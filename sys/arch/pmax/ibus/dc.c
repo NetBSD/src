@@ -1,14 +1,38 @@
-/* $NetBSD: dc.c,v 1.1.2.2 1998/10/21 11:24:32 nisimura Exp $ */
+/*	$NetBSD: dc.c,v 1.1.2.3 1998/10/23 11:56:26 nisimura Exp $ */
+
+/*
+ * Copyright (c) 1996, 1998 Tohru Nishimura.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Christopher G. Demetriou
+ *	for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * DC7085 (DZ-11 look alike) quad asynchronous serial interface
  */
-
-#define	DML_RTS 0100 /* XXX stub XXX */
-#define	DML_CAR 0200 /* XXX stub XXX */
-#define	DML_DTR 0400 /* XXX stub XXX */
-#define	DML_DSR 0010 /* XXX stub XXX */
-
 #include "opt_ddb.h"
 
 #include <sys/param.h>
@@ -27,48 +51,7 @@
 #include <mips/locore.h>
 #include <pmax/ibus/ibusvar.h>
 #include <pmax/ibus/dc7085reg.h> /* XXX dev/dec/dc7085reg.h XXX */
-
-struct dc7085reg {
-	u_int16_t	dz_csr;	/* Control and Status */
-	unsigned : 16;
-	unsigned : 32;
-	u_int16_t	dz_xxx;	/* Rcv Buffer(R) or Line Parameter(W) */
-	unsigned : 16;
-	unsigned : 32;
-	u_int16_t	dz_tcr;	/* Xmt Control (R/W) */
-	unsigned : 16;
-	unsigned : 32;
-	u_int16_t	dz_yyy;	/* Xmit Buffer(W) or Modem Status(R) */
-	unsigned : 16;
-	unsigned : 8;
-	u_int8_t	dz_brk;
-};
-#define dccsr		dz_csr
-#define dcrbuf		dz_xxx
-#define dclpr		dz_xxx
-#define dctcr		dz_tcr
-#define dctbuf		dz_yyy
-#define dcmsr		dz_yyy
-#define dcbrk		dz_brk
-
-struct dc_softc {
-	struct device sc_dv;
-	struct dc7085reg *sc_reg;
-	struct tty *dc_tty[4];
-	u_int16_t dc_flags[4];
-#define	DC_HW_CONSOLE	0x100
-#define	DC_HW_KBD	0x200
-#define	DC_HW_PTR	0x400
-#define	DC_HW_DUMB	0x800
-#define	DC_HW_CLOCALS	(DC_HW_CONSOLE|DC_HW_KBD|DC_HW_PTR|DC_HW_DUMB)
-#define	DC_CHIP_BRK	0x080
-#define	DC_CHIP_19200	0x040
-	struct {
-		u_char *p, *e;
-	} sc_xmit[4];
-};
-#define DCUNIT(dev) (minor(dev) >> 2)
-#define DCLINE(dev) (minor(dev) & 3)
+#include <pmax/ibus/dc7085var.h>
 
 static struct speedtab dcspeedtab[] = {
 	{ 0,	0,	  },
@@ -102,13 +85,24 @@ struct cfattach dc_ca = {
 };
 extern struct cfdriver dc_cd;
 
+int dc_major = 16;
+
 void dcstart __P((struct tty *));
 void dcstop __P((struct tty *, int));
 int  dcparam __P((struct tty *, struct termios *));
 int  dcintr __P((void *));
 int  dcmctl __P((struct dc_softc *, int, int, int));
+void dcttyrint __P((void *, int));
 
-int dc_major = 16;
+void
+dcttyrint(v, cc)
+	void *v;
+	int cc;
+{
+	struct tty *tp = v;
+
+	(*linesw[tp->t_line].l_rint)(cc, tp);
+}
 
 int
 dcmatch(parent, match, aux)
@@ -121,12 +115,12 @@ dcmatch(parent, match, aux)
 	if (strcmp(d->ia_name, "dc") != 0 &&
 	    strcmp(d->ia_name, "mdc") != 0 &&
 	    strcmp(d->ia_name, "dc7085") != 0)
-		return (0);
+		return 0;
 
 	if (badaddr((caddr_t)d->ia_addr, 2))
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 void
@@ -150,6 +144,7 @@ dcintr(v)
 	void *v;
 {
 	struct dc_softc *sc = v;
+	void (*input) __P((void *, int));
 	struct tty *tp;
 	int c, cc, line;
 	unsigned csr;
@@ -162,14 +157,14 @@ dcintr(v)
 			while ((c = sc->sc_reg->dcrbuf) < 0) {
 				cc = c & 0xff;
 				line = (c >> 8) & 3;
-				tp = sc->dc_tty[line];
-				if (tp == NULL)
+				input = sc->sc_input[line].f;
+				if (input == NULL)
 					continue;
 				if (c & DC_FE)
 					cc |= TTY_FE;
 				if (c & DC_PE)
 					cc |= TTY_PE;
-				(*linesw[tp->t_line].l_rint)(cc, tp);
+				(*input)(sc->sc_input[line].a, cc);
 			}
 		}
 		if (csr & DC_TRDY) {
@@ -218,11 +213,13 @@ dcopen(dev, flag, mode, p)
 	unit = DCUNIT(dev);
 	line = DCLINE(dev);
 	if (unit >= dc_cd.cd_ndevs || line >= 4)
-		return (ENXIO);
+		return ENXIO;
 	sc = dc_cd.cd_devs[unit];
-	if ((tp = sc->dc_tty[line]) == NULL) {
-		tp = sc->dc_tty[line] = ttymalloc();
+	if ((tp = sc->sc_tty[line]) == NULL) {
+		tp = sc->sc_tty[line] = ttymalloc();
 		tty_attach(tp);
+		sc->sc_input[line].f = dcttyrint;
+		sc->sc_input[line].a = tp;
 	}
 	tp->t_oproc = dcstart;
 	tp->t_param = dcparam;
@@ -241,7 +238,7 @@ dcopen(dev, flag, mode, p)
 		ttsetwater(tp);
 
 	} else if ((tp->t_state & TS_XCLUDE) && curproc->p_ucred->cr_uid != 0)
-		return (EBUSY);
+		return EBUSY;
 
 	s = spltty();
 	/* if we're doing a blocking open... */
@@ -266,7 +263,7 @@ dcopen(dev, flag, mode, p)
 	if (error == 0)
 		error = (*linesw[tp->t_line].l_open)(dev, tp);
 
-	return (error);
+	return error;
 }
 
 /*ARGSUSED*/
@@ -282,7 +279,7 @@ dcclose(dev, flag, mode, p)
 
 	sc = dc_cd.cd_devs[DCUNIT(dev)];
 	line = DCLINE(dev);
-	tp = sc->dc_tty[line];
+	tp = sc->sc_tty[line];
 	s = spltty();
 	/* turn off the break condition if it is set */
 	if (sc->dc_flags[line] & DC_CHIP_BRK) {
@@ -306,13 +303,13 @@ dcread(dev, uio, flag)
 	struct tty *tp;
 
 	sc = dc_cd.cd_devs[DCUNIT(dev)];
-	tp = sc->dc_tty[DCLINE(dev)];
+	tp = sc->sc_tty[DCLINE(dev)];
 
 #ifdef HW_FLOW_CONTROL
 	if ((tp->t_cflag & CRTSCTS) && (tp->t_state & TS_TBLOCK) &&
 	    tp->t_rawq.c_cc < TTYHOG/5) {
 		tp->t_state &= ~TS_TBLOCK;
-		(void)dcmctl(sc, DCLINE(dev), DML_RTS, DMBIS);
+		(void)dcmctl(sc, DCLINE(dev), SML_RTS, DMBIS);
 	}
 #endif /* HW_FLOW_CONTROL */
 
@@ -328,7 +325,7 @@ dcwrite(dev, uio, flag)
 	struct tty *tp;
 
 	sc = dc_cd.cd_devs[DCUNIT(dev)];
-	tp = sc->dc_tty[DCLINE(dev)];
+	tp = sc->sc_tty[DCLINE(dev)];
 	return (*linesw[tp->t_line].l_write)(tp, uio, flag);
 }
 
@@ -337,11 +334,9 @@ dctty(dev)
         dev_t dev;
 {
 	struct dc_softc *sc;
-	struct tty *tp;
 
 	sc = dc_cd.cd_devs[DCUNIT(dev)];
-	tp = sc->dc_tty[DCLINE(dev)];
-        return (tp);
+        return sc->sc_tty[DCLINE(dev)];
 }
 
 int
@@ -359,14 +354,14 @@ dcioctl(dev, cmd, data, flag, p)
 	unit = DCUNIT(dev);
 	line = DCLINE(dev);
 	sc = dc_cd.cd_devs[unit];
-	tp = sc->dc_tty[line];
+	tp = sc->sc_tty[line];
 
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
-		return (error);
+		return error;
 	error = ttioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
-		return (error);
+		return error;
 
 	switch (cmd) {
 
@@ -381,11 +376,11 @@ dcioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSDTR:
-		(void)dcmctl(sc, line, DML_DTR|DML_RTS, DMBIS);
+		(void)dcmctl(sc, line, SML_DTR|SML_RTS, DMBIS);
 		break;
 
 	case TIOCCDTR:
-		(void)dcmctl(sc, line, DML_DTR|DML_RTS, DMBIC);
+		(void)dcmctl(sc, line, SML_DTR|SML_RTS, DMBIC);
 		break;
 
 	case TIOCMSET:
@@ -411,15 +406,15 @@ dcioctl(dev, cmd, data, flag, p)
 	case TIOCSFLAGS:
                 error = suser(p->p_ucred, &p->p_acflag);
                 if (error)
-                        return (error);
+                        return error;
 		/* 0x7 means SOFTCAR|CLOCAL|CRTSCTS */
 		sc->dc_flags[line] |= *(int *)data & 0x7;
 		break;
 
 	default:
-		return (ENOTTY);
+		return ENOTTY;
 	}
-	return (0);
+	return 0;
 }
 
 void
@@ -464,10 +459,8 @@ dcstop(tp, flag)
 	int s;
 
 	s = spltty();
-	if (tp->t_state & TS_BUSY) {
-		if ((tp->t_state & TS_TTSTOP) == 0)
-			tp->t_state |= TS_FLUSH;
-	}
+	if ((tp->t_state & (TS_BUSY|TS_TTSTOP)) == TS_BUSY)
+		tp->t_state |= TS_FLUSH;
 	splx(s);
 }
 
@@ -481,12 +474,12 @@ dcparam(tp, t)
 	unsigned val;
 
 	if (t->c_ispeed && t->c_ispeed != t->c_ospeed)
-		return (EINVAL);
+		return EINVAL;
 	ospeed = ttspeedtab(t->c_ospeed, dcspeedtab);
 	if (ospeed < 0)
-		return (EINVAL);
+		return EINVAL;
 	if ((t->c_cflag & CSIZE) == CS5 || (t->c_cflag & CSIZE) == CS6)
-		return (EINVAL);
+		return EINVAL;
 
 	sc = dc_cd.cd_devs[DCUNIT(tp->t_dev)];
 	line = DCLINE(tp->t_dev);
@@ -504,7 +497,7 @@ dcparam(tp, t)
 	 * VMIN and VTIME.
 	 */
 	if (tp->t_ospeed == t->c_ospeed && tp->t_cflag == t->c_cflag)
-		return (0);
+		return 0;
 
 	tp->t_ispeed = t->c_ispeed;
 	tp->t_ospeed = t->c_ospeed;
@@ -512,7 +505,7 @@ dcparam(tp, t)
 
 	if (ospeed == 0) {
 		(void)dcmctl(sc, line, 0, DMSET);
-		return (0);
+		return 0;
 	}
 
 	val = DC_RE | ospeed | (1 << line);
@@ -527,11 +520,11 @@ dcparam(tp, t)
 	wbflush();
 	splx(s);
 	DELAY(10);
-	return (0);
+	return 0;
 }
 
 /*
- * XXX do model specific case analysis for 3100/5100/5000 XXX
+ * XXX Need REDO -- do model specific case analysis for 3100/5100/5000 XXX
  */
 int
 dcmctl(sc, line, bits, how)
@@ -539,74 +532,70 @@ dcmctl(sc, line, bits, how)
 	int line, bits, how;
 {
 	struct dc7085reg *reg = sc->sc_reg;
-	struct tty *tp = sc->dc_tty[line];
+	struct tty *tp = sc->sc_tty[line];
 	int mbits, tcr, msr, s;
 
-	mbits = DML_DTR | DML_RTS | DML_DSR | DML_CAR;
+	if (line == 0 || line == 1 || (sc->dc_flags[line] & DC_HW_CLOCALS))
+		return SML_DTR | SML_RTS | SML_DSR | SML_CAR;
 
 	s = spltty();
+	mbits = 0;
 	switch (line) {
 	case  2: /* pmax can detect only DSR, plus DCD/CTS/RI on 3max */
-		mbits = 0;
 		tcr = reg->dctcr;
 		if (tcr & DS3100_DC_L2_DTR)
-			mbits |= DML_DTR;
+			mbits |= SML_DTR;
 		if ((tcr & DS3100_DC_L2_DSR) || (tp->t_cflag & CRTSCTS) == 0)
-			mbits |= DML_RTS;
+			mbits |= SML_RTS;
 		msr = reg->dcmsr;
 		if (msr & DS5000_DC_L2_CD)
-			mbits |= DML_CAR;
+			mbits |= SML_CAR;
 		if (msr & DS5000_DC_L2_DSR) {
-			mbits |= DML_DSR;
+			mbits |= SML_DSR;
 			if (tp->t_cflag & CLOCAL)
-				mbits |= DML_CAR;
+				mbits |= SML_CAR;
 		}
 		break;
-	case 3: /* no modem control on pmax, 3max detects DSR/CTS/DSR/DCD/RI */
-		if (sc->dc_flags[3] & DC_HW_DUMB)
-			break;
-		mbits = 0;
+	 case 3: /* no modem control on pmax, 3max detects DSR/CTS/DCD/RI */
 		tcr = reg->dctcr;
 		if (tcr & DS5000_DC_L3_DTR)
-			mbits |= DML_DTR;
+			mbits |= SML_DTR;
 		if ((tcr & DS5000_DC_L3_RTS) || (tp->t_cflag & CRTSCTS) == 0)
-			mbits |= DML_RTS;
+			mbits |= SML_RTS;
 		msr = reg->dcmsr;
 		if (msr & DS5000_DC_L3_CD)
-			mbits |= DML_CAR;
+			mbits |= SML_CAR;
 		if (msr & DS5000_DC_L3_DSR) {
-			mbits |= DML_DSR;
+			mbits |= SML_DSR;
 			if (tp->t_cflag & CLOCAL)
-				mbits |= DML_CAR;
+				mbits |= SML_CAR;
 		}
 		break;
 	}
 	switch (how) {
 	case DMSET:
-		mbits = bits;
-		break;
+		mbits = bits;	break;
 
 	case DMBIS:
-		mbits |= bits;
-		break;
+		mbits |= bits;	break;
 
 	case DMBIC:
-		mbits &= ~bits;
-		break;
+		mbits &= ~bits;	break;
 
 	case DMGET:
+	default:
 		splx(s);
-		return (mbits);
+		return mbits;
 	}
 	switch (line) {
 	case  2: /* pmax can control only DTR, plus RTS on 3max */
 		tcr = reg->dctcr;
-		if (mbits & DML_DTR)
+		if (mbits & SML_DTR)
 			tcr |= DS3100_DC_L2_DTR;
 		else
 			tcr &= ~DS3100_DC_L2_DTR;
 		if (tp->t_cflag & CRTSCTS) {
-			if (mbits & DML_RTS)
+			if (mbits & SML_RTS)
 				tcr |= DS5100_DC_L2_RTS;
 			else
 				tcr &= ~DS5100_DC_L2_RTS;
@@ -614,15 +603,13 @@ dcmctl(sc, line, bits, how)
 		reg->dctcr = tcr;
 		break;
 	case 3: /* pmax can control nothing, while 3max can do DTR/RTS */
-		if (sc->dc_flags[3] & DC_HW_DUMB)
-			break;
 		tcr = reg->dctcr;
-		if (mbits & DML_DTR)
+		if (mbits & SML_DTR)
 			tcr |= DS5000_DC_L3_DTR;
 		else
 			tcr &= ~DS5000_DC_L3_DTR;
 		if (tp->t_cflag & CRTSCTS) {
-			if (mbits & DML_RTS)
+			if (mbits & SML_RTS)
 				tcr |= DS5000_DC_L3_RTS;
 			else
 				tcr &= ~DS5000_DC_L3_RTS;
@@ -631,11 +618,11 @@ dcmctl(sc, line, bits, how)
 		break;
 	}
 	splx(s);
-	return (mbits);
+	return mbits;
 }
 
-int	dcgetc __P((struct dc7085reg *, int));
-void	dcputc __P((struct dc7085reg *, int, int));
+int	dcgetc __P((struct dc7085reg *, int));		/* EXPORT */
+void	dcputc __P((struct dc7085reg *, int, int));	/* EXPORT */
 
 int
 dcgetc(reg, line)
@@ -683,24 +670,23 @@ dcputc(reg, line, c)
 
 tc_addr_t dc_cons_addr;
 
-int	dc_cngetc __P((dev_t));
-void	dc_cnputc __P((dev_t, int));
-void	dc_cnpollc __P((dev_t, int));
-int	dc_cnattach __P((tc_addr_t, int, int, int));
-void	dc_ws_cnattach __P((tc_addr_t));
+static int  dc_cngetc __P((dev_t));
+static void dc_cnputc __P((dev_t, int));
+static void dc_cnpollc __P((dev_t, int));
+int dc_cnattach __P((paddr_t, int, int, int));		/* EXPORT */
 
 struct consdev dc_cons = {
 	NULL, NULL, dc_cngetc, dc_cnputc, dc_cnpollc, NODEV, CN_NORMAL,
 };
 
-int
+static int
 dc_cngetc(dev)
 	dev_t dev;
 {
 	return dcgetc((struct dc7085reg *)dc_cons_addr, minor(dev));
 }
 
-void
+static void
 dc_cnputc(dev, c)
 	dev_t dev;
 	int c;
@@ -710,7 +696,7 @@ dc_cnputc(dev, c)
 	dcputc((struct dc7085reg *)dc_cons_addr, DCLINE(dev), c);
 }
 
-void
+static void
 dc_cnpollc(dev, onoff)
 	dev_t dev;
 	int onoff;
@@ -720,7 +706,7 @@ dc_cnpollc(dev, onoff)
 /*ARGSUSED*/
 int
 dc_cnattach(addr, line, rate, cflag)
-	tc_addr_t addr;
+	paddr_t addr;
 	int line, rate, cflag;
 {
 	struct dc7085reg *reg;
@@ -745,12 +731,4 @@ dc_cnattach(addr, line, rate, cflag)
 	return 0;
 }
 
-/* XXX XXX XXX */
-void
-dc_ws_cnattach(addr)
-	tc_addr_t addr;
-{
-	/* Tie lk201 keyboard with line 0 */
-}
-/* XXX XXX XXX */
 #endif
