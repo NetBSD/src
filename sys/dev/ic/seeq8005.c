@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.17 2001/03/27 22:17:51 bjh21 Exp $ */
+/* $NetBSD: seeq8005.c,v 1.18 2001/03/29 17:46:39 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -64,7 +64,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.17 2001/03/27 22:17:51 bjh21 Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.18 2001/03/29 17:46:39 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -505,10 +505,11 @@ ea_await_fifo_empty(struct seeq8005_softc *sc)
 	if ((bus_space_read_2(iot, ioh, SEEQ_STATUS) &
 	     SEEQ_STATUS_FIFO_DIR) != 0)
 		return; /* FIFO is reading anyway. */
-	while ((bus_space_read_2(iot, ioh, SEEQ_STATUS) &
-		SEEQ_STATUS_FIFO_EMPTY) == 0 &&
-	       --timeout > 0)
-		continue;
+	while (--timeout > 0)
+		if (bus_space_read_2(iot, ioh, SEEQ_STATUS) &
+		    SEEQ_STATUS_FIFO_EMPTY)
+			return;
+	log(LOG_ERR, "%s: DMA FIFO failed to empty\n", sc->sc_dev.dv_xname);
 }
 
 /*
@@ -522,10 +523,11 @@ ea_await_fifo_full(struct seeq8005_softc *sc)
 	int timeout;
 
 	timeout = 20000;
-	while ((bus_space_read_2(iot, ioh, SEEQ_STATUS) &
-		SEEQ_STATUS_FIFO_FULL) == 0 &&
-	       --timeout > 0)
-		continue;
+	while (--timeout > 0)
+		if (bus_space_read_2(iot, ioh, SEEQ_STATUS) &
+		    SEEQ_STATUS_FIFO_FULL)
+			return;
+	log(LOG_ERR, "%s: DMA FIFO failed to fill\n", sc->sc_dev.dv_xname);
 }
 
 /*
