@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.42 2004/04/20 20:00:37 christos Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.43 2004/04/25 16:20:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.42 2004/04/20 20:00:37 christos Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.43 2004/04/25 16:20:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,8 @@ char *xtmp_name;
 static int
 mk_link(char *,struct stat *,char *, int);
 
+static int warn_broken;
+
 /*
  * routines that deal with file operations such as: creating, removing;
  * and setting access modes, uid/gid and times of files
@@ -89,6 +91,21 @@ file_creat(ARCHD *arcn)
 	int fd = -1;
 	int oerrno;
 
+	/*
+	 * Some horribly busted tar implementations, have directory nodes
+	 * that end in a /, but they mark as files. Compensate for that
+	 * by not creating a directory node at this point, but a file node,
+	 * and not creating the temp file.
+	 */
+	if (arcn->nlen != 0 && arcn->name[arcn->nlen - 1] == '/') {
+		if (!warn_broken) {
+			tty_warn(1, "Archive was created with a broken tar;"
+			    " file `%s' is a directory, but marked as plain.",
+			    arcn->name);
+			warn_broken = 1;
+		}
+		return -1;
+	}
 	/*
 	 * Create a temporary file name so that the file doesn't have partial
 	 * contents while restoring.
