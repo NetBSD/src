@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.96.2.1 2004/07/23 22:27:52 he Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.96.2.1 2004/07/23 22:27:52 he Exp $");
 
 /*
 #define CBB_DEBUG
@@ -520,18 +520,7 @@ pccbbattach(parent, self, aux)
 		return;
 	}
 
-	/* 
-	 * When bus number isn't set correctly, give up using 32-bit CardBus
-	 * mode.
-	 */
 	busreg = pci_conf_read(pc, pa->pa_tag, PCI_BUSNUM);
-#if notyet
-	if (((busreg >> 8) & 0xff) == 0) {
-    		printf("%s: CardBus support disabled because of unconfigured bus number\n",
-		    sc->sc_dev.dv_xname);
-		flags |= PCCBB_PCMCIA_16BITONLY;
-	}
-#endif
 
 	/* pccbb_machdep.c end */
 
@@ -693,7 +682,7 @@ pccbb_pci_callback(self)
 	/* 
 	 * attach cardbus 
 	 */
-	if (!(sc->sc_pcmcia_flags & PCCBB_PCMCIA_16BITONLY)) {
+	{
 		pcireg_t busreg = pci_conf_read(pc, sc->sc_tag, PCI_BUSNUM);
 		pcireg_t bhlc = pci_conf_read(pc, sc->sc_tag, PCI_BHLC_REG);
 
@@ -730,9 +719,10 @@ pccbb_pci_callback(self)
 
 	pccbb_pcmcia_attach_setup(sc, &paa);
 	caa.caa_cb_attach = NULL;
-	if (!(sc->sc_pcmcia_flags & PCCBB_PCMCIA_16BITONLY)) {
+	if (cba.cba_bus == 0)
+		printf("%s: secondary bus number uninitialized; try PCIBIOS_BUS_FIXUP\n", sc->sc_dev.dv_xname);
+	else
 		caa.caa_cb_attach = &cba;
-	}
 	caa.caa_16_attach = &paa;
 	caa.caa_ph = &sc->sc_pcmcia_h;
 
