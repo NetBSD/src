@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.244 2001/07/31 18:28:58 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.245 2001/07/31 22:52:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -856,7 +856,7 @@ ENTRY(kcopy)
  */
 #if defined(I386_CPU)
 #define	DEFAULT_COPYOUT		i386_copyout
-#define	DEFAILT_COPYIN		i386_copyin
+#define	DEFAULT_COPYIN		i386_copyin
 #elif defined(I486_CPU)
 #define	DEFAULT_COPYOUT		i486_copyout
 #define	DEFAULT_COPYIN		i386_copyin
