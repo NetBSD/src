@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_soc.h,v 1.1 2000/06/02 22:57:55 fvdl Exp $	*/
+/*	$NetBSD: clnt_soc.h,v 1.2 2005/02/03 04:39:32 perry Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -62,19 +62,19 @@
  *	u_int recvsz;
  */
 __BEGIN_DECLS
-extern CLIENT *clnttcp_create	__P((struct sockaddr_in *,
-				     u_long,
-				     u_long,
-				     int *,
-				     u_int,
-				     u_int));
+extern CLIENT *clnttcp_create(struct sockaddr_in *,
+				u_long,
+				u_long,
+				int *,
+				u_int,
+				u_int);
 __END_DECLS
 
 /*
  * Raw (memory) rpc.
  */
 __BEGIN_DECLS
-extern CLIENT *clntraw_create   __P((u_long, u_long));
+extern CLIENT *clntraw_create  (u_long, u_long);
 __END_DECLS
 
 
@@ -100,18 +100,18 @@ __END_DECLS
  *	u_int recvsz;
  */
 __BEGIN_DECLS
-extern CLIENT *clntudp_create	__P((struct sockaddr_in *,
-				     u_long,
-				     u_long,
-				     struct timeval,
-				     int *));
-extern CLIENT *clntudp_bufcreate __P((struct sockaddr_in *,
+extern CLIENT *clntudp_create(struct sockaddr_in *,
+				u_long,
+				u_long,
+				struct timeval,
+				int *);
+extern CLIENT *clntudp_bufcreate(struct sockaddr_in *,
 				     u_long,
 				     u_long,
 				     struct timeval,
 				     int *,
 				     u_int,
-				     u_int));
+				     u_int);
 __END_DECLS
 
 #endif /* _RPC_CLNT_SOC_H */

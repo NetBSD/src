@@ -1,4 +1,4 @@
-/*	$NetBSD: fnmatch.h,v 1.11 2003/08/07 09:44:10 agc Exp $	*/
+/*	$NetBSD: fnmatch.h,v 1.12 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	 fnmatch __P((const char *, const char *, int));
+int	 fnmatch(const char *, const char *, int);
 __END_DECLS
 
 #endif /* !_FNMATCH_H_ */

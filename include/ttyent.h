@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyent.h,v 1.12 2003/08/07 09:44:11 agc Exp $	*/
+/*	$NetBSD: ttyent.h,v 1.13 2005/02/03 04:39:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -67,10 +67,10 @@ struct ttyent {
 };
 
 __BEGIN_DECLS
-struct ttyent *getttyent __P((void));
-struct ttyent *getttynam __P((const char *));
-int setttyent __P((void));
-int endttyent __P((void));
+struct ttyent *getttyent(void);
+struct ttyent *getttynam(const char *);
+int setttyent(void);
+int endttyent(void);
 __END_DECLS
 
 #endif /* !_TTYENT_H_ */

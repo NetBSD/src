@@ -1,4 +1,4 @@
-/*	$NetBSD: wctype.h,v 1.5 2003/03/02 22:18:11 tshiozak Exp $	*/
+/*	$NetBSD: wctype.h,v 1.6 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -54,24 +54,24 @@ typedef	_BSD_WCTYPE_T_	wctype_t;
 #endif
 
 __BEGIN_DECLS
-int	iswalnum __P((wint_t));
-int	iswalpha __P((wint_t));
-int	iswblank __P((wint_t));
-int	iswcntrl __P((wint_t));
-int	iswdigit __P((wint_t));
-int	iswgraph __P((wint_t));
-int	iswlower __P((wint_t));
-int	iswprint __P((wint_t));
-int	iswpunct __P((wint_t));
-int	iswspace __P((wint_t));
-int	iswupper __P((wint_t));
-int	iswxdigit __P((wint_t));
-int	iswctype __P((wint_t, wctype_t));
-wint_t	towctrans __P((wint_t, wctrans_t));
-wint_t	towlower __P((wint_t));
-wint_t	towupper __P((wint_t));
-wctrans_t wctrans __P((const char *));
-wctype_t wctype __P((const char *));
+int	iswalnum(wint_t);
+int	iswalpha(wint_t);
+int	iswblank(wint_t);
+int	iswcntrl(wint_t);
+int	iswdigit(wint_t);
+int	iswgraph(wint_t);
+int	iswlower(wint_t);
+int	iswprint(wint_t);
+int	iswpunct(wint_t);
+int	iswspace(wint_t);
+int	iswupper(wint_t);
+int	iswxdigit(wint_t);
+int	iswctype(wint_t, wctype_t);
+wint_t	towctrans(wint_t, wctrans_t);
+wint_t	towlower(wint_t);
+wint_t	towupper(wint_t);
+wctrans_t wctrans(const char *);
+wctype_t wctype(const char *);
 __END_DECLS
 
 #endif		/* _WCTYPE_H_ */

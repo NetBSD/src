@@ -1,4 +1,4 @@
-/*	$NetBSD: ypclnt.h,v 1.12 2003/12/10 12:06:25 agc Exp $	*/
+/*	$NetBSD: ypclnt.h,v 1.13 2005/02/03 04:39:33 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -56,31 +56,30 @@
  
 struct ypall_callback {
 	/* return non-0 to stop getting called */
-	int (*foreach) __P((int, char *, int, char *, int, char *));
+	int (*foreach)(int, char *, int, char *, int, char *);
 	char *data;		/* opaque pointer for use of callback fn */
 };
 
 __BEGIN_DECLS
-int	yp_bind		__P((const char *));
+int	yp_bind		(const char *);
 struct dom_binding;
-int	_yp_dobind	__P((const char *, struct dom_binding **));
-int	_yp_check	__P((char **));
-void	yp_unbind	__P((const char *));
-int	yp_get_default_domain __P((char **));
+int	_yp_dobind	(const char *, struct dom_binding **);
+int	_yp_check	(char **);
+void	yp_unbind	(const char *);
+int	yp_get_default_domain(char **);
 struct ypmaplist;
-int	yp_maplist	__P((const char *, struct ypmaplist **));
-int	yp_match 	__P((const char *, const char *, const char *,
-			     int , char **, int *));
-int	yp_first 	__P((const char *, const char *, char **, int *,
-			     char **, int *));
-int	yp_next		__P((const char *, const char *, const char *,
-			     int, char **, int *, char **, int *));
-int	yp_master	__P((const char *, const char *, char **));
-int	yp_order	__P((const char *, const char *, int *));
-int	yp_all		__P((const char *, const char *,
-			     struct ypall_callback *));
-char *	yperr_string	__P((int));
-int	ypprot_err	__P((unsigned int));
+int	yp_maplist	(const char *, struct ypmaplist **);
+int	yp_match 	(const char *, const char *, const char *,
+			     int , char **, int *);
+int	yp_first 	(const char *, const char *, char **, int *,
+			     char **, int *);
+int	yp_next		(const char *, const char *, const char *,
+			     int, char **, int *, char **, int *);
+int	yp_master	(const char *, const char *, char **);
+int	yp_order	(const char *, const char *, int *);
+int	yp_all		(const char *, const char *, struct ypall_callback *);
+char *	yperr_string	(int);
+int	ypprot_err	(unsigned int);
 __END_DECLS
 
 #endif /* _RPCSVC_YPCLNT_H_ */

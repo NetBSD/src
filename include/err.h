@@ -1,4 +1,4 @@
-/*	$NetBSD: err.h,v 1.13 2003/08/07 09:44:10 agc Exp $	*/
+/*	$NetBSD: err.h,v 1.14 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -45,21 +45,21 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-__dead void	err __P((int, const char *, ...))
+__dead void	err(int, const char *, ...)
 		    __attribute__((__noreturn__, __format__(__printf__, 2, 3)));
-__dead void	verr __P((int, const char *, _BSD_VA_LIST_))
+__dead void	verr(int, const char *, _BSD_VA_LIST_)
 		    __attribute__((__noreturn__, __format__(__printf__, 2, 0)));
-__dead void	errx __P((int, const char *, ...))
+__dead void	errx(int, const char *, ...)
 		    __attribute__((__noreturn__, __format__(__printf__, 2, 3)));
-__dead void	verrx __P((int, const char *, _BSD_VA_LIST_))
+__dead void	verrx(int, const char *, _BSD_VA_LIST_)
 		    __attribute__((__noreturn__, __format__(__printf__, 2, 0)));
-void		warn __P((const char *, ...))
+void		warn(const char *, ...)
 		    __attribute__((__format__(__printf__, 1, 2)));
-void		vwarn __P((const char *, _BSD_VA_LIST_))
+void		vwarn(const char *, _BSD_VA_LIST_)
 		    __attribute__((__format__(__printf__, 1, 0)));
-void		warnx __P((const char *, ...))
+void		warnx(const char *, ...)
 		    __attribute__((__format__(__printf__, 1, 2)));
-void		vwarnx __P((const char *, _BSD_VA_LIST_))
+void		vwarnx(const char *, _BSD_VA_LIST_)
 		    __attribute__((__format__(__printf__, 1, 0)));
 __END_DECLS
 
