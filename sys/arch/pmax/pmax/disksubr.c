@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9 1996/04/10 17:38:24 jonathan Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.10 1996/05/19 18:49:33 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -57,10 +57,6 @@ compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
 char*	readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
 		       register struct disklabel *lp,
 		       struct cpu_disklabel *osdep));
-
-int	dk_establish __P((struct disk *dk, struct device *dev));
-int	bounds_check_with_label __P((struct buf *bp, struct disklabel *lp,
-				     int wlabel));
 
 /*
  * Attempt to read a disk label from a device
@@ -292,14 +288,14 @@ done:
 /*
  * was this the boot device ?
  */
-int
+void
 dk_establish(dk, dev)
 	struct disk *dk;
 	struct device *dev;
 {
 	/* see also arch/alpha/alpha/disksubr.c */
 	printf("Warning: boot path unknown\n");
-	return 1;
+	return;
 }
 
 /* 
