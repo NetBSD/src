@@ -35,7 +35,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)rnusers.x 1.2 87/09/20 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)rnusers.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$NetBSD: rnusers.x,v 1.2 1996/09/26 23:45:25 thorpej Exp $";
+%static char rcsid[] = "$NetBSD: rnusers.x,v 1.3 1996/12/02 06:51:11 mikel Exp $";
 %#endif /* not lint */
 #endif
 
@@ -67,7 +67,6 @@
 %	int uta_cnt;
 %};
 %typedef struct utmparr utmparr;
-%int xdr_utmparr();
 %
 %struct utmpidle {
 %	struct ru_utmp ui_utmp;
@@ -79,7 +78,16 @@
 %	int uia_cnt;
 %};
 %typedef struct utmpidlearr utmpidlearr;
-%int xdr_utmpidlearr();
+%
+%#include <sys/cdefs.h>
+%__BEGIN_DECLS
+%bool_t xdr_utmp __P((XDR *, struct ru_utmp *));
+%bool_t xdr_utmpptr __P((XDR *, struct ru_utmp **));
+%bool_t xdr_utmparr __P((XDR *, struct utmparr *));
+%bool_t xdr_utmpidle __P((XDR *, struct utmpidle *));
+%bool_t xdr_utmpidleptr __P((XDR *, struct utmpidle **));
+%bool_t xdr_utmpidlearr __P((XDR *, struct utmpidlearr *));
+%__END_DECLS
 %
 %#define RUSERSVERS_1 ((u_long)1)
 %#define RUSERSVERS_2 ((u_long)2)
@@ -131,7 +139,7 @@
 %bool_t
 %xdr_utmpptr(xdrs, objpp)
 %	XDR *xdrs;
-%	struct utmp **objpp;
+%	struct ru_utmp **objpp;
 %{
 %	if (!xdr_reference(xdrs, (char **) objpp, sizeof (struct ru_utmp), 
 %			   xdr_utmp)) {
