@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.1 1998/06/26 18:52:41 cgd Exp $	*/
+/*	$NetBSD: puc.c,v 1.2 1998/12/21 20:40:01 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -113,7 +113,7 @@ puc_match(parent, match, aux)
 	if (PCI_HDRTYPE_TYPE(bhlc) != 0)
 		return (0);
 
-	subsys = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x2c);	/* XXX const */
+	subsys = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 
 	desc = puc_find_description(PCI_VENDOR(pa->pa_id),
 	    PCI_PRODUCT(pa->pa_id), PCI_VENDOR(subsys), PCI_PRODUCT(subsys));
@@ -143,7 +143,7 @@ puc_attach(parent, self, aux)
 	pcireg_t subsys;
 	int i, barindex;
 
-	subsys = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x2c);	/* XXX const */
+	subsys = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 	sc->sc_desc = puc_find_description(PCI_VENDOR(pa->pa_id),
 	    PCI_PRODUCT(pa->pa_id), PCI_VENDOR(subsys), PCI_PRODUCT(subsys));
 	if (sc->sc_desc == NULL) {
