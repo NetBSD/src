@@ -34,9 +34,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)activate.c	8.2 (Berkeley) 3/27/94
+ *	@(#)activate.c	8.3 (Berkeley) 4/28/95
  *
- * $Id: activate.c,v 1.1.1.1 1994/06/13 22:55:36 mycroft Exp $
+ * $Id: activate.c,v 1.1.1.2 1997/09/16 11:21:42 lukem Exp $
  */
 
 #include <stdio.h>
@@ -89,7 +89,7 @@ int klen;
 	iov[1].iov_base = key;
 	iov[1].iov_len = klen;
 
-	bzero((char *) &msg, sizeof(msg));
+	memset(&msg, 0, sizeof(msg));
 	msg.msg_iov = iov;
 	msg.msg_iovlen = 2;
 
@@ -129,7 +129,7 @@ int error;
 	/*
 	 * Build a msghdr
 	 */
-	bzero((char *) &msg, sizeof(msg));
+	memset(&msg, 0, sizeof(msg));
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
 

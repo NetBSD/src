@@ -34,9 +34,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pt_file.c	8.2 (Berkeley) 3/27/94
+ *	@(#)pt_file.c	8.3 (Berkeley) 7/3/94
  *
- * $Id: pt_file.c,v 1.1.1.1 1994/06/13 22:55:50 mycroft Exp $
+ * $Id: pt_file.c,v 1.1.1.2 1997/09/16 11:21:45 lukem Exp $
  */
 
 #include <stdio.h>
@@ -61,7 +61,7 @@ int *fdp;
 	int fd;
 	char pbuf[MAXPATHLEN];
 	int error;
-	int gidset[NGROUPS];
+	gid_t gidset[NGROUPS];
 	int i;
 
 	pbuf[0] = '/';
