@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.1.2.7 1999/03/31 04:50:13 nisimura Exp $ */
+/* $NetBSD: ioasic.c,v 1.1.2.8 1999/04/05 00:23:43 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.7 1999/03/31 04:50:13 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.8 1999/04/05 00:23:43 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ ioasicmatch(parent, cfdata, aux)
 		builtin_ndevs = xine_builtin_ndevs;
 		break;
 #endif
-#if defined(DEC_3MIN) || defined(DS_3MAXPLUS)
+#if defined(DEC_3MIN) || defined(DEC_3MAXPLUS)
 	case DS_3MIN:
 	case DS_3MAXPLUS:
 		ioasic_devs = kn03_ioasic_devs;
