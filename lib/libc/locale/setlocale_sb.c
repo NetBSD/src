@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: setlocale_sb.c,v 1.1.2.1 2000/05/28 22:41:06 minoura Exp $
+ *	from: Id: setlocale_sb.c,v 1.4 2000/01/25 14:24:22 cvscitrus Exp
  */
 
 
