@@ -1,9 +1,17 @@
-#	$NetBSD: files.vme,v 1.4 1998/02/16 22:12:50 thorpej Exp $
+#	$NetBSD: files.vme,v 1.5 1999/06/30 15:06:05 drochner Exp $
 #
 # Config file and device description for machine-independent VME code.
 # Included by ports that need it.
 
-device	vme {addr = -1, pri = -1, vec = -1}
+# keep the "3" consistent with VME_MAXCFRANGES in vmevar.h
+#  and VME_NUMCFRANGES in vme.c!
+#  (the latter will hopefully go away)
+device vme {[addr[3] = {-1,-1,-1}], [len[3] = {-1,-1,-1}],
+	[am[3] = {-1,-1,-1}], [irq = -1], [vect = -1]}
+
+attach vme at vmebus
+device vme_slv
+attach vme_slv at vme
 file	dev/vme/vme.c			vme
 
 
@@ -15,10 +23,14 @@ device	xdc {drive = -1}
 attach	xdc at vme
 device	xd: disk
 attach	xd at xdc
-file	dev/vme/xd.c		xd needs-flag
+file	dev/vme/xd.c		xd | xdc needs-flag
 
 device	xyc {drive = -1}
 attach	xyc at vme
 device	xy: disk
 attach	xy at xyc
-file	dev/vme/xy.c		xy needs-flag
+file	dev/vme/xy.c		xy | xyc needs-flag
+
+device vmegeneric
+attach vmegeneric at vme
+file  dev/vme/vmegeneric.c	vmegeneric needs-flag
