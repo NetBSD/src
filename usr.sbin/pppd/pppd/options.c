@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.24 1998/07/06 07:04:29 mrg Exp $	*/
+/*	$NetBSD: options.c,v 1.25 1998/07/27 00:52:02 mycroft Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -24,7 +24,7 @@
 #if 0
 static char rcsid[] = "Id: options.c,v 1.42 1998/03/26 04:46:06 paulus Exp ";
 #else
-__RCSID("$NetBSD: options.c,v 1.24 1998/07/06 07:04:29 mrg Exp $");
+__RCSID("$NetBSD: options.c,v 1.25 1998/07/27 00:52:02 mycroft Exp $");
 #endif
 #endif
 
@@ -670,7 +670,8 @@ err:
 int
 options_from_user()
 {
-    char *user, *path, *file;
+    const char *user;
+    char *path, *file;
     int ret;
     struct passwd *pw;
 

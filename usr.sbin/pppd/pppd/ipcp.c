@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcp.c,v 1.14 1998/05/02 14:19:14 christos Exp $	*/
+/*	$NetBSD: ipcp.c,v 1.15 1998/07/27 00:52:01 mycroft Exp $	*/
 
 /*
  * ipcp.c - PPP IP Control Protocol.
@@ -24,7 +24,7 @@
 #if 0
 static char rcsid[] = "Id: ipcp.c,v 1.33 1998/03/25 03:08:47 paulus Exp ";
 #else
-__RCSID("$NetBSD: ipcp.c,v 1.14 1998/05/02 14:19:14 christos Exp $");
+__RCSID("$NetBSD: ipcp.c,v 1.15 1998/07/27 00:52:01 mycroft Exp $");
 #endif
 #endif
 
@@ -69,7 +69,7 @@ static int  ipcp_rejci __P((fsm *, u_char *, int));	/* Peer rej'd our CI */
 static int  ipcp_reqci __P((fsm *, u_char *, int *, int)); /* Rcv CI */
 static void ipcp_up __P((fsm *));		/* We're UP */
 static void ipcp_down __P((fsm *));		/* We're DOWN */
-static void ipcp_script __P((fsm *, char *)); /* Run an up/down script */
+static void ipcp_script __P((fsm *, const char *)); /* Run an up/down script */
 static void ipcp_finished __P((fsm *));	/* Don't need lower layer */
 
 fsm ipcp_fsm[NUM_PPP];		/* IPCP fsm structure */
@@ -1342,10 +1342,10 @@ ipcp_finished(f)
 static void
 ipcp_script(f, script)
     fsm *f;
-    char *script;
+    const char *script;
 {
     char strspeed[32], strlocal[32], strremote[32];
-    char *argv[8];
+    const char *argv[8];
 
     sprintf(strspeed, "%d", baud_rate);
     strcpy(strlocal, ip_ntoa(ipcp_gotoptions[f->unit].ouraddr));
@@ -1359,6 +1359,7 @@ ipcp_script(f, script)
     argv[5] = strremote;
     argv[6] = ipparam;
     argv[7] = NULL;
+
     run_program(script, argv, 0);
 }
 

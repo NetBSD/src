@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.21 1998/05/02 14:19:13 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.22 1998/07/27 00:52:01 mycroft Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -39,7 +39,7 @@
 #if 0
 static char rcsid[] = "Id: auth.c,v 1.37 1998/03/26 04:46:03 paulus Exp ";
 #else
-__RCSID("$NetBSD: auth.c,v 1.21 1998/05/02 14:19:13 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.22 1998/07/27 00:52:01 mycroft Exp $");
 #endif
 #endif
 
@@ -147,7 +147,7 @@ static int  ip_addr_check __P((u_int32_t, struct wordlist *));
 static int  scan_authfile __P((FILE *, char *, char *, u_int32_t, char *,
 			       struct wordlist **, char *));
 static void free_wordlist __P((struct wordlist *));
-static void auth_script __P((char *));
+static void auth_script __P((const char *));
 static void set_allowed_addrs __P((int, struct wordlist *));
 
 /*
@@ -1481,13 +1481,13 @@ free_wordlist(wp)
  */
 static void
 auth_script(script)
-    char *script;
+    const char *script;
 {
     char strspeed[32];
     struct passwd *pw;
     char struid[32];
-    char *user_name;
-    char *argv[8];
+    const char *user_name;
+    const char *argv[8];
 
     if ((pw = getpwuid(getuid())) != NULL && pw->pw_name != NULL)
 	user_name = pw->pw_name;

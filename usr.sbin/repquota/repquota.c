@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.13 1997/10/23 04:53:03 fair Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.14 1998/07/27 00:52:03 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,11 +81,11 @@ u_long highid[MAXQUOTAS];	/* highest addid()'ed identifier per type */
 int	vflag;			/* verbose */
 int	aflag;			/* all file systems */
 
-struct fileusage *addid __P((u_long, int, char *));
+struct fileusage *addid __P((u_long, int, const char *));
 int	hasquota __P((struct fstab *, int, char **));
 struct fileusage *lookup __P((u_long, int));
 int	main __P((int, char **));
-int	oneof __P((char *, char **, int));
+int	oneof __P((const char *, char **, int));
 int	repquota __P((struct fstab *, int, char *));
 char   *timeprt __P((time_t));
 void	usage __P((void));
@@ -263,7 +263,8 @@ repquota(fs, type, qfpathname)
  */
 int
 oneof(target, list, cnt)
-	char *target, *list[];
+	const char *target;
+	char *list[];
 	int cnt;
 {
 	int i;
@@ -338,7 +339,7 @@ struct fileusage *
 addid(id, type, name)
 	u_long id;
 	int type;
-	char *name;
+	const char *name;
 {
 	struct fileusage *fup, **fhp;
 	int len;

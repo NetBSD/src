@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.15 1998/06/08 03:23:07 lukem Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.16 1998/07/27 00:52:02 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,8 @@ main(argc, argv)
 	FILE *fp, *oldfp;
 	sigset_t set;
 	int ch, cnt, len, makeold, tfd, flags;
-	char *p, *t;
+	char *p;
+	const char *t;
 	char buf[MAX(MAXPATHLEN, LINE_MAX * 2)], tbuf[1024];
 	int hasyp = 0;
 	DBT ypdata, ypkey;

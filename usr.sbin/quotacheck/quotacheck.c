@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.17 1998/03/18 17:22:38 bouyer Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.18 1998/07/27 00:52:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.17 1998/03/18 17:22:38 bouyer Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.18 1998/07/27 00:52:02 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,11 +122,11 @@ static void *needchk __P((struct fstab *));
 static int chkquota __P((const char *, const char *, const char *, void *,
     pid_t *));
 static int update __P((const char *, const char *, int));
-static int oneof __P((char *, char *[], int));
+static int oneof __P((const char *, char *[], int));
 static int getquotagid __P((void));
 static int hasquota __P((struct fstab *, int, char **));
 static struct fileusage *lookup __P((u_long, int));
-static struct fileusage *addid __P((u_long, int, char *));
+static struct fileusage *addid __P((u_long, int, const char *));
 static struct dinode *getnextinode __P((ino_t));
 static void resetinodebuf __P((void));
 static void freeinodebuf __P((void));
@@ -144,7 +144,7 @@ main(argc, argv)
 	int i, argnum, maxrun, errs;
 	long done = 0;
 	int flags = CHECK_PREEN;
-	char *name;
+	const char *name;
 	int ch;
 
 	errs = maxrun = 0;
@@ -438,7 +438,8 @@ update(fsname, quotafile, type)
  */
 static int
 oneof(target, list, cnt)
-	char *target, *list[];
+	const char *target;
+	char *list[];
 	int cnt;
 {
 	int i;
@@ -529,7 +530,7 @@ static struct fileusage *
 addid(id, type, name)
 	u_long id;
 	int type;
-	char *name;
+	const char *name;
 {
 	struct fileusage *fup, **fhp;
 	int len;

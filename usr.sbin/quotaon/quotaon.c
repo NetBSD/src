@@ -1,4 +1,4 @@
-/*	$NetBSD: quotaon.c,v 1.12 1998/02/03 05:00:42 perry Exp $	*/
+/*	$NetBSD: quotaon.c,v 1.13 1998/07/27 00:52:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotaon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: quotaon.c,v 1.12 1998/02/03 05:00:42 perry Exp $");
+__RCSID("$NetBSD: quotaon.c,v 1.13 1998/07/27 00:52:03 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ int main __P((int, char *[]));
 
 static void usage __P((void));
 static int quotaonoff __P((struct fstab *, int, int, char *));
-static int oneof __P((char *, char *[], int));
+static int oneof __P((const char *, char *[], int));
 static int hasquota __P((struct fstab *, int, char **));
 static int readonly __P((struct fstab *));
 
@@ -199,7 +199,8 @@ quotaonoff(fs, offmode, type, qfpathname)
  */
 static int
 oneof(target, list, cnt)
-	char *target, *list[];
+	const char *target;
+	char *list[];
 	int cnt;
 {
 	int i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsinfo.c,v 1.7 1998/07/06 06:45:42 mrg Exp $	*/
+/*	$NetBSD: fsinfo.c,v 1.8 1998/07/27 00:52:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Erez Zadok
@@ -203,7 +203,7 @@ Usage: %s [-v] [-a autodir] [-h hostname] [-b bootparams] [-d dumpsets]\n\
 static char *
 find_username(void)
 {
-  char *u = getlogin();
+  const char *u = getlogin();
 
   if (!u) {
     struct passwd *pw = getpwuid(getuid());

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_v2.c,v 1.6 1997/10/25 13:46:00 lukem Exp $	*/
+/*	$NetBSD: pcnfsd_v2.c,v 1.7 1998/07/27 00:52:04 mycroft Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_v2.c 1.2 91/12/18 13:26:13 SMI */
 /*
@@ -327,11 +327,11 @@ free_mapreq_results(p)
 	return;
 }
 
-static char *my_strdup __P((char *));
+static char *my_strdup __P((const char *));
 
 static char *
 my_strdup(s)
-	char   *s;
+	const char   *s;
 {
 	char   *r;
 	r = (char *) grab(strlen(s) + 1);
@@ -479,7 +479,7 @@ fillin_extra_groups(uname, main_gid, len, extra_gids)
 	gid_t   extra_gids[EXTRAGIDLEN];
 {
 	struct group *grp;
-	char  **members;
+	const char *const *members;
 	int     n = 0;
 
 	setgrent();
