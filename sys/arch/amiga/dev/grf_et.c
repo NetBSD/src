@@ -1,6 +1,7 @@
-/*	$NetBSD: grf_et.c,v 1.8 1996/12/23 09:10:06 veego Exp $	*/
+/*	$NetBSD: grf_et.c,v 1.9 1997/03/05 22:50:38 veego Exp $	*/
 
 /*
+ * Copyright (c) 1997 Klaus Burkert
  * Copyright (c) 1996 Tobias Abt
  * Copyright (c) 1995 Ezra Story
  * Copyright (c) 1995 Kari Mettinen
@@ -48,7 +49,10 @@
  * Modified for Tseng ET4000 from
  * Kari Mettinen's Cirrus driver by Tobias Abt
  *
+ * Fixed Merlin in Z-III, fixed LACE and DBLSCAN, added Domino16M proto
+ * and AT&T ATT20c491 DAC, added memory-size detection by Klaus Burkert. 
  *
+ * 
  * TODO:
  *
  */
@@ -188,7 +192,7 @@ grfetmatch(pdp, cfp, auxp)
 	void *auxp;
 {
 	struct zbus_args *zap;
-	static int regprod, fbprod;
+	static int regprod, regprod2 = 0, fbprod;
 
 	zap = auxp;
 
@@ -209,9 +213,11 @@ grfetmatch(pdp, cfp, auxp)
 			fbprod = 0;
 			break;
 		    case DOMINO:
-			if (zap->prodid != 2 && zap->prodid != 1)
+			/* 2167/3 is Domino16M proto (crest) */
+			if (zap->prodid != 3 && zap->prodid != 2 && zap->prodid != 1)
 				return (0);
 			regprod = 2;
+			regprod2 = 3;
 			fbprod = 1;
 			break;
 		    case MERLIN:
@@ -242,7 +248,7 @@ grfetmatch(pdp, cfp, auxp)
 			et_fbsize = zap->size;
 		}
 	} else {
-		if (zap->prodid == regprod) {
+		if (zap->prodid == regprod || zap->prodid == regprod2) {
 			et_regaddr = zap->va;
 		} else {
 			if (zap->prodid == fbprod) {
@@ -350,7 +356,10 @@ grfetattach(pdp, dp, auxp)
 			printf("MUSIC DAC");
 			break;
 		    case MERLINDAC:
-			printf("BrookTree DAC");
+			printf("BrookTree Bt482 DAC");
+			break;
+		    case ATT20C491:
+			printf("AT&T ATT20c491 DAC");
 			break;
 		}
 		printf(" being used\n");
@@ -363,8 +372,8 @@ grfetattach(pdp, dp, auxp)
 
 int
 grfetprint(auxp, pnp)
-	void   *auxp;
-	const char   *pnp;
+	void *auxp;
+	const char *pnp;
 {
 	if (pnp)
 		printf("ite at %s: ", pnp);
@@ -425,7 +434,7 @@ et_boardinit(gp)
 	WSeq(ba, SEQ_ID_MAP_MASK, 0x0f);
 	WSeq(ba, SEQ_ID_CHAR_MAP_SELECT, 0x00);
 	WSeq(ba, SEQ_ID_MEMORY_MODE, 0x0e);
-/*	WSeq(ba, SEQ_ID_TS_STATE_CONTROL, 0x00);	*/
+	WSeq(ba, SEQ_ID_STATE_CONTROL, 0x00);
 	WSeq(ba, SEQ_ID_AUXILIARY_MODE, 0xf4);
 
 	WCrt(ba, CRT_ID_PRESET_ROW_SCAN, 0x00);
@@ -436,35 +445,39 @@ et_boardinit(gp)
 	WCrt(ba, CRT_ID_CURSOR_LOC_HIGH, 0x00);
 	WCrt(ba, CRT_ID_CURSOR_LOC_LOW, 0x00);
 
-	WCrt(ba, CRT_ID_UNDERLINE_LOC, 0x07);
-	WCrt(ba, CRT_ID_MODE_CONTROL, 0xa3);	/* c3 */
-	WCrt(ba, CRT_ID_LINE_COMPARE, 0xff);	/* ff */
-/* ET4000 special */
+	WCrt(ba, CRT_ID_UNDERLINE_LOC, 0x67);
+	WCrt(ba, CRT_ID_MODE_CONTROL, 0xc3);
+	WCrt(ba, CRT_ID_LINE_COMPARE, 0xff);
+
+	/* ET4000 special */
 	WCrt(ba, CRT_ID_RASCAS_CONFIG, 0x28);
-	WCrt(ba, CTR_ID_EXT_START, 0x00);
+	WCrt(ba, CRT_ID_EXT_START, 0x00);
 	WCrt(ba, CRT_ID_6845_COMPAT, 0x08);
-	WCrt(ba, CRT_ID_VIDEO_CONFIG1, 0xd3);
-	WCrt(ba, CRT_ID_VIDEO_CONFIG2, 0x0f);	/* assume ZorroII first */
-	
-	if (iszthreepa(ba)) {
-		if (((vgar(ba, GREG_FEATURE_CONTROL_R) & 12) |
-		    (vgar(ba, GREG_STATUS0_R) & 0x60)) == 0x24 )
-			WCrt(ba, CRT_ID_VIDEO_CONFIG2, 0x07);	/* ZorroIII */
+
+	/* ET4000/W32 special (currently only for Merlin (crest) */
+	if (ettype == MERLIN) {
+		WCrt(ba, CRT_ID_SEGMENT_COMP, 0x1c);
+		WCrt(ba, CRT_ID_GENERAL_PURPOSE, 0x00);
+		WCrt(ba, CRT_ID_VIDEO_CONFIG1, 0x93);
+	}
+	else {
+		WCrt(ba, CRT_ID_VIDEO_CONFIG1, 0xd3);
 	}
 
+	WCrt(ba, CRT_ID_VIDEO_CONFIG2, 0x0f);
 	WCrt(ba, CRT_ID_HOR_OVERFLOW, 0x00);
+
+	vgaw(ba, GREG_SEGMENTSELECT, 0x00);
 
 	WGfx(ba, GCT_ID_SET_RESET, 0x00);
 	WGfx(ba, GCT_ID_ENABLE_SET_RESET, 0x00);
 	WGfx(ba, GCT_ID_COLOR_COMPARE, 0x00);
 	WGfx(ba, GCT_ID_DATA_ROTATE, 0x00);
 	WGfx(ba, GCT_ID_READ_MAP_SELECT, 0x00);
-	WGfx(ba, GCT_ID_GRAPHICS_MODE, 0x00);
+	WGfx(ba, GCT_ID_GRAPHICS_MODE, 0x40);
 	WGfx(ba, GCT_ID_MISC, 0x01);
 	WGfx(ba, GCT_ID_COLOR_XCARE, 0x0f);
 	WGfx(ba, GCT_ID_BITMASK, 0xff);
-
-	vgaw(ba, GREG_SEGMENTSELECT, 0x00);
 
 	for (x = 0; x < 0x10; x++)
 		WAttr(ba, x, x);
@@ -477,10 +490,9 @@ et_boardinit(gp)
 
 	vgaw(ba, VDAC_MASK, 0xff);
 	delay(200000);
-	vgaw(ba, GREG_MISC_OUTPUT_W, 0xe3);	/* c3 */
+	vgaw(ba, GREG_MISC_OUTPUT_W, 0xe3);
 
 	/* colors initially set to greyscale */
-
 	switch(ettype) {
 	    case MERLIN:
 		vgaw(ba, MERLIN_VDAC_INDEX, 0);
@@ -506,20 +518,43 @@ et_boardinit(gp)
 	et_cursprite.cmap.red = et_sprred;
 	et_cursprite.cmap.green = et_sprgreen;
 	et_cursprite.cmap.blue = et_sprblue;
-	
-	/* card spezific initialisations */
+
+	/* card specific initialisations */
 	switch(ettype) {
 	    case OMNIBUS:
 		etctype = et_getControllerType(gp);
 		etdtype = et_getDACType(gp);
 		break;
 	    case MERLIN:
+		vgaw(ba, GREG_SEGMENTSELECT2, 0x00);
+		if (((vgar(ba, GREG_FEATURE_CONTROL_R) & 12) |
+		     (vgar(ba, GREG_STATUS0_R) & 0x60)) == 0x24) {
+			WCrt(ba, CRT_ID_VIDEO_CONFIG2, 0x07);	/* 1Mx4 RAM */
+			et_fbsize = 0x400000;			/* 4 MB */
+		}
+		else {
+			/* check for 1MB or 2MB board (crest) */
+			/* has there a 1MB Merlin ever been sold ??? */
+			volatile unsigned long *et_fbtestaddr;
+			et_fbtestaddr = (volatile unsigned long *)gp->g_fbkva;
+			*et_fbtestaddr = 0x0;
+			vgaw(ba, GREG_SEGMENTSELECT2, 0x11); /* 1MB offset */
+			*et_fbtestaddr = 0x12345678;
+			vgaw(ba, GREG_SEGMENTSELECT2, 0x00);
+			if (*et_fbtestaddr == 0x0) 
+				et_fbsize = 0x200000;		/* 2 MB */
+			else
+				et_fbsize = 0x100000;		/* 1 MB */
+		}
+		/* ZorroII can map 2 MB max ... */
+		if (!iszthreepa(gp->g_fbkva) && et_fbsize == 0x400000)
+			et_fbsize = 0x200000;
 		etctype = ETW32;
 		etdtype = MERLINDAC;
 		break;
 	    case DOMINO:
 		etctype = ET4000;
-		etdtype = SIERRA11483;
+		etdtype = et_getDACType(gp);
 		break;
 	}
 }
@@ -536,9 +571,9 @@ et_getvmode(gp, vm)
 	/* Handle grabbing console mode */
 	if (vm->mode_num == 255) {
 		bcopy(&etconsole_mode, vm, sizeof(struct grfvideo_mode));
-		/* XXX so grfconfig can tell us the correct text dimensions. */
+	/* XXX so grfconfig can tell us the correct text dimensions. */
 		vm->depth = etconsole_mode.fy;
-	} else 
+	} else
 #endif
 	{
 		if (vm->mode_num == 0)
@@ -597,8 +632,8 @@ et_blank(gp, on)
 	struct grf_softc *gp;
 	int *on;
 {
-        WSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE, *on > 0 ? 0x01 : 0x21);
-        return(0);
+	WSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE, *on > 0 ? 0x01 : 0x21);
+	return(0);
 }
 
 
@@ -1011,6 +1046,7 @@ int
 et_mondefok(gv)
 	struct grfvideo_mode *gv;
 {
+        unsigned long maxpix;
 
 	if (gv->mode_num < 1 || gv->mode_num > monitor_def_max)
 		if (gv->mode_num != 255 || gv->depth != 4)
@@ -1022,13 +1058,23 @@ et_mondefok(gv)
 			return(0);
 	    case 1:
 	    case 8:
+                maxpix = 85000000;
+                break;
 	    case 15:
 	    case 16:
+                maxpix = 45000000;
+                break;
 	    case 24:
-		break;
+                maxpix = 28000000;
+                break;
+	    case 32:
+                maxpix = 21000000;
+                break;
 	    default:
 		return (0);
 	}
+        if (gv->pixel_clock > maxpix)
+                return (0);
 	return (1);
 }
 
@@ -1047,6 +1093,7 @@ et_load_mon(gp, md)
 	char    LACE, DBLSCAN, TEXT;
 	unsigned char seq;
 	int     uplim, lowlim;
+	int	hmul;
 
 	/* identity */
 	gv = &md->gv;
@@ -1107,10 +1154,36 @@ et_load_mon(gp, md)
 	LACE = (((VT * 2) > lowlim) && ((VT * 2) < uplim)) ? 1 : 0;
 	DBLSCAN = (((VT / 2) > lowlim) && ((VT / 2) < uplim)) ? 1 : 0;
 
-	/* adjustments */
+	/* adjustments (crest) */
+	switch (gv->depth) {
+	    case 15:
+	    case 16:	hmul = 2;
+			break;
+	    case 24:	hmul = 3;
+			break;
+			break;
+	    case 32:	hmul = 4;
+			break;
+	    default:	hmul = 1;
+	}
 
-	if (LACE)
-		VDE /= 2;
+	HDE *= hmul;
+	HBS *= hmul;
+	HSS *= hmul;
+	HSE *= hmul;
+	HBE *= hmul;
+	HT  *= hmul;
+
+	if (LACE) {
+		VBS *= 2,
+		VSS *= 2;
+		VSE *= 2;
+		VBE *= 2;
+		VT = VT * 2 + 1;
+	}
+
+	if (DBLSCAN)
+		VDE *= 2;
 
 	WSeq(ba, SEQ_ID_MEMORY_MODE, (TEXT || (gv->depth == 1)) ? 0x06 : 0x0e);
 
@@ -1119,8 +1192,7 @@ et_load_mon(gp, md)
 	WSeq(ba, SEQ_ID_CHAR_MAP_SELECT, 0x00);
 
 	/* Set clock */
-
-	et_CompFQ( gv->pixel_clock, &num0, &denom0);
+	et_CompFQ( gv->pixel_clock * hmul, &num0, &denom0);
 
 	vgaw(ba, GREG_MISC_OUTPUT_W, 0xe3 | ((num0 & 3) << 2));
 	WCrt(ba, CRT_ID_6845_COMPAT, (num0 & 4) ? 0x0a : 0x08);
@@ -1142,13 +1214,13 @@ et_load_mon(gp, md)
 		WSeq(ba, SEQ_ID_AUXILIARY_MODE, 0xf5);
 		WSeq(ba, SEQ_ID_CLOCKING_MODE, seq | 0x08);
 		break;
-	} 
-	/* load display parameters into board */
+	}
 
+	/* load display parameters into board */
 	WCrt(ba, CRT_ID_HOR_TOTAL, HT);
 	WCrt(ba, CRT_ID_HOR_DISP_ENA_END, ((HDE >= HBS) ? HBS - 1 : HDE));
 	WCrt(ba, CRT_ID_START_HOR_BLANK, HBS);
-	WCrt(ba, CRT_ID_END_HOR_BLANK, (HBE & 0x1f) | 0x80);	/* | 0x80? */
+	WCrt(ba, CRT_ID_END_HOR_BLANK, (HBE & 0x1f) | 0x80);
 	WCrt(ba, CRT_ID_START_HOR_RETR, HSS);
 	WCrt(ba, CRT_ID_END_HOR_RETR,
 	    (HSE & 0x1f) |
@@ -1165,7 +1237,7 @@ et_load_mon(gp, md)
 	    ((VSS & 0x200) ? 0x80 : 0x00));
 
 	WCrt(ba, CRT_ID_MAX_ROW_ADDRESS,
-	    0x40 |		/* TEXT ? 0x00 ??? */
+	    0x40 |		/* splitscreen not visible */
 	    (DBLSCAN ? 0x80 : 0x00) |
 	    ((VBS & 0x200) ? 0x20 : 0x00) |
 	    (TEXT ? ((md->fy - 1) & 0x1f) : 0x00));
@@ -1174,7 +1246,6 @@ et_load_mon(gp, md)
 	    ((TEXT || (gv->depth == 1)) ? 0xc3 : 0xab));
 
 	/* text cursor */
-
 	if (TEXT) {
 #if ET_ULCURSOR
 		WCrt(ba, CRT_ID_CURSOR_START, (md->fy & 0x1f) - 2);
@@ -1235,6 +1306,9 @@ et_load_mon(gp, md)
 		    case MUSICDAC:
 			vgaw(ba, VDAC_MASK, 0);
 			break;
+		    case ATT20C491:
+			vgaw(ba, VDAC_MASK, 0x02);
+			break;
 		    case MERLINDAC:
 			setMerlinDACmode(ba, 0);
 			break;
@@ -1248,6 +1322,9 @@ et_load_mon(gp, md)
 		    case MUSICDAC:
 			vgaw(ba, VDAC_MASK, 0);
 			break;
+		    case ATT20C491:
+			vgaw(ba, VDAC_MASK, 0x02);
+			break;
 		    case MERLINDAC:
 			setMerlinDACmode(ba, 0);
 			break;
@@ -1259,6 +1336,7 @@ et_load_mon(gp, md)
 		    case SIERRA11483:
 		    case SIERRA15025:
 		    case MUSICDAC:
+		    case ATT20C491:
 			vgaw(ba, VDAC_MASK, 0xa0);
 			break;
 		    case MERLINDAC:
@@ -1276,6 +1354,7 @@ et_load_mon(gp, md)
 			vgaw(ba, VDAC_MASK, 0xe0);
 			break;
 		    case MUSICDAC:
+		    case ATT20C491:
 			vgaw(ba, VDAC_MASK, 0xc0);
 			break;
 		    case MERLINDAC:
@@ -1293,6 +1372,7 @@ et_load_mon(gp, md)
 			vgaw(ba, VDAC_MASK, 0xe1);
 			break;
 		    case MUSICDAC:
+		    case ATT20C491:
 			vgaw(ba, VDAC_MASK, 0xe0);
 			break;
 		    case MERLINDAC:
@@ -1305,6 +1385,7 @@ et_load_mon(gp, md)
 		switch(etdtype) {
 		    case SIERRA11483:
 		    case MUSICDAC:
+		    case ATT20C491:
 			vgaw(ba, VDAC_MASK, 0);	/* illegal mode! */
 			break;
 		    case SIERRA15025:
@@ -1322,6 +1403,10 @@ et_load_mon(gp, md)
 	    (gv->depth == 1) ? 0x01 : 0x0f);
 
 	WCrt(ba, CRT_ID_OFFSET, HDE);
+	vgaw(ba, CRT_ADDRESS, CRT_ID_HOR_OVERFLOW);
+	vgaw(ba, CRT_ADDRESS_W,
+		(vgar(ba, CRT_ADDRESS_R) & 0x7f)
+                | ((HDE & 0x100) ? 0x80: 0x00));
 
 	/* text initialization */
 	if (TEXT) {
@@ -1372,7 +1457,7 @@ et_inittextmode(gp)
 
 	c = (unsigned char *) (fb) + (tm->cols - 16);
 	strcpy(c, "TSENG");
-	c[6] = 0x20;
+	c[5] = 0x20;
 
 	/* set colors (B&W) */
 
@@ -1381,7 +1466,7 @@ et_inittextmode(gp)
 		vgaw(ba, MERLIN_VDAC_INDEX, 0);
 		for (z = 0; z < 256; z++) {
 			y = (z & 1) ? ((z > 7) ? 2 : 1) : 0;
-	    
+
 			vgaw(ba, MERLIN_VDAC_COLORS, etconscolors[y][0]);
 			vgaw(ba, MERLIN_VDAC_COLORS, etconscolors[y][1]);
 			vgaw(ba, MERLIN_VDAC_COLORS, etconscolors[y][2]);
@@ -1391,7 +1476,7 @@ et_inittextmode(gp)
 		vgaw(ba, VDAC_ADDRESS_W, 0);
 		for (z = 0; z < 256; z++) {
 			y = (z & 1) ? ((z > 7) ? 2 : 1) : 0;
-	    
+
 			vgaw(ba, VDAC_DATA + ((ettype == DOMINO) ? 0x0fff : 0),
 			    etconscolors[y][0] >> etcmap_shift);
 			vgaw(ba, VDAC_DATA + ((ettype == DOMINO) ? 0x0fff : 0),
@@ -1426,7 +1511,13 @@ et_getControllerType(gp)
 	*mem = 0;
 
 	/* make ACL visible */
-	WCrt(ba, CRT_ID_VIDEO_CONFIG1, 0xfb);
+	if(ettype == MERLIN) {
+		WCrt(ba, CRT_ID_VIDEO_CONFIG1, 0xbb);
+	}
+	else {
+		WCrt(ba, CRT_ID_VIDEO_CONFIG1, 0xfb);
+	}
+
 	WIma(ba, IMA_PORTCONTROL, 0x01);
 
 	*((unsigned long *)mmu) = 0;
@@ -1436,8 +1527,13 @@ et_getControllerType(gp)
 
 	/* hide ACL */
 	WIma(ba, IMA_PORTCONTROL, 0x00);
-	WCrt(ba, CRT_ID_VIDEO_CONFIG1, 0xd3);
 
+	if(ettype == MERLIN) {
+		WCrt(ba, CRT_ID_VIDEO_CONFIG1, 0x93);
+	}
+	else {
+		WCrt(ba, CRT_ID_VIDEO_CONFIG1, 0xd3);
+	}
 	return((*mem == 0xff) ? ETW32 : ET4000);
 }
 
@@ -1499,7 +1595,24 @@ et_getDACType(gp)
 
 		vgaw(ba, VDAC_MASK, 0xff);
 		return (MUSICDAC);
-}
+	}
+
+	/* check for AT&T ATT20c491 DAC (crest) */
+	if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR));
+	vgaw(ba, HDR, 0xff);
+	vgaw(ba, VDAC_MASK, 0x01);
+	if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR));
+	if (vgar(ba, HDR) == 0xff) {
+		/* do not shift color values */
+		etcmap_shift = 0;
+
+		vgaw(ba, VDAC_MASK, 0xff);
+		return (ATT20C491);
+	}
+
+	/* restore PowerUp settings (crest) */
+	if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR));
+	vgaw(ba, HDR, 0x00);
 
 	/*
 	 * nothing else found, so let us pretend it is a stupid
@@ -1510,7 +1623,7 @@ et_getDACType(gp)
 	etcmap_shift = 2;
 
 	vgaw(ba, VDAC_MASK, 0xff);
-	return (SIERRA11483);  
+	return (SIERRA11483);
 }
 
 #endif /* NGRFET */
