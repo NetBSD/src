@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.14 2000/07/02 17:40:08 thorpej Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.15 2000/07/10 13:37:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -315,7 +315,7 @@ uvm_coredump32(p, vp, cred, chdr)
 
 		offset += chdr->c_seghdrsize;
 		error = vn_rdwr(UIO_WRITE, vp,
-		    (caddr_t)cseg.c_addr, (int)cseg.c_size,
+		    (caddr_t)(u_long)cseg.c_addr, (int)cseg.c_size,
 		    offset, UIO_USERSPACE,
 		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 		if (error)
