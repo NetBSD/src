@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.119 1998/03/22 12:53:55 drochner Exp $	*/
+/*	$NetBSD: fd.c,v 1.120 1998/05/03 10:14:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -1586,6 +1586,7 @@ fd_mountroot_hook(dev)
 	int c;
 
 	printf("Insert filesystem floppy and press return.");
+	cnpollc(1);
 	for (;;) {
 		c = cngetc();
 		if ((c == '\r') || (c == '\n')) {
@@ -1593,4 +1594,5 @@ fd_mountroot_hook(dev)
 			break;
 		}
 	}
+	cnpollc(0);
 }
