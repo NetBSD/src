@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.19 2002/08/17 01:15:15 briggs Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.20 2002/08/17 05:14:10 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -364,7 +364,6 @@ _bus_dmamap_sync_linear(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	vaddr_t addr = (vaddr_t) map->_dm_origbuf;
 
 	addr += offset;
-	len -= offset;
 
 	switch (ops) {
 	case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
