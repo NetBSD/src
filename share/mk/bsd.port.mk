@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.17 1997/11/10 08:07:29 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.18 1997/11/19 16:41:21 agc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -505,12 +505,7 @@ EXTRACT_BEFORE_ARGS?=   -xzf
 # Figure out where the local mtree file is
 .if !defined(MTREE_FILE)
 .if defined(USE_IMAKE) || defined(USE_X11)
-.if (${OPSYS} == "NetBSD")
-# XXX - agc - this is temporary, and will change when NetBSD has an X11 mtree file
-MTREE_FILE=	/etc/mtree/BSD.pkg.dist
-.else
 MTREE_FILE=	/etc/mtree/BSD.x11.dist
-.endif
 .else
 .if (${OPSYS} == "NetBSD")
 MTREE_FILE=	/etc/mtree/BSD.pkg.dist
