@@ -33,12 +33,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)disklabel.c	5.17 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: disklabel.c,v 1.4 1993/11/11 19:04:22 jtc Exp $";
+static char *rcsid = "$Id: disklabel.c,v 1.5 1994/06/12 22:52:01 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/errno.h>
-#include <ufs/fs.h>
+#include <ufs/ffs/fs.h>
 #include <sys/file.h>
 #define DKTYPENAMES
 #include <sys/disklabel.h>
