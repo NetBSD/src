@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.154 2003/01/22 12:52:14 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.155 2003/01/24 16:24:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -156,6 +156,8 @@ struct proc {
 	struct plimit	*p_limit;	/* Process limits */
 	struct vmspace	*p_vmspace;	/* Address space */
 	struct sigacts	*p_sigacts;	/* Process sigactions (state is below)*/
+
+	void		*p_ksems;	/* p1003.1b semaphores */
 
 #define	p_ucred		p_cred->pc_ucred
 #define	p_rlimit	p_limit->pl_rlimit
