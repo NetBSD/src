@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.27 2004/04/22 14:06:31 christos Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.28 2004/04/22 14:32:09 hannken Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.27 2004/04/22 14:06:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.28 2004/04/22 14:32:09 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1255,9 +1255,9 @@ bsd_statvfs_to_svr4_32_statvfs(bfs, sfs)
 	sfs->f_fsid = bfs->f_fsidx.__fsid_val[0];
 	memcpy(sfs->f_basetype, bfs->f_fstypename, sizeof(sfs->f_basetype));
 	sfs->f_flag = 0;
-	if (bfs->f_flags & MNT_RDONLY)
+	if (bfs->f_flag & MNT_RDONLY)
 		sfs->f_flag |= SVR4_ST_RDONLY;
-	if (bfs->f_flags & MNT_NOSUID)
+	if (bfs->f_flag & MNT_NOSUID)
 		sfs->f_flag |= SVR4_ST_NOSUID;
 	sfs->f_namemax = MAXNAMLEN;
 	memcpy(sfs->f_fstr, bfs->f_fstypename, sizeof(sfs->f_fstr)); /* XXX */
@@ -1281,9 +1281,9 @@ bsd_statvfs_to_svr4_32_statvfs64(bfs, sfs)
 	sfs->f_fsid = bfs->f_fsidx.__fsid_val[0];
 	memcpy(sfs->f_basetype, bfs->f_fstypename, sizeof(sfs->f_basetype));
 	sfs->f_flag = 0;
-	if (bfs->f_flags & MNT_RDONLY)
+	if (bfs->f_flag & MNT_RDONLY)
 		sfs->f_flag |= SVR4_ST_RDONLY;
-	if (bfs->f_flags & MNT_NOSUID)
+	if (bfs->f_flag & MNT_NOSUID)
 		sfs->f_flag |= SVR4_ST_NOSUID;
 	sfs->f_namemax = MAXNAMLEN;
 	memcpy(sfs->f_fstr, bfs->f_fstypename, sizeof(sfs->f_fstr)); /* XXX */
