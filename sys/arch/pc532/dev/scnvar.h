@@ -1,4 +1,4 @@
-/*	$NetBSD: scnvar.h,v 1.1 1996/10/23 07:52:39 matthias Exp $	*/
+/*	$NetBSD: scnvar.h,v 1.2 1996/12/23 08:37:11 matthias Exp $	*/
 
 /*
  * Copyright (c) 1996 Phil Budne.
@@ -99,19 +99,23 @@
 
 /* The DUART description struct; for data common to both channels */
 struct duart_info {
+	volatile u_char *base;
 	int	i_speed[2], o_speed[2];	/* Channel A and B speeds. */
 	char	i_code[2], o_code[2];	/* Channel A and B speeds. */
 	char	speed_grp;		/* BRG speed group */
 	char	acr_bits;		/* ACR bits 0-6 */
 	char	imr_int_bits;		/* IMR bits current set. */
 	char	opcr_bits;		/* OPCR bits to set */
-	volatile u_char *base;
+	char	hwflags;
+#define SCN_HW_2692 1
+#define SCN_HW_26C92 2
 };
 
 #define SCN_RING_BITS	9	/* 512 byte buffers */
 #define SCN_RING_SIZE	(1<<SCN_RING_BITS)	/* must be a power of two */
 #define SCN_RING_MASK	(SCN_RING_SIZE-1)
 #define SCN_RING_THRESH	(SCN_RING_SIZE/2)
+#define SCN_RING_HIWAT  (SCN_RING_SIZE - (SCN_RING_SIZE >> 2))
 
 /* scn channel state */
 struct scn_softc {
@@ -154,8 +158,11 @@ struct scn_softc {
 /* ring buffer for rxrdy interrupt */
 	u_int	sc_rbget;		/* ring buffer `get' index */
 	volatile u_int sc_rbput;	/* ring buffer `put' index */
+	int	sc_rbhiwat;
 	short   sc_rbuf[SCN_RING_SIZE];	/* status + data */
 	long	sc_fotime;		/* last fifo overrun message */
 	long	sc_rotime;		/* last ring overrun message */
 	u_long	ring_overruns;		/* number of ring buffer overruns */
+	/* Flags to communicate with scntty_softint() */
+	volatile char sc_rx_blocked;	/* input block at ring */
 };
