@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.11 2001/11/13 07:48:46 lukem Exp $	*/
+/*	$NetBSD: neo.c,v 1.12 2002/04/15 04:13:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.11 2001/11/13 07:48:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.12 2002/04/15 04:13:25 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.11 2001/11/13 07:48:46 lukem Exp $");
  * Most Neomagic audio chips use the AC-97 codec interface. However, there 
  * seem to be a select few chips 256AV chips that do not support AC-97.
  * This driver does not support them but there are rumors that it
- * mgiht work with wss isa drivers. This might require some playing around
+ * might work with wss isa drivers. This might require some playing around
  * with your BIOS.
  *
  * The Neomagic 256 AV/ZX have 2 PCI I/O region descriptors. Both of
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.11 2001/11/13 07:48:46 lukem Exp $");
  * Also, writes to the AC-97 register space may take order 40us to
  * complete.
  *
- * Unlike many sound engines, the Neomagic does not support (as fas as
+ * Unlike many sound engines, the Neomagic does not support (as far as
  * we know :) the notion of interrupting every n bytes transferred,
  * unlike many DMA engines.  Instead, it allows you to specify one
  * location in each ring buffer (called the watermark). When the chip
