@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.17 2002/03/04 14:02:34 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.18 2002/03/13 01:26:59 simonb Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -169,7 +169,7 @@ wt*)
 	;;
 
 md*)
-	unit=${i#md};	chr=24;	blk=17;
+	unit=${i#md};	chr=24;	blk=17
 	rm -f md${unit}? rmd${unit}?
 	mknod md${unit}a  b $blk $(($unit * 8 + 0))
 	mknod md${unit}d  b $blk $(($unit * 8 + 3))
@@ -244,7 +244,7 @@ opty)
 		mknod ttyp$j c 5 $jn
 		mknod ptyp$j c 6 $jn
 	done
-	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
+	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f]
 	;;
 
 		
@@ -280,7 +280,7 @@ st*)
 	st*) name=st;	unit=${i#st};	chr=14;	blk=5;;
 	esac
 	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	mknod $name$unit	b $blk $(($unit * 16 + 0))
 	mknod n$name$unit	b $blk $(($unit * 16 + 1))
 	mknod e$name$unit	b $blk $(($unit * 16 + 2))
@@ -290,9 +290,9 @@ st*)
 	mknod er$name$unit	c $chr $(($unit * 16 + 2))
 	mknod enr$name$unit	c $chr $(($unit * 16 + 3))
 	chgrp operator $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	chmod 660 $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	;;
 
 ch*|uk*)
@@ -384,7 +384,7 @@ apm*)
 	;;
 
 satlink*)
-	unit=${i#satlink};
+	unit=${i#satlink}
 	rm -f satlink$unit
 	mknod satlink$unit c 45 $unit
 	chmod 444 satlink$unit
@@ -408,7 +408,7 @@ cfs*)
 	;;
 
 scsibus*)
-	unit=${i#scsibus}; 
+	unit=${i#scsibus}
 	rm -f scsibus$unit
 	mknod scsibus$unit c 48 $unit
 	chmod 644 scsibus$unit
