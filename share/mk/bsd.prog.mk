@@ -1,5 +1,5 @@
 #	from: @(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
-#	$Id: bsd.prog.mk,v 1.31 1993/10/07 02:12:18 cgd Exp $
+#	$Id: bsd.prog.mk,v 1.32 1993/11/08 02:18:41 cgd Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -57,12 +57,12 @@ OBJS+=  ${SRCS:N*.h:R:S/$/.o/g}
 .if defined(LDONLY)
 
 ${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${DPADD}
-	${LD} ${LDFLAGS} -o ${.TARGET} ${LIBCRT0} ${OBJS} ${LIBC} ${LDADD}
+	${LD} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${LIBCRT0} ${OBJS} ${LIBC} ${LDADD}
 
 .else defined(LDONLY)
 
 ${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${DPADD}
-	${CC} ${LDFLAGS} -o ${.TARGET} ${OBJS} ${LDADD}
+	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD}
 
 .endif
 
@@ -71,7 +71,7 @@ ${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${DPADD}
 SRCS=	${PROG}.c
 
 ${PROG}: ${SRCS} ${LIBC} ${DPADD}
-	${CC} ${LDFLAGS} ${CFLAGS} -o ${.TARGET} ${.CURDIR}/${SRCS} ${LDADD}
+	${CC} ${LDFLAGS} ${LDSTATIC} ${CFLAGS} -o ${.TARGET} ${.CURDIR}/${SRCS} ${LDADD}
 
 MKDEP=	-p
 
