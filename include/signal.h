@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.36 2003/09/12 20:27:50 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.36.2.1 2004/05/25 01:13:59 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -134,11 +134,21 @@ sigismember(const sigset_t *set, int signo)
 	}
 	return (__sigismember(set, signo));
 }
-#endif /* __GNUC__ && __STDC__ */
 
-/* List definitions after function declarations, or Reiser cpp gets upset. */
-#define	sigemptyset(set)	(__sigemptyset(set), /*LINTED*/0)
-#define	sigfillset(set)		(__sigfillset(set), /*LINTED*/ 0)
+extern __inline int
+sigemptyset(sigset_t *set)
+{
+	__sigemptyset(set);
+	return (0);
+}
+
+extern __inline int
+sigfillset(sigset_t *set)
+{
+	__sigfillset(set);
+	return (0);
+}
+#endif /* __GNUC__ && __STDC__ */
 #endif /* !__LIBC12_SOURCE__ */
 
 /*
