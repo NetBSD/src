@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_nubus.c,v 1.14 1997/06/15 20:20:09 scottr Exp $	*/
+/*	$NetBSD: if_sn_nubus.c,v 1.15 1997/06/26 21:08:10 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -88,6 +88,7 @@ sn_nubus_match(parent, cf, aux)
 			break;
 
 		case SN_VENDOR_APPLE:
+		case SN_VENDOR_APPLE16:
 		case SN_VENDOR_DAYNA:
 			rv = 1;
 			break;
@@ -176,6 +177,30 @@ sn_nubus_attach(parent, self, aux)
 		offset = 0;
 		success = 1;
 		break;
+	
+	case SN_VENDOR_APPLE16:
+		sc->snr_dcr = DCR_ASYNC | DCR_WAIT0 | DCR_EXBUS |
+		    DCR_DMABLOCK | DCR_PO1 | DCR_RFT16 | DCR_TFT16;
+		sc->snr_dcr2 = 0;
+		sc->bitmode = 0; /* 16 bit card */
+
+		if (bus_space_subregion(bst, bsh,
+		    0x0, SN_REGSIZE, &sc->sc_regh)) {
+			printf(": failed to map register space.\n");
+			break;
+		}
+
+		if (bus_space_subregion(bst, bsh,
+		    0x40000, ETHER_ADDR_LEN, &tmp_bsh)) {
+			printf(": failed to map ROM space.\n");
+			break;
+		}
+
+		sn_get_enaddr(bst, tmp_bsh, 0, myaddr);
+
+		offset = 0;
+		success = 1;
+		break;
 
 	default:
 		/*
@@ -222,9 +247,10 @@ sn_nb_card_vendor(bst, bsh, na)
 
 	switch (na->drsw) {
 	case NUBUS_DRSW_3COM:
-		if (   (na->drhw == NUBUS_DRHW_APPLE_SN)
-		    || (na->drhw == NUBUS_DRHW_APPLE_SNT))
+		if (na->drhw == NUBUS_DRHW_APPLE_SN)
 			vendor = SN_VENDOR_APPLE;
+		else if (na->drhw == NUBUS_DRHW_APPLE_SNT)
+			vendor = SN_VENDOR_APPLE16;
 		break;
 	case NUBUS_DRSW_APPLE:
 	case NUBUS_DRSW_TECHWORKS:
