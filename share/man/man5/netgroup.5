@@ -1,4 +1,4 @@
-.\"	$NetBSD: netgroup.5,v 1.5 1998/04/29 11:33:57 fair Exp $
+.\"	$NetBSD: netgroup.5,v 1.6 1999/01/16 14:16:42 lukem Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)netgroup.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd December 11, 1993
+.Dd January 16, 1999
 .Dt NETGROUP 5
 .Os
 .Sh NAME
@@ -75,26 +75,31 @@ should normally be used to access the
 .Nm netgroup
 database.
 .Pp
-These functions operate on the
+If
+.Sq files
+is specified for the
+.Sq netgroup
+database in
+.Xr nsswitch.conf 5 ,
+(or no
+.Sq netgroup
+entry is specified), then these functions operate on the
 .Xr db 3
 version of the
 .Nm netgroup
 .Nm (netgroup.db)
 file which can be generated using
 .Xr netgroup_mkdb 8 .
-If that file is not present, and the system supports
-.Sy NIS,
-then the
-.Nm netgroup
-.Sy NIS
-maps are used.
-The
-.Sy NIS
-maps are also used if the
-.Nm netgroup
-file contains a
-.Sy +
-entry.
+If
+.Sq nis
+is specified then the
+.Tn NIS
+maps
+.Sq netgroup ,
+.Sq netgroup.byhost ,
+and
+.Sq netgroup.byuser
+are used.
 .Pp
 Lines that begin with a # are treated as comments.
 .Sh FILES
@@ -103,9 +108,10 @@ Lines that begin with a # are treated as comments.
 the netgroup database.
 .El
 .Sh SEE ALSO
-.Xr netgroup_mkdb 8 ,
 .Xr getnetgrent 3 ,
-.Xr exports 5
+.Xr exports 5 ,
+.Xr nsswitch.conf 5 ,
+.Xr netgroup_mkdb 8
 .Sh COMPATIBILITY
 The file format is compatible with that of various vendors, however it
 appears that not all vendors use an identical format.
