@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.14 2000/07/25 21:42:55 mycroft Exp $ */
+/* $NetBSD: crt0.c,v 1.15 2000/07/26 02:11:46 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -76,13 +76,10 @@ ___start(sp, cleanup, obj, ps_strings)
 	const Obj_Entry *obj;			/* from shared loader */
 	struct ps_strings *ps_strings;
 {
-	long argc;
+	int argc;
 	char **argv, *namep;
 
-	argc = *(long *)sp;
-	/* XXXXX HACK */
-	if (argc >= 0x100000000)
-		argc >>= 32;
+	argc = *(int *)sp;
 	argv = sp + 1;
 	environ = sp + 2 + argc;		/* 2: argc + NULL ending argv */
 
@@ -117,7 +114,7 @@ ___start(sp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ _start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.14 2000/07/25 21:42:55 mycroft Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.15 2000/07/26 02:11:46 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /* XXX XXX XXX THIS SHOULD GO AWAY XXX XXX XXX
