@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_invop.c,v 1.3 1996/10/23 07:43:44 matthias Exp $	*/
+/*	$NetBSD: ieee_invop.c,v 1.4 1997/03/20 12:04:08 matthias Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -278,7 +278,6 @@ int ieee_invop(struct operand *op1, struct operand *op2,
 	       struct operand *f0_op, int xopcode, state *state)
 {
   int user_trap = FPC_TT_NONE;
-  unsigned int fsr = state->FSR;
 
   /* Don't fiddle with fsr. The FPC_TT_INVOP bit should only be set
    * if we attempt to *generate* a NaN. This is achieved by returning
