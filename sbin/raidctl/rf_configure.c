@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.c,v 1.20 2004/10/26 19:52:21 oster Exp $	*/
+/*	$NetBSD: rf_configure.c,v 1.21 2004/10/26 22:46:27 oster Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -49,7 +49,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rf_configure.c,v 1.20 2004/10/26 19:52:21 oster Exp $");
+__RCSID("$NetBSD: rf_configure.c,v 1.21 2004/10/26 22:46:27 oster Exp $");
 #endif
 
 
@@ -71,24 +71,6 @@ char   *rf_find_white(char *p);
 #define RF_ERRORMSG(s)            printf((s))
 #define RF_ERRORMSG1(s,a)         printf((s),(a))
 #define RF_ERRORMSG2(s,a,b)       printf((s),(a),(b))
-
-/*
- * XXX we include this here so we don't need to drag rf_debugMem.c into
- * the picture...  This is userland, afterall...
- */
-
-/*
- * XXX sucky hack to override the defn. of RF_Malloc as given in
- * rf_debugMem.c...  but I *really* don't want (nor need) to link with
- * that file here in userland..  GO
- */
-
-#undef RF_Malloc
-#define RF_Malloc(_p_, _size_, _cast_) \
-  { \
-     _p_ = _cast_ malloc((u_long)_size_); \
-     bzero((char *)_p_, _size_); \
-  }
 
 int     distSpareYes = 1;
 int     distSpareNo = 0;
@@ -383,8 +365,10 @@ rf_MakeLayoutSpecificDeclustered(configfp, cfgPtr, arg)
 	/* allocate a buffer to hold the configuration info */
 	cfgPtr->layoutSpecificSize = RF_SPAREMAP_NAME_LEN +
 	    6 * sizeof(int) + b * k;
-	/* can't use RF_Malloc here b/c debugMem module not yet init'd */
+
 	cfgBuf = (char *) malloc(cfgPtr->layoutSpecificSize);
+	if (cfgBuf == NULL)
+		return (ENOMEM);
 	cfgPtr->layoutSpecific = (void *) cfgBuf;
 	p = cfgBuf;
 
@@ -525,13 +509,21 @@ rf_ReadSpareTable(req, fname)
 	FILE *fp;
 
 	/* allocate and initialize the table */
-	RF_Malloc(table,
-	    req->TablesPerSpareRegion * sizeof(RF_SpareTableEntry_t *),
-	    (RF_SpareTableEntry_t **));
+	table = malloc(req->TablesPerSpareRegion * 
+		       sizeof(RF_SpareTableEntry_t *));
+	if (table == NULL) {
+		fprintf(stderr,
+			"rf_ReadSpareTable: Unable to allocate table\n");
+		return (NULL);
+	}
 	for (i = 0; i < req->TablesPerSpareRegion; i++) {
-		RF_Malloc(table[i],
-		    req->BlocksPerTable * sizeof(RF_SpareTableEntry_t),
-		    (RF_SpareTableEntry_t *));
+		table[i] = malloc(req->BlocksPerTable * 
+				  sizeof(RF_SpareTableEntry_t));
+		if (table[i] == NULL) {
+			fprintf(stderr,
+				"rf_ReadSpareTable: Unable to allocate table\n");
+			return (NULL);  /* XXX should cleanup too! */
+		}
 		for (j = 0; j < req->BlocksPerTable; j++)
 			table[i][j].spareDisk =
 			    table[i][j].spareBlockOffsetInSUs = -1;
