@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.16 1999/11/18 08:26:21 enami Exp $	*/
+/*	$NetBSD: inode.h,v 1.17 2000/05/27 00:19:55 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -164,6 +164,7 @@ struct inode {
 #define	IN_SHLOCK	0x0020		/* File has shared lock. */
 #define	IN_EXLOCK	0x0040		/* File has exclusive lock. */
 #define	IN_CLEANING	0x0080		/* LFS: file is being cleaned */
+#define	IN_ADIROP	0x0100		/* LFS: dirop in progress */
 
 #ifdef _KERNEL
 /*
