@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.14 2002/02/27 01:20:54 christos Exp $ */
+/*	$NetBSD: mem.c,v 1.15 2002/02/27 04:13:10 kleink Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,18 +57,20 @@
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode)
+mmopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 	return 0;
 }
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode)
+mmclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return 0;
@@ -98,7 +100,7 @@ mmrw(dev, uio, flags)
 		}
 		switch (minor(dev)) {
 
-		case DEV_KMEM:
+		case DEV_MEM:
 			v = uio->uio_offset;
 			c = uio->uio_resid;
 			error = uiomove((caddr_t)v, c, uio);
@@ -110,7 +112,7 @@ mmrw(dev, uio, flags)
 			error = uiomove((caddr_t)v, c, uio);
 			break;
 
-		case DEV_NULl:
+		case DEV_NULL:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
