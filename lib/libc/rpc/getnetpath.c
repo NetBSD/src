@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetpath.c,v 1.2 2000/06/11 16:26:53 assar Exp $	*/
+/*	$NetBSD: getnetpath.c,v 1.2.2.1 2002/04/17 12:11:02 he Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -251,9 +251,9 @@ char token;		/* char to parse string for */
     /*
      * did find a token, but it might be escaped.
      */
-    if (cp[-1] == '\\') {
+    if ((cp > npp) && (cp[-1] == '\\')) {
         /* if slash was also escaped, carry on, otherwise find next token */
-        if (cp[-2] != '\\') {
+        if ((cp > npp + 1) && (cp[-2] != '\\')) {
 	    /* shift r-o-s  onto the escaped token */
 	    strcpy(&cp[-1], cp);    /* XXX: overlapping string copy */
 	    /*
