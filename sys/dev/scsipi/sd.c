@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.85 1996/01/12 22:43:33 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.86 1996/01/30 18:24:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -712,6 +712,14 @@ sdioctl(dev, cmd, addr, flag, p)
 		else
 			sd->flags &= ~SDF_WLABEL;
 		return 0;
+
+	case DIOCLOCK:
+		return scsi_prevent(sd->sc_link,
+		    (*(int *)addr) ? PR_PREVENT : PR_ALLOW, 0);
+
+	case DIOCEJECT:
+		return ((sd->sc_link->flags & SDEV_REMOVABLE == 0) ? ENOTTY :
+		    scsi_start(sd->sc_link, SSS_STOP|SSS_LOEJ, 0));
 
 	default:
 		if (SDPART(dev) != RAW_PART)
