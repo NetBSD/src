@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.89 2004/02/11 10:37:33 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.90 2004/05/19 17:45:05 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.89 2004/02/11 10:37:33 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.90 2004/05/19 17:45:05 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1754,11 +1754,8 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 			    1)) != NULL)
 			{
 				rt->rt_refcnt--;
-				if (rt->rt_ifp != ifp) {
-					/* XXX: loop care? */
-					return nd6_output(ifp, origifp, m0,
-					    dst, rt);
-				}
+				if (rt->rt_ifp != ifp)
+					senderr(EHOSTUNREACH);
 			} else
 				senderr(EHOSTUNREACH);
 		}
