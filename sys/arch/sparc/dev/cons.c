@@ -42,7 +42,7 @@
  *	@(#)cons.c	8.1 (Berkeley) 7/19/93
  *
  * from: Header: cons.c,v 1.12 93/07/20 00:49:45 torek Exp 
- * $Id: cons.c,v 1.2 1993/10/11 02:36:38 deraadt Exp $
+ * $Id: cons.c,v 1.3 1993/10/13 02:36:39 deraadt Exp $
  */
 
 /*
@@ -74,7 +74,12 @@ extern struct promvec *promvec;
  * The output driver may munge the minor number in cons.t_dev.
  */
 struct tty cons;		/* rom console tty device */
+struct tty *cntty[1] = { &cons };
+static void (*fcnstop) __P((struct tty *, int));
+
 static void cnstart __P((struct tty *));
+void cnstop __P((struct tty *, int));
+
 static void cnfbstart __P((struct tty *));
 static void cnfbstop __P((struct tty *, int));
 static void cnfbdma __P((void *));
@@ -86,7 +91,7 @@ consinit()
 {
 	register struct tty *tp = &cons;
 	register int in, out;
-	void zsconsole(), bwtwoconsole();
+	void zsconsole(), void bwtwoconsole();
 
 	tp->t_dev = makedev(0, 0);	/* /dev/console */
 	tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
@@ -97,11 +102,11 @@ consinit()
 
 #if NZS > 0
 	case PROMDEV_TTYA:
-		zsconsole(tp, 0, 0);
+		zsconsole(tp, 0, 0, NULL);
 		break;
 
 	case PROMDEV_TTYB:
-		zsconsole(tp, 1, 0);
+		zsconsole(tp, 1, 0, NULL);
 		break;
 #endif
 
@@ -121,24 +126,24 @@ consinit()
 
 #if NZS > 0
 	case PROMDEV_TTYA:
-		zsconsole(tp, 0, 1);
+		zsconsole(tp, 0, 1, &fcnstop);
 		break;
 
 	case PROMDEV_TTYB:
-		zsconsole(tp, 1, 1);
+		zsconsole(tp, 1, 1, &fcnstop);
 		break;
 #endif
 
 	case PROMDEV_SCREEN:
 		fbconstty = tp;
 		tp->t_oproc = cnfbstart;
-		/*tp->t_stop = cnfbstop;*/
+		fcnstop = cnfbstop;
 		break;
 
 	default:
 		printf("unknown console output sink %d; using rom\n", out);
 		tp->t_oproc = cnstart;
-		/*tp->t_stop = (void (*)(struct tty *, int))nullop;*/
+		fcnstop = (void (*)(struct tty *, int))nullop;*/
 		break;
 	}
 }
@@ -150,6 +155,15 @@ cnopen(dev, flag, mode, p)
 	struct proc *p;
 {
 	register struct tty *tp = &cons;
+ 	static int firstopen = 1;
+
+	if(firstopen) {
+		clalloc(&tp->t_rawq, 1024, 1);
+		clalloc(&tp->t_canq, 1024, 1);
+		/* output queue doesn't need quoting */
+		clalloc(&tp->t_outq, 1024, 0);
+		firstopen = 0;
+	}
 
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		/*
@@ -281,6 +295,14 @@ cnstart(tp)
 	}
 	selwakeup(&tp->t_wsel);
 	splx(s);
+}
+
+void
+cnstop(tp, flag)
+	register struct tty *tp;
+	int flag;
+{
+	(*fcnstop)(tp, flag);
 }
 
 /*
