@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pathnames.h	8.1 (Berkeley) 6/5/93
- *	$Id: pathnames.h,v 1.6 1994/06/08 18:57:38 mycroft Exp $
+ *	$Id: pathnames.h,v 1.7 1995/01/20 18:04:56 mycroft Exp $
  */
 
 #include <paths.h>
@@ -40,4 +40,4 @@
 #define	_PATH_DTMP	"/etc/dtmp"
 #define	_PATH_DUMPDATES	"/etc/dumpdates"
 #define	_PATH_LOCK	"/tmp/dumplockXXXXXX"
-#define	_PATH_RMT	"rmt"
+#define	_PATH_RMT	"/etc/rmt"
