@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.3 1997/04/28 18:46:15 mycroft Exp $	*/
+/*	$NetBSD: Locore.c,v 1.4 1998/02/22 07:42:30 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,39 +32,76 @@
  */
 
 #include <lib/libsa/stand.h>
-#include <powerpc/stand/ofwboot/openfirm.h>
 
 #include <machine/cpu.h>
 
-static int (*openfirmware)(void *);
+#include "openfirm.h"
 
+static int (*openfirmware_entry) __P((void *));
+static int openfirmware __P((void *));
+
+static void startup __P((void *, int, int (*)(void *), char *, int));
 static void setup __P((void));
 
+static int stack[256];
+
 #ifdef XCOFF_GLUE
-asm (".text; .globl _entry; _entry: .long _start,0,0");
+asm("
+	.text
+	.globl	_entry
+_entry:
+	.long	_start,0,0
+");
 #endif
 
-__dead void
-_start(vpd, res, openfirm, arg, argl)
+asm("
+	.text
+	.globl	_start
+_start:
+	li	8,0
+	li	9,0x100
+	mtctr	9
+1:
+	dcbf	0,8
+	icbi	0,8
+	addi	8,8,0x20
+	bdnz	1b
+	sync
+	isync
+
+	lis	1,stack@ha
+	addi	1,1,stack@l
+	addi	1,1,1024
+	b	startup
+");
+
+static int
+openfirmware(arg)
+	void *arg;
+{
+
+	asm volatile ("sync; isync");
+	openfirmware_entry(arg);
+	asm volatile ("sync; isync");
+}
+
+static void
+startup(vpd, res, openfirm, arg, argl)
 	void *vpd;
 	int res;
 	int (*openfirm)(void *);
 	char *arg;
 	int argl;
 {
-	extern char etext[];
 
-#ifdef	FIRMWORKSBUGS
-	syncicache((void *)RELOC, etext - (char *)RELOC);
-#endif
-	openfirmware = openfirm;	/* Save entry to Open Firmware */
+	openfirmware_entry = openfirm;
 	setup();
-	main(arg, argl);
-	exit();
+	main();
+	OF_exit();
 }
 
 __dead void
-_rtt()
+OF_exit()
 {
 	static struct {
 		char *name;
@@ -77,7 +114,7 @@ _rtt()
 	};
 
 	openfirmware(&args);
-	while (1);			/* just in case */
+	for (;;);			/* just in case */
 }
 
 int
@@ -204,10 +241,20 @@ OF_open(dname)
 		1,
 	};
 	
+#ifdef OFW_DEBUG
+	printf("OF_open(%s) -> ", dname);
+#endif
 	args.dname = dname;
 	if (openfirmware(&args) == -1 ||
-	    args.handle == 0)
+	    args.handle == 0) {
+#ifdef OFW_DEBUG
+		printf("lose\n");
+#endif
 		return -1;
+	}
+#ifdef OFW_DEBUG
+	printf("%d\n", args.handle);
+#endif
 	return args.handle;
 }
 
@@ -226,6 +273,9 @@ OF_close(handle)
 		0,
 	};
 	
+#ifdef OFW_DEBUG
+	printf("OF_close(%d)\n", handle);
+#endif
 	args.handle = handle;
 	openfirmware(&args);
 }
@@ -250,11 +300,23 @@ OF_write(handle, addr, len)
 		1,
 	};
 
+#ifdef OFW_DEBUG
+	if (len != 1)
+		printf("OF_write(%d, %x, %x) -> ", handle, addr, len);
+#endif
 	args.ihandle = handle;
 	args.addr = addr;
 	args.len = len;
-	if (openfirmware(&args) == -1)
+	if (openfirmware(&args) == -1) {
+#ifdef OFW_DEBUG
+		printf("lose\n");
+#endif
 		return -1;
+	}
+#ifdef OFW_DEBUG
+	if (len != 1)
+		printf("%x\n", args.actual);
+#endif
 	return args.actual;
 }
 
@@ -278,11 +340,23 @@ OF_read(handle, addr, len)
 		1,
 	};
 
+#ifdef OFW_DEBUG
+	if (len != 1)
+		printf("OF_read(%d, %x, %x) -> ", handle, addr, len);
+#endif
 	args.ihandle = handle;
 	args.addr = addr;
 	args.len = len;
-	if (openfirmware(&args) == -1)
+	if (openfirmware(&args) == -1) {
+#ifdef OFW_DEBUG
+		printf("lose\n");
+#endif
 		return -1;
+	}
+#ifdef OFW_DEBUG
+	if (len != 1)
+		printf("%x\n", args.actual);
+#endif
 	return args.actual;
 }
 
@@ -305,11 +379,21 @@ OF_seek(handle, pos)
 		1,
 	};
 	
+#ifdef OFW_DEBUG
+	printf("OF_seek(%d, %x, %x) -> ", handle, (int)(pos >> 32), (int)pos);
+#endif
 	args.handle = handle;
 	args.poshi = (int)(pos >> 32);
 	args.poslo = (int)pos;
-	if (openfirmware(&args) == -1)
+	if (openfirmware(&args) == -1) {
+#ifdef OFW_DEBUG
+		printf("lose\n");
+#endif
 		return -1;
+	}
+#ifdef OFW_DEBUG
+	printf("%d\n", args.status);
+#endif
 	return args.status;
 }
 
@@ -333,18 +417,21 @@ OF_claim(virt, size, align)
 		1,
 	};
 
-#ifdef	FIRMWORKSBUGS
-	/*
-	 * Bug with Firmworks OFW
-	 */
-	if (virt)
-		return virt;
+#ifdef OFW_DEBUG
+	printf("OF_claim(%x, %x, %x) -> ", virt, size, align);
 #endif
 	args.virt = virt;
 	args.size = size;
 	args.align = align;
-	if (openfirmware(&args) == -1)
+	if (openfirmware(&args) == -1) {
+#ifdef OFW_DEBUG
+		printf("lose\n");
+#endif
 		return (void *)-1;
+	}
+#ifdef OFW_DEBUG
+	printf("%x\n", args.baseaddr);
+#endif
 	return args.baseaddr;
 }
 
@@ -365,6 +452,9 @@ OF_release(virt, size)
 		0,
 	};
 	
+#ifdef OFW_DEBUG
+	printf("OF_release(%x, %x)\n", virt, size);
+#endif
 	args.virt = virt;
 	args.size = size;
 	openfirmware(&args);
@@ -431,8 +521,10 @@ OF_chain(virt, size, entry, arg, len)
 	/*
 	 * This is a REALLY dirty hack till the firmware gets this going
 	 */
+#if 1
 	OF_release(virt, size);
-	entry(0, 0, openfirmware, arg, len);
+#endif
+	entry(0, 0, openfirmware_entry, arg, len);
 }
 #endif
 
@@ -445,11 +537,12 @@ setup()
 	int chosen;
 	
 	if ((chosen = OF_finddevice("/chosen")) == -1)
-		_rtt();
-	if (OF_getprop(chosen, "stdin", &stdin, sizeof(stdin)) != sizeof(stdin)
-	    || OF_getprop(chosen, "stdout", &stdout, sizeof(stdout)) !=
+		OF_exit();
+	if (OF_getprop(chosen, "stdin", &stdin, sizeof(stdin)) !=
+	    sizeof(stdin) ||
+	    OF_getprop(chosen, "stdout", &stdout, sizeof(stdout)) !=
 	    sizeof(stdout))
-		_rtt();
+		OF_exit();
 }
 
 void
