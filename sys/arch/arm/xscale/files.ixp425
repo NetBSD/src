@@ -1,4 +1,4 @@
-#       $NetBSD: files.ixp425,v 1.4 2003/10/08 14:55:04 scw Exp $
+#       $NetBSD: files.ixp425,v 1.5 2003/11/16 12:41:03 scw Exp $
 #
 # Configuration info for Intel IXP4xx CPU support
 #
@@ -11,7 +11,6 @@ file    arch/arm/xscale/xscale_pmc.c            perfctrs
 # IXP425 Slow peripheral devices
 device  ixpsip { [addr=-1], [size=0], [index=-1], [intr=-1] }: bus_space_generic
 file    arch/arm/xscale/ixp425_sip.c		ixpsip
-file	arch/arm/xscale/ixp425_sip_io.c		ixpsip
 
 # IXP425 Processor CPU support
 # IXP425 PCI bus

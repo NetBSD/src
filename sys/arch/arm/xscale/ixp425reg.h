@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425reg.h,v 1.13 2003/10/23 09:29:36 scw Exp $ */
+/*	$NetBSD: ixp425reg.h,v 1.14 2003/11/16 12:41:03 scw Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -130,7 +130,9 @@
  *
  */
 #define	IXP425_TIMER_HWBASE	(IXP425_IO_HWBASE + IXP425_TIMER_OFFSET)
+#define	IXP425_TIMER_VBASE	(IXP425_IO_VBASE + IXP425_TIMER_OFFSET)
 
+#define	IXP425_OST_TS		0x0000
 #define	IXP425_OST_TIM0		0x0004
 #define	IXP425_OST_TIM1		0x000C
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_timer.c,v 1.4 2003/10/08 14:55:04 scw Exp $ */
+/*	$NetBSD: ixp425_timer.c,v 1.5 2003/11/16 12:41:03 scw Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.4 2003/10/08 14:55:04 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.5 2003/11/16 12:41:03 scw Exp $");
 
 #include "opt_perfctrs.h"
 
@@ -77,7 +77,6 @@ struct ixpclk_softc {
 #define	COUNTS_PER_USEC		((COUNTS_PER_SEC / 1000000) + 1)
 
 static struct ixpclk_softc *ixpclk_sc;
-static int ixpclk_first_timer;
 
 CFATTACH_DECL(ixpclk, sizeof(struct ixpclk_softc),
 		ixpclk_match, ixpclk_attach, NULL, NULL);
@@ -85,6 +84,9 @@ CFATTACH_DECL(ixpclk, sizeof(struct ixpclk_softc),
 #define GET_TIMER_VALUE(sc)	(bus_space_read_4((sc)->sc_iot,		\
 						  (sc)->sc_ioh,		\
 						  IXP425_OST_TIM0))
+
+#define GET_TS_VALUE(sc)	(*(volatile u_int32_t *) \
+				  (IXP425_TIMER_VBASE + IXP425_OST_TS))
 
 static int
 ixpclk_match(struct device *parent, struct cfdata *match, void *aux)
@@ -100,32 +102,16 @@ ixpclk_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
+	ixpclk_sc = sc;
+
 	sc->sc_iot = sa->sa_iot;
 	sc->sc_baseaddr = sa->sa_addr;
 
-	/* using first timer for system ticks */
-	if (!ixpclk_first_timer) {
-		ixpclk_first_timer = 1;
-		ixpclk_sc = sc;
-	}
 	if (bus_space_map(sc->sc_iot, sa->sa_addr, sa->sa_size, 0,
 			  &sc->sc_ioh))
 		panic("%s: Cannot map registers", self->dv_xname);
 
-	 aprint_normal("%s: IXP425 Interval Timer\n", sc->sc_dev.dv_xname);
-}
-
-void
-ixp425_clk_bootstrap(bus_space_tag_t bt)
-{
-	static struct ixpclk_softc sc;
-	ixpclk_sc = &sc;
-
-	sc.sc_iot = bt;
-	sc.sc_baseaddr = IXP425_TIMER_HWBASE;
-
-	if (bus_space_map(sc.sc_iot, sc.sc_baseaddr, 0x30, 0, &sc.sc_ioh))
-		panic("ixp425_clk_bootstrap: Cannot map registers");
+	aprint_normal("%s: IXP425 Interval Timer\n", sc->sc_dev.dv_xname);
 }
 
 /*
@@ -272,31 +258,30 @@ microtime(struct timeval *tvp)
 void
 delay(u_int n)
 {
-	struct ixpclk_softc* sc = ixpclk_sc;
-	uint32_t cur, last, delta, usecs;
+	u_int32_t first, last;
+	int usecs;
+
+	if (n == 0)
+		return;
 
 	/*
-	 * This works by polling the timer and counting the
-	 * number of microseconds that go by.
+	 * Clamp the timeout at a maximum value (about 32 seconds with
+	 * a 66MHz clock). *Nobody* should be delay()ing for anywhere
+	 * near that length of time and if they are, they should be hung
+	 * out to dry.
 	 */
-	last = GET_TIMER_VALUE(sc);
-	delta = usecs = 0;
+	if (n >= (0x80000000U / COUNTS_PER_USEC))
+		usecs = (0x80000000U / COUNTS_PER_USEC) - 1;
+	else
+		usecs = n * COUNTS_PER_USEC;
 
-	while (n > usecs) {
-		cur = GET_TIMER_VALUE(sc);
+	/* Note: Timestamp timer counts *up*, unlike the other timers */
+	first = GET_TS_VALUE();
 
-		/* Check to see if the timer has wrapped around. */
-		if (last < cur)
-			delta += (last + (counts_per_hz - cur));
-		else
-			delta += (last - cur);
-
-		last = cur;
-
-		if (delta >= COUNTS_PER_USEC) {
-			usecs += delta / COUNTS_PER_USEC;
-			delta %= COUNTS_PER_USEC;
-		}
+	while (usecs > 0) {
+		last = GET_TS_VALUE();
+		usecs -= (int)(last - first);
+		first = last;
 	}
 }
 
