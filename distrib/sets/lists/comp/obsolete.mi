@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.50 2001/06/20 02:13:14 assar Exp $
+# $NetBSD: obsolete.mi,v 1.51 2001/06/21 12:10:58 wiz Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -648,6 +648,7 @@
 /usr/share/man/cat3/vlimit.0
 /usr/share/man/cat3/vtimes.0
 /usr/share/man/cat8/config.new.0
+/usr/share/man/cat9/disk_detach.0
 /usr/share/man/cat9/vslock.0
 /usr/share/man/cat9/vsunlock.0
 /usr/share/man/man3/MD5_Init.3
@@ -675,6 +676,7 @@
 /usr/share/man/man3/threads.3
 /usr/share/man/man3/vlimit.3
 /usr/share/man/man3/vtimes.3
+/usr/share/man/man9/disk_detach.9
 /usr/share/man/man9/vslock.9
 /usr/share/man/man9/vsunlock.9
 /usr/share/misc/gprof.callg
