@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.44 1998/08/25 19:18:16 ross Exp $	*/
+/*	$NetBSD: mount.c,v 1.45 1998/12/01 23:20:43 kenh Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.44 1998/08/25 19:18:16 ross Exp $");
+__RCSID("$NetBSD: mount.c,v 1.45 1998/12/01 23:20:43 kenh Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,6 +96,7 @@ static struct opt {
 	{ MNT_NOATIME,		0,	"noatime" },
 	{ MNT_NOCOREDUMP,	0,	"nocoredump" },
 	{ MNT_NODEV,		0,	"nodev" },
+	{ MNT_NODEVMTIME,	0,	"nodevmtime" },
 	{ MNT_NOEXEC,		0,	"noexec" },
 	{ MNT_NOSUID,		0,	"nosuid" },
 	{ MNT_QUOTA,		0,	"with quotas" },
