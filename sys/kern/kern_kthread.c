@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.10 2000/05/28 05:49:06 thorpej Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.11 2000/07/14 07:15:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -60,17 +60,8 @@ int	kthread_create_now;
  * The VM space and limits, etc. will be shared with proc0.
  */
 int
-#if __STDC__
 kthread_create1(void (*func)(void *), void *arg,
     struct proc **newpp, const char *fmt, ...)
-#else
-kthread_create1(func, arg, newpp, fmt, va_alist)
-	void (*func) __P((void *));
-	void *arg;
-	struct proc **newpp;
-	const char *fmt;
-	va_dcl
-#endif
 {
 	struct proc *p2;
 	int error;
@@ -106,8 +97,7 @@ kthread_create1(func, arg, newpp, fmt, va_alist)
  * current context.
  */
 void
-kthread_exit(ecode)
-	int ecode;
+kthread_exit(int ecode)
 {
 
 	/*
@@ -130,7 +120,7 @@ kthread_exit(ecode)
 
 struct kthread_q {
 	SIMPLEQ_ENTRY(kthread_q) kq_q;
-	void (*kq_func) __P((void *));
+	void (*kq_func)(void *);
 	void *kq_arg;
 };
 
@@ -142,9 +132,7 @@ SIMPLEQ_HEAD(, kthread_q) kthread_q = SIMPLEQ_HEAD_INITIALIZER(kthread_q);
  * the caller to create threads for e.g. file systems and device drivers.
  */
 void
-kthread_create(func, arg)
-	void (*func) __P((void *));
-	void *arg;
+kthread_create(void (*func)(void *), void *arg)
 {
 	struct kthread_q *kq;
 
@@ -165,7 +153,7 @@ kthread_create(func, arg)
 }
 
 void
-kthread_run_deferred_queue()
+kthread_run_deferred_queue(void)
 {
 	struct kthread_q *kq;
 
