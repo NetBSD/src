@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2000/09/26 11:45:06 wdk Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2001/02/06 04:27:48 wdk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,6 +79,8 @@ extern int initcpu __P((void));		/*XXX*/
 void	findroot __P((struct device **, int *));
 
 struct intrhandler intrtab[MAX_INTR_COOKIES];
+struct device  *booted_device;
+static int	booted_partition;
 
 /*
  * Determine mass storage and memory configuration for a machine.
@@ -104,9 +106,6 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	struct device *booted_device;
-	int booted_partition;
-
 	findroot(&booted_device, &booted_partition);
 
 	printf("boot device: %s\n",
