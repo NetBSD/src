@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.248.2.4 2001/09/14 23:28:50 nathanw Exp $ */
+/* $NetBSD: machdep.c,v 1.248.2.5 2001/09/17 19:03:31 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.4 2001/09/14 23:28:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.5 2001/09/17 19:03:31 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2245,7 +2245,14 @@ cpu_getmcontext(l, mcp, flags)
 	mcp->sc_pc = frame->tf_regs[FRAME_PC];
 	mcp->sc_ps = frame->tf_regs[FRAME_PS];
 	frametoreg(frame, (struct reg *)mcp->sc_regs);
-	mcp->sc_regs[R_SP] = alpha_pal_rdusp();
+	/* XXX if there's a better, general way to get the USP of
+	 * an LWP that might or might not be curproc, I'd like to know
+	 * about it.
+	 */
+	if (l == curproc)
+		mcp->sc_regs[R_SP] = alpha_pal_rdusp();
+	else
+		mcp->sc_regs[R_SP] = l->l_addr->u_pcb.pcb_hw.apcb_usp;
 	*flags |= _UC_CPU;
 
  	/* save the floating-point state, if necessary, then copy it. */
