@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.10 1999/01/20 07:43:17 mrg Exp $
+#	$NetBSD: list,v 1.11 1999/03/25 15:51:18 leo Exp $
 
 # Sparc extra's
 LINK	instbin			sbin/disklabel
@@ -45,6 +45,8 @@ COPY	${CURDIR}/../../sys/arch/sparc/compile/GENERIC_SCSI3/netbsd	netbsd
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
+COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
+LINK	etc/spwd.db			etc/pwd.db
 SYMLINK	/tmp/disktab.shadow		etc/disktab
 SYMLINK	/tmp/fstab.shadow		etc/fstab
 SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
