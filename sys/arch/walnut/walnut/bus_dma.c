@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.6 2002/08/13 05:43:26 simonb Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.7 2002/11/25 05:12:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		 */
 		if (p != NULL)
 			(void) pmap_extract(p->p_vmspace->vm_map.pmap,
-			    vaddr, (paddr_t *)&curaddr);
+			    vaddr, (void *)&curaddr);
 		else
 			curaddr = vtophys(vaddr);
 
