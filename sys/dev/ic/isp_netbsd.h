@@ -1,5 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.18 1999/10/14 02:33:38 mjacob Exp $ */
-/* release_6_5_99 */
+/* $NetBSD: isp_netbsd.h,v 1.19 1999/12/04 02:59:29 mjacob Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -89,11 +88,8 @@ struct isposinfo {
 #include <dev/ic/ispvar.h>
 #include <dev/ic/ispmbox.h>
 
-#define	PRINTF			printf
 #define	IDPRINTF(lev, x)	if (isp->isp_dblev >= lev) printf x
-#ifdef	DIAGNOSTIC
-#else
-#endif
+#define	PRINTF			printf
 
 #define	MEMZERO			bzero
 #define	MEMCPY(dst, src, count)	bcopy((src), (dst), (count))
@@ -109,14 +105,15 @@ struct isposinfo {
 #if	defined(SCSIDEBUG)
 #define	DFLT_DBLEVEL		3
 #define	CFGPRINTF		printf
-#else
-#if	defined(DIAGNOSTIC) || defined(DEBUG)
-#define	DFLT_DBLEVEL		1
+#elif	defined(DEBUG)
+#define	DFLT_DBLEVEL		2
 #define	CFGPRINTF		printf
+#elif	defined(DIAGNOSTIC)
+#define	DFLT_DBLEVEL		1
+#define	CFGPRINTF		if (0) printf
 #else
 #define	DFLT_DBLEVEL		0
 #define	CFGPRINTF		if (0) printf
-#endif
 #endif
 
 #define	ISP_LOCKVAL_DECL	int isp_spl_save
@@ -224,4 +221,7 @@ extern void isp_uninit __P((struct ispsoftc *));
 #define	INLINE	inline
 #include <dev/ic/isp_inline.h>
 
+#if	!defined(ISP_DISABLE_FW) && !defined(ISP_COMPILE_FW)
+#define	ISP_COMPILE_FW	1
+#endif
 #endif	/* _ISP_NETBSD_H */
