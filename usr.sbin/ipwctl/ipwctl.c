@@ -1,4 +1,4 @@
-/*	$NetBSD: ipwctl.c,v 1.3 2004/08/23 13:11:45 lukem Exp $	*/
+/*	$NetBSD: ipwctl.c,v 1.4 2004/08/27 00:05:37 lukem Exp $	*/
 /*	Id: ipwctl.c,v 1.1.2.1 2004/08/19 16:24:50 damien Exp 	*/
 
 /*-
@@ -29,13 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(__RCSID)
-__RCSID("$NetBSD: ipwctl.c,v 1.3 2004/08/23 13:11:45 lukem Exp $");
-#else
-#ifndef lint
-static char rcsid[] = "Id: ipwctl.c,v 1.1.2.1 2004/08/19 16:24:50 damien Exp ";
-#endif /* not lint */
-#endif
+__RCSID("$NetBSD: ipwctl.c,v 1.4 2004/08/27 00:05:37 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -189,9 +183,10 @@ get_radio_state(char *iface)
 
 	if (do_req(iface, SIOCGRADIO, &radio) == -1) {
 		if (errno == ENOTTY)
-			errx(EX_OSERR, "Can't get radio state: No firmware");
+			errx(EX_OSERR, "Can't retrieve radio transmitter "
+			    "state: No firmware");
 		else
-			err(EX_OSERR, "Can't get radio state");
+			err(EX_OSERR, "Can't retrieve radio transmitter state");
 	}
 
 	(void)printf("Radio is %s\n", radio ? "ON" : "OFF");
@@ -209,31 +204,33 @@ struct statistic {
 };
 
 /*- 
- * TIM = Traffic Information Message
+ * TIM  = Traffic Information Message
  * DTIM = Delivery TIM
  * ATIM = Announcement TIM
- * PSP = Power Save Poll
+ * PSP  = Power Save Poll
+ * RTS  = Request To Send
+ * CTS  = Clear To Send
+ * RSSI = Received Signal Strength Indicator
  */
 
 static const struct statistic tbl[] = {
 	{ 1, "Number of frames submitted for transfer", INT },
 	{ 2, "Number of frames transmitted", INT },
 	{ 3, "Number of unicast frames transmitted", INT },
-
 	{ 4, "Number of unicast frames transmitted at 1Mb/s", INT },
 	{ 5, "Number of unicast frames transmitted at 2Mb/s", INT },
 	{ 6, "Number of unicast frames transmitted at 5.5Mb/s", INT },
 	{ 7, "Number of unicast frames transmitted at 11Mb/s", INT },
 
-	{ 13, "Number of broadcast/multicast frames transmitted at 1Mb/s", INT },
-	{ 14, "Number of broadcast/multicast frames transmitted at 2Mb/s", INT },
-	{ 15, "Number of broadcast/multicast frames transmitted at 5.5Mb/s", INT },
-	{ 16, "Number of broadcast/multicast frames transmitted at 11Mb/s", INT },
+	{ 13, "Number of multicast frames transmitted at 1Mb/s", INT },
+	{ 14, "Number of multicast frames transmitted at 2Mb/s", INT },
+	{ 15, "Number of multicast frames transmitted at 5.5Mb/s", INT },
+	{ 16, "Number of multicast frames transmitted at 11Mb/s", INT },
 
-	{ 21, "Number of Null frames transmitted", INT },
-	{ 22, "Number of Request To Send (RTS) frames transmitted", INT },
-	{ 23, "Number of Clear To Send (CTS) frames transmitted", INT },
-	{ 24, "Number of Acknowledgment (ACK) frames transmitted", INT },
+	{ 21, "Number of null frames transmitted", INT },
+	{ 22, "Number of RTS frames transmitted", INT },
+	{ 23, "Number of CTS frames transmitted", INT },
+	{ 24, "Number of ACK frames transmitted", INT },
 	{ 25, "Number of association requests transmitted", INT },
 	{ 26, "Number of association responses transmitted", INT },
 	{ 27, "Number of reassociation requests transmitted", INT },
@@ -254,14 +251,13 @@ static const struct statistic tbl[] = {
 	{ 46, "Number of transmission retries at 11Mb/s", INT },
 
 	{ 51, "Number of transmission failures", INT },
-	{ 52, "Number of transmission aborted at hop time", INT },
-	{ 53, "Number of times max tries in a hop failed", INT },
-	{ 54, "Number of transmission aborted due to late DMA setup", INT },
-	{ 55, "Number of times backoff aborted", INT },
+
+	{ 54, "Number of transmission aborted due to DMA", INT },
+
 	{ 56, "Number of disassociation failures", INT },
-	{ 57, "Number of missed/bad CTS frames", INT },
+
 	{ 58, "Number of spanning tree frames transmitted", INT },
-	{ 59, "Number of transmission errors due to ACKs", INT },
+	{ 59, "Number of transmission errors due to missing ACK", INT },
 
 	{ 61, "Number of frames received", INT },
 	{ 62, "Number of unicast frames received", INT },
@@ -270,17 +266,17 @@ static const struct statistic tbl[] = {
 	{ 65, "Number of unicast frames received at 5.5Mb/s", INT },
 	{ 66, "Number of unicast frames received at 11Mb/s", INT },
 
-	{ 71, "Number of broadcast/multicast frames received", INT },
-	{ 72, "Number of broadcast/multicast frames received at 1Mb/s", INT },
-	{ 73, "Number of broadcast/multicast frames received at 2Mb/s", INT },
-	{ 74, "Number of broadcast/multicast frames received at 5.5Mb/s", INT },
-	{ 75, "Number of broadcast/multicast frames received at 11Mb/s", INT },
+	{ 71, "Number of multicast frames received", INT },
+	{ 72, "Number of multicast frames received at 1Mb/s", INT },
+	{ 73, "Number of multicast frames received at 2Mb/s", INT },
+	{ 74, "Number of multicast frames received at 5.5Mb/s", INT },
+	{ 75, "Number of multicast frames received at 11Mb/s", INT },
 
-	{ 80, "Number of Null frames received", INT },
-	{ 81, "Number of Poll frames received", INT },
-	{ 82, "Number of Request To Send (RTS) frames received", INT },
-	{ 83, "Number of Clear To Send (CTS) frames received", INT },
-	{ 84, "Number of Acknowledgment (ACK) frames received", INT },
+	{ 80, "Number of null frames received", INT },
+	{ 81, "Number of poll frames received", INT },
+	{ 82, "Number of RTS frames received", INT },
+	{ 83, "Number of CTS frames received", INT },
+	{ 84, "Number of ACK frames received", INT },
 	{ 85, "Number of CF-End frames received", INT },
 	{ 86, "Number of CF-End + CF-Ack frames received", INT },
 	{ 87, "Number of association requests received", INT },
@@ -296,36 +292,35 @@ static const struct statistic tbl[] = {
 	{ 97, "Number of deauthentification requests received", INT },
 
 	{ 101, "Number of bytes received", INT },
-	{ 102, "Number of frames received with a bad CRC", INT },
-	{ 103, "Number of frames received with a bad CRC at 1Mb/s", INT },
-	{ 104, "Number of frames received with a bad CRC at 2Mb/s", INT },
-	{ 105, "Number of frames received with a bad CRC at 5.5Mb/s", INT },
-	{ 106, "Number of frames received with a bad CRC at 11Mb/s", INT },
+	{ 102, "Number of frames with a bad CRC received", INT },
+	{ 103, "Number of frames with a bad CRC received at 1Mb/s", INT },
+	{ 104, "Number of frames with a bad CRC received at 2Mb/s", INT },
+	{ 105, "Number of frames with a bad CRC received at 5.5Mb/s", INT },
+	{ 106, "Number of frames with a bad CRC received at 11Mb/s", INT },
 
 	{ 112, "Number of duplicated frames received at 1Mb/s", INT },
 	{ 113, "Number of duplicated frames received at 2Mb/s", INT },
 	{ 114, "Number of duplicated frames received at 5.5Mb/s", INT },
 	{ 115, "Number of duplicated frames received at 11Mb/s", INT },
+
 	{ 119, "Number of duplicated frames received", INT },
 
-	{ 123, "Number of frames received with a bad protocol", INT },
+	{ 123, "Number of frames with a bad protocol received", INT },
 	{ 124, "Boot time", INT },
-	{ 125, "Number of frames dropped due to no buffer", INT },
-	{ 126, "Number of frames dropped due to DMA setup", INT },
-	{ 127, "Number of frames dropped due to hop", INT },
-	{ 128, "Number of frames dropped due to a missing fragment", INT },
-	{ 129, "Number of frames dropped due to non-sequential fragments", INT },
-	{ 130, "Number of frames dropped due to unmatched first frame", INT },
+	{ 125, "Number of frames dropped due to missing buffer", INT },
+	{ 126, "Number of frames dropped due to DMA", INT },
+
+	{ 128, "Number of frames dropped due to missing fragment", INT },
+	{ 129, "Number of frames dropped due to non-seq fragment", INT },
+	{ 130, "Number of frames dropped due to missing first frame", INT },
 	{ 131, "Number of frames dropped due to uncompleted frame", INT },
-	{ 132, "Bad SSID", INT },
-	{ 133, "Number of ICV errors during decryption", INT },
 
 	{ 137, "Number of times adapter suspended", INT },
 	{ 138, "Beacon timeout", INT },
 	{ 139, "Number of poll response timeouts", INT },
-	{ 140, "Number of timeouts waiting for last broadcast/multicast", INT },
-	{ 141, "Number of PSP DTIM received", INT },
-	{ 142, "Number of PSP TIM received", INT },
+
+	{ 141, "Number of PSP DTIM frames received", INT },
+	{ 142, "Number of PSP TIM frames received", INT },
 	{ 143, "PSP station Id", INT },
 
 	{ 147, "RTC time of last association", INT },
@@ -336,30 +331,27 @@ static const struct statistic tbl[] = {
 
 	{ 153, "Number of associations", INT },
 	{ 154, "Number of association failures", INT },
-	{ 155, "Number of failures due to response fail", INT },
 	{ 156, "Number of full scans", INT },
-
 	{ 157, "Card disabled", BOOL },
-	{ 158, "Number of times roaming was inhibited due to ongoing activity", INT },
-	{ 160, "RSSI of association at time of association", INT },
+
+	{ 160, "RSSI at time of association", INT },
 	{ 161, "Number of reassociations due to no probe response", INT },
 	{ 162, "Number of reassociations due to poor line quality", INT },
 	{ 163, "Number of reassociations due to load", INT },
 	{ 164, "Number of reassociations due to access point RSSI level", INT },
 	{ 165, "Number of reassociations due to load leveling", INT },
+
 	{ 170, "Number of times authentification failed", INT },
 	{ 171, "Number of times authentification response failed", INT },
 	{ 172, "Number of entries in association table", INT },
-
 	{ 173, "Average RSSI", INT },
-	{ 174, "Self test results word", INT },
-	{ 175, "Cumulative self test results word", INT },
+
 	{ 176, "Self test status", INT },
 	{ 177, "Power mode", INT },
 	{ 178, "Power index", INT },
 	{ 179, "IEEE country code", HEX },
 	{ 180, "Channels supported for this country", MASK },
-	{ 181, "Number of adapter resets (warm)", INT },
+	{ 181, "Number of adapter warm resets", INT },
 	{ 182, "Beacon interval", INT },
 
 	{ 184, "Princeton version", INT },
@@ -368,7 +360,6 @@ static const struct statistic tbl[] = {
 	{ 187, "Number of times EEPROM updated", INT },
 	{ 188, "Beacon intervals between DTIM", INT },
 	{ 189, "Current channel", INT },
-
 	{ 190, "RTC time", INT },
 	{ 191, "Operating mode", INT },
 	{ 192, "Transmission rate", HEX },
@@ -383,8 +374,6 @@ static const struct statistic tbl[] = {
 	{ 201, "RTS threshold", INT },
 	{ 202, "International mode", BOOL },
 	{ 203, "Fragmentation threshold", INT },
-
-	{ 207, "EEPROM IBSS 11b channel set", MASK },
 
 	{ 213, "Microcode version", INT },
 
@@ -406,7 +395,7 @@ get_statistics(char *iface)
 	}
 
 	for (stat = tbl; stat->index != 0; stat++) {
-		(void)printf("%s: ", stat->desc);
+		(void)printf("%-60s[", stat->desc);
 		switch (stat->unit) {
 		case INT:
 			(void)printf("%lu", stats[stat->index]);
@@ -424,6 +413,6 @@ get_statistics(char *iface)
 		default:
 			(void)printf("0x%08lX", stats[stat->index]);
 		}
-		(void)printf("\n");
+		(void)printf("]\n");
 	}
 }
