@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.100 2002/10/15 08:53:46 onoe Exp $	*/
+/*	$NetBSD: wi.c,v 1.101 2002/10/25 01:35:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.100 2002/10/15 08:53:46 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.101 2002/10/25 01:35:12 mycroft Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -298,7 +298,7 @@ wi_attach(struct wi_softc *sc)
 
 	case WI_SYMBOL:
 		sc->sc_flags |= WI_FLAGS_HAS_DIVERSITY;
-		if (sc->sc_sta_firmware_ver >= 25000)
+		if (sc->sc_sta_firmware_ver >= 20000)
 			ic->ic_flags |= IEEE80211_F_HASIBSS;
 		sc->sc_ibss_port = 4;
 		break;
