@@ -1,3 +1,5 @@
+/*	$NetBSD: rshd.c,v 1.10 1997/10/07 10:37:33 mrg Exp $	*/
+
 /*-
  * Copyright (c) 1988, 1989, 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -31,15 +33,15 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$Id: rshd.c,v 1.9 1995/01/20 18:48:50 christos Exp $";
+__COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
+#if 0
+static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
+#else
+__RCSID("$NetBSD: rshd.c,v 1.10 1997/10/07 10:37:33 mrg Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -81,6 +83,7 @@ void	 getstr __P((char *, int, char *));
 int	 local_domain __P((char *));
 char	*topdomain __P((char *));
 void	 usage __P((void));
+int	main __P((int, char *[]));
 
 #define	OPTIONS	"alnL"
 
@@ -137,6 +140,9 @@ main(argc, argv)
 		syslog(LOG_WARNING, "setsockopt (SO_LINGER): %m");
 	doit(&from);
 	/* NOTREACHED */
+#ifdef __GNUC__
+	exit(0);
+#endif
 }
 
 char	username[20] = "USER=";
@@ -156,9 +162,9 @@ doit(fromp)
 	struct passwd *pwd;
 	u_short port;
 	fd_set ready, readfrom;
-	int cc, nfd, pv[2], pid, s;
+	int cc, nfd, pv[2], pid, s = -1;	/* XXX gcc */
 	int one = 1;
-	char *hostname, *errorstr, *errorhost;
+	char *hostname, *errorstr, *errorhost = NULL;	/* XXX gcc */
 	char *cp, sig, buf[BUFSIZ];
 	char cmdbuf[NCARGS+1], locuser[16], remuser[16];
 	char remotehost[2 * MAXHOSTNAMELEN + 1];
@@ -337,9 +343,9 @@ doit(fromp)
 
 
 		if (errorstr ||
-		    pwd->pw_passwd != 0 && *pwd->pw_passwd != '\0' &&
+		    (pwd->pw_passwd != 0 && *pwd->pw_passwd != '\0' &&
 		    iruserok(fromp->sin_addr.s_addr, pwd->pw_uid == 0,
-		    remuser, locuser) < 0) {
+		    remuser, locuser) < 0)) {
 			if (__rcmd_errstr)
 				syslog(LOG_INFO|LOG_AUTH,
 			    "%s@%s as %s: permission denied (%s). cmd='%.80s'",
