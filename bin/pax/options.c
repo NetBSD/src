@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.80 2004/10/17 18:49:55 dsl Exp $	*/
+/*	$NetBSD: options.c,v 1.81 2004/10/22 21:00:18 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.80 2004/10/17 18:49:55 dsl Exp $");
+__RCSID("$NetBSD: options.c,v 1.81 2004/10/22 21:00:18 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,7 +123,9 @@ static int getline_error;
 #define	OPT_INSECURE			14
 #define	OPT_STRICT			15
 #define	OPT_SPARSE			16
+#if !HAVE_NBTOOL_CONFIG_H
 #define	OPT_CHROOT			17
+#endif
 
 /*
  *	Format specific routine table - MUST BE IN SORTED ORDER BY NAME
@@ -744,8 +746,10 @@ struct option tar_longopts[] = {
 						OPT_INSECURE },
 	{ "exclude",		required_argument,	0,
 						OPT_EXCLUDE },
+#if !HAVE_NBTOOL_CONFIG_H
 	{ "chroot",		no_argument,		0,
 						OPT_CHROOT },
+#endif
 #if 0 /* Not implemented */
 	{ "catenate",		no_argument,		0,	'A' },	/* F */
 	{ "concatenate",	no_argument,		0,	'A' },	/* F */
@@ -1067,9 +1071,11 @@ tar_options(int argc, char **argv)
 			if (tar_gnutar_minus_minus_exclude(optarg) != 0)
 				tar_usage();
 			break;
+#if !HAVE_NBTOOL_CONFIG_H
 		case OPT_CHROOT:
 			do_chroot = 1;
 			break;
+#endif
 		default:
 			tar_usage();
 			break;
