@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.38 1997/03/20 06:48:48 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.39 1997/03/20 16:13:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -114,7 +114,6 @@ int naudio;	/* Count of attached hardware drivers */
 
 int audio_blk_ms = AUDIO_BLK_MS;
 int audio_backlog = AUDIO_BACKLOG;
-int audio_blocksize;
 
 struct audio_softc *audio_softc[NAUDIO];
 
@@ -555,15 +554,16 @@ audio_open(dev, flags, ifmt, p)
 	if (hw->get_precision(sc->hw_hdl) == 0)
 	    panic("audio_open: hardware driver returned 0 for get_precision");
 #endif
-	sc->sc_blksize = audio_blocksize = audio_calc_blksize(sc);
-	audio_alloc_auzero(sc, sc->sc_blksize);
-	    
-	sc->sc_smpl_in_blk = audio_blocksize / 
-	    (hw->get_precision(sc->hw_hdl) / NBBY);
 	sc->sc_50ms = 50 * hw->get_out_sr(sc->hw_hdl) / 1000;
+
+	sc->sc_blksize = audio_calc_blksize(sc);
+	audio_alloc_auzero(sc, sc->sc_blksize);
+	sc->sc_smpl_in_blk = sc->sc_blksize / 
+	    (hw->get_precision(sc->hw_hdl) / NBBY);
+	audio_initbufs(sc);
+
 	sc->sc_backlog = audio_backlog;
 
-	audio_initbufs(sc);
 	DPRINTF(("audio_open: rr.bp=%x-%x pr.bp=%x-%x\n",
 		 sc->rr.bp, sc->rr.ep, sc->pr.bp, sc->pr.ep));
 	
@@ -1517,10 +1517,11 @@ audiosetinfo(sc, ai)
 	struct audio_info *ai;
 {
 	struct audio_prinfo *r = &ai->record, *p = &ai->play;
-	int cleared = 0;
-	int bsize, bps, error = 0;
+	int cleared = 0, init = 0;
+	int bsize, error = 0;
 	struct audio_hw_if *hw = sc->hw_if;
 	mixer_ctrl_t ct;
+	int s;
 	
 	if (hw == 0)		/* HW has not attached */
 		return(ENXIO);
@@ -1529,19 +1530,25 @@ audiosetinfo(sc, ai)
 		if (!cleared)
 			audio_clear(sc);
 		cleared = 1;
+
 		error = hw->set_out_sr(sc->hw_hdl, p->sample_rate);
 		if (error)
 			return(error);
+
 		sc->sc_50ms = 50 * hw->get_out_sr(sc->hw_hdl) / 1000;
+		init = 1;
 	}
 	if (r->sample_rate != ~0) {
 		if (!cleared)
 			audio_clear(sc);
 		cleared = 1;
+
 		error = hw->set_in_sr(sc->hw_hdl, r->sample_rate);
 		if (error)
 			return(error);
+
 		sc->sc_50ms = 50 * hw->get_in_sr(sc->hw_hdl) / 1000;
+		init = 1;
 	}
 	if (p->encoding != ~0 || p->precision != ~0) {
 		if (!cleared)
@@ -1560,11 +1567,7 @@ audiosetinfo(sc, ai)
 			return(error);
 
 		sc->sc_pencoding = p->encoding;
-		sc->sc_blksize = audio_blocksize = audio_calc_blksize(sc);
-		audio_alloc_auzero(sc, sc->sc_blksize);
-		bps = hw->get_precision(sc->hw_hdl) / NBBY;
-		sc->sc_smpl_in_blk = sc->sc_blksize / bps;
-		audio_initbufs(sc);
+		init = 1;
 	}	
 	if (r->encoding != ~0 || r->precision != ~0) {
 		if (!cleared)
@@ -1583,44 +1586,35 @@ audiosetinfo(sc, ai)
 			return(error);
 
 		sc->sc_rencoding = r->encoding;
-		sc->sc_blksize = audio_blocksize = audio_calc_blksize(sc);
-		audio_alloc_auzero(sc, sc->sc_blksize);
-		bps = hw->get_precision(sc->hw_hdl) / NBBY;
-		sc->sc_smpl_in_blk = sc->sc_blksize / bps;
-		audio_initbufs(sc);
+		init = 1;
 	}
 	if (p->channels != ~0) {
 		if (!cleared)
 			audio_clear(sc);
 		cleared = 1;
+
 		error = hw->set_channels(sc->hw_hdl, p->channels);
 		if (error)
 			return(error);
 
-		sc->sc_blksize = audio_blocksize = audio_calc_blksize(sc);
-		audio_alloc_auzero(sc, sc->sc_blksize);
-		bps = hw->get_precision(sc->hw_hdl) / NBBY;
-		sc->sc_smpl_in_blk = sc->sc_blksize / bps;
-		audio_initbufs(sc);
+		init = 1;
 	}
 	if (r->channels != ~0) {
 		if (!cleared)
 			audio_clear(sc);
 		cleared = 1;
+
 		error = hw->set_channels(sc->hw_hdl, r->channels);
 		if (error)
 			return(error);
 
-		sc->sc_blksize = audio_blocksize = audio_calc_blksize(sc);
-		audio_alloc_auzero(sc, sc->sc_blksize);
-		bps = hw->get_precision(sc->hw_hdl) / NBBY;
-		sc->sc_smpl_in_blk = sc->sc_blksize / bps;
-		audio_initbufs(sc);
+		init = 1;
 	}
 	if (p->port != ~0) {
 		if (!cleared)
 			audio_clear(sc);
 		cleared = 1;
+
 		error = hw->set_out_port(sc->hw_hdl, p->port);
 		if (error)
 			return(error);
@@ -1629,6 +1623,7 @@ audiosetinfo(sc, ai)
 		if (!cleared)
 			audio_clear(sc);
 		cleared = 1;
+
 		error = hw->set_in_port(sc->hw_hdl, r->port);
 		if (error)
 			return(error);
@@ -1655,27 +1650,28 @@ audiosetinfo(sc, ai)
 	if (p->pause != (u_char)~0) {
 		sc->pr.cb_pause = p->pause;
 		if (!p->pause) {
-		    int s = splaudio();
+			s = splaudio();
 			audiostartp(sc);
-		    splx(s);
+			splx(s);
 		}
 	}
 	if (r->pause != (u_char)~0) {
 		sc->rr.cb_pause = r->pause;
 		if (!r->pause) {
-		    int s = splaudio();
+			s = splaudio();
 			audiostartr(sc);
-		    splx(s);
+			splx(s);
 		}
 	}
 
-	if (ai->blocksize != ~0) { /* Explicitly specified, possibly */
-				   /* overriding changes done above. */
+	if (ai->blocksize != ~0) {
+		/* Block size specified explicitly. */
 		if (!cleared)
 			audio_clear(sc);
 		cleared = 1;
+
 		if (ai->blocksize == 0)
-			bsize = audio_blocksize;
+			bsize = sc->sc_blksize;
 		else if (ai->blocksize > AU_RING_SIZE/2)
 			bsize = AU_RING_SIZE/2;
 		else
@@ -1683,12 +1679,21 @@ audiosetinfo(sc, ai)
 		bsize = hw->round_blocksize(sc->hw_hdl, bsize);
 		if (bsize > AU_RING_SIZE)
 			bsize = AU_RING_SIZE;
-		ai->blocksize = sc->sc_blksize = bsize;
+
+		sc->sc_blksize = bsize;
+		init = 1;
+	} else if (init) {
+		/* Block size calculated from other parameter changes. */
+		sc->sc_blksize = audio_calc_blksize(sc);
+	}
+
+	if (init) {
 		audio_alloc_auzero(sc, sc->sc_blksize);
-		bps = hw->get_precision(sc->hw_hdl) / NBBY;
-		sc->sc_smpl_in_blk = bsize / bps;
+		sc->sc_smpl_in_blk = sc->sc_blksize / 
+		    (hw->get_precision(sc->hw_hdl) / NBBY);
 		audio_initbufs(sc);
 	}
+
 	if (ai->hiwat != ~0) {
 		if ((unsigned)ai->hiwat > sc->pr.maxblk)
 			ai->hiwat = sc->pr.maxblk;
@@ -1709,6 +1714,7 @@ audiosetinfo(sc, ai)
 		if (!cleared)
 			audio_clear(sc);
 		cleared = 1;
+
 		sc->sc_mode = ai->mode;
 		if (sc->sc_mode & AUMODE_PLAY) {
 			audio_init_play(sc);
@@ -1718,12 +1724,13 @@ audiosetinfo(sc, ai)
 		if (sc->sc_mode & AUMODE_RECORD)
 			audio_init_record(sc);
 	}
+
 	error = hw->commit_settings(sc->hw_hdl);
 	if (error)
 		return (error);
 
 	if (cleared) {
-		int s = splaudio();
+		s = splaudio();
 		if (sc->sc_mode & AUMODE_PLAY)
 			audiostartp(sc);
 		if (sc->sc_mode & AUMODE_RECORD)
