@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 1998/08/30 23:40:15 cgd Exp $	*/
+/*	$NetBSD: bus.h,v 1.3 1998/10/09 06:20:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -246,11 +246,11 @@ do {									\
 #endif
 
 static __inline void
-vax_mem_read_region_1(t, h, o, a, c)
+vax_mem_read_multi_1(t, h, o, a, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
 	bus_size_t o;
-	const u_int8_t *a;
+	u_int8_t *a;
 	size_t c;
 {
 	const bus_addr_t addr = h + o;
@@ -260,11 +260,11 @@ vax_mem_read_region_1(t, h, o, a, c)
 }
 
 static __inline void
-vax_mem_read_region_2(t, h, o, a, c)
+vax_mem_read_multi_2(t, h, o, a, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
 	bus_size_t o;
-	const u_int8_t *a;
+	u_int16_t *a;
 	size_t c;
 {
 	const bus_addr_t addr = h + o;
@@ -274,11 +274,11 @@ vax_mem_read_region_2(t, h, o, a, c)
 }
 
 static __inline void
-vax_mem_read_region_4(t, h, o, a, c)
+vax_mem_read_multi_4(t, h, o, a, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
 	bus_size_t o;
-	const u_int32_t *a;
+	u_int32_t *a;
 	size_t c;
 {
 	const bus_addr_t addr = h + o;
@@ -333,7 +333,7 @@ vax_mem_read_region_1(t, h, o, a, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
 	bus_size_t o;
-	const u_int8_t *a;
+	u_int8_t *a;
 	size_t c;
 {
 	bus_addr_t addr = h + o;
@@ -347,7 +347,7 @@ vax_mem_read_region_2(t, h, o, a, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
 	bus_size_t o;
-	const u_int8_t *a;
+	u_int16_t *a;
 	size_t c;
 {
 	bus_addr_t addr = h + o;
@@ -361,7 +361,7 @@ vax_mem_read_region_4(t, h, o, a, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
 	bus_size_t o;
-	const u_int32_t *a;
+	u_int32_t *a;
 	size_t c;
 {
 	bus_addr_t addr = h + o;
@@ -458,12 +458,12 @@ vax_mem_write_multi_2(t, h, o, a, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
 	bus_size_t o;
-	const u_int8_t *a;
+	const u_int16_t *a;
 	size_t c;
 {
 	const bus_addr_t addr = h + o;
 
-	for (; c != 0; c--, addr++, a++)
+	for (; c != 0; c--, a++)
 		*(volatile u_int16_t *)(addr) = *a;
 }
 
@@ -537,7 +537,7 @@ vax_mem_write_region_2(t, h, o, a, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
 	bus_size_t o;
-	const u_int8_t *a;
+	const u_int16_t *a;
 	size_t c;
 {
 	bus_addr_t addr = h + o;
