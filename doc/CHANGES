@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.8 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.9 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -114,3 +114,5 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 	Don't reference cfdriver structures directly in the cfdata entries;
 		instead, a string names the driver, which is looked up from
 		a list that is built at run-time.  [thorpej 20020926]
+	Add support for the Apple UFS variation on ffs
+		See PR 17345 [dbj 20020928]
