@@ -1,4 +1,4 @@
-/*	$NetBSD: tcvar.h,v 1.2 1996/02/26 23:38:44 cgd Exp $	*/
+/*	$NetBSD: tcvar.h,v 1.3 1996/02/27 01:37:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -55,7 +55,7 @@ struct tcbus_attach_args {
 	char		*tba_busname;		/* XXX should be common */
 
 	/* Bus information */
-	u_int		tba_speed;		/* 0 -> 12.5MHz, 1 -> 25MHz */
+	u_int		tba_speed;		/* see TC_SPEED_* below */
 	u_int		tba_nslots;
 	struct tc_slotdesc *tba_slots;
 	u_int		tba_nbuiltins;
@@ -77,7 +77,7 @@ struct tc_attach_args {
 	tc_offset_t	ta_offset;
 	tc_addr_t	ta_addr;
 	void		*ta_cookie;
-	u_int		ta_busspeed;		/* 0 -> 12.5MHz, 1 -> 25MHz */
+	u_int		ta_busspeed;		/* see TC_SPEED_* below */
 };
 
 /*
@@ -116,6 +116,12 @@ void	tc_intr_disestablish __P((struct device *, void *));
 
 #define	TCCF_SLOT_UNKNOWN	-1
 #define	TCCF_OFFSET_UNKNOWN	-1
+
+/*
+ * Miscellaneous definitions.
+ */
+#define	TC_SPEED_12_5_MHZ	0		/* 12.5MHz TC bus */
+#define	TC_SPEED_25_MHZ		1		/* 25MHz TC bus */
 
 /*
  * The TurboChannel bus cfdriver, so that subdevices can more
