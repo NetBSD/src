@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.33 2003/03/08 06:46:22 christos Exp $	*/
+/*	$NetBSD: keyword.c,v 1.34 2003/03/08 08:04:24 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.33 2003/03/08 06:46:22 christos Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.34 2003/03/08 08:04:24 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,14 +179,14 @@ VAR var[] = {
 	{"svgroup", "SVGROUP", LJUST, svgname},
 	UID("svuid", "SVUID", p_svuid),
 	{"svuser", "SVUSER", LJUST, svuname},
-	/* tdev is UINT32, but we do this for sorting purposes */
+	/* "tdev" is UINT32, but we do this for sorting purposes */
 	{"tdev", "TDEV", 0, tdev, POFF(p_tdev), INT32},
 	{"time", "TIME", 0, cputime, 0, CPUTIME},
 	PID("tpgid", "TGPID", p_tpgid),
 	PVAR("tsess", "TSESS", 0, p_tsess, KPTR, PRIx64),
 	{"tsiz", "TSIZ", 0, tsize, POFF(p_vm_tsize), INT32},
-	{"tt", "TT", LJUST, tname},
-	{"tty", "TTY", LJUST, longtname},
+	{"tt", "TT", LJUST, tname, POFF(p_tdev), INT32},
+	{"tty", "TTY", LJUST, longtname, POFF(p_tdev), INT32},
 	{"ucomm", "UCOMM", LJUST, ucomm},
 	UID("uid", "UID", p_uid),
 	LVAR("upr", "UPR", 0, l_usrpri, UCHAR, "u"),
