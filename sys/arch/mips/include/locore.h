@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.46 2000/10/04 22:44:01 cgd Exp $ */
+/* $NetBSD: locore.h,v 1.47 2000/10/05 00:52:59 cgd Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -218,7 +218,6 @@ typedef int mips_prid_t;
 
 extern mips_prid_t cpu_id;
 extern mips_prid_t fpu_id;
-extern int	cpu_arch;
 extern int	mips_num_tlb_entries;
 extern u_int	mips_L1DCacheSize;
 extern u_int	mips_L1ICacheSize;

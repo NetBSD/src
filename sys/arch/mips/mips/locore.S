@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.116 2000/10/04 22:44:02 cgd Exp $	*/
+/*	$NetBSD: locore.S,v 1.117 2000/10/05 00:53:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1354,12 +1354,9 @@ _C_LABEL(esym):
 
 	.globl	_C_LABEL(cpu_id)
 	.globl	_C_LABEL(fpu_id)
-	.globl	_C_LABEL(cpu_arch)
 _C_LABEL(cpu_id):
 	.word	0
 _C_LABEL(fpu_id):
-	.word	0
-_C_LABEL(cpu_arch):
 	.word	0
 
 	.globl	_C_LABEL(mips_L1DCacheSize)
