@@ -1135,7 +1135,8 @@ vi_cmd(argcnt, cmd)
 		case Ctrl('i'):			/* Nonstandard vi/ksh */
 			if (!Flag(FVITABCOMPLETE))
 				return -1;
-			/* FALLTHROUGH */
+			complete_word(1, argcnt);
+			break;
 
 		case Ctrl('['):			/* some annoying at&t ksh's */
 			if (!Flag(FVIESCCOMPLETE))
@@ -1841,11 +1842,11 @@ display(wb1, wb2, leftside)
 				if (ch < ' ' || ch == 0x7f) {
 					*twb1++ = '^';
 					if (++col < winwidth) {
-						*twb1++ = es->cbuf[cur] ^ '@';
+						*twb1++ = ch ^ '@';
 						col++;
 					}
 				} else {
-					*twb1++ = es->cbuf[cur];
+					*twb1++ = ch;
 					col++;
 				}
 			}
