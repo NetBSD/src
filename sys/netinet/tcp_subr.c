@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.53 1998/05/07 22:30:23 kml Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.54 1998/05/12 21:45:51 kml Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -689,6 +689,7 @@ tcp_mss_from_peer(tp, offer)
 	if (offer)
 		mss = offer;
 	mss = max(mss, 32);		/* sanity */
+	tp->t_peermss = mss;
 	mss -= (tcp_optlen(tp) + ip_optlen(tp->t_inpcb));
 
 	/*
@@ -711,7 +712,6 @@ tcp_mss_from_peer(tp, offer)
 			bufsize = sb_max;
 		(void) sbreserve(&so->so_snd, bufsize);
 	}
-	tp->t_peermss = mss;
 	tp->t_segsz = mss;
 
 #ifdef RTV_SSTHRESH
