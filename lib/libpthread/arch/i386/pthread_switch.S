@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.10 2001/07/31 21:00:24 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.11 2001/08/01 23:41:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,38 +39,54 @@
 #include <machine/asm.h>
 #include "assym.h"
 
-#define STACK_SWITCH			  \
-	movl	PT_UC(%ecx),%esi	; \
-	movl	%esi, %esp
-	
-#define	NOTREACHED			  \
-	/* force error */		  \
-	int3
-/* Simple versions that don't handle spin-preempt cases */
+/*
+ * This file implements low-level routines that are exported to
+ * the machine-independent parts of the thread library. The routines are:
+ * 
+ * void	pthread__switch(pthread_t self, pthread_t next);
+ * void	pthread__upcall_switch(pthread_t self, pthread_t next);
+ * void	pthread__locked_switch(pthread_t self, pthread_t next, 
+ *           pt_spin_t *lock);
+ *	   
+ * as well as some utility code used by these routines. 
+ */
 
-/* Plain switch that doesn't do any special checking. */
+/* Force an error when "notreached" code is reached. */
+#define	NOTREACHED			  \
+	int3
+
+/*
+ * Usable stack space below the ucontext_t. 
+ * See comment below about STACK_SWITCH.
+ */
+#define STACKSPACE 			\
+	32	/* room for 8 integer values */
+
+/*
+ * void	pthread__switch(pthread_t self, pthread_t next);
+ *
+ * Plain switch that doesn't do any special checking or handle
+ * spin-preemption. It isn't used much by normal code, actually; it's
+ * main purpose is to be a basic switch engine when the MI code is
+ * already dealing with spin-preemption or other gunk.  
+ */
+
 ENTRY(pthread__switch)
 	pushl	%ebp
 	movl	%esp, %ebp
-	pushl	%esi	/* callee save */
-	pushl	%edi	/* callee save */
+	pushl	%esi			/* callee save */
+	pushl	%edi			/* callee save */
 	PIC_PROLOGUE
-	movl	8(%ebp), %eax  /* eax holds the current thread */
-	movl	12(%ebp), %ecx /* ecx holds the thread to switch to  */
+	movl	8(%ebp), %eax		/* eax holds the current thread */
+	movl	12(%ebp), %ecx		/* ecx holds the thread to switch to */
+	subl	$CONTEXTSIZE, %esp	/* Allocate space for the ucontext_t */
 	movl	%esp, %edi
-	/* We need the ucontext structure to be on the bottom of the stack,
-         * but we also need to push a few things on the original stack 
-	 * to do some saving, and swapcontext itself uses a word on the stack.
-	 * So 4 is esi,edi,return address,swapcontext tmp
-	 * alignment/paranoia.
-	 */
-	subl	$CONTEXTSIZE+(4*4), %edi
 	movl	%edi, PT_UC(%eax)
-	movl	PT_UC(%ecx),%esi
-	pushl	%esi	/* ucontext_t *ucp */
-	pushl	%edi	/* ucontext_t *oucp */
+	movl	PT_UC(%ecx), %esi
+	pushl	%esi			/* ucontext_t *ucp */
+	pushl	%edi			/* ucontext_t *oucp */
 	call	PIC_PLT(_C_LABEL(_swapcontext_u))
-	addl	$8, %esp
+	addl	$CONTEXTSIZE+8, %esp
 	PIC_EPILOGUE
 	popl	%edi
 	popl	%esi
@@ -78,8 +94,57 @@ ENTRY(pthread__switch)
 	popl	%ebp
 	ret
 
-/* Helper switch code used by pthread__locked_switch and 
- * pthread__upcall_switch.
+/*
+ * Utility macro to switch to the stack of another thread.
+ * WARNING: This is more subtle than it looks.
+ *
+ * There are a couple of motivations for stack switching. One is that
+ * when exiting an upcall and running a thread, we want to recycle the
+ * state of the upcall before continuing the thread. However, the
+ * stack is part of the upcall state, and we can't be on the upcall
+ * stack when we want to recycle it. Therefore, we pre-switch to the
+ * stack of the thread we're about to switch to and borrow some space
+ * on its stack so that we can recycle the upcall.
+ *
+ * Another is that when performing the slightly sensitive operation of
+ * putting the currently running thread on a (locked) sleep queue then
+ * switching to another thread, we don't want to release the queue
+ * lock until we are no longer on the original stack - if we released
+ * it any earlier, it's possible (epecially on a multiprocessor
+ * system) that the original thread could get taken off the queue and
+ * restarted while we're still using its stack, which would be bad
+ * ("Important saftey tip. Thanks, Egon").
+ *
+ * The subtlety comes from the contents of the stack of the thread
+ * being switched to. Our convention is that the ucontext_t of the
+ * thread is stored near the top of the stack. When the kernel
+ * preempts a thread, it stores the ucontext_t just above the current
+ * top-of-stack and passes the upcall handler the pointer to the
+ * ucontext_t, and the upcall handler stores it in the the pt_uc field
+ * of the thread structure. When user-level code voluntairly switches
+ * from one thread to another, the ucontext_t is just below the top of
+ * the stack, and we impose a limit on the amount of stack space above
+ * the ucontext_t that may be used. This way, we can perform the stack
+ * switch safely by setting the stack pointer to thread->pt_uc -
+ * STACKSPACE.
+ * Note carefully that we do the subtraction *before* putting the
+ * value in the stack pointer. Since preemption can occur at any time,
+ * and the kernel will happily write the new ucontext_t below the
+ * current stack pointer, it is unsafe for us to ever set the stack
+ * pointer above potentially valid data, even for one instruction.
+ *
+ * Got it? Good. Now go read it again.
+ * 
+ */
+
+#define STACK_SWITCH			  \
+	movl	PT_UC(%ecx), %esi	; \
+	lea	(-STACKSPACE)(%esi), %esp
+
+
+/*
+ * Helper switch code used by pthread__locked_switch() and 
+ * pthread__upcall_switch() when they discover spinlock preemption.
  */
 .globl pthread__switch_away
 pthread__switch_away:
@@ -87,7 +152,7 @@ pthread__switch_away:
 
 	/* If we're invoked from the switch-to-next provisions of
 	 * pthread__locked_switch or pthread__upcall_switch, there
-	 * may be a fake spinlock present. If so, they will set %edx
+	 * may be a fake spinlock-count set. If so, they will set %edx
 	 * to let us know, and we decrement it once we're no longer using
 	 * the old stack.
 	 */ 
@@ -96,44 +161,42 @@ pthread__switch_away:
 	decl	PT_SPINLOCKS(%eax)
 
 pthread__switch_no_decrement:	
-	pushl	%esi	/* ucontext_t *ucp */
+	pushl	%esi			/* ucontext_t *ucp */
 	call	PIC_PLT(_C_LABEL(_setcontext_u))
 	NOTREACHED
 
-/* Switch away from a thread that is holding a lock on a queue (to
+/*
+ * void	pthread__locked_switch(pthread_t self, pthread_t next, 
+ *           pt_spin_t *lock);
+ *
+ * Switch away from a thread that is holding a lock on a queue (to
  * prevent being removed from the queue before being switched away).
  */
 ENTRY(pthread__locked_switch)
 	pushl	%ebp
 	movl	%esp, %ebp
-	pushl	%esi	/* callee save */
-	pushl	%edi	/* callee save */
+	pushl	%esi			/* callee save */
+	pushl	%edi			/* callee save */
 	PIC_PROLOGUE	
-	movl	8(%ebp), %eax  /* eax holds the current thread */
-	movl	12(%ebp), %ecx /* ecx holds the thread to switch to  */
-	movl	16(%ebp), %edx /* edx holds the pointer to the spinlock */
-	incl	PT_SPINLOCKS(%ecx) /* Make sure we get continued */
+	movl	8(%ebp), %eax		/* eax holds the current thread */
+	movl	12(%ebp), %ecx 		/* ecx holds the thread to switch to */
+	movl	16(%ebp), %edx		/* edx holds the spinlock pointer */
+	incl	PT_SPINLOCKS(%ecx)	/* Make sure we get continued */
+	subl	$CONTEXTSIZE, %esp	/* Allocate space for the ucontext_t */
 	movl	%esp, %edi
-	/* We need the ucontext structure to be on the bottom of the stack,
-         * but we also need to push a few things on the original stack 
-	 * to do some saving, and _getcontext itself uses a word on the stack.
-	 * So 8 is eax,ecx,edx,edi,return address,getcontext tmp, plus
-	 * alignment/paranoia.
-	 */
-	subl	$CONTEXTSIZE+(8*4), %edi
 	movl	%edi, PT_UC(%eax)
-
-	pushl	%eax	/* caller save */
-	pushl	%ecx	/* caller save */
-	pushl	%edx	/* caller save */
-	pushl	%edi	/* ucontext_t *ucp */
+	pushl	%eax			/* caller save */
+	pushl	%ecx			/* caller save */
+	pushl	%edx			/* caller save */
+	pushl	%edi			/* ucontext_t *ucp */
 	call	PIC_PLT(_C_LABEL(_getcontext_u))
 	addl	$4, %esp
 	popl	%edx
 	popl	%ecx	
 	popl	%eax
-	/* Major-league cheating. Edit the context so that it continues
-	 * as if returning from the _setcontext_u below.
+	/*
+	 * Edit the context so that it continues as if returning from
+	 * the _setcontext_u below.  
 	 */
 #ifdef PIC
 	movl	PIC_GOT(locked_return_point), %esi
@@ -164,6 +227,12 @@ ENTRY(pthread__locked_switch)
 	movl	%edx, PT_HELDLOCK(%eax)
 	decl	PT_SPINLOCKS(%eax)
 
+	/* Save the context we previously stored in PT_UC(%eax); 
+	 * that was overwritten when we were preempted and continued,
+	 * so we need to put it somewhere. 
+	 */
+	movl	%edi, PT_SLEEPUC(%eax)
+
 	movl	PT_NEXT(%eax), %edx
 	movl	%ecx, %eax
 	movl	%edx, %ecx
@@ -192,11 +261,11 @@ locked_no_old_preempt:
 	NOTREACHED
 	
 locked_no_new_preempt:		
-	pushl	%esi	/* ucontext_t *ucp */
+	pushl	%esi			/* ucontext_t *ucp */
 	call	PIC_PLT(_C_LABEL(_setcontext_u))
 locked_return_point:
 	/* We're back on the original stack. */
-	addl	$16, %esp
+	addl	$CONTEXTSIZE+16, %esp
 	PIC_EPILOGUE
 	popl	%edi
 	popl	%esi
@@ -206,16 +275,19 @@ locked_return_point:
 
 	
 	
-	
-/* Quit an upcall, recycle it, and jump to the next thing. */
+/*
+ * void	pthread__upcall_switch(pthread_t self, pthread_t next);
+ *
+ * Quit an upcall, recycle it, and jump to the selected thread.
+ */
 ENTRY(pthread__upcall_switch)
 	/* Save args into registers so we can stop using the old stack. */
 	pushl	%ebp
 	movl	%esp, %ebp
 	/* No need to save %esi, %edi;  this function never returns */
 	PIC_PROLOGUE
-	movl	8(%ebp), %eax  /* eax holds the upcall thread */
-	movl	12(%ebp), %ecx /* ecx holds the thread to switch to  */
+	movl	8(%ebp), %eax		/* eax holds the upcall thread */
+	movl	12(%ebp), %ecx		/* ecx holds the thread to switch to */
 	incl	PT_SPINLOCKS(%ecx)
 	
 	STACK_SWITCH
@@ -237,10 +309,10 @@ ENTRY(pthread__upcall_switch)
 	NOTREACHED
 	
 upcall_no_old_preempt:		
-	pushl	%eax	/* caller save */
-	pushl	%ecx	/* caller save */
-	pushl   %ecx	/* pthread_t new */
-	pushl   %eax	/* pthread_t old */
+	pushl	%eax			/* caller save */
+	pushl	%ecx			/* caller save */
+	pushl   %ecx			/* pthread_t new */
+	pushl   %eax			/* pthread_t old */
 	call    PIC_PLT(_C_LABEL(pthread__sa_recycle))
 	addl	$8, %esp
 	popl	%ecx
