@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2002/11/30 03:10:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.26 2003/05/18 07:57:39 lukem Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/27/95
 
 .include <bsd.own.mk>
@@ -13,6 +13,4 @@ WARNS?=	2
 CPPFLAGS+=	-I${NETBSDSRCDIR}/bin/ls -I${NETBSDSRCDIR}/sbin/mknod
 .PATH:		${NETBSDSRCDIR}/bin/ls ${NETBSDSRCDIR}/sbin/mknod
 
-.ifndef HOSTPROG
 .include <bsd.prog.mk>
-.endif

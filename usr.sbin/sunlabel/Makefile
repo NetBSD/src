@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/05/14 00:24:07 dbj Exp $
+#	$NetBSD: Makefile,v 1.5 2003/05/18 07:57:40 lukem Exp $
 
 PROG=	sunlabel
 MAN=	sunlabel.8
@@ -9,5 +9,6 @@ DPADD+=	${LIBTERMCAP}
 
 DPADD+=	${LIBUTIL}
 LDADD+=	-lutil
-.include <bsd.prog.mk>
 .endif
+
+.include <bsd.prog.mk>

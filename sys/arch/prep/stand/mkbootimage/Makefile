@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2002/04/25 23:30:26 kleink Exp $
+#	$NetBSD: Makefile,v 1.4 2003/05/18 07:57:32 lukem Exp $
 
 PROG=	mkbootimage
 SRCS=	mkbootimage.c byteorder.c
@@ -10,6 +10,4 @@ LIBSA=${.CURDIR}/../../../../lib/libsa
 
 CPPFLAGS= -I${LIBSA} -I${.CURDIR}
 
-.ifndef HOSTPROG
 .include <bsd.prog.mk>
-.endif
