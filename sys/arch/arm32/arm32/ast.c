@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.13 1998/05/08 23:24:08 mark Exp $	*/
+/*	$NetBSD: ast.c,v 1.14 1998/06/02 20:41:46 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -40,6 +40,8 @@
  * Created      : 11/10/94
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -53,6 +55,12 @@
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/psl.h>
+
+#if defined(UVM)
+/*#include <sys/types.h>*/
+#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+#endif
 
 int want_resched = 0;
 
@@ -150,7 +158,13 @@ ast(frame)
 {
 	struct proc *p = curproc;
 
+#if defined(UVM)
+	uvmexp.traps++;
+	uvmexp.softs++;
+#else
 	cnt.v_trap++;
+	cnt.v_soft++;
+#endif
 
 #ifdef DIAGNOSTIC
 	if (p == NULL) {
@@ -161,7 +175,6 @@ ast(frame)
 		panic("ast: nopcb!");
 #endif	
 
-	cnt.v_soft++;
 	if (p->p_flag & P_OWEUPC) {
 		p->p_flag &= ~P_OWEUPC;
 		ADDUPROF(p);
