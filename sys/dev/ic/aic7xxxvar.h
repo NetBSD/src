@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.10 1996/10/21 22:34:09 thorpej Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.11 1996/12/02 19:06:44 thorpej Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -213,6 +213,8 @@ struct ahc_data {
 	void	*sc_ih;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	LIST_HEAD(, scsi_xfer) sc_xxxq;	/* XXX software request queue */
+	struct scsi_xfer *sc_xxxqlast;	/* last entry in queue */
 #endif
 	ahc_type type;
 	ahc_flag flags;
