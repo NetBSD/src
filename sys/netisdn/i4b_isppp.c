@@ -34,7 +34,7 @@
  *	the "cx" driver for Cronyx's HDLC-in-hardware device).  This driver
  *	is only the glue between sppp and i4b.
  *
- *	$Id: i4b_isppp.c,v 1.13 2002/03/17 09:46:00 martin Exp $
+ *	$Id: i4b_isppp.c,v 1.14 2002/03/17 11:08:32 martin Exp $
  *
  * $FreeBSD$
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.13 2002/03/17 09:46:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.14 2002/03/17 11:08:32 martin Exp $");
 
 #ifndef __NetBSD__
 #define USE_ISPPP
@@ -452,8 +452,9 @@ i4bisppp_watchdog(struct ifnet *ifp)
 		sc->sc_linb = sc->sc_iinb;
 		sc->sc_loutb = sc->sc_ioutb;
 
-		i4b_l4_accounting(BDRV_ISPPP, unit, ACCT_DURING,
-			 sc->sc_ioutb, sc->sc_iinb, ro, ri, sc->sc_outb, sc->sc_inb);
+		if (sc->sc_cdp)
+			i4b_l4_accounting(sc->sc_cdp->cdid, ACCT_DURING,
+			    sc->sc_ioutb, sc->sc_iinb, ro, ri, sc->sc_outb, sc->sc_inb);
  	}
 	sc->sc_sp.pp_if.if_timer = I4BISPPPACCTINTVL; 	
 
@@ -588,7 +589,7 @@ i4bisppp_disconnect(void *softc, void *cdp)
 	sc->sc_sp.pp_if.if_timer = 0;
 #endif
 
-	i4b_l4_accounting(BDRV_ISPPP, sc->sc_unit, ACCT_FINAL,
+	i4b_l4_accounting(cd->cdid, ACCT_FINAL,
 		 sc->sc_ioutb, sc->sc_iinb, 0, 0, sc->sc_outb, sc->sc_inb);
 	
 	if (sc->sc_state == ST_CONNECTED)

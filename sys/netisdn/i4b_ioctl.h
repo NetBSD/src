@@ -27,7 +27,7 @@
  *	i4b_ioctl.h - messages kernel <--> userland
  *	-------------------------------------------
  *
- *	$Id: i4b_ioctl.h,v 1.2 2001/08/05 11:16:56 jdolecek Exp $ 
+ *	$Id: i4b_ioctl.h,v 1.3 2002/03/17 11:08:32 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -414,8 +414,6 @@ typedef struct {
 	int		accttype;	/* accounting type		*/
 #define  ACCT_DURING 0
 #define  ACCT_FINAL  1
-	int		driver;		/* driver type			*/
-	int		driver_unit;	/* driver unit number		*/
 	int		ioutbytes;	/* ISDN # of bytes sent		*/
 	int		iinbytes;	/* ISDN # of bytes received	*/
 	int		outbps;		/* bytes per sec out		*/
