@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_all.h,v 1.9 1996/09/03 18:20:31 thorpej Exp $	*/
+/*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
  * SCSI general  interface description
@@ -181,8 +181,6 @@ struct scsi_changedef {
 #define	CHANGE_DEFINITION	0x40
 #define	MODE_SENSE_BIG		0x54
 #define	MODE_SELECT_BIG		0x55
-#define MOVE_MEDIUM     	0xa5
-#define READ_ELEMENT_STATUS	0xb8
 
 /*
  * sense data format
