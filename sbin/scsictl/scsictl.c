@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.9 1999/10/04 17:10:56 mycroft Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.10 1999/10/27 22:29:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@ device_format(argc, argv)
 	memcpy(cmd.interleave, data.format_page.interleave,
 	    sizeof(cmd.interleave));
 
-	scsi_command(fd, &cmd, sizeof(cmd), NULL, 0, 60000, 0);
+	scsi_command(fd, &cmd, sizeof(cmd), NULL, 0, 21600000, 0);
 
 	return;
 }
