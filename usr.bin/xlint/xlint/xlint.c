@@ -1,4 +1,4 @@
-/*	$NetBSD: xlint.c,v 1.6 1998/02/22 15:40:41 christos Exp $	*/
+/*	$NetBSD: xlint.c,v 1.7 1998/03/24 23:25:31 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xlint.c,v 1.6 1998/02/22 15:40:41 christos Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.7 1998/03/24 23:25:31 sommerfe Exp $");
 #endif
 
 #include <sys/param.h>
@@ -96,7 +96,7 @@ static	char	**libs;
 static	char	**libsrchpath;
 
 /* flags */
-static	int	iflag, oflag, Cflag, sflag, tflag, Fflag;
+static	int	iflag, oflag, Cflag, sflag, tflag, Fflag, dflag;
 
 /* print the commands executed to run the stages of compilation */
 static	int	Vflag;
@@ -332,6 +332,7 @@ main(argc, argv)
 	appcstrg(&cppflags, "-Wcomment");
 	appcstrg(&cppflags, "-D__NetBSD__");
 	appcstrg(&cppflags, "-Dlint");		/* XXX don't def. with -s */
+
 	appdef(&cppflags, "lint");
 	appdef(&cppflags, "unix");
 
@@ -363,7 +364,7 @@ main(argc, argv)
 		argv += optind;
 		optind = 0;
 
-		c = getopt(argc, argv, "abceghil:no:prstuvxzC:D:FHI:L:U:V");
+		c = getopt(argc, argv, "abcd:eghil:no:prstuvxzC:D:FHI:L:U:V");
 
 		switch (c) {
 
@@ -447,6 +448,15 @@ main(argc, argv)
 			freelst(&deflibs);
 			break;
 
+		case 'd':
+			if (dflag)
+				usage();
+			dflag = 1;
+			appcstrg(&cppflags, "-nostdinc");
+			appcstrg(&cppflags, "-idirafter");
+			appstrg(&cppflags, optarg);
+			break;
+			
 		case 'D':
 		case 'I':
 		case 'U':
