@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.20 2003/05/03 18:25:33 thorpej Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.21 2003/05/05 04:23:26 igy Exp $ */
 #undef DEBUG_BEFOREMMU
 /*
  * Copyright (c) 2002, 2003
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.20 2003/05/03 18:25:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.21 2003/05/05 04:23:26 igy Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -491,7 +491,7 @@ initarm(void *arg)
 	l1pagetable = kernel_l1pt.pv_pa;
 
 	/* Map the L2 pages tables in the L1 page table */
-	pmap_link_l2pt(l1pagetable, 0x00000000,
+	pmap_link_l2pt(l1pagetable, ARM_VECTORS_HIGH & ~(0x00400000 - 1),
 	    &kernel_pt_table[KERNEL_PT_SYS]);
 
 	for (loop = 0; loop < KERNEL_PT_KERNEL_NUM; loop++)
@@ -565,7 +565,7 @@ initarm(void *arg)
 	}
 
 	/* Map the vector page. */
-	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
+	pmap_map_entry(l1pagetable, ARM_VECTORS_HIGH, systempage.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 #ifdef VERBOSE_INIT_ARM
@@ -619,7 +619,7 @@ initarm(void *arg)
 	 */
 	cpu_idcache_wbinv_all();
 
-	arm32_vector_init(ARM_VECTORS_LOW, ARM_VEC_ALL);
+	arm32_vector_init(ARM_VECTORS_HIGH, ARM_VEC_ALL);
 
 	/*
 	 * Pages were allocated during the secondary bootstrap for the
