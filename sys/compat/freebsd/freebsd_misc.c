@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.11 2000/12/18 08:53:39 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.12 2000/12/28 11:18:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -58,11 +58,6 @@
 #include <compat/freebsd/freebsd_rtprio.h>
 #include <compat/freebsd/freebsd_timex.h>
 #include <compat/freebsd/freebsd_signal.h>
-
-#ifdef KTRACE
-void    ktrinitheader(struct ktr_header *, struct proc *, int);
-int	ktrwrite(struct proc *, struct ktr_header *);
-#endif
 
 int
 freebsd_sys_msync(p, v, retval)
@@ -173,25 +168,13 @@ freebsd_sys_utrace(p, v, retval)
 		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
-	struct ktr_header kth;
-	register caddr_t cp;
-	int error = 0;
 
-	if (!KTRPOINT(p, KTR_USER))
-		return (0);
-	p->p_traceflag |= KTRFAC_ACTIVE;
-	ktrinitheader(&kth, p, KTR_USER);
-	cp = (caddr_t) malloc(SCARG(uap, len), M_TEMP, M_WAITOK);
-	if ((error = copyin(SCARG(uap, addr), cp, SCARG(uap, len))) == 0) {
-		kth.ktr_buf = cp;
-		kth.ktr_len = SCARG(uap, len);
-		error = ktrwrite(p, &kth);
-	}
-	free(cp, M_TEMP);
-	p->p_traceflag &= ~KTRFAC_ACTIVE;
-
-	return (error);
+	if (KTRPOINT(p, KTR_USER))
+		ktruser(p, "FreeBSD utrace", SCARG(uap, addr), SCARG(uap, len),
+			0);
+	
+	return (0);
 #else
-	return ENOSYS;
+	return (ENOSYS);
 #endif
 }
