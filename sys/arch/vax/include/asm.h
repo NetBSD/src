@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.10 2000/06/23 12:18:50 kleink Exp $ */
+/*	$NetBSD: asm.h,v 1.11 2000/06/27 06:17:28 matt Exp $ */
 /*
  * Copyright (c) 1982, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +34,8 @@
  *	@(#)DEFS.h	8.1 (Berkeley) 6/4/93
  */
 
-#ifndef _MACHINE_ASM_H_
-#define _MACHINE_ASM_H_
+#ifndef _VAX_ASM_H_
+#define _VAX_ASM_H_
 
 #define R0	0x001
 #define R1	0x002
@@ -44,44 +44,62 @@
 #define R4	0x010
 #define R5	0x020
 #define R6	0x040
-#define	R7 	0x080
-#define	R8	0x100
-#define	R9	0x200
-#define	R10	0x400
-#define	R11	0x800
+#define R7 	0x080
+#define R8	0x100
+#define R9	0x200
+#define R10	0x400
+#define R11	0x800
+
+#ifdef __ELF__
+# define _C_LABEL(x)	x
+#else
+# ifdef __STDC__
+#  define _C_LABEL(x)	_ ## x
+# else
+#  define _C_LABEL(x)	_/**/x
+# endif
+#endif
+
+#define	_ASM_LABEL(x)	x
 
 #ifdef __STDC__
-#ifdef GPROF
-#define	ENTRY(x, regs) \
-	.globl _ ## x; .type _ ## x,@function ; .align 2; _ ## x: .word regs; \
-	.data; 1:; .long 0; .text; moval 1b,r0; jsb mcount
-#define	ASENTRY(x, regs) \
-	.globl x; .type x,@function; .align 2; x: .word regs; \
-	.data; 1:; .long 0; .text; moval 1b,r0; jsb mcount
+# define __CONCAT(x,y)	x ## y
+# define __STRING(x)	#x
 #else
-#define	ENTRY(x, regs) \
-	.globl _ ## x; .type _ ## x,@function; \
-	.align 2; _ ## x : .word regs
-#define	ASENTRY(x, regs) \
-	.globl x; .type x,@function; .align 2; x: .word regs
+# define __CONCAT(x,y)	x/**/y
+# define __STRING(x)	"x"
 #endif
-#define ALTENTRY(x) .globl _ ## x; _ ## x:
+
+/* let kernels and others override entrypoint alignment */
+#ifndef _ALIGN_TEXT
+# ifdef __ELF__
+#  define _ALIGN_TEXT .align 4
 # else
+#  define _ALIGN_TEXT .align 2
+# endif
+#endif
+
+#define	_ENTRY(x, regs) \
+	.text; _ALIGN_TEXT; .globl x; .type x@function; x: .word regs
+
 #ifdef GPROF
-#define ENTRY(x, regs) \
-	.globl _/**/x; .type _/**/x,@function; .align 2; _/**/x: .word regs; \
-	.data; 1:; .long 0; .text; moval 1b,r0; jsb mcount
-#define ASENTRY(x, regs) \
-	.globl x; .type x,@function; .align 2; x: .word regs; \
-	.data; 1:; .long 0; .text; moval 1b,r0; jsb mcount
+# ifdef __ELF__
+#  define _PROF_PROLOGUE	\
+	.data; 1:; .long 0; .text; moval 1b,r0; jsb _ASM_LABEL(__mcount)
+# else 
+#  define _PROF_PROLOGUE	\
+	.data; 1:; .long 0; .text; moval 1b,r0; jsb _ASM_LABEL(mcount)
+# endif
 #else
-#define ENTRY(x, regs) \
-	.globl _/**/x; .type _/**/x,@function; .align 2; _/**/x: .word regs
-#define ASENTRY(x, regs) \
-	.globl x; .type x,@function; .align 2; x: .word regs
+# define _PROF_PROLOGUE
 #endif
-#define ALTENTRY(x) .globl _/**/x; _/**/x:
-#endif
+
+#define ENTRY(x, regs)		_ENTRY(_C_LABEL(x), regs); _PROF_PROLOGUE
+#define NENTRY(x, regs)		_ENTRY(_C_LABEL(x), regs)
+#define ASENTRY(x, regs)	_ENTRY(_ASM_LABEL(x), regs); _PROF_PROLOGUE
+
+#define ALTENTRY(x)		.globl _C_LABEL(x); _C_LABEL(x):
+#define RCSID(x)		.text; .asciz x
 
 #ifdef __ELF__
 #define	WEAK_ALIAS(alias,sym)						\
@@ -90,15 +108,13 @@
 #endif
 
 #ifdef __STDC__
-#define	__STRING(x)			#x
 #define	WARN_REFERENCES(sym,msg)					\
 	.stabs msg ## ,30,0,0,0 ;					\
-	.stabs __STRING(_ ## sym) ## ,1,0,0,0
+	.stabs __STRING(_C_LABEL(sym)) ## ,1,0,0,0
 #else
-#define	__STRING(x)			"x"
 #define	WARN_REFERENCES(sym,msg)					\
 	.stabs msg,30,0,0,0 ;						\
-	.stabs __STRING(_/**/sym),1,0,0,0
+	.stabs __STRING(_C_LABEL(sym)),1,0,0,0
 #endif /* __STDC__ */
 
-#endif
+#endif /* !_VAX_ASM_H_ */
