@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.44 2003/02/16 23:15:27 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.45 2003/02/22 05:24:16 tsutsui Exp $	*/
 
 /*
  * TODO
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.44 2003/02/16 23:15:27 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.45 2003/02/22 05:24:16 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,8 +211,6 @@ Static void		ehci_dump_sqh(ehci_soft_qh_t *);
 Static void		ehci_dump_exfer(struct ehci_xfer *);
 #endif
 #endif
-
-#define MS_TO_TICKS(ms) ((ms) * hz / 1000)
 
 #define EHCI_NULL htole32(EHCI_LINK_TERMINATE)
 
@@ -2569,7 +2567,7 @@ ehci_device_request(usbd_xfer_handle xfer)
 	s = splusb();
 	ehci_set_qh_qtd(sqh, setup);
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
-                usb_callout(xfer->timeout_handle, MS_TO_TICKS(xfer->timeout),
+                usb_callout(xfer->timeout_handle, mstohz(xfer->timeout),
 			    ehci_timeout, xfer);
 	}
 	ehci_add_intr_list(sc, exfer);
@@ -2679,7 +2677,7 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 	s = splusb();
 	ehci_set_qh_qtd(sqh, data);
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
-		usb_callout(xfer->timeout_handle, MS_TO_TICKS(xfer->timeout),
+		usb_callout(xfer->timeout_handle, mstohz(xfer->timeout),
 			    ehci_timeout, xfer);
 	}
 	ehci_add_intr_list(sc, exfer);
