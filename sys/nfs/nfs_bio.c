@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.91 2003/04/12 14:26:58 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.92 2003/04/12 14:38:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.91 2003/04/12 14:26:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.92 2003/04/12 14:38:57 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -1036,7 +1036,7 @@ nfs_doio_write(bp, uiop)
 		}
 		lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
 		if (!error) {
-			bp->b_resid = 0;
+			uio->uio_resid = 0;
 			simple_lock(&uobj->vmobjlock);
 			for (i = 0; i < npages; i++) {
 				pgs[i]->flags &= ~(PG_NEEDCOMMIT | PG_RDONLY);
