@@ -1,4 +1,4 @@
-.\"	$NetBSD: netintro.4,v 1.14 2001/09/22 01:39:12 wiz Exp $
+.\"	$NetBSD: netintro.4,v 1.15 2001/10/29 15:08:31 pooka Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -306,7 +306,8 @@ configuration list.
 struct ifaliasreq {
         char    ifra_name[IFNAMSIZ];   /* if name, e.g. "en0" */
         struct  sockaddr        ifra_addr;
-        struct  sockaddr        ifra_broadaddr;
+        struct  sockaddr        ifra_dstaddr;
+#define	ifra_broadaddr  ifra_dstaddr
         struct  sockaddr        ifra_mask;
 };
 .Ed
