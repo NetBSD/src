@@ -480,8 +480,13 @@ void fillin_program(prog_t *p)
 	sprintf(path, "%s/obj", p->srcdir);
 	if(is_dir(path))
 	    p->objdir = strdup(path);
-	else
-	    p->objdir = p->srcdir;
+	else {
+	    sprintf(path, "%s/obj.%s", p->srcdir, MACHINE);
+	    if(is_dir(path))
+		p->objdir = strdup(path);
+	    else
+	        p->objdir = p->srcdir;
+        }
     }
 
     if(p->srcdir) sprintf(path, "%s/Makefile", p->srcdir);
@@ -539,6 +544,9 @@ void fillin_program_objs(prog_t *p, char *path)
 
     while(fgets(line, MAXLINELEN, f)) {
 	if(strncmp(line, "OBJS= ", 6)) {
+	    if (strcmp(line,
+	   	"sh: warning: running as root with dot in PATH\n") == 0)
+		    continue;
 	    fprintf(stderr, "make error: %s", line);
 	    goterror = 1;	
 	    continue;
