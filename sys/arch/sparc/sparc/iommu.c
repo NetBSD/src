@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.27 1998/09/19 15:47:19 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.28 1998/10/11 23:21:02 chuck Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
 #include <uvm/uvm.h>
 #else
 #define uvm_km_valloc(m,s)	kmem_alloc_pageable(m,s)
-#define uvm_unmap(m,a,s,x)	kmem_free(m,a,s)
+#define uvm_unmap(m,a,s)	kmem_free(m,a,s)
 #endif
 
 #define _SPARC_BUS_DMA_PRIVATE
@@ -729,9 +729,9 @@ iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 	/* Return excess virtual addresses */
 	if (va != sva)
-		(void)uvm_unmap(kernel_map, sva, va, 0);
+		(void)uvm_unmap(kernel_map, sva, va);
 	if (va + size != sva + oversize)
-		(void)uvm_unmap(kernel_map, va + size, sva + oversize, 0);
+		(void)uvm_unmap(kernel_map, va + size, sva + oversize);
 
 
 	*kvap = (caddr_t)va;
