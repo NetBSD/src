@@ -1,4 +1,4 @@
-| $NetBSD: !Run,v 1.2 2002/06/13 08:41:52 gavan Exp $
+| $NetBSD: !Run,v 1.2.2.1 2004/06/17 08:33:47 tron Exp $
 |
 | run file for !BtNetBSD application
 |
@@ -6,6 +6,8 @@
 WimpSlot -min 64k -max 64k
 IconSprites <Obey$Dir>.!Sprites
 Set BtNetBSD$Dir <Obey$Dir>
+
+Set Alias$@RunType_1a9 Run <BtNetBSD$Dir>.!Run %%*0
 
 | First, check if we are running the version of RISC OS 4.03 that
 | needs the memfix module
