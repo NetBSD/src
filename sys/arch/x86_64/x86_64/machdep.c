@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 2003/01/30 02:05:00 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28 2003/02/23 02:43:25 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -1197,8 +1197,8 @@ init_x86_64(first_avail)
 	struct region_descriptor region;
 	struct mem_segment_descriptor *ldt_segp;
 	int x, first16q, ist;
-	u_int64_t seg_start, seg_end;
-	u_int64_t seg_start1, seg_end1;
+	u_int64_t seg_start, seg_end, addr, size;
+	u_int64_t seg_start1, seg_end1, io_end;
 
 	lwp0.l_addr = proc0paddr;
 	curpcb = &lwp0.l_addr->u_pcb;
@@ -1239,16 +1239,18 @@ init_x86_64(first_avail)
 	 * to us by the boot program.
 	 */
 	bim = lookup_bootinfo(BTINFO_MEMMAP);
-	if (0 && bim != NULL && bim->num > 0) {
+	if (bim != NULL && bim->num > 0) {
 #if DEBUG_MEMLOAD
 		printf("BIOS MEMORY MAP (%d ENTRIES):\n", bim->num);
 #endif
 		for (x = 0; x < bim->num; x++) {
+			addr = ((u_int64_t)bim->entry[x].addrhi << 32) |
+				bim->entry[x].addrlo;
+			size = ((u_int64_t)bim->entry[x].sizehi << 32) |
+				bim->entry[x].sizelo;
 #if DEBUG_MEMLOAD
-			printf("    addr 0x%qx  size 0x%qx  type 0x%x\n",
-			    bim->entry[x].addr,
-			    bim->entry[x].size,
-			    bim->entry[x].type);
+			printf("    addr 0x%lx  size 0x%lx  type 0x%x\n",
+			    addr, size, bim->entry[x].type);
 #endif
 
 			/*
@@ -1263,27 +1265,16 @@ init_x86_64(first_avail)
 				continue;
 			}
 
-			seg_start = bim->entry[x].addr;
-			seg_end = bim->entry[x].addr + bim->entry[x].size;
+			seg_start = addr;
+			seg_end = addr + size;
 
-			if (seg_end > 0x10000000000ULL) {
+			if (seg_end > 0x100000000000ULL) {
 				printf("WARNING: skipping large "
 				    "memory map entry: "
 				    "0x%lx/0x%lx/0x%x\n",
-				    bim->entry[x].addr,
-				    bim->entry[x].size,
+				    addr, size,
 				    bim->entry[x].type);
 				continue;
-			}
-
-			/*
-			 * XXX Chop the last page off the size so that
-			 * XXX it can fit in avail_end.
-			 */
-			if (seg_end == 0x100000000ULL) {
-				seg_end -= PAGE_SIZE;
-				if (seg_end <= seg_start)
-					continue;
 			}
 
 			/*
@@ -1292,15 +1283,21 @@ init_x86_64(first_avail)
 			 * the addresses are page rounded just to make
 			 * sure we get them all.
 			 */
-			if (extent_alloc_region(iomem_ex, seg_start,
-			    seg_end - seg_start, EX_NOWAIT)) {
-				/* XXX What should we do? */
-				printf("WARNING: CAN'T ALLOCATE "
-				    "MEMORY SEGMENT %d "
-				    "(0x%lx/0x%lx/0l%x) FROM "
-				    "IOMEM EXTENT MAP!\n",
-				    x, seg_start, seg_end - seg_start,
-				    bim->entry[x].type);
+			if (seg_start < 0x100000000UL) {
+				if (seg_end > 0x100000000UL)
+					io_end = 0x100000000UL;
+				else
+					io_end = seg_end;
+				if (extent_alloc_region(iomem_ex, seg_start,
+				    io_end - seg_start, EX_NOWAIT)) {
+					/* XXX What should we do? */
+					printf("WARNING: CAN'T ALLOCATE "
+					    "MEMORY SEGMENT %d "
+					    "(0x%lx/0x%lx/0l%x) FROM "
+					    "IOMEM EXTENT MAP!\n",
+					    x, seg_start, io_end - seg_start,
+					    bim->entry[x].type);
+				}
 			}
 
 			/*
@@ -1450,7 +1447,8 @@ init_x86_64(first_avail)
 					tmp = seg_end;
 #if DEBUG_MEMLOAD
 				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
-				    seg_start, tmp,
+				    (unsigned long long)seg_start,
+				    (unsigned long long)tmp,
 				    atop(seg_start), atop(tmp));
 #endif
 				uvm_page_physload(atop(seg_start),
@@ -1462,7 +1460,8 @@ init_x86_64(first_avail)
 			if (seg_start != seg_end) {
 #if DEBUG_MEMLOAD
 				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
-				    seg_start, seg_end,
+				    (unsigned long long)seg_start,
+				    (unsigned long long)seg_end,
 				    atop(seg_start), atop(seg_end));
 #endif
 				uvm_page_physload(atop(seg_start),
@@ -1483,7 +1482,8 @@ init_x86_64(first_avail)
 					tmp = seg_end1;
 #if DEBUG_MEMLOAD
 				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
-				    seg_start1, tmp,
+				    (unsigned long long)seg_start1,
+				    (unsigned long long)tmp,
 				    atop(seg_start1), atop(tmp));
 #endif
 				uvm_page_physload(atop(seg_start1),
@@ -1495,7 +1495,8 @@ init_x86_64(first_avail)
 			if (seg_start1 != seg_end1) {
 #if DEBUG_MEMLOAD
 				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
-				    seg_start1, seg_end1,
+				    (unsigned long long)seg_start1,
+				    (unsigned long long)seg_end1,
 				    atop(seg_start1), atop(seg_end1));
 #endif
 				uvm_page_physload(atop(seg_start1),
