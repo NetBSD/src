@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.27 2004/11/10 17:54:06 christos Exp $
+# 	$NetBSD: INSTALL,v 1.28 2005/01/05 09:01:24 tsutsui Exp $
 
 #	config for bootable floppy kernel
 #
@@ -28,7 +28,7 @@ options 	MEMORY_DISK_ROOT_SIZE=2880	# 1.44 Megabytes
 #options 	SHMMAXPGS=1024		# 1024 pages is the default
 #options 	LKM			# loadable kernel modules
 options 	USERCONF		# userconf(4) support
-options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
@@ -46,7 +46,7 @@ options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 #options 	COMPAT_15		# NetBSD 1.5 binary compatibility
 #options 	COMPAT_16		# NetBSD 1.6 binary compatibility
 #options 	COMPAT_20		# NetBSD 2.0 binary compatibility
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_BSDPTY		# /dev/[pt]ty?? ptys.
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
