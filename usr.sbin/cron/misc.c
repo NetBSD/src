@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.7 1998/02/04 15:27:19 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.8 1998/07/28 19:27:39 mycroft Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: misc.c,v 2.9 1994/01/15 20:43:43 vixie Exp";
 #else
-__RCSID("$NetBSD: misc.c,v 1.7 1998/02/04 15:27:19 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.8 1998/07/28 19:27:39 mycroft Exp $");
 #endif
 #endif
 
@@ -615,8 +615,7 @@ mkprint(dst, src, len)
 			*dst++ = '^';
 			*dst++ = '?';
 		} else {			/* parity character */
-			sprintf(dst, "\\%03o", ch);
-			dst += 4;
+			dst += snprintf(dst, 5, "\\%03o", ch);
 		}
 	}
 	*dst = '\0';
