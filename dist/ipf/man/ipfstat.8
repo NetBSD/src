@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipfstat.8,v 1.9 2003/03/30 17:10:31 wiz Exp $
+.\"	$NetBSD: ipfstat.8,v 1.10 2004/03/28 09:00:56 martti Exp $
 .\"
 .TH ipfstat 8
 .SH NAME
@@ -6,10 +6,7 @@ ipfstat \- reports on packet filter statistics and filter list
 .SH SYNOPSIS
 .B ipfstat
 [
-.B \-6aAfghIinosv
-] [
-.B \-d
-<device>
+.B \-6aACdfghIinosv
 ]
 
 .B ipfstat -t
@@ -27,9 +24,6 @@ ipfstat \- reports on packet filter statistics and filter list
 ] [
 .B \-T
 <refresh time>
-] [
-.B \-d
-<device>
 ]
 .SH DESCRIPTION
 .PP
@@ -58,8 +52,8 @@ Display "closed" states as well in the top. Normally, a TCP connection is
 not displayed when it reaches the CLOSE_WAIT protocol state. With this
 option enabled, all state entries are displayed.
 .TP
-.BR \-d \0<device>
-Use a device other than \fB/dev/ipl\fP for interfacing with the kernel.
+.BR \-d
+Produce debugging output when displaying data.
 .TP
 .BR \-D \0<addrport>
 This option is only valid in combination with \fB\-t\fP. Limit the state top

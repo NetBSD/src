@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.1.1.1 2004/03/28 08:56:39 martti Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.2 2004/03/28 09:00:57 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -19,6 +19,8 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.2 2004/03/22 12:18
 #include <sys/param.h>
 #if (NetBSD >= 199905) && !defined(IPFILTER_LKM) && defined(_KERNEL)
 # include "opt_ipfilter_log.h"
+# include "opt_pfil_hooks.h"
+# include "opt_ipsec.h"
 #endif
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -76,6 +78,7 @@ MALLOC_DEFINE(M_IPFILTER, "IP Filter", "IP Filter packet filter data structures"
 
 #if __NetBSD_Version__ >= 105009999
 # define	csuminfo	csum_flags
+#endif
 #endif
 
 extern	struct	protosw	inetsw[];
