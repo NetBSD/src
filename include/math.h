@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.34 2004/03/04 23:42:38 kleink Exp $	*/
+/*	$NetBSD: math.h,v 1.34.2.1 2004/07/15 20:56:40 he Exp $	*/
 
 /*
  * ====================================================
@@ -230,6 +230,7 @@ double	logb __P((double));
 double	nextafter __P((double, double));
 double	remainder __P((double, double));
 double	rint __P((double));
+double	round __P((double));
 double	scalb __P((double, double));
 #endif /* (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)*/
 #endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
@@ -379,6 +380,7 @@ float	significandf __P((float));
 float	copysignf __P((float, float));
 int	ilogbf __P((float));
 float	rintf __P((float));
+float	roundf __P((float));
 float	scalbnf __P((float, int));
 
 /*
