@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.31 2000/05/13 23:43:13 perseant Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.32 2000/05/28 04:13:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -176,9 +176,9 @@ ffs_truncate(v)
 	struct fs *fs;
 	struct buf *bp;
 	int offset, size, level;
-	long count, nblocks, vflags, blocksreleased = 0;
+	long count, nblocks, blocksreleased = 0;
 	int i;
-	int aflags, error, allerror;
+	int aflags, error, allerror = 0;
 	off_t osize;
 
 	if (length < 0)
@@ -325,8 +325,10 @@ ffs_truncate(v)
 	for (i = NDADDR - 1; i > lastblock; i--)
 		oip->i_ffs_db[i] = 0;
 	oip->i_flag |= IN_CHANGE | IN_UPDATE;
-	if ((error = VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT)) != 0)
+	error = VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT);
+	if (error && !allerror)
 		allerror = error;
+
 	/*
 	 * Having written the new inode to disk, save its new configuration
 	 * and put back the old block pointers long enough to process them.
@@ -336,8 +338,9 @@ ffs_truncate(v)
 	memcpy((caddr_t)newblks, (caddr_t)&oip->i_ffs_db[0], sizeof newblks);
 	memcpy((caddr_t)&oip->i_ffs_db[0], (caddr_t)oldblks, sizeof oldblks);
 	oip->i_ffs_size = osize;
-	vflags = ((length > 0) ? V_SAVE : 0) | V_SAVEMETA;
-	allerror = vinvalbuf(ovp, vflags, ap->a_cred, ap->a_p, 0, 0);
+	error = vtruncbuf(ovp, lastblock + 1, 0, 0);
+	if (error && !allerror)
+		allerror = error;
 
 	/*
 	 * Indirect blocks first.
@@ -408,6 +411,7 @@ ffs_truncate(v)
 			blocksreleased += btodb(oldspace - newspace);
 		}
 	}
+
 done:
 #ifdef DIAGNOSTIC
 	for (level = SINGLE; level <= TRIPLE; level++)
@@ -417,7 +421,7 @@ done:
 		if (newblks[i] != oip->i_ffs_db[i])
 			panic("itrunc2");
 	if (length == 0 &&
-	    (ovp->v_dirtyblkhd.lh_first || ovp->v_cleanblkhd.lh_first))
+	    (!LIST_EMPTY(&ovp->v_cleanblkhd) || !LIST_EMPTY(&ovp->v_dirtyblkhd)))
 		panic("itrunc3");
 #endif /* DIAGNOSTIC */
 	/*
