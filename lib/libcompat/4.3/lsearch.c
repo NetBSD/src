@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)lsearch.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: lsearch.c,v 1.4 1998/02/03 18:58:07 perry Exp $");
+__RCSID("$NetBSD: lsearch.c,v 1.5 1999/05/04 17:10:10 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -76,12 +76,14 @@ linear_base(key, base, nelp, width, compar, add_flag)
 	cmp_fn_t compar;
 	int add_flag;
 {
-	const char *element, *end;
+	char *element, *end;
 
-	end = (const char *)base + *nelp * width;
-	for (element = base; element < end; element += width)
+	/* LINTED const castaway */
+	end = (char *)base + *nelp * width;
+	/* LINTED const castaway */
+	for (element = (char *)base; element < end; element += width)
 		if (!compar(element, key))		/* key found */
-			return((void *)element);
+			return element;
 
 	if (!add_flag)					/* key not found */
 		return(NULL);
@@ -96,6 +98,6 @@ linear_base(key, base, nelp, width, compar, add_flag)
 	 * manual.
 	 */
 	++*nelp;
-	memcpy((void *)end, key, width);
-	return((void *)end);
+	memcpy(end, key, width);
+	return end;
 }
