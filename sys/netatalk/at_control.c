@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.2 2000/02/01 22:52:06 thorpej Exp $	 */
+/*	$NetBSD: at_control.c,v 1.3 2000/02/02 23:28:09 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -328,6 +328,20 @@ at_purgeaddr(ifa, ifp)
 	IFAFREE(&aa->aa_ifa);
 	TAILQ_REMOVE(&at_ifaddr, aa, aa_list);
 	IFAFREE(&aa->aa_ifa);
+}
+
+void
+at_purgeif(ifp)
+	struct ifnet *ifp;
+{
+	struct ifaddr *ifa, *nifa;
+
+	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL; ifa = nifa) {
+		nifa = TAILQ_NEXT(ifa, ifa_list);
+		if (ifa->ifa_addr->sa_family != AF_APPLETALK)
+			continue;
+		at_purgeaddr(ifa, ifp);
+	}
 }
 
 /*
