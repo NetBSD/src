@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.9 2003/06/11 21:35:37 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.10 2003/06/14 12:58:46 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -76,9 +76,6 @@
  * On acorn32, that is  msdos.
  */
 EXTERN char *fdtype INIT("msdos");
-
-#define	LIB_COUNT	0
-#define	LIB_MOVE	1
 
 /*
  *  prototypes for MD code.
