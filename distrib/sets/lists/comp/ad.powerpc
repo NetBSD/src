@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.5 1999/06/23 09:09:44 tsubai Exp $
+# $NetBSD: ad.powerpc,v 1.6 1999/12/23 10:22:59 kleink Exp $
 ./usr/include/powerpc
 ./usr/include/powerpc/ansi.h
 ./usr/include/powerpc/aout_machdep.h
@@ -19,6 +19,7 @@
 ./usr/include/powerpc/kcore.h
 ./usr/include/powerpc/limits.h
 ./usr/include/powerpc/machine_type.h
+./usr/include/powerpc/math.h
 ./usr/include/powerpc/param.h
 ./usr/include/powerpc/pcb.h
 ./usr/include/powerpc/pmap.h

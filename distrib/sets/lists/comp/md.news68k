@@ -1,4 +1,4 @@
-# $NetBSD: md.news68k,v 1.1 1999/12/09 15:04:43 tsutsui Exp $
+# $NetBSD: md.news68k,v 1.2 1999/12/23 10:23:00 kleink Exp $
 ./usr/include/news68k
 ./usr/include/news68k/_G_config.h
 ./usr/include/news68k/ansi.h
@@ -19,6 +19,7 @@
 ./usr/include/news68k/intr.h
 ./usr/include/news68k/kcore.h
 ./usr/include/news68k/limits.h
+./usr/include/news68k/math.h
 ./usr/include/news68k/param.h
 ./usr/include/news68k/pcb.h
 ./usr/include/news68k/pmap.h

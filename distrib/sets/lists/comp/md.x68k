@@ -1,4 +1,4 @@
-# $NetBSD: md.x68k,v 1.27 1999/04/19 21:34:16 kleink Exp $
+# $NetBSD: md.x68k,v 1.28 1999/12/23 10:23:00 kleink Exp $
 ./usr/include/x68k
 ./usr/include/x68k/_G_config.h
 ./usr/include/x68k/ansi.h
@@ -26,6 +26,7 @@
 ./usr/include/x68k/kbio.h
 ./usr/include/x68k/kcore.h
 ./usr/include/x68k/limits.h
+./usr/include/x68k/math.h
 ./usr/include/x68k/opmbellio.h
 ./usr/include/x68k/param.h
 ./usr/include/x68k/parioctl.h
