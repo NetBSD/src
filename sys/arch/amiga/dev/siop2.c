@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.6 1999/03/26 22:50:23 mhitch Exp $	*/
+/*	$NetBSD: siop2.c,v 1.7 1999/03/28 19:39:24 is Exp $	*/
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -92,9 +92,18 @@ const
 #include <amiga/dev/siop2_script.out>
 
 /* default to not inhibit sync negotiation on any drive */
-u_char siopng_inhibit_sync[16] = { 0, 0, 0, 0, 0, 0, 0 }; /* initialize, so patchable */
-u_char siopng_inhibit_wide[16] = { 0, 0, 0, 0, 0, 0, 0 }; /* initialize, so patchable */
-u_char siopng_allow_disc[16] = {3, 3, 3, 3, 3, 3, 3, 3};
+u_char siopng_inhibit_sync[16] = {
+	0, 0, 0, 0,	0, 0, 0, 0,	0, 0, 0, 0,	0, 0, 0, 0
+}; /* initialize, so patchable */
+
+u_char siopng_inhibit_wide[16] = {
+	0, 0, 0, 0,	0, 0, 0, 0,	0, 0, 0, 0,	0, 0, 0, 0
+}; /* initialize, so patchable */
+
+u_char siopng_allow_disc[16] = {
+	3, 3, 3, 3,	3, 3, 3, 3,	3, 3, 3, 3,	3, 3, 3, 3
+};
+
 int siopng_no_dma = 0;
 
 int siopng_reset_delay = 250;	/* delay after reset, in milleseconds */
