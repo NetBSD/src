@@ -44,7 +44,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: main.c,v 1.2 1998/09/04 17:51:36 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: main.c,v 1.3 1998/10/08 14:13:25 jtk Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -80,7 +80,7 @@ int main (argc, argv, envp)
 	hdr.length = 0;
 	if (!strcmp (argv [1], "network-location-changed"))
 		hdr.type = NETWORK_LOCATION_CHANGED;
-	if (!strcmp (argv [1], "release-current-dhcp-leases"))
+	else if (!strcmp (argv [1], "release-current-dhcp-leases"))
 		hdr.type = RELEASE_CURRENT_DHCP_LEASES;
 	else
 		error ("unknown status message type %s", argv [1]);
