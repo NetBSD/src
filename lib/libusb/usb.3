@@ -1,4 +1,4 @@
-.\"	$NetBSD: usb.3,v 1.7 1999/07/24 01:42:49 augustss Exp $
+.\"	$NetBSD: usb.3,v 1.8 1999/11/08 22:19:17 augustss Exp $
 .\"
 .\" Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
 .\" All rights reserved.
@@ -73,7 +73,7 @@
 The
 .Nm
 library provides routines to extract data from USB Human Interface Devices.
-.Sh INTRODUCTION
+.Ss INTRODUCTION
 USB HID devices send and receive data layed out a device dependent
 way.  The
 .Nm
@@ -84,7 +84,7 @@ which contains the data layout information and then use this information.
 The routines can be divided into four parts: extraction of the descriptor,
 parsing of the descriptor, translating to/from symbolic names, and
 data manipulation.
-.Sh DESCRIPTOR FUNCTIONS
+.Ss DESCRIPTOR FUNCTIONS
 A report descriptor can be obtained by calling
 .Fn hid_get_report_desc
 with a file descriptor obtained by opening a
@@ -96,7 +96,7 @@ by calling
 The type
 .Fa report_desc_t
 is opaque and should be used when calling the parsing functions.
-.Sh DESCRIPTOR PARSING FUNCTIONS
+.Ss DESCRIPTOR PARSING FUNCTIONS
 To parse the report descriptor the
 .Fn hid_start_parse
 function should be called with a report descriptor and a set that
@@ -145,7 +145,7 @@ function can be used.  It should be given the usage code of
 the item and its kind and it will fill the item and return
 non-zero if the item was found.
 .Pp
-.Sh NAME TRANSLATION FUNCTIONS
+.Ss NAME TRANSLATION FUNCTIONS
 The function
 .Fn hid_usage_page
 will return the symbolic name of a usage page, and the function
@@ -158,7 +158,7 @@ must be parsed, this is done by calling
 with the name of the table.  Passing
 .Fa NULL
 to this function will cause it to use the default table.
-.Sh DATA EXTRACTION FUNCTIONS
+.Ss DATA EXTRACTION FUNCTIONS
 Given the data obtained from a HID device and an item in the
 report descriptor the
 .Fn hid_get_data
