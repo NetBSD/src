@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.30 1998/09/05 05:54:15 nisimura Exp $	*/
+/*	$NetBSD: asic.c,v 1.31 1999/03/12 08:15:27 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -123,7 +123,6 @@ struct cfattach ioasic_ca = {
 void    asic_intr_establish __P((struct confargs *, intr_handler_t,
 				 intr_arg_t));
 void    asic_intr_disestablish __P((struct confargs *));
-caddr_t ioasic_cvtaddr __P((struct confargs *));
 
 int	asic_intrnull __P((intr_arg_t));
 
@@ -170,9 +169,10 @@ ioasicmatch(parent, cf, aux)
 
 	/*
 	 * XXX This is wrong.
+	 * XXX this file will be re-implemented, anyway.
 	 */
 	/* The 3MAX (kn02) is special. */
-	if (TC_BUS_MATCHNAME(ta, KN02_ASIC_NAME)) {
+	if (TC_BUS_MATCHNAME(ta, "KN02    ")) {
 #if 0
 		printf("(configuring KN02 system slot as asic)\n");
 #endif
