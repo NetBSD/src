@@ -1,4 +1,4 @@
-/*	$NetBSD: itime.c,v 1.10 2001/05/28 00:41:14 lukem Exp $	*/
+/*	$NetBSD: itime.c,v 1.11 2001/05/28 01:09:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)itime.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: itime.c,v 1.10 2001/05/28 00:41:14 lukem Exp $");
+__RCSID("$NetBSD: itime.c,v 1.11 2001/05/28 01:09:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ readdumptimes(FILE *df)
 	struct	dumptime *dtwalk;
 
 	for (;;) {
-		dtwalk = (struct dumptime *)calloc(1, sizeof (struct dumptime));
+		dtwalk = (struct dumptime *)xcalloc(1, sizeof(struct dumptime));
 		if (getrecord(df, &(dtwalk->dt_value)) < 0)
 			break;
 		nddates++;
@@ -129,7 +129,7 @@ readdumptimes(FILE *df)
 	 *	record that we may have to add to the ddate structure
 	 */
 	ddatev = (struct dumpdates **)
-		calloc((unsigned) (nddates + 1), sizeof (struct dumpdates *));
+		xcalloc((unsigned) (nddates + 1), sizeof(struct dumpdates *));
 	dtwalk = dthead;
 	for (i = nddates - 1; i >= 0; i--, dtwalk = dtwalk->dt_next)
 		ddatev[i] = &dtwalk->dt_value;
@@ -205,7 +205,7 @@ putdumptime(void)
 	 *	Enough room has been allocated.
 	 */
 	dtwalk = ddatev[nddates] =
-		(struct dumpdates *)calloc(1, sizeof (struct dumpdates));
+		(struct dumpdates *)xcalloc(1, sizeof (struct dumpdates));
 	nddates += 1;
   found:
 	(void) strncpy(dtwalk->dd_name, fname, sizeof (dtwalk->dd_name));

@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.30 2001/05/28 00:41:14 lukem Exp $	*/
+/*	$NetBSD: traverse.c,v 1.31 2001/05/28 01:09:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.30 2001/05/28 00:41:14 lukem Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.31 2001/05/28 01:09:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -182,6 +182,7 @@ mapfileino(ino_t ino, long *tapesize, int *dirskipped)
  * Walk the inode list for a filesystem to find all allocated inodes
  * that have been modified since the previous dump time. Also, find all
  * the directories in the filesystem.
+ * disk may be NULL if dirv is NULL.
  */
 int
 mapfiles(ino_t maxino, long *tapesize, char *disk, char * const *dirv)
