@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2003/07/03 07:10:45 lukem Exp $
+# $NetBSD: Makefile,v 1.6 2003/07/03 11:46:46 tron Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/contrib/mm/Makefile,v 1.6 2002/10/11 08:58:13 ru Exp $
 
@@ -24,7 +24,7 @@ LOCALE=			locale se_locale
 MAN+=		groff_mm.7 groff_mmse.7
 MLINKS=		groff_mm.7 mm.7 groff_mmse.7 mmse.7
 
-#CLEANFILES+=	${MAN}
+CLEANFILES+=	${MAN}
 
 .include <bsd.prog.mk>
 
