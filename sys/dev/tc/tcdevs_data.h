@@ -1,10 +1,10 @@
-/*	$NetBSD: tcdevs_data.h,v 1.9 1998/01/09 06:56:48 thorpej Exp $	*/
+/*	$NetBSD: tcdevs_data.h,v 1.10 1998/01/30 02:25:30 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.7 1997/02/05 22:14:18 cgd Exp 
+ *	NetBSD: tcdevs,v 1.8 1998/01/30 02:24:58 thorpej Exp 
  */
 
 /*
@@ -128,6 +128,26 @@ struct tc_knowndev tc_knowndevs[] = {
 	    "PMAZ-AA ",
 	    TC_DEVICE_PMAZ_AA,
 	    TC_DESCRIPTION_PMAZ_AA,
+	},
+	{
+	    "PMAZ-DS ",
+	    TC_DEVICE_PMAZ_DS,
+	    TC_DESCRIPTION_PMAZ_DS,
+	},
+	{
+	    "PMAZ-FS ",
+	    TC_DEVICE_PMAZ_FS,
+	    TC_DESCRIPTION_PMAZ_FS,
+	},
+	{
+	    "PMAZB-AA",
+	    TC_DEVICE_PMAZB_AA,
+	    TC_DESCRIPTION_PMAZB_AA,
+	},
+	{
+	    "PMAZC-AA",
+	    TC_DEVICE_PMAZC_AA,
+	    TC_DESCRIPTION_PMAZC_AA,
 	},
 	{
 	    "T1D4PKT ",
