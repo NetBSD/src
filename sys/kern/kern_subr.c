@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.88 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.89 2002/09/23 03:37:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.88 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.89 2002/09/23 03:37:59 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -469,7 +469,7 @@ void
 shutdownhook_disestablish(vhook)
 	void *vhook;
 {
-	return hook_disestablish(&shutdownhook_list, vhook);
+	hook_disestablish(&shutdownhook_list, vhook);
 }
 
 /*
@@ -520,7 +520,7 @@ void
 mountroothook_disestablish(vhook)
 	void *vhook;
 {
-	return hook_disestablish(&mountroothook_list, vhook);
+	hook_disestablish(&mountroothook_list, vhook);
 }
 
 void
