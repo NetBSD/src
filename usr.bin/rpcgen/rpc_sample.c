@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_sample.c,v 1.7 2001/03/21 00:31:52 mycroft Exp $	*/
+/*	$NetBSD: rpc_sample.c,v 1.8 2001/03/21 20:11:01 mycroft Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_sample.c  1.1  90/08/30  (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_sample.c,v 1.7 2001/03/21 00:31:52 mycroft Exp $");
+__RCSID("$NetBSD: rpc_sample.c,v 1.8 2001/03/21 20:11:01 mycroft Exp $");
 #endif
 #endif
 
@@ -104,7 +104,7 @@ write_sample_client(program_name, vp)
 		if (proc->arg_num < 2 && !newstyle) {
 			f_print(fout, "\t");
 			if (streq(proc->args.decls->decl.type, "void"))
-				f_print(fout, "char");	/* cannot have "void"
+				f_print(fout, "char ");	/* cannot have "void"
 							 * type */
 			else
 				ptype(proc->args.decls->decl.prefix, proc->args.decls->decl.type, 1);
@@ -115,7 +115,6 @@ write_sample_client(program_name, vp)
 				for (l = proc->args.decls; l != NULL; l = l->next) {
 					f_print(fout, "\t");
 					ptype(l->decl.prefix, l->decl.type, 1);
-					f_print(fout, " ");
 					pvname(proc->proc_name, vp->vers_num);
 					f_print(fout, "_%s;\n", l->decl.name);
 /*	  pdeclaration(proc->args.argname, &l->decl, 1, ";\n" );*/
@@ -181,7 +180,7 @@ write_sample_client(program_name, vp)
 			pvname(proc->proc_name, vp->vers_num);
 			f_print(fout, "_res == NULL)\n");
 		}
-		f_print(fout, "\t\tclnt_perror(clnt, \"call failed:\");\n");
+		f_print(fout, "\t\tclnt_perror(clnt, \"call failed\");\n");
 	}
 
 	f_print(fout, "\tclnt_destroy(clnt);\n");
@@ -212,14 +211,14 @@ write_sample_server(def)
 
 			f_print(fout, "{\n");
 			if (Mflag) {
-				f_print(fout, "\tbool_t retval;\n");
+				f_print(fout, "\tbool_t retval = TRUE;\n");
 			} else {
 				f_print(fout, "\tstatic ");
 				if (streq(proc->res_type, "void"))
-					f_print(fout, "char");	/* cannot have void type */
+					f_print(fout, "char ");	/* cannot have void type */
 				else
 					return_type(proc);
-				f_print(fout, " result;\n");
+				f_print(fout, "result;\n");
 			}
 			f_print(fout,
 			    "\n\t/*\n\t * insert server code here\n\t */\n\n");
