@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.48.4.2 2001/12/24 14:05:28 he Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.48.4.3 2002/03/28 22:49:02 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -431,8 +431,10 @@ dofilewritev(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	/* note: can't use iovlen until iovcnt is validated */
 	iovlen = iovcnt * sizeof(struct iovec);
 	if ((u_int)iovcnt > UIO_SMALLIOV) {
-		if ((u_int)iovcnt > IOV_MAX)
-			return (EINVAL);
+		if ((u_int)iovcnt > IOV_MAX) {
+			error = EINVAL;
+			goto out;
+		}
 		MALLOC(iov, struct iovec *, iovlen, M_IOV, M_WAITOK);
 		needfree = iov;
 	} else if ((u_int)iovcnt > 0) {
