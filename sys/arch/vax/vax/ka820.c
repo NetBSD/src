@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.16 1999/08/04 19:11:01 ragge Exp $	*/
+/*	$NetBSD: ka820.c,v 1.17 1999/09/06 19:52:52 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -125,8 +125,6 @@ ka820_attach(parent, self, aux)
 {
 	struct bi_attach_args *ba = aux;
 	register int csr;
-	extern	short *clk_page;
-	extern	int clk_adrshift, clk_tweak;
 	u_short rev;
 	extern	char cpu_model[];
 

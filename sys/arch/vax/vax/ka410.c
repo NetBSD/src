@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.c,v 1.20 1999/08/07 10:36:48 ragge Exp $ */
+/*	$NetBSD: ka410.c,v 1.21 1999/09/06 19:52:53 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -64,8 +64,6 @@ static	void	ka410_clrf __P((void));
 static	caddr_t	l2cache;	/* mapped in address */
 static	long 	*cacr;		/* l2csche ctlr reg */
 
-extern  short *clk_page;
-
 /* 
  * Declaration of 410-specific calls.
  */
@@ -87,7 +85,6 @@ struct	cpu_dep ka410_calls = {
 void
 ka410_conf()
 {
-        extern  int clk_adrshift, clk_tweak;
 	struct vs_cpu *ka410_cpu;
 
 	ka410_cpu = (struct vs_cpu *)vax_map_physmem(VS_REGS, 1);
