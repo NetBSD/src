@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.160 1999/11/28 04:50:42 simonb Exp $
+#	$NetBSD: bsd.lib.mk,v 1.161 2000/01/17 18:37:23 abs Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -274,7 +274,6 @@ CLEANFILES+=	${DPSRCS}
 CLEANFILES+=	${SRCS:M*.y:.y=.h}
 .endif
 
-OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 lib${LIB}.a:: ${OBJS} __archivebuild
 	@echo building standard ${LIB} library
 
