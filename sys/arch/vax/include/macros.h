@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.30 2003/09/18 18:38:48 ragge Exp $	*/
+/*	$NetBSD: macros.h,v 1.31 2004/07/01 22:58:13 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -32,7 +32,7 @@
 
  /* All bugs are subject to removal without further notice */
 
-#if !defined(_VAX_MACROS_H_) && !defined(lint)
+#if !defined(_VAX_MACROS_H_) && !defined(__lint__)
 #define _VAX_MACROS_H_
 
 void	__blkset(void *, int, size_t);
@@ -425,4 +425,4 @@ remqhi(void *header) {
 #define	Q_EMPTY		0	/* Queue is/was empty */
 #define	Q_OK		1	/* Inserted OK */
 
-#endif	/* _VAX_MACROS_H_ */
+#endif	/* !_VAX_MACROS_H_ && !__lint__ */
