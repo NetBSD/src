@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.29 1998/09/26 18:20:19 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.30 1998/10/06 20:50:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -207,7 +207,6 @@ struct	device *parsedisk __P((char *, int, int, dev_t *));
 void	mountroot_hook_establish __P((void (*) __P((struct device *)),
 				      struct device *));
 
-void	configure __P((void));
 void	bootstrap __P((void));
 struct device *getdevunit __P((char *, int));
 void	*findzs __P((int));

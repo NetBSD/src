@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.5 1996/12/17 06:47:40 scottr Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.6 1998/10/06 20:50:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -41,7 +41,6 @@
 
 /* autoconf.c */
 void	setconf __P((void));
-void	configure __P((void));
 
 /* machdep.c */
 void	mac68k_set_io_offsets __P((vm_offset_t));
