@@ -1,4 +1,4 @@
-/*	$NetBSD: ttymsg.c,v 1.18 2003/08/07 16:45:00 agc Exp $	*/
+/*	$NetBSD: ttymsg.c,v 1.19 2004/03/29 11:52:39 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: ttymsg.c,v 1.18 2003/08/07 16:45:00 agc Exp $");
+__RCSID("$NetBSD: ttymsg.c,v 1.19 2004/03/29 11:52:39 wiz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -135,7 +135,7 @@ ttymsg(struct iovec *iov, int iovcnt, const char *line, int tmout)
 			continue;
 		}
 		if (errno == EWOULDBLOCK) {
-			int cpid;
+			pid_t cpid;
 
 			if (forked) {
 				(void) close(fd);
