@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pica,v 1.16 1997/09/30 22:54:24 christos Exp $
+#	$NetBSD: Makefile.pica,v 1.17 1997/11/12 22:26:20 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -23,9 +23,12 @@
 
 CC?=	cc
 LD?=	ld
+LORDER?=lorder
 MKDEP?=	mkdep
+NM?=	nm
 STRIP?=	strip
 SIZE?=	size
+TSORT?=	tsort -q
 COPTS?=	-O2
 
 # source tree is located via $S relative to the compilation directory

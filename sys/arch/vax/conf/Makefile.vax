@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.36 1997/11/04 22:59:42 ragge Exp $
+#	$NetBSD: Makefile.vax,v 1.37 1997/11/12 22:26:42 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -23,9 +23,12 @@
 
 CC?=	cc
 LD?=	ld
+LORDER?=lorder
 MKDEP?=	mkdep
+NM?=	nm
 SIZE?=	size
 STRIP?=	strip
+TSORT?=	tsort -q
 COPTS?= -O2
 
 # source tree is located via $S relative to the compilation directory
