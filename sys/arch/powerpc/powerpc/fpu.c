@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.14 2004/04/04 22:20:44 matt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.15 2004/04/05 04:53:01 simonb Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.14 2004/04/04 22:20:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.15 2004/04/05 04:53:01 simonb Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -60,7 +60,7 @@ enable_fpu(void)
 		pcb->pcb_flags |= PCB_FPU;
 	}
 	/*
-	 * If we own the CPU but FP is disabled, simple enable it and return.
+	 * If we own the CPU but FP is disabled, simply enable it and return.
 	 */
 	if (ci->ci_fpulwp == l) {
 		tf->srr1 |= PSL_FP | (pcb->pcb_flags & (PCB_FE0|PCB_FE1));
