@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.27 1998/02/21 23:02:34 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.28 1998/03/09 19:14:44 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -278,7 +278,7 @@ poduleexamine(podule, dev, slottype)
 				if (!pod_list->description)
 					printf("man=%04x   : ", podule->manufacturer);
 				else
-					printf("%10s : ", pod_list->description);
+					printf("%s : ", pod_list->description);
 
 				/* Do we know this product ? */
 
