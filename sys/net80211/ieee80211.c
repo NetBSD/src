@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.15 2004/05/25 04:33:59 atatat Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.16 2004/06/06 05:28:58 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.11 2004/04/02 20:19:20 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.15 2004/05/25 04:33:59 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.16 2004/06/06 05:28:58 dyoung Exp $");
 #endif
 
 /*
@@ -786,7 +786,8 @@ ieee80211_chan2mode(struct ieee80211com *ic, struct ieee80211_channel *chan)
 	 * NB: this assumes the channel would not be supplied to us
 	 *     unless it was already compatible with the current mode.
 	 */
-	if (ic->ic_curmode != IEEE80211_MODE_AUTO)
+	if (ic->ic_curmode != IEEE80211_MODE_AUTO ||
+	    chan == IEEE80211_CHAN_ANYC)
 		return ic->ic_curmode;
 	/*
 	 * In autoselect mode; deduce a mode based on the channel
