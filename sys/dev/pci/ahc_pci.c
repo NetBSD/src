@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.23 2000/03/16 10:34:33 fvdl Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.24 2000/05/10 17:07:52 thorpej Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -621,6 +621,7 @@ ahc_pci_attach(parent, self, aux)
 #ifdef AHC_ALLOW_MEMIO
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
+	pcireg_t memtype;
 #endif
 	pci_intr_handle_t ih;
 	const char *intrstr;
@@ -638,9 +639,16 @@ ahc_pci_attach(parent, self, aux)
 	ioh_valid = memh_valid = 0;
 
 #ifdef AHC_ALLOW_MEMIO
-	memh_valid = (pci_mapreg_map(pa, AHC_PCI_MEMADDR,
-	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &memt, &memh, NULL, NULL) == 0);
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, AHC_PCI_MEMADDR);
+	switch (memtype) {
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
+		memh_valid = (pci_mapreg_map(pa, AHC_PCI_MEMADDR,
+		    memtype, 0, &memt, &memh, NULL, NULL) == 0);
+		break;
+	default:
+		memh_valid = 0;
+	}
 #endif
 	ioh_valid = (pci_mapreg_map(pa, AHC_PCI_IOADDR,
 	    PCI_MAPREG_TYPE_IO, 0, &iot, &ioh, NULL, NULL) == 0);
