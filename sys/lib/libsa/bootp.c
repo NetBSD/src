@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.6 1995/09/14 23:45:22 pk Exp $	*/
+/*	$NetBSD: bootp.c,v 1.7 1995/09/18 21:19:20 pk Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -101,15 +101,15 @@ bootp(sock)
 	bp->bp_op = BOOTREQUEST;
 	bp->bp_htype = 1;		/* 10Mb Ethernet (48 bits) */
 	bp->bp_hlen = 6;
-	bp->bp_xid = d->xid;
+	bp->bp_xid = htonl(d->xid);
 	MACPY(d->myea, bp->bp_chaddr);
 	bzero(bp->bp_file, sizeof(bp->bp_file));
 	bcopy(vm_rfc1048, bp->bp_vend, sizeof(vm_rfc1048));
 
 	d->myip = myip;
-	d->myport = IPPORT_BOOTPC;
-	d->destip = INADDR_BROADCAST;
-	d->destport = IPPORT_BOOTPS;
+	d->myport = htons(IPPORT_BOOTPC);
+	d->destip.s_addr = INADDR_BROADCAST;
+	d->destport = htons(IPPORT_BOOTPS);
 
 	(void)sendrecv(d,
 	    bootpsend, bp, sizeof(*bp),
@@ -134,7 +134,7 @@ bootpsend(d, pkt, len)
 #endif
 
 	bp = pkt;
-	bp->bp_secs = (u_long)(getsecs() - bot);
+	bp->bp_secs = htons((u_short)(getsecs() - bot));
 
 #ifdef BOOTP_DEBUG
 	if (debug)
@@ -165,18 +165,17 @@ bootprecv(d, pkt, len, tleft)
 		goto bad;
 
 	bp = (struct bootp *)pkt;
-	NTOHL(bp->bp_xid);
 
 #ifdef BOOTP_DEBUG
 	if (debug)
 		printf("bootprecv: checked.  bp = 0x%x, n = %d\n",
 		    (unsigned)bp, n);
 #endif
-	if (bp->bp_xid != d->xid) {
+	if (bp->bp_xid != htonl(d->xid)) {
 #ifdef BOOTP_DEBUG
 		if (debug) {
 			printf("bootprecv: expected xid 0x%x, got 0x%x\n",
-			    d->xid, bp->bp_xid);
+			    d->xid, ntohl(bp->bp_xid));
 		}
 #endif
 		goto bad;
@@ -188,14 +187,14 @@ bootprecv(d, pkt, len, tleft)
 #endif
 
 	/* Pick up our ip address (and natural netmask) */
-	myip = d->myip = ntohl(bp->bp_yiaddr.s_addr);
+	myip = d->myip = bp->bp_yiaddr;
 #ifdef BOOTP_DEBUG
 	if (debug)
-		printf("our ip address is %s\n", intoa(d->myip));
+		printf("our ip address is %s\n", inet_ntoa(d->myip));
 #endif
-	if (IN_CLASSA(d->myip))
+	if (IN_CLASSA(d->myip.s_addr))
 		nmask = IN_CLASSA_NET;
-	else if (IN_CLASSB(d->myip))
+	else if (IN_CLASSB(d->myip.s_addr))
 		nmask = IN_CLASSB_NET;
 	else
 		nmask = IN_CLASSC_NET;
@@ -206,7 +205,7 @@ bootprecv(d, pkt, len, tleft)
 
 	/* Pick up root or swap server address and file spec. */
 	if (bp->bp_siaddr.s_addr != 0)
-		rootip = ntohl(bp->bp_siaddr.s_addr);
+		rootip = bp->bp_siaddr;
 	if (bp->bp_file[0] != '\0') {
 		strncpy(bootfile, (char *)bp->bp_file, sizeof(bootfile));
 		bootfile[sizeof(bootfile) - 1] = '\0';
@@ -230,23 +229,23 @@ bootprecv(d, pkt, len, tleft)
 	}
 
 	/* Get subnet (or natural net) mask */
-	mask = nmask;
+	netmask = nmask;
 	if (smask)
-		mask = smask;
+		netmask = smask;
 #ifdef BOOTP_DEBUG
 	if (debug)
-		printf("mask: %s\n", intoa(mask));
+		printf("mask: %s\n", intoa(netmask));
 #endif
 
 	/* We need a gateway if root or swap is on a different net */
-	if (!SAMENET(d->myip, rootip, mask)) {
+	if (!SAMENET(d->myip, rootip, netmask)) {
 #ifdef BOOTP_DEBUG
 		if (debug)
 			printf("need gateway for root ip\n");
 #endif
 	}
 
-	if (!SAMENET(d->myip, swapip, mask)) {
+	if (!SAMENET(d->myip, swapip, netmask)) {
 #ifdef BOOTP_DEBUG
 		if (debug)
 			printf("need gateway for swap ip\n");
@@ -254,12 +253,12 @@ bootprecv(d, pkt, len, tleft)
 	}
 
 	/* Toss gateway if on a different net */
-	if (!SAMENET(d->myip, gateip, mask)) {
+	if (!SAMENET(d->myip, gateip, netmask)) {
 #ifdef BOOTP_DEBUG
 		if (debug)
-			printf("gateway ip (%s) bad\n", intoa(gateip));
+			printf("gateway ip (%s) bad\n", inet_ntoa(gateip));
 #endif
-		gateip = 0;
+		gateip.s_addr = 0;
 	}
 
 	return (n);
@@ -282,10 +281,10 @@ vend_cmu(cp)
 	vp = (struct cmu_vend *)cp;
 
 	if (vp->v_smask.s_addr != 0) {
-		smask = ntohl(vp->v_smask.s_addr);
+		smask = vp->v_smask.s_addr;
 	}
 	if (vp->v_dgate.s_addr != 0) {
-		gateip = ntohl(vp->v_dgate.s_addr);
+		gateip = vp->v_dgate;
 	}
 }
 
@@ -315,30 +314,26 @@ vend_rfc1048(cp, len)
 
 		if (tag == TAG_SUBNET_MASK) {
 			bcopy(cp, &smask, sizeof(smask));
-			smask = ntohl(smask);
 		}
 		if (tag == TAG_GATEWAY) {
-			bcopy(cp, &gateip, sizeof(gateip));
-			gateip = ntohl(gateip);
+			bcopy(cp, &gateip.s_addr, sizeof(gateip.s_addr));
 		}
 		if (tag == TAG_SWAPSERVER) {
-			bcopy(cp, &swapip, sizeof(swapip));
-			swapip = ntohl(swapip);
+			bcopy(cp, &swapip.s_addr, sizeof(swapip.s_addr));
 		}
 		if (tag == TAG_DOMAIN_SERVER) {
-			bcopy(cp, &nameip, sizeof(nameip));
-			nameip = ntohl(nameip);
+			bcopy(cp, &nameip.s_addr, sizeof(nameip.s_addr));
 		}
 		if (tag == TAG_ROOTPATH) {
-			strncpy(rootpath, cp, sizeof(rootpath));
+			strncpy(rootpath, (char *)cp, sizeof(rootpath));
 			rootpath[size] = '\0';
 		}
 		if (tag == TAG_HOSTNAME) {
-			strncpy(hostname, cp, sizeof(hostname));
+			strncpy(hostname, (char *)cp, sizeof(hostname));
 			hostname[size] = '\0';
 		}
 		if (tag == TAG_DOMAINNAME) {
-			strncpy(domainname, cp, sizeof(domainname));
+			strncpy(domainname, (char *)cp, sizeof(domainname));
 			domainname[size] = '\0';
 		}
 		cp += size;
