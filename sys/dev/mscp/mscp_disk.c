@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.20 1999/05/29 19:11:41 ragge Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.21 1999/06/06 19:16:18 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -63,11 +63,13 @@
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/rpb.h>
 
-#include <vax/mscp/mscp.h>
-#include <vax/mscp/mscpvar.h>
+#include <dev/mscp/mscp.h>
+#include <dev/mscp/mscpreg.h>
+#include <dev/mscp/mscpvar.h>
 
 #include "locators.h"
 #include "ioconf.h"
@@ -285,7 +287,7 @@ raclose(dev, flags, fmt, p)
 	 */
 #if notyet
 	if (ra->ra_openpart == 0) {
-		s = splbio();
+		s = splimp();
 		while (udautab[unit].b_actf)
 			sleep((caddr_t)&udautab[unit], PZERO - 1);
 		splx(s);
@@ -579,7 +581,7 @@ rx_putonline(rx)
 	*mp->mscp_addr |= MSCP_OWN | MSCP_INT;
 
 	/* Poll away */
-	i = *mi->mi_ip;
+	i = bus_space_read_2(mi->mi_iot, mi->mi_iph, 0);
 	if (tsleep(&rx->ra_dev.dv_unit, PRIBIO, "rxonline", 100*100))
 		rx->ra_state = DK_CLOSED;
 
