@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.25 1997/11/03 21:33:07 pk Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.26 1997/11/16 22:50:58 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -88,13 +88,13 @@ bsd_to_svr4_stat(st, st4)
 	struct svr4_stat 	*st4;
 {
 	bzero(st4, sizeof(*st4));
-	st4->st_dev = st->st_dev;
+	st4->st_dev = bsd_to_svr4_odev_t(st->st_dev);
 	st4->st_ino = st->st_ino;
 	st4->st_mode = BSD_TO_SVR4_MODE(st->st_mode);
 	st4->st_nlink = st->st_nlink;
 	st4->st_uid = st->st_uid;
 	st4->st_gid = st->st_gid;
-	st4->st_rdev = st->st_rdev;
+	st4->st_rdev = bsd_to_svr4_odev_t(st->st_rdev);
 	st4->st_size = st->st_size;
 	st4->st_atim = st->st_atimespec.tv_sec;
 	st4->st_mtim = st->st_mtimespec.tv_sec;
@@ -109,13 +109,13 @@ bsd_to_svr4_xstat(st, st4)
 	struct svr4_xstat	*st4;
 {
 	bzero(st4, sizeof(*st4));
-	st4->st_dev = st->st_dev;
+	st4->st_dev = bsd_to_svr4_dev_t(st->st_dev);
 	st4->st_ino = st->st_ino;
 	st4->st_mode = BSD_TO_SVR4_MODE(st->st_mode);
 	st4->st_nlink = st->st_nlink;
 	st4->st_uid = st->st_uid;
 	st4->st_gid = st->st_gid;
-	st4->st_rdev = st->st_rdev;
+	st4->st_rdev = bsd_to_svr4_dev_t(st->st_rdev);
 	st4->st_size = st->st_size;
 	st4->st_atim = st->st_atimespec;
 	st4->st_mtim = st->st_mtimespec;
@@ -132,13 +132,13 @@ bsd_to_svr4_stat64(st, st4)
 	struct svr4_stat64	*st4;
 {
 	bzero(st4, sizeof(*st4));
-	st4->st_dev = st->st_dev;
+	st4->st_dev = bsd_to_svr4_dev_t(st->st_dev);
 	st4->st_ino = st->st_ino;
 	st4->st_mode = BSD_TO_SVR4_MODE(st->st_mode);
 	st4->st_nlink = st->st_nlink;
 	st4->st_uid = st->st_uid;
 	st4->st_gid = st->st_gid;
-	st4->st_rdev = st->st_rdev;
+	st4->st_rdev = bsd_to_svr4_dev_t(st->st_rdev);
 	st4->st_size = st->st_size;
 	st4->st_atim = st->st_atimespec;
 	st4->st_mtim = st->st_mtimespec;

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.27 1997/10/28 18:58:17 christos Exp $
+	$NetBSD: syscalls.master,v 1.28 1997/11/16 22:50:59 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -239,7 +239,7 @@
 140	UNIMPL
 141	NOARGS		{ int sys_seteuid(uid_t euid); }
 142	UNIMPL		vtrace
-143	UNIMPL		fork1
+143	NOARGS		{ int sys_fork(void); } fork1
 144	UNIMPL		sigtimedwait
 145	UNIMPL		lwp_info
 146	UNIMPL		yield
