@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.18 1997/01/31 02:31:33 thorpej Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.19 1997/02/01 00:39:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -744,13 +744,13 @@ getdisk(str, len, defpart, nam2blk, devp)
 		printf("use one of:");
 #ifdef MEMORY_DISK_HOOKS
 		printf(" %s[a-%c]", fakemdrootdev.dv_xname,
-		    'a' + MAXPARTITIONS);
+		    'a' + MAXPARTITIONS - 1);
 #endif
 		for (dv = alldevs.tqh_first; dv != NULL;
 		    dv = dv->dv_list.tqe_next) {
 			if (dv->dv_class == DV_DISK)
 				printf(" %s[a-%c]", dv->dv_xname,
-				    'a' + MAXPARTITIONS);
+				    'a' + MAXPARTITIONS - 1);
 			if (dv->dv_class == DV_IFNET)
 				printf(" %s", dv->dv_xname);
 		}
