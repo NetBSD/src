@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.110 2000/02/01 23:42:14 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.111 2000/02/02 23:34:47 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -3083,3 +3083,39 @@ sys/ufs/ext2fs/ext2fs_vfsops.c			patch
 
   Add support for ext2fs revision 1, with read-only support for
   the 'sparse_super' and 'filetype' options.  Should fix PR#9088.
+
+distrib/sets/lists/man/mi			1.198,1.202
+distrib/sets/lists/comp/mi			1.163
+share/man/man4/Makefile				patch
+
+  Add files installed for dpt(4) driver.
+
+usr.sbin/pkg_install/lib/ftpio.c		1.13-1.15
+
+  Add copyright and _RCS_ID().  Needed for fidning the version of
+  the pkg_* tools installed on users' systems.  Improve security
+  by using mkstemp(3) instead of mktemp(3).
+
+share/man/man7/packages.7			1.27
+
+  Document PACKAGE_DEPENDS_WITH_PATTERNS switch.
+
+etc/printcap					1.6
+
+  Add example for HP Laserjet with JetDirect ethernet card, using
+  the port@machine syntax.
+
+usr.bin/audio/record/audiorecord.1		1.8
+usr.bin/audio/record/record.c			1.10
+
+  When no `-e' flag is used to specify an encoding, default to
+  "ulaw".  Fixes PR#9329.  Also document the default.
+
+gnu/dist/gcc/config/i386/i386.md		patch (1.1.1.3->1.2)
+
+  Make C++ exceptions work in PIC code.  The compiler did not
+  restore the PIC register.  Fixes PR#9110.
+
+lib/libc/arch/powerpc/sys/cerror.S		1.5
+
+  Implement *__errno() indirection.
