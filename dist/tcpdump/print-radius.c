@@ -1,4 +1,4 @@
-/*	$NetBSD: print-radius.c,v 1.3 2001/10/22 06:59:26 itojun Exp $	*/
+/*	$NetBSD: print-radius.c,v 1.4 2002/02/18 09:37:09 itojun Exp $	*/
 
 /*
  * Copyright (C) 2000 Alfredo Andres Omella.  All rights reserved.
@@ -48,9 +48,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "Id: print-radius.c,v 1.7 2001/06/18 09:16:28 guy Exp";
+    "Id: print-radius.c,v 1.10 2001/10/22 06:58:33 itojun Exp";
 #else
-__RCSID("$NetBSD: print-radius.c,v 1.3 2001/10/22 06:59:26 itojun Exp $");
+__RCSID("$NetBSD: print-radius.c,v 1.4 2002/02/18 09:37:09 itojun Exp $");
 #endif
 #endif
 
@@ -526,7 +526,6 @@ print_attr_num(register u_char *data, u_int length, u_short attr_code )
       }
       else
       {
-      	 data++;
          data_value = EXTRACT_32BITS(data);
       }
       if ( data_value <= (attr_type[attr_code].siz_subtypes - 1 +
@@ -669,7 +668,7 @@ static void print_attr_time(register u_char *data, u_int length, u_short attr_co
    TCHECK2(data[0],4);
    
    attr_time = EXTRACT_32BITS(data);
-   strcpy(string, ctime(&attr_time));
+   strlcpy(string, ctime(&attr_time), sizeof(string));
    /* Get rid of the newline */
    string[24] = '\0';
    printf("{%.24s}", string);

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ip.c,v 1.2 2001/06/25 19:59:58 itojun Exp $	*/
+/*	$NetBSD: print-ip.c,v 1.3 2002/02/18 09:37:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-ip.c,v 1.98 2001/06/15 22:17:33 fenner Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-ip.c,v 1.100 2001/09/17 21:58:03 fenner Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-ip.c,v 1.2 2001/06/25 19:59:58 itojun Exp $");
+__RCSID("$NetBSD: print-ip.c,v 1.3 2002/02/18 09:37:07 itojun Exp $");
 #endif
 #endif
 
@@ -224,7 +224,7 @@ ip_optprint(register const u_char *cp, u_int length)
  * don't modifiy the packet.
  */
 u_short
-in_cksum(const u_short *addr, register int len, u_short csum)
+in_cksum(const u_short *addr, register u_int len, int csum)
 {
 	int nleft = len;
 	const u_short *w = addr;
@@ -348,10 +348,10 @@ again:
 #endif
 		case IPPROTO_ESP:
 		    {
-			int enh;
-			advance = esp_print(cp, (const u_char *)ip, &enh);
+			int enh, padlen;
+			advance = esp_print(cp, (const u_char *)ip, &enh, &padlen);
 			cp += advance;
-			len -= advance;
+			len -= advance + padlen;
 			if (enh < 0)
 				break;
 			nh = enh & 0xff;
@@ -415,7 +415,7 @@ again:
 #define IPPROTO_IGMP 2
 #endif
 		case IPPROTO_IGMP:
-			igmp_print(cp, len, (const u_char *)ip);
+			igmp_print(cp, len);
 			break;
 
 		case 4:

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-domain.c,v 1.2 2001/06/25 19:59:58 itojun Exp $	*/
+/*	$NetBSD: print-domain.c,v 1.3 2002/02/18 09:37:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-domain.c,v 1.75 2001/02/23 08:55:21 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-domain.c,v 1.78 2001/10/19 09:00:48 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-domain.c,v 1.2 2001/06/25 19:59:58 itojun Exp $");
+__RCSID("$NetBSD: print-domain.c,v 1.3 2002/02/18 09:37:06 itojun Exp $");
 #endif
 #endif
 
@@ -40,12 +40,6 @@ __RCSID("$NetBSD: print-domain.c,v 1.2 2001/06/25 19:59:58 itojun Exp $");
 
 #include <netinet/in.h>
 
-#ifdef NOERROR
-#undef NOERROR					/* Solaris sucks */
-#endif
-#ifdef NOERROR
-#undef T_UNSPEC					/* SINIX does too */
-#endif
 #include "nameser.h"
 
 #include <stdio.h>
@@ -55,13 +49,13 @@ __RCSID("$NetBSD: print-domain.c,v 1.2 2001/06/25 19:59:58 itojun Exp $");
 #include "addrtoname.h"
 #include "extract.h"                    /* must come after interface.h */
 
-static char *ns_ops[] = {
+static const char *ns_ops[] = {
 	"", " inv_q", " stat", " op3", " notify", " update", " op6", " op7",
 	" op8", " updataA", " updateD", " updateDA",
 	" updateM", " updateMA", " zoneInit", " zoneRef",
 };
 
-static char *ns_resp[] = {
+static const char *ns_resp[] = {
 	"", " FormErr", " ServFail", " NXDomain",
 	" NotImp", " Refused", " YXDomain", " YXRRSet",
 	" NXRRSet", " NotAuth", " NotZone", " Resp11",
@@ -521,7 +515,7 @@ ns_print(register const u_char *bp, u_int length)
 {
 	register const HEADER *np;
 	register int qdcount, ancount, nscount, arcount;
-	register const u_char *cp = NULL;
+	register const u_char *cp;
 
 	np = (const HEADER *)bp;
 	TCHECK(*np);
@@ -551,12 +545,10 @@ ns_print(register const u_char *bp, u_int length)
 				putchar(',');
 			if (vflag > 1) {
 				fputs(" q:", stdout);
-				if ((cp = ns_qprint((const u_char *)(np + 1), bp))
-				    == NULL)
+				if ((cp = ns_qprint(cp, bp)) == NULL)
 					goto trunc;
 			} else {
-				if ((cp = ns_nskip((const u_char *)(np + 1), bp))
-				    == NULL)
+				if ((cp = ns_nskip(cp, bp)) == NULL)
 					goto trunc;
 				cp += 4;	/* skip QTYPE and QCLASS */
 			}
@@ -628,9 +620,9 @@ ns_print(register const u_char *bp, u_int length)
 		if (arcount)
 			printf(" [%dau]", arcount);
 
+		cp = (const u_char *)(np + 1);
 		if (qdcount--) {
-			cp = ns_qprint((const u_char *)(np + 1),
-				       (const u_char *)np);
+			cp = ns_qprint(cp, (const u_char *)np);
 			if (!cp)
 				goto trunc;
 			while (cp < snapend && qdcount--) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-arcnet.c,v 1.2 2001/06/25 19:59:57 itojun Exp $	*/
+/*	$NetBSD: print-arcnet.c,v 1.3 2002/02/18 09:37:05 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,9 +26,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-arcnet.c,v 1.3 2001/05/22 06:23:29 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-arcnet.c,v 1.6 2001/09/17 21:57:54 fenner Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-arcnet.c,v 1.2 2001/06/25 19:59:57 itojun Exp $");
+__RCSID("$NetBSD: print-arcnet.c,v 1.3 2002/02/18 09:37:05 itojun Exp $");
 #endif
 #endif
 
@@ -51,16 +51,10 @@ struct rtentry;
 #include "interface.h"
 #include "arcnet.h"
 
-const u_char *packetp;
-const u_char *snapend;
-
 int arcnet_encap_print(u_char arctype, const u_char *p,
     u_int length, u_int caplen);
 
-struct arctype_map {
-	const int arctype;
-	char * const name;
-} arctypemap[] = {
+struct tok arctypemap[] = {
 	{ ARCTYPE_IP_OLD,	"oldip" },
 	{ ARCTYPE_ARP_OLD,	"oldarp" },
 	{ ARCTYPE_IP,		"ip" },
@@ -78,9 +72,7 @@ static inline void
 arcnet_print(const u_char *bp, u_int length, int phds, int flag, u_int seqid)
 {
 	const struct arc_header *ap;
-	struct arctype_map *atmp;
-	char *arctypename;
-	char typebuf[3];
+	const char *arctypename;
 
 
 	ap = (const struct arc_header *)bp;
@@ -94,16 +86,7 @@ arcnet_print(const u_char *bp, u_int length, int phds, int flag, u_int seqid)
 		return;
 	}
 
-	for (arctypename = NULL, atmp = arctypemap; atmp->arctype; atmp++) {
-		if (atmp->arctype == ap->arc_type) {
-			arctypename = atmp->name;
-			break;
-		}
-	}
-	if (!arctypename) {
-		arctypename = typebuf;
-		(void)snprintf(typebuf, sizeof(typebuf), "%02x", ap->arc_type);
-	}
+	arctypename = tok2str(arctypemap, "%02x", ap->arc_type);
 
 	if (!phds) {
 		(void)printf("%02x %02x %s %d: ",
@@ -142,12 +125,13 @@ arcnet_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 {
 	u_int caplen = h->caplen;
 	u_int length = h->len;
-	struct arc_header *ap;
+	const struct arc_header *ap;
 
 	int phds, flag = 0, archdrlen = 0;
 	u_int seqid = 0;
 	u_char arc_type;
 
+	++infodelay;
 	ts_print(&h->ts);
 
 	if (caplen < ARC_HDRLEN) {
@@ -155,7 +139,7 @@ arcnet_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 		goto out;
 	}
 
-	ap = (struct arc_header *)p;
+	ap = (const struct arc_header *)p;
 	arc_type = ap->arc_type;
 
 	switch (arc_type) {
@@ -223,6 +207,9 @@ arcnet_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 
  out:
 	putchar('\n');
+	--infodelay;
+	if (infoprint)
+		info(0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-vrrp.c,v 1.3 2001/09/27 12:33:26 kleink Exp $	*/
+/*	$NetBSD: print-vrrp.c,v 1.4 2002/02/18 09:37:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 William C. Fenner.
@@ -29,9 +29,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-vrrp.c,v 1.3 2000/10/10 05:05:08 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-vrrp.c,v 1.5 2001/07/23 22:27:30 fenner Exp";
 #else
-__RCSID("$NetBSD: print-vrrp.c,v 1.3 2001/09/27 12:33:26 kleink Exp $");
+__RCSID("$NetBSD: print-vrrp.c,v 1.4 2002/02/18 09:37:10 itojun Exp $");
 #endif
 #endif
 
