@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sfil.c,v 1.1.1.1 1999/12/11 22:23:58 veego Exp $	*/
+/*	$NetBSD: ip_sfil.c,v 1.1.1.2 2000/02/01 20:11:19 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_sfil.c,v 2.1.2.5 1999/12/11 05:31:10 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_sfil.c,v 2.1.2.6 2000/01/16 10:12:44 darrenr Exp";
 #endif
 
 #include <sys/types.h>
@@ -500,13 +500,15 @@ caddr_t data;
 	}
 
 	if (!f) {
-		if (req != SIOCINAFR || req != SIOCINIFR)
+		if (req != SIOCINAFR && req != SIOCINIFR)
 			while ((f = *ftail))
 				ftail = &f->fr_next;
 		else {
-			if (fp->fr_hits)
+			if (fp->fr_hits) {
+				ftail = fprev;
 				while (--fp->fr_hits && (f = *ftail))
 					ftail = &f->fr_next;
+			}
 			f = NULL;
 		}
 	}
