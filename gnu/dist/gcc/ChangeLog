@@ -1,3 +1,120 @@
+Mon Nov  9 23:29:39 1998  David Edelsohn  <edelsohn@mhpcc.edu>
+
+	* rs6000.md (floatunssidf2_internal splitter): Use base register
+	operand, not hard-coded SP.
+
+Mon Nov  9 23:05:51 1998  Richard Earnshaw (rearnsha@arm.com)
+
+	Restore ABI compatibility for NetBSD.
+	* arm/netbsd.h (DEFAULT_PCC_STRUCT_RETURN): Override setting in
+	arm.h
+	(RETURN_IN_MEMORY): Likewise.
+
+	* arm.c (add_constant): When taking the address of an item in the
+	pool, get the mode of the item addressed.
+
+	* arm.c (final_prescan_insn, case INSN): If an insn doesn't 
+	contain a SET or a PARALLEL, don't consider it for conditional
+	execution.
+
+Mon Nov  9 22:43:57 1998  Jean-Pierre Radley <jpr@jpr.com>
+
+        * fixinc.sco: Paramaterize #include_next values.
+        * fixinc/fixinc.sco: Likewise.
+
+Mon Nov  9 22:43:57 1998  Robert Lipe   <robertl@dgii.com>
+
+        * fixinc.sco: Borrow code to wrap 'bool' typedefs from tinfo.h
+        and term.h from fixinc.wrap.
+
+Thu Nov  5 07:57:45 EST 1998  Andrew MacLeod  <amacleod@cygnus.com>
+
+	* except.c (expand_fixup_region_end): Make sure outer context labels
+	are not issued in an inner context during cleanups.
+
+Sun Nov  1 11:04:32 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* i386/linux.h (CPP_PREDEFINES): Bring back -Di386 for the last time.
+
+	* From Christian Gafton:
+	* i386/linux.h (CPP_PREDEFINES): Add -D__i386__.
+	* sparc/linux.h (CPP_PREDEFINES): Add -D__sparc__.
+	* sparc/linux64.h (CPP_PREDEFIENS): Add -D__sparc__.
+
+Sat Oct 31 00:40:05 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* jump.c (jump_optimize): Initialize mappings from INSN_UID to
+	EH region if exceptions are enabled and we're performing cross
+	jump optimizations.
+	(find_cross_jump): Exit loop if the insns are in different EH regions.
+
+Fri Oct 30 00:54:25 1998  Peter Jakubek <pjak@snafu.de>
+
+	* m68k.h (INDIRECTABLE_1_ADDRESS_P): Fix thinko.
+
+Thu Oct 29 12:14:58 1998  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* alpha/linux.h (CPP_PREDEFINES): Add missing space.
+
+Tue Oct 27 16:11:43 1998  David Edelsohn  <edelsohn@mhpcc.edu>
+
+	* collect2.c (aix64_flag): New variable.
+	(main, case 'b'): Parse it.
+	(GCC_CHECK_HDR): object magic number must match mode.
+	(scan_prog_file): Only check for shared object if valid header.
+	Print debugging if header/mode mismatch.
+	* README.RS6000: Update.
+
+Sun Oct 25 23:36:52 1998  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* stmt.c (expand_fixup): Set fixup->before_jump to a
+	NOTE_INSN_DELETED instead of a NOTE_INSN_BLOCK_BEG.
+
+Sun Oct 25 18:35:06 1998  David Edelsohn  <edelsohn@mhpcc.edu>
+
+	* ginclude/va-ppc.h (va_arg): longlong types in overflow area are
+	not doubleword aligned.
+
+Sun Oct 25 12:07:00 1998  Mumit Khan  <khan@xraylith.wisc.edu>
+
+	* i386/crtdll.h (CPP_PREDEFINES): Fix typo.
+	* i386/mingw32.h (CPP_PREDEFINES): Likewise.
+
+Fri Oct 23 22:41:40 1998  David Edelsohn  <edelsohn@mhpcc.edu>
+
+	* rs6000.md (movsf): Disable explicit secondary-reload-like
+	functionality if TARGET_POWERPC64.
+	(movdf): Remove TARGET_POWERPC64 explicit secondary-reload-like
+	functionality.
+
+Fri Oct 23 22:38:57 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* m68k.md (5200 movqi): Do not allow byte sized memory references
+	using address regs.
+	* m68k.c (output_move_qimode): Do not use byte sized operations on
+	address registers.
+
+Fri Oct 23 00:56:11 1998  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* expr.c (pending_chain): Move up.
+	(save_expr_status): Do save pending_chain.
+	(restore_expr_status): And restore it.
+	* function.h (struct function): Add pending_chain.
+
+Mon Oct 19 13:22:13 1998  Geoff Keating  <geoffk@ozemail.com.au>
+
+        * loop.c (scan_loop): Be more selective about what invariants are 
+        moved out of a loop.
+
+Wed Oct 14 23:27:08 1998  Didier FORT (didier.fort@fedex.com)
+
+	* fixincludes: Fix up rpc/{clnt,svr,xdr}.h for SunOS.
+
+Wed Oct 14 22:13:28 1998  Joel Sherrill (joel@OARcorp.com)
+
+	* Makefile.in (stmp-fixinc): Do not install assert.h if not desired.
+	* config/t-rtems: Do not install assert.h -- use newlib's.
+
 Sat Oct  3 19:01:03 1998  Richard Henderson  <rth@cygnus.com>
 
 	* alpha/linux.h (CPP_PREDEFINES): Define __alpha__ for imake.

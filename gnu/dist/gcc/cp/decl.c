@@ -7191,20 +7191,52 @@ cp_finish_decl (decl, init, asmspec_tree, need_pop, flags)
       if (was_temp)
 	end_temporary_allocation ();
 
-      /* Extern inline function static data has external linkage.
-         Instead of trying to deal with that, we disable inlining of
-         such functions.  The ASM_WRITTEN check is to avoid hitting this
-         for __FUNCTION__.  */
+      /* Static data in a function with comdat linkage also has comdat
+         linkage.  */
       if (TREE_CODE (decl) == VAR_DECL
 	  && TREE_STATIC (decl)
+	  /* Don't mess with __FUNCTION__.  */
 	  && ! TREE_ASM_WRITTEN (decl)
 	  && current_function_decl
 	  && DECL_CONTEXT (decl) == current_function_decl
-	  && DECL_THIS_INLINE (current_function_decl)
+	  && (DECL_THIS_INLINE (current_function_decl)
+	      || DECL_TEMPLATE_INSTANTIATION (current_function_decl))
 	  && TREE_PUBLIC (current_function_decl))
 	{
+	  /* Rather than try to get this right with inlining, we suppress
+	     inlining of such functions.  */
 	  current_function_cannot_inline
 	    = "function with static variable cannot be inline";
+
+	  /* If flag_weak, we don't need to mess with this, as we can just
+	     make the function weak, and let it refer to its unique local
+	     copy.  This works because we don't allow the function to be
+	     inlined.  */
+	  if (! flag_weak)
+	    {
+	      if (DECL_INTERFACE_KNOWN (current_function_decl))
+		{
+		  TREE_PUBLIC (decl) = 1;
+		  DECL_EXTERNAL (decl) = DECL_EXTERNAL (current_function_decl);
+		}
+	      else if (DECL_INITIAL (decl) == NULL_TREE
+		       || DECL_INITIAL (decl) == error_mark_node)
+		{
+		  TREE_PUBLIC (decl) = 1;
+		  DECL_COMMON (decl) = 1;
+		}
+	      /* else we lose. We can only do this if we can use common,
+                 which we can't if it has been initialized.  */
+
+	      if (TREE_PUBLIC (decl))
+		DECL_ASSEMBLER_NAME (decl)
+		  = build_static_name (current_function_decl, DECL_NAME (decl));
+	      else if (! DECL_ARTIFICIAL (decl))
+		{
+		  cp_warning_at ("sorry: semantics of inline function static data `%#D' are wrong (you'll wind up with multiple copies)", decl);
+		  cp_warning_at ("  you can work around this by removing the initializer"), decl;
+		}
+	    }
 	}
 
       else if (TREE_CODE (decl) == VAR_DECL
@@ -9393,8 +9425,9 @@ grokdeclarator (declarator, declspecs, decl_context, initialized, attrlist)
 		      error ("destructor cannot be static member function");
 		    if (quals)
 		      {
-			error ("destructors cannot be declared `const' or `volatile'");
-			return void_type_node;
+			cp_error ("destructors may not be `%s'",
+				  IDENTIFIER_POINTER (TREE_VALUE (quals)));
+			quals = NULL_TREE;
 		      }
 		    if (decl_context == FIELD)
 		      {
@@ -9419,8 +9452,9 @@ grokdeclarator (declarator, declspecs, decl_context, initialized, attrlist)
 		      }
 		    if (quals)
 		      {
-			error ("constructors cannot be declared `const' or `volatile'");
-			return void_type_node;
+			cp_error ("constructors may not be `%s'",
+				  IDENTIFIER_POINTER (TREE_VALUE (quals)));
+			quals = NULL_TREE;
  		      }
 		    {
 		      RID_BIT_TYPE tmp_bits;
@@ -9478,24 +9512,22 @@ grokdeclarator (declarator, declspecs, decl_context, initialized, attrlist)
 
 	    arg_types = grokparms (inner_parms, funcdecl_p ? funcdef_flag : 0);
 
-	    if (declarator)
+	    if (declarator && flags == DTOR_FLAG)
 	      {
-		/* Get past destructors, etc.
-		   We know we have one because FLAGS will be non-zero.
-
-		   Complain about improper parameter lists here.  */
+		/* A destructor declared in the body of a class will
+		   be represented as a BIT_NOT_EXPR.  But, we just
+		   want the underlying IDENTIFIER.  */
 		if (TREE_CODE (declarator) == BIT_NOT_EXPR)
+		  declarator = TREE_OPERAND (declarator, 0);
+		
+		if (strict_prototype == 0 && arg_types == NULL_TREE)
+		  arg_types = void_list_node;
+		else if (arg_types == NULL_TREE
+			 || arg_types != void_list_node)
 		  {
-		    declarator = TREE_OPERAND (declarator, 0);
-
-		    if (strict_prototype == 0 && arg_types == NULL_TREE)
-		      arg_types = void_list_node;
-		    else if (arg_types == NULL_TREE
-			     || arg_types != void_list_node)
-		      {
-			error ("destructors cannot be specified with parameters");
-			arg_types = void_list_node;
-		      }
+		    cp_error ("destructors may not have parameters");
+		    arg_types = void_list_node;
+		    last_function_parms = NULL_TREE;
 		  }
 	      }
 
@@ -11764,6 +11796,7 @@ finish_enum (enumtype, values)
 	TYPE_MIN_VALUE (tem) = TYPE_MIN_VALUE (enumtype);
 	TYPE_MAX_VALUE (tem) = TYPE_MAX_VALUE (enumtype);
 	TYPE_SIZE (tem) = TYPE_SIZE (enumtype);
+	TYPE_SIZE_UNIT (tem) = TYPE_SIZE_UNIT (enumtype);
 	TYPE_MODE (tem) = TYPE_MODE (enumtype);
 	TYPE_PRECISION (tem) = TYPE_PRECISION (enumtype);
 	TYPE_ALIGN (tem) = TYPE_ALIGN (enumtype);
