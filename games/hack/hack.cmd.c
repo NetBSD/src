@@ -1,5 +1,10 @@
-/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* hack.cmd.c - version 1.0.3 */
+/*
+ * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ */
+
+#ifndef lint
+static char rcsid[] = "$Id: hack.cmd.c,v 1.2 1993/08/02 17:17:02 mycroft Exp $";
+#endif /* not lint */
 
 #include	"hack.h"
 #include	"def.func_tab.h"

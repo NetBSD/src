@@ -1,5 +1,8 @@
-/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* def.flag.h - version 1.0.3 */
+/*
+ * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ *
+ *	$Id: def.flag.h,v 1.2 1993/08/02 17:16:42 mycroft Exp $
+ */
 
 struct flag {
 	unsigned ident;		/* social security number for each monster */

@@ -1,5 +1,10 @@
-/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* hack.makemon.c - version 1.0.2 */
+/*
+ * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ */
+
+#ifndef lint
+static char rcsid[] = "$Id: hack.makemon.c,v 1.2 1993/08/02 17:17:19 mycroft Exp $";
+#endif /* not lint */
 
 #include	"hack.h"
 extern char fut_geno[];

@@ -1,5 +1,8 @@
-/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* def.gen.h version 1.0.1: added ONCE flag */
+/*
+ * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ *
+ *	$Id: def.gen.h,v 1.2 1993/08/02 17:16:44 mycroft Exp $
+ */
 
 struct gen {
 	struct gen *ngen;

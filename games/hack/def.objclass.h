@@ -1,5 +1,8 @@
-/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* def.objclass.h - version 1.0.3 */
+/*
+ * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ *
+ *	$Id: def.objclass.h,v 1.2 1993/08/02 17:16:50 mycroft Exp $
+ */
 
 /* definition of a class of objects */
 

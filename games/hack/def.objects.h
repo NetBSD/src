@@ -1,5 +1,8 @@
-/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* def.objects.h - version 1.0.3 */
+/*
+ * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ *
+ *	$Id: def.objects.h,v 1.2 1993/08/02 17:16:51 mycroft Exp $
+ */
 
 /* objects have letter " % ) ( 0 _ ` [ ! ? / = * */
 #include "config.h"
