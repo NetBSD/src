@@ -1,4 +1,4 @@
-/*	$NetBSD: it8368.c,v 1.2 1999/11/29 17:23:04 uch Exp $ */
+/*	$NetBSD: it8368.c,v 1.3 1999/12/27 18:49:20 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -47,7 +47,6 @@
 #else
 #define	DPRINTF(arg)
 #endif
-#undef IT8368_POWERSUPPORT /* XXX don't work FIXME */
 
 int	it8368e_match __P((struct device*, struct cfdata*, void*));
 void	it8368e_attach __P((struct device*, struct device*, void*));
@@ -68,7 +67,10 @@ struct it8368e_softc {
 	bus_space_handle_t sc_csioh;
 	bus_addr_t sc_csiobase;
 	bus_size_t sc_csiosize;
-	/* XXX theses means attribute memory. not memory space. memory space is 0x64000000. */
+	/*
+	 *  XXX theses means attribute memory. not memory space. 
+	 *	memory space is 0x64000000. 
+	 */
 	bus_space_tag_t sc_csmemt;
 	bus_space_handle_t sc_csmemh;
 	bus_addr_t sc_csmembase;
@@ -92,17 +94,28 @@ int	it8368_remove_intr __P((void*));
 void	it8368_intr_ack __P((struct it8368e_softc*));
 void	it8368_dump __P((struct it8368e_softc*));
 
-int	it8368_chip_mem_alloc __P((pcmcia_chipset_handle_t, bus_size_t, struct pcmcia_mem_handle*));
-void	it8368_chip_mem_free __P((pcmcia_chipset_handle_t, struct pcmcia_mem_handle*));
-int	it8368_chip_mem_map __P((pcmcia_chipset_handle_t, int, bus_addr_t, bus_size_t, struct pcmcia_mem_handle*, bus_addr_t*, int*));
+int	it8368_chip_mem_alloc __P((pcmcia_chipset_handle_t, bus_size_t, 
+				   struct pcmcia_mem_handle*));
+void	it8368_chip_mem_free __P((pcmcia_chipset_handle_t, 
+				  struct pcmcia_mem_handle*));
+int	it8368_chip_mem_map __P((pcmcia_chipset_handle_t, int, bus_addr_t, 
+				 bus_size_t, struct pcmcia_mem_handle*, 
+				 bus_addr_t*, int*));
 void	it8368_chip_mem_unmap __P((pcmcia_chipset_handle_t, int));
-int	it8368_chip_io_alloc __P((pcmcia_chipset_handle_t, bus_addr_t, bus_size_t, bus_size_t, struct pcmcia_io_handle*));
-void	it8368_chip_io_free __P((pcmcia_chipset_handle_t, struct pcmcia_io_handle*));
-int	it8368_chip_io_map __P((pcmcia_chipset_handle_t, int, bus_addr_t, bus_size_t, struct pcmcia_io_handle*, int*));
+int	it8368_chip_io_alloc __P((pcmcia_chipset_handle_t, bus_addr_t, 
+				  bus_size_t, bus_size_t, 
+				  struct pcmcia_io_handle*));
+void	it8368_chip_io_free __P((pcmcia_chipset_handle_t, 
+				 struct pcmcia_io_handle*));
+int	it8368_chip_io_map __P((pcmcia_chipset_handle_t, int, bus_addr_t, 
+				bus_size_t, struct pcmcia_io_handle*, 
+				int*));
 void	it8368_chip_io_unmap __P((pcmcia_chipset_handle_t, int));
 void	it8368_chip_socket_enable __P((pcmcia_chipset_handle_t));
 void	it8368_chip_socket_disable __P((pcmcia_chipset_handle_t));
-void	*it8368_chip_intr_establish __P((pcmcia_chipset_handle_t, struct pcmcia_function*, int, int (*) (void*), void*));
+void	*it8368_chip_intr_establish __P((pcmcia_chipset_handle_t, 
+					 struct pcmcia_function*, int, 
+					 int (*) (void*), void*));
 void	it8368_chip_intr_disestablish __P((pcmcia_chipset_handle_t, void*));
 
 static struct pcmcia_chip_functions it8368_functions = {
@@ -127,8 +140,11 @@ struct cfattach it8368e_ca = {
 /*
  *	IT8368 configuration register is big-endian.
  */
-static  u_int16_t it8368_reg_read __P((bus_space_tag_t, bus_space_handle_t, int));
-static  void it8368_reg_write __P((bus_space_tag_t, bus_space_handle_t, int, u_int16_t));
+__inline u_int16_t	it8368_reg_read __P((bus_space_tag_t, 
+					     bus_space_handle_t, int));
+__inline void		it8368_reg_write __P((bus_space_tag_t, 
+					      bus_space_handle_t, int, 
+					      u_int16_t));
 
 int
 it8368e_match(parent, cf, aux)
@@ -163,10 +179,11 @@ it8368e_attach(parent, self, aux)
 	sc->sc_csiobase = ca->ca_csio.csbase;
 	sc->sc_csiosize = ca->ca_csio.cssize;
 
-#ifdef WINCE_DEFAULT_SETTING
-#warning WINCE_DEFAULT_SETTING
-#else
+#ifdef IT8368DEBUG
+	printf("\t[Windows CE setting]\n");
 	it8368_dump(sc); /* print WindowsCE setting */
+#endif
+
 	/* LHA[14:13] <= HA[14:13]	*/
 	reg = it8368_reg_read(csregt, csregh, IT8368_CTRL_REG);
 	reg &= ~IT8368_CTRL_ADDRSEL;
@@ -197,7 +214,8 @@ it8368e_attach(parent, self, aux)
 	it8368_reg_write(csregt, csregh, IT8368_GPIODIR_REG, reg);
 
 	/* Interrupt */
-	reg = IT8368_PIN_CRDSW | IT8368_PIN_CRDDET2 | IT8368_PIN_CRDDET1 | /* CSC */
+	reg = IT8368_PIN_CRDSW | IT8368_PIN_CRDDET2 | IT8368_PIN_CRDDET1 |
+		/* CSC */
 		IT8368_PIN_BCRDRDY; /* #IREQ */
 	/* 
 	 * Enable negative edge only. 
@@ -207,7 +225,7 @@ it8368e_attach(parent, self, aux)
 
 	/* Clear interrupt */
 	it8368_intr_ack(sc);
-#endif /* WINCE_DEFAULT_SETTING */
+
 	/* 
 	 *	Separate I/O and attribute memory region 
 	 */
@@ -215,7 +233,8 @@ it8368e_attach(parent, self, aux)
 	reg |= IT8368_CTRL_FIXATTRIO;
 	it8368_reg_write(csregt, csregh, IT8368_CTRL_REG, reg);
 	
-	if (IT8368_CTRL_FIXATTRIO & it8368_reg_read(csregt, csregh, IT8368_CTRL_REG)) {
+	if (IT8368_CTRL_FIXATTRIO & it8368_reg_read(csregt, csregh, 
+						    IT8368_CTRL_REG)) {
 		sc->sc_fixattr = 1;
 		printf(":fix attr mode\n");
 		sc->sc_csmemt = sc->sc_csiot;
@@ -236,8 +255,10 @@ it8368e_attach(parent, self, aux)
 	/* 
 	 *  CSC interrupt (IO bit1 5:8/1) XXX this is something bogus.
 	 */
-	tx_intr_establish(tc, ca->ca_irq1, IST_EDGE, IPL_TTY, it8368_insert_intr, sc);
-	tx_intr_establish(tc, ca->ca_irq2, IST_EDGE, IPL_TTY, it8368_remove_intr, sc);
+	tx_intr_establish(tc, ca->ca_irq1, IST_EDGE, IPL_TTY, 
+			  it8368_insert_intr, sc);
+	tx_intr_establish(tc, ca->ca_irq2, IST_EDGE, IPL_TTY, 
+			  it8368_remove_intr, sc);
 	/*
 	 *  Card interrupt (3:2)
 	 */
@@ -248,7 +269,7 @@ it8368e_attach(parent, self, aux)
 	it8368_attach_socket(sc);
 }
 
-static  u_int16_t
+__inline u_int16_t
 it8368_reg_read(t, h, ofs)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
@@ -260,7 +281,7 @@ it8368_reg_read(t, h, ofs)
 	return 0xffff & (((val >> 8) & 0xff)|((val << 8) & 0xff00));
 }
 
-static  void
+__inline void
 it8368_reg_write(t, h, ofs, v)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
@@ -282,13 +303,17 @@ it8368_intr_ack(sc)
 
 	/* Clear interrupt */
 	it8368_reg_write(csregt, csregh, IT8368_GPIOPOSINTSTAT_REG,
-		      it8368_reg_read(csregt, csregh, IT8368_GPIOPOSINTSTAT_REG));
+		      it8368_reg_read(csregt, csregh, 
+				      IT8368_GPIOPOSINTSTAT_REG));
 	it8368_reg_write(csregt, csregh, IT8368_GPIONEGINTSTAT_REG,
-		      it8368_reg_read(csregt, csregh, IT8368_GPIONEGINTSTAT_REG));
+		      it8368_reg_read(csregt, csregh, 
+				      IT8368_GPIONEGINTSTAT_REG));
 	it8368_reg_write(csregt, csregh, IT8368_MFIOPOSINTSTAT_REG,
-		      it8368_reg_read(csregt, csregh, IT8368_MFIOPOSINTSTAT_REG));
+		      it8368_reg_read(csregt, csregh, 
+				      IT8368_MFIOPOSINTSTAT_REG));
 	it8368_reg_write(csregt, csregh, IT8368_MFIONEGINTSTAT_REG,
-		      it8368_reg_read(csregt, csregh, IT8368_MFIONEGINTSTAT_REG));
+		      it8368_reg_read(csregt, csregh, 
+				      IT8368_MFIONEGINTSTAT_REG));
 }
 
 int
@@ -311,21 +336,19 @@ it8368_remove_intr(arg)
 
 #define LIMIT_GPIO	12
 #define LIMIT_MFIO	10
-#define PRINTGPIO(m) __bitdisp(it8368_reg_read(csregt, csregh, IT8368_GPIO##m##_REG), 0, LIMIT_GPIO, #m, 1)
-#define PRINTMFIO(m) __bitdisp(it8368_reg_read(csregt, csregh, IT8368_MFIO##m##_REG), 0, LIMIT_MFIO, #m, 1)
+#define PRINTGPIO(m) __bitdisp(it8368_reg_read(csregt, csregh, \
+	IT8368_GPIO##m##_REG), 0, LIMIT_GPIO, #m, 1)
+#define PRINTMFIO(m) __bitdisp(it8368_reg_read(csregt, csregh, \
+	IT8368_MFIO##m##_REG), 0, LIMIT_MFIO, #m, 1)
 
 int
 it8368_intr(arg)
  	void *arg;
 {
 	struct it8368e_softc *sc = arg;
-#if 0
-	bus_space_tag_t csregt = sc->sc_csregt;
-	bus_space_handle_t csregh = sc->sc_csregh;
-	PRINTGPIO(POSINTSTAT);	
-	PRINTGPIO(NEGINTSTAT);
-#endif
+
 	it8368_intr_ack(sc);
+
 	/* Dispatch card interrupt handler */
 	if (sc->sc_card_fun) {
 		(*sc->sc_card_fun)(sc->sc_card_arg);
@@ -339,9 +362,8 @@ it8368_print(arg, pnp)
 	void *arg;
 	const char *pnp;
 {
-	if (pnp) {
+	if (pnp)
 		printf("pcmcia at %s", pnp);
-	}
 
 	return UNCONF;
 }
@@ -386,7 +408,8 @@ it8368_chip_intr_establish(pch, pf, ipl, ih_fun, ih_arg)
 	tx_chipset_tag_t tc = sc->sc_tc;
 
 	if (sc->sc_card_fun) {
-		panic("it8368_chip_intr_establish: duplicate card interrupt handler.");
+		panic("it8368_chip_intr_establish: "
+		      "duplicate card interrupt handler.");
 	}
 
 	sc->sc_card_fun = ih_fun;
@@ -410,7 +433,8 @@ it8368_chip_intr_disestablish(pch, ih)
 	struct it8368e_softc *sc = (struct it8368e_softc*) pch;
 
 	if (!sc->sc_card_fun) {
-		panic("it8368_chip_intr_disestablish: no handler established.");
+		panic("it8368_chip_intr_disestablish:"
+		      "no handler established.");
 	}
 
 	sc->sc_card_fun = 0;
@@ -434,9 +458,11 @@ it8368_chip_mem_alloc(pch, size, pcmhp)
 			  &pcmhp->memh)) {
 		return 1;
 	}
+
 	pcmhp->addr = pcmhp->memh;
 	pcmhp->size = size;
 	pcmhp->realsize = size;
+
 	DPRINTF(("it8368_chip_mem_alloc %#x+%#x\n", pcmhp->memh, size));
 
 	return 0;
@@ -464,12 +490,9 @@ it8368_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 
 	it8368_access(sc, 0, 0);
 
-	pcmhp->memt = sc->sc_csmemt;
-	pcmhp->addr = pcmhp->memh;
-	pcmhp->size = size;
-	pcmhp->realsize = size;
-	*offsetp = 0;
+	*offsetp = card_addr;
 	DPRINTF(("it8368_chip_mem_map %#x+%#x\n", pcmhp->memh, size));
+
 	return 0;
 }
 
@@ -527,24 +550,23 @@ it8368_chip_io_alloc(pch, start, size, align, pcihp)
 	it8368_access(sc, 1, 0);
 
 	if (start) {
-		if (bus_space_map(sc->sc_csiot, start, size, 0, &pcihp->ioh)) {
+		if (bus_space_map(sc->sc_csiot, start, size, 0, 
+				  &pcihp->ioh)) {
 			return 1;
 		}
 		DPRINTF(("it8368_chip_io_alloc map port %#x+%#x\n",
 			 start, size));
 	} else {
-#if notyet
 		if (bus_space_alloc(sc->sc_csiot, sc->sc_csiobase,
-				    sc->sc_csiobase + sc->sc_csiosize, size, 
-				    align, 0, 0, &pcihp->addr, &pcihp->ioh)) {
+				    sc->sc_csiobase + sc->sc_csiosize,
+				    size, align, 0, 0, &pcihp->addr, 
+				    &pcihp->ioh)) {
+				    
 			return 1;
 		}
 		pcihp->flags = PCMCIA_IO_ALLOCATED;
 		DPRINTF(("it8368_chip_io_alloc alloc %#x from %#x\n",
 			 size, pcihp->addr));
-#else
-		return 1; /* XXX */
-#endif
 	}
 
 	pcihp->iot = sc->sc_csiot;
@@ -564,12 +586,12 @@ it8368_chip_io_map(pch, width, offset, size, pcihp, windowp)
 {
 	struct it8368e_softc *sc = (struct it8368e_softc*) pch;
 
+	assert(offset == 0); /* XXX */
+
 	it8368_access(sc, 1, 0);
 
-	pcihp->iot = sc->sc_csiot;
-	pcihp->addr = pcihp->ioh + offset;
-	pcihp->size = size;
-	DPRINTF(("it8368_chip_io_map %#x:%#x+%#x\n", pcihp->ioh, offset, size));
+	DPRINTF(("it8368_chip_io_map %#x:%#x+%#x\n", pcihp->ioh, offset, 
+		 size));
 
 	return 0;
 }
@@ -602,7 +624,7 @@ it8368_chip_socket_enable(pch)
 	bus_space_tag_t csregt = sc->sc_csregt;
 	bus_space_handle_t csregh = sc->sc_csregh;
 	volatile u_int16_t reg;
-#ifdef IT8368_POWERSUPPORT
+
 	/* Disable card */
 	reg = it8368_reg_read(csregt, csregh, IT8368_CTRL_REG);
 	reg &= ~IT8368_CTRL_CARDEN;
@@ -660,20 +682,13 @@ it8368_chip_socket_enable(pch)
 
 	DPRINTF(("socket enabled\n"));
 	it8368_dump(sc);
-#else
-	/* Enable card and interrupt driving. */
-	reg = it8368_reg_read(csregt, csregh, IT8368_CTRL_REG);
-	reg |= (IT8368_CTRL_GLOBALEN | IT8368_CTRL_CARDEN);
-	it8368_reg_write(csregt, csregh, IT8368_CTRL_REG, reg);
-	delay(200000);
-#endif
+
 }
 
 void
 it8368_chip_socket_disable(pch)
 	pcmcia_chipset_handle_t pch;
 {
-#ifdef IT8368_POWERSUPPORT
 	struct it8368e_softc *sc = (struct it8368e_softc*) pch;
 	bus_space_tag_t csregt = sc->sc_csregt;
 	bus_space_handle_t csregh = sc->sc_csregh;
@@ -698,7 +713,6 @@ it8368_chip_socket_disable(pch)
 	delay(300 * 1000);
 	DPRINTF(("socket disabled\n"));
 	it8368_dump(sc);
-#endif
 }
 
 void
@@ -726,7 +740,9 @@ it8368_dump(sc)
 	PRINTMFIO(NEGINTEN);
 	PRINTMFIO(POSINTSTAT);
 	PRINTMFIO(NEGINTSTAT);
-	__bitdisp(it8368_reg_read(csregt, csregh, IT8368_CTRL_REG), 0, 15, "CTRL", 1);
-	__bitdisp(it8368_reg_read(csregt, csregh, IT8368_GPIODATAIN_REG), 8, 11, "]CRDDET/SENSE[", 1);
+	__bitdisp(it8368_reg_read(csregt, csregh, IT8368_CTRL_REG), 0, 15,
+		  "CTRL", 1);
+	__bitdisp(it8368_reg_read(csregt, csregh, IT8368_GPIODATAIN_REG),
+		  8, 11, "]CRDDET/SENSE[", 1);
 #endif
 }
