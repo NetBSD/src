@@ -1,4 +1,4 @@
-/*	$NetBSD: qdioctl.h,v 1.2 1999/06/20 17:53:53 ragge Exp $	*/
+/*	$NetBSD: qdioctl.h,v 1.3 1999/06/20 17:58:56 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1986
  *	The Regents of the University of California.  All rights reserved.
@@ -86,11 +86,7 @@
 ***************************************************************************/
 
 
-#ifdef KERNEL
-#include "sys/ioctl.h"
-#else
 #include <sys/ioctl.h>
-#endif
 
 
 #define QD_GETEVENT	_IOR('g', 1, struct _vs_event) /* get oldest event */

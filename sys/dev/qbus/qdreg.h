@@ -1,4 +1,4 @@
-/*	$NetBSD: qdreg.h,v 1.2 1999/06/20 17:54:13 ragge Exp $	*/
+/*	$NetBSD: qdreg.h,v 1.3 1999/06/20 17:58:56 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
