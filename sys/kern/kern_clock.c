@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.66 2000/08/21 23:51:33 thorpej Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.67 2000/08/22 15:30:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -877,11 +877,12 @@ hardclock(struct clockframe *frame)
 			softclock();
 		} else
 			setsoftclock();
+		return;
 	} else if (softclock_running == 0 &&
 		   (softclock_ticks + 1) == hardclock_ticks) {
 		softclock_ticks++;
-		simple_unlock(&callwheel_slock);
 	}
+	simple_unlock(&callwheel_slock);
 }
 
 /*
