@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.48 1997/04/09 07:22:12 scottr Exp $	*/
+/*	$NetBSD: trap.c,v 1.49 1997/04/09 20:20:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -273,7 +273,7 @@ dopanic:
 		if (kdb_trap(type, (db_regs_t *) &frame))
 			return;
 #endif
-		regdump(&frame, 128);
+		regdump((struct trapframe *)&frame, 128);
 		type &= ~T_USER;
 		if ((unsigned)type < trap_types)
 			panic(trap_type[type]);
