@@ -1,4 +1,4 @@
-/*      $NetBSD: n_sinh.c,v 1.4 1999/07/02 15:37:37 simonb Exp $ */
+/*      $NetBSD: n_sinh.c,v 1.5 2002/06/15 00:10:18 matt Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -78,6 +78,7 @@ static char sccsid[] = "@(#)sinh.c	8.1 (Berkeley) 6/4/93";
  * shown.
  */
 
+#define _LIBM_STATIC
 #include "mathimpl.h"
 
 vc(mln2hi, 8.8029691931113054792E1   ,0f33,43b0,2bdb,c7e2,   7, .B00F33C7E22BDB)
@@ -95,14 +96,14 @@ ic(lnovfl, 7.0978271289338397310E2,     9, 1.62E42FEFA39EF)
 #endif
 
 #if defined(__vax__)||defined(tahoe)
-static int max = 126                      ;
+static const int max = 126                      ;
 #else	/* defined(__vax__)||defined(tahoe) */
-static int max = 1023                     ;
+static const int max = 1023                     ;
 #endif	/* defined(__vax__)||defined(tahoe) */
 
 
-double sinh(x)
-double x;
+double
+sinh(double x)
 {
 	static const double  one=1.0, half=1.0/2.0 ;
 	double t, sign;
