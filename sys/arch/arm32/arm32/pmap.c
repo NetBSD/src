@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43 1999/03/23 12:30:45 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44 1999/03/23 13:27:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -2623,8 +2623,8 @@ pmap_changebit(pa, setbits, maskbits)
 	 * Clear saved attributes (modify, reference)
 	 */
 
-	if (~maskbits)
-		vm_physmem[bank].pmseg.attrs[off] &= maskbits;
+	if (maskbits)
+		vm_physmem[bank].pmseg.attrs[off] &= ~maskbits;
 
 	/*
 	 * Loop over all current mappings setting/clearing as appropos
@@ -2636,7 +2636,7 @@ pmap_changebit(pa, setbits, maskbits)
 			/*
 			 * XXX don't write protect pager mappings
 			 */
-			if (maskbits == ~PT_Wr) {
+			if (maskbits & (PT_Wr|PT_M|PT_H)) {
 #if defined(UVM)
                                 if (va >= uvm.pager_sva && va < uvm.pager_eva)
                                 	continue;
@@ -2648,16 +2648,16 @@ pmap_changebit(pa, setbits, maskbits)
 #endif
 			}
 
-			pv->pv_flags = (pv->pv_flags & maskbits) | setbits;
+			pv->pv_flags = (pv->pv_flags & ~maskbits) | setbits;
 			pte = pmap_pte(pv->pv_pmap, va);
-			if ((maskbits & PT_Wr) == 0)
+			if (maskbits & (PT_Wr|PT_M))
 				*pte = (*pte) & ~PT_AP(AP_W);
 			if (setbits & PT_Wr)
 				*pte = (*pte) | PT_AP(AP_W);
-/*
-			if ((maskbits & PT_H) == 0)
+#if 0
+			if (maskbits & PT_H)
 				*pte = ((*pte) & ~L2_MASK) | L2_INVAL;
-*/
+#endif
 		}
 		cpu_tlb_flushID();
 	}
@@ -2670,7 +2670,7 @@ pmap_clear_modify(pa)
 	vm_offset_t pa;
 {
 	PDEBUG(0, printf("pmap_clear_modify pa=%08lx\n", pa));
-	pmap_changebit(pa, 0, ~PT_M);
+	pmap_changebit(pa, 0, PT_M);
 }
 
 
@@ -2679,7 +2679,7 @@ pmap_clear_reference(pa)
 	vm_offset_t pa;
 {
 	PDEBUG(0, printf("pmap_clear_reference pa=%08lx\n", pa));
-	pmap_changebit(pa, 0, ~PT_H);
+	pmap_changebit(pa, 0, PT_H);
 }
 
 
@@ -2688,7 +2688,7 @@ pmap_copy_on_write(pa)
 	vm_offset_t pa;
 {
 	PDEBUG(0, printf("pmap_copy_on_write pa=%08lx\n", pa));
-	pmap_changebit(pa, 0, ~PT_Wr);
+	pmap_changebit(pa, 0, PT_Wr);
 }
 
 boolean_t
