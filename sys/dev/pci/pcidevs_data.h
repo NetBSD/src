@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.499 2003/01/17 00:19:16 jonathan Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.500 2003/01/24 03:16:08 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.497 2003/01/17 00:17:35 jonathan Exp 
+ *	NetBSD: pcidevs,v 1.498 2003/01/24 03:15:04 thorpej Exp 
  */
 
 /*
@@ -5464,6 +5464,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "RIVA TNT2 Model 64",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_ATA133,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce2 ATA133 IDE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MCPT_AC,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce2 MCP-T AC-97",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_ALADDINTNT2,
 	    0,
 	    "Nvidia Corporation",
@@ -5524,10 +5536,10 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "nForce MCP AC-97",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MCPT_AC,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_ATA100,
 	    0,
 	    "Nvidia Corporation",
-	    "nForce2 MCP-T AC-97",
+	    "nForce ATA100 IDE",
 	},
 	{
 	    PCI_VENDOR_NVIDIA_SGS, PCI_PRODUCT_NVIDIA_SGS_RIVA128,
