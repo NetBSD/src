@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2001/01/14 02:00:40 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.6 2001/03/30 23:23:37 wdk Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -41,6 +41,13 @@
 #define IPL_STATCLOCK	5	/* disable profiling interrupts */
 #define IPL_SERIAL	6	/* disable serial hardware interrupts */
 #define IPL_HIGH	7	/* disable all interrupts */
+#define NIPL		8
+
+/* Interrupt sharing types. */
+#define IST_NONE	0	/* none */
+#define IST_PULSE	1	/* pulsed */
+#define IST_EDGE	2	/* edge-triggered */
+#define IST_LEVEL	3	/* level-triggered */
 
 #define	IPL_SOFTSERIAL	0	/* serial software interrupts */
 #define	IPL_SOFTNET	1	/* network software interrupts */
@@ -55,7 +62,9 @@
 
 #ifdef _KERNEL
 #ifndef _LOCORE
-#include <mips/cpuregs.h>
+#include <sys/types.h>
+#include <sys/device.h>
+#include <sys/queue.h>
 
 extern int _splraise __P((int));
 extern int _spllower __P((int));
@@ -68,22 +77,38 @@ extern void _clrsoftintr __P((int));
 /*
  * software simulated interrupt
  */
-#define SIR_NET		0x01
-#define SIR_SERIAL	0x02
-
 #define setsoft(x)	do {			\
 	extern u_int ssir;			\
 	int s;					\
 						\
 	s = splhigh();				\
-	ssir |= (x);				\
+	ssir |= 1 << (x);			\
 	_setsoftintr(MIPS_SOFT_INT_MASK_1);	\
 	splx(s);				\
 } while (0)
 
-#define setsoftclock()	_setsoftintr(MIPS_SOFT_INT_MASK_0)
-#define setsoftnet()	setsoft(SIR_NET)
-#define setsoftserial()	setsoft(SIR_SERIAL)
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+
+#define softintr_schedule(arg)						\
+do {									\
+	struct mipsco_intrhand *__ih = (arg);				\
+	__ih->ih_pending = 1;						\
+	setsoft(__ih->ih_intrhead->intr_ipl);				\
+} while (0)
+
+extern struct mipsco_intrhand *softnet_intrhand;
+
+#define	setsoftnet()	softintr_schedule(softnet_intrhand)
+
+#else /* ! __HAVE_GENERIC_SOFT_INTERRUPTS */
+
+#define SIR_NET		0x01
+#define SIR_SERIAL	0x02
+
+# define setsoftclock()	_setsoftintr(MIPS_SOFT_INT_MASK_0)
+# define setsoftnet()	setsoft(SIR_NET)
+# define setsoftserial()	setsoft(SIR_SERIAL)
+#endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
 
 /*
  * nesting interrupt masks.
@@ -109,16 +134,31 @@ extern void _clrsoftintr __P((int));
 #define splhigh()	_splraise(MIPS_INT_MASK_SPL2)
 #define	splsched()	splhigh()
 #define	spllock()	splhigh()
+#define splserial()	spltty()
 
 #define splsoftclock()	_splraise(MIPS_INT_MASK_SPL_SOFT0)
-#define splsoftnet()	_splraise(MIPS_INT_MASK_SPL_SOFT1)
+#define splsoft()	_splraise(MIPS_INT_MASK_SPL_SOFT1)
 #define spllowersoftclock() _spllower(MIPS_INT_MASK_SPL_SOFT0)
+#define splsoftnet()	splsoft()
 
-struct intrhandler {
-	int	(*func) __P((void *));
-	void	*arg;
+struct mipsco_intrhand {
+	LIST_ENTRY(mipsco_intrhand)
+		ih_q;
+	int	(*ih_fun) __P((void *));
+	void	 *ih_arg;
+	struct	mipsco_intr *ih_intrhead;
+	int	ih_pending;
 };
-extern struct intrhandler intrtab[];
+
+struct mipsco_intr {
+	LIST_HEAD(,mipsco_intrhand)
+		intr_q;
+	struct	evcnt ih_evcnt;
+	unsigned long intr_ipl;
+};
+
+
+extern struct mipsco_intrhand intrtab[];
 
 #define SYS_INTR_LEVEL0	0
 #define SYS_INTR_LEVEL1	1
@@ -131,10 +171,16 @@ extern struct intrhandler intrtab[];
 #define SYS_INTR_ETHER	8
 #define SYS_INTR_SCC0	9
 #define SYS_INTR_FDC	10
+#define SYS_INTR_ATBUS	11
 
 #define MAX_INTR_COOKIES 16
 
-#define	CALL_INTR(lev)	((*intrtab[lev].func)(intrtab[lev].arg))
+#define	CALL_INTR(lev)	((*intrtab[lev].ih_fun)(intrtab[lev].ih_arg))
+
+void	*softintr_establish(int, void (*)(void *), void *);
+void	softintr_disestablish(void *);
+void	softintr_init(void);
+void	softintr_dispatch(void);
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */
