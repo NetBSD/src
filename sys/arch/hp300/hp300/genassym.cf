@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 1997/03/13 09:22:19 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.2 1997/03/13 09:27:22 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -134,25 +134,6 @@ define	VM_STCHG		offsetof(struct pmap, pm_stchanged)
 
 # interrupt/fault metering
 define	V_INTR			offsetof(struct vmmeter, v_intr)
-
-# trap types (should just include trap.h?)
-define	T_BUSERR		T_BUSERR
-define	T_ADDRERR		T_ADDRERR
-define	T_ILLINST		T_ILLINST
-define	T_ZERODIV		T_ZERODIV
-define	T_CHKINST		T_CHKINST
-define	T_TRAPVINST		T_TRAPVINST
-define	T_PRIVINST		T_PRIVINST
-define	T_TRACE			T_TRACE
-define	T_MMUFLT		T_MMUFLT
-define	T_SSIR			T_SSIR
-define	T_FMTERR		T_FMTERR
-define	T_COPERR		T_COPERR
-define	T_FPERR			T_FPERR
-define	T_ASTFLT		T_ASTFLT
-define	T_TRAP15		T_TRAP15
-define	T_FPEMULI		T_FPEMULI
-define	T_FPEMULD		T_FPEMULD
 
 # PSL values (should just include psl.h?)
 define	PSL_S			PSL_S
