@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ops.c,v 1.5 1999/05/09 19:23:38 thorpej Exp $	*/
+/*	$NetBSD: procfs_ops.c,v 1.6 1999/10/15 19:31:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include <sys/sysctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/resource.h> /* for rusage */
 
 #include <fcntl.h>
 #include <dirent.h>
@@ -51,6 +52,8 @@
 #include <string.h>
 #include <err.h>
 #include <kvm.h>
+
+#include "ps.h"
 
 /* Assume that no process status file will ever be larger than this. */
 #define STATUS_SIZE	8192
@@ -70,8 +73,7 @@
 }
 
 static int verify_procfs_fd __P((int, const char *));
-static int parsekinfo __P((const char *, struct kinfo_proc *));
-struct kinfo_proc *procfs_getprocs __P((int, int, int *));
+static int parsekinfo __P((const char *, KINFO *));
 
 static int
 verify_procfs_fd(fd, path)
@@ -97,15 +99,16 @@ verify_procfs_fd(fd, path)
 }
 
 static int
-parsekinfo(path, kp)
+parsekinfo(path, ki)
 	const char *path;
-	struct kinfo_proc *kp;
+	KINFO *ki;
 {
 	char    fullpath[MAXPATHLEN];
 	int     dirfd, fd, nbytes, devmajor, devminor;
 	struct timeval usertime, systime, starttime;
 	char    buff[STATUS_SIZE];
 	char    flagstr[256];
+	struct kinfo_proc *kp = ki->ki_p;
 
 	/*
 	 * Verify that /proc/<pid> is a procfs file (and that no one has
@@ -131,7 +134,6 @@ parsekinfo(path, kp)
 		 * Don't print warning, as the process may have died since our
 		 * scan of the directory entries.
 		 */
-		close(fd);
 		return -1;	/* Process may no longer exist. */
 	}
 
@@ -174,6 +176,14 @@ parsekinfo(path, kp)
 	kp->kp_proc.p_rtime.tv_sec = usertime.tv_sec + systime.tv_sec;
 	kp->kp_proc.p_rtime.tv_usec = usertime.tv_usec + systime.tv_usec;
 
+	/* if starttime.[u]sec is != -1, it's in-memory process */
+	if (starttime.tv_sec != -1 && starttime.tv_usec != -1) {
+		kp->kp_proc.p_flag |= P_INMEM;
+		ki->ki_u.u_valid = 1;
+		ki->ki_u.u_start.tv_sec = starttime.tv_sec;
+		ki->ki_u.u_start.tv_usec = starttime.tv_usec;
+	}
+
 	/*
 	 * CPU time isn't shown unless the ki_u.u_valid flag is set.
 	 * Unfortunately, we don't have access to that here.
@@ -183,11 +193,15 @@ parsekinfo(path, kp)
 	if (strstr(flagstr, "ctty"))
 		kp->kp_proc.p_flag |= P_CONTROLT;
 
+	/* Set the flag for whether or not this process is session leader */
+	if (strstr(flagstr, "sldr"))
+		kp->kp_eproc.e_flag |= EPROC_SLEADER;
+
 	return 0;
 }
 
-struct kinfo_proc *
-procfs_getprocs(op, arg, cnt)
+KINFO *
+getkinfo_procfs(op, arg, cnt)
 	int     op, arg;
 	int    *cnt;
 {
@@ -195,6 +209,7 @@ procfs_getprocs(op, arg, cnt)
 	int     procdirfd, nbytes, knum = 0, maxknum = 0;
 	char   *direntbuff;
 	struct kinfo_proc *kp;
+	KINFO	*ki;
 	int     mib[4];
 	size_t  len;
 	struct statfs procfsstat;
@@ -250,8 +265,8 @@ procfs_getprocs(op, arg, cnt)
 		err(1, "sysctl to fetch maxproc");
 	maxknum *= 2;		/* Double it, to be really paranoid.  */
 
-	kp = (struct kinfo_proc *) malloc(sizeof(struct kinfo_proc) * maxknum);
-	memset(kp, 0, sizeof(struct kinfo_proc) * maxknum);
+	kp = (struct kinfo_proc *) calloc(sizeof(struct kinfo_proc)*maxknum, 1);
+	ki = (KINFO *) calloc(sizeof(KINFO)*maxknum, 1);
 
 	/* Read in a batch of entries at a time.  */
 	while ((knum < maxknum) &&
@@ -268,7 +283,8 @@ procfs_getprocs(op, arg, cnt)
 				continue;
 			if (strcmp(dp->d_name, "curproc") == 0)
 				continue;
-			if (parsekinfo(dp->d_name, &kp[knum]) != 0)
+			ki[knum].ki_p = &kp[knum];
+			if (parsekinfo(dp->d_name, &ki[knum]) != 0)
 				continue;
 			/*
 			 * Now check some of the flags.  If the newest entry
@@ -323,5 +339,80 @@ procfs_getprocs(op, arg, cnt)
 
 	*cnt = knum;
 	close(procdirfd);
-	return kp;
+	/* free unused memory */
+	if (knum < maxknum) {
+		kp = realloc(kp, sizeof(*kp) * knum);
+		ki = realloc(ki, sizeof(*ki) * knum);
+		for(; knum >= 0; knum--)
+			ki[knum].ki_p = &kp[knum];
+	}
+	return ki;
 }
+
+/*
+ * return process arguments, possibly ones used when exec()ing
+ * the process; return the array as two element array, first is
+ * argv[0], second element is all the other args separated by spaces
+ */
+char **
+procfs_getargv(kp, nchr)
+	const struct kinfo_proc *kp;
+	int nchr;
+{
+	char    fullpath[MAXPATHLEN], *buf, *name, *args, **argv;
+	int fd, num;
+	ssize_t len;
+	size_t idx;
+
+	/* Open /proc/<pid>/cmdline, and parse it into the argv array */
+	snprintf(fullpath, MAXPATHLEN, "/proc/%d/cmdline", kp->kp_proc.p_pid);
+	fd = open(fullpath, O_RDONLY, 0);
+	if (fd == -1 || verify_procfs_fd(fd, fullpath)) {
+		/*
+		 * Don't print warning, as the process may have died since our
+		 * scan of the directory entries.
+		 */
+		return NULL;	/* Process may no longer exist. */
+	}
+
+	buf = (char *)malloc(nchr+1);
+	len = read(fd, buf, nchr);
+	close(fd);
+	if (len == -1) {
+		warnx("procfs_getargv");
+		return NULL;
+	}
+	
+	num = 1;
+	args = NULL;
+	name = buf;
+	/* substitute any \0's with space */
+	for(idx=0; idx < len; idx++) {
+		if (buf[idx] == '\0') {
+			if (!args)
+				args = &buf[idx+1];
+			else
+				buf[idx] = ' ';
+			num++;
+		}
+	}
+	buf[len] = '\0'; /* end the string */
+
+	/* if the name is the same as the p_comm, just enclosed
+	 * in parentheses, remove the parentheses */
+	if (num == 1 && name[0] == '(' && name[len-1] == ')'
+		&& strncmp(name+1, kp->kp_proc.p_comm, len-2) == 0)
+	{
+		len -= 2;
+		strncpy(name, name+1, len);
+		name[len] = '\0';
+	}
+	
+	argv = (char **) malloc(3*sizeof(char *));
+	argv[0] = name;
+	argv[1] = args;
+	argv[2] = NULL;
+
+	return argv;
+}
+
