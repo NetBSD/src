@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.16 1995/08/06 19:01:18 mycroft Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.17 1995/08/13 09:05:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -82,9 +82,6 @@ process_frame(p)
 {
 	void *ptr;
 
-	if ((p->p_flag & P_INMEM) == 0)
-		return (NULL);
-
 	ptr = (char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack);
 	return (ptr);
 }
@@ -94,9 +91,6 @@ process_fpframe(p)
 	struct proc *p;
 {
 
-	if ((p->p_flag & P_INMEM) == 0)
-		return (NULL);
-
 	return (&p->p_addr->u_pcb.pcb_savefpu);
 }
 
@@ -105,11 +99,7 @@ process_read_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
-	struct trapframe *tf;
-
-	tf = process_frame(p);
-	if (tf == NULL)
-		return (EIO);
+	struct trapframe *tf = process_frame(p);
 
 	regs->r_es     = tf->tf_es;
 	regs->r_ds     = tf->tf_ds;
@@ -134,17 +124,14 @@ process_read_fpregs(p, regs)
 	struct proc *p;
 	struct fpreg *regs;
 {
-	struct save87 *frame;
 
 	if (p->p_md.md_flags & MDP_USEDFPU) {
+		struct save87 *frame = process_fpframe(p);
+
 #if NNPX > 0
 		if (npxproc == p)
 			npxsave();
 #endif
-
-		frame = process_fpframe(p);
-		if (frame == NULL)
-			return (EIO);
 
 		bcopy(frame, regs, sizeof(frame));
 	} else
@@ -158,11 +145,7 @@ process_write_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
-	struct trapframe *tf;
-
-	tf = process_frame(p);
-	if (tf == NULL)
-		return (EIO);
+	struct trapframe *tf = process_frame(p);
 
 	/*
 	 * Check for security violations.
@@ -194,16 +177,12 @@ process_write_fpregs(p, regs)
 	struct proc *p;
 	struct fpreg *regs;
 {
-	struct save87 *frame;
+	struct save87 *frame = process_fpframe(p);
 
 #if NNPX > 0
 	if (npxproc == p)
 		npxdrop();
 #endif
-
-	frame = process_fpframe(p);
-	if (frame == NULL)
-		return (EIO);
 
 	p->p_md.md_flags |= MDP_USEDFPU;
 	bcopy(regs, frame, sizeof(frame));
@@ -215,11 +194,7 @@ int
 process_sstep(p, sstep)
 	struct proc *p;
 {
-	struct trapframe *tf;
-
-	tf = process_frame(p);
-	if (tf == NULL)
-		return (EIO);
+	struct trapframe *tf = process_frame(p);
 
 	if (sstep)
 		tf->tf_eflags |= PSL_T;
@@ -234,11 +209,7 @@ process_set_pc(p, addr)
 	struct proc *p;
 	caddr_t addr;
 {
-	struct trapframe *tf;
-
-	tf = process_frame(p);
-	if (tf == NULL)
-		return (EIO);
+	struct trapframe *tf = process_frame(p);
 
 	tf->tf_eip = (int)addr;
 
