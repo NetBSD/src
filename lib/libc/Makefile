@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.2 (Berkeley) 3/5/91
-#	$Id: Makefile,v 1.17 1993/10/17 01:10:37 pk Exp $
+#	$Id: Makefile,v 1.18 1993/11/05 22:43:47 cgd Exp $
 #
 # All library objects contain sccsid strings by default; they may be
 # excluded as a space-saving measure.  To produce a library that does
@@ -36,8 +36,8 @@ AINC=	-I${.CURDIR}/arch/${MACHINE}
 
 LIBKERN=	/sys/lib/libkern
 
-KSRCS=	bcmp.c bzero.c ffs.c strcat.c strcmp.c strcpy.c strlen.c strncpy.c \
-	htonl.c htons.c ntohl.c ntohl.c
+KSRCS=	bcmp.c bzero.c ffs.c strcat.c strcmp.c strcpy.c strlen.c strncmp.c \
+	strncpy.c htonl.c htons.c ntohl.c ntohl.c
 
 copy-to-libkern:	copy-to-libkern-machind copy-to-libkern-machdep
 
@@ -47,6 +47,9 @@ copy-to-libkern-machind: ${KSRCS}
 copy-to-libkern-machdep: ${KMSRCS}
 .if defined(KMSRCS) && !empty(KMSRCS)
 	cp -p ${.ALLSRC} ${LIBKERN}/${MACHINE}
+.endif
+.if defined(KMINCLUDES) && !empty(KMINCLUDES)
+	(cd ${.CURDIR} ; cp -p ${KMINCLUDES} ${LIBKERN}/${MACHINE})
 .endif
 
 rm-from-libkern:
