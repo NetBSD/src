@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.62 2002/06/10 14:08:05 fredette Exp $
+#  $NetBSD: build.sh,v 1.63 2002/07/09 06:36:16 pooka Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -312,7 +312,7 @@ else
 	echo "===> DESTDIR path: $DESTDIR"
 
 	TOOLDIR=`getmakevar TOOLDIR`;
-	[ $? = 0 ] || bomb "getmakevar DESTDIR failed";
+	[ $? = 0 ] || bomb "getmakevar TOOLDIR failed";
 	echo "===> TOOLDIR path: $TOOLDIR"
 
 	export DESTDIR TOOLDIR
@@ -376,7 +376,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.62 2002/06/10 14:08:05 fredette Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.63 2002/07/09 06:36:16 pooka Exp $
 #
 
 EOF
