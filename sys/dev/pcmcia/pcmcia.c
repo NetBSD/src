@@ -1,6 +1,8 @@
-/*	$NetBSD: pcmcia.c,v 1.1.2.11 1997/10/15 02:41:38 enami Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.1.2.12 1997/10/15 03:16:58 enami Exp $	*/
 
 #define	PCMCIADEBUG
+
+#include "opt_pcmciaverbose.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
