@@ -1,4 +1,4 @@
-/*	$NetBSD: fsirand.c,v 1.6 1997/09/14 14:58:54 lukem Exp $	*/
+/*	$NetBSD: fsirand.c,v 1.7 1997/09/20 16:28:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsirand.c,v 1.6 1997/09/14 14:58:54 lukem Exp $");
+__RCSID("$NetBSD: fsirand.c,v 1.7 1997/09/20 16:28:00 christos Exp $");
 #endif /* lint */
 
 #include <stdio.h>
@@ -139,7 +139,9 @@ fixinodes(fd, fs, lab, pflag, xorval)
 
 	for (ino = 0, imax = fs->fs_ipg * fs->fs_ncg; ino < imax;) {
 		off_t sp;
-
+#if __GNUC__	/* XXX work around lame compiler problem (gcc 2.7.2) */
+		(void)&sp;
+#endif
 		sp = (off_t) fsbtodb(fs, ino_to_fsba(fs, ino)) *
 		     (off_t) lab->d_secsize;
 
