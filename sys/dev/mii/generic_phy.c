@@ -1,4 +1,4 @@
-/*  $NetBSD: generic_phy.c,v 1.1 1997/10/17 17:33:48 bouyer Exp $   */
+/*	$NetBSD: generic_phy.c,v 1.2 1997/11/17 08:38:04 thorpej Exp $	*/
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *  This product includes software developed by Manuel Bouyer.
+ *	This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -43,7 +43,8 @@
 #include <dev/mii/mii_phy.h>
 #include <dev/mii/generic_phy.h>
 
-int phy_reset(sc)
+int
+phy_reset(sc)
 	struct phy_softc *sc;
 {
 	int i, control;
@@ -51,34 +52,34 @@ int phy_reset(sc)
 
 	/* reset the PHY, wait for the reset bit to clear */
 	mii_writereg(phy_link->mii_softc, phy_link->dev, PHY_CONTROL,
-		CTRL_LOOPBK);
+	    CTRL_LOOPBK);
 	DELAY(1000);
 	mii_writereg(phy_link->mii_softc, phy_link->dev, PHY_CONTROL,
-		CTRL_LOOPBK | CTRL_RESET);
+	    CTRL_LOOPBK | CTRL_RESET);
 	i = 0;
 	do {
 		DELAY(100000);
 		control = mii_readreg(phy_link->mii_softc, phy_link->dev,
-			PHY_CONTROL);
+		    PHY_CONTROL);
 	} while ((control < 0 || (control & CTRL_RESET) != 0) && ++i < 10);
-	if ( control < 0 || (control & CTRL_RESET) != 0) {
+	if (control < 0 || (control & CTRL_RESET) != 0) {
 		printf("%s: reset failed\n", sc->sc_dev.dv_xname);
-		return 0;
+		return (0);
 	} 
-	return 1;
+	return (1);
 }
 
-int phy_media_probe(sc)
+int
+phy_media_probe(sc)
 	struct phy_softc *sc;
 {
 	mii_phy_t *phy_link = sc->phy_link;
 	int reg;
 
 	reg = mii_readreg(phy_link->mii_softc, phy_link->dev,
-		PHY_AN_Adv);
-	if (reg < 0) {
-		return 2;
-	}
+	    PHY_AN_Adv);
+	if (reg < 0)
+		return (2);
 	if (reg & Adv_10bT)
 		phy_link->phy_media |= PHY_10baseT;
 	if (reg & Adv_10bT_fd)
@@ -89,20 +90,21 @@ int phy_media_probe(sc)
 		phy_link->phy_media |= PHY_100baseTxfd;
 	if (reg & Adv_100bT4)
 		phy_link->phy_media |= PHY_100baseT4;
-	return 0;
+	return (0);
 }
 
-void phy_media_print(media)
+void
+phy_media_print(media)
 	u_int32_t media;
 {
 	char tmpstr[80], *p = tmpstr;
 
-	if (media & PHY_AUI) {
+	if (media & PHY_AUI)
 		 p += sprintf(p, "AUI/");
-	}
-	if (media & PHY_BNC) {
+
+	if (media & PHY_BNC)
 		 p += sprintf(p, "BNC/");
-	}
+
 	if (media & (PHY_10baseT | PHY_10baseTfd)) {
 		p += sprintf(p, "10baseT/");
 		if (media & PHY_10baseTfd) {
@@ -124,7 +126,8 @@ void phy_media_print(media)
 	printf("%s", tmpstr);
 }
 	
-int phy_media_set_10_100(sc, media)
+int
+phy_media_set_10_100(sc, media)
 	struct phy_softc *sc;
 	int media;
 {
@@ -135,14 +138,14 @@ int phy_media_set_10_100(sc, media)
 	int subtype = IFM_SUBTYPE(media);
 
 	if (subtype == IFM_10_T &&
-		(phy_link->phy_media & (PHY_10baseT | PHY_10baseTfd)) == 0)
-		return EINVAL;
+	    (phy_link->phy_media & (PHY_10baseT | PHY_10baseTfd)) == 0)
+		return (EINVAL);
 	if (subtype == IFM_100_TX &&
-		(phy_link->phy_media & (PHY_100baseTx | PHY_100baseTxfd)) == 0)
-		return EINVAL;
+	    (phy_link->phy_media & (PHY_100baseTx | PHY_100baseTxfd)) == 0)
+		return (EINVAL);
 	if (subtype == IFM_100_T4 &&
-		(phy_link->phy_media & PHY_100baseT4) == 0)
-		return EINVAL;
+	    (phy_link->phy_media & PHY_100baseT4) == 0)
+		return (EINVAL);
 
 	reg = (media & IFM_FDX) ? CTRL_DUPLEX : 0;
 	dpx = (media & IFM_FDX) ? " (full duplex)" : "";
@@ -155,44 +158,47 @@ int phy_media_set_10_100(sc, media)
 	do {
 		DELAY(100000);
 		reg = mii_readreg(phy_link->mii_softc, phy_link->dev,
-			PHY_STATUS);
+		    PHY_STATUS);
 		if (reg < 0) {
-			printf("%s: can't read status register\n", sc->sc_dev.dv_xname);
-			return EIO;
+			printf("%s: can't read status register\n",
+			    sc->sc_dev.dv_xname);
+			return (EIO);
 		}
 	} while ((reg & ST_LINK) == 0 && ++i < 10);
 	if ((reg & ST_LINK) == 0) {
 		printf("%s: %s%s: no carrier\n", sc->sc_dev.dv_xname,
 			mediastr, dpx);
 		/* phy_dumpreg(sc); */
-		return ENETDOWN;
+		return (ENETDOWN);
 	}
 	/* printf("%s: selected %s%s\n", sc->sc_dev.dv_xname, mediastr, dpx); */
-	return 0;
+	return (0);
 }
 
-int phy_status(media, v)
+int
+phy_status(media, v)
 	int media;
 	void *v;
 {
 	struct phy_softc * sc = v;
 	int reg;
 	reg = mii_readreg(sc->phy_link->mii_softc, sc->phy_link->dev,
-		PHY_STATUS);
+	    PHY_STATUS);
 	reg = mii_readreg(sc->phy_link->mii_softc, sc->phy_link->dev,
-		PHY_STATUS); /* Read twice to clear latched status */
+	    PHY_STATUS); /* Read twice to clear latched status */
 	
 	if ((reg & ST_LINK) == 0)
-		return ENETDOWN;
-	return 0;
+		return (ENETDOWN);
+	return (0);
 }
 
-void phy_dumpreg(sc)
-    struct phy_softc * sc;
+void
+phy_dumpreg(sc)
+	struct phy_softc * sc;
 {   
 	int i;
-	for (i=0; i <= 0x12; i++) {
-		printf("%s: reg %x = %x\n", sc->sc_dev.dv_xname, i,
-			mii_readreg(sc->phy_link->mii_softc, sc->phy_link->dev, i));
-	}
+
+	for (i = 0; i <= 0x12; i++)
+		printf("%s: reg 0x%x = 0x%x\n", sc->sc_dev.dv_xname, i,
+		    mii_readreg(sc->phy_link->mii_softc, sc->phy_link->dev, i));
 }   
