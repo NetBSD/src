@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sshd,v 1.15 2002/04/19 23:12:26 enami Exp $
+# $NetBSD: sshd,v 1.16 2002/04/19 23:13:44 enami Exp $
 #
 
 # PROVIDE: sshd
@@ -55,7 +55,7 @@ sshd_precmd()
 	if [ ! -f ${sshd_conf_dir}/ssh_host_key -o \
 	    ! -f ${sshd_conf_dir}/ssh_host_dsa_key -o \
 	    ! -f ${sshd_conf_dir}/ssh_host_rsa_key ]; then
-		$0 keygen
+		run_rc_command keygen
 	fi
 }
 
