@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.22 2004/08/13 03:12:59 thorpej Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.23 2004/08/14 15:08:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.22 2004/08/13 03:12:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.23 2004/08/14 15:08:04 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,9 +72,10 @@ static void	write_multi_2_swap __P((bus_space_tag_t, bus_space_handle_t,
 
 struct wdc_mb_softc {
 	struct wdc_softc sc_wdcdev;
-	struct	wdc_channel *wdc_chanlist[1];
-	struct  wdc_channel wdc_channel;
-	struct	ata_queue wdc_chqueue;
+	struct	ata_channel *sc_chanlist[1];
+	struct  ata_channel sc_channel;
+	struct	ata_queue sc_chqueue;
+	struct	wdc_regs sc_wdc_regs;
 	void	*sc_ih;
 };
 
@@ -91,7 +92,9 @@ wdc_mb_probe(parent, cfp, aux)
 	void *aux;
 {
 	static int	wdc_matched = 0;
-	struct wdc_channel ch;
+	struct ata_channel ch;
+	struct wdc_softc wdc;
+	struct wdc_regs wdr;
 	int	result = 0;
 	u_char	sv_ierb;
 
@@ -100,18 +103,21 @@ wdc_mb_probe(parent, cfp, aux)
 	if (!atari_realconfig)
 		return 0;
 
+	memset(&wdc, 0, sizeof(wdc));
 	memset(&ch, 0, sizeof(ch));
+	ch.ch_wdc = &wdc;
+	wdc.regs = &wdr;
 
-	ch.cmd_iot = ch.ctl_iot = mb_alloc_bus_space_tag();
-	if (ch.cmd_iot == NULL)
+	wdr.cmd_iot = wdr.ctl_iot = mb_alloc_bus_space_tag();
+	if (wdr.cmd_iot == NULL)
 		return 0;
-	ch.cmd_iot->stride = 2;
-	ch.cmd_iot->wo_1   = 1;
+	wdr.cmd_iot->stride = 2;
+	wdr.cmd_iot->wo_1   = 1;
 
-	if (bus_space_map(ch.cmd_iot, 0xfff00000, 0x40, 0, &ch.cmd_baseioh))
+	if (bus_space_map(wdr.cmd_iot, 0xfff00000, 0x40, 0, &wdr.cmd_baseioh))
 		return 0;
-	if (bus_space_subregion(ch.cmd_iot, ch.cmd_baseioh, 0x38, 1,
-	    &ch.ctl_ioh))
+	if (bus_space_subregion(wdr.cmd_iot, wdr.cmd_baseioh, 0x38, 1,
+	    &wdr.ctl_ioh))
 		return 0;
 
 	/*
@@ -130,8 +136,8 @@ wdc_mb_probe(parent, cfp, aux)
 
 	MFP->mf_ierb = sv_ierb;
 
-	bus_space_unmap(ch.cmd_iot, ch.cmd_baseioh, 0x40);
-	mb_free_bus_space_tag(ch.cmd_iot);
+	bus_space_unmap(wdr.cmd_iot, wdr.cmd_baseioh, 0x40);
+	mb_free_bus_space_tag(wdr.cmd_iot);
 
 	if (result)
 		wdc_matched = 1;
@@ -144,23 +150,25 @@ wdc_mb_attach(parent, self, aux)
 	void *aux;
 {
 	struct wdc_mb_softc *sc = (void *)self;
+	struct wdc_regs *wdr;
 
 	printf("\n");
 
-	sc->wdc_channel.cmd_iot = sc->wdc_channel.ctl_iot =
+	sc->sc_wdcdev.regs = wdr = &sc->sc_wdc_regs;
+	wdr->cmd_iot = wdr->ctl_iot =
 	    mb_alloc_bus_space_tag();
-	sc->wdc_channel.cmd_iot->stride = 2;
-	sc->wdc_channel.cmd_iot->wo_1   = 1;
-	sc->wdc_channel.cmd_iot->abs_rms_2 = read_multi_2_swap;
-	sc->wdc_channel.cmd_iot->abs_wms_2 = write_multi_2_swap;
-	if (bus_space_map(sc->wdc_channel.cmd_iot, 0xfff00000, 0x40, 0,
-			  &sc->wdc_channel.cmd_baseioh)) {
+	wdr->cmd_iot->stride = 2;
+	wdr->cmd_iot->wo_1   = 1;
+	wdr->cmd_iot->abs_rms_2 = read_multi_2_swap;
+	wdr->cmd_iot->abs_wms_2 = write_multi_2_swap;
+	if (bus_space_map(wdr->cmd_iot, 0xfff00000, 0x40, 0,
+			  &wdr->cmd_baseioh)) {
 		printf("%s: couldn't map registers\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname);
 		return;
 	}
-	if (bus_space_subregion(sc->wdc_channel.cmd_iot,
-	    sc->wdc_channel.cmd_baseioh, 0x38, 1, &sc->wdc_channel.ctl_ioh))
+	if (bus_space_subregion(wdr->cmd_iot,
+	    wdr->cmd_baseioh, 0x38, 1, &wdr->ctl_ioh))
 		return;
 
 	/*
@@ -175,12 +183,12 @@ wdc_mb_attach(parent, self, aux)
 	sc->sc_wdcdev.PIO_cap = 0;
 	sc->sc_wdcdev.claim_hw = &claim_hw;
 	sc->sc_wdcdev.free_hw  = &free_hw;
-	sc->wdc_chanlist[0] = &sc->wdc_channel;
-	sc->sc_wdcdev.channels = sc->wdc_chanlist;
+	sc->sc_chanlist[0] = &sc->sc_channel;
+	sc->sc_wdcdev.channels = sc->sc_chanlist;
 	sc->sc_wdcdev.nchannels = 1;
-	sc->wdc_channel.ch_channel = 0;
-	sc->wdc_channel.ch_wdc = &sc->sc_wdcdev;
-	sc->wdc_channel.ch_queue = &sc->wdc_chqueue;
+	sc->sc_channel.ch_channel = 0;
+	sc->sc_channel.ch_wdc = &sc->sc_wdcdev;
+	sc->sc_channel.ch_queue = &sc->sc_chqueue;
 
 	/*
 	 * Setup & enable disk related interrupts.
@@ -189,7 +197,7 @@ wdc_mb_attach(parent, self, aux)
 	MFP->mf_iprb  = (u_int8_t)~IB_DINT;
 	MFP->mf_imrb |= IB_DINT;
 
-	wdcattach(&sc->wdc_channel);
+	wdcattach(&sc->sc_channel);
 }
 
 /*

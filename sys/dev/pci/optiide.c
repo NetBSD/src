@@ -1,4 +1,4 @@
-/*	$NetBSD: optiide.c,v 1.6 2004/08/13 03:12:59 thorpej Exp $	*/
+/*	$NetBSD: optiide.c,v 1.7 2004/08/14 15:08:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <dev/pci/pciide_opti_reg.h>
 
 static void opti_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void opti_setup_channel(struct wdc_channel*);
+static void opti_setup_channel(struct ata_channel*);
 
 static int  optiide_match(struct device *, struct cfdata *, void *);
 static void optiide_attach(struct device *, struct device *, void *);
@@ -150,6 +150,8 @@ opti_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	interface = PCI_INTERFACE(pa->pa_class);
 
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
@@ -158,7 +160,7 @@ opti_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    (init_ctrl & OPTI_INIT_CONTROL_CH2_DISABLE) != 0) {
 			aprint_normal("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-			cp->wdc_channel.ch_flags |= WDCF_DISABLED;
+			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			continue;
 		}
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
@@ -167,11 +169,11 @@ opti_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-opti_setup_channel(struct wdc_channel *chp)
+opti_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
 	int drive, spd;
 	int mode[2];
 	u_int8_t rv, mr;

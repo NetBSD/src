@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.11 2004/08/13 04:10:49 thorpej Exp $	*/
+/*	$NetBSD: piixide.c,v 1.12 2004/08/14 15:08:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -39,8 +39,8 @@
 #include <dev/pci/pciide_piix_reg.h>
 
 static void piix_chip_map(struct pciide_softc*, struct pci_attach_args *);
-static void piix_setup_channel(struct wdc_channel *);
-static void piix3_4_setup_channel(struct wdc_channel *);
+static void piix_setup_channel(struct ata_channel *);
+static void piix3_4_setup_channel(struct ata_channel *);
 static u_int32_t piix_setup_idetim_timings(u_int8_t, u_int8_t, u_int8_t);
 static u_int32_t piix_setup_idetim_drvs(struct ata_drive_datas *);
 static u_int32_t piix_setup_sidetim_timings(u_int8_t, u_int8_t, u_int8_t);
@@ -264,6 +264,8 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	}
 	ATADEBUG_PRINT(("\n"), DEBUG_PROBE);
 
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
 		/* PIIX is compat-only */
@@ -275,7 +277,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 #if 1
 			aprint_normal("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-			cp->wdc_channel.ch_flags |= WDCF_DISABLED;
+			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			continue;
 #else
 			pcireg_t interface;
@@ -325,13 +327,13 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-piix_setup_channel(struct wdc_channel *chp)
+piix_setup_channel(struct ata_channel *chp)
 {
 	u_int8_t mode[2], drive;
 	u_int32_t oidetim, idetim, idedma_ctl;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
-	struct ata_drive_datas *drvp = cp->wdc_channel.ch_drive;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
+	struct ata_drive_datas *drvp = cp->ata_channel.ch_drive;
 
 	oidetim = pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_IDETIM);
 	idetim = PIIX_IDETIM_CLEAR(oidetim, 0xffff, chp->ch_channel);
@@ -431,12 +433,12 @@ end:	/*
 }
 
 static void
-piix3_4_setup_channel(struct wdc_channel *chp)
+piix3_4_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	u_int32_t oidetim, idetim, sidetim, udmareg, ideconf, idedma_ctl;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
 	struct wdc_softc *wdc = &sc->sc_wdcdev;
 	int drive;
 	int channel = chp->ch_channel;
@@ -586,7 +588,7 @@ piix_setup_idetim_drvs(drvp)
 	struct ata_drive_datas *drvp;
 {
 	u_int32_t ret = 0;
-	struct wdc_channel *chp = drvp->chnl_softc;
+	struct ata_channel *chp = drvp->chnl_softc;
 	u_int8_t channel = chp->ch_channel;
 	u_int8_t drive = drvp->drive;
 
@@ -681,6 +683,8 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
 
 	interface = PCI_INTERFACE(pa->pa_class);
+
+	wdc_allocate_regs(&sc->sc_wdcdev);
 
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];

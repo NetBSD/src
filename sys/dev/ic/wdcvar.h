@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.74 2004/08/13 03:12:59 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.75 2004/08/14 15:08:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -41,10 +41,6 @@
 
 #include <sys/callout.h>
 
-/* XXX For scsipi_adapter and scsipi_channel. */
-#include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/atapiconf.h>
-
 #include <dev/ic/wdcreg.h>
 
 #define	WAITTIME    (10 * hz)    /* time to wait for a completion */
@@ -53,57 +49,17 @@
 #define WDC_NREG	8 /* number of command registers */
 #define	WDC_NSHADOWREG	2 /* number of command "shadow" registers */
 
-/*
- * Per-channel data
- */
-struct wdc_channel {
-	struct callout ch_callout;	/* callout handle */
-	int ch_channel;			/* location */
-	struct wdc_softc *ch_wdc;	/* controller's softc */
-
+struct wdc_regs {
 	/* Our registers */
 	bus_space_tag_t       cmd_iot;
 	bus_space_handle_t    cmd_baseioh;
 	bus_space_handle_t    cmd_iohs[WDC_NREG+WDC_NSHADOWREG];
 	bus_space_tag_t       ctl_iot;
 	bus_space_handle_t    ctl_ioh;
+
+	/* data32{iot,ioh} are only used for 32-bit data xfers */
 	bus_space_tag_t       data32iot;
 	bus_space_handle_t    data32ioh;
-
-	/* Our state */
-	volatile int ch_flags;
-#define WDCF_SHUTDOWN 0x02	/* channel is shutting down */
-#define WDCF_IRQ_WAIT 0x10	/* controller is waiting for irq */
-#define WDCF_DMA_WAIT 0x20	/* controller is waiting for DMA */
-#define	WDCF_DISABLED 0x80	/* channel is disabled */
-#define WDCF_TH_RUN   0x100	/* the kenrel thread is working */
-#define WDCF_TH_RESET 0x200	/* someone ask the thread to reset */
-	u_int8_t ch_status;	/* copy of status register */
-	u_int8_t ch_error;	/* copy of error register */
-
-	/* for the reset callback */
-	int ch_reset_flags;
-
-	/* per-drive info */
-	struct ata_drive_datas ch_drive[2];
-
-	struct device *atabus;	/* self */
-
-	/* ATAPI children */
-	struct device *atapibus;
-	struct scsipi_channel ch_atapi_channel;
-
-	/* ATA children */
-	struct device *ata_drives[2];
-
-	/*
-	 * Channel queues.  May be the same for all channels, if hw
-	 * channels are not independent.
-	 */
-	struct ata_queue *ch_queue;
-
-	/* The channel kernel thread */
-	struct proc *ch_thread;
 };
 
 /*
@@ -111,6 +67,8 @@ struct wdc_channel {
  */
 struct wdc_softc {
 	struct device sc_dev;		/* generic device info */
+
+	struct wdc_regs *regs;		/* register array (per-channel) */
 
 	int           cap;		/* controller capabilities */
 #define	WDC_CAPABILITY_DATA16	0x0001	/* can do 16-bit data access */
@@ -127,7 +85,7 @@ struct wdc_softc {
 	u_int8_t      DMA_cap;		/* highest DMA mode supported */
 	u_int8_t      UDMA_cap;		/* highest UDMA mode supported */
 	int nchannels;			/* # channels on this controller */
-	struct wdc_channel **channels;  /* channel-specific data (array) */
+	struct ata_channel **channels;  /* channel-specific data (array) */
 
 	/*
 	 * The reference count here is used for both IDE and ATAPI devices.
@@ -135,7 +93,7 @@ struct wdc_softc {
 	struct atapi_adapter sc_atapi_adapter;
 
 	/* Function used to probe for drives. */
-	void		(*drv_probe)(struct wdc_channel *);
+	void		(*drv_probe)(struct ata_channel *);
 
 	/* if WDC_CAPABILITY_DMA set in 'cap' */
 	void            *dma_arg;
@@ -165,17 +123,17 @@ struct wdc_softc {
 	 * Optional callback to set drive mode.  Required for anything
 	 * but basic PIO operation.
 	 */
-	void 		(*set_modes)(struct wdc_channel *);
+	void 		(*set_modes)(struct ata_channel *);
 
 	/* Optional callback to select drive. */
-	void		(*select)(struct wdc_channel *,int);
+	void		(*select)(struct ata_channel *,int);
 
 	/* Optional callback to ack IRQ. */
-	void		(*irqack)(struct wdc_channel *);
+	void		(*irqack)(struct ata_channel *);
 
 	/* overridden if the backend has a different data transfer method */
-	void	(*datain_pio)(struct wdc_channel *, int, void *, size_t);
-	void	(*dataout_pio)(struct wdc_channel *, int, void *, size_t);
+	void	(*datain_pio)(struct ata_channel *, int, void *, size_t);
+	void	(*dataout_pio)(struct ata_channel *, int, void *, size_t);
 };
 
 /*
@@ -183,38 +141,39 @@ struct wdc_softc {
  * or bus-specific backends.
  */
 
-void	wdc_init_shadow_regs(struct wdc_channel *);
+void	wdc_allocate_regs(struct wdc_softc *);
+void	wdc_init_shadow_regs(struct ata_channel *);
 
-int	wdcprobe(struct wdc_channel *);
-void	wdcattach(struct wdc_channel *);
+int	wdcprobe(struct ata_channel *);
+void	wdcattach(struct ata_channel *);
 int	wdcdetach(struct device *, int);
 int	wdcactivate(struct device *, enum devact);
 int	wdcintr(void *);
 
 void	wdcrestart(void*);
 
-int	wdcreset(struct wdc_channel *, int);
+int	wdcreset(struct ata_channel *, int);
 #define RESET_POLL 1 
 #define RESET_SLEEP 0 /* wdcreset will use tsleep() */
 
-int	wdcwait(struct wdc_channel *, int, int, int, int);
+int	wdcwait(struct ata_channel *, int, int, int, int);
 #define WDCWAIT_OK	0  /* we have what we asked */
 #define WDCWAIT_TOUT	-1 /* timed out */
 #define WDCWAIT_THR	1  /* return, the kernel thread has been awakened */
 
-void	wdc_datain_pio(struct wdc_channel *, int, void *, size_t);
-void	wdc_dataout_pio(struct wdc_channel *, int, void *, size_t);
-void	wdcbit_bucket(struct wdc_channel *, int);
+void	wdc_datain_pio(struct ata_channel *, int, void *, size_t);
+void	wdc_dataout_pio(struct ata_channel *, int, void *, size_t);
+void	wdcbit_bucket(struct ata_channel *, int);
 
-int	wdc_dmawait(struct wdc_channel *, struct ata_xfer *, int);
-void	wdccommand(struct wdc_channel *, u_int8_t, u_int8_t, u_int16_t,
+int	wdc_dmawait(struct ata_channel *, struct ata_xfer *, int);
+void	wdccommand(struct ata_channel *, u_int8_t, u_int8_t, u_int16_t,
 		   u_int8_t, u_int8_t, u_int8_t, u_int8_t);
-void	wdccommandext(struct wdc_channel *, u_int8_t, u_int8_t, u_int64_t,
+void	wdccommandext(struct ata_channel *, u_int8_t, u_int8_t, u_int64_t,
 		      u_int16_t);
-void	wdccommandshort(struct wdc_channel *, int, int);
+void	wdccommandshort(struct ata_channel *, int, int);
 void	wdctimeout(void *arg);
 void	wdc_reset_drive(struct ata_drive_datas *, int);
-void	wdc_reset_channel(struct wdc_channel *, int);
+void	wdc_reset_channel(struct ata_channel *, int);
 
 int	wdc_exec_command(struct ata_drive_datas *, struct ata_command*);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cypide.c,v 1.10 2004/08/13 04:10:49 thorpej Exp $	*/
+/*	$NetBSD: cypide.c,v 1.11 2004/08/14 15:08:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -42,7 +42,7 @@
 #include <dev/pci/cy82c693var.h>
 
 static void cy693_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void cy693_setup_channel(struct wdc_channel*);
+static void cy693_setup_channel(struct ata_channel*);
 
 static int  cypide_match(struct device *, struct cfdata *, void *);
 static void cypide_attach(struct device *, struct device *, void *);
@@ -142,15 +142,17 @@ cy693_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = 1;
 
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
 	/* Only one channel for this chip; if we are here it's enabled */
 	cp = &sc->pciide_channels[0];
-	sc->wdc_chanarray[0] = &cp->wdc_channel;
+	sc->wdc_chanarray[0] = &cp->ata_channel;
 	cp->name = PCIIDE_CHANNEL_NAME(0);
-	cp->wdc_channel.ch_channel = 0;
-	cp->wdc_channel.ch_wdc = &sc->sc_wdcdev;
-	cp->wdc_channel.ch_queue =
+	cp->ata_channel.ch_channel = 0;
+	cp->ata_channel.ch_wdc = &sc->sc_wdcdev;
+	cp->ata_channel.ch_queue =
 	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
-	if (cp->wdc_channel.ch_queue == NULL) {
+	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error("%s primary channel: "
 		    "can't allocate memory for command queue",
 		sc->sc_wdcdev.sc_dev.dv_xname);
@@ -168,21 +170,21 @@ cy693_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		aprint_normal("compatibility mode\n");
 		pciide_mapregs_compat(pa, cp, sc->sc_cy_compatchan, &cmdsize,
 		    &ctlsize);
-		if ((cp->wdc_channel.ch_flags & WDCF_DISABLED) == 0)
+		if ((cp->ata_channel.ch_flags & ATACH_DISABLED) == 0)
 			pciide_map_compat_intr(pa, cp, sc->sc_cy_compatchan);
 	}
-	wdcattach(&cp->wdc_channel);
+	wdcattach(&cp->ata_channel);
 }
 
 static void
-cy693_setup_channel(struct wdc_channel *chp)
+cy693_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	int drive;
 	u_int32_t cy_cmd_ctrl;
 	u_int32_t idedma_ctl;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
 	int dma_mode = -1;
 
 	ATADEBUG_PRINT(("cy693_chip_map: old timings reg 0x%x\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.13 2004/08/13 04:10:49 thorpej Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.14 2004/08/14 15:08:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -48,13 +48,13 @@ CFATTACH_DECL(cmdide, sizeof(struct pciide_softc),
 
 static void cmd_chip_map(struct pciide_softc*, struct pci_attach_args*);
 static void cmd0643_9_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void cmd0643_9_setup_channel(struct wdc_channel*);
+static void cmd0643_9_setup_channel(struct ata_channel*);
 static void cmd_channel_map(struct pci_attach_args *, struct pciide_softc *,
 			    int);
 static int  cmd_pci_intr(void *);
-static void cmd646_9_irqack(struct wdc_channel *);
+static void cmd646_9_irqack(struct ata_channel *);
 static void cmd680_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void cmd680_setup_channel(struct wdc_channel*);
+static void cmd680_setup_channel(struct ata_channel*);
 static void cmd680_channel_map(struct pci_attach_args *, struct pciide_softc *,
 			       int);
 
@@ -143,10 +143,10 @@ cmd_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
 		interface = PCI_INTERFACE(pa->pa_class);
 	}
 
-	sc->wdc_chanarray[channel] = &cp->wdc_channel;
+	sc->wdc_chanarray[channel] = &cp->ata_channel;
 	cp->name = PCIIDE_CHANNEL_NAME(channel);
-	cp->wdc_channel.ch_channel = channel;
-	cp->wdc_channel.ch_wdc = &sc->sc_wdcdev;
+	cp->ata_channel.ch_channel = channel;
+	cp->ata_channel.ch_wdc = &sc->sc_wdcdev;
 
 	/*
 	 * Older CMD64X doesn't have independant channels
@@ -161,13 +161,13 @@ cmd_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
 	}
 
 	if (channel > 0 && one_channel) {
-		cp->wdc_channel.ch_queue =
-		    sc->pciide_channels[0].wdc_channel.ch_queue;
+		cp->ata_channel.ch_queue =
+		    sc->pciide_channels[0].ata_channel.ch_queue;
 	} else {
-		cp->wdc_channel.ch_queue =
+		cp->ata_channel.ch_queue =
 		    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
 	}
-	if (cp->wdc_channel.ch_queue == NULL) {
+	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error("%s %s channel: "
 		    "can't allocate memory for command queue",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
@@ -189,7 +189,7 @@ cmd_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
 	if (channel != 0 && (ctrl & CMD_CTRL_2PORT) == 0) {
 		aprint_normal("%s: %s channel ignored (disabled)\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-		cp->wdc_channel.ch_flags |= WDCF_DISABLED;
+		cp->ata_channel.ch_flags |= ATACH_DISABLED;
 		return;
 	}
 
@@ -201,7 +201,7 @@ cmd_pci_intr(void *arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
-	struct wdc_channel *wdc_cp;
+	struct ata_channel *wdc_cp;
 	int i, rv, crv; 
 	u_int32_t priirq, secirq;
 
@@ -210,7 +210,7 @@ cmd_pci_intr(void *arg)
 	secirq = pciide_pci_read(sc->sc_pc, sc->sc_tag, CMD_ARTTIM23);
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
 		cp = &sc->pciide_channels[i];
-		wdc_cp = &cp->wdc_channel;
+		wdc_cp = &cp->ata_channel;
 		/* If a compat channel skip. */
 		if (cp->compat)
 			continue;
@@ -255,6 +255,8 @@ cmd_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
 	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16;
+
+	wdc_allocate_regs(&sc->sc_wdcdev);
 
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cmd_channel_map(pa, sc, channel);
@@ -338,6 +340,8 @@ cmd0643_9_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		pci_conf_read(sc->sc_pc, sc->sc_tag, 0x58)),
 		DEBUG_PROBE);
 
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++)
 		cmd_channel_map(pa, sc, channel);
 
@@ -353,14 +357,14 @@ cmd0643_9_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-cmd0643_9_setup_channel(struct wdc_channel *chp)
+cmd0643_9_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	u_int8_t tim;
 	u_int32_t idedma_ctl, udma_reg;
 	int drive;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
 
 	idedma_ctl = 0;
 	/* setup DMA if needed */
@@ -431,11 +435,11 @@ cmd0643_9_setup_channel(struct wdc_channel *chp)
 }
 
 static void
-cmd646_9_irqack(struct wdc_channel *chp)
+cmd646_9_irqack(struct ata_channel *chp)
 {
 	u_int32_t priirq, secirq;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
 
 	if (chp->ch_channel == 0) {
 		priirq = pciide_pci_read(sc->sc_pc, sc->sc_tag, CMD_CONF);
@@ -477,6 +481,9 @@ cmd680_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pciide_pci_write(sc->sc_pc, sc->sc_tag, 0x84, 0x00);
 	pciide_pci_write(sc->sc_pc, sc->sc_tag, 0x8a,
 	    pciide_pci_read(sc->sc_pc, sc->sc_tag, 0x8a) | 0x01);
+
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++)
 		cmd680_channel_map(pa, sc, channel);
 }
@@ -501,14 +508,14 @@ cmd680_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
 		interface = PCI_INTERFACE(pa->pa_class);
 	}
 
-	sc->wdc_chanarray[channel] = &cp->wdc_channel;
+	sc->wdc_chanarray[channel] = &cp->ata_channel;
 	cp->name = PCIIDE_CHANNEL_NAME(channel);
-	cp->wdc_channel.ch_channel = channel;
-	cp->wdc_channel.ch_wdc = &sc->sc_wdcdev;
+	cp->ata_channel.ch_channel = channel;
+	cp->ata_channel.ch_wdc = &sc->sc_wdcdev;
 
-	cp->wdc_channel.ch_queue =
+	cp->ata_channel.ch_queue =
 	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
-	if (cp->wdc_channel.ch_queue == NULL) {
+	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error("%s %s channel: "
 		    "can't allocate memory for command queue",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
@@ -531,7 +538,7 @@ cmd680_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
 }
 
 static void
-cmd680_setup_channel(struct wdc_channel *chp)
+cmd680_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	u_int8_t mode, off, scsc;
@@ -539,7 +546,7 @@ cmd680_setup_channel(struct wdc_channel *chp)
 	u_int32_t idedma_ctl;
 	int drive;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
 	pci_chipset_tag_t pc = sc->sc_pc;
 	pcitag_t pa = sc->sc_tag;
 	static const u_int8_t udma2_tbl[] =

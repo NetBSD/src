@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.47 2004/08/13 04:10:49 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.48 2004/08/14 15:08:04 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.47 2004/08/13 04:10:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.48 2004/08/14 15:08:04 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -102,7 +102,7 @@ extern struct cfdriver atabus_cd;
 int
 atabusprint(void *aux, const char *pnp)
 {
-	struct wdc_channel *chan = aux;
+	struct ata_channel *chan = aux;
 	
 	if (pnp)
 		aprint_normal("atabus at %s", pnp);
@@ -137,12 +137,21 @@ static void
 atabus_thread(void *arg)
 {
 	struct atabus_softc *sc = arg;
-	struct wdc_channel *chp = sc->sc_chan;
+	struct ata_channel *chp = sc->sc_chan;
 	struct ata_xfer *xfer;
-	int s;
+	int i, s;
 
 	s = splbio();
-	chp->ch_flags |= WDCF_TH_RUN;
+	chp->ch_flags |= ATACH_TH_RUN;
+
+	/*
+	 * Probe the drives.  Reset all flags to 0 to indicate to controllers
+	 * that can re-probe that all drives must be probed..
+	 *
+	 * Note: ch_ndrive may be changed during the probe.
+	 */
+	for (i = 0; i < ATA_MAXDRIVES; i++)
+		chp->ch_drive[i].drive_flags = 0;
 	splx(s);
 
 	/* Configure the devices on the bus. */
@@ -150,18 +159,18 @@ atabus_thread(void *arg)
 
 	for (;;) {
 		s = splbio();
-		if ((chp->ch_flags & (WDCF_TH_RESET | WDCF_SHUTDOWN)) == 0 &&
+		if ((chp->ch_flags & (ATACH_TH_RESET | ATACH_SHUTDOWN)) == 0 &&
 		    (chp->ch_queue->active_xfer == NULL ||
 		     chp->ch_queue->queue_freeze == 0)) {
-			chp->ch_flags &= ~WDCF_TH_RUN;
+			chp->ch_flags &= ~ATACH_TH_RUN;
 			(void) tsleep(&chp->ch_thread, PRIBIO, "atath", 0);
-			chp->ch_flags |= WDCF_TH_RUN;
+			chp->ch_flags |= ATACH_TH_RUN;
 		}
 		splx(s);
-		if (chp->ch_flags & WDCF_SHUTDOWN)
+		if (chp->ch_flags & ATACH_SHUTDOWN)
 			break;
 		s = splbio();
-		if (chp->ch_flags & WDCF_TH_RESET) {
+		if (chp->ch_flags & ATACH_TH_RESET) {
 			/*
 			 * wdc_reset_channel() will freeze 2 times, so
 			 * unfreeze one time. Not a problem as we're at splbio
@@ -195,7 +204,7 @@ static void
 atabus_create_thread(void *arg)
 {
 	struct atabus_softc *sc = arg;
-	struct wdc_channel *chp = sc->sc_chan;
+	struct ata_channel *chp = sc->sc_chan;
 	int error;
 
 	if ((error = kthread_create1(atabus_thread, sc, &chp->ch_thread,
@@ -212,7 +221,7 @@ atabus_create_thread(void *arg)
 static int
 atabus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct wdc_channel *chp = aux;
+	struct ata_channel *chp = aux;
 
 	if (chp == NULL)
 		return (0);
@@ -233,7 +242,7 @@ static void
 atabus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct atabus_softc *sc = (void *) self;
-	struct wdc_channel *chp = aux;
+	struct ata_channel *chp = aux;
 	struct atabus_initq *initq;
 
 	sc->sc_chan = chp;
@@ -260,7 +269,7 @@ static int
 atabus_activate(struct device *self, enum devact act)
 {
 	struct atabus_softc *sc = (void *) self;
-	struct wdc_channel *chp = sc->sc_chan;
+	struct ata_channel *chp = sc->sc_chan;
 	struct device *dev = NULL;
 	int s, i, error = 0;
 
@@ -283,7 +292,7 @@ atabus_activate(struct device *self, enum devact act)
 				goto out;
 		}
 
-		for (i = 0; i < 2; i++) {
+		for (i = 0; i < chp->ch_ndrive; i++) {
 			if ((dev = chp->ch_drive[i].drv_softc) != NULL) {
 				ATADEBUG_PRINT(("atabus_activate: %s: "
 				    "deactivating %s\n", sc->sc_dev.dv_xname,
@@ -318,13 +327,13 @@ static int
 atabus_detach(struct device *self, int flags)
 {
 	struct atabus_softc *sc = (void *) self;
-	struct wdc_channel *chp = sc->sc_chan;
+	struct ata_channel *chp = sc->sc_chan;
 	struct device *dev = NULL;
 	int i, error = 0;
 
 	/* Shutdown the channel. */
 	/* XXX NEED AN INTERLOCK HERE. */
-	chp->ch_flags |= WDCF_SHUTDOWN;
+	chp->ch_flags |= ATACH_SHUTDOWN;
 	wakeup(&chp->ch_thread);
 	while (chp->ch_thread != NULL)
 		(void) tsleep((void *)&chp->ch_flags, PRIBIO, "atadown", 0);
@@ -343,7 +352,7 @@ atabus_detach(struct device *self, int flags)
 	/*
 	 * Detach our other children.
 	 */
-	for (i = 0; i < 2; i++) {
+	for (i = 0; i < chp->ch_ndrive; i++) {
 		if (chp->ch_drive[i].drive_flags & DRIVE_ATAPI)
 			continue;
 		if ((dev = chp->ch_drive[i].drv_softc) != NULL) {
@@ -505,7 +514,7 @@ ata_dmaerr(struct ata_drive_datas *drvp, int flags)
  * Add a command to the queue and start controller. Must be called at splbio
  */
 void
-ata_exec_xfer(struct wdc_channel *chp, struct ata_xfer *xfer)
+ata_exec_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 
 	ATADEBUG_PRINT(("ata_exec_xfer %p channel %d drive %d\n", xfer,
@@ -527,7 +536,7 @@ ata_exec_xfer(struct wdc_channel *chp, struct ata_xfer *xfer)
  * are shared.
  */
 void
-atastart(struct wdc_channel *chp)
+atastart(struct ata_channel *chp)
 {
 	struct wdc_softc *wdc = chp->ch_wdc;
 	struct ata_xfer *xfer;
@@ -559,7 +568,7 @@ atastart(struct wdc_channel *chp)
 		return; /* queue froozen */
 	}
 #ifdef DIAGNOSTIC
-	if ((chp->ch_flags & WDCF_IRQ_WAIT) != 0)
+	if ((chp->ch_flags & ATACH_IRQ_WAIT) != 0)
 		panic("atastart: channel waiting for irq");
 #endif
 	if (wdc->claim_hw)
@@ -597,7 +606,7 @@ ata_get_xfer(int flags)
 }
 
 void
-ata_free_xfer(struct wdc_channel *chp, struct ata_xfer *xfer)
+ata_free_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct wdc_softc *wdc = chp->ch_wdc;
 	int s;
@@ -610,14 +619,14 @@ ata_free_xfer(struct wdc_channel *chp, struct ata_xfer *xfer)
 }
 
 /*
- * Kill off all pending xfers for a wdc_channel.
+ * Kill off all pending xfers for a ata_channel.
  *
  * Must be called at splbio().
  */
 void
 ata_kill_pending(struct ata_drive_datas *drvp)
 {
-	struct wdc_channel *chp = drvp->chnl_softc;
+	struct ata_channel *chp = drvp->chnl_softc;
 	struct ata_xfer *xfer, *next_xfer;
 	int s = splbio();
 
@@ -644,7 +653,7 @@ ata_kill_pending(struct ata_drive_datas *drvp)
 }
 
 int
-ata_addref(struct wdc_channel *chp)
+ata_addref(struct ata_channel *chp)
 {
 	struct wdc_softc *wdc = chp->ch_wdc; 
 	struct scsipi_adapter *adapt = &wdc->sc_atapi_adapter._generic;
@@ -662,7 +671,7 @@ ata_addref(struct wdc_channel *chp)
 }
 
 void
-ata_delref(struct wdc_channel *chp)
+ata_delref(struct ata_channel *chp)
 {
 	struct wdc_softc *wdc = chp->ch_wdc;
 	struct scsipi_adapter *adapt = &wdc->sc_atapi_adapter._generic;
@@ -676,7 +685,7 @@ ata_delref(struct wdc_channel *chp)
 }
 
 void
-ata_print_modes(struct wdc_channel *chp)
+ata_print_modes(struct ata_channel *chp)
 {
 	struct wdc_softc *wdc = chp->ch_wdc;
 	int drive;
@@ -716,7 +725,7 @@ ata_print_modes(struct wdc_channel *chp)
 int
 ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 {
-	struct wdc_channel *chp = drvp->chnl_softc;
+	struct ata_channel *chp = drvp->chnl_softc;
 	struct wdc_softc *wdc = chp->ch_wdc;
 	struct device *drv_dev = drvp->drv_softc;
 	int cf_flags = drv_dev->dv_cfdata->cf_flags;
@@ -766,7 +775,7 @@ void
 ata_probe_caps(struct ata_drive_datas *drvp)
 {
 	struct ataparams params, params2;
-	struct wdc_channel *chp = drvp->chnl_softc;
+	struct ata_channel *chp = drvp->chnl_softc;
 	struct wdc_softc *wdc = chp->ch_wdc;
 	struct device *drv_dev = drvp->drv_softc;
 	int i, printed;
@@ -1032,7 +1041,7 @@ atabusioctl(dev, cmd, addr, flag, p)
         struct proc *p;
 {
         struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];
-	struct wdc_channel *chp = sc->sc_chan;
+	struct ata_channel *chp = sc->sc_chan;
 	int min_drive, max_drive, drive;
         int error;
 	int s;

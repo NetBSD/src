@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.9 2004/08/13 04:10:49 thorpej Exp $	*/
+/*	$NetBSD: aceride.c,v 1.10 2004/08/14 15:08:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #include <dev/pci/pciide_acer_reg.h>
 
 static void acer_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void acer_setup_channel(struct wdc_channel*);
+static void acer_setup_channel(struct ata_channel*);
 static int  acer_pci_intr(void *);
 
 static int  aceride_match(struct device *, struct cfdata *, void *);
@@ -150,6 +150,8 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    | ACER_0x4B_CDETECT);
 	}
 
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
@@ -157,7 +159,7 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		if ((interface & PCIIDE_CHAN_EN(channel)) == 0) {
 			aprint_normal("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-			cp->wdc_channel.ch_flags |= WDCF_DISABLED;
+			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			continue;
 		}
 		/* newer controllers seems to lack the ACER_CHIDS. Sigh */
@@ -167,14 +169,14 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-acer_setup_channel(struct wdc_channel *chp)
+acer_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	int drive;
 	u_int32_t acer_fifo_udma;
 	u_int32_t idedma_ctl;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
 
 	idedma_ctl = 0;
 	acer_fifo_udma = pci_conf_read(sc->sc_pc, sc->sc_tag, ACER_FTH_UDMA);
@@ -265,7 +267,7 @@ acer_pci_intr(void *arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
-	struct wdc_channel *wdc_cp;
+	struct ata_channel *wdc_cp;
 	int i, rv, crv; 
 	u_int32_t chids;
 
@@ -273,7 +275,7 @@ acer_pci_intr(void *arg)
 	chids = pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_CHIDS);
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
 		cp = &sc->pciide_channels[i];
-		wdc_cp = &cp->wdc_channel;
+		wdc_cp = &cp->ata_channel;
 		/* If a compat channel skip. */
 		if (cp->compat)
 			continue;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcide.c,v 1.14 2004/08/13 04:10:49 thorpej Exp $	*/
+/*	$NetBSD: pdcide.c,v 1.15 2004/08/14 15:08:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -39,8 +39,8 @@
 #include <dev/pci/pciide_pdc202xx_reg.h>
 
 static void pdc202xx_chip_map(struct pciide_softc *, struct pci_attach_args *);
-static void pdc202xx_setup_channel(struct wdc_channel *);
-static void pdc20268_setup_channel(struct wdc_channel *);
+static void pdc202xx_setup_channel(struct ata_channel *);
+static void pdc20268_setup_channel(struct ata_channel *);
 static int  pdc202xx_pci_intr(void *);
 static int  pdc20265_pci_intr(void *);
 static void pdc20262_dma_start(void *, int, int);
@@ -234,6 +234,8 @@ pdc202xx_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
 
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
 	if (sc->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20262 ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20267 ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20265) {
@@ -299,7 +301,6 @@ pdc202xx_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh, PDC2xx_SM,
 		    mode | 0x1);
 	}
-
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
@@ -308,7 +309,7 @@ pdc202xx_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    PDC262_STATE_EN(channel):PDC246_STATE_EN(channel))) == 0) {
 			aprint_normal("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-			cp->wdc_channel.ch_flags |= WDCF_DISABLED;
+			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			continue;
 		}
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
@@ -321,14 +322,14 @@ pdc202xx_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-pdc202xx_setup_channel(struct wdc_channel *chp)
+pdc202xx_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	int drive;
 	pcireg_t mode, st;
 	u_int32_t idedma_ctl, scr, atapi;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
 	int channel = chp->ch_channel;
 
 	/* setup DMA if needed */
@@ -436,13 +437,13 @@ pdc202xx_setup_channel(struct wdc_channel *chp)
 }
 
 static void
-pdc20268_setup_channel(struct wdc_channel *chp)
+pdc20268_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	int drive;
 	u_int32_t idedma_ctl;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
 	int u100;
 
 	/* setup DMA if needed */     
@@ -489,7 +490,7 @@ pdc202xx_pci_intr(void *arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
-	struct wdc_channel *wdc_cp;
+	struct ata_channel *wdc_cp;
 	int i, rv, crv; 
 	u_int32_t scr;
 
@@ -497,7 +498,7 @@ pdc202xx_pci_intr(void *arg)
 	scr = bus_space_read_4(sc->sc_dma_iot, sc->sc_dma_ioh, PDC2xx_SCR);
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
 		cp = &sc->pciide_channels[i];
-		wdc_cp = &cp->wdc_channel;
+		wdc_cp = &cp->ata_channel;
 		/* If a compat channel skip. */
 		if (cp->compat)
 			continue;
@@ -519,14 +520,14 @@ pdc20265_pci_intr(void *arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
-	struct wdc_channel *wdc_cp;
+	struct ata_channel *wdc_cp;
 	int i, rv, crv; 
 	u_int32_t dmastat;
 
 	rv = 0;
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
 		cp = &sc->pciide_channels[i];
-		wdc_cp = &cp->wdc_channel;
+		wdc_cp = &cp->ata_channel;
 		/* If a compat channel skip. */
 		if (cp->compat)
 			continue;
@@ -580,7 +581,7 @@ pdc20262_dma_finish(void *v, int channel, int drive, int force)
 	struct pciide_softc *sc = v;
 	struct pciide_dma_maps *dma_maps =
 	    &sc->pciide_channels[channel].dma_maps[drive];
-	struct wdc_channel *chp;
+	struct ata_channel *chp;
 	int atapi, error;
 
 	error = pciide_dma_finish(v, channel, drive, force);

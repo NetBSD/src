@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.14 2004/08/13 04:10:49 thorpej Exp $	*/
+/*	$NetBSD: viaide.c,v 1.15 2004/08/14 15:08:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -43,7 +43,7 @@ static int	via_pcib_match(struct pci_attach_args *);
 static void	via_chip_map(struct pciide_softc *, struct pci_attach_args *);
 static void	via_sata_chip_map(struct pciide_softc *,
 		    struct pci_attach_args *);
-static void	via_setup_channel(struct wdc_channel *);
+static void	via_setup_channel(struct ata_channel *);
 
 static int	viaide_match(struct device *, struct cfdata *, void *);
 static void	viaide_attach(struct device *, struct device *, void *);
@@ -308,6 +308,8 @@ unknown:
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
 
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
 	ATADEBUG_PRINT(("via_chip_map: old APO_IDECONF=0x%x, "
 	    "APO_CTLMISC=0x%x, APO_DATATIM=0x%x, APO_UDMA=0x%x\n",
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_IDECONF(sc)),
@@ -325,7 +327,7 @@ unknown:
 		if ((ideconf & APO_IDECONF_EN(channel)) == 0) {
 			aprint_normal("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-			cp->wdc_channel.ch_flags |= WDCF_DISABLED;
+			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			continue;
 		}
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
@@ -334,14 +336,14 @@ unknown:
 }
 
 static void
-via_setup_channel(struct wdc_channel *chp)
+via_setup_channel(struct ata_channel *chp)
 {
 	u_int32_t udmatim_reg, datatim_reg;
 	u_int8_t idedma_ctl;
 	int mode, drive;
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
 	struct wdc_softc *wdc = &sc->sc_wdcdev;
 #ifndef PCIIDE_AMD756_ENABLEDMA
 	int rev = PCI_REVISION(
@@ -506,6 +508,8 @@ via_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
 	sc->sc_wdcdev.set_modes = sata_setup_channel;
+
+	wdc_allocate_regs(&sc->sc_wdcdev);
 
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];

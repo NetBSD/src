@@ -1,4 +1,4 @@
-/*	$NetBSD: stpcide.c,v 1.5 2004/08/13 03:12:59 thorpej Exp $	*/
+/*	$NetBSD: stpcide.c,v 1.6 2004/08/14 15:08:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Toru Nishimura
@@ -38,7 +38,7 @@
 #include <dev/pci/pciidevar.h>
 
 static void stpc_chip_map(struct pciide_softc *, struct pci_attach_args *);
-static void stpc_setup_channel(struct wdc_channel *);
+static void stpc_setup_channel(struct ata_channel *);
 
 static int  stpcide_match(struct device *, struct cfdata *, void *);
 static void stpcide_attach(struct device *, struct device *, void *);
@@ -105,6 +105,8 @@ stpc_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
 
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
@@ -131,10 +133,10 @@ static const u_int16_t dmatbl[] = { 0x7C00, 0x1800, 0x0800 };
 static const u_int16_t piotbl[] = { 0x03C0, 0x0230, 0x01A0, 0x0110, 0x0010 };
 
 static void
-stpc_setup_channel(struct wdc_channel *chp)
+stpc_setup_channel(struct ata_channel *chp)
 {
 	struct pciide_channel *cp = (struct pciide_channel *)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
 	struct wdc_softc *wdc = &sc->sc_wdcdev;
 	int channel = chp->ch_channel;
 	struct ata_drive_datas *drvp;
