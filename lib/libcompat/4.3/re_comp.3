@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)re_comp.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: re_comp.3,v 1.8 2002/02/07 07:00:35 ross Exp $
+.\"	$NetBSD: re_comp.3,v 1.9 2002/10/01 19:04:57 wiz Exp $
 .\"
 .Dd June 4, 1993
 .Dt RE_COMP 3
@@ -70,7 +70,8 @@ function
 returns 0 if the string
 .Fa s
 was compiled successfully; otherwise a string containing an
-error message is returned. If
+error message is returned.
+If
 .Fn re_comp
 is passed 0 or a null string, it returns without changing the currently
 compiled regular expression.
