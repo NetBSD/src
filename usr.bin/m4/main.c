@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 1997/10/19 04:40:00 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.13.2.1 1998/01/29 10:52:02 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.13 1997/10/19 04:40:00 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.13.2.1 1998/01/29 10:52:02 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,11 +70,11 @@ __RCSID("$NetBSD: main.c,v 1.13 1997/10/19 04:40:00 lukem Exp $");
 #include "pathnames.h"
 
 ndptr hashtab[HASHSIZE];	/* hash table for macros etc.  */
-char buf[BUFSIZE];		/* push-back buffer	       */
-char *bufbase = buf;		/* the base for current ilevel */
-char *bbase[MAXINP];		/* the base for each ilevel    */
-char *bp = buf; 		/* first available character   */
-char *endpbb = buf+BUFSIZE;	/* end of push-back buffer     */
+pbent buf[BUFSIZE];		/* push-back buffer	       */
+pbent *bufbase = buf;		/* the base for current ilevel */
+pbent *bbase[MAXINP];		/* the base for each ilevel    */
+pbent *bp = buf; 		/* first available character   */
+pbent *endpbb = buf+BUFSIZE;	/* end of push-back buffer     */
 stae mstack[STACKMAX+1]; 	/* stack of m4 machine         */
 char strspace[STRSPMAX+1];	/* string space for evaluation */
 char *ep = strspace;		/* first free char in strspace */
@@ -216,7 +216,7 @@ main(argc,argv)
 	if (*m4wraps) { 		/* anything for rundown ??   */
 		ilevel = 0;		/* in case m4wrap includes.. */
 		bufbase = bp = buf;	/* use the entire buffer   */
-		putback(EOF);		/* eof is a must !!	     */
+		putbackeof();		/* eof is a must !!	     */
 		pbstr(m4wraps); 	/* user-defined wrapup act   */
 		macro();		/* last will and testament   */
 	}
