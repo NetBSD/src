@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.101 2002/06/30 00:10:34 sommerfeld Exp $ */
+/* $NetBSD: vmstat.c,v 1.102 2002/08/10 19:08:41 soren Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.101 2002/06/30 00:10:34 sommerfeld Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.102 2002/08/10 19:08:41 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -1050,8 +1050,8 @@ domem(void)
 		totuse += ks->ks_memuse;
 		totreq += ks->ks_calls;
 	}
-	(void)printf("\nMemory Totals:  In Use    Free    Requests\n");
-	(void)printf("              %7ldK %6ldK    %8ld\n",
+	(void)printf("\nMemory totals:  In Use    Free    Requests\n");
+	(void)printf("              %7ldK %6ldK    %8ld\n\n",
 	    (totuse + 1023) / 1024, (totfree + 1023) / 1024, totreq);
 }
 
