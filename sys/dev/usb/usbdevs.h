@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.3 1998/09/05 15:42:41 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.4 1998/09/05 15:46:08 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.2 1998/09/05 15:42:12 augustss Exp 
+ *	NetBSD: usbdevs,v 1.3 1998/09/05 15:45:34 augustss Exp 
  */
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #define	USB_VENDOR_NEC	0x0409		/* NEC */
-#define	USB_VENDOR_KODAK	0x0409		/* Eastman Kodak */
+#define	USB_VENDOR_KODAK	0x040a		/* Eastman Kodak */
 #define	USB_VENDOR_NANAO	0x0440		/* Nanao */
 #define	USB_VENDOR_UNIXTAR	0x0451		/* Unixtar */
 #define	USB_VENDOR_GENIUS	0x0458		/* Genius */
