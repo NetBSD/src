@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_machdep.c,v 1.10 2003/10/28 08:26:33 scw Exp $ */
+/*	$NetBSD: ixdp425_machdep.c,v 1.11 2003/11/02 21:27:51 scw Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.10 2003/10/28 08:26:33 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.11 2003/11/02 21:27:51 scw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -313,9 +313,9 @@ cpu_reboot(int howto, char *bootstr)
 	 * This is safe since NetBSD runs out of an alias of
 	 * SDRAM at 0x10000000.
 	 */
-	reg = EXP_CSR_READ_4(ixp425_softc, EXP_CNFG0_OFFSET);
+	reg = EXP_CSR_READ_4(ixpsip_softc, EXP_CNFG0_OFFSET);
 	reg |= EXP_CNFG0_MEM_MAP;
-	EXP_CSR_WRITE_4(ixp425_softc, EXP_CNFG0_OFFSET, reg);
+	EXP_CSR_WRITE_4(ixpsip_softc, EXP_CNFG0_OFFSET, reg);
 
 	/*
 	 * Jump into the bootcode's reset vector
