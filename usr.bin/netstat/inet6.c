@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.24 2002/06/09 02:44:55 itojun Exp $	*/
+/*	$NetBSD: inet6.c,v 1.25 2002/10/26 17:06:08 grant Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.24 2002/06/09 02:44:55 itojun Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.25 2002/10/26 17:06:08 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -1120,7 +1120,7 @@ rip6_stats(off, name)
 #define	p(f, m) if (rip6stat.f || sflag <= 1) \
     printf(m, (unsigned long long)rip6stat.f, plural(rip6stat.f))
 	p(rip6s_ipackets, "\t%llu message%s received\n");
-	p(rip6s_isum, "\t%llu checksum calcuration%s on inbound\n");
+	p(rip6s_isum, "\t%llu checksum calculation%s on inbound\n");
 	p(rip6s_badsum, "\t%llu message%s with bad checksum\n");
 	p(rip6s_nosock, "\t%llu message%s dropped due to no socket\n");
 	p(rip6s_nosockmcast,
