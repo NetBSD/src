@@ -1,4 +1,4 @@
-.\"	$NetBSD: gettytab.5,v 1.15 1997/03/08 13:48:58 mouse Exp $
+.\"	$NetBSD: gettytab.5,v 1.16 1997/07/14 01:29:56 mikel Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -170,7 +170,7 @@ use raw for input, use cbreak
 .It "ub	bool	false	do unbuffered output (of prompts etc)"
 .It "we	str" Ta So Li ^W Sc Ta
 .No "word erase character"
-.It "xc	bool	false	do
+.It "xc	bool	false	do"
 .Tn NOT
 echo control chars as
 .Ql ^X
@@ -180,7 +180,8 @@ echo control chars as
 (start output) character
 .El
 .Pp
-The following capabilities are no longer supported by getty(8):
+The following capabilities are no longer supported by 
+.Xr getty 8 :
 .Bl -column Namexx /usr/bin/login Default
 .It "bd	num	0	backspace delay"
 .It "cb	bool	false	use crt backspace mode"
@@ -273,7 +274,7 @@ The current date.
 .It \&%h
 The hostname of the machine, which is normally obtained from the
 system using
-.Xr gethostname 2 ,
+.Xr gethostname 3 ,
 but may also be overridden by the
 .Em \&hn
 table entry.
@@ -297,7 +298,7 @@ The tty name.
 The type of machine, release of the operating system, name of the
 operating system, and version of the kernel, respectively, as
 returned by
-.Xr uname 2 .
+.Xr uname 3 .
 .It \&%%
 A
 .Dq %
@@ -354,8 +355,8 @@ does not check parity of input characters in
 mode.
 .Sh SEE ALSO
 .Xr login 1 ,
-.Xr gethostname 2 ,
-.Xr uname 2 ,
+.Xr gethostname 3 ,
+.Xr uname 3 ,
 .Xr termcap 5 ,
 .Xr getty 8 .
 .Sh BUGS
@@ -377,7 +378,7 @@ The
 capability is stupid.
 .Pp
 The
-.Xr termcap
+.Xr termcap 5
 format is horrid, something more rational should
 have been chosen.
 .Sh HISTORY
