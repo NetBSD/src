@@ -1,4 +1,11 @@
-/*	$NetBSD: seglist.h,v 1.4 1998/08/28 23:05:55 dbj Exp $	*/
+/*	$NetBSD: seglist.h,v 1.5 1998/11/10 22:45:45 dbj Exp $ */
+
+/*
+ * This file was taken from from mvme68k/mvme68k/seglist.h
+ * should probably be re-synced when needed.
+ * Darrin B. Jewell <jewell@mit.edu>  Tue Nov 10 05:07:16 1998
+ * original cvs id: NetBSD: seglist.h,v 1.4 1998/08/22 10:55:35 scw Exp
+ */
 
 /*
  * Copyright (c) 1997 The Steve Woodford
@@ -42,38 +49,10 @@
  * NOTE: If you change this, you'll need to update locore.s ...
  */
 typedef struct {
-	vm_offset_t	ps_start;	/* Start of segment */
-	vm_offset_t	ps_end;		/* End of segment */
+	paddr_t		ps_start;	/* Start of segment */
+	paddr_t		ps_end;		/* End of segment */
 	int		ps_startpage;	/* Page number of first page */
-}  phys_seg_list_t;
+} phys_seg_list_t;
 
-/* @@@ this next specific stuff should be moved elsewhere
- * and this file should be re-synced to the mvme version
- */ 
-
-#define	N_SIMM		4		/* number of SIMMs in machine */
-
-/* SIMM types */
-#define SIMM_SIZE       0x03
-#define	SIMM_SIZE_EMPTY	0x00
-#define	SIMM_SIZE_16MB	0x01
-#define	SIMM_SIZE_4MB	0x02
-#define	SIMM_SIZE_1MB	0x03
-#define	SIMM_PAGE_MODE	0x04
-#define	SIMM_PARITY	0x08 /* ?? */
-
-/* Space for onboard RAM
- */
-#define	MAX_PHYS_SEGS	N_SIMM+1
-
-/* Machine types, used in both assembler and C sources. */
-#define	NeXT_CUBE	0
-#define	NeXT_WARP9	1
-#define	NeXT_X15	2
-#define	NeXT_WARP9C	3
-
-#define NeXT_TURBO_COLOR 5			/* probed witnessed */
-
-/* Instantiated in pmap.c */
-/* size +1 is for list termination */
+/* Instantiated in machdep.c */
 extern phys_seg_list_t phys_seg_list[];

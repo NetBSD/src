@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.3 1998/07/11 07:06:16 dbj Exp $	*/
+/*	$NetBSD: zs.c,v 1.4 1998/11/10 22:45:44 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -584,7 +584,6 @@ zs_abort(cs)
 #if defined(KGDB)
 	zskgdb(cs);
 #elif defined(DDB)
-  next68k_isr_printcounts();
 	Debugger();
 #else
 	printf("stopping on keyboard abort\n");

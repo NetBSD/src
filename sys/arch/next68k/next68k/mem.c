@@ -1,4 +1,11 @@
-/*	$NetBSD: mem.c,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $	*/
+/*	$NetBSD: mem.c,v 1.2 1998/11/10 22:45:45 dbj Exp $ */
+
+/*
+ * This file was taken from from mvme68k/mvme68k/mem.c
+ * should probably be re-synced when needed.
+ * Darrin B. Jewell <jewell@mit.edu>  Tue Nov 10 05:07:16 1998
+ * original cvs id: NetBSD: mem.c,v 1.5 1998/08/22 10:55:35 scw Exp
+ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,24 +51,25 @@
  * Memory special file
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
-#include <sys/conf.h>
-#include <sys/buf.h>
 #include <sys/systm.h>
-#include <sys/uio.h>
+#include <sys/buf.h>
+#include <sys/conf.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/uio.h>
 
 #include <machine/cpu.h>
 
 #include <vm/vm.h>
+#ifdef UVM
+#include <uvm/uvm_extern.h>
+#endif
 
 extern u_int lowram;
 static caddr_t devzeropage;
-
-int	mmopen __P((dev_t, int, int));
-int	mmclose __P((dev_t, int, int));
-int	mmrw __P((dev_t, struct uio *, int));
-int	mmmmap __P((dev_t, int, int));
 
 /*ARGSUSED*/
 int
@@ -90,9 +98,9 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register vm_offset_t o, v;
-	register int c;
-	register struct iovec *iov;
+	vaddr_t o, v;
+	int c;
+	struct iovec *iov;
 	int error = 0;
 	static int physlock;
 
@@ -128,23 +136,29 @@ mmrw(dev, uio, flags)
 				goto unlock;
 			}
 #endif
-			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
+			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(v), uio->uio_rw == UIO_READ ?
 			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
-			pmap_remove(pmap_kernel(), (vm_offset_t)vmmap,
-			    (vm_offset_t)vmmap + NBPG);
+			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
+			    (vaddr_t)vmmap + NBPG);
 			continue;
 
 /* minor device 1 is kernel memory */
 		case 1:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
+#ifdef UVM
+			if (!uvm_kernacc((caddr_t)v, c,
+			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
+				return (EFAULT);
+#else
 			if (!kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
+#endif
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
@@ -186,7 +200,7 @@ mmrw(dev, uio, flags)
 		}
 		if (error)
 			break;
-		iov->iov_base += c;
+		(caddr_t)iov->iov_base += c;
 		iov->iov_len -= c;
 		uio->uio_offset += c;
 		uio->uio_resid -= c;
