@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.16 1998/06/05 19:53:02 kleink Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.17 1998/06/22 22:01:10 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993, 1995
@@ -34,6 +34,8 @@
  *
  *	@(#)lfs_vnops.c	8.13 (Berkeley) 6/10/95
  */
+
+#include "opt_fifo.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

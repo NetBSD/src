@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.44 1998/05/08 18:39:36 kleink Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.45 1998/06/22 22:01:03 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -39,6 +39,10 @@
  *
  *	@(#)cd9660_vnops.c	8.15 (Berkeley) 5/27/95
  */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_fifo.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

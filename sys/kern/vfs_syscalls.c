@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.117 1998/06/05 20:31:36 kleink Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.118 1998/06/22 22:01:04 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,6 +41,7 @@
  */
 
 #include "opt_uvm.h"
+#include "opt_fifo.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

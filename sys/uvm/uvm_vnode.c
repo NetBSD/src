@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.10 1998/05/05 20:51:07 kleink Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.11 1998/06/22 22:01:12 sommerfe Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -51,6 +51,7 @@
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
+#include "opt_fifo.h"
 
 /*
  * uvm_vnode.c: the vnode pager.
