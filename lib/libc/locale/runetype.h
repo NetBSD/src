@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype.h,v 1.3 2000/12/28 05:22:27 itojun Exp $	*/
+/*	$NetBSD: runetype.h,v 1.4 2001/01/25 01:25:07 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -220,8 +220,11 @@ typedef struct _RuneLocale {
 	void		*__rune_RuneModule;
 } _RuneLocale;
 
-
+/* magic number for LC_CTYPE (rune)locale declaration */
 #define	_RUNE_MAGIC_1	"RuneCT10"	/* Indicates version 0 of RuneLocale */
+
+/* magic string for dynamic link module - type should be like "LC_CTYPE" */
+#define	_RUNE_MODULE_1(type)	"RuneModule10." type
 
 extern _RuneLocale _DefaultRuneLocale;
 extern _RuneLocale *_CurrentRuneLocale;

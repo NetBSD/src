@@ -1,4 +1,4 @@
-/*	$NetBSD: setrunelocale.c,v 1.7 2001/01/03 15:23:26 lukem Exp $	*/
+/*	$NetBSD: setrunelocale.c,v 1.8 2001/01/25 01:25:09 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -100,8 +100,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setrunelocale.c,v 1.7 2001/01/03 15:23:26 lukem Exp $");
+__RCSID("$NetBSD: setrunelocale.c,v 1.8 2001/01/25 01:25:09 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
+
+/*#include "namespace.h"*/
 
 #include "rune.h"
 #include <assert.h>
@@ -338,8 +340,10 @@ loadrunemodule(_RuneLocale *rl, void **rhandle)
 	char namebase[PATH_MAX], name[PATH_MAX];
 	int maj, min;
 	int ret;
-        int (*init) __P((_RuneLocale *));
-        int (*initstream) __P((_RuneLocale *));
+	const char *(*magic) __P((void));
+	const char *magicstr;
+	int (*init) __P((_RuneLocale *));
+	int (*initstream) __P((_RuneLocale *));
 
 	_DIAGASSERT(rl != NULL);
 	_DIAGASSERT(rhandle != NULL);
@@ -368,22 +372,41 @@ loadrunemodule(_RuneLocale *rl, void **rhandle)
 	*rhandle = dlopen(p, RTLD_LAZY);
 	if (!*rhandle)
 		return(EINVAL);
-	snprintf(name, sizeof(name), "_%s_init", rl->__encoding);
-	init = (int (*)__P((_RuneLocale *))) findfunc(*rhandle, name);
-	dlsym(*rhandle, name);
-	if (!init) {
+
+	/* version number check - we should support other versions too */
+	snprintf(name, sizeof(name), "_%s_magic", rl->__encoding);
+	magic = (const char *(*) __P((void))) findfunc(*rhandle, name);
+	if (!magic) {
 		ret = EINVAL;
 		goto fail;
 	}
-	ret = (*init)(rl);
-	if (ret)
+	magicstr = (*magic)();
+	if (!magicstr) {
+		ret = EINVAL;
 		goto fail;
-	snprintf(name, sizeof(name), "_%s_init_stream", rl->__encoding);
-	initstream = (int (*)__P((_RuneLocale *))) findfunc(*rhandle, name);
-	if (initstream) {
-		ret = (*initstream)(rl);
+	}
+	if (strcmp(magicstr, "RuneModule10.LC_CTYPE") == 0) {
+		/* grab functions */
+		snprintf(name, sizeof(name), "_%s_init", rl->__encoding);
+		init = (int (*)__P((_RuneLocale *))) findfunc(*rhandle, name);
+		if (!init) {
+			ret = EINVAL;
+			goto fail;
+		}
+		ret = (*init)(rl);
 		if (ret)
 			goto fail;
+		snprintf(name, sizeof(name), "_%s_init_stream", rl->__encoding);
+		initstream = (int (*)__P((_RuneLocale *)))
+		    findfunc(*rhandle, name);
+		if (initstream) {
+			ret = (*initstream)(rl);
+			if (ret)
+				goto fail;
+		}
+	} else {
+		ret = EINVAL;
+		goto fail;
 	}
 
 	return(ret);
@@ -418,7 +441,7 @@ _newrunelocale(path)
 	struct localetable *lt;
 	FILE *fp;
 	_RuneLocale *rl;
-        int ret;
+	int ret;
 
 	/* path may be NULL (actually, it's checked below) */
 

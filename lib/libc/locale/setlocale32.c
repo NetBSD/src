@@ -1,4 +1,4 @@
-/*	$NetBSD: __mb_cur_max.c,v 1.2 2001/01/25 01:25:06 itojun Exp $	*/
+/*	$NetBSD: setlocale32.c,v 1.1 2001/01/25 01:25:09 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -28,12 +28,22 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: __mb_cur_max.c,v 1.2 2001/01/25 01:25:06 itojun Exp $");
+__RCSID("$NetBSD: setlocale32.c,v 1.1 2001/01/25 01:25:09 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/types.h>
-#include <limits.h>
+#include "namespace.h"
+#define __SETLOCALE_SOURCE__
+#include <locale.h>
+#include "runetype.h"
 
-size_t __mb_cur_max = 1;
-size_t __mb_len_max_runtime = MB_LEN_MAX;
+char *
+__setlocale_mb_len_max_32(category, locale)
+	int category;
+	const char *locale;
+{
 
+	/* locale may be NULL */
+
+	__mb_len_max_runtime = 32;
+	return __setlocale(category, locale);
+}
