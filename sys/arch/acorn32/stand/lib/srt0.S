@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.1.6.1 2004/05/22 17:00:30 he Exp $	*/
+/*	$NetBSD: srt0.S,v 1.1.6.2 2004/06/17 08:39:10 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -33,6 +33,23 @@
  * (see srt1.c)
  */
 
+/* Minimum desired free memory */
+
+#ifndef BOOT_MIN_AVAIL_MEMORY
+#define BOOT_MIN_AVAIL_MEMORY	10 * 1024 * 1024
+#endif
+
+/* If enough above BOOT_MIN_AVAIL_MEMORY, leave BOOT_LEAVE_MEMORY unused */
+/* Avoids sparkfs failing on memory if we try to read a kernel from it */
+
+#ifndef BOOT_LEAVE_MEMORY
+#define BOOT_LEAVE_MEMORY	5 * 1024 * 1024
+#endif
+
+/*
+ * Both BOOT_LEAVE_MEMORY and BOOT_MIN_AVAIL_MEMORY + BOOT_LEAVE_MEMORY
+ * must fit into an immediate ATM constant - 8 bits with arbitrary rotation
+ */
 
 #include <machine/asm.h>
 #include <riscoscalls.h>
@@ -43,6 +60,10 @@ ENTRY(_start)
 	mvn	r1, #0
 	swi	Wimp_SlotSize
 	add	r0, r0, r2
+#if (BOOT_LEAVE_MEMORY > 0)
+	cmp	r0, #BOOT_MIN_AVAIL_MEMORY + BOOT_LEAVE_MEMORY
+	subhi	r0, r0, #BOOT_LEAVE_MEMORY
+#endif 
 	mvn	r1, #0
 	swi	Wimp_SlotSize
 #endif
