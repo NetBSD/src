@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.5 1996/03/17 00:55:39 thorpej Exp $	*/
+/*	$NetBSD: ppb.c,v 1.6 1996/03/17 01:47:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -135,5 +135,5 @@ ppbprint(aux, pnp)
 	if (pnp)
 		printf("pci at %s", pnp);
 	printf(" bus %d", pba->pba_bus);
-        return (UNCONF);
+	return (UNCONF);
 }
