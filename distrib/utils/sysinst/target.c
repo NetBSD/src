@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.12 1997/12/02 03:02:29 jonathan Exp $	*/
+/*	$NetBSD: target.c,v 1.13 1997/12/04 09:05:35 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.12 1997/12/02 03:02:29 jonathan Exp $");
+__RCSID("$NetBSD: target.c,v 1.13 1997/12/04 09:05:35 jonathan Exp $");
 #endif
 
 
@@ -83,8 +83,27 @@ int target_test(const char *test, const char *path);
 
 void backtowin(void);
 
-/* turn on what-is-root? debugging. */
-/*#define DEBUG_ROOT*/
+
+void unwind_mounts __P((void));
+int mount_with_unwind(const char *fstype, const char *from, const char *on);
+
+/* Record a mount for later unwinding of target mounts. */
+struct unwind_mount {
+	struct unwind_mount *um_prev;
+	char um_mountpoint[STRSIZE];
+};
+
+/* Unwind-mount stack */
+ struct unwind_mount *unwind_mountlist = NULL;
+
+
+/*
+ * Debugging options
+ */
+/*#define DEBUG_ROOT*/		/* turn on what-is-root? debugging. */
+/*#define DEBUG_UNWIND*/	/* turn on unwind-target-mount debugging. */
+
+
 
 /*
  * debugging helper. curses...
@@ -509,6 +528,64 @@ FILE*	target_fopen (const char *filename, const char *type)
 }
 
 /*
+ * Do a mount and record the mountpoint in a list of mounts to 
+ * unwind after completing or aborting a mount.
+ */
+int
+mount_with_unwind(const char *fstype, const char *from, const char *on)
+{
+	int error;
+	struct unwind_mount * m;
+
+	m = malloc(sizeof(*m));
+	if (m == 0)
+		return (ENOMEM);	/* XXX */
+
+	strncpy(m->um_mountpoint, on, STRSIZE);
+	m->um_prev = unwind_mountlist;
+        unwind_mountlist = m;
+
+#ifdef DEBUG_UNWIND
+	endwin();
+	fprintf(stderr, "mounting %s with unwind\n", on);
+	backtowin();
+#endif
+
+	error = run_prog("/sbin/mount %s %s %s", fstype, from, on);
+	return (error);
+}
+
+/*
+ * unwind the mount stack, umounting mounted filesystems.
+ * For now, ignore any errors in unmount. 
+ * (Why would we be unable to unmount?  The user has suspended
+ *  us and forked shell sitting somewhere in the target root?)
+ */
+void
+unwind_mounts()
+{
+	struct unwind_mount *m, *prev;
+
+	prev = NULL;
+	for (m = unwind_mountlist; m;  ) {
+		struct unwind_mount *prev;
+#ifdef DEBUG_UNWIND
+		endwin();
+		fprintf(stderr, "unmounting %s\n", m->um_mountpoint);
+		backtowin();
+#endif
+		run_prog("/sbin/umount %s 2>/dev/null", m->um_mountpoint);
+		prev = m->um_prev;
+		free(m);
+		m = prev;
+	}
+	unwind_mountlist = NULL;
+}
+
+
+
+
+/*
  * Do a mount onto a moutpoint in the install target.
  * NB: does not prefix mount-from, which probably breaks  nullfs mounts.
  */
@@ -517,7 +594,9 @@ int target_mount(const char *fstype, const char *from, const char *on)
 	int error;
 	const char *realmount = target_expand(on);
 
-	error = run_prog("/sbin/mount %s %s %s", fstype, from, realmount);
+	/* mount and record for unmonting when done.  */
+	error = mount_with_unwind(fstype, from, realmount);
+
 	return (error);
 }
 
