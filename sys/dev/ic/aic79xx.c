@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.26 2003/11/02 11:07:44 wiz Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.27 2004/02/13 11:36:21 wiz Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.26 2003/11/02 11:07:44 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.27 2004/02/13 11:36:21 wiz Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -8520,7 +8520,7 @@ ahd_download_instr(struct ahd_softc *ahd, u_int instrptr, uint8_t *dconsts)
 		if ((count & 0x01) == 0)
 			instr.format1.parity = 1;
 
-		/* The sequencer is a little endian cpu */
+		/* The sequencer is a little endian CPU */
 		instr.integer = ahd_htole32(instr.integer);
 		ahd_outsb(ahd, SEQRAM, instr.bytes, 4);
 		break;

@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.27 2003/10/18 08:30:14 lukem Exp $
+#	$NetBSD: IPAQ,v 1.28 2004/02/13 11:36:13 wiz Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -123,7 +123,7 @@ config		netbsd	root on ? type ?
 # The main bus device
 mainbus0 at root
 
-# The boot cpu
+# The boot CPU
 cpu0 at mainbus?
 
 saip0	at mainbus?

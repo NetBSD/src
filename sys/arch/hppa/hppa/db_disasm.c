@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.5 2003/11/28 19:02:25 chs Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.6 2004/02/13 11:36:13 wiz Exp $	*/
 
 /*	$OpenBSD: db_disasm.c,v 1.9 2000/04/18 20:02:45 mickey Exp $	*/
 
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.5 2003/11/28 19:02:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.6 2004/02/13 11:36:13 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -755,7 +755,7 @@ DeclBitfR(31,1,_b311)
 /*
  * Changes:
  *   12/01/89 ejf Add Rsd(), Rse(), Rtd(), Rte() for 5 ops.
- *   11/30/89 ejf Make instruction use counters shared, not per cpu.
+ *   11/30/89 ejf Make instruction use counters shared, not per CPU.
  *   11/28/89 ejf Change majoropcode for quicker extension extract.
  */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.23 2003/12/30 12:33:19 pk Exp $ */
+/* $NetBSD: machdep.c,v 1.24 2004/02/13 11:36:17 wiz Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2003/12/30 12:33:19 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2004/02/13 11:36:17 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -168,7 +168,7 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	int i;
 	uint32_t config;
 
-	/* XXX this code must run on the target cpu */
+	/* XXX this code must run on the target CPU */
 	config = mips3_cp0_config_read();
 	config &= ~MIPS3_CONFIG_K0_MASK;
 	config |= 0x05;				/* XXX.  cacheable coherent */

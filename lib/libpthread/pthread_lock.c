@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.8 2004/01/19 16:18:33 kleink Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.9 2004/02/13 11:36:08 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.8 2004/01/19 16:18:33 kleink Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.9 2004/02/13 11:36:08 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/ras.h>
@@ -293,7 +293,7 @@ pthread_spin_init(pthread_spinlock_t *lock, int pshared)
 	lock->pts_magic = _PT_SPINLOCK_MAGIC;
 	/*
 	 * We don't actually use the pshared flag for anything;
-	 * cpu simple locks have all the process-shared properties 
+	 * CPU simple locks have all the process-shared properties 
 	 * that we want anyway.
 	 */
 	lock->pts_flags = pshared;

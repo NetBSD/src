@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.39 2003/09/29 22:54:28 matt Exp $	*/
+/*	$NetBSD: ka820.c,v 1.40 2004/02/13 11:36:20 wiz Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.39 2003/09/29 22:54:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.40 2004/02/13 11:36:20 wiz Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -167,7 +167,7 @@ ka820_attach(struct device *parent, struct device *self, void *aux)
 	mastercpu = mfpr(PR_BINID);
 	strcpy(cpu_model, "VAX 8200");
 	cpu_model[6] = rev & 0x8000 ? '5' : '0';
-	printf(": ka82%c (%s) cpu rev %d, u patch rev %d, sec patch %d\n",
+	printf(": ka82%c (%s) CPU rev %d, u patch rev %d, sec patch %d\n",
 	    cpu_model[6], mastercpu == ba->ba_nodenr ? "master" : "slave",
 	    ((rev >> 11) & 15), ((rev >> 1) &1023), rev & 1);
 	sc->sc_binid = ba->ba_nodenr;

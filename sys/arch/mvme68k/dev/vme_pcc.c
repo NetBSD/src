@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.18 2003/07/15 02:43:47 lukem Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.19 2004/02/13 11:36:15 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_pcc.c,v 1.18 2003/07/15 02:43:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_pcc.c,v 1.19 2004/02/13 11:36:15 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -264,7 +264,7 @@ vme_pcc_intr_establish(csc, prior, level, vector, first, func, arg, evcnt)
 	struct vme_pcc_softc *sc = csc;
 
 	if (prior != level)
-		panic("vme_pcc_intr_establish: cpu priority != VMEbus irq level");
+		panic("vme_pcc_intr_establish: CPU priority != VMEbus irq level");
 
 	isrlink_vectored(func, arg, prior, vector, evcnt);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cdnr.c,v 1.7 2003/11/09 22:11:12 christos Exp $	*/
+/*	$NetBSD: altq_cdnr.c,v 1.8 2004/02/13 11:36:09 wiz Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.8 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.7 2003/11/09 22:11:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.8 2004/02/13 11:36:09 wiz Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -1211,7 +1211,7 @@ cdnropen(dev, flag, fmt, p)
 		init_machclk();
 
 	if (machclk_freq == 0) {
-		printf("cdnr: no cpu clock available!\n");
+		printf("cdnr: no CPU clock available!\n");
 		return (ENXIO);
 	}
 

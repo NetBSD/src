@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.47 2004/01/26 10:45:24 scw Exp $	*/
+/*	$NetBSD: fault.c,v 1.48 2004/02/13 11:36:11 wiz Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.47 2004/01/26 10:45:24 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.48 2004/02/13 11:36:11 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ data_abort_fixup(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l)
 #ifdef CPU_ABORT_FIXUP_REQUIRED
 	int error;
 
-	/* Call the cpu specific data abort fixup routine */
+	/* Call the CPU specific data abort fixup routine */
 	error = cpu_dataabt_fixup(tf);
 	if (__predict_true(error != ABORT_FIXUP_FAILED))
 		return (error);
@@ -299,7 +299,7 @@ data_abort_handler(trapframe_t *tf)
 		dab_fatal(tf, fsr, far, l, NULL);
 	}
 
-	/* See if the cpu state needs to be fixed up */
+	/* See if the CPU state needs to be fixed up */
 	switch (data_abort_fixup(tf, fsr, far, l)) {
 	case ABORT_FIXUP_RETURN:
 		return;
@@ -533,7 +533,7 @@ dab_align(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l, ksiginfo_t *ksi)
 	/* pcb_onfault *must* be NULL at this point */
 	KDASSERT(l->l_addr->u_pcb.pcb_onfault == NULL);
 
-	/* See if the cpu state needs to be fixed up */
+	/* See if the CPU state needs to be fixed up */
 	(void) data_abort_fixup(tf, fsr, far, l);
 
 	/* Deliver a bus error signal to the process */
@@ -629,7 +629,7 @@ dab_buserr(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l,
 		return (0);
 	}
 
-	/* See if the cpu state needs to be fixed up */
+	/* See if the CPU state needs to be fixed up */
 	(void) data_abort_fixup(tf, fsr, far, l);
 
 	/*
@@ -656,7 +656,7 @@ prefetch_abort_fixup(trapframe_t *tf)
 #ifdef CPU_ABORT_FIXUP_REQUIRED
 	int error;
 
-	/* Call the cpu specific prefetch abort fixup routine */
+	/* Call the CPU specific prefetch abort fixup routine */
 	error = cpu_prefetchabt_fixup(tf);
 	if (__predict_true(error != ABORT_FIXUP_FAILED))
 		return (error);
@@ -712,7 +712,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	if (__predict_true((tf->tf_spsr & I32_bit) == 0))
 		enable_interrupts(I32_bit);
 
-	/* See if the cpu state needs to be fixed up */
+	/* See if the CPU state needs to be fixed up */
 	switch (prefetch_abort_fixup(tf)) {
 	case ABORT_FIXUP_RETURN:
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.30 2003/09/22 14:27:12 cl Exp $	*/
+/*	$NetBSD: machdep.h,v 1.31 2004/02/13 11:36:19 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 /*
- * Internal definitions unique to sun3/68k cpu support.
+ * Internal definitions unique to sun3/68k CPU support.
  * These are the "private" declarations - those needed
  * only here in machine-independent code.  The "public"
  * definitions are in cpu.h (used by common code).

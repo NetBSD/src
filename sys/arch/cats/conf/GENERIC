@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.60 2004/01/14 22:29:03 jonathan Exp $
+# $NetBSD: GENERIC,v 1.61 2004/02/13 11:36:11 wiz Exp $
 #
 # GENERIC machine description file
 # 
@@ -184,7 +184,7 @@ config		netbsd	root on ? type ?
 # The main bus device
 mainbus0 at root
 
-# The boot cpu
+# The boot CPU
 cpu0 at mainbus?
 
 # Core logic

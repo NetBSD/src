@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.20 2003/08/07 16:28:08 agc Exp $ */
+/* $NetBSD: locore.s,v 1.21 2004/02/13 11:36:14 wiz Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -1202,7 +1202,7 @@ GLOBAL(fputype)
 GLOBAL(protosrp)
 	.long	0x80000202,0	| prototype supervisor root pointer
 GLOBAL(protocrp)
-	.long	0x80000002,0	| prototype cpu root pointer
+	.long	0x80000002,0	| prototype CPU root pointer
 
 GLOBAL(prototc)
 	.long	0x82c0aa00	| %tc (SRP,CRP,4KB page, TIA/TIB=10/10bits)

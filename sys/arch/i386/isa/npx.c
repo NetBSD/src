@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.101 2004/01/28 10:48:55 yamt Exp $	*/
+/*	$NetBSD: npx.c,v 1.102 2004/02/13 11:36:14 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.101 2004/01/28 10:48:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.102 2004/02/13 11:36:14 wiz Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -404,7 +404,7 @@ npxintr(void *arg, struct intrframe iframe)
 	addr = &l->l_addr->u_pcb.pcb_savefpu;
 	/*
 	 * Save state.  This does an implied fninit.  It had better not halt
-	 * the cpu or we'll hang.
+	 * the CPU or we'll hang.
 	 */
 	fpu_save(addr);
 	fwait();
@@ -672,7 +672,7 @@ npxsave_cpu (struct cpu_info *ci, int save)
 	if (l == NULL)
 		return;
 
-	IPRINTF(("%s: fp cpu %s lwp %p\n", ci->ci_dev->dv_xname,
+	IPRINTF(("%s: fp CPU %s lwp %p\n", ci->ci_dev->dv_xname,
 	    save? "save" : "flush", l));
 
 	if (save) {

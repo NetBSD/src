@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.151 2004/01/02 18:52:17 cl Exp $ */
+/*	$NetBSD: trap.c,v 1.152 2004/02/13 11:36:18 wiz Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.151 2004/01/02 18:52:17 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.152 2004/02/13 11:36:18 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -641,7 +641,7 @@ badtrap:
 		 * itself, which is at its %sp, and the one belonging to
 		 * the window above, which is at its %fp or %i6---both
 		 * in the pcb.  The restore's window may still be in
-		 * the cpu; we need to force it out to the stack.
+		 * the CPU; we need to force it out to the stack.
 		 */
 		KERNEL_PROC_LOCK(l);
 #ifdef DEBUG

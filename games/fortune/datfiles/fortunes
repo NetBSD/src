@@ -4287,7 +4287,7 @@ A:  He told me, he says, "I have to kill you because you can identify
 Q:  Did he kill you?
 A:  No.
 %
-fortune: cpu time/usefulness ratio too high -- core dumped.
+fortune: CPU time/usefulness ratio too high -- core dumped.
 %
 Fortune: You will be attacked next Wednesday at 3:15 p.m. by six samurai
 sword wielding purple fish glued to Harley-Davidson motorcycles.
@@ -10566,10 +10566,10 @@ Q:  How many heterosexual males does it take to screw in a light bulb
     in San Francisco?
 A:  Both of them.
 %
-Q:  How many IBM cpu's does it take to do a logical right shift?
+Q:  How many IBM CPUs does it take to do a logical right shift?
 A:  33.  1 to hold the bits and 32 to push the register.
 %
-Q:  How many IBM CPU's does it take to execute a job?
+Q:  How many IBM CPUs does it take to execute a job?
 A:  Four; three to hold it down, and one to rip its head off.
 %
 Q:  How many IBM types does it take to change a light bulb?

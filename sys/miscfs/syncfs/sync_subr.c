@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.15 2003/10/15 11:29:01 hannken Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.16 2004/02/13 11:36:23 wiz Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.15 2003/10/15 11:29:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.16 2004/02/13 11:36:23 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,7 +248,7 @@ sched_sync(v)
 /*
  * Request the syncer daemon to speed up its work.
  * We never push it to speed up more than half of its
- * normal turn time, otherwise it could take over the cpu.
+ * normal turn time, otherwise it could take over the CPU.
  */
 int
 speedup_syncer()

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.54 2003/10/26 23:11:15 chris Exp $	*/
+/*	$NetBSD: cpu.c,v 1.55 2004/02/13 11:36:10 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -36,7 +36,7 @@
  *
  * cpu.c
  *
- * Probing and configuration for the master cpu
+ * Probing and configuration for the master CPU
  *
  * Created      : 10/10/95
  */
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.54 2003/10/26 23:11:15 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.55 2004/02/13 11:36:10 wiz Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -85,7 +85,7 @@ cpu_attach(struct device *dv)
 	evcnt_attach_dynamic(&curcpu()->ci_arm700bugcount, EVCNT_TYPE_MISC,
 	    NULL, dv->dv_xname, "arm700swibug");
 	
-	/* Get the cpu ID from coprocessor 15 */
+	/* Get the CPU ID from coprocessor 15 */
 
 	curcpu()->ci_arm_cpuid = cpu_id();
 	curcpu()->ci_arm_cputype = curcpu()->ci_arm_cpuid & CPU_ID_CPU_MASK;
@@ -372,8 +372,8 @@ const struct cpu_classtab cpu_classes[] = {
 
 /*
  * Report the type of the specified arm processor. This uses the generic and
- * arm specific information in the cpu structure to identify the processor.
- * The remaining fields in the cpu structure are filled in appropriately.
+ * arm specific information in the CPU structure to identify the processor.
+ * The remaining fields in the CPU structure are filled in appropriately.
  */
 
 static const char * const wtnames[] = {

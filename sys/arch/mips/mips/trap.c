@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.190 2003/12/31 02:40:26 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.191 2004/02/13 11:36:15 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.190 2003/12/31 02:40:26 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.191 2004/02/13 11:36:15 wiz Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -448,7 +448,7 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 	    }
 	case T_ADDR_ERR_LD:	/* misaligned access */
 	case T_ADDR_ERR_ST:	/* misaligned access */
-	case T_BUS_ERR_LD_ST:	/* BERR asserted to cpu */
+	case T_BUS_ERR_LD_ST:	/* BERR asserted to CPU */
 	copyfault:
 		if (l == NULL || l->l_addr->u_pcb.pcb_onfault == NULL)
 			goto dopanic;
@@ -457,8 +457,8 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 
 	case T_ADDR_ERR_LD+T_USER:	/* misaligned or kseg access */
 	case T_ADDR_ERR_ST+T_USER:	/* misaligned or kseg access */
-	case T_BUS_ERR_IFETCH+T_USER:	/* BERR asserted to cpu */
-	case T_BUS_ERR_LD_ST+T_USER:	/* BERR asserted to cpu */
+	case T_BUS_ERR_IFETCH+T_USER:	/* BERR asserted to CPU */
+	case T_BUS_ERR_LD_ST+T_USER:	/* BERR asserted to CPU */
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_signo = SIGSEGV; /* XXX */
 		ksi.ksi_addr = (void *)vaddr;
@@ -976,7 +976,7 @@ static struct { void *addr; char *name;} names[] = {
 	Name(main),
 	Name(trap),
 
-#ifdef MIPS1	/*  r2000 family  (mips-I cpu) */
+#ifdef MIPS1	/*  r2000 family  (mips-I CPU) */
 	Name(mips1_KernGenException),
 	Name(mips1_UserGenException),
 	Name(mips1_SystemCall),
@@ -985,7 +985,7 @@ static struct { void *addr; char *name;} names[] = {
 #endif	/* MIPS1 */
 
 /* XXX simonb: need mips32 and mips64 checks here too */
-#if defined(MIPS3) && !defined(MIPS3_5900) /* r4000 family (mips-III cpu) */
+#if defined(MIPS3) && !defined(MIPS3_5900) /* r4000 family (mips-III CPU) */
 	Name(mips3_KernGenException),
 	Name(mips3_UserGenException),
 	Name(mips3_SystemCall),

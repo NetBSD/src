@@ -1,4 +1,4 @@
-/*	$NetBSD: openpicreg.h,v 1.4 2002/08/06 06:16:42 chs Exp $	*/
+/*	$NetBSD: openpicreg.h,v 1.5 2004/02/13 11:36:17 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -75,7 +75,7 @@
 #define  OPENPIC_PRIORITY_SHIFT			16
 #define  OPENPIC_VECTOR_MASK			0x000000ff
 
-/* interrupt destination cpu */
+/* interrupt destination CPU */
 #ifndef OPENPIC_IDEST
 #define OPENPIC_IDEST(irq)		(0x10010 + (irq) * 0x20)
 #endif

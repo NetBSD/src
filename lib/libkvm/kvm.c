@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.82 2003/11/04 14:59:10 cube Exp $	*/
+/*	$NetBSD: kvm.c,v 1.83 2004/02/13 11:36:08 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.82 2003/11/04 14:59:10 cube Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.83 2004/02/13 11:36:08 wiz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -623,7 +623,7 @@ int	dumpsize;
 		return (-1);
 
 	/*
-	 * Write the cpu header
+	 * Write the CPU header
 	 */
 	CORE_SETMAGIC(seghdr, KCORESEG_MAGIC, 0, CORE_CPU);
 	seghdr.c_size = ALIGN(kd->cpu_dsize);

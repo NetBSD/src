@@ -1,4 +1,4 @@
-/*	$NetBSD: top.c,v 1.18 2003/10/03 15:32:06 christos Exp $	*/
+/*	$NetBSD: top.c,v 1.19 2004/02/13 11:36:24 wiz Exp $	*/
 
 const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
@@ -49,7 +49,7 @@ const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: top.c,v 1.18 2003/10/03 15:32:06 christos Exp $");
+__RCSID("$NetBSD: top.c,v 1.19 2004/02/13 11:36:24 wiz Exp $");
 #endif
 
 #include "os.h"
@@ -526,7 +526,7 @@ Usage: %s [-ISbinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 	(*d_procstates)(system_info.p_total,
 			system_info.procstates);
 
-	/* display the cpu state percentage breakdown */
+	/* display the CPU state percentage breakdown */
 	if (dostates)	/* but not the first time */
 	{
 	    (*d_cpustates)(system_info.cpustates);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 2003/12/30 12:33:16 pk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41 2004/02/13 11:36:15 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2003/12/30 12:33:16 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2004/02/13 11:36:15 wiz Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -402,7 +402,7 @@ mach_init(argc, argv, envp, bim, bip)
 
 /*
  * cpu_startup: allocate memory for variable-sized tables,
- * initialize cpu, and do autoconfiguration.
+ * initialize CPU, and do autoconfiguration.
  */
 void
 cpu_startup()

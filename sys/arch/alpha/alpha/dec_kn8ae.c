@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.30 2002/09/27 02:24:08 thorpej Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.31 2004/02/13 11:36:09 wiz Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.30 2002/09/27 02:24:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.31 2004/02/13 11:36:09 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -395,7 +395,7 @@ kn8ae_harderr(mces, type, logout, framep)
 	 *    see upcoming code branches) and write data back to location.
 	 *
          * 4. When the CPU attempts to read the location, another 620 interrupt
-         *    should occur for the cpu at which instant PAL will scrub the
+         *    should occur for the CPU at which instant PAL will scrub the
          *    location. Then the o.s. scrub routine finishes. If the PAL scrubs
 	 *    the location then the scrubbed flag should be 0 (this is what we
 	 *    expect).

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.179 2003/08/27 15:59:52 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.180 2004/02/13 11:36:17 wiz Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.179 2003/08/27 15:59:52 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.180 2004/02/13 11:36:17 wiz Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -98,7 +98,7 @@ struct cpu_softc {
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 int	cpu_arch;			/* sparc architecture version */
-char	cpu_model[100];			/* machine model (primary cpu) */
+char	cpu_model[100];			/* machine model (primary CPU) */
 extern char machine_model[];
 
 int	ncpu;				/* # of CPUs detected by PROM */
@@ -141,7 +141,7 @@ void cpu_spinup __P((struct cpu_info *));
 struct cpu_info *alloc_cpuinfo_global_va __P((int, vsize_t *));
 struct cpu_info	*alloc_cpuinfo __P((void));
 
-int go_smp_cpus = 0;	/* non-primary cpu's wait for this to go */
+int go_smp_cpus = 0;	/* non-primary CPUs wait for this to go */
 
 /* lock this to send IPI's */
 struct simplelock xpmsg_lock = SIMPLELOCK_INITIALIZER;
@@ -232,7 +232,7 @@ alloc_cpuinfo()
 
 	/*
 	 * Arrange pcb, idle stack and interrupt stack in the same
-	 * way as is done for the boot cpu in locore.
+	 * way as is done for the boot CPU in locore.
 	 */
 	cpi->eintstack = cpi->idle_u = (void *)((vaddr_t)cpi + sz - USPACE);
 
@@ -340,7 +340,7 @@ cpu_mainbus_attach(parent, self, aux)
 				rrp[0].oa_size,
 				BUS_SPACE_MAP_LINEAR, 
 				&cpi->mailbox) != 0)
-			panic("%s: can't map cpu mailbox", self->dv_xname);
+			panic("%s: can't map CPU mailbox", self->dv_xname);
 		free(rrp, M_DEVBUF);
 	}
 
@@ -363,7 +363,7 @@ cpu_mainbus_attach(parent, self, aux)
 			rrp[0].oa_size,
 			BUS_SPACE_MAP_LINEAR, 
 			&cpi->ci_mbusport) != 0) {
-		panic("%s: can't map cpu regs", self->dv_xname);
+		panic("%s: can't map CPU regs", self->dv_xname);
 	}
 	/* register set #1: MCXX control */
 	if (bus_space_map(ma->ma_bustag,
@@ -371,7 +371,7 @@ cpu_mainbus_attach(parent, self, aux)
 			rrp[1].oa_size,
 			BUS_SPACE_MAP_LINEAR, 
 			&cpi->ci_mxccregs) != 0) {
-		panic("%s: can't map cpu regs", self->dv_xname);
+		panic("%s: can't map CPU regs", self->dv_xname);
 	}
 	/* register sets #3 and #4 are E$ cache data and tags */
 
@@ -725,7 +725,7 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 		p->retval = (*func)(arg0, arg1, arg2, arg3); 
 
 	/*
-	 * Lastly, start looping, waiting for all cpu's to register that they
+	 * Lastly, start looping, waiting for all CPUs to register that they
 	 * have completed (bailing if it takes "too long", being loud about
 	 * this in the process).
 	 */
@@ -2160,7 +2160,7 @@ fsrtoname(impl, vers, fver)
 void cpu_debug_dump(void);
 
 /*
- * Dump cpu information from ddb.
+ * Dump CPU information from ddb.
  */
 void
 cpu_debug_dump(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.66 2003/11/01 23:04:32 tsutsui Exp $ */
+/*	$NetBSD: clock.c,v 1.67 2004/02/13 11:36:18 wiz Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.66 2003/11/01 23:04:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.67 2004/02/13 11:36:18 wiz Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -215,7 +215,7 @@ clockmatch_rtc(parent, cf, aux)
  * this read-only and make it read-write only temporarily,
  * whenever we read or write the clock chip.  The clock also
  * contains the ID ``PROM'', and I have already had the pleasure
- * of reloading the cpu type, Ethernet address, etc, by hand from
+ * of reloading the CPU type, Ethernet address, etc, by hand from
  * the console FORTH interpreter.  I intend not to enjoy it again.
  *
  * the MK48T02 is 2K.  the MK48T08 is 8K, and the MK48T59 is

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.12 2003/12/30 12:33:13 pk Exp $ */
+/* $NetBSD: machdep.c,v 1.13 2004/02/13 11:36:09 wiz Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2003/12/30 12:33:13 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2004/02/13 11:36:09 wiz Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -141,7 +141,7 @@ haltsys:
 
 /*
  * cpu_startup: allocate memory for variable-sized tables,
- * initialize cpu, and do autoconfiguration.
+ * initialize CPU, and do autoconfiguration.
  */
 void
 cpu_startup()

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.19 2004/01/25 13:46:59 bjh21 Exp $
+#	$NetBSD: INSTALL,v 1.20 2004/02/13 11:36:09 wiz Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.19 $"
+#ident		"INSTALL-$Revision: 1.20 $"
 
 # estimated number of users
 maxusers	32
@@ -154,7 +154,7 @@ config		netbsd	root on ? type ffs
 # The main bus device
 mainbus0 at root
 
-# The boot cpu
+# The boot CPU
 cpu0 at mainbus?
 
 # The IOMD

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.8 2003/11/26 08:36:49 he Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.9 2004/02/13 11:36:15 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.8 2003/11/26 08:36:49 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.9 2004/02/13 11:36:15 wiz Exp $");
 
 #include "opt_ddb.h"
 
@@ -170,11 +170,11 @@ kgdb_signal(type)
 	case T_TLB_ST_MISS+T_USER:
 	case T_ADDR_ERR_LD:	/* misaligned access */
 	case T_ADDR_ERR_ST:	/* misaligned access */
-	case T_BUS_ERR_LD_ST:	/* BERR asserted to cpu */
+	case T_BUS_ERR_LD_ST:	/* BERR asserted to CPU */
 	case T_ADDR_ERR_LD+T_USER:	/* misaligned or kseg access */
 	case T_ADDR_ERR_ST+T_USER:	/* misaligned or kseg access */
-	case T_BUS_ERR_IFETCH+T_USER:	/* BERR asserted to cpu */
-	case T_BUS_ERR_LD_ST+T_USER:	/* BERR asserted to cpu */
+	case T_BUS_ERR_IFETCH+T_USER:	/* BERR asserted to CPU */
+	case T_BUS_ERR_LD_ST+T_USER:	/* BERR asserted to CPU */
 		return (SIGSEGV);
 
 	case T_BREAK:

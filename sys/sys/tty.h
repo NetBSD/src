@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.63 2003/08/07 16:34:20 agc Exp $	*/
+/*	$NetBSD: tty.h,v 1.64 2004/02/13 11:36:23 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -49,7 +49,7 @@
  * Clists are actually ring buffers. The c_cc, c_cf, c_cl fields have
  * exactly the same behaviour as in true clists.
  * if c_cq is NULL, the ring buffer has no TTY_QUOTE functionality
- * (but, saves memory and cpu time)
+ * (but, saves memory and CPU time)
  *
  * *DON'T* play with c_cs, c_ce, c_cq, or c_cl outside tty_subr.c!!!
  */

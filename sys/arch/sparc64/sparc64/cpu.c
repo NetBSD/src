@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.34 2004/01/06 14:13:33 martin Exp $ */
+/*	$NetBSD: cpu.c,v 1.35 2004/02/13 11:36:18 wiz Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.34 2004/01/06 14:13:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35 2004/02/13 11:36:18 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ static struct cpu_info * alloc_cpuinfo(u_int);
 /* The following are used externally (sysctl_hw). */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char	cpu_model[100];			/* machine model (primary cpu) */
+char	cpu_model[100];			/* machine model (primary CPU) */
 extern char machine_model[];
 
 /* The CPU configuration driver. */
@@ -170,7 +170,7 @@ alloc_cpuinfo(cpu_node)
 	 * Initialize cpuinfo structure.
 	 *
 	 * Arrange pcb, idle stack and interrupt stack in the same
-	 * way as is done for the boot cpu in locore.
+	 * way as is done for the boot CPU in locore.
 	 */
 	cpi->ci_next = NULL;
 	cpi->ci_curlwp = &lwp0;
@@ -431,7 +431,7 @@ cpu_boot_secondary_processors()
 		       cpu_args->cb_initstack);
 #endif
 
-		/* Disable interrupts and start another cpu. */
+		/* Disable interrupts and start another CPU. */
 		pstate = getpstate();
 		setpstate(PSTATE_KERN);
 
