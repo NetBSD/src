@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.24 1994/05/24 02:26:12 deraadt Exp $
+ * $Id: machdep.c,v 1.25 1994/06/10 14:33:10 pk Exp $
  */
 
 #include <sys/param.h>
@@ -571,7 +571,7 @@ boot(howto)
 
 	fb_unblank();
 	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0 && waittime < 0 && rootfs) {
+	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		register struct buf *bp;
 		int iter, nbusy;
 #if 1
@@ -651,7 +651,7 @@ dumpconf()
 	 * The PMEGs (32kB) and the segment table (512 bytes plus padding)
 	 * are appending to the end of the crash dump.
 	 */
-	dumpsize += btoc(sizeof(((struct kpmap *)0)->pm_rsegmap)) +
+	dumpsize += btoc(sizeof(((struct ksegmap *)0)->ks_segmap)) +
 		btoc(NPMEG * NPTESG * sizeof(int));
 #endif
 	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
@@ -696,7 +696,7 @@ dumpmmu(blkno)
 	register int i;
 	register int *pte, *ptend;
 	register int error;
-	register struct kpmap *kpmap = &kernel_pmap_store;
+	register struct ksegmap *kpmap = &kernel_segmap_store;
 	int buffer[dbtob(1) / sizeof(int)];
 	extern int seginval;	/* from pmap.c */
 	
@@ -715,7 +715,7 @@ dumpmmu(blkno)
 
 	/* First find an unused virtual segment. */
 	i = NKSEG;
-	while (kpmap->pm_rsegmap[--i] != seginval)
+	while (kpmap->ks_segmap[--i] != seginval)
 		if (i <= 0)
 			return (-1);
 	/*
@@ -760,8 +760,8 @@ dumpmmu(blkno)
 	 * dump (512 byte) segment map 
 	 * XXX assume it's a multiple of the block size
 	 */
-	error = (*dump)(dumpdev, blkno, (caddr_t)kpmap->pm_rsegmap,
-			sizeof(kpmap->pm_rsegmap));
+	error = (*dump)(dumpdev, blkno, (caddr_t)kpmap->ks_segmap,
+			sizeof(kpmap->ks_segmap));
 	return (error);
 }
 #endif
