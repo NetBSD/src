@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.2 2004/10/23 13:29:18 augustss Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.3 2004/10/24 08:47:27 augustss Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.2 2004/10/23 13:29:18 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.3 2004/10/24 08:47:27 augustss Exp $");
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -264,7 +264,7 @@ USB_ATTACH(cdce)
 			if ('0' <= c && c <= '9')
 				c -= '0';
 			else
-				c -= 'A';
+				c -= 'A' - 10;
 			c &= 0xf;
 			if (c%2 == 0)
 				c <<= 4;
