@@ -4437,6 +4437,7 @@ if test "${target}" = "${host}"; then
   alpha*-*-freebsd*)	;;
   alpha*-*-*)		COREFILE=osf-core.lo ;;
   arm-*-riscix)		COREFILE=trad-core.lo ;;
+  arm*-*-netbsd*)	COREFILE=netbsd-core.lo ;;
   hppa*-*-hpux*)	COREFILE=hpux-core.lo ;;
   hppa*-*-hiux*)	COREFILE=hpux-core.lo ;;
   hppa*-*-mpeix*)	COREFILE=hpux-core.lo ;;
@@ -4567,7 +4568,6 @@ if test "${target}" = "${host}"; then
   powerpc-*-aix4*)	COREFILE=rs6000-core.lo ;;
   powerpc-*-aix*)	COREFILE=rs6000-core.lo ;;
   powerpc-*-beos*)	;;
-  powerpc-*-netbsd*)	COREFILE=netbsd-core.lo ;;
   sparc*-*-netbsd* | sparc-*-openbsd*)
 	COREFILE=netbsd-core.lo
 	;;
