@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.27 2004/03/04 19:52:52 abs Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.28 2004/03/06 19:42:26 heinz Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.27 2004/03/04 19:52:52 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.28 2004/03/06 19:42:26 heinz Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -182,6 +182,7 @@ static const keysym_t pckbd_keydesc_de[] = {
     KC(51),  KS_comma,		KS_semicolon,
     KC(52),  KS_period,		KS_colon,
     KC(53),  KS_minus,		KS_underscore,
+    KC(83),  KS_KP_Delete,	KS_KP_Separator,
     KC(86),  KS_less,		KS_greater,	KS_bar,		KS_brokenbar,
     KC(184), KS_Mode_switch,	KS_Multi_key,
 };
