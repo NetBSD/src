@@ -75,7 +75,7 @@
 
 static void check_scroll ( struct video_state *svsp );
 static void hp_entry ( U_char ch, struct video_state *svsp );
-static void update_hp ( struct video_state *svsp );
+void update_hp ( struct video_state *svsp );
 static void vt_coldinit ( void );
 static void wrfkl ( int num, u_char *string, struct video_state *svsp );
 static void writefkl ( int num, u_char *string, struct video_state *svsp );
@@ -1442,8 +1442,6 @@ set_emulation_mode(struct video_state *svsp, int mode)
 	{
 		svsp->vt_pure_mode = M_PUREVT;
 
-		svsp->screen_rows = svsp->screen_rowsize;
-
 		svsp->vs_tty->t_winsize.ws_row
 			= svsp->screen_rows = svsp->screen_rowsize;
 
@@ -1738,7 +1736,7 @@ vt_col(struct video_state *svsp, int cols)
 /*---------------------------------------------------------------------------*
  *	update HP stuff on screen
  *---------------------------------------------------------------------------*/
-static void
+void
 update_hp(struct video_state *svsp)
 {
 	if(svsp->vt_pure_mode != M_HPVT || (!svsp->labels_on))
