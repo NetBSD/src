@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.41 1998/07/31 15:38:58 kleink Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.42 1998/07/31 22:50:51 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -199,7 +199,7 @@ dofilereadv(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 #endif
 
 	/* note: can't use iovlen until iovcnt is validated */
-	iovlen = iovcnt * sizeof (struct iovec);
+	iovlen = iovcnt * sizeof(struct iovec);
 	if ((u_int)iovcnt > UIO_SMALLIOV) {
 		if ((u_int)iovcnt > UIO_MAXIOV)
 			return (EINVAL);
@@ -400,7 +400,7 @@ dofilewritev(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 #endif
 
 	/* note: can't use iovlen until iovcnt is validated */
-	iovlen = iovcnt * sizeof (struct iovec);
+	iovlen = iovcnt * sizeof(struct iovec);
 	if ((u_int)iovcnt > UIO_SMALLIOV) {
 		if ((u_int)iovcnt > UIO_MAXIOV)
 			return (EINVAL);
@@ -518,7 +518,7 @@ sys_ioctl(p, v, retval)
 	if (size > IOCPARM_MAX)
 		return (ENOTTY);
 	memp = NULL;
-	if (size > sizeof (stkbuf)) {
+	if (size > sizeof(stkbuf)) {
 		memp = (caddr_t)malloc((u_long)size, M_IOCTLOPS, M_WAITOK);
 		data = memp;
 	} else
@@ -656,7 +656,7 @@ sys_select(p, v, retval)
 
 	if (SCARG(uap, tv)) {
 		error = copyin(SCARG(uap, tv), (caddr_t)&atv,
-			sizeof (atv));
+			sizeof(atv));
 		if (error)
 			goto done;
 		if (itimerfix(&atv)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.45 1998/03/01 02:22:29 fvdl Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.46 1998/07/31 22:50:50 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -221,7 +221,7 @@ sys_setrlimit(p, v, retval)
 	struct rlimit alim;
 	int error;
 
-	error = copyin(SCARG(uap, rlp), &alim, sizeof (struct rlimit));
+	error = copyin(SCARG(uap, rlp), &alim, sizeof(struct rlimit));
 	if (error)
 		return (error);
 	return (dosetrlimit(p, which, &alim));
@@ -342,7 +342,7 @@ sys_getrlimit(p, v, retval)
 	if ((u_int)which >= RLIM_NLIMITS)
 		return (EINVAL);
 	return (copyout(&p->p_rlimit[which], SCARG(uap, rlp),
-	    sizeof (struct rlimit)));
+	    sizeof(struct rlimit)));
 }
 
 /*
@@ -429,7 +429,7 @@ sys_getrusage(p, v, retval)
 	default:
 		return (EINVAL);
 	}
-	return (copyout(rup, SCARG(uap, rusage), sizeof (struct rusage)));
+	return (copyout(rup, SCARG(uap, rusage), sizeof(struct rusage)));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.17 1998/03/01 02:22:31 fvdl Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.18 1998/07/31 22:50:51 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -140,7 +140,7 @@ sysctl_doprof(name, namelen, oldp, oldlenp, newp, newlen)
 		return (sysctl_struct(oldp, oldlenp, newp, newlen,
 		    gp->tos, gp->tossize));
 	case GPROF_GMONPARAM:
-		return (sysctl_rdstruct(oldp, oldlenp, newp, gp, sizeof *gp));
+		return (sysctl_rdstruct(oldp, oldlenp, newp, gp, sizeof(*gp)));
 	default:
 		return (EOPNOTSUPP);
 	}
