@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.58 1999/05/18 23:52:55 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.59 1999/10/11 17:48:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -213,6 +213,7 @@ struct mbuf *epget __P((struct ep_softc *, int));
 void	epmbuffill __P((void *));
 void	epmbufempty __P((struct ep_softc *));
 void	epsetfilter __P((struct ep_softc *));
+void	ep_roadrunner_mii_enable __P((struct ep_softc *));
 void	epsetmedia __P((struct ep_softc *));
 
 /* ifmedia callbacks */
@@ -233,6 +234,7 @@ void	ep_mii_sync __P((struct ep_softc *));
 void	ep_mii_sendbits __P((struct ep_softc *, u_int32_t, int));
 
 static int epbusyeeprom __P((struct ep_softc *));
+u_int16_t ep_read_eeprom __P((struct ep_softc *, u_int16_t));
 static inline void ep_reset_cmd __P((struct ep_softc *sc, 
 					u_int cmd, u_int arg));
 static inline void ep_finish_reset __P((bus_space_tag_t, bus_space_handle_t));
@@ -353,17 +355,10 @@ epconfig(sc, chipset, enaddr)
 
 	if (enaddr == NULL) {
 		/*
-		 * Read the station address from the eeprom
+		 * Read the station address from the eeprom.
 		 */
 		for (i = 0; i < 3; i++) {
-			u_int16_t x;
-			if (epbusyeeprom(sc))
-				return;		/* XXX why is eeprom busy? */
-			bus_space_write_2(iot, ioh, ELINK_W0_EEPROM_COMMAND,
-					  READ_EEPROM | i);
-			if (epbusyeeprom(sc))
-				return;		/* XXX why is eeprom busy? */
-			x = bus_space_read_2(iot, ioh, ELINK_W0_EEPROM_DATA);
+			u_int16_t x = ep_read_eeprom(sc, i);
 			myla[(i << 1)] = x >> 8;
 			myla[(i << 1) + 1] = x;
 		}
@@ -459,8 +454,14 @@ epconfig(sc, chipset, enaddr)
 	 * Now, determine which media we have.
 	 */
 	switch (sc->ep_chipset) {
-	case ELINK_CHIPSET_BOOMERANG:
 	case ELINK_CHIPSET_ROADRUNNER:
+		if (sc->ep_flags & ELINK_FLAGS_MII) {
+			ep_roadrunner_mii_enable(sc);
+			GO_WINDOW(0);
+		}
+		/* FALLTHROUGH */
+
+	case ELINK_CHIPSET_BOOMERANG:
 		/*
 		 * If the device has MII, probe it.  We won't be using
 		 * any `native' media in this case, only PHYs.  If
@@ -591,13 +592,7 @@ ep_509_probemedia(sc)
 	/*
 	 * Get the default media from the EEPROM.
 	 */
-	if (epbusyeeprom(sc))
-		return;		/* XXX why is eeprom busy? */
-	bus_space_write_2(iot, ioh, ELINK_W0_EEPROM_COMMAND,
-	    READ_EEPROM | EEPROM_ADDR_CFG);
-	if (epbusyeeprom(sc))
-		return;		/* XXX why is  eeprom busy? */
-	port = bus_space_read_2(iot, ioh, ELINK_W0_EEPROM_DATA) >> 14;
+	port = ep_read_eeprom(sc, EEPROM_ADDR_CFG) >> 14;
 
 #define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
 
@@ -796,6 +791,11 @@ epinit(sc)
 
 		bus_space_write_2(iot, ioh, ELINK_W1_RUNNER_WRCTL, 0);
 		bus_space_write_2(iot, ioh, ELINK_W1_RUNNER_RDCTL, 0);
+
+		if (sc->ep_flags & ELINK_FLAGS_MII) {
+			ep_roadrunner_mii_enable(sc);
+			GO_WINDOW(1);
+		}
 	}
 
 	/* Enable interrupts. */
@@ -865,6 +865,30 @@ ep_media_change(ifp)
 }
 
 /*
+ * Reset and enable the MII on the RoadRunner.
+ */
+void
+ep_roadrunner_mii_enable(sc)
+	struct ep_softc *sc;
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+
+	GO_WINDOW(3);
+	bus_space_write_2(iot, ioh, ELINK_W3_RESET_OPTIONS,
+	    ELINK_PCI_100BASE_MII|ELINK_RUNNER_ENABLE_MII);
+	delay(1000);
+	bus_space_write_2(iot, ioh, ELINK_W3_RESET_OPTIONS,
+	    ELINK_PCI_100BASE_MII|ELINK_RUNNER_MII_RESET|
+	    ELINK_RUNNER_ENABLE_MII);
+	ep_reset_cmd(sc, ELINK_COMMAND, TX_RESET);
+	ep_reset_cmd(sc, ELINK_COMMAND, RX_RESET);
+	delay(1000);
+	bus_space_write_2(iot, ioh, ELINK_W3_RESET_OPTIONS,
+	    ELINK_PCI_100BASE_MII|ELINK_RUNNER_ENABLE_MII);
+}
+
+/*
  * Set the card to use the specified media.
  */
 void
@@ -891,6 +915,7 @@ epsetmedia(sc)
 
 		GO_WINDOW(3);
 
+#if 0
 		if (sc->ep_chipset == ELINK_CHIPSET_ROADRUNNER) {
 			int resopt;
 
@@ -899,6 +924,7 @@ epsetmedia(sc)
 			bus_space_write_2(iot, ioh,
 			    ELINK_W3_RESET_OPTIONS, resopt|ELINK_RUNNER_ENABLE_MII);
 		}
+#endif
 
 		config0 = (u_int)bus_space_read_2(iot, ioh,
 		    ELINK_W3_INTERNAL_CONFIG);
@@ -1312,7 +1338,11 @@ eptxstat(sc)
 			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
 				printf("%s: jabber (%x)\n",
 				       sc->sc_dev.dv_xname, i);
+#if 1
+			ep_reset_cmd(sc, ELINK_COMMAND, TX_RESET);
+#else
 			epreset(sc);
+#endif
 		} else if (i & TXS_UNDERRUN) {
 			++sc->sc_ethercom.ec_if.if_oerrors;
 			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
@@ -1323,7 +1353,11 @@ eptxstat(sc)
 				    sc->tx_start_thresh = min(ETHER_MAX_LEN,
 					    sc->tx_start_thresh + 20);
 			sc->tx_succ_ok = 0;
+#if 1
+			ep_reset_cmd(sc, ELINK_COMMAND, TX_RESET);
+#else
 			epreset(sc);
+#endif
 		} else if (i & TXS_MAX_COLLISION) {
 			++sc->sc_ethercom.ec_if.if_collisions;
 			bus_space_write_2(iot, ioh, ELINK_COMMAND, TX_ENABLE);
@@ -1404,7 +1438,11 @@ epintr(arg)
 		if (status & S_CARD_FAILURE) {
 			printf("%s: adapter failure (%x)\n",
 			    sc->sc_dev.dv_xname, status);
+#if 1
+			epinit(sc);
+#else
 			epreset(sc);
+#endif
 			return (1);
 		}
 		if (status & S_TX_COMPLETE) {
@@ -1951,6 +1989,31 @@ epbusyeeprom(sc)
 		return (1);
 	}
 	return (0);
+}
+
+u_int16_t
+ep_read_eeprom(sc, offset)
+	struct ep_softc *sc;
+	u_int16_t offset;
+{
+	u_int16_t readcmd;
+
+	/*
+	 * RoadRunner has a larger EEPROM, so a different read command
+	 * is required.
+	 */
+	if (sc->ep_chipset == ELINK_CHIPSET_ROADRUNNER)
+		readcmd = READ_EEPROM_RR;
+	else
+		readcmd = READ_EEPROM;
+
+	if (epbusyeeprom(sc))
+		return (0);		/* XXX why is eeprom busy? */
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ELINK_W0_EEPROM_COMMAND,
+	    readcmd | offset);
+	if (epbusyeeprom(sc))
+		return (0);		/* XXX why is eeprom busy? */
+	return (bus_space_read_2(sc->sc_iot, sc->sc_ioh, ELINK_W0_EEPROM_DATA));
 }
 
 void
