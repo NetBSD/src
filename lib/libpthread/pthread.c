@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.7 2003/01/29 14:03:08 drochner Exp $	*/
+/*	$NetBSD: pthread.c,v 1.8 2003/01/31 04:59:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -345,7 +345,7 @@ pthread__idle(void)
 void
 pthread_exit(void *retval)
 {
-	pthread_t self, joiner;
+	pthread_t self;
 	struct pt_clean_t *cleanup;
 	int nt;
 
@@ -397,11 +397,11 @@ pthread_exit(void *retval)
 			/* Whoah, we're the last one. Time to go. */
 			exit(0);
 		}
-		/* Wake up all the potential joiners. Only one can win.
+		/*
+		 * Wake up all the potential joiners. Only one can win.
 		 * (Can you say "Thundering Herd"? I knew you could.)
 		 */
-		PTQ_FOREACH(joiner, &self->pt_joiners, pt_sleep)
-		    pthread__sched(self, joiner);
+		pthread__sched_sleepers(self, &self->pt_joiners);
 		pthread__block(self, &self->pt_join_lock);
 	}
 
@@ -505,7 +505,7 @@ pthread_equal(pthread_t t1, pthread_t t2)
 int
 pthread_detach(pthread_t thread)
 {
-	pthread_t self, joiner;
+	pthread_t self;
 
 	self = pthread__self();
 
@@ -525,8 +525,7 @@ pthread_detach(pthread_t thread)
 	thread->pt_flags |= PT_FLAG_DETACHED;
 
 	/* Any joiners have to be punted now. */
-	PTQ_FOREACH(joiner, &thread->pt_joiners, pt_sleep)
-	    pthread__sched(self, joiner);
+	pthread__sched_sleepers(self, &thread->pt_joiners);
 
 	pthread_spinunlock(self, &thread->pt_join_lock);
 
