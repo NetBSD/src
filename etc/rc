@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.106 1998/11/21 03:00:38 hubertf Exp $
+#	$NetBSD: rc,v 1.107 1999/01/04 00:49:36 tron Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -20,6 +20,14 @@ export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/X11R6/bin
 if [ -f /etc/ccd.conf ]; then
 	ccdconfig -C
 fi
+
+# Configure raid devices.
+for dev in 0 1 2 3; do
+	if [ -f /etc/raid$dev.conf ]; then
+		raidctl -c /etc/raid$dev.conf raid$dev
+		raidctl -r raid$dev
+	fi
+done
 
 # Add all block-type swap devices; these might be necessary
 # during disk checks.
