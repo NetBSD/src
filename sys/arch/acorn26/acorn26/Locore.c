@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.2 2002/08/11 20:50:39 bjh21 Exp $	*/
+/*	$NetBSD: Locore.c,v 1.3 2002/08/17 00:01:23 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: Locore.c,v 1.2 2002/08/11 20:50:39 bjh21 Exp $");
+__RCSID("$NetBSD: Locore.c,v 1.3 2002/08/17 00:01:23 bjh21 Exp $");
 
 #include <sys/proc.h>
 #include <sys/sched.h>
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: Locore.c,v 1.2 2002/08/11 20:50:39 bjh21 Exp $");
 
 #include <machine/machdep.h>
 
-static void idle(void);
+void idle(void);
 
 struct pcb *curpcb;
 
