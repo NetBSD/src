@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 1997/03/26 22:39:25 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 1997/10/10 21:45:22 oki Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -38,12 +38,15 @@
 #include <sys/disklabel.h>
 #include <sys/malloc.h>
 #include <machine/cpu.h>
+#include <x68k/x68k/iodevice.h>
 
 void configure __P((void));
 static void findroot __P((struct device **, int *));
 void mbattach __P((struct device *, struct device *, void *));
 int mbprint __P((void *, const char *));
 int mbmatch __P((struct device *, void *, void *));
+
+static int simple_devprint __P((void *, const char *));
 
 extern int cold;	/* 1 if still booting (locore.s) */
 int x68k_realconfig;
@@ -87,7 +90,7 @@ cpu_rootconf()
 }
 
 /*ARGSUSED*/
-int
+static int
 simple_devprint(auxp, pnp)
 	void *auxp;
 	const char *pnp;
