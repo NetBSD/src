@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.82 2000/03/23 15:04:49 soren Exp $ */
+/*	$NetBSD: wdc.c,v 1.83 2000/03/29 03:56:53 simonb Exp $ */
 
 
 /*
@@ -120,7 +120,6 @@ void  __wdccommand_done __P((struct channel_softc *, struct wdc_xfer *));
 void  __wdccommand_start __P((struct channel_softc *, struct wdc_xfer *));	
 int   __wdccommand_intr __P((struct channel_softc *, struct wdc_xfer *, int));
 int   wdprint __P((void *, const char *));
-void	wdc_kill_pending __P((struct channel_softc *));
 
 
 #define DEBUG_INTR   0x01
