@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.25 1997/04/14 09:09:22 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.26 1997/07/20 09:45:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$NetBSD: ftp.c,v 1.25 1997/04/14 09:09:22 lukem Exp $";
+__RCSID("$NetBSD: ftp.c,v 1.26 1997/07/20 09:45:53 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +87,7 @@ hookup(host, port)
 	const char *host;
 	int port;
 {
-	struct hostent *hp = 0;
+	struct hostent *hp = NULL;
 	int s, len, tos;
 	static char hostnamebuf[MAXHOSTNAMELEN];
 
@@ -411,15 +412,26 @@ sendrequest(cmd, local, remote, printnames)
 {
 	struct stat st;
 	int c, d;
-	FILE *fin, *dout = 0;
+	FILE *fin, *dout;
 	int (*closefunc) __P((FILE *));
 	sig_t oldinti, oldintr, oldintp;
-	off_t hashbytes;
+	volatile off_t hashbytes;
 	char *lmode, buf[BUFSIZ], *bufp;
 	int oprogress;
 
+#ifdef __GNUC__			/* XXX: to shut up gcc warnings */
+	(void)&fin;
+	(void)&dout;
+	(void)&closefunc;
+	(void)&oldinti;
+	(void)&oldintr;
+	(void)&oldintp;
+	(void)&lmode;
+#endif
+
 	hashbytes = mark;
 	direction = "sent";
+	dout = NULL;
 	bytes = 0;
 	filesize = -1;
 	oprogress = progress;
@@ -699,22 +711,37 @@ recvrequest(cmd, local, remote, lmode, printnames)
 	const char *cmd, *local, *remote, *lmode;
 	int printnames;
 {
-	FILE *fout, *din = 0;
+	FILE *fout, *din;
 	int (*closefunc) __P((FILE *));
 	sig_t oldinti, oldintr, oldintp;
-	int c, d, is_retr, tcrflag, bare_lfs = 0;
+	int c, d;
+	volatile int is_retr, tcrflag, bare_lfs;
 	static int bufsize;
 	static char *buf;
-	off_t hashbytes;
+	volatile off_t hashbytes;
 	struct stat st;
 	time_t mtime;
 	struct timeval tval[2];
 	int oprogress;
 	int opreserve;
 
+#ifdef __GNUC__			/* XXX: to shut up gcc warnings */
+	(void)&local;
+	(void)&fout;
+	(void)&din;
+	(void)&closefunc;
+	(void)&oldinti;
+	(void)&oldintr;
+	(void)&oldintp;
+#endif
+
+	fout = NULL;
+	din = NULL;
+	oldinti = NULL;
 	hashbytes = mark;
 	direction = "received";
 	bytes = 0;
+	bare_lfs = 0;
 	filesize = -1;
 	oprogress = progress;
 	opreserve = preserve;
@@ -1341,10 +1368,18 @@ proxtrans(cmd, local, remote)
 	const char *cmd, *local, *remote;
 {
 	sig_t oldintr;
-	int secndflag = 0, prox_type, nfnd;
+	int prox_type, nfnd;
+	volatile int secndflag;
 	char *cmd2;
 	struct fd_set mask;
 
+#ifdef __GNUC__			/* XXX: to shut up gcc warnings */
+	(void)&oldintr;
+	(void)&cmd2;
+#endif
+
+	oldintr = NULL;
+	secndflag = 0;
 	if (strcmp(cmd, "RETR"))
 		cmd2 = "RETR";
 	else

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.9 1997/06/10 22:00:01 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.10 1997/07/20 09:46:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -33,8 +33,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: util.c,v 1.9 1997/06/10 22:00:01 lukem Exp $";
+__RCSID("$NetBSD: util.c,v 1.10 1997/07/20 09:46:03 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -48,8 +49,10 @@ static char rcsid[] = "$NetBSD: util.c,v 1.9 1997/06/10 22:00:01 lukem Exp $";
 #include <err.h>
 #include <fcntl.h>
 #include <glob.h>
+#include <limits.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -67,7 +70,7 @@ setpeer(argc, argv)
 	char *argv[];
 {
 	char *host;
-	short port;
+	u_int16_t port;
 
 	if (connected) {
 		printf("Already connected to %s, use close first.\n",
@@ -84,14 +87,17 @@ setpeer(argc, argv)
 	}
 	port = ftpport;
 	if (argc > 2) {
-		port = atoi(argv[2]);
-		if (port <= 0) {
+		char *ep;
+		long nport;
+
+		nport = strtol(argv[2], &ep, 10);
+		if (nport < 1 || nport > 0xffff || *ep != '\0') {
 			printf("%s: bad port number '%s'.\n", argv[1], argv[2]);
 			printf("usage: %s host-name [port]\n", argv[0]);
 			code = -1;
 			return;
 		}
-		port = htons(port);
+		port = htons(nport);
 	}
 	host = hookup(argv[1], port);
 	if (host) {
@@ -494,8 +500,11 @@ remotemodtime(file, noisy)
 	return (rtime);
 }
 
+void updateprogressmeter __P((int));
+
 void
-updateprogressmeter()
+updateprogressmeter(dummy)
+	int dummy;
 {
 	static pid_t pgrp = -1;
 	int ctty_pgrp;

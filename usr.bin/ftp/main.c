@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 1997/06/10 07:04:43 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.23 1997/07/20 09:45:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.22 1997/06/10 07:04:43 lukem Exp $";
+__RCSID("$NetBSD: main.c,v 1.23 1997/07/20 09:45:58 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,13 +63,16 @@ static char rcsid[] = "$NetBSD: main.c,v 1.22 1997/06/10 07:04:43 lukem Exp $";
 
 #include "ftp_var.h"
 
+int main __P((int, char **));
+
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
 	struct servent *sp;
-	int ch, top, port, rval;
+	int ch, top, rval;
+	long port;
 	struct passwd *pw = NULL;
 	char *cp, homedir[MAXPATHLEN];
 	int dumbterm;
@@ -154,8 +157,8 @@ main(argc, argv)
 			break;
 
 		case 'P':
-			port = atoi(optarg);
-			if (port <= 0)
+			port = strtol(optarg, &cp, 10);
+			if (port < 1 || port > 0xffff || *cp != '\0')
 				warnx("bad port number: %s (ignored)", optarg);
 			else
 				ftpport = htons(port);
@@ -200,6 +203,11 @@ main(argc, argv)
 
 	setttywidth(0);
 	(void)signal(SIGWINCH, setttywidth);
+
+#ifdef __GNUC__			/* XXX: to shut up gcc warnings */
+	(void)&argc;
+	(void)&argv;
+#endif
 
 	if (argc > 0) {
 		if (strchr(argv[0], ':') != NULL) {
