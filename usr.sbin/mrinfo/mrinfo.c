@@ -1,4 +1,4 @@
-/*	$NetBSD: mrinfo.c,v 1.4 1995/12/10 11:00:51 mycroft Exp $	*/
+/*	$NetBSD: mrinfo.c,v 1.5 1997/10/17 11:18:10 lukem Exp $	*/
 
 /*
  * This tool requests configuration info from a multicast router
@@ -61,12 +61,14 @@
  * These notices must be retained in any copies of any part of this software.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char rcsid[] =
-    "@(#) $NetBSD: mrinfo.c,v 1.4 1995/12/10 11:00:51 mycroft Exp $";
-/*  original rcsid:
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
-*/
+#else
+__RCSID("$NetBSD: mrinfo.c,v 1.5 1997/10/17 11:18:10 lukem Exp $");
+#endif
 #endif
 
 #include <string.h>
