@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.5 2000/06/29 08:53:01 mrg Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.6 2002/01/25 20:49:25 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -311,7 +311,7 @@ _isa_bus_dmamap_load(t, map, buf, buflen, p, flags)
 	cookie->id_origbuflen = buflen;
 	cookie->id_buftype = ID_BUFTYPE_LINEAR;
 	error = _bus_dmamap_load(t, map, cookie->id_bouncebuf, buflen,
-	    p, flags);
+	    NULL, flags);
 	if (error) {
 		/*
 		 * Free the bounce pages, unless our resources
