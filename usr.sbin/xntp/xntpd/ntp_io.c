@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_io.c,v 1.5 1998/01/09 06:06:37 perry Exp $	*/
+
 /*
  * xntp_io.c - input/output routines for xntpd.  The socket-opening code
  *	       was shamelessly stolen from ntpd.

@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_heath.c,v 1.2 1998/01/09 06:06:57 perry Exp $	*/
+
 /*
  * refclock_heath - clock driver for Heath GC-1000 Most Accurate Clock
  */

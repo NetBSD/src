@@ -1,3 +1,5 @@
+/*	$NetBSD: ntpd.h,v 1.2 1998/01/09 06:06:17 perry Exp $	*/
+
 /*
  * ntpd.h - Prototypes for xntpd.
  */

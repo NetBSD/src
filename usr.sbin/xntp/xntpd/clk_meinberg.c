@@ -1,3 +1,5 @@
+/*	$NetBSD: clk_meinberg.c,v 1.2 1998/01/09 06:06:29 perry Exp $	*/
+
 /*
  * /src/NTP/REPOSITORY/v4/libparse/clk_meinberg.c,v 3.23 1997/01/19 12:44:38 kardel Exp
  *  

@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_refclock.h,v 1.2 1998/01/09 06:06:11 perry Exp $	*/
+
 /*
  * ntp_refclock.h - definitions for reference clock support
  */

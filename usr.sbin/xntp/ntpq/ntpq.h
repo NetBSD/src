@@ -1,3 +1,5 @@
+/*	$NetBSD: ntpq.h,v 1.2 1998/01/09 06:06:23 perry Exp $	*/
+
 /*
  * ntpq.h - definitions of interest to ntpq
  */

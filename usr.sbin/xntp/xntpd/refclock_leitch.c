@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_leitch.c,v 1.2 1998/01/09 06:07:00 perry Exp $	*/
+
 /*
  * refclock_leitch - clock driver for the Leitch CSD-5300 Master Clock
  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: map_vme.c,v 1.2 1998/01/09 06:06:33 perry Exp $	*/
+
 /********************************************************/
 /*  map_vme.c                                           */
 /*  VME control of TrueTime VME-SG sync gen  card       */

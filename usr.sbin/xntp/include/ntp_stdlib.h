@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_stdlib.h,v 1.2 1998/01/09 06:06:13 perry Exp $	*/
+
 /*
  * ntp_stdlib.h - Prototypes for XNTP lib.
  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_types.h,v 1.2 1998/01/09 06:06:16 perry Exp $	*/
+
 /*
  *  ntp_types.h - defines how int32 and u_int32 are treated.
  *  For 64 bit systems like the DEC Alpha, they have to be defined

@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_timer.c,v 1.2 1998/01/09 06:06:45 perry Exp $	*/
+
 /*
  * ntp_event.c - event timer support routines
  */

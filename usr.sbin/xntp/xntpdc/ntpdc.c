@@ -1,3 +1,5 @@
+/*	$NetBSD: ntpdc.c,v 1.3 1998/01/09 06:07:16 perry Exp $	*/
+
 /*
  * xntpdc - control and monitor your xntpd daemon
  */
