@@ -1,5 +1,5 @@
 /* Output sdb-format symbol table information from GNU compiler.
-   Copyright (C) 1988, 92, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1988, 92-97, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -44,14 +44,16 @@ AT&T C compiler.  From the example below I would conclude the following:
 
 #ifdef SDB_DEBUGGING_INFO
 
+#include "system.h"
 #include "tree.h"
 #include "rtl.h"
-#include <stdio.h>
 #include "regs.h"
 #include "defaults.h"
 #include "flags.h"
 #include "insn-config.h"
 #include "reload.h"
+#include "output.h"
+#include "toplev.h"
 
 /* Mips systems use the SDB functions to dump out symbols, but do not
    supply usable syms.h include files.  Which syms.h file to use is a
@@ -100,9 +102,7 @@ extern FILE *asm_out_file;
 
 extern tree current_function_decl;
 
-void sdbout_init ();
-void sdbout_symbol ();
-void sdbout_types();
+#include "sdbout.h"
 
 static char *gen_fake_label		PROTO((void));
 static int plain_type			PROTO((tree));
@@ -114,7 +114,7 @@ static void sdbout_syms			PROTO((tree));
 static void sdbout_queue_anonymous_type	PROTO((tree));
 static void sdbout_dequeue_anonymous_types PROTO((void));
 static void sdbout_type			PROTO((tree));
-static void sbdout_field_types		PROTO((tree));
+static void sdbout_field_types		PROTO((tree));
 static void sdbout_one_type		PROTO((tree));
 static void sdbout_parms		PROTO((tree));
 static void sdbout_reg_parms		PROTO((tree));
@@ -173,7 +173,13 @@ static void sdbout_reg_parms		PROTO((tree));
 #endif
 
 #ifndef PUT_SDB_INT_VAL
-#define PUT_SDB_INT_VAL(a) fprintf (asm_out_file, "\t.val\t%d%s", (a), SDB_DELIM)
+#define PUT_SDB_INT_VAL(a) \
+ do {									\
+   fputs ("\t.val\t", asm_out_file);		       			\
+   fprintf (asm_out_file, HOST_WIDE_INT_PRINT_DEC, (HOST_WIDE_INT)(a));	\
+   fprintf (asm_out_file, "%s", SDB_DELIM);				\
+ } while (0)
+
 #endif
 
 #ifndef PUT_SDB_VAL
@@ -203,7 +209,12 @@ do { fprintf (asm_out_file, "\t.def\t");	\
 #endif
 
 #ifndef PUT_SDB_SIZE
-#define PUT_SDB_SIZE(a) fprintf(asm_out_file, "\t.size\t%d%s", a, SDB_DELIM)
+#define PUT_SDB_SIZE(a) \
+ do {									\
+   fputs ("\t.size\t", asm_out_file);					\
+   fprintf (asm_out_file, HOST_WIDE_INT_PRINT_DEC, (HOST_WIDE_INT)(a));	\
+   fprintf (asm_out_file, "%s", SDB_DELIM);				\
+ } while(0)
 #endif
 
 #ifndef PUT_SDB_START_DIM
@@ -531,10 +542,14 @@ plain_type_1 (type, level)
 	  {
 	    char *name = IDENTIFIER_POINTER (DECL_NAME (TYPE_NAME (type)));
 
+	    if (!strcmp (name, "char"))
+	      return T_CHAR;
 	    if (!strcmp (name, "unsigned char"))
 	      return T_UCHAR;
 	    if (!strcmp (name, "signed char"))
 	      return T_CHAR;
+	    if (!strcmp (name, "int"))
+	      return T_INT;
 	    if (!strcmp (name, "unsigned int"))
 	      return T_UINT;
 	    if (!strcmp (name, "short int"))
@@ -547,12 +562,12 @@ plain_type_1 (type, level)
 	      return T_ULONG;
 	  }
 
+	if (size == INT_TYPE_SIZE)
+	  return (TREE_UNSIGNED (type) ? T_UINT : T_INT);
 	if (size == CHAR_TYPE_SIZE)
 	  return (TREE_UNSIGNED (type) ? T_UCHAR : T_CHAR);
 	if (size == SHORT_TYPE_SIZE)
 	  return (TREE_UNSIGNED (type) ? T_USHORT : T_SHORT);
-	if (size == INT_TYPE_SIZE)
-	  return (TREE_UNSIGNED (type) ? T_UINT : T_INT);
 	if (size == LONG_TYPE_SIZE)
 	  return (TREE_UNSIGNED (type) ? T_ULONG : T_LONG);
 	if (size == LONG_LONG_TYPE_SIZE)	/* better than nothing */
@@ -570,6 +585,9 @@ plain_type_1 (type, level)
 #ifdef EXTENDED_SDB_BASIC_TYPES
 	if (precision == LONG_DOUBLE_TYPE_SIZE)
 	  return T_LNGDBL;
+#else
+	if (precision == LONG_DOUBLE_TYPE_SIZE)
+	  return T_DOUBLE;	/* better than nothing */
 #endif
 	return 0;
       }
@@ -584,6 +602,7 @@ plain_type_1 (type, level)
 	if (sdb_n_dims < SDB_MAX_DIM)
 	  sdb_dims[sdb_n_dims++]
 	    = (TYPE_DOMAIN (type)
+	       && TYPE_MAX_VALUE (TYPE_DOMAIN (type))
 	       && TREE_CODE (TYPE_MAX_VALUE (TYPE_DOMAIN (type))) == INTEGER_CST
 	       && TREE_CODE (TYPE_MIN_VALUE (TYPE_DOMAIN (type))) == INTEGER_CST
 	       ? (TREE_INT_CST_LOW (TYPE_MAX_VALUE (TYPE_DOMAIN (type)))
@@ -789,7 +808,7 @@ sdbout_symbol (decl, local)
       if (DECL_RTL (decl) == 0)
 	return;
 
-      DECL_RTL (decl) = eliminate_regs (DECL_RTL (decl), 0, NULL_RTX, 0);
+      DECL_RTL (decl) = eliminate_regs (DECL_RTL (decl), 0, NULL_RTX);
 #ifdef LEAF_REG_REMAP
       if (leaf_function)
 	leaf_renumber_regs_insn (DECL_RTL (decl));
@@ -950,6 +969,9 @@ sdbout_symbol (decl, local)
 	  return;
 	}
       break;
+
+    default:
+      break;
     }
   PUT_SDB_TYPE (plain_type (type));
   PUT_SDB_ENDEF;
@@ -1058,8 +1080,9 @@ sdbout_field_types (type)
      tree type;
 {
   tree tail;
+
   for (tail = TYPE_FIELDS (type); tail; tail = TREE_CHAIN (tail))
-    if (TREE_CODE (TREE_TYPE (tail)) == POINTER_TYPE)
+    if (POINTER_TYPE_P (TREE_TYPE (tail)))
       sdbout_one_type (TREE_TYPE (TREE_TYPE (tail)));
     else
       sdbout_one_type (TREE_TYPE (tail));
@@ -1165,6 +1188,9 @@ sdbout_one_type (type)
 	    PUT_SDB_TYPE (T_ENUM);
 	    member_scl = C_MOE;
 	    break;
+
+	  default:
+	    break;
 	  }
 
 	PUT_SDB_SIZE (size);
@@ -1257,6 +1283,9 @@ sdbout_one_type (type)
 	PUT_SDB_SIZE (size);
 	PUT_SDB_ENDEF;
 	break;
+
+      default:
+	break;
       }
     }
 }
@@ -1289,8 +1318,8 @@ sdbout_parms (parms)
 	/* Perform any necessary register eliminations on the parameter's rtl,
 	   so that the debugging output will be accurate.  */
 	DECL_INCOMING_RTL (parms)
-	  = eliminate_regs (DECL_INCOMING_RTL (parms), 0, NULL_RTX, 0);
-	DECL_RTL (parms) = eliminate_regs (DECL_RTL (parms), 0, NULL_RTX, 0);
+	  = eliminate_regs (DECL_INCOMING_RTL (parms), 0, NULL_RTX);
+	DECL_RTL (parms) = eliminate_regs (DECL_RTL (parms), 0, NULL_RTX);
 
 	if (PARM_PASSED_IN_MEMORY (parms))
 	  {

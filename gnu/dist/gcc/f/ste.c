@@ -1,6 +1,6 @@
 /* ste.c -- Implementation File (module.c template V1.0)
    Copyright (C) 1995, 1996 Free Software Foundation, Inc.
-   Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
+   Contributed by James Craig Burley (burley@gnu.org).
 
 This file is part of GNU Fortran.
 
@@ -45,12 +45,13 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 /* Include files. */
 
+#include "proj.h"
+
 #if FFECOM_targetCURRENT == FFECOM_targetGCC
-#include "config.j"
 #include "rtl.j"
+#include "toplev.j"
 #endif
 
-#include "proj.h"
 #include "ste.h"
 #include "bld.h"
 #include "com.h"
@@ -636,7 +637,8 @@ ffeste_io_dofio_ (ffebld expr)
     {
       num_elements = size_binop (CEIL_DIV_EXPR,
 			TYPE_SIZE (TREE_TYPE (TREE_TYPE (variable))), size);
-      num_elements = size_binop (CEIL_DIV_EXPR, num_elements,
+      num_elements = size_binop (CEIL_DIV_EXPR,
+				 num_elements,
 				 size_int (TYPE_PRECISION
 					   (char_type_node)));
       num_elements = convert (ffecom_f2c_ftnlen_type_node,
@@ -736,8 +738,9 @@ ffeste_io_dolio_ (ffebld expr)
       num_elements = size_binop (CEIL_DIV_EXPR,
 			TYPE_SIZE (TREE_TYPE (TREE_TYPE (variable))), size);
       num_elements = size_binop (CEIL_DIV_EXPR,
-				 num_elements, size_int (TYPE_PRECISION
-							 (char_type_node)));
+				 num_elements,
+				 size_int (TYPE_PRECISION
+					   (char_type_node)));
       num_elements = convert (ffecom_f2c_ftnlen_type_node,
 			      num_elements);
     }
@@ -999,7 +1002,6 @@ ffeste_io_cilist_ (bool have_err,
   int yes;
   tree field;
   tree inits, initn;
-  tree ignore;			/* We ignore the length of format! */
   bool constantp = TRUE;
   static tree errfield, unitfield, endfield, formatfield, recfield;
   tree errinit, unitinit, endinit, formatinit, recinit;
@@ -1086,7 +1088,7 @@ ffeste_io_cilist_ (bool have_err,
       break;
 
     case FFESTV_formatCHAREXPR:
-      formatexp = ffecom_arg_ptr_to_expr (format_spec->u.expr, &ignore);
+      formatexp = ffecom_arg_ptr_to_expr (format_spec->u.expr, NULL);
       if (TREE_CONSTANT (formatexp))
 	{
 	  formatinit = formatexp;
@@ -1305,7 +1307,6 @@ ffeste_io_icilist_ (bool have_err,
   int yes;
   tree field;
   tree inits, initn;
-  tree ignore;			/* We ignore the length of format! */
   bool constantp = TRUE;
   static tree errfield, unitfield, endfield, formatfield, unitlenfield,
     unitnumfield;
@@ -1409,7 +1410,7 @@ ffeste_io_icilist_ (bool have_err,
       break;
 
     case FFESTV_formatCHAREXPR:
-      formatexp = ffecom_arg_ptr_to_expr (format_spec->u.expr, &ignore);
+      formatexp = ffecom_arg_ptr_to_expr (format_spec->u.expr, NULL);
       if (TREE_CONSTANT (formatexp))
 	{
 	  formatinit = formatexp;
@@ -2905,22 +2906,24 @@ ffeste_R840 (ffebld expr, ffelab neg, ffelab zero, ffelab pos)
     ffecom_push_calltemps ();
 
     if (neg == zero)
-      if (neg == pos)
-	expand_goto (gzero);
-      else
-	{			/* IF (expr.LE.0) THEN GOTO neg/zero ELSE
-				   GOTO pos. */
-	  texpr = ffecom_expr (expr);
-	  texpr = ffecom_2 (LE_EXPR, integer_type_node,
-			    texpr,
-			    convert (TREE_TYPE (texpr),
-				     integer_zero_node));
-	  expand_start_cond (ffecom_truth_value (texpr), 0);
+      {
+	if (neg == pos)
 	  expand_goto (gzero);
-	  expand_start_else ();
-	  expand_goto (gpos);
-	  expand_end_cond ();
-	}
+	else
+	  {			/* IF (expr.LE.0) THEN GOTO neg/zero ELSE
+				   GOTO pos. */
+	    texpr = ffecom_expr (expr);
+	    texpr = ffecom_2 (LE_EXPR, integer_type_node,
+			      texpr,
+			      convert (TREE_TYPE (texpr),
+				       integer_zero_node));
+	    expand_start_cond (ffecom_truth_value (texpr), 0);
+	    expand_goto (gzero);
+	    expand_start_else ();
+	    expand_goto (gpos);
+	    expand_end_cond ();
+	  }
+      }
     else if (neg == pos)
       {				/* IF (expr.NE.0) THEN GOTO neg/pos ELSE GOTO
 				   zero. */

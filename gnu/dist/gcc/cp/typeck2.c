@@ -31,10 +31,11 @@ Boston, MA 02111-1307, USA.  */
    like a strange sort of assignment).  */
 
 #include "config.h"
-#include <stdio.h>
+#include "system.h"
 #include "tree.h"
 #include "cp-tree.h"
 #include "flags.h"
+#include "toplev.h"
 
 static tree process_init_constructor PROTO((tree, tree, tree *));
 
@@ -130,6 +131,29 @@ abstract_virtuals_error (decl, type)
      tree type;
 {
   tree u = CLASSTYPE_ABSTRACT_VIRTUALS (type);
+  int has_abstract_virtuals, needs_final_overriders;
+  tree tu;
+
+  /* Count how many abstract methods need to be defined.  */
+  for (has_abstract_virtuals = 0, tu = u; tu; tu = TREE_CHAIN (tu))
+    {
+      if (DECL_ABSTRACT_VIRTUAL_P (TREE_VALUE (tu))
+	  && ! DECL_NEEDS_FINAL_OVERRIDER_P (TREE_VALUE (tu)))
+	{
+	  has_abstract_virtuals = 1;
+	  break;
+	}
+    }
+
+  /* Count how many virtual methods need a final overrider.  */
+  for (needs_final_overriders = 0, tu = u; tu; tu = TREE_CHAIN (tu))
+    {
+      if (DECL_NEEDS_FINAL_OVERRIDER_P (TREE_VALUE (tu)))
+	{
+	  needs_final_overriders = 1;
+	  break;
+	}
+    }
 
   if (decl)
     {
@@ -151,19 +175,52 @@ abstract_virtuals_error (decl, type)
       else if (TREE_CODE (decl) == FUNCTION_DECL)
 	cp_error ("invalid return type for function `%#D'", decl);
     }
-  else cp_error ("cannot allocate an object of type `%T'", type);
+  else
+    cp_error ("cannot allocate an object of type `%T'", type);
+
   /* Only go through this once.  */
   if (TREE_PURPOSE (u) == NULL_TREE)
     {
-      error ("  since the following virtual functions are abstract:");
       TREE_PURPOSE (u) = error_mark_node;
-      while (u)
+
+      if (has_abstract_virtuals)
+	error ("  since the following virtual functions are abstract:");
+      tu = u;
+      while (tu)
 	{
-	  cp_error ("\t%#D", TREE_VALUE (u));
-	  u = TREE_CHAIN (u);
+	  if (DECL_ABSTRACT_VIRTUAL_P (TREE_VALUE (tu))
+	      && ! DECL_NEEDS_FINAL_OVERRIDER_P (TREE_VALUE (tu)))
+	    cp_error ("\t%#D", TREE_VALUE (tu));
+	  tu = TREE_CHAIN (tu);
+	}
+
+      if (needs_final_overriders)
+	{
+	  if (has_abstract_virtuals)
+	    error ("  and the following virtual functions need a final overrider:");
+	  else
+	    error ("  since the following virtual functions need a final overrider:");
+	}
+      tu = u;
+      while (tu)
+	{
+	  if (DECL_NEEDS_FINAL_OVERRIDER_P (TREE_VALUE (tu)))
+	    cp_error ("\t%#D", TREE_VALUE (tu));
+	  tu = TREE_CHAIN (tu);
 	}
     }
-  else cp_error ("  since type `%T' has abstract virtual functions", type);
+  else
+    {
+      if (has_abstract_virtuals)
+	{
+	  if (needs_final_overriders)
+	    cp_error ("  since type `%T' has abstract virtual functions and must override virtual functions", type);
+	  else
+	    cp_error ("  since type `%T' has abstract virtual functions", type);
+	}
+      else
+	cp_error ("  since type `%T' must override virtual functions", type);
+    }
 }
 
 /* Print an error message for invalid use of a signature type.
@@ -208,7 +265,7 @@ incomplete_type_error (value, type)
      tree value;
      tree type;
 {
-  char *errmsg;
+  char *errmsg = 0;
 
   /* Avoid duplicate error message.  */
   if (TREE_CODE (type) == ERROR_MARK)
@@ -245,6 +302,10 @@ incomplete_type_error (value, type)
 
 	case OFFSET_TYPE:
 	  error ("invalid use of member type (did you forget the `&' ?)");
+	  return;
+
+	case TEMPLATE_TYPE_PARM:
+	  error ("invalid use of template type parameter");
 	  return;
 
 	default:
@@ -388,8 +449,8 @@ initializer_constant_valid_p (value, endtype)
     case CONVERT_EXPR:
     case NOP_EXPR:
       /* Allow conversions between pointer types.  */
-      if (TREE_CODE (TREE_TYPE (value)) == POINTER_TYPE
-	  && TREE_CODE (TREE_TYPE (TREE_OPERAND (value, 0))) == POINTER_TYPE)
+      if (POINTER_TYPE_P (TREE_TYPE (value))
+	  && POINTER_TYPE_P (TREE_TYPE (TREE_OPERAND (value, 0))))
 	return initializer_constant_valid_p (TREE_OPERAND (value, 0), endtype);
 
       /* Allow conversions between real types.  */
@@ -424,13 +485,18 @@ initializer_constant_valid_p (value, endtype)
 	return initializer_constant_valid_p (TREE_OPERAND (value, 0),
 					     endtype);
 
-      /* Likewise conversions from int to pointers.  */
+      /* Likewise conversions from int to pointers, but also allow
+	 conversions from 0.  */
       if (TREE_CODE (TREE_TYPE (value)) == POINTER_TYPE
-	  && TREE_CODE (TREE_TYPE (TREE_OPERAND (value, 0))) == INTEGER_TYPE
-	  && (TYPE_PRECISION (TREE_TYPE (value))
-	      <= TYPE_PRECISION (TREE_TYPE (TREE_OPERAND (value, 0)))))
-	return initializer_constant_valid_p (TREE_OPERAND (value, 0),
-					     endtype);
+	  && TREE_CODE (TREE_TYPE (TREE_OPERAND (value, 0))) == INTEGER_TYPE)
+	{
+	  if (integer_zerop (TREE_OPERAND (value, 0)))
+	    return null_pointer_node;
+	  else if (TYPE_PRECISION (TREE_TYPE (value))
+		   <= TYPE_PRECISION (TREE_TYPE (TREE_OPERAND (value, 0))))
+	    return initializer_constant_valid_p (TREE_OPERAND (value, 0),
+						 endtype);
+	}
 
       /* Allow conversions to union types if the value inside is okay.  */
       if (TREE_CODE (TREE_TYPE (value)) == UNION_TYPE)
@@ -473,6 +539,9 @@ initializer_constant_valid_p (value, endtype)
 	  return null_pointer_node;
 	return 0;
       }
+
+    default:
+      break;
     }
 
   return 0;
@@ -606,10 +675,6 @@ store_init_value (decl, init)
 	}
     }
 
-  if (TYPE_PTRMEMFUNC_P (type) && TREE_CODE (init) == CONSTRUCTOR
-      && TREE_TYPE (init) == NULL_TREE)
-    cp_pedwarn ("initializer list for `%T'", type);
-
   /* End of special C++ code.  */
 
   /* Digest the specified initializer into an expression.  */
@@ -633,7 +698,7 @@ store_init_value (decl, init)
 		  run time inited when doing pic.  (mrs) */
 	       /* Since ctors and dtors are the only things that can
 		  reference vtables, and they are always written down
-		  the the vtable definition, we can leave the
+		  the vtable definition, we can leave the
 		  vtables in initialized data space.
 		  However, other initialized data cannot be initialized
 		  this way.  Instead a global file-level initializer
@@ -678,7 +743,7 @@ digest_init (type, init, tail)
 {
   enum tree_code code = TREE_CODE (type);
   tree element = NULL_TREE;
-  tree old_tail_contents;
+  tree old_tail_contents = NULL_TREE;
   /* Nonzero if INIT is a braced grouping, which comes in as a CONSTRUCTOR
      tree node which has no TREE_TYPE.  */
   int raw_constructor;
@@ -700,24 +765,9 @@ digest_init (type, init, tail)
   if (TREE_CODE (init) == NON_LVALUE_EXPR)
     init = TREE_OPERAND (init, 0);
 
-  if (init && TREE_TYPE (init) && TYPE_PTRMEMFUNC_P (type))
-    init = default_conversion (init);
-
-  if (init && TYPE_PTRMEMFUNC_P (type)
-      && ((TREE_CODE (init) == ADDR_EXPR
-	   && ((TREE_CODE (TREE_TYPE (init)) == POINTER_TYPE
-		&& TREE_CODE (TREE_TYPE (TREE_TYPE (init))) == METHOD_TYPE)
-	       || TREE_CODE (TREE_OPERAND (init, 0)) == TREE_LIST))
-	  || TREE_CODE (init) == TREE_LIST
-	  || integer_zerop (init)
-	  || (TREE_TYPE (init) && TYPE_PTRMEMFUNC_P (TREE_TYPE (init)))))
-    {
-      return build_ptrmemfunc (TYPE_PTRMEMFUNC_FN_TYPE (type), init, 0);
-    }
-
   raw_constructor = TREE_CODE (init) == CONSTRUCTOR && TREE_TYPE (init) == 0;
 
-  if (init && raw_constructor
+  if (raw_constructor
       && CONSTRUCTOR_ELTS (init) != 0
       && TREE_CHAIN (CONSTRUCTOR_ELTS (init)) == 0)
     {
@@ -729,47 +779,20 @@ digest_init (type, init, tail)
 	return element;
     }
 
-  /* Any type can be initialized from an expression of the same type,
-     optionally with braces.  */
-
-  if (init && TREE_TYPE (init)
-      && (TYPE_MAIN_VARIANT (TREE_TYPE (init)) == type
-	  || (code == ARRAY_TYPE && comptypes (TREE_TYPE (init), type, 1))))
-    {
-      if (pedantic && code == ARRAY_TYPE
-	  && TREE_CODE (init) != STRING_CST)
-	pedwarn ("ANSI C++ forbids initializing array from array expression");
-      if (TREE_CODE (init) == CONST_DECL)
-	init = DECL_INITIAL (init);
-      else if (TREE_READONLY_DECL_P (init))
-	init = decl_constant_value (init);
-      else if (IS_AGGR_TYPE (type) && TYPE_NEEDS_CONSTRUCTING (type))
-	init = ocp_convert (type, init, CONV_IMPLICIT|CONV_FORCE_TEMP,
-			    LOOKUP_NORMAL);
-      return init;
-    }
-
-  if (element && (TREE_TYPE (element) == type
-		  || (code == ARRAY_TYPE && TREE_TYPE (element)
-		      && comptypes (TREE_TYPE (element), type, 1))))
-    {
-      if (pedantic && code == ARRAY_TYPE)
-	pedwarn ("ANSI C++ forbids initializing array from array expression");
-      if (pedantic && (code == RECORD_TYPE || code == UNION_TYPE))
-	pedwarn ("ANSI C++ forbids single nonscalar initializer with braces");
-      if (TREE_CODE (element) == CONST_DECL)
-	element = DECL_INITIAL (element);
-      else if (TREE_READONLY_DECL_P (element))
-	element = decl_constant_value (element);
-      return element;
-    }
-
   /* Initialization of an array of chars from a string constant
      optionally enclosed in braces.  */
 
   if (code == ARRAY_TYPE)
     {
-      tree typ1 = TYPE_MAIN_VARIANT (TREE_TYPE (type));
+      tree typ1;
+
+      if (TREE_CODE (init) == TREE_LIST)
+	{
+	  error ("initializing array with parameter list");
+	  return error_mark_node;
+	}
+
+      typ1 = TYPE_MAIN_VARIANT (TREE_TYPE (type));
       if ((typ1 == char_type_node
 	   || typ1 == signed_char_type_node
 	   || typ1 == unsigned_char_type_node
@@ -795,11 +818,6 @@ digest_init (type, init, tail)
 	      return error_mark_node;
 	    }
 
-	  if (pedantic
-	      && typ1 != char_type_node
-	      && typ1 != signed_char_type_node
-	      && typ1 != unsigned_char_type_node)
-	    pedwarn ("ANSI C++ forbids string initializer except for `char' elements");
 	  TREE_TYPE (string) = type;
 	  if (TYPE_DOMAIN (type) != 0
 	      && TREE_CONSTANT (TYPE_SIZE (type)))
@@ -824,6 +842,7 @@ digest_init (type, init, tail)
   if (code == INTEGER_TYPE || code == REAL_TYPE || code == POINTER_TYPE
       || code == ENUMERAL_TYPE || code == REFERENCE_TYPE
       || code == BOOLEAN_TYPE || code == COMPLEX_TYPE
+      || TYPE_PTRMEMFUNC_P (type)
       || (code == RECORD_TYPE && ! raw_constructor
 	  && (IS_SIGNATURE_POINTER (type) || IS_SIGNATURE_REFERENCE (type))))
     {
@@ -836,9 +855,7 @@ digest_init (type, init, tail)
 	    }
 	  init = element;
 	}
-      while (TREE_CODE (init) == CONSTRUCTOR
-	     && ! (TREE_TYPE (init)
-		   && TYPE_PTRMEMFUNC_P (TREE_TYPE (init))))
+      while (TREE_CODE (init) == CONSTRUCTOR && TREE_HAS_CONSTRUCTOR (init))
 	{
 	  cp_pedwarn ("braces around scalar initializer for `%T'", type);
 	  init = CONSTRUCTOR_ELTS (init);
@@ -870,15 +887,9 @@ digest_init (type, init, tail)
 	}
       else if (raw_constructor)
 	return process_init_constructor (type, init, (tree *)0);
-      else if (TYPE_NON_AGGREGATE_CLASS (type))
-	{
-	  int flags = LOOKUP_NORMAL;
-	  /* Initialization from { } is copy-initialization.  */
-	  if (tail)
-	    flags |= LOOKUP_ONLYCONVERTING;
-	  return convert_for_initialization (0, type, init, flags,
-					     "initialization", NULL_TREE, 0);
-	}
+      else if (can_convert_arg (type, TREE_TYPE (init), init)
+	       || TYPE_NON_AGGREGATE_CLASS (type))
+	/* These are never initialized from multiple constructor elements.  */;
       else if (tail != 0)
 	{
 	  *tail = old_tail_contents;
@@ -886,8 +897,15 @@ digest_init (type, init, tail)
 	}
 
       if (code != ARRAY_TYPE)
-	return convert_for_initialization (NULL_TREE, type, init, LOOKUP_NORMAL,
-					   "initialization", NULL_TREE, 0);
+	{
+	  int flags = LOOKUP_NORMAL;
+	  /* Initialization from { } is copy-initialization.  */
+	  if (tail)
+	    flags |= LOOKUP_ONLYCONVERTING;
+
+	  return convert_for_initialization (NULL_TREE, type, init, flags,
+					     "initialization", NULL_TREE, 0);
+	}
     }
 
   error ("invalid initializer");
@@ -955,10 +973,15 @@ process_init_constructor (type, init, elts)
 	{
 	  register tree next1;
 
+	  if (TREE_PURPOSE (tail)
+	      && (TREE_CODE (TREE_PURPOSE (tail)) != INTEGER_CST
+		  || TREE_INT_CST_LOW (TREE_PURPOSE (tail)) != i))
+	    sorry ("non-trivial labeled initializers");
+
 	  if (TREE_VALUE (tail) != 0)
 	    {
 	      tree tail1 = tail;
-	      next1 = digest_init (TYPE_MAIN_VARIANT (TREE_TYPE (type)),
+	      next1 = digest_init (TREE_TYPE (type),
 				   TREE_VALUE (tail), &tail1);
 	      if (TYPE_NEEDS_CONSTRUCTING (TREE_TYPE (type))
 		  && TYPE_MAIN_VARIANT (TREE_TYPE (type)) != TYPE_MAIN_VARIANT (TREE_TYPE (next1)))
@@ -1031,6 +1054,11 @@ process_init_constructor (type, init, elts)
 	  if (TREE_CODE (field) != FIELD_DECL)
 	    continue;
 
+	  if (TREE_PURPOSE (tail)
+	      && TREE_PURPOSE (tail) != field
+	      && TREE_PURPOSE (tail) != DECL_NAME (field))
+	    sorry ("non-trivial labeled initializers");
+
 	  if (TREE_VALUE (tail) != 0)
 	    {
 	      tree tail1 = tail;
@@ -1082,6 +1110,11 @@ process_init_constructor (type, init, elts)
 	  else if (TREE_CODE (TREE_TYPE (field)) == REFERENCE_TYPE)
 	    error ("member `%s' is uninitialized reference",
 		   IDENTIFIER_POINTER (DECL_NAME (field)));
+	  /* Warn when some struct elements are implicitly initialized
+	      to zero.  */
+	  else if (extra_warnings)
+	    warning ("missing initializer for member `%s'",
+		     IDENTIFIER_POINTER (DECL_NAME (field)));
 	}
     }
 
@@ -1191,7 +1224,7 @@ process_init_constructor (type, init, elts)
    then the expression
 
    x.A::ii refers to the ii member of the L part of
-   of A part of the C object named by X.  In this case,
+   the A part of the C object named by X.  In this case,
    DATUM would be x, and BASETYPE would be A.  */
 
 tree
@@ -1258,7 +1291,7 @@ build_x_arrow (datum)
   tree types_memoized = NULL_TREE;
   register tree rval = datum;
   tree type = TREE_TYPE (rval);
-  tree last_rval;
+  tree last_rval = NULL_TREE;
 
   if (type == error_mark_node)
     return error_mark_node;
@@ -1278,9 +1311,10 @@ build_x_arrow (datum)
       type = TREE_TYPE (rval);
     }
 
-  if (IS_AGGR_TYPE (type) && TYPE_OVERLOADS_ARROW (complete_type (type)))
+  if (IS_AGGR_TYPE (type))
     {
-      while ((rval = build_opfncall (COMPONENT_REF, LOOKUP_NORMAL, rval, NULL_TREE, NULL_TREE)))
+      while ((rval = build_opfncall (COMPONENT_REF, LOOKUP_NORMAL, rval,
+				     NULL_TREE, NULL_TREE)))
 	{
 	  if (rval == error_mark_node)
 	    return error_mark_node;
@@ -1297,6 +1331,13 @@ build_x_arrow (datum)
 	    }
 	  last_rval = rval;
 	}     
+
+      if (last_rval == NULL_TREE)
+	{
+	  cp_error ("base operand of `->' has non-pointer type `%T'", type);
+	  return error_mark_node;
+	}
+
       if (TREE_CODE (TREE_TYPE (last_rval)) == REFERENCE_TYPE)
 	last_rval = convert_from_reference (last_rval);
     }
@@ -1465,6 +1506,15 @@ build_functional_cast (exp, parms)
   if (parms && TREE_CHAIN (parms) == NULL_TREE)
     return build_c_cast (type, TREE_VALUE (parms));
 
+  /* We need to zero-initialize POD types.  Let's do that for everything
+     that doesn't need a constructor.  */
+  if (parms == NULL_TREE && !TYPE_NEEDS_CONSTRUCTING (type)
+      && TYPE_HAS_DEFAULT_CONSTRUCTOR (type))
+    {
+      exp = build (CONSTRUCTOR, type, NULL_TREE, NULL_TREE);
+      return get_target_expr (exp);
+    }
+
   exp = build_method_call (NULL_TREE, ctor_identifier, parms,
 			   TYPE_BINFO (type), LOOKUP_NORMAL);
 
@@ -1494,8 +1544,8 @@ enum_name_string (value, type)
       char *buf = (char *)oballoc (16 + TYPE_NAME_LENGTH (type));
 
       /* Value must have been cast.  */
-      sprintf (buf, "(enum %s)%d",
-	       TYPE_NAME_STRING (type), intval);
+      sprintf (buf, "(enum %s)%ld",
+	       TYPE_NAME_STRING (type), (long) intval);
       return buf;
     }
   return IDENTIFIER_POINTER (TREE_PURPOSE (values));

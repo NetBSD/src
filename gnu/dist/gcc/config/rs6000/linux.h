@@ -25,8 +25,11 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #define CPP_PREDEFINES \
  "-DPPC -D__ELF__ -Dunix -Dlinux -Dpowerpc -Asystem(unix) -Asystem(linux) -Acpu(powerpc) -Amachine(powerpc)"
 
+#undef	CPP_OS_DEFAULT_SPEC
+#define CPP_OS_DEFAULT_SPEC "%(cpp_os_linux)"
+
 #undef LINK_SPEC
-#define LINK_SPEC "-m elf32ppc %{shared:-shared} \
+#define LINK_SPEC "-m elf32ppc %{G*} %{shared:-shared} \
   %{!shared: \
     %{!static: \
       %{rdynamic:-export-dynamic} \
@@ -49,7 +52,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #define LINK_OS_DEFAULT_SPEC "%(link_os_linux)"
 
 #undef TARGET_VERSION
-#define TARGET_VERSION fprintf (stderr, " (PowerPC Linux)");
+#define TARGET_VERSION fprintf (stderr, " (PowerPC GNU/Linux)");
 
 /* Define this macro as a C expression for the initializer of an
    array of string to tell the driver program which options are
@@ -67,3 +70,6 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #ifndef USE_GNULIBC_1
 #define DEFAULT_VTABLE_THUNKS 1
 #endif
+
+#undef JUMP_TABLES_IN_TEXT_SECTION
+#define JUMP_TABLES_IN_TEXT_SECTION 0

@@ -1,5 +1,5 @@
 /* Exception Handling interface routines.
-   Copyright (C) 1996 Free Software Foundation, Inc.
+   Copyright (C) 1996, 1997 Free Software Foundation, Inc.
    Contributed by Mike Stump <mrs@cygnus.com>.
 
 This file is part of GNU CC.
@@ -19,9 +19,9 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-
-#ifndef GET_CODE
-#define rtx int *
+#if !defined(NULL_RTX) && !defined(rtx)
+typedef struct rtx_def *_except_rtx;
+#define rtx _except_rtx
 #endif
 
 #ifdef TREE_CODE
@@ -43,6 +43,10 @@ struct label_node {
    EXCEPTION_HANDLER_LABEL is the label corresponding to the handler
    for this region.
 
+   LABEL_USED indicates whether a CATCH block has already used this
+   label or not. New ones are needed for additional catch blocks if
+   it has.
+
    FINALIZATION is the tree codes for the handler, or is NULL_TREE if
    one hasn't been generated yet, or is integer_zero_node to mark the
    end of a group of try blocks.  */
@@ -50,8 +54,8 @@ struct label_node {
 struct eh_entry {
   rtx outer_context;
   rtx exception_handler_label;
-
   tree finalization;
+  int label_used;
 };
 
 /* A list of EH_ENTRYs. ENTRY is the entry; CHAIN points to the next
@@ -139,9 +143,73 @@ extern rtx catch_clauses;
 
 #endif
 
-struct function;
+/* Test: is exception handling turned on? */
+
+extern int doing_eh				       PROTO ((int));
 
 /* Toplevel initialization for EH.  */
+
+void set_exception_lang_code                    PROTO((short));
+void set_exception_version_code                 PROTO((short));
+
+/* A list of handlers asocciated with an exception region. HANDLER_LABEL
+   is the the label that control should be transfered to if the data
+   in TYPE_INFO matches an exception. a value of NULL_TREE for TYPE_INFO
+   means This is a cleanup, and must always be called. A value of
+   CATCH_ALL_TYPE works like a cleanup, but a call to the runtime matcher
+   is still performed to avoid being caught by a different language
+   exception. NEXT is a pointer to the next handler for this region. 
+   NULL means there are no more. */
+
+typedef struct handler_info 
+{
+  rtx  handler_label;
+  void *type_info;
+  struct handler_info *next;
+} handler_info;
+
+
+/* Add a new eh_entry for this function, The parameter specifies what
+   exception region number NOTE insns use to delimit this range. 
+   The integer returned is uniquely identifies this exception range
+   within an internal table. */
+
+int new_eh_region_entry                         PROTO((int));
+
+/* Add new handler information to an exception range. The  first parameter
+   specifies the range number (returned from new_eh_entry()). The second
+   parameter specifies the handler.  By default the handler is inserted at
+   the end of the list. A handler list may contain only ONE NULL_TREE
+   typeinfo entry. Regardless where it is positioned, a NULL_TREE entry
+   is always output as the LAST handler in the exception table for a region. */
+
+void add_new_handler                       PROTO((int, struct handler_info *));
+
+/* Remove a handler label. The handler label is being deleted, so all
+   regions which reference this handler should have it removed from their
+   list of possible handlers. Any region which has the final handler
+   removed can be deleted. */
+
+void remove_handler                        PROTO((rtx));
+
+/* Create a new handler structure initialized with the handler label and
+   typeinfo fields passed in. */
+
+struct handler_info *get_new_handler            PROTO((rtx, void *));
+
+/* Make a duplicate of an exception region by copying all the handlers
+   for an exception region. Return the new handler index. */
+
+int duplicate_handlers                          PROTO((int, int));
+
+
+/* Get a pointer to the first handler in an exception region's list. */
+
+struct handler_info *get_first_handler          PROTO((int));
+
+/* Find all the runtime handlers type matches currently referenced */
+
+int find_all_handler_type_matches               PROTO((void ***));
 
 extern void init_eh				PROTO((void));
 
@@ -149,18 +217,20 @@ extern void init_eh				PROTO((void));
 
 extern void init_eh_for_function		PROTO((void));
 
-/* Saves the current per-function EH data into P.  */
+/* Generate an exception label. Use instead of gen_label_rtx */
 
-extern void save_eh_status			PROTO((struct function *p));
-
-/* Restores the per-function EH data from P.  */
-
-extern void restore_eh_status			PROTO((struct function *p));
+extern rtx gen_exception_label                  PROTO((void));
 
 /* Adds an EH table entry for EH entry number N. Called from
    final_scan_insn for NOTE_INSN_EH_REGION_BEG.  */
 
 extern void add_eh_table_entry			PROTO((int n));
+
+/* Start a catch clause, triggered by runtime value paramter. */
+
+#ifdef TREE_CODE
+extern void start_catch_handler                 PROTO((tree));
+#endif
 
 /* Returns a non-zero value if we need to output an exception table.  */
 
@@ -202,30 +272,28 @@ extern void add_partial_entry			PROTO((tree handler));
 
 extern void end_protect_partials		PROTO((void));
 
-/* An internal throw with a direct CONTEXT we want to throw
-   from. CONTEXT must be a label.  */
+/* An internal throw.  */
 
-extern void expand_internal_throw		PROTO((rtx context));
+extern void expand_internal_throw		PROTO((void));
 
 /* Called from expand_exception_blocks and expand_end_catch_block to
    expand and pending handlers.  */
 
 extern void expand_leftover_cleanups		PROTO((void));
 
-/* If necessary, emit insns for the start of per-function unwinder for
-   the current function.  */
+/* If necessary, emit insns to get EH context for the current
+   function. */
 
-extern void emit_unwinder			PROTO((void));
-
-/* If necessary, emit insns for the end of the per-function unwinder
-   for the current function.  */
-
-extern void end_eh_unwinder			PROTO((void));
+extern void emit_eh_context			PROTO((void));
 
 /* Builds a list of handler labels and puts them in the global
    variable exception_handler_labels.  */
 
 extern void find_exception_handler_labels	PROTO((void));
+
+/* Determine if an arbitrary label is an exception label */
+
+extern int is_exception_handler_label           PROTO((int));
 
 /* Performs sanity checking on the check_exception_handler_labels
    list.  */
@@ -251,14 +319,13 @@ extern struct label_node *false_label_stack;
 
 extern rtx exception_handler_labels;
 
-/* The rtx for the saved PC value.  */
-
-extern rtx eh_saved_pc_rtx;
-
 /* Performs optimizations for exception handling, such as removing
    unnecessary exception regions. Invoked from jump_optimize ().  */
 
 extern void exception_optimize			PROTO((void));
+
+/* Return EH context (and set it up once per fn).  */
+extern rtx get_eh_context			PROTO((void));
 
 /* Get the dynamic handler chain.  */
 extern rtx get_dynamic_handler_chain		PROTO((void));
@@ -287,15 +354,32 @@ extern int protect_cleanup_actions_with_terminate;
 extern tree protect_with_terminate		PROTO((tree));
 #endif
 
+extern void expand_fixup_region_start	PROTO((void));
+#ifdef TREE_CODE
+extern void expand_fixup_region_end	PROTO((tree));
+#endif
+
 /* Various hooks for the DWARF 2 __throw routine.  */
 
 void expand_builtin_unwind_init		PROTO((void));
 rtx expand_builtin_dwarf_fp_regnum	PROTO((void));
 rtx expand_builtin_eh_stub		PROTO((void));
+rtx expand_builtin_eh_stub_old          PROTO((void));
 #ifdef TREE_CODE
 rtx expand_builtin_frob_return_addr	PROTO((tree));
 rtx expand_builtin_extract_return_addr	PROTO((tree));
 void expand_builtin_set_return_addr_reg PROTO((tree));
 void expand_builtin_set_eh_regs		PROTO((tree, tree));
 rtx expand_builtin_dwarf_reg_size	PROTO((tree, rtx));
+#endif
+
+
+/* Checking whether 2 instructions are within the same exception region. */
+
+int in_same_eh_region                   PROTO((rtx, rtx));
+void free_insn_eh_region                PROTO((void));
+void init_insn_eh_region                PROTO((rtx, int));
+
+#ifdef rtx
+#undef rtx
 #endif

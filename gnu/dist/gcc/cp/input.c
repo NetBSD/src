@@ -29,7 +29,7 @@ Boston, MA 02111-1307, USA.  */
    lex.c for very minor efficiency gains (primarily in function
    inlining).  */
 
-#include <stdio.h>
+#include "system.h"
 
 extern FILE *finput;
 
@@ -57,6 +57,14 @@ extern int lineno;
 #define inline __inline__
 #else
 #define inline
+#endif
+
+#if USE_CPPLIB
+extern unsigned char *yy_cur, *yy_lim;
+extern int yy_get_token ();
+#define GETC() (yy_cur < yy_lim ? *yy_cur++ : yy_get_token ())
+#else
+#define GETC() getc (finput)
 #endif
 
 extern void feed_input PROTO((char *, int));
@@ -168,7 +176,7 @@ sub_getch ()
 	}
       return (unsigned char)input->str[input->offset++];
     }
-  return getc (finput);
+  return GETC ();
 }
 
 inline

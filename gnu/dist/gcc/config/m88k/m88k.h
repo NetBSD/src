@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler for
    Motorola m88100 in an 88open OCS/BCS environment.
-   Copyright (C) 1988, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1988, 92-97, 1998 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@cygnus.com).
    Currently maintained by (gcc@dg-rtp.dg.com)
 
@@ -198,13 +198,13 @@ extern char * reg_names[];
    Redefined in sysv4.h, and luna.h.  */
 #define VERSION_INFO1	"m88k, "
 #ifndef VERSION_INFO2
-#define VERSION_INFO2   "$Revision: 1.1.1.1 $"
+#define VERSION_INFO2   "$Revision: 1.1.1.2 $"
 #endif
 
 #ifndef VERSION_STRING
 #define VERSION_STRING  version_string
 #ifdef __STDC__
-#define TM_RCS_ID      "@(#)" __FILE__ " $Revision: 1.1.1.1 $ " __DATE__
+#define TM_RCS_ID      "@(#)" __FILE__ " $Revision: 1.1.1.2 $ " __DATE__
 #else
 #define TM_RCS_ID      "$What: <@(#) m88k.h,v	1.1.1.2.2.2> $"
 #endif  /* __STDC__ */
@@ -547,7 +547,7 @@ extern char * reg_names[];
     are still no registers to be had for free, but this one must be a GRF
     reg instead of an extended reg, so a preserve register is spilled.  Thus
     the move from extended to GRF is necessitated.  I do not believe this can
-    be 'fixed' through the config/*m88k* files.
+    be 'fixed' through the files in config/m88k.
 
     gcc seems to sometimes make worse use of register allocation -- not counting
     moves -- whenever extended registers are present.  For example in the
@@ -1445,7 +1445,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 
 /* Go to LABEL if ADDR (a legitimate address expression)
    has an effect that depends on the machine mode it is used for.
-   On the the m88000 this is never true.  */
+   On the m88000 this is never true.  */
 
 #define GO_IF_MODE_DEPENDENT_ADDRESS(ADDR,LABEL)
 
@@ -1510,8 +1510,11 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
    elements of a jump-table should have.  */
 #define CASE_VECTOR_MODE SImode
 
-/* Define this macro if jump-tables should contain relative addresses.  */
-#define CASE_VECTOR_PC_RELATIVE
+/* Define as C expression which evaluates to nonzero if the tablejump
+   instruction expects the table to contain offsets from the address of the
+   table.
+   Do not define this if the table should contain absolute addresses. */
+#define CASE_VECTOR_PC_RELATIVE 1
 
 /* Define this if control falls through a `case' insn when the index
    value is out of range.  This means the specified default-label is
@@ -1547,6 +1550,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 
 /* Tell when to handle #pragma weak.  This is only done for V.4.  */
 #define SUPPORTS_WEAK TARGET_SVR4
+#define SUPPORTS_ONE_ONLY TARGET_SVR4
 
 /* Max number of bytes we can move from memory to memory
    in one reasonably fast instruction.  */
@@ -1686,7 +1690,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 
 /* A C expressions returning the cost of moving data of MODE from a register
    to or from memory.  This is more costly than between registers.  */
-#define MEMORY_MOVE_COST(MODE) 4
+#define MEMORY_MOVE_COST(MODE,CLASS,IN) 4
 
 /* Provide the cost of a branch.  Exact meaning under development.  */
 #define BRANCH_COST (TARGET_88100 ? 1 : 2)
@@ -2075,7 +2079,7 @@ do {									 \
   sprintf (LABEL, TARGET_SVR4 ? "*.%s%d" : "*@%s%d", PREFIX, NUM)
 
 /* Internal macro to get a single precision floating point value into
-   an int, so we can print it's value in hex.  */
+   an int, so we can print its value in hex.  */
 #define FLOAT_TO_INT_INTERNAL( FVALUE, IVALUE )				\
   { union {								\
       REAL_VALUE_TYPE d;						\
@@ -2195,7 +2199,7 @@ do {									 \
   } while (0)
 
 /* This is how to output an element of a case-vector that is relative.  */
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL) \
+#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL) \
   ASM_OUTPUT_ADDR_VEC_ELT (FILE, VALUE)
 
 /* This is how to output an assembler line
@@ -2208,9 +2212,8 @@ do {									 \
 /* On the m88100, align the text address to half a cache boundary when it
    can only be reached by jumping.  Pack code tightly when compiling
    crtstuff.c.  */
-#define ASM_OUTPUT_ALIGN_CODE(FILE) \
-  ASM_OUTPUT_ALIGN (FILE, \
-		    (TARGET_88100 && !flag_inhibit_size_directive ? 3 : 2))
+#define LABEL_ALIGN_AFTER_BARRIER(LABEL) \
+  (TARGET_88100 && !flag_inhibit_size_directive ? 3 : 2)
 
 /* Override svr[34].h.  */
 #undef	ASM_OUTPUT_SKIP

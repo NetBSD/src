@@ -819,10 +819,11 @@ extern enum reg_class regno_reg_class[];
    for the index in the tablejump instruction.  */
 #define CASE_VECTOR_MODE HImode
 
-/* Define this if the tablejump instruction expects the table
-   to contain offsets from the address of the table.
-   Do not define this if the table should contain absolute addresses.  */
-#define CASE_VECTOR_PC_RELATIVE
+/* Define as C expression which evaluates to nonzero if the tablejump
+   instruction expects the table to contain offsets from the address of the
+   table.
+   Do not define this if the table should contain absolute addresses. */
+#define CASE_VECTOR_PC_RELATIVE 1
 
 /* Specify the tree operation to be used to convert reals to integers.  */
 #define IMPLICIT_FIX_EXPR FIX_ROUND_EXPR
@@ -1152,7 +1153,7 @@ do { int i; unsigned char *pp = (unsigned char *) (PTR);	\
 
 /* This is how to output an element of a case-vector that is relative.  */
 
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL)  \
+#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL)  \
   fprintf (FILE, "\t.word L%d-L%d\n", VALUE, REL)
 
 /* This is how to output an assembler line

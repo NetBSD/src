@@ -86,16 +86,18 @@ extern int bitmap_bit_p PROTO((bitmap, int));
 
 /* Debug functions to print a bitmap linked list.  */
 extern void bitmap_debug PROTO((bitmap));
-extern void bitmap_debug_file STDIO_PROTO((FILE *, bitmap));
+extern void bitmap_debug_file PROTO((FILE *, bitmap));
 
 /* Print a bitmap */
-extern void bitmap_print STDIO_PROTO((FILE *, bitmap, char *, char *));
+extern void bitmap_print PROTO((FILE *, bitmap, char *, char *));
 
 /* Initialize a bitmap header.  */
 extern bitmap bitmap_initialize PROTO((bitmap));
 
 /* Release all memory held by bitmaps.  */
 extern void bitmap_release_memory PROTO((void));
+
+extern void debug_bitmap PROTO((bitmap));
 
 /* Allocate a bitmap with oballoc.  */
 #define BITMAP_OBSTACK_ALLOC(OBSTACK)				\
@@ -200,7 +202,7 @@ do {									\
   for (; ptr1_ != 0 ; ptr1_ = ptr1_->next)				\
     {									\
       /* Advance BITMAP2 to the equivalent link, using an all		\
-	 zero element if an equavialent link doesn't exist.  */		\
+	 zero element if an equivalent link doesn't exist.  */		\
       bitmap_element *tmp2_;						\
 									\
       while (ptr2_ != 0 && ptr2_->indx < ptr1_->indx)			\

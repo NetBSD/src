@@ -1,6 +1,6 @@
 /* proj.h file for Gnu Fortran
    Copyright (C) 1995, 1996 Free Software Foundation, Inc.
-   Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
+   Contributed by James Craig Burley (burley@gnu.org).
 
 This file is part of GNU Fortran.
 
@@ -24,6 +24,13 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #ifndef _H_f_proj
 #define _H_f_proj
 
+#ifdef USE_HCONFIG
+#include "hconfig.j"
+#else
+#include "config.j"
+#endif
+#include "system.j"
+
 #if !defined (__GNUC__) || (__GNUC__ < 2)
 #error "You have to use gcc 2.x to build g77 (might be fixed in g77-0.6)."
 #endif
@@ -36,25 +43,15 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #endif
 #endif	/* !defined (BUILT_WITH_270) */
 
-/* This file used to attempt to allow for all sorts of broken systems.
-   Because the auto-configuration scripts in conf-proj(.in) didn't work
-   on all systems, and I received far too many bug reports about them,
-   I decided to stop trying to cater to broken systems at all, and
-   simply remove all but the simplest and most useful code (which is
-   still in proj.c).
+/* Include files everyone gets.  <assert.h> is needed for assert().
+   <stddef.h> is needed for offsetof, but technically also NULL,
+   size_t, ptrdiff_t, and so on.  */
 
-   XXX Not entirely true anymore.  We do want to cater to broken systems
-   again by using autoconf to handle the braindamage for us.  */
+#include "assert.j"
 
-/* Include files everyone gets. */
-
-#include "config.j"		/* Must come before any other #includes in gcc. */
-#include "assert.j"		/* Use gcc's assert.h. */
-#include <ctype.h>
-#include <stdio.h>
+#if HAVE_STDDEF_H
 #include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
+#endif
 
 /* Generally useful definitions. */
 
@@ -70,8 +67,6 @@ typedef enum
   } bool;
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
-#define STR(s) # s
-#define STRX(s) STR(s)
 
 #ifndef UNUSED	/* Compile with -DUNUSED= if cc doesn't support this. */
 #if BUILT_WITH_270
@@ -83,10 +78,6 @@ typedef enum
 
 #ifndef dmpout
 #define dmpout stderr
-#endif
-
-#ifndef isascii
-#define isascii(c) ((unsigned char)(c) <= 0x7f)
 #endif
 
 #endif

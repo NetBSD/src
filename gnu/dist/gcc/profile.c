@@ -1,5 +1,5 @@
 /* Calculate branch probabilities, and basic block execution counts. 
-   Copyright (C) 1990, 91, 92, 93, 94, 96, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1990, 91-94, 96, 97, 1998 Free Software Foundation, Inc.
    Contributed by James E. Wilson, UC Berkeley/Cygnus Support;
    based on some ideas from Dain Samples of UC Berkeley.
    Further mangling by Bob Manson, Cygnus Support.
@@ -41,18 +41,19 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
    achieve this, see Dain Sample's UC Berkeley thesis.  */
 
 #include "config.h"
+#include "system.h"
 #include "rtl.h"
 #include "flags.h"
 #include "insn-flags.h"
 #include "insn-config.h"
 #include "output.h"
-#include <stdio.h>
+#include "regs.h"
 #include "tree.h"
 #include "output.h"
 #include "gcov-io.h"
+#include "toplev.h"
 
 extern char * xmalloc ();
-extern void free ();
 
 /* One of these is dynamically created whenever we identify an arc in the
    function.  */
@@ -182,11 +183,6 @@ instrument_arcs (f, num_blocks, dump_file)
   int num_arcs = 0;
   int num_instr_arcs = 0;
   rtx insn;
-
-  int neg_one = -1;
-  int zero = 0;
-  int inverted;
-  rtx note;
 
   /* Instrument the program start.  */
   /* Handle block 0 specially, since it will always be instrumented,
@@ -361,7 +357,7 @@ instrument_arcs (f, num_blocks, dump_file)
 		  emit_barrier_after (arcptr->branch_insn);
 		  
 		  /* Fix up the table jump.  */
-		  new_lref = gen_rtx (LABEL_REF, Pmode, new_label);
+		  new_lref = gen_rtx_LABEL_REF (Pmode, new_label);
 		  XVECEXP (PATTERN (arcptr->branch_insn),
 			   (code == ADDR_DIFF_VEC), index) = new_lref;
 		}
@@ -418,6 +414,25 @@ output_gcov_string (string, delimiter)
   __write_long (delimiter, bb_file, 4);
 }
 
+/* Return TRUE if this insn must be a tablejump entry insn.  This works for
+   the MIPS port, but may give false negatives for some targets.  */
+
+int
+tablejump_entry_p (insn, label)
+     rtx insn, label;
+{
+  rtx next = next_active_insn (insn);
+  enum rtx_code code = GET_CODE (PATTERN (next));
+
+  if (code != ADDR_DIFF_VEC && code != ADDR_VEC)
+    return 0;
+
+  if (PREV_INSN (next) == XEXP (label, 0))
+    return 1;
+
+  return 0;
+}
+
 /* Instrument and/or analyze program behavior based on program flow graph.
    In either case, this function builds a flow graph for the function being
    compiled.  The flow graph is stored in BB_GRAPH.
@@ -426,7 +441,7 @@ output_gcov_string (string, delimiter)
    the flow graph that are needed to reconstruct the dynamic behavior of the
    flow graph.
 
-   When FLAG_BRANCH_PROBABILITIES is nonzero, this function reads auxilliary
+   When FLAG_BRANCH_PROBABILITIES is nonzero, this function reads auxiliary
    information from a data file containing arc count information from previous
    executions of the function being compiled.  In this case, the flow graph is
    annotated with actual execution counts, which are later propagated into the
@@ -440,8 +455,6 @@ branch_prob (f, dump_file)
      FILE *dump_file;
 {
   int i, num_blocks;
-  int dest;
-  rtx insn;
   struct adj_list *arcptr;
   int num_arcs, changes, passes;
   int total, prob;
@@ -625,7 +638,7 @@ branch_prob (f, dump_file)
     register int i;
     int fall_through = 0;
     struct adj_list *arcptr;
-    int dest;
+    int dest = 0;
 
     /* Block 0 always falls through to block 1.  */
     num_arcs = 0;
@@ -678,7 +691,7 @@ branch_prob (f, dump_file)
 	    bb_graph[i].first_insn = insn;
 	  }
 	else if (code == NOTE)
-	  ;
+	  {;}
 
 	if (code == CALL_INSN)
 	  {
@@ -718,10 +731,22 @@ branch_prob (f, dump_file)
 	       We have to handle tablejumps and returns specially anyways, so
 	       we don't check the JUMP_LABEL at all here.  */
 
+	    /* ??? This code should be rewritten.  We need a more elegant way
+	       to find the LABEL_REF.  We need a more elegant way to
+	       differentiate tablejump entries from computed gotos.
+	       We should perhaps reuse code from flow to compute the CFG
+	       instead of trying to compute it here.
+
+	       We can't use current_function_has_computed_jump, because that
+	       is calculated later by flow.  We can't use computed_jump_p,
+	       because that returns true for tablejump entry insns for some
+	       targets, e.g. HPPA and MIPS.  */
+
 	    if (GET_CODE (pattern) == PARALLEL)
 	      {
-		/* This assumes that PARALLEL jumps are tablejump entry
-		   jumps.  */
+		/* This assumes that PARALLEL jumps with a USE are
+		   tablejump entry jumps.  The same assumption can be found
+		   in computed_jump_p.  */
 		/* Make an arc from this jump to the label of the
 		   jump table.  This will instrument the number of
 		   times the switch statement is executed.  */
@@ -751,16 +776,34 @@ branch_prob (f, dump_file)
 	      tablejump = pattern;
 	    else if (GET_CODE (pattern) == RETURN)
 	      dest = num_blocks - 1;
+	    else if (GET_CODE (pattern) != SET)
+	      abort ();
 	    else if ((tem = SET_SRC (pattern))
 		     && GET_CODE (tem) == LABEL_REF)
 	      dest = label_to_bb[CODE_LABEL_NUMBER (XEXP (tem, 0))];
+	    /* Recognize HPPA table jump entry.  This code is similar to
+	       the code above in the PARALLEL case.  */
+	    else if (GET_CODE (tem) == PLUS
+		     && GET_CODE (XEXP (tem, 0)) == MEM
+		     && GET_CODE (XEXP (XEXP (tem, 0), 0)) == PLUS
+		     && GET_CODE (XEXP (XEXP (XEXP (tem, 0), 0), 0)) == PC
+		     && GET_CODE (XEXP (tem, 1)) == LABEL_REF
+		     && tablejump_entry_p (insn, XEXP (tem, 1)))
+	      dest = label_to_bb[CODE_LABEL_NUMBER (XEXP (XEXP (tem, 1), 0))];
+	    /* Recognize the MIPS table jump entry.  */
+	    else if (GET_CODE (tem) == PLUS
+		     && GET_CODE (XEXP (tem, 0)) == REG
+		     && GET_CODE (XEXP (tem, 1)) == LABEL_REF
+		     && tablejump_entry_p (insn, XEXP (tem, 1)))
+	      dest = label_to_bb[CODE_LABEL_NUMBER (XEXP (XEXP (tem, 1), 0))];
 	    else
 	      {
 		rtx label_ref;
 
-		/* Must be an IF_THEN_ELSE branch.  */
+		/* Must be an IF_THEN_ELSE branch.  If it isn't, assume it
+		   is a computed goto, which aren't supported yet.  */
 		if (GET_CODE (tem) != IF_THEN_ELSE)
-		  abort ();
+		  fatal ("-fprofile-arcs does not support computed gotos");
 		if (XEXP (tem, 1) != pc_rtx)
 		  label_ref = XEXP (tem, 1);
 		else
@@ -817,7 +860,13 @@ branch_prob (f, dump_file)
 	if (code != NOTE)
 	  prev_code = code;
 	else if (NOTE_LINE_NUMBER (insn) == NOTE_INSN_SETJMP)
-	  prev_code = CALL_INSN;
+	  {
+	    /* Make a fake insn to tag our notes on.  */
+	    bb_graph[i].first_insn = insn
+	      = emit_insn_after (gen_rtx_USE (VOIDmode, stack_pointer_rtx),
+				 insn);
+	    prev_code = CALL_INSN;
+	  }
       }
 
     /* If the code at the end of the function would give a new block, then
@@ -860,7 +909,7 @@ branch_prob (f, dump_file)
      Note that the spanning tree is considered undirected, so that as many
      must-split arcs as possible can be put on it.
 
-     Fallthough arcs which are crowded should not be chosen on the first
+     Fallthrough arcs which are crowded should not be chosen on the first
      pass, since they do not require creating a new basic block.  These
      arcs will have fall_through set.  */
 
@@ -908,7 +957,10 @@ branch_prob (f, dump_file)
   /* For each arc not on the spanning tree, add counting code as rtl.  */
 
   if (profile_arc_flag)
-    instrument_arcs (f, num_blocks, dump_file);
+    {
+      instrument_arcs (f, num_blocks, dump_file);
+      allocate_reg_info (max_reg_num (), FALSE, FALSE);
+    }
 
   /* Execute the rest only if doing branch probabilities.  */
   if (! flag_branch_probabilities)
@@ -1132,8 +1184,8 @@ branch_prob (f, dump_file)
 	      num_branches++;
 	      
 	      REG_NOTES (arcptr->branch_insn)
-		= gen_rtx (EXPR_LIST, REG_BR_PROB, GEN_INT (prob),
-			   REG_NOTES (arcptr->branch_insn));
+		= gen_rtx_EXPR_LIST (REG_BR_PROB, GEN_INT (prob),
+				     REG_NOTES (arcptr->branch_insn));
 	    }
 	}
 
@@ -1152,8 +1204,8 @@ branch_prob (f, dump_file)
       else
 	{
 	  REG_NOTES (binfo->first_insn)
-	    = gen_rtx (EXPR_LIST, REG_EXEC_COUNT, GEN_INT (total),
-		       REG_NOTES (binfo->first_insn));
+	    = gen_rtx_EXPR_LIST (REG_EXEC_COUNT, GEN_INT (total),
+				 REG_NOTES (binfo->first_insn));
 	  if (i == num_blocks - 1)
 	    return_label_execution_count = total;
 	}
@@ -1491,7 +1543,7 @@ init_arc_profiler ()
   /* Generate and save a copy of this so it can be shared.  */
   char *name = xmalloc (20);
   ASM_GENERATE_INTERNAL_LABEL (name, "LPBX", 2);
-  profiler_label = gen_rtx (SYMBOL_REF, Pmode, name);
+  profiler_label = gen_rtx_SYMBOL_REF (Pmode, name);
 }
 
 /* Output instructions as RTL to increment the arc execution count.  */
@@ -1503,10 +1555,9 @@ output_arc_profiler (arcno, insert_after)
 {
   rtx profiler_target_addr
     = (arcno
-       ? gen_rtx (CONST, Pmode,
-		  gen_rtx (PLUS, Pmode, profiler_label,
-			   gen_rtx (CONST_INT, VOIDmode,
-				    LONG_TYPE_SIZE / BITS_PER_UNIT * arcno)))
+       ? gen_rtx_CONST (Pmode,
+			gen_rtx_PLUS (Pmode, profiler_label,
+				      GEN_INT (LONG_TYPE_SIZE / BITS_PER_UNIT * arcno)))
        : profiler_label);
   enum machine_mode mode = mode_for_size (LONG_TYPE_SIZE, MODE_INT, 0);
   rtx profiler_reg = gen_reg_rtx (mode);
@@ -1514,7 +1565,6 @@ output_arc_profiler (arcno, insert_after)
   rtx mem_ref, add_ref;
   rtx sequence;
 
-#ifdef SMALL_REGISTER_CLASSES
   /* In this case, reload can use explicitly mentioned hard registers for
      reloads.  It is not safe to output profiling code between a call
      and the instruction that copies the result to a pseudo-reg.  This
@@ -1550,23 +1600,27 @@ output_arc_profiler (arcno, insert_after)
 	  else
 	    return_reg = SET_DEST (XVECEXP (PATTERN (insert_after), 0, 0));
 
-	  if (reg_referenced_p (return_reg, PATTERN (next_insert_after)))
+	  /* Now, NEXT_INSERT_AFTER may be an instruction that uses the
+	     return value.  However, it could also be something else,
+	     like a CODE_LABEL, so check that the code is INSN.  */
+	  if (next_insert_after != 0
+	      && GET_RTX_CLASS (GET_CODE (next_insert_after)) == 'i'
+	      && reg_referenced_p (return_reg, PATTERN (next_insert_after)))
 	    insert_after = next_insert_after;
 	}
     }
-#endif
 
   start_sequence ();
 
   emit_move_insn (address_reg, profiler_target_addr);
-  mem_ref = gen_rtx (MEM, mode, address_reg);
+  mem_ref = gen_rtx_MEM (mode, address_reg);
   emit_move_insn (profiler_reg, mem_ref);
 
-  add_ref = gen_rtx (PLUS, mode, profiler_reg, GEN_INT (1));
+  add_ref = gen_rtx_PLUS (mode, profiler_reg, GEN_INT (1));
   emit_move_insn (profiler_reg, add_ref);
 
   /* This is the same rtx as above, but it is not legal to share this rtx.  */
-  mem_ref = gen_rtx (MEM, mode, address_reg);
+  mem_ref = gen_rtx_MEM (mode, address_reg);
   emit_move_insn (mem_ref, profiler_reg);
 
   sequence = gen_sequence ();
@@ -1623,8 +1677,8 @@ output_func_start_profiler ()
   /* Actually generate the code to call __bb_init_func. */
   name = xmalloc (20);
   ASM_GENERATE_INTERNAL_LABEL (name, "LPBX", 0);
-  table_address = force_reg (Pmode, gen_rtx (SYMBOL_REF, Pmode, name));
-  emit_library_call (gen_rtx (SYMBOL_REF, Pmode, "__bb_init_func"), 0,
+  table_address = force_reg (Pmode, gen_rtx_SYMBOL_REF (Pmode, name));
+  emit_library_call (gen_rtx_SYMBOL_REF (Pmode, "__bb_init_func"), 0,
 		     mode, 1, table_address, Pmode);
 
   expand_function_end (input_filename, lineno, 0);
@@ -1640,7 +1694,8 @@ output_func_start_profiler ()
   /* Reset flag_inline_functions to its original value.  */
   flag_inline_functions = save_flag_inline_functions;
 
-  fflush (asm_out_file);
+  if (! quiet_flag)
+    fflush (asm_out_file);
   current_function_decl = NULL_TREE;
 
   assemble_constructor (IDENTIFIER_POINTER (DECL_NAME (fndecl)));
