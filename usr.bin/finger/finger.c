@@ -1,4 +1,4 @@
-/*	$NetBSD: finger.c,v 1.17 2002/08/05 08:04:03 tron Exp $	*/
+/*	$NetBSD: finger.c,v 1.18 2002/08/10 16:10:46 kim Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -56,7 +56,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)finger.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: finger.c,v 1.17 2002/08/05 08:04:03 tron Exp $");
+__RCSID("$NetBSD: finger.c,v 1.18 2002/08/10 16:10:46 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,6 +87,8 @@ __RCSID("$NetBSD: finger.c,v 1.17 2002/08/05 08:04:03 tron Exp $");
 #include <time.h>
 #include <unistd.h>
 
+#include <locale.h>
+
 #include "utmpentry.h"
 
 #include "finger.h"
@@ -108,6 +110,9 @@ main(argc, argv)
 	char **argv;
 {
 	int ch;
+
+	/* Allow user's locale settings to affect character output. */
+	(void *) setlocale(LC_CTYPE, "");
 
 	oflag = 1;		/* default to old "office" behavior */
 
