@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_commpage.c,v 1.2 2004/07/03 16:47:13 manu Exp $ */
+/*	$NetBSD: darwin_commpage.c,v 1.3 2004/07/03 17:29:17 manu Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.2 2004/07/03 16:47:13 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.3 2004/07/03 17:29:17 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -210,8 +210,8 @@ darwin_commpage_init(dcp)
 	/* dcp->dcp_spinlock_relinquish */
 
 #ifdef __powerpc__
-	bcopy_glue[0] = 0x38000000;	/* li r0,0 */
 	bcopy_glue[1] = 0x7c852378;	/* mr r5,r4 */
+	bcopy_glue[0] = 0x38800000;	/* li r4,0 */
 	memcpy(&dcp->dcp_bzero[0], (void *)bcopy_glue, sizeof(bcopy_glue));	
 	memcpy(&dcp->dcp_bzero[8], (void *)memset, sizeof(dcp->dcp_bzero) - 8);
 #endif
