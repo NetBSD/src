@@ -1,7 +1,8 @@
-/*	$NetBSD: pccbb.c,v 1.20 2000/01/25 14:34:24 joda Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.21 2000/01/26 09:02:41 haya Exp $	*/
 
 /*
- * Copyright (c) 1998 and 1999 HAYAKAWA Koichi.  All rights reserved.
+ * Copyright (c) 1998, 1999 and 2000
+ *      HAYAKAWA Koichi.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -98,6 +99,7 @@ int pcicbbmatch __P((struct device *, struct cfdata *, void *));
 void pccbbattach __P((struct device *, struct device *, void *));
 int pccbbintr __P((void *));
 static void pci113x_insert __P((void *));
+static int pccbbintr_function __P((struct pccbb_softc *));
 
 static int pccbb_detect_card __P((struct pccbb_softc *));
 
@@ -920,7 +922,8 @@ pccbbintr(arg)
 
   sockevent = bus_space_read_4(memt, memh, CB_SOCKET_EVENT);
   if (0 == sockevent) {		/* not for me */
-    return 0;
+    /* This interrupt is not for me: it may be for my child devices. */
+    return pccbbintr_function(sc);
   } else {
     bus_space_write_4(memt, memh, CB_SOCKET_EVENT, sockevent); /* reset bit */
   }
@@ -964,6 +967,33 @@ pccbbintr(arg)
 
   return 1;
 }
+
+
+
+/*
+ * static int pccbbintr_function(struct pccbb_softc *sc)
+ *
+ *    This function calls each interrupt handler registered at the
+ *    bridge.  The interrupt handlers are called in registerd order.
+ */
+static int
+pccbbintr_function(sc)
+    struct pccbb_softc *sc;
+{
+    int retval = 0, val;
+    struct pccbb_intrhand_list *pil;
+
+    for (pil = sc->sc_pil; pil != NULL; pil = pil->pil_next) {
+	val = (*pil->pil_func)(pil->pil_arg);
+	retval = retval == 1 ? 1 :
+		 retval == 0 ? val :
+		 val != 0 ? val : retval;
+    }
+
+    return retval;
+}
+
+
 
 
 
@@ -1538,53 +1568,109 @@ pccbb_mem_close(ct, win)
 
 
 
+/*
+ * static void *pccbb_intr_establish(cardbus_chipset_tag_t ct,
+ *				     int irq,
+ *				     int level,
+ *				     int (* func) __P((void *)),
+ *				     void *arg)
+ *
+ *   This function registers an interrupt handler at the bridge, in
+ *   order not to call the interrput handlers of child devices when
+ *   a card-deletion interrput occurs.
+ *
+ *   The arguments irq and level are not used.
+ */
 static void *
 pccbb_intr_establish(ct, irq, level, func, arg)
-     cardbus_chipset_tag_t ct;
-     int irq, level;
-     int (* func) __P((void *));
-     void *arg;
+    cardbus_chipset_tag_t ct;
+    int irq, level;
+    int (* func) __P((void *));
+    void *arg;
 {
-  struct pccbb_softc *sc = (struct pccbb_softc *)ct;
+    struct pccbb_softc *sc = (struct pccbb_softc *)ct;
+    struct pccbb_intrhand_list *pil, *newpil;
 
-  switch (sc->sc_chipset) {
-  case CB_TI113X:
-    {
-      pcireg_t cbctrl = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CBCTRL);
-      cbctrl |= PCI113X_CBCTRL_PCI_INTR; /* functional intr enabled */
-      pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_CBCTRL, cbctrl);
+    if (sc->sc_pil == NULL) {
+	/* initialise bridge intr routing */
+
+	switch (sc->sc_chipset) {
+	case CB_TI113X:
+	{
+	    pcireg_t cbctrl = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CBCTRL);
+	    cbctrl |= PCI113X_CBCTRL_PCI_INTR; /* functional intr enabled */
+	    pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_CBCTRL, cbctrl);
+	    break;
+	}
+	default:
+	    break;
+	}
     }
-    break;
-  default:
-    break;
-  }
 
-  return pci_intr_establish(sc->sc_pc, irq, level, func, arg);
+    /*
+     * Allocate a room for interrut handler structure.
+     */
+    if (NULL == (newpil = (struct pccbb_intrhand_list *)malloc(sizeof(struct pccbb_intrhand_list), M_DEVBUF, M_WAITOK))) {
+	return NULL;
+    }
+
+    newpil->pil_func = func;
+    newpil->pil_arg = arg;
+    newpil->pil_next = NULL;
+
+    if (sc->sc_pil == NULL) {
+	sc->sc_pil = newpil;
+    } else {
+	for (pil = sc->sc_pil; pil->pil_next != NULL; pil = pil->pil_next);
+	pil->pil_next = newpil;
+    }
+	
+    return newpil;
 }
 
 
 
 
+/*
+ * static void *pccbb_intr_disestablish(cardbus_chipset_tag_t ct,
+ *					void *ih)
+ *
+ *   This function removes an interrupt handler pointed by ih.
+ */
 static void
 pccbb_intr_disestablish(ct, ih)
-     cardbus_chipset_tag_t ct;
-     void *ih;
+    cardbus_chipset_tag_t ct;
+    void *ih;
 {
-  struct pccbb_softc *sc = (struct pccbb_softc *)ct;
+    struct pccbb_softc *sc = (struct pccbb_softc *)ct;
+    struct pccbb_intrhand_list *pil, **pil_prev;
+
+    pil_prev = &sc->sc_pil;
   
-  switch (sc->sc_chipset) {
-  case CB_TI113X:
-    {
-      pcireg_t cbctrl = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CBCTRL);
-      cbctrl &= ~PCI113X_CBCTRL_PCI_INTR; /* functional intr disabled */
-      pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_CBCTRL, cbctrl);
+    for (pil = sc->sc_pil; pil != NULL; pil = pil->pil_next) {
+	if (pil == ih) {
+	    *pil_prev = pil->pil_next;
+	    free(pil, M_DEVBUF);
+	    break;
+	}
+	pil_prev = &pil->pil_next;
     }
-    break;
-  default:
-    break;
-  }
-  
-  pci_intr_disestablish(sc->sc_pc, ih);
+
+    if (sc->sc_pil == NULL) {
+	/* No interrupt handlers */
+
+	switch (sc->sc_chipset) {
+	case CB_TI113X:
+	{
+	    pcireg_t cbctrl = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CBCTRL);
+	    cbctrl &= ~PCI113X_CBCTRL_PCI_INTR; /* functional intr disabled */
+	    pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_CBCTRL, cbctrl);
+	    break;
+	}
+	default:
+	    break;
+	}
+    }
 }
 
 
