@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.7 2000/10/29 14:08:04 lukem Exp $
+.\"	$NetBSD: whatis,v 1.8 2002/06/29 09:33:10 lukem Exp $
 .
 There have been many \*M-specific enhancements since the
 1.4 release.
@@ -21,7 +21,8 @@ Ability to boot off LFS partitions.
 traceback code added.
 .It
 Emulate user program use of BWX instructions on CPUs which don't
-support them. Handle unaligned accesses caused by BWX instructions.
+support them.
+Handle unaligned accesses caused by BWX instructions.
 .It
 Improved TGA graphics support, accelerating the text mode and adding
 support for the: 8bpp TGA2, and 32bpp ZLXp-E2 and -E3.
