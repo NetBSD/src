@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.105 1999/07/15 21:30:31 wrstuden Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.106 1999/07/29 13:31:45 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -211,7 +211,8 @@ vfs_busy(mp, flags, interlkp)
 		 * wakeup needs to be done is at the release of the
 		 * exclusive lock at the end of dounmount.
 		 *
-		 * XXX MP: add spinlock protecting mnt_wcnt here.
+		 * XXX MP: add spinlock protecting mnt_wcnt here once you
+		 * can atomically unlock-and-sleep.
 		 */
 		mp->mnt_wcnt++;
 		sleep((caddr_t)mp, PVFS);
@@ -410,13 +411,15 @@ getnewvnode(tag, mp, vops, vpp)
 #endif
 	if (mp) {
 		/*
-		 * XXX
-		 * calling vfs_busy here (either with or without LK_NOWAIT)
-		 * means that syscalls taking place during an
-		 * unsuccessful unmount attempt will fail (spuriously).
-		 * We should be able to wait for the unmount to finish.
+		 * Mark filesystem busy while we're creating a vnode.
+		 * If unmount is in progress, this will wait; if the
+		 * unmount succeeds (only if umount -f), this will
+		 * return an error.  If the unmount fails, we'll keep
+		 * going afterwards.
+		 * (This puts the per-mount vnode list logically under
+		 * the protection of the vfs_busy lock).
 		 */
-		error = vfs_busy(mp, LK_NOWAIT, 0);
+		error = vfs_busy(mp, 0, 0);
 		if (error)
 			return error;
 	}
