@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.3 2001/04/22 11:32:49 jdolecek Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.4 2001/04/22 11:52:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,6 +62,8 @@
 
 #include <machine/intr.h>
 #include <machine/bus.h>
+
+#include <dev/mca/mcavar.h>
 
 #include <dev/mca/edcreg.h>
 #include <dev/mca/edvar.h>
@@ -374,6 +376,7 @@ __edstart(ed, bp)
 	/* Instrumentation. */
 	disk_busy(&ed->sc_dk);
 	ed->sc_flags |= EDF_DK_BUSY;
+	mca_disk_busy();
 
 	/* Read or Write Data command */
 	cmd_args[0] = 2;	/* Options 0000010 */
@@ -430,6 +433,7 @@ edmcadone(ed)
 	if (ed->sc_flags & EDF_DK_BUSY) {
 		disk_unbusy(&ed->sc_dk, (bp->b_bcount - bp->b_resid));
 		ed->sc_flags &= ~EDF_DK_BUSY;
+		mca_disk_unbusy();
 	}
 
 	ed->sc_flags &= ~EDF_IODONE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.5 2001/04/22 11:51:45 jdolecek Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.6 2001/04/22 11:52:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -278,4 +278,25 @@ mca_busprobe()
 	bios_features = scp->feature;
 	MCA_system = (bios_features & FEATURE_MCABUS) ? 1 : 0;
 #endif /* 0 */
+}
+
+#define PORT_DISKLED	0x92
+#define DISKLED_ON	0x40
+
+/*
+ * Light disk busy LED on IBM PS/2.
+ */
+void
+mca_disk_busy(void)
+{
+	outb(PORT_DISKLED, inb(PORT_DISKLED) | DISKLED_ON);
+}
+
+/*
+ * Turn off disk LED on IBM PS/2.
+ */
+void
+mca_disk_unbusy(void)
+{
+	outb(PORT_DISKLED, inb(PORT_DISKLED) & ~DISKLED_ON);
 }
