@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.25 2001/09/07 16:04:03 sato Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.26 2001/09/16 05:32:21 uch Exp $	*/
 /*-
  * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -136,19 +136,14 @@ struct cfattach vrgiu_ca = {
 struct vrgiu_softc *this_giu;
 
 int
-vrgiu_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+vrgiu_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return 2; /* 1st attach group of vrip */
+
+	return (2); /* 1st attach group of vrip */
 }
 
 void
-vrgiu_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+vrgiu_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vrip_attach_args *va = aux;
 	struct vrgiu_softc *sc = (void*)self;
@@ -159,7 +154,7 @@ vrgiu_attach(parent, self, aux)
 	sc->sc_vc = va->va_vc;
 	sc->sc_iot = va->va_iot;
 	bus_space_map(sc->sc_iot, va->va_addr, va->va_size,
-		      0 /* no cache */, &sc->sc_ioh);
+	    0 /* no cache */, &sc->sc_ioh);
 	/*
 	 *  Disable all interrupts.
 	 */
@@ -177,7 +172,7 @@ vrgiu_attach(parent, self, aux)
 	for (i = 0; i < MAX_GPIO_INOUT; i++)
 		TAILQ_INIT(&sc->sc_intr_head[i]);
 	if (!(sc->sc_ih = vrip_intr_establish(va->va_vc, va->va_intr, IPL_BIO,
-					      vrgiu_intr, sc))) {
+	    vrgiu_intr, sc))) {
 		printf("%s: can't establish interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -217,8 +212,7 @@ vrgiu_attach(parent, self, aux)
 }
 
 void
-vrgiu_callback(self)
-	struct device *self;
+vrgiu_callback(struct device *self)
 {
 	struct vrgiu_softc *sc = (void*)self;
 	struct hpcio_attach_args haa;
@@ -231,9 +225,7 @@ vrgiu_callback(self)
 }
 
 int
-vrgiu_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+vrgiu_print(void *aux, const char *pnp)
 {
 	if (pnp)
 		return (QUIET);
@@ -241,11 +233,11 @@ vrgiu_print(aux, pnp)
 }
 
 void
-vrgiu_dump_iosetting(sc)
-	struct vrgiu_softc *sc;
+vrgiu_dump_iosetting(struct vrgiu_softc *sc)
 {
 	long iosel, inten, useupdn, termupdn;
 	u_int32_t m;
+
 	iosel= vrgiu_regread_4(sc, GIUIOSEL_REG);
 	inten= vrgiu_regread_4(sc, GIUINTEN_REG);
 #ifdef ONLY_VR4122_4131
@@ -256,8 +248,8 @@ vrgiu_dump_iosetting(sc)
 #endif
 	for (m = 0x80000000; m; m >>=1)
 		printf ("%c" , (useupdn&m) ?
-			((termupdn&m) ? 'U' : 'D') :
-			((iosel&m) ? 'o' : ((inten&m)?'I':'i')));
+		    ((termupdn&m) ? 'U' : 'D') :
+		    ((iosel&m) ? 'o' : ((inten&m)?'I':'i')));
 }
 
 void
@@ -280,8 +272,8 @@ vrgiu_diff_iosetting()
 	    ouseupdn != useupdn || otermupdn != termupdn) {
 		for (m = 0x80000000; m; m >>=1)
 			printf ("%c" , (useupdn&m) ?
-				((termupdn&m) ? 'U' : 'D') :
-				((iosel&m) ? 'o' : ((inten&m)?'I':'i')));
+			    ((termupdn&m) ? 'U' : 'D') :
+			    ((iosel&m) ? 'o' : ((inten&m)?'I':'i')));
 	}
 	oiosel = iosel;
 	ointen = inten;
@@ -290,8 +282,7 @@ vrgiu_diff_iosetting()
 }
 
 void
-vrgiu_dump_io(sc)
-	struct vrgiu_softc *sc;
+vrgiu_dump_io(struct vrgiu_softc *sc)
 {
 	u_int32_t preg[2];
 
@@ -320,12 +311,12 @@ vrgiu_diff_io()
 }
 
 void
-vrgiu_dump_regs(sc)
-	struct vrgiu_softc *sc;
+vrgiu_dump_regs(struct vrgiu_softc *sc)
 {
+
 	if (sc == NULL) {
 		panic("%s(%d): VRGIU device not initialized\n",
-		      __FILE__, __LINE__);
+		    __FILE__, __LINE__);
 	}
 	printf("    IOSEL: %08x\n", vrgiu_regread_4(sc, GIUIOSEL_REG));
 	printf("     PIOD: %08x\n", vrgiu_regread_4(sc, GIUPIOD_REG));
@@ -340,41 +331,36 @@ vrgiu_dump_regs(sc)
  * GIU regster access method.
  */
 u_int32_t
-vrgiu_regread_4(sc, offs)
-	struct vrgiu_softc *sc;
-	bus_addr_t offs;
+vrgiu_regread_4(struct vrgiu_softc *sc, bus_addr_t offs)
 {
 	u_int16_t reg[2];
+
 	bus_space_read_region_2 (sc->sc_iot, sc->sc_ioh, offs, reg, 2);
-	return reg[0]|(reg[1]<<16);
+
+	return (reg[0] | (reg[1] << 16));
 }
 
 u_int16_t
-vrgiu_regread(sc, off)
-	struct vrgiu_softc *sc;
-	bus_addr_t off;
+vrgiu_regread(struct vrgiu_softc *sc, bus_addr_t off)
 {
-	return bus_space_read_2(sc->sc_iot, sc->sc_ioh, off);
+
+	return (bus_space_read_2(sc->sc_iot, sc->sc_ioh, off));
 }
 
 void
-vrgiu_regwrite_4(sc, offs, data)
-	struct vrgiu_softc *sc;
-	bus_addr_t offs;
-	u_int32_t data;
+vrgiu_regwrite_4(struct vrgiu_softc *sc, bus_addr_t offs, u_int32_t data)
 {
 	u_int16_t reg[2];
+
 	reg[0] = data & 0xffff;
 	reg[1] = (data>>16)&0xffff;
 	bus_space_write_region_2 (sc->sc_iot, sc->sc_ioh, offs, reg, 2);
 }
 
 void
-vrgiu_regwrite(sc, off, data)
-	struct vrgiu_softc *sc;
-	bus_addr_t off;
-	u_int16_t data;
+vrgiu_regwrite(struct vrgiu_softc *sc, bus_addr_t off, u_int16_t data)
 {
+
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, off, data);
 }
 
@@ -382,9 +368,7 @@ vrgiu_regwrite(sc, off, data)
  * PORT 
  */
 int
-vrgiu_port_read(hc, port)
-	hpcio_chip_t hc;
-	int port;
+vrgiu_port_read(hpcio_chip_t hc, int port)
 {
 	struct vrgiu_softc *sc = hc->hc_sc;
 	int on;
@@ -401,10 +385,7 @@ vrgiu_port_read(hc, port)
 }
     
 void
-vrgiu_port_write(hc, port, onoff)
-	hpcio_chip_t hc;
-	int port;
-	int onoff;
+vrgiu_port_write(hpcio_chip_t hc, int port, int onoff)
 {
 	struct vrgiu_softc *sc = hc->hc_sc;
 	u_int32_t reg[2];
@@ -428,21 +409,17 @@ vrgiu_port_write(hc, port, onoff)
 }
 
 static void
-vrgiu_update(hc)
-	hpcio_chip_t hc;
+vrgiu_update(hpcio_chip_t hc)
 {
 }
 
 static void
-vrgiu_dump(hc)
-	hpcio_chip_t hc;
+vrgiu_dump(hpcio_chip_t hc)
 {
 }
 
 static hpcio_chip_t
-vrgiu_getchip(scx, chipid)
-	void* scx;
-	int chipid;
+vrgiu_getchip(void* scx, int chipid)
 {
 	struct vrgiu_softc *sc = scx;
 
@@ -453,9 +430,7 @@ vrgiu_getchip(scx, chipid)
  *  For before autoconfiguration.  
  */
 void
-__vrgiu_out(port, data)
-	int port;
-	int data;
+__vrgiu_out(int port, int data)
 {
 	u_int16_t reg;
 	u_int32_t addr;
@@ -493,12 +468,12 @@ __vrgiu_out(port, data)
  * Interrupt staff 
  */
 void *
-vrgiu_intr_establish(hc, port, mode, ih_fun, ih_arg)
-	hpcio_chip_t hc;
-	int port; /* GPIO pin # */
-	int mode; /* GIU trigger setting */
-	int (*ih_fun) __P((void*));
-	void *ih_arg;
+vrgiu_intr_establish(
+	hpcio_chip_t hc,
+	int port, /* GPIO pin # */
+	int mode, /* GIU trigger setting */
+	int (*ih_fun)(void *),
+	void *ih_arg)
 {
 	struct vrgiu_softc *sc = hc->hc_sc;
 	int s;
@@ -591,13 +566,11 @@ vrgiu_intr_establish(hc, port, mode, ih_fun, ih_arg)
 
 	DPRINTF(DEBUG_INTR, ("\n"));
 
-	return ih;
+	return (ih);
 }
 
 void
-vrgiu_intr_disestablish(hc, arg)
-	hpcio_chip_t hc;
-	void *arg;
+vrgiu_intr_disestablish(hpcio_chip_t hc, void *arg)
 {
 	struct vrgiu_intr_entry *ihe = arg;
 	struct vrgiu_softc *sc = hc->hc_sc;
@@ -629,9 +602,7 @@ vrgiu_intr_disestablish(hc, arg)
 
 /* Clear interrupt */
 void
-vrgiu_intr_clear(hc, arg)
-	hpcio_chip_t hc;
-	void *arg;
+vrgiu_intr_clear(hpcio_chip_t hc, void *arg)
 {
 	struct vrgiu_softc *sc = hc->hc_sc;
 	struct vrgiu_intr_entry *ihe = arg;
@@ -642,9 +613,7 @@ vrgiu_intr_clear(hc, arg)
 }
 
 static void
-vrgiu_register_iochip(hc, iochip)
-	hpcio_chip_t hc;
-	hpcio_chip_t iochip;
+vrgiu_register_iochip(hpcio_chip_t hc, hpcio_chip_t iochip)
 {
 	struct vrgiu_softc *sc = hc->hc_sc;
 
@@ -653,8 +622,7 @@ vrgiu_register_iochip(hc, iochip)
 
 /* interrupt handler */
 int
-vrgiu_intr(arg)
-	void *arg;
+vrgiu_intr(void *arg)
 {
 #ifdef DUMP_GIU_LEVEL2_INTR
 #warning DUMP_GIU_LEVEL2_INTR
@@ -701,8 +669,7 @@ vrgiu_intr(arg)
 	}
 
 	if (vrgiu_intr_led) 
-		config_hook_call(CONFIG_HOOK_SET,
-				 CONFIG_HOOK_LED,
-				(void *)&ledvalue);
-	return 0;
+		config_hook_call(CONFIG_HOOK_SET, CONFIG_HOOK_LED,
+		    (void *)&ledvalue);
+	return (0);
 }
