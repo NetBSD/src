@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.296 2002/06/05 02:42:09 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.297 2002/06/10 14:14:47 fredette Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -302,6 +302,15 @@ NOPIC=		# defined
 NOPROFILE=	# defined
 .endif
 
+# The hppa port is incomplete.
+.if ${MACHINE_ARCH} == "hppa"
+NOLINT=		# defined
+NOPIC=		# defined
+NOPROFILE=	# defined
+MKGDB:=	no
+MKGCC:=	no
+.endif
+
 # If the ns32k port is using an external toolchain, shared libraries
 # are not yet supported.
 .if ${MACHINE_ARCH} == "ns32k" && defined(USE_NEW_TOOLCHAIN)
@@ -324,6 +333,7 @@ MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
 .if ${OBJECT_FMT} == "ELF" && \
     (${MACHINE_GNU_ARCH} == "arm" || \
      ${MACHINE_GNU_ARCH} == "armeb" || \
+     ${MACHINE_ARCH} == "hppa" || \
      ${MACHINE_ARCH} == "ns32k" || \
      ${MACHINE_ARCH} == "i386" || \
      ${MACHINE_ARCH} == "m68k" || \
