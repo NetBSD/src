@@ -1189,7 +1189,7 @@ extern int var_smtpd_delay_reject;
 #define REJECT_UNAUTH_PIPE	"reject_unauth_pipelining"
 
 #define VAR_SMTPD_NULL_KEY	"smtpd_null_access_lookup_key"
-#define DEF_SMTPD_NULL_KEY	""
+#define DEF_SMTPD_NULL_KEY	"<>"
 extern char *var_smtpd_null_key;
 
  /*
@@ -1353,7 +1353,11 @@ extern bool var_verp_bounce_off;
   * the sending processes get a chance to access the disk.
   */
 #define VAR_IN_FLOW_DELAY			"in_flow_delay"
+#ifdef PIPES_CANT_FIONREAD
+#define DEF_IN_FLOW_DELAY			"0s"
+#else
 #define DEF_IN_FLOW_DELAY			"1s"
+#endif
 extern int var_in_flow_delay;
 
  /*
