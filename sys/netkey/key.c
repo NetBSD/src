@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.105 2003/11/10 10:52:13 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.106 2003/11/11 21:41:11 drochner Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.105 2003/11/10 10:52:13 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.106 2003/11/11 21:41:11 drochner Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3878,8 +3878,7 @@ key_ismyaddr(sa)
 #ifdef INET
 	case AF_INET:
 		sin = (struct sockaddr_in *)sa;
-		for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next)
-		{
+		TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list) {
 			if (sin->sin_family == ia->ia_addr.sin_family &&
 			    sin->sin_len == ia->ia_addr.sin_len &&
 			    sin->sin_addr.s_addr == ia->ia_addr.sin_addr.s_addr)
