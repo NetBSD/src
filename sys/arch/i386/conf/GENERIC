@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.127 1997/12/09 13:32:35 tv Exp $
+#	$NetBSD: GENERIC,v 1.128 1998/01/09 15:18:50 drochner Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -126,6 +126,8 @@ options 	EISAVERBOSE	# verbose EISA device autoconfig messages
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
+
+options 	NFS_BOOT_BOOTP,NFS_BOOT_BOOTPARAM
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
