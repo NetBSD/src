@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.51 1996/02/10 00:08:06 christos Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.52 1996/02/12 21:51:59 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -509,9 +509,8 @@ swapout(p)
 
 #ifdef DEBUG
 	if (swapdebug & SDB_SWAPOUT)
-		printf("swapout: pid %d(%s)@%x, stat %x pri %d free %d\n",
+		printf("swapout: pid %d(%s)@%p, stat %x pri %d free %d\n",
 		       p->p_pid, p->p_comm, p->p_addr, p->p_stat,
-/*###511 [cc] warning: unsigned int format, pointer arg (arg 4)%%%*/
 		       p->p_slptime, cnt.v_free_count);
 #endif
 
