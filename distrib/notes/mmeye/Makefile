@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2002/06/15 21:31:36 itojun Exp $
+#	$NetBSD: Makefile,v 1.2 2002/07/21 08:14:49 lukem Exp $
 
-MERGED_SRCS+=${.CURDIR}/../common/sysinst ${.CURDIR}/../common/upgrade
+MERGED_SRCS+=	${COMMON}/upgrade ${COMMON}/xfer
 
 .include <bsd.man.mk>
