@@ -14,54 +14,37 @@
  *
  * commenced: Sun Sep 27 18:14:01 PDT 1992
  *
- *      $Id: aha1742.c,v 1.14.2.1 1993/11/25 20:17:01 mycroft Exp $
+ *      $Id: aha1742.c,v 1.14.2.2 1993/11/29 00:32:00 mycroft Exp $
  */
 
-#include <sys/types.h>
+#include "ahb.h"
 
-#ifdef	KERNEL			/* don't laugh, it compiles as a program too.. look */
-#include <ahb.h>
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
+#include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <i386/include/pio.h>
-#include <i386/isa/isa_device.h>
-#endif /*KERNEL */
+
+#include <machine/pio.h>
+
+#include <i386/isa/isavar.h>
+#include <i386/isa/icu.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-/* */
-
-#ifdef	KERNEL
-# ifdef NetBSD
-#  ifdef DDB
+#ifdef	DDB
 int     Debugger();
-#  else	/* DDB */
-#define Debugger() panic("should call debugger here (adaptec.c)")
-#  endif /* DDB */
-# else
-#include "ddb.h"
-#if     NDDB > 0
-int     Debugger();
-#else	/* NDDB */
-#define Debugger() panic("should call debugger here (adaptec.c)")
-#endif	/* NDDB */
-#endif /* netbsd */
-#else /* KERNEL */
-#define NAHB 1
-#endif /* kernel */
+#else	/* DDB */
+#define Debugger()
+#endif	/* DDB */
 
-#ifndef NetBSD
-typedef void (*timeout_t) __P((caddr_t));
-#endif
-
-typedef unsigned long int physaddr;
-extern int hz;
+typedef u_long physaddr;
 
 #define KVTOPHYS(x)   vtophys(x)
 
@@ -87,9 +70,12 @@ extern int hz;
 #define CHAR2(B1,B2) (((B1<<3) & 0x18) | ((B2>>5) & 0x7)|'@')
 #define CHAR3(B1,B2) ((B2 & 0x1F) | '@')
 
-/* AHA1740 EISA board control registers (Offset from slot base) */
+/*
+ * AHA1740 EISA board control registers (Offset from slot base)
+ */
 #define	EBCTRL		0xC84
 #define  CDEN		0x01
+
 /*
  * AHA1740 EISA board mode registers (Offset from slot base)
  */
@@ -118,6 +104,7 @@ extern int hz;
 #define	B0uS	0x00		/* give up bus immediatly */
 #define	B4uS	0x01		/* delay 4uSec. */
 #define	B8uS	0x02
+
 /*
  * AHA1740 ENHANCED mode mailbox control regs (Offset from slot base)
  */
@@ -207,7 +194,6 @@ struct ahb_ecb_status {
 	u_char  cdb[6];
 };
 
-
 struct ecb {
 	u_char  opcode;
 #define	ECB_SCSI_OP	0x01
@@ -261,50 +247,57 @@ struct ecb {
 };
 
 struct ahb_data {
-	int     flags;
-#define	AHB_INIT	0x01;
-	int     baseport;
+	struct device sc_dev;
+	struct isadev sc_id;
+	struct intrhand sc_ih;
+
+	u_short baseport;
 	struct ecb *ecbhash[ECB_HASH_SIZE];
 	struct ecb *free_ecb;
-	int     our_id;		/* our scsi id */
-	int     vect;
+	int our_id;		/* our scsi id */
+	int vect;
 	struct ecb *immed_ecb;	/* an outstanding immediete command */
+	int numecbs;
 	struct scsi_link sc_link;
-	int     numecbs;
-}      *ahbdata[NAHB];
+}	*ahbdata[NAHB];
 
-int     ahbprobe();
-int	ahbprobe1 __P((struct isa_device *dev));
-int     ahb_attach();
-int	ahb_init __P((int unit));
-int     ahbintr();
-int32   ahb_scsi_cmd();
-void    ahb_timeout();
-void	ahb_done();
+void ahb_send_mbox __P((struct ahb_data *, int, int, struct ecb *));
+int ahb_poll __P((struct ahb_data *, int));
+void ahb_send_immed __P((struct ahb_data *, int, u_long));
+int ahbprobe __P((struct device *, struct cfdata *, void *));
+int ahbprobe1 __P((struct device *, struct cfdata *, struct isa_attach_args *));
+void ahbattach __P((struct device *, struct device *, void *));
+u_int ahb_adapter_info __P((struct ahb_data *));
+int ahbintr __P((void *));
+void ahb_done __P((struct ahb_data *, struct ecb *, int));
+void ahb_free_ecb __P((struct ahb_data *, struct ecb *, int));
+struct ecb *ahb_get_ecb __P((struct ahb_data *, int));
+struct ecb *ahb_ecb_phys_kv __P((struct ahb_data *, physaddr));
+int ahb_find __P((struct ahb_data *));
+void ahb_init __P((struct ahb_data *));
+void ahbminphys __P((struct buf *));
+int ahb_scsi_cmd __P((struct scsi_xfer *));
+void ahb_timeout __P((caddr_t));
+void ahb_print_ecb __P((struct ecb *));
+void ahb_print_active_ecb __P((struct ahb_data *));
+
 struct	ecb *cheat;
-void	ahb_free_ecb();
-void    ahbminphys();
-struct	ecb *ahb_ecb_phys_kv();
-u_int32 ahb_adapter_info();
 
 #define	MAX_SLOTS	8
 static  ahb_slot = 0;		/* slot last board was found in */
-static  ahb_unit = 0;
 int     ahb_debug = 0;
 #define AHB_SHOWECBS 0x01
 #define AHB_SHOWINTS 0x02
 #define AHB_SHOWCMDS 0x04
 #define AHB_SHOWMISC 0x08
-#define FAIL	1
-#define SUCCESS 0
-#define PAGESIZ 4096
 
-#ifdef	KERNEL
-struct isa_driver ahbdriver =
-{
+struct cfdriver ahbcd = {
+	NULL,
+	"ahb",
 	ahbprobe,
-	ahb_attach,
-	"ahb"
+	ahbattach,
+	DV_DULL,
+	sizeof(struct ahb_data)
 };
 
 struct scsi_adapter ahb_switch =
@@ -314,54 +307,45 @@ struct scsi_adapter ahb_switch =
 	0,
 	0,
 	ahb_adapter_info,
-	"ahb",
-	{ 0, 0 }
+	"ahb"
 };
 
 /* the below structure is so we have a default dev struct for our link struct */
 struct scsi_device ahb_dev =
 {
-    NULL,			/* Use default error handler */
-    NULL,			/* have a queue, served by this */
-    NULL,			/* have no async handler */
-    NULL,			/* Use default 'done' routine */
-    "ahb",
-    0,
-    { 0, 0 }
+	NULL,			/* Use default error handler */
+	NULL,			/* have a queue, served by this */
+	NULL,			/* have no async handler */
+	NULL,			/* Use default 'done' routine */
+	"ahb",
+	0
 };
-
-#endif /*KERNEL */
-
-#ifndef	KERNEL
-main()
-{
-	printf("ahb_data size is %d\n", sizeof(struct ahb_data));
-	printf("ecb size is %d\n", sizeof(struct ecb));
-}
-
-#else /*KERNEL */
 
 /*
  * Function to send a command out through a mailbox
  */
 void
-ahb_send_mbox(int unit, int opcode, int target, struct ecb *ecb)
+ahb_send_mbox(ahb, opcode, target, ecb)
+	struct ahb_data *ahb;
+	int opcode, target;
+	struct ecb *ecb;
 {
-	int     port = ahbdata[unit]->baseport;
-	int     wait = 100;	/* 1ms should be enough */
-	int     stport = port + G2STAT;
-	int     s = splbio();
+	u_short port = ahb->baseport;
+	u_short stport = port + G2STAT;
+	int wait = 100;	/* 1ms should be enough */
+	int s = splbio();
 
 	while (--wait) {
 		if ((inb(stport) & (G2STAT_BUSY | G2STAT_MBOX_EMPTY))
 		    == (G2STAT_MBOX_EMPTY))
 			break;
-		DELAY(10);
+		delay(10);
 	}
-	if (wait == 0) {
-		printf("ahb%d: board not responding\n", unit);
+	if (!wait) {
+		printf("%s: board not responding\n", ahb->sc_dev.dv_xname);
 		Debugger();
 	}
+
 	outl(port + MBOXOUT0, KVTOPHYS(ecb));	/* don't know this will work */
 	outb(port + ATTN, opcode | target);
 
@@ -372,52 +356,61 @@ ahb_send_mbox(int unit, int opcode, int target, struct ecb *ecb)
  * Function to poll for command completion when in poll mode
  */
 int
-ahb_poll(int unit, int wait)
+ahb_poll(ahb, wait)
+	struct ahb_data *ahb;
+	int wait;
 {				/* in msec  */
-	struct ahb_data *ahb = ahbdata[unit];
-	int     port = ahb->baseport;
-	int     stport = port + G2STAT;
+	u_short port = ahb->baseport;
+	u_short stport = port + G2STAT;
 
-      retry:
+    retry:
 	while (--wait) {
 		if (inb(stport) & G2STAT_INT_PEND)
 			break;
-		DELAY(1000);
-	} if (wait == 0) {
-		printf("ahb%d: board not responding\n", unit);
-		return (EIO);
+		delay(1000);
 	}
+	if (!wait) {
+		printf("%s: board not responding\n", ahb->sc_dev.dv_xname);
+		return EIO;
+	}
+
 	if (cheat != ahb_ecb_phys_kv(ahb, inl(port + MBOXIN0))) {
 		printf("discarding %x ", inl(port + MBOXIN0));
 		outb(port + G2CNTRL, G2CNTRL_CLEAR_EISA_INT);
-		DELAY(50000);
+		delay(50000);
 		goto retry;
 	}
+
 	/* don't know this will work */
-	ahbintr(unit);
-	return (0);
+	ahbintr(ahb);
+	return 0;
 }
 
 /*
  * Function to  send an immediate type command to the adapter
  */
 void
-ahb_send_immed(int unit, int target, u_long cmd)
+ahb_send_immed(ahb, target, cmd)
+	struct ahb_data *ahb;
+	int target;
+	u_long cmd;
 {
-	int     port = ahbdata[unit]->baseport;
-	int     s = splbio();
-	int     stport = port + G2STAT;
-	int     wait = 100;	/* 1 ms enough? */
+	u_short port = ahb->baseport;
+	u_short stport = port + G2STAT;
+	int wait = 100;	/* 1 ms enough? */
+	int s = splbio();
 
 	while (--wait) {
 		if ((inb(stport) & (G2STAT_BUSY | G2STAT_MBOX_EMPTY))
 		    == (G2STAT_MBOX_EMPTY))
 			break;
-		DELAY(10);
-	} if (wait == 0) {
-		printf("ahb%d: board not responding\n", unit);
+		delay(10);
+	}
+	if (!wait) {
+		printf("%s: board not responding\n", ahb->sc_dev.dv_xname);
 		Debugger();
 	}
+
 	outl(port + MBOXOUT0, cmd);	/* don't know this will work */
 	outb(port + G2CNTRL, G2CNTRL_SET_HOST_READY);
 	outb(port + ATTN, OP_IMMED | target);
@@ -430,31 +423,37 @@ ahb_send_immed(int unit, int target, u_long cmd)
  * the actual probe routine to check it out.
  */
 int
-ahbprobe(dev)
-	struct isa_device *dev;
+ahbprobe(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
 {
-	int     port;
-	u_char  byte1, byte2, byte3;
+	struct isa_attach_args *ia = aux;
+	u_short port;
+	u_char byte1, byte2, byte3;
 
-	ahb_slot++;
-	while (ahb_slot < 8) {
+	if (ia->ia_iobase != IOBASEUNK)
+		return ahbprobe1(parent, cf, aux);
+
+	do {
+		ahb_slot++;
 		port = 0x1000 * ahb_slot;
 		byte1 = inb(port + HID0);
 		byte2 = inb(port + HID1);
 		byte3 = inb(port + HID2);
-		if (byte1 == 0xff) {
-			ahb_slot++;
+		if (byte1 == 0xff)
+			continue;
+		if ((CHAR1(byte1, byte2) != 'A')
+		    || (CHAR2(byte1, byte2) != 'D')
+		    || (CHAR3(byte1, byte2) != 'P')
+		    || ((byte3 != 0) && (byte3 != 1))) {
 			continue;
 		}
-		if ((CHAR1(byte1, byte2) == 'A')
-		    && (CHAR2(byte1, byte2) == 'D')
-		    && (CHAR3(byte1, byte2) == 'P')
-		    && ((byte3 == 0) || (byte3 == 1))) {
-			dev->id_iobase = port;
-			return ahbprobe1(dev);
-		}
-		ahb_slot++;
-	}
+		ia->ia_iobase = port;
+		if (ahbprobe1(parent, cf, ia))
+			return 1;
+	} while (ahb_slot < MAX_SLOTS);
+
 	return 0;
 }
 
@@ -465,111 +464,121 @@ ahbprobe(dev)
  * autoconf.c.
  */
 int
-ahbprobe1(dev)
-	struct isa_device *dev;
+ahbprobe1(parent, cf, ia)
+	struct device *parent;
+	struct cfdata *cf;
+	struct isa_attach_args *ia;
 {
-	/*
-	 * find unit and check we have that many defined
-	 */
-	int	unit = ahb_unit;
+	int unit = cf->cf_unit;
 	struct	ahb_data *ahb;
 
-	if (unit >= NAHB) {
-		printf("ahb: unit number (%d) too high\n", unit);
-		return 0;
-	}
-	dev->id_unit = unit;
-
-	/*
-	 * Allocate a storage area for us
-	 */
-	if (ahbdata[unit]) {
-		printf("ahb%d: memory already allocated\n", unit);
-		return 0;
-	}
 	ahb = malloc(sizeof(struct ahb_data), M_TEMP, M_NOWAIT);
 	if (!ahb) {
 		printf("ahb%d: cannot malloc!\n", unit);
 		return 0;
 	}
-	bzero(ahb, sizeof(struct ahb_data));
 	ahbdata[unit] = ahb;
-	ahb->baseport = dev->id_iobase;
+	ahb->baseport = ia->ia_iobase;
+
 	/*
 	 * Try initialise a unit at this location
 	 * sets up dma and bus speed, loads ahb->vect
 	 */
-	if (ahb_init(unit) != 0) {
+	if (ahb_find(ahb) != 0) {
 		ahbdata[unit] = NULL;
 		free(ahb, M_TEMP);
-		return (0);
+		return 0;
 	}
-	/*
-	 * If it's there, put in it's interrupt vectors
-	 */
-	dev->id_irq = (1 << ahb->vect);
-	dev->id_drq = -1;	/* use EISA dma */
 
-	ahb_unit++;
-	return 0x1000;
+	if (ia->ia_irq == IRQUNK) {
+		ia->ia_irq = (1 << ahb->vect);
+	} else {
+		if (ia->ia_irq != (1 << ahb->vect)) {
+			printf("ahb%d: irq mismatch, %x != %x\n", unit,
+				ia->ia_irq, (1 << ahb->vect));
+			ahbdata[unit] = NULL;
+			free(ahb, M_TEMP);
+			return 0;
+		}
+	}
+
+	ia->ia_drq = DRQUNK;
+	ia->ia_msize = 0;
+	ia->ia_iosize = 0x1000;
+	return 1;
+}
+
+ahbprint()
+{
+
 }
 
 /*
  * Attach all the sub-devices we can find
  */
-int
-ahb_attach(dev)
-	struct isa_device *dev;
+void
+ahbattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-#ifdef NetBSD
-	int     unit = dev->id_masunit;
-#else
-	int     unit = dev->id_unit;
-#endif
+	int unit = self->dv_unit;
 	struct ahb_data *ahb = ahbdata[unit];
+	struct isa_attach_args *ia = aux;
+
+	bcopy((char *)ahb + sizeof(struct device),
+	      (char *)self + sizeof(struct device),
+	      sizeof(struct ahb_data) - sizeof(struct device));
+	free(ahb, M_TEMP);
+	ahbdata[unit] = ahb = (struct ahb_data *)self;
+
+	ahb_init(ahb);
 
 	/*
 	 * fill in the prototype scsi_link.
 	 */
-	ahb->sc_link.adapter_unit = unit;
+	ahb->sc_link.adapter_softc = ahb;
 	ahb->sc_link.adapter_targ = ahb->our_id;
 	ahb->sc_link.adapter = &ahb_switch;
 	ahb->sc_link.device = &ahb_dev;
 
+	printf("\n");
+
+	isa_establish(&ahb->sc_id, &ahb->sc_dev);
+	ahb->sc_ih.ih_fun = ahbintr;
+	ahb->sc_ih.ih_arg = ahb;
+	/* XXX and DV_TAPE, but either gives us splbio */
+	intr_establish(ia->ia_irq, &ahb->sc_ih, DV_DISK);
+
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	scsi_attachdevs(&(ahb->sc_link));
-
-	return 1;
+	config_found(self, &ahb->sc_link, ahbprint);
 }
 
 /*
  * Return some information to the caller about
  * the adapter and it's capabilities
  */
-u_int32 
-ahb_adapter_info(unit)
-	int     unit;
+u_int 
+ahb_adapter_info(ahb)
+	struct ahb_data *ahb;
 {
-	return (2);		/* 2 outstanding requests at a time per device */
+
+	return 2;	/* 2 outstanding requests at a time per device */
 }
 
 /*
  * Catch an interrupt from the adaptor
  */
 int
-ahbintr(unit)
-	int	unit;
+ahbintr(arg)
+	void *arg;
 {
+	struct ahb_data *ahb = arg;
 	struct ecb *ecb;
-	unsigned char stat;
-	u_char  ahbstat;
-	int     target;
-	long int mboxval;
-	struct ahb_data *ahb = ahbdata[unit];
-
-	int	port = ahb->baseport;
+	u_char stat, ahbstat;
+	u_long mboxval;
+	u_short port = ahb->baseport;
 
 #ifdef	AHBDEBUG
 	printf("ahbintr ");
@@ -581,17 +590,17 @@ ahbintr(unit)
 		 * acknowlege the interrupt
 		 */
 		ahbstat = inb(port + G2INTST);
-		target = ahbstat & G2INTST_TARGET;
 		stat = ahbstat & G2INTST_INT_STAT;
 		mboxval = inl(port + MBOXIN0);	/* don't know this will work */
 		outb(port + G2CNTRL, G2CNTRL_CLEAR_EISA_INT);
+
 #ifdef	AHBDEBUG
-		printf("status = 0x%x ", stat);
+		printf("status = 0x%x ", ahbstat);
 #endif /*AHBDEBUG */
+
 		/*
 		 * Process the completed operation
 		 */
-
 		if (stat == AHB_ECB_OK) {	/* common case is fast */
 			ecb = ahb_ecb_phys_kv(ahb, mboxval);
 		} else {
@@ -606,13 +615,13 @@ ahbintr(unit)
 				ahb->immed_ecb = 0;
 				break;
 			case AHB_ASN:	/* for target mode */
-				printf("ahb%d: Unexpected ASN interrupt(%x)\n",
-				    unit, mboxval);
+				printf("%s: Unexpected ASN interrupt(%x)\n",
+					ahb->sc_dev.dv_xname, mboxval);
 				ecb = 0;
 				break;
 			case AHB_HW_ERR:
-				printf("ahb%d: Hardware error interrupt(%x)\n",
-				    unit, mboxval);
+				printf("%s: Hardware error interrupt(%x)\n",
+					ahb->sc_dev.dv_xname, mboxval);
 				ecb = 0;
 				break;
 			case AHB_ECB_RECOVERED:
@@ -622,33 +631,33 @@ ahbintr(unit)
 				ecb = ahb_ecb_phys_kv(ahb, mboxval);
 				break;
 			default:
-				printf(" Unknown return from ahb%d(%x)\n", unit, ahbstat);
+				printf("%s: Unknown return %x\n",
+					ahb->sc_dev.dv_xname, ahbstat);
 				ecb = 0;
 			}
 		} if (ecb) {
 #ifdef	AHBDEBUG
-			if (ahb_debug & AHB_SHOWCMDS) {
+			if (ahb_debug & AHB_SHOWCMDS)
 				show_scsi_cmd(ecb->xs);
-			}
 			if ((ahb_debug & AHB_SHOWECBS) && ecb)
 				printf("<int ecb(%x)>", ecb);
 #endif /*AHBDEBUG */
 			untimeout((timeout_t)ahb_timeout, (caddr_t)ecb);
-			ahb_done(unit, ecb, ((stat == AHB_ECB_OK) ? SUCCESS : FAIL));
+			ahb_done(ahb, ecb, stat != AHB_ECB_OK);
 		}
 	}
 	return 1;
 }
 
 /*
- * We have a ecb which has been processed by the
- * adaptor, now we look to see how the operation
- * went.
+ * We have a ecb which has been processed by the adaptor, now we look to see
+ * how the operation went.
  */
 void
-ahb_done(unit, ecb, state)
-	int    unit, state;
+ahb_done(ahb, ecb, failed)
+	struct ahb_data *ahb;
 	struct ecb *ecb;
+	int failed;
 {
 	struct ahb_ecb_status *stat = &ecb->ecb_status;
 	struct scsi_sense_data *s1, *s2;
@@ -660,16 +669,15 @@ ahb_done(unit, ecb, state)
 	 * into the xfer and call whoever started it
 	 */
 	if (ecb->flags & ECB_IMMED) {
-		if (ecb->flags & ECB_IMMED_FAIL) {
+		if (ecb->flags & ECB_IMMED_FAIL)
 			xs->error = XS_DRIVER_STUFFUP;
-		}
 		goto done;
 	}
-	if ((state == SUCCESS) || (xs->flags & SCSI_ERR_OK)) {	/* All went correctly  OR errors expected */
+
+	if (!failed || (xs->flags & SCSI_ERR_OK)) {	/* All went correctly  OR errors expected */
 		xs->resid = 0;
 		xs->error = 0;
 	} else {
-
 		s1 = &(ecb->ecb_sense);
 		s2 = &(xs->sense);
 
@@ -684,19 +692,17 @@ ahb_done(unit, ecb, state)
 				break;
 			case HS_TIMED_OUT:	/* No response */
 #ifdef	AHBDEBUG
-				if (ahb_debug & AHB_SHOWMISC) {
+				if (ahb_debug & AHB_SHOWMISC)
 					printf("timeout reported back\n");
-				}
 #endif /*AHBDEBUG */
 				xs->error = XS_TIMEOUT;
 				break;
 			default:	/* Other scsi protocol messes */
 				xs->error = XS_DRIVER_STUFFUP;
 #ifdef	AHBDEBUG
-				if (ahb_debug & AHB_SHOWMISC) {
-					printf("unexpected ha_status: %x\n",
-					    stat->ha_status);
-				}
+				if (ahb_debug & AHB_SHOWMISC)
+					printf("unexpected ha_status %x\n",
+						stat->ha_status);
 #endif /*AHBDEBUG */ 
 			}
 		} else {
@@ -712,16 +718,17 @@ ahb_done(unit, ecb, state)
 			default:
 #ifdef	AHBDEBUG
 				if (ahb_debug & AHB_SHOWMISC) {
-					printf("unexpected targ_status: %x\n",
-					    stat->targ_status);
+					printf("unexpected targ_status %x\n",
+						stat->targ_status);
 				}
 #endif /*AHBDEBUG */
 				xs->error = XS_DRIVER_STUFFUP;
 			}
 		}
 	}
-done:	xs->flags |= ITSDONE;
-	ahb_free_ecb(unit, ecb, xs->flags);
+    done:
+	xs->flags |= ITSDONE;
+	ahb_free_ecb(ahb, ecb, xs->flags);
 	scsi_done(xs);
 }
 
@@ -730,12 +737,12 @@ done:	xs->flags |= ITSDONE;
  * free list.
  */
 void
-ahb_free_ecb(unit, ecb, flags)
-	int	unit, flags;
-	struct	ecb *ecb;
+ahb_free_ecb(ahb, ecb, flags)
+	struct ahb_data *ahb;
+	struct ecb *ecb;
+	int flags;
 {
-	unsigned int opri;
-	struct ahb_data *ahb = ahbdata[unit];
+	int opri;
 
 	if (!(flags & SCSI_NOMASK))
 		opri = splbio();
@@ -747,40 +754,40 @@ ahb_free_ecb(unit, ecb, flags)
 	 * If there were none, wake abybody waiting for
 	 * one to come free, starting with queued entries
 	 */
-	if (!ecb->next) {
+	if (!ecb->next)
 		wakeup((caddr_t)&ahb->free_ecb);
-	}
+
 	if (!(flags & SCSI_NOMASK))
 		splx(opri);
 }
 
 /*
  * Get a free ecb 
- * If there are none, see if we can allocate a
- * new one. If so, put it in the hash table too
- * otherwise either return an error or sleep
+ *
+ * If there are none, see if we can allocate a new one. If so, put it in the
+ * hash table too otherwise either return an error or sleep.
  */
 struct ecb *
-ahb_get_ecb(unit, flags)
-	int	unit, flags;
+ahb_get_ecb(ahb, flags)
+	struct ahb_data *ahb;
+	int flags;
 {
-	struct ahb_data *ahb = ahbdata[unit];
-	unsigned opri;
+	int opri;
 	struct ecb *ecbp;
-	int     hashnum;
+	int hashnum;
 
 	if (!(flags & SCSI_NOMASK))
 		opri = splbio();
+
 	/*
 	 * If we can and have to, sleep waiting for one to come free
 	 * but only if we can't allocate a new one.
 	 */
 	while (!(ecbp = ahb->free_ecb)) {
 		if (ahb->numecbs < AHB_ECB_MAX) {
-			ecbp = (struct ecb *) malloc(sizeof(struct ecb),
-				M_TEMP,
-				M_NOWAIT);
-			if (ecbp) {
+			if (ecbp = (struct ecb *) malloc(sizeof(struct ecb),
+			    M_TEMP,
+			    M_NOWAIT)) {
 				bzero(ecbp, sizeof(struct ecb));
 				ahb->numecbs++;
 				ecbp->flags = ECB_ACTIVE;
@@ -793,35 +800,37 @@ ahb_get_ecb(unit, flags)
 				ecbp->nexthash = ahb->ecbhash[hashnum];
 				ahb->ecbhash[hashnum] = ecbp;
 			} else {
-				printf("ahb%d: Can't malloc ECB\n", unit);
-			} goto gottit;
+				printf("%s: Can't malloc ECB\n",
+					ahb->sc_dev.dv_xname);
+			}
+			goto gottit;
 		} else {
-			if (!(flags & SCSI_NOSLEEP)) {
+			if (!(flags & SCSI_NOSLEEP))
 				tsleep((caddr_t)&ahb->free_ecb, PRIBIO,
 				    "ahbecb", 0);
-			}
 		}
-	} if (ecbp) {
+	}
+	if (ecbp) {
 		/* Get ECB from from free list */
 		ahb->free_ecb = ecbp->next;
 		ecbp->flags = ECB_ACTIVE;
 	}
-gottit:	if (!(flags & SCSI_NOMASK))
+    gottit:
+	if (!(flags & SCSI_NOMASK))
 		splx(opri);
 
-	return (ecbp);
+	return ecbp;
 }
 
 /*
- * given a physical address, find the ecb that
- * it corresponds to:
+ * given a physical address, find the ecb that it corresponds to.
  */
 struct ecb *
 ahb_ecb_phys_kv(ahb, ecb_phys)
 	struct ahb_data *ahb;
 	physaddr ecb_phys;
 {
-	int     hashnum = ECB_HASH(ecb_phys);
+	int hashnum = ECB_HASH(ecb_phys);
 	struct ecb *ecbp = ahb->ecbhash[hashnum];
 
 	while (ecbp) {
@@ -836,15 +845,15 @@ ahb_ecb_phys_kv(ahb, ecb_phys)
  * Start the board, ready for normal operation
  */
 int
-ahb_init(unit)
-	int     unit;
+ahb_find(ahb)
+	struct ahb_data *ahb;
 {
-	struct ahb_data *ahb = ahbdata[unit];
-	int     port = ahb->baseport;
-	int     intdef;
-	int     wait = 1000;	/* 1 sec enough? */
-	int     i;
-	int     stport = port + G2STAT;
+	u_short port = ahb->baseport;
+	u_short stport = port + G2STAT;
+	u_char intdef;
+	int i;
+	int wait = 1000;	/* 1 sec enough? */
+
 #define	NO_NO 1
 #ifdef NO_NO
 	/*
@@ -855,39 +864,35 @@ ahb_init(unit)
 	outb(port + PORTADDR, PORTADDR_ENHANCED);
 
 	outb(port + G2CNTRL, G2CNTRL_HARD_RESET);
-	DELAY(1000);
+	delay(1000);
 	outb(port + G2CNTRL, 0);
-	DELAY(10000);
+	delay(10000);
 	while (--wait) {
 		if ((inb(stport) & G2STAT_BUSY) == 0)
 			break;
-		DELAY(1000);
-	} if (wait == 0) {
+		delay(1000);
+	}
+	if (!wait) {
 #ifdef	AHBDEBUG
 		if (ahb_debug & AHB_SHOWMISC)
-			printf("ahb_init: No answer from aha1742 board\n");
+			printf("ahb_find: No answer from aha1742 board\n");
 #endif /*AHBDEBUG */
-		return (ENXIO);
+		return ENXIO;
 	}
-	i = inb(port + MBOXIN0) & 0xff;
+	i = inb(port + MBOXIN0);
 	if (i) {
 		printf("self test failed, val = 0x%x\n", i);
-		return (EIO);
+		return EIO;
 	}
 #endif
+
 	while (inb(stport) & G2STAT_INT_PEND) {
 		printf(".");
 		outb(port + G2CNTRL, G2CNTRL_CLEAR_EISA_INT);
-		DELAY(10000);
+		delay(10000);
 	}
 	outb(port + EBCTRL, CDEN);	/* enable full card */
 	outb(port + PORTADDR, PORTADDR_ENHANCED);
-	/*
-	 * Assume we have a board at this stage
-	 * setup dma channel from jumpers and save int
-	 * level
-	 */
-	printf("ahb%d: reading board settings, ", unit);
 
 	intdef = inb(port + INTDEF);
 	switch (intdef & 0x07) {
@@ -910,10 +915,9 @@ ahb_init(unit)
 		ahb->vect = 15;
 		break;
 	default:
-		printf("illegal int setting\n");
-		return (EIO);
+		printf("illegal int setting %x\n", intdef);
+		return EIO;
 	}
-	printf("int=%d\n", ahb->vect);
 
 	outb(port + INTDEF, (intdef | INTEN));	/* make sure we can interrupt */
 
@@ -923,43 +927,44 @@ ahb_init(unit)
 	/*
 	 * Note that we are going and return (to probe)
 	 */
-	ahb->flags |= AHB_INIT;
-	return (0);
+	return 0;
 }
 
-#ifndef	min
-#define min(x,y) (x < y ? x : y)
-#endif	/* min */ 
+void
+ahb_init(ahb)
+	struct ahb_data *ahb;
+{
+
+}
 
 void
 ahbminphys(bp)
 	struct buf *bp;
 {
-	if (bp->b_bcount > ((AHB_NSEG - 1) * PAGESIZ)) {
-		bp->b_bcount = ((AHB_NSEG - 1) * PAGESIZ);
-	}
+
+	if (bp->b_bcount > ((AHB_NSEG - 1) << PGSHIFT))
+		bp->b_bcount = ((AHB_NSEG - 1) << PGSHIFT);
 }
 
 /*
- * start a scsi operation given the command and
- * the data address. Also needs the unit, target
- * and lu
+ * start a scsi operation given the command and the data address.  Also needs
+ * the unit, target and lu.
  */
-int32 
+int 
 ahb_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
+	struct scsi_link *sc_link = xs->sc_link;
+	struct ahb_data *ahb = sc_link->adapter_softc;
 	struct ecb *ecb;
 	struct ahb_dma_seg *sg;
-	int     seg;		/* scatter gather seg being worked on */
-	int     thiskv;
+	int seg;		/* scatter gather seg being worked on */
+	int thiskv;
 	physaddr thisphys, nextphys;
-	int     unit = xs->sc_link->adapter_unit;
-	int     bytes_this_seg, bytes_this_page, datalen, flags;
-	struct ahb_data *ahb = ahbdata[unit];
-	int     s;
+	int bytes_this_seg, bytes_this_page, datalen, flags;
+	int s;
 
-	SC_DEBUG(xs->sc_link, SDEV_DB2, ("ahb_scsi_cmd\n"));
+	SC_DEBUG(sc_link, SDEV_DB2, ("ahb_scsi_cmd\n"));
 	/*
 	 * get a ecb (mbox-out) to use. If the transfer
 	 * is from a buf (possibly from interrupt time)
@@ -967,22 +972,23 @@ ahb_scsi_cmd(xs)
 	 */
 	flags = xs->flags;
 	if (xs->bp)
-		flags |= (SCSI_NOSLEEP);	/* just to be sure */
+		flags |= SCSI_NOSLEEP;	/* just to be sure */
 	if (flags & ITSDONE) {
-		printf("ahb%d: Already done?", unit);
+		printf("%s: already done?", ahb->sc_dev.dv_xname);
 		xs->flags &= ~ITSDONE;
 	}
 	if (!(flags & INUSE)) {
-		printf("ahb%d: Not in use?", unit);
+		printf("%s: not in use?", ahb->sc_dev.dv_xname);
 		xs->flags |= INUSE;
 	}
-	if (!(ecb = ahb_get_ecb(unit, flags))) {
+	if (!(ecb = ahb_get_ecb(ahb, flags))) {
 		xs->error = XS_DRIVER_STUFFUP;
-		return (TRY_AGAIN_LATER);
+		return TRY_AGAIN_LATER;
 	}
 	cheat = ecb;
-	SC_DEBUG(xs->sc_link, SDEV_DB3, ("start ecb(%x)\n", ecb));
+	SC_DEBUG(sc_link, SDEV_DB3, ("start ecb(%x)\n", ecb));
 	ecb->xs = xs;
+
 	/*
 	 * If it's a reset, we need to do an 'immediate'
 	 * command, and store it's ecb for later
@@ -991,28 +997,27 @@ ahb_scsi_cmd(xs)
 	 */
 	if (flags & SCSI_RESET) {
 		ecb->flags |= ECB_IMMED;
-		if (ahb->immed_ecb) {
-			return (TRY_AGAIN_LATER);
-		}
+		if (ahb->immed_ecb)
+			return TRY_AGAIN_LATER;
 		ahb->immed_ecb = ecb;
 		if (!(flags & SCSI_NOMASK)) {
 			s = splbio();
-			ahb_send_immed(unit, xs->sc_link->target, AHB_TARG_RESET);
-			timeout((timeout_t)ahb_timeout, (caddr_t)ecb, (xs->timeout * hz) / 1000);
+			ahb_send_immed(ahb, sc_link->target, AHB_TARG_RESET);
+			timeout(ahb_timeout, (caddr_t)ecb, (xs->timeout * hz) / 1000);
 			splx(s);
-			return (SUCCESSFULLY_QUEUED);
+			return SUCCESSFULLY_QUEUED;
 		} else {
-			ahb_send_immed(unit, xs->sc_link->target, AHB_TARG_RESET);
+			ahb_send_immed(ahb, sc_link->target, AHB_TARG_RESET);
 			/*
 			 * If we can't use interrupts, poll on completion
 			 */
-			SC_DEBUG(xs->sc_link, SDEV_DB3, ("wait\n"));
-			if (ahb_poll(unit, xs->timeout)) {
-				ahb_free_ecb(unit, ecb, flags);
+			SC_DEBUG(sc_link, SDEV_DB3, ("wait\n"));
+			if (ahb_poll(ahb, xs->timeout)) {
+				ahb_free_ecb(ahb, ecb, flags);
 				xs->error = XS_TIMEOUT;
-				return (HAD_ERROR);
+				return HAD_ERROR;
 			}
-			return (COMPLETE);
+			return COMPLETE;
 		}
 	}
 	/*
@@ -1020,30 +1025,29 @@ ahb_scsi_cmd(xs)
 	 */
 	ecb->opcode = ECB_SCSI_OP;
 	ecb->opt1 = ECB_SES | ECB_DSB | ECB_ARS;
-	if (xs->datalen) {
+	if (xs->datalen)
 		ecb->opt1 |= ECB_S_G;
-	}
-	ecb->opt2 = xs->sc_link->lun | ECB_NRB;
+	ecb->opt2 = sc_link->lun | ECB_NRB;
 	ecb->cdblen = xs->cmdlen;
-	ecb->sense = KVTOPHYS(&(ecb->ecb_sense));
+	ecb->sense = KVTOPHYS(&ecb->ecb_sense);
 	ecb->senselen = sizeof(ecb->ecb_sense);
-	ecb->status = KVTOPHYS(&(ecb->ecb_status));
+	ecb->status = KVTOPHYS(&ecb->ecb_status);
 
 	if (xs->datalen) {	/* should use S/G only if not zero length */
 		ecb->data = KVTOPHYS(ecb->ahb_dma);
 		sg = ecb->ahb_dma;
 		seg = 0;
+
 #ifdef	TFS
 		if (flags & SCSI_DATA_UIO) {
 			iovp = ((struct uio *) xs->data)->uio_iov;
 			datalen = ((struct uio *) xs->data)->uio_iovcnt;
 			xs->datalen = 0;
-			while ((datalen) && (seg < AHB_NSEG)) {
+			while (datalen && seg < AHB_NSEG) {
 				sg->addr = (physaddr) iovp->iov_base;
 				xs->datalen += sg->len = iovp->iov_len;
-				SC_DEBUGN(xs->sc_link, SDEV_DB4,
-				    ("(0x%x@0x%x)", iovp->iov_len
-					,iovp->iov_base));
+				SC_DEBUGN(sc_link, SDEV_DB4, ("(0x%x@0x%x)",
+					iovp->iov_len, iovp->iov_base));
 				sg++;
 				iovp++;
 				seg++;
@@ -1056,124 +1060,129 @@ ahb_scsi_cmd(xs)
 			/*
 			 * Set up the scatter gather block
 			 */
-
-			SC_DEBUG(xs->sc_link, SDEV_DB4,
-			    ("%d @0x%x:- ", xs->datalen, xs->data));
+			SC_DEBUG(sc_link, SDEV_DB4,
+				("%d @0x%x:- ", xs->datalen, xs->data));
 			datalen = xs->datalen;
 			thiskv = (int) xs->data;
 			thisphys = KVTOPHYS(thiskv);
 
-			while ((datalen) && (seg < AHB_NSEG)) {
+			while (datalen && seg < AHB_NSEG) {
 				bytes_this_seg = 0;
 
 				/* put in the base address */
 				sg->addr = thisphys;
 
-				SC_DEBUGN(xs->sc_link, SDEV_DB4, ("0x%x", thisphys));
+				SC_DEBUGN(sc_link, SDEV_DB4,
+					("0x%x", thisphys));
 
 				/* do it at least once */
 				nextphys = thisphys;
 				while ((datalen) && (thisphys == nextphys)) {
 					/*
-					 * This page is contiguous (physically) with   
-					 * the the last, just extend the length             
+					 * This page is contiguous (physically)
+					 * with the the last, just extend the
+					 * length
 					 */
 					/* how far to the end of the page */
-					nextphys = (thisphys & (~(PAGESIZ - 1)))
-					    + PAGESIZ;
+					nextphys = (thisphys & ~PGOFSET) + NBPG;
 					bytes_this_page = nextphys - thisphys;
 					/**** or the data ****/
-					bytes_this_page = min(bytes_this_page
-					    ,datalen);
+					bytes_this_page = min(bytes_this_page,
+							      datalen);
 					bytes_this_seg += bytes_this_page;
 					datalen -= bytes_this_page;
 
 					/* get more ready for the next page */
-					thiskv = (thiskv & (~(PAGESIZ - 1)))
-					    + PAGESIZ;
+					thiskv = (thiskv & ~PGOFSET) + NBPG;
 					if (datalen)
 						thisphys = KVTOPHYS(thiskv);
 				}
 				/*
 				 * next page isn't contiguous, finish the seg 
 				 */
-				SC_DEBUGN(xs->sc_link, SDEV_DB4,
-				    ("(0x%x)", bytes_this_seg));
+				SC_DEBUGN(sc_link, SDEV_DB4,
+					("(0x%x)", bytes_this_seg));
 				sg->len = bytes_this_seg;
 				sg++;
 				seg++;
 			}
-		} /*end of iov/kv decision */
-		ecb->datalen = seg * sizeof(struct ahb_dma_seg);
-		SC_DEBUGN(xs->sc_link, SDEV_DB4, ("\n"));
-		if (datalen) {	/* there's still data, must have run out of segs! */
-			printf("ahb_scsi_cmd%d: more than %d DMA segs\n",
-			    unit, AHB_NSEG);
-			xs->error = XS_DRIVER_STUFFUP;
-			ahb_free_ecb(unit, ecb, flags);
-			return (HAD_ERROR);
 		}
-	} else {		/* No data xfer, use non S/G values */
+
+		/*end of iov/kv decision */
+		ecb->datalen = seg * sizeof(struct ahb_dma_seg);
+		SC_DEBUGN(sc_link, SDEV_DB4, ("\n"));
+
+		if (datalen) {
+			/*
+			 * there's still data, must have run out of segs!
+			 */
+			printf("%s: ahb_scsi_cmd, more than %d DMA segs\n",
+				ahb->sc_dev.dv_xname, AHB_NSEG);
+			xs->error = XS_DRIVER_STUFFUP;
+			ahb_free_ecb(ahb, ecb, flags);
+			return HAD_ERROR;
+		}
+	} else {	/* No data xfer, use non S/G values */
 		ecb->data = (physaddr) 0;
 		ecb->datalen = 0;
-	} ecb->chain = (physaddr) 0;
+	}
+	ecb->chain = (physaddr) 0;
+
 	/*
 	 * Put the scsi command in the ecb and start it
 	 */
 	bcopy(xs->cmd, ecb->cdb, xs->cmdlen);
+
 	/*
 	 * Usually return SUCCESSFULLY QUEUED
 	 */
 	if (!(flags & SCSI_NOMASK)) {
 		s = splbio();
-		ahb_send_mbox(unit, OP_START_ECB, xs->sc_link->target, ecb);
-		timeout((timeout_t)ahb_timeout, (caddr_t)ecb, (xs->timeout * hz) / 1000);
+		ahb_send_mbox(ahb, OP_START_ECB, sc_link->target, ecb);
+		timeout(ahb_timeout, (caddr_t)ecb, (xs->timeout * hz) / 1000);
 		splx(s);
-		SC_DEBUG(xs->sc_link, SDEV_DB3, ("cmd_sent\n"));
-		return (SUCCESSFULLY_QUEUED);
+		SC_DEBUG(sc_link, SDEV_DB3, ("cmd_sent\n"));
+		return SUCCESSFULLY_QUEUED;
 	}
+
 	/*
 	 * If we can't use interrupts, poll on completion
 	 */
-	ahb_send_mbox(unit, OP_START_ECB, xs->sc_link->target, ecb);
-	SC_DEBUG(xs->sc_link, SDEV_DB3, ("cmd_wait\n"));
+	ahb_send_mbox(ahb, OP_START_ECB, sc_link->target, ecb);
+	SC_DEBUG(sc_link, SDEV_DB3, ("cmd_wait\n"));
 	do {
-		if (ahb_poll(unit, xs->timeout)) {
+		if (ahb_poll(ahb, xs->timeout)) {
 			if (!(xs->flags & SCSI_SILENT))
-				printf("cmd fail\n");
-			ahb_send_mbox(unit, OP_ABORT_ECB, xs->sc_link->target, ecb);
-			if (ahb_poll(unit, 2000)) {
-				printf("abort failed in wait\n");
-				ahb_free_ecb(unit, ecb, flags);
+				printf("%s: cmd fail\n", ahb->sc_dev.dv_xname);
+			ahb_send_mbox(ahb, OP_ABORT_ECB, sc_link->target, ecb);
+			if (ahb_poll(ahb, 2000)) {
+				printf("%s: abort failed in wait\n",
+					ahb->sc_dev.dv_xname);
+				ahb_free_ecb(ahb, ecb, flags);
 			}
 			xs->error = XS_DRIVER_STUFFUP;
-			return (HAD_ERROR);
+			return HAD_ERROR;
 		}
-	} while (!(xs->flags & ITSDONE));	/* something (?) else finished */
-	if (xs->error) {
-		return (HAD_ERROR);
-	}
-	return (COMPLETE);
+	} while (!(xs->flags & ITSDONE));/* something (?) else finished */
+	if (xs->error)
+		return HAD_ERROR;
+	return COMPLETE;
 }
 
 void
-ahb_timeout(struct ecb * ecb)
+ahb_timeout(arg)
+	caddr_t arg;
 {
-	int     unit;
-	struct ahb_data *ahb;
-	int     s = splbio();
+	int s = splbio();
+	struct ecb *ecb = (void *)arg;
+	struct ahb_data *ahb = ecb->xs->sc_link->adapter_softc;
 
-	unit = ecb->xs->sc_link->adapter_unit;
-	ahb = ahbdata[unit];
-	printf("ahb%d:%d:%d (%s%d) timed out ", unit
-	    ,ecb->xs->sc_link->target
-	    ,ecb->xs->sc_link->lun
-	    ,ecb->xs->sc_link->device->name
-	    ,ecb->xs->sc_link->dev_unit);
+	sc_print_addr(ecb->xs->sc_link);
+	printf("timed out ");
 
 #ifdef	AHBDEBUG
 	if (ahb_debug & AHB_SHOWECBS)
-		ahb_print_active_ecb(unit);
+		ahb_print_active_ecb(ahb);
 #endif /*AHBDEBUG */
 
 	/*
@@ -1182,28 +1191,25 @@ ahb_timeout(struct ecb * ecb)
 	if (ecb->flags & ECB_IMMED) {
 		ecb->xs->retries = 0;	/* I MEAN IT ! */
 		ecb->flags |= ECB_IMMED_FAIL;
-		ahb_done(unit, ecb, FAIL);
+		ahb_done(ahb, ecb, 1);
 		splx(s);
 		return;
 	}
+
 	/*
 	 * If it has been through before, then
 	 * a previous abort has failed, don't
 	 * try abort again
 	 */
 	if (ecb->flags == ECB_ABORTED) {
-		/*
-		 * abort timed out
-		 */
-		printf("AGAIN");
+		printf("AGAIN\n");
 		ecb->xs->retries = 0;	/* I MEAN IT ! */
 		ecb->ecb_status.ha_status = HS_CMD_ABORTED_HOST;
-		ahb_done(unit, ecb, FAIL);
+		ahb_done(ahb, ecb, 1);
 	} else {		/* abort the operation that has timed out */
 		printf("\n");
-		ahb_send_mbox(unit, OP_ABORT_ECB, ecb->xs->sc_link->target, ecb);
-		/* 2 secs for the abort */
-		timeout((timeout_t)ahb_timeout, (caddr_t)ecb, 2 * hz);
+		ahb_send_mbox(ahb, OP_ABORT_ECB, ecb->xs->sc_link->target, ecb);
+		timeout(ahb_timeout, (caddr_t)ecb, 2 * hz);
 		ecb->flags = ECB_ABORTED;
 	}
 	splx(s);
@@ -1214,35 +1220,28 @@ void
 ahb_print_ecb(ecb)
 	struct ecb *ecb;
 {
-	printf("ecb:%x op:%x cmdlen:%d senlen:%d\n"
-	    ,ecb
-	    ,ecb->opcode
-	    ,ecb->cdblen
-	    ,ecb->senselen);
-	printf("	datlen:%d hstat:%x tstat:%x flags:%x\n"
-	    ,ecb->datalen
-	    ,ecb->ecb_status.ha_status
-	    ,ecb->ecb_status.targ_status
-	    ,ecb->flags);
+	printf("ecb:%x op:%x cmdlen:%d senlen:%d\n",
+		ecb, ecb->opcode, ecb->cdblen, ecb->senselen);
+	printf("	datlen:%d hstat:%x tstat:%x flags:%x\n",
+		ecb->datalen, ecb->ecb_status.ha_status,
+		ecb->ecb_status.targ_status, ecb->flags);
 	show_scsi_cmd(ecb->xs);
 }
 
 void
-ahb_print_active_ecb(int unit)
+ahb_print_active_ecb(ahb)
+	struct ahb_data *ahb;
 {
-	struct ahb_data *ahb = ahbdata[unit];
 	struct ecb *ecb;
-	int     i = 0;
+	int i = 0;
 
-	while (i < ECB_HASH_SIZE) {
+	while (i++ < ECB_HASH_SIZE) {
 		ecb = ahb->ecbhash[i];
 		while (ecb) {
-			if (ecb->flags != ECB_FREE) {
+			if (ecb->flags != ECB_FREE)
 				ahb_print_ecb(ecb);
-			}
 			ecb = ecb->nexthash;
-		} i++;
+		}
 	}
 }
 #endif /*AHBDEBUG */
-#endif /*KERNEL */
