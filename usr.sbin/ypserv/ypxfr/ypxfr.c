@@ -1,4 +1,4 @@
-/*	$NetBSD: ypxfr.c,v 1.11 2001/02/19 23:22:53 cgd Exp $	*/
+/*	$NetBSD: ypxfr.c,v 1.12 2002/07/06 00:53:54 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypxfr.c,v 1.11 2001/02/19 23:22:53 cgd Exp $");
+__RCSID("$NetBSD: ypxfr.c,v 1.12 2002/07/06 00:53:54 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -63,26 +63,24 @@ __RCSID("$NetBSD: ypxfr.c,v 1.11 2001/02/19 23:22:53 cgd Exp $");
 
 DBM	*db;
 
-static	int ypxfr_foreach __P((int, char *, int, char *, int, char *));
+static	int ypxfr_foreach(int, char *, int, char *, int, char *);
 
-int	main __P((int, char *[]));
-int	get_local_ordernum __P((char *, char *, u_int *));
-int	get_remote_ordernum __P((CLIENT *, char *, char *, u_int, u_int *));
-void	get_map __P((CLIENT *, char *, char *, struct ypall_callback *));
-DBM	*create_db __P((char *, char *, char *));
-int	install_db __P((char *, char *, char *));
-int	unlink_db __P((char *, char *, char *));
-int	add_order __P((DBM *, u_int));
-int	add_master __P((CLIENT *, char *, char *, DBM *));
-int	add_interdomain __P((CLIENT *, char *, char *, DBM *));
-int	add_secure __P((CLIENT *, char *, char *, DBM *));
-int	send_clear __P((CLIENT *));
-int	send_reply __P((CLIENT *, int, int));
+int	main(int, char *[]);
+int	get_local_ordernum(char *, char *, u_int *);
+int	get_remote_ordernum(CLIENT *, char *, char *, u_int, u_int *);
+void	get_map(CLIENT *, char *, char *, struct ypall_callback *);
+DBM	*create_db(char *, char *, char *);
+int	install_db(char *, char *, char *);
+int	unlink_db(char *, char *, char *);
+int	add_order(DBM *, u_int);
+int	add_master(CLIENT *, char *, char *, DBM *);
+int	add_interdomain(CLIENT *, char *, char *, DBM *);
+int	add_secure(CLIENT *, char *, char *, DBM *);
+int	send_clear(CLIENT *);
+int	send_reply(CLIENT *, int, int);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char **argv)
 {
 	int need_usage = 0, cflag = 0, fflag = 0, Cflag = 0;
 	int ch;
@@ -275,13 +273,8 @@ main(argc, argv)
 }
 
 static int
-ypxfr_foreach(status, keystr, keylen, valstr, vallen, data)
-	int status;
-	char *keystr;
-	int keylen;
-	char *valstr;
-	int vallen;
-	char *data;
+ypxfr_foreach(int status, char *keystr, int keylen, char *valstr,
+	      int vallen, char *data)
 {
 	datum key, val;
 
@@ -303,9 +296,7 @@ ypxfr_foreach(status, keystr, keylen, valstr, vallen, data)
 }
 
 int
-get_local_ordernum(domain, map, lordernum)
-	char *domain, *map;
-	u_int *lordernum;
+get_local_ordernum(char *domain, char *map, u_int *lordernum)
 {
 	char map_path[1024];
 	char order_key[] = YP_LAST_KEY;
@@ -371,10 +362,8 @@ get_local_ordernum(domain, map, lordernum)
 }
 
 int
-get_remote_ordernum(client, domain, map, lordernum, rordernum)
-	CLIENT *client;
-	char *domain, *map;
-	u_int lordernum, *rordernum;
+get_remote_ordernum(CLIENT *client, char *domain, char *map,
+		    u_int lordernum, u_int *rordernum)
 {
 	int status;
 
@@ -391,18 +380,15 @@ get_remote_ordernum(client, domain, map, lordernum, rordernum)
 }
 
 void
-get_map(client, domain, map, incallback)
-	CLIENT *client;
-	char *domain, *map;
-	struct ypall_callback *incallback;
+get_map(CLIENT *client, char *domain, char *map,
+	struct ypall_callback *incallback)
 {
 
 	(void)yp_all_host(client, domain, map, incallback);
 }
 
 DBM *
-create_db(domain, map, temp_map)
-	char *domain, *map, *temp_map;
+create_db(char *domain, char *map, char *temp_map)
 {
 	char db_temp[255];
 	DBM *db;
@@ -417,8 +403,7 @@ create_db(domain, map, temp_map)
 }
 
 int
-install_db(domain, map, temp_map)
-	char *domain, *map, *temp_map;
+install_db(char *domain, char *map, char *temp_map)
 {
 	char db_name[255], db_temp[255];
 
@@ -439,8 +424,7 @@ install_db(domain, map, temp_map)
 }
 
 int
-unlink_db(domain, map, temp_map)
-	char *domain, *map, *temp_map;
+unlink_db(char *domain, char *map, char *temp_map)
 {
 	char db_temp[255];
 
@@ -457,9 +441,7 @@ unlink_db(domain, map, temp_map)
 }
 
 int
-add_order(db, ordernum)
-	DBM *db;
-	u_int ordernum;
+add_order(DBM *db, u_int ordernum)
 {
 	char datestr[11];
 	datum key, val;
@@ -485,10 +467,7 @@ add_order(db, ordernum)
 }
 
 int
-add_master(client, domain, map, db)
-	CLIENT *client;
-	char *domain, *map;
-	DBM *db;
+add_master(CLIENT *client, char *domain, char *map, DBM *db)
 {
 	char keystr[] = YP_MASTER_KEY;
 	char *master;
@@ -518,10 +497,7 @@ add_master(client, domain, map, db)
 }
 
 int
-add_interdomain(client, domain, map, db)
-	CLIENT *client;
-	char *domain, *map;
-	DBM *db;
+add_interdomain(CLIENT *client, char *domain, char *map, DBM *db)
 {
 	char keystr[] = YP_INTERDOMAIN_KEY;
 	char *value;
@@ -553,10 +529,7 @@ add_interdomain(client, domain, map, db)
 }
 
 int
-add_secure(client, domain, map, db)
-	CLIENT *client;
-	char *domain, *map;
-	DBM *db;
+add_secure(CLIENT *client, char *domain, char *map, DBM *db)
 {
 	char keystr[] = YP_SECURE_KEY;
 	char *value;
@@ -588,8 +561,7 @@ add_secure(client, domain, map, db)
 }
 
 int
-send_clear(client)
-	CLIENT *client;
+send_clear(CLIENT *client)
 {
 	struct timeval tv;
 	int r;
@@ -611,9 +583,7 @@ send_clear(client)
 }
 
 int
-send_reply(client, status, tid)
-	CLIENT *client;
-	int status, tid;
+send_reply(CLIENT *client, int status, int tid)
 {
 	struct timeval tv;
 	struct ypresp_xfr resp;
