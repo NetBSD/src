@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.86 2002/12/01 05:53:30 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.87 2003/03/21 15:52:57 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.86 2002/12/01 05:53:30 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.87 2003/03/21 15:52:57 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.86 2002/12/01 05:53:30 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.87 2003/03/21 15:52:57 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -250,6 +250,15 @@ static struct {
 { ".WAIT",	  Wait, 	0 },
 };
 
+/*
+ * Used by ParseDoSpecialSrc()
+ */
+typedef struct {
+    int		op;
+    char	*src;
+    Lst		allsrc;
+} SpecialSrc;
+
 static int ParseIsEscaped(const char *, const char *);
 static void ParseErrorInternal(char *, size_t, int, char *, ...)
      __attribute__((__format__(__printf__, 4, 5)));
@@ -259,7 +268,8 @@ static int ParseFindKeyword(char *);
 static int ParseLinkSrc(ClientData, ClientData);
 static int ParseDoOp(ClientData, ClientData);
 static int ParseAddDep(ClientData, ClientData);
-static void ParseDoSrc(int, char *, Lst);
+static int ParseDoSpecialSrc(ClientData, ClientData);
+static void ParseDoSrc(int, char *, Lst, Boolean);
 static int ParseFindMain(ClientData, ClientData);
 static int ParseAddDir(ClientData, ClientData);
 static int ParseClearPath(ClientData, ClientData);
@@ -590,6 +600,54 @@ ParseAddDep(ClientData pp, ClientData sp)
 	return 1;
 }
 
+/* -
+ *---------------------------------------------------------------------
+ * ParseDoSpecialSrc  --
+ *	ParseDoSrc struck an unexpanded variable in a src.
+ *	The most likely reason is a src that refers to .TARGET or
+ *	.PREFIX so we get called to set those for each target
+ *	and then call ParseDoSrc again to do the real work.
+ *
+ * Input:
+ *	tp		A target GNode *
+ *	sp		A SpecialSrc * which contains the args we need
+ *			for ParseDoSrc.
+ *
+ * Results:
+ *	Goodness
+ *
+ * Side Effects:
+ *	The target GNode will have .TARGET and .PREFIX set, this seems
+ *	harmless.
+ */
+static int
+ParseDoSpecialSrc(ClientData tp, ClientData sp)
+{
+    GNode *tn = (GNode *) tp;
+    SpecialSrc *ss = (SpecialSrc *) sp;
+    char *cp;
+    char *cp2;
+    char *pref;
+    
+    Var_Set(TARGET, tn->name, tn, 0);
+    if ((pref = strrchr(tn->name, '/')))
+	pref++;
+    else
+	pref = tn->name;
+    if ((cp2 = strchr(pref, '.')) > tn->name) {
+	cp = estrdup(pref);
+	cp[cp2 - pref] = '\0';
+	Var_Set(PREFIX, cp, tn, 0);
+	free(cp);
+    } else
+	Var_Set(PREFIX, pref, tn, 0);   
+    cp = Var_Subst(NULL, ss->src, tn, FALSE);
+    if (strchr(cp, '$'))
+	Parse_Error(PARSE_WARNING, "Cannot resolve '%s' here", ss->src);
+    ParseDoSrc(ss->op, cp, ss->allsrc, FALSE); /* don't come back */
+    return 0;
+}
+
 
 /*-
  *---------------------------------------------------------------------
@@ -604,6 +662,7 @@ ParseAddDep(ClientData pp, ClientData sp)
  *	tOp		operator (if any) from special targets
  *	src		name of the source to handle
  *	allsrc		List of all sources to wait for
+ *	resolve		boolean - should we try and resolve .TARGET refs.
  *
  * Results:
  *	None
@@ -614,7 +673,7 @@ ParseAddDep(ClientData pp, ClientData sp)
  *---------------------------------------------------------------------
  */
 static void
-ParseDoSrc(int tOp, char *src, Lst allsrc)
+ParseDoSrc(int tOp, char *src, Lst allsrc, Boolean resolve)
 {
     GNode	*gn = NULL;
 
@@ -679,6 +738,19 @@ ParseDoSrc(int tOp, char *src, Lst allsrc)
 	 * the 'cohorts' list of the node) or all the cohorts are linked
 	 * to all the targets.
 	 */
+	if (resolve && strchr(src, '$')) {
+	    SpecialSrc ss;
+
+	    ss.op = tOp;
+	    ss.src = src;
+	    ss.allsrc = allsrc;
+
+	    /*
+	     * This will come back to us in a sec if possible.
+	     */
+	    Lst_ForEach(targets, ParseDoSpecialSrc, (ClientData)&ss);
+	    return;
+	}
 	gn = Targ_FindNode (src, TARG_CREATE);
 	if (tOp) {
 	    gn->type |= tOp;
@@ -1289,7 +1361,7 @@ ParseDoDependency(char *line)
 
 		while (!Lst_IsEmpty (sources)) {
 		    gn = (GNode *) Lst_DeQueue (sources);
-		    ParseDoSrc (tOp, gn->name, curSrcs);
+		    ParseDoSrc (tOp, gn->name, curSrcs, TRUE);
 		}
 		Lst_Destroy (sources, NOFREE);
 		cp = line;
@@ -1299,7 +1371,7 @@ ParseDoDependency(char *line)
 		    cp += 1;
 		}
 
-		ParseDoSrc (tOp, line, curSrcs);
+		ParseDoSrc (tOp, line, curSrcs, TRUE);
 	    }
 	    while (*cp && isspace ((unsigned char)*cp)) {
 		cp++;
