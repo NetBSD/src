@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.122 1998/08/16 00:42:51 rvb Exp $	*/
+/*	$NetBSD: trap.c,v 1.123 1998/09/11 12:23:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -718,39 +718,41 @@ syscall(frame)
 	else
 		callp += code;
 	argsize = callp->sy_argsize;
+	if (argsize) {
 #ifdef COMPAT_LINUX
-	/* XXX extra if() for every emul type.. */
-	if (p->p_emul == &emul_linux_aout || p->p_emul == &emul_linux_elf) {
-		/*
-		 * Linux passes the args in ebx, ecx, edx, esi, edi, in
-		 * increasing order.
-		 */
-		switch (argsize) {
-		case 20:
-			args[4] = frame.tf_edi;
-		case 16:
-			args[3] = frame.tf_esi;
-		case 12:
-			args[2] = frame.tf_edx;
-		case 8:
-			args[1] = frame.tf_ecx;
-		case 4:
-			args[0] = frame.tf_ebx;
-		case 0:
-			break;
-		default:
-			panic("linux syscall with weird argument size %d",
-			    argsize);
-			break;
+		/* XXX extra if() for every emul type.. */
+		if (p->p_emul == &emul_linux_aout ||
+		    p->p_emul == &emul_linux_elf) {
+			/*
+			 * Linux passes the args in ebx, ecx, edx, esi, edi, in
+			 * increasing order.
+			 */
+			switch (argsize >> 2) {
+			case 5:
+				args[4] = frame.tf_edi;
+			case 4:
+				args[3] = frame.tf_esi;
+			case 3:
+				args[2] = frame.tf_edx;
+			case 2:
+				args[1] = frame.tf_ecx;
+			case 1:
+				args[0] = frame.tf_ebx;
+				break;
+			default:
+				panic("linux syscall bogus argument size %d",
+				    argsize);
+				break;
+			}
 		}
-		error = 0;
-	}
-	else
+		else
 #endif
-	if (argsize)
-		error = copyin(params, (caddr_t)args, argsize);
-	else
-		error = 0;
+		{
+			error = copyin(params, (caddr_t)args, argsize);
+			if (error)
+				goto bad;
+		}
+	}
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args);
 #endif
@@ -758,8 +760,6 @@ syscall(frame)
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p->p_tracep, code, argsize, args);
 #endif
-	if (error)
-		goto bad;
 	rval[0] = 0;
 	rval[1] = frame.tf_edx;
 	error = (*callp->sy_call)(p, args, rval);
