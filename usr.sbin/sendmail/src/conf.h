@@ -426,6 +426,7 @@ typedef int		pid_t;
 #if defined(__NetBSD__) && ((NetBSD > 199307) || (NetBSD0_9 > 1))
 # undef SETPROCTITLE
 # define HASSETPROCTITLE
+# define setreuid(r,e)	__setreuid(r,e)
 #endif
 # include <sys/cdefs.h>
 # define ERRLIST_PREDEFINED	/* don't declare sys_errlist */
