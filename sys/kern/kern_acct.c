@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.51 2003/01/18 10:06:23 thorpej Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.52 2003/04/20 03:20:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.51 2003/01/18 10:06:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.52 2003/04/20 03:20:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,7 @@ sys_acct(l, v, retval)
 	if (SCARG(uap, path) != NULL) {
 		NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path),
 		    p);
-		if ((error = vn_open(&nd, FWRITE, 0)) != 0)
+		if ((error = vn_open(&nd, FWRITE|O_APPEND, 0)) != 0)
 			return (error);
 		VOP_UNLOCK(nd.ni_vp, 0);
 		if (nd.ni_vp->v_type != VREG) {
