@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.74.2.1 2004/04/27 17:57:52 jdc Exp $
+# $NetBSD: postinstall,v 1.74.2.2 2004/07/25 07:52:47 tron Exp $
 #
 # Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -923,7 +923,7 @@ list()
 
 main()
 {
-	while getopts s:d:m: ch; do
+	while getopts s:d:m:a: ch; do
 		case ${ch} in
 		s)
 			SRC_DIR=${OPTARG}
