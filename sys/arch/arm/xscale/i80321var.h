@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321var.h,v 1.1 2002/03/27 21:45:48 thorpej Exp $	*/
+/*	$NetBSD: i80321var.h,v 1.2 2002/07/25 15:00:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -132,6 +132,9 @@ struct i80321_softc {
 	/* GPIO state */
 	uint8_t sc_gpio_dir;	/* GPIO pin direction (1 == output) */
 	uint8_t sc_gpio_val;	/* GPIO output pin value */
+
+	/* DMA tag for local devices. */
+	struct arm32_bus_dma_tag sc_local_dmat;
 };
 
 extern struct bus_space i80321_bs_tag;
@@ -152,6 +155,8 @@ void	i80321_intr_disestablish(void *);
 void	i80321_bs_init(bus_space_tag_t, void *);
 void	i80321_io_bs_init(bus_space_tag_t, void *);
 void	i80321_mem_bs_init(bus_space_tag_t, void *);
+
+void	i80321_local_dma_init(bus_dma_tag_t, void *);
 
 void	i80321_pci_dma_init(bus_dma_tag_t, void *);
 
