@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.157 2001/03/15 06:10:33 chs Exp $ */
+/* $NetBSD: pmap.c,v 1.158 2001/03/21 03:16:05 chs Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.157 2001/03/15 06:10:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.158 2001/03/21 03:16:05 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -811,7 +811,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 * Figure out how many PTE's are necessary to map the kernel.
 	 * We also reserve space for kmem_alloc_pageable() for vm_fork().
 	 */
-	lev3mapsize = (VM_PHYS_SIZE + ubc_nwins * ubc_winsize +
+	lev3mapsize = (VM_PHYS_SIZE + (ubc_nwins << ubc_winshift) +
 		nbuf * MAXBSIZE + 16 * NCARGS + PAGER_MAP_SIZE) / NBPG +
 		(maxproc * UPAGES) + nkmempages;
 
