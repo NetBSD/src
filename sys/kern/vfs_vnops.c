@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.36 1999/03/31 18:30:13 mycroft Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.36.4.1 1999/06/07 04:25:31 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -153,8 +153,14 @@ vn_open(ndp, fmode, cmode)
 	}
 	if ((error = VOP_OPEN(vp, fmode, cred, p)) != 0)
 		goto bad;
+	if (vp->v_type == VREG &&
+	    uvn_attach(vp, fmode & FWRITE ? VM_PROT_WRITE : 0) == NULL) {
+		error = EIO;
+		goto bad;
+	}
 	if (fmode & FWRITE)
 		vp->v_writecount++;
+
 	return (0);
 bad:
 	vput(vp);

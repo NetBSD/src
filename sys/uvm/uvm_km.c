@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.22.2.1 1999/04/16 16:28:45 chs Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.22.2.1.2.1 1999/06/07 04:25:36 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -421,6 +421,7 @@ uvm_km_init(start, end)
 	 */
 
 	/* kernel_object: for pageable anonymous kernel memory */
+	uao_init();
 	uvm.kernel_object = uao_create(VM_MAX_KERNEL_ADDRESS -
 				 VM_MIN_KERNEL_ADDRESS, UAO_FLAG_KERNOBJ);
 
@@ -671,7 +672,8 @@ uvm_km_kmemalloc(map, obj, size, flags)
 
 	if (uvm_map(map, &kva, size, obj, UVM_UNKNOWN_OFFSET,
 	      UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
-			  UVM_ADV_RANDOM, (flags & UVM_KMF_TRYLOCK))) 
+			  UVM_ADV_RANDOM,
+			  (flags & UVM_KMF_TRYLOCK)))
 			!= KERN_SUCCESS) {
 		UVMHIST_LOG(maphist, "<- done (no VM)",0,0,0,0);
 		return(0);
@@ -775,7 +777,7 @@ uvm_km_free_wakeup(map, addr, size)
 	vm_map_lock(map);
 	(void)uvm_unmap_remove(map, trunc_page(addr), round_page(addr+size), 
 			 &dead_entries);
-	thread_wakeup(map);
+	wakeup(map);
 	vm_map_unlock(map);
 
 	if (dead_entries != NULL)

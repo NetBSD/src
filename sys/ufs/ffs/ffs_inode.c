@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.28 1999/03/24 05:51:30 mrg Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.28.4.1 1999/06/07 04:25:34 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -197,30 +197,20 @@ ffs_truncate(v)
 	fs = oip->i_fs;
 	osize = oip->i_ffs_size;
 	ovp->v_lasta = ovp->v_clen = ovp->v_cstart = ovp->v_lastw = 0;
+
 	/*
-	 * Lengthen the size of the file. We must ensure that the
-	 * last byte of the file is allocated. Since the smallest
-	 * value of osize is 0, length will be at least 1.
+	 * Lengthen the size of the file.
 	 */
+
 	if (osize < length) {
 		if (length > fs->fs_maxfilesize)
 			return (EFBIG);
-		offset = blkoff(fs, length - 1);
-		lbn = lblkno(fs, length - 1);
-		aflags = B_CLRBUF;
-		if (ap->a_flags & IO_SYNC)
-			aflags |= B_SYNC;
-		error = ffs_balloc(oip, lbn, offset + 1, ap->a_cred, &bp,
-				   aflags);
-		if (error)
-			return (error);
+		aflags = 0;
+		bp = 0;
 		oip->i_ffs_size = length;
 		uvm_vnp_setsize(ovp, length);
 		(void) uvm_vnp_uncache(ovp);
-		if (aflags & B_SYNC)
-			bwrite(bp);
-		else
-			bawrite(bp);
+
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(ovp, NULL, NULL, 1));
 	}
@@ -236,21 +226,30 @@ ffs_truncate(v)
 		oip->i_ffs_size = length;
 	} else {
 		lbn = lblkno(fs, length);
+#if 1
+		/* XXX we should handle more than just VREG */
+#else
 		aflags = B_CLRBUF;
 		if (ap->a_flags & IO_SYNC)
 			aflags |= B_SYNC;
-		error = ffs_balloc(oip, lbn, offset, ap->a_cred, &bp, aflags);
+		error = ffs_balloc(oip, lbn, offset, ap->a_cred, &bp, NULL,
+				   aflags);
 		if (error)
 			return (error);
+#endif
 		oip->i_ffs_size = length;
 		size = blksize(fs, oip, lbn);
 		(void) uvm_vnp_uncache(ovp);
+#if 1
+		uvm_vnp_zerorange(ovp, oip->i_ffs_size, size - offset);
+#else
 		memset((char *)bp->b_data + offset, 0,  (u_int)(size - offset));
 		allocbuf(bp, size);
 		if (aflags & B_SYNC)
 			bwrite(bp);
 		else
 			bawrite(bp);
+#endif
 	}
 	uvm_vnp_setsize(ovp, length);
 	/*

@@ -1,4 +1,4 @@
-/* $NetBSD: sysarch.h,v 1.3.2.2 1999/04/30 00:58:33 ross Exp $ */
+/* $NetBSD: sysarch.h,v 1.3 1999/04/30 00:58:32 ross Exp $ */
 
 #ifndef _ALPHA_SYSARCH_H_
 #define _ALPHA_SYSARCH_H_

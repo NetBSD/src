@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.22.2.2 1999/04/06 18:43:19 cgd Exp $
+# $NetBSD: Makefile,v 1.22 1999/04/06 18:43:18 cgd Exp $
 
 PROG = bootxx.old
 

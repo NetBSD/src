@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3.h,v 1.25.2.2 1999/04/05 14:35:14 gwr Exp $	*/
+/*	$NetBSD: vmparam3.h,v 1.25 1999/04/05 14:35:13 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.17.2.1 1999/04/07 00:34:34 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.17.2.1.2.1 1999/06/07 04:25:33 chs Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -69,6 +69,11 @@ struct simplelock {
 #define	SIMPLELOCK_INITIALIZER	{ 0, NULL, 0, NULL, 0, { NULL, NULL }, 0 }
 #else
 #define	SIMPLELOCK_INITIALIZER	{ 0 }
+#endif
+
+#ifdef LOCKDEBUG
+#define SLOCK_UNLOCKED	0
+#define SLOCK_LOCKED	1
 #endif
 
 /* XXXCDC: kill typedefs later? */
@@ -208,6 +213,10 @@ int _simple_lock_try __P((__volatile struct simplelock *alp, const char *, int))
 #define simple_lock_try(alp) _simple_lock_try(alp, __FILE__, __LINE__)
 void _simple_lock __P((__volatile struct simplelock *alp, const char *, int));
 #define simple_lock(alp) _simple_lock(alp, __FILE__, __LINE__)
+void _simple_lock_assert __P((__volatile struct simplelock *alp, int,
+			      const char *, int));
+#define simple_lock_assert(alp, value) \
+	_simple_lock_assert(alp, value,  __FILE__, __LINE__)
 void simple_lock_init __P((struct simplelock *alp));
 void simple_lock_dump __P((void));
 void simple_lock_freecheck __P((void *, void *));
@@ -224,6 +233,7 @@ void simple_lock_freecheck __P((void *, void *));
 #define	simple_lock(alp)
 #define	simple_lock_try(alp)	(1)	/* always succeeds */
 #define	simple_unlock(alp)
+#define	simple_lock_assert(alp, value)
 #endif /* MULTIPROCESSOR */
 #endif /* LOCKDEBUG && ! MULTIPROCESSOR */
 

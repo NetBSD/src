@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_pci.h,v 1.2.2.2 1999/05/05 08:09:35 tsubai Exp $	*/
+/*	$NetBSD: ofw_pci.h,v 1.2 1999/05/05 08:09:34 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

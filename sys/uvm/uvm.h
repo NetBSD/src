@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.15 1999/03/26 17:34:15 chs Exp $	*/
+/*	$NetBSD: uvm.h,v 1.15.4.1 1999/06/07 04:25:35 chs Exp $	*/
 
 /*
  *
@@ -76,6 +76,7 @@
 
 struct uvm {
 	/* vm_page related parameters */
+
 		/* vm_page queues */
 	struct pglist page_free[VM_NFREELIST];	/* unallocated pages */
 	struct pglist page_active;	/* allocated pages, in use */
@@ -83,10 +84,17 @@ struct uvm {
 	struct pglist page_inactive_obj;/* pages inactive (reclaim or free) */
 	simple_lock_data_t pageqlock;	/* lock for active/inactive page q */
 	simple_lock_data_t fpageqlock;	/* lock for free page q */
+
 		/* page daemon trigger */
 	int pagedaemon;			/* daemon sleeps on this */
 	struct proc *pagedaemon_proc;	/* daemon's pid */
 	simple_lock_data_t pagedaemon_lock;
+
+		/* aiodone daemon trigger */
+	int aiodoned;			/* daemon sleeps on this */
+	struct proc *aiodoned_proc;	/* daemon's pid */
+	simple_lock_data_t aiodoned_lock;
+
 		/* page hash */
 	struct pglist *page_hash;	/* page hash table (vp/off->page) */
 	int page_nhash;			/* number of buckets */
@@ -115,8 +123,6 @@ struct uvm {
 	struct uvm_object *kernel_object;
 };
 
-extern struct uvm uvm;
-
 /*
  * historys
  */
@@ -137,6 +143,19 @@ UVMHIST_DECL(pdhist);
 #define UVM_ET_ISSUBMAP(E)	(((E)->etype & UVM_ET_SUBMAP) != 0)
 #define UVM_ET_ISCOPYONWRITE(E)	(((E)->etype & UVM_ET_COPYONWRITE) != 0)
 #define UVM_ET_ISNEEDSCOPY(E)	(((E)->etype & UVM_ET_NEEDSCOPY) != 0)
+
+
+#ifdef _KERNEL
+
+extern struct uvm uvm;
+
+/*
+ * historys
+ */
+
+UVMHIST_DECL(maphist);
+UVMHIST_DECL(pdhist);
+UVMHIST_DECL(ubchist);
 
 /*
  * macros
@@ -182,5 +201,7 @@ UVMHIST_DECL(pdhist);
 #include <uvm/uvm_map_i.h>
 #include <uvm/uvm_page_i.h>
 #include <uvm/uvm_pager_i.h>
+
+#endif
 
 #endif /* _UVM_UVM_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.100 1999/03/24 05:51:29 mrg Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.100.4.1 1999/06/07 04:25:32 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -136,7 +136,9 @@ struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_truncate_desc, nfs_truncate },		/* truncate */
 	{ &vop_update_desc, nfs_update },		/* update */
 	{ &vop_bwrite_desc, nfs_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ &vop_getpages_desc, nfs_getpages },		/* getpages */
+	{ &vop_putpages_desc, nfs_putpages },		/* putpages */
+	{ NULL, NULL }
 };
 struct vnodeopv_desc nfsv2_vnodeop_opv_desc =
 	{ &nfsv2_vnodeop_p, nfsv2_vnodeop_entries };

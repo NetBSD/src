@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.16.2.1 1999/05/04 17:05:42 perry Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.16.2.1.2.1 1999/06/07 04:25:30 chs Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -40,6 +40,7 @@
  */
 
 #include "opt_lockdebug.h"
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -476,6 +477,7 @@ int lockpausetime = 0;
 struct ctldebug debug2 = { "lockpausetime", &lockpausetime };
 int simplelockrecurse;
 LIST_HEAD(slocklist, simplelock) slockdebuglist;
+int simple_lock_debugger = 0;
 
 /*
  * Simple lock functions so that the debugger can see from whence
@@ -485,7 +487,7 @@ void
 simple_lock_init(alp)
 	struct simplelock *alp;
 {
-	alp->lock_data = 0;
+	alp->lock_data = SLOCK_UNLOCKED;
 	alp->lock_file = NULL;
 	alp->lock_line = 0;
 	alp->unlock_file = NULL;
@@ -503,7 +505,7 @@ _simple_lock(alp, id, l)
 
 	if (simplelockrecurse)
 		return;
-	if (alp->lock_data == 1) {
+	if (alp->lock_data != SLOCK_UNLOCKED) {
 		printf("simple_lock: lock held\n");
 		printf("currently at: %s:%d\n", id, l);
 		printf("last locked: %s:%d\n",
@@ -516,11 +518,9 @@ _simple_lock(alp, id, l)
 #ifdef BACKTRACE
 			BACKTRACE(curproc);
 #endif
-		} else if (lockpausetime > 1) {
-			printf("simple_lock: lock held, pausing...");
-			tsleep(&lockpausetime, PCATCH | PPAUSE, "slock",
-			    lockpausetime * hz);
-			printf(" continuing\n");
+		}
+		if (simple_lock_debugger) {
+			Debugger();
 		}
 		return;
 	}
@@ -529,7 +529,7 @@ _simple_lock(alp, id, l)
 	LIST_INSERT_HEAD(&slockdebuglist, (struct simplelock *)alp, list);
 	splx(s);
 
-	alp->lock_data = 1;
+	alp->lock_data = SLOCK_LOCKED;
 	alp->lock_file = id;
 	alp->lock_line = l;
 	if (curproc)
@@ -544,11 +544,28 @@ _simple_lock_try(alp, id, l)
 {
 	int s;
 
-	if (alp->lock_data)
+	if (alp->lock_data != SLOCK_UNLOCKED) {
+		printf("simple_lock_try: lock held\n");
+		printf("currently at: %s:%d\n", id, l);
+		printf("last locked: %s:%d\n",
+		       alp->lock_file, alp->lock_line);
+		printf("last unlocked: %s:%d\n",
+		       alp->unlock_file, alp->unlock_line);
+		if (lockpausetime == -1)
+			panic("simple_lock_try: lock held");
+		if (lockpausetime == 1) {
+#ifdef BACKTRACE
+			BACKTRACE(curproc);
+#endif
+		}
+		if (simple_lock_debugger) {
+			Debugger();
+		}
 		return (0);
+	}
 	if (simplelockrecurse)
 		return (1);
-	alp->lock_data = 1;
+	alp->lock_data = SLOCK_LOCKED;
 	alp->lock_file = id;
 	alp->lock_line = l;
 
@@ -571,7 +588,7 @@ _simple_unlock(alp, id, l)
 
 	if (simplelockrecurse)
 		return;
-	if (alp->lock_data == 0) {
+	if (alp->lock_data == SLOCK_UNLOCKED) {
 		printf("simple_unlock: lock not held\n");
 		printf("currently at: %s:%d\n", id, l);
 		printf("last locked: %s:%d\n",
@@ -584,11 +601,9 @@ _simple_unlock(alp, id, l)
 #ifdef BACKTRACE
 			BACKTRACE(curproc);
 #endif
-		} else if (lockpausetime > 1) {
-			printf("simple_unlock: lock not held, pausing...");
-			tsleep(&lockpausetime, PCATCH | PPAUSE, "sunlock",
-			    lockpausetime * hz);
-			printf(" continuing\n");
+		}
+		if (simple_lock_debugger) {
+			Debugger();
 		}
 		return;
 	}
@@ -599,12 +614,26 @@ _simple_unlock(alp, id, l)
 	alp->list.le_prev = NULL;
 	splx(s);
 
-	alp->lock_data = 0;
+	alp->lock_data = SLOCK_UNLOCKED;
 	alp->unlock_file = id;
 	alp->unlock_line = l;
 	if (curproc)
 		curproc->p_simple_locks--;
 }
+
+void
+_simple_lock_assert(alp, value, id, l)
+	__volatile struct simplelock *alp;
+	int value;
+	const char *id;
+	int l;
+{
+	if (alp->lock_data != value) {
+		panic("lock %p: value %d != expected %d at %s:%d",
+		      alp, alp->lock_data, value, id, l);
+	}
+}
+
 
 void
 simple_lock_dump()

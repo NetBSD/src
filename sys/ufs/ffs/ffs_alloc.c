@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.29 1999/03/24 05:51:30 mrg Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.29.4.1 1999/06/07 04:25:34 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -50,8 +50,8 @@
 #include <sys/syslog.h>
 
 #include <vm/vm.h>
-
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/ufsmount.h>
@@ -171,20 +171,20 @@ nospace:
  * invoked to get an appropriate block.
  */
 int
-ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
+ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 	register struct inode *ip;
 	ufs_daddr_t lbprev;
 	ufs_daddr_t bpref;
 	int osize, nsize;
 	struct ucred *cred;
 	struct buf **bpp;
+	ufs_daddr_t *blknop;
 {
 	register struct fs *fs;
 	struct buf *bp;
 	int cg, request, error;
 	ufs_daddr_t bprev, bno;
 
-	*bpp = 0;
 	fs = ip->i_fs;
 #ifdef DIAGNOSTIC
 	if ((u_int)osize > fs->fs_bsize || fragoff(fs, osize) != 0 ||
@@ -204,32 +204,41 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 		    ip->i_dev, fs->fs_bsize, bprev, fs->fs_fsmnt);
 		panic("ffs_realloccg: bad bprev");
 	}
-	/*
-	 * Allocate the extra space in the buffer.
-	 */
-	if ((error = bread(ITOV(ip), lbprev, osize, NOCRED, &bp)) != 0) {
-		brelse(bp);
-		return (error);
-	}
+
 #ifdef QUOTA
 	if ((error = chkdq(ip, (long)btodb(nsize - osize), cred, 0)) != 0) {
-		brelse(bp);
 		return (error);
 	}
 #endif
+
+	/*
+	 * Allocate the extra space in the buffer.
+	 */
+	if (bpp != NULL &&
+	    (error = bread(ITOV(ip), lbprev, osize, NOCRED, &bp)) != 0) {
+		brelse(bp);
+		return (error);
+	}
+
 	/*
 	 * Check for extension in the existing location.
 	 */
 	cg = dtog(fs, bprev);
 	if ((bno = ffs_fragextend(ip, cg, (long)bprev, osize, nsize)) != 0) {
-		if (bp->b_blkno != fsbtodb(fs, bno))
-			panic("bad blockno");
 		ip->i_ffs_blocks += btodb(nsize - osize);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		allocbuf(bp, nsize);
-		bp->b_flags |= B_DONE;
-		memset((char *)bp->b_data + osize, 0, (u_int)nsize - osize);
-		*bpp = bp;
+
+		if (bpp != NULL) {
+			if (bp->b_blkno != fsbtodb(fs, bno))
+				panic("bad blockno");
+			allocbuf(bp, nsize);
+			bp->b_flags |= B_DONE;
+			memset(bp->b_data + osize, 0, nsize - osize);
+			*bpp = bp;
+		}
+		if (blknop != NULL) {
+			*blknop = bno;
+		}
 		return (0);
 	}
 	/*
@@ -283,7 +292,6 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 	bno = (ufs_daddr_t)ffs_hashalloc(ip, cg, (long)bpref, request,
 	    			     ffs_alloccg);
 	if (bno > 0) {
-		bp->b_blkno = fsbtodb(fs, bno);
 		(void) uvm_vnp_uncache(ITOV(ip));
 		ffs_blkfree(ip, bprev, (long)osize);
 		if (nsize < request)
@@ -291,10 +299,17 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 			    (long)(request - nsize));
 		ip->i_ffs_blocks += btodb(nsize - osize);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		allocbuf(bp, nsize);
-		bp->b_flags |= B_DONE;
-		memset((char *)bp->b_data + osize, 0, (u_int)nsize - osize);
-		*bpp = bp;
+
+		if (bpp != NULL) {
+			bp->b_blkno = fsbtodb(fs, bno);
+			allocbuf(bp, nsize);
+			bp->b_flags |= B_DONE;
+			memset(bp->b_data + osize, 0, (u_int)nsize - osize);
+			*bpp = bp;
+		}
+		if (blknop != NULL) {
+			*blknop = bno;
+		}
 		return (0);
 	}
 #ifdef QUOTA
@@ -303,7 +318,11 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 	 */
 	(void) chkdq(ip, (long)-btodb(nsize - osize), cred, FORCE);
 #endif
-	brelse(bp);
+
+	if (bpp != NULL) {
+		brelse(bp);
+	}
+
 nospace:
 	/*
 	 * no space available
@@ -334,7 +353,7 @@ struct ctldebug debug15 = { "prtrealloc", &prtrealloc };
 #endif
 
 int doasyncfree = 1;
-extern int doreallocblks;
+int doreallocblks;
 
 int
 ffs_reallocblks(v)
@@ -353,6 +372,9 @@ ffs_reallocblks(v)
 	ufs_daddr_t start_lbn, end_lbn, soff, newblk, blkno;
 	struct indir start_ap[NIADDR + 1], end_ap[NIADDR + 1], *idp;
 	int i, len, start_lvl, end_lvl, pref, ssize;
+
+	/* XXX don't do this for now */
+	return ENOSPC;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);

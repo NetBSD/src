@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.19.2.1 1999/04/16 16:26:48 chs Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.19.2.1.2.1 1999/06/07 04:25:35 chs Exp $	*/
 
 /*
  *
@@ -49,6 +49,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/kernel.h>
 #include <sys/pool.h>
 
 #include <vm/vm.h>
@@ -321,7 +322,7 @@ amap_extend(entry, addsize)
 	if (amap->am_nslot >= slotneed) {
 #ifdef UVM_AMAP_PPREF
 		if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
-			amap_pp_adjref(amap, slotoff + slotmapped, addsize, 1);
+			amap_pp_adjref(amap, slotoff + slotmapped, slotadd, 1);
 		}
 #endif
 		amap_unlock(amap);
@@ -339,8 +340,8 @@ amap_extend(entry, addsize)
 		if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
 			if ((slotoff + slotmapped) < amap->am_nslot)
 				amap_pp_adjref(amap, slotoff + slotmapped, 
-				    (amap->am_nslot - (slotoff + slotmapped)) <<
-				    PAGE_SHIFT, 1);
+				    (amap->am_nslot - (slotoff + slotmapped)),
+				    1);
 			pp_setreflen(amap->am_ppref, amap->am_nslot, 1, 
 			   slotneed - amap->am_nslot);
 		}
@@ -419,8 +420,7 @@ amap_extend(entry, addsize)
 		amap->am_ppref = newppref;
 		if ((slotoff + slotmapped) < amap->am_nslot)
 			amap_pp_adjref(amap, slotoff + slotmapped, 
-			    (amap->am_nslot - (slotoff + slotmapped)) <<
-			    PAGE_SHIFT, 1);
+			    (amap->am_nslot - (slotoff + slotmapped)), 1);
 		pp_setreflen(newppref, amap->am_nslot, 1, slotadded);
 	}
 #endif
@@ -570,7 +570,8 @@ amap_copy(map, entry, waitf, canchunk, startva, endva)
 	int slots, lcv;
 	vaddr_t chunksize;
 	UVMHIST_FUNC("amap_copy"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist, "  (map=%p, entry=%p, waitf=%d)", map, entry, waitf, 0);
+	UVMHIST_LOG(maphist, "  (map=%p, entry=%p, waitf=%d)",
+		    map, entry, waitf, 0);
 
 	/*
 	 * is there a map to copy?   if not, create one from scratch.
@@ -688,7 +689,7 @@ amap_copy(map, entry, waitf, canchunk, startva, endva)
 #ifdef UVM_AMAP_PPREF
 	if (srcamap->am_ppref && srcamap->am_ppref != PPREF_NONE) {
 		amap_pp_adjref(srcamap, entry->aref.ar_pageoff, 
-		    entry->end - entry->start, -1);
+		    (entry->end - entry->start) >> PAGE_SHIFT, -1);
 	}
 #endif
 
@@ -806,8 +807,10 @@ ReStart:
 				 * XXXCDC: we should cause fork to fail, but
 				 * we can't ...
 				 */
-				if (nanon)
+				if (nanon) {
+					simple_lock(&nanon->an_lock);
 					uvm_anfree(nanon);
+				}
 				simple_unlock(&anon->an_lock);
 				amap_unlock(amap);
 				uvm_wait("cownowpage");
@@ -929,21 +932,20 @@ amap_pp_establish(amap)
  * => caller must check that ppref != PPREF_NONE before calling
  */
 void
-amap_pp_adjref(amap, curslot, bytelen, adjval)
+amap_pp_adjref(amap, curslot, slotlen, adjval)
 	struct vm_amap *amap;
 	int curslot;
-	vsize_t bytelen;
+	vsize_t slotlen;
 	int adjval;
 {
-	int slots, stopslot, *ppref, lcv;
+	int stopslot, *ppref, lcv;
 	int ref, len;
 
 	/*
 	 * get init values
 	 */
 
-	AMAP_B2SLOT(slots, bytelen);
-	stopslot = curslot + slots;
+	stopslot = curslot + slotlen;
 	ppref = amap->am_ppref;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.9 1999/03/25 18:48:55 mrg Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.9.4.1 1999/06/07 04:25:37 chs Exp $	*/
 
 /*
  *
@@ -37,6 +37,8 @@
 #ifndef _UVM_UVM_PAGER_H_
 #define _UVM_UVM_PAGER_H_
 
+#include <sys/buf.h>
+
 /*
  * uvm_pager.h
  */
@@ -50,10 +52,18 @@ TAILQ_HEAD(uvm_aiohead, uvm_aiodesc);
 struct uvm_aiodesc {
 	void (*aiodone) __P((struct uvm_aiodesc *));
 						/* aio done function */
-	vaddr_t kva;			/* KVA of mapped page(s) */
+	vaddr_t kva;				/* KVA of mapped page(s) */
 	int npages;				/* # of pages in I/O req */
 	void *pd_ptr;				/* pager-dependent pointer */
+	int flags;				/* misc flags */
 	TAILQ_ENTRY(uvm_aiodesc) aioq;		/* linked list of aio's */
+};
+
+#define UVM_AIO_PAGEDAEMON 0x0001		/* i/o is from pagedaemon */
+
+struct uvm_aiobuf {
+	struct buf buf;
+	struct uvm_aiodesc aio;
 };
 
 /*
@@ -112,6 +122,8 @@ struct uvm_pagerops {
 #define PGO_LOCKED	0x040	/* fault data structures are locked [get] */
 #define PGO_PDFREECLUST	0x080	/* daemon's free cluster flag [uvm_pager_put] */
 #define PGO_REALLOCSWAP	0x100	/* reallocate swap area [pager_dropcluster] */
+
+#define PGO_OVERWRITE	0x200	/* page will be overwritten immediately */
 
 /* page we are not interested in getting */
 #define PGO_DONTCARE ((struct vm_page *) -1)	/* [get only] */

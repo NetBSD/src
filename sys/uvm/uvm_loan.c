@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.14.2.1 1999/04/16 16:29:09 chs Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.14.2.1.2.1 1999/06/07 04:25:36 chs Exp $	*/
 
 /*
  *
@@ -490,7 +490,7 @@ uvm_loanuobj(ufi, output, flags, va)
 
 			if (pg->flags & PG_WANTED)
 				/* still holding object lock */
-				thread_wakeup(pg);
+				wakeup(pg);
 
 			if (pg->flags & PG_RELEASED) {
 #ifdef DIAGNOSTIC
@@ -529,7 +529,7 @@ uvm_loanuobj(ufi, output, flags, va)
 		**output = pg;
 		*output = (*output) + 1;
 		if (pg->flags & PG_WANTED)
-			thread_wakeup(pg);
+			wakeup(pg);
 		pg->flags &= ~(PG_WANTED|PG_BUSY);
 		UVM_PAGE_OWN(pg, NULL);
 		return(1);		/* got it! */
@@ -553,7 +553,7 @@ uvm_loanuobj(ufi, output, flags, va)
 		uvm_pageactivate(pg);	/* reactivate */
 		uvm_unlock_pageq();
 		if (pg->flags & PG_WANTED)
-			thread_wakeup(pg);
+			wakeup(pg);
 		pg->flags &= ~(PG_WANTED|PG_BUSY);
 		UVM_PAGE_OWN(pg, NULL);
 		return(1);
@@ -566,7 +566,7 @@ uvm_loanuobj(ufi, output, flags, va)
 	anon = uvm_analloc();
 	if (anon == NULL) {		/* out of VM! */
 		if (pg->flags & PG_WANTED)
-			thread_wakeup(pg);
+			wakeup(pg);
 		pg->flags &= ~(PG_WANTED|PG_BUSY);
 		UVM_PAGE_OWN(pg, NULL);
 		uvmfault_unlockall(ufi, amap, uobj, NULL);
@@ -583,7 +583,7 @@ uvm_loanuobj(ufi, output, flags, va)
 	**output = anon;
 	*output = (*output) + 1;
 	if (pg->flags & PG_WANTED)
-		thread_wakeup(pg);
+		wakeup(pg);
 	pg->flags &= ~(PG_WANTED|PG_BUSY);
 	UVM_PAGE_OWN(pg, NULL);
 	return(1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.23.2.1 1999/04/16 16:27:36 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.23.2.1.2.1 1999/06/07 04:25:35 chs Exp $	*/
 
 /*
  *
@@ -135,6 +135,21 @@
 #define UVM_PGA_USERESERVE		0x0001
 
 /*
+ * the following defines are for ubc_alloc's flags
+ */
+#define UBC_READ	0
+#define UBC_WRITE	1
+
+/*
+ * flags for uvn_findpages().
+ */
+#define UFP_ALL		0x0
+#define UFP_NOWAIT	0x1
+#define UFP_NOALLOC	0x2
+#define UFP_NOCACHE	0x4
+#define UFP_NORDONLY	0x8
+
+/*
  * structures
  */
 
@@ -149,6 +164,10 @@ struct vm_anon;
 struct vmspace;
 struct pmap;
 struct vnode;
+struct uvm_aiodesc;
+struct pool;
+
+extern struct pool *uvm_aiobuf_pool;
 
 /*
  * uvmexp: global data structures that are exported to parts of the kernel
@@ -180,10 +199,12 @@ struct uvmexp {
 	/* swap */
 	int nswapdev;	/* number of configured swap devices in system */
 	int swpages;	/* number of PAGE_SIZE'ed swap pages */
+	int swpguniq;	/* number of swap pages in use, not also in RAM */
 	int swpginuse;	/* number of swap pages in use */
 	int swpgonly;	/* number of swap pages in use, not also in RAM */
 	int nswget;	/* number of times fault calls uvm_swap_get() */
 	int nanon;	/* number total of anon's in system */
+	int nanonneeded;/* number of anons currently needed */
 	int nfreeanon;	/* number of free anon's */
 
 	/* stat counters */
@@ -263,7 +284,15 @@ typedef int vm_fault_t;
 /* uvm_aobj.c */
 struct uvm_object	*uao_create __P((vsize_t, int));
 void			uao_detach __P((struct uvm_object *));
+void			uao_detach_locked __P((struct uvm_object *));
 void			uao_reference __P((struct uvm_object *));
+void			uao_reference_locked __P((struct uvm_object *));
+
+/* uvm_bio.c */
+void *			ubc_alloc __P((struct uvm_object *, vaddr_t, vsize_t *,
+				       int));
+void			ubc_release __P((void *, vsize_t));
+void			ubc_flush __P((struct uvm_object *, vaddr_t, vaddr_t));
 
 /* uvm_fault.c */
 int			uvm_fault __P((vm_map_t, vaddr_t, 
@@ -355,8 +384,13 @@ void			uvm_page_physload __P((vaddr_t, vaddr_t,
 					       vaddr_t, vaddr_t, int));
 void			uvm_setpagesize __P((void));
 
+/* uvm_pager.c */
+void			uvm_aio_biodone __P((struct buf *));
+void			uvm_aio_aiodone __P((struct uvm_aiodesc *));
+
 /* uvm_pdaemon.c */
 void			uvm_pageout __P((void));
+void			uvm_aiodone_daemon __P((void));
 
 /* uvm_pglist.c */
 int			uvm_pglistalloc __P((psize_t, paddr_t,
@@ -382,6 +416,11 @@ void 			uvm_vnp_terminate __P((struct vnode *));
 				/* terminate a uvm/uvn object */
 boolean_t		uvm_vnp_uncache __P((struct vnode *));
 struct uvm_object	*uvn_attach __P((void *, vm_prot_t));
+void			uvn_findpages __P((struct uvm_object *, vaddr_t,
+					   int *, struct vm_page **, int));
+void			uvm_vnp_zerorange __P((struct vnode *, off_t, size_t));
+void			uvm_vnp_asyncget __P((struct vnode *, off_t, size_t,
+					      size_t));
 
 #endif /* _UVM_UVM_EXTERN_H_ */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dmavar.h,v 1.4.2.2 1999/04/08 04:46:42 gwr Exp $ */
+/*	$NetBSD: dmavar.h,v 1.4 1999/04/08 04:46:41 gwr Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sebuf.c,v 1.5.2.2 1999/04/09 04:26:28 gwr Exp $	*/
+/*	$NetBSD: sebuf.c,v 1.5 1999/04/09 04:26:27 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

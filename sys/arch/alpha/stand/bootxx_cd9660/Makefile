@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2.2.2 1999/04/05 03:37:29 cgd Exp $
+# $NetBSD: Makefile,v 1.2 1999/04/05 03:37:28 cgd Exp $
 
 PROG = bootxx_cd9660
 CPPFLAGS += -DLIBSA_SINGLE_FILESYSTEM=cd9660 \

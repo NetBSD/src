@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.12 1999/03/26 17:34:16 chs Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.12.4.1 1999/06/07 04:25:37 chs Exp $	 */
 
 /*
  *
@@ -236,8 +236,9 @@ uvm_dump()
 	    uvmexp.flt_przero);
 
 	printf("  daemon and swap counts:\n");
-	printf("    woke=%d, revs=%d, scans=%d, swout=%d\n", uvmexp.pdwoke,
-	    uvmexp.pdrevs, uvmexp.pdscans, uvmexp.pdswout);
+	printf("    woke=%d, revs=%d, scans=%d, obscans=%d, anscans=%d\n",
+	    uvmexp.pdwoke, uvmexp.pdrevs, uvmexp.pdscans, uvmexp.pdobscan,
+	    uvmexp.pdanscan);
 	printf("    busy=%d, freed=%d, reactivate=%d, deactivate=%d\n",
 	    uvmexp.pdbusy, uvmexp.pdfreed, uvmexp.pdreact, uvmexp.pddeact);
 	printf("    pageouts=%d, pending=%d, nswget=%d\n", uvmexp.pdpageouts,

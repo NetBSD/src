@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.10.2.2 1999/04/08 04:46:42 gwr Exp $	*/
+/*	$NetBSD: esp.c,v 1.10 1999/04/08 04:46:41 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

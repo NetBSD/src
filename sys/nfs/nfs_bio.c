@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.45 1999/03/24 05:51:28 mrg Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.45.4.1 1999/06/07 04:25:32 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -50,10 +50,11 @@
 #include <sys/kernel.h>
 #include <sys/namei.h>
 #include <sys/dirent.h>
+#include <sys/malloc.h>
 
 #include <vm/vm.h>
-
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
@@ -214,6 +215,29 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 		bn = lbn * (biosize / DEV_BSIZE);
 		not_readin = 1;
 
+#if 1
+		offdiff = nra = rabn = diff = 0;
+		error = 0;
+		while (uio->uio_resid > 0) {
+			void *win;
+			vsize_t bytelen = min(np->n_size - uio->uio_offset,
+					      uio->uio_resid);
+
+			if (bytelen == 0)
+				break;
+			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
+					&bytelen, UBC_READ);
+#ifdef DIAGNOSTIC
+			if (win == NULL)
+				panic("nfs_bioread: ubc_alloc -> NULL");
+#endif
+
+			error = uiomove(win, bytelen, uio);
+			ubc_release(win, 0);
+			if (error)
+				break;
+		}
+#else
 		/*
 		 * Start the read ahead(s), as required.
 		 */
@@ -291,6 +315,7 @@ again:
 		diff = (on >= bp->b_validend) ? 0 : (bp->b_validend - on);
 		if (diff < n)
 			n = diff;
+#endif
 		break;
 	    case VLNK:
 		nfsstats.biocache_readlinks++;
@@ -508,7 +533,7 @@ diragain:
 	    default:
 		printf(" nfsbioread: type %x unexpected\n",vp->v_type);
 		break;
-	    };
+	    }
 
 	    if (n > 0) {
 		if (!baddr)
@@ -615,6 +640,28 @@ nfs_write(v)
 	 */
 	biosize = nmp->nm_rsize;
 	do {
+#if 1
+		void *win;
+		vaddr_t oldoff = uio->uio_offset;
+		vsize_t bytelen = uio->uio_resid;
+
+		/*
+		 * XXX only do one page at a time for now.
+		 * otherwise when we're extending the file,
+		 * the flush for a given page will invalidate
+		 * all the pages after that in the file.
+		 * we should probably just defer looking at the attrs
+		 * returned with write rpcs until the
+		 * the entire write operation has finished.
+		 */
+		bytelen = min(uio->uio_resid,
+			      PAGE_SIZE - (uio->uio_offset & (PAGE_SIZE - 1)));
+
+		/* XXX */
+		on = bn = lbn = 0;
+		bp = 0;
+		n = bytelen;
+#endif
 
 		/*
 		 * XXX make sure we aren't cached in the VM page cache
@@ -647,6 +694,47 @@ nfs_write(v)
 		    return (error);
 		}
 		nfsstats.biocache_writes++;
+
+#if 1
+		np->n_flag |= NMODIFIED;
+		if (np->n_size < uio->uio_offset + n) {
+			np->n_size = uio->uio_offset + n;
+			uvm_vnp_setsize(vp, np->n_size);
+		}
+
+		/* XXX check dirty region stuff */
+
+		win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset, &bytelen,
+				UBC_WRITE);
+#ifdef DIAGNOSTIC
+		if (win == NULL) {
+			panic("nfs_bioread: ubc_alloc -> NULL");
+		}
+#endif
+		error = uiomove(win, bytelen, uio);
+		ubc_release(win, 0);
+
+		/* XXX abstract this somehow */
+		simple_lock(&vp->v_uvm.u_obj.vmobjlock);
+		vp->v_uvm.u_obj.pgops->pgo_flush(&vp->v_uvm.u_obj,
+						 trunc_page(oldoff),
+						 oldoff + bytelen,
+						 PGO_CLEANIT | PGO_SYNCIO);
+		simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
+
+		if (error) {
+			/*
+			 * XXX zero out any part of the current window
+			 * that we might have failed to copyin.
+			 */
+			break;
+		}
+
+		/* XXX set dirty region stuff */
+		/* XXX set page NEEDCOMMIT flag */
+		/* XXX handle IO_SYNC and NQNFSNONCACHE */
+
+#else
 		lbn = uio->uio_offset / biosize;
 		on = uio->uio_offset & (biosize-1);
 		n = min((unsigned)(biosize - on), uio->uio_resid);
@@ -750,6 +838,7 @@ again:
 		} else {
 			bdwrite(bp);
 		}
+#endif
 	} while (uio->uio_resid > 0 && n > 0);
 	return (0);
 }
@@ -1128,4 +1217,229 @@ nfs_doio(bp, cr, p)
 		nfs_clearcommit(vp->v_mount);
 	biodone(bp);
 	return (error);
+}
+
+/*
+ * Vnode op for VM getpages.
+ */
+int
+nfs_getpages(v)
+	void *v;
+{
+	struct vop_getpages_args /* {
+		struct vnode *a_vp;
+		vaddr_t a_offset;
+		vm_page_t *a_m;
+		int *a_count;
+		int a_centeridx;
+		vm_prot_t a_access_type;
+		int a_advice;
+		int a_flags;
+	} */ *ap = v;
+	int i, error, npages;
+	struct uio uio;
+	struct iovec iov;
+	vaddr_t kva;
+	struct buf tmpbuf, *bp;
+	struct vnode *vp = ap->a_vp;
+	struct uvm_object *uobj = &vp->v_uvm.u_obj;
+	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
+	vaddr_t offset;
+	vm_page_t pgs[2]; /* XXX tmp hack: 4k page 8k rsize */
+	int cidx, vidx;
+
+	UVMHIST_FUNC("nfs_getpages"); UVMHIST_CALLED(ubchist);
+	UVMHIST_LOG(ubchist, "vp %p off 0x%x", vp, (int)ap->a_offset, 0,0);
+
+#ifdef DIAGNOSTIC
+	if (ap->a_centeridx < 0 || ap->a_centeridx >= *ap->a_count) {
+		panic("nfs_getpages: centeridx %d out of range",
+		      ap->a_centeridx);
+	}
+#endif
+
+	if (ap->a_flags & PGO_LOCKED) {
+		uvn_findpages(uobj, ap->a_offset, ap->a_count, ap->a_m,
+			      UFP_NOWAIT|UFP_NOALLOC);
+
+		/* XXX PGO_ALLPAGES? */
+		return VM_PAGER_OK;
+	}
+
+	/* vnode is VOP_LOCKed, uobj is locked */
+
+	/*
+	 * first see if center page already exists.
+	 * if it does, return the page.
+	 * XXX
+	 * this is needed because ubc_fault() doesn't
+	 * do a PGO_LOCKED call first.
+	 * XXX change ubc_fault() to do the PGO_LOCKED call.
+	 */
+
+	npages = 1;
+	uvn_findpages(uobj, ap->a_offset + (ap->a_centeridx << PAGE_SHIFT),
+		      &npages, &ap->a_m[ap->a_centeridx], UFP_NOALLOC);
+	if (npages == 1) {
+		simple_unlock(&uobj->vmobjlock);
+		return VM_PAGER_OK;
+	}
+
+	npages = nmp->nm_rsize >> PAGE_SHIFT;
+	offset = ap->a_offset & ~(nmp->nm_rsize - 1);
+	cidx = ap->a_centeridx + ((ap->a_offset - offset) >> PAGE_SHIFT);
+	UVMHIST_LOG(ubchist, "npages %d offset 0x%lx cidx %d",
+		    npages, offset, cidx,0);
+	memset(pgs, 0, sizeof(pgs));
+	uvn_findpages(uobj, offset, &npages, pgs, UFP_NOCACHE);
+	vidx = (npages == 2) ? 0 : cidx;
+
+	simple_unlock(&uobj->vmobjlock);
+
+#ifdef DIAGNOSTIC
+	if (npages == 0) {
+		panic("nfs_getpages: nothing to read, vp %p", vp);
+	}
+#endif
+
+	/*
+	 * if the entire page is past the end of the file,
+	 * just zero it and return.
+	 */
+	if (offset >= vp->v_uvm.u_size) {
+		UVMHIST_LOG(ubchist, "off 0x%x past EOF 0x%x, zeroed page",
+			    offset, vp->v_uvm.u_size,0,0);
+
+		while (vidx < npages) {
+			uvm_pagezero(pgs[vidx++]);
+		}
+		return VM_PAGER_OK;
+	}
+
+	/*
+	 * read at last part of the page.
+	 */
+
+	kva = uvm_pagermapin(&pgs[vidx], npages, NULL, M_WAITOK);
+	if (kva == 0) {
+		return VM_PAGER_AGAIN;
+	}
+
+	uio.uio_iov = &iov;
+	iov.iov_len = 0;
+
+	bp = &tmpbuf;
+	bzero(bp, sizeof *bp);
+
+	bp->b_bufsize = npages << PAGE_SHIFT;
+	bp->b_bcount = min(bp->b_bufsize, vp->v_uvm.u_size -
+			   (offset + (vidx << PAGE_SHIFT)));
+	bp->b_data = (void *)kva;
+	bp->b_blkno = bp->b_lblkno =
+		(offset + (vidx << PAGE_SHIFT)) >> DEV_BSHIFT;
+	bp->b_vp = vp;
+	bp->b_rcred = 0;
+	bp->b_flags = B_BUSY|B_READ;
+
+	UVMHIST_LOG(ubchist, "reading blkno 0x%x bcount 0x%x",
+		    bp->b_blkno, bp->b_bcount,0,0);
+	error = nfs_doio(bp, curproc->p_ucred, curproc);
+
+	uvm_pagermapout(kva, npages);
+
+	simple_lock(&uobj->vmobjlock);
+	uvm_lock_pageq();
+	if (error) {
+		for (i = vidx; i < vidx + npages; i++) {
+			if (pgs[i]->flags & PG_WANTED) {
+				wakeup(pgs[i]);
+			}
+			pgs[i]->flags &= ~(PG_WANTED|PG_BUSY);
+			UVM_PAGE_OWN(pgs[i], NULL);
+			uvm_pagefree(pgs[i]);
+		}
+	} else { 
+		for (i = vidx; i < vidx + npages; i++) {
+			if (i != cidx) {
+				if (pgs[i]->flags & PG_WANTED) {
+					wakeup(pgs[i]);
+				}
+				pgs[i]->flags &= ~(PG_WANTED|PG_BUSY);
+				UVM_PAGE_OWN(pgs[i], NULL);
+				
+			}
+			pgs[i]->flags &= ~PG_FAKE;
+			pmap_clear_modify(PMAP_PGARG(pgs[i]));
+			uvm_pageactivate(pgs[i]);
+		}
+	}
+	uvm_unlock_pageq();
+	simple_unlock(&uobj->vmobjlock);
+
+	ap->a_m[ap->a_centeridx] = pgs[cidx];
+	UVMHIST_LOG(ubchist, "a_m[%d] = pgs[%d] = %p", ap->a_centeridx,
+		    cidx, pgs[cidx],0);
+#ifdef DIAGNOSTIC
+	if (ap->a_m[ap->a_centeridx] == NULL) {
+		panic("nfs_getpages: returning null page?");
+	}
+#endif
+	return error ? VM_PAGER_ERROR : VM_PAGER_OK;
+}
+
+/*
+ * Vnode op for VM putpages.
+ */
+int
+nfs_putpages(v)
+	void *v;
+{
+	struct vop_putpages_args /* {
+		struct vnode *a_vp;
+		vm_page_t *a_m;
+		int a_count;
+		int a_sync;
+		int *a_rtvals;
+	} */ *ap = v;
+
+	struct vnode *vp = ap->a_vp;
+	int mode, commit;
+	int error;
+	struct uio uio;
+	struct iovec iov;
+	vm_page_t m;
+	vaddr_t kva;
+	int iosize;
+
+	/* XXX for now, just do one page at a time */
+	if (ap->a_count != 1) {
+		panic("nfs_putpages: one at a time, please\n");
+	}
+
+	m = ap->a_m[0];
+	kva = uvm_pagermapin(ap->a_m, ap->a_count, NULL, M_WAITOK);
+	if (kva == 0) {
+		return VM_PAGER_AGAIN;
+	}
+
+	iosize = min(PAGE_SIZE, vp->v_uvm.u_size - m->offset);
+
+	iov.iov_base = (caddr_t)kva;
+	iov.iov_len = iosize;
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_offset = m->offset;
+	uio.uio_resid = iosize;
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_rw = UIO_WRITE;
+	uio.uio_procp = NULL;
+
+	/* XXX */
+	mode = NFSV3WRITE_FILESYNC;
+
+	error = nfs_writerpc(vp, &uio, curproc->p_ucred, &mode, &commit);
+
+	uvm_pagermapout(kva, ap->a_count);
+
+	return error ? VM_PAGER_ERROR : VM_PAGER_OK;
 }

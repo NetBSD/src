@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.19 1999/03/25 18:48:53 mrg Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.19.4.1 1999/06/07 04:25:37 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -906,6 +906,9 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 		
 		if (uobj == NULL)
 			return((vp->v_type == VREG) ? ENOMEM : EINVAL);
+
+		/* XXX for now, attach doesn't gain a ref */
+		VREF(vp);
 
 		if ((flags & MAP_SHARED) == 0)
 			uvmflag |= UVM_FLAG_COPYONW;
