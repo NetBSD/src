@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.21 2002/08/23 02:53:10 thorpej Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.22 2002/09/25 05:19:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.21 2002/08/23 02:53:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.22 2002/09/25 05:19:23 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -759,7 +759,7 @@ db_esp(addr, have_addr, count, modif)
 		}
 		db_printf("\n");
 		
-		for (t=0; t<NCR_NTARG; t++) {
+		for (t=0; t<sc->sc_ntarg; t++) {
 			LIST_FOREACH(li, &sc->sc_tinfo[t].luns, link) {
 				db_printf("t%d lun %d untagged %p busy %d used %x\n",
 					  t, (int)li->lun, li->untagged, li->busy,
