@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char *rcsid = "$Id: yplib.c,v 1.11 1994/09/18 02:56:00 deraadt Exp $";
+static char *rcsid = "$Id: yplib.c,v 1.12 1994/09/20 07:20:36 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -184,6 +184,7 @@ struct dom_binding **ypdb;
 	int clnt_sock, fd, gpid;
 	CLIENT *client;
 	int new=0, r;
+	int count = 0;
 
 	gpid = getpid();
 	if( !(pid==-1 || pid==gpid) ) {
@@ -281,8 +282,11 @@ trynet:
 		r = clnt_call(client, YPBINDPROC_DOMAIN,
 			xdr_domainname, dom, xdr_ypbind_resp, &ypbr, tv);
 		if(r != RPC_SUCCESS) {
-			fprintf(stderr,
-			"YP: server for domain %s not responding, still trying\n", dom);
+			if (new==0 || count)
+				fprintf(stderr,
+				    "YP server for domain %s not responding, still trying\n",
+				    dom);
+			count++;
 			clnt_destroy(client);
 			ysd->dom_vers = -1;
 			goto again;
