@@ -1,11 +1,11 @@
-/*	$NetBSD: null_vnops.c,v 1.18 2001/01/22 12:17:38 jdolecek Exp $	*/
+/*	$NetBSD: null_vnops.c,v 1.19 2001/06/07 13:44:47 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
  * All rights reserved.
  *
  * This software was written by William Studenmund of the
- * Numerical Aerospace Similation Facility, NASA Ames Research Center.
+ * Numerical Aerospace Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -71,7 +71,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: null_vnops.c,v 1.18 2001/01/22 12:17:38 jdolecek Exp $
+ *	$Id: null_vnops.c,v 1.19 2001/06/07 13:44:47 wiz Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -85,25 +85,25 @@
  * name space under a new name.  In this respect, it is
  * similar to the loopback file system.  It differs from
  * the loopback fs in two respects:  it is implemented using
- * a stackable layers techniques, and it's "null-node"s stack above
+ * a stackable layers technique, and it's "null-node"s stack above
  * all lower-layer vnodes, not just over directory vnodes.
  *
  * The null layer has two purposes.  First, it serves as a demonstration
- * of layering by proving a layer which does nothing.  (It actually
+ * of layering by providing a layer which does nothing.  (It actually
  * does everything the loopback file system does, which is slightly
  * more than nothing.)  Second, the null layer can serve as a prototype
  * layer.  Since it provides all necessary layer framework,
- * new file system layers can be created very easily be starting
+ * new file system layers can be created very easily by starting
  * with a null layer.
  *
- * The remainder of this man page examines the null layer as a basis
+ * The remainder of this comment examines the null layer as a basis
  * for constructing new layers.
  *
  *
  * INSTANTIATING NEW NULL LAYERS
  *
  * New null layers are created with mount_null(8).
- * Mount_null(8) takes two arguments, the pathname
+ * mount_null(8) takes two arguments, the pathname
  * of the lower vfs (target-pn) and the pathname where the null
  * layer will appear in the namespace (alias-pn).  After
  * the null layer is put into place, the contents
@@ -115,24 +115,24 @@
  * The null layer is the minimum file system layer,
  * simply bypassing all possible operations to the lower layer
  * for processing there.  The majority of its activity centers
- * on the bypass routine, though which nearly all vnode operations
+ * on the bypass routine, through which nearly all vnode operations
  * pass.
  *
  * The bypass routine accepts arbitrary vnode operations for
- * handling by the lower layer.  It begins by examing vnode
+ * handling by the lower layer.  It begins by examining vnode
  * operation arguments and replacing any null-nodes by their
- * lower-layer equivlants.  It then invokes the operation
+ * lower-layer equivalents.  It then invokes the operation
  * on the lower layer.  Finally, it replaces the null-nodes
- * in the arguments and, if a vnode is return by the operation,
+ * in the arguments and, if a vnode is returned by the operation,
  * stacks a null-node on top of the returned vnode.
  *
  * Although bypass handles most operations, vop_getattr, vop_lock,
  * vop_unlock, vop_inactive, vop_reclaim, and vop_print are not
- * bypassed. Vop_getattr must change the fsid being returned.
- * Vop_lock and vop_unlock must handle any locking for the
+ * bypassed. vop_getattr must change the fsid being returned.
+ * vop_lock and vop_unlock must handle any locking for the
  * current vnode as well as pass the lock request down.
- * Vop_inactive and vop_reclaim are not bypassed so that
- * they can handle freeing null-layer specific data. Vop_print
+ * vop_inactive and vop_reclaim are not bypassed so that
+ * they can handle freeing null-layer specific data. vop_print
  * is not bypassed to avoid excessive debugging information.
  * Also, certain vnode operations change the locking state within
  * the operation (create, mknod, remove, link, rename, mkdir, rmdir,
@@ -146,7 +146,7 @@
  * INSTANTIATING VNODE STACKS
  *
  * Mounting associates the null layer with a lower layer,
- * effect stacking two VFSes.  Vnode stacks are instead
+ * in effect stacking two VFSes.  Vnode stacks are instead
  * created on demand as files are accessed.
  *
  * The initial mount creates a single vnode stack for the
@@ -154,7 +154,7 @@
  * are created as a result of vnode operations on
  * this or other null vnode stacks.
  *
- * New vnode stacks come into existance as a result of
+ * New vnode stacks come into existence as a result of
  * an operation which returns a vnode.  
  * The bypass routine stacks a null-node above the new
  * vnode before returning it to the caller.
@@ -166,7 +166,7 @@
  * Now consider opening "sys".  A vop_lookup would be
  * done on the root null-node.  This operation would bypass through
  * to the lower layer which would return a vnode representing 
- * the UFS "sys".  Null_bypass then builds a null-node
+ * the UFS "sys".  null_bypass then builds a null-node
  * aliasing the UFS "sys" and returns this to the caller.
  * Later operations on the null-node "sys" will repeat this
  * process when constructing other vnode stacks.
@@ -176,7 +176,7 @@
  *
  * One of the easiest ways to construct new file system layers is to make
  * a copy of the null layer, rename all files and variables, and
- * then begin modifing the copy.  Sed can be used to easily rename
+ * then begin modifying the copy.  sed(1) can be used to easily rename
  * all variables.
  *
  * The umap layer is an example of a layer descended from the 
@@ -190,7 +190,7 @@
  * is appropriate in different situations.  In both cases,
  * it is the responsibility of the aliasing layer to make
  * the operation arguments "correct" for the lower layer
- * by mapping an vnode arguments to the lower layer.
+ * by mapping any vnode arguments to the lower layer.
  *
  * The first approach is to call the aliasing layer's bypass routine.
  * This method is most suitable when you wish to invoke the operation
@@ -198,11 +198,11 @@
  * that the bypass routine already must do argument mapping.
  * An example of this is null_getattrs in the null layer.
  *
- * A second approach is to directly invoked vnode operations on
+ * A second approach is to directly invoke vnode operations on
  * the lower layer with the VOP_OPERATIONNAME interface.
  * The advantage of this method is that it is easy to invoke
  * arbitrary operations on the lower layer.  The disadvantage
- * is that vnodes arguments must be manualy mapped.
+ * is that vnode arguments must be manually mapped.
  *
  */
 

@@ -1,11 +1,11 @@
-/*	$NetBSD: overlay.h,v 1.2 2000/03/13 23:52:41 soren Exp $	*/
+/*	$NetBSD: overlay.h,v 1.3 2001/06/07 13:44:48 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
  * All rights reserved.
  *
- * This software was written by William Studnemund of the
- * Numerical Aerospace Similation Facility, NASA Ames Research Center.
+ * This software was written by William Studenmund of the
+ * Numerical Aerospace Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -78,7 +78,7 @@ struct overlay_args {
 	struct	layer_args	la;	/* generic layerfs args */
 };
 /*
- * We leave ova_target for two reasons. One, We can tell the difference
+ * We leave ova_target for two reasons. One, we can tell the difference
  * between a mount_overlay -u and a call from mountd as the former will
  * pass a pointer to a string while the latter will pass NULL. Two,
  * filesystems based on the overlay layer might have use for it.

@@ -1,11 +1,11 @@
-/*	$NetBSD: overlay_vnops.c,v 1.3 2001/01/22 12:17:39 jdolecek Exp $	*/
+/*	$NetBSD: overlay_vnops.c,v 1.4 2001/06/07 13:44:49 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
  * All rights reserved.
  *
  * This software was written by William Studenmund of the
- * Numerical Aerospace Similation Facility, NASA Ames Research Center.
+ * Numerical Aerospace Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -71,7 +71,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: overlay_vnops.c,v 1.3 2001/01/22 12:17:39 jdolecek Exp $
+ *	$Id: overlay_vnops.c,v 1.4 2001/06/07 13:44:49 wiz Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -82,11 +82,11 @@
  * (See mount_overlay(8) for more information.)
  *
  * The overlay layer has two purposes.  First, it serves as a demonstration
- * of layering by proving a layer which really does nothing.  (the null
+ * of layering by providing a layer which really does nothing.  (the null
  * layer makes the underlying files appear elsewhere in the file hierarchy)
  * Second, the overlay layer can serve as a prototype layer. Since it
  * provides all necessary layer framework, new file system layers can be
- * created very easily be starting with an overlay layer.
+ * created very easily by starting with an overlay layer.
  *
  * The remainder of this comment examines the overlay layer as a basis
  * for constructing new layers.
@@ -94,11 +94,11 @@
  *
  * INSTANTIATING NEW OVERLAY LAYERS
  *
- * New null layers are created with mount_overlay(8).
- * Mount_overlay(8) takes two arguments, an ignored string
+ * New overlay layers are created with mount_overlay(8).
+ * mount_overlay(8) takes two arguments, an ignored string
  * and the pathname which the overlay will mount over. After
  * the overlay layer is put into place, all access to the mount
- * point path will proceede through the overlay layer.
+ * point path will proceed through the overlay layer.
  *
  *
  * OPERATION OF AN OVERLAY LAYER
@@ -111,14 +111,14 @@
  *
  * One of the easiest ways to construct new file system layers is to make
  * a copy of either the null layer or the overlay layer, rename all files
- * and variables, and then begin modifing the copy.  Sed can be used to
+ * and variables, and then begin modifying the copy.  sed(1) can be used to
  * easily rename all variables.
  *
  * The choice between using a null and an overlay layer depends on
  * the desirability of retaining access to the underlying filestore.
  * For instance, the umap filesystem presents both a uid-translated and an
- * untranslaged view of the underlying files, and so it is based off of
- * the null layer. However a layer implimenting Access Controll Lists
+ * untranslated view of the underlying files, and so it is based off of
+ * the null layer. However a layer implementing Access Control Lists
  * might prefer to block access to the underlying filestore, for which
  * the overlay layer is a better basis.
  *

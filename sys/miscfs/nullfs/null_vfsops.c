@@ -1,11 +1,11 @@
-/*	$NetBSD: null_vfsops.c,v 1.29 2001/01/22 12:17:38 jdolecek Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.30 2001/06/07 13:44:46 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
  * All rights reserved.
  *
  * This software was written by William Studenmund of the
- * Numerical Aerospace Similation Facility, NASA Ames Research Center.
+ * Numerical Aerospace Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
