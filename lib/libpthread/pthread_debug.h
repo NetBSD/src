@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.h,v 1.6 2003/07/04 15:16:14 skrll Exp $	*/
+/*	$NetBSD: pthread_debug.h,v 1.7 2004/01/02 14:13:16 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -114,12 +114,14 @@ void pthread__debuglog_printf(const char *fmt, ...);
 #undef	PTHREAD_COND_DEBUG
 #define PTHREAD_MAIN_DEBUG
 #undef	PTHREAD_RUN_DEBUG
+#undef	PTHREAD_PID_DEBUG
 #define PTHREAD_SA_DEBUG
 #undef	PTHREAD_SIG_DEBUG
 #define PTHREAD_SPIN_DEBUG
 #undef	PTHREAD_SPIN_DEBUG_PRINT
 
 extern int pthread__debug_counters[PTHREADD_NCOUNTERS];
+extern int pthread__debug_newline;
 
 extern int pthread__dbg; /* Set by libpthread_dbg */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.c,v 1.6 2003/06/16 21:24:48 nathanw Exp $	*/
+/*	$NetBSD: pthread_debug.c,v 1.7 2004/01/02 14:13:16 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_debug.c,v 1.6 2003/06/16 21:24:48 nathanw Exp $");
+__RCSID("$NetBSD: pthread_debug.c,v 1.7 2004/01/02 14:13:16 cl Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -59,6 +59,7 @@ int pthread__dbg;
 #ifdef PTHREAD__DEBUG
 
 int pthread__debug_counters[PTHREADD_NCOUNTERS];
+int pthread__debug_newline;
 static struct pthread_msgbuf* debugbuf;
 
 static void pthread__debug_printcounters(void);
@@ -76,6 +77,8 @@ void pthread__debug_init(void)
 		debugbuf = pthread__debuglog_init(0);
 		DPRINTF(("Started debugging %s (pid %d) at %s\n", 
 		    getprogname(), getpid(), ctime(&t)));
+
+		pthread__debug_newline = 1;
 	}
 }
 
@@ -136,7 +139,7 @@ pthread__debuglog_init(int force)
 void
 pthread__debuglog_printf(const char *fmt, ...)
 {
-	char tmpbuf[200];
+	char tmpbuf[200+6];
 	size_t len, cplen, r, w, s;
 	long diff1, diff2;
 	va_list ap;
@@ -144,10 +147,18 @@ pthread__debuglog_printf(const char *fmt, ...)
 	if (debugbuf == NULL) 
 		return;
 
+#ifdef PTHREAD_PID_DEBUG
+	if (pthread__debug_newline == 1)
+		len = sprintf(tmpbuf, "%05d ", getpid());
+	else
+#endif
+	len = 0;
 	va_start(ap, fmt);
-	len = vsnprintf(tmpbuf, 200, fmt, ap);
+	len += vsnprintf(tmpbuf, 200, fmt, ap);
 	va_end(ap);
 	
+	pthread__debug_newline = (tmpbuf[len - 1] == '\n') ? 1 : 0;
+
 	r = debugbuf->msg_bufr;
 	w = debugbuf->msg_bufw;
 	s = debugbuf->msg_bufs;

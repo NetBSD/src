@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.14 2003/12/07 20:29:07 christos Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.15 2004/01/02 14:13:16 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_run.c,v 1.14 2003/12/07 20:29:07 christos Exp $");
+__RCSID("$NetBSD: pthread_run.c,v 1.15 2004/01/02 14:13:16 cl Exp $");
 
 #include <ucontext.h>
 #include <errno.h>
@@ -118,6 +118,7 @@ pthread__next(pthread_t self)
 	if (next) {
 		pthread__assert(next->pt_type == PT_THREAD_NORMAL);
 		PTQ_REMOVE(&pthread__runqueue, next, pt_runq);
+		SDPRINTF(("(next %p) returning thread %p\n", self, next));
 	} else {
 		next = PTQ_FIRST(&pthread__idlequeue);
 		pthread__assert(next != 0);
@@ -159,6 +160,8 @@ pthread__sched(pthread_t self, pthread_t thread)
 #ifdef PTHREAD__DEBUG
 	thread->rescheds++;
 #endif
+	pthread__assert(PTQ_LAST(&pthread__runqueue, pthread_queue_t) != thread);
+	pthread__assert(PTQ_FIRST(&pthread__runqueue) != thread);
 	pthread_spinlock(self, &pthread__runqueue_lock);
 	PTQ_INSERT_TAIL(&pthread__runqueue, thread, pt_runq);
 	pthread_spinunlock(self, &pthread__runqueue_lock);
