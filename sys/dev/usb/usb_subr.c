@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.43 1999/09/05 19:32:19 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.44 1999/09/05 21:22:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -596,7 +596,7 @@ usbd_set_config_index(dev, index, msg)
 		 selfpowered, cdp->bMaxPower * 2));
 #ifdef USB_DEBUG
 	if (!dev->powersrc) {
-		printf("usbd_set_config_index: No power source?\n");
+		DPRINTF(("usbd_set_config_index: No power source?\n"));
 		return (USBD_IOERROR);
 	}
 #endif
