@@ -1,4 +1,4 @@
-/*	$NetBSD: docmd.c,v 1.18 1998/12/19 20:32:17 christos Exp $	*/
+/*	$NetBSD: docmd.c,v 1.19 1999/04/20 07:53:02 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: docmd.c,v 1.18 1998/12/19 20:32:17 christos Exp $");
+__RCSID("$NetBSD: docmd.c,v 1.19 1999/04/20 07:53:02 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -313,7 +313,9 @@ closeconn()
 		printf("closeconn()\n");
 
 	if (rem >= 0) {
-		(void) write(rem, "\2\n", 2);
+		if (write(rem, "\2\n", 2) < 0 && debug)
+			printf("write failed on fd %d: %s\n", rem,
+			    strerror(errno));
 		(void) close(rem);
 		(void) close(remerr);
 		rem = -1;
@@ -607,7 +609,8 @@ notify(file, rhost, to, lmod)
 	putc('\n', pf);
 
 	while ((len = read(fd, buf, BUFSIZ)) > 0)
-		(void) fwrite(buf, 1, len, pf);
+		if (fwrite(buf, 1, len, pf) < 1)
+			error("%s: %s\n", file, strerror(errno));
 	(void) close(fd);
 	(void) pclose(pf);
 }

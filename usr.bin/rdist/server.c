@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.17 1998/12/19 20:34:53 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.18 1999/04/20 07:53:02 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: server.c,v 1.17 1998/12/19 20:34:53 christos Exp $");
+__RCSID("$NetBSD: server.c,v 1.18 1999/04/20 07:53:02 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,8 +52,8 @@ __RCSID("$NetBSD: server.c,v 1.17 1998/12/19 20:34:53 christos Exp $");
 
 #include "defs.h"
 
-#define	ack() 	(void) write(rem, "\0\n", 2)
-#define	err() 	(void) write(rem, "\1\n", 2)
+#define	ack() 	do { if (write(rem, "\0\n", 2) < 0) error("ack failed: %s\n", strerror(errno)); } while (0)
+#define	err() 	do { if (write(rem, "\1\n", 2) < 0) error("err failed: %s\n", strerror(errno)); } while (0)
 
 struct	linkbuf *ihead;		/* list of files with more than one link */
 char	buf[BUFSIZ];		/* general purpose buffer */
@@ -105,7 +105,9 @@ server()
 	rem = 0;
 	oumask = umask(0);
 	(void) snprintf(buf, sizeof(buf), "V%d\n", VERSION);
-	(void) write(rem, buf, strlen(buf));
+	if (write(rem, buf, strlen(buf)) < 0)
+		error("server: could not write remote end: %s\n",
+		    strerror(errno));
 
 	for (;;) {
 		cp = cmdbuf;
@@ -292,7 +294,9 @@ install(src, dest, destdir, opts)
 	(void) snprintf(buf, sizeof(buf), "%c%s\n", destdir ? 'T' : 't', dest);
 	if (debug)
 		printf("buf = %s", buf);
-	(void) write(rem, buf, strlen(buf));
+	if (write(rem, buf, strlen(buf)) < 0)
+		error("could not pass filename to remote: %s\n",
+		    strerror(errno));
 	if (response() < 0)
 		return;
 
@@ -376,7 +380,10 @@ sendf(rname, opts)
 		    rname);
 		if (debug)
 			printf("buf = %s", buf);
-		(void) write(rem, buf, strlen(buf));
+		if (write(rem, buf, strlen(buf)) < 0)
+			error("can not write dir spec to remote: %s\n",
+			    strerror(errno));
+			
 		if (response() < 0) {
 			closedir(d);
 			return;
@@ -405,7 +412,9 @@ sendf(rname, opts)
 			sendf(dp->d_name, opts);
 		}
 		closedir(d);
-		(void) write(rem, "E\n", 2);
+		if (write(rem, "E\n", 2) < 0)
+			error("can not write E to remote: %s\n",
+			    strerror(errno));
 		(void) response();
 		tp = otp;
 		*tp = '\0';
@@ -428,7 +437,9 @@ sendf(rname, opts)
 				    lp->pathname, rname);
 				if (debug)
 					printf("buf = %s", buf);
-				(void) write(rem, buf, strlen(buf));
+				if (write(rem, buf, strlen(buf)) < 0)
+					error("can not write link spec to remote: %s\n",
+					    strerror(errno));
 				(void) response();
 				return;
 			}
@@ -438,11 +449,15 @@ sendf(rname, opts)
 		    (u_long)stb.st_mtime, protoname(), protogroup(), rname);
 		if (debug)
 			printf("buf = %s", buf);
-		(void) write(rem, buf, strlen(buf));
+		if (write(rem, buf, strlen(buf)) < 0)
+			error("can not write link spec to remote: %s\n",
+			    strerror(errno));
 		if (response() < 0)
 			return;
 		sizerr = (readlink(target, buf, BUFSIZ) != stb.st_size);
-		(void) write(rem, buf, stb.st_size);
+		if (write(rem, buf, stb.st_size) < 0)
+			error("can not write link name to remote: %s\n",
+			    strerror(errno));
 		if (debug)
 			printf("readlink = %.*s\n", (int)stb.st_size, buf);
 		goto done;
@@ -476,7 +491,9 @@ sendf(rname, opts)
 			    opts, lp->target, lp->pathname, rname);
 			if (debug)
 				printf("buf = %s", buf);
-			(void) write(rem, buf, strlen(buf));
+			if (write(rem, buf, strlen(buf)) <0)
+				error("write of file name failed: %s\n",
+				    strerror(errno));
 			(void) response();
 			return;
 		}
@@ -491,7 +508,8 @@ sendf(rname, opts)
 		(u_long)stb.st_mtime, protoname(), protogroup(), rname);
 	if (debug)
 		printf("buf = %s", buf);
-	(void) write(rem, buf, strlen(buf));
+	if (write(rem, buf, strlen(buf)) < 0)
+		error("write of file name failed: %s\n", strerror(errno));
 	if (response() < 0) {
 		(void) close(f);
 		return;
@@ -503,7 +521,8 @@ sendf(rname, opts)
 			amt = stb.st_size - i;
 		if (sizerr == 0 && read(f, buf, amt) != amt)
 			sizerr = 1;
-		(void) write(rem, buf, amt);
+		if (write(rem, buf, amt) < 0)
+			error("write of file data failed: %s\n", strerror(errno));
 	}
 	(void) close(f);
 done:
@@ -528,7 +547,8 @@ dospecial:
 		    sc->sc_name);
 		if (debug)
 			printf("buf = %s", buf);
-		(void) write(rem, buf, strlen(buf));
+		if (write(rem, buf, strlen(buf)) < 0)
+			error("write of special failed: %s\n", strerror(errno));
 		while (response() > 0)
 			;
 	}
@@ -587,7 +607,8 @@ update(rname, opts, stp)
 	(void) snprintf(buf, sizeof(buf), "Q%s\n", rname);
 	if (debug)
 		printf("buf = %s", buf);
-	(void) write(rem, buf, strlen(buf));
+	if (write(rem, buf, strlen(buf)) < 0)
+		error("write to remote failed: %s\n", strerror(errno));
 again:
 	cp = s = buf;
 	do {
@@ -679,9 +700,11 @@ query(name)
 		    "/%s", name);
 
 	if (lstat(target, &stb) < 0) {
-		if (errno == ENOENT)
-			(void) write(rem, "N\n", 2);
-		else
+		if (errno == ENOENT) {
+			if (write(rem, "N\n", 2) < 0)
+				error("write to remote failed: %s\n",
+				    strerror(errno));
+		} else
 			error("%s:%s: %s\n", host, target, strerror(errno));
 		*tp = '\0';
 		return;
@@ -691,12 +714,14 @@ query(name)
 	case S_IFREG:
 		(void)snprintf(buf, sizeof(buf), "Y%qd %ld\n",
 		    (unsigned long long)stb.st_size, (u_long)stb.st_mtime);
-		(void)write(rem, buf, strlen(buf));
+		if (write(rem, buf, strlen(buf)) < 0)
+			error("write to remote failed: %s\n", strerror(errno));
 		break;
 
 	case S_IFLNK:
 	case S_IFDIR:
-		(void) write(rem, "Y\n", 2);
+		if (write(rem, "Y\n", 2) < 0)
+			error("write to remote failed: %s\n", strerror(errno));
 		break;
 
 	default:
@@ -790,9 +815,11 @@ recvf(cmd, type)
 				}
 				buf[0] = '\0';
 				(void) snprintf(buf + 1, sizeof(buf) - 1,
-					"%s: Warning: remote mode %o != local mode %o\n",
-					target, stb.st_mode & 07777, mode);
-				(void) write(rem, buf, strlen(buf + 1) + 1);
+			    "%s: Warning: remote mode %o != local mode %o\n",
+				    target, stb.st_mode & 07777, mode);
+				if (write(rem, buf, strlen(buf + 1) + 1) < 0)
+					error("write to remote failed: %s\n",
+					    strerror(errno));
 				return;
 			}
 			errno = ENOTDIR;
