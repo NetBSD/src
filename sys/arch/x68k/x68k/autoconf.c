@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 1998/06/30 11:59:12 msaitoh Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14 1998/08/04 16:51:53 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -45,7 +45,7 @@ void configure __P((void));
 static void findroot __P((struct device **, int *));
 void mbattach __P((struct device *, struct device *, void *));
 int mbprint __P((void *, const char *));
-int mbmatch __P((struct device *, void *, void *));
+int mbmatch __P((struct device *, struct cfdata*, void*));
 
 static int simple_devprint __P((void *, const char *));
 
@@ -305,12 +305,11 @@ struct cfattach mainbus_ca = {
 };
 
 int
-mbmatch(pdp, match, auxp)
+mbmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
-	struct cfdata *cfp = match;
-
 	if (cfp->cf_unit > 0)
 		return(0);
 	/*
