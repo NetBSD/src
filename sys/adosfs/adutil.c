@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.5 1994/06/29 06:29:29 cgd Exp $	*/
+/*	$NetBSD: adutil.c,v 1.6 1994/12/28 08:52:01 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -132,8 +132,15 @@ int
 adunixprot(adprot)
 	int adprot;
 {
-	adprot = (~adprot >> 1) & 0x7;
-	return((adprot << 6) | (adprot << 3) | adprot);
+	if (adprot & 0xc000ee00) {
+		adprot = ((adprot & 0xee00) | (~adprot & 0x000e)) >> 1;
+		return (((adprot & 0x7) << 6) | ((adprot & 0x700) >> 5) |
+			(adprot >> 12));
+	}
+	else {
+		adprot = (~adprot >> 1) & 0x7;
+		return((adprot << 6) | (adprot << 3) | adprot);
+	}
 }
 
 static char

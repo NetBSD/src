@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.8 1994/10/29 07:58:24 cgd Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.9 1994/12/28 08:51:56 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,8 +38,31 @@
 #include <sys/queue.h>
 #include <adosfs/adosfs.h>
 
+#ifdef ADOSFS_EXACTMATCH
 #define strmatch(s1, l1, s2, l2) \
     ((l1) == (l2) && bcmp((s1), (s2), (l1)) == 0)
+#else
+int
+strmatch(s1, l1, s2, l2)
+	char *s1, *s2;
+	int l1, l2;
+{
+	if (l1 != l2)
+		return 0;
+	while (--l1 >= 0) {
+		char c;
+		c = *s1++;
+		if (c != *s2) {
+			if (c >= 'A' && c <= 'Z' && c + ('a' - 'A') != *s2)
+				return 0;
+			if (c >= 'a' && c <= 'z' && c + ('A' - 'a') != *s2)
+				return 0;
+		}
+		++s2;
+	}
+	return 1;
+}
+#endif
 
 /*
  * adosfs lookup. enters with:
