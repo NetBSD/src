@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.104 2003/11/04 05:50:54 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.105 2003/11/10 10:52:13 itojun Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.104 2003/11/04 05:50:54 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.105 2003/11/10 10:52:13 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -7827,8 +7827,11 @@ key_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 			int err2 = 0;
 			char *p, *ep;
 			size_t l;
+			int s;
 
+			s = splsoftnet();
 			m = key_setdump(name[1], &error);
+			splx(s);
 			if (!m)
 				return (error);
 			if (!oldp)
@@ -7865,8 +7868,11 @@ key_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 			int err2 = 0;
 			char *p, *ep;
 			size_t l;
+			int s;
 
+			s = splsoftnet();
 			m = key_setspddump(&error);
+			splx(s);
 			if (!m)
 				return (error);
 			if (!oldp)
