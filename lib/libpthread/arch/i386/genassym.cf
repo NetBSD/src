@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.2.5 2001/09/04 21:21:08 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.1.2.6 2001/09/04 21:50:07 nathanw Exp $
 
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -51,7 +51,30 @@ define PT_SPINLOCKS	offsetof(struct pthread_st, pt_spinlocks)
 define PT_HELDLOCK	offsetof(struct pthread_st, pt_heldlock)
 define PT_UC		offsetof(struct pthread_st, pt_uc)
 define CONTEXTSIZE	sizeof(ucontext_t)
+define UC_FLAGS		offsetof(ucontext_t, uc_flags)
+define UC_REGS		offsetof(ucontext_t, uc_mcontext.__gregs)
 define UC_EIP		offsetof(ucontext_t, uc_mcontext.__gregs[_REG_EIP])
-
 define PT_STATE_RECYCLABLE	PT_STATE_RECYCLABLE
 define STACKSPACE		STACKSPACE
+
+define _UC_CPU		_UC_CPU
+
+define _REG_GS		_REG_GS
+define _REG_FS		_REG_FS
+define _REG_ES		_REG_ES
+define _REG_DS		_REG_DS
+define _REG_EDI		_REG_EDI
+define _REG_ESI		_REG_ESI
+define _REG_EBP		_REG_EBP
+define _REG_ESP		_REG_ESP
+define _REG_EBX		_REG_EBX
+define _REG_EDX		_REG_EDX
+define _REG_ECX		_REG_ECX
+define _REG_EAX		_REG_EAX
+define _REG_TRAPNO	_REG_TRAPNO
+define _REG_ERR		_REG_ERR
+define _REG_EIP		_REG_EIP
+define _REG_CS		_REG_CS
+define _REG_EFL		_REG_EFL
+define _REG_UESP	_REG_UESP
+define _REG_SS		_REG_SS
