@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.12 1999/02/13 02:54:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 1999/07/09 07:07:13 garbled Exp $
 
 LIB=	z
 MKMAN=	no
 
-SRCS=	adler32.c compress.c crc32.c deflate.c example.c gzio.c infblock.c \
+SRCS=	adler32.c compress.c crc32.c deflate.c gzio.c infblock.c \
 	infcodes.c inffast.c inflate.c inftrees.c infutil.c trees.c uncompr.c \
 	zutil.c
 
