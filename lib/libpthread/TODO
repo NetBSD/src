@@ -29,6 +29,7 @@ Bugs to fix:
   __cpu_simple_lock_try() so that it is easy to add support for RAS.
 - Add locking to ld.elf_so so that multiple threads doing lazy binding
   doesn't trash things.
+- Verify the cancel stub symbol trickery.
 
 
 Interfaces/features to implement:
