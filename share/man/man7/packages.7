@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.6 1998/07/26 22:20:23 tv Exp $
+.\"	$NetBSD: packages.7,v 1.7 1998/08/28 14:19:44 garbled Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -24,6 +24,11 @@ This section documents variables that typically apply to all packages.
 If set, it lists the values of MACHINE_ARCH (basic
 .Nx
 CPU types) that the package will build under.
+It can be a glob-style wildcard.
+.It NOT_FOR_ARCHS
+If set, it lists the values of MACHINE_ARCH (basic
+.Nx
+CPU types) that the package will not build under.
 It can be a glob-style wildcard.
 .It ARCH
 The architecture, as returned by
