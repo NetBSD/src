@@ -1,11 +1,11 @@
-#	$NetBSD: JORNADA720,v 1.15 2002/04/02 05:30:41 lukem Exp $
+#	$NetBSD: JORNADA720,v 1.16 2002/04/10 20:17:23 thorpej Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
 
 include	"arch/hpcarm/conf/std.hpcarm"
 
-#ident 		"GENERIC-$Revision: 1.15 $"
+#ident 		"GENERIC-$Revision: 1.16 $"
 
 # estimated number of users
 maxusers	32
@@ -21,7 +21,6 @@ options 	CPU_SA110	# Support the SA110 core
 options 	CPU_SA1110	# Support the SA110 core
 
 # Architecture options
-options 	HPCARM		# Windows-CE based
 options 	SAIP		# We use SA1110 builtin peripherals
 
 # FPA options
