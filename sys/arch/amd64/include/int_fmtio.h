@@ -1,4 +1,4 @@
-/*	$NetBSD: int_fmtio.h,v 1.1 2003/04/26 18:39:42 fvdl Exp $	*/
+/*	$NetBSD: int_fmtio.h,v 1.2 2003/08/31 23:24:04 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@
 #define	SCNi8		"hhi"	/* int8_t		*/
 #define	SCNi16		"hi"	/* int16_t		*/
 #define	SCNi32		"i"	/* int32_t		*/
-#define	SCNi64		"lli"	/* int64_t		*/
+#define	SCNi64		"li"	/* int64_t		*/
 #define	SCNiLEAST8	"hhi"	/* int_least8_t		*/
 #define	SCNiLEAST16	"hi"	/* int_least16_t	*/
 #define	SCNiLEAST32	"i"	/* int_least32_t	*/
@@ -209,8 +209,8 @@
 #define	SCNxLEAST16	"hx"	/* uint_least16_t	*/
 #define	SCNxLEAST32	"x"	/* uint_least32_t	*/
 #define	SCNxLEAST64	"lx"	/* uint_least64_t	*/
-#define	SCNxFAST8	"x"	/* uint_fast8_t		*/
-#define	SCNxFAST16	"x"	/* uint_fast16_t	*/
+#define	SCNxFAST8	"hhx"	/* uint_fast8_t		*/
+#define	SCNxFAST16	"hx"	/* uint_fast16_t	*/
 #define	SCNxFAST32	"x"	/* uint_fast32_t	*/
 #define	SCNxFAST64	"lx"	/* uint_fast64_t	*/
 #define	SCNxMAX		"lx"	/* uintmax_t		*/
