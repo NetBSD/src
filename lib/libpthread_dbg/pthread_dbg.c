@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.2 2003/01/18 10:34:23 thorpej Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.3 2003/01/18 19:10:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -163,8 +163,8 @@ td_thr_iter(td_proc_t *proc, int (*call)(td_thread_t *, void *), void *callarg)
 	if (val != 0)
 		return val;
 	
-	next = (caddr_t) allq.ptqh_first;
-	while (next != 0) {
+	next = (void *)allq.ptqh_first;
+	while (next != NULL) {
 		val = td__getthread(proc, next, &thread);
 		if (val != 0)
 			return val;
@@ -378,10 +378,12 @@ td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 
 		switch (regset) {
 		case 0:
-			PTHREAD_REG_TO_UCONTEXT(&uc, (struct reg *)buf);
+			PTHREAD_REG_TO_UCONTEXT(&uc,
+			    (struct reg *)(void *)buf);
 			break;
 		case 1:
-			PTHREAD_FPREG_TO_UCONTEXT(&uc, (struct fpreg *)buf);
+			PTHREAD_FPREG_TO_UCONTEXT(&uc,
+			    (struct fpreg *)(void *)buf);
 			break;
 		case 2:
 			return TD_ERR_INVAL;
@@ -415,8 +417,8 @@ td_thr_join_iter(td_thread_t *thread, int (*call)(td_thread_t *, void *),
 	    &queue, sizeof(struct pthread_queue_t))) != 0)
 		return val;
 
-	next = (caddr_t) queue.ptqh_first;
-	while (next != 0) {
+	next = (void *)queue.ptqh_first;
+	while (next != NULL) {
 		val = td__getthread(thread->proc, next, &thread2);
 		if (val != 0)
 			return val;
@@ -477,7 +479,7 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 			    &taddr, sizeof(pthread_t))) != 0)
 				return val;
 			taddr = pthread__id(taddr);
-			td__getthread(s->proc, (caddr_t)taddr, 
+			td__getthread(s->proc, (void *)taddr, 
 			    &info->sync_data.mutex.owner);
 		} else
 			info->sync_data.mutex.locked = 0;
@@ -515,7 +517,7 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 		if (!PTQ_EMPTY(&queue))
 			info->sync_haswaiters = 1;
 		break;
-	case _PT_RWLOCK_MAGIC:
+	case (int)_PT_RWLOCK_MAGIC:
 		info->sync_type = TD_SYNC_RWLOCK;
 		info->sync_size = sizeof(struct pthread_rwlock_st);
 		if ((val = READ(s->proc, 
@@ -548,9 +550,10 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 			return val;
 		if (taddr != 0) {
 			info->sync_data.rwlock.locked = 1;
-			td__getthread(s->proc, (caddr_t)taddr, 
+			td__getthread(s->proc, (void *)taddr, 
 			    &info->sync_data.rwlock.writeowner);
 		}
+		/*FALLTHROUGH*/
 	default:
 		return (0);
 	}
@@ -598,8 +601,8 @@ td_sync_waiters_iter(td_sync_t *s, int (*call)(td_thread_t *, void *),
 		return (0);
 	}
 	
-	next = (caddr_t) queue.ptqh_first;
-	while (next != 0) {
+	next = (void *)queue.ptqh_first;
+	while (next != NULL) {
 		val = td__getthread(s->proc, next, &thread);
 		if (val != 0)
 			return val;
@@ -644,14 +647,14 @@ td_map_pth2thr(td_proc_t *proc, pthread_t thread, td_thread_t **threadp)
 {
 	int magic, val;
 
-	val = READ(proc, (caddr_t)thread, &magic, sizeof(magic));
+	val = READ(proc, (void *)thread, &magic, sizeof(magic));
 	if (val != 0)
 		return val;
 
 	if (magic != PT_MAGIC)
 		return TD_ERR_NOOBJ;
 
-	val = td__getthread(proc, (caddr_t)thread, threadp);
+	val = td__getthread(proc, (void *)thread, threadp);
 	if (val != 0)
 		return val;
 
@@ -680,8 +683,8 @@ td_map_id2thr(td_proc_t *proc, int threadid, td_thread_t **threadp)
 	if (val != 0)
 		return val;
 	
-	next = (caddr_t) allq.ptqh_first;
-	while (next != 0) {
+	next = (void *)allq.ptqh_first;
+	while (next != NULL) {
 		val = READ(proc, 
 		    next + offsetof(struct pthread_st, pt_num), 
 		    &num, sizeof(num));
@@ -716,7 +719,7 @@ td_map_lwp2thr(td_proc_t *proc, int lwp, td_thread_t **threadp)
 	int val, magic;
 	struct reg gregs;
 	ucontext_t uc;
-	caddr_t th;
+	void *th;
 
 	val = GETREGS(proc, 0, lwp, &gregs);
 	if (val != 0)
@@ -724,7 +727,7 @@ td_map_lwp2thr(td_proc_t *proc, int lwp, td_thread_t **threadp)
 
 	PTHREAD_REG_TO_UCONTEXT(&uc, &gregs);
 
-	th = (caddr_t) pthread__id(pthread__uc_sp(&uc));
+	th = pthread__id(pthread__uc_sp(&uc));
 
 	val = READ(proc, th, &magic, sizeof(magic));
 	if (val != 0)
