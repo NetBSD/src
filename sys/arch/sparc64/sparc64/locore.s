@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.124 2001/07/08 21:05:11 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.125 2001/07/11 23:02:56 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -877,7 +877,7 @@ _C_LABEL(trapbase):
 	ZS_INTERRUPT4U			! 04c = level 12 (zs) interrupt
 	HARDINT4U(13)			! 04d = level 13 interrupt
 	HARDINT4U(14)			! 04e = level 14 interrupt
-	VTRAP(15, winfault)		! 04f = nonmaskable interrupt
+	HARDINT4U(15)			! 04f = nonmaskable interrupt
 	UTRAP(0x050); UTRAP(0x051); UTRAP(0x052); UTRAP(0x053); UTRAP(0x054); UTRAP(0x055)
 	UTRAP(0x056); UTRAP(0x057); UTRAP(0x058); UTRAP(0x059); UTRAP(0x05a); UTRAP(0x05b)
 	UTRAP(0x05c); UTRAP(0x05d); UTRAP(0x05e); UTRAP(0x05f)
@@ -1152,7 +1152,7 @@ kdatafault:
 	ZS_INTERRUPT4U			! 04c = level 12 (zs) interrupt
 	HARDINT4U(13)			! 04d = level 13 interrupt
 	HARDINT4U(14)			! 04e = level 14 interrupt
-	VTRAP(15, winfault)		! 04f = nonmaskable interrupt
+	HARDINT4U(15)			! 04f = nonmaskable interrupt
 	UTRAP(0x050); UTRAP(0x051); UTRAP(0x052); UTRAP(0x053); UTRAP(0x054); UTRAP(0x055)
 	UTRAP(0x056); UTRAP(0x057); UTRAP(0x058); UTRAP(0x059); UTRAP(0x05a); UTRAP(0x05b)
 	UTRAP(0x05c); UTRAP(0x05d); UTRAP(0x05e); UTRAP(0x05f)
@@ -1988,10 +1988,10 @@ intr_setup_msg:
 	sra	%g5, 0, %g5;					/* Sign extend the damn thing */ \
 	subcc	%g7, WSTATE_KERN, %g7;				/* Compare & leave in register */ \
 	movz	%icc, %sp, %g6;					/* Select old (kernel) stack or base of kernel stack */ \
-	add	%g6, %g5, %g6;					/* Allocate a stack frame */ \
-	btst	1, %g6;						/* Fixup 64-bit stack if necessary */ \
-	add	%g6, BIAS, %g5; \
 	srl	%g6, 0, %g6;					/* truncate at 32-bits */ \
+	btst	1, %g6;						/* Fixup 64-bit stack if necessary */ \
+	add	%g6, %g5, %g6;					/* Allocate a stack frame */ \
+	add	%g6, BIAS, %g5; \
 	movne	%icc, %g5, %g6; \
 	\
 	stx	%g1, [%g6 + CC64FSZ + STKB + TF_FAULT]; \
@@ -2439,45 +2439,46 @@ winfault:
 	stb	%g4, [%g7 + 0x20]			! debug
 	CHKPT(%g4,%g7,0x19)
 #endif
-	mov	TLB_TAG_ACCESS, %g3			! Get real fault page from tag access register
-	ldxa	[%g3] ASI_DMMU, %g3			! And put it into the non-MMU alternate regs
+	mov	TLB_TAG_ACCESS, %g3	! Get real fault page from tag access register
+	ldxa	[%g3] ASI_DMMU, %g3	! And put it into the non-MMU alternate regs
 ! 	nop; nop; nop		! Linux sez we need this after reading TAG_ACCESS
 winfix:
 	rdpr	%tl, %g2
 	subcc	%g2, 1, %g1
-	brlez,pt	%g1, datafault			! Don't go below trap level 1
+	brlez,pt	%g1, datafault	! Don't go below trap level 1
 	 sethi	%hi(CPCB), %g6		! get current pcb
 
 
 	CHKPT(%g4,%g7,0x20)
-	wrpr	%g1, 0, %tl				! Pop a trap level
-	rdpr	%tt, %g7				! Read type of prev. trap
-	rdpr	%tstate, %g4				! Try to restore prev %cwp if we were executing a restore
-	andn	%g7, 0x3f, %g5				!   window fill traps are all 0b 0000 11xx xxxx
+	wrpr	%g1, 0, %tl		! Pop a trap level
+	rdpr	%tt, %g7		! Read type of prev. trap
+	rdpr	%tstate, %g4		! Try to restore prev %cwp if we were executing a restore
+	andn	%g7, 0x3f, %g5		!   window fill traps are all 0b 0000 11xx xxxx
 
 #if 1
-	cmp	%g7, 0x68				! If we took a datafault just before this trap
-	bne,pt	%icc, winfixfill			! our stack's probably bad so we need to switch somewhere else
+	cmp	%g7, 0x68		! If we took a datafault just before this trap
+	bne,pt	%icc, winfixfill	! our stack's probably bad so we need to switch somewhere else
 	 nop
 
 	!!
 	!! Double data fault -- bad stack?
 	!!
-	mov	%fp, %l6				! Save the frame pointer
-	set	EINTSTACK+USPACE+CC64FSZ-STKB, %fp	! Set the frame pointer to the middle of the idle stack
-	add	%fp, -CC64FSZ, %sp			! Create a stackframe
-	wrpr	%g0, 15, %pil				! Disable interrupts, too
-	wrpr	%g0, %g0, %canrestore			! Our stack is hozed and our PCB
-	wrpr	%g0, 7, %cansave			!  probably is too, so blow away
-	ta	1					!  all our register windows.
-	ba	slowtrap
+	wrpr	%g2, %tl	! Restore trap level.
+	sir			! Just issue a reset and don't try to recover.
+	mov	%fp, %l6		! Save the frame pointer
+	set	EINTSTACK+USPACE+CC64FSZ-STKB, %fp ! Set the frame pointer to the middle of the idle stack
+	add	%fp, -CC64FSZ, %sp	! Create a stackframe
+	wrpr	%g0, 15, %pil		! Disable interrupts, too
+	wrpr	%g0, %g0, %canrestore	! Our stack is hozed and our PCB
+	wrpr	%g0, 7, %cansave	!  probably is too, so blow away
+	ba	slowtrap		!  all our register windows.
 	 wrpr	%g0, 0x101, %tt
 #endif
 
 winfixfill:
-	cmp	%g5, 0x0c0				!   so we mask lower bits & compare to 0b 0000 1100 0000
-	bne,pt	%icc, winfixspill			! Dump our trap frame -- we will retry the fill when the page is loaded
-	 cmp	%g5, 0x080				!   window spill traps are all 0b 0000 10xx xxxx
+	cmp	%g5, 0x0c0		!   so we mask lower bits & compare to 0b 0000 1100 0000
+	bne,pt	%icc, winfixspill	! Dump our trap frame -- we will retry the fill when the page is loaded
+	 cmp	%g5, 0x080		!   window spill traps are all 0b 0000 10xx xxxx
 
 	!!
 	!! This was a fill
@@ -2488,11 +2489,11 @@ winfixfill:
 	inc	%g5
 	stw	%g5, [%g1]
 #endif
-	btst	TSTATE_PRIV, %g4			! User mode?
-	and	%g4, CWP, %g5				! %g4 = %cwp of trap
+	btst	TSTATE_PRIV, %g4	! User mode?
+	and	%g4, CWP, %g5		! %g4 = %cwp of trap
 	wrpr	%g7, 0, %tt
-	bz,a,pt	%icc, datafault				! We were in user mode -- normal fault
-	 wrpr	%g5, %cwp				! Restore cwp from before fill trap -- regs should now be consisent
+	bz,a,pt	%icc, datafault		! We were in user mode -- normal fault
+	 wrpr	%g5, %cwp		! Restore cwp from before fill trap -- regs should now be consisent
 
 	/*
 	 * We're in a pickle here.  We were trying to return to user mode
@@ -3212,7 +3213,6 @@ Ldatafault_internal:
 	 nop
 
 data_error:
-	wrpr	%g0, PSTATE_INTR, %pstate		! reenable interrupts
 	call	_C_LABEL(data_access_error)		! data_access_error(type, sfva, sfsr,
 							!		afva, afsr, &tf);
 	 add	%sp, CC64FSZ + STKB, %o5				! (argument: &tf)
@@ -5608,9 +5608,9 @@ _C_LABEL(cpu_initialize):
 	ldx	[%l5], %l5
 
 	set	_C_LABEL(ektext), %l1		! And the ends...
-	ldx	[%l1], %l1
+	LDPTR	[%l1], %l1
 	set	_C_LABEL(ekdata), %l4
-	ldx	[%l4], %l4
+	LDPTR	[%l4], %l4
 
 	sethi	%hi(0xe0000000), %o0		! V=1|SZ=11|NFO=0|IE=0
 	sllx	%o0, 32, %o0			! Shift it into place
