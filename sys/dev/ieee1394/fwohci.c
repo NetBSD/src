@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.18 2001/03/12 23:27:53 onoe Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.19 2001/03/12 23:36:09 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -245,13 +245,8 @@ fwohci_init(struct fwohci_softc *sc, const struct evcnt *ev)
 	fwohci_ctx_alloc(sc, &sc->sc_ctx_atrs, 0, OHCI_CTX_ASYNC_TX_RESPONSE);
 	sc->sc_ctx_ir = malloc(sizeof(sc->sc_ctx_ir[0]) * sc->sc_isoctx,
 	    M_DEVBUF, M_WAITOK);
-	for (i = 0; i < sc->sc_isoctx; i++) {
+	for (i = 0; i < sc->sc_isoctx; i++)
 		sc->sc_ctx_ir[i] = NULL;
-#if 0
-		fwohci_ctx_alloc(sc, &sc->sc_ctx_ir[i], OHCI_BUF_IR_CNT, i);
-		sc->sc_ctx_ir[i]->fc_isoch = 1;
-#endif
-	}
 
 	/*
 	 * Allocate buffer for configuration ROM and SelfID buffer
@@ -898,6 +893,7 @@ fwohci_ctx_init(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 {
 	struct fwohci_buf *fb, *nfb;
 	struct fwohci_desc *fd;
+	struct fwohci_handler *fh;
 	int n;
 
 	for (fb = TAILQ_FIRST(&fc->fc_buf); fb != NULL; fb = nfb) {
@@ -920,6 +916,9 @@ fwohci_ctx_init(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 		    OHCI_CTXCTL_RX_DUAL_BUFFER_MODE);
 		OHCI_SYNC_RX_DMA_WRITE(sc, n, OHCI_SUBREG_ContextControlSet,
 		    OHCI_CTXCTL_RX_ISOCH_HEADER);
+		fh = LIST_FIRST(&fc->fc_handler);
+		OHCI_SYNC_RX_DMA_WRITE(sc, n, OHCI_SUBREG_ContextMatch,
+		    (OHCI_CTXMATCH_TAG0 << fh->fh_key2) | fh->fh_key1);
 	} else {
 		OHCI_ASYNC_DMA_WRITE(sc, n, OHCI_SUBREG_CommandPtr,
 		    fb->fb_daddr | 1);
@@ -1344,8 +1343,6 @@ fwohci_handler_set(struct fwohci_softc *sc,
 			    (long)(TAILQ_FIRST(&fc->fc_buf)->fb_desc -
 			    sc->sc_desc));
 #endif
-		OHCI_SYNC_RX_DMA_WRITE(sc, fc->fc_ctx, OHCI_SUBREG_ContextMatch,
-		    (OHCI_CTXMATCH_TAG0 << key2) | key1);
 		OHCI_SYNC_RX_DMA_WRITE(sc, fc->fc_ctx,
 		    OHCI_SUBREG_ContextControlSet, OHCI_CTXCTL_RUN);
 	}
