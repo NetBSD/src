@@ -42,7 +42,7 @@
  *	@(#)esp.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: esp.c,v 1.28 93/04/27 14:40:44 torek Exp  (LBL)
- * $Id: esp.c,v 1.1 1993/10/02 10:23:50 deraadt Exp $
+ * $Id: esp.c,v 1.2 1993/10/27 18:14:16 deraadt Exp $
  *
  * Loosely derived from Mary Baker's devSCSIC90.c from the Berkeley
  * Sprite project, which is:
@@ -76,8 +76,8 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <dev/scsi/scsi.h>
-#include <dev/scsi/scsivar.h>
+#include <sparc/scsi/scsi.h>
+#include <sparc/scsi/scsivar.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>

@@ -16,7 +16,7 @@
  *	%W% (Berkeley) %G%
  *
  * from: Header: scsi_subr.c,v 1.10 93/02/01 19:21:58 torek Locked (LBL)
- * $Id: scsi_subr.c,v 1.1 1993/10/27 17:48:41 deraadt Exp $
+ * $Id: scsi_subr.c,v 1.2 1993/10/27 18:15:06 deraadt Exp $
  */
 
 /*
@@ -28,8 +28,8 @@
 #include <sys/buf.h>
 #include <sys/device.h>
 
-#include <dev/scsi/scsi.h>
-#include <dev/scsi/scsivar.h>
+#include <sparc/scsi/scsi.h>
+#include <sparc/scsi/scsivar.h>
 
 /*
  * General subroutines, and scsi data.
