@@ -1,3 +1,5 @@
+.\"	$NetBSD: 2.t,v 1.2 1998/01/09 06:41:19 perry Exp $
+.\"
 .\" Copyright (c) 1984 M. K. McKusick
 .\" Copyright (c) 1984 The Regents of the University of California.
 .\" All rights reserved.

@@ -1,3 +1,5 @@
+.\"	$NetBSD: tmac.p,v 1.4 1998/01/09 06:42:01 perry Exp $
+.\"
 .\" Copyright (c) 1979 The Regents of the University of California.
 .\" All rights reserved.
 .\"

@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile,v 1.4 1998/01/09 06:41:46 perry Exp $
+#
 #	@(#)Makefile	5.4 (Berkeley) 10/9/94
 
 DIR=	papers/px

@@ -1,3 +1,5 @@
+.\"	$NetBSD: tmac.srefs,v 1.2 1998/01/09 06:42:06 perry Exp $
+.\"
 .\" @(#)tmac.srefs	1.14 11/2/88
 .\" REFER macros .... citations
 .de []
