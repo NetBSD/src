@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.59 2002/05/29 13:52:56 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.60 2002/05/29 13:56:14 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.151 2001/06/19 14:24:41 sumikawa Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.59 2002/05/29 13:52:56 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.60 2002/05/29 13:56:14 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1337,6 +1337,7 @@ nd6_ioctl(cmd, data, ifp)
 		break;
 	case OSIOCGIFINFO_IN6:
 		/* XXX: old ndp(8) assumes a positive value for linkmtu. */
+		bzero(&ndi->ndi, sizeof(ndi->ndi));
 		ndi->ndi.linkmtu = IN6_LINKMTU(ifp);
 		ndi->ndi.maxmtu = ND_IFINFO(ifp)->maxmtu;
 		ndi->ndi.basereachable = ND_IFINFO(ifp)->basereachable;
