@@ -1,3 +1,4 @@
+/* NetBSD $Id: dmap.h,v 1.5 1994/06/27 19:31:01 cgd Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dmap.h	8.2 (Berkeley) 1/4/94
- *	$Id: dmap.h,v 1.4 1994/05/21 03:51:55 cgd Exp $
+ *	@(#)dmap.h	8.2 (Berkeley) 1/4/94
  */
 
 #ifndef _SYS_DMAP_H_

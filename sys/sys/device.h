@@ -1,3 +1,4 @@
+/* NetBSD $Id: device.h,v 1.3 1994/06/27 19:30:52 cgd Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,8 +40,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)device.h	8.2 (Berkeley) 2/17/94
- *      $Id: device.h,v 1.2 1994/05/20 04:26:12 glass Exp $
+ *	@(#)device.h	8.2 (Berkeley) 2/17/94
  */
 
 #ifndef _SYS_DEVICE_H_

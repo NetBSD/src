@@ -1,3 +1,4 @@
+/* NetBSD $Id: callout.h,v 1.8 1994/06/27 19:30:41 cgd Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)callout.h	8.2 (Berkeley) 1/21/94
- *	$Id: callout.h,v 1.7 1994/05/21 03:51:51 cgd Exp $
+ *	@(#)callout.h	8.2 (Berkeley) 1/21/94
  */
 
 struct callout {

@@ -1,3 +1,4 @@
+/* NetBSD $Id: types.h,v 1.15 1994/06/27 19:32:33 cgd Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)types.h	8.4 (Berkeley) 1/21/94
- *	$Id: types.h,v 1.14 1994/05/21 07:11:52 cgd Exp $
+ *	@(#)types.h	8.4 (Berkeley) 1/21/94
  */
 
 #ifndef _SYS_TYPES_H_

@@ -1,3 +1,4 @@
+/* NetBSD $Id: conf.h,v 1.13 1994/06/27 19:30:50 cgd Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)conf.h	8.3 (Berkeley) 1/21/94
- *	$Id: conf.h,v 1.12 1994/05/11 04:29:11 mycroft Exp $
+ *	@(#)conf.h	8.3 (Berkeley) 1/21/94
  */
 
 /*

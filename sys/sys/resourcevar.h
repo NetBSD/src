@@ -1,3 +1,4 @@
+/* NetBSD $Id: resourcevar.h,v 1.8 1994/06/27 19:31:54 cgd Exp $ */
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)resourcevar.h	8.3 (Berkeley) 2/22/94
- *	$Id: resourcevar.h,v 1.7 1994/05/21 03:52:09 cgd Exp $
+ *	@(#)resourcevar.h	8.3 (Berkeley) 2/22/94
  */
 
 #ifndef	_SYS_RESOURCEVAR_H_
