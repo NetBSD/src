@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.17 2003/06/11 21:35:43 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.18 2003/06/14 12:58:49 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,9 +40,6 @@
 #include <sys/bootblock.h>
 
 /* md.h -- Machine specific definitions for the mac68k */
-
-#define LIB_COUNT 0
-#define LIB_MOVE 1
 
 /*
  * Apple Partition Map Types

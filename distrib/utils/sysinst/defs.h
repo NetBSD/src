@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.89 2003/06/13 11:57:28 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.90 2003/06/14 12:58:45 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -208,6 +208,7 @@ EXTERN int ptstart, ptsize;
 /* Actual values for current disk - set by md_get_info() */
 EXTERN int dlcyl, dlhead, dlsec, dlsize, dlcylsize;
 EXTERN int current_cylsize;
+EXTERN int root_limit;
 
 /* Information for the NetBSD disklabel */
 enum DLTR {A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z};
