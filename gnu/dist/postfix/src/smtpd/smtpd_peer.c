@@ -1,3 +1,5 @@
+/*	$NetBSD: smtpd_peer.c,v 1.12 2004/05/31 00:46:48 heas Exp $	*/
+
 /*++
 /* NAME
 /*	smtpd_peer 3

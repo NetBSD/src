@@ -1,3 +1,5 @@
+/*	$NetBSD: cleanup.h,v 1.6 2004/05/31 00:46:47 heas Exp $	*/
+
 /*++
 /* NAME
 /*	cleanup 3h

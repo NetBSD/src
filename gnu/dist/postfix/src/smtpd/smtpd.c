@@ -1,3 +1,5 @@
+/*	$NetBSD: smtpd.c,v 1.10 2004/05/31 00:46:48 heas Exp $	*/
+
 /*++
 /* NAME
 /*	smtpd 8
