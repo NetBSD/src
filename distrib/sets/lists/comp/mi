@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.536 2003/02/13 23:57:53 jmc Exp $
+#	$NetBSD: mi,v 1.537 2003/02/15 21:11:47 jdolecek Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -1291,6 +1291,9 @@
 ./usr/share/man/cat2/sigreturn.0	comp-c-catman
 ./usr/share/man/cat2/sigstack.0		comp-c-catman
 ./usr/share/man/cat2/sigsuspend.0	comp-c-catman
+./usr/share/man/cat2/sigtimedwait.0	comp-c-catman
+./usr/share/man/cat2/sigwait.0		comp-c-catman
+./usr/share/man/cat2/sigwaitinfo.0	comp-c-catman
 ./usr/share/man/cat2/socket.0		comp-c-catman
 ./usr/share/man/cat2/socketpair.0	comp-c-catman
 ./usr/share/man/cat2/stat.0		comp-c-catman
@@ -4328,6 +4331,9 @@
 ./usr/share/man/man2/sigreturn.2		comp-c-man
 ./usr/share/man/man2/sigstack.2		comp-c-man
 ./usr/share/man/man2/sigsuspend.2		comp-c-man
+./usr/share/man/man2/sigtimedwait.2	comp-c-man
+./usr/share/man/man2/sigwait.2		comp-c-man
+./usr/share/man/man2/sigwaitinfo.2	comp-c-man
 ./usr/share/man/man2/socket.2		comp-c-man
 ./usr/share/man/man2/socketpair.2		comp-c-man
 ./usr/share/man/man2/stat.2		comp-c-man
