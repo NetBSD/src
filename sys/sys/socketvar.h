@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.71 2004/04/18 18:48:03 matt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.72 2004/04/18 21:43:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -277,9 +277,6 @@ int	soo_poll(struct file *, int, struct proc *);
 int	soo_kqfilter(struct file *, struct knote *);
 int 	soo_close(struct file *, struct proc *);
 int	soo_stat(struct file *, struct stat *, struct proc *);
-int	uipc_usrreq(struct socket *, int, struct mbuf *,
-	    struct mbuf *, struct mbuf *, struct proc *);
-int	uipc_ctloutput(int, struct socket *, int, int, struct mbuf **);
 void	sbappend(struct sockbuf *, struct mbuf *);
 void	sbappendstream(struct sockbuf *, struct mbuf *);
 int	sbappendaddr(struct sockbuf *, struct sockaddr *, struct mbuf *,
