@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.35 2004/04/15 14:56:57 darrenr Exp $	*/
+/*	$NetBSD: bpf.h,v 1.36 2004/04/15 15:17:11 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -72,10 +72,10 @@ struct bpf_program {
  * Struct returned by BIOCGSTATS.
  */
 struct bpf_stat {
-	u_long bs_recv;		/* number of packets received */
-	u_long bs_drop;		/* number of packets dropped */
-	u_long bs_capt;		/* number of packets captured */
-	u_long bs_padding[13];
+	u_int64_t bs_recv;	/* number of packets received */
+	u_int64_t bs_drop;	/* number of packets dropped */
+	u_int64_t bs_capt;	/* number of packets captured */
+	u_int64_t bs_padding[13];
 };
  
 /*
