@@ -41,7 +41,8 @@
 #	vnd*	"file" pseudo-disks
 #
 # Console ports:
-#	vga	stock pccons vga (note it has no keyboard name or minor!)
+#	ttyv0	pccons or pcvt screen 0
+#	ttyv*	pcvt
 #
 # Pointing devices:
 #	mms*	Microsoft bus mouse
@@ -80,7 +81,7 @@ case $i in
 all)
 	sh MAKEDEV std fd wt0 fd0 fd1 wd0 wd1 sd0 sd1 sd2 tty0 tty1 pty0 pty1
 	sh MAKEDEV st0 st1 ch0 cd0 cd1 mcd0 vnd0 vnd1 lpa0 lpa1
-	sh MAKEDEV lpt0 lpt1 lpt2 vga bpf0 bpf1 bpf2 bpf3 speaker lkm
+	sh MAKEDEV lpt0 lpt1 lpt2 ttyv0 bpf0 bpf1 bpf2 bpf3 speaker lkm
 	sh MAKEDEV mms0 lms0 pms0 audio local
 # MISSING:
 #	sh MAKEDEV mouse-?
@@ -88,7 +89,7 @@ all)
 
 floppy)
 	sh MAKEDEV std wt0 fd0 fd1 wd0 wd1 sd0 sd1 sd2 tty0 tty1
-	sh MAKEDEV st0 st1 cd0 cd1 mcd0 vga
+	sh MAKEDEV st0 st1 cd0 cd1 mcd0 ttyv0
 	;;
 
 std)
@@ -105,6 +106,19 @@ std)
 	mknod stdin		c 22 0	; chmod 666 stdin
 	mknod stdout		c 22 1	; chmod 666 stdout
 	mknod stderr		c 22 2	; chmod 666 stderr
+	;;
+
+ttyv*)
+	unit=`expr $i : 'ttyv\(.*\)'`
+	rm -f ttyv$unit
+	mknod ttyv$unit c 12 $unit
+	chown root.wheel ttyv$unit
+	case $unit in
+	0)
+		rm -f vga
+		ln -s ttyv0 vga
+		;;
+	esac
 	;;
 
 fd)
@@ -281,12 +295,6 @@ lpt*)
 	rm -f lpt$unit
 	mknod lpt$unit c 16 $unit
 	chown root.wheel lpt$unit
-	;;
-
-vga)
-	rm -f vga
-	mknod vga c 12 0
-	chown root.wheel vga
 	;;
 
 bpf*)
