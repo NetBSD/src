@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.1.1.3 1997/05/25 11:46:04 darrenr Exp $	*/
+/*	$NetBSD: misc.c,v 1.1.1.4 1997/05/27 22:17:09 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -43,7 +43,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)misc.c	1.3 2/4/96 (C) 1995 Darren Reed";
-static	char	rcsid[] = "$Id: misc.c,v 1.1.1.3 1997/05/25 11:46:04 darrenr Exp $";
+static	char	rcsid[] = "Id: misc.c,v 2.0.2.6 1997/04/30 13:54:24 darrenr Exp ";
 #endif
 
 extern	int	opts;
