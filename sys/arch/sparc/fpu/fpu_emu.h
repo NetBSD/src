@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.h,v 1.3 2000/06/18 06:54:17 mrg Exp $ */
+/*	$NetBSD: fpu_emu.h,v 1.3.2.1 2000/08/07 01:31:11 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -179,16 +179,17 @@ struct	fpn *fpu_newnan(struct fpemu *);
  */
 int	fpu_shr(struct fpn *, int);
 
-/* Conversion to and from internal format -- note asymmetry. */
-int	fpu_itofpn(struct fpn *, u_int);
-int	fpu_stofpn(struct fpn *, u_int);
-int	fpu_dtofpn(struct fpn *, u_int, u_int);
-int	fpu_xtofpn(struct fpn *, u_int, u_int, u_int, u_int);
-
-u_int	fpu_fpntoi(struct fpemu *, struct fpn *);
-u_int	fpu_fpntos(struct fpemu *, struct fpn *);
-u_int	fpu_fpntod(struct fpemu *, struct fpn *);
-u_int	fpu_fpntox(struct fpemu *, struct fpn *);
-
 void	fpu_explode(struct fpemu *, struct fpn *, int, int);
 void	fpu_implode(struct fpemu *, struct fpn *, int, u_int *);
+
+#ifdef DEBUG
+#define	FPE_INSN	0x1
+#define	FPE_REG		0x2
+extern int fpe_debug;
+void	fpu_dumpfpn(struct fpn *);
+#define	DPRINTF(x, y)	if (fpe_debug & (x)) printf y
+#define DUMPFPN(x, f)	if (fpe_debug & (x)) fpu_dumpfpn((f))
+#else
+#define	DPRINTF(x, y)
+#define DUMPFPN(x, f)
+#endif
