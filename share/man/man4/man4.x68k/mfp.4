@@ -1,4 +1,4 @@
-.\"	$NetBSD: mfp.4,v 1.6 2001/04/11 19:24:35 wiz Exp $
+.\"	$NetBSD: mfp.4,v 1.7 2001/05/04 10:51:57 wiz Exp $
 .\"
 .\" Copyright (c) 1998 MINOURA Makoto
 .\" Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 .Nd X68K Multi-function Peripherals
 .Sh SYNOPSIS
 .Cd mfp0 at intio0 addr 0xe88000 size 0x2000 intr 64
-.Sh DESCRIPTION 
+.Sh DESCRIPTION
 .Nm
 drives Motorola MC68901 MFP (Multi-function Peripheral).
 .Nm
@@ -45,7 +45,7 @@ driver is always required to run the NetBSD/x68k kernel,
 because it is connected to important devices such as
 the display controller, and provides fundamental functions
 like the system clock tick and interrupt controller.
-Since 
+Since
 .Nm
 provides many functions, most of the jobs as a
 device driver is done by its child drivers such as
