@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.61.2.8 2004/10/04 06:04:25 jmc Exp $	*/
+/*	$NetBSD: fil.c,v 1.61.2.9 2004/11/12 04:40:32 jmc Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,7 +135,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.61.2.8 2004/10/04 06:04:25 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.61.2.9 2004/11/12 04:40:32 jmc Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.25 2004/06/30 11:26:08 darrenr Exp";
@@ -4008,15 +4008,6 @@ caddr_t data;
 	}
 
 	/*
-	 * Allowing a rule with both "keep state" and "with oow" is
-	 * pointless because adding a state entry to the table will
-	 * fail with the out of window (oow) flag set.
-	 */
-	if ((fp->fr_flags & FR_KEEPSTATE)
-	    && fp->fr_dun.fru_ipf != NULL && (fp->fr_flx & FI_OOW))
-		return EINVAL;
-
-	/*
 	 * If the rule is being loaded from user space, i.e. we had to copy it
 	 * into kernel space, then do not trust the function pointer in the
 	 * rule.
@@ -4126,8 +4117,17 @@ caddr_t data;
 		break;
 #endif
 	case FR_T_IPF :
-		if (fp->fr_dsize == 0)
+		if (fp->fr_dsize != sizeof(fripf_t))
 			return EINVAL;
+
+		/*
+		 * Allowing a rule with both "keep state" and "with oow" is
+		 * pointless because adding a state entry to the table will
+		 * fail with the out of window (oow) flag set.
+		 */
+		if ((fp->fr_flags & FR_KEEPSTATE) && (fp->fr_flx & FI_OOW))
+			return EINVAL;
+
 		switch (fp->fr_satype)
 		{
 		case FRI_BROADCAST :
