@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.39 2003/09/26 07:02:43 dsl Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.40 2003/12/28 06:06:55 dbj Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.39 2003/09/26 07:02:43 dsl Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.40 2003/12/28 06:06:55 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,8 @@ union {
 #define opt_cg_info	OPT_FLAG('c')
 #define opt_inodes	OPT_FLAG('i')
 #define opt_verbose	OPT_FLAG('v')
+#define DFLT_CHECK (opt_alt_super | opt_cg_info | opt_inodes | \
+	opt_cg_summary | opt_superblock)
 #define DFLT_OPTS	(opt_superblock | opt_cg_summary | opt_cg_info)
 
 long	dev_bsize = 512;
@@ -122,6 +124,7 @@ main(int argc, char *argv[])
 			break;
 		case 'F':	/* File (not device) */
 			Fflag = 1;
+			break;
 		case '?':
 		default:
 			usage();
@@ -129,7 +132,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (opt_flags == 0)
+	if ((opt_flags & DFLT_CHECK) == 0)
 		opt_flags = DFLT_OPTS;
 
 	if (argc < 1)
