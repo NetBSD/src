@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 #define	DEFAULT_ARCH	bfd_arch_mips
 #define	DEFAULT_MID 	M_PMAX_NETBSD
 
-#define MY(OP) CAT(mipselnetbsd_,OP)
+#define MY(OP)		CONCAT2 (mipselnetbsd_,OP)
 /* This needs to start with a.out so GDB knows it is an a.out variant.  */
 #define TARGETNAME "a.out-mipsel-netbsd"
 
