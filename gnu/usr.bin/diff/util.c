@@ -18,7 +18,7 @@ along with GNU DIFF; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char *rcsid = "$Id: util.c,v 1.4 1993/09/16 17:39:31 jtc Exp $";
+static char *rcsid = "$Id: util.c,v 1.5 1993/11/12 02:26:25 jtc Exp $";
 #endif
 
 #include "diff.h"
@@ -676,7 +676,7 @@ xmalloc (size)
   value = (VOID *) malloc (size);
 
   if (!value)
-    fatal ("virtual memory exhausted");
+    fatal ("memory exhausted");
   return value;
 }
 
@@ -695,7 +695,7 @@ xrealloc (old, size)
   value = (VOID *) realloc (old, size);
 
   if (!value)
-    fatal ("virtual memory exhausted");
+    fatal ("memory exhausted");
   return value;
 }
 
