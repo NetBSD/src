@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_sysent.c,v 1.35 1999/02/09 20:32:47 christos Exp $	*/
+/*	$NetBSD: ultrix_sysent.c,v 1.35.2.1 2000/01/31 20:42:49 he Exp $	*/
 
 /*
  * System call switch table.
@@ -203,8 +203,8 @@ struct sysent ultrix_sysent[] = {
 	    sys_dup2 },				/* 90 = dup2 */
 	{ 0, 0,
 	    sys_nosys },			/* 91 = unimplemented getdopt */
-	{ 3, s(struct sys_fcntl_args),
-	    sys_fcntl },			/* 92 = fcntl */
+	{ 3, s(struct ultrix_sys_fcntl_args),
+	    ultrix_sys_fcntl },			/* 92 = fcntl */
 	{ 5, s(struct ultrix_sys_select_args),
 	    ultrix_sys_select },		/* 93 = select */
 	{ 0, 0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_syscallargs.h,v 1.30 1999/02/09 20:32:47 christos Exp $	*/
+/*	$NetBSD: ultrix_syscallargs.h,v 1.30.2.1 2000/01/31 20:42:49 he Exp $	*/
 
 /*
  * System call argument lists.
@@ -101,6 +101,12 @@ struct ultrix_sys_wait3_args {
 	syscallarg(int *) status;
 	syscallarg(int) options;
 	syscallarg(struct rusage *) rusage;
+};
+
+struct ultrix_sys_fcntl_args {
+	syscallarg(int) fd;
+	syscallarg(int) cmd;
+	syscallarg(void *) arg;
 };
 
 struct ultrix_sys_select_args {
@@ -292,7 +298,7 @@ int	compat_43_sys_gethostname	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_sethostname	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_getdtablesize	__P((struct proc *, void *, register_t *));
 int	sys_dup2	__P((struct proc *, void *, register_t *));
-int	sys_fcntl	__P((struct proc *, void *, register_t *));
+int	ultrix_sys_fcntl	__P((struct proc *, void *, register_t *));
 int	ultrix_sys_select	__P((struct proc *, void *, register_t *));
 int	sys_fsync	__P((struct proc *, void *, register_t *));
 int	sys_setpriority	__P((struct proc *, void *, register_t *));
