@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.72 1996/10/21 17:42:48 jtc Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.73 1996/10/23 23:07:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -232,9 +232,10 @@ update:
 	else if (mp->mnt_flag & MNT_RDONLY)
 		mp->mnt_flag |= MNT_WANTRDWR;
 	mp->mnt_flag &=~ (MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
-	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC);
+	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP);
 	mp->mnt_flag |= SCARG(uap, flags) & (MNT_NOSUID | MNT_NOEXEC |
-	    MNT_NODEV | MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC);
+	    MNT_NODEV | MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC |
+	    MNT_NOCOREDUMP);
 	/*
 	 * Mount the filesystem.
 	 */
