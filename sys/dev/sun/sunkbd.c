@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.5 2000/12/19 04:36:05 eeh Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.6 2001/05/17 02:24:00 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,7 +100,7 @@ struct cfattach kbd_ca = {
 
 struct  linesw sunkbd_disc =
 	{ "sunkbd", 7, ttylopen, ttylclose, ttyerrio, ttyerrio, nullioctl,
-	  sunkbdinput, sunkbdstart, nullmodem };	/* 7- SUNKBDDISC */
+	  sunkbdinput, sunkbdstart, nullmodem, ttpoll }; /* 7- SUNKBDDISC */
 
 /*
  * sunkbd_match: how is this tty channel configured?
