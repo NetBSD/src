@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.25 2002/06/21 19:09:29 atatat Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.26 2003/03/27 15:36:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -102,6 +102,7 @@
 #define VND_GET		3
 
 int	verbose = 0;
+int	readonly = 0;
 char	*tabname;
 
 int	config __P((char *, char *, char *, int));
@@ -117,7 +118,7 @@ main(argc, argv)
 {
 	int ch, rv, action = VND_CONFIG;
 
-	while ((ch = getopt(argc, argv, "cf:lt:uv")) != -1) {
+	while ((ch = getopt(argc, argv, "cf:lrt:uv")) != -1) {
 		switch (ch) {
 		case 'c':
 			action = VND_CONFIG;
@@ -128,6 +129,9 @@ main(argc, argv)
 			break;
 		case 'l':
 			action = VND_GET;
+			break;
+		case 'r':
+			readonly = 1;
 			break;
 		case 't':
 			tabname = optarg;
@@ -157,7 +161,7 @@ main(argc, argv)
 		if (argc != 1 || tabname != NULL)
 			usage();
 		rv = config(argv[0], NULL, NULL, action);
-	} else {
+	} else { /* VND_GET */
 		char *vn, path[64];
 		struct vnd_user vnu;
 		int v, n;
@@ -167,7 +171,7 @@ main(argc, argv)
 
 		vn = argc ? argv[0] : "vnd0";
 
-		v = opendisk(vn, O_RDWR, path, sizeof(path), 0);
+		v = opendisk(vn, O_RDONLY, path, sizeof(path), 0);
 		if (v == -1)
 			err(1, "open: %s", vn);
 
@@ -235,6 +239,9 @@ config(dev, file, geom, action)
 		vndio.vnd_flags = VNDIOF_HASGEOM;
 	}
 
+	if (readonly)
+		vndio.vnd_flags = VNDIOF_READONLY;
+
 	/*
 	 * Clear (un-configure) the device
 	 */
@@ -251,7 +258,7 @@ config(dev, file, geom, action)
 	if (action == VND_CONFIG) {
 		int	ffd;
 
-		ffd = open(file, O_RDWR);
+		ffd = open(file, readonly ? O_RDONLY : O_RDWR);
 		if (ffd < 0)
 			warn("%s", file);
 		else {
@@ -328,7 +335,7 @@ usage()
 {
 
 	(void)fprintf(stderr, "%s%s",
-	    "usage: vnconfig [-c] [-f disktab] [-t typename] [-v] special-file"
+	    "usage: vnconfig [-c] [-f disktab] [-t typename] [-vr] special-file"
 		" regular-file [geomspec]\n",
 	    "       vnconfig -u [-v] special-file\n"
 	    "       vnconfig -l [special-file]\n");
