@@ -1,4 +1,4 @@
-/* $NetBSD: intrcnt.h,v 1.8 1997/04/07 05:19:22 cgd Exp $ */
+/* $NetBSD: intrcnt.h,v 1.9 1998/01/29 22:26:24 ross Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -120,7 +120,17 @@
 		ASCIZ "eb164 irq 20";					\
 		ASCIZ "eb164 irq 21";					\
 		ASCIZ "eb164 irq 22";					\
-		ASCIZ "eb164 irq 23";
+		ASCIZ "eb164 irq 23";					\
+		ASCIZ "xbar dma out"; 					\
+		ASCIZ "xbar dma in";					\
+		ASCIZ "a12  pci";					\
+/* 0x60 */	ASCIZ "a12  pci serr";					\
+		ASCIZ "xbar MCE";					\
+		ASCIZ "xbar ECE";					\
+		ASCIZ "a12  IEI";					\
+		ASCIZ "xbar FORUN";					\
+		ASCIZ "xbar FURUN";					\
+		ASCIZ "a12  ICW";
 
 #define INTRCNT_DEFINITION						\
 /* 0x00 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
@@ -128,7 +138,8 @@
 /* 0x20 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
 /* 0x30 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
 /* 0x40 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
-/* 0x50 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+/* 0x50 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
+/* 0x60 */	.quad 0, 0, 0, 0, 0, 0, 0;
 
 #define	INTRCNT_CLOCK		0
 #define	INTRCNT_ISA_IRQ		(INTRCNT_CLOCK + 1)
@@ -145,6 +156,8 @@
 #define	INTRCNT_IOASIC_LEN	4
 #define	INTRCNT_EB164_IRQ	(INTRCNT_IOASIC + INTRCNT_IOASIC_LEN)
 #define	INTRCNT_EB164_IRQ_LEN	24
+#define	INTRCNT_A12_IRQ		(INTRCNT_EB164_IRQ + INTRCNT_EB164_IRQ_LEN)
+#define	INTRCNT_A12_IRQ_LEN	10
 
 #ifndef _LOCORE
 extern volatile long intrcnt[];
