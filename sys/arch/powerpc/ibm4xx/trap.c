@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.16 2003/09/19 00:16:34 cl Exp $	*/
+/*	$NetBSD: trap.c,v 1.17 2003/09/25 18:42:18 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.16 2003/09/19 00:16:34 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.17 2003/09/25 18:42:18 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -162,9 +162,13 @@ trap(struct trapframe *frame)
 		 * DEBUG intr -- probably single-step.
 		 */
 	case EXC_TRC|EXC_USER:
-		KERNEL_PROC_LOCK(l);
 		frame->srr1 &= ~PSL_SE;
-		trapsignal(l, SIGTRAP, EXC_TRC);
+		memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_trap = EXC_TRC;
+		ksi.ksi_addr = (void *)frame->srr0;
+		KERNEL_PROC_LOCK(l);
+		trapsignal(l, &ksi);
 		KERNEL_PROC_UNLOCK(l);
 		break;
 
@@ -247,16 +251,19 @@ trap(struct trapframe *frame)
 			KERNEL_PROC_UNLOCK(l);
 			break;
 		}
+		memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_trap = EXC_DSI;
+		ksi.ksi_addr = (void *)frame->dar;
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s) lid %d, uid %d killed: "
 			    "out of swap\n",
 			    p->p_pid, p->p_comm, l->l_lid,
 			    p->p_cred && p->p_ucred ?
 			    p->p_ucred->cr_uid : -1);
-			trapsignal(l, SIGKILL, EXC_DSI);
-		} else {
-			trapsignal(l, SIGSEGV, EXC_DSI);
+			ksi.ksi_signo = SIGKILL;
 		}
+		trapsignal(l, &ksi);
 		l->l_flag &= ~L_SA_PAGEFAULT;
 		KERNEL_PROC_UNLOCK(l);
 		break;
@@ -280,7 +287,11 @@ trap(struct trapframe *frame)
 			KERNEL_PROC_UNLOCK(l);
 			break;
 		}
-		trapsignal(l, SIGSEGV, EXC_ISI);
+		memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_trap = EXC_ISI;
+		ksi.ksi_addr = (void *)frame->srr0;
+		trapsignal(l, &ksi);
 		l->l_flag &= ~L_SA_PAGEFAULT;
 		KERNEL_PROC_UNLOCK(l);
 		break;
@@ -302,9 +313,13 @@ trap(struct trapframe *frame)
 
 	case EXC_ALI|EXC_USER:
 		KERNEL_PROC_LOCK(l);
-		if (fix_unaligned(l, frame) != 0)
-			trapsignal(l, SIGBUS, EXC_ALI);
-		else
+		if (fix_unaligned(l, frame) != 0) {
+			memset(&ksi, 0, sizeof(ksi));
+			ksi.ksi_signo = SIGBUS;
+			ksi.ksi_trap = EXC_ALI;
+			ksi.ksi_addr = (void *)frame->dar;
+			trapsignal(l, &ksi);
+		} else
 			frame->srr0 += 4;
 		KERNEL_PROC_UNLOCK(l);
 		break;
@@ -324,8 +339,12 @@ trap(struct trapframe *frame)
 
 		if ((rv = fpu_emulate(frame,
 			(struct fpreg *)&l->l_addr->u_pcb.pcb_fpu))) {
+			memset(&ksi, 0, sizeof(ksi));
+			ksi.ksi_signo = rv;
+			ksi.ksi_trap = EXC_PGM;
+			ksi.ksi_addr = (void *)frame->srr0;
 			KERNEL_PROC_LOCK(l);
-			trapsignal(l, rv, EXC_PGM);
+			trapsignal(l, &ksi);
 			KERNEL_PROC_UNLOCK(l);
 		}
 		break;
