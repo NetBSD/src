@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.161 2003/10/27 14:11:47 junyoung Exp $	*/
+/*	$NetBSD: pmap.c,v 1.162 2003/11/01 09:07:11 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.161 2003/10/27 14:11:47 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.162 2003/11/01 09:07:11 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1738,7 +1738,6 @@ void
 pmap_destroy(pmap)
 	struct pmap *pmap;
 {
-	struct vm_page *pg;
 	int refs;
 
 	/*
@@ -1765,15 +1764,11 @@ pmap_destroy(pmap)
 	simple_unlock(&pmaps_lock);
 
 	/*
-	 * free any remaining PTPs
+	 * destroyed pmap shouldn't have remaining PTPs
 	 */
 
-	while ((pg = TAILQ_FIRST(&pmap->pm_obj.memq)) != NULL) {
-		KASSERT((pg->flags & PG_BUSY) == 0);
-
-		pg->wire_count = 0;
-		uvm_pagefree(pg);
-	}
+	KASSERT(pmap->pm_obj.uo_npages == 0);
+	KASSERT(TAILQ_EMPTY(&pmap->pm_obj.memq));
 
 	/*
 	 * MULTIPROCESSOR -- no need to flush out of other processors'
