@@ -1,5 +1,3 @@
-/*	$NetBSD: ibcs2_syscall.h,v 1.13 1998/01/09 06:21:28 thorpej Exp $	*/
-
 /*
  * System call numbers.
  *
@@ -160,6 +158,9 @@
 /* syscall: "utssys" ret: "int" args: "int" "int" "int" */
 #define	IBCS2_SYS_utssys	57
 
+/* syscall: "fsync" ret: "int" args: "int" */
+#define	IBCS2_SYS_fsync	58
+
 /* syscall: "execve" ret: "int" args: "char *" "char **" "char **" */
 #define	IBCS2_SYS_execve	59
 
@@ -213,55 +214,97 @@
 /* syscall: "readlink" ret: "int" args: "char *" "char *" "int" */
 #define	IBCS2_SYS_readlink	92
 
-/* syscall: "sigreturn" ret: "int" args: "struct sigcontext *" */
-#define	IBCS2_SYS_sigreturn	103
+/* syscall: "fchmod" ret: "int" args: "int" "int" */
+#define	IBCS2_SYS_fchmod	93
+
+/* syscall: "fchown" ret: "int" args: "int" "int" "int" */
+#define	IBCS2_SYS_fchown	94
+
+/* syscall: "mmap" ret: "ibcs2_caddr_t" args: "ibcs2_caddr_t" "ibcs2_size_t" "int" "int" "int" "ibcs2_off_t" */
+#define	IBCS2_SYS_mmap	115
+
+/* syscall: "mprotect" ret: "int" args: "void *" "int" "int" */
+#define	IBCS2_SYS_mprotect	116
+
+/* syscall: "munmap" ret: "int" args: "void *" "int" */
+#define	IBCS2_SYS_munmap	117
+
+/* syscall: "fchdir" ret: "int" args: "int" */
+#define	IBCS2_SYS_fchdir	120
+
+/* syscall: "readv" ret: "int" args: "int" "struct iovec *" "u_int" */
+#define	IBCS2_SYS_readv	121
+
+/* syscall: "writev" ret: "int" args: "int" "struct iovec *" "u_int" */
+#define	IBCS2_SYS_writev	122
+
+/* syscall: "memcntl" ret: "int" args: "ibcs2_caddr_t" "ibcs2_size_t" "int" "ibcs2_caddr_t" "int" "int" */
+#define	IBCS2_SYS_memcntl	131
+
+/* syscall: "gettimeofday" ret: "int" args: "struct timeval *" */
+#define	IBCS2_SYS_gettimeofday	171
+
+/* syscall: "settimeofday" ret: "int" args: "struct timeval *" */
+#define	IBCS2_SYS_settimeofday	172
+
+/* syscall: "truncate" ret: "int" args: "char *" "long" */
+#define	IBCS2_SYS_truncate	191
+
+/* syscall: "ftruncate" ret: "int" args: "int" "long" */
+#define	IBCS2_SYS_ftruncate	192
+
+/* syscall: "locking" ret: "int" args: "int" "int" "int" */
+#define	IBCS2_SYS_locking	201
 
 /* syscall: "rdchk" ret: "int" args: "int" */
-#define	IBCS2_SYS_rdchk	135
+#define	IBCS2_SYS_rdchk	207
 
 /* syscall: "chsize" ret: "int" args: "int" "long" */
-#define	IBCS2_SYS_chsize	138
+#define	IBCS2_SYS_chsize	210
 
 /* syscall: "ftime" ret: "int" args: "struct xenix_timeb *" */
-#define	IBCS2_SYS_ftime	139
+#define	IBCS2_SYS_ftime	211
 
-/* syscall: "nap" ret: "int" args: "int" */
-#define	IBCS2_SYS_nap	140
+/* syscall: "nap" ret: "int" args: "long" */
+#define	IBCS2_SYS_nap	212
 
 /* syscall: "select" ret: "int" args: "u_int" "fd_set *" "fd_set *" "fd_set *" "struct timeval *" */
-#define	IBCS2_SYS_select	164
+#define	IBCS2_SYS_select	236
 
 /* syscall: "eaccess" ret: "int" args: "char *" "int" */
-#define	IBCS2_SYS_eaccess	165
+#define	IBCS2_SYS_eaccess	237
 
 /* syscall: "sigaction" ret: "int" args: "int" "struct ibcs2_sigaction *" "struct ibcs2_sigaction *" */
-#define	IBCS2_SYS_sigaction	167
+#define	IBCS2_SYS_sigaction	239
 
 /* syscall: "sigprocmask" ret: "int" args: "int" "ibcs2_sigset_t *" "ibcs2_sigset_t *" */
-#define	IBCS2_SYS_sigprocmask	168
+#define	IBCS2_SYS_sigprocmask	240
 
 /* syscall: "sigpending" ret: "int" args: "ibcs2_sigset_t *" */
-#define	IBCS2_SYS_sigpending	169
+#define	IBCS2_SYS_sigpending	241
 
 /* syscall: "sigsuspend" ret: "int" args: "ibcs2_sigset_t *" */
-#define	IBCS2_SYS_sigsuspend	170
+#define	IBCS2_SYS_sigsuspend	242
 
 /* syscall: "getgroups" ret: "int" args: "int" "ibcs2_gid_t *" */
-#define	IBCS2_SYS_getgroups	171
+#define	IBCS2_SYS_getgroups	243
 
 /* syscall: "setgroups" ret: "int" args: "int" "ibcs2_gid_t *" */
-#define	IBCS2_SYS_setgroups	172
+#define	IBCS2_SYS_setgroups	244
 
 /* syscall: "sysconf" ret: "int" args: "int" */
-#define	IBCS2_SYS_sysconf	173
+#define	IBCS2_SYS_sysconf	245
 
 /* syscall: "pathconf" ret: "int" args: "char *" "int" */
-#define	IBCS2_SYS_pathconf	174
+#define	IBCS2_SYS_pathconf	246
 
 /* syscall: "fpathconf" ret: "int" args: "int" "int" */
-#define	IBCS2_SYS_fpathconf	175
+#define	IBCS2_SYS_fpathconf	247
 
 /* syscall: "rename" ret: "int" args: "char *" "char *" */
-#define	IBCS2_SYS_rename	176
+#define	IBCS2_SYS_rename	248
 
-#define	IBCS2_SYS_MAXSYSCALL	177
+/* syscall: "scoinfo" ret: "int" args: "struct scoutsname *" "int" */
+#define	IBCS2_SYS_scoinfo	250
+
+#define	IBCS2_SYS_MAXSYSCALL	260
