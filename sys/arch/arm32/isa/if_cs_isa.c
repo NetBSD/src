@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.16 1998/07/21 00:58:46 thorpej Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.17 1998/07/21 01:04:34 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -215,8 +215,7 @@
 #include <dev/isa/isadmavar.h>
 
 #include <dev/isa/cs89x0reg.h>
-
-#include <arch/arm32/isa/if_csvar.h>
+#include <dev/isa/cs89x0var.h>
 
 #include "bpfilter.h"
 #if NBPFILTER > 0
