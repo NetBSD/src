@@ -32,11 +32,18 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-divert(0)
-VERSIONID(`@(#)Berkeley.m4	8.5 (Berkeley) 2/18/94')
-define(`UUCP_RELAY', `ucbvax.Berkeley.EDU')dnl
-define(`BITNET_RELAY', `CMSA.Berkeley.EDU')dnl
-define(`confFORWARD_PATH', `$z/.forward.$w:$z/.forward')dnl
-define(`confCW_FILE', `-o /etc/sendmail.cw')dnl
-FEATURE(redirect)dnl
-FEATURE(use_cw_file)dnl
+
+#
+#  This is a generic configuration file for 4.4 BSD-based systems,
+#  including 4.4-Lite, BSDi, NetBSD, and FreeBSD.
+#  It has support for local and SMTP mail only.  If you want to
+#  customize it, copy it to a name appropriate for your environment
+#  and do the modifications there.
+#
+
+divert(0)dnl
+VERSIONID(`@(#)generic-bsd4.4.mc	8.2 (Berkeley) 3/23/96')
+OSTYPE(bsd4.4)dnl
+DOMAIN(generic)dnl
+MAILER(local)dnl
+MAILER(smtp)dnl
