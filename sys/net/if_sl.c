@@ -95,6 +95,7 @@ Huh? Slip without inet?
 #endif
 
 #include "machine/mtpr.h"
+#include "machine/cpu.h"
 
 #include "slcompress.h"
 #include "if_slvar.h"

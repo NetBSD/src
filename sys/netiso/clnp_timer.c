@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clnp_timer.c	7.5 (Berkeley) 5/6/91
- *	$Id: clnp_timer.c,v 1.2 1993/05/20 05:26:59 cgd Exp $
+ *	$Id: clnp_timer.c,v 1.2.4.1 1993/09/24 08:55:19 mycroft Exp $
  */
 
 /***********************************************************
@@ -68,6 +68,8 @@ SOFTWARE.
 #include "socket.h"
 #include "socketvar.h"
 #include "errno.h"
+
+#include "machine/cpu.h"
 
 #include "../net/if.h"
 #include "../net/route.h"

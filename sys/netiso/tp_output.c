@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tp_output.c	7.10 (Berkeley) 6/27/91
- *	$Id: tp_output.c,v 1.3 1993/09/06 18:05:06 mycroft Exp $
+ *	$Id: tp_output.c,v 1.3.2.1 1993/09/24 08:55:38 mycroft Exp $
  */
 
 /***********************************************************
@@ -74,6 +74,10 @@ SOFTWARE.
 #include "protosw.h"
 #include "errno.h"
 #include "time.h"
+#include "kernel.h"
+
+#include "machine/cpu.h"
+
 #include "tp_param.h"
 #include "tp_user.h"
 #include "tp_stat.h"
@@ -83,7 +87,6 @@ SOFTWARE.
 #include "argo_debug.h"
 #include "tp_pcb.h"
 #include "tp_trace.h"
-#include "kernel.h"
 
 #define USERFLAGSMASK_G 0x0f00643b
 #define USERFLAGSMASK_S 0x0f000432

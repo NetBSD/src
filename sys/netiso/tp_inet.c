@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tp_inet.c	7.8 (Berkeley) 5/6/91
- *	$Id: tp_inet.c,v 1.2 1993/05/20 05:27:38 cgd Exp $
+ *	$Id: tp_inet.c,v 1.2.4.1 1993/09/24 08:55:33 mycroft Exp $
  */
 
 /***********************************************************
@@ -89,6 +89,9 @@ SOFTWARE.
 #include "mbuf.h"
 #include "errno.h"
 #include "time.h"
+
+#include "machine/cpu.h"
+
 #include "../net/if.h"
 #include "tp_param.h"
 #include "argo_debug.h"

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)hd_timer.c	7.4 (Berkeley) 5/29/91
- *	$Id: hd_timer.c,v 1.2 1993/05/20 04:12:09 cgd Exp $
+ *	$Id: hd_timer.c,v 1.2.4.1 1993/09/24 08:54:30 mycroft Exp $
  */
 
 #include "param.h"
@@ -48,6 +48,8 @@
 #include "errno.h"
 #include "time.h"
 #include "kernel.h"
+
+#include "machine/cpu.h"
 
 #include "../net/if.h"
 

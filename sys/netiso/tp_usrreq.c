@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tp_usrreq.c	7.17 (Berkeley) 6/27/91
- *	$Id: tp_usrreq.c,v 1.2 1993/05/20 05:28:09 cgd Exp $
+ *	$Id: tp_usrreq.c,v 1.2.4.1 1993/09/24 08:55:42 mycroft Exp $
  */
 
 /***********************************************************
@@ -79,6 +79,8 @@ SOFTWARE.
 #include "protosw.h"
 #include "errno.h"
 #include "time.h"
+
+#include "machine/cpu.h"
 
 #include "tp_param.h"
 #include "tp_timer.h"

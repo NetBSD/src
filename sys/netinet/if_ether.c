@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ether.c	7.13 (Berkeley) 10/31/90
- *	$Id: if_ether.c,v 1.3 1993/06/27 06:02:37 andrew Exp $
+ *	$Id: if_ether.c,v 1.3.4.1 1993/09/24 08:54:50 mycroft Exp $
  */
 
 /*
@@ -52,6 +52,8 @@
 #include "errno.h"
 #include "ioctl.h"
 #include "syslog.h"
+
+#include "machine/cpu.h"
 
 #include "../net/if.h"
 #include "in.h"

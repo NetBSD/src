@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pk_input.c	7.14 (Berkeley) 7/16/91
- *	$Id: pk_input.c,v 1.3 1993/05/20 04:12:19 cgd Exp $
+ *	$Id: pk_input.c,v 1.3.4.1 1993/09/24 08:54:35 mycroft Exp $
  */
 
 #include "param.h"
@@ -46,6 +46,8 @@
 #include "protosw.h"
 #include "socketvar.h"
 #include "errno.h"
+
+#include "machine/cpu.h"
 
 #include "../net/if.h"
 

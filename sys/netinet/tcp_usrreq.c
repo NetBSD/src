@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_usrreq.c	7.15 (Berkeley) 6/28/90
- *	$Id: tcp_usrreq.c,v 1.4 1993/06/15 02:25:26 cgd Exp $
+ *	$Id: tcp_usrreq.c,v 1.4.4.1 1993/09/24 08:55:02 mycroft Exp $
  */
 
 #include "param.h"
@@ -43,6 +43,8 @@
 #include "protosw.h"
 #include "errno.h"
 #include "stat.h"
+
+#include "machine/cpu.h"
 
 #include "../net/if.h"
 #include "../net/route.h"

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)route.c	7.22 (Berkeley) 6/27/91
- *	$Id: route.c,v 1.4 1993/05/22 11:42:19 cgd Exp $
+ *	$Id: route.c,v 1.4.4.1 1993/09/24 08:54:05 mycroft Exp $
  */
 
 #include "param.h"
@@ -44,6 +44,9 @@
 #include "protosw.h"
 #include "ioctl.h"
 
+#include "machine/mtpr.h"
+#include "machine/cpu.h"
+
 #include "if.h"
 #include "af.h"
 #include "route.h"
@@ -55,7 +58,6 @@
 #ifdef NS
 #include "../netns/ns.h"
 #endif
-#include "machine/mtpr.h"
 #include "netisr.h"
 
 #define	SA(p) ((struct sockaddr *)(p))

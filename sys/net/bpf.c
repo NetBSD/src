@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)bpf.c	7.5 (Berkeley) 7/15/91
- *	$Id: bpf.c,v 1.5 1993/05/18 18:19:50 cgd Exp $
+ *	$Id: bpf.c,v 1.5.4.1 1993/09/24 08:53:51 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -77,6 +77,8 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <sys/kernel.h>
+
+#include <machine/cpu.h>
 
 /*
  * Older BSDs don't have kernel malloc.

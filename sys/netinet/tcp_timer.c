@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_timer.c	7.18 (Berkeley) 6/28/90
- *	$Id: tcp_timer.c,v 1.3 1993/05/22 11:42:47 cgd Exp $
+ *	$Id: tcp_timer.c,v 1.3.4.1 1993/09/24 08:54:59 mycroft Exp $
  */
 
 #include "param.h"
@@ -42,6 +42,8 @@
 #include "socketvar.h"
 #include "protosw.h"
 #include "errno.h"
+
+#include "machine/cpu.h"
 
 #include "../net/if.h"
 #include "../net/route.h"

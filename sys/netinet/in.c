@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in.c	7.17 (Berkeley) 4/20/91
- *	$Id: in.c,v 1.4 1993/06/10 05:16:46 deraadt Exp $
+ *	$Id: in.c,v 1.4.4.1 1993/09/24 08:54:53 mycroft Exp $
  */
 
 #include "param.h"
@@ -39,6 +39,9 @@
 #include "mbuf.h"
 #include "socket.h"
 #include "socketvar.h"
+
+#include "machine/cpu.h"
+
 #include "in_systm.h"
 #include "net/if.h"
 #include "net/route.h"
