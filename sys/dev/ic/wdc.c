@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.146 2003/10/25 08:37:00 christos Exp $ */
+/*	$NetBSD: wdc.c,v 1.147 2003/10/29 21:44:41 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.146 2003/10/25 08:37:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.147 2003/10/29 21:44:41 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -268,11 +268,15 @@ atabus_thread(arg)
 	chp->ch_flags |= WDCF_TH_RUN;
 	splx(s);
 	atabusconfig(atabus_sc);
-	while (!(chp->ch_flags & WDCF_SHUTDOWN)) {
+	for(;;) {
 		s = splbio();
-		chp->ch_flags &= ~WDCF_TH_RUN;
-		tsleep(&chp->thread, PRIBIO, "atath", 0);
-		chp->ch_flags |= WDCF_TH_RUN;
+		if ((chp->ch_flags & (WDCF_TH_RESET | WDCF_SHUTDOWN)) == 0 &&
+		    ((chp->ch_flags & WDCF_ACTIVE) == 0 ||
+		     chp->ch_queue->queue_freese == 0)) {
+			chp->ch_flags &= ~WDCF_TH_RUN;
+			tsleep(&chp->thread, PRIBIO, "atath", 0);
+			chp->ch_flags |= WDCF_TH_RUN;
+		}
 		splx(s);
 		if (chp->ch_flags & WDCF_SHUTDOWN)
 			break;
@@ -284,6 +288,7 @@ atabus_thread(arg)
 				chp->ch_drive[drive].state = 0;
 			}
 			chp->ch_flags &= ~WDCF_TH_RESET;
+			chp->ch_queue->queue_freese--;
 			wdcstart(chp);
 		} else if ((chp->ch_flags & WDCF_ACTIVE) != 0 &&
 		    chp->ch_queue->queue_freese == 1) {
@@ -983,8 +988,8 @@ wdcstart(chp)
 	if ((chp->ch_flags & WDCF_ACTIVE) != 0 ) {
 		return; /* channel aleady active */
 	}
-	if ((chp->ch_flags & WDCF_TH_RESET) != 0) {
-		return; /* a channel reset is pending */
+	if (__predict_false(chp->ch_queue->queue_freese > 0)) {
+		return; /* queue froozen */
 	}
 #ifdef DIAGNOSTIC
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) != 0)
@@ -1076,13 +1081,13 @@ wdc_reset_channel(drvp, flags)
 	WDCDEBUG_PRINT(("ata_reset_channel %s:%d for drive %d\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, drvp->drive),
 	    DEBUG_FUNCS);
-	if ((chp->ch_flags & WDCF_TH_RUN) == 0 &&
-	    (flags & AT_POLL) == 0) {
+	if ((flags & AT_POLL) == 0) {
 		chp->ch_flags |= WDCF_TH_RESET;
+		chp->ch_queue->queue_freese++;
 		wakeup(&chp->thread);
 		return;
 	}
-	(void) wdcreset(chp, (flags & AT_POLL) ? RESET_POLL : RESET_SLEEP);
+	(void) wdcreset(chp, RESET_POLL);
 	for (drive = 0; drive < 2; drive++) {
 		chp->ch_drive[drive].state = 0;
 	}
@@ -1294,9 +1299,11 @@ wdcwait(chp, mask, bits, timeout, flags)
 	else {
 		error = __wdcwait(chp, mask, bits, WDCDELAY_POLL);
 		if (error != 0) {
-			if (chp->ch_flags & WDCF_TH_RUN) {
+			if ((chp->ch_flags & WDCF_TH_RUN) ||
+			    (flags & AT_WAIT)) {
 				/*
-				 * we're running in the channel thread context
+				 * we're running in the channel thread
+				 * or some userland thread context
 				 */
 				for (i = 0; i < timeout_hz; i++) {
 					if (__wdcwait(chp, mask, bits,
@@ -1311,6 +1318,10 @@ wdcwait(chp, mask, bits, timeout, flags)
 				 * we're probably in interrupt context,
 				 * ask the thread to come back here
 				 */
+#ifdef DIAGNOSTIC
+				if (chp->ch_queue->queue_freese > 0)
+					panic("wdcwait: queue_freese");
+#endif
 				chp->ch_queue->queue_freese++;
 				wakeup(&chp->thread);
 				return(WDCWAIT_THR);
@@ -1784,7 +1795,7 @@ __wdccommand_intr(chp, xfer, irq)
 
 	if ((wdc_c->flags & (AT_WAIT | AT_POLL)) == (AT_WAIT | AT_POLL)) {
 		/* both wait and poll, we can tsleep here */
-		wflags = 0;
+		wflags = AT_WAIT | AT_POLL;
 	} else {
 		wflags = AT_POLL;
 	}
