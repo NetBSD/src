@@ -1,7 +1,7 @@
-/*	$NetBSD: eventtest.c,v 1.2 2003/06/13 04:09:18 itojun Exp $	*/
+/*	$NetBSD: eventtest.c,v 1.3 2004/08/07 21:09:47 provos Exp $	*/
 
 /*
- * Copyright 2003 Niels Provos <provos@citi.umich.edu>
+ * Copyright (c) 2003, 2004 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,10 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -71,8 +67,10 @@ simple_read_cb(int fd, short event, void *arg)
 	len = read(fd, buf, sizeof(buf));
 
 	if (len) {
-		if (!called)
-			event_add(arg, NULL);
+		if (!called) {
+			if (event_add(arg, NULL) == -1)
+				exit(1);
+		}
 	} else if (called == 1)
 		test_ok = 1;
 
@@ -118,8 +116,10 @@ multiple_write_cb(int fd, short event, void *arg)
 		return;
 	}
 
-	if (!usepersist)
-		event_add(ev, NULL);
+	if (!usepersist) {
+		if (event_add(ev, NULL) == -1)
+			exit(1);
+	}
 }
 
 void
@@ -138,8 +138,10 @@ multiple_read_cb(int fd, short event, void *arg)
 	}
 
 	roff += len;
-	if (!usepersist)
-		event_add(ev, NULL);
+	if (!usepersist) {
+		if (event_add(ev, NULL) == -1) 
+			exit(1);
+	}
 }
 
 void
@@ -190,7 +192,8 @@ combined_read_cb(int fd, short event, void *arg)
 		return;
 
 	both->nread += len;
-	event_add(&both->ev, NULL);
+	if (event_add(&both->ev, NULL) == -1)
+		exit(1);
 }
 
 void
@@ -213,7 +216,8 @@ combined_write_cb(int fd, short event, void *arg)
 	}
 
 	both->nread -= len;
-	event_add(&both->ev, NULL);
+	if (event_add(&both->ev, NULL) == -1)
+		exit(1);
 }
 
 /* Test infrastructure */
@@ -228,6 +232,12 @@ setup_test(char *name)
 		fprintf(stderr, "%s: socketpair\n", __func__);
 		exit(1);
 	}
+
+        if (fcntl(pair[0], F_SETFL, O_NONBLOCK) == -1)
+                warn("fcntl(O_NONBLOCK)");
+
+        if (fcntl(pair[1], F_SETFL, O_NONBLOCK) == -1)
+                warn("fcntl(O_NONBLOCK)");
 
 	test_ok = 0;
 	called = 0;
@@ -250,19 +260,10 @@ cleanup_test(void)
 	return (0);
 }
 
-int
-main (int argc, char **argv)
+void
+test1(void)
 {
-	struct event ev, ev2;
-	struct timeval tv;
-	struct itimerval itv;
-	struct both r1, r2, w1, w2;
-	int i;
-
-	setvbuf(stdout, NULL, _IONBF, 0);
-
-	/* Initalize the event library */
-	event_init();
+	struct event ev;
 
 	/* Very simple read test */
 	setup_test("Simple read: ");
@@ -271,19 +272,34 @@ main (int argc, char **argv)
 	shutdown(pair[0], SHUT_WR);
 
 	event_set(&ev, pair[1], EV_READ, simple_read_cb, &ev);
-	event_add(&ev, NULL);
+	if (event_add(&ev, NULL) == -1)
+		exit(1);
 	event_dispatch();
 
 	cleanup_test();
+}
+
+void
+test2(void)
+{
+	struct event ev;
 
 	/* Very simple write test */
 	setup_test("Simple write: ");
 	
 	event_set(&ev, pair[0], EV_WRITE, simple_write_cb, &ev);
-	event_add(&ev, NULL);
+	if (event_add(&ev, NULL) == -1)
+		exit(1);
 	event_dispatch();
 
 	cleanup_test();
+}
+
+void
+test3(void)
+{
+	struct event ev, ev2;
+	int i;
 
 	/* Multiple read and write test */
 	setup_test("Multiple read/write: ");
@@ -295,15 +311,24 @@ main (int argc, char **argv)
 	usepersist = 0;
 
 	event_set(&ev, pair[0], EV_WRITE, multiple_write_cb, &ev);
-	event_add(&ev, NULL);
+	if (event_add(&ev, NULL) == -1)
+		exit(1);
 	event_set(&ev2, pair[1], EV_READ, multiple_read_cb, &ev2);
-	event_add(&ev2, NULL);
+	if (event_add(&ev2, NULL) == -1)
+		exit(1);
 	event_dispatch();
 
 	if (roff == woff)
 		test_ok = memcmp(rbuf, wbuf, sizeof(wbuf)) == 0;
 
 	cleanup_test();
+}
+
+void
+test4(void)
+{
+	struct event ev, ev2;
+	int i;
 
 	/* Multiple read and write test with persist */
 	setup_test("Persist read/write: ");
@@ -315,15 +340,23 @@ main (int argc, char **argv)
 	usepersist = 1;
 
 	event_set(&ev, pair[0], EV_WRITE|EV_PERSIST, multiple_write_cb, &ev);
-	event_add(&ev, NULL);
+	if (event_add(&ev, NULL) == -1)
+		exit(1);
 	event_set(&ev2, pair[1], EV_READ|EV_PERSIST, multiple_read_cb, &ev2);
-	event_add(&ev2, NULL);
+	if (event_add(&ev2, NULL) == -1)
+		exit(1);
 	event_dispatch();
 
 	if (roff == woff)
 		test_ok = memcmp(rbuf, wbuf, sizeof(wbuf)) == 0;
 
 	cleanup_test();
+}
+
+void
+test5(void)
+{
+	struct both r1, r2, w1, w2;
 
 	setup_test("Combined read/write: ");
 	memset(&r1, 0, sizeof(r1));
@@ -338,10 +371,14 @@ main (int argc, char **argv)
 	event_set(&w1.ev, pair[0], EV_WRITE, combined_write_cb, &w1);
 	event_set(&r2.ev, pair[1], EV_READ, combined_read_cb, &r2);
 	event_set(&w2.ev, pair[1], EV_WRITE, combined_write_cb, &w2);
-	event_add(&r1.ev, NULL);
-	event_add(&w1.ev, NULL);
-	event_add(&r2.ev, NULL);
-	event_add(&w2.ev, NULL);
+	if (event_add(&r1.ev, NULL) == -1)
+		exit(1);
+	if (event_add(&w1.ev, NULL))
+		exit(1);
+	if (event_add(&r2.ev, NULL))
+		exit(1);
+	if (event_add(&w2.ev, NULL))
+		exit(1);
 
 	event_dispatch();
 
@@ -349,7 +386,13 @@ main (int argc, char **argv)
 		test_ok = 1;
 
 	cleanup_test();
-	
+}
+
+void
+test6(void)
+{
+	struct timeval tv;
+	struct event ev;
 
 	setup_test("Simple timeout: ");
 
@@ -362,6 +405,13 @@ main (int argc, char **argv)
 	event_dispatch();
 
 	cleanup_test();
+}
+
+void
+test7(void)
+{
+	struct event ev;
+	struct itimerval itv;
 
 	setup_test("Simple signal: ");
 	signal_set(&ev, SIGALRM, signal_cb, &ev);
@@ -377,6 +427,116 @@ main (int argc, char **argv)
 	signal_del(&ev);
 
 	cleanup_test();
+}
+
+void
+test8(void)
+{
+	struct timeval tv, tv_start, tv_end;
+	struct event ev;
+
+	setup_test("Loop exit: ");
+
+	tv.tv_usec = 0;
+	tv.tv_sec = 60*60*24;
+	evtimer_set(&ev, timeout_cb, NULL);
+	evtimer_add(&ev, &tv);
+
+	tv.tv_usec = 0;
+	tv.tv_sec = 1;
+	event_loopexit(&tv);
+
+	gettimeofday(&tv_start, NULL);
+	event_dispatch();
+	gettimeofday(&tv_end, NULL);
+	timersub(&tv_end, &tv_start, &tv_end);
+
+	evtimer_del(&ev);
+
+	if (tv.tv_sec < 2)
+		test_ok = 1;
+
+	cleanup_test();
+}
+
+void
+readcb(struct bufferevent *bev, void *arg)
+{
+	if (EVBUFFER_LENGTH(bev->input) == 8333) {
+		bufferevent_disable(bev, EV_READ);
+		test_ok++;
+	}
+}
+
+void
+writecb(struct bufferevent *bev, void *arg)
+{
+	if (EVBUFFER_LENGTH(bev->output) == 0)
+		test_ok++;
+}
+
+void
+errorcb(struct bufferevent *bev, short what, void *arg)
+{
+	test_ok = -2;
+}
+
+void
+test9(void)
+{
+	struct bufferevent *bev1, *bev2;
+	char buffer[8333];
+	int i;
+
+	setup_test("Bufferevent: ");
+
+	bev1 = bufferevent_new(pair[0], readcb, writecb, errorcb, NULL);
+	bev2 = bufferevent_new(pair[1], readcb, writecb, errorcb, NULL);
+
+	bufferevent_disable(bev1, EV_READ);
+	bufferevent_enable(bev2, EV_READ);
+
+	for (i = 0; i < sizeof(buffer); i++)
+		buffer[0] = i;
+
+	bufferevent_write(bev1, buffer, sizeof(buffer));
+
+	event_dispatch();
+
+	bufferevent_free(bev1);
+	bufferevent_free(bev2);
+
+	if (test_ok != 2)
+		test_ok = 0;
+
+	cleanup_test();
+}
+
+int
+main (int argc, char **argv)
+{
+	setvbuf(stdout, NULL, _IONBF, 0);
+
+	/* Initalize the event library */
+	event_init();
+
+	test1();
+
+	test2();
+
+	test3();
+
+	test4();
+
+	test5();
+
+	test6();
+
+	test7();
+
+	test8();
+
+	test9();
 
 	return (0);
 }

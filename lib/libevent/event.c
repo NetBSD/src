@@ -1,8 +1,8 @@
-/*	$NetBSD: event.c,v 1.3 2003/06/13 04:11:31 itojun Exp $	*/
+/*	$NetBSD: event.c,v 1.4 2004/08/07 21:09:47 provos Exp $	*/
 /*	$OpenBSD: event.c,v 1.2 2002/06/25 15:50:15 mickey Exp $	*/
 
 /*
- * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
+ * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -89,19 +89,23 @@ struct eventop *eventops[] = {
 	NULL
 };
 
-struct eventop *evsel;
-void *evbase;
+/* Global state */
 
-/* Handle signals */
+const struct eventop *evsel;
+void *evbase;
+static int event_count;
+
+/* Handle signals - This is a deprecated interface */
 int (*event_sigcb)(void);	/* Signal callback when gotsig is set */
 int event_gotsig;		/* Set in signal handler */
+int event_gotterm;		/* Set to terminate loop */
 
 /* Prototypes */
-void	event_queue_insert(struct event *, int);
-void	event_queue_remove(struct event *, int);
-int	event_haveevents(void);
-void	event_process_active(void);
-void	timeout_insert(struct event *);
+void		event_queue_insert(struct event *, int);
+void		event_queue_remove(struct event *, int);
+int		event_haveevents(void);
+
+static void	event_process_active(void);
 
 static RB_HEAD(event_tree, event) timetree;
 static struct event_list activequeue;
@@ -115,6 +119,10 @@ compare(struct event *a, struct event *b)
 	if (timercmp(&a->ev_timeout, &b->ev_timeout, <))
 		return (-1);
 	else if (timercmp(&a->ev_timeout, &b->ev_timeout, >))
+		return (1);
+	if (a < b)
+		return (-1);
+	else if (a > b)
 		return (1);
 	return (0);
 }
@@ -160,11 +168,10 @@ event_init(void)
 int
 event_haveevents(void)
 {
-	return (RB_ROOT(&timetree) || TAILQ_FIRST(&eventqueue) ||
-	    TAILQ_FIRST(&signalqueue) || TAILQ_FIRST(&activequeue));
+	return (event_count > 0);
 }
 
-void
+static void
 event_process_active(void)
 {
 	struct event *ev;
@@ -185,10 +192,26 @@ event_process_active(void)
 	}
 }
 
+/*
+ * Wait continously for events.  We exit only if no events are left.
+ */
+
 int
 event_dispatch(void)
 {
 	return (event_loop(0));
+}
+
+static void
+event_loopexit_cb(int fd, short what, void *arg)
+{
+	event_gotterm = 1;
+}
+
+int
+event_loopexit(struct timeval *tv)
+{
+	return (event_once(-1, EV_TIMEOUT, event_loopexit_cb, NULL, tv));
 }
 
 int
@@ -203,6 +226,12 @@ event_loop(int flags)
 
 	done = 0;
 	while (!done) {
+		/* Terminate the loop if we have been asked to */
+		if (event_gotterm) {
+			event_gotterm = 0;
+			break;
+		}
+
 		while (event_gotsig) {
 			event_gotsig = 0;
 			if (event_sigcb) {
@@ -218,7 +247,7 @@ event_loop(int flags)
 		gettimeofday(&tv, NULL);
 		if (timercmp(&tv, &event_tv, <)) {
 			struct timeval off;
-			LOG_DBG((LOG_MIST, 10,
+			LOG_DBG((LOG_MISC, 10,
 				    "%s: time is running backwards, corrected",
 				    __func__));
 
@@ -257,6 +286,66 @@ event_loop(int flags)
 	return (0);
 }
 
+/* Sets up an event for processing once */
+
+struct event_once {
+	struct event ev;
+
+	void (*cb)(int, short, void *);
+	void *arg;
+};
+
+/* One-time callback, it deletes itself */
+
+static void
+event_once_cb(int fd, short events, void *arg)
+{
+	struct event_once *eonce = arg;
+
+	(*eonce->cb)(fd, events, eonce->arg);
+	free(eonce);
+}
+
+/* Schedules an event once */
+
+int
+event_once(int fd, short events,
+    void (*callback)(int, short, void *), void *arg, struct timeval *tv)
+{
+	struct event_once *eonce;
+	struct timeval etv;
+
+	/* We cannot support signals that just fire once */
+	if (events & EV_SIGNAL)
+		return (-1);
+
+	if ((eonce = calloc(1, sizeof(struct event_once))) == NULL)
+		return (-1);
+
+	if (events == EV_TIMEOUT) {
+		if (tv == NULL) {
+			timerclear(&etv);
+			tv = &etv;
+		}
+
+		eonce->cb = callback;
+		eonce->arg = arg;
+
+		evtimer_set(&eonce->ev, event_once_cb, eonce);
+	} else if (events & (EV_READ|EV_WRITE)) {
+		events &= EV_READ|EV_WRITE;
+
+		event_set(&eonce->ev, fd, events, event_once_cb, eonce);
+	} else {
+		/* Bad event combination */
+		return (-1);
+	}
+
+	event_add(&eonce->ev, tv);
+
+	return (0);
+}
+
 void
 event_set(struct event *ev, int fd, short events,
 	  void (*callback)(int, short, void *), void *arg)
@@ -285,8 +374,10 @@ event_pending(struct event *ev, short event, struct timeval *tv)
 		flags |= ev->ev_res;
 	if (ev->ev_flags & EVLIST_TIMEOUT)
 		flags |= EV_TIMEOUT;
+	if (ev->ev_flags & EVLIST_SIGNAL)
+		flags |= EV_SIGNAL;
 
-	event &= (EV_TIMEOUT|EV_READ|EV_WRITE);
+	event &= (EV_TIMEOUT|EV_READ|EV_WRITE|EV_SIGNAL);
 
 	/* See if there is a timeout that we should report */
 	if (tv != NULL && (flags & event & EV_TIMEOUT))
@@ -424,6 +515,9 @@ timeout_next(struct timeval *tv)
 
 	timersub(&ev->ev_timeout, &now, tv);
 
+	assert(tv->tv_sec >= 0);
+	assert(tv->tv_usec >= 0);
+
 	LOG_DBG((LOG_MISC, 60, "timeout_next: in %d seconds", tv->tv_sec));
 	return (0);
 }
@@ -433,7 +527,8 @@ timeout_correct(struct timeval *off)
 {
 	struct event *ev;
 
-	/* We can modify the key element of the node without destroying
+	/*
+	 * We can modify the key element of the node without destroying
 	 * the key, beause we apply it to all in the right order.
 	 */
 	RB_FOREACH(ev, event_tree, &timetree)
@@ -465,36 +560,14 @@ timeout_process(void)
 }
 
 void
-timeout_insert(struct event *ev)
-{
-	struct event *tmp;
-
-	tmp = RB_FIND(event_tree, &timetree, ev);
-
-	if (tmp != NULL) {
-		struct timeval tv;
-		struct timeval add = {0,1};
-
-		/* Find unique time */
-		tv = ev->ev_timeout;
-		do {
-			timeradd(&tv, &add, &tv);
-			tmp = RB_NEXT(event_tree, &timetree, tmp);
-		} while (tmp != NULL && timercmp(&tmp->ev_timeout, &tv, ==));
-
-		ev->ev_timeout = tv;
-	}
-
-	tmp = RB_INSERT(event_tree, &timetree, ev);
-	assert(tmp == NULL);
-}
-
-void
 event_queue_remove(struct event *ev, int queue)
 {
 	if (!(ev->ev_flags & queue))
 		errx(1, "%s: %p(fd %d) not on queue %x", __func__,
 		    ev, ev->ev_fd, queue);
+
+	if (!(ev->ev_flags & EVLIST_INTERNAL))
+		event_count--;
 
 	ev->ev_flags &= ~queue;
 	switch (queue) {
@@ -522,6 +595,9 @@ event_queue_insert(struct event *ev, int queue)
 		errx(1, "%s: %p(fd %d) already on queue %x", __func__,
 		    ev, ev->ev_fd, queue);
 
+	if (!(ev->ev_flags & EVLIST_INTERNAL))
+		event_count++;
+
 	ev->ev_flags |= queue;
 	switch (queue) {
 	case EVLIST_ACTIVE:
@@ -530,9 +606,11 @@ event_queue_insert(struct event *ev, int queue)
 	case EVLIST_SIGNAL:
 		TAILQ_INSERT_TAIL(&signalqueue, ev, ev_signal_next);
 		break;
-	case EVLIST_TIMEOUT:
-		timeout_insert(ev);
-		break;
+	case EVLIST_TIMEOUT: {
+		struct event *tmp = RB_INSERT(event_tree, &timetree, ev);
+		assert(tmp == NULL);
+ 		break;
+	}
 	case EVLIST_INSERTED:
 		TAILQ_INSERT_TAIL(&eventqueue, ev, ev_next);
 		break;
