@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.29 1999/11/16 06:00:12 nisimura Exp $	*/
+/*	$NetBSD: fb.c,v 1.30 1999/12/15 14:44:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -85,8 +85,10 @@
 
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
+
 #include <pmax/dev/fbreg.h>
 #include <pmax/dev/qvssvar.h>
+#include <pmax/dev/rconsvar.h>
 
 #include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
@@ -131,8 +133,6 @@ extern void fbScreenInit __P (( struct fbinfo *fi));
  * LK-201 and successor keycode mapping
 */
 #include <pmax/dev/lk201var.h>
-
-extern void rcons_connect __P((struct fbinfo *info));	/* XXX */
 
 /*
  * The "blessed" framebuffer; the fb that gets
