@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.34 2002/01/31 01:34:50 lukem Exp $
+# $NetBSD: obsolete.mi,v 1.35 2002/03/05 23:57:49 wiz Exp $
 /bin/rcorder
 /dev/log
 /etc/disklabels
@@ -25,16 +25,16 @@
 /usr/libexec/hprop
 /usr/libexec/kdc
 /usr/libexec/uucp/uuchk
-/usr/sbin/ispppcontrol
-/usr/sbin/pppoectl
 /usr/sbin/dig
 /usr/sbin/dnsquery
 /usr/sbin/eaytest
 /usr/sbin/flush
+/usr/sbin/g711conv
 /usr/sbin/gettable
 /usr/sbin/gifconfig
 /usr/sbin/host
 /usr/sbin/htable
+/usr/sbin/ispppcontrol
 /usr/sbin/kmpstat
 /usr/sbin/lmtp
 /usr/sbin/mbrlabel
@@ -47,6 +47,7 @@
 /usr/sbin/pim6sd
 /usr/sbin/pim6stat
 /usr/sbin/portmap
+/usr/sbin/pppoectl
 /usr/sbin/rdconfig
 /usr/sbin/scriptdump
 /usr/sbin/setkey

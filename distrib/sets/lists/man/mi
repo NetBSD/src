@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.449 2002/03/04 13:24:06 sommerfeld Exp $
+# $NetBSD: mi,v 1.450 2002/03/05 23:57:49 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -125,7 +125,6 @@
 ./usr/share/man/cat1/fsplit.0			man-util-catman
 ./usr/share/man/cat1/fstat.0			man-util-catman
 ./usr/share/man/cat1/ftp.0			man-netutil-catman
-./usr/share/man/cat1/g711conv.0			man-isdn-catman
 ./usr/share/man/cat1/gcpp.0			man-util-catman
 ./usr/share/man/cat1/gencat.0			man-locale-catman
 ./usr/share/man/cat1/getconf.0			man-util-catman
@@ -1798,7 +1797,6 @@
 ./usr/share/man/man1/fsplit.1			man-util-man
 ./usr/share/man/man1/fstat.1			man-util-man
 ./usr/share/man/man1/ftp.1			man-netutil-man
-./usr/share/man/man1/g711conv.1			man-isdn-man
 ./usr/share/man/man1/gcpp.1			man-util-man
 ./usr/share/man/man1/gencat.1			man-locale-man
 ./usr/share/man/man1/getconf.1			man-util-man
