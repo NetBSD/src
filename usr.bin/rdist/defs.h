@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.8 1997/10/18 14:34:44 mrg Exp $	*/
+/*	$NetBSD: defs.h,v 1.9 1997/10/19 14:25:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -146,10 +146,13 @@ extern int rem;			/* remote file descriptor */
 extern int iamremote;		/* acting as remote server */
 extern char tempfile[];		/* file name for logging changes */
 extern struct linkbuf *ihead;	/* list of files with more than one link */
-extern struct passwd *pw;	/* pointer to static area used by getpwent */
-extern struct group *gr;	/* pointer to static area used by getgrent */
 extern char host[];		/* host name of master copy */
 extern char buf[BUFSIZ];	/* general purpose buffer */
+
+extern struct passwd *pw;	/* pointer to static area used by getpwent */
+extern struct group *gr;	/* pointer to static area used by getgrent */
+extern uid_t userid;		/* user's user ID */
+extern gid_t groupid;		/* user's group ID */
 
 int	 any __P((int, char *));
 char	*colon __P((char *));

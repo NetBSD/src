@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 1997/10/19 13:59:09 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.8 1997/10/19 14:25:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.7 1997/10/19 13:59:09 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 1997/10/19 14:25:30 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,8 +77,8 @@ char	host[32];	/* host name */
 int	nerrs;		/* number of errors while sending/receiving */
 char	user[10];	/* user's name */
 char	homedir[128];	/* user's home directory */
-int	userid;		/* user's user ID */
-int	groupid;	/* user's group ID */
+uid_t	userid;		/* user's user ID */
+gid_t	groupid;	/* user's group ID */
 
 struct	passwd *pw;	/* pointer to static area used by getpwent */
 struct	group *gr;	/* pointer to static area used by getgrent */
