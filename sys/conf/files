@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.452 2001/07/14 02:05:54 christos Exp $
+#	$NetBSD: files,v 1.453 2001/08/04 11:38:58 enami Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -561,6 +561,10 @@ file	dev/ic/mm58167.c		mm58167
 # D-Link DL10019/10022 NE2000-compatible network interface subroutines
 define	dl10019
 file	dev/ic/dl10019.c		dl10019
+
+# ASIX AX88190 NE2000-compatible network interface subroutines
+define	ax88190
+file	dev/ic/ax88190.c		ax88190
 
 # WD/SMC 80x3 family, SMC Elite Ultra [8216], SMC EtherEZ
 device	we: ether, ifnet, arp, dp8390nic
