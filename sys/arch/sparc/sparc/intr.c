@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.57 2001/11/21 19:14:28 wiz Exp $ */
+/*	$NetBSD: intr.c,v 1.58 2001/12/04 00:05:06 darrenr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,6 +45,7 @@
  */
 
 #include "opt_multiprocessor.h"
+#include "opt_sparc_arch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,7 +1,13 @@
-#	$NetBSD: files.sparc,v 1.103 2001/11/28 10:21:19 lukem Exp $
+#	$NetBSD: files.sparc,v 1.104 2001/12/04 00:05:04 darrenr Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
+
+defopt	opt_sparc_arch.h	SUN4
+defopt	opt_sparc_arch.h	SUN4_MMU3L
+defopt	opt_sparc_arch.h	SUN4C
+defopt	opt_sparc_arch.h	SUN4M
+defopt	opt_sparc_arch.h	SUN4U
 
 # maxpartitions must be first item in files.${ARCH}
 maxpartitions 8

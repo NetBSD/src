@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.107 2001/11/28 05:45:28 lukem Exp $ */
+/*	$NetBSD: trap.c,v 1.108 2001/12/04 00:05:08 darrenr Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,6 +52,7 @@
 #include "opt_ktrace.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
+#include "opt_sparc_arch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

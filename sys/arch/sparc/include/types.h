@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.25 2001/09/27 02:05:42 mrg Exp $ */
+/*	$NetBSD: types.h,v 1.26 2001/12/04 00:05:05 darrenr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,6 +49,10 @@
 
 #ifdef sun
 #undef sun
+#endif
+
+#if defined(_KERNEL_OPT)
+#include "opt_sparc_arch.h"
 #endif
 
 #include <sys/cdefs.h>

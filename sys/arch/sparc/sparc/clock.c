@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.81 2001/09/26 20:53:07 eeh Exp $ */
+/*	$NetBSD: clock.c,v 1.82 2001/12/04 00:05:06 darrenr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,6 +58,7 @@
  * Clock driver.  This is the id prom and eeprom driver as well
  * and includes the timer register functions too.
  */
+#include "opt_sparc_arch.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>

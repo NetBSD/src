@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.46 2001/11/12 16:32:25 pk Exp $ */
+/*	$NetBSD: cpu.h,v 1.47 2001/12/04 00:05:05 darrenr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,9 +63,10 @@
  * Exported definitions unique to SPARC cpu support.
  */
 
-#if !defined(_LKM)
+#if !defined(_LKM) && defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
+#include "opt_sparc_arch.h"
 #endif
 
 #include <machine/psl.h>
