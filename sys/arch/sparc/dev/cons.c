@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.26 1996/09/05 09:32:47 thorpej Exp $ */
+/*	$NetBSD: cons.c,v 1.27 1996/09/12 01:36:15 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -407,13 +407,13 @@ cnioctl(dev, cmd, data, flag, p)
 }
 
 int
-cnselect(dev, which, p)
+cnpoll(dev, events, p)
 	dev_t dev;
-	int which;
+	int events;
 	struct proc *p;
 {
 
-	return (ttselect(makedev(major(dev), 0), which, p));
+	return (ttpoll(makedev(major(dev), 0), events, p));
 }
 
 /*
