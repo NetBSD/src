@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpcivar.h,v 1.6 2003/12/04 13:57:31 keihan Exp $	*/
+/*	$NetBSD: cmpcivar.h,v 1.7 2004/11/10 16:39:04 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ typedef struct cmpci_dmanode *cmpci_dmapool_t;
 #define CmpciNlow_v			"0.5V"
 #define CmpciNsurround			"surround"
 
-/* record.sorce bitmap (see cmpci_set_in_ports()) */
+/* record.source bitmap (see cmpci_set_in_ports()) */
 #define CMPCI_RECORD_SOURCE_MIC		CMPCI_SB16_MIXER_MIC_SRC    /* mic */
 #define CMPCI_RECORD_SOURCE_CD		CMPCI_SB16_MIXER_CD_SRC_R   /* cd */
 #define CMPCI_RECORD_SOURCE_LINE_IN	CMPCI_SB16_MIXER_LINE_SRC_R /* line */
