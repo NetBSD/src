@@ -1,9 +1,13 @@
-# $NetBSD: Makefile.inc,v 1.7 1999/08/20 09:12:10 agc Exp $
+# $NetBSD: Makefile.inc,v 1.8 1999/08/20 14:34:34 agc Exp $
 # Original from Freebsd, no rcs id.
 
 LIBINSTALL != cd ${.CURDIR}/../lib;\
     printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
 CPPFLAGS+=-I${.CURDIR}/../lib ${DEBUG} -DBINDIR='"${BINDIR}"'
+
+.if !defined(OS)
+OS!= uname -s
+.endif
 
 .if ${OS} == "SunOS.5"
 .if exists(/etc/mk.conf)
