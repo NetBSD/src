@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.156 2002/02/17 21:29:27 maria7 Exp $
+.\"	$NetBSD: main,v 1.157 2002/02/23 19:36:16 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1171,7 +1171,7 @@ because there is a
 option to change the version string:
 .(disp
  option {
-	version "newstring";
+        version "newstring";
  };
 .disp)
 .
