@@ -1,4 +1,4 @@
-/*	$NetBSD: sio_pic.c,v 1.9 1996/06/05 22:52:34 cgd Exp $	*/
+/*	$NetBSD: sio_pic.c,v 1.10 1996/07/14 04:08:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -365,7 +365,7 @@ sio_strayintr(irq)
 void
 sio_iointr(framep, vec)
 	void *framep;
-	int vec;
+	unsigned long vec;
 {
 	int irq, handled;
 	struct intrhand *ih;
