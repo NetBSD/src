@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.241 2003/12/18 08:26:37 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.242 2003/12/21 08:14:19 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -3071,4 +3071,14 @@ BUILDING.mdoc					patch
 	the examples in the doc from -current.
 	[jmc, ticket #1578]
 
+usr.bin/cksum/cksum.c				1.19
+usr.bin/cksum/crc.c				1.14
+usr.bin/cksum/extern.h				1.13
+usr.bin/cksum/print.c				1.9
+usr.bin/cksum/sum1.c				1.10
+usr.bin/cksum/sum2.c				1.10
+
+	Update to keep file lengths in appropriate data types (off_t, as
+	opposed to u_int32_t).
+	[kleink, ticket #1580]
 
