@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.6 2003/09/13 13:30:06 chris Exp $
+#	$NetBSD: SMDK2410,v 1.7 2004/02/13 10:10:18 wiz Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -152,7 +152,7 @@ config		netbsd	root on ? type ?
 # The main bus device
 mainbus0	at root
 
-# The boot cpu
+# The boot CPU
 cpu0		at mainbus?
 
 # Core logic on Samsung S3C2410
