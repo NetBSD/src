@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.243 2001/12/31 23:06:34 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.244 2002/01/01 01:17:32 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -256,7 +256,6 @@ OBJECT_FMT?=	COFF
 # The x86_64 port is incomplete.
 .if ${MACHINE_ARCH} == "x86_64"
 NOLINT=		# defined
-NOPROFILE=	# defined
 .endif
 
 # The m68000 port is incomplete.
