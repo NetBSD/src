@@ -1,4 +1,4 @@
-/*	$NetBSD: sum2.c,v 1.4 1995/03/26 05:15:25 glass Exp $	*/
+/*	$NetBSD: sum2.c,v 1.5 1996/02/27 21:17:28 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,19 +37,21 @@
 #if 0
 static char sccsid[] = "@(#)sum2.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: sum2.c,v 1.4 1995/03/26 05:15:25 glass Exp $";
+static char rcsid[] = "$NetBSD: sum2.c,v 1.5 1996/02/27 21:17:28 cgd Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "extern.h"
+
 int
 csum2(fd, cval, clen)
 	register int fd;
-	u_long *cval, *clen;
+	u_int32_t *cval, *clen;
 {
-	register u_long crc, total;
+	register u_int32_t crc, total;
 	register int nr;
 	register u_char *p;
 	u_char buf[8192];
