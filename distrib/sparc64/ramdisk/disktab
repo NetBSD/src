@@ -1,0 +1,37 @@
+#	$NetBSD: disktab,v 1.1 2000/08/10 14:38:53 mrg Exp $
+#
+# Disk geometry and partition layout tables.
+# Key:
+#	dt	controller type
+#	ty	type of disk (fixed, removeable, simulated)
+#	d[0-4]	drive-type-dependent parameters
+#	ns	#sectors/track
+#	nt	#tracks/cylinder
+#	nc	#cylinders/disk
+#	sc	#sectors/cylinder, ns*nt default
+#	su	#sectors/unit, sc*nc default
+#	se	sector size, DEV_BSIZE default
+#	rm	rpm, 3600 default
+#	sf	supports bad144-style bad sector forwarding
+#	sk	sector skew per track, default 0
+#	cs	sector skew per cylinder, default 0
+#	hs	headswitch time, default 0
+#	ts	one-cylinder seek time, default 0
+#	il	sector interleave (n:1), 1 default
+#	bs	boot block size, default BBSIZE
+#	sb	superblock size, default SBSIZE
+#	o[a-h]	partition offsets in sectors
+#	p[a-h]	partition sizes in sectors
+#	b[a-h]	partition block sizes in bytes
+#	f[a-h]	partition fragment sizes in bytes
+#	t[a-h]	partition types (filesystem, swap, etc)
+#
+# All partition sizes reserve space for bad sector tables.
+# (5 cylinders needed for maintenance + replacement sectors)
+#
+
+# pseudo-geometry taken from rd7945
+miniroot:\
+	:ty=winchester:ns#16:nt#7:nc#968:\
+	:pa#10240:ba#8192:fa#1024:\
+	:pc#10240:bc#8192:fc#1024:
