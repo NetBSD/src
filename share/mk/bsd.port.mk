@@ -2,7 +2,7 @@
 # ex:ts=4
 #
 #	Id: bsd.port.mk,v 1.263 1997/07/17 17:47:36 markm Exp 
-#	$NetBSD: bsd.port.mk,v 1.9 1997/10/03 09:16:15 agc Exp $
+#	$NetBSD: bsd.port.mk,v 1.10 1997/10/07 00:30:31 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -232,10 +232,13 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 # INSTALL_DATA	- A command to install sharable data.
 # INSTALL_MAN	- A command to install manpages (doesn't compress).
 #
-# If your port doesn't automatically compress manpages, set the following.
-# Depending on the setting of NOMANCOMPRESS, the make rules will compress
-# the manpages for you.
+# It is assumed that the port installs manpages uncompressed. If this is
+# not the case, set MANCOMPRESSED in the port.  Depending on the setting of
+# MANZ, the make rules will then compress the manpages for you with the
+# following information.
 #
+# MANCOMPRESSED - Indicates that the port installs manpages in a compressed
+#                 form (default: port installs manpages uncompressed).
 # MAN<sect>		- A list of manpages, categorized by section.  For
 #				  example, if your port has "man/man1/foo.1" and
 #				  "man/mann/bar.n", set "MAN1=foo.1" and "MANN=bar.n".
@@ -306,7 +309,6 @@ OPSYS!=	uname -s
 NOMANCOMPRESS?=	yes
 DEF_UMASK?=		022
 .elif (${OPSYS} == "NetBSD")
-NOMANCOMPRESS?=	no			# XXX should be yes(?) - hubertf
 DEF_UMASK?=		0022
 .else
 DEF_UMASK?=		0022
@@ -544,7 +546,7 @@ SCRIPTS_ENV+=	${INSTALL_MACROS}
 
 COMMENT?=	${PKGDIR}/COMMENT
 DESCR?=		${PKGDIR}/DESCR
-PLIST?=		${PKGDIR}/PLIST
+PLIST=		${WRKDIR}/.PLIST
 
 PKG_CMD?=		/usr/sbin/pkg_create
 .if !defined(PKG_ARGS)
@@ -772,10 +774,6 @@ _MANPAGES+=	${MANN:S%^%${MANNPREFIX}/man/${lang}/mann/%}
 .endif
 
 .endfor
-
-.if defined(_MANPAGES) && defined(MANCOMPRESSED)
-_MANPAGES:=	${_MANPAGES:S/$/.gz/}
-.endif
 
 .MAIN: all
 
@@ -1113,7 +1111,7 @@ do-install:
 # Package
 
 .if !target(do-package)
-do-package:
+do-package: ${PLIST}
 	@if [ -e ${PLIST} ]; then \
 		${ECHO_MSG} "===>  Building package for ${PKGNAME}"; \
 		if [ -d ${PACKAGES} ]; then \
@@ -1221,12 +1219,12 @@ _PORT_USE: .USE
 			${SCRIPTDIR}/${.TARGET:S/^real-/post-/}; \
 	fi
 .if make(real-install) && defined(_MANPAGES)
-.if defined(MANCOMPRESSED) && defined(NOMANCOMPRESS)
+.if defined(MANCOMPRESSED) && !defined(MANZ)
 	@${ECHO_MSG} "===>   Uncompressing manual pages for ${PKGNAME}"
 .for manpage in ${_MANPAGES}
-	@${GUNZIP_CMD} ${manpage}
+	@${GUNZIP_CMD} ${manpage}.gz
 .endfor
-.elif !defined(MANCOMPRESSED) && !defined(NOMANCOMPRESS)
+.elif !defined(MANCOMPRESSED) && defined(MANZ)
 	@${ECHO_MSG} "===>   Compressing manual pages for ${PKGNAME}"
 .for manpage in ${_MANPAGES}
 	@${GZIP_CMD} ${manpage}
@@ -1760,7 +1758,7 @@ print-package-depends:
 # accordance to the @pkgdep directive in the packing lists
 
 .if !target(fake-pkg)
-fake-pkg:
+fake-pkg: ${PLIST}
 	@if [ ! -f ${PLIST} -o ! -f ${COMMENT} -o ! -f ${DESCR} ]; then ${ECHO} "** Missing package files for ${PKGNAME} - installation not recorded."; exit 1; fi
 	@if [ ! -d ${PKG_DBDIR} ]; then ${RM} -f ${PKG_DBDIR}; ${MKDIR} ${PKG_DBDIR}; fi
 .if defined(FORCE_PKG_REGISTER)
@@ -1805,7 +1803,26 @@ depend:
 tags:
 .endif
 
-.endif
+
+# generate ${PLIST} from ${PKGDIR}/PLIST, by
+#  - fixing list of man-pages according to MANCOMPRESSED/MANZ
+#    (we don't regard MANCOMPRESSED as many ports seem to have .gz pages in
+#     PLIST even when they install manpages without compressing them)
+${PLIST}: ${PKGDIR}/PLIST
+.if defined(MANZ)
+	@sed \
+		-e '/man\/man.*[^g][^z]$$/s/$$/.gz/g' \
+		-e '/man\/cat.*[^g][^z]$$/s/$$/.gz/g' \
+		<${PKGDIR}/PLIST >${PLIST}
+.else   # !MANZ
+	@sed \
+		-e '/man\/man/s/\.gz$$//g' \
+		-e '/man\/cat/s/\.gz$$//g' \
+		<${PKGDIR}/PLIST >${PLIST}
+.endif  # MANZ
+
+
+.endif # __ARCH_OK
 
 .if (${OPSYS} == "NetBSD")
 .include <bsd.own.mk>
