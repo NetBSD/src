@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.5 1997/10/10 11:40:04 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.6 1997/10/11 02:07:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,19 +38,19 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: misc.c,v 1.5 1997/10/10 11:40:04 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.6 1997/10/11 02:07:27 lukem Exp $");
 #endif
-#endif /* not lint */
+#endif				/* not lint */
 
 #include "extern.h"
 
 int
 card(array, size)		/* for beenthere, injuries */
-	char *array;
-	int size;
+	char   *array;
+	int     size;
 {
-	char *end = array + size;
-	int i = 0;
+	char   *end = array + size;
+	int     i = 0;
 
 	while (array < end)
 		if (*array++)
@@ -62,10 +62,10 @@ int
 ucard(array)
 	unsigned int *array;
 {
-	int j = 0, n;
+	int     j = 0, n;
 
 	for (n = 0; n < NUMOFOBJECTS; n++)
 		if (testbit(array, n))
-			    j++;
+			j++;
 	return (j);
 }
