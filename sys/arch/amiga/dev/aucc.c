@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.27 2001/05/08 06:09:30 is Exp $	*/
+/*	$NetBSD: aucc.c,v 1.28 2001/10/03 00:04:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Bernardo Innocenti
@@ -261,6 +261,9 @@ struct audio_hw_if sa_hw_if = {
 	NULL,
 	NULL,
 	aucc_get_props,
+	NULL,
+	NULL,
+	NULL,
 };
 
 /* autoconfig routines */

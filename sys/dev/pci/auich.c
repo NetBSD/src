@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.3 2000/12/28 22:59:11 sommerfeld Exp $	*/
+/*	$NetBSD: auich.c,v 1.4 2001/10/03 00:04:51 augustss Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -246,6 +246,7 @@ struct audio_hw_if auich_hw_if = {
 	auich_get_props,
 	auich_trigger_output,
 	auich_trigger_input,
+	NULL,			/* dev_ioctl */
 };
 
 int	auich_attach_codec(void *, struct ac97_codec_if *);

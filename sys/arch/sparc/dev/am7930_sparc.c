@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930_sparc.c,v 1.47 2000/07/09 20:57:45 pk Exp $	*/
+/*	$NetBSD: am7930_sparc.c,v 1.48 2001/10/03 00:04:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -135,6 +135,9 @@ struct audio_hw_if sa_hw_if = {
 	0,
         0,
 	am7930_get_props,
+	0,
+	0,
+        0,
 };
 
 /* autoconfig routines */
