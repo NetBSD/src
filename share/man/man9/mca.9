@@ -1,4 +1,4 @@
-.\"     $NetBSD: mca.9,v 1.2 2001/10/22 08:21:32 wiz Exp $
+.\"     $NetBSD: mca.9,v 1.3 2001/10/26 17:10:22 jdolecek Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,7 +48,7 @@
 .Sh SYNOPSIS
 .Fd #include <machine/bus.h>
 .Fd #include <dev/mca/mcavar.h>
-.Fd #include <dev/tc/mcadevs.h>
+.Fd #include <dev/mca/mcadevs.h>
 .Ft void *
 .Fn mca_intr_establish "mca_chipset_tag_t mc" "mca_intr_handle_t hdl" \
 "int level" "int (*handler)(void *)" "void *arg"
