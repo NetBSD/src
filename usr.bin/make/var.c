@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.26 1998/04/03 04:07:15 cgd Exp $	*/
+/*	$NetBSD: var.c,v 1.27 1998/09/18 20:35:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.26 1998/04/03 04:07:15 cgd Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.27 1998/09/18 20:35:12 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.26 1998/04/03 04:07:15 cgd Exp $");
+__RCSID("$NetBSD: var.c,v 1.27 1998/09/18 20:35:12 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1868,8 +1868,12 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			goto cleanup;
 
 		    termc = *--cp;
-		    if (Cond_EvalExpression(1, str, &value) == COND_INVALID)
+		    delim = '\0';
+		    if (Cond_EvalExpression(1, str, &value, 0) == COND_INVALID){
+			Error("Bad conditional expression `%s' in %s?%s:%s",
+			      str, str, pattern.lhs, pattern.rhs);
 			goto cleanup;
+		    }
 
 		    if (value) {
 			newStr = pattern.lhs;
@@ -2144,8 +2148,9 @@ cleanup:
     *lengthPtr = cp - start + 1;
     if (*freePtr)
 	free(str);
-    Error("Unclosed substitution for %s (%c missing)",
-	  v->name, delim);
+    if (delim != '\0')
+	Error("Unclosed substitution for %s (%c missing)",
+	      v->name, delim);
     return (var_Error);
 }
 
