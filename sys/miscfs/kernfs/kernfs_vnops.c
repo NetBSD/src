@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.63 1999/03/24 05:51:26 mrg Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.63.2.1 1999/08/28 23:24:13 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -598,7 +598,7 @@ kernfs_readdir(v)
 	struct uio *uio = ap->a_uio;
 	struct dirent d;
 	struct kern_target *kt;
-	int i;
+	off_t i;
 	int error;
 	off_t *cookies = NULL;
 	int ncookies = 0, nc = 0;
@@ -613,6 +613,10 @@ kernfs_readdir(v)
 
 	error = 0;
 	i = uio->uio_offset;
+
+	if (i >= nkern_targets)
+		return 0;
+	  
 	memset((caddr_t)&d, 0, UIO_MX);
 	d.d_reclen = UIO_MX;
 
