@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 1998/08/30 23:22:30 enami Exp $	*/
+/*	$NetBSD: main.c,v 1.18 1998/08/30 23:50:28 perry Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.17 1998/08/30 23:22:30 enami Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 1998/08/30 23:50:28 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ struct keyblk keywrds[] = {	/* m4 keywords to be installed */
 	{ "syscmd",       SYSCTYPE },
 	{ "sysval",       SYSVTYPE },
 
-#if /* defined(unix) || */ defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(unix)
 	{ "unix",         MACRTYPE },
 #else
 #ifdef vms
