@@ -1,4 +1,4 @@
-.\"	$NetBSD: etcupdate.8,v 1.4 2003/02/14 16:11:35 grant Exp $
+.\"	$NetBSD: etcupdate.8,v 1.5 2003/03/01 12:59:55 mrg Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -158,6 +158,12 @@ variable.
 This is useful for
 .Xr xterm 1
 users with wider shell windows.
+.It Ev IGNOREFILES
+A list of files that
+.Nm
+should ignore.  Files listed in this
+variable will never be considered for updating by
+.Nm .
 .El
 .Sh FILES
 The environment variables can also be defined in the following configuration
@@ -232,3 +238,10 @@ Files are compared with
 .Xr cmp 1
 as this is more reliable and the only way if the version numbers are the
 same even though the files are different.
+.\" when exactly are the version the same even though the file changes?
+.\" .Pp
+.\" .Sh BUGS
+.\" Because of the use of
+.\" .Xr cmp 1
+.\" to compare files, rather than CVS versions, files that are locally changed
+.\" from the distribution are always considered needing to be updated.
