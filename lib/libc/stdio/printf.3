@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.3,v 1.7 1998/02/05 18:49:29 perry Exp $
+.\"	$NetBSD: printf.3,v 1.8 1998/04/28 20:58:01 fair Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -610,32 +610,28 @@ The conversion formats
 .Cm \&%O ,
 and
 .Cm %U
-are not standard and
-are provided only for backward compatibility.
+are not standard and are provided only for backward compatibility.
 The effect of padding the
 .Cm %p
 format with zeros (either by the
 .Sq Cm 0
-flag or by specifying a precision), and the benign effect (i.e., none)
+flag or by specifying a precision), and the benign effect (i.e. none)
 of the
 .Sq Cm #
 flag on
 .Cm %n
 and
 .Cm %p
-conversions, as well as other
-nonsensical combinations such as
+conversions, as well as other nonsensical combinations such as
 .Cm %Ld ,
-are not standard; such combinations
-should be avoided.
+are not standard; such combinations should be avoided.
 .Pp
 Because
 .Fn sprintf
 and
 .Fn vsprintf
-assume an infinitely long string,
-callers must be careful not to overflow the actual space;
-this is often impossible to assure.
+assume an infinitely long string, callers must be careful not to
+overflow the actual space; this is often impossible to assure.
 For safety, programmers should use the
 .Fn snprintf
 interface instead.

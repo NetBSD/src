@@ -1,4 +1,4 @@
-.\"	$NetBSD: fflush.3,v 1.5 1998/02/05 18:49:15 perry Exp $
+.\"	$NetBSD: fflush.3,v 1.6 1998/04/28 20:58:00 fair Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -78,7 +78,7 @@ For input streams this discards any input read from the underlying object
 but not yet obtained via
 .Xr getc 3 ;
 this includes any text pushed back via
-.Xr ungetc .
+.Xr ungetc 3 .
 .Sh RETURN VALUES
 Upon successful completion 0 is returned.
 Otherwise,
