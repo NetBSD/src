@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.15 1999/01/14 11:40:58 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.16 1999/01/17 15:56:33 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.15 1999/01/14 11:40:58 drochner Exp $";
+    "$NetBSD: wsdisplay.c,v 1.16 1999/01/17 15:56:33 drochner Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -100,6 +100,8 @@ void wsscreen_detach __P((struct wsscreen *));
 static const struct wsscreen_descr *
 wsdisplay_screentype_pick __P((const struct wsscreen_list *, char *));
 int wsdisplay_addscreen __P((struct wsdisplay_softc *, int, char *, char *));
+static void wsdisplay_closescreen __P((struct wsdisplay_softc *,
+				       struct wsscreen *));
 int wsdisplay_delscreen __P((struct wsdisplay_softc *, int, int));
 
 #define WSDISPLAY_MAXSCREEN 8
@@ -200,6 +202,8 @@ static struct consdev wsdisplay_cons = {
 };
 
 int wsdisplay_switch1 __P((void *, int));
+
+int wsdisplay_clearonclose;
 
 struct wsscreen *
 wsscreen_attach(sc, console, emul, type, cookie, ccol, crow, defattr)
@@ -347,13 +351,44 @@ wsdisplay_addscreen(sc, idx, screentype, emul)
 	return (0);
 }
 
+static void
+wsdisplay_closescreen(sc, scr)
+	struct wsdisplay_softc *sc;
+	struct wsscreen *scr;
+{
+	int maj, mn, idx;
+
+	/* hangup */
+	if (WSSCREEN_HAS_TTY(scr)) {
+		struct tty *tp = scr->scr_tty;
+		(*linesw[tp->t_line].l_modem)(tp, 0);
+	}
+
+	/* locate the major number */
+	for (maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == wsdisplayopen)
+			break;
+	/* locate the screen index */
+	for (idx = 0; idx < WSDISPLAY_MAXSCREEN; idx++)
+		if (scr == sc->sc_scr[idx])
+			break;
+#ifdef DIAGNOSTIC
+	if (idx == WSDISPLAY_MAXSCREEN)
+		panic("wsdisplay_forceclose: bad screen");
+#endif
+
+	/* nuke the vnodes */
+	mn = WSDISPLAYMINOR(sc->sc_dv.dv_unit, idx);
+	vdevgone(maj, mn, mn, VCHR);
+}
+
 int
 wsdisplay_delscreen(sc, idx, flags)
 	struct wsdisplay_softc *sc;
 	int idx, flags;
 {
 	struct wsscreen *scr;
-	int maj, mn, s;
+	int s;
 	void *cookie;
 
 	if (idx < 0 || idx >= WSDISPLAY_MAXSCREEN)
@@ -367,14 +402,7 @@ wsdisplay_delscreen(sc, idx, flags)
 	    ((scr->scr_flags & SCR_OPEN) && !(flags & WSDISPLAY_DELSCR_FORCE)))
 		return(EBUSY);
 
-	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == wsdisplayopen)
-			break;
-
-	/* nuke the vnodes */
-	mn = WSDISPLAYMINOR(sc->sc_dv.dv_unit, idx);
-	vdevgone(maj, mn, mn, VCHR);
+	wsdisplay_closescreen(sc, scr);
 
 	/*
 	 * delete pointers, so neither device entries
@@ -706,10 +734,12 @@ wsdisplayclose(dev, flag, mode, p)
 
 	if (WSSCREEN_HAS_EMULATOR(scr)) {
 		scr->scr_flags &= ~SCR_GRAPHICS;
-		if (scr->scr_dconf->wsemul->reset != NULL)
+		(*scr->scr_dconf->wsemul->reset)(scr->scr_dconf->wsemulcookie,
+						 WSEMUL_RESET);
+		if (wsdisplay_clearonclose)
 			(*scr->scr_dconf->wsemul->reset)
-				(scr->scr_dconf->wsemulcookie, WSEMUL_RESET);
-
+				(scr->scr_dconf->wsemulcookie,
+				 WSEMUL_CLEARSCREEN);
 	}
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
@@ -931,8 +961,7 @@ wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p)
 		fd.data = 0;
 		error = (*sc->sc_accessops->load_font)(sc->sc_accesscookie,
 					scr->scr_dconf->emulcookie, &fd);
-		if (!error && WSSCREEN_HAS_EMULATOR(scr) &&
-		    scr->scr_dconf->wsemul->reset != NULL)
+		if (!error && WSSCREEN_HAS_EMULATOR(scr))
 			(*scr->scr_dconf->wsemul->reset)
 				(scr->scr_dconf->wsemulcookie, WSEMUL_SYNCFONT);
 		return (error);
@@ -1339,8 +1368,9 @@ wsdisplay_switch(dev, no, waitok)
 }
 
 void
-wsdisplay_resetemul(dev)
+wsdisplay_reset(dev, op)
 	struct device *dev;
+	enum wsdisplay_resetops op;
 {
 	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dev;
 	struct wsscreen *scr;
@@ -1348,12 +1378,20 @@ wsdisplay_resetemul(dev)
 	KASSERT(sc != NULL);
 	scr = sc->sc_focus;
 
-	if (!scr || !WSSCREEN_HAS_EMULATOR(scr))
+	if (!scr)
 		return;
 
-	if (scr->scr_dconf->wsemul->reset != NULL)
-		(*scr->scr_dconf->wsemul->reset)
-			(scr->scr_dconf->wsemulcookie, WSEMUL_RESET);
+	switch (op) {
+	case WSDISPLAY_RESETEMUL:
+		if (!WSSCREEN_HAS_EMULATOR(scr))
+			break;
+		(*scr->scr_dconf->wsemul->reset)(scr->scr_dconf->wsemulcookie,
+						 WSEMUL_RESET);
+		break;
+	case WSDISPLAY_RESETCLOSE:
+		wsdisplay_closescreen(sc, scr);
+		break;
+	}
 }
 
 /*
