@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.27.8.17 1997/06/29 01:32:28 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.27.8.18 1997/06/29 01:52:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -1953,6 +1953,7 @@ syn_cache_get(so, m)
 	am = m_get(M_DONTWAIT, MT_SONAME);	/* XXX */
 	if (am == NULL) {
 		soabort(so);
+		so = (struct socket *)(-1);
 		goto done;
 	}
 	am->m_len = sizeof(struct sockaddr_in);
@@ -1965,6 +1966,7 @@ syn_cache_get(so, m)
 	if (in_pcbconnect(inp, am)) {
 		(void) m_free(am);
 		soabort(so);
+		so = (struct socket *)(-1);
 		goto done;
 	}
 	(void) m_free(am);
