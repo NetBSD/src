@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.126 2003/07/23 08:01:44 itojun Exp $
+#	$NetBSD: bsd.README,v 1.127 2003/07/23 14:53:57 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -89,7 +89,7 @@ MKCATPAGES	If "no", don't build or install the catman pages.
 		Default: yes
 
 MKCRYPTO	If "no", no cryptography support will be built into the system,
-		and also acts as MKKERBEROS=no.
+		and also acts as MKKERBEROS=no MKKERBEROS4=no.
 		Default: yes
 
 MKCRYPTO_IDEA	If not "no", IDEA support will be built into libcrypto_idea.a.
