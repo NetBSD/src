@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 1998/07/06 06:55:24 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.14 1998/07/12 05:59:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.13 1998/07/06 06:55:24 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.14 1998/07/12 05:59:00 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -235,7 +235,7 @@ display(signo)
 	int i, j;
 
 	/* Get the load average over the last minute. */
-	(void) getloadavg(avenrun, sizeof(avenrun) / sizeof(avenrun[0]));
+	(void)getloadavg(avenrun, sizeof(avenrun) / sizeof(avenrun[0]));
 	(*curcmd->c_fetch)();
 	if (curcmd->c_flags & CF_LOADAV) {
 		j = 5.0*avenrun[0] + 0.5;
@@ -282,7 +282,7 @@ void
 load()
 {
 
-	(void) getloadavg(avenrun, sizeof(avenrun)/sizeof(avenrun[0]));
+	(void)getloadavg(avenrun, sizeof(avenrun)/sizeof(avenrun[0]));
 	mvprintw(CMDLINE, 0, "%4.1f %4.1f %4.1f",
 	    avenrun[0], avenrun[1], avenrun[2]);
 	clrtoeol();

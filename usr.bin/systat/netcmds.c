@@ -1,4 +1,4 @@
-/*	$NetBSD: netcmds.c,v 1.7 1998/04/02 11:18:25 kleink Exp $	*/
+/*	$NetBSD: netcmds.c,v 1.8 1998/07/12 05:59:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netcmds.c,v 1.7 1998/04/02 11:18:25 kleink Exp $");
+__RCSID("$NetBSD: netcmds.c,v 1.8 1998/07/12 05:59:00 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -180,10 +180,10 @@ static void
 showprotos()
 {
 
-	if ((protos&TCP) == 0)
+	if ((protos & TCP) == 0)
 		addch('!');
 	addstr("tcp ");
-	if ((protos&UDP) == 0)
+	if ((protos & UDP) == 0)
 		addch('!');
 	addstr("udp ");
 }
@@ -289,10 +289,10 @@ checkhost(inp)
 	struct hitem *p;
 
 	if (hosts)
-	for (p = hosts; p < hosts+nhosts; p++)
-		if (p->addr.s_addr == inp->inp_laddr.s_addr ||
-		    p->addr.s_addr == inp->inp_faddr.s_addr)
-			return (p->onoff);
+		for (p = hosts; p < hosts+nhosts; p++)
+			if (p->addr.s_addr == inp->inp_laddr.s_addr ||
+			    p->addr.s_addr == inp->inp_faddr.s_addr)
+				return (p->onoff);
 	return (1);
 }
 
