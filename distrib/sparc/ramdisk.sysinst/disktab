@@ -1,4 +1,4 @@
-#	$NetBSD: disktab,v 1.1 1999/11/09 15:48:02 mycroft Exp $
+#	$NetBSD: disktab,v 1.2 2000/08/22 14:11:45 abs Exp $
 #
 # Disk geometry and partition layout tables.
 # Key:
@@ -31,6 +31,6 @@
 #
 
 floppyinstfs|NetBSD floppy install filesystem:\
-	:ty=floppy:se#512:nt#1:rm#300:ns#64:nc#64:\
-	:pa#3312:oa#0:ba#4096:fa#512:ta=4.2BSD:\
-	:pc#3312:oc#0:
+	:ty=floppy:se#512:nt#1:rm#300:ns#64:nc#56:\
+	:pa#3584:oa#0:ba#4096:fa#512:ta=4.2BSD:\
+	:pc#3584:oc#0:

@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile.m4,v 1.4 2000/06/14 22:52:47 cgd Exp $
+# $NetBSD: dot.profile.m4,v 1.5 2000/08/22 14:11:45 abs Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -65,14 +65,8 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	    TERM=$ans
 	fi
 
-	# run update, so that installed software is written as it goes.
-	update
-
 	# mount the ramdisk read write
 	mount -u $ROOTDEV /
-
-	# mount the kern_fs so that we can examine the dmesg state
-	mount -t kernfs /kern /kern
 
 	# run the installation or upgrade script.
 	sysinst

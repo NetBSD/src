@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.7 2000/05/02 16:06:55 sjg Exp $
+#	$NetBSD: Makefile,v 1.8 2000/08/22 14:11:45 abs Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
 HACKSRC=	${TOP}/../utils/libhack
 SRCROOT=	${TOP}/../..
 WARNS=1
+COPTS+=-Os
 
 .if ${MACHINE_ARCH} == "i386"
 RAW_PART=	d
@@ -19,7 +20,7 @@ FS_END=		be
 FS_END=		le
 .endif
 
-AUXDEPENDS= 	dot.profile disktab.preinstall termcap.mini \
+AUXDEPENDS= 	dot.profile termcap.mini \
 		dist/base_obsolete dist/comp_obsolete \
 		dist/games_obsolete dist/man_obsolete dist/misc_obsolete \
 		dist/secr_obsolete dist/xbase_obsolete dist/xserver_obsolete
@@ -35,7 +36,7 @@ VND_RDEV=	/dev/r${VND}a
 VND_CDEV=	/dev/${VND}${RAW_PART}
 VND_CRDEV=	/dev/r${VND}${RAW_PART}
 IMAGE?=		syramdisk.fs
-CSIZE?=         3312
+CSIZE?=         3584
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		list
@@ -48,7 +49,7 @@ all: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS} dot.profile
 	dd if=/dev/zero of=${IMAGE} count=${CSIZE}
 	vnconfig -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -f ${.CURDIR}/disktab -rw ${VND_CDEV} ${DISKTYPE}
-	newfs -B ${FS_END} -m 0 -o space -i 5120 -c 80 ${VND_RDEV} ${DISKTYPE}
+	newfs -B ${FS_END} -m 0 -o space -i 5120 -c 56 ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
