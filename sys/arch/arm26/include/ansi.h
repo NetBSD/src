@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.4 2000/12/26 10:35:28 itojun Exp $	*/
+/*	$NetBSD: ansi.h,v 1.5 2000/12/28 03:52:50 matt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -75,9 +75,9 @@
  * and rune_t are typedef'd, _WCHAR_T_ will be undef'd, but _RUNE_T remains
  * defined for ctype.h.
  */
-#define	_BSD_WCHAR_T_	int			/* wchar_t */
-#define _BSD_WINT_T_	int			/* wint_t */
-#define	_BSD_RUNE_T_	int			/* rune_t */
+#define	_BSD_WCHAR_T_		int		/* wchar_t */
+#define	_BSD_WINT_T_		int		/* wint_t */
+#define	_BSD_RUNE_T_		int		/* rune_t */
 
 /*
  * mbstate_t is an opaque object to keep conversion state, during multibyte
@@ -87,6 +87,6 @@ typedef union {
 	char __mbstate8[128];
 	long long __mbstateL;	/* for alignment */
 } __mbstate_t;
-#define	_BSD_MBSTATE_T_	__mbstate_t		/* mbstate_t */
+#define	_BSD_MBSTATE_T_		__mbstate_t	/* mbstate_t */
 
 #endif	/* _ANSI_H_ */
