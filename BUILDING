@@ -240,10 +240,9 @@ CONFIGURATION
      UNPRIVED    If set, then an unprivileged install will occur.  The user,
                  group, permissions, and file flags, will not be set on the
                  installed item; instead the information will be appended to a
-                 file called METALOG in the .OBJDIR of src.  The contents of
-                 METALOG is used during the generation of the distribution tar
-                 files to ensure that the appropriate file ownership is
-                 stored.
+                 file called METALOG in DESTDIR.  The contents of METALOG is
+                 used during the generation of the distribution tar files to
+                 ensure that the appropriate file ownership is stored.
 
                  Default: Unset.
 
@@ -519,4 +518,4 @@ HISTORY
 BUGS
      A few platforms are not yet using the USE_NEW_TOOLCHAIN system.
 
-NetBSD                           March 5, 2002                               8
+NetBSD                            May 3, 2002                                8
