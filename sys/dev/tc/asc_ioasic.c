@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_ioasic.c,v 1.3 1996/10/13 01:38:36 christos Exp $	*/
+/*	$NetBSD: asc_ioasic.c,v 1.4 1997/04/06 09:58:31 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -112,26 +112,8 @@ asc_ioasic_attach(parent, self, aux)
 	asc->dma_start = asic_dma_start;
 	asc->dma_end = asic_dma_end;
 
-	/*
-	 * Now for timing. The 3max has a 25Mhz tb whereas the 3min and
-	 * maxine are 12.5Mhz.
-	 */
-
-	/*printf(" (bus speed: %d) ", t->ta_busspeed);*/
-	/* XXX don't these run at 25MHz on any ioasic??*/
-	switch (pmax_boardtype) {
-	case DS_3MAX:
-	case DS_3MAXPLUS:
-		speed = ASC_SPEED_25_MHZ;
-		break;
-	case DS_3MIN:
-	case DS_MAXINE:
-	default:
-		speed = ASC_SPEED_12_5_MHZ;
-		break;
-	};
-
-	ascattach(asc, bufsiz, speed);
+	/* digital meters show IOASIC 53c94s are clocked at approx 25MHz */
+	ascattach(asc, bufsiz, ASC_SPEED_25_MHZ);
 
 	/* tie pseudo-slot to device */
 
