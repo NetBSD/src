@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.155 2003/11/17 20:01:35 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.156 2003/11/25 21:03:15 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.155 2003/11/17 20:01:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.156 2003/11/25 21:03:15 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -614,6 +614,7 @@ __wdcprobe(chp, poll)
 	u_int8_t st0, st1, sc, sn, cl, ch;
 	u_int8_t ret_value = 0x03;
 	u_int8_t drive;
+	int s;
 
 	/*
 	 * Sanity check to see if the wdc channel responds at all.
@@ -710,6 +711,8 @@ __wdcprobe(chp, poll)
 			return 0;
 	}
 
+	s = splbio();
+
 	if (chp->wdc && (chp->wdc->cap & WDC_CAPABILITY_SELECT))
 		chp->wdc->select(chp,0);
 	/* assert SRST, wait for reset to complete */
@@ -722,6 +725,10 @@ __wdcprobe(chp, poll)
 	(void) bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_error);
 	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr, WDCTL_4BIT);
 	delay(10);	/* 400ns delay */
+	/* ACK interrupt in case there is one pending left (Promise ATA100) */
+	if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+		chp->wdc->irqack(chp);
+	splx(s);
 
 	ret_value = __wdcwait_reset(chp, ret_value, poll);
 	WDCDEBUG_PRINT(("%s:%d: after reset, ret_value=0x%d\n",
@@ -1109,9 +1116,12 @@ wdcreset(chp, poll)
 	int poll;
 {
 	int drv_mask1, drv_mask2;
+	int s = 0;
 
 	if (chp->wdc->cap & WDC_CAPABILITY_SELECT)
 		chp->wdc->select(chp,0);
+	if (poll != RESET_SLEEP)
+		s = splbio();
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 	    WDSD_IBM); /* master */
 	delay(10);	/* 400ns delay */
@@ -1122,6 +1132,11 @@ wdcreset(chp, poll)
 	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
 	    WDCTL_4BIT | WDCTL_IDS);
 	delay(10);	/* 400ns delay */
+	if (poll != RESET_SLEEP) {
+		if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+			chp->wdc->irqack(chp);
+		splx(s);
+	}
 
 	drv_mask1 = (chp->ch_drive[0].drive_flags & DRIVE) ? 0x01:0x00;
 	drv_mask1 |= (chp->ch_drive[1].drive_flags & DRIVE) ? 0x02:0x00;
