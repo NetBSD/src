@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.22 1998/02/11 12:00:37 mrg Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.23 1998/02/12 06:55:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.22 1998/02/11 12:00:37 mrg Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.23 1998/02/12 06:55:29 chs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,6 +71,10 @@ __RCSID("$NetBSD: kvm_proc.c,v 1.22 1998/02/11 12:00:37 mrg Exp $");
 #include <vm/vm_param.h>
 #include <vm/swap_pager.h>
 
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
+
 #include <sys/sysctl.h>
 
 #include <limits.h>
@@ -83,9 +87,11 @@ __RCSID("$NetBSD: kvm_proc.c,v 1.22 1998/02/11 12:00:37 mrg Exp $");
 	(kvm_read(kd, addr, (char *)(obj), sizeof(*obj)) != sizeof(*obj))
 
 char		*_kvm_uread __P((kvm_t *, const struct proc *, u_long, u_long *));
+#if !defined(UVM)
 int		_kvm_coreinit __P((kvm_t *));
 int		_kvm_readfromcore __P((kvm_t *, u_long, u_long));
 int		_kvm_readfrompager __P((kvm_t *, struct vm_object *, u_long));
+#endif
 ssize_t		kvm_uread __P((kvm_t *, const struct proc *, u_long, char *,
 		    size_t));
 
@@ -110,8 +116,15 @@ _kvm_uread(kd, p, va, cnt)
 	u_long addr, head;
 	u_long offset;
 	struct vm_map_entry vme;
+#if defined(UVM)
+	struct vm_amap amap;
+	struct vm_anon *anonp, anon;
+	struct vm_page pg;
+	int slot;
+#else
 	struct vm_object vmo;
 	int rv;
+#endif
 
 	if (kd->swapspc == 0) {
 		kd->swapspc = (char *)_kvm_malloc(kd, kd->nbpg);
@@ -130,15 +143,66 @@ _kvm_uread(kd, p, va, cnt)
 		if (KREAD(kd, addr, &vme))
 			return (0);
 
+#if defined(UVM)
+		if (va >= vme.start && va < vme.end &&
+		    vme.aref.ar_amap != NULL)
+			break;
+
+#else
 		if (va >= vme.start && va < vme.end && 
 		    vme.object.vm_object != 0)
 			break;
+#endif
 
 		addr = (u_long)vme.next;
 		if (addr == head)
 			return (0);
-	}
 
+	}
+#if defined(UVM)
+
+	/*
+	 * we found the map entry, now to find the object...
+	 */
+	if (vme.aref.ar_amap == NULL)
+		return NULL;
+
+	addr = (u_long)vme.aref.ar_amap;
+	if (KREAD(kd, addr, &amap))
+		return NULL;
+
+	offset = va - vme.start;
+	slot = offset / kd->nbpg + vme.aref.ar_slotoff;
+	/* sanity-check slot number */
+	if (slot  > amap.am_nslot)
+		return NULL;
+
+	addr = (u_long)amap.am_anon + (offset / kd->nbpg) * sizeof(anonp);
+	if (KREAD(kd, addr, &anonp))
+		return NULL;
+
+	addr = (u_long)anonp;
+	if (KREAD(kd, addr, &anon))
+		return NULL;
+
+	addr = (u_long)anon.u.an_page;
+	if (addr) {
+		if (KREAD(kd, addr, &pg))
+			return NULL;
+
+		if (lseek(kd->pmfd, (off_t)pg.phys_addr, SEEK_SET) == -1)
+			return NULL;
+
+		if (read(kd->pmfd, kd->swapspc, kd->nbpg) != kd->nbpg)
+			return NULL;
+	}
+	else {
+		if (lseek(kd->swfd, anon.an_swslot * kd->nbpg, SEEK_SET) == -1)
+			return NULL;
+		if (read(kd->swfd, kd->swapspc, kd->nbpg) != kd->nbpg)
+			return NULL;
+	}
+#else
 	/*
 	 * We found the right object -- follow shadow links.
 	 */
@@ -167,12 +231,15 @@ _kvm_uread(kd, p, va, cnt)
 
 	if (rv == -1)
 		return (0);
+#endif
 
 	/* Found the page. */
 	offset %= kd->nbpg;
 	*cnt = kd->nbpg - offset;
 	return (&kd->swapspc[offset]);
 }
+
+#if !defined(UVM)
 
 #define	vm_page_hash(kd, object, offset) \
 	(((u_long)object + (u_long)(offset / kd->nbpg)) & kd->vm_page_hash_mask)
@@ -223,13 +290,8 @@ _kvm_readfromcore(kd, object, offset)
 		if (KREAD(kd, addr, &mem))
 			return (-1);
 
-#if defined(UVM)
-		if ((u_long)mem.uobject == object &&
-		    (u_long)mem.offset == offset)
-#else
 		if ((u_long)mem.object == object &&
 		    (u_long)mem.offset == offset)
-#endif
 			break;
 
 		addr = (u_long)mem.hashq.tqe_next;
@@ -325,6 +387,7 @@ _kvm_readfrompager(kd, vmop, offset)
 
 	return (1);
 }
+#endif /* !defined(UVM) */
 
 /*
  * Read proc's from memory file into buffer bp, which has space to hold
