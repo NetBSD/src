@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.6 1994/10/26 07:27:11 cgd Exp $	*/
+/*	$NetBSD: ct.c,v 1.7 1995/09/23 17:17:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -181,14 +181,15 @@ ctclose(f)
 
 char io_buf[MAXBSIZE];
 
-ctstrategy(rs, func, dblk, size, buf, rsize)
+ctstrategy(rs, func, dblk, size, v_buf, rsize)
 	register struct ct_softc *rs;
 	int func;
 	daddr_t dblk;
-	u_int size;
-	char *buf;
-	u_int *rsize;
+	size_t size;
+	void *v_buf;
+	size_t *rsize;
 {
+	char *buf = v_buf;
 	register int ctlr = rs->sc_ctlr;
 	register int unit = rs->sc_unit;
 	char stat;
