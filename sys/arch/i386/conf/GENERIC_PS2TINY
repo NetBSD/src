@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.1 2001/07/30 18:24:07 jdolecek Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.2 2001/07/30 21:50:48 jdolecek Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -86,7 +86,7 @@ file-system 	NFS		# Network File System client
 file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	MSDOSFS		# MS-DOS file system
 #file-system 	FDESC		# /dev/fd
-#file-system 	KERNFS		# /kern
+file-system 	KERNFS		# /kern
 #file-system 	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
 #file-system 	PORTAL		# portal filesystem (still experimental)
