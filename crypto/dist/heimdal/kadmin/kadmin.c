@@ -34,7 +34,7 @@
 #include "kadmin_locl.h"
 #include <sl.h>
 
-RCSID("$Id: kadmin.c,v 1.1.1.1 2000/06/16 18:32:07 thorpej Exp $");
+RCSID("$Id: kadmin.c,v 1.1.1.2 2000/08/02 19:58:51 assar Exp $");
 
 static char *config_file;
 static char *keyfile;
@@ -147,6 +147,7 @@ static SL_cmd commands[] = {
     },
     { "help",		help, "help"},
     { "?"},
+    { "quit" },
     { "exit",		exit_kadmin, "exit"},
     { NULL}
 };

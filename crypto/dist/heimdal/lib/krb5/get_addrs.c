@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: get_addrs.c,v 1.1.1.1 2000/06/16 18:32:57 thorpej Exp $");
+RCSID("$Id: get_addrs.c,v 1.1.1.2 2000/08/02 19:59:27 assar Exp $");
 
 #ifdef __osf__
 /* hate */
@@ -171,7 +171,7 @@ find_all_addresses (krb5_context context,
 	 sz = max(sz, sizeof(ifr->ifr_name) + sa->sa_len);
 #endif
 #ifdef SA_LEN
-	 sz = max(sz, SA_LEN(sa));
+	 sz = max(sz, sizeof(ifr->ifr_name) + SA_LEN(sa));
 #endif
 	 memcpy (ifreq.ifr_name, ifr->ifr_name, sizeof(ifr->ifr_name));
 
@@ -294,7 +294,7 @@ get_addrs_int (krb5_context context, krb5_addresses *res, int flags)
 krb5_error_code
 krb5_get_all_client_addrs (krb5_context context, krb5_addresses *res)
 {
-    int flags = LOOP | EXTRA_ADDRESSES;
+    int flags = LOOP_IF_NONE | EXTRA_ADDRESSES;
 
     if (context->scan_interfaces)
 	flags |= SCAN_INTERFACES;

@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: kerberos4.c,v 1.1.1.1 2000/06/16 18:31:38 thorpej Exp $");
+RCSID("$Id: kerberos4.c,v 1.1.1.2 2000/08/02 19:58:55 assar Exp $");
 
 #ifdef KRB4
 
@@ -107,18 +107,55 @@ db_fetch4(const char *name, const char *instance, const char *realm)
 }
 
 krb5_error_code
-get_des_key(hdb_entry *principal, Key **key)
+get_des_key(hdb_entry *principal, krb5_boolean prefer_afs_key, Key **ret_key)
 {
-    krb5_error_code ret;
+    Key *v5_key = NULL, *v4_key = NULL, *afs_key = NULL;
+    int i;
+    krb5_enctype etypes[] = { ETYPE_DES_CBC_MD5, 
+			      ETYPE_DES_CBC_MD4, 
+			      ETYPE_DES_CBC_CRC };
 
-    ret = hdb_enctype2key(context, principal, ETYPE_DES_CBC_MD5, key);
-    if(ret)
-	ret = hdb_enctype2key(context, principal, ETYPE_DES_CBC_MD4, key);
-    if(ret)
-	ret = hdb_enctype2key(context, principal, ETYPE_DES_CBC_CRC, key);
-    if(ret)
-	return ret;
-    if ((*key)->key.keyvalue.length == 0)
+    for(i = 0;
+	i < sizeof(etypes)/sizeof(etypes[0])
+	    && (v5_key == NULL || v4_key == NULL || afs_key == NULL);
+	++i) {
+	Key *key = NULL;
+	while(hdb_next_enctype2key(context, principal, etypes[i], &key) == 0) {
+	    if(key->salt == NULL) {
+		if(v5_key == NULL)
+		    v5_key = key;
+	    } else if(key->salt->type == hdb_pw_salt && 
+		      key->salt->salt.length == 0) {
+		if(v4_key == NULL)
+		    v4_key = key;
+	    } else if(key->salt->type == hdb_afs3_salt) {
+		if(afs_key == NULL)
+		    afs_key = key;
+	    }
+	}
+    }
+
+    if(prefer_afs_key) {
+	if(afs_key)
+	    *ret_key = afs_key;
+	else if(v4_key)
+	    *ret_key = v4_key;
+	else if(v5_key)
+	    *ret_key = v5_key;
+	else
+	    return KERB_ERR_NULL_KEY;
+    } else {
+	if(v4_key)
+	    *ret_key = v4_key;
+	else if(afs_key)
+	    *ret_key = afs_key;
+	else  if(v5_key)
+	    *ret_key = v5_key;
+	else
+	    return KERB_ERR_NULL_KEY;
+    }
+
+    if((*ret_key)->key.keyvalue.length == 0)
 	return KERB_ERR_NULL_KEY;
     return 0;
 }
@@ -152,6 +189,12 @@ do_version4(unsigned char *buf,
     u_int8_t life;
     char client_name[256];
     char server_name[256];
+
+    if(!enable_v4) {
+	kdc_log(0, "Rejected version 4 request from %s", from);
+	make_err_reply(reply, KDC_GEN_ERR, "function not enabled");
+	return 0;
+    }
 
     sp = krb5_storage_from_mem(buf, len);
     RCHECK(krb5_ret_int8(sp, &pvno), out);
@@ -220,7 +263,7 @@ do_version4(unsigned char *buf,
 	    goto out1;
 	}
 
-	ret = get_des_key(client, &ckey);
+	ret = get_des_key(client, FALSE, &ckey);
 	if(ret){
 	    kdc_log(0, "%s", krb5_get_err_text(context, ret));
 	    /* XXX */
@@ -243,7 +286,7 @@ do_version4(unsigned char *buf,
 	}
 #endif
 	
-	ret = get_des_key(server, &skey);
+	ret = get_des_key(server, FALSE, &skey);
 	if(ret){
 	    kdc_log(0, "%s", krb5_get_err_text(context, ret));
 	    /* XXX */
@@ -327,7 +370,7 @@ do_version4(unsigned char *buf,
 	    goto out2;
 	}
 
-	ret = get_des_key(tgt, &tkey);
+	ret = get_des_key(tgt, FALSE, &tkey);
 	if(ret){
 	    kdc_log(0, "%s", krb5_get_err_text(context, ret));
 	    /* XXX */
@@ -414,7 +457,7 @@ do_version4(unsigned char *buf,
 	    goto out2;
 	}
 
-	ret = get_des_key(server, &skey);
+	ret = get_des_key(server, FALSE, &skey);
 	if(ret){
 	    kdc_log(0, "%s", krb5_get_err_text(context, ret));
 	    /* XXX */

@@ -295,6 +295,10 @@ following options:
      hprop.  This is useful when migrating from a kaserver to a Heimdal
      KDC.
 
+`--enable-dce'
+     Enables support for getting DCE credentials and tokens.  See the
+     README files in `appl/dceutils' for more information.
+
 `--disable-otp'
      By default some of the application programs will build with
      support for one-time passwords (OTP).  Use this option to disable
@@ -324,16 +328,43 @@ following options:
      Requires OpenLDAP <http://www.openldap.org>.  See
      <http://www.padl.com/~lukeh/heimdal/> for more information.
 
+`--enable-bigendian'
+
+`--enable-littleendian'
+     Normally, the build process will figure out by itself if the
+     machine is big or little endian.  It might fail in some cases when
+     cross-compiling.  If it does fail to figure it out, use the
+     relevant of these two options.
+
+`--with-mips-abi=ABI'
+     On Irix there are three different ABIs that can be used (`32',
+     `n32', or `64').  This option allows you to override the automatic
+     selection.
+
 
 File: heimdal.info,  Node: Setting up a realm,  Next: Things in search for a better place,  Prev: Building and Installing,  Up: Top
 
 Setting up a realm
 ******************
 
+* Menu:
+
+* Configuration file::
+* Creating the database::
+* keytabs::
+* Remote administration::
+* Password changing::
+* Testing clients and servers::
+* Slave Servers::
+* Incremental propagation::
+
 A realm is an administrative domain.  The name of a Kerberos realm is
 usually the Internet domain name in uppercase.  Call your realm the same
 as your Internet domain name if you do not have strong reasons for not
 doing so.  It will make life easier for you and everyone else.
+
+
+File: heimdal.info,  Node: Configuration file,  Next: Creating the database,  Prev: Setting up a realm,  Up: Setting up a realm
 
 Configuration file
 ==================
@@ -399,6 +430,9 @@ If you use a realm name equal to your domain name, you can omit the
 for your realm, or your kerberos server has CNAME called
 `kerberos.my.realm', you can omit the `realms' section too.
 
+
+File: heimdal.info,  Node: Creating the database,  Next: keytabs,  Prev: Configuration file,  Up: Setting up a realm
+
 Creating the database
 =====================
 
@@ -463,15 +497,18 @@ typographical reasons):
      krbtgt/MY.REALM@MY.REALM 1:0:1:52b53b61c875ce16:-:0:7:c8943be ...
      kadmin/changepw@MY.REALM 1:0:1:f48c8af2b340e9fb:-:0:7:e3e6088 ...
 
+
+File: heimdal.info,  Node: keytabs,  Next: Remote administration,  Prev: Creating the database,  Up: Setting up a realm
+
 keytabs
 =======
 
 To extract a service ticket from the database and put it in a keytab you
 need to first create the principal in the database with `ank' (using
-the `--random' flag to get a random password) and then extract it with
+the `--random-key' flag to get a random key) and then extract it with
 `ext_keytab'.
 
-     kadmin> add --random host/my.host.name
+     kadmin> add --random-key host/my.host.name
      Max ticket life [unlimited]:
      Max renewable life [unlimited]:
      Attributes []:
@@ -483,11 +520,16 @@ the `--random' flag to get a random password) and then extract it with
           1   des-cbc-crc      host/my.host.name@MY.REALM
           1   des3-cbc-sha1    host/my.host.name@MY.REALM
 
+
+File: heimdal.info,  Node: Remote administration,  Next: Password changing,  Prev: keytabs,  Up: Setting up a realm
+
 Remote administration
 =====================
 
-The administration server, `kadmind', is started by `inetd' and you
-should add a line similar to the one below to your `/etc/inetd.conf'.
+The administration server, `kadmind', can be started by `inetd' (which
+isn't recommended) or run as a normal daemon. If you want to start it
+from `inetd' you should add a line similar to the one below to your
+`/etc/inetd.conf'.
 
      kerberos-adm stream     tcp     nowait  root /usr/heimdal/libexec/kadmind kadmind
 
@@ -496,12 +538,20 @@ You might need to add `kerberos-adm' to your `/etc/services' as 749/tcp.
 Access to the admin server is controlled by an acl-file, (default
 `/var/heimdal/kadmind.acl'.) The lines in the access file, has the
 following syntax:
-     principal       [priv1,priv2,...]
+     principal       [priv1,priv2,...]       [glob-pattern]
 
 The privileges you can assign to a principal are: `add',
 `change-password' (or `cpw' for short), `delete', `get', `list', and
 `modify', or the special privilege `all'. All of these roughly
 corresponds to the different commands in `kadmin'.
+
+If a GLOB-PATTERN is given on a line, it restricts the right for the
+principal to only apply for the subjects that match the pattern.  The
+patters are of the same type as those used in shell globbing, see
+<none,,fnmatch(3)>.
+
+
+File: heimdal.info,  Node: Password changing,  Next: Testing clients and servers,  Prev: Remote administration,  Up: Setting up a realm
 
 Password changing
 =================
@@ -544,11 +594,106 @@ patch available at <ftp://ftp.pdc.kth.se/pub/krb/src/cracklib.patch>.
 If no password quality checking function is configured, it is only
 verified that it is at least six characters of length.
 
+
+File: heimdal.info,  Node: Testing clients and servers,  Next: Slave Servers,  Prev: Password changing,  Up: Setting up a realm
+
 Testing clients and servers
 ===========================
 
 Now you should be able to run all the clients and servers.  Refer to the
 appropriate man pages for information on how to use them.
+
+
+File: heimdal.info,  Node: Slave Servers,  Next: Incremental propagation,  Prev: Testing clients and servers,  Up: Setting up a realm
+
+Slave servers, Incremental propagation, Testing clients and servers, Setting up a realm
+=======================================================================================
+
+It is desirable to have at least one backup (slave) server in case the
+master server fails. It is possible to have any number of such slave
+servers but more than three usually doesn't buy much more redundancy.
+
+All Kerberos servers for a realm shall have the same database so that
+they present the same service to all the users.  The `hprop' program,
+running on the master, will propagate the database to the slaves,
+running `hpropd' processes.
+
+Every slave needs a keytab with a principal, `hprop/HOSTNAME'.  Add
+that with the `ktutil' command and start `propd', as follows:
+
+     slave# ktutil get -p foo/admin host/`hostname`
+     slave# hpropd
+
+The master will use the principal `kadmin/hprop' to authenticate to the
+slaves.  This principal should be added when running `kadmin -l init'
+but if you do not have it in your database for whatever reason, please
+add it with `kadmin -l add'.
+
+Then run `hprop' on the master:
+
+     master# hprop slave
+
+This was just an on-hands example to make sure that everything was
+working properly.  Doing it manually is of course the wrong way and to
+automate this you will want to start `hpropd' from `inetd' on the
+slave(s) and regularly run `hprop' on the master to regularly propagate
+the database.  Starting the propagation once an hour from `cron' is
+probably a good idea.
+
+
+File: heimdal.info,  Node: Incremental propagation,  Prev: Slave Servers,  Up: Setting up a realm
+
+Incremental propagation
+=======================
+
+There is also a newer and still somewhat experimental mechanism for
+doing incremental propagation in Heimdal.  Instead of sending the whole
+database regularly, it sends the changes as they happen on the master to
+the slaves.  The master keeps track of all the changes by assigned a
+version number to every change to the database.  The slaves know which
+was the latest version they saw and in this way it can be determined if
+they are in sync or not.  A log of all the changes is kept on the master
+and when a slave is at an older versioner than the oldest one in the
+log, the whole database has to be sent.
+
+Protocol-wise, all the slaves connects to the master and as a greeting
+tell it the latest version that they have (`IHAVE' message).  The
+master then responds by sending all the changes between that version and
+the current version at the master (a series of `FORYOU' messages) or
+the whole database in a `TELLYOUEVERYTHING' message.
+
+Configuring incremental propagation
+-----------------------------------
+
+The program that runs on the master is `ipropd-master' and all clients
+run `ipropd-slave'.
+
+Create the file `/var/heimdal/slaves' on the master containing all the
+slaves that the database should be propagated to.  Each line contains
+the full name of the principal (for example
+`iprop/hemligare.foo.se@FOO.SE').
+
+You should already have `iprop/tcp' defined as 212, in your
+`/etc/services'.  Otherwise, or if you need to use a different port for
+some peculiar reason, you can use the `--port' option.  This is useful
+when you have multiple realms to distribute from one server.
+
+Then you need to create these principals that you added in the
+configuration file.  Create one `iprop/hostname' for the master and for
+every slave.
+
+     master# /usr/heimdal/sbin/ktutil get iprop/`hostname`
+
+The next step is to start the `ipropd-master' process on the master
+server.  The `ipropd-master' listens on the UNIX-socket
+`/var/heimdal/signal' to know when changes have been made to the
+database so they can be propagated to the slaves.  There is also a
+safety feature of testing the version number regularly (every 30
+seconds) to see if it has been modified by some means that do not raise
+this signal.  Then, start `ipropd-slave' on all the slaves:
+
+     master# /usr/heimdal/libexec/ipropd-master &
+     slave#  /usr/heimdal/libexec/ipropd-slave master &
 
 
 File: heimdal.info,  Node: Things in search for a better place,  Next: Kerberos 4 issues,  Prev: Setting up a realm,  Up: Top
@@ -560,11 +705,11 @@ Making things work on Ciscos
 ============================
 
 Modern versions of Cisco IOS has some support for authenticating via
-Kerberos 5. This can be used both to verify passwords via a ticket
-exchange Kerberos 5 (boring), and to use Kerberos authenticated telnet
-to access your router (less boring). The following has been tested on
-IOS 11.2(12), things might be different with other versions. Old
-versions are known to have bugs.
+Kerberos 5. This can be used both by having the router get a ticket when
+you login (boring), and by using Kerberos authenticated telnet to access
+your router (less boring). The following has been tested on IOS
+11.2(12), things might be different with other versions. Old versions
+are known to have bugs.
 
 To make this work, you will first have to configure your router to use
 Kerberos (this is explained in the documentation). A sample
@@ -578,27 +723,25 @@ configuration looks like the following:
      kerberos server FOO.SE 10.0.0.1
      kerberos instance map admin 15
 
-This tells you (among other things) that the when logging in, the router
-should try to authenticate with kerberized telnet, and if that fails try
+This tells you (among other things) that when logging in, the router
+should try to authenticate with kerberised telnet, and if that fails try
 to verify a plain text password via a Kerberos ticket exchange (as
-opposed to a local database or RADIUS or something similar), and if that
+opposed to a local database, RADIUS or something similar), and if that
 fails try the local enable password. If you're not careful when you
 specify the `login default' authentication mechanism, you might not be
-able to login. The `instance map' and `authorization exec' lines says
-that people with `admin' instances should be given `enabled' shells when
-logging in.
+able to login at all. The `instance map' and `authorization exec' lines
+says that people with `admin' instances should be given `enabled' shells
+when logging in.
+
+The numbers after the principal on the `srvtab' line are principal type,
+timestamp (in seconds since 1970), key version number (4), keytype (1 ==
+des), key length (always 8 with des), and then the key.
 
 To make the Heimdal KDC produce tickets that the Cisco can decode you
 might have to turn on the `encode_as_rep_as_tgs_rep' flag in the KDC.
 You will also have to specify that the router can't handle anything but
-`des-cbc-crc'. There currently isn't an easy way to do this. The best
-you can do is to dump your database (with `kadmin -l dump'), remove all
-entries for keys other than `des-cbc-crc', and then reloading the
-database (`kadmin -l load'). An example should clarify this. You should
-have something like (again, truncated):
-     host/router.foo.se@FOO.SE 4:0:1:...:-:... - - - - - - - 126
-Change this to:
-     host/router.foo.se@FOO.SE 4:0:1:...:- - - - - - - - 126
+`des-cbc-crc'. This can be done with the `del_enctype' command of
+`kadmin'.
 
 This all fine and so, but unless you have an IOS version with encryption
 (available only in the U.S) it doesn't really solve any problems. Sure
@@ -808,20 +951,26 @@ Kerberos 5.  Their implementation, however, has some quirks,
 peculiarities, and bugs.  This chapter is a short summary of the things
 that we have found out while trying to test Heimdal against Windows
 2000.  Another big problem with the Kerberos implementation in Windows
-2000 is the almost complete lack of documentation.
+2000 is that the available documentation is more focused on getting
+things to work rather than how they work and not that useful in figuring
+out how things really work.
 
-This information should apply to Heimdal 0.2k and Windows 2000
+This information should apply to Heimdal 0.3a and Windows 2000
 Professional.  It's of course subject all the time and mostly consists
 of our not so inspired guesses.  Hopefully it's still somewhat useful.
 
 * Menu:
 
 * Configuring Windows 2000 to use a Heimdal KDC::
+* Inter-Realm keys (trust) between Windows 2000 and a Heimdal KDC::
+* Create account mappings::
 * Encryption types::
 * Authorization data::
+* Quirks of Windows 2000 KDC::
+* Useful links when reading about the Windows 2000::
 
 
-File: heimdal.info,  Node: Configuring Windows 2000 to use a Heimdal KDC,  Next: Encryption types,  Prev: Windows 2000 compatability,  Up: Windows 2000 compatability
+File: heimdal.info,  Node: Configuring Windows 2000 to use a Heimdal KDC,  Next: Inter-Realm keys (trust) between Windows 2000 and a Heimdal KDC,  Prev: Windows 2000 compatability,  Up: Windows 2000 compatability
 
 Configuring Windows 2000 to use a Heimdal KDC
 =============================================
@@ -830,6 +979,9 @@ You need the command line program called `ksetup.exe' which is available
 in the file `SUPPORT/TOOLS/SUPPORT.CAB' on the Windows 2000 Professional
 CD-ROM. This program is used to configure the Kerberos settings on a
 Workstation.
+
+`Ksetup' store the domain information under the registry key:
+`HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\LSA\Kerberos\Domains'.
 
 Use the kadmin program in Heimdal to create a host principal in the
 Kerberos realm.
@@ -861,35 +1013,114 @@ You can also say:
      C:> ksetup /mapuser * *
 The Windows machine will now map any user to the corresponding
 principal, for example `nisse' to the principal `nisse@MY.REALM'.
-(This most likely what you want.)
-
-More information about the Windows 2000 Kerberos implementation can be
-found at
-<http://www.microsoft.com/windows2000/library/planning/security/kerbsteps.asp>
+(This is most likely what you want.)
 
 
-File: heimdal.info,  Node: Encryption types,  Next: Authorization data,  Prev: Configuring Windows 2000 to use a Heimdal KDC,  Up: Windows 2000 compatability
+File: heimdal.info,  Node: Inter-Realm keys (trust) between Windows 2000 and a Heimdal KDC,  Next: Create account mappings,  Prev: Configuring Windows 2000 to use a Heimdal KDC,  Up: Windows 2000 compatability
+
+Inter-Realm keys (trust) between Windows 2000 and a Heimdal KDC
+===============================================================
+
+See also the Step-by-Step guide from Microsoft, referenced below.
+
+Install Windows 2000, and create a new controller (Active Directory
+Server) for the domain.
+
+By default the trust will be non-transitive. This means that only users
+directly from the trusted domain may authenticate. This can be changed
+to transitive by using the `netdom.exe' tool.
+
+You need to tell Windows 2000 on what hosts to find the KDCs for the
+non-Windows realm with `ksetup', see *Note Configuring Windows 2000 to
+use a Heimdal KDC::.
+
+This need to be done on all computers that want enable cross-realm
+login with `Mapped Names'.
+
+Then you need to add the inter-realm keys on the Windows kdc. Start the
+Domain Tree Management tool. (Found in Programs, Administrative tools,
+Active Directory Domains and Trusts).
+
+Right click on Properties of your domain, select the Trust tab.  Press
+Add on the appropriate trust windows and enter domain name and
+password. When prompted if this is a non-Windows Kerberos realm, press
+OK.
+
+Do not forget to add trusts in both directions.
+
+You also need to add the inter-realm keys to the Heimdal KDC. There are
+some tweaks that you need to do to `krb5.conf' beforehand.
+
+     [libdefaults]
+     	default_etypes = des-cbc-crc
+     	default_etypes_des = des-cbc-crc
+
+since otherwise checksum types that are not understood by Windows 2000
+will be generated (*Note Quirks of Windows 2000 KDC::.).
+
+Another issue is salting.  Since Windows 2000 does not seem to
+understand Kerberos 4 salted hashes you might need to turn off anything
+similar to the following if you have it, at least while adding the
+principals that are going to share keys with Windows 2000.
+
+     	[kadmin]use_v4_salt=yes
+
+You must also set:
+
+Once that is also done, you can add the required inter-realm keys:
+
+     kadmin add krbtgt/NT.REALM.EXAMPLE.COM@EXAMPLE.COM
+     kadmin add krbtgt/REALM.EXAMPLE.COM@NT.EXAMPLE.COM
+
+Use the same passwords for both keys.
+
+Do not forget to reboot before trying the new realm-trust (after running
+`ksetup'). It looks like it might work, but packets are never sent to
+the non-Windows KDC.
+
+
+File: heimdal.info,  Node: Create account mappings,  Next: Encryption types,  Prev: Inter-Realm keys (trust) between Windows 2000 and a Heimdal KDC,  Up: Windows 2000 compatability
+
+Create account mappings
+=======================
+
+Start the `Active Directory Users and Computers' tool. Select the View
+menu, that is in the left corner just below the real menu (or press
+Alt-V), and select Advanced Features. Right click on the user that you
+are going to do a name mapping for and choose Name mapping.
+
+Click on the Kerberos Names tab and add a new principal from the
+non-Windows domain.
+
+
+File: heimdal.info,  Node: Encryption types,  Next: Authorization data,  Prev: Create account mappings,  Up: Windows 2000 compatability
 
 Encryption types
 ================
 
 Windows 2000 supports both the standard DES encryptions (des-cbc-crc and
 des-cbc-md5) and its own proprietary encryption that is based on MD4 and
-rc4 and which is supposed to be described in
-draft-brezak-win2k-krb-rc4-hmac-01.txt.  New users will get both MD4 and
-DES keys.  Users that are converted from a NT4 database, will only have
-MD4 passwords and will need a password change to get a DES key.
+rc4 that is documented in and is supposed to be described in
+`draft-brezak-win2k-krb-rc4-hmac-03.txt'.  New users will get both MD4
+and DES keys.  Users that are converted from a NT4 database, will only
+have MD4 passwords and will need a password change to get a DES key.
+
+Heimdal implements both of these encryption types, but since DES is the
+standard and the hmac-code is somewhat newer, it is likely to work
+better.
 
 
-File: heimdal.info,  Node: Authorization data,  Prev: Encryption types,  Up: Windows 2000 compatability
+File: heimdal.info,  Node: Authorization data,  Next: Quirks of Windows 2000 KDC,  Prev: Encryption types,  Up: Windows 2000 compatability
 
 Authorization data
 ==================
 
 The Windows 2000 KDC also adds extra authorization data in tickets.  It
 is at this point unclear what triggers it to do this.  The format of
-this data is unknown and according to Microsoft, subject to change.  A
-simple way of getting hold of the data to be able to understand it
+this data is only available under a "secret" license from Microsoft,
+which prohibits you implementing it.
+
+A simple way of getting hold of the data to be able to understand it
 better is described here.
 
   1. Find the client example on using the SSPI in the SDK documentation.
@@ -911,6 +1142,76 @@ better is described here.
 
   8. The tool `lib/asn1/asn1_print' is somewhat useful for analyzing
      the data.
+
+
+File: heimdal.info,  Node: Quirks of Windows 2000 KDC,  Next: Useful links when reading about the Windows 2000,  Prev: Authorization data,  Up: Windows 2000 compatability
+
+Quirks of Windows 2000 KDC
+==========================
+
+There are some issues with salts and Windows 2000.  Using an empty salt,
+which is the only one that Kerberos 4 supported and is therefore known
+as a Kerberos 4 compatible salt does not work, as far as we can tell
+from out experiments and users reports.  Therefore, you have to make
+sure you keep around keys with all the different types of salts that are
+required.
+
+Microsoft seems also to have forgotten to implement the checksum
+algorithms `rsa-md4-des' and `rsa-md5-des'. This can make Name mapping
+*Note Create account mappings:: fail if a `des-cbc-md5' key is used. To
+make the KDC return only `des-cbc-crc' you must delete the
+`des-cbc-md5' key from the kdc using the `kadmin del_enctype' command.
+
+     kadmin del_enctype lha des-cbc-md5
+
+You should also add the following entries to the `krb5.conf' file:
+
+     [libdefaults]
+     	default_etypes = des-cbc-crc
+     	default_etypes_des = des-cbc-crc
+
+These configuration options will make sure that no checksums of the
+unsupported types are generated.
+
+
+File: heimdal.info,  Node: Useful links when reading about the Windows 2000,  Prev: Quirks of Windows 2000 KDC,  Up: Windows 2000 compatability
+
+Useful links when reading about the Windows 2000
+================================================
+
+There are lots of text about Kerberos on Microsoft's web site, here is a
+short list of the interesting documents that we have managed to find.
+
+   * Step-by-Step Guide to Kerberos 5 (krb5 1.0) Interoperability -
+     <http://www.microsoft.com/windows2000/library/planning/security/kerbsteps.asp>
+     Kerberos GSS-API (in Windows-ize SSPI), Windows as a client in a
+     non-Windows KDC realm, adding unix clients to a Windows 2000 KDC,
+     and adding cross-realm trust (*Note Inter-Realm keys (trust)
+     between Windows 2000 and a Heimdal KDC::.).
+
+   * Windows 2000 Kerberos Authentication -
+     <http://www.microsoft.com/TechNet/win2000/win2ksrv/technote/kerberos.asp>
+     White paper that describes how Kerberos is used in Windows 2000.
+
+   * Overview of kerberos -
+     <http://support.microsoft.com/support/kb/articles/Q248/7/58.ASP>
+     Links to useful other links.
+
+   * Klist for windows -
+     <http://msdn.microsoft.com/library/periodic/period00/security0500.htm>
+     Describes where to get a klist for Windows 2000.
+
+   * Event logging for kerberos -
+     <http://support.microsoft.com/support/kb/articles/Q262/1/77.ASP>.
+     Basicly it say that you can add a registry key
+     `HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\Kerberos\Parameters\LogLevel'
+     with value DWORD equal to 1, and then you'll get logging in the
+     Event Logger.
+
+
+Other useful programs include these:
+
+   * pwdump2 <http://www.webspan.net/~tas/pwdump2/>
 
 
 File: heimdal.info,  Node: Acknowledgments,  Prev: Windows 2000 compatability,  Up: Top
@@ -993,17 +1294,29 @@ Node: Top210
 Node: Introduction521
 Node: What is Kerberos?3163
 Node: Building and Installing8237
-Node: Setting up a realm11361
-Node: Things in search for a better place20098
-Node: Kerberos 4 issues23004
-Node: Principal conversion issues23399
-Ref: Principal conversion issues-Footnote-125622
-Ref: Principal conversion issues-Footnote-225690
-Node: Converting a version 4 database25743
-Node: Windows 2000 compatability30651
-Node: Configuring Windows 2000 to use a Heimdal KDC31529
-Node: Encryption types33252
-Node: Authorization data33849
-Node: Acknowledgments34920
+Node: Setting up a realm11971
+Node: Configuration file12620
+Node: Creating the database15310
+Node: keytabs17813
+Node: Remote administration18647
+Node: Password changing19881
+Node: Testing clients and servers21688
+Node: Slave Servers22008
+Node: Incremental propagation23640
+Node: Things in search for a better place26151
+Node: Kerberos 4 issues28873
+Node: Principal conversion issues29268
+Ref: Principal conversion issues-Footnote-131491
+Ref: Principal conversion issues-Footnote-231559
+Node: Converting a version 4 database31612
+Node: Windows 2000 compatability36520
+Node: Configuring Windows 2000 to use a Heimdal KDC37696
+Node: Inter-Realm keys (trust) between Windows 2000 and a Heimdal KDC39448
+Node: Create account mappings41891
+Node: Encryption types42481
+Node: Authorization data43222
+Node: Quirks of Windows 2000 KDC44366
+Node: Useful links when reading about the Windows 200045605
+Node: Acknowledgments47317
 
 End Tag Table

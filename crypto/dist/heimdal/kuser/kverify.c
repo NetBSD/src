@@ -33,7 +33,7 @@
 
 #include "kuser_locl.h"
 
-RCSID("$Id: kverify.c,v 1.1.1.1 2000/06/16 18:31:41 thorpej Exp $");
+RCSID("$Id: kverify.c,v 1.1.1.2 2000/08/02 19:58:59 assar Exp $");
 
 int
 main(int argc, char **argv)

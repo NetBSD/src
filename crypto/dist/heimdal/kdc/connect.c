@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: connect.c,v 1.1.1.1 2000/06/16 18:31:37 thorpej Exp $");
+RCSID("$Id: connect.c,v 1.1.1.2 2000/08/02 19:58:53 assar Exp $");
 
 /*
  * a tuple describing on what to listen
@@ -129,10 +129,18 @@ add_standard_ports (int family)
     add_port_service(family, "kerberos", 88, "tcp");
     add_port_service(family, "kerberos-sec", 88, "udp");
     add_port_service(family, "kerberos-sec", 88, "tcp");
-    add_port_service(family, "kerberos-iv", 750, "udp");
-    add_port_service(family, "kerberos-iv", 750, "tcp");
     if(enable_http)
 	add_port_service(family, "http", 80, "tcp");
+#ifdef KRB4
+    if(enable_v4) {
+	add_port_service(family, "kerberos-iv", 750, "udp");
+	add_port_service(family, "kerberos-iv", 750, "tcp");
+    }
+    if(enable_524) {
+	add_port_service(family, "krb524", 4444, "udp");
+	add_port_service(family, "krb524", 4444, "tcp");
+    }
+#endif
 #ifdef KASERVER
     if (enable_kaserver)
 	add_port_service(family, "afs3-kaserver", 7004, "udp");
@@ -305,7 +313,8 @@ init_sockets(struct descr **desc)
     parse_ports(port_str);
     d = malloc(addresses.len * num_ports * sizeof(*d));
     if (d == NULL)
-	krb5_errx(context, 1, "malloc(%u) failed", num_ports * sizeof(*d));
+	krb5_errx(context, 1, "malloc(%lu) failed",
+		  (unsigned long)num_ports * sizeof(*d));
 
     for (i = 0; i < num_ports; i++){
 	for (j = 0; j < addresses.len; ++j) {
@@ -330,7 +339,8 @@ init_sockets(struct descr **desc)
     krb5_free_addresses (context, &addresses);
     d = realloc(d, num * sizeof(*d));
     if (d == NULL && num != 0)
-	krb5_errx(context, 1, "realloc(%u) failed", num * sizeof(*d));
+	krb5_errx(context, 1, "realloc(%lu) failed",
+		  (unsigned long)num * sizeof(*d));
     reinit_descrs (d, num);
     *desc = d;
     return num;

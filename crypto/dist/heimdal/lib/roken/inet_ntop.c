@@ -33,24 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: inet_ntop.c,v 1.1.1.1 2000/06/16 18:32:35 thorpej Exp $");
-#endif
-
-#include <errno.h>
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-#ifdef HAVE_NETINET_IN6_H
-#include <netinet/in6.h>
-#endif
-#ifdef HAVE_NETINET6_IN6_H
-#include <netinet6/in6.h>
+RCSID("$Id: inet_ntop.c,v 1.1.1.2 2000/08/02 19:59:51 assar Exp $");
 #endif
 
 #include <roken.h>

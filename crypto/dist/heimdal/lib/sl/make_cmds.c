@@ -34,7 +34,7 @@
 #include "make_cmds.h"
 #include <getarg.h>
 
-RCSID("$Id: make_cmds.c,v 1.1.1.1 2000/06/16 18:32:32 thorpej Exp $");
+RCSID("$Id: make_cmds.c,v 1.1.1.2 2000/08/02 20:00:18 assar Exp $");
 
 #include <roken.h>
 #include <err.h>

@@ -33,7 +33,7 @@
 
 #include "gen_locl.h"
 
-RCSID("$Id: gen_glue.c,v 1.1.1.1 2000/06/16 18:32:38 thorpej Exp $");
+RCSID("$Id: gen_glue.c,v 1.1.1.2 2000/08/02 19:59:04 assar Exp $");
 
 static void
 generate_2int (const Symbol *s)

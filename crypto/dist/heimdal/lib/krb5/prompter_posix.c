@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: prompter_posix.c,v 1.1.1.1 2000/06/16 18:33:01 thorpej Exp $");
+RCSID("$Id: prompter_posix.c,v 1.1.1.2 2000/08/02 19:59:37 assar Exp $");
 
 int
 krb5_prompter_posix (krb5_context context,

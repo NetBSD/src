@@ -1,4 +1,4 @@
-/* $Id: asn1-common.h,v 1.1.1.1 2000/06/16 18:32:39 thorpej Exp $ */
+/* $Id: asn1-common.h,v 1.1.1.2 2000/08/02 19:59:01 assar Exp $ */
 
 #include <stddef.h>
 #include <time.h>

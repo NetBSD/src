@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: version.c,v 1.1.1.1 2000/06/16 18:33:03 thorpej Exp $");
+RCSID("$Id: version.c,v 1.1.1.2 2000/08/02 19:59:44 assar Exp $");
 
 /* this is just to get a version stamp in the library file */
 

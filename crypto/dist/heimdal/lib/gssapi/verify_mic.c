@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: verify_mic.c,v 1.1.1.1 2000/06/16 18:32:47 thorpej Exp $");
+RCSID("$Id: verify_mic.c,v 1.1.1.2 2000/08/02 19:59:10 assar Exp $");
 
 OM_uint32 gss_verify_mic
            (OM_uint32 * minor_status,
@@ -68,11 +68,11 @@ OM_uint32 gss_verify_mic
   p += 16;
 
   /* verify checksum */
-  MD5_Init (&md5);
-  MD5_Update (&md5, p - 24, 8);
-  MD5_Update (&md5, message_buffer->value,
+  MD5Init (&md5);
+  MD5Update (&md5, p - 24, 8);
+  MD5Update (&md5, message_buffer->value,
 	     message_buffer->length);
-  MD5_Final (hash, &md5);
+  MD5Final (hash, &md5);
 
   memset (&zero, 0, sizeof(zero));
 #if 0
@@ -83,7 +83,7 @@ OM_uint32 gss_verify_mic
 	  sizeof(key));
 
   des_set_key (&key, schedule);
-  des_cbc_cksum ((const void *)hash, (void *)hash, sizeof(hash),
+  des_cbc_cksum ((void *)hash, (void *)hash, sizeof(hash),
 		 schedule, &zero);
   if (memcmp (p - 8, hash, 8) != 0) {
     memset (key, 0, sizeof(key));
@@ -106,7 +106,7 @@ OM_uint32 gss_verify_mic
 
   p -= 16;
   des_set_key (&key, schedule);
-  des_cbc_encrypt ((const void *)p, (void *)p, 8,
+  des_cbc_encrypt ((void *)p, (void *)p, 8,
 		   schedule, (des_cblock *)hash, DES_DECRYPT);
 
   memset (key, 0, sizeof(key));

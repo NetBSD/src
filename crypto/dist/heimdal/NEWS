@@ -1,3 +1,28 @@
+Changes in release 0.3a:
+
+ * implement arcfour-hmac-md5 to interoperate with W2K
+
+ * modularise the handling of the master key, and allow for other
+   encryption types. This makes it easier to import a database from
+   some other source without having to re-encrypt all keys.
+
+ * allow for better control over which encryption types are created
+
+ * make kinit fallback to v4 if given a v4 KDC
+
+ * make klist work better with v4 and v5, and add some more MIT
+   compatibility options
+
+ * make the kdc listen on the krb524 (4444) port for compatibility
+   with MIT krb5 clients
+
+ * implement more DCE/DFS support, enabled with --enable-dce, see
+   lib/kdfs and appl/dceutils
+
+ * make the sequence numbers work correctly
+
+ * bug fixes
+
 Changes in release 0.2t:
 
  * bug fixes
