@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.10 2000/03/23 06:47:33 thorpej Exp $ */
+/*	$NetBSD: ms.c,v 1.10.8.1 2001/09/09 19:14:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -339,6 +339,14 @@ mspoll(dev, events, p)
 	return (ev_poll(&ms->ms_events, events, p));
 }
 
+int
+mskqfilter(dev_t dev, struct knote *kn)
+{
+	struct ms_softc *ms;
+
+	ms = ms_cd.cd_devs[minor(dev)];
+	return (ev_kqfilter(&ms->ms_events, kn));
+}
 
 /****************************************************************
  * Middle layer (translator)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.35 2001/02/02 21:52:11 is Exp $	*/
+/*	$NetBSD: kbd.c,v 1.35.4.1 2001/09/09 19:10:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -507,6 +507,14 @@ kbdpoll(dev, events, p)
 	return ev_poll (&kbd_softc.k_events, events, p);
 }
 
+int
+kbdkqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+
+	return (ev_kqfilter(&kbd_softc.k_events, kn));
+}
 
 void
 kbdintr(mask)

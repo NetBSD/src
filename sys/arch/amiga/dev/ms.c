@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.18 2000/05/18 19:58:30 is Exp $	*/
+/*	$NetBSD: ms.c,v 1.18.8.1 2001/09/09 19:10:30 thorpej Exp $	*/
 
 /*
  * based on:
@@ -458,4 +458,16 @@ mspoll(dev, events, p)
 	ms = MS_DEV2MSPORT(dev);
 
 	return(ev_poll(&ms->ms_events, events, p));
+}
+
+int
+mskqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+	struct ms_port *ms;
+
+	ms = MS_DEV2MSPORT(dev);
+
+	return (ev_kqfilter(&ms->ms_events, kn));
 }

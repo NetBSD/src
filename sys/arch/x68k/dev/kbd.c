@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.11 2001/06/12 15:17:21 wiz Exp $	*/
+/*	$NetBSD: kbd.c,v 1.11.2.1 2001/09/09 19:14:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -70,13 +70,9 @@ struct kbd_softc {
 	struct evvar sc_events; /* event queue state */
 };
 
+cdev_decl(kbd);
+
 void	kbdenable	__P((int));
-int	kbdopen 	__P((dev_t, int, int, struct proc *));
-int	kbdclose	__P((dev_t, int, int, struct proc *));
-int	kbdread 	__P((dev_t, struct uio *, int));
-int	kbdwrite	__P((dev_t, struct uio *, int));
-int	kbdioctl	__P((dev_t, u_long, caddr_t, int, struct proc *));
-int	kbdpoll 	__P((dev_t, int, struct proc *));
 int	kbdintr 	__P((void *));
 void	kbdsoftint	__P((void));
 void	kbd_bell	__P((int));
@@ -315,6 +311,14 @@ kbdpoll(dev, events, p)
 	return (ev_poll(&k->sc_events, events, p));
 }
 
+int
+kbdkqfilter(dev_t dev, struct knote *kn)
+{
+	struct kbd_softc *k;
+
+	k = kbd_cd.cd_devs[minor(dev)];
+	return (ev_kqfilter(&k->sc_events, kn));
+}
 
 #define KBDBUFMASK 63
 #define KBDBUFSIZ 64
