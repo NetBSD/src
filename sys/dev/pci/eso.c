@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.12 1999/11/02 12:11:42 kleink Exp $	*/
+/*	$NetBSD: eso.c,v 1.13 1999/12/03 22:34:28 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus J. Klein
@@ -144,7 +144,8 @@ static struct audio_hw_if eso_hw_if = {
 
 static const char * const eso_rev2model[] = {
 	"ES1938",
-	"ES1946"
+	"ES1946",
+	"ES1946 Revision E"
 };
 
 
