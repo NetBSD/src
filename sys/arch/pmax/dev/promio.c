@@ -1,4 +1,4 @@
-/*	$NetBSD: promio.c,v 1.24 1998/03/26 01:02:16 thorpej Exp $	*/
+/*	$NetBSD: promio.c,v 1.25 1998/03/30 09:44:03 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: promio.c,v 1.24 1998/03/26 01:02:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promio.c,v 1.25 1998/03/30 09:44:03 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,11 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: promio.c,v 1.24 1998/03/26 01:02:16 thorpej Exp $");
 #include <pmax/dev/promiovar.h>
 #include <pmax/pmax/pmaxtype.h>
 
+
 static int  romgetc	__P ((dev_t));
 static void romputc	__P ((dev_t, int));
 static void rompollc	__P((dev_t, int));
-
-extern int	systype;
 
 /*
  * Default consdev, for errors or warnings before
