@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.40 2000/10/10 12:37:01 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.41 2000/12/29 01:24:56 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhid.c,v 1.22 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 /*
- * HID spec: http://www.usb.org/developers/data/usbhid10.pdf
+ * HID spec: http://www.usb.org/developers/data/devclass/hid1_1.pdf
  */
 
 #include <sys/param.h>
