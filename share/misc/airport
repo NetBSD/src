@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.15 2000/10/19 05:23:28 simonb Exp $
+#	$NetBSD: airport,v 1.16 2001/01/29 16:43:20 hubertf Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
@@ -265,10 +265,12 @@ STL:St. Louis/Lambert International, Missouri, USA
 STO:All Airports around Stockholm, Sweden
 SUX:Sioux City International, Iowa, USA
 SVD:Saint Vincent, VC
+SXF:Berlin Schoenefeld, Germany
 SXM:Saint Maarten, NL AN
 SYD:Sydney, New South Wales, Australia
 SYR:Syracuse Hancock International, New York, USA
 TAB:Tobago
+THF:Berlin Tempelhof, Germany
 TLV:Tel Aviv, Israel
 TOL:Toledo Express, Ohio, USA
 TPA:Tampa International, Florida, USA
@@ -276,7 +278,7 @@ TPE:Taipei, Taiwan
 TSV:Townsville, Queensland, Australia
 TUL:Tulsa International, Oklahoma, USA
 TUS:Tucson International, Arizona, USA
-TXL:Berlin, Germany
+TXL:Berlin Tegel, Germany
 TYO:All Airports around Tokyo, Japan
 TYS:Knoxville McGhee Tyson, Tennessee, USA
 UCA:Utica/Oneida County, New York, USA
