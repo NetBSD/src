@@ -1,4 +1,4 @@
-/*	$NetBSD: qsubst.c,v 1.2 1999/09/04 17:07:23 perry Exp $	*/
+/*	$NetBSD: qsubst.c,v 1.3 1999/09/04 18:02:58 perry Exp $	*/
 
 /*
  * qsubst -- designed for renaming routines existing in a whole bunch
@@ -223,9 +223,11 @@ static void put_ul(char *s)
 static int getc_cbreak(void)
 {
  struct termios tio;
+ struct termios otio;
  char c;
 
  if (tcgetattr(0,&tio) < 0) return(getchar());
+ otio = tio;
  tio.c_lflag &= ~(ICANON|ECHOKE|ECHOE|ECHO|ECHONL);
  tio.c_cc[VMIN] = 1;
  tio.c_cc[VTIME] = 0;
@@ -238,7 +240,7 @@ static int getc_cbreak(void)
     case 1:
        break;
   }
- tcsetattr(0,TCSANOW|TCSASOFT,&tio);
+ tcsetattr(0,TCSANOW|TCSASOFT,&otio);
  return(c);
 }
 
