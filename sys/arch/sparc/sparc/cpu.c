@@ -42,7 +42,7 @@
  *	@(#)cpu.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: cpu.c,v 1.12 93/05/03 09:47:57 torek Exp  (LBL)
- * $Id: cpu.c,v 1.6 1994/05/07 05:10:01 deraadt Exp $
+ * $Id: cpu.c,v 1.7 1994/05/19 07:12:49 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -58,7 +58,7 @@
 /* This is declared here so that you must include a CPU for the cache code. */
 struct cacheinfo cacheinfo;
 
-/* The following are used externally */
+/* The following are used externally (sysctl_hw). */
 char	machine[] = "sparc";
 char	cpu_model[100];
 
@@ -158,7 +158,6 @@ cpu_attach(parent, dev, aux)
 	if ((1 << i) != l)
 		panic("bad cache line size %d", l);
 	cacheinfo.c_l2linesize = i;
-
 	vactype = VAC_WRITETHROUGH;
 
 	/*
@@ -245,7 +244,7 @@ static struct info fpu_types[] = {
 	/*
 	 * Vendor 1, IU ROSS0/1 or Pinnacle.
 	 */
-	{ 1, 0x1, 0xf, 0, "on-chip" },		/* Pinnacle (shhh) */
+	{ 1, 0x1, 0xf, 0, "on-chip" },		/* Pinnacle */
 	{ 1, 0x1, ANY, 0, "L64812 or ACT8847" },
 	{ 1, 0x1, ANY, 1, "L64814" },
 	{ 1, 0x1, ANY, 2, "TMS390C602A" },

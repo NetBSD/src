@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.21 1994/05/07 05:09:24 deraadt Exp $
+ * $Id: machdep.c,v 1.22 1994/05/19 07:13:03 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -341,8 +341,6 @@ setregs(p, entry, stack, retval)
 	tf->tf_pc = entry & ~3;
 	tf->tf_global[2] = tf->tf_global[7] = tf->tf_npc = (entry+4) & ~3;
 	stack -= sizeof(struct rwindow);
-if(stack & ALIGNBYTES)
-printf("stack misaligned %8x!\n", stack);
 	tf->tf_out[6] = stack;
 	retval[1] = 0;
 }

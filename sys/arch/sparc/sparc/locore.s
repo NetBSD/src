@@ -39,10 +39,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)locore.s	8.2 (Berkeley) 8/12/93
+ *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  *
- * from: Header: locore.s,v 1.51 93/04/21 06:19:37 torek Exp 
- * $Id: locore.s,v 1.9 1994/05/12 08:34:57 deraadt Exp $
+ * from: Header: locore.s,v 1.51 93/04/21 06:19:37 torek Exp
+ * $Id: locore.s,v 1.10 1994/05/19 07:12:56 deraadt Exp $
  */
 
 #define	LOCORE
@@ -2673,53 +2673,6 @@ _esigcode:
 #define	ALTENTRY(x)	.globl _##x; _##x:
 
 /*
- * update profiling information for the user
- * addupc(pc, &u.u_prof, ticks)
- */
-	.globl	_addupc
-_addupc:
-	save	%sp, -CCFSZ, %sp
-
-	! %i0 = pc, %i1 = profp, %i2 = ticks
-	ld	[%i1 + 8], %l2		! get pr->pr_off
-	sub	%i0, %l2, %l0
-	bneg,a	Lauexit			! if(pc<pr_off) skip out
-	 nop
-	ld	[%i1 + 12], %l3		! scale = pr->pr_scale
-	srl	%l0, 1, %o0		! pc /= 2
-	srl	%l3, 1, %o1		! scale /= 2
-	call	.umul			! praddr = pc * scale
-	 nop
-	ld	[%i1 + 4], %l3		! get pr->pr_size
-	srl	%o0, 15, %l5		! praddr <<= 15
-	andn	%l5, 1, %l5		! praddr &= ~1
-	cmp	%l5, %l3		! if(praddr > pr_size) skip out
-	bge,a	Lauexit
-	 nop
-	ld	[%i1], %o0		! get pr->pr_base
-	add	%l5, %o0, %l5		! praddr += pr_base
-	mov	%l5, %o0
-	call	_fusword		! count = fusword(praddr)
-	 nop
-	cmp	%o0, -1			! error, fail.
-	beq,a	Lauerror
-	 nop
-	add	%o0, 1, %o1		! count++
-	mov	%l5, %o0		! reload praddr
-	call	_susword		! susword(praddr, count)
-	 nop
-	cmp	%o0, -1
-	beq,a	Lauerror
-	 nop
-Lauexit:
-	ret
-	restore
-Lauerror:
-	st	%g0, [%i1 + 12]		! turn off profiling
-	ret
-	restore
-
-/*
  * copyinstr(fromaddr, toaddr, maxlength, &lencopied)
  *
  * Copy a null terminated string from the user address space into
@@ -2959,14 +2912,14 @@ ENTRY(write_user_windows)
 /*
  * Switch statistics (for later tweaking):
  *	nswitchdiff = p1 => p2 (i.e., chose different process)
- *	nswitchexit = number of calls to swtchexit()
+ *	nswitchexit = number of calls to switchexit()
  *	_cnt.v_swtch = total calls to swtch+swtchexit
  */
 	.comm	_nswitchdiff, 4
 	.comm	_nswitchexit, 4
 
 /*
- * REGISTER USAGE IN swtch AND swtchexit:
+ * REGISTER USAGE IN cpu_switch AND switchexit:
  * This is split into two phases, more or less
  * `before we locate a new proc' and `after'.
  * Some values are the same in both phases.
@@ -2990,13 +2943,13 @@ ENTRY(write_user_windows)
  */
 
 /*
- * swtchexit is called only from cpu_exit() before the current process
+ * switchexit is called only from cpu_exit() before the current process
  * has freed its kernel stack; we must free it.  (curproc is already NULL.)
  *
  * We lay the process to rest by changing to the `idle' kernel stack,
  * and note that the `last loaded process' is nonexistent.
  */
-ENTRY(swtchexit)
+ENTRY(switchexit)
 	mov	%o0, %g2		! save the
 	mov	%o1, %g3		! ... three parameters
 	mov	%o2, %g4		! ... to kmem_free
@@ -3027,7 +2980,7 @@ ENTRY(swtchexit)
 	 mov	%g4, %o2
 
 	/*
-	 * Now fall through to `the last swtch'.  %g6 was set to
+	 * Now fall through to `the last switch'.  %g6 was set to
 	 * %hi(_cpcb), but may have been clobbered in kmem_free,
 	 * so all the registers described below will be set here.
 	 *
@@ -3053,7 +3006,7 @@ ENTRY(swtchexit)
 	/* FALLTHROUGH */
 
 /*
- * When no processes are on the runq, swtch
+ * When no processes are on the runq, switch
  * idles here watiing for something to come ready.
  * The registers are set up as noted above.
  */
@@ -3080,26 +3033,27 @@ Lsw_panic_srun:
 	sethi	%hi(3f), %o0
 	call	_panic
 	 or	%lo(3f), %o0, %o0
-1:	.asciz	"swtch rq"
-2:	.asciz	"swtch wchan"
-3:	.asciz	"swtch SRUN"
+1:	.asciz	"switch rq"
+2:	.asciz	"switch wchan"
+3:	.asciz	"switch SRUN"
 	ALIGN
 
 /*
- * swtch() picks a process to run and runs it, saving the current
+ * cpu_switch() picks a process to run and runs it, saving the current
  * one away.  On the assumption that (since most workstations are
  * single user machines) the chances are quite good that the new
  * process will turn out to be the current process, we defer saving
  * it here until we have found someone to load.  If that someone
  * is the current process we avoid both store and load.
  *
- * swtch() is always entered at splstatclock or splhigh.
+ * cpu_switch() is always entered at splstatclock or splhigh.
  *
  * IT MIGHT BE WORTH SAVING BEFORE ENTERING idle TO AVOID HAVING TO
  * SAVE LATER WHEN SOMEONE ELSE IS READY ... MUST MEASURE!
  */
-ENTRY(swtch)
-	INCR(_cnt+V_SWTCH)		! cnt.v_switch++;
+	.globl	_runtime
+	.globl	_time
+ENTRY(cpu_switch)
 	/*
 	 * REGISTER USAGE AT THIS POINT:
 	 *	%g1 = oldpsr (excluding ipl bits)
@@ -3126,10 +3080,28 @@ ENTRY(swtch)
 	st	%g1, [%o0 + PCB_PSR]	! cpcb->pcb_psr = oldpsr;
 	andn	%g1, PSR_PIL, %g1	! oldpsr &= ~PSR_PIL;
 
+	/*
+	 * In all the fiddling we did to get this far, the thing we are
+	 * waiting for might have come ready, so let interrupts in briefly
+	 * before checking for other processes.  Note that we still have
+	 * curproc set---we have to fix this or we can get in trouble with
+	 * the run queues below.
+	 */
+	st	%g0, [%g7 + %lo(_curproc)]	! curproc = NULL;
+	wr	%g1, 0, %psr			! (void) spl0();
+	nop; nop; nop				! paranoia
 	wr	%g1, PIL_CLOCK <<8 , %psr	! (void) splclock();
 
 Lsw_scan:
 	nop; nop; nop				! paranoia
+	/*
+	 * We're about to run a (possibly) new process.  Set runtime
+	 * to indicate its start time.
+	 */
+	sethi	%hi(_time), %o0
+	ldd	[%o0 + %lo(_time)], %o2
+	sethi	%hi(_runtime), %o0
+	std	%o2, [%o0 + %lo(_runtime)]
 
 	ld	[%g2 + %lo(_whichqs)], %o3
 
@@ -3170,11 +3142,11 @@ Lsw_scan:
 	add	%o0, %o5, %o5
 	ld	[%o5], %g3		! p = q->ph_link;
 	cmp	%g3, %o5		! if (p == q)
-	be	Lsw_panic_rq		!	panic("swtch rq");
+	be	Lsw_panic_rq		!	panic("switch rq");
 	 EMPTY
-	ld	[%g3], %o0		! tmp0 = p->p_link;
+	ld	[%g3], %o0		! tmp0 = p->p_forw;
 	st	%o0, [%o5]		! q->ph_link = tmp0;
-	st	%o5, [%o0 + 4]		! tmp0->p_rlink = q;
+	st	%o5, [%o0 + 4]		! tmp0->p_back = q;
 	cmp	%o0, %o5		! if (tmp0 == q)
 	bne	1f
 	 EMPTY
@@ -3203,11 +3175,11 @@ Lsw_scan:
 	/* firewalls */
 	ld	[%g3 + P_WCHAN], %o0	! if (p->p_wchan)
 	tst	%o0
-	bne	Lsw_panic_wchan		!	panic("swtch wchan");
+	bne	Lsw_panic_wchan		!	panic("switch wchan");
 	 EMPTY
 	ldsb	[%g3 + P_STAT], %o0	! if (p->p_stat != SRUN)
 	cmp	%o0, SRUN
-	bne	Lsw_panic_srun		!	panic("swtch SRUN");
+	bne	Lsw_panic_srun		!	panic("switch SRUN");
 	 EMPTY
 
 	/*
@@ -3217,7 +3189,7 @@ Lsw_scan:
 	sethi	%hi(_want_resched), %o0
 	st	%g0, [%o0 + %lo(_want_resched)]	! want_resched = 0;
 	ld	[%g3 + P_ADDR], %g5		! newpcb = p->p_addr;
-	st	%g0, [%g3 + 4]			! p->p_rlink = NULL;
+	st	%g0, [%g3 + 4]			! p->p_back = NULL;
 	ld	[%g5 + PCB_PSR], %g2		! newpsr = newpcb->pcb_psr;
 	st	%g3, [%g7 + %lo(_curproc)]	! curproc = p;
 
@@ -3333,7 +3305,7 @@ Lsw_havectx:
 Lsw_sameproc:
 	/*
 	 * We are resuming the process that was running at the
-	 * call to swtch().  Just set psr ipl and return.
+	 * call to switch().  Just set psr ipl and return.
 	 */
 !	wr	%g2, 0 %psr		! %psr = newpsr; (done earlier)
 	nop
@@ -3347,7 +3319,7 @@ Lsw_sameproc:
  *  - just before a crash dump, for the stack update;
  *  - in cpu_fork(), before copying the kernel stack.
  * In the latter case the pcb and stack will be copied to the child,
- * and the child will be made runnable.  Eventually swtch() will run
+ * and the child will be made runnable.  Eventually switch() will run
  * it.  When it does, we want its pcb_pc set so that we can appear
  * to return 1 from cpu_fork(), so we store the current sp and psr
  * in the given pcb, and set its pcb_pc to our return-1 code (offset
@@ -3362,14 +3334,14 @@ ENTRY(snapshot)
 	st	%o1, [%o0 + PCB_PSR]
 
 	/*
-	 * Just like swtch(); same XXX comments apply.
+	 * Just like switch(); same XXX comments apply.
 	 * 7 of each.  Minor tweak: the 7th restore is
 	 * done after a ret.
 	 */
 	SAVE; SAVE; SAVE; SAVE; SAVE; SAVE; SAVE
 	restore; restore; restore; restore; restore; restore; ret; restore
 
-1:	/* this is reached only after a child gets chosen in swtch() */
+1:	/* this is reached only after a child gets chosen in switch() */
 	mov	1, %i0			! return 1 from cpu_fork
 	ret
 	 restore

@@ -42,7 +42,7 @@
  *	@(#)pmap.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pmap.c,v 1.39 93/04/20 11:17:12 torek Exp 
- * $Id: pmap.c,v 1.9 1994/05/05 05:58:27 deraadt Exp $
+ * $Id: pmap.c,v 1.10 1994/05/19 07:13:06 deraadt Exp $
  */
 
 /*
@@ -134,7 +134,7 @@ struct pmap_stats {
 int	pmapdebug = 0x0;
 #endif
 
-#define	splpmap() splbio()
+#define	splpmap() splimp()
 
 /*
  * First and last managed physical addresses.

@@ -42,7 +42,7 @@
  *	@(#)autoconf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: autoconf.c,v 1.32 93/05/28 03:55:59 torek Exp  (LBL)
- * $Id: autoconf.c,v 1.9 1994/04/17 11:37:46 deraadt Exp $
+ * $Id: autoconf.c,v 1.10 1994/05/19 07:12:44 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -69,7 +69,7 @@
  * the configuration process, and are used in initializing
  * the machine.
  */
-extern	int cold;	/* if 1, still working on cold-start */
+int	cold;		/* if 1, still working on cold-start */
 int	dkn;		/* number of iostat dk numbers assigned so far */
 int	fbnode;		/* node ID of ROM's console frame buffer */
 int	optionsnode;	/* node ID of ROM's options */

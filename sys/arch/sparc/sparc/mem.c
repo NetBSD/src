@@ -39,10 +39,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mem.c	8.1 (Berkeley) 6/11/93
+ *	@(#)mem.c	8.2 (Berkeley) 12/10/93
  *
- * from: Header: mem.c,v 1.9 92/11/26 03:05:03 torek Exp 
- * $Id: mem.c,v 1.1 1993/10/02 10:24:21 deraadt Exp $
+ * from: Header: mem.c,v 1.9 92/11/26 03:05:03 torek Exp
+ * $Id: mem.c,v 1.2 1994/05/19 07:13:05 deraadt Exp $
  */
 
 /*
@@ -115,7 +115,7 @@ mmrw(dev, uio, flags)
 
 /* minor device 1 is kernel memory */
 		case 1:
-			va = (caddr_t)uio->uio_offset;
+			va = (caddr_t)(int)uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
 			if (!kernacc(va, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
