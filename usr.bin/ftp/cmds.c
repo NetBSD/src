@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.21 1997/03/16 14:24:14 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.22 1997/04/05 03:27:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: cmds.c,v 1.21 1997/03/16 14:24:14 lukem Exp $";
+static char rcsid[] = "$NetBSD: cmds.c,v 1.22 1997/04/05 03:27:32 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -730,6 +730,7 @@ setedit(argc, argv)
 {
 
 	code = togglevar(argc, argv, &editing, "Editing mode");
+	controlediting();
 }
 #endif /* !SMALL */
 
