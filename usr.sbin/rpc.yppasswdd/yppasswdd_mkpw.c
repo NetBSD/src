@@ -1,4 +1,4 @@
-/*	$NetBSD: yppasswdd_mkpw.c,v 1.6 2000/07/07 15:11:47 itojun Exp $	*/
+/*	$NetBSD: yppasswdd_mkpw.c,v 1.7 2000/08/03 08:22:34 ad Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.ORG>
@@ -34,11 +34,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: yppasswdd_mkpw.c,v 1.7 2000/08/03 08:22:34 ad Exp $");
+#endif /* not lint */
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
+
 #include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -48,26 +54,18 @@
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+#include <limits.h>
 
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
 #include <rpcsvc/yppasswd.h>
 
-extern int noshell;
-extern int nogecos;
-extern int nopw;
-extern int make;
-extern char make_arg[];
-
-void	make_passwd __P((yppasswd *, struct svc_req *, SVCXPRT *));
+#include "extern.h"
 
 int	handling_request;		/* simple mutex */
 
 void
-make_passwd(argp, rqstp, transp)
-	yppasswd *argp;
-	struct svc_req *rqstp;
-	SVCXPRT *transp;
+make_passwd(yppasswd *argp, struct svc_req *rqstp, SVCXPRT *transp)
 {
 	struct passwd *pw;
 	int pfd, tfd;
@@ -141,7 +139,7 @@ make_passwd(argp, rqstp, transp)
 
 	/* Update the YP maps. */
 	if (chdir("/var/yp"))
-		err(1, "/var/yp");
+		err(EXIT_FAILURE, "/var/yp");
 	(void) umask(022);
 	(void) system(make_arg);
 
