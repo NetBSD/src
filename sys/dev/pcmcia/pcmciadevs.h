@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.105 2000/12/20 05:03:37 sommerfeld Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.106 2000/12/20 06:24:37 haya Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.106 2000/12/20 04:32:48 jhawk Exp 
+ *	NetBSD: pcmciadevs,v 1.107 2000/12/20 06:05:13 haya Exp 
  */
 
 /*-
@@ -538,6 +538,9 @@
 #define	PCMCIA_CIS_IODATA_PCLAT	{ "I-O DATA", "PCLA", "ETHERNET", NULL }
 #define	PCMCIA_PRODUCT_IODATA_PCLAT	-1
 #define	PCMCIA_STR_IODATA_PCLAT	"IO-DATA PCLA/T"
+#define	PCMCIA_CIS_IODATA_CBIDE2	{ "IO DATA", "CBIDE2      ", NULL, NULL }
+#define	PCMCIA_PRODUCT_IODATA_CBIDE2	-1
+#define	PCMCIA_STR_IODATA_CBIDE2	"IO-DATA CBIDE2/16-bit mode"
 #define	PCMCIA_CIS_EPSON_EEN10B	{ "Seiko Epson Corp.", "Ethernet", "P/N: EEN10B Rev. 00", NULL }
 #define	PCMCIA_PRODUCT_EPSON_EEN10B	-1
 #define	PCMCIA_STR_EPSON_EEN10B	"Epson EEN10B"
