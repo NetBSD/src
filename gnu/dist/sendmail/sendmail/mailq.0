@@ -1,7 +1,5 @@
+MAILQ(1)                                                              MAILQ(1)
 
-
-
-MAILQ(1)                                                 MAILQ(1)
 
 
 NNAAMMEE
@@ -11,72 +9,49 @@ SSYYNNOOPPSSIISS
        mmaaiillqq [--AAcc] [--qq......]  [--vv]
 
 DDEESSCCRRIIPPTTIIOONN
-       MMaaiillqq  prints  a  summary  of the mail messages queued for
-       future delivery.
+       MMaaiillqq prints a summary of the mail messages queued for future delivery.
 
-       The first line printed for each message shows the internal
-       identifier used on this host for the message with a possi-
-       ble status character, the size of the  message  in  bytes,
-       the date and time the message was accepted into the queue,
-       and the envelope sender of the message.  The  second  line
-       shows  the  error  message  that caused this message to be
-       retained in the queue; it will not be present if the  mes-
-       sage  is  being  processed for the first time.  The status
-       characters are either ** to indicate the job is being  pro-
-       cessed; XX to indicate that the load is too high to process
-       the job; and -- to indicate that the job is  too  young  to
-       process.  The following lines show message recipients, one
-       per line.
+       The first line printed for each message shows the  internal  identifier
+       used on this host for the message with a possible status character, the
+       size of the message in  bytes,  the  date  and  time  the  message  was
+       accepted  into  the queue, and the envelope sender of the message.  The
+       second line shows the error message that  caused  this  message  to  be
+       retained  in  the queue; it will not be present if the message is being
+       processed for the first time.  The status characters are  either  **  to
+       indicate the job is being processed; XX to indicate that the load is too
+       high to process the job; and -- to indicate that the job is too young to
+       process.  The following lines show message recipients, one per line.
 
        MMaaiillqq is identical to ``sendmail -bp''.
 
        The relevant options are as follows:
 
-       --AAcc    Show  the  mail  submission  queue   specified   in
-              _/_e_t_c_/_m_a_i_l_/_s_u_b_m_i_t_._c_f instead of the MTA queue speci-
-              fied in _/_e_t_c_/_m_a_i_l_/_s_e_n_d_m_a_i_l_._c_f.
+       --AAcc    Show  the mail submission queue specified in _/_e_t_c_/_m_a_i_l_/_s_u_b_m_i_t_._c_f
+              instead of the MTA queue specified in _/_e_t_c_/_m_a_i_l_/_s_e_n_d_m_a_i_l_._c_f.
 
        --qq[_!]I substr
-              Limit processed jobs to those containing _s_u_b_s_t_r  as
-              a substring of the queue id or not when _!  is spec-
-              ified.
+              Limit processed jobs to those containing _s_u_b_s_t_r as  a  substring
+              of the queue id or not when _!  is specified.
 
        --qq[_!]R substr
-              Limit processed jobs to those containing _s_u_b_s_t_r  as
-              a  substring of one of the recipients or not when _!
-              is specified.
+              Limit  processed  jobs to those containing _s_u_b_s_t_r as a substring
+              of one of the recipients or not when _!  is specified.
 
        --qq[_!]S substr
-              Limit processed jobs to those containing _s_u_b_s_t_r  as
-              a  substring of the sender or not when _!  is speci-
-              fied.
+              Limit processed jobs to those containing _s_u_b_s_t_r as  a  substring
+              of the sender or not when _!  is specified.
 
-       --vv     Print verbose information.  This adds the  priority
-              of  the  message  and  a single character indicator
-              (``+'' or blank) indicating whether a warning  mes-
-              sage  has  been  sent on the first line of the mes-
-              sage.  Additionally, extra lines may be  intermixed
-              with  the  recipients  indicating the ``controlling
-              user'' information; this shows  who  will  own  any
+       --vv     Print  verbose  information.  This adds the priority of the mes-
+              sage and a single character indicator (``+'' or blank)  indicat-
+              ing whether a warning message has been sent on the first line of
+              the message.  Additionally, extra lines may be  intermixed  with
+              the  recipients indicating the ``controlling user'' information;
+              this shows who will own any programs that are executed on behalf
+              of  this message and the name of the alias this command expanded
+              from, if any.  Moreover, status messages for each recipient  are
+              printed if available.
 
-
-
-                   Date: 2002/09/26 23:03:39                 1
-
-
-
-
-
-MAILQ(1)                                                 MAILQ(1)
-
-
-              programs  that  are executed on behalf of this mes-
-              sage  and  the  name  of  the  alias  this  command
-              expanded  from,  if any.  Moreover, status messages
-              for each recipient are printed if available.
-
-       The mmaaiillqq utility exits 0 on success, and >0 if  an  error
-       occurs.
+       The mmaaiillqq utility exits 0 on success, and >0 if an error occurs.
 
 SSEEEE AALLSSOO
        sendmail(8)
@@ -86,47 +61,4 @@ HHIISSTTOORRYY
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                   Date: 2002/09/26 23:03:39                 2
-
-
+                         Date: 2002/09/26 23:03:39                 MAILQ(1)

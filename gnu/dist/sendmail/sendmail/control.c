@@ -1,11 +1,11 @@
-/* $NetBSD: control.c,v 1.9 2003/06/01 14:07:05 atatat Exp $ */
+/* $NetBSD: control.c,v 1.10 2004/03/25 19:14:31 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: control.c,v 1.9 2003/06/01 14:07:05 atatat Exp $");
+__RCSID("$NetBSD: control.c,v 1.10 2004/03/25 19:14:31 atatat Exp $");
 #endif
 
 /*
- * Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2003 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -16,7 +16,7 @@ __RCSID("$NetBSD: control.c,v 1.9 2003/06/01 14:07:05 atatat Exp $");
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)Id: control.c,v 8.118.4.3 2002/11/14 00:15:56 ca Exp")
+SM_RCSID("@(#)Id: control.c,v 8.118.4.8 2003/06/24 17:45:27 ca Exp")
 
 #include <sm/fdset.h>
 

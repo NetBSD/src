@@ -1,7 +1,7 @@
-/* $NetBSD: milter.c,v 1.11 2003/06/01 14:07:07 atatat Exp $ */
+/* $NetBSD: milter.c,v 1.12 2004/03/25 19:14:31 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: milter.c,v 1.11 2003/06/01 14:07:07 atatat Exp $");
+__RCSID("$NetBSD: milter.c,v 1.12 2004/03/25 19:14:31 atatat Exp $");
 #endif
 
 /*
@@ -16,7 +16,7 @@ __RCSID("$NetBSD: milter.c,v 1.11 2003/06/01 14:07:07 atatat Exp $");
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)Id: milter.c,v 8.197.2.7 2003/03/22 18:54:25 ca Exp")
+SM_RCSID("@(#)Id: milter.c,v 8.197.2.10 2003/12/01 23:57:44 msk Exp")
 
 #if MILTER
 # include <libmilter/mfapi.h>
@@ -40,6 +40,9 @@ static char *MilterConnectMacros[MAXFILTERMACROS + 1];
 static char *MilterHeloMacros[MAXFILTERMACROS + 1];
 static char *MilterEnvFromMacros[MAXFILTERMACROS + 1];
 static char *MilterEnvRcptMacros[MAXFILTERMACROS + 1];
+#if _FFR_MILTER_MACROS_EOM
+static char *MilterEOMMacros[MAXFILTERMACROS + 1];
+#endif /* _FFR_MILTER_MACROS_EOM */
 
 # define MILTER_CHECK_DONE_MSG() \
 	if (*state == SMFIR_REPLYCODE || \
@@ -1421,6 +1424,10 @@ static struct milteropt
 	{ "macros.envrcpt",		MO_MACROS_ENVRCPT		},
 # define MO_LOGLEVEL			0x05
 	{ "loglevel",			MO_LOGLEVEL			},
+#if _FFR_MILTER_MACROS_EOM
+# define MO_MACROS_EOM			0x06
+	{ "macros.eom",			MO_MACROS_EOM			},
+#endif /* _FFR_MILTER_MACROS_EOM */
 	{ NULL,				0				},
 };
 
@@ -1494,6 +1501,13 @@ milter_set_option(name, val, sticky)
 	  case MO_MACROS_ENVRCPT:
 		if (macros == NULL)
 			macros = MilterEnvRcptMacros;
+#if _FFR_MILTER_MACROS_EOM
+		/* FALLTHROUGH */
+
+	  case MO_MACROS_EOM:
+		if (macros == NULL)
+			macros = MilterEOMMacros;
+#endif /* _FFR_MILTER_MACROS_EOM */
 
 		p = newstr(val);
 		while (*p != '\0')
@@ -1575,7 +1589,7 @@ milter_reopen_df(e)
 
 		/* open writable */
 		if ((e->e_dfp = sm_io_open(SmFtStdio, SM_TIME_DEFAULT, dfname,
-					   SM_IO_RDWR, NULL)) == NULL)
+					   SM_IO_RDWR_B, NULL)) == NULL)
 		{
 			MILTER_DF_ERROR("milter_reopen_df: sm_io_open %s: %s");
 			return -1;
@@ -1632,7 +1646,7 @@ milter_reset_df(e)
 		return -1;
 	}
 	else if ((e->e_dfp = sm_io_open(SmFtStdio, SM_TIME_DEFAULT, dfname,
-					SM_IO_RDONLY, NULL)) == NULL)
+					SM_IO_RDONLY_B, NULL)) == NULL)
 	{
 		MILTER_DF_ERROR("milter_reset_df: error reopening %s: %s");
 		return -1;
@@ -2813,6 +2827,8 @@ milter_addrcpt(response, rlen, e)
 	ssize_t rlen;
 	ENVELOPE *e;
 {
+	int olderrors;
+
 	if (tTd(64, 10))
 		sm_dprintf("milter_addrcpt: ");
 
@@ -2837,7 +2853,9 @@ milter_addrcpt(response, rlen, e)
 		sm_dprintf("%s\n", response);
 	if (MilterLogLevel > 8)
 		sm_syslog(LOG_INFO, e->e_id, "Milter add: rcpt: %s", response);
-	(void) sendtolist(response, NULLADDR, &e->e_sendqueue, 0, e);
+	olderrors = Errors;
+  	(void) sendtolist(response, NULLADDR, &e->e_sendqueue, 0, e);
+ 	Errors = olderrors;
 	return;
 }
 /*
@@ -3595,6 +3613,11 @@ milter_data(e, state)
 			response = milter_body(m, e, state);
 			MILTER_CHECK_RESULTS();
 		}
+
+#if _FFR_MILTER_MACROS_EOM
+		if (MilterEOMMacros[0] != NULL)
+			milter_send_macros(m, MilterEOMMacros, SMFIC_BODYEOB, e);
+#endif /* _FFR_MILTER_MACROS_EOM */
 
 		/* send the final body chunk */
 		(void) milter_write(m, SMFIC_BODYEOB, NULL, 0,

@@ -1,11 +1,11 @@
-/* $NetBSD: recipient.c,v 1.9 2003/06/01 14:07:08 atatat Exp $ */
+/* $NetBSD: recipient.c,v 1.10 2004/03/25 19:14:31 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: recipient.c,v 1.9 2003/06/01 14:07:08 atatat Exp $");
+__RCSID("$NetBSD: recipient.c,v 1.10 2004/03/25 19:14:31 atatat Exp $");
 #endif
 
 /*
- * Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2003 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -19,7 +19,7 @@ __RCSID("$NetBSD: recipient.c,v 1.9 2003/06/01 14:07:08 atatat Exp $");
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)Id: recipient.c,v 8.330.2.1 2002/08/27 20:21:02 gshapiro Exp")
+SM_RCSID("@(#)Id: recipient.c,v 8.330.2.4 2003/10/06 20:43:29 ca Exp")
 
 static void	includetimeout __P((void));
 static ADDRESS	*self_reference __P((ADDRESS *));
@@ -175,6 +175,7 @@ sendtolist(list, ctladdr, sendq, aliaslevel, e)
 	SM_NONVOLATILE char delimiter;		/* the address delimiter */
 	SM_NONVOLATILE int naddrs;
 	SM_NONVOLATILE int i;
+	char *endp;
 	char *oldto = e->e_to;
 	char *SM_NONVOLATILE bufp;
 	char buf[MAXNAME + 1];
@@ -212,6 +213,7 @@ sendtolist(list, ctladdr, sendq, aliaslevel, e)
 	}
 	else
 		bufp = sm_malloc_x(i);
+	endp = bufp + i;
 
 	SM_TRY
 	{
@@ -223,12 +225,16 @@ sendtolist(list, ctladdr, sendq, aliaslevel, e)
 			auto char *delimptr;
 			register ADDRESS *a;
 
+			SM_ASSERT(p < endp);
+
 			/* parse the address */
 			while ((isascii(*p) && isspace(*p)) || *p == ',')
 				p++;
+			SM_ASSERT(p < endp);
 			a = parseaddr(p, NULLADDR, RF_COPYALL, delimiter,
 				      &delimptr, e, true);
 			p = delimptr;
+			SM_ASSERT(p < endp);
 			if (a == NULL)
 				continue;
 			a->q_next = al;
@@ -397,7 +403,8 @@ removefromlist(list, sendq, e)
 			for (pq = sendq; (q = *pq) != NULL; pq = &q->q_next)
 			{
 				if (!QS_IS_DEAD(q->q_state) &&
-				    sameaddr(q, &a))
+				    (sameaddr(q, &a) ||
+				     strcmp(q->q_paddr, a.q_paddr) == 0))
 				{
 					if (tTd(25, 5))
 					{

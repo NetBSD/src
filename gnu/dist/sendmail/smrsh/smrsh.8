@@ -9,10 +9,10 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"     Id: smrsh.8,v 8.16 2002/04/25 13:33:40 ca Exp
-.\"     $NetBSD: smrsh.8,v 1.5 2003/06/01 14:07:10 atatat Exp $
+.\"     Id: smrsh.8,v 8.16.2.2 2003/10/07 18:05:37 ca Exp
+.\"     $NetBSD: smrsh.8,v 1.6 2004/03/25 19:14:31 atatat Exp $
 .\"
-.TH SMRSH 8 "Date: 2002/04/25 13:33:40"
+.TH SMRSH 8 "Date: 2003/10/07 18:05:37"
 .SH NAME
 smrsh \- restricted shell for sendmail
 .SH SYNOPSIS
@@ -48,7 +48,7 @@ It also rejects any commands with the characters
 or `\en' (newline)
 on the command line to prevent ``end run'' attacks.
 It allows ``||'' and ``&&'' to enable commands like:
-``"|exec /usr/local/bin/procmail -f- /etc/procmailrcs/user || exit 75"''
+``"|exec /usr/local/bin/filter || exit 75"''
 .PP
 Initial pathnames on programs are stripped,
 so forwarding to ``/usr/ucb/vacation'',
@@ -61,9 +61,8 @@ all actually forward to
 .PP
 System administrators should be conservative about populating
 the sm.bin directory.
-Reasonable additions are
+For example, a reasonable additions is
 .IR vacation (1),
-.IR procmail (1),
 and the like.
 No matter how brow-beaten you may be,
 never include any shell or shell-like program
@@ -75,6 +74,12 @@ directory.
 Note that this does not restrict the use of shell or perl scripts
 in the sm.bin directory (using the ``#!'' syntax);
 it simply disallows execution of arbitrary programs.
+Also, including mail filtering programs such as
+.IR procmail (1)
+is a very bad idea.
+.IR procmail (1)
+allows users to run arbitrary programs in their
+.IR procmailrc (5).
 .SH COMPILATION
 Compilation should be trivial on most systems.
 You may need to use \-DSMRSH_PATH=\e"\fIpath\fP\e"
@@ -84,6 +89,11 @@ and/or \-DSMRSH_CMDDIR=\e"\fIdir\fP\e"
 to change the default program directory
 (defaults to ``/usr/adm/sm.bin'').
 .SH FILES
-/usr/adm/sm.bin \- directory for restricted programs
+/usr/adm/sm.bin \- default directory for restricted programs on most OSs
+.PP
+/var/adm/sm.bin \- directory for restricted programs on HP UX and Solaris
+.PP
+/usr/libexec/sm.bin \- directory for restricted programs on FreeBSD (>= 3.3)
+
 .SH SEE ALSO
 sendmail(8)

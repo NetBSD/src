@@ -1,11 +1,11 @@
-/* $NetBSD: udb.c,v 1.6 2003/06/01 14:07:09 atatat Exp $ */
+/* $NetBSD: udb.c,v 1.7 2004/03/25 19:14:31 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udb.c,v 1.6 2003/06/01 14:07:09 atatat Exp $");
+__RCSID("$NetBSD: udb.c,v 1.7 2004/03/25 19:14:31 atatat Exp $");
 #endif
 
 /*
- * Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2003 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -20,9 +20,9 @@ __RCSID("$NetBSD: udb.c,v 1.6 2003/06/01 14:07:09 atatat Exp $");
 #include <sendmail.h>
 
 #if USERDB
-SM_RCSID("@(#)Id: udb.c,v 8.153.4.4 2002/12/03 17:57:41 gshapiro Exp (with USERDB)")
+SM_RCSID("@(#)Id: udb.c,v 8.153.4.5 2003/04/03 16:31:00 ca Exp (with USERDB)")
 #else /* USERDB */
-SM_RCSID("@(#)Id: udb.c,v 8.153.4.4 2002/12/03 17:57:41 gshapiro Exp (without USERDB)")
+SM_RCSID("@(#)Id: udb.c,v 8.153.4.5 2003/04/03 16:31:00 ca Exp (without USERDB)")
 #endif /* USERDB */
 
 #if USERDB
@@ -182,7 +182,7 @@ udbexpand(a, sendq, aliaslevel, e)
 	keylen = sm_strlcpyn(keybuf, sizeof keybuf, 2, user, ":maildrop");
 
 	/* if name is too long, assume it won't match */
-	if (keylen > sizeof keybuf)
+	if (keylen >= sizeof keybuf)
 		return EX_OK;
 
 	/* build actual database key */

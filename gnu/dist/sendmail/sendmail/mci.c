@@ -1,7 +1,7 @@
-/* $NetBSD: mci.c,v 1.7 2003/06/01 14:07:07 atatat Exp $ */
+/* $NetBSD: mci.c,v 1.8 2004/03/25 19:14:31 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mci.c,v 1.7 2003/06/01 14:07:07 atatat Exp $");
+__RCSID("$NetBSD: mci.c,v 1.8 2004/03/25 19:14:31 atatat Exp $");
 #endif
 
 /*
@@ -19,7 +19,7 @@ __RCSID("$NetBSD: mci.c,v 1.7 2003/06/01 14:07:07 atatat Exp $");
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)Id: mci.c,v 8.205.2.3 2003/01/07 03:56:19 ca Exp")
+SM_RCSID("@(#)Id: mci.c,v 8.205.2.4 2003/03/31 17:35:27 ca Exp")
 
 #if NETINET || NETINET6
 # include <arpa/inet.h>
@@ -554,11 +554,21 @@ mci_dump(mci, logit)
 	}
 	(void) sm_snprintf(p, SPACELEFT(buf, p), "flags=%lx", mci->mci_flags);
 	p += strlen(p);
+
+	/*
+	**  The following check is just for paranoia.  It protects the
+	**  assignment in the if() clause. If there's not some minimum
+	**  amount of space we can stop right now. The check will not
+	**  trigger as long as sizeof(buf)=4000.
+	*/
+
+	if (p >= buf + sizeof(buf) - 4)
+		goto printit;
 	if (mci->mci_flags != 0)
 	{
 		struct mcifbits *f;
 
-		*p++ = '<';
+		*p++ = '<';	/* protected above */
 		for (f = MciFlags; f->mcif_bit != 0; f++)
 		{
 			if (!bitset(f->mcif_bit, mci->mci_flags))
@@ -1158,7 +1168,7 @@ mci_traverse_persistent(action, pathname)
 			if (hostptr != host)
 				*(hostptr++) = '.';
 			start = end;
-			while (*(start - 1) != '/')
+			while (start > pathname && *(start - 1) != '/')
 				start--;
 
 			if (*end == '.')
@@ -1168,7 +1178,7 @@ mci_traverse_persistent(action, pathname)
 				*(hostptr++) = *scan;
 
 			end = start - 2;
-		} while (*end == '.');
+		} while (end > pathname && *end == '.');
 
 		*hostptr = '\0';
 
@@ -1358,7 +1368,7 @@ mci_purge_persistent(pathname, hostname)
 /*
 **  MCI_GENERATE_PERSISTENT_PATH -- generate path from hostname
 **
-**	Given `host', convert from a.b.c to $QueueDir/.hoststat/c./b./a,
+**	Given `host', convert from a.b.c to $HostStatDir/c./b./a,
 **	putting the result into `path'.  if `createflag' is set, intervening
 **	directories will be created as needed.
 **

@@ -1,11 +1,11 @@
-/* $NetBSD: sfsasl.c,v 1.10 2003/06/01 14:07:08 atatat Exp $ */
+/* $NetBSD: sfsasl.c,v 1.11 2004/03/25 19:14:31 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sfsasl.c,v 1.10 2003/06/01 14:07:08 atatat Exp $");
+__RCSID("$NetBSD: sfsasl.c,v 1.11 2004/03/25 19:14:31 atatat Exp $");
 #endif
 
 /*
- * Copyright (c) 1999-2002 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1999-2003 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -15,7 +15,7 @@ __RCSID("$NetBSD: sfsasl.c,v 1.10 2003/06/01 14:07:08 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)Id: sfsasl.c,v 8.91.2.2 2002/09/12 21:07:50 ca Exp")
+SM_RCSID("@(#)Id: sfsasl.c,v 8.91.2.5 2003/08/08 17:30:11 ca Exp")
 #include <stdlib.h>
 #include <sendmail.h>
 #include <errno.h>
@@ -107,6 +107,11 @@ sasl_open(fp, info, flags, rpool)
 	struct sasl_info *si = (struct sasl_info *) info;
 
 	so = (struct sasl_obj *) sm_malloc(sizeof(struct sasl_obj));
+	if (so == NULL)
+	{
+		errno = ENOMEM;
+		return -1;
+	}
 	so->fp = si->fp;
 	so->conn = si->conn;
 
@@ -145,6 +150,8 @@ sasl_close(fp)
 	struct sasl_obj *so;
 
 	so = (struct sasl_obj *) fp->f_cookie;
+	if (so == NULL)
+		return 0;
 	if (so->fp != NULL)
 	{
 		sm_io_close(so->fp, SM_TIME_DEFAULT);
@@ -198,6 +205,9 @@ sasl_read(fp, buf, size)
 	**  data since it might be larger than the allowed size.
 	**  Therefore we use a static pointer and return portions of it
 	**  if necessary.
+	**  XXX Note: This function is not thread-safe nor can it be used
+	**  on more than one file. A correct implementation would store
+	**  this data in fp->f_cookie.
 	*/
 
 # if SASL >= 20000
@@ -292,6 +302,8 @@ sasl_write(fp, buf, size)
 			/* XXX result == 0? */
 			ret = sm_io_write(so->fp, SM_TIME_DEFAULT,
 					  &outbuf[total], outlen);
+			if (ret <= 0)
+				return ret;
 			outlen -= ret;
 			total += ret;
 		}
@@ -453,6 +465,11 @@ tls_open(fp, info, flags, rpool)
 	struct tls_info *ti = (struct tls_info *) info;
 
 	so = (struct tls_obj *) sm_malloc(sizeof(struct tls_obj));
+	if (so == NULL)
+	{
+		errno = ENOMEM;
+		return -1;
+	}
 	so->fp = ti->fp;
 	so->con = ti->con;
 
@@ -489,6 +506,8 @@ tls_close(fp)
 	struct tls_obj *so;
 
 	so = (struct tls_obj *) fp->f_cookie;
+	if (so == NULL)
+		return 0;
 	if (so->fp != NULL)
 	{
 		sm_io_close(so->fp, SM_TIME_DEFAULT);
@@ -588,7 +607,12 @@ tls_read(fp, buf, size)
 
 		save_errno = (errno == 0) ? EIO : errno;
 		again = MAX_TLS_IOS;
-		if (LogLevel > 7)
+		if (LogLevel > 9)
+			sm_syslog(LOG_WARNING, NOQID,
+				  "STARTTLS: read error=%s (%d), errno=%d, get_error=%s",
+				  err, r, errno,
+				  ERR_error_string(ERR_get_error(), NULL));
+		else if (LogLevel > 7)
 			sm_syslog(LOG_WARNING, NOQID,
 				  "STARTTLS: read error=%s (%d)", err, r);
 		errno = save_errno;
@@ -680,7 +704,12 @@ tls_write(fp, buf, size)
 
 		save_errno = (errno == 0) ? EIO : errno;
 		again = MAX_TLS_IOS;
-		if (LogLevel > 7)
+		if (LogLevel > 9)
+			sm_syslog(LOG_WARNING, NOQID,
+				  "STARTTLS: write error=%s (%d), errno=%d, get_error=%s",
+				  err, r, errno,
+				  ERR_error_string(ERR_get_error(), NULL));
+		else if (LogLevel > 7)
 			sm_syslog(LOG_WARNING, NOQID,
 				  "STARTTLS: write error=%s (%d)", err, r);
 		errno = save_errno;
@@ -695,7 +724,7 @@ tls_write(fp, buf, size)
 **	Parameters:
 **		fin -- data input source being replaced
 **		fout -- data output source being replaced
-**		conn -- the tls connection pointer
+**		con -- the tls connection pointer
 **
 **	Returns:
 **		-1 on error

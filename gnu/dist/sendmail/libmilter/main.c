@@ -1,7 +1,7 @@
-/* $NetBSD: main.c,v 1.7 2003/06/01 14:07:00 atatat Exp $ */
+/* $NetBSD: main.c,v 1.8 2004/03/25 19:14:30 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.7 2003/06/01 14:07:00 atatat Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 2004/03/25 19:14:30 atatat Exp $");
 #endif
 
 /*
@@ -15,7 +15,7 @@ __RCSID("$NetBSD: main.c,v 1.7 2003/06/01 14:07:00 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)Id: main.c,v 8.64.2.10 2003/01/23 22:34:24 ca Exp")
+SM_RCSID("@(#)Id: main.c,v 8.64.2.13 2003/10/20 22:27:13 ca Exp")
 
 #define _DEFINE	1
 #include "libmilter.h"
@@ -92,7 +92,7 @@ smfi_stop()
 }
 
 /*
-**  default values for some variables.
+**  Default values for some variables.
 **	Most of these can be changed with the functions below.
 */
 
@@ -107,19 +107,22 @@ static int backlog = MI_SOMAXCONN;
 **		able to start up
 **
 **	Parameters:
-**		None.
+**		rmsocket -- if true, instructs libmilter to attempt
+**			to remove the socket before creating it;
+**			only applies for "local:" or "unix:" sockets
 **
 **	Return:
 **		MI_SUCCESS/MI_FAILURE
 */
 
 int
-smfi_opensocket()
+smfi_opensocket(rmsocket)
+	bool rmsocket;
 {
 	if (smfi == NULL || conn == NULL)
 		return MI_FAILURE;
 
-	return mi_opensocket(conn, backlog, dbg, smfi);
+	return mi_opensocket(conn, backlog, dbg, rmsocket, smfi);
 }
 #endif /* _FFR_SMFI_OPENSOCKET */
 
