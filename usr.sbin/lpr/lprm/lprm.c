@@ -1,4 +1,4 @@
-/*	$NetBSD: lprm.c,v 1.15 2003/08/07 11:25:30 agc Exp $	*/
+/*	$NetBSD: lprm.c,v 1.16 2004/10/30 08:44:26 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lprm.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lprm.c,v 1.15 2003/08/07 11:25:30 agc Exp $");
+__RCSID("$NetBSD: lprm.c,v 1.16 2004/10/30 08:44:26 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,7 +136,7 @@ main(int argc, char *argv[])
 		else {
 			if (users < 0)
 				usage();
-			if (isdigit(arg[0])) {
+			if (isdigit((unsigned char)arg[0])) {
 				if (requests >= MAXREQUESTS)
 					fatal("Too many requests");
 				requ[requests++] = atoi(arg);
