@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.46 2002/06/26 18:14:04 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.47 2002/08/04 16:43:08 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.46 2002/06/26 18:14:04 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.47 2002/08/04 16:43:08 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -479,12 +479,11 @@ makech(wy)
 				    (!(lspc & __COLOR) ||
 				    ((lspc & __COLOR) && __tc_ut))) {
 					__unsetattr(0);
-					if ((lspc & __COLOR) !=
-					    (curscr->wattr & __COLOR)) {
-						__set_color(lspc);
-						curscr->wattr &= ~__COLOR;
-						curscr->wattr |= lspc & __COLOR;
-					}
+					if (__using_color &&
+					    ((lspc & __COLOR) !=
+					    (curscr->wattr & __COLOR)))
+						__set_color(curscr, lspc &
+						    __COLOR);
 					tputs(__tc_ce, 0, __cputchar);
 					_cursesi_screen->lx = wx + win->begx;
 					while (wx++ <= clsp) {
@@ -497,20 +496,9 @@ makech(wy)
 				ce = NULL;
 			}
 
-			/*
-			 * Unset colour if appropriate.  Check to see
-			 * if we also turn off standout, underscore and
-			 * attributes.
-			 */
-			if (!(nsp->attr & __COLOR) &&
-			    (curscr->wattr & __COLOR)) {
-				if (__tc_oc != NULL && __tc_cc == NULL)
-					tputs(__tc_oc, 0, __cputchar);
-				if (__tc_op != NULL) {
-					tputs(__tc_op, 0, __cputchar);
-					curscr->wattr &= __mask_op;
-				}
-			}
+#ifdef DEBUG
+				__CTRACE("makech: have attributes %08x, need attributes %08x\n", curscr->wattr, nsp->attr);
+#endif
 
 			off = ~nsp->attr & curscr->wattr;
 
@@ -555,6 +543,10 @@ makech(wy)
 				tputs(__tc_ae, 0, __cputchar);
 				curscr->wattr &= ~__ALTCHARSET;
 			}
+
+			/* Set/change colour as appropriate. */
+			if (__using_color)
+				__set_color(curscr, nsp->attr & __COLOR);
 
 			on = nsp->attr & ~curscr->wattr;
 
@@ -605,18 +597,6 @@ makech(wy)
 				if (on & __REVERSE && __tc_mr != NULL) {
 					tputs(__tc_mr, 0, __cputchar);
 					curscr->wattr |= __REVERSE;
-				}
-			}
-
-			/* Set/change colour as appropriate. */
-			if ((nsp->attr & __COLOR) && __tc_Co != NULL &&
-			    (__tc_oc != NULL || __tc_op != NULL)) {
-				if ((nsp->attr & __COLOR) !=
-				    (curscr->wattr & __COLOR)) {
-					__set_color(nsp->attr);
-					curscr->wattr &= ~__COLOR;
-					curscr->wattr |= nsp->attr &
-					    __COLOR;
 				}
 			}
 
@@ -1211,12 +1191,6 @@ __unsetattr(int checkms)
 		curscr->wattr &= ~__ALTCHARSET;
 	}
 	/* Don't leave the screen with colour set (check against ms). */
-	if (curscr->wattr & __COLOR && isms) {
-		if (__tc_oc != NULL && __tc_cc == NULL)
-			tputs(__tc_oc, 0, __cputchar);
-		if (__tc_op != NULL) {
-			tputs(__tc_op, 0, __cputchar);
-			curscr->wattr &= __mask_op;
-		}
-	}
+	if (__using_color && isms)
+		__unset_color(curscr);
 }

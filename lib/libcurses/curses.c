@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.c,v 1.19 2001/12/02 09:14:20 blymn Exp $	*/
+/*	$NetBSD: curses.c,v 1.20 2002/08/04 16:43:07 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)curses.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: curses.c,v 1.19 2001/12/02 09:14:20 blymn Exp $");
+__RCSID("$NetBSD: curses.c,v 1.20 2002/08/04 16:43:07 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -94,7 +94,7 @@ SCREEN  *_cursesi_screen;               /* the current screen we are using */
 int	 COLS;				/* Columns on the screen. */
 int	 LINES;				/* Lines on the screen. */
 int	 COLORS;			/* Maximum colors on the screen */
-int	 COLOR_PAIRS;			/* Maximum color pairs on the screen */
+int	 COLOR_PAIRS = 0;		/* Maximum color pairs on the screen */
 int	 My_term = 0;			/* Use Def_term regardless. */
 const char	*Def_term = "unknown";	/* Default terminal type. */
 char	 __GT;				/* Gtty indicates tabs. */
