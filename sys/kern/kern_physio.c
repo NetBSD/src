@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.23 1995/07/27 02:37:12 mycroft Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.24 1995/08/12 20:31:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -69,11 +69,11 @@ void putphysbuf __P((struct buf *bp));
  */
 int
 physio(strategy, bp, dev, flags, minphys, uio)
-	void (*strategy) __P((struct buf *)); 
+	void (*strategy) __P((struct buf *));
 	struct buf *bp;
 	dev_t dev;
 	int flags;
-	u_int (*minphys) __P((struct buf *));
+	void (*minphys) __P((struct buf *));
 	struct uio *uio;
 {
 	struct iovec *iovp;
@@ -142,13 +142,14 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			bp->b_blkno = btodb(uio->uio_offset);
 			bp->b_bcount = iovp->iov_len;
 			bp->b_data = iovp->iov_base;
-			
+
 			/*
 			 * [call minphys to bound the tranfer size]
 			 * and remember the amount of data to transfer,
 			 * for later comparison.
 			 */
-			todo = (*minphys)(bp);
+			(*minphys)(bp);
+			todo = bp->b_bcount;
 #ifdef DIAGNOSTIC
 			if (todo > MAXPHYS)
 				panic("todo > MAXPHYS; minphys broken");
@@ -261,7 +262,7 @@ getphysbuf()
                 bswlist.b_flags |= B_WANTED;
                 tsleep((caddr_t)&bswlist, PRIBIO + 1, "getphys", 0);
         }
-        bp = bswlist.b_actf; 
+        bp = bswlist.b_actf;
         bswlist.b_actf = bp->b_actf;
         splx(s);
 	return (bp);
@@ -292,16 +293,16 @@ putphysbuf(bp)
  * Leffler, et al., says on p. 231:
  * "The minphys() routine is called by physio() to adjust the
  * size of each I/O transfer before the latter is passed to
- * the strategy routine..." 
+ * the strategy routine..."
  *
  * so, just adjust the buffer's count accounting to MAXPHYS here,
  * and return the new count;
  */
-u_int
+void
 minphys(bp)
 	struct buf *bp;
 {
 
-	bp->b_bcount = min(MAXPHYS, bp->b_bcount);
-        return bp->b_bcount;
+	if (bp->b_bcount > MAXPHYS)
+		bp->b_bcount = MAXPHYS;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.20 1995/07/26 14:22:43 chopps Exp $	*/
+/*	$NetBSD: fd.c,v 1.21 1995/08/12 20:30:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -51,8 +51,8 @@ enum fdc_bits { FDB_CHANGED = 2, FDB_PROTECT, FDB_CYLZERO, FDB_READY };
  * partitions in fd represent different format floppies
  * partition a is 0 etc..
  */
-enum fd_parttypes { 
-	FDAMIGAPART = 0, 
+enum fd_parttypes {
+	FDAMIGAPART = 0,
 #ifdef not_yet
 	FDMSDOSPART,
 #endif
@@ -162,7 +162,7 @@ void fddmadone __P((struct fd_softc *, int));
 void fdsetpos __P((struct fd_softc *, int, int));
 void fdmotoroff __P((void *));
 void fdmotorwait __P((void *));
-u_int fdminphys __P((struct buf *));
+void fdminphys __P((struct buf *));
 void fdcachetoraw __P((struct fd_softc *));
 int fdrawtocache __P((struct fd_softc *));
 int fdloaddisk __P((struct fd_softc *));
@@ -175,7 +175,7 @@ void fdstrategy __P((struct buf *));
 struct dkdriver fddkdriver = { fdstrategy };
 
 /*
- * read size is (nsectors + 1) * mfm secsize + gap bytes + 2 shorts 
+ * read size is (nsectors + 1) * mfm secsize + gap bytes + 2 shorts
  * write size is nsectors * mfm secsize + gap bytes + 3 shorts
  * the extra shorts are to deal with a dma hw bug in the controller
  * they are probably too much (I belive the bug is 1 short on write and
@@ -198,7 +198,7 @@ struct cfdriver fdccd = {
 	sizeof(struct device), NULL, 0 };
 
 /*
- * all hw access through macros, this helps to hide the active low 
+ * all hw access through macros, this helps to hide the active low
  * properties
  */
 
@@ -391,7 +391,7 @@ Fdopen(dev, flags, devtype, p)
 
 	fwork = 0;
 	/*
-	 * if not open let user open request type, otherwise 
+	 * if not open let user open request type, otherwise
 	 * ensure they are trying to open same type.
 	 */
 	if (sc->openpart == FDPART(dev))
@@ -403,14 +403,14 @@ Fdopen(dev, flags, devtype, p)
 		wasopen = 1;
 		error = EPERM;
 		goto done;
-	} 
+	}
 
 	/*
 	 * wait for current io to complete if any
 	 */
 	if (fdc_indma) {
 		fwork = 1;
-		fdc_wantwakeup++;	
+		fdc_wantwakeup++;
 		tsleep(Fdopen, PRIBIO, "Fdopen", 0);
 	}
 	if (error = fdloaddisk(sc))
@@ -422,14 +422,14 @@ Fdopen(dev, flags, devtype, p)
 #endif
 done:
 	/*
-	 * if we requested that fddone()->fdfindwork() wake us, allow it to 
+	 * if we requested that fddone()->fdfindwork() wake us, allow it to
 	 * complete its job now
 	 */
 	if (fwork)
 		fdfindwork(FDUNIT(dev));
 	splx(s);
 
-	/* 
+	/*
 	 * if we were not open and we marked us so reverse that.
 	 */
 	if (error && wasopen == 0)
@@ -476,7 +476,7 @@ fdioctl(dev, cmd, addr, flag, p)
 	int error, wlab;
 
 	sc = getsoftc(fdcd, FDUNIT(dev));
-	
+
 	if ((sc->flags & FDF_HAVELABEL) == 0)
 		return(EBADF);
 
@@ -498,7 +498,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		return(0);
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = &sc->dkdev.dk_label;
-		((struct partinfo *)addr)->part = 
+		((struct partinfo *)addr)->part =
 		    &sc->dkdev.dk_label.d_partitions[FDPART(dev)];
 		return(0);
 	case DIOCSDINFO:
@@ -525,7 +525,7 @@ fdioctl(dev, cmd, addr, flag, p)
 	}
 }
 
-/* 
+/*
  * no dumps to floppy disks thank you.
  */
 int
@@ -556,7 +556,7 @@ int
 fdintr()
 {
 	int s;
-	
+
 	s = splbio();
 	if (fdc_indma)
 		fddmadone(fdc_indma, 0);
@@ -586,7 +586,7 @@ fdstrategy(bp)
 	if ((sc->flags & FDF_HAVELABEL) == 0) {
 		bp->b_error = EIO;
 		goto bad;
-	}		
+	}
 	if (bounds_check_with_label(bp, lp, sc->wlabel) <= 0)
 		goto done;
 
@@ -671,7 +671,7 @@ fdgetdisklabel(sc, dev)
 	clp =  &sc->dkdev.dk_cpulabel;
 	bzero(lp, sizeof(struct disklabel));
 	bzero(clp, sizeof(struct cpu_disklabel));
-	
+
 	lp->d_secsize = FDSECSIZE;
 	lp->d_ntracks = FDNHEADS;
 	lp->d_ncylinders = sc->type->ncylinders;
@@ -683,11 +683,11 @@ fdgetdisklabel(sc, dev)
 	lp->d_partitions[part].p_fstype = FS_UNUSED;
 	lp->d_partitions[part].p_fsize = 1024;
 	lp->d_partitions[part].p_frag = 8;
-	
+
 	sc->flags |= FDF_HAVELABEL;
-	
+
 	bp = (void *)geteblk((int)lp->d_secsize);
-	bp->b_dev = dev; 
+	bp->b_dev = dev;
 	bp->b_blkno = 0;
 	bp->b_cylin = 0;
 	bp->b_bcount = FDSECSIZE;
@@ -717,7 +717,7 @@ nolabel:
 	lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
 	lp->d_rpm = 300; 		/* good guess I suppose. */
 	lp->d_interleave = 1;		/* should change when adding msdos */
-	sc->stepdelay = lp->d_trkseek = FDSTEPDELAY;	
+	sc->stepdelay = lp->d_trkseek = FDSTEPDELAY;
 	lp->d_bbsize = 0;
 	lp->d_sbsize = 0;
 	lp->d_partitions[part].p_size = lp->d_secperunit;
@@ -743,7 +743,7 @@ fdsetdisklabel(sc, lp)
 	struct partition *pp;
 
 	/*
-	 * must have at least opened raw unit to fetch the 
+	 * must have at least opened raw unit to fetch the
 	 * raw_part stuff.
 	 */
 	if ((sc->flags & FDF_HAVELABEL) == 0)
@@ -769,8 +769,8 @@ fdsetdisklabel(sc, lp)
 	    (lp->d_partitions[0].p_offset && lp->d_partitions[1].p_offset) ||
 	    dkcksum(lp))
 		return(EINVAL);
-	/* 
-	 * if any partitions are present make sure they 
+	/*
+	 * if any partitions are present make sure they
 	 * represent the currently open type
 	 */
 	if ((pp = &lp->d_partitions[0])->p_size) {
@@ -780,9 +780,9 @@ fdsetdisklabel(sc, lp)
 			return(EINVAL);
 	} else if (sc->openpart != 0)
 		return(EINVAL);
-	/* 
+	/*
 	 * make sure selected partition is within bounds
-	 * XXX on the second check, its to handle a bug in 
+	 * XXX on the second check, its to handle a bug in
 	 * XXX the cluster routines as they require mutliples
 	 * XXX of CLBYTES currently
 	 */
@@ -805,7 +805,7 @@ fdputdisklabel(sc, dev)
 	struct disklabel *lp, *dlp;
 	struct buf *bp;
 	int error;
-	
+
 	if ((sc->flags & FDF_HAVELABEL) == 0)
 		return(EBADF);
 #ifdef FDDEBUG
@@ -907,7 +907,7 @@ fdmotoroff(arg)
 #ifdef FDDEBUG
 	printf("fdmotoroff: unit %d\n", sc->hwunit);
 #endif
-	if ((sc->flags & FDF_MOTORON) == 0) 
+	if ((sc->flags & FDF_MOTORON) == 0)
 		goto done;
 	/*
 	 * if we have a timeout on a dma operation let fddmadone()
@@ -1002,9 +1002,9 @@ fdsetpos(sc, trk, towrite)
 
 	if (towrite)
 		sc->flags |= FDF_WRITEWAIT;
-	
+
 #ifdef FDDEBUG
-	printf("fdsetpos: cyl %d head %d towrite %d\n", trk / FDNHEADS, 
+	printf("fdsetpos: cyl %d head %d towrite %d\n", trk / FDNHEADS,
 	    trk % FDNHEADS, towrite);
 #endif
 	nstep = ncyl - sc->curcyl;
@@ -1022,7 +1022,7 @@ fdsetpos(sc, trk, towrite)
 		}
 		if (ncyl == 0) {
 			/*
-			 * either just want cylinder 0 or doing 
+			 * either just want cylinder 0 or doing
 			 * a calibrate.
 			 */
 			nstep = 256;
@@ -1042,7 +1042,7 @@ fdsetpos(sc, trk, towrite)
 			}
 		}
 		/*
-		 * if switched directions 
+		 * if switched directions
 		 * allow drive to settle.
 		 */
 		if (sc->pstepdir != sdir)
@@ -1074,7 +1074,7 @@ fdselunit(sc)
 /*
  * process next buf on device queue.
  * normall sequence of events:
- * fdstart() -> fddmastart(); 
+ * fdstart() -> fddmastart();
  * fdintr() -> fddmadone() -> fddone();
  * if the track is in the cache then fdstart() will short-circuit
  * to fddone() else if the track cache is dirty it will flush.  If
@@ -1107,15 +1107,15 @@ fdstart(sc)
 #endif
 		return;
 	}
-	
+
 	/*
 	 * make sure same disk is loaded
 	 */
 	fdselunit(sc);
 	if (FDTESTC(FDB_CHANGED)) {
 		/*
-		 * disk missing, invalidate all future io on 
-		 * this unit until re-open()'ed also invalidate 
+		 * disk missing, invalidate all future io on
+		 * this unit until re-open()'ed also invalidate
 		 * all current io
 		 */
 #ifdef FDDEBUG
@@ -1138,7 +1138,7 @@ fdstart(sc)
 		return;
 	}
 
-	/* 
+	/*
 	 * we have a valid buf, setup our local version
 	 * we use this count to allow reading over multiple tracks.
 	 * into a single buffer
@@ -1148,7 +1148,7 @@ fdstart(sc)
 	dp->b_data = bp->b_data;
 	dp->b_flags = bp->b_flags;
 	dp->b_resid = 0;
-	
+
 	if (bp->b_flags & B_READ)
 		write = 0;
 	else if (FDTESTC(FDB_PROTECT) == 0)
@@ -1162,7 +1162,7 @@ fdstart(sc)
 	 * figure trk given blkno
 	 */
 	trk = bp->b_blkno / sc->nsectors;
-	
+
 	/*
 	 * check to see if same as currently cached track
 	 * if so we need to do no dma read.
@@ -1171,9 +1171,9 @@ fdstart(sc)
 		fddone(sc);
 		return;
 	}
-		
+
 	/*
-	 * if we will be overwriting the entire cache, don't bother to 
+	 * if we will be overwriting the entire cache, don't bother to
 	 * fetch it.
 	 */
 	if (bp->b_bcount == (sc->nsectors * FDSECSIZE) && write &&
@@ -1186,7 +1186,7 @@ fdstart(sc)
 			return;
 		}
 	}
-	
+
 	/*
 	 * start dma read of `trk'
 	 */
@@ -1199,7 +1199,7 @@ bad:
 }
 
 /*
- * continue a started operation on next track. always begin at 
+ * continue a started operation on next track. always begin at
  * sector 0 on the next track.
  */
 void
@@ -1208,7 +1208,7 @@ fdcont(sc)
 {
 	struct buf *dp, *bp;
 	int trk, write;
-	
+
 	dp = &sc->bufq;
 	bp = dp->b_actf;
 	dp->b_data += (dp->b_bcount - bp->b_resid);
@@ -1228,7 +1228,7 @@ fdcont(sc)
 	else
 		write = 1;
 	/*
-	 * if we will be overwriting the entire cache, don't bother to 
+	 * if we will be overwriting the entire cache, don't bother to
 	 * fetch it.
 	 */
 	if (dp->b_bcount == (sc->nsectors * FDSECSIZE) && write) {
@@ -1255,7 +1255,7 @@ fddmastart(sc, trk)
 	int adkmask, ndmaw, write, dmatrk;
 
 #ifdef FDDEBUG
-	printf("fddmastart: unit %d cyl %d head %d", sc->hwunit, 
+	printf("fddmastart: unit %d cyl %d head %d", sc->hwunit,
 	    trk / FDNHEADS, trk % FDNHEADS);
 #endif
 	/*
@@ -1492,7 +1492,7 @@ nobuf:
 void
 fdfindwork(unit)
 	int unit;
-{ 
+{
 	struct fd_softc *ssc, *sc;
 	int i, last;
 
@@ -1522,7 +1522,7 @@ fdfindwork(unit)
 			continue;
 
 		/*
-		 * if unit has requested to be turned off 
+		 * if unit has requested to be turned off
 		 * and it has no buf's queued do it now
 		 */
 		if (sc->flags & FDF_MOTOROFF) {
@@ -1530,7 +1530,7 @@ fdfindwork(unit)
 				fdmotoroff(sc);
 			else {
 				/*
-				 * we gained a buf request while 
+				 * we gained a buf request while
 				 * we waited, forget the motoroff
 				 */
 				sc->flags &= ~FDF_MOTOROFF;
@@ -1541,7 +1541,7 @@ fdfindwork(unit)
 			 */
 			if (fdc_indma)
 				return;
-		} 
+		}
 		/*
 		 * if we have no start unit and the current unit has
 		 * io waiting choose this unit to start.
@@ -1556,7 +1556,7 @@ fdfindwork(unit)
 /*
  * min byte count to whats left of the track in question
  */
-int
+void
 fdminphys(bp)
 	struct buf *bp;
 {
@@ -1578,7 +1578,7 @@ fdminphys(bp)
 #ifdef FDDEBUG
 	printf(" after %d\n", bp->b_bcount);
 #endif
-	return (minphys(bp));
+	minphys(bp);
 }
 
 /*
@@ -1614,8 +1614,8 @@ fdcachetoraw(sc)
 		 * sector format
 		 *	offset		description
 		 *-----------------------------------
-		 *  0			null 
-		 *  1			sync 
+		 *  0			null
+		 *  1			sync
 		 * oddbits	evenbits
 		 *----------------------
 		 *  2		3	[0xff]b [trk]b [sec]b [togap]b
@@ -1688,7 +1688,7 @@ again:
 #endif
 		return(-1);
 	}
-	
+
 	/*
 	 * process sectors
 	 */
@@ -1752,7 +1752,7 @@ mfmblkencode(dp, rp, cp, len)
 {
 	u_long *sdp, *edp, d, dtmp, correct;
 	int i;
-	
+
 	sdp = dp;
 	edp = dp + len;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.51 1995/07/28 22:50:05 mycroft Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.52 1995/08/12 20:31:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -112,7 +112,7 @@ typedef u_long physlen;
 #define	U24_ICMPTR		0x0c9c	/* incoming mail ptr (4 ports) */
 
 /*
- * UHA_LMASK bits (read only) 
+ * UHA_LMASK bits (read only)
  */
 #define UHA_LDIE		0x80	/* local doorbell int enabled */
 #define UHA_SRSTE		0x40	/* soft reset enabled */
@@ -157,7 +157,7 @@ typedef u_long physlen;
 
 #define	UHA_ABORT_ACK		0x18	/* acknowledge status and clear */
 
-/* 
+/*
  * U14_CONFIG bits (read only)
  */
 #define U14_DMA_CH5		0x0000	/* DMA channel 5 */
@@ -295,7 +295,7 @@ int u14_find __P((struct uha_softc *, struct isa_attach_args *));
 int u24_find __P((struct uha_softc *, struct isa_attach_args *));
 void u14_init __P((struct uha_softc *));
 void u24_init __P((struct uha_softc *));
-u_int uhaminphys __P((struct buf *));
+void uhaminphys __P((struct buf *));
 int uha_scsi_cmd __P((struct scsi_xfer *));
 void uha_timeout __P((void *arg));
 #ifdef UHADEBUG
@@ -983,7 +983,7 @@ u24_find(uha, ia)
 	while (uha_slot < 15) {
 		uha_slot++;
 		iobase = 0x1000 * uha_slot;
-		
+
 		vendor = htons(inw(iobase + EISA_VENDOR));
 		if (vendor != 0x5663)	/* `USC' */
 			continue;
@@ -1096,14 +1096,14 @@ u24_init(uha)
 	outb(0x92, iobase + U24_SMASK);	/* XXX */
 }
 
-u_int
+void
 uhaminphys(bp)
 	struct buf *bp;
 {
 
 	if (bp->b_bcount > ((UHA_NSEG - 1) << PGSHIFT))
 		bp->b_bcount = ((UHA_NSEG - 1) << PGSHIFT);
-	return (minphys(bp));
+	minphys(bp);
 }
 
 /*
@@ -1212,7 +1212,7 @@ uha_scsi_cmd(xs)
 					/*
 					 * This page is contiguous (physically)
 					 * with the the last, just extend the
-					 * length 
+					 * length
 					 */
 					/* how far to the end of the page */
 					nextphys = (thisphys & ~PGOFSET) + NBPG;

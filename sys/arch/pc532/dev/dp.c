@@ -1,7 +1,7 @@
-/*	$NetBSD: dp.c,v 1.7 1995/07/24 07:36:51 cgd Exp $	*/
+/*	$NetBSD: dp.c,v 1.8 1995/08/12 20:31:11 mycroft Exp $	*/
 
 /* Written by Phil Nelson for the pc532.  Used source with the following
- * copyrights as a model. 
+ * copyrights as a model.
  *
  *	dp.c:  A NCR DP8490 driver for the pc532.
  */
@@ -30,7 +30,7 @@
  * Grenoble, FRANCE
  *
  * 		All Rights Reserved
- * 
+ *
  *   Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby granted,
  * provided that the above copyright notice appears in all copies and
@@ -39,7 +39,7 @@
  * Foundation not be used in advertising or publicity pertaining to
  * distribution of the software without specific, written prior
  * permission.
- * 
+ *
  *   OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
  * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS,
  * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
@@ -77,7 +77,7 @@
 int dpprobe(struct pc532_device *);
 int dpattach(struct pc532_device *);
 int dp_scsi_cmd(struct scsi_xfer *);
-u_int dpminphys(struct buf *);
+void dpminphys(struct buf *);
 long int dp_adapter_info(int);
 void dp_intr(void);
 void dp_intr_work(void);
@@ -151,7 +151,7 @@ int dpprobe(struct pc532_device *dvp)
      dp_reset();
 
   /* All pc532s should have one, so we don't check ! :) */
-  return (1);	
+  return (1);
 }
 
 
@@ -165,11 +165,12 @@ int dpattach(struct pc532_device *dvp)
 	return(r);
 }
 
-u_int dpminphys(struct buf *bp)
+void dpminphys(struct buf *bp)
 {
+
 	if(bp->b_bcount > ((DP_NSEG - 1) * NBPG))
 		bp->b_bcount = ((DP_NSEG - 1) * NBPG);
-	return (minphys(bp));
+	minphys(bp);
 }
 
 long int dp_adapter_info(int unit)
@@ -317,7 +318,7 @@ int dp_scsi_cmd(struct scsi_xfer *xs)
 }
 
 /*===========================================================================*
- *				dp_intr					     * 
+ *				dp_intr					     *
  *===========================================================================*/
 
 /* This is where a lot of the work happens!  This is called in non-interrupt
@@ -399,7 +400,7 @@ void dp_intr_work(void)
 		ret = dp_pdma_out(cur_xs->cmd, cur_xs->cmdlen, DP_PHASE_CMD);
 		dp_clear_isr();
 		break;
-		
+
 	case DP_DVR_CMD:	/* Next comes the data i/o phase if needed. */
 		/*
 		 * This state can potentially accept data in, data out,
@@ -497,7 +498,7 @@ phase_mismatch:
 		dp_reset();
 		dp_dvr_state = DP_DVR_READY;
 		cur_xs->error = XS_DRIVER_STUFFUP;
-		dp_intr_retval = HAD_ERROR;	
+		dp_intr_retval = HAD_ERROR;
 		/* If this true interrupt code, call the done routine. */
 		if (cur_xs->when_done) {
 		  (*(cur_xs->when_done))(cur_xs->done_arg, cur_xs->done_arg2);
@@ -561,7 +562,7 @@ dp_initialize()
 }
 
 /*===========================================================================*
- *				dp_reset				     * 
+ *				dp_reset				     *
  *===========================================================================*/
 
 /*
@@ -587,7 +588,7 @@ dp_reset()
 }
 
 /*===========================================================================*
- *				dp_wait_bus_free			     * 
+ *				dp_wait_bus_free			     *
  *===========================================================================*/
 /* Wait for the SCSI bus to become free.  Currently polled because I am
  * assuming a single initiator configuration -- so this code would not be
@@ -623,7 +624,7 @@ dp_wait_bus_free()
 }
 
 /*===========================================================================*
- *				dp_select				     * 
+ *				dp_select				     *
  *===========================================================================*/
 /* Select SCSI device, set up for command transfer.
  */

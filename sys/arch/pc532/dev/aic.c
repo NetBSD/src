@@ -1,4 +1,4 @@
-/*	$NetBSD: aic.c,v 1.3 1995/07/24 07:36:39 cgd Exp $	*/
+/*	$NetBSD: aic.c,v 1.4 1995/08/12 20:31:10 mycroft Exp $	*/
 
 /* Written by Phil Nelson for the pc532.  Used source with the following
  * copyrights as a model.
@@ -28,7 +28,7 @@
  * Grenoble, FRANCE
  *
  * 		All Rights Reserved
- * 
+ *
  *   Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby granted,
  * provided that the above copyright notice appears in all copies and
@@ -37,7 +37,7 @@
  * Foundation not be used in advertising or publicity pertaining to
  * distribution of the software without specific, written prior
  * permission.
- * 
+ *
  *   OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
  * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS,
  * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
@@ -70,7 +70,7 @@
 int aicprobe(struct pc532_device *);
 int aicattach(struct pc532_device *);
 int aic_scsi_cmd(struct scsi_xfer *);
-u_int aicminphys(struct buf *);
+void aicminphys(struct buf *);
 long int aic_adapter_info(int);
 
 struct scsidevs *
@@ -106,12 +106,12 @@ int aicattach(struct pc532_device *dvp)
 	return(r);
 }
 
-u_int aicminphys(struct buf *bp)
+void aicminphys(struct buf *bp)
 {
+
 	if(bp->b_bcount > ((AIC_NSEG - 1) * NBPG))
 		bp->b_bcount = ((AIC_NSEG - 1) * NBPG);
-
-	return (minphys(bp);
+	minphys(bp);
 }
 
 long int aic_adapter_info(int unit)

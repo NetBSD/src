@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.50 1995/07/24 06:57:48 cgd Exp $	*/
+/*	$NetBSD: st.c,v 1.51 1995/08/12 20:31:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -300,7 +300,7 @@ stmatch(parent, match, aux)
  * The routine called by the low level scsi routine when it discovers
  * A device suitable for this driver
  */
-void 
+void
 stattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -415,7 +415,7 @@ st_loadquirks(st)
 /*
  * open the device.
  */
-int 
+int
 stopen(dev, flags)
 	dev_t dev;
 	int flags;
@@ -474,7 +474,7 @@ stopen(dev, flags)
 		st_unmount(st, NOEJECT);
 
 	/*
-	 * If we are not mounted, then we should start a new 
+	 * If we are not mounted, then we should start a new
 	 * mount session.
 	 */
 	if (!(st->flags & ST_MOUNTED)) {
@@ -503,7 +503,7 @@ bad:
  * close the device.. only called if we are the LAST
  * occurence of an open device
  */
-int 
+int
 stclose(dev)
 	dev_t dev;
 {
@@ -662,7 +662,7 @@ st_unmount(st, eject)
  * initial operation, make a decision as to how we should be set
  * to run (regarding blocking and EOD marks)
  */
-int 
+int
 st_decide_mode(st, first_read)
 	struct st_softc *st;
 	boolean	first_read;
@@ -769,7 +769,7 @@ done:
  * The transfer is described by a buf and will include
  * only one physical transfer.
  */
-void 
+void
 ststrategy(bp)
 	struct buf *bp;
 {
@@ -851,7 +851,7 @@ done:
  * continues to be drained.
  * ststart() is called at splbio
  */
-void 
+void
 ststart(st)
 	struct st_softc *st;
 {
@@ -974,22 +974,14 @@ ststart(st)
 	} /* go back and see if we can cram more work in.. */
 }
 
-u_int 
-stminphys(bp)
-	struct buf *bp;
-{
-	register struct st_softc *st = stcd.cd_devs[STUNIT(bp->b_dev)];
-
-	return (st->sc_link->adapter->scsi_minphys)(bp);
-}
-
 int
 stread(dev, uio)
 	dev_t dev;
 	struct uio *uio;
 {
 
-	return (physio(ststrategy, NULL, dev, B_READ, stminphys, uio));
+	return (physio(ststrategy, NULL, dev, B_READ,
+		       st->sc_link->adapter->scsi_minphys, uio));
 }
 
 int
@@ -998,14 +990,15 @@ stwrite(dev, uio)
 	struct uio *uio;
 {
 
-	return (physio(ststrategy, NULL, dev, B_WRITE, stminphys, uio));
+	return (physio(ststrategy, NULL, dev, B_WRITE,
+		       st->sc_link->adapter->scsi_minphys, uio));
 }
 
 /*
  * Perform special action on behalf of the user;
  * knows about the internals of this device
  */
-int 
+int
 stioctl(dev, cmd, arg, flag, p)
 	dev_t dev;
 	u_long cmd;
@@ -1164,7 +1157,7 @@ try_new_value:
 	/*
 	 * As the drive liked it, if we are setting a new default,
 	 * set it into the structures as such.
-	 * 
+	 *
 	 * The means for deciding this are not finalised yet
 	 */
 	if (STMODE(dev) == 0x03) {
@@ -1187,7 +1180,7 @@ try_new_value:
 /*
  * Do a synchronous read.
  */
-int 
+int
 st_read(st, buf, size, flags)
 	struct st_softc *st;
 	int size;
@@ -1223,7 +1216,7 @@ st_read(st, buf, size, flags)
 /*
  * Ask the drive what it's min and max blk sizes are.
  */
-int 
+int
 st_read_block_limits(st, flags)
 	struct st_softc *st;
 	int flags;
@@ -1263,7 +1256,7 @@ st_read_block_limits(st, flags)
 
 /*
  * Get the scsi driver to send a full inquiry to the
- * device and use the results to fill out the global 
+ * device and use the results to fill out the global
  * parameter structure.
  *
  * called from:
@@ -1271,7 +1264,7 @@ st_read_block_limits(st, flags)
  * open
  * ioctl (to reset original blksize)
  */
-int 
+int
 st_mode_sense(st, flags)
 	struct st_softc *st;
 	int flags;
@@ -1289,7 +1282,7 @@ st_mode_sense(st, flags)
 	scsi_sense_len = 12 + st->page_0_size;
 
 	/*
-	 * Set up a mode sense 
+	 * Set up a mode sense
 	 */
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = MODE_SENSE;
@@ -1328,7 +1321,7 @@ st_mode_sense(st, flags)
  * Send a filled out parameter structure to the drive to
  * set it into the desire modes etc.
  */
-int 
+int
 st_mode_select(st, flags)
 	struct st_softc *st;
 	int flags;
@@ -1372,7 +1365,7 @@ st_mode_select(st, flags)
 /*
  * skip N blocks/filemarks/seq filemarks/eom
  */
-int 
+int
 st_space(st, number, what, flags)
 	struct st_softc *st;
 	u_int what;
@@ -1454,7 +1447,7 @@ st_space(st, number, what, flags)
 /*
  * write N filemarks
  */
-int 
+int
 st_write_filemarks(st, number, flags)
 	struct st_softc *st;
 	int flags;
@@ -1498,7 +1491,7 @@ st_write_filemarks(st, number, flags)
  * nmarks returns the number of marks to skip (or, if position
  * true, which were skipped) to get back original position.
  */
-int 
+int
 st_check_eod(st, position, nmarks, flags)
 	struct st_softc *st;
 	boolean position;
@@ -1527,7 +1520,7 @@ st_check_eod(st, position, nmarks, flags)
 /*
  * load/unload/retension
  */
-int 
+int
 st_load(st, type, flags)
 	struct st_softc *st;
 	u_int type;
@@ -1557,7 +1550,7 @@ st_load(st, type, flags)
 /*
  *  Rewind the device
  */
-int 
+int
 st_rewind(st, immediate, flags)
 	struct st_softc *st;
 	u_int immediate;
@@ -1586,7 +1579,7 @@ st_rewind(st, immediate, flags)
  * The unix error number to pass back... (0 = report no error)
  *                            (-1 = continue processing)
  */
-int 
+int
 st_interpret_sense(xs)
 	struct scsi_xfer *xs;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.4 1995/08/11 20:02:07 leo Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.5 1995/08/12 20:31:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -81,7 +81,7 @@ static volatile int	main_running = 0;
  */
 static u_char	busy;
 
-static u_int	ncr5380_minphys(struct buf *bp);
+static void	ncr5380_minphys(struct buf *bp);
 static int	ncr5380_scsi_cmd(struct scsi_xfer *xs);
 static int	ncr5380_show_scsi_cmd(struct scsi_xfer *xs);
 
@@ -381,14 +381,14 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 }
 
 #define MIN_PHYS	65536	/*BARF!!!!*/
-static u_int
+static void
 ncr5380_minphys(struct buf *bp)
 {
     if (bp->b_bcount > MIN_PHYS) {
 	printf("Uh-oh...  ncr5380_minphys setting bp->b_bcount=%x.\n",MIN_PHYS);
 	bp->b_bcount = MIN_PHYS;
     }
-    return (minphys(bp));
+    minphys(bp);
 }
 #undef MIN_PHYS
 
@@ -508,7 +508,7 @@ struct ncr_softc *sc;
 		 */
 		if (scsi_select(req, 0)) {
 			sps = splbio();
-			req->next = issue_q; 
+			req->next = issue_q;
 			issue_q = req;
 			splx(sps);
 #ifdef DBG_REQ
@@ -1039,7 +1039,7 @@ u_int	msg;
 #ifdef DBG_REQ
 			show_request(reqp, "DONE");
 #endif
-			connected = NULL;	
+			connected = NULL;
 			busy     &= ~(1 << reqp->targ_id);
 			if (!(reqp->dr_flag & DRIVER_AUTOSEN))
 				reqp->xs->resid = reqp->xdata_len;

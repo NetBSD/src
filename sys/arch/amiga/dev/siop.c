@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.21 1995/07/26 14:30:53 chopps Exp $	*/
+/*	$NetBSD: siop.c,v 1.22 1995/08/12 20:30:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -45,7 +45,7 @@
 
 /* need to know if any tapes have been configured */
 #include "st.h"
- 
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -157,14 +157,15 @@ int	siopphmm = 0;
 /*
  * default minphys routine for siop based controllers
  */
-u_int
+void
 siop_minphys(bp)
 	struct buf *bp;
 {
+
 	/*
-	 * no max transfer at this level
+	 * No max transfer at this level.
 	 */
-	return (minphys(bp));
+	minphys(bp);
 }
 
 /*
@@ -186,7 +187,7 @@ siop_scsicmd(xs)
 
 	if (flags & SCSI_DATA_UIO)
 		panic("siop: scsi data uio requested");
-	
+
 	if (sc->sc_xs && flags & SCSI_POLL)
 		panic("siop_scsicmd: busy");
 
@@ -252,14 +253,14 @@ if (sc->sc_active > 1) {
   printf ("active count %d\n", sc->sc_active);
 }
 #endif
-	if (flags & SCSI_POLL || siop_no_dma) 
+	if (flags & SCSI_POLL || siop_no_dma)
 		stat = siopicmd(sc, slp->target, slp->lun, xs->cmd,
 		    xs->cmdlen, xs->data, xs->datalen);
 	else if (siopgo(sc, xs) == 0)
 		return;
-	else 
+	else
 		stat = sc->sc_cur->sc_stat[0];
-	
+
 	siop_scsidone(sc, stat);
 }
 
@@ -366,11 +367,11 @@ siopgetsense(sc, xs)
 	int stat;
 
 	slp = xs->sc_link;
-	
+
 	rqs.opcode = REQUEST_SENSE;
 	rqs.byte2 = slp->lun << 5;
 #ifdef not_yet
-	rqs.length = xs->req_sense_length ? xs->req_sense_length : 
+	rqs.length = xs->req_sense_length ? xs->req_sense_length :
 	    sizeof(xs->sense);
 #else
 	rqs.length = sizeof(xs->sense);
@@ -378,7 +379,7 @@ siopgetsense(sc, xs)
 	if (rqs.length > sizeof (xs->sense))
 		rqs.length = sizeof (xs->sense);
 	rqs.unused[0] = rqs.unused[1] = rqs.control = 0;
-	
+
 	return(siopicmd(sc, slp->target, slp->lun, &rqs, sizeof(rqs),
 	    &xs->sense, rqs.length));
 }
@@ -391,7 +392,7 @@ siopabort(sc, rp, where)
 {
 	int i;
 
-	printf ("%s: abort %s: dstat %02x, sstat0 %02x sbcl %02x\n", 
+	printf ("%s: abort %s: dstat %02x, sstat0 %02x sbcl %02x\n",
 	    sc->sc_dev.dv_xname,
 	    where, rp->siop_dstat, rp->siop_sstat0, rp->siop_sbcl);
 
@@ -404,7 +405,7 @@ siopabort(sc, rp, where)
       if (asr & (SBIC_ASR_BSY|SBIC_ASR_LCI))
         {
           /* ok, get more drastic.. */
-          
+
 	  SET_SBIC_cmd (rp, SBIC_CMD_RESET);
 	  delay(25);
 	  SBIC_WAIT(rp, SBIC_ASR_INT, 0);
@@ -468,7 +469,7 @@ siopreset(sc)
 
 	if (sc->sc_flags & SIOP_ALIVE)
 		siopabort(sc, rp, "reset");
-		
+
 	printf("%s: ", sc->sc_dev.dv_xname);		/* XXXX */
 
 	s = splbio();

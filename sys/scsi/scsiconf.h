@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.24 1995/07/24 09:03:00 cgd Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.25 1995/08/12 20:31:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -78,9 +78,9 @@ typedef	int			boolean;
  *
  *				-------------
  *
- * The key to all this is the scsi_link structure which associates all the 
+ * The key to all this is the scsi_link structure which associates all the
  * other structures with each other in the correct configuration.  The
- * scsi_link is the connecting information that allows each part of the 
+ * scsi_link is the connecting information that allows each part of the
  * scsi system to find the associated other parts.
  */
 
@@ -92,7 +92,7 @@ typedef	int			boolean;
  */
 struct scsi_adapter {
 	int		(*scsi_cmd)();
-	u_int		(*scsi_minphys) __P((struct buf *));
+	void		(*scsi_minphys) __P((struct buf *));
 	int		(*open_target_lu)();
 	int		(*close_target_lu)();
 };
@@ -135,7 +135,7 @@ struct scsi_link {
 #define	SDEV_MEDIA_LOADED 	0x02	/* device figures are still valid */
 #define	SDEV_WAITING	 	0x04	/* a process is waiting for this */
 #define	SDEV_OPEN	 	0x08	/* at least 1 open session */
-#define	SDEV_DBX		0xf0	/* debuging flags (scsi_debug.h) */	
+#define	SDEV_DBX		0xf0	/* debuging flags (scsi_debug.h) */
 	u_int8_t quirks;		/* per-device oddities */
 #define	SDEV_AUTOSAVE		0x01	/* do implicit SAVEDATAPOINTER on disconnect */
 #define	SDEV_NOSYNCWIDE		0x02	/* does not grok SDTR or WDTR */
