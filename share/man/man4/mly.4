@@ -1,4 +1,4 @@
-.\"	$NetBSD: mly.4,v 1.6 2003/02/14 15:20:19 grant Exp $
+.\"	$NetBSD: mly.4,v 1.7 2003/03/31 03:35:58 perry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -124,12 +124,12 @@ standby
 missing
 .El
 .Sh DIAGNOSTICS
-.Ss Controller initialisation phase
+.Ss Controller initialization phase
 .Bl -diag
-.It "mly%d: controller initialisation started"
-.It "mly%d: initialisation complete"
+.It "mly%d: controller initialization started"
+.It "mly%d: initialization complete"
 .Pp
-The controller firmware has started initialisation.
+The controller firmware has started initialization.
 Normally this process is performed by the controller BIOS,
 but the driver may need
 to do this in cases where the BIOS has failed, or is not compatible
@@ -146,9 +146,9 @@ These error codes are undocumented.
 .Pp
 Firmware detected a fatal memory error; the driver will not attempt to
 attach to this controller.
-.It "mly%d: unknown initialisation code %x"
+.It "mly%d: unknown initialization code %x"
 .Pp
-An unknown error occurred during initialisation; it will be ignored.
+An unknown error occurred during initialization; it will be ignored.
 .El
 .Ss Operational diagnostics
 .Bl -diag
