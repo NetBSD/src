@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)make.1	5.7 (Berkeley) 7/24/91
-.\"	$Id: make.1,v 1.4 1993/12/22 00:25:59 pk Exp $
+.\"	$Id: make.1,v 1.5 1994/02/10 18:25:01 jtc Exp $
 .\"
 .Dd July 24, 1991
 .Dt MAKE 1
@@ -515,7 +515,7 @@ option are searched before the system
 makefile directory.
 .Pp
 Conditional expressions are also preceded by a single dot as the first
-chraracter of a line.
+character of a line.
 The possible conditionals are as follows:
 .Bl -tag -width Ds
 .It Ic .undef Ar variable
@@ -624,7 +624,7 @@ The boolean operator
 .Ql Ic \&!
 may be used to logically negate an entire
 conditional.
-It is of higher precendence than
+It is of higher precedence than
 .Ql Ic \&&& .
 .Pp
 The value of
@@ -643,7 +643,7 @@ explicitly, see
 .Va .MAIN )
 before the line containing the conditional.
 .It Ic empty
-Takes a variable, with possible modifiers, and evalutes to true if
+Takes a variable, with possible modifiers, and evaluates to true if
 the expansion of the variable would result in an empty string.
 .It Ic exists
 Takes a file name as an argument and evaluates to true if the file exists.
