@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2004/05/16 10:25:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2004/08/19 01:30:33 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -29,6 +29,11 @@ FILES=			XFree86.xpm XFree86bw.xpm
 FILESDIR=		${XDMDIR}
 FILESDIR_XFree86.xpm=	${X11INCDIR}/X11/pixmaps
 FILESDIR_XFree86bw.xpm=	${X11INCDIR}/X11/pixmaps
+FILESMODE_GiveConsole=	${BINMODE}
+FILESMODE_TakeConsole=	${BINMODE}
+FILESMODE_Xsetup_0=	${BINMODE}
+FILESMODE_Xsession=	${BINMODE}
+FILESMODE_Xwilling=	${BINMODE}
 
 CONFIGSYMLINKS=		Xservers.ws ${XDMDIR}/Xservers
 
