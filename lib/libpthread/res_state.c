@@ -1,4 +1,4 @@
-/*	$NetBSD: res_state.c,v 1.3 2004/05/24 01:20:17 christos Exp $	*/
+/*	$NetBSD: res_state.c,v 1.4 2004/06/03 19:32:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: res_state.c,v 1.3 2004/05/24 01:20:17 christos Exp $");
+__RCSID("$NetBSD: res_state.c,v 1.4 2004/06/03 19:32:27 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -53,22 +53,13 @@ __RCSID("$NetBSD: res_state.c,v 1.3 2004/05/24 01:20:17 christos Exp $");
 #include "pthread.h"
 #include "pthread_int.h"
 
-#define	MY_LIST_HEAD(name, type)					\
-struct name {								\
-	union type *lh_first;	/* first element */			\
-}
+static SLIST_HEAD(, _res_st) res_list = LIST_HEAD_INITIALIZER(&res_list);
 
-#define	MY_LIST_ENTRY(type)						\
-struct {								\
-	union type *le_next;	/* next element */			\
-	union type **le_prev;	/* address of previous next element */	\
-}
-
-static MY_LIST_HEAD(, _res_st) res_list = LIST_HEAD_INITIALIZER(&res_list);
-
-union _res_st {
-	MY_LIST_ENTRY(_res_st)	st_list;
+struct _res_st {
+	/* __res_put_state() assumes st_res is the first member. */
 	struct __res_state	st_res;
+
+	SLIST_ENTRY(_res_st)	st_list;
 };
 
 static pthread_mutex_t res_mtx = PTHREAD_MUTEX_INITIALIZER;
@@ -96,31 +87,31 @@ res_state
 __res_get_state(void)
 {
 	res_state res;
-	union _res_st *st;
+	struct _res_st *st;
 	pthread_mutex_lock(&res_mtx);
-	st = LIST_FIRST(&res_list);
+	st = SLIST_FIRST(&res_list);
 	if (st != NULL) {
-		res_state_debug("checkout from list", st);
-		LIST_REMOVE(st, st_list);
-		/* XXX: because we trash it with pointers from the list */
-		/* we should probably put the pointers elsewhere */
+		SLIST_REMOVE_HEAD(&res_list, st_list);
+		pthread_mutex_unlock(&res_mtx);
 		res = &st->st_res;
-		res->options = 0;
+		res_state_debug("checkout from list", st);
 	} else {
-		res = (res_state)malloc(sizeof(union _res_st));
-		if (res == NULL) {
-			pthread_mutex_unlock(&res_mtx);
+		pthread_mutex_unlock(&res_mtx);
+		st = malloc(sizeof(*st));
+		if (st == NULL) {
 			h_errno = NETDB_INTERNAL;
 			return NULL;
 		}
+		res = &st->st_res;
 		res->options = 0;
 		res_state_debug("alloc new", res);
 	}
-	pthread_mutex_unlock(&res_mtx);
-	if ((res->options & RES_INIT) == 0 && res_ninit(res) == -1) {
-		h_errno = NETDB_INTERNAL;
-		__res_put_state(res);
-		return NULL;
+	if ((res->options & RES_INIT) == 0) {
+		if (res_ninit(res) == -1) {
+			h_errno = NETDB_INTERNAL;
+			free(st);
+			return NULL;
+		}
 	}
 	return res;
 }
@@ -129,9 +120,11 @@ void
 /*ARGSUSED*/
 __res_put_state(res_state res)
 {
-	pthread_mutex_lock(&res_mtx);
+	struct _res_st *st = (struct _res_st *)(void *)res;
+
 	res_state_debug("free", res);
-	LIST_INSERT_HEAD(&res_list, (union _res_st *)(void *)res, st_list);
+	pthread_mutex_lock(&res_mtx);
+	SLIST_INSERT_HEAD(&res_list, st, st_list);
 	pthread_mutex_unlock(&res_mtx);
 }
 
