@@ -1,322 +1,248 @@
-/*	$NetBSD: base64.c,v 1.1.1.1 1999/11/20 18:54:10 veego Exp $	*/
+/*	$NetBSD: base64.c,v 1.1.1.2 2004/05/17 23:45:01 christos Exp $	*/
 
 /*
- * Copyright (c) 1996-1999 by Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
- * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
+
+/* Id: base64.c,v 1.23.2.2.2.3 2004/03/06 08:14:27 marka Exp */
+
+#include <config.h>
+
+#include <isc/base64.h>
+#include <isc/buffer.h>
+#include <isc/lex.h>
+#include <isc/string.h>
+#include <isc/util.h>
+
+#define RETERR(x) do { \
+	isc_result_t _r = (x); \
+	if (_r != ISC_R_SUCCESS) \
+		return (_r); \
+	} while (0)
+
 
 /*
- * Portions Copyright (c) 1995 by International Business Machines, Inc.
- *
- * International Business Machines, Inc. (hereinafter called IBM) grants
- * permission under its copyrights to use, copy, modify, and distribute this
- * Software with or without fee, provided that the above copyright notice and
- * all paragraphs of this notice appear in all copies, and that the name of IBM
- * not be used in connection with the marketing of any product incorporating
- * the Software or modifications thereof, without specific, written prior
- * permission.
- *
- * To the extent it has a right to do so, IBM grants an immunity from suit
- * under its patents, if any, for the use, sale or manufacture of products to
- * the extent that such products are used for performing Domain Name System
- * dynamic updates in TCP/IP networks by means of the Software.  No immunity is
- * granted for any product per se or for any other function of any product.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", AND IBM DISCLAIMS ALL WARRANTIES,
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE.  IN NO EVENT SHALL IBM BE LIABLE FOR ANY SPECIAL,
- * DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER ARISING
- * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE, EVEN
- * IF IBM IS APPRISED OF THE POSSIBILITY OF SUCH DAMAGES.
+ * These static functions are also present in lib/dns/rdata.c.  I'm not
+ * sure where they should go. -- bwelling
  */
+static isc_result_t
+str_totext(const char *source, isc_buffer_t *target);
 
-#if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: base64.c,v 8.7 1999/10/13 16:39:33 vixie Exp";
-#endif /* not lint */
+static isc_result_t
+mem_tobuffer(isc_buffer_t *target, void *base, unsigned int length);
 
-#include "port_before.h"
+static const char base64[] =
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
 
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/socket.h>
+isc_result_t
+isc_base64_totext(isc_region_t *source, int wordlength,
+		  const char *wordbreak, isc_buffer_t *target)
+{
+	char buf[5];
+	unsigned int loops = 0;
 
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <arpa/nameser.h>
+	if (wordlength < 4)
+		wordlength = 4;
 
-#include <ctype.h>
-#include <resolv.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+	memset(buf, 0, sizeof(buf));
+	while (source->length > 2) {
+		buf[0] = base64[(source->base[0]>>2)&0x3f];
+		buf[1] = base64[((source->base[0]<<4)&0x30)|
+				((source->base[1]>>4)&0x0f)];
+		buf[2] = base64[((source->base[1]<<2)&0x3c)|
+				((source->base[2]>>6)&0x03)];
+		buf[3] = base64[source->base[2]&0x3f];
+		RETERR(str_totext(buf, target));
+		isc_region_consume(source, 3);
 
-#include "port_after.h"
-
-#define Assert(Cond) if (!(Cond)) abort()
-
-static const char Base64[] =
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-static const char Pad64 = '=';
-
-/* (From RFC1521 and draft-ietf-dnssec-secext-03.txt)
-   The following encoding technique is taken from RFC 1521 by Borenstein
-   and Freed.  It is reproduced here in a slightly edited form for
-   convenience.
-
-   A 65-character subset of US-ASCII is used, enabling 6 bits to be
-   represented per printable character. (The extra 65th character, "=",
-   is used to signify a special processing function.)
-
-   The encoding process represents 24-bit groups of input bits as output
-   strings of 4 encoded characters. Proceeding from left to right, a
-   24-bit input group is formed by concatenating 3 8-bit input groups.
-   These 24 bits are then treated as 4 concatenated 6-bit groups, each
-   of which is translated into a single digit in the base64 alphabet.
-
-   Each 6-bit group is used as an index into an array of 64 printable
-   characters. The character referenced by the index is placed in the
-   output string.
-
-                         Table 1: The Base64 Alphabet
-
-      Value Encoding  Value Encoding  Value Encoding  Value Encoding
-          0 A            17 R            34 i            51 z
-          1 B            18 S            35 j            52 0
-          2 C            19 T            36 k            53 1
-          3 D            20 U            37 l            54 2
-          4 E            21 V            38 m            55 3
-          5 F            22 W            39 n            56 4
-          6 G            23 X            40 o            57 5
-          7 H            24 Y            41 p            58 6
-          8 I            25 Z            42 q            59 7
-          9 J            26 a            43 r            60 8
-         10 K            27 b            44 s            61 9
-         11 L            28 c            45 t            62 +
-         12 M            29 d            46 u            63 /
-         13 N            30 e            47 v
-         14 O            31 f            48 w         (pad) =
-         15 P            32 g            49 x
-         16 Q            33 h            50 y
-
-   Special processing is performed if fewer than 24 bits are available
-   at the end of the data being encoded.  A full encoding quantum is
-   always completed at the end of a quantity.  When fewer than 24 input
-   bits are available in an input group, zero bits are added (on the
-   right) to form an integral number of 6-bit groups.  Padding at the
-   end of the data is performed using the '=' character.
-
-   Since all base64 input is an integral number of octets, only the
-         -------------------------------------------------                       
-   following cases can arise:
-   
-       (1) the final quantum of encoding input is an integral
-           multiple of 24 bits; here, the final unit of encoded
-	   output will be an integral multiple of 4 characters
-	   with no "=" padding,
-       (2) the final quantum of encoding input is exactly 8 bits;
-           here, the final unit of encoded output will be two
-	   characters followed by two "=" padding characters, or
-       (3) the final quantum of encoding input is exactly 16 bits;
-           here, the final unit of encoded output will be three
-	   characters followed by one "=" padding character.
-   */
-
-int
-b64_ntop(u_char const *src, size_t srclength, char *target, size_t targsize) {
-	size_t datalength = 0;
-	u_char input[3];
-	u_char output[4];
-	size_t i;
-
-	while (2 < srclength) {
-		input[0] = *src++;
-		input[1] = *src++;
-		input[2] = *src++;
-		srclength -= 3;
-
-		output[0] = input[0] >> 2;
-		output[1] = ((input[0] & 0x03) << 4) + (input[1] >> 4);
-		output[2] = ((input[1] & 0x0f) << 2) + (input[2] >> 6);
-		output[3] = input[2] & 0x3f;
-		Assert(output[0] < 64);
-		Assert(output[1] < 64);
-		Assert(output[2] < 64);
-		Assert(output[3] < 64);
-
-		if (datalength + 4 > targsize)
-			return (-1);
-		target[datalength++] = Base64[output[0]];
-		target[datalength++] = Base64[output[1]];
-		target[datalength++] = Base64[output[2]];
-		target[datalength++] = Base64[output[3]];
+		loops++;
+		if (source->length != 0 &&
+		    (int)((loops + 1) * 4) >= wordlength)
+		{
+			loops = 0;
+			RETERR(str_totext(wordbreak, target));
+		}
 	}
-    
-	/* Now we worry about padding. */
-	if (0 != srclength) {
-		/* Get what's left. */
-		input[0] = input[1] = input[2] = '\0';
-		for (i = 0; i < srclength; i++)
-			input[i] = *src++;
-	
-		output[0] = input[0] >> 2;
-		output[1] = ((input[0] & 0x03) << 4) + (input[1] >> 4);
-		output[2] = ((input[1] & 0x0f) << 2) + (input[2] >> 6);
-		Assert(output[0] < 64);
-		Assert(output[1] < 64);
-		Assert(output[2] < 64);
-
-		if (datalength + 4 > targsize)
-			return (-1);
-		target[datalength++] = Base64[output[0]];
-		target[datalength++] = Base64[output[1]];
-		if (srclength == 1)
-			target[datalength++] = Pad64;
-		else
-			target[datalength++] = Base64[output[2]];
-		target[datalength++] = Pad64;
+	if (source->length == 2) {
+		buf[0] = base64[(source->base[0]>>2)&0x3f];
+		buf[1] = base64[((source->base[0]<<4)&0x30)|
+				((source->base[1]>>4)&0x0f)];
+		buf[2] = base64[((source->base[1]<<2)&0x3c)];
+		buf[3] = '=';
+		RETERR(str_totext(buf, target));
+	} else if (source->length == 1) {
+		buf[0] = base64[(source->base[0]>>2)&0x3f];
+		buf[1] = base64[((source->base[0]<<4)&0x30)];
+		buf[2] = buf[3] = '=';
+		RETERR(str_totext(buf, target));
 	}
-	if (datalength >= targsize)
-		return (-1);
-	target[datalength] = '\0';	/* Returned value doesn't count \0. */
-	return (datalength);
+	return (ISC_R_SUCCESS);
 }
 
-/* skips all whitespace anywhere.
-   converts characters, four at a time, starting at (or after)
-   src from base - 64 numbers into three 8 bit bytes in the target area.
-   it returns the number of data bytes stored at the target, or -1 on error.
+/*
+ * State of a base64 decoding process in progress.
  */
+typedef struct {
+	int length;		/* Desired length of binary data or -1 */
+	isc_buffer_t *target;	/* Buffer for resulting binary data */
+	int digits;		/* Number of buffered base64 digits */
+	isc_boolean_t seen_end;	/* True if "=" end marker seen */
+	int val[4];
+} base64_decode_ctx_t;
 
-int
-b64_pton(src, target, targsize)
-	char const *src;
-	u_char *target;
-	size_t targsize;
+static inline void
+base64_decode_init(base64_decode_ctx_t *ctx, int length, isc_buffer_t *target)
 {
-	int tarindex, state, ch;
-	char *pos;
+	ctx->digits = 0;
+	ctx->seen_end = ISC_FALSE;
+	ctx->length = length;
+	ctx->target = target;
+}
 
-	state = 0;
-	tarindex = 0;
+static inline isc_result_t
+base64_decode_char(base64_decode_ctx_t *ctx, int c) {
+	char *s;
 
-	while ((ch = *src++) != '\0') {
-		if (isspace(ch))	/* Skip whitespace anywhere. */
-			continue;
-
-		if (ch == Pad64)
-			break;
-
-		pos = strchr(Base64, ch);
-		if (pos == 0) 		/* A non-base64 character. */
-			return (-1);
-
-		switch (state) {
-		case 0:
-			if (target) {
-				if ((size_t)tarindex >= targsize)
-					return (-1);
-				target[tarindex] = (pos - Base64) << 2;
-			}
-			state = 1;
-			break;
-		case 1:
-			if (target) {
-				if ((size_t)tarindex + 1 >= targsize)
-					return (-1);
-				target[tarindex]   |=  (pos - Base64) >> 4;
-				target[tarindex+1]  = ((pos - Base64) & 0x0f)
-							<< 4 ;
-			}
-			tarindex++;
-			state = 2;
-			break;
-		case 2:
-			if (target) {
-				if ((size_t)tarindex + 1 >= targsize)
-					return (-1);
-				target[tarindex]   |=  (pos - Base64) >> 2;
-				target[tarindex+1]  = ((pos - Base64) & 0x03)
-							<< 6;
-			}
-			tarindex++;
-			state = 3;
-			break;
-		case 3:
-			if (target) {
-				if ((size_t)tarindex >= targsize)
-					return (-1);
-				target[tarindex] |= (pos - Base64);
-			}
-			tarindex++;
-			state = 0;
-			break;
-		default:
-			abort();
-		}
-	}
-
-	/*
-	 * We are done decoding Base-64 chars.  Let's see if we ended
-	 * on a byte boundary, and/or with erroneous trailing characters.
-	 */
-
-	if (ch == Pad64) {		/* We got a pad char. */
-		ch = *src++;		/* Skip it, get next. */
-		switch (state) {
-		case 0:		/* Invalid = in first position */
-		case 1:		/* Invalid = in second position */
-			return (-1);
-
-		case 2:		/* Valid, means one byte of info */
-			/* Skip any number of spaces. */
-			for ((void)NULL; ch != '\0'; ch = *src++)
-				if (!isspace(ch))
-					break;
-			/* Make sure there is another trailing = sign. */
-			if (ch != Pad64)
-				return (-1);
-			ch = *src++;		/* Skip the = */
-			/* Fall through to "single trailing =" case. */
-			/* FALLTHROUGH */
-
-		case 3:		/* Valid, means two bytes of info */
-			/*
-			 * We know this char is an =.  Is there anything but
-			 * whitespace after it?
-			 */
-			for ((void)NULL; ch != '\0'; ch = *src++)
-				if (!isspace(ch))
-					return (-1);
-
-			/*
-			 * Now make sure for cases 2 and 3 that the "extra"
-			 * bits that slopped past the last full byte were
-			 * zeros.  If we don't check them, they become a
-			 * subliminal channel.
-			 */
-			if (target && target[tarindex] != 0)
-				return (-1);
-		}
-	} else {
+	if (ctx->seen_end)
+		return (ISC_R_BADBASE64);
+	if ((s = strchr(base64, c)) == NULL)
+		return (ISC_R_BADBASE64);
+	ctx->val[ctx->digits++] = s - base64;
+	if (ctx->digits == 4) {
+		int n;
+		unsigned char buf[3];
+		if (ctx->val[0] == 64 || ctx->val[1] == 64)
+			return (ISC_R_BADBASE64);
+		if (ctx->val[2] == 64 && ctx->val[3] != 64)
+			return (ISC_R_BADBASE64);
 		/*
-		 * We ended by seeing the end of the string.  Make sure we
-		 * have no partial bytes lying around.
+		 * Check that bits that should be zero are.
 		 */
-		if (state != 0)
-			return (-1);
+		if (ctx->val[2] == 64 && (ctx->val[1] & 0xf) != 0)
+			return (ISC_R_BADBASE64);
+		/*
+		 * We don't need to test for ctx->val[2] != 64 as
+		 * the bottom two bits of 64 are zero.
+		 */
+		if (ctx->val[3] == 64 && (ctx->val[2] & 0x3) != 0)
+			return (ISC_R_BADBASE64);
+		n = (ctx->val[2] == 64) ? 1 :
+			(ctx->val[3] == 64) ? 2 : 3;
+		if (n != 3) {
+			ctx->seen_end = ISC_TRUE;
+			if (ctx->val[2] == 64)
+				ctx->val[2] = 0;
+			if (ctx->val[3] == 64)
+				ctx->val[3] = 0;
+		}
+		buf[0] = (ctx->val[0]<<2)|(ctx->val[1]>>4);
+		buf[1] = (ctx->val[1]<<4)|(ctx->val[2]>>2);
+		buf[2] = (ctx->val[2]<<6)|(ctx->val[3]);
+		RETERR(mem_tobuffer(ctx->target, buf, n));
+		if (ctx->length >= 0) {
+			if (n > ctx->length)
+				return (ISC_R_BADBASE64);
+			else
+				ctx->length -= n;
+		}
+		ctx->digits = 0;
 	}
+	return (ISC_R_SUCCESS);
+}
 
-	return (tarindex);
+static inline isc_result_t
+base64_decode_finish(base64_decode_ctx_t *ctx) {
+	if (ctx->length > 0)
+		return (ISC_R_UNEXPECTEDEND);
+	if (ctx->digits != 0)
+		return (ISC_R_BADBASE64);
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+isc_base64_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length) {
+	base64_decode_ctx_t ctx;
+	isc_textregion_t *tr;
+	isc_token_t token;
+	isc_boolean_t eol;
+
+	base64_decode_init(&ctx, length, target);
+
+	while (!ctx.seen_end && (ctx.length != 0)) {
+		unsigned int i;
+
+		if (length > 0)
+			eol = ISC_FALSE;
+		else
+			eol = ISC_TRUE;
+		RETERR(isc_lex_getmastertoken(lexer, &token,
+					      isc_tokentype_string, eol));
+		if (token.type != isc_tokentype_string)
+			break;
+		tr = &token.value.as_textregion;
+		for (i = 0; i < tr->length; i++)
+			RETERR(base64_decode_char(&ctx, tr->base[i]));
+	}
+	if (ctx.length < 0 && !ctx.seen_end)
+		isc_lex_ungettoken(lexer, &token);
+	RETERR(base64_decode_finish(&ctx));
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+isc_base64_decodestring(const char *cstr, isc_buffer_t *target) {
+	base64_decode_ctx_t ctx;
+
+	base64_decode_init(&ctx, -1, target);
+	for (;;) {
+		int c = *cstr++;
+		if (c == '\0')
+			break;
+		if (c == ' ' || c == '\t' || c == '\n' || c== '\r')
+			continue;
+		RETERR(base64_decode_char(&ctx, c));
+	}
+	RETERR(base64_decode_finish(&ctx));	
+	return (ISC_R_SUCCESS);
+}
+
+static isc_result_t
+str_totext(const char *source, isc_buffer_t *target) {
+	unsigned int l;
+	isc_region_t region;
+
+	isc_buffer_availableregion(target, &region);
+	l = strlen(source);
+
+	if (l > region.length)
+		return (ISC_R_NOSPACE);
+
+	memcpy(region.base, source, l);
+	isc_buffer_add(target, l);
+	return (ISC_R_SUCCESS);
+}
+
+static isc_result_t
+mem_tobuffer(isc_buffer_t *target, void *base, unsigned int length) {
+	isc_region_t tr;
+
+	isc_buffer_availableregion(target, &tr);
+	if (length > tr.length)
+		return (ISC_R_NOSPACE);
+	memcpy(tr.base, base, length);
+	isc_buffer_add(target, length);
+	return (ISC_R_SUCCESS);
 }

@@ -1,21 +1,23 @@
-/*	$NetBSD: heap.c,v 1.1.1.1 1999/11/20 18:54:11 veego Exp $	*/
+/*	$NetBSD: heap.c,v 1.1.1.2 2004/05/17 23:45:02 christos Exp $	*/
 
 /*
- * Copyright (c) 1997,1999 by Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1997-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
- * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
+
+/* Id: heap.c,v 1.28.12.3 2004/03/08 09:04:48 marka Exp */
 
 /*
  * Heap implementation of priority queues adapted from the following:
@@ -27,197 +29,226 @@
  *	ISBN 0-201-06673-4, chapter 11.
  */
 
-#if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: heap.c,v 8.7 1999/10/13 16:39:34 vixie Exp";
-#endif /* not lint */
-
-#include "port_before.h"
-
-#include <stddef.h>
-#include <stdlib.h>
-#include <errno.h>
-
-#include "port_after.h"
+#include <config.h>
 
 #include <isc/heap.h>
+#include <isc/magic.h>
+#include <isc/mem.h>
+#include <isc/string.h>		/* Required for memcpy. */
+#include <isc/util.h>
 
 /*
  * Note: to make heap_parent and heap_left easy to compute, the first
  * element of the heap array is not used; i.e. heap subscripts are 1-based,
  * not 0-based.
  */
-#define heap_parent(i) ((i) >> 1)
-#define heap_left(i) ((i) << 1)
+#define heap_parent(i)			((i) >> 1)
+#define heap_left(i)			((i) << 1)
 
-#define ARRAY_SIZE_INCREMENT 512
+#define SIZE_INCREMENT			1024
 
-heap_context
-heap_new(heap_higher_priority_func higher_priority, heap_index_func index,
-	 int array_size_increment) {
-	heap_context ctx;
+#define HEAP_MAGIC			ISC_MAGIC('H', 'E', 'A', 'P')
+#define VALID_HEAP(h)			ISC_MAGIC_VALID(h, HEAP_MAGIC)
 
-	ctx = (heap_context)malloc(sizeof (struct heap_context));
-	if (ctx == NULL || higher_priority == NULL)
-		return (NULL);
-	ctx->array_size = 0;
-	if (array_size_increment == 0)
-		ctx->array_size_increment = ARRAY_SIZE_INCREMENT;
+/*
+ * When the heap is in a consistent state, the following invariant
+ * holds true: for every element i > 1, heap_parent(i) has a priority
+ * higher than or equal to that of i.
+ */
+#define HEAPCONDITION(i) ((i) == 1 || \
+			  ! heap->compare(heap->array[(i)], \
+					  heap->array[heap_parent(i)]))
+
+struct isc_heap {
+	unsigned int			magic;
+	isc_mem_t *			mctx;
+	unsigned int			size;
+	unsigned int			size_increment;
+	unsigned int			last;
+	void				**array;
+	isc_heapcompare_t		compare;
+	isc_heapindex_t			index;
+};
+
+isc_result_t
+isc_heap_create(isc_mem_t *mctx, isc_heapcompare_t compare,
+		isc_heapindex_t index, unsigned int size_increment,
+		isc_heap_t **heapp)
+{
+	isc_heap_t *heap;
+
+	REQUIRE(heapp != NULL && *heapp == NULL);
+	REQUIRE(compare != NULL);
+
+	heap = isc_mem_get(mctx, sizeof(*heap));
+	if (heap == NULL)
+		return (ISC_R_NOMEMORY);
+	heap->magic = HEAP_MAGIC;
+	heap->mctx = mctx;
+	heap->size = 0;
+	if (size_increment == 0)
+		heap->size_increment = SIZE_INCREMENT;
 	else
-		ctx->array_size_increment = array_size_increment;
-	ctx->heap_size = 0;
-	ctx->heap = NULL;
-	ctx->higher_priority = higher_priority;
-	ctx->index = index;
-	return (ctx);
+		heap->size_increment = size_increment;
+	heap->last = 0;
+	heap->array = NULL;
+	heap->compare = compare;
+	heap->index = index;
+
+	*heapp = heap;
+
+	return (ISC_R_SUCCESS);
 }
 
-int
-heap_free(heap_context ctx) {
-	if (ctx == NULL) {
-		errno = EINVAL;
-		return (-1);
-	}
+void
+isc_heap_destroy(isc_heap_t **heapp) {
+	isc_heap_t *heap;
 
-	if (ctx->heap != NULL)
-		free(ctx->heap);
-	free(ctx);
+	REQUIRE(heapp != NULL);
+	heap = *heapp;
+	REQUIRE(VALID_HEAP(heap));
 
-	return (0);
+	if (heap->array != NULL)
+		isc_mem_put(heap->mctx, heap->array,
+			    heap->size * sizeof(void *));
+	heap->magic = 0;
+	isc_mem_put(heap->mctx, heap, sizeof(*heap));
+
+	*heapp = NULL;
 }
 
-static int
-heap_resize(heap_context ctx) {
-	void **new_heap;
+static isc_boolean_t
+resize(isc_heap_t *heap) {
+	void **new_array;
+	size_t new_size;
 
-	ctx->array_size += ctx->array_size_increment;
-	new_heap = (void **)realloc(ctx->heap,
-				    (ctx->array_size) * (sizeof (void *)));
-	if (new_heap == NULL) {
-		errno = ENOMEM;
-		return (-1);
+	REQUIRE(VALID_HEAP(heap));
+
+	new_size = heap->size + heap->size_increment;
+	new_array = isc_mem_get(heap->mctx, new_size * sizeof(void *));
+	if (new_array == NULL)
+		return (ISC_FALSE);
+	if (heap->array != NULL) {
+		memcpy(new_array, heap->array, heap->size * sizeof(void *));
+		isc_mem_put(heap->mctx, heap->array,
+			    heap->size * sizeof(void *));
 	}
-	ctx->heap = new_heap;
-	return (0);
+	heap->size = new_size;
+	heap->array = new_array;
+
+	return (ISC_TRUE);
 }
 
 static void
-float_up(heap_context ctx, int i, void *elt) {
-	int p;
+float_up(isc_heap_t *heap, unsigned int i, void *elt) {
+	unsigned int p;
 
-	for ( p = heap_parent(i); 
-	      i > 1 && ctx->higher_priority(elt, ctx->heap[p]);
-	      i = p, p = heap_parent(i) ) {
-		ctx->heap[i] = ctx->heap[p];
-		if (ctx->index != NULL)
-			(ctx->index)(ctx->heap[i], i);
+	for (p = heap_parent(i);
+	     i > 1 && heap->compare(elt, heap->array[p]);
+	     i = p, p = heap_parent(i)) {
+		heap->array[i] = heap->array[p];
+		if (heap->index != NULL)
+			(heap->index)(heap->array[i], i);
 	}
-	ctx->heap[i] = elt;
-	if (ctx->index != NULL)
-		(ctx->index)(ctx->heap[i], i);
+	heap->array[i] = elt;
+	if (heap->index != NULL)
+		(heap->index)(heap->array[i], i);
+
+	INSIST(HEAPCONDITION(i));
 }
 
 static void
-sink_down(heap_context ctx, int i, void *elt) {
-	int j, size, half_size;
-
-	size = ctx->heap_size;
+sink_down(isc_heap_t *heap, unsigned int i, void *elt) {
+	unsigned int j, size, half_size;
+	size = heap->last;
 	half_size = size / 2;
 	while (i <= half_size) {
-		/* find smallest of the (at most) two children */
+		/* Find the smallest of the (at most) two children. */
 		j = heap_left(i);
-		if (j < size && ctx->higher_priority(ctx->heap[j+1],
-						     ctx->heap[j]))
+		if (j < size && heap->compare(heap->array[j+1],
+					      heap->array[j]))
 			j++;
-		if (ctx->higher_priority(elt, ctx->heap[j]))
+		if (heap->compare(elt, heap->array[j]))
 			break;
-		ctx->heap[i] = ctx->heap[j];
-		if (ctx->index != NULL)
-			(ctx->index)(ctx->heap[i], i);
+		heap->array[i] = heap->array[j];
+		if (heap->index != NULL)
+			(heap->index)(heap->array[i], i);
 		i = j;
 	}
-	ctx->heap[i] = elt;
-	if (ctx->index != NULL)
-		(ctx->index)(ctx->heap[i], i);
+	heap->array[i] = elt;
+	if (heap->index != NULL)
+		(heap->index)(heap->array[i], i);
+
+	INSIST(HEAPCONDITION(i));
 }
 
-int
-heap_insert(heap_context ctx, void *elt) {
-	int i;
+isc_result_t
+isc_heap_insert(isc_heap_t *heap, void *elt) {
+	unsigned int i;
 
-	if (ctx == NULL || elt == NULL) {
-		errno = EINVAL;
-		return (-1);
-	}
+	REQUIRE(VALID_HEAP(heap));
 
-	i = ++ctx->heap_size;
-	if (ctx->heap_size >= ctx->array_size && heap_resize(ctx) < 0)
-		return (-1);
-	
-	float_up(ctx, i, elt);
+	i = ++heap->last;
+	if (heap->last >= heap->size && !resize(heap))
+		return (ISC_R_NOMEMORY);
 
-	return (0);
+	float_up(heap, i, elt);
+
+	return (ISC_R_SUCCESS);
 }
 
-int
-heap_delete(heap_context ctx, int i) {
+void
+isc_heap_delete(isc_heap_t *heap, unsigned int i) {
 	void *elt;
+	isc_boolean_t less;
 
-	if (ctx == NULL || i < 1 || i > ctx->heap_size) {
-		errno = EINVAL;
-		return (-1);
+	REQUIRE(VALID_HEAP(heap));
+	REQUIRE(i >= 1 && i <= heap->last);
+
+	if (i == heap->last) {
+		heap->last--;
+	} else {
+		elt = heap->array[heap->last--];
+		less = heap->compare(elt, heap->array[i]);
+		heap->array[i] = elt;
+		if (less)
+			float_up(heap, i, heap->array[i]);
+		else
+			sink_down(heap, i, heap->array[i]);
 	}
-
-	elt = ctx->heap[ctx->heap_size];
-	if (--ctx->heap_size > 0)
-		sink_down(ctx, i, elt);
-
-	return (0);
 }
 
-int
-heap_increased(heap_context ctx, int i) {
-     	if (ctx == NULL || i < 1 || i > ctx->heap_size) {
-		errno = EINVAL;
-		return (-1);
-	}
-	
-	float_up(ctx, i, ctx->heap[i]);
+void
+isc_heap_increased(isc_heap_t *heap, unsigned int i) {
+	REQUIRE(VALID_HEAP(heap));
+	REQUIRE(i >= 1 && i <= heap->last);
 
-	return (0);
+	float_up(heap, i, heap->array[i]);
 }
 
-int
-heap_decreased(heap_context ctx, int i) {
-     	if (ctx == NULL || i < 1 || i > ctx->heap_size) {
-		errno = EINVAL;
-		return (-1);
-	}
-	
-	sink_down(ctx, i, ctx->heap[i]);
+void
+isc_heap_decreased(isc_heap_t *heap, unsigned int i) {
+	REQUIRE(VALID_HEAP(heap));
+	REQUIRE(i >= 1 && i <= heap->last);
 
-	return (0);
+	sink_down(heap, i, heap->array[i]);
 }
 
 void *
-heap_element(heap_context ctx, int i) {
-	if (ctx == NULL || i < 1 || i > ctx->heap_size) {
-		errno = EINVAL;
-		return (NULL);
-	}
+isc_heap_element(isc_heap_t *heap, unsigned int i) {
+	REQUIRE(VALID_HEAP(heap));
+	REQUIRE(i >= 1 && i <= heap->last);
 
-	return (ctx->heap[i]);
+	return (heap->array[i]);
 }
 
-int
-heap_for_each(heap_context ctx, heap_for_each_func action, void *uap) {
-	int i;
+void
+isc_heap_foreach(isc_heap_t *heap, isc_heapaction_t action, void *uap) {
+	unsigned int i;
 
-	if (ctx == NULL || action == NULL) {
-		errno = EINVAL;
-		return (-1);
-	}
+	REQUIRE(VALID_HEAP(heap));
+	REQUIRE(action != NULL);
 
-	for (i = 1; i <= ctx->heap_size; i++)
-		(action)(ctx->heap[i], uap);
-	return (0);
+	for (i = 1; i <= heap->last; i++)
+		(action)(heap->array[i], uap);
 }
