@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.5 1999/06/09 07:33:29 nisimura Exp $	*/
+/* $NetBSD: machdep.h,v 1.6 1999/12/01 08:37:25 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -30,11 +30,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if 0
 /* the following is used externally (sysctl_hw) */
-extern char machine[];
-extern char cpu_model[];
-
-extern volatile struct chiptime *mcclock_addr;
+extern char machine[], machine_arch[], cpu_model[];
+#endif
 
 /* PROM callback routines - see pmax/promcall.c */
 void	 prom_findcons __P((int *, int *, int *));
