@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.45 2004/04/30 05:14:23 matt Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.46 2004/05/03 02:22:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.45 2004/04/30 05:14:23 matt Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.46 2004/05/03 02:22:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,7 @@ file_creat(ARCHD *arcn)
 	 */
 	if (arcn->nlen != 0 && arcn->name[arcn->nlen - 1] == '/') {
 		if (!warn_broken) {
-			tty_warn(1, "Archive was created with a broken tar;"
+			tty_warn(0, "Archive was created with a broken tar;"
 			    " file `%s' is a directory, but marked as plain.",
 			    arcn->name);
 			warn_broken = 1;
