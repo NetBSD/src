@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.30 2004/04/17 10:13:13 pk Exp $ */
+/*	$NetBSD: cache.h,v 1.31 2004/04/17 23:45:40 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -169,13 +169,14 @@ void	sun4_vcache_flush_region(int, int);	/* flush region in cur ctx */
 void	sun4_vcache_flush_segment(int, int, int);/* flush seg in cur ctx */
 void	sun4_vcache_flush_page(int va, int);	/* flush page in cur ctx */
 void	sun4_vcache_flush_page_hw(int va, int);	/* flush page in cur ctx */
-void	sun4_cache_flush(caddr_t, u_int, int);	/* flush region */
+void	sun4_cache_flush(caddr_t, u_int);	/* flush range */
 
 void	srmmu_vcache_flush_context(int);	/* flush current context */
 void	srmmu_vcache_flush_region(int, int);	/* flush region in cur ctx */
 void	srmmu_vcache_flush_segment(int, int, int);/* flush seg in cur ctx */
 void	srmmu_vcache_flush_page(int va, int);	/* flush page in cur ctx */
-void	srmmu_cache_flush(caddr_t, u_int, int);	/* flush region */
+void	srmmu_vcache_flush_range(int, int, int);
+void	srmmu_cache_flush(caddr_t, u_int);	/* flush range */
 
 /* `Fast trap' versions for use in cross-call cache flushes on MP systems */
 #if defined(MULTIPROCESSOR)
@@ -183,15 +184,17 @@ void	ft_srmmu_vcache_flush_context(int);	/* flush current context */
 void	ft_srmmu_vcache_flush_region(int, int);	/* flush region in cur ctx */
 void	ft_srmmu_vcache_flush_segment(int, int, int);/* flush seg in cur ctx */
 void	ft_srmmu_vcache_flush_page(int va, int);/* flush page in cur ctx */
+void	ft_srmmu_vcache_flush_range(int, int, int);/* flush range in cur ctx */
 #else
 #define ft_srmmu_vcache_flush_context	0
 #define ft_srmmu_vcache_flush_region	0
 #define ft_srmmu_vcache_flush_segment	0
 #define ft_srmmu_vcache_flush_page	0
+#define ft_srmmu_vcache_flush_range	0
 #endif /* MULTIPROCESSOR */
 
-void	ms1_cache_flush(caddr_t, u_int, int);
-void	viking_cache_flush(caddr_t, u_int, int);
+void	ms1_cache_flush(caddr_t, u_int);
+void	viking_cache_flush(caddr_t, u_int);
 void	viking_pcache_flush_page(paddr_t, int);
 void	srmmu_pcache_flush_line(int, int);
 void	hypersparc_pure_vcache_flush(void);
@@ -207,7 +210,8 @@ extern void sparc_noop(void);
 #define noop_vcache_flush_region	(void (*)(int,int))sparc_noop
 #define noop_vcache_flush_segment	(void (*)(int,int,int))sparc_noop
 #define noop_vcache_flush_page		(void (*)(int,int))sparc_noop
-#define noop_cache_flush		(void (*)(caddr_t,u_int,int))sparc_noop
+#define noop_vcache_flush_range		(void (*)(int,int,int))sparc_noop
+#define noop_cache_flush		(void (*)(caddr_t,u_int))sparc_noop
 #define noop_pcache_flush_page		(void (*)(paddr_t,int))sparc_noop
 #define noop_pure_vcache_flush		(void (*)(void))sparc_noop
 #define noop_cache_flush_all		(void (*)(void))sparc_noop
@@ -220,13 +224,13 @@ void	smp_vcache_flush_context(int);		/* flush current context */
 void	smp_vcache_flush_region(int,int);	/* flush region in cur ctx */
 void	smp_vcache_flush_segment(int, int, int);/* flush seg in cur ctx */
 void	smp_vcache_flush_page(int va,int);	/* flush page in cur ctx */
-void	smp_cache_flush(caddr_t, u_int, int);	/* flush region */
 
 
 #define cache_flush_page(va,ctx)	cpuinfo.vcache_flush_page(va,ctx)
 #define cache_flush_segment(vr,vs,ctx)	cpuinfo.vcache_flush_segment(vr,vs,ctx)
 #define cache_flush_region(vr,ctx)	cpuinfo.vcache_flush_region(vr,ctx)
 #define cache_flush_context(ctx)	cpuinfo.vcache_flush_context(ctx)
+#define cache_flush(va,len)		cpuinfo.cache_flush(va,len)
 
 #define pcache_flush_page(pa,flag)	cpuinfo.pcache_flush_page(pa,flag)
 

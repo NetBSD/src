@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.184 2004/04/17 10:01:11 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.185 2004/04/17 23:45:40 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.184 2004/04/17 10:01:11 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.185 2004/04/17 23:45:40 pk Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -529,7 +529,6 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 				continue;
 #define SET_CACHE_FUNC(x) \
 	if (cpi->x != __CONCAT(noop_,x)) cpi->x = __CONCAT(smp_,x)
-			SET_CACHE_FUNC(cache_flush);
 			SET_CACHE_FUNC(vcache_flush_page);
 			SET_CACHE_FUNC(vcache_flush_segment);
 			SET_CACHE_FUNC(vcache_flush_region);
@@ -1061,6 +1060,7 @@ struct module_info module_sun4 = {
 	sun4_vcache_flush_segment, NULL,
 	sun4_vcache_flush_region, NULL,
 	sun4_vcache_flush_context, NULL,
+	NULL, NULL,
 	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	noop_cache_flush_all,
@@ -1087,7 +1087,7 @@ getcacheinfo_sun4(sc, node)
 		ci->c_nlines = 0;
 
 		/* Override cache flush functions */
-		sc->sp_cache_flush = noop_cache_flush;
+		sc->cache_flush = noop_cache_flush;
 		sc->sp_vcache_flush_page = noop_vcache_flush_page;
 		sc->sp_vcache_flush_segment = noop_vcache_flush_segment;
 		sc->sp_vcache_flush_region = noop_vcache_flush_region;
@@ -1186,6 +1186,7 @@ struct module_info module_sun4c = {
 	sun4_vcache_flush_segment, NULL,
 	sun4_vcache_flush_region, NULL,
 	sun4_vcache_flush_context, NULL,
+	NULL, NULL,
 	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	noop_cache_flush_all,
@@ -1393,6 +1394,7 @@ struct module_info module_ms1 = {
 	noop_vcache_flush_segment, NULL,
 	noop_vcache_flush_region, NULL,
 	noop_vcache_flush_context, NULL,
+	noop_vcache_flush_range, NULL,
 	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	ms1_cache_flush_all,
@@ -1438,6 +1440,7 @@ struct module_info module_ms2 = {		/* UNTESTED */
 	srmmu_vcache_flush_segment, NULL,
 	srmmu_vcache_flush_region, NULL,
 	srmmu_vcache_flush_context, NULL,
+	srmmu_vcache_flush_range, NULL,
 	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	srmmu_cache_flush_all,
@@ -1464,6 +1467,7 @@ struct module_info module_swift = {
 	srmmu_vcache_flush_segment, NULL,
 	srmmu_vcache_flush_region, NULL,
 	srmmu_vcache_flush_context, NULL,
+	srmmu_vcache_flush_range, NULL,
 	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	srmmu_cache_flush_all,
@@ -1507,6 +1511,7 @@ struct module_info module_hypersparc = {
 	srmmu_vcache_flush_segment, ft_srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region, ft_srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context, ft_srmmu_vcache_flush_context,
+	srmmu_vcache_flush_range, ft_srmmu_vcache_flush_range,
 	noop_pcache_flush_page,
 	hypersparc_pure_vcache_flush,
 	hypersparc_cache_flush_all,
@@ -1573,6 +1578,7 @@ struct module_info module_cypress = {
 	srmmu_vcache_flush_segment, ft_srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region, ft_srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context, ft_srmmu_vcache_flush_context,
+	srmmu_vcache_flush_range, ft_srmmu_vcache_flush_range,
 	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	cypress_cache_flush_all,
@@ -1600,6 +1606,7 @@ struct module_info module_turbosparc = {
 	srmmu_vcache_flush_segment, NULL,
 	srmmu_vcache_flush_region, NULL,
 	srmmu_vcache_flush_context, NULL,
+	srmmu_vcache_flush_range, NULL,
 	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	srmmu_cache_flush_all,
@@ -1635,7 +1642,7 @@ cpumatch_turbosparc(sc, mp, node)
 	sc->mmu_enable = 0;
 	sc->cache_enable = 0;
 	sc->get_syncflt = 0;
-	sc->sp_cache_flush = 0;
+	sc->cache_flush = 0;
 	sc->sp_vcache_flush_page = 0;
 	sc->sp_vcache_flush_segment = 0;
 	sc->sp_vcache_flush_region = 0;
@@ -1677,6 +1684,7 @@ struct module_info module_viking = {
 	noop_vcache_flush_segment, NULL,
 	noop_vcache_flush_region, NULL,
 	noop_vcache_flush_context, NULL,
+	noop_vcache_flush_range, NULL,
 	viking_pcache_flush_page,
 	noop_pure_vcache_flush,
 	noop_cache_flush_all,
@@ -1872,6 +1880,7 @@ struct module_info module_viking_sun4d = {
 	noop_vcache_flush_segment, NULL,
 	noop_vcache_flush_region, NULL,
 	noop_vcache_flush_context, NULL,
+	noop_vcache_flush_range, NULL,
 	viking_pcache_flush_page,
 	noop_pure_vcache_flush,
 	noop_cache_flush_all,
@@ -2048,15 +2057,17 @@ getcpuinfo(sc, node)
 		MPCOPY(cache_enable);
 		MPCOPY(get_syncflt);
 		MPCOPY(get_asyncflt);
-		MPCOPY(sp_cache_flush);
+		MPCOPY(cache_flush);
 		MPCOPY(sp_vcache_flush_page);
 		MPCOPY(sp_vcache_flush_segment);
 		MPCOPY(sp_vcache_flush_region);
 		MPCOPY(sp_vcache_flush_context);
+		MPCOPY(sp_vcache_flush_range);
 		MPCOPY(ft_vcache_flush_page);
 		MPCOPY(ft_vcache_flush_segment);
 		MPCOPY(ft_vcache_flush_region);
 		MPCOPY(ft_vcache_flush_context);
+		MPCOPY(ft_vcache_flush_range);
 		MPCOPY(pcache_flush_page);
 		MPCOPY(pure_vcache_flush);
 		MPCOPY(cache_flush_all);
@@ -2068,7 +2079,6 @@ getcpuinfo(sc, node)
 		 * Use the single-processor cache flush functions until
 		 * all CPUs are initialized.
 		 */
-		sc->cache_flush = sc->sp_cache_flush;
 		sc->vcache_flush_page = sc->sp_vcache_flush_page;
 		sc->vcache_flush_segment = sc->sp_vcache_flush_segment;
 		sc->vcache_flush_region = sc->sp_vcache_flush_region;
