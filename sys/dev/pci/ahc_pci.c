@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.17 1998/03/16 15:39:13 leo Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.18 1998/06/08 06:55:54 thorpej Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -259,11 +259,7 @@ aic7870_probe (pcici_t tag, pcidi_t type)
 
 #elif defined(__NetBSD__)
 
-#ifdef	__BROKEN_INDIRECT_CONFIG
-int ahc_pci_probe __P((struct device *, void *, void *));
-#else
 int ahc_pci_probe __P((struct device *, struct cfdata *, void *));
-#endif
 void ahc_pci_attach __P((struct device *, struct device *, void *));
 
 struct cfattach ahc_pci_ca = {
@@ -273,11 +269,7 @@ struct cfattach ahc_pci_ca = {
 int
 ahc_pci_probe(parent, match, aux)
         struct device *parent;
-#ifdef	__BROKEN_INDIRECT_CONFIG
-        void *match;
-#else
         struct cfdata *match;
-#endif
         void *aux; 
 {       
         struct pci_attach_args *pa = aux;
