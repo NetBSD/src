@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: aha1542.c,v 1.26 1994/04/08 18:22:15 mycroft Exp $
+ *	$Id: aha1542.c,v 1.27 1994/04/21 03:37:19 mycroft Exp $
  */
 
 /*
@@ -983,9 +983,9 @@ aha_find(aha)
 	 * Initialize memory transfer speed
 	 * Not compiled in by default because it breaks some machines 
 	 */
-	if (!(aha_set_bus_speed(aha)))
+	if (!aha_set_bus_speed(aha))
 		return EIO;
-#endif	/*TUNE_1542*/
+#endif /* TUNE_1542 */
 
 	return 0;
 }
@@ -1278,7 +1278,7 @@ aha_poll(aha, xs, ccb)
 
 }
 
-#ifdef	TUNE_1542
+#ifdef TUNE_1542
 /*
  * Try all the speeds from slowest to fastest.. if it finds a
  * speed that fails, back off one notch from the last working
@@ -1287,58 +1287,50 @@ aha_poll(aha, xs, ccb)
  * or 0 if it could get a working speed (or the NEXT speed 
  * failed)
  */
-static	struct bus_speed
-{
-	char	arg;
-	int	nsecs;
-}	aha_bus_speeds[] =
-{
-	{0x88,100},
-	{0x99,150},
-	{0xaa,200},
-	{0xbb,250},
-	{0xcc,300},
-	{0xdd,350},
-	{0xee,400},
-	{0xff,450}
+static struct bus_speed {
+	u_char arg;
+	int nsecs;
+} aha_bus_speeds[] = {
+	{0x88, 100},
+	{0x99, 150},
+	{0xaa, 200},
+	{0xbb, 250},
+	{0xcc, 300},
+	{0xdd, 350},
+	{0xee, 400},
+	{0xff, 450}
 };
 
 int	
 aha_set_bus_speed(aha)
 	struct aha_softc *aha;
 {
-	int	speed;
-	int	lastworking;
-	int	retval,retval2;
+	int speed;
+	int lastworking;
 
 	lastworking = -1;
-	speed = 7;
-	while (1) {
-		retval = aha_bus_speed_check(aha, speed);
-		if (retval != 0)
-			lastworking = speed;
-		if ((retval == 0) || (speed == 0)) {
-			if (lastworking == -1) {
-				printf("No working bus speed for aha154X\n");
-				return 0;
-			}
-			printf("%d nSEC ok, using "
-				,aha_bus_speeds[lastworking].nsecs);
-			if (lastworking == 7)	/* is slowest already */
-				printf("marginal ");
-			else
-				lastworking++;
-			retval2 = aha_bus_speed_check(aha, lastworking);
-			if (retval2 == 0) {
-				printf("test retry failed.. aborting.\n");
-				return 0;
-			}
-			printf("%d nSEC\n",retval2);
-			return retval2 ;
-
-		}
-		speed--;
+	for (speed = 7; speed >= 0; speed--) {
+		if (!aha_bus_speed_check(aha, speed))
+			break;
+		lastworking = speed;
 	}
+	if (lastworking == -1) {
+		printf("no working bus speed\n");
+		return 0;
+	}
+	printf("%d nsec ", aha_bus_speeds[lastworking].nsecs);
+	if (lastworking == 7)	/* is slowest already */
+		printf("marginal\n");
+	else {
+		lastworking++;
+		printf("ok, using %d nsec\n",
+		    aha_bus_speeds[lastworking].nsecs);
+	}
+	if (!aha_bus_speed_check(aha, lastworking)) {
+		printf("test retry failed.. aborting.\n");
+		return 0;
+	}
+	return 1;
 }
 
 /*
@@ -1346,7 +1338,8 @@ aha_set_bus_speed(aha)
  * fails return 0, if it succeeds return the nSec value selected
  * If there is no such speed return HAD_ERROR.
  */
-static char aha_test_string[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdefghijklmnopqrstuvwxyz!@";
+static char aha_test_string[] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdefghijklmnopqrstuvwxyz!@";
 
 int 
 aha_bus_speed_check(aha, speed)
@@ -1358,12 +1351,6 @@ aha_bus_speed_check(aha, speed)
 	u_char ad[3];
 
 	/*
-	 * Check we have such an entry
-	 */
-	if (speed >= numspeeds)
-		return HAD_ERROR;	/* illegal speed */
-
-	/*
 	 * Set the dma-speed
 	 */
 	aha_cmd(aha, 1, 0, 0, 0, AHA_SPEED_SET, aha_bus_speeds[speed].arg);
@@ -1372,33 +1359,33 @@ aha_bus_speed_check(aha, speed)
 	 * put the test data into the buffer and calculate
 	 * it's address. Read it onto the board
 	 */
-	lto3b(KVTOPHYS(aha_scratch_buf), ad);
-	for (loopcount = 2000; loopcount; loopcount--) {
-		strcpy(aha_scratch_buf, aha_test_string);
-
+	for (loopcount = 100; loopcount; loopcount--) {
+		lto3b(KVTOPHYS(aha_test_string), ad);
 		aha_cmd(aha, 3, 0, 0, 0, AHA_WRITE_FIFO, ad[0], ad[1], ad[2]);
 
 		/*
-	 	* clear the buffer then copy the contents back from the
-	 	* board.
-	 	*/
-		bzero(aha_scratch_buf, 54);	/* 54 bytes transfered by test */
+		 * Clear the buffer then copy the contents back from the
+		 * board.
+		 */
+		bzero(aha_scratch_buf, 54);
 	
+		lto3b(KVTOPHYS(aha_scratch_buf), ad);
 		aha_cmd(aha, 3, 0, 0, 0, AHA_READ_FIFO, ad[0], ad[1], ad[2]);
 	
 		/*
-	 	* Compare the original data and the final data and
-	 	* return the correct value depending upon the result
-	 	*/
-		if (strcmp(aha_test_string, aha_scratch_buf)) 	
+		 * Compare the original data and the final data and return the
+		 * correct value depending upon the result.  We only check the
+		 * first 54 bytes, because that's all the board copies during
+		 * WRITE_FIFO and READ_FIFO.
+		 */
+		if (memcmp(aha_test_string, aha_scratch_buf, 54))
 			return 0; /* failed test */
 	}
-			/* copy succeded assume speed ok */
 
-	return aha_bus_speeds[speed].nsecs;
-	
+	/* copy succeeded; assume speed ok */
+	return 1;
 }
-#endif	/*TUNE_1542*/
+#endif /* TUNE_1542 */
 
 void
 aha_timeout(arg)
