@@ -1,4 +1,4 @@
-/*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
+/* $NetBSD: vga.c,v 1.4 1997/04/06 22:56:00 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>
