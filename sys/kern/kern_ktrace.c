@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.54 2001/06/14 20:32:47 thorpej Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.54.2.1 2001/07/10 13:51:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -86,6 +86,7 @@ ktrderef(struct proc *p)
 	if (fp == NULL)
 		return;
 	FILE_USE(fp);
+/* XXXLUKEM: knote_fdclose here ??? */
 	closef(fp, NULL);
 
 	p->p_tracep = NULL;
