@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.13 2000/02/11 19:25:14 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.14 2000/11/14 19:01:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,6 +50,15 @@
 /*
  * Machine dependent constants for HP300
  */
+
+/*
+ * We use 8K pages on the Atari.  Override the PAGE_* definitions
+ * to be compile-time constants.
+ */
+#define	PAGE_SHIFT	13
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
+
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK
  * is the top (end) of the user stack.  LOWPAGES and HIGHPAGES are
