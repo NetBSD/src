@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.26 1997/06/21 04:38:54 mellon Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.27 1997/06/21 18:01:35 cjs Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.26 1997/06/21 04:38:54 mellon Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.27 1997/06/21 18:01:35 cjs Exp $");
 #endif
 #endif /* not lint */
 
@@ -171,7 +171,8 @@ char	proctitle[BUFSIZ];	/* initial part of title */
 			*(file) == '/' ? "" : curdir(), file); \
 		else \
 		    syslog(LOG_INFO, "%s %s%s = %qd bytes", \
-			cmd, (*(file) == '/') ? "" : curdir(), file, cnt); \
+			cmd, (*(file) == '/') ? "" : curdir(), file, \
+			(long long)cnt); \
 	}
 
 static void	 ack __P((char *));
@@ -938,7 +939,7 @@ dataconn(name, size, mode)
 	file_size = size;
 	byte_count = 0;
 	if (size != (off_t) -1)
-		(void) sprintf(sizebuf, " (%qd bytes)", size);
+		(void) sprintf(sizebuf, " (%qd bytes)", (long long)size);
 	else
 		(void) strcpy(sizebuf, "");
 	if (pdata >= 0) {
