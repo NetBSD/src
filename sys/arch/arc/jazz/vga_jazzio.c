@@ -1,4 +1,4 @@
-/* $NetBSD: vga_jazzio.c,v 1.4 2000/12/24 09:25:30 ur Exp $ */
+/* $NetBSD: vga_jazzio.c,v 1.5 2001/06/13 15:12:28 soda Exp $ */
 /* NetBSD: vga_isa.c,v 1.3 1998/06/12 18:45:48 drochner Exp  */
 
 /*
@@ -33,14 +33,19 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
+
+#include <mips/pte.h>
 
 #include <dev/ic/mc6845reg.h>
 #include <dev/ic/pcdisplayvar.h>
 #include <dev/ic/vgareg.h>
 #include <dev/ic/vgavar.h>
+
+#include <arc/arc/wired_map.h>
 #include <arc/jazz/jazziovar.h>
 #include <arc/jazz/pica.h>
 #include <arc/jazz/vga_jazziovar.h>
@@ -57,7 +62,7 @@ struct vga_jazzio_softc {
 #endif
 };
 
-void	vga_jazzio_init_tag __P((bus_space_tag_t *, bus_space_tag_t *));
+int	vga_jazzio_init_tag __P((char*, bus_space_tag_t *, bus_space_tag_t *));
 paddr_t	vga_jazzio_mmap __P((void *, off_t, int));
 int	vga_jazzio_match __P((struct device *, struct cfdata *, void *));
 void	vga_jazzio_attach __P((struct device *, struct device *, void *));
@@ -66,24 +71,45 @@ struct cfattach vga_jazzio_ca = {
 	sizeof(struct vga_jazzio_softc), vga_jazzio_match, vga_jazzio_attach,
 };
 
-void
-vga_jazzio_init_tag(iotp, memtp)
+int
+vga_jazzio_init_tag(name, iotp, memtp)
+	char *name;
 	bus_space_tag_t *iotp, *memtp;
 {
 	static int initialized = 0;
 	static struct arc_bus_space vga_io, vga_mem;
 
+	if (strcmp(name, "ALI_S3") != 0)
+		return(ENXIO);
+
 	if (!initialized) {
 		initialized = 1;
+
 		arc_bus_space_init(&vga_io, "vga_jazzio_io",
 		    PICA_P_LOCAL_VIDEO_CTRL, PICA_V_LOCAL_VIDEO_CTRL,
 		    0, PICA_S_LOCAL_VIDEO_CTRL);
 		arc_bus_space_init(&vga_mem, "vga_jazzio_mem",
 		    PICA_P_LOCAL_VIDEO, PICA_V_LOCAL_VIDEO,
 		    0, PICA_S_LOCAL_VIDEO);
+
+		arc_enter_wired(PICA_V_LOCAL_VIDEO_CTRL,
+		    PICA_P_LOCAL_VIDEO_CTRL,
+		    PICA_P_LOCAL_VIDEO_CTRL + PICA_S_LOCAL_VIDEO_CTRL/2,
+		    MIPS3_PG_SIZE_1M);
+		arc_enter_wired(PICA_V_LOCAL_VIDEO,
+		    PICA_P_LOCAL_VIDEO,
+		    PICA_P_LOCAL_VIDEO + PICA_S_LOCAL_VIDEO/2,
+		    MIPS3_PG_SIZE_4M);
+#if 0
+		arc_enter_wired(PICA_V_EXTND_VIDEO_CTRL,
+		    PICA_P_EXTND_VIDEO_CTRL,
+		    PICA_P_EXTND_VIDEO_CTRL + PICA_S_EXTND_VIDEO_CTRL/2,
+		    MIPS3_PG_SIZE_1M);
+#endif
 	}
 	*iotp = &vga_io;
 	*memtp = &vga_mem;
+	return (0);
 }
 
 paddr_t
@@ -110,10 +136,9 @@ vga_jazzio_match(parent, match, aux)
 	struct jazzio_attach_args *ja = aux;
 	bus_space_tag_t iot, memt;
 
-	if(strcmp(ja->ja_name, "vga") != 0)
-		return(0);
+	if (vga_jazzio_init_tag(ja->ja_name, &iot, &memt))
+		return (0);
 
-	vga_jazzio_init_tag(&iot, &memt);
 	if (!vga_is_console(iot, WSDISPLAY_TYPE_JAZZVGA) &&
 	    !vga_common_probe(iot, memt))
 		return (0);
@@ -129,20 +154,23 @@ vga_jazzio_attach(parent, self, aux)
 #if 0
 	struct vga_jazzio_softc *sc = (struct vga_jazzio_softc *)self;
 #endif
+	struct jazzio_attach_args *ja = aux;
 	bus_space_tag_t iot, memt;
 
 	printf("\n");
 
-	vga_jazzio_init_tag(&iot, &memt);
+	vga_jazzio_init_tag(ja->ja_name, &iot, &memt);
 	vga_common_attach(self, iot, memt, WSDISPLAY_TYPE_JAZZVGA,
 	    vga_jazzio_mmap);
 }
 
 int
-vga_jazzio_cnattach()
+vga_jazzio_cnattach(name)
+	char *name;
 {
 	bus_space_tag_t iot, memt;
 
-	vga_jazzio_init_tag(&iot, &memt);
+	if (vga_jazzio_init_tag(name, &iot, &memt))
+		return (ENXIO);
 	return (vga_cnattach(iot, memt, WSDISPLAY_TYPE_JAZZVGA, 1));
 }
