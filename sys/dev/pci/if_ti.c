@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.43 2001/11/13 07:48:45 lukem Exp $ */
+/* $NetBSD: if_ti.c,v 1.44 2001/11/26 02:41:20 itojun Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.43 2001/11/13 07:48:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.44 2001/11/26 02:41:20 itojun Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -2029,6 +2029,7 @@ static void ti_rxeof(sc)
 
 		eh = mtod(m, struct ether_header *);
 		switch (ntohs(eh->ether_type)) {
+#ifdef INET
 		case ETHERTYPE_IP:
 		    {
 			struct ip *ip = (struct ip *) (eh + 1);
@@ -2067,6 +2068,7 @@ static void ti_rxeof(sc)
 			}
 			break;
 		    }
+#endif
 		default:
 			/* Nothing. */
 			break;
