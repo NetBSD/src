@@ -1,4 +1,5 @@
-/* $NetBSD: maplevar.h,v 1.4 2001/05/26 19:04:40 marcus Exp $ */
+/*	$NetBSD: mapleio.h,v 1.1 2001/05/26 19:04:39 marcus Exp $	*/
+
 /*-
  * Copyright (c) 2001 Marcus Comstedt
  * All rights reserved.
@@ -31,27 +32,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/bus.h>
+#ifndef _DREAMCAST_DEV_MAPLE_MAPLEIO_H_
+#define _DREAMCAST_DEV_MAPLE_MAPLEIO_H_
 
-struct maple_softc {
-	struct device sc_dev;
+/*
+ * Maple (maple, mmc) exported interfaces
 
-	struct callout maple_callout_ch;
-	int maple_commands_pending;
+ * Ioctls are all in group 'M'.  Ioctl number space is partitioned like:
+ *	0-31	generic ioctls (MAPLEIO)
+ */
 
-	int sc_port_units[MAPLE_PORTS];
-	int sc_port_units_open[MAPLE_PORTS];
+#include <sys/types.h>
+#include <sys/ioccom.h>
+#include <dreamcast/dev/maple/maple.h>
 
-	struct maple_unit sc_unit[MAPLE_PORTS][MAPLE_SUBUNITS];
 
-	u_int32_t *sc_txbuf;	/* start of allocated transmit buffer */
-	u_int32_t *sc_txpos;	/* current write position in tx buffer */
-	u_int32_t *sc_txlink;   /* start of last written frame */
+/*
+ * Generic ioctls (0 - 31)
+ */
 
-	/* start of each receive buffer */
-	u_int32_t *sc_rxbuf[MAPLE_PORTS][MAPLE_SUBUNITS];
+/* get devinfo */
+#define MAPLEIO_GDEVINFO	_IOR('M', 0, struct maple_devinfo)
 
-	u_int32_t sc_txbuf_phys;	/* 29-bit physical address */
-  	u_int32_t sc_rxbuf_phys[MAPLE_PORTS][MAPLE_SUBUNITS];
-};
 
+#endif /* _DREAMCAST_DEV_MAPLE_MAPLEIO_H_ */
