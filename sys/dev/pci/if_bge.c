@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.47 2003/08/23 20:37:18 cjep Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.48 2003/08/26 10:17:02 hannken Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.47 2003/08/23 20:37:18 cjep Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.48 2003/08/26 10:17:02 hannken Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2803,7 +2803,7 @@ bge_cksum_pad(struct mbuf *pkt)
 	}
 
 #ifdef DEBUG
-	  KASSERT(M_WRITABLE(last) /*, ("to-pad mbuf not writeable\n")*/ );
+	  /*KASSERT(M_WRITABLE(last), ("to-pad mbuf not writeable\n"));*/
 	  KASSERT(M_TRAILINGSPACE(last) >= padlen /*, ("insufficient space to pad\n")*/ );
 #endif
 	/* Now zero the pad area, to avoid the bge cksum-assist bug */
