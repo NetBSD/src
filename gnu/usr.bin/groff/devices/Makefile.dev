@@ -5,7 +5,10 @@
 
 .include "../../Makefile.cfg"
 
-DEVICEDIR?=	$(fontdir)/dev$(DEVICE)
+# XXX -- this depends on ../include/defs.h
+FONTDIR=	/usr/share/groff_font
+
+DEVICEDIR?=	$(DESTDIR)$(FONTDIR)/dev$(DEVICE)
 FONTOWN?=	bin
 FONTGRP?=	bin
 FONTMODE?=	444
@@ -43,18 +46,13 @@ cleandir:
 
 .if !target(install)
 install:
-	-if test ! -d $(DESTDIR)$(DEVICEDIR); then \
-		install -d -o $(BINOWN) -g $(BINGRP) -m 755 \
-			$(DESTDIR)$(DEVICEDIR); \
-	fi
+	install -d -o $(BINOWN) -g $(BINGRP) -m 755 $(DEVICEDIR)
 	-if test -d $(.CURDIR)/generate; then \
-		if test ! -d $(DESTDIR)$(DEVICEDIR)/generate; then \
-			install -d -o $(BINOWN) -g $(BINGRP) -m 755 \
-				$(DESTDIR)$(DEVICEDIR)/generate; \
-		fi; \
+		install -d -o $(BINOWN) -g $(BINGRP) -m 755 \
+			$(DEVICEDIR)/generate; \
 	fi
 	-for f in $(FONTFILES); do \
 		install -c -o $(FONTOWN) -g $(FONTGRP) -m $(FONTMODE) $$f \
-			$(DESTDIR)$(DEVICEDIR)/$$f; \
+			$(DEVICEDIR)/$$f; \
 	done
 .endif
