@@ -1,5 +1,5 @@
-.\" Copyright (c) 1983, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1983, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +29,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)gprof.1	6.8 (Berkeley) 7/24/91
-.\"	$Id: gprof.1,v 1.3 1994/01/11 02:26:28 jtc Exp $
+.\"	from: @(#)gprof.1	8.1 (Berkeley) 6/6/93
+.\"	$Id: gprof.1,v 1.4 1994/05/17 03:35:59 cgd Exp $
 .\"
-.Dd July 24, 1991
+.Dd June 6, 1993
 .Dt GPROF 1
 .Os BSD 4.2
 .Sh NAME
@@ -78,11 +78,11 @@ Cycles are discovered, and calls into a cycle are made to share the time
 of the cycle.
 The first listing shows the functions
 sorted according to the time they represent
-including the time of their call graph descendants.
+including the time of their call graph descendents.
 Below each function entry is shown its (direct) call graph children,
 and how their times are propagated to this function.
 A similar display above the function shows how this function's time and the
-time of its descendants is propagated to its (direct) call graph parents.
+time of its descendents is propagated to its (direct) call graph parents.
 .Pp
 Cycles are also shown, with an entry for the cycle as a whole and
 a listing of the members of the cycle and their contributions to the
@@ -92,9 +92,9 @@ Second, a flat profile is given,
 similar to that provided by
 .Xr prof  1  .
 This listing gives the total execution times, the call counts,
-the time in milliseconds the call spent in the routine itself, and
-the time in milliseconds the call spent in the routine itself including
-its descendants.
+the time in milleseconds the call spent in the routine itself, and
+the time in milleseconds the call spent in the routine itself including
+its descendents.
 .Pp
 Finally, an index of the function names is provided.
 .Pp
@@ -114,6 +114,14 @@ The static call graph of the program is discovered by a heuristic
 that examines the text space of the object file.
 Static-only parents or children are shown
 with call counts of 0.
+.It Fl C Ar count
+Find a minimal set of arcs that can be broken to eliminate all cycles with
+.Ar count
+or more members.
+Caution: the algorithm used to break cycles is exponential,
+so using this option may cause 
+.Nm gprof
+to run for a very long time.
 .It Fl e Ar name 
 Suppresses the printing of the graph profile entry for routine
 .Ar name

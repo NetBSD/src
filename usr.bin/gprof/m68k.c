@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Id: m68k.c,v 1.1 1993/12/06 05:28:42 cgd Exp $";
+static char rcsid[] = "$Id: m68k.c,v 1.2 1994/05/17 03:36:10 cgd Exp $";
 #endif /* not lint */
 
 #include "gprof.h"
