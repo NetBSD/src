@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah.c,v 1.22 1996/10/13 03:07:14 christos Exp $ */
+/*	$NetBSD: if_bah.c,v 1.23 1996/11/18 08:49:30 is Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -1094,38 +1094,40 @@ bahintr(arg)
 			    sc->sc_dev.dv_xname);
 			/*
 			 * restart receiver on same buffer.
+			 * XXX maybe better reset interface?
 			 */
 			sc->sc_base->command = ARC_RXBC(buffer);
 
-		} else if (++sc->sc_rx_fillcount > 1) {
-			sc->sc_intmask &= ~ARC_RI;
-			sc->sc_base->status = sc->sc_intmask;
-		} else {
-
-			buffer ^= 1;
-			sc->sc_rx_act = buffer;
-
-			/*
-			 * Start receiver on other receive buffer.
-			 * This also clears the RI interupt flag.
-			 */
-			sc->sc_base->command = ARC_RXBC(buffer);
-			/* we are in the RX intr, so mask is ok for RX */
+		} else { 
+			if (++sc->sc_rx_fillcount > 1) {
+				sc->sc_intmask &= ~ARC_RI;
+				sc->sc_base->status = sc->sc_intmask;
+			} else {
+				buffer ^= 1;
+				sc->sc_rx_act = buffer;
+	
+				/*
+				 * Start receiver on other receive buffer.
+				 * This also clears the RI interupt flag.
+				 */
+				sc->sc_base->command = ARC_RXBC(buffer);
+				/* in the RX intr, so mask is ok for RX */
 
 #ifdef BAH_DEBUG
-			printf("%s: started rx for buffer %ld, status 0x%02x\n",
-			    sc->sc_dev.dv_xname, sc->sc_rx_act,
-			    sc->sc_base->status);
+				printf("%s: strtd rx buf %ld, stat 0x%02x\n",
+				    sc->sc_dev.dv_xname, sc->sc_rx_act,
+				    sc->sc_base->status);
 #endif
-		}
+			}
 
 #ifdef BAHSOFTCOPY
-		/* this one starts a soft int to copy out of the hw */
-		add_sicallback((sifunc_t)bah_srint, sc,NULL);
+			/* this one starts a soft int to copy out of the hw */
+			add_sicallback((sifunc_t)bah_srint, sc,NULL);
 #else
-		/* this one does the copy here */
-		bah_srint(sc,NULL);
+			/* this one does the copy here */
+			bah_srint(sc,NULL);
 #endif
+		}
 	}
 
 	if (maskedisr & ARC_TA) 
