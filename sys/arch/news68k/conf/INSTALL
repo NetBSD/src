@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.16 2002/03/10 19:56:44 lukem Exp $
+# 	$NetBSD: INSTALL,v 1.17 2002/04/02 05:30:46 lukem Exp $
 
 #	config for bootable floppy kernel
 #
@@ -16,7 +16,7 @@ options 	CPU_SINGLE		# Will IOP be supported eventually?
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_SIZE=2880	# 1.44 Megabytes
+options 	MEMORY_DISK_ROOT_SIZE=2880	# 1.44 Megabytes
 
 # Standard system options
 #options 	KTRACE			# system call tracing support

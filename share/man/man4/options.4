@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.166 2002/03/23 09:56:58 jdolecek Exp $
+.\"	$NetBSD: options.4,v 1.167 2002/04/02 05:30:34 lukem Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -811,7 +811,7 @@ Forces the
 disk to be the root device.
 This can only be overridden when
 the kernel is booted in the 'ask-for-root' mode.
-.It Cd options MEMORY_DISK_SIZE=integer
+.It Cd options MEMORY_DISK_ROOT_SIZE=integer
 Allocates the given number of 512 byte blocks as memory for the
 .Xr md 4
 .Tn RAM

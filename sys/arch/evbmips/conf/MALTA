@@ -1,9 +1,9 @@
-#	$NetBSD: MALTA,v 1.3 2002/03/23 14:51:28 simonb Exp $
+#	$NetBSD: MALTA,v 1.4 2002/04/02 05:30:40 lukem Exp $
 
 #include 	"arch/evbmips/conf/std.malta.eb"	# big-endian mode
 include 	"arch/evbmips/conf/std.malta.el"	# little-endian mode
 
-#ident 		"GENERIC-$Revision: 1.3 $"
+#ident 		"GENERIC-$Revision: 1.4 $"
 
 maxusers	32
 
@@ -15,8 +15,8 @@ options 	SOFTFLOAT	# emulate FPU insn
 # options 	MEMORY_DISK_HOOKS
 # options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 # options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-# options 	MEMORY_DISK_SIZE=6144	# size of memory disk, in blocks
-#options 	MEMORY_DISK_SIZE=16384	# size of memory disk, in blocks
+# options 	MEMORY_DISK_ROOT_SIZE=6144	# size of memory disk, in blocks
+#options 	MEMORY_DISK_ROOT_SIZE=16384	# size of memory disk, in blocks
 
 # Standard system options
 options 	KTRACE		# system call tracing support
