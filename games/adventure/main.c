@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 1996/05/21 21:53:09 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.6 1997/08/11 14:06:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,17 +38,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/2/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.5 1996/05/21 21:53:09 mrg Exp $";
+__RCSID("$NetBSD: main.c,v 1.6 1997/08/11 14:06:16 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,8 +57,11 @@ static char rcsid[] = "$NetBSD: main.c,v 1.5 1996/05/21 21:53:09 mrg Exp $";
 #include <sys/file.h>
 #include <signal.h>
 #include <stdio.h>
+#include <unistd.h>
 #include "hdr.h"
+#include "extern.h"
 
+int
 main(argc,argv)
 int argc;
 char **argv;
@@ -66,13 +69,12 @@ char **argv;
 	register int i;
 	int rval,ll;
 	struct text *kk;
-	extern trapdel();
 
 	/* adventure doesn't need setuid-ness, so, just get rid of it */
 	if (setuid(getuid()) < 0)
 		perror("setuid");
 
-	init();         /* Initialize everything */
+	init(NULL);         /* Initialize everything */
 	signal(SIGINT,trapdel);
 
 	if (argc > 1)   /* Restore file specified */
@@ -117,7 +119,10 @@ char **argv;
 			}
 			kk = &rtext[16];
 		}
-	l2001:  if (toting(bear)) rspeak(141);  /* 2001                 */
+#if 0
+	l2001:
+#endif
+		if (toting(bear)) rspeak(141);  /* 2001                 */
 		speak(kk);
 		k=1;
 		if (forced(loc))
@@ -125,7 +130,7 @@ char **argv;
 		if (loc==33 && pct(25)&&!closng) rspeak(8);
 		if (!dark(0))
 		{       abb[loc]++;
-			for (i=atloc[loc]; i!=0; i=link[i])     /*2004  */
+			for (i=atloc[loc]; i!=0; i=links[i])     /*2004  */
 			{       obj=i;
 				if (obj>100) obj -= 100;
 				if (obj==steps && toting(nugget)) continue;
@@ -222,11 +227,11 @@ char **argv;
 		if ((!weq(wd1,"water")&&!weq(wd1,"oil"))
 		    || (!weq(wd2,"plant")&&!weq(wd2,"door")))
 			goto l2610;
-		if (at(vocab(wd2,1))) copystr("pour",wd2);
+		if (at(vocab(wd2,1,0))) copystr("pour",wd2);
 
 	l2610:  if (weq(wd1,"west"))
 			if (++iwest==10) rspeak(17);
-	l2630:  i=vocab(wd1,-1);
+	l2630:  i=vocab(wd1,-1,0);
 		if (i== -1)
 		{       spk=60;                 /* 3000         */
 			if (pct(20)) spk=61;
@@ -266,10 +271,12 @@ char **argv;
 		if (*wd2!=0 && verb!=say) goto l2800;
 		if (verb==say) obj= *wd2;
 		if (obj!=0) goto l4090;
+#if 0
 	l4080:
+#endif
 		switch(verb)
 		{   case 1:                     /* take = 8010          */
-			if (atloc[loc]==0||link[atloc[loc]]!=0) goto l8000;
+			if (atloc[loc]==0||links[atloc[loc]]!=0) goto l8000;
 			for (i=1; i<=5; i++)
 				if (dloc[i]==loc&&dflag>=2) goto l8000;
 			obj=atloc[loc];
@@ -332,7 +339,7 @@ char **argv;
 			if (gaveup) done(2);
 			goto l2012;
 		    case 25:                    /* foo: 8250            */
-			k=vocab(wd1,3);
+			k=vocab(wd1,3,0);
 			spk=42;
 			if (foobar==1-k) goto l8252;
 			if (foobar!=0) spk=151;
@@ -397,7 +404,10 @@ char **argv;
 			    case 2012: goto l2012;
 			    default: bug(105);
 			}
-	l9030:      case 3:
+#if 0
+	l9030:
+#endif
+		    case 3:
 			switch(trsay())
 			{   case 2012: goto l2012;
 			    case 2630: goto l2630;
@@ -536,7 +546,10 @@ char **argv;
 				||!closed) goto l2011;
 			hinted[2]=yes(192,193,54);
 			goto l2012;
-	l9280:      case 28:                    /* break                */
+#if 0
+	l9280:
+#endif
+		    case 28:                    /* break                */
 			if (obj==mirror) spk=148;
 			if (obj==vase&&prop[vase]==0)
 			{       spk=198;
@@ -548,8 +561,10 @@ char **argv;
 			if (obj!=mirror||!closed) goto l2011;
 			rspeak(197);
 			done(3);
-
-	l9290:      case 29:                    /* wake                 */
+#if 0
+	l9290:
+#endif
+		    case 29:                    /* wake                 */
 			if (obj!=dwarf||!closed) goto l2011;
 			rspeak(199);
 			done(3);

@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.3 1995/04/24 12:21:37 cgd Exp $	*/
+/*	$NetBSD: io.c,v 1.4 1997/08/11 14:06:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,21 +38,25 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: io.c,v 1.3 1995/04/24 12:21:37 cgd Exp $";
+__RCSID("$NetBSD: io.c,v 1.4 1997/08/11 14:06:15 christos Exp $");
 #endif
 #endif /* not lint */
 
 /*      Re-coding of advent in C: file i/o and user i/o                 */
 
-#include "hdr.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include "hdr.h"
+#include "extern.h"
 
 
+void
 getin(wrd1,wrd2)                        /* get command from user        */
 char **wrd1,**wrd2;                     /* no prompt, usually           */
 {       register char *s;
@@ -95,7 +99,7 @@ char **wrd1,**wrd2;                     /* no prompt, usually           */
 	}
 }
 
-
+int
 confirm(mesg)                           /* confirm irreversible action  */
 char *mesg;
 {       register int result;
@@ -107,9 +111,10 @@ char *mesg;
 	return(result);
 }
 
+int
 yes(x,y,z)                              /* confirm with rspeak          */
 int x,y,z;
-{       register int result;
+{       register int result = TRUE;	/* pacify gcc */
 	register char ch;
 	for (;;)
 	{       rspeak(x);                     /* tell him what we want*/
@@ -125,9 +130,10 @@ int x,y,z;
 	return(result);
 }
 
+int
 yesm(x,y,z)                             /* confirm with mspeak          */
 int x,y,z;
-{       register int result;
+{       register int result = TRUE;	/* pacify gcc */
 	register char ch;
 	for (;;)
 	{       mspeak(x);                     /* tell him what we want*/
@@ -152,6 +158,7 @@ int outsw = 0;				/* putting stuff to data file?  */
 char iotape[] = "Ax3F'\003tt$8h\315qer*h\017nGKrX\207:!l";
 char *tape = iotape;			/* pointer to encryption tape   */
 
+int
 next()                                  /* next virtual char, bump adr  */
 {
 	int ch;
@@ -167,6 +174,7 @@ next()                                  /* next virtual char, bump adr  */
 
 char breakch;                           /* tell which char ended rnum   */
 
+void
 rdata()                                 /* "read" data from virtual file*/
 {       register int sect;
 	register char ch;
@@ -237,6 +245,7 @@ rdata()                                 /* "read" data from virtual file*/
 char nbf[12];
 
 
+int
 rnum()                                  /* read initial location num    */
 {       register char *s;
 	tape = iotape;                  /* restart encryption tape      */
@@ -251,12 +260,11 @@ rnum()                                  /* read initial location num    */
 
 char *seekhere;
 
+void
 rdesc(sect)                             /* read description-format msgs */
 int sect;
-{       register char *s,*t;
-	register int locc;
-	char *seekstart, *maystart, *adrstart;
-	char *entry;
+{	register int locc;
+	char *seekstart, *maystart;
 
 	seekhere = inptr;               /* Where are we in virtual file?*/
 	outsw=1;                        /* these msgs go into tmp file  */
@@ -318,13 +326,14 @@ int sect;
 	}
 }
 
-
+void
 rtrav()                                 /* read travel table            */
 {       register int locc;
-	register struct travlist *t;
+	register struct travlist *t = NULL;
 	register char *s;
 	char buf[12];
-	int len,m,n,entries;
+	int len,m,n,entries = 0;
+
 	for (oldloc= -1;;)              /* get another line             */
 	{       if ((locc=rnum())!=oldloc && oldloc>=0) /* end of entry */
 		{
@@ -339,7 +348,7 @@ rtrav()                                 /* read travel table            */
 			entries=0;
 			oldloc=locc;
 		}
-		for (s=buf;; *s++)      /* get the newloc number /ASCII */
+		for (s=buf;; s++)      /* get the newloc number /ASCII */
 			if ((*s=next())==TAB || *s==LF) break;
 		*s=0;
 		len=length(buf)-1;      /* quad long number handling    */
@@ -365,6 +374,7 @@ rtrav()                                 /* read travel table            */
 
 #ifdef DEBUG
 
+void
 twrite(loq)                             /* travel options from this loc */
 int loq;
 {       register struct travlist *t;
@@ -383,8 +393,9 @@ int loq;
 	}
 }
 
-#endif DEBUG
+#endif /* DEBUG */
 
+void
 rvoc()
 {       register char *s;               /* read the vocabulary          */
 	register int index;
@@ -405,6 +416,7 @@ rvoc()
 }
 
 
+void
 rlocs()                                 /* initial object locations     */
 {	for (;;)
 	{       if ((obj=rnum())<0) break;
@@ -415,6 +427,7 @@ rlocs()                                 /* initial object locations     */
 	}
 }
 
+void
 rdflt()                                 /* default verb messages        */
 {	for (;;)
 	{       if ((verb=rnum())<0) break;
@@ -422,6 +435,7 @@ rdflt()                                 /* default verb messages        */
 	}
 }
 
+void
 rliq()                                  /* liquid assets &c: cond bits  */
 {       register int bitnum;
 	for (;;)                        /* read new bit list            */
@@ -433,6 +447,7 @@ rliq()                                  /* liquid assets &c: cond bits  */
 	}
 }
 
+void
 rhints()
 {       register int hintnum,i;
 	hntmax=0;
@@ -445,18 +460,21 @@ rhints()
 }
 
 
+void
 rspeak(msg)
 int msg;
 {       if (msg!=0) speak(&rtext[msg]);
 }
 
 
+void
 mspeak(msg)
 int msg;
 {       if (msg!=0) speak(&mtext[msg]);
 }
 
 
+void
 speak(msg)       /* read, decrypt, and print a message (not ptext)      */
 struct text *msg;/* msg is a pointer to seek address and length of mess */
 {
@@ -481,6 +499,7 @@ struct text *msg;/* msg is a pointer to seek address and length of mess */
 }
 
 
+void
 pspeak(m,skip) /* read, decrypt an print a ptext message              */
 int m;         /* msg is the number of all the p msgs for this place  */
 int skip;       /* assumes object 1 doesn't have prop 1, obj 2 no prop 2 &c*/

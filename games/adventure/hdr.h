@@ -1,4 +1,4 @@
-/*	$NetBSD: hdr.h,v 1.2 1995/03/21 12:05:02 cgd Exp $	*/
+/*	$NetBSD: hdr.h,v 1.3 1997/08/11 14:06:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -86,7 +86,7 @@ struct hashtab                          /* hash table for vocabulary    */
 struct text
 #ifdef OLDSTUFF
 {       int seekadr;                    /* DATFILE must be < 2**16      */
-#endif OLDSTUFF
+#endif /* OLDSTUFF */
 {       char *seekadr;                  /* Msg start in virtual disk    */
 	int txtlen;                     /* length of msg starting here  */
 };
@@ -130,7 +130,7 @@ int hntmax;
 int hints[20][5];                       /* info on hints                */
 int hinted[20],hintlc[20];
 
-int place[101], prop[101],link[201];
+int place[101], prop[101],links[201];
 int abb[LOCSIZ];
 
 int maxtrs,tally,tally2;                /* treasure values              */
@@ -158,9 +158,4 @@ int turns,lmwarn,iwest,knfloc,detail,   /* various flags & counters     */
 
 int demo,newloc,limit;
 
-char *malloc();
-char *decr();
-unsigned long crc();
-
-/* We need to get a little tricky to avoid strings */
-#define DECR(a,b,c,d,e) decr('a'+'+','b'+'-','c'+'#','d'+'&','e'+'%')
+#define DECR(a,b,c,d,e) decr(a+'+',b+'-',c+'#',d+'&',e+'%')
