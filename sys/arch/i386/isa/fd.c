@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.97 1996/10/21 22:27:40 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.98 1996/11/13 07:00:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -807,6 +807,7 @@ fdcstatus(dv, n, s)
 	char *s;
 {
 	struct fdc_softc *fdc = (void *)dv->dv_parent;
+	char bits[64];
 
 	if (n == 0) {
 		out_fdc(fdc->sc_iot, fdc->sc_ioh, NE7CMD_SENSEI);
@@ -821,15 +822,18 @@ fdcstatus(dv, n, s)
 		printf("\n");
 		break;
 	case 2:
-		printf(" (st0 %b cyl %d)\n",
-		    fdc->sc_status[0], NE7_ST0BITS,
-		    fdc->sc_status[1]);
+		printf(" (st0 %s cyl %d)\n",
+		    bitmask_snprintf(fdc->sc_status[0], NE7_ST0BITS,
+		    bits, sizeof(bits)), fdc->sc_status[1]);
 		break;
 	case 7:
-		printf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
-		    fdc->sc_status[0], NE7_ST0BITS,
-		    fdc->sc_status[1], NE7_ST1BITS,
-		    fdc->sc_status[2], NE7_ST2BITS,
+		printf(" (st0 %s", bitmask_snprintf(fdc->sc_status[0],
+		    NE7_ST0BITS, bits, sizeof(bits)));
+		printf(" st1 %s", bitmask_snprintf(fdc->sc_status[1],
+		    NE7_ST1BITS, bits, sizeof(bits)));
+		printf(" st2 %s", bitmask_snprintf(fdc->sc_status[2],
+		    NE7_ST2BITS, bits, sizeof(bits)));
+		printf(" cyl %d head %d sec %d)\n",
 		    fdc->sc_status[3], fdc->sc_status[4], fdc->sc_status[5]);
 		break;
 #ifdef DIAGNOSTIC
@@ -1151,6 +1155,7 @@ void
 fdcretry(fdc)
 	struct fdc_softc *fdc;
 {
+	char bits[64];
 	struct fd_softc *fd;
 	struct buf *bp;
 
@@ -1176,10 +1181,14 @@ fdcretry(fdc)
 	default:
 		diskerr(bp, "fd", "hard error", LOG_PRINTF,
 		    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
-		printf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
-		    fdc->sc_status[0], NE7_ST0BITS,
-		    fdc->sc_status[1], NE7_ST1BITS,
-		    fdc->sc_status[2], NE7_ST2BITS,
+
+		printf(" (st0 %s", bitmask_snprintf(fdc->sc_status[0],
+		    NE7_ST0BITS, bits, sizeof(bits)));
+		printf(" st1 %s", bitmask_snprintf(fdc->sc_status[1],
+		    NE7_ST1BITS, bits, sizeof(bits)));
+		printf(" st2 %s", bitmask_snprintf(fdc->sc_status[2],
+		    NE7_ST2BITS, bits, sizeof(bits)));
+		printf(" cyl %d head %d sec %d)\n",
 		    fdc->sc_status[3], fdc->sc_status[4], fdc->sc_status[5]);
 
 		bp->b_flags |= B_ERROR;
