@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.16.2.1 1999/04/19 15:19:28 perry Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.16.2.2 1999/06/24 23:02:02 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -16,7 +16,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software develooped for the NetBSD Project by
+ *      This product includes software developed for the NetBSD Project by
  *      Piermont Information Systems Inc.
  * 4. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
@@ -97,11 +97,12 @@ do_upgrade()
 	/* Done with disks. Ready to get and unpack tarballs. */
 	msg_display(MSG_disksetupdone);
 	getchar();
-	puts(CL); /* just to make sure */
+	puts(CL);		/* XXX */
 	wclear(stdscr);
 	wrefresh(stdscr);
 
-	get_and_unpack_sets(MSG_upgrcomplete, MSG_abortupgr);
+	if (get_and_unpack_sets(MSG_upgrcomplete, MSG_abortupgr) != 0)
+		return;
 
 	/* Copy back any files we should restore after the upgrade.*/
 	merge_etc();
@@ -209,12 +210,13 @@ do_reinstall_sets()
 		return;
 
 	fflush(stdout);
-	puts(CL);
+	puts(CL);		/* XXX */
+	wclear(stdscr);
 	wrefresh(stdscr);
 
 	/* Unpack the distribution. */
-	get_and_unpack_sets(MSG_unpackcomplete, MSG_abortunpack);
+	if (get_and_unpack_sets(MSG_unpackcomplete, MSG_abortunpack) != 0)
+		return;
 
 	sanity_check();
-
 }
