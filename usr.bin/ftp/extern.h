@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.41 1999/10/01 06:55:44 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.42 1999/10/05 00:54:07 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -67,10 +67,10 @@
 struct sockaddr;
 struct tm;
 
-void    abort_remote __P((FILE *));
-void    abortpt __P((int));
-void    abortrecv __P((int));
-void    abortsend __P((int));
+void	abort_remote __P((FILE *));
+void	abortpt __P((int));
+void	abortrecv __P((int));
+void	abortsend __P((int));
 void	account __P((int, char **));
 void	alarmtimer __P((int));
 int	another __P((int *, char ***, const char *));
@@ -80,6 +80,7 @@ void	cd __P((int, char **));
 void	cdup __P((int, char **));
 void	changetype __P((int, int));
 void	cmdabort __P((int));
+void	cmdtimeout __P((int));
 void	cmdscanner __P((int));
 void	crankrate __P((int));
 int	command __P((const char *, ...));
@@ -110,7 +111,7 @@ char   *gunique __P((const char *));
 void	help __P((int, char **));
 char   *hookup __P((char *, char *));
 void	idlecmd __P((int, char **));
-int     initconn __P((void));
+int	initconn __P((void));
 void	intr __P((void));
 int	isipv6addr __P((const char *));
 void	list_vertical __P((StringList *));
@@ -132,20 +133,20 @@ char   *onoff __P((int));
 void	newer __P((int, char **));
 void	page __P((int, char **));
 int	parserate __P((int, char **, int));
-void    progressmeter __P((int));
+void	progressmeter __P((int));
 char   *prompt __P((void));
 void	proxabort __P((int));
-void    proxtrans __P((const char *, const char *, const char *));
-void    psabort __P((int));
+void	proxtrans __P((const char *, const char *, const char *));
+void	psabort __P((int));
 void	psummary __P((int));
-void    pswitch __P((int));
-void    ptransfer __P((int));
+void	pswitch __P((int));
+void	ptransfer __P((int));
 void	put __P((int, char **));
 void	pwd __P((int, char **));
 void	quit __P((int, char **));
 void	quote __P((int, char **));
 void	quote1 __P((const char *, int, char **));
-void    recvrequest __P((const char *, const char *, const char *,
+void	recvrequest __P((const char *, const char *, const char *,
 	    const char *, int, int));
 void	reget __P((int, char **));
 char   *remglob __P((char **, int, char **));
@@ -153,13 +154,13 @@ off_t	remotesize __P((const char *, int));
 time_t	remotemodtime __P((const char *, int));
 void	removedir __P((int, char **));
 void	renamefile __P((int, char **));
-void    reset __P((int, char **));
+void	reset __P((int, char **));
 void	restart __P((int, char **));
 void	rmthelp __P((int, char **));
 void	rmtstatus __P((int, char **));
 int	ruserpass __P((const char *, const char **, const char **,
 	    const char **));
-void    sendrequest __P((const char *, const char *, const char *, int));
+void	sendrequest __P((const char *, const char *, const char *, int));
 void	setascii __P((int, char **));
 void	setbell __P((int, char **));
 void	setbinary __P((int, char **));
@@ -207,3 +208,4 @@ int	xlisten __P((int, int));
 void   *xmalloc __P((size_t));
 char   *xstrdup __P((const char *));
 sig_t	xsignal __P((int, void (func) __P((int))));
+sig_t	xsignal_restart __P((int, void (func) __P((int)), int));

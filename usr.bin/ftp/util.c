@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.70 1999/10/01 06:18:32 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.71 1999/10/05 00:54:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.70 1999/10/01 06:18:32 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.71 1999/10/05 00:54:08 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -806,7 +806,7 @@ progressmeter(flag)
 	(void)write(fileno(ttyout), buf, len);
 
 	if (flag == -1) {
-		(void)xsignal(SIGALRM, updateprogressmeter);
+		(void)xsignal_restart(SIGALRM, updateprogressmeter, 1);
 		alarmtimer(1);		/* set alarm timer for 1 Hz */
 	} else if (flag == 1) {
 		(void)xsignal(SIGALRM, SIG_DFL);
@@ -1206,22 +1206,67 @@ xstrdup(str)
 }
 
 sig_t
-xsignal(sig, func)
+xsignal_restart(sig, func, restartable)
 	int sig;
 	void (*func) __P((int));
+	int restartable;
 {
 	struct sigaction act, oact;
-
 	act.sa_handler = func;
+
 	sigemptyset(&act.sa_mask);
 #if defined(SA_RESTART)			/* 4.4BSD, Posix(?), SVR4 */
-	act.sa_flags = SA_RESTART;
+	act.sa_flags = restartable ? SA_RESTART : 0;
 #elif defined(SA_INTERRUPT)		/* SunOS 4.x */
-	act.sa_flags = 0;
+	act.sa_flags = restartable ? 0 : SA_INTERRUPT;
 #else
 #error "system must have SA_RESTART or SA_INTERRUPT"
 #endif
 	if (sigaction(sig, &act, &oact) < 0)
 		return (SIG_ERR);
 	return (oact.sa_handler);
+}
+
+sig_t
+xsignal(sig, func)
+	int sig;
+	void (*func) __P((int));
+{
+	int restartable;
+
+	/*
+	 * Some signals print output or change the state of the process.
+	 * There should be restartable, so that reads and writes are
+	 * not affected.  Some signals should cause program flow to change;
+	 * these signals should not be restartable, so that the system call
+	 * will return with EINTR, and the program will go do something
+	 * different.  If the signal handler calls longjmp(), it doesn't
+	 * matter if it's restartable.
+	 */
+
+	switch(sig) {
+	case SIGINFO:
+	case SIGUSR1:
+	case SIGUSR2:
+	case SIGWINCH:
+		restartable = 1;
+		break;
+
+	case SIGALRM:
+	case SIGINT:
+	case SIGPIPE:
+	case SIGQUIT:
+		restartable = 0;
+		break;
+
+	default:
+		/*
+		 * This is unpleasant, but I don't know what would be better.
+		 * Right now, this "can't happen"
+		 */
+		errx(1, "xsignal_restart called with signal %d\n",
+		sig);
+	}
+
+	return(xsignal_restart(sig, func, restartable));
 }

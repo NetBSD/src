@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.75 1999/10/01 09:23:32 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.76 1999/10/05 00:54:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.75 1999/10/01 09:23:32 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.76 1999/10/05 00:54:07 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,8 @@ __RCSID("$NetBSD: ftp.c,v 1.75 1999/10/01 09:23:32 lukem Exp $");
 
 #include "ftp_var.h"
 
-int	abrtflag = 0;
+volatile int	abrtflag = 0;
+volatile int	timeoutflag = 0;
 jmp_buf	ptabort;
 int	ptabflg;
 int	ptflag = 0;
@@ -359,6 +360,20 @@ cmdabort(notused)
 		longjmp(ptabort, 1);
 }
 
+void
+cmdtimeout(notused)
+	int notused;
+{
+
+	alarmtimer(0);
+	putc('\n', ttyout);
+	(void)fflush(ttyout);
+	timeoutflag++;
+	if (ptflag)
+		longjmp(ptabort, 1);
+}
+
+
 /*VARARGS*/
 int
 #ifdef __STDC__
@@ -370,12 +385,11 @@ command(va_alist)
 {
 	va_list ap;
 	int r;
-	sig_t oldintr;
+	sig_t oldsigint;
 #ifndef __STDC__
 	const char *fmt;
 #endif
 
-	abrtflag = 0;
 	if (debug) {
 		fputs("---> ", ttyout);
 #ifdef __STDC__
@@ -398,7 +412,11 @@ command(va_alist)
 		code = -1;
 		return (0);
 	}
-	oldintr = xsignal(SIGINT, cmdabort);
+
+	abrtflag = 0;
+
+	oldsigint = xsignal(SIGINT, cmdabort);
+
 #ifdef __STDC__
 	va_start(ap, fmt);
 #else
@@ -411,9 +429,9 @@ command(va_alist)
 	(void)fflush(cout);
 	cpend = 1;
 	r = getreply(!strcmp(fmt, "QUIT"));
-	if (abrtflag && oldintr != SIG_IGN)
-		(*oldintr)(SIGINT);
-	(void)xsignal(SIGINT, oldintr);
+	if (abrtflag && oldsigint != SIG_IGN)
+		(*oldsigint)(SIGINT);
+	(void)xsignal(SIGINT, oldsigint);
 	return (r);
 }
 
@@ -425,15 +443,20 @@ getreply(expecteof)
 	int c, n, line;
 	int dig;
 	int originalcode = 0, continuation = 0;
-	sig_t oldintr;
+	sig_t oldsigint, oldsigalrm;
 	int pflag = 0;
 	char *cp, *pt = pasv;
 
-	oldintr = xsignal(SIGINT, cmdabort);
+	abrtflag = 0;
+	timeoutflag = 0;
+
+	oldsigint = xsignal(SIGINT, cmdabort);
+	oldsigalrm = xsignal(SIGALRM, cmdtimeout);
+
 	for (line = 0 ;; line++) {
 		dig = n = code = 0;
 		cp = current_line;
-		while ((c = getc(cin)) != '\n') {
+		while (alarmtimer(60),((c = getc(cin)) != '\n')) {
 			if (c == IAC) {     /* handle telnet commands */
 				switch (c = getc(cin)) {
 				case WILL:
@@ -455,18 +478,38 @@ getreply(expecteof)
 			}
 			dig++;
 			if (c == EOF) {
+				/*
+				 * these will get trashed by pswitch()
+				 * in lostpeer()
+				 */
+				int reply_timeoutflag = timeoutflag;
+				int reply_abrtflag = abrtflag;
+
 				if (expecteof) {
-					(void)xsignal(SIGINT, oldintr);
+					alarmtimer(0);
+					(void)xsignal(SIGINT, oldsigint);
+					(void)xsignal(SIGALRM, oldsigalrm);
 					code = 221;
 					return (0);
 				}
 				lostpeer();
 				if (verbose) {
-					fputs(
-	    "421 Service not available, remote server has closed connection.\n",
-					    ttyout);
+					if (reply_timeoutflag)
+						fputs(
+    "421 Service not available, remote server timed out.\n", ttyout);
+					else if (reply_abrtflag)
+						fputs(
+    "421 Service not available, user interrupt.\n", ttyout);
+					else
+						fputs(
+    "421 Service not available, remote server has closed connection.\n",
+					              ttyout);
+					(void)fflush(ttyout);
 				}
 				code = 421;
+				/* the lostpeer() above calls alarmtimer(0); */
+				(void)xsignal(SIGINT, oldsigint);
+				(void)xsignal(SIGALRM, oldsigalrm);
 				return (4);
 			}
 			if (c != '\r' && (verbose > 0 ||
@@ -527,11 +570,16 @@ getreply(expecteof)
 		*cp = '\0';
 		if (n != '1')
 			cpend = 0;
-		(void)xsignal(SIGINT, oldintr);
+		alarm(0);
+		(void)xsignal(SIGINT, oldsigint);
+		(void)xsignal(SIGALRM, oldsigalrm);
 		if (code == 421 || originalcode == 421)
 			lostpeer();
-		if (abrtflag && oldintr != cmdabort && oldintr != SIG_IGN)
-			(*oldintr)(SIGINT);
+		if (abrtflag && oldsigint != cmdabort && oldsigint != SIG_IGN)
+			(*oldsigint)(SIGINT);
+		if (timeoutflag && oldsigalrm != cmdtimeout &&
+		    oldsigalrm != SIG_IGN)
+			(*oldsigalrm)(SIGINT);
 		return (n - '0');
 	}
 }

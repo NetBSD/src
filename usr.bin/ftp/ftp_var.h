@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.40 1999/10/01 08:01:13 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.41 1999/10/05 00:54:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -69,8 +69,6 @@
  */
 
 #ifdef SMALL
-#undef	NO_ABOUT
-#define	NO_ABOUT
 #undef	NO_EDITCOMPLETE
 #define	NO_EDITCOMPLETE
 #undef	NO_PROGRESS
@@ -120,12 +118,12 @@ struct macel {
 /*
  * Global defines
  */
-#define FTPBUFLEN	MAXPATHLEN + 200
-#define MAX_IN_PORT_T	0xffffU
+#define	FTPBUFLEN	MAXPATHLEN + 200
+#define	MAX_IN_PORT_T	0xffffU
 
-#define HASHBYTES	1024	/* default mark for `hash' command */
+#define	HASHBYTES	1024	/* default mark for `hash' command */
 #define	DEFAULTINCR	1024	/* default increment for `rate' command */
-#define STALLTIME	5	/* # of seconds of no xfer before "stalling" */
+#define	STALLTIME	5	/* # of seconds of no xfer before "stalling" */
 
 #define	FTP_PORT	21	/* default if ! getservbyname("ftp/tcp") */
 #define	HTTP_PORT	80	/* default if ! getservbyname("http/tcp") */
@@ -136,7 +134,7 @@ struct macel {
 #define	GATE_SERVER	""	/* default server */
 #endif
 
-#define PAGER		"more"	/* default pager if $PAGER isn't set */
+#define	PAGER		"more"	/* default pager if $PAGER isn't set */
 
 #define	TMPFILE		"ftpXXXXXXXXXX"
 
@@ -205,9 +203,9 @@ GLOBAL	char   *tmpdir;		/* temporary directory */
 GLOBAL	FILE   *ttyout;		/* stdout, or stderr if retrieving to stdout */
 GLOBAL	int	epsv4;		/* use EPSV/EPRT on IPv4 connections */
 GLOBAL	int	epsv4bad;	/* EPSV doesn't work on the current server */
+GLOBAL	int	editing;	/* command line editing enabled */
 
 #ifndef NO_EDITCOMPLETE
-GLOBAL	int	  editing;	/* command line editing enabled */
 GLOBAL	EditLine *el;		/* editline(3) status structure */
 GLOBAL	History  *hist;		/* editline(3) history structure */
 GLOBAL	char	 *cursor_pos;	/* cursor position we're looking for */
@@ -243,7 +241,7 @@ GLOBAL	char	argbuf[FTPBUFLEN]; /* argument storage buffer */
 GLOBAL	char	*argbase;	/* current storage point in arg buffer */
 GLOBAL	StringList *marg_sl;	/* stringlist containing margv */
 GLOBAL	int	margc;		/* count of arguments on input line */
-#define margv (marg_sl->sl_str)	/* args parsed from input line */
+#define	margv (marg_sl->sl_str)	/* args parsed from input line */
 GLOBAL	int     cpend;		/* flag: if != 0, then pending server reply */
 GLOBAL	int	mflag;		/* flag: if != 0, then active multi command */
 
