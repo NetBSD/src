@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: menu.cpp,v 1.2 2001/05/08 18:51:24 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: menu.cpp,v 1.3 2001/05/17 01:50:36 enami Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -127,6 +127,7 @@ MainTabWindow::init(HWND w)
 
 	// kernel boot options.
 	_set_check(IDC_MAIN_OPTION_A, pref.boot_ask_for_name);
+	_set_check(IDC_MAIN_OPTION_D, pref.boot_debugger);
 	_set_check(IDC_MAIN_OPTION_S, pref.boot_single_user);
 	_set_check(IDC_MAIN_OPTION_V, pref.boot_verbose);
 	_set_check(IDC_MAIN_OPTION_H, pref.boot_serial);
@@ -171,6 +172,7 @@ MainTabWindow::get()
 		pref.rootfs = 3;
 
 	pref.boot_ask_for_name	= _is_checked(IDC_MAIN_OPTION_A);
+	pref.boot_debugger	= _is_checked(IDC_MAIN_OPTION_D);
 	pref.boot_verbose	= _is_checked(IDC_MAIN_OPTION_V);
 	pref.boot_single_user	= _is_checked(IDC_MAIN_OPTION_S);
 	pref.boot_serial	= _is_checked(IDC_MAIN_OPTION_H);
