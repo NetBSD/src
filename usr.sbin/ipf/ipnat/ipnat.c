@@ -56,7 +56,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static  char    sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static	char	rcsid[] = "$Id: ipnat.c,v 1.1.1.1 1997/01/05 13:09:04 mrg Exp $";
+static	char	rcsid[] = "$Id: ipnat.c,v 1.2 1997/01/14 06:45:05 cgd Exp $";
 #endif
 
 #if	SOLARIS
@@ -178,7 +178,7 @@ int verbose;
 			printf(" udp");
 		printf("\n");
 		if (verbose)
-			printf("\t%x %u %x %u", (u_int)np->in_ifp,
+			printf("\t%lx %u %x %u", (u_long)np->in_ifp,
 			       np->in_space, np->in_flags, np->in_pnext);
 	} else {
 		np->in_nextip.s_addr = htonl(np->in_nextip.s_addr);
@@ -207,7 +207,7 @@ int verbose;
 		}
 		printf("\n");
 		if (verbose)
-			printf("\t%x %u %s %d %x\n", (u_int)np->in_ifp,
+			printf("\t%lx %u %s %d %x\n", (u_long)np->in_ifp,
 			       np->in_space, inet_ntoa(np->in_nextip),
 			       np->in_pnext, np->in_flags);
 	}
@@ -233,8 +233,8 @@ int fd, opts;
 			ns.ns_added, ns.ns_expire);
 		printf("inuse\t%lu\n", ns.ns_inuse);
 		if (opts & 16)
-			printf("table %#x list %#x\n",
-				(u_int)ns.ns_table, (u_int)ns.ns_list);
+			printf("table %#lx list %#lx\n",
+				(u_long)ns.ns_table, (u_long)ns.ns_list);
 	}
 	if (opts & 8) {
 		while (ns.ns_list) {
