@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbootd.h,v 1.4 2003/08/17 22:34:17 itojun Exp $	*/
+/*	$NetBSD: ndbootd.h,v 1.5 2004/01/06 23:02:55 wiz Exp $	*/
 
 /* ndbootd.h - header file for the Sun Network Disk (nd) daemon: */
 
@@ -102,7 +102,7 @@ static const char _ndbootd_h_rcsid[] = "<<Id: ndbootd.h,v 1.3 2001/05/22 13:13:2
 #define strerror(e) ((e) < sys_nerr ? sys_errlist[e] : "unknown error")
 #endif				/* !HAVE_STRERROR */
 #ifndef MAX
-#define MAX(a, b) ((a) < (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
 #endif				/* !MAX */
 #ifndef MIN
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
