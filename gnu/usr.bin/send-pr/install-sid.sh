@@ -23,9 +23,9 @@
 COMMAND=`echo $0 | sed -e 's,.*/,,g'`
 USAGE="Usage: $COMMAND [--install-dir=prefix] [--help] [--version] submitter-id"
 
-VERSION=3.01.6
+VERSION=xVERSIONx
 
-BINDIR=/usr/bin
+BINDIR=xBINDIRx
 
 SUBMITTER=
 TEMP=/tmp/sp$$
