@@ -36,7 +36,7 @@
  *
  * From:
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
- *	$Id: process_machdep.c,v 1.1 1994/02/01 17:44:11 deraadt Exp $
+ *	$Id: process_machdep.c,v 1.2 1994/02/11 16:50:03 pk Exp $
  */
 
 /*
@@ -71,18 +71,18 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/vnode.h>
-#include <sys/ptrace.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/frame.h>
-
-extern int kstack[];		/* XXX */
+#include <sys/ptrace.h>
 
 int
 process_read_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
+	/* NOTE: struct reg == struct trapframe */
+	bcopy(p->p_md.md_tf, (caddr_t)regs, sizeof(struct reg));
 	return (0);
 }
 
@@ -91,6 +91,7 @@ process_write_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
+	bcopy((caddr_t)regs, p->p_md.md_tf, sizeof(struct reg));
 	return (0);
 }
 
@@ -98,6 +99,8 @@ int
 process_sstep(p, sstep)
 	struct proc *p;
 {
+	if (sstep)
+		return EINVAL;
 	return (0);
 }
 
@@ -113,5 +116,34 @@ process_set_pc(p, addr)
 	struct proc *p;
 	u_int addr;
 {
+	p->p_md.md_tf->tf_pc = addr;
+	p->p_md.md_tf->tf_npc = addr + 4;
 	return (0);
+}
+
+int
+process_read_fpregs(p, regs)
+struct proc	*p;
+struct fpreg	*regs;
+{
+	extern struct fpstate	initfpstate;
+	struct fpstate		*statep = &initfpstate;
+
+	/* NOTE: struct fpreg == struct fpstate */
+	if (p->p_md.md_fpstate)
+		statep = p->p_md.md_fpstate;
+	bcopy(statep, regs, sizeof(struct fpreg));
+	return 0;
+}
+
+int
+process_write_fpregs(p, regs)
+struct proc	*p;
+struct fpreg	*regs;
+{
+	if (p->p_md.md_fpstate == NULL)
+		return EINVAL;
+
+	bcopy(regs, p->p_md.md_fpstate, sizeof(struct fpreg));
+	return 0;
 }
