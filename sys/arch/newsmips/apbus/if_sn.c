@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.1 1999/12/22 05:55:24 tsubai Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.2 1999/12/22 08:16:45 tsubai Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -548,7 +548,6 @@ sonicput(sc, m0, mtd_next)
 	void	*txp;
 	u_int	len = 0;
 	u_int	totlen = 0;
-u_char *buff0;
 
 #ifdef whyonearthwouldyoudothis
 	if (NIC_GET(sc, SNR_CR) & CR_TXP)
@@ -559,7 +558,6 @@ u_char *buff0;
 	mtdp = &sc->mtda[sc->mtd_free];
 
 	buff = mtdp->mtd_buf;
-buff0 = buff;
 	
 	/* this packet goes to mtdnext fill in the TDA */
 	mtdp->mtd_mbuf = m0;
@@ -905,7 +903,6 @@ snintr(arg)
 		}
 		snstart(&sc->sc_if);
 	}
-
 	return;
 }
 
