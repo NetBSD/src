@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.4 2001/09/23 14:32:52 uch Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.5 2001/11/23 16:21:31 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -153,6 +153,7 @@ softintr_init(void)
 		asi = &hpcmips_soft_intrs[i];
 		TAILQ_INIT(&asi->softintr_q);
 		asi->softintr_ipl = IPL_SOFT + i;
+		simple_lock_init(&asi->softintr_slock);
 		evcnt_attach_dynamic(&asi->softintr_evcnt, EVCNT_TYPE_INTR,
 		    NULL, "soft", softintr_names[i]);
 	}
