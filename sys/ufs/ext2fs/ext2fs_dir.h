@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dir.h,v 1.2 1998/09/13 15:14:40 christos Exp $	*/
+/*	$NetBSD: ext2fs_dir.h,v 1.3 2000/01/26 16:21:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -75,6 +75,9 @@
  * a directory block is free, then its dp->e2d_ino is set to 0.
  * Entries other than the first in a directory do not normally have
  * dp->e2d_ino set to 0.
+ * Ext2 rev 0 has a 16 bits e2d_namlen. For Ext2 vev 1 this has been split
+ * into a 8 bits e2d_namlen and 8 bits e2d_type (looks like ffs, isnt't it ? :)
+ * It's safe to use this for rev 0 as well because all ext2 are little-endian.
  */
 
 #define	EXT2FS_MAXNAMLEN	255
@@ -82,7 +85,8 @@
 struct	ext2fs_direct {
 	u_int32_t e2d_ino;		/* inode number of entry */
 	u_int16_t e2d_reclen;		/* length of this record */
-	u_int16_t e2d_namlen;		/* length of string in d_name */
+	u_int8_t e2d_namlen;		/* length of string in d_name */
+	u_int8_t e2d_type;		/* file type */
 	char	  e2d_name[EXT2FS_MAXNAMLEN];/* name with length <= EXT2FS_MAXNAMLEN */
 };
 
@@ -103,11 +107,13 @@ struct	ext2fs_direct {
 struct ext2fs_dirtemplate {
 	u_int32_t	dot_ino;
 	int16_t		dot_reclen;
-	u_int16_t	dot_namlen;
+	u_int8_t	dot_namlen;
+	u_int8_t	dot_type;
 	char		dot_name[4];	/* must be multiple of 4 */
 	u_int32_t	dotdot_ino;
 	int16_t		dotdot_reclen;
-	u_int16_t	dotdot_namlen;
+	u_int8_t	dotdot_namlen;
+	u_int8_t	dotdot_type;
 	char		dotdot_name[4];	/* ditto */
 };
 
