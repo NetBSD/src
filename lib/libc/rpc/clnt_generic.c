@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_generic.c,v 1.17 2000/06/07 18:27:39 fvdl Exp $	*/
+/*	$NetBSD: clnt_generic.c,v 1.18 2000/07/06 03:10:34 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -49,6 +49,7 @@ static char sccsid[] = "@(#)clnt_generic.c 1.32 89/03/16 Copyr 1988 Sun Micro";
 #include <stdio.h>
 #include <errno.h>
 #include <rpc/rpc.h>
+#include <rpc/nettype.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -100,13 +101,13 @@ clnt_create_vers(hostname, prog, vers_out, vers_low, vers_high, nettype)
 		minvers = rpcerr.re_vers.low;
 		maxvers = rpcerr.re_vers.high;
 		if (maxvers < vers_high)
-			vers_high = maxvers;
+			vers_high = (rpcvers_t)maxvers;
 		if (minvers > vers_low)
-			vers_low = minvers;
+			vers_low = (rpcvers_t)minvers;
 		if (vers_low > vers_high) {
 			goto error;
 		}
-		CLNT_CONTROL(clnt, CLSET_VERS, (char *)&vers_high);
+		CLNT_CONTROL(clnt, CLSET_VERS, (char *)(void *)&vers_high);
 		rpc_stat = clnt_call(clnt, NULLPROC, (xdrproc_t) xdr_void,
 				(char *) NULL, (xdrproc_t) xdr_void,
 				(char *) NULL, to);
@@ -151,12 +152,12 @@ clnt_create(hostname, prog, vers, nettype)
 	struct rpc_err	save_cf_error;
 
 
-	if ((handle = __rpc_setconf((char *) nettype)) == NULL) {
+	if ((handle = __rpc_setconf(nettype)) == NULL) {
 		rpc_createerr.cf_stat = RPC_UNKNOWNPROTO;
-		return ((CLIENT *)NULL);
+		return (NULL);
 	}
 	rpc_createerr.cf_stat = RPC_SUCCESS;
-	while (clnt == (CLIENT *)NULL) {
+	while (clnt == NULL) {
 		if ((nconf = __rpc_getconf(handle)) == NULL) {
 			if (rpc_createerr.cf_stat == RPC_SUCCESS)
 				rpc_createerr.cf_stat = RPC_UNKNOWNPROTO;
@@ -210,17 +211,17 @@ clnt_create(hostname, prog, vers, nettype)
  */
 CLIENT *
 clnt_tp_create(hostname, prog, vers, nconf)
-	const char *hostname;				/* server name */
+	const char *hostname;			/* server name */
 	rpcprog_t prog;				/* program number */
 	rpcvers_t vers;				/* version number */
-	const register struct netconfig *nconf;	/* net config struct */
+	const struct netconfig *nconf;		/* net config struct */
 {
 	struct netbuf *svcaddr;			/* servers address */
 	CLIENT *cl = NULL;			/* client handle */
 
-	if (nconf == (struct netconfig *)NULL) {
+	if (nconf == NULL) {
 		rpc_createerr.cf_stat = RPC_UNKNOWNPROTO;
-		return ((CLIENT *)NULL);
+		return (NULL);
 	}
 
 	/*
@@ -229,9 +230,9 @@ clnt_tp_create(hostname, prog, vers, nconf)
 	if ((svcaddr = __rpcb_findaddr(prog, vers, nconf, hostname,
 		&cl)) == NULL) {
 		/* appropriate error number is set by rpcbind libraries */
-		return ((CLIENT *)NULL);
+		return (NULL);
 	}
-	if (cl == (CLIENT *)NULL) {
+	if (cl == NULL) {
 		cl = clnt_tli_create(RPC_ANYFD, nconf, svcaddr,
 					prog, vers, 0, 0);
 	} else {
@@ -264,9 +265,9 @@ clnt_tp_create(hostname, prog, vers, nconf)
  */
 CLIENT *
 clnt_tli_create(fd, nconf, svcaddr, prog, vers, sendsz, recvsz)
-	register int fd;		/* fd */
+	int fd;				/* fd */
 	const struct netconfig *nconf;	/* netconfig structure */
-	const struct netbuf *svcaddr;		/* servers address */
+	const struct netbuf *svcaddr;	/* servers address */
 	rpcprog_t prog;			/* program number */
 	rpcvers_t vers;			/* version number */
 	u_int sendsz;			/* send size */
@@ -279,9 +280,9 @@ clnt_tli_create(fd, nconf, svcaddr, prog, vers, sendsz, recvsz)
 	struct __rpc_sockinfo si;
 
 	if (fd == RPC_ANYFD) {
-		if (nconf == (struct netconfig *)NULL) {
+		if (nconf == NULL) {
 			rpc_createerr.cf_stat = RPC_UNKNOWNPROTO;
-			return ((CLIENT *)NULL);
+			return (NULL);
 		}
 
 		fd = __rpc_nconf2fd(nconf);
@@ -328,7 +329,7 @@ clnt_tli_create(fd, nconf, svcaddr, prog, vers, sendsz, recvsz)
 		goto err;
 	}
 
-	if (cl == (CLIENT *)NULL)
+	if (cl == NULL)
 		goto err1; /* borrow errors from clnt_dg/vc creates */
 	if (nconf) {
 		cl->cl_netid = strdup(nconf->nc_netid);
@@ -338,7 +339,7 @@ clnt_tli_create(fd, nconf, svcaddr, prog, vers, sendsz, recvsz)
 		cl->cl_tp = "";
 	}
 	if (madefd) {
-		(void) CLNT_CONTROL(cl, CLSET_FD_CLOSE, (char *)NULL);
+		(void) CLNT_CONTROL(cl, CLSET_FD_CLOSE, NULL);
 /*		(void) CLNT_CONTROL(cl, CLSET_POP_TIMOD, (char *) NULL);  */
 	};
 
@@ -349,5 +350,5 @@ err:
 	rpc_createerr.cf_error.re_errno = errno;
 err1:	if (madefd)
 		(void) close(fd);
-	return ((CLIENT *)NULL);
+	return (NULL);
 }

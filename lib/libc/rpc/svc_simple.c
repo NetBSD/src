@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_simple.c,v 1.19 2000/06/02 23:11:17 fvdl Exp $	*/
+/*	$NetBSD: svc_simple.c,v 1.20 2000/07/06 03:10:35 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -50,6 +50,7 @@
 #include "reentrant.h"
 #include <sys/types.h>
 #include <rpc/rpc.h>
+#include <rpc/nettype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -126,7 +127,7 @@ rpc_reg(prognum, versnum, procnum, progname, inproc, outproc, nettype)
 	}
 /* VARIABLES PROTECTED BY proglst_lock: proglst */
 	mutex_lock(&proglst_lock);
-	while ((nconf = __rpc_getconf(handle))) {
+	while ((nconf = __rpc_getconf(handle)) != NULL) {
 		struct proglst *pl;
 		SVCXPRT *svcxprt;
 		int madenow;
@@ -135,7 +136,7 @@ rpc_reg(prognum, versnum, procnum, progname, inproc, outproc, nettype)
 		char *netid;
 
 		madenow = FALSE;
-		svcxprt = (SVCXPRT *)NULL;
+		svcxprt = NULL;
 		for (pl = proglst; pl; pl = pl->p_nxt)
 			if (strcmp(pl->p_netid, nconf->nc_netid) == 0) {
 				svcxprt = pl->p_transp;
@@ -145,12 +146,11 @@ rpc_reg(prognum, versnum, procnum, progname, inproc, outproc, nettype)
 				break;
 			}
 
-		if (svcxprt == (SVCXPRT *)NULL) {
+		if (svcxprt == NULL) {
 			struct __rpc_sockinfo si;
 
-			svcxprt = svc_tli_create(RPC_ANYFD, nconf,
-					(struct t_bind *)NULL, 0, 0);
-			if (svcxprt == (SVCXPRT *)NULL)
+			svcxprt = svc_tli_create(RPC_ANYFD, nconf, NULL, 0, 0);
+			if (svcxprt == NULL)
 				continue;
 			if (!__rpc_fd2sockinfo(svcxprt->xp_fd, &si)) {
 				warnx(rpc_reg_err, rpc_reg_msg, __reg_err2);
@@ -199,8 +199,8 @@ rpc_reg(prognum, versnum, procnum, progname, inproc, outproc, nettype)
 			continue;
 		}
 
-		pl = (struct proglst *)malloc(sizeof (struct proglst));
-		if (pl == (struct proglst *)NULL) {
+		pl = malloc(sizeof (struct proglst));
+		if (pl == NULL) {
 			warnx(rpc_reg_err, rpc_reg_msg, __no_mem_str);
 			if (madenow) {
 				SVC_DESTROY(svcxprt);
@@ -258,8 +258,8 @@ universal(rqstp, transp)
 	 * enforce "procnum 0 is echo" convention
 	 */
 	if (rqstp->rq_proc == NULLPROC) {
-		if (svc_sendreply(transp, (xdrproc_t) xdr_void,
-			(char *)NULL) == FALSE) {
+		if (svc_sendreply(transp, (xdrproc_t) xdr_void, NULL) ==
+		    FALSE) {
 			warnx("svc_sendreply failed");
 		}
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_clnt.c,v 1.15 2000/06/02 23:11:12 fvdl Exp $	*/
+/*	$NetBSD: pmap_clnt.c,v 1.16 2000/07/06 03:10:34 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_clnt.c 1.37 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_clnt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_clnt.c,v 1.15 2000/06/02 23:11:12 fvdl Exp $");
+__RCSID("$NetBSD: pmap_clnt.c,v 1.16 2000/07/06 03:10:34 christos Exp $");
 #endif
 #endif
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: pmap_clnt.c,v 1.15 2000/06/02 23:11:12 fvdl Exp $");
 #include <rpc/rpc.h>
 #include <rpc/pmap_prot.h>
 #include <rpc/pmap_clnt.h>
+#include <rpc/nettype.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -63,8 +64,6 @@ __RCSID("$NetBSD: pmap_clnt.c,v 1.15 2000/06/02 23:11:12 fvdl Exp $");
 __weak_alias(pmap_set,_pmap_set)
 __weak_alias(pmap_unset,_pmap_unset)
 #endif
-
-static const struct timeval tottimeout = { 60, 0 };
 
 bool_t
 pmap_set(u_long program, u_long version, int protocol, int port)
@@ -81,14 +80,14 @@ pmap_set(u_long program, u_long version, int protocol, int port)
 	if (nconf == NULL) {
 		return (FALSE);
 	}
-	snprintf(buf, sizeof buf, "0.0.0.0.%d.%d", port >> 8 & 0xff,
-	    port & 0xff);
+	snprintf(buf, sizeof buf, "0.0.0.0.%d.%d", 
+	    (((u_int32_t)port) >> 8) & 0xff, port & 0xff);
 	na = uaddr2taddr(nconf, buf);
 	if (na == NULL) {
 		freenetconfigent(nconf);
 		return (FALSE);
 	}
-	rslt = rpcb_set(program, version, nconf, na);
+	rslt = rpcb_set((rpcprog_t)program, (rpcvers_t)version, nconf, na);
 	free(na);
 	freenetconfigent(nconf);
 	return (rslt);
@@ -107,12 +106,14 @@ pmap_unset(u_long program, u_long version)
 
 	nconf = __rpc_getconfip("udp");
 	if (nconf != NULL) {
-		udp_rslt = rpcb_unset(program, version, nconf);
+		udp_rslt = rpcb_unset((rpcprog_t)program, (rpcvers_t)version,
+		    nconf);
 		freenetconfigent(nconf);
 	}
 	nconf = __rpc_getconfip("tcp");
 	if (nconf != NULL) {
-		tcp_rslt = rpcb_unset(program, version, nconf);
+		tcp_rslt = rpcb_unset((rpcprog_t)program, (rpcvers_t)version,
+		    nconf);
 		freenetconfigent(nconf);
 	}
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_simple.c,v 1.20 2000/06/02 23:11:08 fvdl Exp $	*/
+/*	$NetBSD: clnt_simple.c,v 1.21 2000/07/06 03:10:34 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -86,7 +86,7 @@ static void rpc_call_destroy __P((void *));
 static void
 rpc_call_destroy(void *vp)
 {
-	register struct rpc_call_private *rcp = (struct rpc_call_private *)vp;
+	struct rpc_call_private *rcp = (struct rpc_call_private *)vp;
 
 	if (rcp) {
 		if (rcp->client)
@@ -138,9 +138,9 @@ rpc_call(host, prognum, versnum, procnum, inproc, in, outproc, out, nettype)
 #else
 	rcp = rpc_call_private_main;
 #endif
-	if (rcp == (struct rpc_call_private *)NULL) {
-		rcp = (struct rpc_call_private *)malloc(sizeof (*rcp));
-		if (rcp == (struct rpc_call_private *)NULL) {
+	if (rcp == NULL) {
+		rcp = malloc(sizeof (*rcp));
+		if (rcp == NULL) {
 			rpc_createerr.cf_stat = RPC_SYSTEMERROR;
 			rpc_createerr.cf_error.re_errno = errno;
 			return (rpc_createerr.cf_stat);
@@ -169,7 +169,7 @@ rpc_call(host, prognum, versnum, procnum, inproc, in, outproc, out, nettype)
 		 */
 		rcp->client = clnt_create(host, prognum, versnum, nettype);
 		rcp->pid = getpid();
-		if (rcp->client == (CLIENT *)NULL) {
+		if (rcp->client == NULL) {
 			return (rpc_createerr.cf_stat);
 		}
 		/*
@@ -180,8 +180,8 @@ rpc_call(host, prognum, versnum, procnum, inproc, in, outproc, out, nettype)
 		timeout.tv_usec = 0;
 		timeout.tv_sec = 5;
 		(void) CLNT_CONTROL(rcp->client,
-				CLSET_RETRY_TIMEOUT, (char *) &timeout);
-		if (CLNT_CONTROL(rcp->client, CLGET_FD, (char *)&fd))
+				CLSET_RETRY_TIMEOUT, (char *)(void *)&timeout);
+		if (CLNT_CONTROL(rcp->client, CLGET_FD, (char *)(void *)&fd))
 			fcntl(fd, F_SETFD, 1);	/* make it "close on exec" */
 		rcp->prognum = prognum;
 		rcp->versnum = versnum;
@@ -196,8 +196,9 @@ rpc_call(host, prognum, versnum, procnum, inproc, in, outproc, out, nettype)
 	} /* else reuse old client */
 	tottimeout.tv_sec = 25;
 	tottimeout.tv_usec = 0;
-	clnt_stat = CLNT_CALL(rcp->client, procnum, inproc, (char *) in, outproc,
-				out, tottimeout);
+	/*LINTED const castaway*/
+	clnt_stat = CLNT_CALL(rcp->client, procnum, inproc, (char *) in,
+	    outproc, out, tottimeout);
 	/*
 	 * if call failed, empty cache
 	 */

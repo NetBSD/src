@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_com.h,v 1.1 2000/06/02 23:11:12 fvdl Exp $	*/
+/*	$NetBSD: rpc_com.h,v 1.2 2000/07/06 03:10:35 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -54,15 +54,14 @@
 #define	RPC_MAXDATASIZE 9000
 #define	RPC_MAXADDRSIZE 1024
 
+#define __RPC_GETXID(now) ((u_int32_t)getpid() ^ (u_int32_t)(now)->tv_sec ^ \
+    (u_int32_t)(now)->tv_usec)
+
 __BEGIN_DECLS
 extern u_int __rpc_get_a_size __P((int));
 extern int __rpc_dtbsize __P((void));
 extern struct netconfig * __rpcgettp __P((int));
 extern  int  __rpc_get_default_domain __P((char **));
-void *__rpc_setconf __P((char *));
-struct netconfig *__rpc_getconf __P((void *));
-struct netconfig * __rpc_getconfip __P((char *));
-void __rpc_endconf __P((void *));
 
 char *__rpc_taddr2uaddr_af __P((int, const struct netbuf *));
 struct netbuf *__rpc_uaddr2taddr_af __P((int, const char *));
@@ -79,6 +78,9 @@ struct netbuf *__rpcb_findaddr __P((rpcprog_t, rpcvers_t,
 				    const struct netconfig *,
 				    const char *, CLIENT **));
 bool_t __rpc_control __P((int,void *));
+
+char *_get_next_token __P((char *, int));
+
 __END_DECLS
 
 #endif /* _RPC_RPCCOM_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetpath.c,v 1.2 2000/06/11 16:26:53 assar Exp $	*/
+/*	$NetBSD: getnetpath.c,v 1.3 2000/07/06 03:10:34 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -73,7 +73,7 @@ struct netpath_vars {
 #define NP_VALID	0xf00d
 #define NP_INVALID	0
 
-char *_get_next_token __P((char *, char));
+char *_get_next_token __P((char *, int));
 
 
 /*
@@ -108,7 +108,7 @@ setnetpath()
     }
     np_sessionp->valid = NP_VALID;
     np_sessionp->ncp_list = NULL;
-    if ((npp = getenv(NETPATH)) == (char *)NULL) {
+    if ((npp = getenv(NETPATH)) == NULL) {
 	np_sessionp->netpath = NULL;
     } else {
 	(void) endnetconfig(np_sessionp->nc_handlep);/* won't need nc session*/
@@ -239,7 +239,7 @@ endnetpath(handlep)
 char *
 _get_next_token(npp, token)
 char *npp;		/* string */
-char token;		/* char to parse string for */
+int token;		/* char to parse string for */
 {
     char  *cp;		/* char pointer */
     char  *np;		/* netpath pointer */

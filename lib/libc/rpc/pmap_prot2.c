@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_prot2.c,v 1.13 2000/06/02 23:11:12 fvdl Exp $	*/
+/*	$NetBSD: pmap_prot2.c,v 1.14 2000/07/06 03:10:34 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_prot2.c 1.3 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_prot2.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_prot2.c,v 1.13 2000/06/02 23:11:12 fvdl Exp $");
+__RCSID("$NetBSD: pmap_prot2.c,v 1.14 2000/07/06 03:10:34 christos Exp $");
 #endif
 #endif
 
@@ -145,5 +145,5 @@ xdr_pmaplist_ptr(xdrs, rp)
 	XDR *xdrs;
 	struct pmaplist *rp;
 {
-	return xdr_pmaplist(xdrs, (struct pmaplist **)rp);
+	return xdr_pmaplist(xdrs, (struct pmaplist **)(void *)rp);
 }

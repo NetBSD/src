@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.4 2000/06/06 14:44:45 fvdl Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.5 2000/07/06 03:10:35 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.4 2000/06/06 14:44:45 fvdl Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.5 2000/07/06 03:10:35 christos Exp $");
 #endif
 #endif
 
@@ -75,8 +75,10 @@ __weak_alias(svc_vc_create,_svc_vc_create)
 #endif
 
 static SVCXPRT *makefd_xprt __P((int, u_int, u_int));
+#if 0
 static bool_t rendezvous_request __P((SVCXPRT *, struct rpc_msg *));
 static enum xprt_stat rendezvous_stat __P((SVCXPRT *));
+#endif
 static void svc_vc_destroy __P((SVCXPRT *));
 static int read_vc __P((caddr_t, caddr_t, int));
 static int write_vc __P((caddr_t, caddr_t, int));
@@ -85,7 +87,9 @@ static bool_t svc_vc_recv __P((SVCXPRT *, struct rpc_msg *));
 static bool_t svc_vc_getargs __P((SVCXPRT *, xdrproc_t, caddr_t));
 static bool_t svc_vc_freeargs __P((SVCXPRT *, xdrproc_t, caddr_t));
 static bool_t svc_vc_reply __P((SVCXPRT *, struct rpc_msg *));
+#if 0
 static void svc_vc_rendezvous_ops __P((SVCXPRT *));
+#endif
 static void svc_vc_ops __P((SVCXPRT *));
 static bool_t svc_vc_control __P((SVCXPRT *xprt, const u_int rq, void *in));
 
@@ -130,16 +134,16 @@ svc_vc_create(fd, sendsize, recvsize)
 	socklen_t slen;
 	int one = 1;
 
-	r = (struct cf_rendezvous *)mem_alloc(sizeof(*r));
+	r = mem_alloc(sizeof(*r));
 	if (r == NULL) {
 		warnx("svc_vc_create: out of memory");
 		goto cleanup_svc_vc_create;
 	}
 	if (!__rpc_fd2sockinfo(fd, &si))
 		return NULL;
-	r->sendsize = __rpc_get_t_size(si.si_af, si.si_proto, sendsize);
-	r->recvsize = __rpc_get_t_size(si.si_af, si.si_proto, recvsize);
-	xprt = (SVCXPRT *)mem_alloc(sizeof(SVCXPRT));
+	r->sendsize = __rpc_get_t_size(si.si_af, si.si_proto, (int)sendsize);
+	r->recvsize = __rpc_get_t_size(si.si_af, si.si_proto, (int)recvsize);
+	xprt = mem_alloc(sizeof(SVCXPRT));
 	if (xprt == NULL) {
 		warnx("svc_vc_create: out of memory");
 		goto cleanup_svc_vc_create;
@@ -149,12 +153,11 @@ svc_vc_create(fd, sendsize, recvsize)
 	xprt->xp_p2 = NULL;
 	xprt->xp_p3 = NULL;
 	xprt->xp_verf = _null_auth;
-	svc_vc_rendezvous_ops(xprt);
-	xprt->xp_port = -1;	/* It is the rendezvouser */
+	xprt->xp_port = (u_short)-1;	/* It is the rendezvouser */
 	xprt->xp_fd = fd;
 
 	slen = sizeof (struct sockaddr_storage);
-	if (getsockname(fd, (struct sockaddr *)&sslocal, &slen) < 0) {
+	if (getsockname(fd, (struct sockaddr *)(void *)&sslocal, &slen) < 0) {
 		warnx("svc_vc_create: could not retrieve local addr");
 		goto cleanup_svc_vc_create;
 	}
@@ -167,12 +170,12 @@ svc_vc_create(fd, sendsize, recvsize)
 			goto cleanup_svc_vc_create;
 
 	xprt->xp_ltaddr.maxlen = xprt->xp_ltaddr.len = sslocal.ss_len;
-	xprt->xp_ltaddr.buf = mem_alloc(sslocal.ss_len);
+	xprt->xp_ltaddr.buf = mem_alloc((size_t)sslocal.ss_len);
 	if (xprt->xp_ltaddr.buf == NULL) {
 		warnx("svc_vc_create: no mem for local addr");
 		goto cleanup_svc_vc_create;
 	}
-	memcpy(xprt->xp_ltaddr.buf, &sslocal, sslocal.ss_len);
+	memcpy(xprt->xp_ltaddr.buf, &sslocal, (size_t)sslocal.ss_len);
 
 	xprt->xp_rtaddr.maxlen = sizeof (struct sockaddr_storage);
 	xprt_register(xprt);
@@ -180,7 +183,7 @@ svc_vc_create(fd, sendsize, recvsize)
 cleanup_svc_vc_create:
 	if (r != NULL)
 		mem_free(r, sizeof(*r));
-	return ((SVCXPRT *)NULL);
+	return (NULL);
 }
 
 /*
@@ -204,30 +207,30 @@ svc_fd_create(fd, sendsize, recvsize)
 		return NULL;
 
 	slen = sizeof (struct sockaddr_storage);
-	if (getsockname(fd, (struct sockaddr *)&ss, &slen) < 0) {
+	if (getsockname(fd, (struct sockaddr *)(void *)&ss, &slen) < 0) {
 		warnx("svc_fd_create: could not retrieve local addr");
 		goto freedata;
 	}
 	ret->xp_ltaddr.maxlen = ret->xp_ltaddr.len = ss.ss_len;
-	ret->xp_ltaddr.buf = mem_alloc(ss.ss_len);
+	ret->xp_ltaddr.buf = mem_alloc((size_t)ss.ss_len);
 	if (ret->xp_ltaddr.buf == NULL) {
 		warnx("svc_fd_create: no mem for local addr");
 		goto freedata;
 	}
-	memcpy(ret->xp_ltaddr.buf, &ss, ss.ss_len);
+	memcpy(ret->xp_ltaddr.buf, &ss, (size_t)ss.ss_len);
 
 	slen = sizeof (struct sockaddr_storage);
-	if (getpeername(fd, (struct sockaddr *)&ss, &slen) < 0) {
+	if (getpeername(fd, (struct sockaddr *)(void *)&ss, &slen) < 0) {
 		warnx("svc_fd_create: could not retrieve remote addr");
 		goto freedata;
 	}
 	ret->xp_rtaddr.maxlen = ret->xp_rtaddr.len = ss.ss_len;
-	ret->xp_rtaddr.buf = mem_alloc(ss.ss_len);
+	ret->xp_rtaddr.buf = mem_alloc((size_t)ss.ss_len);
 	if (ret->xp_rtaddr.buf == NULL) {
 		warnx("svc_fd_create: no mem for local addr");
 		goto freedata;
 	}
-	memcpy(ret->xp_rtaddr.buf, &ss, ss.ss_len);
+	memcpy(ret->xp_rtaddr.buf, &ss, (size_t)ss.ss_len);
 #ifdef PORTMAP
 	if (ss.ss_family == AF_INET) {
 		ret->xp_raddr = *(struct sockaddr_in *)ret->xp_rtaddr.buf;
@@ -255,17 +258,17 @@ makefd_xprt(fd, sendsize, recvsize)
  
 	_DIAGASSERT(fd != -1);
 
-	xprt = (SVCXPRT *)mem_alloc(sizeof(SVCXPRT));
-	if (xprt == (SVCXPRT *)NULL) {
+	xprt = mem_alloc(sizeof(SVCXPRT));
+	if (xprt == NULL) {
 		warnx("svc_tcp: makefd_xprt: out of memory");
 		goto done;
 	}
 	memset(xprt, 0, sizeof *xprt);
-	cd = (struct cf_conn *)mem_alloc(sizeof(struct cf_conn));
-	if (cd == (struct cf_conn *)NULL) {
+	cd = mem_alloc(sizeof(struct cf_conn));
+	if (cd == NULL) {
 		warnx("svc_tcp: makefd_xprt: out of memory");
 		mem_free(xprt, sizeof(SVCXPRT));
-		xprt = (SVCXPRT *)NULL;
+		xprt = NULL;
 		goto done;
 	}
 	cd->strm_stat = XPRT_IDLE;
@@ -281,6 +284,7 @@ done:
 	return (xprt);
 }
 
+#if 0
 /*ARGSUSED*/
 static bool_t
 rendezvous_request(xprt, msg)
@@ -299,7 +303,8 @@ rendezvous_request(xprt, msg)
 	r = (struct cf_rendezvous *)xprt->xp_p1;
 again:
 	len = sizeof addr;
-	if ((sock = accept(xprt->xp_fd, (struct sockaddr *)&addr, &len)) < 0) {
+	if ((sock = accept(xprt->xp_fd, (struct sockaddr *)(void *)&addr,
+	    &len)) < 0) {
 		if (errno == EINTR)
 			goto again;
 	       return (FALSE);
@@ -335,6 +340,7 @@ rendezvous_stat(xprt)
 
 	return (XPRT_IDLE);
 }
+#endif
 
 static void
 svc_vc_destroy(xprt)
@@ -371,6 +377,7 @@ svc_vc_destroy(xprt)
 	mem_free(xprt, sizeof(SVCXPRT));
 }
 
+/*ARGSUSED*/
 static bool_t
 svc_vc_control(xprt, rq, in)
 	SVCXPRT *xprt;
@@ -433,7 +440,7 @@ read_vc(xprtp, buf, len)
 		    cmp->cmsg_type != SCM_CREDS)
 			goto fatal_err;
 
-		sc = (struct sockcred *)CMSG_DATA(cmp);
+		sc = (struct sockcred *)(void *)CMSG_DATA(cmp);
 
 		xprt->xp_p2 = mem_alloc(SOCKCREDSIZE(sc->sc_ngroups));
 		if (xprt->xp_p2 == NULL)
@@ -618,6 +625,7 @@ svc_vc_ops(xprt)
 	mutex_unlock(&ops_lock);
 }
 
+#if 0
 static void
 svc_vc_rendezvous_ops(xprt)
 	SVCXPRT *xprt;
@@ -645,3 +653,4 @@ svc_vc_rendezvous_ops(xprt)
 	xprt->xp_ops2 = &ops2;
 	mutex_unlock(&ops_lock);
 }
+#endif

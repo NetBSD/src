@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.3 2000/06/11 16:26:53 assar Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.4 2000/07/06 03:10:35 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -56,6 +56,7 @@ static char sccsid[] = "@(#)rpcb_clnt.c 1.30 89/06/21 Copyr 1988 Sun Micro";
 #include <sys/utsname.h>
 #include <rpc/rpc.h>
 #include <rpc/rpcb_prot.h>
+#include <rpc/nettype.h>
 #include <netconfig.h>
 #ifdef PORTMAP
 #include <netinet/in.h>		/* FOR IPPROTO_TCP/UDP definitions */
@@ -296,7 +297,7 @@ getclnthandle(host, nconf, targaddr)
 	const struct netconfig *nconf;
 	char **targaddr;
 {
-	register CLIENT *client;
+	CLIENT *client;
 	struct netbuf *addr, taddr;
 	struct netbuf addr_to_delete;
 	struct __rpc_sockinfo si;
@@ -312,8 +313,8 @@ getclnthandle(host, nconf, targaddr)
 	ad_cache = check_cache(host, nconf->nc_netid);
 	if (ad_cache != NULL) {
 		addr = ad_cache->ac_taddr;
-		client = clnt_tli_create(RPC_ANYFD, nconf, addr, RPCBPROG,
-					RPCBVERS4, 0, 0);
+		client = clnt_tli_create(RPC_ANYFD, nconf, addr,
+		    (rpcprog_t)RPCBPROG, (rpcvers_t)RPCBVERS4, 0, 0);
 		if (client != NULL) {
 			if (targaddr)
 				*targaddr = ad_cache->ac_uaddr;
@@ -385,8 +386,8 @@ getclnthandle(host, nconf, targaddr)
 			fprintf(stderr, "\n");
 		}
 #endif
-		client = clnt_tli_create(RPC_ANYFD, nconf, &taddr, RPCBPROG,
-					RPCBVERS4, 0, 0);
+		client = clnt_tli_create(RPC_ANYFD, nconf, &taddr,
+		    (rpcprog_t)RPCBPROG, (rpcvers_t)RPCBVERS4, 0, 0);
 #ifdef ND_DEBUG
 		if (! client) {
 			clnt_pcreateerror("rpcbind clnt interface");
@@ -422,7 +423,8 @@ local_rpcb()
 #ifdef __REENT
 	extern mutex_t loopnconf_lock;
 #endif
-	int sock, tsize;
+	int sock;
+	size_t tsize;
 	struct netbuf nbuf;
 	struct sockaddr_un sun;
 
@@ -442,7 +444,8 @@ local_rpcb()
 	nbuf.buf = &sun;
 
 	tsize = __rpc_get_t_size(AF_LOCAL, 0, 0);
-	client = clnt_vc_create(sock, &nbuf, RPCBPROG, RPCBVERS, tsize, tsize);
+	client = clnt_vc_create(sock, &nbuf, (rpcprog_t)RPCBPROG,
+	    (rpcvers_t)RPCBVERS, tsize, tsize);
 
 	if (client != NULL)
 		return client;
@@ -464,7 +467,7 @@ try_nconf:
 			mutex_unlock(&loopnconf_lock);
 			return (NULL);
 		}
-		while ((nconf = getnetconfig(nc_handle))) {
+		while ((nconf = getnetconfig(nc_handle)) != NULL) {
 #ifdef INET6
 			if ((strcmp(nconf->nc_protofmly, NC_INET6) == 0 ||
 #else
@@ -498,7 +501,7 @@ try_nconf:
 		endnetconfig(nc_handle);
 	}
 	mutex_unlock(&loopnconf_lock);
-	client = getclnthandle(hostname, loopnconf, (char **)NULL);
+	client = getclnthandle(hostname, loopnconf, NULL);
 	return (client);
 }
 
@@ -513,13 +516,13 @@ rpcb_set(program, version, nconf, address)
 	const struct netconfig *nconf;	/* Network structure of transport */
 	const struct netbuf *address;		/* Services netconfig address */
 {
-	register CLIENT *client;
+	CLIENT *client;
 	bool_t rslt = FALSE;
 	RPCB parms;
 	char uidbuf[32];
 
 	/* parameter checking */
-	if (nconf == (struct netconfig *)NULL) {
+	if (nconf == NULL) {
 		rpc_createerr.cf_stat = RPC_UNKNOWNPROTO;
 		return (FALSE);
 	}
@@ -533,6 +536,7 @@ rpcb_set(program, version, nconf, address)
 	}
 
 	/* convert to universal */
+	/*LINTED const castaway*/
 	parms.r_addr = taddr2uaddr((struct netconfig *) nconf,
 				   (struct netbuf *)address);
 	if (!parms.r_addr) {
@@ -550,8 +554,9 @@ rpcb_set(program, version, nconf, address)
 	(void) snprintf(uidbuf, sizeof uidbuf, "%d", geteuid());
 	parms.r_owner = uidbuf;
 
-	CLNT_CALL(client, RPCBPROC_SET, (xdrproc_t) xdr_rpcb, (char *)&parms,
-			(xdrproc_t) xdr_bool, (char *)&rslt, tottimeout);
+	CLNT_CALL(client, (rpcproc_t)RPCBPROC_SET, (xdrproc_t) xdr_rpcb,
+	    (char *)(void *)&parms, (xdrproc_t) xdr_bool,
+	    (char *)(void *)&rslt, tottimeout);
 
 	CLNT_DESTROY(client);
 	free(parms.r_addr);
@@ -570,7 +575,7 @@ rpcb_unset(program, version, nconf)
 	rpcvers_t version;
 	const struct netconfig *nconf;
 {
-	register CLIENT *client;
+	CLIENT *client;
 	bool_t rslt = FALSE;
 	RPCB parms;
 	char uidbuf[32];
@@ -584,14 +589,18 @@ rpcb_unset(program, version, nconf)
 	parms.r_vers = version;
 	if (nconf)
 		parms.r_netid = nconf->nc_netid;
-	else
+	else {
+		/*LINTED const castaway*/
 		parms.r_netid = (char *) &nullstring[0]; /* unsets  all */
+	}
+	/*LINTED const castaway*/
 	parms.r_addr = (char *) &nullstring[0];
 	(void) snprintf(uidbuf, sizeof uidbuf, "%d", geteuid());
 	parms.r_owner = uidbuf;
 
-	CLNT_CALL(client, RPCBPROC_UNSET, (xdrproc_t) xdr_rpcb, (char *)&parms,
-			(xdrproc_t) xdr_bool, (char *)&rslt, tottimeout);
+	CLNT_CALL(client, (rpcproc_t)RPCBPROC_UNSET, (xdrproc_t) xdr_rpcb,
+	    (char *)(void *)&parms, (xdrproc_t) xdr_bool,
+	    (char *)(void *)&rslt, tottimeout);
 
 	CLNT_DESTROY(client);
 	return (rslt);
@@ -655,7 +664,7 @@ __rpcb_findaddr(program, version, nconf, host, clpp)
 	const char *host;
 	CLIENT **clpp;
 {
-	register CLIENT *client = NULL;
+	CLIENT *client = NULL;
 	RPCB parms;
 	enum clnt_stat clnt_st;
 	char *ua = NULL;
@@ -665,7 +674,7 @@ __rpcb_findaddr(program, version, nconf, host, clpp)
 	struct netbuf servaddr;
 
 	/* parameter checking */
-	if (nconf == (struct netconfig *)NULL) {
+	if (nconf == NULL) {
 		rpc_createerr.cf_stat = RPC_UNKNOWNPROTO;
 		return (NULL);
 	}
@@ -696,21 +705,21 @@ __rpcb_findaddr(program, version, nconf, host, clpp)
 		} else {
 			client = getclnthandle(host, nconf, &parms.r_addr);
 		}
-		if (client == (CLIENT *)NULL) {
+		if (client == NULL) {
 			return (NULL);
 		}
 
 		/* Set the version */
-		CLNT_CONTROL(client, CLSET_VERS, (char *)&pmapvers);
+		CLNT_CONTROL(client, CLSET_VERS, (char *)(void *)&pmapvers);
 		pmapparms.pm_prog = program;
 		pmapparms.pm_vers = version;
 		pmapparms.pm_prot = strcmp(nconf->nc_proto, NC_TCP) ?
 					IPPROTO_UDP : IPPROTO_TCP;
 		pmapparms.pm_port = 0;	/* not needed */
-		clnt_st = CLNT_CALL(client, PMAPPROC_GETPORT,
-			(xdrproc_t) xdr_pmap, (caddr_t) &pmapparms,
-			(xdrproc_t) xdr_u_short, (caddr_t) &port,
-			tottimeout);
+		clnt_st = CLNT_CALL(client, (rpcproc_t)PMAPPROC_GETPORT,
+		    (xdrproc_t) xdr_pmap, (caddr_t)(void *)&pmapparms,
+		    (xdrproc_t) xdr_u_short, (caddr_t)(void *)&port,
+		    tottimeout);
 		if (clnt_st != RPC_SUCCESS) {
 			if ((clnt_st == RPC_PROGVERSMISMATCH) ||
 				(clnt_st == RPC_PROGUNAVAIL))
@@ -724,7 +733,7 @@ __rpcb_findaddr(program, version, nconf, host, clpp)
 			goto error;
 		}
 		port = htons(port);
-		CLNT_CONTROL(client, CLGET_SVC_ADDR, (char *)&remote);
+		CLNT_CONTROL(client, CLGET_SVC_ADDR, (char *)(void *)&remote);
 		if (((address = (struct netbuf *)
 			malloc(sizeof (struct netbuf))) == NULL) ||
 		    ((address->buf = (char *)
@@ -739,7 +748,7 @@ __rpcb_findaddr(program, version, nconf, host, clpp)
 		}
 		memcpy(address->buf, remote.buf, remote.len);
 		memcpy(&((char *)address->buf)[sizeof (short)],
-				(char *)&port, sizeof (short));
+				(char *)(void *)&port, sizeof (short));
 		address->len = address->maxlen = remote.len;
 		goto done;
 	}
@@ -753,6 +762,7 @@ try_rpcbind:
 	 */
 	parms.r_prog = program;
 	parms.r_vers = version;
+	/*LINTED const castaway*/
 	parms.r_owner = (char *) &nullstring[0];	/* not needed; */
 							/* just for xdring */
 	parms.r_netid = nconf->nc_netid; /* not really needed */
@@ -799,32 +809,34 @@ try_rpcbind:
 				}
 				__rpc_endconf(handle);
 			}
-			if (client == (CLIENT *)NULL)
+			if (client == NULL)
 				goto regular_rpcbind;	/* Go the regular way */
 		} else {
 			/* This is a UDP PORTMAP handle.  Change to version 4 */
 			vers = RPCBVERS4;
-			CLNT_CONTROL(client, CLSET_VERS, (char *)&vers);
+			CLNT_CONTROL(client, CLSET_VERS, (char *)(void *)&vers);
 		}
 		/*
 		 * We also send the remote system the address we used to
 		 * contact it in case it can help it connect back with us
 		 */
-		if (parms.r_addr == NULL)
+		if (parms.r_addr == NULL) {
+			/*LINTED const castaway*/
 			parms.r_addr = (char *) &nullstring[0]; /* for XDRing */
-		clnt_st = CLNT_CALL(client, RPCBPROC_GETADDRLIST,
-				    (xdrproc_t) xdr_rpcb, (char *) &parms,
-				    (xdrproc_t) xdr_rpcb_entry_list_ptr,
-				    (char *) &relp, tottimeout);
+		}
+		clnt_st = CLNT_CALL(client, (rpcproc_t)RPCBPROC_GETADDRLIST,
+		    (xdrproc_t) xdr_rpcb, (char *)(void *)&parms,
+		    (xdrproc_t) xdr_rpcb_entry_list_ptr,
+		    (char *)(void *)&relp, tottimeout);
 		if (clnt_st == RPC_SUCCESS) {
-			if ((address = got_entry(relp, nconf))) {
+			if ((address = got_entry(relp, nconf)) != NULL) {
 				xdr_free((xdrproc_t) xdr_rpcb_entry_list_ptr,
-					(char *)&relp);
+				    (char *)(void *)&relp);
 				goto done;
 			}
 			/* Entry not found for this transport */
 			xdr_free((xdrproc_t) xdr_rpcb_entry_list_ptr,
-				(char *)&relp);
+			    (char *)(void *)&relp);
 			/*
 			 * XXX: should have perhaps returned with error but
 			 * since the remote machine might not always be able
@@ -863,17 +875,18 @@ regular_rpcbind:
 			goto error;
 		}
 	}
-	if (parms.r_addr == NULL)
+	if (parms.r_addr == NULL) {
+		/*LINTED const castaway*/
 		parms.r_addr = (char *) &nullstring[0];
+	}
 
 	/* First try from start_vers and then version 3 (RPCBVERS) */
 	for (vers = start_vers;  vers >= RPCBVERS; vers--) {
 		/* Set the version */
-		CLNT_CONTROL(client, CLSET_VERS, (char *)&vers);
-		clnt_st = CLNT_CALL(client, RPCBPROC_GETADDR,
-				    (xdrproc_t) xdr_rpcb, (char *) &parms,
-				    (xdrproc_t) xdr_wrapstring,
-				    (char *) &ua, tottimeout);
+		CLNT_CONTROL(client, CLSET_VERS, (char *)(void *)&vers);
+		clnt_st = CLNT_CALL(client, (rpcproc_t)RPCBPROC_GETADDR,
+		    (xdrproc_t) xdr_rpcb, (char *)(void *)&parms,
+		    (xdrproc_t) xdr_wrapstring, (char *)(void *) ua, tottimeout);
 		if (clnt_st == RPC_SUCCESS) {
 			if ((ua == NULL) || (ua[0] == NULL)) {
 				/* address unknown */
@@ -887,14 +900,16 @@ regular_rpcbind:
 				fprintf(stderr,
 					"\tCouldn't resolve remote address!\n");
 #endif
-			xdr_free((xdrproc_t)xdr_wrapstring, (char *)&ua);
+			xdr_free((xdrproc_t)xdr_wrapstring,
+			    (char *)(void *)&ua);
 
 			if (! address) {
 				/* We don't know about your universal address */
 				rpc_createerr.cf_stat = RPC_N2AXLATEFAILURE;
 				goto error;
 			}
-			CLNT_CONTROL(client, CLGET_SVC_ADDR, (char *)&servaddr);
+			CLNT_CONTROL(client, CLGET_SVC_ADDR,
+			    (char *)(void *)&servaddr);
 			__rpc_fixup_addr(address, &servaddr);
 			goto done;
 		} else if (clnt_st == RPC_PROGVERSMISMATCH) {
@@ -967,7 +982,7 @@ rpcb_getaddr(program, version, nconf, address, host)
 		rpc_createerr.cf_stat = RPC_FAILED;
 		return (FALSE);
 	}
-	memcpy(address->buf, na->buf, (int)na->len);
+	memcpy(address->buf, na->buf, (size_t)na->len);
 	address->len = na->len;
 	free(na->buf);
 	free(na);
@@ -986,39 +1001,37 @@ rpcb_getmaps(nconf, host)
 	const struct netconfig *nconf;
 	const char *host;
 {
-	rpcblist_ptr head = (rpcblist_ptr)NULL;
-	register CLIENT *client;
+	rpcblist_ptr head = NULL;
+	CLIENT *client;
 	enum clnt_stat clnt_st;
 	long vers = 0;
 
-	client = getclnthandle(host, nconf, (char **)NULL);
-	if (client == (CLIENT *)NULL) {
+	client = getclnthandle(host, nconf, NULL);
+	if (client == NULL) {
 		return (head);
 	}
-	clnt_st = CLNT_CALL(client, RPCBPROC_DUMP,
-			(xdrproc_t) xdr_void, NULL,
-			(xdrproc_t) xdr_rpcblist_ptr,
-			(char *)&head, tottimeout);
+	clnt_st = CLNT_CALL(client, (rpcproc_t)RPCBPROC_DUMP,
+	    (xdrproc_t) xdr_void, NULL, (xdrproc_t) xdr_rpcblist_ptr,
+	    (char *)(void *)&head, tottimeout);
 	if (clnt_st == RPC_SUCCESS)
 		goto done;
 
 	if ((clnt_st != RPC_PROGVERSMISMATCH) &&
-		    (clnt_st != RPC_PROGUNAVAIL)) {
+	    (clnt_st != RPC_PROGUNAVAIL)) {
 		rpc_createerr.cf_stat = RPC_RPCBFAILURE;
 		clnt_geterr(client, &rpc_createerr.cf_error);
 		goto done;
 	}
 
 	/* fall back to earlier version */
-	CLNT_CONTROL(client, CLGET_VERS, (char *)&vers);
+	CLNT_CONTROL(client, CLGET_VERS, (char *)(void *)&vers);
 	if (vers == RPCBVERS4) {
 		vers = RPCBVERS;
-		CLNT_CONTROL(client, CLSET_VERS, (char *)&vers);
-		if (CLNT_CALL(client, RPCBPROC_DUMP,
-			(xdrproc_t) xdr_void,
-			(char *) NULL, (xdrproc_t) xdr_rpcblist_ptr,
-			(char *)&head, tottimeout) == RPC_SUCCESS)
-				goto done;
+		CLNT_CONTROL(client, CLSET_VERS, (char *)(void *)&vers);
+		if (CLNT_CALL(client, (rpcproc_t)RPCBPROC_DUMP,
+		    (xdrproc_t) xdr_void, NULL, (xdrproc_t) xdr_rpcblist_ptr,
+		    (char *)(void *)&head, tottimeout) == RPC_SUCCESS)
+			goto done;
 	}
 	rpc_createerr.cf_stat = RPC_RPCBFAILURE;
 	clnt_geterr(client, &rpc_createerr.cf_error);
@@ -1048,18 +1061,19 @@ rpcb_rmtcall(nconf, host, prog, vers, proc, xdrargs, argsp,
 	struct timeval tout;		/* Timeout value for this call */
 	const struct netbuf *addr_ptr;	/* Preallocated netbuf address */
 {
-	register CLIENT *client;
+	CLIENT *client;
 	enum clnt_stat stat;
 	struct r_rpcb_rmtcallargs a;
 	struct r_rpcb_rmtcallres r;
 	long rpcb_vers;
 
 
-	client = getclnthandle(host, nconf, (char **)NULL);
-	if (client == (CLIENT *)NULL) {
+	client = getclnthandle(host, nconf, NULL);
+	if (client == NULL) {
 		return (RPC_FAILED);
 	}
-	CLNT_CONTROL(client, CLSET_RETRY_TIMEOUT, (char *)&rmttimeout);
+	/*LINTED const castaway*/
+	CLNT_CONTROL(client, CLSET_RETRY_TIMEOUT, (char *)(void *)&rmttimeout);
 	a.prog = prog;
 	a.vers = vers;
 	a.proc = proc;
@@ -1070,16 +1084,17 @@ rpcb_rmtcall(nconf, host, prog, vers, proc, xdrargs, argsp,
 	r.xdr_res = xdrres;
 
 	for (rpcb_vers = RPCBVERS4; rpcb_vers >= RPCBVERS; rpcb_vers--) {
-		CLNT_CONTROL(client, CLSET_VERS, (char *)&rpcb_vers);
-		stat = CLNT_CALL(client, RPCBPROC_CALLIT,
-			(xdrproc_t) xdr_rpcb_rmtcallargs, (char *)&a,
-			(xdrproc_t) xdr_rpcb_rmtcallres, (char *)&r, tout);
+		CLNT_CONTROL(client, CLSET_VERS, (char *)(void *)&rpcb_vers);
+		stat = CLNT_CALL(client, (rpcproc_t)RPCBPROC_CALLIT,
+		    (xdrproc_t) xdr_rpcb_rmtcallargs, (char *)(void *)&a,
+		    (xdrproc_t) xdr_rpcb_rmtcallres, (char *)(void *)&r, tout);
 		if ((stat == RPC_SUCCESS) && (addr_ptr != NULL)) {
 			struct netbuf *na;
-
+			/*LINTED const castaway*/
 			na = uaddr2taddr((struct netconfig *) nconf, r.addr);
-			if (! na) {
+			if (!na) {
 				stat = RPC_N2AXLATEFAILURE;
+				/*LINTED const castaway*/
 				((struct netbuf *) addr_ptr)->len = 0;
 				goto error;
 			}
@@ -1088,10 +1103,12 @@ rpcb_rmtcall(nconf, host, prog, vers, proc, xdrargs, argsp,
 				stat = RPC_FAILED; /* XXX A better error no */
 				free(na->buf);
 				free(na);
+				/*LINTED const castaway*/
 				((struct netbuf *) addr_ptr)->len = 0;
 				goto error;
 			}
-			memcpy(addr_ptr->buf, na->buf, (int)na->len);
+			memcpy(addr_ptr->buf, na->buf, (size_t)na->len);
+			/*LINTED const castaway*/
 			((struct netbuf *)addr_ptr)->len = na->len;
 			free(na->buf);
 			free(na);
@@ -1104,7 +1121,7 @@ rpcb_rmtcall(nconf, host, prog, vers, proc, xdrargs, argsp,
 error:
 	CLNT_DESTROY(client);
 	if (r.addr)
-		xdr_free((xdrproc_t) xdr_wrapstring, (char *)&r.addr);
+		xdr_free((xdrproc_t) xdr_wrapstring, (char *)(void *)&r.addr);
 	return (stat);
 }
 
@@ -1134,13 +1151,13 @@ rpcb_gettime(host, timep)
 		return (FALSE);
 	}
 	rpc_createerr.cf_stat = RPC_SUCCESS;
-	while (client == (CLIENT *)NULL) {
+	while (client == NULL) {
 		if ((nconf = __rpc_getconf(handle)) == NULL) {
 			if (rpc_createerr.cf_stat == RPC_SUCCESS)
 				rpc_createerr.cf_stat = RPC_UNKNOWNPROTO;
 			break;
 		}
-		client = getclnthandle(host, nconf, (char **)NULL);
+		client = getclnthandle(host, nconf, NULL);
 		if (client)
 			break;
 	}
@@ -1149,19 +1166,19 @@ rpcb_gettime(host, timep)
 		return (FALSE);
 	}
 
-	st = CLNT_CALL(client, RPCBPROC_GETTIME,
-		(xdrproc_t) xdr_void, (char *)NULL,
-		(xdrproc_t) xdr_int, (char *)timep, tottimeout);
+	st = CLNT_CALL(client, (rpcproc_t)RPCBPROC_GETTIME,
+		(xdrproc_t) xdr_void, NULL,
+		(xdrproc_t) xdr_int, (char *)(void *)timep, tottimeout);
 
 	if ((st == RPC_PROGVERSMISMATCH) || (st == RPC_PROGUNAVAIL)) {
-		CLNT_CONTROL(client, CLGET_VERS, (char *)&vers);
+		CLNT_CONTROL(client, CLGET_VERS, (char *)(void *)&vers);
 		if (vers == RPCBVERS4) {
 			/* fall back to earlier version */
 			vers = RPCBVERS;
-			CLNT_CONTROL(client, CLSET_VERS, (char *)&vers);
-			st = CLNT_CALL(client, RPCBPROC_GETTIME,
-				(xdrproc_t) xdr_void, (char *)NULL,
-				(xdrproc_t) xdr_int, (char *) timep,
+			CLNT_CONTROL(client, CLSET_VERS, (char *)(void *)&vers);
+			st = CLNT_CALL(client, (rpcproc_t)RPCBPROC_GETTIME,
+				(xdrproc_t) xdr_void, NULL,
+				(xdrproc_t) xdr_int, (char *)(void *)timep,
 				tottimeout);
 		}
 	}
@@ -1183,7 +1200,7 @@ rpcb_taddr2uaddr(nconf, taddr)
 
 
 	/* parameter checking */
-	if (nconf == (struct netconfig *)NULL) {
+	if (nconf == NULL) {
 		rpc_createerr.cf_stat = RPC_UNKNOWNPROTO;
 		return (NULL);
 	}
@@ -1196,9 +1213,9 @@ rpcb_taddr2uaddr(nconf, taddr)
 		return (NULL);
 	}
 
-	CLNT_CALL(client, RPCBPROC_TADDR2UADDR, (xdrproc_t) xdr_netbuf,
-		(char *)taddr, (xdrproc_t) xdr_wrapstring, (char *)&uaddr,
-		tottimeout);
+	CLNT_CALL(client, (rpcproc_t)RPCBPROC_TADDR2UADDR,
+	    (xdrproc_t) xdr_netbuf, (char *)(void *)taddr,
+	    (xdrproc_t) xdr_wrapstring, (char *)(void *)&uaddr, tottimeout);
 	CLNT_DESTROY(client);
 	return (uaddr);
 }
@@ -1217,7 +1234,7 @@ rpcb_uaddr2taddr(nconf, uaddr)
 
 
 	/* parameter checking */
-	if (nconf == (struct netconfig *)NULL) {
+	if (nconf == NULL) {
 		rpc_createerr.cf_stat = RPC_UNKNOWNPROTO;
 		return (NULL);
 	}
@@ -1235,9 +1252,10 @@ rpcb_uaddr2taddr(nconf, uaddr)
 		CLNT_DESTROY(client);
 		return (NULL);
 	}
-	if (CLNT_CALL(client, RPCBPROC_UADDR2TADDR, (xdrproc_t) xdr_wrapstring,
-		(char *) &uaddr, (xdrproc_t) xdr_netbuf, (char *)taddr,
-		tottimeout) != RPC_SUCCESS) {
+	if (CLNT_CALL(client, (rpcproc_t)RPCBPROC_UADDR2TADDR,
+	    (xdrproc_t) xdr_wrapstring, (char *)(void *)&uaddr,
+	    (xdrproc_t) xdr_netbuf, (char *)(void *)taddr,
+	    tottimeout) != RPC_SUCCESS) {
 		free(taddr);
 		taddr = NULL;
 	}

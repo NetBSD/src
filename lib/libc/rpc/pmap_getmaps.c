@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_getmaps.c,v 1.15 2000/01/22 22:19:18 mycroft Exp $	*/
+/*	$NetBSD: pmap_getmaps.c,v 1.16 2000/07/06 03:10:34 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_getmaps.c 1.10 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_getmaps.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_getmaps.c,v 1.15 2000/01/22 22:19:18 mycroft Exp $");
+__RCSID("$NetBSD: pmap_getmaps.c,v 1.16 2000/07/06 03:10:34 christos Exp $");
 #endif
 #endif
 
@@ -80,7 +80,7 @@ struct pmaplist *
 pmap_getmaps(address)
 	 struct sockaddr_in *address;
 {
-	struct pmaplist *head = (struct pmaplist *)NULL;
+	struct pmaplist *head = NULL;
 	int sock = -1;
 	struct timeval minutetimeout;
 	CLIENT *client;
@@ -92,8 +92,9 @@ pmap_getmaps(address)
 	address->sin_port = htons(PMAPPORT);
 	client = clnttcp_create(address, PMAPPROG,
 	    PMAPVERS, &sock, 50, 500);
-	if (client != (CLIENT *)NULL) {
-		if (CLNT_CALL(client, PMAPPROC_DUMP, (xdrproc_t)xdr_void, NULL,
+	if (client != NULL) {
+		if (CLNT_CALL(client, (rpcproc_t)PMAPPROC_DUMP,
+		    (xdrproc_t)xdr_void, NULL,
 		    (xdrproc_t)xdr_pmaplist, &head, minutetimeout) !=
 		    RPC_SUCCESS) {
 			clnt_perror(client, "pmap_getmaps rpc problem");

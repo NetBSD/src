@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_generic.c,v 1.2 2000/06/07 18:27:40 fvdl Exp $	*/
+/*	$NetBSD: svc_generic.c,v 1.3 2000/07/06 03:10:35 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -52,6 +52,7 @@ static char sccsid[] = "@(#)svc_generic.c 1.21 89/02/28 Copyr 1988 Sun Micro";
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <rpc/rpc.h>
+#include <rpc/nettype.h>
 #include <stdio.h>
 #include <errno.h>
 #include <malloc.h>
@@ -100,11 +101,11 @@ svc_create(dispatch, prognum, versnum, nettype)
 
 /* VARIABLES PROTECTED BY xprtlist_lock: xprtlist */
 
-	if ((handle = __rpc_setconf((char *)nettype)) == NULL) {
+	if ((handle = __rpc_setconf(nettype)) == NULL) {
 		warnx("svc_create: unknown protocol");
 		return (0);
 	}
-	while ((nconf = __rpc_getconf(handle))) {
+	while ((nconf = __rpc_getconf(handle)) != NULL) {
 		mutex_lock(&xprtlist_lock);
 		for (l = xprtlist; l; l = l->next) {
 			if (strcmp(l->xprt->xp_netid, nconf->nc_netid) == 0) {
@@ -121,12 +122,12 @@ svc_create(dispatch, prognum, versnum, nettype)
 				break;
 			}
 		}
-		if (l == (struct xlist *)NULL) {
+		if (l == NULL) {
 			/* It was not found. Now create a new one */
 			xprt = svc_tp_create(dispatch, prognum, versnum, nconf);
 			if (xprt) {
 				l = (struct xlist *)malloc(sizeof (*l));
-				if (l == (struct xlist *)NULL) {
+				if (l == NULL) {
 					warnx("svc_create: no memory");
 					mutex_unlock(&xprtlist_lock);
 					return (0);
@@ -161,16 +162,17 @@ svc_tp_create(dispatch, prognum, versnum, nconf)
 {
 	SVCXPRT *xprt;
 
-	if (nconf == (struct netconfig *)NULL) {
+	if (nconf == NULL) {
 		warnx(
 	"svc_tp_create: invalid netconfig structure for prog %u vers %u",
 				(unsigned)prognum, (unsigned)versnum);
-		return ((SVCXPRT *)NULL);
+		return (NULL);
 	}
-	xprt = svc_tli_create(RPC_ANYFD, nconf, (struct t_bind *)NULL, 0, 0);
-	if (xprt == (SVCXPRT *)NULL) {
-		return ((SVCXPRT *)NULL);
+	xprt = svc_tli_create(RPC_ANYFD, nconf, NULL, 0, 0);
+	if (xprt == NULL) {
+		return (NULL);
 	}
+	/*LINTED const castaway*/
 	(void) rpcb_unset(prognum, versnum, (struct netconfig *) nconf);
 	if (svc_reg(xprt, prognum, versnum, dispatch, nconf) == FALSE) {
 		warnx(
@@ -178,7 +180,7 @@ svc_tp_create(dispatch, prognum, versnum, nconf)
 				(unsigned)prognum, (unsigned)versnum,
 				nconf->nc_netid);
 		SVC_DESTROY(xprt);
-		return ((SVCXPRT *)NULL);
+		return (NULL);
 	}
 	return (xprt);
 }
@@ -200,24 +202,23 @@ svc_tli_create(fd, nconf, bindaddr, sendsz, recvsz)
 	u_int sendsz;			/* Max sendsize */
 	u_int recvsz;			/* Max recvsize */
 {
-	register SVCXPRT *xprt = NULL;	/* service handle */
+	SVCXPRT *xprt = NULL;		/* service handle */
 	bool_t madefd = FALSE;		/* whether fd opened here  */
 	struct __rpc_sockinfo si;
 	struct sockaddr_storage ss;
-	int active = 0;
 	socklen_t slen;
 
 	if (fd == RPC_ANYFD) {
-		if (nconf == (struct netconfig *)NULL) {
+		if (nconf == NULL) {
 			warnx("svc_tli_create: invalid netconfig");
-			return ((SVCXPRT *)NULL);
+			return (NULL);
 		}
 		fd = __rpc_nconf2fd(nconf);
 		if (fd == -1) {
 			warnx(
 			    "svc_tli_create: could not open connection for %s",
 					nconf->nc_netid);
-			return ((SVCXPRT *)NULL);
+			return (NULL);
 		}
 		__rpc_nconf2sockinfo(nconf, &si);
 		madefd = TRUE;
@@ -228,7 +229,7 @@ svc_tli_create(fd, nconf, bindaddr, sendsz, recvsz)
 		if (!__rpc_fd2sockinfo(fd, &si)) {
 			warnx(
 		"svc_tli_create: could not get transport information");
-			return ((SVCXPRT *)NULL);
+			return (NULL);
 		}
 	}
 
@@ -242,7 +243,7 @@ svc_tli_create(fd, nconf, bindaddr, sendsz, recvsz)
 				ss.ss_family = si.si_af;
 				ss.ss_len = si.si_alen;
 				if (bind(fd, (struct sockaddr *)(void *)&ss,
-				    si.si_alen) < 0) {
+				    (socklen_t)si.si_alen) < 0) {
 					warnx(
 			"svc_tli_create: could not bind to anonymous port");
 					goto freedata;
@@ -250,13 +251,14 @@ svc_tli_create(fd, nconf, bindaddr, sendsz, recvsz)
 			}
 			listen(fd, SOMAXCONN);
 		} else {
-			if (bind(fd, (struct sockaddr *)&bindaddr->addr.buf,
-			    si.si_alen) < 0) {
+			if (bind(fd,
+			    (struct sockaddr *)(void *)&bindaddr->addr.buf,
+			    (socklen_t)si.si_alen) < 0) {
 				warnx(
 		"svc_tli_create: could not bind to requested address");
 				goto freedata;
 			}
-			listen(fd, bindaddr->qlen);
+			listen(fd, (int)bindaddr->qlen);
 		}
 			
 	}
@@ -266,9 +268,8 @@ svc_tli_create(fd, nconf, bindaddr, sendsz, recvsz)
 	switch (si.si_socktype) {
 		case SOCK_STREAM:
 			slen = sizeof ss;
-			if (getpeername(fd, (struct sockaddr *)&ss, &slen)
+			if (getpeername(fd, (struct sockaddr *)(void *)&ss, &slen)
 			    == 0) {
-				active = 1;
 				/* accepted socket */
 				xprt = svc_fd_create(fd, sendsz, recvsz);
 			} else
@@ -290,7 +291,7 @@ svc_tli_create(fd, nconf, bindaddr, sendsz, recvsz)
 			goto freedata;
 	}
 
-	if (xprt == (SVCXPRT *)NULL)
+	if (xprt == NULL)
 		/*
 		 * The error messages here are spitted out by the lower layers:
 		 * svc_vc_create(), svc_fd_create() and svc_dg_create().
@@ -314,5 +315,5 @@ freedata:
 			xprt->xp_fd = RPC_ANYFD;
 		SVC_DESTROY(xprt);
 	}
-	return ((SVCXPRT *)NULL);
+	return (NULL);
 }

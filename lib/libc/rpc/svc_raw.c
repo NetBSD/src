@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_raw.c,v 1.13 2000/06/02 23:11:16 fvdl Exp $	*/
+/*	$NetBSD: svc_raw.c,v 1.14 2000/07/06 03:10:35 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -100,11 +100,10 @@ svc_raw_create()
 		srp = (struct svc_raw_private *)calloc(1, sizeof (*srp));
 		if (srp == NULL) {
 			mutex_unlock(&svcraw_lock);
-			return ((SVCXPRT *)NULL);
+			return (NULL);
 		}
 		if (__rpc_rawcombuf == NULL)
-			__rpc_rawcombuf =
-			    (char *)calloc(UDPMSGSIZE, sizeof (char));
+			__rpc_rawcombuf = calloc(UDPMSGSIZE, sizeof (char));
 		srp->raw_buf = __rpc_rawcombuf; /* Share it with the client */
 		svc_raw_private = srp;
 	}
@@ -119,6 +118,7 @@ svc_raw_create()
 	return (&srp->server);
 }
 
+/*ARGSUSED*/
 static enum xprt_stat
 svc_raw_stat(xprt)
 SVCXPRT *xprt; /* args needed to satisfy ANSI-C typechecking */
@@ -126,6 +126,7 @@ SVCXPRT *xprt; /* args needed to satisfy ANSI-C typechecking */
 	return (XPRT_IDLE);
 }
 
+/*ARGSUSED*/
 static bool_t
 svc_raw_recv(xprt, msg)
 	SVCXPRT *xprt;
@@ -151,6 +152,7 @@ svc_raw_recv(xprt, msg)
 	return (TRUE);
 }
 
+/*ARGSUSED*/
 static bool_t
 svc_raw_reply(xprt, msg)
 	SVCXPRT *xprt;
@@ -177,13 +179,14 @@ svc_raw_reply(xprt, msg)
 	return (TRUE);
 }
 
+/*ARGSUSED*/
 static bool_t
 svc_raw_getargs(xprt, xdr_args, args_ptr)
 	SVCXPRT *xprt;
 	xdrproc_t xdr_args;
 	caddr_t args_ptr;
 {
-	register struct svc_raw_private *srp;
+	struct svc_raw_private *srp;
 
 	mutex_lock(&svcraw_lock);
 	srp = svc_raw_private;
@@ -195,6 +198,7 @@ svc_raw_getargs(xprt, xdr_args, args_ptr)
 	return (*xdr_args)(&srp->xdr_stream, args_ptr);
 }
 
+/*ARGSUSED*/
 static bool_t
 svc_raw_freeargs(xprt, xdr_args, args_ptr)
 	SVCXPRT *xprt;
@@ -217,12 +221,14 @@ svc_raw_freeargs(xprt, xdr_args, args_ptr)
 	return (*xdr_args)(xdrs, args_ptr);
 }
 
+/*ARGSUSED*/
 static void
 svc_raw_destroy(xprt)
 SVCXPRT *xprt;
 {
 }
 
+/*ARGSUSED*/
 static bool_t
 svc_raw_control(xprt, rq, in)
 	SVCXPRT *xprt;

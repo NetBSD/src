@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.c,v 1.28 2000/06/02 23:11:12 fvdl Exp $	*/
+/*	$NetBSD: pmap_rmt.c,v 1.29 2000/07/06 03:10:34 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_rmt.c,v 1.28 2000/06/02 23:11:12 fvdl Exp $");
+__RCSID("$NetBSD: pmap_rmt.c,v 1.29 2000/07/06 03:10:34 christos Exp $");
 #endif
 #endif
 
@@ -106,7 +106,7 @@ pmap_rmtcall(addr, prog, vers, proc, xdrargs, argsp, xdrres, resp, tout,
 
 	addr->sin_port = htons(PMAPPORT);
 	client = clntudp_create(addr, PMAPPROG, PMAPVERS, timeout, &sock);
-	if (client != (CLIENT *)NULL) {
+	if (client != NULL) {
 		a.prog = prog;
 		a.vers = vers;
 		a.proc = proc;
@@ -115,7 +115,7 @@ pmap_rmtcall(addr, prog, vers, proc, xdrargs, argsp, xdrres, resp, tout,
 		r.port_ptr = port_ptr;
 		r.results_ptr = resp;
 		r.xdr_results = xdrres;
-		stat = CLNT_CALL(client, PMAPPROC_CALLIT,
+		stat = CLNT_CALL(client, (rpcproc_t)PMAPPROC_CALLIT,
 		    (xdrproc_t)xdr_rmtcall_args, &a, (xdrproc_t)xdr_rmtcallres,
 		    &r, tout);
 		CLNT_DESTROY(client);
