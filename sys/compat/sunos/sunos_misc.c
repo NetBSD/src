@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.47 1995/04/27 12:05:40 christos Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.48 1995/06/11 22:33:54 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,6 +83,7 @@
 #include <sys/syscallargs.h>
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>
+#include <compat/sunos/sunos_util.h>
 
 #include <netinet/in.h>
 
@@ -113,10 +114,49 @@ sunos_creat(p, uap, retval)
 {
 	struct sunos_open_args ouap;
 
+	caddr_t sg = stackgap_init();
+	CHECKALT(p, &sg, SCARG(uap, path));
+
 	SCARG(&ouap, path) = SCARG(uap, path);
 	SCARG(&ouap, flags) = O_WRONLY | O_CREAT | O_TRUNC;
 	SCARG(&ouap, mode) = SCARG(uap, mode);
 	return (open(p, &ouap, retval));
+}
+
+int
+sunos_access(p, uap, retval)
+	struct proc *p;
+	struct sunos_access_args *uap;
+	register_t *retval;
+{
+	caddr_t sg = stackgap_init();
+	CHECKALT(p, &sg, SCARG(uap, path));
+
+	return (access(p, uap, retval));
+}
+
+int
+sunos_stat(p, uap, retval)
+	struct proc *p;
+	struct sunos_stat_args *uap;
+	register_t *retval;
+{
+	caddr_t sg = stackgap_init();
+	CHECKALT(p, &sg, SCARG(uap, path));
+
+	return (compat_43_stat(p, uap, retval));
+}
+
+int
+sunos_lstat(p, uap, retval)
+	struct proc *p;
+	struct sunos_lstat_args *uap;
+	register_t *retval;
+{
+	caddr_t sg = stackgap_init();
+	CHECKALT(p, &sg, SCARG(uap, path));
+
+	return (compat_43_lstat(p, uap, retval));
 }
 
 int
@@ -126,6 +166,9 @@ sunos_execv(p, uap, retval)
 	register_t *retval;
 {
 	struct execve_args ouap;
+
+	caddr_t sg = stackgap_init();
+	CHECKALT(p, &sg, SCARG(uap, path));
 
 	SCARG(&ouap, path) = SCARG(uap, path);
 	SCARG(&ouap, argp) = SCARG(uap, argp);
@@ -165,10 +208,7 @@ sunos_mount(p, uap, retval)
 	register_t *retval;
 {
 	int oflags = SCARG(uap, flags), nflags, error;
-	extern char sigcode[], esigcode[];
 	char fsname[MFSNAMELEN];
-
-#define	szsigcode	(esigcode - sigcode)
 
 	if (oflags & (SUNM_NOSUB | SUNM_SYS5))
 		return (EINVAL);
@@ -581,6 +621,9 @@ sunos_open(p, uap, retval)
 	int noctty;
 	int ret;
 	
+	caddr_t sg = stackgap_init();
+	CHECKALT(p, &sg, SCARG(uap, path));
+
 	/* convert mode into NetBSD mode */
 	l = SCARG(uap, flags);
 	noctty = l & 0x8000;
@@ -707,6 +750,9 @@ sunos_statfs(p, uap, retval)
 	int error;
 	struct nameidata nd;
 
+	caddr_t sg = stackgap_init();
+	CHECKALT(p, &sg, SCARG(uap, path));
+
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if (error = namei(&nd))
 		return (error);
@@ -759,6 +805,9 @@ sunos_mknod(p, uap, retval)
 	struct sunos_mknod_args *uap;
 	register_t *retval;
 {
+	caddr_t sg = stackgap_init();
+	CHECKALT(p, &sg, SCARG(uap, path));
+
 	if (S_ISFIFO(SCARG(uap, mode)))
 		return mkfifo(p, uap, retval);
 
