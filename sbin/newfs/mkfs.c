@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.60 2002/01/07 12:00:09 simonb Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.61 2002/01/18 08:59:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.60 2002/01/07 12:00:09 simonb Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.61 2002/01/18 08:59:18 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,8 +77,10 @@ static void clrblock(struct fs *, unsigned char *, int);
 static void setblock(struct fs *, unsigned char *, int);
 static int32_t calcipg(int32_t, int32_t, off_t *);
 static void swap_cg(struct cg *, struct cg *);
+#ifdef MFS
 static void calc_memfree(void);
 static void *mkfs_malloc(size_t size);
+#endif
 
 static int count_digits(int);
 
@@ -136,6 +138,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 #ifndef STANDALONE
 	time(&utime);
 #endif
+#ifdef MFS
 	if (mfs) {
 		calc_memfree();
 		if (fssize * sectorsize > memleft)
@@ -143,6 +146,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 		if ((membase = mkfs_malloc(fssize * sectorsize)) == 0)
 			exit(12);
 	}
+#endif
 	fsi = fi;
 	fso = fo;
 	if (Oflag) {
@@ -1090,10 +1094,12 @@ rdfs(daddr_t bno, int size, void *bf)
 	int n;
 	off_t offset;
 
+#ifdef MFS
 	if (mfs) {
 		memmove(bf, membase + bno * sectorsize, size);
 		return;
 	}
+#endif
 	offset = bno;
 	offset *= sectorsize;
 	if (lseek(fsi, offset, SEEK_SET) < 0) {
@@ -1118,10 +1124,12 @@ wtfs(daddr_t bno, int size, void *bf)
 	int n;
 	off_t offset;
 
+#ifdef MFS
 	if (mfs) {
 		memmove(membase + bno * sectorsize, bf, size);
 		return;
 	}
+#endif
 	if (Nflag)
 		return;
 	offset = bno;
@@ -1318,6 +1326,7 @@ count_digits(int num)
 	return (ndig);
 }
 
+#ifdef MFS
 /*
  * XXX!
  * Attempt to guess how much more space is available for process data.  The
@@ -1367,3 +1376,4 @@ mkfs_malloc(size_t size)
 	return (mmap(0, size, PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE,
 	    -1, 0));
 }
+#endif	/* MFS */
