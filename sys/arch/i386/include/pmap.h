@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.h	7.4 (Berkeley) 5/12/91
- *	$Id: pmap.h,v 1.13 1994/10/09 13:11:18 mycroft Exp $
+ *	$Id: pmap.h,v 1.14 1994/10/09 15:00:42 mycroft Exp $
  */
 
 /*
@@ -51,6 +51,7 @@
 #ifndef	_I386_PMAP_H_
 #define	_I386_PMAP_H_
 
+#include <machine/cpufunc.h>
 #include <machine/pte.h>
 
 /*
