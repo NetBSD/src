@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: toolchain2netbsd,v 1.6 2001/08/06 19:58:25 tv Exp $
+#	$NetBSD: toolchain2netbsd,v 1.7 2001/08/06 23:26:28 tv Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/toolchain.
@@ -231,7 +231,7 @@ mkdir -p usr.bin/binutils/ld/arch/$MACHINE_ARCH
 	getvars ld/Makefile \
 		DEFS EMUL EMULATION_OFILES INCLUDES OFILES STRINGIFY TEXINFOS
 	getvars ld/Makefile \
-		target_alias | sed 's,[\._0-9]*$,,'
+		target_alias | sed 's,[\._0-9A-Z]*$,,'
 } | write_mk usr.bin/binutils/ld/arch/$MACHINE_ARCH/defs.mk
 
 (cd $_TMPDIR/ld && $MAKE ldemul-list.h)
@@ -257,6 +257,32 @@ mkdir -p usr.bin/gcc/arch/$MACHINE_ARCH
 
 for f in auto-host config gencheck hconfig options specs tconfig tm; do
 	write_c usr.bin/gcc/arch/$MACHINE_ARCH/$f.h <$_TMPDIR/gcc/$f.h
+done
+
+##### gnu/usr.bin/gcc #####
+
+mkdir -p usr.bin/gdb/arch/$MACHINE_ARCH
+
+{
+	getvars gdb/Makefile \
+		INTERNAL_CFLAGS LIBGDB_OBS
+	getvars readline/Makefile \
+		CCFLAGS OBJECTS
+} | write_mk usr.bin/gdb/arch/$MACHINE_ARCH/defs.mk
+
+(cd $_TMPDIR/gdb && $MAKE init.c version.c)
+
+cat $_TMPDIR/gdb/config.h $_TMPDIR/readline/config.h \
+	| write_c usr.bin/gdb/arch/$MACHINE_ARCH/config.h
+
+write_c usr.bin/gdb/arch/$MACHINE_ARCH/init.c <$_TMPDIR/gdb/init.c
+
+sed '/netbsd/s,[\._0-9A-Z]*";$,";,' <$_TMPDIR/gdb/version.c \
+	| write_c usr.bin/gdb/arch/$MACHINE_ARCH/version.c
+
+for f in nm tm xm; do
+	ls -l $_TMPDIR/gdb/$f.h | sed 's,^.*->.*/gdb/config/,,;s,^,#include <,;s,$,>,' \
+		| write_c usr.bin/gdb/arch/$MACHINE_ARCH/$f.h
 done
 
 #	-rm -rf ${_TMPDIR}
