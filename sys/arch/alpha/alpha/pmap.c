@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.41 1998/05/19 02:43:48 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.42 1998/05/19 02:57:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41 1998/05/19 02:43:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42 1998/05/19 02:57:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,43 +256,30 @@ int pmapdebug = PDB_PARANOIA;
 int	protection_codes[2][8];
 
 /*
- * Lev1map:
+ * kernel_lev1map:
  *
  *	Kernel level 1 page table.  This maps all kernel level 2
  *	page table pages, and is used as a template for all user
  *	pmap level 1 page tables.  When a new user level 1 page
- *	table is allocated, all Lev1map PTEs for kernel addresses
- *	are copied to the new map.
+ *	table is allocated, all kernel_lev1map PTEs for kernel
+ *	addresses are copied to the new map.
  *
- * Lev2map:
- *
- *	Initial set of kernel level 2 page table pages.  These
- *	map the kernel level 3 page table pages.  As kernel
- *	level 3 page table pages are added, more level 2 page
- *	table pages may be added to map them.  These pages are
+ *	The kernel also has an initial set of kernel level 2 page
+ *	table pages.  These map the kernel level 3 page table pages.
+ *	As kernel level 3 page table pages are added, more level 2
+ *	page table pages may be added to map them.  These pages are
  *	never freed.
  *
- * Lev3map:
- *
- *	Initial set of kernel level 3 page table pages.  These
- *	map pages in K1SEG.  More level 3 page table pages may
- *	be added at run-time if additional K1SEG address space
- *	is required.  These pages are never freed.
- *
- * Lev2mapsize:
- *
- *	Number of entries in the initial Lev2map.
- *
- * Lev3mapsize:
- *
- *	Number of entries in the initial Lev3map.
+ *	Finally, the kernel also has an initial set of kernel level
+ *	3 page table pages.  These map pages in K1SEG.  More level
+ *	3 page table pages may be added at run-time if additional
+ *	K1SEG address space is required.  These pages are never freed.
  *
  * NOTE: When mappings are inserted into the kernel pmap, all
  * level 2 and level 3 page table pages must already be allocated
  * and mapped into the parent page table.
  */
-pt_entry_t	*Lev1map, *Lev2map, *Lev3map;
-vm_size_t	Lev2mapsize, Lev3mapsize;
+pt_entry_t	*kernel_lev1map;
 
 /*
  * Virtual Page Table.
@@ -354,8 +341,8 @@ LIST_HEAD(, pmap) pmap_all_pmaps;
  * TLB entries and the I-cache are flushed, the generation number is bumped,
  * and pmap_next_asn is changed to indicate the first non-reserved ASN.
  *
- * We reserve ASN #0 for pmaps that use the global Lev1map.  This prevents
- * the following scenario:
+ * We reserve ASN #0 for pmaps that use the global kernel_lev1map.  This
+ * prevents the following scenario:
  *
  *	* New ASN generation starts, and process A is given ASN #0.
  *
@@ -372,11 +359,11 @@ LIST_HEAD(, pmap) pmap_all_pmaps;
  * for the Virtual Page Table addresses in order to speed up this procedure,
  * as well.)
  *
- * By reserving an ASN for Lev1map users, we are guaranteeing that
+ * By reserving an ASN for kernel_lev1map users, we are guaranteeing that
  * new pmaps will initially run with no TLB entries for user addresses
- * or VPT mappings that map user page tables.  Since Lev1map only
+ * or VPT mappings that map user page tables.  Since kernel_lev1map only
  * contains mappings for kernel addresses, and since those mappings
- * are always made with PG_ASM, sharing an ASN for Lev1map users is
+ * are always made with PG_ASM, sharing an ASN for kernel_lev1map users is
  * safe (since PG_ASM mappings match any ASN).
  *
  * On processors that do not support ASNs, the PALcode invalidates
@@ -474,15 +461,15 @@ void	pmap_pvdump __P((vm_offset_t));
 #ifdef DEBUG
 #define	PMAP_ACTIVATE_ASN_SANITY(pmap)					\
 do {									\
-	if ((pmap)->pm_lev1map == Lev1map) {				\
+	if ((pmap)->pm_lev1map == kernel_lev1map) {			\
 		/*							\
-		 * This pmap implementation also ensures that		\
-		 * pmaps referencing Lev1map use a reserved ASN		\
-		 * to prevent the PALcode from servicing a TLB miss	\
-		 * with the wrong PTE.					\
+		 * This pmap implementation also ensures that pmaps	\
+		 * referencing kernel_lev1map use a reserved ASN	\
+		 * ASN to prevent the PALcode from servicing a TLB	\
+		 * miss	with the wrong PTE.				\
 		 */							\
 		if ((pmap)->pm_asn != PMAP_ASN_RESERVED) {		\
-			printf("Lev1map with non-reserved ASN "		\
+			printf("kernel_lev1map with non-reserved ASN "	\
 			    "(line %ld)\n", __LINE__);			\
 			panic("PMAP_ACTIVATE_ASN_SANITY");		\
 		}							\
@@ -551,7 +538,7 @@ do {									\
  *	NOTE: THIS MUST ONLY BE CALLED IF AT LEAST ONE OF THE FOLLOWING
  *	CONDITIONS ARE TRUE:
  *
- *		(1) The pmap references the global Lev1map.
+ *		(1) The pmap references the global kernel_lev1map.
  *
  *		(2) The pmap is not active on the current processor.
  */
@@ -633,6 +620,8 @@ pmap_bootstrap(ptaddr, maxasn)
 	vm_offset_t ptaddr;
 	u_int maxasn;
 {
+	vm_size_t lev2mapsize, lev3mapsize;
+	pt_entry_t *lev2map, *lev3map;
 	pt_entry_t pte;
 	int i;
 	extern int physmem;
@@ -648,21 +637,21 @@ pmap_bootstrap(ptaddr, maxasn)
 	 * This should be kept in sync.
 	 * We also reserve space for kmem_alloc_pageable() for vm_fork().
 	 */
-	Lev3mapsize = (VM_KMEM_SIZE + VM_MBUF_SIZE + VM_PHYS_SIZE +
+	lev3mapsize = (VM_KMEM_SIZE + VM_MBUF_SIZE + VM_PHYS_SIZE +
 		nbuf * MAXBSIZE + 16 * NCARGS) / NBPG + 512 +
 		(maxproc * UPAGES);
 
 #ifdef SYSVSHM
-	Lev3mapsize += shminfo.shmall;
+	lev3mapsize += shminfo.shmall;
 #endif
-	Lev3mapsize = roundup(Lev3mapsize, NPTEPG);
+	lev3mapsize = roundup(lev3mapsize, NPTEPG);
 
 	/*
 	 * Allocate a level 1 PTE table for the kernel.
 	 * This is always one page long.
 	 * IF THIS IS NOT A MULTIPLE OF NBPG, ALL WILL GO TO HELL.
 	 */
-	Lev1map = (pt_entry_t *)
+	kernel_lev1map = (pt_entry_t *)
 	    pmap_steal_memory(sizeof(pt_entry_t) * NPTEPG, NULL, NULL);
 
 	/*
@@ -670,16 +659,16 @@ pmap_bootstrap(ptaddr, maxasn)
 	 * These must map all of the level3 PTEs.
 	 * IF THIS IS NOT A MULTIPLE OF NBPG, ALL WILL GO TO HELL.
 	 */
-	Lev2mapsize = roundup(howmany(Lev3mapsize, NPTEPG), NPTEPG);
-	Lev2map = (pt_entry_t *)
-	    pmap_steal_memory(sizeof(pt_entry_t) * Lev2mapsize, NULL, NULL);
+	lev2mapsize = roundup(howmany(lev3mapsize, NPTEPG), NPTEPG);
+	lev2map = (pt_entry_t *)
+	    pmap_steal_memory(sizeof(pt_entry_t) * lev2mapsize, NULL, NULL);
 
 	/*
 	 * Allocate a level 3 PTE table for the kernel.
-	 * Contains Lev3mapsize PTEs.
+	 * Contains lev3mapsize PTEs.
 	 */
-	Lev3map = (pt_entry_t *)
-	    pmap_steal_memory(sizeof(pt_entry_t) * Lev3mapsize, NULL, NULL);
+	lev3map = (pt_entry_t *)
+	    pmap_steal_memory(sizeof(pt_entry_t) * lev3mapsize, NULL, NULL);
 
 	/*
 	 * Allocate memory for the pv_heads.  (A few more of the latter
@@ -720,41 +709,41 @@ pmap_bootstrap(ptaddr, maxasn)
 	 * Actually, this code lies.  The prom is still mapped, and will
 	 * remain so until the context switch after alpha_init() returns.
 	 * Printfs using the firmware before then will end up frobbing
-	 * Lev1map unnecessarily, but that's OK.
+	 * kernel_lev1map unnecessarily, but that's OK.
 	 */
     }
 #endif
 
 	/* Map all of the level 2 pte pages */
-	for (i = 0; i < howmany(Lev2mapsize, NPTEPG); i++) {
-		pte = (ALPHA_K0SEG_TO_PHYS(((vm_offset_t)Lev2map) +
+	for (i = 0; i < howmany(lev2mapsize, NPTEPG); i++) {
+		pte = (ALPHA_K0SEG_TO_PHYS(((vm_offset_t)lev2map) +
 		    (i*PAGE_SIZE)) >> PGSHIFT) << PG_SHIFT;
 		pte |= PG_V | PG_ASM | PG_KRE | PG_KWE | PG_WIRED;
-		Lev1map[l1pte_index(VM_MIN_KERNEL_ADDRESS +
+		kernel_lev1map[l1pte_index(VM_MIN_KERNEL_ADDRESS +
 		    (i*PAGE_SIZE*NPTEPG*NPTEPG))] = pte;
 	}
 
 	/* Map the virtual page table */
-	pte = (ALPHA_K0SEG_TO_PHYS((vm_offset_t)Lev1map) >> PGSHIFT)
+	pte = (ALPHA_K0SEG_TO_PHYS((vm_offset_t)kernel_lev1map) >> PGSHIFT)
 	    << PG_SHIFT;
 	pte |= PG_V | PG_KRE | PG_KWE; /* NOTE NO ASM */
-	Lev1map[l1pte_index(VPTBASE)] = pte;
+	kernel_lev1map[l1pte_index(VPTBASE)] = pte;
 	VPT = (pt_entry_t *)VPTBASE;
 
 	/*
 	 * Set up level 2 page table.
 	 */
 	/* Map all of the level 3 pte pages */
-	for (i = 0; i < howmany(Lev3mapsize, NPTEPG); i++) {
-		pte = (ALPHA_K0SEG_TO_PHYS(((vm_offset_t)Lev3map) +
+	for (i = 0; i < howmany(lev3mapsize, NPTEPG); i++) {
+		pte = (ALPHA_K0SEG_TO_PHYS(((vm_offset_t)lev3map) +
 		    (i*PAGE_SIZE)) >> PGSHIFT) << PG_SHIFT;
 		pte |= PG_V | PG_ASM | PG_KRE | PG_KWE | PG_WIRED;
-		Lev2map[l2pte_index(VM_MIN_KERNEL_ADDRESS+
+		lev2map[l2pte_index(VM_MIN_KERNEL_ADDRESS+
 		    (i*PAGE_SIZE*NPTEPG))] = pte;
 	}
 
 	/*
-	 * Set up level three page table (Lev3map)
+	 * Set up level three page table (lev3map)
 	 */
 	/* Nothing to do; it's already zero'd */
 
@@ -766,7 +755,7 @@ pmap_bootstrap(ptaddr, maxasn)
 	avail_start = ptoa(vm_physmem[0].start);
 	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
 	virtual_avail = VM_MIN_KERNEL_ADDRESS;
-	virtual_end = VM_MIN_KERNEL_ADDRESS + Lev3mapsize * NBPG;
+	virtual_end = VM_MIN_KERNEL_ADDRESS + lev3mapsize * NBPG;
 
 #if 0
 	printf("avail_start = 0x%lx\n", avail_start);
@@ -791,10 +780,10 @@ pmap_bootstrap(ptaddr, maxasn)
 	 * Initialize kernel pmap.  Note that all kernel mappings
 	 * have PG_ASM set, so the ASN doesn't really matter for
 	 * the kernel pmap.  Also, since the kernel pmap always
-	 * references Lev1map, it always has an invalid ASN
+	 * references kernel_lev1map, it always has an invalid ASN
 	 * generation.
 	 */
-	pmap_kernel()->pm_lev1map = Lev1map;
+	pmap_kernel()->pm_lev1map = kernel_lev1map;
 	pmap_kernel()->pm_count = 1;
 	pmap_kernel()->pm_asn = PMAP_ASN_RESERVED;
 	pmap_kernel()->pm_asngen = pmap_asn_generation;
@@ -806,7 +795,7 @@ pmap_bootstrap(ptaddr, maxasn)
 	 * and has the kernel pmap's (really unused) ASN.
 	 */
 	proc0.p_addr->u_pcb.pcb_hw.apcb_ptbr =
-	    ALPHA_K0SEG_TO_PHYS((vm_offset_t)Lev1map) >> PGSHIFT;
+	    ALPHA_K0SEG_TO_PHYS((vm_offset_t)kernel_lev1map) >> PGSHIFT;
 	proc0.p_addr->u_pcb.pcb_hw.apcb_asn = pmap_kernel()->pm_asn;
 }
 
@@ -1034,9 +1023,9 @@ pmap_pinit(pmap)
 	/*
 	 * Defer allocation of a new level 1 page table until
 	 * the first new mapping is entered; just take a reference
-	 * to the kernel Lev1map.
+	 * to the kernel kernel_lev1map.
 	 */
-	pmap->pm_lev1map = Lev1map;
+	pmap->pm_lev1map = kernel_lev1map;
 
 	pmap->pm_count = 1;
 	pmap->pm_asn = PMAP_ASN_RESERVED;
@@ -1105,7 +1094,7 @@ pmap_release(pmap)
 	 * Since the pmap is supposed to contain no valid
 	 * mappings at this point, this should never happen.
 	 */
-	if (pmap->pm_lev1map != Lev1map) {
+	if (pmap->pm_lev1map != kernel_lev1map) {
 		printf("pmap_release: pmap still contains valid mappings!\n");
 		if (pmap->pm_nlev2)
 			printf("pmap_release: %ld level 2 tables left\n",
@@ -1114,7 +1103,7 @@ pmap_release(pmap)
 			printf("pmap_release: %ld level 3 tables left\n",
 			    pmap->pm_nlev3);
 		pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS);
-		if (pmap->pm_lev1map != Lev1map)
+		if (pmap->pm_lev1map != kernel_lev1map)
 			panic("pmap_release: pmap_remove() didn't");
 	}
 #endif
@@ -1445,12 +1434,12 @@ pmap_enter(pmap, va, pa, prot, wired)
 #endif
 
 		/*
-		 * If we're still referencing the kernel Lev1map, create
-		 * a new level 1 page table.  A reference will be added
-		 * to the level 1 table when the level 2 table is
+		 * If we're still referencing the kernel kernel_lev1map,
+		 * create a new level 1 page table.  A reference will be
+		 * added to the level 1 table when the level 2 table is
 		 * created.
 		 */
-		if (pmap->pm_lev1map == Lev1map)
+		if (pmap->pm_lev1map == kernel_lev1map)
 			pmap_create_lev1map(pmap);
 
 		/*
@@ -2435,7 +2424,7 @@ pmap_remove_mapping(pmap, va, pte)
 				if (pmap_physpage_delref(l1pte) == 0) {
 					/*
 					 * No more level 2 tables left,
-					 * go back to global Lev1map.
+					 * go back to global kernel_lev1map.
 					 */
 					pmap_destroy_lev1map(pmap);
 				}
@@ -3022,10 +3011,10 @@ pmap_alloc_physpage(usage)
 		     pmap = LIST_NEXT(pmap, pm_list)) {
 			/*
 			 * Don't garbage-collect pmaps that reference
-			 * Lev1map.  They don't have any user PT pages
-			 * to free.
+			 * kernel_lev1map.  They don't have any user PT
+			 * pages to free.
 			 */
-			if (pmap->pm_lev1map != Lev1map &&
+			if (pmap->pm_lev1map != kernel_lev1map &&
 			    pmap->pm_cpus == 0) {
 				pmap_collect(pmap);
 				break;
@@ -3164,7 +3153,7 @@ pmap_create_lev1map(pmap)
 	 */
 	for (i = l1pte_index(VM_MIN_KERNEL_ADDRESS);
 	     i <= l1pte_index(VM_MAX_KERNEL_ADDRESS); i++)
-		pmap->pm_lev1map[i] = Lev1map[i];
+		pmap->pm_lev1map[i] = kernel_lev1map[i];
 
 	/*
 	 * Now, map the new virtual page table.  NOTE: NO ASM!
@@ -3201,9 +3190,9 @@ pmap_destroy_lev1map(pmap)
 	ptpa = ALPHA_K0SEG_TO_PHYS((vm_offset_t)pmap->pm_lev1map);
 
 	/*
-	 * Go back to referencing the global Lev1map.
+	 * Go back to referencing the global kernel_lev1map.
 	 */
-	pmap->pm_lev1map = Lev1map;
+	pmap->pm_lev1map = kernel_lev1map;
 
 	/*
 	 * The page table base has changed; if the pmap was active,
@@ -3214,7 +3203,7 @@ pmap_destroy_lev1map(pmap)
 	 *	    user mappings in the pmap, invalidating the
 	 *	    TLB entries for them as we go.
 	 *
-	 *	(2) Lev1map contains only kernel mappings, which
+	 *	(2) kernel_lev1map contains only kernel mappings, which
 	 *	    were identical in the user pmap, and all of
 	 *	    those mappings have PG_ASM, so the ASN doesn't
 	 *	    matter.
@@ -3308,20 +3297,21 @@ pmap_alloc_asn(pmap)
 #endif
 
 	/*
-	 * If the pmap is still using the global Lev1map, there
+	 * If the pmap is still using the global kernel_lev1map, there
 	 * is no need to assign an ASN at this time, because only
 	 * kernel mappings exist in that map, and all kernel mappings
 	 * have PG_ASM set.  If the pmap eventually gets its own
 	 * lev1map, an ASN will be allocated at that time.
 	 */
-	if (pmap->pm_lev1map == Lev1map) {
+	if (pmap->pm_lev1map == kernel_lev1map) {
 #ifdef DEBUG
 		if (pmapdebug & PDB_ASN)
-			printf("pmap_alloc_asn: still references Lev1map\n");
+			printf("pmap_alloc_asn: still references "
+			    "kernel_lev1map\n");
 #endif
 #ifdef DIAGNOSTIC
 		if (pmap->pm_asn != PMAP_ASN_RESERVED)
-			panic("pmap_alloc_asn: Lev1map without "
+			panic("pmap_alloc_asn: kernel_lev1map without "
 			    "PMAP_ASN_RESERVED");
 #endif
 		return;
