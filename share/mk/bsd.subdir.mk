@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.19 1997/05/07 15:53:35 mycroft Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.20 1997/05/07 17:06:30 mycroft Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.own.mk>
@@ -42,36 +42,8 @@ ${targ}-${dir}: .MAKE __SUBDIRINTERNALUSE
 ${dir}: all-${dir}
 .endfor
 
-.if !target(all)
-all: _SUBDIRUSE
-.endif
-
-.if !target(clean)
-clean: _SUBDIRUSE
-.endif
-
-.if !target(cleandir)
-cleandir: _SUBDIRUSE
-.endif
-
-.if !target(depend)
-depend: _SUBDIRUSE
-.endif
-
-.if !target(includes)
-includes: _SUBDIRUSE
-.endif
-
-.if !target(lint)
-lint: _SUBDIRUSE
-.endif
-
-.if !target(obj)
-obj: _SUBDIRUSE
-.endif
-
-.if !target(tags)
-tags: _SUBDIRUSE
-.endif
+.for targ in ${TARGETS}
+${targ}: _SUBDIRUSE
+.endfor
 
 .include <bsd.own.mk>
