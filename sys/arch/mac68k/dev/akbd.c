@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.3.2.3 1999/03/10 16:00:15 scottr Exp $	*/
+/*	$NetBSD: akbd.c,v 1.3.2.4 1999/03/11 19:21:43 scottr Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -29,6 +29,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_adb.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
