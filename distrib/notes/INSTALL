@@ -150,7 +150,7 @@ distribution sets are as follows:
 		[ 7.7M gzipped, 32.0M uncompressed ]
 
 	ksrc11	This set contains the sources to the NetBSD 1.1
-		kernel, config(8), config.new(8) and dbsym(8).
+		kernel, config(8), config.old(8) and dbsym(8).
 		[ 4.5M gzipped, 20.8M uncompressed ]
 
 	ssrc11	This set contains the "share" sources, which include
