@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.1 2000/03/06 08:47:27 deberg Exp $
+.\"	$NetBSD: boot.8,v 1.2 2001/09/08 01:34:40 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,12 +46,12 @@
 .Nd
 system bootstrapping procedures
 .Sh DESCRIPTION
-.Sy Power fail and crash recovery.
+.Sy Power fail and crash recovery
 Normally, the system will reboot itself at power-up or after crashes.
 An automatic consistency check of the file systems will be performed,
 and unless this fails, the system will resume multi-user operations.
 .Pp
-.Sy Cold starts.
+.Sy Cold starts
 On an NeXT, the boot procedure uses the boot ROM to load a boot program
 over the network using BOOTP and TFTP.
 The
