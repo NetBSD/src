@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1 2003/01/19 23:20:14 matt Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.2 2003/01/19 23:22:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@ pthread__sp(void)
 {
 	long ret;
 
-	__asm("movl %sp,%0" : "=r" (ret));
+	__asm("movl %%sp,%0" : "=r" (ret));
 
 	return ret;
 }
@@ -60,6 +60,7 @@ pthread__sp(void)
 #define _INITCONTEXT_U_MD(ucp)						\
 	(ucp)->uc_mcontext.__gregs[_REG_PSL] = 0x03c00000;
 
+#define	STACKSPACE	0
 /*
  * Conversions between struct reg and struct mcontext. Used by
  * libpthread_dbg.
