@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr_sbc.c,v 1.6 1996/03/29 02:06:19 briggs Exp $	*/
+/*	$NetBSD: ncr_sbc.c,v 1.7 1996/04/23 14:20:28 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott Reynolds
@@ -70,12 +70,9 @@
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
 
-#include "ncr_sbcreg.h"
 #include <machine/viareg.h>
 
-#ifdef SBCTEST
-# define SBC_DEBUG
-#endif
+#include "ncr_sbcreg.h"
 
 /*
  * Transfers smaller than this are done using PIO
@@ -696,11 +693,12 @@ sbc_drq_intr(p)
 	register struct sci_req *sr = ncr_sc->sc_current;
 	register struct sbc_pdma_handle *dh = sr->sr_dma_hand;
 	label_t			faultbuf;
-	register int		count;
 	volatile u_int32_t	*long_drq;
 	u_int32_t		*long_data;
 	volatile u_int8_t	*drq;
 	u_int8_t		*data;
+	register int		count;
+	int			dcount, resid;
 
 	/*
 	 * If we're not ready to xfer data, or have no more, just return.
@@ -715,7 +713,7 @@ sbc_drq_intr(p)
 #ifdef SBC_DEBUG
 	sc->sc_vstate = "got drq interrupt.";
 	if (sbc_debug & SBC_DB_INTR)
-		printf("%s: drq intr, dh_len=%d, dh_flags=0x%x\n",
+		printf("%s: drq intr, dh_len=0x%x, dh_flags=0x%x\n",
 		    ncr_sc->sc_dev.dv_xname, dh->dh_len, dh->dh_flags);
 #endif
 
@@ -728,13 +726,11 @@ sbc_drq_intr(p)
 
 	if (setjmp((label_t *) nofault)) {
 		nofault = (int *) 0;
-#ifdef SBC_DEBUG
-		sc->sc_vstate = "buserr in xfer.";
-#endif
 		count = (  (u_long) mac68k_buserr_addr
 			 - (u_long) sc->sc_drq_addr);
+
 		if ((count < 0) || (count > dh->dh_len)) {
-			printf("%s: count = %d (pending count %d)\n",
+			printf("%s: count = 0x%x (pending 0x%x)\n",
 			    ncr_sc->sc_dev.dv_xname, count, dh->dh_len);
 			panic("something is wrong");
 		}
@@ -742,19 +738,16 @@ sbc_drq_intr(p)
 		dh->dh_addr += count;
 		dh->dh_len -= count;
 		dh->dh_flags &= ~SBC_DH_XFER;
-
-#ifdef SBC_DEBUG
-		sc->sc_vstate = "handled bus error in xfer.";
-#endif
 		mac68k_buserr_addr = 0;
 
+#if 0
+		/* Can we rely on a 5380 disconnect interrupt? */
 		ncr5380_intr(ncr_sc);
+#endif
 		return;
 	}
 
 	if (dh->dh_flags & SBC_DH_OUT) { /* Data Out */
-		int	resid;
-
 		/*
 		 * Get the source address aligned.
 		 */
@@ -776,9 +769,7 @@ sbc_drq_intr(p)
 		 * Get ready to start the transfer.
 		 */
 		while (dh->dh_len) {
-			int dcount;
-
-			dcount = count = dh->dh_len;
+			dcount = count = min(dh->dh_len, MAX_DMA_LEN);
 			long_drq = (volatile u_int32_t *) sc->sc_drq_addr;
 			long_data = (u_int32_t *) dh->dh_addr;
 
@@ -803,8 +794,6 @@ sbc_drq_intr(p)
 			dh->dh_addr += dcount;
 		}
 	} else {	/* Data In */
-		int	resid;
-
 		/*
 		 * Get the dest address aligned.
 		 */
@@ -826,9 +815,7 @@ sbc_drq_intr(p)
 		 * Get ready to start the transfer.
 		 */
 		while (dh->dh_len) {
-			int dcount;
-
-			dcount = count = dh->dh_len;
+			dcount = count = min(dh->dh_len, MAX_DMA_LEN);
 			long_drq = (volatile u_int32_t *) sc->sc_drq_addr;
 			long_data = (u_int32_t *) dh->dh_addr;
 
@@ -840,9 +827,6 @@ sbc_drq_intr(p)
 					dh->dh_addr += (dcount - count);
 					dh->dh_len -= (dcount - count);
 					dh->dh_flags &= ~SBC_DH_XFER;
-#ifdef SBC_DEBUG
-					sc->sc_vstate = "drq low";
-#endif
 					return;
 				}
 				R4; R4; R4; R4; R4; R4; R4; R4;
@@ -983,11 +967,13 @@ sbc_dma_poll(ncr_sc)
 	register int s;
 	register int timo;
 
+#if 0
 	/*
 	 * If we haven't started the transfer yet, DO IT NOW!
 	 */
 	if (dh->dh_flags & SBC_DH_START)
 		sbc_drq_intr(ncr_sc);
+#endif
 
 	timo = 50000;	/* X100 = 5 sec. */
 	for (;;) {
@@ -1063,7 +1049,7 @@ void
 sbc_dma_eop(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
-	/* Not needed; the EOP pin is wired high (GMFH, pp. 389-390) */
+	/* Not used; the EOP pin is wired high (GMFH, pp. 389-390) */
 }
 
 void
@@ -1083,27 +1069,25 @@ sbc_dma_stop(ncr_sc)
 	}
 	ncr_sc->sc_state &= ~NCR_DOINGDMA;
 
-	if (ncr_sc->sc_state & NCR_ABORTING)
-		goto out;
-
-	ntrans = ncr_sc->sc_datalen - dh->dh_len;
+	if (!(ncr_sc->sc_state & NCR_ABORTING)) {
+		ntrans = ncr_sc->sc_datalen - dh->dh_len;
 
 #ifdef SBC_DEBUG
-	if (sbc_debug & SBC_DB_DMA)
-		printf("sbc_dma_stop: ntrans=0x%x\n", ntrans);
+		if (sbc_debug & SBC_DB_DMA)
+			printf("sbc_dma_stop: ntrans=0x%x\n", ntrans);
 #endif
 
-	if (ntrans > ncr_sc->sc_datalen)
-		panic("sbc_dma_stop: excess transfer\n");
+		if (ntrans > ncr_sc->sc_datalen)
+			panic("sbc_dma_stop: excess transfer\n");
 
-	/* Adjust data pointer */
-	ncr_sc->sc_dataptr += ntrans;
-	ncr_sc->sc_datalen -= ntrans;
+		/* Adjust data pointer */
+		ncr_sc->sc_dataptr += ntrans;
+		ncr_sc->sc_datalen -= ntrans;
 
-	/* Clear any pending interrupts. */
-	SCI_CLR_INTR(ncr_sc);
+		/* Clear any pending interrupts. */
+		SCI_CLR_INTR(ncr_sc);
+	}
 
-out:
 	/* Put SBIC back into PIO mode. */
 	*ncr_sc->sci_mode &= ~SCI_MODE_DMA;
 	*ncr_sc->sci_icmd = 0;
