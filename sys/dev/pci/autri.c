@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.17 2003/10/25 18:31:11 christos Exp $	*/
+/*	$NetBSD: autri.c,v 1.18 2003/10/29 03:46:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.17 2003/10/25 18:31:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.18 2003/10/29 03:46:10 mycroft Exp $");
 
 #include "midi.h"
 
@@ -423,9 +423,9 @@ autri_reset_codec(void *sc_)
 		ready = AUTRI_ALI_SCTRL_CODEC_READY;
 		break;
 	default:
-		addr = 0;
-		ready = 0;
-		break;
+		printf("%s: autri_reset_codec : unknown device\n",
+		       sc->sc_dev.dv_xname);
+		return;
 	}
 
 	/* wait for 'Codec Ready' */
