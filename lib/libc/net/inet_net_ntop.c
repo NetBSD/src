@@ -1,7 +1,7 @@
-/*	$NetBSD: inet_net_ntop.c,v 1.10 2000/01/22 22:19:15 mycroft Exp $	*/
+/*	$NetBSD: inet_net_ntop.c,v 1.11 2000/04/23 16:59:12 itojun Exp $	*/
 
 /*
- * Copyright (c) 1996 by Internet Software Consortium.
+ * Copyright (c) 1996,1999 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_net_ntop.c,v 8.2 1996/08/08 06:54:44 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_net_ntop.c,v 1.10 2000/01/22 22:19:15 mycroft Exp $");
+__RCSID("$NetBSD: inet_net_ntop.c,v 1.11 2000/04/23 16:59:12 itojun Exp $");
 #endif
 #endif
 
@@ -91,7 +91,7 @@ inet_net_ntop(af, src, bits, dst, size)
  *	pointer to dst, or NULL if an error occurred (check errno).
  * note:
  *	network byte order assumed.  this means 192.5.5.240/28 has
- *	0x11110000 in its fourth octet.
+ *	0b11110000 in its fourth octet.
  * author:
  *	Paul Vixie (ISC), July 1996
  */
@@ -118,6 +118,7 @@ inet_net_ntop_ipv4(src, bits, dst, size)
 		if (size < sizeof "0")
 			goto emsgsize;
 		*dst++ = '0';
+		size--;
 		*dst = '\0';
 	}
 
