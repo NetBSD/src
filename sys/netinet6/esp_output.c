@@ -1,10 +1,10 @@
-/*	$NetBSD: esp_output.c,v 1.1.1.1 2000/06/14 19:39:42 thorpej Exp $	*/
-/*	$KAME: esp_output.c,v 1.17 2000/02/22 14:04:15 itojun Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.1.1.1.2.1 2000/07/17 02:38:40 itojun Exp $	*/
+/*	$KAME: esp_output.c,v 1.22 2000/07/03 13:23:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -68,7 +68,6 @@
 #include <netinet6/esp.h>
 #include <netkey/key.h>
 #include <netkey/keydb.h>
-#include <netkey/key_debug.h>
 
 #include <net/net_osdep.h>
 
@@ -536,8 +535,24 @@ esp_output(m, nexthdrp, md, isr, af)
 	if (AH_MAXSUMSIZE < siz)
 		panic("assertion failed for AH_MAXSUMSIZE");
 
-	if (esp_auth(m, espoff, m->m_pkthdr.len - espoff, sav, authbuf))
-		goto noantireplay;
+	if (esp_auth(m, espoff, m->m_pkthdr.len - espoff, sav, authbuf)) {
+		ipseclog((LOG_ERR, "ESP checksum generation failure\n"));
+		m_freem(m);
+		error = EINVAL;
+		switch (af) {
+#ifdef INET
+		case AF_INET:
+			ipsecstat.out_inval++;
+			break;
+#endif
+#ifdef INET6
+		case AF_INET6:
+			ipsec6stat.out_inval++;
+			break;
+#endif
+		}
+		goto fail;
+	}
 
 	n = m;
 	while (n->m_next)
