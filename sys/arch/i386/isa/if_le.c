@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.18 1994/12/12 04:39:52 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.19 1994/12/12 04:43:51 mycroft Exp $	*/
 
 /*
  * LANCE Ethernet driver
@@ -603,23 +603,23 @@ leintr(sc)
 			   LE_RINT | LE_TINT | LE_IDON));
 		if (isr & (LE_BABL | LE_CERR | LE_MISS | LE_MERR)) {
 			if (isr & LE_BABL) {
-				printf("%s: BABL\n", sc->sc_dev.dv_xname);
+				printf("%s: babble\n", sc->sc_dev.dv_xname);
 				sc->sc_arpcom.ac_if.if_oerrors++;
 			}
 #if 0
 			if (isr & LE_CERR) {
-				printf("%s: CERR\n", sc->sc_dev.dv_xname);
+				printf("%s: collision error\n", sc->sc_dev.dv_xname);
 				sc->sc_arpcom.ac_if.if_collisions++;
 			}
 #endif
 			if (isr & LE_MISS) {
 #if 0
-				printf("%s: MISS\n", sc->sc_dev.dv_xname);
+				printf("%s: missed packet\n", sc->sc_dev.dv_xname);
 #endif
 				sc->sc_arpcom.ac_if.if_ierrors++;
 			}
 			if (isr & LE_MERR) {
-				printf("%s: MERR\n", sc->sc_dev.dv_xname);
+				printf("%s: memory error\n", sc->sc_dev.dv_xname);
 				lereset(sc);
 				goto out;
 			}
@@ -789,9 +789,9 @@ letint(sc)
 		--sc->sc_no_td;
 		if (cdm->mcnt & (LE_TBUFF | LE_UFLO | LE_LCOL | LE_LCAR | LE_RTRY)) {
 			if (cdm->mcnt & LE_TBUFF)
-				printf("%s: TBUFF\n", sc->sc_dev.dv_xname);
+				printf("%s: transmit buffer error\n", sc->sc_dev.dv_xname);
 			if ((cdm->mcnt & (LE_TBUFF | LE_UFLO)) == LE_UFLO)
-				printf("%s: UFLO\n", sc->sc_dev.dv_xname);
+				printf("%s: underflow\n", sc->sc_dev.dv_xname);
 			if (cdm->mcnt & LE_UFLO) {
 				lereset(sc);
 				return;
@@ -844,13 +844,13 @@ lerint(sc)
 	do {
 		if (cdm->flags & (LE_FRAM | LE_OFLO | LE_CRC | LE_RBUFF)) {
 			if ((cdm->flags & (LE_FRAM | LE_OFLO | LE_ENP)) == (LE_FRAM | LE_ENP))
-				printf("%s: FRAM\n", sc->sc_dev.dv_xname);
+				printf("%s: framing error\n", sc->sc_dev.dv_xname);
 			if ((cdm->flags & (LE_OFLO | LE_ENP)) == LE_OFLO)
-				printf("%s: OFLO\n", sc->sc_dev.dv_xname);
+				printf("%s: overflow\n", sc->sc_dev.dv_xname);
 			if ((cdm->flags & (LE_CRC | LE_OFLO | LE_ENP)) == (LE_CRC | LE_ENP))
-				printf("%s: CRC\n", sc->sc_dev.dv_xname);
+				printf("%s: crc mismatch\n", sc->sc_dev.dv_xname);
 			if (cdm->flags & LE_RBUFF)
-				printf("%s: RBUFF\n", sc->sc_dev.dv_xname);
+				printf("%s: receive buffer error\n", sc->sc_dev.dv_xname);
 		} else if (cdm->flags & (LE_STP | LE_ENP) != (LE_STP | LE_ENP)) {
 			do {
 				cdm->mcnt = 0;
