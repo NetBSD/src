@@ -1,5 +1,5 @@
 /*
- * $Id: warnings.c,v 1.16 1994/10/19 20:16:38 pk Exp $
+ * $Id: warnings.c,v 1.17 1994/12/23 20:33:01 pk Exp $
  */
 
 #include <sys/param.h>
@@ -24,6 +24,8 @@
 #endif
 
 #include "ld.h"
+
+static int reported_undefineds;
 
 /*
  * Print the filename of ENTRY on OUTFILE (a stdio stream),
@@ -466,10 +468,11 @@ do_relocation_warnings(entry, data_segment, outfile, nlist_bitvector)
 			/* Mark as being noted by relocation warning pass. */
 			SET_BIT(nlist_bitvector, lsp - start_of_syms);
 
+			if (g->undef_refs == 0)
+				reported_undefineds++;
 			if (g->undef_refs >= MAX_UREFS_PRINTED)
 				/* Listed too many */
 				continue;
-
 			/* Undefined symbol which we should mention */
 
 			if (++(g->undef_refs) == MAX_UREFS_PRINTED) {
@@ -647,10 +650,16 @@ do_file_warnings (entry, outfile)
 				line_number = -1;
 				break;
 
-			default:
-warnx("Unexpected multiple definitions of symbol `%s', type %#x\n", g->name, np->n_type);
+			case N_UNDF | N_EXT:
 				/* Don't print out multiple defs at references.*/
 				continue;
+
+			default:
+				warnx("%s: unexpected multiple definitions "
+				      "of symbol `%s', type %#x",
+				      get_file_name(entry),
+				      g->name, np->n_type);
+				break;
 			}
 
 		} else if (BIT_SET_P(nlist_bitvector, i)) {
@@ -658,9 +667,10 @@ warnx("Unexpected multiple definitions of symbol `%s', type %#x\n", g->name, np-
 		} else if (list_unresolved_refs &&
 			   !g->defined && !g->so_defined) {
 
+			if (g->undef_refs == 0)
+				reported_undefineds++;
 			if (g->undef_refs >= MAX_UREFS_PRINTED)
 				continue;
-
 			if (++(g->undef_refs) == MAX_UREFS_PRINTED)
 				errfmt = "More undefined `%s' refs follow";
 			else
@@ -671,7 +681,7 @@ warnx("Unexpected multiple definitions of symbol `%s', type %#x\n", g->name, np-
 			   g->def_lsp->entry->flags & E_SECONDCLASS) {
 			fprintf(outfile,
 			"%s: Undefined symbol `%s' referenced (use %s ?)\n",
-				entry->filename,
+				get_file_name(entry),
 				g->name,
 				g->def_lsp->entry->local_sym_name);
 			continue;
@@ -693,7 +703,7 @@ warnx("Unexpected multiple definitions of symbol `%s', type %#x\n", g->name, np-
 			continue;
 
 		if (line_number == -1)
-			fprintf(outfile, "%s: ", entry->filename);
+			fprintf(outfile, "%s: ", get_file_name(entry));
 		else
 			fprintf(outfile, "%s:%d: ", file_name, line_number);
 
@@ -714,7 +724,9 @@ do_warnings(outfile)
 	FILE	*outfile;
 {
 	list_unresolved_refs = !relocatable_output &&
-		(undefined_global_sym_count || undefined_shobj_sym_count);
+		( (undefined_global_sym_count - undefined_weak_sym_count) > 0
+		   || undefined_shobj_sym_count
+		);
 	list_multiple_defs = multiple_def_count != 0;
 
 	if (!(list_unresolved_refs ||
@@ -728,6 +740,13 @@ do_warnings(outfile)
 			entry_symbol->name);
 
 	each_file(do_file_warnings, (void *)outfile);
+
+	if (reported_undefineds !=
+	    (undefined_global_sym_count - undefined_weak_sym_count))
+		warnx("Spurious undefined symbols: "
+		      "# undefined symbols %d, reported %d\n",
+		      (undefined_global_sym_count - undefined_weak_sym_count),
+		      reported_undefineds);
 
 	if (list_unresolved_refs || list_multiple_defs)
 		return 0;
