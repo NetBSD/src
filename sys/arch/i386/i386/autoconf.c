@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.51 2000/06/01 17:35:42 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.52 2000/06/01 17:43:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -451,8 +451,8 @@ found:
 	for (dv = alldevs.tqh_first; dv != NULL;
 	    dv = dv->dv_list.tqe_next) {
 		if (strcmp(buf, dv->dv_xname) == 0) {
-			*devpp = dv;
-			*partp = part;
+			booted_device = dv;
+			booted_parition = part;
 			return;
 		}
 	}
