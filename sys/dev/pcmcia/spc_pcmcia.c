@@ -1,4 +1,4 @@
-/*	$NetBSD: spc_pcmcia.c,v 1.4 2004/08/09 14:24:10 mycroft Exp $	*/
+/*	$NetBSD: spc_pcmcia.c,v 1.5 2004/08/09 17:00:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spc_pcmcia.c,v 1.4 2004/08/09 14:24:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc_pcmcia.c,v 1.5 2004/08/09 17:00:53 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,6 +145,7 @@ spc_pcmcia_attach(parent, self, aux)
 	const struct spc_pcmcia_product *epp;
 
 	aprint_normal("\n");
+	sc->sc_pf = pf;
 
 	SIMPLEQ_FOREACH(cfe, &pf->cfe_head, cfe_list) {
 		if (cfe->num_memspace != 0 ||
@@ -162,20 +163,19 @@ spc_pcmcia_attach(parent, self, aux)
 		goto no_config_entry;
 	}
 
-	sc->sc_pf = pf;
-
 	/* Enable the card. */
 	pcmcia_function_init(pf, cfe);
-	if (pcmcia_function_enable(pf)) {
-		aprint_error("%s: function enable failed\n", self->dv_xname);
-		goto enable_failed;
-	}
 
 	/* Map in the I/O space */
 	if (pcmcia_io_map(pf, PCMCIA_WIDTH_AUTO, &sc->sc_pcioh,
 	    &sc->sc_io_window)) {
 		aprint_error("%s: can't map i/o space\n", self->dv_xname);
 		goto iomap_failed;
+	}
+
+	if (spc_pcmcia_enable(self, 1)) {
+		aprint_error("%s: enable failed\n", self->dv_xname);
+		goto enable_failed;
 	}
 
 	epp = spc_pcmcia_lookup(pa);
@@ -195,11 +195,11 @@ spc_pcmcia_attach(parent, self, aux)
 	sc->sc_flags &= ~SPC_PCMCIA_ATTACH;
 	return;
 
-iomap_failed:
-	/* Disable the device. */
-	pcmcia_function_disable(pf);
-
 enable_failed:
+	/* Disable the device. */
+	pcmcia_io_unmap(pf, sc->sc_io_window);
+
+iomap_failed:
 	/* Unmap our I/O space. */
 	pcmcia_io_free(pf, &sc->sc_pcioh);
 
@@ -238,21 +238,20 @@ spc_pcmcia_enable(arg, onoff)
 	struct spc_pcmcia_softc *sc = (void *) arg;
 
 	if (onoff) {
-		/* Establish the interrupt handler. */
-		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
-		    spc_intr, &sc->sc_spc);
-		if (sc->sc_ih == NULL) {
-			printf("%s: couldn't establish interrupt handler\n",
-			    sc->sc_spc.sc_dev.dv_xname);
-			return (EIO);
-		}
-
 		/*
-		 * If attach is in progress, we know that card power is
-		 * enabled and chip will be initialized later.
-		 * Otherwise, enable and reset now.
+		 * If attach is in progress, we already have the device
+		 * powered up.
 		 */
 		if ((sc->sc_flags & SPC_PCMCIA_ATTACH) == 0) {
+			/* Establish the interrupt handler. */
+			sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
+			    spc_intr, &sc->sc_spc);
+			if (sc->sc_ih == NULL) {
+				printf("%s: couldn't establish interrupt handler\n",
+				    sc->sc_spc.sc_dev.dv_xname);
+				return (EIO);
+			}
+
 			if (pcmcia_function_enable(sc->sc_pf)) {
 				printf("%s: couldn't enable PCMCIA function\n",
 				    sc->sc_spc.sc_dev.dv_xname);
