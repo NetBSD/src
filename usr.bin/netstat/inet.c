@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.17 1996/10/08 01:18:10 explorer Exp $	*/
+/*	$NetBSD: inet.c,v 1.18 1996/10/25 07:41:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$NetBSD: inet.c,v 1.17 1996/10/08 01:18:10 explorer Exp $";
+static char *rcsid = "$NetBSD: inet.c,v 1.18 1996/10/25 07:41:35 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -301,6 +301,7 @@ ip_stats(off, name)
 	p(ips_badsum, "\t%lu bad header checksum%s\n");
 	p(ips_toosmall, "\t%lu with size smaller than minimum\n");
 	p(ips_tooshort, "\t%lu with data size < data length\n");
+	p(ips_toolong, "\t%lu with length > max ip packet size\n");
 	p(ips_badhlen, "\t%lu with header length < data size\n");
 	p(ips_badlen, "\t%lu with data length < header length\n");
 	p(ips_badoptions, "\t%lu with bad options\n");
