@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)spec_vnops.c	7.37 (Berkeley) 5/30/91
- *	$Id: spec_vnops.c,v 1.10 1993/12/22 13:14:42 cgd Exp $
+ *	$Id: spec_vnops.c,v 1.11 1994/01/27 03:16:40 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -451,6 +451,20 @@ spec_close(vp, flag, cred, p)
 	switch (vp->v_type) {
 
 	case VCHR:
+		/*
+		 * Hack: a tty device that is a controlling terminal
+		 * has a reference from the session structure.
+		 * We cannot easily tell that a character device is
+		 * a controlling terminal, unless it is the closing
+		 * process' controlling terminal.  In that case,
+		 * if the reference count is 2 (this last descriptor
+		 * plus the session), release the reference from the session.
+		 */
+		if (vcount(vp) == 2 && ap->a_p &&
+		    vp == ap->a_p->p_session->s_ttyvp) {
+			vrele(vp);
+			ap->a_p->p_session->s_ttyvp = NULL;
+		}
 		/*
 		 * If the vnode is locked, then we are in the midst
 		 * of forcably closing the device, otherwise we only
