@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.19 2003/10/28 20:12:00 skrll Exp $
+#	$NetBSD: Makefile.arm,v 1.20 2003/10/30 12:30:39 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -78,7 +78,7 @@ cpuswitch.o fault.o machdep.o: Makefile
 
 # XXX gcc 3.3 generates incorrect code without this
 # XXX see PR 23044
-COPTS.uipc_socketc+=	-fno-strict-aliasing
+COPTS.uipc_socket.c+=	-fno-strict-aliasing
 
 ##
 ## (8) config(8) generated machinery
