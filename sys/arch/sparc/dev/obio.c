@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.16 1995/08/18 08:20:26 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.17 1995/12/11 12:43:30 pk Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -57,24 +57,27 @@ struct bus_softc {
 /* autoconfiguration driver */
 static int	busmatch __P((struct device *, void *, void *));
 static void	obioattach __P((struct device *, struct device *, void *));
+#if defined(SUN4)
 static void	vmesattach __P((struct device *, struct device *, void *));
 static void	vmelattach __P((struct device *, struct device *, void *));
+static int	busattach __P((struct device *, void *, void *, int));
+void *		bus_map __P((struct rom_reg *, int, int));
+void *		bus_tmp __P((void *, int));
+void		bus_untmp __P((void));
+#endif
 
 struct cfdriver obiocd = { NULL, "obio", busmatch, obioattach,
 	DV_DULL, sizeof(struct bus_softc)
 };
+#if defined(SUN4)
 struct cfdriver vmelcd = { NULL, "vmel", busmatch, vmelattach,
 	DV_DULL, sizeof(struct bus_softc)
 };
 struct cfdriver vmescd = { NULL, "vmes", busmatch, vmesattach,
 	DV_DULL, sizeof(struct bus_softc)
 };
+#endif
 
-static int	busattach __P((struct device *, void *, void *, int));
-
-void *		bus_map __P((void *, int, int));
-void *		bus_tmp __P((void *, int));
-void		bus_untmp __P((void));
 
 int
 busmatch(parent, vcf, aux)
@@ -180,13 +183,14 @@ busattach(parent, child, args, bustype)
 	 */
 	if (oca.ca_ra.ra_len)
 		oca.ca_ra.ra_vaddr =
-		    bus_map(oca.ca_ra.ra_paddr,
+		    bus_map(oca.ca_ra.ra_reg,
 		    oca.ca_ra.ra_len, oca.ca_bustype);
 
 	config_attach(parent, cf, &oca, busprint);
 	return 1;
 }
 
+#if defined(SUN4)
 int
 obio_scan(parent, child, args)
 	struct device *parent;
@@ -194,22 +198,28 @@ obio_scan(parent, child, args)
 {
 	return busattach(parent, child, args, BUS_OBIO);
 }
+#endif
 
 void
 obioattach(parent, self, args)
 	struct device *parent, *self;
 	void *args;
 {
-	if (self->dv_unit > 0) {
-		printf(" unsupported\n");
-		return;
-	}
-	printf("\n");
+#if defined(SUN4)
+	if (cputyp == CPU_SUN4) {
+		if (self->dv_unit > 0) {
+			printf(" unsupported\n");
+			return;
+		}
+		printf("\n");
 
-	(void)config_search(obio_scan, self, args);
-	bus_untmp();
+		(void)config_search(obio_scan, self, args);
+		bus_untmp();
+	}
+#endif
 }
 
+#if defined(SUN4)
 struct intrhand **vmeints;
 
 int
@@ -348,7 +358,7 @@ vmeintr_establish(vec, level, ih)
  */
 void *
 bus_map(pa, len, bustype)
-	void *pa;
+	struct rom_reg *pa;
 	int len;
 	int bustype;
 {
@@ -376,7 +386,7 @@ bus_map(pa, len, bustype)
 				return ((void *)va);
 		}
 	}
-	return mapiodev(pa, len, bustype);
+	return mapiodev(pa, 0, len, bustype);
 }
 
 void *
@@ -398,3 +408,4 @@ bus_untmp()
 {
 	pmap_remove(pmap_kernel(), TMPMAP_VA, TMPMAP_VA+NBPG);
 }
+#endif
