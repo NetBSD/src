@@ -1,4 +1,4 @@
-/*	$NetBSD: preen.c,v 1.25 2003/08/07 10:04:16 agc Exp $	*/
+/*	$NetBSD: preen.c,v 1.26 2004/10/28 19:59:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)preen.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: preen.c,v 1.25 2003/08/07 10:04:16 agc Exp $");
+__RCSID("$NetBSD: preen.c,v 1.26 2004/10/28 19:59:09 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -249,7 +249,7 @@ finddisk(const char *name)
 	struct diskentry *d;
 
 	for (len = strlen(name), p = name + len - 1; p >= name; --p)
-		if (isdigit(*p)) {
+		if (isdigit((unsigned char)*p)) {
 			len = p - name + 1;
 			break;
 		}
