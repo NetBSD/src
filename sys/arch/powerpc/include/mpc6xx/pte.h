@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.8 2002/04/03 00:12:07 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.8.4.1 2002/11/10 15:50:07 he Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -55,11 +55,12 @@ struct pte {
 #define	PTE_RPGN_SHFT	12
 #define	PTE_REF		0x00000100
 #define	PTE_CHG		0x00000080
-#define	PTE_WIMG	0x00000078
 #define	PTE_W		0x00000040	/* 1 = write-through, 0 = write-back */
 #define	PTE_I		0x00000020	/* cache inhibit */
 #define	PTE_M		0x00000010	/* memory coherency enable */
 #define	PTE_G		0x00000008	/* guarded region (not on 601) */
+#define	PTE_WIMG	(PTE_W|PTE_I|PTE_M|PTE_G)
+#define	PTE_IG		(PTE_I|PTE_G)
 #define	PTE_PP		0x00000003
 #define	PTE_SO		0x00000000	/* Super. Only       (U: XX, S: RW) */
 #define	PTE_SW		0x00000001	/* Super. Write-Only (U: RO, S: RW) */
