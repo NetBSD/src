@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.44 2004/01/03 17:27:35 dbj Exp $	*/
+/*	$NetBSD: inode.c,v 1.45 2004/01/03 17:56:21 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.44 2004/01/03 17:27:35 dbj Exp $");
+__RCSID("$NetBSD: inode.c,v 1.45 2004/01/03 17:56:21 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -352,16 +352,17 @@ swap_dinode1(union dinode *dp, int n)
 {
 	int i, j;
 	struct ufs1_dinode *dp1;
+	int32_t maxsymlinklen = sblock->fs_maxsymlinklen;
+	if (isappleufs)
+		maxsymlinklen = APPLEUFS_MAXSYMLINKLEN;
 
 	dp1 = (struct ufs1_dinode *)&dp->dp1;
 	for (i = 0; i < n; i++, dp1++) {
 		ffs_dinode1_swap(dp1, dp1);
 		if (((iswap16(dp1->di_mode) & IFMT) != IFLNK) ||
-		    (isappleufs && (iswap64(dp1->di_size) >
-		     APPLEUFS_MAXSYMLINKLEN)) ||
 		    doinglevel2 ||
-		    (sblock->fs_maxsymlinklen < 0) ||
-		    (iswap64(dp1->di_size) > sblock->fs_maxsymlinklen)) {
+		    (maxsymlinklen < 0) ||
+		    (iswap64(dp1->di_size) > maxsymlinklen)) {
 			for (j = 0; j < (NDADDR + NIADDR); j++)
 			    dp1->di_db[j] = bswap32(dp1->di_db[j]);
 		}
