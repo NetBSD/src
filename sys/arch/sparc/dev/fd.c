@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.74 2000/01/24 16:52:02 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.75 2000/01/28 15:46:20 pk Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1831,7 +1831,8 @@ fdcretry(fdc)
 			diskerr(bp, "fd", "hard error", LOG_PRINTF,
 				fd->sc_skip / FD_BSIZE(fd),
 				(struct disklabel *)NULL);
-			fdcstatus(fdc, "\n controller status");
+			printf("\n");
+			fdcstatus(fdc, "controller status");
 		}
 
 	failsilent:
