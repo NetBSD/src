@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.39 2001/01/20 13:44:30 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.40 2001/07/19 23:59:51 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -136,7 +136,7 @@ struct cfattach clock_ebus_ca = {
 extern struct cfdriver clock_cd;
 
 /* Global TOD clock handle & idprom pointer */
-static todr_chip_handle_t todr_handle;
+static todr_chip_handle_t todr_handle = NULL;
 static struct idprom *idprom;
 
 static int	timermatch __P((struct device *, struct cfdata *, void *));
@@ -828,8 +828,9 @@ inittodr(base)
 		badbase = 1;
 	}
 
-	if (todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
-	    time.tv_sec == 0) {
+	if (todr_handle &&
+		(todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
+		time.tv_sec == 0)) {
 		printf("WARNING: bad date in battery clock");
 		/*
 		 * Believe the time in the file system for lack of
@@ -867,7 +868,8 @@ resettodr()
 		return;
 
 	sparc_clock_time_is_ok = 1;
-	if (todr_settime(todr_handle, (struct timeval *)&time) != 0)
+	if (todr_handle == 0 ||
+		todr_settime(todr_handle, (struct timeval *)&time) != 0)
 		printf("Cannot set time in time-of-day clock\n");
 }
 
