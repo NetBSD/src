@@ -1,4 +1,4 @@
-/*	$NetBSD: atrun.h,v 1.3 1996/08/30 20:24:53 thorpej Exp $	*/
+/*	$NetBSD: atrun.h,v 1.3.2.1 1998/10/25 22:55:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -28,6 +28,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * From: $OpenBSD: atrun.h,v 1.2 1997/03/01 23:39:44 millert Exp $
  */
 
 #define ATRUN_MAXLOAD	1.5
+#define NOBODY_UID	32767
+#define NOBODY_GID	32767
