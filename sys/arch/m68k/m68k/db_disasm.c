@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.13 1996/04/01 01:38:01 briggs Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.14 1996/04/29 20:50:26 leo Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -504,6 +504,7 @@ opcode_move(dbuf, opc)
 {
 	int sz, lused;
 
+	sz = 0;
 	switch (OPCODE_MAP(opc)) {
 	case 0x1:		/* move.b */
 		sz = SIZE_BYTE;
@@ -1578,6 +1579,7 @@ opcode_fmove_ext(dbuf, opc, ext)
 {
 	int sz;
 
+	sz = 0;
 	if (BITFIELD(ext,15,13) == 3) {
 		/* fmove r ==> m */
 		addstr(dbuf, "fmov");
@@ -1842,6 +1844,8 @@ opcode_pmove(dbuf, opc, ext)
 	const char *reg;
 	int rtom, sz, preg;
 
+	reg  = "???";
+	sz   = 0;
 	rtom = ISBITSET(ext, 9);
 	preg = BITFIELD(ext, 12, 10);
 	
@@ -2290,6 +2294,8 @@ get_modregstr_moto(dbuf, bit, mod, sz, dd)
 	u_short ext;
 	int disp, odisp, bd, od, reg;
 	
+	odisp = 0;
+
 	/* check to see if we have been given the mod */
 	if (mod != GETMOD_BEFORE && mod != GETMOD_AFTER)
 		reg = BITFIELD(*dbuf->val, bit, bit-2);
@@ -2495,6 +2501,7 @@ get_modregstr_mit(dbuf, bit, mod, sz, dd)
 	u_short ext;
 	int disp, odisp, bd, od, reg;
 	
+	disp = odisp = 0;
 	/* check to see if we have been given the mod */
 	if (mod != GETMOD_BEFORE && mod != GETMOD_AFTER)
 		reg = BITFIELD(*dbuf->val, bit, bit-2);
@@ -2810,6 +2817,7 @@ get_fpustdGEN(dbuf,ext,name)
 	 * it is.
 	 */
 
+	sz = 0;
 	addchar(*name++);
 	if (ISBITSET(ext,7)) {
 		if(ISBITSET(ext,2))
