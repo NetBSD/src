@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.h,v 1.3.2.1 2004/12/13 17:52:21 bouyer Exp $	*/
+/*	$NetBSD: xenfunc.h,v 1.3.2.2 2004/12/17 11:10:51 bouyer Exp $	*/
 
 /*
  *
@@ -118,18 +118,6 @@ ldr6(u_int val)
 {
 
 	HYPERVISOR_set_debugreg(6, val);
-}
-
-static __inline void
-disable_intr(void)
-{
-	__cli();
-}
-
-static __inline void
-enable_intr(void)
-{
-	__sti();
 }
 
 #endif /* _XEN_XENFUNC_H_ */
