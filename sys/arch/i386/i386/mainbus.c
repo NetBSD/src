@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9 1996/06/23 20:11:27 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.10 1996/08/25 23:39:47 jtk Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -44,6 +44,11 @@
 #include <i386/isa/isa_machdep.h>
 
 #include "pci.h"
+#include "apm.h"
+
+#if NAPM > 0
+#include <machine/apmvar.h>
+#endif
 
 int	mainbus_match __P((struct device *, void *, void *));
 void	mainbus_attach __P((struct device *, struct device *, void *));
@@ -63,6 +68,9 @@ union mainbus_attach_args {
 	struct pcibus_attach_args mba_pba;
 	struct eisabus_attach_args mba_eba;
 	struct isabus_attach_args mba_iba;
+#if NAPM > 0
+	struct apm_attach_args mba_aaa;
+#endif
 };
 
 /*
@@ -115,6 +123,12 @@ mainbus_attach(parent, self, aux)
 		mba.mba_iba.iba_bc = NULL;
 		config_found(self, &mba.mba_iba, mainbus_print);
 	}
+#if NAPM > 0
+	{
+	    mba.mba_aaa.aaa_busname = "apm";
+	    config_found(self, &mba.mba_aaa, mainbus_print);
+	}
+#endif
 }
 
 int

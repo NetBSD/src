@@ -24,3 +24,5 @@
 ./usr/mdec/sdboot
 ./usr/mdec/wdboot
 ./usr/sbin/bad144
+./usr/sbin/apm
+./usr/sbin/apmd

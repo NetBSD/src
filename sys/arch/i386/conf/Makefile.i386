@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.71 1996/08/12 00:51:40 mycroft Exp $
+#	$NetBSD: Makefile.i386,v 1.72 1996/08/25 23:39:29 jtk Exp $
 
 # Makefile for NetBSD
 #
@@ -25,6 +25,7 @@ CC?=	cc
 LD?=	ld
 MKDEP?=	mkdep
 STRIP?=	strip -d
+APMSTRIP?=	strip
 TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
@@ -139,10 +140,14 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
+# depend on APM
+.include "${I386}/apm_init/Makefile.inc"
+locore.o: ${APMINC}
+
 SRCS=	${I386}/i386/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
-.depend: ${SRCS} assym.h param.c
+.depend: ${SRCS} assym.h param.c ${APMINC}
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${I386}/i386/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.50 1996/08/05 21:15:58 soda Exp $
+#	$NetBSD: GENERIC,v 1.51 1996/08/25 23:39:27 jtk Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -88,6 +88,8 @@ mainbus0 at root
 isa0	at mainbus0
 eisa0	at mainbus0
 pci0	at mainbus0 bus ?
+
+apm0	at mainbus0			# Advanced power management
 
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pci*	at ppb? bus ?

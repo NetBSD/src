@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
+#	$NetBSD: MAKEDEV,v 1.41 1996/08/25 23:38:57 jtk Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -73,6 +73,7 @@
 #	speaker	pc speaker				(XXX - installed)
 #	lkm	loadable kernel modules interface
 #	audio	audio device
+#	apm	power management device
 #	tun*	network tunnel driver
 #	joy*	joystick device
 #
@@ -88,7 +89,7 @@ all)
 	sh MAKEDEV st0 st1 ch0 cd0 cd1 mcd0 vnd0 vnd1 lpa0 lpa1
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV lpt0 lpt1 lpt2 ttyv0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2
-	sh MAKEDEV speaker lkm mms0 lms0 pms0 audio joy0 joy1 local
+	sh MAKEDEV speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm local
 # MISSING:
 #	sh MAKEDEV mouse-?
 	;;
@@ -345,6 +346,14 @@ joy*)
 	mknod joy$unit c 26 $unit
 	chown root.wheel joy$unit
 	chmod 666 joy$unit
+	;;
+	
+apm*)
+	rm -f apm apmctl
+	mknod apm c 21 0
+	mknod apmctl c 21 8
+	chown root.wheel apm apmctl
+	chmod 644 apm apmctl
 	;;
 
 local)

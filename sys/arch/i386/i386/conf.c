@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.76 1996/08/25 23:39:37 jtk Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -117,6 +117,14 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_mmap((*))) enodev }
 #define cdev_joy_init cdev_ss_init
 
+/* open, close, ioctl, select -- XXX should be a generic device */
+#define cdev_ocis_init(c,n) { \
+        dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+        (dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+        (dev_type_stop((*))) enodev, 0,  dev_init(c,n,select), \
+        (dev_type_mmap((*))) enodev, 0 }
+#define cdev_apm_init cdev_ocis_init
+
 cdev_decl(cn);
 cdev_decl(ctty);
 #define	mmread	mmrw
@@ -178,6 +186,8 @@ cdev_decl(svr4_net);
 cdev_decl(ccd);
 #include "joy.h"
 cdev_decl(joy);
+#include "apm.h"
+cdev_decl(apm);
 
 struct cdevsw	cdevsw[] =
 {
@@ -202,7 +212,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCCD,ccd),	/* 18: concatenated disk driver */
 	cdev_ss_init(NSS,ss),		/* 19: SCSI scanner */
 	cdev_notdef(),			/* 20 */
-	cdev_notdef(),			/* 21 */
+	cdev_apm_init(NAPM,apm),	/* 21: Advancded Power Management */
 	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 23: Berkeley packet filter */
 	cdev_notdef(),			/* 24 */

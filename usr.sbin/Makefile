@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.64 1996/08/09 10:24:00 thorpej Exp $
+#	$NetBSD: Makefile,v 1.65 1996/08/25 23:40:45 jtk Exp $
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
 
 # not yet done: catman
@@ -30,7 +30,7 @@ SUBDIR+=iteconfig
 .elif ${MACHINE} == "hp300"
 SUBDIR+=config.old grfinfo hilinfo
 .elif ${MACHINE} == "i386"
-SUBDIR+=bad144 
+SUBDIR+=apm apmd bad144
 .elif ${MACHINE} == "pmax"
 SUBDIR+=screenblank
 .elif ${MACHINE} == "sun3"
