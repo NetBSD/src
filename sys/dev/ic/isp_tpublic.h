@@ -1,4 +1,4 @@
-/* $NetBSD: isp_tpublic.h,v 1.1 2000/02/12 02:23:13 mjacob Exp $ */
+/* $NetBSD: isp_tpublic.h,v 1.2 2000/02/19 01:50:03 mjacob Exp $ */
 /*
  * Qlogic ISP Host Adapter Public Target Interface Structures && Routines
  *---------------------------------------
@@ -129,13 +129,11 @@ typedef struct {
  * data should be moved, the outer layer should set it to the amount
  * expected to be moved.
  *
- * The tag cd_resid is the total residual of data not transferred.
- * That is, cd_resid is set up, possibly by the MD layer when it
- * reads the expected data transfer length from an FCP CMND IU,
- * to be the total data amount expected to be moved over the life
- * of the command. As data is successfully moved, this value is
- * decreased. At the end of a command, any residual indicates the
- * number of bytes requested but not moved.
+ * The tag cd_resid should be the total residual of data not transferred.
+ * The outer layers need to set this at the begining of command processing
+ * to equal cd_totlen. As data is successfully moved, this value is decreased.
+ * At the end of a command, any nonzero residual indicates the number of bytes
+ * requested but not moved.
  *
  * The tag cd_xfrlen is the length of the currently active data transfer.
  * This allows several interations between any outside software and the
