@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.38 2003/08/05 21:12:53 christos Exp $ */
+/*	$NetBSD: mach_port.c,v 1.39 2003/09/11 23:18:10 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.38 2003/08/05 21:12:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.39 2003/09/11 23:18:10 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.38 2003/08/05 21:12:53 christos Exp 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
 #include <compat/mach/mach_port.h>
+#include <compat/mach/mach_iokit.h>
 #include <compat/mach/mach_clock.h>
 #include <compat/mach/mach_exec.h>
 #include <compat/mach/mach_errno.h>
@@ -764,6 +765,8 @@ mach_right_put_exclocked(mr, right)
 #ifdef DEBUG_MACH_RIGHT
 		printf("mach_right_put: kill name %x\n", mr->mr_name);
 #endif
+		/* If the right is used for an IO notification, remove it */
+		mach_iokit_cleanup_notify(mr);
 
 		mach_notify_port_destroyed(mr->mr_lwp, mr);
 		LIST_REMOVE(mr, mr_list);
