@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.13 1999/04/11 04:02:37 simonb Exp $	*/
+/*	$NetBSD: alloc.c,v 1.14 1999/05/28 19:31:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -110,7 +110,7 @@
 struct fl {
 	unsigned	size;
 	struct fl	*next;
-} *freelist = (struct fl *)0;
+} *freelist;
 
 #ifdef HEAP_VARIABLE
 static char *top, *heapstart, *heaplimit;
