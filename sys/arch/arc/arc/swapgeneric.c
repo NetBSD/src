@@ -1,9 +1,8 @@
-/*	$OpenBSD: fdreg.h,v 1.1.1.1 1996/06/24 09:07:19 pefo Exp $	*/
-/*	$NetBSD: fdreg.h,v 1.1.1.3 2000/01/23 20:24:27 soda Exp $	*/
+/*	$OpenBSD: swapgeneric.c,v 1.4 1996/11/06 01:38:16 deraadt Exp $ */
 
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1994
+ *      The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,8 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *      This product includes software developed by the University of
+ *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -33,35 +32,30 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fdreg.h	7.1 (Berkeley) 5/9/91
+ *      @(#)swapgeneric.c       8.2 (Berkeley) 3/21/94
  */
 
 /*
- * AT floppy controller registers and bitfields
+ * fake swapgeneric.c -- should do this differently.
  */
 
-/* uses NEC765 controller */
-#include <dev/ic/nec765reg.h>
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <machine/disklabel.h>
 
-/* registers */
-#define	fdout	2	/* Digital Output Register (W) */
-#define	FDO_FDSEL	0x03	/*  floppy device select */
-#define	FDO_FRST	0x04	/*  floppy controller reset */
-#define	FDO_FDMAEN	0x08	/*  enable floppy DMA and Interrupt */
-#define	FDO_MOEN(n)	((1 << n) * 0x10)	/* motor enable */
+int (*mountroot) __P((void)) = NULL;	/* tells autoconf.c that we are "generic" */
 
-#define	fdsts	4	/* NEC 765 Main Status Register (R) */
-#define	fddata	5	/* NEC 765 Data Register (R/W) */
+dev_t	rootdev = NODEV;
+dev_t	dumpdev = NODEV;
 
-#define	fdctl	7	/* Control Register (W) */
-#define	FDC_500KBPS	0x00	/* 500KBPS MFM drive transfer rate */
-#define	FDC_300KBPS	0x01	/* 300KBPS MFM drive transfer rate */
-#define	FDC_250KBPS	0x02	/* 250KBPS MFM drive transfer rate */
-#define	FDC_125KBPS	0x03	/* 125KBPS FM drive transfer rate */
-
-#define	fdin	7	/* Digital Input Register (R) */
-#define	FDI_DCHG	0x80	/* diskette has been changed */
-
-#define	FDC_BSIZE	512
-#define	FDC_NPORT	8
-#define	FDC_MAXIOSIZE	NBPG	/* XXX should be MAXBSIZE */
+struct	swdevt swdevt[] = {
+	{ makedev(3, 0*MAXPARTITIONS+1), 0, 0 },	/* sd0b */
+	{ makedev(3, 1*MAXPARTITIONS+1), 0, 0 },	/* sd1b */
+	{ makedev(3, 2*MAXPARTITIONS+1), 0, 0 },	/* sd2b */
+	{ makedev(3, 3*MAXPARTITIONS+1), 0, 0 },	/* sd3b */
+	{ makedev(3, 4*MAXPARTITIONS+1), 0, 0 },	/* sd4b */
+	{ makedev(3, 5*MAXPARTITIONS+1), 0, 0 },	/* sd5b */
+	{ makedev(3, 6*MAXPARTITIONS+1), 0, 0 },	/* sd6b */
+	{ makedev(3, 7*MAXPARTITIONS+1), 0, 0 },	/* sd7b */
+	{ NODEV, 0, 0 }
+};
