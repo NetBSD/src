@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_pageout.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_pageout.c,v 1.4 1993/05/20 03:59:40 cgd Exp $
+ *	$Id: vm_pageout.c,v 1.5 1993/10/02 00:00:23 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -243,7 +243,8 @@ vm_pageout_scan()
 					pager = vm_pager_allocate(PG_DFLT,
 								  (caddr_t)0,
 								  object->size,
-								  VM_PROT_ALL);
+								  VM_PROT_ALL,
+								  0);
 					if (pager != NULL) {
 						vm_object_setpager(object,
 							pager, 0, FALSE);
