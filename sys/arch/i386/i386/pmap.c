@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.99 2000/09/05 21:56:41 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.100 2000/09/06 19:09:45 thorpej Exp $	*/
 
 /*
  *
@@ -2026,6 +2026,23 @@ pmap_extract(pmap, va, pap)
 		}
 	}
 	return (FALSE);
+}
+
+
+/*
+ * vtophys: virtual address to physical address.  For use by
+ * machine-dependent code only.
+ */
+
+paddr_t
+vtophys(va)
+	vaddr_t va;
+{
+	paddr_t pa;
+
+	if (pmap_extract(pmap_kernel(), va, &pa) == TRUE)
+		return (pa);
+	return (0);
 }
 
 
