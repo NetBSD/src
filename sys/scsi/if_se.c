@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.1 1997/03/18 01:31:16 thorpej Exp $	*/
+/*	$NetBSD: if_se.c,v 1.2 1997/03/18 04:45:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -88,6 +88,19 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
+#endif
+
+#ifdef NS
+#include <netns/ns.h>
+#include <netns/ns_if.h>
+#endif
+
+#if defined(CCITT) && defined(LLC)
+#include <sys/socketvar.h>
+#include <netccitt/x25.h>
+#include <netccitt/pk.h>
+#include <netccitt/pk_var.h>
+#include <netccitt/pk_extern.h>
 #endif
 
 #if NBPFILTER > 0
