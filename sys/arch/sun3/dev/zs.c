@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.49 1997/10/05 20:59:02 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.50 1997/10/06 21:04:21 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -67,14 +67,18 @@
 #include <dev/ic/z8530reg.h>
 
 #include <sun3/dev/zs_cons.h>
-#include "kbd.h"
+
+#include "kbd.h"	/* NKBD */
+#include "zsc.h"	/* NZSC */
+#define NZS NZSC
+
+/* Make life easier for the initialized arrays here. */
+#if NZS < 2
+#undef  NZS
+#define NZS 2
+#endif
 
 extern void Debugger __P((void));
-
-/*
- * XXX: Hard code this to make console init easier...
- */
-#define	NZSC	2		/* XXX */
 
 /*
  * Some warts needed by z8530tty.c -
@@ -112,18 +116,18 @@ struct zsdevice {
 
 
 /* Default OBIO addresses. */
-static int zs_physaddr[NZSC] = {
+static int zs_physaddr[NZS] = {
 	OBIO_ZS_KBD_MS,
 	OBIO_ZS_TTY_AB };
 
 /* Saved PROM mappings */
-static struct zsdevice *zsaddr[NZSC];	/* See zs_init() */
+static struct zsdevice *zsaddr[NZS];
 
 /* Flags from cninit() */
-static int zs_hwflags[NZSC][2];
+static int zs_hwflags[NZS][2];
 
 /* Default speed for each channel */
-static int zs_defspeed[NZSC][2] = {
+static int zs_defspeed[NZS][2] = {
 	{ 1200, 	/* keyboard */
 	  1200 },	/* mouse */
 	{ 9600, 	/* ttya */
@@ -156,22 +160,22 @@ zs_init()
 {
 	int i;
 
-	for (i = 0; i < NZSC; i++) {
+	for (i = 0; i < NZS; i++) {
 		zsaddr[i] = (struct zsdevice *)
 			obio_find_mapping(zs_physaddr[i], sizeof(struct zschan));
 	}
 }
 
 struct zschan *
-zs_get_chan_addr(zsc_unit, channel)
-	int zsc_unit, channel;
+zs_get_chan_addr(zs_unit, channel)
+	int zs_unit, channel;
 {
 	struct zsdevice *addr;
 	struct zschan *zc;
 
-	if (zsc_unit >= NZSC)
+	if (zs_unit >= NZS)
 		return NULL;
-	addr = zsaddr[zsc_unit];
+	addr = zsaddr[zs_unit];
 	if (addr == NULL)
 		return NULL;
 	if (channel == 0) {
@@ -188,12 +192,12 @@ zs_get_chan_addr(zsc_unit, channel)
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-static int	zsc_match __P((struct device *, struct cfdata *, void *));
-static void	zsc_attach __P((struct device *, struct device *, void *));
-static int  zsc_print __P((void *, const char *name));
+static int	zs_match __P((struct device *, struct cfdata *, void *));
+static void	zs_attach __P((struct device *, struct device *, void *));
+static int  zs_print __P((void *, const char *name));
 
 struct cfattach zsc_ca = {
-	sizeof(struct zsc_softc), zsc_match, zsc_attach
+	sizeof(struct zsc_softc), zs_match, zs_attach
 };
 
 struct cfdriver zsc_cd = {
@@ -209,19 +213,14 @@ static int zs_get_speed __P((struct zs_chanstate *));
  * Is the zs chip present?
  */
 static int
-zsc_match(parent, cf, aux)
+zs_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
 	struct confargs *ca = aux;
-	int unit;
+	int unit = cf->cf_unit;
 	void *va;
-
-	/* We have arrays sized with NZSC so validate. */
-	unit = cf->cf_unit;
-	if (unit < 0 || unit >= NZSC)
-		return (0);
 
 	/*
 	 * This driver only supports its wired-in mappings,
@@ -253,7 +252,7 @@ zsc_match(parent, cf, aux)
  * not set up the keyboard as ttya, etc.
  */
 static void
-zsc_attach(parent, self, aux)
+zs_attach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
 	void *aux;
@@ -263,22 +262,23 @@ zsc_attach(parent, self, aux)
 	struct zsc_attach_args zsc_args;
 	volatile struct zschan *zc;
 	struct zs_chanstate *cs;
-	int s, zsc_unit, channel;
+	int s, zs_unit, channel;
+	static int didintr;
 
-	zsc_unit = zsc->zsc_dev.dv_unit;
+	zs_unit = zsc->zsc_dev.dv_unit;
 
 	printf(": (softpri %d)\n", ZSSOFT_PRI);
 
 	/* Use the mapping setup by the Sun PROM. */
-	if (zsaddr[zsc_unit] == NULL)
-		panic("zs_attach: zs%d not mapped\n", zsc_unit);
+	if (zsaddr[zs_unit] == NULL)
+		panic("zs_attach: zs%d not mapped\n", zs_unit);
 
 	/*
 	 * Initialize software state for each channel.
 	 */
 	for (channel = 0; channel < 2; channel++) {
 		zsc_args.channel = channel;
-		zsc_args.hwflags = zs_hwflags[zsc_unit][channel];
+		zsc_args.hwflags = zs_hwflags[zs_unit][channel];
 		cs = &zsc->zsc_cs_store[channel];
 		zsc->zsc_cs[channel] = cs;
 
@@ -287,7 +287,7 @@ zsc_attach(parent, self, aux)
 		cs->cs_ops = &zsops_null;
 		cs->cs_brg_clk = PCLK / 16;
 
-		zc = zs_get_chan_addr(zsc_unit, channel);
+		zc = zs_get_chan_addr(zs_unit, channel);
 		cs->cs_reg_csr  = &zc->zc_csr;
 		cs->cs_reg_data = &zc->zc_data;
 
@@ -299,7 +299,7 @@ zsc_attach(parent, self, aux)
 		if (zsc_args.hwflags & ZS_HWFLAG_CONSOLE)
 			cs->cs_defspeed = zs_get_speed(cs);
 		else
-			cs->cs_defspeed = zs_defspeed[zsc_unit][channel];
+			cs->cs_defspeed = zs_defspeed[zs_unit][channel];
 		cs->cs_defcflag = zs_def_cflag;
 
 		/* Make these correspond to cs_defcflag (-crtscts) */
@@ -321,7 +321,7 @@ zsc_attach(parent, self, aux)
 		 * Look for a child driver for this channel.
 		 * The child attach will setup the hardware.
 		 */
-		if (!config_found(self, (void *)&zsc_args, zsc_print)) {
+		if (!config_found(self, (void *)&zsc_args, zs_print)) {
 			/* No sub-driver.  Just reset it. */
 			u_char reset = (channel == 0) ?
 				ZSWR9_A_RESET : ZSWR9_B_RESET;
@@ -336,10 +336,12 @@ zsc_attach(parent, self, aux)
 	 * to the interrupt handlers aren't used.  Note, we only do this
 	 * once since both SCCs interrupt at the same level and vector.
 	 */
-	if (zsc_unit == 0) {
+	if (!didintr) {
+		didintr = 1;
 		isr_add_autovect(zssoft, NULL, ZSSOFT_PRI);
 		isr_add_autovect(zshard, NULL, ca->ca_intpri);
 	}
+	/* XXX; evcnt_attach() ? */
 
 	/*
 	 * Set the master interrupt enable and interrupt vector.
@@ -357,16 +359,16 @@ zsc_attach(parent, self, aux)
 	 * XXX: L1A hack - We would like to be able to break into
 	 * the debugger during the rest of autoconfiguration, so
 	 * lower interrupts just enough to let zs interrupts in.
-	 * This is done after both zsc devices are attached.
+	 * This is done after both zs devices are attached.
 	 */
-	if (zsc_unit == 1) {
+	if (zs_unit == 1) {
 		printf("zsc1: enabling zs interrupts\n");
 		(void)spl5(); /* splzs - 1 */
 	}
 }
 
 static int
-zsc_print(aux, name)
+zs_print(aux, name)
 	void *aux;
 	const char *name;
 {
@@ -449,7 +451,7 @@ zssoft(arg)
 
 
 /*
- * Compute the current baud rate given a ZSCC channel.
+ * Compute the current baud rate given a ZS channel.
  */
 static int
 zs_get_speed(cs)
@@ -632,7 +634,7 @@ zs_abort(cs)
 		ZS_DELAY();
 	} while (rr0 & ZSRR0_BREAK);
 
-	/* XXX - Always available, but may be the PROM monitor. */
+	/* This is always available on the Sun3. */
 	Debugger();
 }
 
@@ -687,13 +689,117 @@ zs_putc(arg, c)
 	splx(s);
 }
 
-extern struct consdev consdev_kd;	/* keyboard/display */
-extern struct consdev consdev_tty;
-extern struct consdev *cn_tab;	/* physical console device info */
+/*****************************************************************/
+
+static void zscninit __P((struct consdev *));
+static int  zscngetc __P((dev_t));
+static void zscnputc __P((dev_t, int));
+
+/*
+ * Console table shared by ttya, ttyb
+ */
+struct consdev consdev_tty = {
+	nullcnprobe,
+	zscninit,
+	zscngetc,
+	zscnputc,
+	nullcnpollc,
+};
+
+static void
+zscninit(cn)
+	struct consdev *cn;
+{
+}
+
+/*
+ * Polled console input putchar.
+ */
+static int
+zscngetc(dev)
+	dev_t dev;
+{
+	return (zs_getc(zs_conschan));
+}
+
+/*
+ * Polled console output putchar.
+ */
+static void
+zscnputc(dev, c)
+	dev_t dev;
+	int c;
+{
+	zs_putc(zs_conschan, c);
+}
+
+/*****************************************************************/
+
+static void prom_cninit __P((struct consdev *));
+static int  prom_cngetc __P((dev_t));
+static void prom_cnputc __P((dev_t, int));
+
+/*
+ * The console is set to this one initially,
+ * which lets us use the PROM until consinit()
+ * is called to select a real console.
+ */
+struct consdev consdev_prom = {
+	nullcnprobe,
+	prom_cninit,
+	prom_cngetc,
+	prom_cnputc,
+	nullcnpollc,
+};
+
+/*
+ * The console table pointer is statically initialized
+ * to point to the PROM (output only) table, so that
+ * early calls to printf will work.
+ */
+struct consdev *cn_tab = &consdev_prom;
+
+void
+nullcnprobe(cn)
+	struct consdev *cn;
+{
+}
+
+static void
+prom_cninit(cn)
+	struct consdev *cn;
+{
+}
+
+/*
+ * PROM console input putchar.
+ * (dummy - this is output only)
+ */
+static int
+prom_cngetc(dev)
+	dev_t dev;
+{
+	return (0);
+}
+
+/*
+ * PROM console output putchar.
+ */
+static void
+prom_cnputc(dev, c)
+	dev_t dev;
+	int c;
+{
+	(*romVectorPtr->putChar)(c & 0x7f);
+}
+
+/*****************************************************************/
+
+extern struct consdev consdev_kd;
 
 static struct {
-	int zsc_unit, channel;
-} zstty_conf[NZSC*2] = {
+	int zs_unit, channel;
+} zstty_conf[NZS*2] = {
 	/* XXX: knowledge from the config file here... */
 	{ 1, 0 },	/* ttya */
 	{ 1, 1 },	/* ttyb */
@@ -717,18 +823,17 @@ cninit()
 	MachMonRomVector *v;
 	struct zschan *zc;
 	struct consdev *cn;
-	int channel, zsc_unit, zstty_unit;
-	u_char inSource;
+	int channel, zs_unit, zstty_unit;
+	u_char inSource, outSink;
 
 	v = romVectorPtr;
-	inSource = *(v->inSource);
-
-	if (inSource != *(v->outSink)) {
+	inSource = *v->inSource;
+	outSink  = *v->outSink;
+	if (inSource != outSink) {
 		mon_printf("cninit: mismatched PROM output selector\n");
 	}
 
 	switch (inSource) {
-
 	default:
 		mon_printf("cninit: invalid inSource=%d\n", inSource);
 		sunmon_abort();
@@ -737,7 +842,7 @@ cninit()
 
 	case 0:	/* keyboard/display */
 #if NKBD > 0
-		zsc_unit = 0;
+		zs_unit = 0;
 		channel = 0;
 		cn = &consdev_kd;
 		/* Set cn_dev, cn_pri in kd.c */
@@ -754,8 +859,8 @@ cninit()
 	case 3:	/* ttyc (rewired keyboard connector) */
 	case 4:	/* ttyd (rewired mouse connector)   */
 		zstty_unit = inSource - 1;
-		zsc_unit = zstty_conf[zstty_unit].zsc_unit;
-		channel  = zstty_conf[zstty_unit].channel;
+		zs_unit = zstty_conf[zstty_unit].zs_unit;
+		channel = zstty_conf[zstty_unit].channel;
 		cn = &consdev_tty;
 		cn->cn_dev = makedev(zs_major, zstty_unit);
 		cn->cn_pri = CN_REMOTE;
@@ -765,61 +870,16 @@ cninit()
 	/* Now that inSource has been validated, print it. */
 	mon_printf("console is %s\n", prom_inSrc_name[inSource]);
 
-	zc = zs_get_chan_addr(zsc_unit, channel);
+	zc = zs_get_chan_addr(zs_unit, channel);
 	if (zc == NULL) {
 		mon_printf("cninit: zs not mapped.\n");
 		return;
 	}
 	zs_conschan = zc;
-	zs_hwflags[zsc_unit][channel] = ZS_HWFLAG_CONSOLE;
+	zs_hwflags[zs_unit][channel] = ZS_HWFLAG_CONSOLE;
 	cn_tab = cn;
 	(*cn->cn_init)(cn);
 #ifdef	KGDB
 	zs_kgdb_init();
 #endif
 }
-
-
-static void zscn_nop __P((struct consdev *));
-static int  zscngetc __P((dev_t));
-static void zscnputc __P((dev_t, int));
-
-struct consdev consdev_tty = {
-	zscn_nop,
-	zscn_nop,
-	zscngetc,
-	zscnputc,
-	nullcnpollc,
-};
-
-static void
-zscn_nop(cn)
-	struct consdev *cn;
-{
-}
-
-/*
- * Polled console input putchar.
- */
-static int
-zscngetc(dev)
-	dev_t dev;
-{
-	register int c;
-
-	c = zs_getc(zs_conschan);
-	return (c);
-}
-
-/*
- * Polled console output putchar.
- */
-static void
-zscnputc(dev, c)
-	dev_t dev;
-	int c;
-{
-
-	zs_putc(zs_conschan, c);
-}
-
