@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.51 1996/02/24 08:58:37 chopps Exp $
+#	$NetBSD: GENERIC,v 1.52 1996/03/02 14:00:31 veego Exp $
 
 #
 # GENERIC AMIGA
@@ -28,14 +28,13 @@ options		DEVPAGER	# Pager for devices (Required)
 # Networking options
 #
 options		INET		# IP networking support (Required)
-#options	ISO		# ISO Networking support
-#options	TPIP		# ARGO TP networking support
-#options	CCITT		# CCITT X.25
-#options	NS		# Xerox XNS
-#options	EON		# ISO CLNL over IP
 #options	GATEWAY		# Packet forwarding
 #options	DIRECTED_BROADCAST	# Broadcast across subnets
-#options	NSIP		# XNS over IP
+#options	MROUTING	# Multicast routing
+#options	NS		# XNS
+#options	ISO,TPIP	# OSI
+#options	EON		# OSI tunneling over IP
+#options	CCITT,LLC,HDLC	# X.25
 
 #
 # File systems
@@ -50,12 +49,12 @@ options		NFSCLIENT	# Network File System client side code
 
 options		ADOSFS		# AmigaDOS file system
 options		CD9660		# ISO 9660 + Rock Ridge file system
-#options	MSDOSFS		# MS-DOS file system
+#options	MSDOSFS		# MS-DOS file system [does not work]
 options		FDESC		# /dev/fd
 options		FIFO		# FIFOs; RECOMMENDED
 options		KERNFS		# /kern
 options		NULLFS		# loopback file system
-#options	PORTAL		# ?
+#options	PORTAL		# Portal Filesystem
 options		PROCFS		# /proc
 options		UMAPFS		# NULLFS + uid and gid remapping
 options		UNION		# union file system
@@ -87,16 +86,15 @@ options		UCONSOLE	# only super-user can redirect console
 
 options		GENERIC		# Mini-root boot support
 options		LKM		# Loadable kernel modules
-options		KTRACE		# Add kernel tracing system call
-options		DIAGNOSTIC	# Add additional error checking code
 options		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
 
 #
 # Misc. debuging options
 #
-options		PANICWAIT	# Require keystroke to dump/reboot
-#options	DEBUG		# Add debugging statements
 options		DDB		# Kernel debugger
+options		DIAGNOSTIC	# Add additional error checking code
+options		KTRACE		# Add kernel tracing system call
+#options	DEBUG		# Add debugging statements
 #options	SYSCALL_DEBUG	# debug all syscalls.
 #options	SCSIDEBUG	# Add SCSI debugging statements
 #options	KGDB		# Kernel debugger (KGDB) support
@@ -115,7 +113,8 @@ options		MACHINE_NONCONTIG # Non-contiguous memory support
 
 options		RETINACONSOLE	# enable code to allow retina to be console
 options		ULOWELLCONSOLE	# enable code to allow a2410 to be console
-options         CL5426CONSOLE   # Cirrus console
+options		CL5426CONSOLE	# Cirrus console
+options		CV64CONSOLE	# CyberVision console
 
 options		GRF_ECS		# Enhanced Chip Set
 options		GRF_NTSC	# NTSC
@@ -160,6 +159,7 @@ ite1		at grf1			# terminal emulators for grf's
 ite2		at grf2			# terminal emulators for grf's
 ite3		at grf3			# terminal emulators for grf's
 ite4		at grf4			# terminal emulators for grf's
+ite5		at grf4			# terminal emulators for grf's
 
 msc0		at zbus0		# A2232 MSC multiport serial.
 mfc0		at zbus0		# MultiFaceCard I/O board
@@ -220,13 +220,15 @@ sd*	at scsibus? target ? lun ?	# scsi disks
 st*	at scsibus? target ? lun ?	# scsi tapes
 cd*	at scsibus? target ? lun ?	# scsi cd's
 
-pseudo-device	sl			# slip
-pseudo-device	ppp			# ppp
+pseudo-device	loop	1		# network loopback
+pseudo-device	sl	1		# slip
+pseudo-device	ppp	1		# ppp
+#pseudo-device	tun	1		# network tunnel line discipline
+pseudo-device	bpfilter	4	# berkeley packet filters
+
 pseudo-device	view	10		# views
 pseudo-device	pty	16		# pseudo terminals
-pseudo-device	loop			# network loopback
-pseudo-device	vnd	4
-#pseudo-device	bpfilter	2	# berkeley packet filters
-#pseudo-device	tun 2
+
+pseudo-device	vnd	4		# paging to files
 
 config	netbsd swap on generic
