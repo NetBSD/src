@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.15 1995/04/13 13:48:54 pk Exp $ */
+/*	$NetBSD: pmap.h,v 1.16 1995/04/13 16:24:40 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -117,9 +117,7 @@ struct pmap {
 #endif
 	int	pm_refcount;		/* just what it says */
 
-#ifdef MMU_3L
 	struct mmuhd	pm_reglist;	/* MMU regions on this pmap */
-#endif
 	struct mmuhd	pm_seglist;	/* MMU segments on this pmap */
 	void		*pm_regstore;
 	struct regmap	*pm_regmap;
