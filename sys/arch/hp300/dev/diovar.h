@@ -1,7 +1,7 @@
-/*	$NetBSD: diovar.h,v 1.6 1997/10/09 09:06:52 jtc Exp $	*/
+/*	$NetBSD: diovar.h,v 1.7 1998/01/11 21:53:05 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -40,10 +40,13 @@
  * Autoconfiguration definitions and prototypes for the DIO bus.
  */
 
+#include <machine/bus.h>
+
 /*
  * Arguments used to attach a device to the DIO bus.
  */
 struct dio_attach_args {
+	bus_space_tag_t da_bst;		/* bus space tag */
 	int	da_scode;		/* select code */
 	int	da_size;		/* size of address space */
 	u_int8_t da_id;			/* primary device id */

@@ -1,7 +1,7 @@
-/*	$NetBSD: intio.c,v 1.3 1997/10/09 09:06:54 jtc Exp $	*/
+/*	$NetBSD: intio.c,v 1.4 1998/01/11 21:53:05 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -108,6 +108,7 @@ intiosearch(parent, cf, aux)
 	struct intio_attach_args ia;
 
 	bzero(&ia, sizeof(ia));
+	ia.ia_bst = HP300_BUS_SPACE_INTIO;
 	if ((*cf->cf_attach->ca_match)(parent, cf, &ia) > 0)
 		config_attach(parent, cf, &ia, intioprint);
 	return (0);

@@ -1,7 +1,7 @@
-/*	$NetBSD: intiovar.h,v 1.3 1997/10/09 09:06:55 jtc Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.4 1998/01/11 21:53:06 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,9 +41,12 @@
  * internal i/o space.
  */
 
+#include <machine/bus.h>
+
 /*
  * Arguments used to attach a device to the internal i/o space.
  */
 struct intio_attach_args {
-	caddr_t	ia_addr;		/* physical address */
+	bus_space_tag_t ia_bst;		/* bus space tag */
+	bus_addr_t ia_addr;		/* physical address */
 };
