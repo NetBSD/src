@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.2 1996/03/08 18:57:41 mark Exp $ */
+/* $NetBSD: clock.c,v 1.3 1996/03/27 21:21:59 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -153,6 +153,7 @@ cpu_initclocks()
 	clockirq.ih_func = clockhandler;
 	clockirq.ih_arg = 0;
 	clockirq.ih_level = IPL_CLOCK;
+	clockirq.ih_name = "TMR0 hard clk";
 	if (irq_claim(IRQ_TIMER0, &clockirq) == -1)
 		panic("Cannot installer timer 0 IRQ handler\n");
 
