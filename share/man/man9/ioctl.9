@@ -1,4 +1,4 @@
-.\" $NetBSD: ioctl.9,v 1.14 2002/04/22 08:44:05 enami Exp $
+.\" $NetBSD: ioctl.9,v 1.15 2002/04/28 14:13:38 atatat Exp $
 .\"
 .\" Copyright (c) 1999  The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,7 +54,7 @@ are internally defined as
 .Pp
 where the different variables and functions are:
 .Bl -tag -width FOOIOCTL
-.It Fn FOOIOCTL
+.It Cm FOOIOCTL
 the name which will later be given in the
 .Xr ioctl 2
 system call as second argument, e.g.
@@ -271,5 +271,44 @@ driver where the name of the card is included in the third argument
 (e.g. ioctl(s, READFROMETH, struct ifreq *)), then you have to use
 the _IOWR() form not the _IOR(), as passing the name of the card to the
 kernel already consists of writing data.
+.Sh RETURN VALUES
+All ioctl() routines should return either 0 or a defined error code.
+The use of magic numbers such as -1, to indicate that a given ioctl
+code was not handled is strongly discouraged.  The value -1 coincides
+with the historic value for
+.Cm ERESTART
+which was shown to produce user space code that never returned from
+a call to
+.Xr ioctl 2 .
+.Pp
+For ioctl codes that
+are not handled by a given routine, the pseudo error value
+.Cm EPASSTHROUGH
+is provided.
+.Cm EPASSTHROUGH
+indicates that no error occurred during processing (it did not fail),
+but neither was anything processed (it did not succeed).  This
+supercedes the use of either
+.Cm ENOTTY
+(which is an explicit failure) or -1 (which has no contextual meaning)
+as a return value.
+.Cm ENOTTY
+will get passed directly back to user space and bypass any further
+processing by other ioctl layers.  Only code that wishes to suppress
+possible further processing of an ioctl code (eg, the tty line discipline
+code) should return
+.Cm ENOTTY .
+All other code should return
+.Cm EPASSTHROUGH ,
+even if it knows that no other layers will be called upon.
+.Pp
+If the value
+.Cm EPASSTHROUGH
+is returned to
+.Fn sys_ioctl ,
+then it will there be changed to
+.Cm ENOTTY
+to be returned to user space, thereby providing the proper error
+notification to the application.
 .Sh SEE ALSO
 .Xr ioctl 2
