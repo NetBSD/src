@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2003/12/13 22:07:35 chs Exp $
+#	$NetBSD: Makefile,v 1.34 2004/12/22 01:25:05 lha Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -64,12 +64,12 @@ DPADD+=	${LIBKRB5} ${LIBASN1} ${LIBCRYPTO}
 
 .if (${USE_KERBEROS4} != "no")
 CPPFLAGS+= -DKRB4
-LDADD+= -lkrb -ldes
-DPADD+=	${LIBKRB} ${LIBDES}
+LDADD+= -lkrb
+DPADD+=	${LIBKRB}
 .endif
 
-LDADD+= -lcom_err -lroken
-DPADD+=	${LIBCOM_ERR} ${LIBROKEN}
+LDADD+= -ldes -lcom_err -lroken
+DPADD+=	${LIBDES} ${LIBCOM_ERR} ${LIBROKEN}
 .endif
 
 .include <bsd.prog.mk>

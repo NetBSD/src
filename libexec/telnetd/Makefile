@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2003/12/13 22:07:35 chs Exp $
+#	$NetBSD: Makefile,v 1.40 2004/12/22 01:25:05 lha Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
 
 .include <bsd.own.mk>
@@ -26,14 +26,14 @@ DPADD+=	${LIBKRB5} ${LIBASN1} ${LIBCRYPTO}
 
 .if (${USE_KERBEROS4} != "no")
 CPPFLAGS+=-DKRB4
-LDADD+= -lkrb -ldes
-DPADD+=	${LIBKRB} ${LIBDES}
+LDADD+= -lkrb
+DPADD+=	${LIBKRB}
 .endif
 
 VERS!=	cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}
 
-LDADD+=	 -lcom_err -L${VERS} -lvers -lroken
-DPADD+=	${LIBCOM_ERR} ${LIBROKEN}
+LDADD+=	 -ldes -lcom_err -L${VERS} -lvers -lroken
+DPADD+=	${LIBDES} ${LIBCOM_ERR} ${LIBROKEN}
 
 .endif
 
