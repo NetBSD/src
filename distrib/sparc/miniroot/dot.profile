@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.12 2003/07/26 17:07:33 salo Exp $
+# $NetBSD: dot.profile,v 1.13 2004/03/26 15:27:56 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -78,7 +78,7 @@ EOF
 		case "$_forceloop" in
 			i*|I*|u*|U*)
 				# setup a writable /tmp directory
-				mount_mfs swap /tmp || continue
+				mount_mfs -s 1m swap /tmp || continue
 				/sysinst
 				;;
 
