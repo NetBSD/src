@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.668 2004/11/22 04:23:21 rumble Exp $
+$NetBSD: pcidevs,v 1.669 2004/11/30 05:02:37 grant Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1866,6 +1866,7 @@ product IODATA CBSCII		0x0005	CBSCII NinjaSCSI-32Bi SCSI
 
 /* ITE products */
 product ITE IT8152		0x8152	IT8152 Host Bridge
+product ITE IT8212		0x8212	IT8212 IDE controller
 
 /* I. T. T. products */
 product ITT AGX016	0x0001	AGX016
