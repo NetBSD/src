@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.53 2000/06/03 22:44:43 fair Exp $ */
+/* $NetBSD: isp.c,v 1.53.2.1 2000/08/11 22:24:46 tls Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -2168,7 +2168,11 @@ ispscsicmd(xs)
 			if (XS_CDBP(xs)[0] == 0x3)	/* REQUEST SENSE */
 				t2reqp->req_flags = REQFLAG_HTAG;
 			else
-				t2reqp->req_flags = REQFLAG_OTAG;
+				if((xs->bp != NULL) && 
+				    xs->bp->b_flags & B_ASYNC)
+					t2reqp->req_flags = REQFLAG_STAG;
+				else
+					t2reqp->req_flags = REQFLAG_OTAG;
 		}
 	} else {
 		sdparam *sdp = (sdparam *)isp->isp_param;

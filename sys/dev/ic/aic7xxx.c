@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.55.2.2 2000/06/30 00:01:25 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.55.2.3 2000/08/11 22:24:45 tls Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -4015,7 +4015,10 @@ get_scb:
 	hscb->tcl = tcl;
 
 	if (ahc_istagged_device(ahc, xs, 0))
-		scb->hscb->control |= MSG_SIMPLE_Q_TAG;
+		if((xs->bp != NULL) && xs->bp->b_flags & B_ASYNC)
+			scb->hscb->control |= MSG_SIMPLE_Q_TAG;
+		else
+			scb->hscb->control |= MSG_ORDERED_Q_TAG;
 	else
 		ahc_busy_tcl(ahc, scb);
 
