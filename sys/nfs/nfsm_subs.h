@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.35 2004/04/05 10:28:23 yamt Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.36 2004/04/05 10:41:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -158,11 +158,14 @@
 
 #define nfsm_mtofh(d, v, v3, f) \
 		{ struct nfsnode *ttnp; nfsfh_t *ttfhp; int ttfhsize; \
+		int hasattr = 0; \
 		if (v3) { \
 			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
 			(f) = fxdr_unsigned(int, *tl); \
-		} else \
+		} else { \
 			(f) = 1; \
+			hasattr = 1; \
+		} \
 		if (f) { \
 			nfsm_getfh(ttfhp, ttfhsize, (v3)); \
 			if ((t1 = nfs_nget((d)->v_mount, ttfhp, ttfhsize, \
@@ -176,11 +179,11 @@
 		if (v3) { \
 			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
 			if (f) \
-				(f) = fxdr_unsigned(int, *tl); \
+				hasattr = fxdr_unsigned(int, *tl); \
 			else if (fxdr_unsigned(int, *tl)) \
 				nfsm_adv(NFSX_V3FATTR); \
 		} \
-		if (f) \
+		if (f && hasattr) \
 			nfsm_loadattr((v), (struct vattr *)0, 0); \
 		}
 
