@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.4 2000/05/19 10:43:47 itojun Exp $	*/
+/*	$NetBSD: debug.c,v 1.5 2000/07/04 20:27:38 matt Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -59,6 +59,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <syslog.h>
 #include <sys/param.h>
 #include <sys/types.h>
