@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.159 2004/04/29 04:42:21 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.160 2004/04/29 04:49:06 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1582,3 +1582,15 @@ x11/bin/xinit/Makefile				1.4
 	-DXFREE86 if we build an XFree86 server. Use /dev/urandom & hexdump to 
 	generate cookies
 	[mrg, ticket #222]
+
+usr.bin/gzip/gzip.1				1.15-1.17
+usr.bin/gzip/gzip.c				1.37-1.42
+usr.bin/gzip/unbzip2.c				1.4
+usr.bin/gzip/zuncompress.c			1.3
+
+	Mega patch fixes several issues & bugs in gzip:
+	- stdin bz2/compress support  
+	- gzip -v pipe support
+	- various robustness issues
+	- no more .Sh BUGS in gzip.1
+	[mrg, ticket #223]
