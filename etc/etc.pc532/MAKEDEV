@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.17 1997/08/01 19:38:44 leo Exp $
+#	$NetBSD: MAKEDEV,v 1.18 1997/08/22 11:34:30 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -79,8 +79,8 @@ all)
 	;;
 
 floppy)
-	sh MAKEDEV std sd0 sd1 sd2 tty0 tty1 tty2 tty3
-	sh MAKEDEV st0 st1 cd0 cd1 md0
+	sh $0 std sd0 sd1 sd2 tty0 tty1 tty2 tty3
+	sh $0 st0 st1 cd0 cd1 md0
 	;;
 
 std)
@@ -126,11 +126,12 @@ ss*)
 	case $i in
 	ss*) name=ss;	unit=${i#ss};	chr=19;;
 	esac
-	rm -f $name$unit n$name$unit
+	rm -f $name$unit n$name$unit en$name$unit
 	mknod $name$unit	c $chr $(($unit * 16 + 0))
 	mknod n$name$unit	c $chr $(($unit * 16 + 1))
-	chgrp operator $name$unit n$name$unit
-	chmod 640 $name$unit n$name$unit
+	mknod en$name$unit	c $chr $(($unit * 16 + 3))
+	chgrp operator $name$unit n$name$unit en$name$unit
+	chmod 640 $name$unit n$name$unit en$name$unit
 	;;
 
 sd*|vnd*|ccd*)
@@ -298,7 +299,12 @@ rtc)
 
 local)
 	umask 0
-	sh MAKEDEV.local all
+	sh $0.local all
+	umask 77
+	;;
+
+*)
+	echo $i: invalid device
 	;;
 
 esac
