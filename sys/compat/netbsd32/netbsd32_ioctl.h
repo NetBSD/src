@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.11 2003/01/24 21:55:16 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.12 2003/04/12 05:00:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -200,8 +200,8 @@ struct	netbsd32_ifreq {
 #define	SIOCSIFMEDIA32	_IOWR('i', 53, struct netbsd32_ifreq)	/* set net media */
 #define	SIOCSIFMTU32	 _IOW('i', 127, struct netbsd32_ifreq)	/* set ifnet mtu */
 #define	SIOCGIFMTU32	_IOWR('i', 126, struct netbsd32_ifreq)	/* get ifnet mtu */
-#define	SIOCSIFASYNCMAP32  _IOW('i', 125, struct netbsd32_ifreq)	/* set ppp asyncmap */
-#define	SIOCGIFASYNCMAP32 _IOWR('i', 124, struct netbsd32_ifreq)	/* get ppp asyncmap */
+/* was 125 SIOCSIFASYNCMAP32 */
+/* was 124 SIOCGIFASYNCMAP32 */
 /* from <net/bpf.h> */
 #define BIOCGETIF32	_IOR('B',107, struct netbsd32_ifreq)
 #define BIOCSETIF32	_IOW('B',108, struct netbsd32_ifreq)
