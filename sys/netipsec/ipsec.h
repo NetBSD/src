@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.8 2004/04/25 22:25:03 jonathan Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.9 2004/04/30 04:12:29 jonathan Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -475,6 +475,7 @@ extern char *ipsec_dump_policy __P((caddr_t, char *));
 extern const char *ipsec_strerror __P((void));
 #endif /* !_KERNEL */
 
+#ifdef _KERNEL
 /* External declarations of per-file init functions */
 INITFN void ah_attach(void);
 INITFN void esp_attach(void);
@@ -484,5 +485,5 @@ INITFN void ipe4_attach(void);
 INITFN void tcpsignature_attach(void);
 
 INITFN void ipsec_attach(void);
-
+#endif /* _KERNEL */
 #endif /* _NETIPSEC_IPSEC_H_ */
