@@ -1,4 +1,4 @@
-/*	$NetBSD: activate.c,v 1.8 1997/09/21 02:35:40 enami Exp $	*/
+/*	$NetBSD: activate.c,v 1.9 2000/06/05 16:30:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: activate.c,v 1.8 1997/09/21 02:35:40 enami Exp $");
+__RCSID("$NetBSD: activate.c,v 1.9 2000/06/05 16:30:43 thorpej Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -127,10 +127,10 @@ send_reply(so, fd, error)
 	int n;
 	struct iovec iov;
 	struct msghdr msg;
-	struct {
-		struct cmsghdr cmsg;
-		int fd;
-	} ctl;
+	void *ctl = NULL;
+	struct cmsghdr *cmsg;
+	int *files;
+	socklen_t cmsgsize;
 
 	/*
 	 * Line up error code.  Don't worry about byte ordering
@@ -151,12 +151,25 @@ send_reply(so, fd, error)
 	 * construct a suitable rights control message.
 	 */
 	if (fd >= 0) {
-		ctl.fd = fd;
-		ctl.cmsg.cmsg_len = sizeof(ctl);
-		ctl.cmsg.cmsg_level = SOL_SOCKET;
-		ctl.cmsg.cmsg_type = SCM_RIGHTS;
-		msg.msg_control = (caddr_t) &ctl;
-		msg.msg_controllen = ctl.cmsg.cmsg_len;
+		cmsgsize = CMSG_SPACE(sizeof(*files));
+
+		ctl = malloc(cmsgsize);
+		if (ctl == NULL) {
+			syslog(LOG_ERR, "malloc control message: %m");
+			return;
+		}
+		memset(ctl, 0, cmsgsize);
+
+		cmsg = (struct cmsghdr *) ctl;
+		cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+		cmsg->cmsg_level = SOL_SOCKET;
+		cmsg->cmsg_type = SCM_RIGHTS;
+
+		files = (int *)CMSG_DATA(cmsg);
+		files[0] = fd;
+
+		msg.msg_control = ctl;
+		msg.msg_controllen = cmsgsize;
 	}
 
 	/*
@@ -173,9 +186,13 @@ send_reply(so, fd, error)
 		syslog(LOG_ERR, "shutdown: %m");
 #endif
 	/*
-	 * Throw away the open file descriptor
+	 * Throw away the open file descriptor and control
+	 * message buffer.
 	 */
-	(void) close(fd);
+	if (fd >= 0)
+		(void) close(fd);
+	if (ctl != NULL)
+		free(ctl);
 }
 
 void
