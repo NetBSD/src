@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.136 2000/06/02 12:57:22 shin Exp $	*/
+/*	$NetBSD: trap.c,v 1.137 2000/06/03 13:16:02 shin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.136 2000/06/02 12:57:22 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.137 2000/06/03 13:16:02 shin Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -391,9 +391,6 @@ trap(status, cause, vaddr, opc, frame)
 	u_quad_t sticks = 0;
 	struct proc *p = curproc;
 	vm_prot_t ftype;
-#ifndef SOFTFLOAT
-	extern struct proc *fpcurproc;
-#endif
 	extern void fswintrberr __P((void));
 
 	uvmexp.traps++;
