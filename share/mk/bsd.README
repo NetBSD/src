@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.86 2001/12/31 23:11:05 thorpej Exp $
+#	$NetBSD: bsd.README,v 1.87 2002/01/01 00:34:26 thorpej Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -396,6 +396,9 @@ MAN		Manual pages (should end in .1 - .9).  If no MAN variable is
 PROG		The name of the program to build.  If not supplied, nothing
 		is built.
 
+PROG_CXX	If defined, causes <bsd.prog.mk> to link the program with
+		the C++ compiler rather than the C compiler.
+
 PROGNAME	The name that the above program will be installed as, if
 		different from ${PROG}.
 
@@ -446,6 +449,11 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBY?=		${DESTDIR}/usr/lib/liby.a
 		LIBZ?=		${DESTDIR}/usr/lib/libz.a
 
+HAVE_GCC3	If defined and PROG_CXX is defined by the program's
+		Makefile, causes <bsd.prog.mk> to pull in additional
+		C++ support libraries required for programs compiled
+		with GNU C++ 3.x.  This is intended as a temporary
+		measure to ease the transition to GCC 3.x.
 
 SHAREDSTRINGS	If defined, a new .c.o rule is used that results in shared
 		strings, using xstr(1). Note that this will not work with
