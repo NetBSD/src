@@ -1,4 +1,12 @@
-#	$NetBSD: dot.login,v 1.4 1997/10/28 03:33:21 mrg Exp $
+#	$NetBSD: dot.login,v 1.5 2000/02/15 19:29:54 abs Exp $
 
-tset -Q \?$TERM
-echo "Don't login as root, use the su command."
+if ( $TERM == unknown ) then
+	tset -Q \?$TERM
+else
+	echo "Terminal type is '$TERM'."
+endif
+
+# Do not display in 'su -' case
+if ( ! $?SU_FROM ) then
+	echo "We recommend creating a non-root account and using su(1) for root access."
+endif
