@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.35 2002/10/05 21:26:24 fvdl Exp $	*/
+/*	$NetBSD: segments.h,v 1.36 2003/03/03 22:14:18 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997
@@ -132,7 +132,8 @@ struct region_descriptor {
 #endif
 
 #ifdef _KERNEL
-extern union descriptor *idt, *gdt, *ldt;
+extern union descriptor *gdt, *ldt;
+extern struct gate_descriptor *idt;
 
 void setgate __P((struct gate_descriptor *, void *, int, int, int, int));
 void setregion __P((struct region_descriptor *, void *, size_t));

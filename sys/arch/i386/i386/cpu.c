@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.11 2003/02/26 21:28:21 fvdl Exp $ */
+/* $NetBSD: cpu.c,v 1.12 2003/03/03 22:14:15 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -699,7 +699,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 	setsegment(&sd, &ci->ci_doubleflt_tss, sizeof(struct i386tss) - 1,
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);
 	ci->ci_gdt[GTRAPTSS_SEL].sd = sd;
-	setgate(&idt[8].gd, NULL, 0, SDT_SYSTASKGT, SEL_KPL,
+	setgate(&idt[8], NULL, 0, SDT_SYSTASKGT, SEL_KPL,
 	    GSEL(GTRAPTSS_SEL, SEL_KPL));
 
 #if defined(DDB) && defined(MULTIPROCESSOR)
@@ -718,7 +718,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);
 	ci->ci_gdt[GIPITSS_SEL].sd = sd;
 
-	setgate(&idt[ddb_vec].gd, NULL, 0, SDT_SYSTASKGT, SEL_KPL,
+	setgate(&idt[ddb_vec], NULL, 0, SDT_SYSTASKGT, SEL_KPL,
 	    GSEL(GIPITSS_SEL, SEL_KPL));
 #endif
 }
