@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.98 1994/10/20 18:37:45 mycroft Exp $
+ *	$Id: wd.c,v 1.99 1994/10/20 19:22:01 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -516,7 +516,10 @@ loop:
 	}
 
 	/* Mark the controller active and set a timeout. */
-	wdc->sc_flags |= WDCF_ACTIVE;
+	if (wdc->sc_flags & WDCF_ACTIVE)
+		untimeout(wdctimeout, wdc);
+	else
+		wdc->sc_flags |= WDCF_ACTIVE;
 	timeout(wdctimeout, wdc, WAITTIME);
     
 	/* Do control operations specially. */
