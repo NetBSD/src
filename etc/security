@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.55 2001/06/14 07:50:07 lukem Exp $
+#	$NetBSD: security,v 1.56 2001/06/18 10:54:02 lukem Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -19,23 +19,21 @@ if [ -s /etc/security.conf ]; then
 	. /etc/security.conf
 fi
 
-SECUREDIR=/tmp/_securedir.$$
-if ! mkdir $SECUREDIR; then
-	echo can not create $SECUREDIR.
-	exit 1
-fi
+SECUREDIR=`mktemp -d /tmp/_securedir.XXXXXX` || exit 1
 
-if ! cd $SECUREDIR; then
-	echo can not chdir to $SECUREDIR.
+trap "/bin/rm -rf $SECUREDIR ; exit 0" EXIT INT QUIT
+
+if ! cd "$SECUREDIR"; then
+	echo "Can not cd to $SECUREDIR".
 	exit 1
 fi
 
 if [ -z "$max_loginlen" ];then
-    max_loginlen=8
+	max_loginlen=8
 fi
 
 if [ -z "$max_grouplen" ]; then
-    max_grouplen=8
+	max_grouplen=8
 fi
 
 ERR=secure1.$$
@@ -46,8 +44,6 @@ MPBYPATH=secure5.$$
 LIST=secure6.$$
 OUTPUT=secure7.$$
 LABELS=secure8.$$
-
-trap '/bin/rm -rf $SECUREDIR ; exit 0' EXIT INT QUIT
 
 # Handle backup_dir not being set in .conf file
 backup_dir=${backup_dir:-/var/backups}

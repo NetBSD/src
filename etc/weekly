@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: weekly,v 1.16 2000/10/15 17:32:38 kim Exp $
+#	$NetBSD: weekly,v 1.17 2001/06/18 10:54:02 lukem Exp $
 #	from: @(#)weekly	8.2 (Berkeley) 1/2/94
 #
 
@@ -37,14 +37,14 @@ fi
 #then
 #	echo ""
 #	echo "Looking for checked out files:"
-#	TDIR=/tmp/_checkout$$
 #
-#	mkdir $TDIR
+#	TDIR=`mktemp -d /tmp/_checkout.XXXXXX` || exit 1
+#	trap "/bin/rm -rf $TDIR ; exit 0" EXIT INT QUIT
 #	for file in `find -f /usr/src ! -fstype local -prune -or \
 #	    -name 'p.*' -print | egrep 'SCCS/p\.'`; do
 #		owner=`awk '{ print $3 }' $file`
 #		echo "$owner	$file"
-#		echo $file >> $TDIR/$owner
+#		echo $file >> "$TDIR/$owner"
 #	done | sed -e 's,SCCS/p.,,'
 #	if test -n "`ls $TDIR`"; then
 #		for file in $TDIR/*; do
@@ -52,7 +52,6 @@ fi
 #			    Mail -s 'checked out files' ${file##*/}
 #		done
 #	fi
-#	rm -rf $TDIR
 #fi
 
 if checkyesno clean_uucp && [ -f /usr/libexec/uucp/clean.weekly ]; then
