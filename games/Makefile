@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.12 1996/12/28 18:59:05 tls Exp $
-#	@(#)Makefile	8.2 (Berkeley) 3/31/94
+#	$NetBSD: Makefile,v 1.13 1997/01/07 12:49:14 tls Exp $
+#	@(#)Makefile	8.3 (Berkeley) 7/24/94
 
 # Missing: ching dungeon hunt warp
 # Moved: chess

@@ -1,3 +1,5 @@
+/*	$NetBSD: extern.h,v 1.2 1997/01/07 12:42:17 tls Exp $ */
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,6 +37,7 @@
 
 #include <stdio.h>
 #include <signal.h>
+#include <string.h>
 #include <ctype.h>
 #include <setjmp.h>
 #include "machdep.h"

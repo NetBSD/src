@@ -1,4 +1,4 @@
-/*	$NetBSD: game.c,v 1.3 1995/04/22 10:36:56 cgd Exp $	*/
+/*	$NetBSD: game.c,v 1.4 1997/01/07 12:42:19 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,13 +35,13 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)game.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)game.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: game.c,v 1.3 1995/04/22 10:36:56 cgd Exp $";
+static char rcsid[] = "$NetBSD: game.c,v 1.4 1997/01/07 12:42:19 tls Exp $";
 #endif
 #endif /* not lint */
 
-#include "externs.h"
+#include "extern.h"
 
 maxturns(ship, af)
 register struct ship *ship;
