@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.86.2.8 2004/04/22 07:52:03 tron Exp $ */
+/*	$NetBSD: sysctl.c,v 1.86.2.9 2004/04/26 20:00:24 jdc Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.86.2.8 2004/04/22 07:52:03 tron Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.86.2.9 2004/04/26 20:00:24 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -1456,7 +1456,7 @@ getdesc(int *name, u_int namelen, struct sysctlnode *pnode)
 	 */
 	i = 0;
 	do {
-		d = malloc(128 * pnode->sysctl_clen);
+		d = malloc(sz);
 		if (d == NULL)
 			return;
 		rc = sysctl(name, namelen + 1, d, &sz, NULL, 0);
