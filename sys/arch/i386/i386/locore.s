@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.23 1993/11/09 08:06:33 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.24 1993/11/09 08:29:17 mycroft Exp $
  */
 
 
@@ -206,9 +206,16 @@ start:	movw	$0x1234,0x472	# warm boot
 /*
  * Virtual address space of kernel:
  *
- *	text | data | bss | [syms] | page dir | proc0 kernel stack | usr stk map | Sysmap
- *			           0               1       2       3             4
+ *	text | data | bss | [syms] | page dir | usr stk map | proc0 kernel stack | Sysmap
+ *			           0          1             2          3         4
  */
+/* clear bss */
+	movl	$(_edata-KERNBASE),%edi
+	movl	$(((_end-_edata)+3)>>2),%ecx
+	xorl	%eax,%eax
+	cld
+	rep
+	stosl
 
 /* find end of kernel image */
 	movl	$(_end-KERNBASE),%ecx
