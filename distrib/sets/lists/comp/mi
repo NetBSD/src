@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.556 2003/04/06 18:26:23 perry Exp $
+#	$NetBSD: mi,v 1.557 2003/04/06 18:27:52 perry Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -118,6 +118,7 @@
 ./usr/include/ctype.h			comp-c-include
 ./usr/include/curses.h			comp-c-include
 ./usr/include/db.h			comp-c-include
+./usr/include/des.h			comp-c-include
 ./usr/include/dev/apm			comp-c-include
 ./usr/include/dev/apm/apmbios.h		comp-c-include
 ./usr/include/dev/apm/apmio.h		comp-c-include
