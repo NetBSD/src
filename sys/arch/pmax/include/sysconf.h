@@ -1,6 +1,5 @@
-/*	$NetBSD: sysconf.h,v 1.1 1998/03/25 03:57:53 jonathan Exp $	*/
-#ifndef	_PMAX_SYSCONF_H
-#define	_PMAX_SYSCONF_H
+/*	$NetBSD: sysconf.h,v 1.2 1998/03/26 06:27:57 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
  *
@@ -42,6 +41,10 @@
  * and others are mmultiprocessors, rename from cpu_* to sys_*.
  */
 
+#ifndef	_PMAX_SYSCONF_H_
+#define	_PMAX_SYSCONF_H_
+
+
 #ifdef _KERNEL
 /*
  * Platform Specific Information and Function Hooks.
@@ -58,8 +61,6 @@ extern struct platform {
 	/*
 	 * Platform Information.
 	 */
-	const char	*family;	/* Family Name */
-	const char	*model;		/* Model (variant) Name */
 	const char	*iobus;		/* Primary iobus name */
 
 	/*
@@ -112,4 +113,4 @@ extern void platform_not_configured __P((void));
 extern void platform_not_supported __P((void));
 
 #endif /* _KERNEL */
-#endif /* !_PMAX_SYSCONF_H */
+#endif /* !_PMAX_SYSCONF_H_ */
