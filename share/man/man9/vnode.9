@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.1 2001/10/22 03:33:19 gmcgarry Exp $
+.\"     $NetBSD: vnode.9,v 1.2 2001/10/22 08:21:33 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -291,7 +291,7 @@ to wait for all writes to complete before returning to the user.  Its
 value must only be modified at splbio.  See
 .Xr spl 9 .
 It does not track the number of dirty buffers attached to the
-vnode.  
+vnode.
 .Pp
 Every time a vnode is reassigned to a new file, the vnode capability
 identifier
@@ -427,7 +427,7 @@ and released by calling
 The vnode locking operation is complicated because it is used for many
 purposes.  Sometimes it is used to bundle a series of vnode operations
 (see
-.Xr vnodeops )
+.Xr vnodeops 9 )
 into an atomic group.  Many file systems rely on it to prevent race
 conditions in updating file system type specific data structures
 rather than using their own private locks.  The vnode lock operates as
@@ -604,7 +604,7 @@ is a null operation if the reference count is greater than zero.
 .It Fn vgone "vp"
 Eliminate all activity associated with the vnode
 .Fa vp
-in preparation for recycling.  
+in preparation for recycling.
 .It Fn vflush "mp" "skipvp" "flags"
 Remove any vnodes in the vnode table belonging to mount point
 .Fa mp .
@@ -721,7 +721,7 @@ This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the vnode
 framework can be found.  All pathnames are relative to
-.Pa /usr/src.
+.Pa /usr/src .
 .Pp
 The vnode framework is implemented within the file
 .Pa sys/kern/vfs_subr.c .

@@ -1,4 +1,4 @@
-.\"     $NetBSD: namecache.9,v 1.1 2001/10/22 03:33:21 gmcgarry Exp $
+.\"     $NetBSD: namecache.9,v 1.2 2001/10/22 08:21:33 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -199,7 +199,7 @@ This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the name
 lookup cache can be found.  All pathnames are relative to
-.Pa /usr/src.
+.Pa /usr/src .
 .Pp
 The name lookup cache is implemented within the file
 .Pa sys/kern/vfs_cache.c .
@@ -209,8 +209,8 @@ The name lookup cache is implemented within the file
 .Xr namei 9 ,
 .Xr vfs 9 ,
 .Xr vnode 9
-.Sh AUTHOR
-The original name lookup cache was written by Robert Elz.
 .Sh HISTORY
 The name lookup cache first appeared in
 .Bx 4.2 .
+.Sh AUTHORS
+The original name lookup cache was written by Robert Elz.

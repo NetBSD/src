@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.1 2001/10/22 03:33:20 gmcgarry Exp $
+.\"     $NetBSD: namei.9,v 1.2 2001/10/22 08:21:33 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -207,7 +207,7 @@ space (UIO_USERSPACE).  The locked vnode for the pathname is returned
 in
 .Em ndp->ni_vp .
 .Pp
-If 
+If
 .Em ndp->ni_cnd.cn_flags
 has the FOLLOW flag set then symbolic links are followed when they
 occur at the end of the name translation process.  Symbolic links are
@@ -283,7 +283,7 @@ This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the name
 lookup subsystem can be found.  All pathnames are relative to
-.Pa /usr/src.
+.Pa /usr/src .
 .Pp
 The name lookup subsystem is implemented within the file
 .Pa sys/kern/vfs_lookup.c .
