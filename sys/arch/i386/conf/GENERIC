@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.69 1997/01/16 23:30:29 perry Exp $
+#	$NetBSD: GENERIC,v 1.70 1997/01/22 23:46:59 mycroft Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -210,6 +210,7 @@ gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is recor
 
 # PnP bus and devices should be declared last 
 isapnp0	at isa? 
+ep*	at isapnp?
 sb*	at isapnp?
 joy*	at isapnp?
 
