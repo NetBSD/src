@@ -1041,6 +1041,7 @@
 ./usr/share/man/cat9/pool_setlowat.0
 ./usr/share/man/cat9/printf.0
 ./usr/share/man/cat9/psignal.0
+./usr/share/man/cat9/ratecheck.0
 ./usr/share/man/cat9/readdisklabel.0
 ./usr/share/man/cat9/resettodr.0
 ./usr/share/man/cat9/rnd.0
@@ -2171,6 +2172,7 @@
 ./usr/share/man/man9/pool_setlowat.9
 ./usr/share/man/man9/printf.9
 ./usr/share/man/man9/psignal.9
+./usr/share/man/man9/ratecheck.9
 ./usr/share/man/man9/readdisklabel.9
 ./usr/share/man/man9/resettodr.9
 ./usr/share/man/man9/rnd.9
