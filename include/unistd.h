@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.62 1998/07/27 09:33:45 mycroft Exp $	*/
+/*	$NetBSD: unistd.h,v 1.63 1998/07/27 09:58:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -225,20 +225,19 @@ pid_t	 getsid __P((pid_t));
 char	*brk __P((const char *));
 int	 fchdir __P((int));
 #if defined(_XOPEN_SOURCE)
-int	fchown __P((int, uid_t, gid_t)) __RENAME(__posix_fchown);
+int	 fchown __P((int, uid_t, gid_t)) __RENAME(__posix_fchown);
 #else
-int	fchown __P((int, uid_t, gid_t));
+int	 fchown __P((int, uid_t, gid_t));
 #endif
 int	 getdtablesize __P((void));
 long	 gethostid __P((void));
 int	 gethostname __P((char *, size_t));
 __pure int
 	 getpagesize __P((void));		/* legacy */
-char	*getwd __P((char *));			/* obsoleted by getcwd() */
 #if defined(_XOPEN_SOURCE)
-int	lchown __P((const char *, uid_t, gid_t)) __RENAME(__posix_lchown);
+int	 lchown __P((const char *, uid_t, gid_t)) __RENAME(__posix_lchown);
 #else
-int	lchown __P((const char *, uid_t, gid_t));
+int	 lchown __P((const char *, uid_t, gid_t));
 #endif
 int	 lockf __P((int, int, off_t));
 int	 readlink __P((const char *, char *, size_t));
@@ -258,6 +257,10 @@ pid_t	 vfork __P((void));
 pid_t	 __vfork14 __P((void));
 #else
 pid_t	 vfork __P((void))			__RENAME(__vfork14);
+#endif
+
+#ifndef __AUDIT__
+char	*getwd __P((char *));			/* obsoleted by getcwd() */
 #endif
 
 /* FIXME: this should go to <sys/time.h>! */
@@ -298,7 +301,7 @@ int	 nfssvc __P((int, void *));
 int	 profil __P((char *, size_t, u_long, u_int));
 void	 psignal __P((unsigned int, const char *));
 int	 rcmd __P((char **, int, const char *,
-		const char *, const char *, int *));
+	    const char *, const char *, int *));
 int	 reboot __P((int, char *));
 int	 revoke __P((const char *));
 int	 rresvport __P((int *));

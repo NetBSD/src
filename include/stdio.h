@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.23 1998/05/11 15:49:15 drochner Exp $	*/
+/*	$NetBSD: stdio.h,v 1.24 1998/07/27 09:58:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -236,7 +236,6 @@ long	 ftell __P((FILE *));
 size_t	 fwrite __P((const void *, size_t, size_t, FILE *));
 int	 getc __P((FILE *));
 int	 getchar __P((void));
-char	*gets __P((char *));
 void	 perror __P((const char *));
 int	 printf __P((const char *, ...));
 int	 putc __P((int, FILE *));
@@ -247,14 +246,18 @@ void	 rewind __P((FILE *));
 int	 scanf __P((const char *, ...));
 void	 setbuf __P((FILE *, char *));
 int	 setvbuf __P((FILE *, char *, int, size_t));
-int	 sprintf __P((char *, const char *, ...));
 int	 sscanf __P((const char *, const char *, ...));
 FILE	*tmpfile __P((void));
 char	*tmpnam __P((char *));
 int	 ungetc __P((int, FILE *));
 int	 vfprintf __P((FILE *, const char *, _BSD_VA_LIST_));
 int	 vprintf __P((const char *, _BSD_VA_LIST_));
+
+#ifndef __AUDIT__
+char	*gets __P((char *));
+int	 sprintf __P((char *, const char *, ...));
 int	 vsprintf __P((char *, const char *, _BSD_VA_LIST_));
+#endif
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
 int	 rename  __P((const char *, const char *)) __RENAME(__posix_rename);
@@ -307,11 +310,14 @@ __END_DECLS
 __BEGIN_DECLS
 int	 getw __P((FILE *));
 int	 putw __P((int, FILE *));
-char	*tempnam __P((const char *, const char *));
 int	 snprintf __P((char *, size_t, const char *, ...))
 		__attribute__((format (printf, 3, 4)));
 int	 vsnprintf __P((char *, size_t, const char *, _BSD_VA_LIST_))
 		__attribute__((format (printf, 3, 0)));
+
+#ifndef __AUDIT__
+char	*tempnam __P((const char *, const char *));
+#endif
 __END_DECLS
 #endif
 
