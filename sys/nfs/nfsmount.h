@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.10 1996/02/18 11:54:03 fvdl Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.11 1996/12/02 22:55:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -84,6 +84,10 @@ struct	nfsmount {
 	int	nm_numuids;		/* Number of nfsuid mappings */
 	TAILQ_HEAD(, nfsuid) nm_uidlruhead; /* Lists of nfsuid mappings */
 	LIST_HEAD(, nfsuid) nm_uidhashtbl[NFS_MUIDHASHSIZ];
+	TAILQ_HEAD(, buf) nm_bufq;      /* async io buffer queue */
+	short	nm_bufqlen;		/* number of buffers in queue */
+	short	nm_bufqwant;		/* process wants to add to the queue */
+	int	nm_bufqiods;		/* number of iods processing queue */
 };
 
 #ifdef _KERNEL
