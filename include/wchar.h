@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.3 2000/12/20 22:36:25 itojun Exp $	*/
+/*	$NetBSD: wchar.h,v 1.4 2000/12/21 05:12:18 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -84,7 +84,24 @@ typedef	_BSD_SIZE_T_	size_t;
 #undef	_BSD_SIZE_T_
 #endif
 
+#ifndef WEOF
+#define	WEOF 	((wint_t)-1)
+#endif
+
 __BEGIN_DECLS
+wchar_t	*wcscat __P((wchar_t *, const wchar_t *));
+wchar_t	*wcschr __P((const wchar_t *, wchar_t));
+int	wcscmp __P((const wchar_t *, const wchar_t *));
+wchar_t	*wcscpy __P((wchar_t *, const wchar_t *));
+size_t	wcscspn __P((const wchar_t *, const wchar_t *));
+size_t	wcslen __P((const wchar_t *));
+wchar_t	*wcsncat __P((wchar_t *, const wchar_t *, size_t));
+int	wcsncmp __P((const wchar_t *, const wchar_t *, size_t));
+wchar_t	*wcsncpy __P((wchar_t *, const wchar_t *, size_t));
+wchar_t	*wcspbrk __P((const wchar_t *, const wchar_t *));
+wchar_t	*wcsrchr __P((const wchar_t *, wchar_t));
+size_t	wcsspn __P((const wchar_t *, const wchar_t *));
+wchar_t	*wcsstr __P((const wchar_t *, const wchar_t *));
 wchar_t	*wmemchr __P((const wchar_t *, wchar_t, size_t));
 int	wmemcmp __P((const wchar_t *, const wchar_t *, size_t));
 wchar_t	*wmemcpy __P((wchar_t *, const wchar_t *, size_t));
