@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
+.\"	$NetBSD: ftpd.8,v 1.9 1997/03/30 22:53:39 cjs Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -237,7 +237,8 @@ the user should be used as the password).
 In the last case, 
 .Nm ftpd
 takes special measures to restrict the client's access privileges.
-The server performs a 
+The server disables the MKD, XMKD, RMD, XRMD, DELE, SITE UMASK, and
+SITE CHMOD commands, sets the umask to 0707, and performs a 
 .Xr chroot 2
 to the home directory of the
 .Dq ftp
@@ -246,7 +247,7 @@ In order that system security is not breached, it is recommended
 that the
 .Dq ftp
 subtree be constructed with care, following these rules:
-.Bl -tag -width "~ftp/pub" -offset indent
+.Bl -tag -width "~ftp/incoming" -offset indent
 .It Pa ~ftp
 Make the home directory owned by
 .Dq root
@@ -278,11 +279,24 @@ The file
 if present, will be printed after a successful login.
 These files should be mode 444.
 .It Pa ~ftp/pub
-Make this directory mode 777 and owned by
-.Dq ftp .
-Guests
-can then place files which are to be accessible via the anonymous
-account in this directory.
+This directory and the subdirectories beneath it should be owned
+by the users and groups responsible for placing files in them,
+and be writable only by them (mode 755 or 775). They should
+.Em not
+be owned or writable by ftp or its group.
+.It Pa ~ftp/incoming
+This directory is where anonymous users place files they upload.
+The owners should be the user ``ftp'' and an appropriate group.
+Members of this group will be the only users with access to these
+files after they have been uploaded; these should be people who
+know how to deal with them appropriately.  If you wish anonymous
+ftp users to be able to see the names of the files in this directory
+the permissions should be 770, otherwise they should be 370.
+.Pp
+Anonymous users will be able to upload files files to this directory,
+but they will not be able to download them, delete them, or overwrite
+them, due to the umask and disabling of the commands mentioned
+above.
 .El
 .Sh FILES
 .Bl -tag -width /etc/ftpwelcome -compact
