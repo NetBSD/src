@@ -1,4 +1,4 @@
-/*	$NetBSD: hb.c,v 1.9 2002/10/02 04:40:08 thorpej Exp $	*/
+/*	$NetBSD: hb.c,v 1.10 2002/12/20 16:23:46 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -37,10 +37,10 @@
 #include <news68k/news68k/isr.h>
 #include <news68k/dev/hbvar.h>
 
-static int	hb_match __P((struct device *, struct cfdata *, void *));
-static void	hb_attach __P((struct device *, struct device *, void *));
-static int	hb_search __P((struct device *, struct cfdata *, void *));
-static int	hb_print __P((void *, const char *));
+static int  hb_match(struct device *, struct cfdata *, void *);
+static void hb_attach(struct device *, struct device *, void *);
+static int  hb_search(struct device *, struct cfdata *, void *);
+static int  hb_print(void *, const char *);
 
 CFATTACH_DECL(hb, sizeof(struct device),
     hb_match, hb_attach, NULL, NULL);
@@ -131,7 +131,7 @@ hb_print(args, name)
 void
 hb_intr_establish(hbvect, hand, ipl, arg)
 	int hbvect;
-	int (*hand) __P((void *)), ipl;
+	int (*hand)(void *), ipl;
 	void *arg;
 {
 

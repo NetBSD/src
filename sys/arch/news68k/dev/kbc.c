@@ -1,4 +1,4 @@
-/*	$NetBSD: kbc.c,v 1.3 2002/10/02 04:40:08 thorpej Exp $	*/
+/*	$NetBSD: kbc.c,v 1.4 2002/12/20 16:23:47 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2001 Izumi Tsutsui.  All rights reserved.
@@ -44,9 +44,9 @@
 #define KBC_SIZE 0x10 /* XXX */
 
 /* Definition of the driver for autoconfig. */
-static int kbc_match __P((struct device *, struct cfdata *, void *));
-static void kbc_attach __P((struct device *, struct device *, void *));
-static int kbc_print __P((void *, const char *name));
+static int  kbc_match(struct device *, struct cfdata *, void *);
+static void kbc_attach(struct device *, struct device *, void *);
+static int  kbc_print(void *, const char *name);
 
 CFATTACH_DECL(kbc, sizeof(struct device),
     kbc_match, kbc_attach, NULL, NULL);
