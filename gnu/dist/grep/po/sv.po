@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: GNU grep 2.2\n"
-"POT-Creation-Date: 1999-02-03 13:09-0500\n"
+"POT-Creation-Date: 1999-02-14 12:08-0500\n"
 "PO-Revision-Date: 1998-08-31 16:02-0200\n"
 "Last-Translator: Daniel Bergstrom <daniel@bergstrom.net>\n"
 "Language-Team: Swedish <sv@li.org>\n"
@@ -14,7 +14,7 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8-bit\n"
 
-#: src/dfa.c:155 src/dfa.c:167 src/dfa.c:180 src/grep.c:858
+#: src/dfa.c:155 src/dfa.c:167 src/dfa.c:180 src/grep.c:861
 msgid "Memory exhausted"
 msgstr "Minnet slut"
 
@@ -161,49 +161,49 @@ msgstr "?? getopt returnerade teckenkod 0%o ??\n"
 msgid "non-option ARGV-elements: "
 msgstr "ARGV-element är inte flaggor: "
 
-#: src/grep.c:169 src/grep.c:186 src/grep.c:288 src/grep.c:344 src/kwset.c:184
+#: src/grep.c:172 src/grep.c:189 src/grep.c:291 src/grep.c:347 src/kwset.c:184
 #: src/kwset.c:190
 msgid "memory exhausted"
 msgstr "minnet slut"
 
-#: src/grep.c:372 src/grep.c:843
+#: src/grep.c:375 src/grep.c:846
 #, c-format
 msgid "%s: warning: %s: %s\n"
 msgstr "%s: varning: %s: %s\n"
 
-#: src/grep.c:497 src/grep.c:1318
+#: src/grep.c:500 src/grep.c:1321
 msgid "writing output"
 msgstr "skriver utdata"
 
-#: src/grep.c:726
+#: src/grep.c:729
 #, c-format
 msgid "Binary file %s matches\n"
 msgstr ""
 
-#: src/grep.c:742
+#: src/grep.c:745
 msgid "(standard input)"
 msgstr "(standard in)"
 
-#: src/grep.c:844
+#: src/grep.c:847
 msgid "recursive directory loop"
 msgstr ""
 
-#: src/grep.c:895
+#: src/grep.c:898
 #, c-format
 msgid "Usage: %s [OPTION]... PATTERN [FILE]...\n"
 msgstr "Användning: %s [FLAGGA]... MÖNSTER [FIL]...\n"
 
-#: src/grep.c:896
+#: src/grep.c:899
 #, c-format
 msgid "Try `%s --help' for more information.\n"
 msgstr "Försök med \"%s --help\" för mer information\n"
 
-#: src/grep.c:900
+#: src/grep.c:903
 #, c-format
 msgid "Usage: %s [OPTION]... PATTERN [FILE] ...\n"
 msgstr "Användning: %s [FLAGGA]... MÖNSTER [FIL]...\n"
 
-#: src/grep.c:901
+#: src/grep.c:904
 msgid ""
 "Search for PATTERN in each FILE or standard input.\n"
 "\n"
@@ -230,7 +230,7 @@ msgstr ""
 " -w, --word-regexp          tvinga MÖNSTER att endast matcha hela ord\n"
 " -x, --line-regexp          tvinga MÖNSTER att endast matcha hela rader\n"
 
-#: src/grep.c:913
+#: src/grep.c:916
 msgid ""
 "\n"
 "Miscellaneous:\n"
@@ -246,7 +246,7 @@ msgstr ""
 "  -V, --version             visa versionsinformation och avsluta\n"
 "      --help                visa detta hjälpmeddelande och avsluta\n"
 
-#: src/grep.c:920
+#: src/grep.c:923
 #, fuzzy
 msgid ""
 "\n"
@@ -276,7 +276,7 @@ msgstr ""
 "  -c, --count               skriv för varje FIL bara ut antal träffade "
 "rader\n"
 
-#: src/grep.c:935
+#: src/grep.c:938
 #, fuzzy
 msgid ""
 "\n"
@@ -309,7 +309,7 @@ msgstr ""
 "två FILer är angivna, sätts flaggan -h. Programmet returnerar 0 om något\n"
 "matchar, 1 om inget matchade och 2 vid syntaxfel eller systemrelaterade fel\n"
 
-#: src/grep.c:950
+#: src/grep.c:953
 msgid ""
 "\n"
 "Report bugs to <bug-gnu-utils@gnu.org>.\n"
@@ -318,34 +318,34 @@ msgstr ""
 "Rapportera buggar till <bug-gnu-utils@gnu.org>.\n"
 "Skicka anmärkningar på översättningar till <sv@li.org>\n"
 
-#: src/grep.c:1093 src/grep.c:1100 src/grep.c:1109
+#: src/grep.c:1096 src/grep.c:1103 src/grep.c:1112
 msgid "invalid context length argument"
 msgstr "ogiltigt argument till -A, -B eller -C"
 
-#: src/grep.c:1116 src/grep.c:1121 src/grep.c:1126
+#: src/grep.c:1119 src/grep.c:1124 src/grep.c:1129
 msgid "you may specify only one of -E, -F, or -G"
 msgstr ""
 
-#: src/grep.c:1145
+#: src/grep.c:1148
 msgid "matcher already specified"
 msgstr "söksträng redan specificerad"
 
-#: src/grep.c:1166
+#: src/grep.c:1169
 msgid "unknown directories method"
 msgstr ""
 
-#: src/grep.c:1252
+#: src/grep.c:1255
 #, c-format
 msgid "grep (GNU grep) %s\n"
 msgstr "grep (GNU grep) %s\n"
 
-#: src/grep.c:1254
+#: src/grep.c:1257
 #, fuzzy
-msgid "Copyright (C) 1988, 1992-1997, 1998 Free Software Foundation, Inc.\n"
+msgid "Copyright (C) 1988, 1992-1998, 1999 Free Software Foundation, Inc.\n"
 msgstr ""
 "Copyright (C) 1988, 92, 93, 94, 95, 96, 97 Free Software Foundation, Inc.\n"
 
-#: src/grep.c:1256
+#: src/grep.c:1259
 msgid ""
 "This is free software; see the source for copying conditions. There is NO\n"
 "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
@@ -357,10 +357,6 @@ msgstr ""
 #: src/obstack.c:467
 msgid "memory exhausted\n"
 msgstr "minnet slut\n"
-
-#, fuzzy
-#~ msgid "infalid context length argument"
-#~ msgstr "ogiltigt argument till -A, -B eller -C"
 
 #~ msgid "(standard input)\n"
 #~ msgstr "(standard in)\n"
