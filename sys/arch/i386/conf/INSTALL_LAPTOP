@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.33 2002/07/05 13:40:13 abs Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.34 2002/07/22 11:06:02 wiz Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -68,7 +68,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
 #options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
+#options 	SHMMAXPGS=2048	# 2048 pages is the default
 
 #options 	LKM		# loadable kernel modules
 
