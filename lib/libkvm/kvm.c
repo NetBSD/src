@@ -35,7 +35,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)kvm.c	5.18 (Berkeley) 5/7/91";*/
-static char rcsid[] = "$Id: kvm.c,v 1.26 1994/02/14 13:46:01 pk Exp $";
+static char rcsid[] = "$Id: kvm.c,v 1.27 1994/03/01 22:14:13 phil Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -147,6 +147,10 @@ static struct nlist nl[] = {
 #endif
 
 #if defined(i386)
+#define	X_DEADKERNEL	8
+#endif
+
+#if defined(ns32k)
 #define	X_DEADKERNEL	8
 #endif
 
