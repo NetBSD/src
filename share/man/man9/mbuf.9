@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.27 2003/04/16 13:35:30 wiz Exp $
+.\"	$NetBSD: mbuf.9,v 1.28 2003/05/27 13:04:25 yamt Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 3, 1997
+.Dd May 27, 2003
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -123,7 +123,7 @@
 .Ft void
 .Fn MEXTMALLOC "struct mbuf *m" "int len" "int how"
 .Ft void
-.Fn MEXTADD "struct mbuf *m" "caddr_t buf" "int size" "int type" "void (*free)(caddr_t, u_int, void *)" "void *arg"
+.Fn MEXTADD "struct mbuf *m" "caddr_t buf" "int size" "int type" "void (*free)(struct mbuf *, caddr_t, size_t, void *)" "void *arg"
 .Ft void
 .Fn MCLGET "struct mbuf *m" "int how"
 .Ft void
@@ -495,7 +495,7 @@ The flag
 .Dv M_EXT
 is set upon success.
 Implemented as a macro.
-.It Fn MEXTADD "struct mbuf *m" "caddr_t buf" "int size" "int type" "void (*free)(caddr_t, u_int, void *)" "void *arg"
+.It Fn MEXTADD "struct mbuf *m" "caddr_t buf" "int size" "int type" "void (*free)(struct mbuf *, caddr_t, size_t, void *)" "void *arg"
 Adds pre-allocated external storage
 .Fa buf
 to a normal mbuf
@@ -521,6 +521,13 @@ The flag
 .Dv M_EXT
 is set upon success.
 Implemented as a macro.
+If a free routine is specified, it will be called when the mbuf is freed or
+when MEXTREMOVE is called for the mbuf.
+In the case of former, the first argument for a free routine is the mbuf
+.Fa m
+and the routine is expected to free it in addition to the external storage
+pointed by second argument.
+In the case of latter, the first argument for the routine is NULL.
 .It Fn MCLGET "struct mbuf *m" "int how"
 Allocates and adds an mbuf cluster to a normal mbuf
 .Fa m .
