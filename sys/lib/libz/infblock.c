@@ -1,4 +1,4 @@
-/* $NetBSD: infblock.c,v 1.6 2003/03/25 22:48:44 mycroft Exp $ */
+/* $NetBSD: infblock.c,v 1.7 2004/06/30 15:44:55 christos Exp $ */
 
 /* infblock.c -- interpret and process block types to last block
  * Copyright (C) 1995-2002 Mark Adler
@@ -178,7 +178,7 @@ int r;
         case 3:                         /* illegal */
           DUMPBITS(3)
           s->mode = BAD;
-          z->msg = (char*)"invalid block type";
+          z->msg = _ZERROR(_ZERR_INV_BLOCK);
           r = Z_DATA_ERROR;
           LEAVE
       }
@@ -188,7 +188,7 @@ int r;
       if ((((~b) >> 16) & 0xffff) != (b & 0xffff))
       {
         s->mode = BAD;
-        z->msg = (char*)"invalid stored block lengths";
+        z->msg = _ZERROR(_ZERR_INV_BLOCK_LEN);
         r = Z_DATA_ERROR;
         LEAVE
       }
@@ -221,7 +221,7 @@ int r;
       if ((t & 0x1f) > 29 || ((t >> 5) & 0x1f) > 29)
       {
         s->mode = BAD;
-        z->msg = (char*)"too many length or distance symbols";
+        z->msg = _ZERROR(_ZERR_TOO_MANY);
         r = Z_DATA_ERROR;
         LEAVE
       }
@@ -293,7 +293,7 @@ int r;
           {
             ZFREE(z, s->sub.trees.blens);
             s->mode = BAD;
-            z->msg = (char*)"invalid bit length repeat";
+            z->msg = _ZERROR(_ZERR_INV_REPEAT);
             r = Z_DATA_ERROR;
             LEAVE
           }
