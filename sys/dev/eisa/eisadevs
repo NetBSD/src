@@ -1,4 +1,4 @@
-$NetBSD: eisadevs,v 1.17.12.1 2000/07/12 23:08:21 thorpej Exp $
+$NetBSD: eisadevs,v 1.17.12.2 2001/10/25 17:57:51 he Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -32,20 +32,23 @@ $NetBSD: eisadevs,v 1.17.12.1 2000/07/12 23:08:21 thorpej Exp $
  */
 
 /*
- * List of known EISA vendors
+ * List of known EISA vendors, sorted by vendor code.
  */
 
 vendor ADP		Adaptec
 vendor AMI		AMI
 vendor ATT		AT&T
 vendor BUS		BusLogic
+vendor CPQ		Compaq
 vendor DEC		Digital Equipment
 vendor DPT		Distributed Processing Technology
+vendor DTI		DeskStation Technology, Inc.
 vendor FSI		FORE Systems
 vendor HWP		Hewlett-Packard
 vendor INP		Interphase
 vendor INT		Intel
 vendor ETI		Microdyne
+vendor MDG		Madge Networks
 vendor MLX		Mylex
 vendor NEC		NEC
 vendor SMC		Standard Microsystems Corp.
@@ -53,7 +56,7 @@ vendor TCM		3Com
 vendor USC		UltraStor
 
 /*
- * List of known products, grouped by vendor.
+ * List of known products, grouped and sorted by vendor code.
  */
 
 /* Adaptec products */
@@ -75,6 +78,16 @@ product ATT 2408	EATA SCSI controller
 /* BusLogic products */
 product BUS 4201	Bt74xB SCSI
 product BUS 4202	Bt74xC SCSI
+product BUS 6001	Bt760 Ethernet
+product BUS 6301	Bt763E Ethernet
+
+/* Compaq products */
+product	CPQ 4001	IDA array controller
+product CPQ 4002	IDA-2 array controller
+product CPQ 4010	IEAS array controller
+product CPQ 4020	SMART array controller
+product CPQ 4030	SMART-2/E array controller
+product CPQ 6101	NetFlex-2 ENET-TR
 
 /* Digital Equipment products */
 product DEC 4220	DE422 Ethernet
@@ -97,10 +110,29 @@ product DPT A502	PM2012Bx/9X EATA SCSI controller
 product DPT A701	PM2011B1/9X EATA SCSI controller
 product DPT BC01	PM3011/7X ESDI controller
 
+/* DeskStation Technology, Inc. products */
+product DTI 0000	Evolution RISC PC
+
+/* ETI products */
+product ETI 1001	NE3300 Ethernet Rev. C & D
+
 /* FORE Systems products */
 product FSI 2001	ESA-200 ATM
 product FSI 2002	ESA-200A ATM
 product FSI 2003	ESA-200E ATM
+
+/* HP products */
+product HWP 0C70	HP-IB Host Adapter
+product HWP 0C80	SCSI Host Adapter (Cirrus-II) -- 25525A
+product HWP 1850	LAN AdapterCard -- 25567A
+product HWP 1980	ATM Adapter -- J2802A
+product HWP 2051	EISA Test Adapter Card
+product HWP C000	Series 700 EISA System Board
+product HWP C010	Series 700 EISA System Board
+product HWP C051	Series 700 EISA System Board
+product HWP C091	EISA System Board
+product HWP C0D1	EISA System Board
+product HWP C0E1	EISA System Board
 
 /* Interphase products */
 product INP 25D0	Seahawk 4811 FDDI Controller
@@ -108,21 +140,21 @@ product INP 25D0	Seahawk 4811 FDDI Controller
 /* Intel products */
 product INT 1010	EtherExpress 32 Flash Ethernet
 
-/* ETI products */
-product ETI 1001	NE3300 Ethernet Rev. C & D
+/* Madge products */
+product MDG 0002	Smart 16/4 EISA Ringnode
+
+/* Mylex products */
+product MLX 0070	DAC960 RAID controller
+product MLX 0071	DAC960 RAID controller
+product MLX 0072	DAC960 RAID controller
+product MLX 0073	DAC960 RAID controller
+product MLX 0074	DAC960 RAID controller
+product MLX 0075	DAC960-A RAID controller
+product MLX 0076	DAC960-A RAID controller
+product MLX 0077	DAC960-A RAID controller
 
 /* NEC products */
 product NEC 8200	EATA SCSI controller
-
-/* 3Com products */
-product TCM 5091	3C509 Ethernet
-product TCM 5092	3C579-TP Ethernet
-product TCM 5093	3C579 Ethernet
-product TCM 5094	3C509 Ethernet Combo
-product	TCM 5920 	3C592 Etherlink III
-product	TCM 5970 	3C597 Fast Etherlink TX
-product	TCM 5971 	3C597 Fast Etherlink T4 
-product	TCM 5972 	3C597 Fast Etherlink MII 
 
 /* Standard Microsystems (SMC) */
 product SMC 8010	Ethercard Elite32C Ultra
@@ -130,3 +162,16 @@ product SMC 0110	Elite32 Ethernet
 
 /* UltraStor products */
 product USC 0240	24f SCSI
+
+/* 3Com products */
+product TCM 5090	3C509-TP Ethernet
+product TCM 5091	3C509 Ethernet
+product TCM 5092	3C579-TP Ethernet
+product TCM 5093	3C579 Ethernet
+product TCM 5094	3C509 Ethernet Combo
+product TCM 5095	3C509-TP Ethernet
+product TCM 5098	3C509-TP Ethernet
+product	TCM 5920 	3C592 Etherlink III
+product	TCM 5970 	3C597 Fast Etherlink TX
+product	TCM 5971 	3C597 Fast Etherlink T4 
+product	TCM 5972 	3C597 Fast Etherlink MII 
