@@ -79,9 +79,17 @@ kernacc(addr, len, rw)
 	caddr_t addr;
 	int len, rw;
 {
+	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
+
+	return (kerncheckprot(addr, len, prot));
+}
+
+kerncheckprot(addr, len, prot)
+	caddr_t addr;
+	int len, prot;
+{
 	boolean_t rv;
 	vm_offset_t saddr, eaddr;
-	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
 
 	saddr = trunc_page(addr);
 	eaddr = round_page(addr+len);
