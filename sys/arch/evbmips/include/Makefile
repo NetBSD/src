@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2003/01/17 22:47:09 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8 2004/05/08 21:51:48 kleink Exp $
 
 INCSDIR=/usr/include/evbmips
 
@@ -18,6 +18,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	reg.h regdef.h regnum.h reloc.h \
 	setjmp.h signal.h stdarg.h \
 	trap.h types.h \
-	varargs.h vmparam.h
+	varargs.h vmparam.h \
+	wchar_limits.h
 
 .include <bsd.kinc.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2003/09/22 14:18:36 cl Exp $
+#	$NetBSD: Makefile,v 1.22 2004/05/08 21:51:49 kleink Exp $
 
 INCSDIR= /usr/include/m68k
 
@@ -18,6 +18,7 @@ INCS=	ansi.h aout_machdep.h asm.h asm_single.h \
 	reg.h setjmp.h signal.h stdarg.h sync_icache.h \
 	sysctl.h \
 	trap.h types.h \
-	varargs.h
+	varargs.h \
+	wchar_limits.h
 
 .include <bsd.kinc.mk>

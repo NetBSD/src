@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/01/18 06:37:05 thorpej Exp $
+#	$NetBSD: Makefile,v 1.6 2004/05/08 21:51:51 kleink Exp $
 
 INCSDIR= /usr/include/shark
 
@@ -17,7 +17,8 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	reg.h \
 	setjmp.h signal.h stdarg.h sysarch.h \
 	trap.h types.h \
-	varargs.h vmparam.h
+	varargs.h vmparam.h \
+	wchar_limits.h
 
 INCS+=	devmap.h joystick.h
 
