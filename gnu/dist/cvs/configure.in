@@ -1,7 +1,7 @@
 dnl configure.in for cvs
-AC_INIT([Concurrent Versions System (CVS)],[1.11.10],[bug-cvs@gnu.org],[cvs])
+AC_INIT([Concurrent Versions System (CVS)],[1.11.11],[bug-cvs@gnu.org],[cvs])
 AC_CONFIG_SRCDIR(src/cvs.h)
-AM_INIT_AUTOMAKE([gnu 1.7.5 dist-bzip2 no-define])
+AM_INIT_AUTOMAKE([gnu 1.7.9 dist-bzip2 no-define])
 AC_PREREQ(2.58)
 
 AC_PREFIX_PROGRAM(cvs)

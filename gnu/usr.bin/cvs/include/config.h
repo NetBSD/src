@@ -42,6 +42,11 @@
 /* Define to enable encryption support. */
 /* #undef ENCRYPTION */
 
+/* Define if this executable will be running on case insensitive file systems.
+   In the client case, this means that it will request that the server pretend
+   to be case insensitive if it isn't already. */
+/* #undef FILENAMES_CASE_INSENSITIVE */
+
 /* When committing or importing files, you must enter a log message. Normally,
    you can do this either via the -m flag on the command line, the -F flag on
    the command line, or an editor will be started for you. If you like to use
@@ -391,13 +396,13 @@
 #define PACKAGE_NAME "Concurrent Versions System (CVS)"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "Concurrent Versions System (CVS) 1.11.10"
+#define PACKAGE_STRING "Concurrent Versions System (CVS) 1.11.11"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "cvs"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.11.10"
+#define PACKAGE_VERSION "1.11.11"
 
 /* Path to the pr utility */
 #define PR_PROGRAM "/usr/bin/pr"
