@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.7 1997/03/16 09:41:36 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.7.4.1 1997/10/14 08:55:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -47,3 +47,6 @@ struct mdproc {
 #define	MDP_HPUXMMAP	0x0008	/* VA space is multiply mapped */
 #define MDP_CCBDATA	0x0010	/* copyback caching of data (68040) */
 #define MDP_CCBSTACK	0x0020	/* copyback caching of stack (68040) */
+#define MDP_STACKADJ	0x0040	/* Frame SP adjusted, might have to
+				 * undo when system call returns
+				 * ERESTART. */
