@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbsh3,v 1.12 2002/03/24 18:14:28 uch Exp $
+#	$NetBSD: files.evbsh3,v 1.13 2002/03/27 10:44:38 uch Exp $
 #
 # new style config file for sh3 architecture
 #
@@ -10,7 +10,6 @@ maxusers 2 16 64
 
 file	arch/evbsh3/evbsh3/conf.c
 file	arch/evbsh3/evbsh3/machdep.c
-file	arch/evbsh3/evbsh3/procfs_machdep.c	procfs
 file	arch/evbsh3/evbsh3/autoconf.c
 file	arch/evbsh3/evbsh3/clock_machdep.c
 file	arch/sh3/sh3/disksubr.c			disk
