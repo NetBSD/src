@@ -34,12 +34,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)alloca.s	5.2 (Berkeley) 5/14/90
- *	$Id: alloca.S,v 1.2 1993/10/21 01:39:56 jtc Exp $
+ *	$Id: alloca.S,v 1.3 1994/01/27 06:34:02 mycroft Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: alloca.S,v 1.2 1993/10/21 01:39:56 jtc Exp $"
+	.asciz "$Id: alloca.S,v 1.3 1994/01/27 06:34:02 mycroft Exp $"
 #endif
 
 /* like alloc, but automatic automatic free in return */
@@ -51,7 +51,7 @@ ENTRY(alloca)
 	popl	%eax		/*  pop amount to allocate */
 	movl	%esp,%ecx
 	addl	$3,%eax		/*  round up to next word */
-	andl	$0xfffffffc,%eax
+	andl	$-4,%eax
 	subl	%eax,%esp
 	movl	%esp,%eax	/* base of newly allocated space */
 	pushl	8(%ecx)		/* copy possible saved registers */
