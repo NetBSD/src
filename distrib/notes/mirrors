@@ -1,6 +1,6 @@
 NetBSD Mirror Site List
 
-The following sites mirror NetBSD as of May 04, 1998.
+The following sites mirror NetBSD as of May 14, 1998.
 
 If you wish to become a distribution site for NetBSD, contact
 mirrors@netbsd.org.
@@ -67,6 +67,8 @@ UK
 
 *   ftp://ftp.uk.netbsd.org/pub/NetBSD
 
+*   ftp://sunsite.org.uk/packages/netbsd
+
 USA
 
 *   ftp://ftp.netbsd.org/pub/NetBSD
@@ -80,6 +82,24 @@ USA
 *   ftp://ftp.iastate.edu/pub/netbsd
 
 *   ftp://ftp.op.net/pub/NetBSD
+
+
+	AFS mirrors
+	-----------
+
+USA
+
+* ftp.iastate.edu
+  AFS path: /afs/iastate.edu/public/ftp/pub/netbsd
+
+
+	NFS mirrors
+	-----------
+
+UK
+
+* sunsite.org.uk
+  Instructions: mount -o ro sunsite.org.uk:/public/packages/netbsd /mnt
 
 
 	SUP mirrors
@@ -120,11 +140,30 @@ USA
   as on sup.NetBSD.ORG
 
 
-	AFS mirrors
+	WWW mirrors
 	-----------
+
+Australia
+
+*   http://www.au.netbsd.org/
+
+France
+
+*   http://www.fr.netbsd.org/
+
+Germany
+
+*   http://www.de.netbsd.org/
+
+Norway
+
+*   http://www.no.netbsd.org/
+
+Spain
+
+*   http://www.es.netbsd.org/
 
 USA
 
-* ftp.iastate.edu
-  AFS path: /afs/iastate.edu/public/ftp/pub/netbsd
+*   http://www.netbsd.org/
 
