@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.26 2000/06/16 23:41:33 cgd Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.27 2000/07/02 06:25:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -68,13 +68,8 @@ STATIC void cardbusattach __P((struct device *, struct device *, void *));
 /* STATIC int cardbusprint __P((void *, const char *)); */
 int cardbus_attach_card __P((struct cardbus_softc *));
 
-#if !defined __BROKEN_INDIRECT_CONFIG
 STATIC int cardbusmatch __P((struct device *, struct cfdata *, void *));
 static int cardbussubmatch __P((struct device *, struct cfdata *, void *));
-#else
-STATIC int cardbusmatch __P((struct device *, void *, void *));
-static int cardbussubmatch __P((struct device *, void *, void *));
-#endif
 static int cardbusprint __P((void *, const char *));
 
 typedef void (*tuple_decode_func)(u_int8_t*, int, void*);

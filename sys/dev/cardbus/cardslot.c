@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.10 2000/06/16 23:41:33 cgd Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.11 2000/07/02 06:25:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -64,11 +64,7 @@
 
 STATIC void cardslotattach __P((struct device *, struct device *, void *));
 
-#if !defined __BROKEN_INDIRECT_CONFIG
 STATIC int cardslotmatch __P((struct device *, struct cfdata *, void *));
-#else
-STATIC int cardslotmatch __P((struct device *, void *, void *));
-#endif
 static void create_slot_manager __P((void *));
 static void cardslot_event_thread __P((void *arg));
 
