@@ -1,7 +1,7 @@
-/*	$NetBSD: mdreloc.c,v 1.26 2002/09/12 22:56:31 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.27 2002/09/25 07:27:54 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -162,56 +162,7 @@ static const int reloc_target_bitmask[] = {
 
 void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
-
-int
-_rtld_relocate_plt_object(obj, rela, addrp)
-	const Obj_Entry *obj;
-	const Elf_Rela *rela;
-	caddr_t *addrp;
-{
-	const Elf_Sym *def;
-	const Obj_Entry *defobj;
-	Elf_Addr *where = (Elf_Addr *) (obj->relocbase + rela->r_offset);
-	Elf_Addr value;
-
-	/* Fully resolve procedure addresses now */
-
-	assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT));
-
-	def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj, true);
-	if (def == NULL)
-		return (-1);
-
-	value = (Elf_Addr) (defobj->relocbase + def->st_value);
-
-	rdbg(("bind now/fixup in %s --> old=%p new=%p", 
-	    defobj->strtab + def->st_name, (void *)*where, (void *)value));
-
-	/*
-	 * At the PLT entry pointed at by `where', we now construct
-	 * a direct transfer to the now fully resolved function
-	 * address.  The resulting code in the jump slot is:
-	 *
-	 *	sethi	%hi(roffset), %g1
-	 *	sethi	%hi(addr), %g1
-	 *	jmp	%g1+%lo(addr)
-	 *
-	 * We write the third instruction first, since that leaves the
-	 * previous `b,a' at the second word in place. Hence the whole
-	 * PLT slot can be atomically change to the new sequence by
-	 * writing the `sethi' instruction at word 2.
-	 */
-#define SETHI	0x03000000
-#define JMP	0x81c06000
-#define NOP	0x01000000
-	where[2] = JMP   | (value & 0x000003ff);
-	where[1] = SETHI | ((value >> 10) & 0x003fffff);
-	__asm __volatile("iflush %0+8" : : "r" (where));
-	__asm __volatile("iflush %0+4" : : "r" (where));
-
-	*addrp = (caddr_t)value;
-	return (0);
-}
+caddr_t _rtld_bind __P((const Obj_Entry *, Elf_Word));
 
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
@@ -284,7 +235,7 @@ _rtld_relocate_nonplt_objects(obj, self)
 		if (type == R_TYPE(NONE))
 			continue;
 
-		/* We do JMP_SLOTs in relocate_plt_object() below */
+		/* We do JMP_SLOTs in _rtld_bind() below */
 		if (type == R_TYPE(JMP_SLOT))
 			continue;
 
@@ -377,4 +328,52 @@ _rtld_relocate_plt_lazy(obj)
 	const Obj_Entry *obj;
 {
 	return (0);
+}
+
+caddr_t
+_rtld_bind(obj, reloff)
+	const Obj_Entry *obj;
+	Elf_Word reloff;
+{
+	const Elf_Rela *rela = (const Elf_Rela *)((caddr_t)obj->pltrela + reloff);
+	const Elf_Sym *def;
+	const Obj_Entry *defobj;
+	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
+	Elf_Addr value;
+
+	/* Fully resolve procedure addresses now */
+
+	assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT));
+
+	def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj, true);
+	if (def == NULL)
+		_rtld_die();
+
+	value = (Elf_Addr)(defobj->relocbase + def->st_value);
+	rdbg(("bind now/fixup in %s --> old=%p new=%p", 
+	    defobj->strtab + def->st_name, (void *)*where, (void *)value));
+
+	/*
+	 * At the PLT entry pointed at by `where', we now construct
+	 * a direct transfer to the now fully resolved function
+	 * address.  The resulting code in the jump slot is:
+	 *
+	 *	sethi	%hi(roffset), %g1
+	 *	sethi	%hi(addr), %g1
+	 *	jmp	%g1+%lo(addr)
+	 *
+	 * We write the third instruction first, since that leaves the
+	 * previous `b,a' at the second word in place. Hence the whole
+	 * PLT slot can be atomically change to the new sequence by
+	 * writing the `sethi' instruction at word 2.
+	 */
+#define SETHI	0x03000000
+#define JMP	0x81c06000
+#define NOP	0x01000000
+	where[2] = JMP   | (value & 0x000003ff);
+	where[1] = SETHI | ((value >> 10) & 0x003fffff);
+	__asm __volatile("iflush %0+8" : : "r" (where));
+	__asm __volatile("iflush %0+4" : : "r" (where));
+
+	return (caddr_t)value;
 }

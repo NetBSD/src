@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.20 2002/09/21 17:51:44 mycroft Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.21 2002/09/25 07:27:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -76,6 +76,7 @@
 void _rtld_bind_start(void);
 void _rtld_bind_start_old(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
+caddr_t _rtld_bind __P((const Obj_Entry *, Elf_Word));
 
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
@@ -311,12 +312,12 @@ _rtld_relocate_plt_lazy(obj)
 	return 0;
 }
 
-int
-_rtld_relocate_plt_object(obj, rela, addrp)
+caddr_t
+_rtld_bind(obj, reloff)
 	const Obj_Entry *obj;
-	const Elf_Rela *rela;
-	caddr_t *addrp;
+	Elf_Word reloff;
 {
+	const Elf_Rela *rela = (const Elf_Rela *)((caddr_t)obj->pltrela + reloff);
 	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 	Elf_Addr new_value;
 	const Elf_Sym  *def;
@@ -327,7 +328,7 @@ _rtld_relocate_plt_object(obj, rela, addrp)
 
 	def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj, true);
 	if (def == NULL)
-		return -1;
+		_rtld_die();
 
 	new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
 	rdbg(("bind now/fixup in %s --> old=%p new=%p",
@@ -482,6 +483,5 @@ _rtld_relocate_plt_object(obj, rela, addrp)
 	}
 
  out:
-	*addrp = (caddr_t)new_value;
-	return 0;
+	return (caddr_t)new_value;
 }
