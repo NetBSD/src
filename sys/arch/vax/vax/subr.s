@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.30 1998/11/05 19:46:18 ragge Exp $	   */
+/*	$NetBSD: subr.s,v 1.31 1998/11/26 21:21:06 ragge Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -50,18 +50,15 @@
 ASENTRY(start, 0)
 	movl	r11,_boothowto			# Howto boot (single etc...)
 	movl	r10,_bootdev			# From where? (see rpb.h)
-	bisl3	$0x80000000,r9,_esym		# End of symbols (if loaded)
+	bisl3	$0x80000000,r9,_esym		# End of loaded code
 	movl	r8,_avail_end			# Usable memory (from VMB)
 	pushl	$0x1f0000			# Push a nice PSL
 	pushl	$to				# Address to jump to
 	rei					# change to kernel stack
 to:	movw	$0xfff,_panic			# Save all regs in panic
-	bbc	$6,_boothowto,2f		# Check debugger bit
 	addl3	_esym,$0x3ff,r0			# Round symbol table end
 	bicl3	$0x3ff,r0,_proc0paddr		# save proc0 uarea pointer
-	brb	3f
-2:	bicl3	$0x3ff,$_end+0x3ff,_proc0paddr	# end of bss
-3:	bicl3	$0x80000000,_proc0paddr,r0	# get phys proc0 uarea addr
+	bicl3	$0x80000000,_proc0paddr,r0	# get phys proc0 uarea addr
 	mtpr	r0,$PR_PCBB			# Save in IPR PCBB
 	addl3	$USPACE,_proc0paddr,r0		# Get kernel stack top
 	mtpr	r0,$PR_KSP			# put in IPR KSP
@@ -159,7 +156,7 @@ ENTRY(badaddr,0)			# Called with addr,b/w/l
 
 # Have bcopy and bzero here to be sure that system files that not gets
 # macros.h included will not complain.
-
+#if 0
 ENTRY(bcopy,0)
 	movl	4(ap), r0
 	movl	8(ap), r1
@@ -172,7 +169,7 @@ ENTRY(bzero,0)
 	movl	8(ap), r1
 	movc5	$0, (r0), $0, r1, (r0)
 	ret
-
+#endif
 #ifdef DDB
 /*
  * DDB is the only routine that uses setjmp/longjmp.
@@ -316,12 +313,13 @@ _copyin:.word 0
 	ret
 
 ENTRY(kcopy,0)
+	movl	*pcbtrap,-(sp)
 	movab	1f,*pcbtrap
 	movl	4(ap),r1
 	movl	8(ap),r2
 	movc3	12(ap),(r1), (r2)
 	clrl	r1
-1:	clrl	*pcbtrap
+1:	movl	(sp)+,*pcbtrap
 	movl	r1,r0
 	ret
 
