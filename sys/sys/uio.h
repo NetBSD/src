@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.30 2003/08/07 16:34:21 agc Exp $	*/
+/*	$NetBSD: uio.h,v 1.31 2003/09/13 16:59:29 erh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -34,6 +34,12 @@
 #ifndef _SYS_UIO_H_
 #define	_SYS_UIO_H_
 
+#ifdef _KERNEL
+#ifndef __UIO_EXPOSE
+#define __UIO_EXPOSE
+#endif
+#endif
+
 #include <machine/ansi.h>
 #include <sys/featuretest.h>
 
@@ -68,6 +74,8 @@ enum uio_seg {
 	UIO_SYSSPACE		/* from system space */
 };
 
+#ifdef __UIO_EXPOSE
+
 struct uio {
 	struct	iovec *uio_iov;	/* pointer to array of iovecs */
 	int	uio_iovcnt;	/* number of iovecs in array */
@@ -77,6 +85,8 @@ struct uio {
 	enum	uio_rw uio_rw;	/* see above */
 	struct	proc *uio_procp;/* process if UIO_USERSPACE */
 };
+
+#endif /* __UIO_EXPOSE */
 
 /*
  * Limits
