@@ -1,4 +1,4 @@
-/*	$NetBSD: xcfb.c,v 1.8 1995/09/20 05:19:54 jonathan Exp $	*/
+/*	$NetBSD: xcfb.c,v 1.9 1995/10/09 01:45:26 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -119,8 +119,6 @@ xcfb needs dtop device
 
 #include <pmax/dev/fbreg.h>
 
-#include <pmax/stand/dec_prom.h>	/* console debugging */
-
 /*
  * These need to be mapped into user space.
  */
@@ -233,7 +231,6 @@ xcfbinit(fi, base, unit, silent)
 {
 	register u_int *reset = (u_int *)IMS332_RESET_ADDRESS;
 
-(*callv->_printf)("xcfbinit: starting\n");
 	if (fi == 0) fi = &xcfbfi;
 	unit = 0;	/*XXX*/ /* FIXME */
 
@@ -268,7 +265,6 @@ xcfbinit(fi, base, unit, silent)
 	/*
 	 * qvss/pm-style mmap()ed event queue compatibility glue
 	 */
-(*callv->_printf)("xcfbinit: starting qvss-compat init\n");
 	/*
 	 * Must be in Uncached space since the fbuaccess structure is
 	 * mapped into the user's address space uncached.
@@ -295,7 +291,6 @@ xcfbinit(fi, base, unit, silent)
 	fi->fi_fbu->scrInfo.min_cur_x = -15;
 	fi->fi_fbu->scrInfo.min_cur_y = -15;
 
-(*callv->_printf)("xcfbinit: resetting RAMDAC\n");
 	/* Initialize the RAMDAC. */
 	ims332init (fi);
 
@@ -309,13 +304,11 @@ xcfbinit(fi, base, unit, silent)
 	/*
 	 * Connect to the raster-console pseudo-driver
 	 */
-(*callv->_printf)("xcfbinit: calling fbconnect()\n");
 	fbconnect("PMAG-DV", fi, silent);
 
 #ifdef	fpinitialized
 	fp->initialized = 1;
 #endif
-(*callv->_printf)("xcfbinit: done\n");
 	return (1);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ds-asic-conf.c,v 1.2 1995/08/09 01:21:43 jonathan Exp $	*/
+/*	$NetBSD: ds-asic-conf.c,v 1.3 1995/10/09 01:45:29 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Jonathan Stone
@@ -60,7 +60,7 @@ struct asic_slot xine_asic_slots[] =
 	    0, asic_intrnull, (void *)(long) XINE_FLOPPY_SLOT, },
 
 	{ { "asc",	   6, XINE_SCSI_SLOT, (u_int) (12 * 0x40000), },
-	    XINE_INTR_SCSI, asic_intrnull, (void*)XINE_SCSI_SLOT, },
+	    0 /*XINE_INTR_SCSI*/, asic_intrnull, (void*)XINE_SCSI_SLOT, },
 #if 0
 	{ { "frc",   3, (u_int) XINE_SLOT_FRC, (15* 0x40000), },
 	    0, asic_intrnull, (void *)(long) XINE_SLOT_FRC, },
