@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.56 1996/05/21 18:22:13 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.57 1996/05/24 19:59:44 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -823,6 +823,7 @@ start:
 | we dont need the AGA mode register.
 	movel	#100000,d3
 LisDraco0:
+#ifdef DEBUG_KERNEL_START
 	movb	#0,0x200003c8
 	movb	#00,0x200003c9
 	movb	#40,0x200003c9
@@ -834,6 +835,7 @@ LisDraco0:
 	movb	#00,0x200003c9
 	subql	#1,d3
 	jcc	LisDraco0
+#endif
 
 	RELOC(_chipmem_start, a0)
 	movl	#0,a0@

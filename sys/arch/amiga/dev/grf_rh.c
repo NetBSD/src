@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.18 1996/05/24 19:26:12 is Exp $	*/
+/*	$NetBSD: grf_rh.c,v 1.19 1996/05/24 19:59:33 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -1493,12 +1493,6 @@ grfrhattach(pdp, dp, auxp)
 		    (char *)&gp[1] - (char *)&gp->g_display);
 	} else {
 		gp->g_regkva = (volatile caddr_t)zap->va;
-
-		gp->g_regkva[0x3c8]=0;
-		gp->g_regkva[0x3c9]=30;
-		gp->g_regkva[0x3c9]=30;
-		gp->g_regkva[0x3c9]=00;
-
 		gp->g_fbkva = (volatile caddr_t)zap->va + LM_OFFSET;
 		gp->g_unit = GRF_RETINAIII_UNIT;
 		gp->g_mode = rh_mode;
