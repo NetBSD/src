@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.71 2000/03/27 05:23:42 nisimura Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.72 2000/03/27 05:30:41 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.71 2000/03/27 05:23:42 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.72 2000/03/27 05:30:41 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -439,7 +439,7 @@ mips_vector_init()
 	switch (cpu_arch) {
 #ifdef MIPS1
 	case 1:
-		mips1_TBIA(MIPS1_TLB_NUM_TLB_ENTRIES);
+		mips1_TBIA(mips_num_tlb_entries);
 		mips1_vector_init();
 		break;
 #endif
