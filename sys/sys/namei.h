@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.8 1994/12/13 15:21:05 mycroft Exp $	*/
+/*	$NetBSD: namei.h,v 1.9 1995/03/26 20:24:29 jtc Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -93,7 +93,7 @@ struct nameidata {
 	} ni_cnd;
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * namei operations
  */
@@ -170,7 +170,7 @@ struct	namecache {
 	char	nc_name[NCHNAMLEN];	/* segment name */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 u_long	nextvnodeid;
 int	namei __P((struct nameidata *ndp));
 int	lookup __P((struct nameidata *ndp));

@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.12 1994/10/30 19:11:55 cgd Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.13 1995/03/26 20:24:44 jtc Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -147,7 +147,7 @@ int sigprop[NSIG + 1] = {
 
 #define	sigcantmask	(sigmask(SIGKILL) | sigmask(SIGSTOP))
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * Machine-independent functions:
  */
@@ -165,5 +165,5 @@ void	trapsignal __P((struct proc *p, int sig, u_long code));
  * Machine-dependent functions:
  */
 void	sendsig __P((sig_t action, int sig, int returnmask, u_long code));
-#endif	/* KERNEL */
+#endif	/* _KERNEL */
 #endif	/* !_SYS_SIGNALVAR_H_ */

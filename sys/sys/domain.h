@@ -1,4 +1,4 @@
-/*	$NetBSD: domain.h,v 1.7 1994/06/29 06:44:01 cgd Exp $	*/
+/*	$NetBSD: domain.h,v 1.8 1995/03/26 20:24:03 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -61,6 +61,6 @@ struct	domain {
 	int	dom_maxrtkey;		/* for routing layer */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct	domain *domains;
 #endif

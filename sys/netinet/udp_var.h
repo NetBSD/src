@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.7 1994/06/29 06:38:58 cgd Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.8 1995/03/26 20:32:42 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -79,7 +79,7 @@ struct	udpstat {
 	{ "checksum", CTLTYPE_INT }, \
 }
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct	inpcb udb;
 struct	udpstat udpstat;
 

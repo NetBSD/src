@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.6 1994/06/29 06:38:18 cgd Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.7 1995/03/26 20:32:29 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -153,7 +153,7 @@ struct icmp {
 	(type) == ICMP_IREQ || (type) == ICMP_IREQREPLY || \
 	(type) == ICMP_MASKREQ || (type) == ICMP_MASKREPLY)
 
-#ifdef KERNEL
+#ifdef _KERNEL
 void	icmp_error __P((struct mbuf *, int, int, n_long, struct ifnet *));
 void	icmp_input __P((struct mbuf *, int));
 void	icmp_reflect __P((struct mbuf *));

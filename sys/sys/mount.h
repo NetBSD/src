@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.38 1995/01/18 06:15:31 mycroft Exp $	*/
+/*	$NetBSD: mount.h,v 1.39 1995/03/26 20:24:24 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -35,7 +35,7 @@
  *	@(#)mount.h	8.15 (Berkeley) 7/14/94
  */
 
-#ifndef KERNEL
+#ifndef _KERNEL
 #include <sys/ucred.h>
 #endif
 #include <sys/queue.h>
@@ -172,7 +172,7 @@ struct mount {
 /*
  * Operations supported on mounted file system.
  */
-#ifdef KERNEL
+#ifdef _KERNEL
 #ifdef __STDC__
 struct nameidata;
 struct mbuf;
@@ -215,7 +215,7 @@ struct vfsops {
 #define VFS_FHTOVP(MP, FIDP, NAM, VPP, EXFLG, CRED) \
 	(*(MP)->mnt_op->vfs_fhtovp)(MP, FIDP, NAM, VPP, EXFLG, CRED)
 #define	VFS_VPTOFH(VP, FIDP)	  (*(VP)->v_mount->mnt_op->vfs_vptofh)(VP, FIDP)
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
 /*
  * Flags for various system call interfaces.
@@ -234,7 +234,7 @@ struct fhandle {
 };
 typedef struct fhandle	fhandle_t;
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #include <net/radix.h>
 #include <sys/socket.h>		/* XXX for AF_MAX */
 
@@ -254,7 +254,7 @@ struct netexport {
 	struct	netcred ne_defexported;		      /* Default export */
 	struct	radix_node_head *ne_rtable[AF_MAX+1]; /* Individual exports */
 };
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
 /*
  * Export arguments for local filesystem mount calls.
@@ -385,7 +385,7 @@ struct adosfs_args {
 	mode_t	mask;		/* mask to be applied for msdosfs perms */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * exported vnode operations
  */
@@ -402,7 +402,7 @@ extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];		    /* filesystem type table */
 extern	int nvfssw;
 
-#else /* KERNEL */
+#else /* _KERNEL */
 
 #include <sys/cdefs.h>
 
@@ -416,4 +416,4 @@ int	statfs __P((const char *, struct statfs *));
 int	unmount __P((const char *, int));
 __END_DECLS
 
-#endif /* KERNEL */
+#endif /* _KERNEL */

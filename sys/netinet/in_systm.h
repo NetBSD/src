@@ -1,4 +1,4 @@
-/*	$NetBSD: in_systm.h,v 1.6 1994/06/29 06:38:11 cgd Exp $	*/
+/*	$NetBSD: in_systm.h,v 1.7 1995/03/26 20:32:25 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -53,6 +53,6 @@ typedef u_long	n_long;			/* long as received from the net */
 
 typedef	u_long	n_time;			/* ms since 00:00 GMT, byte rev */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 n_time	 iptime __P((void));
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: callout.h,v 1.9 1994/06/29 06:43:38 cgd Exp $	*/
+/*	$NetBSD: callout.h,v 1.10 1995/03/26 20:23:56 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -47,7 +47,7 @@ struct callout {
 	int	c_time;				/* ticks to the event */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct	callout *callfree, *callout, calltodo;
 int	ncallout;
 #endif

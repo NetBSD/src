@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp_var.h,v 1.6 1994/06/29 06:37:59 cgd Exp $	*/
+/*	$NetBSD: igmp_var.h,v 1.7 1995/03/26 20:32:22 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988 Stephen Deering.
@@ -60,7 +60,7 @@ struct igmpstat {
 	u_long	igps_snd_reports;	/* sent membership reports */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct igmpstat igmpstat;
 
 /*
