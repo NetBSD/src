@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.217 2003/08/07 16:31:00 agc Exp $	*/
+/*	$NetBSD: com.c,v 1.218 2003/09/01 16:44:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.217 2003/08/07 16:31:00 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.218 2003/09/01 16:44:03 christos Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -299,20 +299,20 @@ comstatus(struct com_softc *sc, char *str)
 {
 	struct tty *tp = sc->sc_tty;
 
-	printf("%s: %s %sclocal  %sdcd %sts_carr_on %sdtr %stx_stopped\n",
+	printf("%s: %s %cclocal  %cdcd %cts_carr_on %cdtr %ctx_stopped\n",
 	    sc->sc_dev.dv_xname, str,
-	    ISSET(tp->t_cflag, CLOCAL) ? "+" : "-",
-	    ISSET(sc->sc_msr, MSR_DCD) ? "+" : "-",
-	    ISSET(tp->t_state, TS_CARR_ON) ? "+" : "-",
-	    ISSET(sc->sc_mcr, MCR_DTR) ? "+" : "-",
-	    sc->sc_tx_stopped ? "+" : "-");
+	    ISSET(tp->t_cflag, CLOCAL) ? '+' : '-',
+	    ISSET(sc->sc_msr, MSR_DCD) ? '+' : '-',
+	    ISSET(tp->t_state, TS_CARR_ON) ? '+' : '-',
+	    ISSET(sc->sc_mcr, MCR_DTR) ? '+' : '-',
+	    sc->sc_tx_stopped ? '+' : '-');
 
-	printf("%s: %s %scrtscts %scts %sts_ttstop  %srts %xrx_flags\n",
+	printf("%s: %s %ccrtscts %ccts %cts_ttstop  %crts rx_flags=0x%x\n",
 	    sc->sc_dev.dv_xname, str,
-	    ISSET(tp->t_cflag, CRTSCTS) ? "+" : "-",
-	    ISSET(sc->sc_msr, MSR_CTS) ? "+" : "-",
-	    ISSET(tp->t_state, TS_TTSTOP) ? "+" : "-",
-	    ISSET(sc->sc_mcr, MCR_RTS) ? "+" : "-",
+	    ISSET(tp->t_cflag, CRTSCTS) ? '+' : '-',
+	    ISSET(sc->sc_msr, MSR_CTS) ? '+' : '-',
+	    ISSET(tp->t_state, TS_TTSTOP) ? '+' : '-',
+	    ISSET(sc->sc_mcr, MCR_RTS) ? '+' : '-',
 	    sc->sc_rx_flags);
 }
 #endif
