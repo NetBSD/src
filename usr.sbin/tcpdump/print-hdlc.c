@@ -1,4 +1,4 @@
-/*	$NetBSD: print-hdlc.c,v 1.2 1998/07/25 11:39:53 explorer Exp $	*/
+/*	$NetBSD: print-hdlc.c,v 1.3 1999/09/04 03:36:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994
@@ -20,6 +20,11 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
+
+#ifndef lint
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: print-hdlc.c,v 1.3 1999/09/04 03:36:41 itojun Exp $");
+#endif
 
 #ifdef HAVE_HDLC
 #include <sys/param.h>

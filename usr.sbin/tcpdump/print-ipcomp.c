@@ -1,3 +1,5 @@
+/*	$NetBSD: print-ipcomp.c,v 1.2 1999/09/04 03:36:41 itojun Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -20,8 +22,13 @@
  */
 
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) /master/usr.sbin/tcpdump/tcpdump/print-icmp.c,v 2.1 1995/02/03 18:14:42 polk Exp (LBL)";
+#else
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: print-ipcomp.c,v 1.2 1999/09/04 03:36:41 itojun Exp $");
+#endif
 #endif
 
 #include <string.h>
