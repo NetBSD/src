@@ -2,7 +2,7 @@
 # R4000 (any  model) kernel config file
 
 #
-# 	$NetBSD: R4000,v 1.5 1997/12/01 15:58:36 kleink Exp $
+# 	$NetBSD: R4000,v 1.6 1998/03/25 04:17:08 jonathan Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -13,19 +13,25 @@ options 	MIPS3			# R4000/R4400 support (new)
 
 
 # Support for specific models of DECstation
+options 	DEC_3MIN		# 5000/50 
+options 	DEC_MAXINE		# 5000/150
+options 	DEC_3MAXPLUS		# 5000/260
+
+# old stype options (deprecated, still required)
 options 	DS5000_25		# MAXINE (kn02ca/xine) support
 options 	DS5000_100		# 3MIN (kn02ba/kmin) support
 options 	DS5000_240		# 3MAXPLUS (kn03) support
 
 
 # Standard system options
-#options 	DDB			# in-kernel debugger
-#options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-#options 	DDB_ONPANIC=0		# don't enter debugger on panic
+options 	DDB			# in-kernel debugger
+options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
+options 	DDB_ONPANIC=0		# don't enter debugger on panic
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
 options 	"COMPAT_43"		# compatibility with 4.3BSD binaries
 options 	KTRACE			# system call tracing support
+options 	LKM			# loadable kernel modules
 options 	"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
 
 #Old 4.4bsd/pmax kgdb options
