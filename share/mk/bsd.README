@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.19 1997/03/13 02:45:58 perry Exp $
+#	$NetBSD: bsd.README,v 1.20 1997/03/22 22:33:53 perry Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
 This is the README file for the new make "include" files for the BSD
@@ -268,7 +268,8 @@ LINKS		The list of binary links; should be full pathnames, the
 			LINKS=	${DESTDIR}/bin/test ${DESTDIR}/bin/[
 
 SYMLINKS	The list of symbolic links; should be full pathnames.
-                Syntax is identical to LINKS.
+                Syntax is identical to LINKS. Note that DESTDIR is not
+		automatically included in the link.
 
 MAN		Manual pages (should end in .1 - .9).  If no MAN variable is
 		defined, "MAN=${PROG}.1" is assumed.
