@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.12 2001/06/16 03:32:48 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13 2001/06/21 03:26:12 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,6 +35,36 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Copyright (C) 1995, 1996 Wolfgang Solfrank.
+ * Copyright (C) 1995, 1996 TooLs GmbH.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by TooLs GmbH.
+ * 4. The name of TooLs GmbH may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY TOOLS GMBH ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL TOOLS GMBH BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -83,7 +113,9 @@ u_long pmap_pte_valid;
 u_long pmap_pte_overflow;
 u_long pmap_pte_replacements;
 u_long pmap_pvo_entries;
+u_long pmap_pvo_enter_depth;
 u_long pmap_pvo_enter_calls;
+u_long pmap_pvo_remove_depth;
 u_long pmap_pvo_remove_calls;
 u_int64_t pmap_pte_spills = 0;
 struct pvo_entry *pmap_pvo_syncicache;
@@ -100,6 +132,7 @@ extern paddr_t msgbuf_paddr;
 #endif
 
 static struct mem_region *mem, *avail;
+static u_int mem_cnt, avail_cnt;
 
 #ifdef __HAVE_PMAP_PHYSSEG
 /*
@@ -194,6 +227,7 @@ STATIC void tlbia(void);
 
 STATIC void pmap_syncicache(paddr_t);
 STATIC void pmap_release (pmap_t);
+STATIC void *pmap_boot_find_memory(psize_t, psize_t, int);
 
 #define	VSID_NBPW	(sizeof(uint32_t) * 8)
 static uint32_t pmap_vsid_bitmap[NPMAPS / VSID_NBPW];
@@ -484,10 +518,10 @@ pmap_pte_change(volatile pte_t *pt, pte_t *pvo_pt, vaddr_t va)
 }
 
 /*
- * Try to insert page table entry *pt into the pmap_pteg_table at idx.
+ * Try to insert the PTE @ *pvo_pt into the pmap_pteg_table at ptegidx
+ * (either primary or secondary location).
  *
- * Note: *pt mustn't have PTE_VALID set.
- * This is done here as required by Book III, 4.12.
+ * Note: both the destination and source PTEs must not have PTE_VALID set.
  */
 static int
 pmap_pte_insert(int ptegidx, pte_t *pvo_pt)
@@ -616,9 +650,7 @@ pmap_pte_spill(vaddr_t addr)
  * Restrict given range to physical memory
  */
 void
-pmap_real_memory(start, size)
-	paddr_t *start;
-	psize_t *size;
+pmap_real_memory(paddr_t *start, psize_t *size)
 {
 	struct mem_region *mp;
 	
@@ -678,20 +710,21 @@ pmap_init(void)
 }
 
 /*
- * How much virtual space is available to the kernel?
+ * How much virtual space does the kernel get?
  */
 void
 pmap_virtual_space(vaddr_t *start, vaddr_t *end)
 {
 	/*
-	 * Reserve one segment for kernel virtual memory
+	 * For now, reserve one segment (minus some overhead) for kernel
+	 * virtual memory
 	 */
 	*start = VM_MIN_KERNEL_ADDRESS + pmap_rkva_count * NBPG;
 	*end = VM_MAX_KERNEL_ADDRESS;
 }
 
 /*
- * Create and return a physical map.
+ * Allocate, initialize, and return a new physical map.
  */
 pmap_t
 pmap_create(void)
@@ -973,8 +1006,8 @@ pmap_pvo_to_pte(const struct pvo_entry *pvo, int pteidx)
 #endif
 		panic("pmap_pvo_to_pte: pvo %p: has invalid pte %p in "
 		    "pmap_pteg_table but valid in pvo", pvo, pt);
-#endif
 	}
+#endif
 	return NULL;
 }
 
@@ -1256,9 +1289,14 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	int ptegidx;
 	int i;
 
+	if (pmap_pvo_remove_depth > 0)
+		panic("pmap_pvo_enter: called while pmap_pvo_remove active!");
+	if (++pmap_pvo_enter_depth > 1)
+		panic("pmap_pvo_enter: called recursively!");
+
 	pmap_pvo_enter_calls++;
 	/*
-	 * Compute the HTAB index.
+	 * Compute the PTE Group index.
 	 */
 	va &= ~ADDR_POFF;
 	sr = va_to_sr(pm->pm_sr, va);
@@ -1311,6 +1349,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 #endif
 				if ((flags & PMAP_CANFAIL) == 0)
 					panic("pmap_pvo_enter: failed");
+				pmap_pvo_enter_depth--;
 				return ENOMEM;
 #if 0
 			}
@@ -1355,6 +1394,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 #endif
 	}
 	PMAP_PVO_CHECK(pvo);		/* sanity check */
+	pmap_pvo_enter_depth--;
 	return first ? ENOENT : 0;
 }
 
@@ -1362,6 +1402,9 @@ void
 pmap_pvo_remove(struct pvo_entry *pvo, int pteidx, int freeit)
 {
 	volatile pte_t *pt;
+
+	if (++pmap_pvo_remove_depth > 1)
+		panic("pmap_pvo_remove: called recursively!");
 
 	PMAP_PVO_CHECK(pvo);		/* sanity check */
 	/* 
@@ -1411,6 +1454,7 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx, int freeit)
 		pmap_pvo_entries--;
 		pmap_pvo_remove_calls++;
 	}
+	pmap_pvo_remove_depth--;
 }
 
 /*
@@ -2340,17 +2384,96 @@ pmap_steal_memory(vsize_t vsize, vaddr_t *vstartp, vaddr_t *vendp)
 }
 
 /*
+ * Find a chuck of memory with right size and alignment.
+ */
+void *
+pmap_boot_find_memory(psize_t size, psize_t alignment, int at_end)
+{
+	struct mem_region *mp;
+	paddr_t s, e;
+	int i, j;
+
+	size = round_page(size);
+
+	DPRINTFN(6,("pmap_boot_find_memory: size=%lx, alignment=%lx, at_end=%d",
+	    size, alignment, at_end));
+
+	if (alignment < NBPG || (alignment & (alignment-1)) != 0)
+		panic("pmap_boot_find_memory: invalid alignment %lx",
+		    alignment);
+
+	if (at_end) {
+		if (alignment != NBPG)
+			panic("pmap_boot_find_memory: invalid ending "
+			    "alignment %lx", alignment);
+		
+		for (mp = &avail[avail_cnt-1]; mp >= avail; mp--) {
+			s = mp->start + mp->size - size;
+			if (s >= mp->start) {
+				mp->size -= size;
+				printf(": %lx\n", s);
+				return (void *) s;
+			}
+		}
+		panic("pmap_boot_find_memory: no available memory");
+	}
+			
+	for (mp = avail, i = 0; i < avail_cnt; i++, mp++) {
+		s = (mp->start + alignment - 1) & ~(alignment-1);
+		e = s + size;
+
+		/*
+		 * Is the calculated region entirely within the region?
+		 */
+		if (s < mp->start || e > mp->start + mp->size)
+			continue;
+
+		DPRINTFN(6,(": %lx\n", s));
+		if (s == mp->start) {
+			/*
+			 * If the block starts at the beginning of region,
+			 * adjust the size & start. (the region may now be
+			 * zero in length)
+			 */
+			mp->start += size;
+			mp->size -= size;
+		} else if (e == mp->start + mp->size) {
+			/*
+			 * If the block starts at the beginning of region,
+			 * adjust only the size.
+			 */
+			mp->size -= size;
+		} else {
+			/*
+			 * Block is in the middle of the region, so we
+			 * have to split it in two.
+			 */
+			for (j = avail_cnt-1; j > i + 1; j--) {
+				avail[j] = avail[j-1];
+			}
+			mp[1].start = e;
+			mp[1].size = mp[0].start + mp[0].size - e;
+			mp[0].size = s - mp[0].start;
+			avail_cnt++;
+		}
+		return (void *) s;
+	}
+	panic("pmap_boot_find_memory: not enough memory for "
+	    "%lx/%lx allocation?", size, alignment);
+}
+
+/*
  * This is not part of the defined PMAP interface and is specific to the
- * PowerPC architecture.
- * This is called during initppc, before the system is really initialized.
+ * PowerPC architecture.  This is called during initppc, before the system
+ * is really initialized.
  */
 void
-pmap_bootstrap(vaddr_t kernelstart, vaddr_t kernelend)
+pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 {
-	struct mem_region *mp, *mp1;
-	int cnt, i;
-	u_int npgs = 0;
-	u_int s, e, sz;
+	struct mem_region *mp, tmp;
+	paddr_t s, e;
+	psize_t size;
+	int i, j;
 
 	/*
 	 * Get memory.
@@ -2368,230 +2491,197 @@ pmap_bootstrap(vaddr_t kernelstart, vaddr_t kernelend)
 	}
 #endif
 
-	for (mp = mem; mp->size; mp++)
+	/*
+	 * Find out how much physical memory we have and in how many chunks.
+	 */
+	for (mem_cnt = 0, mp = mem; mp->size; mp++) {
+#ifdef PMAP_MEMLIMIT
+		if (mp->start >= PMAP_MEMLIMIT * 1024*1024)
+			continue;
+		if (mp->start + mp->size > PMAP_MEMLIMIT * 1024*1024) {
+			size = PMAP_MEMLIMIT * 1024*1024 - mp->start;
+			physmem += btoc(size);
+		} else
+#endif
 		physmem += btoc(mp->size);
+		mem_cnt++;
+	}
 
 	/*
 	 * Count the number of available entries.
 	 */
-	for (cnt = 0, mp = avail; mp->size; mp++)
-		cnt++;
+	for (avail_cnt = 0, mp = avail; mp->size; mp++)
+		avail_cnt++;
 
 	/*
 	 * Page align all regions.
-	 * Non-page aligned memory isn't very interesting to us.
-	 * Also, sort the entries for ascending addresses.
 	 */
-	kernelstart &= ~PGOFSET;
-	kernelend = (kernelend + PGOFSET) & ~PGOFSET;
-	for (mp = avail; mp->size; mp++) {
-		s = mp->start;
-		e = mp->start + mp->size;
-#if defined(ALLEGRO) && defined(discovery)
-#define HOLESTART 0x1fa6000
-#define HOLEEND 0x2000000
-		/*
-		 * Check whether this region holds all of
-		 * the mysterious discovery memory hole
-		 */
-		if (s < HOLESTART && e > HOLEEND) {
-			avail[cnt].start = HOLESTART;
-			avail[cnt++].size = e - HOLEEND;
-			e = HOLESTART;
-		}
-		/*
-		 * Look whether this regions starts within 
-		 * the mysterious discovery memory hole
-		 */
-		if (s >= HOLESTART && s < HOLEEND) {
-			if (e <= HOLEEND)
-				goto empty;
-			s = HOLEEND;
-		}
-		/*
-		 * Now look whether this region ends within
-		 * the mysterious discovery memory hole
-		 */
-		if (e > HOLESTART && e <= HOLEEND) {
-			if (s >= HOLESTART)
-				goto empty;
-			e = HOLESTART;
-		}
-#endif
-		/*
-		 * Check whether this region holds all of the kernel.
-		 */
-		if (s < kernelstart && e > kernelend) {
-			avail[cnt].start = kernelend;
-			avail[cnt++].size = e - kernelend;
-			e = kernelstart;
-		}
-		/*
-		 * Look whether this regions starts within the kernel.
-		 */
-		if (s >= kernelstart && s < kernelend) {
-			if (e <= kernelend)
-				goto empty;
-			s = kernelend;
-		}
-		/*
-		 * Now look whether this region ends within the kernel.
-		 */
-		if (e > kernelstart && e <= kernelend) {
-			if (s >= kernelstart)
-				goto empty;
-			e = kernelstart;
-		}
-		/*
-		 * Now page align the start and size of the region.
-		 */
-		s = round_page(s);
-		e = trunc_page(e);
-		if (e < s)
-			e = s;
-		sz = e - s;
-		/*
-		 * Check whether some memory is left here.
-		 */
-		if (sz == 0) {
-		empty:
-			bcopy(mp + 1, mp,
-			      (cnt - (mp - avail)) * sizeof *mp);
-			cnt--;
-			mp--;
-			continue;
-		}
-		/*
-		 * Do an insertion sort.
-		 */
-		npgs += btoc(sz);
-		for (mp1 = avail; mp1 < mp; mp1++)
-			if (s < mp1->start)
-				break;
-		if (mp1 < mp) {
-			bcopy(mp1, mp1 + 1, (char *)mp - (char *)mp1);
-			mp1->start = s;
-			mp1->size = sz;
-		} else {
-			mp->start = s;
-			mp->size = sz;
-		}
-	}
+	kernelstart = trunc_page(kernelstart);
+	kernelend = round_page(kernelend);
+	for (mp = avail, i = 0; i < avail_cnt; i++, mp++) {
+		s = trunc_page(mp->start);
+		e = round_page(mp->start + mp->size);
 
-#ifdef	HTABENTS
-	pmap_pteg_cnt = HTABENTS;
-#else /* HTABENTS */
-	pmap_pteg_cnt = 1024;
-	while ((pmap_pteg_cnt * sizeof(pteg_t) << 7) < ctob((u_int)physmem))
-		pmap_pteg_cnt <<= 1;
-#ifdef ALLEGRO
-#ifndef discovery
-	pmap_pteg_cnt <<= 1;		/* twice the minimum size */
+		DPRINTFN(7,("pmap_bootstrap: b-avail[%d] start 0x%lx "
+		    "size 0x%lx\n", i, mp->start, mp->size));
+#ifdef PMAP_MEMLIMIT
+		/*
+		 * Don't allow the end to run beyond our artificial limit
+		 */
+		if (e > PMAP_MEMLIMIT * 1024*1024)
+			e = PMAP_MEMLIMIT * 1024*1024;
 #endif
-#endif
-#endif /* HTABENTS */
+
+		/*
+		 * Does this overlap the beginning of kernel?
+		 *   Does extend past the end of the kernel?
+		 */
+		if (s < kernelstart && e > kernelstart) {
+			if (e > kernelend) {
+				avail[avail_cnt].start = kernelend;
+				avail[avail_cnt].size = e - kernelend;
+				avail_cnt++;
+			}
+			mp->size = kernelstart - s;
+		}
+		/*
+		 * Check whether this region overlaps the end of the kernel.
+		 */
+		else if (s < kernelend && e > kernelend) {
+			mp->start = kernelend;
+			mp->size = e - kernelend;
+		}
+		/*
+		 * Look whether this regions is completely inside the kernel.
+		 * Nuke it if it does.
+		 */
+		else if (s >= kernelstart && e <= kernelend) {
+			mp->start = 0;
+			mp->size = 0;
+		}
+#ifdef PMAP_MEMLIMIT
+		/*
+		 * If the user imposed a memory limit, enforce it.
+		 */
+		else if (s >= PMAP_MEMLIMIT * 1024*1024) {
+			mp->start = -NBPG;
+			mp->size = 0;
+		}
+#endif /* PMAP_MEMLIMIT */
+		else {
+			mp->start = s;
+			mp->size = e - s;
+		}
+		DPRINTFN(7,("pmap_bootstrap: a-avail[%d] start 0x%lx size "
+			"0x%lx\n", i, mp->start, mp->size));
+	}
 
 	/*
-	 * Find suitably aligned memory for HTAB.
+	 * Move (and uncount) all the null return to the end.
 	 */
-	for (mp = avail; mp->size; mp++) {
-		s = roundup(mp->start, pmap_pteg_cnt * sizeof(pteg_t)) - mp->start;
-		if (mp->size < s + pmap_pteg_cnt * sizeof(pteg_t))
-			continue;
-		pmap_pteg_table = (volatile pteg_t *)(mp->start + s);
-#ifdef DIAGNOSTIC
-		if ((((uintptr_t)pmap_pteg_table) + pmap_pteg_cnt * sizeof(pteg_t)) > SEGMENT_LENGTH)	/* sanity */
-			panic("pmap_bootstrap: pmap_pteg_table end > 256MB");
-#endif
-		if (mp->size == s + pmap_pteg_cnt * sizeof(pteg_t)) {
-			if (s)
-				mp->size = s;
-			else {
-				bcopy(mp + 1, mp,
-				      (cnt - (mp - avail)) * sizeof *mp);
-				mp = avail;
-			}
-			break;
+	for (mp = avail, i = 0; i < avail_cnt; i++, mp++) {
+		if (mp->size == 0) {
+			tmp = avail[i];
+			avail[i] = avail[--avail_cnt];
+			avail[avail_cnt] = avail[i];
 		}
-		if (s != 0) {
-			bcopy(mp, mp + 1,
-			      (cnt - (mp - avail)) * sizeof *mp);
-			mp++->size = s;
-			cnt++;
-		}
-		mp->start += s + pmap_pteg_cnt * sizeof(pteg_t);
-		mp->size -= s + pmap_pteg_cnt * sizeof(pteg_t);
-		break;
 	}
-	if (!mp->size)
-		panic("not enough memory?");
 
-	npgs -= btoc(pmap_pteg_cnt * sizeof(pteg_t));
+	/*
+	 * (Bubble)sort them into asecnding order.
+	 */
+	for (i = 0; i < avail_cnt; i++) {
+		for (j = i + 1; j < avail_cnt; j++) {
+			if (avail[i].start > avail[j].start) {
+				tmp = avail[i];
+				avail[i] = avail[j];
+				avail[j] = tmp;
+			}
+		}
+	}
+
+	/*
+	 * Make sure they don't overlap.
+	 */
+	for (mp = avail, i = 0; i < avail_cnt - 1; i++, mp++) {
+		if (mp[0].start + mp[0].size > mp[1].start) {
+			mp[0].size = mp[1].start - mp[0].start;
+		}
+		DPRINTFN(7,("pmap_bootstrap: avail[%d] start 0x%lx size "
+		    "0x%lx\n", i, mp->start, mp->size));
+	}
+	DPRINTFN(7,("pmap_bootstrap: avail[%d] start 0x%lx size 0x%lx\n",
+	    i, mp->start, mp->size));
+
+#ifdef	PTEGCOUNT
+	pmap_pteg_cnt = PTEGCOUNT;
+#else /* PTEGCOUNT */
+	pmap_pteg_cnt = 0x1000;
+	
+	while (pmap_pteg_cnt < physmem)
+		pmap_pteg_cnt <<= 1;
+
+	pmap_pteg_cnt >>= 1;
+#endif /* PTEGCOUNT */
+
+	/*
+	 * Find suitably aligned memory for PTEG hash table.
+	 */
+	size = pmap_pteg_cnt * sizeof(pteg_t);
+	pmap_pteg_table = pmap_boot_find_memory(size, size, 0);
+#ifdef DIAGNOSTIC
+	if ( (uintptr_t) pmap_pteg_table + size > SEGMENT_LENGTH)
+		panic("pmap_bootstrap: pmap_pteg_table end (%p + %lx) > 256MB",
+		    pmap_pteg_table, size);
+#endif
+
 	bzero((void *)pmap_pteg_table, pmap_pteg_cnt * sizeof(pteg_t));
 	pmap_pteg_mask = pmap_pteg_cnt - 1;
 
 	/*
-	 * We cannot do pmap_steal_memory here,
-	 * since we don't run with translation enabled yet.
+	 * We cannot do pmap_steal_memory here since UVM hasn't been loaded
+	 * with pages.  So we just steal them before giving them to UVM.
 	 */
-	s = sizeof(struct pvo_head) * pmap_pteg_cnt;
-	sz = round_page(s);
-	for (mp = avail; mp->size; mp++)
-		if (mp->size >= sz)
-			break;
-	if (!mp->size)
-		panic("not enough memory?");
+	size = sizeof(struct pvo_head) * pmap_pteg_cnt;
+	pmap_pvo_table = pmap_boot_find_memory(size, NBPG, 0);
+#ifdef DIAGNOSTIC
+	if ( (uintptr_t) pmap_pvo_table + size > SEGMENT_LENGTH)
+		panic("pmap_bootstrap: pmap_pvo_table end (%p + %lx) > 256MB",
+		    pmap_pvo_table, size);
+#endif
 
-	npgs -= btoc(sz);
-	pmap_pvo_table = (struct pvo_head *)mp->start;
-	mp->size -= sz;
-	mp->start += sz;
-	if (mp->size <= 0)
-		bcopy(mp + 1, mp, (cnt - (mp - avail)) * sizeof *mp);
 	for (i = 0; i < pmap_pteg_cnt; i++)
 		LIST_INIT(&pmap_pvo_table[i]);
 
 #ifndef MSGBUFADDR
 	/*
-	 * allow for msgbuf
+	 * Allocate msgbuf in high memory.
 	 */
-	sz = round_page(MSGBUFSIZE);
-	mp = NULL;
-	for (mp1 = avail; mp1->size; mp1++)
-		if (mp1->size >= sz)
-			mp = mp1;
-	if (mp == NULL)
-		panic("not enough memory?");
-
-	npgs -= btoc(sz);
-	msgbuf_paddr = mp->start + mp->size - sz;
-	mp->size -= sz;
-	if (mp->size <= 0)
-		bcopy(mp + 1, mp, (cnt - (mp - avail)) * sizeof *mp);
+	msgbuf_paddr = (paddr_t) pmap_boot_find_memory(MSGBUFSIZE, NBPG, 1);
 #endif
 
-
-	sz = (sizeof(struct pvo_head *) + 1) * npgs;
-	for (mp = avail; mp->size; mp++)
-		if (mp->size >= sz)
-			break;
-	if (!mp->size)
-		panic("pmap_bootstrap: not enough memory for (BAT) buffers");
 
 #ifdef __HAVE_PMAP_PHYSSEG
-	pmap_physseg.pvoh = (struct pvo_head *) mp->start;
-	pmap_physseg.attrs = (char *) &pmap_physseg.pvoh[npgs];
-	mp->size -= sz;
-	mp->start += sz;
-	if (mp->size == 0)
-		bcopy(mp + 1, mp, (cnt - (mp - avail)) * sizeof *mp);
-	if (((uintpr_t)pmap_physseg.pvoh + sz) > SEGMENT_LENGTH) /* sanity */
-		panic("pmap_bootstrap: PVO list end > 256MB");
+	{
+		u_int npgs = 0;
+		for (i = 0, mp = avail; i < avail_cnt; i++, mp++)
+			npgs += btoc(mp->size);
+		size = (sizeof(struct pvo_head *) + 1) * npgs;
+		pmap_physseg.pvoh = pmap_boot_find_memory(size, NBPG, 0);
+		pmap_physseg.attrs = (char *) &pmap_physseg.pvoh[npgs];
+#ifdef DIAGNOSTIC
+		if ((uintptr_t)pmap_physseg.pvoh + size > SEGMENT_LENGTH)
+			panic("pmap_bootstrap: PVO list end (%p + %lx) > 256MB",
+			    pmap_physseg.pvoh, size);
+#endif
+	}
 #endif
 
-	for (mp = avail; mp->size; mp++) {
+	for (mp = avail, i = 0; i < avail_cnt; mp++, i++) {
 		paddr_t pfstart = atop(mp->start);
 		paddr_t pfend = atop(mp->start + mp->size);
+		if (mp->size == 0)
+			continue;
 		if (mp->start + mp->size <= SEGMENT_LENGTH) {
 			uvm_page_physload(pfstart, pfend, pfstart, pfend,
 				VM_FREELIST_FIRST256);
