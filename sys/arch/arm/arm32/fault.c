@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.25.2.1 2002/10/19 14:04:36 bjh21 Exp $	*/
+/*	$NetBSD: fault.c,v 1.25.2.2 2002/10/24 21:23:57 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.25.2.1 2002/10/19 14:04:36 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.25.2.2 2002/10/24 21:23:57 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,16 +302,6 @@ copyfault:
 	if (pmap_debug_level >= 0)
 		printf("fault in process %p\n", p);
 #endif
-
-#ifdef DEBUG
-	/* Is this needed ? */
-	if (pcb != curpcb) {
-		printf("data_abort: Alert ! pcb(%p) != curpcb(%p)\n",
-		    pcb, curpcb);
-		printf("data_abort: Alert ! proc(%p), curproc(%p)\n",
-		    p, curproc);
-	}
-#endif	/* DEBUG */
 
 	/* Were we in user mode when the abort occurred ? */
 	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
