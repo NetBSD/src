@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.39 1995/05/01 07:55:04 mycroft Exp $	*/
+/*	$NetBSD: genassym.c,v 1.40 1995/05/01 13:16:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -39,7 +39,6 @@
  *	@(#)genassym.c	5.11 (Berkeley) 5/10/91
  */
 
-#define KERNEL
 #define _KERNEL
 
 #include <sys/param.h>
@@ -108,11 +107,11 @@ main()
 	def("V_TRAP", &vm->v_trap);
 	def("V_INTR", &vm->v_intr);
 
-	def("PCB_CR3", &pcb->pcb_tss.tss_cr3);
-	def("PCB_EBP", &pcb->pcb_tss.tss_ebp);
-	def("PCB_ESP", &pcb->pcb_tss.tss_esp);
-	def("PCB_FS", &pcb->pcb_tss.tss_fs);
-	def("PCB_GS", &pcb->pcb_tss.tss_gs);
+	def("PCB_CR3", &pcb->pcb_cr3);
+	def("PCB_EBP", &pcb->pcb_ebp);
+	def("PCB_ESP", &pcb->pcb_esp);
+	def("PCB_FS", &pcb->pcb_fs);
+	def("PCB_GS", &pcb->pcb_gs);
 	def("PCB_CR0", &pcb->pcb_cr0);
 	def("PCB_ONFAULT", &pcb->pcb_onfault);
 	def("PCB_USERLDT", &pcb->pcb_ldt);
