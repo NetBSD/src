@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.54 1995/10/13 20:01:08 gwr Exp $	*/
+/*	$NetBSD: st.c,v 1.55 1995/11/30 10:12:04 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -192,6 +192,13 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 		ST_Q_FORCE_BLKSIZE, 512, DDS,		/* minor 4-7 */
 		ST_Q_FORCE_BLKSIZE, 1024, DDS,		/* minor 8-11 */
 		ST_Q_FORCE_BLKSIZE, 0, DDS		/* minor 12-15 */
+	}},
+	{T_SEQUENTIAL, T_REMOV,
+	 "EXABYTE ", "EXB-8200        ", "263H", 0, 5, {
+		0, 0, 0,				/* minor 0-3 */
+		0, 0, 0,				/* minor 4-7 */
+		0, 0, 0,				/* minor 8-11 */
+		0, 0, 0					/* minor 12-15 */
 	}},
 #if 0
 	{T_SEQUENTIAL, T_REMOV,
