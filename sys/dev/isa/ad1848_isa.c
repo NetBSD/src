@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.2 1998/08/29 22:49:48 jtk Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.3 1998/09/06 11:06:52 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -401,7 +401,7 @@ ad1848_isa_open(addr, flags)
 {
 	struct ad1848_isa_softc *sc = addr;
 
-	DPRINTF(("ad1848_open: sc=%p\n", sc));
+	DPRINTF(("ad1848_isa_open: sc=%p\n", sc));
 
 	sc->sc_lastcc = -1;
 	sc->sc_intr = 0;
@@ -446,7 +446,7 @@ ad1848_isa_dma_init_input(addr, buf, cc)
 	isc->sc_dma_cnt = cc;
 	isa_dmastart(isc->sc_ic, isc->sc_recdrq, buf, cc, NULL,
 		     isc->sc_dma_flags, BUS_DMA_NOWAIT);
-	DPRINTF(("ad1848_dma_init_input: %p %d\n", buf, cc));
+	DPRINTF(("ad1848_isa_dma_init_input: %p %d\n", buf, cc));
 	return 0;
 }
 
@@ -466,13 +466,13 @@ ad1848_isa_dma_input(addr, p, cc, intr, arg)
 	u_char reg;
 
 	if (sc->sc_locked) {
-		DPRINTF(("ad1848_dma_input: locked\n"));
+		DPRINTF(("ad1848_isa_dma_input: locked\n"));
 		return 0;
 	}
 
 #ifdef AUDIO_DEBUG
 	if (ad1848debug > 1)
-		printf("ad1848_dma_input: cc=%d %p (%p)\n", cc, intr, arg);
+		printf("ad1848_isa_dma_input: cc=%d %p (%p)\n", cc, intr, arg);
 #endif
 	sc->sc_locked = 1;
 	isc->sc_intr = intr;
@@ -535,7 +535,7 @@ ad1848_isa_dma_init_output(addr, buf, cc)
 	isc->sc_dma_cnt = cc;
 	isa_dmastart(isc->sc_ic, isc->sc_drq, buf, cc, NULL,
 		     isc->sc_dma_flags, BUS_DMA_NOWAIT);
-	DPRINTF(("ad1848_dma_init_output: %p %d\n", buf, cc));
+	DPRINTF(("ad1848_isa_dma_init_output: %p %d\n", buf, cc));
 	return 0;
 }
 
@@ -552,13 +552,13 @@ ad1848_isa_dma_output(addr, p, cc, intr, arg)
 	u_char reg;
 
 	if (sc->sc_locked) {
-		DPRINTF(("ad1848_dma_output: locked\n"));
+		DPRINTF(("ad1848_isa_dma_output: locked\n"));
 		return 0;
 	}
 
 #ifdef AUDIO_DEBUG
 	if (ad1848debug > 0)
-		printf("ad1848_dma_output: cc=%d at %p 0x%p (0x%p)\n",
+		printf("ad1848_isa_dma_output: cc=%d at %p 0x%p (0x%p)\n",
 		       cc, p, intr, arg);
 #endif
 	sc->sc_locked = 1;
