@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.45 2001/02/12 11:50:50 pk Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.46 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -999,13 +999,7 @@ swap_off(p, sdp)
 		simple_unlock(&uvm.swap_data_lock);
 		return ENOMEM;
 	}
-
-#ifdef DIAGNOSTIC
-	if (sdp->swd_npginuse != sdp->swd_npgbad) {
-		panic("swap_off: sdp %p - %d pages still in use (%d bad)\n",
-		      sdp, sdp->swd_npginuse, sdp->swd_npgbad);
-	}
-#endif
+	KASSERT(sdp->swd_npginuse == sdp->swd_npgbad);
 
 	/*
 	 * done with the vnode and saved creds.
@@ -1423,11 +1417,7 @@ sw_reg_iodone(bp)
 			biodone(pbp);
 		}
 	} else if (pbp->b_resid == 0) {
-#ifdef DIAGNOSTIC
-		if (vnx->vx_pending != 0)
-			panic("sw_reg_iodone: vnx pending: %d",vnx->vx_pending);
-#endif
-
+		KASSERT(vnx->vx_pending == 0);
 		if ((vnx->vx_flags & VX_BUSY) == 0) {
 			UVMHIST_LOG(pdhist, "  iodone error=%d !",
 			    pbp, vnx->vx_error, 0, 0);
@@ -1568,6 +1558,7 @@ uvm_swap_free(startslot, nslots)
 	/*
 	 * ignore attempts to free the "bad" slot.
 	 */
+
 	if (startslot == SWSLOT_BAD) {
 		return;
 	}
@@ -1577,30 +1568,19 @@ uvm_swap_free(startslot, nslots)
 	 * in the extent, and return.   must hold pri lock to do 
 	 * lookup and access the extent.
 	 */
+
 	simple_lock(&uvm.swap_data_lock);
 	sdp = swapdrum_getsdp(startslot);
-
-#ifdef DIAGNOSTIC
-	if (uvmexp.nswapdev < 1)
-		panic("uvm_swap_free: uvmexp.nswapdev < 1\n");
-	if (sdp == NULL) {
-		printf("uvm_swap_free: startslot %d, nslots %d\n", startslot,
-		    nslots);
-		panic("uvm_swap_free: unmapped address\n");
-	}
-#endif
+	KASSERT(uvmexp.nswapdev >= 1);
+	KASSERT(sdp != NULL);
+	KASSERT(sdp->swd_npginuse >= nslots);
 	if (extent_free(sdp->swd_ex, startslot - sdp->swd_drumoffset, nslots,
 			EX_MALLOCOK|EX_NOWAIT) != 0) {
 		printf("warning: resource shortage: %d pages of swap lost\n",
 			nslots);
 	}
-
 	sdp->swd_npginuse -= nslots;
 	uvmexp.swpginuse -= nslots;
-#ifdef DIAGNOSTIC
-	if (sdp->swd_npginuse < 0)
-		panic("uvm_swap_free: inuse < 0");
-#endif
 	simple_unlock(&uvm.swap_data_lock);
 }
 
@@ -1639,11 +1619,7 @@ uvm_swap_get(page, swslot, flags)
 	int	result;
 
 	uvmexp.nswget++;
-#ifdef DIAGNOSTIC
-	if ((flags & PGO_SYNCIO) == 0)
-		printf("uvm_swap_get: ASYNC get requested?\n");
-#endif
-
+	KASSERT(flags & PGO_SYNCIO);
 	if (swslot == SWSLOT_BAD) {
 		return VM_PAGER_ERROR;
 	}
