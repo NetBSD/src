@@ -1,5 +1,5 @@
 #	@(#)rc	5.27 (Berkeley) 6/5/91
-#	$Id: rc,v 1.40 1994/04/10 06:42:40 cgd Exp $
+#	$Id: rc,v 1.41 1994/05/29 03:37:33 jtc Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -73,6 +73,12 @@ echo 'starting network'
 
 mount /usr >/dev/null 2>&1
 
+# clean up left-over files
+rm -f /etc/nologin
+rm -f /var/spool/lock/LCK.*
+rm -f /var/spool/uucp/STST/*
+(cd /var/run && { rm -rf -- *; cp /dev/null utmp; chmod 644 utmp; })
+
 echo -n 'starting rpc daemons:'
 echo -n ' portmap';		portmap
 
@@ -102,12 +108,6 @@ fi
 
 echo '.'
 mount -a -t nfs
-
-# clean up left-over files
-rm -f /etc/nologin
-rm -f /var/spool/lock/LCK.*
-rm -f /var/spool/uucp/STST/*
-(cd /var/run && { rm -rf -- *; cp /dev/null utmp; chmod 644 utmp; })
 
 echo 'runtime link editor directory cache'
 rm -f /var/run/ld.so.hints
