@@ -37,9 +37,9 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * Id: //depot/aic7xxx/aic7xxx/aic79xx.h#89 $
+ * Id: //depot/aic7xxx/aic7xxx/aic79xx.h#92 $
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.h,v 1.10 2003/05/04 00:20:07 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.h,v 1.13 2003/06/06 23:48:18 gibbs Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -1390,11 +1390,13 @@ struct scb		*ahd_get_scb(struct ahd_softc *, u_int);
 void			 ahd_free_scb(struct ahd_softc *, struct scb *);
 void			 ahd_alloc_scbs(struct ahd_softc *);
 void			 ahd_free(struct ahd_softc *);
-int			 ahd_reset(struct ahd_softc *);
+int			 ahd_reset(struct ahd_softc *, int);
 void			 ahd_shutdown(void *);
-int			ahd_write_flexport(struct ahd_softc *, u_int, u_int);
-int			ahd_read_flexport(struct ahd_softc *, u_int, uint8_t *);
-int			ahd_wait_flexport(struct ahd_softc *);
+int			 ahd_write_flexport(struct ahd_softc *,
+					    u_int, u_int);
+int			 ahd_read_flexport(struct ahd_softc *, u_int,
+					   uint8_t *);
+int			 ahd_wait_flexport(struct ahd_softc *);
 
 /*************************** Interrupt Services *******************************/
 int			ahd_pci_intr(struct ahd_softc *);
