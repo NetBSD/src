@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.27 1998/04/19 10:18:20 jonathan Exp $	*/
+/*	$NetBSD: asic.c,v 1.28 1998/04/25 16:29:06 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -94,11 +94,11 @@ const int nxine_ioasic_devs  =  ARRAY_SIZEOF(xine_ioasic_devs);
 #endif /* DEC_MAXINE */
 
 #if defined(DEC_3MAX)
-struct ioasic_dev kn02_ioasic_devs[] = {
+struct ioasicdev_attach_args kn02_ioasic_devs[] = {
 /* 0 */	{ "dc",		0x200000, 0, C(7), },
 /* 0 */	{ "mc146818",	0x280000, 0, C(0), },
-const int n3max_ioasic_devs  =  ARRAY_SIZEOF(3max_ioasic_devs);
 };
+const int nkn02_ioasic_devs  =  ARRAY_SIZEOF(kn02_ioasic_devs);
 #endif /* DEC_3MAX */
 #endif /* pmax */
 
