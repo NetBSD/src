@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.10.4.1 2000/06/30 16:27:38 simonb Exp $ */
+/*	$NetBSD: p9100.c,v 1.10.4.2 2001/12/22 11:51:00 he Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -188,8 +188,14 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	fb->fb_device = &sc->sc_dev;
 	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags & FB_USERMASK;
 	fb->fb_type.fb_type = FBTYPE_SUN3COLOR;
+	fb->fb_pixels = NULL;
 
 	node = sa->sa_node;
+	isconsole = fb_is_console(node);
+	if (!isconsole) {
+		printf("\n%s: fatal error: PROM didn't configure device: not console\n", self->dv_xname);
+		return;
+	}
 
 	/*
 	 * When the ROM has mapped in a p9100 display, the address
@@ -258,7 +264,8 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	p9100loadcmap(sc, 0, 256);
 
 	/* make sure we are not blanked */
-	p9100_set_video(sc, 1);
+	if (isconsole)
+		p9100_set_video(sc, 1);
 
 	if (shutdownhook_establish(p9100_shutdown, sc) == NULL) {
 		panic("%s: could not establish shutdown hook",
