@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.6 2002/05/27 09:18:59 zuntum Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.7 2002/05/27 09:21:34 zuntum Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -61,7 +61,7 @@ message upgrade
 
 
 message hello
-{Witaj w sysinst,  systemie instalacyjnym  NetBSD-@@VERSION@@.
+{Witaj w sysinst, systemie instalacyjnym NetBSD-@@VERSION@@.
 To, oparte na menu, narzedzie zostalo stworzone aby pomoc ci zainstalowac
 NetBSD na twardym dysku, lub zaktualizowac istniejacy system NetBSD,
 zuzywajac minimum czasu.  W ponizszych menu mozesz zmienic aktualne
@@ -515,10 +515,10 @@ message net_defroute
 {bramka IPv4}
 
 message net_media
-{Medium sieciowe}
+{Typ medium sieciowego}
 
 message netok
-{Ponizej sa wartoscki, ktore wprowadziles.  Czy sa poprawne?
+{Ponizej sa wartosci, ktore wprowadziles.  Czy sa poprawne?
 
 Domena DNS:		%s 
 Nazwa hosta:		%s
