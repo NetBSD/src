@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsdiskless.h,v 1.16 1999/02/21 15:07:49 drochner Exp $	*/
+/*	$NetBSD: nfsdiskless.h,v 1.17 2002/12/01 22:59:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
  *
  *	@(#)nfsdiskless.h	8.1 (Berkeley) 6/10/93
  */
+#ifndef _NFS_NFSDISKLESS_H_
+#define _NFS_NFSDISKLESS_H_
 
 /*
  * Structure holds parameters needed by nfs_mountroot(),
@@ -83,3 +85,4 @@ int nfs_boot_sendrecv __P((struct socket *, struct mbuf *,
 int nfs_bootdhcp  __P((struct nfs_diskless *, struct proc *));
 int nfs_bootparam __P((struct nfs_diskless *, struct proc *));
 
+#endif /* _NFS_NFSDISKLESS_H_ */
