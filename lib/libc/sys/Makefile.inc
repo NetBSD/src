@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.110 2000/12/13 07:42:47 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.111 2001/01/05 21:49:47 jdolecek Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -66,7 +66,7 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
 	__sigaltstack14.o __sigpending14.o __sigprocmask14.o __sigsuspend14.o \
 	socket.o socketpair.o __stat13.o statfs.o \
 	swapctl.o symlink.o sysarch.o umask.o undelete.o unlink.o \
-	unmount.o utimes.o vadvise.o wait4.o write.o writev.o \
+	unmount.o utimes.o utrace.o vadvise.o wait4.o write.o writev.o \
 	__sysctl.o \
 	__posix_chown.o __posix_fchown.o __posix_lchown.o __posix_rename.o
 
@@ -208,7 +208,7 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	sigprocmask.2 sigreturn.2 sigstack.2 sigsuspend.2 socket.2 \
 	socketpair.2 stat.2 statfs.2 swapctl.2 swapon.3 symlink.2 \
 	sync.2 sysarch.2 syscall.2 truncate.2 umask.2 undelete.2 \
-	unlink.2 utimes.2 vfork.2 wait.2 write.2
+	unlink.2 utimes.2 utrace.2 vfork.2 wait.2 write.2
 
 MLINKS+=brk.2 sbrk.2
 MLINKS+=dup.2 dup2.2
