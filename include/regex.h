@@ -1,4 +1,4 @@
-/*	$NetBSD: regex.h,v 1.5 1996/06/10 18:55:04 explorer Exp $	*/
+/*	$NetBSD: regex.h,v 1.6 1998/02/02 21:07:41 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992 Henry Spencer.
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)regex.h	8.1 (Berkeley) 6/2/93
+ *	@(#)regex.h	8.2 (Berkeley) 1/3/94
  */
 
 #ifndef _REGEX_H_
