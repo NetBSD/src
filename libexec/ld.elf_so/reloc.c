@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.16 1999/03/01 16:40:07 christos Exp $	 */
+/*	$NetBSD: reloc.c,v 1.17 1999/03/03 12:20:00 jonathan Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -161,7 +161,9 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	extern Elf_Addr  _GLOBAL_OFFSET_TABLE_[];
 	extern Elf_Dyn   _DYNAMIC;
 #endif
+#if defined(__i386__) || defined(__alpha__) || defined(__powerpc__)
 	Elf_Addr         tmp;
+#endif
 
 	switch (ELF_R_TYPE(rela->r_info)) {
 
