@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.24 2003/07/27 01:19:28 thorpej Exp $
+#	$NetBSD: files.news68k,v 1.25 2003/09/26 22:23:58 wiz Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -38,7 +38,7 @@ device hb { addr = 0, [ipl = -1], [vect = -1] }
 attach hb at mainbus
 file arch/news68k/dev/hb.c			hb
 
-# I/O Proccesser
+# I/O Processor
 #device iop { [addr = -1], [ipl = -1] }
 #attach iop at mainbus
 #file arch/news68k/dev/iop.c			iop

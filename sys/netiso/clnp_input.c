@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.26 2003/08/07 16:33:33 agc Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.27 2003/09/26 22:23:58 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.26 2003/08/07 16:33:33 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.27 2003/09/26 22:23:58 wiz Exp $");
 
 #include "opt_iso.h"
 
@@ -342,7 +342,7 @@ clnp_input(m, va_alist)
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_INPUT]) {
 		printf(
-		    "clnp_input: proccessing dg; First mbuf m_len %d, m_type x%x, %s\n",
+		    "clnp_input: processing dg; First mbuf m_len %d, m_type x%x, %s\n",
 		    m->m_len, m->m_type, IS_CLUSTER(m) ? "cluster" : "normal");
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83 2003/07/15 03:36:20 lukem Exp $	*/
+/*	$NetBSD: pmap.c,v 1.84 2003/09/26 22:23:58 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  * to four.  In this implementation, we use three, named 'A' through 'C'.
  *
  * The MMU translates virtual addresses into physical addresses by 
- * traversing these tables in a proccess called a 'table walk'.  The most 
+ * traversing these tables in a process called a 'table walk'.  The most 
  * significant 7 bits of the Virtual Address ('VA') being translated are 
  * used as an index into the level A table, whose base in physical memory 
  * is stored in a special MMU register, the 'CPU Root Pointer' or CRP.  The 
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83 2003/07/15 03:36:20 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84 2003/09/26 22:23:58 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
