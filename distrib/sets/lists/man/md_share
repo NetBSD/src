@@ -1,5 +1,6 @@
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
+./usr/share/man/cat1/grfinfo.0
 ./usr/share/man/cat1/i386/cursor.0
 ./usr/share/man/cat1/i386/fed.0
 ./usr/share/man/cat1/i386/fontedit.0
@@ -201,9 +202,7 @@
 ./usr/share/man/cat8/alpha/setnetbootinfo.0
 ./usr/share/man/cat8/amiga/MAKEDEV.0
 ./usr/share/man/cat8/amiga/binpatch.0
-./usr/share/man/cat8/amiga/boot.0
 ./usr/share/man/cat8/amiga/installboot.0
-./usr/share/man/cat8/amiga/makedev.0
 ./usr/share/man/cat8/amiga/makedev.0
 ./usr/share/man/cat8/arm32/MAKEDEV.0
 ./usr/share/man/cat8/arm32/makedev.0
@@ -212,8 +211,10 @@
 ./usr/share/man/cat8/atari/boot.0
 ./usr/share/man/cat8/atari/installboot.0
 ./usr/share/man/cat8/atari/makedev.0
+./usr/share/man/cat8/bad144.0
 ./usr/share/man/cat8/dbsym.0
 ./usr/share/man/cat8/eeprom.0
+./usr/share/man/cat8/fdisk.0
 ./usr/share/man/cat8/grfconfig.0
 ./usr/share/man/cat8/hp300/MAKEDEV.0
 ./usr/share/man/cat8/hp300/boot.0
@@ -223,7 +224,6 @@
 ./usr/share/man/cat8/i386/MAKEDEV.0
 ./usr/share/man/cat8/i386/apm.0
 ./usr/share/man/cat8/i386/apmd.0
-./usr/share/man/cat8/i386/bad144.0
 ./usr/share/man/cat8/i386/boot.0
 ./usr/share/man/cat8/i386/installboot.0
 ./usr/share/man/cat8/i386/ispcvt.0
