@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.1 2002/07/29 16:22:57 simonb Exp $ */
+/* $NetBSD: machdep.c,v 1.2 2002/08/05 01:33:36 simonb Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2002/07/29 16:22:57 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2002/08/05 01:33:36 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -66,8 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2002/07/29 16:22:57 simonb Exp $");
 #include <net/if_ether.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <sys/sysctl.h>
 
 #include <dev/cons.h>
 
@@ -96,9 +94,7 @@ int	aucomcnrate = CONSPEED;
 #endif /* NAUCOM > 0 */
 
 /* The following are used externally (sysctl_hw). */
-char	machine[] = MACHINE;		/* from <machine/param.h> */
-char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char	cpu_model[64] = "Alchemy Semiconductor Pb1000";
+extern char	cpu_model[];
 
 struct	user *proc0paddr;
 
@@ -138,6 +134,9 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	/* clear the BSS segment */
 	kernend = (caddr_t)mips_round_page(end);
 	memset(edata, 0, kernend - (caddr_t)edata);
+
+	/* set cpu model info for sysctl_hw */
+	strcpy(cpu_model, "Alchemy Semiconductor Pb1000");
 
 	/* save the yamon environment pointer */
 	yamon_envp = envp;
@@ -413,33 +412,6 @@ cpu_startup(void)
 	 */
 	if (!(alchemy_prop_info = propdb_create("board info")))
 		panic("Cannot create board info database");
-}
-
-/*
- * Machine-dependent system variables.
- */
-int
-cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
-{
-	dev_t consdev;
-
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
-
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-		    sizeof consdev));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
 }
 
 void
