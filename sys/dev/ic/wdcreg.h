@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcreg.h,v 1.7 1994/10/27 04:18:30 cgd Exp $	*/
+/*	$NetBSD: wdcreg.h,v 1.8 1994/11/04 23:18:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -92,8 +92,6 @@
 #define	WDCC_EXTDCMD	0xE0		/* send extended command */
 #define	WDCC_READP	0xEC		/* read parameters from controller */
 #define	WDCC_CACHEC	0xEF		/* cache control */
-
-#define	WD_STEP		0		/* winchester- default 35us step */
 
 #define	WDSD_IBM	0xa0		/* forced to 512 byte sector, ecc */
 

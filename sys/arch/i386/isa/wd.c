@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.104 1994/11/04 19:02:06 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.105 1994/11/04 23:18:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.
@@ -144,7 +144,7 @@ int wdcprobe __P((struct device *, void *, void *));
 void wdcattach __P((struct device *, struct device *, void *));
 
 struct cfdriver wdccd = {
-	NULL, "wdc", wdcprobe, wdcattach, DV_DULL, sizeof(struct wd_softc), 1
+	NULL, "wdc", wdcprobe, wdcattach, DV_DULL, sizeof(struct wd_softc)
 };
 
 int wdprobe __P((struct device *, void *, void *));
@@ -161,6 +161,7 @@ static void wdstart __P((struct wd_softc *));
 int wdcintr __P((struct wdc_softc *));
 static void wdcstart __P((struct wdc_softc *));
 static int wdcommand __P((struct wd_softc *, int, int, int, int, int));
+static int wdcommandshort __P((struct wdc_softc *, int, int));
 static int wdcontrol __P((struct wd_softc *));
 static int wdsetctlr __P((struct wd_softc *));
 static int wdgetctlr __P((struct wd_softc *));
@@ -188,7 +189,6 @@ wdcprobe(parent, match, aux)
 {
 	struct wdc_softc *wdc = match;
 	struct isa_attach_args *ia = aux;
-	struct wd_softc *wd;
 	u_short iobase;
 
 	wdc->sc_iobase = iobase = ia->ia_iobase;
@@ -205,28 +205,22 @@ wdcprobe(parent, match, aux)
 			return 0;
 	}
 
-	/*
-	 * XXX wdcommand() accepts a wd_softc, so we have to make it one.
-	 */
-	wd = (void *)malloc(sizeof(struct wd_softc), M_TEMP, M_NOWAIT);
-	bzero(wd, sizeof(struct wd_softc));
-	wd->sc_drive = 0;
-	wd->sc_dev.dv_unit = 0;
-	wd->sc_dev.dv_parent = (void *)wdc;
+	outb(iobase+wd_sdh, WDSD_IBM | 0);
 
-	/* Execute a controller only command. */
-	if (wdcommand(wd, 0, 0, 0, 0, WDCC_DIAGNOSE) != 0 ||
-	    wait_for_unbusy(wdc) != 0)
-		goto lose;
+	/* Wait for controller to become ready. */
+	if (wait_for_unbusy(wdc) < 0)
+		return 0;
+    
+	/* Send command. */
+	outb(iobase+wd_command, WDCC_DIAGNOSE);
 
-	free(wd, M_TEMP);
+	/* Wait for command to complete. */
+	if (wait_for_unbusy(wdc) != 0)
+		return 0;
+
 	ia->ia_iosize = 8;
 	ia->ia_msize = 0;
 	return 1;
-
-lose:
-	free(wd, M_TEMP);
-	return 0;
 }
 
 struct wdc_attach_args {
@@ -272,17 +266,16 @@ wdprobe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct wd_softc *wd = match;
-	struct cfdata *cf = wd->sc_dev.dv_cfdata;
+	struct wdc_softc *wdc = (void *)parent;
+	struct cfdata *cf = match;
 	struct wdc_attach_args *wa = aux;
 	int drive = wa->wa_drive;
 
 	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != drive)
 		return 0;
 	
-	wd->sc_drive = drive;
-
-	if (wdgetctlr(wd) != 0)
+	if (wdcommandshort(wdc, drive, WDCC_RESTORE) != 0 ||
+	    wait_for_ready(wdc) != 0)
 		return 0;
 
 	return 1;
@@ -663,7 +656,7 @@ loop:
 			    (bp->b_flags & B_READ) ? WDCC_READ : WDCC_WRITE;
 	
 		/* Initiate command! */
-		if (wdcommand(wd, cylin, head, sector, nblks, command) != 0) {
+		if (wdcommand(wd, command, cylin, head, sector, nblks) != 0) {
 			wderror(wd, NULL,
 			    "wdcstart: timeout waiting for unbusy");
 			wdcunwedge(wdc);
@@ -940,8 +933,8 @@ wdcontrol(wd)
     
 	switch (wd->sc_state) {
 	case RECAL:			/* Set SDH, step rate, do restore. */
-		if (wdcommand(wd, 0, 0, 0, 0, WDCC_RESTORE | WD_STEP) != 0) {
-			wderror(wd, NULL, "wdcontrol: wdcommand failed");
+		if (wdcommandshort(wdc, wd->sc_drive, WDCC_RESTORE) != 0) {
+			wderror(wd, NULL, "wdcontrol: wdcommandshort failed");
 			wdcunwedge(wdc);
 			return 0;
 		}
@@ -991,21 +984,20 @@ wdcontrol(wd)
  * Assumes interrupts are blocked.
  */
 static int
-wdcommand(wd, cylin, head, sector, count, cmd)
+wdcommand(wd, command, cylin, head, sector, count)
 	struct wd_softc *wd;
+	int command;
 	int cylin, head, sector, count;
-	int cmd;
 {
 	struct wdc_softc *wdc = (void *)wd->sc_dev.dv_parent;
+	u_short iobase = wdc->sc_iobase;
 	int stat;
-	u_short iobase;
     
 	/* Select drive. */
-	iobase = wdc->sc_iobase;
 	outb(iobase+wd_sdh, WDSD_IBM | (wd->sc_drive << 4) | head);
 
 	/* Wait for it to become ready to accept a command. */
-	if (cmd == WDCC_DIAGNOSE || cmd == WDCC_IDC)
+	if (command == WDCC_IDC)
 		stat = wait_for_unbusy(wdc);
 	else
 		stat = wdcwait(wdc, WDCS_READY);
@@ -1019,8 +1011,27 @@ wdcommand(wd, cylin, head, sector, count, cmd)
 	outb(iobase+wd_sector, sector);
 	outb(iobase+wd_seccnt, count);
 
-	/* Send command, await results. */
-	outb(iobase+wd_command, cmd);
+	/* Send command. */
+	outb(iobase+wd_command, command);
+
+	return 0;
+}
+
+int
+wdcommandshort(wdc, drive, command)
+	struct wdc_softc *wdc;
+	int drive;
+	int command;
+{
+	u_short iobase = wdc->sc_iobase;
+
+	/* Select drive. */
+	outb(iobase+wd_sdh, WDSD_IBM | (drive << 4));
+
+	if (wdcwait(wdc, WDCS_READY) < 0)
+		return -1;
+
+	outb(iobase+wd_command, command);
 
 	return 0;
 }
@@ -1040,10 +1051,10 @@ wdsetctlr(wd)
 	    wd->sc_dk.dk_label.d_nsectors);
 #endif
     
-	if (wdcommand(wd, wd->sc_dk.dk_label.d_ncylinders,
-	    wd->sc_dk.dk_label.d_ntracks - 1, 0, wd->sc_dk.dk_label.d_nsectors,
-	    WDCC_IDC) != 0) {
-		wderror(wd, NULL, "wdsetctlr: wdcommand failed");
+	if (wdcommand(wd, WDCC_IDC, wd->sc_dk.dk_label.d_ncylinders,
+	    wd->sc_dk.dk_label.d_ntracks - 1, 0, wd->sc_dk.dk_label.d_nsectors)
+	    != 0) {
+		wderror(wd, NULL, "wdsetctlr: geometry upload failed");
 		return -1;
 	}
 
@@ -1062,17 +1073,11 @@ wdgetctlr(wd)
 	char tb[DEV_BSIZE];
 	struct wdparams *wp;
     
-	if (wdcommand(wd, 0, 0, 0, 0, WDCC_READP) != 0 ||
+	if (wdcommandshort(wdc, wd->sc_drive, WDCC_READP) != 0 ||
 	    wait_for_drq(wdc) != 0) {
 		/*
-		 * If WDCC_READP fails then we might have an old drive so we
-		 * try a seek to 0; if that passes then the drive is there but
-		 * it's OLD AND KRUSTY.
+		 * We `know' there's a drive here; just assume it's old.
 		 */
-		if (wdcommand(wd, 0, 0, 0, 0, WDCC_RESTORE | WD_STEP) != 0 ||
-		    wait_for_ready(wdc) != 0)
-			return -1;
-
 		strncpy(wd->sc_dk.dk_label.d_typename, "ST506",
 		    sizeof wd->sc_dk.dk_label.d_typename);
 		strncpy(wd->sc_params.wdp_model, "Unknown Type",
@@ -1145,9 +1150,9 @@ wdclose(dev, flag, fmt)
 }
 
 int
-wdioctl(dev, cmd, addr, flag, p)
+wdioctl(dev, command, addr, flag, p)
 	dev_t dev;
-	u_long cmd;
+	u_long command;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
@@ -1156,7 +1161,7 @@ wdioctl(dev, cmd, addr, flag, p)
 	struct wd_softc *wd = wdcd.cd_devs[lunit];
 	int error;
     
-	switch (cmd) {
+	switch (command) {
 	case DIOCSBAD:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
@@ -1359,7 +1364,7 @@ wddump(dev)
 	wddoingadump = 1;
 
 	/* Recalibrate. */
-	if (wdcommand(wd, 0, 0, 0, 0, WDCC_RESTORE | WD_STEP) != 0 ||
+	if (wdcommandshort(wdc, wd->sc_drive, WDCC_RESTORE) != 0 ||
 	    wait_for_ready(wdc) != 0 || wdsetctlr(wd) != 0 ||
 	    wait_for_ready(wdc) != 0) {
 		wderror(wd, NULL, "wddump: recal failed");
@@ -1401,12 +1406,9 @@ wddump(dev)
 		printf("cylin %d, head %d, sector %d, addr 0x%x", cylin, head,
 		    sector, addr);
 #endif
-		if (wdcommand(wd, cylin, head, sector, 1, WDCC_WRITE) != 0) {
-			wderror(wd, NULL, "wddump: wdcommand failed");
-			return EIO;
-		}
-		if (wait_for_drq(wdc) != 0) {
-			wderror(wd, NULL, "wddump: timeout waiting for drq");
+		if (wdcommand(wd, WDCC_WRITE, cylin, head, sector, 1) != 0 ||
+		    wait_for_drq(wdc) != 0) {
+			wderror(wd, NULL, "wddump: write failed");
 			return EIO;
 		}
 	
