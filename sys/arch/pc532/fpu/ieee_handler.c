@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_handler.c,v 1.12 2002/05/25 03:54:36 simonb Exp $	*/
+/*	$NetBSD: ieee_handler.c,v 1.13 2002/05/26 07:37:08 simonb Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -86,15 +86,6 @@
 # define ns532_round_page(addr) (((addr) + NBPG - 1) & ~(NBPG - 1))
 #endif
 
-const union t_conv infty =
-    {d_bits: { sign: 0, exp: 0x7ff, mantissa: 0, mantissa2: 0}};
-
-const union t_conv snan =
-    {d_bits: { sign: 0, exp: 0x7ff, mantissa: 0x40000, mantissa2: 0}};
-
-const union t_conv qnan =
-    {d_bits: { sign: 0, exp: 0x7ff, mantissa: 0x80000, mantissa2: 0}};
-
 
 static void get_fstate(state *state) {
   asm("sfsr %0" : "=g" (state->FSR));
@@ -141,6 +132,15 @@ int ieee_sig(int sig, int code, struct sigcontext *scp)
 #endif /* KERNEL */
 
 int ieee_handler_debug = 0;
+
+const union t_conv infty =
+    {d_bits: { sign: 0, exp: 0x7ff, mantissa: 0, mantissa2: 0}};
+
+const union t_conv snan =
+    {d_bits: { sign: 0, exp: 0x7ff, mantissa: 0x40000, mantissa2: 0}};
+
+const union t_conv qnan =
+    {d_bits: { sign: 0, exp: 0x7ff, mantissa: 0x80000, mantissa2: 0}};
 
 #define COPYIN(U,K,N) ({if (copyin((AT)U, (AT)K, N) != 0) longjmp(copyin_buffer.copyfail, 1);0;})
 
