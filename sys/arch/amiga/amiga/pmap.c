@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)pmap.c	7.5 (Berkeley) 5/10/91
- *	$Id: pmap.c,v 1.13 1994/05/25 07:58:33 chopps Exp $
+ *	$Id: pmap.c,v 1.14 1994/06/01 19:34:34 chopps Exp $
  */
 
 /*
@@ -164,6 +164,14 @@ extern vm_offset_t pager_sva, pager_eva;
 #define pmap_pte_v(pte)		((pte)->pg_v)
 #define pmap_pte_set_w(pte, v)		((pte)->pg_w = (v))
 #define pmap_pte_set_prot(pte, v)	((pte)->pg_prot = (v))
+
+/*
+ * taken from hp 4.4lite pmap.h
+ */
+#define active_pmap(pm)	\
+    ((pm) == kernel_pmap || (pm) == curproc->p_vmspace->vm_map.pmap)
+#define pmap_pte_prot(pte)		((pte)->pg_prot)
+#define pmap_pte_prot_chg(pte, np)	((np) ^ pmap_pte_prot(pte))
 
 /*
  * Given a map and a machine independent protection code,
@@ -683,7 +691,6 @@ pmap_remove(pmap, sva, eva)
 	register int ix;
 	pmap_t ptpmap;
 	int *ste, s, bits;
-	boolean_t firstpage = TRUE;
 	boolean_t flushcache = FALSE;
 #ifdef DEBUG
 	pt_entry_t opte;
@@ -997,8 +1004,8 @@ pmap_protect(pmap, sva, eva, prot)
 	register pt_entry_t *pte;
 	register vm_offset_t va;
 	register int ix;
-	int amigaprot;
-	boolean_t firstpage = TRUE;
+	boolean_t needtflush;
+	int isro;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_PROTECT))
@@ -1015,7 +1022,8 @@ pmap_protect(pmap, sva, eva, prot)
 		return;
 
 	pte = pmap_pte(pmap, sva);
-	amigaprot = pte_prot(pmap, prot) == PG_RO ? 1 : 0;
+	isro = pte_prot(pmap, prot) == PG_RO ? 1 : 0;
+	needtflush = active_pmap(pmap);
 	for (va = sva; va < eva; va += PAGE_SIZE) {
 		/*
 		 * Page table page is not allocated.
@@ -1032,22 +1040,31 @@ pmap_protect(pmap, sva, eva, prot)
 			continue;
 		}
 		/*
-		 * Page not valid.  Again, skip it.
-		 * Should we do this?  Or set protection anyway?
+		 * skip if page not valid or protection is same
 		 */
-		if (!pmap_pte_v(pte)) {
+		if (!pmap_pte_v(pte) || !pmap_pte_prot_chg(pte, isro)) {
 			pte += amigapagesperpage;
 			continue;
 		}
 		ix = 0;
 		do {
-			/* clear VAC here if PG_RO? */
-			pmap_pte_set_prot(pte++, amigaprot);
-			TBIS(va + ix * AMIGA_PAGE_SIZE);
+			/*
+			 * Clear caches if making RO (see section
+			 * "7.3 Cache Coherency" in the manual).
+			 */
+			if (isro && cpu040) {
+				vm_offset_t pa = pmap_pte_pa(pte);
+
+				DCFP(pa);
+				ICPP(pa);
+			}
+			pmap_pte_set_prot(pte++, isro);
+			if (needtflush)
+				TBIS(va + ix * AMIGA_PAGE_SIZE);
 		} while (++ix != amigapagesperpage);
 	}
 #ifdef DEBUG
-	if (amigaprot && (pmapvacflush & PVF_PROTECT)) {
+	if (isro && (pmapvacflush & PVF_PROTECT)) {
 		if (pmapvacflush & PVF_TOTAL)
 			DCIA();
 		else if (pmap == kernel_pmap)
@@ -1268,8 +1285,17 @@ validate:
 		npte |= PG_W;
 	if (!checkpv && !cacheable)
 		npte |= PG_CI;
-	else if (cpu040)
+	else if (cpu040 && (npte & PG_PROT) == PG_RW)
 		npte |= cache_copyback;		/* Cacheable, copyback */
+	/*
+	 * Remember if this was a wiring-only change.
+	 * If so, we need not flush the TLB and caches.
+	 */
+	wired = ((*(int *)pte ^ npte) == PG_W);
+	if (cpu040 && !wired) {
+		DCFP(pa);
+		ICPP(pa);
+	}
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
 		printf("enter: new pte value %x\n", npte);
@@ -1281,6 +1307,9 @@ validate:
 		npte += AMIGA_PAGE_SIZE;
 		va += AMIGA_PAGE_SIZE;
 	} while (++ix != amigapagesperpage);
+	if (!wired && active_pmap(pmap))
+		TBIS(va);
+#ifdef HAVEVAC
 	/*
 	 * The following is executed if we are entering a second
 	 * (or greater) mapping for a physical page and the mappings
@@ -1309,6 +1338,9 @@ validate:
 		else
 			DCIU();
 	}
+#endif
+#endif	/* HAVEVAC */
+#ifdef DEBUG
 	if ((pmapdebug & PDB_WIRING) && pmap != kernel_pmap) {
 		va -= PAGE_SIZE;
 		pmap_check_wiring("enter", trunc_page(pmap_pte(pmap, va)));
@@ -1857,8 +1889,10 @@ pmap_changebit(pa, bit, setem)
 	register pv_entry_t pv;
 	register int *pte, npte, ix;
 	vm_offset_t va;
+	boolean_t firstpage;
 	int s;
-	boolean_t firstpage = TRUE;
+
+	firstpage = TRUE;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_BITS)
@@ -1907,8 +1941,21 @@ pmap_changebit(pa, bit, setem)
 				else
 					npte = *pte & ~bit;
 				if (*pte != npte) {
+					/*
+					 * If we are changing caching status or
+					 * protection make sure the caches are
+					 * flushed (but only once).
+					 */
+					if (firstpage && cpu040 &&
+					    (bit == PG_RO && setem ||
+					     (bit & PG_CMASK))) {
+						firstpage = FALSE;
+						DCFP(pa);
+						ICPP(pa);
+					}
 					*pte = npte;
-					TBIS(va);
+					if (active_pmap(pv->pv_pmap))
+						TBIS(va);
 				}
 				va += AMIGA_PAGE_SIZE;
 				pte++;
@@ -1960,8 +2007,8 @@ pmap_enter_ptpage(pmap, va)
 				kmem_alloc(kernel_map, AMIGA_040STSIZE*128);
 			/* intialize root table entries */
 			sg = (u_int *) pmap->pm_rtab;
-			sg_proto = pmap_extract(kernel_pmap, (vm_offset_t) pmap->pm_stab) |
-			    SG_RW | SG_V;
+			sg_proto = pmap_extract(kernel_pmap, 
+			    (vm_offset_t) pmap->pm_stab) | SG_RW | SG_V;
 #ifdef DEBUG
 			if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))
 				printf ("pmap_enter_ptpage: ROOT TABLE SETUP %x %x\n",
