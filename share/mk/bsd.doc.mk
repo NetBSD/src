@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.55 2001/11/18 15:11:25 bjh21 Exp $
+#	$NetBSD: bsd.doc.mk,v 1.56 2001/11/28 20:19:08 tv Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .include <bsd.init.mk>
@@ -45,7 +45,7 @@ _F:=		${DESTDIR}${DOCDIR}/${DIR}/${F}		# installed path
 ${_F}:		${F} __docinstall			# install rule
 docinstall::	${_F}
 .PRECIOUS:	${_F}					# keep if install fails
-.PHONY:		${UPDATE:U${_F}}			# clobber unless UPDATE
+.PHONY:		${UPDATE:D:U${_F}}			# clobber unless UPDATE
 .if !defined(BUILD) && !make(all) && !make(${F})
 ${_F}:		.MADE					# no build at install
 .endif
