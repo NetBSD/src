@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.22 2001/11/12 23:49:37 lukem Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.23 2001/11/13 00:49:35 lukem Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -44,14 +44,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.22 2001/11/12 23:49:37 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.23 2001/11/13 00:49:35 lukem Exp $");
 
 #include "opt_inet.h"
 
-#include "faith.h"
-#if NFAITH > 0
-
-#include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
@@ -363,4 +359,3 @@ faithprefix(in6)
 		RTFREE(rt);
 	return ret;
 }
-#endif /* NFAITH > 0 */
