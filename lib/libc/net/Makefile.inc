@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.59 2002/03/22 18:10:21 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.60 2003/12/04 01:02:44 lukem Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -33,6 +33,7 @@ YHEADER=1
 CLEANFILES+=nsparser.c nslexer.c nsparser.h
 
 nslexer.c: nslexer.l nsparser.h
+	${_MKTARGET_LEX}
 	${LEX.l} -t ${.IMPSRC} | sed -e '/YY_BUF_SIZE/s/16384/1024/' >${.TARGET}
 
 # machine-dependent net sources
