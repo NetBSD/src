@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_synch.c,v 1.68 2000/03/23 06:30:12 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.69 2000/03/23 20:37:59 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -125,7 +125,21 @@ void
 roundrobin(arg)
 	void *arg;
 {
+	int s;
 
+	if (curproc != NULL) {
+		s = splstatclock();
+		if (curproc->p_schedflags & PSCHED_SEENRR) {
+			/*
+			 * The process has already been through a roundrobin
+			 * without switching and may be hogging the CPU.
+			 * Indicate that the process should yield.
+			 */
+			curproc->p_schedflags |= PSCHED_SHOULDYIELD;
+		} else
+			curproc->p_schedflags |= PSCHED_SEENRR;
+		splx(s);
+	}
 	need_resched();
 	callout_reset(&roundrobin_ch, hz / 10, roundrobin, NULL);
 }
@@ -687,6 +701,51 @@ wakeup_one(ident)
 }
 
 /*
+ * General yield call.  Puts the current process back on its run queue and
+ * performs a voluntary context switch.
+ */
+void
+yield()
+{
+	struct proc *p = curproc;
+	int s;
+
+	p->p_priority = p->p_usrpri;
+	s = splstatclock();
+	setrunqueue(p);
+	p->p_stats->p_ru.ru_nvcsw++;
+	mi_switch();
+	splx(s);
+}
+
+/*
+ * General preemption call.  Puts the current process back on its run queue
+ * and performs an involuntary context switch.  If a process is supplied,
+ * we switch to that process.  Otherwise, we use the normal process selection
+ * criteria.
+ */
+void
+preempt(newp)
+	struct proc *newp;
+{
+	struct proc *p = curproc;
+	int s;
+
+	/*
+	 * XXX Switching to a specific process is not supported yet.
+	 */
+	if (newp != NULL)
+		panic("preempt: cpu_preempt not yet implemented");
+
+	p->p_priority = p->p_usrpri;
+	s = splstatclock(); 
+	setrunqueue(p);
+	p->p_stats->p_ru.ru_nivcsw++;
+	mi_switch();
+	splx(s);
+}
+
+/*
  * The machine independent parts of mi_switch().
  * Must be called at splstatclock() or higher.
  */
@@ -743,6 +802,12 @@ mi_switch()
 		p->p_nice = autoniceval + NZERO;
 		resetpriority(p);
 	}
+
+	/*
+	 * Process is about to yield the CPU; clear the appropriate
+	 * scheduling flags.
+	 */
+	p->p_schedflags &= ~PSCHED_SWITCHCLEAR;
 
 	/*
 	 * Pick a new current process and record its start time.
