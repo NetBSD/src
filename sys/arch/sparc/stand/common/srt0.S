@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.6 2001/05/20 17:28:16 uwe Exp $	*/
+/*	$NetBSD: srt0.S,v 1.7 2001/11/21 21:38:00 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -63,11 +63,19 @@ start:
 	save	%o1, -CCFSZ, %sp
 
 	/*
-	 * Relocate.
+	 * Find which address we are at.
 	 */
 1:	call	2f
+	 sethi	%hi(1b), %l0
+2:	or	%l0, %lo(1b), %l0
+	cmp	%l0, %o7	! %o7 contains actual address of 1b
+	beq	4f		! already there, no need to relocate
 	 nop
-2:	add	%o7, (start-1b), %l0
+
+	/*
+	 * Relocate.
+	 */
+	add	%o7, (start-1b), %l0
 	set	start, %l1
 	set	_edata, %o0
 	sub	%o0, %l1, %l2		! length
@@ -78,6 +86,9 @@ start:
 	bg	3b
 	 add	%l1, 4, %l1
 
+	/*
+	 * Jump to our relocated self.
+	 */
 	set	4f, %g1
 	jmp	%g1
 	 nop
