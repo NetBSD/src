@@ -19,7 +19,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$Id: read.c,v 1.13 1995/03/21 15:27:07 mycroft Exp $";
+static char rcsid[] = "$Id: read.c,v 1.14 1995/03/25 17:27:27 glass Exp $";
 #endif
 
 #define MASK_CHAR (0xFF)	/* If your chars aren't 8 bits, you will
@@ -1013,7 +1013,7 @@ void s_lsym() {
 	}
 	input_line_pointer ++;
 	segment = expression(& exp);
-	if (segment != SEG_ABSOLUTE && !SEG_NORMAL(segment)) &&
+	if (segment != SEG_ABSOLUTE && !SEG_NORMAL(segment) &&
 	    segment != SEG_REGISTER) {
 		as_bad("Bad expression: %s", segment_name(segment));
 		ignore_rest_of_line();
