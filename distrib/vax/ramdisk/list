@@ -1,4 +1,10 @@
-#	$NetBSD: list,v 1.4 1999/11/23 23:16:06 simonb Exp $
+#	$NetBSD: list,v 1.5 2000/03/04 16:06:41 ragge Exp $
+
+# Do this first in case spwd.db and pwd.db fill disk
+COPY	${CURDIR}/../../../etc/master.passwd	etc/master.passwd
+SPECIAL	pwd_mkdb -p -d ./ etc/master.passwd
+SPECIAL	/bin/rm etc/spwd.db
+SPECIAL	/bin/rm etc/pwd.db
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -14,6 +20,7 @@ LINK	ramdiskbin			bin/ls
 LINK	ramdiskbin			bin/mkdir
 LINK	ramdiskbin			bin/mt
 LINK	ramdiskbin			bin/mv
+LINK	ramdiskbin			bin/pax
 LINK	ramdiskbin			bin/pwd
 LINK	ramdiskbin			bin/rm
 LINK	ramdiskbin			bin/sh
@@ -43,6 +50,7 @@ LINK	ramdiskbin			sbin/route
 LINK	ramdiskbin			sbin/rrestore
 LINK	ramdiskbin			sbin/shutdown
 LINK	ramdiskbin			sbin/slattach
+LINK	ramdiskbin			sbin/swapctl
 LINK	ramdiskbin			sbin/umount
 SYMLINK	/bin/cat		usr/bin/chgrp
 SYMLINK	/bin/cat		usr/bin/ftp
@@ -61,7 +69,7 @@ SPECIAL	/bin/rm ramdiskbin
 # copy the MAKEDEV script and make some devices
 COPY	${CURDIR}/../../../etc/etc.vax/MAKEDEV	dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV std mt0 st0 rd0 rd1 dz0 dl0 dhu0 rx0
-SPECIAL	cd dev; sh MAKEDEV ra0 ra1 hp0 hp1 sd0 sd1 md0
+SPECIAL	cd dev; sh MAKEDEV ra0 ra1 hp0 hp1 sd0 sd1 sd2 md0 pty0
 SPECIAL	/bin/rm dev/MAKEDEV
 
 # we need the boot in /, and boot blocks in /usr/mdec
@@ -74,10 +82,8 @@ LINK	usr/mdec/xxboot			usr/mdec/sdboot
 
 # various files that we need in /etc for the install
 COPY	${CURDIR}/../../../etc/group		etc/group
-COPY	${CURDIR}/../../../etc/master.passwd	etc/master.passwd
 COPY	${CURDIR}/../../../etc/protocols	etc/protocols
 COPY	${CURDIR}/../../../etc/services	etc/services
-SPECIAL	pwd_mkdb -p -d ./ etc/master.passwd
 
 # and the common installation tools
 # COPY	dot.commonutils			.commonutils
@@ -92,7 +98,7 @@ COPY	${CURDIR}/dot.profile		.profile
 # COPY	${OBJDIR}/install.sh		install
 # COPY	${OBJDIR}/upgrade.sh		upgrade
 # COPY	${OBJDIR}/start.sh		start
-COPY	${CURDIR}/dot.hdprofile		tmp/.hdprofile
+# COPY	${CURDIR}/dot.hdprofile		tmp/.hdprofile
 # SPECIAL	chmod 755 install
 # SPECIAL	chmod 755 upgrade
 # SPECIAL	chmod 755 start
