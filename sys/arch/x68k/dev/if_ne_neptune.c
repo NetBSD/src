@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_neptune.c,v 1.3 2001/02/12 18:49:03 thorpej Exp $	*/
+/*	$NetBSD: if_ne_neptune.c,v 1.4 2001/02/21 05:44:32 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -150,10 +150,6 @@ ne_neptune_attach(parent, self, aux)
 	int netype;
 
 	printf("\n");
-
-	npp_init_media = NULL;
-	media = NULL;
-	nmedia = defmedia = 0;
 
 	/* Map i/o space. */
 	if (bus_space_map(nict, na->na_addr, NE2000_NPORTS*2, 0, &nich)) {
