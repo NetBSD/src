@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.5 2004/03/23 08:40:12 pooka Exp $	*/
+/*	$NetBSD: readelf.c,v 1.6 2004/09/16 13:49:07 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -42,9 +42,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)Id: readelf.c,v 1.39 2004/03/22 20:28:40 christos Exp")
+FILE_RCSID("@(#)Id: readelf.c,v 1.42 2004/07/24 20:57:22 christos Exp")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.5 2004/03/23 08:40:12 pooka Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.6 2004/09/16 13:49:07 pooka Exp $");
 #endif
 #endif
 
@@ -153,6 +153,12 @@ getu64(int swap, uint64_t value)
 			    getu32(swap, ph32.p_align) : 4) \
 			 : (off_t) (ph64.p_align ?	\
 			    getu64(swap, ph64.p_align) : 4)))
+#define ph_filesz	(size_t)((class == ELFCLASS32	\
+			 ? getu32(swap, ph32.p_filesz)	\
+			 : getu64(swap, ph64.p_filesz)))
+#define ph_memsz	(size_t)((class == ELFCLASS32	\
+			 ? getu32(swap, ph32.p_memsz)	\
+			 : getu64(swap, ph64.p_memsz)))
 #define nh_size		(class == ELFCLASS32		\
 			 ? sizeof nh32			\
 			 : sizeof nh64)
@@ -256,7 +262,7 @@ dophn_core(struct magic_set *ms, int class, int swap, int fd, off_t off,
 			file_badseek(ms);
 			return -1;
 		}
-		bufsize = read(fd, nbuf, BUFSIZ);
+		bufsize = read(fd, nbuf, sizeof(nbuf));
 		if (bufsize == -1) {
 			file_badread(ms);
 			return -1;
@@ -319,7 +325,7 @@ donote(struct magic_set *ms, unsigned char *nbuf, size_t offset, size_t size,
 	noff = offset;
 	doff = ELF_ALIGN(offset + namesz);
 
-	if (offset + namesz >= size) {
+	if (offset + namesz > size) {
 		/*
 		 * We're past the end of the buffer.
 		 */
@@ -327,7 +333,7 @@ donote(struct magic_set *ms, unsigned char *nbuf, size_t offset, size_t size,
 	}
 
 	offset = ELF_ALIGN(doff + descsz);
-	if (offset + descsz >= size) {
+	if (offset + descsz > size) {
 		return offset;
 	}
 
@@ -420,19 +426,36 @@ donote(struct magic_set *ms, unsigned char *nbuf, size_t offset, size_t size,
 		 * otherwise 1>xx
 		 */
 		if (desc / 100000 < 5) {
-			if (file_printf(ms, " %d.%d", desc / 100000,
-			    desc / 10000 % 10) == -1)
-				return size;
-			if (desc / 1000 % 10 > 0)
-				if (file_printf(ms, ".%d", desc / 1000 % 10)
-				    == -1)
+			if (desc / 10000 % 10 == 9) {
+				if (file_printf(ms, " %d.%d", desc / 100000,
+				    9 + desc / 1000 % 10) == -1)
 					return size;
+			} else {
+				if (file_printf(ms, " %d.%d", desc / 100000,
+				    desc / 10000 % 10) == -1)
+					return size;
+				if (desc / 1000 % 10 > 0)
+					if (file_printf(ms, ".%d", desc / 1000 % 10)
+					    == -1)
+						return size;
+			}
+			if (desc / 10000 % 10 > 5) {
+				desc %= 1000;
+				if (desc >= 100) {
+					if (file_printf(ms, "-STABLE (rev %d)",
+				    	desc % 100) == -1)
+						return size;
+				} else if (desc != 0) {
+					if (file_printf(ms, ".%d", desc) == -1)
+						return size;
+				}
+			}
 		} else {
 			if (file_printf(ms, " %d.%d", desc / 100000,
 			    desc / 1000 % 100) == -1)
 				return size;
 			desc %= 1000;
-			if (desc > 100) {
+			if (desc >= 100) {
 				if (file_printf(ms, "-CURRENT (rev %d)",
 				    desc % 100) == -1)
 					return size;
@@ -690,8 +713,7 @@ dophn_exec(struct magic_set *ms, int class, int swap, int fd, off_t off,
 				if (offset == 0)
 					break;
 			}
-			if (lseek(fd, savedoffset + offset, SEEK_SET)
-			    == (off_t)-1) {
+			if (lseek(fd, savedoffset, SEEK_SET) == (off_t)-1) {
 				file_badseek(ms);
 				return -1;
 			}
