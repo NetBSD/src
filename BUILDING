@@ -535,6 +535,11 @@ BUILDING
 
      -u        Set the UPDATE variable.
 
+     -V var=[value]
+               Set the variable var to value (which is optional).  This is
+               useful for setting RELEASEDIR without actually building a re-
+               lease.
+
      -w wrapper
                Create the nbmake wrapper script (see below) in a custom loca-
                tion, specified by wrapper.  This allows, for instance, to
@@ -592,4 +597,4 @@ HISTORY
 BUGS
      A few platforms are not yet using this build system.
 
-NetBSD                         December 25, 2002                             9
+NetBSD                          January 4, 2003                             10
