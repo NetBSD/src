@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile.image,v 1.19 2003/01/03 15:34:32 lukem Exp $
+#	$NetBSD: Makefile.image,v 1.20 2003/03/11 07:18:38 lukem Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
-#
-
 #
 # Required variables:
 #	NETBSDSRCDIR	top level of src tree (set by <bsd.own.mk>)
@@ -27,6 +25,10 @@
 #	IMAGE_RELEASEDIR	where to install ${IMAGE}.gz
 #	IMAGETAR_RELEASEDIR	where to install ${IMAGETAR}
 #
+
+.if !defined(_MAKEFILE_IMAGE_)
+_MAKEFILE_IMAGE_=1
+
 
 WORKDIR?=	work
 WORKSPEC?=	work.spec
@@ -117,3 +119,6 @@ release:: check_RELEASEDIR .WAIT ${IMAGETAR}
 .endif
 
 .endif	# ! defined(IMAGETAR)					# }
+
+
+.endif	# _MAKEFILE_IMAGE_
