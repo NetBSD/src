@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.27 1998/05/17 17:07:25 veego Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.28 1998/07/17 00:35:23 sommerfe Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -993,6 +993,12 @@ frdest_t *fdp;
 	 * Must be able to put at least 8 bytes per fragment.
 	 */
 	if (ip->ip_off & IP_DF) {
+		/* Send ICMP error here */
+		struct mbuf *mcopy;
+		mcopy = m_copy(m, 0, imin((int)ip->ip_len, 68));
+		if (mcopy)
+			icmp_error(mcopy, ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG,
+				   ip->ip_dst.s_addr, ifp);
 		error = EMSGSIZE;
 		goto bad;
 	}
