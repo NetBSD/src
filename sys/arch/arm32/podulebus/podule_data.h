@@ -60,7 +60,7 @@ static struct podule_description podules_cconcepts[] = {
 };
 
 static struct podule_description podules_armadillo[] = {
-	{ PODULE_ARMADILLO_A448,	"A447 sound sampler" },
+	{ PODULE_ARMADILLO_A448,	"A448 sound sampler" },
 	{ 0x0000, NULL }
 };
 
@@ -123,6 +123,12 @@ static struct podule_description podules_aleph1[] = {
 static struct podule_description podules_icubed[] = {
 	{ PODULE_ICUBED_ETHERH,	"etherlan 600 network slot interface" },
 	{ PODULE_ICUBED_ETHERHFLASH,	"etherlan 600 network slot interface" },
+	{ PODULE_ICUBED_ETHERLAN500,	"etherlen 500 interface" },
+	{ PODULE_ICUBED_ETHERLAN500A,	"etherlen 500 interface" },
+	{ PODULE_ICUBED_ETHERLAN200,	"etherlen 200 interface" },
+	{ PODULE_ICUBED_ETHERLAN200A,	"etherlen 200 interface" },
+	{ PODULE_ICUBED_ETHERLAN100,	"etherlen 100 interface" },
+	{ PODULE_ICUBED_ETHERLAN100A,	"etherlen 100 interface" },
 	{ 0x0000, NULL }
 };
 
