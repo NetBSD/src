@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.18 1997/02/10 03:50:55 mark Exp $	*/
+/*	$NetBSD: locore.S,v 1.19 1997/02/23 04:05:19 mark Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -210,6 +210,8 @@ Wfiq:
 	.word	fiqmsg
 	.word	_panic
 
+Lcpufuncs:	
+	.word	_cpufuncs
 
 	.global	_boot0
 _boot0:
@@ -218,6 +220,12 @@ _boot0:
 	orr     r2, r2, #(PSR_SVC32_MODE)
 	orr	r2, r2, #(I32_bit | F32_bit)
 	msr     cpsr_all, r2
+
+	ldr	r0, Lcpufuncs
+	add	lr, pc, #Lboot_cache_purged - . - 8
+	ldr	pc, [r0, #CF_CACHE_PURGE_ID]
+
+Lboot_cache_purged:
 
 	/*
  	 * MMU & IDC off, 32 bit program & data space
