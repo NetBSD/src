@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.109 2003/01/05 19:18:52 sommerfeld Exp $
+#	$NetBSD: bsd.README,v 1.110 2003/01/24 02:06:37 thorpej Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -563,10 +563,13 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBPLOT?=	${DESTDIR}/usr/lib/libplot.a
 		LIBPMC?=	${DESTDIR}/usr/lib/libpmc.a
 		LIBPOSIX?=	${DESTDIR}/usr/lib/libposix.a
+		LIBPTHREAD?=	${DESTDIR}/usr/lib/libpthread.a
+		LIBPTHREAD_DBG?=${DESTDIR}/usr/lib/libpthread_dbg.a
 		LIBRESOLV?=	${DESTDIR}/usr/lib/libresolv.a
 		LIBRMT?=	${DESTDIR}/usr/lib/librmt.a
 		LIBROKEN?=	${DESTDIR}/usr/lib/libroken.a
 		LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
+		LIBRT?=		${DESTDIR}/usr/lib/librt.a
 		LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
 		LIBSS?=		${DESTDIR}/usr/lib/libss.a
 		LIBSSL?=	${DESTDIR}/usr/lib/libssl.a
