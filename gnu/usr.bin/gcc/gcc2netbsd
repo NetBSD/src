@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: gcc2netbsd,v 1.6 1996/03/05 01:27:16 jtc Exp $
+#	$NetBSD: gcc2netbsd,v 1.7 1996/03/11 06:53:27 phil Exp $
 #
 #  Perl script to convert a standard distribution directory for gcc into
 #	a NetBSD source tree.
@@ -585,7 +585,8 @@ PROG=           g++
 MAN=		g++.1
 BINDIR=		/usr/bin
 CFLAGS+=        -I$(.CURDIR) -I$(.CURDIR)/../common \
-                 -I$(.CURDIR)/../arch -I$(.CURDIR)/../arch/$(MACHINE_ARCH)
+                -I$(.CURDIR)/../arch -I$(.CURDIR)/../arch/$(MACHINE_ARCH) \
+		-DGCC_NAME=\"/usr/bin/cc\"
 LDADD+=		-lgnumalloc
 DPADD+=		/usr/lib/libgnumalloc.a
 
