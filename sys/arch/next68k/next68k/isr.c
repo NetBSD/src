@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.12 2000/06/29 07:58:50 mrg Exp $ */
+/*	$NetBSD: isr.c,v 1.13 2000/07/02 04:40:42 cgd Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/isr.c
@@ -46,12 +46,6 @@
 /*
  * Link and dispatch interrupts.
  */
-
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,19 +289,6 @@ isrdispatch_vectored(pc, evec, frame)
 	if ((*isr->isr_func)(isr->isr_arg ? isr->isr_arg : frame) == 0)
 		printf("isrdispatch_vectored: vec 0x%x not claimed\n", vec);
 }
-
-/*
- * XXX Why on earth isn't this in a common file?!
- */
-void	netintr __P((void));
-void	arpintr __P((void));
-void	atintr __P((void));
-void	ipintr __P((void));
-void	ip6intr __P((void));
-void	nsintr __P((void));
-void	clnlintr __P((void));
-void	ccittintr __P((void));
-void	pppintr __P((void));
 
 void
 netintr()

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2000/06/29 07:47:53 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2000/07/02 04:40:44 cgd Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,11 +33,6 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -100,49 +95,6 @@
 #include <sys/termios.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
-#endif
-
-#ifdef INET
-#include <net/if.h>
-#include <netinet/in.h>
-#include <netinet/in_var.h>
-#include "arp.h"
-#if (NARP > 0)
-#include <netinet/if_inarp.h>
-#endif
-#endif
-
-#ifdef INET6
-# ifndef INET
-#  include <netinet/in.h>
-# endif
-#include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
-#endif
-
-#ifdef NS
-#include <netns/ns_var.h>
-#endif
-
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/clnp.h>
-#endif
-
-#ifdef CCITT
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_extern.h>
-#endif
-
-#ifdef NETATALK
-#include <netatalk/at_extern.h>
-#endif
-
-#include "ppp.h"
-#if (NPPP > 0)
-#include <net/ppp_defs.h>
-#include <net/if_ppp.h>
 #endif
 
 #ifdef DDB

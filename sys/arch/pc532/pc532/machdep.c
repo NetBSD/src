@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.113 2000/06/29 07:51:47 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.114 2000/07/02 04:40:43 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -43,12 +43,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
-#include "opt_natm.h"
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
@@ -88,44 +82,6 @@
 #include <machine/kcore.h>
 
 #include <net/netisr.h>
-#include <net/if.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#include <netinet/ip_var.h>
-#endif
-#ifdef INET6
-# ifndef INET
-#  include <netinet/in.h>
-# endif
-#include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
-#endif
-#ifdef NETATALK
-#include <netatalk/at_extern.h>
-#endif
-#ifdef NS
-#include <netns/ns_var.h>
-#endif
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/clnp.h>
-#endif
-#ifdef CCITT
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_extern.h>
-#endif
-#ifdef NATM
-#include <netnatm/natm.h>
-#endif
-#include "arp.h"
-#include "ppp.h"
-#if NPPP > 0
-#include <net/ppp_defs.h>
-#include <net/if_ppp.h>
-#endif
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -1197,31 +1153,13 @@ softnet(arg)
 	di(); isr = netisr; netisr = 0; ei();
 	if (isr == 0) return;
 
-#ifdef INET
-#if NARP > 0
-	if (isr & (1 << NETISR_ARP)) arpintr();
-#endif
-	if (isr & (1 << NETISR_IP)) ipintr();
-#endif
-#ifdef INET6
-	if (isr & (1 << NETISR_IPV6)) ip6intr();
-#endif
-#ifdef NETATALK
-	if (isr & (1 << NETISR_ATALK)) atintr();
-#endif
-#ifdef NS
-	if (isr & (1 << NETISR_NS)) nsintr();
-#endif
-#ifdef ISO
-	if (isr & (1 << NETISR_ISO)) clnlintr();
-#endif
-#ifdef CCITT
-	if (isr & (1 << NETISR_CCITT)) ccittintr();
-#endif
-#ifdef NATM
-	if (isr & (1 << NETISR_NATM)) natmintr();
-#endif
-#if NPPP > 0
-	if (isr & (1 << NETISR_PPP)) pppintr();
-#endif
+#define DONETISR(bit, fn)		\
+    do {				\
+	if (isr & (1 << bit))		\
+		fn();			\
+    } while (0)
+
+#include <net/netisr_dispatch.h>
+
+#undef DONETISR
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.104 2000/06/29 07:14:28 mrg Exp $	 */
+/* $NetBSD: machdep.c,v 1.105 2000/07/02 04:40:46 cgd Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -46,9 +46,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_ns.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
@@ -76,25 +73,6 @@
 
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
-
-#include <net/netisr.h>
-#include <net/if.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/ip_var.h>
-#endif
-#ifdef NETATALK
-#include <netatalk/at_extern.h>
-#endif
-#ifdef NS
-#include <netns/ns_var.h>
-#endif
-#include "ppp.h"	/* For NERISR_PPP */
-#if NPPP > 0
-#include <net/ppp_defs.h>
-#include <net/if_ppp.h>
-#endif
 
 #include <machine/sid.h>
 #include <machine/pte.h>
