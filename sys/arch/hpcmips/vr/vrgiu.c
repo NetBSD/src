@@ -1,5 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.8 2000/03/11 09:11:33 shin Exp $	*/
-
+/*	$NetBSD: vrgiu.c,v 1.9 2000/03/14 08:26:42 sato Exp $	*/
 /*-
  * Copyright (c) 1999
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -62,8 +61,13 @@
 #endif /* VRGIUDEBUG_CONF */
 int	vrgiu_debug = VRGIUDEBUG_CONF;
 #define	DPRINTF(flag, arg) if (vrgiu_debug & flag) printf arg;
+#define DDUMP_IO(flag, sc) if (vrgiu_debug & flag) vrgiu_dump_io(sc);
+#define DDUMP_IOSETTING(flag, sc) \
+			if (vrgiu_debug & flag) vrgiu_dump_iosetting(sc);
 #else
 #define	DPRINTF(flag, arg)
+#define DDUMP_IO(flag, sc)
+#define DDUMP_IOSETTING(flag, sc)
 #endif
 
 #define	LEGAL_INTR_PORT(x)	((x) >= 0 && (x) < MAX_GPIO_INOUT)
@@ -76,6 +80,7 @@ int vrgiu_print __P((void*, const char*));
 void vrgiu_callback __P((struct device*));
 
 void	vrgiu_dump_regs(struct vrgiu_softc *sc);
+void	vrgiu_dump_io(struct vrgiu_softc *sc);
 void	vrgiu_dump_iosetting(struct vrgiu_softc *sc);
 u_int32_t vrgiu_regread_4 __P((vrgiu_chipset_tag_t, bus_addr_t));
 u_int16_t vrgiu_regread __P((vrgiu_chipset_tag_t, bus_addr_t));
@@ -133,13 +138,9 @@ vrgiu_attach(parent, self, aux)
 #ifdef WINCE_DEFAULT_SETTING
 #warning WINCE_DEFAULT_SETTING
 #else
-#ifdef VRGIUDEBUG
-	if (vrgiu_debug & DEBUG_IO) {
-		printf("WIN setting:                                ");
-		vrgiu_dump_iosetting(sc);
-		printf("\n");
-	}
-#endif /* VRGIUDEBUG */
+	DPRINTF(DEBUG_IO, ("WIN setting:                                "));
+	DDUMP_IOSETTING(DEBUG_IO, sc);
+	DPRINTF(DEBUG_IO, ("\n"));
 	vrgiu_regwrite_4(sc, GIUINTEN_REG, sc->sc_intr_mask);
 #endif
     
@@ -156,21 +157,14 @@ vrgiu_attach(parent, self, aux)
 	 * Register functions to upper interface. 
 	 */
 	vrip_giu_function_register(va->va_vc, &vrgiu_functions, self);
-#ifdef VRGIUDEBUG
+
 	/* Display port status (Input/Output) for debugging */
-	if (vrgiu_debug & DEBUG_IO) {
-		u_int32_t preg[2];
+	DPRINTF(DEBUG_IO, ("I/O setting:                                "));
+	DDUMP_IOSETTING(DEBUG_IO, sc);
+	DPRINTF(DEBUG_IO, ("\n"));
+	DPRINTF(DEBUG_IO, ("       data:"));
+	DDUMP_IO(DEBUG_IO, sc);
 
-		printf("I/O setting:                                ");
-		vrgiu_dump_iosetting(sc);
-		printf("\n");
-
-		preg[0] = vrgiu_regread_4(sc, GIUPIOD_REG);
-		preg[1] = vrgiu_regread_4(sc, GIUPODAT_REG);
-		printf("       data:");
-		bitdisp64(preg);
-	}
-#endif /* VRGIUDEBUG */
 	/* 
 	 *  General purpose bus 
 	 */
@@ -225,6 +219,18 @@ vrgiu_dump_iosetting(sc)
 		printf ("%c" , (useupdn&m) ?
 			((termupdn&m) ? 'U' : 'D') :
 			((iosel&m) ? 'o' : ((inten&m)?'I':'i')));
+}
+
+void
+vrgiu_dump_io(sc)
+	struct vrgiu_softc *sc;
+{
+	u_int32_t preg[2];
+
+	preg[0] = vrgiu_regread_4(sc, GIUPIOD_REG);
+	preg[1] = vrgiu_regread_4(sc, GIUPODAT_REG);
+
+	bitdisp64(preg);
 }
 
 void
@@ -367,7 +373,7 @@ __vrgiu_out(port, data)
 		offs = port - 48;
 		panic ("__vrgiu_out: not coded yet.");
 	}
-	printf ("__vrgiu_out: addr %08x bit %d\n", addr, offs);
+	DPRINTF(DEBUG_IO, ("__vrgiu_out: addr %08x bit %d\n", addr, offs));
     
 	wbflush();
 	reg = *((volatile u_int16_t*)addr);
@@ -481,9 +487,6 @@ vrgiu_intr_establish(ic, port, mode, level, ih_fun, ih_arg)
 	splx(s);
 
 	DPRINTF(DEBUG_INTR, ("\n"));
-#if 0 && defined VRGIUDEBUG
-	vrgiu_dump_regs(sc);
-#endif
 
 	return ih;
 }
