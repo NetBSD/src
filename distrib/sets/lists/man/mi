@@ -115,6 +115,7 @@
 ./usr/share/man/cat1/g77.0
 ./usr/share/man/cat1/gcov.0
 ./usr/share/man/cat1/gcpp.0
+./usr/share/man/cat1/gencat.0
 ./usr/share/man/cat1/getconf.0
 ./usr/share/man/cat1/getopt.0
 ./usr/share/man/cat1/grep.0
@@ -1248,6 +1249,7 @@
 ./usr/share/man/man1/g77.1
 ./usr/share/man/man1/gcov.1
 ./usr/share/man/man1/gcpp.1
+./usr/share/man/man1/gencat.1
 ./usr/share/man/man1/getconf.1
 ./usr/share/man/man1/getopt.1
 ./usr/share/man/man1/grep.1
