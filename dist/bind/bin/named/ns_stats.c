@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_stats.c,v 1.1.1.1.2.2 1999/12/04 16:56:07 he Exp $	*/
+/*	$NetBSD: ns_stats.c,v 1.1.1.1.2.3 2000/10/10 21:13:12 he Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_stats.c	4.10 (Berkeley) 6/27/90";
@@ -360,13 +360,13 @@ ns_logstats(evContext ctx, void *uap, struct timespec due,
 			sprintf(buffer2, " %s=%lu", p_type(i), typestats[i]);
 			if (strlen(buffer) + strlen(buffer2) >
 			    sizeof(buffer) - 1) {
-				ns_info(ns_log_statistics, buffer);
+				ns_info(ns_log_statistics, "%s", buffer);
 				strcpy(buffer, header);
 			}
 			strcat(buffer, buffer2);
 		}
 	}
-	ns_info(ns_log_statistics, buffer);
+	ns_info(ns_log_statistics, "%s", buffer);
 
 	sprintf(header, "XSTATS %lu %lu", (u_long)timenow, (u_long)boottime);
 	strcpy(buffer, header);
@@ -374,12 +374,12 @@ ns_logstats(evContext ctx, void *uap, struct timespec due,
 		sprintf(buffer2, " %s=%lu",
 			statNames[i]?statNames[i]:"?", (u_long)globalStats[i]);
 		if (strlen(buffer) + strlen(buffer2) > sizeof(buffer) - 1) {
-			ns_info(ns_log_statistics, buffer);
+			ns_info(ns_log_statistics, "%s",buffer);
 			strcpy(buffer, header);
 		}
 		strcat(buffer, buffer2);
 	}
-	ns_info(ns_log_statistics, buffer);
+	ns_info(ns_log_statistics, "%s", buffer);
 }
 
 static void
