@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.127 2001/01/22 12:17:42 jdolecek Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.128 2001/02/06 11:40:02 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -771,6 +771,12 @@ nfs_setattrrpc(vp, vap, cred, procp)
  * nfs lookup call, one step at a time...
  * First look in cache
  * If not found, unlock the directory nfsnode and do the rpc
+ *
+ * This code is full of lock/unlock statements and checks, because
+ * we continue after cache_lookup has finished (we need to check
+ * with the attr cache and do an rpc if it has timed out). This means
+ * that the locking effects of cache_lookup have to be taken into
+ * account.
  */
 int
 nfs_lookup(v)
@@ -798,10 +804,12 @@ nfs_lookup(v)
 	struct nfsnode *np;
 	int lockparent, wantparent, error = 0, attrflag, fhsize;
 	const int v3 = NFS_ISV3(dvp);
+
 	cnp->cn_flags &= ~PDIRUNLOCK;
 	flags = cnp->cn_flags;
 
 	*vpp = NULLVP;
+	newvp = NULLVP;
 	if ((flags & ISLASTCN) && (dvp->v_mount->mnt_flag & MNT_RDONLY) &&
 	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
 		return (EROFS);
@@ -828,20 +836,29 @@ nfs_lookup(v)
 
 		if (error && error != ENOENT) {
 			*vpp = NULLVP;
-			return (error);
+			return error;
+		}
+
+		if (cnp->cn_flags & PDIRUNLOCK) {
+			error = vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
+			if (error) {
+				*vpp = NULLVP;
+				return error;
+			}
+			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
 
 		err2 = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred, cnp->cn_proc);
 		if (err2) {
 			*vpp = NULLVP;
-			return (err2);
+			return err2;
 		}
 
 		if (error == ENOENT) {
 			if (!VOP_GETATTR(dvp, &vattr, cnp->cn_cred,
 			    cnp->cn_proc) && vattr.va_mtime.tv_sec ==
 			    VTONFS(dvp)->n_nctime)
-				return (ENOENT);
+				return ENOENT;
 			cache_purge(dvp);
 			np->n_nctime = 0;
 			goto dorpc;
@@ -857,15 +874,16 @@ nfs_lookup(v)
 			nfsstats.lookupcache_hits++;
 			if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
 				cnp->cn_flags |= SAVENAME;
+			if ((!lockparent || !(flags & ISLASTCN)) &&	
+			     newvp != dvp)
+				VOP_UNLOCK(dvp, 0);
 			return (0);
 		}
-		/* XXX cache_lookup() returns the vnode locked; if nfs
-		 * would have real vnode locking, we should call VOP_UNLOCK()
-		 * here; as it has no real locking, don't bother to do
-		 * anything */
-		/* VOP_UNLOCK(newvp, 0); */
 		cache_purge(newvp);
-		vrele(newvp);
+		if (newvp != dvp)
+			vput(newvp);
+		else
+			vrele(newvp);
 		*vpp = NULLVP;
 	}
 dorpc:
@@ -897,7 +915,7 @@ dorpc:
 		error = nfs_nget(dvp->v_mount, fhp, fhsize, &np);
 		if (error) {
 			m_freem(mrep);
-			return (error);
+			return error;
 		}
 		newvp = NFSTOV(np);
 		if (v3) {
@@ -908,27 +926,80 @@ dorpc:
 		*vpp = newvp;
 		m_freem(mrep);
 		cnp->cn_flags |= SAVENAME;
-		if (!lockparent || !(flags & ISLASTCN))
+		if (!lockparent) {
+			VOP_UNLOCK(dvp, 0);
 			cnp->cn_flags |= PDIRUNLOCK;
+		}
 		return (0);
 	}
 
+	/*
+	 * The postop attr handling is duplicated for each if case,
+	 * because it should be done while dvp is locked (unlocking
+	 * dvp is different for each case).
+	 */
+
 	if (NFS_CMPFH(np, fhp, fhsize)) {
+		/*
+		 * "." lookup
+		 */
 		VREF(dvp);
 		newvp = dvp;
+		if (v3) {
+			nfsm_postop_attr(newvp, attrflag);
+			nfsm_postop_attr(dvp, attrflag);
+		} else
+			nfsm_loadattr(newvp, (struct vattr *)0);
+	} else if (flags & ISDOTDOT) {
+		/*
+		 * ".." lookup
+		 */
+		VOP_UNLOCK(dvp, 0);
+		cnp->cn_flags |= PDIRUNLOCK;
+
+		error = nfs_nget(dvp->v_mount, fhp, fhsize, &np);
+		if (error) {
+			if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) == 0)
+				cnp->cn_flags &= ~PDIRUNLOCK;
+			m_freem(mrep);
+			return error;
+		}
+		newvp = NFSTOV(np);
+
+		if (v3) {
+			nfsm_postop_attr(newvp, attrflag);
+			nfsm_postop_attr(dvp, attrflag);
+		} else
+			nfsm_loadattr(newvp, (struct vattr *)0);
+
+		if (lockparent && (flags & ISLASTCN)) {
+			if ((error = vn_lock(dvp, LK_EXCLUSIVE))) {
+				m_freem(mrep);
+				vput(newvp);
+				return error;
+			}
+			cnp->cn_flags &= ~PDIRUNLOCK;
+		}
 	} else {
+		/*
+		 * Other lookups.
+		 */
 		error = nfs_nget(dvp->v_mount, fhp, fhsize, &np);
 		if (error) {
 			m_freem(mrep);
-			return (error);
+			return error;
 		}
 		newvp = NFSTOV(np);
+		if (v3) {
+			nfsm_postop_attr(newvp, attrflag);
+			nfsm_postop_attr(dvp, attrflag);
+		} else
+			nfsm_loadattr(newvp, (struct vattr *)0);
+		if (!lockparent || !(flags & ISLASTCN)) {
+			VOP_UNLOCK(dvp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
 	}
-	if (v3) {
-		nfsm_postop_attr(newvp, attrflag);
-		nfsm_postop_attr(dvp, attrflag);
-	} else
-		nfsm_loadattr(newvp, (struct vattr *)0);
 	if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
 		cnp->cn_flags |= SAVENAME;
 	if ((cnp->cn_flags & MAKEENTRY) &&
@@ -939,6 +1010,12 @@ dorpc:
 	*vpp = newvp;
 	nfsm_reqdone;
 	if (error) {
+		/*
+		 * We get here only because of errors returned by
+		 * the RPC. Otherwise we'll have returned above
+		 * (the nfsm_* macros will jump to nfsm_reqdone
+		 * on error).
+		 */
 		if (error == ENOENT && (cnp->cn_flags & MAKEENTRY) &&
 		    cnp->cn_nameiop != CREATE) {
 			if (VTONFS(dvp)->n_nctime == 0)
@@ -946,8 +1023,11 @@ dorpc:
 				    VTONFS(dvp)->n_vattr->va_mtime.tv_sec;
 			cache_enter(dvp, NULL, cnp);
 		}
-		if (newvp != NULLVP)
+		if (newvp != NULLVP) {
 			vrele(newvp);
+			if (newvp != dvp)
+				VOP_UNLOCK(newvp, 0);
+		}
 		if ((cnp->cn_nameiop == CREATE || cnp->cn_nameiop == RENAME) &&
 		    (flags & ISLASTCN) && error == ENOENT) {
 			if (dvp->v_mount->mnt_flag & MNT_RDONLY)
@@ -957,11 +1037,10 @@ dorpc:
 		}
 		if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
 			cnp->cn_flags |= SAVENAME;
-	} else {
-		if (!lockparent || !(flags & ISLASTCN))
-			cnp->cn_flags |= PDIRUNLOCK;
+		*vpp = NULL;
 	}
-	return (error);
+
+	return error;
 }
 
 /*
@@ -1280,10 +1359,6 @@ nfs_mknodrpc(dvp, vpp, cnp, vap)
 	if (!error) {
 		nfsm_mtofh(dvp, newvp, v3, gotvp);
 		if (!gotvp) {
-			if (newvp) {
-				vrele(newvp);
-				newvp = (struct vnode *)0;
-			}
 			error = nfs_lookitup(dvp, cnp->cn_nameptr,
 			    cnp->cn_namelen, cnp->cn_cred, cnp->cn_proc, &np);
 			if (!error)
@@ -1295,7 +1370,7 @@ nfs_mknodrpc(dvp, vpp, cnp, vap)
 	nfsm_reqdone;
 	if (error) {
 		if (newvp)
-			vrele(newvp);
+			vput(newvp);
 	} else {
 		if (cnp->cn_flags & MAKEENTRY)
 			cache_enter(dvp, newvp, cnp);
@@ -1305,7 +1380,7 @@ nfs_mknodrpc(dvp, vpp, cnp, vap)
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		VTONFS(dvp)->n_attrstamp = 0;
-	vrele(dvp);
+	vput(dvp);
 	return (error);
 }
 
@@ -1329,7 +1404,7 @@ nfs_mknod(v)
 
 	error = nfs_mknodrpc(ap->a_dvp, &newvp, ap->a_cnp, ap->a_vap);
 	if (!error)
-		vrele(newvp);
+		vput(newvp);
 	return (error);
 }
 
@@ -1409,10 +1484,6 @@ again:
 	if (!error) {
 		nfsm_mtofh(dvp, newvp, v3, gotvp);
 		if (!gotvp) {
-			if (newvp) {
-				vrele(newvp);
-				newvp = (struct vnode *)0;
-			}
 			error = nfs_lookitup(dvp, cnp->cn_nameptr,
 			    cnp->cn_namelen, cnp->cn_cred, cnp->cn_proc, &np);
 			if (!error)
@@ -1428,7 +1499,7 @@ again:
 			goto again;
 		}
 		if (newvp)
-			vrele(newvp);
+			vput(newvp);
 	} else if (v3 && (fmode & O_EXCL))
 		error = nfs_setattrrpc(newvp, vap, cnp->cn_cred, cnp->cn_proc);
 	if (!error) {
@@ -1440,7 +1511,7 @@ again:
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		VTONFS(dvp)->n_attrstamp = 0;
-	vrele(dvp);
+	vput(dvp);
 	return (error);
 }
 
@@ -1512,8 +1583,8 @@ nfs_remove(v)
 		error = nfs_sillyrename(dvp, vp, cnp);
 	PNBUF_PUT(cnp->cn_pnbuf);
 	np->n_attrstamp = 0;
-	vrele(dvp);
-	vrele(vp);
+	vput(dvp);
+	vput(vp);
 	return (error);
 }
 
@@ -1810,12 +1881,12 @@ nfs_symlink(v)
 	}
 	nfsm_reqdone;
 	if (newvp)
-		vrele(newvp);
+		vput(newvp);
 	PNBUF_PUT(cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		VTONFS(dvp)->n_attrstamp = 0;
-	vrele(dvp);
+	vput(dvp);
 	/*
 	 * Kludge: Map EEXIST => 0 assuming that it is a reply to a retry.
 	 */
@@ -1885,7 +1956,7 @@ nfs_mkdir(v)
 	 */
 	if (error == EEXIST || (!error && !gotvp)) {
 		if (newvp) {
-			vrele(newvp);
+			vput(newvp);
 			newvp = (struct vnode *)0;
 		}
 		error = nfs_lookitup(dvp, cnp->cn_nameptr, len, cnp->cn_cred,
@@ -1898,14 +1969,14 @@ nfs_mkdir(v)
 	}
 	if (error) {
 		if (newvp)
-			vrele(newvp);
+			vput(newvp);
 	} else {
 		if (cnp->cn_flags & MAKEENTRY)
 			cache_enter(dvp, newvp, cnp);
 		*ap->a_vpp = newvp;
 	}
 	PNBUF_PUT(cnp->cn_pnbuf);
-	vrele(dvp);
+	vput(dvp);
 	return (error);
 }
 
@@ -2436,6 +2507,8 @@ nfs_readdirplusrpc(vp, uiop, cred)
 			}
 			if (newvp != NULLVP) {
 			    vrele(newvp);
+			    if (newvp != vp)
+				VOP_UNLOCK(vp, 0);
 			    newvp = NULLVP;
 			}
 			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
@@ -2470,8 +2543,11 @@ nfs_readdirplusrpc(vp, uiop, cred)
 	if (bigenough)
 		dnp->n_direofoffset = uiop->uio_offset;
 nfsmout:
-	if (newvp != NULLVP)
+	if (newvp != NULLVP) {
 		vrele(newvp);
+		if (newvp != vp)
+			VOP_UNLOCK(vp, 0);
+	}
 	return (error);
 }
 static char hextoasc[] = "0123456789abcdef";
@@ -2491,6 +2567,7 @@ nfs_sillyrename(dvp, vp, cnp)
 {
 	struct sillyrename *sp;
 	struct nfsnode *np;
+	struct vnode *newvp;
 	int error;
 	short pid;
 
@@ -2527,8 +2604,24 @@ nfs_sillyrename(dvp, vp, cnp)
 	error = nfs_renameit(dvp, cnp, sp);
 	if (error)
 		goto bad;
+	VOP_UNLOCK(vp, 0);
 	error = nfs_lookitup(dvp, sp->s_name, sp->s_namlen, sp->s_cred,
 		cnp->cn_proc, &np);
+	newvp = NFSTOV(np);
+	if (newvp != vp) {
+		/*
+		 * XXX. If the server decides to change the handle
+		 * because of the rename, we're screwed. This is
+		 * "strongly discouraged" in the spec, but not
+		 * forbidden. Should just get a new nfsnode and
+		 * associate it with the vnode in this case.
+		 */
+		vput(newvp);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		error = EINVAL;
+		goto bad;
+	} else
+		vrele(vp);
 	np->n_sillyrename = sp;
 	return (0);
 bad:
@@ -2599,7 +2692,7 @@ nfs_lookitup(dvp, name, len, cred, procp, npp)
 			nfsm_postop_attr(newvp, attrflag);
 			if (!attrflag && *npp == NULL) {
 				m_freem(mrep);
-				vrele(newvp);
+				vput(newvp);
 				return (ENOENT);
 			}
 		} else
@@ -2609,7 +2702,7 @@ nfs_lookitup(dvp, name, len, cred, procp, npp)
 	if (npp && *npp == NULL) {
 		if (error) {
 			if (newvp)
-				vrele(newvp);
+				vput(newvp);
 		} else
 			*npp = np;
 	}
@@ -2685,6 +2778,9 @@ nfs_bmap(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
+	/*
+	 * XXX vpp should be returned unlocked?
+	 */
 	if (ap->a_vpp != NULL)
 		*ap->a_vpp = vp;
 	if (ap->a_bnp != NULL)
