@@ -1,4 +1,4 @@
-/*	$NetBSD: mouse.c,v 1.2 1999/11/11 18:29:40 ad Exp $ */
+/*	$NetBSD: mouse.c,v 1.3 1999/11/15 13:47:30 ad Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,11 +68,18 @@ void
 mouse_put_values(fd)
 	int fd;
 {
+	int tmp;
 
-	if (field_by_value(&resolution)->flags & FLG_SET)
-		if (ioctl(fd, WSMOUSEIO_SRES, &resolution) < 0)
+	if (field_by_value(&resolution)->flags & FLG_SET) {
+		tmp = resolution;
+		if (ioctl(fd, WSMOUSEIO_SRES, &tmp) < 0)
 			err(1, "WSMOUSEIO_SRES");
-	if (field_by_value(&samplerate)->flags & FLG_SET)
-		if (ioctl(fd, WSMOUSEIO_SRATE, &samplerate) < 0)
+		pr_field(field_by_value(&resolution), " -> ");
+	}
+	if (field_by_value(&samplerate)->flags & FLG_SET) {
+		tmp = samplerate;
+		if (ioctl(fd, WSMOUSEIO_SRATE, &tmp) < 0)
 			err(1, "WSMOUSEIO_SRES");
+		pr_field(field_by_value(&tmp), " -> ");
+	}
 }
