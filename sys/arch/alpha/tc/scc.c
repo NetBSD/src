@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.16.4.1 1996/06/03 18:54:32 cgd Exp $	*/
+/*	$NetBSD: scc.c,v 1.16.4.2 1996/06/03 19:44:41 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -305,7 +305,8 @@ sccattach(parent, self, aux)
 	for (cntr = 0; cntr < 2; cntr++) {
 		pdp->p_addr = (void *)sccaddr;
 		tp = scc_tty[sc->sc_dv.dv_unit * 2 + cntr] = ttymalloc();
-		tty_attach(tp);
+		if (cntr == 0)
+			tty_attach(tp);
 		pdp->p_arg = (long)tp;
 		pdp->p_fcn = (void (*)())0;
 		tp->t_dev = (dev_t)((sc->sc_dv.dv_unit << 1) | cntr);
