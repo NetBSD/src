@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.h,v 1.3 2004/02/23 05:20:48 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.h,v 1.4 2004/02/27 03:23:12 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,6 +55,9 @@ public:
 	int _cmdbar_height;
 
 private:
+	HWND _saved_focus;
+	void SaveFocus();
+	void RestoreFocus();
 	void WMCreate(HWND, LPCREATESTRUCT);
 	void WMPaint(HWND, LPCREATESTRUCT);
 
