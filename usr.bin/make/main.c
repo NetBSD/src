@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.86 2003/02/26 08:59:12 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.87 2003/03/14 05:19:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.86 2003/02/26 08:59:12 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.87 2003/03/14 05:19:43 thorpej Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.86 2003/02/26 08:59:12 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.87 2003/03/14 05:19:43 thorpej Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -141,6 +141,7 @@ Boolean			oldVars;	/* variable substitution style */
 Boolean			checkEnvFirst;	/* -e flag */
 Boolean			parseWarnFatal;	/* -W flag */
 Boolean			jobServer; 	/* -J flag */
+Boolean			varNoExportEnv;	/* -X flag */
 static Boolean		jobsRunning;	/* TRUE if the jobs might be running */
 static const char *	tracefile;
 static char *		Check_Cwd_av(int, char **, int);
@@ -178,9 +179,9 @@ MainParseArgs(int argc, char **argv)
 
 	optind = 1;	/* since we're called more than once */
 #ifdef REMOTE
-# define OPTFLAGS "BD:I:J:L:NPST:V:Wd:ef:ij:km:nqrst"
+# define OPTFLAGS "BD:I:J:L:NPST:V:WXd:ef:ij:km:nqrst"
 #else
-# define OPTFLAGS "BD:I:J:NPST:V:Wd:ef:ij:km:nqrst"
+# define OPTFLAGS "BD:I:J:NPST:V:WXd:ef:ij:km:nqrst"
 #endif
 rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 		switch(c) {
@@ -260,6 +261,10 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			break;
 		case 'W':
 			parseWarnFatal = TRUE;
+			break;
+		case 'X':
+			varNoExportEnv = TRUE;
+			Var_Append(MAKEFLAGS, "-X", VAR_GLOBAL);
 			break;
 		case 'd': {
 			char *modules = optarg;
