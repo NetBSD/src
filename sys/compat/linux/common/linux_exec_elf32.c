@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.39 1998/10/23 10:54:58 veego Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.40 1998/11/05 22:19:25 erh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -183,7 +183,6 @@ ELFNAME2(linux,signature)(p, epp, eh)
 	size_t i;
 	Elf_Phdr *ph;
 	Elf_Note *notep;
-	char *testp;
 	size_t phsize;
 	int error = ENOEXEC;
 
@@ -205,17 +204,21 @@ ELFNAME2(linux,signature)(p, epp, eh)
 		    )
 			continue;
 
-		notep = (Elf_Note *)malloc(ephp->p_filesz, M_TEMP, M_WAITOK);
+		notep = (Elf_Note *)malloc(ephp->p_filesz+1, M_TEMP, M_WAITOK);
 		if ((error = ELFNAME(read_from)(p, epp->ep_vp, ephp->p_offset,
 					(caddr_t)notep, ephp->p_filesz)) != 0)
 			goto out3;
 
-		testp = (char *)notep;
-		testp[16] = '\0';
+		/* Check for "linux" in the intepreter name. */
+		if (ephp->p_filesz < 8 + 5) {
+			error = ENOEXEC;
+			goto out3;
+		}
 #ifdef DEBUG_LINUX
-		printf("linux_signature: interp=%s\n", testp);
+		printf("linux_signature: interp=%s\n", notep);
 #endif
-		if (strncmp(&testp[8], "linux", 5) == 0)  {
+		if (strncmp(&((char *)notep)[8], "linux", 5) == 0 ||
+		    strncmp((char *)notep, "/lib/ld.so.", 11) == 0) {
 			error = 0;
 			goto out3;
 		}
