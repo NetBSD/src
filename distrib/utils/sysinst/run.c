@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.55.2.1 2004/05/22 16:45:01 he Exp $	*/
+/*	$NetBSD: run.c,v 1.55.2.2 2004/06/07 10:20:51 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -266,6 +266,14 @@ make_argv(const char *cmd)
 		if (argv == NULL)
 			err(1, "realloc(argv) for %s", cmd);
 		asprintf(argv + argc, "%.*s", (int)(cp - cmd), cmd);
+		/* Hack to remove %xx encoded ftp password */
+		dp = strstr(cmd, ":%");
+		if (dp != NULL && dp < cp) {
+			for (fn = dp + 4; *fn == '%'; fn += 3)
+				continue;
+			if (*fn == '@')
+				memset(dp + 1, '*', fn - dp - 1);
+		}
 		if (*cp == '\'')
 			cp++;
 		if (cp[-1] != '*')
@@ -319,23 +327,13 @@ show_cmd(const char *scmd, struct winsize *win)
 {
 	int n, m;
 	WINDOW *actionwin;
+	const char *command = msg_string(MSG_Command);
+	int nrow;
 
 	wclear(stdscr);
 	clearok(stdscr, 1);
 	touchwin(stdscr);
 	refresh();
-
-	actionwin = subwin(stdscr, win->ws_row - 4, win->ws_col, 4, 0);
-	if (actionwin == NULL) {
-		fprintf(stderr, "sysinst: failed to allocate"
-			    " output window.\n");
-		exit(1);
-	}
-	scrollok(actionwin, TRUE);
-	if (has_colors()) {
-		wbkgd(actionwin, getbkgd(stdscr));
-		wattrset(actionwin, getattrs(stdscr));
-	}
 
 	mvaddstr(0, 4, msg_string(MSG_Status));
 	standout();
@@ -343,13 +341,25 @@ show_cmd(const char *scmd, struct winsize *win)
 	standend();
 	mvaddstr(1, 4, msg_string(MSG_Command));
 	standout();
-	printw("%.*s", win->ws_col - getcurx(stdscr) - 1, scmd);
+	printw("%s", scmd);
 	standend();
-
-	move(3, 0);
+	addstr("\n\n");
 	for (n = win->ws_col; (m = min(n, 30)) > 0; n -= m)
 		addstr( "------------------------------" + 30 - m);
 	refresh();
+
+	nrow = getcury(stdscr) + 1;
+
+	actionwin = subwin(stdscr, win->ws_row - nrow, win->ws_col, nrow, 0);
+	if (actionwin == NULL) {
+		fprintf(stderr, "sysinst: failed to allocate output window.\n");
+		exit(1);
+	}
+	scrollok(actionwin, TRUE);
+	if (has_colors()) {
+		wbkgd(actionwin, getbkgd(stdscr));
+		wattrset(actionwin, getattrs(stdscr));
+	}
 
 	wmove(actionwin, 0, 0);
 	wrefresh(actionwin);
@@ -611,28 +621,37 @@ run_program(int flags, const char *cmd, ...)
 	if (actionwin != NULL) {
 		int y, x;
 		getyx(actionwin, y, x);
-		standout();
+		if (actionwin != stdscr)
+			mvaddstr(0, 4, msg_string(MSG_Status));
 		if (ret != 0) {
-			if (actionwin != stdscr)
-				move(0, 13);
-			else if (x != 0)
+			if (actionwin == stdscr && x != 0)
 				addstr("\n");
-			addstr(errstr);
 			x = 1;	/* force newline below */
-		} else
-			if (actionwin != stdscr)
-				mvaddstr(0, 13, msg_string(MSG_Finished));
-		standend();
+			standout();
+			addstr(errstr);
+			standend();
+		} else {
+			if (actionwin != stdscr) {
+				standout();
+				addstr(msg_string(MSG_Finished));
+				standend();
+			}
+		}
 		refresh();
 		if ((ret != 0 && !(flags & RUN_ERROR_OK)) ||
 		    (y + x != 0 && !(flags & RUN_PROGRESS))) {
 			if (actionwin != stdscr)
-				move(2, 5);
+				move(getbegy(actionwin) - 2, 5);
 			else if (x != 0)
 				addstr("\n");
 			addstr(msg_string(MSG_Hit_enter_to_continue));
 			refresh();
 			getchar();
+		} else {
+			if (y + x != 0)
+				/* give user 1 second to see messages */
+				refresh();
+				sleep(1);
 		}
 	}
 
