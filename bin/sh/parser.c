@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)parser.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: parser.c,v 1.19 1994/07/07 20:53:32 mycroft Exp $";
+static char *rcsid = "$Id: parser.c,v 1.20 1994/08/24 05:48:28 mycroft Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -459,6 +459,7 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		if (!redir)
 			synexpect(-1);
 	case TNL:
+	case TEOF:
 	case TWORD:
 	case TRP:
 		tokpushback++;
