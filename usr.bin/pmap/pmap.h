@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2 2003/03/28 23:10:34 atatat Exp $ */
+/*	$NetBSD: pmap.h,v 1.3 2003/04/04 03:49:20 atatat Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -168,7 +168,14 @@ struct kbit {
 /*
  * this is the *actual* module interface
  */
-void PMAPFUNC(process_map,VERSION)(kvm_t *, pid_t, struct kinfo_proc2 *);
+
+void PMAPFUNC(process_map,VERSION)(kvm_t *, struct kinfo_proc2 *,
+				   struct kbit *, const char *);
+void PMAPFUNC(dump_vm_map,VERSION)(kvm_t *, struct kinfo_proc2 *,
+				   struct kbit *, struct kbit *, const char *);
+size_t PMAPFUNC(dump_vm_map_entry,VERSION)(kvm_t *, struct kinfo_proc2 *,
+					   struct kbit *, struct kbit *, int);
+void PMAPFUNC(dump_amap,VERSION)(kvm_t *, struct kbit *);
 
 /*
  * if we defined VERSION here, we should undef it now that we're done.
