@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.21 1998/12/03 13:24:11 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.22 1998/12/03 13:25:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -1924,7 +1924,7 @@ sis_setup_chip(sc, pc, tag)
 
 	idedma_ctl = 0;
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
-		chp = &sc->pciide_channels[0].wdc_channel; /* Only one channel */
+		chp = &sc->pciide_channels[channel].wdc_channel;
 		WDCDEBUG_PRINT(("sis_setup_chip: old timings reg for "
 		    "channel %d 0x%x\n", channel, 
 		    pci_conf_read(pc, tag, SIS_TIM(channel))), DEBUG_PROBE);
@@ -1936,7 +1936,7 @@ sis_setup_chip(sc, pc, tag)
 				continue;
 			/* add timing values, setup DMA if needed */
 			if (((drvp->drive_flags & DRIVE_DMA) == 0 &&
-			    (drvp->drive_flags & DRIVE_DMA) == 0) ||
+			    (drvp->drive_flags & DRIVE_UDMA) == 0) ||
 			    sc->sc_dma_ok == 0) {
 				drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
 				goto pio;
@@ -1992,7 +1992,7 @@ sis_channel_map(sc, pa, cp)
 {
 	bus_size_t cmdsize, ctlsize;
 	struct channel_softc *wdc_cp = &cp->wdc_channel;
-	u_int32_t sis_ctr0 = pciide_pci_read(pa->pa_pc, pa->pa_tag, SIS_CTRL0);
+	u_int8_t sis_ctr0 = pciide_pci_read(pa->pa_pc, pa->pa_tag, SIS_CTRL0);
 	int interface =
 	    PCI_INTERFACE(pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG));
 
