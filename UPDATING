@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.16 2001/02/17 16:11:00 wiz Exp $
+$NetBSD: UPDATING,v 1.17 2001/02/18 19:13:58 erh Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -151,7 +151,11 @@ Symptom:Unreasonable compiler errors.
 Fix:	Rebuild gnu/usr.bin/egcs
 
 Symptom:Complaints involving a Makefile.
-Fix:	Rebuild usr.bin/make
+Fix:	Rebuild usr.bin/make:
+	cd usr.bin/make && make && make install
+        Or, a failsafe method if that doesn't work:
+	cd usr.bin/make && cc *.c */*.c -I . -o make && mv make /usr/bin
+
 Fix:	Make sure .mk files are up to date.
 	cd share/mk && make install
 
