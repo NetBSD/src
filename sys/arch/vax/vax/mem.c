@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.16 1999/12/11 17:54:04 ragge Exp $	*/
+/*	$NetBSD: mem.c,v 1.17 2000/03/04 07:27:50 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,7 +93,7 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register vm_offset_t v;
+	register vaddr_t v;
 	register int c;
 	register struct iovec *iov;
 	int error = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.30 2000/02/11 19:30:30 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.31 2000/03/04 07:27:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -124,10 +124,10 @@ struct pmap_physseg {
  */
 
 /* user/kernel map constants */
-#define VM_MIN_ADDRESS		((vm_offset_t)0)
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)KERNBASE)
-#define VM_MAX_ADDRESS		((vm_offset_t)KERNBASE)
-#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)KERNBASE)
-#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)(0xC0000000))
+#define VM_MIN_ADDRESS		((vaddr_t)0)
+#define VM_MAXUSER_ADDRESS	((vaddr_t)KERNBASE)
+#define VM_MAX_ADDRESS		((vaddr_t)KERNBASE)
+#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0xC0000000))
 
 #endif
