@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.422 2002/04/18 20:36:30 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.423 2002/04/26 14:21:29 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.419 2002/04/18 20:35:39 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.420 2002/04/26 14:20:59 ad Exp 
  */
 
 /*
@@ -718,16 +718,28 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "AAC-2622",
 	},
 	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR2200S,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "ASR-2200S",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR2120S,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "ASR-2120S",
+	},
+	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAC364,
 	    0,
 	    "Adaptec (2nd PCI Vendor ID)",
 	    "AAC-364",
 	},
 	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAC3642,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR5400S,
 	    0,
 	    "Adaptec (2nd PCI Vendor ID)",
-	    "AAC-3642",
+	    "ASR-5400S",
 	},
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_PERC_2QC,
