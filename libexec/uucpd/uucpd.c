@@ -1,4 +1,4 @@
-/*	$NetBSD: uucpd.c,v 1.18 2002/08/20 14:01:49 christos Exp $	*/
+/*	$NetBSD: uucpd.c,v 1.19 2002/12/06 02:03:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 The Regents of the University of California
 #if 0
 static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";
 #else
-__RCSID("$NetBSD: uucpd.c,v 1.18 2002/08/20 14:01:49 christos Exp $");
+__RCSID("$NetBSD: uucpd.c,v 1.19 2002/12/06 02:03:18 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ char *nenv[] = {
 	Username,
 	NULL,
 };
-int	log;
+int	dolog;
 
 extern char **environ;
 
@@ -114,13 +114,13 @@ main(argc, argv)
 	while ((ch = getopt(argc, argv, "l")) != -1)
 		switch (ch) {
 		case 'l':
-			log = 1;
+			dolog = 1;
 			break;
 		default:
 			exit(1);
 		}
 
-	if (log)
+	if (dolog)
 		openlog("uucpd", LOG_PID, LOG_AUTH);
 	environ = nenv;
 	close(1);
@@ -131,7 +131,7 @@ main(argc, argv)
 	if (getpeername(0, (struct sockaddr *)&hisctladdr, &hisaddrlen) < 0) {
 		fprintf(stderr, "%s: ", argv[0]);
 		perror("getpeername");
-		if (log)
+		if (dolog)
 			syslog(LOG_ERR, "getpeername failed: %m");
 		exit(1);
 	}
@@ -161,7 +161,7 @@ doit(sa)
 		fflush(stdout);
 		if (readline(user, sizeof user) < 0) {
 			fprintf(stderr, "user read\n");
-			if (log)
+			if (dolog)
 				syslog(LOG_ERR, "user read failed: %m");
 			return;
 		}
@@ -174,7 +174,7 @@ doit(sa)
 		fflush(stdout);
 		if (readline(passwd, sizeof passwd) < 0) {
 			fprintf(stderr, "passwd read\n");
-			if (log)
+			if (dolog)
 				syslog(LOG_ERR, "passwd read failed: %m");
 			return;
 		}
@@ -183,7 +183,7 @@ doit(sa)
 
 		if (pw == NULL || strcmp(xpasswd, pw->pw_passwd)) {
 			fprintf(stderr, "Login incorrect.\n");
-			if (log)
+			if (dolog)
 				syslog(LOG_ERR, "incorrect password from %s",
 				    user);
 			return;
@@ -192,7 +192,7 @@ doit(sa)
 		(void)crypt("dummy password", "PA");	/* must always crypt */
 	if (strcmp(pw->pw_shell, _PATH_UUCICO)) {
 		fprintf(stderr, "Login incorrect.\n");
-			if (log)
+			if (dolog)
 				syslog(LOG_ERR, "incorrect shell for %s", user);
 		return;
 	}
@@ -206,16 +206,16 @@ doit(sa)
 	    setlogin(user) < 0 ||
 	    setuid(pw->pw_uid) < 0) {
 		fprintf(stderr, "Could not set permissions.\n");
-		if (log)
+		if (dolog)
 			syslog(LOG_ERR,"couldn't set user %s's permissions: %m",
 			    user);
 		return;
 	}
-	if (log)
+	if (dolog)
 		syslog(LOG_INFO, "%s has logged in", user);
 	execl(_PATH_UUCICO, "uucico", (char *)0);
 	perror("uucico server: execl");
-	if (log)
+	if (dolog)
 		syslog(LOG_ERR, "execl failed: %m");
 }
 
