@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 1998/08/04 16:51:53 minoura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15 1998/09/01 20:08:21 itohy Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -30,6 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_compat_netbsd.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
@@ -40,6 +42,11 @@
 #include <sys/malloc.h>
 #include <machine/cpu.h>
 #include <x68k/x68k/iodevice.h>
+#include <machine/bootinfo.h>
+
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 void configure __P((void));
 static void findroot __P((struct device **, int *));
@@ -48,16 +55,15 @@ int mbprint __P((void *, const char *));
 int mbmatch __P((struct device *, struct cfdata*, void*));
 
 static int simple_devprint __P((void *, const char *));
+static struct device *scsi_find __P((dev_t));
+static struct device *find_dev_byname __P((const char *));
 
 extern int cold;	/* 1 if still booting (locore.s) */
 int x68k_realconfig;
 #include <sys/kernel.h>
 
 struct devnametobdevmaj x68k_nam2blk[] = {
-	{ "fd",		2 },
-	{ "sd",		4 },
-	{ "cd",		7 },
-	{ "md",		8 },
+	X68K_BOOT_DEV_LIST,
 	{ NULL,		0 },
 };
 
@@ -154,14 +160,12 @@ config_console()
 
 dev_t	bootdev = 0;
 
-#if 0
 static void
 findroot(devpp, partp)
 	struct device **devpp;
 	int *partp;
 {
 	int i, majdev, unit, part;
-	struct device *dv;
 	char buf[32];
 
 	/*
@@ -170,132 +174,101 @@ findroot(devpp, partp)
 	*devpp = NULL;
 	*partp = 0;
 
+	if (boothowto & RB_ASKNAME)
+		return;		/* Don't bother looking */
+
 	if ((bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
 		return;
 
-	majdev = (bootdev >> B_TYPESHIFT) & B_TYPEMASK;
+	majdev = B_TYPE(bootdev);
+	if (X68K_BOOT_DEV_IS_SCSI(majdev)) {
+		/*
+		 * SCSI device
+		 */
+		if ((*devpp = scsi_find(bootdev)) != NULL)
+			*partp = B_X68K_SCSI_PART(bootdev);
+		return;
+	}
 	for (i = 0; x68k_nam2blk[i].d_name != NULL; i++)
 		if (majdev == x68k_nam2blk[i].d_maj)
 			break;
 	if (x68k_nam2blk[i].d_name == NULL)
 		return;
 
-	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
-	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
+	part = B_PARTITION(bootdev);
+	unit = B_UNIT(bootdev);
 
 	sprintf(buf, "%s%d", x68k_nam2blk[i].d_name, unit);
-	for (dv = alldevs.tqh_first; dv != NULL;
-	    dv = dv->dv_list.tqe_next) {
-		if (strcmp(buf, dv->dv_xname) == 0) {
-			*devpp = dv;
-			*partp = part;
-			return;
-		}
-	}
+
+	if ((*devpp = find_dev_byname(buf)) != NULL)
+		*partp = part;
 }
-#else
-/*
- * The system will assign the "booted device" indicator (and thus
- * rootdev if rootspec is wildcarded) to the first partition 'a'
- * in preference of boot.
- */
-#include <sys/fcntl.h>		/* XXXX and all that uses it */
-#include <sys/proc.h>		/* XXXX and all that uses it */
 
-#include "fd.h"
-#include "sd.h"
-#include "cd.h"
+static const char *const name_scsiif[] = { X68K_BOOT_SCSIIF_STRINGS };
 
-#if NSD > 0
-extern	struct cfdriver sd_cd;  
-#endif
-#if NCD > 0
-extern	struct cfdriver cd_cd;
-#endif
-#if NFD > 0
-extern	struct cfdriver fd_cd;
-#endif
-
-struct cfdriver *genericconf[] = {
-#if NSD > 0
-	&sd_cd,
-#endif
-#if NCD > 0
-	&cd_cd,
-#endif
-#if NFD > 0
-	&fd_cd,
-#endif
-	NULL,
-};
-
-void
-findroot(devpp, partp)
-	struct device **devpp;
-	int *partp;
+static struct device *
+scsi_find(bdev)
+	dev_t bdev;	/* encoded boot device */
 {
-	struct disk *dkp;
-	struct partition *pp;
-	struct device **devs;
-	int i, maj, unit;
+	int ifid;
+	char tname[16];
+	struct device *scsibus;
+	struct scsibus_softc *sbsc;
+	struct scsipi_link *sc_link;
 
-	/*
-	 * Default to "not found".
-	 */
-	*devpp = NULL;
-
-	/* partition from bootblock */
-	*partp = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
-
-	if (boothowto & RB_ASKNAME)
-		return;		/* Don't bother looking */
-
-	for (i = 0; genericconf[i] != NULL; i++) {
-		for (unit = 0; unit < genericconf[i]->cd_ndevs; unit++) {
-			if (genericconf[i]->cd_devs[unit] == NULL)
-				continue;
-
-			/*
-			 * Find the disk structure corresponding to the
-			 * current device.
-			 */
-			devs = (struct device **)genericconf[i]->cd_devs;
-			if ((dkp = disk_find(devs[unit]->dv_xname)) == NULL)
-				continue;
-
-			if (dkp->dk_driver == NULL ||
-			    dkp->dk_driver->d_strategy == NULL)
-				continue;
-			
-			for (maj = 0; maj < nblkdev; maj++)
-				if (bdevsw[maj].d_strategy ==
-				    dkp->dk_driver->d_strategy)
-					break;
-
-			if (maj != ((bootdev >> B_TYPESHIFT) & B_TYPEMASK))
-				continue;
-
-#ifdef DIAGNOSTIC
-			if (maj >= nblkdev)
-				panic("findroot: impossible");
+	ifid = B_X68K_SCSI_IF(bdev);
+	if (ifid >= sizeof name_scsiif/sizeof name_scsiif[0] ||
+					!name_scsiif[ifid]) {
+#if defined(COMPAT_09) || defined(COMPAT_10) || defined(COMPAT_11) ||	\
+    defined(COMPAT_12) || defined(COMPAT_13)
+		/*
+		 * old boot didn't pass interface type
+		 * try "scsibus0"
+		 */
+		printf("warning: scsi_find: can't get boot interface -- update boot loader\n");
+		scsibus = find_dev_byname("scsibus0");
+#else
+		/* can't determine interface type */
+		return NULL;
 #endif
+	} else {
+		/*
+		 * search for the scsibus whose parent is
+		 * the specified SCSI interface
+		 */
+		sprintf(tname, "%s%d",
+			name_scsiif[ifid], B_X68K_SCSI_IF_UN(bdev));
 
-			/* Open disk; forces read of disklabel. */
-			if ((*bdevsw[maj].d_open)(MAKEDISKDEV(maj,
-			    unit, *partp), FREAD|FNONBLOCK, 0, &proc0))
-				continue;
-			(void)(*bdevsw[maj].d_close)(MAKEDISKDEV(maj,
-			    unit, *partp), FREAD|FNONBLOCK, 0, &proc0);
-			
-			pp = &dkp->dk_label->d_partitions[*partp];
-			if (pp->p_size != 0 && pp->p_fstype == FS_BSDFFS) {
-				*devpp = devs[unit];
-				return;
-			}
-		}
+		for (scsibus = TAILQ_FIRST(&alldevs); scsibus;
+					scsibus = TAILQ_NEXT(scsibus, dv_list))
+			if (scsibus->dv_parent
+			    && !strcmp(tname, scsibus->dv_parent->dv_xname))
+				break;
 	}
+	if (!scsibus)
+		return NULL;
+	sbsc = (struct scsibus_softc *) scsibus;
+	sc_link = sbsc->sc_link[B_X68K_SCSI_ID(bdev)][B_X68K_SCSI_LUN(bdev)];
+
+	return sc_link ? sc_link->device_softc : NULL;
 }
-#endif
+
+/*
+ * Given a device name, find its struct device
+ * XXX - Move this to some common file?
+ */
+static struct device *
+find_dev_byname(name)
+	const char *name;
+{
+	struct device *dv;
+
+	for (dv = TAILQ_FIRST(&alldevs); dv; dv = TAILQ_NEXT(dv, dv_list))
+		if (!strcmp(dv->dv_xname, name))
+			break;
+
+	return dv;
+}
 
 /* 
  * mainbus driver 
