@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.19 1997/02/23 04:05:19 mark Exp $	*/
+/*	$NetBSD: locore.S,v 1.20 1997/07/29 01:20:34 mark Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -420,7 +420,6 @@ Lusertb2:
 /*
  * Signal trampoline; copied to top of user stack.
  */
-	.global	_sigcode
 ENTRY(sigcode)
 /*
  * r0-r2 are our signal handler parameters
@@ -527,13 +526,11 @@ return:
 /*
  * setjump + longjmp
  */
-	.global _setjmp
 ENTRY(setjmp)
 	stmia	r0, {r4-r14}
 	mov	r0, #0x00000000
 	mov	r15, r14
 
-	.global _longjmp
 ENTRY(longjmp)
 	ldmia	r0, {r4-r14}
 	mov	r0, #0x00000001
