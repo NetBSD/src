@@ -1,4 +1,4 @@
-/*	$NetBSD: dm.c,v 1.20 2004/02/08 22:23:50 jsm Exp $	*/
+/*	$NetBSD: dm.c,v 1.21 2004/11/05 21:30:32 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dm.c,v 1.20 2004/02/08 22:23:50 jsm Exp $");
+__RCSID("$NetBSD: dm.c,v 1.21 2004/11/05 21:30:32 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,7 +173,7 @@ c_day(s_day, s_start, s_stop)
 		ct = localtime(&now);
 	if (strcasecmp(s_day, days[ct->tm_wday]))
 		return;
-	if (!isdigit(*s_start) || !isdigit(*s_stop))
+	if (!isdigit((unsigned char)*s_start) || !isdigit((unsigned char)*s_stop))
 		return;
 	start = atoi(s_start);
 	stop = atoi(s_stop);
@@ -221,11 +221,11 @@ c_game(s_game, s_load, s_users, s_priority)
 	if (strcmp(game, s_game) && strcasecmp("default", s_game))
 		return;
 	++found;
-	if (isdigit(*s_load) && atoi(s_load) < load())
+	if (isdigit((unsigned char)*s_load) && atoi(s_load) < load())
 		errx(0, "Sorry, the load average is too high right now.");
-	if (isdigit(*s_users) && atoi(s_users) <= users())
+	if (isdigit((unsigned char)*s_users) && atoi(s_users) <= users())
 		errx(0, "Sorry, there are too many users logged on right now.");
-	if (isdigit(*s_priority))
+	if (isdigit((unsigned char)*s_priority))
 		priority = atoi(s_priority);
 }
 
