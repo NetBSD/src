@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.102 2002/12/11 05:01:22 groo Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.103 2002/12/11 18:09:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.102 2002/12/11 05:01:22 groo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.103 2002/12/11 18:09:07 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -109,6 +109,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.102 2002/12/11 05:01:22 groo Exp $")
 
 
 int	nprocs = 1;		/* process 0 */
+
+/*
+ * Number of ticks to sleep if fork() would fail due to process hitting
+ * limits. Exported in miliseconds to userland via sysctl.
+ */
+int	forkfsleep = 0;
 
 /*ARGSUSED*/
 int
@@ -218,6 +224,8 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 
 		if (ratecheck(&lasttfm, &fork_tfmrate))
 			tablefull("proc", "increase kern.maxproc or NPROC");
+		if (forkfsleep)
+			(void)tsleep(&nprocs, PUSER, "forkmx", forkfsleep);
 		return (EAGAIN);
 	}
 	nprocs++;
@@ -231,6 +239,8 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 			    p1->p_rlimit[RLIMIT_NPROC].rlim_cur)) {
 		(void)chgproccnt(uid, -1);
 		nprocs--;
+		if (forkfsleep)
+			(void)tsleep(&nprocs, PUSER, "forkulim", forkfsleep);
 		return (EAGAIN);
 	}
 
