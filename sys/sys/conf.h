@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.38 1996/09/07 18:39:30 mycroft Exp $	*/
+/*	$NetBSD: conf.h,v 1.39 1996/09/08 00:38:54 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -191,13 +191,7 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev, D_TAPE }
 
-#define cdev_scanner_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, \
-	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
-
-/* open, close, read, write, ioctl, stop, tty */
+/* open, close, read, write, ioctl, stop, tty, poll */
 #define	cdev_tty_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
@@ -209,6 +203,13 @@ extern struct cdevsw cdevsw[];
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
 	(dev_type_mmap((*))) enodev }
+
+/* open, close, read, init */
+#define cdev_scanner_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) nullop, \
+	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
 
 #ifdef LKM
 #define	cdev_lkm_dummy() { \
@@ -226,7 +227,7 @@ extern struct cdevsw cdevsw[];
 	(dev_type_ioctl((*))) enodev, (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev }
 
-/* open, close, read, write, ioctl, poll -- XXX should be a tty */
+/* open, close, read, write, ioctl, stop, poll -- XXX should be a tty */
 #define	cdev_cn_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
@@ -279,18 +280,14 @@ extern struct cdevsw cdevsw[];
 	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
 
 /* open, close, ioctl */
-#define	cdev_lkm_init(c,n) { \
+#define	cdev__oci_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
 	(dev_type_mmap((*))) enodev }
-
-/* open, close, ioctl */
-#define	cdev_ch_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
-	(dev_type_mmap((*))) enodev }
+#define	cdev_lkm_init(c,n)	cdev__oci_init(c,n)
+#define	cdev_ch_init(c,n)	cdev__oci_init(c,n)
+#define	cdev_uk_init(c,n)	cdev__oci_init(c,n)
 
 /* open, close, ioctl, mmap */
 #define	cdev_fb_init(c,n) { \
@@ -305,6 +302,7 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, dev_init(c,n,poll), dev_init(c,n,mmap) }
 
+/* open */
 #define	cdev_svr4_net_init(c,n) { \
 	dev_init(c,n,open), (dev_type_close((*))) enodev, \
 	(dev_type_read((*))) enodev, (dev_type_write((*))) enodev, \
