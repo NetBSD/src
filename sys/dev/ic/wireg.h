@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.4 2001/05/16 07:53:28 ichiro Exp $	*/
+/*	$NetBSD: wireg.h,v 1.5 2001/05/16 10:45:36 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -63,7 +63,7 @@
 #define WI_DEFAULT_AP_DENSITY	1
 
 #define WI_DEFAULT_RTS_THRESH	2347
-	
+
 #define WI_DEFAULT_DATALEN	2304
 
 #define WI_DEFAULT_CREATE_IBSS	0
@@ -108,6 +108,16 @@
 	bus_space_read_2(sc->sc_iot, sc->sc_ioh, reg)
 #define CSR_READ_1(sc, reg)		\
 	bus_space_read_1(sc->sc_iot, sc->sc_ioh, reg)
+
+#ifndef __BUS_SPACE_HAS_STREAM_METHODS
+#define bus_space_write_stream_2	bus_space_write_2
+#define bus_space_read_stream_2		bus_space_read_2
+#endif
+
+#define CSR_WRITE_STREAM_2(sc, reg, val)	\
+	bus_space_write_stream_2(sc->sc_iot, sc->sc_ioh, reg, val)
+#define CSR_READ_STREAM_2(sc, reg)		\
+	bus_space_read_stream_2(sc->sc_iot, sc->sc_ioh, reg)
 
 /*
  * The WaveLAN/IEEE cards contain an 802.11 MAC controller which Lucent
@@ -298,7 +308,7 @@ struct wi_ltv_str {
 						\
 		g.wi_len = 2;			\
 		g.wi_type = recno;		\
-		g.wi_val = val;			\
+		g.wi_val = htole16(val);	\
 		wi_write_record(sc, &g);	\
 	} while (0)
 
@@ -311,7 +321,7 @@ struct wi_ltv_str {
 		bzero((char *)&s, sizeof(s));			\
 		s.wi_len = (l / 2) + 2;				\
 		s.wi_type = recno;				\
-		s.wi_str[0] = strlen(str);			\
+		s.wi_str[0] = htole16(strlen(str));		\
 		bcopy(str, (char *)&s.wi_str[1], strlen(str));	\
 		wi_write_record(sc, (struct wi_ltv_gen *)&s);	\
 	} while (0)
