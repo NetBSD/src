@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.18 1995/10/10 04:45:03 mycroft Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.19 1996/03/08 06:49:45 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -35,13 +35,12 @@
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/systm.h> /* just for boothowto --eichin */
-#include <setjmp.h>
 
 #include <vm/vm.h>
 
 #include <machine/db_machdep.h>
 
-extern jmp_buf	*db_recover;
+extern label_t	*db_recover;
 
 int	db_active = 0;
 
