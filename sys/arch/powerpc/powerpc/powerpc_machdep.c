@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.4 2001/04/05 09:58:05 tsubai Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.5 2001/07/05 08:38:25 toshii Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -66,7 +66,7 @@ setregs(p, pack, stack)
 	 * Notes:
 	 *	- obj and cleanup are the auxilliary and termination
 	 *	  vectors.  They are fixed up by ld.elf_so.
-	 *	- ps_strings is a NetBSD extention, and will be
+	 *	- ps_strings is a NetBSD extension, and will be
 	 * 	  ignored by executables which are strictly
 	 *	  compliant with the SVR4 ABI.
 	 *

@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.49 2001/04/12 03:10:35 thorpej Exp $	*/
+/*	$NetBSD: midway.c,v 1.50 2001/07/05 08:38:26 toshii Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -3598,7 +3598,7 @@ int unit, addr, len;
 
 #ifdef ATM_PVCEXT
 /*
- * ATM PVC extention: shaper control and pvc subinterfaces
+ * ATM PVC extension: shaper control and pvc subinterfaces
  */
 
 /*
