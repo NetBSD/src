@@ -1,4 +1,4 @@
-/*	$NetBSD: ioat66.c,v 1.1 1999/11/15 21:13:38 mcr Exp $	*/
+/*	$NetBSD: ioat66.c,v 1.1.12.1 2001/11/14 19:14:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,6 +32,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.1.12.1 2001/11/14 19:14:50 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

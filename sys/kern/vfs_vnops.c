@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.45.2.3 2001/09/21 22:36:29 nathanw Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.45.2.4 2001/11/14 19:16:49 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)vfs_vnops.c	8.14 (Berkeley) 6/15/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.45.2.4 2001/11/14 19:16:49 nathanw Exp $");
 
 #include "fs_union.h"
 
@@ -193,17 +196,17 @@ vn_writechk(vp)
 }
 
 /*
- * Mark a vnode as being the text image of a running process.
+ * Mark a vnode as having executable mappings.
  */
 void
-vn_marktext(vp)
+vn_markexec(vp)
 	struct vnode *vp;
 {
-	if ((vp->v_flag & VTEXT) == 0) {
+	if ((vp->v_flag & VEXECMAP) == 0) {
 		uvmexp.vnodepages -= vp->v_uobj.uo_npages;
 		uvmexp.vtextpages += vp->v_uobj.uo_npages;
 	}
-	vp->v_flag |= VTEXT;
+	vp->v_flag |= VEXECMAP;
 }
 
 /*

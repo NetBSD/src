@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_invertq.c,v 1.3 1999/02/05 00:06:12 oster Exp $	*/
+/*	$NetBSD: rf_invertq.c,v 1.3.20.1 2001/11/14 19:15:49 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -25,6 +25,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_invertq.c,v 1.3.20.1 2001/11/14 19:15:49 nathanw Exp $");
 
 #include "rf_archs.h"
 #include "rf_pqdeg.h"

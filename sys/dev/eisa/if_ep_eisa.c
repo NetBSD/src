@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.22.6.1 2001/09/21 22:35:29 nathanw Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.22.6.2 2001/11/14 19:14:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,6 +69,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.22.6.2 2001/11/14 19:14:04 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

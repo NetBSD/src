@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.46.2.1 2001/06/21 20:05:28 nathanw Exp $ */
+/*      $NetBSD: if_qe.c,v 1.46.2.2 2001/11/14 19:15:44 nathanw Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,6 +36,9 @@
  *	Fix ALLMULTI reception. But someone must tell me how...
  *	Collect statistics.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.46.2.2 2001/11/14 19:15:44 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

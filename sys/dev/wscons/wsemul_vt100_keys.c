@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_keys.c,v 1.3.14.1 2001/10/22 20:41:48 nathanw Exp $ */
+/* $NetBSD: wsemul_vt100_keys.c,v 1.3.14.2 2001/11/14 19:16:26 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_keys.c,v 1.3.14.2 2001/11/14 19:16:26 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

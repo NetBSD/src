@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.4.2.4 2001/09/21 22:35:43 nathanw Exp $	*/
+/*	$NetBSD: mlx.c,v 1.4.2.5 2001/11/14 19:14:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,6 +72,9 @@
  * o Test and enable channel pause.
  * o SCSI pass-through.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.4.2.5 2001/11/14 19:14:30 nathanw Exp $");
 
 #include "ld.h"
 

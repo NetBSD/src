@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_wfq.c,v 1.2.4.1 2001/06/21 18:12:49 nathanw Exp $	*/
+/*	$NetBSD: altq_wfq.c,v 1.2.4.2 2001/11/14 19:12:39 nathanw Exp $	*/
 /*	$KAME: altq_wfq.c,v 1.7 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -30,6 +30,9 @@
  *  March 27, 1997.  Written by Hiroshi Kyusojin of Keio University
  *  (kyu@mt.cs.keio.ac.jp). 
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.2.4.2 2001/11/14 19:12:39 nathanw Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"

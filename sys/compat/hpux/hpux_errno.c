@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_errno.c,v 1.2 1998/10/24 19:04:19 christos Exp $	*/
+/*	$NetBSD: hpux_errno.c,v 1.2.24.1 2001/11/14 19:12:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,10 @@
  *
  *	@(#)hpux_compat.c	8.4 (Berkeley) 2/13/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hpux_errno.c,v 1.2.24.1 2001/11/14 19:12:57 nathanw Exp $");
+
 #define NERR	84
 #define BERR	1000
 

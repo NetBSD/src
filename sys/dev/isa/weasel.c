@@ -1,4 +1,4 @@
-/*	$NetBSD: weasel.c,v 1.1.4.1 2001/06/21 20:03:55 nathanw Exp $	*/
+/*	$NetBSD: weasel.c,v 1.1.4.2 2001/11/14 19:14:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -40,6 +40,9 @@
  * We're glued into the MDA display driver (`pcdisplay'), and
  * handle things like the watchdog timer.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: weasel.c,v 1.1.4.2 2001/11/14 19:14:55 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

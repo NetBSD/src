@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.55.2.3 2001/09/21 22:36:24 nathanw Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.55.2.4 2001/11/14 19:16:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.55.2.4 2001/11/14 19:16:31 nathanw Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"

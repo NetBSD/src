@@ -27,11 +27,14 @@
  *	i4b - Siemens HSCX chip (B-channel) handling
  *	--------------------------------------------
  *
- *	$Id: hscx.c,v 1.1.2.1 2001/04/09 01:56:13 nathanw Exp $ 
+ *	$Id: hscx.c,v 1.1.2.2 2001/11/14 19:14:23 nathanw Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hscx.c,v 1.1.2.2 2001/11/14 19:14:23 nathanw Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 300001

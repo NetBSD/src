@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.32.2.1 2001/08/24 00:13:01 nathanw Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.32.2.2 2001/11/14 19:18:49 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,6 +38,9 @@
  *	Id: ntfs_vnops.c,v 1.5 1999/05/12 09:43:06 semenu Exp
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.32.2.2 2001/11/14 19:18:49 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

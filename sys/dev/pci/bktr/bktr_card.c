@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_card.c,v 1.9.2.1 2001/09/21 22:36:04 nathanw Exp $	*/
+/*	$NetBSD: bktr_card.c,v 1.9.2.2 2001/11/14 19:15:33 nathanw Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp */
 
@@ -48,6 +48,9 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.9.2.2 2001/11/14 19:15:33 nathanw Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 

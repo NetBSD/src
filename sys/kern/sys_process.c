@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.66.2.4 2001/08/24 00:11:39 nathanw Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.66.2.5 2001/11/14 19:16:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -51,6 +51,9 @@
  * ptrace() requests should actually do, and its text is quoted several times
  * in this file.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.5 2001/11/14 19:16:43 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

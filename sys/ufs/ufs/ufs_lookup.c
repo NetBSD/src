@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.33 2001/02/26 20:25:11 fvdl Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.33.2.1 2001/11/14 19:19:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,6 +40,9 @@
  *	@(#)ufs_lookup.c	8.9 (Berkeley) 8/11/94
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.33.2.1 2001/11/14 19:19:02 nathanw Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -50,7 +53,6 @@
 #include <sys/vnode.h>
 #include <sys/kernel.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufsmount.h>

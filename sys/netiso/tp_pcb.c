@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.21 2000/10/02 03:54:53 itojun Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.21.2.1 2001/11/14 19:18:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -70,6 +70,9 @@ SOFTWARE.
  * tp_soisdisconnected() are tp-specific versions of soisconnect* and are
  * called (obviously) during the closing phase.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.21.2.1 2001/11/14 19:18:30 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"

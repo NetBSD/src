@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.54.20.3 2001/10/08 20:11:08 nathanw Exp $	*/
+/*	$NetBSD: pss.c,v 1.54.20.4 2001/11/14 19:14:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -49,6 +49,9 @@
  * 	- Provide MIDI driver to access MPU
  * 	- Finish support for CD drive (Sony and SCSI)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pss.c,v 1.54.20.4 2001/11/14 19:14:52 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

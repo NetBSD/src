@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.41.2.3 2001/08/24 00:09:38 nathanw Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.41.2.4 2001/11/14 19:14:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  * Device driver for the Standard Microsystems Corp. 83C170
  * Ethernet PCI Integrated Controller (EPIC/100).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.41.2.4 2001/11/14 19:14:37 nathanw Exp $");
 
 #include "bpfilter.h"
 

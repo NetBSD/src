@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.8.2.1 2001/10/08 20:11:04 nathanw Exp $	*/
+/*	$NetBSD: aria.c,v 1.8.2.2 2001/11/14 19:14:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 Roland C. Dowdeswell.  All rights reserved.
@@ -48,6 +48,9 @@
  *           we are passed.
  *       o   Deal better with cards that have no mixer.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.8.2.2 2001/11/14 19:14:44 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

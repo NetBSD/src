@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.138.2.4 2001/09/21 22:36:24 nathanw Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.138.2.5 2001/11/14 19:16:34 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,6 +31,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.138.2.5 2001/11/14 19:16:34 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"

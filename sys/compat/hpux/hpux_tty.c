@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.17.2.1 2001/06/21 19:59:12 nathanw Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.17.2.2 2001/11/14 19:12:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,10 @@
 /*
  * stty/gtty/termio emulation stuff
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.17.2.2 2001/11/14 19:12:59 nathanw Exp $");
+
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
 #endif

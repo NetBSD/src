@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.20.2.2 2001/10/08 20:11:13 nathanw Exp $	*/
+/*	$NetBSD: eso.c,v 1.20.2.3 2001/11/14 19:15:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Klaus J. Klein
@@ -31,6 +31,9 @@
 /*
  * ESS Technology Inc. Solo-1 PCI AudioDrive (ES1938/1946) device driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.20.2.3 2001/11/14 19:15:12 nathanw Exp $");
 
 #include "mpu.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.46.2.4 2001/09/21 22:36:25 nathanw Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.46.2.5 2001/11/14 19:16:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -40,6 +40,9 @@
  *
  *	@(#)kern_physio.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.46.2.5 2001/11/14 19:16:36 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

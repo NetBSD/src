@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.23.2.2 2001/06/21 20:10:03 nathanw Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.23.2.3 2001/11/14 19:18:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -37,6 +37,9 @@
  * Modified for ext2fs by Manuel Bouyer.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.23.2.3 2001/11/14 19:18:53 nathanw Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
@@ -50,7 +53,6 @@
 #include <sys/trace.h>
 #include <sys/resourcevar.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
@@ -356,8 +358,6 @@ done:
 	 */
 	oip->i_e2fs_size = length;
 	oip->i_e2fs_nblock -= blocksreleased;
-	if (oip->i_e2fs_nblock < 0)			/* sanity */
-		oip->i_e2fs_nblock = 0;
 	oip->i_flag |= IN_CHANGE;
 	return (allerror);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.57.2.2 2001/08/24 00:09:01 nathanw Exp $	*/
+/*	$NetBSD: db_command.c,v 1.57.2.3 2001/11/14 19:13:37 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -26,12 +26,16 @@
  * rights to redistribute these changes.
  */
 
-#include "opt_ddb.h"
-#include "opt_inet.h"
-
 /*
  * Command dispatcher.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.57.2.3 2001/11/14 19:13:37 nathanw Exp $");
+
+#include "opt_ddb.h"
+#include "opt_inet.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>

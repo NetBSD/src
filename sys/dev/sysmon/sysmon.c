@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon.c,v 1.4 2000/11/05 04:06:13 thorpej Exp $	*/
+/*	$NetBSD: sysmon.c,v 1.4.4.1 2001/11/14 19:16:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -37,6 +37,9 @@
  * Clearing house for system monitoring hardware.  We currently
  * handle environmental sensors and watchdog timers.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.4.4.1 2001/11/14 19:16:09 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

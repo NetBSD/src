@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ihash.c,v 1.11.2.1 2001/09/21 22:37:09 nathanw Exp $	*/
+/*	$NetBSD: ufs_ihash.c,v 1.11.2.2 2001/11/14 19:19:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -35,6 +35,9 @@
  *	@(#)ufs_ihash.c	8.7 (Berkeley) 5/17/95
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ufs_ihash.c,v 1.11.2.2 2001/11/14 19:19:02 nathanw Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
@@ -42,7 +45,6 @@
 #include <sys/proc.h>
 #include <sys/lock.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_extern.h>
 

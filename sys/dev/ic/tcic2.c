@@ -1,6 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.6 2000/06/28 17:13:04 mrg Exp $	*/
-
-#undef	TCICDEBUG
+/*	$NetBSD: tcic2.c,v 1.6.2.1 2001/11/14 19:14:38 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,6 +29,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.6.2.1 2001/11/14 19:14:38 nathanw Exp $");
+
+#undef	TCICDEBUG
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.40.2.3 2001/08/24 00:09:17 nathanw Exp $	*/
+/*	$NetBSD: bha.c,v 1.40.2.4 2001/11/14 19:14:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -51,6 +51,9 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.40.2.4 2001/11/14 19:14:17 nathanw Exp $");
 
 #include "opt_ddb.h"
 

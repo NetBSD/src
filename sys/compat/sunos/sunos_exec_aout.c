@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec_aout.c,v 1.1 2000/12/01 19:23:10 jdolecek Exp $	*/
+/*	$NetBSD: sunos_exec_aout.c,v 1.1.4.1 2001/11/14 19:13:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -26,6 +26,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.1.4.1 2001/11/14 19:13:23 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +140,7 @@ sunos_exec_aout_prep_zmagic(p, epp)
 #endif
 		return ETXTBSY;
 	}
-	vn_marktext(epp->ep_vp);
+	epp->ep_vp->v_flag |= VTEXT;
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,

@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.15.2.2 2001/08/24 00:09:19 nathanw Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.15.2.3 2001/11/14 19:14:19 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Cirrus Logic CD2400/CD2401 Four Channel Multi-Protocol Comms. Controller.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.15.2.3 2001/11/14 19:14:19 nathanw Exp $");
 
 #include "opt_ddb.h"
 

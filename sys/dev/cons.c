@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.37.4.1 2001/06/21 20:01:15 nathanw Exp $	*/
+/*	$NetBSD: cons.c,v 1.37.4.2 2001/11/14 19:13:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *
  *	@(#)cons.c	8.2 (Berkeley) 1/12/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.37.4.2 2001/11/14 19:13:41 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

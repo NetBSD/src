@@ -1,10 +1,14 @@
-/*	$NetBSD: sets.c,v 1.4.46.2 2001/06/21 20:09:19 nathanw Exp $	*/
+/*	$NetBSD: sets.c,v 1.4.46.3 2001/11/14 19:18:33 nathanw Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
  * It was a ridiculously fast hack and needs rewriting.
  * However it does work...
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sets.c,v 1.4.46.3 2001/11/14 19:18:33 nathanw Exp $");
+
 #include "main.h"
 #include "malloc.h"
 #include "sets.h"

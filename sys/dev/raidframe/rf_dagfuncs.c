@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.7 2001/02/03 12:51:10 mrg Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.7.2.1 2001/11/14 19:15:47 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -46,6 +46,9 @@
  *    even when they NOP, so that a downstream release node will not have
  *    to check to find out whether or not the acquire was suppressed.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.7.2.1 2001/11/14 19:15:47 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

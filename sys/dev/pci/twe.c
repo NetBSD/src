@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.12.2.5 2001/10/22 20:41:29 nathanw Exp $	*/
+/*	$NetBSD: twe.c,v 1.12.2.6 2001/11/14 19:15:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,6 +68,9 @@
 /*
  * Driver for the 3ware Escalade family of RAID controllers.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.12.2.6 2001/11/14 19:15:31 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

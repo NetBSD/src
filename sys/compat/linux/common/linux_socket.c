@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.28.2.6 2001/09/21 22:35:19 nathanw Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.28.2.7 2001/11/14 19:13:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -45,6 +45,9 @@
  * control structure would need to be adjusted accordingly in sendmsg() and
  * recvmsg().
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.28.2.7 2001/11/14 19:13:13 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"

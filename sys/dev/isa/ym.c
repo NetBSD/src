@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.17.2.1 2001/10/08 20:11:09 nathanw Exp $	*/
+/*	$NetBSD: ym.c,v 1.17.2.2 2001/11/14 19:14:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,6 +65,9 @@
 /*
  *  Original code from OpenBSD.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.17.2.2 2001/11/14 19:14:55 nathanw Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"

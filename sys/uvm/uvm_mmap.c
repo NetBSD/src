@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.49.2.6 2001/09/21 22:37:15 nathanw Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.49.2.7 2001/11/14 19:19:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -49,6 +49,10 @@
  * uvm_mmap.c: system call interface into VM system, plus kernel vm_mmap
  * function.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.49.2.7 2001/11/14 19:19:07 nathanw Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/file.h>
@@ -1070,6 +1074,15 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 
 	} else {
 		vp = (struct vnode *)handle;
+
+		/*
+		 * Don't allow mmap for EXEC if the file system
+		 * is mounted NOEXEC.
+		 */
+		if ((prot & PROT_EXEC) != 0 &&
+		    (vp->v_mount->mnt_flag & MNT_NOEXEC) != 0)
+			return (EACCES);
+
 		if (vp->v_type != VCHR) {
 			error = VOP_MMAP(vp, 0, curproc->l_proc->p_ucred, 
 			    curproc->l_proc);
@@ -1082,6 +1095,13 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 
 			/* XXX for now, attach doesn't gain a ref */
 			VREF(vp);
+
+			/*
+			 * If the vnode is being mapped with PROT_EXEC,
+			 * then mark it as text.
+			 */
+			if (prot & PROT_EXEC)
+				vn_markexec(vp);
 		} else {
 			uobj = udv_attach((void *) &vp->v_rdev,
 			    (flags & MAP_SHARED) ? maxprot :

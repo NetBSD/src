@@ -1,4 +1,4 @@
-/*	$NetBSD: bridgestp.c,v 1.1.2.2 2001/08/24 00:12:05 nathanw Exp $	*/
+/*	$NetBSD: bridgestp.c,v 1.1.2.3 2001/11/14 19:17:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -38,6 +38,9 @@
  * ISO/IEC Final DIS 15802-3 (IEEE P802.1D/D17), May 25, 1998.
  * (In English: IEEE 802.1D, Draft 17, 1998)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.1.2.3 2001/11/14 19:17:18 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.21 1999/08/14 13:43:02 tron Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.21.14.1 2001/11/14 19:15:35 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
  *
  *	@(#)com.c	7.5 (Berkeley) 5/16/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.21.14.1 2001/11/14 19:15:35 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.6.2.1 2001/06/21 20:04:56 nathanw Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.6.2.2 2001/11/14 19:15:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * 3ware "Escalade" RAID controller front-end for ld(4) driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.6.2.2 2001/11/14 19:15:21 nathanw Exp $");
 
 #include "rnd.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.4.4.1 2001/06/21 20:08:33 nathanw Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.4.4.2 2001/11/14 19:17:46 nathanw Exp $	*/
 /*	$KAME: ip_encap.c,v 1.39 2000/10/01 12:37:18 itojun Exp $	*/
 
 /*
@@ -55,6 +55,9 @@
  * The code will let you match protocol via src/dst address pair.
  */
 /* XXX is M_NETADDR correct? */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.4.4.2 2001/11/14 19:17:46 nathanw Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"

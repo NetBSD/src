@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.43.4.2 2001/08/24 00:10:43 nathanw Exp $	*/
+/*	$NetBSD: ch.c,v 1.43.4.3 2001/11/14 19:16:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.43.4.3 2001/11/14 19:16:01 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

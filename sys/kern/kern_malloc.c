@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.57.2.3 2001/09/21 22:36:25 nathanw Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.57.2.4 2001/11/14 19:16:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -35,6 +35,9 @@
  *
  *	@(#)kern_malloc.c	8.4 (Berkeley) 5/20/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.57.2.4 2001/11/14 19:16:36 nathanw Exp $");
 
 #include "opt_lockdebug.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_proto.c,v 1.11.14.1 2001/04/09 01:58:53 nathanw Exp $	*/
+/*	$NetBSD: iso_proto.c,v 1.11.14.2 2001/11/14 19:18:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,6 +67,9 @@ SOFTWARE.
  * ISO protocol family includes TP, CLTP, CLNP, 8208
  * TP and CLNP are implemented here.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.11.14.2 2001/11/14 19:18:27 nathanw Exp $");
 
 #include "opt_iso.h"
 

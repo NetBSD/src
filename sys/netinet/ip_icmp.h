@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.15 2000/10/18 17:09:14 thorpej Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.15.2.1 2001/11/14 19:17:49 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -182,6 +182,7 @@ struct icmp {
 void	icmp_error __P((struct mbuf *, int, int, n_long, struct ifnet *));
 void	icmp_mtudisc __P((struct icmp *, struct in_addr));
 void	icmp_input __P((struct mbuf *, ...));
+void	icmp_init __P((void));
 void	icmp_reflect __P((struct mbuf *));
 void	icmp_send __P((struct mbuf *, struct mbuf *));
 int	icmp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));

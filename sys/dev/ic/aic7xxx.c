@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.66.2.6 2001/10/22 20:41:16 nathanw Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.66.2.7 2001/11/14 19:14:14 nathanw Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -85,6 +85,9 @@
  * information isn't lost.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.66.2.7 2001/11/14 19:14:14 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ahc.h"

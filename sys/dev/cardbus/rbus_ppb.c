@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.1.4.2 2001/08/24 00:09:07 nathanw Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.1.4.3 2001/11/14 19:14:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * CardBus front-end for the Intel/Digital DECchip 21152 PCI-PCI bridge
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.1.4.3 2001/11/14 19:14:02 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

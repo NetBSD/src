@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_blkio.c,v 1.3.2.1 2001/06/21 19:59:44 nathanw Exp $	*/
+/*	$NetBSD: linux_blkio.c,v 1.3.2.2 2001/11/14 19:13:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_blkio.c,v 1.3.2.2 2001/11/14 19:13:08 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

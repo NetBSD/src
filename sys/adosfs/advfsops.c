@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.44.2.4 2001/10/08 20:10:42 nathanw Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.44.2.5 2001/11/14 19:12:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.44.2.5 2001/11/14 19:12:36 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"

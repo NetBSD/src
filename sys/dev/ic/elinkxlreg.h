@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlreg.h,v 1.4.2.2 2001/08/24 00:09:23 nathanw Exp $	*/
+/*	$NetBSD: elinkxlreg.h,v 1.4.2.3 2001/11/14 19:14:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@
 #define ELINK_W7_VLANMASK	0x00	/* 90xB only */
 #define ELINK_W7_VLANTYPE	0x04	/* 90xB only */
 #define ELINK_W7_TIMER		0x0a	/* 90x only */
-#define ELINK_W7_TXSTATUS	0x0b	/* 90x only */
+#define ELINK_W7_TX_STATUS	0x0b	/* 90x only */
 #define ELINK_W7_POWEREVENT	0x0c	/* 90xB only */
 #define ELINK_W7_INTSTATUS	0x0e
 

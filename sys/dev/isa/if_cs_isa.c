@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.3 2000/12/26 09:42:21 mycroft Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.3.2.1 2001/11/14 19:14:47 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -32,6 +32,9 @@
  *    negligence, tort, under statute, in equity, at law or otherwise,
  *    even if advised of the possibility of such damage.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_cs_isa.c,v 1.3.2.1 2001/11/14 19:14:47 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,13 +1,4 @@
-/*	$NetBSD: wds.c,v 1.41.2.2 2001/08/24 00:09:51 nathanw Exp $	*/
-
-#include "opt_ddb.h"
-
-#undef WDSDIAG
-#ifdef DDB
-#define	integrate
-#else
-#define	integrate	static inline
-#endif
+/*	$NetBSD: wds.c,v 1.41.2.3 2001/11/14 19:14:54 nathanw Exp $	*/
 
 /*
  * XXX
@@ -93,6 +84,18 @@
  *
  * Loosely based on Theo Deraadt's unfinished attempt.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.41.2.3 2001/11/14 19:14:54 nathanw Exp $");
+
+#include "opt_ddb.h"
+
+#undef WDSDIAG
+#ifdef DDB
+#define	integrate
+#else
+#define	integrate	static inline
+#endif
 
 #include <sys/types.h>
 #include <sys/param.h>

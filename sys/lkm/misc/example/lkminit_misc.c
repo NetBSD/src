@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_misc.c,v 1.1 2000/12/11 13:48:11 jdolecek Exp $	*/
+/*	$NetBSD: lkminit_misc.c,v 1.1.4.1 2001/11/14 19:17:01 nathanw Exp $	*/
 
 /*
  * Makefile for miscmod
@@ -37,6 +37,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lkminit_misc.c,v 1.1.4.1 2001/11/14 19:17:01 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

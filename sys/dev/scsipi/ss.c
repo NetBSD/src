@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.33.2.2 2001/08/24 00:10:55 nathanw Exp $	*/
+/*	$NetBSD: ss.c,v 1.33.2.3 2001/11/14 19:16:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.33.2.3 2001/11/14 19:16:05 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

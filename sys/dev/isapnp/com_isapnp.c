@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isapnp.c,v 1.16 1999/03/22 10:00:10 mycroft Exp $	*/
+/*	$NetBSD: com_isapnp.c,v 1.16.20.1 2001/11/14 19:14:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com_isapnp.c,v 1.16.20.1 2001/11/14 19:14:56 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

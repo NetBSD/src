@@ -114,6 +114,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dbstats.c,v 1.3.4.3 2001/11/14 19:13:45 nathanw Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"

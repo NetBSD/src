@@ -114,6 +114,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tbinstal.c,v 1.1.1.1.4.3 2001/11/14 19:13:56 nathanw Exp $");
 
 #define __TBINSTAL_C__
 

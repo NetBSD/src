@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_12.c,v 1.9.24.1 2001/03/05 22:49:19 nathanw Exp $	*/
+/*	$NetBSD: vm_12.c,v 1.9.24.2 2001/11/14 19:12:55 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_12.c,v 1.9.24.2 2001/11/14 19:12:55 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.29.2.1 2001/04/09 01:56:57 nathanw Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.29.2.2 2001/11/14 19:15:07 nathanw Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -34,6 +34,9 @@
  *
  * $FreeBSD: src/sys/dev/aic7xxx/ahc_pci.c,v 1.28 2000/02/09 21:00:22 gibbs Exp $
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.29.2.2 2001/11/14 19:15:07 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

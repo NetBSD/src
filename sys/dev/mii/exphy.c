@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.25.2.2 2001/09/21 22:35:49 nathanw Exp $	*/
+/*	$NetBSD: exphy.c,v 1.25.2.3 2001/11/14 19:15:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -69,6 +69,9 @@
 /*
  * driver for 3Com internal PHYs
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.25.2.3 2001/11/14 19:15:01 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

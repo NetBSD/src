@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.54.2.5 2001/10/22 20:41:43 nathanw Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.54.2.6 2001/11/14 19:16:14 nathanw Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -75,6 +75,9 @@
  * investigate short rx problem
  * proper cleanup on errors
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.54.2.6 2001/11/14 19:16:14 nathanw Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -438,6 +441,13 @@ aue_miibus_readreg(device_ptr_t dev, int phy, int reg)
 	int			i;
 	u_int16_t		val;
 
+	if (sc->aue_dying) {
+#ifdef DIAGNOSTIC
+		printf("%s: dying\n", USBDEVNAME(sc->aue_dev));
+#endif
+		return 0;
+	}
+
 #if 0
 	/*
 	 * The Am79C901 HomePNA PHY actually contains
@@ -542,11 +552,12 @@ aue_miibus_statchg(device_ptr_t dev)
 	 * This turns on the 'dual link LED' bin in the auxmode
 	 * register of the Broadcom PHY.
 	 */
-	if (sc->aue_flags & LSYS) {
+	if (!sc->aue_dying && (sc->aue_flags & LSYS)) {
 		u_int16_t auxmode;
 		auxmode = aue_miibus_readreg(dev, 0, 0x1b);
 		aue_miibus_writereg(dev, 0, 0x1b, auxmode | 0x04);
 	}
+	DPRINTFN(5,("%s: %s: exit\n", USBDEVNAME(sc->aue_dev), __FUNCTION__));
 }
 
 #define AUE_POLY	0xEDB88320

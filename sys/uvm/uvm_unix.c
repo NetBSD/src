@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.18.2.3 2001/06/21 20:10:50 nathanw Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.18.2.4 2001/11/14 19:19:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -48,6 +48,9 @@
 /*
  * uvm_unix.c: traditional sbrk/grow interface to vm.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.18.2.4 2001/11/14 19:19:10 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

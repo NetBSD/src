@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.2.2.4 2001/09/21 22:35:48 nathanw Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.2.2.5 2001/11/14 19:15:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,6 +72,9 @@
  * Programming information for this PHY was gleaned from FreeBSD
  * (they were apparently able to get a datasheet from Broadcom).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.2.2.5 2001/11/14 19:15:01 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

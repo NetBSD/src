@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.63.2.4 2001/09/21 22:36:50 nathanw Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.63.2.5 2001/11/14 19:17:57 nathanw Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -113,6 +113,9 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  *
  *	@(#)tcp_output.c	8.4 (Berkeley) 5/24/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.63.2.5 2001/11/14 19:17:57 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"

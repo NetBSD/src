@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.71.2.2 2001/08/24 00:09:02 nathanw Exp $	*/
+/*	$NetBSD: ccd.c,v 1.71.2.3 2001/11/14 19:13:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -88,6 +88,9 @@
  *	NASA Ames Research Center
  *	Moffett Field, CA 94035
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.71.2.3 2001/11/14 19:13:40 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_chksum.c,v 1.13.6.2 2001/10/22 20:42:07 nathanw Exp $	*/
+/*	$NetBSD: iso_chksum.c,v 1.13.6.3 2001/11/14 19:18:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -77,6 +77,9 @@ SOFTWARE.
  * stuffed, and the length of the chunk.  The 2 octets have to be logically
  * adjacent, but may be physically located in separate mbufs.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: iso_chksum.c,v 1.13.6.3 2001/11/14 19:18:26 nathanw Exp $");
 
 #include "opt_iso.h"
 

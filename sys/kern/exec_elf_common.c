@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf_common.c,v 1.13 2000/11/08 05:47:56 chs Exp $	*/
+/*	$NetBSD: exec_elf_common.c,v 1.13.2.1 2001/11/14 19:16:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exec_elf_common.c,v 1.13.2.1 2001/11/14 19:16:32 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.35.2.2 2001/10/22 20:41:51 nathanw Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.35.2.3 2001/11/14 19:16:48 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)vfs_lookup.c	8.10 (Berkeley) 5/27/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.35.2.3 2001/11/14 19:16:48 nathanw Exp $");
 
 #include "opt_ktrace.h"
 

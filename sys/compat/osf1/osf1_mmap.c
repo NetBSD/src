@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_mmap.c,v 1.7.2.1 2001/08/30 23:43:46 nathanw Exp $ */
+/* $NetBSD: osf1_mmap.c,v 1.7.2.2 2001/11/14 19:13:20 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: osf1_mmap.c,v 1.7.2.2 2001/11/14 19:13:20 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.52.2.1 2001/08/24 00:09:46 nathanw Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.52.2.2 2001/11/14 19:14:48 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -38,6 +38,10 @@
  * - promiscuous
  * - get rid of isa indirect stuff
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.52.2.2 2001/11/14 19:14:48 nathanw Exp $");
+
 #include "opt_inet.h"
 #include "opt_ns.h"
 #include "bpfilter.h"

@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.4.2.1 2001/06/21 20:04:31 nathanw Exp $ */
+/* $NetBSD: btvmei.c,v 1.4.2.2 2001/11/14 19:15:08 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -27,6 +27,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.4.2.2 2001/11/14 19:15:08 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcioman.c,v 1.4.2.2 2001/06/21 20:01:39 nathanw Exp $ */
+/*	$NetBSD: hpcioman.c,v 1.4.2.3 2001/11/14 19:14:06 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hpcioman.c,v 1.4.2.3 2001/11/14 19:14:06 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.11.4.1 2001/09/21 22:35:43 nathanw Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.11.4.2 2001/11/14 19:14:32 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.11.4.2 2001/11/14 19:14:32 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

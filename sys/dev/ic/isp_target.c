@@ -1,4 +1,4 @@
-/* $NetBSD: isp_target.c,v 1.10.2.3 2001/09/21 22:35:41 nathanw Exp $ */
+/* $NetBSD: isp_target.c,v 1.10.2.4 2001/11/14 19:14:27 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,6 +59,9 @@
 /*
  * Include header file appropriate for platform we're building on.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.10.2.4 2001/11/14 19:14:27 nathanw Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>

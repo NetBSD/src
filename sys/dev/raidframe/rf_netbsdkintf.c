@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.104.2.3 2001/10/22 20:41:37 nathanw Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.104.2.4 2001/11/14 19:15:50 nathanw Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -112,6 +112,9 @@
  * rf_kintf.c -- the kernel interface routines for RAIDframe
  *
  ***********************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.104.2.4 2001/11/14 19:15:50 nathanw Exp $");
 
 #include <sys/errno.h>
 #include <sys/param.h>

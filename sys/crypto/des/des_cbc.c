@@ -55,6 +55,9 @@
  * [including the GNU Public Licence.]
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: des_cbc.c,v 1.2.4.2 2001/11/14 19:13:35 nathanw Exp $");
+
 #include <crypto/des/des_locl.h>
 
 void des_ncbc_encrypt(const unsigned char *in, unsigned char *out, long length,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.22.14.1 2001/08/24 00:09:51 nathanw Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.22.14.2 2001/11/14 19:14:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sb_isa.c,v 1.22.14.2 2001/11/14 19:14:53 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

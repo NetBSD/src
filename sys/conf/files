@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.427.2.7 2001/10/22 20:41:14 nathanw Exp $
+#	$NetBSD: files,v 1.427.2.8 2001/11/14 19:13:33 nathanw Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -987,7 +987,7 @@ file	net/if_ethersubr.c		ether | fddi | netatalk | token |
 file	net/if_faith.c			faith & inet & inet6	needs-flag
 file	net/if_fddisubr.c		fddi			needs-flag
 file	net/if_gif.c			gif			needs-flag
-file	net/if_gre.c			gre			needs-count	
+file	net/if_gre.c			gre			needs-flag
 file	net/if_hippisubr.c		hippi			needs-flag
 file	net/if_ieee1394subr.c		ieee1394
 file	net/if_ieee80211subr.c		wlan
@@ -999,7 +999,7 @@ file	net/if_sl.c			sl			needs-count
 file	net/if_spppsubr.c		sppp
 file	net/if_strip.c			strip			needs-count
 file	net/if_tokensubr.c		token			needs-flag
-file	net/if_tun.c			tun			needs-count
+file	net/if_tun.c			tun			needs-flag
 file	net/if_vlan.c			vlan			needs-flag
 file	net/if_pppoe.c			pppoe			needs-count
 #file net/net_osdep.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.7.2.1 2001/09/21 22:36:22 nathanw Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.7.2.2 2001/11/14 19:16:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -36,6 +36,9 @@
  *
  *	filecore_node.c		1.0	1998/6/4
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.7.2.2 2001/11/14 19:16:29 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.8.4.2 2001/08/24 00:10:54 nathanw Exp $ */
+/*	$NetBSD: ses.c,v 1.8.4.3 2001/11/14 19:16:05 nathanw Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -25,6 +25,8 @@
  * Author:	mjacob@nas.nasa.gov
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.8.4.3 2001/11/14 19:16:05 nathanw Exp $");
 
 #include "opt_scsi.h"
 

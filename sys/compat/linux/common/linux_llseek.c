@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_llseek.c,v 1.25.24.1 2001/03/05 22:49:25 nathanw Exp $	*/
+/*	$NetBSD: linux_llseek.c,v 1.25.24.2 2001/11/14 19:13:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_llseek.c,v 1.25.24.2 2001/11/14 19:13:11 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

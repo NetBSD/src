@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.4.2.3 2001/08/24 00:09:34 nathanw Exp $	*/
+/*	$NetBSD: osiop.c,v 1.4.2.4 2001/11/14 19:14:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -74,6 +74,9 @@
  * The 53c710 datasheet is avaliable at:
  * http://www.lsilogic.com/techlib/techdocs/storage_stand_prod/index.html
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.4.2.4 2001/11/14 19:14:33 nathanw Exp $");
 
 /* #define OSIOP_DEBUG */
 

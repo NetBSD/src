@@ -27,13 +27,16 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.2.2.2 2001/08/24 00:12:48 nathanw Exp $ 
+ *	$Id: i4b_l4.c,v 1.2.2.3 2001/11/14 19:18:19 nathanw Exp $ 
  *
  * $FreeBSD$
  *
  *      last edit-date: [Fri Jan  5 11:33:47 2001]
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.2.2.3 2001/11/14 19:18:19 nathanw Exp $");
 
 #include "i4b.h"
 #include "i4bipr.h"

@@ -33,8 +33,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$NetBSD: example_misc.c,v 1.1 2000/12/11 13:48:11 jdolecek Exp $
+ *	$NetBSD: example_misc.c,v 1.1.4.1 2001/11/14 19:17:01 nathanw Exp $
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: example_misc.c,v 1.1.4.1 2001/11/14 19:17:01 nathanw Exp $");
+
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/systm.h>

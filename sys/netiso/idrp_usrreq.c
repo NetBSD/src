@@ -1,4 +1,4 @@
-/*	$NetBSD: idrp_usrreq.c,v 1.8 2000/03/30 13:10:10 augustss Exp $	*/
+/*	$NetBSD: idrp_usrreq.c,v 1.8.6.1 2001/11/14 19:18:25 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)idrp_usrreq.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.8.6.1 2001/11/14 19:18:25 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

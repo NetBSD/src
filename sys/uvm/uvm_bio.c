@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.7.2.6 2001/10/22 20:42:14 nathanw Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.7.2.7 2001/11/14 19:19:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -29,12 +29,14 @@
  *
  */
 
-#include "opt_uvmhist.h"
-
 /*
  * uvm_bio.c: buffered i/o vnode mapping cache
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.7.2.7 2001/11/14 19:19:04 nathanw Exp $");
+
+#include "opt_uvmhist.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: st_scsi.c,v 1.2.2.3 2001/08/24 00:10:58 nathanw Exp $ */
+/*	$NetBSD: st_scsi.c,v 1.2.2.4 2001/11/14 19:16:06 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,9 @@
  *
  * A lot of rewhacking done by mjacob (mjacob@nas.nasa.gov).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.2.2.4 2001/11/14 19:16:06 nathanw Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"

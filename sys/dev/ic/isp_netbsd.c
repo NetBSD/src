@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.39.2.5 2001/10/08 20:11:01 nathanw Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.39.2.6 2001/11/14 19:14:27 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -57,6 +57,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.39.2.6 2001/11/14 19:14:27 nathanw Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>

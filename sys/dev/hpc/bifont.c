@@ -1,4 +1,4 @@
-/*	$NetBSD: bifont.c,v 1.1.4.1 2001/09/21 22:35:29 nathanw Exp $	*/
+/*	$NetBSD: bifont.c,v 1.1.4.2 2001/11/14 19:14:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bifont.c,v 1.1.4.2 2001/11/14 19:14:05 nathanw Exp $");
 
 unsigned char font_clR8x8_data[] = {
 /*

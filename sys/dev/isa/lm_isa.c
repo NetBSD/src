@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_isa.c,v 1.3 2000/06/24 00:37:20 thorpej Exp $ */
+/*	$NetBSD: lm_isa.c,v 1.3.4.1 2001/11/14 19:14:51 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.3.4.1 2001/11/14 19:14:51 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

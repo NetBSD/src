@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.17.2.1 2001/03/05 22:49:48 nathanw Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.17.2.2 2001/11/14 19:16:48 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,6 +37,9 @@
  *
  *	@(#)ufs_lockf.c	8.4 (Berkeley) 10/26/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.17.2.2 2001/11/14 19:16:48 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

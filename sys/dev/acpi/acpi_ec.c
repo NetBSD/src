@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.1.4.3 2001/10/22 20:41:16 nathanw Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.1.4.4 2001/11/14 19:13:43 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -170,6 +170,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.1.4.4 2001/11/14 19:13:43 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

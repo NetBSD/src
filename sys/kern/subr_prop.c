@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prop.c,v 1.3.4.2 2001/10/22 20:41:50 nathanw Exp $	*/
+/*	$NetBSD: subr_prop.c,v 1.3.4.3 2001/11/14 19:16:41 nathanw Exp $	*/
 
 /*  
  * Copyright (c) 2001 Eduardo Horvath.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.3.4.3 2001/11/14 19:16:41 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.29.2.6 2001/10/08 20:11:57 nathanw Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.29.2.7 2001/11/14 19:19:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,11 +66,14 @@
  * rights to redistribute these changes.
  */
 
-#include "opt_uvmhist.h"
-
 /*
  * uvm_pdaemon.c: the page daemon
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.29.2.7 2001/11/14 19:19:08 nathanw Exp $");
+
+#include "opt_uvmhist.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -355,7 +358,6 @@ boolean_t
 uvmpd_scan_inactive(pglst)
 	struct pglist *pglst;
 {
-	boolean_t retval = FALSE;	/* assume we haven't hit target */
 	int error;
 	struct vm_page *p, *nextpg;
 	struct uvm_object *uobj;
@@ -390,7 +392,6 @@ uvmpd_scan_inactive(pglst)
 			    dirtyreacts == UVMPD_NUMDIRTYREACTS) {
 				UVMHIST_LOG(pdhist,"  met free target: "
 					    "exit loop", 0, 0, 0, 0);
-				retval = TRUE;
 
 				if (swslot == 0) {
 					/* exit now if no swap-i/o pending */
@@ -555,6 +556,12 @@ uvmpd_scan_inactive(pglst)
 					anon->u.an_page = NULL;
 				}
 				simple_unlock(slock);
+
+				/* this page is now only in swap. */
+				simple_lock(&uvm.swap_data_lock);
+				KASSERT(uvmexp.swpgonly < uvmexp.swpginuse);
+				uvmexp.swpgonly++;
+				simple_unlock(&uvm.swap_data_lock);
 				continue;
 			}
 
@@ -713,7 +720,6 @@ uvmpd_scan(void)
 	struct vm_page *p, *nextpg;
 	struct uvm_object *uobj;
 	struct vm_anon *anon;
-	boolean_t got_it;
 	UVMHIST_FUNC("uvmpd_scan"); UVMHIST_CALLED(pdhist);
 
 	uvmexp.pdrevs++;
@@ -752,7 +758,6 @@ uvmpd_scan(void)
 	 * low bit of uvmexp.pdrevs (which we bump by one each call).
 	 */
 
-	got_it = FALSE;
 	pages_freed = uvmexp.pdfreed;
 	(void) uvmpd_scan_inactive(&uvm.page_inactive);
 	pages_freed = uvmexp.pdfreed - pages_freed;

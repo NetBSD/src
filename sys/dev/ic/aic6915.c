@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.1.2.3 2001/08/24 00:09:13 nathanw Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.1.2.4 2001/11/14 19:14:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Device driver for the Adaptec AIC-6915 (``Starfire'')
  * 10/100 Ethernet controller.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.1.2.4 2001/11/14 19:14:14 nathanw Exp $");
 
 #include "bpfilter.h"
 

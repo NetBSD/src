@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf2.c,v 1.6.2.1 2001/08/24 00:11:42 nathanw Exp $	*/
+/*	$NetBSD: uipc_mbuf2.c,v 1.6.2.2 2001/11/14 19:16:46 nathanw Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 
 /*
@@ -64,6 +64,9 @@
  *
  *	@(#)uipc_mbuf.c	8.4 (Berkeley) 2/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.6.2.2 2001/11/14 19:16:46 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_32_syscallargs.h,v 1.2.4.2 2001/08/24 00:08:58 nathanw Exp $ */
+/* $NetBSD: svr4_32_syscallargs.h,v 1.2.4.3 2001/11/14 19:13:31 nathanw Exp $ */
 
 /*
  * System call argument lists.
@@ -18,8 +18,9 @@
 	union {								\
 		register32_t pad;						\
 		struct { x datum; } le;					\
-		struct {						\
-			int8_t pad[ (sizeof (register32_t) < sizeof (x))	\
+		struct { /* LINTED zero array dimension */		\
+			int8_t pad[  /* CONSTCOND */			\
+				(sizeof (register32_t) < sizeof (x))	\
 				? 0					\
 				: sizeof (register32_t) - sizeof (x)];	\
 			x datum;					\

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.13.2.1 2001/06/21 20:06:20 nathanw Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.13.2.2 2001/11/14 19:16:15 nathanw Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,6 +39,9 @@
 /*
  * Prolific PL2301/PL2302 driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.13.2.2 2001/11/14 19:16:15 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

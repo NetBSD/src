@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.16 2000/06/01 14:28:57 augustss Exp $	*/
+/*	$NetBSD: hid.c,v 1.16.4.1 2001/11/14 19:16:14 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -37,6 +37,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.16.4.1 2001/11/14 19:16:14 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

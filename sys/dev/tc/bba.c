@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.12.4.2 2001/10/08 20:11:32 nathanw Exp $ */
+/* $NetBSD: bba.c,v 1.12.4.3 2001/11/14 19:16:09 nathanw Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,6 +34,9 @@
  */
 
 /* maxine/alpha baseboard audio (bba) */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.12.4.3 2001/11/14 19:16:09 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

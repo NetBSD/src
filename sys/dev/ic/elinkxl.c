@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.47.2.4 2001/10/08 20:10:59 nathanw Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.47.2.5 2001/11/14 19:14:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.47.2.5 2001/11/14 19:14:22 nathanw Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -567,7 +570,7 @@ ex_probemedia(sc)
 		return;
 	}
 
-#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
+#define	PRINT(str)	printf("%s%s", sep, str); sep = ", "
 
 	for (exm = ex_native_media; exm->exm_name != NULL; exm++) {
 		if (reset_options & exm->exm_mpbit) {

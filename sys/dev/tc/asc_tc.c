@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tc.c,v 1.14.6.1 2001/10/08 20:11:31 nathanw Exp $ */
+/* $NetBSD: asc_tc.c,v 1.14.6.2 2001/11/14 19:16:09 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.14.6.1 2001/10/08 20:11:31 nathanw Exp $");
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.14.6.2 2001/11/14 19:16:09 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

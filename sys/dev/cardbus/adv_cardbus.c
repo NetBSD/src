@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_cardbus.c,v 1.1.4.4 2001/10/08 20:10:56 nathanw Exp $	*/
+/*	$NetBSD: adv_cardbus.c,v 1.1.4.5 2001/11/14 19:14:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  * this file was brought from ahc_cardbus.c and adv_pci.c
  * and modified by YAMAMOTO Takashi.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.1.4.5 2001/11/14 19:14:00 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

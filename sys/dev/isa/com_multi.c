@@ -1,4 +1,4 @@
-/*	$NetBSD: com_multi.c,v 1.11 1998/09/16 21:30:58 is Exp $	*/
+/*	$NetBSD: com_multi.c,v 1.11.24.1 2001/11/14 19:14:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,6 +74,10 @@
 /*
  * COM driver, uses National Semiconductor NS16450/NS16550AF UART
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.11.24.1 2001/11/14 19:14:44 nathanw Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>

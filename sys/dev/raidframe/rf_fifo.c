@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_fifo.c,v 1.5.6.1 2001/10/22 20:41:36 nathanw Exp $	*/
+/*	$NetBSD: rf_fifo.c,v 1.5.6.2 2001/11/14 19:15:49 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,6 +34,9 @@
  * Aug 4, 1994, adapted from raidSim version (MCH)
  *
  ***************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_fifo.c,v 1.5.6.2 2001/11/14 19:15:49 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

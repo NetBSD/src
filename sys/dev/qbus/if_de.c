@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.8.2.1 2001/06/21 20:05:25 nathanw Exp $	*/
+/*	$NetBSD: if_de.c,v 1.8.2.2 2001/11/14 19:15:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -48,6 +48,9 @@
  * TODO:
  *	timeout routine (get statistics)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.8.2.2 2001/11/14 19:15:43 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

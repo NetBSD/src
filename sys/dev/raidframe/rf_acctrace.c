@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_acctrace.c,v 1.4.14.1 2001/10/22 20:41:32 nathanw Exp $	*/
+/*	$NetBSD: rf_acctrace.c,v 1.4.14.2 2001/11/14 19:15:45 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,6 +32,9 @@
  *
  *****************************************************************************/
 
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.4.14.2 2001/11/14 19:15:45 nathanw Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.22.6.2 2001/06/21 20:07:03 nathanw Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.22.6.3 2001/11/14 19:16:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)sys_socket.c	8.3 (Berkeley) 2/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.22.6.3 2001/11/14 19:16:43 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

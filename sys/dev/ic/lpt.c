@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.57 2000/07/06 01:47:37 thorpej Exp $	*/
+/*	$NetBSD: lpt.c,v 1.57.2.1 2001/11/14 19:14:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -52,6 +52,9 @@
 /*
  * Device Driver for AT style parallel printer port
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.57.2.1 2001/11/14 19:14:28 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

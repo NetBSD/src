@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.18.2.2 2001/09/21 22:36:05 nathanw Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.18.2.3 2001/11/14 19:15:36 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  * This attachment can probably be trivally adapted for other FH and
  * DS cards based on the same chipset.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.18.2.3 2001/11/14 19:15:36 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

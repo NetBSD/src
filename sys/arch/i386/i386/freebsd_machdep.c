@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.26.4.3 2001/08/24 00:08:29 nathanw Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.26.4.4 2001/11/14 19:12:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -127,16 +127,20 @@ freebsd_sendsig(catcher, sig, mask, code)
 	/* Save register context. */
 #ifdef VM86
 	if (tf->tf_eflags & PSL_VM) {
+		frame.sf_sc.sc_gs = tf->tf_vm86_gs;
+		frame.sf_sc.sc_fs = tf->tf_vm86_fs;
 		frame.sf_sc.sc_es = tf->tf_vm86_es;
 		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
-		frame.sf_sc.sc_eflags = get_vflags(l);
+		frame.sf_sc.sc_efl = get_vflags(l);
 		(*p->p_emul->e_syscall_intern)(p);
 	} else
 #endif
 	{
+		frame.sf_sc.sc_gs = tf->tf_gs;
+		frame.sf_sc.sc_fs = tf->tf_fs;
 		frame.sf_sc.sc_es = tf->tf_es;
 		frame.sf_sc.sc_ds = tf->tf_ds;
-		frame.sf_sc.sc_eflags = tf->tf_eflags;
+		frame.sf_sc.sc_efl = tf->tf_eflags;
 	}
 	frame.sf_sc.sc_edi = tf->tf_edi;
 	frame.sf_sc.sc_esi = tf->tf_esi;
@@ -155,7 +159,8 @@ freebsd_sendsig(catcher, sig, mask, code)
 	frame.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
-	native_sigset_to_sigset13(mask, &frame.sf_sc.sc_mask);
+	/* XXX freebsd_osigcontext compat? */
+	frame.sf_sc.sc_mask = *mask;
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
@@ -218,12 +223,14 @@ freebsd_sys_sigreturn(l, v, retval)
 	/* Restore register context. */
 	tf = l->l_md.md_regs;
 #ifdef VM86
-	if (context.sc_eflags & PSL_VM) {
+	if (context.sc_efl & PSL_VM) {
 		void syscall_vm86 __P((struct trapframe));
 
+		tf->tf_vm86_gs = context.sc_gs;
+		tf->tf_vm86_fs = context.sc_fs;
 		tf->tf_vm86_es = context.sc_es;
 		tf->tf_vm86_ds = context.sc_ds;
-		set_vflags(l, context.sc_eflags);
+		set_vflags(l, context.sc_efl);
 		p->p_md.md_syscall = syscall_vm86;
 	} else
 #endif
@@ -234,13 +241,15 @@ freebsd_sys_sigreturn(l, v, retval)
 		 * automatically and generate a trap on violations.  We handle
 		 * the trap, rather than doing all of the checking here.
 		 */
-		if (((context.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-		    !USERMODE(context.sc_cs, context.sc_eflags))
+		if (((context.sc_efl ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
+		    !USERMODE(context.sc_cs, context.sc_efl))
 			return (EINVAL);
 
+		tf->tf_gs = context.sc_gs;
+		tf->tf_fs = context.sc_fs;
 		tf->tf_es = context.sc_es;
 		tf->tf_ds = context.sc_ds;
-		tf->tf_eflags = context.sc_eflags;
+		tf->tf_eflags = context.sc_efl;
 	}
 	tf->tf_edi = context.sc_edi;
 	tf->tf_esi = context.sc_esi;
@@ -262,7 +271,8 @@ freebsd_sys_sigreturn(l, v, retval)
 		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
-	native_sigset13_to_sigset(&context.sc_mask, &mask);
+	/* XXX freebsd_osigcontext compat? */
+	mask = context.sc_mask;
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
 	return (EJUSTRETURN);

@@ -1,4 +1,4 @@
-/*	$NetBSD: button.c,v 1.4.2.2 2001/06/21 20:01:35 nathanw Exp $	*/
+/*	$NetBSD: button.c,v 1.4.2.3 2001/11/14 19:14:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.4.2.3 2001/11/14 19:14:05 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

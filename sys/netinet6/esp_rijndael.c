@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_rijndael.c,v 1.4.2.2 2001/10/22 20:41:59 nathanw Exp $	*/
+/*	$NetBSD: esp_rijndael.c,v 1.4.2.3 2001/11/14 19:18:03 nathanw Exp $	*/
 /*	$KAME: esp_rijndael.c,v 1.4 2001/03/02 05:53:05 itojun Exp $	*/
 
 /*
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: esp_rijndael.c,v 1.4.2.3 2001/11/14 19:18:03 nathanw Exp $");
 
 #include "opt_inet.h"
 

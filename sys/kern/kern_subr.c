@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.75.2.4 2001/06/21 20:06:54 nathanw Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.75.2.5 2001/11/14 19:16:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -88,6 +88,9 @@
  *
  *	@(#)kern_subr.c	8.4 (Berkeley) 2/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.75.2.5 2001/11/14 19:16:37 nathanw Exp $");
 
 #include "opt_md.h"
 

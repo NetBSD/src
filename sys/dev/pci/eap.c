@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.44.2.3 2001/10/08 20:11:12 nathanw Exp $	*/
+/*	$NetBSD: eap.c,v 1.44.2.4 2001/11/14 19:15:11 nathanw Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -54,6 +54,9 @@
  * ftp://ftp.alsa-project.org/pub/manuals/asahi_kasei/4531.pdf
  * ftp://download.intel.com/ial/scalableplatforms/audio/ac97r21.pdf
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.44.2.4 2001/11/14 19:15:11 nathanw Exp $");
 
 #include "midi.h"
 

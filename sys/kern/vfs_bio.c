@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.74.2.2 2001/04/09 01:57:59 nathanw Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.74.2.3 2001/11/14 19:16:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -47,6 +47,9 @@
  *	Leffler, et al.: The Design and Implementation of the 4.3BSD
  *		UNIX Operating System (Addison Welley, 1989)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.74.2.3 2001/11/14 19:16:47 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

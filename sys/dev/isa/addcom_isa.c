@@ -1,4 +1,4 @@
-/*	$NetBSD: addcom_isa.c,v 1.2 2000/04/21 20:13:41 explorer Exp $	*/
+/*	$NetBSD: addcom_isa.c,v 1.2.8.1 2001/11/14 19:14:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Graff.  All rights reserved.
@@ -53,6 +53,9 @@
  *
  * --Michael <explorer@netbsd.org> -- April 21, 2000
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: addcom_isa.c,v 1.2.8.1 2001/11/14 19:14:43 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

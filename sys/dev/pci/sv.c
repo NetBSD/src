@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.12.2.2 2001/10/08 20:11:18 nathanw Exp $ */
+/*      $NetBSD: sv.c,v 1.12.2.3 2001/11/14 19:15:30 nathanw Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -72,6 +72,9 @@
  * S3 SonicVibes driver
  *   Heavily based on the eap driver by Lennart Augustsson
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.12.2.3 2001/11/14 19:15:30 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

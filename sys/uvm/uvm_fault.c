@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.56.2.6 2001/10/08 20:11:55 nathanw Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.56.2.7 2001/11/14 19:19:04 nathanw Exp $	*/
 
 /*
  *
@@ -34,11 +34,14 @@
  * from: Id: uvm_fault.c,v 1.1.2.23 1998/02/06 05:29:05 chs Exp
  */
 
-#include "opt_uvmhist.h"
-
 /*
  * uvm_fault.c: fault handler
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.56.2.7 2001/11/14 19:19:04 nathanw Exp $");
+
+#include "opt_uvmhist.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

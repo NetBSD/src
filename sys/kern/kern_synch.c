@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.101.2.6 2001/09/26 19:55:04 nathanw Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.101.2.7 2001/11/14 19:16:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,6 +76,9 @@
  *
  *	@(#)kern_synch.c	8.9 (Berkeley) 5/19/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.7 2001/11/14 19:16:38 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.25.2.1 2001/09/21 22:36:23 nathanw Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.25.2.2 2001/11/14 19:16:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -39,6 +39,9 @@
  *
  *	@(#)cd9660_node.c	8.8 (Berkeley) 5/22/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.25.2.2 2001/11/14 19:16:30 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.75.2.1 2001/06/21 20:07:37 nathanw Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.75.2.2 2001/11/14 19:17:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,6 +41,9 @@
 /*
  * Kernel parameter filesystem (/kern)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.75.2.2 2001/11/14 19:17:09 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

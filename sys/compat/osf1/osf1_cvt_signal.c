@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_cvt_signal.c,v 1.1 1999/05/01 02:57:10 cgd Exp $	*/
+/*	$NetBSD: osf1_cvt_signal.c,v 1.1.18.1 2001/11/14 19:13:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: osf1_cvt_signal.c,v 1.1.18.1 2001/11/14 19:13:19 nathanw Exp $");
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_cvt.h>

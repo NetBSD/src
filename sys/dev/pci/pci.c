@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.51.2.4 2001/10/22 20:41:25 nathanw Exp $	*/
+/*	$NetBSD: pci.c,v 1.51.2.5 2001/11/14 19:15:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -34,6 +34,9 @@
 /*
  * PCI bus autoconfiguration.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.51.2.5 2001/11/14 19:15:23 nathanw Exp $");
 
 #include "opt_pci.h"
 

@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.14.6.3 2001/09/21 22:35:03 nathanw Exp $
+#	$NetBSD: SWINGER,v 1.14.6.4 2001/11/14 19:12:44 nathanw Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"SWINGER-$Revision: 1.14.6.3 $"
+#ident 		"SWINGER-$Revision: 1.14.6.4 $"
 
 maxusers	64		# estimated number of users
 
@@ -380,6 +380,7 @@ siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 
 # CardBus SCSI cards
 #ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
+#adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 
 # SCSI bus support
 #scsibus* at adv?
@@ -814,4 +815,4 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 # mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux		2
+pseudo-device	wsmux

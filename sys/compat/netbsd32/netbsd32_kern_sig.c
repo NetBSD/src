@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_kern_sig.c,v 1.1.2.2 2001/06/21 20:00:04 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_kern_sig.c,v 1.1.2.3 2001/11/14 19:13:17 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -40,6 +40,9 @@
  *	@(#)kern_sig.c	8.14 (Berkeley) 5/14/95
  * from: NetBSD: kern_sig.c,v 1.112 2001/02/26 21:58:30 lukem Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_kern_sig.c,v 1.1.2.3 2001/11/14 19:13:17 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>

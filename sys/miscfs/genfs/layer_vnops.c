@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.5.2.2 2001/08/24 00:11:58 nathanw Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.5.2.3 2001/11/14 19:17:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -71,7 +71,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.5.2.2 2001/08/24 00:11:58 nathanw Exp $
+ *	$Id: layer_vnops.c,v 1.5.2.3 2001/11/14 19:17:09 nathanw Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -234,6 +234,9 @@
  * is that vnodes arguments must be manualy mapped.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.5.2.3 2001/11/14 19:17:09 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

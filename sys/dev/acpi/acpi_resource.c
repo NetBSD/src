@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.1.4.2 2001/10/08 21:18:06 nathanw Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.1.4.3 2001/11/14 19:13:43 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,6 +65,9 @@
 /*
  * ACPI resource parsing.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.1.4.3 2001/11/14 19:13:43 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

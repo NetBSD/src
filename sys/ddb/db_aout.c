@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.c,v 1.30 2001/01/17 19:50:03 jdolecek Exp $	*/
+/*	$NetBSD: db_aout.c,v 1.30.2.1 2001/11/14 19:13:37 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -25,6 +25,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_aout.c,v 1.30.2.1 2001/11/14 19:13:37 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

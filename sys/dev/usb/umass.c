@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.52.2.2 2001/06/21 20:06:22 nathanw Exp $	*/
+/*	$NetBSD: umass.c,v 1.52.2.3 2001/11/14 19:16:18 nathanw Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -92,6 +92,9 @@
  * in use. When the transfer has finished, these routines call
  * umass_cam_cb again to complete the CAM command.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.52.2.3 2001/11/14 19:16:18 nathanw Exp $");
 
 #include "atapibus.h"
 
@@ -671,6 +674,8 @@ USB_ATTACH(umass)
 		umass_init_shuttle(sc);
 
 	if (umass_attach_bus(sc)) {
+		DPRINTF(UDMASS_GEN, ("%s: bus attach failed\n",
+				     USBDEVNAME(sc->sc_dev)));
 		umass_disco(sc);
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -1093,7 +1098,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 					     &sc->transfer_actlen, NULL);
 
 			if (err) {
-				DPRINTF(UDMASS_BBB, ("%s: Data-%s %db failed, "
+				DPRINTF(UDMASS_BBB, ("%s: Data-%s %d failed, "
 					"%s\n", USBDEVNAME(sc->sc_dev),
 					(sc->transfer_dir == DIR_IN?"in":"out"),
 					sc->transfer_datalen,usbd_errstr(err)));
@@ -1544,7 +1549,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			USBDEVNAME(sc->sc_dev), sc->transfer_actlen));
 
 		if (err) {
-			DPRINTF(UDMASS_CBI, ("%s: Data-%s %db failed, "
+			DPRINTF(UDMASS_CBI, ("%s: Data-%s %d failed, "
 				"%s\n", USBDEVNAME(sc->sc_dev),
 				(sc->transfer_dir == DIR_IN?"in":"out"),
 				sc->transfer_datalen,usbd_errstr(err)));
@@ -1793,7 +1798,7 @@ umass_bbb_dump_cbw(struct umass_softc *sc, umass_bbb_cbw_t *cbw)
 	int tag = UGETDW(cbw->dCBWTag);
 	int flags = cbw->bCBWFlags;
 
-	DPRINTF(UDMASS_BBB, ("%s: CBW %d: cmd = %db "
+	DPRINTF(UDMASS_BBB, ("%s: CBW %d: cmdlen = %d "
 		"(0x%02x%02x%02x%02x%02x%02x%s), "
 		"data = %d bytes, dir = %s\n",
 		USBDEVNAME(sc->sc_dev), tag, clen,

@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.6.2.2 2001/09/21 22:36:38 nathanw Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.6.2.3 2001/11/14 19:17:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -76,6 +76,9 @@
  * Overlay Layer
  * (See overlay_vnops.c for a description of what this does.)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.6.2.3 2001/11/14 19:17:10 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

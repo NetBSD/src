@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.39.2.2 2001/08/24 00:09:51 nathanw Exp $	*/
+/*	$NetBSD: seagate.c,v 1.39.2.3 2001/11/14 19:14:54 nathanw Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -64,6 +64,9 @@
  * disk has. Use these to disklabel your disk in an appropriate manner
  */
  
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.39.2.3 2001/11/14 19:14:54 nathanw Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.18 2000/12/20 21:06:41 thorpej Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.18.2.1 2001/11/14 19:14:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -101,6 +101,9 @@
  * Portions also supplied from the SoundBlaster driver for NetBSD.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.18.2.1 2001/11/14 19:14:43 nathanw Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
@@ -191,7 +194,7 @@ ad1848_isa_probe(isc)
 {
 	struct ad1848_softc *sc = &isc->sc_ad1848;
 	u_char tmp, tmp1 = 0xff, tmp2 = 0xff;
-	int i;
+	int i, t;
 
 	sc->sc_readreg = ad1848_isa_read;
 	sc->sc_writereg = ad1848_isa_write;
@@ -248,6 +251,14 @@ ad1848_isa_probe(isc)
 	 */
 	tmp = ad_read(sc, SP_MISC_INFO);
 	ad_write(sc, SP_MISC_INFO, (~tmp) & 0x0f);
+
+	/* Here, AD1845 may sometimes be busy.  Wait til it becomes ready. */
+	for (t = 0; t < 100000 && ADREAD(sc, AD1848_IADDR) & SP_IN_INIT; t++)
+		;
+#ifdef AUDIO_DEBUG
+	if (t)
+		DPRINTF(("ad1848_isa_probe: t %d\n", t));
+#endif
 
 	if ((tmp & 0x0f) != ((tmp1 = ad_read(sc, SP_MISC_INFO)) & 0x0f)) {
 		DPRINTF(("ad_detect_D (%x)\n", tmp1));
@@ -344,7 +355,15 @@ ad1848_isa_probe(isc)
 					break;
 				case 0x80:
 					/*  XXX I25 no good, AD1845 same as CS4231 */
-					sc->chip_name = "CS4231 or AD1845";
+					/*
+					 * XXX
+					 * This test is correct only after reset
+					 */
+					if (ad_read(sc, 17) & 0xf0) {
+						sc->chip_name = "AD1845";
+						sc->is_ad1845 = 1;
+					} else
+						sc->chip_name = "CS4231";
 					break;
 				case 0x82:
 					sc->chip_name = "CS4232";

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc.c,v 1.6.2.3 2001/09/21 22:35:55 nathanw Exp $	*/
+/*	$NetBSD: if_lmc.c,v 1.6.2.4 2001/11/14 19:15:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -61,6 +61,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.6.2.4 2001/11/14 19:15:16 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

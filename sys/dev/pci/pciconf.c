@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.2.2.2 2001/09/21 22:35:59 nathanw Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.2.2.3 2001/11/14 19:15:24 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -63,6 +63,9 @@
  *    - Try to handle devices that are already configured (perhaps using that
  *      as a hint to where we put other devices)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.2.2.3 2001/11/14 19:15:24 nathanw Exp $");
 
 #include "opt_pci.h"
 
@@ -322,7 +325,7 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 	busreg  =  parent->busno << PCI_BRIDGE_BUS_PRIMARY_SHIFT;
 	busreg |=      pb->busno << PCI_BRIDGE_BUS_SECONDARY_SHIFT;
 	busreg |= pb->last_busno << PCI_BRIDGE_BUS_SUBORDINATE_SHIFT;
-	pci_conf_write(pb->pc, pd->tag, PCI_BRIDGE_BUS_REG, busreg);
+	pci_conf_write(parent->pc, pd->tag, PCI_BRIDGE_BUS_REG, busreg);
 
 	pb->swiz = parent->swiz + dev;
 
@@ -334,7 +337,7 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 
 	pb->io_32bit = 0;
 	if (parent->io_32bit) {
-		io = pci_conf_read(pb->pc, pd->tag, PCI_BRIDGE_STATIO_REG);
+		io = pci_conf_read(parent->pc, pd->tag, PCI_BRIDGE_STATIO_REG);
 		if (PCI_BRIDGE_IO_32BITS(io)) {
 			pb->io_32bit = 1;
 		}
@@ -342,7 +345,7 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 
 	pb->pmem_64bit = 0;
 	if (parent->pmem_64bit) {
-		pmem = pci_conf_read(pb->pc, pd->tag,
+		pmem = pci_conf_read(parent->pc, pd->tag,
 		    PCI_BRIDGE_PREFETCHMEM_REG);
 		if (PCI_BRIDGE_PREFETCHMEM_64BITS(pmem)) {
 			pb->pmem_64bit = 1;
@@ -1022,13 +1025,13 @@ configure_bus(pciconf_bus_t *pb)
  */
 int
 pci_configure_bus(pci_chipset_tag_t pc, struct extent *ioext,
-    struct extent *memext, struct extent *pmemext)
+    struct extent *memext, struct extent *pmemext, int firstbus)
 {
 	pciconf_bus_t	*pb;
 	int		rv;
 
 	pb = malloc (sizeof (pciconf_bus_t), M_DEVBUF, M_NOWAIT);
-	pb->busno = 0;
+	pb->busno = firstbus;
 	pb->busno_spacing = PCI_BUSNO_SPACING;
 	pb->next_busno = pb->busno + 1;
 	pb->last_busno = 255;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.15.2.2 2001/06/21 20:05:25 nathanw Exp $	*/
+/*	$NetBSD: dl.c,v 1.15.2.3 2001/11/14 19:15:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,6 +79,9 @@
  *
  * OS-interface code derived from the dz and dca (hp300) drivers.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.15.2.3 2001/11/14 19:15:43 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

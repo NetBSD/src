@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.3.2.3 2001/09/25 16:20:35 nathanw Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.3.2.4 2001/11/14 19:17:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * IEEE 802.11 generic handler
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.3.2.4 2001/11/14 19:17:22 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_pcmcia.c,v 1.3.8.1 2001/06/21 20:05:19 nathanw Exp $	*/
+/*	$NetBSD: nca_pcmcia.c,v 1.3.8.2 2001/11/14 19:15:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nca_pcmcia.c,v 1.3.8.2 2001/11/14 19:15:39 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

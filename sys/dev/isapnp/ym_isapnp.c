@@ -1,4 +1,4 @@
-/*	$NetBSD: ym_isapnp.c,v 1.11 1999/10/05 03:47:20 itohy Exp $ */
+/*	$NetBSD: ym_isapnp.c,v 1.11.14.1 2001/11/14 19:14:59 nathanw Exp $ */
 
 
 /*
@@ -41,6 +41,9 @@
  *
  *  Original code from OpenBSD.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.11.14.1 2001/11/14 19:14:59 nathanw Exp $");
 
 #include "mpu_ym.h"
 

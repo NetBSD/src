@@ -1,4 +1,4 @@
-/*	$NetBSD: pwctl.c,v 1.5.2.3 2001/08/24 00:09:08 nathanw Exp $	*/
+/*	$NetBSD: pwctl.c,v 1.5.2.4 2001/11/14 19:14:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,6 +35,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pwctl.c,v 1.5.2.4 2001/11/14 19:14:06 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.19 2000/03/30 13:10:13 augustss Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.19.6.1 2001/11/14 19:18:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -75,6 +75,9 @@ SOFTWARE.
  * header, give to tp tpip_output_dg: package a pkt for ip given 2 addresses
  * & some data tpip_output: package a pkt for ip given an inpcb & some data
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.19.6.1 2001/11/14 19:18:29 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -664,7 +667,6 @@ tpip_ctlinput(cmd, sa, dummy)
 	struct sockaddr *sa;
 	void *dummy;
 {
-	extern int      inetctlerrmap[];
 	void            (*notify) __P((struct inpcb *, int));
 	int             errno;
 

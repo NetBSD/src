@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.17.2.2 2001/08/24 00:10:26 nathanw Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.17.2.3 2001/11/14 19:15:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -111,6 +111,9 @@
  * get receiver promiscuity to work, and I haven't even tried
  * multicast. Volunteers are welcome, of course :-).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.17.2.3 2001/11/14 19:15:37 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.7.2.3 2001/10/22 20:41:35 nathanw Exp $	*/
+/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.7.2.4 2001/11/14 19:15:49 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -29,6 +29,9 @@
 /*
  * Code for RAID-EVENODD  architecture.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dagfuncs.c,v 1.7.2.4 2001/11/14 19:15:49 nathanw Exp $");
 
 #include "rf_archs.h"
 

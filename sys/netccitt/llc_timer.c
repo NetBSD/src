@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_timer.c,v 1.5.6.1 2001/06/21 20:08:26 nathanw Exp $	*/
+/*	$NetBSD: llc_timer.c,v 1.5.6.2 2001/11/14 19:17:37 nathanw Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -41,6 +41,9 @@
  *
  *	@(#)llc_timer.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: llc_timer.c,v 1.5.6.2 2001/11/14 19:17:37 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

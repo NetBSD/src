@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_sv.c,v 1.1 1998/12/10 18:47:19 augustss Exp $	*/
+/*	$NetBSD: opl_sv.c,v 1.1.20.1 2001/11/14 19:15:22 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: opl_sv.c,v 1.1.20.1 2001/11/14 19:15:22 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_atapi.c,v 1.7.4.3 2001/08/24 00:10:53 nathanw Exp $	*/
+/*	$NetBSD: sd_atapi.c,v 1.7.4.4 2001/11/14 19:16:04 nathanw Exp $	*/
 
 /*
  * Copyright 1998
@@ -38,6 +38,9 @@
  *
  * Chris Demetriou, January 10, 1998.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sd_atapi.c,v 1.7.4.4 2001/11/14 19:16:04 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

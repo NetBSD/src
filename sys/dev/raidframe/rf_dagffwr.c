@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffwr.c,v 1.5.6.1 2001/10/22 20:41:33 nathanw Exp $	*/
+/*	$NetBSD: rf_dagffwr.c,v 1.5.6.2 2001/11/14 19:15:47 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,6 +32,9 @@
  * code for creating fault-free DAGs
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.5.6.2 2001/11/14 19:15:47 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.6.14.1 2001/08/24 00:10:39 nathanw Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.6.14.2 2001/11/14 19:15:52 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,6 +32,9 @@
  * code to maintain a map of what sectors have/have not been reconstructed
  *
  *************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.6.14.2 2001/11/14 19:15:52 nathanw Exp $");
 
 #include "rf_raid.h"
 #include <sys/time.h>

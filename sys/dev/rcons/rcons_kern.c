@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_kern.c,v 1.12 2000/03/23 07:01:43 thorpej Exp $ */
+/*	$NetBSD: rcons_kern.c,v 1.12.6.1 2001/11/14 19:15:55 nathanw Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -43,6 +43,9 @@
  *
  *	@(#)rcons_kern.c	8.1 (Berkeley) 6/11/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rcons_kern.c,v 1.12.6.1 2001/11/14 19:15:55 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

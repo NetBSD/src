@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.53 2001/01/23 17:04:30 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.53.2.1 2001/11/14 19:16:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
  * http://www.usb.org/developers/data/ and
  * http://www.usb.org/developers/index.html .
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.53.2.1 2001/11/14 19:16:20 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -421,7 +424,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		ohcidebug = ((*(int *)data) & 0x00ff0000) >> 16;
 #endif
 		break;
-#endif
+#endif /* USB_DEBUG */
 	case USB_REQUEST:
 	{
 		struct usb_ctl_request *ur = (void *)data;
@@ -621,6 +624,7 @@ usb_add_event(int type, struct usb_event *uep)
 void
 usb_schedsoftintr(usbd_bus_handle bus)
 {
+	DPRINTFN(10,("usb_schedsoftintr: polling=%d\n", bus->use_polling));
 #ifdef USB_USE_SOFTINTR
 	if (bus->use_polling) {
 		bus->methods->soft_intr(bus);
@@ -635,7 +639,7 @@ usb_schedsoftintr(usbd_bus_handle bus)
 	}
 #else
 	bus->methods->soft_intr(bus);
-#endif
+#endif /* USB_USE_SOFTINTR */
 }
 
 int

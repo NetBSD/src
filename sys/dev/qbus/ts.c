@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.2.2.2 2001/06/21 20:05:30 nathanw Exp $ */
+/*	$NetBSD: ts.c,v 1.2.2.3 2001/11/14 19:15:45 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -68,6 +68,9 @@
  *
  * should be TS11 compatible (untested)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.2.2.3 2001/11/14 19:15:45 nathanw Exp $");
 
 #undef	TSDEBUG
 

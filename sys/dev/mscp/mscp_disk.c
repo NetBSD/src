@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.27.2.1 2001/06/21 20:04:27 nathanw Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.27.2.2 2001/11/14 19:15:04 nathanw Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -47,6 +47,9 @@
  * TODO
  *	write bad block forwarding code
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.27.2.2 2001/11/14 19:15:04 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

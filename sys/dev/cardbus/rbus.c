@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.c,v 1.8.4.1 2001/08/24 00:09:06 nathanw Exp $	*/
+/*	$NetBSD: rbus.c,v 1.8.4.2 2001/11/14 19:14:02 nathanw Exp $	*/
 /*
  * Copyright (c) 1999 and 2000
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -29,7 +29,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.8.4.2 2001/11/14 19:14:02 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

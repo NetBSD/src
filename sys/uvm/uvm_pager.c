@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.41.2.5 2001/10/22 20:42:14 nathanw Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.41.2.6 2001/11/14 19:19:08 nathanw Exp $	*/
 
 /*
  *
@@ -34,11 +34,14 @@
  * from: Id: uvm_pager.c,v 1.1.2.23 1998/02/02 20:38:06 chuck Exp
  */
 
-#include "opt_uvmhist.h"
-
 /*
  * uvm_pager.c: generic functions used to assist the pagers.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.41.2.6 2001/11/14 19:19:08 nathanw Exp $");
+
+#include "opt_uvmhist.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +299,7 @@ uvm_aio_aiodone(bp)
 	struct uvm_object *uobj;
 	struct simplelock *slock;
 	int s, i, error, swslot;
-	boolean_t write, swap, pageout, async;
+	boolean_t write, swap, pageout;
 	UVMHIST_FUNC("uvm_aio_aiodone"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "bp %p", bp, 0,0,0);
 
@@ -314,11 +317,10 @@ uvm_aio_aiodone(bp)
 	}
 	uvm_pagermapout((vaddr_t)bp->b_data, npages);
 
-	swap = (pgs[0]->pqflags & PQ_SWAPBACKED) != 0;
 	swslot = 0;
 	slock = NULL;
+	swap = (pgs[0]->pqflags & PQ_SWAPBACKED) != 0;
 	pageout = (pgs[0]->flags & PG_PAGEOUT) != 0;
-	async = (bp->b_flags & B_ASYNC) != 0;
 	if (!swap) {
 		uobj = pgs[0]->uobject;
 		slock = &uobj->vmobjlock;
@@ -365,7 +367,6 @@ uvm_aio_aiodone(bp)
 
 		if (error) {
 			if (!write) {
-				KASSERT(!swap);
 				pg->flags |= PG_RELEASED;
 				continue;
 			} else if (error == ENOMEM) {
@@ -381,6 +382,8 @@ uvm_aio_aiodone(bp)
 		/*
 		 * if the page is PG_FAKE, this must have been a read to
 		 * initialize the page.  clear PG_FAKE and activate the page.
+		 * we must also clear the pmap "modified" flag since it may
+		 * still be set from the page's previous identity.
 		 */
 
 		if (pg->flags & PG_FAKE) {
@@ -391,14 +394,11 @@ uvm_aio_aiodone(bp)
 		}
 
 		/*
-		 * for async reads, this may be the first time the page
-		 * is unlocked after being created, so we need to be sure
-		 * the page is on a paging queue.
+		 * do accounting for pagedaemon i/o and arrange to free
+		 * the pages instead of just unbusying them.
 		 */
 
-		if (!write) {
-			uvm_pageactivate(pg);
-		} else if (pg->flags & PG_PAGEOUT) {
+		if (pg->flags & PG_PAGEOUT) {
 			pg->flags &= ~PG_PAGEOUT;
 			uvmexp.paging--;
 			pg->flags |= PG_RELEASED;
@@ -419,7 +419,14 @@ uvm_aio_aiodone(bp)
 		uvm_unlock_pageq();
 		simple_unlock(slock);
 	} else {
-		KASSERT(write && pageout);
+		KASSERT(write);
+		KASSERT(pageout);
+
+		/* these pages are now only in swap. */
+		simple_lock(&uvm.swap_data_lock);
+		KASSERT(uvmexp.swpgonly + npages <= uvmexp.swpginuse);
+		uvmexp.swpgonly += npages;
+		simple_unlock(&uvm.swap_data_lock);
 		if (error) {
 			uvm_swap_markbad(swslot, npages);
 		}

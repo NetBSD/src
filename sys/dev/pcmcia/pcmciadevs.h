@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.120.2.6 2001/10/22 20:41:30 nathanw Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.120.2.7 2001/11/14 19:15:42 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.143 2001/10/21 23:16:48 mjl Exp 
+ *	NetBSD: pcmciadevs,v 1.145 2001/11/08 17:05:42 christos Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -224,6 +224,9 @@
 #define	PCMCIA_CIS_ELSA_XI300_IEEE	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_ELSA_XI300_IEEE	0x0002
 #define	PCMCIA_STR_ELSA_XI300_IEEE	"XI300 Wireless LAN"
+#define	PCMCIA_CIS_ELSA_XI800_IEEE	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ELSA_XI800_IEEE	0x0004
+#define	PCMCIA_STR_ELSA_XI800_IEEE	"XI800 CF Wireless LAN"
 
 /* EMTAC */
 #define	PCMCIA_CIS_EMTAC_WLAN	{ NULL, NULL, NULL, NULL }
@@ -497,6 +500,9 @@
 #define	PCMCIA_CIS_XIRCOM_CE3	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_XIRCOM_CE3	0x010a
 #define	PCMCIA_STR_XIRCOM_CE3	"Xircom CreditCard 10/100 Ethernet"
+#define	PCMCIA_CIS_XIRCOM_XE2000	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_XIRCOM_XE2000	0x0153
+#define	PCMCIA_STR_XIRCOM_XE2000	"Xircom XE2000 10/100 Ethernet"
 #define	PCMCIA_CIS_XIRCOM_CNW_801	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_XIRCOM_CNW_801	0x0801
 #define	PCMCIA_STR_XIRCOM_CNW_801	"Xircom CreditCard Netwave (Canada)"

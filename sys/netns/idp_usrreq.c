@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_usrreq.c,v 1.18 2000/03/30 13:02:56 augustss Exp $	*/
+/*	$NetBSD: idp_usrreq.c,v 1.18.6.1 2001/11/14 19:18:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -34,6 +34,10 @@
  *
  *	@(#)idp_usrreq.c	8.2 (Berkeley) 1/9/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: idp_usrreq.c,v 1.18.6.1 2001/11/14 19:18:37 nathanw Exp $");
+
 #include "opt_ns.h"			/* NSIP: Xerox NS over IP */
 
 #include <sys/param.h>

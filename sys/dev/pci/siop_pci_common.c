@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.c,v 1.6.2.1 2001/04/09 01:57:11 nathanw Exp $	*/
+/*	$NetBSD: siop_pci_common.c,v 1.6.2.2 2001/11/14 19:15:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -30,6 +30,9 @@
  */
 
 /* SYM53c8xx PCI-SCSI I/O Processors driver: PCI front-end */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.6.2.2 2001/11/14 19:15:30 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900.c,v 1.8.2.2 2001/08/24 00:09:15 nathanw Exp $	*/
+/*	$NetBSD: am79900.c,v 1.8.2.3 2001/11/14 19:14:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998
@@ -41,6 +41,9 @@
  *
  *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: am79900.c,v 1.8.2.3 2001/11/14 19:14:16 nathanw Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"

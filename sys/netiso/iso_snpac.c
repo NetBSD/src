@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.24 2001/01/17 04:05:45 itojun Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.24.2.1 2001/11/14 19:18:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -61,6 +61,9 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.24.2.1 2001/11/14 19:18:27 nathanw Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO

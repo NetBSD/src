@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tb.c,v 1.25.2.2 2001/04/09 01:57:58 nathanw Exp $	*/
+/*	$NetBSD: tty_tb.c,v 1.25.2.3 2001/11/14 19:16:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)tty_tb.c	8.2 (Berkeley) 1/9/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tty_tb.c,v 1.25.2.3 2001/11/14 19:16:45 nathanw Exp $");
 
 #include "tb.h"
 

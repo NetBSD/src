@@ -1,4 +1,4 @@
-/*	$NetBSD: amhphy.c,v 1.2.6.2 2001/09/21 22:35:48 nathanw Exp $	*/
+/*	$NetBSD: amhphy.c,v 1.2.6.3 2001/11/14 19:15:01 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * Driver for the 10BASE-T portion of the AMD Am79c901 PHY.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: amhphy.c,v 1.2.6.3 2001/11/14 19:15:01 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

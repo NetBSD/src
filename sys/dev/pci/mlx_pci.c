@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_pci.c,v 1.2.2.2 2001/08/24 00:10:13 nathanw Exp $	*/
+/*	$NetBSD: mlx_pci.c,v 1.2.2.3 2001/11/14 19:15:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,6 +67,9 @@
 /*
  * PCI front-end for the mlx(4) driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.2.2.3 2001/11/14 19:15:21 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_exec_powerpc.c,v 1.2.4.2 2001/08/24 00:08:48 nathanw Exp $ */
+/* $NetBSD: linux_exec_powerpc.c,v 1.2.4.3 2001/11/14 19:13:08 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,6 +46,10 @@
  * 
  * Emmanuel Dreyfus <p99dreyf@criens.u-psud.fr>
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.2.4.3 2001/11/14 19:13:08 nathanw Exp $");
+
 #if defined (__alpha__)
 #define ELFSIZE 64
 #elif defined (__powerpc__)

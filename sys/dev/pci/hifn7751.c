@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.2.2.1 2001/08/24 00:10:01 nathanw Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.2.2.2 2001/11/14 19:15:13 nathanw Exp $	*/
 /*	$OpenBSD: hifn7751.c,v 1.47 2000/10/11 13:15:41 itojun Exp $	*/
 
 /*
@@ -39,6 +39,9 @@
 /*
  * Driver for the Hi/Fn 7751 encryption processor.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.2.2.2 2001/11/14 19:15:13 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

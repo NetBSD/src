@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.28.4.1 2001/06/21 20:01:17 nathanw Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.28.4.2 2001/11/14 19:13:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -67,6 +67,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.28.4.2 2001/11/14 19:13:59 nathanw Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG

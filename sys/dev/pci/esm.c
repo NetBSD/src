@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.7.2.3 2001/10/08 20:11:12 nathanw Exp $      */
+/*      $NetBSD: esm.c,v 1.7.2.4 2001/11/14 19:15:12 nathanw Exp $      */
 
 /*-
  * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
@@ -61,6 +61,9 @@
  * Munehiro Matsuda <haro@tk.kubota.co.jp>,
  * who brought patches based on the Linux driver with some simplification.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.7.2.4 2001/11/14 19:15:12 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

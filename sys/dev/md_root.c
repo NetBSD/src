@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.1.4.1 2001/08/24 00:09:03 nathanw Exp $	*/
+/*	$NetBSD: md_root.c,v 1.1.4.2 2001/11/14 19:13:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.1.4.2 2001/11/14 19:13:41 nathanw Exp $");
 
 #include "opt_md.h"
 #include "opt_mdsize.h"

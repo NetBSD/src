@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.19.2.2 2001/08/24 00:12:24 nathanw Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.19.2.3 2001/11/14 19:17:44 nathanw Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.19.2.3 2001/11/14 19:17:44 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -328,8 +331,7 @@ gif_validate4(ip, sc, ifp)
 		return 0;
 	}
 	/* reject packets with broadcast on source */
-	for (ia4 = in_ifaddr.tqh_first; ia4; ia4 = ia4->ia_list.tqe_next)
-	{
+	TAILQ_FOREACH(ia4, &in_ifaddr, ia_list) {
 		if ((ia4->ia_ifa.ifa_ifp->if_flags & IFF_BROADCAST) == 0)
 			continue;
 		if (ip->ip_src.s_addr == ia4->ia_broadaddr.sin_addr.s_addr)

@@ -1,4 +1,4 @@
-/*	$NetBSD: iop_pci.c,v 1.3.2.2 2001/09/26 19:54:56 nathanw Exp $	*/
+/*	$NetBSD: iop_pci.c,v 1.3.2.3 2001/11/14 19:15:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * PCI front-end for `iop' driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.3.2.3 2001/11/14 19:15:20 nathanw Exp $");
 
 #include "opt_i2o.h"
 

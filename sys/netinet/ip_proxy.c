@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.23 2001/02/05 10:42:44 chs Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.23.2.1 2001/11/14 19:17:53 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1997-2000 by Darren Reed.
@@ -9,7 +9,8 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_proxy.c,v 1.23 2001/02/05 10:42:44 chs Exp $";
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.23.2.1 2001/11/14 19:17:53 nathanw Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.9.2.1 2000/05/06 12:30:50 darrenr Exp";
 #endif

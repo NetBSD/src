@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.25.4.1 2001/08/24 00:12:23 nathanw Exp $	*/
+/*	$NetBSD: igmp.c,v 1.25.4.2 2001/11/14 19:17:42 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -38,6 +38,9 @@
  *
  * MULTICAST Revision: 1.3
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.25.4.2 2001/11/14 19:17:42 nathanw Exp $");
 
 #include "opt_mrouting.h"
 

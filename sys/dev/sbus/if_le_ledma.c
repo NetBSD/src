@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.13.2.1 2001/06/21 20:05:36 nathanw Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.13.2.2 2001/11/14 19:15:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.13.2.2 2001/11/14 19:15:58 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

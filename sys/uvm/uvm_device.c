@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.30.2.3 2001/09/21 22:37:11 nathanw Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.30.2.4 2001/11/14 19:19:04 nathanw Exp $	*/
 
 /*
  *
@@ -34,11 +34,14 @@
  * from: Id: uvm_device.c,v 1.1.2.9 1998/02/06 05:11:47 chs Exp
  */
 
-#include "opt_uvmhist.h"
-
 /*
  * uvm_device.c: the device pager.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.30.2.4 2001/11/14 19:19:04 nathanw Exp $");
+
+#include "opt_uvmhist.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

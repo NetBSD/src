@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.8.2.2 2001/09/21 22:35:53 nathanw Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.8.2.3 2001/11/14 19:15:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -28,6 +28,9 @@
  *
  *	$FreeBSD: src/sys/pci/agp_i810.c,v 1.4 2001/07/05 21:28:47 jhb Exp $
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.8.2.3 2001/11/14 19:15:07 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

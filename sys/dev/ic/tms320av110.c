@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110.c,v 1.8.20.1 2001/10/08 20:11:03 nathanw Exp $	*/
+/*	$NetBSD: tms320av110.c,v 1.8.20.2 2001/11/14 19:14:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
  * Currently, only minimum support for audio output. For audio/video
  * synchronization, more is needed.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.8.20.2 2001/11/14 19:14:39 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.c,v 1.1.2.1 2001/04/09 01:56:16 nathanw Exp $ */
+/* $NetBSD: isic_l1.c,v 1.1.2.2 2001/11/14 19:14:26 nathanw Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -25,6 +25,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.1.2.2 2001/11/14 19:14:26 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

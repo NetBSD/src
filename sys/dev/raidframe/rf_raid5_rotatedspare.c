@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid5_rotatedspare.c,v 1.5 2001/01/26 05:16:58 oster Exp $	*/
+/*	$NetBSD: rf_raid5_rotatedspare.c,v 1.5.2.1 2001/11/14 19:15:52 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,6 +31,9 @@
  * rf_raid5_rotated_spare.c -- implements RAID Level 5 with rotated sparing
  *
  **************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_raid5_rotatedspare.c,v 1.5.2.1 2001/11/14 19:15:52 nathanw Exp $");
 
 #include "rf_archs.h"
 

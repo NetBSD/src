@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.3.2.3 2001/08/24 00:09:07 nathanw Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.3.2.4 2001/11/14 19:14:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -33,11 +33,13 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.3.2.4 2001/11/14 19:14:05 nathanw Exp $");
+
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
-static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: bivideo.c,v 1.3.2.3 2001/08/24 00:09:07 nathanw Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>

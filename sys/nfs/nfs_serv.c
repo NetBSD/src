@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.59.2.2 2001/09/26 19:55:11 nathanw Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.59.2.3 2001/11/14 19:18:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -57,6 +57,9 @@
  *	For Version 3, nfsm_reply() does not return for the error case, since
  *	most version 3 rpcs return more than the status for error cases.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.59.2.3 2001/11/14 19:18:43 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

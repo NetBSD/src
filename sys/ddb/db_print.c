@@ -1,4 +1,4 @@
-/*	$NetBSD: db_print.c,v 1.15.2.1 2001/06/21 20:01:09 nathanw Exp $	*/
+/*	$NetBSD: db_print.c,v 1.15.2.2 2001/11/14 19:13:38 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,6 +32,10 @@
 /*
  * Miscellaneous printing.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_print.c,v 1.15.2.2 2001/11/14 19:13:38 nathanw Exp $");
+
 #include <sys/param.h>
 #include <sys/proc.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.3.2.1 2001/10/08 20:11:10 nathanw Exp $	*/
+/*	$NetBSD: auich.c,v 1.3.2.2 2001/11/14 19:15:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -78,6 +78,9 @@
  *
  *	- Add support for the microphone input.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.3.2.2 2001/11/14 19:15:07 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

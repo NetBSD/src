@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.17 2000/03/30 13:10:07 augustss Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.17.6.1 2001/11/14 19:18:25 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)cltp_usrreq.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.17.6.1 2001/11/14 19:18:25 nathanw Exp $");
 
 #ifndef CLTPOVAL_SRC		/* XXX -- till files gets changed */
 #include <sys/param.h>

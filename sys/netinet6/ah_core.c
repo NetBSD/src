@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.23.2.1 2001/10/22 20:41:58 nathanw Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.23.2.2 2001/11/14 19:18:00 nathanw Exp $	*/
 /*	$KAME: ah_core.c,v 1.45 2001/07/26 06:53:14 jinmei Exp $	*/
 
 /*
@@ -33,6 +33,9 @@
 /*
  * RFC1826/2402 authentication header.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.23.2.2 2001/11/14 19:18:00 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1158,10 +1161,17 @@ ah6_calccksum(m, ahdat, len, algo, sav)
 					goto fail;
 				}
 				optlen = optp[1] + 2;
-
-				if (optp[0] & IP6OPT_MUTABLE)
-					bzero(optp + 2, optlen - 2);
 			}
+
+			if (optp + optlen > optend) {
+				error = EINVAL;
+				m_free(n);
+				n = NULL;
+				goto fail;
+			}
+
+			if (optp[0] & IP6OPT_MUTABLE)
+				bzero(optp + 2, optlen - 2);
 
 			optp += optlen;
 		}

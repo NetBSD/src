@@ -27,13 +27,16 @@
  *	i4b_q931.c - Q931 received messages handling
  *	--------------------------------------------
  *
- *	$Id: i4b_q931.c,v 1.2.2.2 2001/08/24 00:12:48 nathanw Exp $ 
+ *	$Id: i4b_q931.c,v 1.2.2.3 2001/11/14 19:18:20 nathanw Exp $ 
  *
  * $FreeBSD$
  *
  *      last edit-date: [Fri Jan  5 11:33:47 2001]
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.2.2.3 2001/11/14 19:18:20 nathanw Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"

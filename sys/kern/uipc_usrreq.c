@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.48.4.3 2001/10/22 20:41:51 nathanw Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.48.4.4 2001/11/14 19:16:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,6 +72,9 @@
  *
  *	@(#)uipc_usrreq.c	8.9 (Berkeley) 5/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.48.4.4 2001/11/14 19:16:47 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

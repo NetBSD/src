@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirmio.c,v 1.2 2000/11/14 21:10:05 matt Exp $ */
+/*	$NetBSD: openfirmio.c,v 1.2.4.1 2001/11/14 19:15:06 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,9 @@
  *
  *	@(#)openfirm.c	8.1 (Berkeley) 6/11/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: openfirmio.c,v 1.2.4.1 2001/11/14 19:15:06 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

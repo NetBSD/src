@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.34 2000/07/27 20:08:47 bouyer Exp $	*/
+/*	$NetBSD: boca.c,v 1.34.2.1 2001/11/14 19:14:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,6 +32,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.34.2.1 2001/11/14 19:14:44 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_options.c,v 1.3.20.1 2001/10/22 20:41:37 nathanw Exp $	*/
+/*	$NetBSD: rf_options.c,v 1.3.20.2 2001/11/14 19:15:50 nathanw Exp $	*/
 /*
  * rf_options.c
  */
@@ -28,6 +28,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_options.c,v 1.3.20.2 2001/11/14 19:15:50 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: umassbus.c,v 1.8.2.3 2001/09/21 22:36:19 nathanw Exp $	*/
+/*	$NetBSD: umassbus.c,v 1.8.2.4 2001/11/14 19:16:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,8 +37,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: umassbus.c,v 1.8.2.4 2001/11/14 19:16:19 nathanw Exp $");
 
 #include "atapibus.h"
+#include "scsibus.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +110,9 @@ umass_attach_bus(struct umass_softc *sc)
 	sc->bus.sc_adapter.adapt_minphys = umass_scsipi_minphys;
 	sc->bus.sc_adapter.adapt_ioctl = umass_scsipi_ioctl;
 	sc->bus.sc_adapter.adapt_getgeom = umass_scsipi_getgeom;
+#if NATAPIBUS > 0
 	sc->bus.sc_atapi_adapter.atapi_probe_device =  umass_atapi_probe_device;
+#endif
 
 	/* fill in the channel */
 	memset(&sc->bus.sc_channel, 0, sizeof(sc->bus.sc_channel));
@@ -121,18 +126,24 @@ umass_attach_bus(struct umass_softc *sc)
 	switch (sc->cmd_proto) {
 	case CPROTO_RBC:
 	case CPROTO_SCSI:
+#if NSCSIBUS > 0
 		sc->bus.sc_channel.chan_bustype = &scsi_bustype;
 		sc->bus.sc_channel.chan_ntargets = UMASS_SCSIID_DEVICE + 1;
 		sc->bus.sc_channel.chan_nluns = sc->maxlun + 1;
 		sc->bus.sc_channel.chan_id = UMASS_SCSIID_HOST;
 		sc->bus.sc_channel.type = BUS_SCSI;
+		DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: SCSI\n",
+				     USBDEVNAME(sc->sc_dev)));
 		sc->bus.sc_child =
 		    config_found(&sc->sc_dev, &sc->bus.sc_channel, scsipiprint);
+#else
+		printf("%s: scsibus not configured\n", USBDEVNAME(sc->sc_dev));
+#endif
 		break;
 
-#if NATAPIBUS > 0
 	case CPROTO_UFI:
 	case CPROTO_ATAPI:
+#if NATAPIBUS > 0
 		sc->bus.sc_channel.chan_bustype = &umass_atapi_bustype;
 		sc->bus.sc_channel.chan_ntargets = 2;
 		sc->bus.sc_channel.chan_nluns = 1;
@@ -144,10 +155,14 @@ umass_attach_bus(struct umass_softc *sc)
 		sc->bus.aa.sc_aa.aa_bus_private = &sc->bus.sc_channel;
 		if (sc->quirks & NO_TEST_UNIT_READY)
 			sc->bus.sc_channel.chan_defquirks |= PQUIRK_NOTUR;
+		DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: ATAPI\n",
+				     USBDEVNAME(sc->sc_dev)));
 		sc->bus.sc_child =
 		    config_found(&sc->sc_dev, &sc->bus.aa.sc_aa, scsipiprint);
-		break;
+#else
+		printf("%s: atapibus not configured\n", USBDEVNAME(sc->sc_dev));
 #endif
+		break;
 
 	default:
 		printf("%s: cmd proto=0x%x not supported yet\n", 
@@ -168,9 +183,15 @@ scsipiprint(void *aux, const char *pnp)
 {
 	struct scsipi_channel *chan = aux;
 
-	if (chan->chan_bustype->bustype_type == SCSIPI_BUSTYPE_SCSI)
+	if (chan->chan_bustype->bustype_type == SCSIPI_BUSTYPE_SCSI) {
+#if NSCSIBUS > 0
 		return (scsiprint(aux, pnp));
-	else {
+#else
+		if (pnp)
+			printf("scsibus at %s", pnp);
+		return (UNCONF);
+#endif
+	} else {
 #if NATAPIBUS > 0
 		struct ata_atapi_attach *aa_link = aux;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.51.2.2 2001/09/21 22:35:18 nathanw Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.51.2.3 2001/11/14 19:13:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
 /*
  * based on exec_aout.c, sunos_exec.c and svr4_exec.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.51.2.3 2001/11/14 19:13:09 nathanw Exp $");
 
 #ifndef ELFSIZE
 #define	ELFSIZE		32				/* XXX should die */

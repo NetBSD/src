@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.15.2.2 2001/10/08 20:11:11 nathanw Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.15.2.3 2001/11/14 19:15:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -50,6 +50,9 @@
  * TODO
  * Joystick support
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.15.2.3 2001/11/14 19:15:10 nathanw Exp $");
 
 #include "midi.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.32.2.1 2001/03/05 22:49:45 nathanw Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.32.2.2 2001/11/14 19:16:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -55,6 +55,9 @@
  *
  * This software is provided ``AS IS'' without any warranties of any kind.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.32.2.2 2001/11/14 19:16:44 nathanw Exp $");
 
 #define SYSVMSG
 

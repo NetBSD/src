@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.112.2.1 2001/06/21 19:25:19 nathanw Exp $
+#	$NetBSD: Makefile.i386,v 1.112.2.2 2001/11/14 19:12:44 nathanw Exp $
 
 # Makefile for NetBSD
 #
@@ -11,6 +11,9 @@
 # Machine generic makefile changes should be made in
 #	/sys/arch/i386/conf/Makefile.i386
 # after which config should be rerun for all machines of that type.
+
+MACHINE_ARCH=i386
+USETOOLS?=	no
 
 .include <bsd.own.mk>
 

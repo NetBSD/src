@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.h,v 1.33.2.2 2001/09/21 22:37:02 nathanw Exp $	*/
+/*	$NetBSD: vnode_if.h,v 1.33.2.3 2001/11/14 19:18:52 nathanw Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
@@ -7,7 +7,7 @@
  * Created from the file:
  *	NetBSD: vnode_if.src,v 1.30 2001/09/15 20:36:37 chs Exp 
  * by the script:
- *	NetBSD: vnode_if.sh,v 1.29 2001/05/07 08:46:02 lukem Exp 
+ *	NetBSD: vnode_if.sh,v 1.30 2001/11/12 14:34:24 lukem Exp 
  */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.29.6.1 2001/06/21 20:06:08 nathanw Exp $	*/
+/*	$NetBSD: uk.c,v 1.29.6.2 2001/11/14 19:16:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Dummy driver for a device we can't identify.
  * Originally by Julian Elischer (julian@tfs.com)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.29.6.2 2001/11/14 19:16:06 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

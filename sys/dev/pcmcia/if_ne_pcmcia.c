@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.70.2.3 2001/10/22 20:41:30 nathanw Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.70.2.4 2001/11/14 19:15:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -28,6 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.70.2.4 2001/11/14 19:15:37 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

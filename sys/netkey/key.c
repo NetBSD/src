@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.43.2.5 2001/10/22 20:42:08 nathanw Exp $	*/
+/*	$NetBSD: key.c,v 1.43.2.6 2001/11/14 19:18:34 nathanw Exp $	*/
 /*	$KAME: key.c,v 1.203 2001/07/28 03:12:18 itojun Exp $	*/
 
 /*
@@ -34,6 +34,9 @@
  * This code is referd to RFC 2367
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.43.2.6 2001/11/14 19:18:34 nathanw Exp $");
+
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 
@@ -55,6 +58,7 @@
 #include <sys/errno.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -7395,9 +7399,6 @@ key_alloc_mbuf(l)
 
 	return m;
 }
-
-#include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
 
 int
 key_sysctl(name, namelen, oldp, oldlenp, newp, newlen)

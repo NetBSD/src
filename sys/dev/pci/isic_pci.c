@@ -33,7 +33,7 @@
  *	isic_pci.c - pcmcia bus frontend for i4b_isic driver
  *	----------------------------------------------------
  *
- *	$Id: isic_pci.c,v 1.2.2.1 2001/04/09 01:57:01 nathanw Exp $ 
+ *	$Id: isic_pci.c,v 1.2.2.2 2001/11/14 19:15:20 nathanw Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
@@ -41,6 +41,9 @@
  *	-mh	added support for Fritz! PCI card
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.2.2.2 2001/11/14 19:15:20 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.34.2.1 2001/10/22 20:41:35 nathanw Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.34.2.2 2001/11/14 19:15:48 nathanw Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -65,6 +65,9 @@
 /***************************************************************
  * rf_disks.c -- code to perform operations on the actual disks
  ***************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.34.2.2 2001/11/14 19:15:48 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

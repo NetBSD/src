@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.3.2.5 2001/10/22 20:41:30 nathanw Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.3.2.6 2001/11/14 19:15:38 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * PCMCIA attachment for Lucent & Intersil WaveLAN PCMCIA card
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.3.2.6 2001/11/14 19:15:38 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,6 +128,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_CIS_COREGA_WIRELESS_LAN_PCCB_11,
 	  PCMCIA_STR_COREGA_WIRELESS_LAN_PCCB_11 },
 
+	{ PCMCIA_VENDOR_INTEL,
+	  PCMCIA_PRODUCT_INTEL_PRO_WLAN_2011,
+	  PCMCIA_CIS_INTEL_PRO_WLAN_2011,
+	  PCMCIA_STR_INTEL_PRO_WLAN_2011 },
+
 	{ PCMCIA_VENDOR_INTERSIL,
 	  PCMCIA_PRODUCT_INTERSIL_PRISM2,
 	  PCMCIA_CIS_INTERSIL_PRISM2,
@@ -194,6 +202,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_GEMTEK_WLAN,
 	  PCMCIA_CIS_GEMTEK_WLAN,
 	  PCMCIA_STR_GEMTEK_WLAN },
+
+	{ PCMCIA_VENDOR_ELSA,
+	  PCMCIA_PRODUCT_ELSA_XI800_IEEE,
+	  PCMCIA_CIS_ELSA_XI800_IEEE,
+	  PCMCIA_STR_ELSA_XI800_IEEE },
 
 	{ 0,
 	  0,

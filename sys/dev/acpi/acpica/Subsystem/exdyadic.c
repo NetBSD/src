@@ -114,6 +114,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exdyadic.c,v 1.2.4.3 2001/11/14 19:13:48 nathanw Exp $");
 
 #define __EXDYADIC_C__
 

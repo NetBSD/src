@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.87.2.4 2001/09/21 22:35:36 nathanw Exp $	*/
+/*	$NetBSD: elink3.c,v 1.87.2.5 2001/11/14 19:14:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,6 +67,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.87.2.5 2001/11/14 19:14:21 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -611,7 +614,7 @@ ep_509_probemedia(sc)
 	 */
 	port = ep_read_eeprom(sc, EEPROM_ADDR_CFG) >> 14;
 
-#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
+#define	PRINT(str)	printf("%s%s", sep, str); sep = ", "
 
 	for (epm = ep_509_media; epm->epm_name != NULL; epm++) {
 		if (ep_w0_config & epm->epm_mpbit) {
@@ -678,7 +681,7 @@ ep_vortex_probemedia(sc)
 		return;
 	}
 
-#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
+#define	PRINT(str)	printf("%s%s", sep, str); sep = ", "
 
 	for (epm = ep_vortex_media; epm->epm_name != NULL; epm++) {
 		if (reset_options & epm->epm_mpbit) {

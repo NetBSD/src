@@ -1,4 +1,4 @@
-/*	$NetBSD: aic77xx.c,v 1.1 2000/03/15 02:06:18 fvdl Exp $	*/
+/*	$NetBSD: aic77xx.c,v 1.1.8.1 2001/11/14 19:14:14 nathanw Exp $	*/
 
 /*
  * Common routines for AHA-27/284X and aic7770 motherboard SCSI controllers.
@@ -29,6 +29,9 @@
  *
  * $FreeBSD: src/sys/dev/aic7xxx/ahc_eisa.c,v 1.15 2000/01/29 14:22:19 peter Exp $
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aic77xx.c,v 1.1.8.1 2001/11/14 19:14:14 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

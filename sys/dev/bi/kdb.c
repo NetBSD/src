@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.23.2.2 2001/08/24 00:09:05 nathanw Exp $ */
+/*	$NetBSD: kdb.c,v 1.23.2.3 2001/11/14 19:14:00 nathanw Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,6 +38,9 @@
  *   Implement node reset routine.
  *   Nices hardware error handling.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.23.2.3 2001/11/14 19:14:00 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

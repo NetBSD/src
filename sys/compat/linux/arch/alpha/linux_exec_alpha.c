@@ -1,4 +1,7 @@
-/*	$NetBSD: linux_exec_alpha.c,v 1.2.2.1 2001/08/24 00:08:46 nathanw Exp $	*/
+/*	$NetBSD: linux_exec_alpha.c,v 1.2.2.2 2001/11/14 19:13:02 nathanw Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_alpha.c,v 1.2.2.2 2001/11/14 19:13:02 nathanw Exp $");
 
 #define ELFSIZE 64
 

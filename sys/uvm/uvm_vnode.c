@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.46.2.6 2001/09/26 19:55:16 nathanw Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.46.2.7 2001/11/14 19:19:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,13 +45,16 @@
  * from: Id: uvm_vnode.c,v 1.1.2.26 1998/02/02 20:38:07 chuck Exp
  */
 
-#include "fs_nfs.h"
-#include "opt_uvmhist.h"
-#include "opt_ddb.h"
-
 /*
  * uvm_vnode.c: the vnode pager.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.46.2.7 2001/11/14 19:19:10 nathanw Exp $");
+
+#include "fs_nfs.h"
+#include "opt_uvmhist.h"
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

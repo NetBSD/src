@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_cons.c,v 1.13.6.1 2001/09/26 19:55:09 nathanw Exp $	*/
+/*	$NetBSD: tp_cons.c,v 1.13.6.2 2001/11/14 19:18:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -70,6 +70,9 @@ SOFTWARE.
  * tpcons_output: package a pkt for cons given an isopcb & some data
  * cons_chan_to_tpcb: find a tpcb based on the channel #
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tp_cons.c,v 1.13.6.2 2001/11/14 19:18:28 nathanw Exp $");
 
 #include "opt_iso.h"
 

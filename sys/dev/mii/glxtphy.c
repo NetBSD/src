@@ -1,4 +1,4 @@
-/*	$NetBSD: glxtphy.c,v 1.1.4.3 2001/09/21 22:35:49 nathanw Exp $	*/
+/*	$NetBSD: glxtphy.c,v 1.1.4.4 2001/11/14 19:15:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -69,6 +69,9 @@
 /*
  * Driver for the Level One LXT-1000 10/100/1000 PHY.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: glxtphy.c,v 1.1.4.4 2001/11/14 19:15:02 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

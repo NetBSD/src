@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_proto.c,v 1.9.14.1 2001/04/09 01:58:55 nathanw Exp $	*/
+/*	$NetBSD: ns_proto.c,v 1.9.14.2 2001/11/14 19:18:38 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)ns_proto.c	8.2 (Berkeley) 2/9/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ns_proto.c,v 1.9.14.2 2001/11/14 19:18:38 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_fcntl.c,v 1.10.2.2 2001/06/21 19:59:15 nathanw Exp $	*/
+/*	$NetBSD: ibcs2_fcntl.c,v 1.10.2.3 2001/11/14 19:12:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -26,6 +26,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.10.2.3 2001/11/14 19:12:59 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.12.2.2 2001/09/21 22:35:51 nathanw Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.12.2.3 2001/11/14 19:15:05 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.12.2.3 2001/11/14 19:15:05 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

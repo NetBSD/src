@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.12.4.2 2001/08/24 00:10:55 nathanw Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.12.4.3 2001/11/14 19:16:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -44,6 +44,9 @@
  * favourite SCSI host adapter: The Mustek DOES NOT DISCONNECT. It will block
  * other traffic from the bus while a transfer is active.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.12.4.3 2001/11/14 19:16:05 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

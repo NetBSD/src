@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.2.2.2 2001/04/09 01:57:37 nathanw Exp $	*/
+/*	$NetBSD: umct.c,v 1.2.2.3 2001/11/14 19:16:19 nathanw Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,6 +41,9 @@
  * http://www.dlink.com/products/usb/dsbs25
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.2.2.3 2001/11/14 19:16:19 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

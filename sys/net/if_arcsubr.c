@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.34.2.2 2001/10/22 20:41:53 nathanw Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.34.2.3 2001/11/14 19:17:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -37,6 +37,10 @@
  *       @(#)if_ethersubr.c	8.1 (Berkeley) 6/10/93
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.34.2.3 2001/11/14 19:17:19 nathanw Exp $");
+
 #include "opt_inet.h"
 
 #include "bpfilter.h"

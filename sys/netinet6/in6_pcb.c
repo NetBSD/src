@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.35.2.3 2001/10/22 20:42:01 nathanw Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.35.2.4 2001/11/14 19:18:07 nathanw Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -64,6 +64,9 @@
  *
  *	@(#)in_pcb.c	8.2 (Berkeley) 1/4/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.35.2.4 2001/11/14 19:18:07 nathanw Exp $");
 
 #include "opt_ipsec.h"
 
@@ -132,7 +135,7 @@ in6_pcballoc(so, head)
 		FREE(in6p, M_PCB);
 		return error;
 	}
-#endif /*IPSEC*/
+#endif /* IPSEC */
 	in6p->in6p_next = head->in6p_next;
 	head->in6p_next = in6p;
 	in6p->in6p_prev = head;

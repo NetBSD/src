@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.11.2.1 2001/08/24 00:12:53 nathanw Exp $	*/
+/*	$NetBSD: keysock.c,v 1.11.2.2 2001/11/14 19:18:36 nathanw Exp $	*/
 /*	$KAME: keysock.c,v 1.23 2000/09/22 08:26:33 itojun Exp $	*/
 
 /*
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.11.2.2 2001/11/14 19:18:36 nathanw Exp $");
 
 #include "opt_inet.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.59.2.4 2001/10/22 20:42:00 nathanw Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.59.2.5 2001/11/14 19:18:03 nathanw Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -65,6 +65,9 @@
  *	@(#)ip_icmp.c	8.2 (Berkeley) 1/4/94
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.59.2.5 2001/11/14 19:18:03 nathanw Exp $");
+
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 
@@ -79,6 +82,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/domain.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -2198,7 +2202,7 @@ icmp6_reflect(m, off)
 #ifdef IPSEC
 	/* Don't lookup socket */
 	(void)ipsec_setsocket(m, NULL);
-#endif /*IPSEC*/
+#endif /* IPSEC */
 
 	ip6_output(m, NULL, NULL, 0, NULL, &outif);
 
@@ -2915,9 +2919,6 @@ icmp6_redirect_timeout(rt, r)
 		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
 	}
 }
-
-#include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
 
 int
 icmp6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)

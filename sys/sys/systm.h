@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.125.2.6 2001/10/22 20:42:12 nathanw Exp $	*/
+/*	$NetBSD: systm.h,v 1.125.2.7 2001/11/14 19:18:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -184,6 +184,7 @@ int	seltrue __P((dev_t, int, struct proc *));
 int	sys_nosys __P((struct lwp *, void *, register_t *));
 
 
+#ifdef _KERNEL
 void	printf __P((const char *, ...))
     __attribute__((__format__(__printf__,1,2)));
 int	sprintf __P((char *, const char *, ...))
@@ -193,6 +194,7 @@ int	snprintf __P((char *, size_t, const char *, ...))
 void	vprintf __P((const char *, _BSD_VA_LIST_));
 int	vsprintf __P((char *, const char *, _BSD_VA_LIST_));
 int	vsnprintf __P((char *, size_t, const char *, _BSD_VA_LIST_));
+#endif /* _KERNEL */
 
 void	panic __P((const char *, ...))
     __attribute__((__noreturn__,__format__(__printf__,1,2)));
@@ -210,9 +212,11 @@ void	tablefull __P((const char *, const char *));
 
 int	kcopy __P((const void *, void *, size_t));
 
+#ifdef _KERNEL
 #define bcopy(src, dst, len)	memcpy((dst), (src), (len))
 #define bzero(src, len)		memset((src), 0, (len))
 #define bcmp(a, b, len)		memcmp((a), (b), (len))
+#endif /* KERNEL */
 
 int	copystr __P((const void *, void *, size_t, size_t *));
 int	copyinstr __P((const void *, void *, size_t, size_t *));
@@ -343,7 +347,7 @@ typedef struct cnm_state {
 #define cn_trap()	console_debugger()
 #endif
 #ifndef cn_isconsole
-#define cn_isconsole(d)	((d) == cn_tab->cn_dev)
+#define cn_isconsole(d)	(cn_tab != NULL && (d) == cn_tab->cn_dev)
 #endif
 
 void cn_init_magic __P((cnm_state_t *cnm));

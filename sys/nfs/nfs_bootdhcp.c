@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.16.2.1 2001/06/21 20:09:32 nathanw Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.16.2.2 2001/11/14 19:18:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -49,6 +49,9 @@
  * Gordon Ross reorganized Tor's version into this form and
  * integrated it into the NetBSD sources during Aug 1997.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.16.2.2 2001/11/14 19:18:43 nathanw Exp $");
 
 #include "opt_nfs_boot.h"
 

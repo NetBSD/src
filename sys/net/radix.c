@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.17 2001/01/10 01:16:59 itojun Exp $	*/
+/*	$NetBSD: radix.c,v 1.17.2.1 2001/11/14 19:17:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -38,6 +38,10 @@
 /*
  * Routines to build and maintain radix trees for routing lookups.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.17.2.1 2001/11/14 19:17:30 nathanw Exp $");
+
 #ifndef _NET_RADIX_H_
 #include <sys/param.h>
 #ifdef	_KERNEL

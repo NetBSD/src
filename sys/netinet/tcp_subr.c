@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.107.2.4 2001/09/21 22:36:50 nathanw Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.107.2.5 2001/11/14 19:17:57 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,6 +100,9 @@
  *
  *	@(#)tcp_subr.c	8.2 (Berkeley) 5/24/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.107.2.5 2001/11/14 19:17:57 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1057,7 +1060,7 @@ tcp_freeq(tp)
 
 	TCP_REASS_LOCK_CHECK(tp);
 
-	while ((qe = tp->segq.lh_first) != NULL) {
+	while ((qe = LIST_FIRST(&tp->segq)) != NULL) {
 #ifdef TCPREASS_DEBUG
 		printf("tcp_freeq[%p,%d]: %u:%u(%u) 0x%02x\n",
 			tp, i++, qe->ipqe_seq, qe->ipqe_seq + qe->ipqe_len,
@@ -1084,10 +1087,9 @@ tcp_drain()
 	/*
 	 * Free the sequence queue of all TCP connections.
 	 */
-	inp = tcbtable.inpt_queue.cqh_first;
+	inp = CIRCLEQ_FIRST(&tcbtable.inpt_queue);
 	if (inp)						/* XXX */
-	for (; inp != (struct inpcb *)&tcbtable.inpt_queue;
-	    inp = inp->inp_queue.cqe_next) {
+	CIRCLEQ_FOREACH(inp, &tcbtable.inpt_queue, inp_queue) {
 		if ((tp = intotcpcb(inp)) != NULL) {
 			/*
 			 * We may be called from a device's interrupt
@@ -1285,7 +1287,7 @@ tcp_ctlinput(cmd, sa, v)
 	struct ip *ip = v;
 	struct tcphdr *th;
 	struct icmp *icp;
-	extern int inetctlerrmap[];
+	extern const int inetctlerrmap[];
 	void (*notify) __P((struct inpcb *, int)) = tcp_notify;
 	int errno;
 	int nmatch;

@@ -1,4 +1,4 @@
-/* $NetBSD: cy82c693.c,v 1.2 2000/11/24 03:59:08 chs Exp $ */
+/* $NetBSD: cy82c693.c,v 1.2.2.1 2001/11/14 19:15:11 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,9 +41,8 @@
  * hyperCache(tm) Stand-Alone PCI Peripheral Controller with USB.
  */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: cy82c693.c,v 1.2 2000/11/24 03:59:08 chs Exp $");
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cy82c693.c,v 1.2.2.1 2001/11/14 19:15:11 nathanw Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.37.2.2 2001/06/21 20:09:33 nathanw Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.37.2.3 2001/11/14 19:18:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,6 +51,9 @@
  *		Performance of Cache-Consistency Protocols", Digital
  *		Equipment Corporation WRL Research Report 89/5, May 1989.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.37.2.3 2001/11/14 19:18:43 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"

@@ -1,4 +1,7 @@
-/*	$NetBSD: smb_lock.c,v 1.1 2000/12/07 03:48:10 deberg Exp $	*/
+/*	$NetBSD: smb_lock.c,v 1.1.4.1 2001/11/14 19:18:40 nathanw Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: smb_lock.c,v 1.1.4.1 2001/11/14 19:18:40 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

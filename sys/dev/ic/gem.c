@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.1.2.4 2001/10/22 20:41:17 nathanw Exp $ */
+/*	$NetBSD: gem.c,v 1.1.2.5 2001/11/14 19:14:22 nathanw Exp $ */
 
 /*
  * 
@@ -32,6 +32,9 @@
 /*
  * Driver for Sun GEM ethernet controllers.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.1.2.5 2001/11/14 19:14:22 nathanw Exp $");
 
 #include "bpfilter.h"
 

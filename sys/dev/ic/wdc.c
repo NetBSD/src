@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.94.2.3 2001/09/21 22:35:45 nathanw Exp $ */
+/*	$NetBSD: wdc.c,v 1.94.2.4 2001/11/14 19:14:41 nathanw Exp $ */
 
 
 /*
@@ -70,6 +70,9 @@
  * CODE UNTESTED IN THE CURRENT REVISION:
  *   
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.94.2.4 2001/11/14 19:14:41 nathanw Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG

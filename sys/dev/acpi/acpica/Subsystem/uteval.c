@@ -114,6 +114,9 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uteval.c,v 1.1.1.1.4.3 2001/11/14 19:13:58 nathanw Exp $");
+
 #define __UTEVAL_C__
 
 #include "acpi.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_mcpair.c,v 1.4.2.2 2001/10/22 20:41:37 nathanw Exp $	*/
+/*	$NetBSD: rf_mcpair.c,v 1.4.2.3 2001/11/14 19:15:49 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,6 +30,9 @@
  * an mcpair is a structure containing a mutex and a condition variable.
  * it's used to block the current thread until some event occurs.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.4.2.3 2001/11/14 19:15:49 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

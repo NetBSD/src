@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.2.4.2 2001/09/21 22:34:52 nathanw Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.2.4.3 2001/11/14 19:12:37 nathanw Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -30,6 +30,9 @@
  *  
  * These notices must be retained in any copies of any part of this software.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.2.4.3 2001/11/14 19:12:37 nathanw Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"

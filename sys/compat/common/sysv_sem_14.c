@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem_14.c,v 1.3.2.1 2001/03/05 22:49:19 nathanw Exp $	*/
+/*	$NetBSD: sysv_sem_14.c,v 1.3.2.2 2001/11/14 19:12:54 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem_14.c,v 1.3.2.2 2001/11/14 19:12:54 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

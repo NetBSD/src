@@ -1,13 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.31.2.1 2001/06/21 20:01:29 nathanw Exp $	*/
-
-#include "opt_ddb.h"
-
-#undef	AHBDEBUG
-#ifdef DDB
-#define	integrate
-#else
-#define	integrate	static inline
-#endif
+/*	$NetBSD: ahb.c,v 1.31.2.2 2001/11/14 19:14:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -60,6 +51,18 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.31.2.2 2001/11/14 19:14:03 nathanw Exp $");
+
+#include "opt_ddb.h"
+
+#undef	AHBDEBUG
+#ifdef DDB
+#define	integrate
+#else
+#define	integrate	static inline
+#endif
 
 #include <sys/types.h>
 #include <sys/param.h>

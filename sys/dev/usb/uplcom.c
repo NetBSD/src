@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.11.4.3 2001/08/24 00:11:10 nathanw Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.11.4.4 2001/11/14 19:16:20 nathanw Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -42,6 +42,9 @@
  * 	(english)
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.11.4.4 2001/11/14 19:16:20 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

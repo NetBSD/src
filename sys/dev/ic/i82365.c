@@ -1,6 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.62 2001/02/21 21:39:55 jdolecek Exp $	*/
-
-#define	PCICDEBUG
+/*	$NetBSD: i82365.c,v 1.62.2.1 2001/11/14 19:14:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -31,6 +29,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.62.2.1 2001/11/14 19:14:23 nathanw Exp $");
+
+#define	PCICDEBUG
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_bi.c,v 1.4 1999/07/12 13:43:40 ragge Exp $ */
+/*	$NetBSD: uba_bi.c,v 1.4.14.1 2001/11/14 19:14:00 nathanw Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,6 +33,9 @@
 /*
  * DWBUA BI-Unibus adapter
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uba_bi.c,v 1.4.14.1 2001/11/14 19:14:00 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

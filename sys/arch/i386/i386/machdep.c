@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.429.2.9 2001/09/21 22:35:05 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.429.2.10 2001/11/14 19:12:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -711,8 +711,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Celeron (Mendocino)",
 				"Pentium III (Katmai)",
 				"Pentium III (Coppermine)",
-				0, "Pentium III (Cascades)", 0, 0,
-				0, 0,
+				0, "Pentium III (Cascades)",
+				"Pentium III (Tualatin)", 0, 0, 0, 0,
 				"Pentium Pro, II or III"	/* Default */
 			},
 			NULL,
@@ -722,8 +722,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium 4"	/* Default */
 			},
 			NULL,
@@ -777,8 +777,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
 				"Unknown K7 (Athlon)"	/* Default */
 			},
 			NULL,
@@ -795,7 +795,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, 0, 0,
 				"MediaGX",
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"486"		/* Default */
 			},
 			NULL,
@@ -817,7 +817,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				"6x86MX", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				"6x86MX", 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
 				"6x86MX"		/* Default */
 			},
 			cyrix6x86_cpu_setup,
@@ -827,7 +828,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
 				"Unknown 6x86MX"		/* Default */
 			},
 			NULL,
@@ -842,8 +844,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{ {
 			CPUCLASS_486, 
 			{
-				0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
 				"486 compatible"	/* Default */
 			},
 			NULL,
@@ -864,8 +866,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium Pro compatible"	/* Default */
 			},
 			NULL,
@@ -875,8 +877,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium Pro compatible"	/* Default */
 			},
 			NULL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_amd.c,v 1.3.2.4 2001/10/22 20:41:23 nathanw Exp $	*/
+/*	$NetBSD: agp_amd.c,v 1.3.2.5 2001/11/14 19:15:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -27,6 +27,9 @@
  *
  *	$FreeBSD: src/sys/pci/agp_amd.c,v 1.6 2001/07/05 21:28:46 jhb Exp $
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: agp_amd.c,v 1.3.2.5 2001/11/14 19:15:07 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_input.c,v 1.13 2000/03/30 13:10:13 augustss Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.13.6.1 2001/11/14 19:18:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,6 +81,9 @@ SOFTWARE.
  * header, to be used by other layers.  It's in here because it uses the
  * static structure tpdu_info.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.13.6.1 2001/11/14 19:18:29 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwscsi.c,v 1.2.2.2 2001/06/21 20:03:43 nathanw Exp $	*/
+/*	$NetBSD: fwscsi.c,v 1.2.2.3 2001/11/14 19:14:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fwscsi.c,v 1.2.2.3 2001/11/14 19:14:43 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

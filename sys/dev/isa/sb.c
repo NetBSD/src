@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.70.2.1 2001/10/08 20:11:08 nathanw Exp $	*/
+/*	$NetBSD: sb.c,v 1.70.2.2 2001/11/14 19:14:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.70.2.2 2001/11/14 19:14:53 nathanw Exp $");
 
 #include "midi.h"
 

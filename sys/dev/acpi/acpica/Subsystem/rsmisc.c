@@ -114,6 +114,9 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rsmisc.c,v 1.1.1.1.4.3 2001/11/14 19:13:55 nathanw Exp $");
+
 #define __RSMISC_C__
 
 #include "acpi.h"

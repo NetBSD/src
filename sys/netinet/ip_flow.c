@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.16.2.2 2001/09/21 22:36:48 nathanw Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.16.2.3 2001/11/14 19:17:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.16.2.3 2001/11/14 19:17:47 nathanw Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -47,11 +50,7 @@
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/pool.h>
-
-#include <uvm/uvm_extern.h>
-
 #include <sys/sysctl.h>
 
 #include <net/if.h>

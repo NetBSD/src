@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.17.2.2 2001/08/24 00:12:09 nathanw Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.17.2.3 2001/11/14 19:17:20 nathanw Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -42,12 +42,12 @@
 /*
  * Loopback interface driver for protocol testing and timing.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.17.2.3 2001/11/14 19:17:20 nathanw Exp $");
+
 #include "opt_inet.h"
 
-#include "faith.h"
-#if NFAITH > 0
-
-#include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
@@ -359,4 +359,3 @@ faithprefix(in6)
 		RTFREE(rt);
 	return ret;
 }
-#endif /* NFAITH > 0 */

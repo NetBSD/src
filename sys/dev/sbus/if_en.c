@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en.c,v 1.10 2000/07/09 20:57:42 pk Exp $	*/
+/*	$NetBSD: if_en.c,v 1.10.2.1 2001/11/14 19:15:57 nathanw Exp $	*/
 
 /*
  *
@@ -41,6 +41,9 @@
  *
  * SBUS glue for the eni155s card.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.10.2.1 2001/11/14 19:15:57 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

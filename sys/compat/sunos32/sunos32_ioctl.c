@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_ioctl.c,v 1.3.4.1 2001/06/21 20:00:32 nathanw Exp $	*/
+/*	$NetBSD: sunos32_ioctl.c,v 1.3.4.2 2001/11/14 19:13:24 nathanw Exp $	*/
 /* from: NetBSD: sunos_ioctl.c,v 1.35 2001/02/03 22:20:02 mrg Exp 	*/
 
 /*
@@ -54,6 +54,9 @@
  *
  * loosely from: Header: sunos_ioctl.c,v 1.7 93/05/28 04:40:43 torek Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.3.4.2 2001/11/14 19:13:24 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd32.h"

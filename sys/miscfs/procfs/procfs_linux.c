@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.2 2001/01/18 16:39:43 tv Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.2.2.1 2001/11/14 19:17:11 nathanw Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.2.2.1 2001/11/14 19:17:11 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
