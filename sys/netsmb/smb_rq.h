@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.h,v 1.5 2003/03/23 10:32:05 jdolecek Exp $	*/
+/*	$NetBSD: smb_rq.h,v 1.6 2003/03/23 16:57:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -78,38 +78,28 @@ struct smb_t2rq;
 
 struct smb_rq {
 	enum smbrq_state	sr_state;
-	struct smb_vc * 	sr_vc;
-	struct smb_share*	sr_share;
-	u_short			sr_mid;
+	struct smb_vc * 	sr_vc;		/* session */
+	struct smb_share *	sr_share;
 	struct mbchain		sr_rq;
-	u_int8_t		sr_rqflags;
-	u_int16_t		sr_rqflags2;
 	u_int8_t *		sr_wcount;
 	u_int8_t *		sr_bcount;
 	struct mdchain		sr_rp;
-	int			sr_rpgen;
-	int			sr_rplast;
-	int			sr_flags;	/* SMBR_* */
-	int			sr_rpsize;
+	u_int			sr_rpgen;
+	u_int			sr_rplast;
 	struct smb_cred *	sr_cred;
-	int			sr_timo;
-	int			sr_rexmit;
-	int			sr_sendcnt;
+	u_short			sr_mid;
+	u_short			sr_flags;	/* SMBR_* */
 	struct timeval		sr_sendtimo;	/* timeout expiration time */
+	int			sr_timo;
+	int			sr_sendcnt;
 	int			sr_lerror;
 	u_int8_t *		sr_rqtid;
 	u_int8_t *		sr_rquid;
-	u_int8_t		sr_errclass;
-	u_int16_t		sr_serror;
-	u_int32_t		sr_error;
-	u_int8_t		sr_rpflags;
-	u_int16_t		sr_rpflags2;
 	u_int16_t		sr_rptid;
 	u_int16_t		sr_rppid;
 	u_int16_t		sr_rpuid;
 	u_int16_t		sr_rpmid;
 	struct smb_slock	sr_slock;	/* short term locks */
-/*	struct smb_t2rq*sr_t2;*/
 	SIMPLEQ_ENTRY(smb_rq)	sr_link;
 };
 
