@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.85 1998/03/21 12:18:25 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.86 1998/03/23 17:16:03 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -804,6 +804,8 @@ configure()
 				 (void *)memregcf->cf_loc[0], 0, NBPG,
 				 0, 0, &bh) != 0)
 			panic("configure: ROM hasn't mapped memreg!");
+
+		par_err_reg = (volatile int *)bh;
 	}
 #endif
 #if defined(SUN4C)
