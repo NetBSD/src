@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.22 1997/01/10 00:07:27 scottr Exp $	*/
+/*	$NetBSD: grf.c,v 1.23 1997/01/30 09:18:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -82,14 +82,13 @@ extern struct emul emul_hpux;
 #if NITE > 0
 #include <hp300/dev/itevar.h>
 #else
-#define	iteon(u,f)	0	/* normally returns int */
+#define	iteon(u,f)		0	/* noramlly returns int */
 #define	iteoff(u,f)
 #endif /* NITE > 0 */
 
 /* prototypes for the devsw entry points */
 cdev_decl(grf);
 
-#ifdef NEWCONFIG
 int	grfmatch __P((struct device *, struct cfdata *, void *));
 void	grfattach __P((struct device *, struct device *, void *));
 
@@ -102,10 +101,6 @@ struct cfdriver grf_cd = {
 };
 
 int	grfprint __P((void *, const char *));
-#else /* ! NEWCONFIG */
-#include "grf.h"
-struct	grf_softc grf_softc[NGRF];
-#endif /* NEWCONFIG */
 
 /*
  * Frambuffer state information, statically allocated for benefit
@@ -121,7 +116,6 @@ int grfdebug = 0;
 #define GDB_LOCK	0x08
 #endif
 
-#ifdef NEWCONFIG
 int
 grfmatch(parent, match, aux)
 	struct device *parent;
@@ -161,7 +155,6 @@ grfprint(aux, pnp)
 
 	return (UNCONF);
 }
-#endif /* NEWCONFIG */
 
 /*ARGSUSED*/
 int
@@ -175,15 +168,9 @@ grfopen(dev, flags, mode, p)
 	struct grf_data *gp;
 	int error = 0;
 
-#ifdef NEWCONFIG
 	if (unit >= grf_cd.cd_ndevs ||
 	    (sc = grf_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
-#else
-	if (unit >= NGRF)
-		return(ENXIO);
-	sc = &grf_softc[unit];
-#endif
 
 	gp = sc->sc_data;
 
@@ -230,11 +217,7 @@ grfclose(dev, flags, mode, p)
 	struct grf_softc *sc;
 	struct grf_data *gp;
 
-#ifdef NEWCONFIG
 	sc = grf_cd.cd_devs[unit];
-#else
-	sc = &grf_softc[unit];
-#endif
 
 	gp = sc->sc_data;
 
@@ -262,11 +245,7 @@ grfioctl(dev, cmd, data, flag, p)
 	struct grf_data *gp;
 	int error, unit = GRFUNIT(dev);
 
-#ifdef NEWCONFIG
 	sc = grf_cd.cd_devs[unit];
-#else
-	sc = &grf_softc[unit];
-#endif
 
 	gp = sc->sc_data;
 
@@ -325,11 +304,7 @@ grfmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-#ifdef NEWCONFIG
 	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
-#else
-	struct grf_softc *sc = &grf_softc[GRFUNIT(dev)];
-#endif
 
 	return (grfaddr(sc, off));
 }
@@ -342,11 +317,7 @@ grfon(dev)
 	struct grf_softc *sc;
 	struct grf_data *gp;
 
-#ifdef NEWCONFIG
 	sc = grf_cd.cd_devs[unit];
-#else
-	sc = &grf_softc[unit];
-#endif
 	gp = sc->sc_data;
 
 	/*
@@ -369,11 +340,7 @@ grfoff(dev)
 	struct grf_data *gp;
 	int error;
 
-#ifdef NEWCONFIG
 	sc = grf_cd.cd_devs[unit];
-#else
-	sc = &grf_softc[unit];
-#endif
 	gp = sc->sc_data;
 
 	(void) grfunmap(dev, (caddr_t)0, curproc);
@@ -381,7 +348,7 @@ grfoff(dev)
 				     (dev&GRFOVDEV) ? GM_GRFOVOFF : GM_GRFOFF,
 				     (caddr_t)0);
 	/* XXX: see comment for iteoff above */
-	iteon(sc->sc_ite->sc_data, 2);
+	(void) iteon(sc->sc_ite->sc_data, 2);
 	return(error);
 }
 
@@ -419,11 +386,7 @@ hpuxgrfioctl(dev, cmd, data, flag, p)
 	caddr_t data;
 	struct proc *p;
 {
-#ifdef NEWCONFIG
 	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
-#else
-	struct grf_softc *sc = &grf_softc[GRFUNIT(dev)];
-#endif
 	struct grf_data *gp = sc->sc_data;
 	int error;
 
@@ -621,15 +584,9 @@ grfdevno(dev)
 	struct grf_data *gp;
 	int newdev;
 
-#ifdef NEWCONFIG
 	if (unit >= grf_cd.cd_ndevs ||
 	    (sc = grf_cd.cd_devs[unit]) == NULL)
 		return (bsdtohpuxdev(dev));
-#else
-	if (unit >= NGRF)
-		return (bsdtohpuxdev(dev));
-	sc = &grf_softc[unit];
-#endif
 
 	gp = sc->sc_data;
 	if ((gp->g_flags & GF_ALIVE) == 0)
@@ -659,11 +616,7 @@ grfmap(dev, addrp, p)
 	caddr_t *addrp;
 	struct proc *p;
 {
-#ifdef NEWCONFIG
 	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
-#else
-	struct grf_softc *sc = &grf_softc[GRFUNIT(dev)];
-#endif
 	struct grf_data *gp = sc->sc_data;
 	int len, error;
 	struct vnode vn;
@@ -696,11 +649,7 @@ grfunmap(dev, addr, p)
 	caddr_t addr;
 	struct proc *p;
 {
-#ifdef NEWCONFIG
 	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
-#else
-	struct grf_softc *sc = &grf_softc[GRFUNIT(dev)];
-#endif
 	struct grf_data *gp = sc->sc_data;
 	vm_size_t size;
 	int rv;

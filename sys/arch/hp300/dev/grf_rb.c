@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rb.c,v 1.9 1996/12/17 08:41:10 thorpej Exp $	*/
+/*	$NetBSD: grf_rb.c,v 1.10 1997/01/30 09:18:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -77,7 +77,6 @@
 int	rb_init __P((struct grf_data *gp, int, caddr_t));
 int	rb_mode __P((struct grf_data *gp, int, caddr_t));
 
-#ifdef NEWCONFIG
 int	rbox_intio_match __P((struct device *, struct cfdata *, void *));
 void	rbox_intio_attach __P((struct device *, struct device *, void *));
 
@@ -95,7 +94,6 @@ struct cfattach rbox_dio_ca = {
 struct cfdriver rbox_cd = {
 	NULL, "rbox", DV_DULL
 };
-#endif /* NEWCONFIG */
 
 /* Renaissance grf switch */
 struct grfsw rbox_grfsw = {
@@ -119,7 +117,6 @@ struct itesw rbox_itesw = {
 };
 #endif /* NITE > 0 */
 
-#ifdef NEWCONFIG
 int
 rbox_intio_match(parent, match, aux)
 	struct device *parent;
@@ -194,7 +191,6 @@ rbox_dio_attach(parent, self, aux)
 
 	grfdev_attach(sc, rb_init, grf, &rbox_grfsw);
 }
-#endif /* NEWCONFIG */
 
 /*
  * Initialize hardware.

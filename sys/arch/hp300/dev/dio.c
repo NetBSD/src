@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.2 1997/01/12 21:27:26 thorpej Exp $	*/
+/*	$NetBSD: dio.c,v 1.3 1997/01/30 09:18:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -60,7 +60,6 @@ extern	caddr_t internalhpib;
 int	dio_scodesize __P((struct dio_attach_args *));
 char	*dio_devinfo __P((struct dio_attach_args *, char *, size_t));
 
-#ifdef NEWCONFIG
 int	diomatch __P((struct device *, struct cfdata *, void *));
 void	dioattach __P((struct device *, struct device *, void *));
 int	dioprint __P((void *, const char *));
@@ -190,7 +189,6 @@ dioprint(aux, pnp)
 	printf(" scode %d", da->da_scode);
 	return (UNCONF);
 }
-#endif /* NEWCONFIG */
 
 /*
  * Convert a select code to a system physical address.

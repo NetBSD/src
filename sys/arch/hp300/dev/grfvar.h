@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.8 1996/12/17 08:41:12 thorpej Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.9 1997/01/30 09:18:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -123,15 +123,8 @@ struct	grfdev_attach_args {
 
 #ifdef _KERNEL
 extern	struct grf_data grf_cn;		/* grf_data for console device */
-#ifndef NEWCONFIG
-extern	struct grf_softc grf_softc[];
-extern	struct grfsw *grfsw[];
-extern	int ngrfsw;
-#endif /* ! NEWCONFIG */
 
-#ifdef NEWCONFIG
 void	grfdev_attach __P((struct grfdev_softc *,
 	    int (*init)(struct grf_data *, int, caddr_t),
 	    caddr_t, struct grfsw *));
-#endif /* NEWCONFIG */
 #endif /* _KERNEL */

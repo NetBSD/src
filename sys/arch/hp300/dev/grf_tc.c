@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.9 1996/12/17 08:41:12 thorpej Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.10 1997/01/30 09:18:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -77,7 +77,6 @@
 int	tc_init __P((struct grf_data *, int, caddr_t));
 int	tc_mode __P((struct grf_data *, int, caddr_t));
 
-#ifdef NEWCONFIG
 void	topcat_common_attach __P((struct grfdev_softc *, caddr_t, u_int8_t));
 
 int	topcat_intio_match __P((struct device *, struct cfdata *, void *));
@@ -97,7 +96,6 @@ struct cfattach topcat_dio_ca = {
 struct cfdriver topcat_cd = {
 	NULL, "topcat", DV_DULL
 };
-#endif /* NEWCONFIG */
 
 /* Topcat (bobcat) grf switch */
 struct grfsw topcat_grfsw = {
@@ -136,7 +134,6 @@ struct itesw topcat_itesw = {
 };
 #endif /* NITE > 0 */
 
-#ifdef NEWCONFIG
 int
 topcat_intio_match(parent, match, aux)
 	struct device *parent;
@@ -267,7 +264,6 @@ topcat_common_attach(sc, grf, secid)
 
 	grfdev_attach(sc, tc_init, grf, sw);
 }
-#endif /* NEWCONFIG */
 
 /*
  * Initialize hardware.

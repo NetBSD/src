@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.12 1997/01/09 01:07:59 scottr Exp $	*/
+/*	$NetBSD: itevar.h,v 1.13 1997/01/30 09:18:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,7 +93,7 @@ struct ite_softc {
 	struct	ite_data *sc_data;	/* terminal state info */
 	struct	grf_softc *sc_grf;	/* pointer to framebuffer */
 };
-#endif
+#endif /* _KERNEL */
 
 /* Flags */
 #define ITE_ALIVE	0x01	/* hardware exists */
