@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_pcppi.c,v 1.1 1998/08/12 18:16:36 augustss Exp $	*/
+/*	$NetBSD: midi_pcppi.c,v 1.2 1998/08/12 21:36:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,8 +63,9 @@ struct midi_pcppi_softc {
 int	midi_pcppi_match __P((struct device *, struct cfdata *, void *));
 void	midi_pcppi_attach __P((struct device *, struct device *, void *));
 
-void	midi_pcppi_on  __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
-void	midi_pcppi_off __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
+void	midi_pcppi_on    __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
+void	midi_pcppi_off   __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
+void	midi_pcppi_close __P((midisyn *));
 
 struct cfattach midi_pcppi_ca = {
 	sizeof(struct midi_pcppi_softc), midi_pcppi_match, midi_pcppi_attach
@@ -72,7 +73,7 @@ struct cfattach midi_pcppi_ca = {
 
 struct midisyn_methods midi_pcppi_hw = {
 	0,			/* open */
-	0,			/* close */
+	midi_pcppi_close,
 	0,			/* ioctl */
 	0,			/* allocv */
 	midi_pcppi_on,
@@ -137,5 +138,15 @@ midi_pcppi_off(ms, chan, note, vel)
 	pcppi_tag_t t = ms->data;
 
 	/*printf("OFF %p %d\n", t, note >> 16);*/
+	pcppi_bell(t, 0, 0, 0);
+}
+
+void
+midi_pcppi_close(ms)
+	midisyn *ms;
+{
+	pcppi_tag_t t = ms->data;
+
+	/* Make sure we are quiet. */
 	pcppi_bell(t, 0, 0, 0);
 }
