@@ -41,7 +41,7 @@ if [ -d /var/rwho ] ; then
 fi
 
 cd /tmp
-find / ! -fstype local -a -prune -o \
+find / \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \) -a -prune -o \
 	\( -name '[#,]*' -o -name '.#*' -o -name a.out -o -name core \
 	   -o -name '*.CKP' -o -name '.emacs_[0-9]*' \) \
 		-a -atime +3 -exec rm -f -- {} \;
