@@ -1,4 +1,4 @@
-/*	$NetBSD: apmd.c,v 1.20 2001/09/15 02:42:26 enami Exp $	*/
+/*	$NetBSD: apmd.c,v 1.21 2001/12/31 19:33:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -585,6 +585,6 @@ do_ac_state(int state)
 		do_etc_file(_PATH_APM_ETC_LINE);
 		break;
 	default:
-		/* Silently ignore */
+		/* Silently ignore */ ;
 	}
 }
