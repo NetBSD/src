@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.25 2002/04/30 15:21:55 agc Exp $	*/
+/*	$NetBSD: library.c,v 1.26 2002/05/03 04:43:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.25 2002/04/30 15:21:55 agc Exp $");
+__RCSID("$NetBSD: library.c,v 1.26 2002/05/03 04:43:57 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,7 +146,7 @@ get_fs_info (struct statfs *lstatfsp, int use_mmap)
 void
 reread_fs_info(FS_INFO *fsp, int use_mmap)
 {
-	if (ifile_fd <= 0) {
+	if (ifile_fd > 0) {
 		if (fstatfs(ifile_fd, fsp->fi_statfsp)) {
 			syslog(LOG_ERR, "Exiting: reread_fs_info: fstatfs failed: %m");
                 	exit(1);
