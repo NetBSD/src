@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.19 1996/02/18 22:19:44 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.20 1996/02/20 04:19:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1098,16 +1098,16 @@ sbdsp_intr(arg)
 	if (sbdspdebug > 1)
 		Dprintf("sbdsp_intr: intr=0x%x\n", sc->sc_intr);
 #endif
+	if (!isa_dmafinished(sc->sc_drq)) {
+#if 0
+		printf("sbdsp_intr: not finished\n");
+#endif
+		return 0;
+	}
 	sc->sc_interrupts++;
 	/* clear interrupt */
 	x = inb(sc->sc_iobase + SBP_DSP_RSTAT);
 	delay(10);
-#if 0
-	if ((x & SB_DSP_READY) == 0) {
-		printf("sbdsp_intr: still busy\n");
-		return 0;
-	}
-#endif
 #if 0
 	if (sc->sc_mintr != 0) {
 		x = sbdsp_rdsp(sc->sc_iobase);
