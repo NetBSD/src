@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.99 2002/10/18 23:31:11 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.100 2002/11/25 01:44:21 thorpej Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.99 2002/10/18 23:31:11 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.100 2002/11/25 01:44:21 thorpej Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>
@@ -3184,7 +3184,7 @@ isp_start(XS_T *xs)
 		isp_update(isp);
 	}
 
-	if (isp_getrqentry(isp, &nxti, &optr, (void **)&qep)) {
+	if (isp_getrqentry(isp, &nxti, &optr, (void *)&qep)) {
 		isp_prt(isp, ISP_LOGDEBUG0, "Request Queue Overflow");
 		XS_SETERR(xs, HBA_BOTCH);
 		return (CMD_EAGAIN);
@@ -3213,7 +3213,7 @@ isp_start(XS_T *xs)
 			isp_put_request(isp, reqp, qep);
 			ISP_ADD_REQUEST(isp, nxti);
 			isp->isp_sendmarker &= ~(1 << i);
-			if (isp_getrqentry(isp, &nxti, &optr, (void **) &qep)) {
+			if (isp_getrqentry(isp, &nxti, &optr, (void *) &qep)) {
 				isp_prt(isp, ISP_LOGDEBUG0,
 				    "Request Queue Overflow+");
 				XS_SETERR(xs, HBA_BOTCH);
