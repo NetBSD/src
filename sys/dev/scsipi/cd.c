@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.154 2001/08/15 22:21:01 eeh Exp $	*/
+/*	$NetBSD: cd.c,v 1.155 2001/08/20 11:31:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -324,6 +324,7 @@ cdopen(dev, flag, fmt, p)
 	struct cd_softc *cd;
 	struct scsipi_periph *periph;
 	struct scsipi_adapter *adapt;
+	struct cd_sub_channel_info data;
 	int unit, part;
 	int error;
 
@@ -377,21 +378,30 @@ cdopen(dev, flag, fmt, p)
 				goto out;
 		}
 
-		/*
-		 * Start the pack spinning if necessary. Always allow the
-		 * raw parition to be opened, for raw IOCTLs. Data transfers
-		 * will check for SDEV_MEDIA_LOADED.
-		 */
-		error = scsipi_start(periph, SSS_START,
-		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE |
-		    XS_CTL_SILENT);
-		SC_DEBUG(periph, SCSIPI_DB1,
-		    ("cdopen: scsipi_start, error=%d\n", error));
-		if (error) {
-			if (part != RAW_PART || fmt != S_IFCHR) 
-				goto bad3;
-			else
-				goto out;
+		/* Don't try to start the unit if audio is playing. */
+		error = cd_read_subchannel(cd, CD_LBA_FORMAT,
+		    CD_CURRENT_POSITION, 0, &data, sizeof(data),
+		    XS_CTL_DATA_ONSTACK);
+		if ((data.header.audio_status != CD_AS_PLAY_IN_PROGRESS &&
+		    data.header.audio_status != CD_AS_PLAY_PAUSED) || error) {
+			/*
+			 * Start the pack spinning if necessary. Always
+			 * allow the raw parition to be opened, for raw
+			 * IOCTLs. Data transfers will check for
+			 * SDEV_MEDIA_LOADED.
+			 */
+			error = scsipi_start(periph, SSS_START,
+			    XS_CTL_IGNORE_ILLEGAL_REQUEST |
+			    XS_CTL_IGNORE_MEDIA_CHANGE |
+			    XS_CTL_SILENT);
+			SC_DEBUG(periph, SCSIPI_DB1,
+			    ("cdopen: scsipi_start, error=%d\n", error));
+			if (error) {
+				if (part != RAW_PART || fmt != S_IFCHR) 
+					goto bad3;
+				else
+					goto out;
+			}
 		}
 
 		periph->periph_flags |= PERIPH_OPEN;
@@ -928,30 +938,44 @@ int cd_interpret_sense(xs)
 	 * the generic code handle it.
 	 */
 	if ((sense->error_code & SSD_ERRCODE) != 0x70 &&
-	    (sense->error_code & SSD_ERRCODE) != 0x71) {	/* DEFFERRED */
+	    (sense->error_code & SSD_ERRCODE) != 0x71) {	/* DEFERRED */
 		return (retval);
 	}
 
-	/*
-	 * If we got a "Unit not ready" (SKEY_NOT_READY) and "Logical Unit
-	 * Is In The Process of Becoming Ready" (Sense code 0x04,0x01), then
-	 * wait a bit for the drive to spin up
-	 */
-
-	if ((sense->flags & SSD_KEY) == SKEY_NOT_READY &&
-	    sense->add_sense_code == 0x4 &&
-	    sense->add_sense_code_qual == 0x01)	{
+	switch (sense->flags & SSD_KEY) {
 		/*
-		 * Sleep for 5 seconds to wait for the drive to spin up
+		 * If we got a "Unit not ready" (SKEY_NOT_READY) and
+		 * "Logical Unit Is In The Process of Becoming Ready" (Sense
+		 * code 0x04,0x01), then wait a bit for the drive to spin up
 		 */
+		case SKEY_NOT_READY:
+			if (sense->add_sense_code == 0x4 &&
+			    sense->add_sense_code_qual == 0x01)	{
+				/*
+				 * Sleep for 5 seconds to wait for the drive to spin up
+				 */
+				SC_DEBUG(periph, SCSIPI_DB1, ("Waiting 5 sec for CD "
+								"spinup\n"));
+				scsipi_periph_freeze(periph, 1);
+				callout_reset(&periph->periph_callout,
+						5 * hz, scsipi_periph_timed_thaw, periph);
+				retval = ERESTART;
+			}
+			break;
 
-		SC_DEBUG(periph, SCSIPI_DB1, ("Waiting 5 sec for CD "
-						"spinup\n"));
-		scsipi_periph_freeze(periph, 1);
-		callout_reset(&periph->periph_callout,
-		    5 * hz, scsipi_periph_timed_thaw, periph);
-		retval = ERESTART;
+		/*
+		 * If we receive notification that the medium has changed,
+		 * then retry the operation.
+		 */
+		case SKEY_UNIT_ATTENTION:
+			if (sense->add_sense_code == 0x28 &&
+			    sense->add_sense_code_qual == 0x00)
+				retval = ERESTART;
+			break;
+		default:
+			break;
 	}
+
 	return (retval);
 }
 
