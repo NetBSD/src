@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.210 2000/03/31 04:45:30 tsarna Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.211 2000/04/03 15:05:05 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.204 2000/03/30 17:34:53 joda Exp 
+ *	NetBSD: pcidevs,v 1.206 2000/04/03 15:04:42 joda Exp 
  */
 
 /*
@@ -2539,7 +2539,79 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_RIVATNT,
 	    0,
 	    "Nvidia Corporation",
-	    "Riva TNT",
+	    "RIVA TNT",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_RIVATNT2,
+	    0,
+	    "Nvidia Corporation",
+	    "RIVA TNT2",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_RIVATNT2U,
+	    0,
+	    "Nvidia Corporation",
+	    "RIVA TNT2 Ultra",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_VANTA,
+	    0,
+	    "Nvidia Corporation",
+	    "Vanta",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_RIVATNT2M64,
+	    0,
+	    "Nvidia Corporation",
+	    "RIVA TNT2 Model 64",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_ALADDINTNT2,
+	    0,
+	    "Nvidia Corporation",
+	    "Aladdin TNT2",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE256,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce 256",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCEDDR,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce DDR",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO,
+	    0,
+	    "Nvidia Corporation",
+	    "Quadro",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce2 GTS",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2DDR,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce2 GTS (DDR)",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2BR,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce2 GTS",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO2,
+	    0,
+	    "Nvidia Corporation",
+	    "Quadro2",
 	},
 	{
 	    PCI_VENDOR_NVIDIA_SGS, PCI_PRODUCT_NVIDIA_SGS_RIVA128,
