@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.16 2002/03/30 07:15:51 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.17 2003/12/26 13:43:29 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -77,6 +77,8 @@
  *	[promdev[{:|,}partition]]/[filename] [flags]
  */
 
+#include "boot.h"
+
 #include <sys/param.h>
 #include <sys/boot_flag.h>
 
@@ -101,8 +103,7 @@ static ofw_version = 0;
 static char *kernels[] = { "/netbsd", "/netbsd.gz", "/netbsd.macppc", NULL };
 
 static void
-prom2boot(dev)
-	char *dev;
+prom2boot(char *dev)
 {
 	char *cp;
 
@@ -123,9 +124,7 @@ prom2boot(dev)
 }
 
 static void
-parseargs(str, howtop)
-	char *str;
-	int *howtop;
+parseargs(char *str, int *howtop)
 {
 	char *cp;
 
@@ -150,10 +149,7 @@ found:
 }
 
 static void
-chain(entry, args, ssym, esym)
-	void (*entry)();
-	char *args;
-	void *ssym, *esym;
+chain(boot_entry_t entry, char *args, void *ssym, void *esym)
 {
 	extern char end[];
 	int l;
@@ -169,19 +165,19 @@ chain(entry, args, ssym, esym)
 	l += sizeof(esym);
 	l += sizeof(int);	/* XXX */
 
-	OF_chain((void *)RELOC, end - (char *)RELOC, entry, args, l);
+	OF_chain((void *) RELOC, end - (char *) RELOC, entry, args, l);
 	panic("chain");
 }
 
 __dead void
-_rtt()
+_rtt(void)
 {
 
 	OF_exit();
 }
 
 void
-main()
+main(void)
 {
 	extern char bootprog_name[], bootprog_rev[],
 		    bootprog_maker[], bootprog_date[];
@@ -298,16 +294,15 @@ loaded:
 	esym = (void *)marks[MARK_END];
 
 	printf(" start=0x%x\n", entry);
-	__syncicache((void *)entry, (u_int)ssym - (u_int)entry);
-	chain((void *)entry, bootline, ssym, esym);
+	__syncicache((void *) entry, (u_int) ssym - (u_int) entry);
+	chain((boot_entry_t) entry, bootline, ssym, esym);
 
 	OF_exit();
 }
 
 #ifdef HAVE_CHANGEDISK_HOOK
 void
-changedisk_hook(of)
-	struct open_file *of;
+changedisk_hook(struct open_file *of)
 {
 	struct of_dev *op = of->f_devdata;
 	int c;
