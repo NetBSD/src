@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfbvar.h,v 1.2 2000/04/03 03:35:37 sato Exp $	*/
+/*	$NetBSD: hpcfbvar.h,v 1.3 2000/05/02 17:45:15 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -70,6 +70,5 @@ struct hpcfb_attach_args {
 	struct hpcfb_dspconf *ha_dspconflist;
 };
 
-int	hpcfb_cnattach __P((bus_space_tag_t iot, int iobase,
-			    int type, int check));
+int	hpcfb_cnattach __P((struct hpcfb_fbconf *));
 int	hpcfbprint __P((void *aux, const char *pnp));

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.4 2000/05/01 07:40:05 takemura Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.5 2000/05/02 17:45:15 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.4 2000/05/01 07:40:05 takemura Exp $";
+    "$Id: hpcfb.c,v 1.5 2000/05/02 17:45:15 uch Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,7 +236,7 @@ void    hpcfb_tv_eraserows __P((struct hpcfb_devconfig *, int, int, long));
 struct wsdisplay_emulops rasops_emul;
 #endif /* HPCFB_HOOK */
 
-static int hpcfbconsole, hpcfb_console_type;
+static int hpcfbconsole;
 struct hpcfb_devconfig hpcfb_console_dc;
 struct wsscreen_descr hpcfb_console_wsscreen;
 #ifdef HPCFB_TVRAM
@@ -369,26 +369,23 @@ hpcfbprint(aux, pnp)
 }
 
 int
-hpcfb_cnattach(iot, iobase, type, check)
-	bus_space_tag_t iot;
-	int iobase;
-	int type, check;
+hpcfb_cnattach(fbconf)
+	struct hpcfb_fbconf *fbconf;
 {
+	struct hpcfb_fbconf __fbconf __attribute__((__unused__));
 	long defattr;
-	int found;
-	struct hpcfb_fbconf fbconf;
-
-	found = 0;
-	bzero(&fbconf, sizeof(struct hpcfb_fbconf));
-
-#if NBIVIDEO > 0
-	if (!found) found = (bivideo_getcnfb(&fbconf) == 0);
-#endif
 
 	bzero(&hpcfb_console_dc, sizeof(struct hpcfb_devconfig));
-	if (!found || hpcfb_init(&fbconf, &hpcfb_console_dc) != 0) {
-		return (ENXIO);
+#if NBIVIDEO > 0
+	if (fbconf == 0) {
+		memset(&__fbconf, 0, sizeof(struct hpcfb_fbconf));
+		if (bivideo_getcnfb(&__fbconf) != 0)
+			return (ENXIO);
+		fbconf = &__fbconf;
 	}
+#endif /* NBIVIDEO > 0 */
+	if (hpcfb_init(fbconf, &hpcfb_console_dc) != 0)
+		return (ENXIO);
 
 	hpcfb_console_wsscreen = hpcfb_stdscreen;
 #ifdef HPCFB_TVRAM
@@ -414,7 +411,6 @@ hpcfb_cnattach(iot, iobase, type, check)
 #endif /* HPCFB_TVRAM */
 
 	hpcfbconsole = 1;
-	hpcfb_console_type = type;
 
 	return (0);
 }
