@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.h,v 1.10 1997/07/18 19:30:35 thorpej Exp $	*/
+/*	$NetBSD: ns.h,v 1.11 1998/05/09 14:24:31 kleink Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -61,7 +61,7 @@
 #define NSPORT_RE	3		/* Router Error */
 
 /*
- * Ports < NSPORT_RESERVED are reserved for priveleged
+ * Ports < NSPORT_RESERVED are reserved for privileged
  * processes (e.g. root).
  */
 #define NSPORT_RESERVED		3000
