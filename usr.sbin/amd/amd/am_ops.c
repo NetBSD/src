@@ -1,7 +1,7 @@
-/*	$NetBSD: am_ops.c,v 1.7 1998/08/08 22:33:28 christos Exp $	*/
+/*	$NetBSD: am_ops.c,v 1.8 1999/02/01 19:05:09 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -19,7 +19,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: am_ops.c,v 5.2.2.1 1992/02/09 15:08:17 jsp beta 
+ * Id: am_ops.c,v 1.3 1999/01/10 21:53:39 ezk Exp 
  *
  */
 
@@ -317,7 +317,7 @@ reverse_option(const char *opt)
  * Caller must eventually free the string being returned.
  */
 static char *
-merge_opts(char *opts1, char *opts2)
+merge_opts(const char *opts1, const char *opts2)
 {
   mntent_t mnt2;		/* place holder for opts2 */
   char *newstr;			/* new string to return (malloc'ed) */
@@ -329,7 +329,7 @@ merge_opts(char *opts1, char *opts2)
   char *s1 = strdup(opts1);	/* copy of opts1 to munge */
 
   /* initialization */
-  mnt2.mnt_opts = opts2;
+  mnt2.mnt_opts = (char *) opts2;
   newstr = xmalloc(len);
   newstr[0] = '\0';
 

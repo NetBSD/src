@@ -1,7 +1,7 @@
-/*	$NetBSD: clock.c,v 1.7 1998/08/08 22:33:28 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.8 1999/02/01 19:05:09 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -19,7 +19,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -40,14 +40,14 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: clock.c,v 5.2.2.1 1992/02/09 15:08:20 jsp beta 
+ * Id: clock.c,v 1.3 1999/01/13 23:30:58 ezk Exp 
  *
  */
 
 /*
  * Callouts.
  *
- * Modelled on kernel object of the same name.
+ * Modeled on kernel object of the same name.
  * See usual references.
  *
  * Use of a heap-based mechanism was rejected:
@@ -192,7 +192,8 @@ reschedule_timeouts(time_t now, time_t then)
     if (cp->c_time >= now && cp->c_time <= then) {
       plog(XLOG_WARNING, "job %d rescheduled to run immediately", cp->c_id);
 #ifdef DEBUG
-      dlog("rescheduling job %d back %d seconds", cp->c_id, cp->c_time - now);
+      dlog("rescheduling job %d back %ld seconds",
+	   cp->c_id, (long) (cp->c_time - now));
 #endif /* DEBUG */
       next_softclock = cp->c_time = now;
     }

@@ -1,7 +1,7 @@
-/*	$NetBSD: get_args.c,v 1.8 1998/08/08 22:33:29 christos Exp $	*/
+/*	$NetBSD: get_args.c,v 1.9 1999/02/01 19:05:10 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -19,7 +19,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: get_args.c,v 5.2.2.1 1992/02/09 15:08:23 jsp beta 
+ * Id: get_args.c,v 1.3 1999/01/10 21:53:45 ezk Exp 
  *
  */
 
@@ -62,11 +62,12 @@ char *conf_tag = NULL;		/* default conf file tags to use */
 int usage = 0;
 int use_conf_file = 0;		/* default don't use amd.conf file */
 char *mnttab_file_name = NULL;	/* symbol must be available always */
+#if 0
 #ifdef DEBUG
 int debug_flags = D_AMQ		/* Register AMQ */
 		| D_DAEMON;	/* Enter daemon mode */
 #endif /* DEBUG */
-
+#endif
 
 /*
  * Return the version string (dynamic buffer)
@@ -86,7 +87,7 @@ get_version_string(void)
 
   vers = xmalloc(2048 + wire_buf_len);
   sprintf(vers, "%s\n%s\n%s\n%s\n",
-	  "Copyright (c) 1997-1998 Erez Zadok",
+	  "Copyright (c) 1997-1999 Erez Zadok",
 	  "Copyright (c) 1990 Jan-Simon Pendry",
 	  "Copyright (c) 1990 Imperial College of Science, Technology & Medicine",
 	  "Copyright (c) 1990 The Regents of the University of California.");
@@ -133,13 +134,13 @@ get_args(int argc, char *argv[])
   if (argc <= 1)
     use_conf_file = 1;
 
-  while ((opt_ch = getopt(argc, argv, "nprvSa:c:d:k:l:o:t:w:x:y:C:D:F:T:O:H")) != EOF)
+  while ((opt_ch = getopt(argc, argv, "nprvSa:c:d:k:l:o:t:w:x:y:C:D:F:T:O:H")) != -1)
     switch (opt_ch) {
 
     case 'a':
       if (*optarg != '/') {
 	fprintf(stderr, "%s: -a option must begin with a '/'\n",
-		progname);
+		am_get_progname());
 	exit(1);
       }
       gopt.auto_dir = optarg;
@@ -226,7 +227,8 @@ get_args(int argc, char *argv[])
 #ifdef DEBUG
       usage += debug_option(optarg);
 #else /* not DEBUG */
-      fprintf(stderr, "%s: not compiled with DEBUG option -- sorry.\n", progname);
+      fprintf(stderr, "%s: not compiled with DEBUG option -- sorry.\n",
+	      am_get_progname());
 #endif /* not DEBUG */
       break;
 
@@ -336,7 +338,7 @@ get_args(int argc, char *argv[])
 # endif /* DEBUG */
 #endif /* not MOUNT_TABLE_ON_FILE */
 
-    if (switch_to_logfile(gopt.logfile) != 0)
+    if (switch_to_logfile(gopt.logfile, orig_umask) != 0)
       plog(XLOG_USER, "Cannot switch logfile");
 
     /*
@@ -364,7 +366,7 @@ show_usage:
 \t[-k kernel_arch] [-l logfile%s\n\
 \t[-t timeout.retrans] [-w wait_timeout] [-C cluster_name]\n\
 \t[-o op_sys_ver] [-O op_sys_name]\n\
-\t[-F conf_file] [-T conf_tag]", progname,
+\t[-F conf_file] [-T conf_tag]", am_get_progname(),
 #ifdef HAVE_SYSLOG
 # ifdef LOG_DAEMON
 	  "|\"syslog[:facility]\"]"

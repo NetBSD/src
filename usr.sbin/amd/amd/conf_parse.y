@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -17,7 +17,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -38,12 +38,12 @@
  *
  *	%W% (Berkeley) %G%
  *
- * Id: conf_parse.y,v 5.2.2.1 1992/02/09 15:09:35 jsp beta 
+ * Id: conf_parse.y,v 1.2 1999/01/10 21:53:44 ezk Exp 
  *
  */
 
 %{
-/*	$NetBSD: conf_parse.y,v 1.4 1998/08/08 22:33:29 christos Exp $	*/
+/*	$NetBSD: conf_parse.y,v 1.5 1999/02/01 19:05:10 christos Exp $	*/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>

@@ -1,7 +1,7 @@
-/*	$NetBSD: homedir.c,v 1.6 1998/08/08 22:33:36 christos Exp $	*/
+/*	$NetBSD: homedir.c,v 1.7 1999/02/01 19:05:13 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -19,7 +19,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: homedir.c,v 1.16 1993/09/13 15:11:00 ezk Exp 
+ * Id: homedir.c,v 1.4 1999/01/13 23:31:19 ezk Exp 
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -161,8 +161,8 @@ homedir(int userid)
     if (found->child) {		/* PARENT */
 #ifdef DEBUG
       if (lastchild)
-	plog(XLOG_INFO, "cache spill uid = %d, pid = %d, home = %s",
-	     lastchild->uid, lastchild->child,
+	plog(XLOG_INFO, "cache spill uid = %ld, pid = %ld, home = %s",
+	     (long) lastchild->uid, (long) lastchild->child,
 	     lastchild->home);
 #endif /* DEBUG */
       lastchild = found;
@@ -184,7 +184,7 @@ homedir(int userid)
    * to the parent upon SIGCHLD in interlock().
    *
    */
-  mypid = getpid();		/* for logging routines */
+  am_set_mypid();		/* for logging routines */
   if (seteuid(userid) < 0) {
     plog(XLOG_WARNING, "could not seteuid to %d: %m", userid);
     return linkval;
@@ -272,7 +272,7 @@ delay(uid2home_t *found, int secs)
 
 #ifdef DEBUG
   if (found)
-    dlog("delaying on child %d for %d seconds", found->child, secs);
+    dlog("delaying on child %ld for %d seconds", (long) found->child, secs);
 #endif /* DEBUG */
 
   tv.tv_usec = 0;
@@ -538,8 +538,8 @@ readent:
 
   /* the rest of the fields are unimportant and not being considered */
 
-  plog(XLOG_USER, "hlfsd_getpwent: name=%s, uid=%d, dir=%s",
-       passwd_ent.pw_name, passwd_ent.pw_uid, passwd_ent.pw_dir);
+  plog(XLOG_USER, "hlfsd_getpwent: name=%s, uid=%ld, dir=%s",
+       passwd_ent.pw_name, (long) passwd_ent.pw_uid, passwd_ent.pw_dir);
 
   return &passwd_ent;
 }
