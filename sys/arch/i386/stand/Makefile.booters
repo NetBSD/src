@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.38 2003/01/14 23:51:34 thorpej Exp $
+#	$NetBSD: Makefile.booters,v 1.39 2003/01/28 16:21:58 dsl Exp $
 
 .include <bsd.own.mk>
 
@@ -23,8 +23,13 @@ COPTS+= -ffreestanding
 I386_STAND_DIR?= $S/arch/i386/stand
 
 .PATH: ${I386_STAND_DIR}/lib/crt/bootsect ${I386_STAND_DIR}/lib
+# ensure the stuff we need to load all of 'biosboot' in in the first few
+# sectors, and that anything that goes to real mode is in the first 64k.
+# (prot_to_real will bleat if the return address is >64k)
 BSSTART= start_bootsect.o fraglist.o bootsectmain.o biosdisk_ll.o \
-	bios_disk.o diskbuf.o
+	bios_disk.o diskbuf.o \
+	biosdelay.o biosgetrtc.o biosmca.o biosmem.o biosmemx.o \
+	biosreboot.o conio.o
 
 .PATH: ${I386_STAND_DIR}/lib/crt/rom
 ROMSTART= start_rom.o
@@ -105,8 +110,25 @@ vers.c: ${VERSIONFILE} ${SOURCES}
 
 CLEANFILES+= ${BASE}.sym
 ${BASE}.sym: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
-	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext ${RELOC} ${STARTFILE} ${OBJS} \
-	    ${LIBLIST} >${BASE}.list
+	@# A default link has a 4k gap between the rodata and data.
+	@# We don't need it here - and are short of space!
+	@# The -N option might work - but it puts the code at offset
+	@# 0x80 in the file.
+	@# Get linker to tell us its link script and remove the line.
+	@rm -f ${BASE}.ldscript
+	@ ${LD} --verbose >${BASE}.ldscript
+	@ printf '%b'  "1,/^===/d\nd\nd\n/ALIGN(0x1000)/\nd\n/^===/\nd\nwq\n" \
+		| ed -s ${BASE}.ldscript >/dev/null
+	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext ${RELOC} -T ${BASE}.ldscript \
+	    ${STARTFILE} ${OBJS} ${LIBLIST} >${BASE}.list
+	@# The code, bss, data and stack are restricted to one 64k segment.
+	@# Check there is a 'moderate' amount (4k) of stack space.
+	@# 2k isn't enough, 3.5k might be (but harder to test for).
+	@# If the stack is too small hair starts being pulled out.
+	@ grep '^[ 0x]*[a-e].*PROVIDE (end, .)$$' ${BASE}.list >/dev/null || { \
+		echo "*** Less that 4k stack space in biosboot" >&2; \
+		rm -f ${BASE}.sym; \
+		false; }
 
 CLEANFILES+= ${BASE}.rom
 ${BASE}.rom: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
