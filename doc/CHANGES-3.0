@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.20 2005/03/27 16:54:26 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.21 2005/03/27 17:49:26 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -324,4 +324,23 @@ doc/CHANGES					patch
 
 	Mention re(4) tso support.
 	[yamt, ticket #66]
+
+sys/arch/cobalt/conf/GENERIC			1.71
+sys/arch/cobalt/conf/INSTALL			1.5
+sys/arch/cobalt/dev/gt.c			1.13
+sys/arch/cobalt/include/pci_machdep.h		1.8
+sys/arch/cobalt/pci/pci_machdep.c		1.17
+sys/dev/pci/pciconf.c				1.26
+sys/dev/pci/pciconf.h				1.9
+
+	Allow MD PCI code to specify or disable PCI_COMMAND_PARITY_ENABLE
+	and PCI_CMMAND_SERR_ENABLE in MI pci_configure_bus(9).
+	Patch from PR kern/27423 by KIYOHARA Takashi with some changes by me,
+	approved by Allen Briggs.
+	Switch cobalt port to use MI pci_configure_bus(9)
+	with options PCI_NETBSD_CONFIGURE.
+	Patch from KIYOHARA Takashi on port-cobalt.
+	This change makes siop(4) (and maybe all other PCI devices
+	using pci mem space) work on cobalt.
+	[tsutsui, ticket #67]
 
