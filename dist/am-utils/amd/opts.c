@@ -1,7 +1,7 @@
-/*	$NetBSD: opts.c,v 1.1.1.5 2002/11/29 22:58:16 christos Exp $	*/
+/*	$NetBSD: opts.c,v 1.1.1.6 2003/03/09 01:13:12 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: opts.c,v 1.23 2002/06/23 01:05:39 ib42 Exp
+ * Id: opts.c,v 1.25 2002/12/27 22:43:52 ezk Exp
  *
  */
 
@@ -1179,7 +1179,7 @@ expand_op(char *opt, int sel_p)
 	    plog(XLOG_ERROR, expand_error, opt);
 	    goto out;
 	  }
-	  amuDebug(D_STR)
+	  if (amuDebug(D_STR))
 	    plog(XLOG_DEBUG, "Environment gave \"%s\" -> \"%s\"", nbuf, env);
 	} else {
 	  plog(XLOG_USER, "Unknown sequence \"${%s}\"", nbuf);
@@ -1218,7 +1218,7 @@ out:
 
   normalize_slash(opt);
 
-  amuDebug(D_STR) {
+  if (amuDebug(D_STR)) {
     plog(XLOG_DEBUG, "Expansion of \"%s\"...", cp_orig);
     plog(XLOG_DEBUG, "......... is \"%s\"", opt);
   }

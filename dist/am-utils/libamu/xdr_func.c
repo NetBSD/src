@@ -1,7 +1,7 @@
-/*	$NetBSD: xdr_func.c,v 1.1.1.5 2002/11/29 22:59:07 christos Exp $	*/
+/*	$NetBSD: xdr_func.c,v 1.1.1.6 2003/03/09 01:14:00 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: xdr_func.c,v 1.12 2002/02/02 20:59:05 ezk Exp
+ * Id: xdr_func.c,v 1.17 2002/12/29 01:09:08 ezk Exp
  *
  */
 
@@ -81,7 +81,7 @@ extern bool_t xdr_name(XDR *xdrs, name *objp);
 bool_t
 xdr_attrstat(XDR *xdrs, nfsattrstat *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_attrstat:");
 
   if (!xdr_nfsstat(xdrs, &objp->ns_status)) {
@@ -105,7 +105,7 @@ xdr_attrstat(XDR *xdrs, nfsattrstat *objp)
 bool_t
 xdr_createargs(XDR *xdrs, nfscreateargs *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_createargs:");
 
   if (!xdr_diropargs(xdrs, &objp->ca_where)) {
@@ -123,7 +123,7 @@ xdr_createargs(XDR *xdrs, nfscreateargs *objp)
 bool_t
 xdr_dirlist(XDR *xdrs, nfsdirlist *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_dirlist:");
 
   if (!xdr_pointer(xdrs, (char **) &objp->dl_entries, sizeof(nfsentry), (XDRPROC_T_TYPE) xdr_entry)) {
@@ -141,7 +141,7 @@ xdr_dirlist(XDR *xdrs, nfsdirlist *objp)
 bool_t
 xdr_diropargs(XDR *xdrs, nfsdiropargs *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_diropargs:");
 
   if (!xdr_nfs_fh(xdrs, &objp->da_fhandle)) {
@@ -159,7 +159,7 @@ xdr_diropargs(XDR *xdrs, nfsdiropargs *objp)
 bool_t
 xdr_diropokres(XDR *xdrs, nfsdiropokres *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_diropokres:");
 
   if (!xdr_nfs_fh(xdrs, &objp->drok_fhandle)) {
@@ -177,7 +177,7 @@ xdr_diropokres(XDR *xdrs, nfsdiropokres *objp)
 bool_t
 xdr_diropres(XDR *xdrs, nfsdiropres *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_diropres:");
 
   if (!xdr_nfsstat(xdrs, &objp->dr_status)) {
@@ -201,7 +201,7 @@ xdr_diropres(XDR *xdrs, nfsdiropres *objp)
 bool_t
 xdr_dirpath(XDR *xdrs, dirpath *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_dirpath:");
 
   if (!xdr_string(xdrs, objp, MNTPATHLEN)) {
@@ -216,7 +216,7 @@ xdr_dirpath(XDR *xdrs, dirpath *objp)
 bool_t
 xdr_entry(XDR *xdrs, nfsentry *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_entry:");
 
   if (!xdr_u_int(xdrs, &objp->ne_fileid)) {
@@ -240,7 +240,7 @@ xdr_entry(XDR *xdrs, nfsentry *objp)
 bool_t
 xdr_exportnode(XDR *xdrs, exportnode *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_exportnode:");
 
   if (!xdr_dirpath(xdrs, &objp->ex_dir)) {
@@ -261,7 +261,7 @@ xdr_exportnode(XDR *xdrs, exportnode *objp)
 bool_t
 xdr_exports(XDR *xdrs, exports *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_exports:");
 
   if (!xdr_pointer(xdrs, (char **) objp, sizeof(exportnode), (XDRPROC_T_TYPE) xdr_exportnode)) {
@@ -276,7 +276,7 @@ xdr_exports(XDR *xdrs, exports *objp)
 bool_t
 xdr_fattr(XDR *xdrs, nfsfattr *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_fattr:");
 
   if (!xdr_ftype(xdrs, &objp->na_type)) {
@@ -330,7 +330,7 @@ xdr_fattr(XDR *xdrs, nfsfattr *objp)
 bool_t
 xdr_fhandle(XDR *xdrs, fhandle objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_fhandle:");
 
   if (!xdr_opaque(xdrs, objp, NFS_FHSIZE)) {
@@ -345,7 +345,7 @@ xdr_fhandle(XDR *xdrs, fhandle objp)
 bool_t
 xdr_fhstatus(XDR *xdrs, fhstatus *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_fhstatus:");
 
   if (!xdr_u_int(xdrs, &objp->fhs_status)) {
@@ -363,7 +363,7 @@ xdr_fhstatus(XDR *xdrs, fhstatus *objp)
 bool_t
 xdr_filename(XDR *xdrs, filename *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_filename:");
 
   if (!xdr_string(xdrs, objp, NFS_MAXNAMLEN)) {
@@ -378,10 +378,12 @@ xdr_filename(XDR *xdrs, filename *objp)
 bool_t
 xdr_ftype(XDR *xdrs, nfsftype *objp)
 {
-  amuDebug(D_XDRTRACE)
+  enum_t local_obj = *objp;
+
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_ftype:");
 
-  if (!xdr_enum(xdrs, (enum_t *) objp)) {
+  if (!xdr_enum(xdrs, &local_obj)) {
     return (FALSE);
   }
   return (TRUE);
@@ -393,7 +395,7 @@ xdr_ftype(XDR *xdrs, nfsftype *objp)
 bool_t
 xdr_groupnode(XDR *xdrs, groupnode *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_groupnode:");
 
   if (!xdr_name(xdrs, &objp->gr_name)) {
@@ -411,7 +413,7 @@ xdr_groupnode(XDR *xdrs, groupnode *objp)
 bool_t
 xdr_groups(XDR *xdrs, groups *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_groups:");
 
   if (!xdr_pointer(xdrs, (char **) objp, sizeof(groupnode), (XDRPROC_T_TYPE) xdr_groupnode)) {
@@ -426,7 +428,7 @@ xdr_groups(XDR *xdrs, groups *objp)
 bool_t
 xdr_linkargs(XDR *xdrs, nfslinkargs *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_linkargs:");
 
   if (!xdr_nfs_fh(xdrs, &objp->la_fhandle)) {
@@ -444,7 +446,7 @@ xdr_linkargs(XDR *xdrs, nfslinkargs *objp)
 bool_t
 xdr_mountbody(XDR *xdrs, mountbody *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_mountbody:");
 
   if (!xdr_name(xdrs, &objp->ml_hostname)) {
@@ -465,7 +467,7 @@ xdr_mountbody(XDR *xdrs, mountbody *objp)
 bool_t
 xdr_mountlist(XDR *xdrs, mountlist *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_mountlist:");
 
   if (!xdr_pointer(xdrs, (char **) objp, sizeof(mountbody), (XDRPROC_T_TYPE) xdr_mountbody)) {
@@ -487,7 +489,7 @@ xdr_mountlist(XDR *xdrs, mountlist *objp)
 bool_t
 xdr_fhandle3(XDR *xdrs, fhandle3 *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_fhandle3:");
 
   if (!xdr_bytes(xdrs,
@@ -502,10 +504,12 @@ xdr_fhandle3(XDR *xdrs, fhandle3 *objp)
 bool_t
 xdr_mountstat3(XDR *xdrs, mountstat3 *objp)
 {
-  amuDebug(D_XDRTRACE)
+  enum_t local_obj = *objp;
+
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_mountstat3:");
 
-  if (!xdr_enum(xdrs, (enum_t *)objp))
+  if (!xdr_enum(xdrs, &local_obj))
     return (FALSE);
   return (TRUE);
 }
@@ -514,7 +518,7 @@ xdr_mountstat3(XDR *xdrs, mountstat3 *objp)
 bool_t
 xdr_mountres3_ok(XDR *xdrs, mountres3_ok *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_mountres3_ok:");
 
   if (!xdr_fhandle3(xdrs, &objp->fhandle))
@@ -533,7 +537,7 @@ xdr_mountres3_ok(XDR *xdrs, mountres3_ok *objp)
 bool_t
 xdr_mountres3(XDR *xdrs, mountres3 *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_mountres3:");
 
   if (!xdr_mountstat3(xdrs, &objp->fhs_status))
@@ -552,7 +556,7 @@ xdr_mountres3(XDR *xdrs, mountres3 *objp)
 bool_t
 xdr_name(XDR *xdrs, name *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_name:");
 
   if (!xdr_string(xdrs, objp, MNTNAMLEN)) {
@@ -567,7 +571,7 @@ xdr_name(XDR *xdrs, name *objp)
 bool_t
 xdr_nfs_fh(XDR *xdrs, am_nfs_fh *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_nfs_fh:");
 
   if (!xdr_opaque(xdrs, (caddr_t) objp->fh_data, NFS_FHSIZE)) {
@@ -582,7 +586,7 @@ xdr_nfs_fh(XDR *xdrs, am_nfs_fh *objp)
 bool_t
 xdr_nfscookie(XDR *xdrs, nfscookie objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_nfscookie:");
 
   if (!xdr_opaque(xdrs, objp, NFS_COOKIESIZE)) {
@@ -597,7 +601,7 @@ xdr_nfscookie(XDR *xdrs, nfscookie objp)
 bool_t
 xdr_nfspath(XDR *xdrs, nfspath *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_nfspath:");
 
   if (!xdr_string(xdrs, objp, NFS_MAXPATHLEN)) {
@@ -612,10 +616,12 @@ xdr_nfspath(XDR *xdrs, nfspath *objp)
 bool_t
 xdr_nfsstat(XDR *xdrs, nfsstat *objp)
 {
-  amuDebug(D_XDRTRACE)
+  enum_t local_obj = *objp;
+
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_nfsstat:");
 
-  if (!xdr_enum(xdrs, (enum_t *) objp)) {
+  if (!xdr_enum(xdrs, &local_obj)) {
     return (FALSE);
   }
   return (TRUE);
@@ -627,7 +633,7 @@ xdr_nfsstat(XDR *xdrs, nfsstat *objp)
 bool_t
 xdr_nfstime(XDR *xdrs, nfstime *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_nfstime:");
 
   if (!xdr_u_int(xdrs, (u_int *) &objp->nt_seconds)) {
@@ -645,7 +651,7 @@ xdr_nfstime(XDR *xdrs, nfstime *objp)
 bool_t
 xdr_pointer(register XDR *xdrs, char **objpp, u_int obj_size, XDRPROC_T_TYPE xdr_obj)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_pointer:");
 
   bool_t more_data;
@@ -668,7 +674,7 @@ xdr_pointer(register XDR *xdrs, char **objpp, u_int obj_size, XDRPROC_T_TYPE xdr
 bool_t
 xdr_readargs(XDR *xdrs, nfsreadargs *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_readargs:");
 
   if (!xdr_nfs_fh(xdrs, &objp->ra_fhandle)) {
@@ -692,7 +698,7 @@ xdr_readargs(XDR *xdrs, nfsreadargs *objp)
 bool_t
 xdr_readdirargs(XDR *xdrs, nfsreaddirargs *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_readdirargs:");
 
   if (!xdr_nfs_fh(xdrs, &objp->rda_fhandle)) {
@@ -713,7 +719,7 @@ xdr_readdirargs(XDR *xdrs, nfsreaddirargs *objp)
 bool_t
 xdr_readdirres(XDR *xdrs, nfsreaddirres *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_readdirres:");
 
   if (!xdr_nfsstat(xdrs, &objp->rdr_status)) {
@@ -737,7 +743,7 @@ xdr_readdirres(XDR *xdrs, nfsreaddirres *objp)
 bool_t
 xdr_readlinkres(XDR *xdrs, nfsreadlinkres *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_readlinkres:");
 
   if (!xdr_nfsstat(xdrs, &objp->rlr_status)) {
@@ -761,7 +767,7 @@ xdr_readlinkres(XDR *xdrs, nfsreadlinkres *objp)
 bool_t
 xdr_readokres(XDR *xdrs, nfsreadokres *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_readokres:");
 
   if (!xdr_fattr(xdrs, &objp->raok_attributes)) {
@@ -782,7 +788,7 @@ xdr_readokres(XDR *xdrs, nfsreadokres *objp)
 bool_t
 xdr_readres(XDR *xdrs, nfsreadres *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_readres:");
 
   if (!xdr_nfsstat(xdrs, &objp->rr_status)) {
@@ -806,7 +812,7 @@ xdr_readres(XDR *xdrs, nfsreadres *objp)
 bool_t
 xdr_renameargs(XDR *xdrs, nfsrenameargs *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_renameargs:");
 
   if (!xdr_diropargs(xdrs, &objp->rna_from)) {
@@ -824,7 +830,7 @@ xdr_renameargs(XDR *xdrs, nfsrenameargs *objp)
 bool_t
 xdr_sattr(XDR *xdrs, nfssattr *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_sattr:");
 
   if (!xdr_u_int(xdrs, &objp->sa_mode)) {
@@ -854,7 +860,7 @@ xdr_sattr(XDR *xdrs, nfssattr *objp)
 bool_t
 xdr_sattrargs(XDR *xdrs, nfssattrargs *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_sattrargs:");
 
   if (!xdr_nfs_fh(xdrs, &objp->sag_fhandle)) {
@@ -872,7 +878,7 @@ xdr_sattrargs(XDR *xdrs, nfssattrargs *objp)
 bool_t
 xdr_statfsokres(XDR *xdrs, nfsstatfsokres *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_statfsokres:");
 
   if (!xdr_u_int(xdrs, &objp->sfrok_tsize)) {
@@ -899,7 +905,7 @@ xdr_statfsokres(XDR *xdrs, nfsstatfsokres *objp)
 bool_t
 xdr_statfsres(XDR *xdrs, nfsstatfsres *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_statfsres:");
 
   if (!xdr_nfsstat(xdrs, &objp->sfr_status)) {
@@ -923,7 +929,7 @@ xdr_statfsres(XDR *xdrs, nfsstatfsres *objp)
 bool_t
 xdr_symlinkargs(XDR *xdrs, nfssymlinkargs *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_symlinkargs:");
 
   if (!xdr_diropargs(xdrs, &objp->sla_from)) {
@@ -944,7 +950,7 @@ xdr_symlinkargs(XDR *xdrs, nfssymlinkargs *objp)
 bool_t
 xdr_writeargs(XDR *xdrs, nfswriteargs *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_writeargs:");
 
   if (!xdr_nfs_fh(xdrs, &objp->wra_fhandle)) {

@@ -1,7 +1,7 @@
-/*	$NetBSD: hlfsd.h,v 1.1.1.5 2002/11/29 22:59:00 christos Exp $	*/
+/*	$NetBSD: hlfsd.h,v 1.1.1.6 2003/03/09 01:13:53 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: hlfsd.h,v 1.10 2002/02/02 20:59:03 ezk Exp
+ * Id: hlfsd.h,v 1.12 2002/12/27 22:44:08 ezk Exp
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -148,7 +148,6 @@ extern gid_t hlfs_gid;
 extern int cache_interval;
 extern int noverify;
 extern int serverpid;
-extern int sys_nerr;
 extern int untab_index(char *username);
 extern am_nfs_fh *root_fhp;
 extern am_nfs_fh root;

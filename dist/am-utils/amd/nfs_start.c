@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_start.c,v 1.1.1.5 2002/11/29 22:58:15 christos Exp $	*/
+/*	$NetBSD: nfs_start.c,v 1.1.1.6 2003/03/09 01:13:12 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_start.c,v 1.16 2002/06/23 01:46:59 ezk Exp
+ * Id: nfs_start.c,v 1.18 2002/12/27 22:43:50 ezk Exp
  *
  */
 
@@ -359,8 +359,8 @@ mount_automounter(int ppid)
   ret = create_nfs_service(&soNFS, &nfs_port, &nfsxprt, nfs_program_2);
   if (ret != 0)
     return ret;
-  /* security: if user sets -D noamq, don't even create listening socket */
-  amuDebug(D_AMQ) {
+  /* security: if user sets -D amq, don't even create listening socket */
+  if (!amuDebug(D_AMQ)) {
     ret = create_amq_service(&udp_soAMQ, &udp_amqp, &udp_amqncp, &tcp_soAMQ, &tcp_amqp, &tcp_amqncp);
     if (ret != 0)
       return ret;
@@ -416,10 +416,7 @@ mount_automounter(int ppid)
     return 0;
   }
 
-#ifdef DEBUG
-  amuDebug(D_AMQ)
-#endif /* DEBUG */
-  {
+  if (!amuDebug(D_AMQ)) {
     /*
      * Complete registration of amq (first TCP service then UDP)
      */

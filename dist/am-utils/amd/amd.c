@@ -1,7 +1,7 @@
-/*	$NetBSD: amd.c,v 1.1.1.5 2002/11/29 22:58:09 christos Exp $	*/
+/*	$NetBSD: amd.c,v 1.1.1.6 2003/03/09 01:13:05 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amd.c,v 1.19 2002/06/23 01:05:38 ib42 Exp
+ * Id: amd.c,v 1.23 2002/12/27 22:43:46 ezk Exp
  *
  */
 
@@ -299,6 +299,9 @@ init_global_options(void)
   /* LDAP cache */
   gopt.ldap_cache_seconds = 0;
   gopt.ldap_cache_maxmem = 131072;
+
+  /* LDAP protocol version */
+  gopt.ldap_proto_version = 2;
 #endif /* HAVE_MAP_LDAP */
 
 #ifdef HAVE_MAP_NIS
@@ -368,11 +371,6 @@ main(int argc, char *argv[])
     plog(XLOG_FATAL, "host name is not set");
     going_down(1);
   }
-
-#ifdef DEBUG
-  /* initialize debugging flags (Register AMQ, Enter daemon mode) */
-  debug_flags = D_AMQ | D_DAEMON;
-#endif /* DEBUG */
 
   /*
    * Initialize global options structure.
@@ -554,9 +552,7 @@ main(int argc, char *argv[])
   }
 #endif /* HAVE_MAP_NIS */
 
-#ifdef DEBUG
-  amuDebug(D_DAEMON)
-#endif /* DEBUG */
+  if (!amuDebug(D_DAEMON))
     ppid = daemon_mode();
 
   sprintf(pid_fsname, "%s:(pid%ld)", am_get_hostname(), (long) am_mypid);

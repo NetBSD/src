@@ -1,7 +1,7 @@
-/*	$NetBSD: mount_fs.c,v 1.1.1.5 2002/11/29 22:59:06 christos Exp $	*/
+/*	$NetBSD: mount_fs.c,v 1.1.1.6 2003/03/09 01:13:59 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mount_fs.c,v 1.26 2002/06/23 01:05:41 ib42 Exp
+ * Id: mount_fs.c,v 1.31 2003/01/23 21:24:29 ib42 Exp
  *
  */
 
@@ -139,7 +139,7 @@ compute_mount_flags(mntent_t *mntp)
    * before and left the machine hung).  This will allow a new amd or
    * hlfsd to be remounted on top of another one.
    */
-  if (hasmntopt(mntp, MNTTAB_OPT_OVERLAY)) {
+  if (amu_hasmntopt(mntp, MNTTAB_OPT_OVERLAY)) {
     flags |= MNT2_GEN_OPT_OVERLAY;
     plog(XLOG_INFO, "using an overlay mount");
   }
@@ -150,7 +150,7 @@ compute_mount_flags(mntent_t *mntp)
    * Crack basic mount options
    */
   for (opt = mnt_flags; opt->opt; opt++) {
-    flags |= hasmntopt(mntp, opt->opt) ? opt->flag : 0;
+    flags |= amu_hasmntopt(mntp, opt->opt) ? opt->flag : 0;
   }
 
   return flags;
@@ -200,10 +200,8 @@ mount_fs2(mntent_t *mnt, char *real_mntdir, int flags, caddr_t mnt_data, int ret
   old_mnt_dir = mnt->mnt_dir;
   mnt->mnt_dir = real_mntdir;
 
-  amuDebug(D_FULL) {
-    dlog("'%s' fstype " MTYPE_PRINTF_TYPE " (%s) flags %#x (%s)",
-	 mnt->mnt_dir, type, mnt->mnt_type, flags, mnt->mnt_opts);
-  }
+  dlog("'%s' fstype " MTYPE_PRINTF_TYPE " (%s) flags %#x (%s)",
+       mnt->mnt_dir, type, mnt->mnt_type, flags, mnt->mnt_opts);
 
 again:
   clock_valid = 0;
@@ -303,7 +301,7 @@ again:
    * add the extra proto={tcp,udp} field to the mount table,
    * unless already specified by user.
    */
-  if (nfs_proto && !hasmntopt(mnt, MNTTAB_OPT_PROTO)) {
+  if (nfs_proto && !amu_hasmntopt(mnt, MNTTAB_OPT_PROTO)) {
     sprintf(optsbuf, "%s=%s", MNTTAB_OPT_PROTO, nfs_proto);
     append_opts(zopts, optsbuf);
   }
@@ -321,7 +319,7 @@ again:
 # endif /* HAVE_MNTENT_T_MNT_CNODE */
 
 # ifdef HAVE_MNTENT_T_MNT_RO
-  mnt->mnt_ro = (hasmntopt(mnt, MNTTAB_OPT_RO) != NULL);
+  mnt->mnt_ro = (amu_hasmntopt(mnt, MNTTAB_OPT_RO) != NULL);
 # endif /* HAVE_MNTENT_T_MNT_RO */
 
 # ifdef HAVE_MNTENT_T_MNT_TIME
@@ -493,7 +491,7 @@ compute_nfs_args(nfs_args_t *nap, mntent_t *mntp, int genflags, struct netconfig
 #endif /* MNT2_NFS_OPT_ACDIRMAX */
 
 #ifdef MNTTAB_OPT_NOAC		/* don't cache attributes */
-  if (hasmntopt(mntp, MNTTAB_OPT_NOAC) != NULL)
+  if (amu_hasmntopt(mntp, MNTTAB_OPT_NOAC) != NULL)
     nap->flags |= MNT2_NFS_OPT_NOAC;
 #endif /* MNTTAB_OPT_NOAC */
 
@@ -551,9 +549,9 @@ compute_nfs_args(nfs_args_t *nap, mntent_t *mntp, int genflags, struct netconfig
   /************************************************************************/
 #ifdef MNT2_NFS_OPT_NOCONN
   /* check if user specified to use unconnected or connected sockets */
-  if (hasmntopt(mntp, MNTTAB_OPT_NOCONN) != NULL)
+  if (amu_hasmntopt(mntp, MNTTAB_OPT_NOCONN) != NULL)
     nap->flags |= MNT2_NFS_OPT_NOCONN;
-  else if (hasmntopt(mntp, MNTTAB_OPT_CONN) != NULL)
+  else if (amu_hasmntopt(mntp, MNTTAB_OPT_CONN) != NULL)
     nap->flags &= ~MNT2_NFS_OPT_NOCONN;
   else {
     /*
@@ -581,7 +579,7 @@ compute_nfs_args(nfs_args_t *nap, mntent_t *mntp, int genflags, struct netconfig
 
 #ifdef MNT2_NFS_OPT_RESVPORT
 # ifdef MNTTAB_OPT_RESVPORT
-  if (hasmntopt(mntp, MNTTAB_OPT_RESVPORT) != NULL)
+  if (amu_hasmntopt(mntp, MNTTAB_OPT_RESVPORT) != NULL)
     nap->flags |= MNT2_NFS_OPT_RESVPORT;
 # else /* not MNTTAB_OPT_RESVPORT */
   nap->flags |= MNT2_NFS_OPT_RESVPORT;
@@ -643,11 +641,11 @@ compute_nfs_args(nfs_args_t *nap, mntent_t *mntp, int genflags, struct netconfig
     nap->flags |= MNT2_NFS_OPT_BIODS;
 #endif /* MNT2_NFS_OPT_BIODS */
 
-  if (hasmntopt(mntp, MNTTAB_OPT_SOFT) != NULL)
+  if (amu_hasmntopt(mntp, MNTTAB_OPT_SOFT) != NULL)
     nap->flags |= MNT2_NFS_OPT_SOFT;
 
 #ifdef MNT2_NFS_OPT_SPONGY
-  if (hasmntopt(mntp, MNTTAB_OPT_SPONGY) != NULL) {
+  if (amu_hasmntopt(mntp, MNTTAB_OPT_SPONGY) != NULL) {
     nap->flags |= MNT2_NFS_OPT_SPONGY;
     if (nap->flags & MNT2_NFS_OPT_SOFT) {
       plog(XLOG_USER, "Mount opts soft and spongy are incompatible - soft ignored");
@@ -663,7 +661,7 @@ compute_nfs_args(nfs_args_t *nap, mntent_t *mntp, int genflags, struct netconfig
 #endif /* defined(MNT2_GEN_OPT_RONLY) && defined(MNT2_NFS_OPT_RONLY) */
 
 #ifdef MNTTAB_OPT_INTR
-  if (hasmntopt(mntp, MNTTAB_OPT_INTR) != NULL)
+  if (amu_hasmntopt(mntp, MNTTAB_OPT_INTR) != NULL)
     /*
      * Either turn on the "allow interrupts" option, or
      * turn off the "disallow interrupts" option"
@@ -683,17 +681,17 @@ compute_nfs_args(nfs_args_t *nap, mntent_t *mntp, int genflags, struct netconfig
 #endif /* MNTTAB_OPT_INTR */
 
 #ifdef MNTTAB_OPT_NODEVS
-  if (hasmntopt(mntp, MNTTAB_OPT_NODEVS) != NULL)
+  if (amu_hasmntopt(mntp, MNTTAB_OPT_NODEVS) != NULL)
     nap->flags |= MNT2_NFS_OPT_NODEVS;
 #endif /* MNTTAB_OPT_NODEVS */
 
 #ifdef MNTTAB_OPT_COMPRESS
-  if (hasmntopt(mntp, MNTTAB_OPT_COMPRESS) != NULL)
+  if (amu_hasmntopt(mntp, MNTTAB_OPT_COMPRESS) != NULL)
     nap->flags |= MNT2_NFS_OPT_COMPRESS;
 #endif /* MNTTAB_OPT_COMPRESS */
 
 #ifdef MNTTAB_OPT_PRIVATE	/* mount private, single-client tree */
-  if (hasmntopt(mntp, MNTTAB_OPT_PRIVATE) != NULL)
+  if (amu_hasmntopt(mntp, MNTTAB_OPT_PRIVATE) != NULL)
     nap->flags |= MNT2_NFS_OPT_PRIVATE;
 #endif /* MNTTAB_OPT_PRIVATE */
 
@@ -708,19 +706,19 @@ compute_nfs_args(nfs_args_t *nap, mntent_t *mntp, int genflags, struct netconfig
 #endif /* MNT2_NFS_OPT_PGTHRESH */
 
 #if defined(MNT2_NFS_OPT_NOCTO) && defined(MNTTAB_OPT_NOCTO)
-  if (hasmntopt(mntp, MNTTAB_OPT_NOCTO) != NULL)
+  if (amu_hasmntopt(mntp, MNTTAB_OPT_NOCTO) != NULL)
     nap->flags |= MNT2_NFS_OPT_NOCTO;
 #endif /* defined(MNT2_NFS_OPT_NOCTO) && defined(MNTTAB_OPT_NOCTO) */
 
 #if defined(MNT2_NFS_OPT_POSIX) && defined(MNTTAB_OPT_POSIX)
-  if (hasmntopt(mntp, MNTTAB_OPT_POSIX) != NULL) {
+  if (amu_hasmntopt(mntp, MNTTAB_OPT_POSIX) != NULL) {
     nap->flags |= MNT2_NFS_OPT_POSIX;
     nap->pathconf = NULL;
   }
 #endif /* MNT2_NFS_OPT_POSIX && MNTTAB_OPT_POSIX */
 
 #if defined(MNT2_NFS_OPT_PROPLIST) && defined(MNTTAB_OPT_PROPLIST)
-  if (hasmntopt(mntp, MNTTAB_OPT_PROPLIST) != NULL)
+  if (amu_hasmntopt(mntp, MNTTAB_OPT_PROPLIST) != NULL)
     nap->flags |= MNT2_NFS_OPT_PROPLIST;
 #endif /* defined(MNT2_NFS_OPT_PROPLIST) && defined(MNTTAB_OPT_PROPLIST) */
 
@@ -731,12 +729,12 @@ compute_nfs_args(nfs_args_t *nap, mntent_t *mntp, int genflags, struct netconfig
 #endif /* defined(MNT2_NFS_OPT_MAXGRPS) && defined(MNTTAB_OPT_MAXGROUPS) */
 
 #if defined(MNT2_NFS_OPT_NONLM) && defined(MNTTAB_OPT_NOLOCK)
-  if (hasmntopt(mntp, MNTTAB_OPT_NOLOCK) != NULL)
+  if (amu_hasmntopt(mntp, MNTTAB_OPT_NOLOCK) != NULL)
     nap->flags |= MNT2_NFS_OPT_NONLM;
 #endif /* defined(MNT2_NFS_OPT_NONLM) && defined(MNTTAB_OPT_NOLOCK) */
 
 #if defined(MNT2_NFS_OPT_XLATECOOKIE) && defined(MNTTAB_OPT_XLATECOOKIE)
-  if (hasmntopt(mntp, MNTTAB_OPT_XLATECOOKIE) != NULL)
+  if (amu_hasmntopt(mntp, MNTTAB_OPT_XLATECOOKIE) != NULL)
     nap->flags |= MNT2_NFS_OPT_XLATECOOKIE;
 #endif /* defined(MNT2_NFS_OPT_XLATECOOKIE) && defined(MNTTAB_OPT_XLATECOOKIE) */
 

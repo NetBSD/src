@@ -1,7 +1,7 @@
-/*	$NetBSD: map.c,v 1.1.1.5 2002/11/29 22:58:14 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.1.1.6 2003/03/09 01:13:10 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: map.c,v 1.32 2002/06/24 03:05:15 ib42 Exp
+ * Id: map.c,v 1.36 2002/12/27 22:43:50 ezk Exp
  *
  */
 
@@ -404,9 +404,6 @@ free_map(am_node *mp)
   if (mp->am_mnt)
     free_mntfs(mp->am_mnt);
 
-  if (mp->am_transp)
-    XFREE(mp->am_transp);
-
   if (mp->am_mfarray) {
     mntfs **temp_mf;
     for (temp_mf = mp->am_mfarray; *temp_mf; temp_mf++)
@@ -467,6 +464,7 @@ fh_to_mp3(am_nfs_fh *fhp, int *rp, int c_or_d)
       ap = 0;
       goto drop;
     }
+#if 0
     /*
      * If the node is hung then locate a new node
      * for it.  This implements the replicated filesystem
@@ -476,7 +474,7 @@ fh_to_mp3(am_nfs_fh *fhp, int *rp, int c_or_d)
       int error;
       am_node *orig_ap = ap;
 
-      dlog("fh_to_mp3: %s (%s) is hung:- call lookup",
+      dlog("fh_to_mp3: %s (%s) is hung: lookup alternative file server",
 	   orig_ap->am_path, orig_ap->am_mnt->mf_info);
 
       /*
@@ -517,6 +515,7 @@ fh_to_mp3(am_nfs_fh *fhp, int *rp, int c_or_d)
       new_ttl(orig_ap);
 
     }
+#endif
 
     /*
      * Disallow references to objects being unmounted, unless
@@ -893,10 +892,13 @@ unmount_node(am_node *mp)
       dlog("No-op unmount of error node %s", mf->mf_info);
     error = 0;
   } else {
-    dlog("Unmounting %s (%s)", mf->mf_mount, mf->mf_info);
+    dlog("Unmounting <%s> <%s> (%s) flags %x",
+	 mp->am_path, mf->mf_mount, mf->mf_info, mf->mf_flags);
     error = (*mf->mf_ops->umount_fs) (mp, mf);
   }
 
+  /* do this again, it might have changed */
+  mf = mp->am_mnt;
   if (error) {
     errno = error;		/* XXX */
     dlog("%s: unmount: %m", mf->mf_mount);
@@ -1031,6 +1033,18 @@ unmount_mp(am_node *mp)
   plog(XLOG_INFO, "\"%s\" on %s timed out", mp->am_path, mp->am_mnt->mf_mount);
 #endif /* notdef */
 
+  if (mf->mf_refc == 1 && !FSRV_ISUP(mf->mf_server)) {
+    /*
+     * Don't try to unmount from a server that is known to be down
+     */
+    if (!(mf->mf_flags & MFF_LOGDOWN)) {
+      /* Only log this once, otherwise gets a bit boring */
+      plog(XLOG_STATS, "file server %s is down - timeout of \"%s\" ignored", mf->mf_server->fs_host, mp->am_path);
+      mf->mf_flags |= MFF_LOGDOWN;
+    }
+    return 0;
+  }
+
 #ifdef HAVE_FS_AUTOFS
   if (mf->mf_flags & MFF_AUTOFS) {
     autofs_release_fh(mf->mf_autofs_fh);
@@ -1038,35 +1052,16 @@ unmount_mp(am_node *mp)
   }
 #endif /* HAVE_FS_AUTOFS */
 
+  dlog("\"%s\" on %s timed out", mp->am_path, mp->am_mnt->mf_mount);
+  mf->mf_flags |= MFF_UNMOUNTING;
   if ((mf->mf_fsflags & FS_UBACKGROUND) &&
       (mf->mf_flags & MFF_MOUNTED)) {
-    if (mf->mf_refc == 1 && !FSRV_ISUP(mf->mf_server)) {
-      /*
-       * Don't try to unmount from a server that is known to be down
-       */
-      if (!(mf->mf_flags & MFF_LOGDOWN)) {
-	/* Only log this once, otherwise gets a bit boring */
-	plog(XLOG_STATS, "file server %s is down - timeout of \"%s\" ignored", mf->mf_server->fs_host, mp->am_path);
-	mf->mf_flags |= MFF_LOGDOWN;
-      }
-    } else {
-      /* Clear logdown flag - since the server must be up */
-      mf->mf_flags &= ~MFF_LOGDOWN;
-      dlog("\"%s\" on %s timed out", mp->am_path, mp->am_mnt->mf_mount);
-      /* dlog("Will background the unmount attempt"); */
-      /*
-       * Note that we are unmounting this node
-       */
-      mf->mf_flags |= MFF_UNMOUNTING;
-      run_task(unmount_node_wrap, (voidp) mp,
-	       free_map_if_success, (voidp) mp);
-      was_backgrounded = 1;
-      dlog("unmount attempt backgrounded");
-    }
+    dlog("Trying unmount in background");
+    run_task(unmount_node_wrap, (voidp) mp,
+	     free_map_if_success, (voidp) mp);
+    was_backgrounded = 1;
   } else {
-    dlog("\"%s\" on %s timed out", mp->am_path, mp->am_mnt->mf_mount);
     dlog("Trying unmount in foreground");
-    mf->mf_flags |= MFF_UNMOUNTING;
     free_map_if_success(unmount_node(mp), 0, (voidp) mp);
     dlog("unmount attempt done");
   }

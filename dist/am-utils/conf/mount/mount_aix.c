@@ -1,7 +1,7 @@
-/*	$NetBSD: mount_aix.c,v 1.1.1.5 2002/11/29 22:58:28 christos Exp $	*/
+/*	$NetBSD: mount_aix.c,v 1.1.1.6 2003/03/09 01:13:21 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,13 +38,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ *      %W% (Berkeley) %G%
  *
- * Id: mount_aix.c,v 1.8 2002/06/22 16:52:11 ib42 Exp
+ * Id: mount_aix.c,v 1.11 2003/01/23 19:35:57 ezk Exp
  *
  */
 
 /*
- * AIX 3 Mount helper
+ * AIX 3-5 Mount helper
  */
 
 #ifdef HAVE_CONFIG_H
@@ -117,7 +118,9 @@ mount_aix3(char *fsname, char *dir, int flags, int type, void *data, char *mnt_o
 #endif /* MOUNT_TYPE_NFS3_BIS */
 #endif /* HAVE_FS_NFS3 */
 
+#ifdef DEBUG
   dlog("mount_aix3: fsname %s, dir %s, type %d", fsname, dir, type);
+#endif /* DEBUG */
 
 #ifdef MOUNT_TYPE_NFS3_BIS
  retry_ibm_stupid_service_pack:
@@ -136,7 +139,16 @@ mount_aix3(char *fsname, char *dir, int flags, int type, void *data, char *mnt_o
     /*     v2args.proto = v3args->proto; */
     v2args.hostname = v3args->hostname;
     v2args.netname = v3args->netname;
+#ifdef AIX_52
+#error do not use this code
+    v2args.fh = v3args->fh;
+    v2args.syncaddr = v3args->syncaddr;
+    v2args.proto = v3args->proto;
+    v2args.numclust = v3args->numclust;
+    v2args.biods = v3args->biods;
+#else /* not AIX_52 */
     memmove(v2args.fh.x, ((fhandle_t *)v3args->fh)->x, FHSIZE);
+#endif /* not AIX_52 */
     v2args.flags = v3args->flags;
     v2args.wsize = v3args->wsize;
     v2args.rsize = v3args->rsize;
@@ -158,6 +170,7 @@ mount_aix3(char *fsname, char *dir, int flags, int type, void *data, char *mnt_o
   case MOUNT_TYPE_NFS3_BIS:
     /* just fall through */
     if (aix_type == MOUNT_TYPE_NFS3_BIS) {
+      dlog("mount_aix3: creating alternate nfs3_args structure");
       memmove((voidp) &v3args_bis.addr, (voidp) &v3args->addr, sizeof(struct sockaddr_in));
       v3args_bis.u0 = v3args->u0;
       v3args_bis.proto = v3args->proto;
@@ -207,16 +220,24 @@ mount_aix3(char *fsname, char *dir, int flags, int type, void *data, char *mnt_o
     return EINVAL;
   }
 
+  /*
+   * XXX: Warning, if vmount() hangs your amd in AIX 5.1, it
+   * is because of a kernel bug in the NFS code.  Get a patch from IBM
+   * or upgrade to 5.2.
+   */
   ret = vmount((struct vmount *)buf, size);
   if (ret < 0) {
+    plog(XLOG_ERROR, "mount_aix3: vmount failed with errno %d", errno);
+    perror ("vmount");
 #ifdef MOUNT_TYPE_NFS3_BIS
     if (aix_type == MOUNT_TYPE_NFS3 && errno == EINVAL) {
       aix_type = MOUNT_TYPE_NFS3_BIS;
+#ifdef DEBUG
       dlog("mount_aix3: retrying with alternate nfs3_args structure");
+#endif /* DEBUG */
       goto retry_ibm_stupid_service_pack;
     }
 #endif /* MOUNT_TYPE_NFS3_BIS */
-    plog(XLOG_ERROR, "mount_aix3: vmount failed with errno %d", errno);
   }
   return ret;
 }
