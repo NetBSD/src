@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.24 2000/02/02 17:09:46 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.25 2000/02/05 18:11:56 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -199,8 +199,7 @@ ex_config(sc)
 	u_int8_t macaddr[ETHER_ADDR_LEN] = {0};
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	bus_dma_segment_t useg, dseg;
-	int urseg, drseg, i, error, attach_stage;
+	int i, error, attach_stage;
 
 	ex_reset(sc);
 
@@ -229,8 +228,8 @@ ex_config(sc)
 	 * map for them.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    EX_NUPD * sizeof (struct ex_upd), NBPG, 0, &useg, 1, &urseg,
-	    BUS_DMA_NOWAIT)) != 0) {
+	    EX_NUPD * sizeof (struct ex_upd), NBPG, 0, &sc->sc_useg, 1, 
+            &sc->sc_urseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: can't allocate upload descriptors, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail;
@@ -238,7 +237,7 @@ ex_config(sc)
 
 	attach_stage = 1;
 
-	if ((error = bus_dmamem_map(sc->sc_dmat, &useg, urseg,
+	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_useg, sc->sc_urseg,
 	    EX_NUPD * sizeof (struct ex_upd), (caddr_t *)&sc->sc_upd,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: can't map upload descriptors, error = %d\n",
@@ -274,8 +273,8 @@ ex_config(sc)
 	 * map for them.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    EX_NDPD * sizeof (struct ex_dpd), NBPG, 0, &dseg, 1, &drseg,
-	    BUS_DMA_NOWAIT)) != 0) {
+	    EX_NDPD * sizeof (struct ex_dpd), NBPG, 0, &sc->sc_dseg, 1, 
+	    &sc->sc_drseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: can't allocate download descriptors, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail;
@@ -283,7 +282,7 @@ ex_config(sc)
 
 	attach_stage = 5;
 
-	if ((error = bus_dmamem_map(sc->sc_dmat, &dseg, drseg,
+	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_dseg, sc->sc_drseg,
 	    EX_NDPD * sizeof (struct ex_dpd), (caddr_t *)&sc->sc_dpd,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: can't map download descriptors, error = %d\n",
@@ -450,7 +449,7 @@ ex_config(sc)
 #endif
 
 	/*  Establish callback to reset card when we reboot. */
-	shutdownhook_establish(ex_shutdown, sc);
+	sc->sc_sdhook = shutdownhook_establish(ex_shutdown, sc);
 	return;
 
  fail:
@@ -496,7 +495,7 @@ ex_config(sc)
 		/* FALLTHROUGH */
 
 	case 5:
-		bus_dmamem_free(sc->sc_dmat, &dseg, drseg);
+		bus_dmamem_free(sc->sc_dmat, &sc->sc_dseg, sc->sc_drseg);
 		break;
 
 	case 4:
@@ -513,7 +512,7 @@ ex_config(sc)
 		/* FALLTHROUGH */
 
 	case 1:
-		bus_dmamem_free(sc->sc_dmat, &useg, urseg);
+		bus_dmamem_free(sc->sc_dmat, &sc->sc_useg, sc->sc_urseg);
 		break;
 	}
 
@@ -1548,6 +1547,110 @@ ex_init_txdescs(sc)
 	sc->tx_ftail = &sc->sc_txdescs[EX_NDPD-1];
 }
 
+
+int
+ex_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct ex_softc *sc = (void *) self;
+	int s, error = 0;
+
+	s = splnet();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		error = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		mii_activate(&sc->ex_mii, act, MII_PHY_ANY, MII_OFFSET_ANY);
+		if_deactivate(&sc->sc_ethercom.ec_if);
+		break;
+	}
+	splx(s);
+
+	return (error);
+}
+
+int
+ex_detach(sc)
+	struct ex_softc *sc;
+{
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ex_rxdesc *rxd;
+	int i;
+
+	/* Unhook our tick handler. */
+	untimeout(ex_tick, sc);
+
+	/* Detach all PHYs */
+	mii_detach(&sc->ex_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+
+	/* Delete all remaining media. */
+	ifmedia_delete_instance(&sc->ex_mii.mii_media, IFM_INST_ANY);
+
+#if NRND > 0
+	rnd_detach_source(&sc->rnd_source);
+#endif
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	for (i = 0; i < EX_NUPD; i++) {
+		rxd = &sc->sc_rxdescs[i];
+		if (rxd->rx_mbhead != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, rxd->rx_dmamap);
+			m_freem(rxd->rx_mbhead);
+			rxd->rx_mbhead = NULL;
+		}
+	}
+	for (i = 0; i < EX_NUPD; i++)
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_rx_dmamaps[i]);
+	for (i = 0; i < EX_NDPD; i++)
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_tx_dmamaps[i]);
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_dpd_dmamap);
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dpd_dmamap);
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_dpd,
+	    EX_NDPD * sizeof (struct ex_dpd));
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_dseg, sc->sc_drseg);
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_upd_dmamap);
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_upd_dmamap);
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_upd,
+	    EX_NUPD * sizeof (struct ex_upd));
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_useg, sc->sc_urseg);
+
+#if 0
+	for (i = 0; i < TULIP_NRXDESC; i++) {
+		rxs = &sc->sc_rxsoft[i];
+		if (rxs->rxs_mbuf != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, rxs->rxs_dmamap);
+			m_freem(rxs->rxs_mbuf);
+			rxs->rxs_mbuf = NULL;
+		}
+		bus_dmamap_destroy(sc->sc_dmat, rxs->rxs_dmamap);
+	}
+	for (i = 0; i < TULIP_TXQUEUELEN; i++) {
+		txs = &sc->sc_txsoft[i];
+		if (txs->txs_mbuf != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, txs->txs_dmamap);
+			m_freem(txs->txs_mbuf);
+			txs->txs_mbuf = NULL;
+		}
+		bus_dmamap_destroy(sc->sc_dmat, txs->txs_dmamap);
+	}
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_cddmamap);
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	    sizeof(struct tulip_control_data));
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
+#endif
+
+	shutdownhook_disestablish(sc->sc_sdhook);
+
+	return (0);
+}
 
 /*
  * Before reboots, reset card completely.
