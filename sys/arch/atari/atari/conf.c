@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.21 1996/12/16 21:24:00 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.22 1996/12/28 23:15:59 pk Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -54,8 +54,8 @@
 
 #include "vnd.h"
 bdev_decl(vnd);
-#include "rd.h"
-bdev_decl(rd);
+#include "md.h"
+bdev_decl(md);
 #include "fd.h"
 #include "hdfd.h"
 bdev_decl(fd);
@@ -72,7 +72,7 @@ bdev_decl(ccd);
 struct bdevsw	bdevsw[] =
 {
 	bdev_disk_init(NVND,vnd),	/* 0: vnode disk driver */
-	bdev_rd_init(NRD,rd),		/* 1: ram disk - for install disk */
+	bdev_rd_init(NRD,md),		/* 1: memory disk - for install disk */
 	bdev_disk_init(NFD+NHDFD,fd),	/* 2: floppy disk */
 	bdev_swap_init(1,sw),		/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */

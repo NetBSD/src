@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HADES,v 1.3 1996/12/16 21:24:23 leo Exp $
+#	$NetBSD: HADES,v 1.4 1996/12/28 23:15:13 pk Exp $
 #
 # Medusa-Hades
 #
@@ -78,7 +78,7 @@ options		GENERIC			# Mini-root boot support
 #
 options		TT_SCSI			# SCSI-support for TT/Hades only
 options		STATCLOCK		# Separate {stat,prof}clock
-options		RAMDISK_HOOKS		# Boot RAM-disk
+options		MEMORY_DISK_HOOKS	# Boot RAM-disk
 options		DISKLABEL_NBDA		# NetBSD disklabels (required)
 options		DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 
@@ -94,7 +94,7 @@ pseudo-device	ppp		# ppp
 pseudo-device	pty	16	# Pseudo-tty support
 pseudo-device	loop		# Loopback network
 pseudo-device	vnd	3	# 3 pseudo disks (see vnconfig)
-pseudo-device	rd	1	# Boot ramdisk
+pseudo-device	md	1	# Boot memory disk
 
 #
 #The following sections describe various hardware options.
