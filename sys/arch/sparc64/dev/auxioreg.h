@@ -1,7 +1,7 @@
-/*	$NetBSD: auxioreg.h,v 1.1 2000/04/05 07:52:49 mrg Exp $	*/
+/*	$NetBSD: auxioreg.h,v 1.2 2000/04/08 03:07:07 mrg Exp $	*/
 
 /*
- * Copyright (c) 1999 Matthew R. Green
+ * Copyright (c) 2000 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
