@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.32 1997/02/14 20:10:50 gwr Exp $
+#	$NetBSD: files.sun3,v 1.33 1997/02/18 15:10:40 gwr Exp $
 
 #
 # sun3-specific configuration info
@@ -11,6 +11,7 @@ maxusers 2 8 64
 
 # Standard stuff
 file arch/sun3/sun3/autoconf.c
+file arch/sun3/sun3/bus_subr.c
 file arch/sun3/sun3/cache.c			havecache
 file arch/sun3/sun3/conf.c
 file arch/sun3/sun3/control.c	
