@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.31 2001/10/23 00:25:21 lukem Exp $	*/
+/*	$NetBSD: passwd.c,v 1.32 2001/11/05 15:03:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.31 2001/10/23 00:25:21 lukem Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.32 2001/11/05 15:03:49 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -398,10 +398,10 @@ err:		pw_error(NULL, 1, 1);
 }
 
 void
-pw_error(const char *name, int err, int eval)
+pw_error(const char *name, int error, int eval)
 {
 
-	if (err) {
+	if (error) {
 		if (name)
 			warn("%s", name);
 		else
