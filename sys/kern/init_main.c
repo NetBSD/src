@@ -1,4 +1,4 @@
-/*	NetBSD $Id: init_main.c,v 1.61 1994/07/03 11:45:41 mycroft Exp $	*/
+/*	$NetBSD: init_main.c,v 1.62 1994/07/17 23:52:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
