@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.35 1998/03/21 20:11:31 pk Exp $ */
+/*	$NetBSD: cgthree.c,v 1.36 1998/03/29 22:10:32 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -166,8 +166,11 @@ cgthreematch_obio(parent, cf, aux)
 		return (strcmp(cf->cf_driver->cd_name, uoba->uoba_sbus.sa_name) == 0);
 
 	oba = &uoba->uoba_oba4;
-	return (obio_bus_probe(oba->oba_bustag, oba->oba_paddr,
-			       0, 4, NULL, NULL));
+	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+				4,	/* probe size */
+				0,	/* offset */
+				0,	/* flags */
+				NULL, NULL));
 }
 
 /*

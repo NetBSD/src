@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.72 1998/03/21 20:14:13 pk Exp $	*/
+/*	$NetBSD: esp.c,v 1.73 1998/03/29 22:10:32 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -219,8 +219,11 @@ espmatch_obio(parent, cf, aux)
 		return (0);
 
 	oba = &uoba->uoba_oba4;
-	return (obio_bus_probe(oba->oba_bustag, oba->oba_paddr,
-			       0, 1, NULL, NULL));
+	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+				1,	/* probe size */
+				0,	/* offset */
+				0,	/* flags */
+				NULL, NULL));
 }
 
 void
@@ -382,8 +385,8 @@ espattach_obio(parent, self, aux)
 
 	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
 			 0,	/* offset */
-			 16,	/* size */
-			 0,	/* flags */
+			 16,	/* size (of ncr53c9xreg) */
+			 BUS_SPACE_MAP_LINEAR,
 			 0, &bh) != 0) {
 		printf("%s @ obio: cannot map registers\n", self->dv_xname);
 		return;

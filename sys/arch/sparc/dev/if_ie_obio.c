@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.5 1998/03/22 22:12:52 pk Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.6 1998/03/29 22:10:33 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -262,8 +262,11 @@ ie_obio_match(parent, cf, aux)
 		return (0);
 
 	oba = &uoba->uoba_oba4;
-	return (obio_bus_probe(oba->oba_bustag, oba->oba_paddr,
-			       0, 1, NULL, NULL));
+	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+				1,	/* probe size */
+				0,	/* offset */
+				0,	/* flags */
+				NULL, NULL));
 }
 
 void

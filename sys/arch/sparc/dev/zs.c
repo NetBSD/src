@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.57 1998/03/21 20:24:11 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.58 1998/03/29 22:10:33 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -254,8 +254,8 @@ zs_match_obio(parent, cf, aux)
 	}
 
 	oba = &uoba->uoba_oba4;
-	return (obio_bus_probe(oba->oba_bustag, oba->oba_paddr,
-			       0, 1, NULL, NULL));
+	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+			        1, 0, 0, NULL, NULL));
 }
 
 static void

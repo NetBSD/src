@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.53 1998/03/21 20:14:13 pk Exp $	*/
+/*	$NetBSD: if_le.c,v 1.54 1998/03/29 22:10:33 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -411,8 +411,11 @@ lematch_obio(parent, cf, aux)
 		return (0);
 
 	oba = &uoba->uoba_oba4;
-	return (obio_bus_probe(oba->oba_bustag, oba->oba_paddr,
-			       0, 2, NULL, NULL));
+	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+				2,	/* probe size */
+				0,	/* offset */
+				0,	/* flags */
+				NULL, NULL));
 }
 
 
