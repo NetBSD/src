@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/03/24 15:04:06 atatat Exp $
+#	$NetBSD: Makefile,v 1.2 2003/07/04 04:52:59 atatat Exp $
 
 NOSHARE=	# defined
 NOPIC=		# defined
@@ -25,7 +25,5 @@ SRCS=		assert.c cf.c clock.c clrerr.c config.c debug.c \
 		strto.c syslogio.c test.c ungetc.c vasprintf.c vfprintf.c \
 		vfscanf.c vprintf.c vsnprintf.c vsprintf.c vsscanf.c \
 		wbuf.c wsetup.c xtrap.c
-
-libinstall::
 
 .include <bsd.lib.mk>

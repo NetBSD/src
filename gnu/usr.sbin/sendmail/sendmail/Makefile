@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2003/03/24 15:04:08 atatat Exp $
+#	$NetBSD: Makefile,v 1.11 2003/07/04 04:52:59 atatat Exp $
 
 .include <bsd.own.mk>
 
@@ -9,8 +9,13 @@ BINDIR=		/usr/libexec/sendmail
 PROG=		sendmail
 
 OBINGRP:=	${BINGRP}
+.if !defined(SENDMAIL_SUIDROOT) || ${SENDMAIL_SUIDROOT} != "yes"
 BINGRP=		smmsp
 BINMODE=	2555
+.else
+BINOWN=		root
+BINMODE=	4555
+.endif
 
 LIBSMUTILDIR!=	cd ${.CURDIR}/../libsmutil && ${PRINTOBJDIR}
 LIBSMDIR!=	cd ${.CURDIR}/../libsm && ${PRINTOBJDIR}
