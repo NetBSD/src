@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.c,v 1.3 1998/03/27 01:30:00 cgd Exp $	*/
+/*	$NetBSD: bcopy.c,v 1.4 2003/04/07 21:04:19 scw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bcopy.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bcopy.c,v 1.3 1998/03/27 01:30:00 cgd Exp $");
+__RCSID("$NetBSD: bcopy.c,v 1.4 2003/04/07 21:04:19 scw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -94,7 +94,9 @@ bcopy(src0, dst0, length)
 #define	TLOOP(s) if (t) TLOOP1(s)
 #define	TLOOP1(s) do { s; } while (--t)
 
+#ifndef MEMCOPY
 	if ((unsigned long)dst < (unsigned long)src) {
+#endif
 		/*
 		 * Copy forward.
 		 */
@@ -118,6 +120,7 @@ bcopy(src0, dst0, length)
 		TLOOP(*(word *)dst = *(word *)src; src += wsize; dst += wsize);
 		t = length & wmask;
 		TLOOP(*dst++ = *src++);
+#ifndef MEMCOPY
 	} else {
 		/*
 		 * Copy backwards.  Otherwise essentially the same.
@@ -140,6 +143,8 @@ bcopy(src0, dst0, length)
 		t = length & wmask;
 		TLOOP(*--dst = *--src);
 	}
+#endif	/* MEMCOPY */
+
 done:
 #if defined(MEMCOPY) || defined(MEMMOVE)
 	return (dst0);
