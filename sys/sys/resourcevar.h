@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)resourcevar.h	7.1 (Berkeley) 5/9/91
- *	$Id: resourcevar.h,v 1.4 1993/06/22 00:56:37 glass Exp $
+ *	$Id: resourcevar.h,v 1.4.4.1 1993/09/27 21:41:26 deraadt Exp $
  */
 
 #ifndef _SYS_RESOURCEVAR_H_
@@ -51,16 +51,20 @@ struct pstats {
 	struct	itimerval p_timer[3];	/* virtual-time timers */
 
 	struct uprof {			/* profile arguments */
-		short	*pr_base;	/* buffer base */
-		unsigned pr_size;	/* buffer size */
-		unsigned pr_off;	/* pc offset */
-		unsigned pr_scale;	/* pc scaling */
+		caddr_t	pr_base;	/* buffer base */
+		u_long	pr_size;	/* buffer size */
+		u_long	pr_off;		/* pc offset */
+		u_long	pr_scale;	/* pc scaling */
+		u_long	pr_addr;	/* temp storage for addr until AST */
+		u_long	pr_ticks;	/* temp storage for ticks until AST */
 	} p_prof;
 #define	pstat_endcopy	p_start
 	struct	timeval p_start;	/* starting time */
 };
 
 void addupc __P((int, struct uprof *, int));	/* process profiling */ 
+void addupc_intr __P((struct proc *p, u_long pc, u_int ticks));
+void addupc_task __P((struct proc *p, u_long pc, u_int ticks));
 
 /*
  * Kernel shareable process resource limits.  Because this structure
@@ -81,5 +85,8 @@ struct plimit {
 
 /* make copy of plimit structure */
 struct	plimit *limcopy __P((struct plimit *lim));
+
+define ADDUPROF(p)	addupc_task(p, (p)->p_stats->p_prof.pr_addr, \
+				(p)->p_stats->p_prof.pr_ticks)
 
 #endif /* !_SYS_RESOURCEVAR_H_ */
