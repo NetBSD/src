@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.23.2.3 2001/11/14 19:12:57 nathanw Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.23.2.4 2001/11/18 00:07:48 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -70,11 +70,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_exec.c,v 1.23.2.3 2001/11/14 19:12:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_exec.c,v 1.23.2.4 2001/11/18 00:07:48 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
 #include <sys/malloc.h>
@@ -130,8 +131,8 @@ const struct emul emul_hpux = {
  * execve().
  */
 int
-hpux_sys_execv(p, v, retval)
-	struct proc *p;
+hpux_sys_execv(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -139,6 +140,7 @@ hpux_sys_execv(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(char **) argv;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_execve_args ap;
 	caddr_t sg;
 
@@ -149,12 +151,12 @@ hpux_sys_execv(p, v, retval)
 	SCARG(&ap, argp) = SCARG(uap, argp);
 	SCARG(&ap, envp) = NULL;
 
-	return sys_execve(p, &ap, retval);
+	return sys_execve(l, &ap, retval);
 }
 
 int
-hpux_sys_execve(p, v, retval)
-	struct proc *p;
+hpux_sys_execve(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -163,6 +165,7 @@ hpux_sys_execve(p, v, retval)
 		syscallarg(char **) argv;
 		syscallarg(char **) envp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_execve_args ap;
 	caddr_t sg;
 
@@ -173,5 +176,5 @@ hpux_sys_execve(p, v, retval)
 	SCARG(&ap, argp) = SCARG(uap, argp);
 	SCARG(&ap, envp) = SCARG(uap, envp);
 
-	return sys_execve(p, &ap, retval);
+	return sys_execve(l, &ap, retval);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.17.2.2 2001/11/14 19:12:59 nathanw Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.17.2.3 2001/11/18 00:07:49 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.17.2.2 2001/11/14 19:12:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.17.2.3 2001/11/18 00:07:49 gmcgarry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.17.2.2 2001/11/14 19:12:59 nathanw Ex
 #include <sys/systm.h>
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/file.h>
@@ -76,11 +77,12 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.17.2.2 2001/11/14 19:12:59 nathanw Ex
  * Map BSD/POSIX style termios info to and from SYS5 style termio stuff.
  */
 int
-hpux_termio(fd, com, data, p)
+hpux_termio(fd, com, data, l)
 	int fd, com;
 	caddr_t data;
-	struct proc *p;
+	struct lwp *l;
 {
+	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct termios tios;
 	struct hpux_termios htios;
@@ -366,14 +368,14 @@ hpux_termio(fd, com, data, p)
 					args.fdes = fd;
 					args.cmd = F_GETFL;
 					args.arg = 0;
-					(void) hpux_sys_fcntl(p, &args, &flags);
+					(void) hpux_sys_fcntl(l, &args, &flags);
 					if (nbio)
 						flags |= HPUXNDELAY;
 					else
 						flags &= ~HPUXNDELAY;
 					args.cmd = F_SETFL;
 					args.arg = flags;
-					(void) hpux_sys_fcntl(p, &args, &flags);
+					(void) hpux_sys_fcntl(l, &args, &flags);
 				}
 			}
 		}
@@ -481,8 +483,8 @@ hpuxtobsdbaud(hpux_speed)
 }
 
 int
-hpux_sys_stty_6x(p, v, retval)
-	struct proc *p;
+hpux_sys_stty_6x(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -491,12 +493,13 @@ hpux_sys_stty_6x(p, v, retval)
 		syscallarg(caddr_t) arg;
 	} */ *uap = v;
 
-	return (getsettty(p, SCARG(uap, fd), HPUXTIOCGETP, SCARG(uap, arg)));
+	return (getsettty(l, SCARG(uap, fd), HPUXTIOCGETP,
+	    SCARG(uap, arg)));
 }
 
 int
-hpux_sys_gtty_6x(p, v, retval)
-	struct proc *p;
+hpux_sys_gtty_6x(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -505,7 +508,8 @@ hpux_sys_gtty_6x(p, v, retval)
 		syscallarg(caddr_t) arg;
 	} */ *uap = v;
 
-	return (getsettty(p, SCARG(uap, fd), HPUXTIOCSETP, SCARG(uap, arg)));
+	return (getsettty(l, SCARG(uap, fd), HPUXTIOCSETP,
+	    SCARG(uap, arg)));
 }
 
 /*
@@ -513,11 +517,12 @@ hpux_sys_gtty_6x(p, v, retval)
  * gtty/stty and TIOCGETP/TIOCSETP.
  */
 int
-getsettty(p, fdes, com, cmarg)
-	struct proc *p;
+getsettty(l, fdes, com, cmarg)
+	struct lwp *l;
 	int fdes, com;
 	caddr_t cmarg;
 {
+	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	struct hpux_sgttyb hsb;
