@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.154 2000/06/20 06:00:28 thorpej Exp $
+#	$NetBSD: Makefile,v 1.155 2000/07/25 19:07:39 thorpej Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -39,7 +39,7 @@
 # do this before bsd.own.mk so we get correct KERNSRCDIR
 .include "../Makefile.inc"
 
-# For NO_SENDMAIL and INSTPRIV
+# For NO_SENDMAIL, INSTPRIV, MKCRYPTO
 .include <bsd.own.mk>
 
 TZDIR=		/usr/share/zoneinfo
@@ -232,6 +232,9 @@ distribution: distrib-dirs
 	(cd ${DESTDIR}/dev; ./MAKEDEV all)
 	(cd ../usr.bin/mail; ${MAKE} distribution)
 	(cd ../gnu/usr.sbin/postfix/; ${MAKE} distribution)
+.if (${MKCRYPTO} != "no")
+	(cd ../usr.bin/ssh; ${MAKE} distribution)
+.endif
 .ifndef NO_SENDMAIL
 	(cd ../gnu/usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
 	${DESTDIR}/usr/libexec/sendmail/sendmail -C ${DESTDIR}/etc/mail/sendmail.cf -O AliasFile=${DESTDIR}/etc/mail/aliases -O DontBlameSendmail=MapInUnsafeDirPath -bi
