@@ -1,4 +1,4 @@
-.\"	$NetBSD: reboot.8,v 1.12 2000/04/25 14:03:26 hubertf Exp $
+.\"	$NetBSD: reboot.8,v 1.13 2001/06/20 02:07:02 mrg Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -74,7 +74,8 @@ Suppress sending a message via
 before halting or restarting.
 .It Fl n
 Do not flush the file system cache.
-This option should be used with extreme caution.
+This option should be used with extreme caution.  It can be used if a disk
+or the processor is on fire.
 .It Fl p
 Attempt to powerdown the system.  If the powerdown fails, or the system
 does not support software powerdown, the system will halt.  This option
