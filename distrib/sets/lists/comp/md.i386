@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.46 2000/04/29 03:46:28 thorpej Exp $
+# $NetBSD: md.i386,v 1.47 2000/06/13 00:54:22 wiz Exp $
 ./usr/include/i386		comp-c-include
 ./usr/include/i386/_G_config.h		comp-c-include
 ./usr/include/i386/ansi.h		comp-c-include
@@ -38,7 +38,6 @@
 ./usr/include/i386/param.h		comp-c-include
 ./usr/include/i386/pcb.h		comp-c-include
 ./usr/include/i386/pccons.h		comp-c-include
-./usr/include/i386/pcvt_ioctl.h		comp-c-include
 ./usr/include/i386/pio.h		comp-c-include
 ./usr/include/i386/pmap.h		comp-c-include
 ./usr/include/i386/proc.h		comp-c-include
