@@ -17,7 +17,16 @@
  * Modification history
  *
  * $Log: if_ed.c,v $
- * Revision 1.2.2.1  1993/07/20 01:51:58  cgd
+ * Revision 1.2.2.2  1993/07/21 13:50:00  cgd
+ * from davidg:
+ *    Added config file override for memory size and added flags to force
+ * 8bit or 16bit operation, and a flag to disable transmitter double buffering.
+ *    See the updated "ed.relnotes" file for information about how to set
+ * the flags.
+ *    This should be considered the first "production"  release. It still
+ * needs a manual page, though.
+ *
+ * Revision 1.2.2.1  1993/07/20  01:51:58  cgd
  * Fixed to allow iosiz config parameter to override what was (for jkh,
  * incorrectly) probed.  This allows you more flexibility in getting weird
  * WD 80x3 clones to work.
@@ -313,13 +322,24 @@ type_WD80x3:
 	}
 
 #if ED_DEBUG
-	printf("type=%s width=%d memsize=%d id_msize=%d\n",sc->type_str,memwidth,memsize,isa_dev->id_msize);
+	printf("type=%s memwidth=%d memsize=%d id_msize=%d\n",
+		sc->type_str,memwidth,memsize,isa_dev->id_msize);
 	for (i=0; i<8; i++)
 		printf("%x -> %x\n", i, inb(sc->asic_addr + i));
 #endif
-	/* Allow id_msize to override */
+	/*
+	 * Allow the user to override the autoconfiguration
+	 */
 	if (isa_dev->id_msize)
 		memsize = isa_dev->id_msize;
+	/*
+	 * (note that if the user specifies both of the following flags
+	 *	that '8bit' mode intentionally has precedence)
+	 */
+	if (isa_dev->id_flags & ED_FLAGS_FORCE_16BIT_MODE)
+		memwidth = 16;
+	if (isa_dev->id_flags & ED_FLAGS_FORCE_8BIT_MODE)
+		memwidth = 8;
 
 	/*
 	 * Check 83C584 interrupt configuration register if this board has one
@@ -352,7 +372,7 @@ type_WD80x3:
 	/*
 	 * allocate one xmit buffer if < 16k, two buffers otherwise
 	 */
-	if (memsize < 16384) {
+	if ((memsize < 16384) || (isa_dev->id_msize & ED_FLAGS_NO_DOUBLE_BUFFERING)) {
 		sc->smem_ring = sc->smem_start + (ED_PAGE_SIZE * ED_TXBUF_SIZE);
 		sc->txb_cnt = 1;
 		sc->rec_page_start = ED_TXBUF_SIZE;
@@ -642,7 +662,7 @@ type_3Com:
 #if 0
 printf("Starting write\n");
 for (i = 0; i < 8192; ++i)
-	bzerow(sc->smem_start, 8192);
+	bzero(sc->smem_start, 8192);
 printf("Done.\n");
 #endif
 #if 0
