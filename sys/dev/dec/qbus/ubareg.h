@@ -1,4 +1,4 @@
-/*	$NetBSD: ubareg.h,v 1.10 1998/10/18 18:51:30 ragge Exp $ */
+/*	$NetBSD: ubareg.h,v 1.11 1999/05/24 20:12:58 ragge Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -86,6 +86,7 @@
 #define	QBAPAGES	1024
 #define UBAIOADDR	0760000		/* start of I/O page */
 #define UBAIOPAGES	16
+#define	UBAIOSIZE	8192		/* 8K I/O space */
 
 #ifndef _LOCORE
 /*
