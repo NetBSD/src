@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: console.c,v 1.2 2004/04/24 17:35:28 cl Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.2 2004/04/24 17:35:28 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -104,7 +104,7 @@ xenc_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct xenc_attach_args *xa = (struct xenc_attach_args *)aux;
 
-	if (strcmp(xa->xa_busname, "xenc") == 0)
+	if (strcmp(xa->xa_device, "xenc") == 0)
 		return 1;
 	return 0;
 }
