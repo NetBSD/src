@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpcmcia.c,v 1.2 1999/12/07 17:23:54 uch Exp $ */
+/*	$NetBSD: plumpcmcia.c,v 1.3 2000/03/05 05:22:13 takemura Exp $ */
 
 /*
  * Copyright (c) 1999 UCHIYAMA Yasushi
@@ -526,7 +526,7 @@ plumpcmcia_chip_io_map(pch, width, offset, size, pcihp, windowp)
 	winofs = pcihp->addr + offset;
 
 	if (winofs > 0x3ff) {
-		printf("plumpcmcia_chip_io_map: WARNING port %#x > 0x3ff\n",
+		printf("plumpcmcia_chip_io_map: WARNING port %#lx > 0x3ff\n",
 		       winofs);
 	}
 

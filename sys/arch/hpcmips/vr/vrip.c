@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.4 1999/12/28 03:15:18 takemura Exp $	*/
+/*	$NetBSD: vrip.c,v 1.5 2000/03/05 05:22:13 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -184,9 +184,9 @@ vrip_print(aux, hoge)
 	struct vrip_attach_args *va = (struct vrip_attach_args*)aux;
 
 	if (va->va_addr)
-		printf(" addr 0x%x", va->va_addr);
+		printf(" addr 0x%lx", va->va_addr);
 	if (va->va_size > 1)
-		printf("-0x%x", va->va_addr + va->va_size - 1);
+		printf("-0x%lx", va->va_addr + va->va_size - 1);
 	if (va->va_intr != VRIPCF_INTR_DEFAULT)
 		printf(" intr %d", va->va_intr);
 	return (UNCONF);
