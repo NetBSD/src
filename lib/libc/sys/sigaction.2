@@ -1,4 +1,4 @@
-.\"	$NetBSD: sigaction.2,v 1.15 1998/04/28 22:28:31 fair Exp $
+.\"	$NetBSD: sigaction.2,v 1.16 1998/04/30 22:03:02 fair Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -220,8 +220,9 @@ or
 all signals, the signal mask, the signal stack,
 and the restart/interrupt flags are inherited by the child.
 .Pp
-.Xr Execve 2
-reinstates the default
+The
+.Xr execve 2
+system call reinstates the default
 action for all signals which were caught and
 resets all signals to be caught on the user stack.
 Ignored signals remain ignored;
