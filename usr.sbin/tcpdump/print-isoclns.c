@@ -1,5 +1,7 @@
+/*	$NetBSD: print-isoclns.c,v 1.1.1.2 1997/10/03 17:24:24 christos Exp $	*/
+
 /*
- * Copyright (c) 1992, 1993, 1994
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,21 +19,28 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- */
-
-/*
+ *
  * Original code by Matt Thomas, Digital Equipment Corporation
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: print-isoclns.c,v 1.9 94/06/14 20:18:44 leres Exp (LBL)";
+#if 0
+static const char rcsid[] =
+    "@(#) Header: print-isoclns.c,v 1.15 96/12/31 21:27:41 leres Exp  (LBL)";
+#else
+__RCSID("$NetBSD: print-isoclns.c,v 1.1.1.2 1997/10/03 17:24:24 christos Exp $");
+#endif
 #endif
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 
+#if __STDC__
+struct mbuf;
+struct rtentry;
+#endif
 #include <net/if.h>
 
 #include <netinet/in.h>
@@ -48,11 +57,11 @@ static char rcsid[] =
 #define	ISIS	131
 #define	NULLNS	0
 
-static int osi_cksum(const u_char *, int, const u_char *, u_char *, u_char *);
-static void esis_print(const u_char *, int);
+static int osi_cksum(const u_char *, u_int, const u_char *, u_char *, u_char *);
+static void esis_print(const u_char *, u_int);
 
 void
-isoclns_print(const u_char *p, int length, int caplen,
+isoclns_print(const u_char *p, u_int length, u_int caplen,
 	      const u_char *esrc, const u_char *edst)
 {
 	if (caplen < 1) {
@@ -130,7 +139,7 @@ struct esis_hdr {
 };
 
 static void
-esis_print(const u_char *p, int length)
+esis_print(const u_char *p, u_int length)
 {
 	const u_char *ep;
 	int li = p[1];
@@ -158,7 +167,7 @@ esis_print(const u_char *p, int length)
 			printf(" bad pkt!");
 		else {
 			printf(" too short for esis header %d:", li);
-			while (--length >= 0)
+			while (--length != 0)
 				printf("%02X", *p++);
 		}
 		return;
@@ -281,17 +290,17 @@ esis_print(const u_char *p, int length)
 }
 
 static int
-osi_cksum(register const u_char *p, register int len,
+osi_cksum(register const u_char *p, register u_int len,
 	  const u_char *toff, u_char *cksum, u_char *off)
 {
 	int x, y, f = (len - ((toff - p) + 1));
-	long c0 = 0, c1 = 0;
+	int32_t c0 = 0, c1 = 0;
 
 	if ((cksum[0] = off[0]) == 0 && (cksum[1] = off[1]) == 0)
 		return 0;
 
 	off[0] = off[1] = 0;
-	while (--len >= 0) {
+	while ((int)--len >= 0) {
 		c0 += *p++;
 		c1 += c0;
 		c0 %= 255;

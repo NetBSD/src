@@ -1,5 +1,7 @@
+/*	$NetBSD: print-null.c,v 1.1.1.2 1997/10/03 17:24:31 christos Exp $	*/
+
 /*
- * Copyright (c) 1991, 1993, 1994
+ * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,9 +21,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] =
-    "@(#)Header: print-null.c,v 1.14 94/06/10 17:01:35 mccanne Exp (LBL)";
+#if 0
+static const char rcsid[] =
+    "@(#) Header: print-null.c,v 1.24 97/05/28 12:52:47 leres Exp  (LBL)";
+#else
+__RCSID("$NetBSD: print-null.c,v 1.1.1.2 1997/10/03 17:24:31 christos Exp $");
+#endif
 #endif
 
 #include <sys/param.h>
@@ -30,6 +37,10 @@ static char rcsid[] =
 #include <sys/file.h>
 #include <sys/ioctl.h>
 
+#if __STDC__
+struct mbuf;
+struct rtentry;
+#endif
 #include <net/if.h>
 
 #include <netinet/in.h>
@@ -42,21 +53,29 @@ static char rcsid[] =
 #include <netinet/tcp.h>
 #include <netinet/tcpip.h>
 
-
+#include <pcap.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "interface.h"
 #include "addrtoname.h"
-#include "pcap.h"
 
+#ifndef AF_NS
+#define AF_NS		6		/* XEROX NS protocols */
+#endif
+
+/*
+ * The DLT_NULL packet header is 4 bytes long. It contains a network
+ * order 32 bit integer that specifies the family, e.g. AF_INET
+ */
 #define	NULL_HDRLEN 4
 
 static void
-null_print(const u_char *p, const struct ip *ip, int length)
+null_print(const u_char *p, const struct ip *ip, u_int length)
 {
 	u_int family;
 
-	bcopy(p, &family, sizeof(family));
+	memcpy((char *)&family, (char *)p, sizeof(family));
 
 	if (nflag) {
 		/* XXX just dump the header */
@@ -81,8 +100,8 @@ null_print(const u_char *p, const struct ip *ip, int length)
 void
 null_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 {
-	int length = h->len;
-	int caplen = h->caplen;
+	u_int length = h->len;
+	u_int caplen = h->caplen;
 	const struct ip *ip;
 
 	ts_print(&h->ts);

@@ -1,5 +1,7 @@
+/*	$NetBSD: print-tcp.c,v 1.1.1.2 1997/10/03 17:24:43 christos Exp $	*/
+
 /*
- * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
+ * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,14 +21,18 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: print-tcp.c,v 1.28 94/06/16 01:26:40 mccanne Exp (LBL)";
+#if 0
+static const char rcsid[] =
+    "@(#) Header: print-tcp.c,v 1.55 97/06/15 13:20:28 leres Exp  (LBL)";
+#else
+__RCSID("$NetBSD: print-tcp.c,v 1.1.1.2 1997/10/03 17:24:43 christos Exp $");
+#endif
 #endif
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/types.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -35,15 +41,19 @@ static char rcsid[] =
 #include <netinet/tcp.h>
 #include <netinet/tcpip.h>
 
-#include <stdio.h>
-#ifdef __STDC__
-#include <stdlib.h>
+#ifdef HAVE_MEMORY_H
+#include <memory.h>
 #endif
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "interface.h"
 #include "addrtoname.h"
+#include "extract.h"
 
+/* Compatibility */
 #ifndef TCPOPT_WSCALE
 #define	TCPOPT_WSCALE		3	/* window scale factor (rfc1072) */
 #endif
@@ -62,6 +72,15 @@ static char rcsid[] =
 #ifndef TCPOPT_TIMESTAMP
 #define TCPOPT_TIMESTAMP	8	/* timestamps (rfc1323) */
 #endif
+#ifndef TCPOPT_CC
+#define TCPOPT_CC		11	/* T/TCP CC options (rfc1644) */
+#endif
+#ifndef TCPOPT_CCNEW
+#define TCPOPT_CCNEW		12	/* T/TCP CC options (rfc1644) */
+#endif
+#ifndef TCPOPT_CCECHO
+#define TCPOPT_CCECHO		13	/* T/TCP CC options (rfc1644) */
+#endif
 
 struct tha {
 	struct in_addr src;
@@ -78,27 +97,29 @@ struct tcp_seq_hash {
 
 #define TSEQ_HASHSIZE 919
 
+/* These tcp optinos do not have the size octet */
+#define ZEROLENOPT(o) ((o) == TCPOPT_EOL || (o) == TCPOPT_NOP)
+
 static struct tcp_seq_hash tcp_seq_hash[TSEQ_HASHSIZE];
 
 
 void
-tcp_print(register const u_char *bp, register int length,
+tcp_print(register const u_char *bp, register u_int length,
 	  register const u_char *bp2)
 {
 	register const struct tcphdr *tp;
 	register const struct ip *ip;
 	register u_char flags;
 	register int hlen;
+	register char ch;
 	u_short sport, dport, win, urp;
-	u_int32 seq, ack;
+	u_int32_t seq, ack;
 
 	tp = (struct tcphdr *)bp;
 	ip = (struct ip *)bp2;
-	if ((const u_char *)(tp + 1)  > snapend) {
-		printf("[|tcp]");
-		return;
-	}
-	if (length < sizeof(struct tcphdr)) {
+	ch = '\0';
+	TCHECK(*tp);
+	if (length < sizeof(*tp)) {
 		(void)printf("truncated-tcp %d", length);
 		return;
 	}
@@ -154,15 +175,18 @@ tcp_print(register const u_char *bp, register int length,
 
 		for (th = &tcp_seq_hash[tha.port % TSEQ_HASHSIZE];
 		     th->nxt; th = th->nxt)
-			if (!bcmp((char *)&tha, (char *)&th->addr,
+			if (!memcmp((char *)&tha, (char *)&th->addr,
 				  sizeof(th->addr)))
 				break;
 
 		if (!th->nxt || flags & TH_SYN) {
 			/* didn't find it or new conversation */
-			if (!th->nxt)
+			if (th->nxt == NULL) {
 				th->nxt = (struct tcp_seq_hash *)
-					calloc(1, sizeof (*th));
+					calloc(1, sizeof(*th));
+				if (th->nxt == NULL)
+					error("tcp_print: calloc");
+			}
 			th->addr = tha;
 			if (rev)
 				th->ack = seq, th->seq = ack - 1;
@@ -176,6 +200,10 @@ tcp_print(register const u_char *bp, register int length,
 		}
 	}
 	hlen = tp->th_off * 4;
+	if (hlen > length) {
+		(void)printf(" [bad hdr length]");
+		return;
+	}
 	length -= hlen;
 	if (length > 0 || flags & (TH_SYN | TH_FIN | TH_RST))
 		(void)printf(" %u:%u(%d)", seq, seq + length, length);
@@ -189,88 +217,154 @@ tcp_print(register const u_char *bp, register int length,
 	/*
 	 * Handle any options.
 	 */
-	if ((hlen -= sizeof(struct tcphdr)) > 0) {
-		register const u_char *cp = (const u_char *)tp + sizeof(*tp);
-		int i;
-		char ch = '<';
+	if ((hlen -= sizeof(*tp)) > 0) {
+		register const u_char *cp;
+		register int i, opt, len, datalen;
 
+		cp = (const u_char *)tp + sizeof(*tp);
 		putchar(' ');
-		while (--hlen >= 0) {
+		ch = '<';
+		while (hlen > 0) {
 			putchar(ch);
-			switch (*cp++) {
-			case TCPOPT_MAXSEG:
-			{
-				(void)printf("mss %d", cp[1] << 8 | cp[2]);
-				if (*cp != 4)
-					(void)printf("[len %d]", *cp);
-				cp += 3;
-				hlen -= 3;
-				break;
+			TCHECK(*cp);
+			opt = *cp++;
+			if (ZEROLENOPT(opt))
+				len = 1;
+			else {
+				TCHECK(*cp);
+				len = *cp++;	/* total including type, len */
+				if (len < 2 || len > hlen)
+					goto bad;
+				--hlen;		/* account for length byte */
 			}
+			--hlen;			/* account for type byte */
+			datalen = 0;
+
+/* Bail if "l" bytes of data are not left or were not captured  */
+#define LENCHECK(l) { if ((l) > hlen) goto bad; TCHECK2(*cp, l); }
+
+			switch (opt) {
+
+			case TCPOPT_MAXSEG:
+				(void)printf("mss");
+				datalen = 2;
+				LENCHECK(datalen);
+				(void)printf(" %u", EXTRACT_16BITS(cp));
+
+				break;
+
 			case TCPOPT_EOL:
 				(void)printf("eol");
 				break;
+
 			case TCPOPT_NOP:
 				(void)printf("nop");
 				break;
+
 			case TCPOPT_WSCALE:
-				(void)printf("wscale %d", cp[1]);
-				if (*cp != 3)
-					(void)printf("[len %d]", *cp);
-				cp += 2;
-				hlen -= 2;
+				(void)printf("wscale");
+				datalen = 1;
+				LENCHECK(datalen);
+				(void)printf(" %u", *cp);
 				break;
+
 			case TCPOPT_SACKOK:
 				(void)printf("sackOK");
-				if (*cp != 2)
-					(void)printf("[len %d]", *cp);
-				cp += 1;
-				hlen -= 1;
 				break;
+
+			case TCPOPT_SACK:
+				(void)printf("sack");
+				datalen = len - 2;
+				for (i = 0; i < datalen; i += 4) {
+					LENCHECK(i + 4);
+					/* block-size@relative-origin */
+					(void)printf(" %u@%u",
+					    EXTRACT_16BITS(cp + i + 2),
+					    EXTRACT_16BITS(cp + i));
+				}
+				if (datalen % 4)
+					(void)printf("[len %d]", len);
+				break;
+
 			case TCPOPT_ECHO:
-			{
-				(void)printf("echo %u",
-					     cp[1] << 24 | cp[2] << 16 |
-					     cp[3] << 8 | cp[4]);
-				if (*cp != 6)
-					(void)printf("[len %d]", *cp);
-				cp += 5;
-				hlen -= 5;
+				(void)printf("echo");
+				datalen = 4;
+				LENCHECK(datalen);
+				(void)printf(" %u", EXTRACT_32BITS(cp));
 				break;
-			}
+
 			case TCPOPT_ECHOREPLY:
-			{
-				(void)printf("echoreply %u",
-					     cp[1] << 24 | cp[2] << 16 |
-					     cp[3] << 8 | cp[4]);
-				if (*cp != 6)
-					(void)printf("[len %d]", *cp);
-				cp += 5;
-				hlen -= 5;
+				(void)printf("echoreply");
+				datalen = 4;
+				LENCHECK(datalen);
+				(void)printf(" %u", EXTRACT_32BITS(cp));
 				break;
-			}
+
 			case TCPOPT_TIMESTAMP:
-			{
-				(void)printf("timestamp %lu %lu",
-					     cp[1] << 24 | cp[2] << 16 |
-					     cp[3] << 8 | cp[4],
-					     cp[5] << 24 | cp[6] << 16 |
-					     cp[7] << 8 | cp[8]);
-				if (*cp != 10)
-					(void)printf("[len %d]", *cp);
-				cp += 9;
-				hlen -= 9;
+				(void)printf("timestamp");
+				datalen = 8;
+				LENCHECK(4);
+				(void)printf(" %u", EXTRACT_32BITS(cp));
+				LENCHECK(datalen);
+				(void)printf(" %u", EXTRACT_32BITS(cp + 4));
 				break;
-  			}
+
+			case TCPOPT_CC:
+				(void)printf("cc");
+				datalen = 4;
+				LENCHECK(datalen);
+				(void)printf(" %u", EXTRACT_32BITS(cp));
+				break;
+
+			case TCPOPT_CCNEW:
+				(void)printf("ccnew");
+				datalen = 4;
+				LENCHECK(datalen);
+				(void)printf(" %u", EXTRACT_32BITS(cp));
+				break;
+
+			case TCPOPT_CCECHO:
+				(void)printf("ccecho");
+				datalen = 4;
+				LENCHECK(datalen);
+				(void)printf(" %u", EXTRACT_32BITS(cp));
+				break;
+
 			default:
-				(void)printf("opt-%d:", cp[-1]);
-				for (i = *cp++ - 2, hlen -= i + 1; i > 0; --i)
-					(void)printf("%02x", *cp++);
+				(void)printf("opt-%d:", opt);
+				datalen = len - 2;
+				for (i = 0; i < datalen; ++i) {
+					LENCHECK(i);
+					(void)printf("%02x", cp[i]);
+				}
 				break;
 			}
+
+			/* Account for data printed */
+			cp += datalen;
+			hlen -= datalen;
+
+			/* Check specification against observed length */
+			++datalen;			/* option octet */
+			if (!ZEROLENOPT(opt))
+				++datalen;		/* size octet */
+			if (datalen != len)
+				(void)printf("[len %d]", len);
 			ch = ',';
+			if (opt == TCPOPT_EOL)
+				break;
 		}
 		putchar('>');
 	}
+	return;
+bad:
+	fputs("[bad opt]", stdout);
+	if (ch != '\0')
+		putchar('>');
+	return;
+trunc:
+	fputs("[|tcp]", stdout);
+	if (ch != '\0')
+		putchar('>');
 }
 

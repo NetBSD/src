@@ -1,5 +1,7 @@
+/*	$NetBSD: print-tftp.c,v 1.1.1.2 1997/10/03 17:24:44 christos Exp $	*/
+
 /*
- * Copyright (c) 1990, 1991, 1993, 1994
+ * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,17 +23,24 @@
  * Format and print trivial file transfer protocol packets.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: print-tftp.c,v 1.20 94/06/14 20:18:49 leres Exp (LBL)";
+#if 0
+static const char rcsid[] =
+    "@(#) Header: print-tftp.c,v 1.30 97/06/13 12:57:12 leres Exp  (LBL)";
+#else
+__RCSID("$NetBSD: print-tftp.c,v 1.1.1.2 1997/10/03 17:24:44 christos Exp $");
+#endif
 #endif
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/types.h>
 
 #include <netinet/in.h>
 
+#ifdef SEGSIZE
+#undef SEGSIZE					/* SINIX sucks */
+#endif
 #include <arpa/tftp.h>
 
 #include <ctype.h>
@@ -42,7 +51,7 @@ static char rcsid[] =
 #include "addrtoname.h"
 
 /* op code to string mapping */
-static struct token op2str[] = {
+static struct tok op2str[] = {
 	{ RRQ,		"RRQ" },	/* read request */
 	{ WRQ,		"WRQ" },	/* write request */
 	{ DATA,		"DATA" },	/* data packet */
@@ -52,7 +61,7 @@ static struct token op2str[] = {
 };
 
 /* error code to string mapping */
-static struct token err2str[] = {
+static struct tok err2str[] = {
 	{ EUNDEF,	"EUNDEF" },	/* not defined */
 	{ ENOTFOUND,	"ENOTFOUND" },	/* file not found */
 	{ EACCESS,	"EACCESS" },	/* access violation */
@@ -68,24 +77,21 @@ static struct token err2str[] = {
  * Print trivial file transfer program requests
  */
 void
-tftp_print(register const u_char *bp, int length)
+tftp_print(register const u_char *bp, u_int length)
 {
 	register const struct tftphdr *tp;
 	register const char *cp;
-	register const u_char *ep, *p;
-	register int opcode;
-#define TCHECK(var, l) if ((u_char *)&(var) > ep - l) goto trunc
+	register const u_char *p;
+	register int opcode, i;
 	static char tstr[] = " [|tftp]";
 
 	tp = (const struct tftphdr *)bp;
-	/* 'ep' points to the end of avaible data. */
-	ep = snapend;
 
 	/* Print length */
 	printf(" %d", length);
 
 	/* Print tftp request type */
-	TCHECK(tp->th_opcode, sizeof(tp->th_opcode));
+	TCHECK(tp->th_opcode);
 	opcode = ntohs(tp->th_opcode);
 	cp = tok2str(op2str, "tftp-#%d", opcode);
 	printf(" %s", cp);
@@ -97,7 +103,6 @@ tftp_print(register const u_char *bp, int length)
 
 	case RRQ:
 	case WRQ:
-		putchar(' ');
 		/*
 		 * XXX Not all arpa/tftp.h's specify th_stuff as any
 		 * array; use address of th_block instead
@@ -107,30 +112,29 @@ tftp_print(register const u_char *bp, int length)
 #else
 		p = (u_char *)&tp->th_block;
 #endif
-		if (fn_print(p, ep)) {
-			fputs(&tstr[1], stdout);
-			return;
-		}
-		break;
-
-	case DATA:
-		TCHECK(tp->th_block, sizeof(tp->th_block));
-		printf(" block %d", ntohs(tp->th_block));
+		fputs(" \"", stdout);
+		i = fn_print(p, snapend);
+		putchar('"');
+		if (i)
+			goto trunc;
 		break;
 
 	case ACK:
+	case DATA:
+		TCHECK(tp->th_block);
+		printf(" block %d", ntohs(tp->th_block));
 		break;
 
 	case ERROR:
 		/* Print error code string */
-		TCHECK(tp->th_code, sizeof(tp->th_code));
-		printf(" %s ", tok2str(err2str, "tftp-err-#%d",
+		TCHECK(tp->th_code);
+		printf(" %s ", tok2str(err2str, "tftp-err-#%d \"",
 				       ntohs(tp->th_code)));
 		/* Print error message string */
-		if (fn_print((const u_char *)tp->th_data, ep)) {
-			fputs(&tstr[1], stdout);
-			return;
-		}
+		i = fn_print((const u_char *)tp->th_data, snapend);
+		putchar('"');
+		if (i)
+			goto trunc;
 		break;
 
 	default:
@@ -141,5 +145,5 @@ tftp_print(register const u_char *bp, int length)
 	return;
 trunc:
 	fputs(tstr, stdout);
-#undef TCHECK
+	return;
 }

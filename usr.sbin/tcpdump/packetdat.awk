@@ -1,3 +1,4 @@
+$NetBSD: packetdat.awk,v 1.1.1.2 1997/10/03 17:25:28 christos Exp $
 BEGIN	{
 	# we need to know (usual) packet size to convert byte numbers
 	# to packet numbers

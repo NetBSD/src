@@ -1,3 +1,4 @@
+$NetBSD: stime.awk,v 1.1.1.2 1997/10/03 17:25:29 christos Exp $
 $6 !~ /^ack/ && $5 !~ /[SFR]/ 	{
 	# given a tcpdump ftp trace, output one line for each send
 	# in the form

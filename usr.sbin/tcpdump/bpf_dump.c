@@ -1,5 +1,7 @@
+/*	$NetBSD: bpf_dump.c,v 1.1.1.2 1997/10/03 17:24:10 christos Exp $	*/
+
 /*
- * Copyright (c) 1992, 1993, 1994
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -18,9 +20,14 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: bpf_dump.c,v 1.6 94/06/06 14:31:21 leres Exp (LBL)";
+#if 0
+static const char rcsid[] =
+    "@(#) Header: bpf_dump.c,v 1.9 96/09/26 23:11:04 leres Exp  (LBL)";
+#else
+__RCSID("$NetBSD: bpf_dump.c,v 1.1.1.2 1997/10/03 17:24:10 christos Exp $");
+#endif
 #endif
 
 #include <sys/types.h>
@@ -44,7 +51,7 @@ bpf_dump(struct bpf_program *p, int option)
 	if (option > 2) {
 		printf("%d\n", n);
 		for (i = 0; i < n; ++insn, ++i) {
-			printf("%lu %lu %lu %lu\n", insn->code,
+			printf("%u %u %u %u\n", insn->code,
 			       insn->jt, insn->jf, insn->k);
 		}
 		return ;

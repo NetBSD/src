@@ -1,5 +1,7 @@
+/*	$NetBSD: extract.h,v 1.1.1.2 1997/10/03 17:25:03 christos Exp $	*/
+
 /*
- * Copyright (c) 1992, 1993, 1994
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -18,32 +20,40 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: extract.h,v 1.7 94/06/14 20:11:45 leres Exp (LBL)
+ * @(#) Header: extract.h,v 1.15 96/11/26 22:03:22 leres Exp  (LBL)
  */
 
-#ifdef TCPDUMP_ALIGN
-#if BYTEORDER == LITTLE_ENDIAN
-#define EXTRACT_SHORT(p)\
-	((u_short)\
-		((u_short)*((u_char *)p+1)<<8|\
-		 (u_short)*((u_char *)p+0)<<0))
-#define EXTRACT_LONG(p)\
-		((u_int32)*((u_char *)p+3)<<24|\
-		 (u_int32)*((u_char *)p+2)<<16|\
-		 (u_int32)*((u_char *)p+1)<<8|\
-		 (u_int32)*((u_char *)p+0)<<0)
+/* Network to host order macros */
+
+#ifdef LBL_ALIGN
+#define EXTRACT_16BITS(p) \
+	((u_short)*((u_char *)(p) + 0) << 8 | \
+	(u_short)*((u_char *)(p) + 1))
+#define EXTRACT_32BITS(p) \
+	((u_int32_t)*((u_char *)(p) + 0) << 24 | \
+	(u_int32_t)*((u_char *)(p) + 1) << 16 | \
+	(u_int32_t)*((u_char *)(p) + 2) << 8 | \
+	(u_int32_t)*((u_char *)(p) + 3))
 #else
-#define EXTRACT_SHORT(p)\
-	((u_short)\
-		((u_short)*((u_char *)p+0)<<8|\
-		 (u_short)*((u_char *)p+1)<<0))
-#define EXTRACT_LONG(p)\
-		((u_int32)*((u_char *)p+0)<<24|\
-		 (u_int32)*((u_char *)p+1)<<16|\
-		 (u_int32)*((u_char *)p+2)<<8|\
-		 (u_int32)*((u_char *)p+3)<<0)
+#define EXTRACT_16BITS(p) \
+	((u_short)ntohs(*(u_short *)(p)))
+#define EXTRACT_32BITS(p) \
+	((u_int32_t)ntohl(*(u_int32_t *)(p)))
 #endif
-#else
-#define EXTRACT_SHORT(p)	((u_short)ntohs(*(u_short *)p))
-#define EXTRACT_LONG(p)		(ntohl(*(u_int32 *)p))
-#endif
+
+#define EXTRACT_24BITS(p) \
+	((u_int32_t)*((u_char *)(p) + 0) << 16 | \
+	(u_int32_t)*((u_char *)(p) + 1) << 8 | \
+	(u_int32_t)*((u_char *)(p) + 2))
+
+/* Little endian protocol host order macros */
+
+#define EXTRACT_LE_8BITS(p) (*(p))
+#define EXTRACT_LE_16BITS(p) \
+	((u_short)*((u_char *)(p) + 1) << 8 | \
+	(u_short)*((u_char *)(p) + 0))
+#define EXTRACT_LE_32BITS(p) \
+	((u_int32_t)*((u_char *)(p) + 3) << 24 | \
+	(u_int32_t)*((u_char *)(p) + 2) << 16 | \
+	(u_int32_t)*((u_char *)(p) + 1) << 8 | \
+	(u_int32_t)*((u_char *)(p) + 0))

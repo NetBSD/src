@@ -1,5 +1,7 @@
+/*	$NetBSD: llc.h,v 1.1.1.2 1997/10/03 17:25:10 christos Exp $	*/
+
 /*
- * Copyright (c) 1993, 1994
+ * Copyright (c) 1993, 1994, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -18,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: llc.h,v 1.4 94/06/14 20:11:46 leres Exp (LBL)
+ * @(#) Header: llc.h,v 1.6 97/06/13 02:06:07 leres Exp  (LBL)
  */
 
 /*
@@ -79,8 +81,8 @@ struct llc {
 #define	LLC_RNR		0x0500
 #define	LLC_REJ		0x0900
 
-#define LLC_IS_NR(is)	(((is) >> 9) & 0x7f)
-#define LLC_I_NS(is)	(((is) >> 1) & 0x7f)
+#define LLC_IS_NR(is)	(((is) >> 1) & 0x7f)
+#define LLC_I_NS(is)	(((is) >> 9) & 0x7f)
 
 #ifndef LLCSAP_NULL
 #define	LLCSAP_NULL		0x00

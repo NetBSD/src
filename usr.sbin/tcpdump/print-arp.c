@@ -1,5 +1,7 @@
+/*	$NetBSD: print-arp.c,v 1.1.1.2 1997/10/03 17:24:12 christos Exp $	*/
+
 /*
- * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
+ * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,34 +21,56 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: print-arp.c,v 1.28 94/06/14 20:17:36 leres Exp (LBL)";
+#if 0
+static const char rcsid[] =
+    "@(#) Header: print-arp.c,v 1.43 97/06/15 13:20:27 leres Exp  (LBL)";
+#else
+__RCSID("$NetBSD: print-arp.c,v 1.1.1.2 1997/10/03 17:24:12 christos Exp $");
+#endif
 #endif
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 
+#if __STDC__
+struct mbuf;
+struct rtentry;
+#endif
 #include <net/if.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
+#ifdef HAVE_MEMORY_H
+#include <memory.h>
+#endif
 #include <stdio.h>
+#include <string.h>
 
 #include "interface.h"
 #include "addrtoname.h"
+#include "ethertype.h"
+#include "extract.h"			/* must come after interface.h */
+
+/* Compatibility */
+#ifndef REVARP_REQUEST
+#define REVARP_REQUEST		3
+#endif
+#ifndef REVARP_REPLY
+#define REVARP_REPLY		4
+#endif
 
 static u_char ezero[6];
 
 void
-arp_print(register const u_char *bp, int length, int caplen)
+arp_print(register const u_char *bp, u_int length, u_int caplen)
 {
 	register const struct ether_arp *ap;
 	register const struct ether_header *eh;
-	const u_char *p;
-	int pro, hrd, op;
+	register u_short pro, hrd, op;
 
 	ap = (struct ether_arp *)bp;
 	if ((u_char *)(ap + 1) > snapend) {
@@ -58,15 +82,10 @@ arp_print(register const u_char *bp, int length, int caplen)
 		default_print((u_char *)ap, length);
 		return;
 	}
-	/*
-	 * Don't assume alignment.
-	 */
-	p = (u_char*)&ap->arp_pro;
-	pro = (p[0] << 8) | p[1];
-	p = (u_char*)&ap->arp_hrd;
-	hrd = (p[0] << 8) | p[1];
-	p = (u_char*)&ap->arp_op;
-	op = (p[0] << 8) | p[1];
+
+	pro = EXTRACT_16BITS(&ap->arp_pro);
+	hrd = EXTRACT_16BITS(&ap->arp_hrd);
+	op = EXTRACT_16BITS(&ap->arp_op);
 
 	if ((pro != ETHERTYPE_IP && pro != ETHERTYPE_TRAIL)
 	    || ap->arp_hln != sizeof(SHA(ap))
@@ -83,19 +102,19 @@ arp_print(register const u_char *bp, int length, int caplen)
 
 	case ARPOP_REQUEST:
 		(void)printf("arp who-has %s", ipaddr_string(TPA(ap)));
-		if (bcmp((char *)ezero, (char *)THA(ap), 6) != 0)
+		if (memcmp((char *)ezero, (char *)THA(ap), 6) != 0)
 			(void)printf(" (%s)", etheraddr_string(THA(ap)));
 		(void)printf(" tell %s", ipaddr_string(SPA(ap)));
-		if (bcmp((char *)ESRC(eh), (char *)SHA(ap), 6) != 0)
+		if (memcmp((char *)ESRC(eh), (char *)SHA(ap), 6) != 0)
 			(void)printf(" (%s)", etheraddr_string(SHA(ap)));
 		break;
 
 	case ARPOP_REPLY:
 		(void)printf("arp reply %s", ipaddr_string(SPA(ap)));
-		if (bcmp((char *)ESRC(eh), (char *)SHA(ap), 6) != 0)
+		if (memcmp((char *)ESRC(eh), (char *)SHA(ap), 6) != 0)
 			(void)printf(" (%s)", etheraddr_string(SHA(ap)));
 		(void)printf(" is-at %s", etheraddr_string(SHA(ap)));
-		if (bcmp((char *)EDST(eh), (char *)THA(ap), 6) != 0)
+		if (memcmp((char *)EDST(eh), (char *)THA(ap), 6) != 0)
 			(void)printf(" (%s)", etheraddr_string(THA(ap)));
 		break;
 
@@ -117,5 +136,5 @@ arp_print(register const u_char *bp, int length, int caplen)
 		return;
 	}
 	if (hrd != ARPHRD_ETHER)
-		printf(" hardware #%d", ap->arp_hrd);
+		printf(" hardware #%d", hrd);
 }
