@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.417 2002/03/19 22:03:06 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.418 2002/03/27 13:12:11 abs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.412 2002/03/19 22:02:36 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.413 2002/03/27 13:11:37 abs Exp 
  */
 
 /*
@@ -1039,6 +1039,7 @@
 
 /* Conexant Systems products  */
 #define	PCI_PRODUCT_CONEXANT_SOFTK56	0x2443		/* SoftK56 PCI Software Modem */
+#define	PCI_PRODUCT_CONEXANT_56KFAXMODEM	0x1085		/* HW 56K Fax Modem */
 
 /* Contaq Microsystems products */
 #define	PCI_PRODUCT_CONTAQ_82C599	0x0600		/* 82C599 PCI-VLB Bridge */
