@@ -1,11 +1,18 @@
-/*	$NetBSD: getsecs.c,v 1.5 1998/01/05 07:02:49 perry Exp $	*/
+/*	$NetBSD: getsecs.c,v 1.6 2002/11/09 06:34:38 thorpej Exp $	*/
 
 #include <sys/param.h>
+
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+  
+#include <lib/libsa/stand.h> 
+#include <lib/libsa/net.h>
+
 #include "include/prom.h"
 #include "include/rpb.h"
 
 int
-getsecs()
+getsecs(void)
 {
 	static long tnsec;
 	static long lastpcc, wrapsecs;
