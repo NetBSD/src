@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.293 2001/01/22 14:15:24 jdolecek Exp $
+$NetBSD: pcidevs,v 1.294 2001/01/26 08:02:46 rh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -938,6 +938,7 @@ product COMPAQ IntNF3P		0xae35	Integrated NetFlex 3/P
 product COMPAQ DPNet100TX	0xae40	Dual Port Netelligent 10/100 TX
 product COMPAQ IntPL100TX	0xae43	ProLiant Integrated Netelligent 10/100 TX
 product COMPAQ DP4000		0xb011	Deskpro 4000 5233MMX
+product COMPAQ M700		0xb112	Armada M700
 product COMPAQ NF3P_BNC		0xf150	NetFlex 3/P w/ BNC
 product COMPAQ NF3P		0xf130	NetFlex 3/P
 
