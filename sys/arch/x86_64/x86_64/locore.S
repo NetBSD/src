@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.3 2002/05/26 12:07:40 fvdl Exp $	*/
+/*	$NetBSD: locore.S,v 1.4 2002/05/28 23:11:39 fvdl Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -206,6 +206,9 @@ farjmp64:
 	
 	.space 512
 tmpstk:
+
+	.globl _C_LABEL(cpu_private)
+	.comm _C_LABEL(cpu_private),NBPG,NBPG
 
 /*
  * Some hackage to deal with 64bit symbols in 32 bit mode.
@@ -652,14 +655,10 @@ longmode_hi:
 	wrmsr
 	movq	$MSR_GSBASE,%rcx
 	wrmsr
+	movq	$MSR_KERNELGSBASE,%rcx
+	wrmsr
 
 	call 	_C_LABEL(main)
-
-NENTRY(proc_trampoline)
-	movq	%r13,%rdi
-	call	*%r12
-	INTRFASTEXIT
-	/* NOTREACHED */
 
 /*****************************************************************************/
 

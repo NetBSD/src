@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.2 2002/05/26 12:19:38 fvdl Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.3 2002/05/28 23:11:39 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -303,9 +303,9 @@ x86_64_iopl(p, args, retval)
 		return error;
 
 	if (ua.iopl)
-		tf->tf_eflags |= PSL_IOPL;
+		tf->tf_rflags |= PSL_IOPL;
 	else
-		tf->tf_eflags &= ~PSL_IOPL;
+		tf->tf_rflags &= ~PSL_IOPL;
 
 	return 0;
 }

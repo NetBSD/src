@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 2001/06/19 00:20:32 fvdl Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 2002/05/28 23:11:39 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -217,7 +217,7 @@ gettick_broken_latch()
 
 	/* Don't want someone screwing with the counter
 	   while we're here. */
-	ef = read_eflags();
+	ef = read_rflags();
 	disable_intr();
 
 	v1 = inb(TIMER_CNTR0);
@@ -227,7 +227,7 @@ gettick_broken_latch()
 	v3 = inb(TIMER_CNTR0);
 	v3 |= inb(TIMER_CNTR0) << 8;
 
-	write_eflags(ef);
+	write_rflags(ef);
 
 #ifdef CLOCK_PARANOIA
 	if (clock_debug) {
@@ -429,13 +429,13 @@ gettick()
 		return (gettick_broken_latch());
 
 	/* Don't want someone screwing with the counter while we're here. */
-	ef = read_eflags();
+	ef = read_rflags();
 	disable_intr();
 	/* Select counter 0 and latch it. */
 	outb(TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
 	lo = inb(TIMER_CNTR0);
 	hi = inb(TIMER_CNTR0);
-	write_eflags(ef);
+	write_rflags(ef);
 	return ((hi << 8) | lo);
 }
 

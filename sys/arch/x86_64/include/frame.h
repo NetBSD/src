@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.1 2001/06/19 00:20:10 fvdl Exp $	*/
+/*	$NetBSD: frame.h,v 1.2 2002/05/28 23:11:38 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ struct trapframe {
 	int64_t	tf_err;
 	int64_t	tf_rip;
 	int64_t	tf_cs;
-	int64_t	tf_eflags;
+	int64_t	tf_rflags;
 	/* These are pushed unconditionally on the x86-64 */
 	int64_t	tf_rsp;
 	int64_t	tf_ss;
@@ -143,7 +143,7 @@ struct intrframe {
 	/* below portion defined in hardware */
 	int64_t	if_rip;
 	int64_t	if_cs;
-	int64_t	if_eflags;
+	int64_t	if_rflags;
 	/* These are pushed unconditionally on the x86-64 */
 	int64_t	if_rsp;
 	int64_t	if_ss;
