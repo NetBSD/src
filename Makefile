@@ -1,18 +1,18 @@
-#	$NetBSD: Makefile,v 1.51 1998/04/15 13:44:55 tv Exp $
+#	$NetBSD: Makefile,v 1.52 1998/05/10 10:37:59 mycroft Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
 # NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
 
-SUBDIR+= lib include bin libexec sbin usr.bin usr.sbin share
+SUBDIR+= lib include bin libexec sbin usr.bin usr.sbin share sys
 
 .if exists(games)
 SUBDIR+= games
 .endif
 
 SUBDIR+= gnu
-
-SUBDIR+= sys
+# This is needed for libstdc++ and gen-params.
+includes-gnu: includes-include includes-sys
 
 .if exists(domestic) && !defined(EXPORTABLE_SYSTEM)
 SUBDIR+= domestic
