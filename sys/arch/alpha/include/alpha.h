@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.6 1999/09/17 19:59:37 thorpej Exp $ */
+/* $NetBSD: alpha.h,v 1.7 2000/02/29 22:19:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -75,18 +75,6 @@ struct proc;
 struct reg;
 struct rpb;
 struct trapframe;
-
-/* Per-CPU info for handling machine checks, an array of which		*/
-/* is allocated early in startup					*/
-struct mchkinfo {
-	volatile u_int		mc_expected;	/* machine check expected */
-	volatile u_int		mc_received;	/* machine check received */
-	/*
-	 * We don't really need more info at this time.
-	 */
-};
-
-struct mchkinfo *cpu_mchkinfo __P((void));
 
 void	XentArith __P((u_int64_t, u_int64_t, u_int64_t));	/* MAGIC */
 void	XentIF __P((u_int64_t, u_int64_t, u_int64_t));		/* MAGIC */
