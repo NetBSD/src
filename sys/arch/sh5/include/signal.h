@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.4 2003/01/20 20:07:53 scw Exp $	*/
+/*	$NetBSD: signal.h,v 1.5 2003/01/21 11:28:01 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -73,5 +73,36 @@ struct sigcontext {
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
 
+/*
+ * The following macros are used to convert from a ucontext to sigcontext,
+ * and vice-versa.  This is for building a sigcontext to deliver to old-style
+ * signal handlers, and converting back (in the event the handler modifies
+ * the context).
+ */
+#define	_MCONTEXT_TO_SIGCONTEXT(uc, sc)					\
+do {									\
+	memcpy(&(sc)->sc_regs, &(uc)->uc_mcontext.__gregs[0],		\
+	    sizeof(struct reg));					\
+	if ((uc)->uc_flags & _UC_FPU) {					\
+		(sc)->sc_fpstate = 3;					\
+		memcpy(&(sc)->sc_fpregs, &(uc)->uc_mcontext.__fpregs,	\
+		    sizeof(struct fpreg));				\
+	} else {							\
+		(sc)->sc_fpstate = 0;					\
+		(sc)->sc_fpregs.r_fpscr = (uc)->uc_mcontext.__fpregs.__fp_scr;\
+	}								\
+} while (/*CONSTCOND*/0)
+
+#define	_SIGCONTEXT_TO_MCONTEXT(sc, uc)					\
+do {									\
+	memcpy(&(uc)->uc_mcontext.__gregs[0], &(sc)->sc_regs,		\
+	    sizeof(struct reg));					\
+	if ((sc)->sc_fpstate) {						\
+		memcpy(&(uc)->uc_mcontext.__fpregs, &(sc)->sc_fpregs,	\
+		    sizeof(struct fpreg));				\
+		(uc)->uc_flags |= _UC_FPU;				\
+	} else								\
+		(uc)->uc_mcontext.__fpregs.__fp_scr = (sc)->sc_fpregs.r_fpscr;\
+} while (/*CONSTCOND*/0)
 #endif /* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 #endif /* !_SH5_SIGNAL_H_*/
