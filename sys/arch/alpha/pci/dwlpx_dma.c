@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_dma.c,v 1.11 1998/08/14 16:50:04 thorpej Exp $ */
+/* $NetBSD: dwlpx_dma.c,v 1.12 1998/09/01 21:28:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.11 1998/08/14 16:50:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.12 1998/09/01 21:28:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,7 +268,6 @@ dwlpx_dma_get_tag(t, bustype)
 	alpha_bus_t bustype;
 {
 	struct dwlpx_config *ccp = t->_cookie;
-	extern int physmem;
 
 	switch (bustype) {
 	case ALPHA_BUS_PCI:
