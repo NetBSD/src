@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.81 2001/02/18 10:44:22 ragge Exp $
+#       $NetBSD: files.vax,v 1.82 2001/03/27 18:01:59 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -60,7 +60,7 @@ file	arch/vax/vax/ctu.c		vax750 | mem_cmi
 device	vsbus { csr }
 attach	vsbus at mainbus
 file	arch/vax/vsa/vsbus.c		vsbus
-file	arch/vax/vsa/vsbus_dma.c	vsbus & (vax46 | vax48 | vax49)
+file	arch/vax/vsa/vsbus_dma.c	vsbus & (vax46 | vax48 | vax49 | vax53)
 
 device	ibus { }
 attach	ibus at mainbus
