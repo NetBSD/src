@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype.h,v 1.18 2000/06/13 01:21:52 simonb Exp $	*/
+/*	$NetBSD: ctype.h,v 1.19 2001/01/21 10:44:15 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -115,6 +115,10 @@ __END_DECLS
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE)
 #if notyet
+/*
+ * isblank() is implemented as C function, due to insufficient bitwidth in
+ * _ctype_.  Note that _B does not mean isblank - it means isprint && !isgraph.
+ */
 #define isblank(c)	((int)((_ctype_ + 1)[(int)(c)] & _B))
 #endif
 #endif
