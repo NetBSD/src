@@ -1,0 +1,3 @@
+# $NetBSD: obsolete.shark,v 1.1 2003/05/15 19:11:28 wiz Exp $
+./dev/mouse-qms0
+./dev/qms0
