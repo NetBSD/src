@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.5 1996/03/20 01:30:49 jonathan Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.6 1997/05/25 09:56:45 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass   
@@ -102,9 +102,9 @@ int
 process_sstep(p, sstep)
 	struct proc *p;
 {
-	/* XXX correct semantics: sstep once or forevermore? */
+	/* XXX what are the correct semantics: sstep once, or forevermore? */
 	if(sstep)
-		cpu_singlestep(p);
+		mips_singlestep(p);
 	return (0);
 }
 

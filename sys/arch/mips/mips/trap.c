@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53 1997/05/24 08:49:22 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.54 1997/05/25 09:56:48 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1321,7 +1321,7 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
  * resuming execution, and then restoring the old instruction.
  */
 int
-cpu_singlestep(p)
+mips_singlestep(p)
 	register struct proc *p;
 {
 	register unsigned va;
