@@ -30,7 +30,7 @@ LIB=		g++
 GXXFLAGS+=	-I$(.CURDIR)/../g++-include -DHAVE_VPRINTF -DHAVE_VSCANF \
 		-DHAVE_SETVBUF -DHAVE_SETLINEBUF -DHAVE_GETPAGESIZE
 SRCS=		AllocRing.cc Obstack.cc File.cc ostream.cc istream.cc \
-		streambuf.cc filebuf.cc Filebuf.cc open.o PlotFile.cc \
+		streambuf.cc filebuf.cc Filebuf.cc open.cc PlotFile.cc \
 		SFile.cc builtin.cc regex.cc Regex.cc String.cc \
 		Integer.cc Rational.cc Complex.cc Random.cc BitSet.cc \
 		BitString.cc LogNorm.cc SmplHist.cc SmplStat.cc \
