@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.431 2003/10/10 06:24:39 grog Exp $
+# $NetBSD: mi,v 1.432 2003/10/13 07:29:28 dyoung Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -642,6 +642,7 @@
 ./usr/include/krb5		base-c-usr
 ./usr/include/machine		base-c-usr
 ./usr/include/net		base-c-usr
+./usr/include/net80211		base-c-usr
 ./usr/include/netatalk		base-c-usr
 ./usr/include/netccitt		base-c-usr
 ./usr/include/netinet		base-c-usr
