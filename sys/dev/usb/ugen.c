@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.45 2000/12/13 04:05:14 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.45.4.1 2001/09/08 06:09:11 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -812,7 +812,7 @@ ugenintr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		DPRINTFN(5, ("ugen_intr: waking %p\n", sce));
 		wakeup(sce);
 	}
-	selwakeup(&sce->rsel);
+	selnotify(&sce->rsel, 0);
 }
 
 Static void
@@ -860,7 +860,7 @@ ugen_isoc_rintr(usbd_xfer_handle xfer, usbd_private_handle addr,
 		DPRINTFN(5, ("ugen_isoc_rintr: waking %p\n", sce));
 		wakeup(sce);
 	}
-	selwakeup(&sce->rsel);
+	selnotify(&sce->rsel, 0);
 }
 
 Static usbd_status
@@ -1306,6 +1306,102 @@ ugenpoll(dev_t dev, int events, struct proc *p)
 	}
 	splx(s);
 	return (revents);
+}
+
+static void
+filt_ugenrdetach(struct knote *kn)
+{
+	struct ugen_endpoint *sce = (void *) kn->kn_hook;
+	int s;
+
+	s = splusb();
+	SLIST_REMOVE(&sce->rsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_ugenread_intr(struct knote *kn, long hint)
+{
+	struct ugen_endpoint *sce = (void *) kn->kn_hook;
+
+	kn->kn_data = sce->q.c_cc;
+	return (kn->kn_data > 0);
+}
+
+static int
+filt_ugenread_isoc(struct knote *kn, long hint)
+{
+	struct ugen_endpoint *sce = (void *) kn->kn_hook;
+
+	if (sce->cur == sce->fill)
+		return (0);
+
+	if (sce->cur < sce->fill)
+		kn->kn_data = sce->fill - sce->cur;
+	else
+		kn->kn_data = (sce->limit - sce->cur) +
+		    (sce->fill - sce->ibuf);
+
+	return (1);
+}
+
+static const struct filterops ugenread_intr_filtops =
+	{ 1, NULL, filt_ugenrdetach, filt_ugenread_intr };
+
+static const struct filterops ugenread_isoc_filtops =
+	{ 1, NULL, filt_ugenrdetach, filt_ugenread_isoc };
+
+int
+ugenkqfilter(dev_t dev, struct knote *kn)
+{
+	struct ugen_softc *sc;
+	struct ugen_endpoint *sce;
+	struct klist *klist;
+	int s;
+
+	USB_GET_SC(ugen, UGENUNIT(dev), sc);
+
+	if (sc->sc_dying)
+		return (1);
+
+	/* XXX always IN */
+	sce = &sc->sc_endpoints[UGENENDPOINT(dev)][IN];
+	if (sce == NULL)
+		return (1);
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sce->rsel.si_klist;
+		switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
+		case UE_INTERRUPT:
+			kn->kn_fop = &ugenread_intr_filtops;
+			break;
+		case UE_ISOCHRONOUS:
+			kn->kn_fop = &ugenread_isoc_filtops;
+			break;
+		case UE_BULK:
+		default:
+			/* 
+			 * We have no easy way of determining if a read will
+			 * yield any data or a write will happen.
+			 * So, emulate "seltrue".
+			 */
+			return (1);
+			break;
+		}
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (void *) sce;
+
+	s = splusb();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
 }
 
 #if defined(__FreeBSD__)
