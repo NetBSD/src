@@ -1,4 +1,4 @@
-/*	$NetBSD: parms.c,v 1.19 2003/04/21 08:54:42 itojun Exp $	*/
+/*	$NetBSD: parms.c,v 1.20 2003/07/03 03:04:04 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #include <sys/stat.h>
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: parms.c,v 1.19 2003/04/21 08:54:42 itojun Exp $");
+__RCSID("$NetBSD: parms.c,v 1.20 2003/07/03 03:04:04 itojun Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -452,7 +452,7 @@ parse_ts(time_t *tp,
 		snprintf(buf, bufsize, "bad timestamp %.25s", val0);
 		return buf;
 	}
-	strcat(buf,"\n");
+	strlcat(buf, "\n", bufsize);
 	memset(&tm, 0, sizeof(tm));
 #if defined(sgi) || defined(__NetBSD__)
 	ptr = strptime(buf, "%y/%m/%d@%H:%M\n", &tm);
