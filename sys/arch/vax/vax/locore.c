@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.44 2000/03/28 23:57:30 simonb Exp $	*/
+/*	$NetBSD: locore.c,v 1.45 2000/05/08 18:48:30 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -63,8 +63,8 @@
 #include "opt_vax660.h"
 #include "opt_vax670.h"
 
-void	start __P((void));
-void	main __P((void));
+void	start(void);
+void	main(void);
 
 extern	paddr_t avail_end;
 paddr_t	esym;
@@ -82,11 +82,13 @@ extern struct cpu_dep ka43_calls;
 extern struct cpu_dep ka46_calls;
 extern struct cpu_dep ka48_calls;
 extern struct cpu_dep ka49_calls;
+extern struct cpu_dep ka53_calls;
 extern struct cpu_dep ka410_calls;
 extern struct cpu_dep ka630_calls;
 extern struct cpu_dep ka650_calls;
 extern struct cpu_dep ka660_calls;
 extern struct cpu_dep ka670_calls;
+extern struct cpu_dep ka680_calls;
 
 /*
  * Start is called from boot; the first routine that is called
@@ -161,13 +163,19 @@ start()
 #if VAX48
 	case VAX_BTYP_48:
 		dep_call = &ka48_calls;
-		strcat(cpu_model, "4000 VLC");
+		strcat(cpu_model, "VAXstation 4000 VLC");
 		break;
 #endif
 #if VAX49
 	case VAX_BTYP_49:
 		dep_call = &ka49_calls;
 		strcat(cpu_model, "4000/90");
+		break;
+#endif
+#if VAX53
+	case VAX_BTYP_53:
+		dep_call = &ka53_calls;
+		strcpy(cpu_model, "VAX 4000/105A");
 		break;
 #endif
 #if VAX630
@@ -209,6 +217,12 @@ start()
 	case VAX_BTYP_670:
 		dep_call = &ka670_calls;
 		strcpy(cpu_model,"VAX 4000/300");
+		break;
+#endif
+#if VAX680
+	case VAX_BTYP_680:
+		dep_call = &ka680_calls;
+		strcpy(cpu_model,"VAX 4000/500");
 		break;
 #endif
 #if VAX8200
