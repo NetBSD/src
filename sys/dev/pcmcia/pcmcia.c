@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.67 2004/08/12 17:07:52 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.68 2004/08/12 17:26:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.67 2004/08/12 17:07:52 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.68 2004/08/12 17:26:51 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -520,7 +520,7 @@ pcmcia_function_enable(pf)
 		}
 	}
 
-	if (pcmcia_mfc(sc)) {
+	if (pcmcia_mfc(sc) || 1) {
 		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE0,
 				 (pf->pf_mfc_iobase >>  0) & 0xff);
 		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE1,
@@ -658,12 +658,13 @@ pcmcia_io_map(pf, width, pcihp, windowp)
 	struct pcmcia_io_handle *pcihp;
 	int *windowp;
 {
+	struct pcmcia_softc *sc = pf->sc;
 	int error;
 
 	if (pf->pf_flags & PFF_ENABLED)
 		printf("pcmcia_io_map: function is enabled!\n");
 
-	error = pcmcia_chip_io_map(pf->sc->pct, pf->sc->pch,
+	error = pcmcia_chip_io_map(sc->pct, sc->pch,
 	    width, 0, pcihp->size, pcihp, windowp);
 	if (error)
 		return (error);
@@ -674,7 +675,7 @@ pcmcia_io_map(pf, width, pcihp, windowp)
 	 * don't overlap, and that the ccr's are set correctly
 	 */
 
-	if (pcmcia_mfc(pf->sc)) {
+	if (pcmcia_mfc(sc) || 1) {
 		bus_addr_t iobase = pcihp->addr;
 		bus_addr_t iomax = pcihp->addr + pcihp->size - 1;
 
@@ -701,20 +702,12 @@ pcmcia_io_unmap(pf, window)
 	struct pcmcia_function *pf;
 	int window;
 {
+	struct pcmcia_softc *sc = pf->sc;
 
 	if (pf->pf_flags & PFF_ENABLED)
 		printf("pcmcia_io_unmap: function is enabled!\n");
 
-	if (pcmcia_mfc(pf->sc)) {
-		/*
-		 * Don't bother trying to unmap windows in the CCR here,
-		 * because we generally get called when a card has been
-		 * ejected, and the CCR isn't there any more.
-		 */
-		;
-	}
-
-	pcmcia_chip_io_unmap(pf->sc->pct, pf->sc->pch, window);
+	pcmcia_chip_io_unmap(sc->pct, sc->pch, window);
 }
 
 void *
