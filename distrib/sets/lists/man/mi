@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.287 2000/11/26 17:44:10 ad Exp $
+# $NetBSD: mi,v 1.288 2000/11/28 05:16:06 thorpej Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -488,6 +488,7 @@
 ./usr/share/man/cat4/ate.0
 ./usr/share/man/cat4/audio.0
 ./usr/share/man/cat4/aue.0
+./usr/share/man/cat4/auich.0
 ./usr/share/man/cat4/auvia.0
 ./usr/share/man/cat4/awi.0
 ./usr/share/man/cat4/bba.0
@@ -1912,6 +1913,7 @@
 ./usr/share/man/man4/ate.4
 ./usr/share/man/man4/audio.4
 ./usr/share/man/man4/aue.4
+./usr/share/man/man4/auich.4
 ./usr/share/man/man4/auvia.4
 ./usr/share/man/man4/awi.4
 ./usr/share/man/man4/bba.4
