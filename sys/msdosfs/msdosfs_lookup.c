@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_lookup.c,v 1.3 1993/10/18 22:42:14 cgd Exp $
+ *	$Id: msdosfs_lookup.c,v 1.4 1993/11/20 09:40:48 cgd Exp $
  */
 
 #include "param.h"
@@ -304,10 +304,8 @@ notfound:;
 	 */
 	if (ndp->ni_makeentry && flag != CREATE)
 		cache_enter(ndp);
-#ifdef __bsdi__
 	if (flag == CREATE || flag == RENAME)
 		return EJUSTRETURN;
-#endif
 	return ENOENT;
 
 found:	;
