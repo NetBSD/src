@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.1.1.1 1997/01/14 20:57:08 gwr Exp $	*/
+/*	$NetBSD: fpu.c,v 1.2 1997/01/23 22:44:46 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -52,9 +52,9 @@
 #include <machine/enable.h>
 #include <machine/frame.h>
 #include <machine/mon.h>
+#include <machine/machdep.h>
 
-#include "interreg.h"
-#include "machdep.h"
+#include <sun3/sun3/interreg.h>
 
 static int fpu_probe __P((void));
 

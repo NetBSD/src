@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.1.1.1 1997/01/14 20:57:07 gwr Exp $	*/
+/*	$NetBSD: dvma.c,v 1.2 1997/01/23 22:44:45 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -98,8 +98,8 @@
 #include <machine/reg.h>
 #include <machine/pmap.h>
 #include <machine/dvma.h>
+#include <machine/machdep.h>
 
-#include "machdep.h"
 #include "iommu.h"
 
 /*
