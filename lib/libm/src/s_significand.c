@@ -1,4 +1,4 @@
-/* @(#)s_significand.c 5.1 93/09/24 */
+/* @(#)s_signif.c 5.1 93/09/24 */
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_significand.c,v 1.3 1994/02/18 02:26:57 jtc Exp $";
+static char rcsid[] = "$Id: s_significand.c,v 1.4 1994/08/10 20:33:06 jtc Exp $";
 #endif
 
 /*
@@ -20,7 +20,8 @@ static char rcsid[] = "$Id: s_significand.c,v 1.3 1994/02/18 02:26:57 jtc Exp $"
  * for exercising the fraction-part(F) IEEE 754-1985 test vector.
  */
 
-#include <math.h>
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 	double significand(double x)

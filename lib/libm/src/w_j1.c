@@ -11,14 +11,15 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: w_j1.c,v 1.3 1994/02/18 02:27:42 jtc Exp $";
+static char rcsid[] = "$Id: w_j1.c,v 1.4 1994/08/10 20:34:35 jtc Exp $";
 #endif
 
 /* 
  * wrapper of j1,y1 
  */
 
-#include <math.h>
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 	double j1(double x)		/* wrapper j1 */

@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_asin.c,v 1.4 1994/03/03 17:04:06 jtc Exp $";
+static char rcsid[] = "$Id: e_asin.c,v 1.5 1994/08/10 20:30:33 jtc Exp $";
 #endif
 
 /* __ieee754_asin(x)
@@ -45,14 +45,8 @@ static char rcsid[] = "$Id: e_asin.c,v 1.4 1994/03/03 17:04:06 jtc Exp $";
  */
 
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#else
-#define n0	0
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 static const double 
@@ -85,11 +79,12 @@ qS4 =  7.70381505559019352791e-02; /* 0x3FB3B8C5, 0xB12E9282 */
 {
 	double t,w,p,q,c,r,s;
 	int hx,ix;
-
-	hx = *(n0+(int*)&x);
+	GET_HIGH_WORD(hx,x);
 	ix = hx&0x7fffffff;
 	if(ix>= 0x3ff00000) {		/* |x|>= 1 */
-	    if(((ix-0x3ff00000)|*(1-n0+(int*)&x))==0)
+	    unsigned int lx;
+	    GET_LOW_WORD(lx,x);
+	    if(((ix-0x3ff00000)|lx)==0)
 		    /* asin(1)=+-pi/2 with inexact */
 		return x*pio2_hi+x*pio2_lo;	
 	    return (x-x)/(x-x);		/* asin(|x|>1) is NaN */   
@@ -114,7 +109,7 @@ qS4 =  7.70381505559019352791e-02; /* 0x3FB3B8C5, 0xB12E9282 */
 	    t = pio2_hi-(2.0*(s+s*w)-pio2_lo);
 	} else {
 	    w  = s;
-	    *(1-n0+(int*)&w) = 0;
+	    SET_LOW_WORD(w,0);
 	    c  = (t-w*w)/(s+w);
 	    r  = p/q;
 	    p  = 2.0*s*r-(pio2_lo-2.0*c);

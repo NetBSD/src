@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_logb.c,v 1.4 1994/03/03 17:04:41 jtc Exp $";
+static char rcsid[] = "$Id: s_logb.c,v 1.5 1994/08/10 20:32:47 jtc Exp $";
 #endif
 
 /*
@@ -20,14 +20,8 @@ static char rcsid[] = "$Id: s_logb.c,v 1.4 1994/03/03 17:04:41 jtc Exp $";
  * Use ilogb instead.
  */
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#else
-#define n0	0
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 	double logb(double x)
@@ -37,8 +31,8 @@ static char rcsid[] = "$Id: s_logb.c,v 1.4 1994/03/03 17:04:41 jtc Exp $";
 #endif
 {
 	int lx,ix;
-	ix = (*(n0+(int*)&x))&0x7fffffff;	/* high |x| */
-	lx = *(1-n0+(int*)&x);			/* low x */
+	EXTRACT_WORDS(ix,lx,x);
+	ix &= 0x7fffffff;			/* high |x| */
 	if((ix|lx)==0) return -1.0/fabs(x);
 	if(ix>=0x7ff00000) return x*x;
 	if((ix>>=20)==0) 			/* IEEE 754 logb */

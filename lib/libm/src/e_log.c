@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_log.c,v 1.4 1994/03/03 17:04:18 jtc Exp $";
+static char rcsid[] = "$Id: e_log.c,v 1.5 1994/08/10 20:31:10 jtc Exp $";
 #endif
 
 /* __ieee754_log(x)
@@ -65,14 +65,8 @@ static char rcsid[] = "$Id: e_log.c,v 1.4 1994/03/03 17:04:18 jtc Exp $";
  * to produce the hexadecimal values shown.
  */
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#else
-#define n0	0
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 static const double
@@ -90,7 +84,11 @@ Lg5 = 1.818357216161805012e-01,  /* 3FC74664 96CB03DE */
 Lg6 = 1.531383769920937332e-01,  /* 3FC39A09 D078C69F */
 Lg7 = 1.479819860511658591e-01;  /* 3FC2F112 DF3E5244 */
 
+#ifdef __STDC__
+static const double zero   =  0.0;
+#else
 static double zero   =  0.0;
+#endif
 
 #ifdef __STDC__
 	double __ieee754_log(double x)
@@ -103,8 +101,7 @@ static double zero   =  0.0;
 	int k,hx,i,j;
 	unsigned lx;
 
-	hx = *(n0+(int*)&x);		/* high word of x */
-	lx = *(1-n0+(int*)&x);		/* low  word of x */
+	EXTRACT_WORDS(hx,lx,x);
 
 	k=0;
 	if (hx < 0x00100000) {			/* x < 2**-1022  */
@@ -112,13 +109,13 @@ static double zero   =  0.0;
 		return -two54/zero;		/* log(+-0)=-inf */
 	    if (hx<0) return (x-x)/zero;	/* log(-#) = NaN */
 	    k -= 54; x *= two54; /* subnormal number, scale up x */
-	    hx = *(n0+(int*)&x);		/* high word of x */
+	    GET_HIGH_WORD(hx,x);
 	} 
 	if (hx >= 0x7ff00000) return x+x;
 	k += (hx>>20)-1023;
 	hx &= 0x000fffff;
 	i = (hx+0x95f64)&0x100000;
-	*(n0+(int*)&x) = hx|(i^0x3ff00000);	/* normalize x or x/2 */
+	SET_HIGH_WORD(x,hx|(i^0x3ff00000));	/* normalize x or x/2 */
 	k += (i>>20);
 	f = x-1.0;
 	if((0x000fffff&(2+hx))<3) {	/* |f| < 2**-20 */

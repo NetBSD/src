@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_nextafter.c,v 1.4 1994/03/03 17:04:43 jtc Exp $";
+static char rcsid[] = "$Id: s_nextafter.c,v 1.5 1994/08/10 20:32:57 jtc Exp $";
 #endif
 
 /* IEEE functions
@@ -21,16 +21,8 @@ static char rcsid[] = "$Id: s_nextafter.c,v 1.4 1994/03/03 17:04:43 jtc Exp $";
  *   Special cases:
  */
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#define n1	0
-#else
-#define n0	0
-#define n1	1
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 	double nextafter(double x, double y)
@@ -42,10 +34,8 @@ static char rcsid[] = "$Id: s_nextafter.c,v 1.4 1994/03/03 17:04:43 jtc Exp $";
 	int	hx,hy,ix,iy;
 	unsigned lx,ly;
 
-	hx = *( n0 + (int*)&x);		/* high word of x */
-	lx = *( n1 + (int*)&x);		/* low  word of x */
-	hy = *( n0 + (int*)&y);		/* high word of y */
-	ly = *( n1 + (int*)&y);		/* low  word of y */
+	EXTRACT_WORDS(hx,lx,x);
+	EXTRACT_WORDS(hy,ly,y);
 	ix = hx&0x7fffffff;		/* |x| */
 	iy = hy&0x7fffffff;		/* |y| */
 
@@ -54,8 +44,7 @@ static char rcsid[] = "$Id: s_nextafter.c,v 1.4 1994/03/03 17:04:43 jtc Exp $";
 	   return x+y;				
 	if(x==y) return x;		/* x=y, return x */
 	if((ix|lx)==0) {			/* x == 0 */
-	    *(n0+(int*)&x) = hy&0x80000000;	/* return +-minsubnormal */
-	    *(n1+(int*)&x) = 1;
+	    INSERT_WORDS(x,hy&0x80000000,1);	/* return +-minsubnormal */
 	    y = x*x;
 	    if(y==x) return y; else return x;	/* raise underflow flag */
 	} 
@@ -81,10 +70,10 @@ static char rcsid[] = "$Id: s_nextafter.c,v 1.4 1994/03/03 17:04:43 jtc Exp $";
 	if(hy<0x00100000) {		/* underflow */
 	    y = x*x;
 	    if(y!=x) {		/* raise underflow flag */
-		*(n0+(int*)&y) = hx; *(n1+(int*)&y) = lx;
+	        INSERT_WORDS(y,hx,lx);
 		return y;
 	    }
 	}
-	*(n0+(int*)&x) = hx; *(n1+(int*)&x) = lx;
+	INSERT_WORDS(x,hx,lx);
 	return x;
 }

@@ -1,4 +1,4 @@
-/* @(#)s_lib_version.c 5.1 93/09/24 */
+/* @(#)s_lib_ver.c 5.1 93/09/24 */
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -11,14 +11,15 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_lib_version.c,v 1.3 1994/02/18 02:26:42 jtc Exp $";
+static char rcsid[] = "$Id: s_lib_version.c,v 1.4 1994/08/10 20:32:40 jtc Exp $";
 #endif
 
 /*
  * MACRO for standards
  */
 
-#include <math.h>
+#include "math.h"
+#include "math_private.h"
 
 /*
  * define and initialize _LIB_VERSION

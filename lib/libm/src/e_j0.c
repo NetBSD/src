@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_j0.c,v 1.4 1994/03/03 17:04:13 jtc Exp $";
+static char rcsid[] = "$Id: e_j0.c,v 1.5 1994/08/10 20:30:58 jtc Exp $";
 #endif
 
 /* __ieee754_j0(x), __ieee754_y0(x)
@@ -59,14 +59,8 @@ static char rcsid[] = "$Id: e_j0.c,v 1.4 1994/03/03 17:04:13 jtc Exp $";
  *	3. Special cases: y0(0)=-inf, y0(x<0)=NaN, y0(inf)=0.
  */
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#else
-#define n0	0
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 static double pzero(double), qzero(double);
@@ -93,7 +87,11 @@ S02  =  1.16926784663337450260e-04, /* 0x3F1EA6D2, 0xDD57DBF4 */
 S03  =  5.13546550207318111446e-07, /* 0x3EA13B54, 0xCE84D5A9 */
 S04  =  1.16614003333790000205e-09; /* 0x3E1408BC, 0xF4745D8F */
 
+#ifdef __STDC__
+static const double zero = 0.0;
+#else
 static double zero = 0.0;
+#endif
 
 #ifdef __STDC__
 	double __ieee754_j0(double x) 
@@ -105,7 +103,7 @@ static double zero = 0.0;
 	double z, s,c,ss,cc,r,u,v;
 	int hx,ix;
 
-	hx = *(n0+(int*)&x);
+	GET_HIGH_WORD(hx,x);
 	ix = hx&0x7fffffff;
 	if(ix>=0x7ff00000) return one/(x*x);
 	x = fabs(x);
@@ -174,9 +172,8 @@ v04  =  4.41110311332675467403e-10; /* 0x3DFE5018, 0x3BD6D9EF */
 	double z, s,c,ss,cc,u,v;
 	int hx,ix,lx;
 
-        hx = *(n0+(int*)&x);
+	EXTRACT_WORDS(hx,lx,x);
         ix = 0x7fffffff&hx;
-        lx = *(1-n0+(int*)&x);
     /* Y0(NaN) is NaN, y0(-inf) is Nan, y0(inf) is 0  */
 	if(ix>=0x7ff00000) return  one/(x+x*x); 
         if((ix|lx)==0) return -one/zero;
@@ -341,7 +338,8 @@ static double pS2[5] = {
 #endif
 	double z,r,s;
 	int ix;
-	ix = 0x7fffffff&(*( (((*(int*)&one)>>29)^1) + (int*)&x));
+	GET_HIGH_WORD(ix,x);
+	ix &= 0x7fffffff;
 	if(ix>=0x40200000)     {p = pR8; q= pS8;}
 	else if(ix>=0x40122E8B){p = pR5; q= pS5;}
 	else if(ix>=0x4006DB6D){p = pR3; q= pS3;}
@@ -476,7 +474,8 @@ static double qS2[6] = {
 #endif
 	double s,r,z;
 	int ix;
-	ix = 0x7fffffff&(*( (((*(int*)&one)>>29)^1) + (int*)&x));
+	GET_HIGH_WORD(ix,x);
+	ix &= 0x7fffffff;
 	if(ix>=0x40200000)     {p = qR8; q= qS8;}
 	else if(ix>=0x40122E8B){p = qR5; q= qS5;}
 	else if(ix>=0x4006DB6D){p = qR3; q= qS3;}

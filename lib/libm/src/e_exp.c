@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_exp.c,v 1.4 1994/03/03 17:04:10 jtc Exp $";
+static char rcsid[] = "$Id: e_exp.c,v 1.5 1994/08/10 20:30:44 jtc Exp $";
 #endif
 
 /* __ieee754_exp(x)
@@ -77,14 +77,8 @@ static char rcsid[] = "$Id: e_exp.c,v 1.4 1994/03/03 17:04:10 jtc Exp $";
  * to produce the hexadecimal values shown.
  */
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#else
-#define n0	0
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 static const double
@@ -120,14 +114,16 @@ P5   =  4.13813679705723846039e-08; /* 0x3E663769, 0x72BEA4D0 */
 	int k,xsb;
 	unsigned hx;
 
-	hx  = *(n0+(unsigned*)&x);	/* high word of x */
+	GET_HIGH_WORD(hx,x);
 	xsb = (hx>>31)&1;		/* sign bit of x */
 	hx &= 0x7fffffff;		/* high word of |x| */
 
     /* filter out non-finite argument */
 	if(hx >= 0x40862E42) {			/* if |x|>=709.78... */
             if(hx>=0x7ff00000) {
-		if(((hx&0xfffff)|*(1-n0+(int*)&x))!=0) 
+	        unsigned int lx;
+		GET_LOW_WORD(lx,x);
+		if(((hx&0xfffff)|lx)!=0) 
 		     return x+x; 		/* NaN */
 		else return (xsb==0)? x:0.0;	/* exp(+-inf)={inf,0} */
 	    }
@@ -158,10 +154,14 @@ P5   =  4.13813679705723846039e-08; /* 0x3E663769, 0x72BEA4D0 */
 	if(k==0) 	return one-((x*c)/(c-2.0)-x); 
 	else 		y = one-((lo-(x*c)/(2.0-c))-hi);
 	if(k >= -1021) {
-	    *(n0+(int*)&y) += (k<<20);	/* add k to y's exponent */
+	    unsigned int hy;
+	    GET_HIGH_WORD(hy,y);
+	    SET_HIGH_WORD(y,hy+(k<<20));	/* add k to y's exponent */
 	    return y;
 	} else {
-	    *(n0+(int*)&y) += ((k+1000)<<20);/* add k to y's exponent */
+	    unsigned int hy;
+	    GET_HIGH_WORD(hy,y);
+	    SET_HIGH_WORD(y,hy+((k+1000)<<20));	/* add k to y's exponent */
 	    return y*twom1000;
 	}
 }

@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_modf.c,v 1.4 1994/03/03 17:04:42 jtc Exp $";
+static char rcsid[] = "$Id: s_modf.c,v 1.5 1994/08/10 20:32:53 jtc Exp $";
 #endif
 
 /*
@@ -24,16 +24,8 @@ static char rcsid[] = "$Id: s_modf.c,v 1.4 1994/03/03 17:04:42 jtc Exp $";
  *	No exception.
  */
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#define n1	0
-#else
-#define n0	0
-#define n1	1
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 static const double one = 1.0;
@@ -50,42 +42,41 @@ static double one = 1.0;
 {
 	int i0,i1,j0;
 	unsigned i;
-	i0 =  *(n0+(int*)&x);		/* high x */
-	i1 =  *(n1+(int*)&x);		/* low  x */
+	EXTRACT_WORDS(i0,i1,x);
 	j0 = ((i0>>20)&0x7ff)-0x3ff;	/* exponent of x */
 	if(j0<20) {			/* integer part in high x */
 	    if(j0<0) {			/* |x|<1 */
-		*(n0+(int*)iptr) = i0&0x80000000;
-		*(n1+(int*)iptr) = 0;		/* *iptr = +-0 */
+	        INSERT_WORDS(*iptr,i0&0x80000000,0);	/* *iptr = +-0 */
 		return x;
 	    } else {
 		i = (0x000fffff)>>j0;
 		if(((i0&i)|i1)==0) {		/* x is integral */
+		    unsigned int high;
 		    *iptr = x;
-		    *(n0+(int*)&x) &= 0x80000000;
-		    *(n1+(int*)&x)  = 0;	/* return +-0 */
+		    GET_HIGH_WORD(high,x);
+		    INSERT_WORDS(x,high&0x80000000,0);	/* return +-0 */
 		    return x;
 		} else {
-		    *(n0+(int*)iptr) = i0&(~i);
-		    *(n1+(int*)iptr) = 0;
+		    INSERT_WORDS(*iptr,i0&(~i),0);
 		    return x - *iptr;
 		}
 	    }
 	} else if (j0>51) {		/* no fraction part */
+	    unsigned int high;
 	    *iptr = x*one;
-	    *(n0+(int*)&x) &= 0x80000000;
-	    *(n1+(int*)&x)  = 0;	/* return +-0 */
+	    GET_HIGH_WORD(high,x);
+	    INSERT_WORDS(x,high&0x80000000,0);	/* return +-0 */
 	    return x;
 	} else {			/* fraction part in low x */
 	    i = ((unsigned)(0xffffffff))>>(j0-20);
 	    if((i1&i)==0) { 		/* x is integral */
+	        unsigned int high;
 		*iptr = x;
-		*(n0+(int*)&x) &= 0x80000000;
-		*(n1+(int*)&x)  = 0;	/* return +-0 */
+		GET_HIGH_WORD(high,x);
+		INSERT_WORDS(x,high&0x80000000,0);	/* return +-0 */
 		return x;
 	    } else {
-		*(n0+(int*)iptr) = i0;
-		*(n1+(int*)iptr) = i1&(~i);
+	        INSERT_WORDS(*iptr,i0,i1&(~i));
 		return x - *iptr;
 	    }
 	}
