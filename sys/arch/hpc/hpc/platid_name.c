@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_name.c,v 1.5 2001/03/04 03:40:39 takemura Exp $	*/
+/*	$NetBSD: platid_name.c,v 1.6 2001/03/22 18:16:15 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -161,9 +161,9 @@ struct platid_name platid_name_table[] = {
 	{ &platid_mask_MACH_EVEREX_FREESTYLE_A20,
 	 TEXT("Everex Freestyle A20") },
 #endif /* hpcmips */
-#ifdef hpcmips
 	{ &platid_mask_MACH_CASIO,
 	 TEXT("CASIO") },
+#ifdef hpcmips
 	{ &platid_mask_MACH_CASIO_CASSIOPEIAE,
 	 TEXT("CASIO Cassiopeia") },
 	{ &platid_mask_MACH_CASIO_CASSIOPEIAE_EXX,
@@ -195,6 +195,14 @@ struct platid_name platid_name_table[] = {
 	{ &platid_mask_MACH_CASIO_POCKETPOSTPET_POCKETPOSTPET,
 	 TEXT("CASIO PocketPostPet") },
 #endif /* hpcmips */
+#ifdef hpcsh
+	{ &platid_mask_MACH_CASIO_CASSIOPEIAA,
+	 TEXT("CASIO Cassiopeia") },
+	{ &platid_mask_MACH_CASIO_CASSIOPEIAA_AXX,
+	 TEXT("CASIO Cassiopeia AXX") },
+	{ &platid_mask_MACH_CASIO_CASSIOPEIAA_A55V,
+	 TEXT("CASIO Cassiopeia A-55V") },
+#endif /* hpcsh */
 #ifdef hpcmips
 	{ &platid_mask_MACH_SHARP,
 	 TEXT("Sharp") },
@@ -338,10 +346,18 @@ struct platid_name platid_name_table[] = {
 	 TEXT("HP Jornada 680") },
 	{ &platid_mask_MACH_HP_JORNADA_680JP,
 	 TEXT("HP Jornada 680 (Japanese)") },
+	{ &platid_mask_MACH_HP_JORNADA_680HU,
+	 TEXT("HP Jornada 680 (Hungarian)") },
+	{ &platid_mask_MACH_HP_JORNADA_680DE,
+	 TEXT("HP Jornada 680 (German)") },
 	{ &platid_mask_MACH_HP_JORNADA_690,
 	 TEXT("HP Jornada 690") },
 	{ &platid_mask_MACH_HP_JORNADA_690JP,
 	 TEXT("HP Jornada 690 (Japanese)") },
+	{ &platid_mask_MACH_HP_JORNADA_690HU,
+	 TEXT("HP Jornada 690 (Hungarian)") },
+	{ &platid_mask_MACH_HP_JORNADA_690DE,
+	 TEXT("HP Jornada 690 (German)") },
 #endif /* hpcsh */
 #ifdef hpcarm
 	{ &platid_mask_MACH_HP_JORNADA_7XX,
@@ -364,6 +380,10 @@ struct platid_name platid_name_table[] = {
 	 TEXT("HITACHI PERSONA") },
 	{ &platid_mask_MACH_HITACHI_PERSONA_HPW230JC,
 	 TEXT("HITACHI PERSONA HPW230JC") },
+	{ &platid_mask_MACH_HITACHI_PERSONA_HPW50PAD,
+	 TEXT("HITACHI PERSONA HPW50PAD") },
+	{ &platid_mask_MACH_HITACHI_PERSONA_HPW650PA,
+	 TEXT("HITACHI PERSONA HPW650PA") },
 #endif /* hpcsh */
 #ifdef hpcsh
 	{ &platid_mask_MACH_LGE,
