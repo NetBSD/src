@@ -1,4 +1,4 @@
-/*	$NetBSD: uudecode.c,v 1.15 2002/06/11 06:06:21 itojun Exp $	*/
+/*	$NetBSD: uudecode.c,v 1.16 2002/06/29 17:58:50 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: uudecode.c,v 1.15 2002/06/11 06:06:21 itojun Exp $");
+__RCSID("$NetBSD: uudecode.c,v 1.16 2002/06/29 17:58:50 itojun Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -101,7 +101,7 @@ main(argc, argv)
 		rval = 0;
 		do {
 			if (!freopen(filename = *argv, "r", stdin)) {
-				warnx("%s", *argv);
+				warn("%s", *argv);
 				rval = 1;
 				continue;
 			}
@@ -177,7 +177,7 @@ decode()
 	/* create output file, set mode */
 	if (!pflag && (!freopen(fn, "w", stdout) ||
 	    fchmod(fileno(stdout), mode & 0666))) { 
-		warnx("%s: %s", fn, filename);
+		warn("%s: %s", fn, filename);
 		return(1);
 	}
 
