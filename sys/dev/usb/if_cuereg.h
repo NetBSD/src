@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cuereg.h,v 1.12 2000/04/27 15:25:36 augustss Exp $	*/
+/*	$NetBSD: if_cuereg.h,v 1.13 2001/01/21 19:30:36 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -195,4 +195,6 @@ struct cue_softc {
 	char			cue_attached;
 	u_int			cue_rx_errs;
 	struct timeval		cue_rx_notice;
+
+	struct usb_task		cue_task;
 };
