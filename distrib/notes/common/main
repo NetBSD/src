@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.42 2001/08/16 17:22:29 tv Exp $
+.\"	$NetBSD: main,v 1.61.2.43 2001/08/16 17:28:19 tv Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1526,7 +1526,6 @@ them, and would like to mentioned, tell us!)
 .It-span Em "The NetBSD \*V Release Engineering team:"
 .It Ta Ta
 .It Ta Chris G. Demetriou Ta Mt cgd@netbsd.org
-.It Ta Emmanuel Dreyfus Ta Mt manu@netbsd.org
 .It Ta H\(oavard Eidnes Ta Mt he@netbsd.org
 .It Ta Ted Lemon Ta Mt mellon@netbsd.org
 .It Ta John Hawkinson Ta Mt jhawk@netbsd.org
@@ -1538,6 +1537,7 @@ them, and would like to mentioned, tell us!)
 .br_ne 2i
 .It-span Em "Developers and other contributors:"
 .It Ta Ta
+.It Ta Nathan Ahlstrom Ta Mt nra@NetBSD.org
 .It Ta Steve Allen Ta Mt wormey@netbsd.org
 .It Ta Julian Assange Ta Mt proff@netbsd.org
 .It Ta Lennart Augustsson Ta Mt augustss@netbsd.org
@@ -1548,6 +1548,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Erik Berls Ta Mt cyber@netbsd.org
 .It Ta John Birrell Ta Mt jb@netbsd.org
 .It Ta Mason Loring Bliss Ta Mt mason@netbsd.org
+.It Ta Rafal Boni Ta Mt rafal@netbsd.org
 .It Ta Manuel Bouyer Ta Mt bouyer@netbsd.org
 .It Ta John Brezak Ta Mt brezak@netbsd.org
 .It Ta Allen Briggs Ta Mt briggs@netbsd.org
@@ -1572,6 +1573,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Jarom\('ir Dolecek Ta Mt jdolecek@netbsd.org
 .It Ta Andy Doran Ta Mt ad@netbsd.org
 .It Ta Roland Dowdeswell Ta Mt elric@netbsd.org
+.It Ta Emmanuel Dreyfus Ta Mt manu@netbsd.org
 .It Ta Matthias Drochner Ta Mt drochner@netbsd.org
 .It Ta Jun Ebihara Ta Mt jun@netbsd.org
 .It Ta H\(oavard Eidnes Ta Mt he@netbsd.org
@@ -1579,6 +1581,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Bernd Ernesti Ta Mt veego@netbsd.org
 .It Ta Erik Fair Ta Mt fair@netbsd.org
 .It Ta Hubert Feyrer Ta Mt hubertf@netbsd.org
+.It Ta Jason R. Fink Ta Mt jrf@netbsd.org
 .It Ta Thorsten Frueauf Ta Mt frueauf@netbsd.org
 .It Ta Castor Fu Ta Mt castor@netbsd.org
 .It Ta Ichiro Fukuhara Ta Mt ichiro@netbsd.org
@@ -1614,6 +1617,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Antti Kantee Ta Mt pooka@netbsd.org
 .It Ta Masanori Kanaoka Ta Mt kanaoka@netbsd.org
 .It Ta KAWAMOTO Yosihisa Ta Mt kawamoto@netbsd.org
+.It Ta Mario Kemper Ta Mt magick@netbsd.org
 .It Ta Lawrence Kesteloot Ta Mt kesteloo@cs.unc.edu
 .It Ta Thomas Klausner Ta Mt wiz@netbsd.org
 .It Ta Klaus Klein Ta Mt kleink@netbsd.org
@@ -1630,6 +1634,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Federico Lupi Ta Mt federico@netbsd.org
 .It Ta Brett Lymn Ta Mt blymn@netbsd.org
 .It Ta Paul Mackerras Ta Mt paulus@netbsd.org
+.It Ta MAEKAWA Masahide Ta Mt gehenna@netbsd.org
 .It Ta David Maxwell Ta Mt david@netbsd.org
 .It Ta Dan McMahill Ta Mt dmcmahill@netbsd.org
 .It Ta Gregory McGarry Ta Mt gmcgarry@netbsd.org
@@ -1696,6 +1701,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Jim Wise Ta Mt jwise@netbsd.org
 .It Ta Michael Wolfson Ta Mt mbw@netbsd.org
 .It Ta Colin Wood Ta Mt ender@netbsd.org
+.It Ta YAMAMOTO Takashi Ta Mt yamt@netbsd.org
 .It Ta Yuji Yamano Ta Mt yyamano@netbsd.org
 .It Ta Reinoud Zandijk Ta Mt reinoud@netbsd.org
 .
