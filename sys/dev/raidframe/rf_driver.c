@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.83 2004/01/14 15:10:55 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.84 2004/01/15 20:27:27 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.83 2004/01/14 15:10:55 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.84 2004/01/15 20:27:27 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -447,6 +447,7 @@ rf_ConfigureRDFreeList(RF_ShutdownList_t **listp)
 		rf_ShutdownRDFreeList(NULL);
 		return (rc);
 	}
+	simple_lock_init(&rf_rad_pool_lock);
 	return (0);
 }
 
