@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.52 2000/05/27 21:58:16 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.53 2000/05/28 00:19:59 fvdl Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -1889,11 +1889,11 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 			printf("queue full\n");
 		case SCSI_STATUS_BUSY:
 			/*
-			 * Requeue any transactions that haven't been
-			 * sent yet.
+			 * XXX middle layer doesn't handle XS_BUSY well.
+			 * So, requeue this ourselves internally.
 			 */
-			ahc_freeze_devq(ahc, xs->sc_link);
-			ahc_freeze_ccb(scb);
+			xs->error = XS_BUSY;
+			scb->flags |= SCB_REQUEUE;
 			break;
 		}
 		break;
