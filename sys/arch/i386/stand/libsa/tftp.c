@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.2 1997/03/22 09:13:51 thorpej Exp $	 */
+/*	$NetBSD: tftp.c,v 1.3 1997/06/13 13:36:12 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -33,10 +33,14 @@
  */
 
 /*
- * Simple TFTP implementation for libsa. Assumes: - socket descriptor (int)
- * at open_file->f_devdata - server host IP in global rootip Restrictions: -
- * read only - lseek only with SEEK_SET or SEEK_CUR - no big time differences
- * between transfers (<tftp timeout)
+ * Simple TFTP implementation for libsa.
+ * Assumes:
+ *  - socket descriptor (int) at open_file->f_devdata
+ *  - server host IP in global rootip
+ * Restrictions:
+ *  - read only
+ *  - lseek only with SEEK_SET or SEEK_CUR
+ *  - no big time differences between transfers (<tftp timeout)
  */
 
 #include <sys/types.h>
