@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.13 1999/09/09 12:26:46 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.14 1999/09/09 17:12:03 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,11 +69,11 @@
  * Universal Serial Bus Mass Storage Class Control/Interrupt/Bulk (CBI)
  * Specification:
  *
- *	http://www.usb.org/developers/usbmass-cbi10.pdf
+ *	http://www.usb.org/developers/data/usbmass-cbi10.pdf
  *
  * Universal Serial Bus Mass Storage Bulk Only 1.0rc4 Specification:
  *
- *	http://www.usb.org/developers/usbmassbulk_10rc4.pdf
+ *	http://www.usb.org/developers/data/usbmassbulk_10rc4.pdf
  *
  * Relevant parts of the old spec (Bulk-only 0.9) have been quoted
  * in the source.
@@ -298,14 +298,14 @@ USB_ATTACH(umass)
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkout,
 				USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
 	if (err) {
-		DPRINTF(UDMASS_USB, ("cannot open bulk out pipe (address %d)\n",
+		DPRINTF(UDMASS_USB,("cannot open bulk out pipe (address %d)\n",
 			sc->sc_bulkout));
 		USB_ATTACH_ERROR_RETURN;
 	}
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkin,
 				USBD_EXCLUSIVE_USE, &sc->sc_bulkin_pipe);
 	if (err) {
-		DPRINTF(UDMASS_USB, ("cannot open bulk in pipe (address %d)\n",
+		DPRINTF(UDMASS_USB,("cannot open bulk in pipe (address %d)\n",
 			sc->sc_bulkin));
 		usbd_close_pipe(sc->sc_bulkout_pipe);
 		USB_ATTACH_ERROR_RETURN;
@@ -450,7 +450,7 @@ umass_bulk_get_max_lun(umass_softc_t *sc, u_int8_t *maxlun)
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 
 	/* The Get Max Lun command is a class-specific request. */
-	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
+	req.bmRequestType = UT_READ_CLASS_INTERFACE;
 	req.bRequest = UR_GET_MAX_LUN;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, id->bInterfaceNumber);
@@ -478,6 +478,7 @@ umass_bulk_get_max_lun(umass_softc_t *sc, u_int8_t *maxlun)
 		printf("%s: Get Max Lun failed: %s\n",
 		    USBDEVNAME(sc->sc_dev), usbd_errstr(err));
 		/* XXX Should we port_reset the device? */
+		break;
 	}
 
 	return (err);
