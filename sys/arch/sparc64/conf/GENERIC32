@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.77 2003/12/14 01:32:02 thorpej Exp $
+# 	$NetBSD: GENERIC32,v 1.78 2004/01/14 22:29:03 jonathan Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.77 $"
+#ident 		"GENERIC-$Revision: 1.78 $"
 
 maxusers	64
 
@@ -287,6 +287,10 @@ isp*	at sbus? slot ? offset ?
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 siop*	at pci? 			# 53C8xx ("glm" compatible)
 esiop*	at pci? 			# 53C875 and newer ("glm" compatible)
+
+# PCI cryptographic devices
+hifn*	at pci? dev ? function ?	# Hifn 7755/7811/795x
+ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
 
 # PCI SCSI controllers
 # 	UT marks untested.
@@ -660,6 +664,10 @@ cgsix*		at sbus? slot ? offset ?
 #ffb*		at upa?
 
 #### Other device configuration
+
+### Other pseudo-devices
+
+pseudo-device 	crypto			# opencrypto framework
 
 ## Pseudo ttys, required for network logins and programs like screen.
 
