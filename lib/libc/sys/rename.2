@@ -1,4 +1,4 @@
-.\"	$NetBSD: rename.2,v 1.12 2000/06/17 19:33:34 hubertf Exp $
+.\"	$NetBSD: rename.2,v 1.13 2001/05/17 23:45:24 matt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -78,7 +78,7 @@ If both
 and
 .Fa to
 are pathnames of the same existing file in the file system's name space,
-.Fn return
+.Fn rename
 returns successfully and performs no other action.
 .Sh CAVEAT
 The system can deadlock if a loop in the file system graph is present.
