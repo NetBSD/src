@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 1999/09/13 16:26:18 msaitoh Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 2000/02/24 17:07:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -84,6 +84,8 @@ cdev_decl(ctty);
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
+#include "wdog.h"
+cdev_decl(wdog);
 cdev_decl(wd);
 cdev_decl(sw);
 #include "pty.h"
@@ -188,6 +190,7 @@ struct cdevsw	cdevsw[] =
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 48: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 49: RAIDframe disk driver */
 	cdev_esh_init(NESH, esh_fp),	/* 50: HIPPI (esh) raw device */
+	cdev_wdog_init(NWDOG,wdog),	/* 51: watchdog timer */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
