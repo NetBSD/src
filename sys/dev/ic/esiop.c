@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.3 2002/04/22 20:47:20 bouyer Exp $	*/
+/*	$NetBSD: esiop.c,v 1.4 2002/04/23 10:38:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.3 2002/04/22 20:47:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.4 2002/04/23 10:38:37 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,17 +306,20 @@ esiop_reset(sc)
 			    E_abs_msgin2_Used[j] * 4, msgin_addr);
 		}
 
-#ifdef SIOP_SYMLED
-		bus_space_write_region_4(sc->sc_c.sc_ramt, sc->sc_c.sc_ramh,
-		    Ent_led_on1, esiop_led_on,
-		    sizeof(esiop_led_on) / sizeof(esiop_led_on[0]));
-		bus_space_write_region_4(sc->sc_c.sc_ramt, sc->sc_c.sc_ramh,
-		    Ent_led_on2, esiop_led_on,
-		    sizeof(esiop_led_on) / sizeof(esiop_led_on[0]));
-		bus_space_write_region_4(sc->sc_c.sc_ramt, sc->sc_c.sc_ramh,
-		    Ent_led_off, esiop_led_off,
-		    sizeof(esiop_led_off) / sizeof(esiop_led_off[0]));
-#endif
+		if (sc->sc_c.features & SF_CHIP_LED0) {
+			bus_space_write_region_4(sc->sc_c.sc_ramt,
+			    sc->sc_c.sc_ramh,
+			    Ent_led_on1, esiop_led_on,
+			    sizeof(esiop_led_on) / sizeof(esiop_led_on[0]));
+			bus_space_write_region_4(sc->sc_c.sc_ramt,
+			    sc->sc_c.sc_ramh,
+			    Ent_led_on2, esiop_led_on,
+			    sizeof(esiop_led_on) / sizeof(esiop_led_on[0]));
+			bus_space_write_region_4(sc->sc_c.sc_ramt,
+			    sc->sc_c.sc_ramh,
+			    Ent_led_off, esiop_led_off,
+			    sizeof(esiop_led_off) / sizeof(esiop_led_off[0]));
+		}
 	} else {
 		for (j = 0;
 		    j < (sizeof(esiop_script) / sizeof(esiop_script[0])); j++) {
@@ -335,23 +338,23 @@ esiop_reset(sc)
 			    htole32(msgin_addr);
 		}
 
-#ifdef SIOP_SYMLED
-		for (j = 0;
-		    j < (sizeof(esiop_led_on) / sizeof(esiop_led_on[0])); j++)
-			sc->sc_c.sc_script[
-			    Ent_led_on1 / sizeof(esiop_led_on[0]) + j
-			    ] = htole32(esiop_led_on[j]);
-		for (j = 0;
-		    j < (sizeof(esiop_led_on) / sizeof(esiop_led_on[0])); j++)
-			sc->sc_c.sc_script[
-			    Ent_led_on2 / sizeof(esiop_led_on[0]) + j
-			    ] = htole32(esiop_led_on[j]);
-		for (j = 0;
-		    j < (sizeof(esiop_led_off) / sizeof(esiop_led_off[0])); j++)
-			sc->sc_c.sc_script[
-			   Ent_led_off / sizeof(esiop_led_off[0]) + j
-			   ] = htole32(esiop_led_off[j]);
-#endif
+		if (sc->sc_c.features & SF_CHIP_LED0) {
+			for (j = 0; j < (sizeof(esiop_led_on) /
+			    sizeof(esiop_led_on[0])); j++)
+				sc->sc_c.sc_script[
+				    Ent_led_on1 / sizeof(esiop_led_on[0]) + j
+				    ] = htole32(esiop_led_on[j]);
+			for (j = 0; j < (sizeof(esiop_led_on) /
+			    sizeof(esiop_led_on[0])); j++)
+				sc->sc_c.sc_script[
+				    Ent_led_on2 / sizeof(esiop_led_on[0]) + j
+				    ] = htole32(esiop_led_on[j]);
+			for (j = 0; j < (sizeof(esiop_led_off) /
+			    sizeof(esiop_led_off[0])); j++)
+				sc->sc_c.sc_script[
+				   Ent_led_off / sizeof(esiop_led_off[0]) + j
+				   ] = htole32(esiop_led_off[j]);
+		}
 	}
 	/* get base of scheduler ring */
 	addr = sc->sc_c.sc_scriptaddr + sc->sc_shedoffset * sizeof(u_int32_t);
