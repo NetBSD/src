@@ -38,7 +38,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)syscall.s	8.2 (Berkeley) 1/21/94" */
-	.asciz "$NetBSD: syscall.S,v 1.2 1997/02/04 18:38:23 ragge Exp $"
+	.asciz "$NetBSD: syscall.S,v 1.3 2000/06/28 19:20:18 matt Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -50,4 +50,4 @@ ENTRY(syscall, 0)
 	jcs	1f
 	ret
 1:
-	jmp	cerror
+	jmp	CERROR
