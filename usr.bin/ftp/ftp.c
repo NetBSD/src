@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.60 1999/09/03 04:29:57 itojun Exp $	*/
+/*	$NetBSD: ftp.c,v 1.61 1999/09/14 22:49:14 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.60 1999/09/03 04:29:57 itojun Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.61 1999/09/14 22:49:14 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,7 @@ hookup(host, port)
 	hints.ai_protocol = 0;
 	error = getaddrinfo(host, port, &hints, &res0);
 	if (error) {
-		warn(gai_strerror(error));
+		warnx(gai_strerror(error));
 		code = -1;
 		return (0);
 	}
