@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.126 1995/01/13 09:40:21 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.127 1995/01/13 10:22:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -490,8 +490,7 @@ wdfinish(wd, bp)
 	if (wd->sc_drivechain.tqe_next) {
 		TAILQ_REMOVE(&wdc->sc_drives, wd, sc_drivechain);
 		if (bp->b_actf) {
-			TAILQ_INSERT_TAIL(&wdc->sc_drives, wd,
-			    sc_drivechain);
+			TAILQ_INSERT_TAIL(&wdc->sc_drives, wd, sc_drivechain);
 		} else
 			wd->sc_q.b_active = 0;
 	}
@@ -776,7 +775,7 @@ wdcintr(wdc)
 	nblks = wd->sc_nblks;
     
 	if (wd->sc_mode == WDM_DMA)
-		isa_dmadone(bp->b_flags & B_READ, bp->b_data,
+		isa_dmadone(bp->b_flags & B_READ, bp->b_data + wd->sc_skip,
 		    nblks * DEV_BSIZE, wdc->sc_drq);
 
 	/* Have we an error? */
