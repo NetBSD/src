@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.298 2002/06/10 18:40:58 mason Exp $
+#	$NetBSD: bsd.own.mk,v 1.299 2002/07/01 19:31:12 fredette Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -306,7 +306,6 @@ NOPROFILE=	# defined
 # The hppa port is incomplete.
 .if ${MACHINE_ARCH} == "hppa"
 NOLINT=		# defined
-NOPIC=		# defined
 NOPROFILE=	# defined
 MKGDB:=	no
 MKGCC:=	no
@@ -334,7 +333,6 @@ MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
 .if ${OBJECT_FMT} == "ELF" && \
     (${MACHINE_GNU_ARCH} == "arm" || \
      ${MACHINE_GNU_ARCH} == "armeb" || \
-     ${MACHINE_ARCH} == "hppa" || \
      ${MACHINE_ARCH} == "ns32k" || \
      ${MACHINE_ARCH} == "i386" || \
      ${MACHINE_ARCH} == "m68k" || \
