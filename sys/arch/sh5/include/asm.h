@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.5 2002/07/12 15:42:27 scw Exp $	*/
+/*	$NetBSD: asm.h,v 1.6 2002/09/28 15:50:37 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -81,13 +81,14 @@
 #define	PIC_GOT(x)	x
 #define	PIC_GOTOFF(x)	x
 
-/*
- * XXX: Remove underscore when we switch to native NetBSD toolchain
- */
-#if __STDC__
-#define _C_LABEL(x)	_ ## x
+#ifdef __NO_LEADING_UNDERSCORES__
+# define _C_LABEL(x)	x
 #else
-#define _C_LABEL(x)	_/**/x
+# if __STDC__
+#  define _C_LABEL(x)	_ ## x
+# else
+#  define _C_LABEL(x)	_/**/x
+# endif
 #endif
 
 #define _ASM_LABEL(x)	x
