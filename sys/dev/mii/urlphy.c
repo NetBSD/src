@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.7 2003/04/04 22:21:39 kristerw Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.8 2003/04/29 01:49:34 thorpej Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.7 2003/04/04 22:21:39 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.8 2003/04/29 01:49:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,8 @@ urlphy_attach(struct device *parent, struct device *self, void *aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	printf(": Realtek RTL8150L internal media interface\n");
+	aprint_naive(": Media interface\n");
+	aprint_normal(": Realtek RTL8150L internal media interface\n");
 
 	DPRINTF(("%s: %s: enter\n", sc->mii_dev.dv_xname, __FUNCTION__));
 
@@ -120,19 +121,19 @@ urlphy_attach(struct device *parent, struct device *self, void *aux)
 	sc->mii_flags |= MIIF_NOISOLATE;
 
 	if (mii->mii_instance != 0) {
-		printf("%s: ignoring this PHY, non-zero instance\n",
+		aprint_error("%s: ignoring this PHY, non-zero instance\n",
 		       sc->mii_dev.dv_xname);
 		return;
 	}
 	PHY_RESET(sc);
 
 	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
-	printf("%s: ", sc->mii_dev.dv_xname);
+	aprint_normal("%s: ", sc->mii_dev.dv_xname);
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
-		printf("no media present");
+		aprint_error("no media present");
 	else
 		mii_phy_add_media(sc);
-	printf("\n");
+	aprint_normal("\n");
 }
 
 int

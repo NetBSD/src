@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.38 2002/10/23 01:50:11 perry Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.39 2003/04/29 01:49:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.38 2002/10/23 01:50:11 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.39 2003/04/29 01:49:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,8 @@ tlphyattach(struct device *parent, struct device *self, void *aux)
 	const char *sep = "";
 
 	mpd = mii_phy_match(ma, tlphys);
-	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
+	aprint_naive(": Media interface\n");
+	aprint_normal(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->sc_mii.mii_inst = mii->mii_instance;
 	sc->sc_mii.mii_phy = ma->mii_phyno;
@@ -177,9 +178,9 @@ tlphyattach(struct device *parent, struct device *self, void *aux)
 
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-#define	PRINT(str)	printf("%s%s", sep, str); sep = ", "
+#define	PRINT(str)	aprint_normal("%s%s", sep, str); sep = ", "
 
-	printf("%s: ", sc->sc_mii.mii_dev.dv_xname);
+	aprint_normal("%s: ", sc->sc_mii.mii_dev.dv_xname);
 	if (sc->sc_tlphycap) {
 		if (sc->sc_tlphycap & TLPHY_MEDIA_10_2) {
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_2, 0,
@@ -192,12 +193,12 @@ tlphyattach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 	if (sc->sc_mii.mii_capabilities & BMSR_MEDIAMASK) {
-		printf("%s", sep);
+		aprint_normal("%s", sep);
 		mii_phy_add_media(&sc->sc_mii);
 	} else if ((sc->sc_tlphycap &
 		    (TLPHY_MEDIA_10_2 | TLPHY_MEDIA_10_5)) == 0)
-		printf("no media present");
-	printf("\n");
+		aprint_error("no media present");
+	aprint_normal("\n");
 #undef ADD
 #undef PRINT
 }

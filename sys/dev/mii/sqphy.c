@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphy.c,v 1.33 2002/10/02 16:34:21 thorpej Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.34 2003/04/29 01:49:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.33 2002/10/02 16:34:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.34 2003/04/29 01:49:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,8 @@ sqphyattach(struct device *parent, struct device *self, void *aux)
 	const struct mii_phydesc *mpd;
 
 	mpd = mii_phy_match(ma, sqphys);
-	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
+	aprint_naive(": Media interface\n");
+	aprint_normal(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
@@ -153,7 +154,7 @@ sqphyattach(struct device *parent, struct device *self, void *aux)
 	switch (MII_MODEL(ma->mii_id2)) {
 	case MII_MODEL_SEEQ_84220:
 		sc->mii_funcs = &sqphy_84220_funcs;
-		printf("%s: using Seeq 84220 isolate/reset hack\n",
+		aprint_normal("%s: using Seeq 84220 isolate/reset hack\n",
 		    sc->mii_dev.dv_xname);
 		break;
 
@@ -165,12 +166,12 @@ sqphyattach(struct device *parent, struct device *self, void *aux)
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
-	printf("%s: ", sc->mii_dev.dv_xname);
+	aprint_normal("%s: ", sc->mii_dev.dv_xname);
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
-		printf("no media present");
+		aprint_error("no media present");
 	else
 		mii_phy_add_media(sc);
-	printf("\n");
+	aprint_normal("\n");
 }
 
 int
