@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.alpha,v 1.68 2001/11/16 00:23:03 atatat Exp $
+# $NetBSD: Makefile.alpha,v 1.69 2001/11/20 12:56:19 lukem Exp $
 
 # Makefile for NetBSD
 #
@@ -12,7 +12,7 @@
 #	/sys/arch/alpha/conf/Makefile.alpha
 # after which config should be rerun for all machines of that type.
 #
-# To specify debugging, add the config line: makeoptions DEBUG="-g" 
+# To specify debugging, add the config line: makeoptions DEBUG="-g"
 # A better way is to specify -g only for a few files.
 #
 #	makeoptions DEBUGLIST="uvm* trap if_*"
@@ -40,7 +40,7 @@ AFLAGS=		-traditional -D_LOCORE
 NORMAL_S=	${CPP} ${AFLAGS} ${CPPFLAGS} $< | sed -e 's,^\#.*,,' | ${AS} -o ${.TARGET}
 
 ##
-## (3) libkern and compat 
+## (3) libkern and compat
 ##
 
 ##
@@ -70,7 +70,7 @@ STRIPFLAGS=	-g -X
 ## (6) port specific target dependencies
 ##
 
-# depend on CPU configuration 
+# depend on CPU configuration
 clock.o apecs.o cia.o lca.o ioasic.o scc.o icasic.o: Makefile
 
 ##

@@ -1,18 +1,18 @@
-# 	$NetBSD: GENERIC,v 1.43 2001/10/24 18:49:38 thorpej Exp $
+# 	$NetBSD: GENERIC,v 1.44 2001/11/20 12:56:39 lukem Exp $
 
 include "arch/sparc64/conf/GENERIC32"
 
-#ident 		"GENERIC-$Revision: 1.43 $"
+#ident 		"GENERIC-$Revision: 1.44 $"
 
 include "arch/sparc64/conf/std.sparc64-64"
 
 options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility
-options		COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility
+options 	COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility
 
 # DEBUG options turned on:
 
 #options 	LOCKDEBUG
 #options 	DIAGNOSTIC
-makeoptions 	DEBUG="-g"
+makeoptions	DEBUG="-g"
 #options 	DEBUG
 #options 	SYSCALL_DEBUG

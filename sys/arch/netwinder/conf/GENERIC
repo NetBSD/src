@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.8 2001/09/01 23:08:44 atatat Exp $
+#	$NetBSD: GENERIC,v 1.9 2001/11/20 12:56:34 lukem Exp $
 #
 #	GENERIC -- Netwinder Architecture Kernel
 #
@@ -93,10 +93,10 @@ options 	COMPAT_14	# NetBSD 1.4 compatibility.
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 options 	SHMMAXPGS=1024	# 1024 pages is the default
 
@@ -123,7 +123,7 @@ options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	ARM700BUGTRACK	# track the ARM700 swi bug
 #options 	PORTMASTER	# Enable PortMaster only options
 options 	DIAGNOSTIC	# internally consistency checks
-#options  	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB

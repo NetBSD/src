@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.27 2001/11/13 17:54:47 augustss Exp $
+# $NetBSD: GENERIC,v 1.28 2001/11/20 12:56:22 lukem Exp $
 
 # GENERIC arm26 configuration -- everything I've implemented so far
 
@@ -13,7 +13,7 @@ options 	CPU_ARM3
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# Cheap kernel consistency checks
-options		DEBUG			# More expensive checks and printfs
+options 	DEBUG			# More expensive checks and printfs
 options 	DDB			# kernel debugger
 #options 	SYSCALL_DEBUG		# trace syscall entry/exit
 #options 	SCSIDEBUG
@@ -82,10 +82,10 @@ options 	INET6		# IPV6
 # System V IPC
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
@@ -161,9 +161,9 @@ wdc0		at upc0			# IDE controller
 wd*		at wdc? drive ?		# IDE hard discs
 atapibus*	at wdc?			# ATAPI devices
 
-cd*     	at atapibus? drive ?	# ATAPI CD-ROM drives
-sd*     	at atapibus? drive ? 	# ATAPI disk drives
-uk*     	at atapibus? drive ?	# ATAPI unknown
+cd*		at atapibus? drive ?	# ATAPI CD-ROM drives
+sd*		at atapibus? drive ? 	# ATAPI disk drives
+uk*		at atapibus? drive ?	# ATAPI unknown
 
 sd*		at scsibus? target ? lun ?	# SCSI disk drives
 st*		at scsibus? target ? lun ?	# SCSI tape drives
@@ -177,8 +177,8 @@ wsdisplay0	at arcvideo0
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4
-#pseudo-device	raid		4		# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG      # auto-configuration of RAID components
+#pseudo-device	raid		4	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	ipfilter	1
 pseudo-device	loop		1
 pseudo-device	md		1
