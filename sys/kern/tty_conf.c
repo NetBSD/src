@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_conf.c	8.4 (Berkeley) 1/21/94
- *	$Id: tty_conf.c,v 1.12 1994/06/16 17:54:52 mycroft Exp $
+ *	$Id: tty_conf.c,v 1.13 1994/06/20 00:32:31 paulus Exp $
  */
 
 #include <sys/param.h>
@@ -82,8 +82,8 @@ int	pppopen __P((dev_t dev, struct tty *tp));
 int	pppclose __P((struct tty *tp, int flags));
 int	ppptioctl __P((struct tty *tp, int cmd, caddr_t data,
 			int flag, struct proc *p));
-void	pppinput __P((int c, struct tty *tp));
-void	pppstart __P((struct tty *tp));
+int	pppinput __P((int c, struct tty *tp));
+int	pppstart __P((struct tty *tp));
 int	pppread __P((struct tty *tp, struct uio *uio, int flag));
 int	pppwrite __P((struct tty *tp, struct uio *uio, int flag));
 #endif
