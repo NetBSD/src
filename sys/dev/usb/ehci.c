@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.67 2004/07/06 04:18:05 mycroft Exp $	*/
+/*	$NetBSD: ehci.c,v 1.68 2004/07/09 05:07:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.67 2004/07/06 04:18:05 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.68 2004/07/09 05:07:06 mycroft Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -501,11 +501,9 @@ ehci_intr1(ehci_softc_t *sc)
 	}
 
 	intrs = EHCI_STS_INTRS(EOREAD4(sc, EHCI_USBSTS));
-
 	if (!intrs)
 		return (0);
 
-	EOWRITE4(sc, EHCI_USBSTS, intrs); /* Acknowledge */
 	eintrs = intrs & sc->sc_eintrs;
 	DPRINTFN(7, ("ehci_intr: sc=%p intrs=0x%x(0x%x) eintrs=0x%x\n",
 		     sc, (u_int)intrs, EOREAD4(sc, EHCI_USBSTS),
@@ -513,6 +511,7 @@ ehci_intr1(ehci_softc_t *sc)
 	if (!eintrs)
 		return (0);
 
+	EOWRITE4(sc, EHCI_USBSTS, intrs); /* Acknowledge */
 	sc->sc_bus.intr_context++;
 	sc->sc_bus.no_intrs++;
 	if (eintrs & EHCI_STS_IAA) {
