@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.312 2001/02/19 22:14:42 cgd Exp $
+#	$NetBSD: mi,v 1.313 2001/02/21 23:50:25 minoura Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -84,10 +84,6 @@
 ./usr/include/bitstring.h		comp-c-include
 ./usr/include/bm.h			comp-c-include
 ./usr/include/bzlib.h			comp-c-include
-./usr/include/cpio.h			comp-c-include
-./usr/include/ctype.h			comp-c-include
-./usr/include/curses.h			comp-c-include
-./usr/include/db.h			comp-c-include
 ./usr/include/cdk/alphalist.h		comp-c-include
 ./usr/include/cdk/binding.h		comp-c-include
 ./usr/include/cdk/buttonbox.h		comp-c-include
@@ -118,6 +114,10 @@
 ./usr/include/cdk/swindow.h		comp-c-include
 ./usr/include/cdk/template.h		comp-c-include
 ./usr/include/cdk/viewer.h		comp-c-include
+./usr/include/cpio.h			comp-c-include
+./usr/include/ctype.h			comp-c-include
+./usr/include/curses.h			comp-c-include
+./usr/include/db.h			comp-c-include
 ./usr/include/dev/ata			comp-c-include
 ./usr/include/dev/ata/atareg.h		comp-c-include
 ./usr/include/dev/ata/atavar.h		comp-c-include
@@ -175,6 +175,7 @@
 ./usr/include/dev/ic/cyreg.h		comp-c-include
 ./usr/include/dev/ic/cyvar.h		comp-c-include
 ./usr/include/dev/ic/dc21040reg.h	comp-c-include
+./usr/include/dev/ic/dl10019reg.h	comp-c-include
 ./usr/include/dev/ic/dp8390reg.h	comp-c-include
 ./usr/include/dev/ic/dp8390var.h	comp-c-include
 ./usr/include/dev/ic/dptreg.h		comp-c-include
@@ -210,9 +211,9 @@
 ./usr/include/dev/ic/mc6845reg.h	comp-c-include
 ./usr/include/dev/ic/midwayreg.h	comp-c-include
 ./usr/include/dev/ic/midwayvar.h	comp-c-include
-./usr/include/dev/ic/mlxvar.h		comp-c-include
 ./usr/include/dev/ic/mlxio.h		comp-c-include
 ./usr/include/dev/ic/mlxreg.h		comp-c-include
+./usr/include/dev/ic/mlxvar.h		comp-c-include
 ./usr/include/dev/ic/ncr5380reg.h	comp-c-include
 ./usr/include/dev/ic/ncr5380var.h	comp-c-include
 ./usr/include/dev/ic/ncr53c400reg.h	comp-c-include
@@ -944,8 +945,8 @@
 ./usr/include/ranlib.h			comp-c-include
 ./usr/include/re_comp.h			comp-c-include
 ./usr/include/readline			comp-c-include
-./usr/include/readline/readline.h	comp-c-include
 ./usr/include/readline/history.h	comp-c-include
+./usr/include/readline/readline.h	comp-c-include
 ./usr/include/regex.h			comp-c-include
 ./usr/include/regexp.h			comp-c-include
 ./usr/include/resolv.h			comp-c-include
@@ -1887,7 +1888,6 @@
 ./usr/share/man/cat3/catopen.0	comp-c-catman
 ./usr/share/man/cat3/cbrt.0	comp-c-catman
 ./usr/share/man/cat3/cbrtf.0	comp-c-catman
-./usr/share/man/cat3/cdk_entry.0	comp-c-catman
 ./usr/share/man/cat3/cdk.0		comp-c-catman
 ./usr/share/man/cat3/cdk_alphalist.0	comp-c-catman
 ./usr/share/man/cat3/cdk_binding.0	comp-c-catman
@@ -1896,6 +1896,7 @@
 ./usr/share/man/cat3/cdk_cdk.0		comp-c-catman
 ./usr/share/man/cat3/cdk_dialog.0	comp-c-catman
 ./usr/share/man/cat3/cdk_display.0	comp-c-catman
+./usr/share/man/cat3/cdk_entry.0	comp-c-catman
 ./usr/share/man/cat3/cdk_fselect.0	comp-c-catman
 ./usr/share/man/cat3/cdk_graph.0	comp-c-catman
 ./usr/share/man/cat3/cdk_histogram.0	comp-c-catman
@@ -2335,9 +2336,12 @@
 ./usr/share/man/cat3/killpg.0	comp-c-catman
 ./usr/share/man/cat3/krb5_425_conv_principal.0	comp-c-catman
 ./usr/share/man/cat3/krb5_appdefault.0	comp-c-catman
+./usr/share/man/cat3/krb5_auth_context.0	comp-c-catman
 ./usr/share/man/cat3/krb5_build_principal.0	comp-c-catman
 ./usr/share/man/cat3/krb5_config.0	comp-c-catman
+./usr/share/man/cat3/krb5_context.0	comp-c-catman
 ./usr/share/man/cat3/krb5_free_principal.0	comp-c-catman
+./usr/share/man/cat3/krb5_init_context.0	comp-c-catman
 ./usr/share/man/cat3/krb5_openlog.0	comp-c-catman
 ./usr/share/man/cat3/krb5_parse_name.0	comp-c-catman
 ./usr/share/man/cat3/krb5_sname_to_principal.0	comp-c-catman
@@ -3155,6 +3159,9 @@
 ./usr/share/man/cat9/mtocl.0		comp-sys-catman
 ./usr/share/man/cat9/mtod.0		comp-sys-catman
 ./usr/share/man/cat9/panic.0		comp-sys-catman
+./usr/share/man/cat9/pci_conf_interrupt.0	comp-sys-catman
+./usr/share/man/cat9/pci_configure_bus.0	comp-sys-catman
+./usr/share/man/cat9/pci_intr.0		comp-sys-catman
 ./usr/share/man/cat9/pfil.0		comp-sys-catman
 ./usr/share/man/cat9/pfil_add_hook.0		comp-sys-catman
 ./usr/share/man/cat9/pfil_hook_get.0		comp-sys-catman
@@ -3728,7 +3735,6 @@
 ./usr/share/man/man3/catopen.3		comp-c-man
 ./usr/share/man/man3/cbrt.3		comp-c-man
 ./usr/share/man/man3/cbrtf.3		comp-c-man
-./usr/share/man/man3/cdk_entry.3	comp-c-man
 ./usr/share/man/man3/cdk.3		comp-c-man
 ./usr/share/man/man3/cdk_alphalist.3	comp-c-man
 ./usr/share/man/man3/cdk_binding.3	comp-c-man
@@ -3737,6 +3743,7 @@
 ./usr/share/man/man3/cdk_cdk.3		comp-c-man
 ./usr/share/man/man3/cdk_dialog.3	comp-c-man
 ./usr/share/man/man3/cdk_display.3	comp-c-man
+./usr/share/man/man3/cdk_entry.3	comp-c-man
 ./usr/share/man/man3/cdk_fselect.3	comp-c-man
 ./usr/share/man/man3/cdk_graph.3	comp-c-man
 ./usr/share/man/man3/cdk_histogram.3	comp-c-man
@@ -4176,9 +4183,12 @@
 ./usr/share/man/man3/killpg.3		comp-c-man
 ./usr/share/man/man3/krb5_425_conv_principal.3	comp-c-man
 ./usr/share/man/man3/krb5_appdefault.3	comp-c-man
+./usr/share/man/man3/krb5_auth_context.3	comp-c-man
 ./usr/share/man/man3/krb5_build_principal.3	comp-c-man
 ./usr/share/man/man3/krb5_config.3	comp-c-man
+./usr/share/man/man3/krb5_context.3	comp-c-man
 ./usr/share/man/man3/krb5_free_principal.3	comp-c-man
+./usr/share/man/man3/krb5_init_context.3	comp-c-man
 ./usr/share/man/man3/krb5_openlog.3	comp-c-man
 ./usr/share/man/man3/krb5_parse_name.3	comp-c-man
 ./usr/share/man/man3/krb5_sname_to_principal.3	comp-c-man
@@ -4996,6 +5006,9 @@
 ./usr/share/man/man9/mtocl.9		comp-sys-man
 ./usr/share/man/man9/mtod.9		comp-sys-man
 ./usr/share/man/man9/panic.9		comp-sys-man
+./usr/share/man/man9/pci_conf_interrupt.9	comp-sys-man
+./usr/share/man/man9/pci_configure_bus.9	comp-sys-man
+./usr/share/man/man9/pci_intr.9		comp-sys-man
 ./usr/share/man/man9/pfil.9		comp-sys-man
 ./usr/share/man/man9/pfil_add_hook.9		comp-sys-man
 ./usr/share/man/man9/pfil_hook_get.9		comp-sys-man
@@ -5065,13 +5078,13 @@
 ./usr/share/man/man9/splx.9		comp-sys-man
 ./usr/share/man/man9/sprintf.9		comp-sys-man
 ./usr/share/man/man9/store.9		comp-sys-man
+./usr/share/man/man9/subyte.9		comp-sys-man
+./usr/share/man/man9/suibyte.9		comp-sys-man
+./usr/share/man/man9/suiword.9		comp-sys-man
 ./usr/share/man/man9/sun3/isr_add.9		comp-sys-man
 ./usr/share/man/man9/sun3/isr_add_autovect.9		comp-sys-man
 ./usr/share/man/man9/sun3/isr_add_custom.9		comp-sys-man
 ./usr/share/man/man9/sun3/isr_add_vectored.9		comp-sys-man
-./usr/share/man/man9/subyte.9		comp-sys-man
-./usr/share/man/man9/suibyte.9		comp-sys-man
-./usr/share/man/man9/suiword.9		comp-sys-man
 ./usr/share/man/man9/suswintr.9		comp-sys-man
 ./usr/share/man/man9/susword.9		comp-sys-man
 ./usr/share/man/man9/suword.9		comp-sys-man
