@@ -1,4 +1,4 @@
-/*	$NetBSD: skeyinit.c,v 1.9 1998/07/06 06:54:54 mrg Exp $	*/
+/*	$NetBSD: skeyinit.c,v 1.10 1998/07/06 14:54:05 mrg Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
  *
@@ -49,6 +49,7 @@ main(argc, argv)
 	time(&now);
 	tm = localtime(&now);
 	strftime(tbuf, sizeof(tbuf), "%M%j", tm);
+	tbuf[sizeof(tbuf) - 1] = '\0';
 
 	if (gethostname(hostname, sizeof(hostname)) < 0)
 		err(1, "gethostname");
@@ -89,7 +90,6 @@ main(argc, argv)
 	setpriority(PRIO_PROCESS, 0, -4);
 
 	if (getuid() != 0) {
-		setpriority(PRIO_PROCESS, 0, -4);
 
 		pw = getpass("Password:");
 		p = crypt(pw, salt);
