@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: amd,v 1.6 2000/09/19 13:04:38 lukem Exp $
+# $NetBSD: amd,v 1.7 2000/11/21 12:20:12 veego Exp $
 #
 
 # PROVIDE: amd
@@ -13,8 +13,8 @@ rcvar=$name
 command="/usr/sbin/${name}"
 load_rc_config $name
 
-command_args='-p -a '$amd_dir' `sed s/#.*$// <'$amd_master'` >/var/run/amd.pid'
-required_files="$amd_master"
+command_args='-p -a '$amd_dir' -F /etc/amd.conf >/var/run/amd.pid'
+required_files="/etc/amd.conf"
 required_dirs="$amd_dir"
 required_vars="rpcbind"
 
