@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.3 2004/05/28 21:44:15 christos Exp $ */
+/*	$NetBSD: display.c,v 1.4 2004/06/03 19:18:41 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,15 +37,21 @@
  */
 
 #include <sys/ioctl.h>
-#include <stdio.h>
 #include <sys/time.h>
-#include <dev/wscons/wsconsio.h>
+
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
 #include <err.h>
+
+#include <dev/wscons/wsconsio.h>
+
 #include "wsconsctl.h"
 
 static int dpytype;
 static struct wsdisplay_usefontdata font;
 static struct wsdisplay_scroll_data scroll_l;
+static int havescroll = 1;
 
 struct field display_field_tab[] = {
     { "type",			&dpytype,	FMT_DPYTYPE,	FLG_RDONLY },
@@ -57,6 +63,19 @@ struct field display_field_tab[] = {
 int display_field_tab_len = sizeof(display_field_tab)/
 			     sizeof(display_field_tab[0]);
 
+static int
+init_values(void)
+{
+	scroll_l.which = 0;
+
+	if (field_by_value(&scroll_l.fastlines)->flags & FLG_GET)
+		scroll_l.which |= WSDISPLAY_SCROLL_DOFASTLINES;
+	if (field_by_value(&scroll_l.slowlines)->flags & FLG_GET)
+		scroll_l.which |= WSDISPLAY_SCROLL_DOSLOWLINES;
+
+	return scroll_l.which;
+
+}
 void
 display_get_values(fd)
 	int fd;
@@ -65,14 +84,15 @@ display_get_values(fd)
 		if (ioctl(fd, WSDISPLAYIO_GTYPE, &dpytype) < 0)
 			err(1, "WSDISPLAYIO_GTYPE");
 	
-	scroll_l.which = 0;
-	if (field_by_value(&scroll_l.fastlines)->flags & FLG_GET)
-		scroll_l.which |= WSDISPLAY_SCROLL_DOFASTLINES;
-	if (field_by_value(&scroll_l.slowlines)->flags & FLG_GET)
-		scroll_l.which |= WSDISPLAY_SCROLL_DOSLOWLINES;
-	if (scroll_l.which != 0 && 
-		ioctl(fd, WSDISPLAYIO_DGSCROLL, &scroll_l) < 0)
+	if (init_values() == 0 || havescroll == 0)
+		return;
+
+	if (ioctl(fd, WSDISPLAYIO_DGSCROLL, &scroll_l) < 0) {
+		if (errno != ENODEV)
 			err(1, "WSDISPLAYIO_GSCROLL");
+		else
+			havescroll = 0;
+	}
 }
 
 void
@@ -85,18 +105,20 @@ display_put_values(fd)
 		pr_field(field_by_value(&font.name), " -> ");
 	}
 	
-	scroll_l.which = 0;
-	if (field_by_value(&scroll_l.fastlines)->flags & FLG_SET)
-		scroll_l.which |= WSDISPLAY_SCROLL_DOFASTLINES;
-	if (field_by_value(&scroll_l.slowlines)->flags & FLG_SET)
-		scroll_l.which |= WSDISPLAY_SCROLL_DOSLOWLINES;
+	if (init_values() == 0 || havescroll == 0)
+		return;
 
 	if (scroll_l.which & WSDISPLAY_SCROLL_DOFASTLINES)
 		pr_field(field_by_value(&scroll_l.fastlines), " -> ");
 	if (scroll_l.which & WSDISPLAY_SCROLL_DOSLOWLINES)
 		pr_field(field_by_value(&scroll_l.slowlines), " -> ");
-	if (scroll_l.which != 0 &&
-		ioctl(fd, WSDISPLAYIO_DSSCROLL, &scroll_l) < 0)
-		err (1, "WSDISPLAYIO_SSCROLL");
 
+	if (ioctl(fd, WSDISPLAYIO_DSSCROLL, &scroll_l) < 0) {
+		if (errno != ENODEV)
+			err (1, "WSDISPLAYIO_DSSCROLL");
+		else {
+			warnx("scrolling is not supported by this kernel");
+			havescroll = 0;
+		}
+	}
 }
