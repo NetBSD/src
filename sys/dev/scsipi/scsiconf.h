@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.34 1996/12/10 21:06:31 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -124,7 +124,7 @@ struct scsi_device {
 	 * we're simply notifying the upper-level driver that the command
 	 * is complete and expect no status back.
 	 */
-	int	(*done)  __P((struct scsi_xfer *, int));
+	void	(*done)  __P((struct scsi_xfer *));
 };
 
 /*
