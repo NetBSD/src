@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.70 1998/04/15 20:35:37 drochner Exp $
+# $NetBSD: files.alpha,v 1.71 1998/04/18 01:19:08 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -182,6 +182,16 @@ include "dev/isa/files.isa"
 
 #file	arch/alpha/isa/isafcns_jensen.c	dec_2000_300
 
+# XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
+# XXX BECAUSE NOT ALL PORTS USE THE MI DRIVER YET.  (when the conf/files
+# XXX and files.isa bogons are fixed, this can be fixed as well.)
+
+# PCI IDE controllers
+device	pciide {[channel = -1]}
+attach	pciide at pci
+file	dev/pci/pciide.c		pciide
+attach	wdc at pciide with wdc_pciide
+file	dev/pci/wdc_pciide.c		wdc_pciide
 
 #
 # ISA Bus devices
@@ -215,6 +225,8 @@ include "dev/eisa/files.eisa"
 #
 
 # include "dev/pci/files.pci" XXX SEE ABOVE
+
+file	arch/alpha/pci/pciide_machdep.c		pciide
 
 define	alpha_pci_sgmap_pte32
 file	arch/alpha/pci/pci_sgmap_pte32.c	alpha_pci_sgmap_pte32
