@@ -1,4 +1,4 @@
-/*	$NetBSD: sa1111_var.h,v 1.5 2003/08/08 12:29:23 bsh Exp $	*/
+/*	$NetBSD: sa11x1_pcicvar.h,v 1.1 2003/08/08 12:29:23 bsh Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,50 +35,26 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _SA1111_VAR_H
-#define _SA1111_VAR_H
 
+#ifndef _SA11X1_PCICVAR_H_
+#define _SA11X1_PCICVAR_H_
 
-struct sacc_intrhand {
-	void *ih_soft;
-	int ih_irq;
-	struct sacc_intrhand *ih_next;
-};
-
-struct sacc_intrvec {
-	u_int32_t lo;	/* bits 0..31 */
-	u_int32_t hi;	/* bits 32..54 */
-};
-
-struct sacc_softc {
-	struct device sc_dev;
-	bus_space_tag_t sc_iot;
+struct sacpcic_softc {
+	struct sapcic_softc sc_pc;
 	bus_space_handle_t sc_ioh;
-	bus_space_tag_t sc_piot;	/* parent(SA1110)'s iot */
-	bus_space_handle_t sc_gpioh;
-
-	u_int32_t sc_gpiomask;	/* SA1110 GPIO mask */
-
-	struct sacc_intrvec sc_imask;
-	struct sacc_intrhand *sc_intrhand[SACCIC_LEN];
-	int sc_intrtype[SACCIC_LEN];
+	
+	struct sapcic_socket sc_socket[2];
 };
 
-typedef void *sacc_chipset_tag_t;
+void	sacpcic_attach_common(struct sacc_softc *, struct sacpcic_softc *,
+	    void *, void (*)(struct sapcic_socket *));
 
-struct sa1111_attach_args {
-	bus_addr_t		sa_addr;	/* i/o address  */
-	bus_size_t		sa_size;
-	int			sa_intr;
-};
+int	sacpcic_read(struct sapcic_socket *, int);
+void	sacpcic_write(struct sapcic_socket *, int, int);
+void	sacpcic_set_power(struct sapcic_socket *, int);
+void	sacpcic_clear_intr(int);
+void	*sacpcic_intr_establish(struct sapcic_socket *, int,
+				       int (*)(void *), void *);
+void	sacpcic_intr_disestablish(struct sapcic_socket *, void *);
 
-#define IST_EDGE_RAISE	6
-#define IST_EDGE_FALL	7
-
-void *sacc_intr_establish(sacc_chipset_tag_t *, int, int, int,
-			  int (*)(void *), void *);
-void sacc_intr_disestablish(sacc_chipset_tag_t *, void *);
-int	sacc_probe(struct device *, struct cfdata *, void *);
-int	sa1111_search(struct device *, struct cfdata *, void *);
-
-#endif /* _SA1111_VAR_H */
+#endif /* _SA11X1_PCICVAR_H_ */
