@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3_startup.c,v 1.63 1997/02/18 15:30:01 gwr Exp $	*/
+/*	$NetBSD: sun3_startup.c,v 1.64 1997/03/13 15:58:56 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -318,7 +318,7 @@ _vm_init(kehp)
 	/* This will advance esym past the symbols. */
 	_save_symtab(kehp);
 #endif
-	virtual_avail = sun3_round_page(esym);
+	virtual_avail = _round_page(esym);
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 
 	/*
@@ -335,7 +335,7 @@ _vm_init(kehp)
 		/* PROM version 1 or later. */
 		avail_end = *rvec->memoryAvail;
 	}
-	avail_end = sun3_trunc_page(avail_end);
+	avail_end = _trunc_page(avail_end);
 
 	/*
 	 * Steal some special-purpose, already mapped pages.
@@ -396,7 +396,7 @@ _vm_init(kehp)
 	 * clean out the rest of the last used segment.
 	 * After this point, virtual_avail is seg-aligned.
 	 */
-	virtual_avail = sun3_round_seg(virtual_avail);
+	virtual_avail = _round_seg(virtual_avail);
 	while (va < virtual_avail) {
 		set_pte(va, PG_INVAL);
 		va += NBPG;
@@ -439,8 +439,8 @@ _vm_init(kehp)
 	 * Clear-out pmegs left in DVMA space by the PROM.
 	 * DO NOT kill the last one! (owned by the PROM!)
 	 */
-	va  = sun3_trunc_seg(DVMA_SPACE_START);
-	eva = sun3_trunc_seg(DVMA_SPACE_END);  /* Yes trunc! */
+	va  = _trunc_seg(DVMA_SPACE_START);
+	eva = _trunc_seg(DVMA_SPACE_END);  /* Yes trunc! */
 	while (va < eva) {
 		set_segmap(va, SEGINV);
 		va += NBSG;
@@ -510,7 +510,7 @@ _vm_init(kehp)
 
 	/* text */
 	va = (vm_offset_t) kernel_text;
-	eva = sun3_trunc_page(etext);
+	eva = _trunc_page(etext);
 	while (va < eva) {
 		pte = get_pte(va);
 		if ((pte & (PG_VALID|PG_TYPE)) != PG_VALID) {
@@ -524,7 +524,7 @@ _vm_init(kehp)
 	}
 
 	/* data and bss */
-	eva = sun3_round_page(end);
+	eva = _round_page(end);
 	while (va < eva) {
 		pte = get_pte(va);
 		if ((pte & (PG_VALID|PG_TYPE)) != PG_VALID) {

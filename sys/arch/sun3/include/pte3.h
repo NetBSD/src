@@ -1,4 +1,4 @@
-/*	$NetBSD: pte3.h,v 1.13 1997/01/27 19:41:08 gwr Exp $	*/
+/*	$NetBSD: pte3.h,v 1.14 1997/03/13 15:58:49 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -88,15 +88,16 @@
 
 /*
  * Mach derived conversion macros
+ * Used only in sys/arch/_MACHINE
  */
-#define sun3_round_seg(x)	((((unsigned)(x)) + SEGOFSET) & ~SEGOFSET)
-#define sun3_trunc_seg(x)	((unsigned)(x) & ~SEGOFSET)
-#define sun3_btos(x)		((unsigned)(x) >> SEGSHIFT)
-#define sun3_stob(x)		((unsigned)(x) << SEGSHIFT)
+#define _round_seg(x)	((((unsigned)(x)) + SEGOFSET) & ~SEGOFSET)
+#define _trunc_seg(x)	((unsigned)(x) & ~SEGOFSET)
+#define _btos(x)	((unsigned)(x) >> SEGSHIFT)
+#define _stob(x)	((unsigned)(x) << SEGSHIFT)
 
-#define sun3_round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
-#define sun3_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
-#define sun3_btop(x)		((unsigned)(x) >> PGSHIFT)
-#define sun3_ptob(x)		((unsigned)(x) << PGSHIFT)
+#define _round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
+#define _trunc_page(x)	((unsigned)(x) & ~PGOFSET)
+#define _btop(x)	((unsigned)(x) >> PGSHIFT)
+#define _ptob(x)	((unsigned)(x) << PGSHIFT)
 
 #endif /* !_MACHINE_PTE_H*/
