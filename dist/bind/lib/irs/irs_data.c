@@ -1,4 +1,4 @@
-/*	$NetBSD: irs_data.c,v 1.1.1.1 1999/11/20 18:54:10 veego Exp $	*/
+/*	$NetBSD: irs_data.c,v 1.2 2000/03/02 18:08:44 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -32,6 +32,7 @@ static const char rcsid[] = "Id: irs_data.c,v 1.14 1999/10/13 16:39:31 vixie Exp
 
 #include <resolv.h>
 #include <stdio.h>
+#include <string.h>
 #include <isc/memcluster.h>
 
 #ifdef DO_PTHREADS
