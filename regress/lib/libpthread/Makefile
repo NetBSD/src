@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2003/07/22 21:28:23 nathanw Exp $
+#	$NetBSD: Makefile,v 1.16 2003/09/12 21:15:05 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,7 @@ ARCHSUBDIR=     ${MACHINE_CPU}
 
 SUBDIR+= atexit barrier1 cancel2 cond1 cond2 cond3 cond4 cond5 exit1 \
 	 fork mutex1 mutex2 mutex3 mutex4 name once1 once2 preempt1 sem \
-	 sigsuspend
+	 sigalarm sigsuspend
 
 .endif
 
