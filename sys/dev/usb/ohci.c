@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.101 2001/02/20 15:20:32 minoura Exp $	*/
+/*	$NetBSD: ohci.c,v 1.102 2001/04/01 15:00:29 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -2063,6 +2063,7 @@ ohci_abort_xfer_end(void *v)
 	p = xfer->hcpriv;
 #ifdef DIAGNOSTIC
 	if (p == NULL) {
+		splx(s);
 		printf("ohci_abort_xfer: hcpriv==0\n");
 		return;
 	}
@@ -3166,6 +3167,7 @@ ohci_device_isoc_abort(usbd_xfer_handle xfer)
 	sitd = xfer->hcpriv;
 #ifdef DIAGNOSTIC
 	if (sitd == NULL) {
+		splx(s);
 		printf("ohci_device_isoc_abort: hcpriv==0\n");
 		return;
 	}
