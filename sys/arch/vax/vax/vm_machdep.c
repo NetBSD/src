@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.32 1997/06/07 12:15:27 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.33 1997/07/06 22:38:22 ragge Exp $       */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -106,8 +106,8 @@ cpu_fork(p1, p2)
 
 	nyproc = &p2->p_addr->u_pcb;
 	tf = p1->p_addr->u_pcb.framep;
-	opmap = &p1->p_vmspace->vm_pmap;
-	pmap = &p2->p_vmspace->vm_pmap;
+	opmap = p1->p_vmspace->vm_map.pmap;
+	pmap = p2->p_vmspace->vm_map.pmap;
 	pmap->pm_pcb = nyproc;
 
 #ifdef notyet
