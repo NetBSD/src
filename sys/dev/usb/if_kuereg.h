@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kuereg.h,v 1.1 2000/01/17 01:38:43 augustss Exp $	*/
+/*	$NetBSD: if_kuereg.h,v 1.2 2000/01/28 00:45:55 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -116,7 +116,6 @@ struct kue_ether_desc {
 #define KUE_TIMEOUT		1000
 #define ETHER_ALIGN		2
 #define KUE_BUFSZ		1536
-#define KUE_CUTOFF		1088
 #define KUE_MIN_FRAMELEN	60
 
 #define KUE_RX_LIST_CNT		1
