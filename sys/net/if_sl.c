@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.54 1999/03/25 00:52:14 tron Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.55 1999/03/27 22:48:36 dbj Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -476,7 +476,9 @@ slstart(tp)
 		if (tp->t_outq.c_cc != 0) {
 			(*tp->t_oproc)(tp);
 			if (tp->t_outq.c_cc > SLIP_HIWAT) {
+#if NBPFILTER > 0
 				if (bpfbuf != NULL) FREE(bpfbuf, M_DEVBUF);
+#endif
 				return;
 			}
 		}
@@ -484,7 +486,9 @@ slstart(tp)
 		 * This happens briefly when the line shuts down.
 		 */
 		if (sc == NULL) {
+#if NBPFILTER > 0
 			if (bpfbuf != NULL) FREE(bpfbuf, M_DEVBUF);
+#endif
 			return;
 		}
 
@@ -496,7 +500,9 @@ slstart(tp)
 		 * escapes this could be as bad as MTU*2+2.
 		 */
 		if (tp->t_outq.c_cn - tp->t_outq.c_cc < 2*sc->sc_if.if_mtu+2) {
+#if NBPFILTER > 0
 			if (bpfbuf != NULL) FREE(bpfbuf, M_DEVBUF);
+#endif
 			return;
 		}
 #endif /* __NetBSD__ */
@@ -512,7 +518,9 @@ slstart(tp)
 			IF_DEQUEUE(&sc->sc_if.if_snd, m);
 		splx(s);
 		if (m == NULL) {
+#if NBPFILTER > 0
 			if (bpfbuf != NULL) FREE(bpfbuf, M_DEVBUF);
+#endif
 			return;
 		}
 
