@@ -1,0 +1,2 @@
+# $NetBSD: obsolete.newsmips,v 1.1 1999/11/09 22:00:45 kleink Exp $
+/usr/include/newsmips/elf.h
