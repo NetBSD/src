@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.17 2001/07/19 04:27:37 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.18 2001/07/19 06:40:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.17 2001/07/19 04:27:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.18 2001/07/19 06:40:01 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -46,6 +46,11 @@ int			__C(SGMAP_TYPE,_debug) = 0;
 #endif
 
 SGMAP_PTE_TYPE		__C(SGMAP_TYPE,_prefetch_spill_page_pte);
+
+int			__C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t,
+			    bus_dmamap_t, void *buf, size_t buflen,
+			    struct proc *, int, int *,
+			    struct alpha_sgmap *);
 
 void
 __C(SGMAP_TYPE,_init_spill_page_pte)(void)
@@ -57,8 +62,9 @@ __C(SGMAP_TYPE,_init_spill_page_pte)(void)
 }
 
 int
-__C(SGMAP_TYPE,_load)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
-    bus_size_t buflen, struct proc *p, int flags, struct alpha_sgmap *sgmap)
+__C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    size_t buflen, struct proc *p, int flags, int *segp,
+    struct alpha_sgmap *sgmap)
 {
 	vaddr_t endva, va = (vaddr_t)buf;
 	paddr_t pa;
@@ -67,20 +73,9 @@ __C(SGMAP_TYPE,_load)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	SGMAP_PTE_TYPE *pte, *page_table = sgmap->aps_pt;
 	int pteidx, error, spill;
 
-	/*
-	 * Initialize the spill page PTE if that hasn't already been done.
-	 */
+	/* Initialize the spill page PTE if it hasn't been already. */
 	if (__C(SGMAP_TYPE,_prefetch_spill_page_pte) == 0)
 		__C(SGMAP_TYPE,_init_spill_page_pte)();
-
-	/*
-	 * Make sure that on error condition we return "no valid mappings".
-	 */
-	map->dm_mapsize = 0;
-	map->dm_nsegs = 0;
-
-	if (buflen > map->_dm_size)
-		return (EINVAL);
 
 	/*
 	 * Remember the offset into the first page and the total
@@ -133,6 +128,8 @@ __C(SGMAP_TYPE,_load)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 
 	error = extent_alloc(sgmap->aps_ex, sgvalen, alignment, boundary,
 	    (flags & BUS_DMA_NOWAIT) ? EX_NOWAIT : EX_WAITOK, &sgva);
+	if (error)
+		return (error);
 
 #if 0
 	printf("error %d sgva 0x%lx\n", error, sgva);
@@ -149,19 +146,18 @@ __C(SGMAP_TYPE,_load)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 #endif
 
 	/* Generate the DMA address. */
-	map->dm_segs[0].ds_addr = sgmap->aps_wbase | sgva | dmaoffset;
-	map->dm_segs[0].ds_len = buflen;
+	map->dm_segs[*segp].ds_addr = sgmap->aps_wbase | sgva | dmaoffset;
+	map->dm_segs[*segp].ds_len = buflen;
 
 #ifdef SGMAP_DEBUG
 	if (__C(SGMAP_TYPE,_debug))
 		printf("sgmap_load: wbase = 0x%lx, vpage = 0x%x, "
-		    "dma addr = 0x%lx\n", sgmap->aps_wbase,
-		    (pteidx << SGMAP_ADDR_PTEIDX_SHIFT),
+		    "dma addr = 0x%lx\n", sgmap->aps_wbase, sgva,
 		    map->dm_segs[0].ds_addr);
 #endif
 
 	for (; va < endva; va += NBPG, pteidx++,
-	     pte = &page_table[pteidx * SGMAP_PTE_SPACING]) {
+	    pte = &page_table[pteidx * SGMAP_PTE_SPACING]) {
 		/* Get the physical address for this segment. */
 		if (p != NULL)
 			(void) pmap_extract(p->p_vmspace->vm_map.pmap, va,
@@ -191,23 +187,95 @@ __C(SGMAP_TYPE,_load)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 #endif
 	}
 
+	return (0);
+}
+
+int
+__C(SGMAP_TYPE,_load)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags, struct alpha_sgmap *sgmap)
+{
+	int seg, error;
+
+	/*
+	 * Make sure that on error condition we return "no valid mappings".
+	 */
+	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
+
+	if (buflen > map->_dm_size)
+		return (EINVAL);
+
+	seg = 0;
+	error = __C(SGMAP_TYPE,_load_buffer)(t, map, buf, buflen, p,
+	    flags, &seg, sgmap);
+
 	alpha_mb();
 
 #if defined(SGMAP_DEBUG) && defined(DDB)
 	if (__C(SGMAP_TYPE,_debug) > 1)
 		Debugger();
 #endif
-	map->dm_mapsize = buflen;
-	map->dm_nsegs = 1;
-	return (0);
+
+	if (error == 0) {
+		map->dm_mapsize = buflen;
+		map->dm_nsegs = 1;
+	} else if (t->_next_window != NULL) {
+		/* Give the next window a chance. */
+		error = bus_dmamap_load(t->_next_window, map, buf, buflen,
+		    p, flags);
+	}
+	return (error);
 }
 
 int
 __C(SGMAP_TYPE,_load_mbuf)(bus_dma_tag_t t, bus_dmamap_t map,
-    struct mbuf *m, int flags, struct alpha_sgmap *sgmap)
+    struct mbuf *m0, int flags, struct alpha_sgmap *sgmap)
 {
+	struct mbuf *m;
+	int seg, error;
 
-	panic(__S(__C(SGMAP_TYPE,_load_mbuf)) ": not implemented");
+	/*
+	 * Make sure that on error condition we return "no valid mappings".
+	 */
+	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
+
+#ifdef DIAGNOSTIC
+	if ((m0->m_flags & M_PKTHDR) == 0)
+		panic(__S(__C(SGMAP_TYPE,_load_mbuf)) ": no packet header");
+#endif
+
+	if (m0->m_pkthdr.len > map->_dm_size)
+		return (EINVAL);
+
+	seg = 0;
+	error = 0;
+	for (m = m0; m != NULL && error == 0; m = m->m_next, seg++)
+		error = __C(SGMAP_TYPE,_load_buffer)(t, map,
+		    m->m_data, m->m_len, NULL, flags, &seg, sgmap);
+
+	alpha_mb();
+
+#if defined(SGMAP_DEBUG) && defined(DDB)
+	if (__C(SGMAP_TYPE,_debug) > 1)
+		Debugger();
+#endif
+
+	if (error == 0) {
+		map->dm_mapsize = m0->m_pkthdr.len;
+		map->dm_nsegs = seg;
+	} else {
+		/* Need to back out what we've done so far. */
+		map->dm_nsegs = seg - 1;
+		__C(SGMAP_TYPE,_unload)(t, map, sgmap);
+		if (t->_next_window != NULL) {
+			/* Give the next window a chance. */
+			error = bus_dmamap_load_mbuf(t->_next_window, map,
+			    m0, flags);
+		}
+	}
+
+	return (error);
 }
 
 int
