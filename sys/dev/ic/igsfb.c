@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.12 2003/05/31 23:22:27 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.13 2003/06/10 22:07:38 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.12 2003/05/31 23:22:27 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.13 2003/06/10 22:07:38 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1258,7 +1258,7 @@ igsfb_accel_copy(dc, src, dst, width, height)
 
 	drawcmd = IGS_COP_DRAW_ALL;
 	if (dst > src) {
-		toend = height * dc->dc_ri.ri_width;
+		toend = dc->dc_ri.ri_width * (height - 1) + (width - 1);
 		src += toend;
 		dst += toend;
 		drawcmd |= IGS_COP_OCTANT_X_NEG | IGS_COP_OCTANT_Y_NEG;
