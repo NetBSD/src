@@ -1,4 +1,4 @@
-.\"	$NetBSD: dumpfs.8,v 1.14 2003/08/30 10:30:52 dsl Exp $
+.\"	$NetBSD: dumpfs.8,v 1.15 2003/08/30 12:48:01 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,19 +37,19 @@
 .Nd dump file system information
 .Sh SYNOPSIS
 .Nm
-.Op Fl Fcimsv
+.Op Fl cFimsv
 .Ar filesys No \&| Ar device
-.Op Ar \&.\&.\&.
+.Op Ar ...
 .Sh DESCRIPTION
 .Nm
 prints out detailed information about the specified filesystems.
 .Pp
 Options:
 .Bl -tag -width Ds
-.It Fl F
-Dump a file system image from a file, not a special device.
 .It Fl c
 Print details of each cylinder group.
+.It Fl F
+Dump a file system image from a file, not a special device.
 .It Fl i
 Print details of each allocated inode.
 .It Fl m
@@ -63,7 +63,7 @@ Be even more verbose.
 If none of
 .Fl c ,
 .Fl i ,
-.Fl m 
+.Fl m ,
 or
 .Fl s
 are given, then
@@ -98,7 +98,8 @@ command appeared in
 The
 .Fl c ,
 .Fl i ,
-.Fl m
+.Fl m ,
 and
 .Fl s
-options, and the inode dump were added for NetBSD 2.0.
+options, and the inode dump were added for
+.Nx 2.0 .
