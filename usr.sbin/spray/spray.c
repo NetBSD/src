@@ -1,3 +1,5 @@
+/*	$NetBSD: spray.c,v 1.4 1996/08/30 20:12:20 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1993 Winning Strategies, Inc.
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: spray.c,v 1.3 1994/12/23 16:42:47 cgd Exp $
  */
 
 #include <stdio.h>

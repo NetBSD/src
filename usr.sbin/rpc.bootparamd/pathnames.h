@@ -1,8 +1,8 @@
+/*	$NetBSD: pathnames.h,v 1.2 1996/08/30 20:10:29 thorpej Exp $	*/
+
 /*
  * Written Roland McGrath <roland@frob.com> 10/15/93.
  * Public domain.
- *
- * $Id: pathnames.h,v 1.1 1994/01/10 14:04:48 deraadt Exp $
  */
 
 #include <paths.h>
