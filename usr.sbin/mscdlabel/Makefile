@@ -1,12 +1,12 @@
-# $NetBSD: Makefile,v 1.2 2002/09/18 03:54:33 lukem Exp $
+# $NetBSD: Makefile,v 1.3 2002/11/30 06:00:42 lukem Exp $
 
 .include <bsd.own.mk>
 
 PROG=	mscdlabel
 SRCS=	main.c dkcksum.c
-LDADD=	-lutil
+DPADD+=	${LIBUTIL}
+LDADD+=	-lutil
 MAN=	mscdlabel.8
-WARNS=	1
 
 DISKLABEL_SRC=	${NETBSDSRCDIR}/sbin/disklabel
 
