@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudiovar.h,v 1.8 1999/11/19 23:50:21 augustss Exp $	*/
+/*	$NetBSD: ossaudiovar.h,v 1.8.4.1 2000/08/07 00:28:48 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -163,6 +163,9 @@ struct oss_old_mixer_info {
 
 #define OSS_SOUND_MIXER_INFO		_OSS_IOR('M', 101, struct oss_mixer_info)
 #define OSS_SOUND_OLD_MIXER_INFO	_OSS_IOR('M', 101, struct oss_old_mixer_info)
+
+#define OSS_SOUND_VERSION   0x030000
+#define OSS_GET_VERSION			_OSS_IOR('M', 118, int)
 
 #define OSS_GET_DEV(com) ((com) & 0xff)
 
