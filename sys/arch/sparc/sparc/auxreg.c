@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.19 1997/04/07 21:00:34 pk Exp $ */
+/*	$NetBSD: auxreg.c,v 1.20 1997/05/17 17:52:50 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -122,7 +122,14 @@ auxregattach(parent, self, aux)
 	struct romaux *ra = &ca->ca_ra;
 
 	(void)mapdev(ra->ra_reg, AUXREG_VA, 0, sizeof(long), ca->ca_bustype);
-	auxio_reg = CPU_ISSUN4M ? AUXIO4M_REG : AUXIO4C_REG;
+	if (CPU_ISSUN4M) {
+		auxio_reg = AUXIO4M_REG;
+		auxio_regval = *AUXIO4M_REG | AUXIO4M_MB1;
+	} else {
+		auxio_reg = AUXIO4C_REG;
+		auxio_regval = *AUXIO4C_REG | AUXIO4C_FEJ | AUXIO4C_MB1;
+	}
+
 	printf("\n");
 #ifdef BLINK
 	blink((caddr_t)0);
@@ -133,7 +140,7 @@ unsigned int
 auxregbisc(bis, bic)
 	int bis, bic;
 {
-	register int v, s;
+	register int s;
 
 	if (auxio_reg == 0)
 		/*
@@ -143,9 +150,8 @@ auxregbisc(bis, bic)
 		panic("no aux register");
 
 	s = splhigh();
-	v = *auxio_reg;
-	*auxio_reg = ((v | bis) & ~bic) |
-		     (CPU_ISSUN4M ? AUXIO4M_MB1 : AUXIO4C_MB1);
+	auxio_regval = (auxio_regval | bis) & ~bic;
+	*auxio_reg = auxio_regval;
 	splx(s);
-	return v;
+	return (auxio_regval);
 }

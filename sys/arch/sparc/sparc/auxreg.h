@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.h,v 1.6 1997/04/07 21:00:35 pk Exp $ */
+/*	$NetBSD: auxreg.h,v 1.7 1997/05/17 17:52:52 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,33 +72,46 @@
 #define	AUXIO4M_REG	((volatile u_char *)(AUXREG_VA))
 
 #define LED_ON		do {						\
-	if (CPU_ISSUN4M)						\
-		*AUXIO4M_REG = *AUXIO4M_REG|AUXIO4M_MB1|AUXIO4M_LED;	\
-	else								\
-		*AUXIO4C_REG = AUXIO4C_MB1|AUXIO4C_FEJ|AUXIO4C_LED;	\
+	if (CPU_ISSUN4M) {						\
+		auxio_regval |= AUXIO4M_LED;				\
+		*AUXIO4M_REG = auxio_regval;				\
+	} else {							\
+		auxio_regval |= AUXIO4C_LED;				\
+		*AUXIO4C_REG = auxio_regval;				\
+	}								\
 } while(0)
 
 #define LED_OFF		do {						\
-	if (CPU_ISSUN4M)						\
-		*AUXIO4M_REG = (*AUXIO4M_REG & ~AUXIO4M_LED)|AUXIO4M_MB1;\
-	else								\
-		*AUXIO4C_REG = AUXIO4C_MB1|AUXIO4C_FEJ;			\
+	if (CPU_ISSUN4M) {						\
+		auxio_regval &= ~AUXIO4M_LED;				\
+		*AUXIO4M_REG = auxio_regval;				\
+	} else {							\
+		auxio_regval &= ~AUXIO4C_LED;				\
+		*AUXIO4C_REG = auxio_regval;				\
+	}								\
 } while(0)
 
 #define LED_FLIP	do {						\
-	if (CPU_ISSUN4M)						\
-		*AUXIO4M_REG = (*AUXIO4M_REG | AUXIO4M_MB1) ^ AUXIO4M_LED;\
-	else								\
-		*AUXIO4C_REG = (*AUXIO4C_REG | AUXIO4C_MB1) ^ AUXIO4C_LED;\
+	if (CPU_ISSUN4M) {						\
+		auxio_regval ^= AUXIO4M_LED;				\
+		*AUXIO4M_REG = auxio_regval;				\
+	} else {							\
+		auxio_regval ^= AUXIO4C_LED;				\
+		*AUXIO4C_REG = auxio_regval;				\
+	}								\
 } while(0)
 
 #define FTC_FLIP	do {						\
-	if (CPU_ISSUN4M)						\
+	if (CPU_ISSUN4M) {						\
+		auxio_regval |= AUXIO4M_FTC;				\
+		*AUXIO4M_REG = auxio_regval;				\
 		*AUXIO4M_REG = *AUXIO4M_REG | AUXIO4M_MB1 | AUXIO4M_FTC;\
-	else {								\
-		*AUXIO4C_REG |= AUXIO4C_MB1 | AUXIO4C_FTC | AUXIO4C_FEJ;\
+	} else {							\
+		auxio_regval |= AUXIO4C_FTC;				\
+		*AUXIO4C_REG = auxio_regval;				\
 		DELAY(10);						\
-		*AUXIO4C_REG |= AUXIO4C_MB1 | AUXIO4C_FEJ;		\
+		auxio_regval &= ~AUXIO4C_FTC;				\
+		*AUXIO4C_REG = auxio_regval;				\
 	}								\
 } while(0)
 
@@ -110,6 +123,7 @@
 
 #ifndef _LOCORE
 volatile u_char *auxio_reg;	/* Copy of AUXIO_REG */
+u_char auxio_regval;
 unsigned int auxregbisc __P((int, int));
 #endif
 
