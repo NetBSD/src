@@ -1,4 +1,4 @@
-.\"	$NetBSD: rpc.sprayd.8,v 1.4 1997/05/25 03:55:58 cjs Exp $
+.\"	$NetBSD: rpc.sprayd.8,v 1.5 1997/10/20 02:51:47 enami Exp $
 .\" 
 .\" Copyright (c) 1994 Christos Zoulas
 .\" All rights reserved.
@@ -32,22 +32,22 @@
 .Dt RPC.SPRAYD 8
 .Os BSD 4.3
 .Sh NAME
-.Nm sprayd ,
-.Nm rpc.sprayd 
+.Nm rpc.sprayd ,
+.Nm sprayd
 .Nd spray server
 .Sh SYNOPSIS
 .Nm /usr/libexec/rpc.sprayd
 .Sh DESCRIPTION
-.Nm rpc.sprayd
+.Nm
 is a server which records packets sent by the
 .Xr spray 8
 command and sends a traffic report to the originator of the packets.
 The
-.Nm rpc.sprayd
+.Nm
 daemon is normally invoked by
 .Xr inetd 8 .
 .Pp
-.Nm rpc.sprayd
+.Nm
 uses an RPC protocol defined in 
 .Pa /usr/include/rpcsvc/spray.x .
 .Sh SEE ALSO
