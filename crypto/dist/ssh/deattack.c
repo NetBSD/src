@@ -1,4 +1,4 @@
-/*	$NetBSD: deattack.c,v 1.1.1.2 2001/01/14 04:50:17 itojun Exp $	*/
+/*	$OpenBSD: deattack.c,v 1.12 2001/01/21 19:05:48 markus Exp $	*/
 
 /*
  * Cryptographic attack detector for ssh - source code
@@ -19,16 +19,9 @@
  * <http://www.core-sdi.com>
  */
 
-/* from OpenBSD: deattack.c,v 1.11 2000/12/19 23:17:56 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: deattack.c,v 1.1.1.2 2001/01/14 04:50:17 itojun Exp $");
-#endif
-
 #include "includes.h"
 #include "deattack.h"
-#include "ssh.h"
+#include "log.h"
 #include "crc32.h"
 #include "getput.h"
 #include "xmalloc.h"
@@ -54,7 +47,7 @@ __RCSID("$NetBSD: deattack.c,v 1.1.1.2 2001/01/14 04:50:17 itojun Exp $");
 #define CMP(a,b)	(memcmp(a, b, SSH_BLOCKSIZE))
 
 
-static void
+void
 crc_update(u_int32_t *a, u_int32_t b)
 {
 	b ^= *a;
@@ -62,7 +55,7 @@ crc_update(u_int32_t *a, u_int32_t b)
 }
 
 /* detect if a block is used in a particular pattern */
-static int
+int
 check_crc(u_char *S, u_char *buf, u_int32_t len,
 	  u_char *IV)
 {

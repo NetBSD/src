@@ -1,5 +1,3 @@
-/*	$NetBSD: kex.c,v 1.1.1.2 2001/01/14 04:50:21 itojun Exp $	*/
-
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,35 +22,25 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: kex.c,v 1.16 2000/12/20 19:37:22 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: kex.c,v 1.1.1.2 2001/01/14 04:50:21 itojun Exp $");
-#endif
-
 #include "includes.h"
-
-#include "ssh.h"
-#include "ssh2.h"
-#include "xmalloc.h"
-#include "buffer.h"
-#include "bufaux.h"
-#include "packet.h"
-#include "compat.h"
-
-#include <openssl/bn.h>
-#include <openssl/dh.h>
+RCSID("$OpenBSD: kex.c,v 1.19 2001/02/04 15:32:23 stevesk Exp $");
 
 #include <openssl/crypto.h>
 #include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 #include <openssl/pem.h>
-#include <openssl/rand.h>
 
+#include "ssh2.h"
+#include "xmalloc.h"
+#include "buffer.h"
+#include "bufaux.h"
+#include "packet.h"
+#include "compat.h"
+#include "cipher.h"
 #include "kex.h"
 #include "key.h"
+#include "log.h"
 
 #define KEX_COOKIE_LEN	16
 
@@ -65,10 +53,8 @@ kex_init(char *myproposal[PROPOSAL_MAX])
 	int i;
 	Buffer *ki = xmalloc(sizeof(*ki));
 	for (i = 0; i < KEX_COOKIE_LEN; i++) {
-		if (i % 4 == 0) {
-			/* XXXthorpej */
-			RAND_pseudo_bytes((u_char *)&rand, sizeof(rand));
-		}
+		if (i % 4 == 0)
+			rand = arc4random();
 		cookie[i] = rand & 0xff;
 		rand >>= 8;
 	}
@@ -93,7 +79,7 @@ kex_exchange_kexinit(
 
 	debug("send KEXINIT");
 	packet_start(SSH2_MSG_KEXINIT);
-	packet_put_raw(buffer_ptr(my_kexinit), buffer_len(my_kexinit));	
+	packet_put_raw(buffer_ptr(my_kexinit), buffer_len(my_kexinit));
 	packet_send();
 	packet_write_wait();
 	debug("done");
@@ -214,7 +200,6 @@ dh_new_group1(void)
 	return (dh_new_group_asc(gen, group1));
 }
 
-#ifdef DEBUG_KEX
 void
 dump_digest(u_char *digest, int len)
 {
@@ -226,7 +211,6 @@ dump_digest(u_char *digest, int len)
 	}
 	fprintf(stderr, "\n");
 }
-#endif
 
 u_char *
 kex_hash(
@@ -260,7 +244,7 @@ kex_hash(
 	buffer_put_bignum2(&b, client_dh_pub);
 	buffer_put_bignum2(&b, server_dh_pub);
 	buffer_put_bignum2(&b, shared_secret);
-	
+
 #ifdef DEBUG_KEX
 	buffer_dump(&b);
 #endif
@@ -313,7 +297,7 @@ kex_hash_gex(
 	buffer_put_bignum2(&b, client_dh_pub);
 	buffer_put_bignum2(&b, server_dh_pub);
 	buffer_put_bignum2(&b, shared_secret);
-	
+
 #ifdef DEBUG_KEX
 	buffer_dump(&b);
 #endif
@@ -330,7 +314,7 @@ kex_hash_gex(
 	return digest;
 }
 
-static u_char *
+u_char *
 derive_key(int id, int need, u_char *hash, BIGNUM *shared_secret)
 {
 	Buffer b;
@@ -372,7 +356,7 @@ derive_key(int id, int need, u_char *hash, BIGNUM *shared_secret)
 #define	MAX_PROP	20
 #define	SEP	","
 
-static char *
+char *
 get_match(char *client, char *server)
 {
 	char *sproposals[MAX_PROP];
@@ -382,7 +366,7 @@ get_match(char *client, char *server)
 	c = cp = xstrdup(client);
 	s = sp = xstrdup(server);
 
-	for ((p = strsep(&sp, SEP)), i=0; p && *p != '\0'; 
+	for ((p = strsep(&sp, SEP)), i=0; p && *p != '\0';
 	     (p = strsep(&sp, SEP)), i++) {
 		if (i < MAX_PROP)
 			sproposals[i] = p;
@@ -391,7 +375,7 @@ get_match(char *client, char *server)
 	}
 	nproposals = i;
 
-	for ((p = strsep(&cp, SEP)), i=0; p && *p != '\0'; 
+	for ((p = strsep(&cp, SEP)), i=0; p && *p != '\0';
 	     (p = strsep(&cp, SEP)), i++) {
 		for (j = 0; j < nproposals; j++) {
 			if (strcmp(p, sproposals[j]) == 0) {
@@ -406,7 +390,7 @@ get_match(char *client, char *server)
 	xfree(s);
 	return NULL;
 }
-static void
+void
 choose_enc(Enc *enc, char *client, char *server)
 {
 	char *name = get_match(client, server);
@@ -420,7 +404,7 @@ choose_enc(Enc *enc, char *client, char *server)
 	enc->iv = NULL;
 	enc->key = NULL;
 }
-static void
+void
 choose_mac(Mac *mac, char *client, char *server)
 {
 	char *name = get_match(client, server);
@@ -441,7 +425,7 @@ choose_mac(Mac *mac, char *client, char *server)
 	mac->key = NULL;
 	mac->enabled = 0;
 }
-static void
+void
 choose_comp(Comp *comp, char *client, char *server)
 {
 	char *name = get_match(client, server);
@@ -456,7 +440,7 @@ choose_comp(Comp *comp, char *client, char *server)
 	}
 	comp->name = name;
 }
-static void
+void
 choose_kex(Kex *k, char *client, char *server)
 {
 	k->name = get_match(client, server);
@@ -469,7 +453,7 @@ choose_kex(Kex *k, char *client, char *server)
 	} else
 		fatal("bad kex alg %s", k->name);
 }
-static void
+void
 choose_hostkeyalg(Kex *k, char *client, char *server)
 {
 	char *hostkeyalg = get_match(client, server);
@@ -478,6 +462,7 @@ choose_hostkeyalg(Kex *k, char *client, char *server)
 	k->hostkey_type = key_type_from_name(hostkeyalg);
 	if (k->hostkey_type == KEY_UNSPEC)
 		fatal("bad hostkey alg '%s'", hostkeyalg);
+	xfree(hostkeyalg);
 }
 
 Kex *

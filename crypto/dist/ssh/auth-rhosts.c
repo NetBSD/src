@@ -1,5 +1,3 @@
-/*	$NetBSD: auth-rhosts.c,v 1.1.1.2 2001/01/14 04:49:58 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,21 +13,16 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: auth-rhosts.c,v 1.17 2000/12/19 23:17:55 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: auth-rhosts.c,v 1.1.1.2 2001/01/14 04:49:58 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: auth-rhosts.c,v 1.20 2001/02/03 10:08:36 markus Exp $");
 
 #include "packet.h"
-#include "pathnames.h"
-#include "ssh.h"
 #include "xmalloc.h"
 #include "uidswap.h"
+#include "pathnames.h"
+#include "log.h"
 #include "servconf.h"
+#include "canohost.h"
 
 /*
  * This function processes an rhosts-style file (.rhosts, .shosts, or
@@ -37,7 +30,7 @@ __RCSID("$NetBSD: auth-rhosts.c,v 1.1.1.2 2001/01/14 04:49:58 itojun Exp $");
  * based on the file, and returns zero otherwise.
  */
 
-static int
+int
 check_rhosts_file(const char *filename, const char *hostname,
 		  const char *ipaddr, const char *client_user,
 		  const char *server_user)
@@ -186,25 +179,25 @@ auth_rhosts(struct passwd *pw, const char *client_user)
 
 	/* Deny if The user has no .shosts or .rhosts file and there are no system-wide files. */
 	if (!rhosts_files[rhosts_file_index] &&
-	    stat(_PATH_HEQUIV, &st) < 0 &&
-	    stat(_PATH_SSH_HEQUIV, &st) < 0)
+	    stat(_PATH_RHOSTS_EQUIV, &st) < 0 &&
+	    stat(_PATH_SSH_HOSTS_EQUIV, &st) < 0)
 		return 0;
 
-	hostname = get_canonical_hostname();
+	hostname = get_canonical_hostname(options.reverse_mapping_check);
 	ipaddr = get_remote_ipaddr();
 
 	/* If not logging in as superuser, try /etc/hosts.equiv and shosts.equiv. */
 	if (pw->pw_uid != 0) {
-		if (check_rhosts_file(_PATH_HEQUIV, hostname, ipaddr, client_user,
+		if (check_rhosts_file("/etc/hosts.equiv", hostname, ipaddr, client_user,
 				      pw->pw_name)) {
-			packet_send_debug("Accepted for %.100s [%.100s] by " _PATH_HEQUIV ".",
+			packet_send_debug("Accepted for %.100s [%.100s] by /etc/hosts.equiv.",
 					  hostname, ipaddr);
 			return 1;
 		}
-		if (check_rhosts_file(_PATH_SSH_HEQUIV, hostname, ipaddr, client_user,
+		if (check_rhosts_file(_PATH_SSH_HOSTS_EQUIV, hostname, ipaddr, client_user,
 				      pw->pw_name)) {
 			packet_send_debug("Accepted for %.100s [%.100s] by %.100s.",
-				      hostname, ipaddr, _PATH_SSH_HEQUIV);
+				      hostname, ipaddr, _PATH_SSH_HOSTS_EQUIV);
 			return 1;
 		}
 	}
@@ -255,8 +248,7 @@ auth_rhosts(struct passwd *pw, const char *client_user)
 			continue;
 		}
 		/* Check if we have been configured to ignore .rhosts and .shosts files. */
-		if ((pw->pw_uid == 0 && options.ignore_root_rhosts) ||
-		    (pw->pw_uid != 0 && options.ignore_rhosts)) {
+		if (options.ignore_rhosts) {
 			packet_send_debug("Server has been configured to ignore %.100s.",
 					  rhosts_files[rhosts_file_index]);
 			continue;

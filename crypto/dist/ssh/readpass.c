@@ -1,5 +1,3 @@
-/*	$NetBSD: readpass.c,v 1.1.1.2 2001/01/14 04:50:32 itojun Exp $	*/
-
 /*
  * Copyright (c) 1988, 1993
  *      The Regents of the University of California.  All rights reserved.
@@ -33,17 +31,10 @@
  * SUCH DAMAGE.
  */
 
-/* from OpenBSD: readpass.c,v 1.12 2000/10/11 20:14:39 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: readpass.c,v 1.1.1.2 2001/01/14 04:50:32 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: readpass.c,v 1.13 2001/01/21 19:05:54 markus Exp $");
 
 #include "xmalloc.h"
-#include "ssh.h"
 #include "cli.h"
 
 /*

@@ -1,5 +1,3 @@
-/*	$NetBSD: mpaux.c,v 1.1.1.2 2001/01/14 04:50:24 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,22 +12,14 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: mpaux.c,v 1.15 2000/12/19 23:17:57 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: mpaux.c,v 1.1.1.2 2001/01/14 04:50:24 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: mpaux.c,v 1.15 2000/12/19 23:17:57 markus Exp $");
 
 #include <openssl/bn.h>
 #include "getput.h"
 #include "xmalloc.h"
 
 #include <openssl/md5.h>
-
-#include "mpaux.h"
 
 void
 compute_session_id(u_char session_id[16],

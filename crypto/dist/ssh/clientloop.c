@@ -1,5 +1,3 @@
-/*	$NetBSD: clientloop.c,v 1.1.1.2 2001/01/14 04:50:16 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -60,35 +58,26 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: clientloop.c,v 1.42 2000/12/19 23:17:56 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: clientloop.c,v 1.1.1.2 2001/01/14 04:50:16 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: clientloop.c,v 1.48 2001/02/06 22:43:02 markus Exp $");
 
-#include "xmalloc.h"
 #include "ssh.h"
+#include "ssh1.h"
+#include "ssh2.h"
+#include "xmalloc.h"
 #include "packet.h"
 #include "buffer.h"
-#include "readconf.h"
-
-#include "ssh2.h"
 #include "compat.h"
 #include "channels.h"
 #include "dispatch.h"
-
-#include "client.h"
-
 #include "buffer.h"
 #include "bufaux.h"
-
-#include <openssl/dsa.h>
-#include <openssl/rsa.h>
 #include "key.h"
+#include "log.h"
+#include "readconf.h"
+#include "clientloop.h"
 #include "authfd.h"
+#include "atomicio.h"
 
 /* import options */
 extern Options options;
@@ -135,18 +124,16 @@ static Buffer stdout_buffer;	/* Buffer for stdout data. */
 static Buffer stderr_buffer;	/* Buffer for stderr data. */
 static u_long stdin_bytes, stdout_bytes, stderr_bytes;
 static u_int buffer_high;/* Soft max buffer size. */
-static int max_fd;		/* Maximum file descriptor number in select(). */
 static int connection_in;	/* Connection to server (input). */
 static int connection_out;	/* Connection to server (output). */
-
 
 void	client_init_dispatch(void);
 int	session_ident = -1;
 
 /* Returns the user\'s terminal to normal mode if it had been put in raw mode. */
 
-static void
-leave_raw_mode(void)
+void
+leave_raw_mode()
 {
 	if (!in_raw_mode)
 		return;
@@ -159,8 +146,8 @@ leave_raw_mode(void)
 
 /* Puts the user\'s terminal in raw mode. */
 
-static void
-enter_raw_mode(void)
+void
+enter_raw_mode()
 {
 	struct termios tio;
 
@@ -185,8 +172,8 @@ enter_raw_mode(void)
 
 /* Restores stdin to blocking mode. */
 
-static void
-leave_non_blocking(void)
+void
+leave_non_blocking()
 {
 	if (in_non_blocking_mode) {
 		(void) fcntl(fileno(stdin), F_SETFL, 0);
@@ -197,8 +184,8 @@ leave_non_blocking(void)
 
 /* Puts stdin terminal in non-blocking mode. */
 
-static void
-enter_non_blocking(void)
+void
+enter_non_blocking()
 {
 	in_non_blocking_mode = 1;
 	(void) fcntl(fileno(stdin), F_SETFL, O_NONBLOCK);
@@ -210,7 +197,7 @@ enter_non_blocking(void)
  * flag indicating that the window has changed.
  */
 
-static void
+void
 window_change_handler(int sig)
 {
 	received_window_change_signal = 1;
@@ -222,7 +209,7 @@ window_change_handler(int sig)
  * signals must be trapped to restore terminal modes.
  */
 
-static void
+void
 signal_handler(int sig)
 {
 	if (in_raw_mode)
@@ -239,8 +226,8 @@ signal_handler(int sig)
  * available resolution.
  */
 
-static double
-get_current_time(void)
+double
+get_current_time()
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
@@ -253,8 +240,8 @@ get_current_time(void)
  * not appear to wake up when redirecting from /dev/null.
  */
 
-static void
-client_check_initial_eof_on_stdin(void)
+void
+client_check_initial_eof_on_stdin()
 {
 	int len;
 	char buf[1];
@@ -307,8 +294,8 @@ client_check_initial_eof_on_stdin(void)
  * connection.
  */
 
-static void
-client_make_packets_from_stdin_data(void)
+void
+client_make_packets_from_stdin_data()
 {
 	u_int len;
 
@@ -338,8 +325,8 @@ client_make_packets_from_stdin_data(void)
  * appropriate.
  */
 
-static void
-client_check_window_change(void)
+void
+client_check_window_change()
 {
 	struct winsize ws;
 
@@ -375,46 +362,38 @@ client_check_window_change(void)
  * one of the file descriptors).
  */
 
-static void
-client_wait_until_can_do_something(fd_set * readset, fd_set * writeset)
+void
+client_wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp,
+    int *maxfdp)
 {
-	/* Initialize select masks. */
-	FD_ZERO(readset);
-	FD_ZERO(writeset);
+	/* Add any selections by the channel mechanism. */
+	channel_prepare_select(readsetp, writesetp, maxfdp);
 
 	if (!compat20) {
 		/* Read from the connection, unless our buffers are full. */
 		if (buffer_len(&stdout_buffer) < buffer_high &&
 		    buffer_len(&stderr_buffer) < buffer_high &&
 		    channel_not_very_much_buffered_data())
-			FD_SET(connection_in, readset);
+			FD_SET(connection_in, *readsetp);
 		/*
 		 * Read from stdin, unless we have seen EOF or have very much
 		 * buffered data to send to the server.
 		 */
 		if (!stdin_eof && packet_not_very_much_data_to_write())
-			FD_SET(fileno(stdin), readset);
+			FD_SET(fileno(stdin), *readsetp);
 
 		/* Select stdout/stderr if have data in buffer. */
 		if (buffer_len(&stdout_buffer) > 0)
-			FD_SET(fileno(stdout), writeset);
+			FD_SET(fileno(stdout), *writesetp);
 		if (buffer_len(&stderr_buffer) > 0)
-			FD_SET(fileno(stderr), writeset);
+			FD_SET(fileno(stderr), *writesetp);
 	} else {
-		FD_SET(connection_in, readset);
+		FD_SET(connection_in, *readsetp);
 	}
-
-	/* Add any selections by the channel mechanism. */
-	channel_prepare_select(readset, writeset);
 
 	/* Select server connection if have data to write to the server. */
 	if (packet_have_data_to_write())
-		FD_SET(connection_out, writeset);
-
-/* move UP XXX */
-	/* Update maximum file descriptor number, if appropriate. */
-	if (channel_max_fd() > max_fd)
-		max_fd = channel_max_fd();
+		FD_SET(connection_out, *writesetp);
 
 	/*
 	 * Wait for something to happen.  This will suspend the process until
@@ -425,11 +404,8 @@ client_wait_until_can_do_something(fd_set * readset, fd_set * writeset)
 	 * SSH_MSG_IGNORE packet when the timeout expires.
 	 */
 
-	if (select(max_fd + 1, readset, writeset, NULL, NULL) < 0) {
+	if (select((*maxfdp)+1, *readsetp, *writesetp, NULL, NULL) < 0) {
 		char buf[100];
-		/* Some systems fail to clear these automatically. */
-		FD_ZERO(readset);
-		FD_ZERO(writeset);
 		if (errno == EINTR)
 			return;
 		/* Note: we might still have data in the buffers. */
@@ -440,18 +416,16 @@ client_wait_until_can_do_something(fd_set * readset, fd_set * writeset)
 	}
 }
 
-static void
+void
 client_suspend_self(Buffer *bin, Buffer *bout, Buffer *berr)
 {
 	struct winsize oldws, newws;
 
 	/* Flush stdout and stderr buffers. */
 	if (buffer_len(bout) > 0)
-		atomic_write(fileno(stdout), buffer_ptr(bout),
-		    buffer_len(bout));
+		atomicio(write, fileno(stdout), buffer_ptr(bout), buffer_len(bout));
 	if (buffer_len(berr) > 0)
-		atomic_write(fileno(stderr), buffer_ptr(berr),
-		    buffer_len(berr));
+		atomicio(write, fileno(stderr), buffer_ptr(berr), buffer_len(berr));
 
 	leave_raw_mode();
 
@@ -485,7 +459,7 @@ client_suspend_self(Buffer *bin, Buffer *bout, Buffer *berr)
 	enter_raw_mode();
 }
 
-static void
+void
 client_process_net_input(fd_set * readset)
 {
 	int len;
@@ -528,7 +502,7 @@ client_process_net_input(fd_set * readset)
 }
 
 /* process the characters one by one */
-static int
+int
 process_escapes(Buffer *bin, Buffer *bout, Buffer *berr, char *buf, int len)
 {
 	char string[1024];
@@ -670,7 +644,7 @@ Supported escape sequences:\r\n\
 	return bytes;
 }
 
-static void
+void
 client_process_input(fd_set * readset)
 {
 	int ret;
@@ -725,7 +699,7 @@ client_process_input(fd_set * readset)
 	}
 }
 
-static void
+void
 client_process_output(fd_set * writeset)
 {
 	int len;
@@ -785,15 +759,15 @@ client_process_output(fd_set * writeset)
  * preparatory phase.
  */
 
-static void
-client_process_buffered_input_packets(void)
+void
+client_process_buffered_input_packets()
 {
 	dispatch_run(DISPATCH_NONBLOCK, &quit_pending, NULL);
 }
 
 /* scan buf[] for '~' before sending data to the peer */
 
-static int
+int
 simple_escape_filter(Channel *c, char *buf, int len)
 {
 	/* XXX we assume c->extended is writeable */
@@ -810,6 +784,8 @@ simple_escape_filter(Channel *c, char *buf, int len)
 int
 client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 {
+	fd_set *readset = NULL, *writeset = NULL;
+	int max_fd = 0;
 	double start_time, total_time;
 	int len;
 	char buf[100];
@@ -826,9 +802,13 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 	buffer_high = 64 * 1024;
 	connection_in = packet_get_connection_in();
 	connection_out = packet_get_connection_out();
-	max_fd = connection_in;
-	if (connection_out > max_fd)
-		max_fd = connection_out;
+	max_fd = MAX(connection_in, connection_out);
+
+	if (!compat20) {
+		max_fd = MAX(max_fd, fileno(stdin));
+		max_fd = MAX(max_fd, fileno(stdout));
+		max_fd = MAX(max_fd, fileno(stderr));
+	}
 	stdin_bytes = 0;
 	stdout_bytes = 0;
 	stderr_bytes = 0;
@@ -853,16 +833,18 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 	if (have_pty)
 		enter_raw_mode();
 
-	/* Check if we should immediately send eof on stdin. */
-	if (!compat20)
+	if (compat20) {
+		session_ident = ssh2_chan_id;
+		if (escape_char != -1)
+			channel_register_filter(session_ident,
+			    simple_escape_filter);
+	} else {
+		/* Check if we should immediately send eof on stdin. */
 		client_check_initial_eof_on_stdin();
-
-	if (compat20 && escape_char != -1)
-		channel_register_filter(ssh2_chan_id, simple_escape_filter);
+	}
 
 	/* Main loop of the client for the interactive session mode. */
 	while (!quit_pending) {
-		fd_set readset, writeset;
 
 		/* Process buffered packets sent by the server. */
 		client_process_buffered_input_packets();
@@ -880,7 +862,7 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 			client_make_packets_from_stdin_data();
 
 		/*
-		 * Make packets from buffered channel data, and buffer them
+		 * Make packets from buffered channel data, and enqueue them
 		 * for sending to the server.
 		 */
 		if (packet_not_very_much_data_to_write())
@@ -899,34 +881,38 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 		 * Wait until we have something to do (something becomes
 		 * available on one of the descriptors).
 		 */
-		client_wait_until_can_do_something(&readset, &writeset);
+		client_wait_until_can_do_something(&readset, &writeset, &max_fd);
 
 		if (quit_pending)
 			break;
 
 		/* Do channel operations. */
-		channel_after_select(&readset, &writeset);
+		channel_after_select(readset, writeset);
 
 		/* Buffer input from the connection.  */
-		client_process_net_input(&readset);
+		client_process_net_input(readset);
 
 		if (quit_pending)
 			break;
 
 		if (!compat20) {
 			/* Buffer data from stdin */
-			client_process_input(&readset);
+			client_process_input(readset);
 			/*
 			 * Process output to stdout and stderr.  Output to
 			 * the connection is processed elsewhere (above).
 			 */
-			client_process_output(&writeset);
+			client_process_output(writeset);
 		}
 
 		/* Send as much buffered packet data as possible to the sender. */
-		if (FD_ISSET(connection_out, &writeset))
+		if (FD_ISSET(connection_out, writeset))
 			packet_write_poll();
 	}
+	if (readset)
+		xfree(readset);
+	if (writeset)
+		xfree(writeset);
 
 	/* Terminate the session. */
 
@@ -993,7 +979,7 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 
 /*********/
 
-static void
+void
 client_input_stdout_data(int type, int plen, void *ctxt)
 {
 	u_int data_len;
@@ -1004,7 +990,7 @@ client_input_stdout_data(int type, int plen, void *ctxt)
 	memset(data, 0, data_len);
 	xfree(data);
 }
-static void
+void
 client_input_stderr_data(int type, int plen, void *ctxt)
 {
 	u_int data_len;
@@ -1015,7 +1001,7 @@ client_input_stderr_data(int type, int plen, void *ctxt)
 	memset(data, 0, data_len);
 	xfree(data);
 }
-static void
+void
 client_input_exit_status(int type, int plen, void *ctxt)
 {
 	packet_integrity_check(plen, 4, type);
@@ -1032,7 +1018,7 @@ client_input_exit_status(int type, int plen, void *ctxt)
 	quit_pending = 1;
 }
 
-static Channel *
+Channel *
 client_request_forwarded_tcpip(const char *request_type, int rchan)
 {
 	Channel* c = NULL;
@@ -1063,7 +1049,7 @@ client_request_forwarded_tcpip(const char *request_type, int rchan)
 	return c;
 }
 
-static Channel*
+Channel*
 client_request_x11(const char *request_type, int rchan)
 {
 	Channel *c = NULL;
@@ -1085,6 +1071,8 @@ client_request_x11(const char *request_type, int rchan)
 	}
 	packet_done();
 	/* XXX check permission */
+	debug("client_request_x11: request from %s %d", originator,
+	    originator_port);
 	sock = x11_connect_display();
 	if (sock >= 0) {
 		newch = channel_new("x11",
@@ -1097,7 +1085,7 @@ client_request_x11(const char *request_type, int rchan)
 	return c;
 }
 
-static Channel*
+Channel*
 client_request_agent(const char *request_type, int rchan)
 {
 	Channel *c = NULL;
@@ -1120,7 +1108,7 @@ client_request_agent(const char *request_type, int rchan)
 }
 
 /* XXXX move to generic input handler */
-static void
+void
 client_input_channel_open(int type, int plen, void *ctxt)
 {
 	Channel *c = NULL;
@@ -1169,9 +1157,45 @@ client_input_channel_open(int type, int plen, void *ctxt)
 	}
 	xfree(ctype);
 }
+void
+client_input_channel_req(int type, int plen, void *ctxt)
+{
+	Channel *c = NULL;
+	int id, reply, success = 0;
+	char *rtype;
 
-static void
-client_init_dispatch_20(void)
+	id = packet_get_int();
+	rtype = packet_get_string(NULL);
+	reply = packet_get_char();
+
+	debug("client_input_channel_req: channel %d rtype %s reply %d",
+	    id, rtype, reply);
+
+	if (session_ident == -1) {
+		error("client_input_channel_req: no channel %d", session_ident);
+	} else if (id != session_ident) {
+		error("client_input_channel_req: channel %d: wrong channel: %d",
+		    session_ident, id);
+	}
+	c = channel_lookup(id);
+	if (c == NULL) {
+		error("client_input_channel_req: channel %d: unknown channel", id);
+	} else if (strcmp(rtype, "exit-status") == 0) {
+		success = 1;
+		exit_status = packet_get_int();
+		packet_done();
+	}
+	if (reply) {
+		packet_start(success ?
+		    SSH2_MSG_CHANNEL_SUCCESS : SSH2_MSG_CHANNEL_FAILURE);
+		packet_put_int(c->remote_id);
+		packet_send();
+	}
+	xfree(rtype);
+}
+
+void
+client_init_dispatch_20()
 {
 	dispatch_init(&dispatch_protocol_error);
 	dispatch_set(SSH2_MSG_CHANNEL_CLOSE, &channel_input_oclose);
@@ -1181,11 +1205,11 @@ client_init_dispatch_20(void)
 	dispatch_set(SSH2_MSG_CHANNEL_OPEN, &client_input_channel_open);
 	dispatch_set(SSH2_MSG_CHANNEL_OPEN_CONFIRMATION, &channel_input_open_confirmation);
 	dispatch_set(SSH2_MSG_CHANNEL_OPEN_FAILURE, &channel_input_open_failure);
-	dispatch_set(SSH2_MSG_CHANNEL_REQUEST, &channel_input_channel_request);
+	dispatch_set(SSH2_MSG_CHANNEL_REQUEST, &client_input_channel_req);
 	dispatch_set(SSH2_MSG_CHANNEL_WINDOW_ADJUST, &channel_input_window_adjust);
 }
-static void
-client_init_dispatch_13(void)
+void
+client_init_dispatch_13()
 {
 	dispatch_init(NULL);
 	dispatch_set(SSH_MSG_CHANNEL_CLOSE, &channel_input_close);
@@ -1203,8 +1227,8 @@ client_init_dispatch_13(void)
 	dispatch_set(SSH_SMSG_X11_OPEN, options.forward_x11 ?
 	    &x11_input_open : &deny_input_open);
 }
-static void
-client_init_dispatch_15(void)
+void
+client_init_dispatch_15()
 {
 	client_init_dispatch_13();
 	dispatch_set(SSH_MSG_CHANNEL_CLOSE, &channel_input_ieof);
@@ -1219,50 +1243,4 @@ client_init_dispatch()
 		client_init_dispatch_13();
 	else
 		client_init_dispatch_15();
-}
-
-static void
-client_input_channel_req(int id, void *arg)
-{
-	Channel *c = NULL;
-	u_int len;
-	int success = 0;
-	int reply;
-	char *rtype;
-
-	rtype = packet_get_string(&len);
-	reply = packet_get_char();
-
-	debug("client_input_channel_req: rtype %s reply %d", rtype, reply);
-
-	c = channel_lookup(id);
-	if (c == NULL)
-		fatal("client_input_channel_req: channel %d: bad channel", id);
-
-	if (session_ident == -1) {
-		error("client_input_channel_req: no channel %d", id);
-	} else if (id != session_ident) {
-		error("client_input_channel_req: bad channel %d != %d",
-		    id, session_ident);
-	} else if (strcmp(rtype, "exit-status") == 0) {
-		success = 1;
-		exit_status = packet_get_int();
-		packet_done();
-	}
-	if (reply) {
-		packet_start(success ?
-		    SSH2_MSG_CHANNEL_SUCCESS : SSH2_MSG_CHANNEL_FAILURE);
-		packet_put_int(c->remote_id);
-		packet_send();
-	}
-	xfree(rtype);
-}
-
-void
-client_set_session_ident(int id)
-{
-	debug2("client_set_session_ident: id %d", id);
-	session_ident = id;
-	channel_register_callback(id, SSH2_MSG_CHANNEL_REQUEST,
-	    client_input_channel_req, (void *)0);
 }
