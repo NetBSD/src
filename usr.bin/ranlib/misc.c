@@ -1,8 +1,8 @@
-/*	$NetBSD: misc.c,v 1.6 1997/01/09 20:20:56 tls Exp $	*/
+/*	$NetBSD: misc.c,v 1.7 1997/10/19 05:50:29 mrg Exp $	*/
 
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Hugh Smith at The University of Guelph.
@@ -37,8 +37,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)misc.c	5.2 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$NetBSD: misc.c,v 1.6 1997/01/09 20:20:56 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: misc.c,v 1.7 1997/10/19 05:50:29 mrg Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -67,20 +70,17 @@ tmp()
 	}
 
 	if (envtmp)
-		(void)snprintf(path, MAXPATHLEN, "%s/%s", envtmp, _NAME_RANTMP);
+		(void)snprintf(path, MAXPATHLEN, "%s/%s", envtmp,
+		    strrchr(_NAME_RANTMP, '/'));
 	else
 		bcopy(_PATH_RANTMP, path, sizeof(_PATH_RANTMP));
 
-	sigemptyset(&set);
-	sigaddset(&set, SIGHUP);
-	sigaddset(&set, SIGINT);
-	sigaddset(&set, SIGQUIT);
-	sigaddset(&set, SIGTERM);
+	sigfillset(&set);
 	(void)sigprocmask(SIG_BLOCK, &set, &oset);
 	if ((fd = mkstemp(path)) == -1)
-		error(tname);
-        (void)unlink(path);
-	(void)sigprocmask(SIG_SETMASK, &oset, (sigset_t *)NULL);
+		error(path);
+	(void)unlink(path);
+	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 	return(fd);
 }
 
@@ -88,9 +88,9 @@ void *
 emalloc(len)
 	int len;
 {
-	char *p;
+	void *p;
 
-	if (!(p = malloc((u_int)len)))
+	if ((p = malloc((u_int)len)) == NULL)
 		error(archive);
 	return(p);
 }
