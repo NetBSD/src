@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.28 2001/01/29 01:24:42 enami Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.29 2001/02/01 04:45:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1051,14 +1051,14 @@ STATIC void rtk_rxeof(sc)
 		 * Skip the status word, wrapping around to the beginning
 		 * of the Rx area, if necessary.
 		 */
-		cur_rx += RTK_RXSTAT_LEN;
-		rxbufpos = sc->rtk_cdata.rtk_rx_buf + (cur_rx % RTK_RXBUFLEN);
+		cur_rx = (cur_rx + RTK_RXSTAT_LEN) % RTK_RXBUFLEN;
+		rxbufpos = sc->rtk_cdata.rtk_rx_buf + cur_rx;
 
 		/*
 		 * Compute the number of bytes at which the packet
 		 * will wrap to the beginning of the ring buffer.
 		 */
-		wrap = RTK_RXBUFLEN - (cur_rx % RTK_RXBUFLEN);
+		wrap = RTK_RXBUFLEN - cur_rx;
 
 		/*
 		 * Compute where the next pending packet is.
