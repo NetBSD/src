@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.33 1995/10/15 15:34:29 ws Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.34 1995/10/30 19:06:20 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -552,8 +552,8 @@ msdosfs_unmount(mp, mntflags, p)
 	printf("union %08x, tag %d, data[0] %08x, data[1] %08x\n",
 	    vp->v_socket, vp->v_tag, vp->v_data[0], vp->v_data[1]);
 #endif
-	error = VOP_CLOSE(pmp->pm_devvp, pmp->pm_flags & MSDOSFSMNT_RONLY ? FREAD : FREAD|FWRITE,
-	    NOCRED, p);
+	error = VOP_CLOSE(pmp->pm_devvp,
+	    pmp->pm_flags & MSDOSFSMNT_RONLY ? FREAD : FREAD|FWRITE, NOCRED, p);
 	vrele(pmp->pm_devvp);
 	free(pmp->pm_inusemap, M_MSDOSFSFAT);
 	free(pmp, M_MSDOSFSMNT);

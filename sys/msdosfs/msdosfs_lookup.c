@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.18 1995/10/15 15:34:27 ws Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.19 1995/10/30 19:06:18 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -309,7 +309,7 @@ msdosfs_lookup(ap)
 							    chksum);
 					continue;
 				}
-					
+				
 				/*
 				 * Ignore volume labels (anywhere, not just
 				 * the root directory).
