@@ -1,4 +1,4 @@
-.\" $NetBSD: i4bctl.4,v 1.5 2001/09/11 00:08:27 wiz Exp $
+.\" $NetBSD: isdnbchan.4,v 1.1 2002/03/16 17:57:39 martin Exp $
 .\"
 .\" Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,28 +23,27 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: i4bctl.4,v 1.5 2001/09/11 00:08:27 wiz Exp $
+.\"	$Id: isdnbchan.4,v 1.1 2002/03/16 17:57:39 martin Exp $
 .\"
 .\" $FreeBSD$
 .\"
-.\"	last edit-date: [Mon Dec 13 23:09:46 1999]
+.\"	last edit-date: [Mon Dec 13 23:13:04 1999]
 .\"
 .Dd February 3, 1998
-.Dt I4BCTL 4
+.Dt ISDNBCHAN 4
 .Os
 .Sh NAME
-.Nm i4bctl
-.Nd control device for the isdn4bsd kernel part
+.Nm isdnbchan
+.Nd ISDN Raw B-CHannel access driver
 .Sh SYNOPSIS
-.Cd "pseudo-device i4bctl"
+.Cd "pseudo-device isdnbchan" Ar count
 .Sh DESCRIPTION
+The
 .Nm
-is used by the
-.Xr isdndebug 8
-utility to get and set the current debugging level and other information
-of the isdn4bsd package kernel ISDN handling layers.
+driver provides an interface to the raw untranslated B-channel.
 .Sh SEE ALSO
-.Xr isdndebug 8
+.Xr isdnd.rc 5 ,
+.Xr isdnd 8
 .Sh AUTHORS
 The
 .Nm
