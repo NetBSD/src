@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.6 1998/08/30 20:30:57 scottr Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.7 2000/07/18 21:49:08 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -88,6 +88,13 @@ static kgdb_reg_t gdb_regs[KGDB_NUMREGS];
 
 #define GETC()	((*kgdb_getc)(kgdb_ioarg))
 #define PUTC(c)	((*kgdb_putc)(kgdb_ioarg, c))
+
+/*
+ * db_trap_callback can be hooked by MD port code to handle special
+ * cases such as disabling hardware watchdogs while in kgdb.  Name
+ * is shared with DDB.
+ */
+void (*db_trap_callback)(int);
 
 /*
  * This little routine exists simply so that bcopy() can be debugged.
@@ -332,6 +339,8 @@ kgdb_trap(type, regs)
 		return (0);
 	}
 
+	if (db_trap_callback) db_trap_callback(1);
+
 	/* Detect and recover from unexpected traps. */
 	if (kgdb_recover != 0) {
 		printf("kgdb: caught trap 0x%x at %p\n",
@@ -363,6 +372,7 @@ kgdb_trap(type, regs)
 	if (kgdb_active == 0) {
 		if (!IS_BREAKPOINT_TRAP(type, 0)) {
 			/* No debugger active -- let trap handle this. */
+			if (db_trap_callback) db_trap_callback(0);
 			return (0);
 		}
 		/* Make the PC point at the breakpoint... */
@@ -514,6 +524,7 @@ kgdb_trap(type, regs)
 		}
 	}
  out:
+	if (db_trap_callback) db_trap_callback(0);
 	kgdb_recover = 0;
 	return (1);
 }
