@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.53 2000/06/19 15:15:04 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.54 2000/06/20 07:39:46 lukem Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -243,8 +243,8 @@ specific commands are supported by the SITE request.
 .It CHMOD Ta "change mode of a file, e.g. ``SITE CHMOD 755 filename''"
 .It HELP Ta "give help information."
 .It IDLE Ta "set idle-timer, e.g. ``SITE IDLE 60''"
-.It RATEGET Ta "set maximum get rate throttle, e.g. ``SITE RATEGET 5k''"
-.It RATEPUT Ta "set maximum put rate throttle, e.g. ``SITE RATEPUT 5k''"
+.It RATEGET Ta "set maximum get rate throttle in bytes/second, e.g. ``SITE RATEGET 5k''"
+.It RATEPUT Ta "set maximum put rate throttle in bytes/second, e.g. ``SITE RATEPUT 5k''"
 .It UMASK Ta "change umask, e.g. ``SITE UMASK 002''"
 .El
 .Pp

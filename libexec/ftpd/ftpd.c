@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.95 2000/06/19 15:15:04 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.96 2000/06/20 07:39:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.95 2000/06/19 15:15:04 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.96 2000/06/20 07:39:46 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1448,9 +1448,8 @@ send_data(FILE *instr, FILE *outstr, off_t blksize, int isdata)
 				}
 				(void)gettimeofday(&now, NULL);
 				timersub(&now, &then, &td);
-				if (td.tv_sec > 0)
-					break;
-				usleep(1000000 - td.tv_usec);
+				if (td.tv_sec == 0)
+					usleep(1000000 - td.tv_usec);
 			}
 		} else {
 			while ((c = read(filefd, buf, (size_t)blksize)) > 0) {
@@ -1553,9 +1552,8 @@ receive_data(FILE *instr, FILE *outstr)
 				}
 				(void)gettimeofday(&now, NULL);
 				timersub(&now, &then, &td);
-				if (td.tv_sec > 0)
-					break;
-				usleep(1000000 - td.tv_usec);
+				if (td.tv_sec == 0)
+					usleep(1000000 - td.tv_usec);
 			}
 		} else {
 			while ((c = read(netfd, buf, sizeof(buf))) > 0) {
