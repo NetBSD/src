@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.58 2003/04/26 07:09:26 toshii Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.59 2003/04/26 08:31:30 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -295,6 +295,7 @@ initarm(argc, argv, bi)
 	vaddr_t freemempos;
 	pv_addr_t kernel_l1pt;
 	pv_addr_t kernel_ptpt;
+	vsize_t pt_size;
 #ifdef DDB
 	Elf_Shdr *sh;
 #endif
@@ -454,6 +455,8 @@ initarm(argc, argv, bi)
 	 */
 	valloc_pages(systempage, 1);
 
+	pt_size = round_page(freemempos) - KERNEL_BASE;
+
 	/* Allocate a page for the page table to map kernel page tables*/
 	valloc_pages(kernel_ptpt, L2_TABLE_SIZE / PAGE_SIZE);
 
@@ -573,7 +576,14 @@ initarm(argc, argv, bi)
 	    UPAGES * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
+#ifdef ARM32_PMAP_NEW
+	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
+#else
 	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+#endif
+	/* Map page tables */
+	pmap_map_chunk(l1pagetable, KERNEL_BASE, KERNEL_BASE, pt_size,
+	    VM_PROT_READ | VM_PROT_WRITE, PTE_PAGETABLE);
 
 	/* Map the page table that maps the kernel pages */
 	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
@@ -605,7 +615,11 @@ initarm(argc, argv, bi)
 	}
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
+#ifdef ARM32_PMAP_NEW
+	    kernel_ptpt.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
+#else
 	    kernel_ptpt.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+#endif
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (SAIPIO_BASE >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_IO].pv_pa, VM_PROT_READ|VM_PROT_WRITE,
@@ -672,7 +686,21 @@ initarm(argc, argv, bi)
 	undefined_init();
 
 	/* Set the page table address. */
+#ifdef ARM32_PMAP_NEW
+	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
 	setttb(kernel_l1pt.pv_pa);
+	cpu_tlb_flushID();
+	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
+
+	/*
+	 * Moved from cpu_startup() as data_abort_handler() references
+	 * this during uvm init
+	 */
+	proc0paddr = (struct user *)kernelstack.pv_va;
+	lwp0.l_addr = proc0paddr;
+#else
+	setttb(kernel_l1pt.pv_pa);
+#endif
 
 #ifdef BOOT_DUMP
 	dumppages((char *)0xc0000000, 16 * PAGE_SIZE);
@@ -706,7 +734,11 @@ initarm(argc, argv, bi)
 	}
 
 	/* Boot strap pmap telling it where the kernel page table is */
+#ifdef ARM32_PMAP_NEW
+	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va);
+#else
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, kernel_ptpt);
+#endif
 
 
 	if (cputype == CPU_ID_SA110)
