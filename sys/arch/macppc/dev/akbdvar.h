@@ -1,4 +1,4 @@
-/*	$NetBSD: akbdvar.h,v 1.8 2002/09/05 19:23:11 jdolecek Exp $	*/
+/*	$NetBSD: akbdvar.h,v 1.9 2003/07/24 20:56:24 nathanw Exp $	*/
 
 /*	$OpenBSD: akbdvar.h,v 1.3 2002/03/27 21:48:12 drahn Exp $	*/
 
@@ -68,5 +68,6 @@ struct akbd_softc {
 #define LED_SCROLL_LOCK	0x4
 
 void kbd_adbcomplete __P((caddr_t buffer, caddr_t data_area, int adb_command));
+void kbd_passup __P((struct akbd_softc *sc, int));
 
 #endif /* _MACPPC_KBDVAR_H_ */
