@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.6 2001/12/02 09:23:59 manu Exp $
+	$NetBSD: syscalls.master,v 1.7 2001/12/08 11:17:37 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -158,7 +158,7 @@
 80	NOARGS		{ int sys_mkdir(char *path, int mode); }
 81	STD		{ int svr4_sys_getdents(int fd, char *buf, \
 			    int nbytes); }
-82	UNIMPL		sginap
+82	STD		{ long irix_sys_sginap (long ticks); }
 83	UNIMPL		sgikopt
 84	UNIMPL		sysfs
 85	STD		{ int svr4_sys_getmsg(int fd, struct svr4_strbuf *ctl, \
@@ -167,7 +167,7 @@
 			    struct svr4_strbuf *dat, int flags); }
 87	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
-88	UNIMPL		sigreturn
+88	STD		{ int irix_sys_sigreturn(struct irix_sigframe *sf); }
 89	UNIMPL		accept
 90	UNIMPL		bind
 91	UNIMPL		connect
@@ -243,10 +243,16 @@
 159	UNIMPL		lxstat
 160	UNIMPL		fxstat
 161	UNIMPL		xmknod
-162	UNIMPL		sigaction
-163	UNIMPL		sigpending
-164	UNIMPL		sigprocmask
-165	UNIMPL		sigsuspend
+162	STD		{ int svr4_sys_sigaction(int signum, \
+			    const struct svr4_sigaction *nsa, \
+			    struct svr4_sigaction *osa); }
+163	STD		{ int svr4_sys_sigpending(int what, \
+			    svr4_sigset_t *set); }
+164	STD		{ int svr4_sys_sigprocmask(int how, \
+			    const svr4_sigset_t *set, \
+			    svr4_sigset_t *oset); }
+165	STD		{ int svr4_sys_sigsuspend( \
+			    const svr4_sigset_t *set); }
 166	UNIMPL		sigpoll_sys
 167	UNIMPL		swapctl
 168	UNIMPL		getcontext
