@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 1997/10/19 15:32:57 oki Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24.2.1 1998/10/13 21:23:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -107,8 +107,8 @@ char	machine[] = MACHINE;	/* from <machine/param.h> */
 vm_map_t buffer_map;
 #ifdef MACHINE_NONCONTIG
 extern int numranges;
-extern u_long low[8];
-extern u_long high[8];
+extern u_long low[2];
+extern u_long high[2];
 #else
 extern vm_offset_t avail_end;
 #endif

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.14.2.1 1997/11/20 08:51:15 mellon Exp $
+#	$NetBSD: GENERIC,v 1.14.2.2 1998/10/13 21:23:34 cgd Exp $
 
 #
 #	GENERIC
@@ -81,7 +81,6 @@ options 	INET			# Internet protocols
 
 # Options specific to this host.
 options 	DEBUG
-options 	MACHINE_NONCONTIG	# support for noncontig memory
 options 	FPSP			# '40 Floating Point Software
 options 	ITEKANJI		# Kanji display for console
 options 	PANICBUTTON		# enable interrupt switch
@@ -92,6 +91,13 @@ options 	MAPPEDCOPY		# use page mapping for large copyin/copyout
 #options 	PROFTIMER, PRF_INTERVAL=500
 #options 	KGDB,"KGDBDEV=15*256+2", KGDBRATE=19200
 #options 	PPP_OUTQ_SIZE=4096
+
+# high memory support
+# CAUTION: DO NOT UNCOMMENT BELOW UNLESS YOU HAVE THAT MEMORY
+#options 	EXTMEM_LOW=0x01000000,EXTMEM_SIZE=16*1024*1024
+					# TS-6BE16 support
+#options 	EXTMEM_LOW=0x10000000,EXTMEM_SIZE=4*1024*1024
+					# 060turbo onboard memory support
 
 #config		netbsd root on sd6a 
 config		netbsd root on ? type ?

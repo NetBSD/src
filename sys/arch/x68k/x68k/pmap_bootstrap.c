@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.9 1997/10/12 18:20:23 oki Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.9.2.1 1998/10/13 21:23:35 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -67,15 +67,21 @@ extern int pmap_aliasmask;
 void	pmap_bootstrap __P((vm_offset_t, vm_offset_t));
 
 #ifdef MACHINE_NONCONTIG
-static void setmemrange __P((void));
-#endif
-
 /*
  * These are used to map the non-contiguous memory.
  */
-int numranges; /* = 0 == don't use the ranges */
-u_long low[8];
-u_long high[8];
+#if defined (EXTMEM_LOW) && defined (EXTMEM_SIZE)
+int numranges = 2;
+u_long low[] = {
+	0,
+	EXTMEM_LOW
+};
+u_long high[] = {
+	0,
+	EXTMEM_LOW + EXTMEM_SIZE
+};
+#endif
+#endif
 
 /*
  * Special purpose kernel virtual addresses, used for mapping
@@ -156,7 +162,7 @@ pmap_bootstrap(nextpa, firstpa)
 	p0upa = nextpa;
 	nextpa += USPACE;
 #ifdef MACHINE_NONCONTIG
-	setmemrange();
+	high[0] = *(u_long *)0x00ED0008;
 	if (nextpa > high[0]) {
 		printf("Failure in BSD boot.  nextpa=0x%lx, high[0]=0x%lx.\n",
 			nextpa, high[0]);
@@ -560,58 +566,3 @@ int i;
 		RELOC(virtual_avail, vm_offset_t) = va;
 	}
 }
-
-#ifdef MACHINE_NONCONTIG
-static struct {
-	caddr_t base;
-	vm_size_t min;
-	vm_size_t max;
-} memlist[] = {
-	(caddr_t)0x01000000, 0x01000000, 0x01000000, /* TS-6BE16 16MB memory */
-	(caddr_t)0x10000000, 0x00400000, 0x02000000, /* 060turbo SIMM slot (4--32MB) */
-};
-
-static void
-setmemrange()
-{
-	int p, i;
-	vm_size_t s, min, max;
-	const volatile caddr_t base = 0x00000000;
-
-	/* first, x68k base memory */
-	numranges = 0;
-	low[numranges]  = 0;
-	high[numranges] = *(u_long *)0x00ED0008;
-	numranges++;
-
-	p = *base;
-
-	/* second, discover extended memory */
-	for (i = 0; i < sizeof(memlist) / sizeof(memlist[0]); i++) {
-		min = memlist[i].min;
-		max = memlist[i].max;
-		/*
-		 * Normally, x68k hardware is NOT 32bit-clean.
-		 * But some type of extended memory is in 32bit address space.
-		 * Check weather.
-		 */
-		if (badaddr(memlist[i].base))
-			continue;
-		*base = 0;
-		*(volatile caddr_t)memlist[i].base = 1;
-		if (*base == 0) {
-			low[numranges] = (u_long)memlist[i].base;
-			high[numranges] = 0;
-			/* range check */
-			for (s = min; s <= max; s += 0x00100000)
-				if (!badaddr((caddr_t)low[numranges] + s - 4))
-					high[numranges] = low[numranges] + s;
-			if (low[numranges] < high[numranges]) {
-				numranges++;
-			}
-		}
-	}
-
-	*base = p;
-}
-#endif
