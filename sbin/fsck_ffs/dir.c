@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.23 1997/09/16 16:44:48 lukem Exp $	*/
+/*	$NetBSD: dir.c,v 1.24 1997/09/20 06:16:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.23 1997/09/16 16:44:48 lukem Exp $");
+__RCSID("$NetBSD: dir.c,v 1.24 1997/09/20 06:16:23 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: dir.c,v 1.23 1997/09/16 16:44:48 lukem Exp $");
 #include <ufs/ffs/fs.h>
 
 #include <err.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "fsck.h"
