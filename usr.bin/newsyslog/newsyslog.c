@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.24 2000/07/07 14:09:41 ad Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.25 2000/07/07 15:42:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.24 2000/07/07 14:09:41 ad Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.25 2000/07/07 15:42:35 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -79,7 +79,6 @@ __RCSID("$NetBSD: newsyslog.c,v 1.24 2000/07/07 14:09:41 ad Exp $");
 #include <errno.h>
 #include <err.h>
 #include <util.h>
-#include <paths.h>
 
 #include "pathnames.h"
 
@@ -103,9 +102,8 @@ struct conf_entry {
 	char	logfile[MAXPATHLEN];	/* Path to log file */
 };
 
-int	verbose = 0;			/* Be verbose */
-int	noaction = 0;			/* Take no real action */
-char	hostname[MAXHOSTNAMELEN + 1];	/* Hostname, stripped of domain */
+int     verbose = 0;			/* Be verbose */
+char    hostname[MAXHOSTNAMELEN + 1];	/* Hostname, stripped of domain */
 
 int	main(int, char **);
 int	parse(struct conf_entry *, FILE *, size_t *);
@@ -130,14 +128,11 @@ main(int argc, char **argv)
 	struct conf_entry ent;
 	FILE *fd;
 	char *p, *cfile;
-	int c, force, needroot, mutex;
+	int c, force, needroot;
 	size_t lineno;
-	uid_t euid;
-	pid_t oldpid;
 
 	force = 0;
 	needroot = 1;
-	mutex = 1;
 	cfile = _PATH_NEWSYSLOGCONF;
 
 	gethostname(hostname, sizeof(hostname));
@@ -148,14 +143,8 @@ main(int argc, char **argv)
 		*p = '\0';
 
 	/* Parse command line options */
-	while ((c = getopt(argc, argv, "f:Fmnrv")) != -1) {
+	while ((c = getopt(argc, argv, "Frvf:")) != -1) {
 		switch (c) {
-		case 'm':
-			mutex = 0;
-			break;
-		case 'n':
-			noaction = 1;
-			break;
 		case 'r':
 			needroot = 0;
 			break;
@@ -173,20 +162,8 @@ main(int argc, char **argv)
 		}
 	}
 
-	euid = geteuid();
-	if (needroot && euid != 0)
+	if (needroot && getuid() != 0 && geteuid() != 0)
 		errx(EXIT_FAILURE, "must be run as root");
-
-	/* Prevent multiple instances if running as root */
-	if (euid == 0) {
-		if (mutex) {
-			oldpid = readpidfile("newsyslog.pid");
-			if (oldpid != (pid_t)-1)
-				errx(EXIT_FAILURE, "already running (pid %ld)",
-				    (long)oldpid);
-		}
-		pidfile("newsyslog");
-	}
 
 	if (strcmp(cfile, "-") == 0)
 		fd = stdin;
@@ -572,25 +549,18 @@ readpidfile(const char *file)
 {
 	FILE *fd;
 	char line[BUFSIZ];
-	char tmp[MAXPATHLEN];
 	pid_t pid;
 
-	if (file[0] != '/') {
-		strcpy(tmp, _PATH_VARRUN);
-		strlcat(tmp, file, sizeof(tmp));
-	} else
-		strlcpy(tmp, file, sizeof(tmp));
-
-	if ((fd = fopen(tmp, "rt")) == NULL) {
-		warn("%s", tmp);
+	if ((fd = fopen(file, "rt")) == NULL) {
+		warn("%s", file);
 		return (-1);
 	}
-
+	
 	if (fgets(line, sizeof(line) - 1, fd) != NULL) {
 		line[sizeof(line) - 1] = '\0';
 		pid = (pid_t)strtol(line, NULL, 0);
 	}
-
+	
 	fclose(fd);
 	return (pid);
 }
