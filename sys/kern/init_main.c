@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.108 1997/10/19 02:00:19 mycroft Exp $	*/
+/*	$NetBSD: init_main.c,v 1.109 1998/01/05 04:52:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -232,11 +232,7 @@ main(framep)
 
 	/* Create the file descriptor table. */
 	p->p_fd = &filedesc0.fd_fd;
-	filedesc0.fd_fd.fd_refcnt = 1;
-	filedesc0.fd_fd.fd_cmask = cmask;
-	filedesc0.fd_fd.fd_ofiles = filedesc0.fd_dfiles;
-	filedesc0.fd_fd.fd_ofileflags = filedesc0.fd_dfileflags;
-	filedesc0.fd_fd.fd_nfiles = NDFILE;
+	fdinit1(&filedesc0);
 
 	/* Create the limits structures. */
 	p->p_limit = &limit0;
