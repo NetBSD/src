@@ -1,6 +1,5 @@
-#	$NetBSD: bsd.inc.mk,v 1.1 1997/03/24 21:54:15 christos Exp $
+#	$NetBSD: bsd.inc.mk,v 1.2 1997/03/27 17:39:31 christos Exp $
 
-.if !target(includes)
 .if defined(INCS) && !empty(INCS)
 .for I in ${INCS}
 inclinstall:: ${DESTDIR}${INCSDIR}/$I
@@ -13,7 +12,4 @@ ${DESTDIR}${INCSDIR}/$I: $I
 		${.ALLSRC} ${.TARGET})
 .endfor
 includes: inclinstall
-.else
-includes: 
-.endif
 .endif
