@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.28 2000/01/16 01:42:03 assar Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.29 2000/05/15 20:16:48 jhawk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -92,7 +92,7 @@ kdb_trap(type, code, regs)
 	case -1:	/* keyboard interrupt */
 		break;
 	default:
-		if (!db_onpanic)
+		if (!db_onpanic && db_recover==0)
 			return (0);
 
 		kdbprinttrap(type, code);
