@@ -33,10 +33,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)errlst.c	5.10 (Berkeley) 2/19/91";*/
-static char *rcsid = "$Id: errlst.c,v 1.4 1993/10/13 23:41:02 jtc Exp $";
+static char *rcsid = "$Id: errlst.c,v 1.5 1993/12/02 04:47:00 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-char *sys_errlist[] = {
+const char *const sys_errlist[] = {
 	"Undefined error: 0",			/*  0 - ENOERROR */
 	"Operation not permitted",		/*  1 - EPERM */
 	"No such file or directory",		/*  2 - ENOENT */
