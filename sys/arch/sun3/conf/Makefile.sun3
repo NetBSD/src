@@ -86,7 +86,7 @@ newvers:
 	${CC} $(CFLAGS) -c vers.c
 
 clean:
-	rm -f eddep *vmunix tags *.o locore.i [a-z]*.s \
+	rm -f eddep netbsd* tags *.o locore.i [a-z]*.s \
 		Errs errs linterrs makelinks
 
 lint: /tmp param.c
