@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.75 2004/01/18 00:47:21 sekiya Exp $	*/
+/*	$NetBSD: machdep.c,v 1.76 2004/01/18 04:43:42 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75 2004/01/18 00:47:21 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2004/01/18 04:43:42 sekiya Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -441,7 +441,6 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 		platform.clkread = mips3_clkread;
 #endif
 		break;
-#ifdef IP32
 	case MACH_SGI_IP32:
 		biomask = 0x0700;
 		netmask = 0x0700;
@@ -450,8 +449,6 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 		platform.intr5 = mips3_clock_intr;
 		platform.clkread = mips3_clkread;
 		break;
-#endif
-
 	default:
 		panic("IP%d architecture not configured", mach_type);
 		break;
