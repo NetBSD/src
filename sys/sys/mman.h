@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.20 1999/02/06 16:14:52 kleink Exp $	*/
+/*	$NetBSD: mman.h,v 1.21 1999/04/27 20:13:06 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -100,6 +100,7 @@ typedef	_BSD_SIZE_T_	size_t;
 #define	MADV_SEQUENTIAL	2	/* expect sequential page references */
 #define	MADV_WILLNEED	3	/* will need these pages */
 #define	MADV_DONTNEED	4	/* dont need these pages */
+#define	MADV_SPACEAVAIL	5	/* insure that resources are reserved */
 #endif
 
 #ifndef _KERNEL
