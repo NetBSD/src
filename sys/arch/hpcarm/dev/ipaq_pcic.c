@@ -1,4 +1,4 @@
-/*      $NetBSD: ipaq_pcic.c,v 1.4 2001/07/11 00:05:55 ichiro Exp $        */
+/*      $NetBSD: ipaq_pcic.c,v 1.5 2001/07/15 00:30:17 ichiro Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -73,13 +73,13 @@ static	void	*ipaqpcic_intr_establish(struct sapcic_socket *, int,
 static	void	ipaqpcic_intr_disestablish(struct sapcic_socket *, void *);
 
 struct ipaqpcic_softc {
-	struct sapcic_softc sc_pc;
-	bus_space_handle_t sc_ioh;
-	bus_space_handle_t sc_gpioh;
-	bus_space_handle_t sc_egpioh;
-	
-	struct sapcic_socket sc_socket[2];
+	struct sapcic_softc	sc_pc;
+	bus_space_handle_t	sc_ioh;
+	struct ipaq_softc	*sc_parent;
+	struct sapcic_socket	sc_socket[2];
 };
+
+static	void	ipaqpcic_init(struct ipaqpcic_softc *);
 
 static struct sapcic_tag ipaqpcic_functions = {
 	ipaqpcic_read,
@@ -118,9 +118,9 @@ ipaqpcic_attach(parent, self, aux)
 
 	sc->sc_pc.sc_iot = psc->sc_iot;
 	sc->sc_ioh = psc->sc_ioh;
+	sc->sc_parent = (struct ipaq_softc *)parent;
 
-	sc->sc_gpioh = psc->sc_gpioh;
-	sc->sc_egpioh = psc->sc_egpioh;
+	ipaqpcic_init(sc);
 
 	for(i = 0; i < 2; i++) {
 		sc->sc_socket[i].sc = (struct sapcic_softc *)sc;
@@ -174,6 +174,17 @@ ipaqpcic_submatch(parent, cf, aux)
 	return (*cf->cf_attach->ca_match)(parent, cf, aux);
 }
 
+static void
+ipaqpcic_init(sc)
+	struct ipaqpcic_softc *sc;
+{
+	sc->sc_parent->ipaq_egpio |=
+		EGPIO_H3600_OPT_NVRAM_ON | EGPIO_H3600_OPT_ON ;
+	sc->sc_parent->ipaq_egpio &=
+		~(EGPIO_H3600_CARD_RESET | EGPIO_H3600_OPT_RESET);
+	bus_space_write_2(sc->sc_pc.sc_iot, sc->sc_parent->sc_egpioh,
+			  0, sc->sc_parent->ipaq_egpio);
+}
 
 static int
 ipaqpcic_read(so, reg)
@@ -183,7 +194,7 @@ ipaqpcic_read(so, reg)
 	int cr, bit;
 	struct ipaqpcic_softc *sc = (struct ipaqpcic_softc *)so->sc;
 
-	cr = bus_space_read_4(sc->sc_pc.sc_iot, sc->sc_gpioh, SAGPIO_PLR);
+	cr = bus_space_read_4(sc->sc_pc.sc_iot, sc->sc_parent->sc_gpioh, SAGPIO_PLR);
 
 	switch (reg) {
 	case SAPCIC_STATUS_CARD:
@@ -207,14 +218,13 @@ ipaqpcic_write(so, reg, arg)
 	int reg;
 	int arg;
 {
-	int s, value;
+	int s;
 	struct ipaqpcic_softc *sc = (struct ipaqpcic_softc *)so->sc;
 
-	value = 0;
 	s = splhigh();
 	switch (reg) {
 	case SAPCIC_CONTROL_RESET:
-		value = EGPIO_H3600_CARD_RESET;
+		sc->sc_parent->ipaq_egpio |= EGPIO_H3600_CARD_RESET;
 		break;
 	case SAPCIC_CONTROL_LINEENABLE:
 	case SAPCIC_CONTROL_WAITENABLE:
@@ -225,10 +235,8 @@ ipaqpcic_write(so, reg, arg)
 		splx(s);
 		panic("ipaqpcic_write: bogus register");
 	}
-	value |= bus_space_read_2(sc->sc_pc.sc_iot, sc->sc_egpioh, 0) & 0xFFFF;
-#if 0
-	bus_space_write_2(sc->sc_pc.sc_iot, sc->sc_egpioh, 0, value);
-#endif
+	bus_space_write_2(sc->sc_pc.sc_iot, sc->sc_parent->sc_egpioh, 0,
+			  sc->sc_parent->ipaq_egpio);
 	splx(s);
 }
 		
@@ -237,26 +245,25 @@ ipaqpcic_set_power(so, arg)
 	struct sapcic_socket *so;
 	int arg;
 {
-	int value, s;
-	struct ipaqpcic_softc *sc = so->pcictag_cookie;
+	int s;
+	struct ipaqpcic_softc *sc = (struct ipaqpcic_softc *)so->sc;
 
 	s = splbio();
 	switch (arg) {
 	case SAPCIC_POWER_OFF:
-		value &= ~(EGPIO_H3600_OPT_NVRAM_ON | EGPIO_H3600_OPT_ON);
+		sc->sc_parent->ipaq_egpio &=
+			~(EGPIO_H3600_OPT_NVRAM_ON | EGPIO_H3600_OPT_ON);
 		break;
 	case SAPCIC_POWER_3V:
 	case SAPCIC_POWER_5V:
-		value |= EGPIO_H3600_OPT_NVRAM_ON | EGPIO_H3600_OPT_ON;
+		sc->sc_parent->ipaq_egpio |=
+			EGPIO_H3600_OPT_NVRAM_ON | EGPIO_H3600_OPT_ON;
 		break;
 	default:
 		panic("ipaqpcic_set_power: bogus arg\n");
 	}
-
-	value |= bus_space_read_2(sc->sc_pc.sc_iot, sc->sc_egpioh, 0) & 0xFFFF;
-#if 0
-	bus_space_write_2(sc->sc_pc.sc_iot, sc->sc_egpioh, 0, value);
-#endif
+	bus_space_write_2(sc->sc_pc.sc_iot, sc->sc_parent->sc_egpioh,
+			  0, sc->sc_parent->ipaq_egpio);
 	splx(s);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_lcd.c,v 1.1 2001/07/10 18:09:33 ichiro Exp $	*/
+/*	$NetBSD: ipaq_lcd.c,v 1.2 2001/07/15 00:30:17 ichiro Exp $	*/
 #define IPAQ_LCD_DEBUG
 
 /*
@@ -140,11 +140,10 @@ void
 ipaqlcd_init(sc)
 	struct ipaqlcd_softc *sc;
 {
-#if 0
 	/* Initialization of Extended GPIO */
-	bus_space_write_4(sc->sc_iot, sc->sc_parent->sc_egpioh,
-			  0, EGPIO_LCD_INIT);
-#endif
+	sc->sc_parent->ipaq_egpio |= EGPIO_LCD_INIT;
+	bus_space_write_2(sc->sc_iot, sc->sc_parent->sc_egpioh,
+			  0, sc->sc_parent->ipaq_egpio);
 
 	if (bus_space_map(sc->sc_iot, SALCD_BASE, SALCD_NPORTS,
 			  0, &sc->sc_ioh))
@@ -167,7 +166,8 @@ ipaqlcd_init(sc)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 					SALCD_CR0, IPAQ_LCCR0);
 
-	DPRINTF(("DMA_BASE= %08x : DMA_CUR = %08x \n"
+	DPRINTF(("\n"
+		 "DMA_BASE= %08x : DMA_CUR = %08x \n"
 		 "LCCR0   = %08x : LCCR1   = %08x \n"
 		 "LCCR2   = %08x : LCCR3   = %08x",
 		bus_space_read_4(sc->sc_iot, sc->sc_ioh, SALCD_BA1),

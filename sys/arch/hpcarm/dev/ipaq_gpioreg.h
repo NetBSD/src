@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_gpioreg.h,v 1.2 2001/07/13 06:54:35 ichiro Exp $	*/
+/*	$NetBSD: ipaq_gpioreg.h,v 1.3 2001/07/15 00:30:17 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -108,10 +108,10 @@ Extended GPIO
 #define EGPIO_H3600_LCD5_ON		GPIO (14)
 #define EGPIO_H3600_LVDD_ON		GPIO (15)
 
-#define EGPIO_INIT	(EGPIO_H3600_OPT_NVRAM_ON| \
-			 EGPIO_H3600_LCD33_ON| \
-			 EGPIO_H3600_LCD_PCI| \
-			 EGPIO_H3600_AUD_ON) & 0xFFFF
+#define EGPIO_INIT	EGPIO_H3600_RS232_ON| \
+			EGPIO_H3600_AUD_PWRON| \
+			EGPIO_H3600_QMUTE| \
+			EGPIO_H3600_AUD_ON
 
 #define EGPIO_LCD_INIT	EGPIO_H3600_LCD33_ON| \
 			EGPIO_H3600_LCD_PCI| \
