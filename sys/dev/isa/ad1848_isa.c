@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.1 1998/08/25 22:34:29 pk Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.2 1998/08/29 22:49:48 jtk Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -614,7 +614,7 @@ ad1848_isa_intr(arg)
 
 #ifdef AUDIO_DEBUG
 	if (ad1848debug > 1)
-		printf("ad1848_intr: intr=%p status=%x\n", sc->sc_intr,status);
+		printf("ad1848_isa_intr: intr=%p status=%x\n", isc->sc_intr, status);
 #endif
 	sc->sc_locked = 0;
 	isc->sc_interrupts++;
