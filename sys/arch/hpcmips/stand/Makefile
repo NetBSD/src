@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.6 2001/05/05 08:26:11 takemura Exp $
+# $NetBSD: Makefile,v 1.7 2001/12/23 13:28:23 shin Exp $
 #
 # Makefile to generate windows VC++ project and workspace files from
 # config files and templates
 
 PROJECT_DIRS=libsa pbsdboot libz
 
-all: winfiles optfiles
+all: winfiles optfiles rom-boot
 
 winfiles: 
 	for name in $(PROJECT_DIRS); do \
@@ -25,6 +25,9 @@ optfiles:
 #	* .plg files (build logs), and
 #	* .[0-9][0-9][0-9] files (old versions of auto-converted .dsp files).
 
+rom-boot:
+	(cd romboot; make)
+
 clean:
 	rm -f hpcmips_stand.ncb
 	for dir in $(PROJECT_DIRS); do \
@@ -33,6 +36,7 @@ clean:
 	    (cd $$dir && rm -f $$dir.ncb $$dir.opt); \
 	done
 	rm -f pbsdboot/opt_spec_platform.h
+	(cd romboot; make clean)
 
 # remove all files which windows is likely to have created, in addition
 # to transient build-related files:
