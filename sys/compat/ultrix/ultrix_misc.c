@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.39 1998/02/19 00:46:02 thorpej Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.40 1998/07/03 20:03:04 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -79,9 +79,11 @@
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
  */
 
+#include "opt_nfsserver.h"
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.39 1998/02/19 00:46:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.40 1998/07/03 20:03:04 mhitch Exp $");
 
 /*
  * SunOS compatibility module.
