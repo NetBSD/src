@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.7 1998/10/23 01:16:24 ender Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.8 1999/03/05 06:45:41 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -455,6 +455,7 @@ pm_pmgrop_pm1(pmdata)
 					case MACH_MACPB160:
 					case MACH_MACPB165:
 					case MACH_MACPB165C:
+					case MACH_MACPB170:
 					case MACH_MACPB180:
 					case MACH_MACPB180C:
 						{
