@@ -1,4 +1,4 @@
-/* $NetBSD: sbicreg.h,v 1.1 1996/03/06 23:44:09 mark Exp $ */
+/* $NetBSD: sbicreg.h,v 1.2 1997/01/03 23:26:22 mark Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -306,7 +306,7 @@
 /* approximate, but we won't do SBT on selects */
 #define	sbic_isa_select(cmd)	(((cmd) > 0x5) && ((cmd) < 0xa))
 
-#define PAD(n) 	char n;
+#define PAD(n) 	char n
 #define SBIC_MACHINE_DMA_MODE	SBIC_CTL_DMA
 
 typedef struct {
