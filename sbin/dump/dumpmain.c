@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dumpmain.c	5.16 (Berkeley) 4/24/91";*/
-static char rcsid[] = "$Id: dumpmain.c,v 1.5 1993/08/01 18:27:47 mycroft Exp $";
+static char rcsid[] = "$Id: dumpmain.c,v 1.6 1993/12/02 03:49:37 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -395,12 +395,7 @@ main(argc, argv)
 	dumpmap(usedinomap, TS_CLRI, maxino);
 
 	msg("dumping (Pass III) [directories]\n");
-	for (map = dumpdirmap, ino = 0; ino < maxino; ) {
-		if ((ino % NBBY) == 0)
-			dirty = *map++;
-		else
-			dirty >>= 1;
-		ino++;
+	for (map = dumpdirmap, dirty = *map++, ino = 1; ino <= maxino; ino++) {
 		if ((dirty & 1) == 0)
 			continue;
 		/*
@@ -410,15 +405,14 @@ main(argc, argv)
 		if ((dp->di_mode & IFMT) != IFDIR)
 			continue;
 		dumpino(dp, ino);
-	}
-
-	msg("dumping (Pass IV) [regular files]\n");
-	for (map = dumpinomap, ino = 0; ino < maxino; ) {
 		if ((ino % NBBY) == 0)
 			dirty = *map++;
 		else
 			dirty >>= 1;
-		ino++;
+	}
+
+	msg("dumping (Pass IV) [regular files]\n");
+	for (map = dumpdirmap, dirty = *map++, ino = 1; ino <= maxino; ino++) {
 		if ((dirty & 1) == 0)
 			continue;
 		/*
@@ -428,6 +422,10 @@ main(argc, argv)
 		if ((dp->di_mode & IFMT) == IFDIR)
 			continue;
 		dumpino(dp, ino);
+		if ((ino % NBBY) == 0)
+			dirty = *map++;
+		else
+			dirty >>= 1;
 	}
 
 	spcl.c_type = TS_END;
