@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.116 2002/11/09 09:03:56 manu Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.117 2002/11/20 04:29:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.116 2002/11/09 09:03:56 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.117 2002/11/20 04:29:31 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -296,11 +296,11 @@ sysctl_docptime(void *oldp, size_t *oldlenp, void *newp)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
-	for (i=0; i<CPUSTATES; i++)
+	for (i = 0; i < CPUSTATES; i++)
 		cp_time[i] = 0;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		for (i=0; i<CPUSTATES; i++)
+		for (i = 0; i < CPUSTATES; i++)
 			cp_time[i] += ci->ci_schedstate.spc_cp_time[i];
 	}
 	return (sysctl_rdstruct(oldp, oldlenp, newp,
