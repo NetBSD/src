@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.8 1995/04/29 23:21:30 mycroft Exp $	*/
+/*	$NetBSD: lex.c,v 1.9 1995/09/27 00:38:46 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: lex.c,v 1.8 1995/04/29 23:21:30 mycroft Exp $";
+static char rcsid[] = "$NetBSD: lex.c,v 1.9 1995/09/27 00:38:46 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -1455,7 +1455,7 @@ bgetc()
     if (cantell) {
 	if (fseekp < fbobp || fseekp > feobp) {
 	    fbobp = feobp = fseekp;
-	    (void) lseek(SHIN, fseekp, L_SET);
+	    (void) lseek(SHIN, fseekp, SEEK_SET);
 	}
 	if (fseekp == feobp) {
 	    int     i;
@@ -1618,7 +1618,7 @@ btell(l)
 void
 btoeof()
 {
-    (void) lseek(SHIN, (off_t) 0, L_XTND);
+    (void) lseek(SHIN, (off_t) 0, SEEK_END);
     aret = F_SEEK;
     fseekp = feobp;
     alvec = NULL;
@@ -1635,11 +1635,11 @@ settell()
     cantell = 0;
     if (arginp || onelflg || intty)
 	return;
-    if (lseek(SHIN, (off_t) 0, L_INCR) < 0 || errno == ESPIPE)
+    if (lseek(SHIN, (off_t) 0, SEEK_CUR) < 0 || errno == ESPIPE)
 	return;
     fbuf = (Char **) xcalloc(2, sizeof(Char **));
     fblocks = 1;
     fbuf[0] = (Char *) xcalloc(BUFSIZ, sizeof(Char));
-    fseekp = fbobp = feobp = lseek(SHIN, (off_t) 0, L_INCR);
+    fseekp = fbobp = feobp = lseek(SHIN, (off_t) 0, SEEK_CUR);
     cantell = 1;
 }
