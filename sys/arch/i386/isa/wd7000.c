@@ -17,7 +17,7 @@
  * drivers to finish off the job..
  */
 #include "wds.h"
-#if WDS > 0
+#if NWDS > 0
 
 #include <sys/types.h>
 #include <sys/param.h>
