@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.8.2.7 1993/12/02 08:27:54 mycroft Exp $
+ * $Id: if_ed.c,v 1.8.2.8 1993/12/03 03:38:04 mycroft Exp $
  */
 
 /*
@@ -1976,8 +1976,17 @@ ed_ioctl(ifp, command, data)
 				outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_XSEL);
 			}
 		}
-
 		break;
+
+#if NBPFILTER > 0
+	case SIOCGIFADDR: {
+		struct sockaddr *sa;
+		sa = (struct sockaddr *)&ifr->ifr_data;
+		bcopy((caddr_t)sc->arpcom.ac_enaddr, (caddr_t)sa->sa_data,
+			ETHER_ADDR_LEN);
+		break;
+	}
+#endif
 
 	default:
 		error = EINVAL;
