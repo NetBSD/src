@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.39 1997/11/01 18:38:29 drochner Exp $	*/
+/*	$NetBSD: mount.c,v 1.40 1997/11/05 21:29:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.39 1997/11/01 18:38:29 drochner Exp $");
+__RCSID("$NetBSD: mount.c,v 1.40 1997/11/05 21:29:33 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,7 @@ static struct opt {
 	{ 0 }
 };
 
-static char ffs[] = "ffs";
+static char ffs_fstype[] = "ffs";
 
 int
 main(argc, argv)
@@ -123,7 +123,7 @@ main(argc, argv)
 	all = forceall = init_flags = 0;
 	options = NULL;
 	vfslist = NULL;
-	vfstype = ffs;
+	vfstype = ffs_fstype;
 	while ((ch = getopt(argc, argv, "Aadfo:rwt:uv")) != -1)
 		switch (ch) {
 		case 'A':
@@ -199,9 +199,12 @@ main(argc, argv)
 			}
 		}
 		exit(rval);
+		/* NOTREACHED */
 	case 1:
-		if (vfslist != NULL)
+		if (vfslist != NULL) {
 			usage();
+			/* NOTREACHED */
+		}
 
 		if (init_flags & MNT_UPDATE) {
 			if ((mntbuf = getmntpt(*argv)) == NULL)
@@ -261,6 +264,7 @@ main(argc, argv)
 	}
 
 	exit(rval);
+	/* NOTREACHED */
 }
 
 int
@@ -359,7 +363,7 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 	if (flags & MNT_UPDATE) {
 		catopt(&optbuf, "update");
 		/* Figure out the fstype only if we defaulted to ffs */
-		if (vfstype == ffs && statfs(name, &sf) != -1)
+		if (vfstype == ffs_fstype && statfs(name, &sf) != -1)
 			vfstype = sf.f_fstypename;
 	}
 
@@ -398,7 +402,7 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 		do {
 			(void)snprintf(execname,
 			    sizeof(execname), "%s/%s", *edir, execbase);
-			execv(execname, (char * const *)argv);
+			(void)execv(execname, (char * const *)argv);
 			if (errno != ENOENT)
 				warn("exec %s for %s", execname, name);
 		} while (*++edir != NULL);
@@ -555,4 +559,5 @@ usage()
 		"[-adfruvw] [-t ffs | external_type]",
 		"[-dfruvw] special | node");
 	exit(1);
+	/* NOTREACHED */
 }
