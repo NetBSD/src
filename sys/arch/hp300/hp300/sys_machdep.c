@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.14 1997/04/01 03:12:30 scottr Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.15 1997/04/06 21:40:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -228,7 +228,7 @@ cachectl(req, addr, len)
 	switch (req) {
 	case CC_EXTPURGE|CC_PURGE:
 	case CC_EXTPURGE|CC_FLUSH:
-#if defined(HP370)
+#if defined(HP340) || defined(HP360) || defined(HP370) || defined(HP375)
 		if (ectype == EC_PHYS)
 			PCIA();
 		/* fall into... */
@@ -238,7 +238,7 @@ cachectl(req, addr, len)
 		DCIU();
 		break;
 	case CC_EXTPURGE|CC_IPURGE:
-#if defined(HP370)
+#if defined(HP340) || defined(HP360) || defined(HP370) || defined(HP375)
 		if (ectype == EC_PHYS)
 			PCIA();
 		else

@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.15 1997/04/02 22:37:27 scottr Exp $	*/
+/*	$NetBSD: dma.c,v 1.16 1997/04/06 21:40:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -274,7 +274,7 @@ dmafree(dq)
 #endif
 
 	DMA_CLEAR(dc);
-#if defined(HP340) || defined(HP360) || defined(HP370) || defined(HP380)
+#if defined(HP340) || defined(HP360) || defined(HP370) || defined(HP375) || defined(HP380)
 	/*
 	 * XXX we may not always go thru the flush code in dmastop()
 	 */
@@ -423,7 +423,7 @@ dmago(unit, addr, count, flags)
 	if (mmutype == MMU_68040 && (flags & DMAGO_READ))
 		dc->dm_flags |= DMAF_PCFLUSH;
 #endif
-#if defined(HP340) || defined(HP360) || defined(HP370)
+#if defined(HP340) || defined(HP360) || defined(HP370) || defined(HP375)
 	/*
 	 * Remember if we need to flush external physical cache when
 	 * DMA is done.  We only do this if we are reading (writing memory).
@@ -475,7 +475,7 @@ dmastop(unit)
 	dmatimo[unit] = 0;
 #endif
 	DMA_CLEAR(dc);
-#if defined(HP340) || defined(HP360) || defined(HP370) || defined(HP380)
+#if defined(HP340) || defined(HP360) || defined(HP370) || defined(HP375) || defined(HP380)
 	if (dc->dm_flags & DMAF_PCFLUSH) {
 		PCIA();
 		dc->dm_flags &= ~DMAF_PCFLUSH;
