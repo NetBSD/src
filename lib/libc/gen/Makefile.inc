@@ -1,10 +1,8 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.45 1994/05/21 09:17:49 chopps Exp $
+#	$Id: Makefile.inc,v 1.46 1994/05/28 23:16:48 mycroft Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
-
-# won't compile (missing shm.h): shmat.c shmctl.c shmdt.c shmget.c 
 
 SRCS+=	alarm.c assert.c clock.c confstr.c ctermid.c ctime.c ctype_.c \
 	daemon.c devname.c difftime.c \
@@ -19,7 +17,7 @@ SRCS+=	alarm.c assert.c clock.c confstr.c ctermid.c ctime.c ctype_.c \
 	mktemp.c nice.c nlist.c pause.c popen.c psignal.c pwcache.c raise.c \
 	scandir.c semconfig.c semctl.c semget.c semop.c \
 	setdomainname.c sethostname.c setjmperr.c setmode.c \
-	setproctitle.c siginterrupt.c \
+	setproctitle.c shmat.c shmctl.c shmdt.c shmget.c siginterrupt.c \
 	siglist.c signal.c signame.c sigsetops.c sleep.c sysconf.c sysctl.c \
 	syslog.c \
 	termios.c time.c times.c timezone.c tolower_.c ttyname.c ttyslot.c \
