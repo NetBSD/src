@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 1995/09/27 18:42:21 jtc Exp $	*/
+/*	$NetBSD: main.c,v 1.21 1995/11/02 23:54:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -48,7 +48,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	5.25 (Berkeley) 4/1/91";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.20 1995/09/27 18:42:21 jtc Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.21 1995/11/02 23:54:54 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,11 +83,12 @@ static char rcsid[] = "$NetBSD: main.c,v 1.20 1995/09/27 18:42:21 jtc Exp $";
 #include <sys/time.h>
 #include <sys/param.h>
 #include <sys/resource.h>
+#include <sys/signal.h>
 #include <sys/stat.h>
 #include <sys/utsname.h>
+#include <sys/resource.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <signal.h>
 #include <stdio.h>
 #if __STDC__
 #include <stdarg.h>
@@ -113,7 +114,7 @@ Boolean			allPrecious;	/* .PRECIOUS given on line by itself */
 
 static Boolean		noBuiltins;	/* -r flag */
 static Lst		makefiles;	/* ordered list of makefiles to read */
-int			maxJobs;	/* -J argument */
+int			maxJobs;	/* -j argument */
 static int		maxLocal;	/* -L argument */
 Boolean			compatMake;	/* -B argument */
 Boolean			debug;		/* -d flag */
@@ -158,10 +159,10 @@ MainParseArgs(argc, argv)
 	int c;
 
 	optind = 1;	/* since we're called more than once */
-#ifdef notyet
+#ifdef REMOTE
 # define OPTFLAGS "BD:I:L:PSd:ef:ij:knqrst"
 #else
-# define OPTFLAGS "D:I:d:ef:ij:knqrst"
+# define OPTFLAGS "BD:I:PSd:ef:ij:knqrst"
 #endif
 rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != EOF) {
 		switch(c) {
@@ -175,15 +176,16 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != EOF) {
 			Var_Append(MAKEFLAGS, "-I", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
-#ifdef notyet
 		case 'B':
 			compatMake = TRUE;
 			break;
+#ifdef REMOTE
 		case 'L':
 			maxLocal = atoi(optarg);
 			Var_Append(MAKEFLAGS, "-L", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
+#endif
 		case 'P':
 			usePipes = FALSE;
 			Var_Append(MAKEFLAGS, "-P", VAR_GLOBAL);
@@ -192,7 +194,6 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != EOF) {
 			keepgoing = FALSE;
 			Var_Append(MAKEFLAGS, "-S", VAR_GLOBAL);
 			break;
-#endif
 		case 'd': {
 			char *modules = optarg;
 
@@ -261,6 +262,9 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != EOF) {
 			break;
 		case 'j':
 			maxJobs = atoi(optarg);
+#ifndef REMOTE
+			maxLocal = maxJobs;
+#endif
 			Var_Append(MAKEFLAGS, "-j", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
@@ -384,6 +388,19 @@ main(argc, argv)
 	struct utsname utsname;
     	char *machine = getenv("MACHINE");
 
+#ifdef RLIMIT_NOFILE
+	/*
+	 * get rid of resource limit on file descriptors
+	 */
+	{
+		struct rlimit rl;
+		if (getrlimit(RLIMIT_NOFILE, &rl) != -1 &&
+		    rl.rlim_cur != rl.rlim_max) {
+			rl.rlim_cur = rl.rlim_max;
+			(void) setrlimit(RLIMIT_NOFILE, &rl);
+		}
+	}
+#endif
 	/*
 	 * Find where we are and take care of PWD for the automounter...
 	 * All this code is so that we know where we are when we start up
@@ -491,13 +508,13 @@ main(argc, argv)
 	debug = 0;			/* No debug verbosity, please. */
 	jobsRunning = FALSE;
 
-	maxJobs = DEFMAXJOBS;		/* Set default max concurrency */
 	maxLocal = DEFMAXLOCAL;		/* Set default local max concurrency */
-#ifdef notyet
-	compatMake = FALSE;		/* No compat mode */
+#ifdef REMOTE
+	maxJobs = DEFMAXJOBS;		/* Set default max concurrency */
 #else
-	compatMake = TRUE;		/* No compat mode */
+	maxJobs = maxLocal;
 #endif
+	compatMake = FALSE;		/* No compat mode */
     
 
 	/*
@@ -934,6 +951,26 @@ enomem()
 {
 	(void)fprintf(stderr, "make: %s.\n", strerror(errno));
 	exit(2);
+}
+
+/*
+ * enunlink --
+ *	Remove a file carefully, avoiding directories.
+ */
+int
+eunlink(file)
+	const char *file;
+{
+	struct stat st;
+
+	if (lstat(file, &st) == -1)
+		return -1;
+
+	if (S_ISDIR(st.st_mode)) {
+		errno = EISDIR;
+		return -1;
+	}
+	return unlink(file);
 }
 
 /*
