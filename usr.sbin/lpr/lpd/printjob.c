@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.21 1999/12/07 14:54:47 mrg Exp $	*/
+/*	$NetBSD: printjob.c,v 1.22 1999/12/11 02:01:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.21 1999/12/07 14:54:47 mrg Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.22 1999/12/11 02:01:18 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,7 +174,7 @@ printjob()
 		syslog(LOG_ERR, "%s: %m", SD);
 		exit(1);
 	}
-	if (stat(LO, &stb) == 0 && (stb.st_mode & 0100))
+	if (stat(LO, &stb) == 0 && (stb.st_mode & S_IXUSR))
 		exit(0);		/* printing disabled */
 	lfd = open(LO, O_WRONLY|O_CREAT, 0644);
 	if (lfd < 0) {
@@ -205,7 +205,7 @@ printjob()
 	}
 	if (nitems == 0)		/* no work to do */
 		exit(0);
-	if (stb.st_mode & 01) {		/* reset queue flag */
+	if (stb.st_mode & S_IXOTH) {	/* reset queue flag */
 		if (fchmod(lfd, stb.st_mode & 0776) < 0)
 			syslog(LOG_ERR, "%s: %s: %m", printer, LO);
 	}
@@ -236,10 +236,10 @@ again:
 		 */
 		if (fstat(lfd, &stb) == 0) {
 			/* stop printing before starting next job? */
-			if (stb.st_mode & 0100)
+			if (stb.st_mode & S_IXUSR)
 				goto done;
 			/* rebuild queue (after lpc topq) */
-			if (stb.st_mode & 01) {
+			if (stb.st_mode & S_IXOTH) {
 				for (free((char *) q); nitems--; free((char *) q))
 					q = *qp++;
 				if (fchmod(lfd, stb.st_mode & 0776) < 0)
@@ -269,7 +269,7 @@ again:
 			syslog(LOG_WARNING, "%s: job could not be %s (%s)", printer,
 				remote ? "sent to remote host" : "printed", q->q_name);
 			if (i == REPRINT) {
-				/* insure we don't attempt this job again */
+				/* ensure we don't attempt this job again */
 				(void) unlink(q->q_name);
 				q->q_name[0] = 'd';
 				(void) unlink(q->q_name);
@@ -1094,7 +1094,7 @@ sendmail(user, bombed)
 		else
 			cp = _PATH_SENDMAIL;
 		execl(_PATH_SENDMAIL, cp, "-t", 0);
-		exit(0);
+		_exit(0);
 	} else if (s > 0) {				/* parent */
 		dup2(p[1], 1);
 		printf("To: %s@%s\n", user, fromhost);
@@ -1590,7 +1590,7 @@ pstatus(msg, va_alist)
 #endif
 {
 	int fd;
-	char buf[BUFSIZ];
+	char *buf;
 	va_list ap;
 #ifdef __STDC__
 	va_start(ap, msg);
@@ -1605,9 +1605,11 @@ pstatus(msg, va_alist)
 		exit(1);
 	}
 	ftruncate(fd, 0);
-	(void)vsnprintf(buf, sizeof(buf) - 2, msg, ap);
+	(void)vasprintf(&buf, msg, ap);
 	va_end(ap);
-	strncat(buf, "\n", 2);
+	/* XXX writev */
 	(void)write(fd, buf, strlen(buf));
+	(void)write(fd, "\n", 2);
 	(void)close(fd);
+	free(buf);
 }
