@@ -1,4 +1,4 @@
-/* $NetBSD: ym.c,v 1.4 1998/08/17 21:16:15 augustss Exp $ */
+/* $NetBSD: ym.c,v 1.5 1998/08/25 22:34:31 pk Exp $ */
 
 
 /*
@@ -35,11 +35,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
-#include <sys/ioctl.h>
-#include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/proc.h>
-#include <sys/buf.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -69,30 +65,30 @@ static void ym_set_mic_gain __P((struct ym_softc *, struct ad1848_volume *));
 
 
 struct audio_hw_if ym_hw_if = {
-	ad1848_open,
-	ad1848_close,
+	ad1848_isa_open,
+	ad1848_isa_close,
 	NULL,
 	ad1848_query_encoding,
 	ad1848_set_params,
 	ad1848_round_blocksize,
 	ad1848_commit_settings,
-	ad1848_dma_init_output,
-	ad1848_dma_init_input,
-	ad1848_dma_output,
-	ad1848_dma_input,
-	ad1848_halt_out_dma,
-	ad1848_halt_in_dma,
+	ad1848_isa_dma_init_output,
+	ad1848_isa_dma_init_input,
+	ad1848_isa_dma_output,
+	ad1848_isa_dma_input,
+	ad1848_halt_out,
+	ad1848_halt_in,
 	NULL,
 	ym_getdev,
 	NULL,
 	ym_mixer_set_port,
 	ym_mixer_get_port,
 	ym_query_devinfo,
-	ad1848_malloc,
-	ad1848_free,
-	ad1848_round,
-	ad1848_mappage,
-	ad1848_get_props,
+	ad1848_isa_malloc,
+	ad1848_isa_free,
+	ad1848_isa_round,
+	ad1848_isa_mappage,
+	ad1848_isa_get_props,
 };
 
 
@@ -109,15 +105,18 @@ void
 ym_attach(sc)
 	struct ym_softc *sc;
 {
+	struct ad1848_softc *ac = &sc->sc_ad1848.sc_ad1848;
 	struct ad1848_volume vol_mid = {220, 220};
 	struct ad1848_volume vol_0   = {0, 0};
   
-	sc->sc_ih = isa_intr_establish(sc->sc_ic, sc->ym_irq, IST_EDGE, 
-				       IPL_AUDIO, ad1848_intr, &sc->sc_ad1848);
+	sc->sc_ad1848.sc_ih = isa_intr_establish(sc->sc_ic, sc->ym_irq,
+						 IST_EDGE, 
+					         IPL_AUDIO, ad1848_isa_intr,
+					         &sc->sc_ad1848);
 
-	ad1848_attach(&sc->sc_ad1848);
+	ad1848_attach(ac);
 	printf("\n");
-	sc->sc_ad1848.parent = sc;
+	ac->parent = sc;
 
 	/* Establish chip in well known mode */
 	ym_set_master_gain(sc, &vol_mid);
@@ -129,7 +128,7 @@ ym_attach(sc)
 	sc->mic_mute = 1;
 	ym_mute(sc, SA3_MIC, sc->mic_mute);
 
-	audio_attach_mi(&ym_hw_if, &sc->sc_ad1848, &sc->sc_dev);
+	audio_attach_mi(&ym_hw_if, ac, &ac->sc_dev);
 }
 
 static __inline int
