@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2004/11/11 11:54:51 yamt Exp $
+#	$NetBSD: Makefile,v 1.2 2004/11/11 12:03:54 yamt Exp $
 #	$OpenBSD: Makefile,v 1.15 2004/03/10 18:49:49 mcbride Exp $
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition
@@ -9,8 +9,6 @@ SRCS+=	pfctl_osfp.c pfctl_radix.c pfctl_table.c pfctl_qstats.c
 CPPFLAGS+=-I${NETBSDSRCDIR}/dist/pf/sbin/pfctl
 YFLAGS=
 MAN=	pfctl.8
-
-WARNS?=	1
 
 LDADD+=	-lm
 DPADD+=	${LIBM}
