@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.35 2000/08/28 17:43:59 jdolecek Exp $
+$NetBSD: isapnpdevs,v 1.36 2000/12/17 20:16:03 thorpej Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@ $NetBSD: isapnpdevs,v 1.35 2000/08/28 17:43:59 jdolecek Exp $
  */
 driver	aha	Adaptec SCSI
 driver	aic	Adaptec SCSI
+driver	an	Aironet 802.11
 driver	com	National Semiconductor Serial
 driver	ep	3Com 3CXXX Ethernet
 driver	ess	ESS Audio Drive
@@ -69,6 +70,11 @@ devlogic	aic	ADP1520		0	Adaptec AHA-1520B
 devlogic	aic	ADP1502		0	Adaptec AHA-1502P
 devlogic	aic	ADP1505		0	Adaptec AVA-1505A
 devcompat	aic	ADP1530		0	(Adaptec AVA-1505A)
+
+/*
+ * an
+ */
+devlogic	an	AOL0001		0	Aironet 4500/4800
 
 /*
  * com
