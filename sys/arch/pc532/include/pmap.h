@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.27 1999/07/28 01:07:53 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.28 2000/07/18 12:45:50 matthias Exp $	*/
 
 /*
  *
@@ -52,13 +52,13 @@
  * are described by PDEs in the PDP.  the PDEs are defined as follows:
  *
  * (ranges are inclusive -> exclusive, just like vm_map_entry start/end)
- * (the following assumes that KERNBASE is 0xf8000000)
+ * (the following assumes that KERNBASE is 0xe0000000)
  *
  * PDE#s	VA range		usage
- * 0->991	0x0 -> 0xf7c00000	user address space
- * 991		0xf7c00000->		recursive mapping of PDP (used for
- *			0xf8000000	linear mapping of PTPs)
- * 992->1022	0xf8000000->		kernel address space (constant
+ * 0->895	0x0 -> 0xdfc00000	user address space
+ * 895		0xdfc00000->		recursive mapping of PDP (used for
+ *			0xe0000000	linear mapping of PTPs)
+ * 896->1022	0xe0000000->		kernel address space (constant
  *			0xff800000	across all pmap's/processes)
  * 1022		0xff800000->		"alternate" recursive PDP mapping
  *			0xffc00000	(for other pmaps)
@@ -73,18 +73,18 @@
  * 4MB range is the PTE that maps VA 0xffffe000 (the last page in a 4GB
  * address).
  *
- * all pmap's PD's must have the same values in slots 991->1023 so that
+ * all pmap's PD's must have the same values in slots 895->1023 so that
  * the kernel and the i/o is always mapped in every process.  these values
  * are loaded into the PD at pmap creation time.
  *
  * at any one time only one pmap can be active on a processor.  this is
  * the pmap whose PDP is pointed to by processor register ptb0.  this pmap
  * will have all its PTEs mapped into memory at the recursive mapping
- * point (slot #991 as show above).  when the pmap code wants to find the
+ * point (slot #895 as show above).  when the pmap code wants to find the
  * PTE for a virtual address, all it has to do is the following:
  *
- * address of PTE = (991 * 4MB) + (VA / NBPG) * sizeof(pt_entry_t)
- *                = 0xf7c00000 + (VA / 4096) * 4
+ * address of PTE = (895 * 4MB) + (VA / NBPG) * sizeof(pt_entry_t)
+ *                = 0xdfc00000 + (VA / 4096) * 4
  *
  * what happens if the pmap layer is asked to perform an operation
  * on a pmap that is not the one which is currently active?  in that
@@ -100,35 +100,35 @@
  *   |   0| -> PTP#0 that maps VA 0x0 -> 0x400000
  *   |    |
  *   |    |
- *   | 991| -> points back to PDP (ptb0) mapping VA 0xf7c00000 -> 0xf8000000
- *   | 992| -> first kernel PTP (maps 0xf8000000 -> 0xf8400000)
+ *   | 895| -> points back to PDP (ptb0) mapping VA 0xdfc00000 -> 0xe0000000
+ *   | 896| -> first kernel PTP (maps 0xe0000000 -> 0xe0400000)
  *   |    |
  *   |1022| -> points to alternate pmap's PDP (maps 0xff800000 -> 0xffc00000)
  *   +----+
  *
- * note that the PDE#991 VA (0xf7c00000) is defined as "PTE_BASE"
+ * note that the PDE#895 VA (0xdfc00000) is defined as "PTE_BASE"
  * note that the PDE#1022 VA (0xff800000) is defined as "APTE_BASE"
  *
- * starting at VA 0xf7c00000 the current active PDP (ptb0) acts as a
+ * starting at VA 0xdfc00000 the current active PDP (ptb0) acts as a
  * PTP:
  *
- * PTP#991 == PDP(ptb0) => maps VA 0xf7c00000 -> 0xf8000000
+ * PTP#895 == PDP(ptb0) => maps VA 0xdfc00000 -> 0xe0000000
  *   +----+
- *   |   0| -> maps the contents of PTP#0 at VA 0xf7c00000->0xf7c01000
+ *   |   0| -> maps the contents of PTP#0 at VA 0xdfc00000->0xdfc01000
  *   |    |
  *   |    |
- *   | 991| -> maps contents of PTP#991 (the PDP) at VA 0xf7fdf000
- *   | 992| -> maps contents of first kernel PTP
+ *   | 895| -> maps contents of PTP#895 (the PDP) at VA 0xdffdf000
+ *   | 896| -> maps contents of first kernel PTP
  *   |    |
  *   |1023|
  *   +----+
  *
- * note that mapping of the PDP at PTP#991's VA (0xf7fdf000) is
+ * note that mapping of the PDP at PTP#895's VA (0xdffdf000) is
  * defined as "PDP_BASE".... within that mapping there are two
  * defines:
- *   "PDP_PDE" (0xf7fdff7c) is the VA of the PDE in the PDP
+ *   "PDP_PDE" (0xdffdff7c) is the VA of the PDE in the PDP
  *      which points back to itself.
- *   "APDP_PDE" (0xf7fdfff8) is the VA of the PDE in the PDP which
+ *   "APDP_PDE" (0xdffdfff8) is the VA of the PDE in the PDP which
  *      establishes the recursive mapping of the alternate pmap.
  *      to set the alternate PDP, one just has to put the correct
  *	PA info in *APDP_PDE.
@@ -141,8 +141,8 @@
  * the following defines identify the slots used as described above.
  */
 
-#define PDSLOT_PTE	((KERNBASE/NBPD)-1) /* 991: for recursive PDP map */
-#define PDSLOT_KERN	(KERNBASE/NBPD)	    /* 992: start of kernel space */
+#define PDSLOT_PTE	((KERNBASE/NBPD)-1) /* 895: for recursive PDP map */
+#define PDSLOT_KERN	(KERNBASE/NBPD)	    /* 896: start of kernel space */
 #define PDSLOT_APTE	((unsigned)1022) /* 1022: alternative recursive slot */
 
 /*
@@ -462,7 +462,7 @@ pmap_protect(pmap, sva, eva, prot)
 	}
 }
 
-vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
+vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, vm_prot_t));
 
 #endif /* _KERNEL */
 #endif	/* _NS532_PMAP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.114 2000/07/02 04:40:43 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.115 2000/07/18 12:45:51 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -847,9 +847,9 @@ map(pd, virtual, physical, protection, size)
  *
  * Level one and level two page tables are initialized to create
  * the following mapping:
- *	0xf7c00000-0xf7ffefff:	Kernel level two page tables
- *	0xf7fff000-0xf7ffffff:	Kernel level one page table
- *	0xf8000000-0xff7fffff:	Kernel code and data
+ *	0xdfc00000-0xdfffefff:	Kernel level two page tables
+ *	0xdffff000-0xf7ffffff:	Kernel level one page table
+ *	0xe0000000-0xff7fffff:	Kernel code and data
  *	0xffc00000-0xffc00fff:	Kernel temporary stack
  *	0xffc80000-0xffc80fff:	Duarts and Parity control
  *	0xffd00000-0xffdfffff:	SCSI polled
