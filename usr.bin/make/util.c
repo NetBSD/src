@@ -1,8 +1,14 @@
+/*	$NetBSD: util.c,v 1.4 1995/06/14 15:20:11 christos Exp $	*/
+
 /*
  * Missing stuff from OS's
  *
- *	$Id: util.c,v 1.3 1994/09/23 09:33:23 mycroft Exp $
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: util.c,v 1.4 1995/06/14 15:20:11 christos Exp $";
+#endif
+
 #include <stdio.h>
 #include "make.h"
 

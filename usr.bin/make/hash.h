@@ -1,3 +1,5 @@
+/*	$NetBSD: hash.h,v 1.4 1995/06/14 15:19:18 christos Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -36,7 +38,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)hash.h	5.4 (Berkeley) 12/28/90
- *	$Id: hash.h,v 1.3 1994/03/05 00:34:46 cgd Exp $
  */
 
 /* hash.h --

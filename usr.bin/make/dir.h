@@ -1,3 +1,5 @@
+/*	$NetBSD: dir.h,v 1.3 1995/06/14 15:19:11 christos Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -36,7 +38,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dir.h	5.4 (Berkeley) 12/28/90
- *	$Id: dir.h,v 1.2 1994/06/06 22:45:27 jtc Exp $
  */
 
 /* dir.h --

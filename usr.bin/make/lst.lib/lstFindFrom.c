@@ -1,3 +1,5 @@
+/*	$NetBSD: lstFindFrom.c,v 1.5 1995/06/14 15:21:09 christos Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -36,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)lstFindFrom.c	5.3 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: lstFindFrom.c,v 1.4 1994/06/06 22:46:02 jtc Exp $";
+static char *rcsid = "$Id: lstFindFrom.c,v 1.5 1995/06/14 15:21:09 christos Exp $";
 #endif /* not lint */
 
 /*-
