@@ -1,6 +1,6 @@
 #! @LOCALPREFIX@/bin/perl
 #
-#	$NetBSD: scriptdump.pl,v 1.3 2000/01/31 14:22:43 itojun Exp $
+#	$NetBSD: scriptdump.pl,v 1.1 2000/06/13 15:15:26 itojun Exp $
 #
 
 if ($< != 0) {
