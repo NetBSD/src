@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.2 1998/02/23 03:23:05 mycroft Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.3 1999/03/05 06:10:48 tsubai Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -29,6 +29,8 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
+
+#include <vm/vm.h>
 
 #include <machine/db_machdep.h>
 #include <machine/pmap.h>
