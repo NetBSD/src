@@ -8,6 +8,11 @@ Preparing you hard disk with HDToolBox:
 	A full explanation of HDToolBox can be found with your
 	AmigaDOS manuals and is beyond the scope of this document.
 
+	The first time you partition a drive, you need to set its drive
+	type so that you have working geometry parameters. To do this
+	you enter the "Change drive type" menu, and either use "read
+	parameters from drive" or set them manually.
+
 	Note you will be modifying your HD's if you mess something 
 	up here you could lose everything on all the drives that 
 	you configure.  It is therefore advised that you:
@@ -37,8 +42,9 @@ Preparing you hard disk with HDToolBox:
 	partitioning includes (from Partition Drive section):
 
 		Marking all NetBSD partitions as non-bootable, with
-		one exception: the root partition, if you want to boot
-		NetBSD directly.
+		two exceptions: the root partition, if you want to boot
+		NetBSD directly, or the swap partition, if you want
+		to boot the installation miniroot directly.
 
 		Changing the file system parameters of the partitions
 		to NetBSD ones.  This must be done from the
