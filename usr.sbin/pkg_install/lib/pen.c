@@ -1,11 +1,11 @@
-/*	$NetBSD: pen.c,v 1.16 1999/08/24 00:48:39 hubertf Exp $	*/
+/*	$NetBSD: pen.c,v 1.16.8.1 2000/07/24 11:30:46 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.16 1999/08/24 00:48:39 hubertf Exp $");
+__RCSID("$NetBSD: pen.c,v 1.16.8.1 2000/07/24 11:30:46 hubertf Exp $");
 #endif
 #endif
 
@@ -87,7 +87,7 @@ find_play_pen(char *pen, size_t pensize, size_t sz)
 	char   *cp;
 	struct stat sb;
 
-	if (pen[0] && stat(pen, &sb) != FAIL && (min_free(pen) >= sz))
+	if (pen && pen[0] && stat(pen, &sb) != FAIL && (min_free(pen) >= sz))
 		return pen;
 	else if ((cp = getenv("PKG_TMPDIR")) != NULL && stat(cp, &sb) != FAIL && (min_free(cp) >= sz))
 		(void) snprintf(pen, pensize, "%s/instmp.XXXXXX", cp);
