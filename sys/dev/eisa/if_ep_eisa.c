@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.2 1996/04/30 22:29:56 thorpej Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.3 1996/05/03 19:07:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -33,6 +33,7 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -92,7 +93,6 @@ ep_eisa_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct eisa_attach_args *ea = aux;
 
 	/* must match one of our known ID strings */
