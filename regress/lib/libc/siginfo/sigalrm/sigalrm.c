@@ -1,17 +1,19 @@
+#include <assert.h>
 #include <signal.h>
 #include <stdio.h>
+#include <sys/time.h>
 #include <sys/ucontext.h>
 
 void
 sigalrm(int signo, siginfo_t *info, void *ptr)
 {
+#ifdef DEBUG
 	printf("%d %p %p\n", signo, info, ptr);
 	if (info != NULL) {
 		printf("si_signo=%d\n", info->si_signo);
 		printf("si_errno=%d\n", info->si_errno);
 		printf("si_code=%d\n", info->si_code);
-		printf("si_trap=%d\n", info->si_trap);
-		printf("si_addr=%p\n", info->si_addr);
+		printf("si_sigval.sival_int=%d\n", info->si_sigval.sival_int);
 	}
 	if (ptr != NULL) {
 		ucontext_t *ctx = ptr;
@@ -30,6 +32,11 @@ sigalrm(int signo, siginfo_t *info, void *ptr)
 			printf("uc_mcontext.greg[%d] 0x%x\n", i,
 			    mc->__gregs[i]);
 	}
+#endif
+	assert(info->si_signo == SIGALRM);
+	assert(info->si_code == SI_TIMER);
+	assert(info->si_sigval.sival_int == ITIMER_REAL);
+	exit(0);
 }
 
 int
