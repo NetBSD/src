@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.13 1999/02/03 20:25:07 mycroft Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.14 2001/09/05 13:27:54 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -229,7 +229,7 @@ static void
 zs_kgdb_rxint(cs)
 	struct zs_chanstate *cs;
 {
-	register u_char c, rr1;
+	u_char c, rr1;
 
 	/*
 	 * First read the status, because reading the received char
@@ -252,9 +252,9 @@ zs_kgdb_rxint(cs)
 
 static void
 zs_kgdb_txint(cs)
-	register struct zs_chanstate *cs;
+	struct zs_chanstate *cs;
 {
-	register int rr0;
+	int rr0;
 
 	rr0 = zs_read_csr(cs);
 	zs_write_csr(cs, ZSWR0_RESET_TXINT);
@@ -262,10 +262,10 @@ zs_kgdb_txint(cs)
 
 static void
 zs_kgdb_stint(cs, force)
-	register struct zs_chanstate *cs;
+	struct zs_chanstate *cs;
 	int force;
 {
-	register int rr0;
+	int rr0;
 
 	rr0 = zs_read_csr(cs);
 	zs_write_csr(cs, ZSWR0_RESET_STATUS);
