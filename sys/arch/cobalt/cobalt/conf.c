@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 2000/06/06 18:00:23 soren Exp $	*/
+/*	$NetBSD: conf.c,v 1.4 2000/07/13 17:40:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -129,7 +129,7 @@ struct cdevsw cdevsw[] =
 	cdev_ipf_init(NIPFILTER,ipl),	/* 20: IP filter */
 	cdev_scanner_init(NSS,ss),	/* 21: SCSI scanner */
 	cdev_ch_init(NCH,ch),		/* 22: SCSI changer */
-	cdev_ch_init(NCH,ch),		/* 23: SCSI unknown */
+	cdev_uk_init(NUK,uk),		/* 23: SCSI unknown */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 24: SCSI bus */
 	cdev_ses_init(NSES,ses),	/* 25: SCSI SES/SAF-TE */
 	cdev_tty_init(NCOM,com),        /* 26: com serial port */
