@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.4 2001/01/08 22:26:27 martin Exp $
+#	$NetBSD: MAKEDEV,v 1.5 2001/06/07 20:05:13 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -63,7 +63,8 @@
 #	wd*	IDE disks
 #
 # Terminals:
-#	tty*	NS16550 ("com") serial ports
+#	ttyC*	NS16550 ("com") serial ports
+#	ttyZ*	Zilog 8530 ("zstty") serial ports
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
@@ -103,7 +104,8 @@ all)
 	sh $0 raid0 raid1 raid2 raid3
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 tun0 tun1 tun2 tun3
-	sh $0 tty00 tty01 tty02 tty03
+	sh $0 ttyC0 ttyC1 ttyC2 ttyC3
+	sh $0 ttyZ0 ttyZ1 ttyZ2 ttyZ3
 	sh $0 random local isdn
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	;;
@@ -111,8 +113,8 @@ all)
 minimal)
 	sh $0 std
 	sh $0 sd0 sd1 sd2 sd3 pty0 st0 st1 ch0 cd0 cd1 ccd0 ccd1 md0
-	sh $0 tty00
-	sh $0 tty01
+	sh $0 ttyC0 ttyC1
+	sh $0 ttyZ0 ttyCZ
 	sh $0 pty0
 	;;
 
@@ -205,19 +207,14 @@ ccd*|cd*|raid*|sd*|vnd*|wd*)
 	chmod 640 ${name}${unit}[a-p] r${name}${unit}[a-p]
 	;;
 
-tty*)
+ttyC*|ttyZ*)
 	case $i in
-	tty*)	name=tty; dname=dty; ounit=${i#tty};	chr=36;;
+	ttyC*)	name=ttyC; dname=dtyC; unit=${i#ttyC}; chr=36;;
+	ttyZ*)	name=ttyZ; dname=dtyZ; unit=${i#ttyZ}; chr=35;;
 	esac
-	ounit=$(($ounit + 0))
-	if [ $ounit -lt 10 ]; then
-		unit=0$ounit
-	else
-		unit=$ounit
-	fi
         rm -f $name$unit $dname$unit
-        mknod  $name$unit c $chr $(($ounit + $dialin ))
-        mknod $dname$unit c $chr $(($ounit + $dialout))
+        mknod  $name$unit c $chr $(($unit + $dialin ))
+        mknod $dname$unit c $chr $(($unit + $dialout))
         chown uucp.wheel $name$unit $dname$unit
         ;;
 
