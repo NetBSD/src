@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.10 2003/05/17 09:58:03 scw Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.11 2003/05/22 20:17:11 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -51,6 +51,9 @@ extern const struct db_command db_machine_command_table[];
 /* arch/vax/vax/db_machdep.c */
 void		db_stack_trace_print(db_expr_t, int, db_expr_t, char *,
 		    void (*)(const char *, ...));
+
+/* ddb/db_xxx.c */
+void		db_kgdb_cmd(db_expr_t, int, db_expr_t, char *);
 
 /* kern/kern_proc.c */
 void		db_kill_proc(db_expr_t, int, db_expr_t, char *);
