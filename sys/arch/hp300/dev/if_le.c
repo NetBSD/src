@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_le.c	7.6 (Berkeley) 5/8/91
- *	$Id: if_le.c,v 1.15 1994/07/10 17:53:12 mycroft Exp $
+ *	$Id: if_le.c,v 1.16 1994/07/15 21:20:48 mycroft Exp $
  */
 
 #include "le.h"
@@ -425,7 +425,9 @@ leintr(unit)
 			}
 #endif
 			if (isr & LE_MISS) {
+#if 0
 				printf("le%d: MISS\n", unit);
+#endif
 				sc->sc_arpcom.ac_if.if_ierrors++;
 			}
 			if (isr & LE_MERR) {
@@ -553,7 +555,7 @@ lestart(ifp)
 		 */
 		cdm->bcnt = -len;
 		cdm->mcnt = 0;
-		cdm->flags = LE_OWN | LE_STP | LE_ENP;
+		cdm->flags |= LE_OWN | LE_STP | LE_ENP;
 
 #ifdef LEDEBUG
 		if (sc->sc_debug)
@@ -660,7 +662,7 @@ lerint(unit)
 		} else if (cdm->flags & (LE_STP | LE_ENP) != (LE_STP | LE_ENP)) {
 			do {
 				cdm->mcnt = 0;
-				cdm->flags = LE_OWN;
+				cdm->flags |= LE_OWN;
 				NEXTRDS;
 			} while ((cdm->flags & (LE_OWN | LE_ERR | LE_STP | LE_ENP)) == 0);
 			sc->sc_last_rd = rmd;
@@ -680,7 +682,7 @@ lerint(unit)
 		}
 			
 		cdm->mcnt = 0;
-		cdm->flags = LE_OWN;
+		cdm->flags |= LE_OWN;
 		NEXTRDS;
 #ifdef LEDEBUG
 		if (sc->sc_debug)
@@ -701,33 +703,37 @@ leread(sc, buf, len)
 	u_char *buf;
 	int len;
 {
-	struct ether_header *eh;
+	struct ifnet *ifp;
 	struct mbuf *m;
+	struct ether_header *eh;
 
-	eh = (struct ether_header *)buf;
-	len -= sizeof(struct ether_header) + 4;
+	len -= 4;
 	if (len <= 0)
 		return;
 
 	/* Pull packet off interface. */
-	m = leget(buf, len, &sc->sc_arpcom.ac_if);
+	ifp = &sc->sc_arpcom.ac_if;
+	m = leget(buf, len, ifp);
 	if (m == 0)
 		return;
+
+	/* We assume that the header fit entirely in one mbuf. */
+	eh = mtod(m, struct ether_header *);
 
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
-	if (sc->sc_arpcom.ac_if.if_bpf) {
-		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m);
+	if (ifp->if_bpf) {
+		bpf_mtap(ifp->if_bpf, m);
 
 		/*
 		 * Note that the interface cannot be in promiscuous mode if
 		 * there are no BPF listeners.  And if we are in promiscuous
 		 * mode, we have to check if this packet is really ours.
 		 */
-		if ((sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC) &&
+		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
 		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
 			    sizeof(eh->ether_dhost)) != 0) {
@@ -737,7 +743,12 @@ leread(sc, buf, len)
 	}
 #endif
 
-	ether_input(&sc->sc_arpcom.ac_if, eh, m);
+	/* We assume that the header fit entirely in one mbuf. */
+	m->m_pkthdr.len -= sizeof(*eh);
+	m->m_len -= sizeof(*eh);
+	m->m_data += sizeof(*eh);
+
+	ether_input(ifp, eh, m);
 }
 
 /*
@@ -756,21 +767,15 @@ leget(buf, totlen, ifp)
 	int totlen;
 	struct ifnet *ifp;
 {
-	struct mbuf *top, **mp, *m, *p;
+	struct mbuf *top, **mp, *m;
 	int len;
-	register caddr_t cp = buf;
-	char *epkt;
-
-	buf += sizeof(struct ether_header);
-	cp = buf;
-	epkt = cp + totlen;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return 0;
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
-	m->m_len = MHLEN;
+	len = MHLEN;
 	top = 0;
 	mp = &top;
 
@@ -781,33 +786,19 @@ leget(buf, totlen, ifp)
 				m_freem(top);
 				return 0;
 			}
-			m->m_len = MLEN;
+			len = MLEN;
 		}
-		len = min(totlen, epkt - cp);
-		if (len >= MINCLSIZE) {
+		if (totlen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
 			if (m->m_flags & M_EXT)
-				m->m_len = len = min(len, MCLBYTES);
-			else
-				len = m->m_len;
-		} else {
-			/*
-			 * Place initial small packet/header at end of mbuf.
-			 */
-			if (len < m->m_len) {
-				if (top == 0 && len + max_linkhdr <= m->m_len)
-					m->m_data += max_linkhdr;
-				m->m_len = len;
-			} else
-				len = m->m_len;
+				len = MCLBYTES;
 		}
-		bcopy(cp, mtod(m, caddr_t), (unsigned)len);
-		cp += len;
+		m->m_len = len = min(totlen, len);
+		bcopy((caddr_t)buf, mtod(m, caddr_t), len);
+		buf += len;
+		totlen -= len;
 		*mp = m;
 		mp = &m->m_next;
-		totlen -= len;
-		if (cp == epkt)
-			cp = buf;
 	}
 
 	return top;
