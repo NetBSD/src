@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.h,v 1.14 2002/10/12 15:39:30 christos Exp $	*/
+/*	$NetBSD: pax.h,v 1.15 2002/10/12 18:49:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -80,8 +80,9 @@
 #define ISBLK		2	/* block device */
 #define ISTAPE		3	/* tape drive */
 #define ISPIPE		4	/* pipe/socket */
+#ifdef SUPPORT_RMT
 #define	ISRMT		5	/* rmt */
-
+#endif
 
 /*
  * Pattern matching structure
