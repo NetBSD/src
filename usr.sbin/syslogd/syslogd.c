@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.65 2004/03/06 20:29:25 itojun Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.65.4.1 2005/01/30 13:29:26 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.65 2004/03/06 20:29:25 itojun Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.65.4.1 2005/01/30 13:29:26 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -373,7 +373,6 @@ getgroup:
 	(void)signal(SIGQUIT, Debug ? die : SIG_IGN);
 	(void)signal(SIGCHLD, reapchild);
 	(void)signal(SIGALRM, domark);
-	(void)alarm(TIMERINTVL);
 
 #ifndef SUN_LEN
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
@@ -473,6 +472,9 @@ getgroup:
 		/* tuck my process id away, if i'm not in debug mode */
 		pidfile(NULL);
 	}
+
+	/* set timer for mark facility after the fork of daemon() */
+	(void)alarm(TIMERINTVL);
 
 	for (;;) {
 		int rv;
