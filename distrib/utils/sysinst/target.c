@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.2 1997/11/02 08:30:39 jonathan Exp $	*/
+/*	$NetBSD: target.c,v 1.3 1997/11/02 23:43:13 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -79,7 +79,15 @@ const char* target_prefix(void)
 /* Is the root we're running from is the root we're trying to upgrade? */
 int target_already_root()
 {
+	/* FIXME */
 	return(strcmp(target_prefix(), "/mnt") == 0);
+}
+
+/* Is this partname (e.g., "sd0a") mounted as root? */
+int is_active_rootpart(const char *partname)
+{
+	/* FIXME -- compare to kernel's sysctl string with current root. */
+	return(0);
 }
 
 
@@ -191,4 +199,26 @@ void target_chdir_or_die(const char *dir)
 int target_chdir(const char *dir)
 {
 	return(do_target_chdir(dir, 0));
+}
+
+/*
+ * Duplicate a file from the current root to the same pathname
+ *  in the target system.  Pathname must be an absolute pathname.
+ * If we're running in the target, do nothing. 
+ */
+void dup_file_into_target(const char *filename)
+{
+	if (!target_already_root()) {
+		run_prog ("/bin/cp %s %s/%s", 
+		    filename, target_prefix(), filename);
+	}
+}
+
+
+/* Do a mv where both pathnames are  within the target filesystem. */
+void mv_within_target_or_die(const char *from, const char *to)
+{
+	run_prog_or_die("mv %s/%s", 
+	    target_prefix(), from,
+	    target_prefix(), to);
 }
