@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.44 1998/11/29 14:31:53 ragge Exp $
+#       $NetBSD: files.vax,v 1.45 1999/01/19 21:04:47 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -327,6 +327,7 @@ file	arch/vax/vax/ka43.c		vax43
 file	arch/vax/vax/ka46.c		vax46
 file	arch/vax/vax/emulate.s		vax630|vax650|vax410
 file	arch/vax/vax/ka650.c		vax650
+file	arch/vax/vax/scb.c
 file	arch/vax/vax/conf.c
 file	arch/vax/vax/urem.s
 file	arch/vax/vax/udiv.s

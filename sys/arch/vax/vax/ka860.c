@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.11 1998/11/29 14:48:53 ragge Exp $	*/
+/*	$NetBSD: ka860.c,v 1.12 1999/01/19 21:04:49 ragge Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -74,6 +74,7 @@ struct	cpu_dep	ka860_calls = {
 	generic_clkread,
 	generic_clkwrite,
 	6,      /* ~VUPS */
+	10,	/* SCB pages */
 	0,	/* Halt call, nothing special */
 	ka86_reboot,
 	ka86_clrf,

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.40 1999/01/01 21:43:19 ragge Exp $     */
+/*	$NetBSD: trap.c,v 1.41 1999/01/19 21:04:49 ragge Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -68,7 +68,6 @@ volatile int startsysc = 0, faultdebug = 0;
 
 void	arithflt __P((struct trapframe *));
 void	syscall __P((struct trapframe *));
-void	stray __P((int, int));
 
 char *traptypes[]={
 	"reserved addressing",
@@ -238,6 +237,7 @@ ufault:			if (rv == KERN_RESOURCE_SHORTAGE)
 	case T_PTELEN:
 		if (p->p_addr)
 			FAULTCHK;
+asm("halt");
 		panic("ptelen fault in system space: addr %lx pc %lx",
 		    frame->code, frame->pc);
 
@@ -437,11 +437,4 @@ bad:
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, frame->code, err, rval[0]);
 #endif
-}
-
-void
-stray(scb, vec)
-	int scb, vec;
-{
-	printf("stray interrupt scb %d, vec 0x%x\n", scb, vec);
 }

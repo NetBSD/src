@@ -1,4 +1,4 @@
-/*	$NetBSD: ka46.c,v 1.3 1999/01/01 21:43:19 ragge Exp $ */
+/*	$NetBSD: ka46.c,v 1.4 1999/01/19 21:04:49 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -76,6 +76,7 @@ struct	cpu_dep ka46_calls = {
 	chip_clkread,
 	chip_clkwrite,
 	12,      /* ~VUPS */
+	2,	/* SCB pages */
 	ka46_halt,
 	ka46_reboot,
 };

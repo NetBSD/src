@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.h,v 1.6 1997/11/02 14:07:13 ragge Exp $ */
+/*	$NetBSD: gencons.h,v 1.7 1999/01/19 21:04:48 ragge Exp $ */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -59,6 +59,16 @@
 #define	GC_BTFL	0x2	/* boot machine */
 #define	GC_CWFL	0x3	/* clear warm start flag */
 #define	GC_CCFL	0x4	/* clear cold start flag */
+
+/* Interrupt vectors used */
+#define	SCB_G0R	0xf8
+#define	SCB_G0T	0xfc
+#define	SCB_G1R	0xc8
+#define	SCB_G1T	0xcc
+#define	SCB_G2R	0xd0
+#define	SCB_G2T	0xd4
+#define	SCB_G3R	0xd8
+#define	SCB_G3T	0xdc
 
 /* Prototypes */
 void	gencnputc __P((dev_t, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.11 1999/01/01 21:43:18 ragge Exp $	*/
+/*	$NetBSD: qd.c,v 1.12 1999/01/19 21:04:48 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -68,34 +68,28 @@
 #include "qd.h"
 
 #if NQD > 0
-#include <sys/types.h>
-#include <machine/pte.h>
-#include <machine/mtpr.h>
 #include <sys/param.h>
-#include <machine/cpu.h>
+#include <sys/systm.h>
 #include <sys/conf.h>
-#include <sys/user.h>
-#include <machine/qdioctl.h>
 #include <sys/tty.h>
-#include <sys/map.h>
-#include <sys/buf.h>
-#include <vm/vm.h>
-#include <sys/clist.h>
-#include <sys/file.h>
-#include <sys/uio.h>
 #include <sys/kernel.h>
-#include <sys/exec.h>
-#include <sys/proc.h>
 #include <sys/device.h>
-#include <vax/uba/ubareg.h>
-#include <vax/uba/ubavar.h>
-#include <sys/syslog.h>
+#include <sys/poll.h>
+
+#include <vm/vm.h>
+
+#include <dev/cons.h>
+
+#include <machine/pte.h>
+#include <machine/cpu.h>
+#include <machine/qdioctl.h>
 #include <machine/qduser.h>	/* definitions shared with user level client */
 #include <machine/qdreg.h>	/* QDSS device register structures */
-#include <sys/poll.h>
-#include <dev/cons.h>
 #include <machine/sid.h>
-#include <sys/systm.h>
+#include <machine/scb.h>
+
+#include <vax/uba/ubareg.h>
+#include <vax/uba/ubavar.h>
 
 #include "ioconf.h"
 
@@ -727,9 +721,9 @@ void qd_attach(parent, self, aux)
 	unit = self->dv_unit;		/* get QDSS number */
 
 	/* Grab the other two interrupt vectors */
-	ubasetvec(self, ua->ua_cvec + 1, qdaint);
-	ubasetvec(self, ua->ua_cvec + 2, qdiint);
-	
+	scb_vecalloc(ua->ua_cvec + 4, qdaint, self->dv_unit, SCB_ISTACK);
+	scb_vecalloc(ua->ua_cvec + 8, qdiint, self->dv_unit, SCB_ISTACK);
+
 	/*
 	* init "qdflags[]" for this QDSS 
 	*/
