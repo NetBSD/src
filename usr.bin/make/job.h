@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.11 2000/12/30 02:05:20 sommerfeld Exp $	*/
+/*	$NetBSD: job.h,v 1.12 2000/12/30 02:51:21 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -254,6 +254,7 @@ void Job_Wait __P((void));
 void Job_AbortAll __P((void));
 void JobFlagForMigration __P((int));
 void Job_TokenReturn __P((void));
+void Job_TokenRelease __P((void));
 Boolean Job_TokenWithdraw __P((void));
 void Job_ServerStart __P((int));
 
