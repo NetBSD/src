@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.40 2003/12/14 05:16:30 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.41 2004/10/23 17:07:39 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.40 2003/12/14 05:16:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.41 2004/10/23 17:07:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -60,8 +60,6 @@ void ofw_stack __P((void));
 
 extern char bootpath[256];
 char cbootpath[256];
-struct device *booted_device;	/* boot device */
-int booted_partition;		/* ...and partition on that device */
 
 u_int *heathrow_FCR = NULL;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 2003/08/07 16:26:47 agc Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22 2004/10/23 17:07:38 thorpej Exp $	*/
 /*	$OpenBSD: autoconf.c,v 1.9 1997/05/18 13:45:20 pefo Exp $	*/
 
 /*
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2003/08/07 16:26:47 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2004/10/23 17:07:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,6 @@ int getpno __P((char **, int *));
  * the configuration process, and are used in initializing
  * the machine.
  */
-struct device *booted_device;
 struct bootdev_data *bootdev_data;
 
 /*

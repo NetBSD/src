@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 2003/08/07 16:28:55 agc Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15 2004/10/23 17:12:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2003/08/07 16:28:55 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2004/10/23 17:12:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2003/08/07 16:28:55 agc Exp $");
 
 #include <next68k/dev/intiovar.h>
 
-struct device *booted_device;	/* boot device */
 volatile u_long *intrstat;
 volatile u_long *intrmask;
 
