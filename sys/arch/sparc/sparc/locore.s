@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.182 2003/01/13 15:50:51 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.183 2003/01/17 10:36:19 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2474,7 +2474,7 @@ softintr_common:
 #if defined(MULTIPROCESSOR)
 	/* Grab the kernel lock for interrupt levels <= IPL_CLOCK */
 	cmp	%l3, IPL_CLOCK
-	bgu	3f
+	bgeu	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 	call	_C_LABEL(intr_lock_kernel)
 	 nop
@@ -2501,7 +2501,7 @@ softintr_common:
 
 #if defined(MULTIPROCESSOR)
 	cmp	%l3, IPL_CLOCK
-	bgu	0f
+	bgeu	0f
 	 nop
 	call	_C_LABEL(intr_unlock_kernel)
 	 nop
@@ -2649,7 +2649,7 @@ sparc_interrupt_common:
 #if defined(MULTIPROCESSOR)
 	/* Grab the kernel lock for interrupt levels <= IPL_CLOCK */
 	cmp	%l3, IPL_CLOCK
-	bgu	3f
+	bgeu	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 	call	_C_LABEL(intr_lock_kernel)
 	 nop
@@ -2689,7 +2689,7 @@ sparc_interrupt_common:
 4:
 #if defined(MULTIPROCESSOR)
 	cmp	%l3, IPL_CLOCK
-	bgu	0f
+	bgeu	0f
 	 nop
 	call	_C_LABEL(intr_unlock_kernel)
 	 nop
