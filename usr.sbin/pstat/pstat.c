@@ -1,7 +1,7 @@
-/*	$NetBSD: pstat.c,v 1.32 1997/07/13 02:23:40 kleink Exp $	*/
+/*	$NetBSD: pstat.c,v 1.33 1997/10/17 06:34:22 mrg Exp $	*/
 
 /*-
- * Copyright (c) 1980, 1991, 1993
+ * Copyright (c) 1980, 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,15 +35,15 @@
 
 #ifndef lint
 static char copyright[] =
-"@(#) Copyright (c) 1980, 1991, 1993\n\
+"@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
+static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$NetBSD: pstat.c,v 1.32 1997/07/13 02:23:40 kleink Exp $";
+static char *rcsid = "$NetBSD: pstat.c,v 1.33 1997/10/17 06:34:22 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,10 +59,14 @@ static char *rcsid = "$NetBSD: pstat.c,v 1.32 1997/07/13 02:23:40 kleink Exp $";
 #define NFS
 #include <sys/mount.h>
 #undef NFS
+#include <sys/uio.h>
+#include <sys/namei.h>
+#include <miscfs/union/union.h>
 #undef _KERNEL
 #include <sys/stat.h>
 #include <nfs/nfsproto.h>
 #include <nfs/rpcv2.h>
+#include <nfs/nfs.h>
 #include <nfs/nfsnode.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
@@ -106,6 +110,40 @@ char	*nlistf	= NULL;
 char	*memf	= NULL;
 kvm_t	*kd;
 
+struct {
+	int m_flag;
+	const char *m_name;
+} mnt_flags[] = {
+	{ MNT_RDONLY, "rdonly" },
+	{ MNT_SYNCHRONOUS, "sync" },
+	{ MNT_NOEXEC, "noexec" },
+	{ MNT_NOSUID, "nosuid" },
+	{ MNT_NODEV, "nodev" },
+	{ MNT_UNION, "union" },
+	{ MNT_ASYNC, "async" },
+	{ MNT_NOCOREDUMP, "nocoredump" },
+	{ MNT_EXRDONLY, "exrdonly" },
+	{ MNT_EXPORTED, "exported" },
+	{ MNT_DEFEXPORTED, "defexported" },
+	{ MNT_EXPORTANON, "exportanon" },
+	{ MNT_EXKERB, "exkerb" },
+	{ MNT_LOCAL, "local" },
+	{ MNT_QUOTA, "quota" },
+	{ MNT_ROOTFS, "rootfs" },
+	{ MNT_UPDATE, "update" },
+	{ MNT_DELEXPORT, "delexport" },
+	{ MNT_RELOAD, "reload" },
+	{ MNT_FORCE, "force" },
+	{ MNT_MLOCK, "mlock" },
+	{ MNT_WAIT, "wait" },
+	{ MNT_MPBUSY, "mpbusy" },
+	{ MNT_MPWANT, "mpwant" },
+	{ MNT_UNMOUNT, "unmount" },
+	{ MNT_WANTRDWR, "wantrdwr" },
+	{ 0 }
+};
+
+
 #define	SVAR(var) __STRING(var)	/* to force expansion */
 #define	KGET(idx, var)							\
 	KGET1(idx, &var, sizeof(var), SVAR(var))
@@ -137,6 +175,8 @@ void	ufs_getflags __P((struct vnode *, struct inode *, char *));
 void	ufs_header __P((void));
 int	ufs_print __P((struct vnode *));
 int		ext2fs_print __P((struct vnode *));
+void	union_header __P((void));
+int	union_print __P((struct vnode *));
 void	usage __P((void));
 void	vnode_header __P((void));
 void	vnode_print __P((struct vnode *, struct vnode *));
@@ -231,9 +271,9 @@ struct e_vnode {
 void
 vnodemode()
 {
-	register struct e_vnode *e_vnodebase, *endvnode, *evp;
-	register struct vnode *vp;
-	register struct mount *maddr, *mp;
+	struct e_vnode *e_vnodebase, *endvnode, *evp;
+	struct vnode *vp;
+	struct mount *maddr, *mp;
 	int numvnodes;
 
 	e_vnodebase = loadvnodes(&numvnodes);
@@ -259,15 +299,16 @@ vnodemode()
 			mount_print(mp);
 			vnode_header();
 			if (!strncmp(ST.f_fstypename, MOUNT_FFS, MFSNAMELEN) ||
-			    !strncmp(ST.f_fstypename, MOUNT_MFS, MFSNAMELEN)) {
+			    !strncmp(ST.f_fstypename, MOUNT_MFS, MFSNAMELEN))
 				ufs_header();
-			} else if (!strncmp(ST.f_fstypename, MOUNT_NFS,
-			    MFSNAMELEN)) {
+			else if (!strncmp(ST.f_fstypename, MOUNT_NFS,
+			    MFSNAMELEN))
 				nfs_header();
-			} else if (!strncmp(ST.f_fstypename, MOUNT_EXT2FS,
-				MFSNAMELEN)) {
+			else if (!strncmp(ST.f_fstypename, MOUNT_EXT2FS,
+				MFSNAMELEN))
 				ufs_header();
-			}
+			else if (!strcmp(ST.f_fstypename, "union"))
+				union_header();
 			(void)printf("\n");
 		}
 		vnode_print(evp->avnode, vp);
@@ -297,12 +338,12 @@ vnode_print(avnode, vp)
 {
 	char *type, flags[16]; 
 	char *fp = flags;
-	register int flag;
+	int flag;
 
 	/*
 	 * set type
 	 */
-	switch(vp->v_type) {
+	switch (vp->v_type) {
 	case VNON:
 		type = "non"; break;
 	case VREG:
@@ -456,7 +497,7 @@ nfs_print(vp)
 {
 	struct nfsnode nfsnode, *np = &nfsnode;
 	char flagbuf[16], *flags = flagbuf;
-	register int flag;
+	int flag;
 	char *name;
 	mode_t type;
 
@@ -493,6 +534,24 @@ nfs_print(vp)
 		(void)printf(" %7qd", np->n_size);
 	return (0);
 }
+
+void
+union_header() 
+{
+	(void)printf("    UPPER    LOWER");
+}
+
+int
+union_print(vp) 
+	struct vnode *vp;
+{
+	struct union_node unode, *up = &unode;
+
+	KGETRET(VTOUNION(vp), &unode, sizeof(unode), "vnode's unode");
+
+	(void)printf(" %8x %8x", up->un_uppervp, up->un_lowervp);
+	return (0);
+}
 	
 /*
  * Given a pointer to a mount structure in kernel space,
@@ -507,7 +566,7 @@ getmnt(maddr)
 		struct mount *maddr;
 		struct mount mount;
 	} *mhead = NULL;
-	register struct mtab *mt;
+	struct mtab *mt;
 
 	for (mt = mhead; mt != NULL; mt = mt->next)
 		if (maddr == mt->maddr)
@@ -525,135 +584,27 @@ void
 mount_print(mp)
 	struct mount *mp;
 {
-	register int flags;
-	char *type;
+	int flags;
+	const char *type;
 
-#define ST	mp->mnt_stat
-	(void)printf("*** MOUNT ");
-	(void)printf("%.*s %s on %s", MFSNAMELEN, ST.f_fstypename,
+	(void)printf("*** MOUNT %s %s on %s", ST.f_fstypename,
 	    ST.f_mntfromname, ST.f_mntonname);
 	if (flags = mp->mnt_flag) {
-		char *comma = "(";
+		int i;
+		const char *sep = " (";
 
-		putchar(' ');
-		/* user visable flags */
-		if (flags & MNT_RDONLY) {
-			(void)printf("%srdonly", comma);
-			flags &= ~MNT_RDONLY;
-			comma = ",";
-		}
-		if (flags & MNT_SYNCHRONOUS) {
-			(void)printf("%ssynchronous", comma);
-			flags &= ~MNT_SYNCHRONOUS;
-			comma = ",";
-		}
-		if (flags & MNT_NOEXEC) {
-			(void)printf("%snoexec", comma);
-			flags &= ~MNT_NOEXEC;
-			comma = ",";
-		}
-		if (flags & MNT_NOSUID) {
-			(void)printf("%snosuid", comma);
-			flags &= ~MNT_NOSUID;
-			comma = ",";
-		}
-		if (flags & MNT_NODEV) {
-			(void)printf("%snodev", comma);
-			flags &= ~MNT_NODEV;
-			comma = ",";
-		}
-		if (flags & MNT_UNION) {
-			(void)printf("%sunion", comma);
-			flags &= ~MNT_UNION;
-			comma = ",";
-		}
-		if (flags & MNT_ASYNC) {
-			(void)printf("%sasync", comma);
-			flags &= ~MNT_ASYNC;
-			comma = ",";
-		}
-		if (flags & MNT_NOCOREDUMP) {
-			(void)printf("%snocoredump", comma);
-			flags &= ~MNT_NOCOREDUMP;
-			comma = ",";
-		}
-		if (flags & MNT_EXRDONLY) {
-			(void)printf("%sexrdonly", comma);
-			flags &= ~MNT_EXRDONLY;
-			comma = ",";
-		}
-		if (flags & MNT_EXPORTED) {
-			(void)printf("%sexport", comma);
-			flags &= ~MNT_EXPORTED;
-			comma = ",";
-		}
-		if (flags & MNT_DEFEXPORTED) {
-			(void)printf("%sdefdexported", comma);
-			flags &= ~MNT_DEFEXPORTED;
-			comma = ",";
-		}
-		if (flags & MNT_EXPORTANON) {
-			(void)printf("%sexportanon", comma);
-			flags &= ~MNT_EXPORTANON;
-			comma = ",";
-		}
-		if (flags & MNT_EXKERB) {
-			(void)printf("%sexkerb", comma);
-			flags &= ~MNT_EXKERB;
-			comma = ",";
-		}
-		if (flags & MNT_LOCAL) {
-			(void)printf("%slocal", comma);
-			flags &= ~MNT_LOCAL;
-			comma = ",";
-		}
-		if (flags & MNT_QUOTA) {
-			(void)printf("%squota", comma);
-			flags &= ~MNT_QUOTA;
-			comma = ",";
-		}
-		if (flags & MNT_ROOTFS) {
-			(void)printf("%srootfs", comma);
-			flags &= ~MNT_ROOTFS;
-			comma = ",";
-		}
-		/* filesystem control flags */
-		if (flags & MNT_UPDATE) {
-			(void)printf("%supdate", comma);
-			flags &= ~MNT_UPDATE;
-			comma = ",";
-		}
-		if (flags & MNT_MLOCK) {
-			(void)printf("%slock", comma);
-			flags &= ~MNT_MLOCK;
-			comma = ",";
-		}
-		if (flags & MNT_MWAIT) {
-			(void)printf("%swait", comma);
-			flags &= ~MNT_MWAIT;
-			comma = ",";
-		}
-		if (flags & MNT_MPBUSY) {
-			(void)printf("%sbusy", comma);
-			flags &= ~MNT_MPBUSY;
-			comma = ",";
-		}
-		if (flags & MNT_MPWANT) {
-			(void)printf("%swant", comma);
-			flags &= ~MNT_MPWANT;
-			comma = ",";
-		}
-		if (flags & MNT_UNMOUNT) {
-			(void)printf("%sunmount", comma);
-			flags &= ~MNT_UNMOUNT;
-			comma = ",";
-		}
-		if (flags)
-			(void)printf("%sunknown_flags:%x", comma, flags);
+		for (i = 0; mnt_flags[i].m_flag; i++) {
+			if (flags & mnt_flags[i].m_flag) {
+				(void)printf("%s%s", sep, mnt_flags[i].m_name);
+				flags &= ~mnt_flags[i].m_flag;
+				sep = ",";
+			}
+  		}
+  		if (flags)
+ 			(void)printf("%sunknown_flags:%x", sep, flags);
 		(void)printf(")");
 	}
 	(void)printf("\n");
-#undef ST
 }
 
 struct e_vnode *
@@ -728,7 +679,8 @@ kinfo_vnodes(avnodes)
 	return ((struct e_vnode *)vbuf);
 }
 	
-char hdr[]="  LINE  RAW  CAN  OUT  HWT LWT    COL STATE      SESS  PGID DISC\n";
+char hdr[]="  LINE RAW CAN OUT  HWT LWT     COL STATE  SESS      PGID DISC\n";
+int ttyspace = 128;
 
 void
 ttymode()
@@ -772,9 +724,9 @@ struct {
 
 void
 ttyprt(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
-	register int i, j;
+	int i, j;
 	pid_t pgid;
 	char *name, state[20];
 
@@ -782,8 +734,8 @@ ttyprt(tp)
 		(void)printf("0x%3x:%1x ", major(tp->t_dev), minor(tp->t_dev)); 
 	else
 		(void)printf("%-7s ", name);
-	(void)printf("%3d %4d ", tp->t_rawq.c_cc, tp->t_canq.c_cc);
-	(void)printf("%4d %4d %3d %6d ", tp->t_outq.c_cc, 
+	(void)printf("%2d %3d ", tp->t_rawq.c_cc, tp->t_canq.c_cc);
+	(void)printf("%3d %4d %3d %7d ", tp->t_outq.c_cc, 
 		tp->t_hiwat, tp->t_lowat, tp->t_column);
 	for (i = j = 0; ttystates[i].flag; i++)
 		if (tp->t_state&ttystates[i].flag)
@@ -791,7 +743,7 @@ ttyprt(tp)
 	if (j == 0)
 		state[j++] = '-';
 	state[j] = '\0';
-	(void)printf("%-6s %8x", state, (u_long)tp->t_session & ~KERNBASE);
+	(void)printf("%-6s %8x", state, (u_long)tp->t_session);
 	pgid = 0;
 	if (tp->t_pgrp != NULL)
 		KGET2(&tp->t_pgrp->pg_id, &pgid, sizeof(pid_t), "pgid");
@@ -821,7 +773,7 @@ ttyprt(tp)
 void
 filemode()
 {
-	register struct file *fp;
+	struct file *fp;
 	struct file *addr;
 	char *buf, flagbuf[16], *fbp;
 	int len, maxfile, nfile;
