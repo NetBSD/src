@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.71 2002/10/23 09:14:33 jdolecek Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.72 2003/02/23 04:25:59 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.71 2002/10/23 09:14:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.72 2003/02/23 04:25:59 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -628,7 +628,6 @@ fdesc_setattr(v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct filedesc *fdp = ap->a_p->p_fd;
-	struct file *fp;
 	unsigned fd;
 
 	/*
@@ -646,7 +645,7 @@ fdesc_setattr(v)
 	}
 
 	fd = VTOFDESC(ap->a_vp)->fd_fd;
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
+	if (fd_getfile(fdp, fd) == NULL)
 		return (EBADF);
 
 	/*
