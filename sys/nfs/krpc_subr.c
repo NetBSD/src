@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.23 1998/08/09 21:19:49 perry Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.24 2001/06/12 15:17:28 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -241,7 +241,7 @@ krpc_call(sa, prog, vers, func, data, from_p)
 	from = NULL;
 
 	/*
-	 * Create socket and set its recieve timeout.
+	 * Create socket and set its receive timeout.
 	 */
 	if ((error = socreate(AF_INET, &so, SOCK_DGRAM, 0)))
 		goto out;

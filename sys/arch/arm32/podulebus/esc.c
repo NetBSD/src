@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.11 2001/04/25 17:53:11 bouyer Exp $	*/
+/*	$NetBSD: esc.c,v 1.12 2001/06/12 15:17:17 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -566,7 +566,7 @@ esc_ixfer(dev)
 			esciwait(dev);
 		}
 
-/* Update buffer pointers to reflect the sent/recieved data. */
+/* Update buffer pointers to reflect the sent/received data. */
 	dev->sc_buf = buf;
 	dev->sc_len = len;
 
@@ -643,7 +643,7 @@ esc_ixfer(dev)
 		}
 	}
 	
-/* Update buffer pointers to reflect the sent/recieved data. */
+/* Update buffer pointers to reflect the sent/received data. */
 	dev->sc_buf = buf;
 	dev->sc_len = len;
 
@@ -1088,7 +1088,7 @@ esc_midaction(dev, rp, nexus)
 
 		case ESC_NS_DISCONNECTING:
 			/*
-			 * We have recieved a DISCONNECT message, so we are
+			 * We have received a DISCONNECT message, so we are
 			 * doing a normal disconnection.
 			 */
 			nexus->state = ESC_NS_DISCONNECTED;

@@ -1,4 +1,4 @@
-/*	$NetBSD: etherfun.c,v 1.2 1998/01/05 07:03:05 perry Exp $	*/
+/*	$NetBSD: etherfun.c,v 1.3 2001/06/12 15:17:19 wiz Exp $	*/
 
 /*
  *
@@ -62,7 +62,7 @@ do_rev_arp ()
   le_put(buf, 76);
 }
   
-/* Recieve and disassemble the rev_arp reply */
+/* Receive and disassemble the rev_arp reply */
 
 int
 get_rev_arp () 
@@ -184,9 +184,9 @@ do_get_file ()
 	       tftp->info.block, tftp->data);
         return 1;
       }
-      if (tftp->info.block != last_ack + 1) { /* we recieved the wrong block */
+      if (tftp->info.block != last_ack + 1) { /* we received the wrong block */
 	if (tftp->info.block < last_ack +1) {
-	  do_send_tftp(tftp->info.block); /* ackn whatever we recieved */
+	  do_send_tftp(tftp->info.block); /* ackn whatever we received */
 	} else {
 	  do_send_tftp( last_ack );       /* ackn the last confirmed block */
         }

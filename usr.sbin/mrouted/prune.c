@@ -1,4 +1,4 @@
-/*	$NetBSD: prune.c,v 1.7 2000/10/12 06:07:04 augustss Exp $	*/
+/*	$NetBSD: prune.c,v 1.8 2001/06/12 15:17:30 wiz Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -2052,7 +2052,7 @@ accept_mtrace(src, dst, group, data, no, datalen)
     }
     else {
 	log(LOG_WARNING, 0, "%s from %s to %s",
-	    "Non decipherable traceroute request recieved",
+	    "Non decipherable traceroute request received",
 	    inet_fmt(src, s1), inet_fmt(dst, s2));
 	return;
     }
@@ -2093,7 +2093,7 @@ accept_mtrace(src, dst, group, data, no, datalen)
 	    /*
 	     * If the multicast router is a member of the group being
 	     * queried, and the query is multicasted, then the router can
-	     * recieve multiple copies of the same query.  If we have already
+	     * receive multiple copies of the same query.  If we have already
 	     * replied to this traceroute, just ignore it this time.
 	     *
 	     * This is not a total solution, but since if this fails you

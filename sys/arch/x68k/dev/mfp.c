@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.5 2000/01/16 14:20:56 minoura Exp $	*/
+/*	$NetBSD: mfp.c,v 1.6 2001/06/12 15:17:21 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@ mfp_send_usart (command)
 }
 
 int
-mfp_recieve_usart(void)
+mfp_receive_usart(void)
 {
 	while (!(mfp_get_rsr() & MFP_RSR_BF))
 		asm("nop");
