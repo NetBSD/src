@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.51 2001/10/26 20:36:27 augustss Exp $ */
+/* $NetBSD: wskbd.c,v 1.52 2001/10/26 20:48:47 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.51 2001/10/26 20:36:27 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.52 2001/10/26 20:48:47 augustss Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -416,7 +416,7 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 #if NWSMUX > 0
-	if (mux != WSKBDDEVCF_MUX_DEFAULT) {
+	if (mux >= 0) {
 		error = wsmux_attach_sc(wsmux_getmux(mux), &sc->sc_base);
 		if (error)
 			printf("%s: attach error=%d\n",
