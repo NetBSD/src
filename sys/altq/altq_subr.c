@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.9 2002/10/09 07:28:57 jdolecek Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.10 2003/11/09 22:11:12 christos Exp $	*/
 /*	$KAME: altq_subr.c,v 1.11 2002/01/11 08:11:49 kjc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.9 2002/10/09 07:28:57 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.10 2003/11/09 22:11:12 christos Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -333,7 +333,7 @@ tbr_set(ifq, profile)
 	       M_DEVBUF, M_WAITOK);
 	if (tbr == NULL)
 		return (ENOMEM);
-	bzero(tbr, sizeof(struct tb_regulator));
+	(void)memset(tbr, 0, sizeof(struct tb_regulator));
 
 	tbr->tbr_rate = TBR_SCALE(profile->rate / 8) / machclk_freq;
 	tbr->tbr_depth = TBR_SCALE(profile->depth);
@@ -766,7 +766,7 @@ acc_add_filter(classifier, filter, class, phandle)
 	       M_DEVBUF, M_WAITOK);
 	if (afp == NULL)
 		return (ENOMEM);
-	bzero(afp, sizeof(struct acc_filter));
+	(void)memset(afp, 0, sizeof(struct acc_filter));
 
 	afp->f_filter = *filter;
 	afp->f_class = class;
