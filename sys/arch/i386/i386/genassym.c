@@ -35,7 +35,7 @@
  *
  *	@(#)genassym.c	5.11 (Berkeley) 5/10/91
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/Attic/genassym.c,v 1.2 1993/05/06 10:48:11 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/Attic/genassym.c,v 1.3 1993/05/09 23:02:34 deraadt Exp $";
 
 #ifndef lint
 static char sccsid[] = "@(#)genassym.c	5.11 (Berkeley) 5/10/91";
@@ -146,9 +146,6 @@ main()
 	printf("#define\tRU_MINFLT %d\n", &rup->ru_minflt);
 	printf("#define\tPCB_FLAGS %d\n", &pcb->pcb_flags);
 	printf("#define\tPCB_SAVEFPU %d\n", &pcb->pcb_savefpu);
-	printf("#define\tFP_WASUSED %d\n", FP_WASUSED);
-	printf("#define\tFP_NEEDSSAVE %d\n", FP_NEEDSSAVE);
-	printf("#define\tFP_NEEDSRESTORE %d\n", FP_NEEDSRESTORE);
 	printf("#define\tFP_USESEMC %d\n", FP_USESEMC);
 	printf("#define\tPCB_SAVEEMC %d\n", &pcb->pcb_saveemc);
 	printf("#define\tPCB_CMAP2 %d\n", &pcb->pcb_cmap2);

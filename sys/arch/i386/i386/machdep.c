@@ -44,7 +44,7 @@
  * 15 Aug 92    William Jolitz          Large memory bug
  * 15 Aug 92	Terry Lambert		Fixed CMOS RAM size bug
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/machdep.c,v 1.7 1993/05/07 05:22:14 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/machdep.c,v 1.8 1993/05/09 23:02:38 deraadt Exp $";
 
 #include "param.h"
 #include "systm.h"
@@ -623,7 +623,7 @@ setregs(p, entry)
 	p->p_regs[sEIP] = entry;
 
 	p->p_addr->u_pcb.pcb_flags = 0;	/* no fp at all */
-	load_cr0(rcr0() | CR0_EM);	/* start emulating */
+	load_cr0(rcr0() | CR0_TS);	/* start emulating */
 #ifdef	NPX
 	npxinit(__INITIAL_NPXCW__);
 #endif

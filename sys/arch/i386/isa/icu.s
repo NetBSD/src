@@ -109,7 +109,7 @@ doreti:
 	ALIGN32
 1:	cmpl	$0,_netisr		# check for softint s/traps
 	jne	1f
-	cmpl	$0,_want_resched
+	cmpl	$0,_astpending
 	jne	1f
 
 	pop	%es			# none, going back to base pri
@@ -171,8 +171,9 @@ doreti:
 1:
 	cmpw	$0x1f,13*4(%esp)	# to user?
 	jne	2f			# nope, leave
-	cmpl	$0,_want_resched
+	cmpl	$0,_astpending
 	je	2f
+	movl	$0,_astpending
 	call	_trap
 
 2:	pop	%es
