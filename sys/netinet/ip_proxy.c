@@ -1,47 +1,58 @@
-/*	$NetBSD: ip_proxy.c,v 1.36 2002/09/19 08:12:54 martti Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.37 2004/03/28 09:00:57 martti Exp $	*/
 
 /*
- * Copyright (C) 1997-2002 by Darren Reed.
+ * Copyright (C) 1997-2003 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
-#if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
-# define	_KERNEL
-#endif
-
-#ifdef __sgi
-# include <sys/ptimers.h>
+#if defined(KERNEL) || defined(_KERNEL)
+# undef KERNEL
+# undef _KERNEL
+# define        KERNEL	1
+# define        _KERNEL	1
 #endif
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/file.h>
-#if !defined(__FreeBSD_version)  
-# include <sys/ioctl.h>      
-#endif
 #include <sys/fcntl.h>
-#if !defined(_KERNEL) && !defined(KERNEL)
+#if !defined(_KERNEL) && !defined(__KERNEL__)
 # include <stdio.h>
 # include <string.h>
 # include <stdlib.h>
+# include <ctype.h>
+# define _KERNEL
+# ifdef __OpenBSD__
+struct file;
+# endif
+# include <sys/uio.h>
+# undef _KERNEL
 #endif
-#ifndef	linux
+#if !defined(linux)
 # include <sys/protosw.h>
 #endif
 #include <sys/socket.h>
 #if defined(_KERNEL)
-# if !defined(linux)
-#  include <sys/systm.h>
-# else
-#  include <linux/string.h>
+# if !defined(__NetBSD__) && !defined(sun) && !defined(__osf__) && \
+     !defined(__OpenBSD__) && !defined(__hpux) && !defined(__sgi)
+#  include <sys/ctype.h>
 # endif
-#endif
-#if !defined(__SVR4) && !defined(__svr4__)
-# ifndef linux
+# include <sys/systm.h>
+# if !defined(__SVR4) && !defined(__svr4__)
 #  include <sys/mbuf.h>
 # endif
+#endif
+#if defined(_KERNEL) && (__FreeBSD_version >= 220000)
+# include <sys/filio.h>
+# include <sys/fcntl.h>
+# if (__FreeBSD_version >= 300000) && !defined(IPFILTER_LKM)
+#  include "opt_ipfilter.h"
+# endif
 #else
+# include <sys/ioctl.h>
+#endif
+#if defined(__SVR4) || defined(__svr4__)
 # include <sys/byteorder.h>
 # ifdef _KERNEL
 #  include <sys/dditypes.h>
@@ -76,73 +87,87 @@
 # include <sys/malloc.h>
 #endif
 
+#include "netinet/ip_ftp_pxy.c"
+#include "netinet/ip_rcmd_pxy.c"
+#if defined(_KERNEL)
+# include "netinet/ip_irc_pxy.c"
+# include "netinet/ip_raudio_pxy.c"
+# include "netinet/ip_h323_pxy.c"
+# include "netinet/ip_pptp_pxy.c"
+# ifdef	IPFILTER_PRO
+#  include "netinet/ip_msnrpc_pxy.c"
+# endif
+# include "netinet/ip_netbios_pxy.c"
+#endif
+#include "netinet/ip_ipsec_pxy.c"
+#include "netinet/ip_rpcb_pxy.c"
+
+/* END OF INCLUDES */
+
 #if !defined(lint)
-#if defined(__NetBSD__)
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.36 2002/09/19 08:12:54 martti Exp $");
-#else
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.9.2.24 2002/08/28 12:45:51 darrenr Exp";
-#endif
-#endif
-
-#if defined(_KERNEL) && (SOLARIS || defined(__sgi))
-extern  KRWLOCK_T       ipf_nat, ipf_state;
-#endif
-
-#ifndef MIN
-#define MIN(a,b)        (((a)<(b))?(a):(b))
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.3 2004/03/19 23:00:34 darrenr Exp";
 #endif
 
 static int appr_fixseqack __P((fr_info_t *, ip_t *, ap_session_t *, int ));
 
-
-#define	PROXY_DEBUG 0
-
 #define	AP_SESS_SIZE	53
-
-#include "netinet/ip_ftp_pxy.c"
-#if defined(_KERNEL)
-#include "netinet/ip_rcmd_pxy.c"
-#include "netinet/ip_raudio_pxy.c"
-#include "netinet/ip_netbios_pxy.c"
-#include "netinet/ip_h323_pxy.c"
-#endif
-#include "netinet/ip_ipsec_pxy.c"
 
 ap_session_t	*ap_sess_tab[AP_SESS_SIZE];
 ap_session_t	*ap_sess_list = NULL;
 aproxy_t	*ap_proxylist = NULL;
 aproxy_t	ap_proxies[] = {
 #ifdef	IPF_FTP_PROXY
-	{ NULL, "ftp", (char)IPPROTO_TCP, 0, 0, ippr_ftp_init, NULL,
+	{ NULL, "ftp", (char)IPPROTO_TCP, 0, 0, ippr_ftp_init, ippr_ftp_fini,
 	  ippr_ftp_new, NULL, ippr_ftp_in, ippr_ftp_out, NULL },
 #endif
+#ifdef	IPF_IRC_PROXY
+	{ NULL, "irc", (char)IPPROTO_TCP, 0, 0, ippr_irc_init, ippr_irc_fini,
+	  ippr_irc_new, NULL, NULL, ippr_irc_out, NULL, NULL },
+#endif
 #ifdef	IPF_RCMD_PROXY
-	{ NULL, "rcmd", (char)IPPROTO_TCP, 0, 0, ippr_rcmd_init, NULL,
-	  ippr_rcmd_new, NULL, NULL, ippr_rcmd_out, NULL },
+	{ NULL, "rcmd", (char)IPPROTO_TCP, 0, 0, ippr_rcmd_init, ippr_rcmd_fini,
+	  ippr_rcmd_new, NULL, ippr_rcmd_in, ippr_rcmd_out, NULL, NULL },
 #endif
 #ifdef	IPF_RAUDIO_PROXY
-	{ NULL, "raudio", (char)IPPROTO_TCP, 0, 0, ippr_raudio_init, NULL,
-	  ippr_raudio_new, NULL, ippr_raudio_in, ippr_raudio_out, NULL },
+	{ NULL, "raudio", (char)IPPROTO_TCP, 0, 0, ippr_raudio_init, ippr_raudio_fini,
+	  ippr_raudio_new, NULL, ippr_raudio_in, ippr_raudio_out, NULL, NULL },
 #endif
-#ifdef IPF_IPSEC_PROXY
-	{ NULL, "ipsec", (char)IPPROTO_UDP, 0, 0, ippr_ipsec_init, NULL,
-	  ippr_ipsec_new, ippr_ipsec_del, NULL, ippr_ipsec_out,
-	  ippr_ipsec_match },
+#ifdef	IPF_MSNRPC_PROXY
+	{ NULL, "msnrpc", (char)IPPROTO_TCP, 0, 0, ippr_msnrpc_init, ippr_msnrpc_fini,
+	  ippr_msnrpc_new, NULL, ippr_msnrpc_in, ippr_msnrpc_out, NULL, NULL },
 #endif
 #ifdef	IPF_NETBIOS_PROXY
-	{ NULL, "netbios", (char)IPPROTO_UDP, 0, 0, ippr_netbios_init, NULL,
-	  NULL, NULL, NULL, ippr_netbios_out, NULL },
+	{ NULL, "netbios", (char)IPPROTO_UDP, 0, 0, ippr_netbios_init, ippr_netbios_fini,
+	  NULL, NULL, NULL, ippr_netbios_out, NULL, NULL },
+#endif
+#ifdef	IPF_IPSEC_PROXY
+	{ NULL, "ipsec", (char)IPPROTO_UDP, 0, 0,
+	  ippr_ipsec_init, ippr_ipsec_fini, ippr_ipsec_new, ippr_ipsec_del,
+	  ippr_ipsec_inout, ippr_ipsec_inout, ippr_ipsec_match, NULL },
+#endif
+#ifdef	IPF_PPTP_PROXY
+	{ NULL, "pptp", (char)IPPROTO_TCP, 0, 0,
+	  ippr_pptp_init, ippr_pptp_fini, ippr_pptp_new, ippr_pptp_del,
+	  ippr_pptp_inout, ippr_pptp_inout, ippr_pptp_match, NULL },
 #endif
 #ifdef  IPF_H323_PROXY
-    { NULL, "h323", (char)IPPROTO_TCP, 0, 0, ippr_h323_init, NULL,
- 	  ippr_h323_new, ippr_h323_del, ippr_h323_in, ippr_h323_out, NULL },
-    { NULL, "h245", (char)IPPROTO_TCP, 0, 0, ippr_h245_init, NULL,
- 	  ippr_h245_new, NULL, NULL, ippr_h245_out, NULL },
-#endif   
-	{ NULL, "", '\0', 0, 0, NULL, NULL, NULL }
+	{ NULL, "h323", (char)IPPROTO_TCP, 0, 0, ippr_h323_init, ippr_h323_fini,
+	  ippr_h323_new, ippr_h323_del, ippr_h323_in, NULL, NULL },
+	{ NULL, "h245", (char)IPPROTO_TCP, 0, 0, NULL, NULL,
+	  ippr_h245_new, NULL, NULL, ippr_h245_out, NULL },
+#endif
+#ifdef	IPF_RPCB_PROXY
+# if 0
+	{ NULL, "rpcbt", (char)IPPROTO_TCP, 0, 0,
+	  ippr_rpcb_init, ippr_rpcb_fini, ippr_rpcb_new, ippr_rpcb_del,
+	  ippr_rpcb_in, ippr_rpcb_out, NULL, NULL },
+# endif
+	{ NULL, "rpcbu", (char)IPPROTO_UDP, 0, 0,
+	  ippr_rpcb_init, ippr_rpcb_fini, ippr_rpcb_new, ippr_rpcb_del,
+	  ippr_rpcb_in, ippr_rpcb_out, NULL, NULL },
+#endif
+	{ NULL, "", '\0', 0, 0, NULL, NULL, NULL, NULL }
 };
-
 
 /*
  * Dynamically add a new kernel proxy.  Ensure that it is unique in the
@@ -159,14 +184,38 @@ aproxy_t *ap;
 			     sizeof(ap->apr_label)))
 			return -1;
 
-	for (a = ap_proxylist; a && a->apr_p; a = a->apr_next)
+	for (a = ap_proxylist; a->apr_p; a = a->apr_next)
 		if ((a->apr_p == ap->apr_p) &&
 		    !strncmp(a->apr_label, ap->apr_label,
 			     sizeof(ap->apr_label)))
 			return -1;
 	ap->apr_next = ap_proxylist;
 	ap_proxylist = ap;
-	return (*ap->apr_init)();
+	if (ap->apr_init != NULL)
+		return (*ap->apr_init)();
+	return 0;
+}
+
+
+/*
+ * Check to see if the proxy this control request has come through for
+ * exists, and if it does and it has a control function then invoke that
+ * control function.
+ */
+int appr_ctl(ctl)
+ap_ctl_t *ctl;
+{
+	aproxy_t *a;
+	int error;
+
+	a = appr_lookup(ctl->apc_p, ctl->apc_label);
+	if (a == NULL)
+		error = ESRCH;
+	else if (a->apr_ctl == NULL)
+		error = ENXIO;
+	else
+		error = (*a->apr_ctl)(a, ctl);
+	return error;
 }
 
 
@@ -180,7 +229,7 @@ aproxy_t *ap;
 {
 	aproxy_t *a, **app;
 
-	for (app = &ap_proxylist; (a = *app); app = &a->apr_next)
+	for (app = &ap_proxylist; ((a = *app) != NULL); app = &a->apr_next)
 		if (a == ap) {
 			a->apr_flags |= APR_DELETE;
 			*app = a->apr_next;
@@ -195,8 +244,8 @@ aproxy_t *ap;
 /*
  * Return 1 if the packet is a good match against a proxy, else 0.
  */
-int appr_ok(ip, tcp, nat)
-ip_t *ip;
+int appr_ok(fin, tcp, nat)
+fr_info_t *fin;
 tcphdr_t *tcp;
 ipnat_t *nat;
 {
@@ -204,11 +253,58 @@ ipnat_t *nat;
 	u_short dport = nat->in_dport;
 
 	if ((apr == NULL) || (apr->apr_flags & APR_DELETE) ||
-	    (ip->ip_p != apr->apr_p))
+	    (fin->fin_p != apr->apr_p))
 		return 0;
-	if (((tcp != NULL) && (tcp->th_dport != dport)) || (!tcp && dport))
+	if ((tcp == NULL) && dport)
 		return 0;
 	return 1;
+}
+
+
+int appr_ioctl(data, cmd, mode)
+caddr_t data;
+ioctlcmd_t cmd;
+int mode;
+{
+	ap_ctl_t ctl;
+	caddr_t ptr;
+	int error;
+
+	mode = mode;	/* LINT */
+
+	switch (cmd)
+	{
+	case SIOCPROXY :
+		BCOPYIN(data, &ctl, sizeof(ctl));
+		ptr = NULL;
+
+		if (ctl.apc_dsize > 0) {
+			KMALLOCS(ptr, caddr_t, ctl.apc_dsize);
+			if (ptr == NULL)
+				error = ENOMEM;
+			else {
+				error = copyinptr(ctl.apc_data, ptr,
+						  ctl.apc_dsize);
+				if (error == 0)
+					ctl.apc_data = ptr;
+			}
+		} else {
+			ctl.apc_data = NULL;
+			error = 0;
+		}
+
+		if (error == 0)
+			error = appr_ctl(&ctl);
+
+		if (ctl.apc_dsize > 0 && ptr != NULL && ctl.apc_data == ptr) {
+			KFREES(ptr, ctl.apc_dsize);
+		}
+		break;
+
+	default :
+		error = EINVAL;
+	}
+	return error;
 }
 
 
@@ -222,6 +318,9 @@ nat_t *nat;
 {
 	aproxy_t *apr;
 	ipnat_t *ipn;
+
+	if ((fin->fin_flx & (FI_SHORT|FI_BAD)) != 0)
+		return -1;
 
 	ipn = nat->nat_ptr;
 	if (ipn == NULL)
@@ -242,9 +341,8 @@ nat_t *nat;
  * relevant details.  call the init function once complete, prior to
  * returning.
  */
-int appr_new(fin, ip, nat)
+int appr_new(fin, nat)
 fr_info_t *fin;
-ip_t *ip;
 nat_t *nat;
 {
 	register ap_session_t *aps;
@@ -255,19 +353,20 @@ nat_t *nat;
 
 	apr = nat->nat_ptr->in_apr;
 
-	if (!apr || (apr->apr_flags & APR_DELETE) || (ip->ip_p != apr->apr_p))
+	if (!apr || (apr->apr_flags & APR_DELETE) ||
+	    (fin->fin_p != apr->apr_p))
 		return -1;
 
 	KMALLOC(aps, ap_session_t *);
 	if (!aps)
 		return -1;
 	bzero((char *)aps, sizeof(*aps));
-	aps->aps_p = ip->ip_p;
+	aps->aps_p = fin->fin_p;
 	aps->aps_data = NULL;
 	aps->aps_apr = apr;
 	aps->aps_psiz = 0;
 	if (apr->apr_new != NULL)
-		if ((*apr->apr_new)(fin, ip, aps, nat) == -1) {
+		if ((*apr->apr_new)(fin, aps, nat) == -1) {
 			if ((aps->aps_data != NULL) && (aps->aps_psiz != 0)) {
 				KFREES(aps->aps_data, aps->aps_psiz);
 			}
@@ -284,78 +383,100 @@ nat_t *nat;
 
 
 /*
- * check to see if a packet should be passed through an active proxy routine
- * if one has been setup for it.
+ * Check to see if a packet should be passed through an active proxy routine
+ * if one has been setup for it.  We don't need to check the checksum here if
+ * IPFILTER_CKSUM is defined because if it is, a failed check causes FI_BAD
+ * to be set.
  */
-int appr_check(ip, fin, nat)
-ip_t *ip;
+int appr_check(fin, nat)
 fr_info_t *fin;
 nat_t *nat;
 {
 #if SOLARIS && defined(_KERNEL) && (SOLARIS2 >= 6)
-	mb_t *m = fin->fin_qfm;
+# if defined(ICK_VALID)
+	mb_t *m;
+# endif
 	int dosum = 1;
 #endif
 	tcphdr_t *tcp = NULL;
+	udphdr_t *udp = NULL;
 	ap_session_t *aps;
 	aproxy_t *apr;
-	u_32_t sum;
+	ip_t *ip;
 	short rv;
 	int err;
+#if !defined(_KERNEL) || defined(MENTAT) || defined(__sgi)
+	u_32_t s1, s2, sd;
+#endif
+
+	if (fin->fin_flx & FI_BAD)
+		return -1;
+
+#ifndef IPFILTER_CKSUM
+	if ((fin->fin_out == 0) && (fr_checkl4sum(fin) == -1)) {
+# if PROXY_DEBUG || !defined(_KERNEL)
+		printf("proxy l4 checksum failure\n");
+# endif
+		if (fin->fin_p == IPPROTO_TCP)
+			frstats[fin->fin_out].fr_tcpbad++;
+		return -1;
+	}
+#endif
 
 	aps = nat->nat_aps;
-	if ((aps != NULL) && (aps->aps_p == ip->ip_p)) {
-		if (ip->ip_p == IPPROTO_TCP) {
-			tcp = (tcphdr_t *)fin->fin_dp;
-			/*
-			 * verify that the checksum is correct.  If not, then
-			 * don't do anything with this packet.
-			 */
-#if SOLARIS && defined(_KERNEL) && (SOLARIS2 >= 6)
-			if (dohwcksum && (m->b_ick_flag == ICK_VALID)) {
-				sum = tcp->th_sum;
-				dosum = 0;
-			}
-			if (dosum)
-				sum = fr_tcpsum(fin->fin_qfm, ip, tcp);
-#else
-			sum = fr_tcpsum(*(mb_t **)fin->fin_mp, ip, tcp);
-#endif
-			if (sum != tcp->th_sum) {
-#if PROXY_DEBUG
-				printf("proxy tcp checksum failure\n");
-#endif
-				frstats[fin->fin_out].fr_tcpbad++;
+	if ((aps != NULL) && (aps->aps_p == fin->fin_p)) {
+		/*
+		 * If there is data in this packet to be proxied then try and
+		 * get it all into the one buffer, else drop it.
+		 */
+		if ((fin->fin_dlen > 0) && !(fin->fin_flx & FI_COALESCE))
+			if (fr_coalesce(fin) == -1)
 				return -1;
-			}
+		ip = fin->fin_ip;
 
+		switch (fin->fin_p)
+		{
+		case IPPROTO_TCP :
+			tcp = (tcphdr_t *)fin->fin_dp;
+
+#if SOLARIS && defined(_KERNEL) && (SOLARIS2 >= 6) && defined(ICK_VALID)
+			m = fin->fin_qfm;
+			if (dohwcksum && (m->b_ick_flag == ICK_VALID))
+				dosum = 0;
+#endif
 			/*
-			 * Don't both the proxy with these...or in fact, should
-			 * we free up proxy stuff when seen?
+			 * Don't bother the proxy with these...or in fact,
+			 * should we free up proxy stuff when seen?
 			 */
-			if ((tcp->th_flags & TH_RST) != 0)
-				return 0;
+			if ((fin->fin_tcpf & TH_RST) != 0)
+				break;
+			/*FALLTHROUGH*/
+		case IPPROTO_UDP :
+			udp = (udphdr_t *)fin->fin_dp;
+			break;
+		default :
+			break;
 		}
 
 		apr = aps->aps_apr;
 		err = 0;
 		if (fin->fin_out != 0) {
 			if (apr->apr_outpkt != NULL)
-				err = (*apr->apr_outpkt)(fin, ip, aps, nat);
+				err = (*apr->apr_outpkt)(fin, aps, nat);
 		} else {
 			if (apr->apr_inpkt != NULL)
-				err = (*apr->apr_inpkt)(fin, ip, aps, nat);
+				err = (*apr->apr_inpkt)(fin, aps, nat);
 		}
 
 		rv = APR_EXIT(err);
 		if (rv == 1) {
-#if PROXY_DEBUG
+#if PROXY_DEBUG || !defined(_KERNEL)
 			printf("proxy says bad packet received\n");
 #endif
 			return -1;
 		}
 		if (rv == 2) {
-#if PROXY_DEBUG
+#if PROXY_DEBUG || !defined(_KERNEL)
 			printf("proxy says free app proxy data\n");
 #endif
 			appr_free(apr);
@@ -363,16 +484,52 @@ nat_t *nat;
 			return -1;
 		}
 
+		/*
+		 * If err != 0 then the data size of the packet has changed
+		 * so we need to recalculate the header checksums for the
+		 * packet.
+		 */
+#if !defined(_KERNEL) || defined(MENTAT) || defined(__sgi)
+		if (err != 0) {
+			short adjlen = err & 0xffff;
+
+			s1 = LONG_SUM(ip->ip_len - adjlen);
+			s2 = LONG_SUM(ip->ip_len);
+			CALC_SUMD(s1, s2, sd);
+			fix_outcksum(fin, &ip->ip_sum, sd);
+		}
+#endif
+
+		/*
+		 * For TCP packets, we may need to adjust the sequence and
+		 * acknowledgement numbers to reflect changes in size of the
+		 * data stream.
+		 *
+		 * For both TCP and UDP, recalculate the layer 4 checksum,
+		 * regardless, as we can't tell (here) if data has been
+		 * changed or not.
+		 */
 		if (tcp != NULL) {
 			err = appr_fixseqack(fin, ip, aps, APR_INC(err));
 #if SOLARIS && defined(_KERNEL) && (SOLARIS2 >= 6)
 			if (dosum)
-				tcp->th_sum = fr_tcpsum(fin->fin_qfm, ip, tcp);
+				tcp->th_sum = fr_cksum(fin->fin_qfm, ip,
+						       IPPROTO_TCP, tcp);
 #else
-			tcp->th_sum = fr_tcpsum(*(mb_t **)fin->fin_mp, ip, tcp);
+			tcp->th_sum = fr_cksum(fin->fin_m, ip,
+					       IPPROTO_TCP, tcp);
+#endif
+		} else if ((udp != NULL) && (udp->uh_sum != 0)) {
+#if SOLARIS && defined(_KERNEL) && (SOLARIS2 >= 6)
+			if (dosum)
+				udp->uh_sum = fr_cksum(fin->fin_qfm, ip,
+						       IPPROTO_UDP, udp);
+#else
+			udp->uh_sum = fr_cksum(fin->fin_m, ip,
+					       IPPROTO_UDP, udp);
 #endif
 		}
-		aps->aps_bytes += ip->ip_len;
+		aps->aps_bytes += fin->fin_plen;
 		aps->aps_pkts++;
 		return 1;
 	}
@@ -422,7 +579,7 @@ ap_session_t *aps;
 	if (!aps)
 		return;
 
-	for (ap = &ap_sess_list; (a = *ap); ap = &a->aps_next)
+	for (ap = &ap_sess_list; ((a = *ap) != NULL); ap = &a->aps_next)
 		if (a == aps) {
 			*ap = a->aps_next;
 			break;
@@ -431,7 +588,7 @@ ap_session_t *aps;
 	apr = aps->aps_apr;
 	if ((apr != NULL) && (apr->apr_del != NULL))
 		(*apr->apr_del)(aps);
- 
+
 	if ((aps->aps_data != NULL) && (aps->aps_psiz != 0))
 		KFREES(aps->aps_data, aps->aps_psiz);
 	KFREE(aps);
@@ -458,7 +615,7 @@ int inc;
 	 * ip_len has already been adjusted by 'inc'.
 	 */
 	nlen = ip->ip_len;
-	nlen -= (ip->ip_hl << 2) + (tcp->th_off << 2);
+	nlen -= (IP_HL(ip) << 2) + (TCP_OFF(tcp) << 2);
 
 	inc2 = inc;
 	inc = (int)inc2;
@@ -475,7 +632,7 @@ int inc;
 				sel, !sel, seq1, aps->aps_seqmin[!sel]);
 #endif
 			sel = aps->aps_sel[out] = !sel;
-}
+		}
 
 		if (aps->aps_seqoff[sel]) {
 			seq2 = aps->aps_seqmin[sel] - aps->aps_seqoff[sel];
@@ -510,7 +667,7 @@ int inc;
 				sel, !sel, seq1, aps->aps_ackmin[!sel]);
 #endif
 			sel = aps->aps_sel[1 - out] = !sel;
-}
+		}
 
 		if (aps->aps_ackoff[sel] && (seq1 > aps->aps_ackmin[sel])) {
 			seq2 = aps->aps_ackoff[sel];
@@ -529,7 +686,7 @@ int inc;
 				sel, !sel, seq1, aps->aps_ackmin[!sel]);
 #endif
 			sel = aps->aps_sel[out] = !sel;
-}
+		}
 
 		if (aps->aps_ackoff[sel]) {
 			seq2 = aps->aps_ackmin[sel] - aps->aps_ackoff[sel];
@@ -564,7 +721,7 @@ int inc;
 				sel, !sel, seq1, aps->aps_seqmin[!sel]);
 #endif
 			sel = aps->aps_sel[1 - out] = !sel;
-}
+		}
 
 		if (aps->aps_seqoff[sel] != 0) {
 #if PROXY_DEBUG
@@ -580,7 +737,7 @@ int inc;
 		}
 	}
 #if PROXY_DEBUG
-	printf("appr_fixseqack: seq %x ack %x\n", ntohl(tcp->th_seq),
+	printf("appr_fixseqack: seq %lx ack %lx\n", ntohl(tcp->th_seq),
 		ntohl(tcp->th_ack));
 #endif
 	return ch ? 2 : 0;
@@ -597,9 +754,11 @@ int appr_init()
 	int err = 0;
 
 	for (ap = ap_proxies; ap->apr_p; ap++) {
-		err = (*ap->apr_init)();
-		if (err != 0)
-			break;
+		if (ap->apr_init != NULL) {
+			err = (*ap->apr_init)();
+			if (err != 0)
+				break;
+		}
 	}
 	return err;
 }
@@ -614,9 +773,9 @@ void appr_unload()
 	aproxy_t *ap;
 
 	for (ap = ap_proxies; ap->apr_p; ap++)
-		if (ap->apr_fini)
+		if (ap->apr_fini != NULL)
 			(*ap->apr_fini)();
 	for (ap = ap_proxylist; ap; ap = ap->apr_next)
-		if (ap->apr_fini)
+		if (ap->apr_fini != NULL)
 			(*ap->apr_fini)();
 }

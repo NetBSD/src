@@ -1,9 +1,11 @@
-/*	$NetBSD: hpux.c,v 1.2 2002/01/24 08:21:39 martti Exp $	*/
+/*	$NetBSD: hpux.c,v 1.3 2004/03/28 09:00:55 martti Exp $	*/
 
 /*
  * (C)opyright 1997-1998 Darren Reed. (from tcplog)
  *
- * See the IPFILTER.LICENCE file for details on licencing.
+ * Redistribution and use in source and binary forms are permitted
+ * provided that this notice is preserved and due credit is given
+ * to the original author and the contributors.
  */
 #include <stdio.h>
 #include <strings.h>

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipnat.5,v 1.14 2003/07/02 13:26:26 wiz Exp $
+.\"	$NetBSD: ipnat.5,v 1.15 2004/03/28 09:00:56 martti Exp $
 .\"
 .TH IPNAT 5
 .SH NAME
@@ -9,11 +9,11 @@ The format for files accepted by ipnat is described by the following grammar:
 .nf
 ipmap :: = mapblock | redir | map .
 
-map ::= mapit ifname ipmask "->" dstipmask [ mapport ] [ clamp ] .
-map ::= mapit ifname fromto "->" dstipmask [ mapport ] [ clamp ] .
-mapblock ::= "map-block" ifname ipmask "->" ipmask [ ports ] [ clamp ] .
-redir ::= "rdr" ifname ipmask dport "->" ip [ "," ip ] rdrport options .
+map ::= mapit ifname lhs "->" dstipmask [ mapport | mapproxy ] mapoptions.
+mapblock ::= "map-block" ifname lhs "->" ipmask [ ports ] mapoptions.
+redir ::= "rdr" ifname ipmask dport "->" ip [ "," ip ] rdrport rdroptions .
 
+lhs ::= ipmask | fromto .
 dport ::= "port" portnum [ "-" portnum ] .
 ports ::= "ports" numports | "auto" .
 rdrport ::= "port" portnum .
@@ -22,27 +22,31 @@ fromto ::= "from" object "to" object .
 ipmask ::= ip "/" bits | ip "/" mask | ip "netmask" mask .
 dstipmask ::= ipmask | "range" ip "-" ip .
 mapport ::= "portmap" tcpudp portspec .
-clamp ::= "mssclamp" number .
-options ::= [ tcpudp ] [ rr ] .
+mapoptions ::= [ tcpudp ] [ "frag" ] [ age ] [ clamp ] .
+rdroptions ::= rdrproto [ rr ] [ "frag" ] [ age ] [ clamp ] [ rdrproxy ] .
 
-object  :: = addr [ port-comp | port-range ] .
-addr    :: = "any" | nummask | host-name [ "mask" ipaddr | "mask" hexnumber ] .
+object :: = addr [ port-comp | port-range ] .
+addr :: = "any" | nummask | host-name [ "mask" ipaddr | "mask" hexnumber ] .
 port-comp :: = "port" compare port-num .
 port-range :: = "port" port-num range port-num .
+rdrproto ::= tcpudp | protocol .
 
 rr ::= "round-robin" .
-nummask = host-name [ "/" decnumber ] .
-tcpudp ::= "tcp" | "udp" | "tcp/udp" .
+age ::= "age" decnumber [ "/" decnumber ] .
+clamp ::= "mssclamp" decnumber .
+tcpudp ::= "tcp/udp" | protocol .
+mapproxy ::= "proxy" "port" port proxy-name '/' protocol
+rdrproxy ::= "proxy" proxy-name .
+
+protocol ::= protocol-name | decnumber .
+nummask ::= host-name [ "/" decnumber ] .
 portspec ::= "auto" | portnumber ":" portnumber .
+port ::= portnumber | port-name .
 portnumber ::= number { numbers } .
 ifname ::= 'A' - 'Z' { 'A' - 'Z' } numbers .
 
 numbers ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' .
 .fi
-.PP
-In addition to this, # is used to mark the start of a comment and may
-appear at the end of a line with a NAT rule (as described above) or on its
-own lines.  Blank lines are ignored.
 .PP
 For standard NAT functionality, a rule should start with \fBmap\fP and then
 proceeds to specify the interface for which outgoing packets will have their
@@ -99,15 +103,6 @@ or as
 map de0 from 10.1.0.0/16 to any -> 201.2.3.4/32
 .fi
 .LP
-For even greater control, one may negate either of the "from" or "to" clauses
-with a preceding exclamation mark ("!").  Please note that one may not use a
-negated "from" within a \fBmap\fP rule or a negated "to" within a \fBrdr\fP
-rule.  Such a rule might look like the following:
-.LP
-.nf
-+map de0 from 10.1.0.0/16 ! to 10.1.0.0/16 -> 201.2.3.4/32
-.fi
-.PP
 Only IP address and port numbers can be compared against.  This is available
 with all NAT rules.
 .SH TRANSLATION
@@ -128,11 +123,74 @@ how it searches for a new, free and unique tuple, in that it will used an
 algorithm to determine what the new source address should be, along with the
 range of available ports - the IP address is never changed and nor does the
 port number ever exceed its allotted range.
+.SH ICMPIDMAP
+.PP
+ICMP messages can be divided into two groups: "errors" and "queries". ICMP
+errors are generated as a response of another IP packet. IP Filter will take
+care that ICMP errors that are the response of a NAT-ed IP packet are
+handled properly.
+.PP
+For 4 types of ICMP queries (echo request, timestamp request, information 
+request and address mask request) IP Filter supports an additional mapping
+called "ICMP id mapping". All these 4 types of ICMP queries use a unique
+identifier called the ICMP id. This id is set by the process sending the
+ICMP query and it is usually equal to the process id. The receiver of the
+ICMP query will use the same id in its response, thus enabling the
+sender to recognize that the incoming ICMP reply is intended for him and is
+an answer to a query that he made. The "ICMP id mapping" feature modifies 
+these ICMP id in a way identical to \fBportmap\fP for TCP or UDP.
+.PP
+The reason that you might want this, is that using this feature you don't
+need an IP address per host behind the NAT box, that wants to do ICMP queries.
+The two numbers behind the \fBicmpidmap\fP keyword are the first and the
+last icmp id number that can be used. There is one important caveat: if you
+map to an IP address that belongs to the NAT box itself (notably if you have
+only a single public IP address), then you must ensure that the NAT box does
+not use the \fBicmpidmap\fP range that you specified in the \fBmap\fP rule.
+Since the ICMP id is usually the process id, it is wise to restrict the
+largest permittable process id (PID) on your operating system to e.g. 63999 and
+use the range 64000:65535 for ICMP id mapping. Changing the maximal PID is
+system dependent. For most BSD derived systems can be done by changing 
+PID_MAX in /usr/include/sys/proc.h and then rebuild the system.
 .SH KERNEL PROXIES
 .PP
 IP Filter comes with a few, simple, proxies built into the code that is loaded
 into the kernel to allow secondary channels to be opened without forcing the
-packets through a user program.
+packets through a user program.  The current state of the proxies is listed
+below, as one of three states:
+.HP
+Aging - protocol is roughly understood from
+the time at which the proxy was written but it is not well tested or
+maintained;
+.HP
+Developmental - basic functionality exists, works most of the time but
+may be problematic in extended real use;
+.HP
+Experimental - rough support for the protocol at best, may or may not
+work as testing has been at best sporadic, possible large scale changes
+to the code in order to properly support the protocol.
+.HP
+Mature - well tested, protocol is properly
+understood by the proxy;
+.PP
+The currently compiled in proxy list is as follows:
+.HP
+FTP - Mature
+.HP
+IRC - Experimental
+.HP
+rpcbind - Experimental
+.HP
+H.323 - Experimental
+.HP
+Real Audio (PNA) - Aging
+.HP
+IPsec - Developmental
+.HP
+netbios - Experimental
+.HP
+R-command - Mature
+
 .SH TRANSPARENT PROXIES
 .PP
 True transparent proxying should be performed using the redirect (\fBrdr\fP)
@@ -219,23 +277,6 @@ own.  As opposed to the above use of \fBmap\fP, if for some reason the user
 of (say) 172.192.0.2 wanted 260 simultaneous connections going out, they would
 be limited to 252 with \fBmap-block\fP but would just \fImove on\fP to the next
 IP address with the \fBmap\fP command.
-.LP
-.nf
-map pppoe0 10.0.0.0/8 -> 209.1.2.0/24 mssclamp 1452
-.fi
-.PP
-The mssclamp clause tells the NAT processor to scan for TCP packets in the
-three-way handshake and limit their negotiated MSS value to the number
-given in the rule. This is useful to make hosts behind a connection with
-low MTU (like PPPoE or tunnels) communicate without any outside proxies
-with broken sites that use a misconfigured firewall. Unfortunately such
-sites are not rare.
-.PP
-The value for the clamping clause is calculated as interface-MTU less
-40 bytes (size of IP header plus maximal IP options size), so for a
-PPPoE interface it is 1492 - 40 = 1452. Some sites seem to require clamping
-to even smaller values, but there is no rationale for this behaviour.
-.SH FILES
 /dev/ipnat
 .br
 /etc/services

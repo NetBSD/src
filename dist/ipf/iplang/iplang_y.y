@@ -1,19 +1,14 @@
-/*	$NetBSD: iplang_y.y,v 1.4 2002/03/14 12:32:39 martti Exp $	*/
+/*	$NetBSD: iplang_y.y,v 1.5 2004/03/28 09:00:55 martti Exp $	*/
 
 %{
 /*
  * Copyright (C) 1997-1998 by Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: iplang_y.y,v 2.2.2.2 2002/02/22 15:32:57 darrenr Exp
+ * Id: iplang_y.y,v 2.9.2.1 2004/03/23 12:58:38 darrenr Exp
  */
 
-#ifdef __sgi
-# include <sys/ptimers.h>
-#endif
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
@@ -33,12 +28,9 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
-#include <netinet/ip_icmp.h>
 #ifndef	linux
 #include <netinet/ip_var.h>
 #endif
-#include <netinet/tcp.h>
-#include <netinet/udp.h>
 #include <net/if.h>
 #ifndef	linux
 #include <netinet/if_ether.h>
@@ -54,7 +46,7 @@
 #include "iplang.h"
 
 #if !defined(__NetBSD__) && (!defined(__FreeBSD_version) && \
-    __FreeBSD_version < 400020)
+    __FreeBSD_version < 400020) && (!SOLARIS || SOLARIS2 < 10)
 extern	struct ether_addr *ether_aton __P((char *));
 #endif
 
@@ -1296,7 +1288,7 @@ void prep_packet()
 		return;
 	}
 	if (ifp->if_fd == -1)
-		ifp->if_fd = initdevice(ifp->if_name, 0, 5);
+		ifp->if_fd = initdevice(ifp->if_name, 5);
 	gwip = sending.snd_gw;
 	if (!gwip.s_addr)
 		gwip = aniphead->ah_ip->ip_dst;
@@ -1520,11 +1512,6 @@ int type;
 }
 
 
-static	char	*icmpcodes[] = {
-	"net-unr", "host-unr", "proto-unr", "port-unr", "needfrag", "srcfail",
-	"net-unk", "host-unk", "isolate", "net-prohib", "host-prohib",
-	"net-tos", "host-tos", NULL };
-
 void set_icmpcodetok(code)
 char **code;
 {
@@ -1542,13 +1529,6 @@ char **code;
 	*code = NULL;
 }
 
-
-static	char	*icmptypes[] = {
-	"echorep", (char *)NULL, (char *)NULL, "unreach", "squench",
-	"redir", (char *)NULL, (char *)NULL, "echo", (char *)NULL,
-	(char *)NULL, "timex", "paramprob", "timest", "timestrep",
-	"inforeq", "inforep", "maskreq", "maskrep", "END"
-};
 
 void set_icmptypetok(type)
 char **type;
