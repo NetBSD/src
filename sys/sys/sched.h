@@ -1,7 +1,7 @@
-/* $NetBSD: sched.h,v 1.13 2001/05/30 12:07:05 mrg Exp $ */
+/* $NetBSD: sched.h,v 1.14 2001/07/01 18:06:12 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -154,9 +154,23 @@ struct schedstate_percpu {
 
 #define	SPCF_SWITCHCLEAR	(SPCF_SEENRR|SPCF_SHOULDYIELD)
 
+/*
+ * Flags passed to the Linux-compatible __clone(2) system call.
+ */
+#define	CLONE_CSIGNAL		0x000000ff	/* signal to be sent at exit */
+#define	CLONE_VM		0x00000100	/* share address space */
+#define	CLONE_FS		0x00000200	/* share "file system" info */
+#define	CLONE_FILES		0x00000400	/* share file descriptors */
+#define	CLONE_SIGHAND		0x00000800	/* share signal actions */
+#define	CLONE_PID		0x00001000	/* share process ID */
+#define	CLONE_PTRACE		0x00002000	/* ptrace(2) continues on 
+						   child */
+#define	CLONE_VFORK		0x00004000	/* parent blocks until child
+						   exits */
+
 #endif /* !_POSIX_SOURCE && !_XOPEN_SOURCE && !_ANSI_SOURCE */
 
-#ifdef	_KERNEL
+#ifdef _KERNEL
 
 #define	PPQ	(128 / RUNQUE_NQS)	/* priorities per queue */
 #define NICE_WEIGHT 2			/* priorities per nice level */
