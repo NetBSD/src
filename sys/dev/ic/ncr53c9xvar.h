@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.41 2003/02/04 20:05:11 pk Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.42 2003/03/24 14:46:00 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,9 +37,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DEV_IC_NCR53C9XVAR_H_
-#define _DEV_IC_NCR53C9XVAR_H_
-
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
  *
@@ -68,6 +65,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_IC_NCR53C9XVAR_H_
+#define _DEV_IC_NCR53C9XVAR_H_
+
+#include <sys/lock.h>
 
 /* Set this to 1 for normal debug, or 2 for per-target tracing. */
 /* #define NCR53C9X_DEBUG		1 */
@@ -339,7 +341,8 @@ struct ncr53c9x_softc {
 	int sc_features;	/* Chip features */
 	int sc_minsync;		/* Minimum sync period / 4 */
 	int sc_maxxfer;		/* Maximum transfer size */
-	struct simplelock sc_lock;
+
+	struct simplelock sc_lock;/* driver mutex */
 };
 
 /* values for sc_state */
