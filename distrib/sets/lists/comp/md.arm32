@@ -46,4 +46,5 @@
 ./usr/include/machine/vidc.h
 ./usr/include/machine/vmparam.h
 ./usr/lib/libntp_pic.a
+./usr/lib/libposix_pic.a
 ./usr/lib/scrt0.o

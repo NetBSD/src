@@ -27,6 +27,9 @@
 ./usr/lib/libpcap.so
 ./usr/lib/libpcap.so.0
 ./usr/lib/libpcap.so.0.0
+./usr/lib/libposix.so
+./usr/lib/libposix.so.0
+./usr/lib/libposix.so.0.0
 ./usr/lib/libresolv.so
 ./usr/lib/libresolv.so.1
 ./usr/lib/libresolv.so.1.0

@@ -84,5 +84,6 @@
 ./usr/include/mips/varargs.h
 ./usr/include/mips/vmparam.h
 ./usr/lib/libntp_pic.a
+./usr/lib/libposix_pic.a
 ./usr/share/man/cat1/objcopy.0
 ./usr/share/man/cat1/objdump.0
