@@ -2,34 +2,35 @@
 | author: chapuni(GBA02750@niftyserve.or.jp)
 |         Yasha
 |
-| $NetBSD: xxboot.S,v 1.1 1998/09/01 20:02:35 itohy Exp $
+| $NetBSD: xxboot.S,v 1.2 2001/06/12 16:57:28 minoura Exp $
 
+#include <machine/asm.h>
 #include "iocscall.h"
 
 #define BASEOFF		0x8000
 #define BASEPTR_A	(TEXTADDR+BASEOFF)
-#define BASEPTR_R	pc@(top+BASEOFF:W)
+#define BASEPTR_R	%pc@(top+BASEOFF:W)
 
 #define SRAM		0x00ED0000	/* SRAM stat addr */
 #define SRAM_MEMSZ	(SRAM + 8)	/* (L) size of main memory */
 #define MINMEM		0x00400000	/* at least 4MB required */
 
-#define BOOT_ERROR(s)	jbsr boot_error; .asciz s; .even
+#define BOOT_ERROR1(s)	jbsr boot_error; .asciz s; .even
 
-	.globl	_header
-	.globl	_image
+	.globl	_C_LABEL(header)
+	.globl	_C_LABEL(image)
 
-_header=0x100000		| まずは、このアドレスに
-_image=_header+(8*4)		| コアをロードします。
+_C_LABEL(header)=0x100000		| まずは、このアドレスに
+_C_LABEL(image)=_C_LABEL(header)+(8*4)		| コアをロードします。
 
 #ifdef BOOT_DEBUG
-	.globl	_startregs
-_startregs=0xb000		| chosen arbitrarily...
+	.globl	_C_LABEL(startregs)
+_C_LABEL(startregs)=0xb000		| chosen arbitrarily...
 #endif
 
-	.globl	_bootufs
+	.globl	_C_LABEL(bootufs)
 	.text
-top:
+ASENTRY_NOPROFILE(top)
 		bras	entry0
 		.ascii	"SHARP/"
 		.ascii	"X680x0"
@@ -37,17 +38,19 @@ top:
 		.word	0x8e9e,0x82c9,0x82cd,0x8cbb
 		.word	0x8ec0,0x93a6,0x94f0,0x8149
 | 0x2000 (FD), 0x2400 (SASI/SCSI) (もしくは 0x3F0000)
-| d4 にはすでに SCSI ID が入っている
+| %d4 にはすでに SCSI ID が入っている
 | ここから jmp まではリロケータブルに書かねばならない。
 entry0:
 #ifdef BOOT_DEBUG
-		moveml	d0-d7/a0-a7,_startregs
+		moveml	%d0-%d7/%a0-%a7,_C_LABEL(startregs)
 #endif
-		lea	BASEPTR_A:l,a5		| set base ptr
-#define RELOC(adr)	a5@(((adr)-(BASEPTR_A&0xffff)):W)
+		lea	BASEPTR_A:l,%a5		| set base ptr
+#define _RELOC(adr)	%a5@(((adr)-(BASEPTR_A&0xffff)):W)
+#define ASRELOC(var)	_RELOC(_ASM_LABEL(var))
+#define RELOC(var)	_RELOC(_C_LABEL(var))
 
-		lea	RELOC(_edata),a1	| BSS start
-		movew	#_end-1,d0		| BSS end (low word only)
+		lea	RELOC(edata),%a1	| bss start
+		movew	#_end-1,%d0		| bss end (low word only)
 
 #ifndef BOOT_DEBUG		/* not enough space -- moved below */
 		| check memory size (high word)
@@ -61,7 +64,7 @@ disklabel:
 		.space	300
 
 #ifdef TITLE_IMAGE
-		.word	img_title-top
+		.word	img_title-_ASM_LABEL(top)
 #else
 		.word	0
 #endif
@@ -71,34 +74,34 @@ entry:
 		cmpiw	#MINMEM/0x10000,SRAM_MEMSZ
 #endif
 		jcc	memok		| (continued from above) RAM >= 4MB
-		BOOT_ERROR("4MB RAM required")
+		BOOT_ERROR1("4MB RAM required")
 memok:
-		| clear out BSS  (must be <= 64KB)
-		subw	a1,d0
-clrbss:		clrb	a1@+
-		dbra	d0,clrbss
+		| clear out bss  (must be <= 64KB)
+		subw	%a1,%d0
+clrbss:		clrb	%a1@+
+		dbra	%d0,clrbss
 
 		| set system stack
-		lea	RELOC(top),a1	| set stack pointer to 0x003F0000
-		lea	a1@,sp		| a1 will be used later for IOCS calls
+		lea	ASRELOC(top),%a1 | set stack pointer to 0x003F0000
+		lea	%a1@,%sp	| %a1 will be used later for IOCS calls
 
 		| we use 68020 instructions, and check MPU beforehand
 		|
-		| here d1.w = -1, and the above "subw a1,d0" = 0x9049, and
+		| here %d1.w = -1, and the above "subw %a1,%d0" = 0x9049, and
 		|	if MPU <= 010	loads 0x49,
 		|	if MPU >= 020	loads 0x90.
 		| This is a move, not a tst instruction
 		| because pc-relative tsts are not availble on 000/010.
-chkmpu:		moveb	pc@(clrbss-chkmpu-2:B,d0:W:2),d0	| 103B 02xx
+chkmpu:		moveb	%pc@(clrbss-chkmpu-2:B,%d0:W:2),%d0	| 103B 02xx
 		jmi	mpuok		| MC68020 or later
-		BOOT_ERROR("MPU 68000?")
+		BOOT_ERROR1("MPU 68000?")
 mpuok:		| XXX check for MMU?
 
-		movel	d4,RELOC(_ID)	| SCSI ID (if booted from SCSI)
+		movel	%d4,RELOC(ID)	| SCSI ID (if booted from SCSI)
 		IOCS(__BOOTINF)
-		movel	d0,RELOC(_BOOT_INFO)
-		lsll	#8,d0		| clear MSByte
-		lsrl	#8,d0		|
+		movel	%d0,RELOC(BOOT_INFO)
+		lsll	#8,%d0		| clear MSByte
+		lsrl	#8,%d0		|
 
 		|
 		| 0x80...0x8F		SASI
@@ -106,44 +109,44 @@ mpuok:		| XXX check for MMU?
 		| 0xED0000...0xED3FFE	SRAM
 		| others		ROM (SCSI?)
 		|
-		movel	d0,d1
-		clrb	d1
-		tstl	d1
+		movel	%d0,%d1
+		clrb	%d1
+		tstl	%d1
 		jne	boot_ram_rom
 		|
 		| SASI or Floppy
 		|
-		movel	d0,d2
-		andib	#0xFC,d0
-		cmpib	#0x90,d0
+		movel	%d0,%d2
+		andib	#0xFC,%d0
+		cmpib	#0x90,%d0
 		jne	boot_dev_unsupported	| boot from SASI?
 		|
 		| Floppy
 		|
-		moveb	d2,d0
-		andib	#0x03,d0		| drive # (head=0)
+		moveb	%d2,%d0
+		andib	#0x03,%d0		| drive # (head=0)
 		jbsr	check_fd_format
-		moveml	d0-d1,RELOC(_FDSECMINMAX)	| min and max sec #
-		lslw	#8,d2
-		moveq	#0x70,d1
-		orw	d2,d1		| PDA*256 + MODE
-		movel	d1,RELOC(_FDMODE)
-		movel	d0,d2		| read position (first sector)
-		movel	#8192,d3	| read bytes
+		moveml	%d0-%d1,RELOC(FDSECMINMAX)	| min and max sec #
+		lslw	#8,%d2
+		moveq	#0x70,%d1
+		orw	%d2,%d1		| PDA*256 + MODE
+		movel	%d1,RELOC(FDMODE)
+		movel	%d0,%d2		| read position (first sector)
+		movel	#8192,%d3	| read bytes
 		IOCS(__B_READ)
 		jra	boot_read_done
 
 #include "chkfmt.s"
 
 boot_ram_rom:
-		movel	d0,d1
-		swap	d1
-		cmpiw	#0x00ED,d1
+		movel	%d0,%d1
+		swap	%d1
+		cmpiw	#0x00ED,%d1
 		jne	boot_SCSI
 		| boot from SRAM?
 
 boot_dev_unsupported:
-		BOOT_ERROR("unsupported boot device")
+		BOOT_ERROR1("unsupported boot device")
 
 |
 | volatile void BOOT_ERROR(const char *msg);
@@ -155,14 +158,14 @@ booterr_msg:	.ascii	"\r\n\n"
 reboot_msg:	.asciz	"\r\n[Hit key to reboot]"
 		.even
 
-		.globl	_BOOT_ERROR
-_BOOT_ERROR:	addql	#4,sp
+ENTRY_NOPROFILE(BOOT_ERROR)
+		addql	#4,%sp
 
-boot_error:	lea	pc@(booterr_msg),a1
+boot_error:	lea	%pc@(booterr_msg),%a1
 		IOCS(__B_PRINT)
-		moveal	sp@+,a1
+		moveal	%sp@+,%a1
 		IOCS(__B_PRINT)
-		lea	pc@(reboot_msg),a1
+		lea	%pc@(reboot_msg),%a1
 		IOCS(__B_PRINT)
 
 		| wait for a key press (or release of a modifier)
@@ -183,121 +186,123 @@ boot_SCSI:
 		|
 
 		| get block length of the SCSI disk
-		SCSIIOCS(__S_READCAP)	| using buffer at a1
-		tstl	d0
+		SCSIIOCS(__S_READCAP)	| using buffer at %a1
+		tstl	%d0
 		jeq	1f
-		BOOT_ERROR("READCAP failed")
-1:		moveq	#0,d5
-		moveb	a1@(6),d5	| 1: 256, 2: 512, 4: 1024
-		lsrb	#1,d5		| 0: 256, 1: 512, 2: 1024
-		movel	d5,RELOC(_SCSI_BLKLEN)
+		BOOT_ERROR1("READCAP failed")
+1:		moveq	#0,%d5
+		moveb	%a1@(6),%d5	| 1: 256, 2: 512, 4: 1024
+		lsrb	#1,%d5		| 0: 256, 1: 512, 2: 1024
+		movel	%d5,RELOC(SCSI_BLKLEN)
 
 		| find out the start position of the boot partition
 		| XXX VERY AD HOC
 		|
 		| SCSI IPLs (genuine and SxSI):
-		|	pass read pos (in kilobytes) in d2
+		|	pass read pos (in kilobytes) in %d2
 		|	partition table on the memory is destroyed
 		| BOOT MENU Ver.2.22:
-		|	passes partition table entry address in a0
-		|	d2 is cleared to zero
+		|	passes partition table entry address in %a0
+		|	%d2 is cleared to zero
 		| No other IPL is supported.  XXX FIXME
-		tstl	d2
+		tstl	%d2
 		jne	1f
-		| no information in d2 -- probably from BOOT MENU
-		| a0 points the partiion table entry
-		movel	a0@(0x0008),d2	| in KByte
-1:		lsll	#8,d2		| clear MSByte
-		lsrl	#6,d2		|
-		lsrl	d5,d2		| in sector
-		movel	d2,RELOC(_SCSI_PARTTOP)
+		| no information in %d2 -- probably from BOOT MENU
+		| %a0 points the partiion table entry
+		movel	%a0@(0x0008),%d2 | in KByte
+1:		lsll	#8,%d2		| clear MSByte
+		lsrl	#6,%d2		|
+		lsrl	%d5,%d2		| in sector
+		movel	%d2,RELOC(SCSI_PARTTOP)
 
 		| read entire boot
-		moveq	#8192/256,d3	| size is 8KB
-		lsrl	d5,d3		| in sector
-		jbsr	scsiread	| read at  a1
+		moveq	#8192/256,%d3	| size is 8KB
+		lsrl	%d5,%d3		| in sector
+		jbsr	scsiread	| read at  %a1
 #else
-		moveq	#1,d5		| 512bytes/sec
-		moveq	#8192/512,d3	| 読み込める最大サイズ
-		moveq	#0x40,d2	| いわゆる決め打ち(sd*a のみ)
+		moveq	#1,%d5		| 512bytes/sec
+		moveq	#8192/512,%d3	| 読み込める最大サイズ
+		moveq	#0x40,%d2	| いわゆる決め打ち(sd*a のみ)
 		SCSIIOCS(__S_READ)
 #endif
 
 boot_read_done:
 
 | テキストパレットの初期化
-		moveq	#15,d1
+		moveq	#15,%d1
 initpalet:
-		moveq	#0,d2
-		subqw	#1,d2		| movel	#0xFFFF,d2
+		moveq	#0,%d2
+		subqw	#1,%d2		| movel	#0xFFFF,%d2
 		IOCS(__TPALET2)
-		subqw	#1,d1
-		moveq	#0,d2
+		subqw	#1,%d1
+		moveq	#0,%d2
 		IOCS(__TPALET2)
-		dbra	d1,initpalet
+		dbra	%d1,initpalet
 
-		jsr	RELOC(_printtitle)
-		jmp	RELOC(_bootufs)		| 0x3Fxxxx に飛んでゆく
+		jsr	RELOC(printtitle)
+		jmp	RELOC(bootufs)		| 0x3Fxxxx に飛んでゆく
 
-read_error:	BOOT_ERROR("read error")
+read_error:	BOOT_ERROR1("read error")
 
-#undef RELOC	/* base register  a5  is no longer available */
+#undef _RELOC	/* base register  a5  is no longer available */
+#undef ASRELOC
+#undef RELOC
 
 |
 |	read SCSI
 |
-|	input:	d2.l: pos in sector
-|		d3.l: len in sector
-|		d4: target SCSI ID
-|		d5: sector length (0: 256, 1: 512, 2: 1024)
-|		a1: buffer address
+|	input:	%d2.l: pos in sector
+|		%d3.l: len in sector
+|		%d4: target SCSI ID
+|		%d5: sector length (0: 256, 1: 512, 2: 1024)
+|		%a1: buffer address
 |	destroy:
-|		d0, d1, a1
+|		%d0, %d1, %a1
 |
 scsiread:
-		moveml	d2-d3/d6-d7/a2,sp@-
+		moveml	%d2-%d3/%d6-%d7/%a2,%sp@-
 		| if (pos >= 0x200000 || (len > 255 && pos + len >= 0x200000))
 		|	use READEXT
 		| else
 		|	use READ
-		moveq	#0x20,d0
-		swap	d0		| d0.l = 0x00200000
-		moveq	#0,d6
-		subqb	#1,d6		| d6.l = 255
-		moveq	#8,d7
-		addb	d5,d7		| d7.b = (sector length: 0-2) + 8
-		cmpl	d0,d2
+		moveq	#0x20,%d0
+		swap	%d0		| %d0.l = 0x00200000
+		moveq	#0,%d6
+		subqb	#1,%d6		| %d6.l = 255
+		moveq	#8,%d7
+		addb	%d5,%d7		| %d7.b = (sector length: 0-2) + 8
+		cmpl	%d0,%d2
 		jcc	scsiread_ext
-		moveq	#__S_READ,d1
-		cmpl	d3,d6
+		moveq	#__S_READ,%d1
+		cmpl	%d3,%d6
 		jcc	scsiread_noext
-		subl	d2,d0		| d0.0 = 0x200000 - pos
-		cmpl	d0,d3		|	<= len
+		subl	%d2,%d0		| %d0.0 = 0x200000 - pos
+		cmpl	%d0,%d3		|	<= len
 		jcs	scsiread_noext	| no
 
 scsiread_ext:	| use READEXT
-		extw	d6		| d6.l = 65535
-		moveq	#__S_READEXT,d1
+		extw	%d6		| %d6.l = 65535
+		moveq	#__S_READEXT,%d1
 
 scsiread_noext:	| use READ
 loop_scsiread:
-		| d1: SCSI IOCS call #
-		| d6: max sector count at a time
-		movel	d3,a2		| save original len in a2
-		cmpl	d3,d6
+		| %d1: SCSI IOCS call #
+		| %d6: max sector count at a time
+		movel	%d3,%a2		| save original len in %a2
+		cmpl	%d3,%d6
 		jcc	1f
-		movel	d6,d3
-1:		IOCS(__SCSIDRV)		| SCSIIOCS(d1)
-		tstl	d0
+		movel	%d6,%d3
+1:		IOCS(__SCSIDRV)		| SCSIIOCS(%d1)
+		tstl	%d0
 		jne	read_error
-		movel	d3,d0		| addr += read count << (8 + sec len)
-		asll	d7,d0
-		addl	d0,a1
-		exg	d3,a2		| restore original len to d3
-		addl	a2,d2		| pos += read count
-		subl	a2,d3		| len -= read count
+		movel	%d3,%d0		| addr += read count << (8 + sec len)
+		asll	%d7,%d0
+		addl	%d0,%a1
+		exg	%d3,%a2		| restore original len to %d3
+		addl	%a2,%d2		| pos += read count
+		subl	%a2,%d3		| len -= read count
 		jne	loop_scsiread
-		moveml	sp@+,d2-d3/d6-d7/a2
+		moveml	%sp@+,%d2-%d3/%d6-%d7/%a2
 		rts
 
 |
@@ -315,22 +320,21 @@ first_kbyte:
 |	check if the given address is valid for byte read
 |	return: 0: valid, 1: not valid
 
-		.globl	_badbaddr
-_badbaddr:
-		lea	0x0008:W,a1		| MPU Bus Error vector
-		moveq	#1,d0
-		lea	pc@(badr1),a0
-		movew	sr,sp@-
-		oriw	#0x0700,sr		| keep out interrupts
-		movel	a1@,sp@-
-		movel	a0,a1@			| set bus error vector
-		movel	sp,d1			| save sp
-		moveal	sp@(10),a0
-		tstb	a0@			| try read...
-		moveq	#0,d0			| this is skipped on bus error
-badr1:		moveal	d1,sp			| restore sp
-		movel	sp@+,a1@
-		movew	sp@+,sr
+ENTRY_NOPROFILE(badbaddr)
+		lea	0x0008:W,%a1		| MPU Bus Error vector
+		moveq	#1,%d0
+		lea	%pc@(badr1),%a0
+		movew	%sr,%sp@-
+		oriw	#0x0700,%sr		| keep out interrupts
+		movel	%a1@,%sp@-
+		movel	%a0,%a1@		| set bus error vector
+		movel	%sp,%d1			| save %sp
+		moveal	%sp@(10),%a0
+		tstb	%a0@			| try read...
+		moveq	#0,%d0			| this is skipped on bus error
+badr1:		moveal	%d1,%sp			| restore %sp
+		movel	%sp@+,%a1@
+		movew	%sp@+,%sr
 		rts
 
 | void RAW_READ __P((void *buf, u_int32_t blkpos, size_t bytelen));
@@ -343,54 +347,54 @@ Lraw_read_buf=4+(4*11)
 Lraw_read_pos_=Lraw_read_buf+4
 Lraw_read_len=Lraw_read_buf+8
 
-		.globl	_RAW_READ
 #ifdef SCSI_ADHOC_BOOTPART
-		.globl	_RAW_READ0
 |	RAW_READ of physical disk
-_RAW_READ0:
-		moveq	#0,d0
+ENTRY_NOPROFILE(RAW_READ0)
+		moveq	#0,%d0
 		jra	raw_read1
 #endif
-_RAW_READ:
+ENTRY_NOPROFILE(RAW_READ)
 #ifdef SCSI_ADHOC_BOOTPART
-		movel	_SCSI_PARTTOP,d0
+		movel	_C_LABEL(SCSI_PARTTOP),%d0
 raw_read1:
 #endif
-		moveml	d2-d7/a2-a6,sp@-
-		moveml	sp@(Lraw_read_buf),d1-d3
-		movel	d1,a1
-		| d2.l:		pos in 512byte-blocks
-		| d3.l:		length in bytes
-		| a1 (=d1):	buffer address
+		moveml	%d2-%d7/%a2-%a6,%sp@-
+		moveml	%sp@(Lraw_read_buf),%d1-%d3
+		movel	%d1,%a1
+		| %d2.l:	pos in 512byte-blocks
+		| %d3.l:	length in bytes
+		| %a1 (=%d1):	buffer address
 
-		lea	BASEPTR_R,a5	| set base ptr
-#define RELOC(adr)	a5@(((adr)-(BASEPTR_A&0xffff)):W)
+		lea	BASEPTR_R,%a5	| set base ptr
+#define _RELOC(adr)	%a5@(((adr)-(BASEPTR_A&0xffff)):W)
+#define ASRELOC(var)	_RELOC(_ASM_LABEL(var))
+#define RELOC(var)	_RELOC(_C_LABEL(var))
 
-		tstb	RELOC(_BOOT_INFO+1) | simple check.  may be incorrect!
+		tstb	_RELOC(_C_LABEL(BOOT_INFO)+1) | simple check.  may be incorrect!
 		beqs	raw_read_floppy
 
 raw_read_scsi:
-		movel	RELOC(_ID),d4	| SCSI ID
+		movel	RELOC(ID),%d4	| SCSI ID
 #ifdef SCSI_ADHOC_BOOTPART
-		movel	RELOC(_SCSI_BLKLEN),d5	| sector size: 0-2
+		movel	RELOC(SCSI_BLKLEN),%d5	| sector size: 0-2
 		| XXX length must be sector aligned
-		lsrl	#8,d3		| size in 256byte-blocks
-		lsrl	d5,d3		| size in sector
+		lsrl	#8,%d3		| size in 256byte-blocks
+		lsrl	%d5,%d3		| size in sector
 		bcss	read_half	| minimal error check
-		lsll	#1,d2		| X flag and d2: pos in 256byte-blocks
-		roxrl	d5,d2		| pos in sector
-		addl	d0,d2		| physical pos in sector
+		lsll	#1,%d2		| X flag and %d2: pos in 256byte-blocks
+		roxrl	%d5,%d2		| pos in sector
+		addl	%d0,%d2		| physical pos in sector
 #else
-		moveq	#1,d5		| 512bytes/sec
-		moveq	#9,d0		| shift count
-		addl	#511,d3
-		lsrl	d0,d3
+		moveq	#1,%d5		| 512bytes/sec
+		moveq	#9,%d0		| shift count
+		addl	#511,%d3
+		lsrl	%d0,%d3
 		bcss	read_half	| minimal error check
 
-		addl	#0x40,d2	| 'a' partition starts here
+		addl	#0x40,%d2	| 'a' partition starts here
 #endif
 |		jcc	1f
-|		BOOT_ERROR("out of seek")	| pos exceeds 32bit
+|		BOOT_ERROR1("out of seek")	| pos exceeds 32bit
 |1:
 		jbsr	scsiread
 		bras	raw_read_end
@@ -402,123 +406,116 @@ raw_read_floppy:
 
 		| convert to seek position
 
-		asll	#2,d2		| size in 128byte-blocks
+		asll	#2,%d2		| size in 128byte-blocks
 
-		| sec = raw_read_pos	(d2)
+		| sec = raw_read_pos	(%d2)
 		| sec >>= 7 + (sector length: 0-3)
 
-		lea	RELOC(_FDSECMINMAX),a0
-		moveq	#0,d1
-		moveb	a0@,d1		| d1: sector length (0-3)
-		lsrl	d1,d2		| d2: pos in sector
+		lea	RELOC(FDSECMINMAX),%a0
+		moveq	#0,%d1
+		moveb	%a0@,%d1	| %d1: sector length (0-3)
+		lsrl	%d1,%d2		| %d2: pos in sector
 		bcss	read_half	| error check
 
 		| trk = sec / (# sectors)
 		| sec = sec % (# sectors)
 
-		moveb	a0@(7),d1	| d1: max sector #
-		subb	a0@(3),d1	|   - min sector #
-		addqb	#1,d1		| d1: # sectors
-		divu	d1,d2		| d2: (sec << 16) | track
+		moveb	%a0@(7),%d1	| %d1: max sector #
+		subb	%a0@(3),%d1	|   - min sector #
+		addqb	#1,%d1		| %d1: # sectors
+		divu	%d1,%d2		| %d2: (sec << 16) | track
 
 		| position = (sec length << 24) | (track/2 << 16)
 		|		| (track%2 << 8) | (min sec # + sec)
 
-		movel	a0@,d0		| d0: (sec len << 24) | min sec #
-		lsrw	#1,d2		| d2: (sec << 16) | (track / 2)
+		movel	%a0@,%d0	| %d0: (sec len << 24) | min sec #
+		lsrw	#1,%d2		| %d2: (sec << 16) | (track / 2)
 		jcc	1f
-		bset	#8,d0		| |= (track % 2) << 8
-1:		swap	d2		| d2: ((track / 2) << 16) | sec
-		addl	d0,d2		| d2: position
+		bset	#8,%d0		| |= (track % 2) << 8
+1:		swap	%d2		| %d2: ((track / 2) << 16) | sec
+		addl	%d0,%d2		| %d2: position
 
 		| read
-		movel	RELOC(_FDMODE),d1	| PDA*256 + MODE
+		movel	RELOC(FDMODE),%d1	| PDA*256 + MODE
 
 		| B_READ (for floppy)
-		|  d1.w: PDA x 256 + MODE
+		|  %d1.w: PDA x 256 + MODE
 		|	PDA: 0x90 (drive 0) ... 0x93 (drive 3)
 		|	MODE:	bit6: MFM
 		|		bit5: retry
 		|		bit4: seek
-		|  d2.l: position
+		|  %d2.l: position
 		|	bit31-24: sector length (0: 128, 1: 256, 2: 512, 3: 1K)
 		|	bit23-16: track # (0-79)
 		|	bit15-08: side (0 or 1)
 		|	bit07-00: sector # (1-)
-		|  d3.l: read bytes
-		|  a1:   read address
+		|  %d3.l: read bytes
+		|  %a1:   read address
 		| return:
-		|  d0:	bit 31-24	ST0
+		|  %d0:	bit 31-24	ST0
 		|	bit 23-16	ST1
 		|	bit 15- 8	ST2
 		|	bit  7- 0	C
 		|	-1 on parameter error
-		| destroy: d0, d2, d3, a1
+		| destroy: %d0, %d2, %d3, %a1
 		IOCS(__B_READ)
-		andil	#0xf8ffff00,d0		| check status (must be zero)
+		andil	#0xf8ffff00,%d0		| check status (must be zero)
 		jne	read_error
 
 raw_read_end:
-		moveml	sp@+,a2-a6/d2-d7
+		moveml	%sp@+,%a2-%a6/%d2-%d7
 		rts
-#undef RELOC	/* base register  a5  is no longer available */
+#undef _RELOC	/* base register  %a5  is no longer available */
+#undef ASRELOC
+#undef RELOC
 
-read_half:	BOOT_ERROR("read half of block")
+read_half:	BOOT_ERROR1("read half of block")
 
 #if 0
-	.globl	_JISSFT
-_JISSFT:
-		movel	sp@(4),d1
+ENTRY_NOPROFILE(JISSFT)
+		movel	%sp@(4),%d1
 		IOCS(__JISSFT)
 		rts
 #endif
 
-	.globl	_B_SFTSNS
-_B_SFTSNS:
+ENTRY_NOPROFILE(B_SFTSNS)
 		IOCS(__B_SFTSNS)
 		rts
 
-	.globl	_B_KEYINP
-_B_KEYINP:
+ENTRY_NOPROFILE(B_KEYINP)
 		IOCS(__B_KEYINP)
 		rts
 
-	.globl	_B_PUTC
-_B_PUTC:
-		movel	sp@(4),d1
+ENTRY_NOPROFILE(B_PUTC)
+		movel	%sp@(4),%d1
 		IOCS(__B_PUTC)
 		rts
 
-	.globl	_B_PRINT
-_B_PRINT:
-		movel	sp@(4),a1
+ENTRY_NOPROFILE(B_PRINT)
+		movel	%sp@(4),%a1
 		IOCS(__B_PRINT)
 		rts
 
-	.globl	_B_COLOR
-_B_COLOR:
-		movel	sp@(4),d1
+ENTRY_NOPROFILE(B_COLOR)
+		movel	%sp@(4),%d1
 		IOCS(__B_COLOR)
 		rts
 
-	.globl	_B_LOCATE
-_B_LOCATE:
-		movel	d2,sp@-
-		movel	sp@(8),d1
-		movel	sp@(12),d2
+ENTRY_NOPROFILE(B_LOCATE)
+		movel	%d2,%sp@-
+		movel	%sp@(8),%d1
+		movel	%sp@(12),%d2
 		IOCS(__B_LOCATE)
-		movel	sp@+,d2
+		movel	%sp@+,%d2
 		rts
 
-	.globl	_B_CLR_ST
-_B_CLR_ST:
-		movel	sp@(4),d1
+ENTRY_NOPROFILE(B_CLR_ST)
+		movel	%sp@(4),%d1
 		IOCS(__B_CLR_ST)
 		rts
 
-	.globl	_printtitle
-_printtitle:
-		lea	pc@(msg_title),a1
+ENTRY_NOPROFILE(printtitle)
+		lea	%pc@(msg_title),%a1
 		IOCS(__B_PRINT)
 #ifndef TITLE_IMAGE
 		rts
@@ -532,99 +529,99 @@ _printtitle:
 |
 |	display title image
 |
-put_image:	link	a6,#-(IMGWIDTH*IMGHEIGHT/8*2+8)	| make local buffer
-		moveal	sp,a1				| buffer (plane #0) top
-		moveml	d2-d7/a2-a4,sp@-
+put_image:	link	%a6,#-(IMGWIDTH*IMGHEIGHT/8*2+8) | make local buffer
+		moveal	%sp,%a1				| buffer (plane #0) top
+		moveml	%d2-%d7/%a2-%a4,%sp@-
 
-		lea	a1@(IMGWIDTH*IMGHEIGHT/8+4),a4	| buffer (plane #1) top
-		movel	#IMGWIDTH*0x10000+IMGHEIGHT,a1@	| image size
-		movel	a1@+,a4@+
+		lea	%a1@(IMGWIDTH*IMGHEIGHT/8+4),%a4 | buffer (plane #1) top
+		movel	#IMGWIDTH*0x10000+IMGHEIGHT,%a1@ | image size
+		movel	%a1@+,%a4@+
 
-		lea	pc@(img_title),a2
-		moveaw	a2@+,a3			| only the lower word is valid
+		lea	%pc@(img_title),%a2
+		moveaw	%a2@+,%a3		| only the lower word is valid
 
-1:		tstb	a2@+			| skip human readable comment
+1:		tstb	%a2@+			| skip human readable comment
 		jne	1b
-		lea	a2@(4),a0		| image data here
+		lea	%a2@(4),%a0		| image data here
 
-		moveq	#0,d2			| (b) now have 0bit
-		moveq	#0,d3			| (w) input bit buffer
+		moveq	#0,%d2			| (b) now have 0bit
+		moveq	#0,%d3			| (w) input bit buffer
 
-		moveq	#16,d4			| (b) output bit count
-		moveq	#IMGWIDTH*IMGHEIGHT/16+0xffffff00,d7
+		moveq	#16,%d4			| (b) output bit count
+		moveq	#IMGWIDTH*IMGHEIGHT/16+0xffffff00,%d7
 
-		| d2.b: # bits in input buffer
-		| d3.w: input buffer
-		| d4.b: # bits in output buffer
-		| d5.w: output buffer for plane 0
-		| d6.w: output buffer for plane 1
-		| d7.b: size count
-		| a0: input data pointer
+		| %d2.b: # bits in input buffer
+		| %d3.w: input buffer
+		| %d4.b: # bits in output buffer
+		| %d5.w: output buffer for plane 0
+		| %d6.w: output buffer for plane 1
+		| %d7.b: size count
+		| %a0: input data pointer
 
 Lrunlen:	| a run entry:
 		|	value	 (2bit)
 		|	length-1 (3bit)
-		subqb	#5,d2		| have enough bits?
+		subqb	#5,%d2		| have enough bits?
 		jcc	Lhave5b		| yes
 		| fill byte
-		cmpaw	a0,a3		| the register order is significant
+		cmpaw	%a0,%a3		| the register order is significant
 					| for word comparison
 		jne	1f
-		lea	pc@(disklabel),a0 | continue to disklabel area?
-		cmpiw	#0x696d,a0@+	| check magic number
+		lea	%pc@(disklabel),%a0 | continue to disklabel area?
+		cmpiw	#0x696d,%a0@+	| check magic number
 		jne	Lrxabort	| no, abort (no image)
-1:		moveb	a0@+,d0
-		addqb	#8,d2		| d2: 3: have 0bit, ..., 7: have 4bit
-		lslw	#8,d0		| clear unused bits
-		lsrw	d2,d0
-		orw	d0,d3
+1:		moveb	%a0@+,%d0
+		addqb	#8,%d2		| %d2: 3: have 0bit, ..., 7: have 4bit
+		lslw	#8,%d0		| clear unused bits
+		lsrw	%d2,%d0
+		orw	%d0,%d3
 
-Lhave5b:	| field# 19 20 21 22 23 24 25 26 27 28 29 30 31
-		| d3: ... v  v  l  l  l  ?  ?  ?  ?  ?  ?  ?  0
-		bfexts	d3{#19,#2},d0	| value
-		bfextu	d3{#21,#3},d1	| length - 1
-		lslw	#5,d3
+Lhave5b:	| field#  19 20 21 22 23 24 25 26 27 28 29 30 31
+		| %d3: ... v  v  l  l  l  ?  ?  ?  ?  ?  ?  ?  0
+		bfexts	%d3{#19,#2},%d0	| value
+		bfextu	%d3{#21,#3},%d1	| length - 1
+		lslw	#5,%d3
 
-Lrxloop:	lslw	#2,d6
-		bfins	d0,d6{#30,#2}
-		roxrw	#1,d6
-		roxlw	#1,d5
-		subqb	#1,d4
+Lrxloop:	lslw	#2,%d6
+		bfins	%d0,%d6{#30,#2}
+		roxrw	#1,%d6
+		roxlw	#1,%d5
+		subqb	#1,%d4
 		jne	1f
-		moveq	#16,d4
-		movew	d5,a1@+
-		movew	d6,a4@+
-		subqb	#1,d7		| end?
-1:		dbeq	d1,Lrxloop	| fall down if end
+		moveq	#16,%d4
+		movew	%d5,%a1@+
+		movew	%d6,%a4@+
+		subqb	#1,%d7		| end?
+1:		dbeq	%d1,Lrxloop	| fall down if end
 		jne	Lrunlen		| fall down if end
 
-		moveq	#1,d1
-		movew	a2@+,d2
+		moveq	#1,%d1
+		movew	%a2@+,%d2
 		IOCS(__TPALET2)
-		moveq	#2,d1
-		movew	a2@,d2
+		moveq	#2,%d1
+		movew	%a2@,%d2
 		IOCS(__TPALET2)
 
-|		moveq	#0x02,d1	| plane 1 (already have it)
+|		moveq	#0x02,%d1	| plane 1 (already have it)
 		IOCS(__TCOLOR)
-		moveq	#IMGXPOS,d1
-		moveq	#IMGYPOS,d2
+		moveq	#IMGXPOS,%d1
+		moveq	#IMGYPOS,%d2
 		IOCS(__TEXTPUT)
-		moveq	#0x01,d1	| plane 0
+		moveq	#0x01,%d1	| plane 0
 		IOCS(__TCOLOR)
-		moveq	#IMGXPOS,d1
-		lea	a6@(-(IMGWIDTH*IMGHEIGHT/8*2+8)),a1
+		moveq	#IMGXPOS,%d1
+		lea	%a6@(-(IMGWIDTH*IMGHEIGHT/8*2+8)),%a1
 		IOCS(__TEXTPUT)
 
-Lrxabort:	moveml	sp@+,d2-d7/a2-a4
-		unlk	a6
+Lrxabort:	moveml	%sp@+,%d2-%d7/%a2-%a4
+		unlk	%a6
 		rts
 #endif
 
 #if 0
 |IOCS SYS_STAT   $AC
 |
-|入力 d1.l=0 のとき d0.l に以下の値
+|入力 %d1.l=0 のとき %d0.l に以下の値
 |        bit0〜7         0:68000, 1:68010, 2:68020, 3:68030
 |        bit14           0:MMUなし, 1:MMUあり
 |        bit15           0:FPCPなし, 1:FPCPあり
@@ -634,31 +631,31 @@ Lrxabort:	moveml	sp@+,d2-d7/a2-a4
 |起動時に SRAM で組み込んでくれます。
 	.globl	_SYS_STAT
 _SYS_STAT:
-		movel	sp@(4),d1
+		movel	%sp@(4),%d1
 		IOCS(__SYS_STAT)
 		rts
 
 		.globl	_getcpu
 _getcpu:
-	movl	#0x200,d0		| data freeze bit
-	movc	d0,cacr			|   only exists on 68030
-	movc	cacr,d0			| read it back
-	tstl	d0			| zero?
+	movl	#0x200,%d0		| data freeze bit
+	movc	%d0,%cacr		|   only exists on 68030
+	movc	%cacr,%d0		| read it back
+	tstl	%d0			| zero?
 	jeq	Lnot68030		| yes, we have 68020/68040
-	movq	#3,d0			| 68030
+	movq	#3,%d0			| 68030
 	rts
 Lnot68030:
-	bset	#31,d0			| data cache enable bit
-	movc	d0,cacr			|   only exists on 68040
-	movc	cacr,d0			| read it back
-	tstl	d0			| zero?
+	bset	#31,%d0			| data cache enable bit
+	movc	%d0,%cacr		|   only exists on 68040
+	movc	%cacr,%d0		| read it back
+	tstl	%d0			| zero?
 	jeq	Lis68020		| yes, we have 68020
-	moveq	#0,d0			| now turn it back off
-	movec	d0,cacr			|   before we access any data
-	movq	#4,d0			| 68040
+	moveq	#0,%d0			| now turn it back off
+	movec	%d0,%cacr		|   before we access any data
+	movq	#4,%d0			| 68040
 	rts
 Lis68020:
-	movq	#2,d0			| 68020
+	movq	#2,%d0			| 68020
 	rts
 #endif
 
@@ -669,29 +666,28 @@ Lis68020:
 |	small and slow memcpy...
 |	THIS FUNCTION DOES NOT CONFORM THE ANSI STANDARD
 |
-	.globl	_memcpy, _memmove
-_memcpy:
-_memmove:
-	lea	sp@(12),a1
-	movel	a1@,d1		| count
+ENTRY_NOPROFILE(memcpy)
+ENTRY_NOPROFILE(memmove)
+	lea	%sp@(12),%a1
+	movel	%a1@,%d1	| count
 	jeq	Lmcpret
-	moveal	a1@-,a0		| src
-	moveal	a1@-,a1		| dest
-	cmpl	a1,a0
+	moveal	%a1@-,%a0	| src
+	moveal	%a1@-,%a1	| dest
+	cmpl	%a1,%a0
 	jcc	Lmcpfw
 	| copy backward
-	addal	d1,a0
-	addal	d1,a1
-1:	moveb	a0@-,a1@-
-	subql	#1,d1
+	addal	%d1,%a0
+	addal	%d1,%a1
+1:	moveb	%a0@-,%a1@-
+	subql	#1,%d1
 	jne	1b
 	jra	Lmcpret
 Lmcpfw:	| copy forward
-1:	moveb	a0@+,a1@+
-	subql	#1,d1
+1:	moveb	%a0@+,%a1@+
+	subql	#1,%d1
 	jne	1b
 Lmcpret:
-|	movel	sp@(8),d0	| uncomment this to conform ANSI
+|	movel	%sp@(8),%d0	| uncomment this to conform ANSI
 	rts
 
 |
@@ -798,10 +794,10 @@ imgend1:
 |
 |	global variables
 |
-	.comm	_ID,4		| SCSI ID
-	.comm	_BOOT_INFO,4	| result of IOCS(__BOOTINF)
-	.comm	_FDMODE,4	| Floppy access mode: PDA x 256 + MODE
-	.comm	_FDSECMINMAX,8	| +0: (min sector) sector length
+	BSS(ID,4)		| SCSI ID
+	BSS(BOOT_INFO,4)	| result of IOCS(__BOOTINF)
+	BSS(FDMODE,4)		| Floppy access mode: PDA x 256 + MODE
+	BSS(FDSECMINMAX,8)	| +0: (min sector) sector length
 				| +1: (min sector) track #
 				| +2: (min sector) side
 				| +3: (min sector) sector #
@@ -810,6 +806,6 @@ imgend1:
 				| +6: (max sector) side
 				| +7: (max sector) sector #
 #ifdef SCSI_ADHOC_BOOTPART
-	.comm	_SCSI_PARTTOP,4	| top position of boot partition in sector
-	.comm	_SCSI_BLKLEN,4	| sector len 0: 256, 1: 512, 2: 1024
+	BSS(SCSI_PARTTOP,4)	| top position of boot partition in sector
+	BSS(SCSI_BLKLEN,4)	| sector len 0: 256, 1: 512, 2: 1024
 #endif

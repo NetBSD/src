@@ -100,7 +100,7 @@
  */
 
 #ifdef RCSID
-static char rcsid[] = "$NetBSD: inflate.c,v 1.3 1999/03/28 14:03:36 minoura Exp $";
+static char rcsid[] = "$NetBSD: inflate.c,v 1.4 2001/06/12 16:57:29 minoura Exp $";
 #endif
 
 #include <sys/types.h>
@@ -135,7 +135,7 @@ fake_malloc_for_inflate(size)
 {
     register char *cp
 #if defined(__GNUC__) && defined(__m68k__)	/* saves 8bytes :-) */
-		asm("d0")
+		asm("%d0")
 #endif
 			;
     register char *abuf = alloc_buf;
@@ -301,32 +301,52 @@ const ush mask_bits[] = {
 #ifdef BOOT
 /* optimize for size */
 #define NEEDBITS(n) {	\
-		register unsigned k_ asm("d5") = k;		\
-		register ulg b_ asm("d4") = b;			\
-		register const unsigned n_ asm("d1") = (n);	\
+		register unsigned k_ asm("%d5") = k;		\
+		register ulg b_ asm("%d4") = b;			\
+		register const unsigned n_ asm("%d1") = (n);	\
 		asm volatile("jbsr	needbits"		\
 			: "=d" (k_), "=d" (b_)			\
-			: "d" (k_), "d" (b_), "r"(n_) : "a0");	\
+			: "d" (k_), "d" (b_), "r"(n_) : "%a0");	\
 		k = k_;						\
 		b = b_;						\
 	}
+#ifdef __ELF__
+asm("get_byte:\n\
+	movel	csrc,%a0\n\
+	clrl	%d0\n\
+	moveb	%a0@,%d0\n\
+	addql	#1,csrc\n\
+	rts");
+asm("Lneedlp:\n\
+	movel	%d0,%sp@-\n\
+	jbsr	get_byte\n\
+	lsll	%d5,%d0\n\
+	orl	%d0,%d4\n\
+	movel	%sp@+,%d0\n\
+	addql	#8,%d5\n\
+needbits:\n\
+	cmpw	%d1,%d5\n\
+	jcs	Lneedlp\n\
+	rts");
+#else
 asm("_get_byte:\n\
-	movel	_csrc,a0\n\
-	clrl	d0\n\
-	moveb	a0@,d0\n\
+	movel	_csrc,%a0\n\
+	clrl	%d0\n\
+	moveb	%a0@,%d0\n\
 	addql	#1,_csrc\n\
 	rts");
 asm("Lneedlp:\n\
-	movel	d0,sp@-\n\
+	movel	%d0,%sp@-\n\
 	jbsr	_get_byte\n\
-	lsll	d5,d0\n\
-	orl	d0,d4\n\
-	movel	sp@+,d0\n\
-	addql	#8,d5\n\
+	lsll	%d5,%d0\n\
+	orl	%d0,%d4\n\
+	movel	%sp@+,%d0\n\
+	addql	#8,%d5\n\
 needbits:\n\
-	cmpw	d1,d5\n\
+	cmpw	%d1,%d5\n\
 	jcs	Lneedlp\n\
 	rts");
+#endif
 #else
 #define NEEDBITS(n) {while(k<(n)){b|=((ulg)NEXTBYTE())<<k;k+=8;}}
 #endif
