@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.8 1997/10/11 22:57:49 mycroft Exp $
+#	$NetBSD: Makefile,v 1.9 1998/01/21 05:47:18 mycroft Exp $
 
-SUBDIR+= _setjmp db regex setjmp sigsetjmp
+SUBDIR+= _setjmp db regex setjmp sigsetjmp time
 .if (${MACHINE_ARCH} != "vax")
 SUBDIR+= ieeefp
 .endif
