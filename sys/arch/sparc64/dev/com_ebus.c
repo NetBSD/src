@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.3 2000/12/03 14:49:50 fvdl Exp $	*/
+/*	$NetBSD: com_ebus.c,v 1.4 2000/12/20 16:19:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -152,7 +152,6 @@ com_ebus_attach(parent, self, aux)
 	for (i = 0; i < ea->ea_nintrs; i++)
 		bus_intr_establish(ea->ea_bustag, ea->ea_intrs[i], 0,
 		    IPL_SERIAL, comintr, sc);
-	printf("\n");
 
 	com_attach_subr(sc);
 
