@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)asm.h	5.5 (Berkeley) 5/7/91
- *	$Id: asm.h,v 1.5 1994/03/12 01:23:21 jtc Exp $
+ *	$Id: asm.h,v 1.6 1994/09/02 05:02:47 jtc Exp $
  */
 
 #ifndef _I386_ASM_H_
@@ -60,30 +60,25 @@
 #define PIC_GOTOFF(x)	x
 #endif
 
-#ifdef PROF
-/*
- * XXX assumes that arguments are not passed in %eax
- */
-# define _BEGIN_ENTRY	.data; 1:; .long 0; .text; .align 2
-# define _END_ENTRY	movl $1b,%eax; call PIC_PLT(mcount)
-#else
-# define _BEGIN_ENTRY	.text; .align 2
-# define _END_ENTRY
-#endif
-
 #ifdef __STDC__
-# define _C_FUNC(x)	_ ## x
+# define _C_LABEL(x)	_ ## x
 #else
-# define _C_FUNC(x)	_/**/x
+# define _C_LABEL(x)	_/**/x
 #endif
-#define	_ASM_FUNC(x)	x
+#define	_ASM_LABEL(x)	x
 
-#define _ENTRY(x)	.globl x; .type x,@function; x:
+#define _ENTRY(x) \
+	.text; .align 2; .globl x; .type x,@function; x:
 
-#define	ENTRY(y)	_BEGIN_ENTRY; _ENTRY(_C_FUNC(y)); _END_ENTRY
-#define	TWOENTRY(y,z)	_BEGIN_ENTRY; _ENTRY(_C_FUNC(y)); _ENTRY(_C_FUNC(z)); \
-			_END_ENTRY
-#define	ASENTRY(y)	_BEGIN_ENTRY; _ENTRY(_ASM_FUNC(y)); _END_ENTRY
+#ifdef PROF
+# define _PROF_PROLOGUE	\
+	pushl %ebp; movl %esp,%ebp; call PIC_PLT(mcount); popl %ebp
+#else
+# define _PROF_PROLOGUE
+#endif
+
+#define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
+#define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
 
 #define	ASMSTR		.asciz
 
