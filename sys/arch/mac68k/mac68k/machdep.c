@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.190 1998/04/24 05:27:25 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.191 1998/04/24 06:12:29 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -270,12 +270,10 @@ mac68k_init()
 
 	/*
 	 * Tell the VM system about available physical memory.
-	 * XXX The physical segment list hasn't been sorted, and there
-	 * may be adjoining segments.  They shouldn't overlap, but let's
-	 * keep our fingers cross, shall we?
+	 * Notice that we don't need to worry about avail_end here
+	 * since it's equal to high[numranges-1].
 	 */
 	for (i = 0; i < numranges; i++) {
-		if (low[i] <= avail_start && avail_start <= high[i])
 #if defined(UVM)
 		if (low[i] <= avail_start && avail_start <= high[i])
 			uvm_page_physload(atop(avail_start), atop(high[i]),
