@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.14 1997/03/15 16:32:18 ragge Exp $ */
+/*	$NetBSD: hp.c,v 1.15 1997/06/24 01:09:37 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -444,7 +444,8 @@ hpsize(dev)
 		return -1;
 
 	sc = hp_cd.cd_devs[unit];
-	size = sc->sc_disk.dk_label->d_partitions[DISKPART(dev)].p_size;
+	size = sc->sc_disk.dk_label->d_partitions[DISKPART(dev)].p_size *
+	    (sc->sc_disk.dk_label->d_secsize / DEV_BSIZE);
 
 	return size;
 }
