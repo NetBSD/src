@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.55 2001/10/16 18:06:29 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.56 2002/02/06 16:20:25 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.55 2001/10/16 18:06:29 sjg Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.56 2002/02/06 16:20:25 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.55 2001/10/16 18:06:29 sjg Exp $");
+__RCSID("$NetBSD: job.c,v 1.56 2002/02/06 16:20:25 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -596,7 +596,6 @@ JobPrintCommand(cmdp, jobp)
     char       	  *cmdTemplate;	    /* Template to use when printing the
 				     * command */
     char    	  *cmdStart;	    /* Start of expanded command */
-    LstNode 	  cmdNode;  	    /* Node for replacing the command */
     char     	  *cmd = (char *) cmdp;
     Job           *job = (Job *) jobp;
     char	*cp;
@@ -622,13 +621,7 @@ JobPrintCommand(cmdp, jobp)
 
     numCommands += 1;
 
-    /*
-     * For debugging, we replace each command with the result of expanding
-     * the variables in the command.
-     */
-    cmdNode = Lst_Member(job->node->commands, (ClientData)cmd);
     cmdStart = cmd = Var_Subst(NULL, cmd, job->node, FALSE);
-    Lst_Replace(cmdNode, (ClientData)cmdStart);
 
     cmdTemplate = "%s\n";
 
