@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.3 2000/06/19 15:15:03 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.4 2000/06/19 17:08:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.3 2000/06/19 15:15:03 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.4 2000/06/19 17:08:05 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -161,8 +161,9 @@ struct ftpfact facttab[] = {
 	/* "Lang" */
 	/* "Media-Type" */
 	/* "CharSet" */
-	{ NULL, NULL, },
 };
+
+#define FACTTABSIZE	(sizeof(facttab) / sizeof(struct ftpfact))
 
 
 void
@@ -198,7 +199,7 @@ feat(void)
 	reply(-211, "Features supported");
 	cprintf(stdout, " MDTM\r\n");
 	cprintf(stdout, " MLST ");
-	for (i = 0; facttab[i].name; i++)
+	for (i = 0; i < FACTTABSIZE; i++)
 		cprintf(stdout, "%s%s;", facttab[i].name,
 		    facttab[i].enabled ? "*" : "");
 	cprintf(stdout, "\r\n");
@@ -335,7 +336,7 @@ opts(const char *command)
 
 			/* special case: MLST */
 	if (strcasecmp(command, "MLST") == 0) {
-		int	 enabled[sizeof(facttab) / sizeof(struct ftpfact)];
+		int	 enabled[FACTTABSIZE];
 		int	 i, onedone;
 		size_t	 len;
 		char	*p;
@@ -356,7 +357,7 @@ opts(const char *command)
 		while ((p = strsep(&ep, ";")) != NULL) {
 			if (*p == '\0')
 				goto badmlstopt;
-			for (i = 0; facttab[i].name; i++)
+			for (i = 0; i < FACTTABSIZE; i++)
 				if (strcasecmp(p, facttab[i].name) == 0) {
 					enabled[i] = 1;
 					break;
@@ -364,10 +365,10 @@ opts(const char *command)
 		}
 
  displaymlstopts:
-		for (i = 0; facttab[i].name; i++)
+		for (i = 0; i < FACTTABSIZE; i++)
 			facttab[i].enabled = enabled[i];
 		cprintf(stdout, "200 MLST OPTS");
-		for (i = onedone = 0; facttab[i].name; i++) {
+		for (i = onedone = 0; i < FACTTABSIZE; i++) {
 			if (facttab[i].enabled) {
 				cprintf(stdout, "%s%s;", onedone ? "" : " ",
 				    facttab[i].name);
@@ -763,7 +764,7 @@ mlsname(FILE *fp, factelem *fe)
 {
 	int i;
 
-	for (i = 0; facttab[i].name; i++) {
+	for (i = 0; i < FACTTABSIZE; i++) {
 		if (facttab[i].enabled)
 			(facttab[i].display)(facttab[i].name, fp, fe);
 	}
