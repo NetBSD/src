@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.18 1998/12/08 14:08:50 drochner Exp $	*/
+/*	$NetBSD: compile.c,v 1.19 1998/12/19 22:12:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: compile.c,v 1.18 1998/12/08 14:08:50 drochner Exp $");
+__RCSID("$NetBSD: compile.c,v 1.19 1998/12/19 22:12:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,7 +148,8 @@ compile()
 
 #define EATSPACE() do {							\
 	if (p)								\
-		while (*p && isascii(*p) && isspace(*p))		\
+		while (*p && isascii((unsigned char)*p) &&		\
+		    isspace((unsigned char)*p))				\
 			p++;						\
 	} while (0)
 
@@ -705,7 +706,7 @@ duptoeol(s, ctype)
 
 	ws = 0;
 	for (start = s; *s != '\0' && *s != '\n'; ++s)
-		ws = isspace(*s);
+		ws = isspace((unsigned char)*s);
 	*s = '\0';
 	if (ws)
 		err(WARNING, "whitespace after %s", ctype);
