@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.71.2.5 2002/07/26 00:03:22 nathanw Exp $	*/
+/*	$NetBSD: print.c,v 1.71.2.6 2002/11/12 20:31:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.71.2.5 2002/07/26 00:03:22 nathanw Exp $");
+__RCSID("$NetBSD: print.c,v 1.71.2.6 2002/11/12 20:31:58 nathanw Exp $");
 #endif
 #endif /* not lint */
 
@@ -302,7 +302,6 @@ command(arg, ve, mode)
 	if (needcomm) {
 		name = ki->p_comm;
 		if (!commandonly) {
-			argv = NULL;
 			argv = kvm_getargv2(kd, ki, termwidth);
 			if ((p = argv) != NULL) {
 				while (*p) {
@@ -434,6 +433,8 @@ state(arg, ve, mode)
 		*cp++ = 'N';
 	if (flag & P_TRACED)
 		*cp++ = 'X';
+	if (flag & P_SYSTRACE)
+		*cp++ = 'x';
 	if (flag & P_WEXIT && !is_zombie)
 		*cp++ = 'E';
 	if (flag & P_PPWAIT)
