@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.40 1998/11/07 16:47:22 drochner Exp $	*/
+/*	$NetBSD: pci.c,v 1.40.6.1 2000/06/27 14:32:06 he Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -42,6 +42,12 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#ifdef PCI_CONFIG_DUMP
+int pci_config_dump = 1;
+#else
+int pci_config_dump = 0;
+#endif
 
 int pcimatch __P((struct device *, struct cfdata *, void *));
 void pciattach __P((struct device *, struct device *, void *));
@@ -270,45 +276,43 @@ pciprint(aux, pnp)
 {
 	register struct pci_attach_args *pa = aux;
 	char devinfo[256];
-#if 0
 	const struct pci_quirkdata *qd;
-#endif
 
 	if (pnp) {
 		pci_devinfo(pa->pa_id, pa->pa_class, 1, devinfo);
 		printf("%s at %s", devinfo, pnp);
 	}
 	printf(" dev %d function %d", pa->pa_device, pa->pa_function);
-#if 0
-	printf(": ");
-	pci_conf_print(pa->pa_pc, pa->pa_tag, NULL);
-	if (!pnp)
-		pci_devinfo(pa->pa_id, pa->pa_class, 1, devinfo);
-	printf("%s at %s", devinfo, pnp ? pnp : "?");
-	printf(" dev %d function %d (", pa->pa_device, pa->pa_function);
+	if (pci_config_dump) {
+		printf(": ");
+		pci_conf_print(pa->pa_pc, pa->pa_tag, NULL);
+		if (!pnp)
+			pci_devinfo(pa->pa_id, pa->pa_class, 1, devinfo);
+		printf("%s at %s", devinfo, pnp ? pnp : "?");
+		printf(" dev %d function %d (", pa->pa_device, pa->pa_function);
 #ifdef __i386__
-	printf("tag %#lx, intrtag %#lx, intrswiz %#lx, intrpin %#lx",
-	    *(long *)&pa->pa_tag, *(long *)&pa->pa_intrtag,
-	    (long)pa->pa_intrswiz, (long)pa->pa_intrpin);
+		printf("tag %#lx, intrtag %#lx, intrswiz %#lx, intrpin %#lx",
+		    *(long *)&pa->pa_tag, *(long *)&pa->pa_intrtag,
+		    (long)pa->pa_intrswiz, (long)pa->pa_intrpin);
 #else
-	printf("tag %#lx, intrtag %#lx, intrswiz %#lx, intrpin %#lx",
-	    (long)pa->pa_tag, (long)pa->pa_intrtag, (long)pa->pa_intrswiz,
-	    (long)pa->pa_intrpin);
+		printf("tag %#lx, intrtag %#lx, intrswiz %#lx, intrpin %#lx",
+		    (long)pa->pa_tag, (long)pa->pa_intrtag, (long)pa->pa_intrswiz,
+		    (long)pa->pa_intrpin);
 #endif
-	printf(", i/o %s, mem %s,",
-	    pa->pa_flags & PCI_FLAGS_IO_ENABLED ? "on" : "off",
-	    pa->pa_flags & PCI_FLAGS_MEM_ENABLED ? "on" : "off");
-	qd = pci_lookup_quirkdata(PCI_VENDOR(pa->pa_id),
-	    PCI_PRODUCT(pa->pa_id));
-	if (qd == NULL) {
-		printf(" no quirks");
-	} else {
-		bitmask_snprintf(qd->quirks,
-		    "\20\1multifn", devinfo, sizeof (devinfo));
-		printf(" quirks %s", devinfo);
+		printf(", i/o %s, mem %s,",
+		    pa->pa_flags & PCI_FLAGS_IO_ENABLED ? "on" : "off",
+		    pa->pa_flags & PCI_FLAGS_MEM_ENABLED ? "on" : "off");
+		qd = pci_lookup_quirkdata(PCI_VENDOR(pa->pa_id),
+		    PCI_PRODUCT(pa->pa_id));
+		if (qd == NULL) {
+			printf(" no quirks");
+		} else {
+			bitmask_snprintf(qd->quirks,
+			    "\20\1multifn", devinfo, sizeof (devinfo));
+			printf(" quirks %s", devinfo);
+		}
+		printf(")");
 	}
-	printf(")");
-#endif
 	return (UNCONF);
 }
 
