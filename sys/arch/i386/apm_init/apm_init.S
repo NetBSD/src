@@ -1,4 +1,4 @@
-/*	$NetBSD: apm_init.S,v 1.1 1996/08/25 23:39:18 jtk Exp $ */
+/*	$NetBSD: apm_init.S,v 1.2 1996/08/30 02:32:23 jtk Exp $ */
 /*
  * LP (Laptop Package)
  *
@@ -37,10 +37,10 @@
 	.file	"apm_init.S"
 
 #define ASM
+#define _LOCORE
 
 #include "real_prot.h"
-#include <apm_bios.h>
-#include <apm_segments.h>
+#include <i386/include/apmvar.h>
 
 /*
  * APM BIOS initializer
@@ -89,19 +89,19 @@ ENTRY(apm_init)
 	/*
 	 * APM installation check
 	 */
-	movb	$(APM_BIOS), %ah
-	movb	$(APM_INSTCHECK), %al
+	movb	$(APM_BIOS_FNCODE), %ah
+	movb	$(APM_INSTALLATION_CHECK), %al
 	data32
-	movl	$(PMDV_APMBIOS), %ebx
+	movl	$(APM_DEV_APM_BIOS), %ebx
 	sti
-	int	$(SYSTEM_BIOS)		/* call system BIOS */
+	int	$(APM_SYSTEM_BIOS)		/* call system BIOS */
 	cli
 
 	jnc	1f			/* if found, goto 1f */
 	
 	data32
 	call	EXT(real_to_prot)	/* come back again to protected mode */
-	movl	$(APMINI_CANTFIND), apm_version
+	movl	$(APM_INI_CANTFIND), apm_version
 					/* can't find APM BIOS */
 	jmp	finish
 
@@ -116,7 +116,7 @@ ENTRY(apm_init)
 	jz	2f
 
 1:
-	movl	$(APMINI_BADVER), apm_version
+	movl	$(APM_INI_BADVER), apm_version
 					/* can't find APM BIOS */
 	jmp	finish
 
@@ -125,7 +125,7 @@ ENTRY(apm_init)
 					/* supports 32bit connection? */
 	jnz	1f
 
-	movl	$(APMINI_NOT32BIT), apm_version
+	movl	$(APM_INI_NOT32BIT), apm_version
 					/* don't support 32bit connection */
 	jmp	finish
 1:
@@ -138,26 +138,26 @@ ENTRY(apm_init)
 	 */
 	call	EXT(prot_to_real)	/* return to real mode */
 
-	movb	$(APM_BIOS), %ah
+	movb	$(APM_BIOS_FNCODE), %ah
 	movb	$(APM_DISCONNECT), %al	/* just in case bootloader connected*/
 	data32
-	movl	$(PMDV_APMBIOS), %ebx
+	movl	$(APM_DEV_APM_BIOS), %ebx
 	sti
-	int	$(SYSTEM_BIOS)
+	int	$(APM_SYSTEM_BIOS)
 	cli
 	xorl	%esi,%esi		/* clear out in case BIOS doesn't */
 	xorl	%edi,%edi
-	movb	$(APM_BIOS), %ah
-	movb	$(APM_PROT32CONNECT), %al
+	movb	$(APM_BIOS_FNCODE), %ah
+	movb	$(APM_32BIT_CONNECT), %al
 	data32
-	movl	$(PMDV_APMBIOS), %ebx
+	movl	$(APM_DEV_APM_BIOS), %ebx
 	sti
-	int	$(SYSTEM_BIOS)
+	int	$(APM_SYSTEM_BIOS)
 	cli
 	jnc	1f			/* if successed, go to 1f */
 	data32
 	call	EXT(real_to_prot)
-	movl	$(APMINI_CONNECTERR), apm_version
+	movl	$(APM_INI_CONNECTERR), apm_version
 					/* connection error */
 	jmp	finish
 1:	
@@ -185,7 +185,7 @@ finish:
 	movl	apm_version, %ebp	/* stored to %eax later */
 	movl	apm_flags, %edi
 #if 0
-	movw	$(BOOTSTRAP_DS_SEL), %ax
+	movw	$(APM_BOOTSTRAP_DS_SEL), %ax
 					/* restore old data segments */
 #else
 	movw	%fs, %ax
