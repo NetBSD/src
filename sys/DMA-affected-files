@@ -1,11 +1,16 @@
 arch/i386/eisa/eisa_machdep.c
+arch/i386/eisa/eisa_machdep.h
 arch/i386/i386/machdep.c
+arch/i386/i386/mainbus.c
 arch/i386/i386/pmap.c
 arch/i386/include/bus.h
 arch/i386/isa/fd.c
 arch/i386/isa/isa_machdep.c
 arch/i386/isa/isa_machdep.h
+arch/i386/pci/pchb.c
 arch/i386/pci/pci_machdep.c
+arch/i386/pci/pci_machdep.h
+arch/i386/pci/pcib.c
 dev/eisa/ahb.c
 dev/eisa/ahbreg.h
 dev/eisa/bha_eisa.c
