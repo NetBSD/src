@@ -1,10 +1,10 @@
-/*      $NetBSD: esm.c,v 1.22 2003/02/03 01:11:54 kleink Exp $      */
+/*      $NetBSD: esm.c,v 1.23 2003/12/04 13:57:31 keihan Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
  * All rights reserved.
  *
- * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
+ * Copyright (c) 2000, 2001 Rene Hexel <rh@NetBSD.org>
  * All rights reserved.
  *
  * Copyright (c) 2000 Taku YAMAMOTO <taku@cent.saitama-u.ac.jp>
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.22 2003/02/03 01:11:54 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.23 2003/12/04 13:57:31 keihan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

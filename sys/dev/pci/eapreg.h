@@ -1,11 +1,11 @@
-/*	$NetBSD: eapreg.h,v 1.6 2002/12/14 17:52:48 pooka Exp $	*/
+/*	$NetBSD: eapreg.h,v 1.7 2003/12/04 13:57:31 keihan Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson <augustss@netbsd.org> and Charles M. Hannum.
+ * by Lennart Augustsson <augustss@NetBSD.org> and Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

@@ -1,7 +1,7 @@
-/*	$NetBSD: strlen.S,v 1.1 2001/11/30 02:27:20 mjl Exp $ */
+/*	$NetBSD: strlen.S,v 1.2 2003/12/04 13:57:31 keihan Exp $ */
 
 /*-
- * Copyright (C) 2001	Martin J. Laubach <mjl@netbsd.org>
+ * Copyright (C) 2001	Martin J. Laubach <mjl@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.50 2003/09/27 15:56:03 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.51 2003/12/04 13:57:30 keihan Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.50 2003/09/27 15:56:03 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.51 2003/12/04 13:57:30 keihan Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -444,7 +444,7 @@ fdprobe(parent, match, aux)
 	bus_space_write_1(iot, ioh, fdout, FDO_FRST);
 	splx(s);
 
-#if defined(bebox)	/* XXX What is this about? --thorpej@netbsd.org */
+#if defined(bebox)	/* XXX What is this about? --thorpej@NetBSD.org */
 	if (n != 2 || (fdc->sc_status[1] != 0))
 		return 0;
 #else

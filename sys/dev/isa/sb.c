@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.75 2003/09/29 03:22:58 jdolecek Exp $	*/
+/*	$NetBSD: sb.c,v 1.76 2003/12/04 13:57:30 keihan Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.75 2003/09/29 03:22:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.76 2003/12/04 13:57:30 keihan Exp $");
 
 #include "midi.h"
 
@@ -151,7 +151,7 @@ sbmatch(sc)
         	/* 
                  * XXX Some ViBRA16 cards seem to have two 8 bit DMA 
                  * channels.  I've no clue how to use them, so ignore
-                 * one of them for now.  -- augustss@netbsd.org
+                 * one of them for now.  -- augustss@NetBSD.org
                  */
         	sc->sc_drq16 = -1;
 

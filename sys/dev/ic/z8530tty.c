@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.92 2003/08/07 16:31:04 agc Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.93 2003/12/04 13:57:30 keihan Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -128,7 +128,7 @@
  * into independent child drivers.
  *
  * RTS/CTS flow-control support was a collaboration of:
- *	Gordon Ross <gwr@netbsd.org>,
+ *	Gordon Ross <gwr@NetBSD.org>,
  *	Bill Studenmund <wrstuden@loki.stanford.edu>
  *	Ian Dall <Ian.Dall@dsto.defence.gov.au>
  *
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.92 2003/08/07 16:31:04 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.93 2003/12/04 13:57:30 keihan Exp $");
 
 #include "opt_kgdb.h"
 
