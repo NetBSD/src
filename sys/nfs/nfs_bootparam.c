@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.12 1999/04/11 22:15:25 gwr Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.13 1999/04/12 01:05:01 ross Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -111,7 +111,6 @@ nfs_bootparam(nd, procp)
 	struct nfs_diskless *nd;
 	struct proc *procp;
 {
-	extern u_int32_t inet_addr __P((char *)); /* XXX libkern */
 	struct ifnet *ifp = nd->nd_ifp;
 	struct in_addr my_ip, arps_ip, gw_ip;
 	struct sockaddr_in bp_sin;

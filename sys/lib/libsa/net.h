@@ -1,4 +1,4 @@
-/*	$NetBSD: net.h,v 1.11 1999/02/11 09:10:44 pk Exp $	*/
+/*	$NetBSD: net.h,v 1.12 1999/04/12 01:05:01 ross Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass 
@@ -114,7 +114,6 @@ char	*ether_sprintf __P((u_char *));
 int	in_cksum __P((void *, int));
 char	*inet_ntoa __P((struct in_addr));
 char	*intoa __P((n_long));		/* similar to inet_ntoa */
-n_long	inet_addr __P((char *));
 int	in_cksum __P((void *, int));
 n_long	ip_convertaddr __P((char *));
 
