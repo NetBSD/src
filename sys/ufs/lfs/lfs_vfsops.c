@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.86 2003/01/25 12:58:23 tron Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.87 2003/01/25 18:12:33 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.86 2003/01/25 12:58:23 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.87 2003/01/25 18:12:33 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -446,7 +446,7 @@ update_meta(struct lfs *fs, ino_t ino, int version, daddr_t lbn,
 #ifdef DIAGNOSTIC
 		if (sup->su_nbytes < size) {
 			panic("update_meta: negative bytes "
-			      "(segment %lld short by %ld)\n",
+			      "(segment %" PRId64 " short by %ld)\n",
 			      dtosn(fs, dbtofsb(fs, odaddr)), (long)size - sup->su_nbytes);
 			sup->su_nbytes = size;
 		}
