@@ -1,4 +1,4 @@
-/*	$NetBSD: start.s,v 1.6 1996/02/01 22:33:14 mycroft Exp $ */
+/*	$NetBSD: start.s,v 1.7 1996/02/02 19:08:33 mycroft Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -37,10 +37,9 @@
 		
 
 #define	_LOCORE
-#include "sys/disklabel.h"
-#undef _LOCORE
 
-#define ASSEMBLER
+#include "sys/disklabel.h"
+
 #include "../include/mtpr.h"
 #include "../include/asm.h"		
 
