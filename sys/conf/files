@@ -1,4 +1,4 @@
-#	$Id: files,v 1.31 1993/12/13 05:04:34 deraadt Exp $
+#	$Id: files,v 1.32 1993/12/21 05:25:35 brezak Exp $
 #
 ddb/db_access.c		optional ddb
 ddb/db_aout.c		optional ddb
@@ -16,6 +16,7 @@ ddb/db_trap.c		optional ddb
 ddb/db_variables.c	optional ddb
 ddb/db_watch.c		optional ddb
 ddb/db_write_cmd.c	optional ddb
+dev/vn.c		optional vn device-driver
 isofs/isofs_bmap.c	optional isofs
 isofs/isofs_lookup.c	optional isofs
 isofs/isofs_node.c	optional isofs
