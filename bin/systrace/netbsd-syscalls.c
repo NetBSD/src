@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd-syscalls.c,v 1.11 2002/12/06 09:49:36 scw Exp $	*/
+/*	$NetBSD: netbsd-syscalls.c,v 1.12 2003/06/03 04:33:44 provos Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netbsd-syscalls.c,v 1.11 2002/12/06 09:49:36 scw Exp $");
+__RCSID("$NetBSD: netbsd-syscalls.c,v 1.12 2003/06/03 04:33:44 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -633,6 +633,11 @@ nbsd_read(int fd)
 		intercept_child_info(msg.msg_pid,
 		    msg.msg_data.msg_child.new_pid);
 		break;
+#ifdef SYSTR_MSG_POLICYFREE
+	case SYSTR_MSG_POLICYFREE:
+		intercept_policy_free(msg.msg_policy);
+		break;
+#endif
 	}
 	return (0);
 }
