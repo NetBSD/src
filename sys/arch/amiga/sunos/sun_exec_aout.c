@@ -14,7 +14,7 @@
  *    must display the following acknowledgement:
  *      This product includes software developed by Christopher G. Demetriou.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software withough specific prior written permission
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -28,7 +28,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *	based on:
- *	$Id: sun_exec_aout.c,v 1.1 1993/10/30 23:42:22 mw Exp $
+ *	$Id: sun_exec_aout.c,v 1.2 1994/01/28 23:43:41 jtc Exp $
  */
 
 #include "param.h"
