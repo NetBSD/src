@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.3 2002/08/26 10:38:52 scw Exp $
+#	$NetBSD: genassym.cf,v 1.4 2002/08/29 16:04:10 scw Exp $
 
 # Copyright 2002 Wasabi Systems, Inc.
 # All rights reserved.
@@ -79,6 +79,7 @@ define	CI_TSCRATCH		offsetof(struct cpu_info, ci_tscratch)
 define	PCB_CTX_PC		offsetof(struct pcb, pcb_ctx.sf_pc)
 define	PCB_CTX_SR		offsetof(struct pcb, pcb_ctx.sf_sr)
 define	PCB_CTX_SP		offsetof(struct pcb, pcb_ctx.sf_sp)
+define	PCB_CTX_FP		offsetof(struct pcb, pcb_ctx.sf_fp)
 define	PCB_CTX_REGS_R10	offsetof(struct pcb, pcb_ctx.sf_regs.r10)
 define	PCB_CTX_REGS_R11	offsetof(struct pcb, pcb_ctx.sf_regs.r11)
 define	PCB_CTX_REGS_R12	offsetof(struct pcb, pcb_ctx.sf_regs.r12)
