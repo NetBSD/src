@@ -1,4 +1,4 @@
-/* $NetBSD: cat.c,v 1.35 2002/09/13 18:07:52 thorpej Exp $	*/
+/* $NetBSD: cat.c,v 1.36 2003/08/04 22:31:21 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.35 2002/09/13 18:07:52 thorpej Exp $");
+__RCSID("$NetBSD: cat.c,v 1.36 2003/08/04 22:31:21 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,8 +63,9 @@ __RCSID("$NetBSD: cat.c,v 1.35 2002/09/13 18:07:52 thorpej Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <vis.h>
 
-int bflag, eflag, fflag, lflag, nflag, sflag, tflag, vflag;
+int bflag, eflag, fflag, lflag, nflag, sflag, stdout_ok, tflag, vflag;
 int rval;
 const char *filename;
 
@@ -73,6 +74,7 @@ void cook_args(char *argv[]);
 void cook_buf(FILE *);
 void raw_args(char *argv[]);
 void raw_cat(int);
+char *printescaped(const char *);
 
 int
 main(int argc, char *argv[])
@@ -121,6 +123,8 @@ main(int argc, char *argv[])
 		}
 	argv += optind;
 
+	stdout_ok = isatty(STDOUT_FILENO);
+
 	if (lflag) {
 		stdout_lock.l_len = 0;
 		stdout_lock.l_start = 0;
@@ -153,7 +157,10 @@ cook_args(char **argv)
 				fp = stdin;
 			else if ((fp = fopen(*argv,
 			    fflag ? "rf" : "r")) == NULL) {
-				warn("%s", *argv);
+				char *fn;
+				fn = printescaped(*argv);
+				warn("%s", fn);
+				free(fn);
 				rval = 1;
 				++argv;
 				continue;
@@ -229,7 +236,10 @@ cook_buf(FILE *fp)
 			break;
 	}
 	if (ferror(fp)) {
-		warn("%s", filename);
+		char *fn;
+		fn = printescaped(filename);
+		warn("%s", fn);
+		free(fn);
 		rval = 1;
 		clearerr(fp);
 	}
@@ -241,6 +251,7 @@ void
 raw_args(char **argv)
 {
 	int fd;
+	char *fn;
 
 	fd = fileno(stdin);
 	filename = "stdin";
@@ -260,13 +271,17 @@ raw_args(char **argv)
 				}
 				if (!S_ISREG(st.st_mode)) {
 					close(fd);
-					warnx("%s: not a regular file", *argv);
+					fn = printescaped(*argv);
+					warnx("%s: not a regular file", fn);
+					free(fn);
 					goto skipnomsg;
 				}
 			}
 			else if ((fd = open(*argv, O_RDONLY, 0)) < 0) {
 skip:
-				warn("%s", *argv);
+				fn = printescaped(*argv);
+				warn("%s", fn);
+				free(fn);
 skipnomsg:
 				rval = 1;
 				++argv;
@@ -290,6 +305,7 @@ raw_cat(int rfd)
 	struct stat sbuf;
 	ssize_t nr, nw, off;
 	int wfd;
+	char *fn;
 
 	wfd = fileno(stdout);
 	if (buf == NULL) {
@@ -308,7 +324,33 @@ raw_cat(int rfd)
 			if ((nw = write(wfd, buf + off, (size_t)nr)) < 0)
 				err(1, "stdout");
 	if (nr < 0) {
-		warn("%s", filename);
+		fn = printescaped(filename);
+		warn("%s", fn);
+		free(fn);
 		rval = 1;
 	}
+}
+
+char *
+printescaped(const char *src)
+{
+	size_t len;
+	char *retval;
+
+	len = strlen(src);
+	if (len != 0 && SIZE_T_MAX/len <= 4) {
+		errx(EXIT_FAILURE, "%s: name too long", src);
+		/* NOTREACHED */
+	}
+
+	retval = (char *)malloc(4*len+1);
+	if (retval != NULL) {
+		if (stdout_ok)
+			(void)strvis(retval, src, VIS_NL | VIS_CSTYLE);
+		else
+			(void)strcpy(retval, src);
+		return retval;
+	} else
+		errx(EXIT_FAILURE, "out of memory!");
+		/* NOTREACHED */
 }
