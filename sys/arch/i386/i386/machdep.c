@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.260 1997/10/16 01:10:52 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.261 1997/10/16 02:58:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -97,7 +97,6 @@
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/extent.h>
-#include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
