@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.7 2001/06/06 17:42:29 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.8 2001/06/23 02:17:14 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -47,6 +47,8 @@
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/asm.h>
+
+#include <powerpc/spr.h>
 
 /*
  * Some instructions gas doesn't understand (yet?)
@@ -123,9 +125,9 @@ __start:
 __start_cpu1:
 #ifdef CPU1_SLEEP
 	lis	8, 0x0020	/* SLEEP */
-	mfspr	7, 1008		/* get HID0 */
+	mfspr	7, SPR_HID0	/* get HID0 */
 	or	7, 7, 8
-	mtspr	1008, 7		/* set HID0 */
+	mtspr	SPR_HID0, 7	/* set HID0 */
 	lis	8, 0x0004	/* POW */
 	sync
 	mtmsr	8
