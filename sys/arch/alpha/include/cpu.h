@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.35 1999/09/17 19:59:37 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.36 1999/12/16 20:17:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -116,7 +116,8 @@ struct cpu_info {
 	 */
 	struct proc *ci_fpcurproc;	/* current owner of the FPU */
 	paddr_t ci_curpcb;		/* PA of current HW PCB */
-	struct proc *ci_idle_thread;	/* our idle thread */
+	struct pcb *ci_idle_pcb;	/* our idle PCB */
+	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
 	u_long ci_flags;		/* flags; see below */
 	u_long ci_ipis;			/* interprocessor interrupts pending */
 	struct device *ci_dev;		/* pointer to our device */
@@ -129,10 +130,12 @@ struct cpu_info {
 extern	u_long cpus_running;
 extern	struct cpu_info cpu_info[];
 
-#define	curcpu()	(&cpu_info[cpu_number()])
+#define	curcpu()	((struct cpu_info *)alpha_pal_rdval())
 
 #define	fpcurproc	curcpu()->ci_fpcurproc
 #define	curpcb		curcpu()->ci_curpcb
+
+void	cpu_boot_secondary_processors __P((void));
 #else
 extern	struct proc *fpcurproc;		/* current owner of FPU */
 extern	paddr_t curpcb;			/* PA of current HW context */
