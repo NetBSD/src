@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.27 1998/12/05 19:43:39 mjacob Exp $	*/
+/*	$NetBSD: zssc.c,v 1.28 1999/01/10 13:24:11 tron Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -104,7 +104,7 @@ zsscattach(pdp, dp, auxp)
 	zap = auxp;
 
 	sc = (struct siop_softc *)dp;
-	sc->sc_siopp = rp = zap->va + 0x4000;
+	sc->sc_siopp = rp = (siop_regmap_p)((caddr_t)zap->va + 0x4000);
 
 	/*
 	 * CTEST7 = 00

@@ -1,4 +1,4 @@
-/*	$NetBSD: mgnsc.c,v 1.29 1998/12/05 19:43:37 mjacob Exp $	*/
+/*	$NetBSD: mgnsc.c,v 1.30 1999/01/10 13:28:34 tron Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -103,7 +103,7 @@ mgnscattach(pdp, dp, auxp)
 	zap = auxp;
 
 	sc = (struct siop_softc *)dp;
-	sc->sc_siopp = rp = zap->va + 0x8000;
+	sc->sc_siopp = rp = (siop_regmap_p)((caddr_t)zap->va + 0x8000);
 
 	/*
 	 * CTEST7 = TT1
