@@ -1,4 +1,4 @@
-/*	$NetBSD: getoldopt.c,v 1.3 1995/03/21 09:07:28 cgd Exp $	*/
+/*	$NetBSD: getoldopt.c,v 1.4 1996/05/17 01:07:47 jtc Exp $	*/
 
 /*
  * Plug-compatible replacement for getopt() for parsing tar-like
@@ -6,11 +6,11 @@
  * otherwise, it uses the old rules used by tar, dump, and ps.
  *
  * Written 25 August 1985 by John Gilmore (ihnp4!hoptoad!gnu) and placed
- * in the Pubic Domain for your edification and enjoyment.
+ * in the Public Domain for your edification and enjoyment.
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: getoldopt.c,v 1.3 1995/03/21 09:07:28 cgd Exp $";
+static char rcsid[] = "$NetBSD: getoldopt.c,v 1.4 1996/05/17 01:07:47 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
