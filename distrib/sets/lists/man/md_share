@@ -44,9 +44,13 @@
 ./usr/share/man/cat4/i386/com.0
 ./usr/share/man/cat4/i386/cy.0
 ./usr/share/man/cat4/i386/ed.0
+./usr/share/man/cat4/i386/eg.0
+./usr/share/man/cat4/i386/el.0
 ./usr/share/man/cat4/i386/ep.0
+./usr/share/man/cat4/i386/ie.0
 ./usr/share/man/cat4/i386/intro.0
 ./usr/share/man/cat4/i386/kmem.0
+./usr/share/man/cat4/i386/le.0
 ./usr/share/man/cat4/i386/lms.0
 ./usr/share/man/cat4/i386/lpt.0
 ./usr/share/man/cat4/i386/mcd.0
@@ -60,6 +64,7 @@
 ./usr/share/man/cat4/i386/speaker.0
 ./usr/share/man/cat4/i386/uha.0
 ./usr/share/man/cat4/i386/wd.0
+./usr/share/man/cat4/i386/wt.0
 ./usr/share/man/cat4/pc532/lpt.0
 ./usr/share/man/cat4/pc532/plip.0
 ./usr/share/man/cat4/sparc/bwtwo.0
