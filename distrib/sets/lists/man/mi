@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.491 2002/06/18 13:01:30 christos Exp $
+# $NetBSD: mi,v 1.492 2002/06/18 13:31:48 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1282,6 +1282,8 @@
 ./usr/share/man/cat8/cats/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/cats/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/ccdconfig.0		man-sysutil-catman
+./usr/share/man/cat8/cesfic/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/cesfic/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/chat.0			man-ppp-catman
 ./usr/share/man/cat8/chown.0			man-sysutil-catman
 ./usr/share/man/cat8/chroot.0			man-sysutil-catman
@@ -1334,6 +1336,8 @@
 ./usr/share/man/cat8/etcupdate.0		man-sysutil-catman
 ./usr/share/man/cat8/evbarm/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/evbarm/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/evbmips/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/evbmips/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/evbsh3/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/evbsh3/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/faithd.0			man-router-catman
@@ -1370,6 +1374,10 @@
 ./usr/share/man/cat8/hp300/crash.0		man-sys-catman
 ./usr/share/man/cat8/hp300/format.0		man-sys-catman
 ./usr/share/man/cat8/hp300/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/hp700/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/hp700/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/hpcarm/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/hpcarm/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/hpcmips/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/hpcmips/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/hpcmips/pbsdboot.0		man-sys-catman
@@ -1626,6 +1634,8 @@
 ./usr/share/man/cat8/sandpoint/MAKEDEV.0	man-sysutil-catman
 ./usr/share/man/cat8/sandpoint/makedev.0	man-sysutil-catman
 ./usr/share/man/cat8/savecore.0			man-sysutil-catman
+./usr/share/man/cat8/sbmips/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/sbmips/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/scsictl.0			man-sysutil-catman
 ./usr/share/man/cat8/sendmail.0			man-sendmail-catman
 ./usr/share/man/cat8/sesd.0			man-sysutil-catman
@@ -3003,6 +3013,8 @@
 ./usr/share/man/man8/cats/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/cats/makedev.8		man-sysutil-man
 ./usr/share/man/man8/ccdconfig.8		man-sysutil-man
+./usr/share/man/man8/cesfic/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/cesfic/makedev.8		man-sysutil-man
 ./usr/share/man/man8/chat.8			man-ppp-man
 ./usr/share/man/man8/chown.8			man-sysutil-man
 ./usr/share/man/man8/chroot.8			man-sysutil-man
@@ -3055,6 +3067,8 @@
 ./usr/share/man/man8/etcupdate.8		man-sysutil-man
 ./usr/share/man/man8/evbarm/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/evbarm/makedev.8		man-sysutil-man
+./usr/share/man/man8/evbmips/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/evbmips/makedev.8		man-sysutil-man
 ./usr/share/man/man8/evbsh3/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/evbsh3/makedev.8		man-sysutil-man
 ./usr/share/man/man8/faithd.8			man-router-man
@@ -3091,6 +3105,10 @@
 ./usr/share/man/man8/hp300/crash.8		man-sys-man
 ./usr/share/man/man8/hp300/format.8		man-sys-man
 ./usr/share/man/man8/hp300/makedev.8		man-sysutil-man
+./usr/share/man/man8/hp700/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/hp700/makedev.8		man-sysutil-man
+./usr/share/man/man8/hpcarm/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/hpcarm/makedev.8		man-sysutil-man
 ./usr/share/man/man8/hpcmips/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/hpcmips/makedev.8		man-sysutil-man
 ./usr/share/man/man8/hpcmips/pbsdboot.8		man-sys-man
@@ -3347,6 +3365,8 @@
 ./usr/share/man/man8/sandpoint/MAKEDEV.8	man-sysutil-man
 ./usr/share/man/man8/sandpoint/makedev.8	man-sysutil-man
 ./usr/share/man/man8/savecore.8			man-sysutil-man
+./usr/share/man/man8/sbmips/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/sbmips/makedev.8		man-sysutil-man
 ./usr/share/man/man8/scsictl.8			man-sysutil-man
 ./usr/share/man/man8/sendmail.8			man-sendmail-man
 ./usr/share/man/man8/sesd.8			man-sysutil-man
