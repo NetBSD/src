@@ -1,12 +1,11 @@
 #	from: @(#)Makefile	6.13 (Berkeley) 3/20/91
-#	$NetBSD: Makefile,v 1.16 1997/03/27 03:12:32 mycroft Exp $
+#	$NetBSD: Makefile,v 1.17 1997/03/27 08:50:26 mycroft Exp $
 
-BINDIR= /usr/share
 MSRCS=  andoc doc doc-ditroff doc-common doc-nroff doc-syms
 MMACS=  ${MSRCS:S@^@tmac.@g}
 FILES=	${MMACS}
 FILESDIR=${BINDIR}/tmac
-LINKS=	${BINDIR}/tmac/tmac.andoc ${BINDIR}/tmac/tmac.an
+LINKS=	${FILESDIR}/tmac.andoc ${FILESDIR}/tmac.an
 CLEANFILES+= ${MMACS}
 
 STRIP_SED = ${.CURDIR}/../me/strip.sed
