@@ -1,5 +1,5 @@
 .\"	@(#)rpc.3n	2.4 88/08/08 4.0 RPCSRC; from 1.19 88/06/24 SMI
-.\"	$NetBSD: rpc_soc.3,v 1.4 2002/02/07 07:00:23 ross Exp $
+.\"	$NetBSD: rpc_soc.3,v 1.5 2002/07/31 01:46:02 soren Exp $
 .\"
 .TH RPC_SOC 3 "16 February 1988"
 .SH NAME
@@ -943,8 +943,8 @@ See also
 .nf
 .sp .5
 pmap_set(prognum, versnum, protocol, port)
-u_long prognum, versnum, protocol;
-u_short port;
+u_long prognum, versnum;
+int protocol, port;
 .fi
 .ft R
 .IP
