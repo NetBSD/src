@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-proto.h,v 1.9 2001/01/06 23:36:07 christos Exp $	*/
+/*	$NetBSD: auth-proto.h,v 1.10 2003/07/14 08:36:27 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@
 #define _LIBTELNET_AUTH_PROTO_H_
 #include <sys/cdefs.h>
 
-#if	defined(AUTHENTICATION)
+#ifdef AUTHENTICATION
 Authenticator *findauthenticator __P((int, int));
 
 void auth_init __P((const char *, int));
