@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.30 2000/03/30 12:41:14 augustss Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.31 2000/05/13 23:43:16 perseant Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -800,7 +800,7 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 			error = VOP_BWRITE(bp);
 		}
 		TIMEVAL_TO_TIMESPEC(&time, &ts);
-		ret = VOP_UPDATE(dvp, &ts, &ts, !DOINGSOFTDEP(dvp));
+		ret = VOP_UPDATE(dvp, &ts, &ts, UPDATE_DIROP);
 		if (error == 0)
 			return (ret);
 		return (error);
