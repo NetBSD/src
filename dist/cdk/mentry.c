@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 20:15:30 $
- * $Revision: 1.2 $
+ * $Date: 2001/01/09 18:41:53 $
+ * $Revision: 1.3 $
  */
 
 /*
@@ -267,6 +267,9 @@ char *injectCDKMentry (CDKMENTRY *mentry, chtype input)
    int x, infoLength, fieldCharacters;
    char holder;
 
+   /* set the exit type */
+   mentry->exitType = vEARLY_EXIT;
+
    /* Check if there is a pre-process function to be called. */
    if (mentry->preProcessFunction != 0)
    {
@@ -280,7 +283,6 @@ char *injectCDKMentry (CDKMENTRY *mentry, chtype input)
       /* Check for a key binding... */
       if (checkCDKObjectBind (vMENTRY, mentry, input) != 0)
       {
-	 mentry->exitType = vESCAPE_HIT;
 	 return 0;
       }
       else

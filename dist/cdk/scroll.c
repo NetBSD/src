@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 20:15:31 $
- * $Revision: 1.2 $
+ * $Date: 2001/01/09 18:41:54 $
+ * $Revision: 1.3 $
  */
 
 /*
@@ -290,7 +290,6 @@ int injectCDKScroll (CDKSCROLL *scrollp, chtype input)
       /* Check for a predefined key binding. */
       if (checkCDKObjectBind (vSCROLL, scrollp, input) != 0)
       {
-	 scrollp->exitType = vESCAPE_HIT;
 	 return -1;
       }
       else

@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 20:15:30 $
- * $Revision: 1.2 $
+ * $Date: 2001/01/09 18:41:53 $
+ * $Revision: 1.3 $
  */
 
 DeclareCDKObjects(my_funcs,Itemlist);
@@ -265,7 +265,6 @@ int injectCDKItemlist (CDKITEMLIST *itemlist, chtype input)
       /* Check a predefined binding. */
       if (checkCDKObjectBind (vITEMLIST, itemlist, input) != 0)
       {
-	 itemlist->exitType = vESCAPE_HIT;
 	 return -1;
       }
       else

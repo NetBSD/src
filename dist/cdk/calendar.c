@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 20:15:30 $
- * $Revision: 1.2 $
+ * $Date: 2001/01/09 18:41:53 $
+ * $Revision: 1.3 $
  */
 
 /*
@@ -259,7 +259,6 @@ time_t injectCDKCalendar (CDKCALENDAR *calendar, chtype input)
       /* Check a predefined binding. */
       if (checkCDKObjectBind (vCALENDAR, calendar, input) != 0)
       {
-	 calendar->exitType = vEARLY_EXIT;
 	 return 0;
       }
       else

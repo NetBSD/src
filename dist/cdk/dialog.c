@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 20:15:30 $
- * $Revision: 1.2 $
+ * $Date: 2001/01/09 18:41:53 $
+ * $Revision: 1.3 $
  */
 
 DeclareCDKObjects(my_funcs,Dialog);
@@ -212,7 +212,6 @@ int injectCDKDialog (CDKDIALOG *dialog, chtype input)
       /* Check for a key binding. */
       if (checkCDKObjectBind (vDIALOG, dialog, input) != 0)
       {
-	 dialog->exitType = vESCAPE_HIT;
 	 return -1;
       }
       else

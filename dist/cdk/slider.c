@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 20:15:31 $
- * $Revision: 1.2 $
+ * $Date: 2001/01/09 18:41:54 $
+ * $Revision: 1.3 $
  */
 
 /*
@@ -264,7 +264,6 @@ int injectCDKSlider (CDKSLIDER *slider, chtype input)
       /* Check for a key binding. */
       if (checkCDKObjectBind(vSLIDER, slider, input) != 0)
       {
-	 slider->exitType = vESCAPE_HIT;
 	 return -1;
       }
       else
