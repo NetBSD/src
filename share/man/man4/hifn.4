@@ -1,4 +1,4 @@
-.\"	$NetBSD: hifn.4,v 1.1 2004/04/29 01:59:34 jonathan Exp $
+.\"	$NetBSD: hifn.4,v 1.2 2004/04/29 02:25:00 jonathan Exp $
 .\"	$OpenBSD: hifn.4,v 1.32 2002/09/26 07:55:40 miod Exp $
 .\"	$FreeBSD: src/share/man/man4/hifn.4,v 1.1.2.2 2003/10/08 23:57:50 sam Exp $
 .\"
@@ -76,7 +76,9 @@ The
 driver registers itself to accelerate DES, Triple-DES,
 AES (7955 and 7956 only), ARC4, MD5,
 MD5-HMAC, SHA1, and SHA1-HMAC operations for
-.Xr ipsec 4
+.Xr opencrypto 9 ,
+and thus for
+.Xr fast_ipsec 4
 and
 .Xr crypto 4 .
 .Pp
@@ -99,7 +101,7 @@ to the driver, but all vendors currently just use the obvious ID which is
 .Sh SEE ALSO
 .Xr crypto 4 ,
 .Xr intro 4 ,
-.Xr ipsec 4 ,
+.Xr fast_ipsec 4 ,
 .Xr rnd 4 ,
 .Xr opencrypto 9
 .Sh CAVEATS
