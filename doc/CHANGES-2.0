@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.534 2004/11/12 06:48:59 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.535 2004/11/12 06:50:40 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -8062,3 +8062,13 @@ lib/libpthread/arch/i386/_getsetc.S		1.4
 
 	save&restore %fs and %gs registers for USER_LDT applications. PR#26900
 	[kent, ticket #969]
+
+distrib/utils/sysinst/arch/hp300/md.c		1.18
+
+	For hp300, dont try to install a second-stage boot loader, as none
+	exists, and use the "c"  (raw) partition for boot code installation 
+	instead of the "a" partition (which will not work).  This should fix
+	the problem that newly-partitioned and newly-installed disks will not
+	be made bootable by sysinst.
+
+	[he, ticket #970]
