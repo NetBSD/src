@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.30 2003/09/12 10:43:42 itojun Exp $	*/
+/*	$NetBSD: inet6.c,v 1.31 2003/11/06 06:11:48 itojun Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.30 2003/09/12 10:43:42 itojun Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.31 2003/11/06 06:11:48 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1229,9 +1229,10 @@ inet6name(in6p)
 		sin6.sin6_family = AF_INET6;
 		sin6.sin6_addr = *in6p;
 #ifdef __KAME__
-		if (IN6_IS_ADDR_LINKLOCAL(in6p)) {
+		if (IN6_IS_ADDR_LINKLOCAL(in6p) ||
+		    IN6_IS_ADDR_MC_LINKLOCAL(in6p)) {
 			sin6.sin6_scope_id =
-				ntohs(*(u_int16_t *)&in6p->s6_addr[2]);
+			    ntohs(*(u_int16_t *)&in6p->s6_addr[2]);
 			sin6.sin6_addr.s6_addr[2] = 0;
 			sin6.sin6_addr.s6_addr[3] = 0;
 		}
