@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.76.2.1 1997/12/09 20:33:21 thorpej Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.76.2.2 1998/02/07 01:00:54 mellon Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1071,11 +1071,14 @@ sbversion(sc)
 #else
 		sc->sc_mixer_model = SBM_CT1745;
 #endif
+#if 0
+/* XXX figure out a good way of determining the model */
 		/* XXX what about SB_32 */
 		if (SBVER_MINOR(v) == 16)
 			sc->sc_model = SB_64;
 		else
-			sc->sc_model = SB_16;
+#endif
+		sc->sc_model = SB_16;
 		break;
 	}
 }
