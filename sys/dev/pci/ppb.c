@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.3 1996/03/14 02:35:34 cgd Exp $	*/
+/*	$NetBSD: ppb.c,v 1.4 1996/03/14 04:03:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -49,25 +49,11 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/ppbreg.h>
 
-struct ppb_softc {
-	struct device sc_dev;
-
-	/*
-	 * Primary bus information.
-	 */
-	pcitag_t	sc_p_tag;		/* tag of this device */
-
-	/*
-	 * Secondary bus information.
-	 */
-	int		sc_s_num;		/* secondary bus number */
-};
-
 int	ppbmatch __P((struct device *, void *, void *));
 void	ppbattach __P((struct device *, struct device *, void *));
 
 struct cfdriver ppbcd = {
-	NULL, "ppb", ppbmatch, ppbattach, DV_DULL, sizeof(struct ppb_softc)
+	NULL, "ppb", ppbmatch, ppbattach, DV_DULL, sizeof(struct device)
 };
 
 static int	ppbprint __P((void *, char *pnp));
@@ -97,21 +83,17 @@ ppbattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct ppb_softc *sc = (struct ppb_softc *)self;
 	struct pci_attach_args *pa = aux;
 	struct pcibus_attach_args pba;
 	pcireg_t data;
 	char devinfo[256];
 
-	sc->sc_p_tag = pa->pa_tag;
-
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
-	data = pci_conf_read(sc->sc_p_tag, PPB_REG_BUSINFO);
+	data = pci_conf_read(pa->pa_tag, PPB_REG_BUSINFO);
 
-	sc->sc_s_num = PPB_BUSINFO_SECONDARY(data);
-	if (sc->sc_s_num == 0) {
+	if (PPB_BUSINFO_SECONDARY(data) == 0) {
 		printf("%s: not configured by system firmware\n",
 		    self->dv_xname);
 		return;
@@ -133,7 +115,7 @@ ppbattach(parent, self, aux)
 	 * Attach the PCI bus than hangs off of it.
 	 */
 	pba.pba_busname = "pci";
-	pba.pba_bus = sc->sc_s_num;
+	pba.pba_bus = PPB_BUSINFO_SECONDARY(data);
 
 	config_found(self, &pba, ppbprint);
 }
