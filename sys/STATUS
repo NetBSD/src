@@ -9,9 +9,9 @@ ahc			broken
 aic			compiles
 asc			OK (pmax, as MI SCSI xasc)
 bha			compiles
-dpt			compiles
+dpt			OK (i386)
 esp			compiles
-iopsp			compiles
+iopsp			OK (i386)
 isp			compiles
 mb89352
 nca			compiles
