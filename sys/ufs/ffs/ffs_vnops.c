@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ffs_vnops.c	8.7 (Berkeley) 2/3/94
- *	$Id: ffs_vnops.c,v 1.1 1994/06/08 11:42:11 mycroft Exp $
+ *	$Id: ffs_vnops.c,v 1.2 1994/06/22 05:45:19 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -56,6 +56,7 @@
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufs_extern.h>
+#include <ufs/ufs/ufsmount.h>
 
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
@@ -263,7 +264,8 @@ ffs_reclaim(ap)
 	error = ufs_reclaim(vp);
 	if (error)
 		return (error);
-	FREE(vp->v_data, M_FFSNODE);
+	FREE(vp->v_data, VFSTOUFS(vp->v_mount)->um_devvp->v_tag == VT_MFS ?
+	    M_MFSNODE : M_FFSNODE);
 	vp->v_data = NULL;
 	return (0);
 }
