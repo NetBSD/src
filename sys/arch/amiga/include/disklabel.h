@@ -27,25 +27,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: disklabel.h,v 1.2 1994/07/04 19:39:59 chopps Exp $
+ *	$Id: disklabel.h,v 1.3 1994/10/14 18:26:30 cgd Exp $
  */
 #ifndef _MACHINE_DISKLABEL_H_
 #define _MACHINE_DISKLABEL_H_
 
-#ifndef MAXPARTITIONS
-#define MAXPARTITIONS	16
-#endif
-
-#define RAW_PART	2		/* Xd0c is raw part. */
-
-/* 
- * used to encode disk minor numbers
- * this should probably be moved to sys/disklabel.h
- */
-#define DISKUNIT(dev)	(minor(dev) / MAXPARTITIONS)
-#define DISKPART(dev)	(minor(dev) % MAXPARTITIONS)
-#define MAKEDISKDEV(maj, unit, part) \
-    (makedev((maj), ((unit) * MAXPARTITIONS) + (part)))
+#define	LABELSECTOR	0			/* sector containing label */
+#define	LABELOFFSET	64			/* offset of label in sector */
+#define	MAXPARTITIONS	16			/* number of partitions */
+#define	RAW_PART	2			/* raw partition: xx?c */
 
 /*
  * describes ados Rigid Disk Blocks

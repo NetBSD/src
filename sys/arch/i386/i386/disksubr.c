@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- *	$Id: disksubr.c,v 1.8 1994/07/26 19:37:00 mycroft Exp $
+ *	$Id: disksubr.c,v 1.9 1994/10/14 18:26:44 cgd Exp $
  */
 
 #include "param.h"
@@ -47,8 +47,6 @@
 #define dkminor(unit, part)	(((unit) << 3) | (part))
 
 #define	b_cylin	b_resid
-
-#define	RAW_PART	3
 
 /*
  * Attempt to read a disk label from a device
