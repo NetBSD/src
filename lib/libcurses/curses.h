@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.40 2000/04/22 13:29:01 blymn Exp $	*/
+/*	$NetBSD: curses.h,v 1.41 2000/04/22 14:32:45 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -556,6 +556,7 @@ WINDOW	*subwin(WINDOW *orig, int nlines, int ncols, int by, int bx);
 int	 touchline(WINDOW *win, int start, int count);
 int	 touchoverlap(WINDOW *win1, WINDOW *win2);
 int	 touchwin(WINDOW *win);
+int      ungetch(int c);
 int	 vwprintw(WINDOW *win, const char *fmt, _BSD_VA_LIST_);
 int	 vwscanw(WINDOW *win, const char *fmt, _BSD_VA_LIST_);
 int	 waddch(WINDOW *win, chtype ch);

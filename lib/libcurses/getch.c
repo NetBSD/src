@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.21 2000/04/18 21:44:48 jdc Exp $	*/
+/*	$NetBSD: getch.c,v 1.22 2000/04/22 14:32:45 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.21 2000/04/18 21:44:48 jdc Exp $");
+__RCSID("$NetBSD: getch.c,v 1.22 2000/04/22 14:32:45 blymn Exp $");
 #endif
 #endif					/* not lint */
 
@@ -392,8 +392,7 @@ wchar_t
 inkey(int to, int delay)
 {
 	wchar_t		 k;
-	ssize_t		 nchar;
-	unsigned char    c;
+	int              c;
 	keymap_t	*current = base_keymap;
 
 	for (;;) {		/* loop until we get a complete key sequence */
@@ -401,13 +400,14 @@ reread:
 		if (state == INKEY_NORM) {
 			if (delay && __timeout(delay) == ERR)
 				return ERR;
-			if ((nchar = read(STDIN_FILENO, &c, sizeof(char))) < 0)
+			if ((c = getchar()) == EOF) {
+				clearerr(stdin);
 				return ERR;
+			}
+			
 			if (delay && (__notimeout() == ERR))
 				return ERR;
-			if (nchar == 0)
-				return ERR;	/* just in case we are nodelay
-						 * mode */
+
 			k = (wchar_t) c;
 #ifdef DEBUG
 			__CTRACE("inkey (state normal) got '%s'\n", unctrl(k));
@@ -439,9 +439,13 @@ reread:
 				if (to && (__timeout(DEFAULT_DELAY) == ERR))
 					return ERR;
 			}
-			if ((nchar = read(STDIN_FILENO, &c,
-					  sizeof(char))) < 0)
+
+			c = getchar();
+			if (ferror(stdin)) {
+				clearerr(stdin);
 				return ERR;
+			}
+			
 			if ((to || delay) && (__notimeout() == ERR))
 					return ERR;
 
@@ -449,8 +453,9 @@ reread:
 #ifdef DEBUG
 			__CTRACE("inkey (state assembling) got '%s'\n", unctrl(k));
 #endif
-			if (nchar == 0) {	/* inter-char timeout,
+			if (feof(stdin)) {	/* inter-char timeout,
 						 * start backing out */
+				clearerr(stdin);
 				if (start == end)
 					/* no chars in the buffer, restart */
 					goto reread;
@@ -556,7 +561,6 @@ int
 wgetch(WINDOW *win)
 {
 	int     inp, weset;
-	ssize_t	nchar;
 	char    c;
 
 	if (!(win->flags & __SCROLLOK) && (win->flags & __FULLWIN)
@@ -611,13 +615,17 @@ wgetch(WINDOW *win)
 			break;
 		}
 
-		if ((nchar = read(STDIN_FILENO, &c, sizeof(char))) < 0) {
+		c = getchar();
+		if (feof(stdin)) {
+			clearerr(stdin);
+			__restore_termios();
+			return ERR;	/* we have timed out */
+		}
+		
+		if (ferror(stdin)) {
+			clearerr(stdin);
 			inp = ERR;
 		} else {
-			if (nchar == 0) {
-				__restore_termios();
-				return ERR;	/* we have timed out */
-			}
 			inp = (unsigned int) c;
 		}
 	}
@@ -640,14 +648,21 @@ wgetch(WINDOW *win)
 
 	__restore_termios();
 	if (__echoit) {
-/*
-		mvwaddch(curscr,
-		    (int) (win->cury + win->begy), (int) (win->curx + win->begx), (chtype) inp);
-*/
 		waddch(win, (chtype) inp);
 	}
 	if (weset)
 		nocbreak();
 
+	wrefresh(win);
 	return ((inp < 0) || (inp == ERR) ? ERR : inp);
+}
+
+/*
+ * ungetch --
+ *     Put the character back into the input queue.
+ */
+int
+ungetch(int c)
+{
+	return ((ungetc(c, stdin) == EOF) ? ERR : OK);
 }
