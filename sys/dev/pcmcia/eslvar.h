@@ -1,4 +1,4 @@
-/*	$NetBSD: eslvar.h,v 1.1 2001/09/29 14:00:57 augustss Exp $	*/
+/*	$NetBSD: eslvar.h,v 1.2 2001/09/29 19:30:29 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -61,7 +61,7 @@ struct esl_softc
 #define ESS_RIGHT 1
 
 	u_long	nintr;			/* number of interrupts */
-	void	(*intr)__P((void *));	/* ISR for FIFO Half-Empty */
+	void	(*intr)(void *);	/* ISR for FIFO Half-Empty */
 	void	*arg;			/* argument for intr() */
 
 	/* Pseudo-DMA state vars */
@@ -84,9 +84,9 @@ struct esl_pcmcia_softc {
 	struct device *sc_audiodev;
 	struct device *sc_opldev;
 
-	int (*sc_enable) __P((struct esl_pcmcia_softc *));
-	void (*sc_disable) __P((struct esl_pcmcia_softc *));
+	int (*sc_enable)(struct esl_pcmcia_softc *);
+	void (*sc_disable)(struct esl_pcmcia_softc *);
 };
 
-int     esl_init __P((struct esl_pcmcia_softc *sc));
-int	esl_intr __P((void *));
+int     esl_init(struct esl_pcmcia_softc *sc);
+int	esl_intr(void *);

@@ -1,4 +1,4 @@
-/* $NetBSD: opl_esl.c,v 1.2 2001/09/29 19:06:33 augustss Exp $ */
+/* $NetBSD: opl_esl.c,v 1.3 2001/09/29 19:30:29 augustss Exp $ */
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -73,12 +73,12 @@ opl_esl_match(struct device *parent, struct cfdata *match, void *aux)
 	struct opl_softc sc;
 
 	if (aa->type != AUDIODEV_TYPE_OPL)
-		return(0);
+		return (0);
 	memset(&sc, 0, sizeof(sc));
 	sc.iot = ssc->sc_pcioh.iot;
 	sc.ioh = ssc->sc_pcioh.ioh;
 
-	return(opl_find(&sc));
+	return (opl_find(&sc));
 }
 
 void
@@ -103,5 +103,5 @@ opl_esl_detach(struct device *self, int flags)
 
 	rv = opl_detach(sc, flags);
 
-	return(rv);
+	return (rv);
 }
