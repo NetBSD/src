@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.21 2002/06/18 05:24:45 itojun Exp $
+# $NetBSD: md.macppc,v 1.22 2002/08/07 21:20:57 briggs Exp $
 ./usr/include/macppc	comp-c-include
 ./usr/include/macppc/_G_config.h	comp-c-include
 ./usr/include/macppc/adbsys.h	comp-c-include
@@ -39,6 +39,7 @@
 ./usr/include/macppc/pcb.h	comp-c-include
 ./usr/include/macppc/pio.h	comp-c-include
 ./usr/include/macppc/pmap.h	comp-c-include
+./usr/include/macppc/pmc.h	comp-c-include
 ./usr/include/macppc/powerpc.h	comp-c-include
 ./usr/include/macppc/proc.h	comp-c-include
 ./usr/include/macppc/profile.h	comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.51 2002/07/09 12:24:32 mycroft Exp $
+# $NetBSD: md.sparc,v 1.52 2002/08/07 21:21:02 briggs Exp $
 ./usr/include/sparc	comp-c-include
 ./usr/include/sparc/_G_config.h	comp-c-include
 ./usr/include/sparc/ansi.h	comp-c-include
@@ -39,6 +39,7 @@
 ./usr/include/sparc/param.h	comp-c-include
 ./usr/include/sparc/pcb.h	comp-c-include
 ./usr/include/sparc/pmap.h	comp-c-include
+./usr/include/sparc/pmc.h	comp-c-include
 ./usr/include/sparc/proc.h	comp-c-include
 ./usr/include/sparc/profile.h	comp-c-include
 ./usr/include/sparc/psl.h	comp-c-include
@@ -98,6 +99,7 @@
 ./usr/include/sparc64/param.h	comp-c-include
 ./usr/include/sparc64/pcb.h	comp-c-include
 ./usr/include/sparc64/pmap.h	comp-c-include
+./usr/include/sparc64/pmc.h	comp-c-include
 ./usr/include/sparc64/proc.h	comp-c-include
 ./usr/include/sparc64/profile.h	comp-c-include
 ./usr/include/sparc64/psl.h	comp-c-include

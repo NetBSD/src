@@ -1,4 +1,4 @@
-# $NetBSD: md.x68k,v 1.41 2002/03/24 15:01:04 isaki Exp $
+# $NetBSD: md.x68k,v 1.42 2002/08/07 21:21:04 briggs Exp $
 ./usr/include/x68k	comp-c-include
 ./usr/include/x68k/_G_config.h	comp-c-include
 ./usr/include/x68k/ansi.h	comp-c-include
@@ -39,6 +39,7 @@
 ./usr/include/x68k/pcb.h	comp-c-include
 ./usr/include/x68k/pci_machdep.h	comp-c-include
 ./usr/include/x68k/pmap.h	comp-c-include
+./usr/include/x68k/pmc.h	comp-c-include
 ./usr/include/x68k/powioctl.h	comp-c-include
 ./usr/include/x68k/proc.h	comp-c-include
 ./usr/include/x68k/profile.h	comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.evbarm,v 1.4 2002/03/30 06:29:00 thorpej Exp $
+# $NetBSD: md.evbarm,v 1.5 2002/08/07 21:20:54 briggs Exp $
 ./usr/include/evbarm			comp-c-include
 ./usr/include/evbarm/_G_config.h	comp-c-include
 ./usr/include/evbarm/ansi.h		comp-c-include
@@ -32,6 +32,7 @@
 ./usr/include/evbarm/param.h		comp-c-include
 ./usr/include/evbarm/pcb.h		comp-c-include
 ./usr/include/evbarm/pmap.h		comp-c-include
+./usr/include/evbarm/pmc.h		comp-c-include
 ./usr/include/evbarm/proc.h		comp-c-include
 ./usr/include/evbarm/profile.h		comp-c-include
 ./usr/include/evbarm/ptrace.h		comp-c-include

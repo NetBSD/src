@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.6 2002/03/30 06:29:00 thorpej Exp $
+# $NetBSD: ad.arm,v 1.7 2002/08/07 21:20:49 briggs Exp $
 ./usr/include/arm			comp-c-include
 ./usr/include/arm/ansi.h		comp-c-include
 ./usr/include/arm/aout_machdep.h	comp-c-include
@@ -43,6 +43,7 @@
 ./usr/include/arm/math.h		comp-c-include
 ./usr/include/arm/param.h		comp-c-include
 ./usr/include/arm/pcb.h			comp-c-include
+./usr/include/arm/pmc.h			comp-c-include
 ./usr/include/arm/proc.h		comp-c-include
 ./usr/include/arm/profile.h		comp-c-include
 ./usr/include/arm/ptrace.h		comp-c-include
