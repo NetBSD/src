@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.67 2001/07/08 16:18:59 abs Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.68 2001/07/26 21:47:04 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -169,11 +169,8 @@ extern struct mbuf *m_copypack();
 int	tcp_cwm = 0;
 int	tcp_cwm_burstsize = 4;
 
-static __inline void tcp_segsize __P((struct tcpcb *, int *, int *));
 static __inline void
-tcp_segsize(tp, txsegsizep, rxsegsizep)
-	struct tcpcb *tp;
-	int *txsegsizep, *rxsegsizep;
+tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 {
 #ifdef INET
 	struct inpcb *inp = tp->t_inpcb;
