@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.5 2000/10/19 00:16:03 pk Exp $	*/
+/*	$NetBSD: srt0.S,v 1.6 2001/05/20 17:28:16 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -47,7 +47,6 @@
 	.file	"str0.s"
 
 	.comm	_C_LABEL(romp), 4
-	.comm	_C_LABEL(opf_romp), 4
 	.comm	_C_LABEL(cputyp), 4
 	.comm	_C_LABEL(nbpg), 4
 	.comm	_C_LABEL(pgofset), 4
@@ -138,14 +137,22 @@ start:
 	mov	SUN4CM_PGSHIFT, %g5
 
 	/*
-	 * Save address of PROM vector (passed in %i0).
+	 * OpenProm machines pass PROM vector in %o0 (%i0 after save)
+	 * OpenFirm machines pass OF entry in %o3 (%i3 after save)
 	 */
+	cmp	%i0, 0
+	be	is_openfirm
+	 nop
+
+	! save address of PROM vector
 	sethi	%hi(_C_LABEL(romp)), %o1
 	st	%i0, [%o1 + %lo(_C_LABEL(romp))]
+	b,a	is_sun4cm
 
-	/* Also save %i3, which is the Openfirmware entry, if any */
-	sethi	%hi(_C_LABEL(opf_romp)), %o1
-	st	%i3, [%o1 + %lo(_C_LABEL(opf_romp))]
+is_openfirm:
+	! save address of OpenFirmware client interface handler
+	sethi	%hi(_C_LABEL(romp)), %o1
+	st	%i3, [%o1 + %lo(_C_LABEL(romp))]
 	b,a	is_sun4cm
 
 is_sun4:
