@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ne.c	7.4 (Berkeley) 5/21/91
- *	$Id: if_ne.c,v 1.9 1993/07/17 16:41:27 mycroft Exp $
+ *	$Id: if_ne.c,v 1.10 1993/10/01 22:59:57 mycroft Exp $
  */
 
 /*
@@ -127,7 +127,7 @@ struct	ne_softc {
 
 #define	PAT(n)	(0xa55a + 37*(n))
 
-u_short boarddata[16];
+u_char boarddata[16];
  
 neprobe(dvp)
 	struct isa_device *dvp;
@@ -237,7 +237,7 @@ word:
 	nefetch (ns, (caddr_t)boarddata, 0, sizeof(boarddata));
 
 	for(i=0; i < 6; i++)
-		ns->ns_addrp[i] = boarddata[i];
+		ns->ns_addrp[i] = boarddata[i*(2-bytemode)];
 	splx(s);
 	return (16);
 }
