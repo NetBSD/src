@@ -1,4 +1,4 @@
-/*	$NetBSD: pal.s,v 1.4 1996/07/09 04:18:15 cgd Exp $	*/
+/*	$NetBSD: pal.s,v 1.5 1996/07/14 04:21:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -64,42 +64,6 @@ LEAF(alpha_wmb,0)
 	END(alpha_wmb)
 
 /*
- * alpha_pal_bpt: Breakpoint trap [UNPRIVILEGED]
- */
-	.text
-LEAF(alpha_pal_bpt,0)
-	call_pal PAL_bpt
-	RET
-	END(alpha_pal_bpt)
-
-/*
- * alpha_pal_bugchk: Bugcheck trap [UNPRIVILEGED]
- */
-	.text
-LEAF(alpha_pal_bugchk,0)
-	call_pal PAL_bugchk
-	RET
-	END(alpha_pal_bugchk)
-
-/*
- * alpha_pal_callsys: System call [UNPRIVILEGED]
- */
-	.text
-LEAF(alpha_pal_callsys,0)
-	call_pal PAL_OSF1_callsys
-	RET
-	END(alpha_pal_callsys)
-
-/*
- * alpha_pal_gentrap: Generate trap [UNPRIVILEGED]
- */
-	.text
-LEAF(alpha_pal_gentrap,0)
-	call_pal PAL_gentrap
-	RET
-	END(alpha_pal_gentrap)
-
-/*
  * alpha_pal_imb: I-Stream memory barrier. [UNPRIVILEGED]
  * (Makes instruction stream coherent with data stream.)
  */
@@ -108,29 +72,6 @@ LEAF(alpha_pal_imb,0)
 	call_pal PAL_imb
 	RET
 	END(alpha_pal_imb)
-
-/*
- * alpha_pal_rdunique: Read process unique value. [UNPRIVILEGED]
- *
- * Return:
- *	v0	current process unique value
- */
-	.text
-LEAF(alpha_pal_rdunique,0)
-	call_pal PAL_rdunique
-	RET
-	END(alpha_pal_rdunique)
-
-/*
- * alpha_pal_wrunique: Write process unique value. [UNPRIVILEGED]
- * Arguments:
- *	a0	new process unique value
- */
-	.text
-LEAF(alpha_pal_wrunique,1)
-	call_pal PAL_wrunique
-	RET
-	END(alpha_pal_wrunique)
 
 /*
  * alpha_pal_draina: Drain aborts. [PRIVILEGED]
@@ -164,18 +105,6 @@ LEAF(alpha_pal_rdmces,1)
 	END(alpha_pal_rdmces)
 
 /*
- * alphapal_rdps: Read processor status. [PRIVILEGED]
- *
- * Return:
- *	v0	current processor status
- */
-	.text
-LEAF(alpha_pal_rdps,0)
-	call_pal PAL_OSF1_rdps
-	RET
-	END(alpha_pal_rdps)
-
-/*
  * alpha_pal_rdusp: Read user stack pointer. [PRIVILEGED]
  *
  * Return:
@@ -188,52 +117,8 @@ LEAF(alpha_pal_rdusp,0)
 	END(alpha_pal_rdusp)
 
 /*
- * alpha_pal_rdval: Read system value. [PRIVILEGED]
- *
- * Return:
- *	v0	current system value
- */
-	.text
-LEAF(alpha_pal_rdval,0)
-	call_pal PAL_OSF1_rdval
-	RET
-	END(alpha_pal_rdval)
-
-/*
- * alpha_pal_retsys: Return from system call. [PRIVILEGED]
- */
-	.text
-LEAF(alpha_pal_retsys,0)
-	call_pal PAL_OSF1_retsys
-	RET
-	END(alpha_pal_retsys)
-
-/*
- * alpha_pal_rti: Return from trap, fault, or interrupt. [PRIVILEGED]
- */
-	.text
-LEAF(alpha_pal_rti,0)
-	call_pal PAL_OSF1_rti
-	RET
-	END(alpha_pal_rti)
-
-/*
- * alpha_pal_swpctx: Swap process context. [PRIVILEGED] 
- *
- * Arguments:
- *	a0	new PCB
- *
- * Return:
- *	v0	old PCB
- */
-	.text
-LEAF(alpha_pal_swpctx,1)
-	call_pal PAL_OSF1_swpctx
-	RET
-	END(alpha_pal_swpctx)
-
-/*
  * alpha_pal_swpipl: Swap Interrupt priority level. [PRIVILEGED]
+ * _alpha_pal_swpipl: Same, from profiling code. [PRIVILEGED]
  *
  * Arguments:
  *	a0	new IPL
@@ -303,18 +188,6 @@ LEAF(alpha_pal_wrfen,1)
 	END(alpha_pal_wrfen)
 
 /*
- * alpha_pal_wrkgp: Write kernel global pointer. [PRIVILEGED]
- *
- * Arguments:
- *	a0	new kernel global pointer
- */
-	.text
-LEAF(alpha_pal_wrkgp,1)
-	call_pal PAL_OSF1_wrkgp
-	RET
-	END(alpha_pal_wrkgp)
-
-/*
  * alpha_pal_wrusp: Write user stack pointer. [PRIVILEGED]
  *
  * Arguments:
@@ -325,18 +198,6 @@ LEAF(alpha_pal_wrusp,1)
 	call_pal PAL_OSF1_wrusp
 	RET
 	END(alpha_pal_wrusp)
-
-/*
- * alpha_pal_wrval: Write system value. [PRIVILEGED]
- *
- * Arguments:
- *	a0	new system value
- */
-	.text
-LEAF(alpha_pal_wrval,1)
-	call_pal PAL_OSF1_wrval
-	RET
-	END(alpha_pal_wrval)
 
 /*
  * alpha_pal_wrvptptr: Write virtual page table pointer. [PRIVILEGED]
