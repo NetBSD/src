@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.96 2000/02/07 17:48:52 bouyer Exp $
+#	$NetBSD: NetBSD.dist,v 1.97 2000/02/27 01:27:48 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1159,6 +1159,17 @@ LC_MESSAGES
 ..
 
 # ./usr/share/locale/pl
+..
+
+# ./usr/share/locale/pt_BR
+pt_BR
+
+# ./usr/share/locale/pt_BR/LC_MESSAGES
+LC_MESSAGES
+# ./usr/share/locale/pt_BR/LC_MESSAGES
+..
+
+# ./usr/share/locale/pt_BR
 ..
 
 # ./usr/share/locale/ru
