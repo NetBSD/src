@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2003/03/24 17:07:18 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2003/03/27 07:19:11 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -177,7 +177,7 @@ bus_space_handle_t gt_memh;
 
 struct powerpc_bus_space *obio_bs_tags[5] = {
 	&gt_obio0_bs_tag, &gt_obio1_bs_tag, &gt_obio2_bs_tag,
-	&gt_obio1_bs_tag, &gt_bootcs_bs_tag
+	&gt_obio3_bs_tag, &gt_bootcs_bs_tag
 };
 
 static char ex_storage[10][EXTENT_FIXED_STORAGE_SIZE(8)]
@@ -447,10 +447,20 @@ gt_halt(bus_space_tag_t gt_memt, bus_space_handle_t gt_memh)
 	int i;
 	u_int32_t data;
 
-	bus_space_write_4(gt_memt, gt_memh,
-	    SDMA_U_SDCM(0), SDMA_SDCM_AR|SDMA_SDCM_AT);
-	bus_space_write_4(gt_memt, gt_memh,
-	    SDMA_U_SDCM(1), SDMA_SDCM_AR|SDMA_SDCM_AT);
+	/*
+	 * Shut down the MPSC ports
+	 */
+	for (i = 0; i < 2; i++) {
+		bus_space_write_4(gt_memt, gt_memh,
+		    SDMA_U_SDCM(i), SDMA_SDCM_AR|SDMA_SDCM_AT);
+		for (;;) {
+			data = bus_space_read_4(gt_memt, gt_memh,
+			    SDMA_U_SDCM(i));
+			if (((SDMA_SDCM_AR|SDMA_SDCM_AT) & data) == 0)
+				break;
+		}
+	}
+
 	/*
 	 * Shut down the Ethernets
 	 */
@@ -517,6 +527,16 @@ gt_bus_space_init(void)
 
 	datal = bus_space_read_4(gt_memt, gt_memh, GT_PCI0_Mem0_Low_Decode);
 	datah = bus_space_read_4(gt_memt, gt_memh, GT_PCI0_Mem0_High_Decode);
+#if defined(GT_PCI0_MEMBASE)
+	datal &= ~0xfff;
+	datal |= (GT_PCI0_MEMBASE >> 20);
+	bus_space_write_4(gt_memt, gt_memh, GT_PCI0_Mem0_Low_Decode, datal);
+#endif
+#if defined(GT_PCI0_MEMSIZE)
+	datah &= ~0xfff;
+	datah |= (GT_PCI0_MEMSIZE + GT_LowAddr_GET(datal) - 1)  >> 20;
+	bus_space_write_4(gt_memt, gt_memh, GT_PCI0_Mem0_High_Decode, datal);
+#endif
 	gt_pci0_mem_bs_tag.pbs_base  = GT_LowAddr_GET(datal);
 	gt_pci0_mem_bs_tag.pbs_limit = GT_HighAddr_GET(datah) + 1;
 
@@ -537,7 +557,17 @@ gt_bus_space_init(void)
 
 	datal = bus_space_read_4(gt_memt, gt_memh, GT_PCI0_IO_Low_Decode);
 	datah = bus_space_read_4(gt_memt, gt_memh, GT_PCI0_IO_High_Decode);
-	gt_pci0_io_bs_tag.pbs_offset  = GT_LowAddr_GET(datal);
+#if defined(GT_PCI0_IOBASE)
+	datal &= ~0xfff;
+	datal |= (GT_PCI0_IOBASE >> 20);
+	bus_space_write_4(gt_memt, gt_memh, GT_PCI0_IO_Low_Decode, datal);
+#endif
+#if defined(GT_PCI0_IOSIZE)
+	datah &= ~0xfff;
+	datah |= (GT_PCI0_IOSIZE + GT_LowAddr_GET(datal) - 1)  >> 20;
+	bus_space_write_4(gt_memt, gt_memh, GT_PCI0_IO_High_Decode, datal);
+#endif
+	gt_pci0_io_bs_tag.pbs_offset = GT_LowAddr_GET(datal);
 	gt_pci0_io_bs_tag.pbs_limit = GT_HighAddr_GET(datah) + 1 -
 	    gt_pci0_io_bs_tag.pbs_offset;
 
@@ -555,6 +585,16 @@ gt_bus_space_init(void)
 
 	datal = bus_space_read_4(gt_memt, gt_memh, GT_PCI1_Mem0_Low_Decode);
 	datah = bus_space_read_4(gt_memt, gt_memh, GT_PCI1_Mem0_High_Decode);
+#if defined(GT_PCI1_MEMBASE)
+	datal &= ~0xfff;
+	datal |= (GT_PCI1_MEMBASE >> 20);
+	bus_space_write_4(gt_memt, gt_memh, GT_PCI1_Mem0_Low_Decode, datal);
+#endif
+#if defined(GT_PCI1_MEMSIZE)
+	datah &= ~0xfff;
+	datah |= (GT_PCI1_MEMSIZE + GT_LowAddr_GET(datal) - 1)  >> 20;
+	bus_space_write_4(gt_memt, gt_memh, GT_PCI1_Mem0_High_Decode, datal);
+#endif
 	gt_pci1_mem_bs_tag.pbs_base  = GT_LowAddr_GET(datal);
 	gt_pci1_mem_bs_tag.pbs_limit = GT_HighAddr_GET(datah) + 1;
 
@@ -575,6 +615,16 @@ gt_bus_space_init(void)
 
 	datal = bus_space_read_4(gt_memt, gt_memh, GT_PCI1_IO_Low_Decode);
 	datah = bus_space_read_4(gt_memt, gt_memh, GT_PCI1_IO_High_Decode);
+#if defined(GT_PCI1_IOBASE)
+	datal &= ~0xfff;
+	datal |= (GT_PCI1_IOBASE >> 20);
+	bus_space_write_4(gt_memt, gt_memh, GT_PCI1_IO_Low_Decode, datal);
+#endif
+#if defined(GT_PCI1_IOSIZE)
+	datah &= ~0xfff;
+	datah |= (GT_PCI1_IOSIZE + GT_LowAddr_GET(datal) - 1)  >> 20;
+	bus_space_write_4(gt_memt, gt_memh, GT_PCI1_IO_High_Decode, datal);
+#endif
 	gt_pci1_io_bs_tag.pbs_offset = GT_LowAddr_GET(datal);
 	gt_pci1_io_bs_tag.pbs_limit = GT_HighAddr_GET(datah) + 1 -
 	    gt_pci1_io_bs_tag.pbs_offset;
