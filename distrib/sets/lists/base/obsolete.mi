@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.49 2002/06/20 13:14:26 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.50 2002/06/21 14:17:36 bouyer Exp $
 /bin/rcorder
 /dev/i4b
 /dev/i4bctl
@@ -97,15 +97,37 @@
 /usr/share/doc/smm/01.setup/tahoe
 /usr/share/doc/smm/01.setup/vax
 /usr/share/doc/usd/13.ex
+/usr/share/doc/usd/13.ex/Makefile
+/usr/share/doc/usd/13.ex/ex.rm
+/usr/share/doc/usd/13.ex/ex.summary
 /usr/share/lkm
+/usr/share/lkm/README
 /usr/share/lkm/misc
+/usr/share/lkm/misc/Makefile
+/usr/share/lkm/misc/README
 /usr/share/lkm/misc/module
+/usr/share/lkm/misc/module/Makefile
+/usr/share/lkm/misc/module/misccall.c
+/usr/share/lkm/misc/module/miscmod.c
 /usr/share/lkm/misc/test
+/usr/share/lkm/misc/test/Makefile
+/usr/share/lkm/misc/test/testmisc.c
 /usr/share/lkm/syscall
+/usr/share/lkm/syscall/Makefile
+/usr/share/lkm/syscall/README
 /usr/share/lkm/syscall/module
+/usr/share/lkm/syscall/module/Makefile
+/usr/share/lkm/syscall/module/mycall.c
+/usr/share/lkm/syscall/module/newsyscall.c
 /usr/share/lkm/syscall/test
+/usr/share/lkm/syscall/test/Makefile
+/usr/share/lkm/syscall/test/testsyscall.c
 /usr/share/lkm/vfs 
+/usr/share/lkm/vfs/Makefile
+/usr/share/lkm/vfs/README
 /usr/share/lkm/vfs/module
+/usr/share/lkm/vfs/module/Makefile
+/usr/share/lkm/vfs/module/kernfsmod.c
 /usr/share/locale/en_US.UTF-2
 /usr/share/locale/en_US.UTF-2/LC_CTYPE
 /usr/share/locale/ru_SU.CP866
