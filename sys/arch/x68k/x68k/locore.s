@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.23 1997/10/15 23:39:49 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.24 1997/10/19 20:41:02 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,6 +44,7 @@
 
 #include "ite.h"
 #include "spc.h"
+#include "mha.h"
 #include "fd.h"
 #include "par.h"
 #include "adpcm.h"
@@ -647,13 +648,18 @@ _spctrap:
 	jra	rei
 
 _exspctrap:
-#if NSPC > 1
 	INTERRUPT_SAVEREG
+#if NMHA > 0
+	movel	#0,sp@-
+	jbsr	_mhaintr		| handle interrupt
+	addql	#4,sp
+#endif
+#if NSPC > 1
 	movel	#1,sp@-
 	jbsr	_spcintr		| handle interrupt
 	addql	#4,sp
-	INTERRUPT_RESTOREREG
 #endif
+	INTERRUPT_RESTOREREG
 	addql	#1,_intrcnt+44
 	addql	#1,_cnt+V_INTR
 	jra	rei
