@@ -1,4 +1,4 @@
-/* $NetBSD: genassym.c,v 1.3 1996/02/05 23:24:50 mark Exp $ */
+/* $NetBSD: genassym.c,v 1.4 1996/03/13 21:22:32 mark Exp $ */
 
 /*-
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -34,8 +34,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: genassym.c,v 1.3 1996/02/05 23:24:50 mark Exp $
  */
 
 #include <sys/param.h>
@@ -81,8 +79,6 @@ main()
 	def("P_SPARE", &p->p_md.__spare);
 
 	def("PCB_PAGEDIR", &pcb->pcb_pagedir);
-	def("PCB_KSTACKPTE0", &pcb->pcb_kstackpte0);
-	def("PCB_KSTACKPTE1", &pcb->pcb_kstackpte1);
 	def("PCB_FLAGS", &pcb->pcb_flags);
 	def("PCB_R0", &pcb->pcb_r0);
 	def("PCB_R1", &pcb->pcb_r1);
