@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.44 2003/01/21 20:39:29 bouyer Exp $ */
+/*	$NetBSD: if_ed.c,v 1.45 2004/02/24 15:16:04 wiz Exp $ */
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -19,7 +19,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.44 2003/01/21 20:39:29 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.45 2004/02/24 15:16:04 wiz Exp $");
 
 #include "bpfilter.h"
 
@@ -245,7 +245,7 @@ ed_zbus_attach(struct device *parent, struct device *self, void *aux)
 	    sc->mem_start + ((sc->txb_cnt * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
 
 	/*
-	 * Interupts must be inactive when reading the prom, as the interrupt
+	 * Interrupts must be inactive when reading the prom, as the interrupt
 	 * line is shared with one of its address lines.
 	 */
 
