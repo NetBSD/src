@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.1 2002/02/27 21:02:26 scw Exp $
+#	$NetBSD: Makefile.booters,v 1.2 2002/05/31 13:46:00 bjh21 Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
@@ -52,9 +52,10 @@ PROGLINKOBJS?=	${PROGDEPENDS}
 ${PROG}: machine powerpc ${PROGDEPENDS}
 	${LD} -N -Ttext ${RELOC} -o $@ ${PROGLINKOBJS}
 
+.include <bsd.own.mk>
+
 LIB_SA_DIR=	${.CURDIR}/../libsa
-LIBSA_DIR!=cd ${LIB_SA_DIR}; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+LIBSA_DIR!=	cd ${LIB_SA_DIR} && ${PRINTOBJDIR}
 LIBSA=${LIBSA_DIR}/libsa.a
 
 .PHONY: ${LIBSA}
@@ -69,8 +70,7 @@ ${SRTOBJ}:
 	@cd ${LIB_SA_DIR} && ${MAKE} srt0.o
 
 #WRTVID_BOOT_DIR=  ${.CURDIR}/../wrtvid
-#WRTVID_DIR!=cd ${WRTVID_BOOT_DIR}; \
-#	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+#WRTVID_DIR!=	cd ${WRTVID_BOOT_DIR} && ${PRINTOBJDIR}
 #WRTVID=${WRTVID_DIR}/wrtvid
 #
 #.PHONY: ${WRTVID}
