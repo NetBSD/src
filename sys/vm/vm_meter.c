@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,31 +30,23 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vm_meter.c	7.11 (Berkeley) 4/20/91
- *	$Id: vm_meter.c,v 1.11 1994/05/05 05:41:00 cgd Exp $
+ *	from: @(#)vm_meter.c	8.4 (Berkeley) 1/4/94
+ *	$Id: vm_meter.c,v 1.12 1994/05/07 00:40:07 cgd Exp $
  */
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/vmmeter.h>
-
-#include <vm/vm_param.h>
+#include <vm/vm.h>
+#include <sys/sysctl.h>
 
 struct loadavg averunnable;
-#if defined(COMPAT_43) && (defined(vax) || defined(tahoe))
-double avenrun[3];
-#endif /* COMPAT_43 */
 
 int	maxslp = MAXSLP;
-
 #ifndef MACHINE_NONCONTIG
 int	saferss = SAFERSS;
 #endif /* MACHINE_NONCONTIG */
-
-static void vmtotal __P((void));
-static void loadav __P((fixpt_t *, int));
 
 void
 vmmeter()
@@ -62,63 +54,9 @@ vmmeter()
 	register unsigned *cp, *rp, *sp;
 
 	if (time.tv_sec % 5 == 0)
-		vmtotal();
+		loadav(&averunnable);
 	if (proc0.p_slptime > maxslp/2)
 		wakeup((caddr_t)&proc0);
-}
-
-static void
-vmtotal()
-{
-	register struct proc *p;
-	int nrun = 0;
-
-	total.t_vm = 0;
-	total.t_avm = 0;
-	total.t_rm = 0;
-	total.t_arm = 0;
-	total.t_rq = 0;
-	total.t_dw = 0;
-	total.t_pw = 0;
-	total.t_sl = 0;
-	total.t_sw = 0;
-	for (p = (struct proc *)allproc; p != NULL; p = p->p_next) {
-		if (p->p_flag & P_SYSTEM)
-			continue;
-		if (p->p_stat) {
-			switch (p->p_stat) {
-
-			case SSLEEP:
-				if (p->p_priority <= PZERO && p->p_slptime == 0)
-					nrun++;
-				/* fall through */
-			case SSTOP:
-				if (p->p_flag & P_INMEM) {
-					if (p->p_priority <= PZERO)
-						total.t_dw++;
-					else if (p->p_slptime < maxslp)
-						total.t_sl++;
-				} else if (p->p_slptime < maxslp)
-					total.t_sw++;
-				if (p->p_slptime < maxslp)
-					goto active;
-				break;
-
-			case SRUN:
-			case SIDL:
-				nrun++;
-				if (p->p_flag & P_INMEM)
-					total.t_rq++;
-				else
-					total.t_sw++;
-active:
-				break;
-			}
-		}
-	}
-	/* XXXX */
-	loadav(averunnable.ldavg, nrun);
-	averunnable.fscale = FSCALE;
 }
 
 /*
@@ -135,42 +73,156 @@ fixpt_t	cexp[3] = {
  * Compute a tenex style load average of a quantity on
  * 1, 5 and 15 minute intervals.
  */
-static void
-loadav(avg, n)
-	register fixpt_t *avg;
-	int n;
+void
+loadav(avg)
+	register struct loadavg *avg;
 {
-	register int i;
+	register int i, nrun;
+	register struct proc *p;
 
+	for (nrun = 0, p = (struct proc *)allproc; p != NULL; p = p->p_next) {  
+		switch (p->p_stat) {
+		case SSLEEP:
+			if (p->p_priority > PZERO || p->p_slptime != 0)
+				continue;
+			/* fall through */
+		case SRUN:      
+		case SIDL:
+			nrun++;
+		}
+	}
 	for (i = 0; i < 3; i++)
-		avg[i] = (cexp[i] * avg[i] + n * FSCALE * (FSCALE - cexp[i]))
-		         >> FSHIFT;
-#if defined(COMPAT_43) && (defined(vax) || defined(tahoe))
-	for (i = 0; i < 3; i++)
-		avenrun[i] = (double) averunnable.ldavg[i] / FSCALE;
-#endif /* COMPAT_43 */
+		avg->ldavg[i] = (cexp[i] * avg->ldavg[i] +
+			nrun * FSCALE * (FSCALE - cexp[i])) >> FSHIFT;
 }
 
 /*
- * Get load average (i.e. avenrunnable, via kinfo).
+ * Attributes associated with virtual memory.
  */
-/* ARGSUSED */
-kinfo_loadavg(op, where, acopysize, arg, aneeded)
-	int op;
-	char *where;
-	int *acopysize, arg, *aneeded;
+vm_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
 {
-	int error;
+	struct vmtotal vmtotals;
 
-	if (where == NULL || acopysize == NULL) {
-		*aneeded = sizeof(struct loadavg);
-		return 0;
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);		/* overloaded */
+
+	switch (name[0]) {
+	case VM_LOADAVG:
+		averunnable.fscale = FSCALE;
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &averunnable,
+		    sizeof(averunnable)));
+	case VM_METER:
+		vmtotal(&vmtotals);
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &vmtotals,
+		    sizeof(vmtotals)));
+	default:
+		return (EOPNOTSUPP);
 	}
-	if (*acopysize != sizeof(struct loadavg)) {
-		*aneeded = sizeof(struct loadavg);
-		*acopysize = 0;
-		return 0;
+	/* NOTREACHED */
+}
+
+/*
+ * Calculate the current state of the system.
+ * Done on demand from getkerninfo().
+ */
+void
+vmtotal(totalp)
+	register struct vmtotal *totalp;
+{
+	register struct proc *p;
+	register vm_map_entry_t	entry;
+	register vm_object_t object;
+	register vm_map_t map;
+	int paging;
+
+	bzero(totalp, sizeof *totalp);
+	/*
+	 * Mark all objects as inactive.
+	 */
+	simple_lock(&vm_object_list_lock);
+	for (object = vm_object_list.tqh_first;
+	     object != NULL;
+	     object = object->object_list.tqe_next)
+		object->flags &= ~OBJ_ACTIVE;
+	simple_unlock(&vm_object_list_lock);
+	/*
+	 * Calculate process statistics.
+	 */
+	for (p = (struct proc *)allproc; p != NULL; p = p->p_next) {
+		if (p->p_flag & P_SYSTEM)
+			continue;
+		switch (p->p_stat) {
+		case 0:
+			continue;
+
+		case SSLEEP:
+		case SSTOP:
+			if (p->p_flag & P_INMEM) {
+				if (p->p_priority <= PZERO)
+					totalp->t_dw++;
+				else if (p->p_slptime < maxslp)
+					totalp->t_sl++;
+			} else if (p->p_slptime < maxslp)
+				totalp->t_sw++;
+			if (p->p_slptime >= maxslp)
+				continue;
+			break;
+
+		case SRUN:
+		case SIDL:
+			if (p->p_flag & P_INMEM)
+				totalp->t_rq++;
+			else
+				totalp->t_sw++;
+			if (p->p_stat == SIDL)
+				continue;
+			break;
+		}
+		/*
+		 * Note active objects.
+		 */
+		paging = 0;
+		for (map = &p->p_vmspace->vm_map, entry = map->header.next;
+		     entry != &map->header; entry = entry->next) {
+			if (entry->is_a_map || entry->is_sub_map ||
+			    entry->object.vm_object == NULL)
+				continue;
+			entry->object.vm_object->flags |= OBJ_ACTIVE;
+			paging |= entry->object.vm_object->paging_in_progress;
+		}
+		if (paging)
+			totalp->t_pw++;
 	}
-	*aneeded = 0;
-	return copyout(&averunnable, where, *acopysize);
+	/*
+	 * Calculate object memory usage statistics.
+	 */
+	simple_lock(&vm_object_list_lock);
+	for (object = vm_object_list.tqh_first;
+	     object != NULL;
+	     object = object->object_list.tqe_next) {
+		totalp->t_vm += num_pages(object->size);
+		totalp->t_rm += object->resident_page_count;
+		if (object->flags & OBJ_ACTIVE) {
+			totalp->t_avm += num_pages(object->size);
+			totalp->t_arm += object->resident_page_count;
+		}
+		if (object->ref_count > 1) {
+			/* shared object */
+			totalp->t_vmshr += num_pages(object->size);
+			totalp->t_rmshr += object->resident_page_count;
+			if (object->flags & OBJ_ACTIVE) {
+				totalp->t_avmshr += num_pages(object->size);
+				totalp->t_armshr += object->resident_page_count;
+			}
+		}
+	}
+	totalp->t_free = cnt.v_free_count;
 }
