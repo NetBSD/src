@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2001/03/15 06:10:39 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2001/03/23 11:10:10 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -105,6 +105,8 @@ extern int pmap_debug_level;
 int kernel_debug = 0;
 
 struct user *proc0paddr;
+
+extern char booted_kernel[];
 
 /* Prototypes */
 
@@ -722,6 +724,13 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			consdev = NODEV;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
 			sizeof consdev));
+	}
+
+	case CPU_BOOTED_KERNEL: {
+		if (booted_kernel != NULL && booted_kernel[0] != '\0')
+			return sysctl_rdstring(oldp, oldlenp, newp,
+			    booted_kernel);
+		return (EOPNOTSUPP);
 	}
 
 	default:
