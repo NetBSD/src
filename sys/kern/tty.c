@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.123 2000/11/14 22:17:49 thorpej Exp $	*/
+/*	$NetBSD: tty.c,v 1.124 2000/11/15 01:47:14 enami Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -738,6 +738,7 @@ ttioctl(tp, cmd, data, flag, p)
 {
 	extern struct tty *constty;	/* Temporary virtual console. */
 	extern int nlinesw;
+	struct linesw *lp;
 	int s, error;
 
 	/* If the ioctl involves modification, hang if in the background. */
@@ -934,43 +935,28 @@ ttioctl(tp, cmd, data, flag, p)
 	}
 	case TIOCSETD: {		/* set line discipline */
 		int t = *(int *)data;
-		struct linesw *lp;
-		dev_t device = tp->t_dev;
 
 		if ((u_int)t >= nlinesw)
 			return (ENXIO);
 		lp = linesw[t];
-		if (lp != tp->t_linesw) {
-			s = spltty();
-			if (tp->t_linesw) 
-				(*tp->t_linesw->l_close)(tp, flag);
-			error = (*lp->l_open)(device, tp);
-			if (error) {
-				(void)(*tp->t_linesw->l_open)(device, tp);
-				splx(s);
-				return (error);
-			}
-			tp->t_linesw = lp;
-			splx(s);
-		}
-		break;
+		goto setldisc;
 	}
 	case TIOCSLINED: {		/* set line discipline */
 		char *name = (char *)data;
-		struct linesw *lp;
-		dev_t device = tp->t_dev;
+		dev_t device;
 
 		/* Null terminate to prevent buffer overflow */
-		data[TTLINEDNAMELEN] = 0; 
+		name[TTLINEDNAMELEN] = 0; 
 		lp = ttyldisc_lookup(name);
 
-		if (!lp)
+setldisc:
+		if (lp == NULL)
 			return (ENXIO);
 
 		if (lp != tp->t_linesw) {
+			device = tp->t_dev;
 			s = spltty();
-			if (tp->t_linesw) 
-				(*tp->t_linesw->l_close)(tp, flag);
+			(*tp->t_linesw->l_close)(tp, flag);
 			error = (*lp->l_open)(device, tp);
 			if (error) {
 				(void)(*tp->t_linesw->l_open)(device, tp);
