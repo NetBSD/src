@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.130 1999/11/15 19:10:44 fvdl Exp $
+#	$NetBSD: GENERIC,v 1.131 1999/11/21 14:00:38 itojun Exp $
 
 #
 #if 0
@@ -44,10 +44,28 @@ options 	M68030		# support for 030
 options 	M68020		# support for 020/851
 options 	FPU_EMULATE	# FPU emulation
 #endif
+
+# Pull in config fragments for kernel crypto.  This is required for
+# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
+# one of these, based on whether you use crypto-us or crypto-intl, and
+# adjust the prefixes as necessary.
+
+#prefix ../crypto-us/sys
+#cinclude "conf/files.crypto-us"
+#prefix
+
+#prefix ../crypto-intl/sys
+#cinclude "conf/files.crypto-intl"
+#prefix
+
 #
 # Networking options
 #
 options 	INET		# IP networking support (Required)
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# Packet forwarding
 #options 	DIRECTED_BROADCAST	# Broadcast across subnets
 #options 	MROUTING	# Multicast routing
@@ -367,6 +385,8 @@ pseudo-device	tun		1	# network tunnel line discipline
 #pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	bpfilter	16	# Berkeley packet filter
 pseudo-device	ipfilter		# IP Filter package
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty		16	# pseudo ptys

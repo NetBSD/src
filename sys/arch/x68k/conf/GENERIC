@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.38 1999/11/18 14:08:24 minoura Exp $
+#	$NetBSD: GENERIC,v 1.39 1999/11/21 14:00:45 itojun Exp $
 
 #
 #	GENERIC
@@ -154,8 +154,25 @@ options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	SOFTDEP         # FFS soft updates support.
 
+# Pull in config fragments for kernel crypto.  This is required for
+# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
+# one of these, based on whether you use crypto-us or crypto-intl, and
+# adjust the prefixes as necessary.
+
+#prefix ../crypto-us/sys
+#cinclude "conf/files.crypto-us"
+#prefix
+
+#prefix ../crypto-intl/sys
+#cinclude "conf/files.crypto-intl"
+#prefix
+
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 options 	TCP_COMPAT_42	# 4.2BSD IP implementation compatibility
 #options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets
@@ -289,6 +306,9 @@ pseudo-device	bpfilter	8
 ## one example of the use of the IP Filter.
 pseudo-device	ipfilter
 
+## for IPv6
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 
 #### Other device configuration
 
