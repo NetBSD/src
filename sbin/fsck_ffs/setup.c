@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)setup.c	5.33 (Berkeley) 2/22/91";*/
-static char rcsid[] = "$Id: setup.c,v 1.5 1993/10/01 01:45:31 mycroft Exp $";
+static char rcsid[] = "$Id: setup.c,v 1.6 1994/04/09 08:58:31 deraadt Exp $";
 #endif /* not lint */
 
 #define DKTYPENAMES
@@ -44,6 +44,7 @@ static char rcsid[] = "$Id: setup.c,v 1.5 1993/10/01 01:45:31 mycroft Exp $";
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>
 #include <sys/file.h>
+#include <sys/mount.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -69,6 +70,7 @@ struct bufarea asblk;
 
 char	*index();
 struct	disklabel *getdisklabel();
+char	*getmntdev();
 
 setup(dev)
 	char *dev;
@@ -76,15 +78,47 @@ setup(dev)
 	long cg, size, asked, i, j;
 	long bmapsize;
 	struct disklabel *lp;
-	struct stat statb;
+	struct stat statb, statb2;
 	struct fs proto;
+	char path2[MAXPATHLEN];
+	char *dev2;
 
 	havesb = 0;
 	if (stat(dev, &statb) < 0) {
 		printf("Can't stat %s: %s\n", dev, strerror(errno));
 		return (0);
 	}
-	if ((statb.st_mode & S_IFMT) != S_IFCHR) {
+	switch (statb.st_mode & S_IFMT) {
+	case S_IFCHR:
+		break;
+	case S_IFDIR:
+		dev2 = getmntdev(dev);
+		if (dev2 != NULL && !strncmp(dev2, "/dev/", 5)) {
+			snprintf(path2, sizeof(path2), "/dev/r%s", dev2 + 5);
+			if (stat(path2, &statb2) == 0 &&
+			    (statb2.st_mode & S_IFMT) == S_IFCHR) {
+				dev = path2;
+				statb = statb2;
+				break;
+			}
+		}
+		pfatal("%s is not a character device", dev);
+		if (reply("CONTINUE") == 0)
+			return (0);
+		break;
+	case S_IFBLK:
+		if (!strncmp(dev, "/dev/", 5)) {
+			sprintf(path2, "/dev/r%s", dev + 5);
+			if (stat(path2, &statb2) == 0 &&
+			    (statb2.st_mode & S_IFMT) == S_IFCHR &&
+			    minor(statb2.st_rdev) == minor(statb.st_rdev)) {
+				dev = path2;
+				statb = statb2;
+				break;
+			}
+		}
+		/* fall through */
+	default:
 		pfatal("%s is not a character device", dev);
 		if (reply("CONTINUE") == 0)
 			return (0);
@@ -483,4 +517,21 @@ getdisklabel(s, fd)
 		errexit("%s: can't read disk label\n", s);
 	}
 	return (&lab);
+}
+
+char *
+getmntdev(name)
+	char *name;
+{
+	long mntsize;
+	register long i;
+	struct statfs *mntbuf;
+	
+	mntsize = getmntinfo(&mntbuf, MNT_NOWAIT);
+	for (i = 0; i < mntsize; i++) {
+		if ((mntbuf[i].f_type == MOUNT_UFS) &&
+		    !strcmp(mntbuf[i].f_mntonname, name))
+			return (mntbuf[i].f_mntfromname);
+	}
+	return ((char *)0);
 }
