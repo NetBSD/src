@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.26 1997/07/12 22:07:59 leo Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.27 1997/09/12 07:55:19 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -133,8 +133,7 @@ cleankernel:
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${MVME68K}/mvme68k/Locore.c ${CFILES} \
-	    ioconf.c param.c | \
+	    ${CFILES} ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
 tags:
