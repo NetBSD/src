@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.14 1994/10/30 21:44:51 cgd Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.15 1995/04/22 19:48:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,6 +78,7 @@
 
 #include <hp300/hpux/hpux.h>
 #include <hp300/hpux/hpux_termio.h>
+#include <hp300/hpux/hpux_syscall.h>
 
 #ifdef DEBUG
 int unimpresponse = 0;
@@ -105,7 +106,7 @@ char hpux_context[] =
 #define BERR	1000
 
 /* indexed by BSD errno */
-short bsdtohpuxerrnomap[NERR] = {
+int bsdtohpuxerrnomap[NERR] = {
 /*00*/	  0,   1,   2,   3,   4,   5,   6,   7,   8,   9,
 /*10*/	 10,  45,  12,  13,  14,  15,  16,  17,  18,  19,
 /*20*/	 20,  21,  22,  23,  24,  25,  26,  27,  28,  29,
@@ -115,6 +116,24 @@ short bsdtohpuxerrnomap[NERR] = {
 /*60*/	238, 239, 249, 248, 241, 242, 247,BERR,BERR,BERR,
 /*70*/   70,  71,BERR,BERR,BERR,BERR,BERR,  46, 251,BERR,
 /*80*/ BERR,BERR,  11
+};
+
+extern char *hpux_syscallnames[];
+extern struct sysent hpux_sysent[];
+
+struct emul emul_hpux = {
+	"hpux",
+	bsdtohpuxerrnomap,
+	sendsig,
+	HPUX_SYS_syscall,
+	HPUX_SYS_MAXSYSCALL,
+	hpux_sysent,
+	hpux_syscallnames,
+	0,
+	copyargs,
+	setregs,
+	sigcode,
+	esigcode,
 };
 
 notimp(p, uap, retval, code, nargs, argsize)
@@ -1146,15 +1165,6 @@ hpux_mmap(p, uap, retval)
 	nargs.fd = (nargs.flags & MAP_ANON) ? -1 : SCARG(uap, fd);
 	nargs.pos = SCARG(uap, pos);
 	return (mmap(p, &nargs, retval));
-}
-
-/* convert from BSD to HP-UX errno */
-bsdtohpuxerrno(err)
-	int err;
-{
-	if (err < 0 || err >= NERR)
-		return(BERR);
-	return((int)bsdtohpuxerrnomap[err]);
 }
 
 hpux_stat1(fname, hsb, follow, p)

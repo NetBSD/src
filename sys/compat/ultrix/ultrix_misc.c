@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.10 1995/03/09 12:06:17 mycroft Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.11 1995/04/22 19:49:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,12 +83,32 @@
 #include <netinet/in.h>
 
 #include <miscfs/specfs/specdev.h>
+#include <compat/ultrix/ultrix_syscall.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsv2.h>
 #include <nfs/nfs.h>
 
 #include <vm/vm.h>
+
+extern struct sysent ultrix_sysent[];
+extern char *ultrix_syscallnames[];
+extern void cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
+					u_long, register_t *));
+struct emul emul_ultrix = {
+	"ultrix",
+	NULL,
+	sendsig,
+	ULTRIX_SYS_syscall,
+	ULTRIX_SYS_MAXSYSCALL,
+	ultrix_sysent,
+	ultrix_syscallnames,
+	0,
+	copyargs,
+	cpu_exec_ecoff_setregs,
+	sigcode,
+	esigcode,
+};
 
 #define GSI_PROG_ENV 1
 

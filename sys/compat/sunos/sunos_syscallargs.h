@@ -85,6 +85,10 @@ struct sunos_setsockopt_args {
 	syscallarg(int) valsize;
 };
 
+struct sunos_sigreturn_args {
+	syscallarg(struct sigcontext *) sigcntxp;
+};
+
 struct sunos_getrlimit_args {
 	syscallarg(u_int) which;
 	syscallarg(struct orlimit *) rlp;

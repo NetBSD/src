@@ -642,4 +642,3 @@ struct sysent osf1_sysent[] = {
 	    nosys },				/* 260 = unimplemented memcntl */
 };
 
-int	nosf1_sysent= sizeof(osf1_sysent) / sizeof(osf1_sysent[0]);

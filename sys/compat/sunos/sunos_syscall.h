@@ -118,7 +118,7 @@
 #define	SUNOS_SYS_mkdir	136
 #define	SUNOS_SYS_rmdir	137
 #define	SUNOS_SYS_utimes	138
-#define	SUNOS_SYS_sigreturn	139
+#define	SUNOS_SYS_sunos_sigreturn	139
 #define	SUNOS_SYS_adjtime	140
 #define	SUNOS_SYS_compat_43_getpeername	141
 #define	SUNOS_SYS_compat_43_gethostid	142
@@ -154,3 +154,4 @@
 #define	SUNOS_SYS_fpathconf	187
 #define	SUNOS_SYS_sunos_sysconf	188
 #define	SUNOS_SYS_sunos_uname	189
+#define	SUNOS_SYS_MAXSYSCALL	190

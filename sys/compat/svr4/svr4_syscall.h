@@ -107,3 +107,4 @@
 #define	SVR4_SYS_svr4_gettimeofday	156
 #define	SVR4_SYS_getitimer	157
 #define	SVR4_SYS_setitimer	158
+#define	SVR4_SYS_MAXSYSCALL	187

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.7 1994/10/25 23:03:24 deraadt Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.8 1995/04/22 19:48:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -35,6 +35,7 @@
 #include <sys/mount.h>
 #include <sys/malloc.h>
 #include <sys/namei.h>
+#include <sys/signalvar.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/exec.h>
@@ -53,12 +54,44 @@
 #include <machine/exec.h>
 
 #include <compat/sunos/exec.h>
+#include <compat/sunos/sunos_syscall.h>
 
 #ifdef sparc
 #define	sunos_exec_aout_prep_zmagic exec_aout_prep_zmagic
 #define	sunos_exec_aout_prep_nmagic exec_aout_prep_nmagic
 #define	sunos_exec_aout_prep_omagic exec_aout_prep_omagic
 #endif
+
+extern int nsunos_sysent;
+extern struct sysent sunos_sysent[];
+#ifdef SYSCALL_DEBUG
+extern char *sunos_syscallnames[];
+#endif
+extern void sunos_sendsig __P((sig_t, int, int, u_long));
+extern char sigcode[], esigcode[];
+
+struct emul emul_sunos = {
+	"sunos",
+	NULL,
+#ifdef sparc
+	sendsig,
+#else
+	sunos_sendsig,
+#endif
+	SUNOS_SYS_syscall,
+	SUNOS_SYS_MAXSYSCALL,
+	sunos_sysent,
+#ifdef SYSCALL_DEBUG
+	sunos_syscallnames,
+#else
+	NULL,
+#endif
+	0,
+	copyargs,
+	setregs,
+	sigcode,
+	esigcode,
+};
 
 int
 sunos_exec_aout_makecmds(p, epp)
@@ -83,7 +116,7 @@ sunos_exec_aout_makecmds(p, epp)
 		break;
 	}
 	if (error==0)
-		epp->ep_emul = EMUL_SUNOS;
+		epp->ep_emul = &emul_sunos;
 	return error;
 }
 

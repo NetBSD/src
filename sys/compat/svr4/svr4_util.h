@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_util.h,v 1.5 1994/11/18 02:54:31 christos Exp $	 */
+/*	$NetBSD: svr4_util.h,v 1.6 1995/04/22 19:49:00 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,12 +33,12 @@
 #include <machine/vmparam.h>
 #include <sys/exec.h>
 
+extern char     svr4_sigcode[], svr4_esigcode[];
+
 static __inline caddr_t
 stackgap_init()
 {
-	extern char     sigcode[], esigcode[];
-#define szsigcode (esigcode - sigcode)
-	extern caddr_t  svr4_edata;
+#define szsigcode (svr4_esigcode - svr4_sigcode)
 	return STACKGAPBASE;
 }
 
