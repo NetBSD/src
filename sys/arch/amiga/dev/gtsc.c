@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: gtsc.c,v 1.1 1994/05/08 05:53:12 chopps Exp $
+ *	$Id: gtsc.c,v 1.2 1994/05/11 19:06:44 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ gtscattach(pdp, dp, auxp)
 		sc->sc_dmamask = ~0x01ffffff;
 	else
 		sc->sc_dmamask = ~0x07ffffff;
-	printf(" dmamask: 0x%x", ~sc->sc_dmamask);
+	printf(" dmamask 0x%x", ~sc->sc_dmamask);
 	
 	sc->gtsc_bankmask = (~sc->sc_dmamask >> 18) & 0x01c0;
 
@@ -171,17 +171,17 @@ gtscattach(pdp, dp, auxp)
 	if (gtsc_dmabounce || kvtop(sc) & sc->sc_dmamask) {
 		sc->sc_dmabuffer = (char *) alloc_z2mem(MAXPHYS);
 		if (isztwomem(sc->sc_dmabuffer))
-			printf(" bounce PA: 0x%x", ztwopa(sc->sc_dmabuffer));
+			printf(" bounce pa 0x%x", ztwopa(sc->sc_dmabuffer));
 		else if (gtsc_maxdma == 0) {
 			gtsc_maxdma = 1024;
-			printf(" bounce PA: 0x%x", 
+			printf(" bounce pa 0x%x", 
 			    PREP_DMA_MEM(sc->sc_dmabuffer));
 		}
 	}
 	if (gtsc_maxdma == 0)
 		gtsc_maxdma = MAXPHYS;
 
-	printf(" max dma: %d\n", gtsc_maxdma);
+	printf(" maxdma %d\n", gtsc_maxdma);
 
 	sc->sc_sbicp = (sbic_regmap_p) ((int)rp + 0x61);
 	sc->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 77;

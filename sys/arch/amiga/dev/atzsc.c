@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: atzsc.c,v 1.1 1994/05/08 05:52:56 chopps Exp $
+ *	$Id: atzsc.c,v 1.2 1994/05/11 19:06:41 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,19 +132,21 @@ atzscattach(pdp, dp, auxp)
 	sc->sc_dmago = atzsc_dmago;
 	sc->sc_dmanext = atzsc_dmanext;
 	sc->sc_dmastop = atzsc_dmastop;
-	sc->sc_dmacmd = 0xFF000000;		/* only ztwomem */
+	sc->sc_dmacmd = 0;
 
 #ifdef DEBUG
 	/* make sure timeout is really not needed */
 	timeout(atzsc_dmatimeout, 0, 30 * hz);
 #endif
 	/*
-	 * eveything is a valid dma address
+	 * only 24 bit mem.
 	 */
-	sc->sc_dmamask = 0;
+	sc->sc_dmamask = ~0x00ffffff;
 	sc->sc_sbicp = (sbic_regmap_p) ((int)rp + 0x91);
 	sc->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 77;
 	
+	printf(" dmamask 0x%x\n", ~sc->sc_dmamask);
+
 	sbicreset(sc);
 
 	sc->sc_link.adapter_softc = sc;
