@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.149 1997/06/12 15:46:34 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.150 1997/06/29 00:26:12 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -947,98 +947,6 @@ straytrap(pc, evec)
 #ifdef DDB
 	Debugger();
 #endif
-}
-
-int    *nofault;
-
-int badaddr __P((caddr_t));
-
-int
-badaddr(addr)
-	register caddr_t addr;
-{
-	register int i;
-	label_t faultbuf;
-
-#ifdef lint
-	i = *addr;
-	if (i)
-		return (0);
-#endif
-	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *) nofault)) {
-		nofault = (int *) 0;
-		return (1);
-	}
-	i = *(volatile short *) addr;
-	nofault = (int *) 0;
-	return (0);
-}
-
-int
-badbaddr(addr)
-	register caddr_t addr;
-{
-	register int i;
-	label_t faultbuf;
-
-#ifdef lint
-	i = *addr;
-	if (i)
-		return (0);
-#endif
-	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *) nofault)) {
-		nofault = (int *) 0;
-		return (1);
-	}
-	i = *(volatile u_int8_t *) addr;
-	nofault = (int *) 0;
-	return (0);
-}
-
-int
-badwaddr(addr)
-	register caddr_t addr;
-{
-	register int i;
-	label_t faultbuf;
-
-#ifdef lint
-	i = *addr;
-	if (i)
-		return (0);
-#endif
-	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *) nofault)) {
-		nofault = (int *) 0;
-		return (1);
-	}
-	i = *(volatile u_int16_t *) addr;
-	nofault = (int *) 0;
-	return (0);
-}
-
-int
-badladdr(addr)
-	register caddr_t addr;
-{
-	register int i;
-	label_t faultbuf;
-
-#ifdef lint
-	i = *addr;
-	if (i)
-		return (0);
-#endif
-	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *) nofault)) {
-		nofault = (int *) 0;
-		return (1);
-	}
-	i = *(volatile u_int32_t *) addr;
-	nofault = (int *) 0;
-	return (0);
 }
 
 void arpintr __P((void));
@@ -2874,6 +2782,8 @@ bus_space_subregion(t, bsh, offset, size, nbshp)
 	*nbshp = bsh + offset;
 	return (0);
 }
+
+int    *nofault;
 
 int
 bus_probe(t, bsh, offset, sz)
