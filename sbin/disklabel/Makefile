@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.24 1997/06/07 00:47:27 perry Exp $
+#	$NetBSD: Makefile,v 1.25 1997/06/30 22:51:27 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
+WARNS=	1
 PROG=	disklabel
 SRCS=	disklabel.c dkcksum.c interact.c
 MAN=	disklabel.5 disklabel.8

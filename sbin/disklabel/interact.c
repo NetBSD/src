@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.4 1997/03/18 21:26:44 christos Exp $	*/
+/*	$NetBSD: interact.c,v 1.5 1997/06/30 22:51:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -29,8 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: interact.c,v 1.4 1997/03/18 21:26:44 christos Exp $";
+__RCSID("$NetBSD: interact.c,v 1.5 1997/06/30 22:51:34 christos Exp $");
 #endif /* lint */
 
 #include <stdio.h>
@@ -217,7 +218,7 @@ cmd_label(lp, s, fd)
 	}
 
 	if ((i = writelabel(fd, bootarea, lp)) != 0) {
-		printf("Label not written %d\n", strerror(i));
+		printf("Label not written %s\n", strerror(i));
 		return;
 	}
 	printf("Label written\n");
@@ -237,16 +238,17 @@ runcmd(line, lp, fd)
 			if (cmd->func == NULL)
 				return -1;
 			(*cmd->func)(lp, line, fd);
-			return;
+			return 0;
 		}
 
 	if (line[1] == '\0' &&
 	    line[0] >= 'a' && line[0] < 'a' + getmaxpartitions()) {
 		cmd_part(lp, line, fd);
-		return;
+		return 0;
 	}
 		
 	printf("Unknown command %s\n", line);
+	return 1;
 }
 
 

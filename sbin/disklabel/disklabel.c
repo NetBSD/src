@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.38 1997/03/16 05:25:38 lukem Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.39 1997/06/30 22:51:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -36,10 +36,10 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1987, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
@@ -47,7 +47,7 @@ static char copyright[] =
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$NetBSD: disklabel.c,v 1.38 1997/03/16 05:25:38 lukem Exp $";
+__RCSID("$NetBSD: disklabel.c,v 1.39 1997/06/30 22:51:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,8 +70,10 @@ static char rcsid[] = "$NetBSD: disklabel.c,v 1.38 1997/03/16 05:25:38 lukem Exp
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
 #include "pathnames.h"
 #include "extern.h"
+#include "dkcksum.h"
 
 /*
  * Disklabel: read and write disklabels.
@@ -138,7 +140,6 @@ static struct dos_partition *readmbr __P((int));
 #endif
 
 int main __P((int, char *[]));
-extern u_short dkcksum __P((struct disklabel *));
 
 static void makedisktab __P((FILE *, struct disklabel *));
 static void makelabel __P((char *, char *, struct disklabel *));
@@ -150,7 +151,9 @@ static int editit __P((void));
 static char *skip __P((char *));
 static char *word __P((char *));
 static int getasciilabel __P((FILE *, struct disklabel *));
+#if NUMBOOT > 0
 static void setbootflag __P((struct disklabel *));
+#endif
 static void usage __P((void));
 
 int
@@ -338,8 +341,8 @@ main(argc, argv)
 			error = writelabel(f, bootarea, lp);
 		break;
 
-#if NUMBOOT > 0
 	case WRITEBOOT:
+#if NUMBOOT > 0
 	{
 		struct disklabel tlab;
 
@@ -675,8 +678,8 @@ makebootarea(boot, dp, f)
 {
 	struct disklabel *lp;
 	char *p;
-	int b;
 #if NUMBOOT > 0
+	int b;
 	char *dkbasename;
 # if NUMBOOT <= 1
 	struct stat sb;
@@ -809,7 +812,7 @@ makedisktab(f, lp)
 	struct partition *pp;
 
 	(void) fprintf(f, "%.*s|Automatically generated label:\\\n\t:dt=",
-	    sizeof(lp->d_typename), lp->d_typename);
+	    (int) sizeof(lp->d_typename), lp->d_typename);
 	if ((unsigned) lp->d_type < DKMAXTYPES)
 		(void) fprintf(f, "%s:", dktypenames[lp->d_type]);
 	else
@@ -903,9 +906,9 @@ display(f, lp)
 		(void) fprintf(f, "type: %s\n", dktypenames[lp->d_type]);
 	else
 		(void) fprintf(f, "type: %d\n", lp->d_type);
-	(void) fprintf(f, "disk: %.*s\n", sizeof(lp->d_typename),
+	(void) fprintf(f, "disk: %.*s\n", (int) sizeof(lp->d_typename),
 	    lp->d_typename);
-	(void) fprintf(f, "label: %.*s\n", sizeof(lp->d_packname),
+	(void) fprintf(f, "label: %.*s\n", (int) sizeof(lp->d_packname),
 	    lp->d_packname);
 	(void) fprintf(f, "flags:");
 	if (lp->d_flags & D_REMOVABLE)
