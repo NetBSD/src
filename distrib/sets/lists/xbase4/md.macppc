@@ -1,2 +1,23 @@
-# $NetBSD: md.macppc,v 1.1 2003/02/15 11:14:46 he Exp $
+# $NetBSD: md.macppc,v 1.2 2003/07/22 11:46:53 mrg Exp $
+./usr/X11R6/bin/dga
+./usr/X11R6/include/X11/bitmaps/card.xbm
+./usr/X11R6/include/X11/bitmaps/down.xbm
+./usr/X11R6/include/X11/bitmaps/keyboard.xbm
+./usr/X11R6/include/X11/bitmaps/left.xbm
+./usr/X11R6/include/X11/bitmaps/monitor.xbm
+./usr/X11R6/include/X11/bitmaps/mouse.xbm
+./usr/X11R6/include/X11/bitmaps/narrower.xbm
+./usr/X11R6/include/X11/bitmaps/right.xbm
+./usr/X11R6/include/X11/bitmaps/shorter.xbm
+./usr/X11R6/include/X11/bitmaps/taller.xbm
+./usr/X11R6/include/X11/bitmaps/up.xbm
+./usr/X11R6/include/X11/bitmaps/wider.xbm
+./usr/X11R6/include/X11/pixmaps/card.xpm
+./usr/X11R6/include/X11/pixmaps/computer.xpm
+./usr/X11R6/include/X11/pixmaps/keyboard.xpm
+./usr/X11R6/include/X11/pixmaps/monitor.xpm
+./usr/X11R6/include/X11/pixmaps/mouse.xpm
+./usr/X11R6/lib/X11/Options
+./usr/X11R6/man/cat1/dga.0
+./usr/X11R6/man/cat1/pcitweak.0
 ./usr/X11R6/man/cat1/scanpci.0

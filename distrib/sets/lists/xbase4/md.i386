@@ -1,5 +1,5 @@
-# $NetBSD: md.i386,v 1.2 2003/03/01 00:11:29 tron Exp $
-./usr/X11R6/man/cat1/scanpci.0
+# $NetBSD: md.i386,v 1.3 2003/07/22 11:46:53 mrg Exp $
+./usr/X11R6/bin/dga
 ./usr/X11R6/bin/gtf
 ./usr/X11R6/bin/inb
 ./usr/X11R6/bin/inl
@@ -10,4 +10,25 @@
 ./usr/X11R6/bin/outb
 ./usr/X11R6/bin/outl
 ./usr/X11R6/bin/outw
+./usr/X11R6/include/X11/bitmaps/card.xbm
+./usr/X11R6/include/X11/bitmaps/down.xbm
+./usr/X11R6/include/X11/bitmaps/keyboard.xbm
+./usr/X11R6/include/X11/bitmaps/left.xbm
+./usr/X11R6/include/X11/bitmaps/monitor.xbm
+./usr/X11R6/include/X11/bitmaps/mouse.xbm
+./usr/X11R6/include/X11/bitmaps/narrower.xbm
+./usr/X11R6/include/X11/bitmaps/right.xbm
+./usr/X11R6/include/X11/bitmaps/shorter.xbm
+./usr/X11R6/include/X11/bitmaps/taller.xbm
+./usr/X11R6/include/X11/bitmaps/up.xbm
+./usr/X11R6/include/X11/bitmaps/wider.xbm
+./usr/X11R6/include/X11/pixmaps/card.xpm
+./usr/X11R6/include/X11/pixmaps/computer.xpm
+./usr/X11R6/include/X11/pixmaps/keyboard.xpm
+./usr/X11R6/include/X11/pixmaps/monitor.xpm
+./usr/X11R6/include/X11/pixmaps/mouse.xpm
+./usr/X11R6/lib/X11/Options
+./usr/X11R6/man/cat1/dga.0
 ./usr/X11R6/man/cat1/gtf.0
+./usr/X11R6/man/cat1/pcitweak.0
+./usr/X11R6/man/cat1/scanpci.0

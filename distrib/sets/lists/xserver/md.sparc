@@ -1,9 +1,7 @@
-# $NetBSD: md.sparc,v 1.8 2000/10/05 02:27:04 tv Exp $
+# $NetBSD: md.sparc,v 1.9 2003/07/22 11:46:55 mrg Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/Xsun
 ./usr/X11R6/bin/Xsun24
-./usr/X11R6/bin/XsunMono
-./usr/X11R6/lib/X11/rgb.db
 ./usr/X11R6/man/cat1/Xsun.0
 ./usr/X11R6/man/cat1/Xsun24.0
 ./usr/X11R6/man/cat1/XsunMono.0
