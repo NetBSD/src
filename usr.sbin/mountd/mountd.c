@@ -1,4 +1,4 @@
-/*	$NetBSD: mountd.c,v 1.29 1995/11/16 04:34:13 thorpej Exp $	*/
+/*	$NetBSD: mountd.c,v 1.30 1995/11/28 05:25:47 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mountd.c	8.8 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$NetBSD: mountd.c,v 1.29 1995/11/16 04:34:13 thorpej Exp $";
+static char rcsid[] = "$NetBSD: mountd.c,v 1.30 1995/11/28 05:25:47 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -633,7 +633,7 @@ get_exportlist()
 	 * And delete exports that are in the kernel for all local
 	 * file systems.
 	 * XXX: Should know how to handle all local exportable file systems
-	 *      instead of just MOUNT_UFS.
+	 *      instead of just MOUNT_FFS.
 	 */
 	num = getmntinfo(&fsp, MNT_NOWAIT);
 	for (i = 0; i < num; i++) {
@@ -646,7 +646,7 @@ get_exportlist()
 		} targs;
 
 		if (!strncmp(fsp->f_fstypename, MOUNT_MFS, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_UFS, MFSNAMELEN) ||
+		    !strncmp(fsp->f_fstypename, MOUNT_FFS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_MSDOS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_ADOSFS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_CD9660, MFSNAMELEN)) {
@@ -1531,7 +1531,7 @@ do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 		 * Maybe I should just use the fsb->f_mntonname path instead
 		 * of looping back up the dirp to the mount point??
 		 * Also, needs to know how to export all types of local
-		 * exportable file systems and not just MOUNT_UFS.
+		 * exportable file systems and not just MOUNT_FFS.
 		 */
 		while (mount(fsb->f_fstypename, dirp,
 		       fsb->f_flags | MNT_UPDATE, (caddr_t)&args) < 0) {
