@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.31 2001/09/23 14:32:53 uch Exp $	*/
+/*	$NetBSD: vr.c,v 1.32 2001/11/18 08:19:41 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -45,8 +45,9 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/sysconf.h>
-#include <machine/bus.h>
 #include <machine/bootinfo.h>
+#include <machine/bus.h>
+#include <machine/bus_space_hpcmips.h>
 
 #include <dev/hpc/hpckbdvar.h>
 
