@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.152 2003/04/08 23:39:15 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.153 2003/05/04 02:53:53 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -987,6 +987,8 @@ END(MachFPInterrupt)
 
 LEAF(mips_pagecopy)
 #if defined(__mips_n32) || defined(_LP64)
+	.set	push
+	.set	mips3
 	li	a2, PAGE_SIZE >> 6
 
 1:	ld	t0, 0(a1)
@@ -1010,6 +1012,7 @@ LEAF(mips_pagecopy)
 	sd	ta3, 56(a0)
 	bgtz	a2,1b
 	addu	a0, 64
+	.set	pop
 #else
 	/* o32 */
 	li	a2, PAGE_SIZE >> 5
@@ -1041,7 +1044,11 @@ LEAF(mips_pagecopy)
 END(mips_pagecopy)
 
 LEAF(mips_pagezero)
-#if defined(__mips_n32) || defined(_LP64)
+/* We can always safely store a 64-bit zero on MIPS3,4,64 */
+#if !defined(MIPS1) && !defined(MIPS32)
+	.set	push
+	.set	mips3
+	li	a1, NBPG >> 6
 	li	a1, PAGE_SIZE >> 6
 
 1:	sd	zero, 0(a0)			# try to miss cache first
@@ -1055,6 +1062,7 @@ LEAF(mips_pagezero)
 	sd	zero, 56(a0)
 	bgtz	a1,1b
 	addu	a0, 64
+	.set	pop
 #else
 	/* o32 */
 	li	a1, PAGE_SIZE >> 5
