@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.4 2001/09/10 23:41:48 bjh21 Exp $
+# $NetBSD: genassym.cf,v 1.5 2001/09/20 21:54:11 bjh21 Exp $
 #
 # Copyright (c) 1999 Ben Harris
 # All rights reserved.
@@ -27,12 +27,18 @@
 #
 # This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines.
 
+include "eca.h"
+
 include <sys/param.h>
 
-include <sys/mbuf.h>
 include <sys/proc.h>
 include <sys/user.h>
 include <machine/pcb.h>
+
+if NECA > 0
+include <sys/mbuf.h>
+include <arch/arm26/ioc/if_ecavar.h>
+endif
 
 define	U_PCB		offsetof(struct user, u_pcb)
 define	PCB_ONFAULT	offsetof(struct pcb, pcb_onfault)
@@ -48,6 +54,16 @@ define	IF_SIZE		sizeof(struct irqframe)
 
 define	SIGF_SC		offsetof(struct sigframe, sf_sc)
 
+if NECA > 0
 define	M_NEXT		offsetof(struct mbuf, m_next)
 define	M_DATA		offsetof(struct mbuf, m_data)
 define	M_LEN		offsetof(struct mbuf, m_len)
+
+define	EFS_FIQHANDLER	offsetof(struct eca_fiqstate, efs_fiqhandler)
+define	EFS_RX_CURMBUF	offsetof(struct eca_fiqstate, efs_rx_curmbuf)
+define	EFS_RX_FIQREGS	offsetof(struct eca_fiqstate, efs_rx_fiqregs)
+define	EFS_RX_FLAGS	offsetof(struct eca_fiqstate, efs_rx_flags)
+define	EFS_RX_MYADDR	offsetof(struct eca_fiqstate, efs_rx_myaddr)
+define	EFS_TX_CURMBUF	offsetof(struct eca_fiqstate, efs_tx_curmbuf)
+endif
+
