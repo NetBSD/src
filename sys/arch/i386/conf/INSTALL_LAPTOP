@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.55 2003/12/14 01:32:02 thorpej Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.56 2003/12/14 09:54:01 dyoung Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -438,6 +438,7 @@ com*	at mhzc?
 sm*	at mhzc?
 
 # CardBus network cards
+ath*	at cardbus? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at cardbus? dev ? function ?	# ADMtek ADM8211 (802.11)
 ex* 	at cardbus? dev ? function ?	# 3Com 3C575TX
 fxp* 	at cardbus? dev ? function ? 	# Intel i8255x

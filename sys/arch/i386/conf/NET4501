@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.22 2003/10/13 05:46:26 dyoung Exp $
+# $NetBSD: NET4501,v 1.23 2003/12/14 09:54:01 dyoung Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.22 $"
+#ident 		"NET4501-$Revision: 1.23 $"
 
 maxusers	32		# estimated number of users
 
@@ -208,6 +208,7 @@ cardbus*	at cardslot?
 pcmcia* 	at cardslot?
 
 # Cardbus NICs
+ath*	at cardbus? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at cardbus? dev ? function ?	# ADMtek ADM8211 (802.11)
 
 # Coprocessor Support
