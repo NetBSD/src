@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.25 1995/04/17 12:07:47 cgd Exp $	*/
+/*	$NetBSD: vector.s,v 1.26 1995/04/22 00:30:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -210,7 +210,7 @@ _Xresume/**/irq_num/**/:						;\
 	movl	_intrhand + (irq_num) * 4,%ebx	/* head of chain */	;\
 	testl	%ebx,%ebx						;\
 	jz	_Xstray/**/irq_num	/* no handlears; we're stray */	;\
-	STRAY_INITIALIZE						;\
+	STRAY_INITIALIZE		/* nobody claimed it yet */	;\
 7:	movl	IH_ARG(%ebx),%eax	/* get handler arg */		;\
 	testl	%eax,%eax						;\
 	jnz	4f							;\
@@ -218,12 +218,12 @@ _Xresume/**/irq_num/**/:						;\
 4:	pushl	%eax							;\
 	call	IH_FUN(%ebx)		/* call it */			;\
 	addl	$4,%esp			/* toss the arg */		;\
-	STRAY_INTEGRATE							;\
+	STRAY_INTEGRATE			/* maybe he claimed it */	;\
 	incl	IH_COUNT(%ebx)		/* count the intrs */		;\
 	movl	IH_NEXT(%ebx),%ebx	/* next handler in chain */	;\
 	testl	%ebx,%ebx						;\
 	jnz	7b							;\
-	STRAY_TEST							;\
+	STRAY_TEST			/* see if it's a stray */	;\
 5:	UNMASK(irq_num, icu)		/* unmask it in hardware */	;\
 	INTREXIT			/* lower spl and do ASTs */	;\
 IDTVEC(stray/**/irq_num)						;\
@@ -237,12 +237,12 @@ IDTVEC(hold/**/irq_num)							;\
 
 #if defined(DEBUG) && defined(notdef)
 #define	STRAY_INITIALIZE \
-	xorl	%esi,%esi		/* nobody claimed it yet */
+	xorl	%esi,%esi
 #define	STRAY_INTEGRATE \
-	orl	%eax,%esi		/* maybe he claimed it */
+	orl	%eax,%esi
 #define	STRAY_TEST \
-	testl	%esi,%esi		/* no more handlers */		;\
-	jz	_Xstray/**/irq_num	/* nobody claimed it */	
+	testl	%esi,%esi						;\
+	jz	_Xstray/**/irq_num
 #else /* !DEBUG */
 #define	STRAY_INITIALIZE
 #define	STRAY_INTEGRATE
