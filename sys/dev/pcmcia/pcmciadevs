@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.22 1998/12/18 21:12:14 thorpej Exp $
+$NetBSD: pcmciadevs,v 1.23 1998/12/18 21:52:53 thorpej Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -134,6 +134,7 @@ vendor ACCTON			-1 	ACCTON
 vendor YEDATA			-1 	Y-E DATA
 vendor DIGITAL			-1 	Digital Equipment Corporation
 vendor TEAC			-1	TEAC
+vendor SVEC			-1	SVEC/Hawking Technology
 
 product MEGAHERTZ XJ2288 	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL } Megahertz XJ2288 Modem
 product PREMAX PE200		{ "PMX&sp&sp&sp", "PE-200", NULL, NULL } PreMax PE-200
@@ -147,3 +148,4 @@ product DIGITAL DEPCMXX		{ "DIGITAL", "DEPCM-XX", NULL, NULL } DEC DEPCM-BA
 product TEAC IDECARDII		{ NULL, "NinjaATA-", NULL, NULL } TEAC IDE Card/II
 product LINKSYS ECARD_2	{ "LINKSYS", "E-CARD", NULL, NULL } Linksys E-Card
 product COREGA PCC_2	{ "corega&spK.K.", "corega&spEther&spPCC-T", NULL, NULL } Corega
+product SVEC COMBOCARD	{ "Ethernet", "Adapter", NULL, NULL } SVEC/Hawking Tech. Combo Card
