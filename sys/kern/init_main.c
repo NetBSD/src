@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.212 2002/11/24 17:33:43 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.213 2002/12/05 10:30:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.212 2002/11/24 17:33:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.213 2002/12/05 10:30:00 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -526,7 +526,8 @@ main(void)
 		panic("fork syncer");
 
 	/* Create the aiodone daemon kernel thread. */
-	if (kthread_create1(uvm_aiodone_daemon, NULL, NULL, "aiodoned"))
+	if (kthread_create1(uvm_aiodone_daemon, NULL, &uvm.aiodoned_proc,
+	    "aiodoned"))
 		panic("fork aiodoned");
 
 #if defined(MULTIPROCESSOR)
