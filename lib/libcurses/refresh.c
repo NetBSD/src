@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.28 2000/04/29 02:51:16 mycroft Exp $	*/
+/*	$NetBSD: refresh.c,v 1.29 2000/05/07 21:22:43 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.28 2000/04/29 02:51:16 mycroft Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.29 2000/05/07 21:22:43 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -98,7 +98,8 @@ wnoutrefresh(WINDOW *win)
 	if (win->flags & __CLEAROK)
 		win->flags &= ~__CLEAROK;
 
-	for (wy = 0; wy < win->maxy; wy++) {
+	for (wy = 0, y_off = win->begy; wy < win->maxy &&
+	    y_off < __virtscr->maxy; wy++, y_off++) {
 #ifdef DEBUG
 		__CTRACE("wnoutrefresh: wy %d\tf: %d\tl:%d\tflags %x\n", wy,
 		    *win->lines[wy]->firstchp,
@@ -109,8 +110,8 @@ wnoutrefresh(WINDOW *win)
 		if (*win->lines[wy]->firstchp <= win->maxx + win->ch_off &&
 		    *win->lines[wy]->lastchp >= win->ch_off) {
 			/* Copy line from "win" to "__virtscr". */
-			for (wx = 0; wx < win->maxx; wx++) {
-				x_off = wx + win->begx;
+			for (wx = 0, x_off = win->begx; wx < win->maxx &&
+			    x_off < __virtscr->maxx; wx++, x_off++) {
 				__virtscr->lines[y_off]->line[x_off].attr =
 				    win->lines[wy]->line[wx].attr;
 				if (!(win->lines[wy]->line[wx].attr & __COLOR)
