@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.19 2001/02/24 01:05:04 cgd Exp $
+$NetBSD: UPDATING,v 1.20 2001/02/24 20:23:10 jmc Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -10,11 +10,13 @@ Recent changes:
 
 20010219:
 	get/setprogname() added. Any hostprog's that may use this will need
-        to be bootstraped manually until the host system is current.
+        to be bootstrapped manually until the host system is current.
 
         Known problems: sys/arch/macppc/stand/fixcoff
 			usr.sbin/config (adding -DMAKE_BOOTSTRAP to
 			  CFLAGS and rebuilding should work)
+			usr.sbin/mdsetimage - Build a static copy if
+  		          building a snapshot before fully bootstrapped.
 
 20010204:
 	prepare the code to compile with stricter gcc flags. in
