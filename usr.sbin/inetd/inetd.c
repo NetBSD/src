@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.67 2000/07/05 12:43:06 itojun Exp $	*/
+/*	$NetBSD: inetd.c,v 1.68 2000/07/07 14:56:45 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.67 2000/07/05 12:43:06 itojun Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.68 2000/07/07 14:56:45 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -870,6 +870,19 @@ config(signo)
 			struct addrinfo hints, *res;
 			char *host, *port;
 			int error;
+			int s;
+
+			/* check if the family is supported */
+			s = socket(sep->se_family, SOCK_DGRAM, 0);
+			if (s < 0) {
+				syslog(LOG_WARNING,
+"%s/%s: %s: the address family is not supported by the kernel",
+				    sep->se_service, sep->se_proto,
+				    sep->se_hostaddr);
+				sep->se_checked = 0;
+				continue;
+			}
+			close(s);
 
 			memset(&hints, 0, sizeof(hints));
 			hints.ai_family = sep->se_family;
@@ -885,13 +898,8 @@ config(signo)
 				port = sep->se_service;
 			error = getaddrinfo(host, port, &hints, &res);
 			if (error) {
-				if (error == EAI_NODATA && host == NULL) {
-					syslog(LOG_WARNING, "%s/%s: %s: "
-					    "the address family is not "
-					    "supported by the kernel",
-					    sep->se_service, sep->se_proto,
-					    sep->se_hostaddr);
-				} else if (error == EAI_SERVICE) {
+				if (error == EAI_SERVICE) {
+					/* gai_strerror not friendly enough */
 					syslog(LOG_WARNING, "%s/%s: "
 					    "unknown service",
 					    sep->se_service, sep->se_proto);
