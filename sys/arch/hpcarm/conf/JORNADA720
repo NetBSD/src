@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.21 2002/06/17 05:14:10 lukem Exp $
+#	$NetBSD: JORNADA720,v 1.22 2002/06/22 13:04:00 toshii Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.21 $"
+#ident 		"GENERIC-$Revision: 1.22 $"
 
 # estimated number of users
 maxusers	32
@@ -94,7 +94,7 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 
-options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
+#options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
 #options 	MEMORY_DISK_ROOT_SIZE=3400	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
