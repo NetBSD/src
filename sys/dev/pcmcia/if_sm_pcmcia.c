@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.43 2004/08/10 18:39:08 mycroft Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.44 2004/08/10 18:43:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.43 2004/08/10 18:39:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.44 2004/08/10 18:43:49 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,6 @@ sm_pcmcia_attach(parent, self, aux)
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	int error;
 
-	aprint_normal("\n");
 	psc->sc_pf = pa->pf;
 
 	error = pcmcia_function_configure(pa->pf, sm_pcmcia_validate_config);

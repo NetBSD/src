@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.81 2004/08/10 18:39:08 mycroft Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.82 2004/08/10 18:43:50 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.81 2004/08/10 18:39:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.82 2004/08/10 18:43:50 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -200,7 +200,6 @@ wdc_pcmcia_attach(parent, self, aux)
 	int i;
 	int error;
 
-	aprint_normal("\n");
 	sc->sc_pf = pa->pf;
 
 	/*XXXmem16|common*/

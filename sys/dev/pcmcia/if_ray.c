@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.52 2004/08/10 15:29:56 mycroft Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.53 2004/08/10 18:43:49 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.52 2004/08/10 15:29:56 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.53 2004/08/10 18:43:49 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -518,7 +518,6 @@ ray_attach(parent, self, aux)
 	struct ray_ecf_startup *ep;
 	int error;
 
-	aprint_normal("\n");
 	sc->sc_pf = pa->pf;
 
 	/*XXXmem8|common*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.17 2004/08/10 18:39:08 mycroft Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.18 2004/08/10 18:43:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.17 2004/08/10 18:39:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.18 2004/08/10 18:43:50 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,6 @@ pcmcom_attach(parent, self, aux)
 	size_t size;
 	int i;
 
-	printf("\n");
 	sc->sc_pf = pa->pf;
 
 	pp = pcmcia_product_lookup(pa, pcmcom_products, pcmcom_nproducts,

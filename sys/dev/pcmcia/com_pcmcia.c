@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.45 2004/08/10 06:10:38 mycroft Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.46 2004/08/10 18:43:49 mycroft Exp $	 */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.45 2004/08/10 06:10:38 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.46 2004/08/10 18:43:49 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,7 +219,6 @@ com_pcmcia_attach(parent, self, aux)
 	struct pcmcia_config_entry *cfe;
 	int error;
 
-	aprint_normal("\n");
 	psc->sc_pf = pa->pf;
 
 	error = pcmcia_function_configure(pa->pf, com_pcmcia_validate_config);
