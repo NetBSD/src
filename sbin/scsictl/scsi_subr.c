@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_subr.c,v 1.6 2002/06/26 16:04:12 mjacob Exp $	*/
+/*	$NetBSD: scsi_subr.c,v 1.7 2002/10/08 20:17:06 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ scsi_command(fd, cmd, cmdlen, data, datalen, timeout, flags)
 	else if (req.retsts == SCCMD_SENSE)
 		scsi_print_sense(dvname, &req, 1);
 	else
-		fprintf(stderr, "%s: device had unknown status %x", dvname,
+		fprintf(stderr, "%s: device had unknown status %x\n", dvname,
 		    req.retsts);
 
 	exit(1);
