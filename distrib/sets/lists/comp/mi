@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.442 2002/05/25 02:18:36 gmcgarry Exp $
+#	$NetBSD: mi,v 1.443 2002/05/28 11:35:40 itojun Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -2912,6 +2912,7 @@
 ./usr/share/man/cat9/VREF.0		comp-sys-catman
 ./usr/share/man/cat9/access.0		comp-sys-catman
 ./usr/share/man/cat9/altq.0		comp-sys-catman
+./usr/share/man/cat9/arc4random.0		comp-sys-catman
 ./usr/share/man/cat9/arp.0		comp-sys-catman
 ./usr/share/man/cat9/arp_ifinit.0		comp-sys-catman
 ./usr/share/man/cat9/arpintr.0		comp-sys-catman
@@ -5429,6 +5430,7 @@
 ./usr/share/man/man9/VREF.9		comp-sys-man
 ./usr/share/man/man9/access.9		comp-sys-man
 ./usr/share/man/man9/altq.9		comp-sys-man
+./usr/share/man/man9/arc4random.9		comp-sys-man
 ./usr/share/man/man9/arp.9		comp-sys-man
 ./usr/share/man/man9/arp_ifinit.9		comp-sys-man
 ./usr/share/man/man9/arpintr.9		comp-sys-man
