@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.71 2003/12/20 10:09:20 grant Exp $	*/
+/*	$NetBSD: file.c,v 1.72 2004/12/29 11:35:00 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.71 2003/12/20 10:09:20 grant Exp $");
+__RCSID("$NetBSD: file.c,v 1.72 2004/12/29 11:35:00 agc Exp $");
 #endif
 #endif
 
@@ -233,10 +233,10 @@ fileURLFilename(const char *fname, char *where, int max)
 char   *
 fileGetURL(const char *spec)
 {
-	char    host[MAXHOSTNAMELEN], file[FILENAME_MAX];
+	char    host[MAXHOSTNAMELEN], file[MaxPathSize];
 	const char *cp;
 	char   *rp;
-	char    pen[FILENAME_MAX];
+	char    pen[MaxPathSize];
 	int     rc;
 
 	rp = NULL;
@@ -250,7 +250,7 @@ fileGetURL(const char *spec)
 		warnx("URL `%s' has bad host part!", spec);
 		return NULL;
 	}
-	cp = fileURLFilename(spec, file, FILENAME_MAX);
+	cp = fileURLFilename(spec, file, MaxPathSize);
 	if (!*cp) {
 		warnx("URL `%s' has bad filename part!", spec);
 		return NULL;
@@ -280,7 +280,7 @@ fileGetURL(const char *spec)
 static char *
 resolvepattern1(const char *name)
 {
-	static char tmp[FILENAME_MAX];
+	static char tmp[MaxPathSize];
 	char *cp;
 
 	if (IS_URL(name)) {
@@ -316,7 +316,7 @@ resolvepattern1(const char *name)
 static char *
 resolvepattern(const char *name)
 {
-	char tmp[FILENAME_MAX];
+	char tmp[MaxPathSize];
 	char *cp;
 	const char *suf;
 
@@ -353,7 +353,7 @@ resolvepattern(const char *name)
 char   *
 fileFindByPath(const char *fname)
 {
-	char    tmp[FILENAME_MAX];
+	char    tmp[MaxPathSize];
 	struct path *path;
 
 	/*
@@ -377,7 +377,7 @@ fileFindByPath(const char *fname)
 			snprintf(tmp, sizeof(tmp), "%s/%s", cp2, fname);
 		}
 		else {
-			char cwdtmp[MAXPATHLEN];
+			char cwdtmp[MaxPathSize];
 			if (getcwd(cwdtmp, sizeof(cwdtmp)) == NULL)
 				errx(EXIT_FAILURE, "getcwd");
 			snprintf(tmp, sizeof(tmp), "%s/%s/%s", cwdtmp, cp2, fname);
@@ -493,7 +493,7 @@ write_file(char *name, char *str)
 void
 copy_file(char *dir, char *fname, char *to)
 {
-	char    fpath[FILENAME_MAX];
+	char    fpath[MaxPathSize];
 
 	(void) snprintf(fpath, sizeof(fpath), "%s%s%s",
 			(fname[0] != '/') ? dir : "",
@@ -508,7 +508,7 @@ copy_file(char *dir, char *fname, char *to)
 void
 move_file(char *dir, char *fname, char *to)
 {
-	char    fpath[FILENAME_MAX];
+	char    fpath[MaxPathSize];
 
 	(void) snprintf(fpath, sizeof(fpath), "%s%s%s",
 			(fname[0] != '/') ? dir : "",
@@ -523,7 +523,7 @@ move_file(char *dir, char *fname, char *to)
 void
 remove_files(const char *path, const char *pattern)
 {
-	char	fpath[FILENAME_MAX];
+	char	fpath[MaxPathSize];
 	glob_t	globbed;
 	int	i;
 
@@ -561,7 +561,7 @@ int
 unpack(const char *pkg, const char *flist)
 {
 	char args[10] = "-";
-	char cmd[FILENAME_MAX];
+	char cmd[MaxPathSize];
 	const char *decompress_cmd = NULL;
 	const char *suf;
 
@@ -608,7 +608,7 @@ unpack(const char *pkg, const char *flist)
 void
 format_cmd(char *buf, size_t size, char *fmt, char *dir, char *name)
 {
-	char    scratch[FILENAME_MAX * 2];
+	char    scratch[MaxPathSize * 2];
 	char   *bufp;
 	char   *cp;
 
