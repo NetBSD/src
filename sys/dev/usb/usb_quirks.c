@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.17 1999/11/16 11:39:48 augustss Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.18 1999/11/16 12:08:38 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ static struct usbd_quirk_entry {
  { USB_VENDOR_DALLAS, USB_PRODUCT_DALLAS_J6502,	    0x0a2, { UQ_BAD_ADC }},
  { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_N48,   0x110, { UQ_MS_REVZ }},
  { USB_VENDOR_ALTEC, USB_PRODUCT_ALTEC_ASC495,      0x000, { UQ_BAD_AUDIO }},
-/* { USB_VENDOR_QTRONIX, USB_PRODUCT_QTRONIX_KEYB_PS2,0x110, { UQ_SPUR_BUT_UP }},*/
+ { USB_VENDOR_QTRONIX, USB_PRODUCT_QTRONIX_980N,    0x110, { UQ_SPUR_BUT_UP }},
  { 0, 0, 0, { 0 } }
 };
 
