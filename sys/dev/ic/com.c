@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.153 1999/02/03 23:57:27 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.154 1999/02/12 12:45:48 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -286,9 +286,10 @@ comprobe1(iot, ioh)
 {
 
 	/* force access to id reg */
-	bus_space_write_1(iot, ioh, com_lcr, 0);
+	bus_space_write_1(iot, ioh, com_lcr, LCR_8BITS);
 	bus_space_write_1(iot, ioh, com_iir, 0);
-	if (bus_space_read_1(iot, ioh, com_iir) & 0x38)
+	if ((bus_space_read_1(iot, ioh, com_lcr) != LCR_8BITS) ||
+	    (bus_space_read_1(iot, ioh, com_iir) & 0x38))
 		return (0);
 
 	return (1);
