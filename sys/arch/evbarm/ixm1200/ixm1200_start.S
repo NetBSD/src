@@ -1,4 +1,4 @@
-/* $NetBSD: ixm1200_start.S,v 1.1 2002/07/15 17:13:32 ichiro Exp $ */
+/* $NetBSD: ixm1200_start.S,v 1.2 2002/07/21 14:26:05 ichiro Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -181,3 +181,5 @@ Lstart:
 
 Ltable:
 	.word	0xc0200000 - 0x4000	/* our KERNEL_TEXT_BASE - 16KB */
+
+/* end of ixm1200_start.S */

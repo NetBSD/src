@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpcom_ixm.c,v 1.1 2002/07/20 03:09:05 ichiro Exp $ */
+/*	$NetBSD: ixpcom_ixm.c,v 1.2 2002/07/21 14:26:05 ichiro Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -84,6 +84,8 @@ ixpcom_ixm_attach(parent, self, aux)
 	isc->sc_iot = sa->sa_iot;
 	sc->sc_iot = sa->sa_iot;
 	sc->sc_baseaddr = sa->sa_addr;
+
+	printf("\n");
 
 	if (bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 0,
 			 &sc->sc_ioh)) {
