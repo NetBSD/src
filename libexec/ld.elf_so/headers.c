@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.10 2002/07/10 15:12:34 fredette Exp $	 */
+/*	$NetBSD: headers.c,v 1.11 2002/09/05 16:58:16 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -238,9 +238,15 @@ _rtld_digest_dynamic(obj)
 	obj->rellim = (const Elf_Rel *)((caddr_t)obj->rel + relsz);
 	obj->relalim = (const Elf_Rela *)((caddr_t)obj->rela + relasz);
 	if (plttype == DT_REL) {
+		/* On PPC and SPARC, at least, REL(A)SZ may include PLTREL. */
+		if (obj->rellim && obj->pltrel && obj->rellim > obj->pltrel)
+			obj->rellim = obj->pltrel;
 		obj->pltrellim = (const Elf_Rel *)((caddr_t)obj->pltrel + pltrelsz);
 		obj->pltrelalim = 0;
 	} else {
+		/* On PPC and SPARC, at least, REL(A)SZ may include PLTREL. */
+		if (obj->relalim && obj->pltrela && obj->relalim > obj->pltrela)
+			obj->relalim = obj->pltrela;
 		obj->pltrellim = 0;
 		obj->pltrelalim = (const Elf_Rela *)((caddr_t)obj->pltrela + pltrelsz);
 	}
