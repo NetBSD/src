@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.28 2000/07/24 04:45:49 mycroft Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.29 2000/07/24 04:54:16 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -69,8 +69,8 @@ CWARNFLAGS=	-Wimplicit -Wunused -Wswitch -Wcomment -Wtrigraphs -Wchar-subscripts
 #CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -Wa,-Av9a -mno-fpu
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -Wa,-Av9a
-LINKFLAGS=	-p -Ttext f1000000 -Tdata f1400000 -e start
-#LINKFLAGS=	-N -p -Ttext f1000000 -e start
+LINKFLAGS=	-Ttext f1000000 -Tdata f1400000 -e start
+#LINKFLAGS=	-N -Ttext f1000000 -e start
 STRIPFLAGS=	-g
 
 %INCLUDES
