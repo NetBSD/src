@@ -1,4 +1,4 @@
-/* $NetBSD: mcbusvar.h,v 1.2 1998/04/15 20:40:34 mjacob Exp $ */
+/* $NetBSD: mcbusvar.h,v 1.2.8.1 1999/04/16 23:33:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -59,7 +59,6 @@ struct mcbus_cpu_busdep {
 	u_int8_t	mcbus_bcache;	/* BCache on this CPU */
 	u_int8_t	mcbus_valid;
 };
-extern struct mcbus_cpu_busdep mcbus_primary;
 
 #define	MCBUS_CPU_BCACHE_0MB	0
 #define	MCBUS_CPU_BCACHE_1MB	1
@@ -73,3 +72,8 @@ extern struct mcbus_cpu_busdep mcbus_primary;
 #define	MCBUS_TYPE_MEM	2
 #define	MCBUS_TYPE_CPU	3
 #define	MCBUS_TYPE_PCI	4
+
+#ifdef _KERNEL
+extern struct mcbus_cpu_busdep mcbus_primary;
+extern const int mcbus_mcpcia_probe_order[];
+#endif
