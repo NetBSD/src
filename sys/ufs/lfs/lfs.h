@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.36.4.2 2001/07/02 17:48:17 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.36.4.3 2001/07/10 01:43:29 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -148,6 +148,8 @@
 
 #define LFS_ITIMES(ip, acc, mod, cre)  do {				\
        	if ((ip)->i_flag & IN_ACCESS) {                        		\
+		(ip)->i_ffs_atime = (acc)->tv_sec;			\
+		(ip)->i_ffs_atimensec = (acc)->tv_nsec;			\
 		if ((ip)->i_lfs->lfs_version > 1) {			\
 			struct buf *ibp;				\
 			IFILE *ifp;					\
@@ -158,8 +160,6 @@
 			VOP_BWRITE(ibp);				\
 			(ip)->i_flag &= ~IN_ACCESS;			\
 		} else {						\
-			(ip)->i_ffs_atime = (acc)->tv_sec;		\
-			(ip)->i_ffs_atimensec = (acc)->tv_nsec;		\
 			LFS_SET_UINO(ip, IN_ACCESSED);			\
 		}                                              		\
 	}								\
@@ -460,7 +460,8 @@ typedef struct _cleanerinfo {
 	u_int32_t dirty;		/* number of dirty segments */
 	u_int32_t bfree;		/* disk blocks free */
 	int32_t   avail;		/* disk blocks available */
-	u_int32_t free_ino;             /* head of the inode free list */
+	u_int32_t free_head;            /* head of the inode free list */
+	u_int32_t free_tail;            /* tail of the inode free list */
 } CLEANERINFO;
 
 #define	CLEANSIZE_SU(fs)						\
@@ -589,22 +590,34 @@ struct segsum {
 	brelse(bp);                                              \
 } while(0)
 
-#define LFS_GET_FREEINUM(FS, CIP, BP, FREEP) do {                       \
+#define LFS_GET_HEADFREE(FS, CIP, BP, FREEP) do {                       \
 	if ((FS)->lfs_version > 1) {                                    \
 		LFS_CLEANERINFO((CIP), (FS), (BP));                     \
-		(FS)->lfs_free = (CIP)->free_ino;			\
+		(FS)->lfs_free = (CIP)->free_head;			\
 		brelse(BP);                                             \
 	}								\
 	*(FREEP) = (FS)->lfs_free;					\
 } while (0)
 
-#define LFS_PUT_FREEINUM(FS, CIP, BP, VAL) do {                         \
+#define LFS_PUT_HEADFREE(FS, CIP, BP, VAL) do {                         \
 	(FS)->lfs_free = (VAL);						\
 	if ((FS)->lfs_version > 1) {                                    \
 		LFS_CLEANERINFO((CIP), (FS), (BP));                     \
-		(CIP)->free_ino = (VAL);                 		\
+		(CIP)->free_head = (VAL);                 		\
 		VOP_BWRITE(BP);                                         \
 	}                                                               \
+} while (0)
+
+#define LFS_GET_TAILFREE(FS, CIP, BP, FREEP) do {                       \
+	LFS_CLEANERINFO((CIP), (FS), (BP));                     	\
+	*(FREEP) = (CIP)->free_tail;					\
+	brelse(BP);                                             	\
+} while (0)
+
+#define LFS_PUT_TAILFREE(FS, CIP, BP, VAL) do {                         \
+	LFS_CLEANERINFO((CIP), (FS), (BP));                     	\
+	(CIP)->free_tail = (VAL);                 			\
+	VOP_BWRITE(BP);                                         	\
 } while (0)
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.47.2.4 2001/07/02 17:48:18 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.47.2.5 2001/07/10 01:43:28 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -160,9 +160,9 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
 	ifp->if_version = version;
 	brelse(bp);
 
-	LFS_GET_FREEINUM(fs, cip, cbp, &ino);
+	LFS_GET_HEADFREE(fs, cip, cbp, &ino);
 	if (ino) {
-		LFS_PUT_FREEINUM(fs, cip, cbp, oldnext);
+		LFS_PUT_HEADFREE(fs, cip, cbp, oldnext);
 	} else {
 		tino = ino;
 		while(1) {
@@ -237,8 +237,8 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 	
 	i = (blkno - fs->lfs_segtabsz - fs->lfs_cleansz) *
 		fs->lfs_ifpb;
-	LFS_GET_FREEINUM(fs, cip, cbp, &oldlast);
-	LFS_PUT_FREEINUM(fs, cip, cbp, i);
+	LFS_GET_HEADFREE(fs, cip, cbp, &oldlast);
+	LFS_PUT_HEADFREE(fs, cip, cbp, i);
 #ifdef DIAGNOSTIC
 	if(fs->lfs_free == LFS_UNUSED_INUM)
 		panic("inode 0 allocated [2]");
@@ -308,7 +308,7 @@ lfs_valloc(void *v)
 	}
 
 	/* Get the head of the freelist. */
-	LFS_GET_FREEINUM(fs, cip, cbp, &new_ino);
+	LFS_GET_HEADFREE(fs, cip, cbp, &new_ino);
 
 #ifdef DIAGNOSTIC
 	if(new_ino == LFS_UNUSED_INUM) {
@@ -329,7 +329,7 @@ lfs_valloc(void *v)
 	LFS_IENTRY(ifp, fs, new_ino, bp);
 	if (ifp->if_daddr != LFS_UNUSED_DADDR)
 		panic("lfs_valloc: inuse inode %d on the free list", new_ino);
-	LFS_PUT_FREEINUM(fs, cip, cbp, ifp->if_nextfree);
+	LFS_PUT_HEADFREE(fs, cip, cbp, ifp->if_nextfree);
 
 	new_gen = ifp->if_version; /* version was updated by vfree */
 	brelse(bp);
@@ -337,7 +337,7 @@ lfs_valloc(void *v)
 	/* Extend IFILE so that the next lfs_valloc will succeed. */
 	if (fs->lfs_free == LFS_UNUSED_INUM) {
 		if ((error = extend_ifile(fs, ap->a_cred)) != 0) {
-			LFS_PUT_FREEINUM(fs, cip, cbp, new_ino);
+			LFS_PUT_HEADFREE(fs, cip, cbp, new_ino);
 			if (fs->lfs_version == 1)
 				lfs_segunlock(fs);
 			else
@@ -423,8 +423,8 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 	 */
 	LFS_IENTRY(ifp, fs, new_ino, bp);
 	ifp->if_daddr = LFS_UNUSED_DADDR;
-	LFS_GET_FREEINUM(fs, cip, cbp, &(ifp->if_nextfree));
-	LFS_PUT_FREEINUM(fs, cip, cbp, new_ino);
+	LFS_GET_HEADFREE(fs, cip, cbp, &(ifp->if_nextfree));
+	LFS_PUT_HEADFREE(fs, cip, cbp, new_ino);
 	(void) VOP_BWRITE(bp); /* Ifile */
 
 	*vpp = NULLVP;
@@ -485,7 +485,7 @@ lfs_vfree(void *v)
 	struct vnode *vp;
 	struct lfs *fs;
 	ufs_daddr_t old_iaddr;
-	ino_t ino;
+	ino_t ino, otail;
 	extern int lfs_dirvcount;
 	
 	/* Get the inode number and file system. */
@@ -519,15 +519,31 @@ lfs_vfree(void *v)
 
 	/*
 	 * Set the ifile's inode entry to unused, increment its version number
-	 * and link it into the free chain.
+	 * and link it onto the free chain.
 	 */
 	LFS_IENTRY(ifp, fs, ino, bp);
 	old_iaddr = ifp->if_daddr;
 	ifp->if_daddr = LFS_UNUSED_DADDR;
 	++ifp->if_version;
-	LFS_GET_FREEINUM(fs, cip, cbp, &(ifp->if_nextfree));
-	LFS_PUT_FREEINUM(fs, cip, cbp, ino);
-	(void) VOP_BWRITE(bp); /* Ifile */
+	if (fs->lfs_version == 1) {
+		LFS_GET_HEADFREE(fs, cip, cbp, &(ifp->if_nextfree));
+		LFS_PUT_HEADFREE(fs, cip, cbp, ino);
+		(void) VOP_BWRITE(bp); /* Ifile */
+	} else {
+		ifp->if_nextfree = LFS_UNUSED_INUM;
+		/*
+		 * XXX Writing the freed node here means that it might not
+		 * XXX make it into the free list in the event of a crash
+		 * XXX (the ifile could be written before the rest of this
+		 * XXX completes).
+		 */
+		(void) VOP_BWRITE(bp); /* Ifile */
+		LFS_GET_TAILFREE(fs, cip, cbp, &otail);
+		LFS_IENTRY(ifp, fs, otail, bp);
+		ifp->if_nextfree = ino;
+		VOP_BWRITE(bp);
+		LFS_PUT_TAILFREE(fs, cip, cbp, ino);
+	}
 #ifdef DIAGNOSTIC
 	if(ino == LFS_UNUSED_INUM) {
 		panic("inode 0 freed");
