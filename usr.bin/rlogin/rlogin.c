@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.7 1995/05/17 13:35:50 mycroft Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.8 1995/10/05 09:07:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: rlogin.c,v 1.7 1995/05/17 13:35:50 mycroft Exp $";
+static char rcsid[] = "$NetBSD: rlogin.c,v 1.8 1995/10/05 09:07:22 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -635,10 +635,9 @@ oob(signo)
 	int signo;
 {
 	struct termios tty;
-	int atmark, n, out, rcvd;
+	int atmark, n, rcvd;
 	char waste[BUFSIZ], mark;
 
-	out = O_RDWR;
 	rcvd = 0;
 	while (recv(rem, &mark, 1, MSG_OOB) < 0) {
 		switch (errno) {
@@ -679,7 +678,7 @@ oob(signo)
 		(void)tcsetattr(0, TCSANOW, &tty);
 	}
 	if (mark & TIOCPKT_FLUSHWRITE) {
-		(void)ioctl(1, TIOCFLUSH, (char *)&out);
+		(void)tcflush(1, TCIOFLUSH);
 		for (;;) {
 			if (ioctl(rem, SIOCATMARK, &atmark) < 0) {
 				(void)fprintf(stderr, "rlogin: ioctl: %s.\n",
