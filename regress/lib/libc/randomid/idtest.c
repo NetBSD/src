@@ -1,4 +1,4 @@
-/* $NetBSD: idtest.c,v 1.2 2003/11/25 23:14:48 itojun Exp $ */
+/* $NetBSD: idtest.c,v 1.3 2003/11/29 00:11:18 simonb Exp $ */
 
 /* If defined, abort at first short period and only test REGRESS times. */
 #define	REGRESS		10000000		/* should be enough... */
@@ -6,9 +6,10 @@
 #include <sys/types.h>
 
 #include <assert.h>
-#include <string.h>
-#include <limits.h>
 #include <randomid.h>
+#include <inttypes.h>
+#include <stdio.h>
+#include <string.h>
 
 #define	PERIOD		12000
 
@@ -26,18 +27,24 @@ main()
 	memset(last, 0, sizeof(last));
 	ctx = randomid_new(16, (long)3600);
 
-	lowest = 0xffffffffffffffffULL;
-	while (n < ULLONG_MAX) {
+	lowest = UINT64_MAX;
+	while (n < UINT64_MAX) {
 		id = randomid(ctx);
 		if (last[id] > 0) {
 			if (n - last[id] <= lowest) {
-				if (lowest != 0xffffffffffffffffULL) {
+				if (lowest != UINT64_MAX) {
 					printf("id %5d  "
 					    "last call for id at %9lld, "
 					    "current call %9lld (diff %5lld)\n",
 					    id, last[id], n, n - last[id]);
 #ifdef REGRESS
-					assert(lowest >= REGRESS);
+					if (n - last[id] < PERIOD) {
+						printf("diff (%"PRIu64") less "
+						    "than minimum period "
+						    "(%d)\n", n - last[id],
+						    PERIOD);
+						abort();
+					}
 #endif
 				}
 				lowest = n - last[id];
@@ -52,4 +59,3 @@ main()
 	}
 	exit(0);
 }
-
