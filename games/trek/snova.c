@@ -1,4 +1,4 @@
-/*	$NetBSD: snova.c,v 1.3 1995/04/22 10:59:29 cgd Exp $	*/
+/*	$NetBSD: snova.c,v 1.4 1997/10/12 21:25:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,15 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)snova.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: snova.c,v 1.3 1995/04/22 10:59:29 cgd Exp $";
+__RCSID("$NetBSD: snova.c,v 1.4 1997/10/12 21:25:18 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include <unistd.h>
+#include "trek.h"
 
 /*
 **  CAUSE SUPERNOVA TO OCCUR
@@ -64,15 +67,16 @@ static char rcsid[] = "$NetBSD: snova.c,v 1.3 1995/04/22 10:59:29 cgd Exp $";
 **	override mode.
 */
 
+void
 snova(x, y)
 int	x, y;
 {
-	int			qx, qy;
-	register int		ix, iy;
-	int			f;
-	int			dx, dy;
-	int			n;
-	register struct quad	*q;
+	int		qx, qy;
+	int		ix, iy = 0;
+	int		f;
+	int		dx, dy;
+	int		n;
+	struct quad	*q;
 
 	f = 0;
 	ix = x;
@@ -146,12 +150,12 @@ int	x, y;
 		/* Enterprise caused supernova */
 		Game.kills += dy;
 		if (q->bases)
-			killb(qx, qy, -1);
+			killb(qx, qy);
 		Game.killk += dx;
 	}
 	else
 		if (q->bases)
-			killb(qx, qy, 0);
+			killb(qx, qy);
 	killd(qx, qy, (x >= 0));
 	q->stars = -1;
 	q->klings = 0;

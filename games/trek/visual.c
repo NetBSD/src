@@ -1,4 +1,4 @@
-/*	$NetBSD: visual.c,v 1.3 1995/04/22 10:59:39 cgd Exp $	*/
+/*	$NetBSD: visual.c,v 1.4 1997/10/12 21:25:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,15 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)visual.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: visual.c,v 1.3 1995/04/22 10:59:39 cgd Exp $";
+__RCSID("$NetBSD: visual.c,v 1.4 1997/10/12 21:25:26 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include "trek.h"
+#include "getpar.h"
 
 /*
 **  VISUAL SCAN
@@ -55,24 +58,27 @@ static char rcsid[] = "$NetBSD: visual.c,v 1.3 1995/04/22 10:59:39 cgd Exp $";
 /* This struct[] has the delta x, delta y for particular directions */
 struct xy	Visdelta[11] =
 {
-	-1,	-1,
-	-1,	 0,
-	-1,	 1,
-	 0,	 1,
-	 1,	 1,
-	 1,	 0,
-	 1,	-1,
-	 0,	-1,
-	-1,	-1,
-	-1,	 0,
-	-1,	 1
+	{ -1,	-1 },
+	{ -1,	 0 },
+	{ -1,	 1 },
+	{  0,	 1 },
+	{  1,	 1 },
+	{  1,	 0 },
+	{  1,	-1 },
+	{  0,	-1 },
+	{ -1,	-1 },
+	{ -1,	 0 },
+	{ -1,	 1 }
 };
 
-visual()
+/*ARGSUSED*/
+void
+visual(z)
+	int z;
 {
-	register int		ix, iy;
-	int			co;
-	register struct xy	*v;
+	int		ix, iy;
+	int		co;
+	struct xy	*v;
 
 	co = getintpar("direction");
 	if (co < 0 || co > 360)

@@ -1,4 +1,4 @@
-/*	$NetBSD: srscan.c,v 1.3 1995/04/22 10:59:31 cgd Exp $	*/
+/*	$NetBSD: srscan.c,v 1.4 1997/10/12 21:25:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,16 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)srscan.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: srscan.c,v 1.3 1995/04/22 10:59:31 cgd Exp $";
+__RCSID("$NetBSD: srscan.c,v 1.4 1997/10/12 21:25:19 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
-# include	"getpar.h"
+#include <stdio.h>
+#include "trek.h"
+#include "getpar.h"
 
 /*
 **  SHORT RANGE SENSOR SCAN
@@ -67,16 +69,15 @@ char	*Color[4] =
 	"RED"
 };
 
+void
 srscan(f)
 int	f;
 {
-	register int		i, j;
-	register int		statinfo;
-	char			*s;
-	int			percent;
-	struct quad		*q;
-	extern struct cvntab	Skitab[];
-	extern struct cvntab	Lentab[];
+	int		i, j;
+	int		statinfo;
+	char		*s;
+	int		percent;
+	struct quad	*q = NULL;
 	struct cvntab		*p;
 
 	if (f >= 0 && check_out(SRSCAN))
