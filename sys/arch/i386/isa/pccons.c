@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.165 2003/05/14 12:10:04 drochner Exp $	*/
+/*	$NetBSD: pccons.c,v 1.166 2003/05/17 10:34:39 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.165 2003/05/14 12:10:04 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.166 2003/05/17 10:34:39 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -2741,7 +2741,7 @@ pc_xmode_on()
 
 #ifdef COMPAT_10
 	/* This is done by i386_iopl(3) now. */
-	fp = curlwp->p_md.md_regs;
+	fp = curlwp->l_md.md_regs;
 	fp->tf_eflags |= PSL_IOPL;
 #endif
 }
@@ -2761,7 +2761,7 @@ pc_xmode_off()
 #endif
 	async_update();
 
-	fp = curlwp->p_md.md_regs;
+	fp = curlwp->l_md.md_regs;
 	fp->tf_eflags &= ~PSL_IOPL;
 }
 #endif /* XSERVER */
