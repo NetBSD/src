@@ -1,4 +1,4 @@
-.\"	$NetBSD: pdisk.8,v 1.15 2003/04/24 07:43:53 dbj Exp $
+.\"	$NetBSD: pdisk.8,v 1.16 2003/04/24 12:28:12 wiz Exp $
 .Dd April 24, 2003
 .Os
 .Dt PDISK 8
@@ -39,8 +39,8 @@ to always ignore the device size listed in the partition table
 and compute the device size by other means.
 .It Fl d
 .It Fl -debug
-Turns on debugging.  Doesn't add that much output, but does add
-a new command
+Turns on debugging.
+Doesn't add that much output, but does add a new command
 .Sq x
 to the editing commands that accesses an eclectic bunch of
 undocumented functionality.
@@ -70,7 +70,8 @@ the partition tables for the specified
 .Ar devices .
 .It Fl L
 .It Fl -logical
-Show partition limits in logical blocks.  Default is physical blocks.
+Show partition limits in logical blocks.
+Default is physical blocks.
 .It Fl r
 .It Fl -readonly
 Prevents
@@ -161,7 +162,8 @@ The
 command is similar to the
 .Ic c
 command, with the addition of a partition type argument after the
-other arguments.  Choosing a type of Apple_UNIX_SVR2 will prompt for
+other arguments.
+Choosing a type of Apple_UNIX_SVR2 will prompt for
 the unix filesystem slice to set in the Block Zero Block bits.
 .Pp
 The
@@ -185,7 +187,8 @@ The index numbers are constrained to be a contiguous sequence.
 The
 .Ic t
 (change partition type) command allows the type of a partition to be
-changed.  Changing the type to Apple_UNIX_SVR2 will prompt for the
+changed.
+Changing the type to Apple_UNIX_SVR2 will prompt for the
 unix filesystem slice to set in the Block Zero Block bits.
 .Pp
 The
@@ -198,7 +201,6 @@ In order to use the new partition map you must reboot.
 .Xr fdisk 8 ,
 .Xr newfs 8
 .Sh HISTORY
-
 The
 .Nm
 utility was originally developed for MkLinux.
@@ -219,18 +221,18 @@ The
 option has not been heavily tested.
 .Pp
 .Nm
-will first try to use 
+will first try to use
 .Xr lseek 2
 with
 .Dv SEEK_END
-to compute the size of the device.  If this fails, it will try
-a binary search using
+to compute the size of the device.
+If this fails, it will try a binary search using
 .Xr lseek 2
 and
 .Xr read 2
-to find the end of the device.  This has been observed to fail on some
-raw disk devices.  As a workaround, try using the block device
-instead.
+to find the end of the device.
+This has been observed to fail on some raw disk devices.
+As a workaround, try using the block device instead.
 .Nm
 should probably read the disklabel using the
 .Dv DIOCGDINFO
