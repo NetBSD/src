@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.17 2000/07/31 22:40:25 briggs Exp $	*/
+/*	$NetBSD: bus.h,v 1.18 2001/09/14 00:58:08 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,8 @@
  * Value for the mac68k bus space tag, not to be used directly by MI code.
  */
 #define MAC68K_BUS_SPACE_MEM	0	/* space is mem space */
+
+#define __BUS_SPACE_HAS_STREAM_METHODS 1
 
 /*
  * Bus address and size types
