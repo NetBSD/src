@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.103 1997/08/12 17:25:43 drochner Exp $	*/
+/*	$NetBSD: com.c,v 1.104 1997/08/14 16:15:15 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -103,6 +103,9 @@
 int comprobeHAYESP __P((bus_space_handle_t hayespioh, struct com_softc *sc));
 #endif
 
+#if defined(DDB) || defined(KGDB)
+static void com_enable_debugport __P((struct com_softc *));
+#endif
 void	com_attach_subr	__P((struct com_softc *sc));
 void	comdiag		__P((void *));
 int	comspeed	__P((long));
@@ -180,8 +183,6 @@ int com_kgdb_addr;
 bus_space_tag_t com_kgdb_iot;
 bus_space_handle_t com_kgdb_ioh;
 
-void	com_kgdb_attach __P((struct com_softc *, bus_space_tag_t,
-	    bus_space_handle_t));
 int	com_kgdb_getc __P((void *));
 void	com_kgdb_putc __P((void *, int));
 #endif /* KGDB */
@@ -326,27 +327,6 @@ comprobeHAYESP(hayespioh, sc)
 #endif
 
 #ifdef KGDB
-void
-com_kgdb_attach(sc, iot, ioh)
-	struct com_softc *sc;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-{
-	int s;
-	u_char stat;
-
-	SET(sc->sc_hwflags, COM_HW_KGDB);
-
-	/* Turn on interrupts. */
-	s = splserial();
-	sc->sc_ier = IER_ERXRDY;
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
-	bus_space_write_1(iot, ioh, com_mcr, MCR_DTR | MCR_RTS | MCR_IENABLE);
-	DELAY(100);
-	stat = bus_space_read_1(iot, ioh, com_iir);
-	splx(s);
-}
-
 /* ARGSUSED */
 int
 com_kgdb_getc(arg)
@@ -367,6 +347,22 @@ com_kgdb_putc(arg, c)
 }
 #endif /* KGDB */
 
+#if defined(DDB) || defined(KGDB)
+static void
+com_enable_debugport(sc)
+	struct com_softc *sc;
+{
+	int s;
+
+	/* Turn on line break interrupt, set carrier. */
+	s = splserial();
+	sc->sc_ier = IER_ERXRDY;
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
+	SET(sc->sc_mcr, MCR_DTR | MCR_RTS);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_mcr, sc->sc_mcr);
+	splx(s);
+}
+#endif
 
 void
 com_attach_subr(sc)
@@ -454,7 +450,9 @@ com_attach_subr(sc)
 		SET(sc->sc_mcr, MCR_IENABLE);
 
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
-		cominit(iot, ioh, comconsrate);
+#ifdef DDB
+		com_enable_debugport(sc);
+#endif
 		printf("%s: console\n", sc->sc_dev.dv_xname);
 	}
 
@@ -463,9 +461,9 @@ com_attach_subr(sc)
 	 * Allow kgdb to "take over" this port.  If this is
 	 * the kgdb device, it has exclusive use.
 	 */
-	if (iobase == com_kgdb_addr
-	    && !ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
-		com_kgdb_attach(sc, iot, ioh);
+	if (iobase == com_kgdb_addr) {
+		SET(sc->sc_hwflags, COM_HW_KGDB);
+		com_enable_debugport(sc);
 		printf("%s: kgdb\n", sc->sc_dev.dv_xname);
 	}
 #endif
@@ -649,7 +647,13 @@ comclose(dev, flag, mode, p)
 
 	s = splserial();
 	/* Turn off interrupts. */
-	sc->sc_ier = 0;
+#ifdef DDB
+	if(ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+		sc->sc_ier = IER_ERXRDY; /* interrupt on break */
+	else
+#else
+		sc->sc_ier = 0;
+#endif
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
 	splx(s);
 	
