@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.84 2004/04/28 20:59:32 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.85 2004/05/15 21:53:29 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -65,20 +65,14 @@
 /* Disk descriptions */
 #define MAX_DISKS 15
 struct disk_desc {
-	char dd_name[SSTRSIZE];
-	struct disk_geom {
-		int  dg_cyl;
-		int  dg_head;
-		int  dg_sec;
-		int  dg_secsize;
-		int  dg_totsec;
-	} dg;
+	char	dd_name[SSTRSIZE];
+	uint	dd_no_mbr;
+	uint	dd_cyl;
+	uint	dd_head;
+	uint	dd_sec;
+	uint	dd_secsize;
+	uint	dd_totsec;
 };
-#define dd_cyl dg.dg_cyl
-#define dd_head dg.dg_head
-#define dd_sec dg.dg_sec
-#define dd_secsize dg.dg_secsize
-#define dd_totsec dg.dg_totsec
 
 /* Local prototypes */
 static int foundffs(struct data *, size_t);
@@ -96,7 +90,7 @@ static int
 get_disks(struct disk_desc *dd)
 {
 	const char **xd;
-	char d_name[SSTRSIZE];
+	char *cp;
 	struct disklabel l;
 	int i;
 	int numdisks;
@@ -106,13 +100,19 @@ get_disks(struct disk_desc *dd)
 
 	for (xd = disk_names; *xd != NULL; xd++) {
 		for (i = 0; i < MAX_DISKS; i++) {
-			snprintf(d_name, sizeof d_name, "%s%d", *xd, i);
-			if (!get_geom(d_name, &l)) {
+			strlcpy(dd->dd_name, *xd, sizeof dd->dd_name - 2);
+			cp = strchr(dd->dd_name, ':');
+			if (cp != NULL)
+				dd->dd_no_mbr = ~strcmp(cp, ":no_mbr");
+			else
+				cp = strchr(dd->dd_name, 0);
+
+			snprintf(cp, 2 + 1, "%d", i);
+			if (!get_geom(dd->dd_name, &l)) {
 				if (errno == ENOENT)
 					break;
 				continue;
 			}
-			strlcpy(dd->dd_name, d_name, sizeof dd->dd_name);
 			dd->dd_cyl = l.d_ncylinders;
 			dd->dd_head = l.d_ntracks;
 			dd->dd_sec = l.d_nsectors;
@@ -191,6 +191,7 @@ find_disks(const char *doingwhat)
 	dlhead = disk->dd_head;
 	dlsec = disk->dd_sec;
 	dlsize = disk->dd_totsec;
+	no_mbr = disk->dd_no_mbr;
 	if (dlsize == 0)
 		dlsize = disk->dd_cyl * disk->dd_head * disk->dd_sec;
 	dlcylsize = dlhead * dlsec;

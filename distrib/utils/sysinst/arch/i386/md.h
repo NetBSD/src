@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.50 2004/04/29 20:47:52 gendalia Exp $	*/
+/*	$NetBSD: md.h,v 1.51 2004/05/15 21:53:29 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -82,7 +82,7 @@
  * On i386, we allow "wd"  ST-506/IDE disks,  "sd" scsi disks, "ld" logical
  * disks, "ed" IBM ESDI disks, "raid" raidframe disks
  */
-#define DISK_NAMES "wd", "sd", "ld", "ed", "raid"
+#define DISK_NAMES "wd", "sd", "ld", "ed", "raid:no_mbr"
 
 /*
  * Machine-specific command to write a new label to a disk.
