@@ -1,4 +1,4 @@
-/*	$NetBSD: apcdmareg.h,v 1.3 2002/03/12 04:48:28 uwe Exp $	*/
+/*	$NetBSD: apcdmareg.h,v 1.4 2003/09/10 11:37:13 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -56,6 +56,19 @@ struct apc_dma {
 	volatile u_int32_t dmapnva;	/* Playback Next VAddress */
 	volatile u_int32_t dmapnc;	/* Playback Next Count */
 };
+
+/* same as above but as offsets for bus_space ops */
+#define APC_DMA_CSR	0
+#define APC_DMA_CVA	16
+#define APC_DMA_CC	20
+#define APC_DMA_CNVA	24
+#define APC_DMA_CNC	28
+#define APC_DMA_PVA	32
+#define APC_DMA_PC	36
+#define APC_DMA_PNVA	40
+#define APC_DMA_PNC	44
+
+#define APC_DMA_SIZE	48
 
 /*
  * APC CSR Register bit definitions
