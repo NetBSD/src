@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.12 1999/03/02 03:18:49 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.13 1999/03/09 02:59:25 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -232,7 +232,7 @@ int raiddump __P((dev_t, daddr_t, caddr_t, size_t));
 
 int raidwrite_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
 int raidread_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
-
+void rf_update_component_labels( RF_Raid_t *);
 /*
  * Pilfered from ccd.c
  */
@@ -459,6 +459,21 @@ raidopen(dev, flags, fmt, p)
 		rs->sc_dkdev.dk_bopenmask |= pmask;
 		break;
 	}
+
+	if ((rs->sc_dkdev.dk_openmask == 0) && 
+	    ((rs->sc_flags & RAIDF_INITED) != 0)) {
+		/* First one... mark things as dirty... Note that we *MUST*
+		 have done a configure before this.  I DO NOT WANT TO BE
+		 SCRIBBLING TO RANDOM COMPONENTS UNTIL IT'S BEEN DETERMINED
+		 THAT THEY BELONG TOGETHER!!!!! */
+		/* XXX should check to see if we're only open for reading
+		   here... If so, we needn't do this, but then need some
+		   other way of keeping track of what's happened.. */
+
+		rf_markalldirty( raidPtrs[unit] );
+	}
+
+
 	rs->sc_dkdev.dk_openmask =
 	    rs->sc_dkdev.dk_copenmask | rs->sc_dkdev.dk_bopenmask;
 
@@ -501,6 +516,15 @@ raidclose(dev, flags, fmt, p)
 	}
 	rs->sc_dkdev.dk_openmask =
 	    rs->sc_dkdev.dk_copenmask | rs->sc_dkdev.dk_bopenmask;
+	
+	if ((rs->sc_dkdev.dk_openmask == 0) &&
+	    ((rs->sc_flags & RAIDF_INITED) != 0)) {
+		/* Last one... device is not unconfigured yet.  
+		   Device shutdown has taken care of setting the 
+		   clean bits if RAIDF_INITED is not set 
+		   mark things as clean... */
+		rf_update_component_labels( raidPtrs[unit] );
+	}
 
 	raidunlock(rs);
 	return (0);
@@ -778,13 +802,14 @@ raidioctl(dev, cmd, data, flag, p)
 		if (retcode == 0) {
 			retcode = raidinit(dev, raidPtrs[unit], unit);
 			rf_markalldirty( raidPtrs[unit] );
+#if 0
 			/* register our shutdown hook */
 			if ((rs->sc_sdhook = 
 			     shutdownhook_establish(raid_shutdown, 
 						raidPtrs[unit])) == NULL) {
 				printf("raid%d: WARNING: unable to establish shutdown hook\n",raidPtrs[unit]->raidid);
 			}
-
+#endif
 			
 		}
 		/* free the buffers.  No return code here. */
@@ -832,10 +857,10 @@ raidioctl(dev, cmd, data, flag, p)
 
 		/* It's no longer initialized... */
 		rs->sc_flags &= ~RAIDF_INITED;
-		
+#if 0		
 		shutdownhook_disestablish( rs->sc_sdhook );
 		rs->sc_sdhook = NULL;
-
+#endif
 		/* Detach the disk. */
 		disk_detach(&rs->sc_dkdev);
 
@@ -2166,6 +2191,7 @@ rf_markalldirty( raidPtr )
 			}
 		} 
 	}
+	/* printf("Component labels marked dirty.\n"); */
 #if 0
 	for( c = 0; c < raidPtr->numSpare ; c++) {
 		sparecol = raidPtr->numCol + c;
@@ -2224,3 +2250,120 @@ rf_markalldirty( raidPtr )
 #endif
 }
 
+
+void
+rf_update_component_labels( raidPtr )
+	RF_Raid_t *raidPtr;
+{
+	RF_ComponentLabel_t c_label;
+	int sparecol;
+	int r,c;
+	int i,j;
+	int srow, scol;
+
+	srow = -1;
+	scol = -1;
+
+	/* XXX should do extra checks to make sure things really are clean, 
+	   rather than blindly setting the clean bit... */
+
+	raidPtr->mod_counter++;
+
+	for (r = 0; r < raidPtr->numRow; r++) {
+		for (c = 0; c < raidPtr->numCol; c++) {
+			if (raidPtr->Disks[r][c].status == rf_ds_optimal) {
+				raidread_component_label(
+					raidPtr->Disks[r][c].dev,
+					raidPtr->raid_cinfo[r][c].ci_vp,
+					&c_label);
+				/* make sure status is noted */
+				c_label.status = rf_ds_optimal;
+				raidwrite_component_label( 
+					raidPtr->Disks[r][c].dev,
+					raidPtr->raid_cinfo[r][c].ci_vp,
+					&c_label);
+				if (raidPtr->parity_good == RF_RAID_CLEAN) {
+					raidmarkclean( 
+					      raidPtr->Disks[r][c].dev, 
+					      raidPtr->raid_cinfo[r][c].ci_vp,
+					      raidPtr->mod_counter);
+				}
+			} 
+			/* else we don't touch it.. */
+#if 0
+			else if (raidPtr->Disks[r][c].status !=
+				   rf_ds_failed) {
+				raidread_component_label(
+					raidPtr->Disks[r][c].dev,
+					raidPtr->raid_cinfo[r][c].ci_vp,
+					&c_label);
+				/* make sure status is noted */
+				c_label.status = 
+					raidPtr->Disks[r][c].status;
+				raidwrite_component_label( 
+					raidPtr->Disks[r][c].dev,
+					raidPtr->raid_cinfo[r][c].ci_vp,
+					&c_label);
+				if (raidPtr->parity_good == RF_RAID_CLEAN) {
+					raidmarkclean( 
+					      raidPtr->Disks[r][c].dev, 
+					      raidPtr->raid_cinfo[r][c].ci_vp,
+					      raidPtr->mod_counter);
+				}
+			}
+#endif
+		} 
+	}
+
+	for( c = 0; c < raidPtr->numSpare ; c++) {
+		sparecol = raidPtr->numCol + c;
+		if (raidPtr->Disks[0][sparecol].status == rf_ds_used_spare) {
+			/* 
+			   
+			   we claim this disk is "optimal" if it's 
+			   rf_ds_used_spare, as that means it should be 
+			   directly substitutable for the disk it replaced. 
+			   We note that too...
+
+			 */
+
+			for(i=0;i<raidPtr->numRow;i++) {
+				for(j=0;j<raidPtr->numCol;j++) {
+					if ((raidPtr->Disks[i][j].spareRow == 
+					     0) &&
+					    (raidPtr->Disks[i][j].spareCol ==
+					     sparecol)) {
+						srow = i;
+						scol = j;
+						break;
+					}
+				}
+			}
+			
+			raidread_component_label( 
+				      raidPtr->Disks[0][sparecol].dev,
+				      raidPtr->raid_cinfo[0][sparecol].ci_vp,
+				      &c_label);
+			/* make sure status is noted */
+			c_label.version = RF_COMPONENT_LABEL_VERSION; 
+			c_label.mod_counter = raidPtr->mod_counter;
+			c_label.serial_number = raidPtr->serial_number;
+			c_label.row = srow;
+			c_label.column = scol;
+			c_label.num_rows = raidPtr->numRow;
+			c_label.num_columns = raidPtr->numCol;
+			c_label.clean = RF_RAID_DIRTY; /* changed in a bit*/
+			c_label.status = rf_ds_optimal;
+			raidwrite_component_label(
+				      raidPtr->Disks[0][sparecol].dev,
+				      raidPtr->raid_cinfo[0][sparecol].ci_vp,
+				      &c_label);
+			if (raidPtr->parity_good == RF_RAID_CLEAN) {
+				raidmarkclean( raidPtr->Disks[0][sparecol].dev,
+			              raidPtr->raid_cinfo[0][sparecol].ci_vp,
+					       raidPtr->mod_counter);
+			}
+		}
+	}
+	/* 	printf("Component labels updated\n"); */
+}
