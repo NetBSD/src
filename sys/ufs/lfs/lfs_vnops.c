@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.82 2003/01/30 14:18:32 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.83 2003/02/03 00:32:35 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.82 2003/01/30 14:18:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.83 2003/02/03 00:32:35 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -708,14 +708,17 @@ lfs_rename(void *v)
 		struct componentname *a_tcnp;
 	} */ *ap = v;
 	struct vnode *tvp, *fvp, *tdvp, *fdvp;
+	struct componentname *tcnp, *fcnp;
 	int error;
 	struct lfs *fs;
 
 	fs = VTOI(ap->a_fdvp)->i_lfs;
 	tvp = ap->a_tvp;
 	tdvp = ap->a_tdvp;
+	tcnp = ap->a_tcnp;
 	fvp = ap->a_fvp;
 	fdvp = ap->a_fdvp;
+	fcnp = ap->a_fcnp;
 
 	/*
 	 * Check for cross-device rename.
@@ -730,6 +733,44 @@ lfs_rename(void *v)
 		error = EXDEV;
 		goto errout;
 	}
+
+	/*
+	 * Check to make sure we're not renaming a vnode onto itself
+	 * (deleting a hard link by renaming one name onto another);
+	 * if we are we can't recursively call VOP_REMOVE since that
+	 * would leave us with an unaccounted-for number of live dirops.
+	 *
+	 * Inline the relevant section of ufs_rename here, *before*
+	 * calling SET_DIROP2.
+	 */
+	if (tvp && ((VTOI(tvp)->i_ffs_flags & (IMMUTABLE | APPEND)) ||
+	    (VTOI(tdvp)->i_ffs_flags & APPEND))) {
+		error = EPERM;
+		goto errout;
+	}
+        if (fvp == tvp) {
+                if (fvp->v_type == VDIR) {
+                        error = EINVAL;
+                        goto errout;
+                }
+
+                /* Release destination completely. */
+                VOP_ABORTOP(tdvp, tcnp);
+                vput(tdvp);
+                vput(tvp);
+
+                /* Delete source. */
+                vrele(fvp);
+                fcnp->cn_flags &= ~(MODMASK | SAVESTART);
+                fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
+                fcnp->cn_nameiop = DELETE;
+                if ((error = relookup(fdvp, &fvp, fcnp))){
+                        /* relookup blew away fdvp */
+                        return (error);
+                }
+                return (VOP_REMOVE(fdvp, fvp, fcnp));
+        }
+
 	if ((error = SET_DIROP2(tdvp, tvp)) != 0)
 		goto errout;
 	MARK_VNODE(fdvp);
@@ -738,6 +779,7 @@ lfs_rename(void *v)
 	if (tvp) {
 		MARK_VNODE(tvp);
 	}
+	
 	error = ufs_rename(ap);
 	UNMARK_VNODE(fdvp);
 	UNMARK_VNODE(tdvp);
