@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.37 2002/03/03 07:02:54 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.38 2002/03/16 16:55:56 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -163,16 +163,16 @@ cdev_decl(cy);
 #include "openfirm.h"
 cdev_decl(openfirm);
 
-#include "i4b.h"
-#include "i4bctl.h"
-#include "i4btrc.h"
-#include "i4brbch.h"
-#include "i4btel.h"
-cdev_decl(i4b);
-cdev_decl(i4bctl);
-cdev_decl(i4btrc);
-cdev_decl(i4brbch);
-cdev_decl(i4btel);
+#include "isdn.h"
+#include "isdnctl.h"
+#include "isdntrc.h"
+#include "isdnbchan.h"
+#include "isdntel.h"
+cdev_decl(isdn);
+cdev_decl(isdnctl);
+cdev_decl(isdntrc);
+cdev_decl(isdnbchan);
+cdev_decl(isdntel);
 #include "clockctl.h"
 cdev_decl(clockctl);
 
@@ -234,11 +234,11 @@ struct cdevsw cdevsw[] = {
 	cdev_usbdev_init(NURIO,urio),	/* 51: Diamond Rio 500 */
 	cdev_ugen_init(NUSCANNER,uscanner),/* 52: USB scanner */
 	cdev_openfirm_init(NOPENFIRM,openfirm), /* 53: /dev/openfirm */
-	cdev_i4b_init(NI4B, i4b),	/* 54: i4b main device */
-	cdev_i4bctl_init(NI4BCTL, i4bctl), /* 55: i4b control device */
-	cdev_i4brbch_init(NI4BRBCH, i4brbch), /* 56: i4b raw b-channel access */
-	cdev_i4btrc_init(NI4BTRC, i4btrc), /* 57: i4b trace device */
-	cdev_i4btel_init(NI4BTEL, i4btel), /* 58: i4b phone device */
+	cdev_isdn_init(NISDN, isdn),	/* 54: isdn main device */
+	cdev_isdnctl_init(NISDNCTL, isdnctl), /* 55: isdn control device */
+	cdev_isdnbchan_init(NISDNBCHAN, isdnbchan), /* 56: isdn raw b-channel access */
+	cdev_isdntrc_init(NISDNTRC, isdntrc), /* 57: isdn trace device */
+	cdev_isdntel_init(NISDNTEL, isdntel), /* 58: isdn phone device */
 	cdev_disk_init(NLD,ld),		/* 59: logical disk driver */
 	cdev_pci_init(NPCI,pci),	/* 60: PCI bus access device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 61: settimeofday driver */

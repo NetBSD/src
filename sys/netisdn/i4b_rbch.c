@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.4 2001/11/13 01:06:23 lukem Exp $
+ *	$Id: i4b_rbch.c,v 1.5 2002/03/16 16:56:05 martin Exp $
  *
  * $FreeBSD$
  *
@@ -36,11 +36,11 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.4 2001/11/13 01:06:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.5 2002/03/16 16:56:05 martin Exp $");
 
-#include "i4brbch.h"
+#include "isdnbchan.h"
 
-#if NI4BRBCH > 0
+#if NISDNBCHAN > 0
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,8 +111,8 @@ extern cc_t ttydefchars;
 #include <sys/filio.h>
 #endif
 
-static drvr_link_t rbch_drvr_linktab[NI4BRBCH];
-static isdn_link_t *isdn_linktab[NI4BRBCH];
+static drvr_link_t rbch_drvr_linktab[NISDNBCHAN];
+static isdn_link_t *isdn_linktab[NISDNBCHAN];
 
 #define I4BRBCHACCT		1 	/* enable accounting messages */
 #define	I4BRBCHACCTINTVL	2	/* accounting msg interval in secs */
@@ -160,7 +160,7 @@ static struct rbch_softc {
 	int		sc_loutb;	/* last # of bytes tx'd 	*/
 	int		sc_fn;		/* flag, first null acct	*/
 #endif	
-} rbch_softc[NI4BRBCH];
+} rbch_softc[NISDNBCHAN];
 
 static void rbch_rx_data_rdy(int unit);
 static void rbch_tx_queue_empty(int unit);
@@ -172,16 +172,16 @@ static void rbch_clrq(int unit);
 #ifndef __FreeBSD__
 #define PDEVSTATIC	/* - not static - */
 #define IOCTL_CMD_T	u_long
-void i4brbchattach __P((void));
-int i4brbchopen __P((dev_t dev, int flag, int fmt, struct proc *p));
-int i4brbchclose __P((dev_t dev, int flag, int fmt, struct proc *p));
-int i4brbchread __P((dev_t dev, struct uio *uio, int ioflag));
-int i4brbchwrite __P((dev_t dev, struct uio *uio, int ioflag));
-int i4brbchioctl __P((dev_t dev, IOCTL_CMD_T cmd, caddr_t arg, int flag, struct proc* pr));
+void isdnbchanattach __P((void));
+int isdnbchanopen __P((dev_t dev, int flag, int fmt, struct proc *p));
+int isdnbchanclose __P((dev_t dev, int flag, int fmt, struct proc *p));
+int isdnbchanread __P((dev_t dev, struct uio *uio, int ioflag));
+int isdnbchanwrite __P((dev_t dev, struct uio *uio, int ioflag));
+int isdnbchanioctl __P((dev_t dev, IOCTL_CMD_T cmd, caddr_t arg, int flag, struct proc* pr));
 #ifdef OS_USES_POLL
-int i4brbchpoll __P((dev_t dev, int events, struct proc *p));
+int isdnbchanpoll __P((dev_t dev, int events, struct proc *p));
 #else
-PDEVSTATIC int i4brbchselect __P((dev_t dev, int rw, struct proc *p));
+PDEVSTATIC int isdnbchanselect __P((dev_t dev, int rw, struct proc *p));
 #endif
 #endif
 
@@ -189,33 +189,33 @@ PDEVSTATIC int i4brbchselect __P((dev_t dev, int rw, struct proc *p));
 #define PDEVSTATIC	static
 #define IOCTL_CMD_T	u_long
 
-PDEVSTATIC d_open_t i4brbchopen;
-PDEVSTATIC d_close_t i4brbchclose;
-PDEVSTATIC d_read_t i4brbchread;
-PDEVSTATIC d_read_t i4brbchwrite;
-PDEVSTATIC d_ioctl_t i4brbchioctl;
+PDEVSTATIC d_open_t isdnbchanopen;
+PDEVSTATIC d_close_t isdnbchanclose;
+PDEVSTATIC d_read_t isdnbchanread;
+PDEVSTATIC d_read_t isdnbchanwrite;
+PDEVSTATIC d_ioctl_t isdnbchanioctl;
 
 #ifdef OS_USES_POLL
-PDEVSTATIC d_poll_t i4brbchpoll;
-#define POLLFIELD	i4brbchpoll
+PDEVSTATIC d_poll_t isdnbchanpoll;
+#define POLLFIELD	isdnbchanpoll
 #else
-PDEVSTATIC d_select_t i4brbchselect;
-#define POLLFIELD	i4brbchselect
+PDEVSTATIC d_select_t isdnbchanselect;
+#define POLLFIELD	isdnbchanselect
 #endif
 
 #define CDEV_MAJOR 57
 
 #if defined(__FreeBSD__) && __FreeBSD__ >= 4
-static struct cdevsw i4brbch_cdevsw = {
-	/* open */      i4brbchopen,
-	/* close */     i4brbchclose,
-	/* read */      i4brbchread,
-	/* write */     i4brbchwrite,
-	/* ioctl */     i4brbchioctl,
+static struct cdevsw isdnbchan_cdevsw = {
+	/* open */      isdnbchanopen,
+	/* close */     isdnbchanclose,
+	/* read */      isdnbchanread,
+	/* write */     isdnbchanwrite,
+	/* ioctl */     isdnbchanioctl,
 	/* poll */      POLLFIELD,
 	/* mmap */      nommap,
 	/* strategy */  nostrategy,
-	/* name */      "i4brbch",
+	/* name */      "isdnbchan",
 	/* maj */       CDEV_MAJOR,
 	/* dump */      nodump,
 	/* psize */     nopsize,
@@ -223,15 +223,15 @@ static struct cdevsw i4brbch_cdevsw = {
 	/* bmaj */      -1
 };
 #else
-static struct cdevsw i4brbch_cdevsw = {
-	i4brbchopen,	i4brbchclose,	i4brbchread,	i4brbchwrite,
-  	i4brbchioctl,	nostop,		noreset,	nodevtotty,
-	POLLFIELD,	nommap, 	NULL, "i4brbch", NULL, -1
+static struct cdevsw isdnbchan_cdevsw = {
+	isdnbchanopen,	isdnbchanclose,	isdnbchanread,	isdnbchanwrite,
+  	isdnbchanioctl,	nostop,		noreset,	nodevtotty,
+	POLLFIELD,	nommap, 	NULL, "isdnbchan", NULL, -1
 };
 #endif
 
-static void i4brbchattach(void *);
-PSEUDO_SET(i4brbchattach, i4b_rbch);
+static void isdnbchanattach(void *);
+PSEUDO_SET(isdnbchanattach, i4b_rbch);
 
 /*===========================================================================*
  *			DEVICE DRIVER ROUTINES
@@ -241,47 +241,47 @@ PSEUDO_SET(i4brbchattach, i4b_rbch);
  *	initialization at kernel load time
  *---------------------------------------------------------------------------*/
 static void
-i4brbchinit(void *unused)
+isdnbchaninit(void *unused)
 {
 #if defined(__FreeBSD__) && __FreeBSD__ >= 4
-	cdevsw_add(&i4brbch_cdevsw);
+	cdevsw_add(&isdnbchan_cdevsw);
 #else
 	dev_t dev = makedev(CDEV_MAJOR, 0);
-	cdevsw_add(&dev, &i4brbch_cdevsw, NULL);
+	cdevsw_add(&dev, &isdnbchan_cdevsw, NULL);
 #endif
 }
 
-SYSINIT(i4brbchdev, SI_SUB_DRIVERS,
-	SI_ORDER_MIDDLE+CDEV_MAJOR, &i4brbchinit, NULL);
+SYSINIT(isdnbchandev, SI_SUB_DRIVERS,
+	SI_ORDER_MIDDLE+CDEV_MAJOR, &isdnbchaninit, NULL);
 
 #endif /* BSD > 199306 && defined(__FreeBSD__) */
 
 #ifdef __bsdi__
-int i4brbchmatch(struct device *parent, struct cfdata *cf, void *aux);
-void dummy_i4brbchattach(struct device*, struct device *, void *);
+int isdnbchanmatch(struct device *parent, struct cfdata *cf, void *aux);
+void dummy_isdnbchanattach(struct device*, struct device *, void *);
 
 #define CDEV_MAJOR 61
 
-static struct cfdriver i4brbchcd =
-	{ NULL, "i4brbch", i4brbchmatch, dummy_i4brbchattach, DV_DULL,
+static struct cfdriver isdnbchancd =
+	{ NULL, "isdnbchan", isdnbchanmatch, dummy_isdnbchanattach, DV_DULL,
 	  sizeof(struct cfdriver) };
-struct devsw i4brbchsw = 
-	{ &i4brbchcd,
-	  i4brbchopen,	i4brbchclose,	i4brbchread,	i4brbchwrite,
-	  i4brbchioctl,	seltrue,	nommap,		nostrat,
+struct devsw isdnbchansw = 
+	{ &isdnbchancd,
+	  isdnbchanopen,	isdnbchanclose,	isdnbchanread,	isdnbchanwrite,
+	  isdnbchanioctl,	seltrue,	nommap,		nostrat,
 	  nodump,	nopsize,	0,		nostop
 };
 
 int
-i4brbchmatch(struct device *parent, struct cfdata *cf, void *aux)
+isdnbchanmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	printf("i4brbchmatch: aux=0x%x\n", aux);
+	printf("isdnbchanmatch: aux=0x%x\n", aux);
 	return 1;
 }
 void
-dummy_i4brbchattach(struct device *parent, struct device *self, void *aux)
+dummy_isdnbchanattach(struct device *parent, struct device *self, void *aux)
 {
-	printf("dummy_i4brbchattach: aux=0x%x\n", aux);
+	printf("dummy_isdnbchanattach: aux=0x%x\n", aux);
 }
 #endif /* __bsdi__ */
 
@@ -290,32 +290,28 @@ dummy_i4brbchattach(struct device *parent, struct device *self, void *aux)
  *---------------------------------------------------------------------------*/
 PDEVSTATIC void
 #ifdef __FreeBSD__
-i4brbchattach(void *dummy)
+isdnbchanattach(void *dummy)
 #else
-i4brbchattach()
+isdnbchanattach()
 #endif
 {
 	int i;
 
-#ifndef HACK_NO_PSEUDO_ATTACH_MSG
-	printf("i4brbch: %d raw B channel access device(s) attached\n", NI4BRBCH);
-#endif
-	
-	for(i=0; i < NI4BRBCH; i++)
+	for(i=0; i < NISDNBCHAN; i++)
 	{
 #if defined(__FreeBSD__)
 #if __FreeBSD__ == 3
 
 #ifdef DEVFS
 		rbch_softc[i].devfs_token =
-			devfs_add_devswf(&i4brbch_cdevsw, i, DV_CHR,
+			devfs_add_devswf(&isdnbchan_cdevsw, i, DV_CHR,
 				     UID_ROOT, GID_WHEEL, 0600,
-				     "i4brbch%d", i);
+				     "isdnbchan%d", i);
 #endif
 
 #else
-		make_dev(&i4brbch_cdevsw, i,
-			UID_ROOT, GID_WHEEL, 0600, "i4brbch%d", i);
+		make_dev(&isdnbchan_cdevsw, i,
+			UID_ROOT, GID_WHEEL, 0600, "isdnbchan%d", i);
 #endif
 #endif
 
@@ -341,11 +337,11 @@ i4brbchattach()
  *	open rbch device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4brbchopen(dev_t dev, int flag, int fmt, struct proc *p)
+isdnbchanopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	int unit = minor(dev);
 	
-	if(unit >= NI4BRBCH)
+	if(unit >= NISDNBCHAN)
 		return(ENXIO);
 
 	if(rbch_softc[unit].sc_devstate & ST_ISOPEN)
@@ -366,7 +362,7 @@ i4brbchopen(dev_t dev, int flag, int fmt, struct proc *p)
  *	close rbch device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4brbchclose(dev_t dev, int flag, int fmt, struct proc *p)
+isdnbchanclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	int unit = minor(dev);
 	struct rbch_softc *sc = &rbch_softc[unit];
@@ -387,7 +383,7 @@ i4brbchclose(dev_t dev, int flag, int fmt, struct proc *p)
  *	read from rbch device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4brbchread(dev_t dev, struct uio *uio, int ioflag)
+isdnbchanread(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct mbuf *m;
 	int error = 0;
@@ -489,7 +485,7 @@ i4brbchread(dev_t dev, struct uio *uio, int ioflag)
  *	write to rbch device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4brbchwrite(dev_t dev, struct uio * uio, int ioflag)
+isdnbchanwrite(dev_t dev, struct uio * uio, int ioflag)
 {
 	struct mbuf *m;
 	int error = 0;
@@ -614,7 +610,7 @@ i4brbchwrite(dev_t dev, struct uio * uio, int ioflag)
  *	rbch device ioctl handlibg
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4brbchioctl(dev_t dev, IOCTL_CMD_T cmd, caddr_t data, int flag, struct proc *p)
+isdnbchanioctl(dev_t dev, IOCTL_CMD_T cmd, caddr_t data, int flag, struct proc *p)
 {
 	int error = 0;
 	int unit = minor(dev);
@@ -713,7 +709,7 @@ i4brbchioctl(dev_t dev, IOCTL_CMD_T cmd, caddr_t data, int flag, struct proc *p)
  *	device driver poll
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4brbchpoll(dev_t dev, int events, struct proc *p)
+isdnbchanpoll(dev_t dev, int events, struct proc *p)
 {
 	int revents = 0;	/* Events we found */
 	int s;
@@ -771,7 +767,7 @@ i4brbchpoll(dev_t dev, int events, struct proc *p)
  *	device driver select
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4brbchselect(dev_t dev, int rw, struct proc *p)
+isdnbchanselect(dev_t dev, int rw, struct proc *p)
 {
 	int unit = minor(dev);
 	struct rbch_softc *sc = &rbch_softc[unit];
@@ -1082,4 +1078,4 @@ rbch_init_linktab(int unit)
 
 /*===========================================================================*/
 
-#endif /* NI4BRBCH > 0 */
+#endif /* NISDNBCHAN > 0 */
