@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.23 1998/11/04 06:41:57 itohy Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.24 1998/12/18 21:12:32 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.21 1998/11/04 06:40:54 itohy Exp 
+ *	NetBSD: pcmciadevs,v 1.22 1998/12/18 21:12:14 thorpej Exp 
  */
 
 /*-
@@ -325,6 +325,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Linksys E-Card"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_PCC_2,
+	    PCMCIA_CIS_COREGA_PCC_2,
+	    0,
+	    "Corega K.K.",
+	    "Corega"	},
+	},
+	{
 	    PCMCIA_VENDOR_SANDISK, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -434,6 +441,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "I-O DATA",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_COREGA, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Corega K.K.",
 	    NULL,
 	},
 	{
