@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.h,v 1.7.4.5 1999/07/02 18:32:19 thorpej Exp $	*/
+/*	$NetBSD: uvm_vnode.h,v 1.7.4.6 1999/07/04 02:09:03 chs Exp $	*/
 
 /*
  *
@@ -61,17 +61,5 @@ struct uvm_vnode {
 	/* the following entry is locked by uvn_sync_lock */
 	SIMPLEQ_ENTRY(uvm_vnode) u_syncq; /* vnode objects due for a "sync" */
 };
-
-/*
- * u_flags values
- */
-#define UVM_VNODE_RELKILL	VXLOCK
-#define UVM_VNODE_WANTED	VXWANT
-#define UVM_VNODE_IOSYNCWANTED	VBWAIT
-#define UVM_VNODE_WRITEABLE	VDIRTY
-#define UVM_VNODE_VNISLOCKED	VXLOCK
-#define UVM_VNODE_BLOCKED	VXLOCK
-
-#define UVM_VNODE_ALOCK		VXLOCK
 
 #endif /* _UVM_UVM_VNODE_H_ */
