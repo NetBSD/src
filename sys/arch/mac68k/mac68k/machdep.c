@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 1995/04/30 17:01:06 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 1995/05/17 00:00:42 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -453,6 +453,7 @@ setregs(p, pack, sp, retval)
 	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_pc = pack->ep_entry & ~1;
 	frame->f_regs[SP] = sp;
+	frame->f_regs[A2] = (int)PS_STRINGS;
 
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
