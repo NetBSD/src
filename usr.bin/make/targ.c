@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.10 1996/11/06 17:59:27 christos Exp $	*/
+/*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-static char *rcsid = "$NetBSD: targ.c,v 1.10 1996/11/06 17:59:27 christos Exp $";
+static char *rcsid = "$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -165,6 +165,7 @@ Targ_NewGN (name)
 
     gn = (GNode *) emalloc (sizeof (GNode));
     gn->name = estrdup (name);
+    gn->uname = NULL;
     gn->path = (char *) 0;
     if (name[0] == '-' && name[1] == 'l') {
 	gn->type = OP_LIB;
@@ -214,6 +215,8 @@ TargFreeGN (gnp)
 
 
     free(gn->name);
+    if (gn->uname)
+	free(gn->uname);
     if (gn->path)
 	free(gn->path);
 
