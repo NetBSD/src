@@ -1,4 +1,4 @@
-/*	$NetBSD: kcmd.c,v 1.3 1997/02/11 09:20:15 mrg Exp $	*/
+/*	$NetBSD: kcmd.c,v 1.4 1997/06/28 23:43:37 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 static char Xsccsid[] = "derived from @(#)rcmd.c 5.17 (Berkeley) 6/27/88";
 static char sccsid[] = "@(#)kcmd.c	8.2 (Berkeley) 8/19/93";
 #else
-static char rcsid[] = "$NetBSD: kcmd.c,v 1.3 1997/02/11 09:20:15 mrg Exp $";
+static char rcsid[] = "$NetBSD: kcmd.c,v 1.4 1997/06/28 23:43:37 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -238,7 +238,7 @@ kcmd(sock, ahost, rport, locuser, remuser, cmd, fd2p, ticket, service, realm,
 	}
 #ifdef KERBEROS
 	if ((status = krb_sendauth(authopts, s, ticket, service, *ahost,
-			       realm, (unsigned long) getpid(), msg_data,
+			       realm, (u_int32_t) getpid(), msg_data,
 			       cred, schedule,
 			       laddr,
 			       faddr,
