@@ -70,6 +70,12 @@ extern int h_errno;
 #include <net/if.h>
 #include <net/if_arp.h>
 
+/* Solaris 2.6 defines AF_LINK, so we need the rest of the baggage that
+   comes with it, but of course Solaris 2.5 and previous do not. */
+#if defined (AF_LINK)
+#include <net/if_dl.h>
+#endif
+
 /*
  * Definitions for IP type of service (ip_tos)
  */
