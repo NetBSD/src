@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.c,v 1.1.1.1 2004/05/17 23:44:52 christos Exp $	*/
+/*	$NetBSD: rbt.c,v 1.2 2005/02/22 18:42:15 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -217,9 +217,9 @@ unhash_node(dns_rbt_t *rbt, dns_rbtnode_t *node);
 #define unhash_node(rbt, node)
 #endif
 
-static inline void
+static void
 rotate_left(dns_rbtnode_t *node, dns_rbtnode_t **rootp);
-static inline void
+static void
 rotate_right(dns_rbtnode_t *node, dns_rbtnode_t **rootp);
 
 static void
@@ -1575,7 +1575,7 @@ unhash_node(dns_rbt_t *rbt, dns_rbtnode_t *node) {
 }
 #endif /* DNS_RBT_USEHASH */
 
-static inline void
+static void
 rotate_left(dns_rbtnode_t *node, dns_rbtnode_t **rootp) {
 	dns_rbtnode_t *child;
 
@@ -1608,7 +1608,7 @@ rotate_left(dns_rbtnode_t *node, dns_rbtnode_t **rootp) {
 	PARENT(node) = child;
 }
 
-static inline void
+static void
 rotate_right(dns_rbtnode_t *node, dns_rbtnode_t **rootp) {
 	dns_rbtnode_t *child;
 
