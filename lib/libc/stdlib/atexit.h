@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)atexit.h	5.1 (Berkeley) 5/15/90
- *	$Id: atexit.h,v 1.2 1993/08/01 18:37:20 mycroft Exp $
+ *	$Id: atexit.h,v 1.3 1995/06/14 05:16:04 jtc Exp $
  */
 
 /* must be at least 32 to guarantee ANSI conformance */
@@ -43,4 +43,4 @@ struct atexit {
 	void (*fns[ATEXIT_SIZE])();	/* the table itself */
 };
 
-struct atexit *__atexit;	/* points to head of LIFO stack */
+extern struct atexit *__atexit;		/* points to head of LIFO stack */
