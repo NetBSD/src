@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.107 2003/04/02 10:39:34 fvdl Exp $	*/
+/*	$NetBSD: vnode.h,v 1.108 2003/04/06 07:02:08 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -586,7 +586,7 @@ int	speedup_syncer(void);
 /* from vfs_syscalls.c - abused by compat code */
 int	getvnode(struct filedesc *fdp, int fd, struct file **fpp);
 
-/* see vfsops(9) */
+/* see vfssubr(9) */
 void	vfs_getnewfsid(struct mount *);
 #ifdef DDB
 void	vfs_vnode_print(struct vnode *, int, void (*)(const char *, ...));
