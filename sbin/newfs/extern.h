@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.1 1997/06/30 22:20:32 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.2 2000/12/01 11:52:54 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -29,4 +29,4 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void mkfs __P((struct partition *, char *, int, int));
+void mkfs(struct partition *, char *, int, int);
