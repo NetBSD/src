@@ -1,4 +1,4 @@
-/* $NetBSD: osiop_jazzio.c,v 1.1.10.2 2002/10/18 02:35:17 nathanw Exp $ */
+/* $NetBSD: osiop_jazzio.c,v 1.1.10.3 2002/12/29 19:18:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -60,7 +60,7 @@ osiop_jazzio_match(parent, match, aux)
 {
 	struct jazzio_attach_args *ja = aux;
 
-	if (strcmp(ja->ja_name, "osiop") != 0)
+	if (strcmp(ja->ja_name, "NCRC710") != 0)
 		return (0);
 
 	return (1);

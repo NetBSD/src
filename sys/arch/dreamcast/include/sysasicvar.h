@@ -1,4 +1,4 @@
-/*	$NetBSD: sysasicvar.h,v 1.2.6.2 2002/12/11 05:58:29 thorpej Exp $	*/
+/*	$NetBSD: sysasicvar.h,v 1.2.6.3 2002/12/29 19:21:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #define SYSASIC_EVENT_MAPLE_ERROR	13
 #define SYSASIC_EVENT_GDROM		32
 #define SYSASIC_EVENT_AICA		33
+#define SYSASIC_EVENT_8BIT		34
 #define SYSASIC_EVENT_EXT		35
 #define SYSASIC_EVENT_MAX		65
 

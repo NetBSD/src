@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_io.c,v 1.1.4.3 2002/12/11 05:53:10 thorpej Exp $ */
+/*	$NetBSD: ixp12x0_io.c,v 1.1.4.4 2002/12/29 19:20:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -111,7 +111,7 @@ struct bus_space ixp12x0_bs_tag = {
 	/* write region */
 	bs_notimpl_bs_wr_1,
 	generic_armv4_bs_wr_2,
-	bs_notimpl_bs_wr_4,
+	generic_bs_wr_4,
 	bs_notimpl_bs_wr_8,
 
 	/* set multiple */
@@ -123,7 +123,7 @@ struct bus_space ixp12x0_bs_tag = {
 	/* set region */
 	bs_notimpl_bs_sr_1,
 	generic_armv4_bs_sr_2,
-	bs_notimpl_bs_sr_4,
+	generic_bs_sr_4,
 	bs_notimpl_bs_sr_8,
 
 	/* copy */

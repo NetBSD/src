@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_jazzio.c,v 1.2.2.2 2002/10/18 02:35:15 nathanw Exp $	*/
+/*	$NetBSD: fdc_jazzio.c,v 1.2.2.3 2002/12/29 19:18:56 thorpej Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -132,7 +132,7 @@ fdc_jazzio_probe(parent, match, aux)
 	bus_space_handle_t base_ioh, ioh;
 	int rv;
 
-	if (strcmp(ja->ja_name, "fdc") != 0)
+	if (strcmp(ja->ja_name, "I82077") != 0)
 		return 0;
 
 	iot = ja->ja_bust;
