@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.33 1998/11/17 08:38:07 thorpej Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.34 1998/11/18 18:38:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -496,7 +496,7 @@ config_activate(dev)
 	struct device *dev;
 {
 	struct cfattach *ca = dev->dv_cfdata->cf_attach;
-	int rv = 0;
+	int rv = 0, oflags = dev->dv_flags;
 
 	if (ca->ca_activate == NULL)
 		return (EOPNOTSUPP);
@@ -504,6 +504,8 @@ config_activate(dev)
 	if ((dev->dv_flags & DVF_ACTIVE) == 0) {
 		dev->dv_flags |= DVF_ACTIVE;
 		rv = (*ca->ca_activate)(dev, DVACT_ACTIVATE);
+		if (rv)
+			dev->dv_flags = oflags;
 	}
 	return (rv);
 }
@@ -513,7 +515,7 @@ config_deactivate(dev)
 	struct device *dev;
 {
 	struct cfattach *ca = dev->dv_cfdata->cf_attach;
-	int rv = 0;
+	int rv = 0, oflags = dev->dv_flags;
 
 	if (ca->ca_activate == NULL)
 		return (EOPNOTSUPP);
@@ -521,6 +523,8 @@ config_deactivate(dev)
 	if (dev->dv_flags & DVF_ACTIVE) {
 		dev->dv_flags &= ~DVF_ACTIVE;
 		rv = (*ca->ca_activate)(dev, DVACT_DEACTIVATE);
+		if (rv)
+			dev->dv_flags = oflags;
 	}
 	return (rv);
 }
