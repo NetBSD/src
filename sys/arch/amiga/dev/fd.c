@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.12 1994/10/26 02:03:02 cgd Exp $	*/
+/*	$NetBSD: fd.c,v 1.13 1994/12/01 17:24:56 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -190,11 +190,11 @@ struct fdtype fdtype[] = {
 int nfdtype = sizeof(fdtype) / sizeof(*fdtype);
 
 struct cfdriver fdcd = {
-	NULL, "fd", fdmatch, fdattach, DV_DISK,
+	NULL, "fd", (cfmatch_t)fdmatch, fdattach, DV_DISK,
 	sizeof(struct fd_softc), NULL, 0 };
 
 struct cfdriver fdccd = {
-	NULL, "fdc", fdcmatch, fdcattach, DV_DULL,
+	NULL, "fdc", (cfmatch_t)fdcmatch, fdcattach, DV_DULL,
 	sizeof(struct device), NULL, 0 };
 
 /*
@@ -461,8 +461,9 @@ fdclose(dev, flags, devtype, p)
 int
 fdioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
-	int cmd, flag;
+	u_long cmd;
 	caddr_t addr;
+	int flag;
 	struct proc *p;
 {
 	struct fd_softc *sc;

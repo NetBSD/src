@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.15 1994/10/26 02:03:07 cgd Exp $	*/
+/*	$NetBSD: grf.c,v 1.16 1994/12/01 17:24:58 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -81,7 +81,7 @@
 
 int grfopen __P((dev_t, int, int, struct proc *));
 int grfclose __P((dev_t, int));
-int grfioctl __P((dev_t, int, caddr_t, int, struct proc *));
+int grfioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int grfselect __P((dev_t, int));
 int grfmap __P((dev_t, int, int));
 
@@ -104,7 +104,7 @@ struct grf_softc *grfsp[NGRF];
 
 
 struct cfdriver grfcd = {
-	NULL, "grf", grfmatch, grfattach, DV_DULL,
+	NULL, "grf", (cfmatch_t)grfmatch, grfattach, DV_DULL,
 	sizeof(struct device), NULL, 0 };
 
 /*
@@ -148,7 +148,9 @@ grfattach(pdp, dp, auxp)
 	 * find our major device number 
 	 */
 	for(maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == grfopen)
+		if (cdevsw[maj].d_open ==
+		    (int (*)__P((dev_t,int,int,struct proc *,struct file*)))
+		    grfopen)
 			break;
 
 	gp->g_grfdev = makedev(maj, gp->g_unit);
@@ -218,8 +220,9 @@ grfclose(dev, flags)
 int
 grfioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd, flag;
+	u_long cmd;
 	caddr_t data;
+	int flag;
 	struct proc *p;
 {
 	struct grf_softc *gp;

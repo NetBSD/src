@@ -1,4 +1,4 @@
-/*	$NetBSD: ahsc.c,v 1.4 1994/10/26 02:02:43 cgd Exp $	*/
+/*	$NetBSD: ahsc.c,v 1.5 1994/12/01 17:24:51 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -85,7 +85,7 @@ int	ahsc_dmadebug = 0;
 #endif
 
 struct cfdriver ahsccd = {
-	NULL, "ahsc", ahscmatch, ahscattach, 
+	NULL, "ahsc", (cfmatch_t)ahscmatch, ahscattach, 
 	DV_DULL, sizeof(struct sbic_softc), NULL, 0 };
 
 /*

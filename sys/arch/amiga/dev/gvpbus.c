@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpbus.c,v 1.4 1994/10/26 02:03:40 cgd Exp $	*/
+/*	$NetBSD: gvpbus.c,v 1.5 1994/12/01 17:25:12 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -40,7 +40,7 @@ int gvpbusmatch __P((struct device *, struct cfdata *, void *));
 int gvpbusprint __P((void *auxp, char *));
 
 struct cfdriver gvpbuscd = {
-	NULL, "gvpbus", gvpbusmatch, gvpbusattach, 
+	NULL, "gvpbus", (cfmatch_t)gvpbusmatch, gvpbusattach, 
 	DV_DULL, sizeof(struct device), NULL, 0 };
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.6 1994/10/26 02:05:15 cgd Exp $	*/
+/*	$NetBSD: zssc.c,v 1.7 1994/12/01 17:25:40 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -77,7 +77,7 @@ struct scsi_device zssc_scsidev = {
 #endif
 
 struct cfdriver zssccd = {
-	NULL, "zssc", zsscmatch, zsscattach, 
+	NULL, "zssc", (cfmatch_t)zsscmatch, zsscattach, 
 	DV_DULL, sizeof(struct siop_softc), NULL, 0 };
 
 /*
