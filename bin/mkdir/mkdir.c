@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdir.c,v 1.19 1998/07/28 05:31:25 mycroft Exp $	*/
+/*	$NetBSD: mkdir.c,v 1.20 1998/10/08 02:14:16 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-__RCSID("$NetBSD: mkdir.c,v 1.19 1998/07/28 05:31:25 mycroft Exp $");
+__RCSID("$NetBSD: mkdir.c,v 1.20 1998/10/08 02:14:16 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,6 +119,15 @@ main(argc, argv)
 				warn("%s", *argv);
 				exitval = 1;
 			}
+                	/*
+                         * The mkdir() and umask() calls both honor only the low
+                	 * nine bits, so if you try to set a mode including the
+                    	 * sticky, setuid, setgid bits you lose them. So chmod().
+                         */
+                    	if (chmod(*argv, mode) == -1) {
+				warn("%s", *argv);
+				exitval = 1;
+                        }
 		}
 	}
 	exit(exitval);
@@ -156,6 +165,15 @@ mkpath(path, mode, dir_mode)
 				warn("%s", path);
 				return (-1);
 			}
+                	/*
+                         * The mkdir() and umask() calls both honor only the low
+                	 * nine bits, so if you try to set a mode including the
+                    	 * sticky, setuid, setgid bits you lose them. So chmod().
+                         */
+                    	if (chmod(path, done ? mode : dir_mode) == -1) {
+                            	warn("%s", path);
+                            	return (-1);
+                        }
 		} else if (!S_ISDIR(sb.st_mode)) {
 		        warnx("%s: %s", path, strerror(ENOTDIR));
 			return (-1);
