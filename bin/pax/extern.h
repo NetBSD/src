@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.23 2000/03/30 17:53:04 thorpej Exp $	*/
+/*	$NetBSD: extern.h,v 1.24 2000/07/04 17:17:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -186,7 +186,8 @@ int check_Aflag __P((void));
 /*
  * getoldopt.c
  */
-int getoldopt __P((int, char **, char *));
+struct option;
+int getoldopt __P((int, char **, const char *, struct option *, int *));
 
 /*
  * options.c
