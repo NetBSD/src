@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.49 1999/06/02 02:03:58 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.50 1999/06/20 22:07:29 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.49 1999/06/02 02:03:58 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.50 1999/06/20 22:07:29 cgd Exp $");
 #endif /* not lint */
 
 /*
@@ -759,7 +759,7 @@ mkgmtime(tm)
 }
 #endif	/* not HAVE_TIMEGM */
 
-#ifndef	SMALL
+#ifndef	NO_PROGRESS
 
 /*
  * return non-zero if we're the current foreground process
@@ -787,7 +787,7 @@ updateprogressmeter(dummy)
 
 	progressmeter(0);
 }
-#endif	/* SMALL */
+#endif	/* NO_PROGRESS */
 
 
 /*
@@ -806,14 +806,16 @@ static const char prefixes[] = " KMGTP";
  *   with flag = 0
  * - After the transfer, call with flag = 1
  */
+#ifndef	NO_PROGRESS
 static struct timeval start;
 static struct timeval lastupdate;
+#endif
 
 void
 progressmeter(flag)
 	int flag;
 {
-#ifndef	SMALL
+#ifndef	NO_PROGRESS
 	static off_t lastsize;
 	struct timeval now, td, wait;
 	off_t cursize, abbrevsize, bytespersec;
@@ -932,7 +934,7 @@ progressmeter(flag)
 		(void)putc('\n', ttyout);
 	}
 	fflush(ttyout);
-#endif	/* SMALL */
+#endif	/* NO_PROGRESS */
 }
 
 /*
@@ -947,7 +949,7 @@ void
 ptransfer(siginfo)
 	int siginfo;
 {
-#ifndef	SMALL
+#ifndef	NO_PROGRESS
 	struct timeval now, td, wait;
 	double elapsed;
 	off_t bytespersec;
@@ -1020,7 +1022,7 @@ ptransfer(siginfo)
 	}
 	len += snprintf(buf + len, sizeof(buf) - len, "\n");
 	(void)write(siginfo ? STDERR_FILENO : fileno(ttyout), buf, len);
-#endif	/* SMALL */
+#endif	/* NO_PROGRESS */
 }
 
 /*
@@ -1099,7 +1101,7 @@ alarmtimer(wait)
 /*
  * Setup or cleanup EditLine structures
  */
-#ifndef SMALL
+#ifndef NO_EDITCOMPLETE
 void
 controlediting()
 {
@@ -1140,7 +1142,7 @@ controlediting()
 		}
 	}
 }
-#endif /* !SMALL */
+#endif /* !NO_EDITCOMPLETE */
 
 /*
  * Parse the specified socket buffer size.
