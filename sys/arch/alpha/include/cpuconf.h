@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.6 1997/09/23 23:17:50 mjacob Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.7 1997/11/06 00:42:03 thorpej Exp $	*/
 #ifndef	_ALPHA_CPUCONF_H
 #define	_ALPHA_CPUCONF_H
 /*
@@ -84,11 +84,18 @@ extern struct platform {
  * There's no return from this function.
  */
 
-extern void (*cpuinit[]) __P((void));
-extern int ncpuinit;
-extern void nocpu __P((void));
+struct cpuinit {
+	void	(*init) __P((void));
+	const char *option;
+};
 
-#define	unknown_cpu(x)	(!((x) >= 0 && (x) < (int) ncpuinit))
+#define	cpu_notsupp(st)		{ platform_not_supported, st }
+#define	cpu_init(fn, opt)	{ fn, opt }
+
+extern struct cpuinit cpuinit[];
+extern int ncpuinit;
+extern void platform_not_configured __P((void));
+extern void platform_not_supported __P((void));
 
 #endif /* _KERNEL */
 #endif /* !_ALPHA_CPUCONF_H */
