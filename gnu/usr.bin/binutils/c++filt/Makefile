@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.7 1999/02/02 22:05:59 tv Exp $
+#	$NetBSD: Makefile,v 1.8 1999/02/06 05:27:43 tv Exp $
 
 PROG=	c++filt
 SRCS=	cplus-dem.c underscore.c
 MAN=	c++filt.1
 
-CPPFLAGS+=-DMAIN -DVERSION='"${VERSION}"'
+CPPFLAGS+=-DMAIN
 
 CLEANFILES+=${PROG}.1
 
