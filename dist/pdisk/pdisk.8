@@ -1,4 +1,4 @@
-.\"	$NetBSD: pdisk.8,v 1.6 2002/09/09 11:43:27 dbj Exp $
+.\"	$NetBSD: pdisk.8,v 1.7 2002/09/09 13:07:36 dbj Exp $
 .Dd August 19, 2002
 .Os
 .Dt PDISK 8
@@ -57,14 +57,16 @@ Causes
 to go into an interactive mode similar to the MacOS version of the program.
 .It Fl l
 .It Fl -list Ar device
-If no
-.Ar device
-argument is given,
-.Nm
-tries to list partition tables for all available hard drives.
-Otherwise,
-.Nm
-lists the partition tables for the specified
+.\"If no
+.\".Ar device
+.\"argument is given,
+.\".Nm
+.\"tries to list partition tables for all available hard drives.
+.\"Otherwise,
+.\".Nm
+.\"lists
+List
+the partition tables for the specified
 .Ar devices .
 .It Fl L
 .It Fl -logical
