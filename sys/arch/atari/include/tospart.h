@@ -1,4 +1,4 @@
-/*	$NetBSD: tospart.h,v 1.1.1.1 1995/03/26 07:12:08 leo Exp $	*/
+/*	$NetBSD: tospart.h,v 1.2 1995/08/05 20:24:43 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -32,28 +32,27 @@
 
 #ifndef _MACHINE_TOSPART_H
 #define _MACHINE_TOSPART_H
+
+#define	TOS_BSIZE	512		/* TOS blocksize	*/
+#define	TOS_BBLOCK	0		/* TOS bootblock	*/
+
 /*
- * Format of GEM root sector
+ * Format of TOS bootblock.
  */
-typedef struct gem_part {
-	u_char	p_flg;		/* bit 0 is in-use flag			*/
-	u_char	p_id[3];	/* id: GEM, BGM, XGM, UNX, MIX		*/
-	u_long	p_st;		/* block where partition starts		*/
-	u_long	p_size;		/* partition size			*/
-} GEM_PART;
+#define	NTOS_PARTS	4		/* Max. # of entries in part. table */
 
-#define	NGEM_PARTS	4	/* Max. partition infos in root sector	*/
-
-typedef struct gem_root {
-	u_char		fill[0x1c2];	/* Filler, can be boot code	*/
-	u_long		hd_siz;		/* size of entire volume	*/
-	GEM_PART	parts[NGEM_PARTS];/* see above			*/
-	u_long		bsl_st;		/* start of bad-sector list	*/
-	u_long		bsl_cnt;	/* # of blocks in bad-sect. list*/
-} GEM_ROOT;
-
-#define	TOS_BSIZE	512	/* TOS blocksize			*/
-#define	TOS_BBLOCK	0	/* TOS Bootblock			*/
-#define	TOS_MAXPART	32	/* Maximum number of partitions we read	*/
+struct tos_part {
+	u_char		tp_flg;		/* bit 0 is in-use flag		    */
+	u_char		tp_id[3];	/* id: GEM, BGM, XGM, UNX, MIX	    */
+	u_int32_t	tp_st;		/* block where partition starts	    */
+	u_int32_t	tp_size;	/* partition size in blocks	    */
+};
+struct tos_root {
+	u_char		tr_fill[0x1c2];	/* filler, can be boot code	    */
+	u_int32_t	tr_hdsize;	/* size of entire volume in blocks  */
+	struct tos_part	tr_parts[NTOS_PARTS]; /* partition table	    */
+	u_int32_t	tr_bslst;	/* start of bad-sector list	    */
+	u_int32_t	tr_bslsize;	/* # of blocks in bad-sector list   */
+};
 
 #endif /* _MACHINE_TOSPART_H */
