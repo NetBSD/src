@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.h,v 1.5 1996/03/14 21:08:54 christos Exp $ */
+/*	$NetBSD: auxreg.h,v 1.6 1997/04/07 21:00:35 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,32 +49,67 @@
  * (if it exists) and the front-panel LED.
  */
 
-#define	AUXIO_MB1	0xf0		/* must be set on write */
-#define	AUXIO_FHD	0x20		/* floppy: high density (unreliable?)*/
-#define	AUXIO_FDC	0x10		/* floppy: diskette was changed */
-#define	AUXIO_FDS	0x08		/* floppy: drive select */
-#define	AUXIO_FTC	0x04		/* floppy: drives Terminal Count pin */
-#define	AUXIO_FEJ	0x02		/* floppy: eject disk */
-#define	AUXIO_LED	0x01		/* front panel LED */
+#define	AUXIO4C_MB1	0xf0		/* must be set on write */
+#define	AUXIO4C_FHD	0x20		/* floppy: high density (unreliable?)*/
+#define	AUXIO4C_FDC	0x10		/* floppy: diskette was changed */
+#define	AUXIO4C_FDS	0x08		/* floppy: drive select */
+#define	AUXIO4C_FTC	0x04		/* floppy: drives Terminal Count pin */
+#define	AUXIO4C_FEJ	0x02		/* floppy: eject disk */
+#define	AUXIO4C_LED	0x01		/* front panel LED */
+
+#define	AUXIO4M_MB1	0xc0		/* must be set on write? */
+#define	AUXIO4M_FHD	0x20		/* floppy: high density (unreliable?)*/
+#define	AUXIO4M_LTE	0x08		/* link-test enable */
+#define	AUXIO4M_MMX	0x04		/* Monitor/Mouse MUX; what is it? */
+#define	AUXIO4M_FTC	0x02		/* floppy: drives Terminal Count pin */
+#define	AUXIO4M_LED	0x01		/* front panel LED */
 
 /*
  * We use a fixed virtual address for the register because we use it for
  * timing short sections of code (via external hardware attached to the LED).
  */
-#define	AUXIO_REG	((volatile u_char *)(AUXREG_VA + 3))
+#define	AUXIO4C_REG	((volatile u_char *)(AUXREG_VA + 3))
+#define	AUXIO4M_REG	((volatile u_char *)(AUXREG_VA))
 
-#define LED_ON		*AUXIO_REG = AUXIO_MB1|AUXIO_FEJ|AUXIO_LED
-#define LED_OFF		*AUXIO_REG = AUXIO_MB1|AUXIO_FEJ
-#define LED_FLIP	*AUXIO_REG = (*AUXIO_REG | AUXIO_MB1) ^ AUXIO_LED
+#define LED_ON		do {						\
+	if (CPU_ISSUN4M)						\
+		*AUXIO4M_REG = *AUXIO4M_REG|AUXIO4M_MB1|AUXIO4M_LED;	\
+	else								\
+		*AUXIO4C_REG = AUXIO4C_MB1|AUXIO4C_FEJ|AUXIO4C_LED;	\
+} while(0)
 
-#define	AUXIO_BITS	"\20\6FHD\5FDC\4FDS\3FTC\2FEJ\1LED"
+#define LED_OFF		do {						\
+	if (CPU_ISSUN4M)						\
+		*AUXIO4M_REG = (*AUXIO4M_REG & ~AUXIO4M_LED)|AUXIO4M_MB1;\
+	else								\
+		*AUXIO4C_REG = AUXIO4C_MB1|AUXIO4C_FEJ;			\
+} while(0)
+
+#define LED_FLIP	do {						\
+	if (CPU_ISSUN4M)						\
+		*AUXIO4M_REG = (*AUXIO4M_REG | AUXIO4M_MB1) ^ AUXIO4M_LED;\
+	else								\
+		*AUXIO4C_REG = (*AUXIO4C_REG | AUXIO4C_MB1) ^ AUXIO4C_LED;\
+} while(0)
+
+#define FTC_FLIP	do {						\
+	if (CPU_ISSUN4M)						\
+		*AUXIO4M_REG = *AUXIO4M_REG | AUXIO4M_MB1 | AUXIO4M_FTC;\
+	else {								\
+		*AUXIO4C_REG |= AUXIO4C_MB1 | AUXIO4C_FTC | AUXIO4C_FEJ;\
+		DELAY(10);						\
+		*AUXIO4C_REG |= AUXIO4C_MB1 | AUXIO4C_FEJ;		\
+	}								\
+} while(0)
+
+#define	AUXIO_BITS	(						\
+	CPU_ISSUN4M							\
+		? "\20\6FHD\4LTE\3MMX\2FTC\1LED"			\
+		: "\20\6FHD\5FDC\4FDS\3FTC\2FEJ\1LED"			\
+)
 
 #ifndef _LOCORE
-/*
- * Copy of AUXIO_REG for the benefit of assembler modules (eg. trap handlers)
- * as AUXREG_VA depends on NBPG which is not a constant.
- */
-volatile u_char *auxio_reg;
+volatile u_char *auxio_reg;	/* Copy of AUXIO_REG */
 unsigned int auxregbisc __P((int, int));
 #endif
 
