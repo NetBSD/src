@@ -1,4 +1,4 @@
-.\" $NetBSD: ifpci.4,v 1.1 2002/03/25 19:15:35 martin Exp $
+.\" $NetBSD: ifpci.4,v 1.2 2002/03/25 19:27:45 wiz Exp $
 .\"
 .\" Copyright (c) 2002 Martin Husemann. All rights reserved.
 .\"
@@ -32,30 +32,30 @@
 .Nd AVM Fritz!PCI ISDN card driver
 .Sh SYNOPSIS
 .Cd ifpci* at pci?
-.Pp
 .Sh DESCRIPTION
 The
 .Nm
 driver supports the popular Fritz!PCI card from AVM. While this card uses
 the same brand as its predecessors, those use a different chipset and are
-driven by the 
+driven by the
 .Xr isic 4
 driver.
 .Pp
 The PCI subsystem configures the card automatically, there are no options
 for the driver.
 .Sh SEE ALSO
-.Xr isdnd 8 ,
-.Xr isic 4
+.Xr isic 4 ,
+.Xr isdnd 8
 .Sh STANDARDS
 CCITT Recommendation I.430
 .Sh AUTHORS
 The
 .Nm
-driver was written by 
+driver was written by
 .An Gary Jennejohn
-for FreeBSD.
-It was ported to 
+for
+.Fx .
+It was ported to
 .Nx
 by Martin Husemann
 .Aq martin@netbsd.org .
