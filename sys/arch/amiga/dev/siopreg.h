@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)siopreg.h	7.3 (Berkeley) 2/5/91
- *	$Id: siopreg.h,v 1.3 1994/02/11 07:02:19 chopps Exp $
+ *	$Id: siopreg.h,v 1.4 1994/05/12 05:57:24 chopps Exp $
  */
 
 /*
@@ -89,6 +89,7 @@ typedef struct {
 	volatile unsigned long	siop_addr;
 
 } siop_regmap_t;
+typedef volatile siop_regmap_t *siop_regmap_p;
 
 /*
  * Register defines
@@ -303,7 +304,7 @@ typedef struct {
 						0 --> 37.51..50.00 Mhz, div=2
 						1 --> 25.01..37.50 Mhz, div=1.5
 						2 --> 16.67..25.00 Mhz, div=1
-						3 --> reserved
+						3 --> 50.01..66.00 Mhz, div=3
 					 */
 #define	SIOP_DCNTL_S16		0x20	/* SCRIPTS fetches 16bits at a time */
 #define	SIOP_DCNTL_SSM		0x10	/* Single step mode */

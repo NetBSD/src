@@ -1,5 +1,5 @@
 /*
- *	$Id: loadbsd.c,v 1.9 1994/03/28 06:16:54 chopps Exp $
+ *	$Id: loadbsd.c,v 1.10 1994/05/12 05:57:33 chopps Exp $
  */
 
 #include <sys/types.h>
@@ -10,6 +10,7 @@
 #include <exec/types.h>
 #include <exec/execbase.h>
 #include <exec/memory.h>
+#include <exec/resident.h>
 #include <libraries/configregs.h>
 #include <libraries/expansionbase.h>
 #include <graphics/gfxbase.h>
@@ -44,6 +45,7 @@ OPTIONS
 \t    list information being passed to the kernel and also
 \t    exits without actually starting NetBSD.
 \t-S  Include kernel symbol table.
+\t-D  Enter debugger
 \t-V  Version of loadbsd program.
 HISTORY
       This version supports Kernel version 720 +
@@ -66,14 +68,17 @@ struct GfxBase *GfxBase;
 
 /*
  *	Version history:
- *	1.x	Kernel parameter passing version check
- *	2.0	Added symbol table end address and symbol table support
- *	2.1	03/23/94 - round up end of fastram segment
- *		check fastram segment size for minimum of 2M
- *		use largest segment of highest priority if -p option
- *		print out fastram size in KB if not a multiple of MB
- *	2.2	03/24/94 - zero out all unused registers
- *		started version history comment
+ *	1.x	Kernel parameter passing version check.
+ *	2.0	Added symbol table end address and symbol table support.
+ *	2.1	03/23/94 - Round up end of fastram segment.
+ *		Check fastram segment size for minimum of 2M.
+ *		Use largest segment of highest priority if -p option.
+ *		Print out fastram size in KB if not a multiple of MB.
+ *	2.2	03/24/94 - Zero out all unused registers.
+ *		Started version history comment.
+ *	2.3	04/26/94 - Added -D option to enter debugger on boot.
+ *	2.4	04/30/94 - Cpuid includes base machine type.
+ *		Also check if CPU is capable of running NetBSD.
  */
 
 struct MEM_LIST {
@@ -93,17 +98,21 @@ int p_opt;
 int t_opt;
 int m_opt;
 int S_opt;
+int D_opt;
+
+u_long cpuid;
 
 extern char *optarg;
 extern int optind;
 
 void get_mem_config (void **fastmem_start, u_long *fastmem_size, u_long *chipmem_size);
+void get_cpuid (void);
 void Usage (char *program_name);
 void Version (void);
 
-static const char _version[] = "$VER: LoadBSD 2.2 (24.3.94)";
+static const char _version[] = "$VER: LoadBSD 2.4 (30.4.94)";
 
-int 
+int
 main (int argc, char *argv[])
 {
   struct exec e;
@@ -113,13 +122,13 @@ main (int argc, char *argv[])
   if (argc >= 2)
     {
       if ((fd = open (argv[1], 0)) >= 0)
-        {
-          if (read (fd, &e, sizeof (e)) == sizeof (e))
-            {
-              if (e.a_magic == NMAGIC)
-                {
-                  u_char *kernel;
-                  int kernel_size;
+	{
+	  if (read (fd, &e, sizeof (e)) == sizeof (e))
+	    {
+	      if (e.a_magic == NMAGIC)
+		{
+		  u_char *kernel;
+		  int kernel_size;
 		  int text_size;
 		  struct ConfigDev *cd;
 		  int num_cd;
@@ -129,7 +138,7 @@ main (int argc, char *argv[])
 		  u_short *kern_vers;
 		  char *esym;
 		  int string_size;
-		  
+
 		  GfxBase = (struct GfxBase *) OpenLibrary ("graphics.library", 0);
 		  if (! GfxBase)	/* not supposed to fail... */
 		    abort();
@@ -137,7 +146,7 @@ main (int argc, char *argv[])
 		  if (! ExpansionBase)	/* not supposed to fail... */
 		    abort();
 		  optind = 2;
-		  while ((i = getopt (argc, argv, "kabptVm:S")) != EOF)
+		  while ((i = getopt (argc, argv, "kabptVm:SD")) != EOF)
 		    switch (i) {
 		    case 'k':
 		      k_opt = 1;
@@ -157,20 +166,24 @@ main (int argc, char *argv[])
 		    case 'm':
 		      m_opt = atoi (optarg) * 1024;
 		      break;
-                    case 'V':
-                      Version();
-                      break;
-                    case 'S':
-                      S_opt = 1;
-                      break;
-                    default:
-                      Usage(argv[0]);
-                      fprintf(stderr,"Unrecognized option \n");
-                      exit(-1);
+		    case 'V':
+		      Version();
+		      break;
+		    case 'S':
+		      S_opt = 1;
+		      break;
+		    case 'D':
+		      D_opt = 1;
+		      break;
+		    default:
+		      Usage(argv[0]);
+		      fprintf(stderr,"Unrecognized option \n");
+		      exit(-1);
 		    }
 
 		  for (cd = 0, num_cd = 0; cd = FindConfigDev (cd, -1, -1); num_cd++) ;
 		  get_mem_config (&fastmem_start, &fastmem_size, &chipmem_size);
+		  get_cpuid ();
 
 		  text_size = (e.a_text + __LDPGSZ - 1) & (-__LDPGSZ);
 		  esym = NULL;
@@ -193,7 +206,7 @@ main (int argc, char *argv[])
 			S_opt = 1;		/* sucess!  Keep -S option */
 		      }
 		    }
-		  } 
+		  }
 
 		  kernel = (u_char *) malloc (kernel_size);
 
@@ -206,9 +219,9 @@ main (int argc, char *argv[])
 			mem_list.mem_seg[i].mem_prio);
 		    }
 
-                  if (kernel)
-                    {
-		      if (read (fd, kernel, e.a_text) == e.a_text 
+		  if (kernel)
+		    {
+		      if (read (fd, kernel, e.a_text) == e.a_text
 			  && read (fd, kernel + text_size, e.a_data) == e.a_data)
 			{
 			  int *knum_cd;
@@ -225,7 +238,7 @@ main (int argc, char *argv[])
 			    {
 			      fastmem_size = m_opt;
 			    }
-			  
+
 			  if (a_opt)
 			    {
 			      printf("Autobooting...");
@@ -237,7 +250,12 @@ main (int argc, char *argv[])
 			      printf("Askboot...");
 			      boothowto |= RB_ASKNAME;
 			    }
-			  
+
+			  if (D_opt)
+			    {
+			      boothowto |= RB_KDB;
+			    }
+
 			  printf ("Using %d%c FASTMEM at 0x%x, %dM CHIPMEM\n",
 				(fastmem_size & 0xfffff) ? fastmem_size>>10 :
 				fastmem_size>>20,
@@ -248,6 +266,13 @@ main (int argc, char *argv[])
 			      *kern_vers != 0x4e73)
 			    {
 			      printf ("This kernel requires a newer version of loadbsd: %d\n", *kern_vers);
+			      exit (0);
+			    }
+			  if ((cpuid & AFB_68020) == 0)
+			    {
+			      printf ("Hmmm... You don't seem to have a CPU capable\n");
+			      printf ("        of running NetBSD.  You need a 68020\n");
+			      printf ("        or better\n");
 			      exit (0);
 			    }
 			  /* give them a chance to read the information... */
@@ -284,24 +309,24 @@ main (int argc, char *argv[])
 			  startit (kernel, kernel_size,
 				   e.a_entry, fastmem_start,
 				   fastmem_size, chipmem_size,
-				   boothowto, esym );
+				   boothowto, esym, cpuid );
 			}
 		      else
 			fprintf (stderr, "Executable corrupt!\n");
-                    }
-                  else
-		    fprintf (stderr, "Out of memory! (%d)\n", text_size + e.a_data + e.a_bss 
+		    }
+		  else
+		    fprintf (stderr, "Out of memory! (%d)\n", text_size + e.a_data + e.a_bss
 				   + num_cd*sizeof(*cd) + 4
 				   + mem_list.num_mem*sizeof(struct MEM_SEG) + 4);
-                }
+		}
 	      else
-	        fprintf (stderr, "Unsupported executable: %o\n", e.a_magic);
-            }
-          else
+		fprintf (stderr, "Unsupported executable: %o\n", e.a_magic);
+	    }
+	  else
 	    fprintf (stderr, "Can't read header of %s\n", argv[1]);
 
 	  close (fd);
-        }
+	}
       else
 	perror ("open");
     }
@@ -313,17 +338,17 @@ main (int argc, char *argv[])
 void
 get_mem_config (void **fastmem_start, u_long *fastmem_size, u_long *chipmem_size)
 {
-  extern struct ExecBase *SysBase;  
+  extern struct ExecBase *SysBase;
   struct MemHeader *mh, *nmh;
   int num_mem = 0;
   u_int seg_size;
   u_int seg_start;
   u_int seg_end;
   char mem_pri = -128;
-  
+
   *fastmem_size = 0;
   *chipmem_size = 0;
-  
+
   /* walk thru the exec memory list */
   Forbid ();
   for (mh  = (struct MemHeader *) SysBase->MemList.lh_Head;
@@ -339,7 +364,7 @@ get_mem_config (void **fastmem_start, u_long *fastmem_size, u_long *chipmem_size
       mem_list.mem_seg[num_mem].mem_start = seg_start;
 
       if (mh->mh_Attributes & MEMF_CHIP)
-        {
+	{
 	  /* there should hardly be more than one entry for chip mem, but
 	     handle it the same nevertheless */
 	  /* chipmem always starts at 0, so include vector area */
@@ -351,7 +376,7 @@ get_mem_config (void **fastmem_start, u_long *fastmem_size, u_long *chipmem_size
 	    {
 	      *chipmem_size = seg_size;
 	    }
-        }
+	}
       else
 	{
 	  /* some heuristics.. */
@@ -378,7 +403,7 @@ get_mem_config (void **fastmem_start, u_long *fastmem_size, u_long *chipmem_size
 	    continue;
 /* if p_opt is set, select memory by priority instead of size */
 	  if ((!p_opt && seg_size > *fastmem_size) ||
-            (p_opt && mem_pri <= mh->mh_Node.ln_Pri && seg_size > *fastmem_size))
+	    (p_opt && mem_pri <= mh->mh_Node.ln_Pri && seg_size > *fastmem_size))
 	    {
 	      *fastmem_size = seg_size;
 	      *fastmem_start = (void *)seg_start;
@@ -390,7 +415,43 @@ get_mem_config (void **fastmem_start, u_long *fastmem_size, u_long *chipmem_size
   Permit();
 }
 
+/*
+ * Try to determine the machine ID by searching the resident module list
+ * for modules only present on specific machines.  (Thanks, Bill!)
+ */
 
+void
+get_cpuid ()
+{
+	extern struct ExecBase *SysBase;
+	u_long *rl;
+	struct Resident *rm;
+
+	cpuid = SysBase->AttnFlags;	/* get FPU and CPU flags */
+	rl = (u_long *) SysBase->ResModules;
+	if (rl == NULL)
+		return;
+
+	while (*rl) {
+		rm = (struct Resident *) *rl;
+		if (strcmp (rm->rt_Name, "A4000 Bonus") == 0 ||
+		    strcmp (rm->rt_Name, "A1000 Bonus") == 0) {
+			cpuid |= 4000 << 16;
+			break;
+		}
+		if (strcmp (rm->rt_Name, "A3000 Bonus") == 0) {
+			cpuid |= 3000 << 16;
+			break;
+		}
+		if (strcmp (rm->rt_Name, "card.resource") == 0) {
+			cpuid |= 1200 << 16;	/* or A600 :-) */
+			break;
+		}
+		++rl;
+	}
+	if (*rl == 0)		/* Nothing found, it's probably an A2000 or A500 */
+		cpuid |= 2000 << 16;
+}
 
 
 asm ("
@@ -415,6 +476,7 @@ start_super:
 	| d5:  AttnFlags (cpuid)
 	| d7:  boothowto
 	| a4:  esym location
+	| All other registers zeroed for possible future requirements.
 
 	movel	a3@(4),a1		| loaded kernel
 	movel	a3@(8),d2		| length of loaded kernel
@@ -422,10 +484,9 @@ start_super:
 	movel	a3@(16),a0		| fastmem-start
 	movel	a3@(20),d0		| fastmem-size
 	movel	a3@(24),d1		| chipmem-size
-	movel	#0,d5
-	movew	(ABSEXECBASE)@(0x128),d5 | SysBase->AttnFlags
 	movel	a3@(28),d7		| boothowto
 	movel	a3@(32),a4		| esym
+	movel	a3@(36),d5		| cpuid
 	subl	a5,a5			| target, load to 0
 
 	btst	#3,(ABSEXECBASE)@(0x129) | AFB_68040,SysBase->AttnFlags

@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 1994 Michael L. Hitch
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -31,20 +32,144 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: mgnsc.c,v 1.1 1994/05/08 05:53:27 chopps Exp $
+ *	$Id: mgnsc.c,v 1.2 1994/05/12 05:57:21 chopps Exp $
  */
 
-/*
- * dummy CSA Magnum DMA driver
- */
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/device.h>
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
+#include <amiga/amiga/custom.h>
+#include <amiga/amiga/cc.h>
+#include <amiga/amiga/device.h>
+#include <amiga/dev/siopreg.h>
+#include <amiga/dev/siopvar.h>
+#include <amiga/dev/zthreebusvar.h>
 
-#include "magnumscsi.h"
+int mgnscprint __P((void *auxp, char *));
+void mgnscattach __P((struct device *, struct device *, void *));
+int mgnscmatch __P((struct device *, struct cfdata *, void *));
 
-#if NMAGNUMSCSI > 0
+struct scsi_adapter mgnsc_scsiswitch = {
+	siop_scsicmd,
+	siop_minphys,
+	0,			/* no lun support */
+	0,			/* no lun support */
+	siop_adinfo,
+	"mgnsc",
+};
 
-void
-magnumdmainit ()
-{
-}
+struct scsi_device mgnsc_scsidev = {
+	NULL,		/* use default error handler */
+	NULL,		/* do not have a start functio */
+	NULL,		/* have no async handler */
+	NULL,		/* Use default done routine */
+	"mgnsc",
+	0,
+};
+
+
+#ifdef DEBUG
 #endif
 
+struct cfdriver mgnsccd = {
+	NULL, "mgnsc", mgnscmatch, mgnscattach, 
+	DV_DULL, sizeof(struct siop_softc), NULL, 0 };
+
+/*
+ * if we are a CSA Magnum 40 SCSI
+ */
+int
+mgnscmatch(pdp, cdp, auxp)
+	struct device *pdp;
+	struct cfdata *cdp;
+	void *auxp;
+{
+	struct zthreebus_args *zap;
+
+	zap = auxp;
+	if (zap->manid == 1058 && zap->prodid == 17)
+		return(1);
+	return(0);
+}
+
+void
+mgnscattach(pdp, dp, auxp)
+	struct device *pdp, *dp;
+	void *auxp;
+{
+	struct siop_softc *sc;
+	struct zthreebus_args *zap;
+	siop_regmap_p rp;
+
+	zap = auxp;
+	
+	sc = (struct siop_softc *)dp;
+	sc->sc_siopp = rp = zap->va + 0x40000;
+
+	/*
+	 * DCNTL = 25.01->37.5MHZ / SCLK/1.5
+	 * CTEST7 = TT1
+	 */
+	sc->sc_clock_freq = 0x0240;
+	
+	siopreset(sc);
+
+	sc->sc_link.adapter_softc = sc;
+	sc->sc_link.adapter_targ = 7;
+	sc->sc_link.adapter = &mgnsc_scsiswitch;
+	sc->sc_link.device = &mgnsc_scsidev;
+	TAILQ_INIT(&sc->sc_xslist);
+
+	custom.intreq = INTF_PORTS;
+	custom.intena = INTF_SETCLR | INTF_PORTS;
+
+	/*
+	 * attach all scsi units on us
+	 */
+	config_found(dp, &sc->sc_link, mgnscprint);
+}
+
+/*
+ * print diag if pnp is NULL else just extra
+ */
+int
+mgnscprint(auxp, pnp)
+	void *auxp;
+	char *pnp;
+{
+	if (pnp == NULL)
+		return(UNCONF);
+	return(QUIET);
+}
+
+
+int
+mgnsc_dmaintr()
+{
+	siop_regmap_p rp;
+	struct siop_softc *dev;
+	int i, found;
+	u_char istat;
+
+	found = 0;
+	for (i = 0; i < mgnsccd.cd_ndevs; i++) {
+		dev = mgnsccd.cd_devs[i];
+		if (dev == NULL)
+			continue;
+		rp = dev->sc_siopp;
+		istat = rp->siop_istat;
+		if ((istat & (SIOP_ISTAT_SIP | SIOP_ISTAT_DIP)) == 0)
+			continue;
+		if ((dev->sc_flags & (SIOP_DMA | SIOP_SELECTED)) == SIOP_SELECTED)
+			continue;	/* doing non-interrupt I/O */
+		found++;
+		dev->sc_istat = istat;
+		dev->sc_dstat = rp->siop_dstat;
+		dev->sc_sstat0 = rp->siop_sstat0;
+		siopintr(dev);
+	}
+	return(found);
+}

@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.16 1994/05/11 19:02:57 chopps Exp $
+ *	$Id: locore.s,v 1.17 1994/05/12 05:56:32 chopps Exp $
  *
  * Original (hp300) Author: unknown, maybe Mike Hibler?
  * Amiga author: Markus Wild
@@ -606,7 +606,7 @@ Lbomrip:
 Lstackok:
 #endif	/* DEBUG */
 #endif
-#if NZEUSSCSI > 0
+#if NZSSC > 0
 	jbsr	_siopintr6		| check for siop (53C710) interrupt
 	tstl	d0
 	jne	Lskipciab		| XXX skip CIAB processing

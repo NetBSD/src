@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: autoconf.c,v 1.18 1994/05/11 19:02:53 chopps Exp $
+ *	$Id: autoconf.c,v 1.19 1994/05/12 05:56:30 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,6 +35,7 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
+#include <machine/cpu.h>
 #include <amiga/amiga/cfdev.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
@@ -190,7 +191,7 @@ mbattach(pdp, dp, auxp)
 	struct device *pdp, *dp;
 	void *auxp;
 {
-	printf("\n");
+	printf ("\n");
 	config_found(dp, "clock", simple_devprint);
 	config_found(dp, "ser", simple_devprint);
 	config_found(dp, "par", simple_devprint);
@@ -199,6 +200,11 @@ mbattach(pdp, dp, auxp)
 	config_found(dp, "ztwobus", simple_devprint);
 	if (is_a3000())
 		config_found(dp, "ahsc", simple_devprint);
+	if (is_a3000() || is_a4000()) {
+		config_found(dp, "zthreebus", simple_devprint);
+	}
+	if (is_a4000())
+		config_found(dp, "idesc", simple_devprint);
 }
 
 int
@@ -324,6 +330,11 @@ is_a3000()
 	extern long orig_fastram_start;
 	short sc;
 
+	if ((machineid >> 16) == 3000)
+		return (1);			/* It's an A3000 */
+	if (machineid >> 16)
+		return (0);			/* It's not an A3000 */
+	/* Machine type is unknown, so try to guess it */
 	/* where is fastram on the A4000 ?? */
 	/* if fastram is below 0x07000000, assume it's not an A3000 */
 	if (orig_fastram_start < 0x07000000)
@@ -360,5 +371,15 @@ is_a3000()
 int
 is_a4000()
 {
-	return (a4000_flag);		/* XXX */
+	if ((machineid >> 16) == 4000)
+		return (1);		/* It's an A4000 */
+	if ((custom.deniseid & 0xff) == 0xf8)
+		return (1);
+#ifdef DEBUG
+	if (a4000_flag)
+		printf ("Denise ID = %04x\n", (unsigned short)custom.deniseid);
+#endif
+	if (machineid >> 16)
+		return (0);		/* It's not an A4000 */
+	return (a4000_flag);		/* Machine type not set */
 }

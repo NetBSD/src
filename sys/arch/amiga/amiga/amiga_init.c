@@ -1,7 +1,7 @@
 /* Authors: Markus Wild, Bryan Ford, Niklas Hallqvist 
  *          Michael L. Hitch - initial 68040 support
  *
- *	$Id: amiga_init.c,v 1.13 1994/05/08 05:52:11 chopps Exp $
+ *	$Id: amiga_init.c,v 1.14 1994/05/12 05:56:28 chopps Exp $
  */
 
 
@@ -35,6 +35,7 @@
 #include <amiga/amiga/cfdev.h>
 #include <amiga/amiga/memlist.h>
 #include <amiga/dev/ztwobusvar.h>
+#include <amiga/dev/zthreebusvar.h>
 
 #ifdef DEBUG
 #include <amiga/amiga/color.h>
@@ -155,6 +156,8 @@ start_c(id, fastram_start, fastram_size, chipram_size, esym_addr)
   u_int zorro2_pt;
 #endif
   u_int end_loaded;
+  u_int ncd;
+  struct cfdev *cd;
 
   orig_fastram_start = fastram_start;
   orig_fastram_size = fastram_size;
@@ -196,6 +199,14 @@ start_c(id, fastram_start, fastram_size, chipram_size, esym_addr)
       break;
     }
   }
+
+  /* look for Z3 boards. For now, no Z3 RAM-extensions are supported, just
+     I/O boards */
+  for (ZTHREEAVAIL = 0, cd = cfdev, ncd = ncfdev; 
+       ncd > 0; 
+       ncd--, cd++)
+    if ((u_int) cd->addr >= ZTHREEBASE && (u_int) cd->addr < ZTHREETOP)
+      ZTHREEAVAIL += amiga_round_page (cd->size);
 
 #if 0
   /* XXX */
@@ -253,6 +264,8 @@ start_c(id, fastram_start, fastram_size, chipram_size, esym_addr)
     pagetable_extra = CHIPMEMSIZE + CIASIZE + ZTWOROMSIZE;
 #endif
   pagetable_extra += (ZTWOMEMSIZE) / AMIGA_PAGE_SIZE; /* XXX */
+  if (ZTHREEAVAIL > 0)
+    pagetable_extra += btoc (ZTHREEAVAIL);
   pagetable_size  = (Sysptsize + (pagetable_extra + NPTEPG-1)/NPTEPG) << PGSHIFT;
   vstart         += pagetable_size;
   pstart         += pagetable_size;
@@ -444,6 +457,9 @@ start_c(id, fastram_start, fastram_size, chipram_size, esym_addr)
     }
 #endif
 
+  /* following page tables MAY be allocated to ZORRO3 space, but they're
+     then later mapped in autoconf.c */
+
   /* Setup page table for process 0.
   
      We set up page table access for the kernel via Usrptmap (usrpt)
@@ -498,6 +514,7 @@ start_c(id, fastram_start, fastram_size, chipram_size, esym_addr)
   else						/* XXX */
     CIAADDR     = CHIPMEMADDR + CHIPMEMSIZE*AMIGA_PAGE_SIZE;
   ZTWOROMADDR  = (caddr_t) CIAADDR + CIASIZE*AMIGA_PAGE_SIZE;
+  ZTHREEADDR  = (caddr_t) ZTWOROMADDR + ZTWOROMSIZE*AMIGA_PAGE_SIZE;
   CIAADDR    += AMIGA_PAGE_SIZE/2; /* not on 8k boundery :-( */
 
   /* just setup the custom chips address, other addresses (like SCSI on

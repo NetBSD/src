@@ -1,7 +1,7 @@
 #
 # GENERIC AMIGA
 #
-#	$Id: GENERIC,v 1.7 1994/05/11 19:03:33 chopps Exp $
+#	$Id: GENERIC,v 1.8 1994/05/12 05:56:59 chopps Exp $
 #
 # This configuration file contains all possible options
 #
@@ -33,8 +33,10 @@ atzsc0		at ztwobus0
 #ivsc0		at ztwobus0		# IVS scsi
 #mlhsc0		at ztwobus0		# Hacker scsi
 #otgsc0		at ztwobus0		# 12 gauge scsi
-#zssc0		at ztwobus0		# Zues scsi
-#mgnsc0		at ztwobus0		# Magnum scsi
+zssc0		at ztwobus0		# Zeus scsi
+mgnsc0		at ztwobus0		# Magnum scsi
+wesc0		at zthreebus0		# Warp Engine scsi
+#idesc0		at mainbus0		# A4000(A1200?) IDE
 
 scsibus0	at gtsc0
 scsibus1	at ahsc0
@@ -43,8 +45,10 @@ scsibus2	at atzsc0
 #scsibus3	at ivsc0
 #scsibus4	at mlhsc0
 #scsibus5	at otgsc0
-#scsibus6	at zssc0
-#scsibus7	at mgnsc0
+scsibus6	at zssc0
+scsibus7	at mgnsc0
+scsibus8	at wesc0
+#scsibus9	at idesc0
 
 # any drives on configured controllers.
 sd0	at scsibus? target 0 lun 0
@@ -54,6 +58,7 @@ sd3	at scsibus? target 3 lun 0
 sd4	at scsibus? target 4 lun 0
 sd5	at scsibus? target 5 lun 0
 sd6	at scsibus? target 6 lun 0
+sd7	at scsibus? target ? lun 0
 st0	at scsibus? target ? lun 0
 
 config	netbsd swap on generic

@@ -1,5 +1,5 @@
 # standard amiga information
-#	$Id: std.amiga,v 1.1 1994/05/08 05:56:53 chopps Exp $
+#	$Id: std.amiga,v 1.2 1994/05/12 05:57:01 chopps Exp $
 machine amiga m68k
 
 mainbus0	at root
@@ -9,5 +9,6 @@ ser0	at mainbus0
 par0	at mainbus0
 kbd0	at mainbus0
 ztwobus0	at mainbus0
+zthreebus0	at mainbus0
 
 pseudo-device mouse 2
