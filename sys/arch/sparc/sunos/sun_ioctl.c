@@ -22,7 +22,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * loosely from: Header: sun_ioctl.c,v 1.7 93/05/28 04:40:43 torek Exp 
- * $Id: sun_ioctl.c,v 1.3 1993/11/14 14:46:54 deraadt Exp $
+ * $Id: sun_ioctl.c,v 1.4 1993/11/20 02:57:43 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -420,6 +420,18 @@ sun_ioctl(p, uap, retval)
 			return ENXIO;
 
 		return (*ctl)(fp, TIOCSETD, (caddr_t)&disc, p);
+	    }
+	case _IOW('t', 101, int):	/* sun SUN_TIOCSSOFTCAR */
+	    {
+		int x;	/* unused */
+
+		return copyin((caddr_t)&x, uap->data, sizeof x);
+	    }
+	case _IOR('t', 100, int):	/* sun SUN_TIOCSSOFTCAR */
+	    {
+		int x = 0;
+
+		return copyout((caddr_t)&x, uap->data, sizeof x);
 	    }
 	case _IO('t', 36): 		/* sun TIOCCONS, no parameters */
 	    {
