@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.21.4.1 2002/11/01 18:14:07 tron Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.21.4.2 2002/11/06 22:10:56 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -70,7 +70,6 @@
 	lis	pmap,_C_LABEL(kernel_pmap_)@ha;	\
 	lwzu	sr,_C_LABEL(kernel_pmap_)+PM_SR@l(pmap); \
 	RESTORE_SRS(pmap,sr)
-#endif
 
 /*
  * Data used during primary/secondary traps/interrupts
