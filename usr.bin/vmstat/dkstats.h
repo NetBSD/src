@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.h,v 1.5 2002/06/30 00:10:34 sommerfeld Exp $	*/
+/*	$NetBSD: dkstats.h,v 1.6 2002/11/01 12:47:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -40,9 +40,11 @@
 struct _disk {
 	int		 *dk_select;	/* Display stats for selected disks. */
 	char		**dk_name;	/* Disk names (sd0, wd1, etc). */
-	u_int64_t	 *dk_xfer;	/* # of transfers. */
+	u_int64_t	 *dk_rxfer;	/* # of read transfers. */
+	u_int64_t	 *dk_wxfer;	/* # of write transfers. */
 	u_int64_t	 *dk_seek;	/* # of seeks (currently unused). */
-	u_int64_t	 *dk_bytes;	/* # of bytes transfered. */
+	u_int64_t	 *dk_rbytes;	/* # of bytes read. */
+	u_int64_t	 *dk_wbytes;	/* # of bytes written. */
 	struct timeval	 *dk_time;	/* Time spent in disk i/o. */
 	u_int64_t	  tk_nin;	/* TTY Chars in. */
 	u_int64_t	  tk_nout;	/* TTY Chars out. */
