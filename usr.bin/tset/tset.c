@@ -1,4 +1,4 @@
-/*	$NetBSD: tset.c,v 1.6 1997/10/20 01:07:54 lukem Exp $	*/
+/*	$NetBSD: tset.c,v 1.7 1998/07/26 23:09:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tset.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: tset.c,v 1.6 1997/10/20 01:07:54 lukem Exp $");
+__RCSID("$NetBSD: tset.c,v 1.7 1998/07/26 23:09:50 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -81,7 +81,8 @@ main(argc, argv)
 	struct winsize win;
 #endif
 	int ch, noinit, noset, quiet, Sflag, sflag, showterm, usingupper;
-	char savech, *p, *t, *tcapbuf, *ttype;
+	char savech, *p, *t, *tcapbuf;
+	const char *ttype;
 
 	if (tcgetattr(STDERR_FILENO, &mode) < 0)
 		err(1, "standard error");
