@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2000/11/28 03:03:29 minoura Exp $
+#	$NetBSD: Makefile,v 1.13 2001/12/07 06:57:51 minoura Exp $
 
 TOP=		${.CURDIR}/..
 COMMONDIR=	${TOP}/ramdisk-common
@@ -7,16 +7,15 @@ IMAGE=		ramdisk.fs
 
 AUXTARGETS=	passwd
 AUXDEPENDS= 	${AUXTARGETS} dot.profile dot.hdprofile \
-		${COMMONDIR}/termcap.vt ${COMMONDIR}/disktab.preinstall \
-		${COMMONDIR}/installboot.sh
+		${COMMONDIR}/termcap.vt ${COMMONDIR}/disktab.preinstall
 AUXCLEAN=	${AUXTARGETS}
 
 CBIN=		ramdiskbin
 
 RAMDISKSPT=	15
-RAMDISKCYLS=	80
+RAMDISKCYLS=	85
 RAMDISKHEADS=	2
-RAMDISKCPG=	32
+RAMDISKCPG=	96
 RAMDISKBPI=	4096
 
 passwd:
@@ -24,6 +23,8 @@ passwd:
 	/bin/cp -pf ${.CURDIR}/../../../../etc/master.passwd ${.OBJDIR}/etc
 	pwd_mkdb -p -d ${.OBJDIR} ${.OBJDIR}/etc/master.passwd
 	/bin/cp -pf ${.OBJDIR}/etc/passwd ${.OBJDIR}
+
+includes:
 
 .include "${COMMONDIR}/Makefile.inc"
 

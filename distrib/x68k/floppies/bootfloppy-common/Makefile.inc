@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2001/10/21 23:23:24 jmc Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2001/12/07 06:57:49 minoura Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -6,86 +6,98 @@ COMMONDIR=	${TOP}/bootfloppy-common
 
 .include <bsd.kernobj.mk>
 
-MOUNT_POINT?=	/mnt
+IMAGE?=		xxx-${REV}.fs
+.ifndef INSTKERNEL
+INSTKERNNAME?=	netbsd.xxx.gz
+INSTKERNODIR!=	cd ${INSTKERNDIR} ; ${MAKE} print-objdir
+INSTKERNEL=	${INSTKERNODIR}/${INSTKERNNAME}
+.endif
+BOOTNAME?=	USTAR.volsize.4540
+BASENAME?=	boot
+IMAGE1?=	${BASENAME}1.fs
+
 VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CDEV=	/dev/${VND}c
 VND_CRDEV=	/dev/r${VND}c
-IMAGE?=		xxx-${REV}.fs
-RAMDISKDIR?=	$(.CURDIR)/../ramdisk/
-KERN?=		netbsd-xxx
-KERNNAME?=	netbsd.xxx
-GZNAME?=	${KERNNAME}.gz
 MDEC=		${DESTDIR}/usr/mdec
-MDSETIMAGE?=	mdsetimage
+FSTMP=		ustar.fs
 
-LISTS=		${COMMONDIR}/list
-.if ${RAMDISKDIR} != ""
-RAMDISK	!=cd ${RAMDISKDIR}; ${MAKE} echoimage
-.endif
+DISKTYPE?=	floppy5
+DISKSIZE?=	2400
+BLOCK8K?=	149
 
-DISKTYPE=	floppy5
 
-# Some reasonable values for the -i parameter to newfs are:
-#
-#   6144	1147k, 189 inodes free
-#  16384	1159k,  93 inodes free
-# 204800	1167k,  29 inodes free
-INO_BYTES?=	204800
+CLEANFILES+=	netbsd ${BOOTNAME} ${FSTMP}
 
-CLEANFILES+=	${KERNNAME} ${GZNAME} netbsd.tmp*
-
-realall: ${GZNAME}
-	dd if=/dev/zero of=${IMAGE} bs=100k count=12
-	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
-	disklabel -rw ${VND_CDEV} ${DISKTYPE}
-	newfs -B be -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV} ${DISKTYPE}
-	mount ${VND_DEV} ${MOUNT_POINT}
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} KERN=${GZNAME} \
-	    KERNOBJDIR=${KERNOBJDIR} \
-	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	umount ${MOUNT_POINT}
-	@echo ""
+realall: netbsd ${BOOTNAME}
+	tar cvf ${FSTMP} ${BOOTNAME} netbsd
+	@echo
+	@echo Making disk number one
+	-mv -f ${IMAGE1} ${IMAGE1}.tmp
+	dd if=/dev/zero of=${IMAGE1}.tmp count=${DISKSIZE}
+	vnconfig -t ${DISKTYPE} -v -c ${VND_CRDEV} ${IMAGE1}.tmp
+	disklabel -rw ${VND_CRDEV} ${DISKTYPE}
+	dd bs=8k seek=1 count=${BLOCK8K} if=${FSTMP} of=${VND_RDEV}
 	@echo "installing new bootblocks"
-	${MDEC}/installboot ${MDEC}/fdboot ${VND_CRDEV}
-	vnconfig -u ${VND_CDEV}
+	${MDEC}/installboot.new -v ${MDEC}/fdboot_ustar ${VND_RDEV}
+	vnconfig -u ${VND_CRDEV}
+	@ls -l ${FSTMP} | (read mode links uid gid size junk; \
+		dksize=$$((${DISKSIZE} * 512 - 8 * 1024)); \
+		disks=$$(($$size / $$dksize + 1)); \
+		if test $$size -gt $$dksize; then \
+			d=2; \
+			while test $$d -le $$disks; do \
+				echo; \
+				echo Making disk number $$d.; \
+				IMAGE=${BASENAME}$${d}.fs; \
+				echo USTARFS $$d > $${IMAGE}; \
+				skip=$$((($$d - 1) * ${BLOCK8K})); \
+				if test $$d -eq $$disks; then \
+					dd bs=8k seek=1 skip=$${skip} \
+						conv=sync \
+						if=${FSTMP} of=$${IMAGE}; \
+				else \
+					dd bs=8k seek=1 skip=$${skip} \
+						conv=sync count=${BLOCK8K} \
+						if=${FSTMP} of=$${IMAGE}; \
+				fi; \
+				d=$$(($$d + 1)); \
+			done; \
+		else \
+			dd seek=$$(($${size} / 512 + 15)) count=1 \
+				if=/dev/zero of=${IMAGE1}; \
+		fi; \
+		echo; \
+                bytes=$$(($$dksize * $$disks - $$size));    \
+                echo "There are $$bytes ($$(($$bytes / 1024))K) bytes free\
+                        on disk $$disks."; \
+	)
+	mv -f ${IMAGE1}.tmp ${IMAGE1}
 
 unconfig:
-	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_DEV}
-	-/bin/rm -f ${IMAGE}
+	-vnconfig -u ${VND_RDEV}
 
-.if defined(RAMDISK)
-${KERNNAME}: ${KERN} ${RAMDISK}
-	-/bin/rm -f netbsd.tmp*
-	cp ${KERN} netbsd.tmp
-	${MDSETIMAGE} -v netbsd.tmp ${RAMDISK}
-	mv -f netbsd.tmp ${.TARGET}
-.else
-${KERNNAME}: ${KERN}
-	cp ${KERN} ${.TARGET}
-.endif
+${BOOTNAME}:
+	cp -fp ${MDEC}/boot ${BOOTNAME}
 
-${GZNAME}: ${KERNNAME}
-	gzip -cv9 ${KERNNAME} > ${.TARGET}
+netbsd:
+	cp -fp ${INSTKERNEL} netbsd
 
 depend:
 
 release:
 	-mkdir -p ${RELEASEDIR}/installation/floppy
-	-mkdir -p ${RELEASEDIR}/installation/misc
-	cp -p ${IMAGE} ${RELEASEDIR}/installation/floppy
-	gzip <${IMAGE} >${RELEASEDIR}/installation/floppy/${IMAGE}.gz
-.ifndef NOKERNCOPY
-	cp -p ${KERNNAME} ${RELEASEDIR}/installation/misc
-	cp -p ${GZNAME} ${RELEASEDIR}/installation/misc
-.endif
+	cp -p ${BASENAME}*.fs ${RELEASEDIR}/installation/floppy
+	for f in ${RELEASEDIR}/installation/floppy/${BASENAME}*.fs; do \
+		gzip <$$f >$$f.gz; \
+	done
 
 clean cleandir distclean:
-	/bin/rm -f *.core ${IMAGE} ${CLEANFILES}
+	/bin/rm -f *.core ${IMAGE1}.tmp ${BASENAME}?.fs ${CLEANFILES}
+
+includes:
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
