@@ -1,4 +1,4 @@
-/*	$NetBSD: fsi_analyze.c,v 1.3 2003/03/09 01:38:45 christos Exp $	*/
+/*	$NetBSD: fsi_analyze.c,v 1.4 2003/07/15 09:01:18 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -124,16 +124,16 @@ compute_hostpath(char *hn)
     d = strrchr(p, '.');
     if (d) {
       *d = 0;
-      strcat(path, d + 1);
-      strcat(path, "/");
+      strlcat(path, d + 1, sizeof(path));
+      strlcat(path, "/", sizeof(path));
     } else {
-      strcat(path, p);
+      strlcat(path, p, sizeof(path));
     }
   } while (d);
 
   logit("hostpath of '%s' is '%s'", hn, path);
 
-  strcpy(p, path);
+  strlcpy(p, path, strlen(hn) + 1);
   return p;
 }
 
@@ -222,7 +222,7 @@ analyze_dkmount_tree(qelem *q, fsi_mount *parent, disk_fs *dk)
     logit("Mount %s:", mp->m_name);
     if (parent) {
       char n[MAXPATHLEN];
-      sprintf(n, "%s/%s", parent->m_name, mp->m_name);
+      snprintf(n, sizeof(n), "%s/%s", parent->m_name, mp->m_name);
       if (*mp->m_name == '/')
 	lerror(mp->m_ioloc, "sub-directory %s of %s starts with '/'", mp->m_name, parent->m_name);
       else if (STREQ(mp->m_name, "default"))
@@ -632,7 +632,7 @@ analyze_automount_tree(qelem *q, char *pref, int lvl)
     if (lvl > 0 || ap->a_mount)
       if (ap->a_name[1] && strchr(ap->a_name + 1, '/'))
 	lerror(ap->a_ioloc, "not allowed '/' in a directory name");
-    sprintf(nname, "%s/%s", pref, ap->a_name);
+    snprintf(nname, sizeof(nname), "%s/%s", pref, ap->a_name);
     XFREE(ap->a_name);
     ap->a_name = strdup(nname[1] == '/' ? nname + 1 : nname);
     logit("automount point %s:", ap->a_name);

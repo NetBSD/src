@@ -1,4 +1,4 @@
-/*	$NetBSD: mk-amd-map.c,v 1.1.1.6 2003/03/09 01:14:06 christos Exp $	*/
+/*	$NetBSD: mk-amd-map.c,v 1.2 2003/07/15 09:01:20 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -306,15 +306,15 @@ main(int argc, char *argv[])
 
     /* remove existing temps (if any) */
 #ifdef HAVE_DB_SUFFIX
-    sprintf(maptdb, "%s.db", maptmp);
+    snprintf(maptdb, sizeof(maptdb), "%s.db", maptmp);
     if (remove_file(maptdb) < 0) {
       fprintf(stderr, "Can't remove existing temporary file; ");
       perror(maptdb);
       exit(1);
     }
 #else /* not HAVE_DB_SUFFIX */
-    sprintf(maptpag, "%s.pag", maptmp);
-    sprintf(maptdir, "%s.dir", maptmp);
+    snprintf(maptpag, sizeof(maptpag), "%s.pag", maptmp);
+    snprintf(maptdir, sizeof(maptdir), "%s.dir", maptmp);
     if (remove_file(maptpag) < 0 || remove_file(maptdir) < 0) {
       fprintf(stderr, "Can't remove existing temporary files; %s and ", maptpag);
       perror(maptdir);

@@ -1,4 +1,4 @@
-/*	$NetBSD: get_args.c,v 1.1.1.6 2003/03/09 01:13:17 christos Exp $	*/
+/*	$NetBSD: get_args.c,v 1.2 2003/07/15 09:01:15 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -72,46 +72,48 @@ get_version_string(void)
   char tmpbuf[1024];
   char *wire_buf;
   int wire_buf_len = 0;
+  size_t l;
 
   /* first get dynamic string listing all known networks */
   wire_buf = print_wires();
   if (wire_buf)
     wire_buf_len = strlen(wire_buf);
 
-  vers = xmalloc(2048 + wire_buf_len);
-  sprintf(vers, "%s\n%s\n%s\n%s\n",
+  l = 2048 + wire_buf_len;
+  vers = xmalloc(l);
+  snprintf(vers, l, "%s\n%s\n%s\n%s\n",
 	  "Copyright (c) 1997-2003 Erez Zadok",
 	  "Copyright (c) 1990 Jan-Simon Pendry",
 	  "Copyright (c) 1990 Imperial College of Science, Technology & Medicine",
 	  "Copyright (c) 1990 The Regents of the University of California.");
-  sprintf(tmpbuf, "%s version %s (build %d).\n",
+  snprintf(tmpbuf, sizeof(tmpbuf), "%s version %s (build %d).\n",
 	  PACKAGE_NAME, PACKAGE_VERSION, AMU_BUILD_VERSION);
-  strcat(vers, tmpbuf);
-  sprintf(tmpbuf, "Report bugs to %s.\n", PACKAGE_BUGREPORT);
-  strcat(vers, tmpbuf);
-  sprintf(tmpbuf, "Built by %s@%s on date %s.\n",
+  strlcat(vers, tmpbuf, l);
+  snprintf(tmpbuf, sizeof(tmpbuf), "Report bugs to %s.\n", PACKAGE_BUGREPORT);
+  strlcat(vers, tmpbuf, l);
+  snprintf(tmpbuf, sizeof(tmpbuf), "Built by %s@%s on date %s.\n",
 	  USER_NAME, HOST_NAME, CONFIG_DATE);
-  strcat(vers, tmpbuf);
-  sprintf(tmpbuf, "cpu=%s (%s-endian), arch=%s, karch=%s.\n",
+  strlcat(vers, tmpbuf, l);
+  snprintf(tmpbuf, sizeof(tmpbuf), "cpu=%s (%s-endian), arch=%s, karch=%s.\n",
 	  cpu, endian, gopt.arch, gopt.karch);
-  strcat(vers, tmpbuf);
-  sprintf(tmpbuf, "full_os=%s, os=%s, osver=%s, vendor=%s.\n",
+  strlcat(vers, tmpbuf, l);
+  snprintf(tmpbuf, sizeof(tmpbuf), "full_os=%s, os=%s, osver=%s, vendor=%s.\n",
 	  gopt.op_sys_full, gopt.op_sys, gopt.op_sys_ver, gopt.op_sys_vendor);
-  strcat(vers, tmpbuf);
+  strlcat(vers, tmpbuf, l);
 
-  strcat(vers, "Map support for: ");
-  mapc_showtypes(tmpbuf);
-  strcat(vers, tmpbuf);
-  strcat(vers, ".\nAMFS: ");
+  strlcat(vers, "Map support for: ", l);
+  mapc_showtypes(tmpbuf, sizeof(tmpbuf));
+  strlcat(vers, tmpbuf, l);
+  strlcat(vers, ".\nAMFS: ", l);
   ops_showamfstypes(tmpbuf);
-  strcat(vers, tmpbuf);
-  strcat(vers, ".\nFS: ");
+  strlcat(vers, tmpbuf, l);
+  strlcat(vers, ".\nFS: ", l);
   ops_showfstypes(tmpbuf);
-  strcat(vers, tmpbuf);
+  strlcat(vers, tmpbuf, l);
 
   /* append list of networks if available */
   if (wire_buf) {
-    strcat(vers, wire_buf);
+    strlcat(vers, wire_buf, l);
     XFREE(wire_buf);
   }
 
@@ -126,6 +128,7 @@ get_args(int argc, char *argv[])
   FILE *fp = stdin;
   char getopt_arguments[] = "+nprvSa:c:d:k:l:o:t:w:x:y:C:D:F:T:O:HA:";
   char *getopt_args;
+  extern char hostd[2 * MAXHOSTNAMELEN + 1];
 
 #ifdef HAVE_GNU_GETOPT
   getopt_args = getopt_arguments;
@@ -274,7 +277,7 @@ get_args(int argc, char *argv[])
     fp = fopen(conf_file, "r");
     if (!fp) {
       char buf[128];
-      sprintf(buf, "Amd configuration file (%s)", conf_file);
+      snprintf(buf, sizeof(buf), "Amd configuration file (%s)", conf_file);
       perror(buf);
       exit(1);
     }
@@ -328,8 +331,8 @@ get_args(int argc, char *argv[])
       hostdomain = gopt.sub_domain;
     if (*hostdomain == '.')
       hostdomain++;
-    strcat(hostd, ".");
-    strcat(hostd, hostdomain);
+    strlcat(hostd, ".", sizeof(hostd));
+    strlcat(hostd, hostdomain, sizeof(hostd));
 
 #ifdef MOUNT_TABLE_ON_FILE
     if (amuDebug(D_MTAB))

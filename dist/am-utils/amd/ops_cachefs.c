@@ -1,4 +1,4 @@
-/*	$NetBSD: ops_cachefs.c,v 1.1.1.6 2003/03/09 01:13:15 christos Exp $	*/
+/*	$NetBSD: ops_cachefs.c,v 1.2 2003/07/15 09:01:16 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -177,7 +177,7 @@ mount_cachefs(char *mntdir, char *real_mntdir, char *backdir, char *cachedir,
   /* CFS fscdir name */
   memset(ca.cfs_cacheid, 0, sizeof(ca.cfs_cacheid));
   /* append cacheid and mountpoint */
-  sprintf(ca.cfs_cacheid, "%s:%s", ca.cfs_fsid, mntdir);
+  snprintf(ca.cfs_cacheid, sizeof(ca.cfs_cacheid), "%s:%s", ca.cfs_fsid, mntdir);
   /* convert '/' to '_' (Solaris does that...) */
   cp = ca.cfs_cacheid;
   while ((cp = strpbrk(cp, "/")) != NULL)
@@ -247,7 +247,7 @@ cachefs_umount(am_node *am, mntfs *mf)
 
     cachedir = (char *) mf->mf_private;
     plog(XLOG_INFO, "running fsck on cache directory \"%s\"", cachedir);
-    sprintf(cmd, "fsck -F cachefs %s", cachedir);
+    snprintf(cmd, sizeof(cmd), "fsck -F cachefs %s", cachedir);
     system(cmd);
   }
 

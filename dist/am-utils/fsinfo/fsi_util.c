@@ -1,4 +1,4 @@
-/*	$NetBSD: fsi_util.c,v 1.7 2003/03/09 01:38:45 christos Exp $	*/
+/*	$NetBSD: fsi_util.c,v 1.8 2003/07/15 09:01:18 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -78,7 +78,7 @@ show_total(void)
 
     if (total_mmm < 0)
       fputc('*', stdout);
-    sprintf(n, "%d", total_shown);
+    snprintf(n, sizeof(n), "%d", total_shown);
     len = strlen(n);
     if (col_output(len))
       fputc(' ', stdout);
@@ -277,7 +277,7 @@ pref_open(char *pref, char *hn, void (*hdr) (FILE *, char *), char *arg)
   char p[MAXPATHLEN];
   FILE *ef;
 
-  sprintf(p, "%s%s", pref, hn);
+  snprintf(p, sizeof(p), "%s%s", pref, hn);
   logit("Writing %s info for %s to %s", pref, hn, p);
   ef = fopen(p, "w");
   if (ef) {

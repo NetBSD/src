@@ -1,4 +1,4 @@
-/*	$NetBSD: amfs_toplvl.c,v 1.1.1.6 2003/03/09 01:13:08 christos Exp $	*/
+/*	$NetBSD: amfs_toplvl.c,v 1.2 2003/07/15 09:01:15 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -147,13 +147,13 @@ mount_amfs_toplvl(mntfs *mf, char *opts)
   /*
    * Make a ``hostname'' string for the kernel
    */
-  sprintf(fs_hostname, "pid%ld@%s:%s",
+  snprintf(fs_hostname, sizeof(fs_hostname), "pid%ld@%s:%s",
 	  get_server_pid(), am_get_hostname(), dir);
   /*
    * Most kernels have a name length restriction (64 bytes)...
    */
   if (strlen(fs_hostname) >= MAXHOSTNAMELEN)
-    strcpy(fs_hostname + MAXHOSTNAMELEN - 3, "..");
+    strlcpy(fs_hostname + MAXHOSTNAMELEN - 3, "..", sizeof(fs_hostname) - (MAXHOSTNAMELEN - 3));
 #ifdef HOSTNAMESZ
   /*
    * ... and some of these restrictions are 32 bytes (HOSTNAMESZ)
@@ -161,7 +161,7 @@ mount_amfs_toplvl(mntfs *mf, char *opts)
    * add the proper header file to the conf/nfs_prot/nfs_prot_*.h file.
    */
   if (strlen(fs_hostname) >= HOSTNAMESZ)
-    strcpy(fs_hostname + HOSTNAMESZ - 3, "..");
+    strlcpy(fs_hostname + HOSTNAMESZ - 3, "..", sizeof(fs_hostname) - (HOSTNAMESZ - 3));
 #endif /* HOSTNAMESZ */
 
   /*
@@ -315,14 +315,14 @@ amfs_toplvl_mount(am_node *mp, mntfs *mf)
   {
     preopts[0] = '\0';
 #ifdef MNTTAB_OPT_INTR
-    strcat(preopts, MNTTAB_OPT_INTR);
-    strcat(preopts, ",");
+    strlcat(preopts, MNTTAB_OPT_INTR, sizeof(preopts));
+    strlcat(preopts, ",", sizeof(preopts));
 #endif /* MNTTAB_OPT_INTR */
 #ifdef MNTTAB_OPT_IGNORE
-    strcat(preopts, MNTTAB_OPT_IGNORE);
-    strcat(preopts, ",");
+    strlcat(preopts, MNTTAB_OPT_IGNORE, sizeof(preopts));
+    strlcat(preopts, ",", sizeof(preopts));
 #endif /* MNTTAB_OPT_IGNORE */
-    sprintf(opts, "%s%s,%s=%d,%s=%d,%s=%d,%s,map=%s",
+    snprintf(opts, sizeof(opts), "%s%s,%s=%d,%s=%d,%s=%d,%s,map=%s",
 	    preopts,
 	    MNTTAB_OPT_RW,
 	    MNTTAB_OPT_PORT, nfs_port,

@@ -1,4 +1,4 @@
-/*	$NetBSD: am_utils.h,v 1.6 2003/03/09 01:38:48 christos Exp $	*/
+/*	$NetBSD: am_utils.h,v 1.7 2003/07/15 09:01:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -666,7 +666,7 @@ extern void map_flush_srvr(fserver *);
 extern void mapc_add_kv(mnt_map *, char *, char *);
 extern void mapc_free(voidp);
 extern void mapc_reload(void);
-extern void mapc_showtypes(char *buf);
+extern void mapc_showtypes(char *, size_t);
 extern void mk_fattr(am_node *, nfsftype);
 extern void mnt_free(mntent_t *);
 extern void mp_to_fh(am_node *, am_nfs_fh *);

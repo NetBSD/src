@@ -1,4 +1,4 @@
-/*	$NetBSD: pawd.c,v 1.1.1.6 2003/03/09 01:13:19 christos Exp $	*/
+/*	$NetBSD: pawd.c,v 1.2 2003/07/15 09:01:18 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -75,9 +75,9 @@ find_mt(amq_mount_tree *mt, char *dir)
       if (NSTREQ(mt->mt_mountpoint, dir, len) &&
 	  ((dir[len] == '\0') || (dir[len] == '/'))) {
 	char tmp_buf[MAXPATHLEN];
-	strcpy(tmp_buf, mt->mt_directory);
-	strcat(tmp_buf, &dir[len]);
-	strcpy(newdir, tmp_buf);
+	strlcpy(tmp_buf, mt->mt_directory, sizeof(tmp_buf));
+	strlcat(tmp_buf, &dir[len], sizeof(tmp_buf));
+	strlcpy(newdir, tmp_buf, sizeof(newdir));
 	return 1;
       }
     }
@@ -161,7 +161,7 @@ hack_name(char *dir)
     fprintf(stderr, "partition %s, username %s\n", partition, username);
 #endif /* DEBUG */
 
-    sprintf(hesiod_lookup, "%s.homes-remote", username);
+    snprintf(hesiod_lookup, sizeof(hesiod_lookup), "%s.homes-remote", username);
     hes = hes_resolve(hesiod_lookup, "amd");
     if (!hes)
       return NULL;
@@ -185,9 +185,9 @@ hack_name(char *dir)
 #ifdef DEBUG
     fprintf(stderr, "A match, munging....\n");
 #endif /* DEBUG */
-    strcpy(transform, "/home/");
-    strcat(transform, username);
-    if (*ch) strcat(transform, ch);
+    strlcpy(transform, "/home/", sizeof(transform));
+    strlcat(transform, username, sizeof(transform));
+    if (*ch) strlcat(transform, ch, sizeof(transform));
 #ifdef DEBUG
     fprintf(stderr, "Munged to <%s>\n", transform);
 #endif /* DEBUG */
@@ -241,10 +241,10 @@ transform_dir(char *dir)
   if (clnt == 0)
     return dir;
 
-  strcpy(transform,dir);
-  while ( (mlp = amqproc_export_1((voidp)0, clnt)) &&
+  strlcpy(transform, dir, sizeof(transform));
+  while ((mlp = amqproc_export_1((voidp)0, clnt)) &&
 	  find_mlp(mlp,transform) ) {
-    strcpy(transform,newdir);
+    strlcpy(transform, newdir, sizeof(transform));
   }
   return transform;
 }
@@ -252,7 +252,7 @@ transform_dir(char *dir)
 
 /* getawd() is a substitute for getwd() which transforms the path */
 static char *
-getawd(char *path)
+getawd(char *path, size_t l)
 {
 #ifdef HAVE_GETCWD
   char *wd = getcwd(path, MAXPATHLEN+1);
@@ -263,7 +263,7 @@ getawd(char *path)
   if (wd == NULL) {
     return NULL;
   }
-  strcpy(path, transform_dir(wd));
+  strlcpy(path, transform_dir(wd), l);
   return path;
 }
 
@@ -274,7 +274,7 @@ main(int argc, char *argv[])
   char tmp_buf[MAXPATHLEN], *wd;
 
   if (argc == 1) {
-    wd = getawd(tmp_buf);
+    wd = getawd(tmp_buf, sizeof(tmp_buf));
     if (wd == NULL) {
       fprintf(stderr, "pawd: %s\n", tmp_buf);
       exit(1);

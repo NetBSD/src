@@ -1,4 +1,4 @@
-/*	$NetBSD: ops_nfs.c,v 1.2 2003/07/14 17:20:13 itojun Exp $	*/
+/*	$NetBSD: ops_nfs.c,v 1.3 2003/07/15 09:01:16 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -593,7 +593,7 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *mntdir, char *real_mntdir, char *fs_nam
 #ifdef MAXHOSTNAMELEN
   /* most kernels have a name length restriction */
   if (strlen(host) >= MAXHOSTNAMELEN)
-    strcpy(host + MAXHOSTNAMELEN - 3, "..");
+    strlcpy(host + MAXHOSTNAMELEN - 3, "..", sizeof(host) - (MAXHOSTNAMELEN - 3));
 #endif /* MAXHOSTNAMELEN */
 
   if (mf->mf_remopts && *mf->mf_remopts &&

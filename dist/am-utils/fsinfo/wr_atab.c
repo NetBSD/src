@@ -1,4 +1,4 @@
-/*	$NetBSD: wr_atab.c,v 1.1.1.6 2003/03/09 01:13:53 christos Exp $	*/
+/*	$NetBSD: wr_atab.c,v 1.2 2003/07/15 09:01:18 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -222,12 +222,12 @@ write_amount_info(FILE *af, automount *ap,  int sk)
 	char sublink[1024];
 	sublink[0] = '\0';
 	if (exp_namelen < namelen) {
-	  strcat(sublink, mp->m_name + exp_namelen + 1);
+	  strlcat(sublink, mp->m_name + exp_namelen + 1, sizeof(sublink));
 	  if (mvolnlen < volnlen)
-	    strcat(sublink, "/");
+	    strlcat(sublink, "/", sizeof(sublink));
 	}
 	if (mvolnlen < volnlen)
-	  strcat(sublink, ap->a_volname + mvolnlen + 1);
+	  strlcat(sublink, ap->a_volname + mvolnlen + 1, sizeof(sublink));
 
 	fprintf(af, ";sublink:=%s", sublink);
       }

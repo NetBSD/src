@@ -1,4 +1,4 @@
-/*	$NetBSD: info_ndbm.c,v 1.1.1.6 2003/03/09 01:13:14 christos Exp $	*/
+/*	$NetBSD: info_ndbm.c,v 1.2 2003/07/15 09:01:16 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -87,8 +87,8 @@ ndbm_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 #ifdef DBM_SUFFIX
     char dbfilename[256];
 
-    strcpy(dbfilename, map);
-    strcat(dbfilename, DBM_SUFFIX);
+    strlcpy(dbfilename, map, sizeof(dbfilename));
+    strlcat(dbfilename, DBM_SUFFIX, sizeof(dbfilename));
     error = stat(dbfilename, &stb);
 #else /* not DBM_SUFFIX */
     error = fstat(dbm_pagfno(db), &stb);
@@ -118,8 +118,8 @@ ndbm_init(mnt_map *m, char *map, time_t *tp)
 #ifdef DBM_SUFFIX
     char dbfilename[256];
 
-    strcpy(dbfilename, map);
-    strcat(dbfilename, DBM_SUFFIX);
+    strlcpy(dbfilename, map, sizeof(dbfilename));
+    strlcat(dbfilename, DBM_SUFFIX, sizeof(dbfilename));
     error = stat(dbfilename, &stb);
 #else /* not DBM_SUFFIX */
     error = fstat(dbm_pagfno(db), &stb);

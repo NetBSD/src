@@ -1,4 +1,4 @@
-/*	$NetBSD: amd.c,v 1.5 2003/03/09 01:38:39 christos Exp $	*/
+/*	$NetBSD: amd.c,v 1.6 2003/07/15 09:01:15 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -390,7 +390,7 @@ main(int argc, char *argv[])
     *domdot++ = '\0';
     hostdomain = domdot;
   }
-  strcpy(hostd, hostname);
+  strlcpy(hostd, hostname, sizeof(hostd));
   am_set_hostname(hostname);
 
   /*
@@ -555,7 +555,7 @@ main(int argc, char *argv[])
   if (!amuDebug(D_DAEMON))
     ppid = daemon_mode();
 
-  sprintf(pid_fsname, "%s:(pid%ld)", am_get_hostname(), (long) am_mypid);
+  snprintf(pid_fsname, sizeof(pid_fsname), "%s:(pid%ld)", am_get_hostname(), (long) am_mypid);
 
   do_mapc_reload = clocktime() + gopt.map_reload_interval;
 
