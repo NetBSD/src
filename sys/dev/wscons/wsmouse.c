@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.11 2000/01/08 02:57:24 takemura Exp $ */
+/* $NetBSD: wsmouse.c,v 1.12 2000/05/01 07:36:58 takemura Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.11 2000/01/08 02:57:24 takemura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.12 2000/05/01 07:36:58 takemura Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -350,25 +350,6 @@ wsmouse_input(wsmousedev, btns, x, y, z, flags)
 		splx(s);						\
 	} while (0)
 
-	mb = sc->sc_mb;
-	ub = sc->sc_ub;
-	while ((d = mb ^ ub) != 0) {
-		/*
-		 * Mouse button change.  Find the first change and drop
-		 * it into the event queue.
-		 */
-		NEXT;
-		ev->value = ffs(d) - 1;
-
-		KASSERT(ev->value >= 0);
-
-		d = 1 << ev->value;
-		ev->type =
-		    (mb & d) ? WSCONS_EVENT_MOUSE_DOWN : WSCONS_EVENT_MOUSE_UP;
-		TIMESTAMP;
-		ADVANCE;
-		ub ^= d;
-	}
 	if (flags & WSMOUSE_INPUT_ABSOLUTE_X) {
 		if (sc->sc_x != x) {
 			NEXT;
@@ -425,6 +406,26 @@ wsmouse_input(wsmousedev, btns, x, y, z, flags)
 			ADVANCE;
 			sc->sc_dz = 0;
 		}
+	}
+
+	mb = sc->sc_mb;
+	ub = sc->sc_ub;
+	while ((d = mb ^ ub) != 0) {
+		/*
+		 * Mouse button change.  Find the first change and drop
+		 * it into the event queue.
+		 */
+		NEXT;
+		ev->value = ffs(d) - 1;
+
+		KASSERT(ev->value >= 0);
+
+		d = 1 << ev->value;
+		ev->type =
+		    (mb & d) ? WSCONS_EVENT_MOUSE_DOWN : WSCONS_EVENT_MOUSE_UP;
+		TIMESTAMP;
+		ADVANCE;
+		ub ^= d;
 	}
 out:
 	if (any) {
