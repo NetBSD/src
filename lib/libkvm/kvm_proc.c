@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.45.2.4 2002/05/09 21:56:57 nathanw Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.45.2.5 2002/05/09 22:22:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.45.2.4 2002/05/09 21:56:57 nathanw Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.45.2.5 2002/05/09 22:22:39 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -622,6 +622,11 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 
 			kp2p->p_eflag = (int32_t)kp->kp_eproc.e_flag;
 
+			kp2p->p_realflag = kp->kp_proc.p_flag;
+			kp2p->p_nlwps = kp->kp_proc.p_nlwps;
+			kp2p->p_nrlwps = kp->kp_proc.p_nrlwps;
+			kp2p->p_realstat = kp->kp_proc.p_stat;
+
 			if (P_ZOMBIE(&kp->kp_proc)
 			    ||
 			    kp->kp_proc.p_stats == NULL ||
@@ -766,6 +771,7 @@ kvm_getlwps(kd, pid, paddr, esize, cnt)
 				(void)kvm_read(kd, (u_long)l.l_wmesg,
 				    kl->l_wmesg, WMESGLEN);
 			kl->l_cpuid = KI_NOCPU;
+			laddr = PTRTOINT64(l.l_sibling.le_next);
 		}
 	}
 
