@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.23 2001/11/13 00:56:59 lukem Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.24 2001/12/20 07:26:37 itojun Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.23 2001/11/13 00:56:59 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.24 2001/12/20 07:26:37 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -86,7 +86,7 @@ in6_gif_output(ifp, family, m)
 	struct sockaddr_in6 *sin6_src = (struct sockaddr_in6 *)sc->gif_psrc;
 	struct sockaddr_in6 *sin6_dst = (struct sockaddr_in6 *)sc->gif_pdst;
 	struct ip6_hdr *ip6;
-	int proto;
+	int proto, error;
 	u_int8_t itos, otos;
 
 	if (sin6_src == NULL || sin6_dst == NULL ||
@@ -205,10 +205,12 @@ in6_gif_output(ifp, family, m)
 	 * it is too painful to ask for resend of inner packet, to achieve
 	 * path MTU discovery for encapsulated packets.
 	 */
-	return(ip6_output(m, 0, &sc->gif_ro6, IPV6_MINMTU, 0, NULL));
+	error = ip6_output(m, 0, &sc->gif_ro6, IPV6_MINMTU, 0, NULL);
 #else
-	return(ip6_output(m, 0, &sc->gif_ro6, 0, 0, NULL));
+	error = ip6_output(m, 0, &sc->gif_ro6, 0, 0, NULL);
 #endif
+
+	return(error);
 }
 
 int in6_gif_input(mp, offp, proto)
