@@ -1,4 +1,4 @@
-/*	$NetBSD: lpq.c,v 1.9 1999/12/07 14:54:47 mrg Exp $	*/
+/*	$NetBSD: lpq.c,v 1.10 2000/04/14 06:26:53 simonb Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpq.c	8.3 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpq.c,v 1.9 1999/12/07 14:54:47 mrg Exp $");
+__RCSID("$NetBSD: lpq.c,v 1.10 2000/04/14 06:26:53 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,8 +84,6 @@ main(argc, argv)
 	int	argc;
 	char	**argv;
 {
-	extern char	*optarg;
-	extern int	optind;
 	int	ch, aflag, lflag;
 	char	*buf, *cp;
 

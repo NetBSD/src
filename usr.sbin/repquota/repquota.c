@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.16 2000/01/21 17:08:37 mycroft Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.17 2000/04/14 06:26:54 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,8 +100,6 @@ main(argc, argv)
 	struct group *gr;
 	int gflag = 0, uflag = 0, errs = 0;
 	long i, argnum, done = 0;
-	extern char *optarg;
-	extern int optind;
 	char *qfnp;
 	int ch;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: eshconfig.c,v 1.2 1998/11/20 17:23:27 kml Exp $	*/
+/*	$NetBSD: eshconfig.c,v 1.3 2000/04/14 06:26:53 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: eshconfig.c,v 1.2 1998/11/20 17:23:27 kml Exp $");
+__RCSID("$NetBSD: eshconfig.c,v 1.3 2000/04/14 06:26:53 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -232,7 +232,6 @@ main(argc, argv)
      int argc;
      char *argv[];
 {
-	extern int optind;
 	int ch;
 
 	/* Parse command-line options */

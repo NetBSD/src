@@ -1,4 +1,4 @@
-/*	$NetBSD: yppoll.c,v 1.6 1997/07/18 08:10:43 thorpej Exp $	*/
+/*	$NetBSD: yppoll.c,v 1.7 2000/04/14 06:26:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yppoll.c,v 1.6 1997/07/18 08:10:43 thorpej Exp $");
+__RCSID("$NetBSD: yppoll.c,v 1.7 2000/04/14 06:26:55 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -71,8 +71,6 @@ main(argc, argv)
 	char *hostname = NULL;
 	char *inmap, *master;
 	int order;
-	extern char *optarg;
-	extern int optind;
 	int c, r;
 
 	yp_get_default_domain(&domainname);
