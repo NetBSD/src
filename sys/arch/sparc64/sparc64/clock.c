@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.10 1999/05/30 19:13:34 eeh Exp $ */
+/*	$NetBSD: clock.c,v 1.11 1999/06/05 05:10:01 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,6 +88,9 @@
 #include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/sbusreg.h>
 #include <dev/sbus/sbusvar.h>
+#include <sparc64/dev/ebusreg.h>
+#include <sparc64/dev/ebusvar.h>
+
 #include "kbd.h"
 
 /*
@@ -127,13 +130,23 @@ static struct intrhand level10 = { clockintr };
 static struct intrhand level0 = { tickintr };
 static struct intrhand level14 = { statintr };
 
-static int	clockmatch __P((struct device *, struct cfdata *, void *));
-static void	clockattach __P((struct device *, struct device *, void *));
+/*
+ * clock (eeprom) attaches at the sbus or the ebus (PCI)
+ */
+static int	clockmatch_sbus __P((struct device *, struct cfdata *, void *));
+static void	clockattach_sbus __P((struct device *, struct device *, void *));
+static int	clockmatch_ebus __P((struct device *, struct cfdata *, void *));
+static void	clockattach_ebus __P((struct device *, struct device *, void *));
+static void	clockattach __P((int, bus_space_handle_t));
 
 static struct clockreg *clock_map __P((bus_space_handle_t, char *));
 
-struct cfattach clock_ca = {
-	sizeof(struct device), clockmatch, clockattach
+struct cfattach clock_sbus_ca = {
+	sizeof(struct device), clockmatch_sbus, clockattach_sbus
+};
+
+struct cfattach clock_ebus_ca = {
+	sizeof(struct device), clockmatch_ebus, clockattach_ebus
 };
 
 extern struct cfdriver clock_cd;
@@ -161,7 +174,7 @@ int timerblurb = 10; /* Guess a value; used before clock is attached */
  * own special match function to call it the "clock".
  */
 static int
-clockmatch(parent, cf, aux)
+clockmatch_sbus(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
@@ -169,6 +182,17 @@ clockmatch(parent, cf, aux)
 	struct sbus_attach_args *sa = aux;
 
 	return (strcmp("eeprom", sa->sa_name) == 0);
+}
+
+static int
+clockmatch_ebus(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct ebus_attach_args *ea = aux;
+
+	return (strcmp("eeprom", ea->ea_name) == 0);
 }
 
 static struct clockreg *
@@ -184,48 +208,36 @@ clock_map(bh, model)
 	return (cl);
 }
 
+/*
+ * Attach a clock (really `eeprom') to the sbus or ebus.
+ *
+ * We ignore any existing virtual address as we need to map
+ * this read-only and make it read-write only temporarily,
+ * whenever we read or write the clock chip.  The clock also
+ * contains the ID ``PROM'', and I have already had the pleasure
+ * of reloading the cpu type, Ethernet address, etc, by hand from
+ * the console FORTH interpreter.  I intend not to enjoy it again.
+ *
+ * the MK48T02 is 2K.  the MK48T08 is 8K, and the MK48T59 is
+ * supposed to be identical to it.
+ *
+ * This is *UGLY*!  We probably have multiple mappings.  But I do
+ * know that this all fits inside an 8K page, so I'll just map in
+ * once.
+ */
 /* ARGSUSED */
 static void
-clockattach(parent, self, aux)
+clockattach_sbus(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
 	struct sbus_attach_args *sa = aux;
-	char *model;
-	int sz;
-	struct clockreg *cl;
-	struct idprom *idp;
 	bus_space_handle_t bh;
-	int h;
+	int sz;
 
-	model = getpropstring(sa->sa_node, "model");
-#ifdef DIAGNOSTIC
-	if (model == NULL)
-		panic("no model");
-#endif
-	/*
-	 * the MK48T08 is 8K; the MK48T02 is 2K
-	 */
-	/*
-	 * the MK48T08 is 8K, and the MK48T59 is supposed to be identical to it
-	 */
+	/* use sa->sa_regs[0].size? */
 	sz = 8192;
-	printf(": %s (eeprom)", model);
 
-	/*
-	 * We ignore any existing virtual address as we need to map
-	 * this read-only and make it read-write only temporarily,
-	 * whenever we read or write the clock chip.  The clock also
-	 * contains the ID ``PROM'', and I have already had the pleasure
-	 * of reloading the cpu type, Ethernet address, etc, by hand from
-	 * the console FORTH interpreter.  I intend not to enjoy it again.
-	 */
-
-	/* 
-	 * This is *UGLY*!  We probably have multiple mappings.  But I do
-	 * know that this all fits inside an 8K page, so I'll just map in
-	 * once.
-	 */
 	if (sbus_bus_map(sa->sa_bustag,
 			 sa->sa_slot,
 			 (sa->sa_offset & ~NBPG),
@@ -236,9 +248,53 @@ clockattach(parent, self, aux)
 		printf("%s: can't map register\n", self->dv_xname);
 		return;
 	}
+	clockattach(sa->sa_node, bh);
+}
+
+/* ARGSUSED */
+static void
+clockattach_ebus(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct ebus_attach_args *ea = aux;
+	bus_space_handle_t bh;
+	int sz;
+
+	/* hard code to 8K? */
+	sz = ea->ea_regs[0].size;
+
+	if (ebus_bus_map(ea->ea_bustag,
+			 0,
+			 EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
+			 sz,
+			 BUS_SPACE_MAP_LINEAR,
+			 0,
+			 &bh) != 0) {
+		printf("%s: can't map register\n", self->dv_xname);
+		return;
+	}
+	clockattach(ea->ea_node, bh);
+}
+
+static void
+clockattach(node, bh)
+	int node;
+	bus_space_handle_t bh;
+{
+	char *model;
+	struct clockreg *cl;
+	struct idprom *idp;
+	int h;
+
+	model = getpropstring(node, "model");
+#ifdef DIAGNOSTIC
+	if (model == NULL)
+		panic("no model");
+#endif
+	printf(": %s (eeprom)", model);
 
 	cl = clock_map(bh, model);
-/*	cl = (struct clockreg *)bh; */
 	idp = &cl->cl_idprom;
 
 	h = idp->id_machine << 24;
@@ -251,7 +307,8 @@ clockattach(parent, self, aux)
 }
 
 /*
- * The sun4u OPENPROM calls the timer the "counter-timer".
+ * The the sun4u OPENPROMs call the timer the "counter-timer", except for
+ * the lame UltraSPARC IIi PCI machines that don't have them.
  */
 static int
 timermatch(parent, cf, aux)
@@ -270,59 +327,20 @@ timerattach(parent, self, aux)
 	void *aux;
 {
 	struct mainbus_attach_args *ma = aux;
-	bus_space_handle_t bh;
-	struct upa_reg *ur = NULL;
-	u_int *va = NULL;
-	int nreg;
+	u_int *va = ma->ma_address;
+#if 0
 	volatile int64_t *cnt = NULL, *lim = NULL;
-	/* XXX: must init to NULL to avoid stupid gcc -Wall warning */
-
-	/* Get full-size register property */
-	if (getprop(ma->ma_node, "reg", sizeof(*ur),
-		     &nreg, (void **)&ur) != 0) {
-		printf("%s: can't map register\n", self->dv_xname);
-		return;
-	}
-	
-	if (nreg < 2) {
-		printf("%s: only %d register sets\n", self->dv_xname,
-		       nreg);
-		return;
-	}
+#endif
 	
 	/*
 	 * What we should have are 3 sets of registers that reside on
-	 * different parts of sysio.  We'll use the prom mappings cause we
-	 * can't get rid of them and set up appropriate pointers on the
-	 * timerreg_4u structure.
+	 * different parts of SYSIO or PSYCHO.  We'll use the prom
+	 * mappings cause we can't get rid of them and set up appropriate
+	 * pointers on the timerreg_4u structure.
 	 */
-	/* Get address property */
-	if (getprop(ma->ma_node, "address", sizeof(*va),
-		     &nreg, (void **)&va) == 0) {
-		timerreg_4u.t_timer = (struct timer_4u *)(u_long)va[0];
-		timerreg_4u.t_clrintr = (int64_t *)(u_long)va[1];
-		timerreg_4u.t_mapintr = (int64_t *)(u_long)va[2];
-	} else {
-		/* Map the system timer -- Not an SBUS device */
-		if (bus_space_map2(ma->ma_bustag, 0,
-				 ur[0].ur_paddr,
-				 NBPG,
-				 BUS_SPACE_MAP_LINEAR,
-				 TIMERREG_VA, &bh) != 0) {
-			printf("%s: can't map register\n", self->dv_xname);
-			return;
-		}
-		
-		timerreg_4u.t_timer = (struct timer_4u *)
-			(TIMERREG_VA + (((long)ur[0].ur_paddr)&PGOFSET));
-		timerreg_4u.t_clrintr = (int64_t *)
-			(TIMERREG_VA + (((long)ur[1].ur_paddr)&PGOFSET));
-		timerreg_4u.t_mapintr = (int64_t *)
-			(TIMERREG_VA + (((long)ur[2].ur_paddr)&PGOFSET));
-	}
-
-	cnt = &(timerreg_4u.t_timer[0].t_count);
-	lim = &(timerreg_4u.t_timer[0].t_limit);
+	timerreg_4u.t_timer = (struct timer_4u *)(u_long)va[0];
+	timerreg_4u.t_clrintr = (int64_t *)(u_long)va[1];
+	timerreg_4u.t_mapintr = (int64_t *)(u_long)va[2];
 
 	/* Install the appropriate interrupt vector here */
 	level10.ih_number = ma->ma_interrupts[0];
@@ -331,12 +349,51 @@ timerattach(parent, self, aux)
 	level14.ih_number = ma->ma_interrupts[1];
 /*	level14.ih_clr = (void*)timerreg_4u.t_clrintr[1]; */
 	intr_establish(14, &level14);
-	printf(" irq vectors %lx and %lx\n", 
+	printf(" irq vectors %lx and %lx", 
 	       (u_long)level10.ih_number, 
 	       (u_long)level14.ih_number);
 
-	timerok = 1;
+#if 0
+	cnt = &(timerreg_4u.t_timer[0].t_count);
+	lim = &(timerreg_4u.t_timer[0].t_limit);
 
+	/*
+	 * Calibrate delay() by tweaking the magic constant
+	 * until a delay(100) actually reads (at least) 100 us 
+	 * on the clock.  Since we're using the %tick register 
+	 * which should be running at exactly the CPU clock rate, it
+	 * has a period of somewhere between 7ns and 3ns.
+	 */
+
+#ifdef DEBUG
+	printf("Delay calibrarion....\n");
+#endif
+	for (timerblurb = 1; timerblurb > 0; timerblurb++) {
+		volatile int discard;
+		register int t0, t1;
+
+		/* Reset counter register by writing some large limit value */
+		discard = *lim;
+		*lim = tmr_ustolim(TMR_MASK-1);
+
+		t0 = *cnt;
+		delay(100);
+		t1 = *cnt;
+
+		if (t1 & TMR_LIMIT)
+			panic("delay calibration");
+
+		t0 = (t0 >> TMR_SHIFT) & TMR_MASK;
+		t1 = (t1 >> TMR_SHIFT) & TMR_MASK;
+
+		if (t1 >= t0 + 100)
+			break;
+	}
+
+	printf(" delay constant %d\n", timerblurb);
+#endif
+	printf("\n");
+	timerok = 1;
 }
 
 /*
