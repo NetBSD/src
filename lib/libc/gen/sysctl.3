@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.91 2002/05/14 10:25:34 itojun Exp $
+.\"	$NetBSD: sysctl.3,v 1.92 2002/05/14 10:27:29 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -950,7 +950,7 @@ The currently defined protocols and names are:
 .It ip6	kame_version	string	no
 .It ip6	use_deprecated	integer	yes
 .It ip6	rr_prune	integer	yes
-.It ip6	bindv6only	integer	yes
+.It ip6	v6only	integer	yes
 .It ip6	anonportmin	integer	yes
 .It ip6	anonportmax	integer	yes
 .It ip6	lowportmin	integer	yes
@@ -1047,7 +1047,7 @@ The variable controls use of deprecated address, specified in RFC2462 5.5.4.
 .It Li ip6.rr_prune
 The variable specifies interval between IPv6 router renumbering prefix
 babysitting, in seconds.
-.It Li ip6.bindv6only
+.It Li ip6.v6only
 The variable specifies initial value for
 .Dv IPV6_V6ONLY
 socket option for
