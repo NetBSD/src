@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.13 1999/01/20 14:45:09 mrg Exp $	*/
+/*	$NetBSD: tar.c,v 1.14 1999/01/21 08:46:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.13 1999/01/20 14:45:09 mrg Exp $");
+__RCSID("$NetBSD: tar.c,v 1.14 1999/01/21 08:46:06 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -1224,7 +1224,8 @@ tar_gnutar_X_compat(path)
 {
 	char *line, sbuf[MAXPATHLEN * 2 + 1 + 5];
 	FILE *fp;
-	int lineno = 0, len, i, j;
+	int lineno = 0, i, j;
+	size_t len;
 
 	fp = fopen(path, "r");
 	if (fp == NULL) {
