@@ -214,8 +214,8 @@ un_de_norm:
 	move.l	8(a0),d2
 norm_loop:
 	sub.w	#1,d0
-	lsl.l	#1,d2
-	roxl.l	#1,d1
+	add.l	d2,d2
+	addx.l	d1,d1
 	tst.l	d1
 	bge.b	norm_loop
 *
@@ -424,9 +424,9 @@ no_inf:
 iscale:	
 	fmove.s	FONE,fp1	;init fp1 to 1
 	bfextu	USER_FPCR(a6){26:2},d1 ;get initial rmode bits
-	lsl.w	#1,d1		;put them in bits 2:1
+	add.w	d1,d1		;put them in bits 2:1
 	add.w	d5,d1		;add in LAMBDA
-	lsl.w	#1,d1		;put them in bits 3:1
+	add.w	d1,d1		;put them in bits 3:1
 	tst.l	L_SCR2(a6)	;test sign of original x
 	bge.b	x_pos		;if pos, don't set bit 0
 	addq.l	#1,d1		;if neg, set bit 0

@@ -192,7 +192,7 @@ scosd:
 	xdef	ssin
 ssin:
 *--SET ADJN TO 0
-	MOVE.L		#0,ADJN(a6)
+	CLR.L		ADJN(a6)
 	BRA.B		SINBGN
 
 	xdef	scos
@@ -248,7 +248,7 @@ SINCONT:
 	MOVE.L		N(a6),D0
 	ADD.L		ADJN(a6),D0	...SEE IF D0 IS ODD OR EVEN
 	ROR.L		#1,D0	...D0 WAS ODD IFF D0 IS NEGATIVE
-	CMPI.L		#0,D0
+	TST.L		D0
 	BLT.W		COSPOLY
 
 SINPOLY:
@@ -379,11 +379,11 @@ SINBORS:
 
 SINSM:
 	MOVE.L		ADJN(a6),D0
-	CMPI.L		#0,D0
+	TST.L		D0
 	BGT.B		COSTINY
 
 SINTINY:
-	MOVE.W		#$0000,XDCARE(a6)	...JUST IN CASE
+	CLR.W		XDCARE(a6)	...JUST IN CASE
 	FMOVE.L		d1,FPCR		;restore users exceptions
 	FMOVE.X		X(a6),FP0		;last inst - possible exception set
 	bra		t_frcinx
@@ -444,7 +444,7 @@ LOOP:
 	BLE.B		LASTLOOP
 CONTLOOP:
 	SUBI.L		#27,D0	 ...D0 IS L := K-27
-	MOVE.L		#0,ENDFLAG(a6)
+	CLR.L		ENDFLAG(a6)
 	BRA.B		WORK
 LASTLOOP:
 	CLR.L		D0		...D0 IS L := 0
@@ -524,7 +524,7 @@ WORK:
 *--|r| <= half ulp of R.
 	FAdd.X		FP1,FP0			...FP0 is R := A+a
 *--No need to calculate r if this is the last loop
-	CMPI.L		#0,D0
+	TST.L		D0
 	BGT.W		RESTORE
 
 *--Need to calculate r
@@ -601,7 +601,7 @@ SCCONT:
 	MOVE.L		N(a6),D0
 	ROR.L		#1,D0
 	
-	CMPI.L		#0,D0		...D0 < 0 IFF N IS ODD
+	TST.L		D0		...D0 < 0 IFF N IS ODD
 	BGE.W		NEVEN
 
 NODD:
@@ -754,7 +754,7 @@ SCBORS:
         
 
 SCSM:
-	MOVE.W		#$0000,XDCARE(a6)
+	CLR.W		XDCARE(a6)
 	FMOVE.S		#:3F800000,FP1
 
 	move.l		d1,-(sp)	;save users mode & precision

@@ -66,7 +66,7 @@ sto_cos:
 	fmovem.x	(a7)+,d0
 	rts
 c_fp0123:
-	cmpi.b		#0,d0
+	tst.b		d0
 	beq.b		c_is_fp0
 	cmpi.b		#1,d0
 	beq.b		c_is_fp1
@@ -99,7 +99,7 @@ sto_res:
 	fmovem.x	(a7)+,d0
 	rts
 fp0123:
-	cmpi.b		#0,d0
+	tst.b		d0
 	beq.b		is_fp0
 	cmpi.b		#1,d0
 	beq.b		is_fp1

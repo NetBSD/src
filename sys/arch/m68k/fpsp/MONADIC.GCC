@@ -29,37 +29,16 @@
 *	under any patents or trademarks of Motorola, Inc.
 
 *
-*	MONADIC.GEN 1.5 5/18/92
+*	MONADIC.GCC --- MONADIC template for GCC compiler
 *
-*	MONADIC.GEN 1.4 1/16/92
-*
-*	MONADIC.GEN 1.3 4/30/91
-*
-*	MONADIC.GEN --- generic MONADIC template
-*
-*	This version saves all registers that will be used by the emulation
-*	routines and restores all but FP0 on exit.  The FPSR is
-*	updated to reflect the result of the operation.  Return value
-*	is placed in FP0 for single, double and extended results.
-*	
-*	The package subroutines expect the incoming FPCR to be zeroed
-*	since they need extended precision to work properly.  The
-*	'final' FPCR is expected in d1 so that the calculated result
-*	can be properly sized and rounded.  Also, if the incoming FPCR
-*	has enabled any exceptions, the exception will be taken on the
-*	final fmovem in this template.
+*	This is based on the generic template.  The only difference is that
+*	GCC does not need the d0-d1/a0-a1 registers saved.
 *
 *	Customizations:  
-*		1. Remove the movem.l at the entry and exit of
-*		   each routine if your compiler treats those 
-*		   registers as scratch.
 *		2. Likewise, don't save FP0/FP1 if they are scratch
 *		   registers.
 *		3. Delete handling of the fpsr if you only care about
 *		   the result.  
-*		4. Some (most?) C compilers convert all float arguments
-*		   to double, and provide no support at all for extended
-*		   precision so remove the _OPs_ and _OPx_ entry points.
 *		5. Move the result to d0/d1 if the compiler is that old.
 *
 
@@ -73,7 +52,6 @@
 	xdef	_OPs_
 _OPs_:
 	link	a6,#-LOCAL_SIZE
-	movem.l	d0-d1/a0-a1,USER_DA(a6)
 	fmovem.x fp0-fp3,USER_FP0(a6)
 	fmove.l	fpsr,USER_FPSR(a6)
 	fmove.l	fpcr,USER_FPCR(a6)
@@ -116,7 +94,6 @@ _TMP_6:
 *
 *	Result is now in FP0
 *
-	movem.l	USER_DA(a6),d0-d1/a0-a1
 	fmovem.x USER_FP1(a6),fp1-fp3	; note: FP0 not restored
 	fmove.l USER_FPCR(a6),fpcr	; fpcr restored
 	unlk	a6
@@ -125,7 +102,6 @@ _TMP_6:
 	xdef	_OPd_
 _OPd_:
 	link	a6,#-LOCAL_SIZE
-	movem.l	d0-d1/a0-a1,USER_DA(a6)
 	fmovem.x fp0-fp3,USER_FP0(a6)
 	fmove.l	fpsr,USER_FPSR(a6)
 	fmove.l	fpcr,USER_FPCR(a6)
@@ -168,7 +144,6 @@ _TMP_B:
 *
 *	Result is now in FP0
 *
-	movem.l	USER_DA(a6),d0-d1/a0-a1
 	fmovem.x USER_FP1(a6),fp1-fp3	; note: FP0 not restored
 	fmove.l USER_FPCR(a6),fpcr	; fpcr restored
 	unlk	a6
@@ -177,7 +152,6 @@ _TMP_B:
 	xdef	_OPx_
 _OPx_:
 	link	a6,#-LOCAL_SIZE
-	movem.l	d0-d1/a0-a1,USER_DA(a6)
 	fmovem.x fp0-fp3,USER_FP0(a6)
 	fmove.l	fpsr,USER_FPSR(a6)
 	fmove.l	fpcr,USER_FPCR(a6)
@@ -220,7 +194,6 @@ _TMP_G:
 *
 *	Result is now in FP0
 *
-	movem.l	USER_DA(a6),d0-d1/a0-a1
 	fmovem.x USER_FP1(a6),fp1-fp3	; note: FP0 not restored
 	fmove.l USER_FPCR(a6),fpcr	; fpcr restored
 	unlk	a6

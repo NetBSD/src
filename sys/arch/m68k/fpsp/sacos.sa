@@ -118,7 +118,7 @@ ACOSBIG:
 *--|X| = 1, ACOS(X) = 0 OR PI
 	move.l		(a0),d0		...pack exponent with upper 16 fraction
 	move.w		4(a0),d0
-	CMP.L		#0,D0		;D0 has original exponent+fraction
+	TST.L		D0		;D0 has original exponent+fraction
 	BGT.B		ACOSP1
 
 *--X = -1

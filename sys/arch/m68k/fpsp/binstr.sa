@@ -118,8 +118,8 @@ loop:
 *
 * A4. Multiply d4:d5 by 2; add carry out to d1.
 *
-	asl.l	#1,d5			;mul d5 by 2
-	roxl.l	#1,d4			;mul d4 by 2
+	add.l	d5,d5			;mul d5 by 2
+	addx.l	d4,d4			;mul d4 by 2
 	swap	d6			;put 0 in d6 lower word
 	addx.w	d6,d1			;add in extend from mul by 2
 *

@@ -137,7 +137,7 @@ rnd_zero:
 *
 rnd_near:
 	swap 	d1			;set up d1 for round prec.
-	asl.l	#1,d0			;shift g-bit to c-bit
+	add.l	d0,d0			;shift g-bit to c-bit
 	bcc.w	truncate		;if (g=1) then
 	lea	add_to_l,a1
 	move.l	(a1,d1.w*4),a1
@@ -159,7 +159,7 @@ rnd_near:
 *
 ext_grs:
 	swap	d1			;have d1.w point to round precision
-	cmpi.w	#0,d1
+	tst.w	d1
 	bne.b	sgl_or_dbl
 	bra.b	end_ext_grs
  
@@ -353,7 +353,7 @@ greater:
 	lsr.l	d5,d6		;by the number in the exp, then 
 *				;set exp = 0.
 	or.l	d6,d1		;shift the ls mant bits into the ms mant
-	move.l	#0,d0		;same as if decremented exp to 0 
+	clr.l	d0		;same as if decremented exp to 0 
 *				;while shifting
 	move.w	d0,LOCAL_EX(a0)
 	move.l	d1,LOCAL_HI(a0)
@@ -370,7 +370,7 @@ ms_clr:
 	movem.l	(a7)+,d2/d3/d5/d6
 	rts
 all_clr:
-	move.w	#0,LOCAL_EX(a0)	;no mantissa bits set. Set exp = 0.
+	clr.w	LOCAL_EX(a0)	;no mantissa bits set. Set exp = 0.
 	movem.l	(a7)+,d2/d3/d5/d6
 	rts
 *
@@ -445,7 +445,7 @@ denorm:
 	bset.b	#7,LOCAL_EX(a0)	;sign extend if it is so
 no_sgn_ext:
 
-	cmpi.b	#0,d0		;if 0 then extended precision
+	tst.b	d0		;if 0 then extended precision
 	bne.b	not_ext		;else branch
 
 	clr.l	d1		;load d1 with ext threshold
@@ -496,8 +496,8 @@ set_stky:
 	move.l	#$20000000,d0	;set sticky bit in return value
 clr_mant:
 	move.w	d1,LOCAL_EX(a0)		;load exp with threshold
-	move.l	#0,LOCAL_HI(a0) 	;set d1 = 0 (ms mantissa)
-	move.l	#0,LOCAL_LO(a0)		;set d2 = 0 (ms mantissa)
+	clr.l	LOCAL_HI(a0) 	;set d1 = 0 (ms mantissa)
+	clr.l	LOCAL_LO(a0)		;set d2 = 0 (ms mantissa)
 	rts
 dnrm_inex:
 	or.l	#inx2a_mask,USER_FPSR(a6) ;set inex2/ainex

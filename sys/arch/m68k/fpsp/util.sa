@@ -328,7 +328,7 @@ error:
 *
 get_fline:
 	move.l	USER_FPIAR(a6),a0	;opcode address
-	move.l	#0,-(a7)	;reserve a word on the stack
+	clr.l	-(a7)		;reserve a word on the stack
 	lea.l	2(a7),a1	;point to low word of temporary
 	move.l	#2,d0		;count
 	bsr.l	mem_read
@@ -431,7 +431,7 @@ unff_dbl:
 * Force extended
 *
 unf_fsgl:
-	move.l	#0,d0		
+	clr.l	d0		
 	rts
 *
 * Get rounding precision set in FPCR{7:6}.

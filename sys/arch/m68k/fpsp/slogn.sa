@@ -286,7 +286,7 @@ slognd:
 *----Note that this code assumes the denormalized input is NON-ZERO.
 
      MoveM.L	D2-D7,-(A7)		...save some registers 
-     Move.L	#$00000000,D3		...D3 is exponent of smallest norm. #
+     Clr.L	D3			...D3 is exponent of smallest norm. #
      Move.L	4(A0),D4
      Move.L	8(A0),D5		...(D4,D5) is (Hi_X,Lo_X)
      Clr.L	D2			...D2 used for holding K
@@ -342,7 +342,7 @@ slogn:
 *--ENTRY POINT FOR LOG(X) FOR X FINITE, NON-ZERO, NOT NAN'S
 
 	FMOVE.X		(A0),FP0	...LOAD INPUT
-	MOVE.L		#$00000000,ADJK(a6)
+	CLR.L		ADJK(a6)
 
 LOGBGN:
 *--FPCR SAVED AND CLEARED, INPUT IS 2^(ADJK)*FP0, FP0 CONTAINS
@@ -355,7 +355,7 @@ LOGBGN:
 	move.l	4(a0),X+4(a6)
 	move.l	8(a0),X+8(a6)
 
-	CMPI.L	#0,D0		...CHECK IF X IS NEGATIVE
+	TST.L	D0		...CHECK IF X IS NEGATIVE
 	BLT.W	LOGNEG		...LOG OF NEGATIVE ARGUMENT IS INVALID
 	CMP2.L	BOUNDS1,D0	...X IS POSITIVE, CHECK IF X IS NEAR 1
 	BCC.W	LOGNEAR1	...BOUNDS IS ROUGHLY [15/16, 17/16]
@@ -518,13 +518,13 @@ slognp1:
 
 LP1REAL:
 	FMOVE.X	(A0),FP0	...LOAD INPUT
-	MOVE.L	#$00000000,ADJK(a6)
+	CLR.L	ADJK(a6)
 	FMOVE.X	FP0,FP1	...FP1 IS INPUT Z
 	FADD.S	one,FP0	...X := ROUND(1+Z)
 	FMOVE.X	FP0,X(a6)
 	MOVE.W	XFRAC(a6),XDCARE(a6)
 	MOVE.L	X(a6),D0
-	CMPI.L	#0,D0
+	TST.L	D0
 	BLE.W	LP1NEG0	...LOG OF ZERO OR -VE
 	CMP2.L	BOUNDS2,D0
 	BCS.W	LOGMAIN	...BOUNDS2 IS [1/2,3/2]
@@ -598,7 +598,7 @@ KISZERO:
 
 LP1NEG0:
 *--FPCR SAVED. D0 IS X IN COMPACT FORM.
-	CMPI.L	#0,D0
+	TST.L	D0
 	BLT.B	LP1NEG
 LP1ZERO:
 	FMOVE.S	negone,FP0

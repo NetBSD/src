@@ -63,21 +63,13 @@ SKELETON	IDNT    2,1 Motorola 040 Floating Point Software Package
 *
 *	The following counters are used for standalone testing
 *
-sigunimp	dc.l	0
-sigbsun		dc.l	0
-siginex		dc.l	0
-sigdz		dc.l	0
-sigunfl		dc.l	0
-sigovfl		dc.l	0
-sigoperr	dc.l	0
-sigsnan		dc.l	0
-sigunsupp	dc.l	0
 
 	section 8
 
 	include	fpsp.h
 
 	xref	b1238_fix
+	xref	_mmutype
 
 *
 *	Divide by Zero exception
@@ -87,16 +79,16 @@ sigunsupp	dc.l	0
 	xdef	dz
 	xdef	real_dz
 dz:
+	cmp.l		#-2,_mmutype
+	bne.l		_fpfault
 real_dz:
 	link		a6,#-LOCAL_SIZE
 	fsave		-(sp)
 	bclr.b		#E1,E_BYTE(a6)
 	frestore	(sp)+
 	unlk		a6
+	jmp		_fpfault
 
-	add.l	#1,sigdz		;for standalone testing
-
-	rte
 *
 *	Inexact exception
 *
@@ -121,6 +113,8 @@ real_dz:
 	xdef	real_inex
 	xdef	inex
 inex:
+	cmp.l		#-2,_mmutype
+	bne.l		_fpfault
 	link		a6,#-LOCAL_SIZE
 	fsave		-(sp)
 	cmpi.b		#VER_40,(sp)		;test version number
@@ -130,21 +124,21 @@ inex:
 	beq.b		not_b1232
 	btst.b		#snan_bit,2(sp) ;test for snan
 	beq		inex_ckofl
-	add.l		#4,sp
+	addq.l		#4,sp
 	frestore	(sp)+
 	unlk		a6
 	bra		snan
 inex_ckofl:
 	btst.b		#ovfl_bit,2(sp) ;test for ovfl
 	beq		inex_ckufl 
-	add.l		#4,sp
+	addq.l		#4,sp
 	frestore	(sp)+
 	unlk		a6
 	bra		ovfl
 inex_ckufl:
 	btst.b		#unfl_bit,2(sp) ;test for unfl
 	beq		not_b1232
-	add.l		#4,sp
+	addq.l		#4,sp
 	frestore	(sp)+
 	unlk		a6
 	bra		unfl
@@ -154,14 +148,11 @@ inex_ckufl:
 * real_inex.
 *
 not_b1232:
-	add.l		#4,sp
+	addq.l		#4,sp
 	frestore	(sp)+
 	unlk		a6
 
 real_inex:
-
-	add.l		#1,siginex		;for standalone testing
-
 	link		a6,#-LOCAL_SIZE
 	fsave		-(sp)
 not_fmt40:
@@ -182,7 +173,7 @@ inex_cke1:
 inex_done:
 	frestore	(sp)+
 	unlk		a6
-	rte
+	jmp		_fpfault
 	
 *
 *	Overflow exception
@@ -191,11 +182,10 @@ inex_done:
 	xdef	real_ovfl
 	xdef	ovfl
 ovfl:
-	jmp	fpsp_ovfl
+	cmp.l		#-2,_mmutype
+	beq.l		fpsp_ovfl
+	jmp		_fpfault
 real_ovfl:
-
-	add.l		#1,sigovfl		;for standalone testing
-
 	link		a6,#-LOCAL_SIZE
 	fsave		-(sp)
 	bclr.b		#E3,E_BYTE(a6)		;clear and test E3 flag
@@ -204,7 +194,7 @@ real_ovfl:
 ovfl_done:
 	frestore	(sp)+
 	unlk		a6
-	rte
+	jmp		_fpfault
 	
 *
 *	Underflow exception
@@ -213,11 +203,10 @@ ovfl_done:
 	xdef	real_unfl
 	xdef	unfl
 unfl:
-	jmp	fpsp_unfl
+	cmp.l		#-2,_mmutype
+	beq.l		fpsp_unfl
+	jmp		_fpfault
 real_unfl:
-
-	add.l		#1,sigunfl		;for standalone testing
-
 	link		a6,#-LOCAL_SIZE
 	fsave		-(sp)
 	bclr.b		#E3,E_BYTE(a6)		;clear and test E3 flag
@@ -226,7 +215,7 @@ real_unfl:
 unfl_done:
 	frestore	(sp)+
 	unlk		a6
-	rte
+	jmp		_fpfault
 	
 *
 *	Signalling NAN exception
@@ -235,16 +224,16 @@ unfl_done:
 	xdef	real_snan
 	xdef	snan
 snan:
-	jmp	fpsp_snan
+	cmp.l		#-2,_mmutype
+	beq.l		fpsp_snan
+	jmp		_fpfault
 real_snan:
 	link		a6,#-LOCAL_SIZE
 	fsave		-(sp)
 	bclr.b		#E1,E_BYTE(a6)	;snan is always an E1 exception
 	frestore	(sp)+
 	unlk		a6
-
-	add.l		#1,sigsnan		;for standalone testing
-	rte
+	jmp		_fpfault
 	
 *
 *	Operand Error exception
@@ -253,17 +242,16 @@ real_snan:
 	xdef	real_operr
 	xdef	operr
 operr:
-	jmp	fpsp_operr
+	cmp.l		#-2,_mmutype
+	beq.l		fpsp_operr
+	jmp		_fpfault
 real_operr:
 	link		a6,#-LOCAL_SIZE
 	fsave		-(sp)
 	bclr.b		#E1,E_BYTE(a6)	;operr is always an E1 exception
 	frestore	(sp)+
 	unlk		a6
-
-	add.l		#1,sigoperr		;for standalone testing
-
-	rte
+	jmp		_fpfault
 	
 *
 *	BSUN exception
@@ -274,7 +262,9 @@ real_operr:
 	xdef	real_bsun
 	xdef	bsun
 bsun:
-	jmp	fpsp_bsun
+	cmp.l		#-2,_mmutype
+	beq.l		fpsp_bsun
+	jmp		_fpfault
 real_bsun:
 	link		a6,#-LOCAL_SIZE
 	fsave		-(sp)
@@ -284,10 +274,7 @@ real_bsun:
 	fmove.l		(sp)+,FPSR
 	frestore	(sp)+
 	unlk		a6
-
-	add.l		#1,sigbsun		;for standalone testing
-
-	rte
+	jmp		_fpfault
 
 *
 *	F-line exception
@@ -300,12 +287,11 @@ real_bsun:
 	xdef	real_fline
 	xdef	fline
 fline:
-	jmp	fpsp_fline
+	cmp.l		#-2,_mmutype
+	beq.l		fpsp_fline
+	jmp		_fpfault
 real_fline:
-
-	add.l		#1,sigunimp		;for standalone testing
-
-	rte
+	jmp		_fpfault
 
 *
 *	Unsupported data type exception
@@ -314,17 +300,16 @@ real_fline:
 	xdef	real_unsupp
 	xdef	unsupp
 unsupp:
-	jmp	fpsp_unsupp
+	cmp.l		#-2,_mmutype
+	beq.l		fpsp_unsupp
+	jmp		_fpfault
 real_unsupp:
 	link		a6,#-LOCAL_SIZE
 	fsave		-(sp)
 	bclr.b		#E1,E_BYTE(a6)	;unsupp is always an E1 exception
 	frestore	(sp)+
 	unlk		a6
-
-	add.l		#1,sigunsupp		;for standalone testing
-
-	rte
+	jmp		_fpfault
 
 *
 *	Trace exception
@@ -351,8 +336,12 @@ real_trace:
 *
 	xdef	fpsp_fmt_error
 fpsp_fmt_error:
-
-	dc.l	$f27f0000	;f-line illegal 
+	pea		1f
+	jsr		_panic
+	dc.l		$f27f0000	;f-line illegal
+1:
+	.asciz		"bad floating point stack frame"
+	.even
 
 *
 *	fpsp_done --- FPSP exit point
@@ -362,9 +351,10 @@ fpsp_fmt_error:
 *	to execute before we do.  If there is, do it now.
 *
 *
+	xref	rei
 	xdef	fpsp_done
 fpsp_done:
-	rte
+	jmp		rei
 
 *
 *	mem_write --- write to user or supervisor address space
@@ -402,10 +392,11 @@ user_write:
 	move.l	d0,-(sp)
 	move.l	a1,-(sp)
 	move.l	a0,-(sp)
-	jsr		copyout
+	jsr	_copyout
 	add.l	#12,sp
 	move.l	(sp)+,d1
 	rts
+
 *
 *	mem_read --- read from user or supervisor address space
 *
@@ -441,40 +432,9 @@ user_read:
 	move.l	d0,-(sp)
 	move.l	a1,-(sp)
 	move.l	a0,-(sp)
-	jsr		copyin
+	jsr	_copyin
 	add.l	#12,sp
 	move.l	(sp)+,d1
-	rts
-
-*
-* Use these routines if your kernel doesn't have copyout/copyin equivalents.
-* Assumes that D0/D1/A0/A1 are scratch registers. copyout overwrites DFC,
-* and copyin overwrites SFC.
-*
-copyout:
-	move.l	4(sp),a0	; source
-	move.l	8(sp),a1	; destination
-	move.l	12(sp),d0	; count
-	sub.l	#1,d0		; dec count by 1 for dbra
-	move.l	#1,d1
-	movec	d1,DFC		; set dfc for user data space
-moreout:
-	move.b	(a0)+,d1	; fetch supervisor byte
-	moves.b	d1,(a1)+	; write user byte
-	dbf.w	d0,moreout
-	rts
-
-copyin:
-	move.l	4(sp),a0	; source
-	move.l	8(sp),a1	; destination
-	move.l	12(sp),d0	; count
-	sub.l	#1,d0		; dec count by 1 for dbra
-	move.l	#1,d1
-	movec	d1,SFC		; set sfc for user space
-morein:
-	moves.b	(a0)+,d1	; fetch user byte
-	move.b	d1,(a1)+	; write supervisor byte
-	dbf.w	d0,morein
 	rts
 
 	end

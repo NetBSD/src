@@ -168,7 +168,7 @@ move_out:
 	move.l		EXC_EA(a6),a0	;get <ea> from exc frame
 
 	bfextu		CMDREG1B(a6){3:3},d0 ;move rx field to d0{2:0}
-	cmpi.l		#0,d0		;check for long
+	tst.l		d0		;check for long
 	beq.b		sto_long	;branch if move_out long
 	
 	cmpi.l		#4,d0		;check for word
