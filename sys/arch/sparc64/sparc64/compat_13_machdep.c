@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.2 1998/10/08 02:31:40 eeh Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.3 1998/11/16 06:51:35 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -91,7 +91,14 @@ compat_13_sys_sigreturn(p, v, retval)
 	 * verified.  pc and npc must be multiples of 4.  This is all
 	 * that is required; if it holds, just do it.
 	 */
-	if (((scp->sc_pc | scp->sc_npc) & 3) != 0)
+	if (((scp->sc_pc | scp->sc_npc) & 3) != 0 || scp->sc_pc == 0 || scp->sc_npc == 0)
+#ifdef DEBUG
+	{
+		printf("sigreturn13: pc %p or npc %p invalid\n", scp->sc_pc, scp->sc_npc);
+		Debugger();
+		return (EINVAL);
+	}
+#endif
 		return (EINVAL);
 	/* take only psr ICC field */
 #ifdef _LP64
