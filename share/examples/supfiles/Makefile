@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.10 2001/12/12 01:49:16 tv Exp $
+#	$NetBSD: Makefile,v 1.11 2001/12/12 12:24:22 lukem Exp $
+
+NOOBJ=	# defined
 
 .include <bsd.own.mk>
 
@@ -7,6 +9,5 @@ FILES=	sup.au.netbsd.org sup.jp.netbsd.org \
 	sup.netbsd.org sup2.fr.netbsd.org
 FILESDIR=/usr/share/examples/supfiles
 .endif
-NOOBJ=	# defined
 
 .include <bsd.prog.mk>

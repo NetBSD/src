@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 2001/12/12 01:49:15 tv Exp $
+#	$NetBSD: Makefile,v 1.8 2001/12/12 12:24:21 lukem Exp $
+
+NOOBJ=	# defined
 
 .include <bsd.own.mk>
 
@@ -6,6 +8,5 @@
 FILES=	amd.conf cd net
 FILESDIR=/usr/share/examples/amd
 .endif
-NOOBJ=	# defined
 
 .include <bsd.prog.mk>
