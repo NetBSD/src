@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.77 2004/04/25 16:42:41 simonb Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.78 2004/05/06 22:20:30 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.77 2004/04/25 16:42:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.78 2004/05/06 22:20:30 pk Exp $");
 
 #include "opt_kstack.h"
 
@@ -940,19 +940,25 @@ orphanpg(struct pgrp *pg)
 void
 p_sugid(struct proc *p)
 {
-	struct plimit *newlim;
+	struct plimit *lim;
+	char *cn;
 
 	p->p_flag |= P_SUGID;
 	/* reset what needs to be reset in plimit */
-	if (p->p_limit->pl_corename != defcorename) {
-		if (p->p_limit->p_refcnt > 1 &&
-		    (p->p_limit->p_lflags & PL_SHAREMOD) == 0) {
-			newlim = limcopy(p->p_limit);
-			limfree(p->p_limit);
-			p->p_limit = newlim;
+	lim = p->p_limit;
+	if (lim->pl_corename != defcorename) {
+		if (lim->p_refcnt > 1 &&
+		    (lim->p_lflags & PL_SHAREMOD) == 0) {
+			p->p_limit = limcopy(lim);
+			limfree(lim);
+			lim = p->p_limit;
 		}
-		free(p->p_limit->pl_corename, M_TEMP);
-		p->p_limit->pl_corename = defcorename;
+		simple_lock(&lim->p_slock);
+		cn = lim->pl_corename;
+		lim->pl_corename = defcorename;
+		simple_unlock(&lim->p_slock);
+		if (cn != defcorename)
+			free(cn, M_TEMP);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.82 2004/05/01 06:17:26 matt Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.83 2004/05/06 22:20:30 pk Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.82 2004/05/01 06:17:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.83 2004/05/06 22:20:30 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,7 +252,7 @@ dosetrlimit(p, cred, which, limp)
 	struct rlimit *limp;
 {
 	struct rlimit *alimp;
-	struct plimit *newplim;
+	struct plimit *oldplim;
 	int error;
 
 	if ((u_int)which >= RLIM_NLIMITS)
@@ -280,9 +280,8 @@ dosetrlimit(p, cred, which, limp)
 
 	if (p->p_limit->p_refcnt > 1 &&
 	    (p->p_limit->p_lflags & PL_SHAREMOD) == 0) {
-		newplim = limcopy(p->p_limit);
-		limfree(p->p_limit);
-		p->p_limit = newplim;
+		p->p_limit = limcopy(oldplim = p->p_limit);
+		limfree(oldplim);
 		alimp = &p->p_rlimit[which];
 	}
 
@@ -505,20 +504,29 @@ limcopy(lim)
 	struct plimit *lim;
 {
 	struct plimit *newlim;
-	size_t l;
+	size_t l = 0;
+
+	simple_lock(&lim->p_slock);
+	if (lim->pl_corename != defcorename)
+		l = strlen(lim->pl_corename) + 1;
+	simple_unlock(&lim->p_slock);
 
 	newlim = pool_get(&plimit_pool, PR_WAITOK);
-	memcpy(newlim->pl_rlimit, lim->pl_rlimit,
-	    sizeof(struct rlimit) * RLIM_NLIMITS);
-	if (lim->pl_corename == defcorename) {
-		newlim->pl_corename = defcorename;
-	} else {
-		l = strlen(lim->pl_corename) + 1;
-		newlim->pl_corename = malloc(l, M_TEMP, M_WAITOK);
-		strlcpy(newlim->pl_corename, lim->pl_corename, l);
-	}
+	simple_lock_init(&newlim->p_slock);
 	newlim->p_lflags = 0;
 	newlim->p_refcnt = 1;
+	newlim->pl_corename = (l != 0)
+		? malloc(l, M_TEMP, M_WAITOK)
+		: defcorename;
+
+	simple_lock(&lim->p_slock);
+	memcpy(newlim->pl_rlimit, lim->pl_rlimit,
+	    sizeof(struct rlimit) * RLIM_NLIMITS);
+
+	if (l != 0)
+		strlcpy(newlim->pl_corename, lim->pl_corename, l);
+	simple_unlock(&lim->p_slock);
+
 	return (newlim);
 }
 
@@ -527,10 +535,13 @@ limfree(lim)
 	struct plimit *lim;
 {
 
-	if (--lim->p_refcnt > 0)
+	simple_lock(&lim->p_slock);
+	int n = --lim->p_refcnt;
+	simple_unlock(&lim->p_slock);
+	if (n > 0)
 		return;
 #ifdef DIAGNOSTIC
-	if (lim->p_refcnt < 0)
+	if (n < 0)
 		panic("limfree");
 #endif
 	if (lim->pl_corename != defcorename)
@@ -626,7 +637,7 @@ static int
 sysctl_proc_corename(SYSCTLFN_ARGS)
 {
 	struct proc *ptmp, *p;
-	struct plimit *newplim;
+	struct plimit *lim;
 	int error = 0, len;
 	char cname[MAXPATHLEN], *tmp;
 	struct sysctlnode node;
@@ -684,15 +695,15 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 		return (ENOMEM);
 	strlcpy(tmp, cname, len + 1);
 
-	if (ptmp->p_limit->p_refcnt > 1 &&
-	    (ptmp->p_limit->p_lflags & PL_SHAREMOD) == 0) {
-		newplim = limcopy(ptmp->p_limit);
-		limfree(ptmp->p_limit);
-		ptmp->p_limit = newplim;
+	lim = ptmp->p_limit;
+	if (lim->p_refcnt > 1 && (lim->p_lflags & PL_SHAREMOD) == 0) {
+		ptmp->p_limit = limcopy(lim);
+		limfree(lim);
+		lim = ptmp->p_limit;
 	}
-	if (ptmp->p_limit->pl_corename != defcorename)
-		FREE(ptmp->p_limit->pl_corename, M_SYSCTLDATA);
-	ptmp->p_limit->pl_corename = tmp;
+	if (lim->pl_corename != defcorename)
+		free(lim->pl_corename, M_TEMP);
+	lim->pl_corename = tmp;
 
 	return (error);
 }
