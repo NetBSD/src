@@ -1,4 +1,4 @@
-/*	$NetBSD: strlen.S,v 1.1 2001/11/30 02:26:35 mjl Exp $ */
+/*	$NetBSD: strlen.S,v 1.1.4.1 2004/07/23 13:59:00 tron Exp $ */
 
 /*-
  * Copyright (C) 2001	Martin J. Laubach <mjl@netbsd.org>
@@ -64,49 +64,49 @@
 ENTRY(strlen)
 
 		/* Setup constants */
-		lis	r10, 0x7f7f
-		lis	r9, 0xfefe
-		ori	r10, r10, 0x7f7f
-		ori	r9, r9, 0xfeff
+		lis	%r10, 0x7f7f
+		lis	%r9, 0xfefe
+		ori	%r10, %r10, 0x7f7f
+		ori	%r9, %r9, 0xfeff
 
 		/* Mask out leading bytes on non aligned strings */
-		rlwinm.	r8, r3, 3, 27, 28	/* leading bits to mask */
-		clrrwi	r5, r3, 2		/*  clear low 2 addr bits */
-		li	r0, -1
+		rlwinm.	%r8, %r3, 3, 27, 28	/* leading bits to mask */
+		clrrwi	%r5, %r3, 2		/*  clear low 2 addr bits */
+		li	%r0, -1
 		beq+	3f			/* skip alignment if already */
 						/* aligned */
 
-		srw	r0, r0, r8		/* make 0000...1111 mask */
+		srw	%r0, %r0, %r8		/* make 0000...1111 mask */
 
-		lwz	r7, 0(r5)
-		nor	r0, r0, r0		/* invert mask */
-		or	r7, r7, r0		/* make leading bytes != 0 */
+		lwz	%r7, 0(%r5)
+		nor	%r0, %r0, %r0		/* invert mask */
+		or	%r7, %r7, %r0		/* make leading bytes != 0 */
 		b	2f
 
-3:		subi	r5, r5, 4
+3:		subi	%r5, %r5, 4
 
-1:		lwzu	r7, 4(r5)		/* fetch data word */
+1:		lwzu	%r7, 4(%r5)		/* fetch data word */
 
-2:		nor	r0, r7, r10		/* do step 1 */
-		add	r6, r7, r9
-		and.	r0, r0, r6
+2:		nor	%r0, %r7, %r10		/* do step 1 */
+		add	%r6, %r7, %r9
+		and.	%r0, %r0, %r6
 
 		beq+	1b			/* no NUL bytes here */
 	
-		and	r8, r7, r10		/* ok, a NUL is somewhere */
-		or	r7, r7, r10		/* do step 2 to find out */
-		add	r0, r8, r10		/* where */
-		nor	r8, r7, r0
+		and	%r8, %r7, %r10		/* ok, a NUL is somewhere */
+		or	%r7, %r7, %r10		/* do step 2 to find out */
+		add	%r0, %r8, %r10		/* where */
+		nor	%r8, %r7, %r0
 
-		cntlzw	r0, r8			/* offset from this word */
-		srwi	r4, r0, 3
+		cntlzw	%r0, %r8		/* offset from this word */
+		srwi	%r4, %r0, 3
 
-		add	r4, r5, r4		/* r4 contains end pointer */
+		add	%r4, %r5, %r4		/* r4 contains end pointer */
 		/* NOTE: Keep it so this function returns the end pointer
 		   in r4, so we can it use from other str* calls (strcat
 		   comes to mind */
 
-		subf	r3, r3, r4
+		subf	%r3, %r3, %r4
 		blr
 
 /*----------------------------------------------------------------------*/
