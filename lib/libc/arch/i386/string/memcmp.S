@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$Id: memcmp.S,v 1.7 1995/04/28 22:54:18 jtc Exp $")
+	RCSID("$NetBSD: memcmp.S,v 1.8 1995/04/28 22:58:04 jtc Exp $")
 #endif
 
 ENTRY(memcmp)
