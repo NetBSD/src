@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype.h,v 1.25 2003/10/22 15:51:18 kleink Exp $	*/
+/*	$NetBSD: ctype.h,v 1.26 2004/11/05 22:55:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -84,19 +84,19 @@ int	isblank __P ((int));
 #endif
 __END_DECLS
 
-#define	isdigit(c)	((int)((_ctype_ + 1)[(int)(c)] & _N))
-#define	islower(c)	((int)((_ctype_ + 1)[(int)(c)] & _L))
-#define	isspace(c)	((int)((_ctype_ + 1)[(int)(c)] & _S))
-#define	ispunct(c)	((int)((_ctype_ + 1)[(int)(c)] & _P))
-#define	isupper(c)	((int)((_ctype_ + 1)[(int)(c)] & _U))
-#define	isalpha(c)	((int)((_ctype_ + 1)[(int)(c)] & (_U|_L)))
-#define	isxdigit(c)	((int)((_ctype_ + 1)[(int)(c)] & (_N|_X)))
-#define	isalnum(c)	((int)((_ctype_ + 1)[(int)(c)] & (_U|_L|_N)))
-#define	isprint(c)	((int)((_ctype_ + 1)[(int)(c)] & (_P|_U|_L|_N|_B)))
-#define	isgraph(c)	((int)((_ctype_ + 1)[(int)(c)] & (_P|_U|_L|_N)))
-#define	iscntrl(c)	((int)((_ctype_ + 1)[(int)(c)] & _C))
-#define	tolower(c)	((int)((_tolower_tab_ + 1)[(int)(c)]))
-#define	toupper(c)	((int)((_toupper_tab_ + 1)[(int)(c)]))
+#define	isdigit(c)	((int)((_ctype_ + 1)[(c)] & _N))
+#define	islower(c)	((int)((_ctype_ + 1)[(c)] & _L))
+#define	isspace(c)	((int)((_ctype_ + 1)[(c)] & _S))
+#define	ispunct(c)	((int)((_ctype_ + 1)[(c)] & _P))
+#define	isupper(c)	((int)((_ctype_ + 1)[(c)] & _U))
+#define	isalpha(c)	((int)((_ctype_ + 1)[(c)] & (_U|_L)))
+#define	isxdigit(c)	((int)((_ctype_ + 1)[(c)] & (_N|_X)))
+#define	isalnum(c)	((int)((_ctype_ + 1)[(c)] & (_U|_L|_N)))
+#define	isprint(c)	((int)((_ctype_ + 1)[(c)] & (_P|_U|_L|_N|_B)))
+#define	isgraph(c)	((int)((_ctype_ + 1)[(c)] & (_P|_U|_L|_N)))
+#define	iscntrl(c)	((int)((_ctype_ + 1)[(c)] & _C))
+#define	tolower(c)	((int)((_tolower_tab_ + 1)[(c)]))
+#define	toupper(c)	((int)((_toupper_tab_ + 1)[(c)]))
 
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #define	isascii(c)	((unsigned)(c) <= 0177)
@@ -112,7 +112,7 @@ __END_DECLS
  * isblank() is implemented as C function, due to insufficient bitwidth in
  * _ctype_.  Note that _B does not mean isblank - it means isprint && !isgraph.
  */
-#define isblank(c)	((int)((_ctype_ + 1)[(int)(c)] & _B))
+#define isblank(c)	((int)((_ctype_ + 1)[(c)] & _B))
 #endif
 #endif
 
