@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.29 1999/11/25 01:40:22 simonb Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.30 1999/12/03 03:06:11 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.29 1999/11/25 01:40:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.30 1999/12/03 03:06:11 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ dec_3maxplus_init()
 	splvec.splstatclock = MIPS_SPL_0_1;
 	
 	/* calibrate cpu_mhz value */
-	mc_cpuspeed((void *)(ioasic_base+IOASIC_SLOT_8_START), MIPS_INT_MASK_1);
+	mc_cpuspeed(ioasic_base+IOASIC_SLOT_8_START, MIPS_INT_MASK_1);
 
 	*(u_int32_t *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
 	*(u_int32_t *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.13 1999/11/25 01:40:22 simonb Exp $ */
+/* $NetBSD: dec_5100.c,v 1.14 1999/12/03 03:06:11 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -103,8 +103,7 @@ dec_5100_init()
 	splvec.splstatclock = MIPS_SPL_0_1_2;
 
 	/* calibrate cpu_mhz value */
-	mc_cpuspeed(
-	    (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK), MIPS_INT_MASK_2);
+	mc_cpuspeed(MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK), MIPS_INT_MASK_2);
 
 	sprintf(cpu_model, "DECsystem 5100 (MIPSMATE)");
 }
