@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.31 1994/03/29 12:42:04 cgd Exp $
+#	$Id: Makefile,v 1.32 1994/04/04 21:49:39 cgd Exp $
 
 # not yet done: catman
 
@@ -12,9 +12,12 @@ SUBDIR=	ac accton amd arp chown chroot config config.new cron dev_mkdb \
 	ypbind yppoll ypset
 
 .if   make(clean) || make(cleandir)
-SUBDIR+=bad144
+SUBDIR+=bad144 hilinfo grfinfo
 .elif ${MACHINE} == "i386"
 SUBDIR+=bad144 
+.elif ${MACHINE} == "hp300"
+# probably could be expanded to other machines, too
+SUBDIR+=hilinfo grfinfo
 .endif
 
 .include <bsd.subdir.mk>
