@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.63 2000/04/24 17:40:31 thorpej Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.64 2000/06/04 02:25:40 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.63 2000/04/24 17:40:31 thorpej Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.64 2000/06/04 02:25:40 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,6 +95,7 @@ __RCSID("$NetBSD: vmstat.c,v 1.63 2000/04/24 17:40:31 thorpej Exp $");
 #include <sys/namei.h>
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
+#include <sys/sched.h>
 #include <sys/sysctl.h>
 #include <sys/device.h>
 #include <sys/pool.h>
