@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.102 1997/10/01 19:21:17 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.103 1997/11/19 23:19:13 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -607,8 +607,9 @@ setpgt4m(ptep, pte)
 	int pte;
 {
 	*ptep = pte;
-#if 0
-	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)
+#if 1
+	/* XXX - uncaching in pgtalloc() below is not yet quite Okay */
+	if (cpuinfo.cpu_type == CPUTYP_SS1_MBUS_NOMXCC)
 		cpuinfo.pcache_flush_line((int)ptep, VA2PA((caddr_t)ptep));
 #endif
 }
