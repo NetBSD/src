@@ -1,3 +1,5 @@
+/*	$NetBSD: ansi.h,v 1.3 1994/10/26 08:01:59 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *      @(#)ansi.h      7.1 (Berkeley) 3/9/91
- *	$Id: ansi.h,v 1.2 1994/10/08 15:43:53 ragge Exp $
  */
 
 #ifndef _ANSI_H_

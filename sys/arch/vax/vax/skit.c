@@ -1,3 +1,5 @@
+/*	$NetBSD: skit.c,v 1.4 1994/10/26 08:03:27 cgd Exp $	*/
+
 /*
  * This file shouldn't exist; it contains all undefines that currently is.
  * (even undefined pointers, bleh!) It is actually created from an awk

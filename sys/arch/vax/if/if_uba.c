@@ -1,3 +1,5 @@
+/*	$NetBSD: if_uba.c,v 1.3 1994/10/26 08:01:53 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)if_uba.c	7.16 (Berkeley) 12/16/90
- *	$Id: if_uba.c,v 1.2 1994/10/08 15:42:57 ragge Exp $
  */
 
 #include "sys/param.h"
