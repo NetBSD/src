@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.19 2001/05/03 13:17:26 soren Exp $
+# $NetBSD: ad.powerpc,v 1.20 2001/05/30 13:09:02 tsubai Exp $
 ./usr/bin/elf2aout	comp-sysutil-bin
 ./usr/include/powerpc	comp-c-include
 ./usr/include/powerpc/ansi.h	comp-c-include
@@ -6,6 +6,7 @@
 ./usr/include/powerpc/asm.h	comp-c-include
 ./usr/include/powerpc/bat.h	comp-c-include
 ./usr/include/powerpc/bswap.h	comp-c-include
+./usr/include/powerpc/byte_swap.h	comp-c-include
 ./usr/include/powerpc/cdefs.h	comp-c-include
 ./usr/include/powerpc/cpu.h	comp-c-include
 ./usr/include/powerpc/db_machdep.h	comp-c-include
