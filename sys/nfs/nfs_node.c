@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.41.2.7 2002/02/28 04:15:20 nathanw Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.41.2.8 2002/04/01 07:49:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.41.2.7 2002/02/28 04:15:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.41.2.8 2002/04/01 07:49:06 nathanw Exp $");
 
 #include "opt_nfs.h"
 
@@ -80,11 +80,12 @@ extern int prtactive;
 
 void nfs_gop_size(struct vnode *, off_t, off_t *);
 int nfs_gop_alloc(struct vnode *, off_t, off_t, int, struct ucred *);
+int nfs_gop_write(struct vnode *, struct vm_page **, int, int);
 
 struct genfs_ops nfs_genfsops = {
 	nfs_gop_size,
 	nfs_gop_alloc,
-	genfs_gop_write,
+	nfs_gop_write,
 };
 
 /*
@@ -100,9 +101,9 @@ nfs_nhinit()
 	lockinit(&nfs_hashlock, PINOD, "nfs_hashlock", 0, 0);
 
 	pool_init(&nfs_node_pool, sizeof(struct nfsnode), 0, 0, 0, "nfsnodepl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_NFSNODE);
+	    &pool_allocator_nointr);
 	pool_init(&nfs_vattr_pool, sizeof(struct vattr), 0, 0, 0, "nfsvapl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_NFSNODE);
+	    &pool_allocator_nointr);
 }
 
 /*
@@ -324,4 +325,15 @@ nfs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
     struct ucred *cred)
 {
 	return 0;
+}
+
+int
+nfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
+{
+	int i;
+
+	for (i = 0; i < npages; i++) {
+		pmap_page_protect(pgs[i], VM_PROT_READ);
+	}
+	return genfs_gop_write(vp, pgs, npages, flags);
 }

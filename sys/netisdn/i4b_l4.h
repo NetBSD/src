@@ -27,7 +27,7 @@
  *	i4b_l4.h - kernel interface to userland header file
  *	---------------------------------------------------
  *
- *	$Id: i4b_l4.h,v 1.1.1.1 2001/01/05 12:49:56 martin Exp $ 
+ *	$Id: i4b_l4.h,v 1.1.1.1.4.1 2002/04/01 07:48:58 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -40,7 +40,7 @@
 
 extern void i4bputqueue ( struct mbuf *m );
 extern void i4bputqueue_hipri(struct mbuf *m);
-extern void i4b_l4_accounting(int, int, int, int, int, int, int, int, int);
+extern void i4b_l4_accounting(int, int, int, int, int, int, int, int);
 extern void i4b_l4_alert_ind ( call_desc_t *cd );
 extern void i4b_l4_charging_ind( call_desc_t *cd );
 extern void i4b_l4_connect_active_ind ( call_desc_t *cd );
@@ -50,7 +50,7 @@ extern void i4b_l4_daemon_detached(void);
 extern void i4b_l4_dialout( int driver, int driver_unit );
 extern void i4b_l4_dialoutnumber(int driver, int driver_unit, int cmdlen, char *cmd);
 extern void i4b_l4_disconnect_ind ( call_desc_t *cd );
-extern void i4b_l4_drvrdisc (int driver, int driver_unit );
+extern void i4b_l4_drvrdisc (int cdid);
 extern void i4b_l4_negcomplete( call_desc_t *cd );
 extern void i4b_l4_ifstate_changed( call_desc_t *cd, int new_state );
 extern void i4b_l4_idle_timeout_ind( call_desc_t *cd );
@@ -63,8 +63,9 @@ extern void i4b_l4_status_ind ( call_desc_t *cd );
 extern void i4b_l4_proceeding_ind ( call_desc_t *cd );
 extern void i4b_idle_check(call_desc_t *cdp);
 extern call_desc_t * cd_by_cdid ( unsigned int cdid );
-extern call_desc_t * cd_by_unitcr ( int unit, int cr, int crf );
 extern void freecd_by_cd ( call_desc_t *cd );
+call_desc_t *cd_by_bricr(int bri, int cr, int crf);
+void free_all_cd_of_bri(int bri);
 extern unsigned char get_rand_cr ( int unit );
 extern call_desc_t * reserve_cd ( void );
 extern void T400_start ( call_desc_t *cd );

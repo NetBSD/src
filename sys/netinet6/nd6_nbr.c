@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.28.2.2 2001/11/14 19:18:14 nathanw Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.28.2.3 2002/04/01 07:48:52 nathanw Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.28.2.2 2001/11/14 19:18:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.28.2.3 2002/04/01 07:48:52 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -793,7 +793,7 @@ nd6_na_input(m, off, icmp6len)
 		 */
 		nd6_output(ifp, ifp, ln->ln_hold,
 			   (struct sockaddr_in6 *)rt_key(rt), rt);
-		ln->ln_hold = 0;
+		ln->ln_hold = NULL;
 	}
 
  freeit:

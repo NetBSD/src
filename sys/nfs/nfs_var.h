@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.19.2.3 2002/01/08 00:34:33 nathanw Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.19.2.4 2002/04/01 07:49:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -207,6 +207,7 @@ int nfs_rephead __P((int, struct nfsrv_descript *, struct nfssvc_sock *,
 void nfs_timer __P((void *));
 int nfs_sigintr __P((struct nfsmount *, struct nfsreq *, struct proc *));
 int nfs_sndlock __P((int *, struct nfsreq *));
+void nfs_exit __P((struct proc *, void *));
 void nfs_sndunlock __P((int *));
 int nfs_rcvlock __P((struct nfsreq *));
 void nfs_rcvunlock __P((int *));
@@ -238,7 +239,7 @@ int nfsm_strtmbuf __P((struct mbuf **, char **, const char *, long));
 u_long nfs_dirhash __P((off_t));
 void nfs_initdircache __P((struct vnode *));
 struct nfsdircache *nfs_searchdircache __P((struct vnode *, off_t, int, int *));
-struct nfsdircache *nfs_enterdircache __P((struct vnode *, off_t, off_t,						   daddr_t, int));
+struct nfsdircache *nfs_enterdircache __P((struct vnode *, off_t, off_t,						   int, daddr_t));
 void nfs_invaldircache __P((struct vnode *, int));
 void nfs_init __P((void));
 int nfsm_loadattrcache __P((struct vnode **, struct mbuf **, caddr_t *,

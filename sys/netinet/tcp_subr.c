@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.107.2.5 2001/11/14 19:17:57 nathanw Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.107.2.6 2002/04/01 07:48:44 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.107.2.5 2001/11/14 19:17:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.107.2.6 2002/04/01 07:48:44 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -236,7 +236,7 @@ tcp_init()
 	int hlen;
 
 	pool_init(&tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl",
-	    0, NULL, NULL, M_PCB);
+	    NULL);
 	in_pcbinit(&tcbtable, tcbhashsize, tcbhashsize);
 #ifdef INET6
 	tcb6.in6p_next = tcb6.in6p_prev = &tcb6;
@@ -1104,6 +1104,34 @@ tcp_drain()
 		}
 	}
 }
+
+#ifdef INET6
+void
+tcp6_drain()
+{
+	struct in6pcb *in6p;
+	struct tcpcb *tp;
+	struct in6pcb *head = &tcb6;
+
+	/*
+	 * Free the sequence queue of all TCP connections.
+	 */
+	for (in6p = head->in6p_next; in6p != head; in6p = in6p->in6p_next) {
+		if ((tp = in6totcpcb(in6p)) != NULL) {
+			/*
+			 * We may be called from a device's interrupt
+			 * context.  If the tcpcb is already busy,
+			 * just bail out now.
+			 */
+			if (tcp_reass_lock_try(tp) == 0)
+				continue;
+			if (tcp_freeq(tp))
+				tcpstat.tcps_connsdrained++;
+			TCP_REASS_UNLOCK(tp);
+		}
+	}
+}
+#endif
 
 /*
  * Notify a tcp user of an asynchronous error;

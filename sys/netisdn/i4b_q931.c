@@ -27,7 +27,7 @@
  *	i4b_q931.c - Q931 received messages handling
  *	--------------------------------------------
  *
- *	$Id: i4b_q931.c,v 1.2.2.4 2002/02/28 04:15:15 nathanw Exp $ 
+ *	$Id: i4b_q931.c,v 1.2.2.5 2002/04/01 07:48:59 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.2.2.4 2002/02/28 04:15:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.2.2.5 2002/04/01 07:48:59 nathanw Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -80,10 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.2.2.4 2002/02/28 04:15:15 nathanw Exp
 #include <netisdn/i4b_l4.h>
 
 unsigned int i4b_l3_debug = L3_DEBUG_DEFAULT;
-
-call_desc_t call_desc[N_CALL_DESC];	/* call descriptor array */
-ctrl_desc_t ctrl_desc[MAX_CONTROLLERS];	/* controller description array */
-int utoc_tab[MAX_CONTROLLERS];		/* unit to controller conversion */
 
 /* protocol independent causes -> Q.931 causes */
 
@@ -179,7 +175,7 @@ i4b_decode_q931(int bri, int msg_len, u_char *msg_ptr)
 
 	/* find or allocate calldescriptor */
 
-	if((cd = cd_by_unitcr(bri, crval,
+	if((cd = cd_by_bricr(bri, crval,
 			crflag == CRF_DEST ? CRF_ORIG : CRF_DEST)) == NULL)
 	{
 		if(*msg_ptr == SETUP)
@@ -190,8 +186,8 @@ i4b_decode_q931(int bri, int msg_len, u_char *msg_ptr)
 			cd->bri = bri;
 			cd->cr = crval;		
 			cd->crflag = CRF_DEST;	/* we are the dest side */
-			cd->ilt = NULL;		/* reset link tab ptrs */
-			cd->dlt = NULL;
+			cd->l4_driver = NULL;		/* reset link tab ptrs */
+			cd->l4_driver_softc = NULL;
 		}
 		else
 		{

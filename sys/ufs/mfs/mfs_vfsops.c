@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.32.2.5 2002/02/28 04:15:29 nathanw Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.32.2.6 2002/04/01 07:49:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.32.2.5 2002/02/28 04:15:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.32.2.6 2002/04/01 07:49:18 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -201,7 +201,6 @@ mfs_initminiroot(base)
 	caddr_t base;
 {
 	struct fs *fs = (struct fs *)(base + SBOFF);
-	extern int (*mountroot) __P((void));
 
 	/* check for valid super block */
 	if (fs->fs_magic != FS_MAGIC || fs->fs_bsize > MAXBSIZE ||

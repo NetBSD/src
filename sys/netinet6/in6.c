@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.44.2.5 2002/01/08 00:34:15 nathanw Exp $	*/
+/*	$NetBSD: in6.c,v 1.44.2.6 2002/04/01 07:48:49 nathanw Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.44.2.5 2002/01/08 00:34:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.44.2.6 2002/04/01 07:48:49 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -1741,7 +1741,7 @@ struct in6_addr *addr;
 		}
 	}
 
-	if (bcmp(&in6addr_loopback, addr, sizeof(addr) - 1) == 0) {
+	if (bcmp(&in6addr_loopback, addr, sizeof(*addr) - 1) == 0) {
 		if (addr->s6_addr8[15] == 1) /* loopback */
 			return IPV6_ADDR_SCOPE_NODELOCAL;
 		if (addr->s6_addr8[15] == 0) /* unspecified */

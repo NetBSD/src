@@ -1,7 +1,7 @@
-/* $NetBSD: i4b_l1l2.h,v 1.1.1.1.4.1 2001/04/09 01:58:46 nathanw Exp $ */
+/* $NetBSD: i4b_l1l2.h,v 1.1.1.1.4.2 2002/04/01 07:48:55 nathanw Exp $ */
 
 /*
- * Copyright (c) 2001 Martin Husemann. All rights reserved.
+ * Copyright (c) 2001-2002 Martin Husemann. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,21 +30,18 @@
 #define _I4B_L1L2_H_
 
 /*
- * This file defines the interface between layer 1 (physical card hardware)
- * and layer 2 of a passive ISDN card (i.e. a card that does not run it's
- * own ISDN stack in firmware).
+ * This file defines the D-channel interface between layer 1 (physical 
+ * card hardware) and layer 2 of a passive ISDN card (i.e. a card that 
+ * does not run it's own ISDN stack in firmware).
  *
- * The layer 2 is represented in all functions by an opaque layer2token type,
- * internally representing the layer 2 struct softc (which is unknown to
- * layer 1).
- * Similarily layer 1 is represented by a layer1token type, typically
- * representing its struct device derived softc pointer. If someone ever
- * creates a multi-bri passive isdn card, it would need to be something
- * else (i.e. pointer to a struct containing the softc pointer and a
- * interface index), so we do not define it as 'struct device *' here.
+ * Since each layer 1 driver knows in advance it will need to attach
+ * to this layer 2, the whole layer 2 softc struct is typically included
+ * in the layer 1 softc.
+ *
+ * A back-pointer to the layer 1 softc is included (as void*) in this
+ * structure.
  */
 
-typedef void * isdn_layer2token;
 typedef void * isdn_layer1token;
 
 /*
@@ -66,40 +63,24 @@ struct isdn_layer1_bri_driver {
 
 	/* Request to execute an internal command. */
 	int (*mph_command_req)(isdn_layer1token, int, void *);
-
-	/* switch on/off trace */
-	void (*n_mgmt_command)(isdn_layer1token, int cmd, void *);
 };
-
-/*
- * Support functions called from upper layers
- */
-isdn_layer2token isdn_find_l2_by_bri(int);
 
 /*
  * Layer 2 functions called by layer 1:
  */
 
-/* Attach a new BRI and return it's layer 2 token. */
-isdn_layer2token isdn_attach_layer1_bri(isdn_layer1token,
-					const char *, const char *,
-					const struct isdn_layer1_bri_driver *);
-
-/* Detach a BRI. */
-int isdn_detach_layer1_bri(isdn_layer2token);
-
-/* Pass data up to layer 2. */
-int isdn_layer2_data_ind(isdn_layer2token, struct mbuf *);
+/* Process a rx'd frame */
+int isdn_layer2_data_ind(struct l2_softc * t, struct mbuf *m);
 
 /* Pass a layer 1 activation/deactivation to layer 2. */
-int isdn_layer2_activate_ind(isdn_layer2token, int);
+int isdn_layer2_activate_ind(struct l2_softc *, int);
 
 /* Pass trace data to layer 2. */
 struct i4b_trace_hdr;	/* from i4b_trace.h */
-int isdn_layer2_trace_ind(isdn_layer2token, struct i4b_trace_hdr *, size_t, unsigned char *);
+int isdn_layer2_trace_ind(struct l2_softc *, struct i4b_trace_hdr *, size_t, unsigned char *);
 
 /* Pass status informations to layer 2. */
-int isdn_layer2_status_ind(isdn_layer2token, int, int);
+int isdn_layer2_status_ind(struct l2_softc *, int, int);
 	
 #endif /* !_I4B_L1L2_H_ */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.31.2.7 2002/01/08 00:34:21 nathanw Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.31.2.8 2002/04/01 07:48:51 nathanw Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.31.2.7 2002/01/08 00:34:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.31.2.8 2002/04/01 07:48:51 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -460,7 +460,8 @@ skip_ipsec2:;
 	 * and is still up. If not, free it and try again.
 	 */
 	if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-			 !IN6_ARE_ADDR_EQUAL(&dst->sin6_addr, &ip6->ip6_dst))) {
+			  dst->sin6_family != AF_INET6 ||
+			  !IN6_ARE_ADDR_EQUAL(&dst->sin6_addr, &ip6->ip6_dst))) {
 		RTFREE(ro->ro_rt);
 		ro->ro_rt = (struct rtentry *)0;
 	}

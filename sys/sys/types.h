@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.48.2.3 2001/10/22 20:42:13 nathanw Exp $	*/
+/*	$NetBSD: types.h,v 1.48.2.4 2002/04/01 07:49:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -117,8 +117,18 @@ typedef	u_int64_t	u_quad_t;	/* quads */
 typedef	int64_t		quad_t;
 typedef	quad_t *	qaddr_t;
 
-typedef	quad_t		longlong_t;	/* ANSI long long type */
-typedef	u_quad_t	u_longlong_t;	/* ANSI unsigned long long type */
+/*
+ * The types longlong_t and u_longlong_t exist for use with the
+ * Sun-derived XDR routines involving these types, and their usage
+ * in other contexts is discouraged.  Further note that these types
+ * may not be equivalent to "long long" and "unsigned long long",
+ * they are only guaranteed to be signed and unsigned 64-bit types
+ * respectively.  Portable programs that need 64-bit types should use
+ * the C99 types int64_t and uint64_t instead.
+ */
+
+typedef	quad_t		longlong_t;	/* for XDR */
+typedef	u_quad_t	u_longlong_t;	/* for XDR */
 
 typedef	int64_t		blkcnt_t;	/* fs block count */
 typedef	u_int32_t	blksize_t;	/* fs optimal block size */

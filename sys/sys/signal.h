@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.42.20.3 2001/11/17 00:28:30 nathanw Exp $	*/
+/*	$NetBSD: signal.h,v 1.42.20.4 2002/04/01 07:49:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -45,7 +45,7 @@
 
 #include <sys/featuretest.h>
 
-#define _NSIG		33
+#define _NSIG		64
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE)
@@ -104,6 +104,10 @@
 #define SIGUSR2		31	/* user defined signal 2 */
 #ifndef _POSIX_SOURCE
 #define	SIGPWR		32	/* power fail/restart (not reset when caught) */
+#endif
+#ifdef _KERNEL
+#define SIGRTMIN	33	/* Kernel only; not exposed to userland yet */
+#define SIGRTMAX	63	/* Kernel only; not exposed to userland yet */
 #endif
 
 #ifndef _KERNEL

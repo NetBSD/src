@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.130.2.8 2002/01/08 00:34:34 nathanw Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.130.2.9 2002/04/01 07:49:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.130.2.8 2002/01/08 00:34:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.130.2.9 2002/04/01 07:49:08 nathanw Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -403,7 +403,8 @@ nfs_access(v)
 		 * different request, OR it in. Don't update
 		 * the timestamp in that case.
 		 */
-		if (cachevalid && error == np->n_accerror) {
+		if (cachevalid && np->n_accstamp != -1 &&
+		    error == np->n_accerror) {
 			if (!error)
 				np->n_accmode |= ap->a_mode;
 			else if ((np->n_accmode & ap->a_mode) == ap->a_mode)

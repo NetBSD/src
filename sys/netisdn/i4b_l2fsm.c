@@ -27,7 +27,7 @@
  *	i4b_l2fsm.c - layer 2 FSM
  *	-------------------------
  *
- *	$Id: i4b_l2fsm.c,v 1.1.1.1.4.2 2001/11/14 19:18:18 nathanw Exp $ 
+ *	$Id: i4b_l2fsm.c,v 1.1.1.1.4.3 2002/04/01 07:48:56 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2fsm.c,v 1.1.1.1.4.2 2001/11/14 19:18:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2fsm.c,v 1.1.1.1.4.3 2002/04/01 07:48:56 nathanw Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l2fsm.c,v 1.1.1.1.4.2 2001/11/14 19:18:18 nathan
 #endif
 
 #include <netisdn/i4b_global.h>
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_isdnq931.h>
 #include <netisdn/i4b_mbuf.h>

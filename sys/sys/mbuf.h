@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.56.2.3 2001/10/22 20:42:12 nathanw Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.56.2.4 2002/04/01 07:49:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -263,8 +263,7 @@ do {									\
 		(m)->m_nextpkt = (struct mbuf *)NULL;			\
 		(m)->m_data = (m)->m_dat;				\
 		(m)->m_flags = 0;					\
-	} else								\
-		(m) = m_retry((how), (type));				\
+	}								\
 } while (/* CONSTCOND */ 0)
 
 #define	MGETHDR(m, how, type)						\
@@ -281,8 +280,7 @@ do {									\
 		(m)->m_pkthdr.csum_flags = 0;				\
 		(m)->m_pkthdr.csum_data = 0;				\
 		(m)->m_pkthdr.aux = (struct mbuf *)NULL;		\
-	} else								\
-		(m) = m_retryhdr((how), (type));			\
+	}								\
 } while (/* CONSTCOND */ 0)
 
 /*
@@ -355,12 +353,6 @@ do {									\
 		(m)->m_ext.ext_buf =					\
 		    pool_cache_get(&mclpool_cache, (how) == M_WAIT ?	\
 			(PR_WAITOK|PR_LIMITFAIL) : 0);			\
-		if ((m)->m_ext.ext_buf == NULL) {			\
-			m_reclaim((how));				\
-			(m)->m_ext.ext_buf =				\
-			    pool_cache_get(&mclpool_cache,		\
-			     (how) == M_WAIT ? PR_WAITOK : 0);		\
-		}							\
 	);								\
 	if ((m)->m_ext.ext_buf != NULL) {				\
 		(m)->m_data = (m)->m_ext.ext_buf;			\
@@ -630,8 +622,6 @@ struct	mbuf *m_gethdr __P((int, int));
 struct	mbuf *m_prepend __P((struct mbuf *,int,int));
 struct	mbuf *m_pulldown __P((struct mbuf *, int, int, int *));
 struct	mbuf *m_pullup __P((struct mbuf *, int));
-struct	mbuf *m_retry __P((int, int));
-struct	mbuf *m_retryhdr __P((int, int));
 struct	mbuf *m_split __P((struct mbuf *,int,int));
 void	m_adj __P((struct mbuf *, int));
 void	m_cat __P((struct mbuf *,struct mbuf *));
@@ -639,7 +629,7 @@ int	m_mballoc __P((int, int));
 void	m_copyback __P((struct mbuf *, int, int, caddr_t));
 void	m_copydata __P((struct mbuf *,int,int,caddr_t));
 void	m_freem __P((struct mbuf *));
-void	m_reclaim __P((int));
+void	m_reclaim __P((void *, int));
 void	mbinit __P((void));
 
 struct mbuf *m_aux_add __P((struct mbuf *, int, int));
