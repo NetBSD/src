@@ -1,5 +1,5 @@
 #  @(#)Makefile 5.1beta 93/09/24 
-#  $Id: Makefile,v 1.11 1994/02/11 18:35:35 jtc Exp $
+#  $Id: Makefile,v 1.12 1994/02/14 17:07:07 jtc Exp $
 # 
 #  ====================================================
 #  Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -69,11 +69,13 @@ OBJS = 	k_standard.o k_rem_pio2.o k_cos.o k_sin.o k_tan.o \
 	w_scalb.o w_sinh.o w_sqrt.o \
 	s_asinh.o s_atan.o s_cbrt.o s_ceil.o s_copysign.o \
 	s_cos.o s_erf.o s_expm1.o s_fabs.o s_finite.o s_floor.o \
-	s_frexp.o s_ilogb.o s_isnan.o s_ldexp.o s_lib_version.o \
+	s_frexp.o s_ilogb.o s_ldexp.o s_lib_version.o \
 	s_log1p.o s_logb.o s_matherr.o s_modf.o s_nextafter.o \
 	s_rint.o s_scalbn.o s_signgam.o s_significand.o s_sin.o \
 	s_tan.o s_tanh.o
 
+# NetBSD's C library supplies isnan().
+#OBJS+=	s_isnan.o
 
 MAN3+=	acos.0 acosh.0 asin.0 asinh.0 atan.0 atan2.0 atanh.0 ceil.0 \
 	cos.0 cosh.0 erf.0 exp.0 fabs.0 floor.0 fmod.0 hypot.0 ieee.0 \
