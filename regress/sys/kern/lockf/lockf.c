@@ -1,3 +1,5 @@
+/*	$NetBSD: lockf.c,v 1.1.2.1 2000/07/30 09:21:45 jdolecek Exp $	*/
+
 /*
  * lockf regression test:
  *
@@ -15,11 +17,12 @@
 #include <stdlib.h>
 #include <err.h>
 #include <signal.h>
+#include <errno.h>
 
 int nlocks = 1000;		/* number of locks per thread */
 int nprocs = 10;		/* number of processes to spawn */
 int sleeptime = 500000;		/* sleep time between locks, usec */
-int size = 8192;		/* size of file to lock */
+off_t size = 8192;		/* size of file to lock */
 const char *lockfile = "/tmp/lockf_test";
 
 static u_int32_t
@@ -82,11 +85,12 @@ trylocks(int id)
 	close (fd);
 }
 
+/* ARGSUSED */
 int
 main(int argc, char **argv)
 {
 	int i, j;
-	int *pid;
+	pid_t *pid;
 	int status;
 	int fd;
 	
@@ -102,7 +106,7 @@ main(int argc, char **argv)
 	fsync(fd);
 	close(fd);
 	
-	pid = malloc(nprocs * sizeof(int));
+	pid = malloc(nprocs * sizeof(pid_t));
 	
 	for (i=0; i<nprocs; i++) {
 		pid[i] = fork();
@@ -119,17 +123,18 @@ main(int argc, char **argv)
 		}
 	}
 	for (j=0; j<100; j++) {
+		printf("parent: run %i\n", j+1);
 		for (i=0; i<nprocs; i++) {
 			printf("stop %d\n", i);
 			if (ptrace(PT_ATTACH, pid[i], 0, 0) < 0)
-				err(1, "ptrace");
+				err(1, "ptrace attach %d", pid[i]);
 			printf("wait %d\n", i);
 			if (waitpid(pid[i], &status, WUNTRACED) < 0)
 				err(1, "waitpid(ptrace)");
 			printf("awake %d\n", i);
 			usleep(sleeptime/3);
-			if (ptrace(PT_DETACH, pid[i], 0, 0) < 0)
-				err(1, "ptrace");
+			if (ptrace(PT_DETACH, pid[i], (caddr_t)1, 0) < 0)
+				err(1, "ptrace detach %d", pid[i]);
 			printf("done %d\n", i);
 			usleep(sleeptime/3);
 		}
@@ -137,9 +142,10 @@ main(int argc, char **argv)
 	for (i=0; i<nprocs; i++) {
 		printf("reap %d: ", i);
 		fflush(stdout);
+		kill(pid[i], SIGINT);
 		waitpid(pid[i], &status, 0);
 		printf(" status %d\n", status);
 	}
 	exit(0);
+	/* NOTREACHED */
 }
-
