@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.6 2003/07/14 15:47:29 lukem Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.7 2003/11/12 11:29:12 augustss Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.6 2003/07/14 15:47:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.7 2003/11/12 11:29:12 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -380,7 +380,6 @@ USB_ATTACH(ubsa)
 	USB_ATTACH_SUCCESS_RETURN;
 
 error:
-	free(devinfo, M_USBDEV);
 	USB_ATTACH_ERROR_RETURN;
 }
 
