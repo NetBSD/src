@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_wrap.c,v 1.8 2003/04/03 06:21:33 itojun Exp $	*/
+/*	$NetBSD: monitor_wrap.c,v 1.9 2003/05/26 07:57:38 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor_wrap.c,v 1.25 2003/04/02 09:48:07 markus Exp $");
+RCSID("$OpenBSD: monitor_wrap.c,v 1.26 2003/04/07 08:29:57 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/dh.h>
@@ -573,7 +573,7 @@ mm_send_keystate(struct monitor *pmonitor)
 	buffer_put_int(&m, seqnr);
 	buffer_put_int64(&m, blocks);
 	buffer_put_int(&m, packets);
-	packet_get_state(MODE_OUT, &seqnr, &blocks, &packets);
+	packet_get_state(MODE_IN, &seqnr, &blocks, &packets);
 	buffer_put_int(&m, seqnr);
 	buffer_put_int64(&m, blocks);
 	buffer_put_int(&m, packets);
