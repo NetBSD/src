@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4 2004/08/30 15:05:19 drochner Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.5 2005/03/10 22:10:11 bouyer Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2004/08/30 15:05:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5 2005/03/10 22:10:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,7 @@ union mainbus_attach_args {
 #endif
 };
 
+#ifndef XEN
 /*
  * This is set when the ISA bus is attached.  If it's not set by the
  * time it's checked below, then mainbus attempts to attach an ISA.
@@ -141,12 +142,13 @@ struct isabus_attach_args mba_iba = {
 	&isa_bus_dma_tag,
 	&x86_isa_chipset
 };
-#endif
+#endif /* NISA */
 
 /*
  * Same as above, but for EISA.
  */
 int	eisa_has_been_seen;
+#endif /* !XEN */
 
 #if defined(MPBIOS) || defined(MPACPI)
 struct mp_bus *mp_busses;
