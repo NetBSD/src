@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.116 2003/08/17 13:44:09 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.117 2003/08/17 13:53:38 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1296,12 +1296,14 @@ sys/compat/ossaudio/ossaudio.c			1.43
 	Fix missing call to FILE_UNUSE.  From kern/21946, from Todd Vierling.
 	[tv, ticket #1422]
 
+sys/kern/exec_conf.c				1.80
+sys/kern/exec_script.c				1.33
 sys/sys/exec_script.h				1.8
 sys/sys/param.h					1.163
 
 	grow #! line length -- patch from cgd, fixes PR kern/20112 from
 	Todd Vierling
-	[tv, ticket #1423]
+	[tv, tickets #1423, #1424]
 
 share/man/man5/dir.5				1.10-1.16
 
@@ -1318,11 +1320,4 @@ share/man/man5/dir.5				1.10-1.16
 	Much easier to read and write, and supported by groff for ages.
 	Okayed by ross.
 	[wiz, ticket #1372]
-
-sys/kern/exec_conf.c				1.80
-sys/kern/exec_script.c				1.33
-
-	grow #! line length -- patch from cgd, fixes PR kern/20112 from
-	Todd Vierling
-	[tv, ticket #1424]
 
