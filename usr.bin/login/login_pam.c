@@ -1,4 +1,4 @@
-/*     $NetBSD: login_pam.c,v 1.2 2005/02/01 17:57:16 christos Exp $       */
+/*     $NetBSD: login_pam.c,v 1.3 2005/02/28 16:11:36 christos Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login_pam.c,v 1.2 2005/02/01 17:57:16 christos Exp $");
+__RCSID("$NetBSD: login_pam.c,v 1.3 2005/02/28 16:11:36 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -107,6 +107,7 @@ static struct pam_conv pamc = { openpam_ttyconv, NULL };
 u_int	timeout = 300;
 
 struct	passwd *pwd;
+struct	group *gr;
 int	failures, have_ss;
 char	term[64], *envinit[1], *hostname, *username, *tty, *nested;
 struct timeval now;
@@ -182,6 +183,10 @@ main(int argc, char *argv[])
 			if (uid)
 				errx(1, "-a option: %s", strerror(EPERM));
 			decode_ss(optarg);
+#ifdef notdef
+			(void)sockaddr_snprintf(optarg,
+			    sizeof(struct sockaddr_storage), "%a", (void *)&ss);
+#endif
 			break;
 		case 'F':
 			Fflag = 1;
@@ -209,6 +214,8 @@ main(int argc, char *argv[])
 			usage();
 			break;
 		}
+
+	setproctitle(NULL);
 	argc -= optind;
 	argv += optind;
 
@@ -218,15 +225,21 @@ main(int argc, char *argv[])
 	} else
 		ask = 1;
 
+#ifdef F_CLOSEM
+	(void)fcntl(3, F_CLOSEM, 0);
+#else
 	for (cnt = getdtablesize(); cnt > 2; cnt--)
 		(void)close(cnt);
+#endif
 
 	ttyn = ttyname(STDIN_FILENO);
 	if (ttyn == NULL || *ttyn == '\0') {
 		(void)snprintf(tname, sizeof(tname), "%s??", _PATH_TTY);
 		ttyn = tname;
 	}
-	if ((tty = strrchr(ttyn, '/')) != NULL)
+	if ((tty = strstr(ttyn, "/pts/")) != NULL)
+		++tty;
+	else if ((tty = strrchr(ttyn, '/')) != NULL)
 		++tty;
 	else
 		tty = ttyn;
@@ -445,6 +458,9 @@ skip_auth:
 	setgroups(nsaved_gids, saved_gids);
 	seteuid(saved_uid);
 
+	(void)chown(ttyn, pwd->pw_uid,
+	    (gr = getgrnam(TTYGRPNAME)) ? gr->gr_gid : pwd->pw_gid);
+
 	/* Nothing else left to fail -- really log in. */
         update_db(quietlog);
 
@@ -517,7 +533,7 @@ skip_auth:
 		 * Parent: wait for the child to terminate
 		 * and call pam_close_session.
 		 */
-		if ((xpid = wait(&status)) != pid) {
+		if ((xpid = waitpid(pid, &status, 0)) != pid) {
 			pam_err = pam_close_session(pamh, 0);
 			if (pam_err != PAM_SUCCESS) {
 				syslog(LOG_ERR,
@@ -527,7 +543,10 @@ skip_auth:
 				    pam_strerror(pamh, pam_err));
 			}
 			pam_end(pamh, pam_err);
-			warnx("wrong PID: %d != %d", pid, xpid);
+			if (xpid != -1)
+				warnx("wrong PID: %d != %d", pid, xpid);
+			else
+				warn("wait for pid %d failed", pid);
 			exit(1);
 		}
 		
