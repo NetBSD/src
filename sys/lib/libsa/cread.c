@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.5 1997/07/04 18:45:11 drochner Exp $	*/
+/*	$NetBSD: cread.c,v 1.6 1997/10/18 22:27:15 cjs Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -79,7 +79,7 @@ static struct sd {
   int fd;
   unsigned char     *inbuf;  /* input buffer */
   unsigned long    crc;     /* crc32 of uncompressed data */
-  int      transparent; /* 1 if input file is not a .gz file */
+  int      compressed; /* 1 if input file is a .gz file */
 } *ss[SOPEN_MAX];
 
 /*
@@ -155,12 +155,23 @@ static void check_header(s)
     for (len = 0; len < 2; len++) {
 	c = get_byte(s);
 	if (c != gz_magic[len]) {
-	    s->transparent = 1;
+	    if ((c == EOF) && (len == 0))  {
+		/*
+		 * We must not change s->compressed if we are at EOF;
+		 * we may have come to the end of a gzipped file and be
+		 * check to see if another gzipped file is concatenated
+		 * to this one. If one isn't, we still need to be able
+		 * to lseek on this file as a compressed file.
+		 */
+		return;
+	    }
+	    s->compressed = 0;
 	    if (c != EOF) s->stream.avail_in++, s->stream.next_in--;
 	    s->z_err = s->stream.avail_in != 0 ? Z_OK : Z_STREAM_END;
 	    return;
 	}
     }
+    s->compressed = 1;
     method = get_byte(s);
     flags = get_byte(s);
     if (method != Z_DEFLATED || (flags & RESERVED) != 0) {
@@ -273,7 +284,7 @@ read(fd, buf, len)
 
 	  while (s->stream.avail_out != 0) {
 
-	    if (s->transparent) {
+	    if (s->compressed == 0) {
 	      /* Copy first the lookahead bytes: */
 	      unsigned int n = s->stream.avail_in;
 	      if (n > s->stream.avail_out) n = s->stream.avail_out;
@@ -353,7 +364,7 @@ lseek(fd, offset, where)
 
 	    s = ss[fd];
 
-	    if(s->transparent) {
+	    if(s->compressed == 0) {
 		off_t res = olseek(fd, offset, where);
 		if(res != (off_t)-1) {
 		    /* make sure the lookahead buffer is invalid */
