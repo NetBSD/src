@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.5 1997/01/09 20:21:31 tls Exp $	*/
+/*	$NetBSD: misc.c,v 1.6 1997/10/19 23:05:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -37,9 +37,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/* from: static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$NetBSD: misc.c,v 1.5 1997/01/09 20:21:31 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: misc.c,v 1.6 1997/10/19 23:05:15 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>

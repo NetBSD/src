@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.19 1997/10/19 05:23:50 mrg Exp $	*/
+/*	$NetBSD: process.c,v 1.20 1997/10/19 23:05:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -37,11 +37,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)process.c	8.6 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$NetBSD: process.c,v 1.19 1997/10/19 05:23:50 mrg Exp $";
+__RCSID("$NetBSD: process.c,v 1.20 1997/10/19 23:05:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,6 +99,7 @@ process()
 	size_t len, oldpsl;
 	char *p;
 
+	oldpsl = 0;
 	for (linenum = 0; mf_fgets(&PS, REPLACE);) {
 		pd = 0;
 top:
@@ -448,7 +450,8 @@ flush_appends()
 			 */
 			if ((f = fopen(appends[i].s, "r")) == NULL)
 				break;
-			while (count = fread(buf, sizeof(char), sizeof(buf), f))
+			while ((count =
+			    fread(buf, sizeof(char), sizeof(buf), f)) > 0);
 				(void)fwrite(buf, sizeof(char), count, stdout);
 			(void)fclose(f);
 			break;
@@ -460,15 +463,15 @@ flush_appends()
 
 static void
 lputs(s)
-	register char *s;
+	char *s;
 {
-	register int count;
-	register char *escapes, *p;
+	int count;
+	char *escapes, *p;
 	struct winsize win;
 	static int termwidth = -1;
 
 	if (termwidth == -1)
-		if (p = getenv("COLUMNS"))
+		if ((p = getenv("COLUMNS")) != NULL)
 			termwidth = atoi(p);
 		else if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
 		    win.ws_col > 0)
@@ -487,7 +490,7 @@ lputs(s)
 		} else {
 			escapes = "\\\a\b\f\n\r\t\v";
 			(void)putchar('\\');
-			if (p = strchr(escapes, *s)) {
+			if ((p = strchr(escapes, *s)) != NULL) {
 				(void)putchar("\\abfnrtv"[p - escapes]);
 				count += 2;
 			} else {
@@ -533,6 +536,7 @@ regexec_e(preg, string, eflags, nomatch, slen)
 	}
 	err(FATAL, "RE error: %s", strregerror(eval, defpreg));
 	/* NOTREACHED */
+	return (0);
 }
 
 /*
@@ -544,8 +548,8 @@ regsub(sp, string, src)
 	SPACE *sp;
 	char *string, *src;
 {
-	register int len, no;
-	register char c, *dst;
+	int len, no;
+	char c, *dst;
 
 #define	NEEDSP(reqlen)							\
 	if (sp->len >= sp->blen - (reqlen) - 1) {			\
@@ -614,7 +618,7 @@ cspace(sp, p, len, spflag)
  */
 void
 cfclose(cp, end)
-	register struct s_command *cp, *end;
+	struct s_command *cp, *end;
 {
 
 	for (; cp != end; cp = cp->next)
