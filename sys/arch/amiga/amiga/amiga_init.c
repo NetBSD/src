@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.35 1996/02/24 07:43:14 chopps Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.36 1996/03/19 11:12:10 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -566,9 +566,10 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 		 * movec d0,TC
 		 */
 		asm volatile ("movel %0,a0; .word 0x4e7b,0x8807"
-		    : : "a" (Sysseg_pa));
+		    : : "a" (Sysseg_pa) : "a0");
 		asm volatile (".word 0xf518" : : );
-		asm volatile ("movel #0xc000,d0; .word 0x4e7b,0x0003" : : );
+		asm volatile ("movel #0xc000,d0; .word 0x4e7b,0x0003" 
+		    : : : "d0");
 	} else
 #endif
 	{
