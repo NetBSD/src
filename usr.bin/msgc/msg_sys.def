@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.10 1999/07/04 07:40:51 cgd Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.11 1999/07/04 09:37:18 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -226,7 +226,7 @@ void msg_display(int msg_no, ...)
 	msg_clear();
 
 	va_start(ap, msg_no);
-	(void)msg_vprintf(0/*XXX*/, msg_list[msg_no], ap);
+	(void)msg_vprintf(1, msg_list[msg_no], ap);
 	va_end(ap);
 }
 
@@ -235,7 +235,7 @@ void msg_display_add(int msg_no, ...)
 	va_list ap;
 
 	va_start (ap, msg_no);
-	(void)msg_vprintf(0/*XXX*/, msg_list[msg_no], ap);
+	(void)msg_vprintf(1, msg_list[msg_no], ap);
 	va_end (ap);
 }
 
@@ -247,7 +247,7 @@ int msg_printf (char *fmt, ...)
 	msg_clear();
 
 	va_start (ap, fmt);
-	res = msg_vprintf (0/*XXX*/, fmt, ap);
+	res = msg_vprintf (1, fmt, ap);
 	va_end (ap);
 	return res;
 }
@@ -258,7 +258,7 @@ int msg_printf_add (char *fmt, ...)
 	int  res;
 
 	va_start (ap, fmt);
-	res = msg_vprintf (0/*XXX*/, fmt, ap);
+	res = msg_vprintf (1, fmt, ap);
 	va_end (ap);
 	return res;
 }
