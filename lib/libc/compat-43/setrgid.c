@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1989, 1993
+ * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,18 +32,19 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)creat.c	8.1 (Berkeley) 6/2/93";
+static char sccsid[] = "@(#)setrgid.c	8.1 (Berkeley) 6/2/93";
 #endif /* LIBC_SCCS and not lint */
 
-#include <fcntl.h>
+#include <unistd.h>
 
-#if __STDC__
-creat(const char *path, mode_t mode)
+int
+#ifdef __STDC__
+setrgid(gid_t rgid)
 #else
-creat(path, mode)
-	char *path;
-	mode_t mode;
+setrgid(rgid)
+	int rgid;
 #endif
 {
-	return(open(path, O_WRONLY|O_CREAT|O_TRUNC, mode));
+
+	return (setregid(rgid, -1));
 }
