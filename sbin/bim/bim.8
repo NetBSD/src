@@ -1,4 +1,4 @@
-.\"	$NetBSD: bim.8,v 1.2 1997/08/15 18:57:15 perry Exp $
+.\"	$NetBSD: bim.8,v 1.3 1997/09/15 01:29:27 lukem Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -33,7 +33,6 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-
 .Dd July 16, 1997
 .Os NetBSD 1.3
 .Dt BIM 8
@@ -49,7 +48,7 @@ The pc532 has available an autoboot ROM monitor.  This ROM monitor understands
 the BSD disklabel and expects a boot image directory following the
 disklabel.  Also, it expects an image partition for the storage of bootable
 images.  The image directory and the image partition is managed by
-.Nm bim .
+.Nm "" .
 The
 .Ar device
 is the raw disk partition that includes the disklabel.  The default
@@ -57,7 +56,7 @@ value of
 .Ar device
 is
 .Pa /dev/rsd0c .
-.Nm Bim
+.Nm
 directly accesses both the disklabel and the image partition directly
 from the raw disk device.  It does not open the device corresponding
 to the boot partition.  
@@ -73,14 +72,11 @@ to be used from scripts.  The
 argument may be repeated up to 20 times.  The commands
 will be executed in the order given.
 .Sh DISK INITIALIZATION
-.Nm Bim
+.Nm
 is typically used as part of the initial setup on a disk.
 The disk must be partitioned by using
 .Xr disklabel 8 ,
-making sure there is an 
-.Nm boot
-partition.  This
-.Nm boot
+making sure there is a boot boot partition.  This boot
 partition is often just after the disklabel.  It must not include
 the disklabel.  If 
 .Nm
@@ -89,11 +85,11 @@ one created.  From there, the operation of
 .Nm
 is completely command driven.  The command interpreter is 
 .Sh COMMANDS
-The following commands are found in 
-.Nm bim .
+.Nm
+supports the following commands.
 There is on-line documentation for all commands.
 .Pp
-.Bl -tag -width Ds
+.Bl -tag -width "partitions"
 .It add
 Adds an executable file to the image partition.
 .It delete
@@ -102,7 +98,7 @@ Deletes an image from the image partition.
 Sets the default image boot.
 .It exit
 Exit 
-.Nm bim .
+.Nm "" .
 .It header
 Print a small section of the disklabel.
 .It help
@@ -115,13 +111,13 @@ Initialize the image partition and associated partition table.
 Print the disklabel.
 .It quit
 Terminate 
-.Nm bim .
+.Nm "" .
 .It ?
 Print help.
 .El
 .Pp
 For the details on these commands, ask for help from
-.Nm bim .
+.Nm "" .
 .Sh SEE ALSO
 .Xr disklabel 8 .
 .Sh AUTHORS
@@ -130,5 +126,3 @@ ROM monitor.  Philip A. Nelson took the command interpreter, modified
 it to be a more generic command interpreter and added the 
 .Nm 
 specific code.
-
-
