@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.5 2002/10/22 01:27:24 nathanw Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.6 2002/12/06 20:59:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -86,6 +86,35 @@ pthread__sp(void)
 	memcpy(&(uc)->uc_mcontext.__fpregs, (freg),			\
 	    sizeof(struct fpreg));					\
 	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;       	\
+	} while (/*CONSTCOND*/0)
+
+#define PTHREAD_UCONTEXT_TO_SIGCONTEXT(uc, sc) do {			\
+	(sc)->sc_pc = (uc)->uc_mcontext.__gregs[_REG_PC];	 	\
+	(sc)->sc_ps = (uc)->uc_mcontext.__gregs[_REG_PS];	 	\
+	memcpy(&(sc)->sc_regs, &(uc)->uc_mcontext.__gregs,		\
+		31 * sizeof(unsigned long));				\
+	if ((uc)->uc_flags & _UC_FPU) {					\
+		(sc)->sc_ownedfp = 1;					\
+		memcpy(&(sc)->sc_fpregs,				\
+			&(uc)->uc_mcontext.__fpregs.__fp_fr,  		\
+			31 * sizeof(unsigned long));			\
+		(sc)->sc_fpcr = (uc)->uc_mcontext.__fpregs.__fp_fpcr;	\
+	} else {							\
+		(sc)->sc_ownedfp = 0;					\
+	} while (/*CONSTCOND*/0)
+
+#define PTHREAD_SIGCONTEXT_TO_UCONTEXT(uc, sc) do {			\
+	(uc)->uc_mcontext.__gregs[_REG_PC] = (sc)->sc_pc;		\
+	(uc)->uc_mcontext.__gregs[_REG_PS] = (sc)->sc_ps;	 	\
+	memcpy(&(uc)->uc_mcontext.__gregs, &(sc)->sc_regs,		\
+		31 * sizeof(unsigned long));				\
+	if ((sc)->sc_ownedfp) {						\
+		memcpy(&(uc)->uc_mcontext.__fpregs.__fp_fr,		\
+			&(sc)->sc_fpregs, 31 * sizeof(unsigned long));	\
+	       	(sc)->sc_fpcr = (uc)->uc_mcontext.__fpregs.__fp_fpcr;	\
+		(uc)->uc_flags |= _UC_FPU;				\
+	}								\
+	(uc)->uc_flags &= ~_UC_USER;					\
 	} while (/*CONSTCOND*/0)
 
 #endif /* _LIB_PTHREAD_ALPHA_MD_H */
