@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.11 1999/03/25 18:48:51 mrg Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.12 2000/03/29 03:43:34 simonb Exp $	*/
 
 /*
  *
@@ -47,7 +47,6 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
-#include <sys/conf.h>
 
 
 #include <vm/vm.h>
