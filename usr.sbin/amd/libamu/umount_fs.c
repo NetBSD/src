@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: umount_fs.c,v 1.1.1.1 1997/07/24 21:20:10 christos Exp $
+ * $Id: umount_fs.c,v 1.1.1.2 1997/09/22 21:11:22 christos Exp $
  *
  */
 
@@ -54,7 +54,7 @@
 
 
 int
-umount_fs(char *fs_name)
+umount_fs(char *fs_name, const char *mnttabname)
 {
   int error;
 

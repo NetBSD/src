@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: mtabutil.c,v 1.1.1.1 1997/07/24 21:20:11 christos Exp $
+ * $Id: mtabutil.c,v 1.1.1.2 1997/09/22 21:11:24 christos Exp $
  *
  */
 
@@ -107,7 +107,7 @@ mnt_dup(struct statfs *mp)
  * Read a mount table into memory
  */
 mntlist *
-read_mtab(char *fs)
+read_mtab(char *fs, const char *mnttabname)
 {
   mntlist **mpp, *mhp;
   struct statfs *mntbufp, *mntp;
