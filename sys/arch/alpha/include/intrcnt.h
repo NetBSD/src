@@ -1,4 +1,4 @@
-/* $NetBSD: intrcnt.h,v 1.18 1999/06/29 07:22:25 ross Exp $ */
+/* $NetBSD: intrcnt.h,v 1.19 1999/12/04 00:22:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -53,7 +53,7 @@
 #define	INTRCNT_A12_IRQ_LEN		10
 #define	INTRCNT_DEC_1000A_IRQ_LEN	32
 #define	INTRCNT_DEC_1000_IRQ_LEN	16
-#define	INTRCNT_DEC_2100_A500_IRQ_LEN	16
+#define	INTRCNT_DEC_2100_A500_IRQ_LEN	64
 #define	INTRCNT_DEC_550_IRQ_LEN		48
 #define	INTRCNT_EB164_IRQ_LEN		24
 #define	INTRCNT_EB64PLUS_IRQ_LEN	32
