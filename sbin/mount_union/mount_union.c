@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_union.c,v 1.8 2002/09/21 18:43:38 christos Exp $	*/
+/*	$NetBSD: mount_union.c,v 1.9 2003/03/19 18:25:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,14 +46,14 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_union.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_union.c,v 1.8 2002/09/21 18:43:38 christos Exp $");
+__RCSID("$NetBSD: mount_union.c,v 1.9 2003/03/19 18:25:15 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>
 
-#include <miscfs/union/union.h>
+#include <fs/union/union.h>
 
 #include <err.h>
 #include <stdio.h>
