@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.31 2000/03/19 21:45:24 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.32 2000/03/23 07:01:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #define	_DEV_IC_TULIPVAR_H_
 
 #include <sys/queue.h>
+#include <sys/callout.h>
 
 /*
  * Misc. definitions for the Digital Semiconductor ``Tulip'' (21x4x)
@@ -292,6 +293,7 @@ struct tulip_softc {
 	 */
 	int		sc_nway_ticks;	/* tick counter */
 	struct ifmedia_entry *sc_nway_active; /* the active media */
+	struct callout	sc_nway_callout;
 
 	tulip_chip_t	sc_chip;	/* chip type */
 	int		sc_rev;		/* chip revision */
@@ -323,6 +325,7 @@ struct tulip_softc {
 
 	/* Media tick function. */
 	void		(*sc_tick) __P((void *));
+	struct callout sc_tick_callout;
 
 	/* Power management hooks. */
 	int		(*sc_enable) __P((struct tulip_softc *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.h,v 1.10 2000/03/20 11:24:46 pk Exp $ */
+/*	$NetBSD: rcons.h,v 1.11 2000/03/23 07:01:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,6 +48,8 @@
 
 #include "opt_rcons.h"
 
+#include <sys/callout.h>
+
 /* Avoid dragging in dev/wscons/wsdisplayvar.h */
 struct wsdisplay_emulops;
 
@@ -62,6 +64,8 @@ struct rconsole {
 	u_int	rc_height;		/* height in pixels */
 	u_int	rc_row;			/* emulator row */
 	u_int	rc_col;			/* emulator column */
+
+	struct callout rc_belltmr_ch;
 
 	/* These may be overridden in the kernel config file. */
 	int	rc_deffgcolor;		/* default fg color */

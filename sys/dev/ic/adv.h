@@ -1,4 +1,4 @@
-/*      $NetBSD: adv.h,v 1.6 1999/08/07 07:20:15 thorpej Exp $        */
+/*      $NetBSD: adv.h,v 1.7 2000/03/23 07:01:28 thorpej Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -52,6 +52,8 @@ struct adv_ccb
 	ASC_SCSI_Q	scsiq;
 
 	struct scsipi_sense_data scsi_sense;
+
+	struct callout ccb_watchdog;
 
 	TAILQ_ENTRY(adv_ccb) chain;
 	struct adv_ccb		*nexthash;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.202 2000/02/07 20:16:55 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.203 2000/03/23 07:01:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -134,6 +134,7 @@ struct wd_softc {
 	struct device sc_dev;
 	struct disk sc_dk;
 	struct buf_queue sc_q;
+	struct callout sc_restart_ch;
 	/* IDE disk soft states */
 	struct ata_bio sc_wdc_bio; /* current transfer */
 	struct buf *sc_bp; /* buf being transfered */
@@ -261,6 +262,7 @@ wdattach(parent, self, aux)
 	char buf[41], pbuf[9], c, *p, *q;
 	WDCDEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
 
+	callout_init(&wd->sc_restart_ch);
 	BUFQ_INIT(&wd->sc_q);
 
 	wd->openings = aa_link->aa_openings;
@@ -551,7 +553,7 @@ __wdstart(wd, bp)
 	disk_busy(&wd->sc_dk);
 	switch (wdc_ata_bio(wd->drvp, &wd->sc_wdc_bio)) {
 	case WDC_TRY_AGAIN:
-		timeout(wdrestart, wd, hz);
+		callout_reset(&wd->sc_restart_ch, hz, wdrestart, wd);
 		break;
 	case WDC_QUEUED:
 	case WDC_COMPLETE:
@@ -595,7 +597,8 @@ retry:		/* Just reset and retry. Can we do more ? */
 		    wd->sc_wdc_bio.blkdone, wd->sc_dk.dk_label);
 		if (wd->retries++ < WDIORETRIES) {
 			printf(", retrying\n");
-			timeout(wdrestart, wd, RECOVERYTIME);
+			callout_reset(&wd->sc_restart_ch, RECOVERYTIME,
+			    wdrestart, wd);
 			return;
 		}
 		printf("\n");

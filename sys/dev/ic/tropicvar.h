@@ -1,4 +1,4 @@
-/*	$NetBSD: tropicvar.h,v 1.4 1999/10/17 23:53:45 cgd Exp $	*/
+/*	$NetBSD: tropicvar.h,v 1.5 2000/03/23 07:01:33 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -31,6 +31,8 @@
  */
 
 /* $ACIS:if_lanvar.h 12.0$ */
+
+#include <sys/callout.h>
 
 /*
  * This file contains structures used in the "tr" driver for the
@@ -68,6 +70,10 @@ struct	tr_softc {
 	bus_space_handle_t sc_pioh;	/* handle pio area */
 	bus_space_handle_t sc_sramh;	/* handle for the shared ram area */
 	bus_space_handle_t sc_mmioh;	/* handle for the bios/mmio area */
+
+	struct callout sc_timeout_callout;
+	struct callout sc_init_callout;
+	struct callout sc_reinit_callout;
 
 	int (*sc_mediachange) __P((struct tr_softc *));
 	void (*sc_mediastatus) __P((struct tr_softc *, struct ifmediareq *));

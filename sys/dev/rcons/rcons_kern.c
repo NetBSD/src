@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_kern.c,v 1.11 2000/03/20 11:24:46 pk Exp $ */
+/*	$NetBSD: rcons_kern.c,v 1.12 2000/03/23 07:01:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -104,7 +104,7 @@ rcons_output(tp)
 	/* Come back if there's more to do */
 	if (tp->t_outq.c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout(ttrstrt, tp, 1);
+		callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
 	}
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state&TS_ASLEEP) {
@@ -140,7 +140,8 @@ rcons_bell(rc)
 		splx(s);
 		(*rc->rc_bell)(1);
 		/* XXX Chris doesn't like the following divide */
-		timeout(rcons_belltmr, rc, hz/10);
+		callout_reset(&rc->rc_belltmr_ch, hz / 10,
+		    rcons_belltmr, rc);
 	}
 }
 
@@ -159,12 +160,14 @@ rcons_belltmr(p)
 		(*rc->rc_bell)(0);
 		if (i != 0)
 			/* XXX Chris doesn't like the following divide */
-			timeout(rcons_belltmr, rc, hz/30);
+			callout_reset(&rc->rc_belltmr_ch, hz / 30,
+			    rcons_belltmr, rc);
 	} else {
 		rc->rc_ringing = 1;
 		splx(s);
 		(*rc->rc_bell)(1);
-		timeout(rcons_belltmr, rc, hz/10);
+		callout_reset(&rc->rc_belltmr_ch, hz / 10,
+		    rcons_belltmr, rc);
 	}
 }
 
@@ -174,7 +177,9 @@ rcons_init(rc, clear)
 	int clear;
 {
 	mydevicep = rc;
-	
+
+	callout_init(&rc->rc_belltmr_ch);
+
 	/* Initialize operations set, clear screen and turn cursor on */
 	rcons_init_ops(rc);
 	if (clear) {

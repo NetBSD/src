@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.21 1999/06/30 03:32:40 chopps Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.22 2000/03/23 07:03:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -99,6 +99,8 @@ extern struct timeval time;
 extern int      hz;
 
 LIST_HEAD(, llinfo_llc) llinfo_llc;
+
+struct callout snpac_age_ch;
 
 struct sockaddr_iso blank_siso = {sizeof(blank_siso), AF_ISO};
 static struct sockaddr_iso
@@ -547,7 +549,7 @@ snpac_ioctl(so, cmd, data, p)
 		esis_holding_time = rq->sr_holdt;
 		esis_config_time = rq->sr_configt;
 		if (esis_esconfig_time != rq->sr_esconfigt) {
-			untimeout(esis_config, (caddr_t) 0);
+			callout_stop(&esis_config_ch);
 			esis_esconfig_time = rq->sr_esconfigt;
 			esis_config(NULL);
 		}
@@ -626,7 +628,7 @@ snpac_age(v)
 	register struct llinfo_llc *lc, *nlc;
 	register struct rtentry *rt;
 
-	timeout(snpac_age, (caddr_t) 0, SNPAC_AGE * hz);
+	callout_reset(&snpac_age_ch, SNPAC_AGE * hz, snpac_age, NULL);
 
 	for (lc = llinfo_llc.lh_first; lc != 0; lc = nlc) {
 		nlc = lc->lc_list.le_next;

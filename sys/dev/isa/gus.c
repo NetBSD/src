@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.68 2000/02/07 22:07:31 thorpej Exp $	*/
+/*	$NetBSD: gus.c,v 1.69 2000/03/23 07:01:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -99,6 +99,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
@@ -184,6 +185,8 @@ struct gus_softc {
 	bus_space_handle_t sc_ioh2;	/* handle */
 	bus_space_handle_t sc_ioh3;	/* ICS2101 handle */
 	bus_space_handle_t sc_ioh4;	/* MIDI handle */
+
+	struct callout sc_dmaout_ch;
 
 	int sc_iobase;			/* I/O base address */
 	int sc_irq;			/* IRQ used */
@@ -806,6 +809,8 @@ gusattach(parent, self, aux)
 	bus_space_handle_t ioh1, ioh2, ioh3, ioh4;
  	int		iobase, i;
 	unsigned char	c,d,m;
+
+	callout_init(&sc->sc_dmaout_ch);
 
 	sc->sc_iot = iot = ia->ia_iot;
 	sc->sc_ic = ia->ia_ic;
@@ -1459,7 +1464,7 @@ gus_dmaout_intr(sc)
 
 	SELECT_GUS_REG(iot, ioh2, GUSREG_DMA_CONTROL);
  	if (bus_space_read_1(iot, ioh2, GUS_DATA_HIGH) & GUSMASK_DMA_IRQPEND) {
-	    untimeout(gus_dmaout_timeout, sc);
+	    callout_stop(&sc->sc_dmaout_ch);
 	    gus_dmaout_dointr(sc);
 	    return 1;
 	}
@@ -2010,8 +2015,7 @@ gusdmaout(sc, flags, gusaddr, buffaddr, length)
 	/*
 	 * XXX If we don't finish in one second, give up...
 	 */
-	untimeout(gus_dmaout_timeout, sc); /* flush old one, if there is one */
-	timeout(gus_dmaout_timeout, sc, hz);
+	callout_reset(&sc->sc_dmaout_ch, hz, gus_dmaout_timeout, sc);
 }
 
 /*
@@ -3080,7 +3084,7 @@ gus_halt_out_dma(addr)
   	SELECT_GUS_REG(iot, ioh2, GUSREG_DMA_CONTROL);
  	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, 0);
 
-	untimeout(gus_dmaout_timeout, sc);
+	callout_stop(&sc->sc_dmaout_ch);
  	isa_dmaabort(sc->sc_ic, sc->sc_playdrq);
 	sc->sc_flags &= ~(GUS_DMAOUT_ACTIVE|GUS_LOCKED);
 	sc->sc_dmaoutintr = 0;

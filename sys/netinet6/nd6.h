@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.9 2000/02/26 08:39:20 itojun Exp $	*/
+/*	$NetBSD: nd6.h,v 1.10 2000/03/23 07:03:31 thorpej Exp $	*/
 /*	$KAME: nd6.h,v 1.16 2000/02/24 16:34:51 itojun Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #endif
 
 #include <sys/queue.h>
+#include <sys/callout.h>
 
 struct	llinfo_nd6 {
 	struct	llinfo_nd6 *ln_next;
@@ -231,6 +232,8 @@ extern struct llinfo_nd6 llinfo_nd6;
 extern struct nd_ifinfo *nd_ifinfo;
 extern struct nd_drhead nd_defrouter;
 extern struct nd_prhead nd_prefix;
+
+extern struct callout nd6_timer_ch;
 
 /* nd6_rtr.c */
 extern int nd6_defifindex;

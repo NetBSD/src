@@ -1,4 +1,4 @@
-/* $NetBSD: if_rl.c,v 1.7 2000/03/06 21:02:02 thorpej Exp $ */
+/* $NetBSD: if_rl.c,v 1.8 2000/03/23 07:01:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -92,6 +92,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
@@ -761,6 +762,8 @@ rl_attach(parent, self, aux)
 	const char *intrstr = NULL;
 	bus_dma_segment_t dmaseg;
 	int error, dmanseg;
+
+	callout_init(&sc->rl_tick_ch);
 
 	s = splimp();
 
@@ -1486,7 +1489,7 @@ static void rl_init(xsc)
 
 	(void)splx(s);
 
-	timeout(rl_tick, sc, hz);
+	callout_reset(&sc->rl_tick_ch, hz, rl_tick, sc);
 }
 
 /*
@@ -1646,7 +1649,7 @@ static void rl_stop(sc)
 	ifp = &sc->ethercom.ec_if;
 	ifp->if_timer = 0;
 
-	untimeout(rl_tick, sc);
+	callout_stop(&sc->rl_tick_ch);
 
 	mii_down(&sc->mii);
 
@@ -1693,5 +1696,5 @@ rl_tick(arg)
 	mii_tick(&sc->mii);
 	splx(s);
 
-	timeout(rl_tick, sc, hz);
+	callout_reset(&sc->rl_tick_ch, hz, rl_tick, sc);
 }

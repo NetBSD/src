@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.31 2000/03/20 22:57:00 enami Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.32 2000/03/23 07:01:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -150,7 +150,7 @@ wdc_atapi_kill_xfer(chp, xfer)
 {
 	struct scsipi_xfer *sc_xfer = xfer->cmd;
 
-	untimeout(wdctimeout, chp);
+	callout_stop(&chp->ch_callout);
 	/* remove this command from xfer queue */
 	wdc_free_xfer(chp, xfer);
 	sc_xfer->xs_status |= XS_STS_DONE;
@@ -289,7 +289,8 @@ wdc_atapi_start(chp, xfer)
 	}
 	/* start timeout machinery */
 	if ((sc_xfer->xs_control & XS_CTL_POLL) == 0)
-		timeout(wdctimeout, chp, sc_xfer->timeout * hz / 1000);
+		callout_reset(&chp->ch_callout, sc_xfer->timeout * hz / 1000,
+		    wdctimeout, chp);
 	/* Do control operations specially. */
 	if (drvp->state < READY) {
 		if (drvp->state != PIOMODE) {
@@ -695,7 +696,7 @@ again:
 					    sizeof(sc_xfer->sense.scsi_sense);
 					xfer->c_skip = 0;
 					xfer->c_flags |= C_SENSE;
-					untimeout(wdctimeout, chp);
+					callout_stop(&chp->ch_callout);
 					wdc_atapi_start(chp, xfer);
 					return 1;
 				}
@@ -815,7 +816,7 @@ piomode:
 	ready:
 		drvp->state = READY;
 		xfer->c_intr = wdc_atapi_intr;
-		untimeout(wdctimeout, chp);
+		callout_stop(&chp->ch_callout);
 		wdc_atapi_start(chp, xfer);
 		return 1;
 	}
@@ -857,7 +858,7 @@ wdc_atapi_done(chp, xfer)
 	WDCDEBUG_PRINT(("wdc_atapi_done %s:%d:%d: flags 0x%x\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 	    (u_int)xfer->c_flags), DEBUG_XFERS);
-	untimeout(wdctimeout, chp);
+	callout_stop(&chp->ch_callout);
 	/* remove this command from xfer queue */
 	wdc_free_xfer(chp, xfer);
 	sc_xfer->xs_status |= XS_STS_DONE;
