@@ -1,4 +1,4 @@
-/*	$NetBSD: ashiftrt.S,v 1.2 2001/02/14 11:32:44 msaitoh Exp $	*/
+/*	$NetBSD: ashiftrt.S,v 1.3 2001/02/14 21:04:17 msaitoh Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -28,62 +28,62 @@
 
 #include <machine/asm.h>
 
-ENTRY(__ashiftrt_r4_31)
+NENTRY(__ashiftrt_r4_31)
 	shll	r4
 	rts
 	subc	r4, r4
 
-ENTRY(__ashiftrt_r4_30)
+ALTENTRY(__ashiftrt_r4_30)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_29)
+ALTENTRY(__ashiftrt_r4_29)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_28)
+ALTENTRY(__ashiftrt_r4_28)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_27)
+ALTENTRY(__ashiftrt_r4_27)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_26)
+ALTENTRY(__ashiftrt_r4_26)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_25)
+ALTENTRY(__ashiftrt_r4_25)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_24)
+ALTENTRY(__ashiftrt_r4_24)
 	shlr16	r4
 	shlr8	r4
 	rts
 	exts.b	r4, r4
 
-ENTRY(__ashiftrt_r4_23)
+ALTENTRY(__ashiftrt_r4_23)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_22)
+ALTENTRY(__ashiftrt_r4_22)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_21)
+ALTENTRY(__ashiftrt_r4_21)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_20)
+ALTENTRY(__ashiftrt_r4_20)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_19)
+ALTENTRY(__ashiftrt_r4_19)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_18)
+ALTENTRY(__ashiftrt_r4_18)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_17)
+ALTENTRY(__ashiftrt_r4_17)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_16)
+ALTENTRY(__ashiftrt_r4_16)
 	shlr16	r4
 	rts
 	exts.w	r4, r4
 
-ENTRY(__ashiftrt_r4_15)
+ALTENTRY(__ashiftrt_r4_15)
 	swap.w	r4, r4
 	cmp/pz	r4
 	bf/s	1f
@@ -95,49 +95,49 @@ ENTRY(__ashiftrt_r4_15)
 	rts
 	rotcl	r4
 
-ENTRY(__ashiftrt_r4_14)
+ALTENTRY(__ashiftrt_r4_14)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_13)
+ALTENTRY(__ashiftrt_r4_13)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_12)
+ALTENTRY(__ashiftrt_r4_12)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_11)
+ALTENTRY(__ashiftrt_r4_11)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_10)
+ALTENTRY(__ashiftrt_r4_10)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_9)
+ALTENTRY(__ashiftrt_r4_9)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_8)
+ALTENTRY(__ashiftrt_r4_8)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_7)
+ALTENTRY(__ashiftrt_r4_7)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_6)
+ALTENTRY(__ashiftrt_r4_6)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_5)
+ALTENTRY(__ashiftrt_r4_5)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_4)
+ALTENTRY(__ashiftrt_r4_4)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_3)
+ALTENTRY(__ashiftrt_r4_3)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_2)
+ALTENTRY(__ashiftrt_r4_2)
 	shar	r4
 
-ENTRY(__ashiftrt_r4_1)
+ALTENTRY(__ashiftrt_r4_1)
 	rts
 	shar	r4
 
-ENTRY(__ashiftrt_r4_0)
+ALTENTRY(__ashiftrt_r4_0)
 	rts
 	nop
