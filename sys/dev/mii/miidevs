@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.26 2001/07/20 07:06:42 thorpej Exp $
+$NetBSD: miidevs,v 1.27 2001/07/27 17:54:40 thorpej Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -110,9 +110,10 @@ model yyAMD 79c901		0x0037 Am79C901 10 PHY
 model yyAMD 79c901home		0x0039 Am79C901 HomePHY
 
 /* Broadcom Corp. PHYs */
-model xxBROADCOM 3C905C		0x0017 Broadcom 3C905C internal PHY
+model xxBROADCOM 3C905B		0x0012 Broadcom 3c905B internal PHY
+model xxBROADCOM 3C905C		0x0017 Broadcom 3c905C internal PHY
 model xxBROADCOM BCM5201	0x0021 BCM5201 10/100 media interface
-model BROADCOM BCM5221		0x001e BCM5221 10/100 media interface
+model xxBROADCOM BCM5221	0x001e BCM5221 10/100 media interface
 model BROADCOM BCM5400		0x0004 BCM5400 1000BASE-T media interface
 model BROADCOM BCM5401		0x0005 BCM5401 1000BASE-T media interface
 model BROADCOM BCM5411		0x0007 BCM5411 1000BASE-T media interface
