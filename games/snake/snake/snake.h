@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.h,v 1.8 1997/10/12 01:49:29 lukem Exp $	*/
+/*	$NetBSD: snake.h,v 1.9 1997/10/14 01:02:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -44,6 +44,7 @@
 # include <stdio.h>
 # include <stdlib.h>
 # include <string.h>
+# include <termcap.h>
 # include <termios.h>
 
 #define ESC	'\033'
