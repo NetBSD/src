@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc_obio.c,v 1.15 2002/09/27 20:33:29 thorpej Exp $	*/
+/*	$NetBSD: sbc_obio.c,v 1.16 2002/10/02 05:36:39 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1996,1997 Scott Reynolds.  All rights reserved.
@@ -75,9 +75,8 @@ void	sbc_intr_enable __P((struct ncr5380_softc *));
 void	sbc_intr_disable __P((struct ncr5380_softc *));
 void	sbc_obio_clrintr __P((struct ncr5380_softc *));
 
-const struct cfattach sbc_obio_ca = {
-	sizeof(struct sbc_softc), sbc_obio_match, sbc_obio_attach
-};
+CFATTACH_DECL(sbc_obio, sizeof(struct sbc_softc),
+    sbc_obio_match, sbc_obio_attach, NULL, NULL);
 
 static int
 sbc_obio_match(parent, cf, args)

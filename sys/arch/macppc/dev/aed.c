@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.8 2002/09/27 20:33:31 thorpej Exp $	*/
+/*	$NetBSD: aed.c,v 1.9 2002/10/02 05:30:38 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -73,9 +73,8 @@ static struct aed_softc *aed_sc = NULL;
 static int aed_options = 0; /* | AED_MSEMUL; */
 
 /* Driver definition */
-const struct cfattach aed_ca = {
-	sizeof(struct aed_softc), aedmatch, aedattach
-};
+CFATTACH_DECL(aed, sizeof(struct aed_softc),
+    aedmatch, aedattach, NULL, NULL);
 
 extern struct cfdriver aed_cd;
 

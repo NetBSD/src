@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.9 2002/09/27 20:30:49 thorpej Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.10 2002/10/02 05:02:31 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -198,9 +198,8 @@ static int sacomconsattached;
 static int sacomconsrate;
 static tcflag_t sacomconscflag;
 
-const struct cfattach sacom_ca = {
-	sizeof(struct sacom_softc), sacom_match, sacom_attach
-};
+CFATTACH_DECL(sacom, sizeof(struct sacom_softc),
+    sacom_match, sacom_attach, NULL, NULL);
 extern struct cfdriver sacom_cd;
 
 #ifdef hpcarm

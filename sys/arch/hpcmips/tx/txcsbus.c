@@ -1,4 +1,4 @@
-/*	$NetBSD: txcsbus.c,v 1.12 2002/09/27 20:32:28 thorpej Exp $ */
+/*	$NetBSD: txcsbus.c,v 1.13 2002/10/02 05:26:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,9 +100,8 @@ struct txcsbus_softc {
 	struct bus_space_tag_hpcmips *sc_cst[TX39_MAXCS];
 };
 
-const struct cfattach txcsbus_ca = {
-	sizeof(struct txcsbus_softc), txcsbus_match, txcsbus_attach
-};
+CFATTACH_DECL(txcsbus, sizeof(struct txcsbus_softc),
+    txcsbus_match, txcsbus_attach, NULL, NULL);
 
 static bus_space_tag_t __txcsbus_alloc_cstag(struct txcsbus_softc *, 
     struct cs_handle *);

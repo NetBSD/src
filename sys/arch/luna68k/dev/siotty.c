@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.10 2002/09/06 13:18:43 gehenna Exp $ */
+/* $NetBSD: siotty.c,v 1.11 2002/10/02 05:31:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.10 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.11 2002/10/02 05:31:46 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -95,9 +95,8 @@ static int  siomctl __P((struct siotty_softc *, int, int));
 static int  siotty_match __P((struct device *, struct cfdata *, void *));
 static void siotty_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach siotty_ca = {
-	sizeof(struct siotty_softc), siotty_match, siotty_attach
-};
+CFATTACH_DECL(siotty, sizeof(struct siotty_softc),
+    siotty_match, siotty_attach, NULL, NULL);
 extern struct cfdriver siotty_cd;
 
 dev_type_open(sioopen);

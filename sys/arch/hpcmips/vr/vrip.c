@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.26 2002/09/27 20:32:37 thorpej Exp $	*/
+/*	$NetBSD: vrip.c,v 1.27 2002/10/02 05:26:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -109,9 +109,8 @@ static const struct vrip_chipset_tag vrip_chipset_methods = {
 };
 
 #ifdef SINGLE_VRIP_BASE
-const struct cfattach vrip_ca = {
-	sizeof(struct vrip_softc), vripmatch, vripattach
-};
+CFATTACH_DECL(vrip, sizeof(struct vrip_softc),
+    vripmatch, vripattach, NULL, NULL);
 
 static const struct vrip_unit vrip_units[] = {
 	[VRIP_UNIT_PMU] = { "pmu",

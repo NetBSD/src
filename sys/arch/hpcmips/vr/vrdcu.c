@@ -54,9 +54,8 @@ struct vrdcu_softc {
 int vrdcu_match(struct device *, struct cfdata *, void *);
 void vrdcu_attach(struct device *, struct device *, void *);
 
-const struct cfattach vrdcu_ca = {
-	sizeof(struct vrdcu_softc), vrdcu_match, vrdcu_attach
-};
+CFATTACH_DECL(vrdcu, sizeof(struct vrdcu_softc),
+    vrdcu_match, vrdcu_attach, NULL, NULL);
 
 int vrdcu_enable_aiuin(vrdcu_chipset_tag_t);
 int vrdcu_enable_aiuout(vrdcu_chipset_tag_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.10 2002/09/27 20:33:37 thorpej Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.11 2002/10/02 05:30:43 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -64,9 +64,8 @@ static int stdin, stdout;
 static int ofcmatch __P((struct device *, struct cfdata *, void *));
 static void ofcattach __P((struct device *, struct device *, void *));
 
-const struct cfattach macofcons_ca = {
-	sizeof(struct ofcons_softc), ofcmatch, ofcattach
-};
+CFATTACH_DECL(macofcons, sizeof(struct ofcons_softc),
+    ofcmatch, ofcattach, NULL, NULL);
 
 extern struct cfdriver macofcons_cd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_saip.c,v 1.12 2002/09/27 20:32:07 thorpej Exp $	*/
+/*	$NetBSD: ipaq_saip.c,v 1.13 2002/10/02 05:18:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -51,9 +51,8 @@ static int 	ipaq_search(struct device *, struct cfdata *, void *);
 static int	ipaq_print(void *, const char *);
 
 /* attach structures */
-const struct cfattach ipaqbus_ca = {
-	sizeof(struct ipaq_softc), ipaq_match, ipaq_attach
-};
+CFATTACH_DECL(ipaqbus, sizeof(struct ipaq_softc),
+    ipaq_match, ipaq_attach, NULL, NULL);
 
 static int
 ipaq_print(aux, name)

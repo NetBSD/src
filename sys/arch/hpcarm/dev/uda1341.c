@@ -1,4 +1,4 @@
-/*	$NetBSD: uda1341.c,v 1.3 2002/09/27 20:32:09 thorpej Exp $	*/
+/*	$NetBSD: uda1341.c,v 1.4 2002/10/02 05:18:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -79,9 +79,8 @@ static	void	L3_sendbyte(struct uda1341_softc *, u_int8_t, int);
 static	int	L3_read(struct uda1341_softc *, u_int8_t, u_int8_t *, int);
 static	int	L3_write(struct uda1341_softc *, u_int8_t, u_int8_t *, int);
 
-const struct cfattach uda_ca = {
-	sizeof(struct uda1341_softc), uda1341_match, uda1341_attach
-};
+CFATTACH_DECL(uda, sizeof(struct uda1341_softc),
+    uda1341_match, uda1341_attach, NULL, NULL);
 
 /*
  * Philips L3 bus support.

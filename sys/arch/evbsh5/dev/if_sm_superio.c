@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_superio.c,v 1.4 2002/09/27 20:31:37 thorpej Exp $	*/
+/*	$NetBSD: if_sm_superio.c,v 1.5 2002/10/02 05:33:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_superio.c,v 1.4 2002/09/27 20:31:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_superio.c,v 1.5 2002/10/02 05:33:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,9 +85,8 @@ struct sm_superio_softc {
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-const struct cfattach sm_superio_ca = {
-	sizeof(struct sm_superio_softc), sm_superio_match, sm_superio_attach
-};
+CFATTACH_DECL(sm_superio, sizeof(struct sm_superio_softc),
+    sm_superio_match, sm_superio_attach, NULL, NULL);
 extern struct cfdriver sm_cd;
 
 static int

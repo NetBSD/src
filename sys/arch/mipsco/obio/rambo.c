@@ -1,4 +1,4 @@
-/*	$NetBSD: rambo.c,v 1.4 2002/09/27 20:33:51 thorpej Exp $	*/
+/*	$NetBSD: rambo.c,v 1.5 2002/10/02 05:38:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,9 +69,8 @@ struct rambo_softc {
 
 static struct rambo_softc *rambo;
 
-const struct cfattach rambo_ca = {
-	sizeof(struct rambo_softc), rambo_match, rambo_attach
-};
+CFATTACH_DECL(rambo, sizeof(struct rambo_softc),
+    rambo_match, rambo_attach, NULL, NULL);
 
 static int
 rambo_match(parent, cf, aux)
