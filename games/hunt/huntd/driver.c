@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.3 1997/10/11 08:13:47 lukem Exp $	*/
+/*	$NetBSD: driver.c,v 1.4 1997/10/15 12:02:08 mrg Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.3 1997/10/11 08:13:47 lukem Exp $");
+__RCSID("$NetBSD: driver.c,v 1.4 1997/10/15 12:02:08 mrg Exp $");
 #endif /* not lint */
 
 # include	<sys/ioctl.h>
@@ -262,7 +262,7 @@ init()
 	(void) signal(SIGTERM, cleanup);
 # endif
 
-	(void) chdir("/usr/tmp");	/* just in case it core dumps */
+	(void) chdir("/var/tmp");	/* just in case it core dumps */
 	(void) umask(0);		/* No privacy at all! */
 	(void) signal(SIGPIPE, SIG_IGN);
 
