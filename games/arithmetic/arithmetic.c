@@ -1,6 +1,8 @@
+/*	$NetBSD: arithmetic.c,v 1.5 1995/03/21 11:59:32 cgd Exp $	*/
+
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Eamonn McManus of Trinity College Dublin.
@@ -35,14 +37,17 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)arithmetic.c	5.5 (Berkeley) 2/27/91";*/
-static char rcsid[] = "$Id: arithmetic.c,v 1.4 1995/02/28 18:30:59 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: arithmetic.c,v 1.5 1995/03/21 11:59:32 cgd Exp $";
+#endif
 #endif /* not lint */
 
 /*
