@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.2.10.11 2001/08/17 14:26:33 tv Exp $
+.\"	$NetBSD: install,v 1.2.10.12 2002/01/05 18:30:48 he Exp $
 .
 .Ss2 Booting the installer
 .
@@ -51,16 +51,16 @@ Open Firmware has device aliases which are simple names for the full
 hardware path to a device.  You can find out
 what device aliases Open Firmware has on your machine by typing:
 .Pp
-.Dl 0 > Ic devalias
+.Dl 0 \*> Ic devalias
 .Pp
 To get a complete listing of what hardware is recognized by Open
 Firmware, type:
 .Pp
-.Dl 0 > Ic dev / ls
+.Dl 0 \*> Ic dev / ls
 .Pp
 To determine if a device is bootable, type:
 .Pp
-.Dl 0 > Ic dev /path/to/device words
+.Dl 0 \*> Ic dev /path/to/device words
 .Pp
 If
 .Sq open
@@ -101,11 +101,11 @@ boot floppy -- you must enter Open Firmware and type a boot command.
 .Note)
 All you need to do is:
 .Pp
-.Dl 0 > Ic boot fd:0
+.Dl 0 \*> Ic boot fd:0
 .Pp
 You can eject a floppy by typing:
 .Pp
-.Dl 0 > Ic eject fd
+.Dl 0 \*> Ic eject fd
 .It
 .Em Ethernet
 .br
@@ -114,12 +114,12 @@ Firmware 2.4)
 .Pp
 You can try the simple form (i.e. that you are booting from ethernet):
 .Pp
-.Dl 0 > Ic "boot enet"
+.Dl 0 \*> Ic "boot enet"
 .Pp
 Or you may be more specific,
 specifying the bootloader filename and the kernel name:
 .Pp
-.Dl 0 > Ic "boot enet:,ofwboot.xcf enet:,netbsd.ram.gz"
+.Dl 0 \*> Ic "boot enet:,ofwboot.xcf enet:,netbsd.ram.gz"
 .(Note
 Some Open Firmware 1.0.5 machines have their MAC address stored
 incorrectly.  Make sure that your netboot server is using the same MAC
@@ -138,12 +138,12 @@ correctly. These machines cannot netboot.
 .Pp
 You can try the simple form (i.e. that you are booting from ethernet):
 .Pp
-.Dl 0 > Ic "boot enet:0"
+.Dl 0 \*> Ic "boot enet:0"
 .Pp
 Or you may be more specific,
 specifying the bootloader filename and the kernel name:
 .Pp
-.Dl 0 > Ic "boot enet:0,ofwboot.xcf enet:0,netbsd.ram.gz"
+.Dl 0 \*> Ic "boot enet:0,ofwboot.xcf enet:0,netbsd.ram.gz"
 .It
 .Em CD-ROM
 .br
@@ -187,19 +187,19 @@ You may be able to get a directory listing of the files on your CD-ROM
 disk with the following command (where
 .Pa scsi/sd@3:0
 is the device alias and path to your CD-ROM drive):
-.Dl 0 > Ic "dir scsi/sd@3:0,\e\"
+.Dl 0 \*> Ic "dir scsi/sd@3:0,\e\"
 If you have subdirectories, you can examine them as well:
-.Dl 0 > Ic "dir scsi/sd@3:0,\e\\&subdirectory\e\"
+.Dl 0 \*> Ic "dir scsi/sd@3:0,\e\\&subdirectory\e\"
 .Pp
 Here are some examples of what you might use to boot from CD-ROM (Apple
 usually sets their CD-ROM drives to SCSI ID 3):
 .Pp
-.Dl 0 > Ic "boot scsi-int/sd@3:0,OFWBOOT.XCF NETBSD.MACPPC"
-.Dl 0 > Ic "boot scsi/sd@3:0,OFWBOOT.XCF NETBSD.MACPPC"
-.Dl 0 > Ic "boot scsi-ext/sd@3:0,OFWBOOT.XCF NETBSD.MACPPC"
-.Dl 0 > Ic "boot ata/atapi-disk:0,OFWBOOT.XCF NETBSD.MACPPC"
-.Dl 0 > Ic "boot ide1/disk@0:0,OFWBOOT.XCF NETBSD.MACPPC"
-.Dl 0 > Ic "boot cd:0,ofwboot.xcf netbsd.macppc"
+.Dl 0 \*> Ic "boot scsi-int/sd@3:0,OFWBOOT.XCF NETBSD.MACPPC"
+.Dl 0 \*> Ic "boot scsi/sd@3:0,OFWBOOT.XCF NETBSD.MACPPC"
+.Dl 0 \*> Ic "boot scsi-ext/sd@3:0,OFWBOOT.XCF NETBSD.MACPPC"
+.Dl 0 \*> Ic "boot ata/atapi-disk:0,OFWBOOT.XCF NETBSD.MACPPC"
+.Dl 0 \*> Ic "boot ide1/disk@0:0,OFWBOOT.XCF NETBSD.MACPPC"
+.Dl 0 \*> Ic "boot cd:0,ofwboot.xcf netbsd.macppc"
 .It
 .Em "IDE or SCSI drive with a"
 .Sq "partition zero"
@@ -220,13 +220,13 @@ Internal hard drives are usually SCSI ID 0.
 .Pp
 Here are some examples of what you might use to boot from such a drive:
 .Pp
-.Dl 0 > Ic "boot scsi-int/sd@0:0"
-.Dl 0 > Ic "boot scsi/sd@0:0"
-.Dl 0 > Ic "boot scsi-ext/sd@0:0"
-.Dl 0 > Ic "boot ata/ata-disk@0:0"
-.Dl 0 > Ic "boot ata/ATA-Disk@0:0"
-.Dl 0 > Ic "boot ide0/disk@0:0"
-.Dl 0 > Ic "boot zip:0"
+.Dl 0 \*> Ic "boot scsi-int/sd@0:0"
+.Dl 0 \*> Ic "boot scsi/sd@0:0"
+.Dl 0 \*> Ic "boot scsi-ext/sd@0:0"
+.Dl 0 \*> Ic "boot ata/ata-disk@0:0"
+.Dl 0 \*> Ic "boot ata/ATA-Disk@0:0"
+.Dl 0 \*> Ic "boot ide0/disk@0:0"
+.Dl 0 \*> Ic "boot zip:0"
 .It
 .Em "IDE or SCSI drive from an HFS or HFS+ partition"
 .br
@@ -253,9 +253,9 @@ You may be able to get a directory listing of the files on your hard
 drive with the following command (where
 .Pa hd-devalias
 is the device alias and path to your hard drive):
-.Dl 0 > Ic "dir hd-devalias:,\e\"
+.Dl 0 \*> Ic "dir hd-devalias:,\e\"
 If you have subdirectories, you can examine them as well:
-.Dl 0 > Ic "dir hd-devalias:,\e\\&subdirectory\e\"
+.Dl 0 \*> Ic "dir hd-devalias:,\e\\&subdirectory\e\"
 .Pp
 If bootloader is on a different partition from the
 .Nx
@@ -268,16 +268,16 @@ Here are some examples of what you might use to boot the boot floppy image
 located on an HFS or HFS+ partition (note, you must use the path to the floppy
 image):
 .Pp
-.Dl 0 > Ic "boot scsi/sd@0:9,ofwboot.xcf scsi/sd@0:9,boot.fs"
-.Dl 0 > Ic "boot ide0/disk@0:10,ofwboot.xcf ide0/disk@0:9,boot.fs"
-.Dl 0 > Ic "boot hd:9,ofwboot.xcf hd:9,boot.fs"
+.Dl 0 \*> Ic "boot scsi/sd@0:9,ofwboot.xcf scsi/sd@0:9,boot.fs"
+.Dl 0 \*> Ic "boot ide0/disk@0:10,ofwboot.xcf ide0/disk@0:9,boot.fs"
+.Dl 0 \*> Ic "boot hd:9,ofwboot.xcf hd:9,boot.fs"
 .Pp
 Here are some examples of what you might use to boot a kernel located on the
 same HFS or HFS+ partition as the bootloader (note, you do not specify a 
 path to the kernel name):
 .Pp
-.Dl 0 > Ic "boot ultra1:9,ofwboot.xcf netbsd.ram.gz"
-.Dl 0 > Ic "boot hd:10,ofwboot.xcf netbsd.GENERIC.gz"
+.Dl 0 \*> Ic "boot ultra1:9,ofwboot.xcf netbsd.ram.gz"
+.Dl 0 \*> Ic "boot hd:10,ofwboot.xcf netbsd.GENERIC.gz"
 .bullet)
 .
 .Ss2 Example of a normal boot
@@ -295,7 +295,7 @@ get an idea of what to expect (user-typed commands are in
  To continue booting, type "mac-boot" and press return.
  To shut down, type "shut-down" and press return.
   ok
-.No  0 > Ic "boot hd:ofwboot.xcf hd:boot.fs"
+.No  0 \*> Ic "boot hd:ofwboot.xcf hd:boot.fs"
  loading XCOFF
  tsize=C280 dsize=14AC bsize=2620 entry=600000
  SECTIONS:
@@ -306,8 +306,8 @@ get an idea of what to expect (user-typed commands are in
  loading .data, done..
  clearing .bss, done..
  
- >> NetBSD/macppc OpenFirmware Boot, Revision 1.3
- >> (tsubai@mint.iri.co.jp, Sun Nov 26 01:41:27 JST 2000) 
+ \*>\*> NetBSD/macppc OpenFirmware Boot, Revision 1.3
+ \*>\*> (tsubai@mint.iri.co.jp, Sun Nov 26 01:41:27 JST 2000) 
  1701508+177748 [100+68176+55886]=0x1e9468
  
   start=0x100000
@@ -398,9 +398,9 @@ There are several models that cannot be booted while
 using the screen and keyboard. The only known workaround is to use a serial
 console (i.e. set your input and output devices to ttya or ttyb).
 .Pp
-.Dl 0 > Ic "setenv output-device ttya"
-.Dl 0 > Ic "setenv input-device ttya"
-.Dl 0 > Ic "reset-all"
+.Dl 0 \*> Ic "setenv output-device ttya"
+.Dl 0 \*> Ic "setenv input-device ttya"
+.Dl 0 \*> Ic "reset-all"
 .It
 .Dq Li "CLAIM failed"
 .Pp
@@ -422,9 +422,9 @@ There are several models that cannot be booted while using the screen and
 keyboard. The only known workaround is to use a serial console
 (i.e. set your input and output devices to ttya or ttyb).
 .Pp
-.Dl 0 > Ic "setenv output-device ttya"
-.Dl 0 > Ic "setenv input-device ttya"
-.Dl 0 > Ic "reset-all"
+.Dl 0 \*> Ic "setenv output-device ttya"
+.Dl 0 \*> Ic "setenv input-device ttya"
+.Dl 0 \*> Ic "reset-all"
 .It
 .Dq Li "can't OPEN"
 .Pp
@@ -464,9 +464,9 @@ You forgot to set
 in Open Firmware or it got erased by your booting into
 .Tn MacOS .
 .Pp
-.Dl 0 > Ic "setenv load-base 600000"
-.Dl 0 > Ic "setenv real-base F00000"
-.Dl 0 > Ic "reset-all"
+.Dl 0 \*> Ic "setenv load-base 600000"
+.Dl 0 \*> Ic "setenv real-base F00000"
+.Dl 0 \*> Ic "reset-all"
 .It
 After the kernel loads, the first key you press repeats forever
 .Pp
@@ -526,10 +526,10 @@ need to boot (see above).  If you are using a
 .Sq "partition zero"
 style boot scheme, you would type something like the following:
 .Pp
-.Dl 0 > Ic "setenv auto-boot? true"
-.Dl 0 > Ic "setenv boot-device scsi/sd@0:0"
-.Dl 0 > Ic "setenv boot-file netbsd"
-.Dl 0 > Ic "reset-all"
+.Dl 0 \*> Ic "setenv auto-boot? true"
+.Dl 0 \*> Ic "setenv boot-device scsi/sd@0:0"
+.Dl 0 \*> Ic "setenv boot-file netbsd"
+.Dl 0 \*> Ic "reset-all"
 .Pp
 The last command resets the system so that these settings are stored.
 Replace
@@ -538,16 +538,16 @@ with the actual device you will be booting from.  If you find that your
 system tries booting before your hard drive has spun up, you may need to
 also enter something like:
 .Pp
-.Dl 0 > Ic "setenv boot-command begin ['] boot catch 1000 ms cr again"
+.Dl 0 \*> Ic "setenv boot-command begin ['] boot catch 1000 ms cr again"
 .Pp
 If you are not using a
 .Sq "partition zero"
 style boot scheme, then you can still plug in all the information you
 need:
 .Pp
-.Dl 0 > Ic "setenv auto-boot? true"
-.Dl 0 > Ic "setenv boot-device ide0/disk@0:8,ofwboot.xcf"
-.Dl 0 > Ic "setenv boot-file ide0/disk@0:13,/netbsd"
-.Dl 0 > Ic "setenv boot-command boot"
-.Dl 0 > Ic "reset-all"
+.Dl 0 \*> Ic "setenv auto-boot? true"
+.Dl 0 \*> Ic "setenv boot-device ide0/disk@0:8,ofwboot.xcf"
+.Dl 0 \*> Ic "setenv boot-file ide0/disk@0:13,/netbsd"
+.Dl 0 \*> Ic "setenv boot-command boot"
+.Dl 0 \*> Ic "reset-all"
 .Pp
