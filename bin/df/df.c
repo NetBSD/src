@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.25 1998/03/01 02:20:01 fvdl Exp $	*/
+/*	$NetBSD: df.c,v 1.26 1998/04/08 23:16:37 fair Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -49,7 +49,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.25 1998/03/01 02:20:01 fvdl Exp $");
+__RCSID("$NetBSD: df.c,v 1.26 1998/04/08 23:16:37 fair Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,8 @@ __RCSID("$NetBSD: df.c,v 1.25 1998/03/01 02:20:01 fvdl Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+extern char * strpct __P((u_long num, u_long denom, u_int digits));
 
 int	 main __P((int, char *[]));
 int	 bread __P((off_t, void *, int));
@@ -317,6 +319,7 @@ prtstat(sfsp, maxwidth)
 	static int headerlen, timesthrough;
 	static char *header;
 	long used, availblks, inodes;
+	static char     *full = "100%";
 
 	if (maxwidth < 11)
 		maxwidth = 11;
@@ -340,13 +343,13 @@ prtstat(sfsp, maxwidth)
 	    fsbtoblk(sfsp->f_blocks, sfsp->f_bsize, blocksize),
 	    fsbtoblk(used, sfsp->f_bsize, blocksize),
 	    fsbtoblk(sfsp->f_bavail, sfsp->f_bsize, blocksize));
-	(void)printf(" %5.0f%%",
-	    availblks == 0 ? 100.0 : (double)used / (double)availblks * 100.0);
+	(void)printf(" %6s",
+	    availblks == 0 ? full : strpct((ulong)used, (ulong)availblks, 0));
 	if (iflag) {
 		inodes = sfsp->f_files;
 		used = inodes - sfsp->f_ffree;
-		(void)printf(" %7ld %7ld %5.0f%% ", used, sfsp->f_ffree,
-		   inodes == 0 ? 100.0 : (double)used / (double)inodes * 100.0);
+		(void)printf(" %7ld %7ld %6s ", used, sfsp->f_ffree,
+		   inodes == 0 ? full : strpct((ulong)used, (ulong)inodes, 0));
 	} else 
 		(void)printf("  ");
 	(void)printf("  %s\n", sfsp->f_mntonname);
