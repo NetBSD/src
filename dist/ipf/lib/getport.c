@@ -1,8 +1,9 @@
 #include "ipf.h"
 
-int getport(fr, name)
+int getport(fr, name, port)
 frentry_t *fr;
 char *name;
+u_short *port;
 {
 	struct protoent *p;
 	struct servent *s;
@@ -10,8 +11,10 @@ char *name;
 
 	if (fr == NULL || fr->fr_type != FR_T_IPF) {
 		s = getservbyname(name, NULL);
-		if (s != NULL)
-			return s->s_port;
+		if (s != NULL) {
+			*port = s->s_port;
+			return 0;
+		}
 		return -1;
 	}
 
@@ -27,13 +30,15 @@ char *name;
 		s = getservbyname(name, "udp");
 		if (s == NULL || s->s_port != p1)
 			return -1;
-		return p1;
+		*port = p1;
+		return 0;
 	}
 
 	p = getprotobynumber(fr->fr_proto);
 	s = getservbyname(name, p ? p->p_name : NULL);
-	if (s != NULL)
-		return s->s_port;
-
+	if (s != NULL) {
+		*port = s->s_port;
+		return 0;
+	}
 	return -1;
 }
