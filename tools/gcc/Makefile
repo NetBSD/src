@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2003/08/23 10:07:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2003/10/10 01:18:54 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,8 @@ CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--enable-languages="c c++ objc f77"
 
 MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q} \
-		LIBGCC= LIBGCC1= LIBGCC1_TEST= LIBGCC2= INSTALL_LIBGCC=
+		LIBGCC= LIBGCC1= LIBGCC1_TEST= LIBGCC2= INSTALL_LIBGCC= \
+		EXTRA_PARTS=
 
 ALL_TARGET=	all-gcc
 INSTALL_TARGET=	install-gcc
