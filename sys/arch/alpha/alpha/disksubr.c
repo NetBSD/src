@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.15 1998/08/24 02:37:16 tv Exp $ */
+/* $NetBSD: disksubr.c,v 1.16 1998/10/15 19:08:33 drochner Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.15 1998/08/24 02:37:16 tv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16 1998/10/15 19:08:33 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -79,12 +79,15 @@ readdisklabel(dev, strat, lp, clp)
 	int i;
 
 	/* minimal requirements for archtypal disk label */
+	if (lp->d_secsize == 0)
+		lp->d_secsize = DEV_BSIZE;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff; 
-	lp->d_npartitions = 1;
-	if (lp->d_partitions[0].p_size == 0)
-		lp->d_partitions[0].p_size = 0x1fffffff;
-	lp->d_partitions[0].p_offset = 0;
+	lp->d_npartitions = RAW_PART + 1;
+	if (lp->d_partitions[RAW_PART].p_size == 0)
+		lp->d_partitions[RAW_PART].p_size =
+		    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+	lp->d_partitions[RAW_PART].p_offset = 0;
 
 	/* obtain buffer to probe drive with */
 	bp = geteblk((int)lp->d_secsize);
@@ -279,7 +282,7 @@ bounds_check_with_label(bp, lp, wlabel)
 #define dkpart(dev) (minor(dev) & 7)
 
 	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
-	int labelsect = lp->d_partitions[0].p_offset;
+	int labelsect = lp->d_partitions[RAW_PART].p_offset;
 	int maxsz = p->p_size;
 	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 
