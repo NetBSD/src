@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.61 2002/05/30 05:06:29 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.62 2002/06/03 00:51:47 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.151 2001/06/19 14:24:41 sumikawa Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.61 2002/05/30 05:06:29 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.62 2002/06/03 00:51:47 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,15 +51,12 @@ __KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.61 2002/05/30 05:06:29 itojun Exp $");
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-#include <net/if_atm.h>
-#include <net/if_ieee1394.h>
 #include <net/route.h>
+#include <net/if_ether.h>
+#include <net/if_fddi.h>
+#include <net/if_arc.h>
 
 #include <netinet/in.h>
-#include <net/if_ether.h>
-#include <netinet/if_inarp.h>
-#include <net/if_fddi.h>
-#include <net/if_ieee80211.h>
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
@@ -188,23 +185,11 @@ nd6_setmtu0(ifp, ndi)
 	omaxmtu = ndi->maxmtu;
 
 	switch (ifp->if_type) {
-	case IFT_ARCNET:	/* XXX MTU handling needs more work */
-		ndi->maxmtu = MIN(60480, ifp->if_mtu);
-		break;
-	case IFT_ETHER:
-		ndi->maxmtu = MIN(ETHERMTU, ifp->if_mtu);
+	case IFT_ARCNET:
+		ndi->maxmtu = MIN(ARC_PHDS_MAXMTU, ifp->if_mtu); /* RFC2497 */
 		break;
 	case IFT_FDDI:
 		ndi->maxmtu = MIN(FDDIIPMTU, ifp->if_mtu);
-		break;
-	case IFT_ATM:
-		ndi->maxmtu = MIN(ATMMTU, ifp->if_mtu);
-		break;
-	case IFT_IEEE1394:
-		ndi->maxmtu = MIN(IEEE1394MTU, ifp->if_mtu);
-		break;
-	case IFT_IEEE80211:
-		ndi->maxmtu = MIN(IEEE80211_MTU, ifp->if_mtu);
 		break;
 	default:
 		ndi->maxmtu = ifp->if_mtu;
