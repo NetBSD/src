@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.24 1999/03/28 19:53:49 mycroft Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.25 1999/03/28 21:01:25 mycroft Exp $	*/
 
 /*
  *
@@ -821,7 +821,8 @@ ReFault:
 			uvmexp.fltnamap++;
 			pmap_enter(ufi.orig_map->pmap, currva,
 			    VM_PAGE_TO_PHYS(anon->u.an_page),
-			    (anon->an_ref > 1) ? VM_PROT_READ : enter_prot, 
+			    (anon->an_ref > 1) ? (enter_prot & ~VM_PROT_WRITE) :
+			    enter_prot, 
 			    (ufi.entry->wired_count != 0), 0);
 		}
 		simple_unlock(&anon->an_lock);
