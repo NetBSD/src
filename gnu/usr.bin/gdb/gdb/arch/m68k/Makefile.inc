@@ -1,4 +1,4 @@
-# $Id: Makefile.inc,v 1.2 1994/05/25 18:27:49 pk Exp $
+# $Id: Makefile.inc,v 1.3 1995/04/16 03:07:47 gwr Exp $
 
-SRCS+=	coredep.c m68k-pinsn.c m68k-tdep.c m68k-dis.c m68881-ext.c m68k-nat.c
+SRCS+=	m68k-pinsn.c m68k-tdep.c m68k-dis.c m68881-ext.c m68k-nat.c
 
