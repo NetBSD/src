@@ -48,6 +48,7 @@ static char sccsid[] = "@(#)kdump.c	5.3 (Berkeley) 1/17/91";
 #include <sys/ktrace.h>
 #include <sys/ioctl.h>
 #include <sys/ptrace.h>
+#undef _SYS_ERRNO_H_
 #define KERNEL
 #include <sys/errno.h>
 #undef KERNEL
