@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.23 1999/03/26 21:58:39 mycroft Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.24 1999/03/28 19:53:49 mycroft Exp $	*/
 
 /*
  *
@@ -546,6 +546,9 @@ int uvmfault_anonget(ufi, amap, anon)
  *	the map locked off during I/O.
  */
 
+#define MASK(entry)     (UVM_ET_ISCOPYONWRITE(entry) ? \
+			 ~VM_PROT_WRITE : VM_PROT_ALL)
+
 int
 uvm_fault(orig_map, vaddr, fault_type, access_type)
 	vm_map_t orig_map;
@@ -884,8 +887,7 @@ ReFault:
 		result = uobj->pgops->pgo_get(uobj, ufi.entry->offset +
 				(startva - ufi.entry->start),
 				pages, &gotpages, centeridx,
-				UVM_ET_ISCOPYONWRITE(ufi.entry) ?
-				VM_PROT_READ : access_type,
+				access_type & MASK(ufi.entry),
 				ufi.entry->advice, PGO_LOCKED);
 
 		/*
@@ -946,9 +948,8 @@ ReFault:
 				uvmexp.fltnomap++;
 				pmap_enter(ufi.orig_map->pmap, currva,
 				    VM_PAGE_TO_PHYS(pages[lcv]),
-				    UVM_ET_ISCOPYONWRITE(ufi.entry) ?
-				    VM_PROT_READ : enter_prot, wired,
-				    access_type);
+				    enter_prot & MASK(ufi.entry),
+				    wired, access_type);
 
 				/* 
 				 * NOTE: page can't be PG_WANTED or PG_RELEASED
@@ -1283,8 +1284,7 @@ Case2:
 		result = uobj->pgops->pgo_get(uobj,
 		    (ufi.orig_rvaddr - ufi.entry->start) + ufi.entry->offset,
 		    &uobjpage, &gotpages, 0,
-		    UVM_ET_ISCOPYONWRITE(ufi.entry) ?
-			VM_PROT_READ : access_type,
+			access_type & MASK(ufi.entry),
 			ufi.entry->advice, 0);
 
 		/* locked: uobjpage(if result OK) */
@@ -1415,7 +1415,7 @@ Case2:
 
 		uvmexp.flt_obj++;
 		if (UVM_ET_ISCOPYONWRITE(ufi.entry))
-			enter_prot = enter_prot & ~VM_PROT_WRITE;
+			enter_prot &= ~VM_PROT_WRITE;
 		pg = uobjpage;		/* map in the actual object */
 
 		/* assert(uobjpage != PGO_DONTCARE) */
