@@ -1,6 +1,6 @@
 #	@(#)Makefile	5.24 (Berkeley) 7/1/91
 #
-#	$Header: /cvsroot/src/bin/csh/Makefile,v 1.3 1993/03/23 00:23:53 cgd Exp $
+#	$Header: /cvsroot/src/bin/csh/Makefile,v 1.4 1993/05/26 19:05:47 proven Exp $
 #
 # C Shell with process control; VM/UNIX VAX Makefile
 # Bill Joy UC Berkeley; Jim Kulp IIASA, Austria
@@ -8,7 +8,7 @@
 # To profile, put -DPROF in DEFS and -pg in CFLAGS, and recompile.
 
 PROG=	csh
-CFLAGS+=-fcombine-regs -fstrength-reduce -DFILEC -DNLS -DSHORT_STRINGS -I.
+CFLAGS+=-fstrength-reduce -DFILEC -DNLS -DSHORT_STRINGS -I.
 SRCS=	alloc.c char.c const.c csh.c dir.c dol.c err.c exec.c exp.c file.c \
 	func.c glob.c hist.c init.c lex.c misc.c parse.c print.c printf.c \
 	proc.c sem.c set.c str.c time.c

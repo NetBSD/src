@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.4 1993/05/20 14:35:11 cgd Exp $
+ *	$Id: npx.c,v 1.5 1993/05/26 18:58:11 proven Exp $
  */
 #include "npx.h"
 #if NNPX > 0
@@ -130,21 +130,20 @@ static	volatile u_int		npx_traps_while_probing;
  * latch stuff in probintr() can be moved to npxprobe().
  */
 void probeintr(void);
-asm
-("
-	.text
-_probeintr:
-	ss
-	incl	_npx_intrs_while_probing
-	pushl	%eax
-	movb	$0x20,%al	/* EOI (asm in strings loses cpp features) */
-	outb	%al,$0xa0	/* IO_ICU2 */
-	outb	%al,$0x20	/* IO_ICU1 */
-	movb	$0,%al
-	outb	%al,$0xf0	/* clear BUSY# latch */
-	popl	%eax
-	iret
-");
+asm (																	\
+	".text;"															\
+	"_probeintr:;"														\
+	"ss;"																\
+	"incl	_npx_intrs_while_probing;"									\
+	"pushl	%eax;"														\
+	"movb	$0x20,%al;"	/* EOI (asm in strings loses cpp features) */ 	\
+	"outb	%al,$0xa0;"	/* IO_ICU2 */ 									\
+	"outb	%al,$0x20;"	/* IO_ICU1 */									\
+	"movb	$0,%al;"													\
+	"outb	%al,$0xf0;"	/* clear BUSY# latch */ 						\
+	"popl	%eax;"														\
+	"iret"																\
+);
 
 void probetrap(void);
 asm
