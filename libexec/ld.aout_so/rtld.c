@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.25 1994/12/07 20:30:53 pk Exp $
+ *	$Id: rtld.c,v 1.26 1994/12/18 15:38:55 pk Exp $
  */
 
 #include <sys/param.h>
@@ -433,7 +433,7 @@ map_object(sodp, smp)
 {
 	struct _dynamic	*dp;
 	char		*path, *name = (char *)(sodp->sod_name + LM_LDBASE(smp));
-	int		fd;
+	int		fd, zfd;
 	caddr_t		addr;
 	struct exec	hdr;
 	int		usehints = 0;
@@ -484,22 +484,31 @@ again:
 		return NULL;
 	}
 
+	zfd = -1;
+#ifdef NEED_DEV_ZERO
+	if ((zfd = open("/dev/zero", O_RDWR, 0)) == -1)
+		warn("open: %s", "/dev/zero");
+#endif
 	if ((addr = mmap(0, hdr.a_text + hdr.a_data + hdr.a_bss,
-	     PROT_READ|PROT_EXEC,
-	     MAP_COPY, fd, 0)) == (caddr_t)-1) {
+			 PROT_READ|PROT_WRITE|PROT_EXEC,
+			 MAP_ANON|MAP_COPY,
+			 zfd, 0)) == (caddr_t)-1) {
+		(void)close(zfd);
 		(void)close(fd);
 		return NULL;
 	}
 
-#if 0
-	if (mmap(addr + hdr.a_text, hdr.a_data,
-	    PROT_READ|PROT_WRITE|PROT_EXEC,
-	    MAP_FIXED|MAP_COPY,
-	    fd, hdr.a_text) == (caddr_t)-1) {
+#ifdef NEED_DEV_ZERO
+	close(zfd);
+#endif
+
+	if (mmap(addr, hdr.a_text + hdr.a_data,
+	         PROT_READ|PROT_EXEC,
+	         MAP_FIXED|MAP_COPY, fd, 0) == (caddr_t)-1) {
 		(void)close(fd);
 		return NULL;
 	}
-#endif
+
 	if (mprotect(addr + hdr.a_text, hdr.a_data,
 	    PROT_READ|PROT_WRITE|PROT_EXEC) != 0) {
 		(void)close(fd);
@@ -507,21 +516,6 @@ again:
 	}
 
 	(void)close(fd);
-
-	fd = -1;
-#ifdef NEED_DEV_ZERO
-	if ((fd = open("/dev/zero", O_RDWR, 0)) == -1)
-		warn("open: %s", "/dev/zero");
-#endif
-	if (hdr.a_bss && mmap(addr + hdr.a_text + hdr.a_data, hdr.a_bss,
-				PROT_READ|PROT_WRITE|PROT_EXEC,
-				MAP_ANON|MAP_FIXED|MAP_COPY,
-				fd, hdr.a_text + hdr.a_data) == (caddr_t)-1)
-		return NULL;
-
-#ifdef NEED_DEV_ZERO
-	close(fd);
-#endif
 
 	/* Assume _DYNAMIC is the first data item */
 	dp = (struct _dynamic *)(addr+hdr.a_text);
@@ -797,7 +791,7 @@ lookup(name, src_map, strong)
 	 * Search all maps for a definition of NAME
 	 */
 	for (smp = link_map_head; smp; smp = smp->som_next) {
-		int		buckets = LD_BUCKETS(smp->som_dynamic);
+		int		buckets;
 		long		hashval;
 		struct rrs_hash	*hp;
 		char		*cp;
@@ -809,10 +803,13 @@ lookup(name, src_map, strong)
 		char		*stringbase;
 		int		symsize;
 
-		if (LM_PRIVATE(smp)->spd_flags & RTLD_RTLD)
+		if (*src_map && smp != *src_map)
 			continue;
 
-		if (*src_map && smp != *src_map)
+		if ((buckets = LD_BUCKETS(smp->som_dynamic)) == 0)
+			continue; 
+
+		if (LM_PRIVATE(smp)->spd_flags & RTLD_RTLD)
 			continue;
 
 restart:
