@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.68 2000/03/30 13:24:52 augustss Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.69 2000/05/20 03:08:42 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1241,20 +1241,24 @@ db_show_radix_node(rn, w)
 }
 /*
  * Function to print all the route trees.
- * Use this from ddb:  "call db_show_arptab"
+ * Use this from ddb:  "show arptab"
  */
-int
-db_show_arptab()
+void
+db_show_arptab(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
 {
 	struct radix_node_head *rnh;
 	rnh = rt_tables[AF_INET];
 	db_printf("Route tree for AF_INET\n");
 	if (rnh == NULL) {
 		db_printf(" (not initialized)\n");
-		return (0);
+		return;
 	}
 	rn_walktree(rnh, db_show_radix_node, NULL);
-	return (0);
+	return;
 }
 #endif
 #endif /* INET */
