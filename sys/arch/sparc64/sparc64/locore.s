@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.155 2002/06/04 15:04:08 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.156 2002/06/05 18:11:18 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3422,9 +3422,17 @@ fp_exception:
 /*
  * We're here because we took an alignment fault in NUCLEUS context.
  * This could be a kernel bug or it could be due to saving a user
- * window to an invalid stack pointer.  If the latter is the case,
- * we should emulate the save by storing all the user register windows 
- * to the PCB and returning.
+ * window to an invalid stack pointer.  
+ * 
+ * If the latter is the case, we could try to emulate unaligned accesses, 
+ * but we really don't know where to store the registers since we can't 
+ * determine if there's a stack bias.  Or we could store all the regs 
+ * into the PCB and punt, until the user program uses up all the CPU's
+ * register windows and we run out of places to store them.  So for
+ * simplicity we'll just blow them away and enter the trap code which
+ * will generate a bus error.  Debugging the problem will be a bit
+ * complicated since lots of register windows will be lost, but what
+ * can we do?
  */
 checkalign:
 	rdpr	%tl, %g2
@@ -3448,8 +3456,8 @@ checkalign:
 	!!
 	!! Double data fault -- bad stack?
 	!!
-	wrpr	%g2, %tl	! Restore trap level.
-	sir			! Just issue a reset and don't try to recover.
+	wrpr	%g2, %tl		! Restore trap level.
+	sir				! Just issue a reset and don't try to recover.
 	mov	%fp, %l6		! Save the frame pointer
 	set	EINTSTACK+USPACE+CC64FSZ-STKB, %fp ! Set the frame pointer to the middle of the idle stack
 	add	%fp, -CC64FSZ, %sp	! Create a stackframe
@@ -3459,17 +3467,54 @@ checkalign:
 	ba	slowtrap		!  all our register windows.
 	 wrpr	%g0, 0x101, %tt
 #endif
-checkalignspill:	
-	wr	%g0, ASI_DMMU, %asi			! We need to re-load trap info
-	ldxa	[SFSR] %asi, %g3			! get sync fault status register
-	stxa	%g0, [SFSR] %asi			! Clear out fault now
-	membar	#Sync					! No real reason for this XXXX
+checkalignspill:
 	/*
-	 * Here we just jump to winfixspill and let it take care of
-	 * saving the windows.
+         * %g1 -- current tl
+	 * %g2 -- original tl
+	 * %g4 -- tstate
+         * %g7 -- tt
 	 */
-	ba,pt	%icc, winfixspill	! Continue with the winfix
-	 orcc	%g0, %g0, %g0		! Make sure we compare to zero
+
+	and	%g4, CWP, %g5
+	wrpr	%g5, %cwp		! Go back to the original register win
+
+	/*
+	 * Remember:
+	 * 
+	 * %otherwin = 0
+	 * %cansave = NWINDOWS - 2 - %canrestore
+	 */
+
+	rdpr	%otherwin, %g6
+	rdpr	%canrestore, %g3
+	rdpr	%ver, %g5
+	sub	%g3, %g6, %g3		! Calculate %canrestore - %g7
+	and	%g5, CWP, %g5		! NWINDOWS-1
+	movrlz	%g3, %g0, %g3		! Clamp at zero
+	wrpr	%g0, 0, %otherwin
+	wrpr	%g3, 0, %canrestore	! This is the new canrestore
+	dec	%g5			! NWINDOWS-2
+	wrpr	%g5, 0, %cleanwin	! Set cleanwin to max, since we're in-kernel
+	sub	%g5, %g3, %g5		! NWINDOWS-2-%canrestore
+#ifdef xTRAPTRACE
+	wrpr	%g5, 0, %cleanwin	! Force cleanwindow faults
+#endif
+	wrpr	%g5, 0, %cansave
+
+	wrpr	%g0, T_ALIGN, %tt	! This was an alignment fault 
+	/*
+	 * Now we need to determine if this was a userland store or not.
+	 * Userland stores occur in anything other than the kernel spill
+	 * handlers (trap type 09x).
+	 */
+	and	%g7, 0xff0, %g5
+	cmp	%g5, 0x90
+	bz,pn	%icc, slowtrap
+	 nop
+	bclr	TSTATE_PRIV, %g4
+	wrpr	%g4, 0, %tstate
+	ba,a,pt	%icc, slowtrap
+	 nop
 	
 /*
  * slowtrap() builds a trap frame and calls trap().
