@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.195 1998/10/24 00:46:17 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.196 1998/10/25 18:40:17 christos Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -282,6 +282,8 @@ ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI
 bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [457]4X SCSI
 bha1	at isa? port 0x334 irq ? drq ?
+nca0	at isa? port 0x360 irq 15	# Port-mapped NCR 53C80 contoller
+nca1	at isa? iomem 0xd8000 irq 5	# Memory-mapped controller (T128, etc.)
 sea0	at isa? iomem 0xc8000 irq 5	# Seagate/Future Domain SCSI
 uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI
 uha1	at isa? port 0x340 irq ? drq ?
@@ -297,6 +299,7 @@ scsibus* at ahc?
 scsibus* at aic?
 scsibus* at bha?
 scsibus* at isp?
+scsibus* at nca?
 scsibus* at ncr?
 scsibus* at sea?
 scsibus* at uha?
