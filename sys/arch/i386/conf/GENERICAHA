@@ -1,7 +1,7 @@
 #
 # GENERICAHA -- Generic machine w/aha driver -- distribution floppy
 #
-#	$Id: GENERICAHA,v 1.46 1994/06/18 23:49:26 cgd Exp $
+#	$Id: GENERICAHA,v 1.47 1994/07/01 20:09:57 mycroft Exp $
 #
 
 machine		"i386"
@@ -98,7 +98,7 @@ device ed2 at isa? port 0x300 irq 10 iomem 0xcc000
 #device el0 at isa? port 0x300 irq 9
 device ep0 at isa? port ? irq ?
 device ie0 at isa? port 0x360 irq 7 iomem 0xd0000
-device is0 at isa? port 0x320 irq 10 drq 7
+device le0 at isa? port 0x320 irq 10 drq 7
 
 device		npx0	at isa? port "IO_NPX" irq 13
 
