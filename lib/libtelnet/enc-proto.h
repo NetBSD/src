@@ -1,4 +1,4 @@
-/*	$NetBSD: enc-proto.h,v 1.7 2005/02/06 05:52:25 perry Exp $	*/
+/*	$NetBSD: enc-proto.h,v 1.8 2005/02/06 18:00:30 agc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -100,7 +100,7 @@ void encrypt_printsub(unsigned char *, int, unsigned char *, int );
 #ifdef	TELENTD
 void encrypt_wait(void);
 #else
-void printsub(char, unsigned char *, int);
+void printsub(int, unsigned char *, int);
 int encrypt_cmd(int, char **);
 void encrypt_display(void);
 #endif
