@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.10 1996/10/13 03:05:44 christos Exp $ */
+/* $NetBSD: autoconf.c,v 1.11 1996/10/15 21:32:10 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -162,14 +162,14 @@ set_root_device()
 #ifdef DEBUG              
 			if (pmap_debug_level >= 0)
 				printf("rootdev = %08x\n", rootdev);
-#endif
+#endif	/* DEBUG */
 		}
 	}
 
 #ifdef GENERIC
 	if (rootdev == NODEV)
 		panic("No root device specified in boot config\n");
-#endif
+#endif	/* GENERIC */
 }
 
 
@@ -243,7 +243,10 @@ swapconf()
 }
 
 
-/* Set up the root and swap device numbers, configure the swap space and dump space */
+/*
+ * Set up the root and swap device numbers, configure the swap space and
+ * dump space
+ */
 
 void
 set_boot_devs()
@@ -253,7 +256,7 @@ set_boot_devs()
 	set_swap_device();
 #ifdef NFSCLIENT
 	if (major(rootdev) != 1)
-#endif
+#endif	/* NFSCLIENT */
 	{
 		if (swdevt[0].sw_dev == NODEV && minor(rootdev) < (MAXPARTITIONS - 2))
 			swdevt[0].sw_dev = makedev(major(rootdev), minor(rootdev) + 1);
@@ -261,7 +264,7 @@ set_boot_devs()
 		dumpdev = swdevt[0].sw_dev;
 		argdev = swdevt[0].sw_dev;
 	}		
-#endif
+#endif	/* GENERIC */
 	swapconf();
 	dumpconf();
 }
@@ -278,23 +281,23 @@ void
 configure()
 {
 
-/*
- * Configure all the roots.
- * We have to have a mainbus
- */
+	/*
+	 * Configure all the roots.
+	 * We have to have a mainbus
+	 */
 
 	config_rootfound("mainbus", NULL);
 #if NPODULEBUS > 0
 	config_rootfound("podulebus", NULL);
-#endif
+#endif	/* NPODULEBUS */
 
-/* Debugging information */
+	/* Debugging information */
 
 	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_clock=%08x ipl_imp=%08x ipl_none=%08x\n",
 	    irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
 	    irqmasks[IPL_CLOCK], irqmasks[IPL_IMP], irqmasks[IPL_NONE]);
 
-/* Time to start taking interrupts so lets open the flood gates .... */
+	/* Time to start taking interrupts so lets open the flood gates .... */
          
 	(void)spl0();
 }
