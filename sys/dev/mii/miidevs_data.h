@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs_data.h,v 1.9 2001/05/17 17:39:30 drochner Exp $	*/
+/*	$NetBSD: miidevs_data.h,v 1.10 2001/05/22 16:07:56 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.19 2001/05/17 17:39:00 drochner Exp 
+ *	NetBSD: miidevs,v 1.20 2001/05/22 16:04:27 soren Exp 
  */
 
 /*-
@@ -60,6 +60,7 @@ struct mii_knowndev mii_knowndevs[] = {
  { MII_OUI_yyINTEL, MII_MODEL_yyINTEL_I82555, MII_STR_yyINTEL_I82555 }, 
  { MII_OUI_yyINTEL, MII_MODEL_yyINTEL_I82562EH, MII_STR_yyINTEL_I82562EH }, 
  { MII_OUI_yyINTEL, MII_MODEL_yyINTEL_I82562EM, MII_STR_yyINTEL_I82562EM }, 
+ { MII_OUI_yyINTEL, MII_MODEL_yyINTEL_I82562ET, MII_STR_yyINTEL_I82562ET }, 
  { MII_OUI_yyINTEL, MII_MODEL_yyINTEL_I82553, MII_STR_yyINTEL_I82553 }, 
  { MII_OUI_xxLEVEL1, MII_MODEL_xxLEVEL1_LXT970, MII_STR_xxLEVEL1_LXT970 }, 
  { MII_OUI_xxMYSON, MII_MODEL_xxMYSON_MTD972, MII_STR_xxMYSON_MTD972 }, 
