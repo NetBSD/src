@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.1.1.1 1995/03/26 07:12:14 leo Exp $	*/
+/*	$NetBSD: zs.c,v 1.2 1995/04/11 02:37:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -69,7 +69,7 @@
 #include <machine/scu.h>
 #include <machine/mfp.h>
 
-#include <atari/dev/zsreg.h>
+#include <dev/ic/z8530.h>
 #include <atari/dev/zsvar.h>
 #include "zs.h"
 #if NZS > 1
@@ -176,23 +176,23 @@ void		*aux;
 	/*
 	 * Get the command register into a known state.
 	 */
-	tmp = addr->zs_chan[CHAN_A].zc_csr;
-	tmp = addr->zs_chan[CHAN_A].zc_csr;
-	tmp = addr->zs_chan[CHAN_B].zc_csr;
-	tmp = addr->zs_chan[CHAN_B].zc_csr;
+	tmp = addr->zs_chan[ZS_CHAN_A].zc_csr;
+	tmp = addr->zs_chan[ZS_CHAN_A].zc_csr;
+	tmp = addr->zs_chan[ZS_CHAN_B].zc_csr;
+	tmp = addr->zs_chan[ZS_CHAN_B].zc_csr;
 
 	/*
 	 * Do a hardware reset.
 	 */
-	ZS_WRITE(&addr->zs_chan[CHAN_A], 9, ZSWR9_HARD_RESET);
+	ZS_WRITE(&addr->zs_chan[ZS_CHAN_A], 9, ZSWR9_HARD_RESET);
 	delay(50000);	/*enough ? */
-	ZS_WRITE(&addr->zs_chan[CHAN_A], 9, 0);
+	ZS_WRITE(&addr->zs_chan[ZS_CHAN_A], 9, 0);
 
 	/*
 	 * Initialize both channels
 	 */
-	zs_loadchannelregs(&addr->zs_chan[CHAN_A], zs_init_regs);
-	zs_loadchannelregs(&addr->zs_chan[CHAN_B], zs_init_regs);
+	zs_loadchannelregs(&addr->zs_chan[ZS_CHAN_A], zs_init_regs);
+	zs_loadchannelregs(&addr->zs_chan[ZS_CHAN_B], zs_init_regs);
 
 	/*
 	 * enable scc related interrupts
@@ -205,10 +205,10 @@ void		*aux;
 	zslist        = cs;
 
 	cs->cs_unit  = 0;
-	cs->cs_zc    = &addr->zs_chan[CHAN_A];
+	cs->cs_zc    = &addr->zs_chan[ZS_CHAN_A];
 	cs++;
 	cs->cs_unit  = 1;
-	cs->cs_zc    = &addr->zs_chan[CHAN_B];
+	cs->cs_zc    = &addr->zs_chan[ZS_CHAN_B];
 
 	printf(": serial2 on channel a and modem2 on channel b\n");
 }
@@ -681,7 +681,7 @@ struct proc	*p;
 	case TIOCSFLAGS: {
 		int userbits, driverbits = 0;
 
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = suser(p->p_ucred, p);
 		if(error != 0)
 			return (EPERM);
 
