@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sshd,v 1.13 2002/02/24 12:50:09 lukem Exp $
+# $NetBSD: sshd,v 1.14 2002/03/27 09:15:54 lukem Exp $
 #
 
 # PROVIDE: sshd
@@ -11,6 +11,7 @@
 name="sshd"
 rcvar=$name
 command="/usr/sbin/${name}"
+command_args='-f ${sshd_conf_dir}/${name}.conf'
 pidfile="/var/run/${name}.pid"
 load_rc_config $name
 required_files="${sshd_conf_dir}/${name}.conf"
