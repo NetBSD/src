@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.10 1999/02/22 10:16:52 simonb Exp $	*/
+/*	$NetBSD: rz.c,v 1.11 1999/03/25 05:13:15 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,12 +38,11 @@
  *	@(#)rz.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <stdarg.h>
-
 #include <stand.h>
 #include <sys/param.h>
 #include <sys/disklabel.h>
 #include <machine/dec_prom.h>
+#include <machine/stdarg.h>
 #include <rz.h>
 
 struct	rz_softc {
