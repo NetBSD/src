@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.5 1999/04/14 23:14:46 ragge Exp $	*/
+/*	$NetBSD: bus.h,v 1.6 1999/05/24 20:10:30 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ typedef u_long bus_size_t;
 /*
  * Access methods for bus resources and address space.
  */
-typedef	struct vax_bus_space bus_space_tag_t;
+typedef	struct vax_bus_space *bus_space_tag_t;
 typedef	u_long bus_space_handle_t;
 
 struct vax_bus_space {
