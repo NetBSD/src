@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.96 2000/09/11 23:29:31 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.97 2000/09/12 04:16:29 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -11010,26 +11010,35 @@ microtick:
 /*
  * The following code only works if %tick is synchronized with time.
  */
-	sethi	%hi(_C_LABEL(cpu_clockrate)), %o3
-	ldx	[%o3 + %lo(_C_LABEL(cpu_clockrate) + 8)], %o4	! Get scale factor
-	rdpr	%tick, %o1
-	sethi	%hi(MICROPERSEC), %o2
+	LDPTR	[%g2+%lo(_C_LABEL(time))], %o2			! time.tv_sec & time.tv_usec
+	LDPTR	[%g2+%lo(_C_LABEL(time)+PTRSZ)], %o3		! time.tv_sec & time.tv_usec
+	rdpr	%tick, %o4					! Load usec timer value
+	LDPTR	[%g2+%lo(_C_LABEL(time))], %g1			! see if time values changed
+	LDPTR	[%g2+%lo(_C_LABEL(time)+PTRSZ)], %g5		! see if time values changed
+	cmp	%g1, %o2
+	bne	2b						! if time.tv_sec changed
+	 cmp	%g5, %o3
+	bne	2b						! if time.tv_usec changed
+
+	 sethi	%hi(_C_LABEL(cpu_clockrate)), %o1
+	ldx	[%o1 + %lo(_C_LABEL(cpu_clockrate) + 8)], %o4	! Get scale factor
+	sethi	%hi(MICROPERSEC), %o5
 	brnz,pt	%o4, 1f						! Already scaled?
-	 or	%o2, %lo(MICROPERSEC), %o2
+	 or	%o2, %lo(MICROPERSEC), %o5
 
 	!! Calculate ticks/usec
-	ldx	[%o3 + %lo(_C_LABEL(cpu_clockrate))], %o4	! No, we need to calculate it
-	udivx	%o4, %o2, %o4					! Hz / 10^6 = MHz
-	stx	%o4, [%o3 + %lo(_C_LABEL(cpu_clockrate))]	! Save it so we don't need to divide again
+	ldx	[%o1 + %lo(_C_LABEL(cpu_clockrate))], %o4	! No, we need to calculate it
+	udivx	%o4, %o5, %o4					! Hz / 10^6 = MHz
+	stx	%o4, [%o1 + %lo(_C_LABEL(cpu_clockrate) + 8)]	! Save it so we don't need to divide again
 1:
 
-	udivx	%o1, %o4, %o1					! Scale it: ticks / MHz = usec
+	STPTR	%o2, [%o0]					! Store seconds.
+	udivx	%o4, %o1, %o4					! Scale it: ticks / MHz = usec
 
-	udivx	%o1, %o2, %o3					! Now %o3 has seconds
-	STPTR	%o3, [%o0]					! and store it
+	udivx	%o4, %o5, %o2					! Now %o2 has seconds
 
-	mulx	%o3, %o2, %o2					! Now calculate usecs -- damn no remainder insn
-	sub	%o1, %o2, %o1					! %o1 has the remainder
+	mulx	%o3, %o5, %o5					! Now calculate usecs -- damn no remainder insn
+	sub	%o2, %o5, %o1					! %o1 has the remainder
 
 	retl
 	 STPTR	%o1, [%o0+PTRSZ]				! Save time_t low word
