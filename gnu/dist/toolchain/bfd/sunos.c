@@ -78,6 +78,10 @@ static boolean sunos_finish_dynamic_link
 #define MY_write_dynamic_symbol sunos_write_dynamic_symbol
 #define MY_check_dynamic_reloc sunos_check_dynamic_reloc
 #define MY_finish_dynamic_link sunos_finish_dynamic_link
+  
+/* On SunOS, the entry point may be taken to be the start of the text
+   section.  */
+#define MY_entry_is_text_address 1
 
 /* ??? Where should this go?  */
 #define MACHTYPE_OK(mtype) \

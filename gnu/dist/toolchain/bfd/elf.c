@@ -2862,7 +2862,7 @@ assign_file_positions_for_segments (abfd)
 		  if ((abfd->flags & D_PAGED) != 0)
 		    adjust = (sec->vma - voff) % bed->maxpagesize;
 		  else
-		    adjust = (sec->vma - voff) % align;
+		    adjust = (sec->vma - (p->p_paddr + p->p_memsz)) % align;
 		}
 	      else
 		adjust = 0;

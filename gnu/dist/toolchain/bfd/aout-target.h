@@ -44,6 +44,11 @@ MY(callback) (abfd)
   unsigned int arch_align_power;
   unsigned long arch_align;
 
+#ifdef N_PIC
+  if (N_PIC(*execp))
+    abfd->flags |= BFD_PIC;
+#endif
+
   /* Calculate the file positions of the parts of a newly read aout header */
   obj_textsec (abfd)->_raw_size = N_TXTSIZE(*execp);
 
@@ -326,6 +331,21 @@ MY(set_sizes) (abfd)
 #ifndef MY_finish_dynamic_link
 #define MY_finish_dynamic_link 0
 #endif
+#ifndef MY_translate_from_native_sym_flags
+#define MY_translate_from_native_sym_flags 0
+#endif
+#ifndef MY_translate_to_native_sym_flags
+#define MY_translate_to_native_sym_flags 0
+#endif
+#ifndef MY_get_needed_list
+#define MY_get_needed_list 0
+#endif
+#ifndef MY_record_link_assignment
+#define MY_record_link_assignment 0
+#endif
+#ifndef MY_size_dynamic_sections
+#define MY_size_dynamic_sections 0
+#endif
 
 static CONST struct aout_backend_data MY(backend_data) = {
   MY_zmagic_contiguous,
@@ -340,7 +360,12 @@ static CONST struct aout_backend_data MY(backend_data) = {
   MY_link_dynamic_object,
   MY_write_dynamic_symbol,
   MY_check_dynamic_reloc,
-  MY_finish_dynamic_link
+  MY_finish_dynamic_link,
+  MY_translate_from_native_sym_flags,
+  MY_translate_to_native_sym_flags,
+  MY_get_needed_list,
+  MY_record_link_assignment,
+  MY_size_dynamic_sections
 };
 #define MY_backend_data &MY(backend_data)
 #endif
@@ -604,7 +629,7 @@ const bfd_target MY(vec) =
 #endif
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |
-   HAS_SYMS | HAS_LOCALS | DYNAMIC | WP_TEXT | D_PAGED),
+   HAS_SYMS | HAS_LOCALS | DYNAMIC | WP_TEXT | D_PAGED | BFD_PIC),
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_CODE | SEC_DATA),
   MY_symbol_leading_char,
   AR_PAD_CHAR,			/* ar_pad_char */

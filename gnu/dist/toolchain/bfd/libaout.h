@@ -89,6 +89,13 @@ struct aout_link_hash_table
     (boolean (*) PARAMS ((struct bfd_link_hash_entry *, PTR))) (func),	\
     (info)))
 
+typedef struct aout_symbol {
+  asymbol symbol;
+  short desc;
+  char other;
+  unsigned char type;
+} aout_symbol_type;
+
 /* Get the a.out link hash table from the info structure.  This is
    just a cast.  */
 
@@ -169,6 +176,31 @@ struct aout_backend_data
   /* Called at the end of a link to finish up any dynamic linking
      information.  */
   boolean (*finish_dynamic_link) PARAMS ((bfd *, struct bfd_link_info *));
+
+  /* Translate an a.out symbol into a BFD symbol.  */
+  boolean (*translate_from_native_sym_flags) PARAMS ((bfd *, 
+                                                      aout_symbol_type *));
+
+  /* Set the fields of the external_nlist according to the asybol.  */
+  boolean (*translate_to_native_sym_flags) PARAMS ((bfd *, 
+                                                    asymbol *,
+                                                    struct external_nlist *));
+
+  /* Return the list of objects needed by BFD.  */
+  struct bfd_link_needed_list * (*get_needed_list)
+    PARAMS ((bfd *, struct bfd_link_info *));
+
+  /* Record an assignment made to a symbol by a linker script.  */
+  boolean (*record_link_assignment) PARAMS ((bfd *,
+					     struct bfd_link_info *,
+					     const char *));
+
+  /* Set up the sizes and contents of the dynamic sections.  */
+  boolean (*size_dynamic_sections) PARAMS ((bfd *,
+					    struct bfd_link_info *,
+					    struct sec **,
+					    struct sec **,
+					    struct sec **));
 };
 #define aout_backend_info(abfd) \
 	((CONST struct aout_backend_data *)((abfd)->xvec->backend_data))
@@ -230,10 +262,11 @@ enum machine_type {
   M_532_NETBSD = 137,	/* NetBSD/ns32k binary */
   M_SPARC_NETBSD = 138,	/* NetBSD/sparc binary */
   M_PMAX_NETBSD = 139,	/* NetBSD/pmax (MIPS little-endian) binary */
-  M_VAX_NETBSD = 140,	/* NetBSD/vax binary */
+  M_VAX1K_NETBSD = 140,	/* NetBSD/vax1k binary */
   M_ALPHA_NETBSD = 141,	/* NetBSD/alpha binary */
   M_ARM6_NETBSD = 143,	/* NetBSD/arm32 binary */
   M_SPARCLET_1 = 147,	/* 0x93, reserved */
+  M_VAX_NETBSD = 150,	/* NetBSD/vax binary */
   M_MIPS1 = 151,        /* MIPS R2000/R3000 binary */
   M_MIPS2 = 152,        /* MIPS R4000/R6000 binary */
   M_SPARCLET_2 = 163,	/* 0xa3, reserved */
@@ -291,13 +324,6 @@ enum machine_type {
 ((exec).a_info = \
  ((exec).a_info&0x00ffffff) | (((flags) & 0xff) << 24))
 #endif
-
-typedef struct aout_symbol {
-  asymbol symbol;
-  short desc;
-  char other;
-  unsigned char type;
-} aout_symbol_type;
 
 /* The `tdata' struct for all a.out-like object file formats.
    Various things depend on this struct being around any time an a.out

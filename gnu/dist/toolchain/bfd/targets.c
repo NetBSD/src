@@ -535,6 +535,8 @@ extern const bfd_target bfd_elf32_pj_vec;
 extern const bfd_target bfd_elf32_pjl_vec;
 extern const bfd_target bfd_elf32_powerpc_vec;
 extern const bfd_target bfd_elf32_powerpcle_vec;
+extern const bfd_target bfd_elf32_shunx_vec;
+extern const bfd_target bfd_elf32_shlunx_vec;
 extern const bfd_target bfd_elf32_sh_vec;
 extern const bfd_target bfd_elf32_shl_vec;
 extern const bfd_target bfd_elf32_sparc_vec;
@@ -591,6 +593,7 @@ extern const bfd_target m68ksysvcoff_vec;
 extern const bfd_target m68k4knetbsd_vec;
 extern const bfd_target m88kbcs_vec;
 extern const bfd_target m88kmach3_vec;
+extern const bfd_target mipselnetbsd_vec;
 extern const bfd_target mipslpe_vec;
 extern const bfd_target mipslpei_vec;
 extern const bfd_target mcore_pe_big_vec;
@@ -626,6 +629,7 @@ extern const bfd_target tekhex_vec;
 extern const bfd_target tic30_aout_vec;
 extern const bfd_target tic30_coff_vec;
 extern const bfd_target tic80coff_vec;
+extern const bfd_target vaxcoff_vec;
 extern const bfd_target vaxnetbsd_vec;
 extern const bfd_target versados_vec;
 extern const bfd_target vms_alpha_vec;
@@ -657,7 +661,7 @@ extern const bfd_target sco5_core_vec;
 extern const bfd_target trad_core_vec;
 extern const bfd_target ptrace_core_vec;
 
-const bfd_target * const bfd_target_vector[] = {
+static const bfd_target * const _bfd_target_vector[] = {
 
 #ifdef SELECT_VECS
 
@@ -863,6 +867,7 @@ const bfd_target * const bfd_target_vector[] = {
 	&tic30_aout_vec,
 	&tic30_coff_vec,
 	&tic80coff_vec,
+	&vaxcoff_vec,
 	&vaxnetbsd_vec,
 	&versados_vec,
 #ifdef BFD64
@@ -917,6 +922,7 @@ const bfd_target * const bfd_target_vector[] = {
 
 	NULL /* end of list marker */
 };
+const bfd_target * const *bfd_target_vector = _bfd_target_vector;
 
 /* bfd_default_vector[0] contains either the address of the default vector,
    if there is one, or zero if there isn't.  */
@@ -931,7 +937,7 @@ const bfd_target *bfd_default_vector[] = {
 /* When there is an ambiguous match, bfd_check_format_matches puts the
    names of the matching targets in an array.  This variable is the maximum
    number of entries that the array could possibly need.  */
-const size_t _bfd_target_vector_entries = sizeof(bfd_target_vector)/sizeof(*bfd_target_vector);
+const size_t _bfd_target_vector_entries = sizeof(_bfd_target_vector)/sizeof(*_bfd_target_vector);
 
 /* This array maps configuration triplets onto BFD vectors.  */
 
