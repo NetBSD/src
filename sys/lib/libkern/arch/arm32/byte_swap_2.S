@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_2.S,v 1.3 2000/12/12 17:46:11 mycroft Exp $	*/
+/*	$NetBSD: byte_swap_2.S,v 1.4 2000/12/12 17:53:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <machine/asm.h>
 
-ENTRY(__bswap16)
+ENTRY(bswap16)
 ALTENTRY(ntohs)
 ALTENTRY(htons)
 	and		r1, r0, #0xFF00
