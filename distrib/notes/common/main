@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.48 2000/02/26 03:02:14 mbw Exp $
+.\" $NetBSD: main,v 1.49 2000/03/01 02:08:28 ross Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -786,6 +786,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Ignatios Souvatzis Ta Mt is@NetBSD.ORG Ta Sy amiga
 .It Ta Jonathan Stone Ta Mt jonathan@NetBSD.ORG Ta Sy pmax
 .It Ta Shin Takemura Ta Mt takemura@NetBSD.ORG Ta Sy hpcmips
+.It Ta Jason Thorpe Ta Mt thorpej@NetBSD.ORG Ta Sy alpha
 .It Ta Jason Thorpe Ta Mt thorpej@NetBSD.ORG Ta Sy hp300
 .It Ta Tsubai Masanari Ta Mt tsubai@NetBSD.ORG Ta Sy macppc
 .It Ta Tsubai Masanari Ta Mt tsubai@NetBSD.ORG Ta Sy newsmips
