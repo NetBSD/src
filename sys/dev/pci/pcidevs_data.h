@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.438 2002/06/03 19:53:38 briggs Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.439 2002/06/04 08:57:48 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.435 2002/06/03 19:52:18 briggs Exp 
+ *	NetBSD: pcidevs,v 1.436 2002/06/04 08:53:47 fvdl Exp 
  */
 
 /*
@@ -1010,6 +1010,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced Micro Devices",
 	    "AMD768 USB Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_IDE,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD8111 IDE Controller",
 	},
 	{
 	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID,
