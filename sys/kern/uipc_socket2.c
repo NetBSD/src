@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.64 2004/06/11 03:46:01 jonathan Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.65 2004/06/24 04:15:50 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.64 2004/06/11 03:46:01 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.65 2004/06/24 04:15:50 jonathan Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -542,7 +542,7 @@ sbappend(struct sockbuf *sb, struct mbuf *m)
 		return;
 
 #ifdef MBUFTRACE
-	m_claim(m, sb->sb_mowner);
+	m_claimm(m, sb->sb_mowner);
 #endif
 
 	SBLASTRECORDCHK(sb, "sbappend 1");
@@ -585,7 +585,7 @@ sbappendstream(struct sockbuf *sb, struct mbuf *m)
 	SBLASTMBUFCHK(sb, __func__);
 
 #ifdef MBUFTRACE
-	m_claim(m, sb->sb_mowner);
+	m_claimm(m, sb->sb_mowner);
 #endif
 
 	sbcompress(sb, m, sb->sb_mbtail);
@@ -632,7 +632,7 @@ sbappendrecord(struct sockbuf *sb, struct mbuf *m0)
 		return;
 
 #ifdef MBUFTRACE
-	m_claim(m0, sb->sb_mowner);
+	m_claimm(m0, sb->sb_mowner);
 #endif
 	/*
 	 * Put the first mbuf on the queue.
@@ -720,7 +720,7 @@ sbappendaddr(struct sockbuf *sb, const struct sockaddr *asa, struct mbuf *m0,
 			panic("sbappendaddr");
 		space += m0->m_pkthdr.len;
 #ifdef MBUFTRACE
-		m_claim(m0, sb->sb_mowner);
+		m_claimm(m0, sb->sb_mowner);
 #endif
 	}
 	for (n = control; n; n = n->m_next) {
@@ -846,7 +846,7 @@ sbappendaddrchain(struct sockbuf *sb, const struct sockaddr *asa,
 		struct mbuf *np;
 
 #ifdef MBUFTRACE
-		m_claim(m, sb->sb_mowner);
+		m_claimm(m, sb->sb_mowner);
 #endif
 
 		/* Prepend sockaddr to this record (m) of input chain m0 */

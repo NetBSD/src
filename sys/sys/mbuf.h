@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.93 2004/06/22 14:04:04 itojun Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.94 2004/06/24 04:15:50 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -387,7 +387,7 @@ do {									\
 #define	MCLAIM(m, mowner) 		do { } while (/* CONSTCOND */ 0)
 #define	MOWNER_ATTACH(mo)		do { } while (/* CONSTCOND */ 0)
 #define	MOWNER_DETACH(mo)		do { } while (/* CONSTCOND */ 0)
-#define	m_claim(m, mo)			do { } while (/* CONSTCOND */ 0)
+#define	m_claimm(m, mo)			do { } while (/* CONSTCOND */ 0)
 #define MBUFTRACE_ASSERT(cond)		do { } while (/* CONSTCOND */ 0)
 #endif
 
@@ -846,7 +846,7 @@ int	m_apply(struct mbuf *, int, int,
 		int (*)(void *, caddr_t, unsigned int), void *);
 void	m_cat(struct mbuf *,struct mbuf *);
 #ifdef MBUFTRACE
-void	m_claim(struct mbuf *, struct mowner *);
+void	m_claimm(struct mbuf *, struct mowner *);
 #endif
 void	m_clget(struct mbuf *, int);
 int	m_mballoc(int, int);

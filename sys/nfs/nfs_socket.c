@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.107 2004/05/24 19:08:07 jonathan Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.108 2004/06/24 04:15:51 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.107 2004/05/24 19:08:07 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.108 2004/06/24 04:15:51 jonathan Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2187,7 +2187,7 @@ nfsrv_getstream(slp, waitflag)
 				slp->ns_flag &= ~SLP_GETSTREAM;
 				return (EWOULDBLOCK);
 			}
-			m_claim(recm, &nfs_mowner);
+			m_claimm(recm, &nfs_mowner);
 			slp->ns_raw = m;
 			if (m->m_next == NULL)
 				slp->ns_rawend = m;
