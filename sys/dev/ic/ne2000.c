@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.9 1998/01/29 00:59:33 thorpej Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.10 1998/02/03 04:26:45 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -69,6 +69,12 @@
 #include <net/if_ether.h>
 
 #include <machine/bus.h>
+
+#ifndef __BUS_SPACE_NEED_STREAM_METHODS
+#define	bus_space_write_stream_2	bus_space_write_2
+#define	bus_space_write_multi_stream_2	bus_space_write_multi_2
+#define	bus_space_read_multi_stream_2	bus_space_read_multi_2
+#endif /* __BUS_SPACE_NEED_STREAM_METHODS */
 
 #include <dev/ic/dp8390reg.h>
 #include <dev/ic/dp8390var.h>
@@ -463,7 +469,7 @@ ne2000_write_mbuf(sc, m, buf)
 			/* Finish the last word. */
 			if (wantbyte) {
 				savebyte[1] = *data;
-				bus_space_write_2(asict, asich,
+				bus_space_write_stream_2(asict, asich,
 				    NE2000_ASIC_DATA, *(u_int16_t *)savebyte);
 				data++;
 				l--;
@@ -487,7 +493,7 @@ ne2000_write_mbuf(sc, m, buf)
 
 			/* Output contiguous words. */
 			if (l > 1) {
-				bus_space_write_multi_2(asict, asich,
+				bus_space_write_multi_stream_2(asict, asich,
 				    NE2000_ASIC_DATA, (u_int16_t *)data,
 				    l >> 1);
 			}
@@ -504,7 +510,7 @@ ne2000_write_mbuf(sc, m, buf)
 
 		if (wantbyte) {
 			savebyte[1] = 0;
-			bus_space_write_2(asict, asich, NE2000_ASIC_DATA,
+			bus_space_write_stream_2(asict, asich, NE2000_ASIC_DATA,
 			    *(u_int16_t *)savebyte);
 		}
 	}
@@ -630,7 +636,7 @@ ne2000_readmem(nict, nich, asict, asich, src, dst, amount, useword)
 	    ED_CR_RD0 | ED_CR_PAGE_0 | ED_CR_STA);
 
 	if (useword)
-		bus_space_read_multi_2(asict, asich, NE2000_ASIC_DATA,
+		bus_space_read_multi_stream_2(asict, asich, NE2000_ASIC_DATA,
 		    (u_int16_t *)dst, amount >> 1);
 	else
 		bus_space_read_multi_1(asict, asich, NE2000_ASIC_DATA,
@@ -674,7 +680,7 @@ ne2000_writemem(nict, nich, asict, asich, src, dst, len, useword)
 	    ED_CR_RD1 | ED_CR_PAGE_0 | ED_CR_STA);
 
 	if (useword)
-		bus_space_write_multi_2(asict, asich, NE2000_ASIC_DATA,
+		bus_space_write_multi_stream_2(asict, asich, NE2000_ASIC_DATA,
 		    (u_int16_t *)src, len >> 1);
 	else
 		bus_space_write_multi_1(asict, asich, NE2000_ASIC_DATA,
