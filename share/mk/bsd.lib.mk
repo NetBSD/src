@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.140 1998/09/28 08:13:38 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.141 1998/10/07 17:49:15 wrstuden Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -245,7 +245,7 @@ LLIBS?=		-lc
 llib-l${LIB}.ln: ${LOBJS}
 	@echo building llib-l${LIB}.ln
 	@rm -f llib-l${LIB}.ln
-	@${LINT} -C${LIB} ${LOBJS} ${LLIBS}
+	@${LINT} -C${LIB} ${.ALLSRC} ${LLIBS}
 
 cleanlib:
 	rm -f a.out [Ee]rrs mklog core *.core ${CLEANFILES}
