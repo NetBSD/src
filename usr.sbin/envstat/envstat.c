@@ -1,4 +1,4 @@
-/*	$NetBSD: envstat.c,v 1.7 2003/01/01 12:14:21 augustss Exp $ */
+/*	$NetBSD: envstat.c,v 1.8 2003/01/01 12:16:40 augustss Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.7 2003/01/01 12:14:21 augustss Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.8 2003/01/01 12:16:40 augustss Exp $");
 #endif
 
 #include <fcntl.h>
@@ -47,13 +47,12 @@ __RCSID("$NetBSD: envstat.c,v 1.7 2003/01/01 12:14:21 augustss Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <err.h>
+#include <paths.h>
 
 #include <sys/envsys.h>
 #include <sys/ioctl.h>
 
 const char E_CANTENUM[] = "cannot enumerate sensors";
-
-#define	_PATH_SYSMON	"/dev/sysmon"
 
 int main(int, char **);
 void listsensors(envsys_basic_info_t *, int);
