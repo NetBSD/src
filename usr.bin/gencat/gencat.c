@@ -1,4 +1,4 @@
-/*	$NetBSD: gencat.c,v 1.7 1997/10/19 02:12:40 lukem Exp $	*/
+/*	$NetBSD: gencat.c,v 1.8 1998/04/28 15:28:49 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gencat.c,v 1.7 1997/10/19 02:12:40 lukem Exp $");
+__RCSID("$NetBSD: gencat.c,v 1.8 1998/04/28 15:28:49 mjacob Exp $");
 #endif
 
 /***********************************************************
@@ -346,7 +346,7 @@ getmsg(fd, cptr, quote)
 			char   *tmp;
 			tmp = cptr + 1;
 			if (*tmp && (!isspace(*tmp) || *wskip(tmp))) {
-				warning(cptr, "unexpected quote character, ignoreing");
+				warning(cptr, "unexpected quote character, ignoring");
 				*tptr++ = *cptr++;
 			} else {
 				*cptr = '\0';
@@ -393,7 +393,9 @@ getmsg(fd, cptr, quote)
 					++cptr;
 					break;
 				default:
-					if (isdigit(*cptr)) {
+					if (quote && *cptr == quote) {
+						*tptr++ = *cptr++;
+					} else if (isdigit(*cptr)) {
 						*tptr = 0;
 						for (i = 0; i < 3; ++i) {
 							if (!isdigit(*cptr))
@@ -407,6 +409,7 @@ getmsg(fd, cptr, quote)
 					} else {
 						warning(cptr, "unrecognized escape sequence");
 					}
+					break;
 				}
 			} else {
 				*tptr++ = *cptr++;
@@ -461,15 +464,32 @@ MCParse(fd)
 				}
 			}
 		} else {
+			/*
+			 * First check for (and eat) empty lines....
+			 */
+			if (!*cptr)
+				continue;
+			/*
+			 * We have a digit? Start of a message. Else,
+			 * syntax error.
+			 */
 			if (isdigit(*cptr)) {
 				msgid = atoi(cptr);
 				cptr = cskip(cptr);
 				cptr = wskip(cptr);
 				/* if (*cptr) ++cptr; */
+			} else {
+				warning(cptr, "neither blank line nor start of a message id");
+				continue;
 			}
-			if (!*cptr)
+			/*
+			 * If we have a message ID, but no message,
+			 * then this means "delete this message id
+			 * from the catalog".
+			 */
+			if (!*cptr) {
 				MCDelMsg(msgid);
-			else {
+			} else {
 				str = getmsg(fd, cptr, quote);
 				MCAddMsg(msgid, str);
 			}
