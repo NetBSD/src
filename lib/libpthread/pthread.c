@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.4 2003/01/19 16:03:50 christos Exp $	*/
+/*	$NetBSD: pthread.c,v 1.5 2003/01/19 21:58:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,6 +80,8 @@ struct pthread_queue_t pthread__runqueue;
 struct pthread_queue_t pthread__idlequeue;
 
 __strong_alias(__libc_thr_self,pthread_self)
+__strong_alias(__libc_thr_create,pthread_create)
+__strong_alias(__libc_thr_exit,pthread_exit)
 __strong_alias(__libc_thr_errno,pthread__errno)
 
 /*

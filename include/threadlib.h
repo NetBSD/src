@@ -1,4 +1,4 @@
-/*	$NetBSD: threadlib.h,v 1.3 2003/01/19 21:06:02 thorpej Exp $	*/
+/*	$NetBSD: threadlib.h,v 1.4 2003/01/19 21:58:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2003 The NetBSD Foundation, Inc.
@@ -71,6 +71,8 @@
 #define	thread_key_t		pthread_key_t
 
 #define	thr_t			pthread_t
+
+#define	thrattr_t		pthread_attr_t
 
 #define	once_t			pthread_once_t
 #define	ONCE_INITIALIZER	PTHREAD_ONCE_INIT
@@ -149,6 +151,10 @@ __BEGIN_DECLS
 int	__libc_thr_once(once_t *, void (*)(void));
 int	__libc_thr_sigsetmask(int, const sigset_t *, sigset_t *);
 thr_t	__libc_thr_self(void);
+void	__libc_thr_yield(void);
+void	__libc_thr_create(thr_t *, const thrattr_t *,
+	    void *(*)(void *), void *);
+void	__libc_thr_exit(void *) __attribute__((__noreturn__));
 int	*__libc_thr_errno(void);
 
 extern int __isthreaded;
@@ -157,6 +163,9 @@ __END_DECLS
 #define	thr_once(o, f)		__libc_thr_once((o), (f))
 #define	thr_sigsetmask(f, n, o)	__libc_thr_sigsetmask((f), (n), (o))
 #define	thr_self()		__libc_thr_self()
+#define	thr_yield()		__libc_thr_yield()
+#define	thr_create(tp, ta, f, a) __libc_thr_create((tp), (ta), (f), (a))
+#define	thr_exit(v)		__libc_thr_exit((v))
 #define	thr_errno()		__libc_thr_errno()
 #define	thr_enabled()		(__isthreaded)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.2 2003/01/18 10:34:16 thorpej Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.3 2003/01/19 21:58:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@ extern struct pthread_queue_t pthread__idlequeue;
 extern pthread_spin_t pthread__deadqueue_lock;
 extern struct pthread_queue_t pthread__reidlequeue;
 
+__strong_alias(__libc_thr_yield,sched_yield)
 
 int
 sched_yield(void)
