@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.13 1998/10/09 09:35:40 agc Exp $ */
+/* $NetBSD: lib.h,v 1.14 1998/10/09 18:27:35 agc Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -80,7 +80,8 @@
 /* The name of the "prefix" environment variable given to scripts */
 #define PKG_PREFIX_VNAME	"PKG_PREFIX"
 
-typedef enum _plist_t {
+/* enumerated constants for plist entry types */
+typedef enum pl_ent_t {
 	PLIST_SHOW_ALL = -1,
 	PLIST_FILE,
 	PLIST_CWD,
@@ -100,25 +101,30 @@ typedef enum _plist_t {
 	PLIST_IGNORE_INST,
 	PLIST_OPTION,
 	PLIST_PKGCFL
-} plist_t;
+} pl_ent_t;
 
 /* Types */
 typedef unsigned int Boolean;
 
-struct _plist {
-    struct _plist *prev;
-    struct _plist *next;
-    char *name;
-    Boolean marked;
-    plist_t type;
-};
-typedef struct _plist *PackingList;
+/* this structure describes a packing list entry */
+typedef struct plist_t {
+	struct plist_t	*prev;		/* previous entry */
+	struct plist_t	*next;		/* next entry */
+	char		*name;		/* name of entry */
+	Boolean		marked;		/* whether entry has been marked */
+	pl_ent_t	type;		/* type of entry */
+} plist_t;
 
-struct _pack {
-    struct _plist *head;
-    struct _plist *tail;
+/* this structure describes a package's complete packing list */
+typedef struct package_t {
+	plist_t		*head;		/* head of list */
+	plist_t		*tail;		/* tail of list */
+} package_t;
+
+enum {
+	ChecksumLen = 16,
+	LegibleChecksumLen = 33
 };
-typedef struct _pack Package;
 
 /* type of function to be handed to findmatchingname; return value of this
  * is currently ignored */
@@ -174,21 +180,21 @@ int		unpack(char *, char *);
 void		format_cmd(char *, size_t , char *, char *, char *);
 
 /* Packing list */
-PackingList	new_plist_entry(void);
-PackingList	last_plist(Package *);
-PackingList	find_plist(Package *, plist_t);
-char		*find_plist_option(Package *, char *name);
-void		plist_delete(Package *, Boolean, plist_t, char *);
-void		free_plist(Package *);
-void		mark_plist(Package *);
-void		csum_plist_entry(char *, PackingList);
-void		add_plist(Package *, plist_t, char *);
-void		add_plist_top(Package *, plist_t, char *);
-void		delete_plist(Package *pkg, Boolean all, plist_t type, char *name);
-void		write_plist(Package *, FILE *);
-void		read_plist(Package *, FILE *);
+plist_t		*new_plist_entry(void);
+plist_t		*last_plist(package_t *);
+plist_t		*find_plist(package_t *, pl_ent_t);
+char		*find_plist_option(package_t *, char *name);
+void		plist_delete(package_t *, Boolean, pl_ent_t, char *);
+void		free_plist(package_t *);
+void		mark_plist(package_t *);
+void		csum_plist_entry(char *, plist_t *);
+void		add_plist(package_t *, pl_ent_t, char *);
+void		add_plist_top(package_t *, pl_ent_t, char *);
+void		delete_plist(package_t *pkg, Boolean all, pl_ent_t type, char *name);
+void		write_plist(package_t *, FILE *);
+void		read_plist(package_t *, FILE *);
 int		plist_cmd(char *, char **);
-int		delete_package(Boolean, Boolean, Package *);
+int		delete_package(Boolean, Boolean, package_t *);
 
 /* For all */
 int		pkg_perform(char **);

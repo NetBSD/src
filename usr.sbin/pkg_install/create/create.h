@@ -1,4 +1,4 @@
-/* $NetBSD: create.h,v 1.6 1998/10/08 12:57:59 agc Exp $ */
+/* $NetBSD: create.h,v 1.7 1998/10/09 18:27:33 agc Exp $ */
 
 /* from FreeBSD Id: create.h,v 1.13 1997/10/08 07:46:19 charnier Exp */
 
@@ -43,8 +43,8 @@ extern size_t	PlayPenSize;
 extern int	Dereference;
 extern int	PlistOnly;
 
-void		check_list(char *, Package *);
+void		check_list(char *, package_t *);
 int		pkg_perform(char **);
-void		copy_plist(char *, Package *);
+void		copy_plist(char *, package_t *);
 
 #endif	/* _INST_CREATE_H_INCLUDE */
