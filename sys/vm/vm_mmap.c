@@ -38,7 +38,7 @@
  * from: Utah $Hdr: vm_mmap.c 1.3 90/01/21$
  *
  *	from: @(#)vm_mmap.c	7.5 (Berkeley) 6/28/91
- *	$Id: vm_mmap.c,v 1.7 1993/05/20 03:59:33 cgd Exp $
+ *	$Id: vm_mmap.c,v 1.8 1993/07/07 11:25:32 cgd Exp $
  */
 
 /*
@@ -193,8 +193,6 @@ smmap(p, uap, retval)
 		    ((flags & MAP_SHARED) &&
 		     (uap->prot & PROT_WRITE) && (fp->f_flag & FWRITE) == 0))
 			return(EACCES);
-		if ((flags & MAP_SHARED) && (fp->f_flag & FWRITE) == 0)
-			flags = (flags & ~MAP_SHARED) | MAP_PRIVATE;
 		handle = (caddr_t)vp;
 		/*
 		 * Map protections to MACH style
