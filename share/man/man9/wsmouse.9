@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsmouse.9,v 1.8 2003/04/16 13:35:36 wiz Exp $
+.\"     $NetBSD: wsmouse.9,v 1.9 2004/06/05 15:24:04 rumble Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -93,7 +93,7 @@ There is a
 .Fa void *
 cookie provided by the mouse driver associated with these functions,
 which is passed to them when they are invoked.
-.It Fa struct wsmouse_attach_args
+.It Fa struct wsmousedev_attach_args
 A structure used to attach the
 .Xr wsmouse 4
 child device.
@@ -146,7 +146,7 @@ device and provide an attachment interface.
 To attach the
 .Xr wsmouse 4
 device, the mouse driver must allocate and populate a
-.Fa wsmouse_attach_args
+.Fa wsmousedev_attach_args
 structure with the supported operations and callbacks and call
 .Fn config_found
 to perform the attach (see
