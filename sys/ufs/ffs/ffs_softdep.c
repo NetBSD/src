@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.18 2001/10/26 05:56:08 lukem Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.19 2001/10/30 01:11:53 lukem Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -31,6 +31,9 @@
  *
  * from: @(#)ffs_softdep.c 9.56 (McKusick) 1/17/00
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.19 2001/10/30 01:11:53 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

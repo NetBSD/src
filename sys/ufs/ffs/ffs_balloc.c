@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.27 2001/09/30 02:54:42 chs Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.28 2001/10/30 01:11:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)ffs_balloc.c	8.8 (Berkeley) 6/16/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.28 2001/10/30 01:11:53 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"

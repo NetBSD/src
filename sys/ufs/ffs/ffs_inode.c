@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.45 2001/09/28 11:43:23 chs Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.46 2001/10/30 01:11:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)ffs_inode.c	8.13 (Berkeley) 4/21/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.46 2001/10/30 01:11:53 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
