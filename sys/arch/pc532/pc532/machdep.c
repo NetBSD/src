@@ -655,20 +655,27 @@ boot(arghowto)
 	}
 	howto = arghowto;
 printf ("boot: howto=0x%x\n", howto);
-#if 0
 	if ((howto&RB_NOSYNC) == 0 && waittime < 0 && bfreelist[0].b_forw) {
 		register struct buf *bp;
 		int iter, nbusy;
 
 		waittime = 0;
 		(void) splnet();
+		printf("syncing disks... ");
 		/*
 		 * Release inodes held by texts before update.
 		 */
 		if (panicstr == 0)
 			vnode_pager_umount(NULL);
-		sync((struct sigcontext *)0);
+		sync((struct proc *)0, (void *)0, (int *)0);
 
+		/*
+		 * Unmount filesystems
+		 */
+#if 0
+		if (panicstr == 0)
+			vfs_unmountall();
+#endif
 		for (iter = 0; iter < 20; iter++) {
 			nbusy = 0;
 			for (bp = &buf[nbuf]; --bp >= buf; )
@@ -676,20 +683,24 @@ printf ("boot: howto=0x%x\n", howto);
 					nbusy++;
 			if (nbusy == 0)
 				break;
-			if (nomsg) {
-				printf("updating disks before rebooting... ");
-				nomsg = 0;
-			}
-			/* printf("%d ", nbusy); */
+			printf("%d ", nbusy);
 			DELAY(40000 * iter);
 		}
 		if (nbusy)
-			printf(" failed!\n");
-		else if (nomsg == 0)
-			printf("succeded.\n");
+			printf("giving up\n");
+		else
+			printf("done\n");
+
+#if 0
+		/*
+		 * If we've been adjusting the clock, the todr
+		 * will be out of synch; adjust it now.
+		 */
+		resettodr();
+#endif
+
 		DELAY(10000);			/* wait for printf to finish */
 	}
-#endif	/* if 0 */
 	splhigh();
 	devtype = major(rootdev);
 
