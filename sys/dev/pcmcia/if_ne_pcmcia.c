@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.102 2003/07/26 10:41:31 martin Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.103 2003/09/02 12:43:02 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.102 2003/07/26 10:41:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.103 2003/09/02 12:43:02 ichiro Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,6 +265,11 @@ static const struct ne2000dev {
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
       PCMCIA_CIS_LINKSYS_ETHERFAST,
       0, -1, { 0x00, 0x90, 0xfe }, NE2000DVF_DL10019 },
+
+    { PCMCIA_STR_LINKSYS_ETHERFAST,
+      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
+      PCMCIA_CIS_LINKSYS_ETHERFAST,
+      0, -1, { 0x00, 0xa0, 0xb0 }, NE2000DVF_DL10019 },
 
     { PCMCIA_STR_DLINK_DE650,
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
