@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: GENERIC,v 1.45 1999/05/10 04:49:24 simonb Exp $
+# 	$NetBSD: GENERIC,v 1.46 1999/07/20 07:40:36 christos Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
@@ -79,10 +79,10 @@ options 	GATEWAY		# IP packet forwarding
 #options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking protocols
-#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
-#options 	PPP_DEFLATE	# Deflate compression support for PPP
-#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+options 	PPP_DEFLATE	# Deflate compression support for PPP
+options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 
 # NetBSD backwards compatibility

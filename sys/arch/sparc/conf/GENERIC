@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.85 1999/06/28 20:26:47 pk Exp $
+# 	$NetBSD: GENERIC,v 1.86 1999/07/20 07:40:36 christos Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -161,11 +161,11 @@ options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
-#options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
-#options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
-#options 	PPP_BSDCOMP	# Add BSD compression to ppp device
-#options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
-#options 	PPP_FILTER	# Add active filters for ppp (via bpf)
+options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
+options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
+options 	PPP_BSDCOMP	# Add BSD compression to ppp device
+options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
+options 	PPP_FILTER	# Add active filters for ppp (via bpf)
 
 
 

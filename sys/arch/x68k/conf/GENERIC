@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.34 1999/05/21 15:08:27 minoura Exp $
+#	$NetBSD: GENERIC,v 1.35 1999/07/20 07:40:37 christos Exp $
 
 #
 #	GENERIC
@@ -166,11 +166,11 @@ options 	TCP_COMPAT_42	# 4.2BSD IP implementation compatibility
 options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
-#options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
+options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
 options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
-#options 	PPP_BSDCOMP	# Add BSD compression to ppp device
-#options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
-#options 	PPP_FILTER	# Add active filters for ppp (via bpf)
+options 	PPP_BSDCOMP	# Add BSD compression to ppp device
+options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
+options 	PPP_FILTER	# Add active filters for ppp (via bpf)
 
 
 
