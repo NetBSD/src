@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.4 1999/08/23 09:23:06 kleink Exp $	*/
+/*	$NetBSD: crt0.c,v 1.5 1999/11/02 10:07:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus Klein
@@ -34,7 +34,7 @@
 
 #include "common.h"
 
-static void __start __P((int, char **, char **, void (*cleanup) __P((void)),
+void __start __P((int, char **, char **, void (*cleanup) __P((void)),
     const Obj_Entry *, struct ps_strings *));
 
 __asm("
@@ -52,7 +52,7 @@ _start:
 	jsr	__start
 ");
 
-static void
+void
 __start(argc, argv, envp, cleanup, obj, ps_strings)
 	int argc;
 	char **argv;
@@ -93,7 +93,7 @@ __start(argc, argv, envp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.4 1999/08/23 09:23:06 kleink Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.5 1999/11/02 10:07:13 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
