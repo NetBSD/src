@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $NetBSD: gen.c,v 1.16 2003/07/14 11:36:48 itojun Exp $ */
+/* $NetBSD: gen.c,v 1.17 2003/11/18 21:37:39 christos Exp $ */
 
 #include "flexdef.h"
 
@@ -1436,7 +1436,7 @@ void make_tables()
 		indent_puts( "if ( yy_act == 0 )" );
 		indent_up();
 		indent_puts( C_plus_plus ?
-			"cerr << \"--scanner backing up\\n\";" :
+			"std::cerr << \"--scanner backing up\" << std:endl;" :
 			"fprintf( stderr, \"--scanner backing up\\n\" );" );
 		indent_down();
 
@@ -1447,9 +1447,9 @@ void make_tables()
 		if ( C_plus_plus )
 			{
 			indent_puts(
-	"cerr << \"--accepting rule at line \" << yy_rule_linenum[yy_act] <<" );
+	"std::cerr << \"--accepting rule at line \" << yy_rule_linenum[yy_act] <<" );
 			indent_puts(
-			"         \"(\\\"\" << yytext << \"\\\")\\n\";" );
+			"         \"(\\\"\" << yytext << \"\\\")\" << std::endl;" );
 			}
 		else
 			{
@@ -1469,7 +1469,7 @@ void make_tables()
 		if ( C_plus_plus )
 			{
 			indent_puts(
-"cerr << \"--accepting default rule (\\\"\" << yytext << \"\\\")\\n\";" );
+"std::cerr << \"--accepting default rule (\\\"\" << yytext << \"\\\")\" << std::endl;" );
 			}
 		else
 			{
@@ -1485,7 +1485,7 @@ void make_tables()
 		indent_up();
 
 		indent_puts( C_plus_plus ?
-			"cerr << \"--(end of buffer or a NUL)\\n\";" :
+			"std::cerr << \"--(end of buffer or a NUL)\" << std::endl;" :
 		"fprintf( stderr, \"--(end of buffer or a NUL)\\n\" );" );
 
 		indent_down();
@@ -1497,7 +1497,7 @@ void make_tables()
 		if ( C_plus_plus )
 			{
 			indent_puts(
-	"cerr << \"--EOF (start condition \" << YY_START << \")\\n\";" );
+	"std::cerr << \"--EOF (start condition \" << YY_START << \")\" << std::endl;" );
 			}
 		else
 			{

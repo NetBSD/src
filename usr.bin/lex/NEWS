@@ -65,7 +65,7 @@ Changes between release 2.5.2 (25Apr95) and release 2.5.1:
 	- The .texi and .info files in MISC/texinfo/ have been updated,
 	  thanks also to Francois Pinard.
 
-	- The FlexLexer::yylex(istream* new_in, ostream* new_out) method
+	- The FlexLexer::yylex(std::istream* new_in, std::ostream* new_out) method
 	  now does not have a default for the first argument, to disambiguate
 	  it from FlexLexer::yylex().
 
@@ -371,14 +371,14 @@ Changes between release 2.5.1 (28Mar95) and release 2.4.7:
 
 	- The FlexLexer class includes two new public member functions:
 
-		virtual void switch_streams( istream* new_in = 0,
-						ostream* new_out = 0 )
+		virtual void switch_streams( std::istream* new_in = 0,
+						std::ostream* new_out = 0 )
 
 	  reassigns yyin to new_in (if non-nil) and yyout to new_out
 	  (ditto), deleting the previous input buffer if yyin is
 	  reassigned.  It is used by:
 
-		int yylex( istream* new_in = 0, ostream* new_out = 0 )
+		int yylex( std::istream* new_in = 0, std::ostream* new_out = 0 )
 
 	  which first calls switch_streams() and then returns the value
 	  of calling yylex().
