@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.61 2000/07/09 13:29:44 itojun Exp $
+.\"	$NetBSD: sysctl.3,v 1.62 2000/07/10 09:34:39 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -668,6 +668,7 @@ The currently defined protocols and names are:
 .It ip	gifttl	integer	yes
 .It icmp	errratelimit	integer	yes
 .It icmp	maskrepl	integer	yes
+.It icmp	errppslimit	integer	yes
 .It tcp	rfc1323	integer	yes
 .It tcp	sendspace	integer	yes
 .It tcp	recvspace	integer	yes
@@ -742,6 +743,11 @@ This variable specifies the minimum interval between ICMP error messages,
 in microseconds.
 .It Li icmp.maskrepl
 Returns 1 if ICMP network mask requests are to be answered.
+.It Li icmp.errppslimit
+The variable specifies the maximum number of outgoing ICMP error messages,
+per second.
+ICMP error messages that exceeded the value are subject to rate limitation
+and will not go out from the node.
 .It Li tcp.rfc1323
 Returns 1 if RFC1323 extensions to TCP are enabled.
 .It Li tcp.sendspace
@@ -999,7 +1005,7 @@ ICMPv6 node information query/reply.
 .It Li icmp6.errppslimit
 The variable specifies the maximum number of outgoing ICMPv6 error messages,
 per second.
-ICMPv6 error messages that exceeded the value is subject to rate limitation
+ICMPv6 error messages that exceeded the value are subject to rate limitation
 and will not go out from the node.
 .It Li icmp6.nd6_maxnudhint
 IPv6 neighbor discovery permits upper layer protocols to supply reachability
