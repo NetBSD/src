@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.15.2.1 2000/07/27 16:12:35 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.15.2.2 2000/10/16 23:31:30 tv Exp $	*/
 /*	$KAME: ping6.c,v 1.55 2000/06/12 16:18:32 itojun Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.15.2.1 2000/07/27 16:12:35 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.15.2.2 2000/10/16 23:31:30 tv Exp $");
 #endif
 #endif
 
@@ -285,6 +285,7 @@ main(argc, argv)
 	char *policy_in = NULL;
 	char *policy_out = NULL;
 #endif
+	size_t rthlen;
 
 	/* just to be sure */
 	memset(&smsghdr, 0, sizeof(&smsghdr));
@@ -476,11 +477,17 @@ main(argc, argv)
 	}
 
 	if (argc > 1) {
-#ifdef USE_SIN6_SCOPE_ID
-		ip6optlen += CMSG_SPACE(inet6_rth_space(IPV6_RTHDR_TYPE_0, argc - 1));
-#else  /* old advanced API */
-		ip6optlen += inet6_rthdr_space(IPV6_RTHDR_TYPE_0, argc - 1);
+#ifdef IPV6_RECVRTHDR	/* 2292bis */
+		rthlen = CMSG_SPACE(inet6_rth_space(IPV6_RTHDR_TYPE_0,
+		    argc - 1));
+#else  /* RFC2292 */
+		rthlen = inet6_rthdr_space(IPV6_RTHDR_TYPE_0, argc - 1);
 #endif
+		if (rthlen == 0) {
+			errx(1, "too many intermediate hops");
+			/*NOTREACHED*/
+		}
+		ip6optlen += rthlen;
 	}
 
 	if (options & F_NIGROUP) {
