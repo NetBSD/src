@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.11 2002/02/11 03:43:53 mrg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.12 2002/03/18 15:20:08 tv Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -26,6 +26,7 @@ MKDEP?=		mkdep
 STRIP?=		strip
 OBJCOPY?=	objcopy
 OBJDUMP?=	objdump
+.MAKEOVERRIDES+=USETOOLS	# make sure proper value is propagated
 
 ##
 ## (1) port independent source tree identification
