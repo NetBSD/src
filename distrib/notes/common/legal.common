@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.19 2001/04/07 14:41:52 jhawk Exp $
+.\"	$NetBSD: legal.common,v 1.20 2001/04/07 14:45:09 jhawk Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,16 +53,12 @@ This product includes software developed by the NetBSD Foundation, Inc.
 and its contributors.
 This product includes software developed by the Computer
 Systems Engineering Group at Lawrence Berkeley Laboratory.
-This product includes software developed by Adam Glass
-and Charles Hannum.
-This product includes software developed by Adam Glass
-and Charles M. Hannum.
+This product includes software developed by Adam Glass and Charles Hannum.
+This product includes software developed by Adam Glass and Charles M. Hannum.
 This product includes software developed by Adam Glass.
 This product includes software developed by Alistair G. Crooks.
-This product includes software developed by Amancio Hasty and
-Roger Hardiman.
-This product includes software developed by Berkeley Software
-Design, Inc.
+This product includes software developed by Amancio Hasty and Roger Hardiman.
+This product includes software developed by Berkeley Software Design, Inc.
 This product includes software developed by Bill Paul.
 This product includes software developed by Charles D. Cranor
 and Washington University.
@@ -86,8 +82,7 @@ This product includes software developed by Eric S. Hvozda.
 This product includes software developed by Ezra Story.
 This product includes software developed by Gardner Buchanan.
 This product includes software developed by Gordon Ross.
-This product includes software developed by Gordon W. Ross
-and Leo Weppelman.
+This product includes software developed by Gordon W. Ross and Leo Weppelman.
 This product includes software developed by Gordon W. Ross.
 This product includes software developed by Hauke Fath.
 This product includes software developed by HAYAKAWA Koichi.
