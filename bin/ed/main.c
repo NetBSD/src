@@ -443,7 +443,7 @@ exec_command()
 
 	static pattern_t *pat = NULL;
 	static int sgflag = 0;
-	static int sgnum = 0;
+	static long sgnum = 0;
 
 	pattern_t *tpat;
 	char *fnp;
