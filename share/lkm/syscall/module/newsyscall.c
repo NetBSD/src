@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: newsyscall.c,v 1.3 1994/12/24 13:26:51 cgd Exp $
+ *	$NetBSD: newsyscall.c,v 1.4 1997/10/13 11:20:45 lukem Exp $
  */
 #include <sys/param.h>
 #include <sys/ioctl.h>

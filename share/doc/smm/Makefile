@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$Id: Makefile,v 1.11 1997/03/24 21:57:03 christos Exp $
+#	$NetBSD: Makefile,v 1.12 1997/10/13 11:19:54 lukem Exp $
 
 # The following modules do not build/install:
 # 10.named, 13.amd
