@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.3.2.1 1999/03/05 08:24:24 scottr Exp $	*/
+/*	$NetBSD: akbd.c,v 1.3.2.2 1999/03/08 02:06:13 scottr Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -489,6 +489,13 @@ akbd_ioctl(v, cmd, data, flag, p)
 	case WSKBDIO_GETLEDS:
 		*(int *)data = 0;
 		return 0;
+	case WSKBDIO_BELL:
+	case WSKBDIO_COMPLEXBELL:
+#define d ((struct wskbd_bell_data *)data)
+		mac68k_ring_bell(d->pitch, d->period * HZ / 1000, 100);
+		/* comes in as msec, goes out as ticks; volume ignored */
+#undef d
+		return (0);
 	}
 	/* kbdioctl(...); */
 
