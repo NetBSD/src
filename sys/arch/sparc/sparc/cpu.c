@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.99 2000/05/31 05:28:28 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.100 2000/05/31 11:23:21 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -124,7 +124,7 @@ alloc_cpuinfo_global_va(ismaster, sizep)
 	vsize_t *sizep;
 {
 	int align;
-	vaddr_t sva, va
+	vaddr_t sva, va;
 	vsize_t sz, esz;
 
 	/*
