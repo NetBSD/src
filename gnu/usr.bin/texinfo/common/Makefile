@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2002/09/19 03:09:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2003/01/17 15:32:23 wiz Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -13,7 +13,7 @@ CPPFLAGS+=	-DGNULOCALEDIR=\"/usr/share/locale\" \
 
 .include <bsd.lib.mk>
 
-.PATH: ${DIST}/texinfo/lib ${DIST}/texinfo/po
+.PATH: ${IDIST}/lib ${IDIST}/po
 
 all: ${FILES}
 .SUFFIXES: .gmo .mo

@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.7 2002/12/23 06:52:50 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2003/01/17 15:32:24 wiz Exp $
 
 PROG=		install-info
 SRCS=		install-info.c
 
 .include <bsd.prog.mk>
 
-.PATH: ${DIST}/texinfo/util ${DIST}/texinfo/doc
+.PATH: ${IDIST}/util ${IDIST}/doc
 
 infodir-meta:
 .if defined(UNPRIVED) && (${MKINFO} != "no")
