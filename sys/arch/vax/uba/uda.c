@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.11 1996/02/02 18:08:42 mycroft Exp $	*/
+/*	$NetBSD: uda.c,v 1.12 1996/02/11 13:22:30 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -677,7 +677,7 @@ udainit(ctlr)
 	int ctlr;
 {
 	register struct uda_softc *sc;
-	register struct udadevice *udaddr;
+	volatile struct udadevice *udaddr;
 	struct uba_ctlr *um;
 	int timo, ubinfo, count, i, wait_status;
 	unsigned short hej;
@@ -2098,7 +2098,7 @@ udadump(dev)
  * comes on, or ten seconds pass without response, return true (error).
  */
 udadumpwait(udaddr, bits)
-	register struct udadevice *udaddr;
+	volatile struct udadevice *udaddr;
 	register int bits;
 {
 	register int timo = todr() + 1000;
