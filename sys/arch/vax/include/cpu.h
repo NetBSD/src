@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.47 2000/05/27 16:33:04 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.48 2000/05/29 20:00:56 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -94,52 +94,26 @@ struct cpu_info {
 	u_long ci_simple_locks;         /* # of simple locks held */
 #endif
 
-#if defined(MULTIPROCESSOR)
 	struct proc *ci_curproc;        /* current owner of the processor */
-#endif
 
 	/*
 	 * Private members.
 	 */
-#if defined(MULTIPROCESSOR)
-	int	ci_want_resched;	/* Should change process */
-#endif
+	int ci_want_resched;		/* Should change process */
+	int ci_cpunumber;		/* Some numeric identifier */
+	long ci_exit;			/* Page to use while exiting */
 };
 
-#if defined(MULTIPROCESSOR)
-
-/*
- * VAX internal CPU numbering is not sequential; therefore have a separate
- * function call that returns the cpu_info struct for this CPU.
- *
- * For the master CPU (or only) this struct is allocated early in startup;
- * for other CPUs it is allocated when the CPU is found.
- */
-extern	int (*vax_cpu_number)(void);
-extern	struct cpu_info *(*vax_curcpu)(void);
-
-#define	cpu_number()		(*vax_cpu_number)()
-#define	curcpu()		(*vax_curcpu)()
+#define	curcpu() ((struct cpu_info *)mfpr(PR_SSP))
+#define	curproc	(curcpu()->ci_curproc)
+#define	cpu_number() (curcpu()->ci_cpunumber)
 #define	need_resched() {curcpu()->ci_want_resched++; mtpr(AST_OK,PR_ASTLVL); }
-#define	cpu_boot_secondary_processors()
-
-#else /* MULTIPROCESSOR */
-
-extern	int     want_resched;   /* resched() was called */
-extern	struct cpu_info cpu_info_store;
-
-#define	curcpu()		(&cpu_info_store)
-#define	cpu_number()		0
-#define need_resched() { want_resched++; mtpr(AST_OK,PR_ASTLVL); }
-
-#endif /* MULTIPROCESSOR */
 
 extern struct device *booted_from;
 extern int mastercpu;
 
 #define	setsoftnet()	mtpr(12,PR_SIRR)
 #define setsoftclock()	mtpr(8,PR_SIRR)
-#define	todr()		mfpr(PR_TODR)
 
 /*
  * Notify the current process (p) that it has a signal pending,

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.41 2000/05/27 20:02:58 ragge Exp $	   */
+/*	$NetBSD: subr.s,v 1.42 2000/05/29 20:00:55 ragge Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -65,6 +65,8 @@ to:	movw	$0xfff,_panic			# Save all regs in panic
 	addl3	$USPACE,_proc0paddr,r0		# Get kernel stack top
 	mtpr	r0,$PR_KSP			# put in IPR KSP
 	movl	r0,_Sysmap			# SPT start addr after KSP
+	movab	IFTRAP(r0),4(r0)		# Save trap address in ESP
+	mtpr	4(r0),$PR_ESP			# Put it in ESP also
 
 # Set some registers in known state
 	movl	_proc0paddr,r0
@@ -260,14 +262,8 @@ idle:	mtpr	$0,$PR_IPL		# Enable all types of interrupts
 #
 
 JSBENTRY(Swtch)
-#if defined(MULTIPROCESSOR)
-	pushl	r0
-	calls	$0,*_vax_curcpu		# Get ptr to this cpu_info struct
-	clrl	CI_CURPROC(r0)		# Stop process accounting
-	movl	(sp)+,r0
-#else
-	clrl	_curproc		# Stop process accounting
-#endif
+	mfpr	$PR_SSP,r1		# Get ptr to this cpu_info struct
+	clrl	CI_CURPROC(r1)		# Stop process accounting
 	mtpr	$0x1f,$PR_IPL		# block all interrupts
 	ffs	$0,$32,_sched_whichqs,r3	# Search for bit set
 	beql	idle			# no bit set, go to idle loop
@@ -284,16 +280,9 @@ noque:	.asciz	"swtch"
 	bbsc	r3,_sched_whichqs,2f		# no, clear bit in whichqs
 2:	clrl	4(r2)			# clear proc backpointer
 	movb	$SONPROC,P_STAT(r2)	# p->p_stat = SONPROC;
-#if defined(MULTIPROCESSOR)
-	pushl	r0
-	calls	$0,*_vax_curcpu		# Get ptr to this cpu_info struct
-	movl	r2,CI_CURPROC(r0)	# set new process running
-	clrl	CI_WANT_RESCHED(r0)	# we are now changing process
-	movl	(sp)+,r0
-#else
-	movl	r2,_curproc		# set new process running
-	clrl	_want_resched		# we are now changing process
-#endif
+	mfpr	$PR_SSP,r1		# Get ptr to this cpu_info struct
+	movl	r2,CI_CURPROC(r1)	# set new process running
+	clrl	CI_WANT_RESCHED(r1)	# we are now changing process
 	cmpl	r0,r2			# Same process?
 	bneq	1f			# No, continue
 	rsb
@@ -301,6 +290,8 @@ noque:	.asciz	"swtch"
 	addl3	r0,$IFTRAP,r1		# Save for copy* functions.
 	mtpr	r1,$PR_ESP		# Use ESP as CPU-specific pointer
 	movl	r1,4(r0)		# Must save in PCB also.
+	mfpr	$PR_SSP,r1		# New process must inherit cpu_info
+	movl	r1,8(r0)		# Put it in new PCB
 
 #
 # Nice routine to get physical from virtual adresses.
@@ -324,16 +315,16 @@ noque:	.asciz	"swtch"
 ENTRY(cpu_exit,0)
 	movl	4(ap),r6	# Process pointer in r6
 	mtpr	$0x18,$PR_IPL	# Block almost everything
-	addl3	$512,_scratch,sp # Change stack, and schedule it to be freed
-
-	pushl	r6		# exit2(p)
-	calls	$1,_exit2
-
-	clrl	r0		# No process to switch from
-	bicl3	$0xc0000000,_scratch,r1
-	mtpr	r1,$PR_PCBB
+	mfpr	$PR_SSP,r7	# get cpu_info ptr
+	movl	CI_EXIT(r7),r8	# scratch page address
+	movab	512(r8),sp	# change stack
+	bicl2	$0xc0000000,r8	# get physical address
+	mtpr	r8,$PR_PCBB	# new PCB
+	mtpr	r7,$PR_SSP	# In case...
+	pushl	r6
+	calls	$1,_exit2	# release last resources.
+	clrl	r0
 	brw	Swtch
-
 
 #
 # copy/fetch/store routines. 
