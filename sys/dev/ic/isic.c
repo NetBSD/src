@@ -27,14 +27,14 @@
  *	i4b_isic.c - global isic stuff
  *	==============================
  *
- *	$Id: isic.c,v 1.13 2002/04/06 21:46:51 martin Exp $ 
+ *	$Id: isic.c,v 1.14 2002/04/08 12:20:49 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.13 2002/04/06 21:46:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.14 2002/04/08 12:20:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ioccom.h>
@@ -90,8 +90,15 @@ isicintr(void *arg)
 {
 	struct isic_softc *sc = arg;
 
-	if (sc->sc_dying)
+	/* could this be an interrupt for us? */
+	if (sc->sc_intr_valid != ISIC_INTR_VALID) {
+		/* just in case - clear it, or we might never get interrupted
+		 * again */
+		if (sc->sc_intr_valid == ISIC_INTR_DISABLED &&
+		    sc->clearirq)
+			sc->clearirq(sc);
 		return 0;
+	}
 
 	if(sc->sc_ipac == 0)	/* HSCX/ISAC interupt routine */
 	{

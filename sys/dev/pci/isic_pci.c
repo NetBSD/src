@@ -33,7 +33,7 @@
  *	isic_pci.c - pci bus frontend for i4b_isic driver
  *	----------------------------------------------------
  *
- *	$Id: isic_pci.c,v 1.10 2002/03/30 19:13:45 martin Exp $ 
+ *	$Id: isic_pci.c,v 1.11 2002/04/08 12:20:50 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.10 2002/03/30 19:13:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.11 2002/04/08 12:20:50 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -368,7 +368,7 @@ isic_pci_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		psc->sc_isic.sc_dying = 1;
+		psc->sc_isic.sc_intr_valid = ISIC_INTR_DYING;
 		isic_detach_bri(&psc->sc_isic);
 		break;
 	}
