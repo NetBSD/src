@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.6 1999/03/29 11:09:04 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.7 1999/03/30 14:46:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -26,6 +26,10 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ */
+
+/*
+ * XXX this is slightly icky in places...
  */
 
 #include <sys/types.h>
@@ -274,7 +278,6 @@ decode_int(arg, intp)
 	errx(1, "argument `%s' not a valid integer", arg);
 }
 
-#include <stdio.h>
 void
 decode_time(arg, tvp)
 	const char *arg;
