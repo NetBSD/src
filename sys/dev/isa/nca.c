@@ -1,4 +1,4 @@
-/*	$NetBSD: nca.c,v 1.2 1998/10/25 23:48:30 scottr Exp $	*/
+/*	$NetBSD: nca.c,v 1.3 1998/11/19 21:53:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c)  1998 The NetBSD Foundation, Inc.
@@ -91,12 +91,6 @@ int	nca_test __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
 
 struct cfattach nca_ca = {
 	sizeof(struct nca_softc), nca_match, nca_attach
-};
-
-struct scsipi_adapter nca_switch = {
-	ncr5380_scsi_cmd,
-	minphys,		/* no special minphys */
-	NULL,
 };
 
 struct scsipi_device nca_dev = {
@@ -421,6 +415,12 @@ nca_attach(parent, self, aux)
 	sc->sc_min_dma_len = MIN_DMA_LEN;
 
 	/*
+	 * Fill in the adapter.
+	 */
+	sc->sc_adapter.scsipi_cmd = ncr5380_scsi_cmd;
+	sc->sc_adapter.scsipi_minphys = minphys;
+
+	/*
 	 * Fill in the prototype scsi_link.
 	 */
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
@@ -428,7 +428,7 @@ nca_attach(parent, self, aux)
 	sc->sc_link.scsipi_scsi.max_target = 7;
 	sc->sc_link.type = BUS_SCSI;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter = &nca_switch;
+	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &nca_dev;
 	sc->sc_link.openings = 1;
 
