@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.h,v 1.8 2000/05/26 02:34:01 simonb Exp $	*/
+/*	$NetBSD: kvm.h,v 1.9 2000/06/26 06:12:43 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -50,7 +50,7 @@
 #define KVM_NO_FILES	0x80000000
 
 #include <nlist.h>
-#include <sys/cdefs.h>
+#include <sys/types.h>
 #include <stdio.h>
 
 __BEGIN_DECLS
