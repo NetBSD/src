@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.17 1994/12/28 21:34:23 mycroft Exp $
+#	$NetBSD: bsd.man.mk,v 1.18 1994/12/28 21:46:29 mycroft Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
 .if !target(.MAIN)
@@ -26,9 +26,9 @@ maninstall:
 .if defined(MANALL)
 	@for page in ${MANALL}; do \
 		dir=${DESTDIR}${MANDIR}`expr $$page : '.*\.cat\([1-8]\)'`; \
-		instpage=`expr $$page : '\(.*\)\.cat[1-8]'`.0; \
-		echo ${MINSTALL} $$page $$dir/$$instpage; \
-		${MINSTALL} $$page $$dir/$$instpage; \
+		instpage=$${dir}${MANSUBDIR}/`expr $$page : '\(.*\)\.cat[1-8]'`.0; \
+		echo ${MINSTALL} $$page $$instpage; \
+		${MINSTALL} $$page $$instpage; \
 	done
 .endif
 .if defined(MLINKS) && !empty(MLINKS)
