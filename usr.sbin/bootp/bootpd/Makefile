@@ -1,7 +1,6 @@
 # bootpd/Makefile
-# $NetBSD: Makefile,v 1.4 1997/10/25 06:57:55 lukem Exp $
+# $NetBSD: Makefile,v 1.5 1998/03/14 04:39:53 lukem Exp $
 
-WARNS?=	0
 PROG=	bootpd
 CPPFLAGS+= -DETC_ETHERS -DSYSLOG -DDEBUG -DVEND_CMU
 

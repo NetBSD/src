@@ -1,4 +1,9 @@
-/*	$NetBSD: trygetea.c,v 1.2 1998/01/09 08:09:16 perry Exp $	*/
+/*	$NetBSD: trygetea.c,v 1.3 1998/03/14 04:39:55 lukem Exp $	*/
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: trygetea.c,v 1.3 1998/03/14 04:39:55 lukem Exp $");
+#endif
 
 /*
  * trygetea.c - test program for getether.c
