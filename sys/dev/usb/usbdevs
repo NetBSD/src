@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.318 2003/05/06 02:05:43 rafal Exp $
+$NetBSD: usbdevs,v 1.319 2003/05/07 16:56:34 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -345,6 +345,8 @@ vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
 vendor PLX		0x10b5	PLX
 vendor ASANTE		0x10bd	Asante
+vendor JRC		0x1145	Japan Radio Company
+vendor ACERCM		0x1189	Acer Communications & Multimedia
 vendor BELKIN2		0x1293	Belkin Components
 vendor MOBILITY		0x1342	Mobility
 vendor SHARK		0x13d2	Shark
@@ -828,6 +830,9 @@ product	IODATA2 USB2SC		0x0a09	USB2.0-SCSI Bridge USB2-SC
 product IOMEGA ZIP100		0x0001	Zip 100
 product IOMEGA ZIP250		0x0030	Zip 250
 
+/* JRC products */
+product JRC AH_J3001V_J3002V	0x0001	AirPHONE AH-J3001V/J3002V
+
 /* Jaton products */
 product JATON EDA		0x5704	Ethernet Device Adapter
 
@@ -1222,6 +1227,7 @@ product SANDISK SDDR31		0x0002	ImageMate SDDR-31
 product SANDISK SDDR05		0x0005	ImageMate SDDR-05
 product SANDISK SDDR12		0x0100	ImageMate SDDR-12
 product SANDISK SDDR09		0x0200	ImageMate SDDR-09
+product SANDISK SDDR75		0x0810	ImageMate SDDR-75
 
 /* Sanwa Supply products */
 product SANWASUPPLY JYDV9USB	0x9806	JY-DV9USB gamepad
