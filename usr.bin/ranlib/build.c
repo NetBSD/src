@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)build.c	5.3 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$Id: build.c,v 1.3 1994/03/03 10:20:06 pk Exp $";
+static char rcsid[] = "$Id: build.c,v 1.4 1994/03/31 11:12:40 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -238,7 +238,7 @@ symobj()
 	/* Put out the ranlib archive file header. */
 #define	DEFMODE	(S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH)
 	(void)sprintf(hb, HDR2, RANLIBMAG, 0L, getuid(), getgid(),
-	    DEFMODE & ~umask(0), ransize, ARFMAG);
+	    DEFMODE & ~umask(0), (off_t)ransize, ARFMAG);
 	if (!fwrite(hb, sizeof(struct ar_hdr), 1, fp))
 		error(tname);
 
