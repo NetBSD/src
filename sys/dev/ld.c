@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.23 2003/06/07 23:37:24 thorpej Exp $	*/
+/*	$NetBSD: ld.c,v 1.24 2003/06/13 02:32:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.23 2003/06/07 23:37:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.24 2003/06/13 02:32:27 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -157,25 +157,19 @@ ldattach(struct ld_softc *sc)
 int
 ldadjqparam(struct ld_softc *sc, int max)
 {
-	int s, rv;
+	int s;
 
 	s = splbio();
 	sc->sc_maxqueuecnt = max;
-	if (sc->sc_queuecnt > max) {
-		sc->sc_flags |= LDF_DRAIN;
-		rv = tsleep(&sc->sc_queuecnt, PRIBIO, "lddrn", 30 * hz);
-		sc->sc_flags &= ~LDF_DRAIN;
-	} else
-		rv = 0;
 	splx(s);
 
-	return (rv);
+	return (0);
 }
 
 int
 ldbegindetach(struct ld_softc *sc, int flags)
 {
-	int s, rv;
+	int s, rv = 0;
 
 	if ((sc->sc_flags & LDF_ENABLED) == 0)
 		return (0);
@@ -184,8 +178,14 @@ ldbegindetach(struct ld_softc *sc, int flags)
 		return (EBUSY);
 
 	s = splbio();
+	sc->sc_maxqueuecnt = 0;
 	sc->sc_flags |= LDF_DETACH;
-	rv = ldadjqparam(sc, 0);
+	while (sc->sc_queuecnt > 0) {
+		sc->sc_flags |= LDF_DRAIN;
+		rv = tsleep(&sc->sc_queuecnt, PRIBIO, "lddrn", 0);
+		if (rv)
+			break;
+	}
 	splx(s);
 
 	return (rv);
@@ -235,11 +235,18 @@ ldenddetach(struct ld_softc *sc)
 	rnd_detach_source(&sc->sc_rnd_source);
 #endif
 
+	/*
+	 * XXX We can't really flush the cache here, beceause the
+	 * XXX device may already be non-existent from the controller's
+	 * XXX perspective.
+	 */
+#if 0
 	/* Flush the device's cache. */
 	if (sc->sc_flush != NULL)
 		if ((*sc->sc_flush)(sc) != 0)
 			printf("%s: unable to flush cache\n",
 			    sc->sc_dv.dv_xname);
+#endif
 }
 
 /* ARGSUSED */
@@ -597,8 +604,10 @@ lddone(struct ld_softc *sc, struct buf *bp)
 	biodone(bp);
 
 	if (--sc->sc_queuecnt <= sc->sc_maxqueuecnt) {
-		if ((sc->sc_flags & LDF_DRAIN) != 0)
+		if ((sc->sc_flags & LDF_DRAIN) != 0) {
+			sc->sc_flags &= ~LDF_DRAIN;
 			wakeup(&sc->sc_queuecnt);
+		}
 		ldstart(sc);
 	}
 }
