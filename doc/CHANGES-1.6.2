@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.71 2003/06/24 12:46:53 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.72 2003/06/25 09:52:52 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -866,3 +866,9 @@ share/mk/bsd.info.mk				1.28
 
 	Fix "clean" rule to honor "CLEANFILES" variable.
 	[tron, ticket #1337]
+
+sys/arch/macppc/include/keyboard.h		1.5
+
+	This change supports Japanese layout keyboard for
+	WSDISPLAY_COMPAT_RAWKBD on macppc.
+	[hamajima, ticket #1338]
