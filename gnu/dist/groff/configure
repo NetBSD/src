@@ -2860,7 +2860,7 @@ elif test -n "$sys_tmac_prefix"; then
 fi
 echo "$ac_t""$tmac_wrap" 1>&6
 
-$srcdir/mkinstalldirs src/xditview
+sh $srcdir/mkinstalldirs src/xditview
 trap '' 1 2 15
 cat > confcache <<\EOF
 # This file is a shell script that caches the results of configure
