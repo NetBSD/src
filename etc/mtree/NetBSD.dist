@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.188 2002/05/02 17:03:58 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.189 2002/05/04 20:03:14 jdolecek Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -248,6 +248,7 @@
 ./usr/share/examples/emul/svr4/etc
 ./usr/share/examples/emul/ultrix
 ./usr/share/examples/emul/ultrix/etc
+./usr/share/examples/fstab
 ./usr/share/examples/ftpd
 ./usr/share/examples/ipf
 ./usr/share/examples/isdn
