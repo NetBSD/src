@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.12 2002/05/15 09:44:55 lukem Exp $	*/
+/*	$NetBSD: installboot.h,v 1.13 2002/05/20 16:05:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -100,13 +100,21 @@ struct ib_fs {
 	uint32_t	 needswap;
 };
 
+typedef enum {
+	BBINFO_BIG_ENDIAN =	0,
+	BBINFO_LITTLE_ENDIAN =	1,
+} bbinfo_endian;
+
 struct bbinfo_params {
-	const char	*magic;
-	uint32_t	offset;
-	uint32_t	blocksize;
-	uint32_t	maxsize;
-	uint32_t	headeroffset;
-	int		littleendian;
+	const char	*magic;		/* magic string to look for */
+	uint32_t	offset;		/* offset to write start of stage1 */
+	uint32_t	blocksize;	/* blocksize of stage1 */
+	uint32_t	maxsize;	/* max size of stage1 */
+	uint32_t	headeroffset;	/*
+					 * header offset (relative to offset)
+					 * to read stage1 into
+					 */
+	bbinfo_endian	endian;
 };
 
 extern struct ib_mach	machines[];
@@ -121,9 +129,10 @@ int		no_setboot(ib_params *);
 int		no_clearboot(ib_params *);
 
 	/* bbinfo.c */
-int		shared_bbinfo_clearboot(ib_params *, struct bbinfo_params *);
+int		shared_bbinfo_clearboot(ib_params *, struct bbinfo_params *,
+		    int (*)(ib_params *, struct bbinfo_params *, uint8_t *));
 int		shared_bbinfo_setboot(ib_params *, struct bbinfo_params *,
-		    int (*)(ib_params *, struct bbinfo_params *, char *));
+		    int (*)(ib_params *, struct bbinfo_params *, uint8_t *));
 
 	/* fstypes.c */
 int		hardcode_stage2(ib_params *, uint32_t *, ib_block *);
@@ -138,6 +147,10 @@ int		alpha_setboot(ib_params *);
 int		alpha_clearboot(ib_params *);
 int		macppc_setboot(ib_params *);
 int		macppc_clearboot(ib_params *);
+int		news68k_setboot(ib_params *);
+int		news68k_clearboot(ib_params *);
+int		newsmips_setboot(ib_params *);
+int		newsmips_clearboot(ib_params *);
 int		pmax_parseopt(ib_params *, const char *);
 int		pmax_setboot(ib_params *);
 int		pmax_clearboot(ib_params *);

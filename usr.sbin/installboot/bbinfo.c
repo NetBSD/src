@@ -1,4 +1,4 @@
-/*	$NetBSD: bbinfo.c,v 1.4 2002/05/20 15:04:25 lukem Exp $ */
+/*	$NetBSD: bbinfo.c,v 1.5 2002/05/20 16:05:26 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: bbinfo.c,v 1.4 2002/05/20 15:04:25 lukem Exp $");
+__RCSID("$NetBSD: bbinfo.c,v 1.5 2002/05/20 16:05:26 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -58,9 +58,10 @@ __RCSID("$NetBSD: bbinfo.c,v 1.4 2002/05/20 15:04:25 lukem Exp $");
 #include "installboot.h"
 
 int
-shared_bbinfo_clearboot(ib_params *params, struct bbinfo_params *bbparams)
+shared_bbinfo_clearboot(ib_params *params, struct bbinfo_params *bbparams,
+	int (*callback)(ib_params *, struct bbinfo_params *, uint8_t *))
 {
-	char	*bb;
+	uint8_t	*bb;
 	ssize_t	rv;
 	int	retval;
 
@@ -92,8 +93,11 @@ shared_bbinfo_clearboot(ib_params *params, struct bbinfo_params *bbparams)
 		goto done;
 	}
 
-		/* Now clear it out to nothing */
-	memset(bb, 0, bbparams->maxsize);
+		/* Now clear out (past the header offset) */
+	memset(bb + bbparams->headeroffset, 0,
+	    bbparams->maxsize - bbparams->headeroffset);
+	if (callback != NULL && ! (*callback)(params, bbparams, bb))
+		goto done;
 
 	if (params->flags & IB_VERBOSE)
 		printf("%slearing boot block\n",
@@ -121,9 +125,9 @@ shared_bbinfo_clearboot(ib_params *params, struct bbinfo_params *bbparams)
 
 int
 shared_bbinfo_setboot(ib_params *params, struct bbinfo_params *bbparams,
-	int (*callback)(ib_params *, struct bbinfo_params *, char *))
+	int (*callback)(ib_params *, struct bbinfo_params *, uint8_t *))
 {
-	char		*bb;
+	uint8_t		*bb;
 	int		retval;
 	ssize_t		rv;
 	size_t		bbi;
@@ -180,11 +184,12 @@ shared_bbinfo_setboot(ib_params *params, struct bbinfo_params *bbparams,
 		goto done;
 	}
 
-#define HOSTTOTARGET32(x) (bbparams->littleendian ? le32toh((x)) : be32toh((x)))
+#define HOSTTOTARGET32(x) ((bbparams->endian == BBINFO_LITTLE_ENDIAN) \
+			    ? le32toh((x)) : be32toh((x)))
 
 		/* Look for the bbinfo structure. */
 	for (bbi = 0; bbi < bbparams->maxsize; bbi += sizeof(uint32_t)) {
-		bbinfop = (void *) (bb + bbi);
+		bbinfop = (void *) (bb + bbparams->headeroffset + bbi);
 		if (memcmp(bbinfop->bbi_magic, bbparams->magic,
 			    sizeof(bbinfop->bbi_magic)) == 0)
 			break;
