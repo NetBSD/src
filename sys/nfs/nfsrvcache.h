@@ -36,6 +36,9 @@
  *	@(#)nfsrvcache.h	7.3 (Berkeley) 6/28/90
  */
 
+#ifndef _NFS_NFSRVCACHE_H_
+#define _NFS_NFSRVCACHE_H_
+
 /*
  * Definitions for the server recent request cache
  */
@@ -91,3 +94,4 @@ struct nfsrvcache {
 /* Delay time after completion that request is dropped */
 #define	RC_DELAY	2		/* seconds */
 
+#endif /* !_NFS_NFSRVCACHE_H_ */

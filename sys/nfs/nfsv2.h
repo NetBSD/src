@@ -44,6 +44,9 @@
  *                                              AIX3.2 NFS clients
  */
 
+#ifndef _NFS_NFSV2_H_
+#define _NFS_NFSV2_H_
+
 /*
  * nfs definitions as per the version 2 specs
  */
@@ -166,3 +169,5 @@ struct nfsv2_statfs {
 	u_long	sf_bfree;
 	u_long	sf_bavail;
 };
+
+#endif /* !_NFS_NFSV2_H_ */

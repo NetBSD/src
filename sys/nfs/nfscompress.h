@@ -36,6 +36,9 @@
  *	@(#)nfscompress.h	7.2 (Berkeley) 10/2/90
  */
 
+#ifndef _NFS_NFSCOMPRESS_H_
+#define _NFS_NFSCOMPRESS_H_
+
 /*
  * Definitions for the compression algorithm
  */
@@ -76,3 +79,5 @@
 			(c) = *ip++; \
 			ileft--; \
 		}
+
+#endif /* !_NFS_NFSCOMPRESS_H_ */
