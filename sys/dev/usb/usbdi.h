@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.57 2001/12/12 15:24:00 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.58 2001/12/12 15:38:27 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -47,25 +47,25 @@ typedef void			*usbd_private_handle;
 
 typedef enum {		/* keep in sync with usbd_status_msgs */ 
 	USBD_NORMAL_COMPLETION = 0, /* must be 0 */
-	USBD_IN_PROGRESS,
+	USBD_IN_PROGRESS,	/* 1 */
 	/* errors */
-	USBD_PENDING_REQUESTS,
-	USBD_NOT_STARTED,
-	USBD_INVAL,
-	USBD_NOMEM,
-	USBD_CANCELLED,
-	USBD_BAD_ADDRESS,
-	USBD_IN_USE,
-	USBD_NO_ADDR,
-	USBD_SET_ADDR_FAILED,
-	USBD_NO_POWER,
-	USBD_TOO_DEEP,
-	USBD_IOERROR,
-	USBD_NOT_CONFIGURED,
-	USBD_TIMEOUT,
-	USBD_SHORT_XFER,
-	USBD_STALLED,
-	USBD_INTERRUPTED,
+	USBD_PENDING_REQUESTS,	/* 2 */
+	USBD_NOT_STARTED,	/* 3 */
+	USBD_INVAL,		/* 4 */
+	USBD_NOMEM,		/* 5 */
+	USBD_CANCELLED,		/* 6 */
+	USBD_BAD_ADDRESS,	/* 7 */
+	USBD_IN_USE,		/* 8 */
+	USBD_NO_ADDR,		/* 9 */
+	USBD_SET_ADDR_FAILED,	/* 10 */
+	USBD_NO_POWER,		/* 11 */
+	USBD_TOO_DEEP,		/* 12 */
+	USBD_IOERROR,		/* 13 */
+	USBD_NOT_CONFIGURED,	/* 14 */
+	USBD_TIMEOUT,		/* 15 */
+	USBD_SHORT_XFER,	/* 16 */
+	USBD_STALLED,		/* 17 */
+	USBD_INTERRUPTED,	/* 18 */
 
 	USBD_ERROR_MAX		/* must be last */
 } usbd_status;
@@ -125,8 +125,8 @@ usbd_status usbd_device2interface_handle(usbd_device_handle dev,
 			      u_int8_t ifaceno, usbd_interface_handle *iface);
 
 usbd_device_handle usbd_pipe2device_handle(usbd_pipe_handle);
-void *usbd_alloc_buffer(usbd_xfer_handle req, u_int32_t size);
-void usbd_free_buffer(usbd_xfer_handle req);
+void *usbd_alloc_buffer(usbd_xfer_handle xfer, u_int32_t size);
+void usbd_free_buffer(usbd_xfer_handle xfer);
 void *usbd_get_buffer(usbd_xfer_handle xfer);
 usbd_status usbd_sync_transfer(usbd_xfer_handle req);
 usbd_status usbd_open_pipe_intr(usbd_interface_handle iface, u_int8_t address,
