@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.3 2002/12/30 02:05:12 reinoud Exp $	*/
+/*	$NetBSD: boot32.c,v 1.4 2002/12/30 02:19:20 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -352,11 +352,11 @@ void get_memory_configuration(void) {
 	if (top_physdram == 0) panic("reality check: No DRAM in this machine?");
 
 	if (VRAM_pages[0] == 0) {
-		/* map top DRAM as video memory */
+		/* map bottom DRAM as video memory */
 		mapped_screen_memory = 1024 * 1024;	/* max allowed on RiscPC */
 		videomem_start   = DRAM_addr[0];
 		videomem_pages   = (mapped_screen_memory / nbpp);
-		display_size	 = vdu_var(os_VDUVAR_TOTAL_SCREEN_SIZE) & (nbpp-1);
+		display_size	 = vdu_var(os_VDUVAR_TOTAL_SCREEN_SIZE) & ~(nbpp-1);
 		DRAM_addr[0]	+= videomem_pages * nbpp;
 		DRAM_pages[0]	-= videomem_pages;
 	} else {
