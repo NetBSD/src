@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.53 1995/07/05 03:48:45 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54 1995/07/06 02:32:13 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2161,7 +2161,10 @@ getenvvars (void)
    * Get end of symbols for kernel debugging
    */
   esym = getenv("END_SYM");
-  if (esym == 0) esym = (long) &end;
+#ifndef SYMTAB_SPACE
+  if (esym == 0)
+#endif
+  	esym = (long) &end;
   
   /* Get MacOS time */
   macos_boottime = getenv("BOOTTIME");
@@ -2707,7 +2710,7 @@ get_mapping (void)
 		 * Kludge for IIvx internal video. ???
 		 */
 		if (0x60000000 < videoaddr && videoaddr < 0x70000000) {
-			if (!get_physical(addr, &phys))
+			if (!get_physical(videoaddr, &phys))
 				printf("get_mapping(): IIvx kludge. "
 					" False start.\n");
 			else {
@@ -2717,7 +2720,7 @@ get_mapping (void)
 				addr = videoaddr+32768;
 				while (get_physical(addr, &phys)) {
 					if (   (phys - mac68k_vidphys)
-					    !=  mac68k_vidlen+32768)
+					    !=  mac68k_vidlen)
 						break;
 					if (mac68k_vidlen+32768 > 1*1024*1024){
 printf("get_mapping(): IIvx kludge.  Does it never end?\n");
