@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.33 2003/05/16 01:26:18 dyoung Exp $	*/
+/*	$NetBSD: wivar.h,v 1.34 2003/05/20 01:29:35 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -46,6 +46,7 @@ struct wi_softc	{
 
 	int			sc_attached;
 	int			sc_enabled;
+	int			sc_invalid;
 	int			sc_firmware_type;
 #define	WI_NOTYPE	0
 #define	WI_LUCENT	1
