@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 1999/07/09 15:29:45 minoura Exp $ */
+/*	$NetBSD: md.c,v 1.2 1999/07/11 14:12:21 minoura Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,6 +39,7 @@
 /* md.c -- Machine specific code for x68k */
 
 #include <stdio.h>
+#include <unistd.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -72,6 +73,10 @@ int md_need_newdisk = 0;
 
 /* prototypes */
 static int md_newdisk __P((void));
+#define COPYRIGHT "NetBSD/x68k SCSI primary boot. "		\
+		  "(C) 1999 by The NetBSD Foundation, Inc. "	\
+		  "Written by sysinst."
+
 static int md_check_partition_order __P((void));
 
 int
@@ -144,8 +149,6 @@ md_get_info()
 #ifndef DEBUG
 static int
 md_newdisk(void)
-	int fd;
-	size_t size;
 {
 	int mbootfd;
 	char devname[100];
@@ -165,12 +168,10 @@ md_newdisk(void)
 
 	/* Write disk mark */
 	memset(buf, 0, 1024);
-	sprintf(buf, "X68SCSI1%c%c%c%c%c%c%c%c"
-		     "NetBSD/x68k SCSI primary boot. "
-		     "(C) 1999 by The NetBSD Foundation, Inc.",
+	sprintf(buf, "X68SCSI1%c%c%c%c%c%c%c%c%s",
 		2, 0,
 		(size>>24)&0xff, (size>>16)&0xff, (size>>8)&0xff, size&0xff,
-		1, 0);
+		1, 0, COPYRIGHT);
 	lseek(fd, 0, SEEK_SET);
 	if (write(fd, buf, 1024) < 0) {
 		endwin();
@@ -207,10 +208,9 @@ md_newdisk(void)
 #ifdef notyet
 	memset(&md_disklabel, 0, sizeof(md_disklabel));
 	sprintf((char*) md_disklabel, "X68K%c%c%c%c%c%c%c%c%c%c%c%c",
+		0, 0, 0, 32,
 		(size>>24)&0xff, (size>>16)&0xff, (size>>8)&0xff, size&0xff,
-		(size>>24)&0xff, (size>>16)&0xff, (size>>8)&0xff, size&0xff,
-		((size-64)>>24)&0xff, ((size-64)>>16)&0xff,
-		((size-64)>>8)&0xff, (size-64)&0xff);
+		(size>>24)&0xff, (size>>16)&0xff, (size>>8)&0xff, size&0xff);
 	if (write(fd, md_disklabel, 1024) < 0) {
 		endwin();
 		close(fd);
@@ -220,10 +220,9 @@ md_newdisk(void)
 #else
 	memset(buf, 0, 1024);
 	sprintf(buf, "X68K%c%c%c%c%c%c%c%c%c%c%c%c",
+		0, 0, 0, 32,
 		(size>>24)&0xff, (size>>16)&0xff, (size>>8)&0xff, size&0xff,
-		(size>>24)&0xff, (size>>16)&0xff, (size>>8)&0xff, size&0xff,
-		((size-64)>>24)&0xff, ((size-64)>>16)&0xff,
-		((size-64)>>8)&0xff, (size-64)&0xff);
+		(size>>24)&0xff, (size>>16)&0xff, (size>>8)&0xff, size&0xff);
 	if (write(fd, buf, 1024) < 0) {
 		endwin();
 		close(fd);
@@ -332,7 +331,7 @@ md_post_disklabel(void)
  * continue installation by booting the target disk and doing an
  * `upgrade'.
  *
- * On the sparc, we use this opportunity to install the boot blocks.
+ * On the x68k, we use this opportunity to install the boot blocks.
  */
 int
 md_post_newfs(void)
