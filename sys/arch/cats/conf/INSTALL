@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.42.6.1 2005/02/12 18:17:31 yamt Exp $
+#	$NetBSD: INSTALL,v 1.42.6.2 2005/03/19 08:32:52 yamt Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -54,7 +54,7 @@ file-system	KERNFS		# /kern
 #options 	NFSSERVER
 #options 	SOFTDEP		# FFS soft updates support
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
-#options 	FFS_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 
@@ -85,6 +85,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_14	# NetBSD 1.4 compatibility.
 options 	COMPAT_13	# NetBSD 1.3 compatibility.

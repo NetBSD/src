@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.50 2004/10/31 12:52:55 he Exp $	*/
+/*	$NetBSD: uda.c,v 1.50.6.1 2005/03/19 08:35:38 yamt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.50 2004/10/31 12:52:55 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.50.6.1 2005/03/19 08:35:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -180,12 +180,12 @@ again:
 	if (mscp_waitstep(&mi, MP_STEP1, MP_STEP1) == 0)
 		return 0; /* Nothing here... */
 
-	bus_space_write_2(mi.mi_iot, mi.mi_sah, 0, 
+	bus_space_write_2(mi.mi_iot, mi.mi_sah, 0,
 	    MP_ERR | (NCMDL2 << 11) | (NRSPL2 << 8) | MP_IE |
 	    ((ubasc->uh_lastiv - 4) >> 2));
 
 	if (mscp_waitstep(&mi, MP_STEP2, MP_STEP2) == 0) {
-		printf("udaprobe: init step2 no change. sa=%x\n", 
+		printf("udaprobe: init step2 no change. sa=%x\n",
 		    bus_space_read_2(mi.mi_iot, mi.mi_sah, 0));
 		goto bad;
 	}
@@ -283,7 +283,7 @@ udago(struct device *usc, struct mscp_xi *mxi)
 	 */
 	if (sc->sc_inq == 0) {
 		err = bus_dmamap_load(sc->sc_dmat, mxi->mxi_dmam,
-		    bp->b_data, bp->b_bcount, 
+		    bp->b_data, bp->b_bcount,
 		    (bp->b_flags & B_PHYS ? bp->b_proc : 0), BUS_DMA_NOWAIT);
 		if (err == 0) {
 			mscp_dgo(sc->sc_softc, mxi);
@@ -302,7 +302,7 @@ udago(struct device *usc, struct mscp_xi *mxi)
 
 /*
  * Called if we have been blocked for resources, and resources
- * have been freed again. Return 1 if we could start all 
+ * have been freed again. Return 1 if we could start all
  * transfers again, 0 if we still are waiting.
  * Called from uba resource free routines.
  */

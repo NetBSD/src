@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ilreg.h,v 1.3 2003/08/07 16:31:15 agc Exp $	*/
+/*	$NetBSD: if_ilreg.h,v 1.3.10.1 2005/03/19 08:35:37 yamt Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -103,7 +103,7 @@ struct ildevice {
 #ifdef ILERRS
 char *ilerrs[NILERRS] = {
 	"success",			/*  0 */
-	"success with retries", 	/*  1 */
+	"success with retries",		/*  1 */
 	"illegal command",		/*  2 */
 	"inappropriate command",	/*  3 */
 	"failure",			/*  4 */

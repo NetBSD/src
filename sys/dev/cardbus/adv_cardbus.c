@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_cardbus.c,v 1.9.6.1 2005/02/12 18:17:42 yamt Exp $	*/
+/*	$NetBSD: adv_cardbus.c,v 1.9.6.2 2005/03/19 08:33:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.9.6.1 2005/02/12 18:17:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.9.6.2 2005/03/19 08:33:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,10 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.9.6.1 2005/02/12 18:17:42 yamt Exp
 #include <sys/queue.h>
 #include <sys/device.h>
 
-#include <machine/bus.h> 
+#include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <dev/scsipi/scsi_all.h> 
+#include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
@@ -168,7 +168,7 @@ adv_cardbus_attach(parent, self, aux)
 	 * Map the device.
 	 */
 	csc->sc_csr = PCI_COMMAND_MASTER_ENABLE;
-	
+
 #ifdef ADV_CARDBUS_ALLOW_MEMIO
 	if (Cardbus_mapreg_map(csc->sc_ct, ADV_CARDBUS_MMBA,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,

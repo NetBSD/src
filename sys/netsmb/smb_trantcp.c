@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.17 2004/09/17 14:11:25 skrll Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.17.6.1 2005/03/19 08:36:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,8 +35,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.17 2004/09/17 14:11:25 skrll Exp $");
- 
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.17.6.1 2005/03/19 08:36:51 yamt Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -169,7 +169,7 @@ nbssn_rselect(struct nbpcb *nbp, const struct timeval *tv, int events,
 		timo = hzto(&atv);
 		if (timo <= 0)
 			return (EWOULDBLOCK);
-	} else 
+	} else
 		timo = 0;
 
  retry:
@@ -418,7 +418,7 @@ nbssn_recvhdr(struct nbpcb *nbp, int *lenp,
 	    (struct mbuf **)NULL, (struct mbuf **)NULL, &flags);
 #else
 	error = (*so->so_receive)(so, (struct mbuf **)0, &auio,
-				  (struct mbuf **)NULL, 
+				  (struct mbuf **)NULL,
 				  (struct mbuf **)NULL, &flags);
 #endif
 	if (error)

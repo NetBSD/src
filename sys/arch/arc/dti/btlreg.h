@@ -1,4 +1,4 @@
-/*	$NetBSD: btlreg.h,v 1.6 2005/01/22 07:35:34 tsutsui Exp $	*/
+/*	$NetBSD: btlreg.h,v 1.6.2.1 2005/03/19 08:32:51 yamt Exp $	*/
 
 typedef uint8_t physaddr[4];
 typedef uint8_t physlen[4];
@@ -133,7 +133,7 @@ struct bt_ccb {
 	/*------------------------------------longword boundary */
 	physaddr sense_ptr;
 /*-----end of HW fields-----------------------longword boundary */
-	struct scsipi_sense_data scsi_sense;
+	struct scsi_sense_data scsi_sense;
 	/*------------------------------------longword boundary */
 	struct bt_scat_gath scat_gath[BT_NSEG];
 	/*------------------------------------longword boundary */

@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.23.6.1 2005/02/12 18:17:44 yamt Exp $ */
+/*      $NetBSD: sgec.c,v 1.23.6.2 2005/03/19 08:34:03 yamt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -12,7 +12,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of 
+ *      This product includes software developed at Ludd, University of
  *      Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
@@ -31,7 +31,7 @@
 
 /*
  * Driver for the SGEC (Second Generation Ethernet Controller), sitting
- * on for example the VAX 4000/300 (KA670). 
+ * on for example the VAX 4000/300 (KA670).
  *
  * The SGEC looks like a mixture of the DEQNA and the TULIP. Fun toy.
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.23.6.1 2005/02/12 18:17:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.23.6.2 2005/03/19 08:34:03 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -346,7 +346,7 @@ zestart(ifp)
 			ifp->if_flags |= IFF_OACTIVE;
 			goto out;
 		}
-		
+
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
@@ -630,7 +630,7 @@ ze_setup(sc)
 	memcpy(zc->zc_setup, enaddr, ETHER_ADDR_LEN);
 
 	/*
-	 * Multicast handling. The SGEC can handle up to 16 direct 
+	 * Multicast handling. The SGEC can handle up to 16 direct
 	 * ethernet addresses.
 	 */
 	j = 16;

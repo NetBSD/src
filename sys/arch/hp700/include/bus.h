@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.6 2004/07/27 22:16:40 jkunz Exp $	*/
+/*	$NetBSD: bus.h,v 1.6.6.1 2005/03/19 08:33:00 yamt Exp $	*/
 
 /*	$OpenBSD: bus.h,v 1.13 2001/07/30 14:15:59 art Exp $	*/
 
@@ -435,7 +435,7 @@ struct hppa_bus_dmamap {
 	 */
 	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
 	int		_dm_segcnt;	/* number of segs this map can map */
-	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
+	bus_size_t	_dm_maxsegsz;	/* fixed largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
 
@@ -444,6 +444,7 @@ struct hppa_bus_dmamap {
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
 	 */
+	bus_size_t	dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	dm_mapsize;	/* size of the mapping */
 	int		dm_nsegs;	/* # valid segments in mapping */
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */

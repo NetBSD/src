@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxgvar.h,v 1.1 2001/09/18 19:51:23 ad Exp $	*/
+/* 	$NetBSD: pxgvar.h,v 1.1.34.1 2005/03/19 08:35:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	_TC_PXGVAR_H_
 
 /*
- * Firmware segment.  If pfs_data is NULL, this is BSS and should be zeroed. 
+ * Firmware segment.  If pfs_data is NULL, this is BSS and should be zeroed.
  * Otherwise, pfs_data points to an RLE compressed binary image.  If a word
  * is read and matches PXGFW_RLE_MAGIC, the next word contains the data, and
  * the next the repeat count.  All segment sizes and addresses must be

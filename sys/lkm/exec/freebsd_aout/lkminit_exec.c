@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.5 2004/11/13 06:09:47 christos Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.5.6.1 2005/03/19 08:36:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.5 2004/11/13 06:09:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.5.6.1 2005/03/19 08:36:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ MOD_EXEC("exec_freebsd_aout", -1, &exec_freebsd_aout, "freebsd");
  */
 int
 exec_freebsd_aout_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 	int ver;
 {

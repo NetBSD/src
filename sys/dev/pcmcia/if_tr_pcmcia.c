@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_pcmcia.c,v 1.14 2004/08/10 18:43:49 mycroft Exp $	*/
+/*	$NetBSD: if_tr_pcmcia.c,v 1.14.6.1 2005/03/19 08:35:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.14 2004/08/10 18:43:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.14.6.1 2005/03/19 08:35:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,7 +312,7 @@ tr_pcmcia_detach(self, flags)
 
 	rv = tr_detach(self, flags);
 
-	if (rv == 0) { 
+	if (rv == 0) {
 		pcmcia_mem_unmap(psc->sc_pf, psc->sc_mmio_window);
 		pcmcia_mem_free(psc->sc_pf, &psc->sc_mmioh);
 		pcmcia_mem_unmap(psc->sc_pf, psc->sc_sram_window);

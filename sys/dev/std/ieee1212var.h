@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1212var.h,v 1.1 2002/02/27 04:58:51 jmc Exp $	*/
+/*	$NetBSD: ieee1212var.h,v 1.1.30.1 2005/03/19 08:35:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ struct p1212_com {
 
 struct p1212_data {
 	struct p1212_com com;
-	
+
 	u_int32_t val;
 	struct p1212_leafdata *leafdata;
 	void (*print)(struct p1212_data *);

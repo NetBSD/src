@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.7 2002/10/02 16:52:24 thorpej Exp $ */
+/* $NetBSD: if_eb.c,v 1.7.16.1 2005/03/19 08:35:37 yamt Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eb.c,v 1.7 2002/10/02 16:52:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eb.c,v 1.7.16.1 2005/03/19 08:35:37 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -91,7 +91,7 @@ int
 ebprobe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
-	
+
 	return pa->pa_product == PODULE_ETHERB;
 }
 
@@ -106,7 +106,7 @@ ebattach(struct device *parent, struct device *self, void *aux)
 	struct eb_softc *sc = (void *)self;
 	struct podulebus_attach_args *pa = aux;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
-	
+
 /*	dprintf(("Attaching %s...\n", sc->sc_dev.dv_xname));*/
 
 	/* Set the address of the controller for easy access */

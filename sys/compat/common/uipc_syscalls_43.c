@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.22 2003/08/07 16:30:36 agc Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.22.10.1 2005/03/19 08:33:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.22 2003/08/07 16:30:36 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.22.10.1 2005/03/19 08:33:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ compat_43_sys_recvmsg(struct lwp *l, void *v, register_t *retval)
 		    M_IOV, M_WAITOK);
 	} else
 		iov = aiov;
-	
+
 	error = copyin((caddr_t)omsg.msg_iov, (caddr_t)iov,
 	    (unsigned)(omsg.msg_iovlen * sizeof (struct iovec)));
 	if (error)
@@ -246,7 +246,7 @@ compat_43_sys_recvmsg(struct lwp *l, void *v, register_t *retval)
 		/* safe - msg.msg_controllen set by kernel */
 		cmsg = (struct cmsghdr *) malloc(msg.msg_controllen,
 		    M_TEMP, M_WAITOK);
-		
+
 		error = copyin(msg.msg_control, cmsg, msg.msg_controllen);
 		if (error) {
 			free(cmsg, M_TEMP);
@@ -259,7 +259,7 @@ compat_43_sys_recvmsg(struct lwp *l, void *v, register_t *retval)
 			    cmsg->cmsg_len)) {
 			omsg.msg_accrightslen = 0;
 		}
-		 
+
 		free(cmsg, M_TEMP);
 
 		if (!error) {
@@ -364,7 +364,7 @@ compat_43_sys_sendmsg(struct lwp *l, void *v, register_t *retval)
 
 		(void) copyout(sa, usa, omsg.msg_namelen);
 		free(osa, M_TEMP);
-		
+
 		msg.msg_name = usa;
 		msg.msg_namelen = omsg.msg_namelen;
 	} else {
@@ -383,7 +383,7 @@ compat_43_sys_sendmsg(struct lwp *l, void *v, register_t *retval)
 			return (EINVAL);
 
 		cmsg = malloc(CMSG_SPACE(omsg.msg_accrightslen), M_TEMP,
-		    M_WAITOK); 
+		    M_WAITOK);
 		cmsg->cmsg_len		= CMSG_SPACE(omsg.msg_accrightslen);
 		cmsg->cmsg_level	= SOL_SOCKET;
 		cmsg->cmsg_type 	= SCM_RIGHTS;
@@ -394,7 +394,7 @@ compat_43_sys_sendmsg(struct lwp *l, void *v, register_t *retval)
 			free(cmsg, M_TEMP);
 			return (error);
 		}
-		
+
 		ucmsg = stackgap_alloc(p, &sg, CMSG_SPACE(omsg.msg_accrightslen));
 		if (!ucmsg) {
 			free(cmsg, M_TEMP);

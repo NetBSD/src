@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.20 2003/08/07 16:32:41 agc Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.20.10.1 2005/03/19 08:36:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.20 2003/08/07 16:32:41 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.20.10.1 2005/03/19 08:36:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ procfs_domap(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 
 	if (uio->uio_offset != 0)
 		return (0);
-	
+
 	error = 0;
 	if (map != &curproc->p_vmspace->vm_map)
 		vm_map_lock_read(map);
@@ -157,7 +157,7 @@ procfs_domap(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 				if (error == 0 && vp != pfs->pfs_vnode) {
 					fileid = va.va_fileid;
 					dev = va.va_fsid;
-					error = procfs_vnode_to_path(vp, path,	
+					error = procfs_vnode_to_path(vp, path,
 					    MAXPATHLEN * 4, curp, p);
 				}
 			}

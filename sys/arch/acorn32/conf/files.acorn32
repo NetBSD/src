@@ -1,4 +1,4 @@
-#	$NetBSD: files.acorn32,v 1.23 2004/03/13 17:59:00 bjh21 Exp $
+#	$NetBSD: files.acorn32,v 1.23.10.1 2005/03/19 08:32:44 yamt Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -161,8 +161,7 @@ file	arch/acorn32/eb7500atx/rsbus_io.c	rsbus
 file	arch/acorn32/eb7500atx/rsbus_io_asm.S	rsbus
 
 # riscstation IDE driver
-device rside {[channel = -1]}: ata
-attach rside at rsbus
+attach wdc at rsbus with rside
 file   arch/acorn32/eb7500atx/rside.c          rside
 
 # RiscStation's CS network driver

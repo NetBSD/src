@@ -1,4 +1,4 @@
-/*	$NetBSD: cacreg.h,v 1.5 2001/01/10 16:48:04 ad Exp $	*/
+/*	$NetBSD: cacreg.h,v 1.5.34.1 2005/03/19 08:34:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -196,5 +196,5 @@ struct cac_sgb {
 	u_int32_t	length;		/* length of S/G segment */
 	u_int32_t	addr;		/* physical address of block */
 } __attribute__((__packed__));
-	
+
 #endif	/* !_IC_CACREG_H_ */

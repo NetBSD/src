@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.43.6.1 2005/02/12 18:17:56 yamt Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.43.6.2 2005/03/19 08:37:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.43.6.1 2005/02/12 18:17:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.43.6.2 2005/03/19 08:37:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ ext2fs_setsize(struct inode *ip, u_int64_t size)
 int
 ext2fs_inactive(v)
 	void *v;
-{   
+{
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
 		struct proc *a_p;
@@ -149,7 +149,7 @@ ext2fs_inactive(v)
 	struct proc *p = ap->a_p;
 	struct timespec ts;
 	int error = 0;
-	
+
 	if (prtactive && vp->v_usecount != 0)
 		vprint("ext2fs_inactive: pushing active", vp);
 	/* Get rid of inodes related to stale file handles. */
@@ -182,7 +182,7 @@ out:
 	if (ip->i_e2fs_dtime != 0)
 		vrecycle(vp, NULL, p);
 	return (error);
-}   
+}
 
 
 /*

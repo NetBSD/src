@@ -1,4 +1,4 @@
-/*	$NetBSD: video_subr.c,v 1.6 2003/11/13 03:09:29 chs Exp $	*/
+/*	$NetBSD: video_subr.c,v 1.6.10.1 2005/03/19 08:33:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video_subr.c,v 1.6 2003/11/13 03:09:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video_subr.c,v 1.6.10.1 2005/03/19 08:33:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,7 +305,7 @@ video_reverse_color()
 		{ -1, -1 } /* terminator */
 	}, *ctypep;
 	u_int16_t fbtype;
-	
+
 	/* check reverse color */
 	fbtype = bootinfo->fb_type;
 	for (ctypep = ctype; ctypep->normal != -1 ;  ctypep++) {

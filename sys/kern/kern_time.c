@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_time.c,v 1.86 2005/01/06 19:26:41 mycroft Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.86.4.1 2005/03/19 08:36:11 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.86 2005/01/06 19:26:41 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.86.4.1 2005/03/19 08:36:11 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -864,7 +864,7 @@ timerupcall(struct lwp *l, void *arg)
 	/* Bail out if we do not own the virtual processor */
 	if (l->l_savp->savp_lwp != l)
 		return ;
-	
+
 	KERNEL_PROC_LOCK(l);
 
 	fired = pt->pts_fired;
@@ -1235,7 +1235,7 @@ itimerfire(struct ptimer *pt)
 			p->p_timers->pts_fired = i;
 			p->p_userret = timerupcall;
 			p->p_userret_arg = p->p_timers;
-			
+
 			SCHED_LOCK(s);
 			SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
 				if (vp->savp_lwp->l_flag & L_SA_IDLE) {

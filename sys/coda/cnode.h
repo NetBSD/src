@@ -1,13 +1,13 @@
-/*	$NetBSD: cnode.h,v 1.13 2003/08/27 17:49:48 drochner Exp $	*/
+/*	$NetBSD: cnode.h,v 1.13.10.1 2005/03/19 08:33:28 yamt Exp $	*/
 
 /*
- * 
+ *
  *             Coda: an Experimental Distributed File System
  *                              Release 3.1
- * 
+ *
  *           Copyright (c) 1987-1998 Carnegie Mellon University
  *                          All Rights Reserved
- * 
+ *
  * Permission  to  use, copy, modify and distribute this software and its
  * documentation is hereby granted,  provided  that  both  the  copyright
  * notice  and  this  permission  notice  appear  in  all  copies  of the
@@ -16,22 +16,22 @@
  * that credit is given to Carnegie Mellon University  in  all  documents
  * and publicity pertaining to direct or indirect use of this code or its
  * derivatives.
- * 
+ *
  * CODA IS AN EXPERIMENTAL SOFTWARE SYSTEM AND IS  KNOWN  TO  HAVE  BUGS,
  * SOME  OF  WHICH MAY HAVE SERIOUS CONSEQUENCES.  CARNEGIE MELLON ALLOWS
  * FREE USE OF THIS SOFTWARE IN ITS "AS IS" CONDITION.   CARNEGIE  MELLON
  * DISCLAIMS  ANY  LIABILITY  OF  ANY  KIND  FOR  ANY  DAMAGES WHATSOEVER
  * RESULTING DIRECTLY OR INDIRECTLY FROM THE USE OF THIS SOFTWARE  OR  OF
  * ANY DERIVATIVE WORK.
- * 
+ *
  * Carnegie  Mellon  encourages  users  of  this  software  to return any
  * improvements or extensions that  they  make,  and  to  grant  Carnegie
  * Mellon the rights to redistribute these changes without encumbrance.
- * 
- * 	@(#) coda/cnode.h,v 1.1.1.1 1998/08/29 21:26:46 rvb Exp $ 
+ *
+ * 	@(#) coda/cnode.h,v 1.1.1.1 1998/08/29 21:26:46 rvb Exp $
  */
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1990 Carnegie-Mellon University
  * Copyright (c) 1989 Carnegie-Mellon University
@@ -154,7 +154,7 @@ struct coda_mntinfo {
     struct vnode	*mi_rootvp;
     struct mount	*mi_vfsp;
     struct vcomm	 mi_vcomm;
-    int			 mi_started;	
+    int			 mi_started;
 };
 extern struct coda_mntinfo coda_mnttbl[]; /* indexed by minor device number */
 
@@ -179,7 +179,7 @@ extern struct vnode *coda_ctlvp;
  				 && ((vp) == vtomi((vp))->mi_rootvp)    \
 				 && strncmp(name, CODA_CONTROL, l) == 0)
 
-/* 
+/*
  * An enum to tell us whether something that will remove a reference
  * to a cnode was a downcall or not
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.7 2002/05/16 19:30:41 wiz Exp $	*/
+/*	$NetBSD: malloc.c,v 1.7.18.1 2005/03/19 08:36:48 yamt Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -6,14 +6,14 @@
  * However it does work...
  */
 
-/* 
+/*
  * a simple malloc
  * it might be brain-damaged but for the purposes of xebec
- * it's a whole lot faster than the c library malloc 
+ * it's a whole lot faster than the c library malloc
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malloc.c,v 1.7 2002/05/16 19:30:41 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malloc.c,v 1.7.18.1 2005/03/19 08:36:48 yamt Exp $");
 
 #include <stdio.h>
 #include "malloc.h"
@@ -77,7 +77,7 @@ int x;
 		if(((unsigned)(hiwat) & 0x3)) {
 			bytesmalloced = 4 - (int) ((unsigned)(hiwat) & 0x3);
 			hiwat = sbrk( bytesmalloced );
-		} else 
+		} else
 			bytesmalloced = 0;
 		firsttime = 0;
 		highend = hiwat;

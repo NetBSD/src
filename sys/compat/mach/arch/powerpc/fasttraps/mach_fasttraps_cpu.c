@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_fasttraps_cpu.c,v 1.3 2003/01/21 04:01:09 matt Exp $ */
+/*	$NetBSD: mach_fasttraps_cpu.c,v 1.3.12.1 2005/03/19 08:33:42 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_fasttraps_cpu.c,v 1.3 2003/01/21 04:01:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_fasttraps_cpu.c,v 1.3.12.1 2005/03/19 08:33:42 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -54,12 +54,12 @@ __KERNEL_RCSID(0, "$NetBSD: mach_fasttraps_cpu.c,v 1.3 2003/01/21 04:01:09 matt 
 #define mach_vectorCngbit	6
 #define mach_timerPopbit	7
 #define mach_userProtKeybit	8
-#define mach_trapUnalignbit	9 
+#define mach_trapUnalignbit	9
 #define mach_notifyUnalignbit	10
 #define mach_bbThreadbit	28
 #define mach_bbNoMachSCbit	29
 #define mach_bbPreemptivebit	30
-#define mach_spfReserved1	31      
+#define mach_spfReserved1	31
 
 /* We do not emulate anything here right now */
 int

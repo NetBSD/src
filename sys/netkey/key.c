@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.127.4.1 2005/02/12 18:17:55 yamt Exp $	*/
+/*	$NetBSD: key.c,v 1.127.4.2 2005/03/19 08:36:48 yamt Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.127.4.1 2005/02/12 18:17:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.127.4.2 2005/03/19 08:36:48 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1123,7 +1123,7 @@ key_newsp(id)
 
 	if (id == 0) {
 		if ((newid = keydb_newspid()) == 0) {
-			ipseclog((LOG_DEBUG, 
+			ipseclog((LOG_DEBUG,
 			    "key_newsp: new policy_id allocation failed."));
 			return NULL;
 		}
@@ -2362,8 +2362,8 @@ key_spddump(so, m, mhp)
 }
 
 #ifdef IPSEC_NAT_T
-/* 
- * SADB_X_NAT_T_NEW_MAPPING 
+/*
+ * SADB_X_NAT_T_NEW_MAPPING
  */
 static int
 key_nat_map(so, m, mhp)
@@ -2394,13 +2394,13 @@ key_nat_map(so, m, mhp)
 		return key_senderror(so, m, EINVAL);
 	}
 
-	if ((mhp->ext[SADB_X_EXT_NAT_T_OA] != NULL) && 
+	if ((mhp->ext[SADB_X_EXT_NAT_T_OA] != NULL) &&
 	    (mhp->extlen[SADB_X_EXT_NAT_T_OA] < sizeof(*addr))) {
 		ipseclog((LOG_DEBUG, "key_nat_map: invalid message\n"));
 		return key_senderror(so, m, EINVAL);
 	}
 
-	if ((mhp->ext[SADB_X_EXT_NAT_T_FRAG] != NULL) && 
+	if ((mhp->ext[SADB_X_EXT_NAT_T_FRAG] != NULL) &&
 	    (mhp->extlen[SADB_X_EXT_NAT_T_FRAG] < sizeof(*frag))) {
 		ipseclog((LOG_DEBUG, "key_nat_map: invalid message\n"));
 		return key_senderror(so, m, EINVAL);
@@ -2412,13 +2412,13 @@ key_nat_map(so, m, mhp)
 	addr = (struct sadb_address *)mhp->ext[SADB_X_EXT_NAT_T_OA];
 	frag = (struct sadb_x_nat_t_frag *) mhp->ext[SADB_X_EXT_NAT_T_FRAG];
 
-	printf("sadb_nat_map: type %d, sport = %d, dport = %d\n", 
+	printf("sadb_nat_map: type %d, sport = %d, dport = %d\n",
 		type->sadb_x_nat_t_type_type,
 		sport->sadb_x_nat_t_port_port,
 		dport->sadb_x_nat_t_port_port);
 
-	/* 
-	 * XXX handle that, it should also contain a SA, or anything 
+	/*
+	 * XXX handle that, it should also contain a SA, or anything
 	 * that enable to update the SA information.
 	 */
 
@@ -4264,7 +4264,7 @@ key_cmpspidx_withmask(spidx0, spidx1)
 			return 0;
 		/*
 		 * scope_id check. if sin6_scope_id is 0, we regard it
-		 * as a wildcard scope, which matches any scope zone ID. 
+		 * as a wildcard scope, which matches any scope zone ID.
 		 */
 		if (satosin6(&spidx0->src)->sin6_scope_id &&
 		    satosin6(&spidx1->src)->sin6_scope_id &&
@@ -4299,7 +4299,7 @@ key_cmpspidx_withmask(spidx0, spidx1)
 			return 0;
 		/*
 		 * scope_id check. if sin6_scope_id is 0, we regard it
-		 * as a wildcard scope, which matches any scope zone ID. 
+		 * as a wildcard scope, which matches any scope zone ID.
 		 */
 		if (satosin6(&spidx0->src)->sin6_scope_id &&
 		    satosin6(&spidx1->src)->sin6_scope_id &&
@@ -5190,7 +5190,7 @@ key_update(so, m, mhp)
 	}
 
 #ifdef IPSEC_NAT_T
-	/* 
+	/*
 	 * Handle NAT-T info if present
 	 */
 	if (mhp->ext[SADB_X_EXT_NAT_T_OA] != NULL)
@@ -5198,7 +5198,7 @@ key_update(so, m, mhp)
 
 	if ((mhp->ext[SADB_X_EXT_NAT_T_TYPE] != NULL) &&
 	    (mhp->ext[SADB_X_EXT_NAT_T_SPORT] != NULL) &&
-	    (mhp->ext[SADB_X_EXT_NAT_T_DPORT] != NULL)) { 
+	    (mhp->ext[SADB_X_EXT_NAT_T_DPORT] != NULL)) {
 		struct sadb_x_nat_t_type *type;
 		struct sadb_x_nat_t_port *sport;
 		struct sadb_x_nat_t_port *dport;
@@ -5213,13 +5213,13 @@ key_update(so, m, mhp)
 			return key_senderror(so, m, EINVAL);
 		}
 
-		if ((mhp->ext[SADB_X_EXT_NAT_T_OA] != NULL) && 
+		if ((mhp->ext[SADB_X_EXT_NAT_T_OA] != NULL) &&
 		    (mhp->extlen[SADB_X_EXT_NAT_T_OA] < sizeof(*addr))) {
 			ipseclog((LOG_DEBUG, "key_update: invalid message\n"));
 			return key_senderror(so, m, EINVAL);
 		}
 
-		if ((mhp->ext[SADB_X_EXT_NAT_T_FRAG] != NULL) && 
+		if ((mhp->ext[SADB_X_EXT_NAT_T_FRAG] != NULL) &&
 		    (mhp->extlen[SADB_X_EXT_NAT_T_FRAG] < sizeof(*frag))) {
 			ipseclog((LOG_DEBUG, "key_update: invalid message\n"));
 			return key_senderror(so, m, EINVAL);
@@ -5235,7 +5235,7 @@ key_update(so, m, mhp)
 		    mhp->ext[SADB_X_EXT_NAT_T_OA];
 		frag = (struct sadb_x_nat_t_frag *)
 		    mhp->ext[SADB_X_EXT_NAT_T_FRAG];
-	
+
 		sav->natt_type = type->sadb_x_nat_t_type_type;
 		sav->remote_ike_port = ntohs(dport->sadb_x_nat_t_port_port);
 		sav->local_ike_port = ntohs(sport->sadb_x_nat_t_port_port);
@@ -5402,15 +5402,15 @@ key_add(so, m, mhp)
 	}
 
 #ifdef IPSEC_NAT_T
-	/* 
+	/*
 	 * Handle NAT-T info if present
 	 */
 	if (mhp->ext[SADB_X_EXT_NAT_T_OA] != NULL)
 		printf("add: NAT-T OA present\n");
-	
+
 	if ((mhp->ext[SADB_X_EXT_NAT_T_TYPE] != NULL) &&
 	    (mhp->ext[SADB_X_EXT_NAT_T_SPORT] != NULL) &&
-	    (mhp->ext[SADB_X_EXT_NAT_T_DPORT] != NULL)) { 
+	    (mhp->ext[SADB_X_EXT_NAT_T_DPORT] != NULL)) {
 		struct sadb_x_nat_t_type *type;
 		struct sadb_x_nat_t_port *sport;
 		struct sadb_x_nat_t_port *dport;
@@ -5425,13 +5425,13 @@ key_add(so, m, mhp)
 			return key_senderror(so, m, EINVAL);
 		}
 
-		if ((mhp->ext[SADB_X_EXT_NAT_T_OA] != NULL) && 
+		if ((mhp->ext[SADB_X_EXT_NAT_T_OA] != NULL) &&
 		    (mhp->extlen[SADB_X_EXT_NAT_T_OA] < sizeof(*addr))) {
 			ipseclog((LOG_DEBUG, "key_add: invalid message\n"));
 			return key_senderror(so, m, EINVAL);
 		}
 
-		if ((mhp->ext[SADB_X_EXT_NAT_T_FRAG] != NULL) && 
+		if ((mhp->ext[SADB_X_EXT_NAT_T_FRAG] != NULL) &&
 		    (mhp->extlen[SADB_X_EXT_NAT_T_FRAG] < sizeof(*frag))) {
 			ipseclog((LOG_DEBUG, "key_update: invalid message\n"));
 			return key_senderror(so, m, EINVAL);
@@ -5447,7 +5447,7 @@ key_add(so, m, mhp)
 		    mhp->ext[SADB_X_EXT_NAT_T_OA];
 		frag = (struct sadb_x_nat_t_frag *)
 		    mhp->ext[SADB_X_EXT_NAT_T_FRAG];
-	
+
 		newsav->natt_type = type->sadb_x_nat_t_type_type;
 		newsav->local_ike_port = ntohs(sport->sadb_x_nat_t_port_port);
 		newsav->remote_ike_port = ntohs(dport->sadb_x_nat_t_port_port);
@@ -5499,7 +5499,7 @@ key_setident(sah, m, mhp)
 		sah->identd = NULL;
 		return 0;
 	}
-	
+
 	if (mhp->ext[SADB_EXT_IDENTITY_SRC] == NULL ||
 	    mhp->ext[SADB_EXT_IDENTITY_DST] == NULL) {
 		ipseclog((LOG_DEBUG, "key_setident: invalid identity.\n"));
@@ -5549,7 +5549,7 @@ key_setident(sah, m, mhp)
 
 /*
  * m will not be freed on return.
- * it is caller's responsibility to free the result. 
+ * it is caller's responsibility to free the result.
  */
 static struct mbuf *
 key_getmsgbuf_x1(m, mhp)
@@ -5743,7 +5743,7 @@ key_delete_all(so, m, mhp, proto)
 					       state, sav->state));
 					continue;
 				}
-				
+
 				key_sa_chgstate(sav, SADB_SASTATE_DEAD);
 				key_freesav(sav);
 			}
@@ -6743,7 +6743,7 @@ key_freereg(so)
 			}
 		}
 	}
-	
+
 	return;
 }
 
@@ -7606,7 +7606,7 @@ key_align(m, mhp)
 		case SADB_EXT_SPIRANGE:
 		case SADB_X_EXT_POLICY:
 		case SADB_X_EXT_SA2:
-#ifdef IPSEC_NAT_T 
+#ifdef IPSEC_NAT_T
 		case SADB_X_EXT_NAT_T_TYPE:
 		case SADB_X_EXT_NAT_T_SPORT:
 		case SADB_X_EXT_NAT_T_DPORT:

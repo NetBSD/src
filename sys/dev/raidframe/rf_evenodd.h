@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd.h,v 1.3 2003/12/29 02:38:17 oster Exp $	*/
+/*	$NetBSD: rf_evenodd.h,v 1.3.10.1 2005/03/19 08:35:41 yamt Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,24 +30,24 @@
 #define _RF__RF_EVENODD_H_
 
 /* extern declerations of the failure mode  functions.  */
-int 
+int
 rf_ConfigureEvenOdd(RF_ShutdownList_t ** shutdownListp, RF_Raid_t * raidPtr,
     RF_Config_t * cfgPtr);
 int     rf_GetDefaultNumFloatingReconBuffersEvenOdd(RF_Raid_t * raidPtr);
 RF_HeadSepLimit_t rf_GetDefaultHeadSepLimitEvenOdd(RF_Raid_t * raidPtr);
-void 
+void
 rf_IdentifyStripeEvenOdd(RF_Raid_t * raidPtr, RF_RaidAddr_t addr,
     RF_RowCol_t ** diskids, RF_RowCol_t * outrow);
-void 
+void
 rf_MapParityEvenOdd(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
     RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
-void 
+void
 rf_MapEEvenOdd(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
     RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
-void 
+void
 rf_EODagSelect(RF_Raid_t * raidPtr, RF_IoType_t type,
     RF_AccessStripeMap_t * asmap, RF_VoidFuncPtr * createFunc);
-int 
+int
 rf_VerifyParityEvenOdd(RF_Raid_t * raidPtr, RF_RaidAddr_t raidAddr,
     RF_PhysDiskAddr_t * parityPDA, int correct_it, RF_RaidAccessFlags_t flags);
 

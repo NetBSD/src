@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.19 2003/08/07 16:34:12 agc Exp $ */
+/* $NetBSD: sched.h,v 1.19.10.1 2005/03/19 08:36:52 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ struct schedstate_percpu {
 	u_char spc_curpriority;		/* usrpri of curproc */
 	int spc_rrticks;		/* ticks until roundrobin() */
 	int spc_pscnt;			/* prof/stat counter */
-	int spc_psdiv;			/* prof/stat divisor */	
+	int spc_psdiv;			/* prof/stat divisor */
 };
 
 /* spc_flags */
@@ -169,7 +169,7 @@ struct schedstate_percpu {
 #define	CLONE_FILES		0x00000400	/* share file descriptors */
 #define	CLONE_SIGHAND		0x00000800	/* share signal actions */
 #define	CLONE_PID		0x00001000	/* share process ID */
-#define	CLONE_PTRACE		0x00002000	/* ptrace(2) continues on 
+#define	CLONE_PTRACE		0x00002000	/* ptrace(2) continues on
 						   child */
 #define	CLONE_VFORK		0x00004000	/* parent blocks until child
 						   exits */

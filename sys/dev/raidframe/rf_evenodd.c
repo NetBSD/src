@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd.c,v 1.13 2004/01/10 00:56:28 oster Exp $	*/
+/*	$NetBSD: rf_evenodd.c,v 1.13.10.1 2005/03/19 08:35:41 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.13 2004/01/10 00:56:28 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.13.10.1 2005/03/19 08:35:41 yamt Exp $");
 
 #include "rf_archs.h"
 
@@ -67,7 +67,7 @@ typedef struct RF_EvenOddConfigInfo_s {
 					 * IdentifyStripe */
 }       RF_EvenOddConfigInfo_t;
 
-int 
+int
 rf_ConfigureEvenOdd(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		    RF_Config_t *cfgPtr)
 {
@@ -120,19 +120,19 @@ rf_ConfigureEvenOdd(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 	return (0);
 }
 
-int 
+int
 rf_GetDefaultNumFloatingReconBuffersEvenOdd(RF_Raid_t *raidPtr)
 {
 	return (20);
 }
 
-RF_HeadSepLimit_t 
+RF_HeadSepLimit_t
 rf_GetDefaultHeadSepLimitEvenOdd(RF_Raid_t *raidPtr)
 {
 	return (10);
 }
 
-void 
+void
 rf_IdentifyStripeEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
 			 RF_RowCol_t **diskids, RF_RowCol_t *outRow)
 {
@@ -157,7 +157,7 @@ rf_IdentifyStripeEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
 */
 
 
-void 
+void
 rf_MapParityEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 		    RF_RowCol_t *row, RF_RowCol_t *col,
 		    RF_SectorNum_t *diskSector, int remap)
@@ -171,7 +171,7 @@ rf_MapParityEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 	    (raidSector % raidPtr->Layout.sectorsPerStripeUnit);
 }
 
-void 
+void
 rf_MapEEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 	       RF_RowCol_t *row, RF_RowCol_t *col, RF_SectorNum_t *diskSector,
 	       int remap)
@@ -185,7 +185,7 @@ rf_MapEEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 	    (raidSector % raidPtr->Layout.sectorsPerStripeUnit);
 }
 
-void 
+void
 rf_EODagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 	       RF_AccessStripeMap_t *asmap, RF_VoidFuncPtr *createFunc)
 {
@@ -332,7 +332,7 @@ rf_EODagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 }
 
 
-int 
+int
 rf_VerifyParityEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 		       RF_PhysDiskAddr_t *parityPDA, int correct_it,
 		       RF_RaidAccessFlags_t flags)

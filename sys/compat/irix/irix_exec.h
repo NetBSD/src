@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.h,v 1.20 2003/08/24 17:52:42 chs Exp $ */
+/*	$NetBSD: irix_exec.h,v 1.20.10.1 2005/03/19 08:33:34 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifndef	_IRIX_EXEC_H_
 #define	_IRIX_EXEC_H_
 
-#include <sys/types.h> 
+#include <sys/types.h>
 #include <sys/exec.h>
 #include <sys/signal.h>
 #include <sys/queue.h>
@@ -62,10 +62,10 @@ struct irix_emuldata {
 				/* share group proc list head and lock */
 	struct irix_share_group *ied_share_group;
 				/* share group proc list itself */
-	LIST_ENTRY(irix_emuldata) ied_sglist;	
+	LIST_ENTRY(irix_emuldata) ied_sglist;
 	struct proc *ied_p;	/* points back to struct proc */
 	int ied_shareaddr;	/* share VM with the group */
-	LIST_HEAD(ied_shared_regions, irix_shared_regions_rec) 
+	LIST_HEAD(ied_shared_regions, irix_shared_regions_rec)
 	    ied_shared_regions;	/* list of (un)shared memory regions */
 };
 
@@ -86,10 +86,10 @@ struct irix_emuldata {
 int irix_elf32_copyargs __P((struct proc *, struct exec_package *,
     struct ps_strings *, char **, void *));
 
-int irix_elf32_probe_o32 __P((struct proc *, struct exec_package *, void *,  
+int irix_elf32_probe_o32 __P((struct proc *, struct exec_package *, void *,
     char *, vaddr_t *));
 
-int irix_elf32_probe_n32 __P((struct proc *, struct exec_package *, void *,  
+int irix_elf32_probe_n32 __P((struct proc *, struct exec_package *, void *,
     char *, vaddr_t *));
 #endif
 
@@ -100,7 +100,7 @@ int irix_elf32_probe_n32 __P((struct proc *, struct exec_package *, void *,
 int irix_elf64_copyargs __P((struct proc *, struct exec_package *,
     struct ps_strings *, char **, void *));
 
-int irix_elf64_probe __P((struct proc *, struct exec_package *, void *,  
+int irix_elf64_probe __P((struct proc *, struct exec_package *, void *,
     char *, vaddr_t *));
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nullcons_subr.c,v 1.1.12.1 2005/02/12 18:17:42 yamt Exp $	*/
+/*	$NetBSD: nullcons_subr.c,v 1.1.12.2 2005/03/19 08:33:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nullcons_subr.c,v 1.1.12.1 2005/02/12 18:17:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nullcons_subr.c,v 1.1.12.2 2005/03/19 08:33:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -196,7 +196,7 @@ nullcons_newdev(cn)
 
 /*
  * Pseudo-device attach function -- it's the right time to do the rest of
- * initialization. 
+ * initialization.
  */
 void
 nullconsattach(pdev_count)

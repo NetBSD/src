@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.h,v 1.1 2003/08/13 20:06:49 jonathan Exp $	*/
+/*	$NetBSD: esp.h,v 1.1.12.1 2005/03/19 08:36:41 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/esp.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: esp.h,v 1.16 2000/10/18 21:28:00 itojun Exp $	*/
 
@@ -65,6 +65,6 @@ struct esptail {
 	u_int8_t	esp_nxt;	/* Next header */
 	/*variable size, 32bit bound*/	/* Authentication data (new IPsec)*/
 };
-	
+
 #define ESP_ALEN	12	/* 96-bit authenticator */
 #endif /*_NETIPSEC_ESP_H_*/

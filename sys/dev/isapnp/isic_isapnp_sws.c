@@ -15,7 +15,7 @@
  *      without specific prior written permission.
  *   4. Altered versions must be plainly marked as such, and must not be
  *      misrepresented as being the original software and/or documentation.
- *   
+ *
  *   THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  *   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  *   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -31,11 +31,11 @@
  *---------------------------------------------------------------------------
  *
  * Card format:
- * 
+ *
  * iobase + 0 : reset on  (0x03)
  * iobase + 1 : reset off (0x0)
  * iobase + 2 : isac read/write
- * iobase + 3 : hscx read/write ( offset 0-0x3f    hscx0 , 
+ * iobase + 3 : hscx read/write ( offset 0-0x3f    hscx0 ,
  *                                offset 0x40-0x7f hscx1 )
  * iobase + 4 : offset for indirect addressing
  *
@@ -47,7 +47,7 @@
  *		EXPERIMENTAL !!!!
  *		=================
  *
- *	$Id: isic_isapnp_sws.c,v 1.5.10.1 2005/02/12 18:17:46 yamt Exp $
+ *	$Id: isic_isapnp_sws.c,v 1.5.10.2 2005/03/19 08:34:40 yamt Exp $
  *
  *	last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -57,9 +57,9 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.5.10.1 2005/02/12 18:17:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.5.10.2 2005/03/19 08:34:40 yamt Exp $");
 
-#include "opt_isicpnp.h"  
+#include "opt_isicpnp.h"
 #ifdef ISICPNP_SEDLBAUER
 
 #define SWS_RESON  0 /* reset on                 */
@@ -308,7 +308,7 @@ isic_attach_sws(struct isa_device *dev)
 	HSCX_A_BASE = (caddr_t) (((u_int) sc->sc_port) + SWS_HSCX0);
 	HSCX_B_BASE = (caddr_t) (((u_int) sc->sc_port) + SWS_HSCX1);
 
-	/* 
+	/*
 	 * Read HSCX A/B VSTR.  Expected value for the SWS PnP card is
 	 * 0x05 ( = version 2.1 ) in the least significant bits.
 	 */
@@ -323,7 +323,7 @@ isic_attach_sws(struct isa_device *dev)
 		printf("isic%d: HSC1: VSTR: %#x\n",
 			dev->id_unit, HSCX_READ(1, H_VSTR));
 		return (0);
-	}                   
+	}
 
 	/* reset card */
 
@@ -331,7 +331,7 @@ isic_attach_sws(struct isa_device *dev)
 	DELAY(SEC_DELAY / 5);
 	outb( ((u_int) sc->sc_port) + SWS_RESOFF, 0);
 	DELAY(SEC_DELAY / 5);
-		
+
 	return(1);
 }
 
@@ -349,17 +349,17 @@ isic_attach_sws(struct isic_softc *sc)
 	sc->writefifo = sws_write_fifo;
 
 	/* setup card type */
-	
+
 	sc->sc_cardtyp = CARD_TYPEP_SWS;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM2;
 
 	sc->sc_ipac = 0;
 	sc->sc_bfifolen = HSCX_FIFO_LEN;
 
-	/* 
+	/*
 	 * Read HSCX A/B VSTR.  Expected value for the SWS PnP card is
 	 * 0x05 ( = version 2.1 ) in the least significant bits.
 	 */
@@ -374,7 +374,7 @@ isic_attach_sws(struct isic_softc *sc)
 		printf("%s: HSC1: VSTR: %#x\n",
 			sc->sc_dev.dv_xname, HSCX_READ(1, H_VSTR));
 		return;
-	}                   
+	}
 
 	/* reset card */
         {

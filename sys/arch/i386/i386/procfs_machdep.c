@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.19 2004/04/06 20:37:07 wiz Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.19.6.1 2005/03/19 08:33:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.19 2004/04/06 20:37:07 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.19.6.1 2005/03/19 08:33:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,7 @@ static const char * const i386_features[] = {
 	"fxsr", "sse", "sse2", "ss", "ht", "tm", "ia64", "31"
 };
 
+static int procfs_getonecpu(int, struct cpu_info *, char *, int *);
 
 /*
  * Linux-style /proc/cpuinfo.
@@ -76,13 +77,43 @@ static const char * const i386_features[] = {
 int
 procfs_getcpuinfstr(char *buf, int *len)
 {
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+	int i = 0, used = *len, total = *len;
+
+	*len = 0;
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (procfs_getonecpu(i++, ci, buf, &used) == 0) {
+			*len += used;
+			total = 0;
+			break;
+		}
+		total -= used;
+		if (total > 0) {
+			buf += used;
+			*buf++ = '\n';
+			*len += used + 1;
+			used = --total;
+			if (used == 0)
+			    break;
+		} else {
+			*len += used;
+			break;
+		}
+	}
+	return total == 0 ? -1 : 0;
+}
+
+static int
+procfs_getonecpu(int cpu, struct cpu_info *ci, char *buf, int *len)
+{
 	int left, l, i;
 	char featurebuf[256], *p;
 
 	p = featurebuf;
 	left = sizeof featurebuf;
 	for (i = 0; i < 32; i++) {
-		if (cpu_feature & (1 << i)) {
+		if (ci->ci_feature_flags & (1 << i)) {
 			l = snprintf(p, left, "%s ", i386_features[i]);
 			left -= l;
 			p += l;
@@ -100,12 +131,12 @@ procfs_getcpuinfstr(char *buf, int *len)
 		"model\t\t: %d\n"
 		"model name\t: %s\n"
 		"stepping\t: ",
-		0,
-		(char *)cpu_info_list->ci_vendor,
-		cpu_info_list->ci_cpuid_level >= 0 ?
-		    ((cpu_info_list->ci_signature >> 8) & 15) : cpu_class + 3,
-		cpu_info_list->ci_cpuid_level >= 0 ?
-		    ((cpu_info_list->ci_signature >> 4) & 15) : 0,
+		cpu,
+		(char *)ci->ci_vendor,
+		ci->ci_cpuid_level >= 0 ?
+		    ((ci->ci_signature >> 8) & 15) : cpu_class + 3,
+		ci->ci_cpuid_level >= 0 ?
+		    ((ci->ci_signature >> 4) & 15) : 0,
 		cpu_model
 	    );
 
@@ -114,8 +145,8 @@ procfs_getcpuinfstr(char *buf, int *len)
 	if (left <= 0)
 		return 0;
 
-	if (cpu_info_list->ci_cpuid_level >= 0)
-		l = snprintf(p, left, "%d\n", cpu_info_list->ci_signature & 15);
+	if (ci->ci_cpuid_level >= 0)
+		l = snprintf(p, left, "%d\n", ci->ci_signature & 15);
 	else
 		l = snprintf(p, left, "unknown\n");
 
@@ -125,11 +156,11 @@ procfs_getcpuinfstr(char *buf, int *len)
 		return 0;
 
 		
-	if (cpu_info_list->ci_tsc_freq != 0) {
+	if (ci->ci_tsc_freq != 0) {
 		u_int64_t freq, fraq;
 
-		freq = (cpu_info_list->ci_tsc_freq + 4999) / 1000000;
-		fraq = ((cpu_info_list->ci_tsc_freq + 4999) / 10000) % 100;
+		freq = (ci->ci_tsc_freq + 4999) / 1000000;
+		fraq = ((ci->ci_tsc_freq + 4999) / 10000) % 100;
 		l = snprintf(p, left, "cpu MHz\t\t: %qd.%qd\n",
 		    freq, fraq);
 	} else
@@ -150,13 +181,15 @@ procfs_getcpuinfstr(char *buf, int *len)
 		i386_fpu_fdivbug ? "yes" : "no",
 		i386_fpu_present ? "yes" : "no",
 		i386_fpu_exception ? "yes" : "no",
-		cpu_info_list->ci_cpuid_level,
+		ci->ci_cpuid_level,
 		(rcr0() & CR0_WP) ? "yes" : "no",
 		featurebuf);
 
+	if (l > left)
+		return 0;
 	*len = (p + l) - buf;
 
-	return 0;
+	return 1;
 }
 
 #ifdef __HAVE_PROCFS_MACHDEP

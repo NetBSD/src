@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pq.h,v 1.3 1999/02/05 00:06:15 oster Exp $	*/
+/*	$NetBSD: rf_pq.h,v 1.3.52.1 2005/03/19 08:35:41 yamt Exp $	*/
 /*
  * rf_pq.h
  */
@@ -48,7 +48,7 @@ extern RF_RedFuncs_t rf_qFuncs;
 extern RF_RedFuncs_t rf_qRecoveryFuncs;
 extern RF_RedFuncs_t rf_pqRecoveryFuncs;
 
-void 
+void
 rf_PQDagSelect(RF_Raid_t * raidPtr, RF_IoType_t type,
     RF_AccessStripeMap_t * asmap, RF_VoidFuncPtr * createFunc);
 RF_CREATE_DAG_FUNC_DECL(rf_PQCreateLargeWriteDAG);
@@ -61,10 +61,10 @@ void    rf_Degraded_100_PQFunc(RF_DagNode_t * node);
 int     rf_RecoveryQFunc(RF_DagNode_t * node);
 int     rf_RecoveryPQFunc(RF_DagNode_t * node);
 void    rf_PQ_DegradedWriteQFunc(RF_DagNode_t * node);
-void 
+void
 rf_IncQ(unsigned long *dest, unsigned long *buf, unsigned length,
     unsigned coeff);
-void 
+void
 rf_PQ_recover(unsigned long *pbuf, unsigned long *qbuf, unsigned long *abuf,
     unsigned long *bbuf, unsigned length, unsigned coeff_a, unsigned coeff_b);
 

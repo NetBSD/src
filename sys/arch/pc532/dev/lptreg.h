@@ -1,4 +1,4 @@
-/*	$NetBSD: lptreg.h,v 1.3 1995/05/16 07:30:35 phil Exp $	*/
+/*	$NetBSD: lptreg.h,v 1.3.74.1 2005/03/19 08:33:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -67,9 +67,3 @@ struct i8255 {
 #define LPT_PROBE_MASK	0x08
 #define LPT_PROBE_SET	0x07
 #define LPT_PROBE_CLR	0x06
-
-					/* Default mapped address */
-#define LPT_ADR(unit) (((volatile struct i8255 *)0xFFC80030) + unit)
-					/* Default interrupts */
-#define LPT_IRQ(unit) (unit?IR_TTY3 - 1:IR_TTY3)
-#define LPT_MAX	2			/* Maximum number of lpt interfaces*/

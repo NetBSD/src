@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_msq.h,v 1.4 2004/01/28 17:11:48 jdolecek Exp $ */
+/* $NetBSD: ppbus_msq.h,v 1.4.12.1 2005/03/19 08:35:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 Nicolas Souchu
@@ -39,9 +39,9 @@
 /* Microsequence stuff. */
 #define PPBUS_MS_MAXLEN 64              /* XXX according to MS_INS_MASK */
 #define PPBUS_MS_MAXARGS        3               /* according to MS_ARG_MASK */
- 
+
 /* Maximum number of mode dependent submicrosequences for in/out operations. */
-#define PPBUS_MAX_XFER  6 
+#define PPBUS_MAX_XFER  6
 
 /* Argument in microsequence structure */
 union ppbus_insarg {

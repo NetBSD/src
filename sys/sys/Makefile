@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.71 2005/01/02 16:08:30 thorpej Exp $
+#	$NetBSD: Makefile,v 1.71.4.1 2005/03/19 08:36:52 yamt Exp $
 
 INCSDIR= /usr/include/sys
 
@@ -22,7 +22,7 @@ INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
 	param.h pipe.h pmc.h poll.h pool.h power.h proc.h properties.h \
 	protosw.h ptrace.h queue.h \
 	ras.h reboot.h radioio.h resource.h resourcevar.h rnd.h \
-	sa.h scanio.h sched.h scsiio.h select.h sem.h sha1.h shm.h \
+	sa.h scanio.h sched.h scsiio.h select.h selinfo.h sem.h sha1.h shm.h \
 	siginfo.h signal.h signalvar.h sigtypes.h socket.h \
 	socketvar.h sockio.h stat.h statvfs.h syscall.h syscallargs.h \
 	sysctl.h stdint.h swap.h syslimits.h syslog.h systm.h \

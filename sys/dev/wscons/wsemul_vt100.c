@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.26 2004/07/28 12:34:05 jmmv Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.26.6.1 2005/03/19 08:36:02 yamt Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.26 2004/07/28 12:34:05 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.26.6.1 2005/03/19 08:36:02 yamt Exp $");
 
 #include "opt_wsmsgattrs.h"
 
@@ -130,7 +130,7 @@ vt100_handler *vt100_output[] = {
 };
 
 static void
-wsemul_vt100_init(struct wsemul_vt100_emuldata *edp, 
+wsemul_vt100_init(struct wsemul_vt100_emuldata *edp,
 	const struct wsscreen_descr *type, void *cookie, int ccol, int crow,
 	long defattr)
 {
@@ -352,7 +352,7 @@ wsemul_vt100_nextline(struct wsemul_vt100_emuldata *edp)
 			edp->crow++;
 		CHECK_DW;
 	}
-}	
+}
 
 static void
 wsemul_vt100_output_normal(struct wsemul_vt100_emuldata *edp, u_char c,
@@ -393,7 +393,7 @@ wsemul_vt100_output_normal(struct wsemul_vt100_emuldata *edp, u_char c,
 }
 
 static void
-wsemul_vt100_output_c0c1(struct wsemul_vt100_emuldata *edp, u_char c, 
+wsemul_vt100_output_c0c1(struct wsemul_vt100_emuldata *edp, u_char c,
 	int kernel)
 {
 	u_int n;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_acl.h,v 1.2 1998/09/04 19:54:37 christos Exp $	*/
+/*	$NetBSD: svr4_acl.h,v 1.2.56.1 2005/03/19 08:33:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	_SVR4_ACL_H_
 
 typedef struct svr4_aclent {
-	int		a_type;	
+	int		a_type;
 	svr4_uid_t	a_id;
 	svr4_o_mode_t	a_perm;
 } svr4_aclent_t;

@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.27 2004/04/18 19:21:06 matt Exp $ 
+ *	$Id: i4b_l4.c,v 1.27.6.1 2005/03/19 08:36:42 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.27 2004/04/18 19:21:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.27.6.1 2005/03/19 08:36:42 yamt Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -88,7 +88,7 @@ static int next_isdnif = 0;
  * Attach a new L3 driver instance and return its ISDN identifier
  */
 struct isdn_l3_driver *
-isdn_attach_isdnif(const char *devname, const char *cardname, 
+isdn_attach_isdnif(const char *devname, const char *cardname,
     void *l1_token, const struct isdn_l3_driver_functions *l3driver, int nbch)
 {
 	int s = splnet();
@@ -197,7 +197,7 @@ isdn_find_softc_by_isdnif(int isdnif)
 /*---------------------------------------------------------------------------*
  *      daemon is attached
  *---------------------------------------------------------------------------*/
-void 
+void
 i4b_l4_daemon_attached(void)
 {
 	struct isdn_l3_driver *d;
@@ -213,7 +213,7 @@ i4b_l4_daemon_attached(void)
 /*---------------------------------------------------------------------------*
  *      daemon is detached
  *---------------------------------------------------------------------------*/
-void 
+void
 i4b_l4_daemon_detached(void)
 {
 	struct isdn_l3_driver *d;
@@ -311,24 +311,24 @@ i4b_l4_pdeact(struct isdn_l3_driver *d, int numactive)
 	struct mbuf *m;
 	int i;
 	call_desc_t *cd;
-	
+
 	for(i=0; i < num_call_desc; i++)
 	{
 		if(call_desc[i].cdid != CDID_UNUSED && call_desc[i].l3drv == d)
 		{
 			cd = &call_desc[i];
-			
+
 			if(cd->timeout_active)
 			{
 				STOP_TIMER(cd->idle_timeout_handle, i4b_idle_check, cd);
 			}
-			
+
 			if (cd->l4_driver != NULL && cd->l4_driver_softc != NULL)
 			{
 				(*cd->l4_driver->line_disconnected)(cd->l4_driver_softc, (void *)cd);
 				i4b_unlink_bchandrvr(cd);
 			}
-		
+
 			if ((cd->channelid >= 0)
 			     && (cd->channelid < d->nbch));
 				d->bch_state[cd->channelid] = BCH_ST_FREE;
@@ -336,7 +336,7 @@ i4b_l4_pdeact(struct isdn_l3_driver *d, int numactive)
 			cd->cdid = CDID_UNUSED;
 		}
 	}
-	
+
 	if((m = i4b_Dgetmbuf(sizeof(msg_pdeact_ind_t))) != NULL)
 	{
 		msg_pdeact_ind_t *md = (msg_pdeact_ind_t *)m->m_data;
@@ -412,7 +412,7 @@ i4b_l4_dialout(int driver, int driver_unit)
 		md->header.cdid = -1;
 
 		md->driver = driver;
-		md->driver_unit = driver_unit;	
+		md->driver_unit = driver_unit;
 
 		i4bputqueue(m);
 	}
@@ -526,7 +526,7 @@ i4b_l4_accounting(int cdid, int accttype, int ioutbytes,
 		md->inbps = ri;
 		md->outbytes = outbytes;
 		md->inbytes = inbytes;
-		
+
 		i4bputqueue(m);
 	}
 }
@@ -568,14 +568,14 @@ i4b_l4_connect_ind(call_desc_t *cd)
 		mp->type_plan = cd->type_plan;
 		memcpy(mp->src_subaddr, cd->src_subaddr, sizeof(mp->src_subaddr));
 		memcpy(mp->dest_subaddr, cd->dest_subaddr, sizeof(mp->dest_subaddr));
-			
+
 		strlcpy(mp->display, cd->display, sizeof(mp->src_telno));
 
 		mp->scr_ind = cd->scr_ind;
-		mp->prs_ind = cd->prs_ind;		
-		
+		mp->prs_ind = cd->prs_ind;
+
 		T400_start(cd);
-		
+
 		i4bputqueue(m);
 	}
 }
@@ -594,7 +594,7 @@ i4b_l4_connect_active_ind(call_desc_t *cd)
 	cd->last_active_time = cd->connect_time = SECOND;
 
 	NDBGL4(L4_TIMO, "last_active/connect_time=%ld", (long)cd->connect_time);
-	
+
 	i4b_link_bchandrvr(cd);
 
 	update_controller_leds(cd->l3drv);
@@ -603,9 +603,9 @@ i4b_l4_connect_active_ind(call_desc_t *cd)
 		(*cd->l4_driver->line_connected)(cd->l4_driver_softc, cd);
 
 	i4b_l4_setup_timeout(cd);
-	
-	splx(s);	
-	
+
+	splx(s);
+
 	if((m = i4b_Dgetmbuf(sizeof(msg_connect_active_ind_t))) != NULL)
 	{
 		msg_connect_active_ind_t *mp = (msg_connect_active_ind_t *)m->m_data;
@@ -658,7 +658,7 @@ i4b_l4_disconnect_ind(call_desc_t *cd)
 		NDBGL4(L4_MSG, "invalid channel %d for ISDN!", cd->channelid);
 	}
 	update_controller_leds(d);
-	
+
 	if((m = i4b_Dgetmbuf(sizeof(msg_disconnect_ind_t))) != NULL)
 	{
 		msg_disconnect_ind_t *mp = (msg_disconnect_ind_t *)m->m_data;
@@ -822,7 +822,7 @@ static int
 i4b_link_bchandrvr(call_desc_t *cd)
 {
 	struct isdn_l3_driver *d = cd->l3drv;
-	
+
 	if (d == NULL || d->l3driver == NULL || d->l3driver->get_linktab == NULL)
 	{
 			cd->ilt = NULL;
@@ -850,7 +850,7 @@ i4b_link_bchandrvr(call_desc_t *cd)
 	cd->l4_driver->set_linktab(cd->l4_driver_softc, cd->ilt);
 
 	/* activate B channel */
-		
+
 	(*cd->ilt->bchannel_driver->bch_config)(cd->ilt->l1token, cd->ilt->channel, cd->bprot, 1);
 
 	return(0);
@@ -879,11 +879,11 @@ i4b_unlink_bchandrvr(call_desc_t *cd)
 		cd->ilt = d->l3driver->get_linktab(
 		    d->l1_token, cd->channelid);
 	}
-	
+
 	/* deactivate B channel */
-		
+
 	(*cd->ilt->bchannel_driver->bch_config)(cd->ilt->l1token, cd->ilt->channel, cd->bprot, 0);
-} 
+}
 
 /*---------------------------------------------------------------------------
 
@@ -892,15 +892,15 @@ i4b_unlink_bchandrvr(call_desc_t *cd)
 
 	|<---- unchecked-window ------->|<-checkwindow->|<-safetywindow>|
 
-idletime_state:      IST_NONCHK             IST_CHECK       IST_SAFE	
-	
+idletime_state:      IST_NONCHK             IST_CHECK       IST_SAFE
+
 	|				|		|		|
   time>>+-------------------------------+---------------+---------------+-...
 	|				|		|		|
 	|				|<--idle_time-->|<--earlyhup--->|
 	|<-----------------------unitlen------------------------------->|
 
-	
+
 	  unitlen - specifies the time a charging unit lasts
 	idle_time - specifies the thime the line must be idle at the
 		    end of the unit to be elected for hangup
@@ -924,8 +924,8 @@ idletime_state:      IST_NONCHK             IST_CHECK       IST_SAFE
 	it is just possible to specify a maximum idle time for incoming
 	connections, after this time of no activity on the line the line
 	is closed.
-	
----------------------------------------------------------------------------*/	
+
+---------------------------------------------------------------------------*/
 
 static time_t
 i4b_get_idletime(call_desc_t *cd)
@@ -938,20 +938,20 @@ i4b_get_idletime(call_desc_t *cd)
 
 /*---------------------------------------------------------------------------*
  *	B channel idle check timeout setup
- *---------------------------------------------------------------------------*/ 
+ *---------------------------------------------------------------------------*/
 static void
 i4b_l4_setup_timeout(call_desc_t *cd)
 {
 	NDBGL4(L4_TIMO, "%ld: direction %d, shorthold algorithm %d",
 		(long)SECOND, cd->dir, cd->shorthold_data.shorthold_algorithm);
-	
+
 	cd->timeout_active = 0;
 	cd->idletime_state = IST_IDLE;
-	
+
 	if((cd->dir == DIR_INCOMING) && (cd->max_idle_time > 0))
 	{
 		/* incoming call: simple max idletime check */
-	
+
 		START_TIMER(cd->idle_timeout_handle, i4b_idle_check, cd, hz/2);
 		cd->timeout_active = 1;
 		NDBGL4(L4_TIMO, "%ld: incoming-call, setup max_idle_time to %ld", (long)SECOND, (long)cd->max_idle_time);
@@ -964,7 +964,7 @@ i4b_l4_setup_timeout(call_desc_t *cd)
 			case SHA_FIXU:
 				i4b_l4_setup_timeout_fix_unit( cd );
 				break;
-				
+
 			case SHA_VARU:
 				i4b_l4_setup_timeout_var_unit( cd );
 				break;
@@ -983,11 +983,11 @@ static void
 i4b_l4_setup_timeout_fix_unit(call_desc_t *cd)
 {
 	/* outgoing call */
-	
+
 	if((cd->shorthold_data.idle_time > 0) && (cd->shorthold_data.unitlen_time == 0))
 	{
 		/* outgoing call: simple max idletime check */
-		
+
 		START_TIMER(cd->idle_timeout_handle, i4b_idle_check, cd, hz/2);
 		cd->timeout_active = 1;
 		NDBGL4(L4_TIMO, "%ld: outgoing-call, setup idle_time to %ld",
@@ -996,11 +996,11 @@ i4b_l4_setup_timeout_fix_unit(call_desc_t *cd)
 	else if((cd->shorthold_data.unitlen_time > 0) && (cd->shorthold_data.unitlen_time > (cd->shorthold_data.idle_time + cd->shorthold_data.earlyhup_time)))
 	{
 		/* outgoing call: full shorthold mode check */
-		
+
 		START_TIMER(cd->idle_timeout_handle, i4b_idle_check, cd, hz*(cd->shorthold_data.unitlen_time - (cd->shorthold_data.idle_time + cd->shorthold_data.earlyhup_time)));
 		cd->timeout_active = 1;
 		cd->idletime_state = IST_NONCHK;
-		NDBGL4(L4_TIMO, "%ld: outgoing-call, start %ld sec nocheck window", 
+		NDBGL4(L4_TIMO, "%ld: outgoing-call, start %ld sec nocheck window",
 			(long)SECOND, (long)(cd->shorthold_data.unitlen_time - (cd->shorthold_data.idle_time + cd->shorthold_data.earlyhup_time)));
 
 		if(cd->aocd_flag == 0)
@@ -1013,7 +1013,7 @@ i4b_l4_setup_timeout_fix_unit(call_desc_t *cd)
 	else
 	{
 		/* parms somehow got wrong .. */
-		
+
 		NDBGL4(L4_ERR, "%ld: ERROR: idletime[%ld]+earlyhup[%ld] > unitlength[%ld]!",
 			(long)SECOND, (long)cd->shorthold_data.idle_time, (long)cd->shorthold_data.earlyhup_time, (long)cd->shorthold_data.unitlen_time);
 	}
@@ -1026,7 +1026,7 @@ static void
 i4b_l4_setup_timeout_var_unit(call_desc_t *cd)
 {
 	/* outgoing call: variable unit idletime check */
-		
+
 	/*
 	 * start checking for an idle connect one second before the end of the unit.
 	 * The one second takes into account of rounding due to the driver only
@@ -1043,7 +1043,7 @@ i4b_l4_setup_timeout_var_unit(call_desc_t *cd)
 
 /*---------------------------------------------------------------------------*
  *	B channel idle check timeout function
- *---------------------------------------------------------------------------*/ 
+ *---------------------------------------------------------------------------*/
 void
 i4b_idle_check(call_desc_t *cd)
 {
@@ -1051,7 +1051,7 @@ i4b_idle_check(call_desc_t *cd)
 
 	if(cd->cdid == CDID_UNUSED)
 		return;
-	
+
 	s = splnet();
 
 	/* failsafe */
@@ -1061,10 +1061,10 @@ i4b_idle_check(call_desc_t *cd)
 		NDBGL4(L4_ERR, "ERROR: timeout_active == 0 !!!");
 	}
 	else
-	{	
+	{
 		cd->timeout_active = 0;
 	}
-	
+
 	/* incoming connections, simple idletime check */
 
 	if(cd->dir == DIR_INCOMING)
@@ -1182,7 +1182,7 @@ i4b_idle_check_fix_unit(call_desc_t *cd)
 				cd->cunits++;
 				i4b_l4_charging_ind(cd);
 			}
-			
+
 			NDBGL4(L4_TIMO, "%ld: outgoing-call, earlyhup end, wait for idletime start", (long)SECOND);
 			break;
 

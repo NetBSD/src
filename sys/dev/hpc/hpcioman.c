@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcioman.c,v 1.11 2004/09/13 12:55:47 drochner Exp $ */
+/*	$NetBSD: hpcioman.c,v 1.11.6.1 2005/03/19 08:33:58 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcioman.c,v 1.11 2004/09/13 12:55:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcioman.c,v 1.11.6.1 2005/03/19 08:33:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ hpcioman_print(void *aux, const char *pnp)
 		    hma->hma_hc ? hma->hma_hc->hc_name : "not found",
 		    hma->hma_port, type, hma->hma_id);
 		if (type == CONFIG_HOOK_BUTTONEVENT ||
-		    type == CONFIG_HOOK_PMEVENT || 
+		    type == CONFIG_HOOK_PMEVENT ||
 		    type == CONFIG_HOOK_EVENT ||
 		    type == CONFIG_HOOK_PCIINTR) {
 			if (hma->hma_intr_mode & HPCIO_INTR_EDGE)
@@ -202,6 +202,6 @@ hpcioman_print(void *aux, const char *pnp)
 		if (hma->hma_on == 0)
 			aprint_normal(", active low");
 	}
-	
+
 	return (QUIET);
 }

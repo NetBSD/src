@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.3.6.1 2005/02/12 18:17:51 yamt Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.3.6.2 2005/03/19 08:36:06 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.24 2005/01/08 16:55:54 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.25 2005/02/01 03:14:31 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -45,6 +45,10 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.24 2005/01/08 16:5
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
+#if __NetBSD_Version__ >= 105190000	/* 1.5T */
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
+#endif
 #include <netinet/udp.h>
 #include <netinet/tcpip.h>
 #include <netinet/ip_icmp.h>
@@ -131,22 +135,24 @@ struct mbuf **mp;
 struct ifnet *ifp;
 int dir;
 {
-	struct ip *ip = mtod(*mp, struct ip *);
-	int rv, hlen = ip->ip_hl << 2;
-
-#if __NetBSD_Version >= 200080000
+	struct ip *ip;
+	int rv, hlen;
+#if __NetBSD_Version__ >= 200080000
 	/*
 	 * ensure that mbufs are writable beforehand
 	 * as it's assumed by ipf code.
 	 * XXX inefficient
 	 */
-	error = m_makewritable(mp, 0, M_COPYALL, M_DONTWAIT);
+	int error = m_makewritable(mp, 0, M_COPYALL, M_DONTWAIT);
+
 	if (error) {
 		m_freem(*mp);
 		*mp = NULL;
 		return error;
 	}
 #endif
+	ip = mtod(*mp, struct ip *);
+	hlen = ip->ip_hl << 2;
 
 #ifdef INET
 #if defined(M_CSUM_TCPv4)
@@ -204,7 +210,7 @@ int dir;
 	    ifp, (dir == PFIL_OUT), mp));
 }
 # endif
-#endif /* __NetBSD_Version >= 105110000 */
+#endif /* __NetBSD_Version__ >= 105110000 */
 
 
 #if	defined(IPFILTER_LKM)
@@ -1382,7 +1388,7 @@ frdest_t *fdp;
 	struct ifnet *ifp;
 	frentry_t *fr;
 	u_long mtu;
-	int error;
+	int error = 0;
 
 	ro = &ip6route;
 	fr = fin->fin_fr;
@@ -1423,20 +1429,14 @@ frdest_t *fdp;
 		dst6->sin6_addr.s6_addr16[1] = htons(ifp->if_index);
 
 	{
-#if (__NetBSD_Version__ >= 106010000)
-		struct in6_addr finaldst = fin->fin_dst6;
-		int frag;
-#endif
+		struct in6_ifextra *ife;
+
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			dst6 = (struct sockaddr_in6 *)ro->ro_rt->rt_gateway;
 		ro->ro_rt->rt_use++;
 
-#if (__NetBSD_Version__ <= 106009999)
-		mtu = nd_ifinfo[ifp->if_index].linkmtu;
-#else
-		/* Determine path MTU. */
-		error = ip6_getpmtu(ro, ro, ifp, &finaldst, &mtu, &frag);
-#endif
+		ife = (struct in6_ifextra *)(ifp)->if_afdata[AF_INET6];
+		mtu = ife->nd_ifinfo[ifp->if_index].linkmtu;
 		if ((error == 0) && (m0->m_pkthdr.len <= mtu)) {
 			*mpp = NULL;
 			error = nd6_output(ifp, ifp, m0, dst6, rt);
@@ -1541,18 +1541,19 @@ struct in_addr *inp, *inpmask;
 u_32_t fr_newisn(fin)
 fr_info_t *fin;
 {
-	u_32_t newiss;
-#if __NetBSD_Version >= 105190000	/* 1.5T */
+#if __NetBSD_Version__ >= 105190000	/* 1.5T */
 	size_t asz;
 	
-
 	if (fin->fin_v == 4)
 		asz = sizeof(struct in_addr);
 	else if (fin->fin_v == 6)
 		asz = sizeof(fin->fin_src);
-	newiss = tcp_new_iss1((void *)&fin->fin_src, (void *)&fin->fin_dst,
-			      fin->fin_sport, fin->fin_dport, asz);
+	else	/* XXX: no way to return error */
+		return 0;
+	return tcp_new_iss1((void *)&fin->fin_src, (void *)&fin->fin_dst,
+	    fin->fin_sport, fin->fin_dport, asz, 0);
 #else
+	u_32_t newiss;
 	static int iss_seq_off = 0;
 	u_char hash[16];
 	MD5_CTX ctx;
@@ -1584,8 +1585,8 @@ fr_info_t *fin;
 	 */
 	iss_seq_off += 0x00010000;
 	newiss += iss_seq_off;
-#endif
 	return newiss;
+#endif
 }
 
 

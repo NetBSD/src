@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.10 2004/09/17 14:11:24 skrll Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.10.6.1 2005/03/19 08:33:43 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.10 2004/09/17 14:11:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.10.6.1 2005/03/19 08:33:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,7 +191,7 @@ osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
 	struct ecoff_exechdr ldr_exechdr;
 	struct nameidata nd;
 	struct vnode *ldr_vp;
-        size_t resid;  
+        size_t resid;
 	int error;
 
 	strncpy(emul_arg->loader_name, OSF1_LDR_EXEC_DEFAULT_LOADER,
@@ -242,7 +242,7 @@ osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
                 goto badunlock;
         }
 
-	/* 
+	/*
 	 * If loader's mount point disallows set-id execution,
 	 * disable set-id.
 	 */

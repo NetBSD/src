@@ -1,4 +1,4 @@
-# $NetBSD: gen_errno_tables.awk,v 1.1 1999/04/23 05:31:33 cgd Exp $
+# $NetBSD: gen_errno_tables.awk,v 1.1.48.1 2005/03/19 08:33:28 yamt Exp $
 
 # Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
 #
@@ -79,7 +79,7 @@ NR != (FNR + nr_offset) {
 
 END {
 	if (idx != 1) {
-		exit 1	
+		exit 1
 	}
 
 	printf("    0,\n") >> "c"

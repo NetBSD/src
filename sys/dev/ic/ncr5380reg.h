@@ -1,27 +1,27 @@
-/*	$NetBSD: ncr5380reg.h,v 1.5 2003/05/03 18:11:22 wiz Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.5.12.1 2005/03/19 08:34:03 yamt Exp $	*/
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991,1990,1989 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
@@ -30,13 +30,13 @@
  * Revision 2.3  91/08/24  12:25:10  af
  * 	Moved padding of regmap in impl file.
  * 	[91/08/02  04:22:39  af]
- * 
+ *
  * Revision 2.2  91/06/19  16:28:35  rvb
  * 	From the NCR data sheets
  * 	"NCR 5380 Family, SCSI Protocol Controller Data Manual"
  * 	NCR Microelectronics Division, Colorado Spring, 6/98 T01891L
  * 	[91/04/21            af]
- * 
+ *
  */
 
 /*

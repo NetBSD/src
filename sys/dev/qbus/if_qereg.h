@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qereg.h,v 1.7 2003/08/07 16:31:15 agc Exp $ */
+/*	$NetBSD: if_qereg.h,v 1.7.10.1 2005/03/19 08:35:37 yamt Exp $ */
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 /* @(#)if_qereg.h	1.2 (ULTRIX) 1/3/85 */
- 
+
 /****************************************************************
  *								*
  *        Licensed from Digital Equipment Corporation 		*
@@ -59,27 +59,27 @@
  *								*
  ****************************************************************/
 /* ---------------------------------------------------------------------
- * Modification History 
+ * Modification History
  *
  *  13 Feb. 84 -- rjl
  *
  *	Initial version of driver. derived from IL driver.
- * 
+ *
  * ---------------------------------------------------------------------
  */
- 
+
 /*
- * Digital Q-BUS to NI Adapter 
+ * Digital Q-BUS to NI Adapter
  */
 #ifdef notdef
 struct qedevice {
-	u_short	qe_sta_addr[2]; 	/* Station address (actually 6 	*/
-	u_short	qe_rcvlist_lo; 		/* Receive list lo address 	*/
-	u_short	qe_rcvlist_hi; 		/* Receive list hi address 	*/
-	u_short	qe_xmtlist_lo;		/* Transmit list lo address 	*/
-	u_short	qe_xmtlist_hi;		/* Transmit list hi address 	*/
-	u_short	qe_vector;		/* Interrupt vector 		*/
-	u_short	qe_csr;			/* Command and Status Register 	*/
+	u_short	qe_sta_addr[2];		/* Station address (actually 6	*/
+	u_short	qe_rcvlist_lo;		/* Receive list lo address	*/
+	u_short	qe_rcvlist_hi;		/* Receive list hi address	*/
+	u_short	qe_xmtlist_lo;		/* Transmit list lo address	*/
+	u_short	qe_xmtlist_hi;		/* Transmit list hi address	*/
+	u_short	qe_vector;		/* Interrupt vector		*/
+	u_short	qe_csr;			/* Command and Status Register	*/
 };
 #endif
 
@@ -94,7 +94,7 @@ struct qedevice {
 #define	QE_CSR_XMTH	10
 #define	QE_CSR_VECTOR	12
 #define	QE_CSR_CSR	14
- 
+
 /*
  * Command and status bits (csr)
  */
@@ -106,19 +106,19 @@ struct qedevice {
 #define QE_RL_INVALID	0x0020		/* Receive list invalid		*/
 #define QE_INT_ENABLE	0x0040		/* Interrupt enable		*/
 #define QE_XMIT_INT	0x0080		/* Transmit interrupt		*/
-#define QE_ILOOP 	0x0100		/* Internal loopback		*/
+#define QE_ILOOP	0x0100		/* Internal loopback		*/
 #define QE_ELOOP	0x0200		/* External loopback		*/
 #define QE_STIM_ENABLE	0x0400		/* Sanity timer enable		*/
 #define QE_POWERUP	0x1000		/* Tranceiver power on		*/
 #define QE_CARRIER	0x2000		/* Carrier detect		*/
 #define QE_RCV_INT	0x8000		/* Receiver interrupt		*/
- 
+
 /*
  * Transmit and receive ring discriptor ---------------------------
  *
  * The QNA uses the flag, status1 and the valid bit as a handshake/semiphore
- * mechinism. 
- * 
+ * mechinism.
+ *
  * The flag word is written on ( bits 15,15 set to 1 ) when it reads the
  * descriptor. If the valid bit is set it considers the address to be valid.
  * When it uses the buffer pointed to by the valid address it sets status word
@@ -142,7 +142,7 @@ struct qe_ring	{
 #define	QE_SETUP		0x1000
 #define	QE_ODDEND		0x0080
 #define	QE_ODDBEGIN		0x0040
- 
+
 /*
  * Status word definations (receive)
  *	word1
@@ -159,7 +159,7 @@ struct qe_ring	{
 #define QE_LASTNOT		0x8000	/* Not the last in the packet	*/
 /*	word2								*/
 #define QE_RBL_LO		0x00ff	/* Low bits of receive len	*/
- 
+
 /*
  * Status word definations (transmit)
  *	word1
@@ -172,14 +172,14 @@ struct qe_ring	{
 #define QE_LOSS			0x1000	/* Loss of carrier while xmit	*/
 /*	word2								*/
 #define QE_TDR			0x3fff	/* Time domain reflectometry	*/
- 
+
 /*
  * General constant definations
  */
-#define QEALLOC 		0	/* Allocate an mbuf		*/
+#define QEALLOC			0	/* Allocate an mbuf		*/
 #define QENOALLOC		1	/* No mbuf allocation		*/
 #define QEDEALLOC		2	/* Release an mbuf chain	*/
- 
+
 #define QE_NOTYET		0x8000	/* Descriptor not in use yet	*/
 #define QE_INUSE		0x4000	/* Descriptor being used by QNA	*/
 #define QE_MASK			0xc000	/* Lastnot/error/used mask	*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_isa.c,v 1.13.6.1 2005/02/12 18:17:45 yamt Exp $	*/
+/*	$NetBSD: nca_isa.c,v 1.13.6.2 2005/03/19 08:34:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nca_isa.c,v 1.13.6.1 2005/02/12 18:17:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nca_isa.c,v 1.13.6.2 2005/03/19 08:34:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,8 +101,8 @@ struct nca_isa_probe_data {
 
 int	nca_isa_find(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 	    struct nca_isa_probe_data *);
-int	nca_isa_match(struct device *, struct cfdata *, void *); 
-void	nca_isa_attach(struct device *, struct device *, void *);  
+int	nca_isa_match(struct device *, struct cfdata *, void *);
+void	nca_isa_attach(struct device *, struct device *, void *);
 int	nca_isa_test(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 CFATTACH_DECL(nca_isa, sizeof(struct nca_isa_softc),
@@ -406,7 +406,7 @@ nca_isa_attach(parent, self, aux)
 			    sc->sc_dev.dv_xname);
 			return;
 		}
-	} else 
+	} else
 		sc->sc_flags |= NCR5380_FORCE_POLLING;
 
 
@@ -423,7 +423,7 @@ nca_isa_attach(parent, self, aux)
 
 	sc->sc_no_disconnect =
 		(esc->sc_options & NCA_NO_DISCONNECT);
-	sc->sc_parity_disable = 
+	sc->sc_parity_disable =
 		(esc->sc_options & NCA_NO_PARITY_CHK) >> 8;
 	if (esc->sc_options & NCA_FORCE_POLLING)
 		sc->sc_flags |= NCR5380_FORCE_POLLING;

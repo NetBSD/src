@@ -1,9 +1,9 @@
-/*	$NetBSD: panic.c,v 1.3 2003/03/07 00:46:37 dsl Exp $	*/
+/*	$NetBSD: panic.c,v 1.3.12.1 2005/03/19 08:36:26 yamt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
  *  All rights reserved.
- * 
+ *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
  *  are met:
@@ -14,7 +14,7 @@
  *     documentation and/or other materials provided with the distribution.
  *  3. The name of the author may not be used to endorse or promote products
  *     derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR `AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -46,7 +46,7 @@ panic(fmt /*, va_alist */)
     va_list ap;
 #ifndef LIBSA_NO_FS_CLOSE
     static int paniced;
-    
+
     if (!paniced) {
         paniced = 1;
         closeall();

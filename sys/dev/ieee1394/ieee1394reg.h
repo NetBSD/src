@@ -1,11 +1,11 @@
-/*	$NetBSD: ieee1394reg.h,v 1.17 2003/08/04 07:00:19 mrg Exp $	*/
+/*	$NetBSD: ieee1394reg.h,v 1.17.10.1 2005/03/19 08:34:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by 
+ * by
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -243,7 +243,7 @@ struct ieee1394_async_nodata {
  */
 
 /*
- * 0xfffff0010000 - if_fw fifo  XXX - Move this below the 4G mark 
+ * 0xfffff0010000 - if_fw fifo  XXX - Move this below the 4G mark
  * 0x0000f0010004 - 0x0000f0020000 - SBP2 addr range (64k in 4 byte chunks)
  * 0x0000f0020000 - 0x0000f101ffff - SBP2 data address range (16M in 512 byte
  *                                                            chunks)

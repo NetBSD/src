@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_exec.c,v 1.11.10.1 2005/02/12 18:17:41 yamt Exp $	*/
+/*	$NetBSD: compat_exec.c,v 1.11.10.2 2005/03/19 08:33:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.11.10.1 2005/02/12 18:17:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.11.10.2 2005/03/19 08:33:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ exec_aout_prep_oldomagic(p, epp)
 	 * computed (in execve(2)) by rounding *up* `ep_tsize' and `ep_dsize'
 	 * respectively to page boundaries.
 	 * Compensate `ep_dsize' for the amount of data covered by the last
-	 * text page. 
+	 * text page.
 	 */
 	dsize = epp->ep_dsize + execp->a_text - roundup(execp->a_text,
 							PAGE_SIZE);

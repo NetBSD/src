@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.24 2004/10/28 07:22:24 martti Exp $	*/
+/*	$NetBSD: amr.c,v 1.24.6.1 2005/03/19 08:35:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  * SUCH DAMAGE.
  *
  * from FreeBSD: amr_pci.c,v 1.5 2000/08/30 07:52:40 msmith Exp
- * from FreeBSD: amr.c,v 1.16 2000/08/30 07:52:40 msmith Exp 
+ * from FreeBSD: amr.c,v 1.16 2000/08/30 07:52:40 msmith Exp
  */
 
 /*
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.24 2004/10/28 07:22:24 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.24.6.1 2005/03/19 08:35:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,7 +230,7 @@ amr_match(struct device *parent, struct cfdata *match, void *aux)
 		return (0);
 
 	for (i = 0; i < sizeof(amr_pci_type) / sizeof(amr_pci_type[0]); i++)
-		if (PCI_VENDOR(pa->pa_id) == amr_pci_type[i].apt_vendor && 
+		if (PCI_VENDOR(pa->pa_id) == amr_pci_type[i].apt_vendor &&
 		    PCI_PRODUCT(pa->pa_id) == amr_pci_type[i].apt_product)
 		    	break;
 
@@ -351,7 +351,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 	}
 	amr->amr_flags |= AMRF_DMA_ALLOC;
 
-	if ((rv = bus_dmamem_map(amr->amr_dmat, &amr->amr_dmaseg, rseg, size, 
+	if ((rv = bus_dmamem_map(amr->amr_dmat, &amr->amr_dmaseg, rseg, size,
 	    (caddr_t *)&amr->amr_mbox,
 	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		aprint_error("%s: unable to map buffer, rv = %d\n",
@@ -361,7 +361,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 	}
 	amr->amr_flags |= AMRF_DMA_MAP;
 
-	if ((rv = bus_dmamap_create(amr->amr_dmat, size, 1, size, 0, 
+	if ((rv = bus_dmamap_create(amr->amr_dmat, size, 1, size, 0,
 	    BUS_DMA_NOWAIT, &amr->amr_dmamap)) != 0) {
 		aprint_error("%s: unable to create buffer DMA map, rv = %d\n",
 		    amr->amr_dv.dv_xname, rv);
@@ -448,7 +448,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* 
+	/*
 	 * Cap the maximum number of outstanding commands.  AMI's Linux
 	 * driver doesn't trust the controller's reported value, and lockups
 	 * have been seen when we do.
@@ -872,7 +872,7 @@ amr_thread(void *cookie)
 
 		if ((rv = amr_ccb_alloc(amr, &ac)) != 0) {
 			printf("%s: ccb_alloc failed (%d)\n",
- 			    amr->amr_dv.dv_xname, rv);		
+ 			    amr->amr_dv.dv_xname, rv);
 			continue;
 		}
 
@@ -1131,7 +1131,7 @@ amr_ccb_wait(struct amr_softc *amr, struct amr_ccb *ac)
 
 	s = splbio();
 	amr_ccb_enqueue(amr, ac);
-	tsleep(ac, PRIBIO, "amrcmd", 0); 
+	tsleep(ac, PRIBIO, "amrcmd", 0);
 	splx(s);
 
 	return (ac->ac_status != 0 ? EIO : 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.24 2004/06/05 07:36:25 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.24.6.1 2005/03/19 08:36:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.24 2004/06/05 07:36:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.24.6.1 2005/03/19 08:36:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ smbfs_smb_statvfs(struct smb_share *ssp, struct statvfs *sbp,
 	 * allocation units. Allocation unit is what 'block'
 	 * means in Unix context, sector size might be HW sector size.
 	 */
-	
+
 	if (SMB_DIALECT(SSTOVC(ssp)) >= SMB_DIALECT_LANMAN2_0) {
 		struct smb_t2rq *t2p;
 		struct mbchain *mbp;
@@ -872,7 +872,7 @@ smbfs_smb_search(struct smbfs_fctx *ctx)
 	}
 	smb_rq_getreply(rqp, &mdp);
 	md_get_uint8(mdp, &wc);
-	if (wc != 1) 
+	if (wc != 1)
 		return EBADRPC;
 	md_get_uint16le(mdp, &ec);
 	if (ec == 0)
@@ -1416,7 +1416,7 @@ smbfs_smb_ntcreatex(struct smbnode *np, int accmode, struct smb_cred *scred)
 	md_get_uint8(mdp, NULL);	/* Oplock level granted */
 	md_get_uint16(mdp, &np->n_fid);	/* FID */
 	/* ignore rest */
-	
+
 bad:
 	smb_rq_done(rqp);
 	return (error);
@@ -1495,7 +1495,7 @@ smbfs_smb_nt_dirnotify_fetch(struct smb_rq *rqp, int *hint)
 			*hint = NOTE_ATTRIB | NOTE_WRITE;
 			error = 0;
 		}
-		
+
 		goto bad;
 	}
 
@@ -1535,7 +1535,7 @@ smbfs_smb_nt_dirnotify_fetch(struct smb_rq *rqp, int *hint)
 			md_get_mem(mdp, NULL, nextentry - 2 * 4, MB_MZERO);
 #if 0
 		md_get_uint32le(mdp, &fnlen);
-		
+
 		printf("notify: next %u act %u fnlen %u fname '",
 			nextentry, action, fnlen);
 		for(; fnlen > 0; fnlen -= 2) {

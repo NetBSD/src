@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_pci.c,v 1.11 2002/10/02 16:51:43 thorpej Exp $	*/
+/*	$NetBSD: mlx_pci.c,v 1.11.16.1 2005/03/19 08:35:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.11 2002/10/02 16:51:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.11.16.1 2005/03/19 08:35:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -380,7 +380,7 @@ mlx_v3_intaction(struct mlx_softc *mlx, int action)
  * Returns 0 if initialisation is complete, 1 if still in progress but no
  * error has been fetched, 2 if an error has been retrieved.
  */
-static int 
+static int
 mlx_v3_fw_handshake(struct mlx_softc *mlx, int *error, int *param1, int *param2)
 {
 	u_int8_t fwerror;
@@ -417,7 +417,7 @@ mlx_v3_fw_handshake(struct mlx_softc *mlx, int *error, int *param1, int *param2)
 /*
  * Reset the controller.  Return non-zero on failure.
  */
-static int 
+static int
 mlx_v3_reset(struct mlx_softc *mlx)
 {
 	int i;
@@ -534,7 +534,7 @@ mlx_v4_intaction(struct mlx_softc *mlx, int action)
  * Returns 0 if initialisation is complete, 1 if still in progress but no
  * error has been fetched, 2 if an error has been retrieved.
  */
-static int 
+static int
 mlx_v4_fw_handshake(struct mlx_softc *mlx, int *error, int *param1, int *param2)
 {
 	u_int8_t fwerror;
@@ -645,7 +645,7 @@ mlx_v5_intaction(struct mlx_softc *mlx, int action)
  * Returns 0 if initialisation is complete, 1 if still in progress but no
  * error has been fetched, 2 if an error has been retrieved.
  */
-static int 
+static int
 mlx_v5_fw_handshake(struct mlx_softc *mlx, int *error, int *param1, int *param2)
 {
 	u_int8_t fwerror;

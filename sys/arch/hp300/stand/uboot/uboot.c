@@ -1,4 +1,4 @@
-/*	$NetBSD: uboot.c,v 1.11 2003/11/14 16:52:40 tsutsui Exp $	*/
+/*	$NetBSD: uboot.c,v 1.11.10.1 2005/03/19 08:33:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -66,11 +66,11 @@ char *names[] = {
 
 static int bdev, badapt, bctlr, bunit, bpart;
 
-void main __P((void));
-void getbootdev __P((int *));
+void main(void);
+void getbootdev(int *);
 
 void
-main()
+main(void)
 {
 	int currname = 0;
 
@@ -102,8 +102,7 @@ main()
 }
 
 void
-getbootdev(howto)
-	int *howto;
+getbootdev(int *howto)
 {
 	char c, *ptr = line;
 

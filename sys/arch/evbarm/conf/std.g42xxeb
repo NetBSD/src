@@ -1,0 +1,26 @@
+#	$NetBSD: std.g42xxeb,v 1.1.6.2 2005/03/19 08:32:55 yamt Exp $
+#
+# standard NetBSD/evbarm for TWINTAIL (G4255EB) options
+
+machine	evbarm arm
+
+# Pull in LUBBOCK config definitions.
+include "arch/evbarm/conf/files.g42xxeb"
+
+options 	G42XXEB
+options 	EXEC_ELF32
+options 	EXEC_SCRIPT
+
+# To support easy transit to ../arch/arm/arm32
+options 	ARM32
+
+makeoptions	LOADADDRESS="0xc0200000"
+makeoptions	BOARDTYPE="g42xxeb"
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.g42xxeb"
+
+options 	ARM_INTR_IMPL="<arch/arm/xscale/pxa2x0_intr.h>"
+
+# OS Timer
+saost*	at pxaip? addr 0x40a00000 size 0x20
+
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_bootstrap.c,v 1.10 2003/12/09 11:29:01 manu Exp $ */
+/*	$NetBSD: mach_bootstrap.c,v 1.10.10.1 2005/03/19 08:33:40 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.10 2003/12/09 11:29:01 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.10.10.1 2005/03/19 08:33:40 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.10 2003/12/09 11:29:01 manu Exp
 #include <compat/mach/mach_errno.h>
 #include <compat/mach/mach_services.h>
 
-int 
+int
 mach_bootstrap_look_up(args)
 	struct mach_trap_args *args;
 {
@@ -66,7 +66,7 @@ mach_bootstrap_look_up(args)
 	size_t len;
 
 	/* The trailer is word aligned  */
-	service_name_len = (sizeof(service_name) + 1) & ~0x7UL; 
+	service_name_len = (sizeof(service_name) + 1) & ~0x7UL;
 	len = sizeof(*rep) - sizeof(rep->rep_service_name) + service_name_len;
 
 	if (len > *msglen)

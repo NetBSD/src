@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sig_notalpha.c,v 1.27 2003/01/18 21:21:32 thorpej Exp $	*/
+/*	$NetBSD: linux_sig_notalpha.c,v 1.27.12.1 2005/03/19 08:33:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.27 2003/01/18 21:21:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.27.12.1 2005/03/19 08:33:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ linux_sys_sigprocmask(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 
-	return(linux_sigprocmask1(p, SCARG(uap, how), 
+	return(linux_sigprocmask1(p, SCARG(uap, how),
 				SCARG(uap, set), SCARG(uap, oset)));
 }
 
@@ -173,9 +173,9 @@ linux_sys_sigprocmask(l, v, retval)
 int
 linux_sys_pause(l, v, retval)
 	struct lwp *l;
-	void *v;	
+	void *v;
 	register_t *retval;
-{	
+{
 	struct proc *p = l->l_proc;
 
 	return (sigsuspend1(p, 0));

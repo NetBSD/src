@@ -1,4 +1,4 @@
-/*	$NetBSD: mc68450reg.h,v 1.2 1999/02/10 16:00:54 minoura Exp $	*/
+/*	$NetBSD: mc68450reg.h,v 1.2.52.1 2005/03/19 08:34:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -165,7 +165,7 @@
 #define DMAC_FC_CPU		0x07
 
 /*
- * An element of the array used in DMAC scatter-gather transfer 
+ * An element of the array used in DMAC scatter-gather transfer
  * (array chaining mode)
  */
 struct dmac_sg_array {

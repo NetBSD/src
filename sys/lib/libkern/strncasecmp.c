@@ -28,7 +28,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: strncasecmp.c,v 1.5 1998/03/27 01:30:10 cgd Exp $";
+static char *rcsid = "$NetBSD: strncasecmp.c,v 1.5.58.1 2005/03/19 08:36:21 yamt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(_KERNEL) || defined(_STANDALONE)
@@ -51,10 +51,10 @@ strncasecmp(s1, s2, n)
 		unsigned char c2 = (unsigned char) *s2++;
 
 		if (c1 != c2) {
-			if (c1 >= 'A' && c1 <= 'Z' && 
+			if (c1 >= 'A' && c1 <= 'Z' &&
 			    c2 >= 'a' && c2 <= 'z')
 				c1 += 'a' - 'A';
-			else if (c1 >= 'a' && c1 <= 'z' && 
+			else if (c1 >= 'a' && c1 <= 'z' &&
 				 c2 >= 'A' && c2 <= 'Z')
 				c2 += 'a' - 'A';
 			if (c1 != c2)

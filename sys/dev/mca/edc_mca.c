@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.26.6.1 2005/02/12 18:17:46 yamt Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.26.6.2 2005/03/19 08:34:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.26.6.1 2005/02/12 18:17:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.26.6.2 2005/03/19 08:34:42 yamt Exp $");
 
 #include "rnd.h"
 
@@ -184,7 +184,7 @@ edc_mca_attach(parent, self, aux)
 
 	/*
 	 * POS register 2: (adf pos0)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
 	 *   \ \____/  \ \__ enable: 0=adapter disabled, 1=adapter enabled
 	 *    \     \   \___ Primary/Alternate Port Addresses:
@@ -194,14 +194,14 @@ edc_mca_attach(parent, self, aux)
 	 *        \_________ Fairness On/Off: 1=On 0=Off
 	 *
 	 * POS register 3: (adf pos1)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
 	 * 0 0 \_/
 	 *       \__________ DMA Burst Pacing Interval: 10=24ms 11=31ms
 	 *                     01=16ms 00=Burst Disabled
 	 *
 	 * POS register 4: (adf pos2)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
 	 *           \_/ \__ DMA Pacing Control: 1=Disabled 0=Enabled
 	 *             \____ Time to Release: 1X=6ms 01=3ms 00=Immediate
@@ -220,7 +220,7 @@ edc_mca_attach(parent, self, aux)
 		typestr = NULL;
 		break;
 	}
-		
+
 	irq = ESDIC_IRQ;
 	iobase = (pos2 & IO_IS_ALT) ? ESDIC_IOALT : ESDIC_IOPRM;
 	drq = (pos2 & DRQ_MASK) >> 2;
@@ -477,7 +477,7 @@ edc_intr(arg)
 	case ISR_ATTN_ERROR:
 		/*
 		 * Basically, this means driver bug or something seriously
-		 * hosed. panic rather than extending the lossage. 
+		 * hosed. panic rather than extending the lossage.
 		 * No status block available, so no further info.
 		 */
 		panic("%s: dev %d: attention error",
@@ -493,7 +493,7 @@ edc_intr(arg)
 		sc->sc_stat = STAT_ERROR;
 		break;
 	}
-			
+
 	/*
 	 * Unless the interrupt is for Data Transfer Ready or
 	 * Attention Error, finish by assertion EOI. This makes
@@ -516,7 +516,7 @@ edc_intr(arg)
 /*
  * This follows the exact order for Attention Request as
  * written in DASD Storage Interface Specification MC (Rev 2.2).
- */ 
+ */
 static int
 edc_do_attn(sc, attn_type, devno, intr_id)
 	struct edc_mca_softc *sc;
@@ -554,7 +554,7 @@ edc_do_attn(sc, attn_type, devno, intr_id)
 
 	/*
 	 * 3. Write proper DEVICE NUMBER and Attention number to ATN.
-	 */ 
+	 */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ATN, attn_type | (devno<<5));
 
 	/*
@@ -596,7 +596,7 @@ edc_cmd_wait(sc, secs, poll)
 			edc_intr(sc);
 	}
 }
- 
+
 /*
  * Command controller to execute specified command on a device.
  */
@@ -621,7 +621,7 @@ edc_run_cmd(sc, cmd, devno, cmd_args, cmd_len, poll)
 	 * Construct the command. The bits are like this:
 	 *
 	 * 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0
-	 *  \_/   0  0       1 0 \__/   \_____/      
+	 *  \_/   0  0       1 0 \__/   \_____/
 	 *    \    \__________/     \         \_ Command Code (see CMD_*)
 	 *     \              \      \__ Device: 0 common, 7 controller
 	 *      \              \__ Options: reserved, bit 10=cache bypass bit
@@ -634,7 +634,7 @@ edc_run_cmd(sc, cmd, devno, cmd_args, cmd_len, poll)
 		| (devno <<  5)
 		| (cmd_args[0] << 8) | cmd;
 	cmd_args[0] = cmd0;
-	
+
 	/*
 	 * Write word of CMD to the CIFR. This sets "Command
 	 * Interface Register Full (CMD IN)" in BSR. Once the attachment
@@ -644,7 +644,7 @@ edc_run_cmd(sc, cmd, devno, cmd_args, cmd_len, poll)
 	for(i=0; i < cmd_len; i++) {
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh, CIFR,
 			htole16(cmd_args[i]));
-			
+
 		/* Wait until CMD IN is cleared. */
 		tries = 0;
 		for(; (bus_space_read_1(sc->sc_iot, sc->sc_ioh, BSR)
@@ -885,7 +885,7 @@ edcworker(arg)
 
 			/* Instrumentation. */
 			disk_busy(&ed->sc_dk);
-	
+
 			error = edc_bio(sc, ed, bp->b_data, bp->b_bcount,
 				bp->b_rawblkno, (bp->b_flags & B_READ), 0);
 
@@ -934,7 +934,7 @@ edc_bio(struct edc_mca_softc *sc, struct ed_softc *ed, void *data,
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_xfer, 0,
 		bcount, (isread) ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
-	
+
 	track = rawblkno / ed->sectors;
 	head = track % ed->heads;
 	cyl = track / ed->heads;

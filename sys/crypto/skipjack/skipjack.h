@@ -1,16 +1,16 @@
-/*	$NetBSD: skipjack.h,v 1.1 2003/11/16 12:07:50 tls Exp $ */
+/*	$NetBSD: skipjack.h,v 1.1.12.1 2005/03/19 08:33:52 yamt Exp $ */
 /*	$OpenBSD: skipjack.h,v 1.3 2002/03/14 01:26:51 millert Exp $	*/
 
-/* 
- * Further optimized test implementation of SKIPJACK algorithm 
+/*
+ * Further optimized test implementation of SKIPJACK algorithm
  * Mark Tillotson <markt@chaos.org.uk>, 25 June 98
  * Optimizations suit RISC (lots of registers) machine best.
  *
  * based on unoptimized implementation of
  * Panu Rissanen <bande@lut.fi> 960624
  *
- * SKIPJACK and KEA Algorithm Specifications 
- * Version 2.0 
+ * SKIPJACK and KEA Algorithm Specifications
+ * Version 2.0
  * 29 May 1998
 */
 

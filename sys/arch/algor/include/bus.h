@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.8 2003/06/15 23:08:54 fvdl Exp $	*/
+/*	$NetBSD: bus.h,v 1.8.12.1 2005/03/19 08:32:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -627,7 +627,7 @@ struct algor_bus_dmamap {
 	 */
 	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
 	int		_dm_segcnt;	/* number of segs this map can map */
-	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
+	bus_size_t	_dm_maxmaxsegsz; /* fixed largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
 	struct proc	*_dm_proc;	/* proc that owns the mapping */
@@ -640,6 +640,7 @@ struct algor_bus_dmamap {
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
 	 */
+	bus_size_t	dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	dm_mapsize;	/* size of the mapping */
 	int		dm_nsegs;	/* # valid segments in mapping */
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */

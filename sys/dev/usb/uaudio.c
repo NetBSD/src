@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.96 2005/01/16 12:46:00 kent Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.96.4.1 2005/03/19 08:35:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.96 2005/01/16 12:46:00 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.96.4.1 2005/03/19 08:35:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1878,8 +1878,10 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 		if (ibuf >= ibufend)
 			break;
 		dp = (const usb_descriptor_t *)ibuf;
-		if (ibuf + dp->bLength > ibufend)
+		if (ibuf + dp->bLength > ibufend) {
+			free(iot, M_TEMP);
 			return USBD_INVAL;
+		}
 		if (dp->bDescriptorType != UDESC_CS_INTERFACE) {
 			printf("uaudio_identify_ac: skip desc type=0x%02x\n",
 			       dp->bDescriptorType);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.27 2004/08/28 17:37:01 thorpej Exp $	*/
+/*	$NetBSD: hpib.c,v 1.27.6.1 2005/03/19 08:32:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.27 2004/08/28 17:37:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.27.6.1 2005/03/19 08:32:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,13 +87,13 @@ __KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.27 2004/08/28 17:37:01 thorpej Exp $");
 #include <machine/cpu.h>
 #include <machine/hp300spu.h>
 
+#include "ioconf.h"
+
 static int	hpibbusmatch(struct device *, struct cfdata *, void *);
 static void	hpibbusattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(hpibbus, sizeof(struct hpibbus_softc),
     hpibbusmatch, hpibbusattach, NULL, NULL);
-
-extern struct cfdriver hpibbus_cd;
 
 static void	hpibbus_attach_children(struct hpibbus_softc *);
 static int	hpibbussearch(struct device *, struct cfdata *, void *);

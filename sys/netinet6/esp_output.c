@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_output.c,v 1.18.10.1 2005/02/12 18:17:54 yamt Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.18.10.2 2005/03/19 08:36:41 yamt Exp $	*/
 /*	$KAME: esp_output.c,v 1.44 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.18.10.1 2005/02/12 18:17:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.18.10.2 2005/03/19 08:36:41 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -165,7 +165,7 @@ esp_hdrsiz(isr)
 	 * 	sizeof(struct udphdr) = UDP encapsulation (NAT-T)
 	 */
 	return sizeof(struct newesp) + esp_max_ivlen() +
-	    esp_max_padbound() - 1 + 2 + AH_MAXSUMSIZE + 
+	    esp_max_padbound() - 1 + 2 + AH_MAXSUMSIZE +
 #ifdef IPSEC_NAT_T
 	    sizeof(u_int64_t) + sizeof(struct udphdr) +
 #endif
@@ -526,7 +526,7 @@ esp_output(m, nexthdrp, md, isr, af)
 	if (sav->natt_type != 0) {
 		*nexthdrp = IPPROTO_UDP;
 
-		/* 
+		/*
 		 * Create the UDP encapsulation header for NAT-T
 		 * uh_len is set later, when the size is known.
 		 */
@@ -690,7 +690,7 @@ esp_output(m, nexthdrp, md, isr, af)
 		struct ip *ip;
 		ip = mtod(m, struct ip *);
 #ifdef _IP_VHL
-		udp->uh_ulen = 
+		udp->uh_ulen =
 		    htons(ntohs(ip->ip_len) - (IP_VHL_HL(ip->ip_vhl) << 2));
 #else
 		udp->uh_ulen = htons(ntohs(ip->ip_len) - (ip->ip_hl << 2));

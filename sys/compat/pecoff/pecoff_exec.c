@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.25.6.1 2005/02/12 18:17:41 yamt Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.25.6.2 2005/03/19 08:33:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.25.6.1 2005/02/12 18:17:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.25.6.2 2005/03/19 08:33:45 yamt Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -401,7 +401,7 @@ exec_pecoff_coff_makecmds(p, epp, fp, peofs)
 	default:
 		return ENOEXEC;
 	}
-	
+
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fmv.c,v 1.5 2005/01/02 12:22:19 tsutsui Exp $	*/
+/*	$NetBSD: fmv.c,v 1.5.4.1 2005/03/19 08:34:02 yamt Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fmv.c,v 1.5 2005/01/02 12:22:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fmv.c,v 1.5.4.1 2005/03/19 08:34:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ fmv_detect(bus_space_tag_t iot, bus_space_handle_t ioh, uint8_t *enaddr)
 	/* Determine the card type. */
 	model = bus_space_read_1(iot, ioh, FE_FMV0) & FE_FMV0_MODEL;
 	id    = bus_space_read_1(iot, ioh, FE_FMV1) & FE_FMV1_CARDID_REV;
-	
+
 	switch (model) {
 	case FE_FMV0_MODEL_FMV181:
 		type = FE_TYPE_FMV181;

@@ -1,4 +1,4 @@
-/*	$NetBSD: epclk.c,v 1.3 2005/01/06 16:11:54 joff Exp $	*/
+/*	$NetBSD: epclk.c,v 1.3.6.1 2005/03/19 08:32:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.3 2005/01/06 16:11:54 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.3.6.1 2005/03/19 08:32:51 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -351,7 +351,7 @@ inittodr(time_t base)
 
 	if (!badbase) {
 		/*
-		 * See if we tained/lost two or more days; if
+		 * See if we gained/lost two or more days; if
 		 * so, assume something is amiss.
 		 */
 		deltat = time.tv_sec - base;

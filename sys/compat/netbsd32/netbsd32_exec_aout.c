@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_aout.c,v 1.19 2004/02/20 17:04:27 drochner Exp $	*/
+/*	$NetBSD: netbsd32_exec_aout.c,v 1.19.10.1 2005/03/19 08:33:43 yamt Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.19 2004/02/20 17:04:27 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.19.10.1 2005/03/19 08:33:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.19 2004/02/20 17:04:27 droc
 #include <machine/frame.h>
 #include <machine/netbsd32_machdep.h>
 
-int netbsd32_copyinargs __P((struct exec_package *, struct ps_strings *, 
+int netbsd32_copyinargs __P((struct exec_package *, struct ps_strings *,
 			     void *, size_t, const void *, const void *));
 
 /*
@@ -137,7 +137,7 @@ exec_netbsd32_makecmds(p, epp)
 
 	if (error) {
 		kill_vmcmds(&epp->ep_vmcmds);
-		epp->ep_flags &= ~EXEC_32;	
+		epp->ep_flags &= ~EXEC_32;
 	}
 	return error;
 }
@@ -271,7 +271,7 @@ netbsd32_exec_aout_prep_omagic(p, epp)
 	 * computed (in execve(2)) by rounding *up* `ep_tsize' and `ep_dsize'
 	 * respectively to page boundaries.
 	 * Compensate `ep_dsize' for the amount of data covered by the last
-	 * text page. 
+	 * text page.
 	 */
 	dsize = epp->ep_dsize + execp->a_text - roundup(execp->a_text,
 							PAGE_SIZE);

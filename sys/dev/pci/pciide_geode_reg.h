@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_geode_reg.h,v 1.2 2004/07/27 00:19:27 rumble Exp $	*/
+/*	$NetBSD: pciide_geode_reg.h,v 1.2.8.1 2005/03/19 08:35:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Manuel Bouyer.
@@ -38,7 +38,7 @@
 /*
  * Recommended values from the cs5530 data sheet.
  * Note that the udma values include CS5530_DMA_REG_UDMA.
- * However, from the datasheet bits 30-21 should be reserved, yet 
+ * However, from the datasheet bits 30-21 should be reserved, yet
  * geode_udma sets bit 23 to 1. I don't know if it's the definition of
  * DMA_REG_UDMA which is wrong (bit 23 instead of 20) or these values.
  */

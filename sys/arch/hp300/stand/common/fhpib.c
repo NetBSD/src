@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.3 2003/11/14 16:52:40 tsutsui Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.3.10.1 2005/03/19 08:32:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -45,8 +45,7 @@
 static int fhpibwait(struct fhpibdevice *, uint8_t);
 
 int
-fhpibinit(unit)
-	int unit;
+fhpibinit(int unit)
 {
 	struct hpib_softc *hs = &hpib_softc[unit];
 	struct fhpibdevice *hd = (void *)hs->sc_addr;
@@ -60,7 +59,7 @@ fhpibinit(unit)
 }
 
 void
-fhpibreset(unit)
+fhpibreset(int unit)
 {
 	struct hpib_softc *hs = &hpib_softc[unit];
 	struct fhpibdevice *hd;
@@ -81,10 +80,7 @@ fhpibreset(unit)
 }
 
 int
-fhpibsend(unit, slave, sec, buf, cnt)
-	int unit, slave, sec;
-	char *buf;
-	int cnt;
+fhpibsend(int unit, int slave, int sec, char *buf, int cnt)
 {
 	struct hpib_softc *hs = &hpib_softc[unit];
 	struct fhpibdevice *hd;
@@ -124,10 +120,7 @@ fhpibsend(unit, slave, sec, buf, cnt)
 }
 
 int
-fhpibrecv(unit, slave, sec, buf, cnt)
-	int unit, slave, sec;
-	char *buf;
-	int cnt;
+fhpibrecv(int unit, int slave, int sec, char *buf, int cnt)
 {
 	struct hpib_softc *hs = &hpib_softc[unit];
 	struct fhpibdevice *hd;
@@ -163,8 +156,7 @@ fhpibrecv(unit, slave, sec, buf, cnt)
 }
 
 int
-fhpibppoll(unit)
-	int unit;
+fhpibppoll(int unit)
 {
 	struct hpib_softc *hs = &hpib_softc[unit];
 	struct fhpibdevice *hd;
@@ -187,9 +179,7 @@ fhpibppoll(unit)
 }
 
 static int
-fhpibwait(hd, x)
-	struct fhpibdevice *hd;
-	uint8_t x;
+fhpibwait(struct fhpibdevice *hd, uint8_t x)
 {
 	int timo = 100000;
 

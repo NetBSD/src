@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.144 2005/01/24 21:27:02 dbj Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.144.2.1 2005/03/19 08:36:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.144 2005/01/24 21:27:02 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.144.2.1 2005/03/19 08:36:11 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -216,8 +216,8 @@ exit1(struct lwp *l, int rv)
 
 	DPRINTF(("exit1: %d.%d exiting.\n", p->p_pid, l->l_lid));
 	/*
-	 * Disable scheduler activation upcalls. 
-	 * We're trying to get out of here. 
+	 * Disable scheduler activation upcalls.
+	 * We're trying to get out of here.
 	 */
 	sa = 0;
 	if (p->p_sa != NULL) {
@@ -319,7 +319,7 @@ exit1(struct lwp *l, int rv)
 	fixjobc(p, p->p_pgrp, 0);
 	(void)acct_process(p);
 #ifdef KTRACE
-	/* 
+	/*
 	 * release trace file
 	 */
 	ktrderef(p);
@@ -346,7 +346,7 @@ exit1(struct lwp *l, int rv)
 	/*
 	 * Give machine-dependent code a chance to free any
 	 * MD LWP resources while we can still block. This must be done
-	 * before uvm_lwp_exit(), in case these resources are in the 
+	 * before uvm_lwp_exit(), in case these resources are in the
 	 * PCB.
 	 * THIS IS LAST BLOCKING OPERATION.
 	 */
@@ -558,8 +558,8 @@ exit_lwps(struct lwp *l)
 
 	p = l->l_proc;
 
-	/* XXX SMP 
-	 * This would be the right place to IPI any LWPs running on 
+	/* XXX SMP
+	 * This would be the right place to IPI any LWPs running on
 	 * other processors so that they can notice the userret exit hook.
 	 */
 	p->p_userret = lwp_exit_hook;
@@ -589,11 +589,11 @@ exit_lwps(struct lwp *l)
 			vp->savp_wokenq_head = NULL;
 		}
 	}
-	
+
 	/*
 	 * Interrupt LWPs in interruptable sleep, unsuspend suspended
 	 * LWPs, make detached LWPs undetached (so we can wait for
-	 * them) and then wait for everyone else to finish.  
+	 * them) and then wait for everyone else to finish.
 	 */
 	LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
 		l2->l_flag &= ~(L_DETACHED|L_SA);
@@ -608,16 +608,16 @@ exit_lwps(struct lwp *l)
 		}
 	}
 
-	
+
 	while (p->p_nlwps > 1) {
-		DPRINTF(("exit_lwps: waiting for %d LWPs (%d runnable, %d zombies)\n", 
+		DPRINTF(("exit_lwps: waiting for %d LWPs (%d runnable, %d zombies)\n",
 		    p->p_nlwps, p->p_nrlwps, p->p_nzlwps));
 		error = lwp_wait1(l, 0, &waited, LWPWAIT_EXITCONTROL);
 		if (error)
 			panic("exit_lwps: lwp_wait1 failed with error %d\n",
 			    error);
 		DPRINTF(("exit_lwps: Got LWP %d from lwp_wait1()\n", waited));
-	}	
+	}
 
 	p->p_userret = NULL;
 }

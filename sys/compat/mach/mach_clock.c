@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_clock.c,v 1.12 2003/12/21 14:44:43 manu Exp $ */
+/*	$NetBSD: mach_clock.c,v 1.12.10.1 2005/03/19 08:33:40 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_clock.c,v 1.12 2003/12/21 14:44:43 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_clock.c,v 1.12.10.1 2005/03/19 08:33:40 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -120,7 +120,7 @@ mach_sys_timebase_info(l, v, retval)
 	info.numer = 4000000000UL;
 	info.denom = 75189611UL;
 
-	if ((error = copyout(&info, (void *)SCARG(uap, info), 
+	if ((error = copyout(&info, (void *)SCARG(uap, info),
 	    sizeof(info))) != 0)
 		return error;
 
@@ -129,7 +129,7 @@ mach_sys_timebase_info(l, v, retval)
 
 
 
-int 
+int
 mach_clock_get_time(args)
 	struct mach_trap_args *args;
 {
@@ -139,12 +139,12 @@ mach_clock_get_time(args)
 	struct timeval tv;
 
 	microtime(&tv);
-	
+
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
 
-	rep->rep_cur_time.tv_sec = tv.tv_sec; 
-	rep->rep_cur_time.tv_nsec = tv.tv_usec * 1000; 
+	rep->rep_cur_time.tv_sec = tv.tv_sec;
+	rep->rep_cur_time.tv_nsec = tv.tv_usec * 1000;
 
 	mach_set_trailer(rep, *msglen);
 

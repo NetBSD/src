@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_rssadapt.c,v 1.8 2004/07/23 06:44:56 mycroft Exp $ */
+/* $NetBSD: ieee80211_rssadapt.c,v 1.8.8.1 2005/03/19 08:36:35 yamt Exp $ */
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *
@@ -248,7 +248,7 @@ out:
 void
 ieee80211_rssadapt_updatestats(struct ieee80211_rssadapt *ra)
 {
-	long interval; 
+	long interval;
 
 	ra->ra_pktrate =
 	    (ra->ra_pktrate + 10 * (ra->ra_nfail + ra->ra_nok)) / 2;

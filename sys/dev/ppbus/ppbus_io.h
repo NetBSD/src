@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_io.h,v 1.4 2004/01/28 17:11:48 jdolecek Exp $ */
+/* $NetBSD: ppbus_io.h,v 1.4.12.1 2005/03/19 08:35:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 Nicolas Souchu
@@ -33,8 +33,8 @@
 #define __PPBUS_IO_H
 
 /* Parallel port bus I/O opcodes */
-#define PPBUS_OUTSB_EPP 1       
-#define PPBUS_OUTSW_EPP 2       
+#define PPBUS_OUTSB_EPP 1
+#define PPBUS_OUTSW_EPP 2
 #define PPBUS_OUTSL_EPP 3
 #define PPBUS_INSB_EPP  4
 #define PPBUS_INSW_EPP  5
@@ -61,19 +61,19 @@
 
 #define ppbus_outsb_epp(dev,buf,cnt) \
 		ppbus_io((dev), PPBUS_OUTSB_EPP, (buf), (cnt), 0)
-			
+
 #define ppbus_outsw_epp(dev,buf,cnt) \
 		ppbus_io((dev), PPBUS_OUTSW_EPP, (buf), (cnt), 0)
-			
+
 #define ppbus_outsl_epp(dev,buf,cnt) \
 		ppbus_io((dev), PPBUS_OUTSL_EPP, (buf), (cnt), 0)
 
 #define ppbus_insb_epp(dev,buf,cnt) \
 		ppbus_io((dev), PPBUS_INSB_EPP, (buf), (cnt), 0)
-			
+
 #define ppbus_insw_epp(dev,buf,cnt) \
 		ppbus_io(( dev), PPBUS_INSW_EPP, (buf), (cnt), 0)
-			
+
 #define ppbus_insl_epp(dev,buf,cnt) \
 		ppbus_io((dev), PPBUS_INSL_EPP, (buf), (cnt), 0))
 
@@ -88,35 +88,35 @@
 
 #define ppbus_rfifo(dev) \
 		ppbus_io((dev), PPBUS_RFIFO, NULL, 0, 0)
-			
+
 #define ppbus_wepp_A(dev,byte) \
 		ppbus_io((dev), PPBUS_WEPP_A, NULL, 0, (byte))
-			
+
 #define ppbus_wepp_D(dev,byte) \
 		ppbus_io((dev), PPBUS_WEPP_D, NULL, 0, (byte))
-			
+
 #define ppbus_wecr(dev,byte) \
 		ppbus_io((dev), PPBUS_WECR, NULL, 0, (byte))
-			
+
 #define ppbus_wfifo(dev,byte) \
 		ppbus_io((dev), PPBUS_WFIFO, NULL, 0, (byte))
 
 #define ppbus_rdtr(dev) \
 		ppbus_io((dev), PPBUS_RDTR, NULL, 0, 0)
-			
+
 #define ppbus_rstr(dev) \
 		ppbus_io((dev), PPBUS_RSTR, NULL, 0, 0)
-			
+
 #define ppbus_rctr(dev) \
 		ppbus_io((dev), PPBUS_RCTR, NULL, 0, 0)
 
 #define ppbus_wdtr(dev,byte) \
 		ppbus_io((dev), PPBUS_WDTR, NULL, 0, (byte))
-			
+
 #define ppbus_wstr(dev,byte) \
 		ppbus_io((dev), PPBUS_WSTR, NULL, 0, (byte))
-			
+
 #define ppbus_wctr(dev,byte) \
 		ppbus_io((dev), PPBUS_WCTR, NULL, 0, (byte))
-			
+
 #endif /* __PPBUS_IO_H */

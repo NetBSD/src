@@ -1,4 +1,4 @@
-/*	$NetBSD: kprintf.h,v 1.4.10.1 2005/02/12 18:17:55 yamt Exp $	*/
+/*	$NetBSD: kprintf.h,v 1.4.10.2 2005/03/19 08:36:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -50,7 +50,7 @@
 
 extern struct simplelock kprintf_slock;
 
-/* 
+/*
  * Use cpu_simple_lock() and cpu_simple_unlock().  These are the actual
  * atomic locking operations, and never attempt to print debugging
  * information.

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.39.2.1 2005/02/12 18:17:39 yamt Exp $
+#	$NetBSD: GENERIC,v 1.39.2.2 2005/03/19 08:33:13 yamt Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.39.2.1 $"
+#ident		"GENERIC-$Revision: 1.39.2.2 $"
 
 # estimated number of users
 maxusers	32
@@ -65,7 +65,7 @@ file-system	PROCFS		# /proc
 options 	SOFTDEP		# FFS soft updates support.
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER
-options 	FFS_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 
@@ -131,7 +131,7 @@ options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Device options
 
-options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
+#options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
 #options 	MEMORY_DISK_ROOT_SIZE=3400	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
@@ -148,7 +148,7 @@ options 	INSECURE		# disable kernel securelevel
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	SYSTRACE	# system call vetting via systrace(1)
 options 	IRQSTATS	# manage IRQ statistics, XXX temp required
-#options 	LKM		# loadable kernel modules
+options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics, XXX temp required
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -162,7 +162,7 @@ options 	DIAGNOSTIC	# internal consistency checks
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
-options 	SYMTAB_SPACE=390000	# reserve symbol space for DDB
+options 	SYMTAB_SPACE=440000 	# reserve symbol space for DDB
 				# (needed because we boot netbsd.aout)
 #options 	DDB_ONPANIC=0	# don't run DDB at panictime
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB

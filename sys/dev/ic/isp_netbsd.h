@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.52 2003/12/04 13:57:30 keihan Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.52.10.1 2005/03/19 08:34:03 yamt Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -64,11 +64,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/errno.h>  
+#include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/buf.h> 
+#include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/kthread.h>
@@ -376,8 +376,8 @@ static void isp_wait_complete(struct ispsoftc *);
 #define	ISP_ILOCK(x)		isp_lock(x); isp->isp_osinfo.onintstack++
 #define	ISP_IUNLOCK(x)		isp->isp_osinfo.onintstack--; isp_unlock(x)
 
-/*              
- * Platform private flags                                               
+/*
+ * Platform private flags
  */
 
 #define	XS_PSTS_INWDOG		0x10000000

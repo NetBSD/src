@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.95.4.1 2005/01/25 12:59:35 yamt Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.95.4.2 2005/03/19 08:36:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.95.4.1 2005/01/25 12:59:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.95.4.2 2005/03/19 08:36:11 yamt Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -849,7 +849,7 @@ kmeminit(void)
 	    UVM_KMF_WIRED|UVM_KMF_ZERO);
 	kmb = 0;
 	kmem_map = uvm_km_suballoc(kernel_map, &kmb,
-	    &kml, ((vsize_t)nkmempages << PAGE_SHIFT), 
+	    &kml, ((vsize_t)nkmempages << PAGE_SHIFT),
 	    VM_MAP_INTRSAFE, FALSE, &kmem_map_store);
 	uvm_km_vacache_init(kmem_map, "kvakmem", 0);
 	kmembase = (char *)kmb;
@@ -905,11 +905,11 @@ dump_kmemstats(void)
 
 
 #if 0
-/* 
+/*
  * Diagnostic messages about "Data modified on
  * freelist" indicate a memory corruption, but
  * they do not help tracking it down.
- * This function can be called at various places 
+ * This function can be called at various places
  * to sanity check malloc's freelist and discover
  * where does the corruption take place.
  */
@@ -919,15 +919,15 @@ freelist_sanitycheck(void) {
 	struct kmembuckets *kbp;
 	struct freelist *freep;
 	int rv = 0;
-		
+
 	for (i = MINBUCKET; i <= MINBUCKET + 15; i++) {
-		kbp = &bucket[i];	
+		kbp = &bucket[i];
 		freep = (struct freelist *)kbp->kb_next;
 		j = 0;
 		while(freep) {
 			vm_map_lock(kmem_map);
 			rv = uvm_map_checkprot(kmem_map, (vaddr_t)freep,
-			    (vaddr_t)freep + sizeof(struct freelist), 
+			    (vaddr_t)freep + sizeof(struct freelist),
 			    VM_PROT_WRITE);
 			vm_map_unlock(kmem_map);
 

@@ -1,4 +1,4 @@
-#	$NetBSD: README.technote,v 1.2 1999/03/27 05:48:53 scottr Exp $
+#	$NetBSD: README.technote,v 1.2.52.1 2005/03/19 08:36:26 yamt Exp $
 
 
 The IWM chip (the Mac floppy controller) is a descendant of the Apple
@@ -33,7 +33,7 @@ off   on    Read from handshake register
 on    off   Read from status register
 on    on    Write to mode register -- drive is off
             Write to data register -- drive is on
-            
+
 
 2. IWM mode register
 
@@ -55,7 +55,7 @@ Bit   Function
 
 
 3. IWM status register
-                                 
+
 Bit   Function
 -----------------------------------------------------------------------------
 7     sense input:         5.25" write protect line
@@ -87,7 +87,7 @@ Bit   Function
 3     reserved
 2     reserved
 1     reserved
-0     reserved                                                 
+0     reserved
 
 
 ---
@@ -113,7 +113,7 @@ Floppy drive registers:
 
 1. Status bits:
 
-The result of the query for 'Param' is returned in Bit 7 of q7L, which is 
+The result of the query for 'Param' is returned in Bit 7 of q7L, which is
 usually checked by a bmi/bpl branch.
 
 
@@ -122,15 +122,15 @@ CA1   CA0   SEL   CA2   Param    Register    Function (q7L, Bit 7)
 off   off   off   off   0x00     DIRTN       direction of head step:
                                              0 = inward (greater track no)
                                              1 = outward (smaller track no)
-off   off   off   on    0x01     RDDATA0     Reading sets up drive to read 
+off   off   off   on    0x01     RDDATA0     Reading sets up drive to read
                                              data from lower head
 off   off   on    off   0x02     CSTIN       Disk inserted:
                                              0 = disk in drive
                                              1 = drive empty
-off   off   on    on    0x03     RDDATA1     Reading sets up drive to read 
+off   off   on    on    0x03     RDDATA1     Reading sets up drive to read
                                              data from upper head
 off   on    off   off   0x04     STEP        Disk head is stepping (1)
-                                             0 = yes, still stepping 
+                                             0 = yes, still stepping
                                              1 = no, drive ready
 off   on    off   on    0x05     -----       Not used
 off   on    on    off   0x06     WRTPRT      Disk is locked:
@@ -156,12 +156,12 @@ on    on    on    on    0x0F     DRVIN       Drive installed: (2)
                                              0 = drive is connected
                                              1 = no drive
 
-(1)   After step is done, wait ca. 30 µs before issuing next step command; 
+(1)   After step is done, wait ca. 30 µs before issuing next step command;
 otherwise steps tend to get lost.
 
-(2)   The SWIM & SuperDrive apparently use DRVIN (0x0F) to distinguish between 
+(2)   The SWIM & SuperDrive apparently use DRVIN (0x0F) to distinguish between
 DD and HD disk media and check for an installed drive with 0x0D.
-                                             
+
 
 2. Control bits:
 
@@ -187,7 +187,7 @@ on    on    off   on    0x0D                     "
 on    on    on    off   0x0E     ------      Not used
 on    on    on    on    0x0F     ------      Not used
 
-Disk commands are formed by the CA1, CA0, SEL lines. For a given command 
+Disk commands are formed by the CA1, CA0, SEL lines. For a given command
 code CA2 acts as a parameter bit.
 
 
@@ -195,10 +195,10 @@ code CA2 acts as a parameter bit.
 Reading a GCR sector header
 ===========================
 
-A sector header on a Macintosh 400/800K GCR disk consists of 
+A sector header on a Macintosh 400/800K GCR disk consists of
 
 o  a three byte lead-in: '0xD5 0xAA 0x96'
-o  current track byte, sector byte and side bit, encoded in four bytes plus 
+o  current track byte, sector byte and side bit, encoded in four bytes plus
    a one byte checksum
 o  a two byte lead-out:  '0xDE 0xAA'
 
@@ -208,24 +208,24 @@ is subject to further processing.
 
 1. Remapping
 
-The byte values that the IWM can write to / read from disk reliably are 
-subject to several constraints: 
+The byte values that the IWM can write to / read from disk reliably are
+subject to several constraints:
 
 o  They may not equal any reserved values (header markers)
 o  Bit 7 == 1 for hardware synchronization
 o  No more than one pair of consecutive zero bits
 o  At least one pair of consecutive one bits
 
-These constraints leave 64 valid bytes in the range of 0x95..0xFF. 
-For convenience, this range is mapped to a continuous range of 
+These constraints leave 64 valid bytes in the range of 0x95..0xFF.
+For convenience, this range is mapped to a continuous range of
 0x00..0x3F -- this rule applies to all user data on the disk.
 
 
 2. Contents
 
-For byte 1, the current sector number, the offered range is large enough; no 
-further processing is needed. The same applies to byte 3 (function?).  
-Byte 0 & 2 hold the side bit and the current track number; some further 
+For byte 1, the current sector number, the offered range is large enough; no
+further processing is needed. The same applies to byte 3 (function?).
+Byte 0 & 2 hold the side bit and the current track number; some further
 massage is needed to extract their values.
 
 o  Byte 1: Bits 6&7 are dropped, Bits 0..5 leave a range of 0..63.
@@ -239,8 +239,8 @@ o  Byte 2: Bits 0&1 become bits 6&7 of Byte 1. Bits 2..5 (range 0..0x0F)
 
 3. Checksum
 
-The checksum of the header content area is evaluated by XORing bytes 0..3; 
-the result must equal byte 4. (Alternatively the result of XORing all five 
+The checksum of the header content area is evaluated by XORing bytes 0..3;
+the result must equal byte 4. (Alternatively the result of XORing all five
 bytes can be checked against zero.)
 
 

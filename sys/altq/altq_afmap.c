@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_afmap.c,v 1.7 2004/04/21 18:40:37 itojun Exp $	*/
+/*	$NetBSD: altq_afmap.c,v 1.7.6.1 2005/03/19 08:32:44 yamt Exp $	*/
 /*	$KAME: altq_afmap.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.7 2004/04/21 18:40:37 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.7.6.1 2005/03/19 08:32:44 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -79,7 +79,7 @@ afm_alloc(ifp)
 	struct ifnet *ifp;
 {
 	struct afm_head *head;
-    
+
 	MALLOC(head, struct afm_head *, sizeof(struct afm_head),
 	       M_DEVBUF, M_WAITOK);
 	if (head == NULL)
@@ -90,10 +90,10 @@ afm_alloc(ifp)
 	LIST_INIT(&head->afh_head);
 
 	head->afh_ifp = ifp;
-    
+
 	/* add this afm_head to the chain */
 	LIST_INSERT_HEAD(&afhead_chain, head, afh_chain);
-    
+
 	return (0);
 }
 
@@ -130,7 +130,7 @@ afm_top(ifp)
 			break;
 	if (head == NULL)
 		return NULL;
-    
+
 	return (head->afh_head.lh_first);
 }
 
@@ -174,7 +174,7 @@ int afm_add(ifp, flowmap)
 	return 0;
 }
 
-int 
+int
 afm_remove(afm)
 	struct afm *afm;
 {
@@ -183,7 +183,7 @@ afm_remove(afm)
 	return (0);
 }
 
-int 
+int
 afm_removeall(ifp)
 	struct ifnet *ifp;
 {
@@ -395,7 +395,7 @@ afmioctl(dev, cmd, addr, flag, p)
 
 	/* lookup interface */
 	flowmap = (struct atm_flowmap *)addr;
-	flowmap->af_ifname[IFNAMSIZ-1] = '\0'; 	  
+	flowmap->af_ifname[IFNAMSIZ-1] = '\0';
 	ifp = ifunit(flowmap->af_ifname);
 	if (ifp == NULL || ifp->if_ioctl == NULL ||
 	    (ifp->if_flags & IFF_RUNNING) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.78.4.1 2005/02/12 18:17:55 yamt Exp $	*/
+/*	$NetBSD: buf.h,v 1.78.4.2 2005/03/19 08:36:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -87,8 +87,8 @@ struct vnode;
 #define NOLIST ((struct buf *)0x87654321)
 
 /*
- * To avoid including <ufs/ffs/softdep.h> 
- */   
+ * To avoid including <ufs/ffs/softdep.h>
+ */
 LIST_HEAD(workhead, worklist);
 
 

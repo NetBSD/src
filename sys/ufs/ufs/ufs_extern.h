@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.41 2004/06/20 18:25:49 hannken Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.41.6.1 2005/03/19 08:37:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -100,7 +100,7 @@ int	ufsfifo_write	__P((void *));
 int	ufsfifo_close	__P((void *));
 
 /* ufs_bmap.c */
-typedef boolean_t (*ufs_issequential_callback_t) __P((const struct ufsmount *, 
+typedef boolean_t (*ufs_issequential_callback_t) __P((const struct ufsmount *,
     daddr_t, daddr_t));
 int ufs_bmaparray __P((struct vnode *, daddr_t, daddr_t *, struct indir *,
 			int *, int *, ufs_issequential_callback_t));

@@ -1,4 +1,4 @@
-/*	$NetBSD: twereg.h,v 1.10 2004/10/05 23:49:15 heas Exp $	*/
+/*	$NetBSD: twereg.h,v 1.10.6.1 2005/03/19 08:35:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -336,6 +336,10 @@ struct twe_array_descriptor {
 #define TWE_AD_STRIPE_16k	0x05
 #define TWE_AD_STRIPE_32k	0x06
 #define TWE_AD_STRIPE_64k	0x07
+#define TWE_AD_STRIPE_128k	0x08
+#define TWE_AD_STRIPE_256k	0x09
+#define TWE_AD_STRIPE_512k	0x0a
+#define TWE_AD_STRIPE_1024k	0x0b
 	u_int8_t		log_drv_status;	/* bitmap of functional subunits, or mirror units in RAID10 */
 	u_int32_t		start_lba;
 	u_int32_t		block_count;	/* actual drive size if configuration == 0x0f, otherwise less DCB size */

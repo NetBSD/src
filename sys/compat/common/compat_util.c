@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.27 2003/06/29 22:29:13 fvdl Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.27.12.1 2005/03/19 08:33:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.27 2003/06/29 22:29:13 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.27.12.1 2005/03/19 08:33:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ emul_find(p, sgp, prefix, path, pbuf, sflag)
 
 	sz = MAXPATHLEN - (ptr - buf);
 
-	/* 
+	/*
 	 * If sgp is not given then the path is already in kernel space
 	 */
 	if (sgp == NULL)
@@ -148,7 +148,7 @@ emul_find(p, sgp, prefix, path, pbuf, sflag)
 		break;
 	case CHECK_ALT_FL_EXISTS:
 	case CHECK_ALT_FL_SYMLINK:
-		NDINIT(&nd, LOOKUP,	
+		NDINIT(&nd, LOOKUP,
 			(sflag == CHECK_ALT_FL_SYMLINK) ? NOFOLLOW : FOLLOW,
 			UIO_SYSSPACE, buf, p);
 
@@ -234,7 +234,7 @@ emul_find_interp(struct proc *p, const char *prefix, char *itp)
 	} else {
 		/* check filename without the emul prefix */
 		struct nameidata nd;
-	
+
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, itp, p);
 
 		if ((error = namei(&nd)))
@@ -294,7 +294,7 @@ stackgap_alloc(p, sgp, sz)
 	caddr_t nsgp;
 	const struct emul *e = p->p_emul;
 	int sigsize = e->e_esigcode - e->e_sigcode;
-	
+
 	sz = ALIGN(sz);
 	nsgp = *sgp + sz;
 	if (nsgp > (((caddr_t)p->p_psstr) - sigsize))

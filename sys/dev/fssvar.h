@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.7 2004/10/29 15:39:38 hannken Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.7.6.1 2005/03/19 08:33:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ struct fss_get {
 
 /* Cluster to offset */
 #define FSS_CLTOB(sc, cl) \
-	((off_t)(cl) << (sc)->sc_clshift)      
+	((off_t)(cl) << (sc)->sc_clshift)
 
 /* Offset from start of cluster */
 #define FSS_CLOFF(sc, off) \

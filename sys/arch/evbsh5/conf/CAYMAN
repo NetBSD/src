@@ -1,4 +1,4 @@
-#	$NetBSD: CAYMAN,v 1.14.6.1 2005/02/12 18:17:32 yamt Exp $
+#	$NetBSD: CAYMAN,v 1.14.6.2 2005/03/19 08:32:58 yamt Exp $
 
 #
 # Config file for SuperH "CAYMAN" SH-5 Evaluation board
@@ -11,7 +11,7 @@ maxusers	8
 options 	INCLUDE_CONFIG_FILE
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident		"CAYMAN-$Revision: 1.14.6.1 $"
+#ident		"CAYMAN-$Revision: 1.14.6.2 $"
 
 # Uncomment this to build a 64-bit kernel
 #makeoptions 	SH5_ABI=64
@@ -28,6 +28,8 @@ options 	DDB
 #options 	UVMHIST_PRINT
 
 options 	COMPAT_16
+options 	COMPAT_20
+options 	COMPAT_BSDPTY
 
 options 	KTRACE		# system call tracing via ktrace(1)
 options 	SYSTRACE	# system call vetting via systrace(1)
@@ -42,9 +44,10 @@ file-system 	KERNFS
 file-system 	MFS
 
 options 	SOFTDEP
+options 	FFS_NO_SNAPSHOT	# No FFS snapshots
 
 options 	INET
-#options 	INET6
+options 	INET6
 
 config netbsd	root on ? type ?
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hcide.c,v 1.15 2004/08/20 06:39:39 thorpej Exp $	*/
+/*	$NetBSD: hcide.c,v 1.15.6.1 2005/03/19 08:35:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.15 2004/08/20 06:39:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.15.6.1 2005/03/19 08:35:37 yamt Exp $");
 
 #include <sys/param.h>
 

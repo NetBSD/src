@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 2004/04/07 13:29:26 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.5.6.1 2005/03/19 08:32:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -129,8 +129,7 @@ getsecs(void)
 
 
 static int
-bbc_to_gmt(timbuf)
-	u_long *timbuf;
+bbc_to_gmt(u_long *timbuf)
 {
 	int i;
 	u_long tmp;
@@ -173,7 +172,7 @@ bbc_to_gmt(timbuf)
 }
 
 void
-read_bbc()
+read_bbc(void)
 {
   	int i, read_okay;
 
@@ -189,8 +188,7 @@ read_bbc()
 }
 
 u_char
-read_bbc_reg(reg)
-	int reg;
+read_bbc_reg(int reg)
 {
 	u_char data = reg;
 

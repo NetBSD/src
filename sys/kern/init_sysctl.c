@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.32 2004/10/01 16:30:52 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.32.6.1 2005/03/19 08:36:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.32 2004/10/01 16:30:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.32.6.1 2005/03/19 08:36:11 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.32 2004/10/01 16:30:52 yamt Exp $"
 #include <dev/cons.h>
 #include <sys/socketvar.h>
 #include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/tty.h>
 #include <sys/malloc.h>
 #include <sys/resource.h>
@@ -134,6 +135,7 @@ static int sysctl_kern_lwp(SYSCTLFN_PROTO);
 static int sysctl_kern_forkfsleep(SYSCTLFN_PROTO);
 static int sysctl_kern_root_partition(SYSCTLFN_PROTO);
 static int sysctl_kern_drivers(SYSCTLFN_PROTO);
+static int sysctl_kern_file2(SYSCTLFN_PROTO);
 static int sysctl_doeproc(SYSCTLFN_PROTO);
 static int sysctl_kern_proc_args(SYSCTLFN_PROTO);
 static int sysctl_hw_usermem(SYSCTLFN_PROTO);
@@ -142,6 +144,8 @@ static int sysctl_hw_ncpu(SYSCTLFN_PROTO);
 
 static void fill_kproc2(struct proc *, struct kinfo_proc2 *);
 static void fill_lwp(struct lwp *l, struct kinfo_lwp *kl);
+static void fill_file(struct kinfo_file *, const struct file *, struct proc *,
+		      int);
 
 /*
  * ********************************************************************
@@ -717,6 +721,12 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 				    "character device numbers"),
 		       sysctl_kern_drivers, 0, NULL, 0,
 		       CTL_KERN, KERN_DRIVERS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "file2",
+		       SYSCTL_DESCR("System open file table"),
+		       sysctl_kern_file2, 0, NULL, 0,
+		       CTL_KERN, KERN_FILE2, CTL_EOL);
 }
 
 SYSCTL_SETUP(sysctl_kern_proc_setup,
@@ -1636,7 +1646,7 @@ sysctl_kern_maxptys(SYSCTLFN_ARGS)
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return (error);
-	
+
 	if (max != pty_maxptys(max, 1))
 		return (EINVAL);
 
@@ -1845,6 +1855,149 @@ sysctl_kern_drivers(SYSCTLFN_ARGS)
 	}
 	*oldlenp = where - start;
 	return error;
+}
+
+/*
+ * sysctl helper function for kern.file2
+ */
+static int
+sysctl_kern_file2(SYSCTLFN_ARGS)
+{
+	struct proc *p;
+	struct file *fp;
+	struct filedesc *fd;
+	struct kinfo_file kf;
+	char *dp;
+	u_int i, op;
+	size_t len, needed, elem_size, out_size;
+	int error, arg, elem_count;
+
+	if (namelen == 1 && name[0] == CTL_QUERY)
+		return (sysctl_query(SYSCTLFN_CALL(rnode)));
+
+	if (namelen != 4)
+		return (EINVAL);
+
+	error = 0;
+	dp = oldp;
+	len = (oldp != NULL) ? *oldlenp : 0;
+	op = name[0];
+	arg = name[1];
+	elem_size = name[2];
+	elem_count = name[3];
+	out_size = MIN(sizeof(kf), elem_size);
+	needed = 0;
+
+	if (elem_size < 1 || elem_count < 0)
+		return (EINVAL);
+
+	switch (op) {
+	case KERN_FILE_BYFILE:
+		/*
+		 * doesn't use arg so it must be zero
+		 */
+		if (arg != 0)
+			return (EINVAL);
+		LIST_FOREACH(fp, &filehead, f_list) {
+			if (len >= elem_size && elem_count > 0) {
+				fill_file(&kf, fp, NULL, 0);
+				error = copyout(&kf, dp, out_size);
+				if (error)
+					break;
+				dp += elem_size;
+				len -= elem_size;
+			}
+			if (elem_count > 0) {
+				needed += elem_size;
+				if (elem_count != INT_MAX)
+					elem_count--;
+			}
+		}
+		break;
+	    case KERN_FILE_BYPID:
+		if (arg < -1)
+			/* -1 means all processes */
+			return (EINVAL);
+		proclist_lock_read();
+		PROCLIST_FOREACH(p, &allproc) {
+			if (p->p_stat == SIDL)
+				/* skip embryonic processes */
+				continue;
+			if (arg > 0 && p->p_pid != arg)
+				/* pick only the one we want */
+				/* XXX want 0 to mean "kernel files" */
+				continue;
+			fd = p->p_fd;
+			for (i = 0; i < fd->fd_nfiles; i++) {
+				fp = fd->fd_ofiles[i];
+				if (fp == NULL || !FILE_IS_USABLE(fp))
+					continue;
+				if (len >= elem_size && elem_count > 0) {
+					fill_file(&kf, fd->fd_ofiles[i],
+						  p, i);
+					error = copyout(&kf, dp, out_size);
+					if (error)
+						break;
+					dp += elem_size;
+					len -= elem_size;
+				}
+				if (elem_count > 0) {
+					needed += elem_size;
+					if (elem_count != INT_MAX)
+						elem_count--;
+				}
+			}
+		}
+		proclist_unlock_read();
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	if (oldp == NULL)
+		needed += KERN_FILESLOP * elem_size;
+	*oldlenp = needed;
+
+	return (error);
+}
+
+static void
+fill_file(struct kinfo_file *kp, const struct file *fp, struct proc *p, int i)
+{
+
+	memset(kp, 0, sizeof(*kp));
+
+	kp->ki_fileaddr =	PTRTOUINT64(fp);
+	kp->ki_flag =		fp->f_flag;
+	kp->ki_iflags =		fp->f_iflags;
+	kp->ki_ftype =		fp->f_type;
+	kp->ki_count =		fp->f_count;
+	kp->ki_msgcount =	fp->f_msgcount;
+	kp->ki_usecount =	fp->f_usecount;
+	kp->ki_fucred =		PTRTOUINT64(fp->f_cred);
+	kp->ki_fuid =		fp->f_cred->cr_uid;
+	kp->ki_fgid =		fp->f_cred->cr_gid;
+	kp->ki_fops =		PTRTOUINT64(fp->f_ops);
+	kp->ki_foffset =	fp->f_offset;
+	kp->ki_fdata =		PTRTOUINT64(fp->f_data);
+
+	/* vnode information to glue this file to something */
+	if (fp->f_type == DTYPE_VNODE) {
+		struct vnode *vp = (struct vnode *)fp->f_data;
+
+		kp->ki_vun =	PTRTOUINT64(vp->v_un.vu_socket);
+		kp->ki_vsize =	vp->v_size;
+		kp->ki_vtype =	vp->v_type;
+		kp->ki_vtag =	vp->v_tag;
+		kp->ki_vdata =	PTRTOUINT64(vp->v_data);
+	}
+
+        /* process information when retrieved via KERN_FILE_BYPID */
+	if (p) {
+		kp->ki_pid =		p->p_pid;
+		kp->ki_fd =		i;
+		kp->ki_ofileflags =	p->p_fd->fd_ofileflags[i];
+	}
 }
 
 static int
@@ -2251,7 +2404,7 @@ sysctl_hw_cnmagic(SYSCTLFN_ARGS)
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return (error);
-	
+
 	return (cn_set_magic(magic));
 }
 
@@ -2264,7 +2417,7 @@ sysctl_hw_ncpu(SYSCTLFN_ARGS)
 	ncpu = sysctl_ncpus();
 	node = *rnode;
 	node.sysctl_data = &ncpu;
-	
+
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 

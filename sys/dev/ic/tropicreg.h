@@ -1,31 +1,31 @@
-/*	$NetBSD: tropicreg.h,v 1.4 2003/11/02 11:07:46 wiz Exp $	*/
+/*	$NetBSD: tropicreg.h,v 1.4.10.1 2005/03/19 08:34:04 yamt Exp $	*/
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
- * Copyright (c) 1991 IBM Corporation 
+ * Copyright (c) 1991 IBM Corporation
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation,
- * and that the name IBM not be used in advertising or publicity 
+ * and that the name IBM not be used in advertising or publicity
  * pertaining to distribution of the software without specific, written
  * prior permission.
- * 
+ *
  * CARNEGIE MELLON AND IBM ALLOW FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON AND IBM DISCLAIM ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
@@ -164,7 +164,7 @@
 #define ARB_RINGSTATUS		6
 
 /* DLC status change response block */
-#define ARB_DLCSTAT_STATUS	6	/* status info field */ 
+#define ARB_DLCSTAT_STATUS	6	/* status info field */
 #define ARB_DLCSTAT_FRMRDATA	8	/* 5 bytes */
 #define ARB_DLCSTAT_ACCPRIO	13
 #define ARB_DLCSTAT_REMADDR	14	/* remote address */
@@ -365,14 +365,14 @@ struct param_addr {
 #define TR_SRAM_DEFAULT	0xd8000
 
 /* Offset of MMIO region */
-#define TR_MMIO_OFFSET	0x80000 
+#define TR_MMIO_OFFSET	0x80000
 #define TR_MMIO_MINADDR	0xc0000
 #define TR_MMIO_MAXADDR 0xde000
 #define TR_MMIO_SIZE	8192
 
 #define	TR_ACA_OFFSET	0x1e00	/* Offset of ACA in MMIO region */
 /*
- * XXX Create AIP structure 
+ * XXX Create AIP structure
  */
 #define TR_MAC_OFFSET	0x1f00	/* Offset of MAC address in MMIO region */
 #define TR_ID_OFFSET	0x1f30	/* Offset of ID in MMIO region */
@@ -526,7 +526,7 @@ struct param_addr {
 
 /* Constants for Token-Ring physical header */
 #define	DLC_HDR_LEN	0x3	/* Length of DLC header */
-#define	SNAP_LENGTH     0x05	/* SNAP field length */              
+#define	SNAP_LENGTH     0x05	/* SNAP field length */
 				/* protocol id = 3 bytes */
 				/* ethertype = 2 bytes */
 #define HDR_LNGTH_NOROUTE 14    /* length of header with no route info */

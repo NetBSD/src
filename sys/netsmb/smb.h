@@ -1,4 +1,4 @@
-/*	$NetBSD: smb.h,v 1.14 2004/03/22 16:42:06 jdolecek Exp $	*/
+/*	$NetBSD: smb.h,v 1.14.10.1 2005/03/19 08:36:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -37,7 +37,7 @@
 /*
  * Common definintions and structures for SMB/CIFS protocol
  */
- 
+
 #ifndef _NETSMB_SMB_H_
 #define _NETSMB_SMB_H_
 
@@ -45,7 +45,7 @@
 /*
  * SMB dialects that we have to deal with.
  */
-enum smb_dialects { 
+enum smb_dialects {
 	SMB_DIALECT_NONE,
 	SMB_DIALECT_CORE,		/* PC NETWORK PROGRAM 1.0, PCLAN1.0 */
 	SMB_DIALECT_COREPLUS,		/* MICROSOFT NETWORKS 1.03 */
@@ -431,7 +431,7 @@ enum smb_dialects {
 #define ERRlock		33	/* A lock request conflicts with existing lock */
 #define ERRunsup	50	/* unsupported - Win 95 */
 #define ERRnoipc	66	/* Bad Device Type */
-#define ERRnosuchshare	67	/* Bad Network Name */	
+#define ERRnosuchshare	67	/* Bad Network Name */
 #define ERRfilexists	80	/* The file named in the request already exists */
 #define ERRcannotopen	110	/* cannot open the file */
 #define ERRquota	112	/* W2K returns this if quota space exceeds */

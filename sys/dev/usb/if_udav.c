@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.4 2004/10/30 18:10:06 thorpej Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.4.6.1 2005/03/19 08:35:58 yamt Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.4 2004/10/30 18:10:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.4.6.1 2005/03/19 08:35:58 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -564,7 +564,7 @@ Static int
 udav_csr_read1(struct udav_softc *sc, int offset)
 {
 	u_int8_t val = 0;
-	
+
 	if (sc == NULL)
 		return (0);
 

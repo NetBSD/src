@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.44 2004/04/09 23:10:16 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.44.6.1 2005/03/19 08:35:41 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.44 2004/04/09 23:10:16 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.44.6.1 2005/03/19 08:35:41 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -68,14 +68,14 @@ static void rf_ValidateVisitedBits(RF_DagHeader_t *);
 
 /* The maximum number of nodes in a DAG is bounded by
 
-(2 * raidPtr->Layout->numDataCol) + (1 * layoutPtr->numParityCol) + 
+(2 * raidPtr->Layout->numDataCol) + (1 * layoutPtr->numParityCol) +
 	(1 * 2 * layoutPtr->numParityCol) + 3
 
 which is:  2*RF_MAXCOL+1*2+1*2*2+3
 
 For RF_MAXCOL of 40, this works out to 89.  We use this value to provide an estimate
-on the maximum size needed for RF_DAGPCACHE_SIZE.  For RF_MAXCOL of 40, this structure 
-would be 534 bytes.  Too much to have on-hand in a RF_DagNode_t, but should be ok to 
+on the maximum size needed for RF_DAGPCACHE_SIZE.  For RF_MAXCOL of 40, this structure
+would be 534 bytes.  Too much to have on-hand in a RF_DagNode_t, but should be ok to
 have a few kicking around.
 */
 #define RF_DAGPCACHE_SIZE ((2*RF_MAXCOL+1*2+1*2*2+3) *(RF_MAX(sizeof(RF_DagParam_t), sizeof(RF_DagNode_t *))))
@@ -112,8 +112,8 @@ rf_InitNode(RF_DagNode_t *node, RF_NodeStatus_t initstatus, int commit,
 	node->numAntecedents = nAnte;
 	node->numAntDone = 0;
 	node->next = NULL;
-	/* node->list_next = NULL */  /* Don't touch this here!  
-	                                 It may already be 
+	/* node->list_next = NULL */  /* Don't touch this here!
+	                                 It may already be
 					 in use by the caller! */
 	node->numSuccedents = nSucc;
 	node->name = name;
@@ -142,7 +142,7 @@ rf_InitNode(RF_DagNode_t *node, RF_NodeStatus_t initstatus, int commit,
 		node->big_dag_ptrs = rf_AllocDAGPCache();
 		ptrs = (void **) node->big_dag_ptrs;
 	} else {
-		RF_MallocAndAdd(ptrs, nptrs * sizeof(void *), 
+		RF_MallocAndAdd(ptrs, nptrs * sizeof(void *),
 				(void **), alist);
 	}
 	node->succedents = (nSucc) ? (RF_DagNode_t **) ptrs : NULL;
@@ -157,8 +157,8 @@ rf_InitNode(RF_DagNode_t *node, RF_NodeStatus_t initstatus, int commit,
 			node->big_dag_params = rf_AllocDAGPCache();
 			node->params = node->big_dag_params;
 		} else {
-			RF_MallocAndAdd(node->params, 
-					nParam * sizeof(RF_DagParam_t), 
+			RF_MallocAndAdd(node->params,
+					nParam * sizeof(RF_DagParam_t),
 					(RF_DagParam_t *), alist);
 		}
 	} else {
@@ -174,7 +174,7 @@ rf_InitNode(RF_DagNode_t *node, RF_NodeStatus_t initstatus, int commit,
  *
  *****************************************************************************/
 
-void 
+void
 rf_FreeDAG(RF_DagHeader_t *dag_h)
 {
 	RF_AccessStripeMapHeader_t *asmap, *t_asmap;
@@ -224,7 +224,7 @@ rf_FreeDAG(RF_DagHeader_t *dag_h)
 #define RF_MIN_FREE_BUFFERS  32
 
 static void rf_ShutdownDAGs(void *);
-static void 
+static void
 rf_ShutdownDAGs(void *ignored)
 {
 	pool_destroy(&rf_pools.dagh);
@@ -234,7 +234,7 @@ rf_ShutdownDAGs(void *ignored)
 	pool_destroy(&rf_pools.funclist);
 }
 
-int 
+int
 rf_ConfigureDAGs(RF_ShutdownList_t **listp)
 {
 
@@ -263,7 +263,7 @@ rf_AllocDAGHeader()
 	return (dh);
 }
 
-void 
+void
 rf_FreeDAGHeader(RF_DagHeader_t * dh)
 {
 	pool_put(&rf_pools.dagh, dh);
@@ -314,7 +314,7 @@ rf_AllocDAGPCache()
 	void *p;
 	p = pool_get(&rf_pools.dagpcache, PR_WAITOK);
 	memset(p, 0, RF_DAGPCACHE_SIZE);
-	
+
 	return (p);
 }
 
@@ -331,7 +331,7 @@ rf_AllocFuncList()
 
 	funcList = pool_get(&rf_pools.funclist, PR_WAITOK);
 	memset(funcList, 0, sizeof(RF_FuncList_t));
-	
+
 	return (funcList);
 }
 
@@ -342,7 +342,7 @@ rf_FreeFuncList(RF_FuncList_t *funcList)
 }
 
 /* allocates a stripe buffer -- a buffer large enough to hold all the data
-   in an entire stripe.  
+   in an entire stripe.
 */
 
 void *
@@ -351,11 +351,11 @@ rf_AllocStripeBuffer(RF_Raid_t *raidPtr, RF_DagHeader_t *dag_h, int size)
 	RF_VoidPointerListElem_t *vple;
 	void *p;
 
-	RF_ASSERT((size <= (raidPtr->numCol * (raidPtr->Layout.sectorsPerStripeUnit << 
+	RF_ASSERT((size <= (raidPtr->numCol * (raidPtr->Layout.sectorsPerStripeUnit <<
 					       raidPtr->logBytesPerSector))));
 
-	p =  malloc( raidPtr->numCol * (raidPtr->Layout.sectorsPerStripeUnit << 
-					raidPtr->logBytesPerSector), 
+	p =  malloc( raidPtr->numCol * (raidPtr->Layout.sectorsPerStripeUnit <<
+					raidPtr->logBytesPerSector),
 		     M_RAIDFRAME, M_NOWAIT);
 	if (!p) {
 		RF_LOCK_MUTEX(raidPtr->mutex);
@@ -372,9 +372,9 @@ rf_AllocStripeBuffer(RF_Raid_t *raidPtr, RF_DagHeader_t *dag_h, int size)
 		}
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
 		if (!p) {
-			/* We didn't get a buffer... not much we can do other than wait, 
+			/* We didn't get a buffer... not much we can do other than wait,
 			   and hope that someone frees up memory for us.. */
-			p = malloc( raidPtr->numCol * (raidPtr->Layout.sectorsPerStripeUnit << 
+			p = malloc( raidPtr->numCol * (raidPtr->Layout.sectorsPerStripeUnit <<
 						       raidPtr->logBytesPerSector), M_RAIDFRAME, M_WAITOK);
 		}
 	}
@@ -430,11 +430,11 @@ rf_AllocIOBuffer(RF_Raid_t *raidPtr, int size)
 	RF_VoidPointerListElem_t *vple;
 	void *p;
 
-	RF_ASSERT((size <= (raidPtr->Layout.sectorsPerStripeUnit << 
+	RF_ASSERT((size <= (raidPtr->Layout.sectorsPerStripeUnit <<
 			   raidPtr->logBytesPerSector)));
 
-	p =  malloc( raidPtr->Layout.sectorsPerStripeUnit << 
-				 raidPtr->logBytesPerSector, 
+	p =  malloc( raidPtr->Layout.sectorsPerStripeUnit <<
+				 raidPtr->logBytesPerSector,
 				 M_RAIDFRAME, M_NOWAIT);
 	if (!p) {
 		RF_LOCK_MUTEX(raidPtr->mutex);
@@ -451,10 +451,10 @@ rf_AllocIOBuffer(RF_Raid_t *raidPtr, int size)
 		}
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
 		if (!p) {
-			/* We didn't get a buffer... not much we can do other than wait, 
+			/* We didn't get a buffer... not much we can do other than wait,
 			   and hope that someone frees up memory for us.. */
-			p = malloc( raidPtr->Layout.sectorsPerStripeUnit << 
-				    raidPtr->logBytesPerSector, 
+			p = malloc( raidPtr->Layout.sectorsPerStripeUnit <<
+				    raidPtr->logBytesPerSector,
 				    M_RAIDFRAME, M_WAITOK);
 		}
 	}
@@ -504,7 +504,7 @@ rf_NodeStatusString(RF_DagNode_t *node)
 	}
 }
 
-void 
+void
 rf_PrintNodeInfoString(RF_DagNode_t *node)
 {
 	RF_PhysDiskAddr_t *pda;
@@ -566,7 +566,7 @@ rf_PrintNodeInfoString(RF_DagNode_t *node)
 	printf("?\n");
 }
 #ifdef DEBUG
-static void 
+static void
 rf_RecurPrintDAG(RF_DagNode_t *node, int depth, int unvisited)
 {
 	char   *anttype;
@@ -610,7 +610,7 @@ rf_RecurPrintDAG(RF_DagNode_t *node, int depth, int unvisited)
 	}
 }
 
-static void 
+static void
 rf_PrintDAG(RF_DagHeader_t *dag_h)
 {
 	int     unvisited, i;
@@ -650,7 +650,7 @@ rf_PrintDAG(RF_DagHeader_t *dag_h)
 }
 #endif
 /* assigns node numbers */
-int 
+int
 rf_AssignNodeNums(RF_DagHeader_t * dag_h)
 {
 	int     unvisited, i, nnum;
@@ -669,7 +669,7 @@ rf_AssignNodeNums(RF_DagHeader_t * dag_h)
 	return (nnum);
 }
 
-int 
+int
 rf_RecurAssignNodeNums(RF_DagNode_t *node, int num, int unvisited)
 {
 	int     i;
@@ -685,7 +685,7 @@ rf_RecurAssignNodeNums(RF_DagNode_t *node, int num, int unvisited)
 	return (num);
 }
 /* set the header pointers in each node to "newptr" */
-void 
+void
 rf_ResetDAGHeaderPointers(RF_DagHeader_t *dag_h, RF_DagHeader_t *newptr)
 {
 	int     i;
@@ -694,7 +694,7 @@ rf_ResetDAGHeaderPointers(RF_DagHeader_t *dag_h, RF_DagHeader_t *newptr)
 			rf_RecurResetDAGHeaderPointers(dag_h->succedents[i], newptr);
 }
 
-void 
+void
 rf_RecurResetDAGHeaderPointers(RF_DagNode_t *node, RF_DagHeader_t *newptr)
 {
 	int     i;
@@ -705,7 +705,7 @@ rf_RecurResetDAGHeaderPointers(RF_DagNode_t *node, RF_DagHeader_t *newptr)
 }
 
 
-void 
+void
 rf_PrintDAGList(RF_DagHeader_t * dag_h)
 {
 	int     i = 0;
@@ -717,7 +717,7 @@ rf_PrintDAGList(RF_DagHeader_t * dag_h)
 	}
 }
 
-static int 
+static int
 rf_ValidateBranch(RF_DagNode_t *node, int *scount, int *acount,
 		  RF_DagNode_t **nodes, int unvisited)
 {
@@ -775,7 +775,7 @@ rf_ValidateBranch(RF_DagNode_t *node, int *scount, int *acount,
 	return (retcode);
 }
 
-static void 
+static void
 rf_ValidateBranchVisitedBits(RF_DagNode_t *node, int unvisited, int rl)
 {
 	int     i;
@@ -792,7 +792,7 @@ rf_ValidateBranchVisitedBits(RF_DagNode_t *node, int unvisited, int rl)
 /* NOTE:  never call this on a big dag, because it is exponential
  * in execution time
  */
-static void 
+static void
 rf_ValidateVisitedBits(RF_DagHeader_t *dag)
 {
 	int     i, unvisited;
@@ -823,7 +823,7 @@ rf_ValidateVisitedBits(RF_DagHeader_t *dag)
  *      is equal to the succedent count on that node
  *   -- what else?
  */
-int 
+int
 rf_ValidateDAG(RF_DagHeader_t *dag_h)
 {
 	int     i, nodecount;
@@ -863,7 +863,7 @@ rf_ValidateDAG(RF_DagHeader_t *dag_h)
 
 	RF_Malloc(scount, nodecount * sizeof(int), (int *));
 	RF_Malloc(acount, nodecount * sizeof(int), (int *));
-	RF_Malloc(nodes, nodecount * sizeof(RF_DagNode_t *), 
+	RF_Malloc(nodes, nodecount * sizeof(RF_DagNode_t *),
 		  (RF_DagNode_t **));
 	for (i = 0; i < dag_h->numSuccedents; i++) {
 		if ((dag_h->succedents[i]->visited == unvisited)
@@ -931,7 +931,7 @@ validate_dag_bad:
  *
  *****************************************************************************/
 
-void 
+void
 rf_redirect_asm(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap)
 {
 	int     ds = (raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE) ? 1 : 0;
@@ -985,7 +985,7 @@ rf_redirect_asm(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap)
  * Note that this routine does the wrong thing if the access is fully
  * contained within one stripe unit, so we RF_ASSERT against this case at the
  * start.
- * 
+ *
  * layoutPtr - in: layout information
  * asmap     - in: access stripe map
  * dag_h     - in: header of the dag to create
@@ -993,13 +993,13 @@ rf_redirect_asm(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap)
  * nRodNodes - out: num nodes to be generated to read unaccessed data
  * sosBuffer, eosBuffer - out: pointers to newly allocated buffer
  */
-void 
+void
 rf_MapUnaccessedPortionOfStripe(RF_Raid_t *raidPtr,
 				RF_RaidLayout_t *layoutPtr,
 				RF_AccessStripeMap_t *asmap,
 				RF_DagHeader_t *dag_h,
 				RF_AccessStripeMapHeader_t **new_asm_h,
-				int *nRodNodes, 
+				int *nRodNodes,
 				char **sosBuffer, char **eosBuffer,
 				RF_AllocListElem_t *allocList)
 {
@@ -1046,8 +1046,8 @@ rf_MapUnaccessedPortionOfStripe(RF_Raid_t *raidPtr,
 
 
 /* returns non-zero if the indicated ranges of stripe unit offsets overlap */
-int 
-rf_PDAOverlap(RF_RaidLayout_t *layoutPtr, 
+int
+rf_PDAOverlap(RF_RaidLayout_t *layoutPtr,
 	      RF_PhysDiskAddr_t *src, RF_PhysDiskAddr_t *dest)
 {
 	RF_SectorNum_t soffs = rf_StripeUnitOffset(layoutPtr, src->startSector);
@@ -1087,7 +1087,7 @@ rf_PDAOverlap(RF_RaidLayout_t *layoutPtr,
  /* out: new_asm_h - the two new ASMs */
  /* out: nXorBufs - the total number of xor bufs required */
  /* out: rpBufPtr - a buffer for the parity read */
-void 
+void
 rf_GenerateFailedAccessASMs(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			    RF_PhysDiskAddr_t *failedPDA,
 			    RF_DagHeader_t *dag_h,
@@ -1144,9 +1144,9 @@ rf_GenerateFailedAccessASMs(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		}
 		(*nXorBufs) += new_asm_h[1]->stripeMap->numStripeUnitsAccessed;
 	}
-	
+
 	/* allocate a buffer for parity */
-	if (rpBufPtr) 
+	if (rpBufPtr)
 		*rpBufPtr = rf_AllocBuffer(raidPtr, dag_h, failedPDA->numSector << raidPtr->logBytesPerSector);
 
 	/* the last step is to figure out how many more distinct buffers need
@@ -1206,7 +1206,7 @@ rf_GenerateFailedAccessASMs(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
  * |           rrrrrrrrrrrrrrrr                          |
  *
  */
-void 
+void
 rf_RangeRestrictPDA(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *src,
 		    RF_PhysDiskAddr_t *dest, int dobuffer, int doraidaddr)
 {
@@ -1245,7 +1245,7 @@ static int lowprimes[NLOWPRIMES] = {2, 3, 5, 7, 11, 13, 17, 19};
  * return nonzero if access should shift to secondary, otherwise,
  * access is to primary
  *****************************************************************************/
-int 
+int
 rf_compute_workload_shift(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda)
 {
 	/*
@@ -1329,7 +1329,7 @@ rf_compute_workload_shift(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda)
  * Both the disk I/Os queued in RAIDframe as well as those at the physical
  * disk are counted as members of the "queue"
  */
-void 
+void
 rf_SelectMirrorDiskIdle(RF_DagNode_t * node)
 {
 	RF_Raid_t *raidPtr = (RF_Raid_t *) node->dagHdr->raidPtr;
@@ -1403,7 +1403,7 @@ rf_SelectMirrorDiskIdle(RF_DagNode_t * node)
  * Do simple partitioning. This assumes that
  * the data and parity disks are laid out identically.
  */
-void 
+void
 rf_SelectMirrorDiskPartition(RF_DagNode_t * node)
 {
 	RF_Raid_t *raidPtr = (RF_Raid_t *) node->dagHdr->raidPtr;
@@ -1424,12 +1424,12 @@ rf_SelectMirrorDiskPartition(RF_DagNode_t * node)
 	} else
 		if (RF_DEAD_DISK(disks[colData].status)) {
 			usemirror = 1;
-		} else 
+		} else
 			if (raidPtr->parity_good == RF_RAID_DIRTY) {
 				/* Trust only the main disk */
 				usemirror = 0;
 			} else
-				if (data_pda->startSector < 
+				if (data_pda->startSector <
 				    (disks[colData].numBlocks / 2)) {
 					usemirror = 0;
 				} else {

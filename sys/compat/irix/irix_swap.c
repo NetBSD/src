@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_swap.c,v 1.12 2004/10/27 19:29:57 david Exp $ */
+/*	$NetBSD: irix_swap.c,v 1.12.6.1 2005/03/19 08:33:34 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,10 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.12 2004/10/27 19:29:57 david Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.12.6.1 2005/03/19 08:33:34 yamt Exp $");
 
 #include <sys/types.h>
-#include <sys/signal.h> 
+#include <sys/signal.h>
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/malloc.h>
@@ -88,7 +88,7 @@ irix_sys_swapctl(l, v, retval)
 	case IRIX_SC_SGIADD: /* Add a swap resource */
 	case IRIX_SC_REMOVE: {/* Remove a swap resource */
 		struct irix_xswapres isr;
-		size_t len = (SCARG(uap, cmd) == IRIX_SC_SGIADD) ? 
+		size_t len = (SCARG(uap, cmd) == IRIX_SC_SGIADD) ?
 		    sizeof(struct irix_xswapres) : sizeof(struct irix_swapres);
 
 		if ((error = copyin(SCARG(uap, arg), &isr, len)) != 0)
@@ -106,10 +106,10 @@ irix_sys_swapctl(l, v, retval)
 			printf("unsupported non null sr_start\n");
 			return EINVAL;
 		}
-		SCARG(&cup, cmd) = 
+		SCARG(&cup, cmd) =
 		    (SCARG(uap, cmd) == IRIX_SC_REMOVE) ? SWAP_OFF : SWAP_ON;
 		SCARG(&cup, arg) = isr.sr_name;
-		SCARG(&cup, misc) = 
+		SCARG(&cup, misc) =
 		    (SCARG(uap, cmd) == IRIX_SC_SGIADD) ? isr.sr_pri : 0;
 		return sys_swapctl(l, &cup, retval);
 		break;
@@ -154,8 +154,8 @@ irix_sys_swapctl(l, v, retval)
 		for (i = 0; i < ist.swt_n; i++) {
 
 			pathlen = MIN(strlen(bse[i].se_path), IRIX_PATH_MAX);
-			if (ise[i].ste_path != NULL && 
-			    ((error = copyout(&(bse[i].se_path), 
+			if (ise[i].ste_path != NULL &&
+			    ((error = copyout(&(bse[i].se_path),
 			    ise[i].ste_path, pathlen)) != 0))
 				goto bad;
 
@@ -165,7 +165,7 @@ irix_sys_swapctl(l, v, retval)
 			ise[i].ste_free = (bse[i].se_nblks - bse[i].se_inuse) /
 			    scale;
 
-			ise[i].ste_flags = 0; 
+			ise[i].ste_flags = 0;
 			if (bse[i].se_flags & SWF_FAKE)
 				ise[i].ste_flags |= IRIX_ST_NOTREADY;
 
@@ -200,27 +200,27 @@ bad:
 		sep = (struct swapent *)malloc(
 		    sizeof(struct swapent) * entries, M_TEMP, M_WAITOK);
 		lockmgr(&swap_syscall_lock, LK_EXCLUSIVE, NULL);
-		uvm_swap_stats(SWAP_STATS, sep, entries, 
+		uvm_swap_stats(SWAP_STATS, sep, entries,
 		    (register_t *)(void *)&dontcare);
 		lockmgr(&swap_syscall_lock, LK_RELEASE, NULL);
 
 		if (SCARG(uap, cmd) == IRIX_SC_GETFREESWAP)
-			for (i = 0; i < entries; i++) 
+			for (i = 0; i < entries; i++)
 				sum += (sep[i].se_nblks - sep[i].se_inuse);
 
 		if (SCARG(uap, cmd) == IRIX_SC_GETSWAPVIRT)
-			for (i = 0; i < entries; i++) 
+			for (i = 0; i < entries; i++)
 				sum += sep[i].se_nblks;
-		
+
 		/* dbtob(1) is the size in byte of one swap block */
-		sum = sum * IRIX_SWAP_BLKSZ / dbtob(1); 
+		sum = sum * IRIX_SWAP_BLKSZ / dbtob(1);
 
 		if ((error = copyout(&sum, SCARG(uap, arg), sizeof(sum))) != 0)
 			return error;
 		break;
 	}
 	default:
-		printf("irix_sys_swapctl(): unsupported command %d\n", 
+		printf("irix_sys_swapctl(): unsupported command %d\n",
 		    SCARG(uap, cmd));
 		return EINVAL;
 		break;

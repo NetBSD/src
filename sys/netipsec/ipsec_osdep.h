@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_osdep.h,v 1.10 2004/04/30 04:12:29 jonathan Exp $	*/
+/*	$NetBSD: ipsec_osdep.h,v 1.10.8.1 2005/03/19 08:36:41 yamt Exp $	*/
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/netipsec/ipsec_osdep.h,v 1.1 2003/09/29 22:47:45 sam Exp $	*/
 
 /*
@@ -30,10 +30,10 @@
 #define NETIPSEC_OSDEP_H
 
 #ifdef _KERNEL
-/* 
+/*
  *  Hide porting differences across different 4.4BSD-derived platforms.
- * 
- * 1.  KASSERT() differences: 
+ *
+ * 1.  KASSERT() differences:
  * 2.  Kernel  Random-number API differences.
  * 3.  Is packet data in an mbuf object writeable?
  * 4.  Packet-header semantics.
@@ -47,7 +47,7 @@
  */
 
 /*
- *  1. KASSERT and spl differences 
+ *  1. KASSERT and spl differences
  *
  * FreeBSD takes an expression and  parenthesized printf() argument-list.
  * NetBSD takes one arg: the expression being asserted.
@@ -89,8 +89,8 @@
 static __inline u_int read_random(void *p, u_int len);
 
 static __inline u_int
-read_random(void *bufp, u_int len) 
-{ 
+read_random(void *bufp, u_int len)
+{
 	return rnd_extract_data(bufp, len, RND_EXTRACT_ANY /*XXX FIXME */);
 }
 #endif	/* __NetBSD__ */
@@ -100,7 +100,7 @@ read_random(void *bufp, u_int len)
  * FreeBSD 4.x uses: M_EXT_WRITABLE
  * NetBSD has M_READONLY(). Use !M_READONLY().
  * Not an exact match to FreeBSD semantics, but adequate for IPsec purposes.
- * 
+ *
  */
 #ifdef __NetBSD__
 /* XXX wrong, but close enough for restricted ipsec usage. */
@@ -137,7 +137,7 @@ static __inline struct mbuf *
 m_getcl(int how, short type, int flags)
 {
 	struct mbuf *mp;
-	if (flags & M_PKTHDR) 
+	if (flags & M_PKTHDR)
 		MGETHDR(mp, how, type);
 	else
 		MGET(mp, how,  type);
@@ -157,16 +157,16 @@ m_getcl(int how, short type, int flags)
  * 6. Network output macros
  * FreeBSD uses the  IF_HANDOFF(), which raises SPL, enqueues
  * a packet, and updates interface counters. NetBSD has IFQ_ENQUE(),
- * which leaves SPL changes up to the caller. 
+ * which leaves SPL changes up to the caller.
  * For now, we provide an emulation of IF_HANOOFF() which works
  * for protocol input queues.
  */
-#ifdef __FreeBSD__ 
+#ifdef __FreeBSD__
 /* nothing to do */
 #endif /* __FreeBSD__ */
 #ifdef __NetBSD__
 #define IF_HANDOFF(ifq, m, f) if_handoff(ifq, m, f, 0)
-  
+
 #include <net/if.h>
 
 static __inline int
@@ -213,12 +213,12 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
 
 /*
  * 8. Test for "privileged" socket opened by superuser.
- * FreeBSD tests  ((so)->so_cred && (so)->so_cred.cr_uid == 0), 
+ * FreeBSD tests  ((so)->so_cred && (so)->so_cred.cr_uid == 0),
  * NetBSD (1.6N) tests (so)->so_uid == 0).
  * This difference is wrapped inside  the IPSEC_PRIVILEGED_SO() macro.
  *
  */
-#ifdef __FreeBSD__ 
+#ifdef __FreeBSD__
 #define IPSEC_PRIVILEGED_SO(so) ((so)->so_cred && (so)->so_cred.cr_uid == 0)
 #endif	/* __FreeBSD__ */
 
@@ -259,9 +259,9 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
 #endif	/* __NetBSD__ */
 
 /*
- * 11.  Type of initialization functions.  
+ * 11.  Type of initialization functions.
  */
-#ifdef __FreeBSD__ 
+#ifdef __FreeBSD__
 #define INITFN static
 #endif
 #ifdef __NetBSD__
@@ -285,7 +285,7 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
  * NetBSD's struct inpcb and struct in6pcb were changed to both have
  * common struct, struct inpcb_hdr, as their first member.  NetBSD can
  * thus pass arguments as struct inpcb_hdr*, and dispatch on a v4/v6
- * flag in the inpcb_hdr at runtime. 
+ * flag in the inpcb_hdr at runtime.
  *
  * We hide the NetBSD-vs-FreeBSD differences inside the following abstraction:
  *
@@ -335,7 +335,7 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
  *
  * A. Initialization code.  This  is the largest difference of all.
  *
- *   FreeBSD uses compile/link-time perl hackery to generate special 
+ *   FreeBSD uses compile/link-time perl hackery to generate special
  * .o files  with linker sections  that give the moral equivalent of
  * C++ file-level-object constructors. NetBSD has no such facility.
  *
@@ -345,13 +345,13 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
  *
  * In the absence of SYSINIT(), all the file-level init functions
  * now have "extern" linkage. There is a new fast-ipsec init()
- * function which calls each of the per-file in an appropriate order. 
+ * function which calls each of the per-file in an appropriate order.
  * init_main will arrange to call the fast-ipsec init function
  * after the crypto framework has registered its transforms (including
  * any autoconfigured hardware crypto  accelerators) but before
  * initializing the network stack to send or receive  packet.
  *
- * B. Protosw() differences. 
+ * B. Protosw() differences.
  * CSRG-style BSD TCP/IP uses a generic protocol-dispatch-function
  * where the specific request is identified by an enum argument.
  * FreeBSD replaced that with an array of request-specific
@@ -364,7 +364,7 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
  *
  * C. Timeout() versus callout(9):
  * The FreeBSD 4.x netipsec/ code still uses timeout().
- * FreeBSD 4.7 has callout(9), so I just replaced 
+ * FreeBSD 4.7 has callout(9), so I just replaced
  * timeout_*() with the nearest callout_*() equivalents,
  * and added a callout handle to the ipsec context.
  *

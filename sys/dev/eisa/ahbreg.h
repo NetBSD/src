@@ -1,4 +1,4 @@
-/*	$NetBSD: ahbreg.h,v 1.13 2004/12/07 19:14:57 thorpej Exp $	*/
+/*	$NetBSD: ahbreg.h,v 1.13.4.1 2005/03/19 08:33:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -216,7 +216,7 @@ struct ahb_ecb {
 
 	struct ahb_dma_seg ahb_dma[AHB_NSEG];
 	struct ahb_ecb_status ecb_status;
-	struct scsipi_sense_data ecb_sense;
+	struct scsi_sense_data ecb_sense;
 
 	TAILQ_ENTRY(ahb_ecb) chain;
 	struct ahb_ecb *nexthash;

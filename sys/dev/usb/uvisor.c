@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.27 2004/09/13 12:55:49 drochner Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.27.6.1 2005/03/19 08:35:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.27 2004/09/13 12:55:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.27.6.1 2005/03/19 08:35:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,7 +252,7 @@ USB_ATTACH(uvisor)
 	sc->sc_flags = uvisor_lookup(uaa->vendor, uaa->product)->uv_flags;
 
 	if ((sc->sc_flags & (VISOR | PALM4)) == 0) {
-		printf("%s: init failed, device type is neither visor nor palm\n", 
+		printf("%s: init failed, device type is neither visor nor palm\n",
 		    USBDEVNAME(sc->sc_dev));
 		goto bad;
 	}
@@ -341,8 +341,8 @@ USB_ATTACH(uvisor)
 
 		/* Attach a ucom for each connection. */
 		for (i = 0; i < sc->sc_numcon; ++i) {
-			/* 
-			 * XXX this should copy out 4-char string from the 
+			/*
+			 * XXX this should copy out 4-char string from the
 			 * XXX port_function_id, but where would the string go?
 			 * XXX uca.info is a const char *, not an array.
 			 */
@@ -360,7 +360,7 @@ USB_ATTACH(uvisor)
 			sc->sc_subdevs[i] = config_found_sm_loc(self, "ucombus",
 				NULL, &uca, ucomprint, ucomsubmatch);
 
-			    
+
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.29 2004/12/30 15:38:50 reinoud Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.29.4.1 2005/03/19 08:36:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -50,7 +50,7 @@
  *    must display the following acknowledgement:
  *        This product includes software developed by The NetBSD
  *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its 
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.29 2004/12/30 15:38:50 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.29.4.1 2005/03/19 08:36:31 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -196,7 +196,7 @@ extern struct ifqueue pkintrq;
 #define RCF_SINGLEROUTE (2 << 8) | TOKEN_RCF_FRAME2 | TOKEN_RCF_BROADCAST_SINGLE
 
 static	int token_output __P((struct ifnet *, struct mbuf *,
-	    struct sockaddr *, struct rtentry *)); 
+	    struct sockaddr *, struct rtentry *));
 static	void token_input __P((struct ifnet *, struct mbuf *));
 
 /*
@@ -778,7 +778,7 @@ token_ifattach(ifp, lla)
 #endif
 }
 
-void    
+void
 token_ifdetach(ifp)
         struct ifnet *ifp;
 {

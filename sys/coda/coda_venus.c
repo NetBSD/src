@@ -1,13 +1,13 @@
-/*	$NetBSD: coda_venus.c,v 1.17 2003/08/28 05:55:19 mrg Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.17.10.1 2005/03/19 08:33:28 yamt Exp $	*/
 
 /*
- * 
+ *
  *             Coda: an Experimental Distributed File System
  *                              Release 3.1
- * 
+ *
  *           Copyright (c) 1987-1998 Carnegie Mellon University
  *                          All Rights Reserved
- * 
+ *
  * Permission  to  use, copy, modify and distribute this software and its
  * documentation is hereby granted,  provided  that  both  the  copyright
  * notice  and  this  permission  notice  appear  in  all  copies  of the
@@ -16,23 +16,23 @@
  * that credit is given to Carnegie Mellon University  in  all  documents
  * and publicity pertaining to direct or indirect use of this code or its
  * derivatives.
- * 
+ *
  * CODA IS AN EXPERIMENTAL SOFTWARE SYSTEM AND IS  KNOWN  TO  HAVE  BUGS,
  * SOME  OF  WHICH MAY HAVE SERIOUS CONSEQUENCES.  CARNEGIE MELLON ALLOWS
  * FREE USE OF THIS SOFTWARE IN ITS "AS IS" CONDITION.   CARNEGIE  MELLON
  * DISCLAIMS  ANY  LIABILITY  OF  ANY  KIND  FOR  ANY  DAMAGES WHATSOEVER
  * RESULTING DIRECTLY OR INDIRECTLY FROM THE USE OF THIS SOFTWARE  OR  OF
  * ANY DERIVATIVE WORK.
- * 
+ *
  * Carnegie  Mellon  encourages  users  of  this  software  to return any
  * improvements or extensions that  they  make,  and  to  grant  Carnegie
  * Mellon the rights to redistribute these changes without encumbrance.
- * 
- * 	@(#) coda/coda_venus.c,v 1.1.1.1 1998/08/29 21:26:45 rvb Exp $ 
+ *
+ * 	@(#) coda/coda_venus.c,v 1.1.1.1 1998/08/29 21:26:45 rvb Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.17 2003/08/28 05:55:19 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.17.10.1 2005/03/19 08:33:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ venus_root(void *mdp,
     ALLOC_NO_IN(coda_root);		/* sets inp & outp */
 
     /* send the open to venus. */
-    INIT_IN(inp, CODA_ROOT, cred, p);  
+    INIT_IN(inp, CODA_ROOT, cred, p);
 
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
     if (!error)
@@ -282,7 +282,7 @@ venus_ioctl(void *mdp, CodaFid *fid,
     INIT_IN(&inp->ih, CODA_IOCTL, cred, p);
     inp->Fid = *fid;
 
-    /* command was mutated by increasing its size field to reflect the  
+    /* command was mutated by increasing its size field to reflect the
      * path and follow args. we need to subtract that out before sending
      * the command to venus.
      */
@@ -297,7 +297,7 @@ venus_ioctl(void *mdp, CodaFid *fid,
     inp->len = iap->vi.in_size;
     inp->data = (char *)(sizeof (struct coda_ioctl_in));
 
-    error = copyin(iap->vi.in, (char*)inp + (int)(long)inp->data, 
+    error = copyin(iap->vi.in, (char*)inp + (int)(long)inp->data,
 		   iap->vi.in_size);
     if (error) {
 	CODA_FREE(inp, coda_ioctl_size);
@@ -312,7 +312,7 @@ venus_ioctl(void *mdp, CodaFid *fid,
 	if (outp->len > iap->vi.out_size) {
 	    error = EINVAL;
 	} else {
-	    error = copyout((char *)outp + (int)(long)outp->data, 
+	    error = copyout((char *)outp + (int)(long)outp->data,
 			    iap->vi.out, iap->vi.out_size);
 	}
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_kq.c,v 1.7 2003/06/29 22:31:12 fvdl Exp $	*/
+/*	$NetBSD: smbfs_kq.c,v 1.7.12.1 2005/03/19 08:36:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.7 2003/06/29 22:31:12 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.7.12.1 2005/03/19 08:36:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,7 +222,7 @@ smbfs_kqpoll(void *arg)
 
 				/* drop lock while processing */
 				simple_unlock(&smbkq_lock);
-			
+
 				/*
 				 * Skip fetch if not yet setup.
 				 */
@@ -384,9 +384,9 @@ filt_smbfsvnode(struct knote *kn, long hint)
 	return (kn->kn_fflags != 0);
 }
 
-static const struct filterops smbfsread_filtops = 
+static const struct filterops smbfsread_filtops =
 	{ 1, NULL, filt_smbfsdetach, filt_smbfsread };
-static const struct filterops smbfsvnode_filtops = 
+static const struct filterops smbfsvnode_filtops =
 	{ 1, NULL, filt_smbfsdetach, filt_smbfsvnode };
 
 int
@@ -425,12 +425,12 @@ smbfs_kqfilter(void *v)
 	 * Put the vnode to watched list.
 	 */
 	kevs++;
-	
+
 	/*
 	 * Fetch current attributes. It's only needed when the vnode
 	 * is not watched yet, but we need to do this without lock
 	 * held. This is likely cheap due to attrcache, so do it now.
-	 */ 
+	 */
 	memset(&attr, 0, sizeof(attr));
 	(void) VOP_GETATTR(vp, &attr, p->p_ucred, p);
 

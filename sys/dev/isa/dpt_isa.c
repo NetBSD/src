@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_isa.c,v 1.13 2004/09/14 20:20:46 drochner Exp $	*/
+/*	$NetBSD: dpt_isa.c,v 1.13.6.1 2005/03/19 08:34:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -28,11 +28,11 @@
  */
 
 /*
- * ISA front-end for DPT EATA SCSI driver. 
+ * ISA front-end for DPT EATA SCSI driver.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.13 2004/09/14 20:20:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.13.6.1 2005/03/19 08:34:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ dpt_isa_match(struct device *parent, struct cfdata *match, void *aux)
 	if (ISA_DIRECT_CONFIG(ia))
 		return (0);
 
-	if (ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT) 
+	if (ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT)
 		return (dpt_isa_probe(ia, ia->ia_io[0].ir_addr));
 
 	for (i = 0; dpt_isa_iobases[i] != 0; i++) {
@@ -138,7 +138,7 @@ dpt_isa_probe(struct isa_attach_args *ia, int iobase)
 	if (bus_space_map(iot, iobase, DPT_ISA_IOSIZE, 0, &ioh) != 0)
 		return(0);
 
-	/* 
+	/*
 	 * Assumuing the DPT BIOS reset the board, we shouldn't need to
 	 * re-do it here.  The tests below should weed out non-EATA devices
 	 * before we start poking any registers.
@@ -163,7 +163,7 @@ dpt_isa_probe(struct isa_attach_args *ia, int iobase)
 		    bus_space_read_1(iot, ioh, HA_ERROR + 2) != 'T')
 			goto bad;
 
-	/* 
+	/*
 	 * At this point we can be confident that we are dealing with a DPT
 	 * HBA.  Issue the read-config command and wait for the data to
 	 * appear.  XXX We shouldn't be doing this with PIO, but it makes it
@@ -171,10 +171,10 @@ dpt_isa_probe(struct isa_attach_args *ia, int iobase)
 	 */
 	bus_space_write_1(iot, ioh, HA_COMMAND, CP_PIO_GETCFG);
 	memset(&ec, 0, sizeof(ec));
-	i = ((int)&((struct eata_cfg *)0)->ec_cfglen + 
+	i = ((int)&((struct eata_cfg *)0)->ec_cfglen +
 	    sizeof(ec.ec_cfglen)) >> 1;
 	p = (u_int16_t *)&ec;
-	
+
 	if (dpt_isa_wait(ioh, iot, 0xFF, HA_ST_DATA_RDY))
 		goto bad;
 
@@ -189,7 +189,7 @@ dpt_isa_probe(struct isa_attach_args *ia, int iobase)
 		  - (int)(&(((struct eata_cfg *)0L)->ec_cfglen))
 		  - sizeof(ec.ec_cfglen);
 
-	j = i + (int)(&(((struct eata_cfg *)0L)->ec_cfglen)) + 
+	j = i + (int)(&(((struct eata_cfg *)0L)->ec_cfglen)) +
 	    sizeof(ec.ec_cfglen);
 	i >>= 1;
 
@@ -204,26 +204,26 @@ dpt_isa_probe(struct isa_attach_args *ia, int iobase)
 	/* Puke if we don't like the returned configuration data. */
 	if ((bus_space_read_1(iot, ioh,  HA_STATUS) & HA_ST_ERROR) != 0 ||
 	    memcmp(ec.ec_eatasig, "EATA", 4) != 0 ||
-	    (ec.ec_feat0 & (EC_F0_HBA_VALID | EC_F0_DMA_SUPPORTED)) != 
+	    (ec.ec_feat0 & (EC_F0_HBA_VALID | EC_F0_DMA_SUPPORTED)) !=
 	    (EC_F0_HBA_VALID | EC_F0_DMA_SUPPORTED))
 	    	goto bad;
 
-	/* 
+	/*
 	 * Which DMA channel to use: if it was hardwired in the kernel
 	 * configuration, use that value.  If the HBA told us, use that
 	 * value.  Otherwise, puke.
 	 */
 	if ((drq = ia->ia_drq[0].ir_drq) == ISA_UNKNOWN_DRQ) {
-		int dmanum = ((ec.ec_feat1 & EC_F1_DMA_NUM_MASK) >> 
+		int dmanum = ((ec.ec_feat1 & EC_F1_DMA_NUM_MASK) >>
 		    EC_F1_DMA_NUM_SHIFT);
-	
+
 		if ((ec.ec_feat0 & EC_F0_DMA_NUM_VALID) == 0 || dmanum > 3)
 			goto bad;
 		drq = "\0\7\6\5"[dmanum];
 	}
 
-	/* 
-	 * Which IRQ to use: if it was hardwired in the kernel configuration, 
+	/*
+	 * Which IRQ to use: if it was hardwired in the kernel configuration,
 	 * use that value.  Otherwise, use what the HBA told us.
 	 */
 	if ((irq = ia->ia_irq[0].ir_irq) == ISA_UNKNOWN_IRQ)
@@ -261,12 +261,12 @@ dpt_isa_attach(struct device *parent, struct device *self, void *aux)
 	struct dpt_softc *sc;
 	struct eata_cfg *ec;
 	int error;
-	
+
 	ia = aux;
 	sc = (struct dpt_softc *)self;
 	iot = ia->ia_iot;
-	ic = ia->ia_ic;	
-	
+	ic = ia->ia_ic;
+
 	printf(": ");
 
 	if ((error = bus_space_map(iot, ia->ia_io[0].ir_addr, DPT_ISA_IOSIZE,
@@ -294,10 +294,10 @@ dpt_isa_attach(struct device *parent, struct device *self, void *aux)
 
 	if (dpt_readcfg(sc)) {
 		printf("readcfg failed - see dpt(4)\n");
-		return;	
+		return;
 	}
 
-	/* 
+	/*
 	 * Now attach to the bus-independent code.  XXX We need to force
 	 * parameters that aren't filled in by some ISA boards.  In
 	 * particular, due to the limited amount of memory we have to play

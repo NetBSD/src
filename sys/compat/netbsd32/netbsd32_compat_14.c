@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_14.c,v 1.9 2003/01/18 08:28:26 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_compat_14.c,v 1.9.12.1 2005/03/19 08:33:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.9 2003/01/18 08:28:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.9.12.1 2005/03/19 08:33:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ipc.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.9 2003/01/18 08:28:26 thorp
 #include <sys/mount.h>
 #include <sys/msg.h>
 #include <sys/sem.h>
-#include <sys/shm.h>  
+#include <sys/shm.h>
 
 #ifndef	SYSVMSG
 #define	SYSVMSG
@@ -243,7 +243,7 @@ compat_14_netbsd32_msgctl(l, v, retval)
 	if (cmd == IPC_SET) {
 		error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, buf)),
 		    &omsqbuf, sizeof(omsqbuf));
-		if (error) 
+		if (error)
 			return (error);
 		netbsd32_msqid_ds14_to_native(&omsqbuf, &msqbuf);
 	}
@@ -252,7 +252,7 @@ compat_14_netbsd32_msgctl(l, v, retval)
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &msqbuf : NULL);
 
 	if (error == 0 && cmd == IPC_STAT) {
-		native_to_netbsd32_msqid_ds14(&msqbuf, &omsqbuf);     
+		native_to_netbsd32_msqid_ds14(&msqbuf, &omsqbuf);
 		error = copyout(&omsqbuf,
 		    (caddr_t)NETBSD32PTR64(SCARG(uap, buf)), sizeof(omsqbuf));
 	}
@@ -281,7 +281,7 @@ compat_14_netbsd32___semctl(l, v, retval)
 	cmd = SCARG(uap, cmd);
 
 	switch (cmd) {
-	case IPC_SET:    
+	case IPC_SET:
 	case IPC_STAT:
 		pass_arg = &sembuf;
 		break;
@@ -297,10 +297,10 @@ compat_14_netbsd32___semctl(l, v, retval)
 		error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, arg)), &arg,
 		    sizeof(arg));
 		if (error)
-			return (error);  
-		if (cmd == IPC_SET) { 
+			return (error);
+		if (cmd == IPC_SET) {
 			error = copyin(arg.buf, &osembuf, sizeof(osembuf));
-			if (error)  
+			if (error)
 				return (error);
 			netbsd32_semid_ds14_to_native(&osembuf, &sembuf);
 		}
@@ -337,7 +337,7 @@ compat_14_netbsd32_shmctl(l, v, retval)
 	if (cmd == IPC_SET) {
 		error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, buf)),
 		    &oshmbuf, sizeof(oshmbuf));
-		if (error) 
+		if (error)
 			return (error);
 		netbsd32_shmid_ds14_to_native(&oshmbuf, &shmbuf);
 	}
@@ -346,7 +346,7 @@ compat_14_netbsd32_shmctl(l, v, retval)
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &shmbuf : NULL);
 
 	if (error == 0 && cmd == IPC_STAT) {
-		native_to_netbsd32_shmid_ds14(&shmbuf, &oshmbuf);     
+		native_to_netbsd32_shmid_ds14(&shmbuf, &oshmbuf);
 		error = copyout(&oshmbuf,
 		    (caddr_t)NETBSD32PTR64(SCARG(uap, buf)), sizeof(oshmbuf));
 	}

@@ -1,6 +1,6 @@
-/* $NetBSD: lk201reg.h,v 1.1 1998/09/17 20:01:57 drochner Exp $ */
+/* $NetBSD: lk201reg.h,v 1.1.56.1 2005/03/19 08:33:58 yamt Exp $ */
 
-/* 
+/*
  * command keycodes for Digital LK200/LK400 series keyboards.
  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.1.14.1 2005/03/19 08:33:25 yamt Exp $	*/
 /*	NetBSD: frameasm.h,v 1.4 2004/02/20 17:35:01 yamt Exp 	*/
 
 #ifndef _I386_FRAMEASM_H_
@@ -12,6 +12,7 @@
 #define TRAP_INSTR	int $0x82
 #define __HYPERVISOR_stack_switch          4
 #define __HYPERVISOR_fpu_taskswitch	   7
+#define __HYPERVISOR_physdev_op		   19
 
 #ifndef TRAPLOG
 #define TLOG		/**/
@@ -109,17 +110,22 @@
 #define	STI(reg)	sti
 #else
 /* XXX assym.h */
-#define	EVENTS 0
-#define	EVENTS_MASK 4
-#define EVENTS_MASTER_ENABLE_BIT  31
+#define	EVENTS_MASK 136
+/* Offsets into shared_info_t. */
+#define evtchn_upcall_pending		/* 0 */
+#define evtchn_upcall_mask		1
+
+#define XEN_BLOCK_EVENTS(reg)	movb $1,evtchn_upcall_mask(reg)
+#define XEN_UNBLOCK_EVENTS(reg)	movb $0,evtchn_upcall_mask(reg)
+#define XEN_TEST_PENDING(reg)	testb $0xFF,evtchn_upcall_pending(%reg)
+
 #define CLI(reg)	movl	_C_LABEL(HYPERVISOR_shared_info),reg ;	\
-    			btrl	$EVENTS_MASTER_ENABLE_BIT,EVENTS_MASK(reg)
+    			XEN_BLOCK_EVENTS(reg)
 #define STI(reg)	movl	_C_LABEL(HYPERVISOR_shared_info),reg ;	\
-    			btsl	$EVENTS_MASTER_ENABLE_BIT,EVENTS_MASK(reg)
+    			XEN_UNBLOCK_EVENTS(reg)
 #define STIC(reg)	movl	_C_LABEL(HYPERVISOR_shared_info),reg ;	\
-    			btsl	$EVENTS_MASTER_ENABLE_BIT,EVENTS_MASK(reg) ; \
-			movl	EVENTS(reg),reg ; \
-			testl	reg,reg
+    			XEN_UNBLOCK_EVENTS(reg)  ; \
+			testb $1,evtchn_upcall_pending(reg)
 #endif
 
 #endif /* _I386_FRAMEASM_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.2 2002/10/19 08:53:45 scw Exp $	*/
+/*	$NetBSD: memset.S,v 1.2.18.1 2005/03/19 08:36:26 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -76,8 +76,8 @@ ENTRY(memset)
 	shlli	r4, 2, r4
 	movi	-1, r1
 #ifdef __LITTLE_ENDIAN__
-	shlld	r1, r4, r1		
-	shlld	r1, r4, r1		
+	shlld	r1, r4, r1
+	shlld	r1, r4, r1
 #else
 	shlrd	r1, r4, r1
 	shlrd	r1, r4, r1
@@ -118,7 +118,7 @@ Laligned:
 	xor	r1, r6, r1
 	shlri	r1, 1, r1
 	addi	r1, 6, r1
-	ptrel/l	r1, tr1	
+	ptrel/l	r1, tr1
 	blink	tr1, r63
 	st.q	r7, -24, r3
 	st.q	r7, -16, r3

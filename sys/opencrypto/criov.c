@@ -1,4 +1,4 @@
-/*	$NetBSD: criov.c,v 1.2 2003/07/30 17:27:23 lha Exp $ */
+/*	$NetBSD: criov.c,v 1.2.12.1 2005/03/19 08:36:52 yamt Exp $ */
 /*      $OpenBSD: criov.c,v 1.11 2002/06/10 19:36:43 espie Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: criov.c,v 1.2 2003/07/30 17:27:23 lha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: criov.c,v 1.2.12.1 2005/03/19 08:36:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ cuio_apply(struct uio *uio, int off, int len,
 		panic("%s: len %d < 0", __func__, len);
 	if (off < 0)
 		panic("%s: off %d < 0", __func__, off);
-	
+
 	ind = 0;
 	while (off > 0) {
 		if (ind >= uio->uio_iovcnt)
@@ -205,7 +205,7 @@ cuio_apply(struct uio *uio, int off, int len,
 			panic("cuio_apply: out of ivecs when processing uio");
 		count = min(uio->uio_iov[ind].iov_len - off, len);
 
-		rval = f(fstate, 
+		rval = f(fstate,
 			 ((caddr_t)uio->uio_iov[ind].iov_base + off), count);
 		if (rval)
 			return (rval);

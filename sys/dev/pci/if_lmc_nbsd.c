@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_nbsd.c,v 1.21 2003/04/01 02:04:34 thorpej Exp $	*/
+/*	$NetBSD: if_lmc_nbsd.c,v 1.21.12.1 2005/03/19 08:35:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc_nbsd.c,v 1.21 2003/04/01 02:04:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc_nbsd.c,v 1.21.12.1 2005/03/19 08:35:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_lmc_nbsd.c,v 1.21 2003/04/01 02:04:34 thorpej Exp
 #if defined(__NetBSD__)
 #include <dev/pci/if_lmc_types.h>
 #include <dev/pci/if_lmcioctl.h>
-#include <dev/pci/if_lmcvar.h>  
+#include <dev/pci/if_lmcvar.h>
 #elif defined(__FreeBSD__)
 #include "pci/if_lmc_types.h"
 #include "pci/if_lmcioctl.h"
@@ -165,7 +165,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_lmc_nbsd.c,v 1.21 2003/04/01 02:04:34 thorpej Exp
 #else /* BSDI */
 #include "i386/pci/if_lmctypes.h"
 #include "i386/pci/if_lmcioctl.h"
-#include "i386/pci/if_lmcvar.h" 
+#include "i386/pci/if_lmcvar.h"
 #endif
 
 /*
@@ -344,7 +344,7 @@ lmc_pci_attach(struct device * const parent,
 	LMC_CSR_WRITE(sc, csr_busmode, TULIP_BUSMODE_SWRESET);
 
 	/*
-	 * Wait 10 microseconds (actually 50 PCI cycles but at 
+	 * Wait 10 microseconds (actually 50 PCI cycles but at
 	 * 33MHz that comes to two microseconds but wait a
 	 * bit longer anyways)
 	 */
@@ -468,7 +468,7 @@ lmc_busdma_init(
 		sc->lmc_txmaps[sc->lmc_txmaps_free++] = map;
 	}
 	if (error) {
-	    while (sc->lmc_txmaps_free > 0) 
+	    while (sc->lmc_txmaps_free > 0)
 		bus_dmamap_destroy(sc->lmc_dmatag,
 				   sc->lmc_txmaps[--sc->lmc_txmaps_free]);
 	}
@@ -500,7 +500,7 @@ lmc_busdma_init(
 		sc->lmc_rxmaps[sc->lmc_rxmaps_free++] = map;
 	}
 	if (error) {
-	    while (sc->lmc_rxmaps_free > 0) 
+	    while (sc->lmc_rxmaps_free > 0)
 		bus_dmamap_destroy(sc->lmc_dmatag,
 				   sc->lmc_rxmaps[--sc->lmc_rxmaps_free]);
 	}

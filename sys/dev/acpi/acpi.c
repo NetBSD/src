@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.67 2004/08/30 15:05:19 drochner Exp $	*/
+/*	$NetBSD: acpi.c,v 1.67.6.1 2005/03/19 08:33:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.67 2004/08/30 15:05:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.67.6.1 2005/03/19 08:33:55 yamt Exp $");
 
 #include "opt_acpi.h"
 
@@ -869,8 +869,8 @@ acpi_eval_struct(ACPI_HANDLE handle, char *path, ACPI_BUFFER *bufp)
  */
 
 ACPI_STATUS
-acpi_foreach_package_object(ACPI_OBJECT *pkg, 
-    ACPI_STATUS (*func)(ACPI_OBJECT *, void *), 
+acpi_foreach_package_object(ACPI_OBJECT *pkg,
+    ACPI_STATUS (*func)(ACPI_OBJECT *, void *),
     void *arg)
 {
 	ACPI_STATUS rv = AE_OK;

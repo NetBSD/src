@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.43 2003/11/02 11:07:44 wiz Exp $	 */
+/* $NetBSD: adw.c,v 1.43.10.1 2005/03/19 08:34:01 yamt Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.43 2003/11/02 11:07:44 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.43.10.1 2005/03/19 08:34:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -525,7 +525,7 @@ adw_attach(ADW_SOFTC *sc)
 	 * Fill in the scsipi_channel.
 	 */
 	memset(chan, 0, sizeof(*chan));
-	chan->chan_adapter = adapt;   
+	chan->chan_adapter = adapt;
 	chan->chan_bustype = &scsi_bustype;
 	chan->chan_channel = 0;
 	chan->chan_ntargets = ADW_MAX_TID + 1;
@@ -621,7 +621,7 @@ adw_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		return;
 
 	case ADAPTER_REQ_SET_XFER_MODE:
-		/* XXX XXX XXX */     
+		/* XXX XXX XXX */
 		return;
 	}
 }
@@ -668,7 +668,7 @@ adw_build_req(ADW_SOFTC *sc, ADW_CCB *ccb)
 	scsiqp->vsense_addr = &ccb->scsi_sense;
 	scsiqp->sense_addr = htole32(sc->sc_dmamap_control->dm_segs[0].ds_addr +
 			ADW_CCB_OFF(ccb) + offsetof(struct adw_ccb, scsi_sense));
-	scsiqp->sense_len = sizeof(struct scsipi_sense_data);
+	scsiqp->sense_len = sizeof(struct scsi_sense_data);
 
 	/*
 	 * Build ADW_SCSI_REQ_Q for a scatter-gather buffer command.
@@ -703,7 +703,7 @@ adw_build_req(ADW_SOFTC *sc, ADW_CCB *ccb)
 		case ENOMEM:
 		case EAGAIN:
 			xs->error = XS_RESOURCE_SHORTAGE;
-			goto out_bad; 
+			goto out_bad;
 
 		default:
 			xs->error = XS_DRIVER_STUFFUP;
@@ -1017,7 +1017,7 @@ adw_print_info(ADW_SOFTC *sc, int tid)
 			((sdtr_reneg)? "sync" : "") );
 		printf(" renegotiation pending before next command.\n");
 	}
-}	
+}
 
 
 /******************************************************************************/
@@ -1040,7 +1040,7 @@ adw_isr_callback(ADW_SOFTC *sc, ADW_SCSI_REQ_Q *scsiq)
 	bus_dma_tag_t   dmat = sc->sc_dmat;
 	ADW_CCB        *ccb;
 	struct scsipi_xfer *xs;
-	struct scsipi_sense_data *s1, *s2;
+	struct scsi_sense_data *s1, *s2;
 
 
 	ccb = adw_ccb_phys_kv(sc, scsiq->ccb_ptr);
@@ -1153,7 +1153,7 @@ adw_isr_callback(ADW_SOFTC *sc, ADW_SCSI_REQ_Q *scsiq)
 			adw_reset_bus(sc);
 			xs->error = XS_BUSY;
 			goto done;
-			
+
 		case QHSTA_M_WTM_TIMEOUT:
 		case QHSTA_M_SXFR_WD_TMO:
 			/* The SCSI bus hung in a phase */

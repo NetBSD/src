@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkeyv2.h,v 1.18.4.1 2005/02/12 18:17:53 yamt Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.18.4.2 2005/03/19 08:36:32 yamt Exp $	*/
 /*	$KAME: pfkeyv2.h,v 1.36 2003/07/25 09:33:37 itojun Exp $	*/
 
 /*
@@ -267,7 +267,7 @@ struct sadb_x_nat_t_type {
 
 /* NAT traversal source or destination port */
 /* sizeof(struct sadb_x_nat_t_port) == 8 */
-struct sadb_x_nat_t_port { 
+struct sadb_x_nat_t_port {
   u_int16_t sadb_x_nat_t_port_len;
   u_int16_t sadb_x_nat_t_port_exttype;
   u_int16_t sadb_x_nat_t_port_port;

@@ -1,4 +1,4 @@
-/*	$NetBSD: iavcvar.h,v 1.1 2003/09/25 15:53:26 pooka Exp $	*/
+/*	$NetBSD: iavcvar.h,v 1.1.12.1 2005/03/19 08:34:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -60,7 +60,7 @@ typedef struct iavc_softc {
 
     uint32_t		sc_unit;
     uint32_t		sc_intr;
- 
+
     int32_t		sc_state;
 #define IAVC_DOWN       0
 #define IAVC_POLL       1

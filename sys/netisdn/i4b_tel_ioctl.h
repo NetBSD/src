@@ -27,7 +27,7 @@
  *	i4b_tel_ioctl.h telephony interface ioctls
  *	------------------------------------------
  *
- *	$Id: i4b_tel_ioctl.h,v 1.2 2003/04/06 18:20:14 wiz Exp $ 
+ *	$Id: i4b_tel_ioctl.h,v 1.2.12.1 2005/03/19 08:36:42 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -41,15 +41,15 @@
 /*===========================================================================*
  *	/dev/i4btel<n> devices (audio data)
  *===========================================================================*/
- 
+
 /* supported audio format conversions */
 
 #define CVT_NONE	0		/* no A-law/mu-law conversion     */
 #define CVT_ALAW2ULAW	1		/* ISDN line: A-law, user: mu-law */
 #define CVT_ULAW2ALAW	2		/* ISDN line: mu-law, user: A-law */
-      
+
 /*---------------------------------------------------------------------------*
- *	get / set audio format 
+ *	get / set audio format
  *---------------------------------------------------------------------------*/
 
 #define	I4B_TEL_GETAUDIOFMT	_IOR('A', 0, int)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.44 2004/03/24 16:55:07 pooka Exp $ */
+/*	$NetBSD: mach_message.c,v 1.44.10.1 2005/03/19 08:33:42 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.44 2004/03/24 16:55:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.44.10.1 2005/03/19 08:33:42 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.44 2004/03/24 16:55:07 pooka Exp 
 #include <sys/pool.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
-#endif 
+#endif
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
@@ -73,16 +73,16 @@ __KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.44 2004/03/24 16:55:07 pooka Exp 
 /* Mach message pool */
 static struct pool mach_message_pool;
 
-static inline 
+static inline
     int mach_msg_send(struct lwp *, mach_msg_header_t *, int *, size_t);
-static inline int mach_msg_recv(struct lwp *, mach_msg_header_t *, 
+static inline int mach_msg_recv(struct lwp *, mach_msg_header_t *,
     int, size_t, unsigned int, mach_port_t);
-static inline 
+static inline
     struct lwp *mach_get_target_task(struct lwp *, struct mach_port *);
 static inline void mach_drop_rights(struct mach_right *, int);
-static inline 
+static inline
     void mach_trade_rights(struct lwp *, struct lwp *, mach_port_t *, int);
-static inline 
+static inline
     int mach_trade_rights_complex(struct lwp *, struct mach_message *);
 
 int
@@ -121,8 +121,8 @@ mach_sys_msg_overwrite_trap(l, v, retval)
 		return 0;
 	}
 
-	/* 
-	 * Two options: receive or send. If both are 
+	/*
+	 * Two options: receive or send. If both are
 	 * set, we must send, and then receive. If
 	 * send fail, then we skip recieve.
 	 */
@@ -131,7 +131,7 @@ mach_sys_msg_overwrite_trap(l, v, retval)
 		*retval = mach_msg_send(l, msg, &opt, send_size);
 
 	if ((opt & MACH_RCV_MSG) && (*retval == MACH_MSG_SUCCESS)) {
-		/* 
+		/*
 		 * Find a buffer for the reply.
 		 */
 		if (SCARG(uap, rcv_msg) != NULL)
@@ -143,21 +143,21 @@ mach_sys_msg_overwrite_trap(l, v, retval)
 			return 0;
 		}
 
-		*retval = mach_msg_recv(l, msg, opt, recv_size, 
+		*retval = mach_msg_recv(l, msg, opt, recv_size,
 		    SCARG(uap, timeout), SCARG(uap, rcv_name));
 	}
 
 	return 0;
 }
 
-/* 
+/*
  * Send a Mach message. This returns a Mach message error code.
  */
-static inline int 
+static inline int
 mach_msg_send(l, msg, option, send_size)
 	struct lwp *l;
 	mach_msg_header_t *msg;
-	int *option; 
+	int *option;
 	size_t send_size;
 {
 	struct mach_emuldata *med;
@@ -178,20 +178,20 @@ mach_msg_send(l, msg, option, send_size)
 	if (msg == NULL)
 		return MACH_SEND_INVALID_DATA;
 
-	/* 
+	/*
 	 * Allocate memory for the message and its reply,
 	 * and copy the whole message in the kernel.
 	 */
 	sm = malloc(send_size, M_EMULDATA, M_WAITOK);
 	if ((error = copyin(msg, sm, send_size)) != 0) {
-		ret = MACH_SEND_INVALID_DATA;	
+		ret = MACH_SEND_INVALID_DATA;
 		goto out1;
 	}
 
 #ifdef KTRACE
 	/* Dump the Mach message */
 	if (KTRPOINT(p, KTR_MMSG))
-		ktrmmsg(p, (char *)sm, send_size); 
+		ktrmmsg(p, (char *)sm, send_size);
 #endif
 	/*
 	 * Handle rights in the message
@@ -209,9 +209,9 @@ mach_msg_send(l, msg, option, send_size)
 		goto out1;
 	}
 
-	/* 
-	 * Check that the process has a send right on 
-	 * the remote port. 
+	/*
+	 * Check that the process has a send right on
+	 * the remote port.
 	 */
 	rights = (MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_SEND_ONCE);
 	if (mach_right_check(rn, l, rights) == NULL) {
@@ -221,7 +221,7 @@ mach_msg_send(l, msg, option, send_size)
 
 	/*
 	 * If the remote port is a special port (host, kernel,
-	 * clock, or io_master), the message will be handled 
+	 * clock, or io_master), the message will be handled
 	 * by the kernel.
 	 */
 	med = (struct mach_emuldata *)p->p_emuldata;
@@ -231,15 +231,15 @@ mach_msg_send(l, msg, option, send_size)
 		mach_msg_header_t *rm;
 		size_t min_reqlen, max_replen;
 
-		/* 
+		/*
 		 * Look for the function that will handle it,
 		 * using the message id.
 		 */
 		for (srv = mach_services_table; srv->srv_id; srv++)
 			if (srv->srv_id == sm->msgh_id)
 				break;
-		
-		/* 
+
+		/*
 		 * If no match, give up, and display a warning.
 		 */
 		if (srv->srv_handler == NULL) {
@@ -272,8 +272,8 @@ mach_msg_send(l, msg, option, send_size)
 		 * Check that the local port is valid, else
 		 * we will not be able to send the reply
 		 */
-		if ((lr == NULL) || 
-		    (lr->mr_port == NULL) || 
+		if ((lr == NULL) ||
+		    (lr->mr_port == NULL) ||
 		    (lr->mr_port->mp_recv == NULL)) {
 #ifdef DEBUG_MACH
 			printf("msg id %d: invalid src\n", sm->msgh_id);
@@ -285,7 +285,7 @@ skip_null_lr:
 
 		/*
 		 * Sanity check message length. We do not want the
-		 * server to: 
+		 * server to:
 		 * 1) use kernel memory located after
 		 *    the end of the request message.
 		 */
@@ -306,7 +306,7 @@ skip_null_lr:
 		 */
 
 
-		/* 
+		/*
 		 * Invoke the server. We give it the opportunity
 		 * to shorten recv_size if there is less data in
 		 * the reply than what the sender expected.
@@ -324,9 +324,9 @@ skip_null_lr:
 		args.rmsg = rm;
 		args.rsize = &reply_size;
 		args.ssize = send_size;
-		if ((ret = (*srv->srv_handler)(&args)) != 0) 
+		if ((ret = (*srv->srv_handler)(&args)) != 0)
 			goto out1;
-		
+
 		/*
 		 * No-reply opration: everything is done.
 		 * Change option so that we skip the
@@ -338,7 +338,7 @@ skip_null_lr:
 		}
 
 #ifdef DIAGNOSTIC
-		/* 
+		/*
 		 * Catch potential bug in the server (sanity
 		 * check #2): did it output a larger message
 		 * then the one that was allocated?
@@ -355,12 +355,12 @@ skip_null_lr:
 		mp = lr->mr_port;
 		(void)mach_message_get(rm, reply_size, mp, NULL);
 #ifdef DEBUG_MACH_MSG
-		printf("pid %d: message queued on port %p (%d) [%p]\n", 
+		printf("pid %d: message queued on port %p (%d) [%p]\n",
 		    p->p_pid, mp, rm->msgh_id,
 		    mp->mp_recv->mr_sethead);
 		if (sm->msgh_id == 404)
 			printf("*** msg to bootstrap. port = %p, "
-			    "recv = %p [%p]\n", mach_bootstrap_port, 
+			    "recv = %p [%p]\n", mach_bootstrap_port,
 			    mach_bootstrap_port->mp_recv,
 			    mach_bootstrap_port->mp_recv->mr_sethead);
 #endif
@@ -372,8 +372,8 @@ out1:
 		return ret;
 	}
 
-	/* 
-	 * The message is not to be handled by the kernel. 
+	/*
+	 * The message is not to be handled by the kernel.
 	 * Check that there is a valid receiver, and
 	 * queue the message in the remote port.
 	 */
@@ -388,8 +388,8 @@ out1:
 
 	(void)mach_message_get(sm, send_size, mp, l);
 #ifdef DEBUG_MACH_MSG
-	printf("pid %d: message queued on port %p (%d) [%p]\n", 
-	    p->p_pid, mp, sm->msgh_id, 
+	printf("pid %d: message queued on port %p (%d) [%p]\n",
+	    p->p_pid, mp, sm->msgh_id,
 	    mp->mp_recv->mr_sethead);
 #endif
 	/*
@@ -413,15 +413,15 @@ out1:
 	return MACH_MSG_SUCCESS;
 }
 
-/* 
+/*
  * Receive a Mach message. This returns a Mach message error code.
  */
-static inline int 
+static inline int
 mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 	struct lwp *l;
 	mach_msg_header_t *urm;
 	int option;
-	size_t recv_size; 
+	size_t recv_size;
     	unsigned int timeout;
 	mach_port_t mn;
 {
@@ -441,30 +441,30 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 	else
 		timeout = 0;
 
-	/* 
+	/*
 	 * Check for receive right on the port.
 	 */
 	mr = mach_right_check(mn, l, MACH_PORT_TYPE_RECEIVE);
 	if (mr == NULL) {
-		
-		/* 
+
+		/*
 		 * Is it a port set?
 		 */
 		mr = mach_right_check(mn, l, MACH_PORT_TYPE_PORT_SET);
 		if (mr == NULL)
 			return MACH_RCV_INVALID_NAME;
-		
-		/* 
+
+		/*
 		 * This is a port set. For each port in the
 		 * port set, check we have receive right, and
 		 * and check if we have some message.
 		 */
 		LIST_FOREACH(cmr, &mr->mr_set, mr_setlist) {
-			if ((mach_right_check(cmr->mr_name, l, 
+			if ((mach_right_check(cmr->mr_name, l,
 			    MACH_PORT_TYPE_RECEIVE)) == NULL)
 				return MACH_RCV_INVALID_NAME;
 
-			mp = cmr->mr_port;	
+			mp = cmr->mr_port;
 #ifdef DEBUG_MACH
 			if (mp->mp_recv != cmr)
 				uprintf("mach_msg_trap: bad receive "
@@ -474,9 +474,9 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 				break;
 		}
 
-		/* 
+		/*
 		 * If cmr is NULL then we found no message on
-		 * any port. Sleep on the port set until we get 
+		 * any port. Sleep on the port set until we get
 		 * some or until we get a timeout.
 		 */
 		if (cmr == NULL) {
@@ -484,25 +484,25 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 			printf("pid %d: wait on port %p [%p]\n",
 			    p->p_pid, mp, mr->mr_sethead);
 #endif
-			error = tsleep(mr->mr_sethead, PZERO|PCATCH, 
+			error = tsleep(mr->mr_sethead, PZERO|PCATCH,
 			    "mach_msg", timeout);
 			if ((error == ERESTART) || (error == EINTR))
 				return MACH_RCV_INTERRUPTED;
 
-			/* 
+			/*
 			 * Check we did not loose the receive right
 			 * while we were sleeping.
 			 */
-			if ((mach_right_check(mn, l, 
+			if ((mach_right_check(mn, l,
 			     MACH_PORT_TYPE_PORT_SET)) == NULL)
 				return  MACH_RCV_PORT_DIED;
 
 			/*
-			 * Is there any pending message for 
+			 * Is there any pending message for
 			 * a port in the port set?
 			 */
 			LIST_FOREACH(cmr, &mr->mr_set, mr_setlist) {
-				mp = cmr->mr_port;	
+				mp = cmr->mr_port;
 				if (mp->mp_count != 0)
 					break;
 			}
@@ -510,8 +510,8 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 			if (cmr == NULL)
 				return MACH_RCV_TIMED_OUT;
 		}
-		
-		/* 
+
+		/*
 		 * We found a port with a pending message.
 		 */
 		mp = cmr->mr_port;
@@ -530,20 +530,20 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 			    "port/right\n");
 #endif
 #ifdef DEBUG_MACH_MSG
-		printf("pid %d: wait on port %p [%p]\n", 
+		printf("pid %d: wait on port %p [%p]\n",
 		    p->p_pid, mp, mr->mr_sethead);
 #endif
 		if (mp->mp_count == 0) {
-			error = tsleep(mr->mr_sethead, PZERO|PCATCH, 
+			error = tsleep(mr->mr_sethead, PZERO|PCATCH,
 			    "mach_msg", timeout);
 			if ((error == ERESTART) || (error == EINTR))
 				return MACH_RCV_INTERRUPTED;
 
-			/* 
+			/*
 			 * Check we did not lose the receive right
 			 * while we were sleeping.
 			 */
-			if ((mach_right_check(mn, l, 
+			if ((mach_right_check(mn, l,
 			     MACH_PORT_TYPE_RECEIVE)) == NULL)
 				return MACH_RCV_PORT_DIED;
 
@@ -552,7 +552,7 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 		}
 	}
 
-	/* 
+	/*
 	 * Dequeue the message.
 	 * XXX Do we really need to lock here? There could be
 	 * only one reader process, so mm will not disapear
@@ -561,7 +561,7 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 	lockmgr(&mp->mp_msglock, LK_SHARED, NULL);
 	mm = TAILQ_FIRST(&mp->mp_msglist);
 #ifdef DEBUG_MACH_MSG
-	printf("pid %d: dequeue message on port %p (id %d)\n", 
+	printf("pid %d: dequeue message on port %p (id %d)\n",
 	    p->p_pid, mp, mm->mm_msg->msgh_id);
 #endif
 
@@ -570,18 +570,18 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 		struct mach_short_reply sr;
 
 		ret = MACH_RCV_TOO_LARGE;
-		/* 
+		/*
 		 * If MACH_RCV_LARGE was not set, destroy the message.
 		 */
 		if ((option & MACH_RCV_LARGE) == 0) {
 			free(mm->mm_msg, M_EMULDATA);
 			mach_message_put_shlocked(mm);
 			goto unlock;
-		}		
+		}
 
-		/* 
-		 * If MACH_RCV_TOO_LARGE is set, then return 
-		 * a message with just header and trailer. The 
+		/*
+		 * If MACH_RCV_TOO_LARGE is set, then return
+		 * a message with just header and trailer. The
 		 * size in the header should correspond to the
 		 * whole message, so just copy the whole header.
 		 */
@@ -595,12 +595,12 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 #ifdef KTRACE
 		/* Dump the Mach message */
 		if (KTRPOINT(p, KTR_MMSG))
-			ktrmmsg(p, (char *)&sr, sizeof(sr)); 
+			ktrmmsg(p, (char *)&sr, sizeof(sr));
 #endif
 		goto unlock;
 	}
 
-	/* 
+	/*
 	 * Get rights carried by the message if it is not a
 	 * reply from the kernel.
 	 * XXX mm->mm_l could contain stall data. Reference
@@ -611,7 +611,7 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 #ifdef DEBUG_MACH
 		printf("mach_msg: non kernel-reply message\n");
 #endif
-		/* 
+		/*
 		 * Turn local and remote port names into
 		 * names in the local process namespace.
 		 */
@@ -623,7 +623,7 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 		mnp = &mm->mm_msg->msgh_remote_port;
 		mach_trade_rights(l, mm->mm_l, mnp, bits);
 
-		/* 
+		/*
 		 * The same operation must be done to all
 		 * port descriptors carried with the message.
 		 */
@@ -632,14 +632,14 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 			goto unlock;
 
 		/*
-		 * swap local and remote ports, and 
+		 * swap local and remote ports, and
 		 * corresponding bits as well.
 		 */
-		bits = (bits & 0xffff0000) | 
+		bits = (bits & 0xffff0000) |
 		    ((bits & 0xff00) >> 8) |
 		    ((bits & 0x00ff) << 8);
 		tmp = mm->mm_msg->msgh_remote_port;
-		mm->mm_msg->msgh_remote_port = 
+		mm->mm_msg->msgh_remote_port =
 		    mm->mm_msg->msgh_local_port;
 		mm->mm_msg->msgh_local_port = tmp;
 	}
@@ -654,7 +654,7 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 #ifdef KTRACE
 	/* Dump the Mach message */
 	if (KTRPOINT(p, KTR_MMSG))
-		ktrmmsg(p, (char *)mm->mm_msg, mm->mm_size); 
+		ktrmmsg(p, (char *)mm->mm_msg, mm->mm_size);
 #endif
 
 	free(mm->mm_msg, M_EMULDATA);
@@ -722,7 +722,7 @@ mach_get_target_task(l, mp)
 	return tl;
 }
 
-static inline void 
+static inline void
 mach_drop_rights(mr, bits)
 	struct mach_right *mr;
 	int bits;
@@ -748,16 +748,16 @@ mach_drop_rights(mr, bits)
 
 	if (rights != 0)
 		mach_right_put(mr, rights);
-	
+
 	return;
 }
 
-/* 
- * When a messages is transmitted from one process to another, 
+/*
+ * When a messages is transmitted from one process to another,
  * we need to make sure the port names are in the receiver process
- * namespace. 
+ * namespace.
  */
-static inline void 
+static inline void
 mach_trade_rights(ll, rl, mnp, bits)
 	struct lwp *ll;		/* local lwp (receiver, current lwp) */
 	struct lwp *rl;		/* remote lwp (sender) */
@@ -804,7 +804,7 @@ mach_trade_rights(ll, rl, mnp, bits)
 
 	/* Get the right in the remote process (sender) */
 	rmr = NULL;
-	if (lr != 0) 
+	if (lr != 0)
 		rmr = mach_right_check(*mnp, rl, rr);
 
 	/* Translate it into a right in the local process (receiver) */
@@ -818,11 +818,11 @@ mach_trade_rights(ll, rl, mnp, bits)
 	return;
 }
 
-/* 
- * Turn rights carried by complex messages into rights in 
+/*
+ * Turn rights carried by complex messages into rights in
  * the local namespace. Returns a Mach messsage error
- * XXX Nothing is there yet to remove the rights from the 
- * sender namespace, it should be done at send time and it 
+ * XXX Nothing is there yet to remove the rights from the
+ * sender namespace, it should be done at send time and it
  * is not done yet.
  */
 static inline int
@@ -834,9 +834,9 @@ mach_trade_rights_complex(l, mm)
 	unsigned int i, count;
 	unsigned long begin, end;
 
-	/* 
-	 * Sanity check the descriptor count. 
-	 * Note that all descriptor types 
+	/*
+	 * Sanity check the descriptor count.
+	 * Note that all descriptor types
 	 * have the same size, hence it is
 	 * safe to not take the descriptor
 	 * type into account here.
@@ -856,8 +856,8 @@ mach_trade_rights_complex(l, mm)
 	for (i = 0; i < count; i++) {
 		switch (mcm->mcm_desc.gen[i].type) {
 		case MACH_MSG_PORT_DESCRIPTOR:
-			mach_trade_rights(l, mm->mm_l, 
-			    &mcm->mcm_desc.port[i].name, 
+			mach_trade_rights(l, mm->mm_l,
+			    &mcm->mcm_desc.port[i].name,
 			    mcm->mcm_desc.port[i].disposition);
 			break;
 
@@ -871,9 +871,9 @@ mach_trade_rights_complex(l, mm)
 			int count;		/* descriptor count */
 			mach_port_t *kmnp;
 			void *kaddr;
-			int error;	
+			int error;
 			int j;
-			
+
 			rp = mm->mm_l->l_proc;
 			lp = l->l_proc;
 			disp = mcm->mcm_desc.ool_ports[i].disposition;
@@ -889,11 +889,11 @@ mach_trade_rights_complex(l, mm)
 				return MACH_SEND_INVALID_DATA;
 
 			kmnp = (mach_port_t *)kaddr;
-			for (j = 0; j < count; j++) 
+			for (j = 0; j < count; j++)
 				mach_trade_rights(l, mm->mm_l, &kmnp[j], disp);
 
 			/* This frees kmnp */
-			if ((error = mach_ool_copyout(lp, kmnp, &lumnp, 
+			if ((error = mach_ool_copyout(lp, kmnp, &lumnp,
 			    size, MACH_OOL_FREE|MACH_OOL_TRACE)) != 0)
 				return MACH_SEND_INVALID_DATA;
 
@@ -913,8 +913,8 @@ mach_trade_rights_complex(l, mm)
 			void *rudata;		/* remote user address */
 			size_t size;		/* data size */
 			void *kdata;
-			int error;	
-			
+			int error;
+
 			rp = mm->mm_l->l_proc;
 			lp = l->l_proc;
 			rudata = mcm->mcm_desc.ool[i].address;
@@ -922,10 +922,10 @@ mach_trade_rights_complex(l, mm)
 			kdata = NULL;
 			ludata = NULL;
 
-			/* 
+			/*
 			 * XXX This is inefficient for large chunk of OOL
 			 * memory. Think about remapping COW when possible.
-			 */ 
+			 */
 
 			/* This allocates kdata */
 			error = mach_ool_copyin(rp, rudata, &kdata, size, 0);
@@ -933,7 +933,7 @@ mach_trade_rights_complex(l, mm)
 				return MACH_SEND_INVALID_DATA;
 
 			/* This frees kdata */
-			if ((error = mach_ool_copyout(lp, kdata, &ludata, 
+			if ((error = mach_ool_copyout(lp, kdata, &ludata,
 			    size, MACH_OOL_FREE|MACH_OOL_TRACE)) != 0)
 				return MACH_SEND_INVALID_DATA;
 
@@ -963,9 +963,9 @@ mach_ool_copyin(p, uaddr, kaddr, size, flags)
 	int error;
 	void *kbuf;
 
-	/* 
+	/*
 	 * Sanity check OOL size to avoid DoS on malloc: useless once
-	 * we remap data instead of copying it. In the meantime, 
+	 * we remap data instead of copying it. In the meantime,
 	 * disabled since it makes some OOL transfer fail.
 	 */
 #if 0
@@ -1004,11 +1004,11 @@ mach_ool_copyout(p, kaddr, uaddr, size, flags)
 	int flags;
 {
 	vaddr_t ubuf;
-	int error = 0; 
+	int error = 0;
 
-	/* 
+	/*
 	 * Sanity check OOL size to avoid DoS on malloc: useless once
-	 * we remap data instead of copying it. In the meantime, 
+	 * we remap data instead of copying it. In the meantime,
 	 * disabled since it makes some OOL transfer fail.
 	 */
 #if 0
@@ -1025,15 +1025,15 @@ mach_ool_copyout(p, kaddr, uaddr, size, flags)
 
 	/* Never map anything at address zero: this is a red zone */
 	if (ubuf == (vaddr_t)NULL)
-		ubuf += PAGE_SIZE; 
-	
+		ubuf += PAGE_SIZE;
+
 	if ((error = uvm_map(&p->p_vmspace->vm_map, &ubuf,
 	    round_page(size), NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_ALL,
 	    UVM_INH_COPY, UVM_ADV_NORMAL, UVM_FLAG_COPYONW))) != 0)
 		goto out;
 
-	if ((error = copyout_proc(p, kaddr, (void *)ubuf, size)) != 0) 
+	if ((error = copyout_proc(p, kaddr, (void *)ubuf, size)) != 0)
 		goto out;
 
 #ifdef KTRACE
@@ -1068,7 +1068,7 @@ mach_set_trailer(msgh, size)
 	return;
 }
 
-inline void 
+inline void
 mach_set_header(rep, req, size)
 	void *rep;
 	void *req;
@@ -1077,7 +1077,7 @@ mach_set_header(rep, req, size)
 	mach_msg_header_t *rephdr = rep;
 	mach_msg_header_t *reqhdr = req;
 
-	rephdr->msgh_bits = 
+	rephdr->msgh_bits =
 		MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
 	rephdr->msgh_size = size - sizeof(mach_msg_trailer_t);
 	rephdr->msgh_local_port = reqhdr->msgh_local_port;
@@ -1105,12 +1105,12 @@ mach_add_port_desc(msg, name)
 	mcm->mcm_desc.port[i].name = name;
 	mcm->mcm_desc.port[i].disposition = MACH_MSG_TYPE_MOVE_SEND;
 	mcm->mcm_desc.port[i].type = MACH_MSG_PORT_DESCRIPTOR;
-	
+
 	mcm->mcm_body.msgh_descriptor_count++;
 	return;
 }
 
-inline void 
+inline void
 mach_add_ool_ports_desc(msg, addr, count)
 	void *msg;
 	void *addr;
@@ -1131,7 +1131,7 @@ mach_add_ool_ports_desc(msg, addr, count)
 	mcm->mcm_desc.ool_ports[i].copy = MACH_MSG_ALLOCATE;
 	mcm->mcm_desc.ool_ports[i].disposition = MACH_MSG_TYPE_MOVE_SEND;
 	mcm->mcm_desc.ool_ports[i].type = MACH_MSG_OOL_PORTS_DESCRIPTOR;
-	
+
 	mcm->mcm_body.msgh_descriptor_count++;
 	return;
 }
@@ -1156,7 +1156,7 @@ inline void mach_add_ool_desc(msg, addr, size)
 	mcm->mcm_desc.ool[i].deallocate = 0;
 	mcm->mcm_desc.ool[i].copy = MACH_MSG_ALLOCATE;
 	mcm->mcm_desc.ool[i].type = MACH_MSG_OOL_DESCRIPTOR;
-	
+
 	mcm->mcm_body.msgh_descriptor_count++;
 	return;
 }
@@ -1184,7 +1184,7 @@ mach_message_get(msgh, size, mp, l)
 	mm->mm_size = size;
 	mm->mm_port = mp;
 	mm->mm_l = l;
-	
+
 	lockmgr(&mp->mp_msglock, LK_EXCLUSIVE, NULL);
 	TAILQ_INSERT_TAIL(&mp->mp_msglist, mm, mm_list);
 	mp->mp_count++;
@@ -1240,7 +1240,7 @@ mach_message_put_exclocked(mm)
 }
 
 #ifdef DEBUG_MACH
-void 
+void
 mach_debug_message(void)
 {
 	struct lwp *l;
@@ -1271,7 +1271,7 @@ mach_debug_message(void)
 					printf("%d ", mm->mm_msg->msgh_id);
 
 				printf("\n");
-				continue;			
+				continue;
 			}
 			/* Port set... */
 			LIST_FOREACH(mrs, &mr->mr_set, mr_setlist) {

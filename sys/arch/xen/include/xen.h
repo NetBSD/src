@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.9 2004/12/10 18:49:02 christos Exp $	*/
+/*	$NetBSD: xen.h,v 1.9.6.1 2005/03/19 08:33:26 yamt Exp $	*/
 
 /*
  *
@@ -50,9 +50,15 @@ void	xen_parse_cmdline(int, union xen_cmdline_parseinfo *);
 
 void	xenconscn_attach(void);
 
-void	xenmachmem_init(void);
 void	xenprivcmd_init(void);
-void	xenvfr_init(void);
+
+void	xbdback_init(void);
+void	xennetback_init(void);
+void	xen_shm_init(void);
+
+void	xenevt_event(int);
+
+void	idle_block(void);
 
 #ifdef XENDEBUG
 void printk(const char *, ...);
@@ -60,11 +66,6 @@ void vprintk(const char *, _BSD_VA_LIST_);
 #endif
 
 #endif
-
-#define hypervisor_asm_ack(num) \
-	movl	HYPERVISOR_shared_info,%eax		;\
-	lock						;\
-	btsl	$num,EVENTS_MASK(%eax)
 
 #endif /* _XEN_H */
 
@@ -88,7 +89,7 @@ void vprintk(const char *, _BSD_VA_LIST_);
 
 
 /*
- * these are also defined in hypervisor-if.h but can't be pulled in as
+ * these are also defined in xen-public/xen.h but can't be pulled in as
  * they are used in start of day assembly. Need to clean up the .h files
  * a bit more...
  */
@@ -108,52 +109,56 @@ void vprintk(const char *, _BSD_VA_LIST_);
 
 /* some function prototypes */
 void trap_init(void);
+void xpq_flush_cache(void);
 
 
 /*
  * STI/CLI equivalents. These basically set and clear the virtual
- * event_enable flag in teh shared_info structure. Note that when
+ * event_enable flag in the shared_info structure. Note that when
  * the enable bit is set, there may be pending events to be handled.
  * We may therefore call into do_hypervisor_callback() directly.
  */
 
 #define __save_flags(x)							\
 do {									\
-	(x) = x86_atomic_test_bit(&HYPERVISOR_shared_info->events_mask,	\
-		EVENTS_MASTER_ENABLE_BIT);				\
-	__insn_barrier();						\
+	(x) = HYPERVISOR_shared_info->vcpu_data[0].evtchn_upcall_mask;	\
 } while (0)
 
 #define __restore_flags(x)						\
 do {									\
-	shared_info_t *_shared = HYPERVISOR_shared_info;		\
-	if (x) x86_atomic_set_bit(&_shared->events_mask,		\
-		EVENTS_MASTER_ENABLE_BIT);				\
+	volatile shared_info_t *_shared = HYPERVISOR_shared_info;	\
 	__insn_barrier();						\
+	if ((_shared->vcpu_data[0].evtchn_upcall_mask = (x)) == 0) {	\
+		__insn_barrier();					\
+		if (__predict_false(_shared->vcpu_data[0].evtchn_upcall_pending)) \
+			hypervisor_force_callback();			\
+	}								\
 } while (0)
-/*     if (__predict_false(_shared->events) && (x)) do_hypervisor_callback(NULL);     \ */
 
 #define __cli()								\
 do {									\
-	x86_atomic_clear_bit(&HYPERVISOR_shared_info->events_mask,	\
-		EVENTS_MASTER_ENABLE_BIT);				\
-	    __insn_barrier();						\
+	HYPERVISOR_shared_info->vcpu_data[0].evtchn_upcall_mask = 1;	\
+	__insn_barrier();						\
 } while (0)
 
 #define __sti()								\
 do {									\
-	shared_info_t *_shared = HYPERVISOR_shared_info;		\
-	x86_atomic_set_bit(&_shared->events_mask,			\
-		EVENTS_MASTER_ENABLE_BIT);				\
-    __insn_barrier();							\
+	volatile shared_info_t *_shared = HYPERVISOR_shared_info;	\
+	__insn_barrier();						\
+	_shared->vcpu_data[0].evtchn_upcall_mask = 0;			\
+	__insn_barrier(); /* unmask then check (avoid races) */		\
+	if (__predict_false(_shared->vcpu_data[0].evtchn_upcall_pending)) \
+		hypervisor_force_callback();				\
 } while (0)
-/*     if (__predict_false(_shared->events)) do_hypervisor_callback(NULL); \ */
 
 #define cli()			__cli()
 #define sti()			__sti()
 #define save_flags(x)		__save_flags(x)
 #define restore_flags(x)	__restore_flags(x)
-#define save_and_cli(x)		__save_and_cli(x)
+#define save_and_cli(x)	do {					\
+	__save_flags(x);					\
+	__cli();						\
+} while (/* CONSTCOND */ 0)
 #define save_and_sti(x)		__save_and_sti(x)
 
 #ifdef MULTIPROCESSOR
@@ -162,8 +167,8 @@ do {									\
 #define __LOCK_PREFIX ""
 #endif
 
-static __inline__ unsigned long
-x86_atomic_xchg(unsigned long *ptr, unsigned long val)
+static __inline__ uint32_t
+x86_atomic_xchg(volatile uint32_t *ptr, unsigned long val)
 {
 	unsigned long result;
 
@@ -182,6 +187,19 @@ x86_atomic_test_and_clear_bit(volatile void *ptr, int bitno)
 
         __asm __volatile(__LOCK_PREFIX
 	    "btrl %2,%1 ;"
+	    "sbbl %0,%0"
+	    :"=r" (result), "=m" (*(volatile uint32_t *)(ptr))
+	    :"Ir" (bitno) : "memory");
+        return result;
+}
+
+static __inline__ int
+x86_atomic_test_and_set_bit(volatile void *ptr, int bitno)
+{
+        int result;
+
+        __asm __volatile(__LOCK_PREFIX
+	    "btsl %2,%1 ;"
 	    "sbbl %0,%0"
 	    :"=r" (result), "=m" (*(volatile uint32_t *)(ptr))
 	    :"Ir" (bitno) : "memory");
@@ -211,7 +229,7 @@ x86_variable_test_bit(const volatile void *ptr, int bitno)
 #define x86_atomic_test_bit(ptr, bitno) \
 	(__builtin_constant_p(bitno) ? \
 	 x86_constant_test_bit((ptr),(bitno)) : \
-	 variable_test_bit((ptr),(bitno)))
+	 x86_variable_test_bit((ptr),(bitno)))
 
 static __inline void
 x86_atomic_set_bit(volatile void *ptr, int bitno)
@@ -229,6 +247,12 @@ x86_atomic_clear_bit(volatile void *ptr, int bitno)
 	    "btrl %1,%0"
 	    :"=m" (*(volatile uint32_t *)(ptr))
 	    :"Ir" (bitno));
+}
+
+static __inline void
+wbinvd(void)
+{
+	xpq_flush_cache();
 }
 
 #endif /* !__ASSEMBLY__ */

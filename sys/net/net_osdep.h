@@ -1,4 +1,4 @@
-/*	$NetBSD: net_osdep.h,v 1.9 2004/12/04 16:10:25 peter Exp $	*/
+/*	$NetBSD: net_osdep.h,v 1.9.6.1 2005/03/19 08:36:32 yamt Exp $	*/
 /*	$KAME: net_osdep.h,v 1.51 2001/07/06 06:21:43 itojun Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  *             ip_len ip_id ip_off
  * bsdi3:          xs     x      x
  * bsdi4:          xs            x
- * freebsd[23]:    xs     x      x 
+ * freebsd[23]:    xs     x      x
  * freebsd4:       xs            x
  * NetBSD:          x            x
  * OpenBSD:        xs     x      x
@@ -57,7 +57,7 @@
  * - ifa_ifwithaf()
  *   bsdi[34], netbsd, and openbsd define it in sys/net/if.c
  *   freebsd (all versions) does not have it.
- *  
+ *
  * - struct rt_addrinfo
  *   bsdi4, netbsd 1.5R and beyond: rti_addrs, rti_info[], rti_flags, rti_ifa,
  *	rti_ifp, and rti_rtm.

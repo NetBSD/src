@@ -1,4 +1,4 @@
-/*	$NetBSD: gpib.c,v 1.2.6.1 2005/02/12 18:17:42 yamt Exp $	*/
+/*	$NetBSD: gpib.c,v 1.2.6.2 2005/03/19 08:33:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.2.6.1 2005/02/12 18:17:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.2.6.2 2005/03/19 08:33:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -451,7 +451,7 @@ _gpibsend(sc, slave, sec, ptr, origcnt)
 senderror:
 	(*sc->sc_ic->ifc)(sc->sc_ic->cookie);
 	DPRINTF(DBG_FAIL,
-	    ("%s: _gpibsend failed: slave %d, sec %x, sent %d of %d bytes\n", 
+	    ("%s: _gpibsend failed: slave %d, sec %x, sent %d of %d bytes\n",
 	    sc->sc_dev.dv_xname, slave, sec, cnt, origcnt));
 	return (cnt);
 }
@@ -505,7 +505,7 @@ _gpibrecv(sc, slave, sec, ptr, origcnt)
 			goto recverror;
 		if ((sc->sc_ic->tc)(sc->sc_ic->cookie, 0))
 			goto recverror;
-		cmds[0] = (slave == GPIB_BROADCAST_ADDR) ? 
+		cmds[0] = (slave == GPIB_BROADCAST_ADDR) ?
 		    GPIBCMD_UNA : GPIBCMD_UNT;
 		if ((*sc->sc_ic->sendcmds)(sc->sc_ic->cookie, cmds, 1) != 1)
 			goto recverror;

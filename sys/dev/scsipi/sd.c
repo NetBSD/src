@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.232 2004/12/07 23:16:40 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.232.4.1 2005/03/19 08:35:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.232 2004/12/07 23:16:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.232.4.1 2005/03/19 08:35:47 yamt Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.232 2004/12/07 23:16:40 thorpej Exp $");
 #include <sys/rnd.h>
 #endif
 
+#include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_disk.h>
@@ -113,9 +114,9 @@ static int	sd_get_simplifiedparms(struct sd_softc *, struct disk_parms *,
 		    int);
 static int	sd_get_capacity(struct sd_softc *, struct disk_parms *, int);
 static int	sd_get_parms(struct sd_softc *, struct disk_parms *, int);
-static int	sd_get_parms_page4(struct sd_softc *, struct disk_parms *, 
+static int	sd_get_parms_page4(struct sd_softc *, struct disk_parms *,
 		    int);
-static int	sd_get_parms_page5(struct sd_softc *, struct disk_parms *, 
+static int	sd_get_parms_page5(struct sd_softc *, struct disk_parms *,
 		    int);
 
 static int	sd_flush(struct sd_softc *, int);
@@ -181,10 +182,10 @@ struct sd_mode_sense_data {
 	 * enough.
 	 */
 	union {
-		struct scsipi_mode_header small;
-		struct scsipi_mode_header_big big;
+		struct scsi_mode_parameter_header_6 small;
+		struct scsi_mode_parameter_header_10 big;
 	} header;
-	struct scsi_blk_desc blk_desc;
+	struct scsi_general_block_descriptor blk_desc;
 	union scsi_disk_pages pages;
 };
 
@@ -423,7 +424,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 
 	if ((error = lockmgr(&sd->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
 		return (error);
-	
+
 	/*
 	 * If there are wedges, and this is not RAW_PART, then we
 	 * need to fail.
@@ -502,7 +503,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 
 		if (periph->periph_flags & PERIPH_REMOVABLE) {
 			/* Lock the pack in. */
-			error = scsipi_prevent(periph, PR_PREVENT,
+			error = scsipi_prevent(periph, SPAMR_PREVENT_DT,
 			    XS_CTL_IGNORE_ILLEGAL_REQUEST |
 			    XS_CTL_IGNORE_MEDIA_CHANGE);
 			if (error)
@@ -565,7 +566,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
  bad3:
 	if (sd->sc_dk.dk_openmask == 0) {
 		if (periph->periph_flags & PERIPH_REMOVABLE)
-			scsipi_prevent(periph, PR_ALLOW,
+			scsipi_prevent(periph, SPAMR_ALLOW,
 			    XS_CTL_IGNORE_ILLEGAL_REQUEST |
 			    XS_CTL_IGNORE_MEDIA_CHANGE);
 		periph->periph_flags &= ~PERIPH_OPEN;
@@ -627,7 +628,7 @@ sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 		scsipi_wait_drain(periph);
 
 		if (periph->periph_flags & PERIPH_REMOVABLE)
-			scsipi_prevent(periph, PR_ALLOW,
+			scsipi_prevent(periph, SPAMR_ALLOW,
 			    XS_CTL_IGNORE_ILLEGAL_REQUEST |
 			    XS_CTL_IGNORE_NOT_READY);
 		periph->periph_flags &= ~PERIPH_OPEN;
@@ -1135,7 +1136,7 @@ bad:
 
 	case DIOCLOCK:
 		return (scsipi_prevent(periph,
-		    (*(int *)addr) ? PR_PREVENT : PR_ALLOW, 0));
+		    (*(int *)addr) ? SPAMR_PREVENT_DT : SPAMR_ALLOW, 0));
 
 	case DIOCEJECT:
 		if ((periph->periph_flags & PERIPH_REMOVABLE) == 0)
@@ -1148,7 +1149,7 @@ bad:
 			if ((sd->sc_dk.dk_openmask & ~(1 << part)) == 0 &&
 			    sd->sc_dk.dk_bopenmask + sd->sc_dk.dk_copenmask ==
 			    sd->sc_dk.dk_openmask) {
-				error = scsipi_prevent(periph, PR_ALLOW,
+				error = scsipi_prevent(periph, SPAMR_ALLOW,
 				    XS_CTL_IGNORE_NOT_READY);
 				if (error)
 					return (error);
@@ -1215,7 +1216,7 @@ bad:
 		strcpy(dkw->dkw_parent, sd->sc_dev.dv_xname);
 		return (dkwedge_add(dkw));
 	    }
-	
+
 	case DIOCDWEDGE:
 	    {
 	    	struct dkwedge_info *dkw = (void *) addr;
@@ -1227,7 +1228,7 @@ bad:
 		strcpy(dkw->dkw_parent, sd->sc_dev.dv_xname);
 		return (dkwedge_del(dkw));
 	    }
-	
+
 	case DIOCLWEDGES:
 	    {
 	    	struct dkwedge_list *dkwl = (void *) addr;
@@ -1347,7 +1348,7 @@ static int
 sd_interpret_sense(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
-	struct scsipi_sense_data *sense = &xs->sense.scsi_sense;
+	struct scsi_sense_data *sense = &xs->sense.scsi_sense;
 	struct sd_softc *sd = (void *)periph->periph_dev;
 	int s, error, retval = EJUSTRETURN;
 
@@ -1368,13 +1369,14 @@ sd_interpret_sense(struct scsipi_xfer *xs)
 	 * If it isn't a extended or extended/deferred error, let
 	 * the generic code handle it.
 	 */
-	if ((sense->error_code & SSD_ERRCODE) != 0x70 &&
-	    (sense->error_code & SSD_ERRCODE) != 0x71)
+	if ((sense->response_code & SSD_RCODE_VALID) == 0 ||
+	    (SSD_RCODE(sense->response_code) != SSD_RCODE_CURRENT &&
+	     SSD_RCODE(sense->response_code) != SSD_RCODE_DEFERRED))
 		return (retval);
 
-	if ((sense->flags & SSD_KEY) == SKEY_NOT_READY &&
-	    sense->add_sense_code == 0x4) {
-		if (sense->add_sense_code_qual == 0x01)	{
+	if (SSD_SENSE_KEY(sense->flags) == SKEY_NOT_READY &&
+	    sense->asc == 0x4) {
+		if (sense->ascq == 0x01)	{
 			/*
 			 * Unit In The Process Of Becoming Ready.
 			 */
@@ -1385,7 +1387,7 @@ sd_interpret_sense(struct scsipi_xfer *xs)
 			callout_reset(&periph->periph_callout,
 			    5 * hz, scsipi_periph_timed_thaw, periph);
 			retval = ERESTART;
-		} else if (sense->add_sense_code_qual == 0x02) {
+		} else if (sense->ascq == 0x02) {
 			printf("%s: pack is stopped, restarting...\n",
 			    sd->sc_dev.dv_xname);
 			s = splbio();
@@ -1405,9 +1407,9 @@ sd_interpret_sense(struct scsipi_xfer *xs)
 			splx(s);
 		}
 	}
-	if ((sense->flags & SSD_KEY) == SKEY_MEDIUM_ERROR &&
-	    sense->add_sense_code == 0x31 &&
-	    sense->add_sense_code_qual == 0x00)	{ /* maybe for any asq ? */
+	if (SSD_SENSE_KEY(sense->flags) == SKEY_MEDIUM_ERROR &&
+	    sense->asc == 0x31 &&
+	    sense->ascq == 0x00)	{ /* maybe for any asq ? */
 		/* Medium Format Corrupted */
 		retval = EFTYPE;
 	}
@@ -1579,12 +1581,12 @@ sd_mode_sense(struct sd_softc *sd, u_int8_t byte2, void *sense, size_t size,
 	    !(sd->sc_periph->periph_quirks & PQUIRK_NOBIGMODESENSE)) {
 		*big = 1;
 		return scsipi_mode_sense_big(sd->sc_periph, byte2, page, sense,
-		    size + sizeof(struct scsipi_mode_header_big),
+		    size + sizeof(struct scsi_mode_parameter_header_10),
 		    flags | XS_CTL_DATA_ONSTACK, SDRETRIES, 6000);
 	} else {
 		*big = 0;
 		return scsipi_mode_sense(sd->sc_periph, byte2, page, sense,
-		    size + sizeof(struct scsipi_mode_header),
+		    size + sizeof(struct scsi_mode_parameter_header_6),
 		    flags | XS_CTL_DATA_ONSTACK, SDRETRIES, 6000);
 	}
 }
@@ -1595,18 +1597,18 @@ sd_mode_select(struct sd_softc *sd, u_int8_t byte2, void *sense, size_t size,
 {
 
 	if (big) {
-		struct scsipi_mode_header_big *header = sense;
+		struct scsi_mode_parameter_header_10 *header = sense;
 
 		_lto2b(0, header->data_length);
 		return scsipi_mode_select_big(sd->sc_periph, byte2, sense,
-		    size + sizeof(struct scsipi_mode_header_big),
+		    size + sizeof(struct scsi_mode_parameter_header_10),
 		    flags | XS_CTL_DATA_ONSTACK, SDRETRIES, 6000);
 	} else {
-		struct scsipi_mode_header *header = sense;
+		struct scsi_mode_parameter_header_6 *header = sense;
 
 		header->data_length = 0;
 		return scsipi_mode_select(sd->sc_periph, byte2, sense,
-		    size + sizeof(struct scsipi_mode_header),
+		    size + sizeof(struct scsi_mode_parameter_header_6),
 		    flags | XS_CTL_DATA_ONSTACK, SDRETRIES, 6000);
 	}
 }
@@ -1615,7 +1617,7 @@ static int
 sd_get_simplifiedparms(struct sd_softc *sd, struct disk_parms *dp, int flags)
 {
 	struct {
-		struct scsipi_mode_header header;
+		struct scsi_mode_parameter_header_6 header;
 		/* no block descriptor */
 		u_int8_t pg_code; /* page code (should be 6) */
 		u_int8_t pg_length; /* page length (should be 11) */
@@ -1732,7 +1734,7 @@ printf("rfc result:"); for (i = sizeof(struct scsipi_capacity_list_header) + dat
 	} else {
 		struct sd_mode_sense_data scsipi_sense;
 		int big, bsize;
-		struct scsi_blk_desc *bdesc;
+		struct scsi_general_block_descriptor *bdesc;
 
 		memset(&scsipi_sense, 0, sizeof(scsipi_sense));
 		error = sd_mode_sense(sd, 0, &scsipi_sense,
@@ -2021,7 +2023,7 @@ sd_getcache(struct sd_softc *sd, int *bitsp)
 	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
 	error = sd_mode_sense(sd, SMS_DBD, &scsipi_sense,
 	    sizeof(scsipi_sense.pages.caching_params),
-	    SMS_PAGE_CTRL_CHANGEABLE|8, 0, &big);
+	    SMS_PCTRL_CHANGEABLE|8, 0, &big);
 	if (error == 0) {
 		if (big)
 			pages = (void *)(&scsipi_sense.header.big + 1);
@@ -2084,6 +2086,6 @@ sd_setcache(struct sd_softc *sd, int bits)
 		byte2 |= SMS_SP;
 
 	return (sd_mode_select(sd, byte2|SMS_PF, &scsipi_sense,
-	    sizeof(struct scsipi_mode_page_header) +
+	    sizeof(struct scsi_mode_page_header) +
 	    pages->caching_params.pg_length, 0, big));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.37 2004/11/30 04:25:43 christos Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.37.6.1 2005/03/19 08:33:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.37 2004/11/30 04:25:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.37.6.1 2005/03/19 08:33:45 yamt Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -211,7 +211,7 @@ svr4_netopen(dev, flag, mode, p)
 		return error;
 	}
 
-	error = fdclone(p, fp, fd, &svr4_netops, so);
+	error = fdclone(p, fp, fd, flag, &svr4_netops, so);
 	fp->f_type = DTYPE_SOCKET;
 	(void)svr4_stream_get(fp);
 
@@ -246,7 +246,7 @@ svr4_ptm_alloc(p)
 	 * /dev/ptmx open automatically just open a pty, that (after
 	 * STREAMS I_PUSHes), is just a plain pty.  fstat() is used
 	 * to get the minor device number to map to a tty.
-	 * 
+	 *
 	 * Cycle through the names. If sys_open() returns ENOENT (or
 	 * ENXIO), short circuit the cycle and exit.
 	 */

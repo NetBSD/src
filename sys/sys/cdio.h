@@ -1,4 +1,4 @@
-/*	$NetBSD: cdio.h,v 1.18 2004/05/10 15:14:12 christos Exp $	*/
+/*	$NetBSD: cdio.h,v 1.18.6.1 2005/03/19 08:36:52 yamt Exp $	*/
 
 #ifndef _SYS_CDIO_H_
 #define _SYS_CDIO_H_
@@ -65,16 +65,16 @@ struct cd_sub_channel_q_data {
         u_char  mc_valid:1;
         u_char  :7;
 #endif
-        u_char  mc_number[15]; 
+        u_char  mc_number[15];
 #if BYTE_ORDER == LITTLE_ENDIAN
         u_char  :7;
-        u_char  ti_valid:1;   
+        u_char  ti_valid:1;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-        u_char  ti_valid:1;   
+        u_char  ti_valid:1;
         u_char  :7;
 #endif
-        u_char  ti_number[15]; 
+        u_char  ti_number[15];
 };
 
 struct cd_sub_channel_position_data {

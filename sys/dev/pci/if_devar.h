@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.38.16.1 2005/02/12 18:17:47 yamt Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.38.16.2 2005/03/19 08:35:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -130,7 +130,7 @@ typedef struct {
 /*
  * While 21x4x allows chaining of its descriptors, this driver
  * doesn't take advantage of it.  We keep the descriptors in a
- * traditional FIFO ring.  
+ * traditional FIFO ring.
  */
 typedef struct {
     tulip_desc_t *ri_first;	/* first entry in ring */
@@ -158,11 +158,11 @@ typedef struct {
  * And the number of receive descriptors multiplied by the size
  * of the receive buffers must equal the recevive space.  This
  * is so that we can manipulate the page tables so that even if a
- * packet wraps around the end of the receive space, we can 
+ * packet wraps around the end of the receive space, we can
  * treat it as virtually contiguous.
  *
  * The above used to be true (the stupid restriction is still true)
- * but we gone to directly DMA'ing into MBUFs (unless it's on an 
+ * but we gone to directly DMA'ing into MBUFs (unless it's on an
  * architecture which can't handle unaligned accesses) because with
  * 100Mb/s cards the copying is just too much of a hit.
  */
@@ -470,7 +470,7 @@ typedef struct {
 
 /*
  * Now to important stuff.  This is softc structure (where does softc
- * come from??? No idea) for the tulip device.  
+ * come from??? No idea) for the tulip device.
  *
  */
 struct _tulip_softc_t {
@@ -707,7 +707,7 @@ struct _tulip_softc_t {
 
 
 #if defined(TULIP_HDR_DATA)
-static const char * const tulip_chipdescs[] = { 
+static const char * const tulip_chipdescs[] = {
     "21040 [10Mb/s]",
 #if defined(TULIP_EISA)
     "DE425 [10Mb/s]",
@@ -1111,7 +1111,7 @@ TULIP_PERFREAD(
 #define	TULIP_PERFDIFF(s, f)	((unsigned int) ((f) - (s)))
 #endif
 #else
-#define	TULIP_PERFSTART(name)	
+#define	TULIP_PERFSTART(name)
 #define	TULIP_PERFEND(name)	do { } while (0)
 #define	TULIP_PERFMERGE(s,n)	do { } while (0)
 #endif /* TULIP_PERFSTATS */

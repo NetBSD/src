@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.21 2004/04/29 01:46:06 jonathan Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.21.6.1 2005/03/19 08:35:10 yamt Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.21 2004/04/29 01:46:06 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.21.6.1 2005/03/19 08:35:10 yamt Exp $");
 
 #include "rnd.h"
 #include "opencrypto.h"
@@ -246,7 +246,7 @@ hifn_probe(struct device *parent, struct cfdata *match, void *aux)
 	return (0);
 }
 
-void 
+void
 hifn_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hifn_softc *sc = (struct hifn_softc *)self;
@@ -862,7 +862,7 @@ report:
  * Give initial values to the registers listed in the "Register Space"
  * section of the HIFN Software Development reference manual.
  */
-void 
+void
 hifn_init_pci_registers(struct hifn_softc *sc)
 {
 	/* write fixed values needed by the Initialization registers */
@@ -1238,7 +1238,7 @@ hifn_readramaddr(struct hifn_softc *sc, int addr, u_int8_t *data)
 /*
  * Initialize the descriptor rings.
  */
-void 
+void
 hifn_init_dma(struct hifn_softc *sc)
 {
 	struct hifn_dma *dma = sc->sc_dma;
@@ -1525,7 +1525,7 @@ hifn_dmamap_load_src(struct hifn_softc *sc, struct hifn_command *cmd)
 	return (idx);
 }
 
-int 
+int
 hifn_crypto(struct hifn_softc *sc, struct hifn_command *cmd,
     struct cryptop *crp, int hint)
 {
@@ -1741,7 +1741,7 @@ hifn_crypto(struct hifn_softc *sc, struct hifn_command *cmd,
 	resi = dma->resi++;
 	dma->hifn_commands[resi] = cmd;
 	HIFN_RES_SYNC(sc, resi, BUS_DMASYNC_PREREAD);
-	dma->resr[resi].l = htole32(HIFN_MAX_RESULT | 
+	dma->resr[resi].l = htole32(HIFN_MAX_RESULT |
 	    HIFN_D_VALID | HIFN_D_LAST);
 	HIFN_RESR_SYNC(sc, resi,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -1832,7 +1832,7 @@ hifn_tick(void *vsc)
 #endif
 }
 
-int 
+int
 hifn_intr(void *arg)
 {
 	struct hifn_softc *sc = arg;
@@ -1911,7 +1911,7 @@ hifn_intr(void *arg)
 
 			HIFN_RES_SYNC(sc, i, BUS_DMASYNC_POSTREAD);
 			cmd = dma->hifn_commands[i];
-			KASSERT(cmd != NULL 
+			KASSERT(cmd != NULL
 				/*("hifn_intr: null command slot %u", i)*/);
 			dma->hifn_commands[i] = NULL;
 
@@ -2010,7 +2010,7 @@ hifn_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 			    RND_EXTRACT_ANY);
 #else	/* FreeBSD and OpenBSD have get_random_bytes */
 			/* XXX this may read fewer, does it matter? */
- 			get_random_bytes(sc->sc_sessions[i].hs_iv, 
+ 			get_random_bytes(sc->sc_sessions[i].hs_iv,
 				c->cri_alg == CRYPTO_AES_CBC ?
 					HIFN_AES_IV_LENGTH : HIFN_IV_LENGTH);
 #endif
@@ -2238,7 +2238,7 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 		cmd->ck = enccrd->crd_key;
 		cmd->cklen = enccrd->crd_klen >> 3;
 
-		/* 
+		/*
 		 * Need to specify the size for the AES key in the masks.
 		 */
 		if ((cmd->cry_masks & HIFN_CRYPT_CMD_ALG_MASK) ==
@@ -2414,7 +2414,7 @@ hifn_abort(struct hifn_softc *sc)
 	for (i = 0; i < sc->sc_maxses; i++)
 		if (sc->sc_sessions[i].hs_state == HS_STATE_KEY)
 			sc->sc_sessions[i].hs_state = HS_STATE_USED;
-	
+
 	hifn_reset_board(sc, 1);
 	hifn_init_dma(sc);
 	hifn_init_pci_registers(sc);

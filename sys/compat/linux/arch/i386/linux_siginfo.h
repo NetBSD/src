@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_siginfo.h,v 1.2 2003/07/03 21:24:29 christos Exp $	*/
+/*	$NetBSD: linux_siginfo.h,v 1.2.10.1 2005/03/19 08:33:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ typedef struct linux_siginfo {
 #define lsi_ptr         _sidata._rt._sigval.sival_ptr
 #define lsi_addr        _sidata._sigfault._addr
 #define lsi_band        _sidata._sigpoll._band
-#define lsi_fd          _sidata._sigpoll._fd  
+#define lsi_fd          _sidata._sigpoll._fd
 
 /*
  * si_code values for non-signals

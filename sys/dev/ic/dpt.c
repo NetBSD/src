@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.43 2004/04/22 00:17:11 itojun Exp $	*/
+/*	$NetBSD: dpt.c,v 1.43.6.1 2005/03/19 08:34:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.43 2004/04/22 00:17:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.43.6.1 2005/03/19 08:34:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,14 +124,14 @@ static const char * const dpt_cname[] = {
 	"2042", "SmartCache IV",
 	"2041", "SmartCache IV",
 	"3224", "SmartRAID III",
-	"3222", "SmartRAID III", 
+	"3222", "SmartRAID III",
 	"3021", "SmartRAID III",
 	"2124", "SmartCache III",
 	"2024", "SmartCache III",
 	"2122", "SmartCache III",
 	"2022", "SmartCache III",
 	"2021", "SmartCache III",
-	"2012", "SmartCache Plus", 
+	"2012", "SmartCache Plus",
 	"2011", "SmartCache Plus",
 	NULL,   "<unknown>",
 };
@@ -252,7 +252,7 @@ dpt_intr(void *cookie)
 	for (;;) {
 		/*
 		 * HBA might have interrupted while we were dealing with the
-		 * last completed command, since we ACK before we deal; keep 
+		 * last completed command, since we ACK before we deal; keep
 		 * polling.
 		 */
 		if ((dpt_inb(sc, HA_AUX_STATUS) & HA_AUX_INTR) == 0)
@@ -279,7 +279,7 @@ dpt_intr(void *cookie)
 
 		/* Make sure CCB ID from status packet is realistic. */
 		if ((u_int)sp->sp_ccbid >= sc->sc_nccbs) {
-			printf("%s: bogus status (returned CCB id %d)\n", 
+			printf("%s: bogus status (returned CCB id %d)\n",
 			    sc->sc_dv.dv_xname, sp->sp_ccbid);
 
 			/* Ack the interrupt */
@@ -299,7 +299,7 @@ dpt_intr(void *cookie)
 		if (ccb->ccb_savesp != NULL)
 			memcpy(ccb->ccb_savesp, sp, sizeof(*sp));
 
-		/* 
+		/*
 		 * Ack the interrupt and process the CCB.  If this
 		 * is a private CCB it's up to dpt_ccb_poll() to
 		 * notice.
@@ -339,11 +339,11 @@ dpt_init(struct dpt_softc *sc, const char *intrstr)
 	/*
 	 * Allocate the CCB/status packet/scratch DMA map and load.
 	 */
-	sc->sc_nccbs = 
+	sc->sc_nccbs =
 	    min(be16toh(*(int16_t *)ec->ec_queuedepth), DPT_MAX_CCBS);
 	sc->sc_stpoff = sc->sc_nccbs * sizeof(struct dpt_ccb);
 	sc->sc_scroff = sc->sc_stpoff + sizeof(struct eata_sp);
-	mapsize = sc->sc_nccbs * sizeof(struct dpt_ccb) + 
+	mapsize = sc->sc_nccbs * sizeof(struct dpt_ccb) +
 	    DPT_SCRATCH_SIZE + sizeof(struct eata_sp);
 
 	if ((rv = bus_dmamem_alloc(sc->sc_dmat, mapsize,
@@ -392,7 +392,7 @@ dpt_init(struct dpt_softc *sc, const char *intrstr)
 		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &ccb->ccb_dmamap_xfer);
 		if (rv) {
-			aprint_error("%s: can't create ccb dmamap (%d)\n", 
+			aprint_error("%s: can't create ccb dmamap (%d)\n",
 			    sc->sc_dv.dv_xname, rv);
 			break;
 		}
@@ -419,7 +419,7 @@ dpt_init(struct dpt_softc *sc, const char *intrstr)
 	/* Get the inquiry data from the HBA. */
 	dpt_hba_inquire(sc, &ei);
 
-	/* 
+	/*
 	 * dpt0 at pci0 dev 12 function 0: DPT SmartRAID III (PM3224A/9X-R)
 	 * dpt0: interrupting at irq 10
 	 * dpt0: 64 queued commands, 1 channel(s), adapter on ID(s) 7
@@ -532,8 +532,8 @@ dpt_readcfg(struct dpt_softc *sc)
 		}
 	}
 
-	/* 
-	 * Issue the read-config command and wait for the data to appear. 
+	/*
+	 * Issue the read-config command and wait for the data to appear.
 	 *
 	 * Apparently certian firmware revisions won't DMA later on if we
 	 * request the config data using PIO, but it makes it a lot easier
@@ -541,10 +541,10 @@ dpt_readcfg(struct dpt_softc *sc)
 	 */
 	dpt_outb(sc, HA_COMMAND, CP_PIO_GETCFG);
 	memset(ec, 0, sizeof(*ec));
-	i = ((int)&((struct eata_cfg *)0)->ec_cfglen + 
+	i = ((int)&((struct eata_cfg *)0)->ec_cfglen +
 	    sizeof(ec->ec_cfglen)) >> 1;
 	p = (u_int16_t *)ec;
-	
+
 	if (dpt_wait(sc, 0xFF, HA_ST_DATA_RDY, 2000)) {
 		printf("%s: cfg data didn't appear (hba status:%02x)\n",
 		    sc->sc_dv.dv_xname, dpt_inb(sc, HA_STATUS));
@@ -562,7 +562,7 @@ dpt_readcfg(struct dpt_softc *sc)
 		  - (int)(&(((struct eata_cfg *)0L)->ec_cfglen))
 		  - sizeof(ec->ec_cfglen);
 
-	j = i + (int)(&(((struct eata_cfg *)0L)->ec_cfglen)) + 
+	j = i + (int)(&(((struct eata_cfg *)0L)->ec_cfglen)) +
 	    sizeof(ec->ec_cfglen);
 	i >>= 1;
 
@@ -573,7 +573,7 @@ dpt_readcfg(struct dpt_softc *sc)
 	i = (512 - j + 1) >> 1;
 	while (i--)
 		bus_space_read_stream_2(sc->sc_iot, sc->sc_ioh, HA_DATA);
-	
+
 	/* Defaults for older firmware... */
 	if (p <= (u_short *)&ec->ec_hba[DPT_MAX_CHANNELS - 1])
 		ec->ec_hba[DPT_MAX_CHANNELS - 1] = 7;
@@ -728,7 +728,7 @@ dpt_ccb_done(struct dpt_softc *sc, struct dpt_ccb *ccb)
 	SC_DEBUG(xs->xs_periph, SCSIPI_DB2, ("dpt_ccb_done\n"));
 
 	/*
-	 * If we were a data transfer, unload the map that described the 
+	 * If we were a data transfer, unload the map that described the
 	 * data buffer.
 	 */
 	if (xs->datalen != 0)
@@ -792,7 +792,7 @@ dpt_ccb_abort(struct dpt_softc *sc, struct dpt_ccb *ccb)
 	periph = xs->xs_periph;
 
 	scsipi_printaddr(periph);
-	printf("timed out (status:%02x aux status:%02x)", 
+	printf("timed out (status:%02x aux status:%02x)",
 	    dpt_inb(sc, HA_STATUS), dpt_inb(sc, HA_AUX_STATUS));
 
 	s = splbio();
@@ -834,7 +834,7 @@ dpt_ccb_map(struct dpt_softc *sc, struct dpt_ccb *ccb)
 	cp = &ccb->ccb_eata_cp;
 
 	rv = bus_dmamap_load(sc->sc_dmat, xfer, xs->data, xs->datalen, NULL,
-	    ((xs->xs_control & XS_CTL_NOSLEEP) != 0 ? 
+	    ((xs->xs_control & XS_CTL_NOSLEEP) != 0 ?
 	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK) | BUS_DMA_STREAMING |
 	    ((xs->xs_control & XS_CTL_DATA_IN) ? BUS_DMA_READ : BUS_DMA_WRITE));
 
@@ -867,7 +867,7 @@ dpt_ccb_map(struct dpt_softc *sc, struct dpt_ccb *ccb)
 		cp->cp_datalen = htobe32(xfer->dm_segs[0].ds_len);
 	} else {
 		/*
-		 * Load the hardware scatter/gather map with 
+		 * Load the hardware scatter/gather map with
 		 * the contents of the DMA map.
 		 */
 		sg = ccb->ccb_sg;
@@ -876,7 +876,7 @@ dpt_ccb_map(struct dpt_softc *sc, struct dpt_ccb *ccb)
  			sg->sg_addr = htobe32(ds->ds_addr);
  			sg->sg_len =  htobe32(ds->ds_len);
  		}
-	 	cp->cp_dataaddr = htobe32(CCB_OFF(sc, ccb) + 
+	 	cp->cp_dataaddr = htobe32(CCB_OFF(sc, ccb) +
 		    sc->sc_dmamap->dm_segs[0].ds_addr +
 		    offsetof(struct dpt_ccb, ccb_sg));
 		cp->cp_datalen = htobe32(i * sizeof(struct eata_sg));
@@ -965,7 +965,7 @@ dpt_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		cp->cp_senselen = sizeof(ccb->ccb_sense);
 		cp->cp_stataddr = htobe32(sc->sc_stppa);
 		cp->cp_ctl0 = CP_C0_AUTO_SENSE;
-		cp->cp_ctl1 = 0; 
+		cp->cp_ctl1 = 0;
 		cp->cp_ctl2 = 0;
 		cp->cp_ctl3 = periph->periph_target << CP_C3_ID_SHIFT;
 		cp->cp_ctl3 |= chan->chan_channel << CP_C3_CHANNEL_SHIFT;
@@ -1003,11 +1003,11 @@ dpt_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, sc->sc_stpoff,
 		    sizeof(struct eata_sp), BUS_DMASYNC_PREREAD);
 
-		/* 
+		/*
 		 * Start the command.
 		 */
 		if ((xs->xs_control & XS_CTL_POLL) != 0)
-			ccb->ccb_flg |= CCB_PRIVATE; 
+			ccb->ccb_flg |= CCB_PRIVATE;
 
 		if (dpt_cmd(sc, ccb, CP_DMA_CMD, 0)) {
 			printf("%s: dpt_cmd failed\n", sc->sc_dv.dv_xname);
@@ -1026,7 +1026,7 @@ dpt_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			/* Wait for abort to complete... */
 			if (dpt_ccb_poll(sc, ccb))
 				dpt_ccb_abort(sc, ccb);
-		} 
+		}
 
 		dpt_ccb_done(sc, ccb);
 		break;
@@ -1083,11 +1083,11 @@ dpt_hba_inquire(struct dpt_softc *sc, struct eata_inquiry_data **ei)
 	cp->cp_cdb_len = sizeof(struct eata_inquiry_data);
 
 	/* Sync up CCB, status packet and scratch area. */
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, CCB_OFF(sc, ccb), 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, CCB_OFF(sc, ccb),
 	    sizeof(struct dpt_ccb), BUS_DMASYNC_PREWRITE);
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, sc->sc_stpoff, 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, sc->sc_stpoff,
 	    sizeof(struct eata_sp), BUS_DMASYNC_PREREAD);
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, sc->sc_scroff, 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, sc->sc_scroff,
 	    sizeof(struct eata_inquiry_data), BUS_DMASYNC_PREREAD);
 
 	/* Start the command and poll on completion. */
@@ -1104,7 +1104,7 @@ dpt_hba_inquire(struct dpt_softc *sc, struct eata_inquiry_data **ei)
 		    ccb->ccb_scsi_status);
 
 	/* Sync up the DMA map and free CCB, returning. */
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, sc->sc_scroff, 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, sc->sc_scroff,
 	    sizeof(struct eata_inquiry_data), BUS_DMASYNC_POSTREAD);
 	dpt_ccb_free(sc, ccb);
 }
@@ -1327,7 +1327,7 @@ dpt_passthrough(struct dpt_softc *sc, struct eata_ucp *ucp, struct proc *proc)
 	 		sg->sg_addr = htobe32(ds->ds_addr);
 	 		sg->sg_len = htobe32(ds->ds_len);
  		}
-		cp->cp_dataaddr = htobe32(CCB_OFF(sc, ccb) + 
+		cp->cp_dataaddr = htobe32(CCB_OFF(sc, ccb) +
 		    sc->sc_dmamap->dm_segs[0].ds_addr +
 		    offsetof(struct dpt_ccb, ccb_sg));
 		cp->cp_datalen = htobe32(i * sizeof(struct eata_sg));
@@ -1341,10 +1341,10 @@ dpt_passthrough(struct dpt_softc *sc, struct eata_ucp *ucp, struct proc *proc)
 	 * Start the command and sleep on completion.
 	 */
 	PHOLD(curlwp);	/* XXXJRT curlwp */
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, CCB_OFF(sc, ccb), 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, CCB_OFF(sc, ccb),
 	    sizeof(struct dpt_ccb), BUS_DMASYNC_PREWRITE);
 	s = splbio();
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, sc->sc_stpoff, 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, sc->sc_stpoff,
 	    sizeof(struct eata_sp), BUS_DMASYNC_PREREAD);
 	if (dpt_cmd(sc, ccb, CP_DMA_CMD, 0))
 		panic("%s: dpt_cmd failed", sc->sc_dv.dv_xname);
@@ -1355,7 +1355,7 @@ dpt_passthrough(struct dpt_softc *sc, struct eata_ucp *ucp, struct proc *proc)
 	/*
 	 * Sync up the DMA map and copy out results.
 	 */
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, CCB_OFF(sc, ccb), 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, CCB_OFF(sc, ccb),
 	    sizeof(struct dpt_ccb), BUS_DMASYNC_POSTWRITE);
 
 	if (cp->cp_datalen != 0) {

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.67.2.1 2005/02/12 18:17:40 yamt Exp $
+# $NetBSD: GENERIC3X,v 1.67.2.2 2005/03/19 08:33:15 yamt Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -87,7 +87,7 @@ options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
-options 	FFS_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 options 	INET		# IP prototol stack support

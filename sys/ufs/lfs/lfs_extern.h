@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.61 2004/05/20 06:34:33 atatat Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.61.6.1 2005/03/19 08:37:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -85,7 +85,11 @@ MALLOC_DECLARE(M_SEGMENT);
 #define LFS_CLEAN_VNHEAD 2 /* put prev unrefed cleaned vnodes on head of free list */
 #define LFS_DOSTATS	 3
 #define LFS_MAXPAGES	 4
-#define LFS_MAXID	 5
+#define LFS_FS_PAGETRIP	 5
+#define LFS_STATS	 6
+#define LFS_DO_RFW	 7
+#define LFS_DEBUGLOG	 8
+#define LFS_MAXID	 9
 
 #define LFS_NAMES { \
 	{ 0, 0 }, \
@@ -93,6 +97,7 @@ MALLOC_DECLARE(M_SEGMENT);
 	{ "clean_vnhead", CTLTYPE_INT }, \
 	{ "dostats", CTLTYPE_INT }, \
 	{ "maxpages", CTLTYPE_INT }, \
+	{ "debug", CTLTYPE_NODE }, \
 }
 
 struct fid;
@@ -117,23 +122,31 @@ extern int lfs_allclean_wakeup;
 extern struct pool lfs_inode_pool;		/* memory pool for inodes */
 extern struct pool lfs_dinode_pool;		/* memory pool for dinodes */
 extern struct pool lfs_inoext_pool;	/* memory pool for inode extension */
+extern struct pool lfs_lbnentry_pool;   /* memory pool for balloc accounting */
 
 extern int locked_queue_count;
 extern long locked_queue_bytes;
-extern int lfs_subsys_pages;	
+extern int lfs_subsys_pages;
 extern int lfs_dirvcount;
 extern struct simplelock lfs_subsys_lock;
+extern int lfs_debug_log_subsys[];
 
 __BEGIN_DECLS
 /* lfs_alloc.c */
 int lfs_rf_valloc(struct lfs *, ino_t, int, struct proc *, struct vnode **);
 void lfs_vcreate(struct mount *, ino_t, struct vnode *);
+
+/* lfs_balloc.c */
+void lfs_register_block(struct vnode *, daddr_t);
+void lfs_deregister_block(struct vnode *, daddr_t);
+void lfs_deregister_all(struct vnode *);
+
 /* lfs_bio.c */
 int lfs_availwait(struct lfs *, int);
 int lfs_bwrite_ext(struct buf *, int);
 int lfs_fits(struct lfs *, int);
 void lfs_flush_fs(struct lfs *, int);
-void lfs_flush(struct lfs *, int);
+void lfs_flush(struct lfs *, int, int);
 int lfs_check(struct vnode *, daddr_t, int);
 void lfs_freebuf(struct lfs *, struct buf *);
 struct buf *lfs_newbuf(struct lfs *, struct vnode *, daddr_t, size_t, int);
@@ -154,6 +167,7 @@ void lfs_dump_super(struct lfs *);
 void lfs_dump_dinode(struct ufs1_dinode *);
 void lfs_check_bpp(struct lfs *, struct segment *, char *, int);
 void lfs_check_segsum(struct lfs *, struct segment *, char *, int);
+void lfs_debug_log(int, const char *, ...);
 #endif /* DEBUG */
 
 /* lfs_inode.c */

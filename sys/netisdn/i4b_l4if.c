@@ -27,7 +27,7 @@
  *	i4b_l4if.c - Layer 3 interface to Layer 4
  *	-------------------------------------------
  *
- *	$Id: i4b_l4if.c,v 1.17 2003/10/03 16:38:44 pooka Exp $ 
+ *	$Id: i4b_l4if.c,v 1.17.10.1 2005/03/19 08:36:42 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.17 2003/10/03 16:38:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.17.10.1 2005/03/19 08:36:42 yamt Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -93,7 +93,7 @@ i4b_mdl_status_ind(struct isdn_l3_driver *d, int status, int parm)
 {
 	int sendup, update_leds = 0;
 	int i;
-	
+
 	NDBGL3(L3_MSG, "isdnif = %d, status = %d, parm = %d",
 	    d->isdnif, status, parm);
 
@@ -112,7 +112,7 @@ i4b_mdl_status_ind(struct isdn_l3_driver *d, int status, int parm)
 			update_leds = 1;
 			NDBGL3(L3_MSG, "STI_L1STAT: isdnif %d layer 1 = %s", d->isdnif, status ? "up" : "down");
 			break;
-			
+
 		case STI_L2STAT:
 			i4b_l4_l12stat(d, 2, parm);
 			update_leds = 1;
@@ -218,7 +218,7 @@ n_mgmt_command(struct isdn_l3_driver *d, int cmd, void *parm)
 	{
 		case CMR_DOPEN:
 			NDBGL3(L3_MSG, "CMR_DOPEN for isdnif %d", d->isdnif);
-			
+
 			for(i=0; i < num_call_desc; i++)
 			{
 				if(call_desc[i].isdnif == d->isdnif)
@@ -236,7 +236,7 @@ n_mgmt_command(struct isdn_l3_driver *d, int cmd, void *parm)
 		case CMR_DCLOSE:
 			NDBGL3(L3_MSG, "CMR_DCLOSE for isdnif %d", d->isdnif);
 			break;
-			
+
 		default:
 			NDBGL3(L3_MSG, "unknown cmd %d for isdnif %d",
 			    cmd, d->isdnif);
@@ -252,7 +252,7 @@ n_mgmt_command(struct isdn_l3_driver *d, int cmd, void *parm)
 void
 n_connect_request(struct call_desc *cd)
 {
-	next_l3state(cd, EV_SETUPRQ);	
+	next_l3state(cd, EV_SETUPRQ);
 }
 
 /*---------------------------------------------------------------------------*
@@ -265,7 +265,7 @@ n_connect_response(struct call_desc *cd, int response, int cause)
 	int chstate;
 
 	T400_stop(cd);
-	
+
 	cd->response = response;
 	cd->cause_out = cause;
 
@@ -275,12 +275,12 @@ n_connect_response(struct call_desc *cd, int response, int cause)
 			next_l3state(cd, EV_SETACRS);
 			chstate = BCH_ST_USED;
 			break;
-		
+
 		case SETUP_RESP_REJECT:
 			next_l3state(cd, EV_SETRJRS);
 			chstate = BCH_ST_FREE;
 			break;
-			
+
 		case SETUP_RESP_DNTCRE:
 			next_l3state(cd, EV_SETDCRS);
 			chstate = BCH_ST_FREE;

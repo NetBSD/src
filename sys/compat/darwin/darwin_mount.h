@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_mount.h,v 1.1 2003/09/02 21:31:03 manu Exp $ */
+/*	$NetBSD: darwin_mount.h,v 1.1.12.1 2005/03/19 08:33:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #define DARWIN_MNT_FIXEDSCRIPTENCODING	0x10000000
 
 #define DARWIN_MFSNAMELEN	15
-#define DARWIN_MNAMELEN		90 
+#define DARWIN_MNAMELEN		90
 
 struct darwin_statfs {
 	short	f_otype;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_subr.c,v 1.6 2004/04/22 00:17:12 itojun Exp $	*/
+/*	$NetBSD: mca_subr.c,v 1.6.6.1 2005/03/19 08:34:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_subr.c,v 1.6 2004/04/22 00:17:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_subr.c,v 1.6.6.1 2005/03/19 08:34:42 yamt Exp $");
 
 #include "opt_mcaverbose.h"
 
@@ -74,7 +74,7 @@ mca_devinfo(id, cp, l)
 {
 #ifdef MCAVERBOSE
 	const struct mca_knowndev *kdp;
-	
+
 	kdp = mca_knowndevs;
         for (; kdp->name != NULL && kdp->id != id; kdp++);
 

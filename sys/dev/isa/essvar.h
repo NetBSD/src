@@ -1,4 +1,4 @@
-/*	$NetBSD: essvar.h,v 1.22 2005/01/13 15:01:27 kent Exp $	*/
+/*	$NetBSD: essvar.h,v 1.22.4.1 2005/03/19 08:34:33 yamt Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essvar.h,v $ $Revision: 1.22 $ (SHARK) $Date: 2005/01/13 15:01:27 $
+** @(#) $RCSfile: essvar.h,v $ $Revision: 1.22.4.1 $ (SHARK) $Date: 2005/03/19 08:34:33 $
 **
 **++
 **
@@ -54,7 +54,7 @@
 **	Blair Fidler	Software Engineering Australia
 **			Gold Coast, Australia.
 **
-**  CREATION DATE:  
+**  CREATION DATE:
 **
 **	May 12, 1997.
 **

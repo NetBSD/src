@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_isadma.c,v 1.1 2004/01/25 11:35:46 jdolecek Exp $ */
+/* $NetBSD: atppc_isadma.c,v 1.1.12.1 2005/03/19 08:34:33 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_isadma.c,v 1.1 2004/01/25 11:35:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_isadma.c,v 1.1.12.1 2005/03/19 08:34:33 yamt Exp $");
 
 #include "opt_atppc.h"
 
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: atppc_isadma.c,v 1.1 2004/01/25 11:35:46 jdolecek Ex
 #include <dev/isa/atppc_isadma.h>
 
 /* Enable DMA */
-int 
+int
 atppc_isadma_setup(struct atppc_softc * lsc, isa_chipset_tag_t ic, int drq)
 {
 	int error = 1;
@@ -69,25 +69,25 @@ atppc_isadma_setup(struct atppc_softc * lsc, isa_chipset_tag_t ic, int drq)
 	lsc->sc_dma_maxsize = isa_dmamaxsize(ic, drq);
 
 	/* Create dma mapping */
-	error = isa_dmamap_create(ic, drq, lsc->sc_dma_maxsize, 
+	error = isa_dmamap_create(ic, drq, lsc->sc_dma_maxsize,
 		BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW);
-	
+
 	return error;
 }
 
 /* Start DMA operation over ISA bus */
-int 
+int
 atppc_isadma_start(isa_chipset_tag_t ic, int drq, void * buf, u_int nbytes,
 	u_int8_t mode)
 {
-	return (isa_dmastart(ic, drq, buf, nbytes, NULL,  
-		((mode == ATPPC_DMA_MODE_WRITE) ? DMAMODE_WRITE : 
-		DMAMODE_READ) | DMAMODE_DEMAND, ((mode == ATPPC_DMA_MODE_WRITE) 
+	return (isa_dmastart(ic, drq, buf, nbytes, NULL,
+		((mode == ATPPC_DMA_MODE_WRITE) ? DMAMODE_WRITE :
+		DMAMODE_READ) | DMAMODE_DEMAND, ((mode == ATPPC_DMA_MODE_WRITE)
 		? BUS_DMA_WRITE : BUS_DMA_READ) | BUS_DMA_NOWAIT));
 }
 
 /* Stop DMA operation over ISA bus */
-int 
+int
 atppc_isadma_finish(isa_chipset_tag_t ic, int drq)
 {
 	isa_dmadone(ic, drq);
@@ -95,14 +95,14 @@ atppc_isadma_finish(isa_chipset_tag_t ic, int drq)
 }
 
 /* Abort DMA operation over ISA bus */
-int 
+int
 atppc_isadma_abort(isa_chipset_tag_t ic, int drq)
 {
 	isa_dmaabort(ic, drq);
 	return 0;
 }
 
-/* Allocate memory for DMA over ISA bus */ 
+/* Allocate memory for DMA over ISA bus */
 int
 atppc_isadma_malloc(isa_chipset_tag_t ic, int drq, caddr_t *buf, bus_addr_t *bus_addr, bus_size_t size)
 {
@@ -119,8 +119,8 @@ atppc_isadma_malloc(isa_chipset_tag_t ic, int drq, caddr_t *buf, bus_addr_t *bus
 	return error;
 }
 
-/* Free memory allocated by atppc_isadma_malloc() */ 
-void 
+/* Free memory allocated by atppc_isadma_malloc() */
+void
 atppc_isadma_free(isa_chipset_tag_t ic, int drq, caddr_t * buf, bus_addr_t * bus_addr, bus_size_t size)
 {
 	isa_dmamem_unmap(ic, drq, *buf, size);

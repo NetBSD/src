@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.27.4.1 2005/02/12 18:17:36 yamt Exp $
+# 	$NetBSD: NEWS1200,v 1.27.4.2 2005/03/19 08:33:09 yamt Exp $
 
 #	news1200 config file
 #
@@ -73,7 +73,7 @@ file-system	NULLFS		# loopback file system
 #options 	QUOTA		# ffs quotas
 #options 	FFS_EI		# ffs endian independant support
 #options 	SOFTDEP		# ffs soft updates support
-#options 	FFS_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 options 	INET		# Internet protocols

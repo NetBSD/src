@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.49.6.1 2005/02/12 18:17:36 yamt Exp $
+# $NetBSD: GENERIC,v 1.49.6.2 2005/03/19 08:33:06 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mvme68k/conf/std.mvme68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.49.6.1 $"
+#ident 		"GENERIC-$Revision: 1.49.6.2 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -66,7 +66,7 @@ file-system 	CD9660
 options 	NFSSERVER
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
-#options 	FFS_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# ffs snapshots
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
 # Networking options
@@ -95,9 +95,15 @@ options 	INET6		# IPV6
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
 options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
-options 	COMPAT_09, COMPAT_10, COMPAT_11
-options 	COMPAT_12, COMPAT_13, COMPAT_14
-options		COMPAT_15, COMPAT_16
+options 	COMPAT_09
+options 	COMPAT_10
+options 	COMPAT_11
+options 	COMPAT_12
+options 	COMPAT_13
+options 	COMPAT_14
+options 	COMPAT_15
+options 	COMPAT_16
+options 	COMPAT_20
 #options 	COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 #options 	COMPAT_LINUX	# compatibility with Linux/m68k binaries

@@ -1,4 +1,4 @@
-/* $NetBSD: com_upc.c,v 1.5 2002/10/02 16:33:32 thorpej Exp $ */
+/* $NetBSD: com_upc.c,v 1.5.16.1 2005/03/19 08:34:02 yamt Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -28,7 +28,7 @@
 /* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_upc.c,v 1.5 2002/10/02 16:33:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_upc.c,v 1.5.16.1 2005/03/19 08:34:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -65,7 +65,7 @@ com_upc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_frequency = COM_FREQ;
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_ioh = ua->ua_ioh;
-	
+
 	com_attach_subr(sc);
 	upc_intr_establish(ua->ua_irqhandle, IPL_SERIAL, comintr, sc);
 }

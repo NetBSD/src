@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc700.c,v 1.8 2004/08/30 15:05:19 drochner Exp $	*/
+/*	$NetBSD: cpc700.c,v 1.8.6.1 2005/03/19 08:34:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.8 2004/08/30 15:05:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.8.6.1 2005/03/19 08:34:02 yamt Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -132,7 +132,7 @@ cpc_attach(struct device *self, pci_chipset_tag_t pc, bus_space_tag_t mem,
 {
 	union attach_args aa;
 	int i;
-	pcitag_t tag; 
+	pcitag_t tag;
 	pcireg_t erren;
 	pcireg_t v;
 	static struct {
@@ -227,7 +227,7 @@ cpc700_init_intr(bus_space_tag_t bt, bus_space_handle_t bh,
 	/* XXX */
 	the_cpc_tag = bt;
 	the_cpc_handle = bh;
-	/* 
+	/*
 	 * See CPC700 manual for information about what
 	 * interrupts have which properties.
 	 */

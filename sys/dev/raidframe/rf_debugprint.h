@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugprint.h,v 1.4 2002/08/04 03:22:07 oster Exp $	*/
+/*	$NetBSD: rf_debugprint.h,v 1.4.16.1 2005/03/19 08:35:41 yamt Exp $	*/
 /*
  * rf_debugprint.h
  */
@@ -32,7 +32,7 @@
 #ifndef _RF__RF_DEBUGPRINT_H_
 #define _RF__RF_DEBUGPRINT_H_
 
-void 
+void
 rf_debug_printf(char *s, void *a1, void *a2, void *a3, void *a4,
     void *a5, void *a6, void *a7, void *a8);
 

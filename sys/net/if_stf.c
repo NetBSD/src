@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.43.2.2 2005/02/12 18:17:53 yamt Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.43.2.3 2005/03/19 08:36:31 yamt Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  * ICMPv6:
  * - Redirects cannot be used due to the lack of link-local address.
  *
- * stf interface does not have, and will not need, a link-local address.  
+ * stf interface does not have, and will not need, a link-local address.
  * It seems to have no real benefit and does not help the above symptoms much.
  * Even if we assign link-locals to interface, we cannot really
  * use link-local unicast/multicast on top of 6to4 cloud (since there's no
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.43.2.2 2005/02/12 18:17:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.43.2.3 2005/03/19 08:36:31 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.43.2.2 2005/02/12 18:17:53 yamt Exp $")
 #include <sys/mbuf.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
+#include <sys/proc.h>
 #include <sys/protosw.h>
 #include <sys/queue.h>
 #include <sys/syslog.h>
@@ -212,7 +213,7 @@ stf_clone_create(ifc, unit)
 		return (EIO);	/* XXX */
 	}
 
-	sc->sc_if.if_mtu    = IPV6_MMTU;
+	sc->sc_if.if_mtu    = STF_MTU;
 	sc->sc_if.if_flags  = 0;
 	sc->sc_if.if_ioctl  = stf_ioctl;
 	sc->sc_if.if_output = stf_output;
@@ -653,7 +654,7 @@ in_stf_input(struct mbuf *m, ...)
 	ip6->ip6_flow |= htonl((u_int32_t)itos << 20);
 
 	m->m_pkthdr.rcvif = ifp;
-	
+
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
 		bpf_mtap_af(ifp->if_bpf, AF_INET6, m);
@@ -689,9 +690,12 @@ stf_rtrequest(cmd, rt, info)
 	struct rtentry *rt;
 	struct rt_addrinfo *info;
 {
+	if (rt != NULL) {
+		struct stf_softc *sc;
 
-	if (rt)
-		rt->rt_rmx.rmx_mtu = IPV6_MMTU;
+		sc = LIST_FIRST(&stf_softc_list);
+		rt->rt_rmx.rmx_mtu = (sc != NULL) ? sc->sc_if.if_mtu : STF_MTU;
+	}
 }
 
 static int
@@ -700,10 +704,12 @@ stf_ioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct ifaddr *ifa;
-	struct ifreq *ifr;
-	struct sockaddr_in6 *sin6;
-	int error;
+	struct proc 		*p = curproc;	/* XXX */
+	struct ifaddr		*ifa;
+	struct ifreq		*ifr;
+	struct sockaddr_in6	*sin6;
+	int			error;
+	u_long			mtu;
 
 	error = 0;
 	switch (cmd) {
@@ -725,10 +731,20 @@ stf_ioctl(ifp, cmd, data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		ifr = (struct ifreq *)data;
-		if (ifr && ifr->ifr_addr.sa_family == AF_INET6)
+		if (ifr != NULL && ifr->ifr_addr.sa_family == AF_INET6)
 			;
 		else
 			error = EAFNOSUPPORT;
+		break;
+
+	case SIOCSIFMTU:
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			break;
+		ifr = (struct ifreq *)data;
+		mtu = ifr->ifr_mtu;
+		if (mtu < STF_MTU_MIN || mtu > STF_MTU_MAX)
+			return EINVAL;
+		ifp->if_mtu = mtu;
 		break;
 
 	default:

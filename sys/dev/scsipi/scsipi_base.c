@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.123 2004/12/07 23:14:03 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.123.4.1 2005/03/19 08:35:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.123 2004/12/07 23:14:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.123.4.1 2005/03/19 08:35:47 yamt Exp $");
 
 #include "opt_scsi.h"
 
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.123 2004/12/07 23:14:03 thorpej Ex
 
 #include <uvm/uvm_extern.h>
 
+#include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipi_disk.h>
 #include <dev/scsipi/scsipiconf.h>
@@ -759,7 +760,7 @@ scsipi_print_cdb(struct scsipi_generic *cmd)
 int
 scsipi_interpret_sense(struct scsipi_xfer *xs)
 {
-	struct scsipi_sense_data *sense;
+	struct scsi_sense_data *sense;
 	struct scsipi_periph *periph = xs->xs_periph;
 	u_int8_t key;
 	int error;
@@ -783,12 +784,12 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 		int count;
 		scsipi_printaddr(periph);
 		printf(" sense debug information:\n");
-		printf("\tcode 0x%x valid 0x%x\n",
-			sense->error_code & SSD_ERRCODE,
-			sense->error_code & SSD_ERRCODE_VALID ? 1 : 0);
+		printf("\tcode 0x%x valid %d\n",
+			SSD_RCODE(sense->response_code),
+			sense->response_code & SSD_RCODE_VALID ? 1 : 0);
 		printf("\tseg 0x%x key 0x%x ili 0x%x eom 0x%x fmark 0x%x\n",
 			sense->segment,
-			sense->flags & SSD_KEY,
+			SSD_SENSE_KEY(sense->flags),
 			sense->flags & SSD_ILI ? 1 : 0,
 			sense->flags & SSD_EOM ? 1 : 0,
 			sense->flags & SSD_FILEMARK ? 1 : 0);
@@ -800,8 +801,8 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 			sense->info[3],
 			sense->extra_len);
 		printf("\textra: ");
-		for (count = 0; count < ADD_BYTES_LIM(sense); count++)
-			printf("0x%x ", sense->cmd_spec_info[count]);
+		for (count = 0; count < SSD_ADD_BYTES_LIM(sense); count++)
+			printf("0x%x ", sense->csi[count]);
 		printf("\n");
 	}
 #endif
@@ -819,7 +820,7 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 			return (error);
 	}
 	/* otherwise use the default */
-	switch (sense->error_code & SSD_ERRCODE) {
+	switch (SSD_RCODE(sense->response_code)) {
 
 		/*
 		 * Old SCSI-1 and SASI devices respond with
@@ -848,17 +849,17 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 		 */
 	case 0x71:		/* delayed error */
 		scsipi_printaddr(periph);
-		key = sense->flags & SSD_KEY;
+		key = SSD_SENSE_KEY(sense->flags);
 		printf(" DEFERRED ERROR, key = 0x%x\n", key);
 		/* FALLTHROUGH */
 	case 0x70:
 #ifndef	SCSIVERBOSE
-		if ((sense->error_code & SSD_ERRCODE_VALID) != 0)
+		if ((sense->response_code & SSD_RCODE_VALID) != 0)
 			info = _4btol(sense->info);
 		else
 			info = 0;
 #endif
-		key = sense->flags & SSD_KEY;
+		key = SSD_SENSE_KEY(sense->flags);
 
 		switch (key) {
 		case SKEY_NO_SENSE:
@@ -877,7 +878,7 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 				periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
 			if ((xs->xs_control & XS_CTL_IGNORE_NOT_READY) != 0)
 				return (0);
-			if (sense->add_sense_code == 0x3A) {
+			if (sense->asc == 0x3A) {
 				error = ENODEV; /* Medium not present */
 				if (xs->xs_control & XS_CTL_SILENT_NODEV)
 					return (error);
@@ -895,16 +896,16 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 			 * Logical Unit Not Supported during discovery.
 			 */
 			if ((xs->xs_control & XS_CTL_DISCOVERY) != 0 &&
-			    sense->add_sense_code == 0x25 &&
-			    sense->add_sense_code_qual == 0x00)
+			    sense->asc == 0x25 &&
+			    sense->ascq == 0x00)
 				return (EINVAL);
 			if ((xs->xs_control & XS_CTL_SILENT) != 0)
 				return (EIO);
 			error = EINVAL;
 			break;
 		case SKEY_UNIT_ATTENTION:
-			if (sense->add_sense_code == 0x29 &&
-			    sense->add_sense_code_qual == 0x00) {
+			if (sense->asc == 0x29 &&
+			    sense->ascq == 0x00) {
 				/* device or bus reset */
 				return (ERESTART);
 			}
@@ -921,7 +922,7 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 				return (EIO);
 			error = EIO;
 			break;
-		case SKEY_WRITE_PROTECT:
+		case SKEY_DATA_PROTECT:
 			error = EROFS;
 			break;
 		case SKEY_BLANK_CHECK:
@@ -949,12 +950,12 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 		if (key) {
 			scsipi_printaddr(periph);
 			printf("%s", error_mes[key - 1]);
-			if ((sense->error_code & SSD_ERRCODE_VALID) != 0) {
+			if ((sense->response_code & SSD_RCODE_VALID) != 0) {
 				switch (key) {
 				case SKEY_NOT_READY:
 				case SKEY_ILLEGAL_REQUEST:
 				case SKEY_UNIT_ATTENTION:
-				case SKEY_WRITE_PROTECT:
+				case SKEY_DATA_PROTECT:
 					break;
 				case SKEY_BLANK_CHECK:
 					printf(", requested size: %d (decimal)",
@@ -975,7 +976,7 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 				printf(", data =");
 				for (n = 0; n < sense->extra_len; n++)
 					printf(" %02x",
-					    sense->cmd_spec_info[n]);
+					    sense->csi[n]);
 			}
 			printf("\n");
 		}
@@ -1005,10 +1006,10 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 #else
 		scsipi_printaddr(periph);
 		printf("Sense Error Code 0x%x",
-			sense->error_code & SSD_ERRCODE);
-		if ((sense->error_code & SSD_ERRCODE_VALID) != 0) {
-			struct scsipi_sense_data_unextended *usense =
-			    (struct scsipi_sense_data_unextended *)sense;
+			SSD_RCODE(sense->response_code));
+		if ((sense->response_code & SSD_RCODE_VALID) != 0) {
+			struct scsi_sense_data_unextended *usense =
+			    (struct scsi_sense_data_unextended *)sense;
 			printf(" at block no. %d (decimal)",
 			    _3btol(usense->block));
 		}
@@ -1077,10 +1078,10 @@ scsipi_size(struct scsipi_periph *periph, int flags)
 int
 scsipi_test_unit_ready(struct scsipi_periph *periph, int flags)
 {
-	struct scsipi_test_unit_ready cmd;
+	struct scsi_test_unit_ready cmd;
 	int retries;
 
-	/* some ATAPI drives don't support TEST_UNIT_READY. Sigh */
+	/* some ATAPI drives don't support TEST UNIT READY. Sigh */
 	if (periph->periph_quirks & PQUIRK_NOTUR)
 		return (0);
 
@@ -1090,7 +1091,7 @@ scsipi_test_unit_ready(struct scsipi_periph *periph, int flags)
 		retries = SCSIPIRETRIES;
 
 	memset(&cmd, 0, sizeof(cmd));
-	cmd.opcode = TEST_UNIT_READY;
+	cmd.opcode = SCSI_TEST_UNIT_READY;
 
 	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd), 0, 0,
 	    retries, 10000, NULL, flags));
@@ -1144,7 +1145,7 @@ printf("inquire: addlen=%d, retrying\n", inqbuf->additional_length);
 printf("inquire: error=%d\n", error);
 #endif
 	}
-	
+
 #ifdef SCSI_OLD_NOINQUIRY
 	/*
 	 * Kludge for the Adaptec ACB-4000 SCSI->MFM translator.
@@ -1170,7 +1171,7 @@ printf("inquire: error=%d\n", error);
 	 * Kludge for the Emulex MT-02 SCSI->QIC translator.
 	 * This board gives an empty response to an INQUIRY command.
 	 */
-	else if (error == 0 && 
+	else if (error == 0 &&
 	    inqbuf->device == (SID_QUAL_LU_PRESENT | T_DIRECT) &&
 	    inqbuf->dev_qual2 == 0 &&
 	    inqbuf->version == 0 &&
@@ -1186,7 +1187,7 @@ printf("inquire: error=%d\n", error);
 	}
 #endif /* SCSI_OLD_NOINQUIRY */
 
-	return error; 
+	return error;
 }
 
 /*
@@ -1197,10 +1198,10 @@ printf("inquire: error=%d\n", error);
 int
 scsipi_prevent(struct scsipi_periph *periph, int type, int flags)
 {
-	struct scsipi_prevent cmd;
+	struct scsi_prevent_allow_medium_removal cmd;
 
 	memset(&cmd, 0, sizeof(cmd));
-	cmd.opcode = PREVENT_ALLOW;
+	cmd.opcode = SCSI_PREVENT_ALLOW_MEDIUM_REMOVAL;
 	cmd.how = type;
 
 	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd), 0, 0,
@@ -1233,13 +1234,13 @@ scsipi_start(struct scsipi_periph *periph, int type, int flags)
 
 int
 scsipi_mode_sense(struct scsipi_periph *periph, int byte2, int page,
-    struct scsipi_mode_header *data, int len, int flags, int retries,
+    struct scsi_mode_parameter_header_6 *data, int len, int flags, int retries,
     int timeout)
 {
-	struct scsipi_mode_sense cmd;
+	struct scsi_mode_sense_6 cmd;
 
 	memset(&cmd, 0, sizeof(cmd));
-	cmd.opcode = MODE_SENSE;
+	cmd.opcode = SCSI_MODE_SENSE_6;
 	cmd.byte2 = byte2;
 	cmd.page = page;
 	cmd.length = len & 0xff;
@@ -1250,13 +1251,13 @@ scsipi_mode_sense(struct scsipi_periph *periph, int byte2, int page,
 
 int
 scsipi_mode_sense_big(struct scsipi_periph *periph, int byte2, int page,
-    struct scsipi_mode_header_big *data, int len, int flags, int retries,
+    struct scsi_mode_parameter_header_10 *data, int len, int flags, int retries,
     int timeout)
 {
-	struct scsipi_mode_sense_big cmd;
+	struct scsi_mode_sense_10 cmd;
 
 	memset(&cmd, 0, sizeof(cmd));
-	cmd.opcode = MODE_SENSE_BIG;
+	cmd.opcode = SCSI_MODE_SENSE_10;
 	cmd.byte2 = byte2;
 	cmd.page = page;
 	_lto2b(len, cmd.length);
@@ -1267,13 +1268,13 @@ scsipi_mode_sense_big(struct scsipi_periph *periph, int byte2, int page,
 
 int
 scsipi_mode_select(struct scsipi_periph *periph, int byte2,
-    struct scsipi_mode_header *data, int len, int flags, int retries,
+    struct scsi_mode_parameter_header_6 *data, int len, int flags, int retries,
     int timeout)
 {
-	struct scsipi_mode_select cmd;
+	struct scsi_mode_select_6 cmd;
 
 	memset(&cmd, 0, sizeof(cmd));
-	cmd.opcode = MODE_SELECT;
+	cmd.opcode = SCSI_MODE_SELECT_6;
 	cmd.byte2 = byte2;
 	cmd.length = len & 0xff;
 
@@ -1283,13 +1284,13 @@ scsipi_mode_select(struct scsipi_periph *periph, int byte2,
 
 int
 scsipi_mode_select_big(struct scsipi_periph *periph, int byte2,
-    struct scsipi_mode_header_big *data, int len, int flags, int retries,
+    struct scsi_mode_parameter_header_10 *data, int len, int flags, int retries,
     int timeout)
 {
-	struct scsipi_mode_select_big cmd;
+	struct scsi_mode_select_10 cmd;
 
 	memset(&cmd, 0, sizeof(cmd));
-	cmd.opcode = MODE_SELECT_BIG;
+	cmd.opcode = SCSI_MODE_SELECT_10;
 	cmd.byte2 = byte2;
 	_lto2b(len, cmd.length);
 
@@ -1482,7 +1483,7 @@ scsipi_complete(struct scsipi_xfer *xs)
 
 	/*
 	 * If it's a user level request, bypass all usual completion
-	 * processing, let the user work it out..  
+	 * processing, let the user work it out..
 	 */
 	if ((xs->xs_control & XS_CTL_USERCMD) != 0) {
 		SC_DEBUG(periph, SCSIPI_DB3, ("calling user done()\n"));
@@ -1658,7 +1659,7 @@ scsipi_request_sense(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	int flags, error;
-	struct scsipi_sense cmd;
+	struct scsi_request_sense cmd;
 
 	periph->periph_flags |= PERIPH_SENSE;
 
@@ -1672,11 +1673,11 @@ scsipi_request_sense(struct scsipi_xfer *xs)
 	    XS_CTL_THAW_PERIPH | XS_CTL_FREEZE_PERIPH;
 
 	memset(&cmd, 0, sizeof(cmd));
-	cmd.opcode = REQUEST_SENSE;
-	cmd.length = sizeof(struct scsipi_sense_data);
+	cmd.opcode = SCSI_REQUEST_SENSE;
+	cmd.length = sizeof(struct scsi_sense_data);
 
 	error = scsipi_command(periph, (void *)&cmd, sizeof(cmd),
-	    (void *)&xs->sense.scsi_sense, sizeof(struct scsipi_sense_data),
+	    (void *)&xs->sense.scsi_sense, sizeof(struct scsi_sense_data),
 	    0, 1000, NULL, flags);
 	periph->periph_flags &= ~PERIPH_SENSE;
 	periph->periph_xscheck = NULL;
@@ -1847,7 +1848,7 @@ scsipi_run_queue(struct scsipi_channel *chan)
 					/* We'll panic shortly... */
 				}
 				splx(s);
-				
+
 				/*
 				 * XXX: We should be able to note that
 				 * XXX: that resources are needed here!
@@ -2006,7 +2007,7 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 			    error);
 			panic("scsipi_execute_xs");
 		}
-		
+
 		scsipi_printaddr(periph);
 		printf("should have flushed queue?\n");
 		goto free_xs;
@@ -2045,7 +2046,7 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 		goto restarted;
 
 	/*
-	 * If it was meant to run async and we cleared aync ourselve, 
+	 * If it was meant to run async and we cleared aync ourselve,
 	 * don't return an error here. It has already been handled
 	 */
 	if (oasync)
@@ -2268,7 +2269,7 @@ scsipi_print_xfer_mode(struct scsipi_periph *periph)
 		if (periph->periph_mode & PERIPH_CAP_WIDE32)
 			speed *= 4;
 		else if (periph->periph_mode &
-		    (PERIPH_CAP_WIDE16 | PERIPH_CAP_DT)) 
+		    (PERIPH_CAP_WIDE16 | PERIPH_CAP_DT))
 			speed *= 2;
 		mbs = speed / 1000;
 		if (mbs > 0)

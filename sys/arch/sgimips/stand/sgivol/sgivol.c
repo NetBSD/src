@@ -1,4 +1,4 @@
-/*	$NetBSD: sgivol.c,v 1.9 2004/11/24 22:01:21 jmc Exp $	*/
+/*	$NetBSD: sgivol.c,v 1.9.6.1 2005/03/19 08:33:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -235,7 +235,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 #else
-	if (ioctl(fd, DIOCGDINFO, &lbl) < 1) {
+	if (ioctl(fd, DIOCGDINFO, &lbl) < 0) {
 		perror("DIOCGDINFO");
 		exit(1);
 	}

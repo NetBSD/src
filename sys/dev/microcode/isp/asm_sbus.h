@@ -1,4 +1,4 @@
-/* $NetBSD: asm_sbus.h,v 1.17 2002/03/22 02:31:09 mjacob Exp $ */
+/* $NetBSD: asm_sbus.h,v 1.17.20.1 2005/03/19 08:34:48 yamt Exp $ */
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 1999 Qlogic, Inc.
  * All rights reserved.
@@ -23,7 +23,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */ 
+ */
 #define	ISP_1000_RISC_CODE	(u_int16_t *) isp_1000_risc_code
 
 #if	defined(ISP_COMPILE_FW) || defined(ISP_COMPILE_1000_FW)

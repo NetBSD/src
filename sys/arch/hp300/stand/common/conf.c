@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 2003/11/14 16:52:40 tsutsui Exp $	*/
+/*	$NetBSD: conf.c,v 1.7.10.1 2005/03/19 08:32:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -108,8 +108,7 @@ int	n_netif_drivers = (sizeof(netif_drivers) / sizeof(netif_drivers[0]));
 static int punitzero(int, int, int *);
 
 static int
-punitzero(ctlr, slave, punit)
-	int ctlr, slave, *punit;
+punitzero(int ctlr, int slave, int *punit)
 {
 
 	*punit = 0;
@@ -160,7 +159,7 @@ int	nfsys = 1;		/* we always know which one we want */
  * 
  * XXX this should be a table
  */
-void ctlrinit()
+void ctlrinit(void)
 {
 #ifdef SUPPORT_ETHERNET
 	leinit();

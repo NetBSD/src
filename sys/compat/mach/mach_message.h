@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.h,v 1.25 2003/12/26 16:31:29 manu Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.25.10.1 2005/03/19 08:33:42 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ typedef unsigned int mach_msg_type_number_t;
 #define MACH_RCV_INTERRUPT	0x00000400
 #define MACH_RCV_OVERWRITE	0x00001000
 #define MACH_SEND_ALWAYS	0x00010000
-#define MACH_SEND_TRAILER	0x00020000	
+#define MACH_SEND_TRAILER	0x00020000
 
 /* mach_msg error codes */
 #define MACH_MSG_SUCCESS		0x00000000
@@ -76,7 +76,7 @@ typedef unsigned int mach_msg_type_number_t;
 #define MACH_SEND_INTERRUPT		0x00000040
 #define MACH_SEND_CANCEL		0x00000080
 #define MACH_SEND_ALWAYS		0x00010000
-#define MACH_SEND_TRAILER		0x00020000      
+#define MACH_SEND_TRAILER		0x00020000
 #define MACH_SEND_IN_PROGRESS		0x10000001
 #define MACH_SEND_INVALID_DATA		0x10000002
 #define MACH_SEND_INVALID_DEST		0x10000003
@@ -166,7 +166,7 @@ typedef	struct {
 #define MACH_MSG_TRAILER_FORMAT_0	0
 typedef u_int32_t mach_msg_trailer_type_t;
 typedef u_int32_t mach_msg_trailer_size_t;
-typedef struct { 
+typedef struct {
 	mach_msg_trailer_type_t       msgh_trailer_type;
 	mach_msg_trailer_size_t       msgh_trailer_size;
 } mach_msg_trailer_t;
@@ -224,7 +224,7 @@ struct mach_complex_msg {
 		mach_msg_port_descriptor_t port[1];
 		mach_msg_ool_ports_descriptor_t ool_ports[1];
 		mach_msg_ool_descriptor_t ool[1];
-	} mcm_desc; 
+	} mcm_desc;
 };
 
 /* Kernel-private structures */
@@ -271,7 +271,7 @@ inline void mach_add_port_desc(void *, mach_port_name_t);
 inline void mach_add_ool_ports_desc(void *, void *, int);
 inline void mach_add_ool_desc(void *, void *, size_t);
 void mach_message_init(void);
-struct mach_message *mach_message_get(mach_msg_header_t *, 
+struct mach_message *mach_message_get(mach_msg_header_t *,
     size_t, struct mach_port *, struct lwp *);
 void mach_message_put(struct mach_message *);
 void mach_message_put_shlocked(struct mach_message *);

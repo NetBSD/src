@@ -1,4 +1,4 @@
-/*	$NetBSD: memcmp.c,v 1.4 2003/08/07 16:32:09 agc Exp $	*/
+/*	$NetBSD: memcmp.c,v 1.4.10.1 2005/03/19 08:36:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)memcmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memcmp.c,v 1.4 2003/08/07 16:32:09 agc Exp $");
+__RCSID("$NetBSD: memcmp.c,v 1.4.10.1 2005/03/19 08:36:21 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: memcmp.c,v 1.4 2003/08/07 16:32:09 agc Exp $");
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
-#endif 
+#endif
 
 /*
  * Compare memory regions.
