@@ -4,6 +4,7 @@ ENTRY(swab)
 	movl	sp@(4),a0	/* source */
 	movl	sp@(8),a1	/* destination */
 	movl	sp@(12),d0	/* count */
+	lsrl	#1,d0		/* count is in bytes; we need words */
 	jeq	swdone
 
 swloop:
