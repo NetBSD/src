@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.23 1999/08/10 21:10:20 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.24 1999/08/14 06:56:07 ross Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -98,9 +98,9 @@ struct simplelock {
 	int lock_data __attribute__((__aligned__));
 #ifdef LOCKDEBUG
 	const char *lock_file;
-	int lock_line;
 	const char *unlock_file;
-	int unlock_line;
+	short lock_line;
+	short unlock_line;
 	TAILQ_ENTRY(simplelock) list;
 	cpuid_t lock_holder;		/* CPU ID */
 #endif
