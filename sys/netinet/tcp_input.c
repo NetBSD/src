@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.169 2003/06/15 02:49:33 matt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.170 2003/06/29 18:58:26 ragge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.169 2003/06/15 02:49:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.170 2003/06/29 18:58:26 ragge Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1457,6 +1457,9 @@ after_listen:
 				tcpstat.tcps_rcvackbyte += acked;
 				ND6_HINT(tp);
 				sbdrop(&so->so_snd, acked);
+				if (tp->t_lastm != NULL)
+					tp->t_lastoff -= acked;
+
 				/*
 				 * We want snd_recover to track snd_una to
 				 * avoid sequence wraparound problems for
@@ -2069,11 +2072,15 @@ after_listen:
 		ND6_HINT(tp);
 		if (acked > so->so_snd.sb_cc) {
 			tp->snd_wnd -= so->so_snd.sb_cc;
+			tp->t_lastm = NULL;
 			sbdrop(&so->so_snd, (int)so->so_snd.sb_cc);
 			ourfinisacked = 1;
 		} else {
 			sbdrop(&so->so_snd, acked);
 			tp->snd_wnd -= acked;
+			tp->t_lastoff -= acked;
+			if (tp->t_lastoff <= 0)
+				tp->t_lastm = NULL;
 			ourfinisacked = 0;
 		}
 		sowwakeup(so);
