@@ -1,3 +1,5 @@
+/*	$NetBSD: skey.h,v 1.3 1996/09/19 19:39:45 thorpej Exp $	*/
+
 /*
  * S/KEY v1.1b (skey.h)
  *
@@ -10,8 +12,6 @@
  *          Scott Chasin <chasin@crimelab.com>
  *
  * Main client header
- *
- * $Id: skey.h,v 1.2 1995/06/05 19:48:36 pk Exp $
  */
 
 #if	defined(__TURBOC__) || defined(__STDC__) || defined(LATTICE)

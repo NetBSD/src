@@ -1,3 +1,5 @@
+/*	$NetBSD: skeysubr.c,v 1.7 1996/09/19 19:39:50 thorpej Exp $	*/
+
 /* S/KEY v1.1b (skeysubr.c)
  *
  * Authors:
@@ -9,8 +11,6 @@
  *          Scott Chasin <chasin@crimelab.com>
  *
  * S/KEY misc routines.
- *
- * $Id: skeysubr.c,v 1.6 1996/09/19 19:36:54 thorpej Exp $
  */
 
 #include <stdio.h>

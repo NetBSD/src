@@ -1,3 +1,5 @@
+/*	$NetBSD: md4.h,v 1.3 1996/09/19 19:39:41 thorpej Exp $	*/
+
 /* 
  *
  * md4.h -- Header file for implementation of MD4 Message Digest Algorithm
@@ -23,8 +25,6 @@
  *
  * These notices must be retained in any copies of any part of this
  * documentation and/or software.
- *
- * $Id: md4.h,v 1.2 1996/09/19 19:36:52 thorpej Exp $
  */
 
 #ifdef  __STDC__

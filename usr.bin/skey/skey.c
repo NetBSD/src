@@ -1,3 +1,5 @@
+/*	$NetBSD: skey.c,v 1.4 1996/09/19 19:44:33 thorpej Exp $	*/
+
 /*
  * S/KEY v1.1b (skey.c)
  *
@@ -17,8 +19,6 @@
  *	Enter password:
  *	OMEN US HORN OMIT BACK AHOY
  *	>
- *
- * $Id: skey.c,v 1.3 1995/06/05 19:55:40 pk Exp $
  */
 
 #include <sys/cdefs.h>

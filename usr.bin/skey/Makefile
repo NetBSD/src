@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 1994/12/22 12:30:55 cgd Exp $
+#	$NetBSD: Makefile,v 1.6 1996/09/19 19:44:32 thorpej Exp $
 
 PROG= skey
 CFLAGS+= -I${.CURDIR}/../../lib/libskey
