@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.46 2003/01/20 18:24:03 dsl Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.47 2003/02/13 08:09:33 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.46 2003/01/20 18:24:03 dsl Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.47 2003/02/13 08:09:33 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -291,20 +291,37 @@ print_ie_title(int i)
 	name_width = strlen(ie_head[i].ie_name);
 	width -= group_width + 1 + name_width;
 	if (width < 0) {
-		/* screen to narrow for full strings */
+		/*
+		 * Screen to narrow for full strings
+		 * This is all rather horrid, in some cases there are a lot
+		 * of events in the same group, and in others the event
+		 * name is "intr".  There are also names which need 7 or 8
+		 * columns before they become meaningful.
+		 * This is a bad compromise.
+		 */
 		width = -width;
 		group_width -= (width + 1) / 2;
 		name_width -= width / 2;
-		if (group_width <= 3 || name_width < 0) {
-			/* don't display group */
-			name_width += group_width + 1;
-			group_width = 0;
+		/* some have the 'useful' name "intr", display their group */
+		if (strcasecmp(ie_head[i].ie_name, "intr") == 0) {
+			 group_width += name_width + 1;
+			 name_width = 0;
+		} else {
+			if (group_width <= 3 || name_width < 0) {
+				/* don't display group */
+				name_width += group_width + 1;
+				group_width = 0;
+			}
 		}
 	}
 
-	if (group_width)
-		printw("%-.*s ", group_width, ie_head[i].ie_group);
-	printw("%-.*s", name_width, ie_head[i].ie_name);
+	if (group_width != 0) {
+		printw("%-.*s", group_width, ie_head[i].ie_group);
+		if (name_width != 0)
+			printw(" ");
+	}
+	if (name_width != 0)
+		printw("%-.*s", name_width, ie_head[i].ie_name);
 }
 
 void
@@ -372,7 +389,8 @@ labelvmstat(void)
 	for (i = 0; i < nintr; i++) {
 		if (intrloc[i] == 0)
 			continue;
-		mvprintw(intrloc[i], INTSCOL + 9, "%-8.8s", intrname[i]);
+		mvprintw(intrloc[i], INTSCOL + 9, "%-.*s",
+			COLS - (INTSCOL + 9), intrname[i]);
 	}
 	for (i = 0; i < nevcnt; i++) {
 		if (ie_head[i].ie_loc == 0)
@@ -428,8 +446,8 @@ showvmstat(void)
 			if (nextintsrow == LINES)
 				continue;
 			intrloc[i] = nextintsrow++;
-			mvprintw(intrloc[i], INTSCOL + 9, "%-8.8s",
-				intrname[i]);
+			mvprintw(intrloc[i], INTSCOL + 9, "%-.*s",
+				COLS - (INTSCOL + 9), intrname[i]);
 		}
 		X(intrcnt);
 		l = (int)((float)s.intrcnt[i]/etime + 0.5);
