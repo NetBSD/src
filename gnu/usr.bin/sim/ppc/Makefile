@@ -1,6 +1,13 @@
-#	$NetBSD: Makefile,v 1.3 2002/03/01 06:06:50 jmc Exp $
+#	$NetBSD: Makefile,v 1.4 2002/09/19 01:58:07 lukem Exp $
 
-TOP=	${.CURDIR}/../../..
+NOLINT=		# defined
+NOPIC=		# defined
+NOPROFILE=	# defined
+
+.include <bsd.own.mk>
+
+TOP=	${NETBSDSRCDIR}/gnu
+DIST=	${TOP}/dist/toolchain
 
 LIB=	sim
 SRCS=	debug.c filter_filename.o bits.c sim-endian.c os_emul.c emul_generic.c \
@@ -11,26 +18,24 @@ SRCS=	debug.c filter_filename.o bits.c sim-endian.c os_emul.c emul_generic.c \
 	hw_iobus.c hw_htab.c hw_disk.c hw_trace.c hw_register.c hw_vm.c \
 	hw_init.c hw_core.c hw_pal.c hw_com.c hw_eeprom.c hw_opic.c hw_glue.c \
 	hw_phb.c hw_ide.c options.c sim_calls.c callback.o targ-map.c
-NOPIC=1
-NOPROFILE=1
-NOLINT=1
 
 all: libsim.a
 
 libinstall:
 
 .include <bsd.lib.mk>
+.include "../../Makefile.inc"
 
 MIC=	sh ${DIST}/move-if-change
 
-HOST_CPPFLAGS+=	-I${DIST}/sim/ppc -I${DIST}/sim/ppc/../../include \
-		-I${DIST}/sim/ppc/../../bfd -I../../gdb \
-		-I${DIST}/sim/ppc/../../gdb  \
-		-I${DIST}/sim/ppc/../../gdb/config \
-		-I${DIST}/sim/ppc/../../mmalloc \
+HOST_CPPFLAGS+=	-I${DIST}/sim/ppc -I${DIST}/include \
+		-I${DIST}/bfd -I../../gdb \
+		-I${DIST}/gdb  \
+		-I${DIST}/gdb/config \
+		-I${DIST}/mmalloc \
 		-I${.CURDIR}/../arch/powerpc \
-		-I${.CURDIR}/../../../usr.bin/gdb/arch/powerpc \
-		-I${.CURDIR}/../../../lib/libbfd/arch/powerpc -I.
+		-I${TOP}/usr.bin/gdb/arch/powerpc \
+		-I${TOP}/lib/libbfd/arch/powerpc -I.
 PSIM_DEFINES=	-DHAVE_CONFIG_H \
 		-DDEFAULT_INLINE=INLINE_LOCALS \
 		-DWITH_HOST_BYTE_ORDER=BYTE_ORDER \
