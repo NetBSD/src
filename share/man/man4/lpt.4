@@ -1,4 +1,4 @@
-.\" $NetBSD: lpt.4,v 1.7 2004/02/03 21:37:00 jdolecek Exp $
+.\" $NetBSD: lpt.4,v 1.8 2004/02/04 14:27:18 wiz Exp $
 .\"
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -74,16 +74,16 @@ parallel port control device
 .Xr lptctl 8 ,
 .Xr mknod 8
 .Sh HISTORY
-This driver is derived from
+This driver is derived from the
 .Fx
-ppbus and also from historic
+ppbus and also from the historic
 .Nx
-driver.
+drivers.
 .Pp
 The
 .Nm
 driver used to assign special meaning for some bits of device minor.
-This was dropped in ppbus based
+This was dropped in ppbus-based
 .Nm
 in favour of configuration via
 .Xr lptctl 8 .
