@@ -1,4 +1,4 @@
-.\"	$NetBSD: mv.1,v 1.9 1997/08/27 17:27:13 kleink Exp $
+.\"	$NetBSD: mv.1,v 1.10 1997/10/20 08:52:51 enami Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,16 +43,16 @@
 .Nm mv
 .Nd move files
 .Sh SYNOPSIS
-.Nm mv
+.Nm
 .Op Fl fi
 .Ar source target
-.Nm mv
+.Nm ""
 .Op Fl fi
 .Ar source ... directory
 .Sh DESCRIPTION
 .Pp
 In its first form, the
-.Nm mv
+.Nm
 utility renames the file named by the
 .Ar source
 operand to the destination path named by the
@@ -62,7 +62,7 @@ This form is assumed when the last operand does not name an already
 existing directory.
 .Pp
 In its second form,
-.Nm mv
+.Nm
 moves each file named by a
 .Ar source
 operand to a destination file in the existing directory named by the
@@ -79,7 +79,7 @@ Do not prompt for confirmation before overwriting the destination
 path.
 .It Fl i
 Causes
-.Nm mv
+.Nm
 to write a prompt to standard error before moving a file that would
 overwrite an existing file.
 If the response from the standard input begins with the character ``y'',
@@ -90,7 +90,7 @@ The last of any
 or
 .Fl i
 options is the one which affects
-.Nm mv Ns 's
+.Nm Ns 's
 behavior.
 .Pp
 It is an error for either the
@@ -98,7 +98,7 @@ It is an error for either the
 operand or the destination path to specify a directory unless both do.
 .Pp
 If the destination path does not have a mode which permits writing,
-.Nm mv
+.Nm
 prompts the user for confirmation as specified for the
 .Fl i
 option.
@@ -106,7 +106,7 @@ option.
 As the
 .Xr rename  2
 call does not work across file systems,
-.Nm mv
+.Nm
 uses
 .Xr cp 1
 and
@@ -120,14 +120,14 @@ rm -f destination_path && \e
 .Ed
 .Pp
 The
-.Nm mv
+.Nm
 utility exits 0 on success, and >0 if an error occurs.
 .Sh SEE ALSO
 .Xr cp 1 ,
 .Xr symlink 7
 .Sh STANDARDS
 The
-.Nm mv
+.Nm
 utility is expected to be
 .St -p1003.2
 compatible.
