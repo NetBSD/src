@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.218 2001/01/26 01:33:17 jwise Exp $
+# $NetBSD: mi,v 1.219 2001/01/26 05:28:00 jwise Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -217,7 +217,7 @@
 ./usr/bin/fstat		base-util-bin
 ./usr/bin/ftp		base-netutil-bin
 ./usr/bin/gcpp		base-util-bin
-./usr/bin/gencat	base-util-bin
+./usr/bin/gencat	base-locale-bin
 ./usr/bin/getconf	base-util-bin
 ./usr/bin/getopt	base-util-bin
 ./usr/bin/grep		base-util-bin
@@ -413,7 +413,7 @@
 ./usr/bin/which		base-util-bin
 ./usr/bin/who		base-util-bin
 ./usr/bin/whoami	base-util-bin
-./usr/bin/whois		base-util-bin
+./usr/bin/whois		base-netutil-bin
 ./usr/bin/window	base-util-bin
 ./usr/bin/write		base-util-bin
 ./usr/bin/xargs		base-util-bin
