@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.167 2004/04/27 09:45:02 junyoung Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.168 2004/04/27 09:50:43 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.167 2004/04/27 09:45:02 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.168 2004/04/27 09:50:43 junyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1429,7 +1429,7 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 				 * if hint > entry->end.
 				 */
 			} else {
-				/* Start from higer gap. */
+				/* Start from higher gap. */
 				entry = entry->next;
 				if (entry == &map->header)
 					goto notfound;
@@ -3425,7 +3425,7 @@ uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t min, vaddr_t max)
 }
 
 /*
- * uvmspace_share: share a vmspace between two proceses
+ * uvmspace_share: share a vmspace between two processes
  *
  * - XXX: no locking on vmspace
  * - used for vfork, threads(?)
