@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.70 2004/04/17 15:22:59 christos Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.71 2004/04/18 18:48:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -118,15 +118,15 @@ struct socket {
 	struct sockbuf	so_rcv;		/* receive buffer */
 
 	void		*so_internal;	/* Space for svr4 stream data */
-	void		(*so_upcall) __P((struct socket *, caddr_t, int));
+	void		(*so_upcall) (struct socket *, caddr_t, int);
 	caddr_t		so_upcallarg;	/* Arg for above */
-	int		(*so_send) __P((struct socket *, struct mbuf *,
+	int		(*so_send) (struct socket *, struct mbuf *,
 					struct uio *, struct mbuf *,
-					struct mbuf *, int));
-	int		(*so_receive) __P((struct socket *,
+					struct mbuf *, int);
+	int		(*so_receive) (struct socket *,
 					struct mbuf **,
 					struct uio *, struct mbuf **,
-					struct mbuf **, int *));
+					struct mbuf **, int *);
 	struct mowner	*so_mowner;	/* who owns mbufs for this socket */
 	uid_t		so_uid;		/* who opened the socket */
 };
