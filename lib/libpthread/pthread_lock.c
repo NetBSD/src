@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.1.2.9 2002/10/16 18:34:40 nathanw Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.1.2.10 2002/10/22 01:38:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 #endif
 
 /* How many times to try before checking whether we've been continued. */
-#define NSPINS 20	/* XXX arbitrary */
+#define NSPINS 1	/* no point in actually spinning until MP works */
 
 static int nspins = NSPINS;
 
@@ -79,12 +79,6 @@ pthread_spinlock(pthread_t thread, pthread_spin_t *lock)
 		if (ret == 1)
 			break;
 
-		/*
-		 * As long as this is uniprocessor, encountering a
-		 * locked spinlock is a bug. 
-		 */
-		assert (ret == 1);
-
 	SDPRINTF(("(pthread_spinlock %p) decrementing spinlock from %d\n",
 		thread, thread->pt_spinlocks));
 		--thread->pt_spinlocks;
@@ -100,8 +94,7 @@ pthread_spinlock(pthread_t thread, pthread_spin_t *lock)
 		 * (in case (a), we should let the code finish and 
 		 * we will bail out in pthread_spinunlock()).
 		 */
-		if ((thread->pt_next != NULL) &&
-		    (thread->pt_type != PT_THREAD_UPCALL)) {
+		if (thread->pt_next != NULL) {
 			PTHREADD_ADD(PTHREADD_SPINPREEMPT);
 			pthread__switch(thread, thread->pt_next);
 		}
@@ -133,8 +126,7 @@ pthread_spintrylock(pthread_t thread, pthread_spin_t *lock)
 		thread, thread->pt_spinlocks));
 		--thread->pt_spinlocks;
 		/* See above. */
-		if ((thread->pt_next != NULL) &&
-		    (thread->pt_type != PT_THREAD_UPCALL)) {
+		if (thread->pt_next != NULL) {
 			PTHREADD_ADD(PTHREADD_SPINPREEMPT);
 			pthread__switch(thread, thread->pt_next);
 		}
@@ -163,8 +155,7 @@ pthread_spinunlock(pthread_t thread, pthread_spin_t *lock)
 	 * XXX when will we ever have more than one?
 	 */
 	
-	if ((thread->pt_spinlocks == 0) && (thread->pt_next != NULL) 
-		&& (thread->pt_type != PT_THREAD_UPCALL)) {
+	if ((thread->pt_spinlocks == 0) && (thread->pt_next != NULL)) {
 		PTHREADD_ADD(PTHREADD_SPINPREEMPT);
 		pthread__switch(thread, thread->pt_next);
 	}
