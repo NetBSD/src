@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.171 2001/11/26 20:39:29 fredette Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.172 2001/12/02 22:44:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.171 2001/11/26 20:39:29 fredette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.172 2001/12/02 22:44:34 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,7 @@ scsibusmatch(parent, cf, aux)
 {
 	struct scsipi_channel *chan = aux;
 
-	if (chan->type != BUS_SCSI)
+	if (chan->chan_bustype->bustype_type != SCSIPI_BUSTYPE_SCSI)
 		return 0;
 
 	if (cf->cf_loc[SCSICF_CHANNEL] != chan->chan_channel &&

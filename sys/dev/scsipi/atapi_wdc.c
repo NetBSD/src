@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.45 2001/12/01 00:00:29 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.46 2001/12/02 22:44:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.45 2001/12/01 00:00:29 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.46 2001/12/02 22:44:33 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -116,7 +116,6 @@ wdc_atapibus_attach(chp)
 	struct wdc_softc *wdc = chp->wdc;
 	struct scsipi_adapter *adapt = &wdc->sc_atapi_adapter._generic;
 	struct scsipi_channel *chan = &chp->ch_atapi_channel;
-	struct ata_atapi_attach aa;
 
 	/*
 	 * Fill in the scsipi_adapter.
@@ -143,13 +142,7 @@ wdc_atapibus_attach(chp)
 	chan->chan_ntargets = 2;
 	chan->chan_nluns = 1;
 
-	memset(&aa, 0, sizeof(aa));
-	aa.aa_type = T_ATAPI;
-	aa.aa_channel = chan->chan_channel;
-	aa.aa_openings = chan->chan_openings;
-	aa.aa_drv_data = chp->ch_drive; /* pass the whole array */
-	aa.aa_bus_private = chan;
-	chp->atapibus = config_found(&wdc->sc_dev, &aa, atapiprint);
+	chp->atapibus = config_found(&wdc->sc_dev, chan, atapiprint);
 }
 
 void
@@ -257,7 +250,9 @@ wdc_atapi_probe_device(sc, target)
 	struct scsipi_periph *periph;
 	struct ataparams ids;
 	struct ataparams *id = &ids;
-	struct ata_drive_datas *drvp = &sc->sc_drvs[target];
+	struct wdc_softc *wdc = (void *)chan->chan_adapter->adapt_dev;
+	struct channel_softc *chp = wdc->channels[chan->chan_channel];
+	struct ata_drive_datas *drvp = &chp->ch_drive[target];
 	struct scsipibus_attach_args sa;
 	char serial_number[21], model[41], firmware_revision[9];
 
