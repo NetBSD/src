@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.18 2001/01/03 13:14:26 mjl Exp $	*/
+/*	$NetBSD: write.c,v 1.19 2001/01/03 13:25:11 mjl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: write.c,v 1.18 2001/01/03 13:14:26 mjl Exp $");
+__RCSID("$NetBSD: write.c,v 1.19 2001/01/03 13:25:11 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,18 +66,16 @@ __RCSID("$NetBSD: write.c,v 1.18 2001/01/03 13:14:26 mjl Exp $");
 #include <utmp.h>
 #include <err.h>
 
-void done __P((int));
-void do_write __P((char *, char *, uid_t));
-void wr_fputs __P((char *));
-void search_utmp __P((char *, char *, char *, uid_t, int));
-int term_chk __P((char *, int *, time_t *, int));
-int utmp_chk __P((char *, char *));
-int main __P((int, char **));
+void done(int);
+void do_write(const char *, const char *, const uid_t);
+void wr_fputs(char *);
+void search_utmp(char *, char *, char *, uid_t, int);
+int term_chk(const char *, int *, time_t *, int);
+int utmp_chk(const char *, const char *);
+int main(int, char **);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	char *cp;
 	time_t atime;
@@ -143,8 +141,7 @@ main(argc, argv)
  *     the given tty
  */
 int
-utmp_chk(user, tty)
-	char *user, *tty;
+utmp_chk(const char *user, const char *tty)
 {
 	struct utmp u;
 	int ufd;
@@ -175,10 +172,7 @@ utmp_chk(user, tty)
  * writing from, unless that's the only terminal with messages enabled.
  */
 void
-search_utmp(user, tty, mytty, myuid, ttylen)
-	char *user, *tty, *mytty;
-	uid_t myuid;
-	int ttylen;
+search_utmp(char *user, char *tty, char *mytty, uid_t myuid, int ttylen)
 {
 	struct utmp u;
 	time_t bestatime, atime;
@@ -232,10 +226,7 @@ search_utmp(user, tty, mytty, myuid, ttylen)
  *     and the access time
  */
 int
-term_chk(tty, msgsokP, atimeP, showerror)
-	char *tty;
-	int *msgsokP, showerror;
-	time_t *atimeP;
+term_chk(const char *tty, int *msgsokP, time_t *atimeP, int showerror)
 {
 	struct stat s;
 	char path[MAXPATHLEN];
@@ -255,9 +246,7 @@ term_chk(tty, msgsokP, atimeP, showerror)
  * do_write - actually make the connection
  */
 void
-do_write(tty, mytty, myuid)
-	char *tty, *mytty;
-	uid_t myuid;
+do_write(const char *tty, const char *mytty, const uid_t myuid)
 {
 	const char *login;
 	char *nows;
@@ -297,8 +286,7 @@ do_write(tty, mytty, myuid)
  * done - cleanup and exit
  */
 void
-done(dummy)
-	int dummy;
+done(int dummy)
 {
 
 	(void)printf("EOF\r\n");
@@ -310,8 +298,7 @@ done(dummy)
  *     turns \n into \r\n
  */
 void
-wr_fputs(s)
-	char *s;
+wr_fputs(char *s)
 {
 	char c;
 
