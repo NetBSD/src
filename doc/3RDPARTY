@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1 2002/09/21 08:17:32 lukem Exp $
+#	$NetBSD: 3RDPARTY,v 1.2 2002/09/22 10:12:48 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -74,35 +74,33 @@ need to maintain both BIND4 _res and BIND8 _res.  (2) amount of local changes.
 nsswitch/nsdispatch need to be reimplemented.
 
 Package:	binutils/gas
-Version:	1.92.3/2.9.1/2.11.2
+Version:	1.92.3/2.11.2
 Current Vers:	2.13
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Mailing List:	bug-gnu-utils@gnu.org
 Responsible:	thorpej
 Notes:
-Almost all ports now use the binutils-2.11.2 gas (gas.new) by default.
+Version 1.92.3 still in-tree for historical reasons, but unused.
 
 Package:	binutils/ld
-Version:	???/2.9.1/2.11.2
+Version:	???/2.11.2
 Current Vers:	2.13
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Mailing List:	bug-gnu-utils@gnu.org
 Responsible:	thorpej
 Notes:
-Almost all ports now use the binutils-2.11.2 ld (ld.new) by default
+Version ??? still in-tree for historical reasons, but unused.
 
 Package:	binutils/misc
-Version:	2.9.1/2.11.2
+Version:	2.11.2
 Current Vers:	2.13
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Mailing List:	bug-gnu-utils@gnu.org
 Responsible:	thorpej
 Notes:
-All ports now provide the various other utilities from the binutils package
-(addr2line, objdump, etc.)
 
 Package:	bsd-family-tree
 Version:	1.52
@@ -251,28 +249,25 @@ Responsible:
 Notes:
 Should look at ATT awk as a replacement for this. A download link
 is available at http://cm.bell-labs.com/cm/cs/awkbook/
+See also nawk entry below.
 
 Package:	gcc
-Version:	egcs-1.1.2/2.95.3
+Version:	2.95.3
 Current Vers:	3.2
 Maintainer:	cygnus
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Mailing List:	gcc-bugs@gnu.org
 Responsible:	thorpej
 Notes:
-All ports are now using egcs.  Cygnus egcs/gcc sources are in
-/usr/src/gnu/dist
 
 Package:	gdb
-Version:	4.17/5.0
+Version:	5.0
 Current Vers:	5.2.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gdb/
 Mailing List:	bug-gdb@gnu.org
 Responsible:	thorpej
 Notes:
-It looks like the m68k stuff has not been submitted to the FSF.
-Significant divergence.
 
 Package:	gettext
 Version:	0.10.35
@@ -664,7 +659,7 @@ Archive Site:	http://www.tcpdump.org/release/
 Mailing List:	tcpdump-workers@tcpdump.org
 Responsible:	itojun
 Notes:
-code will be imported into src/dist/tcpdump.  changes has to go back to
+Code will be imported into src/dist/tcpdump.  Changes have to go back to
 tcpdump.org.
 
 Package:	termcap.src
@@ -751,7 +746,7 @@ Notes:
 - Fix 01-08 from the xfree86 fixes directory are merged into the tree.
 - imported changes from 3.3.6 branch on 2001-03-05
 4.x:
- Only X410src-1 and X410src-2 were imported. X410src-3 contains postscript
+ Only X4??src-1 and X4??src-2 were imported. X4??src-3 contains postscript
  files which we don't need in our tree.
  ALL changes must be sent back to the XFree86 repository. Patches should
  be sent to patch@XFree86.org.
