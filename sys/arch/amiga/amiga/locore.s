@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.32 1994/07/04 20:27:44 chopps Exp $
+ *	$Id: locore.s,v 1.33 1994/07/06 04:33:31 chopps Exp $
  *
  * Original (hp300) Author: unknown, maybe Mike Hibler?
  * Amiga author: Markus Wild
@@ -196,81 +196,45 @@ Lstkadj:
  * FP exceptions.
  */
 _fpfline:
-| check for unimplemented floating point instruction and emulate it
-	.globl	fpsp_unimp
-	btst	#5,sp@(6)		| is format == 2?
-	jne	fpsp_unimp
+#if defined(M68040)
+	cmpw	#0x202c,sp@(6)		| format type 2?
+	jne	_illinst		| no, not an FP emulation
+#ifdef FPSP
+	.globl fpsp_unimp
+	jmp	fpsp_unimp		| yes, go handle it
+#else
+	clrl	sp@-			| stack adjust count
+	moveml	#0xFFFF,sp@-		| save registers
+	moveq	#T_FPEMULI,d0		| denote as FP emulation trap
+	jra	fault			| do it
+#endif
+#else
 	jra	_illinst
+#endif
 
 _fpunsupp:
-	jra	_illinst
+#if defined(M68040)
+	cmpl	#-2,_mmutype		| 68040?
+	jne	_illinst		| no, treat as illinst
 #ifdef FPSP
-| FPSP entry points and support routines
-	.globl	real_fline,real_bsun,real_unfl,real_operr,real_ovfl,real_snan
-	.globl	real_unsupp,real_inex
-	.globl	fpsp_done,fpsp_fmt_error,mem_read,mem_write,real_trace
-real_fline:
+	.globl	fpsp_unsupp
+	jmp	fpsp_unsupp		| yes, go handle it
+#else
+	clrl	sp@-			| stack adjust count
+	moveml	#0xFFFF,sp@-		| save registers
+	moveq	#T_FPEMULD,d0		| denote as FP emulation trap
+	jra	fault			| do it
+#endif
+#else
 	jra	_illinst
-real_trace:
-fpsp_done:
-	rte
-fpsp_fmt_error:
-	pea	LFP1
-	jbsr	_panic
-mem_read:
-	btst	#5,a6@(4)
-	jeq	user_read
-super_read:
-	movb	a0@+,a1@+
-	subl	#1,d0
-	jne	super_read
-	rts
-user_read:
-	movl	d1,sp@-
-	movl	d0,sp@-		| len
-	movl	a1,sp@-		| to
-	movl	a0,sp@-		| from
-	jsr	_copyin
-	addw	#12,sp
-	movl	sp@+,d1
-	rts
-mem_write:
-	btst	#5,a6@(4)
-	jeq	user_write
-super_write:
-	movb	a0@+,a1@+
-	subl	#1,d0
-	jne	super_write
-	rts
-user_write:
-	movl	d1,sp@-
-	movl	d0,sp@-		| len
-	movl	a1,sp@-		| to
-	movl	a0,sp@-		| from
-	jsr	_copyout
-	addw	#12,sp
-	movl	sp@+,d1
-	rts
-LFP1:	.asciz	"FPSP format error"
-	.even
-real_unsupp:
-	jra	_illinst
-
-real_bsun:
-real_inex:
-real_dz:
-real_unfl:
-real_operr:
-real_ovfl:
-real_snan:
-| Fall through into FP coprocessor exceptions
-#endif /* FPSP */
+#endif
 /*
  * Handles all other FP coprocessor exceptions.
  * Note that since some FP exceptions generate mid-instruction frames
  * and may cause signal delivery, we need to test for stack adjustment
  * after the trap call.
  */
+	.globl	_fpfault
 _fpfault:
 #ifdef FPCOPROC
 	clrl	sp@-		| stack adjust count
@@ -604,86 +568,7 @@ _lev7intr:
  */
 	.comm	_ssir,1
 	.globl	_astpending
-#ifdef old_rei 
-rei:
-#ifdef DEBUG
-	tstl	_panicstr		| have we paniced?
-	jne	Ldorte			| yes, do not make matters worse
-#endif
-	tstl	_astpending		| AST pending?
-	jeq	Lchksir			| no, go check for SIR
-	btst	#5,sp@			| yes, are we returning to user mode?
-	jne	Lchksir			| no, go check for SIR
-	clrl	sp@-			| pad SR to longword
-	moveml	#0xFFFF,sp@-		| save all registers
-	movl	usp,a1			| including
-	movl	a1,sp@(FR_SP)		|    the users SP
-	clrl	sp@-			| VA == none
-	clrl	sp@-			| code == none
-	movl	#T_ASTFLT,sp@-		| type == async system trap
-	jbsr	_trap			| go handle it
-	lea	sp@(12),sp		| pop value args
-	movl	sp@(FR_SP),a0		| restore
-	movl	a0,usp			|   user SP
-	moveml	sp@+,#0x7FFF		| and all remaining registers
-	addql	#4,sp			| toss SSP
-	tstl	sp@+			| do we need to clean up stack?
-	jeq	Ldorte			| no, just continue
-	btst	#7,sp@(6)		| type 9/10/11 frame?
-	jeq	Ldorte			| no, nothing to do
-	btst	#5,sp@(6)		| type 9?
-	jne	Last1			| no, skip
-	movw	sp@,sp@(12)		| yes, push down SR
-	movl	sp@(2),sp@(14)		| and PC
-	clrw	sp@(18)			| and mark as type 0 frame
-	lea	sp@(12),sp		| clean the excess
-	jra	Ldorte			| all done
-Last1:
-	btst	#4,sp@(6)		| type 10?
-	jne	Last2			| no, skip
-	movw	sp@,sp@(24)		| yes, push down SR
-	movl	sp@(2),sp@(26)		| and PC
-	clrw	sp@(30)			| and mark as type 0 frame
-	lea	sp@(24),sp		| clean the excess
-	jra	Ldorte			| all done
-Last2:
-	movw	sp@,sp@(84)		| type 11, push down SR
-	movl	sp@(2),sp@(86)		| and PC
-	clrw	sp@(90)			| and mark as type 0 frame
-	lea	sp@(84),sp		| clean the excess
-	jra	Ldorte			| all done
-Lchksir:
-	tstb	_ssir			| SIR pending?
-	jeq	Ldorte			| no, all done
-	movl	d0,sp@-			| need a scratch register
-	movw	sp@(4),d0		| get SR
-	andw	#PSL_IPL7,d0		| mask all but IPL
-	jne	Lnosir			| came from interrupt, no can do
-	movl	sp@+,d0			| restore scratch register
-Lgotsir:
-	movw	#SPL1,sr		| prevent others from servicing int
-	tstb	_ssir			| too late?
-	jeq	Ldorte			| yes, oh well...
-	clrl	sp@-			| pad SR to longword
-	moveml	#0xFFFF,sp@-		| save all registers
-	movl	usp,a1			| including
-	movl	a1,sp@(60)		|    the users SP
-	clrl	sp@-			| VA == none
-	clrl	sp@-			| code == none
-	movl	#T_SSIR,sp@-		| type == software interrupt
-	jbsr	_trap			| go handle it
-	lea	sp@(12),sp		| pop value args
-	movl	sp@(FR_SP),a0		| restore
-	movl	a0,usp			|   user SP
-	moveml	sp@+,#0x7FFF		| and all remaining registers
-	addql	#8,sp			| pop SSP and stkadj
-	rte
-Lnosir:
-	movl	sp@+,d0			| restore scratch register
-Ldorte:
-	rte				| real return
-#endif /* old_rei
-/* #ifdef new_rei */
+	.globl	rei
 rei:
 #ifdef DEBUG
 	tstl	_panicstr		| have we paniced?
@@ -752,7 +637,7 @@ Lnosir:
 	movl	sp@+,d0			| restore scratch register
 Ldorte:
 	rte				| real return
-/* #endif */
+
 /*
  * Kernel access to the current processes kernel stack is via a fixed
  * virtual address.  It is at the same address as in the users VA space.
@@ -827,17 +712,6 @@ Lsetcpu040:
 	jeq	Lstartnot040		| it's not 68040
 	movl	#-2,_mmutype		| same as hp300 for compat
 	.word	0xf4f8		| cpusha bc - push and invalidate caches
-#ifdef FPSP
-	lea	Lvectab+0xc0,a0		| set up 68040 floating point
-	movl	#fpsp_bsun,a0@+		|  exception vectors
-	movl	#real_inex,a0@+
-	movl	#real_dz,a0@+
-	movl	#fpsp_unfl,a0@+
-	movl	#fpsp_operr,a0@+
-	movl	#fpsp_ovfl,a0@+
-	movl	#fpsp_snan,a0@+
-	movl	#fpsp_unsupp,a0@+
-#endif
 	movl	#CACHE40_OFF,d0		| 68040 cache disable
 Lstartnot040:
 	movc	d0,cacr			| clear and disable on-chip cache(s)
