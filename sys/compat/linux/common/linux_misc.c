@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.59 1999/07/15 23:18:41 thorpej Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.60 1999/10/04 16:55:56 tron Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -917,51 +917,6 @@ linux_sys___sysctl(p, v, retval)
 	SCARG(&bsa, newlen) = ls.newlen;
 
 	return sys___sysctl(p, &bsa, retval);
-}
-
-int
-linux_sys_clone(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_clone_args /* {
-		syscallarg(int) flags;
-		syscallarg(void *) stack;
-	} */ *uap = v;
-	int flags, sig;
-
-	/*
-	 * We don't support the Linux CLONE_PID or CLONE_PTRACE flags.
-	 */
-	if (SCARG(uap, flags) & (LINUX_CLONE_PID|LINUX_CLONE_PTRACE))
-		return (EINVAL);
-
-	flags = 0;
-
-	if (SCARG(uap, flags) & LINUX_CLONE_VM)
-		flags |= FORK_SHAREVM;
-	if (SCARG(uap, flags) & LINUX_CLONE_FS)
-		flags |= FORK_SHARECWD;
-	if (SCARG(uap, flags) & LINUX_CLONE_FILES)
-		flags |= FORK_SHAREFILES;
-	if (SCARG(uap, flags) & LINUX_CLONE_SIGHAND)
-		flags |= FORK_SHARESIGS;
-	if (SCARG(uap, flags) & LINUX_CLONE_VFORK)
-		flags |= FORK_PPWAIT;
-
-	sig = SCARG(uap, flags) & LINUX_CLONE_CSIGNAL;
-	if (sig < 0 || sig >= LINUX_NSIG)
-		return (EINVAL);
-	sig = linux_to_native_sig[sig];
-
-	/*
-	 * Note that Linux does not provide a portable way of specifying
-	 * the stack area; the caller must know if the stack grows up
-	 * or down.  So, we pass a stack size of 0, so that the code
-	 * that makes this adjustment is a noop.
-	 */
-	return (fork1(p, flags, sig, SCARG(uap, stack), 0, retval, NULL));
 }
 
 int
