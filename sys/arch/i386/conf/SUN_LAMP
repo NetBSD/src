@@ -1,4 +1,4 @@
-#	$NetBSD: SUN_LAMP,v 1.101 1998/06/26 01:54:00 lukem Exp $
+#	$NetBSD: SUN_LAMP,v 1.102 1998/08/31 17:58:56 thorpej Exp $
 #
 #	SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
@@ -30,8 +30,6 @@ options 	RTC_OFFSET=480	# hardware clock is this many mins. west of GMT
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 options 	DIAGNOSTIC	# internal consistency checks
 options 	KTRACE		# system call tracing, a la ktrace(1)
-
-#options 	UVM		# Use UVM instead of Mach VM.
 
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
