@@ -1,4 +1,4 @@
-/*	$NetBSD: lk201.h,v 1.6 1999/03/10 13:02:43 kleink Exp $	*/
+/*	$NetBSD: lk201.h,v 1.7 1999/03/19 18:34:01 ad Exp $	*/
 
 
 /*
@@ -69,6 +69,7 @@
 #define	KEY_R_SHIFT	0xab
 #define KEY_SHIFT	0xae
 #define KEY_CONTROL	0xaf
+#define KEY_CAPSLOCK	0xb0
 #define	KEY_R_ALT	0xb2
 #define KEY_UP		0xb3
 #define KEY_REPEAT	0xb4
