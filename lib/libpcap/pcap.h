@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap.h,v 1.6 1997/10/03 15:53:17 christos Exp $	*/
+/*	$NetBSD: pcap.h,v 1.7 1998/07/26 14:49:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -113,7 +113,8 @@ const u_char*
 int	pcap_stats(pcap_t *, struct pcap_stat *);
 int	pcap_setfilter(pcap_t *, struct bpf_program *);
 void	pcap_perror(pcap_t *, char *);
-char	*pcap_strerror(int);
+const char*
+	pcap_strerror(int);
 char	*pcap_geterr(pcap_t *);
 int	pcap_compile(pcap_t *, struct bpf_program *, char *, int,
 	    bpf_u_int32);

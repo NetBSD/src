@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.11 1997/07/04 21:23:58 christos Exp $	*/
+/*	$NetBSD: exec.c,v 1.12 1998/07/26 14:53:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.3 (Berkeley) 5/23/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.11 1997/07/04 21:23:58 christos Exp $");
+__RCSID("$NetBSD: exec.c,v 1.12 1998/07/26 14:53:46 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ extern char **environ;
  * is not in the last component of the search path, so we must
  * go on after first detecting the error.
  */
-static char *exerr;		/* Execution error message */
+static const char *exerr;	/* Execution error message */
 static Char *expath;		/* Path for exerr */
 
 /*
