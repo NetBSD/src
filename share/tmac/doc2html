@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.46 2005/02/07 01:11:14 wiz Exp $
+.\" $NetBSD: doc2html,v 1.47 2005/02/07 01:13:18 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -750,6 +750,7 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 .DEBUG .tm .Fx \\$*
 .	as doc-pcresult FreeBSD
 .	recurse \\$@
+.	pc-fin
 ..
 .de Nm
 .	ds Nm-result \\*[Nm-save]
