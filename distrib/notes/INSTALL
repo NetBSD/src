@@ -1,4 +1,4 @@
-	$NetBSD: INSTALL,v 1.68 1998/12/08 08:48:34 cgd Exp $
+	$NetBSD: INSTALL,v 1.69 1998/12/08 22:23:43 minoura Exp $
 #define	_FOR_RELEASE 0			/* 0 == snapshot; 1 == release */
 INSTALLATION NOTES for NetBSD/_MACH _VER
 
@@ -627,6 +627,7 @@ Ross Harvey		<ross@NetBSD.ORG>		(alpha)
 Chris Hopps		<chopps@NetBSD.ORG>		(amiga)
 Eduardo Horvath		<eeh@NetBSD.ORG>		(sparc64)
 Paul Kranenburg		<pk@NetBSD.ORG>			(sparc)
+Ted Lemon		<mellon@NetBSD.ORG>		(pmax)
 Anders Magnusson	<ragge@NetBSD.ORG>		(vax)
 Tsubai Masanari		<tsubai@NetBSD.ORG>		(newsmips)
 Phil Nelson		<phil@NetBSD.ORG>		(pc532)
@@ -652,6 +653,8 @@ Lennart Augustsson	<augustss@NetBSD.ORG>
 Christoph Badura	<bad@NetBSD.ORG>
 Manuel Bouyer		<bouyer@NetBSD.ORG>
 Robert V. Baron		<rvb@NetBSD.ORG>
+John Birrell		<jb@NetBSD.ORG>
+Manuel Bouyer		<bouyer@NetBSD.ORG>
 John Brezak		<brezak@NetBSD.ORG>
 Allen Briggs		<briggs@NetBSD.ORG>
 Aaron Brown		<abrown@NetBSD.ORG>
@@ -678,6 +681,7 @@ Michael Graff		<explorer@NetBSD.ORG>
 Brad Grantham		<grantham@tenon.com>
 Matthew Green		<mrg@NetBSD.ORG>
 Juergen Hannken-Illjes	<hannken@NetBSD.ORG>
+Charles M. Hannum	<mycroft@NetBSD.ORG>
 Eric Haszlakiewicz	<erh@NetBSD.ORG>
 Michael L. Hitch	<osymh@NetBSD.ORG>
 Ken Hornstein		<kenh@NetBSD.ORG>
@@ -700,6 +704,7 @@ Minoura Makoto		<minoura@NetBSD.ORG>
 der Mouse		<mouse@NetBSD.ORG>
 Tohru Nishimura		<nisimura@NetBSD.ORG>
 Greg Oster		<oster@NetBSD.ORG>
+Herb Peyerl		<hpeyerl@NetBSD.ORG>
 Matthias Pfaller	<matthias@NetBSD.ORG>
 Dante Profeta		<dante@NetBSD.ORG>
 Chris Provenzano	<proven@NetBSD.ORG>
@@ -708,6 +713,7 @@ Darren Reed		<darrenr@NetBSD.ORG>
 Tim Rightnour		<garbled@NetBSD.ORG>
 Heiko W. Rupp		<hwr@NetBSD.ORG>
 SAITOH Masanobu		<msaitoh@NetBSD.ORG>
+Kazuki Sakamoto		<sakamoto@NetBSD.ORG>
 Curt Sampson		<cjs@NetBSD.ORG>
 Wilfredo Sanchez	<wsanchez@NetBSD.ORG>
 Ty Sarna		<tsarna@NetBSD.ORG>
@@ -717,6 +723,7 @@ Tim Shepard		<shep@NetBSD.ORG>
 Chuck Silvers		<chs@NetBSD.ORG>
 Thor Lancelot Simon	<tls@NetBSD.ORG>
 Noriyuki Soda		<soda@NetBSD.ORG>
+Wolfgang Solfrank	<ws@NetBSD.ORG>
 Bill Sommerfeld		<sommerfeld@NetBSD.ORG>
 Ignatios Souvatzis	<is@NetBSD.ORG>
 Bill Studenmund		<wrstuden@NetBSD.ORG>
