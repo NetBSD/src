@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.20 1998/06/25 23:58:06 thorpej Exp $        */
+/*	$NetBSD: pmap.c,v 1.21 1998/08/16 15:33:48 scw Exp $        */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -115,6 +115,7 @@
 #endif
 
 #include <machine/cpu.h>
+#include <m68k/cacheops.h>
 
 #ifdef PMAPSTATS
 struct {
@@ -196,8 +197,6 @@ int pmapvacflush = 0;
 int dowriteback = 1;	/* 68040: enable writeback caching */
 int dokwriteback = 1;	/* 68040: enable writeback caching of kernel AS */
 #endif
-
-extern vm_offset_t pager_sva, pager_eva;
 #endif
 
 /*
@@ -1708,7 +1707,9 @@ void pmap_update()
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_update()\n");
 #endif
+#if (defined(M68020)||defined(M68040)||defined(M68060))
 	TBIA();
+#endif
 }
 
 /*

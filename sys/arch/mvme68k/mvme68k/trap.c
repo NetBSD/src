@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.21 1998/07/04 22:18:33 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.22 1998/08/16 15:33:48 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -82,6 +82,8 @@
 #include <compat/sunos/sunos_syscall.h>
 extern struct emul emul_sunos;
 #endif
+
+#include <m68k/cacheops.h>
 
 int	astpending;
 

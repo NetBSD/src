@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.37 1998/07/04 22:18:32 jonathan Exp $	*/
+/*	$NetBSD: locore.s,v 1.38 1998/08/16 15:33:48 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -401,8 +401,10 @@ Lenab1:
 	jbsr	_m68881_restore		| restore it (does not kill a1)
 	addql	#4,sp
 Lenab2:
+#if (defined(M68020)||defined(M68040)||defined(M68060))
 /* flush TLB and turn on caches */
 	jbsr	_TBIA			| invalidate TLB
+#endif
 	cmpl	#MMU_68040,_mmutype	| 68040?
 	jeq	Lnocache0		| yes, cache already on
 	movl	#CACHE_ON,d0
@@ -769,42 +771,12 @@ _trace:
 	moveq	#T_TRACE,d0
 	jra	fault
 
+
 /*
- * The sigreturn() syscall comes here.  It requires special handling
- * because we must open a hole in the stack to fill in the (possibly much
- * larger) original stack frame.
+ * Use common m68k sigreturn routine.
  */
-sigreturn:
-	lea	sp@(-84),sp		| leave enough space for largest frame
-	movl	sp@(84),sp@		| move up current 8 byte frame
-	movl	sp@(88),sp@(4)
-	movl	#84,sp@-		| default: adjust by 84 bytes
-	moveml	#0xFFFF,sp@-		| save user registers
-	movl	usp,a0			| save the user SP
-	movl	a0,sp@(FR_SP)		|   in the savearea
-	movl	#SYS_sigreturn,sp@-	| push syscall number
-	jbsr	_syscall		| handle it
-	addql	#4,sp			| pop syscall#
-	movl	sp@(FR_SP),a0		| grab and restore
-	movl	a0,usp			|   user SP
-	lea	sp@(FR_HW),a1		| pointer to HW frame
-	movw	sp@(FR_ADJ),d0		| do we need to adjust the stack?
-	jeq	Lsigr1			| no, just continue
-	moveq	#92,d1			| total size
-	subw	d0,d1			|  - hole size = frame size
-	lea	a1@(92),a0		| destination
-	addw	d1,a1			| source
-	lsrw	#1,d1			| convert to word count
-	subqw	#1,d1			| minus 1 for dbf
-Lsigrlp:
-	movw	a1@-,a0@-		| copy a word
-	dbf	d1,Lsigrlp		| continue
-	movl	a0,a1			| new HW frame base
-Lsigr1:
-	movl	a1,sp@(FR_SP)		| new SP value
-	moveml	sp@+,#0x7FFF		| restore user registers
-	movl	sp@,sp			| and our SP
-	jra	rei			| all done
+#include <m68k/m68k/sigreturn.s>
+
 
 /*
  * Interrupt handlers.
@@ -1261,197 +1233,6 @@ Lsldone:
 	rts
 #endif
 
-/*
- * Invalidate entire TLB.
- */
-ENTRY(TBIA)
-__TBIA:
-#if defined(M68040)
-	cmpl	#MMU_68040,_mmutype	| 68040?
-	jne	Lmotommu3		| no, skip
-	.word	0xf518			| yes, pflusha
-	rts
-Lmotommu3:
-#endif
-	tstl	_mmutype		| what mmu?
-	jpl	Lmc68851a		| 68851 implies no d-cache
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			| invalidate on-chip d-cache
-Lmc68851a:
-	rts
-
-/*
- * Invalidate any TLB entry for given VA (TB Invalidate Single)
- */
-ENTRY(TBIS)
-#ifdef DEBUG
-	tstl	fulltflush		| being conservative?
-	jne	__TBIA			| yes, flush entire TLB
-#endif
-#if defined(M68040)
-	cmpl	#MMU_68040,_mmutype	| 68040?
-	jne	Lmotommu4		| no, skip
-	movl	sp@(4),a0
-	movc	dfc,d1
-	moveq	#1,d0			| user space
-	movc	d0,dfc
-	.word	0xf508			| pflush a0@
-	moveq	#5,d0			| super space
-	movc	d0,dfc
-	.word	0xf508			| pflush a0@
-	movc	d1,dfc
-	rts
-Lmotommu4:
-#endif
-	tstl	_mmutype		| is 68851?
-	jpl	Lmc68851b		| 
-	movl	sp@(4),a0		| get addr to flush
-	pflush	#0,#0,a0@		| flush address from both sides
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			| invalidate on-chip data cache
-	rts
-Lmc68851b:
-	pflushs	#0,#0,a0@		| flush address from both sides
-	rts
-
-/*
- * Invalidate supervisor side of TLB
- */
-ENTRY(TBIAS)
-#ifdef DEBUG
-	tstl	fulltflush		| being conservative?
-	jne	__TBIA			| yes, flush everything
-#endif
-#if defined(M68040)
-	cmpl    #MMU_68040,_mmutype     | 68040?
-	jne     Lmotommu5               | no, skip
-	.word   0xf518                  | yes, pflusha (for now) XXX
-	rts
-Lmotommu5:
-#endif
-	pflush	#4,#4			| flush supervisor TLB entries
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			| invalidate on-chip d-cache
-	rts
-
-/*
- * Invalidate user side of TLB
- */
-ENTRY(TBIAU)
-#ifdef DEBUG
-	tstl	fulltflush		| being conservative?
-	jne	__TBIA			| yes, flush everything
-#endif
-#if defined(M68040)
-	cmpl    #MMU_68040,_mmutype     | 68040?
-	jne     Lmotommu6               | no, skip
-	.word   0xf518                  | yes, pflusha (for now) XXX
-	rts
-Lmotommu6:
-#endif
-	pflush	#0,#4			| flush user TLB entries
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			| invalidate on-chip d-cache
-	rts
-
-/*
- * Invalidate instruction cache
- */
-ENTRY(ICIA)
-#if defined(M68040)
-ENTRY(ICPA)
-	cmpl    #MMU_68040,_mmutype     | 68040
-	jne     Lmotommu7               | no, skip
-	.word   0xf498                  | cinva ic
-	rts
-Lmotommu7:
-#endif
-	movl	#IC_CLEAR,d0
-	movc	d0,cacr			| invalidate i-cache
-	rts
-
-/*
- * Invalidate data cache.
- * NOTE: we do not flush 68030 on-chip cache as there are no aliasing
- * problems with DC_WA.  The only cases we have to worry about are context
- * switch and TLB changes, both of which are handled "in-line" in resume
- * and TBI*.
- */
-ENTRY(DCIA)
-__DCIA:
-#if defined(M68040)
-	cmpl    #MMU_68040,_mmutype     | 68040
-	jne     Lmotommu8               | no, skip
-	/* XXX implement */
-	rts
-Lmotommu8:
-#endif
-	rts
-
-ENTRY(DCIS)
-__DCIS:
-#if defined(M68040)
-	cmpl    #MMU_68040,_mmutype     | 68040
-	jne     Lmotommu9               | no, skip
-	/* XXX implement */
-	rts
-Lmotommu9:
-#endif
-	rts
-
-ENTRY(DCIU)
-__DCIU:
-#if defined(M68040)
-	cmpl    #MMU_68040,_mmutype     | 68040
-	jne     LmotommuA               | no, skip
-	/* XXX implement */
-	rts
-LmotommuA:
-#endif
-	rts
-
-#if defined(M68040)
-ENTRY(ICPL)
-	movl    sp@(4),a0               | address
-	.word   0xf488                  | cinvl ic,a0@
-	rts
-ENTRY(ICPP)
-	movl    sp@(4),a0               | address
-	.word   0xf490                  | cinvp ic,a0@
-	rts
-ENTRY(DCPL)
-	movl    sp@(4),a0               | address
-	.word   0xf448                  | cinvl dc,a0@
-	rts
-ENTRY(DCPP)
-	movl    sp@(4),a0               | address
-	.word   0xf450                  | cinvp dc,a0@
-	rts
-ENTRY(DCPA)
-	.word   0xf458                  | cinva dc
-	rts
-ENTRY(DCFL)
-	movl    sp@(4),a0               | address
-	.word   0xf468                  | cpushl dc,a0@
-	rts
-ENTRY(DCFP)
-	movl    sp@(4),a0               | address
-	.word   0xf470                  | cpushp dc,a0@
-	rts
-#endif
-
-ENTRY(PCIA)
-#if defined(M68040)
-ENTRY(DCFA)
-	cmpl    #MMU_68040,_mmutype     | 68040
-	jne     LmotommuB               | no, skip
-	.word   0xf478                  | cpusha dc
-	rts
-LmotommuB:
-#endif
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			| invalidate on-chip d-cache
-	rts
 
 ENTRY(ecacheon)
 	rts
