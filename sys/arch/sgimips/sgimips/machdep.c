@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57 2003/09/28 13:02:18 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.58 2003/10/04 09:19:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57 2003/09/28 13:02:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58 2003/10/04 09:19:23 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -109,7 +109,7 @@ const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
 	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
- 	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
+	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
 };
 
 /* Our exported CPU info; we can have only one. */
@@ -262,7 +262,7 @@ mach_init(argc, argv, magic, btinfo)
 	if (cpufreq == 0)
 		panic("no $cpufreq");
 
-	/* 
+	/*
 	 * Note initial estimate of CPU speed... If we care enough, we'll
 	 * use the RTC to get a better estimate later.
 	 */
@@ -325,7 +325,7 @@ mach_init(argc, argv, magic, btinfo)
 		if (argv[i][0] == '-') {
 			rv = 0;
 			BOOT_FLAG(argv[i][1], rv);
-			
+
 			if (rv == 0) {
 				printf("Unexpected option '%s' ignored", argv[i]);
 			} else {
@@ -964,7 +964,7 @@ void mips_machdep_cache_config(void)
 	{
 #if 1
 		/* L2 cache does not work on IP32 (yet) */
-        	mips_sdcache_size = 0;
+		mips_sdcache_size = 0;
 		mips_sdcache_line_size = 0;
 
 		cpu_config = mips3_cp0_config_read();
@@ -993,22 +993,22 @@ void mips_machdep_cache_config(void)
 void
 mips_machdep_find_l2cache(struct arcbios_component *comp, struct arcbios_treewalk_context *atc)
 {
-        struct device *self = atc->atc_cookie;
+	struct device *self = atc->atc_cookie;
 
-        if (comp->Class != COMPONENT_CLASS_CacheClass)
-                return;
+	if (comp->Class != COMPONENT_CLASS_CacheClass)
+		return;
 
-        switch (comp->Type) {
-        case COMPONENT_TYPE_SecondaryICache:
-                panic("%s: split L2 cache", self->dv_xname);
-        case COMPONENT_TYPE_SecondaryDCache:
-        case COMPONENT_TYPE_SecondaryCache:
-                mips_sdcache_size = COMPONENT_KEY_Cache_CacheSize(comp->Key);
-                mips_sdcache_line_size =
-                    COMPONENT_KEY_Cache_LineSize(comp->Key);
-                /* XXX */
-                mips_sdcache_ways = 1;
-                break;
-        }
+	switch (comp->Type) {
+	case COMPONENT_TYPE_SecondaryICache:
+		panic("%s: split L2 cache", self->dv_xname);
+	case COMPONENT_TYPE_SecondaryDCache:
+	case COMPONENT_TYPE_SecondaryCache:
+		mips_sdcache_size = COMPONENT_KEY_Cache_CacheSize(comp->Key);
+		mips_sdcache_line_size =
+		    COMPONENT_KEY_Cache_LineSize(comp->Key);
+		/* XXX */
+		mips_sdcache_ways = 1;
+		break;
+	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip22.c,v 1.15 2003/07/15 03:35:55 lukem Exp $	*/
+/*	$NetBSD: ip22.c,v 1.16 2003/10/04 09:19:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip22.c,v 1.15 2003/07/15 03:35:55 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip22.c,v 1.16 2003/10/04 09:19:23 tsutsui Exp $");
 
 #include "opt_cputype.h"
 #include "opt_machtypes.h"
@@ -188,7 +188,7 @@ ip22_init(void)
 	evcnt_attach_static(&mips_int5_evcnt);
 	evcnt_attach_static(&mips_spurint_evcnt);
 
-	printf("CPU clock speed = %lu.%02luMhz\n", 
+	printf("CPU clock speed = %lu.%02luMhz\n",
 				curcpu()->ci_cpu_freq / 1000000,
 			    	(curcpu()->ci_cpu_freq / 10000) % 100);
 }
@@ -224,8 +224,8 @@ ip22_intr(status, cause, pc, ipending)
 		mips3_cp0_compare_write(next_clk_intr);
 		newcnt = mips3_cp0_count_read();
 
-		/* 
-		 * Missed one or more clock interrupts, so let's start 
+		/*
+		 * Missed one or more clock interrupts, so let's start
 		 * counting again from the current value.
 		 */
 		if ((next_clk_intr - newcnt) & 0x80000000) {
@@ -265,7 +265,7 @@ ip22_intr(status, cause, pc, ipending)
 		cause &= ~MIPS_INT_MASK_4;
 	}
 
-	if (cause & status & MIPS_HARD_INT_MASK) 
+	if (cause & status & MIPS_HARD_INT_MASK)
 		mips_spurint_evcnt.ev_count++;
 }
 
@@ -370,7 +370,7 @@ ip22_local1_intr()
 		}
 	}
 
-    return ret;
+	return ret;
 }
 
 void

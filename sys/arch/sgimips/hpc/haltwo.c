@@ -1,4 +1,4 @@
-/* $NetBSD: haltwo.c,v 1.1 2003/09/25 16:35:50 lonewolf Exp $ */
+/* $NetBSD: haltwo.c,v 1.2 2003/10/04 09:19:23 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.1 2003/09/25 16:35:50 lonewolf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.2 2003/10/04 09:19:23 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,9 +108,9 @@ static struct audio_hw_if haltwo_hw_if = {
 };
 
 static const struct audio_device haltwo_device = {
-  "HAL2",
-  "",
-  "haltwo"
+	"HAL2",
+	"",
+	"haltwo"
 };
 
 static int  haltwo_match(struct device *, struct cfdata *, void *);
@@ -130,6 +130,7 @@ static void
 haltwo_write_indirect(struct haltwo_softc *sc, uint32_t ireg, uint16_t low,
 		uint16_t high)
 {
+
 	haltwo_write(sc, ctl, HAL2_REG_CTL_IDR0, low);
 	haltwo_write(sc, ctl, HAL2_REG_CTL_IDR1, high);
 	haltwo_write(sc, ctl, HAL2_REG_CTL_IDR2, 0);
@@ -144,6 +145,7 @@ static void
 haltwo_read_indirect(struct haltwo_softc *sc, uint32_t ireg, uint16_t *low,
 		uint16_t *high)
 {
+
 	haltwo_write(sc, ctl, HAL2_REG_CTL_IAR,
 	    ireg | HAL2_IAR_READ);
 
@@ -152,7 +154,7 @@ haltwo_read_indirect(struct haltwo_softc *sc, uint32_t ireg, uint16_t *low,
 
 	if (low)
 		*low = haltwo_read(sc, ctl, HAL2_REG_CTL_IDR0);
-	
+
 	if (high)
 		*high = haltwo_read(sc, ctl, HAL2_REG_CTL_IDR1);
 }
@@ -212,7 +214,7 @@ haltwo_setup_dma(struct haltwo_softc *sc, struct haltwo_codec *codec,
 	bus_dma_segment_t *segp;
 	struct hpc_dma_desc *descp;
 	int next_intr = blksize;
-  
+
 	KASSERT(len % blksize == 0);
 
 	codec->intr = intr;
@@ -233,8 +235,7 @@ haltwo_setup_dma(struct haltwo_softc *sc, struct haltwo_codec *codec,
 			/* Generate intr after this DMA buffer */
 			descp->hdd_ctl |= HDD_CTL_INTR;
 			next_intr = blksize;
-		}
-		else
+		} else
 			next_intr -= segp->ds_len;
 
 		if (i < dmabuf->dma_map->dm_nsegs - 1)
@@ -244,8 +245,8 @@ haltwo_setup_dma(struct haltwo_softc *sc, struct haltwo_codec *codec,
 			descp->hdd_descptr = codec->dma_seg.ds_addr;
 
 		DPRINTF(("haltwo_setup_dma: hdd_bufptr = %x hdd_ctl = %x"
-		     " hdd_descptr = %x\n", descp->hdd_bufptr, descp->hdd_ctl,
-		     descp->hdd_descptr));
+		    " hdd_descptr = %x\n", descp->hdd_bufptr, descp->hdd_ctl,
+		    descp->hdd_descptr));
 
 		segp++;
 		descp++;
@@ -272,7 +273,7 @@ haltwo_attach(struct device *parent, struct device *self, void *aux)
 	struct haltwo_softc *sc = (void *)self;
 	struct hpc_attach_args *haa = aux;
 	uint32_t rev;
-	
+
 	sc->sc_st = haa->ha_st;
 	sc->sc_dma_tag = haa->ha_dmat;
 
@@ -351,12 +352,11 @@ haltwo_intr(void *v)
 
 	if (bus_space_read_4(sc->sc_st, sc->sc_dma_sh, HPC_PBUS_CH0_CTL)
 	    & HPC_PBUS_DMACTL_IRQ) {
-	  sc->sc_dac.intr(sc->sc_dac.intr_arg);
+		sc->sc_dac.intr(sc->sc_dac.intr_arg);
 
-	  ret = 1;
-	}
-	else
-	  DPRINTF(("haltwo_intr: Huh?\n"));
+		ret = 1;
+	} else
+		DPRINTF(("haltwo_intr: Huh?\n"));
 
 	return (ret);
 }
@@ -364,8 +364,9 @@ haltwo_intr(void *v)
 static int
 haltwo_open(void *v, int flags)
 {
+
 	DPRINTF(("haltwo_open flags = %x\n", flags));
-	
+
 	return (0);
 }
 
@@ -377,6 +378,7 @@ haltwo_close(void *v)
 static int
 haltwo_query_encoding(void *v, struct audio_encoding *e)
 {
+
 	switch (e->index) {
 	case 0:
 		strcpy(e->name, AudioEslinear_le);
@@ -384,7 +386,7 @@ haltwo_query_encoding(void *v, struct audio_encoding *e)
 		e->precision = 16;
 		e->flags = 0;
 		break;
-	
+
 	case 1:
 		strcpy(e->name, AudioEslinear_be);
 		e->encoding = AUDIO_ENCODING_SLINEAR_BE;
@@ -398,11 +400,11 @@ haltwo_query_encoding(void *v, struct audio_encoding *e)
 		e->precision = 8;
 		e->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
-	
+
 	default:
 		return (EINVAL);
 	}
-	
+
 	return (0);
 }
 
@@ -422,11 +424,11 @@ haltwo_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 	play->sw_code = NULL;
 	play->factor = 1;
 	play->factor_denom = 1;
-	
+
 	switch (play->encoding) {
 	case AUDIO_ENCODING_ULAW:
 		if (play->precision != 8)
-		  return (EINVAL);
+			return (EINVAL);
 
 		play->sw_code = mulaw_to_slinear16_le;
 		play->factor = 2;
@@ -454,8 +456,8 @@ haltwo_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 	play->hw_sample_rate = master * inc / mod;
 
 	DPRINTF(("haltwo_set_params: master = %d inc = %d mod = %d"
-	     " hw_sample_rate = %ld\n", master, inc, mod,
-	     play->hw_sample_rate));
+	    " hw_sample_rate = %ld\n", master, inc, mod,
+	    play->hw_sample_rate));
 
 	/* Setup samplerate to HW */
 	haltwo_write_indirect(sc, HAL2_IREG_BRES1_C1,
@@ -479,7 +481,7 @@ haltwo_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 	    (play->hw_channels << HAL2_C1_DATAT_SHIFT), 0);
 
 	DPRINTF(("haltwo_set_params: hw_encoding = %d hw_channels = %d\n",
-	      play->hw_encoding, play->hw_channels));
+	    play->hw_encoding, play->hw_channels));
 
 	return (0);
 }
@@ -487,6 +489,7 @@ haltwo_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 static int
 haltwo_round_blocksize(void *v,int blocksize)
 {
+
 	/* XXX Make this smarter and support DMA descriptor chaining XXX */
 	/* XXX Rounding to nearest PAGE_SIZE might work? XXX */
 	return PAGE_SIZE;
@@ -507,12 +510,14 @@ haltwo_halt_output(void *v)
 static int
 haltwo_halt_input(void *v)
 {
+
 	return (ENXIO);
 }
 
 static int
 haltwo_getdev(void *v, struct audio_device *dev)
 {
+
 	*dev = haltwo_device;
 
 	return (0);
@@ -523,7 +528,7 @@ haltwo_set_port(void *v, mixer_ctrl_t *mc)
 {
 	struct haltwo_softc *sc = v;
 	int lval, rval;
-  
+
 	if (mc->type != AUDIO_MIXER_VALUE)
 		return (EINVAL);
 
@@ -558,7 +563,7 @@ haltwo_get_port(void *v, mixer_ctrl_t *mc)
 {
 	struct haltwo_softc *sc = v;
 	int l, r;
-  
+
 	switch (mc->dev) {
 	case HALTWO_MASTER_VOL:
 		l = sc->sc_vol_left;
@@ -583,6 +588,7 @@ haltwo_get_port(void *v, mixer_ctrl_t *mc)
 static int
 haltwo_query_devinfo(void *v, mixer_devinfo_t *dev)
 {
+
 	switch (dev->index) {
 	/* Mixer values */
 	case HALTWO_MASTER_VOL:
@@ -697,6 +703,7 @@ haltwo_free(void *v, void *addr, struct malloc_type *type)
 static int
 haltwo_get_props(void *v)
 {
+
 	return (0);
 }
 
@@ -711,7 +718,7 @@ haltwo_trigger_output(void *v, void *start, void *end, int blksize,
 	unsigned int fifobeg, fifoend, highwater;
 
 	DPRINTF(("haltwo_trigger_output start = %p end = %p blksize = %d"
-	     " param = %p\n", start, end, blksize, param));
+	    " param = %p\n", start, end, blksize, param));
 
 	for (p = sc->sc_dma_bufs; p != NULL; p = p->next)
 		if (p->kern_addr == start)
@@ -719,7 +726,7 @@ haltwo_trigger_output(void *v, void *start, void *end, int blksize,
 
 	if (p == NULL) {
 		printf("haltwo_trigger_output: buffer not in list\n");
-		
+
 		return (EINVAL);
 	}
 
@@ -740,8 +747,8 @@ haltwo_trigger_output(void *v, void *start, void *end, int blksize,
 	fifoend = (param->hw_channels * 8) >> 3;
 
 	DPRINTF(("haltwo_trigger_output: hw_channels = %d highwater = %d"
-	     " fifobeg = %d fifoend = %d\n", param->hw_channels, highwater,
-	     fifobeg, fifoend));
+	    " fifobeg = %d fifoend = %d\n", param->hw_channels, highwater,
+	    fifobeg, fifoend));
 
 	ctrl = HPC_PBUS_DMACTL_RT
 	    | HPC_PBUS_DMACTL_ACT_LD
@@ -762,7 +769,7 @@ haltwo_trigger_output(void *v, void *start, void *end, int blksize,
 	haltwo_read_indirect(sc, HAL2_IREG_DMA_PORT_EN, &tmp, NULL);
 	haltwo_write_indirect(sc, HAL2_IREG_DMA_PORT_EN,
 	    tmp | HAL2_DMA_PORT_EN_CODECTX, 0);
-	
+
 	return (0);
 }
 
@@ -772,17 +779,17 @@ haltwo_trigger_input(void *v, void *start, void *end, int blksize,
 {
 	struct haltwo_softc *sc = v;
 	struct haltwo_dmabuf *p;
-	
+
 	DPRINTF(("haltwo_trigger_input start = %p end = %p blksize = %d\n",
-	      start, end, blksize));
-	
+	    start, end, blksize));
+
 	for (p = sc->sc_dma_bufs; p != NULL; p = p->next)
 		if (p->kern_addr == start)
 			break;
 
 	if (p == NULL) {
 		printf("haltwo_trigger_input: buffer not in list\n");
-		
+
 		return (EINVAL);
 	}
 
@@ -790,6 +797,6 @@ haltwo_trigger_input(void *v, void *start, void *end, int blksize,
 	haltwo_setup_dma(sc, &sc->sc_adc, p, (char *)end - (char *)start,
 	    blksize, intr, intrarg);
 #endif
-	
+
 	return (ENXIO);
 }

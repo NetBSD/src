@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.15 2003/08/07 16:29:25 agc Exp $	*/
+/*	$NetBSD: sbic.c,v 1.16 2003/10/04 09:19:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.15 2003/08/07 16:29:25 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.16 2003/10/04 09:19:23 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -441,7 +441,7 @@ wd33c93_dma_stop(dev)
 	struct wd33c93_softc *dev;
 {
 	size_t count;
- 	int asr;
+	int asr;
 
 	/* Wait until WD chip is idle */
 	do {
@@ -450,7 +450,7 @@ wd33c93_dma_stop(dev)
 			printf("wd33c93_dma_stop: asr %02x canceled!\n", asr);
 			break;
 		}
-	} while(asr & (SBIC_ASR_BSY|SBIC_ASR_CIP));
+	} while (asr & (SBIC_ASR_BSY|SBIC_ASR_CIP));
 
 	/* Only need to save pointers if DMA was active */
 	if (dev->sc_flags & SBICF_INDMA) {

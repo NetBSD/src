@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mace.c,v 1.9 2003/07/15 03:35:52 lukem Exp $	*/
+/*	$NetBSD: mcclock_mace.c,v 1.10 2003/10/04 09:19:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Antti Kantee.  All Rights Reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.9 2003/07/15 03:35:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.10 2003/10/04 09:19:23 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,8 @@ CFATTACH_DECL(mcclock_mace, sizeof(struct mcclock_mace_softc),
 static int
 mcclock_mace_match(struct device *parent, struct cfdata *match, void *aux)
 {
-		return 1;
+
+	return 1;
 }
 
 void
@@ -125,10 +126,10 @@ mcclock_mace_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_st = maa->maa_st;
 	sc->sc_sh = maa->maa_sh;
 
-	/* 
- 	 * We want a fixed format: 24-hour, BCD data, so just force the
- 	 * RTC to this mode; if there was junk there we'll be able to
- 	 * fix things up later when we discover the time read back is
+	/*
+	 * We want a fixed format: 24-hour, BCD data, so just force the
+	 * RTC to this mode; if there was junk there we'll be able to
+	 * fix things up later when we discover the time read back is
 	 * no good.
 	 */
 	ds1687_write(sc, DS1687_CONTROLA, DS1687_DV1 | DS1687_BANK1);
@@ -166,6 +167,7 @@ ds1687_write(void *arg, unsigned int addr, unsigned int data)
 static void
 mcclock_mace_init(struct device *dev)
 {
+
 	return;
 }
 
@@ -186,8 +188,8 @@ mcclock_mace_get(struct device *dev, struct clock_ymdhms *dt)
 	dt->dt_wday = FROMBCD(regs[DS1687_SOFT_DOW]);
 	dt->dt_day = FROMBCD(regs[DS1687_SOFT_DOM]);
 	dt->dt_mon = FROMBCD(regs[DS1687_SOFT_MONTH]);
-	dt->dt_year = FROMBCD(regs[DS1687_SOFT_YEAR]) + 
-			(100 * FROMBCD(regs[DS1687_SOFT_CENTURY]));
+	dt->dt_year = FROMBCD(regs[DS1687_SOFT_YEAR]) +
+	    (100 * FROMBCD(regs[DS1687_SOFT_CENTURY]));
 }
 
 static void

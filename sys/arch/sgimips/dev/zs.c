@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.19 2003/07/15 03:35:52 lukem Exp $	*/
+/*	$NetBSD: zs.c,v 1.20 2003/10/04 09:19:23 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.19 2003/07/15 03:35:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.20 2003/10/04 09:19:23 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -325,7 +325,7 @@ zs_hpc_attach(parent, self, aux)
 				ZSWR9_A_RESET : ZSWR9_B_RESET;
 
 			s = splhigh();
- 			zs_write_reg(cs, 9, reset);
+			zs_write_reg(cs, 9, reset);
 			splx(s);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: crimereg.h,v 1.6 2003/01/10 20:39:22 rafal Exp $	*/
+/*	$NetBSD: crimereg.h,v 1.7 2003/10/04 09:19:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -72,14 +72,14 @@
  * CRM_CONTROL_SET_WBUF_HWM(*(__uint64_t *)CRM_CONTROL, 4)
  */
 #define CRM_CONTROL_GET_CQUEUE_HWM(x)   \
-        (((x) & CRM_CONTROL_CQUEUE_HWM) >> CRM_CONTROL_CQUEUE_SHFT)
+	(((x) & CRM_CONTROL_CQUEUE_HWM) >> CRM_CONTROL_CQUEUE_SHFT)
 #define CRM_CONTROL_SET_CQUEUE_HWM(x,v) \
-        (((v) << CRM_CONTROL_CQUEUE_SHFT) | ((x) & ~CRM_CONTROL_CQUEUE_HWM))
+	(((v) << CRM_CONTROL_CQUEUE_SHFT) | ((x) & ~CRM_CONTROL_CQUEUE_HWM))
 
 #define CRM_CONTROL_GET_WBUF_HWM(x)     \
-        (((x) & CRM_CONTROL_WBUF_HWM) >> CRM_CONTROL_WBUF_SHFT)
+	(((x) & CRM_CONTROL_WBUF_HWM) >> CRM_CONTROL_WBUF_SHFT)
 #define CRM_CONTROL_SET_WBUF_HWM(x,v)   \
-        (((v) << CRM_CONTROL_WBUF_SHFT) | ((x) & ~CRM_CONTROL_WBUF_HWM))
+	(((v) << CRM_CONTROL_WBUF_SHFT) | ((x) & ~CRM_CONTROL_WBUF_HWM))
 
 
 /* Offset 0x010 -- interrupt status register.  All 32 bits valid */
