@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.15 2003/03/13 13:44:18 scw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16 2003/04/01 10:25:09 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -41,6 +41,13 @@
 #include <sh5/pte.h>
 
 #if defined(_KERNEL)
+
+/*
+ * PMAP flags exported to UVM
+ */
+#define	PMAP_CACHE_VIVT		/* The insn cache is VIVT */
+/*#define PMAP_PREFER*/		/* XXX: Not yet */
+
 /*
  * Assume 512MB of KSEG1 KVA, but allow this to be over-ridden
  * if necessary.
