@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.94 2001/12/09 03:07:58 chs Exp $ */
+/* $NetBSD: vmstat.c,v 1.95 2002/01/28 02:15:16 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.94 2001/12/09 03:07:58 chs Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.95 2002/01/28 02:15:16 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -372,12 +372,8 @@ main(int argc, char *argv[])
 	if (kd == NULL)
 		errx(1, "kvm_openfiles: %s", errbuf);
 
-	if (nlistf == NULL && memf == NULL) {
-		if (todo & VMSTAT)
-			(void)setegid(getgid());	/* XXX: dkinit */
-		else
-			(void)setgid(getgid());
-	}
+	if (nlistf == NULL && memf == NULL)
+		(void)setgid(getgid());
 
 	if ((c = kvm_nlist(kd, namelist)) != 0) {
 		if (c == -1)
@@ -397,7 +393,7 @@ main(int argc, char *argv[])
 	if (todo & VMSTAT) {
 		struct winsize winsize;
 
-		dkinit(0, egid); /* Initialize disk stats, no disks selected. */
+		dkinit(0);	/* Initialize disk stats, no disks selected. */
 
 		(void)setgid(getgid()); /* don't need privs anymore */
 
