@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.60 2004/04/09 17:35:21 kim Exp $
+#	$NetBSD: daily,v 1.61 2004/05/28 03:55:30 martin Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -218,7 +218,7 @@ if checkyesno check_network; then
 	if checkyesno full_netstat; then
 		netstat -inv
 	else
-		netstat -in | awk 'BEGIN {
+		netstat -inv | awk 'BEGIN {
 			ifs[""] = 0;
 		}
 		/^[^\*]* / {
