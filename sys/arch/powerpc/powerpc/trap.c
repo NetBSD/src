@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.28 2000/06/29 07:48:18 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.29 2000/11/22 14:00:46 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -154,7 +154,7 @@ trap(frame)
 		break;
 	case EXC_SC|EXC_USER:
 		{
-			struct sysent *callp;
+			const struct sysent *callp;
 			size_t argsize;
 			register_t code, error;
 			register_t *params, rval[2];
