@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.9 2002/01/08 00:32:34 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.10 2002/01/09 02:58:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.9 2002/01/08 00:32:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.10 2002/01/09 02:58:56 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1063,9 +1063,11 @@ issignal(struct lwp *l)
 {
 	struct proc	*p;
 	int		s, signum, prop;
-	int		dolock = (p->p_flag & P_SINTR) == 0, locked = !dolock;
+	int		dolock, locked;
 	sigset_t	ss;
 
+	dolock = (l->l_flag & L_SINTR) == 0;
+	locked = !dolock;
 	p = l->l_proc;
 	for (;;) {
 		sigpending1(p, &ss);
@@ -1549,20 +1551,6 @@ coredump(struct lwp *l)
 	VOP_LEASE(vp, p, cred, LEASE_WRITE);
 	VOP_SETATTR(vp, &vattr, cred, p);
 	p->p_acflag |= ACORE;
-
-	if ((p->p_flag & P_32) && coredump32_hook != NULL)
-		return (*coredump32_hook)(p, vp);
-#if 0
-	/*
-	 * XXX
-	 * It would be nice if we at least dumped the signal state (and made it
-	 * available at run time to the debugger, as well), but this code
-	 * hasn't actually had any effect for a long time, since we don't dump
-	 * the user area.  For now, it's dead.
-	 */
-	memcpy(&p->p_addr->u_kproc.kp_proc, p, sizeof(struct proc));
-	fill_eproc(p, &p->p_addr->u_kproc.kp_eproc);
-#endif
 
 	/* Now dump the actual core file. */
 	error = (*p->p_execsw->es_coredump)(l, vp, cred);
