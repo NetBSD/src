@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2001/02/17 18:15:18 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2001/02/17 18:21:03 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1191,37 +1191,16 @@ extern struct consdev consdev_bm, consdev_zs;
 
 int tty00_is_console = 0;
 
-#if NFB > 0
-void bmcons_putc(int);
-
-extern void fbbm_probe(), vt100_open(), setup_fnt(), setup_fnt24();
-extern int vt100_write();
-
-#include "fb.h"
-#endif /* NFB > 0 */
-
 void
 consinit()
 {
 
 	int dipsw = *dip_switch;
 
-#if NFB > 0
-	fbbm_probe(dipsw);
-	vt100_open();
-	setup_fnt();
-	setup_fnt24();
-#else
 	dipsw &= ~SW_CONSOLE;
-#endif /* NFB > 0 */
 
 	switch (dipsw & SW_CONSOLE) {
-	    default:
-#if NFB > 0
-		cn_tab = &consdev_bm;
-		(*cn_tab->cn_init)(cn_tab);
-		break;
-#endif /* NFB > 0 */
+	    default: /* XXX no fb support yet */
 	    case 0:
 		tty00_is_console = 1;
 		cn_tab = &consdev_zs;
@@ -1241,15 +1220,3 @@ consinit()
 		Debugger();
 #endif
 }
-
-#if NFB > 0
-void
-bmcons_putc(c)
-	int c;
-{
-	char cnbuf[1];
-
-	cnbuf[0] = (char)c;
-	vt100_write(0, cnbuf, 1);
-}
-#endif /* NFB > 0 */
