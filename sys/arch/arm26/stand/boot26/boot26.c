@@ -1,10 +1,38 @@
-/*	$NetBSD: boot26.c,v 1.1 2001/07/27 23:13:50 bjh21 Exp $	*/
+/*	$NetBSD: boot26.c,v 1.2 2001/07/28 13:49:25 bjh21 Exp $	*/
+
+/*-
+ * Copyright (c) 1998, 1999, 2000, 2001 Ben Harris
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
 #include <riscoscalls.h>
 #include <sys/boot_flag.h>
 #include <machine/boot.h>
+#include <machine/memcreg.h>
 
 extern const char bootprog_rev[];
 extern const char bootprog_name[];
@@ -92,16 +120,16 @@ main(int argc, char **argv)
 	bootconfig.version = 0;
 	bootconfig.boothowto = howto;
 	bootconfig.bootdev = -1;
-	bootconfig.ssym = marks[MARK_SYM] - 0x02000000;
-	bootconfig.esym = marks[MARK_END] - 0x02000000;
+	bootconfig.ssym = (caddr_t)marks[MARK_SYM] - MEMC_PHYS_BASE;
+	bootconfig.esym = (caddr_t)marks[MARK_END] - MEMC_PHYS_BASE;
 	bootconfig.nbpp = nbpp;
 	bootconfig.npages = npages;
-	bootconfig.freebase = marks[MARK_END] - 0x02000000;
+	bootconfig.freebase = (caddr_t)marks[MARK_END] - MEMC_PHYS_BASE;
 	bootconfig.xpixels = vdu_var(os_MODEVAR_XWIND_LIMIT) + 1;
 	bootconfig.ypixels = vdu_var(os_MODEVAR_YWIND_LIMIT) + 1;
 	bootconfig.bpp = 1 << vdu_var(os_MODEVAR_LOG2_BPP);
-	bootconfig.screenbase = vdu_var(os_VDUVAR_DISPLAY_START) +
-	    vdu_var(os_VDUVAR_TOTAL_SCREEN_SIZE) - 0x02000000;
+	bootconfig.screenbase = (caddr_t)vdu_var(os_VDUVAR_DISPLAY_START) +
+	    vdu_var(os_VDUVAR_TOTAL_SCREEN_SIZE) - MEMC_PHYS_BASE;
 	bootconfig.screensize = vdu_var(os_VDUVAR_TOTAL_SCREEN_SIZE);
 	os_byte(osbyte_OUTPUT_CURSOR_POSITION, 0, 0, NULL, &crow);
 	bootconfig.cpixelrow = crow * vdu_var(os_VDUVAR_TCHAR_SPACEY);
@@ -190,7 +218,7 @@ boot26_read(int f, void *addr, size_t size)
 
 	total = 0;
 	while (size > 0) {
-		ppn = ((u_int)addr - 0x02000000) / nbpp;
+		ppn = ((caddr_t)addr - MEMC_PHYS_BASE) / nbpp;
 		if (pgstatus[ppn] != FREE)
 			panic("Page %d not free", ppn);
 		fragaddr = pginfo[ppn].map + ((u_int)addr % nbpp);
@@ -218,7 +246,7 @@ boot26_memcpy(void *dst, const void *src, size_t size)
 	void *addr = dst;
 
 	while (size > 0) {
-		ppn = ((u_int)addr - 0x02000000) / nbpp;
+		ppn = ((caddr_t)addr - MEMC_PHYS_BASE) / nbpp;
 		if (pgstatus[ppn] != FREE)
 			panic("Page %d not free", ppn);
 		fragaddr = pginfo[ppn].map + ((u_int)addr % nbpp);
@@ -242,7 +270,7 @@ boot26_memset(void *dst, int c, size_t size)
 	void *addr = dst;
 
 	while (size > 0) {
-		ppn = ((u_int)addr - 0x02000000) / nbpp;
+		ppn = ((caddr_t)addr - MEMC_PHYS_BASE) / nbpp;
 		if (pgstatus[ppn] != FREE)
 			panic("Page %d not free", ppn);
 		fragaddr = pginfo[ppn].map + ((u_int)addr % nbpp);
