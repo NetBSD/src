@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.14 (Berkeley) 6/18/90
+#	from: @(#)Makefile	5.14 (Berkeley) 6/18/90
+#	$Id: Makefile,v 1.3 1993/07/31 00:21:28 mycroft Exp $
 
 CFLAGS+=-I/sys
 PROG=	netstat

@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.4 (Berkeley) 3/12/91
+#	from: @(#)Makefile	5.4 (Berkeley) 3/12/91
+#	$Id: Makefile,v 1.4 1993/07/31 00:20:24 mycroft Exp $
 
 PROG=	ranlib
 SRCS=	archive.c build.c misc.c ranlib.c touch.c
