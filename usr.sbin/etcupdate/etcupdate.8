@@ -1,4 +1,4 @@
-.\"	$NetBSD: etcupdate.8,v 1.9 2003/04/02 16:47:40 perry Exp $
+.\"	$NetBSD: etcupdate.8,v 1.10 2003/04/02 19:30:57 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,14 +43,11 @@
 .Pa /etc
 .Sh SYNOPSIS
 .Nm
-.Op Fl a
+.Op Fl ahlv
 .Op Fl b Ar srcdir
-.Op Fl h
-.Op Fl l
 .Op Fl p Ar pager
 .Op Fl s Ar srcdir
 .Op Fl t Ar temproot
-.Op Fl v
 .Op Fl w Ar width
 .Sh DESCRIPTION
 .Nm
@@ -83,7 +80,7 @@ from the
 file.
 .Pp
 .Nm
-needs a clean set of new configuration files to compare the 
+needs a clean set of new configuration files to compare the
 existing files against.
 These files, called the
 .Dq reference files
@@ -101,7 +98,7 @@ in
 installing the files to a so-called
 .Pa temproot .
 (See usage of the
-.Fl s Ar srcdir ,
+.Fl s Ar srcdir
 and
 .Fl t Ar temproot
 options later in this manual page.)
@@ -113,7 +110,7 @@ files (see usage of the
 option later in this manual page).
 .Pp
 The following options are available:
-.Bl -tag -width indent
+.Bl -tag -width XXtXtemprootX
 .It Fl a
 .Nm
 can automatically update files which have not been modified locally.
@@ -125,7 +122,7 @@ to store MD5 checksums in
 .Pa /var/etcupdate
 and use these checksums to determine if there have been any
 local modifications.
-.It Fl b
+.It Fl b Ar srcdir
 Location of reference files extracted from a binary distribution of
 .Nx .
 Note that reference files in
@@ -143,14 +140,14 @@ Prints a help text.
 .It Fl l
 Automatically skip files with unchanged RCS IDs.
 This has the effect of leaving alone files that have been altered
-locally but which have not been changed in the 
+locally but which have not been changed in the
 reference files.
 Since this works using RCS IDs, files without RCS IDs will not be
 skipped even if only modified locally.
 This flag may be used together with the
 .Fl a
 flag described above.
-.It Fl p
+.It Fl p Ar pager
 The pager to use when displaying files.
 By default this is
 .Xr more 1
@@ -158,7 +155,7 @@ but it can be changed either with this option
 or by defining the
 .Ev PAGER
 variable.
-.It Fl s
+.It Fl s Ar srcdir
 The location of the
 .Nx
 sources files used to create the reference files.
@@ -168,7 +165,7 @@ but it can be changed either with this option
 or the
 .Ev SRCDIR
 variable.
-.It Fl t
+.It Fl t Ar temproot
 Specifies the location of the
 .Pa temproot
 directory.
@@ -184,7 +181,7 @@ environment variable.
 Makes
 .Nm
 verbose about its actions.
-.It Fl w
+.It Fl w Ar width
 Sets screen width used during interactive merge.
 By default this is the number of columns
 .Xr stty 1
@@ -197,7 +194,7 @@ This is useful for
 users with wider shell windows.
 .El
 .Sh ENVIRONMENT
-.Bl -tag -width TEMPROOT
+.Bl -tag -width IGNOREFILESXX
 .It Ev TEMPROOT
 Sets a default value for
 .Pa temproot .
