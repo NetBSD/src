@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.359 2003/09/18 23:17:57 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.360 2003/09/19 08:15:46 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -44,9 +44,6 @@ TOOLCHAIN_MISSING=	no
 #    ${MACHINE_ARCH} == "m68k" ||
 #    ${MACHINE_ARCH} == "mipseb" ||
 #    ${MACHINE_ARCH} == "mipsel" ||
-
-HAVE_GCC3?=	no
-# these are ready to switch
 .if ${MACHINE_ARCH} == "alpha" || \
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "sparc" || \
