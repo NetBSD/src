@@ -486,7 +486,7 @@ void do_packet PROTO ((struct interface_info *,
 extern int warnings_occurred;
 void error PROTO ((char *, ...));
 int warn PROTO ((char *, ...));
-int note PROTO ((char *, ...));
+int note PROTO ((const char *, ...));
 int debug PROTO ((char *, ...));
 int parse_warn PROTO ((char *, ...));
 
