@@ -1,4 +1,4 @@
-/*	$NetBSD: drsupio.c,v 1.1 1997/08/27 19:32:53 is Exp $ */
+/*	$NetBSD: drsupio.c,v 1.2 1997/09/16 20:34:38 is Exp $ */
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis
@@ -88,11 +88,12 @@ drsupiomatch(parent, cfp, auxp)
 struct drsupio_devs {
 	char *name;
 	int off;
+	int arg;
 } drsupiodevs[] = {
-	{ "com", 0x3f8 },
-	{ "com", 0x2f8 },
-	{ "lpt", 0x378 },
-	{ "fdc", 0x3f0 },
+	{ "com", 0x3f8, 115200 * 16 },
+	{ "com", 0x2f8, 115200 * 16 },
+	{ "lpt", 0x378, 0 },
+	{ "fdc", 0x3f0, 0 },
 	/* WD port? */
 	{ 0 }
 };
@@ -116,10 +117,12 @@ drsupioattach(parent, self, auxp)
 	drsc->sc_bst.stride = 2;
 	
 	supa.supio_iot = &drsc->sc_bst;
+	supa.supio_ipl = 5;
 
 	while (drsd->name) {
 		supa.supio_name = drsd->name;
 		supa.supio_iobase = drsd->off;
+		supa.supio_arg = drsd->arg;
 		config_found(self, &supa, drsupprint); /* XXX */
 		++drsd;
 	}

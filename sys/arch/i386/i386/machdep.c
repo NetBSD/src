@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.252 1997/09/12 05:01:09 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.253 1997/09/16 20:34:34 is Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1750,7 +1750,7 @@ consinit()
 		comcnrate = CONSPEED;
 		comcnmode = CONMODE;
 
-		if(comcnattach(tag, comcnaddr, comcnrate, comcnmode))
+		if(comcnattach(tag, comcnaddr, comcnrate, COM_FREQ, comcnmode))
 			panic("can't init serial console @%x", comcnaddr);
 
 		return;
@@ -1771,7 +1771,8 @@ kgdb_port_init()
 		comkgdbrate = KGDBRATE;
 		comkgdbmode = KGDBMODE;
 
-		com_kgdb_attach(tag, comkgdbaddr, comkgdbrate, comkgdbmode);
+		com_kgdb_attach(tag, comkgdbaddr, comkgdbrate, COM_FREQ, 
+		    comkgdbmode);
 	}
 #endif
 }
