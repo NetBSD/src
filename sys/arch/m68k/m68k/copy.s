@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.s,v 1.36 1999/11/10 00:13:59 thorpej Exp $	*/
+/*	$NetBSD: copy.s,v 1.37 2001/07/28 13:08:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -365,9 +365,9 @@ ENTRY(kcopy)
 	movl	%a0@(PCB_ONFAULT),%a6@(-4) | save old handler first
 	movl	#Lkcfault,%a0@(PCB_ONFAULT)
 	movl	%a6@(16),%sp@-		| push len
-	movl	%a6@(12),%sp@-		| push dst
 	movl	%a6@(8),%sp@-		| push src
-	jbsr	_C_LABEL(bcopy)		| copy it
+	movl	%a6@(12),%sp@-		| push dst
+	jbsr	_C_LABEL(memcpy)	| copy it
 	addl	#12,%sp			| pop args
 	clrl	%d0			| success!
 Lkcdone:
