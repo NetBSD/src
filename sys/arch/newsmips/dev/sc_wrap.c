@@ -1,3 +1,5 @@
+/*	$NetBSD: sc_wrap.c,v 1.3 1998/06/01 19:31:05 tsubai Exp $	*/
+
 /*
   This driver is slow!  Need to rewrite.
 */
@@ -72,7 +74,7 @@ void sc_done __P((struct scsi *));
 int sc_intr __P((struct sc_softc *));
 static void cxd1185_timeout __P((void *));
 
-extern sc_send __P((int, int, struct scsi *));
+extern int sc_send __P((int, int, struct scsi *));
 extern int scintr __P((void));
 extern void scsi_hardreset __P((void));
 extern int sc_busy __P((int));
@@ -327,7 +329,7 @@ start:
 	sc_param->sc_cpoint = xs->data;
 	sc_param->sc_ctrnscnt = xs->datalen;
 
-	bcopy(xs->cmd, &sc_param->sc_opcode, xs->cmdlen);
+	bcopy(xs->cmd, &sc_param->sc_cdb, xs->cmdlen);
 
 	/* make va->pa mapping table for dma */
 	if (xs->datalen > 0) {
@@ -355,10 +357,8 @@ start:
 		sc_param->sc_map = &sc->sc_map[chan];
 	}
 
-	if (flags & SCSI_POLL)
-		ie &= ~SCSI_INTEN;
-	else
-		ie |= SCSI_INTEN;
+	if ((flags & SCSI_POLL) == 0)
+		ie = SCSI_INTEN;
 
 	timeout(cxd1185_timeout, scb, hz * 10);
 

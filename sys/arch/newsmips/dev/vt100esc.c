@@ -1,3 +1,5 @@
+/*	$NetBSD: vt100esc.c,v 1.3 1998/06/01 19:31:05 tsubai Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -1131,7 +1133,7 @@ esc_char_setl(sp, c)
 	sp->s_current_stat &= ~ESCAPE;
 }
 
-extern tmode;
+extern int tmode;
 extern  unsigned  int	first_jcode;
 /*
  *  character set to kanji
@@ -1487,7 +1489,7 @@ esc_pf_define(sp, c)
 	SCREEN *sp;
 	unsigned int c;
 {
-	static bufc = 0;
+	static int bufc = 0;
 
 	if (in_str(c, sp->s_estp->terminators)) {
 		pf_define(pfn, esc_bp - esc_buf + active_buf, c);
