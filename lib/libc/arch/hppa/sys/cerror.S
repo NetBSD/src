@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.2 2004/07/15 19:58:00 skrll Exp $	*/
+/*	$NetBSD: cerror.S,v 1.3 2004/07/18 20:44:05 chs Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -45,12 +45,14 @@ LEAF_ENTRY(__cerror)
 #endif
 #ifdef _REENTRANT
 	stw	%rp, HPPA_FRAME_CRP(%sp)
+	stw	%t1, HPPA_FRAME_ARG(0)(%sp)
 	ldo	HPPA_FRAME_SIZE(%sp),%sp
 	bl	__errno, %rp
 	nop
-	stw	%t1, 0(%ret0)
 	ldo	-HPPA_FRAME_SIZE(%sp), %sp
+	ldw	HPPA_FRAME_ARG(0)(%sp), %t1
 	ldw	HPPA_FRAME_CRP(%sp), %rp
+	stw	%t1, 0(%ret0)
 #else
 #ifdef PIC
 	addil	LT%errno, %r19
