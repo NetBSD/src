@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.43 1998/07/26 03:28:28 explorer Exp $
+#	$NetBSD: files.pci,v 1.44 1998/08/11 00:08:23 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -80,7 +80,7 @@ attach	cy at pci with cy_pci
 file	dev/pci/cy_pci.c		cy_pci
 
 # Intel EtherExpress PRO 10/100B
-device	fxp: ether, ifnet, arp
+device	fxp: ether, ifnet, arp, mii
 attach	fxp at pci 
 file	dev/pci/if_fxp.c		fxp
 
@@ -89,7 +89,7 @@ attach	ne at pci with ne_pci
 file	dev/pci/if_ne_pci.c		ne_pci
 
 # Texas Instruments ThunderLAN Chip.
-device  tl: ether, ifnet, arp, i2c, i2c_eeprom, miibus
+device  tl: ether, ifnet, arp, i2c, i2c_eeprom, mii
 attach  tl at pci
 file    dev/pci/if_tl.c     tl
 
