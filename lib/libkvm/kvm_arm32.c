@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_arm32.c,v 1.5 1997/10/05 23:54:13 mark Exp $	*/
+/*	$NetBSD: kvm_arm32.c,v 1.6 1997/10/18 02:37:00 mark Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -41,6 +41,7 @@
 
 #include <vm/vm.h>
 
+#include <stdlib.h>
 #include <db.h>
 #include <limits.h>
 #include <kvm.h>
