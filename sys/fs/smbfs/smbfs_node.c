@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.9 2003/02/24 15:55:08 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.10 2003/02/24 18:41:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -61,7 +61,6 @@
 #define	smbfs_hash_lock(smp)	lockmgr(&smp->sm_hashlock, LK_EXCLUSIVE, NULL)
 #define	smbfs_hash_unlock(smp)	lockmgr(&smp->sm_hashlock, LK_RELEASE, NULL)
 
-MALLOC_DEFINE(M_SMBNODE, "SMBFS node", "SMBFS vnode private part");
 static MALLOC_DEFINE(M_SMBNODENAME, "SMBFS nname", "SMBFS node name");
 
 extern int (**smbfs_vnodeop_p) __P((void *));
@@ -71,6 +70,8 @@ static struct genfs_ops smbfs_genfsops = {
 	NULL,
 	genfs_compat_gop_write,
 };
+
+struct pool smbfs_node_pool;
 
 #if 0
 static int smbfs_hashprint(struct mount *mp);
@@ -188,13 +189,12 @@ loop:
 	if (fap == NULL)
 		return ENOENT;
 
-	/* XXX use pool ? */
-	MALLOC(np, struct smbnode *, sizeof *np, M_SMBNODE, M_WAITOK);
+	np = pool_get(&smbfs_node_pool, PR_WAITOK);
 	memset(np, 0, sizeof(*np));
 
 	error = getnewvnode(VT_SMBFS, mp, smbfs_vnodeop_p, &vp);
 	if (error) {
-		FREE(np, M_SMBNODE);
+		pool_put(&smbfs_node_pool, np);
 		return error;
 	}
 	vp->v_type = fap->fa_attr & SMB_FA_DIR ? VDIR : VREG;
@@ -293,7 +293,7 @@ smbfs_reclaim(v)
 	smbfs_hash_unlock(smp);
 	if (np->n_name)
 		smbfs_name_free(np->n_name);
-	FREE(np, M_SMBNODE);
+	pool_put(&smbfs_node_pool, np);
 	if (dvp)
 		vrele(dvp);
 	return 0;
