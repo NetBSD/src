@@ -1,4 +1,4 @@
-/*	$NetBSD: recover.c,v 1.6 2001/03/31 11:37:46 aymeric Exp $	*/
+/*	$NetBSD: recover.c,v 1.7 2001/05/13 12:03:00 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -610,7 +610,7 @@ rcv_read(sp, frp)
 		return (1);
 	rp = O_STR(sp, O_RECDIR);
 	if ((dirp = opendir(rp)) == NULL) {
-		msgq_str(sp, M_ERR, rp, "%s");
+		msgq_str(sp, M_SYSERR, rp, "%s");
 		return (1);
 	}
 
