@@ -1082,6 +1082,7 @@ register NODE *tree;
 	register FILE *fp;
 	int numnodes, i;
 	NODE *save;
+	NODE *tval;
 
 	if (tree->rnode) {
 		int errflg;		/* not used, sigh */
@@ -1118,8 +1119,11 @@ register NODE *tree;
 		if (t[i]->flags & NUMBER) {
 			if (OFMTidx == CONVFMTidx)
 				(void) force_string(t[i]);
-			else
-				t[i] = format_val(OFMT, OFMTidx, t[i]);
+			else {
+				tval = tmp_number(t[i]->numbr);
+				unref(t[i]);
+				t[i] = format_val(OFMT, OFMTidx, tval);
+			}
 		}
 	}
 
