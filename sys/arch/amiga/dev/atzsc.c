@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: atzsc.c,v 1.3 1994/05/16 04:55:08 chopps Exp $
+ *	$Id: atzsc.c,v 1.4 1994/06/16 14:28:42 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ atzscattach(pdp, dp, auxp)
 	sc->sc_sbicp = (sbic_regmap_p) ((int)rp + 0x91);
 	sc->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 77;
 	
-	printf(" dmamask 0x%x\n", ~sc->sc_dmamask);
+	printf(": dmamask 0x%x\n", ~sc->sc_dmamask);
 
 	sbicreset(sc);
 

@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: wesc.c,v 1.2 1994/06/14 00:59:23 chopps Exp $
+ *	$Id: wesc.c,v 1.3 1994/06/16 14:28:57 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -103,6 +103,8 @@ wescattach(pdp, dp, auxp)
 	struct siop_softc *sc;
 	struct zthreebus_args *zap;
 	siop_regmap_p rp;
+
+	printf("\n");
 
 	zap = auxp;
 	
