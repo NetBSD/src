@@ -341,6 +341,7 @@
 ./usr/share/man/cat4/fea.0
 ./usr/share/man/cat4/fpa.0
 ./usr/share/man/cat4/fta.0
+./usr/share/man/cat4/gre.0
 ./usr/share/man/cat4/gus.0
 ./usr/share/man/cat4/guspnp.0
 ./usr/share/man/cat4/icmp.0
@@ -572,6 +573,7 @@
 ./usr/share/man/cat8/genassym.sh.0
 ./usr/share/man/cat8/getNAME.0
 ./usr/share/man/cat8/getty.0
+./usr/share/man/cat8/greconfig.0
 ./usr/share/man/cat8/halt.0
 ./usr/share/man/cat8/hlfsd.0
 ./usr/share/man/cat8/identd.0
@@ -1372,6 +1374,7 @@
 ./usr/share/man/man4/fea.4
 ./usr/share/man/man4/fpa.4
 ./usr/share/man/man4/fta.4
+./usr/share/man/man4/gre.4
 ./usr/share/man/man4/gus.4
 ./usr/share/man/man4/guspnp.4
 ./usr/share/man/man4/icmp.4
@@ -1603,6 +1606,7 @@
 ./usr/share/man/man8/genassym.sh.8
 ./usr/share/man/man8/getNAME.8
 ./usr/share/man/man8/getty.8
+./usr/share/man/man8/greconfig.8
 ./usr/share/man/man8/halt.8
 ./usr/share/man/man8/hlfsd.8
 ./usr/share/man/man8/identd.8
