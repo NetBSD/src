@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.13 1998/12/30 12:02:03 dbj Exp $	*/
+/*	$NetBSD: esp.c,v 1.14 1999/01/27 06:37:49 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -346,6 +346,16 @@ espattach_intio(parent, self, aux)
 						sc->sc_dev.dv_xname,error);
 			}
 		}
+
+		{
+			int error;
+			if ((error = bus_dmamap_create(esc->sc_scsi_dma.nd_dmat,
+					ESP_DMA_MAXTAIL, 1, ESP_DMA_MAXTAIL,
+					0, BUS_DMA_ALLOCNOW, &esc->sc_tail_dmamap)) != 0) {
+				panic("%s: can't create tail i/o DMA map, error = %d",
+						sc->sc_dev.dv_xname,error);
+			}
+		}
 	}
 
 #if 0
@@ -355,12 +365,14 @@ espattach_intio(parent, self, aux)
 	ncr53c9x_dmaselect = 0;
 #endif
 
+	esc->sc_datain = -1;
 	esc->sc_slop_bgn_addr = 0;
 	esc->sc_slop_bgn_size = 0;
 	esc->sc_slop_end_addr = 0;
 	esc->sc_slop_end_size = 0;
-	esc->sc_datain = -1;
 	esc->sc_dmamap_loaded = 0;
+	esc->sc_tail = 0;
+	esc->sc_tail_size = 0;
 
 	/* Establish interrupt channel */
 	isrlink_autovec((int(*)__P((void*)))ncr53c9x_intr, sc,
@@ -410,8 +422,6 @@ esp_dma_isintr(sc)
 	int r = (INTR_OCCURRED(NEXT_I_SCSI));
 
 	if (r) {
-		int handled;
-
 		DPRINTF(("esp_dma_isintr = 0x%b\n",
 				(*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)),NEXT_INTR_BITS));
 
@@ -428,7 +438,7 @@ esp_dma_isintr(sc)
 						ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD);
 			}
 			nextdma_intr(&esc->sc_scsi_dma);
-			return 0;
+			return 1;
 		}
 
 		/* Clear the DMAMOD bit in the DCTL register, since if this
@@ -477,28 +487,17 @@ esp_dma_reset(sc)
 
 	nextdma_reset(&esc->sc_scsi_dma);
 
-#if 0
-
-	if (esc->sc_dmamap->dm_mapsize != 0) {
-		bus_dmamap_unload(esc->sc_scsi_dma.nd_dmat, esc->sc_dmamap);
-	}
-
-#else
-
 	if (esc->sc_dmamap_loaded) {
+		/* fixing this is slightly complicated since multiple maps may be loaded,
+		 * and the esc->sc_dmamap_loaded variable only indicates the most recent one.
+		 */
+		panic("invoking completed callbacks upon esp_dma_reset is not yet implemented");
+
 		esp_dmacb_completed(esc->sc_dmamap,sc);
-		esp_dmacb_shutdown(sc);
+		esp_dmacb_completed(esc->sc_tail_dmamap,sc);
 	}
 
-#endif
-
-	esc->sc_slop_bgn_addr = 0;
-	esc->sc_slop_bgn_size = 0;
-	esc->sc_slop_end_addr = 0;
-	esc->sc_slop_end_size = 0;
-	esc->sc_datain = -1;
-	esc->sc_dmamap_loaded = 0;
-
+	esp_dmacb_shutdown(sc);				/* this will clean up */
 }
 
 int
@@ -596,36 +595,25 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	/* Save these in case we have to abort DMA */
-	esc->sc_dmaaddr = addr;
-	esc->sc_dmalen = len;
-#if 1
-	esc->sc_dmasize = DMA_ENDALIGN(caddr_t,*addr+*len)-*addr;
-#else
-	esc->sc_dmasize = *dmasize;
-#endif
-
 #ifdef DIAGNOSTIC
 	/* if this is a read DMA, pre-fill the buffer with 0xdeadbeef
 	 * to identify bogus reads
 	 */
 	if (datain) {
-		int *v = (int *)(*esc->sc_dmaaddr);
+		int *v = (int *)(*addr);
 		int i;
-		for(i=0;i<((*esc->sc_dmalen)/4);i++) v[i] = 0xdeadbeef;
+		for(i=0;i<((*len)/4);i++) v[i] = 0xdeadbeef;
 	}
 #endif
 
-	DPRINTF(("esp_dma_setup(0x%08lx,0x%08lx,0x%08lx)\n",*esc->sc_dmaaddr,*esc->sc_dmalen,esc->sc_dmasize));
+	DPRINTF(("esp_dma_setup(0x%08lx,0x%08lx,0x%08lx)\n",*addr,*len,*dmasize));
 
-#if 0
 #ifdef DIAGNOSTIC /* @@@ this is ok sometimes. verify that we handle it ok
 									 * and then remove this check
 									 */
-	if (*(esc->sc_dmalen) != esc->sc_dmasize) {
+	if (*len != *dmasize) {
 		panic("esp dmalen != size");
 	}
-#endif
 #endif
 
 #ifdef DIAGNOSTIC
@@ -638,6 +626,12 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 				esc->sc_dmamap_loaded);
 	}
 #endif
+
+	/* Save these in case we have to abort DMA */
+	esc->sc_datain   = datain;
+	esc->sc_dmaaddr  = addr;
+	esc->sc_dmalen   = len;
+	esc->sc_dmasize  = *dmasize;
 
 	/* Deal with DMA alignment issues, by stuffing the FIFO.
 	 * This assumes that if bus_dmamap_load is given an aligned
@@ -659,24 +653,15 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 		}
 
 		/* Check to make sure we haven't counted extra slop
-		 * as would happen for a very short dma buffer */
-		if (slop_bgn_size+slop_end_size >= esc->sc_dmasize) {
-
-			slop_bgn_size = esc->sc_dmasize;
-			slop_end_size = 0;
-
+		 * as would happen for a very short dma buffer, also
+		 * for short buffers, just stuff the entire thing in the tail
+		 */
+		if ((slop_bgn_size+slop_end_size >= esc->sc_dmasize) ||
+				(esc->sc_dmasize <= ESP_DMA_MAXTAIL)) {
+ 			slop_bgn_size = 0;
+			slop_end_size = esc->sc_dmasize;
 		} else {
-			int error;
-			error = bus_dmamap_load(esc->sc_scsi_dma.nd_dmat,
-					esc->sc_dmamap, 
-					*esc->sc_dmaaddr+slop_bgn_size,
-					esc->sc_dmasize-(slop_bgn_size+slop_end_size),
-					NULL, BUS_DMA_NOWAIT);
-			if (error) {
-				panic("%s: can't load dma map. error = %d",
-						sc->sc_dev.dv_xname, error);
-			}
-
+			panic("Chaining DMA interrupts are currently broken.\n");	/* @@@ */
 		}
 
 		esc->sc_slop_bgn_addr = *esc->sc_dmaaddr;
@@ -685,7 +670,45 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 		esc->sc_slop_end_size = slop_end_size;
 	}
 
-	esc->sc_datain = datain;
+	/* Load the normal DMA map */
+	if (esc->sc_dmasize-(esc->sc_slop_bgn_size+esc->sc_slop_end_size)) {
+		int error;
+		error = bus_dmamap_load(esc->sc_scsi_dma.nd_dmat,
+				esc->sc_dmamap, 
+				*esc->sc_dmaaddr+esc->sc_slop_bgn_size,
+				esc->sc_dmasize-(esc->sc_slop_bgn_size+esc->sc_slop_end_size),
+				NULL, BUS_DMA_NOWAIT);
+		if (error) {
+			panic("%s: can't load dma map. error = %d",
+					sc->sc_dev.dv_xname, error);
+		}
+	}
+
+	/* Now set up the tail dma buffer, including alignment. */
+	if (esc->sc_slop_end_size) {
+		esc->sc_tail = DMA_ENDALIGN(caddr_t,esc->sc_tailbuf+esc->sc_slop_end_size)-esc->sc_slop_end_size;
+		/* If the beginning of the tail is not correctly aligned,
+		 * we have no choice but to align the start, which might then unalign the end.
+		 */
+		esc->sc_tail = DMA_ALIGN(caddr_t,esc->sc_tail);
+		/* So therefore, we change the tail size to be end aligned again. */
+		esc->sc_tail_size = DMA_ENDALIGN(caddr_t,esc->sc_tail+esc->sc_slop_end_size)-esc->sc_tail;
+		
+		{
+			int error;
+			error = bus_dmamap_load(esc->sc_scsi_dma.nd_dmat,
+					esc->sc_tail_dmamap,
+					esc->sc_tail, esc->sc_tail_size,
+					NULL, BUS_DMA_NOWAIT);
+			if (error) {
+				panic("%s: can't load dma map. error = %d",
+						sc->sc_dev.dv_xname, error);
+			}
+		}
+	} else {
+		esc->sc_tail = 0;
+		esc->sc_tail_size = 0;
+	}
 
 	return (0);
 }
@@ -728,42 +751,26 @@ esp_dma_go(sc)
 	}
 #endif
 
-	if (esc->sc_dmamap->dm_mapsize != 0) {
-
-		nextdma_start(&esc->sc_scsi_dma, 
-				(esc->sc_datain ? DMACSR_READ : DMACSR_WRITE));
-
-		if (esc->sc_datain) { 
-			NCR_WRITE_REG(sc, ESP_DCTL,
-					ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD);
-		} else {
-			NCR_WRITE_REG(sc, ESP_DCTL,
-					ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD);
-		}
-
-
-	} else {
-
-		panic("FIFO emulated DMA sequences not yet supported\n");	/* @@@ */
-		
 #if defined(DIAGNOSTIC)
-		/* verify that end slop is 0, since the shutdown
-		 * callback will not be called.
-		 */
-		if (esc->sc_slop_end_size != 0) {
-			panic("%s: Unexpected end slop with no DMA, slop = %d",
-					sc->sc_dev.dv_xname, esc->sc_slop_end_size);
-		}
+	if ((esc->sc_dmamap->dm_mapsize == 0) && (esc->sc_tail_dmamap->dm_mapsize == 0)) {
+		panic("%s: No DMA requested!");
+	}
 #endif
 
-		esc->sc_datain = -1;
-		esc->sc_slop_bgn_addr = 0;
-		esc->sc_slop_bgn_size = 0;
-		esc->sc_slop_end_addr = 0;
-		esc->sc_slop_end_size = 0;
+	/* if we are a dma write cycle, copy the end slop */
+	if (esc->sc_datain == 0) {
+		memcpy(esc->sc_tail,esc->sc_slop_end_addr,esc->sc_slop_end_size);
+	}
 
-		DPRINTF(("esp fifo size = %d\n",
-				(NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF)));
+	nextdma_start(&esc->sc_scsi_dma, 
+			(esc->sc_datain ? DMACSR_READ : DMACSR_WRITE));
+
+	if (esc->sc_datain) { 
+		NCR_WRITE_REG(sc, ESP_DCTL,
+				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD);
+	} else {
+		NCR_WRITE_REG(sc, ESP_DCTL,
+				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD);
 	}
 }
 
@@ -796,30 +803,42 @@ esp_dmacb_continue(arg)
 
 	DPRINTF(("esp dma continue\n"));
 
-  bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_dmamap,
-			0, esc->sc_dmamap->dm_mapsize, 
-			(esc->sc_datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE));
-
 #ifdef DIAGNOSTIC
 	if ((esc->sc_datain < 0) || (esc->sc_datain > 1)) {
 		panic("%s: map not loaded in dma continue callback, datain = %d",
 				sc->sc_dev.dv_xname,esc->sc_datain);
 	}
 #endif
-
-	if (esc->sc_dmamap_loaded == 0) {
-		esc->sc_dmamap_loaded++;
-		return(esc->sc_dmamap);
-	} else {
-#ifdef DIAGNOSTIC
-		if (esc->sc_dmamap_loaded != 1) {
-			panic("%s: Unexpected sc_dmamap_loaded (%d) != 1 in continue_cb",
-					sc->sc_dev.dv_xname,esc->sc_dmamap_loaded);
+	switch(esc->sc_dmamap_loaded) {
+	case 0:
+		if (esc->sc_dmamap->dm_mapsize) {
+			bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_dmamap,
+					0, esc->sc_dmamap->dm_mapsize, 
+					(esc->sc_datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE));
+			esc->sc_dmamap_loaded = 1;
+			DPRINTF(("Loading primary map\n"));
+			return(esc->sc_dmamap);
 		}
-#endif
+		/* Fallthrough */
+	case 1:
+		if (esc->sc_tail_dmamap->dm_mapsize) {
+			bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_tail_dmamap,
+					0, esc->sc_tail_dmamap->dm_mapsize, 
+					(esc->sc_datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE));
+			esc->sc_dmamap_loaded = 2;
+			DPRINTF(("Loading tail map\n"));
+			return(esc->sc_tail_dmamap);
+		}
+		/* Fallthrough */
+	case 2:
+		DPRINTF(("Not loading map\n"));
 		return(0);
+	default:
+		panic("%s: Unexpected sc_dmamap_loaded (%d) in continue_cb",
+				sc->sc_dev.dv_xname,esc->sc_dmamap_loaded);
 	}
 }
+
 
 void
 esp_dmacb_completed(map, arg)
@@ -832,38 +851,38 @@ esp_dmacb_completed(map, arg)
 	DPRINTF(("esp dma completed\n"));
 
 #ifdef DIAGNOSTIC
-	if ((esc->sc_datain < 0) || 
-			(esc->sc_datain > 1) ||
-			(esc->sc_dmamap_loaded != 1)) {
+	if ((esc->sc_datain < 0) || (esc->sc_datain > 1)) {
 		panic("%s: map not loaded in dma completed callback, datain = %d, loaded = %d",
 				sc->sc_dev.dv_xname,esc->sc_datain,esc->sc_dmamap_loaded);
 	}
-	if (map != esc->sc_dmamap) {
-		panic("%s: unexpected tx completed map", sc->sc_dev.dv_xname);
+	if ((map != esc->sc_dmamap) && (map != esc->sc_tail_dmamap)) {
+		panic("%s: unexpected completed map", sc->sc_dev.dv_xname);
 	}
 #endif
 
-	/* @@@ Flush the fifo? */
-
-	if (esc->sc_datain) { 
+#if 0
+	if (esc->sc_datain) {					/* @@@ this may not be needed */
 		NCR_WRITE_REG(sc, ESP_DCTL,
 				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMARD);
 	} else {
 		NCR_WRITE_REG(sc, ESP_DCTL,
 				ESPDCTL_20MHZ | ESPDCTL_INTENB);
 	}
+#endif
 
-  bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_dmamap,
-			0, esc->sc_dmamap->dm_mapsize, 
+	bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, map,
+			0, map->dm_mapsize,
 			(esc->sc_datain ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
 
-	if (esc->sc_datain) {
+#if 0
+	if (esc->sc_datain) {					/* @@@ this may not be needed */
 		NCR_WRITE_REG(sc, ESP_DCTL,
 				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD);
 	} else {
 		NCR_WRITE_REG(sc, ESP_DCTL,
 				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD);
 	}
+#endif
 
 }
 
@@ -876,22 +895,14 @@ esp_dmacb_shutdown(arg)
 
 	DPRINTF(("esp dma shutdown\n"));
 
-#ifdef DIAGNOSTIC
-	if ((esc->sc_datain < 0) || (esc->sc_datain > 1)) {
-		panic("%s: map not loaded in dma shutdown callback, datain = %d",
-				sc->sc_dev.dv_xname,esc->sc_datain);
-	}
-#endif
-
 	/* Stuff the end slop into fifo */
 
-#ifdef DIAGNOSTIC
-	{
+#ifdef ESP_DEBUG
+	if (esp_debug) {
+		
 		int n = NCR_READ_REG(sc, NCR_FFLAG);
 		DPRINTF(("esp fifo size = %d, seq = 0x%x\n",n & NCRFIFO_FF, (n & NCRFIFO_SS)>>5));
-	}
 
-	if (esp_debug) {
 		NCR_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d\n",
 				NCR_READ_REG(sc, NCR_TCL),
 				NCR_READ_REG(sc, NCR_TCM),
@@ -900,62 +911,17 @@ esp_dmacb_shutdown(arg)
 	}
 #endif
 
-
-	if (esc->sc_datain) { 
-		NCR_WRITE_REG(sc, ESP_DCTL,
-				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD);
-	} else {
-		NCR_WRITE_REG(sc, ESP_DCTL,
-				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD);
+	if (esc->sc_dmamap->dm_mapsize) {
+		bus_dmamap_unload(esc->sc_scsi_dma.nd_dmat, esc->sc_dmamap);
+	}
+	if (esc->sc_tail_dmamap->dm_mapsize) {
+		bus_dmamap_unload(esc->sc_scsi_dma.nd_dmat, esc->sc_tail_dmamap);
 	}
 
-	{
-
-		if (esc->sc_datain) { 
-			int i;
-			int r = NCR_READ_REG(sc, NCR_FFLAG);
-			int n = r & NCRFIFO_FF;
-#ifdef DIAGNOSTIC
-#if 0 /*
-			 * This condition is ok.
-			 * For example, scsi sense requests as much as might be available.
-			 */
-			int s = (r & NCRFIFO_SS) >> 5;
-			if (n != esc->sc_slop_end_size) {
-				panic("%s: Unexpected data in fifo n = %d, expecting %d at end. (seq = 0x%x)\n",
-						sc->sc_dev.dv_xname, n , esc->sc_slop_end_size, s);
-			}
-#endif
-#endif
-			for(i=0;i<esc->sc_slop_end_size;i++) {
-				esc->sc_slop_end_addr[i]=NCR_READ_REG(sc, NCR_FIFO);
-			}
-		
-		} else {
-			int i;
-			for(i=0;i<esc->sc_slop_end_size;i++) {
-				NCR_WRITE_REG(sc, NCR_FIFO, esc->sc_slop_end_addr[i]);
-			}
-		}
+	if (esc->sc_datain == 1) {
+		memcpy(esc->sc_slop_end_addr,esc->sc_tail,esc->sc_slop_end_size);
 	}
-
-	if (esc->sc_datain) { 
-		NCR_WRITE_REG(sc, ESP_DCTL,
-				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMARD);
-	} else {
-		NCR_WRITE_REG(sc, ESP_DCTL,
-				ESPDCTL_20MHZ | ESPDCTL_INTENB);
-	}
-
-#ifdef DIAGNOSTIC
-	{
-		int n = NCR_READ_REG(sc, NCR_FFLAG);
-		DPRINTF(("esp fifo size = %d, seq = 0x%x\n",n & NCRFIFO_FF, (n & NCRFIFO_SS)>>5));
-	}
-#endif
-
-	bus_dmamap_unload(esc->sc_scsi_dma.nd_dmat, esc->sc_dmamap);
-
+	
 #ifdef ESP_DEBUG
 	if (esp_debug) esp_hex_dump(*(esc->sc_dmaaddr),esc->sc_dmasize);
 #endif
@@ -965,11 +931,7 @@ esp_dmacb_shutdown(arg)
 	esc->sc_slop_bgn_size = 0;
 	esc->sc_slop_end_addr = 0;
 	esc->sc_slop_end_size = 0;
-	esc->sc_dmamap_loaded--;
-#ifdef DIAGNOSTIC
-	if (esc->sc_dmamap_loaded != 0) {
-		panic("%s: Unexpected sc_dmamap_loaded (%d) != 0 in shutdown_cb",
-				sc->sc_dev.dv_xname,esc->sc_dmamap_loaded);
-	}
-#endif
+	esc->sc_dmamap_loaded = 0;
+	esc->sc_tail = 0;
+	esc->sc_tail_size = 0;
 }
