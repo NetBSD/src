@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.545 2003/02/09 10:01:14 tron Exp $
+# $NetBSD: mi,v 1.546 2003/02/12 02:45:06 gmcgarry Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1265,6 +1265,7 @@
 ./usr/share/man/cat7/mandoc.0			man-reference-catman
 ./usr/share/man/cat7/mdoc.0			man-reference-catman
 ./usr/share/man/cat7/msafer.0			man-reference-catman
+./usr/share/man/cat7/nls.0			man-reference-catman
 ./usr/share/man/cat7/packages.0			man-reference-catman
 ./usr/share/man/cat7/re_format.0		man-reference-catman
 ./usr/share/man/cat7/release.0			man-reference-catman
@@ -3044,6 +3045,7 @@
 ./usr/share/man/man7/mandoc.7			man-reference-man
 ./usr/share/man/man7/mdoc.7			man-reference-man
 ./usr/share/man/man7/msafer.7			man-reference-man
+./usr/share/man/man7/nls.7			man-reference-man
 ./usr/share/man/man7/packages.7			man-reference-man
 ./usr/share/man/man7/re_format.7		man-reference-man
 ./usr/share/man/man7/release.7			man-reference-man
