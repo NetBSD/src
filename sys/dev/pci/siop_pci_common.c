@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.c,v 1.7 2001/03/12 10:00:51 bouyer Exp $	*/
+/*	$NetBSD: siop_pci_common.c,v 1.8 2001/03/15 17:41:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -166,7 +166,7 @@ const struct siop_product_desc siop_products[] = {
 	"Symbios Logic 53c1010-33 (ultra2-wide scsi)",
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM |
-	SF_CHIP_LS | SF_CHIP_10REGS | SF_CHIP_DFBC |
+	SF_CHIP_LS | SF_CHIP_10REGS | SF_CHIP_DFBC | SF_CHIP_DBLR |
 	SF_BUS_ULTRA2 | SF_BUS_WIDE, 
 	7, 31, 7, 62, 8192
 	},
