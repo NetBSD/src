@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13 1996/10/13 03:39:53 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.14 1997/01/14 22:29:54 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -153,7 +153,7 @@ vm_offset_t	avail_end;	/* PA of last available physical page */
 vm_size_t	mem_size;	/* memory size in bytes */
 vm_offset_t	virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vm_offset_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
-int		pmaxpagesperpage;	/* PAGE_SIZE / NBPG */
+int		mipspagesperpage;	/* PAGE_SIZE / NBPG */
 #ifdef ATTR
 char		*pmap_attributes;	/* reference and modify bits */
 #endif
@@ -215,7 +215,7 @@ pmap_bootstrap(firstaddr)
 	virtual_avail = VM_MIN_KERNEL_ADDRESS;
 	virtual_end = VM_MIN_KERNEL_ADDRESS + Sysmapsize * NBPG;
 	/* XXX need to decide how to set cnt.v_page_size */
-	pmaxpagesperpage = 1;
+	mipspagesperpage = 1;
 
 	simple_lock_init(&pmap_kernel()->pm_lock);
 	pmap_kernel()->pm_count = 1;
@@ -339,7 +339,7 @@ pmap_pinit(pmap)
 		pmap_zero_page(VM_PAGE_TO_PHYS(mem));
 		pmap->pm_segtab = stp = (struct segtab *)
 			MACH_PHYS_TO_CACHED(VM_PAGE_TO_PHYS(mem));
-		i = pmaxpagesperpage * (NBPG / sizeof(struct segtab));
+		i = mipspagesperpage * (NBPG / sizeof(struct segtab));
 		s = splimp();
 		while (--i != 0) {
 			stp++;
@@ -975,10 +975,10 @@ pmap_enter(pmap, va, pa, prot, wired)
 		pte = kvtopte(va);
 		npte |= pa | PG_V | PG_G;
 		if (wired) {
-			pmap->pm_stats.wired_count += pmaxpagesperpage;
+			pmap->pm_stats.wired_count += mipspagesperpage;
 			npte |= PG_WIRED;
 		}
-		i = pmaxpagesperpage;
+		i = mipspagesperpage;
 		do {
 			if (!(pte->pt_entry & PG_V)) {
 				pmap->pm_stats.resident_count++;
@@ -1015,7 +1015,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 */
 	npte |= pa | PG_V;
 	if (wired) {
-		pmap->pm_stats.wired_count += pmaxpagesperpage;
+		pmap->pm_stats.wired_count += mipspagesperpage;
 		npte |= PG_WIRED;
 	}
 #ifdef DEBUG
@@ -1026,7 +1026,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		printf("\n");
 	}
 #endif
-	i = pmaxpagesperpage;
+	i = mipspagesperpage;
 	do {
 		pte->pt_entry = npte;
 		if (pmap->pm_tlbgen == tlbpid_gen)
@@ -1080,7 +1080,7 @@ pmap_change_wiring(pmap, va, wired)
 		pte += (va >> PGSHIFT) & (NPTEPG - 1);
 	}
 
-	i = pmaxpagesperpage;
+	i = mipspagesperpage;
 	if (!(pte->pt_entry & PG_WIRED) && p)
 		pmap->pm_stats.wired_count += i;
 	else if ((pte->pt_entry & PG_WIRED) && !p)
