@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.c,v 1.6 1999/08/21 10:40:03 simonb Exp $	*/
+/*	$NetBSD: monop.c,v 1.7 1999/09/08 21:45:28 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)monop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monop.c,v 1.6 1999/08/21 10:40:03 simonb Exp $");
+__RCSID("$NetBSD: monop.c,v 1.7 1999/09/08 21:45:28 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ main(ac, av)
 /*ARGSUSED*/
 static void
 do_quit(n)
-	int n;
+	int n __attribute__((__unused__));
 {
 	quit();
 }

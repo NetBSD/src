@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.10 1999/09/08 21:17:58 jsm Exp $ */
+/*	$NetBSD: extern.h,v 1.11 1999/09/08 21:45:30 jsm Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -372,7 +372,7 @@ void choke __P((int)) __attribute__((__noreturn__));
 void child __P((int));
 
 /* pl_2.c */
-void play __P((void));
+void play __P((void)) __attribute__((__noreturn__));
 
 /* pl_3.c */
 void acceptcombat __P((void));

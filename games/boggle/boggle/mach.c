@@ -1,4 +1,4 @@
-/*	$NetBSD: mach.c,v 1.9 1999/09/08 21:17:44 jsm Exp $	*/
+/*	$NetBSD: mach.c,v 1.10 1999/09/08 21:45:26 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: mach.c,v 1.9 1999/09/08 21:17:44 jsm Exp $");
+__RCSID("$NetBSD: mach.c,v 1.10 1999/09/08 21:45:26 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -598,7 +598,7 @@ tty_setup()
 
 static void
 stop_catcher(signo)
-	int signo;
+	int signo __attribute__((__unused__));
 {
 	sigset_t sigset, osigset;
 
@@ -619,7 +619,7 @@ stop_catcher(signo)
  
 static void
 cont_catcher(signo)
-	int signo;
+	int signo __attribute__((__unused__));
 {
 	noecho();
 	raw();
@@ -635,7 +635,7 @@ cont_catcher(signo)
  */
 static void
 winch_catcher(signo)
-	int signo;
+	int signo __attribute__((__unused__));
 {
 	struct winsize win;
 

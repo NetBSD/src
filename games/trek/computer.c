@@ -1,4 +1,4 @@
-/*	$NetBSD: computer.c,v 1.6 1999/07/21 13:19:10 hubertf Exp $	*/
+/*	$NetBSD: computer.c,v 1.7 1999/09/08 21:45:32 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)computer.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: computer.c,v 1.6 1999/07/21 13:19:10 hubertf Exp $");
+__RCSID("$NetBSD: computer.c,v 1.7 1999/09/08 21:45:32 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,7 +113,7 @@ static void prkalc __P((int, double));
 /*ARGSUSED*/
 void
 computer(v)
-	int v;
+	int v __attribute__((__unused__));
 {
 	int		ix, iy;
 	int		i, j;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rest.c,v 1.4 1997/10/12 21:25:10 christos Exp $	*/
+/*	$NetBSD: rest.c,v 1.5 1999/09/08 21:45:33 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rest.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: rest.c,v 1.4 1997/10/12 21:25:10 christos Exp $");
+__RCSID("$NetBSD: rest.c,v 1.5 1999/09/08 21:45:33 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: rest.c,v 1.4 1997/10/12 21:25:10 christos Exp $");
 /*ARGSUSED*/
 void
 rest(v)
-	int v;
+	int v __attribute__((__unused__));
 {
 	double		t;
 	int		percent;

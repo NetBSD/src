@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.10 1999/09/08 21:18:01 jsm Exp $	*/
+/*	$NetBSD: tetris.c,v 1.11 1999/09/08 21:45:31 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -304,7 +304,7 @@ main(argc, argv)
 
 void
 onintr(signo)
-	int signo;
+	int signo __attribute__((__unused__));
 {
 	scr_clear();
 	scr_end();

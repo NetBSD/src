@@ -1,4 +1,4 @@
-/*	$NetBSD: hangman.h,v 1.8 1999/09/08 21:17:50 jsm Exp $	*/
+/*	$NetBSD: hangman.h,v 1.9 1999/09/08 21:45:28 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -82,7 +82,7 @@ extern FILE *Dict;
 
 extern off_t Dict_size;
 
-void    die __P((int));
+void    die __P((int)) __attribute__((__noreturn__));
 void    endgame __P((void));
 int	main __P((void));
 void	getguess __P((void));

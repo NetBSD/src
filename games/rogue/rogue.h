@@ -1,4 +1,4 @@
-/*	$NetBSD: rogue.h,v 1.8 1998/11/10 13:01:32 hubertf Exp $	*/
+/*	$NetBSD: rogue.h,v 1.9 1999/09/08 21:45:30 jsm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -587,7 +587,7 @@ boolean	is_pack_letter __P((short *, unsigned short *));
 boolean	is_passable __P((int, int));
 boolean	is_vowel __P((short));
 void	kick_into_pack __P((void));
-void	killed_by __P((const object *, short));
+void	killed_by __P((const object *, short)) __attribute__((__noreturn__));
 long	lget_number __P((const char *));
 void	light_passage __P((int, int));
 void	light_up_room __P((int));
@@ -747,7 +747,7 @@ void	wanderer __P((void));
 void	wdrain_life __P((object *));
 void	wear __P((void));
 void	wield __P((void));
-void	win __P((void));
+void	win __P((void)) __attribute__((__noreturn__));
 void	wizardize __P((void));
 void	write_pack __P((const object *, FILE *));
 void	write_string __P((char *, FILE *));

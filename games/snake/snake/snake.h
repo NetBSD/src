@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.h,v 1.12 1999/09/08 21:18:00 jsm Exp $	*/
+/*	$NetBSD: snake.h,v 1.13 1999/09/08 21:45:31 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -99,7 +99,7 @@ void		home __P((void));
 void		length __P((int));
 void		ll __P((void));
 void		logit __P((const char *));
-void		mainloop __P((void));
+void		mainloop __P((void)) __attribute__((__noreturn__));
 void		move __P((struct point *));
 void		nd __P((void));
 void		outch __P((int));

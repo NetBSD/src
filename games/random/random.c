@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.5 1997/10/12 01:14:22 lukem Exp $	*/
+/*	$NetBSD: random.c,v 1.6 1999/09/08 21:45:29 jsm Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\n\
 #if 0
 static char sccsid[] = "@(#)random.c	8.6 (Berkeley) 6/1/94";
 #else
-__RCSID("$NetBSD: random.c,v 1.5 1997/10/12 01:14:22 lukem Exp $");
+__RCSID("$NetBSD: random.c,v 1.6 1999/09/08 21:45:29 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ __RCSID("$NetBSD: random.c,v 1.5 1997/10/12 01:14:22 lukem Exp $");
 #include <limits.h>
 
 int  main __P((int, char **));
-void usage __P((void));
+void usage __P((void)) __attribute__((__noreturn__));
 
 int
 main(argc, argv)

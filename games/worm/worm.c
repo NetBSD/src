@@ -1,4 +1,4 @@
-/*	$NetBSD: worm.c,v 1.13 1999/09/08 21:18:01 jsm Exp $	*/
+/*	$NetBSD: worm.c,v 1.14 1999/09/08 21:45:34 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worm.c,v 1.13 1999/09/08 21:18:01 jsm Exp $");
+__RCSID("$NetBSD: worm.c,v 1.14 1999/09/08 21:45:34 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,7 +191,7 @@ leave(dummy)
 
 void
 wake(dummy)
-	int dummy;
+	int dummy __attribute__((__unused__));
 {
 	signal(SIGALRM, wake);
 	fflush(stdout);

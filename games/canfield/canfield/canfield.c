@@ -1,4 +1,4 @@
-/*	$NetBSD: canfield.c,v 1.12 1999/09/08 21:17:46 jsm Exp $	*/
+/*	$NetBSD: canfield.c,v 1.13 1999/09/08 21:45:26 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)canfield.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: canfield.c,v 1.12 1999/09/08 21:17:46 jsm Exp $");
+__RCSID("$NetBSD: canfield.c,v 1.13 1999/09/08 21:45:26 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -1742,7 +1742,7 @@ finish()
  */
 void
 cleanup(dummy)
-	int dummy;
+	int dummy __attribute__((__unused__));
 {
 
 	total.thinktime += 1;
@@ -1766,7 +1766,7 @@ cleanup(dummy)
  */
 void
 askquit(dummy)
-	int dummy;
+	int dummy __attribute__((__unused__));
 {
 	move(msgrow, msgcol);
 	printw("Really wish to quit?    ");
