@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.28 2000/10/27 07:24:04 nisimura Exp $ */
+/* $NetBSD: tfb.c,v 1.29 2001/01/16 05:32:16 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.28 2000/10/27 07:24:04 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.29 2001/01/16 05:32:16 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.28 2000/10/27 07:24:04 nisimura Exp $");
 
 #endif
 
-#if defined(__alpha__) || defined(alpha)
+#if defined(alpha)
 #define machine_btop(x) alpha_btop(x)
 #define MACHINE_KSEG0_TO_PHYS(x) ALPHA_K0SEG_TO_PHYS(x)
 
@@ -157,7 +157,7 @@ struct fb_devconfig {
 	int	dc_depth;		/* depth, bits per pixel */
 	int	dc_rowbytes;		/* bytes in a FB scan line */
 	vaddr_t dc_videobase;		/* base of flat frame buffer */
-	int	    dc_blanked;		/* currently has video disabled */
+	int	dc_blanked;		/* currently has video disabled */
 
 	struct rasops_info rinfo;
 };
@@ -185,12 +185,8 @@ struct tfb_softc {
 	struct hwcmap256 sc_cmap;	/* software copy of colormap */
 	struct hwcursor64 sc_cursor;	/* software copy of cursor */
 	int sc_curenb;			/* cursor sprite enabled */
-	int sc_changed;			/* need update of colormap */
-#define	DATA_ENB_CHANGED	0x01	/* cursor enable changed */
-#define	DATA_CURCMAP_CHANGED	0x02	/* cursor colormap changed */
-#define	DATA_CURSHAPE_CHANGED	0x04	/* cursor size, image, mask changed */
-#define	DATA_CMAP_CHANGED	0x08	/* colormap changed */
-#define	DATA_ALL_CHANGED	0x0f
+	int sc_changed;			/* need update of hardware */
+#define	WSDISPLAY_CMAP_DOLUT	0x20
 	int nscreens;
 };
 
@@ -268,7 +264,6 @@ static int  set_cmap __P((struct tfb_softc *, struct wsdisplay_cmap *));
 static int  set_cursor __P((struct tfb_softc *, struct wsdisplay_cursor *));
 static int  get_cursor __P((struct tfb_softc *, struct wsdisplay_cursor *));
 static void set_curpos __P((struct tfb_softc *, struct wsdisplay_curpos *));
-static void bt431_set_curpos __P((struct tfb_softc *));
 
 /* bit order reverse */
 static const u_int8_t flip[256] = {
@@ -480,7 +475,7 @@ tfbioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_SCURPOS:
 		set_curpos(sc, (struct wsdisplay_curpos *)data);
-		bt431_set_curpos(sc);
+		sc->sc_changed = WSDISPLAY_CURSOR_DOPOS;
 		return (0);
 
 	case WSDISPLAYIO_GCURMAX:
@@ -588,12 +583,27 @@ tfbintr(arg)
 	vdac = (void *)(tfbbase + TX_BT463_OFFSET);
 	curs = (void *)(tfbbase + TX_BT431_OFFSET);
 	v = sc->sc_changed;
-	sc->sc_changed = 0;
-	if (v & DATA_ENB_CHANGED) {
+	if (v & WSDISPLAY_CURSOR_DOCUR) {
 		SELECT431(curs, BT431_REG_COMMAND);
 		HALF(curs, bt_ctl) = (sc->sc_curenb) ? 0x4444 : 0x0404;
 	}
-	if (v & DATA_CURCMAP_CHANGED) {
+	if (v & (WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOHOT)) {
+		int x, y;
+		u_int16_t twin;
+
+		x = sc->sc_cursor.cc_pos.x - sc->sc_cursor.cc_hot.x;
+		y = sc->sc_cursor.cc_pos.y - sc->sc_cursor.cc_hot.y;
+
+		x += sc->sc_cursor.cc_magic.x;
+		y += sc->sc_cursor.cc_magic.y;
+
+		SELECT431(curs, BT431_REG_CURSOR_X_LOW);
+		HALF(curs, bt_ctl) = TWIN_LO(x);	tc_wmb();
+		HALF(curs, bt_ctl) = TWIN_HI(x);	tc_wmb();
+		HALF(curs, bt_ctl) = TWIN_LO(y);	tc_wmb();
+		HALF(curs, bt_ctl) = TWIN_HI(y);	tc_wmb();
+	}
+	if (v & WSDISPLAY_CURSOR_DOCMAP) {
 		u_int8_t *cp = sc->sc_cursor.cc_color;
 
 		SELECT463(vdac, BT463_IREG_CURSOR_COLOR_0);
@@ -613,7 +623,7 @@ tfbintr(arg)
 		BYTE(vdac, bt_reg) = cp[3]; tc_wmb();
 		BYTE(vdac, bt_reg) = cp[5]; tc_wmb();
 	}
-	if (v & DATA_CURSHAPE_CHANGED) {
+	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		u_int8_t *ip, *mp, img, msk;
 		int bcnt;
 
@@ -646,7 +656,7 @@ tfbintr(arg)
 			bcnt += 2;
 		}
 	}
-	if (v & DATA_CMAP_CHANGED) {
+	if (v & WSDISPLAY_CMAP_DOLUT) {
 		struct hwcmap256 *cm = &sc->sc_cmap;
 		int index;
 
@@ -657,6 +667,7 @@ tfbintr(arg)
 			BYTE(vdac, bt_cmap) = cm->b[index];
 		}
 	}
+	sc->sc_changed = 0;
 done:
 	*(u_int8_t *)(tfbbase + TX_CONTROL) &= ~0x40;	/* !? Eeeh !? */
 	*(u_int8_t *)(tfbbase + TX_CONTROL) |= 0x40;
@@ -781,7 +792,7 @@ set_cmap(sc, p)
 	copyin(p->green, &sc->sc_cmap.g[index], count);
 	copyin(p->blue, &sc->sc_cmap.b[index], count);
 
-	sc->sc_changed |= DATA_CMAP_CHANGED;
+	sc->sc_changed |= WSDISPLAY_CMAP_DOLUT;
 
 	return (0);
 }
@@ -813,32 +824,25 @@ set_cursor(sc, p)
 		    !uvm_useracc(p->mask, icount, B_READ))
 			return (EFAULT);
 	}
-	if (v & (WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOCUR)) {
-		if (v & WSDISPLAY_CURSOR_DOCUR)
-			cc->cc_hot = p->hot;
-		if (v & WSDISPLAY_CURSOR_DOPOS)
-			set_curpos(sc, &p->pos);
-		bt431_set_curpos(sc);
-	}
 
-	sc->sc_changed = 0;
-	if (v & WSDISPLAY_CURSOR_DOCUR) {
+	if (v & WSDISPLAY_CURSOR_DOCUR)
 		sc->sc_curenb = p->enable;
-		sc->sc_changed |= DATA_ENB_CHANGED;
-	}
+	if (v & WSDISPLAY_CURSOR_DOPOS)
+		set_curpos(sc, &p->pos);
+	if (v & WSDISPLAY_CURSOR_DOHOT)
+		cc->cc_hot = p->hot;
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
 		copyin(p->cmap.red, &cc->cc_color[index], count);
 		copyin(p->cmap.green, &cc->cc_color[index + 2], count);
 		copyin(p->cmap.blue, &cc->cc_color[index + 4], count);
-		sc->sc_changed |= DATA_CURCMAP_CHANGED;
 	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		cc->cc_size = p->size;
 		memset(cc->cc_image, 0, sizeof cc->cc_image);
 		copyin(p->image, cc->cc_image, icount);
 		copyin(p->mask, cc->cc_image+CURSOR_MAX_SIZE, icount);
-		sc->sc_changed |= DATA_CURSHAPE_CHANGED;
 	}
+	sc->sc_changed = v;
 
 	return (0);
 #undef cc
@@ -870,30 +874,4 @@ set_curpos(sc, curpos)
 		x = dc->dc_wid;
 	sc->sc_cursor.cc_pos.x = x;
 	sc->sc_cursor.cc_pos.y = y;
-}
-
-static void
-bt431_set_curpos(sc)
-	struct tfb_softc *sc;
-{
-	caddr_t tfbbase = (caddr_t)sc->sc_dc->dc_vaddr;
-	void *curs = (void *)(tfbbase + TX_BT431_OFFSET);
-	u_int16_t twin;
-	int x, y, s;
-
-	x = sc->sc_cursor.cc_pos.x - sc->sc_cursor.cc_hot.x;
-	y = sc->sc_cursor.cc_pos.y - sc->sc_cursor.cc_hot.y;
-
-	x += sc->sc_cursor.cc_magic.x;
-	y += sc->sc_cursor.cc_magic.y;
-
-	s = spltty();
-
-	SELECT431(curs, BT431_REG_CURSOR_X_LOW);
-	HALF(curs, bt_ctl) = TWIN_LO(x);	tc_wmb();
-	HALF(curs, bt_ctl) = TWIN_HI(x);	tc_wmb();
-	HALF(curs, bt_ctl) = TWIN_LO(y);	tc_wmb();
-	HALF(curs, bt_ctl) = TWIN_HI(y);	tc_wmb();
-
-	splx(s);
 }
