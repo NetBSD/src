@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.4 2002/10/02 05:17:47 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.5 2002/11/17 17:10:46 chs Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.5 2001/05/05 20:56:36 art Exp $	*/
 
@@ -119,7 +119,7 @@ dev_type_read(mmrw);
 dev_type_ioctl(mmioctl);
 dev_type_mmap(mmmmap);
 
-const struct cdevsw mem_cdevsw {
+const struct cdevsw mem_cdevsw = {
 	nullopen, nullclose, mmrw, mmrw, mmioctl,
 	nostop, notty, nopoll, mmmmap,
 };
