@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.4 1995/10/02 17:21:33 jpo Exp $	*/
+/*	$NetBSD: externs1.h,v 1.5 1995/10/02 17:26:55 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -83,6 +83,7 @@ extern	sym_t	*pushdown __P((sym_t *));
 extern	void	rmsym __P((sym_t *));
 extern	void	rmsyms __P((sym_t *));
 extern	void	inssym __P((int, sym_t *));
+extern	void	freeyyv __P((void *, int));
 extern	int	yylex __P((void));
 
 /*
