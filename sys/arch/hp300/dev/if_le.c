@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_le.c	7.6 (Berkeley) 5/8/91
- *	$Id: if_le.c,v 1.18 1994/09/18 00:43:19 mycroft Exp $
+ *	$Id: if_le.c,v 1.19 1994/09/29 21:24:12 mycroft Exp $
  */
 
 #include "le.h"
@@ -1056,7 +1056,7 @@ lesetladrf(ac, af)
 		crc >>= 26;
 
 		/* Turn on the corresponding bit in the filter. */
-		af[crc >> 5] |= 1 << (crc & 0x1f);
+		af[crc >> 5] |= 1 << ((crc & 0x1f) ^ 16);
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
