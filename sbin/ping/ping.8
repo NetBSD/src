@@ -1,4 +1,4 @@
-.\"	$NetBSD: ping.8,v 1.17 1997/09/15 07:21:09 lukem Exp $
+.\"	$NetBSD: ping.8,v 1.18 1997/10/03 00:55:28 hubertf Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -105,9 +105,9 @@ This can be very hard on a network and should be used with caution.
 .It Fl g Ar gateway
 Use Lose Source Routing to send the ECHO_REQUEST packets via
 .Ar gateway .
-.It Fl i Ar internal
+.It Fl i Ar interval
 Wait
-.Ar internal
+.Ar interval
 seconds
 .Em between sending each packet .
 The default is to wait for one second between each packet,
