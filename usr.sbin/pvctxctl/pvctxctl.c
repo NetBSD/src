@@ -1,4 +1,4 @@
-/*	$NetBSD: pvctxctl.c,v 1.3 2001/05/07 14:00:23 kleink Exp $	*/
+/*	$NetBSD: pvctxctl.c,v 1.4 2004/10/30 15:08:49 dsl Exp $	*/
 
 /*
  * Copyright (C) 1998
@@ -76,7 +76,7 @@ main(int argc, char **argv)
 		usage();
 
 	if_name = argv[1];
-	if (argc > 2 && isdigit(argv[2][0]))
+	if (argc > 2 && isdigit((unsigned char)argv[2][0]))
 		str2vc(argv[2], &vpi, &vci);
     
 	optind = 3;
