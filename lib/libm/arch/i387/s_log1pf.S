@@ -5,7 +5,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$Id: s_log1pf.S,v 1.3 1995/04/28 22:44:11 jtc Exp $")
+RCSID("$NetBSD: s_log1pf.S,v 1.4 1995/05/09 00:13:05 jtc Exp $")
 
 /*
  * Since the fyl2xp1 instruction has such a limited range:

@@ -40,7 +40,7 @@
 ;_sccsid:
 ;.asciz	"from: @(#)support.s	5.2 (Berkeley) 5/17/90"
 
-RCSID("$Id: s_finite.S,v 1.2 1994/03/18 23:23:02 jtc Exp $")
+RCSID("$NetBSD: s_finite.S,v 1.3 1995/05/09 02:03:31 jtc Exp $")
 
 | finite(x)
 | returns the value TRUE if -INF < x < +INF and returns FALSE otherwise.

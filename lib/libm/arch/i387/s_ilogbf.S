@@ -5,7 +5,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$Id: s_ilogbf.S,v 1.2 1995/04/28 22:44:09 jtc Exp $")
+RCSID("$NetBSD: s_ilogbf.S,v 1.3 1995/05/09 00:08:15 jtc Exp $")
 
 ENTRY(ilogbf)
 	pushl	%esp
