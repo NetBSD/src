@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.16 2000/03/19 15:38:45 pk Exp $ */
+/*	$NetBSD: tcx.c,v 1.17 2000/04/04 21:47:17 pk Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -289,12 +289,12 @@ tcxioctl(dev, cmd, data, flags, p)
 		break;
 
 	case FBIOGETCMAP:
-		return (bt_getcmap((struct fbcmap *)data, &sc->sc_cmap, 256));
+#define	p ((struct fbcmap *)data)
+		return (bt_getcmap(p, &sc->sc_cmap, 256, 1));
 
 	case FBIOPUTCMAP:
 		/* copy to software map */
-#define	p ((struct fbcmap *)data)
-		error = bt_putcmap(p, &sc->sc_cmap, 256);
+		error = bt_putcmap(p, &sc->sc_cmap, 256, 1);
 		if (error)
 			return (error);
 		/* now blast them into the chip */
