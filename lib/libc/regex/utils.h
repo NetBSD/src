@@ -3,7 +3,7 @@
 #define	INFINITY	(DUPMAX + 1)
 #define	NC		(CHAR_MAX - CHAR_MIN + 1)
 
-typedef unsigned char uchar;
+typedef unsigned char uch;
 
 #ifndef REDEBUG
 #ifndef NDEBUG

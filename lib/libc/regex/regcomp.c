@@ -69,7 +69,7 @@ static int never = 0;		/* for use in asserts; shuts lint up */
 
 /*
  - regcomp - interface for parser and compilation
- = extern int regcomp(regex_t *preg, const char *pattern, int cflags);
+ = extern int regcomp(regex_t *, const char *, int);
  = #define	REG_BASIC	0000
  = #define	REG_EXTENDED	0001
  = #define	REG_ICASE	0002
@@ -606,7 +606,7 @@ register struct parse *p;
 					CHadd(cs, ci);
 			}
 		if (cs->multis != NULL)
-			mccase(cs);
+			mccase(p, cs);
 	}
 	if (invert) {
 		register int i;
@@ -619,7 +619,7 @@ register struct parse *p;
 		if (p->g->cflags&REG_NEWLINE)
 			CHsub(cs, '\n');
 		if (cs->multis != NULL)
-			mcinvert(cs);
+			mcinvert(p, cs);
 	}
 
 	assert(cs->multis == NULL);		/* xxx */
@@ -728,7 +728,7 @@ register cset *cs;
 	while ((c = *u++) != '\0')
 		CHadd(cs, c);
 	for (u = cp->multis; *u != '\0'; u += strlen(u) + 1)
-		MCadd(cs, u);
+		MCadd(p, cs, u);
 }
 
 /*
@@ -980,6 +980,7 @@ register struct parse *p;
 	register size_t nbytes;
 	register cset *cs;
 	register size_t css = (size_t)p->g->csetsize;
+	register int i;
 
 	if (no >= p->ncsalloc) {	/* need another column of space */
 		p->ncsalloc += CHAR_BIT;
@@ -992,10 +993,14 @@ register struct parse *p;
 			p->g->sets = (cset *)realloc((char *)p->g->sets,
 							nc * sizeof(cset));
 		if (p->g->setbits == NULL)
-			p->g->setbits = (uchar *)malloc(nbytes);
-		else
-			p->g->setbits = (uchar *)realloc((char *)p->g->setbits,
+			p->g->setbits = (uch *)malloc(nbytes);
+		else {
+			p->g->setbits = (uch *)realloc((char *)p->g->setbits,
 								nbytes);
+			/* xxx this isn't right if setbits is now NULL */
+			for (i = 0; i < no; i++)
+				p->g->sets[i].ptr = p->g->setbits + css*(i/CHAR_BIT);
+		}
 		if (p->g->sets != NULL && p->g->setbits != NULL)
 			(void) memset((char *)p->g->setbits + (nbytes - css),
 								0, css);
@@ -1051,7 +1056,7 @@ freezeset(p, cs)
 register struct parse *p;
 register cset *cs;
 {
-	register uchar h = cs->hash;
+	register uch h = cs->hash;
 	register int i;
 	register cset *top = &p->g->sets[p->g->ncsets];
 	register cset *cs2;
@@ -1201,13 +1206,14 @@ register char *cp;
 
 /*
  - mcinvert - invert the list of collating elements in a cset
- == static void mcinvert(register cset *cs);
+ == static void mcinvert(register struct parse *p, register cset *cs);
  *
  * This would have to know the set of possibilities.  Implementation
  * is deferred.
  */
 static void
-mcinvert(cs)
+mcinvert(p, cs)
+register struct parse *p;
 register cset *cs;
 {
 	assert(cs->multis == NULL);	/* xxx */
@@ -1215,13 +1221,14 @@ register cset *cs;
 
 /*
  - mccase - add case counterparts of the list of collating elements in a cset
- == static void mccase(register cset *cs);
+ == static void mccase(register struct parse *p, register cset *cs);
  *
  * This would have to know the set of possibilities.  Implementation
  * is deferred.
  */
 static void
-mccase(cs)
+mccase(p, cs)
+register struct parse *p;
 register cset *cs;
 {
 	assert(cs->multis == NULL);	/* xxx */
@@ -1236,7 +1243,7 @@ isinsets(g, c)
 register struct re_guts *g;
 int c;
 {
-	register uchar *col;
+	register uch *col;
 	register int i;
 	register int ncols = (g->ncsets+(CHAR_BIT-1)) / CHAR_BIT;
 	register unsigned uc = (unsigned char)c;
@@ -1257,7 +1264,7 @@ register struct re_guts *g;
 int c1;
 int c2;
 {
-	register uchar *col;
+	register uch *col;
 	register int i;
 	register int ncols = (g->ncsets+(CHAR_BIT-1)) / CHAR_BIT;
 	register unsigned uc1 = (unsigned char)c1;
@@ -1442,7 +1449,7 @@ register struct parse *p;
 register struct re_guts *g;
 {
 	g->nstates = p->slen;
-	g->strip = (sop *)realloc((sop *)p->strip, p->slen * sizeof(sop));
+	g->strip = (sop *)realloc((char *)p->strip, p->slen * sizeof(sop));
 	if (g->strip == NULL) {
 		SETERROR(REG_ESPACE);
 		g->strip = p->strip;
@@ -1529,8 +1536,10 @@ register struct re_guts *g;
 	for (i = g->mlen; i > 0; i--) {
 		while (OP(s = *scan++) != OCHAR)
 			continue;
+		assert(cp < g->must + g->mlen);
 		*cp++ = (char)OPND(s);
 	}
+	assert(cp == g->must + g->mlen);
 	*cp++ = '\0';		/* just on general principles */
 }
 

@@ -3,21 +3,16 @@
 # internal assertion checking).  Take -Dconst= out for an ANSI compiler.
 # Do not take -DPOSIX_MISTAKE out.  REGCFLAGS isn't important to you (it's
 # for my use in some special contexts).
-#CFLAGS = -I. -Dconst= -DPOSIX_MISTAKE -DREDEBUG $(REGCFLAGS)
 CFLAGS = -I. -DPOSIX_MISTAKE -DREDEBUG $(REGCFLAGS)
 
 # If you have an ANSI compiler, take -o out of MKHFLAGS.  If you want
 # the Berkeley __P macro, put -b in.
-#MKHFLAGS = -o
 MKHFLAGS = -b
 
 LDFLAGS =
 
 # If you have an ANSI environment, take limits.h and stdlib.h out of
 # HMISSING and take memmove out of SRCMISSING and OBJMISSING.
-#HMISSING = limits.h stdlib.h
-#SRCMISSING = split.c memmove.c
-#OBJMISSING = split.o memmove.o
 HMISSING =
 SRCMISSING = split.c
 OBJMISSING = split.o
@@ -118,4 +113,4 @@ cio:	$(DTR)
 	cio $(DTR)
 
 rdf:	$(DTR)
-	rcsdiff -c $(DTR)
+	rcsdiff -c $(DTR) 2>&1 | p
