@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.28.2.3 2004/09/21 13:14:20 skrll Exp $	*/
+/*	$NetBSD: pccons.c,v 1.28.2.4 2005/01/17 08:25:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.28.2.3 2004/09/21 13:14:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.28.2.4 2005/01/17 08:25:44 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -836,10 +836,10 @@ pcconskbd_cnattach(tag, slot)
 #endif
 
 int
-pcopen(dev, flag, mode, p)
+pcopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct pc_softc *sc;
 	int unit = PCUNIT(dev);
@@ -869,7 +869,7 @@ pcopen(dev, flag, mode, p)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		pcparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0)
+	} else if (tp->t_state&TS_XCLUDE && l->l_proc->p_ucred->cr_uid != 0)
 		return (EBUSY);
 	tp->t_state |= TS_CARR_ON;
 
@@ -877,10 +877,10 @@ pcopen(dev, flag, mode, p)
 }
 
 int
-pcclose(dev, flag, mode, p)
+pcclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -920,15 +920,15 @@ pcwrite(dev, uio, flag)
 }
 
 int
-pcpoll(dev, events, p)
+pcpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -995,22 +995,22 @@ pcintr(arg)
 #endif
 
 int
-pcioctl(dev, cmd, data, flag, p)
+pcioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 	int error;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 

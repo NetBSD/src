@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.12.6.3 2004/09/21 13:13:59 skrll Exp $	*/
+/*	$NetBSD: ms.c,v 1.12.6.4 2005/01/17 08:25:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.12.6.3 2004/09/21 13:13:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.12.6.4 2005/01/17 08:25:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -306,10 +306,10 @@ out:
 }
 
 int
-msopen(dev, flags, mode, p)
+msopen(dev, flags, mode, l)
 dev_t		dev;
 int		flags, mode;
-struct proc	*p;
+struct lwp	*l;
 {
 	u_char		report_ms_joy[] = { 0x14, 0x08 };
 	struct ms_softc	*ms;
@@ -324,7 +324,7 @@ struct proc	*p;
 	if (ms->ms_events.ev_io)
 		return(EBUSY);
 
-	ms->ms_events.ev_io = p;
+	ms->ms_events.ev_io = l->l_proc;
 	ms->ms_dx = ms->ms_dy = 0;
 	ms->ms_buttons = 0;
 	ms->ms_bq[0].id = ms->ms_bq[1].id = 0;
@@ -339,10 +339,10 @@ struct proc	*p;
 }
 
 int
-msclose(dev, flags, mode, p)
+msclose(dev, flags, mode, l)
 dev_t		dev;
 int		flags, mode;
-struct proc	*p;
+struct lwp	*l;
 {
 	u_char		disable_ms_joy[] = { 0x12, 0x1a };
 	int		unit;
@@ -373,12 +373,12 @@ int		flags;
 }
 
 int
-msioctl(dev, cmd, data, flag, p)
+msioctl(dev, cmd, data, flag, l)
 dev_t			dev;
 u_long			cmd;
 register caddr_t 	data;
 int			flag;
-struct proc		*p;
+struct lwp		*l;
 {
 	struct ms_softc *ms;
 	int		unit;
@@ -419,15 +419,15 @@ struct proc		*p;
 }
 
 int
-mspoll(dev, events, p)
+mspoll(dev, events, l)
 dev_t		dev;
 int		events;
-struct proc	*p;
+struct lwp	*l;
 {
 	struct ms_softc *ms;
 
 	ms = &ms_softc[minor(dev)];
-	return(ev_poll(&ms->ms_events, events, p));
+	return(ev_poll(&ms->ms_events, events, l));
 }
 
 int

@@ -1,4 +1,4 @@
-/* $NetBSD: lubbock_lcd.c,v 1.1.4.4 2004/09/21 13:14:53 skrll Exp $ */
+/* $NetBSD: lubbock_lcd.c,v 1.1.4.5 2005/01/17 08:25:44 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  *   LCD panel geometry
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.1.4.4 2004/09/21 13:14:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.1.4.5 2005/01/17 08:25:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ const struct wsscreen_list lcd_screen_list = {
 	lcd_scr_descr
 };
 
-int	lcd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	lcd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 
 int	lcd_show_screen(void *, void *, int,
 	    void (*)(void *, int, int), void *);
@@ -215,7 +215,7 @@ void lcd_attach( struct device *parent, struct device *self, void *aux )
 #if NWSDISPLAY > 0
 
 int
-lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct obio_softc *osc = 
 	    (struct obio_softc *)((struct device *)v)->dv_parent;
@@ -234,7 +234,7 @@ lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;			/* turn on/off LCD controller */
 	}
 
-	return pxa2x0_lcd_ioctl( v, cmd, data, flag, p );
+	return pxa2x0_lcd_ioctl( v, cmd, data, flag, l );
 }
 
 int
@@ -259,13 +259,13 @@ lcd_show_screen(void *v, void *cookie, int waitok,
 #else  /* NWSDISPLAY==0 */
 
 int
-lcdopen( dev_t dev, int oflags, int devtype, struct proc *p )
+lcdopen( dev_t dev, int oflags, int devtype, struct lwp *l )
 {
 	return 0;
 }
 
 int
-lcdclose( dev_t dev, int fflag, int devtype, struct proc *p )
+lcdclose( dev_t dev, int fflag, int devtype, struct lwp *l )
 {
 	return 0;
 }
@@ -282,7 +282,7 @@ lcdmmap( dev_t dev, off_t offset, int size )
 
 int
 lcdioctl( dev_t dev, u_long cmd, caddr_t data,
-	    int fflag, struct proc *p )
+	    int fflag, struct lwp *l )
 {
 	return EOPNOTSUPP;
 }

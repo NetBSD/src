@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.39.6.3 2004/09/21 13:14:00 skrll Exp $	*/
+/*	$NetBSD: zs.c,v 1.39.6.4 2005/01/17 08:25:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.39.6.3 2004/09/21 13:14:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.39.6.4 2005/01/17 08:25:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,11 +362,11 @@ void		*aux;
  * Open a zs serial port.
  */
 int
-zsopen(dev, flags, mode, p)
+zsopen(dev, flags, mode, l)
 dev_t		dev;
 int		flags;
 int		mode;
-struct proc	*p;
+struct lwp	*l;
 {
 	register struct tty		*tp;
 	register struct zs_chanstate	*cs;
@@ -402,7 +402,7 @@ struct proc	*p;
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    l->l_proc->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
 	s  = spltty();
@@ -464,11 +464,11 @@ bad:
  * Close a zs serial port.
  */
 int
-zsclose(dev, flags, mode, p)
+zsclose(dev, flags, mode, l)
 dev_t		dev;
 int		flags;
 int		mode;
-struct proc	*p;
+struct lwp	*l;
 {
 	register struct zs_chanstate	*cs;
 	register struct tty		*tp;
@@ -535,10 +535,10 @@ int		flags;
 }
 
 int
-zspoll(dev, events, p)
+zspoll(dev, events, l)
 dev_t		dev;
 int		events;
-struct proc	*p;
+struct lwp	*l;
 {
 	register struct zs_chanstate	*cs;
 	register struct zs_softc	*zi;
@@ -550,7 +550,7 @@ struct proc	*p;
 	cs   = &zi->zi_cs[unit & 1];
 	tp   = cs->cs_ttyp;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -856,12 +856,12 @@ again:
 }
 
 int
-zsioctl(dev, cmd, data, flag, p)
+zsioctl(dev, cmd, data, flag, l)
 dev_t		dev;
 u_long		cmd;
 caddr_t		data;
 int		flag;
-struct proc	*p;
+struct lwp	*l;
 {
 		 int			unit = ZS_UNIT(dev);
 		 struct zs_softc	*zi = zs_cd.cd_devs[unit >> 1];
@@ -869,11 +869,11 @@ struct proc	*p;
 	register int			error, s;
 	register struct zs_chanstate	*cs = &zi->zi_cs[unit & 1];
 
-	error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p);
+	error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, l);
 	if(error != EPASSTHROUGH)
 		return(error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if(error !=EPASSTHROUGH)
 		return (error);
 
@@ -907,7 +907,7 @@ struct proc	*p;
 	case TIOCSFLAGS: {
 		int userbits = 0;
 
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
 		if(error != 0)
 			return (EPERM);
 

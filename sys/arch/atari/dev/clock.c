@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.32.2.3 2004/09/21 13:13:58 skrll Exp $	*/
+/*	$NetBSD: clock.c,v 1.32.2.4 2005/01/17 08:25:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.32.2.3 2004/09/21 13:13:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.32.2.4 2005/01/17 08:25:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -501,10 +501,10 @@ gettod()
  *                   RTC-device support				       *
  ***********************************************************************/
 int
-rtcopen(dev, flag, mode, p)
+rtcopen(dev, flag, mode, l)
 	dev_t		dev;
 	int		flag, mode;
-	struct proc	*p;
+	struct lwp	*l;
 {
 	int			unit = minor(dev);
 	struct clock_softc	*sc;
@@ -522,11 +522,11 @@ rtcopen(dev, flag, mode, p)
 }
 
 int
-rtcclose(dev, flag, mode, p)
+rtcclose(dev, flag, mode, l)
 	dev_t		dev;
 	int		flag;
 	int		mode;
-	struct proc	*p;
+	struct lwp	*l;
 {
 	int			unit = minor(dev);
 	struct clock_softc	*sc = clock_cd.cd_devs[unit];
