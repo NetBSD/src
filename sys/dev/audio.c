@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.131 2000/07/19 13:44:24 nathanw Exp $	*/
+/*	$NetBSD: audio.c,v 1.132 2000/12/25 00:01:39 jmc Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -290,12 +290,12 @@ audioattach(parent, self, aux)
 
 	iclass = oclass = -1;
 	sc->sc_inports.index = -1;
-	sc->sc_inports.master = -1;
+	sc->sc_inports.master = 0;
 	sc->sc_inports.nports = 0;
 	sc->sc_inports.isenum = 0;
 	sc->sc_inports.allports = 0;
 	sc->sc_outports.index = -1;
-	sc->sc_outports.master = -1;
+	sc->sc_outports.master = 0;
 	sc->sc_outports.nports = 0;
 	sc->sc_outports.isenum = 0;
 	sc->sc_outports.allports = 0;
