@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.1 1997/08/29 16:07:46 gwr Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.2 1997/09/09 21:36:35 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -106,12 +106,16 @@ nfs_bootparam(ifp, nd, procp)
 	struct proc *procp;
 {
 	struct ifreq ireq;
+	struct in_addr my_ip, gw_ip;
 	struct sockaddr_in bp_sin;
 	struct sockaddr_in *sin;
 	struct socket *so;
-	struct in_addr my_ip;
+	struct nfs_dlmount *gw_ndm;
+	char *p;
+	u_int32_t mask, x;
 	int error;
 
+	gw_ndm = 0;
 	bzero(&ireq, sizeof(ireq));
 	bcopy(ifp->if_xname, ireq.ifr_name, IFNAMSIZ);
 
@@ -161,7 +165,7 @@ nfs_bootparam(ifp, nd, procp)
 	sin = (struct sockaddr_in *)&ireq.ifr_addr;
 	sin->sin_len = sizeof(*sin);
 	sin->sin_family = AF_INET;
-	sin->sin_addr.s_addr = my_ip.s_addr;
+	sin->sin_addr = my_ip;
 	error = ifioctl(so, SIOCSIFADDR, (caddr_t)&ireq, procp);
 	if (error) {
 		printf("nfs_boot: set ifaddr, error=%d\n", error);
@@ -183,7 +187,7 @@ nfs_bootparam(ifp, nd, procp)
 	sin->sin_addr.s_addr = INADDR_BROADCAST;
 
 	/* Do the RPC/bootparam/whoami. */
-	error = bp_whoami(sin, &my_ip, &nd->nd_gwip);
+	error = bp_whoami(sin, &my_ip, &gw_ip);
 	if (error) {
 		printf("nfs_boot: bootparam whoami, error=%d\n", error);
 		goto out;
@@ -209,13 +213,81 @@ nfs_bootparam(ifp, nd, procp)
 	}
 #endif
 
+#ifdef	NFS_BOOT_GATEWAY
 	/*
-	 * XXX - Use bp_getfile(sin, "gate", &gw_ip)
-	 * to get the [router:mask] information, maybe?
-	 * Better still, just use BOOTP/DHCP instead.
+	 * Note: we normally ignore the gateway address returned
+	 * by the "bootparam/whoami" RPC above, because many old
+	 * bootparam servers supply a bogus gateway value.
+	 *
+	 * These deficiencies in the bootparam RPC interface are
+	 * circumvented by using the bootparam/getfile RPC.  The
+	 * parameter "gateway" is requested, and if its returned,
+	 * we use the "server" part of the reply as the gateway,
+	 * and use the "pathname" part of the reply as the mask.
+	 * (The mask comes to us as a string: "0x%x")
 	 */
+	if (gw_ip.s_addr) {
+		/* Our caller will add the route. */
+		nd->nd_gwip = gw_ip;
+	}
+#endif
+	gw_ndm = malloc(sizeof(*gw_ndm), M_NFSMNT, M_WAITOK);
+	bzero((caddr_t)gw_ndm, sizeof(*gw_ndm));
+	error = bp_getfile(sin, "gateway", gw_ndm);
+	if (error) {
+		/* Ignore the error.  No gateway supplied. */
+		error = 0;
+		goto out;
+	}
+	printf("nfs_boot: gateway=%s\n", gw_ndm->ndm_host);
+	sin = (struct sockaddr_in *) &gw_ndm->ndm_saddr;
+	nd->nd_gwip = sin->sin_addr;
+	/* Find the pathname part of the "mounted-on" string. */
+	p = strchr(gw_ndm->ndm_host, ':');
+	if (p == 0)
+		goto out;
+	/* have pathname */
+	/* XXX - Inline: sscanf(p, ":0x%x", &mask) */
+	mask = 0;
+	while (*p) {
+		switch (*p) {
+		case '0': case '1': case '2': case '3': case '4':
+		case '5': case '6': case '7': case '8': case '9':
+			x = (*p - '0');
+			break;
+		case 'A': case 'B': case 'C':
+		case 'D': case 'E': case 'F':
+			x = (*p - ('A' - 10));
+			break;
+		case 'a': case 'b': case 'c':
+		case 'd': case 'e': case 'f':
+			x = (*p - ('a' - 10));
+			break;
+		default:
+			mask = x = 0;
+			break;
+		}
+		mask = (mask << 4) + x;
+		p++;
+	}
+	if (mask == 0)
+		goto out;
+
+	/* Save our netmask and update the network interface. */
+	nd->nd_mask.s_addr = htonl(mask);
+	sin = (struct sockaddr_in *)&ireq.ifr_addr;
+	sin->sin_len = sizeof(*sin);
+	sin->sin_family = AF_INET;
+	sin->sin_addr = nd->nd_mask;
+	error = ifioctl(so, SIOCSIFNETMASK, (caddr_t)&ireq, procp);
+	if (error) {
+		printf("nfs_boot: set ifmask, error=%d\n", error);
+		error = 0;	/* ignore it */
+	}
 
  out:
+	if (gw_ndm)
+		free(gw_ndm, M_NFSMNT);
 	soclose(so);
 	return (error);
 }
