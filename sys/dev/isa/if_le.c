@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.19 1994/12/12 04:43:51 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.20 1995/01/02 20:06:38 mycroft Exp $	*/
 
 /*
  * LANCE Ethernet driver
@@ -172,7 +172,7 @@ found:
 		u_char *mem, val;
 		int i;
 
-		mem = sc->sc_mem = ia->ia_maddr;
+		mem = sc->sc_mem = ISA_HOLE_VADDR(ia->ia_maddr);
 		/* XXX This is somewhat bogus. */
 		if (ia->ia_msize < MAXMEM) {
 			printf("%s: not enough memory configured\n",
