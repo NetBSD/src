@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_5.c,v 1.3 1995/04/22 10:36:51 cgd Exp $	*/
+/*	$NetBSD: dr_5.c,v 1.4 1997/01/07 12:42:15 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,13 +35,13 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)dr_5.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)dr_5.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: dr_5.c,v 1.3 1995/04/22 10:36:51 cgd Exp $";
+static char rcsid[] = "$NetBSD: dr_5.c,v 1.4 1997/01/07 12:42:15 tls Exp $";
 #endif
 #endif /* not lint */
 
-#include "externs.h"
+#include "extern.h"
 
 subtract(from, totalfrom, crewfrom, fromcap, pcfrom)
 struct ship *from, *fromcap;
