@@ -1,4 +1,4 @@
-/*	$NetBSD: ip32.c,v 1.10 2002/05/03 01:49:22 rafal Exp $	*/
+/*	$NetBSD: ip32.c,v 1.11 2002/06/04 05:42:42 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -76,22 +76,7 @@ void ip32_init(void)
 	/* Counter on R4k/R4400/R4600/R5k counts at half the CPU frequency */
 	curcpu()->ci_cycles_per_hz = curcpu()->ci_cpu_freq / (2 * hz);
 	curcpu()->ci_divisor_delay = curcpu()->ci_cpu_freq / (2 * 1000000);
-
-        /*
-         * To implement a more accurate microtime using the CP0 COUNT
-         * register we need to divide that register by the number of
-         * cycles per MHz.  But...
-         *
-         * DIV and DIVU are expensive on MIPS (eg 75 clocks on the
-         * R4000).  MULT and MULTU are only 12 clocks on the same CPU.  
-         *
-         * The strategy we use to to calculate the reciprical of cycles
-         * per MHz, scaled by 1<<32.  Then we can simply issue a MULTU
-         * and pluck of the HI register and have the results of the
-         * division.
-         */
-        curcpu()->ci_divisor_recip =
-            0x100000000ULL / curcpu()->ci_divisor_delay;
+	MIPS_SET_CI_RECIPRICAL(curcpu());
 
 	platform.iointr = ip32_intr;
 	platform.bus_reset = ip32_bus_reset;

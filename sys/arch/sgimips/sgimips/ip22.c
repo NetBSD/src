@@ -1,4 +1,4 @@
-/*	$NetBSD: ip22.c,v 1.12 2002/05/03 01:49:21 rafal Exp $	*/
+/*	$NetBSD: ip22.c,v 1.13 2002/06/04 05:42:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Rafal K. Boni
@@ -180,22 +180,7 @@ ip22_init(void)
 	curcpu()->ci_cpu_freq = 2 * cps * hz;
 	curcpu()->ci_cycles_per_hz = curcpu()->ci_cpu_freq / (2 * hz);
 	curcpu()->ci_divisor_delay = curcpu()->ci_cpu_freq / (2 * 1000000);
-
-        /*
-         * To implement a more accurate microtime using the CP0 COUNT
-         * register we need to divide that register by the number of
-         * cycles per MHz.  But...
-         *
-         * DIV and DIVU are expensive on MIPS (eg 75 clocks on the
-         * R4000).  MULT and MULTU are only 12 clocks on the same CPU.  
-         *
-         * The strategy we use to to calculate the reciprical of cycles
-         * per MHz, scaled by 1<<32.  Then we can simply issue a MULTU
-         * and pluck of the HI register and have the results of the
-         * division.
-         */
-        curcpu()->ci_divisor_recip =
-            0x100000000ULL / curcpu()->ci_divisor_delay;
+	MIPS_SET_CI_RECIPRICAL(curcpu());
 
 	evcnt_attach_static(&mips_int5_evcnt);
 	evcnt_attach_static(&mips_spurint_evcnt);
@@ -444,10 +429,7 @@ ip22_clkread(void)
 	uint32_t res, count;
 
 	count = mips3_cp0_count_read() - last_clk_intr;
-
-	asm volatile("multu %1,%2 ; mfhi %0"
-		: "=r"(res) : "r"(count), "r"(curcpu()->ci_divisor_recip));
-
+	MIPS_COUNT_TO_MHZ(curcpu(), count, res);
 	return (res);
 }
 
