@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.21 1998/02/23 03:11:26 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.22 1998/03/27 06:10:54 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -238,6 +238,7 @@ adb_keymaybemouse(event)
 			adb_dokeyupdown(&new_event);
 		}
 	} else if (optionkey_down) {
+#ifdef ALTXBUTTONS
 		if (event->u.k.key == ADBK_KEYDOWN(ADBK_1)) {
 			adb_ms_buttons |= 1;	/* left down */
 			new_event.def_addr = ADBADDR_MS;
@@ -252,32 +253,46 @@ adb_keymaybemouse(event)
 			new_event.u.m.dx = new_event.u.m.dy = 0;
 			microtime(&new_event.timestamp);
 			adb_dokeyupdown(&new_event);
-		} else if ((event->u.k.key == ADBK_KEYDOWN(ADBK_LEFT)) ||
-			(event->u.k.key == ADBK_KEYDOWN(ADBK_2))) {
+		} else
+#endif
+		if (event->u.k.key == ADBK_KEYDOWN(ADBK_LEFT)
+#ifdef ALTXBUTTONS
+		    || event->u.k.key == ADBK_KEYDOWN(ADBK_2)
+#endif
+		    ) {
 			adb_ms_buttons |= 2;	/* middle down */
 			new_event.def_addr = ADBADDR_MS;
 			new_event.u.m.buttons = adb_ms_buttons;
 			new_event.u.m.dx = new_event.u.m.dy = 0;
 			microtime(&new_event.timestamp);
 			adb_dokeyupdown(&new_event);
-		} else if ((event->u.k.key == ADBK_KEYUP(ADBK_LEFT)) ||
-			(event->u.k.key == ADBK_KEYUP(ADBK_2))) {
+		} else if (event->u.k.key == ADBK_KEYUP(ADBK_LEFT)
+#ifdef ALTXBUTTONS
+		    || event->u.k.key == ADBK_KEYUP(ADBK_2)
+#endif
+		    ) {
 			adb_ms_buttons &= ~2;	/* middle up */
 			new_event.def_addr = ADBADDR_MS;
 			new_event.u.m.buttons = adb_ms_buttons;
 			new_event.u.m.dx = new_event.u.m.dy = 0;
 			microtime(&new_event.timestamp);
 			adb_dokeyupdown(&new_event);
-		} else if ((event->u.k.key == ADBK_KEYDOWN(ADBK_RIGHT)) ||
-			(event->u.k.key == ADBK_KEYDOWN(ADBK_3))) {
+		} else if (event->u.k.key == ADBK_KEYDOWN(ADBK_RIGHT)
+#ifdef ALTXBUTTONS
+		    || event->u.k.key == ADBK_KEYDOWN(ADBK_3)
+#endif
+		    ) {
 			adb_ms_buttons |= 4;	/* right down */
 			new_event.def_addr = ADBADDR_MS;
 			new_event.u.m.buttons = adb_ms_buttons;
 			new_event.u.m.dx = new_event.u.m.dy = 0;
 			microtime(&new_event.timestamp);
 			adb_dokeyupdown(&new_event);
-		} else if ((event->u.k.key == ADBK_KEYUP(ADBK_RIGHT)) ||
-			(event->u.k.key == ADBK_KEYUP(ADBK_3))) {
+		} else if (event->u.k.key == ADBK_KEYUP(ADBK_RIGHT)
+#ifdef ALTXBUTTONS
+		    || event->u.k.key == ADBK_KEYUP(ADBK_3)
+#endif
+		    ) {
 			adb_ms_buttons &= ~4;	/* right up */
 			new_event.def_addr = ADBADDR_MS;
 			new_event.u.m.buttons = adb_ms_buttons;
