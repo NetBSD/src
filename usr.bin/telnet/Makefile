@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1998/07/27 04:16:19 scottr Exp $
+#	$NetBSD: Makefile,v 1.13 1998/07/27 04:45:23 scottr Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -64,7 +64,6 @@ NOCRYPT_DIR=${.CURDIR}/Nocrypt
 
 MAN=	telnet.1
 
-.include <bsd.obj.mk>
 .include <bsd.man.mk>
 
 .endif	# EXPORTABLE_SYSTEM
