@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.41.2.4 2005/01/17 19:30:38 skrll Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.41.2.5 2005/02/17 07:10:37 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.41.2.4 2005/01/17 19:30:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.41.2.5 2005/02/17 07:10:37 skrll Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -109,12 +109,12 @@ db_value_of_name(char *name, db_expr_t *valuep)
 	}
 #endif
 	db_symsplit(name, &mod, &sym);
-	if (ksyms_getval_from_kernel(mod, sym, &uval, KSYMS_EXTERN) == 0) {
+	if (ksyms_getval(mod, sym, &uval, KSYMS_EXTERN) == 0) {
 		val = (long) uval;
 		*valuep = (db_expr_t)val;
 		return TRUE;
 	}
-	if (ksyms_getval_from_kernel(mod, sym, &uval, KSYMS_ANY) == 0) {
+	if (ksyms_getval(mod, sym, &uval, KSYMS_ANY) == 0) {
 		val = (long) uval;
 		*valuep = (db_expr_t)val;
 		return TRUE;
@@ -229,7 +229,7 @@ db_search_symbol(db_addr_t val, db_strategy_t strategy, db_expr_t *offp)
 #endif
 
 	if (ksyms_getname(&mod, &sym, (vaddr_t)val, strategy) == 0) {
-		(void)ksyms_getval_from_kernel(mod, sym, &naddr, KSYMS_ANY);
+		(void)ksyms_getval(mod, sym, &naddr, KSYMS_ANY);
 		diff = val - (db_addr_t)naddr;
 		ret = (db_sym_t)naddr;
 	} else
@@ -338,7 +338,7 @@ db_symstr(char *buf, size_t buflen, db_expr_t off, db_strategy_t strategy)
 #endif
 	if (ksyms_getname(&mod, &name, (vaddr_t)off,
 	    strategy|KSYMS_CLOSEST) == 0) {
-		(void)ksyms_getval_from_kernel(mod, name, &val, KSYMS_ANY);
+		(void)ksyms_getval(mod, name, &val, KSYMS_ANY);
 		if (((off - val) < db_maxoff) && val) {
 			snprintf(buf, buflen, "%s:%s", mod, name);
 			if (off - val) {
@@ -410,7 +410,7 @@ db_printsym(db_expr_t off, db_strategy_t strategy,
 #endif
 	if (ksyms_getname(&mod, &name, (vaddr_t)off,
 	    strategy|KSYMS_CLOSEST) == 0) {
-		(void)ksyms_getval_from_kernel(mod, name, &uval, KSYMS_ANY);
+		(void)ksyms_getval(mod, name, &uval, KSYMS_ANY);
 		val = (long) uval;
 		if (((off - val) < db_maxoff) && val) {
 			(*pr)("%s:%s", mod, name);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.1.2.6 2005/02/15 21:33:29 skrll Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.1.2.7 2005/02/17 07:10:37 skrll Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -45,6 +45,10 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.24 2005/01/08 16:5
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
+#if __NetBSD_Version__ >= 105190000	/* 1.5T */
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
+#endif
 #include <netinet/udp.h>
 #include <netinet/tcpip.h>
 #include <netinet/ip_icmp.h>
@@ -133,14 +137,14 @@ int dir;
 {
 	struct ip *ip = mtod(*mp, struct ip *);
 	int rv, hlen = ip->ip_hl << 2;
-
-#if __NetBSD_Version >= 200080000
+#if __NetBSD_Version__ >= 200080000
 	/*
 	 * ensure that mbufs are writable beforehand
 	 * as it's assumed by ipf code.
 	 * XXX inefficient
 	 */
-	error = m_makewritable(mp, 0, M_COPYALL, M_DONTWAIT);
+	int error = m_makewritable(mp, 0, M_COPYALL, M_DONTWAIT);
+
 	if (error) {
 		m_freem(*mp);
 		*mp = NULL;
@@ -204,7 +208,7 @@ int dir;
 	    ifp, (dir == PFIL_OUT), mp));
 }
 # endif
-#endif /* __NetBSD_Version >= 105110000 */
+#endif /* __NetBSD_Version__ >= 105110000 */
 
 
 #if	defined(IPFILTER_LKM)
@@ -1541,18 +1545,19 @@ struct in_addr *inp, *inpmask;
 u_32_t fr_newisn(fin)
 fr_info_t *fin;
 {
-	u_32_t newiss;
-#if __NetBSD_Version >= 105190000	/* 1.5T */
+#if __NetBSD_Version__ >= 105190000	/* 1.5T */
 	size_t asz;
 	
-
 	if (fin->fin_v == 4)
 		asz = sizeof(struct in_addr);
 	else if (fin->fin_v == 6)
 		asz = sizeof(fin->fin_src);
-	newiss = tcp_new_iss1((void *)&fin->fin_src, (void *)&fin->fin_dst,
-			      fin->fin_sport, fin->fin_dport, asz);
+	else	/* XXX: no way to return error */
+		return 0;
+	return tcp_new_iss1((void *)&fin->fin_src, (void *)&fin->fin_dst,
+	    fin->fin_sport, fin->fin_dport, asz, 0);
 #else
+	u_32_t newiss;
 	static int iss_seq_off = 0;
 	u_char hash[16];
 	MD5_CTX ctx;
@@ -1584,8 +1589,8 @@ fr_info_t *fin;
 	 */
 	iss_seq_off += 0x00010000;
 	newiss += iss_seq_off;
-#endif
 	return newiss;
+#endif
 }
 
 

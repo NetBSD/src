@@ -1,9 +1,10 @@
-/*	$NetBSD: kcore.h,v 1.3 2002/11/03 22:36:23 matt Exp $	*/
+/*	$NetBSD: kcore.h,v 1.3.6.1 2005/02/17 07:10:37 skrll Exp $	*/
 
-/*-
- * Copyright (C) 1996 Wolfgang Solfrank.
- * Copyright (C) 1996 TooLs GmbH.
+/*
+ * Copyright (c) 2005 Wasabi Systems, Inc.
  * All rights reserved.
+ *
+ * Written by Allen Briggs for Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,31 +16,43 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by TooLs GmbH.
- * 4. The name of TooLs GmbH may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *      This product includes software developed for the NetBSD Project by
+ *      Wasabi Systems, Inc.
+ * 4. The name of Wasabi Systems, Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY TOOLS GMBH ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL TOOLS GMBH BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef	_POWERPC_KCORE_H_
 #define	_POWERPC_KCORE_H_
 
-#define	NPHYS_RAM_SEGS	4
-
+/*
+ * Support for 4xx/8xx/82xx/etc, will probably make this a union.
+ * The pad/pvr should be kept in the same place, though, so we can
+ * tell the difference.
+ */
 typedef struct cpu_kcore_hdr {
-	paddr_t	ptable;		/* Phys address of page table */
-	paddr_t	potable;	/* Phys address of page overflow table */
-	phys_ram_seg_t	ram_segs[NPHYS_RAM_SEGS];
+	uint32_t	pad;		/* Pad for 64-bit register_t */
+	uint32_t	pvr;		/* PVR */
+	register_t	sdr1;		/* SDR1 */
+	register_t	sr[16];		/* Segment registers */
+	register_t	dbatl[8];	/* DBATL[] */
+	register_t	dbatu[8];	/* DBATU[] */
+	register_t	ibatl[8];	/* IBATL[] */
+	register_t	ibatu[8];	/* IBATU[] */
+	register_t	pad_reg;	/* Pad for 32-bit systems */
 } cpu_kcore_hdr_t;
 
 #endif	/* _POWERPC_KCORE_H_ */
