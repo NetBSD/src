@@ -27,11 +27,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_conf.c,v 1.3 1994/02/05 02:24:56 cgd Exp $
+ *	$Id: exec_conf.c,v 1.4 1994/05/27 09:20:13 glass Exp $
  */
 
 #define	EXEC_SCRIPT			/* XXX */
 #define EXEC_AOUT			/* XXX */
+
+#ifdef COMPAT_ULTRIX
+#define EXEC_ECOFF
+#endif
 
 #include <sys/param.h>
 #include <sys/exec.h>
@@ -42,6 +46,10 @@
 
 #ifdef EXEC_AOUT
 #include <sys/exec_aout.h>
+#endif
+
+#ifdef EXEC_ECOFF
+#include <sys/exec_ecoff.h>
 #endif
 
 struct execsw execsw[] = {
@@ -57,6 +65,9 @@ struct execsw execsw[] = {
 #endif
 #ifdef EXEC_AOUT
 	{ sizeof(struct exec), exec_aout_makecmds, },	/* a.out binaries */
+#endif
+#ifdef EXEC_ECOFF
+	{ ECOFF_HDR_SIZE, exec_ecoff_makecmds, },	/* ecoff binaries */
 #endif
 };
 int nexecs = (sizeof execsw / sizeof(*execsw));
