@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2003/07/15 01:37:37 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2003/07/16 01:00:33 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2003/07/15 01:37:37 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2003/07/16 01:00:33 simonb Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -297,8 +297,6 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	 * Initialize pmap module.
 	 */
 	pmap_bootstrap(startkernel, endkernel);
-
-	consinit();
 
 #ifdef DEBUG
 	printf("Board config data:\n");
