@@ -1,4 +1,4 @@
-.\" $NetBSD: pms.4,v 1.19 2005/01/02 22:52:28 wiz Exp $
+.\" $NetBSD: pms.4,v 1.20 2005/01/18 10:23:35 scw Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd January 2, 2005
+.Dd January 18, 2005
 .Dt PMS 4
 .Os
 .Sh NAME
@@ -44,6 +44,7 @@
 .Cd wsmouse* at pms?
 .Pp
 .Cd options PMS_DISABLE_POWERHOOK
+.Cd options PMS_SYNAPTICS_TOUCHPAD
 .Sh DESCRIPTION
 The
 .Nm
@@ -81,7 +82,10 @@ In addition, the
 .Nm
 driver supports the
 .Dq Synaptics
-touchpad.
+touchpad in native mode, enabled with the
+.Va PMS_SYNAPTICS_TOUCHPAD
+kernel option. This allows the driver to take advantage of extra
+features available on Synaptics Touchpads.
 The following
 .Xr sysctl 8
 variables control the touchpad's behavior:
