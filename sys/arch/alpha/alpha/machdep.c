@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 1996/04/12 06:07:32 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 1996/04/18 00:59:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -94,7 +94,7 @@
 #include <net/netisr.h>
 #include "ether.h"
 
-#include "le.h"			/* XXX for le_iomem creation */
+#include "le_ioasic.h"			/* for le_iomem creation */
 
 vm_map_t buffer_map;
 
@@ -434,18 +434,24 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	if (cpu_model == NULL)
 		cpu_model = model_names[cputype];
 
-#if NLE > 0
+#if NLE_IOASIC > 0
 	/*
 	 * Grab 128K at the top of physical memory for the lance chip
 	 * on machines where it does dma through the I/O ASIC.
 	 * It must be physically contiguous and aligned on a 128K boundary.
+	 *
+	 * Note that since this is conditional on the presence of
+	 * IOASIC-attached 'le' units in the kernel config, the
+	 * message buffer may move on these systems.  This shouldn't
+	 * be a problem, because once people have a kernel config that
+	 * they use, they're going to stick with it.
 	 */
 	if (cputype == ST_DEC_3000_500 ||
 	    cputype == ST_DEC_3000_300) {	/* XXX possibly others? */
 		lastusablepage -= btoc(128 * 1024);
 		le_iomem = (caddr_t)phystok0seg(ctob(lastusablepage + 1));
 	}
-#endif /* NLE */
+#endif /* NLE_IOASIC */
 
 	/*
 	 * Initialize error message buffer (at end of core).
