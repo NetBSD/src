@@ -38,8 +38,8 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)dbtest.c	8.5 (Berkeley) 9/7/93"; */
-static char *rcsid = "$Id: dbtest.c,v 1.4 1993/09/09 02:42:43 cgd Exp $";
+/* from: static char sccsid[] = "@(#)dbtest.c	8.6 (Berkeley) 9/16/93"; */
+static char *rcsid = "$Id: dbtest.c,v 1.5 1993/09/16 23:15:57 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -292,6 +292,10 @@ lkey:			switch(command) {
 			    p, lineno);
 		}
 	}
+#ifdef STATISTICS
+	if (type == DB_BTREE)
+		__bt_stat(dbp);
+#endif
 	if (dbp->close(dbp))
 		err("db->close: %s", strerror(errno));
 	(void)close(ofd);
