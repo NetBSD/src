@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.13.4.2 2001/03/20 17:58:09 he Exp $	*/
+/*	$NetBSD: main.c,v 1.13.4.3 2001/04/23 21:45:25 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.13.4.2 2001/03/20 17:58:09 he Exp $");
+__RCSID("$NetBSD: main.c,v 1.13.4.3 2001/04/23 21:45:25 he Exp $");
 #endif
 
 /*
@@ -556,13 +556,15 @@ usage(void)
 {
 	printf("usage: pkg_admin [-V] command args ...\n"
 	    "Where 'commands' and 'args' are:\n"
-	    " rebuild          - rebuild pkgdb from +CONTENTS files\n"
-	    " check [pkg ...]  - check md5 checksum of installed files\n"
+	    " rebuild                     - rebuild pkgdb from +CONTENTS files\n"
+	    " check [pkg ...]             - check md5 checksum of installed files\n"
 #ifdef PKGDB_DEBUG
-	    " add key value    - add key & value\n"
-	    " delete key       - delete reference to key\n"
+	    " add key value               - add key & value\n"
+	    " delete key                  - delete reference to key\n"
 #endif
-	    " dump             - dump database\n");
+	    " lsall /path/to/pkgpattern   - list all pkgs matching the pattern\n"
+	    " lsbest /path/to/pkgpattern  - list pkgs matching the pattern best\n"
+	    " dump                        - dump database\n");
 	exit(1);
 }
 
