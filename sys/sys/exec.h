@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.91 2003/02/01 06:23:50 thorpej Exp $	*/
+/*	$NetBSD: exec.h,v 1.92 2003/02/03 00:21:42 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -221,12 +221,12 @@ void	new_vmcmd __P((struct exec_vmcmd_set *evsp,
 		    u_long len, u_long addr, struct vnode *vp, u_long offset,
 		    u_int prot, int flags));
 #define	NEW_VMCMD(evsp,proc,len,addr,vp,offset,prot) \
-	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,0)
+	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,VMCMD_FIXED)
 #define	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,flags) \
 	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,flags)
 #else	/* DEBUG */
 #define	NEW_VMCMD(evsp,proc,len,addr,vp,offset,prot) \
-	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,0)
+	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,VMCMD_FIXED)
 #define	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,flags) do { \
 	struct exec_vmcmd *vcp; \
 	if ((evsp)->evs_used >= (evsp)->evs_cnt) \
