@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1999/04/07 06:47:50 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1999/05/11 20:08:01 veego Exp $
 
 IMAGE1=		disk1of2
 IMAGE2=		disk2of2
@@ -60,6 +60,9 @@ unconfig:
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${CLEANFILES}
+
+# nothing to do here
+depend includes lint regress tags:
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
