@@ -64,7 +64,10 @@
 
 #define DAYST 119
 #define DAYEN 303
+
+#ifndef	XTALSPEED
 #define XTALSPEED 1193182
+#endif
 
 startrtclock() {
 	int s;
@@ -73,8 +76,8 @@ startrtclock() {
 					to find the cpu speed */
 	/* initialize 8253 clock */
 	outb(TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
-	outb (IO_TIMER1, XTALSPEED/hz);
-	outb (IO_TIMER1, (XTALSPEED/hz)/256);
+	outb (IO_TIMER1, (XTALSPEED+hz/2)/hz);
+	outb (IO_TIMER1, ((XTALSPEED+hz/2)/hz)/256);
 
 	/* initialize brain-dead battery powered clock */
 	outb (IO_RTC, RTC_STATUSA);
