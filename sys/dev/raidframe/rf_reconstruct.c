@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.13 2000/01/09 01:45:58 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.14 2000/01/09 03:14:33 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -59,7 +59,6 @@
 #include "rf_debugprint.h"
 #include "rf_driver.h"
 #include "rf_utils.h"
-#include "rf_cpuutil.h"
 #include "rf_shutdown.h"
 
 #include "rf_kintf.h"
@@ -667,7 +666,7 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 
 		/* now start up the actual reconstruction: issue a read for
 		 * each surviving disk */
-		rf_start_cpu_monitor();
+
 		reconDesc->numDisksDone = 0;
 		for (i = 0; i < raidPtr->numCol; i++) {
 			if (i != col) {
@@ -735,14 +734,10 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 		reconDesc->state = 5;
 
 	case 5:
-		rf_stop_cpu_monitor();
-
 		/* Success:  mark the dead disk as reconstructed.  We quiesce
 		 * the array here to assure no nasty interactions with pending
 		 * user accesses when we free up the psstatus structure as
 		 * part of FreeReconControl() */
-
-
 
 		reconDesc->state = 6;
 
@@ -784,7 +779,7 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 		    (int) raidPtr->reconControl[row]->starttime.tv_sec,
 		    (int) raidPtr->reconControl[row]->starttime.tv_usec,
 		    (int) etime.tv_sec, (int) etime.tv_usec);
-		rf_print_cpu_util("reconstruction");
+
 #if RF_RECON_STATS > 0
 		printf("Total head-sep stall count was %d\n",
 		    (int) reconDesc->hsStallCount);
