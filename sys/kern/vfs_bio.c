@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.88 2003/02/06 09:46:46 pk Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.89 2003/02/06 11:22:35 pk Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -51,7 +51,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.88 2003/02/06 09:46:46 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.89 2003/02/06 11:22:35 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -879,7 +879,9 @@ start:
 		 */
 		SET(bp->b_flags, B_AGE);
 		simple_unlock(&bp->b_interlock);
+		simple_unlock(&bqueue_slock);
 		bawrite(bp);
+		simple_lock(&bqueue_slock);
 		return (NULL);
 	}
 
