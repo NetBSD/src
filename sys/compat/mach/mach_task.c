@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.50 2003/12/18 01:10:20 grant Exp $ */
+/*	$NetBSD: mach_task.c,v 1.51 2003/12/20 19:43:17 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.50 2003/12/18 01:10:20 grant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.51 2003/12/20 19:43:17 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -278,11 +278,13 @@ mach_task_threads(args)
 	struct lwp *l = args->l;
 	struct lwp *tl = args->tl;
 	struct proc *tp = tl->l_proc;
+	struct lwp *cl;
 	struct mach_emuldata *med;
+	struct mach_lwp_emuldata *mle;
 	int error;
 	void *uaddr;
 	size_t size;
-	int i;
+	int i = 0;
 	struct mach_right *mr;
 	mach_port_name_t *mnp;
 
@@ -291,10 +293,10 @@ mach_task_threads(args)
 	mnp = malloc(size, M_TEMP, M_WAITOK);
 	uaddr = NULL;
 
-	for (i = 0; i < tp->p_nlwps; i++) {
-		/* XXX each thread should have a kernel port */
-		mr = mach_right_get(med->med_kernel, l, MACH_PORT_TYPE_SEND, 0);
-		mnp[i] = mr->mr_name;
+	LIST_FOREACH(cl, &tp->p_lwps, l_sibling) {
+		mle = cl->l_emuldata;
+		mr = mach_right_get(mle->mle_kernel, l, MACH_PORT_TYPE_SEND, 0);
+		mnp[i++] = mr->mr_name;
 	}
 
 	/* This will free mnp */
