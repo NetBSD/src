@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.70 2004/05/14 13:23:12 pk Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.71 2004/06/06 04:36:29 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.70 2004/05/14 13:23:12 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.71 2004/06/06 04:36:29 dyoung Exp $");
 
 #include "tun.h"
 
@@ -523,20 +523,12 @@ tun_output(ifp, m0, dst, rt)
 	if (ifp->if_bpf) {
 		/*
 		 * We need to prepend the address family as
-		 * a four byte field.  Cons up a dummy header
-		 * to pacify bpf.  This is safe because bpf
-		 * will only read from the mbuf (i.e., it won't
-		 * try to free it or keep a pointer to it).
+		 * a four-byte field.  Note that dst->sa_family
+		 * is not always a four-byte field.
 		 */
-		struct mbuf m;
 		u_int32_t af = dst->sa_family;
 
-		m.m_flags = 0;
-		m.m_next = m0;
-		m.m_len = sizeof(af);
-		m.m_data = (char *)&af;
-
-		bpf_mtap(ifp->if_bpf, &m);
+		bpf_mtap2(ifp->if_bpf, &af, sizeof(af), m0);
 	}
 #endif
 
