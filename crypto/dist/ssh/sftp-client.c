@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-client.c,v 1.12 2002/03/08 02:00:54 itojun Exp $	*/
+/*	$NetBSD: sftp-client.c,v 1.13 2002/03/08 06:03:21 itojun Exp $	*/
 /*
  * Copyright (c) 2001,2002 Damien Miller.  All rights reserved.
  *
@@ -818,7 +818,9 @@ do_download(struct sftp_conn *conn, char *remote_path, char *local_path,
 		/* Send some more requests */
 		while (num_req < max_req) {
 			debug3("Request range %llu -> %llu (%d/%d)", 
-			    offset, offset + buflen - 1, num_req, max_req);
+			    (unsigned long long)offset,
+			    (unsigned long long)offset + buflen - 1,
+			    num_req, max_req);
 			req = xmalloc(sizeof(*req));
 			req->id = conn->msg_id++;
 			req->len = buflen;
