@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.16 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: files.c,v 1.17 2003/01/23 14:55:39 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -346,7 +346,7 @@ fixdevsw(void)
 		res = ht_lookup(fixdevmtab, intern(dm->dm_name));
 		if (res != NULL) {
 			if (res->dm_cmajor != dm->dm_cmajor ||
-			    res->dm_cmajor != dm->dm_bmajor) {
+			    res->dm_bmajor != dm->dm_bmajor) {
 				xerror(res->dm_srcfile, res->dm_srcline,
 				       "device-major '%s' is inconsistent: "
 				       "block %d, char %d", res->dm_name,
