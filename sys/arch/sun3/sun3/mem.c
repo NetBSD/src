@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass 
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -36,10 +37,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: mem.c 1.14 90/10/12$
- *
+ *	from: Utah $Hdr: mem.c 1.14 90/10/12$
  *	from: @(#)mem.c	8.3 (Berkeley) 1/12/94
- *	$Id: mem.c,v 1.9 1994/06/01 15:28:17 gwr Exp $
+ *	$Id: mem.c,v 1.10 1994/09/20 16:51:09 gwr Exp $
  */
 
 /*
@@ -59,7 +59,8 @@
 #include <vm/vm_prot.h>
 
 #include <machine/cpu.h>
-#include <machine/obio.h>
+
+extern int eeprom_uio();
 
 extern int physmem;
 extern caddr_t vmmap;
@@ -134,13 +135,7 @@ mmrw(dev, uio, flags)
 
 /* minor device 11 (/dev/eeprom) accesses Non-Volatile RAM */
 		case 11:
-			if (eeprom_va == NULL)
-				return (ENXIO);
-			o = uio->uio_offset;
-			if (o >= OBIO_EEPROM_SIZE)
-				return (EFAULT);
-			c = min(uio->uio_resid, OBIO_EEPROM_SIZE - o);
-			error = uiomove(eeprom_va + o, (int)c, uio);
+			error = eeprom_uio(uio);
 			return (error);
 
 /* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
@@ -192,8 +187,8 @@ mmmap(dev, off, prot)
 	/*
 	 * Allow access only in RAM.
 	 *
-	 * XXX could be extended to allow access to IO space but must
-	 * be very careful.
+	 * This could be extended to allow access to IO space but
+	 * it is probably better to make device drivers do it.
 	 */
 	if ((u_int)off >= (u_int)physmem)
 		return (-1);
