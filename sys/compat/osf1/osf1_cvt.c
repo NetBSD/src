@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.c,v 1.2 1999/05/01 04:47:00 cgd Exp $ */
+/* $NetBSD: osf1_cvt.c,v 1.3 1999/05/04 02:12:15 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -512,4 +512,56 @@ osf1_cvt_sigaltstack_from_native(bss, oss)
         /* translate flags */
 	oss->ss_flags = emul_flags_translate(osf1_sigaltstack_flags_rxtab,
             bss->ss_flags, NULL);
+}
+
+int
+osf1_cvt_pathconf_name_to_native(oname, bnamep)
+	int oname, *bnamep;
+{
+	int error;
+
+	error  = 0;
+	switch (oname) {
+	case OSF1__PC_CHOWN_RESTRICTED:
+		*bnamep = _PC_CHOWN_RESTRICTED;
+		break;
+
+	case OSF1__PC_LINK_MAX:
+		*bnamep = _PC_LINK_MAX;
+		break;
+
+	case OSF1__PC_MAX_CANON:
+		*bnamep = _PC_MAX_CANON;
+		break;
+
+	case OSF1__PC_MAX_INPUT:
+		*bnamep = _PC_MAX_INPUT;
+		break;
+
+	case OSF1__PC_NAME_MAX:
+		*bnamep = _PC_NAME_MAX;
+		break;
+
+	case OSF1__PC_NO_TRUNC:
+		*bnamep = _PC_NO_TRUNC;
+		break;
+
+	case OSF1__PC_PATH_MAX:
+		*bnamep = _PC_PATH_MAX;
+		break;
+
+	case OSF1__PC_PIPE_BUF:
+		*bnamep = _PC_PIPE_BUF;
+		break;
+
+	case OSF1__PC_VDISABLE:
+		*bnamep = _PC_VDISABLE;
+		break;
+
+	default:
+		error = EINVAL;
+		break;
+	}
+
+	return (error);
 }

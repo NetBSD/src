@@ -1,4 +1,4 @@
-/* $NetBSD: osf1.h,v 1.14 1999/05/01 02:57:08 cgd Exp $ */
+/* $NetBSD: osf1.h,v 1.15 1999/05/04 02:12:15 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -507,6 +507,19 @@ struct osf1_iovec {
 	osf1_data_ptr	iov_base;
 	osf1_int	iov_len;
 };
+
+
+/* unistd.h (user-land header) */
+
+#define OSF1__PC_CHOWN_RESTRICTED 10
+#define OSF1__PC_LINK_MAX	11
+#define OSF1__PC_MAX_CANON	12
+#define OSF1__PC_MAX_INPUT	13
+#define OSF1__PC_NAME_MAX	14
+#define OSF1__PC_NO_TRUNC	15
+#define OSF1__PC_PATH_MAX	16
+#define OSF1__PC_PIPE_BUF	17
+#define OSF1__PC_VDISABLE	18
 
 
 /* utsname.h */
