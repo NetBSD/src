@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.3 2002/06/04 05:42:41 simonb Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.4 2002/07/29 16:21:04 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -62,29 +62,29 @@
  * given hardware interrupt priority level.
  */
 const u_int32_t ipl_sr_bits[_IPL_N] = {
-	0,					/* IPL_NONE */
+	0,					/*  0: IPL_NONE */
 
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
+	MIPS_SOFT_INT_MASK_0,			/*  1: IPL_SOFT */
 
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTNET */
+	MIPS_SOFT_INT_MASK_0,			/*  2: IPL_SOFTCLOCK */
 
 	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTSERIAL */
+		MIPS_SOFT_INT_MASK_1,		/*  3: IPL_SOFTNET */
 
 	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0,		/* IPL_BIO */
+		MIPS_SOFT_INT_MASK_1,		/*  4: IPL_SOFTSERIAL */
 
 	MIPS_SOFT_INT_MASK_0|
 		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0,		/* IPL_NET */
+		MIPS_INT_MASK_0,		/*  5: IPL_BIO */
 
 	MIPS_SOFT_INT_MASK_0|
 		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0,		/* IPL_{TTY,SERIAL} */
+		MIPS_INT_MASK_0,		/*  6: IPL_NET */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0,		/*  7: IPL_{TTY,SERIAL} */
 
 	MIPS_SOFT_INT_MASK_0|
 		MIPS_SOFT_INT_MASK_1|
@@ -93,7 +93,19 @@ const u_int32_t ipl_sr_bits[_IPL_N] = {
 		MIPS_INT_MASK_2|
 		MIPS_INT_MASK_3|
 		MIPS_INT_MASK_4|
-		MIPS_INT_MASK_5,		/* IPL_{CLOCK,HIGH} */
+		MIPS_INT_MASK_5,		/*  8: IPL_{CLOCK,HIGH} */
+};
+
+/*
+ * This is a mask of bits to clear in the SR when we go to a
+ * given software interrupt priority level.
+ * Hardware ipls are port/board specific.
+ */
+const u_int32_t ipl_si_to_sr[_IPL_NSOFT] = {
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
+	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
+	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
 };
 
 struct malta_cpuintr {
@@ -151,7 +163,7 @@ evbmips_intr_init(void)
 void
 malta_cal_timer(bus_space_tag_t st, bus_space_handle_t sh)
 {
-	u_long ctrdiff[4], startctr, endctr;
+	uint32_t ctrdiff[4], startctr, endctr;
 	u_int8_t regc;
 	int i;
 
@@ -212,7 +224,7 @@ malta_cal_timer(bus_space_tag_t st, bus_space_handle_t sh)
 		curcpu()->ci_cpu_freq *= 2;
 
 #ifdef DEBUG
-	printf("Timer calibration: %lu cycles/sec [(%lu, %lu) * 16]\n",
+	printf("Timer calibration: %lu cycles/sec [(%u, %u) * 16]\n",
 	    curcpu()->ci_cpu_freq, ctrdiff[2], ctrdiff[3]);
 #endif
 }
