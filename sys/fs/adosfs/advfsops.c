@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.20 2005/01/02 16:08:28 thorpej Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.21 2005/02/26 22:58:54 perry Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.20 2005/01/02 16:08:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.21 2005/02/26 22:58:54 perry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -120,7 +120,7 @@ adosfs_mount(mp, path, data, ndp, p)
 	error = copyin(data, &args, sizeof(struct adosfs_args));
 	if (error)
 		return(error);
-	
+
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		return (EROFS);
 	/*
@@ -207,7 +207,7 @@ adosfs_mountfs(devvp, mp, p)
 	if ((error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0)) != 0)
 		return (error);
 
-	/* 
+	/*
 	 * open blkdev and read root block
 	 */
 	if ((error = VOP_OPEN(devvp, FREAD, NOCRED, p)) != 0)
@@ -256,7 +256,7 @@ adosfs_mountfs(devvp, mp, p)
 	amp->nwords = amp->bsize >> 2;
 	amp->dbsize = amp->bsize - (IS_FFS(amp) ? 0 : OFS_DATA_OFFSET);
 	amp->devvp = devvp;
-	
+
 	mp->mnt_data = amp;
 	mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)devvp->v_rdev;
 	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_ADOSFS);
@@ -269,7 +269,7 @@ adosfs_mountfs(devvp, mp, p)
 	/*
 	 * init anode table.
 	 */
-	for (i = 0; i < ANODEHASHSZ; i++) 
+	for (i = 0; i < ANODEHASHSZ; i++)
 		LIST_INIT(&amp->anodetab[i]);
 
 	/*
@@ -381,7 +381,7 @@ adosfs_statvfs(mp, sbp, p)
 	return (0);
 }
 
-/* 
+/*
  * lookup an anode, check mount's hash table if not found, create
  * return locked and referenced al la vget(vp, 1);
  */
@@ -402,7 +402,7 @@ adosfs_vget(mp, an, vpp)
 	amp = VFSTOADOSFS(mp);
 	bp = NULL;
 
-	/* 
+	/*
 	 * check hash table. we are done if found
 	 */
 	if ((*vpp = adosfs_ahashget(mp, an)) != NULL)
@@ -508,8 +508,8 @@ adosfs_vget(mp, an, vpp)
 	memcpy(ap->name, nam, namlen);
 	ap->name[namlen] = 0;
 
-	/* 
-	 * if dir alloc hash table and copy it in 
+	/*
+	 * if dir alloc hash table and copy it in
 	 */
 	if (vp->v_type == VDIR) {
 		int i;
@@ -721,7 +721,7 @@ adosfs_fhtovp(mp, fhp, vpp)
 #ifdef ADOSFS_DIAGNOSTIC
 	printf("adfhtovp(%x, %x, %x)\n", mp, fhp, vpp);
 #endif
-	
+
 	if ((error = VFS_VGET(mp, ifhp->ifid_ino, &nvp)) != 0) {
 		*vpp = NULLVP;
 		return (error);
@@ -754,7 +754,7 @@ adosfs_checkexp(mp, nam, exflagsp, credanonp)
 #ifdef ADOSFS_DIAGNOSTIC
 	printf("adcheckexp(%x, %x, %x)\n", mp, nam, exflagsp);
 #endif
-	
+
 	/*
 	 * Get the export permission structure for this <mp, client> tuple.
 	 */
@@ -777,10 +777,10 @@ adosfs_vptofh(vp, fhp)
 
 	ifhp = (struct ifid *)fhp;
 	ifhp->ifid_len = sizeof(struct ifid);
-	
+
 	ifhp->ifid_ino = ap->block;
 	ifhp->ifid_start = ap->block;
-	
+
 #ifdef ADOSFS_DIAGNOSTIC
 	printf("advptofh(%x, %x)\n", vp, fhp);
 #endif
@@ -860,7 +860,7 @@ SYSCTL_SETUP(sysctl_vfs_adosfs_setup, "sysctl vfs.adosfs subtree setup")
  * vfs generic function call table
  */
 
-extern const struct vnodeopv_desc adosfs_vnodeop_opv_desc; 
+extern const struct vnodeopv_desc adosfs_vnodeop_opv_desc;
 
 const struct vnodeopv_desc *adosfs_vnodeopv_descs[] = {
 	&adosfs_vnodeop_opv_desc,
@@ -873,13 +873,13 @@ struct vfsops adosfs_vfsops = {
 	adosfs_start,
 	adosfs_unmount,
 	adosfs_root,
-	adosfs_quotactl,                
-	adosfs_statvfs,                  
-	adosfs_sync,                    
+	adosfs_quotactl,
+	adosfs_statvfs,
+	adosfs_sync,
 	adosfs_vget,
-	adosfs_fhtovp,                  
-	adosfs_vptofh,                  
-	adosfs_init,                    
+	adosfs_fhtovp,
+	adosfs_vptofh,
+	adosfs_init,
 	NULL,
 	adosfs_done,
 	NULL,

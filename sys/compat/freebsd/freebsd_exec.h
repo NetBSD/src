@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.h,v 1.12 2003/08/07 16:30:37 agc Exp $	*/
+/*	$NetBSD: freebsd_exec.h,v 1.13 2005/02/26 23:10:18 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -72,7 +72,7 @@
 /* Text segment offset. */
 #define	FREEBSD_N_TXTOFF(ex) \
 	(FREEBSD_N_GETMAGIC(ex) == ZMAGIC ? AOUT_LDPGSZ : \
-	 FREEBSD_N_GETMAGIC(ex) == QMAGIC ? 0 : sizeof(struct exec)) 
+	 FREEBSD_N_GETMAGIC(ex) == QMAGIC ? 0 : sizeof(struct exec))
 
 /* Data segment offset. */
 #define	FREEBSD_N_DATOFF(ex) \

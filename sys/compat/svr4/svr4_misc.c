@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.110 2004/09/17 14:11:24 skrll Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.111 2005/02/26 23:10:21 perry Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.110 2004/09/17 14:11:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.111 2005/02/26 23:10:21 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ svr4_sys_wait(l, v, retval)
 
 	if ((error = sys_wait4(l, &w4, retval)) != 0)
 		return error;
-	
+
 	if ((error = copyin(SCARG(&w4, status), &st, sizeof(st))) != 0)
 		return error;
 
@@ -801,10 +801,10 @@ svr4_sys_break(l, v, retval)
 	if (new > old) {
 		error = uvm_map(&vm->vm_map, &old, new - old, NULL,
 			UVM_UNKNOWN_OFFSET, 0,
-           		UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY, 
-			UVM_ADV_NORMAL, 
+           		UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
+			UVM_ADV_NORMAL,
 			UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|
-			UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW)); 
+			UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
 		if (error) {
 			uprintf("sbrk: grow failed, error = %d\n", error);
 			return error;
@@ -897,7 +897,7 @@ svr4_sys_ulimit(l, v, retval)
 			struct sys_setrlimit_args srl;
 			struct rlimit krl;
 			caddr_t sg = stackgap_init(p, 0);
-			struct rlimit *url = (struct rlimit *) 
+			struct rlimit *url = (struct rlimit *)
 				stackgap_alloc(p, &sg, sizeof *url);
 
 			krl.rlim_cur = SCARG(uap, newlimit) * 512;
@@ -1064,7 +1064,7 @@ svr4_hrtcntl(l, uap, retval)
 
 
 int
-svr4_sys_hrtsys(l, v, retval) 
+svr4_sys_hrtsys(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
@@ -1153,7 +1153,7 @@ svr4_setinfo(p, st, s)
 
 
 int
-svr4_sys_waitsys(l, v, retval) 
+svr4_sys_waitsys(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
@@ -1165,7 +1165,7 @@ svr4_sys_waitsys(l, v, retval)
 	struct proc *child;
 
 	switch (SCARG(uap, grp)) {
-	case SVR4_P_PID:	
+	case SVR4_P_PID:
 		break;
 
 	case SVR4_P_PGID:
@@ -1191,7 +1191,7 @@ svr4_sys_waitsys(l, v, retval)
 	if (SCARG(uap, options) & (SVR4_WSTOPPED|SVR4_WCONTINUED))
 		options |= WUNTRACED;
 
-	DPRINTF(("waitsys(%d, %d, %p, %x)\n", 
+	DPRINTF(("waitsys(%d, %d, %p, %x)\n",
 	         SCARG(uap, grp), SCARG(uap, id),
 		 SCARG(uap, info), SCARG(uap, options)));
 
@@ -1228,7 +1228,7 @@ static void
 bsd_statvfs_to_svr4_statvfs(const struct statvfs *bfs,
     struct svr4_statvfs *sfs)
 {
-	sfs->f_bsize = bfs->f_bsize; 
+	sfs->f_bsize = bfs->f_bsize;
 	sfs->f_frsize = bfs->f_frsize;
 	sfs->f_blocks = bfs->f_blocks;
 	sfs->f_bfree = bfs->f_bfree;
@@ -1275,7 +1275,7 @@ bsd_statvfs_to_svr4_statvfs64(const struct statvfs *bfs,
 
 
 int
-svr4_sys_statvfs(l, v, retval) 
+svr4_sys_statvfs(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
@@ -1307,7 +1307,7 @@ svr4_sys_statvfs(l, v, retval)
 
 
 int
-svr4_sys_fstatvfs(l, v, retval) 
+svr4_sys_fstatvfs(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
@@ -1370,7 +1370,7 @@ svr4_sys_statvfs64(l, v, retval)
 
 
 int
-svr4_sys_fstatvfs64(l, v, retval) 
+svr4_sys_fstatvfs64(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;

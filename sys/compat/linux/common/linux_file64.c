@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.23 2004/09/17 14:11:24 skrll Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.24 2005/02/26 23:10:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.23 2004/09/17 14:11:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.24 2005/02/26 23:10:19 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,7 +264,7 @@ linux_sys_ftruncate64(l, v, retval)
 #if !defined(__m68k__)
 static void bsd_to_linux_flock64 __P((struct linux_flock64 *,
     const struct flock *));
-static void linux_to_bsd_flock64 __P((struct flock *, 
+static void linux_to_bsd_flock64 __P((struct flock *,
     const struct linux_flock64 *));
 
 static void

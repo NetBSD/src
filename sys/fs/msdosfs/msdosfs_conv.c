@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.2 2003/09/07 22:09:11 itojun Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.3 2005/02/26 22:58:55 perry Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.2 2003/09/07 22:09:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.3 2005/02/26 22:58:55 perry Exp $");
 
 /*
  * System include files.
@@ -389,7 +389,7 @@ dos2unixfn(dn, un, lower)
 		thislong++;
 	}
 	dn += 8;
-	
+
 	/*
 	 * Now, if there is an extension then put in a period and copy in
 	 * the extension.

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_kmem.c,v 1.4 2002/10/23 09:12:53 jdolecek Exp $ */
+/*	$NetBSD: irix_kmem.c,v 1.5 2005/02/26 23:10:18 perry Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_kmem.c,v 1.4 2002/10/23 09:12:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_kmem.c,v 1.5 2005/02/26 23:10:18 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,13 +54,13 @@ __KERNEL_RCSID(0, "$NetBSD: irix_kmem.c,v 1.4 2002/10/23 09:12:53 jdolecek Exp $
 /*
  * We have no idea of theses value's meaning yet, but time will come
  */
-long irix_kernel_var[32] = { 0x7fff2fc8, 0x0fb72194, 0x00000000, 0x0fb68890, 
-			     0x7fff2f74, 0x7fff2fc8, 0x7fff2fc8, 0x7fff2f74, 
-			     0x7fff2f7c, 0x0fb7246c, 0x0fbd9178, 0x0fb910d4, 
-			     0x0fb65440, 0x00000800, 0x00400034, 0x0000000a, 
-			     0x00000008, 0x0fb73fb0, 0x00000000, 0x00000000, 
-			     0x00000000, 0x7fff3000, 0x00000001, 0x7fff2f74, 
-			     0x7fff2d24, 0x0fa85880, 0x00000001, 0x0fb60188, 
+long irix_kernel_var[32] = { 0x7fff2fc8, 0x0fb72194, 0x00000000, 0x0fb68890,
+			     0x7fff2f74, 0x7fff2fc8, 0x7fff2fc8, 0x7fff2f74,
+			     0x7fff2f7c, 0x0fb7246c, 0x0fbd9178, 0x0fb910d4,
+			     0x0fb65440, 0x00000800, 0x00400034, 0x0000000a,
+			     0x00000008, 0x0fb73fb0, 0x00000000, 0x00000000,
+			     0x00000000, 0x7fff3000, 0x00000001, 0x7fff2f74,
+			     0x7fff2d24, 0x0fa85880, 0x00000001, 0x0fb60188,
 			     0x00000004, 0x00000000, 0x00000000, 0x00000001,
 			   };
 struct irix_kmem_softc {
@@ -81,7 +81,7 @@ void
 irix_kmemattach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
-	void *aux; 
+	void *aux;
 {
 	return;
 }
@@ -130,7 +130,7 @@ irix_kmemread(dev, uio, flag)
 	}
 
 	if (buflen != 0)
-		error = uiomove(buf, buflen, uio); 
+		error = uiomove(buf, buflen, uio);
 	return error;
 }
 

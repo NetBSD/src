@@ -1,13 +1,13 @@
-/*	$NetBSD: coda_namecache.h,v 1.7 2003/08/27 17:49:49 drochner Exp $	*/
+/*	$NetBSD: coda_namecache.h,v 1.8 2005/02/26 23:04:16 perry Exp $	*/
 
 /*
- * 
+ *
  *             Coda: an Experimental Distributed File System
  *                              Release 3.1
- * 
+ *
  *           Copyright (c) 1987-1998 Carnegie Mellon University
  *                          All Rights Reserved
- * 
+ *
  * Permission  to  use, copy, modify and distribute this software and its
  * documentation is hereby granted,  provided  that  both  the  copyright
  * notice  and  this  permission  notice  appear  in  all  copies  of the
@@ -16,22 +16,22 @@
  * that credit is given to Carnegie Mellon University  in  all  documents
  * and publicity pertaining to direct or indirect use of this code or its
  * derivatives.
- * 
+ *
  * CODA IS AN EXPERIMENTAL SOFTWARE SYSTEM AND IS  KNOWN  TO  HAVE  BUGS,
  * SOME  OF  WHICH MAY HAVE SERIOUS CONSEQUENCES.  CARNEGIE MELLON ALLOWS
  * FREE USE OF THIS SOFTWARE IN ITS "AS IS" CONDITION.   CARNEGIE  MELLON
  * DISCLAIMS  ANY  LIABILITY  OF  ANY  KIND  FOR  ANY  DAMAGES WHATSOEVER
  * RESULTING DIRECTLY OR INDIRECTLY FROM THE USE OF THIS SOFTWARE  OR  OF
  * ANY DERIVATIVE WORK.
- * 
+ *
  * Carnegie  Mellon  encourages  users  of  this  software  to return any
  * improvements or extensions that  they  make,  and  to  grant  Carnegie
  * Mellon the rights to redistribute these changes without encumbrance.
- * 
- * 	@(#) coda/coda_namecache.h,v 1.1.1.1 1998/08/29 21:26:46 rvb Exp $ 
+ *
+ * 	@(#) coda/coda_namecache.h,v 1.1.1.1 1998/08/29 21:26:46 rvb Exp $
  */
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1990 Carnegie-Mellon University
  * Copyright (c) 1989 Carnegie-Mellon University
@@ -58,7 +58,7 @@
  * Hash function for the primary hash.
  */
 
-/* 
+/*
  * First try -- (first + last letters + length + (int)cp) mod size
  * 2nd try -- same, except dir fid.vnode instead of cp
  */
@@ -93,7 +93,7 @@
 #define CODA_NC_LRUGET(lruhead)		LRU_TOP((lruhead).lru_prev)
 
 #define CODA_NC_VALID(cncp)	(cncp->dcp != (struct cnode *)0)
- 
+
 #define LRU_PART(cncp)			(struct coda_cache *) \
 				((char *)cncp + (2*sizeof(struct coda_cache *)))
 #define LRU_TOP(cncp)				(struct coda_cache *) \
@@ -109,7 +109,7 @@
  * DATA_PART.
  */
 
-struct coda_cache {	
+struct coda_cache {
 	struct coda_cache	*hash_next,*hash_prev;	/* Hash list */
 	struct coda_cache	*lru_next, *lru_prev;	/* LRU list */
 	struct cnode	*cp;			/* vnode of the file */
@@ -131,7 +131,7 @@ struct coda_hash {		/* Start of Hash chain */
 };
 
 
-/* 
+/*
  * Symbols to aid in debugging the namecache code. Assumes the existence
  * of the variable coda_nc_debug, which is defined in cfs_namecache.c
  */

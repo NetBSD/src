@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.26 2005/01/30 23:59:58 christos Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.27 2005/02/26 23:10:21 perry Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.26 2005/01/30 23:59:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.27 2005/02/26 23:10:21 perry Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -401,7 +401,7 @@ exec_pecoff_coff_makecmds(p, epp, fp, peofs)
 	default:
 		return ENOEXEC;
 	}
-	
+
 	return error;
 }
 

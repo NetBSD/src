@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_resource.c,v 1.3 2004/10/27 19:29:57 david Exp $ */
+/*	$NetBSD: irix_resource.c,v 1.4 2005/02/26 23:10:18 perry Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_resource.c,v 1.3 2004/10/27 19:29:57 david Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_resource.c,v 1.4 2005/02/26 23:10:18 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_resource.c,v 1.3 2004/10/27 19:29:57 david Exp 
 
 static int irix_to_native_resource __P((int));
 
-static int 
+static int
 irix_to_native_resource(irix_res)
 	int irix_res;
 {
@@ -114,17 +114,17 @@ irix_sys_getrlimit(l, v, retval)
 	int error;
 
 	SCARG(&cup, which) = irix_to_native_resource(SCARG(uap, resource));
-	SCARG(&cup, rlp) = stackgap_alloc(p, &sg, sizeof(struct rlimit)); 
-	
+	SCARG(&cup, rlp) = stackgap_alloc(p, &sg, sizeof(struct rlimit));
+
 	if ((error = sys_getrlimit(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, rlp), &rlp, sizeof(rlp))) != 0)
 		return error;
 
-	if (rlp.rlim_cur == RLIM_INFINITY) 
+	if (rlp.rlim_cur == RLIM_INFINITY)
 		irlp.rlim_cur = IRIX_RLIM_INFINITY;
-	else 
+	else
 		irlp.rlim_cur = rlp.rlim_cur;
 
 	if (rlp.rlim_max == RLIM_INFINITY)
@@ -154,19 +154,19 @@ irix_sys_getrlimit64(l, v, retval)
 	struct rlimit rlp;
 	struct irix_rlimit64 irlp;
 	int error;
-	
+
 	SCARG(&cup, which) = irix_to_native_resource(SCARG(uap, resource));
-	SCARG(&cup, rlp) = stackgap_alloc(p, &sg, sizeof(struct rlimit)); 
-	
+	SCARG(&cup, rlp) = stackgap_alloc(p, &sg, sizeof(struct rlimit));
+
 	if ((error = sys_getrlimit(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, rlp), &rlp, sizeof(rlp))) != 0)
 		return error;
 
-	if (rlp.rlim_cur == RLIM_INFINITY) 
+	if (rlp.rlim_cur == RLIM_INFINITY)
 		irlp.rlim_cur = IRIX_RLIM64_INFINITY;
-	else 
+	else
 		irlp.rlim_cur = rlp.rlim_cur;
 
 	if (rlp.rlim_max == RLIM_INFINITY)
@@ -196,16 +196,16 @@ irix_sys_setrlimit(l, v, retval)
 	struct rlimit rlp;
 	struct irix_rlimit irlp;
 	int error;
-	
+
 	SCARG(&cup, which) = irix_to_native_resource(SCARG(uap, resource));
-	SCARG(&cup, rlp) = stackgap_alloc(p, &sg, sizeof(struct rlimit)); 
-	
+	SCARG(&cup, rlp) = stackgap_alloc(p, &sg, sizeof(struct rlimit));
+
 	if ((error = copyin(SCARG(uap, rlp), &irlp, sizeof(irlp))) != 0)
 		return error;
 
-	if (irlp.rlim_cur == IRIX_RLIM_INFINITY) 
+	if (irlp.rlim_cur == IRIX_RLIM_INFINITY)
 		rlp.rlim_cur = RLIM_INFINITY;
-	else 
+	else
 		rlp.rlim_cur = irlp.rlim_cur;
 
 	if (irlp.rlim_max == IRIX_RLIM_INFINITY)
@@ -238,16 +238,16 @@ irix_sys_setrlimit64(l, v, retval)
 	struct rlimit rlp;
 	struct irix_rlimit64 irlp;
 	int error;
-	
+
 	SCARG(&cup, which) = irix_to_native_resource(SCARG(uap, resource));
-	SCARG(&cup, rlp) = stackgap_alloc(p, &sg, sizeof(struct rlimit)); 
-	
+	SCARG(&cup, rlp) = stackgap_alloc(p, &sg, sizeof(struct rlimit));
+
 	if ((error = copyin(SCARG(uap, rlp), &irlp, sizeof(irlp))) != 0)
 		return error;
 
-	if (irlp.rlim_cur == IRIX_RLIM64_INFINITY) 
+	if (irlp.rlim_cur == IRIX_RLIM64_INFINITY)
 		rlp.rlim_cur = RLIM_INFINITY;
-	else 
+	else
 		rlp.rlim_cur = irlp.rlim_cur;
 
 	if (irlp.rlim_max == IRIX_RLIM64_INFINITY)

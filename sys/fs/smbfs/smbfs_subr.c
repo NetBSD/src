@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.c,v 1.8 2003/02/25 09:09:31 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_subr.c,v 1.9 2005/02/26 22:58:55 perry Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.8 2003/02/25 09:09:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.9 2005/02/26 22:58:55 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.8 2003/02/25 09:09:31 jdolecek Exp 
 
 MALLOC_DEFINE(M_SMBFSDATA, "SMBFS data", "SMBFS private data");
 
-/* 
+/*
  * Time & date conversion routines taken from msdosfs. Although leap
  * year calculation is bogus, it's sufficient before 2100 :)
  */
@@ -149,7 +149,7 @@ smb_time_local2NT(struct timespec *tsp, int tzoff, int64_t *nsec)
 }
 
 void
-smb_time_unix2dos(struct timespec *tsp, int tzoff, u_int16_t *ddp, 
+smb_time_unix2dos(struct timespec *tsp, int tzoff, u_int16_t *ddp,
 	u_int16_t *dtp,	u_int8_t *dhp)
 {
 	u_long t, days, year, month, inc;

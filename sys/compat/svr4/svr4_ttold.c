@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ttold.c,v 1.22 2003/06/29 22:29:49 fvdl Exp $	 */
+/*	$NetBSD: svr4_ttold.c,v 1.23 2005/02/26 23:10:21 perry Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_ttold.c,v 1.22 2003/06/29 22:29:49 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_ttold.c,v 1.23 2005/02/26 23:10:21 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -153,7 +153,7 @@ svr4_sgttyb_to_bsd_sgttyb(ss, bs)
 {
 	bs->sg_ispeed = ss->sg_ispeed;
 	bs->sg_ospeed = ss->sg_ospeed;
-	bs->sg_erase  =	ss->sg_erase;	
+	bs->sg_erase  =	ss->sg_erase;
 	bs->sg_kill   = ss->sg_kill;
 	bs->sg_flags  = ss->sg_flags;
 }
@@ -166,7 +166,7 @@ bsd_sgttyb_to_svr4_sgttyb(bs, ss)
 {
 	ss->sg_ispeed = bs->sg_ispeed;
 	ss->sg_ospeed = bs->sg_ospeed;
-	ss->sg_erase  =	bs->sg_erase;	
+	ss->sg_erase  =	bs->sg_erase;
 	ss->sg_kill   = bs->sg_kill;
 	ss->sg_flags  = bs->sg_flags;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ptrace.c,v 1.4 2004/07/28 22:24:06 manu Exp $ */
+/*	$NetBSD: darwin_ptrace.c,v 1.5 2005/02/26 23:10:18 perry Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.4 2004/07/28 22:24:06 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.5 2005/02/26 23:10:18 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -99,7 +99,7 @@ darwin_sys_ptrace(l, v, retval)
 
 		return error;
 		break;
-		
+
 	case DARWIN_PT_SIGEXC:
 		if ((p->p_flag & P_TRACED) == 0)
 			return EBUSY;
@@ -124,7 +124,7 @@ darwin_sys_ptrace(l, v, retval)
 		}
 
 		/*
-		 * If the process is not marked as stopped, 
+		 * If the process is not marked as stopped,
 		 * sys_ptrace sanity checks will return EBUSY.
 		 */
 		proc_stop(t, 0);
@@ -140,7 +140,7 @@ darwin_sys_ptrace(l, v, retval)
 
 	case DARWIN_PT_THUPDATE: {
 		int signo = SCARG(uap, data);
-		
+
 		if ((t = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
 
@@ -165,7 +165,7 @@ darwin_sys_ptrace(l, v, retval)
 		if (signo != 0)
 			sigaddset(&p->p_sigctx.ps_siglist, signo);
 
-		break;		
+		break;
 	}
 
 	case DARWIN_PT_READ_U:
@@ -181,7 +181,7 @@ darwin_sys_ptrace(l, v, retval)
 		return sys_ptrace(l, v, retval);
 		break;
 	}
-	
+
 	return 0;
 }
 
@@ -210,7 +210,7 @@ darwin_sys_kdebug_trace(l, v, retval)
 
 #ifdef DEBUG_DARWIN
 	printf("darwin_sys_kdebug_trace(%x, (%x %x %x)/\"%s\", %x, %x)\n",
-	    SCARG(uap, debugid), SCARG(uap, arg1), SCARG(uap, arg2), 
+	    SCARG(uap, debugid), SCARG(uap, arg1), SCARG(uap, arg2),
 	    SCARG(uap, arg3), str, SCARG(uap, arg4), SCARG(uap, arg5));
 #endif
 	return 0;

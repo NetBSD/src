@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.70 2004/10/27 19:29:57 david Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.71 2005/02/26 23:10:18 perry Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.70 2004/10/27 19:29:57 david Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.71 2005/02/26 23:10:18 perry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -249,7 +249,7 @@ hpux_sys_wait(l, v, retval)
 	if (SCARG(uap, status) == NULL)
 		return error;
 	else
-		return copyout(&retval[1], 
+		return copyout(&retval[1],
 			       SCARG(uap, status), sizeof(retval[1]));
 }
 

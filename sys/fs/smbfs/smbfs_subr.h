@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.h,v 1.12 2004/06/05 07:36:25 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_subr.h,v 1.13 2005/02/26 22:58:55 perry Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -182,7 +182,7 @@ void  smb_time_local2server(struct timespec *tsp, int tzoff, u_long *seconds);
 void  smb_time_server2local(u_long seconds, int tzoff, struct timespec *tsp);
 void  smb_time_NT2local(int64_t nsec, int tzoff, struct timespec *tsp);
 void  smb_time_local2NT(struct timespec *tsp, int tzoff, int64_t *nsec);
-void  smb_time_unix2dos(struct timespec *tsp, int tzoff, u_int16_t *ddp, 
+void  smb_time_unix2dos(struct timespec *tsp, int tzoff, u_int16_t *ddp,
 	     u_int16_t *dtp, u_int8_t *dhp);
 void smb_dos2unixtime (u_int dd, u_int dt, u_int dh, int tzoff, struct timespec *tsp);
 

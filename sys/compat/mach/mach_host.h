@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.h,v 1.14 2003/12/29 01:30:27 manu Exp $ */
+/*	$NetBSD: mach_host.h,v 1.15 2005/02/26 23:10:19 perry Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -88,13 +88,13 @@ struct mach_host_basic_info {
 	mach_vm_size_t		memory_size;
 	mach_cpu_type_t		cpu_type;
 	mach_cpu_subtype_t	cpu_subtype;
-}; 
+};
 
 struct mach_host_sched_info {
 	mach_integer_t		min_timeout;
 	mach_integer_t		min_quantum;
 };
-	
+
 struct mach_kernel_resource_sizes {
 	mach_vm_size_t	 task;
 	mach_vm_size_t	 thread;

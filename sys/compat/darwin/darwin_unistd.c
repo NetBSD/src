@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_unistd.c,v 1.4 2004/07/28 22:24:06 manu Exp $ */
+/*	$NetBSD: darwin_unistd.c,v 1.5 2005/02/26 23:10:18 perry Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_unistd.c,v 1.4 2004/07/28 22:24:06 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_unistd.c,v 1.5 2005/02/26 23:10:18 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,8 @@ darwin_sys_lseek(l, v, retval)
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, whence) = SCARG(uap, whence);
 
-	/* 
-	 * NetBSD pads the syscallarg structure because of the 
+	/*
+	 * NetBSD pads the syscallarg structure because of the
 	 * off_t argument, Darwin does not. In order to get the off_t
 	 * argument going through our syscall machinery, we declare
 	 * it as two long arguments, and we reassemble them here.

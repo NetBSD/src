@@ -1,4 +1,4 @@
-/*	$NetBSD: adosfs.h,v 1.4 2004/09/13 19:25:48 jdolecek Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.5 2005/02/26 22:58:54 perry Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -63,7 +63,7 @@ enum anode_type { AROOT, ADIR, AFILE, ALDIR, ALFILE, ASLINK };
 /* Maximum file/directory name */
 #define ADMAXNAMELEN		30
 
-/* 
+/*
  * similar to inode's, we use to represent:
  * the root dir, reg dirs, reg files and extension blocks
  * note the ``tab'' is a hash table for r/d, and a data block
@@ -95,7 +95,7 @@ struct anode {
 	int adprot;		/* (d/f) amigados protection bits */
 	uid_t  uid;		/* (d/f) uid of directory/file */
 	gid_t  gid;		/* (d/f) gid of directory/file */
-	int flags;		/* misc flags */ 
+	int flags;		/* misc flags */
 	char *slinkto;		/* name of file or dir */
 };
 #define VTOA(vp)		((struct anode *)(vp)->v_data)
@@ -105,7 +105,7 @@ struct anode {
 #define ANODENDATBLKENT(ap)	((ap)->nwords - 56)
 
 /*
- * mount data 
+ * mount data
  */
 #define ANODEHASHSZ (512)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigarray.c,v 1.4 2002/03/31 22:40:18 christos Exp $ */
+/*	$NetBSD: linux_sigarray.c,v 1.5 2005/02/26 23:10:19 perry Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(1, "$NetBSD: linux_sigarray.c,v 1.4 2002/03/31 22:40:18 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_sigarray.c,v 1.5 2005/02/26 23:10:19 perry Exp $");
 
 const int linux_to_native_signo[LINUX__NSIG] = {
 	0,			/* 0 */
@@ -46,7 +46,7 @@ const int linux_to_native_signo[LINUX__NSIG] = {
 	SIGILL,
 	SIGTRAP,	/* 5 */
 	SIGABRT,
-	SIGBUS, 
+	SIGBUS,
 	SIGFPE,
 	SIGKILL,
 	SIGUSR1,	/* 10 */

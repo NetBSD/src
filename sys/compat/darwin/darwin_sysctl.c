@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.33 2004/10/01 16:30:52 yamt Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.34 2005/02/26 23:10:18 perry Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,20 +37,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.33 2004/10/01 16:30:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.34 2005/02/26 23:10:18 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
-#include <sys/mount.h> 
-#include <sys/exec.h> 
-#include <sys/proc.h> 
-#include <sys/malloc.h> 
-#include <sys/sysctl.h> 
-#include <sys/sa.h> 
-#include <sys/tty.h> 
+#include <sys/mount.h>
+#include <sys/exec.h>
+#include <sys/proc.h>
+#include <sys/malloc.h>
+#include <sys/sysctl.h>
+#include <sys/sa.h>
+#include <sys/tty.h>
 
 #include <sys/syscallargs.h>
 
@@ -312,9 +312,9 @@ darwin_sys___sysctl(struct lwp *l, void *v, register_t *retval)
 #ifdef DEBUG_DARWIN
 	if (1) {
 		int i;
-	
+
 		printf("darwin_sys___sysctl: ");
-		for (i = 0; i < SCARG(uap, namelen); i++) 
+		for (i = 0; i < SCARG(uap, namelen); i++)
 			printf("%d ", name[i]);
 		printf("\n");
 	}
@@ -378,21 +378,21 @@ SYSCTL_SETUP(sysctl_emul_darwin_setup, "sysctl emul.darwin subtree setup")
 		       CTLTYPE_NODE, "init",
 		       SYSCTL_DESCR("Darwin init(8) process settings"),
 		       NULL, 0, NULL, 0,
-		       CTL_EMUL, EMUL_DARWIN, 
+		       CTL_EMUL, EMUL_DARWIN,
 		       EMUL_DARWIN_INIT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "ioframebuffer",
 		       SYSCTL_DESCR("Darwin framebuffer settings"),
 		       NULL, 0, NULL, 0,
-		       CTL_EMUL, EMUL_DARWIN, 
+		       CTL_EMUL, EMUL_DARWIN,
 		       EMUL_DARWIN_IOFRAMEBUFFER, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "iohidsystem",
 		       SYSCTL_DESCR("Darwin HID system settings"),
 		       NULL, 0, NULL, 0,
-		       CTL_EMUL, EMUL_DARWIN, 
+		       CTL_EMUL, EMUL_DARWIN,
 		       EMUL_DARWIN_IOHIDSYSTEM, CTL_EOL);
 	/*
 	 * XXX - darwin_init_pid is a pid_t, not an int
@@ -431,18 +431,18 @@ SYSCTL_SETUP(sysctl_emul_darwin_setup, "sysctl emul.darwin subtree setup")
  * On Darwin, mach_init is the system bootstrap process. It is responsible
  * for forking the traditional UNIX init(8) and it does the Mach port naming
  * service. We need mach_init for the naming service, but unfortunately, it
- * will only act as such if its PID is 1. We use a sysctl 
+ * will only act as such if its PID is 1. We use a sysctl
  * (emul.darwin.init.pid) to fool a given process into thinking its PID is 1.
- * That way we can run mach_init when we want to. 
+ * That way we can run mach_init when we want to.
  * Typical use:
  * sysctl -w emul.darwin.init.pid=$$; exec /emul/darwin/sbin/mach_init
- * 
+ *
  * The same problem exists after mach_init has forked init: the fork libc stub
  * really insist on the child to have PID 2 (if PID is not 2, then the stub
  * will issue bootstrap calls to an already running mach_init, which fails,
- * of course). 
+ * of course).
  */
-int 
+int
 darwin_sys_getpid(l, v, retval)
 	struct lwp *l;
 	void *v;
@@ -453,7 +453,7 @@ darwin_sys_getpid(l, v, retval)
 
 	ded = (struct darwin_emuldata *)p->p_emuldata;
 
-	printf("pid %d: fakepid = %d, mach_init_pid = %d\n", 
+	printf("pid %d: fakepid = %d, mach_init_pid = %d\n",
 	    p->p_pid, ded->ded_fakepid, darwin_init_pid);
 	if (ded->ded_fakepid != 0)
 		*retval = ded->ded_fakepid;
@@ -465,7 +465,7 @@ darwin_sys_getpid(l, v, retval)
 
 #define DARWIN_ENTROPYMAX	65536
 static int
-darwin_sysctl_kdebug(SYSCTLFN_ARGS) 
+darwin_sysctl_kdebug(SYSCTLFN_ARGS)
 {
 	if (namelen < 1)
 		return EINVAL;
@@ -504,7 +504,7 @@ darwin_sysctl_kdebug(SYSCTLFN_ARGS)
 		timeout.tv_usec = (mstimeout % 1000) * 1000;
 		lnow = (now.tv_sec * 1000000) + now.tv_usec;
 		ltimeout = (timeout.tv_sec * 1000000) + timeout.tv_usec;
-		
+
 		for (i = 0; i < count; i++) {
 			unsigned long long rnd = random();
 			struct timeval item, new;
@@ -514,7 +514,7 @@ darwin_sysctl_kdebug(SYSCTLFN_ARGS)
 
 			item.tv_sec = rnd / 1000;
 			item.tv_usec = rnd % 1000;
-			
+
 			timeradd(&last, &item, &new);
 			TIMEVAL_TO_TIMESPEC(&new, &buf[i]);
 
@@ -522,17 +522,17 @@ darwin_sysctl_kdebug(SYSCTLFN_ARGS)
 			last.tv_usec = new.tv_usec;
 		}
 
-		tsleep(&timeout, PZERO|PCATCH, "darwin_entropy", 
+		tsleep(&timeout, PZERO|PCATCH, "darwin_entropy",
 			(mstimeout * hz / 1000));
 
 		/* Just in case... */
 		if (sizeof(*buf) * count < *oldlenp)
 			*oldlenp = sizeof(*buf) * count;
-		
+
 		error = copyout(buf, oldp, *oldlenp);
 		free(buf, M_TEMP);
 
-		/* 
+		/*
 		 * The return value is the number of record
 		 * instead of the size of the copied data.
 		 */
@@ -546,19 +546,19 @@ darwin_sysctl_kdebug(SYSCTLFN_ARGS)
 	default:
 		return EINVAL;
 		break;
-	} 
+	}
 	return 0;
 }
 
 static int
-darwin_sysctl_net(SYSCTLFN_ARGS) 
+darwin_sysctl_net(SYSCTLFN_ARGS)
 {
 	int af;
 
-	/* 
-	 * A strange thing: thrid level is zero, but I don't understand 
+	/*
+	 * A strange thing: thrid level is zero, but I don't understand
 	 * what it stands for.
-	 * All nodes here are of form [net.]<address family>.<zero>.* 
+	 * All nodes here are of form [net.]<address family>.<zero>.*
 	 */
 	if (namelen < 3)
 		return EINVAL;
@@ -602,7 +602,7 @@ darwin_sysctl_net(SYSCTLFN_ARGS)
 
 
 /*
- * This is stolen from sys/kern/kern_sysctl.c:sysctl_doeproc() 
+ * This is stolen from sys/kern/kern_sysctl.c:sysctl_doeproc()
  */
 #define DARWIN_KERN_PROCSLOP	(5 * sizeof(struct darwin_kinfo_proc))
 
@@ -630,7 +630,7 @@ darwin_sysctl_dokproc(SYSCTLFN_ARGS)
 	type = rnode->sysctl_num;
 
 	if (type == DARWIN_KERN_PROC) {
-		if (namelen != 2 && 
+		if (namelen != 2 &&
 		    !(namelen == 1 && name[0] == DARWIN_KERN_PROC_ALL))
 			return (EINVAL);
 		op = name[0];
@@ -690,7 +690,7 @@ again:
 			} else if ((p->p_flag & P_CONTROLT) == 0 ||
 			    p->p_session->s_ttyp == NULL) {
 					continue;
-			} else if (p->p_session->s_ttyp->t_dev != 
+			} else if (p->p_session->s_ttyp->t_dev !=
 			    darwin_to_native_dev((dev_t)arg))
 				continue;
 			break;
@@ -742,8 +742,8 @@ again:
 	return (error);
 }
 
-/* 
- * Native struct proc to Darwin's struct kinfo_proc 
+/*
+ * Native struct proc to Darwin's struct kinfo_proc
  */
 static void
 darwin_fill_kproc(p, dkp)
@@ -787,15 +787,15 @@ darwin_fill_kproc(p, dkp)
 	dep->p_iticks = p->p_iticks;
 	dep->p_traceflag = p->p_traceflag; /* XXX */
 	/* (ptr) dep->p_tracep */
-	native_sigset13_to_sigset(&dep->p_siglist, 
+	native_sigset13_to_sigset(&dep->p_siglist,
 	    &p->p_sigctx.ps_siglist);
 	/* (ptr) dep->p_textvp */
 	/* dep->p_holdcnt */
-	native_sigset13_to_sigset(&dep->p_sigmask, 
+	native_sigset13_to_sigset(&dep->p_sigmask,
 	    &p->p_sigctx.ps_sigmask);
-	native_sigset13_to_sigset(&dep->p_sigignore, 
+	native_sigset13_to_sigset(&dep->p_sigignore,
 	    &p->p_sigctx.ps_sigignore);
-	native_sigset13_to_sigset(&dep->p_sigcatch, 
+	native_sigset13_to_sigset(&dep->p_sigcatch,
 	    &p->p_sigctx.ps_sigcatch);
 	dep->p_priority = l->l_priority;
 	dep->p_nice = p->p_nice;
@@ -807,7 +807,7 @@ darwin_fill_kproc(p, dkp)
 	/* (ptr) dep->p_ru */
 
 	/* (ptr) */ de->e_paddr = (struct darwin_proc *)p;
-	/* (ptr) */ de->e_sess = 
+	/* (ptr) */ de->e_sess =
 	    (struct darwin_session *)p->p_session;
 	de->e_pcred.pc_ruid = p->p_cred->p_ruid;
 	de->e_pcred.pc_svuid = p->p_cred->p_svuid;
@@ -817,7 +817,7 @@ darwin_fill_kproc(p, dkp)
 	de->e_ucred.cr_ref = p->p_ucred->cr_ref;
 	de->e_ucred.cr_uid = p->p_ucred->cr_uid;
 	de->e_ucred.cr_ngroups = p->p_ucred->cr_ngroups;
-	(void)memcpy(de->e_ucred.cr_groups, 
+	(void)memcpy(de->e_ucred.cr_groups,
 	    p->p_ucred->cr_groups, sizeof(gid_t) * DARWIN_NGROUPS);
 	de->e_vm.vm_refcnt = p->p_vmspace->vm_refcnt;
 	de->e_vm.vm_rssize = p->p_vmspace->vm_rssize;
@@ -832,16 +832,16 @@ darwin_fill_kproc(p, dkp)
 	de->e_pgid = p->p_pgid;
 	de->e_jobc = p->p_pgrp->pg_jobc;
 	if ((p->p_flag & P_CONTROLT) && (p->p_session->s_ttyp != NULL)) {
-		de->e_tdev = 
+		de->e_tdev =
 		    native_to_darwin_dev(p->p_session->s_ttyp->t_dev);
-		de->e_tpgid = p->p_session->s_ttyp->t_pgrp ? 
+		de->e_tpgid = p->p_session->s_ttyp->t_pgrp ?
 		    p->p_session->s_ttyp->t_pgrp->pg_id : NO_PGID;
 		/* (ptr) */ de->e_tsess = (struct darwin_session *)
 		    p->p_session->s_ttyp->t_session;
 	} else {
 		de->e_tdev = NODEV;
-		/* de->e_tpgid */ 
-		/* (ptr) de->e_tsess */ 
+		/* de->e_tpgid */
+		/* (ptr) de->e_tsess */
 	}
 	if (l->l_wmesg)
 		strlcpy(de->e_wmesg, l->l_wmesg, DARWIN_WMESGLEN);
@@ -853,14 +853,14 @@ darwin_fill_kproc(p, dkp)
 
 	if (SESS_LEADER(p))
 		de->e_flag |= DARWIN_EPROC_SLEADER;
-	(void)strlcpy(de->e_login, 
+	(void)strlcpy(de->e_login,
 	    p->p_session->s_login, DARWIN_COMAPT_MAXLOGNAME);
 	/* de->e_spare */
 
 	return;
 }
 
-static void 
+static void
 native_to_darwin_pflag(dfp, bf)
 	int *dfp;
 	int bf;
@@ -991,12 +991,12 @@ darwin_sysctl_procargs(SYSCTLFN_ARGS)
 	if ((error = uvm_io(&p->p_vmspace->vm_map, &auio)) != 0)
 		goto done;
 
-	/* 
+	/*
 	 * Get argument vector address and length. Since we want to
 	 * copy argv and env at the same time, we add their lengths.
 	 */
 	memcpy(&nargv, (char *)&pss + p->p_psnargv, sizeof(nargv));
-	memcpy(&nenv, (char *)&pss + p->p_psnenv, sizeof(nargv)); 
+	memcpy(&nenv, (char *)&pss + p->p_psnenv, sizeof(nargv));
 	nstr = nargv + nenv;
 	memcpy(&tmp, (char *)&pss + p->p_psargv, sizeof(tmp));
 
@@ -1013,11 +1013,11 @@ darwin_sysctl_procargs(SYSCTLFN_ARGS)
 		goto done;
 
 
-	/* 
-	 * Check the whole argument vector to discover its size 
+	/*
+	 * Check the whole argument vector to discover its size
 	 * We have to do this since Darwin's ps insist about having
 	 * the data at the end of the buffer.
-	 */ 
+	 */
 	len = 0;
 	upper_bound = *oldlenp;
 	for (; nstr != 0 && len < upper_bound; len += xlen) {
@@ -1041,7 +1041,7 @@ darwin_sysctl_procargs(SYSCTLFN_ARGS)
 		}
 
 		/*
-		 * Make sure we don't reach the 
+		 * Make sure we don't reach the
 		 * end of the user's buffer.
 		 */
 		if (len + i > upper_bound)
@@ -1053,15 +1053,15 @@ darwin_sysctl_procargs(SYSCTLFN_ARGS)
 		}
 	}
 
-	/* 
+	/*
 	 * Try to keep one null word at the
-	 * end, and align on a word boundary 
+	 * end, and align on a word boundary
 	 */
 	len = (((u_long)oldp + len - 5) & ~0x3UL) - (u_long)oldp;
-	len = upper_bound - len; 
+	len = upper_bound - len;
 
-	/* 
-	 * Align to a word boundary, and copy the program name 
+	/*
+	 * Align to a word boundary, and copy the program name
 	 */
 	len = (((u_long)oldp + len - 1) & ~0x3UL) - (u_long)oldp;
 	len = len - strlen(p->p_comm);

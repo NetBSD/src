@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_types.h,v 1.21 2004/07/24 15:46:02 manu Exp $	 */
+/*	$NetBSD: mach_types.h,v 1.22 2005/02/26 23:10:20 perry Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ typedef int mach_exception_type_t;
 typedef int mach_exception_behavior_t;
 typedef unsigned int mach_exception_mask_t;
 typedef int mach_port_flavor_t;
-typedef mach_natural_t mach_port_seqno_t; 
+typedef mach_natural_t mach_port_seqno_t;
 typedef mach_natural_t mach_port_mscount_t;
 typedef mach_natural_t mach_port_msgcount_t;
 typedef mach_natural_t mach_port_rights_t;
@@ -81,14 +81,14 @@ typedef mach_natural_t mach_port_urefs_t;
 typedef int mach_port_delta_t;
 
 
-/* 
- * This is called cproc_t in Mach (cthread_t in Darwin). It is a pointer to 
+/*
+ * This is called cproc_t in Mach (cthread_t in Darwin). It is a pointer to
  * a struct cproc (struct cthread in Darwin), which is stored in userland and
  * seems to be opaque to the kernel. The kernel just has to store and restore
  * it with cthread_self() (pthread_self() in Darwin) and _cthread_set_self()
- * (_pthread_set_self() in Darwin). 
+ * (_pthread_set_self() in Darwin).
  */
-typedef void *mach_cproc_t;	
+typedef void *mach_cproc_t;
 
 typedef struct mach_timebase_info {
 	u_int32_t	numer;
@@ -101,7 +101,7 @@ typedef struct {
 	u_int8_t       reserved1;
 	u_int8_t       mig_encoding;
 	u_int8_t       int_rep;
-	u_int8_t       char_rep; 
+	u_int8_t       char_rep;
 	u_int8_t       float_rep;
 	u_int8_t       reserved2;
 } mach_ndr_record_t;

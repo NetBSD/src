@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_systeminfo.c,v 1.9 2003/12/04 19:38:22 atatat Exp $ */
+/*	$NetBSD: irix_systeminfo.c,v 1.10 2005/02/26 23:10:19 perry Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_systeminfo.c,v 1.9 2003/12/04 19:38:22 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_systeminfo.c,v 1.10 2005/02/26 23:10:19 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -141,7 +141,7 @@ irix_sys_systeminfo(l, v, retval)
 			return error;
 		snprintf(strbuf, BUF_SIZE, "%d", ncpu);
 		str = strbuf;
-			
+
 		break;
 	}
 
@@ -161,9 +161,9 @@ irix_sys_systeminfo(l, v, retval)
 		break;
 	}
 
-	/* 
-	 * This duplicates some code in 
-	 * svr4_sys_systeminfo(). 
+	/*
+	 * This duplicates some code in
+	 * svr4_sys_systeminfo().
 	 * Ideally, it should be merged.
 	 */
 	if (str) {

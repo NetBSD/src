@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.5 2001/12/08 00:37:08 thorpej Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.6 2005/02/26 22:58:57 perry Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.5 2001/12/08 00:37:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.6 2005/02/26 22:58:57 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -85,7 +85,7 @@ MOD_EXEC("compat_aoutm68k", -1, &exec_netbsd_aoutm68k, "aoutm68k");
  */
 int
 compat_aoutm68k_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 	int ver;
 {

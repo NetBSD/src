@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_fork.h,v 1.2 2003/08/07 16:30:39 agc Exp $	*/
+/*	$NetBSD: freebsd_fork.h,v 1.3 2005/02/26 23:10:18 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@
 #define FREEBSD_RFNOTEG		(1<<3)  /* UNIMPL create new plan9 note grou' */
 #define FREEBSD_RFPROC		(1<<4)  /* change child (else curproc) */
 #define FREEBSD_RFMEM		(1<<5)  /* share `address space' */
-#define FREEBSD_RFNOWAIT	(1<<6)  /* parent need not wait() on child */ 
+#define FREEBSD_RFNOWAIT	(1<<6)  /* parent need not wait() on child */
 #define FREEBSD_RFCNAMEG	(1<<10) /* UNIMPL zero plan9 `name space' */
 #define FREEBSD_RFCENVG		(1<<11) /* UNIMPL zero plan9 `env space' */
 #define FREEBSD_RFCFDG		(1<<12) /* zero fd table */

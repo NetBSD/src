@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.60 2004/09/12 10:38:25 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.61 2005/02/26 23:10:18 perry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.60 2004/09/12 10:38:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.61 2005/02/26 23:10:18 perry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -114,7 +114,7 @@ const struct emul emul_ibcs2 = {
  * This is exec process hook. Find out if this is x.out executable, if
  * yes, set flag appropriately, so that emul code which needs to adjust
  * behaviour accordingly can do so.
- */ 
+ */
 static void
 ibcs2_e_proc_exec(p, epp)
 	struct proc *p;

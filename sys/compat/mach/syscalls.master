@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.6 2003/12/30 00:15:46 manu Exp $
+	$NetBSD: syscalls.master,v 1.7 2005/02/26 23:10:20 perry Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -51,38 +51,38 @@
 #include <compat/mach/mach_syscallargs.h>
 %%
 
-0	UNIMPL	
-1	UNIMPL	
-2	UNIMPL	
-3	UNIMPL	
-4	UNIMPL	
-5	UNIMPL	
-6	UNIMPL	
-7	UNIMPL	
-8	UNIMPL	
-9	UNIMPL	
-10	UNIMPL	
-11	UNIMPL	
-12	UNIMPL	
-13	UNIMPL	
-14	UNIMPL	
-15	UNIMPL	
-16	UNIMPL	
-17	UNIMPL	
-18	UNIMPL	
-19	UNIMPL	
-20	UNIMPL	
-21	UNIMPL	
-22	UNIMPL	
-23	UNIMPL	
-24	UNIMPL	
-25	UNIMPL	
+0	UNIMPL
+1	UNIMPL
+2	UNIMPL
+3	UNIMPL
+4	UNIMPL
+5	UNIMPL
+6	UNIMPL
+7	UNIMPL
+8	UNIMPL
+9	UNIMPL
+10	UNIMPL
+11	UNIMPL
+12	UNIMPL
+13	UNIMPL
+14	UNIMPL
+15	UNIMPL
+16	UNIMPL
+17	UNIMPL
+18	UNIMPL
+19	UNIMPL
+20	UNIMPL
+21	UNIMPL
+22	UNIMPL
+23	UNIMPL
+24	UNIMPL
+25	UNIMPL
 26	STD		{ mach_port_name_t	mach_sys_reply_port(void); }
 27	STD		{ mach_port_name_t \
 			    mach_sys_thread_self_trap(void); }
 28	STD		{ mach_port_name_t	mach_sys_task_self_trap(void); }
 29	STD		{ mach_port_name_t	mach_sys_host_self_trap(void); }
-30	UNIMPL	
+30	UNIMPL
 31	STD		{ mach_msg_return_t	mach_sys_msg_trap( \
 			    mach_msg_header_t	*msg, \
 			    mach_msg_option_t	option, \
@@ -140,7 +140,7 @@
 			    mach_port_t target_tport, int pid, \
 			    mach_port_t *t); }
 46	STD		{ mach_kern_return_t mach_sys_pid_for_task( \
-			    mach_port_t t, int *x); } 
+			    mach_port_t t, int *x); }
 47	UNIMPL
 48	STD		{ mach_kern_return_t mach_sys_macx_swapon( \
 			    char *name, int flags, int size, int priority); }

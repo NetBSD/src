@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.95 2005/02/16 15:25:33 chs Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.96 2005/02/26 22:59:00 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.95 2005/02/16 15:25:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.96 2005/02/26 22:59:00 perry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -1764,9 +1764,9 @@ filt_genfsvnode(struct knote *kn, long hint)
 	return (kn->kn_fflags != 0);
 }
 
-static const struct filterops genfsread_filtops = 
+static const struct filterops genfsread_filtops =
 	{ 1, NULL, filt_genfsdetach, filt_genfsread };
-static const struct filterops genfsvnode_filtops = 
+static const struct filterops genfsvnode_filtops =
 	{ 1, NULL, filt_genfsdetach, filt_genfsvnode };
 
 int

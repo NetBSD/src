@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.h,v 1.8 2002/10/14 21:14:25 manu Exp $ */
+/*	$NetBSD: irix_prctl.h,v 1.9 2005/02/26 23:10:18 perry Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -42,13 +42,13 @@
 /* IRIX share group structure */
 struct irix_share_group {
 	LIST_HEAD(isg_head, irix_emuldata) isg_head;	/* list head */
-	struct lock isg_lock;				/* list lock */ 
+	struct lock isg_lock;				/* list lock */
 	int isg_refcount;
 };
 
 /*
  * List of shared vs unshared regions in the VM space. We need to maintain
- * this for all processes, not only processes belonging to a share group, 
+ * this for all processes, not only processes belonging to a share group,
  * because a process can request a private mapping (MAP_LOCAL option to
  * mmap(2)) before becoming the member of a share group.
  */

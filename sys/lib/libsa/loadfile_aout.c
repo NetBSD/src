@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_aout.c,v 1.6 2003/08/31 22:40:48 fvdl Exp $ */
+/* $NetBSD: loadfile_aout.c,v 1.7 2005/02/26 22:58:56 perry Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -74,17 +74,17 @@
 #ifdef _STANDALONE
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
-#else           
+#else
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <unistd.h>  
+#include <unistd.h>
 #include <fcntl.h>
 #include <err.h>
-#endif  
+#endif
 
-#include <sys/param.h> 
+#include <sys/param.h>
 #include <sys/exec.h>
 
 #include "loadfile.h"
@@ -114,7 +114,7 @@ loadfile_aout(fd, x, marks, flags)
 		sub = 0;
 	else
 		sub = sizeof(*x);
-	
+
 	minp = maxp = ALIGNENTRY(entry);
 
 	if (lseek(fd, sizeof(*x), SEEK_SET) == -1)  {

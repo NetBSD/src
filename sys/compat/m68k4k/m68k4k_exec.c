@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k4k_exec.c,v 1.15 2005/01/30 23:59:58 christos Exp $	*/
+/*	$NetBSD: m68k4k_exec.c,v 1.16 2005/02/26 23:10:19 perry Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.15 2005/01/30 23:59:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.16 2005/02/26 23:10:19 perry Exp $");
 
 #if !defined(__m68k__)
 #error YOU GOTTA BE KIDDING!
@@ -238,7 +238,7 @@ exec_m68k4k_prep_omagic(p, epp)
 	 * computed (in execve(2)) by rounding *up* `ep_tsize' and `ep_dsize'
 	 * respectively to page boundaries.
 	 * Compensate `ep_dsize' for the amount of data covered by the last
-	 * text page. 
+	 * text page.
 	 */
 	dsize = epp->ep_dsize + execp->a_text - roundup(execp->a_text,
 							PAGE_SIZE);

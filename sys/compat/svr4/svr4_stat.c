@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.51 2004/04/19 02:55:40 dmcmahill Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.52 2005/02/26 23:10:21 perry Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.51 2004/04/19 02:55:40 dmcmahill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.52 2005/02/26 23:10:21 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.51 2004/04/19 02:55:40 dmcmahill Exp
 #include <compat/svr4/svr4_socket.h>
 
 #ifdef __sparc__
-/* 
+/*
  * Solaris-2.4 on the sparc has the old stat call using the new
  * stat data structure...
  */
@@ -680,7 +680,7 @@ svr4_sys_systeminfo(l, v, retval)
 	}
 	else {
 		/*
-		 * looks redundant to do this, but actually it retrieves "len" 
+		 * looks redundant to do this, but actually it retrieves "len"
 		 */
 		error = copyinstr(SCARG(uap, buf), buf, sizeof(buf), &len);
 		if (error)

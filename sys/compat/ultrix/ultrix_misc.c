@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.97 2005/01/25 14:56:09 drochner Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.98 2005/02/26 23:10:22 perry Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -72,11 +72,11 @@
  *
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
- * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
+ * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.97 2005/01/25 14:56:09 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.98 2005/02/26 23:10:22 perry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -260,7 +260,7 @@ ultrix_sys_wait3(struct lwp *l, void *v, register_t *retval)
  * Ultrix binaries pass in FD_MAX as the first arg to select().
  * On Ultrix, FD_MAX is 4096, which is more than the NetBSD sys_select()
  * can handle.
- * Since we can't have more than the (native) FD_MAX descriptors open, 
+ * Since we can't have more than the (native) FD_MAX descriptors open,
  * limit nfds to at most FD_MAX.
  */
 int

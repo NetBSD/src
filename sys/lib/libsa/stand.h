@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.53 2004/06/30 13:59:05 christos Exp $	*/
+/*	$NetBSD: stand.h,v 1.54 2005/02/26 22:58:57 perry Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -273,7 +273,7 @@ FS_DEF(null);
 /* Machine dependent functions */
 void	machdep_start(char *, int, char *, char *, char *);
 int	getchar(void);
-void	putchar(int);    
+void	putchar(int);
 
 #ifdef __INTERNAL_LIBSA_CREAD
 int	oopen(const char *, int);

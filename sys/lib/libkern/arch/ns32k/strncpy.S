@@ -1,6 +1,6 @@
-/*	$NetBSD: strncpy.S,v 1.3 1999/11/16 18:16:53 matthias Exp $	*/
+/*	$NetBSD: strncpy.S,v 1.4 2005/02/26 22:58:56 perry Exp $	*/
 
-/* 
+/*
  * Written by Matthias Pfaller, 1996
  * Public domain.
  */
@@ -8,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strncpy.S,v 1.3 1999/11/16 18:16:53 matthias Exp $")
+	RCSID("$NetBSD: strncpy.S,v 1.4 2005/02/26 22:58:56 perry Exp $")
 #endif
 
 /*

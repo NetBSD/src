@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.24 2003/08/31 22:40:47 fvdl Exp $	*/
+/*	$NetBSD: arp.c,v 1.25 2005/02/26 22:58:56 perry Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -60,7 +60,7 @@
  * Ethernet Address Resolution Protocol.
  *
  * See RFC 826 for protocol description.  Structure below is adapted
- * to resolving internet addresses.  Field names used correspond to 
+ * to resolving internet addresses.  Field names used correspond to
  * RFC 826.
  */
 struct	ether_arp {

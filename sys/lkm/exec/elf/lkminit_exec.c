@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.6 2004/11/13 06:09:47 christos Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.7 2005/02/26 22:58:58 perry Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.6 2004/11/13 06:09:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.7 2005/02/26 22:58:58 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ MOD_EXEC("exec_elf", -1, &exec_elf, "elf");
  */
 int
 exec_elf_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 	int ver;
 {

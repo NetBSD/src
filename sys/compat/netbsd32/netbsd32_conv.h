@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.4 2004/06/17 18:29:40 cube Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.5 2005/02/26 23:10:21 perry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -107,9 +107,9 @@ netbsd32_from_itimerval(itv, itv32)
 	struct netbsd32_itimerval *itv32;
 {
 
-	netbsd32_from_timeval(&itv->it_interval, 
+	netbsd32_from_timeval(&itv->it_interval,
 			     &itv32->it_interval);
-	netbsd32_from_timeval(&itv->it_value, 
+	netbsd32_from_timeval(&itv->it_value,
 			     &itv32->it_value);
 }
 
@@ -204,7 +204,7 @@ netbsd32_to_iovecin(iov32p, iovp, len)
 	int i, error=0;
 	u_int32_t iov_base;
 	u_int32_t iov_len;
-	/* 
+	/*
 	 * We could allocate an iov32p, do a copyin, and translate
 	 * each field and then free it all up, or we could copyin
 	 * each field separately.  I'm doing the latter to reduce

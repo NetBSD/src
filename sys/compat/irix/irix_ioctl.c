@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_ioctl.c,v 1.6 2003/01/22 12:58:22 rafal Exp $ */
+/*	$NetBSD: irix_ioctl.c,v 1.7 2005/02/26 23:10:18 perry Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.6 2003/01/22 12:58:22 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.7 2005/02/26 23:10:18 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -95,14 +95,14 @@ irix_sys_ioctl(l, v, retval)
 	caddr_t sg = stackgap_init(p, 0);
 	int error, val;
 
-	/* 
-	 * This duplicates 6 lines from svr4_sys_ioctl() 
+	/*
+	 * This duplicates 6 lines from svr4_sys_ioctl()
 	 * It would be nice to merge it.
 	 */
 	fdp = p->p_fd;
 	cmd = SCARG(uap, com);
 	data = SCARG(uap, data);
-	
+
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
@@ -113,9 +113,9 @@ irix_sys_ioctl(l, v, retval)
 	 * A special hook for /dev/usemaclone ioctls. Some of the ioctl
 	 * commands need to set the return value, which is normally
 	 * impossible in the file methods and lower. We do the job by
-	 * copying the retval address and the data argument to a 
+	 * copying the retval address and the data argument to a
 	 * struct irix_ioctl_usrdata in the stackgap. The data argument
-	 * is set to the address of the structure, and the underlying 
+	 * is set to the address of the structure, and the underlying
 	 * code will be able to retreive both data and the retval address
 	 * by fetching the struct irix_ioctl_usrdata.
 	 *
@@ -134,11 +134,11 @@ irix_sys_ioctl(l, v, retval)
 			goto out;
 		}
 
-		iiup = stackgap_alloc(p, &sg, sizeof(iiu));	
+		iiup = stackgap_alloc(p, &sg, sizeof(iiu));
 		iiu.iiu_data = data;
 		iiu.iiu_retval = retval;
 		data = (caddr_t)iiup;
-		if ((error = copyout(&iiu, iiup, sizeof(iiu))) != 0) 
+		if ((error = copyout(&iiu, iiup, sizeof(iiu))) != 0)
 			goto out;
 
 		error = (*fp->f_ops->fo_ioctl)(fp, cmd, data, p);
@@ -149,9 +149,9 @@ out:
 
 	switch (cmd) {
 	case IRIX_SIOCNREAD: /* number of bytes to read */
-		return (*(fp->f_ops->fo_ioctl))(fp, FIONREAD, 
+		return (*(fp->f_ops->fo_ioctl))(fp, FIONREAD,
 		    SCARG(uap, data), p);
-		break;	
+		break;
 
 	case IRIX_MTIOCGETBLKSIZE: /* get tape block size in 512B units */
 		if (fp->f_type != DTYPE_VNODE)

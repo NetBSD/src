@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_elf32.c,v 1.8 2003/11/05 04:03:21 christos Exp $	*/
+/*	$NetBSD: ibcs2_exec_elf32.c,v 1.9 2005/02/26 23:10:18 perry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_elf32.c,v 1.8 2003/11/05 04:03:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_elf32.c,v 1.9 2005/02/26 23:10:18 perry Exp $");
 
 #define ELFSIZE		32
 
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_elf32.c,v 1.8 2003/11/05 04:03:21 christo
 
 static int ibcs2_elf32_signature __P((struct proc *p, struct exec_package *,
 				      Elf32_Ehdr *));
-	
+
 /*
  * The SCO compiler adds the string "SCO" to the .notes section of all
  * binaries I've seen so far.

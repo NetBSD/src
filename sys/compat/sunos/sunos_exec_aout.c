@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec_aout.c,v 1.12 2005/01/30 23:59:58 christos Exp $	*/
+/*	$NetBSD: sunos_exec_aout.c,v 1.13 2005/02/26 23:10:21 perry Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.12 2005/01/30 23:59:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.13 2005/02/26 23:10:21 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ sunos_exec_aout_prep_zmagic(p, epp)
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
-	    epp->ep_taddr, epp->ep_vp, SUNOS_N_TXTOFF(*execp, ZMAGIC), 
+	    epp->ep_taddr, epp->ep_vp, SUNOS_N_TXTOFF(*execp, ZMAGIC),
 	    VM_PROT_READ|VM_PROT_EXECUTE);
 
 	/* set up command for data segment */

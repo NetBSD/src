@@ -1,4 +1,4 @@
-/*	$NetBSD: syncicache.c,v 1.8 2002/03/28 00:46:08 matt Exp $	*/
+/*	$NetBSD: syncicache.c,v 1.9 2005/02/26 22:58:56 perry Exp $	*/
 
 /*
  * Copyright (C) 1995-1997, 1999 Wolfgang Solfrank.
@@ -101,7 +101,7 @@ __syncicache(void *from, size_t len)
 #if	!defined(_KERNEL) && !defined(_STANDALONE)
 	if (!_cachelinesize)
 		getcachelinesize();
-#endif	
+#endif
 
 	if (CACHEINFO.dcache_size > 0) {
 		linesz = CACHEINFO.dcache_line_size;

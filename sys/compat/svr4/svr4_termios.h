@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_termios.h,v 1.4 1998/09/04 19:54:40 christos Exp $	 */
+/*	$NetBSD: svr4_termios.h,v 1.5 2005/02/26 23:10:21 perry Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ struct svr4_termio {
 	u_short		c_oflag;
 	u_short		c_cflag;
 	u_short		c_lflag;
-	char		c_line;	
+	char		c_line;
 	u_char		c_cc[SVR4_NCC];
 };
 

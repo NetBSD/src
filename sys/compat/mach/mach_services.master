@@ -1,10 +1,10 @@
- $NetBSD: mach_services.master,v 1.11 2004/07/24 15:46:02 manu Exp $
+ $NetBSD: mach_services.master,v 1.12 2005/02/26 23:10:20 perry Exp $
 ;
-; Mach services list. 
+; Mach services list.
 ;
 #include <sys/types.h>
 #include <sys/param.h>
- 
+
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
 #include <compat/mach/mach_bootstrap.h>
@@ -66,7 +66,7 @@
 ; Implemented by mach_init, clashes with host_default_memory_manager
 403	UNIMPL	boostrap_register
 ; Implemented by mach_init, clashes with vm_wire
-404	STD	bootstrap_look_up 
+404	STD	bootstrap_look_up
 405	UNIMPL	thread_wire
 406	UNIMPL	vm_allocate_cpm
 407	UNIMPL	host_processors
@@ -179,8 +179,8 @@
 2451	UNIMPL	notices
 
 ;
-; Mach exception Replies. 
-; Defined because the kernel is the client here: 
+; Mach exception Replies.
+; Defined because the kernel is the client here:
 ; it has to handle replies instead of reequest.
 ;
 2501	STD	exception_raise
@@ -194,12 +194,12 @@
 2801	STD	io_object_conforms_to
 2802	STD	io_iterator_next
 2803	STD	io_iterator_reset
-2804	STD	io_service_get_matching_services 
+2804	STD	io_service_get_matching_services
 2805	STD	io_registry_entry_get_property
 2806	UNIMPL	io_registry_create_iterator
 2807	UNIMPL	io_registry_iterator_enter_entry
 2808	UNIMPL	io_registry_iterator_exit_entry
-2809	STD	io_registry_entry_from_path 
+2809	STD	io_registry_entry_from_path
 2810	UNIMPL	io_registry_entry_get_name
 2811	STD	io_registry_entry_get_properties
 2812	UNIMPL	io_registry_entry_get_property_bytes
@@ -214,7 +214,7 @@
 2821	STD	io_connect_set_properties
 2822	STD	io_connect_method_scalari_scalaro
 2823	STD	io_connect_method_scalari_structo
-2824	STD	io_connect_method_scalari_structi 
+2824	STD	io_connect_method_scalari_structi
 2825	STD	io_connect_method_structi_structo
 2826	STD	io_registry_entry_get_path
 2827	STD	io_registry_get_root_entry

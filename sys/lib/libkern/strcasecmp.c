@@ -1,4 +1,4 @@
-/*	$NetBSD: strcasecmp.c,v 1.1 2000/11/01 19:37:18 thorpej Exp $	*/
+/*	$NetBSD: strcasecmp.c,v 1.2 2005/02/26 22:58:56 perry Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: strcasecmp.c,v 1.1 2000/11/01 19:37:18 thorpej Exp $";
+static char *rcsid = "$NetBSD: strcasecmp.c,v 1.2 2005/02/26 22:58:56 perry Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(_KERNEL) || defined(_STANDALONE)
@@ -52,10 +52,10 @@ strcasecmp(s1, s2)
 		c2 = (unsigned char) *s2++;
 
 		if (c1 != c2) {
-			if (c1 >= 'A' && c1 <= 'Z' && 
+			if (c1 >= 'A' && c1 <= 'Z' &&
 			    c2 >= 'a' && c2 <= 'z')
 				c1 += 'a' - 'A';
-			else if (c1 >= 'a' && c1 <= 'z' && 
+			else if (c1 >= 'a' && c1 <= 'z' &&
 				 c2 >= 'A' && c2 <= 'Z')
 				c2 += 'a' - 'A';
 			if (c1 != c2)

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.h,v 1.12 2003/12/09 17:13:19 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.h,v 1.13 2005/02/26 23:10:18 perry Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ typedef union {
 		uint8_t reserved2;
 		uint32_t reserved3;
 		union {
-			darwin_iohidsystem_tabletpoint point;	
+			darwin_iohidsystem_tabletpoint point;
 			darwin_iohidsystem_tabletproxymity proximity;
 		} tablet;
 	} mouse;
@@ -129,7 +129,7 @@ typedef union {
 		uint8_t reserved1;
 		int32_t reserved2;
 		union {
-			darwin_iohidsystem_tabletpoint point;	
+			darwin_iohidsystem_tabletpoint point;
 			darwin_iohidsystem_tabletproxymity proximity;
 		} tablet;
 	} mouse_move;
@@ -225,8 +225,8 @@ typedef volatile struct {
 typedef struct {
 	int diei_next;
 	darwin_ev_lock_data_t diei_sem;
-	/* 
-	 * Avoid automatic alignement, this should be 
+	/*
+	 * Avoid automatic alignement, this should be
 	 * darwin_iohidsystem_event, we declare it as a char array.
 	 */
 	unsigned char diei_event[76];
@@ -266,7 +266,7 @@ struct darwin_iohidsystem_evglobals {
 	char evg_waitcursor_enabled;
 	char evg_globalwaitcursor_enabled;
 	int evg_waitcursor_threshold;
-	darwin_iohidsystem_event_item 
+	darwin_iohidsystem_event_item
 	    evg_evqueue[DARWIN_IOHIDSYSTEM_EVENTQUEUE_LEN];
 };
 
@@ -274,7 +274,7 @@ struct darwin_iohidsystem_evglobals {
 struct  darwin_iohidsystem_shmem {
 	int dis_global_offset;	/* Offset to global zone, usually 8 */
 	int dis_private_offset;	/* Offset to private memory. Don't care. */
-	struct darwin_iohidsystem_evglobals dis_evglobals; 
+	struct darwin_iohidsystem_evglobals dis_evglobals;
 };
 
 /* I/O selectors for io_connect_method_{scalar|struct}i_{scalar|struct}o */

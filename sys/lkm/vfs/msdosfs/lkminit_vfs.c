@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.6 2004/05/20 06:34:28 atatat Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.7 2005/02/26 22:58:59 perry Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.6 2004/05/20 06:34:28 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.7 2005/02/26 22:58:59 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -77,7 +77,7 @@ static struct sysctllog *_msdosfs_log;
  */
 int
 msdosfs_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 	int ver;
 {
@@ -87,7 +87,7 @@ msdosfs_lkmentry(lkmtp, cmd, ver)
 
 static int
 load(lkmtp, cmd)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 {
 
@@ -97,7 +97,7 @@ load(lkmtp, cmd)
 
 static int
 unload(lkmtp, cmd)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 {
 

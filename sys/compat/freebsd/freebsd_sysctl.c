@@ -1,11 +1,11 @@
-/*	$NetBSD: freebsd_sysctl.c,v 1.1 2005/02/22 16:14:50 heas Exp $	*/
+/*	$NetBSD: freebsd_sysctl.c,v 1.2 2005/02/26 23:10:18 perry Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by 
+ * by
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.1 2005/02/22 16:14:50 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.2 2005/02/26 23:10:18 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ freebsd_sys_sysctl(l, v, retval)
 		if (error)
 			return(error);
 		error = copyout(&oidlen, SCARG(uap, oldlenp), sizeof(u_int));
-		
+
 		return(error);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.3 2003/06/29 22:31:09 fvdl Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.4 2005/02/26 22:58:55 perry Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.3 2003/06/29 22:31:09 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.4 2005/02/26 22:58:55 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -370,7 +370,7 @@ notfound:
 			slotoffset +=
 				sizeof(struct direntry) * (wincnt - slotcount);
 		}
-	
+
 		/*
 		 * Return an indication of where the new directory
 		 * entry should be put.

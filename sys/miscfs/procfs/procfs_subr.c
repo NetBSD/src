@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.62 2004/09/20 17:53:08 jdolecek Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.63 2005/02/26 22:59:00 perry Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.62 2004/09/20 17:53:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.63 2005/02/26 22:59:00 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 				vxp = (struct vnode *)fp->f_data;
 
 				/*
-				 * We make symlinks for directories 
+				 * We make symlinks for directories
 				 * to avoid cycles.
 				 */
 				if (vxp->v_type == VDIR)
@@ -314,11 +314,11 @@ procfs_rw(v)
 
 	/* XXX NJWLWP
 	 * The entire procfs interface needs work to be useful to
-	 * a process with multiple LWPs. For the moment, we'll 
+	 * a process with multiple LWPs. For the moment, we'll
 	 * just kluge this and fail on others.
 	 */
 	l = proc_representative_lwp(p);
-	
+
 	switch (pfs->pfs_type) {
 	case PFSnote:
 	case PFSnotepg:

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.86 2004/06/17 18:29:40 cube Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.87 2005/02/26 23:10:21 perry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.86 2004/06/17 18:29:40 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.87 2005/02/26 23:10:21 perry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -2118,7 +2118,7 @@ netbsd32_fktrace(l, v, retval)
 }
 #endif /* KTRACE */
 
-int netbsd32___sigpending14(l, v, retval) 
+int netbsd32___sigpending14(l, v, retval)
 	struct lwp *l;
 	void   *v;
 	register_t *retval;
@@ -2132,7 +2132,7 @@ int netbsd32___sigpending14(l, v, retval)
 	return (sys___sigpending14(l, &ua, retval));
 }
 
-int netbsd32___sigprocmask14(l, v, retval) 
+int netbsd32___sigprocmask14(l, v, retval)
 	struct lwp *l;
 	void   *v;
 	register_t *retval;
@@ -2150,7 +2150,7 @@ int netbsd32___sigprocmask14(l, v, retval)
 	return (sys___sigprocmask14(l, &ua, retval));
 }
 
-int netbsd32___sigsuspend14(l, v, retval) 
+int netbsd32___sigsuspend14(l, v, retval)
 	struct lwp *l;
 	void   *v;
 	register_t *retval;
@@ -2173,7 +2173,7 @@ int netbsd32_fchroot(l, v, retval)
 		syscallarg(int) fd;
 	} */ *uap = v;
 	struct sys_fchroot_args ua;
-	
+
 	NETBSD32TO64_UAP(fd);
 	return (sys_fchroot(l, &ua, retval));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.31 2003/12/29 01:34:02 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.32 2005/02/26 23:10:18 perry Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.31 2003/12/29 01:34:02 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.32 2005/02/26 23:10:18 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -99,9 +99,9 @@ struct mach_iokit_property darwin_ioframebuffer_properties_array[] = {
 	{ "IOFBDependentIndex", NULL },
 	{ "graphic-options", "<integer size=\"32\" ID=\"0\">0x0</integer>"},
 	{ "IOFBConfig", darwin_iofbconfig },
-	{ "IOFBMemorySize", 
+	{ "IOFBMemorySize",
 	    "<integer size=\"32\" ID=\"0\">0x1000000</integer>"},
-	{ "AAPL,boot-display", ""}, 
+	{ "AAPL,boot-display", ""},
 	{ NULL, 0}
 };
 
@@ -151,11 +151,11 @@ darwin_ioframebuffer_connect_method_scalari_scalaro(args)
 		maxheight = req->req_in[2]; /* 0x20 */
 #ifdef DEBUG_DARWIN
 		printf("DARWIN_IOFBCREATESHAREDCURSOR: shmemvers = %d, "
-		    "maxwidth = %d, maxheight = %d\n", shmemvers, 
+		    "maxwidth = %d, maxheight = %d\n", shmemvers,
 		    maxwidth, maxheight);
 #endif
 		if (darwin_ioframebuffer_shmem == NULL) {
-			memsize = 
+			memsize =
 			    round_page(sizeof(*darwin_ioframebuffer_shmem));
 
 			darwin_ioframebuffer_shmem = uao_create(memsize, 0);
@@ -219,7 +219,7 @@ darwin_ioframebuffer_connect_method_scalari_scalaro(args)
 #ifdef DEBUG_DARWIN
 		printf("DARWIN_IOFBGETCURRENTDISPLAYMODE\n");
 #endif
-		if (maxoutcount < 2)	
+		if (maxoutcount < 2)
 			return mach_msg_error(args, EINVAL);
 
 		rep->rep_outcount = 2;
@@ -250,15 +250,15 @@ darwin_ioframebuffer_connect_method_scalari_scalaro(args)
 
 		/* We only heard about the mrdf attribute. What is it? */
 		if (memcmp(name, "mrdf", 4) == 0) {
-			if (maxoutcount < 1)	
+			if (maxoutcount < 1)
 				return mach_msg_error(args, EINVAL);
 
 			rep->rep_outcount = 1;
 			rep->rep_out[0] = 0; /* XXX */
 		} else {
 #ifdef DEBUG_DARWIN
-			printf("Unknown attribute %c%c%c%c\n", 
-			    req->req_in[0], req->req_in[1], 
+			printf("Unknown attribute %c%c%c%c\n",
+			    req->req_in[0], req->req_in[1],
 			    req->req_in[2], req->req_in[3]);
 #endif
 			return mach_msg_error(args, EINVAL);
@@ -272,10 +272,10 @@ darwin_ioframebuffer_connect_method_scalari_scalaro(args)
 
 		aperture = req->req_in[0];
 #ifdef DEBUG_DARWIN
-		printf("DARWIN_IOFBGETVRAMMAPOFFSET: aperture = %d\n", 
+		printf("DARWIN_IOFBGETVRAMMAPOFFSET: aperture = %d\n",
 		    aperture);
 #endif
-		if (maxoutcount < 1)	
+		if (maxoutcount < 1)
 			return mach_msg_error(args, EINVAL);
 
 		rep->rep_outcount = 1;
@@ -326,7 +326,7 @@ darwin_ioframebuffer_connect_method_scalari_structo(args)
 		aperture = req->req_in[2]; /* 0 */
 #ifdef DEBUG_DARWIN
 		printf("DARWIN_IOFBGETPIXELINFORMATION: displaymode = %d, "
-		    "depth = %d, aperture = %d\n", displaymode, depth, 
+		    "depth = %d, aperture = %d\n", displaymode, depth,
 		    aperture);
 #endif
 		pixelinfo = (darwin_iopixelinformation *)&rep->rep_out[0];
@@ -334,16 +334,16 @@ darwin_ioframebuffer_connect_method_scalari_structo(args)
 		if (maxoutcount < sizeof(*pixelinfo))
 			return mach_msg_error(args, EINVAL);
 
-		/* 
+		/*
 		 * darwin_iopixelinformation is shorter than the buffer
-		 * usually supplied, but Darwin still returns the whole buffer 
+		 * usually supplied, but Darwin still returns the whole buffer
 		 */
-		rep->rep_outcount = maxoutcount; 
+		rep->rep_outcount = maxoutcount;
 		memset(pixelinfo, 0, maxoutcount * sizeof(int));
 
 		switch (depth) {
 		case 0: /* 8 bpp */
-			pixelinfo->bytesperrow = 0x400; 
+			pixelinfo->bytesperrow = 0x400;
 			pixelinfo->bytesperplane = 0;
 			pixelinfo->bitsperpixel = 0x8;
 			pixelinfo->pixeltype = DARWIN_IOFB_CLUTPIXELS;
@@ -382,7 +382,7 @@ darwin_ioframebuffer_connect_method_scalari_structo(args)
 			pixelinfo->componentmasks[0] = 0x00ff0000; /* Red */
 			pixelinfo->componentmasks[1] = 0x0000ff00; /* Green */
 			pixelinfo->componentmasks[2] = 0x000000ff; /* Blue */
-			memcpy(&pixelinfo->pixelformat, 
+			memcpy(&pixelinfo->pixelformat,
 			    "--------RRRRRRRRGGGGGGGGBBBBBBBB", 32);
 			pixelinfo->flags = 0;
 			pixelinfo->activewidth = 0;
@@ -393,7 +393,7 @@ darwin_ioframebuffer_connect_method_scalari_structo(args)
 			printf("unknown depth %d\n", depth);
 			break;
 		}
-			    
+
 		/* Probably useless */
 		rep->rep_out[158] = 0x4;
 		rep->rep_out[162] = 0x3;
@@ -406,7 +406,7 @@ darwin_ioframebuffer_connect_method_scalari_structo(args)
 		printf("Unknown selector %d\n", req->req_selector);
 #endif
 		return mach_msg_error(args, EINVAL);
-		break;	
+		break;
 	}
 
 	*msglen = sizeof(*rep) - (4096 - rep->rep_outcount);
@@ -431,7 +431,7 @@ darwin_ioframebuffer_connect_method_structi_structo(args)
 
 	rep->rep_outcount = 0;
 	/* maxoutcount is word aligned */
-	maxoutcount = req->req_in[(req->req_incount & ~0x3UL) + 4]; 
+	maxoutcount = req->req_in[(req->req_incount & ~0x3UL) + 4];
 
 	switch(req->req_selector) {
 	case DARWIN_IOFBSETBOUNDS: {
@@ -440,7 +440,7 @@ darwin_ioframebuffer_connect_method_structi_structo(args)
 		bounds = (darwin_iogbounds *)&req->req_in[0];
 
 #ifdef DEBUG_DARWIN
-		printf("DARWIN_IOFBSETBOUNDS: bounds (%d, %d) - (%d, %d)\n", 
+		printf("DARWIN_IOFBSETBOUNDS: bounds (%d, %d) - (%d, %d)\n",
 		    bounds->minx, bounds->miny, bounds->maxx, bounds->maxy);
 #endif
 		/* Nothing yet */
@@ -452,7 +452,7 @@ darwin_ioframebuffer_connect_method_structi_structo(args)
 		printf("Unknown selector %d\n", req->req_selector);
 #endif
 		return mach_msg_error(args, EINVAL);
-		break;	
+		break;
 	}
 
 	*msglen = sizeof(*rep) - (4096 - rep->rep_outcount);
@@ -462,7 +462,7 @@ darwin_ioframebuffer_connect_method_structi_structo(args)
 	return 0;
 }
 
-int 
+int
 darwin_ioframebuffer_connect_map_memory(args)
 	struct mach_trap_args *args;
 {
@@ -480,7 +480,7 @@ darwin_ioframebuffer_connect_map_memory(args)
 #endif
 	switch (req->req_memtype) {
 	case DARWIN_IOFRAMEBUFFER_CURSOR_MEMORY:
-		if (darwin_ioframebuffer_shmem == NULL) 
+		if (darwin_ioframebuffer_shmem == NULL)
 			return mach_msg_error(args, error);
 
 		len = sizeof(struct darwin_ioframebuffer_shmem);
@@ -492,7 +492,7 @@ darwin_ioframebuffer_connect_map_memory(args)
 		if ((error = uvm_map(&p->p_vmspace->vm_map, &pvaddr,
 		    memsize, darwin_ioframebuffer_shmem, 0, PAGE_SIZE,
 		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
-		    UVM_INH_SHARE, UVM_ADV_RANDOM, 0))) != 0) 
+		    UVM_INH_SHARE, UVM_ADV_RANDOM, 0))) != 0)
 			return mach_msg_error(args, error);
 
 #ifdef DEBUG_DARWIN
@@ -510,7 +510,7 @@ darwin_ioframebuffer_connect_map_memory(args)
 		struct darwin_emuldata *ded;
 		struct vnode *vp;
 
-		/* 
+		/*
 		 * Use unit given by sysctl emul.darwin.ioframebuffer.unit
 		 * and emul.darwin.ioframebuffer.screen
 		 */
@@ -523,7 +523,7 @@ darwin_ioframebuffer_connect_map_memory(args)
 			return mach_msg_error(args, ENXIO);
 
 		/* Find the framebuffer's size */
-		if ((error = (wsdisplay->d_ioctl)(device, 
+		if ((error = (wsdisplay->d_ioctl)(device,
 		    WSDISPLAYIO_GINFO, (caddr_t)&fbi, 0, p)) != 0) {
 #ifdef DEBUG_DARWIN
 			printf("*** Cannot get screen params ***\n");
@@ -531,21 +531,21 @@ darwin_ioframebuffer_connect_map_memory(args)
 			return mach_msg_error(args, error);
 		}
 #ifdef DEBUG_DARWIN
-		printf("framebuffer: %d x %d x %d\n", 
+		printf("framebuffer: %d x %d x %d\n",
 		    fbi.width, fbi.height, fbi.depth);
 #endif
 		len = round_page(fbi.height * fbi.width * fbi.depth / 8);
 
-		/* 
-		 * The framebuffer cannot be mapped if the console is 
-		 * not in graphic mode. We will do the switch, but it 
-		 * screws the console. Therefore we attempt to restore 
-		 * its original state on process exit. ded->ded_wsdev 
-		 * is used to remember the console device. If it is not 
+		/*
+		 * The framebuffer cannot be mapped if the console is
+		 * not in graphic mode. We will do the switch, but it
+		 * screws the console. Therefore we attempt to restore
+		 * its original state on process exit. ded->ded_wsdev
+		 * is used to remember the console device. If it is not
 		 * NODEV on process exit, we use it to restore text mode.
 		 */
 		ded = (struct darwin_emuldata *)p->p_emuldata;
-		if ((error = (wsdisplay->d_ioctl)(device, 
+		if ((error = (wsdisplay->d_ioctl)(device,
 		    WSDISPLAYIO_GMODE, (caddr_t)&mode, 0, p)) != 0) {
 #ifdef DEBUG_DARWIN
 			printf("*** Cannot get console state ***\n");
@@ -557,7 +557,7 @@ darwin_ioframebuffer_connect_map_memory(args)
 
 		/* Switch to graphic mode */
 		mode = WSDISPLAYIO_MODE_MAPPED;
-		if ((error = (wsdisplay->d_ioctl)(device, 
+		if ((error = (wsdisplay->d_ioctl)(device,
 		    WSDISPLAYIO_SMODE, (caddr_t)&mode, 0, p)) != 0) {
 #ifdef DEBUG_DARWIN
 			printf("*** Cannot switch to graphic mode ***\n");
@@ -573,7 +573,7 @@ darwin_ioframebuffer_connect_map_memory(args)
 		}
 
 		pvaddr = 0;
-		if ((error = uvm_mmap(&p->p_vmspace->vm_map, &pvaddr, 
+		if ((error = uvm_mmap(&p->p_vmspace->vm_map, &pvaddr,
 		    len, UVM_PROT_RW, UVM_PROT_RW, MAP_SHARED, vp, 0,
 		    p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur)) != 0) {
 #ifdef DEBUG_DARWIN
@@ -612,7 +612,7 @@ darwin_ioframebuffer_connect_map_memory(args)
 		ded = p->p_emuldata;
 		/*
 		 * This seems to be the offset of the framebuffer
-		 * within the VRAM. For now 0, as we are only 
+		 * within the VRAM. For now 0, as we are only
 		 * able to map the framebuffer.
 		 */
 		ded->ded_vramoffset = (void *)(pvaddr - pvaddr);
@@ -647,9 +647,9 @@ darwin_ioframebuffer_connect_method_scalari_structi(args)
 #ifdef DEBUG_DARWIN
 	printf("darwin_ioframebuffer_connect_method_scalari_structi()\n");
 #endif
-	scalar_len = req->req_incount; 
+	scalar_len = req->req_incount;
 	struct_len = req->req_in[scalar_len];
-	struct_data = (char *)&req->req_in[scalar_len + 1];	
+	struct_data = (char *)&req->req_in[scalar_len + 1];
 
 	switch (req->req_selector) {
 	case DARWIN_IOFBSETCOLORCONVERTTABLE: {
@@ -692,7 +692,7 @@ darwin_ioframebuffer_connect_method_scalari_structi(args)
 	case DARWIN_IOFBSETCLUTWITHENTRIES: {
 		int index;
 		int option;
-		struct darwin_iocolorentry *clut; 
+		struct darwin_iocolorentry *clut;
 		size_t clutlen;
 		size_t tablen;
 		size_t kcolorsz;
@@ -716,14 +716,14 @@ darwin_ioframebuffer_connect_method_scalari_structi(args)
 		clut = (struct darwin_iocolorentry *)struct_data;
 
 		if ((clutlen == 0) || (index >= 256))
-			break;	
-	
+			break;
+
 #ifdef DEBUG_DARWIN
 		printf("DARWIN_IOFBSETCLUTWITHENTRIES: index = %d, "
 		    "option = %d, clutlen = %d\n", index, option, clutlen);
 #endif
 
-		/* 
+		/*
 		 * Find wsdisplay. Use the screen given by sysctl
 		 * emul.darwin.ioframebuffer.screen
 		 */
@@ -743,7 +743,7 @@ darwin_ioframebuffer_connect_method_scalari_structi(args)
 
 		/*
 		 * Big tables will not fit in the stackgap.
-		 * We have to split the data. 
+		 * We have to split the data.
 		 */
 		if (clutlen <= 128)
 			tablen = clutlen;
@@ -774,7 +774,7 @@ darwin_ioframebuffer_connect_method_scalari_structi(args)
 			    ((error = copyout(kblue, blue, kcolorsz)) != 0))
 				return mach_msg_error(args, error);
 
-			if ((error = (wsdisplay->d_ioctl)(dev, 
+			if ((error = (wsdisplay->d_ioctl)(dev,
 			    WSDISPLAYIO_PUTCMAP, (caddr_t)&cmap, 0, p)) != 0)
 				return mach_msg_error(args, error);
 
@@ -795,7 +795,7 @@ darwin_ioframebuffer_connect_method_scalari_structi(args)
 		break;
 	}
 
-	*msglen = sizeof(*rep); 
+	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
 
 	rep->rep_retval = 0;
@@ -830,7 +830,7 @@ darwin_findscreen(dev, unit, screen)
 	major = cdevsw_lookup_major(&wsdisplay_cdevsw);
 	minor = WSDISPLAYMINOR(dv->dv_unit, screen);
 	*dev = makedev(major, minor);
-	
+
 #ifdef DEBUG_DARWIN
 	printf("ioframebuffer uses major = %d, minor = %d\n", major, minor);
 #endif

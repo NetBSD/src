@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.h,v 1.10 2003/12/09 17:13:19 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.h,v 1.11 2005/02/26 23:10:18 perry Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -131,13 +131,13 @@ typedef struct {
 	uint32_t reserved[2];
 } darwin_iopixelinformation;
 
-int 
+int
 darwin_ioframebuffer_connect_method_scalari_scalaro(struct mach_trap_args *);
-int 
+int
 darwin_ioframebuffer_connect_method_scalari_structo(struct mach_trap_args *);
 int
 darwin_ioframebuffer_connect_method_structi_structo(struct mach_trap_args *);
-int 
+int
 darwin_ioframebuffer_connect_method_scalari_structi(struct mach_trap_args *);
 int darwin_ioframebuffer_connect_map_memory(struct mach_trap_args *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ipc.c,v 1.7 2003/10/21 09:02:50 petrov Exp $	*/
+/*	$NetBSD: svr4_32_ipc.c,v 1.8 2005/02/26 23:10:21 perry Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_ipc.c,v 1.7 2003/10/21 09:02:50 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_ipc.c,v 1.8 2005/02/26 23:10:21 perry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -237,7 +237,7 @@ svr4_32_semctl(l, v, retval)
 	}
 
 	if (cmd == IPC_SET) {
-		error = copyin((caddr_t)(u_long)SCARG(uap, arg).buf, 
+		error = copyin((caddr_t)(u_long)SCARG(uap, arg).buf,
 			       &ssembuf, sizeof(ssembuf));
 		if (error)
 			return (error);
@@ -249,7 +249,7 @@ svr4_32_semctl(l, v, retval)
 
 	if (error == 0 && cmd == IPC_STAT) {
 		bsd_to_svr4_32_semid_ds(&sembuf, &ssembuf);
-		error = copyout(&ssembuf, (caddr_t)(u_long)SCARG(uap, arg).buf, 
+		error = copyout(&ssembuf, (caddr_t)(u_long)SCARG(uap, arg).buf,
 				sizeof(ssembuf));
 	}
 
@@ -425,7 +425,7 @@ svr4_32_msgrcv(l, v, retval)
 
 	return sys_msgrcv(l, &ap, retval);
 }
-	
+
 struct svr4_32_sys_msgget_args {
 	syscallarg(int) what;
 	syscallarg(svr4_key_t) key;
@@ -669,7 +669,7 @@ svr4_32_shmctl(l, v, retval)
 		case SVR4_IPC_RMID:
 		case SVR4_SHM_LOCK:
 		case SVR4_SHM_UNLOCK:
-			error = copyin((caddr_t)(u_long)SCARG(uap, buf), 
+			error = copyin((caddr_t)(u_long)SCARG(uap, buf),
 				       (caddr_t)&ss, sizeof ss);
 			if (error)
 				return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.13 2005/01/09 16:42:44 chs Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.14 2005/02/26 22:58:55 perry Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.13 2005/01/09 16:42:44 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.14 2005/02/26 22:58:55 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -366,7 +366,7 @@ msdosfs_setattr(v)
 	    (vap->va_fsid != VNOVAL) || (vap->va_fileid != VNOVAL) ||
 	    (vap->va_blocksize != VNOVAL) || (vap->va_rdev != VNOVAL) ||
 	    (vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL) ||
-	    (vap->va_uid != VNOVAL && vap->va_uid != pmp->pm_uid) || 
+	    (vap->va_uid != VNOVAL && vap->va_uid != pmp->pm_uid) ||
 	    (vap->va_gid != VNOVAL && vap->va_gid != pmp->pm_gid)) {
 #ifdef MSDOSFS_DEBUG
 		printf("msdosfs_setattr(): returning EINVAL\n");
@@ -536,7 +536,7 @@ msdosfs_read(v)
 		error = uiomove(bp->b_data + on, (int) n, uio);
 		brelse(bp);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
- 
+
 out:
 	if ((ap->a_ioflag & IO_SYNC) == IO_SYNC)
 		error = deupdat(dep, 1);
@@ -1514,7 +1514,7 @@ msdosfs_readdir(v)
 				dirbuf.d_reclen = DIRENT_SIZE(&dirbuf);
 				if (uio->uio_resid < dirbuf.d_reclen)
 					goto out;
-				error = uiomove(&dirbuf, 
+				error = uiomove(&dirbuf,
 						dirbuf.d_reclen, uio);
 				if (error)
 					goto out;

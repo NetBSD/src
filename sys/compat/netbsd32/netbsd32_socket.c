@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.12 2003/10/21 01:38:42 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.13 2005/02/26 23:10:21 perry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.12 2003/10/21 01:38:42 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.13 2005/02/26 23:10:21 perry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.12 2003/10/21 01:38:42 fvdl Ex
 #include <compat/netbsd32/netbsd32_conv.h>
 
 /* note that the netbsd32_msghdr's iov really points to a struct iovec, not a netbsd32_iovec. */
-static int recvit32 __P((struct proc *, int, struct netbsd32_msghdr *, struct iovec *, caddr_t, 
+static int recvit32 __P((struct proc *, int, struct netbsd32_msghdr *, struct iovec *, caddr_t,
 			 register_t *));
 
 int
@@ -91,7 +91,7 @@ netbsd32_recvmsg(l, v, retval)
 		return (EMSGSIZE);
 	msg.msg_flags = SCARG(uap, flags);
 	uiov = (struct iovec *)NETBSD32PTR64(msg.msg_iov);
-	error = netbsd32_to_iovecin((struct netbsd32_iovec *)uiov, 
+	error = netbsd32_to_iovecin((struct netbsd32_iovec *)uiov,
 				   iov, msg.msg_iovlen);
 	if (error)
 		goto done;
@@ -124,7 +124,7 @@ recvit32(p, s, mp, iov, namelenp, retsize)
 #ifdef KTRACE
 	struct iovec *ktriov = NULL;
 #endif
-	
+
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, s, &fp)) != 0)
 		return (error);
@@ -269,7 +269,7 @@ netbsd32_sendmsg(l, v, retval)
 		iov = aiov;
 	else
 		return (EMSGSIZE);
-	error = netbsd32_to_iovecin((struct netbsd32_iovec *)msg.msg_iov, 
+	error = netbsd32_to_iovecin((struct netbsd32_iovec *)msg.msg_iov,
 				   iov, msg.msg_iovlen);
 	if (error)
 		goto done;

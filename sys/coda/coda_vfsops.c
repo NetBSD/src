@@ -1,13 +1,13 @@
-/*	$NetBSD: coda_vfsops.c,v 1.41 2005/01/02 16:08:28 thorpej Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.42 2005/02/26 23:04:16 perry Exp $	*/
 
 /*
- * 
+ *
  *             Coda: an Experimental Distributed File System
  *                              Release 3.1
- * 
+ *
  *           Copyright (c) 1987-1998 Carnegie Mellon University
  *                          All Rights Reserved
- * 
+ *
  * Permission  to  use, copy, modify and distribute this software and its
  * documentation is hereby granted,  provided  that  both  the  copyright
  * notice  and  this  permission  notice  appear  in  all  copies  of the
@@ -16,22 +16,22 @@
  * that credit is given to Carnegie Mellon University  in  all  documents
  * and publicity pertaining to direct or indirect use of this code or its
  * derivatives.
- * 
+ *
  * CODA IS AN EXPERIMENTAL SOFTWARE SYSTEM AND IS  KNOWN  TO  HAVE  BUGS,
  * SOME  OF  WHICH MAY HAVE SERIOUS CONSEQUENCES.  CARNEGIE MELLON ALLOWS
  * FREE USE OF THIS SOFTWARE IN ITS "AS IS" CONDITION.   CARNEGIE  MELLON
  * DISCLAIMS  ANY  LIABILITY  OF  ANY  KIND  FOR  ANY  DAMAGES WHATSOEVER
  * RESULTING DIRECTLY OR INDIRECTLY FROM THE USE OF THIS SOFTWARE  OR  OF
  * ANY DERIVATIVE WORK.
- * 
+ *
  * Carnegie  Mellon  encourages  users  of  this  software  to return any
  * improvements or extensions that  they  make,  and  to  grant  Carnegie
  * Mellon the rights to redistribute these changes without encumbrance.
- * 
- * 	@(#) cfs/coda_vfsops.c,v 1.1.1.1 1998/08/29 21:26:45 rvb Exp $ 
+ *
+ * 	@(#) cfs/coda_vfsops.c,v 1.1.1.1 1998/08/29 21:26:45 rvb Exp $
  */
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1989 Carnegie-Mellon University
  * All rights reserved.  The CMU software License Agreement specifies
@@ -41,11 +41,11 @@
 /*
  * This code was written for the Coda file system at Carnegie Mellon
  * University.  Contributers include David Steere, James Kistler, and
- * M. Satyanarayanan.  
+ * M. Satyanarayanan.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.41 2005/01/02 16:08:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.42 2005/02/26 23:04:16 perry Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -131,7 +131,7 @@ int
 coda_vfsopstats_init(void)
 {
 	int i;
-	
+
 	for (i=0;i<CODA_VFSOPS_SIZE;i++) {
 		coda_vfsopstats[i].opcode = i;
 		coda_vfsopstats[i].entries = 0;
@@ -139,7 +139,7 @@ coda_vfsopstats_init(void)
 		coda_vfsopstats[i].unsat_intrn = 0;
 		coda_vfsopstats[i].gen_intrn = 0;
 	}
-	
+
 	return 0;
 }
 
@@ -172,13 +172,13 @@ coda_mount(vfsp, path, data, ndp, p)
 
     coda_vfsopstats_init();
     coda_vnodeopstats_init();
-    
+
     MARK_ENTRY(CODA_MOUNT_STATS);
     if (CODA_MOUNTED(vfsp)) {
 	MARK_INT_FAIL(CODA_MOUNT_STATS);
 	return(EBUSY);
     }
-    
+
     /* Validate mount device.  Similar to getmdev(). */
 
     NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, data, p);
@@ -210,22 +210,22 @@ coda_mount(vfsp, path, data, ndp, p)
 	MARK_INT_FAIL(CODA_MOUNT_STATS);
 	return(ENXIO);
     }
-    
+
     if (minor(dev) >= NVCODA || minor(dev) < 0) {
 	MARK_INT_FAIL(CODA_MOUNT_STATS);
 	return(ENXIO);
     }
-    
+
     /*
      * Initialize the mount record and link it to the vfs struct
      */
     mi = &coda_mnttbl[minor(dev)];
-    
+
     if (!VC_OPEN(&mi->mi_vcomm)) {
 	MARK_INT_FAIL(CODA_MOUNT_STATS);
 	return(ENODEV);
     }
-    
+
     /* No initialization (here) of mi_vcomm! */
     vfsp->mnt_data = mi;
     vfsp->mnt_stat.f_fsidx.__fsid_val[0] = 0;
@@ -233,7 +233,7 @@ coda_mount(vfsp, path, data, ndp, p)
     vfsp->mnt_stat.f_fsid = vfsp->mnt_stat.f_fsidx.__fsid_val[0];
     vfsp->mnt_stat.f_namemax = MAXNAMLEN;
     mi->mi_vfsp = vfsp;
-    
+
     /*
      * Make a root vnode to placate the Vnode interface, but don't
      * actually make the CODA_ROOT call to venus until the first call
@@ -242,7 +242,7 @@ coda_mount(vfsp, path, data, ndp, p)
     cp = make_coda_node(&rootfid, vfsp, VDIR);
     rootvp = CTOV(cp);
     rootvp->v_flag |= VROOT;
-	
+
 /*  cp = make_coda_node(&ctlfid, vfsp, VCHR);
     The above code seems to cause a loop in the cnode links.
     I don't totally understand when it happens, it is caught
@@ -255,7 +255,7 @@ coda_mount(vfsp, path, data, ndp, p)
     /* Add vfs and rootvp to chain of vfs hanging off mntinfo */
     mi->mi_vfsp = vfsp;
     mi->mi_rootvp = rootvp;
-    
+
     /* set filesystem block size */
     vfsp->mnt_stat.f_bsize = 8192;	    /* XXX -JJK */
     vfsp->mnt_stat.f_frsize = 8192;	    /* XXX -JJK */
@@ -292,14 +292,14 @@ coda_unmount(vfsp, mntflags, p)
 {
     struct coda_mntinfo *mi = vftomi(vfsp);
     int active, error = 0;
-    
+
     ENTRY;
     MARK_ENTRY(CODA_UMOUNT_STATS);
     if (!CODA_MOUNTED(vfsp)) {
 	MARK_INT_FAIL(CODA_UMOUNT_STATS);
 	return(EINVAL);
     }
-    
+
     if (mi->mi_vfsp == vfsp) {	/* We found the victim */
 	if (!IS_UNMOUNTING(VTOC(mi->mi_rootvp)))
 	    return (EBUSY); 	/* Venus is still running */
@@ -352,7 +352,7 @@ coda_root(vfsp, vpp)
 
     ENTRY;
     MARK_ENTRY(CODA_ROOT_STATS);
-    
+
     if (vfsp == mi->mi_vfsp) {
     	if (memcmp(&VTOC(mi->mi_rootvp)->c_fid, &invalfid, sizeof(CodaFid)))
 	    { /* Found valid root. */
@@ -387,8 +387,8 @@ coda_root(vfsp, vpp)
 	 * If Venus fails to respond to the CODA_ROOT call, coda_call returns
 	 * ENODEV. Return the uninitialized root vnode to allow vfs
 	 * operations such as unmount to continue. Without this hack,
-	 * there is no way to do an unmount if Venus dies before a 
-	 * successful CODA_ROOT call is done. All vnode operations 
+	 * there is no way to do an unmount if Venus dies before a
+	 * successful CODA_ROOT call is done. All vnode operations
 	 * will fail.
 	 */
 	*vpp = mi->mi_rootvp;
@@ -400,7 +400,7 @@ coda_root(vfsp, vpp)
     } else {
 	CODADEBUG( CODA_ROOT, myprintf(("error %d in CODA_ROOT\n", error)); );
 	MARK_INT_FAIL(CODA_ROOT_STATS);
-		
+
 	goto exit;
     }
  exit:
@@ -418,7 +418,7 @@ coda_quotactl(vfsp, cmd, uid, arg, p)
     ENTRY;
     return (EOPNOTSUPP);
 }
-     
+
 /*
  * Get file system statistics.
  */
@@ -437,7 +437,7 @@ coda_nb_statvfs(vfsp, sbp, p)
 /*	MARK_INT_FAIL(CODA_STATFS_STATS); */
 	return(EINVAL);
     }
-    
+
     /* XXX - what to do about f_flags, others? --bnoble */
     /* Below This is what AFS does
     	#define NB_SFS_SIZ 0x895440
@@ -491,14 +491,14 @@ coda_vget(vfsp, ino, vpp)
     return (EOPNOTSUPP);
 }
 
-/* 
+/*
  * fhtovp is now what vget used to be in 4.3-derived systems.  For
  * some silly reason, vget is now keyed by a 32 bit ino_t, rather than
- * a type-specific fid.  
+ * a type-specific fid.
  */
 int
 coda_fhtovp(vfsp, fhp, nam, vpp, exflagsp, creadanonp)
-    struct mount *vfsp;    
+    struct mount *vfsp;
     struct fid *fhp;
     struct mbuf *nam;
     struct vnode **vpp;
@@ -513,7 +513,7 @@ coda_fhtovp(vfsp, fhp, nam, vpp, exflagsp, creadanonp)
     int vtype;
 
     ENTRY;
-    
+
     MARK_ENTRY(CODA_VGET_STATS);
     /* Check for vget of control object. */
     if (IS_CTL_FID(&cfid->cfid_fid)) {
@@ -522,17 +522,17 @@ coda_fhtovp(vfsp, fhp, nam, vpp, exflagsp, creadanonp)
 	MARK_INT_SAT(CODA_VGET_STATS);
 	return(0);
     }
-    
+
     error = venus_fhtovp(vftomi(vfsp), &cfid->cfid_fid, p->p_cred->pc_ucred, p, &VFid, &vtype);
-    
+
     if (error) {
 	CODADEBUG(CODA_VGET, myprintf(("vget error %d\n",error));)
 	    *vpp = (struct vnode *)0;
     } else {
-	CODADEBUG(CODA_VGET, 
+	CODADEBUG(CODA_VGET,
 		 myprintf(("vget: %s type %d result %d\n",
 			coda_f2s(&VFid), vtype, error)); )
-	    
+
 	cp = make_coda_node(&VFid, vfsp, vtype);
 	*vpp = CTOV(cp);
     }
@@ -595,14 +595,14 @@ SYSCTL_SETUP(sysctl_vfs_coda_setup, "sysctl vfs.coda subtree setup")
  * through, but without propagating orphan-ness.  So this function will
  * get a new vnode for the file from the current run of Venus.
  */
- 
+
 int
 getNewVnode(vpp)
      struct vnode **vpp;
 {
     struct cfid cfid;
     struct coda_mntinfo *mi = vftomi((*vpp)->v_mount);
-    
+
     ENTRY;
 
     cfid.cfid_len = (short)sizeof(CodaFid);
@@ -614,29 +614,29 @@ getNewVnode(vpp)
      */
     if (mi->mi_vfsp == NULL)
 	return ENODEV;
-    
+
     return coda_fhtovp(mi->mi_vfsp, (struct fid*)&cfid, NULL, vpp,
 		      NULL, NULL);
 }
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/ufsmount.h>
-/* get the mount structure corresponding to a given device.  Assume 
+/* get the mount structure corresponding to a given device.  Assume
  * device corresponds to a UFS. Return NULL if no device is found.
- */ 
+ */
 struct mount *devtomp(dev)
     dev_t dev;
 {
     struct mount *mp, *nmp;
-    
+
     for (mp = mountlist.cqh_first; mp != (void*)&mountlist; mp = nmp) {
 	nmp = mp->mnt_list.cqe_next;
 	if ((!strcmp(mp->mnt_op->vfs_name, MOUNT_UFS)) &&
 	    ((VFSTOUFS(mp))->um_dev == (dev_t) dev)) {
 	    /* mount corresponds to UFS and the device matches one we want */
-	    return(mp); 
+	    return(mp);
 	}
     }
-    /* mount structure wasn't found */ 
-    return(NULL); 
+    /* mount structure wasn't found */
+    return(NULL);
 }

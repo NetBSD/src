@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.3 2003/12/04 13:57:31 keihan Exp $ */
+/*	$NetBSD: memset.S,v 1.4 2005/02/26 22:58:56 perry Exp $ */
 
 /*-
  * Copyright (C) 2003	Matt Thomas <matt@3am-software.com>
@@ -70,9 +70,9 @@ simple_fill:	mtctr	r_len			/* set CTR */
 complex_fill:
 		rlwimi	r_val, r_val, 8, 16, 23	/* word extend fill value */
 		rlwimi	r_val, r_val, 16, 0, 15
-		andi.	r_tmp, r_dst, 0x03	
+		andi.	r_tmp, r_dst, 0x03
 		beq+	word_fill		/* already aligned to word? */
-		andi.	r_tmp, r_dst, 0x01	
+		andi.	r_tmp, r_dst, 0x01
 		beq	half_fill		/* aligned to halfword? */
 		stb	r_val, 0(r_dst)
 		addi	r_dst, r_dst, 1

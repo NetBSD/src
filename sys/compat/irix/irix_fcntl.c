@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.c,v 1.12 2003/01/22 12:58:22 rafal Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.13 2005/02/26 23:10:18 perry Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.12 2003/01/22 12:58:22 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.13 2005/02/26 23:10:18 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -79,8 +79,8 @@ irix_sys_lseek64(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	/* 
-	 * Note: we have an alignement problem here. If pad2, pad3 and pad4 
+	/*
+	 * Note: we have an alignement problem here. If pad2, pad3 and pad4
 	 * are removed, lseek64 will break, because whence will be wrong.
 	 */
 	struct irix_sys_lseek64_args /* {
@@ -98,7 +98,7 @@ irix_sys_lseek64(l, v, retval)
 	printf("irix_sys_lseek64(): fd = %d, pad1 = 0x%08x, offset = 0x%llx\n",
 	    SCARG(uap, fd), SCARG(uap, pad1), SCARG(uap, offset));
 	printf("whence = 0x%08x, pad2 = 0x%08x, pad3 = 0x%08x, pad4 = 0x%08x\n",
-	    SCARG(uap, whence), SCARG(uap, pad2), SCARG(uap, pad3), 
+	    SCARG(uap, whence), SCARG(uap, pad2), SCARG(uap, pad3),
 	    SCARG(uap, pad4));
 #endif
 	SCARG(&cup, fd) = SCARG(uap, fd);
@@ -133,7 +133,7 @@ irix_sys_fcntl(l, v, retval)
 		if ((error = copyin(SCARG(uap, arg), &fl, sizeof(fl))) != 0)
 			return error;
 
-		return fd_truncate(l, SCARG(uap, fd), 
+		return fd_truncate(l, SCARG(uap, fd),
 		    fl.l_whence, fl.l_start, retval);
 		break;
 	}
@@ -145,7 +145,7 @@ irix_sys_fcntl(l, v, retval)
 		if ((error = copyin(SCARG(uap, arg), &fl, sizeof(fl))) != 0)
 			return error;
 
-		return fd_truncate(l, SCARG(uap, fd), 
+		return fd_truncate(l, SCARG(uap, fd),
 		    fl.l_whence, fl.l_start, retval);
 		break;
 	}
@@ -167,17 +167,17 @@ irix_sys_fcntl(l, v, retval)
 		*retval = bsd_to_irix_fcntl_flags(*retval);
 		return 0;
 		break;
-		
+
 	case IRIX_F_SETFL:
-		/* 
-		 * All unsupported flags are silently ignored 
+		/*
+		 * All unsupported flags are silently ignored
 		 * except FDIRECT taht will return EINVAL
 		 */
 		if ((int)SCARG(uap, arg) & IRIX_FDIRECT)
 			return EINVAL;
 
 		SCARG(&cup, fd) = SCARG(uap, fd);
-		SCARG(&cup, arg) = 
+		SCARG(&cup, arg) =
 		    (char *)irix_to_bsd_fcntl_flags((int)SCARG(uap, arg));
 		SCARG(&cup, cmd) = F_SETFL;
 		return sys_fcntl(l, &cup, retval);
@@ -226,7 +226,7 @@ irix_sys_fcntl(l, v, retval)
 	case IRIX_F_SETPRIO:
 	case IRIX_F_GETPRIO:
 	default:
-		printf("Warning: unimplemented IRIX fcntl() command %d\n", 
+		printf("Warning: unimplemented IRIX fcntl() command %d\n",
 		    cmd);
 		return EINVAL;
 		break;
@@ -237,7 +237,7 @@ irix_sys_fcntl(l, v, retval)
 	SCARG(&cup, arg) = SCARG(uap, arg);
 	return svr4_sys_fcntl(l, &cup, retval);
 }
-	
+
 static int
 fd_truncate(l, fd, whence, start, retval)
 	struct lwp *l;
@@ -245,7 +245,7 @@ fd_truncate(l, fd, whence, start, retval)
 	int whence;
 	off_t start;
 	register_t *retval;
-{	
+{
 	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
@@ -315,10 +315,10 @@ irix_sys_open(l, v, retval)
 
 	vp = (struct vnode *)fp->f_data;
 
-	/* 
+	/*
 	 * A special hook for the usemaclone driver: we need to clone
 	 * the vnode, because the driver method need a context for each
-	 * usemaclone open instance, and because we need to overload 
+	 * usemaclone open instance, and because we need to overload
 	 * some vnode operations like setattr.
 	 * The original vnode is stored in the v_data field of the cloned
 	 * vnode.
@@ -326,8 +326,8 @@ irix_sys_open(l, v, retval)
 	if (vp->v_type == VCHR &&
 	    cdevsw_lookup(vp->v_rdev) == &irix_usema_cdevsw &&
 	    minor(vp->v_rdev) == IRIX_USEMACLNDEV_MINOR) {
-		if ((error = getnewvnode(VCHR, vp->v_mount, 
-		    irix_usema_vnodeop_p, 
+		if ((error = getnewvnode(VCHR, vp->v_mount,
+		    irix_usema_vnodeop_p,
 		    (struct vnode **)&fp->f_data)) != 0) {
 			(void) vn_close(vp, fp->f_flag, fp->f_cred, p);
 			FILE_UNUSE(fp, p);
@@ -335,14 +335,14 @@ irix_sys_open(l, v, retval)
 			fdremove(p->p_fd, fd);
 			return error;
 		}
-		
+
 		nvp = (struct vnode *)fp->f_data;
 
 		if (SCARG(uap, flags) & O_RDWR || SCARG(uap, flags) & O_WRONLY)
 			nvp->v_writecount++;
 
 		nvp->v_type = VCHR;
-		nvp->v_specinfo = (void *)malloc(sizeof(struct specinfo), 
+		nvp->v_specinfo = (void *)malloc(sizeof(struct specinfo),
 		    M_VNODE, M_WAITOK|M_ZERO);
 		nvp->v_rdev = vp->v_rdev;
 		nvp->v_specmountpoint = vp->v_specmountpoint;
@@ -355,7 +355,7 @@ irix_sys_open(l, v, retval)
 	return 0;
 }
 
-static int 
+static int
 irix_to_bsd_fcntl_flags(flags)
 	int flags;
 {
@@ -382,7 +382,7 @@ irix_to_bsd_fcntl_flags(flags)
 	return ret;
 }
 
-static int 
+static int
 bsd_to_irix_fcntl_flags(flags)
 	int flags;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.31 2003/11/05 04:03:43 christos Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.32 2005/02/26 23:10:18 perry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.31 2003/11/05 04:03:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.32 2005/02/26 23:10:18 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ static struct speedtab sptab[] = {
 	{ -1, -1 }
 };
 
-static const u_long s2btab[] = { 
+static const u_long s2btab[] = {
 	0,
 	50,
 	75,
@@ -369,10 +369,10 @@ ibcs2_sys_ioctl(l, v, retval)
 		struct termios bts;
 		struct ibcs2_termios sts;
 		struct ibcs2_termio st;
-	
+
 		if ((error = (*ctl)(fp, TIOCGETA, (caddr_t)&bts, p)) != 0)
 			return error;
-	
+
 		btios2stios (&bts, &sts);
 		if (SCARG(uap, cmd) == IBCS2_TCGETA) {
 			stios2stio (&sts, &st);

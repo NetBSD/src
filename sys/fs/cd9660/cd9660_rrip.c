@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.5 2004/11/21 21:49:08 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.6 2005/02/26 22:58:55 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.5 2004/11/21 21:49:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.6 2005/02/26 22:58:55 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -544,7 +544,7 @@ cd9660_rrip_loop(isodir, ana, table)
 		ana->iso_ce_len = 0;
 		/*
 		 * Note: "pend" should be more than one SUSP header
-		 */ 
+		 */
 		while (pend >= phead + 1) {
 			if (isonum_711(phead->version) == 1) {
 				for (ptable = table; ptable->func; ptable++) {
@@ -625,7 +625,7 @@ cd9660_rrip_analyze(isodir, inop, imp)
 	return cd9660_rrip_loop(isodir, &analyze, rrip_table_analyze);
 }
 
-/* 
+/*
  * Get Alternate Name.
  */
 static const RRIP_TABLE rrip_table_getname[] = {
@@ -672,7 +672,7 @@ cd9660_rrip_getname(isodir, outbuf, outlen, inump, imp)
 	return cd9660_rrip_loop(isodir, &analyze, tab);
 }
 
-/* 
+/*
  * Get Symbolic Link.
  */
 static const RRIP_TABLE rrip_table_getsymname[] = {

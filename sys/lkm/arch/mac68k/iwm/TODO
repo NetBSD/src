@@ -1,10 +1,10 @@
-$NetBSD: TODO,v 1.2 1999/03/27 05:48:53 scottr Exp $
+$NetBSD: TODO,v 1.3 2005/02/26 22:58:57 perry Exp $
 
 
 981126
 
-o  Change file naming pattern: Other drivers (adb, if) use a prefix. 
-   We could use 
+o  Change file naming pattern: Other drivers (adb, if) use a prefix.
+   We could use
 
 	iwm.s		(was: iwm.s)
 	iwm_regs.s	(was: iwmRegs.s)
@@ -20,7 +20,7 @@ o  Change file naming pattern: Other drivers (adb, if) use a prefix.
 
 o  location: Is obio fine, or should the driver files be placed in dev?
 
-o  LKM location: Is /sys/arch/mac68k/lkm appropriate or should the 
+o  LKM location: Is /sys/arch/mac68k/lkm appropriate or should the
    lkm rather go to sys/lkm?
 
 
@@ -35,23 +35,23 @@ o  send-pr because disklabel(8) displays transition times in milliseconds
 980606
 
 o  The Performa 630, a CLASS_Q2 machine according to mac68k/mac68k/machdep.c,
-   fails to attach (initialize) the IWM. Apparently the driver tickles 
+   fails to attach (initialize) the IWM. Apparently the driver tickles
    the right spot, though: Booting with an inserted disk lets the driver
    "find" two (unsupported) HD drives. What IWM chip does that box have?
-   [SWIM II] 
-   Has Apple changed the IWM register layout with introducing 
-   manual-insertion floppy drives? 
-   [Yes; All 040 Macs need System 7 which does not fit on an 800k disk, 
+   [SWIM II]
+   Has Apple changed the IWM register layout with introducing
+   manual-insertion floppy drives?
+   [Yes; All 040 Macs need System 7 which does not fit on an 800k disk,
    so the 800k code is legacy and need not be present at boot time.]
 
 
 980602
 
-o  send-pr because static array fscknames[] cannot be disabled in 
-   <sys/disklabel.h> 
+o  send-pr because static array fscknames[] cannot be disabled in
+   <sys/disklabel.h>
    [FIXED as of 11/98 by J. Thorpe]
 
-o  send-pr because <bsd.kmod.mk> tries to unload a kernel module 
+o  send-pr because <bsd.kmod.mk> tries to unload a kernel module
    under a different name than it was loaded and fails miserably.
    [bin/4701]
 

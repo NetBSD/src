@@ -1,10 +1,10 @@
-	$NetBSD: syscalls.master,v 1.20 2004/09/20 18:41:07 jdolecek Exp $  
+	$NetBSD: syscalls.master,v 1.21 2005/02/26 23:10:19 perry Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
 ; Derived from NetBSD's sys/compat/linux/arch/i386/syscalls.master
-; sys/compat/linux/arch/m68k/syscalls.master 
-; and from Linux's arch/ppc/kernel/misc.S 
+; sys/compat/linux/arch/m68k/syscalls.master
+; and from Linux's arch/ppc/kernel/misc.S
 ;
 ; We have problems for a few syscalls, specially:
 ; 142 ppc_select -> sys_new_select -> sys_select (Conflicts with 82 ???).
@@ -17,11 +17,11 @@
 ; 101 ioperm
 ; 109 uname
 ; 117 ipc
-; 
+;
 ; Most of syscalls after 182 that were introduced in Linux-2.4 are UNIMPL.
 ;
-; The following are UNIMPL here. The Linux kernel implements them but just logs 
-; a kernel error and returns -ENOSYS. 
+; The following are UNIMPL here. The Linux kernel implements them but just logs
+; a kernel error and returns -ENOSYS.
 ; 110 iopl
 ; 113 vm86
 ; 123 modify_ldt
@@ -168,7 +168,7 @@
 			    struct linux_old_sigaction *osa); }
 68	STD		{ int linux_sys_siggetmask(void); }
 69	STD		{ int linux_sys_sigsetmask(linux_old_sigset_t mask); }
-70	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); } 
+70	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); }
 71	NOARGS		{ int sys_setregid(gid_t rgid, gid_t egid); }
 72	STD		{ int linux_sys_sigsuspend(caddr_t restart, \
 			    int oldmask, int mask); }
@@ -231,10 +231,10 @@
 			    struct linux_stat *sp); }
 108	STD		{ int linux_sys_fstat(int fd, struct linux_stat *sp); }
 109	STD		{ int linux_sys_uname(struct linux_utsname *up); }
-110	UNIMPL		iopl	
+110	UNIMPL		iopl
 111	UNIMPL		vhangup
 112	UNIMPL		idle
-113	UNIMPL		vm86old 
+113	UNIMPL		vm86old
 114	STD		{ int linux_sys_wait4(int pid, int *status, \
 			    int options, struct rusage *rusage); }
 115	STD		{ int linux_sys_swapoff(const char *path); }
@@ -247,7 +247,7 @@
 121	STD		{ int linux_sys_setdomainname(char *domainname, \
 			    int len); }
 122	STD		{ int linux_sys_new_uname(struct linux_utsname *up); }
-123	UNIMPL		modify_ldt	
+123	UNIMPL		modify_ldt
 124	UNIMPL		adjtimex
 125	STD		{ int linux_sys_mprotect(const void *start, \
 			    unsigned long len, int prot); }
@@ -366,7 +366,7 @@
 			    struct linux_stat64 *sp); }
 197	STD		{ int linux_sys_fstat64(int fd, \
 			    struct linux_stat64 *sp); }
-198	UNIMPL		sys_pciconfig_read  
+198	UNIMPL		sys_pciconfig_read
 199	UNIMPL		sys_pciconfig_write
 200	UNIMPL		sys_pciconfig_iobase
 201	UNIMPL		/* Unused (MacOnLinux project) */

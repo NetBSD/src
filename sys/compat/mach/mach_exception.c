@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exception.c,v 1.4 2004/07/27 22:01:56 manu Exp $ */
+/*	$NetBSD: mach_exception.c,v 1.5 2005/02/26 23:10:19 perry Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.4 2004/07/27 22:01:56 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.5 2005/02/26 23:10:19 perry Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_darwin.h"
@@ -65,13 +65,13 @@ __KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.4 2004/07/27 22:01:56 manu Exp 
 
 static void mach_siginfo_to_exception(const struct ksiginfo *, int *);
 
-/* 
- * Exception handler 
- * Mach does not use signals. But systems based on Mach (e.g.: Darwin), 
- * can use both Mach exceptions and UNIX signals. In order to allow the 
- * Mach layer to intercept the exception and inhibit UNIX signals, we have 
- * mach_trapsignal1 returning an error. If it returns 0, then the 
- * exception was intercepted at the Mach level, and no signal should 
+/*
+ * Exception handler
+ * Mach does not use signals. But systems based on Mach (e.g.: Darwin),
+ * can use both Mach exceptions and UNIX signals. In order to allow the
+ * Mach layer to intercept the exception and inhibit UNIX signals, we have
+ * mach_trapsignal1 returning an error. If it returns 0, then the
+ * exception was intercepted at the Mach level, and no signal should
  * be produced. Else, a signal might be sent. darwin_trapinfo calls
  * mach_trapinfo1 and handle signals if it gets a non zero return value.
  */
@@ -158,25 +158,25 @@ mach_exception(exc_l, exc, code)
 #endif
 
 	/*
-	 * It's extremely useful to have the ability of catching 
+	 * It's extremely useful to have the ability of catching
 	 * the process at the time it dies.
 	 */
 	if (mach_exception_hang) {
 		int s;
 		struct proc *p = exc_l->l_proc;
-		
+
 		sigminusset(&contsigmask, &p->p_sigctx.ps_siglist);
 		SCHED_LOCK(s);
-		p->p_pptr->p_nstopchild++; 
+		p->p_pptr->p_nstopchild++;
 		p->p_stat = SSTOP;
 		exc_l->l_stat = LSSTOP;
 		p->p_nrlwps--;
 		mi_switch(exc_l, NULL);
 		SCHED_ASSERT_UNLOCKED();
-		splx(s);	
+		splx(s);
 	}
 
-	/* 
+	/*
 	 * No exception if there is no exception port or if it has no receiver
 	 */
 	exc_mle = exc_l->l_emuldata;
@@ -191,7 +191,7 @@ mach_exception(exc_l, exc, code)
 	}
 
 #ifdef DEBUG_MACH
-	printf("catcher is %d.%d, state %d\n", 
+	printf("catcher is %d.%d, state %d\n",
 	    exc_port->mp_recv->mr_lwp->l_proc->p_pid,
 	    exc_port->mp_recv->mr_lwp->l_lid,
 	    exc_port->mp_recv->mr_lwp->l_proc->p_stat);
@@ -204,9 +204,9 @@ mach_exception(exc_l, exc, code)
 		goto out;
 	}
 
-	/* 
-	 * XXX Avoid a nasty deadlock because process in TX state 
-	 * (traced and suspended) are invulnerable to kill -9. 
+	/*
+	 * XXX Avoid a nasty deadlock because process in TX state
+	 * (traced and suspended) are invulnerable to kill -9.
 	 *
 	 * The scenario:
 	 * - the parent gets Child's signals though Mach exceptions
@@ -214,14 +214,14 @@ mach_exception(exc_l, exc, code)
 	 *   mach_exit(), it will wait for the child
 	 * - the child receives SIGHUP, which is turned into a Mach
 	 *   exception. The child sleeps awaiting for the parent
-	 *   to tell it to continue. 
+	 *   to tell it to continue.
 	 *   For some reason I do not understand, it goes in the
 	 *   suspended state instead of the sleeping state.
 	 * - Parents waits for the child, child is suspended, we
 	 *   are stuck.
 	 *
 	 * By preventing exception to traced processes with
-	 * a dying parent, a signal is sent instead of the 
+	 * a dying parent, a signal is sent instead of the
 	 * notification, this fixes the problem.
 	 */
 	if ((exc_l->l_proc->p_flag & P_TRACED) &&
@@ -244,19 +244,19 @@ mach_exception(exc_l, exc, code)
 	behavior = mei->mei_behavior;
 	flavor = mei->mei_flavor;
 
-	/* 
-	 * We want the port names in the target process, that is, 
+	/*
+	 * We want the port names in the target process, that is,
 	 * the process with receive right for exc_port.
 	 */
 	catcher_l = exc_port->mp_recv->mr_lwp;
 	catcher_med = catcher_l->l_proc->p_emuldata;
 	exc_mr = mach_right_get(exc_port, catcher_l, MACH_PORT_TYPE_SEND, 0);
-	kernel_mr = mach_right_get(catcher_med->med_kernel, 
+	kernel_mr = mach_right_get(catcher_med->med_kernel,
 	    catcher_l, MACH_PORT_TYPE_SEND, 0);
 
-	exc_task = mach_right_get(exc_med->med_kernel, 
+	exc_task = mach_right_get(exc_med->med_kernel,
 	    catcher_l, MACH_PORT_TYPE_SEND, 0);
-	exc_thread = mach_right_get(exc_mle->mle_kernel, 
+	exc_thread = mach_right_get(exc_mle->mle_kernel,
 	    catcher_l, MACH_PORT_TYPE_SEND, 0);
 
 	switch (behavior) {
@@ -267,10 +267,10 @@ mach_exception(exc_l, exc, code)
 		msglen = sizeof(*req);
 		msgh = (mach_msg_header_t *)req;
 
-		req->req_msgh.msgh_bits = 
+		req->req_msgh.msgh_bits =
 		    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND) |
 		    MACH_MSGH_REMOTE_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-		req->req_msgh.msgh_size = 
+		req->req_msgh.msgh_size =
 		    sizeof(*req) - sizeof(req->req_trailer);
 		req->req_msgh.msgh_remote_port = kernel_mr->mr_name;
 		req->req_msgh.msgh_local_port = exc_mr->mr_name;
@@ -287,7 +287,7 @@ mach_exception(exc_l, exc, code)
 
 		break;
 	}
-	 
+
 	case MACH_EXCEPTION_STATE: {
 		mach_exception_raise_state_request_t *req;
 		int dc;
@@ -299,7 +299,7 @@ mach_exception(exc_l, exc, code)
 		req->req_msgh.msgh_bits =
 		    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND) |
 		    MACH_MSGH_REMOTE_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-		req->req_msgh.msgh_size = 
+		req->req_msgh.msgh_size =
 		    sizeof(*req) - sizeof(req->req_trailer);
 		req->req_msgh.msgh_remote_port = kernel_mr->mr_name;
 		req->req_msgh.msgh_local_port = exc_mr->mr_name;
@@ -308,10 +308,10 @@ mach_exception(exc_l, exc, code)
 		req->req_codecount = 2;
 		memcpy(&req->req_code[0], code, sizeof(req->req_code));
 		req->req_flavor = flavor;
-		mach_thread_get_state_machdep(exc_l, 
+		mach_thread_get_state_machdep(exc_l,
 		    flavor, req->req_state, &dc);
 
-		msglen = msglen - 
+		msglen = msglen -
 			 sizeof(req->req_state) +
 			 (dc * sizeof(req->req_state[0]));
 		mach_set_trailer(req, msglen);
@@ -327,10 +327,10 @@ mach_exception(exc_l, exc, code)
 		msglen = sizeof(*req);
 		msgh = (mach_msg_header_t *)req;
 
-		req->req_msgh.msgh_bits = 
+		req->req_msgh.msgh_bits =
 		    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND) |
 		    MACH_MSGH_REMOTE_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-		req->req_msgh.msgh_size = 
+		req->req_msgh.msgh_size =
 		    sizeof(*req) - sizeof(req->req_trailer);
 		req->req_msgh.msgh_remote_port = kernel_mr->mr_name;
 		req->req_msgh.msgh_local_port = exc_mr->mr_name;
@@ -344,10 +344,10 @@ mach_exception(exc_l, exc, code)
 		req->req_codecount = 2;
 		memcpy(&req->req_code[0], code, sizeof(req->req_code));
 		req->req_flavor = flavor;
-		mach_thread_get_state_machdep(exc_l, 
+		mach_thread_get_state_machdep(exc_l,
 		    flavor, req->req_state, &dc);
 
-		msglen = msglen - 
+		msglen = msglen -
 			 sizeof(req->req_state) +
 			 (dc * sizeof(req->req_state[0]));
 
@@ -362,11 +362,11 @@ mach_exception(exc_l, exc, code)
 		goto out;
 		break;
 	}
-		
+
 	mach_set_trailer(msgh, msglen);
 
 	/*
-	 * Once an exception is sent on the exception port, 
+	 * Once an exception is sent on the exception port,
 	 * no new exception will be taken until the catcher
 	 * acknowledge the first one.
 	 */
@@ -385,8 +385,8 @@ mach_exception(exc_l, exc, code)
 	(void)mach_message_get(msgh, msglen, exc_port, NULL);
 	wakeup(exc_port->mp_recv->mr_sethead);
 
-	/* 
-	 * The thread that caused the exception is now 
+	/*
+	 * The thread that caused the exception is now
 	 * supposed to wait for a reply to its message.
 	 */
 #ifdef DEBUG_MACH
@@ -399,7 +399,7 @@ mach_exception(exc_l, exc, code)
 	    exc_l->l_proc->p_pid, exc_l->l_lid, error);
 #endif
 
-	/* 
+	/*
 	 * Unlock the catcher's exception handler
 	 */
 	lockmgr(&catcher_med->med_exclock, LK_RELEASE, NULL);
@@ -422,7 +422,7 @@ mach_siginfo_to_exception(ksi, code)
 			code[1] = (long)ksi->ksi_addr;
 			break;
 		default:
-			printf("untranslated siginfo signo %d, code %d\n", 
+			printf("untranslated siginfo signo %d, code %d\n",
 			    ksi->ksi_signo, ksi->ksi_code);
 			break;
 		}
@@ -435,7 +435,7 @@ mach_siginfo_to_exception(ksi, code)
 			code[1] = (long)ksi->ksi_addr;
 			break;
 		default:
-			printf("untranslated siginfo signo %d, code %d\n", 
+			printf("untranslated siginfo signo %d, code %d\n",
 			    ksi->ksi_signo, ksi->ksi_code);
 			break;
 		}
@@ -448,7 +448,7 @@ mach_siginfo_to_exception(ksi, code)
 			code[1] = (long)ksi->ksi_addr;
 			break;
 		default:
-			printf("untranslated siginfo signo %d, code %d\n", 
+			printf("untranslated siginfo signo %d, code %d\n",
 			    ksi->ksi_signo, ksi->ksi_code);
 			break;
 		}
@@ -469,14 +469,14 @@ mach_siginfo_to_exception(ksi, code)
 			code[1] = (long)ksi->ksi_addr;
 			break;
 		default:
-			printf("untranslated siginfo signo %d, code %d\n", 
+			printf("untranslated siginfo signo %d, code %d\n",
 			    ksi->ksi_signo, ksi->ksi_code);
 			break;
 		}
 		break;
 
 	default:
-		printf("untranslated siginfo signo %d, code %d\n", 
+		printf("untranslated siginfo signo %d, code %d\n",
 		    ksi->ksi_signo, ksi->ksi_code);
 		break;
 	}
@@ -492,17 +492,17 @@ mach_exception_raise(args)
 	struct mach_emuldata *med;
 
 	/*
-	 * No typo here: the reply is in the sent message. 
+	 * No typo here: the reply is in the sent message.
 	 * The kernel is acting as a client that gets the
 	 * reply message to its exception message.
 	 */
 	rep = args->smsg;
 
-	/* 
+	/*
 	 * This message is sent by the process catching the
 	 * exception to release the process that raised the exception.
 	 * We wake it up if the return value is 0 (no error), else
-	 * we should ignore this message. 
+	 * we should ignore this message.
 	 */
 #ifdef DEBUG_MACH
 	printf("mach_excpetion_raise: retval = %ld\n", (long)rep->rep_retval);

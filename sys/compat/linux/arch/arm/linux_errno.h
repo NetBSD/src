@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_errno.h,v 1.3 2002/01/17 21:17:57 bjh21 Exp $	*/
+/* 	$NetBSD: linux_errno.h,v 1.4 2005/02/26 23:10:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -40,8 +40,8 @@
 #define _ARM_LINUX_ERRNO_H
 
 /*
- * Linux/arm returns negative errors to userland  
- * The libc makes the errno positive.  
+ * Linux/arm returns negative errors to userland
+ * The libc makes the errno positive.
  */
 #define LINUX_SCERR_SIGN -
 

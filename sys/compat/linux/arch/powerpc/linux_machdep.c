@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.28 2004/04/17 08:47:15 matt Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.29 2005/02/26 23:10:19 perry Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.28 2004/04/17 08:47:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.29 2005/02/26 23:10:19 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,17 +92,17 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.28 2004/04/17 08:47:15 matt Exp 
 #include <dev/wscons/wsdisplay_usl_io.h>
 #endif
 
-/* 
+/*
  * Set set up registers on exec.
  * XXX not used at the moment since in sys/kern/exec_conf, LINUX_COMPAT
  * entry uses NetBSD's native setregs instead of linux_setregs
  */
 void
-linux_setregs(l, pack, stack) 
+linux_setregs(l, pack, stack)
 	struct lwp *l;
 	struct exec_package *pack;
 	u_long stack;
-{	
+{
 	setregs(l, pack, stack);
 }
 
@@ -132,9 +132,9 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	int i;
 
 	tf = trapframe(l);
- 
-	/* 
-	 * Do we need to jump onto the signal stack? 
+
+	/*
+	 * Do we need to jump onto the signal stack?
 	 */
 	onstack =
 	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
@@ -146,8 +146,8 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	onstack=0;
 
-	/* 
-	 * Allocate space for the signal handler context. 
+	/*
+	 * Allocate space for the signal handler context.
 	 */
 	if (onstack) {
 		fp = (register_t)
@@ -162,7 +162,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	fp -= sizeof(struct linux_sigregs);
 	fp &= ~0xf;
 
-	/* 
+	/*
 	 * Prepare a sigcontext for later.
 	 */
 	memset(&sc, 0, sizeof sc);
@@ -172,23 +172,23 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	sc.lregs = (struct linux_pt_regs*)fp;
 
 	/*
-	 * Setup the signal stack frame as Linux does it in 
+	 * Setup the signal stack frame as Linux does it in
 	 * arch/ppc/kernel/signal.c:setup_frame()
 	 *
-	 * Save register context. 
+	 * Save register context.
 	 */
-	for (i = 0; i < 32; i++) 
+	for (i = 0; i < 32; i++)
 		linux_regs.lgpr[i] = tf->fixreg[i];
-	linux_regs.lnip = tf->srr0;	
+	linux_regs.lnip = tf->srr0;
 	linux_regs.lmsr = tf->srr1 & PSL_USERSRR1;
 	linux_regs.lorig_gpr3 = tf->fixreg[3]; /* XXX Is that right? */
 	linux_regs.lctr = tf->ctr;
 	linux_regs.llink = tf->lr;
 	linux_regs.lxer = tf->xer;
-	linux_regs.lccr = tf->cr; 
+	linux_regs.lccr = tf->cr;
 	linux_regs.lmq = 0;  			/* Unused, 601 only */
 	linux_regs.ltrap = tf->exc;
-	linux_regs.ldar = tf->dar; 
+	linux_regs.ldar = tf->dar;
 	linux_regs.ldsisr = tf->dsisr;
 	linux_regs.lresult = 0;
 
@@ -204,10 +204,10 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	frame.ltramp[0] = 0x38997777; /* li r0, 0x7777 */
 	frame.ltramp[1] = 0x44000002; /* sc */
-	
+
 	/*
 	 * Move it to the user stack
-	 * There is a little trick here, about the LINUX_ABIGAP: the 
+	 * There is a little trick here, about the LINUX_ABIGAP: the
 	 * linux_sigreg structure has a 56 int gap to support rs6000/xcoff
 	 * binaries. But the Linux kernel seems to do without it, and it
 	 * just skip it when building the stack frame. Hence the LINUX_ABIGAP.
@@ -247,8 +247,8 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 #ifdef DEBUG_LINUX
 	printf("fp at end of linux_sendsig = %x\n", fp);
 #endif
-	/* 
-	 * Remember that we're now on the signal stack. 
+	/*
+	 * Remember that we're now on the signal stack.
 	 */
 	if (onstack)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
@@ -314,9 +314,9 @@ linux_sys_rt_sigreturn(l, v, retval)
 #endif
 
 	if (!PSL_USEROK_P(lregs->lmsr))
-		return (EINVAL);  
+		return (EINVAL);
 
-	for (i = 0; i < 32; i++) 
+	for (i = 0; i < 32; i++)
 		tf->fixreg[i] = lregs->lgpr[i];
 	tf->lr = lregs->llink;
 	tf->cr = lregs->lccr;
@@ -333,15 +333,15 @@ linux_sys_rt_sigreturn(l, v, retval)
 	memcpy(curpcb->pcb_fpu.fpreg, (caddr_t)&sregs.lfp_regs,
 	       sizeof(curpcb->pcb_fpu.fpreg));
 
-	/* 
-	 * Restore signal stack. 
-	 * 
-	 * XXX cannot find the onstack information in Linux sig context. 
+	/*
+	 * Restore signal stack.
+	 *
+	 * XXX cannot find the onstack information in Linux sig context.
 	 * Is signal stack really supported on Linux?
-	 * 
+	 *
 	 * It seems to be supported in libc6...
 	 */
-	/* if (sc.sc_onstack & SS_ONSTACK) 
+	/* if (sc.sc_onstack & SS_ONSTACK)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else */
 		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
@@ -360,7 +360,7 @@ linux_sys_rt_sigreturn(l, v, retval)
  * The following needs code review for potential security issues
  */
 int
-linux_sys_sigreturn(l, v, retval)  
+linux_sys_sigreturn(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
@@ -403,9 +403,9 @@ linux_sys_sigreturn(l, v, retval)
 #endif
 
 	if (!PSL_USEROK_P(lregs->lmsr))
-		return (EINVAL);  
+		return (EINVAL);
 
-	for (i = 0; i < 32; i++) 
+	for (i = 0; i < 32; i++)
 		tf->fixreg[i] = lregs->lgpr[i];
 	tf->lr = lregs->llink;
 	tf->cr = lregs->lccr;
@@ -422,14 +422,14 @@ linux_sys_sigreturn(l, v, retval)
 	memcpy(curpcb->pcb_fpu.fpreg, (caddr_t)&sregs.lfp_regs,
 	       sizeof(curpcb->pcb_fpu.fpreg));
 
-	/* 
-	 * Restore signal stack. 
-	 * 
-	 * XXX cannot find the onstack information in Linux sig context. 
+	/*
+	 * Restore signal stack.
+	 *
+	 * XXX cannot find the onstack information in Linux sig context.
 	 * Is signal stack really supported on Linux?
 	 */
 #if 0
-	if (sc.sc_onstack & SS_ONSTACK) 
+	if (sc.sc_onstack & SS_ONSTACK)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
 #endif
@@ -451,18 +451,18 @@ linux_sys_modify_ldt(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	/* 
+	/*
 	 * This syscall is not implemented in Linux/PowerPC: we should not
 	 * be here
 	 */
 #ifdef DEBUG_LINUX
-	printf("linux_sys_modify_ldt: should not be here.\n");	 
+	printf("linux_sys_modify_ldt: should not be here.\n");
 #endif
   return 0;
 }
 #endif
 
-/* 
+/*
  * major device numbers remapping
  */
 dev_t
@@ -482,7 +482,7 @@ linux_machdepioctl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
-{ 
+{
 	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
@@ -490,11 +490,11 @@ linux_machdepioctl(p, v, retval)
 	} */ *uap = v;
 	struct sys_ioctl_args bia;
 	u_long com;
-	
+
 	SCARG(&bia, fd) = SCARG(uap, fd);
 	SCARG(&bia, data) = SCARG(uap, data);
 	com = SCARG(uap, com);
-	
+
 	switch (com) {
 	default:
 		printf("linux_machdepioctl: invalid ioctl %08lx\n", com);
@@ -516,7 +516,7 @@ linux_sys_iopl(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	/* 
+	/*
 	 * This syscall is not implemented in Linux/PowerPC: we should not be here
 	 */
 #ifdef DEBUG_LINUX
@@ -536,35 +536,35 @@ linux_sys_ioperm(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	/* 
+	/*
 	 * This syscall is not implemented in Linux/PowerPC: we should not be here
 	 */
 #ifdef DEBUG_LINUX
-	printf("linux_sys_ioperm: should not be here.\n");	 
+	printf("linux_sys_ioperm: should not be here.\n");
 #endif
 	return 0;
 }
 
 /*
- * wrapper linux_sys_new_uname() -> linux_sys_uname() 
+ * wrapper linux_sys_new_uname() -> linux_sys_uname()
  */
-int	
-linux_sys_new_uname(l, v, retval) 
+int
+linux_sys_new_uname(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	return linux_sys_uname(l, v, retval); 
+	return linux_sys_uname(l, v, retval);
 }
 
 /*
- * wrapper linux_sys_new_select() -> linux_sys_select() 
+ * wrapper linux_sys_new_select() -> linux_sys_select()
  */
-int	
-linux_sys_new_select(l, v, retval) 
+int
+linux_sys_new_select(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	return linux_sys_select(l, v, retval); 
+	return linux_sys_select(l, v, retval);
 }

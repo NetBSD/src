@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.9 2003/10/23 15:06:26 he Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.10 2005/02/26 22:58:56 perry Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,17 +45,17 @@
 #ifdef _STANDALONE
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
-#else           
+#else
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <unistd.h>  
+#include <unistd.h>
 #include <fcntl.h>
 #include <err.h>
-#endif  
+#endif
 
-#include <sys/param.h> 
+#include <sys/param.h>
 #include <sys/exec.h>
 
 #include "loadfile.h"

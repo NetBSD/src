@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_fcntl.c,v 1.10 2003/10/15 11:28:59 hannken Exp $	 */
+/*	$NetBSD: svr4_32_fcntl.c,v 1.11 2005/02/26 23:10:21 perry Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.10 2003/10/15 11:28:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.11 2005/02/26 23:10:21 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -457,10 +457,10 @@ svr4_32_sys_llseek(l, v, retval)
 	SCARG(&ap, fd) = SCARG(uap, fd);
 
 #if BYTE_ORDER == BIG_ENDIAN
-	SCARG(&ap, offset) = (((long long) SCARG(uap, offset1)) << 32) | 
+	SCARG(&ap, offset) = (((long long) SCARG(uap, offset1)) << 32) |
 		SCARG(uap, offset2);
 #else
-	SCARG(&ap, offset) = (((long long) SCARG(uap, offset2)) << 32) | 
+	SCARG(&ap, offset) = (((long long) SCARG(uap, offset2)) << 32) |
 		SCARG(uap, offset1);
 #endif
 	SCARG(&ap, whence) = SCARG(uap, whence);
@@ -513,7 +513,7 @@ svr4_32_sys_pread(l, v, retval)
 int
 svr4_32_sys_pread64(l, v, retval)
 	struct lwp *l;
-	void *v; 
+	void *v;
 	register_t *retval;
 {
 
@@ -558,7 +558,7 @@ svr4_32_sys_pwrite(l, v, retval)
 int
 svr4_32_sys_pwrite64(l, v, retval)
 	struct lwp *l;
-	void *v; 
+	void *v;
 	register_t *retval;
 {
 	struct svr4_32_sys_pwrite64_args *uap = v;
@@ -638,7 +638,7 @@ svr4_32_sys_fcntl(l, v, retval)
 			flp = stackgap_alloc(p, &sg, sizeof(struct flock));
 			SCARG(&fa, arg) = (void *) flp;
 
-			error = copyin((char *)(u_long)SCARG(uap, arg), 
+			error = copyin((char *)(u_long)SCARG(uap, arg),
 				       &ifl, sizeof ifl);
 			if (error)
 				return error;
@@ -659,7 +659,7 @@ svr4_32_sys_fcntl(l, v, retval)
 
 			bsd_to_svr4_32_flock(&fl, &ifl);
 
-			return copyout(&ifl, (char *)(u_long)SCARG(uap, arg), 
+			return copyout(&ifl, (char *)(u_long)SCARG(uap, arg),
 				       sizeof ifl);
 		}
 	case -1:
@@ -682,7 +682,7 @@ svr4_32_sys_fcntl(l, v, retval)
 				struct svr4_32_flock	 ifl;
 				struct flock		 fl;
 
-				error = copyin((char *)(u_long)SCARG(uap, arg), 
+				error = copyin((char *)(u_long)SCARG(uap, arg),
 					       &ifl, sizeof ifl);
 				if (error)
 					return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_siginfo.h,v 1.2 2001/09/02 07:24:49 manu Exp $ */
+/*	$NetBSD: linux_siginfo.h,v 1.3 2005/02/26 23:10:19 perry Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,8 +39,8 @@
 #ifndef _MIPS_LINUX_SIGINFO_H
 #define _MIPS_LINUX_SIGINFO_H
 
-/* 
- * Everything is from Linux's include/asm-mips/siginfo.h 
+/*
+ * Everything is from Linux's include/asm-mips/siginfo.h
  */
 typedef union linux_sigval {
 	int sival_int;

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_mount.c,v 1.4 2004/07/28 22:24:06 manu Exp $ */
+/*	$NetBSD: darwin_mount.c,v 1.5 2005/02/26 23:10:18 perry Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.4 2004/07/28 22:24:06 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.5 2005/02/26 23:10:18 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -118,7 +118,7 @@ darwin_sys_getfsstat(l, v, retval)
 	maxcount = SCARG(uap, bufsize) / sizeof(struct darwin_statfs);
 	uds = SCARG(uap, buf);
 
-	for (count = 0, mp = mountlist.cqh_first; 
+	for (count = 0, mp = mountlist.cqh_first;
 	    mp != (void *)&mountlist; mp = nmp) {
 		nmp = mp->mnt_list.cqe_next;
 

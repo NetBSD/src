@@ -1,4 +1,4 @@
-/*	$NetBSD: des.h,v 1.5 2001/09/09 11:01:02 tls Exp $	*/
+/*	$NetBSD: des.h,v 1.6 2005/02/26 23:04:17 perry Exp $	*/
 /*	$KAME: des.h,v 1.7 2000/09/18 20:59:21 itojun Exp $	*/
 
 /* lib/des/des.h */
@@ -92,18 +92,18 @@ void des_encrypt3 __P((DES_LONG *, des_key_schedule, des_key_schedule,
 void des_decrypt3 __P((DES_LONG *, des_key_schedule, des_key_schedule,
 		      des_key_schedule));
 
-void des_ecb3_encrypt __P((des_cblock *, des_cblock *, des_key_schedule, 
+void des_ecb3_encrypt __P((des_cblock *, des_cblock *, des_key_schedule,
 			  des_key_schedule, des_key_schedule, int));
 
 void des_ncbc_encrypt __P((const unsigned char *, unsigned char *, long,
 			  des_key_schedule, des_cblock *, int));
 
 void des_ede3_cbc_encrypt(const unsigned char *, unsigned char *, long,
-			  des_key_schedule, des_key_schedule, 
+			  des_key_schedule, des_key_schedule,
 			  des_key_schedule, des_cblock *, int);
 
 void des_set_odd_parity __P((des_cblock *));
-void des_fixup_key_parity __P((des_cblock *)); 
+void des_fixup_key_parity __P((des_cblock *));
 int des_is_weak_key __P((des_cblock *));
 int des_set_key __P((des_cblock *, des_key_schedule));
 int des_key_sched __P((des_cblock *, des_key_schedule));

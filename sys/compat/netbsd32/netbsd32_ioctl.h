@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.15 2004/01/15 14:36:28 mrg Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.16 2005/02/26 23:10:21 perry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -41,7 +41,7 @@
 		__CONCAT(netbsd32_from_, type)((struct type *)data, \
 			(struct __CONCAT(netbsd32_, type) *)data32, cmd); \
 		break
- 
+
 /* from <sys/audioio.h> */
 #if 0
 #define AUDIO_WSEEK	_IOR('A', 25, u_long)
@@ -248,7 +248,7 @@ struct  netbsd32_ifdrv {
 	netbsd32_u_long	ifd_cmd;
 	netbsd32_size_t	ifd_len;
 	netbsd32_voidp	ifd_data;
-}; 
+};
 #if 1
 /* from <sys/sockio.h> */
 #define SIOCSDRVSPEC32	_IOW('i', 123, struct netbsd32_ifdrv)   /* set driver-specific */

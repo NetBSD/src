@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ipc.c,v 1.16 2003/01/18 08:44:26 thorpej Exp $	*/
+/*	$NetBSD: svr4_ipc.c,v 1.17 2005/02/26 23:10:21 perry Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_ipc.c,v 1.16 2003/01/18 08:44:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_ipc.c,v 1.17 2005/02/26 23:10:21 perry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -422,7 +422,7 @@ svr4_msgrcv(l, v, retval)
 
 	return sys_msgrcv(l, &ap, retval);
 }
-	
+
 struct svr4_sys_msgget_args {
 	syscallarg(int) what;
 	syscallarg(svr4_key_t) key;
@@ -660,7 +660,7 @@ svr4_shmctl(l, v, retval)
 	SCARG(&ap, shmid) = SCARG(uap, shmid);
 
 	if (SCARG(uap, buf) != NULL) {
-		SCARG(&ap, buf) = stackgap_alloc(p, &sg, 
+		SCARG(&ap, buf) = stackgap_alloc(p, &sg,
 		    sizeof (struct shmid_ds));
 		switch (SCARG(uap, cmd)) {
 		case SVR4_IPC_SET:
