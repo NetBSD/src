@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.12.2.4 2004/09/21 13:33:27 skrll Exp $ */
+/*	$NetBSD: fb.c,v 1.12.2.5 2004/09/21 16:19:51 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.12.2.4 2004/09/21 13:33:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.12.2.5 2004/09/21 16:19:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,7 +208,7 @@ fbopen(dev, flags, mode, l)
 
 	if (devfb == NULL)
 		return (ENXIO);
-	return (devfb->fb_driver->fbd_open)(dev, flags, mode, l->l_proc);
+	return (devfb->fb_driver->fbd_open)(dev, flags, mode, l);
 }
 
 int
@@ -218,7 +218,7 @@ fbclose(dev, flags, mode, l)
 	struct lwp *l;
 {
 
-	return (devfb->fb_driver->fbd_close)(dev, flags, mode, l->l_proc);
+	return (devfb->fb_driver->fbd_close)(dev, flags, mode, l);
 }
 
 int
@@ -230,7 +230,7 @@ fbioctl(dev, cmd, data, flags, l)
 	struct lwp *l;
 {
 
-	return (devfb->fb_driver->fbd_ioctl)(dev, cmd, data, flags, l->l_proc);
+	return (devfb->fb_driver->fbd_ioctl)(dev, cmd, data, flags, l);
 }
 
 int
@@ -240,7 +240,7 @@ fbpoll(dev, events, l)
 	struct lwp *l;
 {
 
-	return (devfb->fb_driver->fbd_poll)(dev, events, l->l_proc);
+	return (devfb->fb_driver->fbd_poll)(dev, events, l);
 }
 
 int
