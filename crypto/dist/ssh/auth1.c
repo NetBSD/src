@@ -31,6 +31,11 @@ krb5_principal tkt_client = NULL;    /* Principal from the received ticket.
 Also is used as an indication of succesful krb5 authentization. */
 #endif
 
+#if defined(KRB4) || defined(KRB5)
+int ssh_krb_auth; /* 4 or 5 indicates krb version we authenticated with */
+char *ssh_krb_user;
+#endif
+
 /* import */
 extern ServerOptions options;
 
@@ -168,6 +173,8 @@ do_authloop(Authctxt *authctxt)
 						memcpy(auth.dat, kdata, auth.length);
 					    authenticated = auth_krb4(pw->pw_name, &auth, &tkt_user);
 					    if (authenticated) {
+						ssh_krb_auth = 4;
+						ssh_krb_user = strdup(authctxt->user);
 						snprintf(info, sizeof info,
 							 " tktuser %.100s", tkt_user);
 						xfree(tkt_user);
@@ -194,8 +201,12 @@ do_authloop(Authctxt *authctxt)
 					  	/* authorize client against .k5login */
 					  	if (krb5_kuserok(ssh_context,
 						      tkt_client,
-						      pw->pw_name))
+						      pw->pw_name)) {
+							ssh_krb_user =
+							 strdup(authctxt->user);
+							ssh_krb_auth = 5;
 						  	authenticated = 1;
+						}
 					}
 #endif /* KRB5 */
 				}
@@ -320,31 +331,6 @@ do_authloop(Authctxt *authctxt)
 			}
 			break;
 
-#ifdef KRB5
-		case SSH_CMSG_HAVE_KERBEROS_TGT:
-			/* Passing krb5 ticket */
-			if (!options.krb5_tgt_passing 
-                            /*|| !options.krb5_authentication */) {
-
-			}
-			
-			if (tkt_client == NULL) {
-			  /* passing tgt without krb5 authentication */
-			}
-			
-			{
-			  krb5_data tgt;
-			  u_int tgtlen;
-			  tgt.data = packet_get_string(&tgtlen);
-			  tgt.length = tgtlen;
-			  
-			  if (!auth_krb5_tgt(authctxt->user, &tgt, tkt_client))
-			    verbose ("Kerberos V5 TGT refused for %.100s", authctxt->user);
-			  xfree(tgt.data);
-			      
-			  break;
-			}
-#endif /* KRB5 */
 		default:
 			/*
 			 * Any unknown messages will be ignored (and failure
