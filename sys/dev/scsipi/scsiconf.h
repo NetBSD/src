@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.41 1998/02/13 08:28:45 enami Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.42 1998/03/28 21:57:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -80,6 +80,8 @@ int	scsi_interpret_sense __P((struct scsipi_xfer *));
 void	scsi_print_addr __P((struct scsipi_link *));
 #ifdef SCSIVERBOSE
 void	scsi_print_sense __P((struct scsipi_xfer *, int));
+void	scsi_print_sense_data __P((struct scsipi_sense_data *, int));
+char   *scsi_decode_sense __P((void *, int));
 #endif
 int	scsi_probe_busses __P((int, int, int));
 int	scsi_scsipi_cmd __P((struct scsipi_link *, struct scsipi_generic *,
