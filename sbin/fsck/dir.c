@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dir.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: dir.c,v 1.7.2.4 1994/10/06 14:21:51 mycroft Exp $";
+static char *rcsid = "$Id: dir.c,v 1.7.2.5 1994/11/07 22:14:29 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -164,6 +164,8 @@ fsck_readdir(idesc)
 		dp = (struct direct *)(bp->b_un.b_buf + idesc->id_loc);
 		if (dircheck(idesc, dp))
 			goto dpok;
+		if (idesc->id_fix == IGNORE)
+			return (0);
 		fix = dofix(idesc, "DIRECTORY CORRUPTED");
 		bp = getdirblk(idesc->id_blkno, blksiz);
 		dp = (struct direct *)(bp->b_un.b_buf + idesc->id_loc);
@@ -193,6 +195,8 @@ dpok:
 		size = DIRBLKSIZ - (idesc->id_loc % DIRBLKSIZ);
 		idesc->id_loc += size;
 		idesc->id_filesize -= size;
+		if (idesc->id_fix == IGNORE)
+			return (0);
 		fix = dofix(idesc, "DIRECTORY CORRUPTED");
 		bp = getdirblk(idesc->id_blkno, blksiz);
 		dp = (struct direct *)(bp->b_un.b_buf + dploc);
