@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.96.2.6 2001/05/01 11:44:52 he Exp $
+#	$NetBSD: files.pci,v 1.96.2.7 2001/05/03 20:58:04 he Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -231,6 +231,11 @@ file	dev/pci/opl_eso.c		opl_eso
 
 attach	mpu at eso with mpu_eso
 file	dev/pci/mpu_eso.c		mpu_eso
+
+# ESS Maestro-1/2/2e PCI AC97 Audio Accelerator
+device	esm: audio, auconv, mulaw, ac97
+attach	esm at pci
+file	dev/pci/esm.c			esm
 
 # S3 SonicVibes (S3 617)
 device	sv { }: audio, auconv, mulaw, midibus
