@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.75 2000/12/19 10:42:03 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.76 2001/02/18 00:54:02 reinoud Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include	"arch/arm32/conf/std.arm32"
 
-#ident 		"GENERIC-$Revision: 1.75 $"
+#ident 		"GENERIC-$Revision: 1.76 $"
 
 # estimated number of users
 maxusers	32
@@ -93,6 +93,9 @@ options 	COMPAT_12	# NetBSD 1.2 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
+
+# Bootloader options
+options		COMPAT_OLD_BOOTLOADER
 
 # Shared memory options
 
