@@ -1,0 +1,244 @@
+/*	$NetBSD: cpuunit.c,v 1.1 2002/08/23 18:00:47 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Autoconfiguration support for Sun4d "cpu units".
+ */
+
+#include <sys/param.h>
+#include <sys/malloc.h>
+#include <sys/systm.h>
+#include <sys/device.h>
+
+#include <machine/bus.h>
+
+#include <sparc/sparc/cpuunitvar.h>
+#include <machine/autoconf.h>
+
+struct cpuunit_softc {
+	struct device sc_dev;
+	int sc_node;				/* our OBP node */
+
+	bus_space_tag_t sc_st;			/* ours */
+	bus_space_tag_t sc_bustag;		/* passed on to children */
+
+	struct openprom_range *sc_range;	/* our address ranges */
+	int sc_nrange;
+
+	int sc_device_id;			/* device-id */
+	int sc_board;				/* board number */
+};
+
+static int cpuunit_match(struct device *, struct cfdata *, void *);
+static void cpuunit_attach(struct device *, struct device *, void *);
+
+struct cfattach cpuunit_ca = {
+	sizeof(struct cpuunit_softc), cpuunit_match, cpuunit_attach,
+};
+
+static int cpuunit_print(void *, const char *);
+
+static int cpuunit_bus_map(bus_space_tag_t, bus_addr_t, size_t, int,
+    vaddr_t, bus_space_handle_t *);
+static paddr_t cpuunit_bus_mmap(bus_space_tag_t, bus_addr_t, off_t,
+    int, int);
+
+static int cpuunit_setup_attach_args(struct cpuunit_softc *, bus_space_tag_t,
+    int, struct cpuunit_attach_args *);
+static void cpuunit_destroy_attach_args(struct cpuunit_attach_args *);
+
+static int
+cpuunit_match(struct device *parent, struct cfdata *cf, void *aux)
+{
+	struct mainbus_attach_args *ma = aux;
+
+	if (strcmp(ma->ma_name, "cpu-unit") == 0)
+		return (1);
+
+	return (0);
+}
+
+static void
+cpuunit_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct cpuunit_softc *sc = (void *) self;
+	struct mainbus_attach_args *ma = aux;
+	int node, error;
+
+	sc->sc_node = ma->ma_node;
+	sc->sc_st = ma->ma_bustag;
+
+	sc->sc_device_id = PROM_getpropint(sc->sc_node, "device-id", -1);
+	sc->sc_board = PROM_getpropint(sc->sc_node, "board#", -1);
+
+	printf(": board #%d, ID %d\n", sc->sc_board, sc->sc_device_id);
+
+	/*
+	 * Initialize the bus space tag we pass on to our children.
+	 */
+	sc->sc_bustag = malloc(sizeof(*sc->sc_bustag), M_DEVBUF,
+	    M_WAITOK|M_ZERO);
+	sc->sc_bustag->cookie = sc;
+	sc->sc_bustag->parent = sc->sc_st;
+	sc->sc_bustag->sparc_bus_map = cpuunit_bus_map;
+	sc->sc_bustag->sparc_bus_mmap = cpuunit_bus_mmap;
+
+	/*
+	 * Collect address translations from the OBP.
+	 */
+	error = PROM_getprop(sc->sc_node, "ranges",
+	    sizeof(struct openprom_range), &sc->sc_nrange,
+	    (void **) &sc->sc_range);
+	if (error) {
+		printf("%s: error %d getting \"ranges\" property\n",
+		    sc->sc_dev.dv_xname, error);
+		panic("cpuunit_attach");
+	}
+
+	/* Attach the CPU (and possibly bootbus) child nodes. */
+	for (node = firstchild(sc->sc_node); node != 0;
+	     node = nextsibling(node)) {
+		struct cpuunit_attach_args cpua;
+
+		if (cpuunit_setup_attach_args(sc, sc->sc_bustag, node, &cpua))
+			panic("cpuunit_attach: failed to set up attach args");
+
+		(void) config_found(&sc->sc_dev, &cpua, cpuunit_print);
+
+		cpuunit_destroy_attach_args(&cpua);
+	}
+}
+
+static int
+cpuunit_print(void *aux, const char *pnp)
+{
+	struct cpuunit_attach_args *cpua = aux;
+
+	if (pnp)
+		printf("%s at %s", cpua->cpua_name, pnp);
+
+	return (UNCONF);
+}
+
+static int
+cpuunit_setup_attach_args(struct cpuunit_softc *sc, bus_space_tag_t bustag,
+    int node, struct cpuunit_attach_args *cpua)
+{
+	int n, error;
+
+	memset(cpua, 0, sizeof(*cpua));
+
+	error = PROM_getprop(node, "name", 1, &n, (void **) &cpua->cpua_name);
+	if (error)
+		return (error);
+	cpua->cpua_name[n] = '\0';
+
+	error = PROM_getprop(node, "device_type", 1, &n,
+	    (void **) &cpua->cpua_type);
+	if (error) {
+		free(cpua->cpua_name, M_DEVBUF);
+		return (error);
+	}
+
+	cpua->cpua_bustag = bustag;
+	cpua->cpua_node = node;
+	cpua->cpua_device_id = sc->sc_device_id;
+
+	return (0);
+}
+
+static void
+cpuunit_destroy_attach_args(struct cpuunit_attach_args *cpua)
+{
+
+	if (cpua->cpua_name != NULL)
+		free(cpua->cpua_name, M_DEVBUF);
+
+	if (cpua->cpua_type != NULL)
+		free(cpua->cpua_type, M_DEVBUF);
+}
+
+static int
+cpuunit_translate_address(struct cpuunit_softc *sc, bus_addr_t addr,
+    bus_addr_t *addrp)
+{
+	int space = BUS_ADDR_IOSPACE(addr);
+	int i;
+
+	for (i = 0; i < sc->sc_nrange; i++) {
+		struct openprom_range *rp = &sc->sc_range[i];
+
+		if (rp->or_child_space != space)
+			continue;
+
+		/* We've found the connection to the parent bus. */
+		*addrp = BUS_ADDR(rp->or_parent_space,
+		    rp->or_parent_base + BUS_ADDR_PADDR(addr));
+		return (0);
+	}
+
+	return (EINVAL);
+}
+
+static int
+cpuunit_bus_map(bus_space_tag_t t, bus_addr_t ba, bus_size_t size,
+    int flags, vaddr_t va, bus_space_handle_t *hp)
+{
+	struct cpuunit_softc *sc = t->cookie;
+	bus_addr_t addr;
+	int error;
+
+	error = cpuunit_translate_address(sc, ba, &addr);
+	if (error)
+		return (error);
+	return (bus_space_map2(sc->sc_st, addr, size, flags, va, hp));
+}
+
+static paddr_t
+cpuunit_bus_mmap(bus_space_tag_t t, bus_addr_t ba, off_t off, int prot,
+    int flags)
+{
+	struct cpuunit_softc *sc = t->cookie;
+	bus_addr_t addr;
+	int error;
+
+	error = cpuunit_translate_address(sc, ba, &addr);
+	if (error)
+		return (-1);
+	return (bus_space_mmap(sc->sc_st, addr, off, prot, flags));
+}
