@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/11/24 02:54:50 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 2002/01/01 07:59:32 mrg Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -59,6 +59,11 @@ makeflist: .PHONY check_destdir
 checkflist: check_destdir
 	DESTDIR=${DESTDIR} MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH} \
 	    MAKE=${MAKE} sh ${.CURDIR}/checkflist
+
+.PRECIOUS: checkflist
+checkflist-x11: check_destdir
+	DESTDIR=${DESTDIR} MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH} \
+	    MAKE=${MAKE} sh ${.CURDIR}/checkflist -x11
 
 .PRECIOUS: maketars
 maketars: check_destdir check_releasedir
