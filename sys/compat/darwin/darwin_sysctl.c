@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.20 2003/12/04 19:38:22 atatat Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.21 2003/12/26 16:00:53 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.20 2003/12/04 19:38:22 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.21 2003/12/26 16:00:53 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -347,29 +347,43 @@ SYSCTL_SETUP(sysctl_emul_darwin_setup, "sysctl emul.darwin subtree setup")
 		       CTLTYPE_NODE, "darwin", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_EMUL, EMUL_DARWIN, CTL_EOL);
-
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "init", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_EMUL, EMUL_DARWIN, 
+		       EMUL_DARWIN_INIT, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "ioframebuffer", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_EMUL, EMUL_DARWIN, 
+		       EMUL_DARWIN_IOFRAMEBUFFER, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "iohidsystem", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_EMUL, EMUL_DARWIN, 
+		       EMUL_DARWIN_IOHIDSYSTEM, CTL_EOL);
 	/*
 	 * XXX - darwin_init_pid is a pid_t, not an int
 	 */
 	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
-		       CTLTYPE_INT, "init_pid", NULL,
+		       CTLTYPE_INT, "pid", NULL,
 		       NULL, 0, &darwin_init_pid, 0,
-		       CTL_EMUL, EMUL_DARWIN,
+		       CTL_EMUL, EMUL_DARWIN, EMUL_DARWIN_INIT,
 		       EMUL_DARWIN_INIT_PID, CTL_EOL);
 	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
-		       CTLTYPE_INT, "ioframebuffer_unit", NULL,
+		       CTLTYPE_INT, "unit", NULL,
 		       NULL, 0, &darwin_ioframebuffer_unit, 0,
-		       CTL_EMUL, EMUL_DARWIN,
+		       CTL_EMUL, EMUL_DARWIN, EMUL_DARWIN_IOFRAMEBUFFER,
 		       EMUL_DARWIN_IOFRAMEBUFFER_UNIT, CTL_EOL);
 	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
-		       CTLTYPE_INT, "ioframebuffer_screen", NULL,
+		       CTLTYPE_INT, "screen", NULL,
 		       NULL, 0, &darwin_ioframebuffer_screen, 0,
-		       CTL_EMUL, EMUL_DARWIN,
+		       CTL_EMUL, EMUL_DARWIN, EMUL_DARWIN_IOFRAMEBUFFER,
 		       EMUL_DARWIN_IOFRAMEBUFFER_SCREEN, CTL_EOL);
 	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
-		       CTLTYPE_INT, "iohidsystem_mux", NULL,
+		       CTLTYPE_INT, "mux", NULL,
 		       NULL, 0, &darwin_iohidsystem_mux, 0,
-		       CTL_EMUL, EMUL_DARWIN,
+		       CTL_EMUL, EMUL_DARWIN, EMUL_DARWIN_IOHIDSYSTEM,
 		       EMUL_DARWIN_IOHIDSYSTEM_MUX, CTL_EOL);
 }
 
@@ -378,10 +392,10 @@ SYSCTL_SETUP(sysctl_emul_darwin_setup, "sysctl emul.darwin subtree setup")
  * for forking the traditional UNIX init(8) and it does the Mach port naming
  * service. We need mach_init for the naming service, but unfortunately, it
  * will only act as such if its PID is 1. We use a sysctl 
- * (emul.darwin.init_pid) to fool a given process into thinking its PID is 1.
+ * (emul.darwin.init.pid) to fool a given process into thinking its PID is 1.
  * That way we can run mach_init when we want to. 
  * Typical use:
- * sysctl -w emul.darwin.init_pid=$$; exec /emul/darwin/sbin/mach_init
+ * sysctl -w emul.darwin.init.pid=$$; exec /emul/darwin/sbin/mach_init
  * 
  * The same problem exists after mach_init has forked init: the fork libc stub
  * really insist on the child to have PID 2 (if PID is not 2, then the stub
