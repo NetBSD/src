@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_addr.c,v 1.13 2001/06/17 23:24:22 jdolecek Exp $	*/
+/*	$NetBSD: ns_addr.c,v 1.14 2001/06/25 09:07:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ns_addr.c	8.1 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: ns_addr.c,v 1.13 2001/06/17 23:24:22 jdolecek Exp $");
+__RCSID("$NetBSD: ns_addr.c,v 1.14 2001/06/25 09:07:08 jdolecek Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,7 +52,6 @@ __RCSID("$NetBSD: ns_addr.c,v 1.13 2001/06/17 23:24:22 jdolecek Exp $");
 #include <stdio.h>
 #include <string.h>
 
-static struct ns_addr addr, zero_addr;
 static void Field __P((char *, u_int8_t *, int));
 static void cvtbase __P((long, int, int[], int, u_int8_t[], int));
 
@@ -63,6 +62,7 @@ ns_addr(name)
 	char separator;
 	char *hostname, *socketname, *cp;
 	char buf[50];
+	static struct ns_addr addr;
 
 	_DIAGASSERT(name != NULL);
 
@@ -89,7 +89,7 @@ ns_addr(name)
 	if (hostname)
 		*hostname++ = 0;
 
-	addr = zero_addr;
+	memset(&addr, '\0', sizeof(addr));
 	Field(buf, addr.x_net.c_net, 4);
 	if (hostname == 0)
 		return (addr);  /* No separator means net only */
