@@ -578,6 +578,7 @@ main(int argc, char **argv)
 	if (maxfd > fdlim_get(0))
 		fdlim_set(maxfd);
 	fdcon = xmalloc(maxfd * sizeof(con));
+	memset(fdcon, 0, maxfd * sizeof(con));
 
 	do {
 		while (ncon < maxcon) {
