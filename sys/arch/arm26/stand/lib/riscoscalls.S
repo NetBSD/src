@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.S,v 1.5 2001/07/27 20:49:09 bjh21 Exp $	*/
+/*	$NetBSD: riscoscalls.S,v 1.6 2001/07/27 21:10:04 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -49,6 +49,18 @@ ENTRY(os_readc)
 	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
 	swi	OS_ReadC
+	ldmdb	fp, {fp, sp, pc}
+
+ENTRY(os_byte)
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
+	swi	OS_Byte	
+	teq	r3, #0
+	strne	r1, [r3]
+	ldr	r3, [fp, #4]
+	teq	r3, #0
+	strne	r2, [r3]
 	ldmdb	fp, {fp, sp, pc}
 
 ENTRY(xosargs_read)
