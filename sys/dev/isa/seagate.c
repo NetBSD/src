@@ -377,8 +377,10 @@ seaprobe(parent, match, aux)
 		    (void *) (((u_char *)sea->maddr) + 0x1e00);
 		break;
 	default:
+#ifdef DIAGNOSTIC
 		printf("%s: board type unknown at address 0x%lx\n",
 		    sea->sc_dev.dv_xname, sea->maddr);
+#endif
 		return 0;
 	}
 
@@ -625,10 +627,10 @@ sea_get_scb(sea, flags)
 				printf("%s: can't malloc scb\n",
 				    sea->sc_dev.dv_xname);
 			break;
-		} else {
-			if ((flags & SCSI_NOSLEEP) == 0)
-				tsleep(&sea->free_list, PRIBIO, "seascb", 0);
 		}
+		if ((flags & SCSI_NOSLEEP) != 0)
+			break;
+		tsleep(&sea->free_list, PRIBIO, "seascb", 0);
 	}
 
 	splx(s);

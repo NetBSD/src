@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.42 1995/07/27 01:00:14 mycroft Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.43 1995/07/28 22:49:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -808,10 +808,10 @@ bt_get_ccb(bt, flags)
 				    bt->sc_dev.dv_xname);
 			}
 			break;
-		} else {
-			if ((flags & SCSI_NOSLEEP) == 0)
-				tsleep(&bt->free_ccb, PRIBIO, "btccb", 0);
 		}
+		if ((flags & SCSI_NOSLEEP) != 0)
+			break;
+		tsleep(&bt->free_ccb, PRIBIO, "btccb", 0);
 	}
 
 	splx(opri);
