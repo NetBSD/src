@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.192 2004/12/13 17:55:28 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.193 2004/12/14 19:53:46 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.192 2004/12/13 17:55:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.193 2004/12/14 19:53:46 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -911,6 +911,17 @@ wi_init(struct ifnet *ifp)
 }
 
 STATIC void
+wi_txcmd_wait(struct wi_softc *sc)
+{
+	KASSERT(sc->sc_txcmds == 1);
+	if (sc->sc_status & WI_EV_CMD) {
+		sc->sc_status &= ~WI_EV_CMD;
+		CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_CMD);
+	} else
+		(void)wi_cmd_wait(sc, WI_CMD_TX | WI_RECLAIM, 0);
+}
+
+STATIC void
 wi_stop(struct ifnet *ifp, int disable)
 {
 	struct wi_softc	*sc = ifp->if_softc;
@@ -925,6 +936,15 @@ wi_stop(struct ifnet *ifp, int disable)
 	DPRINTF(("wi_stop: disable %d\n", disable));
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
+
+	/* wait for tx command completion (deassoc, deauth) */
+	while (sc->sc_txcmds > 0) {
+		wi_txcmd_wait(sc);
+		wi_cmd_intr(sc);
+	}
+
+	/* TBD wait for deassoc, deauth tx completion? */
+
 	if (!sc->sc_invalid) {
 		CSR_WRITE_2(sc, WI_INT_EN, 0);
 		wi_cmd(sc, WI_CMD_DISABLE | sc->sc_portnum, 0, 0, 0);
@@ -2561,14 +2581,8 @@ wi_cmd(struct wi_softc *sc, int cmd, int val0, int val1, int val2)
 		    sc->sc_txcmds);
 	}
 #endif
-	if (sc->sc_txcmds > 0) {
-		KASSERT(sc->sc_txcmds == 1);
-		if (sc->sc_status & WI_EV_CMD) {
-			sc->sc_status &= ~WI_EV_CMD;
-			CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_CMD);
-		} else
-			(void)wi_cmd_wait(sc, WI_CMD_TX | WI_RECLAIM, 0);
-	}
+	if (sc->sc_txcmds > 0)
+		wi_txcmd_wait(sc);
 
 	if ((rc = wi_cmd_start(sc, cmd, val0, val1, val2)) != 0)
 		return rc;
