@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.22 2000/09/09 00:21:36 hubertf Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.23 2000/09/26 23:12:44 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -71,6 +71,9 @@ do_upgrade()
 	get_ramsize();
 
 	if (find_disks() < 0)
+		return;
+
+	if (md_pre_update() < 0)
 		return;
 
 	/* if we need the user to mount root, ask them to. */
