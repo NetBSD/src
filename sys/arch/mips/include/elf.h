@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.h,v 1.3 1996/05/19 04:15:37 jonathan Exp $	*/
+/*	$NetBSD: elf.h,v 1.4 1996/06/26 04:41:41 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Ted Lemon
@@ -130,7 +130,7 @@ struct sym {
 #define	STT_SECTION	3
 #define STT_FILE	4
 
-#define ELF_HDR_SIZE	(sizeof (struct ehdr))
+#define MIPS_ELF_HDR_SIZE	(sizeof (struct ehdr))
 #ifdef _KERNEL
 int     mips_elf_makecmds __P((struct proc *, struct exec_package *));
 #endif /* _KERNEL */
