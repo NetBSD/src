@@ -1,4 +1,4 @@
-/*	$NetBSD: device_pager.c,v 1.26 1998/08/13 02:11:04 eeh Exp $	*/
+/*	$NetBSD: device_pager.c,v 1.27 1998/11/19 05:23:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -289,6 +289,8 @@ dev_pager_getpage(pager, mlist, npages, sync)
 #endif
 	paddr = pmap_phys_address((*mapfunc)(dev, (int)offset, prot));
 #ifdef DIAGNOSTIC
+	/* XXX this test is broken XXX */
+	/* pmap_phys_address may have converted a -1 to somethig else. */
 	if (paddr == -1)
 		panic("dev_pager_getpage: map function returns error");
 #endif
