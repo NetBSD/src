@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.21 2002/03/18 16:00:57 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.22 2002/10/27 21:41:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.21 2002/03/18 16:00:57 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.22 2002/10/27 21:41:50 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -389,6 +389,11 @@ el_gets(EditLine *el, int *nread)
 			*nread = el->el_line.cursor - el->el_line.buffer;
 		return (el->el_line.buffer);
 	}
+
+	/* This is relatively cheap, and things go terribly wrong if
+	   we have the wrong size. */
+	el_resize(el);
+
 	re_clear_display(el);	/* reset the display stuff */
 	ch_reset(el);
 
@@ -434,6 +439,7 @@ el_gets(EditLine *el, int *nread)
 			*nread = el->el_line.cursor - el->el_line.buffer;
 		return (el->el_line.buffer);
 	}
+
 	for (num = OKCMD; num == OKCMD;) {	/* while still editing this
 						 * line */
 #ifdef DEBUG_EDIT
@@ -470,6 +476,10 @@ el_gets(EditLine *el, int *nread)
 		}
 #endif /* DEBUG_READ */
 		retval = (*el->el_map.func[cmdnum]) (el, ch);
+#ifdef DEBUG_READ
+		(void) fprintf(el->el_errfile,
+			"Returned state %d\n", retval );
+#endif /* DEBUG_READ */
 
 		/* save the last command here */
 		el->el_state.lastcmd = cmdnum;
@@ -544,9 +554,9 @@ el_gets(EditLine *el, int *nread)
 		}
 	}
 
-				/* make sure the tty is set up correctly */
-	(void) tty_cookedmode(el);
 	term__flush();		/* flush any buffered output */
+	/* make sure the tty is set up correctly */
+	(void) tty_cookedmode(el);
 	if (el->el_flags & HANDLE_SIGNALS)
 		sig_clr(el);
 	if (nread)

@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.11 2002/03/18 16:00:51 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.12 2002/10/27 21:41:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: common.c,v 1.11 2002/03/18 16:00:51 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.12 2002/10/27 21:41:50 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -72,7 +72,6 @@ ed_end_of_file(EditLine *el, int c)
 protected el_action_t
 ed_insert(EditLine *el, int c)
 {
-	int i;
 
 	if (c == '\0')
 		return (CC_ERROR);
@@ -85,29 +84,16 @@ ed_insert(EditLine *el, int c)
 	}
 
 	if (el->el_state.argument == 1) {
-		if (el->el_state.inputmode != MODE_INSERT) {
-			el->el_chared.c_undo.buf[el->el_chared.c_undo.isize++] =
-			    *el->el_line.cursor;
-			el->el_chared.c_undo.buf[el->el_chared.c_undo.isize] =
-			    '\0';
-			c_delafter(el, 1);
-		}
-		c_insert(el, 1);
+		if (el->el_state.inputmode == MODE_INSERT
+		    || el->el_line.cursor >= el->el_line.lastchar)
+			c_insert(el, 1);
 
 		*el->el_line.cursor++ = c;
 		el->el_state.doingarg = 0;	/* just in case */
 		re_fastaddc(el);		/* fast refresh for one char. */
 	} else {
-		if (el->el_state.inputmode != MODE_INSERT) {
-			for (i = 0; i < el->el_state.argument; i++)
-				el->el_chared.c_undo.buf[el->el_chared.c_undo.isize++] =
-				    el->el_line.cursor[i];
-
-			el->el_chared.c_undo.buf[el->el_chared.c_undo.isize] =
-			    '\0';
-			c_delafter(el, el->el_state.argument);
-		}
-		c_insert(el, el->el_state.argument);
+		if (el->el_state.inputmode != MODE_REPLACE_1)
+			c_insert(el, el->el_state.argument);
 
 		while (el->el_state.argument--)
 			*el->el_line.cursor++ = c;
@@ -115,7 +101,7 @@ ed_insert(EditLine *el, int c)
 	}
 
 	if (el->el_state.inputmode == MODE_REPLACE_1)
-		(void) vi_command_mode(el, 0);
+		return vi_command_mode(el, 0);
 
 	return (CC_NORM);
 }
@@ -411,25 +397,9 @@ ed_digit(EditLine *el, int c)
 			    (el->el_state.argument * 10) + (c - '0');
 		}
 		return (CC_ARGHACK);
-	} else {
-		if (el->el_line.lastchar + 1 >= el->el_line.limit) {
-			if (!ch_enlargebufs(el, 1))
-				return (CC_ERROR);
-		}
-
-		if (el->el_state.inputmode != MODE_INSERT) {
-			el->el_chared.c_undo.buf[el->el_chared.c_undo.isize++] =
-			    *el->el_line.cursor;
-			el->el_chared.c_undo.buf[el->el_chared.c_undo.isize] =
-			    '\0';
-			c_delafter(el, 1);
-		}
-		c_insert(el, 1);
-		*el->el_line.cursor++ = c;
-		el->el_state.doingarg = 0;
-		re_fastaddc(el);
 	}
-	return (CC_NORM);
+
+	return ed_insert(el, c);
 }
 
 
@@ -579,8 +549,6 @@ ed_newline(EditLine *el, int c)
 	re_goto_bottom(el);
 	*el->el_line.lastchar++ = '\n';
 	*el->el_line.lastchar = '\0';
-	if (el->el_map.type == MAP_VI)
-		el->el_chared.c_vcmd.ins = el->el_line.buffer;
 	return (CC_NEWLINE);
 }
 
@@ -670,7 +638,7 @@ ed_prev_history(EditLine *el, int c)
 {
 	char beep = 0;
 
-	el->el_chared.c_undo.action = NOP;
+	el->el_chared.c_undo.len = -1;
 	*el->el_line.lastchar = '\0';		/* just in case */
 
 	if (el->el_history.eventno == 0) {	/* save the current buffer
@@ -704,7 +672,7 @@ protected el_action_t
 ed_next_history(EditLine *el, int c)
 {
 
-	el->el_chared.c_undo.action = NOP;
+	el->el_chared.c_undo.len = -1;
 	*el->el_line.lastchar = '\0';	/* just in case */
 
 	el->el_history.eventno -= el->el_state.argument;
@@ -730,7 +698,7 @@ ed_search_prev_history(EditLine *el, int c)
 	bool_t found = 0;
 
 	el->el_chared.c_vcmd.action = NOP;
-	el->el_chared.c_undo.action = NOP;
+	el->el_chared.c_undo.len = -1;
 	*el->el_line.lastchar = '\0';	/* just in case */
 	if (el->el_history.eventno < 0) {
 #ifdef DEBUG_EDIT
@@ -798,7 +766,7 @@ ed_search_next_history(EditLine *el, int c)
 	bool_t found = 0;
 
 	el->el_chared.c_vcmd.action = NOP;
-	el->el_chared.c_undo.action = NOP;
+	el->el_chared.c_undo.len = -1;
 	*el->el_line.lastchar = '\0';	/* just in case */
 
 	if (el->el_history.eventno == 0)
