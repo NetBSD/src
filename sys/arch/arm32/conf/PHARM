@@ -23,7 +23,7 @@ options		CPU_LATE_ABORT	# ARM7XX compatibility
 
 # FPA options
 
-options		FPE		# Single precision FPE
+#options	FPE		# Single precision FPE
 options		ARMFPE		# ARM Ltd FPE
 
 # File system options
@@ -86,7 +86,7 @@ options		KSHELL		# kernel developemnt shell (debug)
 options		LKM		# loadable kernel modules
 #options	DEBUGTERM	# create a debug console
 #options	KGDB		# remote kernel debugging
-#options	DDB		# in-kernel debugger
+options		DDB		# in-kernel debugger
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
 config		netbsd	swap generic
@@ -118,12 +118,12 @@ vt4     at mainbus?
 vt5     at mainbus?
 
 # IDE disk controller
-wdc0    at mainbus? base 0x002107c0
+wdc0    at mainbus? base 0x002107c0 irq 9
 wd0     at wdc? drive ?
 wd1     at wdc? drive ?
 
 # Floppy disk controller
-fdc0    at mainbus? base 0x00210fc0 dack 0x00002000
+fdc0    at mainbus? base 0x00210fc0 irq 12 dack 0x00002000
 fd0     at fdc? drive ?
 
 # Ramdisk
@@ -136,7 +136,7 @@ kbd0	at mainbus? base 0x00000000
 quadmouse0	at mainbus? base 0x00000000
 
 # Serial ports
-com0    at mainbus? base 0x00210fe0
+com0    at mainbus? base 0x00210fe0 irq 10
 #com1    at mainbus? base 0x00210be0
 
 # Parallel ports
