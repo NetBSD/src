@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.47 2000/01/11 06:57:50 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.48 2000/04/10 01:17:41 thorpej Exp $	*/
 
 /*
  *
@@ -1602,8 +1602,16 @@ Case2:
 #endif
 
 		anon = uvm_analloc();
-		if (anon)
-			pg = uvm_pagealloc(NULL, 0, anon, 0);
+		if (anon) {
+			/*
+			 * In `Fill in data...' below, if
+			 * uobjpage == PGO_DONTCARE, we want
+			 * a zero'd, dirty page, so have
+			 * uvm_pagealloc() do that for us.
+			 */
+			pg = uvm_pagealloc(NULL, 0, anon,
+			    (uobjpage == PGO_DONTCARE) ? UVM_PGA_ZERO : 0);
+		}
 #ifdef __GNUC__
 		else
 			pg = NULL; /* XXX: gcc */
@@ -1692,7 +1700,10 @@ Case2:
 
 		} else {
 			uvmexp.flt_przero++;
-			uvm_pagezero(pg);	/* zero page [pg now dirty] */
+			/*
+			 * Page is zero'd and marked dirty by uvm_pagealloc()
+			 * above.
+			 */
 			UVMHIST_LOG(maphist,"  zero fill anon/page 0x%x/0%x",
 			    anon, pg, 0, 0);
 		}
