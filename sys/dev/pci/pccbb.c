@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.26 2000/02/23 07:28:54 haya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.27 2000/03/01 23:40:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -190,9 +190,9 @@ static int pccbb_open_win __P((struct pccbb_softc *, bus_space_tag_t,
     bus_addr_t, bus_size_t, bus_space_handle_t, int flags));
 static int pccbb_close_win __P((struct pccbb_softc *, bus_space_tag_t,
     bus_space_handle_t, bus_size_t));
-static int pccbb_winlist_insert __P((struct pccbb_win_chain **, bus_addr_t,
+static int pccbb_winlist_insert __P((struct pccbb_win_chain_head *, bus_addr_t,
     bus_size_t, bus_space_handle_t, int));
-static int pccbb_winlist_delete __P((struct pccbb_win_chain **,
+static int pccbb_winlist_delete __P((struct pccbb_win_chain_head *,
     bus_space_handle_t, bus_size_t));
 static void pccbb_winset __P((bus_addr_t align, struct pccbb_softc *,
     bus_space_tag_t));
@@ -410,6 +410,9 @@ pccbbattach(parent, self, aux)
 	printf(" (chipflags %x)", flags);
 #endif
 	printf("\n");
+
+	TAILQ_INIT(&sc->sc_memwindow);
+	TAILQ_INIT(&sc->sc_iowindow);
 
 #if rbus
 	sc->sc_rbus_iot = rbus_pccbb_parent_io(pa);
@@ -2890,20 +2893,22 @@ pccbb_open_win(sc, bst, addr, size, bsh, flags)
 	bus_space_handle_t bsh;
 	int flags;
 {
-	struct pccbb_win_chain **top;
+	struct pccbb_win_chain_head *head;
 	bus_addr_t align;
 
-	top = &sc->sc_iowindow;
+	head = &sc->sc_iowindow;
 	align = 0x04;
 	if (sc->sc_memt == bst) {
-		top = &sc->sc_memwindow;
+		head = &sc->sc_memwindow;
 		align = 0x1000;
 		DPRINTF(("using memory window, %x %x %x\n\n",
 		    sc->sc_iot, sc->sc_memt, bst));
 	}
 
-	if (pccbb_winlist_insert(top, addr, size, bsh, flags)) {
-		printf("winlist insert fails:\n");
+	if (pccbb_winlist_insert(head, addr, size, bsh, flags)) {
+		printf("%s: pccbb_open_win: %s winlist insert failed\n",
+		    sc->sc_dev.dv_xname,
+		    (head == &sc->sc_memwindow) ? "mem" : "io");
 	}
 	pccbb_winset(align, sc, bst);
 
@@ -2917,18 +2922,20 @@ pccbb_close_win(sc, bst, bsh, size)
 	bus_space_handle_t bsh;
 	bus_size_t size;
 {
-	struct pccbb_win_chain **top;
+	struct pccbb_win_chain_head *head;
 	bus_addr_t align;
 
-	top = &sc->sc_iowindow;
+	head = &sc->sc_iowindow;
 	align = 0x04;
 	if (sc->sc_memt == bst) {
-		top = &sc->sc_memwindow;
+		head = &sc->sc_memwindow;
 		align = 0x1000;
 	}
 
-	if (pccbb_winlist_delete(top, bsh, size)) {
-		printf("winlist delete fails:\n");
+	if (pccbb_winlist_delete(head, bsh, size)) {
+		printf("%s: pccbb_close_win: %s winlist delete failed\n",
+		    sc->sc_dev.dv_xname,
+		    (head == &sc->sc_memwindow) ? "mem" : "io");
 	}
 	pccbb_winset(align, sc, bst);
 
@@ -2936,96 +2943,69 @@ pccbb_close_win(sc, bst, bsh, size)
 }
 
 static int
-pccbb_winlist_insert(top, start, size, bsh, flags)
-	struct pccbb_win_chain **top;
+pccbb_winlist_insert(head, start, size, bsh, flags)
+	struct pccbb_win_chain_head *head;
 	bus_addr_t start;
 	bus_size_t size;
 	bus_space_handle_t bsh;
 	int flags;
 {
-	struct pccbb_win_chain *chainp = *top;
-	struct pccbb_win_chain *before = *top;
-	struct pccbb_win_chain *elem;
+	struct pccbb_win_chain *chainp, *elem;
 
-	if (*top == NULL) {
-		if (NULL == (elem =
-		    (struct pccbb_win_chain *)malloc(sizeof(struct
-		    pccbb_win_chain), M_DEVBUF, M_NOWAIT))) {
-			return 1;      /* fail */
-		}
-
-		elem->wc_start = start;
-		elem->wc_end = start + size - 1;
-		elem->wc_handle = bsh;
-		elem->wc_flags = flags;
-
-		*top = elem;
-		elem->wc_next = NULL;
-		return 0;
-	}
-
-	for (; chainp && chainp->wc_start <= start; chainp = chainp->wc_next) {
-		before = chainp;
-	}
-
-	if (chainp != NULL) {
-		if (chainp->wc_start < start + size) {
-			printf("fatal! 0x%lx 0x%lx\n", chainp->wc_start,
-			    start + size);
-			return 1;
-		}
-	}
-	if ((before != *top) && (before->wc_end >= start)) {
-		printf("fatal!! 0x%lx 0x%lx\n", before->wc_end, start);
-		return 1;
-	}
-
-	if (NULL == (elem =
-	    (struct pccbb_win_chain *)malloc(sizeof(struct pccbb_win_chain),
-	    M_DEVBUF, M_NOWAIT))) {
-		return 1;	       /* fail */
-	}
+	if ((elem = malloc(sizeof(struct pccbb_win_chain), M_DEVBUF,
+	    M_NOWAIT)) == NULL)
+		return 1;		/* fail */
 
 	elem->wc_start = start;
-	elem->wc_end = start + size - 1;
+	elem->wc_end = start + (size - 1);
 	elem->wc_handle = bsh;
 	elem->wc_flags = flags;
 
-	elem->wc_next = chainp;
-	if (chainp == *top) {
-		*top = elem;
-	} else {
-		before->wc_next = elem;
+	if ((chainp = TAILQ_FIRST(head)) == NULL) {
+		TAILQ_INSERT_HEAD(head, elem, wc_list);
+		return 0;
 	}
+
+	for (; chainp != NULL; chainp = TAILQ_NEXT(chainp, wc_list)) {
+		if (chainp->wc_end < start)
+			continue;
+		TAILQ_INSERT_AFTER(head, chainp, elem, wc_list);
+		return 0;
+	}
+
+	TAILQ_INSERT_TAIL(head, elem, wc_list);
+
 	return 0;
 }
 
 static int
-pccbb_winlist_delete(top, bsh, size)
-	struct pccbb_win_chain **top;
+pccbb_winlist_delete(head, bsh, size)
+	struct pccbb_win_chain_head *head;
 	bus_space_handle_t bsh;
 	bus_size_t size;
 {
-	struct pccbb_win_chain *chainp = *top;
-	struct pccbb_win_chain **before = top;
+	struct pccbb_win_chain *chainp;
 
-	for (; chainp && chainp->wc_handle != bsh; chainp = chainp->wc_next) {
-		before = &chainp->wc_next;
+	for (chainp = TAILQ_FIRST(head); chainp != NULL;
+	     chainp = TAILQ_NEXT(chainp, wc_list)) {
+		if (chainp->wc_handle != bsh)
+			continue;
+		if ((chainp->wc_end - chainp->wc_start) != (size - 1)) {
+			printf("pccbb_winlist_delete: window 0x%lx size "
+			    "inconsistent: 0x%lx, 0x%lx\n",
+			    chainp->wc_start,
+			    chainp->wc_end - chainp->wc_start,
+			    size - 1);
+			return 1;
+		}
+
+		TAILQ_REMOVE(head, chainp, wc_list);
+		free(chainp, M_DEVBUF);
+
+		return 0;
 	}
 
-	if (chainp == NULL) {
-		return 1;	       /* fail: no candidate to remove */
-	}
-
-	if (chainp->wc_end - chainp->wc_start != size - 1) {
-		printf("fatal!!! 0x%lx\n", chainp->wc_start);
-		return 1;	       /* fail: no candidate to remove */
-	}
-
-	*before = chainp->wc_next;
-	free(chainp, M_DEVBUF);
-
-	return 0;
+	return 1;	       /* fail: no candidate to remove */
 }
 
 static void
@@ -3050,27 +3030,27 @@ pccbb_winset(align, sc, bst)
 	win[1].win_start = 0xffffffff;
 	win[1].win_limit = 0;
 
-	chainp = sc->sc_iowindow;
+	chainp = TAILQ_FIRST(&sc->sc_iowindow);
 	offs = 0x2c;
 	if (sc->sc_memt == bst) {
-		chainp = sc->sc_memwindow;
+		chainp = TAILQ_FIRST(&sc->sc_memwindow);
 		offs = 0x1c;
 	}
 
-	if (chainp) {
+	if (chainp != NULL) {
 		win[0].win_start = chainp->wc_start & mask;
 		win[0].win_limit = chainp->wc_end & mask;
 		win[0].win_flags = chainp->wc_flags;
-		chainp = chainp->wc_next;
+		chainp = TAILQ_NEXT(chainp, wc_list);
 	}
 
-	for (; chainp; chainp = chainp->wc_next) {
+	for (; chainp != NULL; chainp = TAILQ_NEXT(chainp, wc_list)) {
 		if (win[1].win_start == 0xffffffff) {
 			/* window 1 is not used */
 			if ((win[0].win_flags == chainp->wc_flags) &&
 			    (win[0].win_limit + align >=
 			    (chainp->wc_start & mask))) {
-				/* concatinate */
+				/* concatenate */
 				win[0].win_limit = chainp->wc_end & mask;
 			} else {
 				/* make new window */
@@ -3105,7 +3085,7 @@ pccbb_winset(align, sc, bst)
 			} else {
 				/* different flags */
 
-				/* concatinate win0 and win1 */
+				/* concatenate win0 and win1 */
 				win[0].win_limit = win[1].win_limit;
 				/* allocate win[1] to new space */
 				win[1].win_start = chainp->wc_start & mask;
