@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.50 1999/10/12 11:21:25 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.51 1999/10/12 20:02:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2052,7 +2052,12 @@ void
 ohci_root_intr_abort(reqh)
 	usbd_request_handle reqh;
 {
-	/* No need to abort. */
+	if (reqh->pipe->intrreqh == reqh) {
+		DPRINTF(("ohci_root_intr_abort: remove\n"));
+		reqh->pipe->intrreqh = 0;
+	}
+	reqh->status = USBD_CANCELLED;
+	usb_transfer_complete(reqh);
 }
 
 /* Close the root pipe. */
