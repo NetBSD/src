@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.18 2001/04/06 15:53:43 wiz Exp $
+.\"	$NetBSD: uvm.9,v 1.19 2001/04/21 08:34:11 jdolecek Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -109,7 +109,7 @@ initialises the swap sub-system.
 .Ft int
 .Fn uvm_map "vm_map_t map" "vaddr_t *startp" "vsize_t size" "struct uvm_object *uobj" "voff_t uoffset" "uvm_flag_t flags"
 .Ft int
-.Fn uvm_map_pageable "vm_map_t map" "vaddr_t start" "vaddr_t end" "boolean_t new_pageable"
+.Fn uvm_map_pageable "vm_map_t map" "vaddr_t start" "vaddr_t end" "boolean_t new_pageable" "int lockflags"
 .Ft boolean_t
 .Fn uvm_map_checkprot "vm_map_t map" "vaddr_t start" "vaddr_t end" "vm_prot_t protection"
 .Ft int
