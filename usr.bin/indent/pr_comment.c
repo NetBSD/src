@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pr_comment.c	5.12 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: pr_comment.c,v 1.2 1993/08/01 18:14:28 mycroft Exp $";
+static char rcsid[] = "$Id: pr_comment.c,v 1.3 1993/08/07 06:56:51 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -112,10 +112,10 @@ pr_comment()
 	ps.com_col = 1;
     }
     else {
-	if (*buf_ptr == '-' || *buf_ptr == '*') {
-	    ps.box_com = true;	/* a comment with a '-' or '*' immediately
-				 * after the /* is assumed to be a boxed
-				 * comment */
+	if (*buf_ptr == '-' || *buf_ptr == '*' || *buf_ptr == '\n') {
+	    ps.box_com = true;	/* a comment with a '-', '*' or newline
+				 * immediately after the /* is assumed to be
+				 * a boxed comment */
 	    break_delim = 0;
 	}
 	if ( /* ps.bl_line && */ (s_lab == e_lab) && (s_code == e_code)) {
