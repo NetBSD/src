@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2004/08/11 11:45:26 sekiya Exp $
+#	$NetBSD: Makefile,v 1.2 2005/01/14 08:17:49 skrll Exp $
 
 PROG=	ip30boot
 
@@ -49,20 +49,20 @@ CLEANFILES+= vers.c
 
 ### find out what to use for libkern
 KERN_AS=	library
-KERNMISCMAKEFLAGS+=	LD="${LD} -m elf64bmip" RANLIB="true"
+KERNMISCMAKEFLAGS+=	LD="${LD} -m elf64btsmip" RANLIB="true"
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN=	${KERNLIB}
 
 ### find out what to use for libz
 Z_AS=		library
-ZMISCMAKEFLAGS+=	LD="${LD} -m elf64bmip" RANLIB="true"
+ZMISCMAKEFLAGS+=	LD="${LD} -m elf64btsmip" RANLIB="true"
 .include "${S}/lib/libz/Makefile.inc"
 LIBZ=		${ZLIB}
 
 ### find out what to use for libsa
 SA_AS=		library
 SAMISCMAKEFLAGS+=	SA_USE_LOADFILE=yes SA_USE_CREAD=yes \
-			LD="${LD} -m elf64bmip" RANLIB="true"
+			LD="${LD} -m elf64btsmip" RANLIB="true"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
@@ -78,7 +78,7 @@ CLEANFILES+= machine mips
 LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 
 ip30boot: ${OBJS} ${LIBS}
-	${LD} -m elf64bmip -Map boot.map -x -Ttext ${LOAD_ADDRESS_IP30} \
+	${LD} -m elf64btsmip -Map boot.map -x -Ttext ${LOAD_ADDRESS_IP30} \
 		${LDBUG} -e start -o ip30boot ${OBJS} ${LIBS}
 
 .include <bsd.prog.mk>
