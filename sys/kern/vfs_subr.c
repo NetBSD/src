@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.128.2.1 2000/07/03 17:36:02 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.128.2.2 2000/07/04 16:05:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -492,7 +492,7 @@ getnewvnode(tag, mp, vops, vpp)
 			simple_unlock(&vnode_free_list_slock);
 			if (mp && error != EDEADLK)
 				vfs_unbusy(mp);
-			tablefull("vnode");
+			tablefull("vnode", "increase kern.maxvnodes or NVNODE");
 			*vpp = 0;
 			return (ENFILE);
 		}
