@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp1.S,v 1.1 2002/07/11 14:23:05 scw Exp $	*/
+/*	$NetBSD: __sigtramp1.S,v 1.2 2002/07/11 17:41:40 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  * and the kernel builds the sigcontext structure on our stack,
  * we simply use the current SP (r15) as the sigreturn14 arg.
  */
-ENTRY_NOPROFILE(__sigtramp_sigcontext_t)
+ENTRY_NOPROFILE(__sigtramp_sigcontext_1)
 	or	r15, r63, r2
 	SYSTRAP(__sigreturn14)
 	SYSTRAP(exit)
