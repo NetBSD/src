@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.116 1999/11/13 00:32:18 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.117 2000/06/25 13:26:26 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -98,8 +98,6 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
-#include <vm/vm_prot.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm.h>
 

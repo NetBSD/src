@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.125 2000/05/02 00:00:00 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.126 2000/06/25 13:26:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -83,7 +83,6 @@
 #include <dev/audiovar.h>
 
 #include <vm/vm.h>
-#include <vm/vm_prot.h>
 
 #include <machine/endian.h>
 

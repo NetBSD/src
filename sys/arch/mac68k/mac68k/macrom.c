@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.44 1999/06/12 00:21:13 ender Exp $	*/
+/*	$NetBSD: macrom.c,v 1.45 2000/06/25 13:26:23 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -55,9 +55,6 @@
 #include <sys/queue.h>
 
 #include <vm/vm.h>
-#include <vm/vm_prot.h>
-#include <vm/vm_param.h>
-#include <vm/pmap.h>
 
 #include <machine/cpu.h>
 #include <machine/frame.h>

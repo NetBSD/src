@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.170 2000/06/20 12:04:22 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.171 2000/06/25 13:26:24 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -73,8 +73,6 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
-#include <vm/vm_prot.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm.h>
 
