@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.12 1997/04/30 07:02:18 mrg Exp $	*/
+/*	$NetBSD: res_init.c,v 1.12.2.1 1997/05/23 21:14:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -58,7 +58,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "Id: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp";
 #else
-static char rcsid[] = "$NetBSD: res_init.c,v 1.12 1997/04/30 07:02:18 mrg Exp $";
+static char rcsid[] = "$NetBSD: res_init.c,v 1.12.2.1 1997/05/23 21:14:54 lukem Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -136,8 +136,6 @@ res_init()
 	_res.nscount = 1;
 	_res.ndots = 1;
 	_res.pfcode = 0;
-	_res.lookups[0] = 'f';
-	_res.lookups[1] = '\0';
 
 	/* Allow user to override the local domain definition */
 	if ((cp = getenv("LOCALDOMAIN")) != NULL) {
@@ -181,10 +179,6 @@ res_init()
 	 line[sizeof(name) - 1] == '\t'))
 
 	if ((fp = fopen(_PATH_RESCONF, "r")) != NULL) {
-	    _res.lookups[0] = 'b';
-	    _res.lookups[1] = 'f';
-	    _res.lookups[2] = '\0';
-
 	    /* read the config file */
 	    while (fgets(buf, sizeof(buf), fp) != NULL) {
 		/* skip comments */
@@ -206,33 +200,9 @@ res_init()
 		    havesearch = 0;
 		    continue;
 		}
-		/* lookup types */
-		if (!strncmp(buf, "lookup", sizeof("lookup") -1)) {
-		    char *sp = NULL;
-
-		    bzero(_res.lookups, sizeof _res.lookups);
-		    cp = buf + sizeof("lookup") - 1;
-		    for (n = 0;; cp++) {
-		    	    if (n == MAXDNSLUS)
-				    break;
-			    if ((*cp == '\0') || (*cp == '\n')) {
-				    if (sp) {
-					    if (*sp=='y' || *sp=='b' || *sp=='f')
-						    _res.lookups[n++] = *sp;
-					    sp = NULL;
-				    }
-				    break;
-			    } else if ((*cp == ' ') || (*cp == '\t') || (*cp == ',')) {
-				    if (sp) {
-					    if (*sp=='y' || *sp=='b' || *sp=='f')
-						    _res.lookups[n++] = *sp;
-					    sp = NULL;
-				    }
-			    } else if (sp == NULL)
-				    sp = cp;
-		    }
+		/* lookup types; deprecated in favour of nsswitch.conf(5) */
+		if (!strncmp(buf, "lookup", sizeof("lookup") -1))
 		    continue;
-		}
 		/* set search list */
 		if (MATCH(buf, "search")) {
 		    if (haveenv)	/* skip if have from environ */
