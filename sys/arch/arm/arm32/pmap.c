@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.144 2003/10/29 05:47:04 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.145 2003/10/29 05:48:19 mycroft Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.144 2003/10/29 05:47:04 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.145 2003/10/29 05:48:19 mycroft Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -4827,12 +4827,9 @@ pmap_pte_init_xscale(void)
 	/*
 	 * Disable ECC protection of page table access, for now.
 	 */
-	__asm __volatile("mrc p15, 0, %0, c1, c0, 1"
-		: "=r" (auxctl));
+	__asm __volatile("mrc p15, 0, %0, c1, c0, 1" : "=r" (auxctl));
 	auxctl &= ~XSCALE_AUXCTL_P;
-	__asm __volatile("mcr p15, 0, %0, c1, c0, 1"
-		:
-		: "r" (auxctl));
+	__asm __volatile("mcr p15, 0, %0, c1, c0, 1" : : "r" (auxctl));
 }
 
 /*
