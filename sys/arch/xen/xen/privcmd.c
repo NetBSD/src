@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.1 2004/05/07 15:51:04 cl Exp $ */
+/* $NetBSD: privcmd.c,v 1.1.8.1 2005/01/31 17:21:16 bouyer Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.1 2004/05/07 15:51:04 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.1.8.1 2005/01/31 17:21:16 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,8 +82,29 @@ privcmd_ioctl(void *v)
 			: "=a" (error) : "0" (ap->a_data) : "memory" );
 		error = -error;
 		break;
+	case IOCTL_PRIVCMD_INITDOMAIN_EVTCHN:
+		{
+		extern int initdom_ctrlif_domcontroller_port;
+		error = initdom_ctrlif_domcontroller_port;
+		}
+		break;
+	case IOCTL_PRIVCMD_MMAP:
+		/* XXX */
+	case IOCTL_PRIVCMD_MMAPBATCH:
+		/* XXX */
+		error = EOPNOTSUPP;
+		break;
+	case IOCTL_PRIVCMD_GET_MACH2PHYS_START_MFN:
+		{
+		unsigned long *mfn_start = ap->a_data;
+		*mfn_start = HYPERVISOR_shared_info->arch.mfn_to_pfn_start;
+		error = 0;
+		}
+		break;
+	default:
+		error = EINVAL;
 	}
-
+	
 	return error;
 }
 

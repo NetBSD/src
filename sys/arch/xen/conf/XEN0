@@ -1,4 +1,4 @@
-# $NetBSD: XEN0,v 1.1.2.2 2005/01/21 10:23:16 bouyer Exp $
+# $NetBSD: XEN0,v 1.1.2.3 2005/01/31 17:21:16 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -338,3 +338,6 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
+
+#xen devices
+pseudo-device	xenevt

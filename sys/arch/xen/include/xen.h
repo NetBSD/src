@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.9.2.3 2005/01/18 14:44:59 bouyer Exp $	*/
+/*	$NetBSD: xen.h,v 1.9.2.4 2005/01/31 17:21:16 bouyer Exp $	*/
 
 /*
  *
@@ -53,6 +53,8 @@ void	xenconscn_attach(void);
 void	xenmachmem_init(void);
 void	xenprivcmd_init(void);
 void	xenvfr_init(void);
+
+void	xenevt_event(int);
 
 void	idle_block(void);
 

@@ -1,8 +1,9 @@
-#	$NetBSD: majors.xen,v 1.3 2004/04/24 18:24:14 cl Exp $
+#	$NetBSD: majors.xen,v 1.3.6.1 2005/01/31 17:21:16 bouyer Exp $
 #
 # Device majors for Xen
 #
 
+device-major	xenevt		char 141		xenevt
 device-major	xbd		char 142 block 142	xbd
 device-major	xencons		char 143		xencons
 

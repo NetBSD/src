@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.1.2.3 2005/01/21 10:16:08 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.1.2.4 2005/01/31 17:21:16 bouyer Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.1.2.3 2005/01/21 10:16:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.1.2.4 2005/01/31 17:21:16 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -83,7 +83,7 @@ static int pirq_to_irq[NR_PIRQS];
 /* PIRQ needing notify */
 static u_int32_t irq_needs_unmask_notify[NR_IRQS / 32];
 int pirq_interrupt(void *);
-static void pirq_notify(int);
+void pirq_notify(int);
 physdev_op_t physdev_op_notify = {
 	.cmd = PHYSDEVOP_IRQ_UNMASK_NOTIFY,
 };
@@ -423,7 +423,7 @@ pirq_interrupt(void *arg)
 	return ret;
 }
 
-static void
+void
 pirq_notify(int irq)
 {
 
