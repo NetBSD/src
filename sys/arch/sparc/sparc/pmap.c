@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.241 2003/02/18 22:05:08 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.242 2003/02/19 22:27:08 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -164,6 +164,59 @@ int	pmapdebug = 0;
 paddr_t	vm_first_phys = (paddr_t)-1;
 paddr_t	vm_last_phys = 0;
 psize_t vm_num_phys;
+
+/*
+ * Locking:
+ *
+ *	This pmap module uses two types of locks: `normal' (sleep)
+ *	locks and `simple' (spin) locks.  They are used as follows:
+ *
+ *	READ/WRITE SPIN LOCKS
+ *	---------------------
+ *
+ *	* pmap_main_lock - This lock is used to prevent deadlock and/or
+ *	  provide mutex access to the pmap module.  Most operations lock
+ *	  the pmap first, then PV lists as needed.  However, some operations,
+ *	  such as pmap_page_protect(), lock the PV lists before locking
+ *	  the pmaps.  To prevent deadlock, we require a mutex lock on the
+ *	  pmap module if locking in the PV->pmap direction.  This is
+ *	  implemented by acquiring a (shared) read lock on pmap_main_lock
+ *	  if locking pmap->PV and a (exclusive) write lock if locking in
+ *	  the PV->pmap direction.  Since only one thread can hold a write
+ *	  lock at a time, this provides the mutex.
+ *
+ *	SIMPLE LOCKS
+ *	------------
+ *
+ *	* pm_slock (per-pmap) - This lock protects all of the members
+ *	  of the pmap structure itself. Note that in the case of the
+ *	  kernel pmap, interrupts which cause memory allocation *must*
+ *	  be blocked while this lock is asserted.
+ *
+ *	* pv_slock (per-vm_page) - This lock protects the PV list
+ *	  for a specified managed page.
+ *
+ *	All internal functions which operate on a pmap are called
+ *	with the pmap already locked by the caller (which will be
+ *	an interface function).
+ */
+struct lock pmap_main_lock;
+
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#define	PMAP_MAP_TO_HEAD_LOCK() \
+	spinlockmgr(&pmap_main_lock, LK_SHARED, NULL)
+#define	PMAP_MAP_TO_HEAD_UNLOCK() \
+	spinlockmgr(&pmap_main_lock, LK_RELEASE, NULL)
+#define	PMAP_HEAD_TO_MAP_LOCK() \
+	spinlockmgr(&pmap_main_lock, LK_EXCLUSIVE, NULL)
+#define	PMAP_HEAD_TO_MAP_UNLOCK() \
+	spinlockmgr(&pmap_main_lock, LK_RELEASE, NULL)
+#else
+#define	PMAP_MAP_TO_HEAD_LOCK()		/* nothing */
+#define	PMAP_MAP_TO_HEAD_UNLOCK()	/* nothing */
+#define	PMAP_HEAD_TO_MAP_LOCK()		/* nothing */
+#define	PMAP_HEAD_TO_MAP_UNLOCK()	/* nothing */
+#endif /* MULTIPROCESSOR || LOCKDEBUG */
 
 /*
  * Flags in pvlist.pv_flags.  Note that PV_MOD must be 1 and PV_REF must be 2
@@ -461,7 +514,7 @@ static void  mmu_setup4m_L3 __P((int, struct segmap *));
 				int, struct vm_page *, int));
 /*static*/ void pv_changepte4m __P((struct vm_page *, int, int));
 /*static*/ int  pv_syncflags4m __P((struct vm_page *));
-/*static*/ int  pv_link4m __P((struct vm_page *, struct pmap *, vaddr_t, int));
+/*static*/ int  pv_link4m __P((struct vm_page *, struct pmap *, vaddr_t, u_int *));
 /*static*/ void pv_unlink4m __P((struct vm_page *, struct pmap *, vaddr_t));
 #endif
 
@@ -2425,10 +2478,12 @@ pv_changepte4m(pg, bis, bic)
 	pv = VM_MDPAGE_PVHEAD(pg);
 
 	s = splvm();			/* paranoid? */
+	PMAP_HEAD_TO_MAP_LOCK();
+	simple_lock(&pg->mdpage.pv_slock);
 	if (pv->pv_pmap == NULL) {
-		splx(s);
-		return;
+		goto out;
 	}
+
 	for (; pv != NULL; pv = pv->pv_next) {
 		int tpte;
 		pm = pv->pv_pmap;
@@ -2457,6 +2512,10 @@ pv_changepte4m(pg, bis, bic)
 		    &sp->sg_pte[VA_SUN4M_VPG(va)], bic, bis, pm->pm_ctxnum,
 		    PMAP_CPUSET(pm)));
 	}
+
+out:
+	simple_unlock(&pg->mdpage.pv_slock);
+	PMAP_HEAD_TO_MAP_UNLOCK();
 	splx(s);
 }
 
@@ -2481,21 +2540,24 @@ pv_syncflags4m(pg)
 	pv = VM_MDPAGE_PVHEAD(pg);
 
 	s = splvm();			/* paranoid? */
+	PMAP_HEAD_TO_MAP_LOCK();
 	if (pv->pv_pmap == NULL) {	/* paranoid */
-		splx(s);
-		return (0);
+		flags = 0;
+		goto out;
 	}
 
 	simple_lock(&pg->mdpage.pv_slock);
 	flags = pv->pv_flags;
 	for (; pv != NULL; pv = pv->pv_next) {
 		pm = pv->pv_pmap;
+		simple_lock(&pm->pm_lock);
 		va = pv->pv_va;
 		vr = VA_VREG(va);
 		vs = VA_VSEG(va);
 		rp = &pm->pm_regmap[vr];
 		sp = &rp->rg_segmap[vs];
 		if (sp->sg_pte == NULL) {
+			simple_unlock(&pm->pm_lock);
 			continue;
 		}
 
@@ -2535,9 +2597,13 @@ pv_syncflags4m(pg)
 				    PMAP_CPUSET(pm));
 			}
 		}
+		simple_unlock(&pm->pm_lock);
 	}
+
 	VM_MDPAGE_PVHEAD(pg)->pv_flags = flags;
 	simple_unlock(&pg->mdpage.pv_slock);
+out:
+	PMAP_HEAD_TO_MAP_UNLOCK();
 	splx(s);
 	return (flags);
 }
@@ -2582,13 +2648,16 @@ pv_unlink4m(pg, pm, va)
 			 */
 			pv0->pv_pmap = NULL;
 			pv0->pv_flags &= ~(PV_NC|PV_ANC);
-			simple_unlock(&pg->mdpage.pv_slock);
-			return;
+			goto out;
 		}
 	} else {
 		struct pvlist *prev;
 
 		for (prev = pv0;; prev = npv, npv = npv->pv_next) {
+			if (npv == NULL) {
+				printf("pm %p is missing ", pm);
+				goto out;
+			}
 			pmap_stats.ps_unlink_pvsearch++;
 			if (npv->pv_pmap == pm && npv->pv_va == va)
 				break;
@@ -2596,7 +2665,6 @@ pv_unlink4m(pg, pm, va)
 		prev->pv_next = npv->pv_next;
 		pool_put(&pv_pool, npv);
 	}
-	simple_unlock(&pg->mdpage.pv_slock);
 
 	if ((pv0->pv_flags & (PV_NC|PV_ANC)) == PV_ANC) {
 
@@ -2607,7 +2675,7 @@ pv_unlink4m(pg, pm, va)
 		for (npv = pv0->pv_next; npv != NULL; npv = npv->pv_next)
 			if (BADALIAS(va, npv->pv_va) ||
 			    (npv->pv_flags & PV_NC) != 0)
-				return;
+				goto out;
 #ifdef DEBUG
 		if (pmapdebug & PDB_CACHESTUFF)
 			printf(
@@ -2618,25 +2686,28 @@ pv_unlink4m(pg, pm, va)
 		pv0->pv_flags &= ~PV_ANC;
 		pv_changepte4m(pg, SRMMU_PG_C, 0);
 	}
+
+out:
+	simple_unlock(&pg->mdpage.pv_slock);
 }
 
 /*
  * pv_link is the inverse of pv_unlink, and is used in pmap_enter.
- * It returns SRMMU_PG_C if the (new) pvlist says that the address cannot
- * be cached (i.e. its results must be (& ~)'d in.
+ * May turn off the cacheable bit in the pte prototype for the new mapping.
+ * Called with pm locked.
  */
 /*static*/ int
-pv_link4m(pg, pm, va, nc)
+pv_link4m(pg, pm, va, pteprotop)
 	struct vm_page *pg;
 	struct pmap *pm;
 	vaddr_t va;
-	int nc;
+	unsigned int *pteprotop;
 {
 	struct pvlist *pv0, *npv;
-	int ret;
+	int nc = (*pteprotop & SRMMU_PG_C) == 0 ? PV_NC : 0;
+	int error = 0;
 
 	pv0 = VM_MDPAGE_PVHEAD(pg);
-	ret = nc ? SRMMU_PG_C : 0;
 	simple_lock(&pg->mdpage.pv_slock);
 
 	if (pv0->pv_pmap == NULL) {
@@ -2645,60 +2716,64 @@ pv_link4m(pg, pm, va, nc)
 		pv0->pv_next = NULL;
 		pv0->pv_pmap = pm;
 		pv0->pv_va = va;
-		pv0->pv_flags |= nc ? PV_NC : 0;
-		simple_unlock(&pg->mdpage.pv_slock);
-		return (ret);
+		pv0->pv_flags |= nc;
+		goto out;
 	}
-
-	/*
-	 * Before entering the new mapping, see if
-	 * it will cause old mappings to become aliased
-	 * and thus need to be `discached'.
-	 */
 
 	pmap_stats.ps_enter_secondpv++;
-	if ((pv0->pv_flags & PV_ANC) != 0) {
-		/* already uncached, just stay that way */
-		ret = SRMMU_PG_C;
-	} else {
-		for (npv = pv0; npv != NULL; npv = npv->pv_next) {
-			if ((npv->pv_flags & PV_NC) != 0) {
-				ret = SRMMU_PG_C;
-#ifdef DEBUG
-				/* Check currently illegal condition */
-				if (nc == 0)
-					printf("pv_link: proc %s, va=0x%lx: "
-				"unexpected uncached mapping at 0x%lx\n",
-					    curproc ? curproc->p_comm : "--",
-					    va, npv->pv_va);
-#endif
-			}
-			if (BADALIAS(va, npv->pv_va)) {
-#ifdef DEBUG
-				if (pmapdebug & PDB_CACHESTUFF)
-					printf(
-			"pv_link: badalias: proc %s, 0x%lx<=>0x%lx, pg %p\n",
-					curproc ? curproc->p_comm : "--",
-					va, npv->pv_va, pg);
-#endif
-				/* Mark list head `uncached due to aliases' */
-				pv0->pv_flags |= PV_ANC;
-				pv_changepte4m(pg, 0, ret = SRMMU_PG_C);
-				break;
-			}
-		}
-	}
 
 	npv = pool_get(&pv_pool, PR_NOWAIT);
-	if (npv == NULL)
-		panic("pv_link: pv_pool exhausted");
+	if (npv == NULL) {
+		error = ENOMEM;
+		goto out;
+	}
 	npv->pv_next = pv0->pv_next;
 	npv->pv_pmap = pm;
 	npv->pv_va = va;
-	npv->pv_flags = nc ? PV_NC : 0;
+	npv->pv_flags = nc;
 	pv0->pv_next = npv;
+
+	/*
+	 * See if the new mapping will cause old mappings to
+	 * become aliased and thus need to be `discached'.
+	 */
+	if ((pv0->pv_flags & PV_ANC) != 0) {
+		/* already uncached, just stay that way */
+		*pteprotop &= ~SRMMU_PG_C;
+		goto out;
+	}
+
+	for (npv = pv0; npv != NULL; npv = npv->pv_next) {
+		if ((npv->pv_flags & PV_NC) != 0) {
+			*pteprotop &= ~SRMMU_PG_C;
+#ifdef DEBUG
+			/* Check currently illegal condition */
+			if (nc == 0)
+				printf("pv_link: proc %s, va=0x%lx: "
+				"unexpected uncached mapping at 0x%lx\n",
+				    curproc ? curproc->p_comm : "--",
+				    va, npv->pv_va);
+#endif
+		}
+		if (BADALIAS(va, npv->pv_va)) {
+#ifdef DEBUG
+			if (pmapdebug & PDB_CACHESTUFF)
+				printf(
+			"pv_link: badalias: proc %s, 0x%lx<=>0x%lx, pg %p\n",
+				curproc ? curproc->p_comm : "--",
+				va, npv->pv_va, pg);
+#endif
+			/* Mark list head `uncached due to aliases' */
+			pv0->pv_flags |= PV_ANC;
+			pv_changepte4m(pg, 0, SRMMU_PG_C);
+			*pteprotop &= ~SRMMU_PG_C;
+			break;
+		}
+	}
+
+out:
 	simple_unlock(&pg->mdpage.pv_slock);
-	return (ret);
+	return (0);
 }
 #endif
 
@@ -2826,6 +2901,12 @@ pmap_bootstrap(nctx, nregion, nsegment)
 #endif
 
 	/*
+	 * Initialize the locks.
+	 */
+	spinlockinit(&pmap_main_lock, "pmaplk", 0);
+	simple_lock_init(&kernel_pmap_store.pm_lock);
+
+	/*
 	 * Grab physical memory list.
 	 */
 	get_phys_mem();
@@ -2941,7 +3022,6 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	 * Intialize the kernel pmap.
 	 */
 	/* kernel_pmap_store.pm_ctxnum = 0; */
-	simple_lock_init(&kernel_pmap_store.pm_lock);
 	kernel_pmap_store.pm_refcount = 1;
 #if defined(SUN4_MMU3L)
 	TAILQ_INIT(&kernel_pmap_store.pm_reglist);
@@ -3292,7 +3372,6 @@ pmap_bootstrap4m(void)
 	 * Intialize the kernel pmap.
 	 */
 	/* kernel_pmap_store.pm_ctxnum = 0; */
-	simple_lock_init(&kernel_pmap_store.pm_lock);
 	kernel_pmap_store.pm_refcount = 1;
 
 	/*
@@ -4084,10 +4163,40 @@ void
 pmap_reference(pm)
 	struct pmap *pm;
 {
+	int s = splvm();
 	simple_lock(&pm->pm_lock);
 	pm->pm_refcount++;
 	simple_unlock(&pm->pm_lock);
+	splx(s);
 }
+
+#if defined(SUN4M) || defined(SUN4D)
+/*
+ * SRMMU helper to deallocate level 1 & 2 page tables.
+ */
+static void pgt_lvl23_remove4m(struct pmap *pm, struct regmap *rp,
+				struct segmap *sp, int vr, int vs)
+{
+	/* Invalidate level 2 PTP entry */
+	setpgt4m(&rp->rg_seg_ptps[vs], SRMMU_TEINVALID);
+	pool_put(&L23_pool, sp->sg_pte);
+	sp->sg_pte = NULL;
+
+	/* If segment is now empty, remove level 1 pagetable as well */
+	if (--rp->rg_nsegmap == 0) {
+		int n = 0;
+#ifdef MULTIPROCESSOR
+		/* Invalidate level 1 PTP entries on all CPUs */
+		for (; n < ncpu; n++)
+#endif
+			setpgt4m(&pm->pm_reg_ptps[n][vr], SRMMU_TEINVALID);
+
+		free(rp->rg_segmap, M_VMPMAP);
+		rp->rg_segmap = NULL;
+		pool_put(&L23_pool, rp->rg_seg_ptps);
+	}
+}
+#endif /* SUN4M || SUN4D */
 
 /*
  * Remove the given range of mapping entries.
@@ -4126,6 +4235,7 @@ pmap_remove(pm, va, endva)
 
 	ctx = getcontext();
 	s = splvm();		/* XXX conservative */
+	PMAP_MAP_TO_HEAD_LOCK();
 	simple_lock(&pm->pm_lock);
 	for (; va < endva; va = nva) {
 		/* do one virtual segment at a time */
@@ -4138,6 +4248,7 @@ pmap_remove(pm, va, endva)
 			(*rm)(pm, va, nva, vr, vs);
 	}
 	simple_unlock(&pm->pm_lock);
+	PMAP_MAP_TO_HEAD_UNLOCK();
 	splx(s);
 	setcontext(ctx);
 }
@@ -4566,38 +4677,8 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 	 * If the segment is all gone, and the context is loaded, give
 	 * the segment back.
 	 */
-	if ((sp->sg_npte = nleft) == 0) {
-		va = VSTOVA(vr,vs);
-
-		/* Paranoia? */
-		if (pm->pm_ctx)
-			tlb_flush_segment(va, pm->pm_ctxnum, PMAP_CPUSET(pm));
-		setpgt4m_va(va, &rp->rg_seg_ptps[vs], SRMMU_TEINVALID, 0,
-				pm->pm_ctxnum, PMAP_CPUSET(pm));
-		sp->sg_pte = NULL;
-		pool_put(&L23_pool, pte0);
-
-		if (--rp->rg_nsegmap == 0) {
-			int n;
-			
-			/* Paranoia? */
-			if (pm->pm_ctx)
-				tlb_flush_region(va, pm->pm_ctxnum,
-				    PMAP_CPUSET(pm));
-#ifdef MULTIPROCESSOR
-			for (n = 0; n < ncpu; n++)
-#else
-			n = 0;
-#endif
-			{
-				setpgt4m(&pm->pm_reg_ptps[n][vr],
-					 SRMMU_TEINVALID);
-			}
-			free(rp->rg_segmap, M_VMPMAP);
-			rp->rg_segmap = NULL;
-			pool_put(&L23_pool, rp->rg_seg_ptps);
-		}
-	}
+	if ((sp->sg_npte = nleft) == 0)
+		pgt_lvl23_remove4m(pm, rp, sp, vr, vs);
 }
 #endif /* SUN4M || SUN4D */
 
@@ -5023,13 +5104,12 @@ pmap_page_protect4m(pg, prot)
 	/* This pv head will become empty, so clear caching state flags */
 	flags = pv->pv_flags & ~(PV_NC|PV_ANC);
 
+	PMAP_HEAD_TO_MAP_LOCK();
 	simple_lock(&pg->mdpage.pv_slock);
-	while (pv != NULL) {
 
+	while (pv != NULL) {
 		pm = pv->pv_pmap;
-		if (simple_lock_try(&pm->pm_lock) == 0) {
-			panic("pm %p: FIX LOCKING\n", pm);
-		}
+		simple_lock(&pm->pm_lock);
 		va = pv->pv_va;
 		vr = VA_VREG(va);
 		vs = VA_VSEG(va);
@@ -5058,42 +5138,11 @@ pmap_page_protect4m(pg, prot)
 
 		flags |= MR4M(tpte);
 
-		if (nleft == 0 && pm != pmap_kernel()) {
+		if (nleft == 0 && pm != pmap_kernel())
 			/*
 			 * Entire user mode segment is gone
 			 */
-			if (pm->pm_ctx)
-				tlb_flush_segment(va, pm->pm_ctxnum,
-				    PMAP_CPUSET(pm));
-			setpgt4m_va(va, &rp->rg_seg_ptps[vs], SRMMU_TEINVALID,
-			    0, pm->pm_ctxnum, PMAP_CPUSET(pm));
-			pool_put(&L23_pool, sp->sg_pte);
-			sp->sg_pte = NULL;
-
-			if (--rp->rg_nsegmap == 0) {
-				int n;
-				if (pm->pm_ctx)
-					tlb_flush_region(va, pm->pm_ctxnum,
-					   PMAP_CPUSET(pm));
-
-				/*
-				 * Replicate segment de-allocation in each
-				 * CPU's region table.
-				 */
-#ifdef MULTIPROCESSOR
-				for (n = 0; n < ncpu; n++)
-#else
-				n = 0;
-#endif
-				{
-					setpgt4m(&pm->pm_reg_ptps[n][vr],
-						 SRMMU_TEINVALID);
-				}
-				free(rp->rg_segmap, M_VMPMAP);
-				rp->rg_segmap = NULL;
-				pool_put(&L23_pool, rp->rg_seg_ptps);
-			}
-		}
+			pgt_lvl23_remove4m(pm, rp, sp, vr, vs);
 
 		npv = pv->pv_next;
 		if (pv != VM_MDPAGE_PVHEAD(pg))
@@ -5102,6 +5151,7 @@ pmap_page_protect4m(pg, prot)
 		pv = npv;
 	}
 	simple_unlock(&pg->mdpage.pv_slock);
+	PMAP_HEAD_TO_MAP_UNLOCK();
 
 	/* Finally, update pv head */
 	VM_MDPAGE_PVHEAD(pg)->pv_pmap = NULL;
@@ -5930,6 +5980,7 @@ pmap_enk4m(pm, va, prot, flags, pg, pteproto)
 	int vr, vs, tpte, s;
 	struct regmap *rp;
 	struct segmap *sp;
+	int error = 0;
 
 #ifdef DEBUG
 	if (va < KERNBASE)
@@ -5941,6 +5992,8 @@ pmap_enk4m(pm, va, prot, flags, pg, pteproto)
 	sp = &rp->rg_segmap[vs];
 
 	s = splvm();		/* XXX way too conservative */
+	PMAP_MAP_TO_HEAD_LOCK();
+	simple_lock(&pm->pm_lock);
 
 	if (rp->rg_seg_ptps == NULL) /* enter new region */
 		panic("pmap_enk4m: missing kernel region table for va 0x%lx",va);
@@ -5952,6 +6005,8 @@ pmap_enk4m(pm, va, prot, flags, pg, pteproto)
 
 		if ((tpte & SRMMU_PPNMASK) == (pteproto & SRMMU_PPNMASK)) {
 			/* just changing protection and/or wiring */
+			simple_unlock(&pm->pm_lock);
+			PMAP_MAP_TO_HEAD_UNLOCK();
 			splx(s);
 			pmap_changeprot4m(pm, va, prot,
 					  (flags & PMAP_WIRED) != 0);
@@ -5992,18 +6047,19 @@ printf("pmap_enk4m: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x, "
 	/*
 	 * If the new mapping is for a managed PA, enter into pvlist.
 	 */
-	if (pg != NULL)
-	        pteproto &= ~(pv_link4m(pg, pm, va, (pteproto & SRMMU_PG_C) == 0));
-
-#ifdef DEBUG
-	if (sp->sg_pte == NULL) /* If no existing pagetable */
-		panic("pmap_enk4m: missing segment table for va 0x%lx",va);
-#endif
+	if (pg != NULL && (error = pv_link4m(pg, pm, va, &pteproto) != 0)) {
+		sp->sg_npte--;
+		if ((flags & PMAP_CANFAIL) != 0)
+			goto out;
+		panic("pmap_enter: cannot allocate PV entry");
+	}
 
 	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
-
+out:
+	simple_unlock(&pm->pm_lock);
+	PMAP_MAP_TO_HEAD_UNLOCK();
 	splx(s);
-	return (0);
+	return (error);
 }
 
 /* enter new (or change existing) user mapping */
@@ -6030,21 +6086,21 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 	vs = VA_VSEG(va);
 	rp = &pm->pm_regmap[vr];
 	s = splvm();			/* XXX conservative */
+	PMAP_MAP_TO_HEAD_LOCK();
+	simple_lock(&pm->pm_lock);
 
 	if (rp->rg_segmap == NULL) {
 		/* definitely a new mapping */
 		int size = NSEGRG * sizeof (struct segmap);
 		int mflag = M_NOWAIT;
 
-	rretry:
 		sp = (struct segmap *)malloc((u_long)size, M_VMPMAP, mflag);
 		if (sp == NULL) {
 			if ((flags & PMAP_CANFAIL) != 0) {
 				error = ENOMEM;
 				goto out;
 			}
-			mflag = M_WAITOK;
-			goto rretry;
+			panic("pmap_enter: cannot allocate segmap");
 		}
 #ifdef DEBUG
 		if (rp->rg_segmap != NULL)
@@ -6060,20 +6116,14 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 		int i, *ptd;
 		int mflag = PR_NOWAIT;
 
-	rgretry:
 		ptd = pool_get(&L23_pool, mflag);
 		if (ptd == NULL) {
 			if ((flags & PMAP_CANFAIL) != 0) {
 				error = ENOMEM;
 				goto out;
 			}
-			mflag = PR_WAITOK;
-			goto rgretry;
+			panic("pmap_enter: cannot allocate PTP table");
 		}
-#ifdef DEBUG
-		if (rp->rg_seg_ptps != NULL)
-			panic("pmap_enu4m: segment table fill during sleep");
-#endif
 
 		rp->rg_seg_ptps = ptd;
 		for (i = 0; i < SRMMU_L2SIZE; i++)
@@ -6099,20 +6149,14 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 		int i;
 		int mflag = PR_NOWAIT;
 
-	sretry:
 		pte = pool_get(&L23_pool, mflag);
 		if (pte == NULL) {
 			if ((flags & PMAP_CANFAIL) != 0) {
 				error = ENOMEM;
 				goto out;
 			}
-			mflag = PR_WAITOK;
-			goto sretry;
+			panic("pmap_enter: cannot allocate PTE table");
 		}
-#ifdef DEBUG
-		if (sp->sg_pte != NULL)
-			panic("pmap_enter: pte filled during sleep");
-#endif
 
 		sp->sg_pte = pte;
 		sp->sg_npte = 1;
@@ -6135,6 +6179,8 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 			if ((tpte & SRMMU_PPNMASK) ==
 			    (pteproto & SRMMU_PPNMASK)) {
 				/* just changing prot and/or wiring */
+				simple_unlock(&pm->pm_lock);
+				PMAP_MAP_TO_HEAD_UNLOCK();
 				splx(s);
 				/* caller should call this directly: */
 				pmap_changeprot4m(pm, va, prot,
@@ -6189,8 +6235,15 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 		}
 	}
 
-	if (pg != NULL)
-	        pteproto &= ~(pv_link4m(pg, pm, va, (pteproto & SRMMU_PG_C) == 0));
+	if (pg != NULL && (error = pv_link4m(pg, pm, va, &pteproto) != 0)) {
+		if (--sp->sg_npte == 0)
+			/* Sigh, undo pgt allocations */
+			pgt_lvl23_remove4m(pm, rp, sp, vr, vs);
+
+		if ((flags & PMAP_CANFAIL) != 0)
+			goto out;
+		panic("pmap_enter: cannot allocate PV entry");
+	}
 
 	/*
 	 * Update PTEs, flush TLB as necessary.
@@ -6198,6 +6251,8 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
 
 out:
+	simple_unlock(&pm->pm_lock);
+	PMAP_MAP_TO_HEAD_UNLOCK();
 	splx(s);
 	return (error);
 }
@@ -6212,6 +6267,7 @@ pmap_kenter_pa4m(va, pa, prot)
 	struct regmap *rp;
 	struct segmap *sp;
 	int pteproto, vr, vs, tpte;
+	int s;
 
 	/* Initialise pteproto with cache bit */
 	pteproto = (pa & PMAP_NC) == 0 ? SRMMU_PG_C : 0;
@@ -6227,6 +6283,7 @@ pmap_kenter_pa4m(va, pa, prot)
 	rp = &pm->pm_regmap[vr];
 	sp = &rp->rg_segmap[vs];
 
+	s = splvm();
 	simple_lock(&pm->pm_lock);
 	tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
 	KASSERT((tpte & SRMMU_TETYPE) != SRMMU_TEPTE);
@@ -6234,6 +6291,7 @@ pmap_kenter_pa4m(va, pa, prot)
 	sp->sg_npte++;
 	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
 	simple_unlock(&pm->pm_lock);
+	splx(s);
 }
 
 void
@@ -6248,8 +6306,10 @@ pmap_kremove4m(va, len)
 	int vr, vs;
 	int tpte, perpage, npg;
 	int nleft;
+	int s;
 
 	endva = va + len;
+	s = splvm();
 	simple_lock(&pm->pm_lock);
 	for (; va < endva; va = nva) {
 		/* do one virtual segment at a time */
@@ -6305,6 +6365,7 @@ pmap_kremove4m(va, len)
 		sp->sg_npte = nleft;
 	}
 	simple_unlock(&pm->pm_lock);
+	splx(s);
 }
 
 #endif /* SUN4M || SUN4D */
@@ -6408,13 +6469,16 @@ pmap_extract4m(pm, va, pap)
 	struct regmap *rm;
 	struct segmap *sm;
 	int pte;
+	int s, v = FALSE;
 
+	s = splvm();
+	simple_lock(&pm->pm_lock);
 	if ((rm = pm->pm_regmap) == NULL) {
 #ifdef DEBUG
 		if (pmapdebug & PDB_FOLLOW)
 			printf("pmap_extract: no regmap entry\n");
 #endif
-		return (FALSE);
+		goto out;
 	}
 
 	rm += VA_VREG(va);
@@ -6423,7 +6487,7 @@ pmap_extract4m(pm, va, pap)
 		if (pmapdebug & PDB_FOLLOW)
 			printf("pmap_extract: no segmap\n");
 #endif
-		return (FALSE);
+		goto out;
 	}
 
 	sm += VA_VSEG(va);
@@ -6432,7 +6496,7 @@ pmap_extract4m(pm, va, pap)
 		if (pmapdebug & PDB_FOLLOW)
 			printf("pmap_extract: no ptes\n");
 #endif
-		return (FALSE);
+		goto out;
 	}
 
 	pte = sm->sg_pte[VA_SUN4M_VPG(va)];
@@ -6442,7 +6506,7 @@ pmap_extract4m(pm, va, pap)
 			printf("pmap_extract: invalid pte of type %d\n",
 			       pte & SRMMU_TETYPE);
 #endif
-		return (FALSE);
+		goto out;
 	}
 #ifdef DIAGNOSTIC
 	if (sm->sg_npte <= 0)
@@ -6452,7 +6516,12 @@ pmap_extract4m(pm, va, pap)
 	if (pap != NULL)
 		*pap = ptoa((pte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT) |
 		    VA_OFF(va);
-	return (TRUE);
+
+	v = TRUE;
+out:
+	simple_unlock(&pm->pm_lock);
+	splx(s);
+	return (v);
 }
 #endif /* sun4m */
 
