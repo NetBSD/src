@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.39 2004/11/13 19:17:50 christos Exp $	*/
+/*	$NetBSD: igmp.c,v 1.40 2005/02/02 21:41:55 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.39 2004/11/13 19:17:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.40 2005/02/02 21:41:55 perry Exp $");
 
 #include "opt_mrouting.h"
 
@@ -70,9 +70,9 @@ struct igmpstat igmpstat;
 int igmp_timers_are_running;
 static LIST_HEAD(, router_info) rti_head = LIST_HEAD_INITIALIZER(rti_head);
 
-void igmp_sendpkt __P((struct in_multi *, int));
-static int rti_fill __P((struct in_multi *));
-static struct router_info *rti_find __P((struct ifnet *));
+void igmp_sendpkt(struct in_multi *, int);
+static int rti_fill(struct in_multi *);
+static struct router_info *rti_find(struct ifnet *);
 static void rti_delete(struct ifnet *);
 
 static int
