@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.2 1998/07/07 03:05:02 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.3 1998/08/13 02:10:42 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -114,7 +114,8 @@ int sbus_flush __P((struct sbus_softc *));
 
 static bus_space_tag_t sbus_alloc_bustag __P((struct sbus_softc *));
 static bus_dma_tag_t sbus_alloc_dmatag __P((struct sbus_softc *));
-static int sbus_get_intr __P((struct sbus_softc *, int, int *));
+static int sbus_get_intr __P((struct sbus_softc *, int,
+			      struct sbus_intr **, int *));
 static int sbus_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 			      int, bus_space_handle_t *));
 static int _sbus_bus_map __P((
@@ -123,7 +124,7 @@ static int _sbus_bus_map __P((
 		bus_addr_t,		/*offset*/
 		bus_size_t,		/*size*/
 		int,			/*flags*/
-		vm_offset_t,		/*preferred virtual address */
+		vaddr_t,		/*preferred virtual address */
 		bus_space_handle_t *));
 static void *sbus_intr_establish __P((
 		bus_space_tag_t,
@@ -147,8 +148,8 @@ extern struct cfdriver sbus_cd;
 /*
  * DVMA routines
  */
-void sbus_enter __P((struct sbus_softc *, vm_offset_t, int64_t, int));
-void sbus_remove __P((struct sbus_softc *, vm_offset_t, int));
+void sbus_enter __P((struct sbus_softc *, vaddr_t, int64_t, int));
+void sbus_remove __P((struct sbus_softc *, vaddr_t, int));
 int sbus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
 			  bus_size_t, struct proc *, int));
 void sbus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
@@ -204,14 +205,15 @@ sbus_print(args, busname)
 	const char *busname;
 {
 	struct sbus_attach_args *sa = args;
+	int i;
 
 	if (busname)
 		printf("%s at %s", sa->sa_name, busname);
 	printf(" slot %d offset 0x%x", sa->sa_slot, sa->sa_offset);
-	if (sa->sa_pri) {
-		int level = sa->sa_pri;
+	for (i=0; i<sa->sa_nintr; i++) {
+		struct sbus_intr *sbi = &sa->sa_intr[i];
 
-		printf(" vector %x ipl %d", (int)INTVEC(level), (int)INTLEV(level));
+		printf(" vector %x ipl %d", (int)sbi->sbi_vec, (int)INTLEV(sbi->sbi_pri));
 	}
 	return (UNCONF);
 }
@@ -315,7 +317,7 @@ sbus_attach(parent, self, aux)
 	 */
 	{
 		extern int64_t		*iotsb;
-		extern vm_offset_t	iotsbp;
+		extern paddr_t		iotsbp;
 		extern int		iotsbsize;
 		
 		sc->sc_tsbsize = iotsbsize;
@@ -342,7 +344,7 @@ sbus_attach(parent, self, aux)
 		tsb = sc->sc_sysio->sys_iommu.iommu_tsb;
 		printf("iommu cr=%x:%x tsb=%x:%x\n", (long)(cr>>32), (long)cr, (long)(tsb>>32), (long)tsb);
 		printf("sysio base %p phys %p TSB base %p phys %p", 
-		       (long)sc->sc_sysio, (long)pmap_extract(pmap_kernel(), (vm_offset_t)sc->sc_sysio), 
+		       (long)sc->sc_sysio, (long)pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_sysio), 
 		       (long)sc->sc_tsb, (long)sc->sc_ptsb);
 		delay(1000000); /* 1 s */
 	}
@@ -351,7 +353,7 @@ sbus_attach(parent, self, aux)
 	/*
 	 * Initialize streaming buffer.
 	 */
-	sc->sc_flushpa = pmap_extract(pmap_kernel(), &sc->sc_flush);
+	sc->sc_flushpa = pmap_extract(pmap_kernel(), (vaddr_t)&sc->sc_flush);
 #if 0
 	sc->sc_sysio->sys_strbuf.strbuf_ctl = STRBUF_EN; /* Enable diagnostics mode? */
 #else
@@ -374,6 +376,7 @@ sbus_attach(parent, self, aux)
 			continue;
 		}
 		(void) config_found(&sc->sc_dev, (void *)&sa, sbus_print);
+		sbus_destroy_attach_args(&sa);
 	}
 }
 
@@ -386,39 +389,71 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, bp, sa)
 	struct bootpath		*bp;
 	struct sbus_attach_args	*sa;
 {
-	struct	sbus_reg romreg;
-	int	base;
+	/*struct	sbus_reg sbusreg;*/
+	/*int	base;*/
 	int	error;
+	int n;
 
 	bzero(sa, sizeof(struct sbus_attach_args));
-	sa->sa_name = getpropstring(node, "name");
+	error = getpropA(node, "name", 1, &n, (void **)&sa->sa_name);
+	if (error != 0)
+		return (error);
+	sa->sa_name[n] = '\0';
+
 	sa->sa_bustag = bustag;
 	sa->sa_dmatag = dmatag;
 	sa->sa_node = node;
 	sa->sa_bp = bp;
 
-	if ((error = getprop_reg1(node, &romreg)) != 0)
-		return (error);
-
-	/* We pass only the first "reg" property */
-	base = (int)romreg.rr_paddr;
-	if (SBUS_ABS(base)) {
-		sa->sa_slot = SBUS_ABS_TO_SLOT(base);
-		sa->sa_offset = SBUS_ABS_TO_OFFSET(base);
-	} else {
-		sa->sa_slot = romreg.rr_iospace;
-		sa->sa_offset = base;
+	error = getpropA(node, "reg", sizeof(struct sbus_reg),
+			 &sa->sa_nreg, (void **)&sa->sa_reg);
+	if (error != 0) {
+		char buf[32];
+		if (error != ENOENT ||
+		    !node_has_property(node, "device_type") ||
+		    strcmp(getpropstringA(node, "device_type", buf),
+			   "hierarchical") != 0)
+			return (error);
 	}
-	sa->sa_size = romreg.rr_len;
+	for (n = 0; n < sa->sa_nreg; n++) {
+		/* Convert to relative addressing, if necessary */
+		u_int32_t base = sa->sa_reg[n].sbr_offset;
+		if (SBUS_ABS(base)) {
+			sa->sa_reg[n].sbr_slot = SBUS_ABS_TO_SLOT(base);
+			sa->sa_reg[n].sbr_offset = SBUS_ABS_TO_OFFSET(base);
+		}
+	}
 
-	if ((error = sbus_get_intr(sc, node, &sa->sa_pri)) != 0)
+	if ((error = sbus_get_intr(sc, node, &sa->sa_intr, &sa->sa_nintr)) != 0)
 		return (error);
 
-	if ((error = getprop_address1(node, &sa->sa_promvaddr)) != 0)
+	error = getpropA(node, "address", sizeof(u_int32_t),
+			 &sa->sa_npromvaddrs, (void **)&sa->sa_promvaddrs);
+	if (error != 0 && error != ENOENT)
 		return (error);
 
 	return (0);
 }
+
+void
+sbus_destroy_attach_args(sa)
+	struct sbus_attach_args	*sa;
+{
+	if (sa->sa_name != NULL)
+		free(sa->sa_name, M_DEVBUF);
+
+	if (sa->sa_nreg != 0)
+		free(sa->sa_reg, M_DEVBUF);
+
+	if (sa->sa_intr)
+		free(sa->sa_intr, M_DEVBUF);
+
+	if (sa->sa_promvaddrs)
+		free(sa->sa_promvaddrs, M_DEVBUF);
+
+	bzero(sa, sizeof(struct sbus_attach_args));/*DEBUG*/
+}
+
 
 int
 _sbus_bus_map(t, btype, offset, size, flags, vaddr, hp)
@@ -427,7 +462,7 @@ _sbus_bus_map(t, btype, offset, size, flags, vaddr, hp)
 	bus_addr_t offset;
 	bus_size_t size;
 	int	flags;
-	vm_offset_t vaddr;
+	vaddr_t vaddr;
 	bus_space_handle_t *hp;
 {
 	struct sbus_softc *sc = t->cookie;
@@ -557,7 +592,7 @@ sbusreset(sbus)
 void
 sbus_enter(sc, va, pa, flags)
 	struct sbus_softc *sc;
-	vm_offset_t va;
+	vaddr_t va;
 	int64_t pa;
 	int flags;
 {
@@ -568,7 +603,7 @@ sbus_enter(sc, va, pa, flags)
 		panic("sbus_enter: va 0x%x not in DVMA space",va);
 #endif
 
-	tte = MAKEIOTTE(pa, flags&BUS_DMA_WRITE, flags&BUS_DMA_CACHE, 
+	tte = MAKEIOTTE(pa, !(flags&BUS_DMA_NOWRITE), !(flags&BUS_DMA_NOCACHE), 
 			!(flags&BUS_DMA_COHERENT));
 	
 	/* Is the streamcache flush really needed? */
@@ -601,7 +636,7 @@ sbus_enter(sc, va, pa, flags)
 void
 sbus_remove(sc, va, len)
 	struct sbus_softc *sc;
-	vm_offset_t va;
+	vaddr_t va;
 	int len;
 {
 
@@ -696,35 +731,52 @@ sbus_flush(sc)
  * Get interrupt attributes for an Sbus device.
  */
 int
-sbus_get_intr(sc, node, ip)
+sbus_get_intr(sc, node, ipp, np)
 	struct sbus_softc *sc;
 	int node;
-	int *ip;
+	struct sbus_intr **ipp;
+	int *np;
 {
-	struct sbus_intr *rip;
 	int *ipl;
-	int n;
+	int i, n, error;
 	char buf[32];
 
 	/*
 	 * The `interrupts' property contains the Sbus interrupt level.
 	 */
 	ipl = NULL;
-	if (getpropA(node, "interrupts", sizeof(int), &n, (void **)&ipl) == 0) {
+	if (getpropA(node, "interrupts", sizeof(int), np, (void **)&ipl) == 0) {
+		/* Change format to an `struct sbus_intr' array */
+		struct sbus_intr *ip;
+		int pri = 0;
+		ip = malloc(*np * sizeof(struct sbus_intr), M_DEVBUF, M_NOWAIT);
+		if (ip == NULL)
+			return (ENOMEM);
 		/* Now things get ugly.  We need to take this value which is
 		 * the interrupt vector number and encode the IPL into it
 		 * somehow. Luckily, the interrupt vector has lots of free
 		 * space and we can easily stuff the IPL in there for a while.  
 		 */
 		getpropstringA(node, "device_type", buf);
-		for (n=0; intrmap[n].in_class; n++) {
-			if (strcmp(intrmap[n].in_class, buf) == 0) {
-				ipl[0] |= INTLEVENCODE(intrmap[n].in_lev);
+		for (i=0; intrmap[i].in_class; i++) {
+			if (strcmp(intrmap[i].in_class, buf) == 0) {
+				pri = INTLEVENCODE(intrmap[i].in_lev);
 				break;
 			}
 		}
-		*ip = ipl[0];
+		for (n = 0; n < *np; n++) {
+			/* 
+			 * We encode vector and priority into sbi_pri so we 
+			 * can pass them as a unit.  This will go away if 
+			 * sbus_establish ever takes an sbus_intr instead 
+			 * of an integer level.
+			 * Stuff the real vector in sbi_vec.
+			 */
+			ip[n].sbi_pri = pri|ipl[n];
+			ip[n].sbi_vec = ipl[n];
+		}
 		free(ipl, M_DEVBUF);
+		*ipp = ip;
 		return (0);
 	}
 	
@@ -734,25 +786,27 @@ sbus_get_intr(sc, node, ip)
 	/*
 	 * Fall back on `intr' property.
 	 */
-	rip = NULL;
-	switch (getpropA(node, "intr", sizeof(*rip), &n, (void **)&rip)) {
+	*ipp = NULL;
+	error = getpropA(node, "intr", sizeof(struct sbus_intr),
+			 np, (void **)ipp);
+	switch (error) {
 	case 0:
-		getpropstringA(node, "device_type", buf);
-		for (n=0; intrmap[n].in_class; n++) {
-			if (strcmp(intrmap[n].in_class, buf) == 0) {
-				rip[0].int_pri |= INTLEVENCODE(intrmap[n].in_lev);
-				break;
-			}
+		for (n = *np; n-- > 0;) {
+			/* 
+			 * Move the interrupt vector into place.
+			 * We could remap the level, but the SBUS priorities 
+			 * are probably good enough.
+			 */
+			(*ipp)[n].sbi_vec = (*ipp)[n].sbi_pri;
+			(*ipp)[n].sbi_pri |= INTLEVENCODE((*ipp)[n].sbi_pri);
 		}
-		*ip = rip[0].int_pri;
-		free(rip, M_DEVBUF);
-		return (0);
+		break;
 	case ENOENT:
-		*ip = 0;
-		return (0);
+		error = 0;
+		break;
 	}
 
-	return (-1);
+	return (error);
 }
 
 
@@ -918,8 +972,8 @@ sbus_dmamap_load(t, map, buf, buflen, p, flags)
 {
 	int err;
 	bus_size_t sgsize;
-	vm_offset_t curaddr;
-	vm_offset_t  dvmaddr, vaddr = (vm_offset_t)buf;
+	paddr_t curaddr;
+	vaddr_t  dvmaddr, vaddr = (vaddr_t)buf;
 	pmap_t pmap;
 	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
 
@@ -944,7 +998,7 @@ sbus_dmamap_load(t, map, buf, buflen, p, flags)
 		/*
 		 * Get the physical address for this page.
 		 */
-		if ((curaddr = (bus_addr_t)pmap_extract(pmap, (vm_offset_t)vaddr)) == NULL) {
+		if ((curaddr = (bus_addr_t)pmap_extract(pmap, (vaddr_t)vaddr)) == NULL) {
 			bus_dmamap_unload(t, map);
 			return (-1);
 		}
@@ -975,7 +1029,7 @@ sbus_dmamap_unload(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
-	vm_offset_t addr;
+	vaddr_t addr;
 	int len;
 	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
 
@@ -1004,7 +1058,7 @@ sbus_dmamap_sync(t, map, offset, len, ops)
 	int ops;
 {
 	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
-	vm_offset_t va = map->dm_segs[0].ds_addr + offset;
+	vaddr_t va = map->dm_segs[0].ds_addr + offset;
 
 
 	/*
@@ -1059,7 +1113,7 @@ sbus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	vm_offset_t curaddr;
+	paddr_t curaddr;
 	bus_addr_t dvmaddr;
 	vm_page_t m;
 	struct pglist *mlist;
@@ -1092,7 +1146,7 @@ sbus_dmamem_free(t, segs, nsegs)
 	bus_dma_segment_t *segs;
 	int nsegs;
 {
-	vm_offset_t addr;
+	vaddr_t addr;
 	int len;
 	int n;
 	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
@@ -1120,17 +1174,17 @@ sbus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	int flags;
 {
 	vm_page_t m;
-	vm_offset_t va;
+	vaddr_t va;
 	bus_addr_t addr;
 	struct pglist *mlist;
 	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
-	int r, cbit;
+	int cbit;
 	int rval;
 
 	/* 
 	 * First have the parent driver allocate some address space in DVMA space.
 	 */
-	if (rval = bus_dmamem_map(t->_parent, segs, nsegs, size, kvap, flags))
+	if ((rval = bus_dmamem_map(t->_parent, segs, nsegs, size, kvap, flags)))
 		return (rval);
 
 	/* 
@@ -1139,12 +1193,12 @@ sbus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	cbit = 0;
 	if (flags & BUS_DMA_COHERENT)	/* Disable vcache */
 		cbit |= PMAP_NVC;
-	if (flags & BUS_DMA_CACHE)	/* sideffects */
+	if (flags & BUS_DMA_NOCACHE)	/* sideffects */
 		cbit |= PMAP_NC;
 	/*
 	 * Now take this and map it both into the CPU and into the IOMMU.
 	 */
-	va = (vm_offset_t)*kvap;
+	va = (vaddr_t)*kvap;
 	mlist = segs[0]._ds_mlist;
 	for (m = mlist->tqh_first; m != NULL; m = m->pageq.tqe_next) {
 
@@ -1180,6 +1234,6 @@ sbus_dmamem_unmap(t, kva, size)
 #endif
 	
 	size = round_page(size);
-	sbus_remove(sc, kva, size);
+	sbus_remove(sc, (vaddr_t)kva, size);
 	bus_dmamem_unmap(t->_parent, kva, size);
 }

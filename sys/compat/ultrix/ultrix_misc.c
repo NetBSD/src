@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.41 1998/08/09 20:37:56 perry Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.42 1998/08/13 02:10:49 eeh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -83,7 +83,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.41 1998/08/09 20:37:56 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.42 1998/08/13 02:10:49 eeh Exp $");
 
 /*
  * SunOS compatibility module.
@@ -577,7 +577,7 @@ ultrix_sys_cacheflush(p, v, retval)
 		syscallarg(int) nbytes;
 		syscallarg(int) flag;
 	} */ *uap = v;
-	register vm_offset_t va  = (vm_offset_t)SCARG(uap, addr);
+	register vaddr_t va  = (vaddr_t)SCARG(uap, addr);
 	register int nbytes     = SCARG(uap, nbytes);
 	register int whichcache = SCARG(uap, whichcache);
 
@@ -596,7 +596,7 @@ ultrix_sys_cachectl(p, v, retval)
 		syscallarg(int) nbytes;
 		syscallarg(int) cacheop;
 	} */ *uap = v;
-	register vm_offset_t va  = (vm_offset_t)SCARG(uap, addr);
+	register vaddr_t va  = (vaddr_t)SCARG(uap, addr);
 	register int nbytes  = SCARG(uap, nbytes);
 	register int cacheop = SCARG(uap, cacheop);
 

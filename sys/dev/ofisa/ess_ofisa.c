@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_ofisa.c,v 1.3 1998/07/31 15:17:18 augustss Exp $	*/
+/*	$NetBSD: ess_ofisa.c,v 1.4 1998/08/13 02:10:52 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

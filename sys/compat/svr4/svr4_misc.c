@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.62 1998/08/09 20:37:55 perry Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.63 1998/08/13 02:10:49 eeh Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -803,11 +803,11 @@ svr4_sys_break(p, v, retval)
 {
 	struct svr4_sys_break_args *uap = v;
 	register struct vmspace *vm = p->p_vmspace;
-	vm_offset_t     new, old;
+	vaddr_t     new, old;
 	int             rv;
 	register int    diff;
 
-	old = (vm_offset_t) vm->vm_daddr;
+	old = (vaddr_t) vm->vm_daddr;
 	new = round_page(SCARG(uap, nsize));
 	diff = new - old;
 

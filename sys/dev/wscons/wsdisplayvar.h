@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.6 1998/07/28 22:01:24 augustss Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.7 1998/08/13 02:10:56 eeh Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
