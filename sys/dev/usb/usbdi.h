@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.27 1999/09/09 12:26:48 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.28 1999/09/11 08:19:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,8 +66,6 @@ typedef enum {
 	USBD_STALLED,
 	USBD_INTERRUPTED,
 
-	USBD_XXX,
-
 	USBD_ERROR_MAX,		/* must be last */
 } usbd_status;
 
@@ -80,9 +78,7 @@ typedef void (*usbd_callback) __P((usbd_request_handle, usbd_private_handle,
 #define USBD_EXCLUSIVE_USE	0x01
 
 /* Request flags */
-#define USBD_XFER_OUT		0x01
-#define USBD_XFER_IN		0x02
-#define USBD_SHORT_XFER_OK	0x04	/* allow short reads */
+/* in usb.h #define USBD_SHORT_XFER_OK	0x04*/	/* allow short reads */
 #define USBD_SYNCHRONOUS	0x08	/* wait for completion */
 
 #define USBD_NO_TIMEOUT 0

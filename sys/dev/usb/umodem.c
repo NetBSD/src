@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.14 1999/09/09 12:26:46 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.15 1999/09/11 08:19:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -360,7 +360,7 @@ umodemstart(tp)
 	/* XXX what can we do on error? */
 	usbd_setup_request(sc->sc_oreqh, sc->sc_bulkout_pipe, 
 			   (usbd_private_handle)sc, data, cnt,
-			   USBD_XFER_OUT, USBD_NO_TIMEOUT, umodemwritecb);
+			   0, USBD_NO_TIMEOUT, umodemwritecb);
 	(void)usbd_transfer(sc->sc_oreqh);
 
 out:
@@ -616,9 +616,7 @@ umodemstartread(sc)
 	DPRINTFN(5,("umodemstartread: start\n"));
 	usbd_setup_request(sc->sc_ireqh, sc->sc_bulkin_pipe, 
 			   (usbd_private_handle)sc, 
-			   sc->sc_ibuf,
-			   UMODEMIBUFSIZE, 
-			   USBD_XFER_IN | USBD_SHORT_XFER_OK, 
+			   sc->sc_ibuf,  UMODEMIBUFSIZE, USBD_SHORT_XFER_OK, 
 			   USBD_NO_TIMEOUT, umodemreadcb);
 	r = usbd_transfer(sc->sc_ireqh);
 	if (r != USBD_IN_PROGRESS)
