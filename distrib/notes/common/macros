@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.21 2002/06/29 08:29:46 lukem Exp $
+.\"	$NetBSD: macros,v 1.22 2002/07/08 18:00:29 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -169,6 +169,21 @@
 .
 .de Ul
 .Ux -like
+..
+.
+.\" setsize <G> <U>
+.\" display "<G> MB gzipped, <U> MB uncompressed" on a new line.
+.\" values can be generated with something like this:
+.\"	gzip -l *.tgz | \
+.\"	awk '/\.tar/ { printf ".el .ie r_%s .setsize %d %d\n", \
+.\"	    substr($4,0,index($4, "/")-1), \
+.\"	    ( $1+1048575 ) /1048576, \
+.\"	    ( $2 + 1048575) / 1048576 } '
+.\"
+.
+.de setsize
+.br
+.Em \\$[1] MB gzipped, \\$[2] MB uncompressed
 ..
 .
 .\" .Bc/.Ec; begin/end two-column mode. This may not work in all
