@@ -1,4 +1,4 @@
-/*	$NetBSD: touchwin.c,v 1.11 2000/04/15 13:17:05 blymn Exp $	*/
+/*	$NetBSD: touchwin.c,v 1.12 2000/04/15 22:53:05 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)touchwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: touchwin.c,v 1.11 2000/04/15 13:17:05 blymn Exp $");
+__RCSID("$NetBSD: touchwin.c,v 1.12 2000/04/15 22:53:05 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -107,16 +107,13 @@ __touchline(WINDOW *win, int y, int sx, int ex, int force)
 		win->lines[y]->flags |= __FORCEPAINT;
 	sx += win->ch_off;
 	ex += win->ch_off;
-	if (!(win->lines[y]->flags & __ISDIRTY)) {
+	if (!(win->lines[y]->flags & __ISDIRTY))
 		win->lines[y]->flags |= __ISDIRTY;
+	/* firstchp/lastchp are shared between parent window and sub-window. */
+	if (*win->lines[y]->firstchp > sx)
 		*win->lines[y]->firstchp = sx;
+	if (*win->lines[y]->lastchp < ex)
 		*win->lines[y]->lastchp = ex;
-	} else {
-		if (*win->lines[y]->firstchp > sx)
-			*win->lines[y]->firstchp = sx;
-		if (*win->lines[y]->lastchp < ex)
-			*win->lines[y]->lastchp = ex;
-	}
 #ifdef DEBUG
 	__CTRACE("touchline: first = %d, last = %d\n",
 	    *win->lines[y]->firstchp, *win->lines[y]->lastchp);
