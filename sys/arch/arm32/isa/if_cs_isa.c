@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.1 1998/06/08 17:49:43 tv Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.2 1998/06/08 20:23:08 tv Exp $	*/
 
 /*
  * Copyright 1997
@@ -52,17 +52,7 @@
 **
 **     13-Feb-1997.
 **
-**  MODIFICATION HISTORY:
-**
-**     $Log: if_cs_isa.c,v $
-**     Revision 1.1  1998/06/08 17:49:43  tv
-**     Add ISA support needed for Shark and the CATS board (CATS isa_machdep not
-**     here yet).
-**
-**     Revision 1.1  1998/06/08 17:23:49  tv
-**     Add ISA support files for Shark (and the CATS board, which shares much of
-**     this code).  This will probably still need some merging with the CATS
-**     source.
+**  MODIFICATION HISTORY (Digital):
 **
 **     Revision 1.27  1998/01/20  17:59:40  cgd
 **     update for moved headers
@@ -195,10 +185,6 @@
 **
 **--
 */
-
-#if 0
-static const char *rcsid = "$Id: if_cs_isa.c,v 1.1 1998/06/08 17:49:43 tv Exp $";
-#endif
 
 
 /*
