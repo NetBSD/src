@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.36 2003/09/14 19:16:06 jschauma Exp $	*/
+/*	$NetBSD: print.c,v 1.37 2003/09/22 02:43:20 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.36 2003/09/14 19:16:06 jschauma Exp $");
+__RCSID("$NetBSD: print.c,v 1.37 2003/09/22 02:43:20 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,7 @@ printlong(DISPLAY *dp)
 			printtime(sp->st_ctime);
 		else
 			printtime(sp->st_mtime);
-		if (f_escape)
+		if (f_octal || f_octal_escape)
 			(void)safe_print(p->fts_name);
 		else if (f_nonprint)
 			(void)printescaped(p->fts_name);
@@ -297,7 +297,7 @@ printaname(FTSENT *p, int inodefield, int sizefield)
 	if (f_size)
 		chcnt += printf("%*llu ", sizefield,
 		    (long long)howmany(sp->st_blocks, blocksize));
-	if (f_escape)
+	if (f_octal || f_octal_escape)
 		chcnt += safe_print(p->fts_name);
 	else if (f_nonprint)
 		chcnt += printescaped(p->fts_name);
@@ -377,7 +377,7 @@ printlink(FTSENT *p)
 	}
 	path[lnklen] = '\0';
 	(void)printf(" -> ");
-	if (f_escape)
+	if (f_octal || f_octal_escape)
 		(void)safe_print(path);
 	else if (f_nonprint)
 		(void)printescaped(path);
