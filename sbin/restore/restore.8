@@ -1,4 +1,4 @@
-.\"	$NetBSD: restore.8,v 1.16 1997/09/15 08:04:34 lukem Exp $
+.\"	$NetBSD: restore.8,v 1.17 1997/09/16 13:44:14 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)restore.8	8.3 (Berkeley) 6/1/94
+.\"     @(#)restore.8	8.4 (Berkeley) 5/1/95
 .\"
 .Dd July 1, 1997
 .Dt RESTORE 8
@@ -295,6 +295,19 @@ or
 .Nm
 reads from the named file on the remote host using
 .Xr rmt 8 .
+If the name of the file is
+.Ql Fl ,
+.Nm
+reads from standard input.
+Thus,
+.Xr dump 8
+and
+.Nm
+can be used in a pipeline to dump and restore a file system
+with the command
+.Bd -literal -offset indent
+dump 0f - /usr | (cd /mnt; restore xf -)
+.Ed
 .Pp
 .It Fl h
 Extract the actual directory, 
