@@ -33,7 +33,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumconfig.c,v 1.2 2003/10/25 16:15:07 chs Exp $
+ * $Id: vinumconfig.c,v 1.3 2004/06/22 14:00:54 itojun Exp $
  * $FreeBSD$
  */
 
@@ -106,7 +106,7 @@ throw_rude_remark(int error, char *msg,...)
 	} else {
 	    retval = snprintf(msg, 0, (void *) text, 10, ap);
 	    text[retval] = '\0';			    /* delimit */
-	    strcpy(ioctl_reply->msg, text);
+	    strlcpy(ioctl_reply->msg, text, sizeof(ioctl_reply->msg));
 	    ioctl_reply->error = error;			    /* first byte is the error number */
 	    Free(text);
 	}
@@ -461,7 +461,8 @@ get_empty_drive(void)
     bzero(drive, sizeof(struct drive));
     drive->driveno = driveno;				    /* put number in structure */
     drive->flags |= VF_NEWBORN;				    /* newly born drive */
-    strcpy(drive->devicename, "unknown");		    /* and make the name ``unknown'' */
+    /* and make the name ``unknown'' */
+    strlcpy(drive->devicename, "unknown", sizeof(drive->devicename));
     return driveno;					    /* return the index */
 }
 
@@ -1208,12 +1209,14 @@ config_subdisk(int update)
 	char sdsuffix[8];				    /* form sd name suffix here */
 
 	/* Do we have a plex name? */
-	if (sdindex >= 0)				    /* we have a plex */
-	    strcpy(sd->name, PLEX[sd->plexno].name);	    /* take it from there */
-	else						    /* no way */
+	if (sdindex >= 0) {				    /* we have a plex */
+	    /* take it from there */
+	    strlcpy(sd->name, PLEX[sd->plexno].name, sizeof(sd->name));
+	} else						    /* no way */
 	    throw_rude_remark(EINVAL, "Unnamed sd is not associated with a plex");
-	sprintf(sdsuffix, ".s%d", sdindex);		    /* form the suffix */
-	strcat(sd->name, sdsuffix);			    /* and add it to the name */
+	/* form the suffix */
+	snprintf(sdsuffix, sizeof(sdsuffix), ".s%d", sdindex);
+	strlcat(sd->name, sdsuffix, sizeof(sd->name));	    /* and add it to the name */
     }
     /* do we have complete info for this subdisk? */
     if (sd->sectors < 0)
@@ -1388,12 +1391,13 @@ config_plex(int update)
 	char plexsuffix[8];				    /* form plex name suffix here */
 	/* Do we have a volume name? */
 	if (plex->volno >= 0)				    /* we have a volume */
-	    strcpy(plex->name,				    /* take it from there */
-		VOL[plex->volno].name);
+	    strlcpy(plex->name,				    /* take it from there */
+		VOL[plex->volno].name, sizeof(plex->name));
 	else						    /* no way */
 	    throw_rude_remark(EINVAL, "Unnamed plex is not associated with a volume");
-	sprintf(plexsuffix, ".p%d", pindex);		    /* form the suffix */
-	strcat(plex->name, plexsuffix);			    /* and add it to the name */
+	/* form the suffix */
+	snprintf(plexsuffix, sizeof(plexsuffix), ".p%d", pindex);
+	strlcat(plex->name, plexsuffix, sizeof(plex->name));    /* and add it to the name */
     }
     if (isstriped(plex)) {
 	plex->lock = (struct rangelock *)
@@ -1608,7 +1612,7 @@ parse_user_config(char *cptr, struct keywordset *keyset)
     ioctl_reply = (struct _ioctl_reply *) cptr;
     status = parse_config(cptr, keyset, 0);
     if (status == ENOENT)				    /* from scandisk, but it can't tell us */
-	strcpy(ioctl_reply->msg, "no drives found");
+	strlcpy(ioctl_reply->msg, "no drives found", sizeof(ioctl_reply->msg));
     ioctl_reply = NULL;					    /* don't do this again */
     return status;
 }
@@ -1646,7 +1650,8 @@ remove(struct vinum_ioctl_msg *msg)
 
     default:
 	ioctl_reply->error = EINVAL;
-	strcpy(ioctl_reply->msg, "Invalid object type");
+	strlcpy(ioctl_reply->msg, "Invalid object type",
+	    sizeof(ioctl_reply->msg));
     }
 }
 
@@ -1660,7 +1665,7 @@ remove_drive_entry(int driveno, int force)
     if ((driveno > vinum_conf.drives_allocated)		    /* not a valid drive */
     ||(drive->state == drive_unallocated)) {		    /* or nothing there */
 	ioctl_reply->error = EINVAL;
-	strcpy(ioctl_reply->msg, "No such drive");
+	strlcpy(ioctl_reply->msg, "No such drive", sizeof(ioctl_reply->msg));
     } else if (drive->opencount > 0) {			    /* we have subdisks */
 	if (force) {					    /* do it at any cost */
 	    for (sdno = 0; sdno < vinum_conf.subdisks_allocated; sdno++) {
@@ -1687,7 +1692,7 @@ remove_sd_entry(int sdno, int force, int recurse)
     if ((sdno > vinum_conf.subdisks_allocated)		    /* not a valid sd */
     ||(sd->state == sd_unallocated)) {			    /* or nothing there */
 	ioctl_reply->error = EINVAL;
-	strcpy(ioctl_reply->msg, "No such subdisk");
+	strlcpy(ioctl_reply->msg, "No such subdisk", sizeof(ioctl_reply->msg));
     } else if (sd->flags & VF_OPEN)			    /* we're open */
 	ioctl_reply->error = EBUSY;			    /* no getting around that */
     else if (sd->plexno >= 0) {				    /* we have a plex */
@@ -1740,7 +1745,7 @@ remove_plex_entry(int plexno, int force, int recurse)
     if ((plexno > vinum_conf.plexes_allocated)		    /* not a valid plex */
     ||(plex->state == plex_unallocated)) {		    /* or nothing there */
 	ioctl_reply->error = EINVAL;
-	strcpy(ioctl_reply->msg, "No such plex");
+	strlcpy(ioctl_reply->msg, "No such plex", sizeof(ioctl_reply->msg));
     } else if (plex->flags & VF_OPEN) {			    /* we're open */
 	ioctl_reply->error = EBUSY;			    /* no getting around that */
 	return;
@@ -1799,7 +1804,7 @@ remove_volume_entry(int volno, int force, int recurse)
     if ((volno > vinum_conf.volumes_allocated)		    /* not a valid volume */
     ||(vol->state == volume_unallocated)) {		    /* or nothing there */
 	ioctl_reply->error = EINVAL;
-	strcpy(ioctl_reply->msg, "No such volume");
+	strlcpy(ioctl_reply->msg, "No such volume", sizeof(ioctl_reply->msg));
     } else if (vol->flags & VF_OPEN)			    /* we're open */
 	ioctl_reply->error = EBUSY;			    /* no getting around that */
     else if (vol->plexes) {
