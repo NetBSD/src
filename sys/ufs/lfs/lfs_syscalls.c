@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.97 2003/08/07 16:34:38 agc Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.98 2003/09/10 11:09:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.97 2003/08/07 16:34:38 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.98 2003/09/10 11:09:11 yamt Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -231,9 +231,6 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	daddr_t b_daddr, v_daddr;
 	int cnt, error;
 	int do_again = 0;
-#ifdef CHECK_COPYIN
-	int i;
-#endif /* CHECK_COPYIN */
 	int numrefed = 0;
 	ino_t maxino;
 	size_t obsize;
