@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.77 2004/05/28 21:42:29 christos Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.78 2004/06/03 19:04:58 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.77 2004/05/28 21:42:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.78 2004/06/03 19:04:58 christos Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_compat_netbsd.h"
@@ -1095,6 +1095,10 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		ksdp = &sc->sc_scroll_values;
 		SETSCROLLLINES(usdp, ksdp, ksdp);
 		return (0);
+#else
+	case WSDISPLAYIO_DSSCROLL:
+	case WSDISPLAYIO_DGSCROLL:
+		return ENODEV;
 #endif
 
 	case WSDISPLAYIO_SFONT:
@@ -1133,7 +1137,10 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		return ((*sc->sc_accessops->putwschar)
 			(scr->scr_dconf->emulcookie, d));
 #undef d
-		return 1;
+#else
+	case WSDISPLAYIO_PUTWSCHAR:
+	case WSDISPLAYIO_GETWSCHAR:
+		return ENODEV;
 #endif /* WSDISPLAY_CHARFUNCS */
 
 	}
