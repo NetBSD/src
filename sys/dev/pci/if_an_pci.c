@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.3 2001/06/12 22:05:53 thorpej Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.4 2001/06/18 13:21:24 onoe Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
+#include <net/if_ieee80211.h>
 
 #if NBPFILTER > 0 
 #include <net/bpf.h>
@@ -111,6 +112,7 @@ const struct an_pci_product {
 	{ PCI_VENDOR_AIRONET,		PCI_PRODUCT_AIRONET_PC4xxx },
 	{ PCI_VENDOR_AIRONET,		PCI_PRODUCT_AIRONET_PC4500 },
 	{ PCI_VENDOR_AIRONET,		PCI_PRODUCT_AIRONET_PC4800 },
+	{ PCI_VENDOR_AIRONET,		PCI_PRODUCT_AIRONET_350 },
 	{ 0,				0			   }
 };
 
