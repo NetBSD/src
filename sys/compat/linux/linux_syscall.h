@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.h,v 1.35 1998/10/01 18:23:37 christos Exp $	*/
+/*	$NetBSD: linux_syscall.h,v 1.36 1998/10/03 20:17:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,9 +40,9 @@
 #define _LINUX_SYSCALL_H
 
 #if defined(__i386__)
-#include <compat/linux/i386/linux_syscall.h>
+#include <compat/linux/arch/i386/linux_syscall.h>
 #elif defined(__alpha__)
-#include <compat/linux/alpha/linux_syscall.h>
+#include <compat/linux/arch/alpha/linux_syscall.h>
 #else
 #define	LINUX_SYS_MAXSYSCALL	0
 #endif

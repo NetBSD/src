@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_shm.h,v 1.2 1998/10/01 03:48:32 erh Exp $	*/
+/*	$NetBSD: linux_shm.h,v 1.3 1998/10/03 20:17:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,8 +67,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _COMMON_LINUX_SHM_H
-#define _COMMON_LINUX_SHM_H
+#ifndef _LINUX_SHM_H
+#define _LINUX_SHM_H
 
 #include <sys/shm.h>
 
@@ -119,11 +119,11 @@ __BEGIN_DECLS
 int linux_sys_shmat __P((struct proc *, void *, register_t *));
 int linux_sys_shmctl __P((struct proc *, void *, register_t *));
 void linux_to_bsd_shmid_ds __P((struct linux_shmid_ds *,
-				       struct shmid_ds *));
+    struct shmid_ds *));
 void bsd_to_linux_shmid_ds __P((struct shmid_ds *,
-				       struct linux_shmid_ds *));
+    struct linux_shmid_ds *));
 __END_DECLS
 #endif	/* !_KERNEL */
 #endif	/* !SYSVSHM */
 
-#endif /* !_COMMON_LINUX_SHM_H */
+#endif /* !_LINUX_SHM_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.9 1998/10/01 02:11:00 erh Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.10 1998/10/03 20:17:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,9 +67,17 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+#ifndef _LINUX_EXEC_H
+#define _LINUX_EXEC_H
 
-#ifndef	_COMMON_LINUX_EXEC_H
-#define	_COMMON_LINUX_EXEC_H
+#if defined(__i386__)
+#include <compat/linux/arch/i386/linux_exec.h>
+#elif defined(__alpha__)
+#include <compat/linux/arch/alpha/linux_exec.h>
+#else
+#error Undefined linux_exec.h machine type.
+#endif
+
 
 /* Defines for a.out executables */
 #define LINUX_AOUT_HDR_SIZE (sizeof (struct exec))
@@ -110,4 +118,4 @@ int linux_elf64_probe __P((struct proc *, struct exec_package *, Elf64_Ehdr *,
 __END_DECLS
 #endif /* !_KERNEL */
 
-#endif /* !_COMMON_LINUX_EXEC_H */
+#endif /* !_LINUX_EXEC_H */

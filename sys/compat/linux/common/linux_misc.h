@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.h,v 1.1 1998/10/01 03:49:59 erh Exp $	*/
+/*	$NetBSD: linux_misc.h,v 1.2 1998/10/03 20:17:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _COMMON_LINUX_MISC_H
-#define _COMMON_LINUX_MISC_H
+#ifndef _LINUX_MISC_H
+#define _LINUX_MISC_H
 
 #ifdef _KERNEL
 __BEGIN_DECLS
@@ -47,4 +47,4 @@ int linux_select1 __P((struct proc *, register_t *, int, fd_set *, fd_set *,
 __END_DECLS
 #endif /* !_KERNEL */
 
-#endif /* !_COMMON_LINUX_MISC_H */
+#endif /* !_LINUX_MISC_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysent.c,v 1.1 1998/09/30 21:34:34 erh Exp $	*/
+/*	$NetBSD: linux_sysent.c,v 1.2 1998/10/03 20:17:38 christos Exp $	*/
 
 /*
  * System call switch table.
@@ -12,14 +12,14 @@
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-#include <compat/linux/linux_types.h>
-#include <compat/linux/linux_signal.h>
-#include <compat/linux/linux_siginfo.h>
-#include <compat/linux/alpha/linux_syscallargs.h>
-#include <compat/linux/linux_ipc.h>
-#include <compat/linux/linux_msg.h>
-#include <compat/linux/linux_sem.h>
-#include <compat/linux/linux_shm.h>
+#include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_siginfo.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_msg.h>
+#include <compat/linux/common/linux_sem.h>
+#include <compat/linux/common/linux_shm.h>
+#include <compat/linux/linux_syscallargs.h>
 
 #define	s(type)	sizeof(type)
 

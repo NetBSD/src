@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldselect.c,v 1.47 1998/10/01 04:05:55 erh Exp $	*/
+/*	$NetBSD: linux_oldselect.c,v 1.48 1998/10/03 20:17:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,10 +77,12 @@
 #include <vm/vm.h>
 #include <vm/vm_param.h>
 
-#include <compat/linux/linux_types.h>
-#include <compat/linux/linux_misc.h>
-#include <compat/linux/linux_mmap.h>
-#include <compat/linux/linux_signal.h>
+#include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_misc.h>
+#include <compat/linux/common/linux_mmap.h>
+#include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_oldselect.h>
+
 #include <compat/linux/linux_syscallargs.h>
 
 /* Used on: arm, i386, m68k */

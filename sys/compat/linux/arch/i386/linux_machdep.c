@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.43 1998/10/01 02:17:31 erh Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.44 1998/10/03 20:17:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -57,13 +57,14 @@
 #include <sys/filedesc.h>
 #include <sys/exec_elf.h>
 
-#include <compat/linux/linux_types.h>
-#include <compat/linux/linux_signal.h>
+#include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_util.h>
+#include <compat/linux/common/linux_ioctl.h>
+#include <compat/linux/common/linux_exec.h>
+#include <compat/linux/common/linux_machdep.h>
+
 #include <compat/linux/linux_syscallargs.h>
-#include <compat/linux/linux_util.h>
-#include <compat/linux/linux_ioctl.h>
-#include <compat/linux/linux_exec.h>
-#include <compat/linux/linux_machdep.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>

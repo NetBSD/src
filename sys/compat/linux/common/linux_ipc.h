@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.h,v 1.2 1998/10/01 03:48:32 erh Exp $	*/
+/*	$NetBSD: linux_ipc.h,v 1.3 1998/10/03 20:17:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,8 +67,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _COMMON_LINUX_IPC_H
-#define _COMMON_LINUX_IPC_H
+#ifndef _LINUX_IPC_H
+#define _LINUX_IPC_H
 
 #include <sys/ipc.h>
 
@@ -110,4 +110,4 @@ __END_DECLS
 #endif	/* !_KERNEL */
 #endif	/* !SYSVSEM, !SYSVSHM, !SYSVMSG */
 
-#endif /* !_COMMON_LINUX_IPC_H */
+#endif /* !_LINUX_IPC_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.14 1998/10/01 03:27:38 erh Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.15 1998/10/03 20:17:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,16 +78,18 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <compat/linux/linux_types.h>
-#include <compat/linux/linux_signal.h>
+#include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_util.h>
+
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_syscall.h>
-#include <compat/linux/linux_util.h>
-#include <compat/linux/linux_ipc.h>
-#include <compat/linux/linux_msg.h>
-#include <compat/linux/linux_shm.h>
-#include <compat/linux/linux_sem.h>
-#include <compat/linux/linux_ipccall.h>
+
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_msg.h>
+#include <compat/linux/common/linux_shm.h>
+#include <compat/linux/common/linux_sem.h>
+#include <compat/linux/common/linux_ipccall.h>
 
 /*
  * Note: Not all linux architechtures have explicit versions
