@@ -1,32 +1,81 @@
-#	$NetBSD: Makefile,v 1.12 2001/04/19 14:41:43 wiz Exp $
+# $FreeBSD: src/gnu/usr.bin/groff/tmac/Makefile,v 1.41 2003/05/01 13:22:21 ru Exp $
 
-.include "../Makefile.path"
+TMACOWN?=	${BINOWN}
+TMACGRP?=	${BINGRP}
+TMACMODE?=	${NOBINMODE}
+TMACDIR?=	${SHAREDIR}/tmac
+MDOCDIR?=	${TMACDIR}/mdoc
 
-.PATH:		${IDIST}/tmac
+MAN=		groff_ms.7 groff_man.7 groff_me.7 groff_mdoc.7
+MAN+=		groff_trace.7 groff_www.7
+MLINKS=		groff_ms.7 ms.7
+MLINKS+=	groff_man.7 man.7
+MLINKS+=	groff_me.7 me.7
+MLINKS+=	groff_mdoc.7 mdoc.7 groff_mdoc.7 mdoc.samples.7
 
-.include <bsd.own.mk>
+CLEANFILES=	${MAN} ${MDOCFILES:S/$/-s/} ${STRIPFILES:S/$/-s/} ${SPECIALFILES:S/$/-s/}
 
-# XXX -- this depends on ../include/defs.h
-TMACDIR?=	/usr/share/tmac
+NORMALFILES=	mandoc.tmac andoc.tmac an-old.tmac \
+		me.tmac \
+		mdoc.tmac \
+		pic.tmac \
+		a4.tmac \
+		papersize.tmac \
+		ec.tmac \
+		safer.tmac \
+		trace.tmac \
+		ps.tmac psold.tmac pspic.tmac psatk.tmac \
+		dvi.tmac \
+		tty.tmac tty-char.tmac \
+		latin1.tmac latin2.tmac latin9.tmac cp1047.tmac \
+		X.tmac Xps.tmac \
+		lj4.tmac \
+		lbp.tmac \
+		html.tmac html-end.tmac \
+		europs.tmac \
+		composite.tmac \
+		eqnrc \
+		troffrc troffrc-end \
+		hyphen.us hyphenex.us
+SPECIALFILES=	an.tmac man.tmac s.tmac ms.tmac www.tmac
+STRIPFILES=	e.tmac doc.tmac mdoc.local
+MDOCFILES=	doc-common doc-ditroff doc-nroff doc-syms \
+		fr.ISO8859-1 ru.KOI8-R
 
-TMACOWN?=	${FILESOWN}
-TMACGRP?=	${FILESGRP}
-TMACMODE?=	${FILESMODE}
+all: ${MDOCFILES:S/$/-s/} ${STRIPFILES:S/$/-s/} ${SPECIALFILES:S/$/-s/}
 
-# don't install groff_mdoc.7 and groff_mdoc.samples.7, ours are newer
-# also don't install groff_me.7, since we're using our own tmac.e and me.7
-MAN=		groff_man.7 groff_markup.7 groff_ms.7 groff_msafer.7 \
-		groff_tmac.5
-MLINKS=		groff_ms.7 ms.7 groff_msafer.7 msafer.7
+.for f in ${MDOCFILES} ${STRIPFILES}
+$f-s: $f
+	sed -f ${DIST_DIR}/strip.sed ${.ALLSRC} > ${.TARGET}
+.endfor
 
-.if ${MKSHARE} != "no"
-FILES=		tmac.pic tmac.ps tmac.psnew tmac.psold tmac.pspic tmac.psatk \
-		tmac.dvi tmac.tty tmac.tty-char tmac.X tmac.Xps tmac.latin1 \
-		tmac.lj4 tmac.safer tmac.a4 tmac.s tmac.an man.local eqnrc \
-		troffrc tmac.arkup tmac.html tmac.trace troffrc-end
+.for f in ${SPECIALFILES}
+$f-s: $f
+	sed -e "s;@TMAC_AN_PREFIX@;${tmac_an_prefix};g" \
+	    -e "s;@TMAC_S_PREFIX@;${tmac_s_prefix};g" \
+	    -e "s;@PNMTOPS_NOSETPAGE@;pnmtops;g" \
+		${.ALLSRC} > ${.TARGET}
+.endfor
 
-FILESDIR=	${TMACDIR}
-FILESNAME_tmac.an=tmac.an.old
+beforeinstall:
+	cd ${DIST_DIR}; \
+	    ${INSTALL} -o ${TMACOWN} -g ${TMACGRP} -m ${TMACMODE} \
+	    ${NORMALFILES} ${DESTDIR}${TMACDIR}
+	cd ${.CURDIR}; \
+	    ${INSTALL} -o ${TMACOWN} -g ${TMACGRP} -m ${TMACMODE} \
+	    hyphen.ru ${DESTDIR}${TMACDIR}
+	cd ${.OBJDIR}
+.for f in ${STRIPFILES} ${SPECIALFILES}
+	${INSTALL} -o ${TMACOWN} -g ${TMACGRP} -m ${TMACMODE} \
+	    $f-s ${DESTDIR}${TMACDIR}/$f
+.endfor
+.for f in ${MDOCFILES}
+	${INSTALL} -o ${TMACOWN} -g ${TMACGRP} -m ${TMACMODE} \
+	    $f-s ${DESTDIR}${MDOCDIR}/$f
+.endfor
+.if !exists(${DESTDIR}${TMACDIR}/man.local)
+	${INSTALL} -o ${TMACOWN} -g ${TMACGRP} -m ${TMACMODE} \
+	    ${DIST_DIR}/man.local ${DESTDIR}${TMACDIR}
 .endif
 
 .include <bsd.prog.mk>
