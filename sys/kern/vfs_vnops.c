@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.43 2000/06/27 17:41:54 mrg Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.44 2000/08/12 16:43:00 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -578,8 +578,8 @@ vn_lock(vp, flags)
 			simple_lock(&vp->v_interlock);
 		if (vp->v_flag & VXLOCK) {
 			vp->v_flag |= VXWANT;
-			simple_unlock(&vp->v_interlock);
-			tsleep((caddr_t)vp, PINOD, "vn_lock", 0);
+			ltsleep((caddr_t)vp, PINOD | PNORELOCK,
+			    "vn_lock", 0, &vp->v_interlock);
 			error = ENOENT;
 		} else {
 			error = VOP_LOCK(vp, flags | LK_INTERLOCK);

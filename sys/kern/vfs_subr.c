@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.133 2000/07/16 21:07:24 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.134 2000/08/12 16:43:01 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1082,8 +1082,8 @@ vget(vp, flags)
 		simple_lock(&vp->v_interlock);
 	if (vp->v_flag & VXLOCK) {
 		vp->v_flag |= VXWANT;
-		simple_unlock(&vp->v_interlock);
-		tsleep((caddr_t)vp, PINOD, "vget", 0);
+		ltsleep((caddr_t)vp, PINOD|PNORELOCK,
+		    "vget", 0, &vp->v_interlock);
 		return (ENOENT);
 	}
 	if (vp->v_usecount == 0) {
@@ -1571,8 +1571,8 @@ vgonel(vp, p)
 	 */
 	if (vp->v_flag & VXLOCK) {
 		vp->v_flag |= VXWANT;
-		simple_unlock(&vp->v_interlock);
-		tsleep((caddr_t)vp, PINOD, "vgone", 0);
+		ltsleep((caddr_t)vp, PINOD | PNORELOCK,
+		    "vgone", 0, &vp->v_interlock);
 		return;
 	}
 	/*
