@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.183 2000/11/27 05:57:27 soren Exp $	*/
+/*	$NetBSD: machdep.c,v 1.184 2000/11/27 08:57:08 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.183 2000/11/27 05:57:27 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184 2000/11/27 08:57:08 nisimura Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -303,6 +303,18 @@ mach_init(argc, argv, code, cv, bim, bip)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
+
+	/*
+	 * Alloc u pages for proc0 stealing KSEG0 memory.
+	 */
+	proc0.p_addr = proc0paddr = (struct user *)kernend;
+	proc0.p_md.md_regs = (struct frame *)(kernend + USPACE) - 1;
+	memset(proc0.p_addr, 0, USPACE);
+	curpcb = &proc0.p_addr->u_pcb;
+	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+
+	kernend += USPACE;
+
 	/*
 	 * Initialize physmem_boardmax; assume no SIMM-bank limits.
 	 * Adjust later in model-specific code if necessary.
@@ -355,15 +367,6 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 * Initialize error message buffer (at end of core).
 	 */
 	mips_init_msgbuf();
-
-	/*
-	 * Allocate space for proc0's USPACE.
-	 */
-	v = (caddr_t)pmap_steal_memory(USPACE, NULL, NULL); 
-	proc0.p_addr = proc0paddr = (struct user *)v;
-	proc0.p_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	curpcb = &proc0.p_addr->u_pcb;
-	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*
 	 * Allocate space for system data structures.  These data structures
