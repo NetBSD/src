@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.47 2001/11/06 07:09:39 simonb Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.48 2001/11/08 02:39:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -36,6 +36,9 @@
  *	@(#)ffs_vfsops.c	8.14 (Berkeley) 11/28/94
  * Modified for ext2fs by Manuel Bouyer.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.48 2001/11/08 02:39:08 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
