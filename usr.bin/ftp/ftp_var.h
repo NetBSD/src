@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.54 2000/05/01 10:35:18 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.55 2000/07/18 07:16:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -160,6 +160,20 @@ struct option {
 	char	*value;
 };
 
+/*
+ * Indices to features[]; an array containing status of remote server
+ * features; -1 not known (FEAT failed), 0 absent, 1 present.
+ */
+enum {
+	FEAT_FEAT = 0,		/* FEAT, OPTS */
+	FEAT_MDTM,		/* MDTM */
+	FEAT_MLST,		/* MLSD, MLST */
+	FEAT_REST_STREAM,	/* RESTart STREAM */
+	FEAT_SIZE,		/* SIZE */
+	FEAT_TVFS,		/* TVFS (not used) */
+	FEAT_max,
+};
+
 
 /*
  * Global defines
@@ -252,6 +266,7 @@ GLOBAL	FILE   *ttyout;		/* stdout, or stderr if retrieving to stdout */
 GLOBAL	int	epsv4;		/* use EPSV/EPRT on IPv4 connections */
 GLOBAL	int	epsv4bad;	/* EPSV doesn't work on the current server */
 GLOBAL	int	editing;	/* command line editing enabled */
+GLOBAL	int	features[FEAT_max];	/* remote FEATures supported */
 
 #ifndef NO_EDITCOMPLETE
 GLOBAL	EditLine *el;		/* editline(3) status structure */
@@ -302,6 +317,13 @@ GLOBAL	char	macbuf[4096];
 
 GLOBAL	char	 home[MAXPATHLEN];	/* home directory (for lcd) */
 GLOBAL	char	 reply_string[BUFSIZ];	/* first line of previous reply */
+GLOBAL	void	(*reply_callback)(const char *);
+					/*
+					 * function to call for each line in
+					 * the server's reply except for the
+					 * first (`xxx-') and last (`xxx ')
+					 */
+
 
 GLOBAL	FILE	*cin;
 GLOBAL	FILE	*cout;

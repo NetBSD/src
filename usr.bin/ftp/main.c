@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.72 2000/06/11 02:12:06 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.73 2000/07/18 07:16:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.72 2000/06/11 02:12:06 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.73 2000/07/18 07:16:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -186,6 +186,7 @@ main(int argc, char *argv[])
 	epsv4bad = 0;
 	upload_path = NULL;
 	isupload = 0;
+	reply_callback = NULL;
 
 	/*
 	 * Get the default socket buffer sizes if we don't already have them.
@@ -365,7 +366,6 @@ main(int argc, char *argv[])
 
 		case 'u':
 		{
-			/* XXX : if i move this under 'T' we get a segv. */
 			isupload = 1;
 			interactive = 0;
 			upload_path = xstrdup(optarg);
@@ -583,7 +583,7 @@ cmdscanner(void)
 			if (fgets(line, sizeof(line), stdin) == NULL) {
 				if (fromatty)
 					putc('\n', ttyout);
-				quit(0, 0);
+				quit(0, NULL);
 			}
 			num = strlen(line);
 			if (num == 0)
@@ -607,7 +607,7 @@ cmdscanner(void)
 			if ((buf = el_gets(el, &num)) == NULL || num == 0) {
 				if (fromatty)
 					putc('\n', ttyout);
-				quit(0, 0);
+				quit(0, NULL);
 			}
 			if (buf[--num] == '\n') {
 				if (num == 0)
