@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.8 1996/02/29 00:04:57 jtc Exp $	*/
+/*	$NetBSD: signal.h,v 1.9 1997/11/18 20:30:24 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,11 +39,12 @@
 #define _USER_SIGNAL_H
 
 #include <sys/cdefs.h>
-#include <sys/signal.h>
 
 #if !defined(_ANSI_SOURCE)
 #include <sys/types.h>
 #endif
+
+#include <sys/signal.h>
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 extern __const char *__const sys_signame[_NSIG];
