@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.8 1999/08/05 16:01:07 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.9 1999/08/09 02:24:52 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -464,9 +464,12 @@ udp6_ctlinput(cmd, sa, ip6, m, off)
 
 	/* translate addresses into internal form */
 	if (sa->sa_family != AF_INET6 ||
-	    sa->sa_len != sizeof(struct sockaddr_in6))
+	    sa->sa_len != sizeof(struct sockaddr_in6)) {
 		log(LOG_ERR, "udp6_ctlinput: arg sa is not for IPv6,"
-		    "sa->sa_family = %d, len = %d", sa->sa_family, sa->sa_len);
+		    "sa->sa_family = %d, len = %d\n",
+		    sa->sa_family, sa->sa_len);
+		return;
+	}
 	sa6 = *(struct sockaddr_in6 *)sa;
 	if (IN6_IS_ADDR_LINKLOCAL(&sa6.sin6_addr))
 		sa6.sin6_addr.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
