@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2003/06/23 22:17:11 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 2003/07/14 22:57:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,6 +77,9 @@
  *	@(#)machdep.c   8.3 (Berkeley) 1/12/94
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2003/07/14 22:57:47 lukem Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
