@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.22 2002/10/23 09:10:52 jdolecek Exp $	*/
+/*	$NetBSD: kbd.c,v 1.23 2003/02/02 17:56:54 thomas Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -34,6 +34,10 @@
  * SUCH DAMAGE.
  */
 
+#include "mouse.h"
+#include "ite.h"
+#include "wskbd.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -59,7 +63,40 @@
 #include <atari/dev/kbdmap.h>
 #include <atari/dev/msvar.h>
 
-#include "mouse.h"
+#if NWSKBD>0
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wskbdvar.h>
+#include <dev/wscons/wsksymdef.h>
+#include <dev/wscons/wsksymvar.h>
+#include <atari/dev/wskbdmap_atari.h>
+#endif
+
+/* WSKBD */
+/*
+ * If NWSKBD>0 we try to attach an wskbd device to us. What follows
+ * is definitions of callback functions and structures that are passed
+ * to wscons when initializing.
+ */
+
+/*
+ * Now with wscons this driver exhibits some weird behaviour.
+ * It may act both as a driver of its own and the md part of the
+ * wskbd driver. Therefore it can be accessed through /dev/kbd
+ * and /dev/wskbd0 both.
+ *
+ * The data from they keyboard may end up in at least four different
+ * places:
+ * - If this driver has been opened (/dev/kbd) and the
+ *   direct mode (TIOCDIRECT) has been set, data goes to
+ *   the process who opened the device. Data will transmit itself
+ *   as described by the firm_event structure.
+ * - If wskbd support is compiled in and a wskbd driver has been
+ *   attached then the data is sent to it. Wskbd in turn may
+ *   - Send the data in the wscons_event form to a process that
+ *     has opened /dev/wskbd0
+ *   - Feed the data to a virtual terminal.
+ * - If an ite is present the data may be fed to it.
+ */
 
 u_char			kbd_modifier;	/* Modifier mask		*/
 
@@ -84,7 +121,9 @@ void	kbdintr __P((int));
 static void kbdsoft __P((void *, void *));
 static void kbdattach __P((struct device *, struct device *, void *));
 static int  kbdmatch __P((struct device *, struct cfdata *, void *));
+#if NITE>0
 static int  kbd_do_modifier __P((u_char));
+#endif
 static int  kbd_write_poll __P((u_char *, int));
 static void kbd_pkg_start __P((struct kbd_softc *, u_char));
 
@@ -95,6 +134,36 @@ const struct cdevsw kbd_cdevsw = {
 	kbdopen, kbdclose, kbdread, nowrite, kbdioctl,
 	nostop, notty, kbdpoll, nommap, kbdkqfilter,
 };
+
+#if NWSKBD>0
+/* accessops */
+static int	kbd_enable(void *, int);
+static void	kbd_set_leds(void *, int);
+static int	kbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+
+/* console ops */
+static void	kbd_getc(void *, u_int *, int *);
+static void	kbd_pollc(void *, int);
+static void	kbd_bell(void *, u_int, u_int, u_int);
+
+static struct wskbd_accessops kbd_accessops = {
+	kbd_enable,
+	kbd_set_leds,
+	kbd_ioctl
+};
+
+static struct wskbd_consops kbd_consops = {
+        kbd_getc,
+	kbd_pollc,
+	kbd_bell
+};
+
+/* Pointer to keymaps. */
+static struct wskbd_mapdata kbd_mapdata = {
+        atarikbd_keydesctab,
+	KB_US
+};
+#endif /* WSKBD */
 
 /*ARGSUSED*/
 static	int
@@ -155,6 +224,28 @@ void	*auxp;
 	kbd_write_poll(kbd_icmd, sizeof(kbd_icmd));
 
 	printf("\n");
+
+#if NWSKBD>0
+	if (dp != NULL) {
+		/*
+		 * Try to attach the wskbd.
+		 */
+		struct wskbddev_attach_args waa;
+
+		/* Maybe should be done before this?... */
+		wskbd_cnattach(&kbd_consops, NULL, &kbd_mapdata);
+
+		waa.console = 1;
+		waa.keymap = &kbd_mapdata;
+		waa.accessops = &kbd_accessops;
+		waa.accesscookie = NULL;
+		kbd_softc.k_wskbddev = config_found(dp, &waa, wskbddevprint);
+
+		kbd_softc.k_pollingmode = 0;
+
+		kbdenable();
+	}
+#endif /* WSKBD */
 }
 
 void
@@ -387,8 +478,28 @@ void	*junk1, *junk2;
 				kbd_pkg_start(k, code);
 				continue;
 			}
+#if NWSKBD>0
+			/*
+			 * If we have attached a wskbd and not in polling mode and
+			 * nobody has opened us directly, then send the keystroke
+			 * to the wskbd.
+			 */
+
+			if (kbd_softc.k_pollingmode == 0
+			    && kbd_softc.k_wskbddev != NUL
+			    && k->k_event_mode == 0) {
+				wskbd_input(kbd_softc.k_wskbddev,
+					    KBD_RELEASED(code) ?
+					    WSCONS_EVENT_KEY_UP :
+					    WSCONS_EVENT_KEY_DOWN,
+					    KBD_SCANCODE(code));
+				continue;
+			}
+#endif /* NWSKBD */
+#if NITE>0
 			if (kbd_do_modifier(code) && !k->k_event_mode)
 				continue;
+#endif
 			
 			/*
 			 * if not in event mode, deliver straight to ite to
@@ -396,7 +507,9 @@ void	*junk1, *junk2;
 			 */
 			if (!k->k_event_mode) {
 				/* Gets to spltty() by itself	*/
+#if NITE>0
 				ite_filter(code, ITEFILT_TTY);
+#endif
 				continue;
 			}
 
@@ -516,7 +629,9 @@ kbdgetcn()
 			continue;
 		}
 		code = KBD->ac_da;
+#if NITE>0
 		if (!kbd_do_modifier(code))
+#endif
 			break;
 	}
 
@@ -641,6 +756,7 @@ u_char		 msg_start;
 	}
 }
 
+#if NITE>0
 /*
  * Modifier processing
  */
@@ -681,3 +797,76 @@ u_char	code;
 	}
 	return 0;
 }	
+#endif
+
+#if NWSKBD>0
+/*
+ * These are the callback functions that are passed to wscons.
+ * They really don't do anything worth noting, just call the
+ * other functions above.
+ */
+
+static int
+kbd_enable(void *c, int on)
+{
+        /* Wonder what this is supposed to do... */
+	return 0;
+}
+
+static void
+kbd_set_leds(void *c, int leds)
+{
+        /* we can not set the leds */
+}
+
+static int
+kbd_ioctl(void *c, u_long cmd, caddr_t data, int flag, struct proc *p)
+{
+	struct wskbd_bell_data *kd;
+
+	switch (cmd)
+	{
+	case WSKBDIO_COMPLEXBELL:
+		kd = (struct wskbd_bell_data *)data;
+		kbd_bell(0, kd->pitch, kd->period, kd->volume);
+		return 0;
+	case WSKBDIO_SETLEDS:
+		return 0;
+	case WSKBDIO_GETLEDS:
+		*(int*)data = 0;
+		return 0;
+	case WSKBDIO_GTYPE:
+		*(u_int*)data = WSKBD_TYPE_ATARI;
+		return 0;
+	}
+
+	/*
+	 * We are supposed to return EPASSTHROUGH to wscons if we didn't
+	 * understand.
+	 */
+	return (EPASSTHROUGH);
+}
+
+static void
+kbd_getc(void *c, u_int *type, int *data)
+{
+	int key;
+	key = kbdgetcn();
+
+	*data = KBD_SCANCODE(key);
+	*type = KBD_RELEASED(key) ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
+}
+
+static void
+kbd_pollc(void *c, int on)
+{
+        kbd_softc.k_pollingmode = on;
+}
+
+static void
+kbd_bell(void *v, u_int pitch, u_int duration, u_int volume)
+{
+        kbd_bell_sparms(volume, pitch, duration);
+	kbdbell();
+}
+#endif /* NWSKBD */
