@@ -1,4 +1,4 @@
-/*	$NetBSD: announce.c,v 1.16 2002/09/25 04:57:59 itojun Exp $	*/
+/*	$NetBSD: announce.c,v 1.17 2002/11/20 21:01:57 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)announce.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: announce.c,v 1.16 2002/09/25 04:57:59 itojun Exp $");
+__RCSID("$NetBSD: announce.c,v 1.17 2002/11/20 21:01:57 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,6 +129,8 @@ print_mesg(tty, request, remote_machine)
 	sizes[i] = strlen(line_buf[i]);
 	max_size = max(max_size, sizes[i]);
 	i++;
+	if (strlen(request->l_name) + 1 > sizeof(vis_user) / 4)
+		return (FAILED);
 	strvis(vis_user, request->l_name, VIS_CSTYLE);
 	(void)snprintf(line_buf[i], N_CHARS,
 	    "talk: connection requested by %s@%s.", vis_user, remote_machine);
