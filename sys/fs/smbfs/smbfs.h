@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs.h,v 1.3 2003/02/23 22:31:17 jdolecek Exp $	*/
+/*	$NetBSD: smbfs.h,v 1.4 2003/02/27 08:54:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -97,7 +97,6 @@ struct smbmount {
 #define VTOVFS(vp)		((vp)->v_mount)
 #define	VTOSMBFS(vp)		(VFSTOSMBFS(VTOVFS(vp)))
 
-int smbfs_ioctl(void *v);
 int smbfs_doio(struct buf *bp, struct ucred *cr, struct proc *p);
 int smbfs_vinvalbuf(struct vnode *vp, int flags, struct ucred *cred, 
 	struct proc *p, int intrflg);
