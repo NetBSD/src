@@ -1,4 +1,4 @@
-/*	$NetBSD: gettytab.h,v 1.11 2000/12/28 22:18:27 sommerfeld Exp $	*/
+/*	$NetBSD: gettytab.h,v 1.12 2001/02/04 22:09:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -168,11 +168,6 @@ struct gettyflags {
 #define	NP	gettyflags[21].value
 #define	MB	gettyflags[22].value
 #define	CS	gettyflags[23].value
-
-int	getent __P((char *, char *));
-long	getnum __P((char *));
-int	getflag __P((char *));
-char	*getstr __P((char *, char **));
 
 extern	struct gettyflags gettyflags[];
 extern	struct gettynums gettynums[];
