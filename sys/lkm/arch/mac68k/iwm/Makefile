@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1999/03/27 05:48:53 scottr Exp $
+#	$NetBSD: Makefile,v 1.3 1999/04/03 08:28:50 scottr Exp $
 #
 # Makefile for loadable iwm device driver kernel module
 #
@@ -23,7 +23,7 @@ CLEANFILES+=	*~ ${KMOD}
 CPPFLAGS=	-DDIAGNOSTIC -DDDB -nostdinc -Dmc68020 -Dmac68k
 CFLAGS= 	-g -O -m68020-40
 
-AFLAGS=		-x assembler-with-cpp -traditional-cpp
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -I$S/arch
 
 
 .include <bsd.kmod.mk> 
