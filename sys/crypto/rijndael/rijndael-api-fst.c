@@ -1,5 +1,5 @@
-/*	$NetBSD: rijndael-api-fst.c,v 1.2 2000/10/02 17:19:15 itojun Exp $	*/
-/*	$KAME: rijndael-api-fst.c,v 1.5 2000/10/02 17:14:27 itojun Exp $	*/
+/*	$NetBSD: rijndael-api-fst.c,v 1.3 2000/10/03 03:17:19 itojun Exp $	*/
+/*	$KAME: rijndael-api-fst.c,v 1.6 2000/10/03 03:14:52 jinmei Exp $	*/
 
 /*
  * rijndael-api-fst.c   v2.3   April '2000
@@ -110,10 +110,10 @@ int rijndael_cipherInit(cipherInstance *cipher, BYTE mode, char *IV) {
 			cipher->IV[i] = (word8)j;
 		}
 #else
-		memcpy(cipher->IV, IV, MAX_IV_SIZE);
+		bcopy(IV, cipher->IV, MAX_IV_SIZE);
 #endif /* ?BINARY_KEY_MATERIAL */
 	} else {
-		memset(cipher->IV, 0, MAX_IV_SIZE);
+		bzero(cipher->IV, MAX_IV_SIZE);
 	}
 	return TRUE;
 }
@@ -145,8 +145,8 @@ int rijndael_blockEncrypt(cipherInstance *cipher, keyInstance *key,
 		
 	case MODE_CBC:
 #if 1 /*STRICT_ALIGN*/
-		memcpy(block, cipher->IV, 16);
-		memcpy(iv, input, 16);
+		bcopy(cipher->IV, block, 16);
+		bcopy(input, iv, 16);
 		((word32*)block)[0] ^= ((word32*)iv)[0];
 		((word32*)block)[1] ^= ((word32*)iv)[1];
 		((word32*)block)[2] ^= ((word32*)iv)[2];
@@ -161,7 +161,7 @@ int rijndael_blockEncrypt(cipherInstance *cipher, keyInstance *key,
 		input += 16;
 		for (i = numBlocks - 1; i > 0; i--) {
 #if 1 /*STRICT_ALIGN*/
-			memcpy(block, outBuffer, 16);
+			bcopy(outBuffer, block, 16);
 			((word32*)block)[0] ^= ((word32*)iv)[0];
 			((word32*)block)[1] ^= ((word32*)iv)[1];
 			((word32*)block)[2] ^= ((word32*)iv)[2];
@@ -180,7 +180,7 @@ int rijndael_blockEncrypt(cipherInstance *cipher, keyInstance *key,
 	
 	case MODE_CFB1:
 #if 1 /*STRICT_ALIGN*/
-		memcpy(iv, cipher->IV, 16); 
+		bcopy(cipher->IV, iv, 16); 
 #else  /* !STRICT_ALIGN */
 		*((word32*)iv[0]) = *((word32*)(cipher->IV   ));
 		*((word32*)iv[1]) = *((word32*)(cipher->IV+ 4));
@@ -234,7 +234,7 @@ int rijndael_blockEncrypt(cipherInstance *cipher, keyInstance *key,
 int rijndael_padEncrypt(cipherInstance *cipher, keyInstance *key,
 		BYTE *input, int inputOctets, BYTE *outBuffer) {
 	int i, numBlocks, padLen;
-	word8 block[16], *iv;
+	word8 block[16], *iv, *cp;
 
 	if (cipher == NULL ||
 		key == NULL ||
@@ -255,9 +255,11 @@ int rijndael_padEncrypt(cipherInstance *cipher, keyInstance *key,
 			outBuffer += 16;
 		}
 		padLen = 16 - (inputOctets - 16*numBlocks);
-		assert(padLen > 0 && padLen <= 16);
-		memcpy(block, input, 16 - padLen);
-		memset(block + 16 - padLen, padLen, padLen);
+		if (padLen > 0 && padLen <= 16)
+			panic("rijndael_padEncrypt(ECB)");
+		bcopy(input, block, 16 - padLen);
+		for (cp = block + 16 - padLen; cp < block + 16; cp++)
+			*cp = padLen;
 		rijndaelEncrypt(block, outBuffer, key->keySched, key->ROUNDS);
 		break;
 
@@ -274,7 +276,8 @@ int rijndael_padEncrypt(cipherInstance *cipher, keyInstance *key,
 			outBuffer += 16;
 		}
 		padLen = 16 - (inputOctets - 16*numBlocks);
-		assert(padLen > 0 && padLen <= 16);
+		if (padLen > 0 && padLen <= 16)
+			panic("rijndael_padEncrypt(CBC)");
 		for (i = 0; i < 16 - padLen; i++) {
 			block[i] = input[i] ^ iv[i];
 		}
@@ -318,7 +321,7 @@ int rijndael_blockDecrypt(cipherInstance *cipher, keyInstance *key,
 		
 	case MODE_CBC:
 #if 1 /*STRICT_ALIGN */
-		memcpy(iv, cipher->IV, 16); 
+		bcopy(cipher->IV, iv, 16); 
 #else
 		*((word32*)iv[0]) = *((word32*)(cipher->IV   ));
 		*((word32*)iv[1]) = *((word32*)(cipher->IV+ 4));
@@ -332,8 +335,8 @@ int rijndael_blockDecrypt(cipherInstance *cipher, keyInstance *key,
 			((word32*)block)[2] ^= *((word32*)iv[2]);
 			((word32*)block)[3] ^= *((word32*)iv[3]);
 #if 1 /*STRICT_ALIGN*/
-			memcpy(iv, input, 16);
-			memcpy(outBuffer, block, 16);
+			bcopy(input, iv, 16);
+			bcopy(block, outBuffer, 16);
 #else
 			*((word32*)iv[0]) = ((word32*)input)[0]; ((word32*)outBuffer)[0] = ((word32*)block)[0];
 			*((word32*)iv[1]) = ((word32*)input)[1]; ((word32*)outBuffer)[1] = ((word32*)block)[1];
@@ -347,7 +350,7 @@ int rijndael_blockDecrypt(cipherInstance *cipher, keyInstance *key,
 	
 	case MODE_CFB1:
 #if 1 /*STRICT_ALIGN */
-		memcpy(iv, cipher->IV, 16); 
+		bcopy(cipher->IV, iv, 16); 
 #else
 		*((word32*)iv[0]) = *((word32*)(cipher->IV));
 		*((word32*)iv[1]) = *((word32*)(cipher->IV+ 4));
@@ -428,11 +431,11 @@ int rijndael_padDecrypt(cipherInstance *cipher, keyInstance *key,
 				return BAD_DATA;
 			}
 		}
-		memcpy(outBuffer, block, 16 - padLen);
+		bcopy(block, outBuffer, 16 - padLen);
 		break;
 		
 	case MODE_CBC:
-		memcpy(iv, cipher->IV, 16);
+		bcopy(cipher->IV, iv, 16);
 		/* all blocks but last */
 		for (i = numBlocks - 1; i > 0; i--) {
 			rijndaelDecrypt(input, block, key->keySched, key->ROUNDS);
@@ -440,8 +443,8 @@ int rijndael_padDecrypt(cipherInstance *cipher, keyInstance *key,
 			((word32*)block)[1] ^= iv[1];
 			((word32*)block)[2] ^= iv[2];
 			((word32*)block)[3] ^= iv[3];
-			memcpy(iv, input, 16);
-			memcpy(outBuffer, block, 16);
+			bcopy(input, iv, 16);
+			bcopy(block, outBuffer, 16);
 			input += 16;
 			outBuffer += 16;
 		}
@@ -460,7 +463,7 @@ int rijndael_padDecrypt(cipherInstance *cipher, keyInstance *key,
 				return BAD_DATA;
 			}
 		}
-		memcpy(outBuffer, block, 16 - padLen);
+		bcopy(block, outBuffer, 16 - padLen);
 		break;
 	
 	default:
