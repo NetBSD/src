@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.8 2002/08/17 16:36:34 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.9 2002/10/13 14:54:49 bjh21 Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -54,7 +54,7 @@
 ENTRY_NP(kernel_text)
 
 ASENTRY_NP(start)
-	add	r1, pc, #(.Lstart - . - 8)
+	adr	r1, .Lstart
 	ldmia	r1, {r1, r2, sp}	/* Set initial stack and */
 	sub	r2, r2, r1		/* get zero init data */
 	mov	r3, #0
@@ -77,7 +77,7 @@ ASENTRY_NP(start)
 
 	bl	_C_LABEL(main)		/* call main()! */
 
-	add	r0, pc, #.Lmainreturned - . - 8
+	adr	r0, .Lmainreturned
 	b	_C_LABEL(panic)
 	/* NOTEACHED */
 
@@ -114,10 +114,8 @@ ENTRY_NP(cpu_reset)
 	ldr	r4, [r4]
 
 	ldr	r0, .Lcpufuncs
-	add	lr, pc, #.Lboot_cache_purged - . - 8
+	mov	pc, lr
 	ldr	pc, [r0, #CF_IDCACHE_WBINV_ALL]
-
-.Lboot_cache_purged:
 
 	/*
 	 * Load the cpu_reset_needs_v4_MMU_disable flag to determine if it's
@@ -172,7 +170,7 @@ ENTRY_NP(Execute)
 	mov	ip, r3
 	ldr	r7, .Lreturn
 	stmfd	sp!, {r0, r7}
-	add	r7, pc, #.LExec - . - 8
+	adr	r7, #.LExec
 	mov	r5, r1
 	mrs	r4, cpsr
 	ldmia	r2, {r0-r3}

@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.8 2002/10/13 14:24:09 bjh21 Exp $	*/
+/*	$NetBSD: fusu.S,v 1.9 2002/10/13 14:54:49 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -69,7 +69,7 @@ ENTRY(fuword)
 	beq	.Lfusupcbfault
 #endif
 
-	add	r1, pc, #.Lfusufault - . - 8
+	adr	r1, .Lfusufault
 	str	r1, [r2, #PCB_ONFAULT]
 
 	ldrt	r3, [r0]
@@ -103,7 +103,7 @@ ENTRY(fusword)
 	beq	.Lfusupcbfault
 #endif
 
-	add	r1, pc, #.Lfusufault - . - 8
+	adr	r1, .Lfusufault
 	str	r1, [r2, #PCB_ONFAULT]
 
 	ldrt	r3, [r0]
@@ -145,7 +145,7 @@ ENTRY(fuswintr)
 	beq	.Lfusupcbfault
 #endif
 
-	add	r1, pc, #_C_LABEL(fusubailout) - . - 8
+	adr	r1, _C_LABEL(fusubailout)
 	str	r1, [r2, #PCB_ONFAULT]
 
 	ldrt	r3, [r0]
@@ -190,7 +190,7 @@ ENTRY(fubyte)
 	beq	.Lfusupcbfault
 #endif
 
-	add	r1, pc, #.Lfusufault - . - 8
+	adr	r1, .Lfusufault
 	str	r1, [r2, #PCB_ONFAULT]
 
 	ldrbt	r3, [r0]
@@ -231,7 +231,7 @@ _C_LABEL(fusubailout):
 
 .Lfusupcbfault:
 	mov	r1, r0
-	add	r0, pc, #fusupcbfaulttext - . - 8
+	adr	r0, fusupcbfaulttext
 	b	_C_LABEL(panic)
 
 fusupcbfaulttext:
@@ -263,7 +263,7 @@ ENTRY(suword)
 	beq	.Lfusupcbfault
 #endif
 
-	add	r3, pc, #.Lfusufault - . - 8
+	adr	r3, .Lfusufault
 	str	r3, [r2, #PCB_ONFAULT]
 
 	strt	r1, [r0]
@@ -302,7 +302,7 @@ ENTRY(suswintr)
 	beq	.Lfusupcbfault
 #endif
 
-	add	r3, pc, #_C_LABEL(fusubailout) - . - 8
+	adr	r3, _C_LABEL(fusubailout)
 	str	r3, [r2, #PCB_ONFAULT]
 
 	strbt	r1, [r0], #1
@@ -336,7 +336,7 @@ ENTRY(susword)
 	beq	.Lfusupcbfault
 #endif
 
-	add	r3, pc, #.Lfusufault - . - 8
+	adr	r3, .Lfusufault
 	str	r3, [r2, #PCB_ONFAULT]
 
 	strbt	r1, [r0], #1
@@ -371,7 +371,7 @@ ENTRY(subyte)
 	beq	.Lfusupcbfault
 #endif
 
-	add	r3, pc, #.Lfusufault - . - 8
+	adr	r3, .Lfusufault
 	str	r3, [r2, #PCB_ONFAULT]
 
 	strbt	r1, [r0]

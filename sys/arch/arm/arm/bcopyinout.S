@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.8 2002/10/13 11:20:37 bjh21 Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.9 2002/10/13 14:54:47 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: bcopyinout.S,v 1.8 2002/10/13 11:20:37 bjh21 Exp $")	
+RCSID("$NetBSD: bcopyinout.S,v 1.9 2002/10/13 14:54:47 bjh21 Exp $")	
 
 	.text
 	.align	0
@@ -101,7 +101,7 @@ ENTRY(copyin)
 #endif
 
 	ldr	r5, [r4, #PCB_ONFAULT]
-	add	r3, pc, #.Lcopyfault - . - 8
+	adr	r3, .Lcopyfault
 	str	r3, [r4, #PCB_ONFAULT]
 
 	PREFETCH(r0, 0)
@@ -324,7 +324,7 @@ ENTRY(copyout)
 #endif
 
 	ldr	r5, [r4, #PCB_ONFAULT]
-	add	r3, pc, #.Lcopyfault - . - 8
+	adr	r3, .Lcopyfault
 	str	r3, [r4, #PCB_ONFAULT]
 
 	PREFETCH(r0, 0)
@@ -537,7 +537,7 @@ ENTRY(kcopy)
 #endif
 
 	ldr	r5, [r4, #PCB_ONFAULT]
-	add	r3, pc, #.Lcopyfault - . - 8
+	adr	r3, .Lcopyfault
 	str	r3, [r4, #PCB_ONFAULT]
 
 	PREFETCH(r0, 0)
