@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.56 2000/07/05 12:03:50 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.57 2000/07/08 13:46:34 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@
 #define err		_err
 #define errx		_errx
 #define fork		_fork
+#define fseeko		_fseeko
+#define ftello		_ftello
 #define inet_aton	_inet_aton
 #define inet_pton	_inet_pton
 #define sbrk		_sbrk

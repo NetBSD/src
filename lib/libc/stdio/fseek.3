@@ -1,4 +1,4 @@
-.\"	$NetBSD: fseek.3,v 1.12 1999/03/08 10:27:34 kleink Exp $
+.\"	$NetBSD: fseek.3,v 1.13 2000/07/08 13:46:35 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,8 +43,10 @@
 .Sh NAME
 .Nm fgetpos ,
 .Nm fseek ,
+.Nm fseeko ,
 .Nm fsetpos ,
 .Nm ftell ,
+.Nm ftello ,
 .Nm rewind
 .Nd reposition a stream
 .Sh LIBRARY
@@ -53,7 +55,11 @@
 .Fd #include <stdio.h>
 .Ft int
 .Fn fseek "FILE *stream" "long offset" "int whence"
+.Ft int
+.Fn fseeko "FILE *stream" "off_t offset" "int whence"
 .Ft long
+.Fn ftell "FILE *stream"
+.Ft off_t
 .Fn ftell "FILE *stream"
 .Ft void
 .Fn rewind "FILE *stream"
@@ -197,3 +203,9 @@ and
 functions
 conform to
 .St -ansiC .
+The
+.Fn fseeko
+and
+.Fn ftello
+functions conform to
+.St -xcu5 .

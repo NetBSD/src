@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.33 2000/06/26 15:52:36 kleink Exp $	*/
+/*	$NetBSD: stdio.h,v 1.34 2000/07/08 13:46:33 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -327,6 +327,20 @@ char	*tempnam __P((const char *, const char *));
 #endif
 __END_DECLS
 #endif
+
+/*
+ * X/Open CAE Specification Issue 5 Version 2
+ */
+#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
+    (_XOPEN_SOURCE - 0) >= 500 || defined(_LARGEFILE_SOURCE)
+#ifndef	off_t
+typedef	__off_t		off_t;
+#define	off_t		off_t
+#endif 7* off_t */
+
+int	 fseeko __P((FILE *, off_t, int));
+off_t	 ftello __P((FILE *));
+#endif /* (!_POSIX_SOURCE && !_XOPEN_SOURCE) || ... */
 
 /*
  * Routines that are purely local.

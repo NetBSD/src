@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.18 1998/08/30 23:29:18 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2000/07/08 13:46:35 kleink Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
@@ -9,10 +9,10 @@ CPPFLAGS+=-DFLOATING_POINT
 SRCS+=	asprintf.c clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c \
 	fgetc.c fgetln.c fgetpos.c fgets.c fileno.c findfp.c flags.c \
 	fopen.c fprintf.c fpurge.c fputc.c fputs.c fread.c freopen.c \
-	fscanf.c fseek.c fsetpos.c ftell.c funopen.c fvwrite.c \
-	fwalk.c fwrite.c getc.c getchar.c gettemp.c getw.c makebuf.c \
-	mkdtemp.c mkstemp.c perror.c printf.c putc.c putchar.c puts.c \
-	putw.c refill.c remove.c rewind.c rget.c scanf.c setbuf.c \
+	fscanf.c fseek.c fseeko.c fsetpos.c ftell.c ftello.c funopen.c \
+	fvwrite.c fwalk.c fwrite.c getc.c getchar.c gettemp.c getw.c \
+	makebuf.c mkdtemp.c mkstemp.c perror.c printf.c putc.c putchar.c \
+	puts.c putw.c refill.c remove.c rewind.c rget.c scanf.c setbuf.c \
 	setbuffer.c setvbuf.c snprintf.c sscanf.c stdio.c tmpfile.c \
 	ungetc.c vasprintf.c vfprintf.c vfscanf.c vprintf.c vscanf.c \
 	vsnprintf.c vsscanf.c wbuf.c wsetup.c
@@ -20,6 +20,9 @@ SRCS+=	asprintf.c clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c \
 .if !defined(AUDIT)
 SRCS+=	gets.c sprintf.c vsprintf.c tempnam.c tmpnam.c mktemp.c
 .endif
+
+# namespace purity wrappers
+SRCS+=	_fseeko.c _ftello.c
 
 MAN+=	fclose.3 ferror.3 fflush.3 fgetln.3 fgets.3 fopen.3 fputs.3 \
 	fread.3 fseek.3 funopen.3 getc.3 mktemp.3 perror.3 printf.3 putc.3 \
@@ -31,7 +34,8 @@ MLINKS+=fgets.3 gets.3
 MLINKS+=fopen.3 fdopen.3 fopen.3 freopen.3
 MLINKS+=fputs.3 puts.3
 MLINKS+=fread.3 fwrite.3
-MLINKS+=fseek.3 fgetpos.3 fseek.3 fsetpos.3 fseek.3 ftell.3 fseek.3 rewind.3
+MLINKS+=fseek.3 fgetpos.3 fseek.3 fseeko.3 fseek.3 fsetpos.3 fseek.3 ftell.3 \
+	fseek.3 ftello.3 fseek.3 rewind.3
 MLINKS+=funopen.3 fropen.3 funopen.3 fwopen.3
 MLINKS+=getc.3 fgetc.3 getc.3 getchar.3 getc.3 getw.3
 MLINKS+=mktemp.3 mkdtemp.3 mktemp.3 mkstemp.3
