@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.12 2003/09/17 23:19:02 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.13 2003/09/18 01:35:07 christos Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: misc.c,v 1.20 2002/12/13 10:03:15 markus Exp $");
-__RCSID("$NetBSD: misc.c,v 1.12 2003/09/17 23:19:02 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.13 2003/09/18 01:35:07 christos Exp $");
 
 #include "misc.h"
 #include "log.h"
@@ -314,7 +314,7 @@ addargs(arglist *args, char *fmt, ...)
 		nalloc = 32;
 		args->num = 0;
 	} else if (args->num+2 >= args->nalloc)
-		nalloc *= 2;
+		nalloc = args->nalloc * 2;
 
 	args->list = xrealloc(args->list, nalloc * sizeof(char *));
 	args->nalloc = nalloc;
