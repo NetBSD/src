@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.58 2001/06/05 04:40:39 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.59 2001/06/05 18:51:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -175,7 +175,7 @@ struct pool_log {
 
 int pool_logsize = POOL_LOGSIZE;
 
-#ifdef DIAGNOSTIC
+#ifdef POOL_DIAGNOSTIC
 static __inline void
 pr_log(struct pool *pp, void *v, int action, const char *file, long line)
 {
@@ -272,7 +272,7 @@ pr_enter_check(struct pool *pp, void (*pr)(const char *, ...))
 #define	pr_enter(pp, file, line)
 #define	pr_leave(pp)
 #define	pr_enter_check(pp, pr)
-#endif /* DIAGNOSTIC */
+#endif /* POOL_DIAGNOSTIC */
 
 /*
  * Return the pool page header based on page address.
@@ -477,6 +477,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_hiwat = 0;
 	pp->pr_nidle = 0;
 
+#ifdef POOL_DIAGNOSTIC
 	if (flags & PR_LOGGING) {
 		if (kmem_map == NULL ||
 		    (pp->pr_log = malloc(pool_logsize * sizeof(struct pool_log),
@@ -485,6 +486,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 		pp->pr_curlogentry = 0;
 		pp->pr_logsize = pool_logsize;
 	}
+#endif
 
 	pp->pr_entered_file = NULL;
 	pp->pr_entered_line = 0;
@@ -542,8 +544,10 @@ pool_destroy(struct pool *pp)
 	drainpp = NULL;
 	simple_unlock(&pool_head_slock);
 
+#ifdef POOL_DIAGNOSTIC
 	if ((pp->pr_roflags & PR_LOGGING) != 0)
 		free(pp->pr_log, M_TEMP);
+#endif
 
 	if (pp->pr_roflags & PR_FREEHEADER)
 		free(pp, M_POOL);
@@ -572,7 +576,7 @@ pool_alloc_item_header(struct pool *pp, caddr_t storage, int flags)
  * Grab an item from the pool; must be called at appropriate spl level
  */
 void *
-#ifdef DIAGNOSTIC
+#ifdef POOL_DIAGNOSTIC
 _pool_get(struct pool *pp, int flags, const char *file, long line)
 #else
 pool_get(struct pool *pp, int flags)
@@ -942,7 +946,7 @@ pool_do_put(struct pool *pp, void *v)
 /*
  * Return resource to the pool; must be called at appropriate spl level
  */
-#ifdef DIAGNOSTIC
+#ifdef POOL_DIAGNOSTIC
 void
 _pool_put(struct pool *pp, void *v, const char *file, long line)
 {
@@ -958,7 +962,7 @@ _pool_put(struct pool *pp, void *v, const char *file, long line)
 	simple_unlock(&pp->pr_slock);
 }
 #undef pool_put
-#endif /* DIAGNOSTIC */
+#endif /* POOL_DIAGNOSTIC */
 
 void
 pool_put(struct pool *pp, void *v)
@@ -971,7 +975,7 @@ pool_put(struct pool *pp, void *v)
 	simple_unlock(&pp->pr_slock);
 }
 
-#ifdef DIAGNOSTIC
+#ifdef POOL_DIAGNOSTIC
 #define		pool_put(h, v)	_pool_put((h), (v), __FILE__, __LINE__)
 #endif
 
@@ -1245,7 +1249,7 @@ pool_page_free_nointr(void *v, unsigned long sz, int mtype)
  * Release all complete pages that have not been used recently.
  */
 void
-#ifdef DIAGNOSTIC
+#ifdef POOL_DIAGNOSTIC
 _pool_reclaim(struct pool *pp, const char *file, long line)
 #else
 pool_reclaim(struct pool *pp)
