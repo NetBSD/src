@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)iso.h	7.6 (Berkeley) 5/6/91
- *	$Id: iso.h,v 1.3 1993/05/20 05:27:14 cgd Exp $
+ *	from: @(#)iso.h	8.1 (Berkeley) 6/10/93
+ *	$Id: iso.h,v 1.4 1994/05/13 06:08:51 mycroft Exp $
  */
-
-#ifndef _NETISO_ISO_H_
-#define _NETISO_ISO_H_
 
 /***********************************************************
 		Copyright IBM Corporation 1987
@@ -64,6 +61,9 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 
+#ifndef _NETISO_ISO_H_
+#define _NETISO_ISO_H_
+
 /*
  *	Return true if this is a multicast address
  *	This assumes that the bit transmission is lsb first. This 
@@ -77,6 +77,8 @@ SOFTWARE.
 /*
  * Protocols
  */
+#define	ISOPROTO_TCP	6		/* IETF experiment */
+#define	ISOPROTO_UDP	17		/* IETF experiment */
 #define	ISOPROTO_TP0	25		/* connection oriented transport protocol */
 #define	ISOPROTO_TP1	26		/* not implemented */
 #define	ISOPROTO_TP2	27		/* not implemented */
@@ -89,6 +91,7 @@ SOFTWARE.
 #define	ISOPROTO_INACT_NL	33	/* inactive network layer! */
 #define	ISOPROTO_ESIS	34		/* ES-IS protocol */
 #define	ISOPROTO_INTRAISIS	35		/* IS-IS protocol */
+#define	ISOPROTO_IDRP	36		/* Interdomain Routing Protocol */
 
 #define	ISOPROTO_RAW	255		/* raw clnp */
 #define	ISOPROTO_MAX	256
@@ -120,11 +123,13 @@ SOFTWARE.
 #define	ISO9542_ESIS	0x82
 #define ISO9542X25_ESIS	0x8a
 #define ISO10589_ISIS		0x83
+#define ISO8878A_CONS		0x84
+#define ISO10747_IDRP		0x85
 
 
 #ifndef IN_CLASSA_NET
-#include "../netinet/in.h"
-#endif IN_CLASSA_NET
+#include <netinet/in.h>
+#endif /* IN_CLASSA_NET */
 
 
 
@@ -186,5 +191,4 @@ __END_DECLS
 #endif /* KERNEL */
 
 #define _offsetof(t, m) ((int)((caddr_t)&((t *)0)->m))
-
-#endif /* !_NETISO_ISO_H_ */
+#endif /* _NETISO_ISO_H_ */

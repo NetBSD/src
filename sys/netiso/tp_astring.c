@@ -30,36 +30,46 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)clnl.h	8.1 (Berkeley) 6/10/93
- *	$Id: clnl.h,v 1.4 1994/05/13 06:08:05 mycroft Exp $
+ *	from: @(#)tp_astring.c	8.1 (Berkeley) 6/10/93
+ *	$Id: tp_astring.c,v 1.1 1994/05/13 06:09:09 mycroft Exp $
  */
 
-/***********************************************************
-		Copyright IBM Corporation 1987
+char *tp_sstring[] = {
+"ST_ERROR(0x0)",
+"TP_CLOSED(0x1)",
+"TP_CRSENT(0x2)",
+"TP_AKWAIT(0x3)",
+"TP_OPEN(0x4)",
+"TP_CLOSING(0x5)",
+"TP_REFWAIT(0x6)",
+"TP_LISTENING(0x7)",
+"TP_CONFIRMING(0x8)",
+};
 
-                      All Rights Reserved
-
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
-provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
-supporting documentation, and that the name of IBM not be
-used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
-
-IBM DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
-ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
-IBM BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
-ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
-WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
-ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
-SOFTWARE.
-
-******************************************************************/
-
-/*
- * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
- */
-struct clnl_protosw {
-	void (*clnl_input)();	/* input routine */
+char *tp_estring[] = {
+"TM_inact(0x0)",
+"TM_retrans(0x1)",
+"TM_sendack(0x2)",
+"TM_notused(0x3)",
+"TM_reference(0x4)",
+"TM_data_retrans(0x5)",
+"ER_TPDU(0x6)",
+"CR_TPDU(0x7)",
+"DR_TPDU(0x8)",
+"DC_TPDU(0x9)",
+"CC_TPDU(0xa)",
+"AK_TPDU(0xb)",
+"DT_TPDU(0xc)",
+"XPD_TPDU(0xd)",
+"XAK_TPDU(0xe)",
+"T_CONN_req(0xf)",
+"T_DISC_req(0x10)",
+"T_LISTEN_req(0x11)",
+"T_DATA_req(0x12)",
+"T_XPD_req(0x13)",
+"T_USR_rcvd(0x14)",
+"T_USR_Xrcvd(0x15)",
+"T_DETACH(0x16)",
+"T_NETRESET(0x17)",
+"T_ACPT_req(0x18)",
 };

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)clnp_output.c	7.10 (Berkeley) 5/6/91
- *	$Id: clnp_output.c,v 1.3 1993/12/18 00:42:38 mycroft Exp $
+ *	from: @(#)clnp_output.c	8.1 (Berkeley) 6/10/93
+ *	$Id: clnp_output.c,v 1.4 1994/05/13 06:08:20 mycroft Exp $
  */
 
 /***********************************************************
@@ -110,10 +110,20 @@ static struct clnp_fixed echo_template = {
 	0				/* checksum */
 };
 
+static struct clnp_fixed echor_template = {
+	ISO8473_CLNP,	/* network identifier */
+	0,				/* length */
+	ISO8473_V1,		/* version */
+	CLNP_TTL,		/* ttl */
+	CLNP_ECR|CNF_SEG_OK|CNF_ERR_OK,		/* type */
+	0,				/* segment length */
+	0				/* checksum */
+};
+
 #ifdef	DECBIT
 u_char qos_option[] = {CLNPOVAL_QOS, 1, 
 	CLNPOVAL_GLOBAL|CLNPOVAL_SEQUENCING|CLNPOVAL_LOWDELAY};
-#endif	DECBIT
+#endif	/* DECBIT */
 
 int				clnp_id = 0;		/* id for segmented dgrams */
 
@@ -370,6 +380,8 @@ int					flags;		/* flags */
 			*clnp = raw_template;
 		} else if (flags & CLNP_ECHO) {
 			*clnp = echo_template;
+		} else if (flags & CLNP_ECHOR) {
+			*clnp = echor_template;
 		} else {
 			*clnp = dt_template;
 		}
@@ -453,7 +465,7 @@ int					flags;		/* flags */
 			hdrlen += sizeof(qos_option);
 			m->m_len += sizeof(qos_option);
 		}
-#endif	DECBIT
+#endif	/* DECBIT */
 
 		/*
 		 *	If an options mbuf is present, concatenate a copy to the hdr mbuf.

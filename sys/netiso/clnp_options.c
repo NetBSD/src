@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)clnp_options.c	7.8 (Berkeley) 5/6/91
- *	$Id: clnp_options.c,v 1.3 1993/12/18 00:42:36 mycroft Exp $
+ *	from: @(#)clnp_options.c	8.1 (Berkeley) 6/10/93
+ *	$Id: clnp_options.c,v 1.4 1994/05/13 06:08:17 mycroft Exp $
  */
 
 /***********************************************************
@@ -63,7 +63,6 @@ SOFTWARE.
 
 #ifdef ISO
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
@@ -529,4 +528,4 @@ struct clnp_optidx	*oidx;	/* RETURN: filled in with option idx info */
 		ENDDEBUG
 	return(0);
 }
-#endif	ISO
+#endif	/* ISO */
