@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.72 2003/10/26 19:09:44 christos Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.73 2003/10/28 20:21:44 mycroft Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.72 2003/10/26 19:09:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.73 2003/10/28 20:21:44 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -4757,26 +4757,23 @@ sppp_set_ip_addrs(struct sppp *sp, u_int32_t myaddr, u_int32_t hisaddr)
 {
 	STDDCL;
 	struct ifaddr *ifa;
-	struct sockaddr_in *si = NULL;
-	struct sockaddr_in *dest = NULL; /* XXX: gcc */
+	struct sockaddr_in *si, *dest;
 
 	/*
 	 * Pick the first AF_INET address from the list,
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
 
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list)
-	{
-		if (ifa->ifa_addr->sa_family == AF_INET)
-		{
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		if (ifa->ifa_addr->sa_family == AF_INET) {
 			si = (struct sockaddr_in *)ifa->ifa_addr;
 			dest = (struct sockaddr_in *)ifa->ifa_dstaddr;
-			if (si)
-				break;
+			goto found;
 		}
 	}
+	return;
 
-	if (ifa && si)
+found:
 	{
 		int error;
 		struct sockaddr_in new_sin = *si;
@@ -4815,8 +4812,7 @@ sppp_clear_ip_addrs(struct sppp *sp)
 {
 	struct ifnet *ifp = &sp->pp_if;
 	struct ifaddr *ifa;
-	struct sockaddr_in *si = NULL;
-	struct sockaddr_in *dest = NULL; /* XXX: gcc */
+	struct sockaddr_in *si, *dest;
 
 	u_int32_t remote;
 	if (sp->ipcp.flags & IPCP_HISADDR_DYN)
@@ -4829,18 +4825,16 @@ sppp_clear_ip_addrs(struct sppp *sp)
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
 
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list)
-	{
-		if (ifa->ifa_addr->sa_family == AF_INET)
-		{
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		if (ifa->ifa_addr->sa_family == AF_INET) {
 			si = (struct sockaddr_in *)ifa->ifa_addr;
 			dest = (struct sockaddr_in *)ifa->ifa_dstaddr;
-			if (si)
-				break;
+			goto found;
 		}
 	}
+	return;
 
-	if (ifa && si)
+found:
 	{
 		struct sockaddr_in new_sin = *si;
 
