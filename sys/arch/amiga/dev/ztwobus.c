@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ztwobus.c,v 1.8 1994/06/16 14:29:01 chopps Exp $
+ *	$Id: ztwobus.c,v 1.9 1994/07/16 02:26:30 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/device.h>
@@ -85,6 +85,10 @@ static struct aconfdata aconftab[] = {
 	{ "itrmp",	2112,	52 },
 	{ "ivasc",	2112,	242 },
 	{ "ivsc",	2112,	243 },
+	/* Hydra */
+	{ "ed",		2121,	1 },
+	/* ASDG */
+	{ "ed",		9999,	9 },		/* XXXX */
 	/* Hacker Inc. */
 	{ "mlhsc",	2011,	1 },
 };

@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.34 1994/07/02 15:53:56 chopps Exp $
+ *	$Id: machdep.c,v 1.35 1994/07/16 02:26:05 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -95,6 +95,7 @@
  */
 #include "ite.h"
 #include "le.h"
+#include "ed.h"
 #include "fd.h"
 #include "ahsc.h"
 #include "atzsc.h"
@@ -1430,6 +1431,10 @@ intrhand(sr)
 #endif
 #if NLE > 0
 		if (leintr (0))
+			goto intports_done;
+#endif
+#if NED > 0
+		if (edintr (0))
 			goto intports_done;
 #endif
 #if NIDESC > 0
