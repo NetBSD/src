@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.33 1997/10/17 11:24:08 ws Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.34 1997/10/18 22:12:27 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -442,13 +442,6 @@ found:;
 		}
 	}
 
-	if (cluster == MSDOSFSROOT) {
-		/*
-		 * Force root to be a directory.
-		 */
-		isadir = ATTR_DIRECTORY;
-		blkoff = diroff;
-	}
 	if (isadir) {
 		cluster = scn;
 		if (cluster == MSDOSFSROOT)
