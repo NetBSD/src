@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.3 1998/09/01 04:09:30 thorpej Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.4 1998/09/05 04:37:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -178,6 +178,19 @@ filecore_mount(mp, path, data, ndp, p)
 	if (major(devvp->v_rdev) >= nblkdev) {
 		vrele(devvp);
 		return ENXIO;
+	}
+	/*
+	 * If mount by non-root, then verify that user has necessary
+	 * permissions on the device.
+	 */
+	if (p->p_ucred->cr_uid != 0) {
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+		error = VOP_ACCESS(devvp, VREAD, p->p_ucred, p);
+		VOP_UNLOCK(devvp, 0);
+		if (error) {
+			vrele(devvp);
+			return (error);
+		}
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)
 		error = filecore_mountfs(devvp, mp, p, &args);
