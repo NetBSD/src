@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.5 2000/06/05 00:09:18 matt Exp $	*/
+/*	$NetBSD: rl.c,v 1.5.2.1 2001/05/01 12:27:29 he Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -379,11 +379,23 @@ rlioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	struct rl_softc *rc = rl_cd.cd_devs[DISKUNIT(dev)];
 	struct disklabel *lp = rc->rc_disk.dk_label;
 	int err = 0;
+#ifdef __HAVE_OLD_DISKLABEL
+	struct disklabel newlabel;
+#endif
 
 	switch (cmd) {
 	case DIOCGDINFO:
 		bcopy(lp, addr, sizeof (struct disklabel));
 		break;
+
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCGDINFO:
+		newlabel = *lp;
+		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
+			return ENOTTY;
+		bcopy(&newlabel, addr, sizeof (struct olddisklabel));
+		break;
+#endif
 
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = lp;
@@ -393,13 +405,34 @@ rlioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 	case DIOCSDINFO:
 	case DIOCWDINFO:
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCWDINFO:
+	case ODIOCSDINFO:
+#endif
+	{
+		struct disklabel *tp;
+
+#ifdef __HAVE_OLD_DISKLABEL
+		if (cmd == ODIOCSDINFO || cmd == ODIOCWDINFO) {
+			memset(&newlabel, 0, sizeof newlabel);
+			memcpy(&newlabel, addr, sizeof (struct olddisklabel));
+			tp = &newlabel;
+		} else
+#endif
+		tp = (struct disklabel *)addr;
+
 		if ((flag & FWRITE) == 0)
 			err = EBADF;
 		else
-			err = (cmd == DIOCSDINFO ?
-			    setdisklabel(lp, (struct disklabel *)addr, 0, 0) :
+			err = ((
+#ifdef __HAVE_OLD_DISKLABEL
+			       cmd == ODIOCSDINFO ||
+#endif
+			       cmd == DIOCSDINFO) ?
+			    setdisklabel(lp, tp, 0, 0) :
 			    writedisklabel(dev, rlstrategy, lp, 0));
 		break;
+	}
 
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
