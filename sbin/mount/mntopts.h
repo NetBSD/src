@@ -1,4 +1,4 @@
-/*	$NetBSD: mntopts.h,v 1.10 2002/09/21 18:43:31 christos Exp $	*/
+/*	$NetBSD: mntopts.h,v 1.11 2002/11/07 12:43:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -57,6 +57,7 @@ struct mntopt {
 #define MOPT_NOATIME		{ "atime",	1, MNT_NOATIME, 0 }
 #define MOPT_SYMPERM		{ "symperm",	0, MNT_SYMPERM, 0 }
 #define MOPT_SOFTDEP		{ "softdep",	0, MNT_SOFTDEP, 0 }
+#define MOPT_IGNORE		{ "hidden",	0, MNT_IGNORE, 0 }
 
 /* Control flags. */
 #define MOPT_FORCE		{ "force",	1, MNT_FORCE, 0 }
@@ -87,6 +88,7 @@ struct mntopt {
 	MOPT_NOSUID,							\
 	MOPT_RDONLY,							\
 	MOPT_UNION,							\
+	MOPT_IGNORE,							\
 	MOPT_SYMPERM
 
 void getmntopts __P((const char *, const struct mntopt *, int *, int *));
