@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.21 1999/01/17 15:47:20 drochner Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.22 1999/01/23 16:59:22 drochner Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -291,6 +291,11 @@
 #define KS_Cmd2			0xf10f
 #define KS_Meta_L		0xf110
 #define KS_Meta_R		0xf111
+#define KS_Zenkaku_Hankaku	0xf112	/* Zenkaku/Hankaku toggle */
+#define KS_Hiragana_Katakana	0xf113	/* Hiragana/Katakana toggle */
+#define KS_Henkan_Mode		0xf114	/* Start/Stop Conversion */
+#define KS_Henkan		0xf115	/* Alias for Henkan_Mode */
+#define KS_Muhenkan		0xf116	/* Cancel Conversion */
 
 /*
  * Group 2 (keypad) character in low byte
