@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.58 2001/09/16 16:34:25 wiz Exp $	*/
+/*	$NetBSD: curses.h,v 1.59 2001/09/20 11:11:54 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -696,6 +696,7 @@ int	 raw(void);
 int	 reset_prog_mode(void);
 int	 reset_shell_mode(void);
 int	 resetty(void);
+int      resizeterm(int, int);
 int	 savetty(void);
 int	 scanw(const char *, ...)
 		__attribute__((__format__(__scanf__, 1, 2)));
@@ -746,6 +747,7 @@ int	 wnoutrefresh(WINDOW *);
 int	 wprintw(WINDOW *, const char *, ...)
 		__attribute__((__format__(__printf__, 2, 3)));
 int	 wrefresh(WINDOW *);
+int      wresize(WINDOW *, int, int);
 int	 wscanw(WINDOW *, const char *, ...)
 		__attribute__((__format__(__scanf__, 2, 3)));
 int	 wscrl(WINDOW *, int);
