@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.148 1998/09/16 21:30:58 is Exp $	*/
+/*	$NetBSD: com.c,v 1.149 1998/11/18 23:58:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -99,6 +99,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/timepps.h>
+#include <sys/vnode.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -213,8 +214,14 @@ int	com_kgdb_getc __P((void *));
 void	com_kgdb_putc __P((void *, int));
 #endif /* KGDB */
 
-#define	COMUNIT(x)	(minor(x) & 0x7ffff)
-#define	COMDIALOUT(x)	(minor(x) & 0x80000)
+#define	COMUNIT_MASK	0x7ffff
+#define	COMDIALOUT_MASK	0x80000
+
+#define	COMUNIT(x)	(minor(x) & COMUNIT_MASK)
+#define	COMDIALOUT(x)	(minor(x) & COMDIALOUT_MASK)
+
+#define	COM_ISALIVE(sc)	((sc)->enabled != 0 && \
+			 ISSET((sc)->sc_dev.dv_flags, DVF_ACTIVE))
 
 int
 comspeed(speed, frequency)
@@ -599,6 +606,76 @@ com_config(sc)
 #endif
 }
 
+int
+com_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct com_softc *sc = (struct com_softc *)self;
+	int maj, mn;
+
+	/* locate the major number */
+	for (maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == comopen)
+			break;
+
+	/* Nuke the vnodes for any open instances. */
+	mn = self->dv_unit;
+	vdevgone(maj, mn, mn, VCHR);
+
+	mn |= COMDIALOUT_MASK;
+	vdevgone(maj, mn, mn, VCHR);
+
+	/* Free the receive buffer. */
+	free(sc->sc_rbuf, M_DEVBUF);
+
+	/* Detach and free the tty. */
+	tty_detach(sc->sc_tty);
+	ttyfree(sc->sc_tty);
+
+#ifdef __GENERIC_SOFT_INTERRUPTS
+	/* Unhook the soft interrupt handler. */
+	softintr_disestablish(sc->sc_si);
+#endif
+
+#if NRND > 0 && defined(RND_COM)
+	/* Unhook the entropy source. */
+	rnd_detach_source(&sc->rnd_source);
+#endif
+
+	return (0);
+}
+
+int
+com_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct com_softc *sc = (struct com_softc *)self;
+	int s, rv = 0;
+
+	s = splserial();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		if (sc->sc_hwflags & (COM_HW_CONSOLE|COM_HW_KGDB)) {
+			rv = EBUSY;
+			break;
+		}
+
+		if (sc->disable != NULL && sc->enabled != 0) {
+			(*sc->disable)(sc);
+			sc->enabled = 0;
+		}
+		break;
+	}
+	splx(s);
+	return (rv);
+}
+
 void
 com_shutdown(sc)
 	struct com_softc *sc;
@@ -669,6 +746,9 @@ comopen(dev, flag, mode, p)
 	sc = com_cd.cd_devs[unit];
 	if (sc == 0 || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK) ||
 	    sc->sc_rbuf == NULL)
+		return (ENXIO);
+
+	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
 		return (ENXIO);
 
 #ifdef KGDB
@@ -818,6 +898,9 @@ comclose(dev, flag, mode, p)
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
 
+	if (COM_ISALIVE(sc) == 0)
+		return (0);
+
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		/*
 		 * Although we got a last close, the device may still be in
@@ -838,6 +921,9 @@ comread(dev, uio, flag)
 {
 	struct com_softc *sc = com_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
+
+	if (COM_ISALIVE(sc) == 0)
+		return (EIO);
  
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
@@ -850,6 +936,9 @@ comwrite(dev, uio, flag)
 {
 	struct com_softc *sc = com_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
+
+	if (COM_ISALIVE(sc) == 0)
+		return (EIO);
  
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
@@ -889,6 +978,9 @@ comioctl(dev, cmd, data, flag, p)
 	struct tty *tp = sc->sc_tty;
 	int error;
 	int s;
+
+	if (COM_ISALIVE(sc) == 0)
+		return (EIO);
 
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
@@ -1197,6 +1289,9 @@ comparam(tp, t)
 	u_char lcr;
 	int s;
 
+	if (COM_ISALIVE(sc) == 0)
+		return (EIO);
+
 	/* Check requested parameters. */
 	if (ospeed < 0)
 		return (EINVAL);
@@ -1419,6 +1514,9 @@ comhwiflow(tp, block)
 	struct com_softc *sc = com_cd.cd_devs[COMUNIT(tp->t_dev)];
 	int s;
 
+	if (COM_ISALIVE(sc) == 0)
+		return (0);
+
 	if (sc->sc_mcr_rts == 0)
 		return (0);
 
@@ -1474,6 +1572,9 @@ comstart(tp)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int s;
+
+	if (COM_ISALIVE(sc) == 0)
+		return;
 
 	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
@@ -1723,7 +1824,7 @@ comsoft(arg)
 	struct com_softc *sc = arg;
 	struct tty *tp;
 
-	if (!sc->enabled)
+	if (COM_ISALIVE(sc) == 0)
 		return;
 
 	{
@@ -1751,7 +1852,7 @@ comsoft(arg)
 		if (sc == NULL || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK))
 			continue;
 
-		if (!sc->enabled)
+		if (COM_ISALIVE(sc) == 0)
 			continue;
 
 		tp = sc->sc_tty;
@@ -1801,7 +1902,7 @@ comintr(arg)
 	u_int cc;
 	u_char lsr, iir;
 
-	if (!sc->enabled)
+	if (COM_ISALIVE(sc) == 0)
 		return (0);
 
 	iir = bus_space_read_1(iot, ioh, com_iir);
