@@ -1,4 +1,4 @@
-/*	$NetBSD: ypclnt.h,v 1.6 1994/10/26 00:57:11 cgd Exp $	*/
+/*	$NetBSD: ypclnt.h,v 1.7 1995/07/14 21:11:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -31,8 +31,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _YPCLNT_H_
-#define _YPCLNT_H_
+#ifndef _RPCSVC_YPCLNT_H_
+#define _RPCSVC_YPCLNT_H_
 
 #define YPERR_BADARGS	1		/* args to function are bad */
 #define YPERR_RPC	2		/* RPC failure */
@@ -60,30 +60,29 @@
 #define YPOP_STORE 	4		/* add, or change */
  
 struct ypall_callback {
-	int (*foreach)();	/* return non-0 to stop getting called */
+	/* return non-0 to stop getting called */
+	int (*foreach) __P((u_long, char *, int, char *, int, void *));
 	char *data;		/* opaque pointer for use of callback fn */
 };
 
-int	yp_bind		__P((char *dom));
+__BEGIN_DECLS
+int	yp_bind		__P((const char *));
 struct dom_binding;
-int	_yp_dobind	__P((char *dom, struct dom_binding **ypdb));
-void	yp_unbind	__P((char *dom));
-int	yp_get_default_domain __P((char **domp));
-int	yp_match 	__P((char *indomain, char *inmap,
-			    const char *inkey, int inkeylen, char **outval,
-			    int *outvallen));
-int	yp_first 	__P((char *indomain, char *inmap,
-			    char **outkey, int *outkeylen, char **outval,
-			    int *outvallen));
-int	yp_next		__P((char *indomain, char *inmap,
-			    char *inkey, int inkeylen, char **outkey,
-			    int *outkeylen, char **outval, int *outvallen));
-int	yp_master	__P((char *indomain, char *inmap, char **outname));
-int	yp_order	__P((char *indomain, char *inmap, int *outorder));
-int	yp_all		__P((char *indomain, char *inmap,
-			    struct ypall_callback *incallback));
-char *	yperr_string	__P((int incode));
-int	ypprot_err	__P((unsigned int incode));
+int	_yp_dobind	__P((const char *, struct dom_binding **));
+void	yp_unbind	__P((const char *));
+int	yp_get_default_domain __P((char **));
+int	yp_match 	__P((const char *, const char *, const char *,
+			     int , char **, int *));
+int	yp_first 	__P((const char *, const char *, char **, int *,
+			     char **, int *));
+int	yp_next		__P((const char *, const char *, const char *,
+			     int, char **, int *, char **, int *));
+int	yp_master	__P((const char *, const char *, char **));
+int	yp_order	__P((const char *, const char *, int *));
+int	yp_all		__P((const char *, const char *,
+			     struct ypall_callback *));
+char *	yperr_string	__P((int));
+int	ypprot_err	__P((unsigned int));
+__END_DECLS
 
-#endif /* _YPCLNT_H_ */
-
+#endif /* _RPCSVC_YPCLNT_H_ */
