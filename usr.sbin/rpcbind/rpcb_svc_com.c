@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_com.c,v 1.9 2002/11/08 00:16:39 fvdl Exp $	*/
+/*	$NetBSD: rpcb_svc_com.c,v 1.10 2003/10/21 02:53:02 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -1431,7 +1431,7 @@ del_pmaplist(RPCB *arg)
 	} else if (strcmp(arg->r_netid, tcptrans) == 0) {
 		/* It is TCP */
 		prot = IPPROTO_TCP;
-	} else if (arg->r_netid[0] == NULL) {
+	} else if (arg->r_netid[0] == 0) {
 		prot = 0;	/* Remove all occurrences */
 	} else {
 		/* Not a IP protocol */
