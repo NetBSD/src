@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51 1996/10/13 03:30:45 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52 1996/11/07 07:18:23 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -148,6 +148,7 @@ void	cpu_reset __P((void));
 void
 cpu_startup()
 {
+	extern char etext[], kernel_text[];
 	unsigned i;
 	caddr_t v;
 	int sz;
@@ -235,6 +236,14 @@ cpu_startup()
 	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 	    VM_MBUF_SIZE, FALSE);
+
+	/*
+	 * Tell the VM system that writing to kernel text isn't allowed.
+	 * If we don't, we might end up COW'ing the text segment!
+	 */
+	if (vm_map_protect(kernel_map, NBPG, ns532_round_page(&kernel_text),
+	    VM_PROT_READ|VM_PROT_EXECUTE, TRUE) != KERN_SUCCESS)
+		panic("can't protect kernel text");
 
 	/*
 	 * Initialize callouts
