@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.138 2000/02/26 17:35:35 oster Exp $
+#	$NetBSD: GENERIC,v 1.139 2000/02/29 06:32:22 simonb Exp $
 
 #
 #if 0
@@ -15,7 +15,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.138 $"
+#ident 		"GENERIC-$Revision: 1.139 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -422,7 +422,7 @@ pseudo-device	pty		16	# pseudo ptys
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ccd		4	# concatenated disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
-#options	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
 # rnd is EXPERIMENTAL at this point.
 #pseudo-device  rnd                     # /dev/random and in-kernel generator
