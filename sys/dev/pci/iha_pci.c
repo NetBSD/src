@@ -1,8 +1,14 @@
-/*	$NetBSD: iha_pci.c,v 1.1.2.5 2002/10/18 02:43:09 nathanw Exp $ */
-/*
- * Initio INI-9xxxU/UW SCSI Device Driver
+/*	$NetBSD: iha_pci.c,v 1.1.2.6 2002/12/11 06:38:18 thorpej Exp $ */
+
+/*-
+ * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
  *
+ *  Written for 386bsd and FreeBSD by
+ *	Winston Hung		<winstonh@initio.com>
+ *
+ * Copyright (c) 1997-1999 Initio Corp.
  * Copyright (c) 2000 Ken Westerback
+ * Copyright (c) 2001 Izumi Tsutsui
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,21 +31,6 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
- *
- *-------------------------------------------------------------------------
- *
- * Ported from i91u.c, provided by Initio Corporation, which credits:
- *
- * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
- *
- * FreeBSD
- *
- *  Written for 386bsd and FreeBSD by
- *	Winston Hung		<winstonh@initio.com>
- *
- * Copyright (c) 1997-99 Initio Corp.  All rights reserved.
- *
- *-------------------------------------------------------------------------
  */
 
 /*
@@ -48,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha_pci.c,v 1.1.2.5 2002/10/18 02:43:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha_pci.c,v 1.1.2.6 2002/12/11 06:38:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

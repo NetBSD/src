@@ -1,4 +1,4 @@
-/*	$NetBSD: eapreg.h,v 1.2.8.1 2002/11/11 22:11:04 nathanw Exp $	*/
+/*	$NetBSD: eapreg.h,v 1.2.8.2 2002/12/11 06:38:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 #define  EAP_M_SBB		0x00004000
 #define  E1371_SYNC_RES		0x00004000
 #define  EAP_MSFMTSEL		0x00008000
-#define  EAP_EN(i)		(EAP_DAC2_EN << (i))
+#define  EAP_DAC_EN(i)		(EAP_DAC2_EN << (i))
 #define  EAP_SET_PCLKDIV(n)	(((n)&0x1fff)<<16)
 #define  EAP_GET_PCLKDIV(n)	(((n)>>16)&0x1fff)
 #define  EAP_PCLKBITS		0x1fff0000
@@ -278,6 +278,8 @@
 
 #define EAP_EV1938_A  0x00
 #define EAP_CT5880_C  0x02
+#define EAP_CT5880_D  0x03
+#define EAP_CT5880_E  0x04
 #define EAP_ES1373_A  0x04
 #define EAP_ES1373_B  0x06
 #define EAP_CT5880_A  0x07

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec_elf32.c,v 1.1.4.2 2001/11/14 19:12:55 nathanw Exp $	*/
+/*	$NetBSD: freebsd_exec_elf32.c,v 1.1.4.3 2002/12/11 06:37:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_elf32.c,v 1.1.4.2 2001/11/14 19:12:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_elf32.c,v 1.1.4.3 2002/12/11 06:37:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,6 @@ ELFNAME2(freebsd,probe)(p, epp, veh, itp, pos)
 	Elf_Phdr *ph;
 	Elf_Phdr *ephp;
 	Elf_Nhdr *np;
-	const char *bp;
 
         static const char wantBrand[] = FREEBSD_ELF_BRAND_STRING;
         static const char wantInterp[] = FREEBSD_ELF_INTERP_PREFIX_STRING;
@@ -117,12 +116,9 @@ ELFNAME2(freebsd,probe)(p, epp, veh, itp, pos)
 	}
 
 	if (itp[0]) {
-		if ((error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path,
-		    itp, &bp, 0)))
+		if ((error = emul_find_interp(p, epp->ep_esch->es_emul->e_path,
+		    itp)))
 			return error;
-		if ((error = copystr(bp, itp, MAXPATHLEN, &i)) != 0)
-			return error;
-		free((void *)bp, M_TEMP);
 	}
 	*pos = ELF_NO_ADDR;
 #ifdef DEBUG_FREEBSD_ELF

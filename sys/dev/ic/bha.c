@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.40.2.6 2002/04/17 00:05:33 nathanw Exp $	*/
+/*	$NetBSD: bha.c,v 1.40.2.7 2002/12/11 06:37:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.40.2.6 2002/04/17 00:05:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.40.2.7 2002/12/11 06:37:52 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -1818,7 +1818,7 @@ bha_create_ccbs(sc, count)
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, PAGE_SIZE,
-	    (caddr_t *)&bcg,
+	    (void *)&bcg,
 	    sc->sc_dmaflags | BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (error) {
 		printf("%s: unable to map CCB group, error = %d\n",

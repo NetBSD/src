@@ -1,4 +1,4 @@
-/*	$NetBSD: magmareg.h,v 1.3.6.2 2002/09/17 21:21:06 nathanw Exp $	*/
+/*	$NetBSD: magmareg.h,v 1.3.6.3 2002/12/11 06:38:42 thorpej Exp $	*/
 /* magmareg.h
  *
  *  Copyright (c) 1998 Iain Hibbert
@@ -123,6 +123,8 @@ struct magma_softc {
 	struct mtty_softc *ms_mtty;
 	struct mbpp_softc *ms_mbpp;
 
+	/* softintr(9) cookie */
+	void	*ms_sicookie;
 };
 
 #define MTTY_RBUF_SIZE		(2 * 512)
@@ -210,7 +212,7 @@ void cd1400_enable_transmitter __P((struct cd1400 *, int));
 int magma_match __P((struct device *, struct cfdata *, void *));
 void magma_attach __P((struct device *, struct device *, void *));
 int magma_hard __P((void *));
-int magma_soft __P((void *));
+void magma_soft __P((void *));
 
 int mtty_match __P((struct device *, struct cfdata *, void *));
 void mtty_attach __P((struct device *, struct device *, void *));

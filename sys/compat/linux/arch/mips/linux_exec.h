@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.2.6.4 2002/08/27 23:46:19 nathanw Exp $ */
+/*	$NetBSD: linux_exec.h,v 1.2.6.5 2002/12/11 06:37:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -61,43 +61,7 @@
 #define LINUX_ATEXIT_SIGNATURE 1
 #define LINUX_GCC_SIGNATURE 1
 
-/* #define LINUX_COPYARGS_FUNCTION linux_elf32_copyargs */
-#if defined(ELFSIZE) && (ELFSIZE == 64)
-#define LINUX_COPYARGS_FUNCTION ELF64NAME(copyargs)
-#else
-#define LINUX_COPYARGS_FUNCTION ELF32NAME(copyargs)
-#endif
-
-#define LINUX_ELF_AUX_ENTRIES 14
-
 #define LINUX_ELF_AUX_ARGSIZ \
-    ((howmany(ELF_AUX_ENTRIES * sizeof(LinuxAuxInfo), sizeof(Elf32_Addr))))
-
-typedef struct {
-	Elf32_Sword a_type;
-	Elf32_Word  a_v;
-} LinuxAux32Info;
-typedef struct {
-	Elf64_Sword a_type;
-	Elf64_Word  a_v;
-} LinuxAux64Info;
-#if defined(ELFSIZE) && (ELFSIZE == 64)
-#define LinuxAuxInfo LinuxAux64Info
-#else
-#define LinuxAuxInfo LinuxAux32Info
-#endif
-
-#ifdef _KERNEL
-__BEGIN_DECLS
-#ifdef EXEC_ELF32
-int linux_elf32_copyargs __P((struct proc *, struct exec_package *,
-    struct ps_strings *, char **, void *)); 
-#endif
-#ifdef EXEC_ELF64
-int linux_elf64_copyargs __P((struct proc *, struct exec_package *,
-    struct ps_strings *, char **, void *)); 
-#endif
-__END_DECLS
-#endif /* _KERNEL */
+    ((howmany(LINUX_ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr))))
 
 #endif /* !_MIPS_LINUX_EXEC_H */

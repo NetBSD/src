@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.20.2.5 2002/10/18 02:40:56 nathanw Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.20.2.6 2002/12/11 06:37:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.20.2.5 2002/10/18 02:40:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.20.2.6 2002/12/11 06:37:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,6 +213,37 @@ bad2:
 bad:
 	free(buf, M_TEMP);
 	return error;
+}
+
+/*
+ * Search the alternate path for dynamic binary interpreter. If not found
+ * there, check if the interpreter exists in within 'proper' tree.
+ */
+int
+emul_find_interp(struct proc *p, const char *prefix, char *itp)
+{
+	const char *bp;
+	int error;
+
+	if (emul_find(p, NULL, prefix, itp, &bp, CHECK_ALT_FL_EXISTS) == 0) {
+		size_t len;
+
+		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
+			return error;
+		free((void *)bp, M_TEMP);
+	} else {
+		/* check filename without the emul prefix */
+		struct nameidata nd;
+	
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, itp, p);
+
+		if ((error = namei(&nd)))
+			return error;
+
+		vrele(nd.ni_vp);
+	}
+
+	return (0);
 }
 
 /*

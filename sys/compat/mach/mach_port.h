@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.1.2.2 2002/11/11 22:07:25 nathanw Exp $ */
+/*	$NetBSD: mach_port.h,v 1.1.2.3 2002/12/11 06:37:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,46 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_port_allocate_reply_t;  
 
-int mach_port_deallocate __P((struct proc *, mach_msg_header_t *));
-int mach_port_allocate __P((struct proc *, mach_msg_header_t *));
+/* port_insert_right */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_msg_body_t req_body;
+	mach_msg_port_descriptor_t req_poly;
+	mach_ndr_record_t req_ndr;
+	mach_port_name_t req_name;
+} mach_port_insert_right_request_t;  
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_trailer_t rep_trailer;
+} mach_port_insert_right_reply_t;  
+
+/* port_type */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_port_name_t req_name;
+} mach_port_type_request_t;  
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_port_type_t rep_ptype;
+	mach_msg_trailer_t rep_trailer;
+} mach_port_type_reply_t;  
+
+int mach_port_deallocate(struct proc *, mach_msg_header_t *, 
+    size_t,  mach_msg_header_t *);
+int mach_port_allocate(struct proc *, mach_msg_header_t *,
+    size_t,  mach_msg_header_t *);
+int mach_port_insert_right(struct proc *, mach_msg_header_t *,
+    size_t,  mach_msg_header_t *);
+int mach_port_type(struct proc *, mach_msg_header_t *,
+    size_t,  mach_msg_header_t *);
 
 #endif /* _MACH_PORT_H_ */

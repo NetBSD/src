@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.53.2.8 2002/11/11 22:12:59 nathanw Exp $	*/
+/*	$NetBSD: usb.c,v 1.53.2.9 2002/12/11 06:38:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.53.2.8 2002/11/11 22:12:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.53.2.9 2002/12/11 06:38:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -600,7 +600,7 @@ filt_usbrdetach(struct knote *kn)
 	int s;
 
 	s = splusb();
-	SLIST_REMOVE(&usb_selevent.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&usb_selevent.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -628,7 +628,7 @@ usbkqfilter(dev_t dev, struct knote *kn)
 	case EVFILT_READ:
 		if (minor(dev) != USB_DEV_MINOR)
 			return (1);
-		klist = &usb_selevent.si_klist;
+		klist = &usb_selevent.sel_klist;
 		kn->kn_fop = &usbread_filtops;
 		break;
 

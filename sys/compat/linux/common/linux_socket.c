@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.28.2.13 2002/07/12 01:40:02 nathanw Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.28.2.14 2002/12/11 06:37:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.28.2.13 2002/07/12 01:40:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.28.2.14 2002/12/11 06:37:25 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -80,6 +80,11 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.28.2.13 2002/07/12 01:40:02 natha
 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+#ifdef INET6
+#include <netinet/ip6.h>
+#include <netinet6/ip6_var.h>
+#endif
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_util.h>
@@ -216,13 +221,42 @@ linux_sys_socket(l, v, retval)
 		syscallarg(int) protocol;
 	} */ *uap = v;
 	struct sys_socket_args bsa;
+	int error;
 
 	SCARG(&bsa, protocol) = SCARG(uap, protocol);
 	SCARG(&bsa, type) = SCARG(uap, type);
 	SCARG(&bsa, domain) = linux_to_bsd_domain(SCARG(uap, domain));
 	if (SCARG(&bsa, domain) == -1)
 		return EINVAL;
-	return sys_socket(l, &bsa, retval);
+	error = sys_socket(l, &bsa, retval);
+
+#ifdef INET6
+	/*
+	 * Linux AF_INET6 socket has IPV6_V6ONLY setsockopt set to 0 by
+	 * default and some apps depend on this. So, set V6ONLY to 0
+	 * for Linux apps if the sysctl value is set to 1.
+	 */
+	if (!error && ip6_v6only && SCARG(&bsa, domain) == PF_INET6) {
+		struct proc *p = l->l_proc;
+		struct file *fp;
+
+		if (getsock(p->p_fd, *retval, &fp) == 0) {
+			struct mbuf *m;
+
+			m = m_get(M_WAIT, MT_SOOPTS);
+			m->m_len = sizeof(int);
+			*mtod(m, int *) = 0;
+
+			/* ignore error */
+			(void) sosetopt((struct socket *)fp->f_data,
+				IPPROTO_IPV6, IPV6_V6ONLY, m);
+
+			FILE_UNUSE(fp, p);
+		}
+	}
+#endif
+
+	return (error);
 }
 
 int
@@ -564,20 +598,20 @@ linux_sys_setsockopt(l, v, retval)
 	SCARG(&bsa, valsize) = SCARG(uap, optlen);
 
 	switch (SCARG(&bsa, level)) {
-		case SOL_SOCKET:
-			name = linux_to_bsd_so_sockopt(SCARG(uap, optname));
-			break;
-		case IPPROTO_IP:
-			name = linux_to_bsd_ip_sockopt(SCARG(uap, optname));
-			break;
-		case IPPROTO_TCP:
-			name = linux_to_bsd_tcp_sockopt(SCARG(uap, optname));
-			break;
-		case IPPROTO_UDP:
-			name = linux_to_bsd_udp_sockopt(SCARG(uap, optname));
-			break;
-		default:
-			return EINVAL;
+	case SOL_SOCKET:
+		name = linux_to_bsd_so_sockopt(SCARG(uap, optname));
+		break;
+	case IPPROTO_IP:
+		name = linux_to_bsd_ip_sockopt(SCARG(uap, optname));
+		break;
+	case IPPROTO_TCP:
+		name = linux_to_bsd_tcp_sockopt(SCARG(uap, optname));
+		break;
+	case IPPROTO_UDP:
+		name = linux_to_bsd_udp_sockopt(SCARG(uap, optname));
+		break;
+	default:
+		return EINVAL;
 	}
 
 	if (name == -1)
@@ -612,20 +646,20 @@ linux_sys_getsockopt(l, v, retval)
 	SCARG(&bga, avalsize) = SCARG(uap, optlen);
 
 	switch (SCARG(&bga, level)) {
-		case SOL_SOCKET:
-			name = linux_to_bsd_so_sockopt(SCARG(uap, optname));
-			break;
-		case IPPROTO_IP:
-			name = linux_to_bsd_ip_sockopt(SCARG(uap, optname));
-			break;
-		case IPPROTO_TCP:
-			name = linux_to_bsd_tcp_sockopt(SCARG(uap, optname));
-			break;
-		case IPPROTO_UDP:
-			name = linux_to_bsd_udp_sockopt(SCARG(uap, optname));
-			break;
-		default:
-			return EINVAL;
+	case SOL_SOCKET:
+		name = linux_to_bsd_so_sockopt(SCARG(uap, optname));
+		break;
+	case IPPROTO_IP:
+		name = linux_to_bsd_ip_sockopt(SCARG(uap, optname));
+		break;
+	case IPPROTO_TCP:
+		name = linux_to_bsd_tcp_sockopt(SCARG(uap, optname));
+		break;
+	case IPPROTO_UDP:
+		name = linux_to_bsd_udp_sockopt(SCARG(uap, optname));
+		break;
+	default:
+		return EINVAL;
 	}
 
 	if (name == -1)

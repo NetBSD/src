@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.4.2.14 2002/10/18 02:42:05 nathanw Exp $	*/
+/*	$NetBSD: wivar.h,v 1.4.2.15 2002/12/11 06:38:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -63,7 +63,9 @@ struct wi_softc	{
 	int			sc_bap_id;
 	int			sc_bap_off;
 
+	u_int16_t		sc_dbm_adjust;
 	u_int16_t		sc_max_datalen;
+	u_int16_t		sc_frag_thresh;
 	u_int16_t		sc_rts_thresh;
 	u_int16_t		sc_system_scale;
 	u_int16_t		sc_tx_rate;
@@ -106,6 +108,7 @@ struct wi_softc	{
 #define	WI_FLAGS_HAS_DIVERSITY		0x0040
 #define	WI_FLAGS_HAS_SYSSCALE		0x0080
 #define	WI_FLAGS_BUG_AUTOINC		0x0100
+#define	WI_FLAGS_HAS_FRAGTHR		0x0200
 
 struct wi_card_ident {
 	u_int16_t	card_id;

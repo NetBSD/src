@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.42.2.5 2002/10/18 02:43:13 nathanw Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.42.2.6 2002/12/11 06:38:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.42.2.5 2002/10/18 02:43:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.42.2.6 2002/12/11 06:38:20 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -605,10 +605,11 @@ pci_conf_print_bar(
 			pci_conf_write(pc, tag, reg + 4, 0xffffffff);
 			mask64h = pci_conf_read(pc, tag, reg + 4);
 			pci_conf_write(pc, tag, reg + 4, rval64h);
-		}
+		} else
+			mask64h = 0;
 		splx(s);
 	} else
-		mask = 0;
+		mask = mask64h = 0;
 #endif /* _KERNEL */
 
 	printf("    Base address register at 0x%02x", reg);

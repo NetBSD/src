@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1394reg.h,v 1.5.2.3 2002/02/28 04:13:35 nathanw Exp $	*/
+/*	$NetBSD: ieee1394reg.h,v 1.5.2.4 2002/12/11 06:38:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -168,6 +168,7 @@ struct ieee1394_async_nodata {
 /*
  * Tag value
  */
+#define IEEE1394_TAG_CIP		0x1
 #define	IEEE1394_TAG_GASP		0x3
 
 /*
@@ -227,14 +228,87 @@ struct ieee1394_async_nodata {
 #define IEEE1394_MAX_REC(i)     ((0x1 << (i + 1)))
 #define IEEE1394_BUSINFO_LEN	3
 
+#define IEEE1394_MAX_ASYNCH_FOR_SPEED(i) (IEEE1394_MAX_REC(8+i))
 #define IEEE1394_GET_MAX_REC(i) ((i & 0x0000f000) >> 12)
 #define IEEE1394_GET_LINK_SPD(i) (i & 0x00000007)
 
-/* XXX. Should be at if_fw level but needed here for constructing the config
-   rom. An interface for if_fw to send up a config rom should be done (probably
-   in the p1212 routines. */
+#define IEEE1394_CREATE_ADDR_HIGH(x) (htonl((x & 0xffffffff00000000) >> 32))
+#define IEEE1394_CREATE_ADDR_LOW(x)  (htonl((x & 0x00000000ffffffff)))
 
-#define FW_FIFO_HI      0x2000
-#define FW_FIFO_LO      0x00000000
+
+/*
+ * Allocated CSR space initiator drivers have reserved. Add allocations here to
+ * avoid overlaps. Use the initial 64k space for register space and alloc large
+ * blocks above that for virtualizing data space (ala SBP).
+ */
+
+/*
+ * 0xfffff0010000 - if_fw fifo
+ * 0xfffff0010004 - 0xfffff0020000 - SBP2 addr range (64k in 4 byte chunks)
+ * 0xfffff0020000 - 0xfffff101ffff - SBP2 data address range (16M in 512 byte
+ *                                                            chunks)
+ *
+ */
+
+/* if_fw fifo for receiving packets. */
+
+#define FW_FIFO_HI      0xffff
+#define FW_FIFO_LO      0xf0010000
+#define FW_FIFO		0x0000fffff0010000
+
+#define SBP_ADDR_BEG_HI	0xffff
+#define SBP_ADDR_BEG_LO	0xf0010004
+#define SBP_ADDR_BEG	0x0000fffff0010004
+
+#define SBP_ADDR_MAX_HI	0xffff
+#define SBP_ADDR_MAX_LO	0xf0020004
+#define SBP_ADDR_MAX	0x0000fffff0020004
+
+#define SBP_ADDR_SIZE	(SBP_ADDR_MAX - SBP_ADDR_BEG)
+#define SBP_ADDR_BLOCK_SIZE	4
+
+#define SBP_DATA_BEG_HI	0xffff
+#define SBP_DATA_BEG_LO	0xf0020000
+#define SBP_DATA_BEG	0x0000fffff0020000
+
+#define SBP_DATA_MAX_HI	0xffff
+#define SBP_DATA_MAX_LO 0xf101ffff
+#define SBP_DATA_MAX	0x0000fffff1020000
+
+#define SBP_DATA_SIZE	(SBP_DATA_MAX - SBP_DATA_BEG)
+#define SBP_DATA_BLOCK_SIZE	512
+
+
+/* CIP format (isochronous transaction, tag 1) */
+#define IEEE1394_CIP_SID_MASK		0x3f000000
+#define IEEE1394_CIP_SID_OFFS		24
+#define IEEE1394_CIP_DBS_MASK		0x00ff0000
+#define IEEE1394_CIP_DBS_OFFS		16
+#define IEEE1394_CIP_FN_MASK		0x0000c000
+#define IEEE1394_CIP_FN_OFFS		14
+#define IEEE1394_CIP_QPC_MASK		0x00003800
+#define IEEE1394_CIP_QPC_OFFS		11
+#define IEEE1394_CIP_SPH_MASK		0x00000400
+#define IEEE1394_CIP_SPH_OFFS		10
+#define IEEE1394_CIP_DBC_MASK		0x000000ff
+#define IEEE1394_CIP_DBC_OFFS		0
+#define IEEE1394_CIP_FMT_MASK		0x3f000000
+#define IEEE1394_CIP_FMT_OFFS		24
+#define IEEE1394_CIP_FDF_MASK		0x00ffffff
+
+#define IEEE1394_CIP_FDF_SYT_MASK	0x0000ffff
+#define IEEE1394_CIP_FDF_SYT_OFFS	0
+
+#define IEEE1394_CIP_FDF_DV_FR		0x00800000
+#define IEEE1394_CIP_FDF_DV_FR_60	0x00800000
+#define IEEE1394_CIP_FDF_DV_FR_50	0x00000000
+#define IEEE1394_CIP_FDF_DV_STYPE	0x007c0000
+
+#define IEEE1394_CIP_FMT_DV		0
+#define IEEE1394_CIP_FMT_MPEG2TS	0x20000000
+#define IEEE1394_CIP_FMT_AUDIO		0x10000000
+
+#define IEEE1394_CIP_SET(reg, val)					\
+	(IEEE1394_CIP_##reg##_MASK & ((val) << IEEE1394_CIP_##reg##_OFFS))
 
 #endif	/* _DEV_IEEE1394_IEEE1394REG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.8.2.6 2002/08/27 23:46:26 nathanw Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.8.2.7 2002/12/11 06:37:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.8.2.6 2002/08/27 23:46:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.8.2.7 2002/12/11 06:37:40 thorpej Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -162,6 +162,11 @@ pecoff_load_file(p, epp, path, vcset, entry, argp)
 	struct coff_scnhdr *sh = 0;
 	const char *bp;
 
+	/*
+	 * Following has ~same effect as emul_find_interp(), but the code
+	 * needs to do some more checks while having the vnode open.
+	 * emul_find_interp() wouldn't really simplify handling here.
+	 */
 	if ((error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path,
 			       path, &bp, 0))) {
 		char *ptr;
@@ -174,6 +179,7 @@ pecoff_load_file(p, epp, path, vcset, entry, argp)
 		copystr(path, ptr, len, 0);
 		bp = ptr;
 	}
+
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, bp, p);
 	if ((error = namei(&nd)) != 0) {
 		free((void *)bp, M_TEMP);

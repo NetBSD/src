@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.10.2.17 2002/11/27 21:59:23 christos Exp $	*/
+/*	$NetBSD: iop.c,v 1.10.2.18 2002/12/11 06:37:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.10.2.17 2002/11/27 21:59:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.10.2.18 2002/12/11 06:37:51 thorpej Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -129,7 +129,7 @@ struct iop_class {
 	{	
 		I2O_CLASS_EXECUTIVE,
 		0,
-		COMMENT("executive")
+		IFVERBOSE("executive")
 	},
 	{
 		I2O_CLASS_DDM,
@@ -227,7 +227,6 @@ static void	iop_devinfo(int, char *);
 static int	iop_print(void *, const char *);
 static void	iop_shutdown(void *);
 static int	iop_submatch(struct device *, struct cfdata *, void *);
-static int	iop_vendor_print(void *, const char *);
 
 static void	iop_adjqparam(struct iop_softc *, int);
 static void	iop_create_reconf_thread(void *);
@@ -586,7 +585,7 @@ iop_config_interrupts(struct device *self)
 	 */
 	ia.ia_class = I2O_CLASS_ANY;
 	ia.ia_tid = I2O_TID_IOP;
-	config_found_sm(self, &ia, iop_vendor_print, iop_submatch);
+	config_found_sm(self, &ia, iop_print, iop_submatch);
 
 	/*
 	 * Start device configuration.
@@ -887,13 +886,6 @@ iop_print(void *aux, const char *pnp)
 	}
 	printf(" tid %d", ia->ia_tid);
 	return (UNCONF);
-}
-
-static int
-iop_vendor_print(void *aux, const char *pnp)
-{
-
-	return (QUIET);
 }
 
 static int

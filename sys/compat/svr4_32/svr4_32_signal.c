@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_signal.c,v 1.2.2.7 2002/08/23 02:39:16 petrov Exp $	 */
+/*	$NetBSD: svr4_32_signal.c,v 1.2.2.8 2002/12/11 06:37:43 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.2.2.7 2002/08/23 02:39:16 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.2.2.8 2002/12/11 06:37:43 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_svr4.h"
@@ -271,26 +271,26 @@ svr4_32_to_native_sigaction(ssa, bsa)
 	struct sigaction *bsa;
 {
 
-	bsa->sa_handler = (sig_t)(u_long) ssa->sa_handler;
-	svr4_32_to_native_sigset(&ssa->sa_mask, &bsa->sa_mask);
+	bsa->sa_handler = (sig_t)(u_long) ssa->svr4_32_sa_handler;
+	svr4_32_to_native_sigset(&ssa->svr4_32_sa_mask, &bsa->sa_mask);
 	bsa->sa_flags = 0;
-	if ((ssa->sa_flags & SVR4_SA_ONSTACK) != 0)
+	if ((ssa->svr4_32_sa_flags & SVR4_SA_ONSTACK) != 0)
 		bsa->sa_flags |= SA_ONSTACK;
-	if ((ssa->sa_flags & SVR4_SA_RESETHAND) != 0)
+	if ((ssa->svr4_32_sa_flags & SVR4_SA_RESETHAND) != 0)
 		bsa->sa_flags |= SA_RESETHAND;
-	if ((ssa->sa_flags & SVR4_SA_RESTART) != 0)
+	if ((ssa->svr4_32_sa_flags & SVR4_SA_RESTART) != 0)
 		bsa->sa_flags |= SA_RESTART;
-	if ((ssa->sa_flags & SVR4_SA_SIGINFO) != 0)
+	if ((ssa->svr4_32_sa_flags & SVR4_SA_SIGINFO) != 0)
 		DPRINTF(("svr4_to_native_sigaction: SA_SIGINFO ignored\n"));
-	if ((ssa->sa_flags & SVR4_SA_NODEFER) != 0)
+	if ((ssa->svr4_32_sa_flags & SVR4_SA_NODEFER) != 0)
 		bsa->sa_flags |= SA_NODEFER;
-	if ((ssa->sa_flags & SVR4_SA_NOCLDWAIT) != 0)
+	if ((ssa->svr4_32_sa_flags & SVR4_SA_NOCLDWAIT) != 0)
 		bsa->sa_flags |= SA_NOCLDWAIT;
-	if ((ssa->sa_flags & SVR4_SA_NOCLDSTOP) != 0)
+	if ((ssa->svr4_32_sa_flags & SVR4_SA_NOCLDSTOP) != 0)
 		bsa->sa_flags |= SA_NOCLDSTOP;
-	if ((ssa->sa_flags & ~SVR4_SA_ALLBITS) != 0)
+	if ((ssa->svr4_32_sa_flags & ~SVR4_SA_ALLBITS) != 0)
 		DPRINTF(("svr4_32_to_native_sigaction: extra bits %x ignored\n",
-		    ssa->sa_flags & ~SVR4_SA_ALLBITS));
+		    ssa->svr4_32_sa_flags & ~SVR4_SA_ALLBITS));
 }
 
 void
@@ -299,19 +299,19 @@ native_to_svr4_32_sigaction(bsa, ssa)
 	struct svr4_32_sigaction *ssa;
 {
 
-	ssa->sa_handler = (svr4_32_sig_t)(u_long) bsa->sa_handler;
-	native_to_svr4_32_sigset(&bsa->sa_mask, &ssa->sa_mask);
-	ssa->sa_flags = 0;
+	ssa->svr4_32_sa_handler = (svr4_32_sig_t)(u_long) bsa->sa_handler;
+	native_to_svr4_32_sigset(&bsa->sa_mask, &ssa->svr4_32_sa_mask);
+	ssa->svr4_32_sa_flags = 0;
 	if ((bsa->sa_flags & SA_ONSTACK) != 0)
-		ssa->sa_flags |= SVR4_SA_ONSTACK;
+		ssa->svr4_32_sa_flags |= SVR4_SA_ONSTACK;
 	if ((bsa->sa_flags & SA_RESETHAND) != 0)
-		ssa->sa_flags |= SVR4_SA_RESETHAND;
+		ssa->svr4_32_sa_flags |= SVR4_SA_RESETHAND;
 	if ((bsa->sa_flags & SA_RESTART) != 0)
-		ssa->sa_flags |= SVR4_SA_RESTART;
+		ssa->svr4_32_sa_flags |= SVR4_SA_RESTART;
 	if ((bsa->sa_flags & SA_NODEFER) != 0)
-		ssa->sa_flags |= SVR4_SA_NODEFER;
+		ssa->svr4_32_sa_flags |= SVR4_SA_NODEFER;
 	if ((bsa->sa_flags & SA_NOCLDSTOP) != 0)
-		ssa->sa_flags |= SVR4_SA_NOCLDSTOP;
+		ssa->svr4_32_sa_flags |= SVR4_SA_NOCLDSTOP;
 }
 
 void

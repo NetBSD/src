@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux.h,v 1.15.14.1 2001/08/24 00:08:45 nathanw Exp $	*/
+/*	$NetBSD: hpux.h,v 1.15.14.2 2002/12/11 06:37:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -287,9 +287,9 @@ struct hpux_flock {
 /* HP-UX POSIX signal stuff implementation */
 typedef struct __hpux_sigset_t { int sigset[8]; } hpux_sigset_t;
 struct hpux_sigaction {
-	void		(*sa_handler) __P((int));
-	hpux_sigset_t	sa_mask;
-	int		sa_flags;
+	void		(*hpux_sa_handler) __P((int));
+	hpux_sigset_t	hpux_sa_mask;
+	int		hpux_sa_flags;
 };
 #define HPUXSA_ONSTACK		1
 #define HPUXSA_RESETHAND	4

@@ -1,7 +1,12 @@
-/*	$NetBSD: ihareg.h,v 1.1.2.4 2002/01/08 00:29:49 nathanw Exp $ */
-/*
- * Initio INI-9xxxU/UW SCSI Device Driver
+/*	$NetBSD: ihareg.h,v 1.1.2.5 2002/12/11 06:37:58 thorpej Exp $ */
+
+/*-
+ * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
  *
+ *  Written for 386bsd and FreeBSD by
+ *	Winston Hung		<winstonh@initio.com>
+ *
+ * Copyright (c) 1997-1999 Initio Corp.
  * Copyright (c) 2000 Ken Westerback
  * All rights reserved.
  *
@@ -25,22 +30,6 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
- *
- *-------------------------------------------------------------------------
- *
- * Ported from i91uscsi.h, provided by Initio Corporation, which probably
- * came from the same people who provided i91u.c:
- *
- * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
- *
- * FreeBSD
- *
- *  Written for 386bsd and FreeBSD by
- *	Winston Hung		<winstonh@initio.com>
- *
- * Copyright (c) 1997-99 Initio Corp.  All rights reserved.
- *
- *-------------------------------------------------------------------------
  */
 
 /*
@@ -156,7 +145,7 @@
 #define TUL_SBID	0x89	       /* R   SCSI BUS ID		     */
 #define TUL_SID		0x89	       /* W   SCSI ID			     */
 #define TUL_SALVC	0x8A	       /* R   FIFO Avail Cnt/Identify Msg    */
-#define     MSG_IDENTIFY_LUNMASK 0x07
+#define     IHA_MSG_IDENTIFY_LUNMASK 0x07
 #define TUL_STIMO	0x8A	       /* W   Sel/Resel Time Out Register    */
 #define     STIMO_250MS	153	       /*     in units of 1.6385us           */
 #define TUL_SDATI	0x8B	       /* R   SCSI Bus contents		     */

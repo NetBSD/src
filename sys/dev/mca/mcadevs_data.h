@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs_data.h,v 1.2.8.3 2002/01/08 00:30:46 nathanw Exp $	*/
+/*	$NetBSD: mcadevs_data.h,v 1.2.8.4 2002/12/11 06:38:14 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.16 2001/12/01 10:43:36 jdolecek Exp 
+ *	NetBSD: mcadevs,v 1.17 2002/12/04 18:52:28 jdolecek Exp 
  */
 
 /*-
@@ -337,6 +337,7 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0x8FD9,	"IBM XGA/XGA-2 Display Adapter" },
     { 0x8FDA,	"IBM XGA/XGA-2 Display Adapter" },
     { 0x8FDB,	"IBM XGA/XGA-2 Display Adapter" },
+    { 0x90EE,	"IBM SVGA Adapter/A" },
     { 0xDDFF,	"IBM ESDI Fixed Disk Controller" },
     { 0xDEFF,	"IBM Multi-Protocol Communications Adapter" },
     { 0xDF7F,	"IBM 3363 Optical Disk Adapter" },

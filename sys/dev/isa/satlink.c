@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.11.2.7 2002/11/11 22:10:22 nathanw Exp $	*/
+/*	$NetBSD: satlink.c,v 1.11.2.8 2002/12/11 06:38:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.11.2.7 2002/11/11 22:10:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.11.2.8 2002/12/11 06:38:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -434,7 +434,7 @@ filt_satlinkrdetach(struct knote *kn)
 	int s;
 
 	s = splsoftclock();
-	SLIST_REMOVE(&sc->sc_selq.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_selq.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -469,12 +469,12 @@ satlinkkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_selq.si_klist;
+		klist = &sc->sc_selq.sel_klist;
 		kn->kn_fop = &satlinkread_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &sc->sc_selq.si_klist;
+		klist = &sc->sc_selq.sel_klist;
 		kn->kn_fop = &satlink_seltrue_filtops;
 		break;
 

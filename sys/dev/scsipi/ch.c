@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.43.4.7 2002/11/11 22:12:12 nathanw Exp $	*/
+/*	$NetBSD: ch.c,v 1.43.4.8 2002/12/11 06:38:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.43.4.7 2002/11/11 22:12:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.43.4.8 2002/12/11 06:38:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -485,7 +485,7 @@ filt_chdetach(struct knote *kn)
 {
 	struct ch_softc *sc = kn->kn_hook;
 
-	SLIST_REMOVE(&sc->sc_selq.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_selq.sel_klist, kn, knote, kn_selnext);
 }
 
 static int
@@ -513,12 +513,12 @@ chkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_selq.si_klist;
+		klist = &sc->sc_selq.sel_klist;
 		kn->kn_fop = &chread_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &sc->sc_selq.si_klist;
+		klist = &sc->sc_selq.sel_klist;
 		kn->kn_fop = &chwrite_filtops;
 		break;
 

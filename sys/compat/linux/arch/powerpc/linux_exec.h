@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.2.4.5 2002/08/27 23:46:20 nathanw Exp $  */
+/*	$NetBSD: linux_exec.h,v 1.2.4.6 2002/12/11 06:37:22 thorpej Exp $  */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -96,31 +96,14 @@
  * by PowerPC GNU ld.so). If we use LINUX_SP_WRAP, we also need some extra
  * room for the sp_wrap_code.
  */
-#ifdef LINUX_SP_WRAP
 #define LINUX_ELF_AUX_ARGSIZ \
-    ((howmany(ELF_AUX_ENTRIES * sizeof(LinuxAuxInfo), sizeof(Elf32_Addr))) \
+    ((howmany(LINUX_ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr))) \
     + 16 + LINUX_SP_WRAP)
-#else
-#define LINUX_ELF_AUX_ARGSIZ \
-    ((howmany(ELF_AUX_ENTRIES * sizeof(LinuxAuxInfo), sizeof(Elf32_Addr))) + 16)
-#endif
 
-/* XXX should use ELFNAME2 */
-#define LINUX_COPYARGS_FUNCTION linux_elf32_copyargs
-
-typedef struct {
-	Elf32_Sword a_type;
-	Elf32_Word  a_v;
-} LinuxAux32Info;
-#define LinuxAuxInfo LinuxAux32Info
+/* we have special powerpc ELF copyargs */
+#define LINUX_MACHDEP_ELF_COPYARGS
 
 /* NetBSD/powerpc doesn't use e_syscall, so use the default. */
 #define LINUX_SYSCALL_FUNCTION syscall
 
-#ifdef _KERNEL
-__BEGIN_DECLS
-int linux_elf32_copyargs __P((struct proc *, struct exec_package *,
-    struct ps_strings *, char **, void *)); 
-__END_DECLS
-#endif /* _KERNEL */
 #endif /* !_POWERPC_LINUX_EXEC_H */

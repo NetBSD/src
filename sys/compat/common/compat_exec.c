@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_exec.c,v 1.3.2.2 2002/10/18 02:40:56 nathanw Exp $	*/
+/*	$NetBSD: compat_exec.c,v 1.3.2.3 2002/12/11 06:37:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.3.2.2 2002/10/18 02:40:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.3.2.3 2002/12/11 06:37:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ exec_aout_prep_oldnmagic(p, epp)
 
 	epp->ep_taddr = 0;
 	epp->ep_tsize = execp->a_text;
-	epp->ep_daddr = roundup(epp->ep_taddr + execp->a_text, __LDPGSZ);
+	epp->ep_daddr = roundup(epp->ep_taddr + execp->a_text, AOUT_LDPGSZ);
 	epp->ep_dsize = execp->a_data + execp->a_bss;
 	epp->ep_entry = execp->a_entry;
 

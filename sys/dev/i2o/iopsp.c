@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.4.2.9 2002/10/18 02:41:44 nathanw Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.4.2.10 2002/12/11 06:37:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.4.2.9 2002/10/18 02:41:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.4.2.10 2002/12/11 06:37:52 thorpej Exp $");
 
 #include "opt_i2o.h"
 
@@ -307,22 +307,21 @@ iopsp_reconfig(struct device *dv)
 		it = &sc->sc_targetmap[targ];
 		it->it_flags |= IT_PRESENT;
 		syncrate = ((int)le64toh(param.sdi.negsyncrate) + 500) / 1000;
-		if (it->it_width == param.sdi.negdatawidth &&
-		    it->it_offset == param.sdi.negoffset &&
-		    it->it_syncrate == syncrate)
-			continue;
+		if (it->it_width != param.sdi.negdatawidth ||
+		    it->it_offset != param.sdi.negoffset ||
+		    it->it_syncrate != syncrate) {
+			it->it_width = param.sdi.negdatawidth;
+			it->it_offset = param.sdi.negoffset;
+			it->it_syncrate = syncrate;
 
-		it->it_width = param.sdi.negdatawidth;
-		it->it_offset = param.sdi.negoffset;
-		it->it_syncrate = syncrate;
-
-		printf("%s: target %d (tid %d): %d-bit, ", sc->sc_dv.dv_xname,
-		    targ, tid, it->it_width);
-		if (it->it_syncrate == 0)
-			printf("asynchronous\n");
-		else
-			printf("synchronous at %dMHz, offset 0x%x\n",
-			    it->it_syncrate, it->it_offset);
+			printf("%s: target %d (tid %d): %d-bit, ",
+			    sc->sc_dv.dv_xname, targ, tid, it->it_width);
+			if (it->it_syncrate == 0)
+				printf("asynchronous\n");
+			else
+				printf("synchronous at %dMHz, offset 0x%x\n",
+				    it->it_syncrate, it->it_offset);
+		}
 #endif
 
 		/* Ignore the device if it's in use by somebody else. */
@@ -423,6 +422,8 @@ iopsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		periph = xs->xs_periph;
 		flags = xs->xs_control;
 
+		SC_DEBUG(periph, SCSIPI_DB2, ("iopsp_scsi_request run_xfer\n"));
+
 		tid = IOPSP_TIDMAP(sc->sc_tidmap, periph->periph_target,
 		    periph->periph_lun);
 		if (tid == IOPSP_TID_ABSENT || tid == IOPSP_TID_INUSE) {
@@ -430,8 +431,6 @@ iopsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			scsipi_done(xs);
 			return;
 		}
-
-		SC_DEBUG(periph, SCSIPI_DB2, ("iopsp_scsi_request run_xfer\n"));
 
 		/* Need to reset the target? */
 		if ((flags & XS_CTL_RESET) != 0) {

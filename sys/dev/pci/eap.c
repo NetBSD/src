@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.44.2.7 2002/11/11 22:11:03 nathanw Exp $	*/
+/*	$NetBSD: eap.c,v 1.44.2.8 2002/12/11 06:38:16 thorpej Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.44.2.7 2002/11/11 22:11:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.44.2.8 2002/12/11 06:38:16 thorpej Exp $");
 
 #include "midi.h"
 
@@ -464,7 +464,8 @@ eap1371_src_read(struct eap_softc *sc, int a)
 	src |= E1371_SRC_ADDR(a);
 	EWRITE4(sc, E1371_SRC, src | E1371_SRC_STATE_OK);
 
-	if ((eap1371_src_wait(sc) & E1371_SRC_STATE_MASK) != E1371_SRC_STATE_OK) {
+	t = eap1371_src_wait(sc);
+	if ((t & E1371_SRC_STATE_MASK) != E1371_SRC_STATE_OK) {
 		for (to = 0; to < EAP_READ_TIMEOUT; to++) {
 			t = EREAD4(sc, E1371_SRC);
 			if ((t & E1371_SRC_STATE_MASK) == E1371_SRC_STATE_OK)
@@ -585,18 +586,24 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	revision = PCI_REVISION(pa->pa_class);
+	ct5880 = 0;
 	if (sc->sc_1371) {
-		ct5880 = 0;
 		if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ENSONIQ &&
-		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ENSONIQ_CT5880)
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ENSONIQ_CT5880) {
 			ct5880 = 1;
-		switch (revision) {
-		case EAP_EV1938_A: revstr = "EV1938A "; break;
-		case EAP_CT5880_C: revstr = "CT5880C "; ct5880 = 1; break;
-		case EAP_ES1373_A: revstr = "ES1373A "; break;
-		case EAP_ES1373_B: revstr = "ES1373B "; break;
-		case EAP_CT5880_A: revstr = "CT5880A "; ct5880 = 1; break;
-		case EAP_ES1371_B: revstr = "ES1371B "; break;
+			switch (revision) {
+			case EAP_CT5880_C: revstr = "CT5880C "; break;
+			case EAP_CT5880_D: revstr = "CT5880D "; break;
+			case EAP_CT5880_E: revstr = "CT5880E "; break;
+			case EAP_CT5880_A: revstr = "CT5880A "; break;
+			}
+		} else {
+			switch (revision) {
+			case EAP_EV1938_A: revstr = "EV1938A "; break;
+			case EAP_ES1373_A: revstr = "ES1373A "; break;
+			case EAP_ES1373_B: revstr = "ES1373B "; break;
+			case EAP_ES1371_B: revstr = "ES1371B "; break;
+			}
 		}
 	}
 	printf(": %s %s(rev. 0x%02x)\n", devinfo, revstr, revision);
@@ -658,25 +665,25 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 		ctl.un.mask = 1 << EAP_VOICE_VOL | 1 << EAP_FM_VOL | 
 			1 << EAP_CD_VOL | 1 << EAP_LINE_VOL | 1 << EAP_AUX_VOL |
 			1 << EAP_MIC_VOL;
-		eap_hw_if->set_port(sc, &ctl);
+		eap_hw_if->set_port(&sc->sc_ei[EAP_I1], &ctl);
 
 		ctl.type = AUDIO_MIXER_VALUE;
 		ctl.un.value.num_channels = 1;
 		for (ctl.dev = EAP_MASTER_VOL; ctl.dev < EAP_MIC_VOL; 
 		     ctl.dev++) {
 			ctl.un.value.level[AUDIO_MIXER_LEVEL_MONO] = VOL_0DB;
-			eap_hw_if->set_port(sc, &ctl);
+			eap_hw_if->set_port(&sc->sc_ei[EAP_I1], &ctl);
 		}
 		ctl.un.value.level[AUDIO_MIXER_LEVEL_MONO] = 0;
-		eap_hw_if->set_port(sc, &ctl);
+		eap_hw_if->set_port(&sc->sc_ei[EAP_I1], &ctl);
 		ctl.dev = EAP_MIC_PREAMP;
 		ctl.type = AUDIO_MIXER_ENUM;
 		ctl.un.ord = 0;
-		eap_hw_if->set_port(sc, &ctl);
+		eap_hw_if->set_port(&sc->sc_ei[EAP_I1], &ctl);
 		ctl.dev = EAP_RECORD_SOURCE;
 		ctl.type = AUDIO_MIXER_SET;
 		ctl.un.mask = 1 << EAP_MIC_VOL;
-		eap_hw_if->set_port(sc, &ctl);
+		eap_hw_if->set_port(&sc->sc_ei[EAP_I1], &ctl);
 	} else {
 		/* clean slate */
 
@@ -687,7 +694,7 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 		if (ct5880) {
 			EWRITE4(sc, EAP_ICSS, EAP_CT5880_AC97_RESET);
 			/* Let codec wake up */
-			tsleep(sc, PRIBIO, "eapcdc", hz / 20);
+			delay(20000);
 		}
 
                 /* Reset from es1371's perspective */
@@ -1210,7 +1217,7 @@ eap_trigger_output(
 		EWRITE4(sc, E1371_SRC, 0);
 
 	icsc = EREAD4(sc, EAP_ICSC);
-	icsc |= EAP_EN(ei->index);
+	icsc |= EAP_DAC_EN(ei->index);
 	EWRITE4(sc, EAP_ICSC, icsc);
 
 	DPRINTFN(1, ("eap_trigger_output: set ICSC = 0x%08x\n", icsc));
@@ -1297,7 +1304,7 @@ eap_halt_output(void *addr)
 
 	DPRINTF(("eap: eap_halt_output\n"));
 	icsc = EREAD4(sc, EAP_ICSC);
-	EWRITE4(sc, EAP_ICSC, icsc & ~(EAP_DAC2_EN << ei->index));
+	EWRITE4(sc, EAP_ICSC, icsc & ~(EAP_DAC_EN(ei->index)));
 #ifdef DIAGNOSTIC
 	ei->ei_prun = 0;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.19.2.8 2002/11/11 22:10:17 nathanw Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.19.2.9 2002/12/11 06:38:09 thorpej Exp $	*/
 
 /*
  * TODO
@@ -672,7 +672,7 @@ filt_irframetrdetach(struct knote *kn)
 	int s;
 
 	s = splir();
-	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -694,7 +694,7 @@ filt_irframetwdetach(struct knote *kn)
 	int s;
 
 	s = splir();
-	SLIST_REMOVE(&sc->sc_wsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_wsel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -729,11 +729,11 @@ irframet_kqfilter(void *h, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rsel.si_klist;
+		klist = &sc->sc_rsel.sel_klist;
 		kn->kn_fop = &irframetread_filtops;
 		break;
 	case EVFILT_WRITE:
-		klist = &sc->sc_wsel.si_klist;
+		klist = &sc->sc_wsel.sel_klist;
 		kn->kn_fop = &irframetwrite_filtops;
 		break;
 	default:

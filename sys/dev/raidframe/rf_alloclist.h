@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.h,v 1.3.20.2 2002/10/18 02:43:42 nathanw Exp $	*/
+/*	$NetBSD: rf_alloclist.h,v 1.3.20.3 2002/12/11 06:38:31 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -50,10 +50,8 @@ struct RF_AllocListElem_s {
 
 int     rf_ConfigureAllocList(RF_ShutdownList_t ** listp);
 
-#if RF_UTILITY == 0
 void    rf_real_AddToAllocList(RF_AllocListElem_t * l, void *p, int size);
 void    rf_FreeAllocList(RF_AllocListElem_t * l);
 RF_AllocListElem_t *rf_real_MakeAllocList(void);
-#endif				/* RF_UTILITY == 0 */
 
 #endif				/* !_RF__RF_ALLOCLIST_H_ */

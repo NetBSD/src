@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.h,v 1.1.2.2 2002/11/11 22:07:31 nathanw Exp $ */
+/*	$NetBSD: mach_vm.h,v 1.1.2.3 2002/12/11 06:37:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,8 +46,28 @@
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
 
-/* vm_map */
+#define	MACH_ALTERNATE_LOAD_SITE	1
+#define MACH_NEW_LOCAL_SHARED_REGIONS	2
+#define MACH_QUERY_IS_SYSTEM_REGION	4
+#define MACH_SF_PREV_LOADED		1
+#define MACH_SYSTEM_REGION_BACKED	2
 
+#define MACH_VM_PROT_COW	0x8
+#define MACH_VM_PROT_ZF		0x10
+
+typedef struct mach_sf_mapping {
+	mach_vm_offset_t mapping_offset;
+	mach_vm_size_t size;
+	mach_vm_offset_t file_offset;
+	mach_vm_prot_t protection;
+	mach_vm_offset_t cksum;
+} mach_sf_mapping_t;
+
+/* vm_map */
+#define MACH_VM_INHERIT_SHARE 0
+#define MACH_VM_INHERIT_COPY 1
+#define MACH_VM_INHERIT_NONE 2
+#define MACH_VM_INHERIT_DONATE_COPY 3
 typedef struct {
 	mach_msg_header_t req_msgh;
 	mach_msg_body_t req_body;
@@ -72,6 +92,25 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_vm_map_reply_t;
 
+/* vm_allocate */
+#define MACH_VM_FLAGS_ANYWHERE 1
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_vm_address_t req_address;
+	mach_vm_size_t req_size;
+	int req_flags;
+} mach_vm_allocate_request_t;
+
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_vm_address_t rep_address;
+	mach_msg_trailer_t rep_trailer;
+} mach_vm_allocate_reply_t;
+
 /* vm_deallocate */
 
 typedef struct {
@@ -88,7 +127,32 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_vm_deallocate_reply_t;
 
-int mach_vm_map __P((struct proc *, mach_msg_header_t *));
-int mach_vm_deallocate __P((struct proc *, mach_msg_header_t *));
+/* vm_wire */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_msg_body_t req_body;
+	mach_msg_port_descriptor_t req_task;
+	mach_ndr_record_t req_ndr;
+	mach_vm_address_t req_address;
+	mach_vm_size_t req_size;
+	mach_vm_prot_t req_access;
+} mach_vm_wire_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_trailer_t rep_trailer;
+} mach_vm_wire_reply_t;
+
+int mach_vm_map(struct proc *, mach_msg_header_t *,
+    size_t, mach_msg_header_t *);
+int mach_vm_allocate(struct proc *, mach_msg_header_t *,
+    size_t, mach_msg_header_t *);
+int mach_vm_deallocate(struct proc *, mach_msg_header_t *,
+    size_t, mach_msg_header_t *);
+int mach_vm_wire(struct proc *, mach_msg_header_t *,
+    size_t, mach_msg_header_t *);
 
 #endif /* _MACH_VM_H_ */

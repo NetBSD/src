@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.8.2.6 2002/11/11 22:12:02 nathanw Exp $ */
+/*	$NetBSD: bpp.c,v 1.8.2.7 2002/12/11 06:38:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.8.2.6 2002/11/11 22:12:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.8.2.7 2002/12/11 06:38:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -204,7 +204,7 @@ bppattach(parent, self, aux)
 	if (sa->sa_nintr) {
 		sc->sc_intrchain = bppintr;
 		sc->sc_intrchainarg = dsc;
-		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_TTY, 0,
+		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_TTY,
 					 bppintr, sc);
 	}
 
@@ -511,7 +511,7 @@ filt_bpprdetach(struct knote *kn)
 	int s;
 
 	s = splbpp();
-	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -532,7 +532,7 @@ filt_bppwdetach(struct knote *kn)
 	int s;
 
 	s = splbpp();
-	SLIST_REMOVE(&sc->sc_wsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_wsel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -560,12 +560,12 @@ bppkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rsel.si_klist;
+		klist = &sc->sc_rsel.sel_klist;
 		kn->kn_fop = &bppread_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &sc->sc_wsel.si_klist;
+		klist = &sc->sc_wsel.sel_klist;
 		kn->kn_fop = &bppwrite_filtops;
 		break;
 

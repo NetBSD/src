@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_acctrace.h,v 1.3.20.2 2002/09/17 21:20:44 nathanw Exp $	*/
+/*	$NetBSD: rf_acctrace.h,v 1.3.20.3 2002/12/11 06:38:30 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -122,9 +122,9 @@ typedef struct RF_AccTotals_s {
 	RF_Hist_t dw_hist[RF_HIST_NUM_BUCKETS];
 	RF_Hist_t tot_hist[RF_HIST_NUM_BUCKETS];
 }       RF_AccTotals_t;
-#if RF_UTILITY == 0
+
 RF_DECLARE_EXTERN_MUTEX(rf_tracing_mutex)
-#endif				/* RF_UTILITY == 0 */
+
 
 	int     rf_ConfigureAccessTrace(RF_ShutdownList_t ** listp);
 	void    rf_LogTraceRec(RF_Raid_t * raid, RF_AccTraceEntry_t * rec);

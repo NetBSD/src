@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.15.2.4 2002/10/18 02:43:43 nathanw Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.15.2.5 2002/12/11 06:38:31 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.15.2.4 2002/10/18 02:43:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.15.2.5 2002/12/11 06:38:31 thorpej Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -118,7 +118,7 @@ rf_CopybackReconstructedData(raidPtr)
 	}
 
 	if (frow == raidPtr->numRow) {
-		printf("COPYBACK:  no disks need copyback\n");
+		printf("raid%d: no disks need copyback\n", raidPtr->raidid);
 		return;
 	}
 	badDisk = &raidPtr->Disks[frow][fcol];
@@ -146,8 +146,9 @@ rf_CopybackReconstructedData(raidPtr)
 	retcode = raidlookup(raidPtr->Disks[frow][fcol].devname, proc, &vp);
 
 	if (retcode) {
-		printf("COPYBACK: raidlookup on device: %s failed: %d!\n",
-		    raidPtr->Disks[frow][fcol].devname, retcode);
+		printf("raid%d: copyback: raidlookup on device: %s failed: %d!\n",
+		       raidPtr->raidid, raidPtr->Disks[frow][fcol].devname, 
+		       retcode);
 
 		/* XXX the component isn't responding properly... must be
 		 * still dead :-( */
@@ -185,7 +186,8 @@ rf_CopybackReconstructedData(raidPtr)
 	}
 
 	if (retcode) {
-		printf("COPYBACK: target disk failed TUR\n");
+		printf("raid%d: copyback: target disk failed TUR\n",
+		       raidPtr->raidid);
 		return;
 	}
 	/* get a buffer to hold one SU  */
@@ -205,7 +207,6 @@ rf_CopybackReconstructedData(raidPtr)
 	desc->databuf = databuf;
 	desc->mcpair = rf_AllocMCPair();
 
-	printf("COPYBACK: Quiescing the array\n");
 	/* quiesce the array, since we don't want to code support for user
 	 * accs here */
 	rf_SuspendNewRequestsAndWait(raidPtr);
@@ -217,7 +218,6 @@ rf_CopybackReconstructedData(raidPtr)
 	rf_copyback_in_progress = 1;	/* debug only */
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
 
-	printf("COPYBACK: Beginning\n");
 	RF_GETTIME(desc->starttime);
 	rf_ContinueCopyback(desc);
 
@@ -236,6 +236,7 @@ rf_CopybackReconstructedData(raidPtr)
 	raidwrite_component_label( raidPtr->raid_cinfo[frow][fcol].ci_dev,
 				   raidPtr->raid_cinfo[frow][fcol].ci_vp,
 				   &c_label);
+	rf_update_component_labels(raidPtr, RF_NORMAL_COMPONENT_UPDATE);
 }
 
 
@@ -385,7 +386,8 @@ rf_CopybackReadDoneProc(desc, status)
 	int     status;
 {
 	if (status) {		/* invoke the callback with bad status */
-		printf("COPYBACK: copyback read failed.  Aborting.\n");
+		printf("raid%d: copyback read failed.  Aborting.\n",
+		       desc->raidPtr->raidid);
 		(desc->writereq->CompleteFunc) (desc, -100);
 	} else {
 		rf_DiskIOEnqueue(&(desc->raidPtr->Queues[desc->frow][desc->fcol]), desc->writereq, RF_IO_NORMAL_PRIORITY);
@@ -403,7 +405,8 @@ rf_CopybackWriteDoneProc(desc, status)
 	int     status;
 {
 	if (status && status != -100) {
-		printf("COPYBACK: copyback write failed.  Aborting.\n");
+		printf("raid%d: copyback write failed.  Aborting.\n",
+		       desc->raidPtr->raidid);
 	}
 	desc->status = status;
 	rf_MCPairWakeupFunc(desc->mcpair);
@@ -430,10 +433,13 @@ rf_CopybackComplete(desc, status)
 
 		RF_GETTIME(t);
 		RF_TIMEVAL_DIFF(&desc->starttime, &t, &diff);
+#if 0
 		printf("Copyback time was %d.%06d seconds\n",
 		    (int) diff.tv_sec, (int) diff.tv_usec);
+#endif
 	} else
-		printf("COPYBACK: Failure.\n");
+		printf("raid%d: Copyback failure.  Status: %d\n",
+		       raidPtr->raidid, status);
 
 	RF_Free(desc->databuf, rf_RaidAddressToByte(raidPtr, desc->sectPerSU));
 	rf_FreeMCPair(desc->mcpair);

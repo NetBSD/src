@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.9.2.8 2002/11/11 22:12:03 nathanw Exp $	*/
+/*	$NetBSD: magma.c,v 1.9.2.9 2002/12/11 06:38:42 thorpej Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.9.2.8 2002/11/11 22:12:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.9.2.9 2002/12/11 06:38:42 thorpej Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -72,19 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.9.2.8 2002/11/11 22:12:03 nathanw Exp $"
 
 #include <dev/sbus/mbppio.h>
 #include <dev/sbus/magmareg.h>
-
-/*
- * Select tty soft interrupt bit based on TTY ipl. (stole from zs.c)
- */
-#if PIL_TTY == 1
-# define IE_MSOFT IE_L1
-#elif PIL_TTY == 4
-# define IE_MSOFT IE_L4
-#elif PIL_TTY == 6
-# define IE_MSOFT IE_L6
-#else
-# error "no suitable software interrupt bit"
-#endif
 
 /* supported cards
  *
@@ -402,7 +389,7 @@ magma_attach(parent, self, aux)
 	}
 
 	dprintf((" addr %p", sc));
-	printf(" softpri %d: %s\n", PIL_TTY, card->mb_realname);
+	printf(": %s\n", card->mb_realname);
 
 	sc->ms_board = card;
 	sc->ms_ncd1400 = card->mb_ncd1400;
@@ -501,10 +488,13 @@ magma_attach(parent, self, aux)
 		return;		/* No interrupts to service!? */
 
 	(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_TTY,
-				 0, magma_hard, sc);
-	(void)bus_intr_establish(sa->sa_bustag, PIL_TTY, IPL_SOFTSERIAL,
-				 BUS_INTR_ESTABLISH_SOFTINTR,
-				 magma_soft, sc);
+				 magma_hard, sc);
+	sc->ms_sicookie = softintr_establish(IPL_SOFTSERIAL, magma_soft, sc);
+	if (sc->ms_sicookie == NULL) {
+		printf("\n%s: cannot establish soft int handler\n",
+			sc->ms_dev.dv_xname);
+		return;
+	}
 	evcnt_attach_dynamic(&sc->ms_intrcnt, EVCNT_TYPE_INTR, NULL,
 	    sc->ms_dev.dv_xname, "intr");
 }
@@ -725,14 +715,9 @@ magma_hard(arg)
 	}
 	*/
 
-	if( needsoftint ) {	/* trigger the soft interrupt */
-#if defined(SUN4M)
-		if( CPU_ISSUN4M )
-			raise(0, PIL_TTY);
-		else
-#endif
-			ienab_bis(IE_MSOFT);
-	}
+	if (needsoftint)
+		/* trigger the soft interrupt */
+		softintr_schedule(sc->ms_sicookie);
 
 	return(serviced);
 }
@@ -744,7 +729,7 @@ magma_hard(arg)
  *
  *  runs at spltty()
  */
-int
+void
 magma_soft(arg)
 	void *arg;
 {
@@ -752,7 +737,6 @@ magma_soft(arg)
 	struct mtty_softc *mtty = sc->ms_mtty;
 	struct mbpp_softc *mbpp = sc->ms_mbpp;
 	int port;
-	int serviced = 0;
 	int s, flags;
 
 	if (mtty == NULL)
@@ -790,7 +774,6 @@ magma_soft(arg)
 				    mtty->ms_dev.dv_xname, port);
 
 			(*tp->t_linesw->l_rint)(data, tp);
-			serviced = 1;
 		}
 
 		s = splhigh();	/* block out hard interrupt routine */
@@ -802,20 +785,17 @@ magma_soft(arg)
 			dprintf(("%s%x: cd %s\n", mtty->ms_dev.dv_xname,
 				port, mp->mp_carrier ? "on" : "off"));
 			(*tp->t_linesw->l_modem)(tp, mp->mp_carrier);
-			serviced = 1;
 		}
 
 		if( ISSET(flags, MTTYF_RING_OVERFLOW) ) {
 			log(LOG_WARNING, "%s%x: ring buffer overflow\n",
 			    mtty->ms_dev.dv_xname, port);
-			serviced = 1;
 		}
 
 		if( ISSET(flags, MTTYF_DONE) ) {
 			ndflush(&tp->t_outq, mp->mp_txp - tp->t_outq.c_cf);
 			CLR(tp->t_state, TS_BUSY);
 			(*tp->t_linesw->l_start)(tp);	/* might be some more */
-			serviced = 1;
 		}
 	} /* for(each mtty...) */
 
@@ -825,7 +805,7 @@ chkbpp:
 	 * Check the bpp ports (if any) to see what needs doing
 	 */
 	if (mbpp == NULL)
-		return (serviced);
+		return;
 
 	for( port = 0 ; port < mbpp->ms_nports ; port++ ) {
 		struct mbpp_port *mp = &mbpp->ms_port[port];
@@ -840,12 +820,9 @@ chkbpp:
 
 		if( ISSET(flags, MBPPF_WAKEUP) ) {
 			wakeup(mp);
-			serviced = 1;
 		}
 
 	} /* for(each mbpp...) */
-
-	return(serviced);
 }
 
 /************************************************************************

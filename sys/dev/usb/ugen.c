@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.45.2.9 2002/11/11 22:12:51 nathanw Exp $	*/
+/*	$NetBSD: ugen.c,v 1.45.2.10 2002/12/11 06:38:51 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.45.2.9 2002/11/11 22:12:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.45.2.10 2002/12/11 06:38:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1364,7 +1364,7 @@ filt_ugenrdetach(struct knote *kn)
 	int s;
 
 	s = splusb();
-	SLIST_REMOVE(&sce->rsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sce->rsel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -1423,7 +1423,7 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sce->rsel.si_klist;
+		klist = &sce->rsel.sel_klist;
 		switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
 		case UE_INTERRUPT:
 			kn->kn_fop = &ugenread_intr_filtops;
@@ -1445,7 +1445,7 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	case EVFILT_WRITE:
-		klist = &sce->rsel.si_klist;
+		klist = &sce->rsel.sel_klist;
 		switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
 		case UE_INTERRUPT:
 		case UE_ISOCHRONOUS:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.2.2.3 2002/11/11 22:12:50 nathanw Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.2.2.4 2002/12/11 06:38:50 thorpej Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -81,6 +81,7 @@
 #endif
 #include <sys/proc.h>
 #include <sys/vnode.h>
+#include <sys/device.h>
 #include <sys/poll.h>
 #include <sys/sysctl.h>
 
@@ -385,7 +386,7 @@ error:
 USB_DETACH(ubsa)
 {
 	USB_DETACH_START(ubsa, sc);
-	int rv;
+	int rv = 0;
 
 
 	DPRINTF(("ubsa_detach: sc = %p\n", sc));

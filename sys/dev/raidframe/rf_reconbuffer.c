@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconbuffer.c,v 1.5.2.5 2002/10/18 02:43:55 nathanw Exp $	*/
+/*	$NetBSD: rf_reconbuffer.c,v 1.5.2.6 2002/12/11 06:38:36 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.5.2.5 2002/10/18 02:43:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.5.2.6 2002/12/11 06:38:36 thorpej Exp $");
 
 #include "rf_raid.h"
 #include "rf_reconbuffer.h"
@@ -333,17 +333,10 @@ rf_GetFullReconBuffer(reconCtrlPtr)
 
 	RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
 
-	if ((p = reconCtrlPtr->priorityList) != NULL) {
-		reconCtrlPtr->priorityList = p->next;
-		p->next = NULL;
-		goto out;
-	}
 	if ((p = reconCtrlPtr->fullBufferList) != NULL) {
 		reconCtrlPtr->fullBufferList = p->next;
 		p->next = NULL;
-		goto out;
 	}
-out:
 	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
 	return (p);
 }
@@ -378,14 +371,7 @@ rf_CheckForFullRbuf(raidPtr, reconCtrl, pssPtr, numDataCol)
 			Dprintf2("RECON: rbuf for psid %ld ru %d is in list\n",
 			    (long) rbuf->parityStripeID, rbuf->which_ru);
 		}
-#if 0
-		pssPtr->writeRbuf = pssPtr->rbuf;	/* DEBUG ONLY:  we like
-							 * to be able to find
-							 * this rbuf while it's
-							 * awaiting write */
-#else
 		rbuf->pssPtr = pssPtr;
-#endif
 		pssPtr->rbuf = NULL;
 		rf_CauseReconEvent(raidPtr, rbuf->row, rbuf->col, NULL, RF_REVENT_BUFREADY);
 	}

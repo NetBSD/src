@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.83.2.19 2002/10/18 02:41:13 nathanw Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.83.2.20 2002/12/11 06:37:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.83.2.19 2002/10/18 02:41:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.83.2.20 2002/12/11 06:37:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -589,11 +589,9 @@ linux_sys_mprotect(l, v, retval)
 
 /*
  * This code is partly stolen from src/lib/libc/compat-43/times.c
- * XXX - CLK_TCK isn't declared in /sys, just in <time.h>, done here
  */
 
-#define CLK_TCK 100
-#define	CONVTCK(r)	(r.tv_sec * CLK_TCK + r.tv_usec / (1000000 / CLK_TCK))
+#define	CONVTCK(r)	(r.tv_sec * hz + r.tv_usec / (1000000 / hz))
 
 int
 linux_sys_times(l, v, retval)
@@ -606,19 +604,22 @@ linux_sys_times(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct timeval t;
-	struct linux_tms ltms;
-	struct rusage ru;
 	int error, s;
 
-	calcru(p, &ru.ru_utime, &ru.ru_stime, NULL);
-	ltms.ltms_utime = CONVTCK(ru.ru_utime);
-	ltms.ltms_stime = CONVTCK(ru.ru_stime);
+	if (SCARG(uap, tms)) {
+		struct linux_tms ltms;
+		struct rusage ru;
 
-	ltms.ltms_cutime = CONVTCK(p->p_stats->p_cru.ru_utime);
-	ltms.ltms_cstime = CONVTCK(p->p_stats->p_cru.ru_stime);
+		calcru(p, &ru.ru_utime, &ru.ru_stime, NULL);
+		ltms.ltms_utime = CONVTCK(ru.ru_utime);
+		ltms.ltms_stime = CONVTCK(ru.ru_stime);
 
-	if ((error = copyout(&ltms, SCARG(uap, tms), sizeof ltms)))
-		return error;
+		ltms.ltms_cutime = CONVTCK(p->p_stats->p_cru.ru_utime);
+		ltms.ltms_cstime = CONVTCK(p->p_stats->p_cru.ru_stime);
+
+		if ((error = copyout(&ltms, SCARG(uap, tms), sizeof ltms)))
+			return error;
+	}
 
 	s = splclock();
 	timersub(&time, &boottime, &t);
@@ -627,6 +628,8 @@ linux_sys_times(l, v, retval)
 	retval[0] = ((linux_clock_t)(CONVTCK(t)));
 	return 0;
 }
+
+#undef CONVTCK
 
 /*
  * Linux 'readdir' call. This code is mostly taken from the
@@ -1504,7 +1507,8 @@ linux_sys_sysinfo(l, v, retval)
 }
 
 #define bsd_to_linux_rlimit1(l, b, f) \
-    (l)->f = ((b)->f == RLIM_INFINITY || ((b)->f & 0xffffffff00000000) != 0) ? \
+    (l)->f = ((b)->f == RLIM_INFINITY || \
+	     ((b)->f & 0xffffffff00000000ULL) != 0) ? \
     LINUX_RLIM_INFINITY : (int32_t)(b)->f
 #define bsd_to_linux_rlimit(l, b) \
     bsd_to_linux_rlimit1(l, b, rlim_cur); \

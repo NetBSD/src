@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcireg.h,v 1.6.2.4 2002/02/28 04:13:35 nathanw Exp $	*/
+/*	$NetBSD: fwohcireg.h,v 1.6.2.5 2002/12/11 06:38:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -332,6 +332,16 @@
 #define	OHCI_PhyControl_WrData_BITPOS	0
 
 /*
+ * OHCI_REG_IsochronousCycleTimer
+ */
+#define OHCI_IsoCycleTimer_Sec		0xfe000000
+#define OHCI_IsoCycleTimer_Sec_BITPOS	25
+#define OHCI_IsoCycleTimer_uSec		0x01fff000
+#define OHCI_IsoCycleTimer_uSec_BITPOS	12
+#define OHCI_IsoCycleTimer_Mod		0x00000fff
+#define OHCI_IsoCycleTimer_Mod_BITPOS	0
+
+/*
  * Section 3.1.1: ContextControl register
  *
  *
@@ -496,6 +506,8 @@
 #define	OHCI_CTXMATCH_TAG2			0x40000000
 #define	OHCI_CTXMATCH_TAG1			0x20000000
 #define	OHCI_CTXMATCH_TAG0			0x10000000
+#define	OHCI_CTXMATCH_TAG_MASK			0xf0000000
+#define	OHCI_CTXMATCH_TAG_BITPOS		28
 #define	OHCI_CTXMATCH_CYCLE_MATCH_MASK		0x07fff000
 #define	OHCI_CTXMATCH_CYCLE_MATCH_BITPOS	12
 #define	OHCI_CTXMATCH_SYNC_MASK			0x00000f00
@@ -532,7 +544,9 @@ struct fwohci_desc {
 #endif
 #define	fd_timestamp	fd_rescount
 
+#define	OHCI_DESC_STORE_VALUE	0x8600
 #define	OHCI_DESC_INPUT		0x2000
+#define	OHCI_DESC_OUTPUT	0x0000 /* for the symmetory */
 #define	OHCI_DESC_LAST		0x1000
 #define	OHCI_DESC_STATUS	0x0800
 #define	OHCI_DESC_IMMED		0x0200

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365var.h,v 1.15.6.1 2002/01/08 00:29:46 nathanw Exp $	*/
+/*	$NetBSD: i82365var.h,v 1.15.6.2 2002/12/11 06:37:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -100,6 +100,11 @@ struct pcic_handle {
 #define	PCIC_VENDOR_I82365SLR1		2
 #define	PCIC_VENDOR_CIRRUS_PD6710	3
 #define	PCIC_VENDOR_CIRRUS_PD672X	4
+#define PCIC_VENDOR_I82365SL_DF		5
+#define PCIC_VENDOR_IBM			6
+#define PCIC_VENDOR_IBM_KING		7
+#define PCIC_VENDOR_RICOH_5C296		8
+#define PCIC_VENDOR_RICOH_5C396		9
 
 /*
  * This is sort of arbitrary.  It merely needs to be "enough". It can be

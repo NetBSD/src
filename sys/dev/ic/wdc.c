@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.94.2.14 2002/10/18 02:42:02 nathanw Exp $ */
+/*	$NetBSD: wdc.c,v 1.94.2.15 2002/12/11 06:38:02 thorpej Exp $ */
 
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.94.2.14 2002/10/18 02:42:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.94.2.15 2002/12/11 06:38:02 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -976,7 +976,7 @@ wdctimeout(arg)
 			chp->ch_flags &= ~WDCF_DMA_WAIT;
 		}
 		/*
-		 * Call the interrupt routine. If we just missed and interrupt,
+		 * Call the interrupt routine. If we just missed an interrupt,
 		 * it will do what's needed. Else, it will take the needed
 		 * action (reset the device).
 		 * Before that we need to reinstall the timeout callback,

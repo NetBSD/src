@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.10.2.8 2002/11/11 22:06:53 nathanw Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.10.2.9 2002/12/11 06:37:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,11 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.10.2.8 2002/11/11 22:06:53 nathanw Exp $");
-
-#ifndef ELFSIZE
-#define ELFSIZE		32	/* XXX should die */
-#endif
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.10.2.9 2002/12/11 06:37:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,14 +45,10 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.10.2.8 2002/11/11 22:06:53 nathanw E
 #include <sys/lock.h>
 #include <sys/exec.h>
 #include <sys/types.h>
-#include <sys/exec_elf.h>
 #include <sys/malloc.h>
 
 #include <machine/regnum.h>
-
 #include <uvm/uvm_extern.h>
-
-#include <compat/common/compat_util.h>
 
 #include <compat/irix/irix_syscall.h>
 #include <compat/irix/irix_types.h>
@@ -69,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.10.2.8 2002/11/11 22:06:53 nathanw E
 
 extern const int native_to_svr4_signo[];
 
-static void setregs_n32 __P((struct proc *, struct exec_package *, u_long));
 static void irix_e_proc_exec __P((struct proc *, struct exec_package *));
 static void irix_e_proc_fork __P((struct proc *, struct proc *));
 static void irix_e_proc_exit __P((struct proc *));
@@ -84,8 +75,8 @@ void irix_syscall __P((void));
 void irix_syscall_intern __P((struct proc *));
 #endif
 
-const struct emul emul_irix_o32 = {
-	"irix o32",
+const struct emul emul_irix = {
+	"irix",
 	"/emul/irix",
 #ifndef __HAVE_MINIMAL_EMUL
 	0,
@@ -116,142 +107,19 @@ const struct emul emul_irix_o32 = {
 	irix_vm_fault,
 };
 
-const struct emul emul_irix_n32 = {
-	"irix n32",
-	"/emul/irix",
-#ifndef __HAVE_MINIMAL_EMUL
-	0,
-	native_to_irix_errno,
-	IRIX_SYS_syscall,
-	IRIX_SYS_MAXSYSCALL,
-#endif
-	irix_sysent,
-#ifdef SYSCALL_DEBUG
-	irix_syscallnames,
-#else
-	NULL,
-#endif
-	irix_sendsig,
-	trapsignal,
-	NULL,
-	NULL,
-	setregs_n32,
-	irix_e_proc_exec,
-	irix_e_proc_fork,
-	irix_e_proc_exit,
-#ifdef __HAVE_SYSCALL_INTERN
-	irix_syscall_intern,
-#else
-	irix_syscall,
-#endif
-	irix_sysctl,
-	irix_vm_fault,
-};
-
-/*
- * IRIX o32 ABI probe function
- */
-int
-ELFNAME2(irix,probe_o32)(p, epp, eh, itp, pos)
-	struct proc *p;
-	struct exec_package *epp;
-	void *eh;
-	char *itp; 
-	vaddr_t *pos; 
-{
-	const char *bp;
-	int error;
-	size_t len;
-
-#ifdef DEBUG_IRIX
-	printf("irix_probe_o32()\n");
-#endif
-	if ((((Elf_Ehdr *)epp->ep_hdr)->e_flags & IRIX_EF_IRIX_ABI_MASK) !=
-	    IRIX_EF_IRIX_ABIO32)
-		return error;
-
-	if (itp[0]) {
-		/* o32 binaries use /lib/libc.so.1 */
-		if (strncmp(itp, "/lib/libc.so", 12) && 
-		    strncmp(itp, "/usr/lib/libc.so", 16))
-			return ENOEXEC;
-		if ((error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path,
-		    itp, &bp, 0)))
-			return error;
-		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
-			return error;
-		free((void *)bp, M_TEMP);
-	}
-	*pos = ELF_NO_ADDR;
-#ifdef DEBUG_IRIX
-	printf("irix_probe_o32: returning 0\n");
-	printf("epp->ep_vm_minaddr = 0x%lx\n", epp->ep_vm_minaddr);
-#endif
-	epp->ep_vm_minaddr = epp->ep_vm_minaddr & ~0xfUL;
-	return 0;
-}
-
-/*
- * IRIX n32 ABI probe function
- */
-int
-ELFNAME2(irix,probe_n32)(p, epp, eh, itp, pos)
-	struct proc *p;
-	struct exec_package *epp;
-	void *eh;
-	char *itp; 
-	vaddr_t *pos; 
-{
-	const char *bp;
-	int error;
-	size_t len;
-
-#ifdef DEBUG_IRIX
-	printf("irix_probe_n32()\n");
-#endif
-	if ((((Elf_Ehdr *)epp->ep_hdr)->e_flags & IRIX_EF_IRIX_ABI_MASK) !=
-	    IRIX_EF_IRIX_ABIN32)
-		return error;
-
-	if (itp[0]) {
-		/* n32 binaries use /lib32/libc.so.1 */
-		if (strncmp(itp, "/lib32/libc.so", 14) &&
-		    strncmp(itp, "/usr/lib32/libc.so", 18))
-			return ENOEXEC;
-		if ((error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path,
-		    itp, &bp, 0)))
-			return error;
-		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
-			return error;
-		free((void *)bp, M_TEMP);
-	}
-	*pos = ELF_NO_ADDR;
-#ifdef DEBUG_IRIX
-	printf("irix_probe_n32: returning 0\n");
-	printf("epp->ep_vm_minaddr = 0x%lx\n", epp->ep_vm_minaddr);
-#endif
-	epp->ep_vm_minaddr = epp->ep_vm_minaddr & ~0xfUL;
-	return 0;
-}
-
 /*
  * set registers on exec for N32 applications 
  */
 void
-setregs_n32(p, pack, stack)
+irix_n32_setregs(p, pack, stack)
 	struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
 {
 	struct frame *f = (struct frame *)p->p_md.md_regs;
 	
-	/* Use regular setregs */
-	setregs(p, pack, stack);
-
 	/* Enable 64 bit instructions (eg: sd) */
 	f->f_regs[SR] |= MIPS3_SR_UX; 
-
-	return;
 }
 
 /*
@@ -402,17 +270,4 @@ irix_e_proc_fork(p, parent)
 
 	(void) memcpy(ied1, ied2, (unsigned)
 	    ((caddr_t)&ied1->ied_endcopy - (caddr_t)&ied1->ied_startcopy));
-}
-
-/*
- * Return true if the given process is an IRIX process 
- */
-int
-irix_check_exec(p)
-	struct proc *p;
-{
-	if (p->p_emul == &emul_irix_n32 ||
-	    p->p_emul == &emul_irix_o32)
-		return 1;
-	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_core.c,v 1.17.2.5 2002/09/17 21:20:32 nathanw Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.17.2.6 2002/12/11 06:38:27 thorpej Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp */
 
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.17.2.5 2002/09/17 21:20:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.17.2.6 2002/12/11 06:38:27 thorpej Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -812,7 +812,7 @@ common_bktr_intr( void *arg )
 		}
 
 		/* If someone has a select() on /dev/vbi, inform them */
-		if (bktr->vbi_select.si_pid) {
+		if (bktr->vbi_select.sel_pid) {
 			selwakeup(&bktr->vbi_select);
 		}
 

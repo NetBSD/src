@@ -1,4 +1,4 @@
-/*	$NetBSD: dptvar.h,v 1.7.4.1 2001/06/21 20:02:27 nathanw Exp $	*/
+/*	$NetBSD: dptvar.h,v 1.7.4.2 2002/12/11 06:37:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
@@ -42,6 +42,7 @@
 #define CCB_ABORT	0x01	/* abort has been issued on this CCB */
 #define CCB_INTR	0x02	/* HBA interrupted for this CCB */
 #define CCB_PRIVATE	0x04	/* ours; don't talk to scsipi when done */ 
+#define CCB_WAIT	0x08	/* sleeping on completion */
 
 struct dpt_ccb {
 	/* Data that will be touched by the HBA */
@@ -59,6 +60,7 @@ struct dpt_ccb {
 	int		ccb_id;			/* unique ID of this CCB */
 	SLIST_ENTRY(dpt_ccb) ccb_chain;		/* link to next CCB */
 	struct scsipi_xfer *ccb_xs;		/* initiating SCSI command */
+	struct eata_sp	*ccb_savesp;		/* saved status packet */
 };
 
 struct dpt_softc {
@@ -81,6 +83,11 @@ struct dpt_softc {
 	int		sc_nccbs;	/* number of CCBs available */
 	SLIST_HEAD(, dpt_ccb) sc_ccb_free;/* free ccb list */
 	struct eata_cfg sc_ec;		/* EATA configuration data */
+	int		sc_uactive;	/* user command active */
+	int		sc_bustype;	/* SysInfo bus type */
+	int		sc_isadrq;	/* ISA DRQ */
+	int		sc_isairq;	/* ISA IRQ */
+	int		sc_isaport;	/* ISA port */
 };
 
 void	dpt_init(struct dpt_softc *, const char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_errno.h,v 1.1.2.2 2002/11/11 22:07:19 nathanw Exp $ */
+	/*	$NetBSD: mach_errno.h,v 1.1.2.3 2002/12/11 06:37:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -91,5 +91,20 @@ extern int native_to_mach_errno[];
 #define	MACH_KERN_NODE_DOWN			47
 #define MACH_KERN_NOT_WAITING			48
 #define	MACH_KERN_OPERATION_TIMED_OUT		49
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_trailer_t rep_trailer;
+} mach_error_reply_t;
+
+#define MACH_MSG_ERROR(p,msgh,req,rep,error,maxlen,dst) \
+    mach_msg_error((p), (msgh), (mach_msg_header_t *)(req), \
+    (mach_error_reply_t *)(rep), (error), (maxlen), \
+    (mach_msg_header_t *)(dst))
+
+int mach_msg_error(struct proc *, mach_msg_header_t *, mach_msg_header_t *, 
+    mach_error_reply_t *, int, size_t, mach_msg_header_t *);
 
 #endif	/* _MACH_ERRNO_H_ */

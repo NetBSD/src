@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.h,v 1.6.2.1 2001/03/05 22:49:20 nathanw Exp $	*/
+/*	$NetBSD: freebsd_exec.h,v 1.6.2.2 2002/12/11 06:37:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -67,7 +67,7 @@
 #define FREEBSD_N_TXTADDR(ex) \
 	((FREEBSD_N_GETMAGIC(ex) == OMAGIC || \
 	  FREEBSD_N_GETMAGIC(ex) == NMAGIC || \
-	  FREEBSD_N_GETMAGIC(ex) == ZMAGIC) ? 0 : __LDPGSZ)
+	  FREEBSD_N_GETMAGIC(ex) == ZMAGIC) ? 0 : AOUT_LDPGSZ)
 
 /* Address of the bottom of the data segment. */
 #define FREEBSD_N_DATADDR(ex) \
@@ -75,7 +75,7 @@
 
 /* Text segment offset. */
 #define	FREEBSD_N_TXTOFF(ex) \
-	(FREEBSD_N_GETMAGIC(ex) == ZMAGIC ? __LDPGSZ : \
+	(FREEBSD_N_GETMAGIC(ex) == ZMAGIC ? AOUT_LDPGSZ : \
 	 FREEBSD_N_GETMAGIC(ex) == QMAGIC ? 0 : sizeof(struct exec)) 
 
 /* Data segment offset. */

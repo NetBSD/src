@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.c,v 1.10.2.4 2002/05/29 21:32:51 nathanw Exp $ */
+/* $NetBSD: osf1_cvt.c,v 1.10.2.5 2002/12/11 06:37:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_cvt.c,v 1.10.2.4 2002/05/29 21:32:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_cvt.c,v 1.10.2.5 2002/12/11 06:37:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -524,11 +524,11 @@ osf1_cvt_sigaction_from_native(bsa, osa)
 	struct osf1_sigaction *osa;
 {
 
-	osa->sa_handler = bsa->sa_handler;
-	osf1_cvt_sigset_from_native(&bsa->sa_mask, &osa->sa_mask);
+	osa->osf1_sa_handler = bsa->sa_handler;
+	osf1_cvt_sigset_from_native(&bsa->sa_mask, &osa->osf1_sa_mask);
 
         /* translate flags */
-	osa->sa_flags = emul_flags_translate(osf1_sigaction_flags_rxtab,
+	osa->osf1_sa_flags = emul_flags_translate(osf1_sigaction_flags_rxtab,
             bsa->sa_flags, NULL);
 }
 
@@ -538,12 +538,12 @@ osf1_cvt_sigaction_to_native(osa, bsa)
 	struct sigaction *bsa;
 {
 
-	bsa->sa_handler = osa->sa_handler;
-	osf1_cvt_sigset_to_native(&osa->sa_mask, &bsa->sa_mask);
+	bsa->sa_handler = osa->osf1_sa_handler;
+	osf1_cvt_sigset_to_native(&osa->osf1_sa_mask, &bsa->sa_mask);
 
         /* translate flags */
 	bsa->sa_flags = emul_flags_translate(osf1_sigaction_flags_xtab,
-            osa->sa_flags, NULL);
+            osa->osf1_sa_flags, NULL);
 	/* XXX error if we can't translate */
 
 	return (0);

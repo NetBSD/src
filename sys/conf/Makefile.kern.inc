@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile.kern.inc,v 1.3.2.10 2002/11/11 22:08:23 nathanw Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.3.2.11 2002/12/11 06:37:44 thorpej Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
-# at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
-# many `MI' definitions that should end up in here, but they are not yet.
+# at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
 #
 # Each target in this file should be protected with `if !target(target)'
 # or `if !commands(target)' and each variable should only be conditionally
@@ -53,6 +52,9 @@ DEFWARNINGS?=	yes
 .if (${DEFWARNINGS} == "yes")
 CWARNFLAGS+=	-Werror -Wall -Wno-main -Wno-format-zero-length -Wpointer-arith
 CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
+# Add -Wno-sign-compare.  -Wsign-compare is included in -Wall as of GCC 3.3,
+# but our sources aren't up for it yet.
+CWARNFLAGS+=	-Wno-sign-compare
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
 # XXX always get it right.  --thorpej
 CWARNFLAGS+=	-Wno-uninitialized
@@ -189,6 +191,12 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP} $S/conf/newvers.sh $S/conf/osrelease.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 .endif
 
+.if !target(config_time.h)
+EXTRA_CLEAN+= config_time.h
+config_time.h: Makefile
+	cp config_time.src config_time.h
+.endif
+
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
 
@@ -233,7 +241,7 @@ depend: .depend
 SRCS?=		${MD_SFILES} ${MD_CFILES} ${MI_CFILES} ${CFILES} ${SFILES}
 MKDEP_AFLAGS?=	${AFLAGS}
 MKDEP_CFLAGS?=	${CFLAGS}
-.depend: ${SRCS} assym.h
+.depend: ${SRCS} assym.h config_time.h
 	${MKDEP} ${MKDEP_AFLAGS} ${CPPFLAGS} ${MD_SFILES} ${SFILES}
 	${MKDEP} -a ${MKDEP_CFLAGS} ${CPPFLAGS} ${MD_CFILES} ${MI_CFILES} \
 	    ${CFILES}

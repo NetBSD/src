@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.5.4.3 2002/10/18 02:43:57 nathanw Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.5.4.4 2002/12/11 06:38:38 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -147,8 +147,6 @@ struct RF_ReconCtrl_s {
 						 * waiting disk */
 	RF_ReconBuffer_t *fullBufferList;	/* full buffers waiting to be
 						 * written out */
-	RF_ReconBuffer_t *priorityList;	/* full buffers that have been
-					 * elevated to higher priority */
 	RF_CallbackDesc_t *bufferWaitList;	/* disks that are currently
 						 * blocked waiting for buffers */
 
