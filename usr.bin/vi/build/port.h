@@ -1,6 +1,6 @@
-/*	$NetBSD: port.h,v 1.2 1998/01/09 08:06:14 perry Exp $	*/
+/*	$NetBSD: port.h,v 1.3 2001/03/31 11:37:44 aymeric Exp $	*/
 
-/* @(#)port.h.in	8.12 (Berkeley) 5/16/96 */
+/* @(#)port.h.in	8.13 (Berkeley) 6/12/96 */
 
 /*
  * Declare the basic types, if they aren't already declared.  Named and

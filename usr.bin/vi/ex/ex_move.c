@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_move.c,v 1.7 1998/01/09 08:07:54 perry Exp $	*/
+/*	$NetBSD: ex_move.c,v 1.8 2001/03/31 11:37:50 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_move.c	10.9 (Berkeley) 3/6/96";
+static const char sccsid[] = "@(#)ex_move.c	10.10 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -148,7 +148,7 @@ ex_move(sp, cmdp)
 			if (db_get(sp, fl, DBG_FATAL, &p, &len))
 				return (1);
 			BINC_RET(sp, bp, blen, len);
-			memmove(bp, p, len);
+			memcpy(bp, p, len);
 			if (db_append(sp, 1, tl, bp, len))
 				return (1);
 			if (mark_reset)
@@ -167,7 +167,7 @@ ex_move(sp, cmdp)
 			if (db_get(sp, fl, DBG_FATAL, &p, &len))
 				return (1);
 			BINC_RET(sp, bp, blen, len);
-			memmove(bp, p, len);
+			memcpy(bp, p, len);
 			if (db_append(sp, 1, tl++, bp, len))
 				return (1);
 			if (mark_reset)

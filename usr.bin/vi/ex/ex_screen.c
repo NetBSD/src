@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_screen.c,v 1.7 1998/01/09 08:08:00 perry Exp $	*/
+/*	$NetBSD: ex_screen.c,v 1.8 2001/03/31 11:37:50 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_screen.c	10.10 (Berkeley) 3/6/96";
+static const char sccsid[] = "@(#)ex_screen.c	10.11 (Berkeley) 6/29/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,7 +53,19 @@ ex_fg(sp, cmdp)
 	SCR *sp;
 	EXCMD *cmdp;
 {
-	return (vs_fg(sp, cmdp->argc ? cmdp->argv[0]->bp : NULL));
+	SCR *nsp;
+	int newscreen;
+
+	newscreen = F_ISSET(cmdp, E_NEWSCREEN);
+	if (vs_fg(sp, &nsp, cmdp->argc ? cmdp->argv[0]->bp : NULL, newscreen))
+		return (1);
+
+	/* Set up the switch. */
+	if (newscreen) {
+		sp->nextdisp = nsp;
+		F_SET(sp, SC_SSWITCH);
+	}
+	return (0);
 }
 
 /*

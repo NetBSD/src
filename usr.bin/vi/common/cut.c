@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.2 1998/01/09 08:06:32 perry Exp $	*/
+/*	$NetBSD: cut.c,v 1.3 2001/03/31 11:37:45 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)cut.c	10.9 (Berkeley) 3/30/96";
+static const char sccsid[] = "@(#)cut.c	10.10 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -268,7 +268,7 @@ cut_line(sp, lno, fcno, clen, cbp)
 	if (len != 0) {
 		if (clen == 0)
 			clen = len - fcno;
-		memmove(tp->lb, p + fcno, clen);
+		memcpy(tp->lb, p + fcno, clen);
 		tp->len = clen;
 	}
 
@@ -330,7 +330,7 @@ text_init(sp, p, len, total_len)
 			return (NULL);
 		}
 		if (p != NULL && len != 0)
-			memmove(tp->lb, p, len);
+			memcpy(tp->lb, p, len);
 	}
 	tp->len = len;
 	return (tp);

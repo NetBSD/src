@@ -1,4 +1,4 @@
-/*	$NetBSD: v_delete.c,v 1.8 1998/01/09 08:08:28 perry Exp $	*/
+/*	$NetBSD: v_delete.c,v 1.9 2001/03/31 11:37:52 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)v_delete.c	10.8 (Berkeley) 5/19/96";
+static const char sccsid[] = "@(#)v_delete.c	10.9 (Berkeley) 10/23/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,7 +51,7 @@ v_delete(sp, vp)
 		return (1);
 
 	/* Delete the lines. */
-	if (delete(sp, &vp->m_start, &vp->m_stop, lmode))
+	if (del(sp, &vp->m_start, &vp->m_stop, lmode))
 		return (1);
 
 	/*

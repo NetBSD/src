@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_append.c,v 1.7 1998/01/09 08:07:39 perry Exp $	*/
+/*	$NetBSD: ex_append.c,v 1.8 2001/03/31 11:37:49 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_append.c	10.27 (Berkeley) 4/27/96";
+static const char sccsid[] = "@(#)ex_append.c	10.30 (Berkeley) 10/23/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -85,6 +85,7 @@ ex_aci(sp, cmdp, cmd)
 	enum which cmd;
 {
 	CHAR_T *p, *t;
+	GS *gp;
 	TEXT *tp;
 	TEXTH tiq;
 	recno_t cnt, lno;
@@ -92,6 +93,7 @@ ex_aci(sp, cmdp, cmd)
 	u_int32_t flags;
 	int need_newline;
 
+	gp = sp->gp;
 	NEEDFILE(sp, cmdp);
 
 	/*
@@ -116,7 +118,7 @@ ex_aci(sp, cmdp, cmd)
 	 */
 	if (cmd == CHANGE && cmdp->addr1.lno != 0 &&
 	    (cut(sp, NULL, &cmdp->addr1, &cmdp->addr2, CUT_LINEMODE) ||
-	    delete(sp, &cmdp->addr1, &cmdp->addr2, 1)))
+	    del(sp, &cmdp->addr1, &cmdp->addr2, 1)))
 		return (1);
 
 	/*
@@ -212,7 +214,7 @@ ex_aci(sp, cmdp, cmd)
 	 * be possible.
 	 */
 	if (F_ISSET(sp, SC_VI)) {
-		if (sp->gp->scr_screen(sp, SC_EX)) {
+		if (gp->scr_screen(sp, SC_EX)) {
 			ex_emsg(sp, cmdp->cmd->name, EXM_NOCANON);
 			return (1);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: recover.c,v 1.5 1998/07/06 07:01:52 mrg Exp $	*/
+/*	$NetBSD: recover.c,v 1.6 2001/03/31 11:37:46 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)recover.c	10.18 (Berkeley) 5/15/96";
+static const char sccsid[] = "@(#)recover.c	10.21 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -33,10 +33,10 @@ static const char sccsid[] = "@(#)recover.c	10.18 (Berkeley) 5/15/96";
 #include <fcntl.h>
 #include <limits.h>
 #include <pwd.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "common.h"
@@ -335,6 +335,7 @@ rcv_mailfile(sp, issync, cp_path)
 	char *cp_path;
 {
 	EXF *ep;
+	GS *gp;
 	struct passwd *pw;
 	size_t len;
 	time_t now;
@@ -351,8 +352,9 @@ rcv_mailfile(sp, issync, cp_path)
 #ifndef MAXHOSTNAMELEN
 #define	MAXHOSTNAMELEN	1024
 #endif
-	char host[MAXHOSTNAMELEN + 1];
+	char host[MAXHOSTNAMELEN];
 
+	gp = sp->gp;
 	if ((pw = getpwuid(uid = getuid())) == NULL) {
 		msgq(sp, M_ERR,
 		    "062|Information on user id %u not found", uid);
@@ -400,7 +402,6 @@ rcv_mailfile(sp, issync, cp_path)
 		++p;
 	(void)time(&now);
 	(void)gethostname(host, sizeof(host));
-	host[sizeof(host) - 1] = '\0';
 	len = snprintf(buf, sizeof(buf),
 	    "%s%s\n%s%s\n%s\n%s\n%s%s\n%s%s\n%s\n\n",
 	    VI_FHEADER, t,			/* Non-standard. */
@@ -415,13 +416,14 @@ rcv_mailfile(sp, issync, cp_path)
 	if (write(fd, buf, len) != len)
 		goto werr;
 
-	len = snprintf(buf, sizeof(buf), "%s%.24s%s%s%s%s%s%s%s%s%s%s%s\n\n",
+	len = snprintf(buf, sizeof(buf),
+	    "%s%.24s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n\n",
 	    "On ", ctime(&now), ", the user ", pw->pw_name,
 	    " was editing a file named ", t, " on the machine ",
 	    host, ", when it was saved for recovery. ",
 	    "You can recover most, if not all, of the changes ",
-	    "to this file using the -r option to ex or vi:\n\n",
-	    "\tvi -r ", t);
+	    "to this file using the -r option to ", gp->progname, ":\n\n\t",
+	    gp->progname, " -r ", t);
 	if (len > sizeof(buf) - 1) {
 lerr:		msgq(sp, M_ERR, "064|Recovery file buffer overrun");
 		goto err;
