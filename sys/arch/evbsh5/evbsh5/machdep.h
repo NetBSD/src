@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.1 2002/07/05 13:31:40 scw Exp $	*/
+/*	$NetBSD: machdep.h,v 1.2 2002/10/22 09:30:27 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -41,9 +41,6 @@
 extern bus_space_handle_t _evbsh5_bh_pbridge;
 extern bus_space_handle_t _evbsh5_bh_sysfpga;
 
-struct mem_region;
-
-extern vaddr_t evbsh5_memory_init(vaddr_t, struct mem_region *);
-extern void evbsh5_init(void);
+extern void evbsh5_init(vaddr_t);
 
 #endif /* _EVBSH5_MACHDEP_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.19 2002/10/12 12:02:16 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.20 2002/10/22 09:30:27 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -389,7 +389,6 @@ static struct pool_allocator pmap_pool_uallocator = {
 	pmap_pool_ualloc, pmap_pool_ufree, 0,
 };
 
-void pmap_bootstrap(vaddr_t, paddr_t, struct mem_region *);
 volatile pte_t *pmap_pte_spill(u_int, vsid_t, vaddr_t);
 
 static void pmap_copyzero_page_dpurge(paddr_t, struct evcnt *);
