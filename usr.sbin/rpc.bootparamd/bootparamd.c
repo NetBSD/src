@@ -2,10 +2,11 @@
  * This code is not copyright, and is placed in the public domain.
  * Feel free to use and modify. Please send modifications and/or
  * suggestions + bug fixes to Klas Heggemann <klas@nada.kth.se>
- * 
- * Various small changes by Theo de Raadt <deraadt@fsa.ca>
  *
- * $Id: bootparamd.c,v 1.1 1994/01/08 13:22:04 deraadt Exp $
+ * Various small changes by Theo de Raadt <deraadt@fsa.ca>
+ * Parser rewritten (adding YP support) by Roland McGrath <roland@frob.com>
+ *
+ * $Id: bootparamd.c,v 1.2 1994/01/10 14:04:46 deraadt Exp $
  */
 
 #include <sys/types.h>
@@ -18,6 +19,8 @@
 #include <netdb.h>
 #include <ctype.h>
 #include <syslog.h>
+#include <string.h>
+#include "pathnames.h"
 
 #define MAXLEN 800
 
@@ -35,7 +38,7 @@ int     dolog = 0;
 unsigned long route_addr, inet_addr();
 struct sockaddr_in my_addr;
 char   *progname;
-char   *bootpfile = "/etc/bootparams";
+char   *bootpfile = _PATH_BOOTPARAMS;
 
 extern char *optarg;
 extern int optind;
@@ -44,7 +47,7 @@ void
 usage()
 {
 	fprintf(stderr,
-		"usage: rpc.bootparamd [-d] [-s] [-r router] [-f bootparmsfile]\n");
+	    "usage: rpc.bootparamd [-d] [-s] [-r router] [-f bootparmsfile]\n");
 }
 
 
@@ -143,6 +146,7 @@ bootparamproc_whoami_1(whoami)
 {
 	long    haddr;
 	static bp_whoami_res res;
+
 	if (debug)
 		fprintf(stderr, "whoami got question for %d.%d.%d.%d\n",
 		    255 & whoami->client_address.bp_address_u.ip_addr.net,
@@ -168,7 +172,7 @@ bootparamproc_whoami_1(whoami)
 		syslog(LOG_NOTICE, "This is host %s\n", he->h_name);
 
 	strcpy(askname, he->h_name);
-	if (checkhost(askname, hostname)) {
+	if (!lookup_bootparam(askname, hostname, NULL, NULL, NULL)) {
 		res.client_name = hostname;
 		getdomainname(domain_name, MAX_MACHINE_NAME);
 		res.domain_name = domain_name;
@@ -209,6 +213,7 @@ bootparamproc_getfile_1(getfile)
 {
 	char   *where, *index();
 	static bp_getfile_res res;
+	int     err;
 
 	if (debug)
 		fprintf(stderr, "getfile got question for \"%s\" and file \"%s\"\n",
@@ -224,184 +229,149 @@ bootparamproc_getfile_1(getfile)
 		goto failed;
 
 	strcpy(askname, he->h_name);
-	if (getthefile(askname, getfile->file_id, buffer)) {
-		if (where = index(buffer, ':')) {
-			/* buffer is re-written to contain the name of the
-			 * info of file */
-			strncpy(hostname, buffer, where - buffer);
-			hostname[where - buffer] = '\0';
-			where++;
-			strcpy(path, where);
-			he = gethostbyname(hostname);
-			if (!he)
-				goto failed;
-			bcopy(he->h_addr, &res.server_address.bp_address_u.ip_addr, 4);
-			res.server_name = hostname;
-			res.server_path = path;
-			res.server_address.address_type = IP_ADDR_TYPE;
-		} else {	/* special for dump, answer with null strings */
-			if (!strcmp(getfile->file_id, "dump")) {
-				res.server_name[0] = '\0';
-				res.server_path[0] = '\0';
-				bzero(&res.server_address.bp_address_u.ip_addr, 4);
-			} else
-				goto failed;
-		}
+	err = lookup_bootparam(askname, NULL, getfile->file_id,
+	    &res.server_name, &res.server_path);
+	if (err == 0) {
+		he = gethostbyname(res.server_name);
+		if (!he)
+			goto failed;
+		bcopy(he->h_addr, &res.server_address.bp_address_u.ip_addr, 4);
+		res.server_address.address_type = IP_ADDR_TYPE;
+	} else if (err == ENOENT && !strcmp(getfile->file_id, "dump")) {
+		/* Special for dump, answer with null strings. */
+		res.server_name[0] = '\0';
+		res.server_path[0] = '\0';
+		bzero(&res.server_address.bp_address_u.ip_addr, 4);
+	} else {
+failed:
 		if (debug)
-			fprintf(stderr,
-			    "returning server:%s path:%s address: %d.%d.%d.%d\n",
-			    res.server_name, res.server_path,
-			    255 & res.server_address.bp_address_u.ip_addr.net,
-			    255 & res.server_address.bp_address_u.ip_addr.host,
-			    255 & res.server_address.bp_address_u.ip_addr.lh,
-			    255 & res.server_address.bp_address_u.ip_addr.impno);
+			fprintf(stderr, "getfile failed for %s\n",
+			    getfile->client_name);
 		if (dolog)
 			syslog(LOG_NOTICE,
-			    "returning server:%s path:%s address: %d.%d.%d.%d\n",
-			    res.server_name, res.server_path,
-			    255 & res.server_address.bp_address_u.ip_addr.net,
-			    255 & res.server_address.bp_address_u.ip_addr.host,
-			    255 & res.server_address.bp_address_u.ip_addr.lh,
-			    255 & res.server_address.bp_address_u.ip_addr.impno);
-		return (&res);
+			    "getfile failed for %s\n", getfile->client_name);
+		return (NULL);
 	}
-failed:
+
 	if (debug)
-		fprintf(stderr, "getfile failed for %s\n", getfile->client_name);
+		fprintf(stderr,
+		    "returning server:%s path:%s address: %d.%d.%d.%d\n",
+		    res.server_name, res.server_path,
+		    255 & res.server_address.bp_address_u.ip_addr.net,
+		    255 & res.server_address.bp_address_u.ip_addr.host,
+		    255 & res.server_address.bp_address_u.ip_addr.lh,
+		    255 & res.server_address.bp_address_u.ip_addr.impno);
 	if (dolog)
 		syslog(LOG_NOTICE,
-		    "getfile failed for %s\n", getfile->client_name);
-	return (NULL);
+		    "returning server:%s path:%s address: %d.%d.%d.%d\n",
+		    res.server_name, res.server_path,
+		    255 & res.server_address.bp_address_u.ip_addr.net,
+		    255 & res.server_address.bp_address_u.ip_addr.host,
+		    255 & res.server_address.bp_address_u.ip_addr.lh,
+		    255 & res.server_address.bp_address_u.ip_addr.impno);
+	return (&res);
 }
 
 
-/*
- * getthefile return 1 and fills the buffer with the information
- * of the file, e g "host:/export/root/client" if it can be found.
- * If the host is in the database, but the file is not, the buffer
- * will be empty. (This makes it possible to give the special
- * empty answer for the file "dump")
- */
-getthefile(askname, fileid, buffer)
-	char   *askname;
-	char   *fileid, *buffer;
+int
+lookup_bootparam(client, client_canonical, id, server, path)
+	char	*client;
+	char	*client_canonical;
+	char	*id;
+	char	**server;
+	char	**path;
 {
-	FILE   *bpf;
-	char   *where;
+	FILE   *f = fopen(bootpfile, "r");
+#ifdef YP
+	static char *ypbuf = NULL;
+	static int ypbuflen = 0;
+#endif
+	static char buf[BUFSIZ];
+	char   *bp, *word;
+	size_t  idlen = id == NULL ? 0 : strlen(id);
+	int     contin = 0;
+	int     found = 0;
 
-	int     ch, pch, fid_len, res = 0;
-	int     match = 0;
-	char    info[MAX_FILEID + MAX_PATH_LEN + MAX_MACHINE_NAME + 3];
+	if (f == NULL)
+		return EINVAL;	/* ? */
 
-	bpf = fopen(bootpfile, "r");
-	if (!bpf) {
-		fprintf(stderr, "No %s\n", bootpfile);
-		exit(1);
-	}
-	while (fscanf(bpf, "%s", hostname) > 0 && !match) {
-		if (*hostname != '#') {	/* comment */
-			if (!strcmp(hostname, askname)) {
-				match = 1;
-			} else {
-				he = gethostbyname(hostname);
-				if (he && !strcmp(he->h_name, askname))
-					match = 1;
-			}
-		}
-		/* skip to next entry */
-		if (match)
-			break;
-		pch = ch = getc(bpf);
-		while (!(ch == '\n' && pch != '\\') && ch != EOF) {
-			pch = ch;
-			ch = getc(bpf);
-		}
-	}
+	while (fgets(buf, sizeof buf, f)) {
+		int     wascontin = contin;
+		contin = buf[strlen(buf) - 2] == '\\';
+		bp = buf + strspn(buf, " \t\n");
 
-	/* if match is true we read the rest of the line to get the info of
-	 * the file */
+		switch (wascontin) {
+		case -1:
+			/* Continuation of uninteresting line */
+			contin *= -1;
+			continue;
+		case 0:
+			/* New line */
+			contin *= -1;
+			if (*bp == '#')
+				continue;
+			if ((word = strsep(&bp, " \t\n")) == NULL)
+				continue;
+#ifdef YP
+			/* A + in the file means try YP now */
+			if (!strcmp(word, "+")) {
+				char   *ypdom;
 
-	if (match) {
-		fid_len = strlen(fileid);
-		while (!res && (fscanf(bpf, "%s", info)) > 0) {	/* read a string */
-			ch = getc(bpf);	/* and a character */
-			if (*info != '#') {	/* Comment ? */
-				if (!strncmp(info, fileid, fid_len) &&
-				    *(info + fid_len) == '=') {
-					where = info + fid_len + 1;
-					if (isprint(*where)) {
-						strcpy(buffer, where);
-						res = 1;
-						break;
-					}
-				} else {
-					while (isspace(ch) && ch != '\n')
-						ch = getc(bpf);
-					if (ch == '\n') {
-						res = -1;
-						break;
-					}
-					if (ch == '\\') {
-						ch = getc(bpf);
-						if (ch == '\n')
-							continue;
-						ungetc(ch, bpf);
-						ungetc('\\', bpf);
-					} else
-						ungetc(ch, bpf);
-				}
-			} else
-				break;
-		}
-	}
-	if (fclose(bpf)) {
-		fprintf(stderr, "Could not close %s\n", bootpfile);
-	}
-	if (res == -1)
-		buffer[0] = '\0';	/* host found, file not */
-	return (match);
-}
-
-
-/*
- * checkhost puts the hostname found in the database file in
- * the hostname-variable and returns 1, if askname is a valid
- * name for a host in the database
- */
-checkhost(askname, hostname)
-	char   *askname;
-	char   *hostname;
-{
-	int     ch, pch;
-	FILE   *bpf;
-	int     res = 0;
-
-	bpf = fopen(bootpfile, "r");
-	if (!bpf) {
-		fprintf(stderr, "No %s\n", bootpfile);
-		exit(1);
-	}
-	while (fscanf(bpf, "%s", hostname) > 0) {
-		if (!strcmp(hostname, askname)) {
-			/* return true for match of hostname */
-			res = 1;
-			break;
-		} else {
-			/* check the alias list */
-			he = NULL;
-			he = gethostbyname(hostname);
-			if (he && !strcmp(askname, he->h_name)) {
-				res = 1;
+				if (yp_get_default_domain(&ypdom) ||
+				    yp_match(ypdom, "bootparams", client,
+					strlen(client), &ypbuf, &ypbuflen))
+					continue;
+				bp = ypbuf;
+				word = client;
+				contin *= -1;
 				break;
 			}
+#endif
+			/* See if this line's client is the one we are
+			 * looking for */
+			if (strcmp(word, client) != 0) {
+				/*
+				 * If it didn't match, try getting the
+				 * canonical host name of the client
+				 * on this line and comparing that to
+				 * the client we are looking for
+				 */
+				struct hostent *hp = gethostbyname(word);
+				if (hp == NULL || !strcmp(hp->h_name, client))
+					continue;
+			}
+			contin *= -1;
+			break;
+		case 1:
+			/* Continued line we want to parse below */
+			break;
 		}
-		/* skip to next entry */
-		pch = ch = getc(bpf);
-		while (!(ch == '\n' && pch != '\\') && ch != EOF) {
-			pch = ch;
-			ch = getc(bpf);
+
+		if (client_canonical)
+			strncpy(client_canonical, word, MAX_MACHINE_NAME);
+
+		/* We have found a line for CLIENT */
+		if (id == NULL)
+			return 0;
+
+		/* Look for a value for the parameter named by ID */
+		while ((word = strsep(&bp, " \t\n")) != NULL) {
+			if (!strncmp(word, id, idlen) && word[idlen] == '=') {
+				/* We have found the entry we want */
+				*server = &word[idlen + 1];
+				*path = strchr(*server, ':');
+				if (*path == NULL)
+					/* Malformed entry */
+					continue;
+				*(*path)++ = '\0';
+				(void) fclose(f);
+				return 0;
+			}
 		}
+
+		found = 1;
 	}
-	fclose(bpf);
-	return (res);
+
+	(void) fclose(f);
+	return found ? ENOENT : EPERM;
 }

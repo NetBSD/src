@@ -1,4 +1,6 @@
-#	$Id: Makefile,v 1.1 1994/01/08 13:22:03 deraadt Exp $
+#	$Id: Makefile,v 1.2 1994/01/10 14:04:44 deraadt Exp $
+
+CFLAGS+=-DYP
 
 PROG=	rpc.bootparamd
 SRCS=	bootparamd.c bootparam_prot_svc.c
