@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.101 1997/06/15 11:18:59 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.102 1997/07/05 20:52:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -102,10 +102,7 @@
 #ifdef COM_HAYESP
 int comprobeHAYESP __P((bus_space_handle_t hayespioh, struct com_softc *sc));
 #endif
-#ifdef KGDB
-void com_kgdb_attach __P((struct com_softc *, bus_space_tag_t,
-			  bus_space_handle_t));
-#endif
+
 void	com_attach_subr	__P((struct com_softc *sc));
 void	comdiag		__P((void *));
 int	comspeed	__P((long));
@@ -128,6 +125,9 @@ void	com_hwiflow	__P((struct com_softc *));
 void	com_break	__P((struct com_softc *, int));
 void	com_modem	__P((struct com_softc *, int));
 void	com_iflush	__P((struct com_softc *));
+
+int	com_common_getc	__P((bus_space_tag_t, bus_space_handle_t));
+void	com_common_putc	__P((bus_space_tag_t, bus_space_handle_t, int));
 
 /* XXX: These belong elsewhere */
 cdev_decl(com);
@@ -172,11 +172,19 @@ volatile int	com_softintr_scheduled;
 #endif
 
 #ifdef KGDB
-#include <machine/remote-sl.h>
+#include <sys/kgdb.h>
 extern int kgdb_dev;
 extern int kgdb_rate;
 extern int kgdb_debug_init;
-#endif
+
+bus_space_tag_t com_kgdb_iot;
+bus_space_handle_t com_kgdb_ioh;
+
+void	com_kgdb_attach __P((struct com_softc *, bus_space_tag_t,
+	    bus_space_handle_t));
+int	com_kgdb_getc __P((void *));
+void	com_kgdb_putc __P((void *, int));
+#endif /* KGDB */
 
 #define	COMUNIT(x)	(minor(x))
 
@@ -325,25 +333,53 @@ com_kgdb_attach(sc, iot, ioh)
 	bus_space_handle_t ioh;
 {
 
-	if (kgdb_dev == makedev(commajor, unit)) {
-		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
-			kgdb_dev = -1;	/* can't debug over console port */
-		else {
-			cominitcons(iot, ioh, kgdb_rate);
-			if (kgdb_debug_init) {
-				/*
-				 * Print prefix of device name,
-				 * let kgdb_connect print the rest.
-				 */
-				printf("%s: ", sc->sc_dev.dv_xname);
-				kgdb_connect(1);
-			} else
-				printf("%s: kgdb enabled\n",
-				    sc->sc_dev.dv_xname);
-		}
+	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+		/*
+		 * Can't debug over the console port.
+		 */
+		kgdb_dev = NODEV;
+		return;
 	}
+
+	/* Turn on interrupts. */
+	sc->sc_ier = IER_ERXRDY | IER_ERLS | IER_EMSC;
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
+
+	SET(sc->sc_hwflags, COM_HW_KGDB);
+	com_kgdb_iot = iot;
+	com_kgdb_ioh = ioh;
+	cominitcons(iot, ioh, kgdb_rate);
+	kgdb_attach(com_kgdb_getc, com_kgdb_putc, NULL);
+	if (kgdb_debug_init) {
+		/*
+		 * Print prefix of device name,
+		 * let kgdb_connect print the rest.
+		 */
+		printf("%s: ", sc->sc_dev.dv_xname);
+		kgdb_connect(1);
+	} else
+		printf("%s: kgdb enabled\n", sc->sc_dev.dv_xname);
 }
-#endif
+
+/* ARGSUSED */
+int
+com_kgdb_getc(arg)
+	void *arg;
+{
+
+	return (com_common_getc(com_kgdb_iot, com_kgdb_ioh));
+}
+
+/* ARGSUSED */
+void
+com_kgdb_putc(arg, c)
+	void *arg;
+	int c;
+{
+
+	return (com_common_putc(com_kgdb_iot, com_kgdb_ioh, c));
+}
+#endif /* KGDB */
 
 
 void
@@ -439,7 +475,12 @@ com_attach_subr(sc)
 	}
 
 #ifdef KGDB
-	com_kgdb_attach(sc, iot, ioh);
+	/*
+	 * Allow kgdb to "take over" this port.  If this is
+	 * the kgdb device, it has exclusive use.
+	 */
+	if (makedev(commajor, sc->sc_dev.dv_unit) == kgdb_dev)
+		com_kgdb_attach(sc, iot, ioh);
 #endif
 
 #ifdef __GENERIC_SOFT_INTERRUPTS
@@ -464,6 +505,14 @@ comopen(dev, flag, mode, p)
 	sc = com_cd.cd_devs[unit];
 	if (!sc)
 		return (ENXIO);
+
+#ifdef KGDB
+	/*
+	 * If this is the kgdb port, no other use is permitted.
+	 */
+	if (ISSET(sc->sc_hwflags, COM_HW_KGDB))
+		return (EBUSY);
+#endif
 
 	if (!sc->sc_tty) {
 		tp = sc->sc_tty = ttymalloc();
@@ -1207,7 +1256,7 @@ comrxint(sc, tp)
 	while (cc) {
 		lsr = sc->sc_lbuf[get];
 		if (ISSET(lsr, LSR_BI)) {
-#ifdef DDB
+#ifdef DDB 
 			if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
 				Debugger();
 #endif
@@ -1402,6 +1451,19 @@ comintr(arg)
 		u_char	msr, delta;
 
 		lsr = bus_space_read_1(iot, ioh, com_lsr);
+#ifdef KGDB
+		/*
+		 * If there is data available, and this is the kgdb
+		 * port, defer it all to the kgdb protocol engine.
+		 */
+		if (ISSET(sc->sc_hwflags, COM_HW_KGDB) &&
+		    ISSET(lsr, LSR_RCV_MASK)) {
+			kgdb_connect(1);
+			/* XXX Should we suck up any remaining characters? */
+			return (1);
+		}
+#endif
+
 		if (ISSET(lsr, LSR_RCV_MASK) &&
 		    !ISSET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED)) {
 			for (; ISSET(lsr, LSR_RCV_MASK) && cc > 0; cc--) {
@@ -1521,6 +1583,53 @@ comintr(arg)
 }
 
 /*
+ * The following functions are polled getc and putc routines, shared
+ * by the console and kgdb glue.
+ */
+
+int
+com_common_getc(iot, ioh)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+{
+	int s = splserial();
+	u_char stat, c;
+
+	while (!ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY))
+		;
+	c = bus_space_read_1(iot, ioh, com_data);
+	stat = bus_space_read_1(iot, ioh, com_iir);
+	splx(s);
+	return (c);
+}
+
+void
+com_common_putc(iot, ioh, c)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	int c;
+{
+	int s = splserial();
+	u_char stat;
+	register int timo;
+
+	/* wait for any pending transmission to finish */
+	timo = 50000;
+	while (!ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_TXRDY)
+	    && --timo)
+		;
+	bus_space_write_1(iot, ioh, com_data, c);
+	/* wait for this transmission to complete */
+	timo = 1500000;
+	while (!ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_TXRDY)
+	    && --timo)
+		;
+	/* clear any interrupts generated by this transmission */
+	stat = bus_space_read_1(iot, ioh, com_iir);
+	splx(s);
+}
+
+/*
  * Following are all routines needed for COM to act as console
  */
 #include <dev/cons.h>
@@ -1620,17 +1729,8 @@ int
 comcngetc(dev)
 	dev_t dev;
 {
-	int s = splserial();
-	bus_space_tag_t iot = comconstag;
-	bus_space_handle_t ioh = comconsioh;
-	u_char stat, c;
 
-	while (!ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY))
-		;
-	c = bus_space_read_1(iot, ioh, com_data);
-	stat = bus_space_read_1(iot, ioh, com_iir);
-	splx(s);
-	return (c);
+	return (com_common_getc(comconstag, comconsioh));
 }
 
 /*
@@ -1641,24 +1741,8 @@ comcnputc(dev, c)
 	dev_t dev;
 	int c;
 {
-	int s = splserial();
-	bus_space_tag_t iot = comconstag;
-	bus_space_handle_t ioh = comconsioh;
-	u_char stat;
-	register int timo;
 
-	/* wait for any pending transmission to finish */
-	timo = 50000;
-	while (!ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_TXRDY) && --timo)
-		;
-	bus_space_write_1(iot, ioh, com_data, c);
-	/* wait for this transmission to complete */
-	timo = 1500000;
-	while (!ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_TXRDY) && --timo)
-		;
-	/* clear any interrupts generated by this transmission */
-	stat = bus_space_read_1(iot, ioh, com_iir);
-	splx(s);
+	com_common_putc(comconstag, comconsioh, c);
 }
 
 void
