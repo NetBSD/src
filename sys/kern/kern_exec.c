@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.113 2000/06/27 17:41:17 mrg Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.114 2000/07/13 01:24:05 matt Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -226,6 +226,7 @@ sys_execve(p, v, retval)
 	struct vmspace *vm;
 	char **tmpfap;
 	int szsigcode;
+	struct exec_vmcmd *base_vcp = NULL;
 	extern struct emul emul_netbsd;
 
 	/*
@@ -386,6 +387,18 @@ sys_execve(p, v, retval)
 		struct exec_vmcmd *vcp;
 
 		vcp = &pack.ep_vmcmds.evs_cmds[i];
+		if (vcp->ev_flags & VMCMD_RELATIVE) {
+#ifdef DIAGNOSTIC
+			if (base_vcp == NULL)
+				panic("execve: relative vmcmd with no base");
+			if (vcp->ev_flags & VMCMD_BASE)
+				panic("execve: illegal base & relative vmcmd");
+#endif
+			uprintf("vmcmd-b[%d] = %#lx/%#lx @ %#lx (%d)\n", i,
+			       vcp->ev_addr, vcp->ev_len, vcp->ev_offset,
+			       vcp->ev_flags);
+			vcp->ev_addr += base_vcp->ev_addr;
+		}
 		error = (*vcp->ev_proc)(p, vcp);
 #ifdef DEBUG
 		if (error) {
@@ -397,6 +410,8 @@ sys_execve(p, v, retval)
 			       vcp->ev_addr, vcp->ev_len, vcp->ev_offset);
 		}
 #endif
+		if (vcp->ev_flags & VMCMD_BASE)
+			base_vcp = vcp;
 	}
 
 	/* free the vmspace-creation commands, and release their references */
