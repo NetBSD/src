@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.1 2002/02/15 20:02:56 christos Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.2 2002/02/20 17:02:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.1 2002/02/15 20:02:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.2 2002/02/20 17:02:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,9 +168,17 @@ linux_sys___sysctl(struct proc *p, void *v, register_t *retval)
 	return (error);
 }
 
-extern char linux_sysname[];
-extern char linux_release[];
-extern char linux_version[];
+/*
+ * NOTE: DO NOT CHANGE THIS
+ * Linux makes assumptions about specific features being present with
+ * more recent kernels. Specifically, LinuxThreads use RT queued
+ * signals if the kernel release is bigger. Since we don't support them
+ * yet, the version needs to stay this way until we'd have the RT queued
+ * signals implemented.
+ */
+char linux_sysname[128] = "Linux";
+char linux_release[128] = "2.0.38";
+char linux_version[128] = "#0 Sun Apr 1 11:11:11 MET 2000";
 
 /*
  * kernel related system variables.
@@ -179,13 +187,20 @@ int
 linux_kern_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen, struct proc *p)
 {
+	/*
+	 * Note that we allow writing into this, so that userland
+	 * programs can setup things as they see fit. This is suboptimal.
+	 */
 	switch (name[0]) {
 	case LINUX_KERN_OSTYPE:
-		return sysctl_rdstring(oldp, oldlenp, newp, linux_sysname);
+		return sysctl_string(oldp, oldlenp, newp, newlen,
+		    linux_sysname, sizeof(linux_sysname));
 	case LINUX_KERN_OSRELEASE:
-		return sysctl_rdstring(oldp, oldlenp, newp, linux_release);
-	case KERN_VERSION:
-		return sysctl_rdstring(oldp, oldlenp, newp, linux_version);
+		return sysctl_string(oldp, oldlenp, newp, newlen,
+		    linux_release, sizeof(linux_release));
+	case LINUX_KERN_VERSION:
+		return sysctl_string(oldp, oldlenp, newp, newlen,
+		    linux_version, sizeof(linux_version));
 	default:
 		return EOPNOTSUPP;
 	}
