@@ -1,4 +1,4 @@
-/* $Id: platid_mask.h,v 1.16 2000/02/06 14:02:44 takemura Exp $ */
+/* $Id: platid_mask.h,v 1.17 2000/02/14 07:19:26 jun Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -288,6 +288,10 @@ extern platid_t platid_mask_MACH_SHARP_MOBILON_HC;
 extern platid_t platid_mask_MACH_SHARP_MOBILON_HC4100;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define SHARP_MOBILON_HC4100 ((int)&platid_mask_MACH_SHARP_MOBILON_HC4100)
+#endif
+extern platid_t platid_mask_MACH_SHARP_MOBILON_HC1200;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define SHARP_MOBILON_HC1200 ((int)&platid_mask_MACH_SHARP_MOBILON_HC1200)
 #endif
 extern platid_t platid_mask_MACH_FUJITSU;
 #ifdef PLATID_DEFINE_MASK_NICKNAME

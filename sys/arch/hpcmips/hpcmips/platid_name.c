@@ -1,4 +1,4 @@
-/* $Id: platid_name.c,v 1.2 2000/02/06 14:02:43 takemura Exp $ */
+/* $Id: platid_name.c,v 1.3 2000/02/14 07:19:25 jun Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -166,6 +166,8 @@ struct platid_name platid_name_table[] = {
 	  "Sharp Mobilon HC" },
 	{ &platid_mask_MACH_SHARP_MOBILON_HC4100,
 	  "Sharp Mobilon HC4100" },
+	{ &platid_mask_MACH_SHARP_MOBILON_HC1200,
+	  "Sharp Mobilon HC1200" },
 	{ &platid_mask_MACH_FUJITSU,
 	  "Fujitsu" },
 	{ &platid_mask_MACH_FUJITSU_INTERTOP,
@@ -235,4 +237,4 @@ struct platid_name platid_name_table[] = {
 	{ &platid_mask_MACH_IBM_WORKPAD_26011AU,
 	  "IBM WorkPad z50 2601 1AU" },
 };
-platid_name_table_size = 97;
+platid_name_table_size = 98;
