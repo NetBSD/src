@@ -24,11 +24,11 @@
  * rights to redistribute these changes.
  */
 /*
- * $Id: db_sym.c,v 1.2 1993/05/20 03:39:31 cgd Exp $
+ * db_sym.c,v 1.2 1993/05/20 03:39:31 cgd Exp
  *
  * HISTORY
- * $Log: db_sym.c,v $
- * Revision 1.2  1993/05/20 03:39:31  cgd
+ * db_sym.c,v
+ * Revision 1.2  1993/05/20  03:39:31  cgd
  * add explicit rcs id
  *
  * Revision 1.1.1.1  1993/03/21  09:46:27  cgd
@@ -96,7 +96,9 @@ extern void	X_db_symbol_values();
 /*
  * Multiple symbol tables
  */
+#ifndef MAXNOSYMTABS
 #define	MAXNOSYMTABS	3	/* mach, ux, emulator */
+#endif
 
 db_symtab_t	db_symtabs[MAXNOSYMTABS] = {{0,},};
 int db_nsymtab = 0;
@@ -363,6 +365,19 @@ db_printsym(off, strategy)
 
 boolean_t
 db_line_at_pc( sym, filename, linenum, pc)
+	db_sym_t	sym;
+	char		**filename;
+	int		*linenum;
+	db_expr_t	pc;
 {
 	return X_db_line_at_pc( db_last_symtab, sym, filename, linenum, pc);
+}
+
+int
+db_sym_numargs(sym, nargp, argnames)
+	db_sym_t	sym;
+	int		*nargp;
+	char		**argnames;
+{
+	return X_db_sym_numargs(db_last_symtab, sym, nargp, argnames);
 }
