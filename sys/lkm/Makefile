@@ -1,5 +1,5 @@
-# $NetBSD: Makefile,v 1.3 1999/03/26 22:32:03 scottr Exp $
+# $NetBSD: Makefile,v 1.4 2000/12/08 23:06:34 jdolecek Exp $
 
-SUBDIR=	arch compat netinet vfs
+SUBDIR=	arch compat exec netinet vfs
 
 .include <bsd.subdir.mk>
