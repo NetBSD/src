@@ -3,7 +3,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
-/* $Id: zconf.h,v 1.1.1.1 1996/09/12 15:33:10 gwr Exp $ */
+/* $Id: zconf.h,v 1.2 1996/09/12 19:33:53 gwr Exp $ */
 
 #ifndef _ZCONF_H
 #define _ZCONF_H
@@ -46,16 +46,9 @@
 #  define voidp		z_voidp
 #endif
 
-#if (defined(_WIN32) || defined(__WIN32__)) && !defined(WIN32)
-#  define WIN32
-#endif
-#if defined(__GNUC__) || defined(WIN32) || defined(__386__) || defined(i386)
-#  ifndef __32BIT__
-#    define __32BIT__
-#  endif
-#endif
-#if defined(__MSDOS__) && !defined(MSDOS)
-#  define MSDOS
+#ifndef __32BIT__
+/* Don't be alarmed; this just means we have at least 32-bits */
+#  define __32BIT__
 #endif
 
 /*
@@ -65,19 +58,19 @@
 #if defined(MSDOS) && !defined(__32BIT__)
 #  define MAXSEG_64K
 #endif
-#ifdef MSDOS
+
+#ifdef MSDOS	/* XXX - Yuck! */
+/* XXX: Are there machines where we should define this?  m68k? */
 #  define UNALIGNED_OK
 #endif
 
-#if (defined(MSDOS) || defined(_WINDOWS) || defined(WIN32))  && !defined(STDC)
-#  define STDC
-#endif
 #if (defined(__STDC__) || defined(__cplusplus)) && !defined(STDC)
+/* XXX: Look out - this is used in zutil.h and elsewhere... */
 #  define STDC
 #endif
 
 #ifndef STDC
-#  ifndef const /* cannot use !defined(STDC) && !defined(const) on Mac */
+#  ifndef const
 #    define const
 #  endif
 #endif
@@ -114,71 +107,24 @@
  for small objects.
 */
 
-                        /* Type declarations */
+/* Type declarations */
 
-#ifndef OF /* function prototypes */
-#  ifdef STDC
-#    define OF(args)  args
-#  else
-#    define OF(args)  ()
-#  endif
-#endif
+#define OF(args)  __P(args)
+#define FAR
 
-/* The following definitions for FAR are needed only for MSDOS mixed
- * model programming (small or medium model with some far allocations).
- * This was tested only with MSC; for other MSDOS compilers you may have
- * to define NO_MEMCPY in zutil.h.  If you don't need the mixed model,
- * just define FAR to be empty.
- */
-#if (defined(M_I86SM) || defined(M_I86MM)) && !defined(__32BIT__)
-   /* MSC small or medium model */
-#  define SMALL_MEDIUM
-#  ifdef _MSC_VER
-#    define FAR __far
-#  else
-#    define FAR far
-#  endif
-#endif
-#if defined(__BORLANDC__) && (defined(__SMALL__) || defined(__MEDIUM__))
-#  ifndef __32BIT__
-#    define SMALL_MEDIUM
-#    define FAR __far
-#  endif
-#endif
-#ifndef FAR
-#   define FAR
-#endif
+typedef u_char  Byte;  /* 8 bits */
+typedef u_int   uInt;  /* 16 bits or more */
+typedef u_long  uLong; /* 32 bits or more */
 
-typedef unsigned char  Byte;  /* 8 bits */
-typedef unsigned int   uInt;  /* 16 bits or more */
-typedef unsigned long  uLong; /* 32 bits or more */
-
-#if defined(__BORLANDC__) && defined(SMALL_MEDIUM)
-   /* Borland C/C++ ignores FAR inside typedef */
-#  define Bytef Byte FAR
-#else
-   typedef Byte  FAR Bytef;
-#endif
+typedef Byte  FAR Bytef;
 typedef char  FAR charf;
 typedef int   FAR intf;
 typedef uInt  FAR uIntf;
 typedef uLong FAR uLongf;
 
-#ifdef STDC
-   typedef void FAR *voidpf;
-   typedef void     *voidp;
-#else
-   typedef Byte FAR *voidpf;
-   typedef Byte     *voidp;
-#endif
+#define voidpf void *
+#define voidp  void *
 
-
-/* Compile with -DZLIB_DLL for Windows DLL support */
-#if (defined(_WINDOWS) || defined(WINDOWS)) && defined(ZLIB_DLL)
-#  include <windows.h>
-#  define EXPORT  WINAPI
-#else
-#  define EXPORT
-#endif
+#define EXPORT
 
 #endif /* _ZCONF_H */
