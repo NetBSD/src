@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.11 1997/10/08 08:45:11 mrg Exp $	*/
+/*	$NetBSD: state.c,v 1.11.4.1 2000/10/10 21:48:19 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: state.c,v 1.11 1997/10/08 08:45:11 mrg Exp $");
+__RCSID("$NetBSD: state.c,v 1.11.4.1 2000/10/10 21:48:19 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,10 +49,10 @@ __RCSID("$NetBSD: state.c,v 1.11 1997/10/08 08:45:11 mrg Exp $");
 
 static int envvarok __P((char *));
 
-unsigned char	doopt[] = { IAC, DO, '%', 'c', 0 };
-unsigned char	dont[] = { IAC, DONT, '%', 'c', 0 };
-unsigned char	will[] = { IAC, WILL, '%', 'c', 0 };
-unsigned char	wont[] = { IAC, WONT, '%', 'c', 0 };
+unsigned const char	doopt[] = { IAC, DO, '%', 'c', 0 };
+unsigned const char	dont[] = { IAC, DONT, '%', 'c', 0 };
+unsigned const char	will[] = { IAC, WILL, '%', 'c', 0 };
+unsigned const char	wont[] = { IAC, WONT, '%', 'c', 0 };
 int	not42 = 1;
 
 /*
