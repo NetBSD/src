@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.91 2001/12/30 15:46:53 fvdl Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.92 2002/02/28 21:59:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.91 2001/12/30 15:46:53 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.92 2002/02/28 21:59:23 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -954,8 +954,7 @@ ffs_statfs(mp, sbp, p)
 		fs->fs_cstotal.cs_nffree + dbtofsb(fs, fs->fs_pendingblocks);
 	sbp->f_bavail = (long) (((u_int64_t) fs->fs_dsize * (u_int64_t)
 	    (100 - fs->fs_minfree) / (u_int64_t) 100) -
-	    (u_int64_t) (fs->fs_dsize - sbp->f_bfree) +
-	    (u_int64_t) dbtofsb(fs, fs->fs_pendingblocks));
+	    (u_int64_t) (fs->fs_dsize - sbp->f_bfree));
 	sbp->f_files =  fs->fs_ncg * fs->fs_ipg - ROOTINO;
 	sbp->f_ffree = fs->fs_cstotal.cs_nifree + fs->fs_pendinginodes;
 	if (sbp != &mp->mnt_stat) {
