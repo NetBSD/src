@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.15 1997/05/09 12:38:30 mycroft Exp $
+#	$NetBSD: Makefile,v 1.16 1997/05/10 14:30:38 mycroft Exp $
 #	@(#)Makefile	5.4 (Berkeley) 5/11/90
 
 PROG=	strip
 
 proginstall::	.NOTMAIN hackinstall
+.PHONY:		hackinstall
 
 .include <bsd.prog.mk>
 
