@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.84 2002/08/25 20:01:13 thorpej Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.85 2002/08/25 22:28:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.84 2002/08/25 20:01:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.85 2002/08/25 22:28:42 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -142,7 +142,7 @@ static void hook_proc_run __P((hook_list_t *, struct proc *));
 int
 uiomove(buf, n, uio)
 	void *buf;
-	int n;
+	size_t n;
 	struct uio *uio;
 {
 	struct iovec *iov;
@@ -202,6 +202,7 @@ uiomove(buf, n, uio)
 		uio->uio_resid -= cnt;
 		uio->uio_offset += cnt;
 		cp += cnt;
+		KDASSERT(cnt <= n);
 		n -= cnt;
 	}
 	return (error);
