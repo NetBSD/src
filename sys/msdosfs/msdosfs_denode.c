@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.55 2002/03/08 20:48:42 thorpej Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.55.8.1 2002/06/05 03:26:27 lukem Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.55 2002/03/08 20:48:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.55.8.1 2002/06/05 03:26:27 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -446,27 +446,22 @@ detrunc(dep, length, flags, cred, p)
 			bn = cntobn(pmp, eofentry);
 			error = bread(pmp->pm_devvp, bn, pmp->pm_bpcluster,
 			    NOCRED, &bp);
-		} else {
-			bn = de_blk(pmp, length);
-			error = bread(DETOV(dep), bn, pmp->pm_bpcluster,
-			    NOCRED, &bp);
-		}
-		if (error) {
-			brelse(bp);
+			if (error) {
+				brelse(bp);
 #ifdef MSDOSFS_DEBUG
-			printf("detrunc(): bread fails %d\n", error);
+				printf("detrunc(): bread fails %d\n", error);
 #endif
-			return (error);
+				return (error);
+			}
+			memset(bp->b_data + boff, 0, pmp->pm_bpcluster - boff);
+			if (flags & IO_SYNC)
+				bwrite(bp);
+			else
+				bdwrite(bp);
+		} else {
+			uvm_vnp_zerorange(DETOV(dep), length,
+					  pmp->pm_bpcluster - boff);
 		}
-
-		/*
-		 * is this the right place for it?
-		 */
-		memset(bp->b_data + boff, 0, pmp->pm_bpcluster - boff);
-		if (flags & IO_SYNC)
-			bwrite(bp);
-		else
-			bdwrite(bp);
 	}
 
 	/*
