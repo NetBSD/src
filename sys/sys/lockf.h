@@ -1,4 +1,4 @@
-/*	$NetBSD: lockf.h,v 1.9 2000/07/22 15:26:11 jdolecek Exp $	*/
+/*	$NetBSD: lockf.h,v 1.10 2000/08/04 09:20:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -71,6 +71,8 @@ struct lockf {
 /* Maximum length of sleep chains to traverse to try and detect deadlock. */
 #define MAXDEPTH 50
 
+#ifdef _KERNEL
+
 __BEGIN_DECLS
 void	 lf_addblock __P((struct lockf *, struct lockf *));
 int	 lf_advlock __P((struct vop_advlock_args *, struct lockf **, off_t));
@@ -93,5 +95,7 @@ void	lf_print __P((char *, struct lockf *));
 void	lf_printlist __P((char *, struct lockf *));
 __END_DECLS
 #endif /* LOCKF_DEBUG */
+
+#endif /* _KERNEL */
 
 #endif /* !_SYS_LOCKF_H_ */
