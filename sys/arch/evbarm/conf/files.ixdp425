@@ -1,4 +1,4 @@
-#	$NetBSD: files.ixdp425,v 1.2 2003/05/24 01:59:32 ichiro Exp $
+#	$NetBSD: files.ixdp425,v 1.3 2003/05/31 01:16:31 ichiro Exp $
 #
 # Intel IXP425 networkproccesor board configuration info
 #
@@ -25,9 +25,9 @@ file	arch/evbarm/ixdp425/ixdp425_mainbus.c		ixpio_mainbus
 attach	ixpsip at mainbus
 
 # LED
-#device	ixdpled
-#attach	ixdpled at ixpsip
-#file    arch/evbarm/ixdp425/ixdp425_led.c		ixdpled needs-flag
+device	ixdpled
+attach	ixdpled at ixpsip
+file    arch/evbarm/ixdp425/ixdp425_led.c		ixdpled needs-flag
 
 # IXDP425 serial port
 # "device" declaration in files.evbarm (because of needs-flag)
