@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1 1998/08/12 06:52:56 scottr Exp $	*/
+/*	$NetBSD: intr.c,v 1.2 1998/08/25 04:03:56 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ intr_disestablish(ipl)
  *
  * XXX Note: see the warning in intr_establish()
  */
-int
+void
 intr_dispatch(evec)
 	int evec;		/* format | vector offset */
 {
@@ -161,7 +161,7 @@ intr_dispatch(evec)
 	cnt.v_intr++;
 #endif
 
-	return (*intr_func[ipl])(intr_arg[ipl]);
+	(void)(*intr_func[ipl])(intr_arg[ipl]);
 }
 
 /*
