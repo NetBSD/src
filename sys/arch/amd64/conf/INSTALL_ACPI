@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_ACPI,v 1.14 2005/01/17 15:28:51 cube Exp $
+# $NetBSD: INSTALL_ACPI,v 1.15 2005/01/18 10:30:11 scw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.14 $"
+#ident 		"INSTALL-$Revision: 1.15 $"
 
 maxusers	32		# estimated number of users
 
@@ -220,6 +220,7 @@ pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
+#options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 vga*		at pci? dev ? function ?
 wsdisplay*	at vga? console ?
 wskbd*		at pckbd? console ?
