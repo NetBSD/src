@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.c,v 1.17 2001/12/31 00:40:11 thorpej Exp $	*/
+/*	$NetBSD: crtbegin.c,v 1.18 2002/04/08 22:17:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -141,8 +141,7 @@ _init()
 #endif /* DWARF2_EH */
 
 	/*
-	 * Call global constructors.
-	 * Arrange to call global destructors at exit.
+	 * Execute code in the .init sections
 	 */
 	INIT_FALLTHRU();
 	if (!initialized) {
@@ -160,6 +159,9 @@ _init()
 			_Jv_RegisterClasses(__JCR_LIST__);
 #endif /* JCR && __GNUC__ */
 
+		/*
+		 * Call global constructors.
+		 */
 		__ctors();
 	}
 }
@@ -179,7 +181,6 @@ _fini()
 	/*
 	 * Call global destructors.
 	 */
-	/* prevent function pointer constant propagation */
 	__dtors();
 
 #ifdef DWARF2_EH
@@ -189,6 +190,9 @@ _fini()
 #endif /* __GNUC__ */
 #endif /* DWARF2_EH */
 
+	/*
+	 * Execute code in the .fini sections
+	 */
 	FINI_FALLTHRU();
 }
 
