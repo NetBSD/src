@@ -39,7 +39,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mkmakefile.c	5.3 (Berkeley) 5/24/93
+ *	from: @(#)mkmakefile.c	5.3 (Berkeley) 5/24/93
+ *	$Id: mkmakefile.c,v 1.4 1993/12/04 06:06:14 cgd Exp $
  */
 
 #include <sys/param.h>

@@ -41,7 +41,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)gram.y	5.3 (Berkeley) 4/18/93
+ *	from: @(#)gram.y	5.3 (Berkeley) 4/18/93
+ *	$Id: gram.y,v 1.3 1993/12/04 06:06:06 cgd Exp $
  */
 
 #include <sys/param.h>
