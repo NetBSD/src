@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.211 2002/12/20 06:39:53 lukem Exp $
+#	$NetBSD: NetBSD.dist,v 1.212 2003/01/14 11:29:02 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -51,6 +51,7 @@
 ./usr/include/dev
 ./usr/include/dev/ata
 ./usr/include/dev/dec
+./usr/include/dev/dmover
 ./usr/include/dev/hpc
 ./usr/include/dev/i2o
 ./usr/include/dev/ic
