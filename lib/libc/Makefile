@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 1996/10/18 05:45:01 thorpej Exp $
+#	$NetBSD: Makefile,v 1.50 1996/11/07 19:15:22 jtc Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -15,7 +15,7 @@
 # actually call the YP functions, put -DYP on the CFLAGS line below.
 
 LIB=c
-CFLAGS+=-DNLS -DYP -DLIBC_SCCS -DSYSLIBC_SCCS -I${.CURDIR}/include
+CFLAGS+=-DNLS -DYP -DLIBC_SCCS -DSYSLIBC_SCCS -D_REENTRANT -I${.CURDIR}/include
 AINC=	-I${.CURDIR}/arch/${MACHINE_ARCH}
 .if defined(DESTDIR)
 AINC+=	-nostdinc -idirafter ${DESTDIR}/usr/include
