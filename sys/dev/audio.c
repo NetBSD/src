@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.177 2003/05/03 18:11:08 wiz Exp $	*/
+/*	$NetBSD: audio.c,v 1.178 2003/05/26 12:43:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.177 2003/05/03 18:11:08 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.178 2003/05/26 12:43:35 augustss Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1772,6 +1772,10 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 	switch (cmd) {
 	case FIONBIO:
 		/* All handled in the upper FS layer. */
+		break;
+
+	case FIONREAD:
+		*(int *)addr = sc->sc_rr.used;
 		break;
 
 	case FIOASYNC:
