@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.14 1998/08/25 20:59:43 ross Exp $	*/
+/*	$NetBSD: write.c,v 1.15 1998/12/20 15:04:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: write.c,v 1.14 1998/08/25 20:59:43 ross Exp $");
+__RCSID("$NetBSD: write.c,v 1.15 1998/12/20 15:04:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -320,7 +320,8 @@ wr_fputs(s)
 		if (c == '\n') {
 			PUTC('\r');
 			PUTC('\n');
-		} else if (!isprint(c) && !isspace(c) && c != '\007') {
+		} else if (!isprint((unsigned char)c) &&
+		    !isspace((unsigned char)c) && c != '\007') {
 			PUTC('^');
 			PUTC(c^0x40);	/* DEL to ?, others to alpha */
 		} else
