@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.11 1994/12/13 20:15:33 mycroft Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.12 1994/12/13 20:27:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -521,13 +521,13 @@ union_access(ap)
 	if ((vp = un->un_lowervp) != NULLVP) {
 		VOP_LOCK(vp);
 		ap->a_vp = vp;
-		error = VCALL(vp, VOFFSET(vop_access), ap));
+		error = VCALL(vp, VOFFSET(vop_access), ap);
 		if (error == 0) {
 			struct union_mount *um = MOUNTTOUNIONMOUNT(vp->v_mount);
 
 			if (um->um_op == UNMNT_BELOW) {
 				ap->a_cred = um->um_cred;
-				error = VCALL(vp, VOFFSET(vop_access), ap));
+				error = VCALL(vp, VOFFSET(vop_access), ap);
 			}
 		}
 		VOP_UNLOCK(vp);
@@ -642,9 +642,9 @@ union_setattr(ap)
 		/* at this point, uppervp is locked */
 		union_newupper(un, uvp);
 
-		VOP_UNLOCK(vp);
+		VOP_UNLOCK(uvp);
 		union_vn_close(uvp, FWRITE, ap->a_cred, ap->a_p);
-		VOP_LOCK(vp);
+		VOP_LOCK(uvp);
 		un->un_flags |= UN_ULOCK;
 	}
 
@@ -1225,7 +1225,7 @@ union_abortop(ap)
 		else
 			FIXUP(VTOUNION(ap->a_dvp));
 	}
-	ap->a_vp = vp;
+	ap->a_dvp = vp;
 	error = VCALL(vp, VOFFSET(vop_abortop), ap);
 	if (islocked && dolock)
 		VOP_UNLOCK(vp);
