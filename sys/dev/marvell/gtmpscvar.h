@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpscvar.h,v 1.3 2003/03/18 05:50:02 matt Exp $	*/
+/*	$NetBSD: gtmpscvar.h,v 1.4 2003/03/24 17:02:15 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -53,11 +53,6 @@
 #define	GTMPSC_CLOCK_DIVIDER            8
 #define	GTMPSC_MMCR_HI_TCDV_DEFAULT     GTMPSC_MMCR_HI_TCDV_8X
 #define	GTMPSC_MMCR_HI_RCDV_DEFAULT     GTMPSC_MMCR_HI_RCDV_8X
-#ifdef __powerpc__
-#define	BRG_DEFAULT_INPUT_RATE          (cpu_timebase*4)
-#else
-#define	BRG_DEFAULT_INPUT_RATE          100000000
-#endif
 #define	BRG_BCR_CDV_MAX                 0xffff
 
 /*
@@ -103,6 +98,7 @@ typedef struct gtmpsc_softc {
 	unsigned int gtmpsc_flags;
 	unsigned int gtmpsc_baud_rate;
 	bus_dma_segment_t gtmpsc_dma_segs[1];
+	bus_dmamap_t gtmpsc_dma_map;
 	gtmpsc_poll_sdma_t *gtmpsc_poll_sdmapage;
 	unsigned int gtmpsc_poll_txix;		/* "current" tx xfer index */
 	unsigned int gtmpsc_poll_rxix;		/* "current" rx xfer index */

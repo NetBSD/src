@@ -1,4 +1,4 @@
-#	$NetBSD: files.discovery,v 1.2 2003/03/16 07:05:33 matt Exp $
+#	$NetBSD: files.discovery,v 1.3 2003/03/24 17:02:14 matt Exp $
 #
 # Config file and device description for machine-independent support for
 # the Moverll (formerly Galileo Technologies) Discovery system controllers.
@@ -17,9 +17,10 @@
 # Systems with multiple GT controllers are not currently handled by this
 # code.
 
-defflag		opt_marvell.h	MPSC_CONSOLE
+defparam	opt_marvell.h	MPSC_CONSOLE
 defparam	opt_marvell.h	GT_MPSC_DEFAULT_BAUD_RATE
 defparam	opt_marvell.h	GT_MPP_INTERRUPTS GT_MPP_WATCHDOG GT_BASE
+defparam	opt_marvell.h	GT_MPSC_FREQUENCY GT_MPSC_CLOCK_SOURCE
 
 define	gt { [unit = -1] }
 device	gt: gt
