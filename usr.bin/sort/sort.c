@@ -1,3 +1,5 @@
+/*	$NetBSD: sort.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,16 +36,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-static char sccsid[] = "@(#)sort.c	8.1 (Berkeley) 6/6/93";
-#endif /* not lint */
-
 /* Sort sorts a file using an optional user-defined key.
  * Sort uses radix sort for internal sorting, and allows
  * a choice of merge sort and radix sort for external sorting.
@@ -52,6 +44,16 @@ static char sccsid[] = "@(#)sort.c	8.1 (Berkeley) 6/6/93";
 #include "sort.h"
 #include "fsort.h"
 #include "pathnames.h"
+
+#ifndef lint
+__COPYRIGHT("@(#) Copyright (c) 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
+#endif /* not lint */
+
+#ifndef lint
+__RCSID("$NetBSD: sort.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $");
+__SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
+#endif /* not lint */
 
 #include <paths.h>
 #include <signal.h>
@@ -81,8 +83,10 @@ char devstdin[] = _PATH_STDIN;
 char toutpath[_POSIX_PATH_MAX];
 
 static void cleanup __P((void));
-static void onsig __P((int));
+static void onsignal __P((int));
 static void usage __P((char *));
+
+int main __P((int argc, char **argv));
 
 int
 main(argc, argv)
@@ -91,7 +95,8 @@ main(argc, argv)
 {
 	extern int optind;
 	extern char *optarg;
-	int (*get)();
+	int (*get) __P((int, union f_handle, int, struct recheader *, u_char *,
+	    struct field *));
 	int ch, i, stdinflag = 0, tmp = 0;
 	char cflag = 0, mflag = 0, nflag = 0;
 	char *outfile, *outpath = 0;
@@ -137,8 +142,8 @@ main(argc, argv)
 			SEP_FLAG = 1;
 			d_mask[' '] &= ~FLD_D;
 			d_mask['\t'] &= ~FLD_D;
-			d_mask[*optarg] |= FLD_D;
-			if (d_mask[*optarg] & REC_D_F)
+			d_mask[(u_char)*optarg] |= FLD_D;
+			if (d_mask[(u_char)*optarg] & REC_D_F)
 				err(2, "record/field delimiter clash");
 			break;
 		case 'T':
@@ -183,7 +188,7 @@ main(argc, argv)
 				stdinflag = 1;
 				argv[i] = devstdin;
 			}
-		} else if (ch = access(argv[i], R_OK))
+		} else if ((ch = access(argv[i], R_OK)))
 			err(2, "%s", argv[i]);
 	}
 	if (!(fldtab->flags & (I|D) || fldtab[1].icol.num)) {
@@ -219,13 +224,14 @@ main(argc, argv)
 		outfile = outpath = toutpath;
 	} else if (!(ch = access(outpath, 0)) &&
 	    strncmp(_PATH_DEV, outpath, 5)) {
-		struct sigaction act = {0, SIG_BLOCK, 6};
+		struct sigaction act = {0};
 		int sigtable[] = {SIGHUP, SIGINT, SIGPIPE, SIGXCPU, SIGXFSZ,
 		    SIGVTALRM, SIGPROF, 0};
 		errno = 0;
 		if (access(outpath, W_OK))
 			err(2, "%s", outpath);
-		act.sa_handler = cleanup;
+		act.sa_handler = onsignal;
+		act.sa_flags = SA_RESTART | SA_RESETHAND;
 		(void)snprintf(toutpath, sizeof(toutpath), "%sXXXX", outpath);
 		outfile = mktemp(toutpath);
 		if (!outfile)
@@ -253,11 +259,10 @@ main(argc, argv)
 }
 
 static void
-onsig(s)
-	int s;
+onsignal(sig)
+	int sig;
 {
 	cleanup();
-	exit(2);			/* return 2 on error/interrupt */
 }
 
 static void
