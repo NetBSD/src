@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.371 2003/10/06 05:19:32 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.372 2003/10/14 02:08:02 fvdl Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -78,7 +78,8 @@ USE_TOOLS_TOOLCHAIN?=yes
     ${MACHINE_ARCH} == "m68k" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sparc" || \
-    ${MACHINE_ARCH} == "sparc64"
+    ${MACHINE_ARCH} == "sparc64" || \
+    ${MACHINE_ARCH} == "x86_64"
 HAVE_GDB53?=	yes
 .else
 HAVE_GDB53?=	no
