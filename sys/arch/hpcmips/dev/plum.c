@@ -1,4 +1,4 @@
-/*	$NetBSD: plum.c,v 1.7 2003/07/15 02:29:30 lukem Exp $ */
+/*	$NetBSD: plum.c,v 1.8 2003/09/26 14:30:15 simonb Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plum.c,v 1.7 2003/07/15 02:29:30 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plum.c,v 1.8 2003/09/26 14:30:15 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,7 @@ plum_match(struct device *parent, struct cfdata *cf, void *aux)
 		return (0);
 	case PLUM2_1:
 	case PLUM2_2:
+		/* nothing */;
 	}
 
 	return (1);
