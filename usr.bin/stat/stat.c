@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.17.2.1 2004/05/30 07:13:26 tron Exp $ */
+/*	$NetBSD: stat.c,v 1.17.2.2 2004/06/22 07:22:16 tron Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.17.2.1 2004/05/30 07:13:26 tron Exp $");
+__RCSID("$NetBSD: stat.c,v 1.17.2.2 2004/06/22 07:22:16 tron Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -706,8 +706,8 @@ format1(const struct stat *st,
 	case SHOW_st_btime:
 		if (!gottime) {
 			gottime = 1;
-			secs = st->st_birthtimespec.tv_sec;
-			nsecs = st->st_birthtimespec.tv_nsec;
+			secs = st->st_birthtime;
+			nsecs = st->st_birthtimensec;
 		}
 #endif /* HAVE_STRUCT_STAT_ST_BIRTHTIME */
 		small = (sizeof(secs) == 4);
@@ -802,7 +802,9 @@ format1(const struct stat *st,
 					(void)strcat(sdata, "*");
 				break;
 			case S_IFLNK:	(void)strcat(sdata, "@");	break;
+#ifdef S_IFSOCK
 			case S_IFSOCK:	(void)strcat(sdata, "=");	break;
+#endif
 #ifdef S_IFWHT
 			case S_IFWHT:	(void)strcat(sdata, "%");	break;
 #endif /* S_IFWHT */
@@ -820,7 +822,9 @@ format1(const struct stat *st,
 			case S_IFBLK:	sdata = "Block Device";		break;
 			case S_IFREG:	sdata = "Regular File";		break;
 			case S_IFLNK:	sdata = "Symbolic Link";	break;
+#ifdef S_IFSOCK
 			case S_IFSOCK:	sdata = "Socket";		break;
+#endif
 #ifdef S_IFWHT
 			case S_IFWHT:	sdata = "Whiteout File";	break;
 #endif /* S_IFWHT */
