@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.38 1997/05/13 18:00:59 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.39 1997/05/19 21:07:05 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -285,8 +285,17 @@ _intr_glue:
 _lev2intr:
 	rte				|  HBL, can't be turned off on Falcon!
 
-_lev4intr:				|  VBL interrupts can not be turned
-	rte				|  off on a Falcon, so just ignore them.
+_lev4intr:				|  VBL interrupt
+#ifdef FALCON_VIDEO
+	tstl	_falcon_needs_vbl	|  Do we need to service a VBL-request?
+	jne	1f
+	rte				|  Nothing to do.
+1:
+	moveml	d0-d1/a0-a1,sp@-
+	jbsr	_falcon_display_switch
+	moveml	sp@+,d0-d1/a0-a1
+#endif /* FALCON_VIDEO */
+	rte
 
 _lev3intr:
 _lev5intr:

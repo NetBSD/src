@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.c,v 1.8 1997/04/25 19:25:39 leo Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.9 1997/05/19 21:07:19 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -301,13 +301,17 @@ dmode_t *dm;
 
 }
 
+u_long	falcon_needs_vbl;
+void falcon_display_switch __P((void));
+
 static void
 falcon_display_view(v)
 view_t *v;
 {
 	dmode_t	*dm = v->mode;
-	bmap_t	*bm = v->bitmap;
-	struct videl *vregs = vm_regs(v->mode);
+	bmap_t		*bm;
+	struct videl	*vregs;
+	static u_short last_mode = 0xffff;
 
 	if (dm->current_view) {
 		/*
@@ -317,14 +321,48 @@ view_t *v;
 	}
 	dm->current_view = v;
 	v->flags |= VF_DISPLAY;
+	vregs = vm_regs(v->mode);
 
 	falcon_use_colormap(v, v->colormap);
 
-	/* XXX: should use vbl for this */
-
-	VIDEO->vd_raml   =  (u_long)bm->hw_address & 0xff;
-	VIDEO->vd_ramm   = ((u_long)bm->hw_address >>  8) & 0xff;
+	bm = v->bitmap;
 	VIDEO->vd_ramh   = ((u_long)bm->hw_address >> 16) & 0xff;
+	VIDEO->vd_ramm   = ((u_long)bm->hw_address >>  8) & 0xff;
+	VIDEO->vd_raml   =  (u_long)bm->hw_address & 0xff;
+
+	if (last_mode != vregs->video_mode) {
+		last_mode = vregs->video_mode;
+
+		if (dm->depth == 1) {
+			/*
+			 * Set the resolution registers to a mode, which guarantee
+			 * no shifting when the register are written during vbl.
+			 */
+			VIDEO->vd_fal_res = 0;
+			VIDEO->vd_st_res = 0;
+		}
+
+		/*
+		 * Arrange for them to be activated
+		 * at the second vbl interrupt.
+		 */
+		falcon_needs_vbl = (u_long)v;
+	}
+}
+
+void
+falcon_display_switch()
+{
+	view_t		*v;
+	struct videl	*vregs;
+	static int vbl_count = 1;
+
+	if(vbl_count--) return;
+
+	v = (view_t*)falcon_needs_vbl;
+
+	vbl_count = 1;
+	falcon_needs_vbl = 0;
 
 	/*
 	 * Write to videl registers only on VGA displays
@@ -332,25 +370,27 @@ view_t *v;
 	 */
 	if(mon_type != FAL_VGA) return;
 
-	VIDEO->vd_v_freq_tim	= vregs->vd_v_freq_tim;
-	VIDEO->vd_v_ss		= vregs->vd_v_ss;
-	VIDEO->vd_v_bord_beg	= vregs->vd_v_bord_beg;
-	VIDEO->vd_v_bord_end	= vregs->vd_v_bord_end;
-	VIDEO->vd_v_dis_beg	= vregs->vd_v_dis_beg;
-	VIDEO->vd_v_dis_end	= vregs->vd_v_dis_end;
-	VIDEO->vd_h_hold_tim	= vregs->vd_h_hold_tim;
-	VIDEO->vd_h_ss		= vregs->vd_h_ss;
-	VIDEO->vd_h_bord_beg	= vregs->vd_h_bord_beg;
-	VIDEO->vd_h_bord_end	= vregs->vd_h_bord_end;
-	VIDEO->vd_h_dis_beg	= vregs->vd_h_dis_beg;
-	VIDEO->vd_h_dis_end	= vregs->vd_h_dis_end;
+	vregs = vm_regs(v->mode);
+
+	VIDEO->vd_v_freq_tim    = vregs->vd_v_freq_tim;
+	VIDEO->vd_v_ss          = vregs->vd_v_ss;
+	VIDEO->vd_v_bord_beg    = vregs->vd_v_bord_beg;
+	VIDEO->vd_v_bord_end    = vregs->vd_v_bord_end;
+	VIDEO->vd_v_dis_beg     = vregs->vd_v_dis_beg;
+	VIDEO->vd_v_dis_end     = vregs->vd_v_dis_end;
+	VIDEO->vd_h_hold_tim    = vregs->vd_h_hold_tim;
+	VIDEO->vd_h_ss          = vregs->vd_h_ss;
+	VIDEO->vd_h_bord_beg    = vregs->vd_h_bord_beg;
+	VIDEO->vd_h_bord_end    = vregs->vd_h_bord_end;
+	VIDEO->vd_h_dis_beg     = vregs->vd_h_dis_beg;
+	VIDEO->vd_h_dis_end     = vregs->vd_h_dis_end;
 #if 0 /* This seems not to be necessary -- Thomas */
 	VIDEO->vd_h_fs		= vregs->vd_h_fs;
 	VIDEO->vd_h_hh		= vregs->vd_h_hh;
 #endif
 	VIDEO->vd_sync          = vregs->vd_syncmode;
 	VIDEO->vd_fal_res       = 0;
-	if (dm->depth == 2)
+	if (v->mode->depth == 2)
 		VIDEO->vd_st_res        = vregs->vd_st_res;
 	else {
 		VIDEO->vd_st_res        = 0;
