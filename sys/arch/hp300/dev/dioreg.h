@@ -1,4 +1,4 @@
-/*	$NetBSD: dioreg.h,v 1.1 1996/12/17 08:41:04 thorpej Exp $	*/
+/*	$NetBSD: dioreg.h,v 1.2 1997/01/12 21:27:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -89,6 +89,11 @@
 #define	DIO_SCMAX(machineid)	((machineid) == HP_320 ? 32 : 256)
 
 /*
+ * Base of DIO-II select codes.
+ */
+#define	DIOII_SCBASE		132
+
+/*
  * Macro that returns true if a select code lies within
  * the select code `hole'.
  */
@@ -98,7 +103,7 @@
  * Macros to determine if device is DIO or DIO-II.
  */
 #define	DIO_ISDIO(scode)	((scode) >= 0 && (scode) < 32)
-#define	DIO_ISDIOII(scode)	((scode) >= 132 && (scode) < 256)
+#define	DIO_ISDIOII(scode)	((scode) >= DIOII_SCBASE && (scode) < 256)
 
 /*
  * Macro to determine if device is a framebuffer, given the
