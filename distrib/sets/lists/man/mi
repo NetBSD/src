@@ -911,6 +911,7 @@
 ./usr/share/man/cat9/m_split.0
 ./usr/share/man/cat9/malloc.0
 ./usr/share/man/cat9/mbuf.0
+./usr/share/man/cat9/microtime.0
 ./usr/share/man/cat9/mi_switch.0
 ./usr/share/man/cat9/mono_time.0
 ./usr/share/man/cat9/mtocl.0
@@ -1944,6 +1945,7 @@
 ./usr/share/man/man9/m_split.9
 ./usr/share/man/man9/malloc.9
 ./usr/share/man/man9/mbuf.9
+./usr/share/man/man9/microtime.9
 ./usr/share/man/man9/mi_switch.9
 ./usr/share/man/man9/mono_time.9
 ./usr/share/man/man9/mtocl.9
