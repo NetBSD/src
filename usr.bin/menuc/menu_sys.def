@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.44 2003/07/25 07:22:05 dsl Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.45 2003/07/27 07:21:58 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -265,6 +265,7 @@ draw_menu(menudesc *m, void *arg)
 	int opt;
 	int hasbox, cury, maxy;
 	int tadd;
+	int hasexit = (m->mopt & MC_NOEXITOPT ? 0 : 1);
 	
 	if (m->mopt & MC_NOBOX) {
 		cury = 0;
@@ -293,6 +294,12 @@ draw_menu(menudesc *m, void *arg)
 		if (m->h <= m->numopts)
 			m->topline = m->numopts + 1 - m->h;
 	}
+
+	while (m->cursel >= m->topline + m->h)
+		m->topline = MIN(m->topline + m->h,
+				 m->numopts + hasexit - m->h);
+	while (m->cursel < m->topline)
+		m->topline = MAX(0, m->topline - m->h);
 
 	for (opt = m->topline; opt < m->numopts; opt++) {
 		if (cury >= maxy)
@@ -502,12 +509,6 @@ process_req(menudesc *m, void *arg, int num, int req)
 		m->cursel = ch;
 	}
 
-	while (m->cursel >= m->topline + m->h)
-		m->topline = MIN(m->topline + m->h,
-				 m->numopts + hasexit - m->h);
-	while (m->cursel < m->topline)
-		m->topline = MAX(0, m->topline - m->h);
-
 	draw_menu(m, arg);
 }
 
@@ -621,7 +622,7 @@ process_menu(int num, void *arg)
 				__m_endwin = 1;
 			}
 			if (opt->opt_action)
-				done = (*opt->opt_action)(m, opt, arg);
+				done = (*opt->opt_action)(m, arg);
 			if (opt->opt_menu != -1) {
 				if (opt->opt_flags & OPT_SUB)
 					process_menu(opt->opt_menu, arg);
