@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2001/07/18 18:29:02 tv Exp $
+#	$NetBSD: Makefile,v 1.19 2001/07/18 20:20:01 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -43,7 +43,7 @@ op${f}.o: ${G_CXX_LIB2SRCS:M*/new2.cc}
 
 .include <bsd.lib.mk>
 
-${OBJS}: ${MACHINE_ARCH}.mk
+${OBJS}: ${.CURDIR}/${MACHINE_ARCH}.mk
 
 .else
 #
