@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.39 2004/08/06 20:30:05 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.40 2004/08/08 05:33:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.39 2004/08/06 20:30:05 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.40 2004/08/08 05:33:04 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -69,11 +69,6 @@ int	pcmcia_match __P((struct device *, struct cfdata *, void *));
 int	pcmcia_submatch __P((struct device *, struct cfdata *, void *));
 void	pcmcia_attach __P((struct device *, struct device *, void *));
 int	pcmcia_print __P((void *, const char *));
-
-static inline void pcmcia_socket_enable __P((pcmcia_chipset_tag_t,
-					     pcmcia_chipset_handle_t *));
-static inline void pcmcia_socket_disable __P((pcmcia_chipset_tag_t,
-					      pcmcia_chipset_handle_t *));
 
 int pcmcia_card_intr __P((void *));
 #ifdef PCMCIADEBUG
@@ -407,18 +402,20 @@ pcmcia_function_init(pf, cfe)
 	pf->cfe = cfe;
 }
 
-static inline void pcmcia_socket_enable(pct, pch)
-     pcmcia_chipset_tag_t pct;
-     pcmcia_chipset_handle_t *pch;
+void pcmcia_socket_enable(dev)
+	struct device *dev;
 {
-	pcmcia_chip_socket_enable(pct, pch);
+	struct pcmcia_softc *sc = (void *)dev;
+
+	pcmcia_chip_socket_enable(sc->pct, sc->pch);
 }
 
-static inline void pcmcia_socket_disable(pct, pch)
-     pcmcia_chipset_tag_t pct;
-     pcmcia_chipset_handle_t *pch;
+void pcmcia_socket_disable(dev)
+	struct device *dev;
 {
-	pcmcia_chip_socket_disable(pct, pch);
+	struct pcmcia_softc *sc = (void *)dev;
+
+	pcmcia_chip_socket_disable(sc->pct, sc->pch);
 }
 
 /* Enable a PCMCIA function */
