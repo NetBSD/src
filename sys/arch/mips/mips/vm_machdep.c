@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.29 1998/09/09 11:17:28 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.29.2.1 1998/10/15 03:16:49 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.29 1998/09/09 11:17:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.29.2.1 1998/10/15 03:16:49 nisimura Exp $");
 
 #include "opt_uvm.h"
 
@@ -71,8 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.29 1998/09/09 11:17:28 thorpej Exp 
 
 /* XXX will be declared in mips/include/cpu.h XXX */
 extern struct proc *fpcurproc;
-extern void savefpregs __P((struct proc *));
-extern void child_return __P((void));
 
 extern vm_offset_t kvtophys __P((vm_offset_t kva));	/* XXX */
 
@@ -197,7 +195,7 @@ cpu_coredump(p, vp, cred, chdr)
 		cpustate.fpregs = p->p_addr->u_pcb.pcb_fpregs;
 	}
 	else
-		bzero((caddr_t)&cpustate.fpregs, sizeof(struct fpreg));
+		memset(&cpustate.fpregs, 0, sizeof(struct fpreg));
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;

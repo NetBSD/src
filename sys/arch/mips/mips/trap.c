@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.93 1998/10/01 00:42:38 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.93.2.1 1998/10/15 03:16:48 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93 1998/10/01 00:42:38 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93.2.1 1998/10/15 03:16:48 nisimura Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -123,217 +123,16 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93 1998/10/01 00:42:38 jonathan Exp $");
 int astpending;
 int want_resched;
 
-int (*mips_hardware_intr) __P((unsigned mask, unsigned pc, unsigned status,
-			       unsigned cause)) =
-	( int (*) __P((unsigned, unsigned, unsigned, unsigned)) ) 0;
+int  (*mips_hardware_intr) __P((unsigned, unsigned, unsigned, unsigned)) = 0;
+void (*mips_software_intr) __P((int)) = 0;
+int  softisr;	/* for extensible software interrupt framework */
 
 #if defined(MIPS3) && defined(MIPS3_INTERNAL_TIMER_INTERRUPT)
-extern u_int32_t mips3_intr_cycle_count;
 u_int32_t mips3_intr_cycle_count;
 u_int32_t mips3_timer_delta;
 #endif
 
-
-/*
- * Exception-handling functions, called via ExceptionTable from locore
- */
-#ifdef MIPS1
-extern void mips1_KernGenException __P((void));
-extern void mips1_UserGenException __P((void));
-extern void mips1_SystemCall __P((void));
-extern void mips1_KernIntr __P((void));
-extern void mips1_UserIntr __P((void));
-#if 0
-extern void mips1_TLBModException  __P((void));
-#endif
-extern void mips1_TLBMissException __P((void));
-
-/* marks start/end of vector code */
-extern void mips1_KernGenExceptionEnd __P((void));
-extern void mips1_UserGenExceptionEnd __P((void));
-extern void mips1_SystemCallEnd __P((void));
-extern void mips1_KernIntrEnd __P((void));
-extern void mips1_UserIntrEnd __P((void));
-extern void mips1_exceptionentry_start __P((void));
-extern void mips1_exceptionentry_end __P((void));
-#endif
-
-#ifdef MIPS3
-extern void mips3_KernGenException __P((void));
-extern void mips3_UserGenException __P((void));
-extern void mips3_SystemCall __P((void));
-extern void mips3_KernIntr __P((void));
-extern void mips3_UserIntr __P((void));
-extern void mips3_TLBInvalidException __P((void));
-extern void mips3_TLBMissException __P((void));
-
-extern void mips3_VCED __P((void));
-extern void mips3_VCEI __P((void));	/* XXXX */
-
-/* marks start/end of vector code */
-extern void mips3_KernGenExceptionEnd __P((void));
-extern void mips3_UserGenExceptionEnd __P((void));
-extern void mips3_SystemCallEnd __P((void));
-extern void mips3_KernIntrEnd __P((void));
-extern void mips3_UserIntrEnd __P((void));
-extern void mips3_exceptionentry_start __P((void));
-extern void mips3_exceptionentry_end __P((void));
-#endif
-
-
-#ifdef MIPS1
-void (*mips1_ExceptionTable[]) __P((void)) = {
-/*
- * The kernel exception handlers.
- */
-    mips1_KernIntr,			/* 0 external interrupt */
-    mips1_KernGenException,		/* 1 TLB modification */
-    mips1_TLBMissException,		/* 2 TLB miss (load or instr. fetch) */
-    mips1_TLBMissException,		/* 3 TLB miss (store) */
-    mips1_KernGenException,		/* 4 address error (load or I-fetch) */
-    mips1_KernGenException,		/* 5 address error (store) */
-    mips1_KernGenException,		/* 6 bus error (I-fetch) */
-    mips1_KernGenException,		/* 7 bus error (load or store) */
-    mips1_KernGenException,		/* 8 system call */
-    mips1_KernGenException,		/* 9 breakpoint */
-    mips1_KernGenException,		/* 10 reserved instruction */
-    mips1_KernGenException,		/* 11 coprocessor unusable */
-    mips1_KernGenException,		/* 12 arithmetic overflow */
-    mips1_KernGenException,		/* 13 r4k trap excpt, r3k reserved */
-    mips1_KernGenException,		/* 14 r4k virt coherence, r3k reserved */
-    mips1_KernGenException,		/* 15 r4k FP exception, r3k reserved */
-    mips1_KernGenException,		/* 16 reserved */
-    mips1_KernGenException,		/* 17 reserved */
-    mips1_KernGenException,		/* 18 reserved */
-    mips1_KernGenException,		/* 19 reserved */
-    mips1_KernGenException,		/* 20 reserved */
-    mips1_KernGenException,		/* 21 reserved */
-    mips1_KernGenException,		/* 22 reserved */
-    mips1_KernGenException,		/* 23 watch exception */
-    mips1_KernGenException,		/* 24 reserved */
-    mips1_KernGenException,		/* 25 reserved */
-    mips1_KernGenException,		/* 26 reserved */
-    mips1_KernGenException,		/* 27 reserved */
-    mips1_KernGenException,		/* 28 reserved */
-    mips1_KernGenException,		/* 29 reserved */
-    mips1_KernGenException,		/* 30 reserved */
-    mips1_KernGenException,		/* 31 virt. coherence exception data */
-/*
- * The user exception handlers.
- */
-    mips1_UserIntr,		        /*  0 */
-    mips1_UserGenException,	        /*  1 */
-    mips1_UserGenException,	        /*  2 */
-    mips1_UserGenException,	        /*  3 */
-    mips1_UserGenException,	        /*  4 */
-    mips1_UserGenException,	        /*  5 */
-    mips1_UserGenException,	        /*  6 */
-    mips1_UserGenException,	        /*  7 */
-    mips1_SystemCall,		        /*  8 */
-    mips1_UserGenException,	        /*  9 */
-    mips1_UserGenException,	        /* 10 */
-    mips1_UserGenException,	        /* 11 */
-    mips1_UserGenException,	        /* 12 */
-    mips1_UserGenException,	        /* 13 */
-    mips1_UserGenException,	        /* 14 */
-    mips1_UserGenException,	        /* 15 */
-    mips1_UserGenException,		/* 16 */
-    mips1_UserGenException,		/* 17 */
-    mips1_UserGenException,		/* 18 */
-    mips1_UserGenException,		/* 19 */
-    mips1_UserGenException,		/* 20 */
-    mips1_UserGenException,		/* 21 */
-    mips1_UserGenException,		/* 22 */
-    mips1_UserGenException,		/* 23 */
-    mips1_UserGenException,		/* 24 */
-    mips1_UserGenException,		/* 25 */
-    mips1_UserGenException,		/* 26 */
-    mips1_UserGenException,		/* 27 */
-    mips1_UserGenException,		/* 28 */
-    mips1_UserGenException,		/* 29 */
-    mips1_UserGenException,		/* 20 */
-    mips1_UserGenException,		/* 31 */
-};
-#endif	/* MIPS1 */
-
-#ifdef MIPS3		/* r4000 family (mips-III cpu) */
-
-void (*mips3_ExceptionTable[]) __P((void)) = {
-/*
- * The kernel exception handlers.
- */
-    mips3_KernIntr,			/* 0 external interrupt */
-    mips3_KernGenException,		/* 1 TLB modification */
-    mips3_TLBInvalidException,		/* 2 TLB miss (load or instr. fetch) */
-    mips3_TLBInvalidException,		/* 3 TLB miss (store) */
-    mips3_KernGenException,		/* 4 address error (load or I-fetch) */
-    mips3_KernGenException,		/* 5 address error (store) */
-    mips3_KernGenException,		/* 6 bus error (I-fetch) */
-    mips3_KernGenException,		/* 7 bus error (load or store) */
-    mips3_KernGenException,		/* 8 system call */
-    mips3_KernGenException,		/* 9 breakpoint */
-    mips3_KernGenException,		/* 10 reserved instruction */
-    mips3_KernGenException,		/* 11 coprocessor unusable */
-    mips3_KernGenException,		/* 12 arithmetic overflow */
-    mips3_KernGenException,		/* 13 r4k trap excpt, r3k reserved */
-    mips3_VCEI,				/* 14 r4k virt coherence, r3k reserved */
-    mips3_KernGenException,		/* 15 r4k FP exception, r3k reserved */
-    mips3_KernGenException,		/* 16 reserved */
-    mips3_KernGenException,		/* 17 reserved */
-    mips3_KernGenException,		/* 18 reserved */
-    mips3_KernGenException,		/* 19 reserved */
-    mips3_KernGenException,		/* 20 reserved */
-    mips3_KernGenException,		/* 21 reserved */
-    mips3_KernGenException,		/* 22 reserved */
-    mips3_KernGenException,		/* 23 watch exception */
-    mips3_KernGenException,		/* 24 reserved */
-    mips3_KernGenException,		/* 25 reserved */
-    mips3_KernGenException,		/* 26 reserved */
-    mips3_KernGenException,		/* 27 reserved */
-    mips3_KernGenException,		/* 28 reserved */
-    mips3_KernGenException,		/* 29 reserved */
-    mips3_KernGenException,		/* 30 reserved */
-    mips3_VCED,				/* 31 virt. coherence exception data */
-/*
- * The user exception handlers.
- */
-    mips3_UserIntr,		        /*  0 */
-    mips3_UserGenException,	        /*  1 */
-    mips3_UserGenException,	        /*  2 */
-    mips3_UserGenException,	        /*  3 */
-    mips3_UserGenException,	        /*  4 */
-    mips3_UserGenException,	        /*  5 */
-    mips3_UserGenException,	        /*  6 */
-    mips3_UserGenException,	        /*  7 */
-    mips3_SystemCall,		        /*  8 */
-    mips3_UserGenException,	        /*  9 */
-    mips3_UserGenException,	        /* 10 */
-    mips3_UserGenException,	        /* 11 */
-    mips3_UserGenException,	        /* 12 */
-    mips3_UserGenException,	        /* 13 */
-    mips3_VCEI,			        /* 14 */
-    mips3_UserGenException,	        /* 15 */
-    mips3_UserGenException,		/* 16 */
-    mips3_UserGenException,		/* 17 */
-    mips3_UserGenException,		/* 18 */
-    mips3_UserGenException,		/* 19 */
-    mips3_UserGenException,		/* 20 */
-    mips3_UserGenException,		/* 21 */
-    mips3_UserGenException,		/* 22 */
-    mips3_UserGenException,		/* 23 */
-    mips3_UserGenException,		/* 24 */
-    mips3_UserGenException,		/* 25 */
-    mips3_UserGenException,		/* 26 */
-    mips3_UserGenException,		/* 27 */
-    mips3_UserGenException,		/* 28 */
-    mips3_UserGenException,		/* 29 */
-    mips3_UserGenException,		/* 20 */
-    mips3_VCED,				/* 31 virt. coherence exception data */
-};
-#endif	/* MIPS3 */
-
-
-char	*trap_type[] = {
+char *trap_type[] = {
 	"external interrupt",
 	"TLB modification",
 	"TLB miss (load or instr. fetch)",
@@ -368,6 +167,33 @@ char	*trap_type[] = {
 	"r4000 virtual coherency data",
 };
 
+struct trapframe {
+	unsigned tf_regs[17];
+	unsigned tf_ra;
+	unsigned tf_sr;
+	unsigned tf_mullo;
+	unsigned tf_mulhi;
+	unsigned tf_epc;
+};
+
+void userret __P((struct proc *, unsigned, u_quad_t));
+void trap __P((unsigned, unsigned, unsigned, unsigned, struct trapframe));
+void syscall __P((unsigned, unsigned, unsigned));
+void interrupt __P((unsigned, unsigned, unsigned));
+void ast __P((unsigned));
+void dealfpu __P((unsigned, unsigned, unsigned));
+
+extern void MachEmulateFP __P((unsigned));
+extern void MachFPInterrupt __P((unsigned, unsigned, unsigned, int *));
+
+/*
+ * Other forward declarations.
+ */
+unsigned MachEmulateBranch __P((unsigned *regsPtr,
+			     unsigned instPC,
+			     unsigned fpcCSR,
+			     int allowNonBranch));
+
 #ifdef DEBUG
 #define TRAPSIZE	10
 struct trapdebug {		/* trap history buffer for debugging */
@@ -383,64 +209,7 @@ struct trapdebug {		/* trap history buffer for debugging */
 void trapDump __P((char * msg));
 #endif	/* DEBUG */
 
-/* marks start/end of code */
-extern void splx_end __P((void));
-extern void cpu_switch_end __P((void));
-extern void idle_end __P((void));
-extern void bcopy_end __P((void));
-extern char start[], edata[];
-
-
-void mips1_dump_tlb __P((int, int, void (*printfn)(const char*, ...)));
-void mips3_dump_tlb __P((int, int, void (*printfn)(const char*, ...)));
-void mips_dump_tlb __P((int, int));
-
-/*
- * Other forward declarations.
- */
-unsigned MachEmulateBranch __P((unsigned *regsPtr,
-			     unsigned instPC,
-			     unsigned fpcCSR,
-			     int allowNonBranch));
-
-struct proc *fpcurproc;
-struct pcb *curpcb;
-
-/* extern functions used but not declared elsewhere */
-extern void clearsoftclock __P((void));
-extern void clearsoftnet __P((void));
-extern void MachFPInterrupt __P((unsigned, unsigned, unsigned, int *));
-extern void switchfpregs __P((struct proc *, struct proc *));
-
-/* only called by locore */
-extern void trap __P((u_int status, u_int cause, u_int vaddr,  u_int opc,
-			 struct frame frame));
-static void userret __P((struct proc *p, unsigned pc, u_quad_t sticks));
-extern void syscall __P((unsigned status, unsigned cause, unsigned opc,
-			 struct frame *frame));
-extern void child_return __P((struct proc *p));
-extern void interrupt __P((unsigned status, unsigned cause, unsigned pc,
-			   struct frame *frame));
-extern void ast __P((unsigned pc));
-
- /*
-  *  stack trace code, also useful to DDB one day
-  */
-#if defined(DEBUG) || defined(DDB)
-int	kdbpeek __P((vm_offset_t addr));
-extern void stacktrace __P((void)); /*XXX*/
-extern void logstacktrace __P((void)); /*XXX*/
-
-/* extern functions printed by name in stack backtraces */
-extern void idle __P((void)),  cpu_switch __P(( struct proc *p));
-extern void MachEmptyWriteBuffer __P((void));
-extern void MachUTLBMiss __P((void));
-extern void setsoftclock __P((void));
-extern int main __P((void*));
-extern void am7990_meminit __P((void*)); /* XXX */
-#endif	/* DEBUG || DDB */
-
-static void
+void
 userret(p, pc, sticks)
 	struct proc *p;
 	unsigned pc;
@@ -491,11 +260,13 @@ userret(p, pc, sticks)
  * and the return value (if any) in v0 and possibly v1.
  */
 void
-syscall(status, cause, opc, frame)
-	unsigned status, cause, opc;
-	struct frame *frame;
+syscall(status, cause, opc)
+	unsigned status;
+	unsigned cause;
+	unsigned opc;
 {
 	struct proc *p = curproc;
+	struct frame *frame = (struct frame *)p->p_md.md_regs;
 	u_quad_t sticks;
 	int args[8], rval[2], error;
 	size_t code, numsys, nsaved, argsiz;
@@ -566,8 +337,8 @@ syscall(status, cause, opc, frame)
 	argsiz = callp->sy_argsize / sizeof(int);
 	if (argsiz > nsaved) {
 		error = copyin(
-			(caddr_t)((int *)frame->f_regs[SP] + 4),
-			(caddr_t)(args + nsaved),
+			(void *)((int *)frame->f_regs[SP] + 4),
+			(void *)(args + nsaved),
 			(argsiz - nsaved) * sizeof(int));
 		if (error)
 			goto bad;
@@ -651,18 +422,20 @@ child_return(p)
  */
 void
 trap(status, cause, vaddr, opc, frame)
-	u_int status;
-	u_int cause;
-	u_int vaddr;
-	u_int opc;
-	struct frame frame;
+	unsigned status;
+	unsigned cause;
+	unsigned vaddr;
+	unsigned opc;
+	struct trapframe frame;
 {
 	int type, sig;
 	int ucode = 0;
 	u_quad_t sticks = 0;
 	struct proc *p = curproc;
 	vm_prot_t ftype;
+	extern struct proc *fpcurproc;
 	extern void fswintrberr __P((void));
+	extern int ddb_trap __P((int, int *));
 
 #ifdef DEBUG
 	trp->status = status;
@@ -705,10 +478,13 @@ trap(status, cause, vaddr, opc, frame)
 			printf("pid=%d cmd=%s\n", p->p_pid, p->p_comm);
 		else
 			printf("curproc == NULL\n");
+#ifdef DDB
+		ddb_trap(-1, (int *)&frame);
+#endif
 #ifdef DEBUG
 		stacktrace();
 		trapDump("trap");
-#endif	/* DEBUG */
+#endif
 		panic("trap");
 		/*NOTREACHED*/
 	case T_TLB_MOD:
@@ -788,11 +564,11 @@ trap(status, cause, vaddr, opc, frame)
 		 * It is an error for the kernel to access user space except
 		 * through the copyin/copyout routines.
 		 */
-		if (curpcb->pcb_onfault == NULL)
+		if (p->p_addr->u_pcb.pcb_onfault == NULL)
 			goto dopanic;
 		/* check for fuswintr() or suswintr() getting a page fault */
-		if (curpcb->pcb_onfault == (caddr_t)fswintrberr) {
-			frame.f_regs[PC] = (int)fswintrberr;
+		if (p->p_addr->u_pcb.pcb_onfault == (caddr_t)fswintrberr) {
+			frame.tf_epc = (int)fswintrberr;
 			return; /* KERN */
 		}
 		goto pagefault;
@@ -855,7 +631,7 @@ trap(status, cause, vaddr, opc, frame)
 		sig = (rv == KERN_PROTECTION_FAILURE) ? SIGBUS : SIGSEGV;
 		ucode = vaddr;
 		break; /* SIGNAL */  
-		}
+	    }
 	kernelfault: ;
 	    {
 		vm_offset_t va;
@@ -875,9 +651,9 @@ trap(status, cause, vaddr, opc, frame)
 	case T_ADDR_ERR_ST:	/* misaligned access */
 	case T_BUS_ERR_LD_ST:	/* BERR asserted to cpu */
 	copyfault:
-		if (curpcb->pcb_onfault == NULL)
+		if (p->p_addr->u_pcb.pcb_onfault == NULL)
 			goto dopanic;
-		frame.f_regs[PC] = (int)curpcb->pcb_onfault;
+		frame.tf_epc = (int)p->p_addr->u_pcb.pcb_onfault;
 		return; /* KERN */
 
 	case T_ADDR_ERR_LD+T_USER:	/* misaligned or kseg access */
@@ -890,7 +666,7 @@ trap(status, cause, vaddr, opc, frame)
 
 	case T_BREAK:
 #ifdef DDB
-		kdb_trap(type, (struct frame *)&frame.f_regs);
+		ddb_trap(type, (int *)&frame);
 		return;	/* KERN */
 #else
 		goto dopanic;
@@ -913,9 +689,9 @@ trap(status, cause, vaddr, opc, frame)
 			sig = SIGTRAP; 
 			break;
 		}
-			/*
+		/*
 		 * Restore original instruction and clear BP
-			 */
+		 */
 #ifndef NO_PROCFS_SUBR 
 		rv = suiword((caddr_t)va, p->p_md.md_ss_instr);
 		if (rv < 0) {
@@ -929,7 +705,6 @@ trap(status, cause, vaddr, opc, frame)
 				rv = suiword((caddr_t)va, MIPS_BREAK_SSTEP);
 				(void)uvm_map_protect(&p->p_vmspace->vm_map,
 				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
-				}
 			}
 #else
 			rv = vm_map_protect(&p->p_vmspace->vm_map,
@@ -938,9 +713,9 @@ trap(status, cause, vaddr, opc, frame)
 				rv = suiword((caddr_t)va, MIPS_BREAK_SSTEP);
 				(void)vm_map_protect(&p->p_vmspace->vm_map,
 				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
-				}
 			}
 #endif /* UVM */
+		}
 #else /* NO_PROCFS_SUBR */
 		{
 		struct uio uio;
@@ -965,7 +740,7 @@ trap(status, cause, vaddr, opc, frame)
 		p->p_md.md_ss_addr = 0;
 		sig = SIGTRAP;
 		break; /* SIGNAL */
-				}
+	    }
 	case T_RES_INST+T_USER:
 		sig = SIGILL;
 		break; /* SIGNAL */
@@ -973,7 +748,7 @@ trap(status, cause, vaddr, opc, frame)
 		if ((cause & MIPS_CR_COP_ERR) != 0x10000000) {
 			sig = SIGILL;	/* only FPU instructions allowed */
 			break; /* SIGNAL */
-			}
+		}
 		switchfpregs(fpcurproc, p);
 		fpcurproc = p;
 		p->p_md.md_regs[SR] |= MIPS_SR_COP_1_BIT;
@@ -987,7 +762,7 @@ trap(status, cause, vaddr, opc, frame)
 	case T_OVFLOW+T_USER:
 		sig = SIGFPE;
 		break; /* SIGNAL */ 
-		}
+	}
 	p->p_md.md_regs[CAUSE] = cause;
 	p->p_md.md_regs[BADVADDR] = vaddr;
 	trapsignal(p, sig, ucode);
@@ -1025,24 +800,22 @@ trap(status, cause, vaddr, opc, frame)
 
 /*
  * Handle an interrupt.
- * Called from MachKernIntr() or MachUserIntr()
- * Note: curproc might be NULL.
+ * N.B., curproc might be NULL.
  */
 void
-interrupt(status, cause, pc, frame)
-	unsigned status, cause, pc;
-	struct frame *frame;  
+interrupt(status, cause, pc)
+	unsigned status;
+	unsigned cause;
+	unsigned pc;
 {
 	unsigned mask;
 	extern u_int32_t mips3_cycle_count __P((void));
 
 	mask = cause & status;	/* pending interrupts & enable mask */
 
-#if defined(MIPS3) && defined(MIPS3_INTERNAL_TIMER_INTERRUPT)
-	if (CPUISMIPS3 && (mask & MIPS_INT_MASK_5)) {
+#if defined(MIPS3) && defined(MIPS_INT_MASK_CLOCK)
+	if ((mask & MIPS_INT_MASK_CLOCK) && CPUISMIPS3)
 		mips3_intr_cycle_count = mips3_cycle_count();
-		mips3_write_compare(mips3_intr_cycle_count + mips3_timer_delta);
-	}
 #endif
 
 #ifdef DEBUG
@@ -1062,60 +835,64 @@ interrupt(status, cause, pc, frame)
 #else
 	cnt.v_intr++;
 #endif
-	/* Device interrupt */
-	if (mips_hardware_intr)
+	/* real device interrupt */
+	if ((mask & INT_MASK_REAL_DEV) && mips_hardware_intr) {
+		cnt.v_intr++;
 		splx((*mips_hardware_intr)(mask, pc, status, cause));
-
-#ifdef MIPS_INT_MASK_FPU
-	if (mask & MIPS_INT_MASK_FPU) {
-		intrcnt[FPU_INTR]++;
-		if (USERMODE(status))
-			MachFPInterrupt(status, cause, pc, frame->f_regs);
-		else {
-			printf("FPU interrupt: PC %x CR %x SR %x\n",
-				pc, cause, status);
-		}
 	}
-#endif /* MIPS_INT_MASK_FPU */
 
-	/* Network software interrupt */
+#ifdef INT_MASK_FPU_DEAL
+	if (mask & INT_MASK_FPU_DEAL) {
+		intrcnt[FPU_INTR]++;
+		if (!USERMODE(status))
+			panic("kernel used FPU: PC %x, CR %x, SR %x",
+			    pc, cause, status);
+		/* dealfpu(status, cause, pc); */
+		MachFPInterrupt(status, cause, pc, curproc->p_md.md_regs);
+	}
+#endif
+
+	/* simulated interrupt */
 	if ((mask & MIPS_SOFT_INT_MASK_1)
-	    || (netisr && (status & MIPS_SOFT_INT_MASK_1))) {
-		int isr;
-
-		isr = netisr;
-		netisr = 0;	/* XXX need protect? */
+		    || ((netisr|softisr) && (status & MIPS_SOFT_INT_MASK_1))) {
+		register isr, sisr;
+		isr = netisr; netisr = 0;
+		sisr = softisr; softisr = 0;
 		clearsoftnet();
 #if defined(UVM)
 		uvmexp.softs++;
 #else
 		cnt.v_soft++;
 #endif
-		intrcnt[SOFTNET_INTR]++;
+		if (isr) {
+			intrcnt[SOFTNET_INTR]++;
 #ifdef INET
 #if NARP > 0
-		if (isr & (1 << NETISR_ARP)) arpintr();
+			if (isr & (1 << NETISR_ARP)) arpintr();
 #endif
-		if (isr & (1 << NETISR_IP)) ipintr();
+			if (isr & (1 << NETISR_IP)) ipintr();
 #endif
 #ifdef NETATALK
-		if (isr & (1 << NETISR_ATALK)) atintr();
+			if (isr & (1 << NETISR_ATALK)) atintr();
 #endif
 #ifdef NS
-		if (isr & (1 << NETISR_NS)) nsintr();
+			if (isr & (1 << NETISR_NS)) nsintr();
 #endif
 #ifdef ISO
-		if (isr & (1 << NETISR_ISO)) clnlintr();
+			if (isr & (1 << NETISR_ISO)) clnlintr();
 #endif
 #ifdef CCITT
-		if (isr & (1 << NETISR_CCITT)) ccittintr();
+			if (isr & (1 << NETISR_CCITT)) ccittintr();
 #endif
 #if NPPP > 0
-		if (isr & (1 << NETISR_PPP)) pppintr();
+			if (isr & (1 << NETISR_PPP)) pppintr();
 #endif
+		}
+		if (sisr && mips_software_intr)
+			(*mips_software_intr)(sisr);
 	}
 
-	/* Software clock interrupt */
+	/* 'softclock' interrupt */
 	if (mask & MIPS_SOFT_INT_MASK_0) {
 		clearsoftclock();
 #if defined(UVM)
@@ -1152,6 +929,71 @@ ast(pc)
 	userret(p, pc, p->p_sticks);
 }
 
+/* XXX XXX XXX */
+#define	set_cp0sr(x)		\
+{				\
+	register _r = (x);	\
+	__asm __volatile("	\
+		.set noreorder	; \
+		mtc0	%0, $12	; \
+		nop;nop;nop;nop	; \
+		.set reorder"	\
+		: : "r"(_r));	\
+}
+
+#define	get_fpcsr()		\
+({				\
+	register _r;		\
+	__asm __volatile("	\
+		.set noreorder	; \
+		cfc1	%0, $31	; \
+		cfc1	%0, $31	; \
+		nop		; \
+		.set reorder"	\
+		: "=r"(_r));	\
+	_r;			\
+})
+
+#define	clr_fpcsr()		\
+	__asm __volatile("ctc1	$0, $31")
+/* XXX XXX XXX */
+
+void
+dealfpu(status, cause, opc)
+	unsigned status;
+	unsigned cause;
+	unsigned opc;
+{
+	struct frame *f = (struct frame *)curproc->p_md.md_regs;
+	unsigned v0;
+
+	set_cp0sr(status | MIPS_SR_COP_1_BIT);
+	v0 = get_fpcsr();
+	if ((int)(v0 << (31 - 17)) >= 0) /* ??? */
+		goto unimplemented;
+	if (DELAYBRANCH(cause)) {
+		f->f_regs[PC] = MachEmulateBranch(f->f_regs, opc, v0, 0);
+		v0 = *(unsigned *)(opc + sizeof(unsigned));
+	}
+	else {
+		f->f_regs[PC] = opc + sizeof(unsigned);
+		v0 = *(unsigned *)opc;
+	}
+	if (MIPS_OPCODE_C1 != (v0 >> MIPS_OPCODE_SHIFT))
+		goto unimplemented;
+
+	MachEmulateFP(v0);
+	set_cp0sr(status &~ MIPS_SR_COP_1_BIT);
+	return;
+
+unimplemented:
+	clr_fpcsr();
+	f->f_regs[CAUSE] = cause;
+	f->f_regs[BADVADDR] = 0;
+	trapsignal(curproc, SIGFPE, v0);
+	set_cp0sr(status &~ MIPS_SR_COP_1_BIT);
+	return;
+}
 
 #ifdef DEBUG
 void
@@ -1179,7 +1021,7 @@ trapDump(msg)
 		printf("   RA %x SP %x code %d\n", trp->ra, trp->sp, trp->code);
 	}
 #ifndef DDB
-	bzero(trapdebug, sizeof(trapdebug));
+	memset(trapdebug, 0, sizeof(trapdebug));
 	trp = trapdebug;
 #endif
 	splx(s);
@@ -1463,6 +1305,11 @@ mips_singlestep(p)
 }
 
 #if defined(DEBUG) || defined(DDB)
+int	kdbpeek __P((vm_offset_t addr));
+extern void stacktrace __P((void)); /*XXX*/
+extern void logstacktrace __P((void)); /*XXX*/
+
+
 int
 kdbpeek(addr)
 	vm_offset_t addr;
@@ -1477,6 +1324,31 @@ kdbpeek(addr)
 }
 
 #define MIPS_JR_RA	0x03e00008	/* instruction code for jr ra */
+
+/* marks start/end of code */
+extern char start[], edata[];
+extern char mips1_KernGenException[], mips1_KernGenExceptionEnd[];
+extern char mips1_UserGenException[], mips1_UserGenExceptionEnd[];
+extern char mips1_KernIntr[], mips1_KernIntrEnd[];
+extern char mips1_UserIntr[], mips1_UserIntrEnd[];
+extern char mips1_SystemCall[], mips1_SystemCallEnd[];
+extern char mips1_exceptionentry_start[], mips1_exceptionentry_end[];
+extern char mips3_KernGenException[], mips3_KernGenExceptionEnd[];
+extern char mips3_UserGenException[], mips3_UserGenExceptionEnd[];
+extern char mips3_KernIntr[], mips3_KernIntrEnd[];
+extern char mips3_UserIntr[], mips3_UserIntrEnd[];
+extern char mips3_SystemCall[], mips3_SystemCallEnd[];
+extern char mips3_exceptionentry_start[], mips3_exceptionentry_end[];
+extern int main __P((void*));
+extern void idle __P((void));
+extern void idle_end __P((void));
+extern void cpu_switch __P((struct proc *));
+extern void cpu_switch_end __P((void));
+extern void bcopy_end __P((void));
+
+/*
+ *  stack trace code, also useful to DDB one day
+ */
 
 /* forward */
 char *fn_name(unsigned addr);
@@ -1645,11 +1517,9 @@ specialframe:
 #endif /* MIPS3 */
 
 
-	if (pcBetween(splx, splx_end))
-		subr = (unsigned) splx;
- 	else if (pcBetween(cpu_switch, cpu_switch_end))
+ 	if (pcBetween(cpu_switch, cpu_switch_end))
 		subr = (unsigned) cpu_switch;
-	else if (pcBetween(idle, idle_end)) {
+	else if (pcBetween(idle, cpu_switch))	{
 		subr = (unsigned) idle;
 		ra = 0;
 		goto done;
@@ -1821,9 +1691,6 @@ static struct { void *addr; char *name;} names[] = {
 	Name(main),
 	Name(interrupt),
 	Name(trap),
-#ifdef pmax
-	Name(am7990_meminit),
-#endif
 
 #ifdef MIPS1	/*  r2000 family  (mips-I cpu) */
 	Name(mips1_KernGenException),
@@ -1841,7 +1708,6 @@ static struct { void *addr; char *name;} names[] = {
 	Name(mips3_UserIntr),
 #endif	/* MIPS3 */
 
-	Name(splx),
 	Name(idle),
 	Name(cpu_switch),
 	{0, 0}
@@ -1877,97 +1743,3 @@ fn_name(unsigned addr)
 }
 
 #endif /* DEBUG */
-
-#ifdef MIPS3
-/*
- * Dump TLB contents on mips3 CPU.
- * called by mips3 locore after in-kernel TLB miss.
- */
-void
-mips3_dump_tlb(first, last, printfn)
-	int first;
-	int last;
-	void (*printfn) __P((const char*, ...));
-{
-	int tlbno;
-	struct tlb tlb;
-	extern void mips3_TLBRead(int, struct tlb *);
-
-	tlbno = first;
-
-	while(tlbno <= last) {
-		mips3_TLBRead(tlbno, &tlb);
-		if (mips_pg_v(tlb.tlb_lo0) || mips_pg_v(tlb.tlb_lo1)) {
-			(*printfn)("TLB %2d vad 0x%08x ", tlbno, tlb.tlb_hi);
-		}
-		else {
-			(*printfn)("TLB*%2d vad 0x%08x ", tlbno, tlb.tlb_hi);
-		}
-		(*printfn)("0=0x%08lx ", pfn_to_vad(tlb.tlb_lo0));
-		(*printfn)("%c", tlb.tlb_lo0 & mips_pg_m_bit() ? 'M' : ' ');
-		(*printfn)("%c", tlb.tlb_lo0 & mips_pg_global_bit() ? 'G' : ' ');
-		(*printfn)(" atr %x ", (tlb.tlb_lo0 >> 3) & 7);
-		(*printfn)("1=0x%08lx ", pfn_to_vad(tlb.tlb_lo1));
-		(*printfn)("%c", tlb.tlb_lo1 & mips_pg_m_bit() ? 'M' : ' ');
-		(*printfn)("%c", tlb.tlb_lo1 & mips_pg_global_bit() ? 'G' : ' ');
-		(*printfn)(" atr %x ", (tlb.tlb_lo1 >> 3) & 7);
-		(*printfn)(" sz=%x\n", tlb.tlb_mask);
-
-		tlbno++;
-	}
-}
-#endif /* MIPS3 */
-
-#ifdef MIPS1
-/*
- * Dump mips1 TLB contents.
- * called by mips3 locore after in-kernel TLB miss.
- */
-void
-mips1_dump_tlb(first, last, printfn)
-	int first;
-	int last;
-	void (*printfn) __P((const char*, ...));
-{
-	int tlbno;
-	extern u_int tlbhi, tlblo;
-	extern void mips1_TLBRead(int);
-
-	tlbno = first;
-
-	while(tlbno <= last) {
-		mips1_TLBRead(tlbno);
-		if (mips_pg_v(tlblo)) {
-			(*printfn)("TLB %2d vad 0x%08x ", tlbno, tlbhi);
-		}
-		else {
-			(*printfn)("TLB*%2d vad 0x%08x ", tlbno, tlbhi);
-		}
-		(*printfn)("0x%08x ", tlblo & MIPS1_PG_FRAME);
-		(*printfn)("%c", tlblo & mips_pg_m_bit() ? 'M' : ' ');
-		(*printfn)("%c", tlblo & mips_pg_global_bit() ? 'G' : ' ');
-		(*printfn)("%c\n", tlblo & MIPS1_PG_N ? 'N' : ' ');
-
-		tlbno++;
-	}
-}
-#endif /* MIPS1 */
-
-/*
- *  Dump TLB after panic.
- */
-void
-mips_dump_tlb(first, last)
-	int first;
-	int last;
-{
-	if (CPUISMIPS3) {
-#ifdef MIPS3
-		mips3_dump_tlb(first,last, printf);
-#endif
-	} else {
-#ifdef MIPS1
-		mips1_dump_tlb(first,last, printf);
-#endif
-	}
-}
