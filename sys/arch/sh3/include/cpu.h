@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.29 2002/05/07 04:01:59 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.30 2002/11/13 14:00:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -186,11 +186,18 @@ do {									\
 /* SH4 Processor Version Register */
 #define	SH4_PVR_ADDR	0xff000030	/* P4  address */
 #define	SH4_PVR		(*(volatile unsigned int *) SH4_PVR_ADDR)
+#define	SH4_PRR_ADDR	0xff000044	/* P4  address */
+#define	SH4_PRR		(*(volatile unsigned int *) SH4_PRR_ADDR)
 
 #define	SH4_PVR_MASK	0xffffff00
 #define	SH4_PVR_SH7750	0x04020500	/* SH7750  */
 #define	SH4_PVR_SH7750S	0x04020600	/* SH7750S */
+#define	SH4_PVR_SH775xR	0x04050000	/* SH775xR */
 #define	SH4_PVR_SH7751	0x04110000	/* SH7751  */
+
+#define	SH4_PRR_MASK	0xfffffff0
+#define SH4_PRR_7750R	0x00000100	/* SH7750R */
+#define SH4_PRR_7751R	0x00000110	/* SH7751R */
 #endif
 
 /*
