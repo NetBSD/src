@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.84 2000/09/24 12:32:36 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.85 2000/09/24 16:16:37 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -307,7 +307,8 @@ initppc(startkernel, endkernel, args)
 	args = bootpath;
 	while (*++args && *args != ' ');
 	if (*args) {
-		for(*args++ = 0; *args; args++)
+		*args++ = 0;
+		while (*args)
 			BOOT_FLAG(*args++, boothowto);
 	}
 
