@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufsmount.h	7.9 (Berkeley) 5/8/91
- *	$Id: ufsmount.h,v 1.3 1993/05/20 03:53:50 cgd Exp $
+ *	$Id: ufsmount.h,v 1.3.4.1 1993/09/24 08:59:07 mycroft Exp $
  */
 
 #ifndef _UFS_UFSMOUNT_H_
@@ -72,8 +72,8 @@ int ufs_mount __P((struct mount *mp, char *path, caddr_t data,
 int ufs_start __P((struct mount *mp, int flags, struct proc *p));
 int ufs_unmount __P((struct mount *mp, int mntflags, struct proc *p));
 int ufs_root __P((struct mount *mp, struct vnode **vpp));
-int ufs_quotactl __P((struct mount *mp, int cmds, int uid, /* should be uid_t */
-	caddr_t arg, struct proc *p));
+int ufs_quotactl __P((struct mount *mp, int cmds, int uid, caddr_t arg,
+	struct proc *p));
 int ufs_statfs __P((struct mount *mp, struct statfs *sbp, struct proc *p));
 int ufs_sync __P((struct mount *mp, int waitfor));
 int ufs_fhtovp __P((struct mount *mp, struct fid *fhp, struct vnode **vpp));
