@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.85 2004/02/10 00:40:06 dbj Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.86 2004/03/02 11:43:44 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.85 2004/02/10 00:40:06 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.86 2004/03/02 11:43:44 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -899,8 +899,11 @@ ReFault:
 			currva = startva;
 			for (lcv = 0; lcv < npages;
 			     lcv++, currva += PAGE_SIZE) {
-				if (pages[lcv] == NULL ||
-				    pages[lcv] == PGO_DONTCARE) {
+				struct vm_page *curpg;
+				boolean_t readonly;
+
+				curpg = pages[lcv];
+				if (curpg == NULL || curpg == PGO_DONTCARE) {
 					continue;
 				}
 
@@ -913,7 +916,7 @@ ReFault:
 				 */
 
 				if (lcv == centeridx) {
-					uobjpage = pages[lcv];
+					uobjpage = curpg;
 					UVMHIST_LOG(maphist, "  got uobjpage "
 					    "(0x%x) with locked get",
 					    uobjpage, 0,0,0);
@@ -928,11 +931,11 @@ ReFault:
 				 */
 
 				uvm_lock_pageq();
-				uvm_pageactivate(pages[lcv]);
+				uvm_pageactivate(curpg);
 				uvm_unlock_pageq();
 				UVMHIST_LOG(maphist,
 				  "  MAPPING: n obj: pm=0x%x, va=0x%x, pg=0x%x",
-				  ufi.orig_map->pmap, currva, pages[lcv], 0);
+				  ufi.orig_map->pmap, currva, curpg, 0);
 				uvmexp.fltnomap++;
 
 				/*
@@ -941,10 +944,14 @@ ReFault:
 				 * failures; it's not critical that we
 				 * enter these right now.
 				 */
+				KASSERT((curpg->flags & PG_PAGEOUT) == 0);
+				KASSERT((curpg->flags & PG_RELEASED) == 0);
+				readonly = (curpg->flags & PG_RDONLY)
+				    || (curpg->loan_count > 0);
 
 				(void) pmap_enter(ufi.orig_map->pmap, currva,
-				    VM_PAGE_TO_PHYS(pages[lcv]),
-				    pages[lcv]->flags & PG_RDONLY ?
+				    VM_PAGE_TO_PHYS(curpg),
+				    readonly ?
 				    enter_prot & ~VM_PROT_WRITE :
 				    enter_prot & MASK(ufi.entry),
 				    PMAP_CANFAIL |
@@ -956,8 +963,8 @@ ReFault:
 				 * we've had the handle.
 				 */
 
-				pages[lcv]->flags &= ~(PG_BUSY);
-				UVM_PAGE_OWN(pages[lcv], NULL);
+				curpg->flags &= ~(PG_BUSY);
+				UVM_PAGE_OWN(curpg, NULL);
 			}
 			pmap_update(ufi.orig_map->pmap);
 		}
