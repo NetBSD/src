@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25 1995/03/08 15:53:50 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.26 1995/04/13 13:51:34 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,6 +80,7 @@ int	optionsnode;	/* node ID of ROM's options */
 int	cpumod;		/* CPU model,
 			 * XXX currently valid only if cputyp == CPU_SUN4
 			 */
+int	mmu_3l;		/* SUN4_400 models have a 3-level MMU */
 
 extern	struct promvec *promvec;
 
@@ -105,7 +106,7 @@ matchbyname(parent, vcf, aux)
 	struct confargs *ca = aux;
 
 #if defined(SUN4)
-	if (cputyp==CPU_SUN4) {
+	if (cputyp == CPU_SUN4) {
 		printf("WARNING: matchbyname not valid on sun4!");
 		printf("%s\n", cf->cf_driver->cd_name);
 		return (0);
@@ -162,7 +163,7 @@ bootstrap()
 	register char *cp, *pp;
 	register struct bootpath *bp;
 	int v0val[3];
-	int nmmu, ncontext, node;
+	int nregion, nsegment, ncontext, node;
 #ifdef KGDB
 	extern int kgdb_debug_panic;
 #endif
@@ -210,20 +211,22 @@ bootstrap()
 		getidprom(&idprom, sizeof(idprom));
 		switch (cpumod = idprom.id_machine) {
 		case SUN4_100:
-			nmmu = 256;
+			nsegment = 256;
 			ncontext = 8;
 			break;
 		case SUN4_200:
-			nmmu = 512;
+			nsegment = 512;
 			ncontext = 16;
 			break;
 		case SUN4_300:
-			nmmu = 256;
+			nsegment = 256;
 			ncontext = 16;
 			break;
 		case SUN4_400:
-			nmmu = 1024;
+			nsegment = 1024;
 			ncontext = 64;
+			nregion = 256;
+			mmu_3l = 1;
 			break;
 		default:
 			printf("bootstrap: sun4 machine type %2x unknown!\n",
@@ -235,12 +238,11 @@ bootstrap()
 #if defined(SUN4C) || defined(SUN4M)
 	if (cputyp == CPU_SUN4C || cputyp == CPU_SUN4M) {
 		node = findroot();
-		nmmu = getpropint(node, "mmu-npmg", 128);
+		nsegment = getpropint(node, "mmu-npmg", 128);
 		ncontext = getpropint(node, "mmu-nctx", 8);
 	}
 #endif /* SUN4C || SUN4M */
-
-	pmap_bootstrap(nmmu, ncontext);
+	pmap_bootstrap(ncontext, nregion, nsegment);
 #ifdef KGDB
 	zs_kgdb_init();			/* XXX */
 #endif
