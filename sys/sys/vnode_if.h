@@ -1,11 +1,11 @@
-/*	$NetBSD: vnode_if.h,v 1.38 2001/11/12 14:48:47 lukem Exp $	*/
+/*	$NetBSD: vnode_if.h,v 1.39 2002/10/23 09:16:48 jdolecek Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.30 2001/09/15 20:36:37 chs Exp 
+ *	NetBSD: vnode_if.src,v 1.31 2002/10/23 09:14:32 jdolecek Exp 
  * by the script:
  *	NetBSD: vnode_if.sh,v 1.30 2001/11/12 14:34:24 lukem Exp 
  */
@@ -494,6 +494,33 @@ static __inline int VOP_POLL(vp, events, p)
 	a.a_events = events;
 	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_poll), &a));
+}
+#endif
+
+struct vop_kqfilter_args {
+	const struct vnodeop_desc *a_desc;
+	struct vnode *a_vp;
+	struct knote *a_kn;
+};
+extern const struct vnodeop_desc vop_kqfilter_desc;
+#ifndef VNODE_OP_NOINLINE
+static __inline
+#endif
+int VOP_KQFILTER(struct vnode *, struct knote *)
+#ifndef VNODE_OP_NOINLINE
+__attribute__((__unused__))
+#endif
+;
+#ifndef VNODE_OP_NOINLINE
+static __inline int VOP_KQFILTER(vp, kn)
+	struct vnode *vp;
+	struct knote *kn;
+{
+	struct vop_kqfilter_args a;
+	a.a_desc = VDESC(vop_kqfilter);
+	a.a_vp = vp;
+	a.a_kn = kn;
+	return (VCALL(vp, VOFFSET(vop_kqfilter), &a));
 }
 #endif
 
@@ -1610,7 +1637,7 @@ static __inline int VOP_BWRITE(bp)
 }
 #endif
 
-#define VNODE_OPS_COUNT	49
+#define VNODE_OPS_COUNT	50
 
 /* End of special cases. */
 
