@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.3 1998/06/26 21:20:34 drochner Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.4 1998/06/26 22:35:27 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -212,9 +212,9 @@ wsemul_vt100_attach(console, type, cookie, ccol, crow, cbcookie, defattr)
 	}
 	edp->cbcookie = cbcookie;
 
-	edp->tabs = malloc(type->ncols, M_DEVBUF, M_NOWAIT);
-	edp->dblwid = malloc(type->nrows, M_DEVBUF, M_NOWAIT);
-	bzero(edp->dblwid, type->nrows);
+	edp->tabs = malloc(edp->ncols, M_DEVBUF, M_NOWAIT);
+	edp->dblwid = malloc(edp->nrows, M_DEVBUF, M_NOWAIT);
+	bzero(edp->dblwid, edp->nrows);
 	edp->dw = 0;
 	edp->dcsarg = malloc(DCS_MAXLEN, M_DEVBUF, M_NOWAIT);
 	edp->isolatin1tab = malloc(128 * sizeof(int), M_DEVBUF, M_NOWAIT);
