@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.8 2001/01/05 03:27:27 lukem Exp $	*/
+/*	$NetBSD: debug.c,v 1.9 2001/01/16 02:44:43 cgd Exp $	*/
 /*	$KAME: debug.c,v 1.44 2000/12/04 06:45:29 itojun Exp $	*/
 
 /*
@@ -71,6 +71,7 @@
 #include <netinet6/ip6_mroute.h>
 #include <netinet6/pim6.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <syslog.h>
 #include <errno.h>
 #include "defs.h"
