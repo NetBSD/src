@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.6 2002/04/22 17:17:36 lukem Exp $	*/
+/*	$NetBSD: installboot.h,v 1.7 2002/04/30 14:45:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -100,6 +100,8 @@ int		no_clearboot(ib_params *);
 	/* fstypes.c */
 int		ffs_match(ib_params *);
 int		ffs_findstage2(ib_params *, uint32_t *, ib_block *);
+int		raw_match(ib_params *);
+int		raw_findstage2(ib_params *, uint32_t *, ib_block *);
 
 	/* machines.c */
 int		alpha_parseopt(ib_params *, const char *);

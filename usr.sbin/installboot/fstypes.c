@@ -1,11 +1,11 @@
-/*	$NetBSD: fstypes.c,v 1.1 2002/04/19 07:08:52 lukem Exp $	*/
+/*	$NetBSD: fstypes.c,v 1.2 2002/04/30 14:45:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Matt Fredette.
+ * by Matt Fredette and Luke Mewburn.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,9 +37,32 @@
  */
 
 #include <sys/types.h>
+
+#include <assert.h>
+#include <stdio.h>
+
 #include "installboot.h"
 
 struct ib_fs fstypes[] = {
 	{ "ffs",	ffs_match,	ffs_findstage2 },
+	{ "raw",	raw_match,	raw_findstage2 },
 	{ 0, 0, 0 }
 };
+
+int
+raw_match(ib_params *params)
+{
+
+	assert(params != NULL);
+	return (1);		/* can always write to a "raw" file system */
+}
+
+int
+raw_findstage2(ib_params *params, uint32_t *maxblk, ib_block *blocks)
+{
+
+	assert(params != NULL);
+	assert(maxblk != NULL);
+	assert(blocks != NULL);
+	return (0);		/* no stage2 support for raw */
+}
