@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_pci.c,v 1.2 2002/12/09 13:36:27 tsutsui Exp $	*/
+/*	$NetBSD: c_nec_pci.c,v 1.3 2002/12/28 16:52:02 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -233,7 +233,7 @@ c_nec_pci_cons_init()
 			/* NEC RISCstation 2200 PCI TGA [NEC-RA94] */
 			/* NEC RISCstation 2250 PCI TGA [NEC-RD94] */
 			/* NEC Express 5800/230 R4400 PCI TGA [NEC-JC94] */
-			/* NEC Express 5800/230 R10000 PCI TGA [[NEC-J95] */
+			/* NEC Express 5800/230 R10000 PCI TGA [NEC-J95] */
 #if NTGA > 0
 			necpb_init(&necpb_main_context);
 			/* XXX device number is hardcoded */
