@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.8.2.14 1994/02/02 07:49:22 mycroft Exp $
+ * $Id: if_ed.c,v 1.8.2.15 1994/02/02 09:47:31 mycroft Exp $
  */
 
 /*
@@ -132,17 +132,13 @@
 #define IFF_ALTPHYS IFF_LINK0
 #endif
  
-struct	ed_device {
-	struct	device ed_dev;
-	struct	isadev ed_id;
-	struct	intrhand ed_ih;
-};
-
 /*
  * ed_softc: per line info and status
  */
 struct	ed_softc {
-	struct	ed_device *sc_ed;
+	struct	device sc_dev;
+	struct	isadev sc_id;
+	struct	intrhand sc_ih;
 
 	struct	arpcom arpcom;	/* ethernet common */
 
@@ -180,13 +176,13 @@ struct	ed_softc {
 	u_char	next_packet;	/* pointer to next unread RX packet */
 } ed_softc[NED];
 
-static int edprobe __P((struct device *, struct cfdata *, void *));
+static int edprobe __P((struct device *, struct device *, void *));
 static void edforceintr __P((void *));
 static void edattach __P((struct device *, struct device *, void *));
 static int edintr __P((void *));
 
 struct cfdriver edcd =
-{ NULL, "ed", edprobe, edattach, DV_IFNET, sizeof(struct ed_device) };
+{ NULL, "ed", edprobe, edattach, DV_IFNET, sizeof(struct ed_softc) };
 
 int ed_ioctl __P((struct ifnet *, int, caddr_t));
 void ed_start __P((struct ifnet *));
@@ -237,20 +233,20 @@ static u_short ed_intr_mask[] = {
  * Determine if the device is present
  */
 static int
-edprobe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
+edprobe(parent, self, aux)
+	struct device *parent, *self;
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
+	struct ed_softc *sc = (void *)self;
 
-	if (ed_probe_WD80x3(cf, ia))
+	if (ed_probe_WD80x3(ia, sc))
 		return 1;
 
-	if (ed_probe_3Com(cf, ia))
+	if (ed_probe_3Com(ia, sc))
 		return 1;
 
-	if (ed_probe_Novell(cf, ia))
+	if (ed_probe_Novell(ia, sc))
 		return 1;
 
 	return 0;
@@ -297,11 +293,11 @@ ed_probe_generic8390(sc)
  * Probe and vendor-specific initialization routine for SMC/WD80x3 boards
  */
 int
-ed_probe_WD80x3(cf, ia)
-	struct cfdata *cf;
+ed_probe_WD80x3(ia, sc)
 	struct isa_attach_args *ia;
+	struct ed_softc *sc;
 {
-	struct ed_softc *sc = &ed_softc[cf->cf_unit];
+	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	int i;
 	u_int memsize;
 	u_char iptr, isa16bit, sum;
@@ -440,7 +436,8 @@ ed_probe_WD80x3(cf, ia)
 			ia->ia_irq = ed_intr_mask[iptr];
 		else if (ed_intr_mask[iptr] != ia->ia_irq) {
 			printf("ed%d: kernel configured irq %d doesn't match board configured irq %d\n",
-				cf->cf_unit, ffs(ia->ia_irq) - 1, ffs(ed_intr_mask[iptr]) - 1);
+				cf->cf_unit, ffs(ia->ia_irq) - 1,
+				ffs(ed_intr_mask[iptr]) - 1);
 			return 0;
 		}
 		/*
@@ -561,11 +558,11 @@ ed_probe_WD80x3(cf, ia)
  * Probe and vendor-specific initialization routine for 3Com 3c503 boards
  */
 int
-ed_probe_3Com(cf, ia)
-	struct cfdata *cf;
+ed_probe_3Com(ia, sc)
 	struct isa_attach_args *ia;
+	struct ed_softc *sc;
 {
-	struct ed_softc *sc = &ed_softc[cf->cf_unit];
+	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	int i;
 	u_int memsize;
 	u_char isa16bit, sum;
@@ -844,11 +841,11 @@ ed_probe_3Com(cf, ia)
  * Probe and vendor-specific initialization routine for NE1000/2000 boards
  */
 int
-ed_probe_Novell(cf, ia)
-	struct cfdata *cf;
+ed_probe_Novell(ia, sc)
 	struct isa_attach_args *ia;
+	struct ed_softc *sc;
 {
-	struct ed_softc *sc = &ed_softc[cf->cf_unit];
+	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	u_int memsize, n;
 	u_char romdata[16], isa16bit = 0, tmp;
 	static u_char test_pattern[32] = "THIS is A memory TEST pattern";
@@ -1011,15 +1008,12 @@ edattach(parent, self, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-	struct ed_device *ed = (struct ed_device *)self;
-	struct ed_softc *sc = &ed_softc[ed->ed_dev.dv_unit];
-	struct cfdata *cf = ed->ed_dev.dv_cfdata;
+	struct ed_softc *sc = (void *)self;
+	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
  
-	sc->sc_ed = ed;
-
 	/*
 	 * Set interface to stopped condition (reset)
 	 */
@@ -1028,7 +1022,7 @@ edattach(parent, self, aux)
 	/*
 	 * Initialize ifnet structure
 	 */
-	ifp->if_unit = ed->ed_dev.dv_unit;
+	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = edcd.cd_name;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
@@ -1083,7 +1077,7 @@ edattach(parent, self, aux)
 	else
 		printf("type unknown (0x%x) ", sc->type);
 
-	printf("%s",sc->isa16bit ? "(16 bit)" : "(8 bit)");
+	printf("%s", sc->isa16bit ? "(16 bit)" : "(8 bit)");
 
 	printf("%s\n", ((sc->vendor == ED_VENDOR_3COM) &&
 		(ifp->if_flags & IFF_ALTPHYS)) ? " tranceiver disabled" : "");
@@ -1095,10 +1089,10 @@ edattach(parent, self, aux)
 	bpfattach(&sc->bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
-	isa_establish(&ed->ed_id, &ed->ed_dev);
-	ed->ed_ih.ih_fun = edintr;
-	ed->ed_ih.ih_arg = sc;
-	intr_establish(ia->ia_irq, &ed->ed_ih, DV_IFNET);
+	isa_establish(&sc->sc_id, &sc->sc_dev);
+	sc->sc_ih.ih_fun = edintr;
+	sc->sc_ih.ih_arg = sc;
+	intr_establish(ia->ia_irq, &sc->sc_ih, DV_IFNET);
 }
  
 /*
@@ -1152,7 +1146,7 @@ ed_watchdog(unit)
 {
 	struct ed_softc *sc = &ed_softc[unit];
 
-	log(LOG_ERR, "%s: device timeout\n", sc->sc_ed->ed_dev.dv_xname);
+	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->arpcom.ac_if.if_oerrors;
 
 	ed_reset(sc);
@@ -1419,7 +1413,7 @@ outloop:
 	 */
 	if (sc->txb_inuse && (sc->xmit_busy == 0)) {
 		printf("%s: packets buffers, but transmitter idle\n",
-		       sc->sc_ed->ed_dev.dv_xname);
+		       sc->sc_dev.dv_xname);
 		ed_xmit(ifp);
 	}
 
@@ -1653,7 +1647,7 @@ ed_rint(sc)
 			 */
 			log(LOG_ERR,
 				"%s: NIC memory corrupt - invalid packet length %d\n",
-			        sc->sc_ed->ed_dev.dv_xname, len);
+			        sc->sc_dev.dv_xname, len);
 			++sc->arpcom.ac_if.if_ierrors;
 			ed_reset(sc);
 			return;
@@ -1695,7 +1689,7 @@ edintr(aux)
 	void *aux;
 {
 	struct ed_softc *sc = aux;
-	short unit = sc->sc_ed->ed_dev.dv_unit;
+	short unit = sc->sc_dev.dv_unit;
 	u_char isr;
 
 	/*
@@ -1808,7 +1802,7 @@ edintr(aux)
 #ifdef DIAGNOSTIC
 				log(LOG_WARNING,
 					"%s: warning - receiver ring buffer overrun\n",
-					sc->sc_ed->ed_dev.dv_xname);
+					sc->sc_dev.dv_xname);
 #endif
 				/*
 				 * Stop/reset/re-init NIC
@@ -1824,7 +1818,7 @@ edintr(aux)
 					++sc->arpcom.ac_if.if_ierrors;
 #ifdef ED_DEBUG
 					printf("%s: receive error %x\n",
-						sc->sc_ed->ed_dev.dv_xname,
+						sc->sc_dev.dv_xname,
 						inb(sc->nic_addr + ED_P0_RSR));
 #endif
 				}
@@ -2346,7 +2340,7 @@ ed_pio_write_mbufs(sc,m,dst)
 
 	if (!maxwait) {
 		log(LOG_WARNING, "%s: remote transmit DMA failed to complete\n",
-			sc->sc_ed->ed_dev.dv_xname);
+			sc->sc_dev.dv_xname);
 		ed_reset(sc);
 	}
 
@@ -2495,7 +2489,7 @@ ds_getmcaf(sc, mcaf)
 			mcaf[1] = 0xffffffff;
 			return;
 		}
-		index = ds_crc(enm->enm_addrlo, 6) >> 26;
+		index = ds_crc(enm->enm_addrlo) >> 26;
 		af[index >> 3] |= 1 << (index & 7);
 
 		ETHER_NEXT_MULTI(step, enm);
