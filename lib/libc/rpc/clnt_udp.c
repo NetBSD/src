@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_udp.c,v 1.16 1999/01/20 11:37:36 lukem Exp $	*/
+/*	$NetBSD: clnt_udp.c,v 1.17 1999/03/25 01:16:11 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_udp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_udp.c,v 1.16 1999/01/20 11:37:36 lukem Exp $");
+__RCSID("$NetBSD: clnt_udp.c,v 1.17 1999/03/25 01:16:11 lukem Exp $");
 #endif
 #endif
 
@@ -112,7 +112,9 @@ struct cu_data {
  * If *sockp<0, *sockp is set to a newly created UPD socket.
  * If raddr->sin_port is 0 a binder on the remote machine
  * is consulted for the correct port number.
- * NB: It is the clients responsibility to close *sockp.
+ * NB: It is the client's responsibility to close *sockp, unless
+ *     clntudp_bufcreate() was called with *sockp = -1 (so it created
+ *     the socket), and CLNT_DESTROY() is used.
  * NB: The rpch->cl_auth is initialized to null authentication.
  *     Caller may wish to set this something more useful.
  *
@@ -200,9 +202,9 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 			rpc_createerr.cf_error.re_errno = errno;
 			goto fooy;
 		}
-		/* attempt to bind to priv port */
+			/* attempt to bind to priv port */
 		(void)bindresvport(*sockp, (struct sockaddr_in *)0);
-		/* the sockets rpc controls are non-blocking */
+			/* the sockets rpc controls are non-blocking */
 		(void)ioctl(*sockp, FIONBIO, (char *)(void *)&dontblock);
 		cu->cu_closeit = TRUE;
 	} else {
@@ -467,7 +469,7 @@ clntudp_destroy(cl)
 {
 	struct cu_data *cu = (struct cu_data *)cl->cl_private;
 
-	if (cu->cu_closeit) {
+	if (cu->cu_closeit && cu->cu_sock != -1) {
 		(void)close(cu->cu_sock);
 	}
 	XDR_DESTROY(&(cu->cu_outxdrs));
