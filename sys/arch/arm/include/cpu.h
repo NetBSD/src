@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3 2001/02/25 21:31:13 bjh21 Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4 2001/02/27 00:16:48 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -138,9 +138,6 @@ extern struct cpu_info cpu_info_store;
 #define	curcpu()	(&cpu_info_store)
 #endif /* _KERNEL */
 #endif /* ! _LOCORE */
-
-#define cpu_wait(p)	/* nothing */
-#define	cpu_number()	0
 
 /*
  * Notify the current process (p) that it has a signal pending,
