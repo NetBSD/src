@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 1997/02/13 00:30:25 cgd Exp $
+#	$NetBSD: Makefile,v 1.18 1997/03/13 04:24:38 mikel Exp $
 
 .include "../../Makefile.inc"
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -95,7 +95,7 @@ ${MKHITS}:
 
 depend: .depend
 .depend: ${DEPSRCS}
-	mkdep ${MKDEP} ${CFLAGS:M-[ID]*} ${.ALLSRC:M*.c}
+	${MKDEP} ${MKDEPFLAGS} ${CFLAGS:M-[ID]*} ${.ALLSRC:M*.c}
 
 .include <bsd.prog.mk>
 
