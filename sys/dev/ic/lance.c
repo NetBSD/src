@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.4 1998/12/09 07:36:51 leo Exp $	*/
+/*	$NetBSD: lance.c,v 1.5 1998/12/12 16:58:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -408,53 +408,52 @@ lance_get(sc, boff, totlen)
 	struct lance_softc *sc;
 	int boff, totlen;
 {
-	register struct mbuf *m;
-	struct mbuf *top, **mp;
+	struct mbuf *m, *m0, *newm;
 	int len;
 
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == 0)
+	MGETHDR(m0, M_DONTWAIT, MT_DATA);
+	if (m0 == 0)
 		return (0);
-	m->m_pkthdr.rcvif = ifp;
-	m->m_pkthdr.len = totlen;
+	m0->m_pkthdr.rcvif = ifp;
+	m0->m_pkthdr.len = totlen;
 	len = MHLEN;
-	top = 0;
-	mp = &top;
+	m = m0;
 
 	while (totlen > 0) {
-		if (top) {
-			MGET(m, M_DONTWAIT, MT_DATA);
-			if (m == 0) {
-				m_freem(top);
-				return 0;
-			}
-			len = MLEN;
-		}
 		if (totlen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0) {
-				m_free(m);
-				m_freem(top);
-				return 0;
-			}
+			if ((m->m_flags & M_EXT) == 0)
+				goto bad;
 			len = MCLBYTES;
 		}
-		if (!top) {
-			register int pad =
-			    ALIGN(sizeof(struct ether_header)) -
-			        sizeof(struct ether_header);
-			m->m_data += pad;
-			len -= pad;
+
+		if (m == m0) {
+			caddr_t newdata = (caddr_t)
+			    ALIGN(m->m_data + sizeof(struct ether_header)) -
+			    sizeof(struct ether_header);
+			len -= newdata - m->m_data;
+			m->m_data = newdata;
 		}
+
 		m->m_len = len = min(totlen, len);
 		(*sc->sc_copyfrombuf)(sc, mtod(m, caddr_t), boff, len);
 		boff += len;
+
 		totlen -= len;
-		*mp = m;
-		mp = &m->m_next;
+		if (totlen > 0) {
+			MGET(newm, M_DONTWAIT, MT_DATA);
+			if (newm == 0)
+				goto bad;
+			len = MLEN;
+			m = m->m_next = newm;
+		}
 	}
 
-	return (top);
+	return (m0);
+
+bad:
+	m_freem(m0);
+	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
+/*	$NetBSD: i82586.c,v 1.19 1998/12/12 16:58:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1081,14 +1081,14 @@ ieget(sc, ehp, to_bpf, head, totlen)
 	int head;
 	int totlen;
 {
-	struct mbuf *top, **mp, *m;
+	struct mbuf *m, *m0, *newm;
 	int len, resid;
 	int thisrboff, thismboff;
 
 	/*
 	 * Snarf the Ethernet header.
 	 */
-	(sc->memcopyin)(sc, ehp, IE_RBUF_ADDR(sc,head), sizeof *ehp);
+	(sc->memcopyin)(sc, ehp, IE_RBUF_ADDR(sc, head), sizeof *ehp);
 
 	/*
 	 * As quickly as possible, check if this packet is for us.
@@ -1105,43 +1105,39 @@ ieget(sc, ehp, to_bpf, head, totlen)
 
 	resid = totlen -= (thisrboff = sizeof *ehp);
 
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == 0)
+	MGETHDR(m0, M_DONTWAIT, MT_DATA);
+	if (m0 == 0)
 		return (0);
-	m->m_pkthdr.rcvif = &sc->sc_ethercom.ec_if;
-	m->m_pkthdr.len = totlen;
+	m0->m_pkthdr.rcvif = &sc->sc_ethercom.ec_if;
+	m0->m_pkthdr.len = totlen;
 	len = MHLEN;
-	top = 0;
-	mp = &top;
+	m = m0;
 
 	/*
 	 * This loop goes through and allocates mbufs for all the data we will
 	 * be copying in.  It does not actually do the copying yet.
 	 */
 	while (totlen > 0) {
-		if (top) {
-			MGET(m, M_DONTWAIT, MT_DATA);
-			if (m == 0) {
-				m_freem(top);
-				return (0);
-			}
-			len = MLEN;
-		}
 		if (totlen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0) {
-				m_freem(top);
-				return (0);
-			}
+			if ((m->m_flags & M_EXT) == 0)
+				goto bad;
 			len = MCLBYTES;
 		}
+
 		m->m_len = len = min(totlen, len);
+
 		totlen -= len;
-		*mp = m;
-		mp = &m->m_next;
+		if (totlen > 0) {
+			MGET(newm, M_DONTWAIT, MT_DATA);
+			if (newm == 0)
+				goto bad;
+			len = MLEN;
+			m = m->m_next = newm;
+		}
 	}
 
-	m = top;
+	m = m0;
 	thismboff = 0;
 
 	/*
@@ -1178,7 +1174,11 @@ ieget(sc, ehp, to_bpf, head, totlen)
 	 * we have now copied everything in from the shared memory.
 	 * This means that we are done.
 	 */
-	return (top);
+	return (m0);
+
+bad:
+	m_freem(m0);
+	return (0);
 }
 
 /*

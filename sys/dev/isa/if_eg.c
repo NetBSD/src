@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.43 1998/07/05 06:49:13 jonathan Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.44 1998/12/12 16:58:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -816,45 +816,44 @@ egget(sc, buf, totlen)
 	int totlen;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	struct mbuf *top, **mp, *m;
+	struct mbuf *m, *m0, *newm;
 	int len;
 
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == 0)
-		return 0;
-	m->m_pkthdr.rcvif = ifp;
-	m->m_pkthdr.len = totlen;
+	MGETHDR(m0, M_DONTWAIT, MT_DATA);
+	if (m0 == 0)
+		return (0);
+	m0->m_pkthdr.rcvif = ifp;
+	m0->m_pkthdr.len = totlen;
 	len = MHLEN;
-	top = 0;
-	mp = &top;
+	m = m0;
 
 	while (totlen > 0) {
-		if (top) {
-			MGET(m, M_DONTWAIT, MT_DATA);
-			if (m == 0) {
-				m_freem(top);
-				return 0;
-			}
-			len = MLEN;
-		}
 		if (totlen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0) {
-				m_free(m);
-				m_freem(top);
-				return 0;
-			}
+			if ((m->m_flags & M_EXT) == 0)
+				goto bad;
 			len = MCLBYTES;
 		}
+
 		m->m_len = len = min(totlen, len);
 		bcopy((caddr_t)buf, mtod(m, caddr_t), len);
 		buf += len;
+
 		totlen -= len;
-		*mp = m;
-		mp = &m->m_next;
+		if (totlen > 0) {
+			MGET(newm, M_DONTWAIT, MT_DATA);
+			if (newm == 0)
+				goto bad;
+			len = MLEN;
+			m = m->m_next = newm;
+		}
 	}
 
-	return top;
+	return (m0);
+
+bad:
+	m_freem(m0);
+	return (0);
 }
 
 int
