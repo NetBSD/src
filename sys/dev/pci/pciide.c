@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.62 2000/06/06 17:48:12 soren Exp $	*/
+/*	$NetBSD: pciide.c,v 1.63 2000/06/06 22:47:22 thorpej Exp $	*/
 
 
 /*
@@ -637,6 +637,8 @@ pciide_mapreg_dma(sc, pa)
 	struct pciide_softc *sc;
 	struct pci_attach_args *pa;
 {
+	pcireg_t maptype;
+
 	/*
 	 * Map DMA registers
 	 *
@@ -651,22 +653,32 @@ pciide_mapreg_dma(sc, pa)
 	 * XXX say that "The bus master IDE function uses 16 bytes of IO
 	 * XXX space," some controllers (at least the United
 	 * XXX Microelectronics UM8886BF) place it in memory space.
-	 * XXX eventually, we should probably read the register and check
-	 * XXX which type it is.  Either that or 'quirk' certain devices.
 	 */
-	sc->sc_dma_ok = (pci_mapreg_map(pa,
-	    PCIIDE_REG_BUS_MASTER_DMA, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->sc_dma_iot, &sc->sc_dma_ioh, NULL, NULL) == 0);
-	sc->sc_dmat = pa->pa_dmat;
-	if (sc->sc_dma_ok == 0) {
-		printf(", but unused (couldn't map registers)");
-	} else {
-		sc->sc_wdcdev.dma_arg = sc;
-		sc->sc_wdcdev.dma_init = pciide_dma_init;
-		sc->sc_wdcdev.dma_start = pciide_dma_start;
-		sc->sc_wdcdev.dma_finish = pciide_dma_finish;
+	maptype = pci_mapreg_type(pa->pa_pc, pa->pa_tag,
+	    PCIIDE_REG_BUS_MASTER_DMA);
+
+	switch (maptype) {
+	case PCI_MAPREG_TYPE_IO:
+	case PCI_MAPREG_MEM_TYPE_32BIT:
+		sc->sc_dma_ok = (pci_mapreg_map(pa,
+		    PCIIDE_REG_BUS_MASTER_DMA, maptype, 0,
+		    &sc->sc_dma_iot, &sc->sc_dma_ioh, NULL, NULL) == 0);
+		sc->sc_dmat = pa->pa_dmat;
+		if (sc->sc_dma_ok == 0) {
+			printf(", but unused (couldn't map registers)");
+		} else {
+			sc->sc_wdcdev.dma_arg = sc;
+			sc->sc_wdcdev.dma_init = pciide_dma_init;
+			sc->sc_wdcdev.dma_start = pciide_dma_start;
+			sc->sc_wdcdev.dma_finish = pciide_dma_finish;
+		}
+
+	default:
+		sc->sc_dma_ok = 0;
+		printf(", but unsupported register maptype (0x%x)", maptype);
 	}
 }
+
 int
 pciide_compat_intr(arg)
 	void *arg;
