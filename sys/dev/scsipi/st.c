@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.93 1998/07/30 00:55:20 mjacob Exp $ */
+/*	$NetBSD: st.c,v 1.94 1998/07/30 03:17:22 mjacob Exp $ */
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -85,7 +85,11 @@
 #define STMODE(z)	( minor(z)       & 0x03)
 #define STDSTY(z)	((minor(z) >> 2) & 0x03)
 #define STUNIT(z)	((minor(z) >> 4)       )
-#define CTLMODE		3
+
+#define NORMAL_MODE	0
+#define NOREW_MODE	1
+#define EJECT_MODE	2
+#define CTRL_MODE	3
 
 #define	FALSE		0
 #define	TRUE		1
@@ -584,7 +588,7 @@ stopen(dev, flags, mode, p)
 	 * Catch any unit attention errors.
 	 */
 	error = scsipi_test_unit_ready(sc_link, SCSI_IGNORE_MEDIA_CHANGE |
-	    (stmode == CTLMODE ? SCSI_IGNORE_NOT_READY : 0));
+	    (stmode == CTRL_MODE ? SCSI_IGNORE_NOT_READY : 0));
 	if (error)
 		goto bad;
 
@@ -593,10 +597,11 @@ stopen(dev, flags, mode, p)
 	/*
 	 * If the mode is 3 (e.g. minor = 3,7,11,15)
 	 * then the device has been opened to set defaults
-	 * This mode does NOT ALLOW I/O, only ioctls
+	 * and perform other, usually non-I/O related, operations.
 	 */
-	if (stmode == CTLMODE)
+	if (stmode == CTRL_MODE) {
 		return (0);
+	}
 
 	/*
 	 * if it's a different mode, or if the media has been
@@ -649,16 +654,16 @@ stclose(dev, flags, mode, p)
 	if ((st->flags & (ST_WRITTEN | ST_FM_WRITTEN)) == ST_WRITTEN)
 		st_write_filemarks(st, 1, 0);
 	switch (STMODE(dev)) {
-	case 0:
-	case 3:		/* for now */
+	case NORMAL_MODE:
+	case CTRL_MODE:		/* for now */
 		st_unmount(st, NOEJECT);
 		break;
-	case 1:
+	case NOREW_MODE:
 		/* leave mounted unless media seems to have been removed */
 		if (!(st->sc_link->flags & SDEV_MEDIA_LOADED))
 			st_unmount(st, NOEJECT);
 		break;
-	case 2:
+	case EJECT_MODE:
 		st_unmount(st, EJECT);
 		break;
 	}
@@ -678,13 +683,12 @@ st_mount_tape(dev, flags)
 	int flags;
 {
 	int unit;
-	u_int mode, dsty;
+	u_int dsty;
 	struct st_softc *st;
 	struct scsipi_link *sc_link;
 	int error = 0;
 
 	unit = STUNIT(dev);
-	mode = STMODE(dev);
 	dsty = STDSTY(dev);
 	st = st_cd.cd_devs[unit];
 	sc_link = st->sc_link;
@@ -1298,7 +1302,11 @@ stioctl(dev, cmd, arg, flag, p)
 			goto try_new_value;
 
 		case MTSETDNSTY:	/* Set density for device and mode */
-			if (number > SCSI_2_MAX_DENSITY_CODE) {
+			/*
+			 * Any number >= 0 and <= 0xff is legal. Numbers
+			 * above 0x80 are 'vendor unique'.
+			 */
+			if (number < 0 || number > 255) {
 				error = EINVAL;
 				break;
 			} else
@@ -1368,11 +1376,11 @@ try_new_value:
 	 * As the drive liked it, if we are setting a new default,
 	 * set it into the structures as such.
 	 *
-	 * The means for deciding this are not finalised yet
+	 * The means for deciding this are not finalised yet- but
+	 * if the device was opened in Control Mode, the values
+	 * are persistent now across mounts.
 	 */
-	if (STMODE(dev) == 0x03) {
-		/* special mode */
-		/* XXX */
+	if (STMODE(dev) == CTRL_MODE) {
 		switch ((short) (mt->mt_op)) {
 		case MTSETBSIZ:
 			st->modes[dsty].blksize = st->blksize;
