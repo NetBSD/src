@@ -1,4 +1,4 @@
-/*	$NetBSD: crontab.c,v 1.7 1998/01/31 14:40:23 christos Exp $	*/
+/*	$NetBSD: crontab.c,v 1.8 1998/02/01 14:36:36 frueauf Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: crontab.c,v 2.13 1994/01/17 03:20:37 vixie Exp";
 #else
-__RCSID("$NetBSD: crontab.c,v 1.7 1998/01/31 14:40:23 christos Exp $");
+__RCSID("$NetBSD: crontab.c,v 1.8 1998/02/01 14:36:36 frueauf Exp $");
 #endif
 #endif
 
@@ -72,7 +72,7 @@ static	void		list_cmd __P((void)),
 			delete_cmd __P((void)),
 			edit_cmd __P((void)),
 			poke_daemon __P((void)),
-			check_error __P((char *)),
+			check_error __P((const char *)),
 			parse_args __P((int c, char *v[]));
 static	int		replace_cmd __P((void));
 
@@ -295,7 +295,7 @@ delete_cmd() {
 
 static void
 check_error(msg)
-	char	*msg;
+	const char	*msg;
 {
 	CheckErrorCount++;
 	fprintf(stderr, "\"%s\":%d: %s\n", Filename, LineNumber-1, msg);
