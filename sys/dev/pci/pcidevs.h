@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.275 2000/11/03 15:57:33 ad Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.276 2000/11/03 16:31:51 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.269 2000/11/03 15:54:02 ad Exp 
+ *	NetBSD: pcidevs,v 1.270 2000/11/03 16:31:01 ad Exp 
  */
 
 /*
@@ -1382,18 +1382,6 @@
 /* PC Tech products */
 #define	PCI_PRODUCT_PCTECH_RZ1000	0x1000		/* RZ1000 */
 
-/* Pequr products */
-#define	PCI_PRODUCT_PEQUR_ROSB4	0x0200		/* ROSB4 SouthBridge */
-#define	PCI_PRODUCT_PEQUR_XX5	0x0005		/* PCIHB5 */
-#define	PCI_PRODUCT_PEQUR_CIOB20	0x0006		/* I/O Bridge */
-#define	PCI_PRODUCT_PEQUR_XX7	0x0007		/* PCIHB7 */
-#define	PCI_PRODUCT_PEQUR_CNB20HE	0x0008		/* CNB20HE Host */
-#define	PCI_PRODUCT_PEQUR_CNB20LE	0x0009		/* CNB20LE Host */
-#define	PCI_PRODUCT_PEQUR_CIOB30	0x0010		/* CIOB30 */
-#define	PCI_PRODUCT_PEQUR_CMIC_HE	0x0011		/* CMIC_HE Host */
-#define	PCI_PRODUCT_PEQUR_IDE	0x0211		/* IDE */
-#define	PCI_PRODUCT_PEQUR_USB	0x0220		/* USB */
-
 /* PLX Technology products */
 #define	PCI_PRODUCT_PLX_9060ES	0x906e		/* 9060ES PCI bus controller */
 
@@ -1478,6 +1466,18 @@
 
 /* Samsung Semiconductor products */
 #define	PCI_PRODUCT_SAMSUNGSEMI_KS8920	0x8920		/* KS8920 10/100 Ethernet */
+
+/* ServerWorks products */
+#define	PCI_PRODUCT_SERVERWORKS_ROSB4	0x0200		/* ROSB4 SouthBridge */
+#define	PCI_PRODUCT_SERVERWORKS_XX5	0x0005		/* PCIHB5 */
+#define	PCI_PRODUCT_SERVERWORKS_CIOB20	0x0006		/* I/O Bridge */
+#define	PCI_PRODUCT_SERVERWORKS_XX7	0x0007		/* PCIHB7 */
+#define	PCI_PRODUCT_SERVERWORKS_CNB20HE	0x0008		/* CNB20HE Host */
+#define	PCI_PRODUCT_SERVERWORKS_CNB20LE	0x0009		/* CNB20LE Host */
+#define	PCI_PRODUCT_SERVERWORKS_CIOB30	0x0010		/* CIOB30 */
+#define	PCI_PRODUCT_SERVERWORKS_CMIC_HE	0x0011		/* CMIC_HE Host */
+#define	PCI_PRODUCT_SERVERWORKS_IDE	0x0211		/* IDE */
+#define	PCI_PRODUCT_SERVERWORKS_USB	0x0220		/* USB */
 
 /* SGI products */
 #define	PCI_PRODUCT_SGI_IOC3	0x0003		/* IOC3 */

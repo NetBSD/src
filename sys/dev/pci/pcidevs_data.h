@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.273 2000/11/03 15:57:34 ad Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.274 2000/11/03 16:31:51 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.269 2000/11/03 15:54:02 ad Exp 
+ *	NetBSD: pcidevs,v 1.270 2000/11/03 16:31:01 ad Exp 
  */
 
 /*
@@ -3610,66 +3610,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "RZ1000",
 	},
 	{
-	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_ROSB4,
-	    0,
-	    "",
-	    "ROSB4 SouthBridge",
-	},
-	{
-	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_XX5,
-	    0,
-	    "",
-	    "PCIHB5",
-	},
-	{
-	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_CIOB20,
-	    0,
-	    "",
-	    "I/O Bridge",
-	},
-	{
-	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_XX7,
-	    0,
-	    "",
-	    "PCIHB7",
-	},
-	{
-	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_CNB20HE,
-	    0,
-	    "",
-	    "CNB20HE Host",
-	},
-	{
-	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_CNB20LE,
-	    0,
-	    "",
-	    "CNB20LE Host",
-	},
-	{
-	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_CIOB30,
-	    0,
-	    "",
-	    "CIOB30",
-	},
-	{
-	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_CMIC_HE,
-	    0,
-	    "",
-	    "CMIC_HE Host",
-	},
-	{
-	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_IDE,
-	    0,
-	    "",
-	    "IDE",
-	},
-	{
-	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_USB,
-	    0,
-	    "",
-	    "USB",
-	},
-	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9060ES,
 	    0,
 	    "PLX Technology",
@@ -4046,6 +3986,66 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Samsung Semiconductors",
 	    "KS8920 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_ROSB4,
+	    0,
+	    "ServerWorks",
+	    "ROSB4 SouthBridge",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_XX5,
+	    0,
+	    "ServerWorks",
+	    "PCIHB5",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CIOB20,
+	    0,
+	    "ServerWorks",
+	    "I/O Bridge",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_XX7,
+	    0,
+	    "ServerWorks",
+	    "PCIHB7",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB20HE,
+	    0,
+	    "ServerWorks",
+	    "CNB20HE Host",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB20LE,
+	    0,
+	    "ServerWorks",
+	    "CNB20LE Host",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CIOB30,
+	    0,
+	    "ServerWorks",
+	    "CIOB30",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CMIC_HE,
+	    0,
+	    "ServerWorks",
+	    "CMIC_HE Host",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_IDE,
+	    0,
+	    "ServerWorks",
+	    "IDE",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_USB,
+	    0,
+	    "ServerWorks",
+	    "USB",
 	},
 	{
 	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3,
