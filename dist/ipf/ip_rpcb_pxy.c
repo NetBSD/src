@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_rpcb_pxy.c,v 1.1.1.3 2005/02/08 06:53:01 martti Exp $	*/
+/*	$NetBSD: ip_rpcb_pxy.c,v 1.1.1.4 2005/02/19 21:26:08 martti Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Ryan Beasley <ryanb@goddamnbastard.org>
@@ -39,7 +39,7 @@
  *   o The enclosed hack of STREAMS support is pretty sick and most likely
  *     broken.
  *
- *	Id: ip_rpcb_pxy.c,v 2.25.2.2 2004/12/09 19:41:00 darrenr Exp
+ *	Id: ip_rpcb_pxy.c,v 2.25.2.3 2005/02/04 10:22:56 darrenr Exp
  */
 
 #define	IPF_RPCB_PROXY
@@ -1272,6 +1272,8 @@ ippr_rpcb_getnat(fin, nat, proto, port)
 			 */
 			return(-1);
 		}
+		if (fi.fin_state != NULL)
+			fr_statederef(&fi, (ipstate_t **)&fi.fin_state);
 	}
 
 	return(0);

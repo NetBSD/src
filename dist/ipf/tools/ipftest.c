@@ -1,4 +1,4 @@
-/*	$NetBSD: ipftest.c,v 1.1.1.2 2004/07/23 05:34:50 martti Exp $	*/
+/*	$NetBSD: ipftest.c,v 1.1.1.3 2005/02/19 21:27:02 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -12,7 +12,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipt.c	1.19 6/3/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipftest.c,v 1.44.2.2 2004/04/28 17:56:21 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipftest.c,v 1.44.2.3 2005/02/01 02:41:24 darrenr Exp";
 #endif
 
 extern	char	*optarg;
@@ -653,12 +653,12 @@ void dumplookups()
 	printf("List of configured pools\n");
 	for (i = 0; i < IPL_LOGSIZE; i++)
 		for (ipl = ip_pool_list[i]; ipl != NULL; ipl = ipl->ipo_next)
-			printpool(ipl, bcopywrap, opts);
+			printpool(ipl, bcopywrap, NULL, opts);
 
 	printf("List of configured hash tables\n");
 	for (i = 0; i < IPL_LOGSIZE; i++)
 		for (iph = ipf_htables[i]; iph != NULL; iph = iph->iph_next)
-			printhash(iph, bcopywrap, opts);
+			printhash(iph, bcopywrap, NULL, opts);
 }
 
 
