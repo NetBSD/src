@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.76 2000/05/26 02:44:33 simonb Exp $
+# $NetBSD: shl.mi,v 1.77 2000/05/28 09:59:48 blymn Exp $
 ./usr/lib/libamu.so.1.1
 ./usr/lib/libbz2.so.0.0
 ./usr/lib/libc.so.12.61
@@ -20,8 +20,8 @@
 ./usr/lib/libstdc++.so.2.0
 ./usr/lib/libtelnet.so.2.0
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
-./usr/lib/libtermcap.so.0.3
-./usr/lib/libtermlib.so.0.3
+./usr/lib/libtermcap.so.0.4
+./usr/lib/libtermlib.so.0.4
 ./usr/lib/libusb.so.0.0
 ./usr/lib/libutil.so.5.2
 ./usr/lib/libwrap.so.0.2
