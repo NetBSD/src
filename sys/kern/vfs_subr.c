@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.33 1994/07/02 04:51:18 deraadt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.33.2.1 1994/07/10 05:54:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -638,7 +638,7 @@ loop:
 			goto loop;
 		break;
 	}
-	if (vp == NULL || vp->v_tag != VT_NON) {
+	if (vp == NULL || vp->v_tag != VT_NON || vp->v_type != VBLK) {
 		MALLOC(nvp->v_specinfo, struct specinfo *,
 			sizeof(struct specinfo), M_VNODE, M_WAITOK);
 		nvp->v_rdev = nvp_rdev;
