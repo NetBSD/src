@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.26 2002/08/14 18:41:50 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.27 2002/10/07 19:28:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -105,7 +105,8 @@ pthread_ops_t pthread_ops = {
 	pthread__errno
 };
 
-/* This needs to be started by the library loading code, before main() 
+/*
+ * This needs to be started by the library loading code, before main() 
  * gets to run, for various things that use the state of the initial thread
  * to work properly (thread-specific data is an application-visible example; 
  * spinlock counts for mutexes is an internal example).
@@ -220,8 +221,9 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	PTHREADD_ADD(PTHREADD_CREATE);
 	assert(thread != NULL);
 
-	/* It's okay to check this without a lock because there can
-         * only be one thread before it becomes true.
+	/*
+	 * It's okay to check this without a lock because there can
+	 * only be one thread before it becomes true.
 	 */
 	if (started == 0) {
 		started = 1;
@@ -256,8 +258,10 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	newthread->pt_flags = nattr.pta_flags;
 	newthread->pt_sigmask = self->pt_sigmask;
 	
-	/* 3. Set up context. */
-	/* The pt_uc pointer points to a location safely below the
+	/*
+	 * 3. Set up context.
+	 *
+	 * The pt_uc pointer points to a location safely below the
 	 * stack start; this is arranged by pthread__stackalloc().
 	 */
 	getcontext(newthread->pt_uc);
@@ -305,7 +309,8 @@ pthread__idle(void)
 	PTHREADD_ADD(PTHREADD_IDLE);
 	self = pthread__self();
 
-	/* The drill here is that we want to yield the processor, 
+	/*
+	 * The drill here is that we want to yield the processor, 
 	 * but for the thread itself to be recovered, we need to be on
 	 * a list somewhere for the thread system to know about us. 
 	 */
@@ -591,7 +596,8 @@ pthread_attr_getschedparam(pthread_attr_t *attr, struct sched_param *param)
 	return 0;
 }
 
-/* XXX There should be a way for applications to use the efficent
+/*
+ * XXX There should be a way for applications to use the efficent
  *  inline version, but there are opacity/namespace issues. 
  */
 
@@ -622,7 +628,8 @@ pthread_cancel(pthread_t thread)
 		thread->pt_cancel = 1;
 		pthread_spinlock(self, &thread->pt_statelock);
 		if (thread->pt_state == PT_STATE_BLOCKED_SYS) {
-			/* It's sleeping in the kernel. If we can wake
+			/*
+			 * It's sleeping in the kernel. If we can wake
 			 * it up, it will notice the cancellation when
 			 * it returns. If it doesn't wake up when we
 			 * make this call, then it's blocked
@@ -631,7 +638,8 @@ pthread_cancel(pthread_t thread)
 			 */
 			_lwp_wakeup(thread->pt_blockedlwp);
 		} else if (thread->pt_state == PT_STATE_BLOCKED_QUEUE) {
-			/* We're blocked somewhere (pthread__block()
+			/*
+			 * We're blocked somewhere (pthread__block()
 			 * was called. Cause it to wake up and the
 			 * caller will check for the cancellation.
 			 */
@@ -641,7 +649,8 @@ pthread_cancel(pthread_t thread)
 			pthread_spinunlock(self, thread->pt_sleeplock);
 			pthread__sched(self, thread);
 		} else {
-			/* Nothing. The target thread is running and will
+			/*
+			 * Nothing. The target thread is running and will
 			 * notice at the next deferred cancellation point.
 			 */
 		}
