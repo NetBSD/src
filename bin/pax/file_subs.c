@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.31 2003/02/09 18:27:10 grant Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.32 2003/02/10 07:49:57 grant Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.31 2003/02/09 18:27:10 grant Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.32 2003/02/10 07:49:57 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -769,8 +769,10 @@ set_pmode(char *fnm, mode_t mode)
 #else
 	if (chmod(fnm, mode))
 #endif
+	{
 		(void)fflush(listf);
 		syswarn(1, errno, "Cannot set permissions on %s", fnm);
+	}
 	return;
 }
 
