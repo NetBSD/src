@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.38 1994/05/16 22:43:42 cgd Exp $
+#	$Id: Makefile,v 1.39 1994/05/29 21:47:12 jtc Exp $
 
 # Doing a make install builds /usr/include
 #
@@ -10,8 +10,8 @@
 
 FILES=	a.out.h ar.h assert.h bitstring.h ctype.h db.h dirent.h disktab.h \
 	err.h fnmatch.h fstab.h fts.h glob.h grp.h kvm.h limits.h locale.h \
-	math.h memory.h mpool.h ndbm.h netdb.h nlist.h paths.h pwd.h ranlib.h \
-	regex.h regexp.h resolv.h \
+	math.h memory.h mpool.h ndbm.h netdb.h nlist.h nl_types.h paths.h \
+	pwd.h ranlib.h regex.h regexp.h resolv.h \
 	search.h setjmp.h sgtty.h signal.h stab.h stdarg.h stddef.h \
 	stdio.h stdlib.h string.h strings.h struct.h sysexits.h time.h \
 	ttyent.h tzfile.h unistd.h utime.h utmp.h vis.h malloc.h \
