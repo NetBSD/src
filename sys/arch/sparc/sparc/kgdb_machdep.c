@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.7 2000/06/29 07:40:10 mrg Exp $ */
+/*	$NetBSD: kgdb_machdep.c,v 1.8 2001/05/26 10:22:32 pk Exp $ */
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -86,6 +86,9 @@
 /*
  * Machine dependent routines needed by kern/kgdb_stub.c
  */
+
+#include "opt_kgdb.h"
+
 #ifdef KGDB
 
 #include <sys/param.h>
