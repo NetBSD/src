@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.27 1998/05/02 16:45:30 scottr Exp $	*/
+/*	$NetBSD: asc.c,v 1.28 1998/08/15 07:42:50 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -78,6 +78,7 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/bus.h>
+#include <machine/viareg.h>
 
 #include <mac68k/obio/ascvar.h>
 #include <mac68k/obio/obiovar.h>
@@ -86,10 +87,20 @@
 #define	MAC68K_IIFX_ASC_BASE	0x50f10000
 #define	MAC68K_ASC_LEN		0x01000
 
+#ifdef DEBUG
+#define ASC_DEBUG
+#endif
+
+#ifdef ASC_DEBUG
+int	asc_debug = 0;		/* non-zero enables debugging output */
+#endif
+
 static u_int8_t		asc_wave_tab[0x800];
 
 static int	asc_ring_bell __P((void *, int, int, int));
 static void	asc_stop_bell __P((void *));
+static void	asc_intr_enable __P((void));
+static void	asc_intr __P((void *));
 
 static int	ascmatch __P((struct device *, struct cfdata *, void *));
 static void	ascattach __P((struct device *, struct device *, void *));
@@ -175,6 +186,9 @@ ascattach(parent, self, aux)
 	printf("\n");
 
 	mac68k_set_bell_callback(asc_ring_bell, sc);
+
+	via2_register_irq(VIA2_ASC, asc_intr, sc);
+	asc_intr_enable();
 }
 
 int
@@ -347,4 +361,31 @@ asc_stop_bell(arg)
 
 	if (--sc->sc_ringing == 0)	/* disable ASC */
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x801, 0);
+}
+
+static void
+asc_intr_enable()
+{
+	int s;
+
+	s = splhigh();
+	if (VIA2 == VIA2OFF)
+		via2_reg(vIER) = 0x80 | V2IF_ASC;
+	else
+		via2_reg(rIER) = 0x80 | V2IF_ASC;
+	splx(s);
+}
+
+
+/*ARGSUSED*/
+static void
+asc_intr(arg)
+        void *arg;
+{
+#ifdef ASC_DEBUG
+	struct asc_softc *sc = (struct asc_softc *)arg;
+
+	if (asc_debug)
+		printf("asc_intr(%p)\n", sc);
+#endif
 }
