@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivga.c,v 1.12 1996/10/23 04:12:29 cgd Exp $	*/
+/*	$NetBSD: pcivga.c,v 1.13 1996/11/13 21:13:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -88,7 +88,6 @@ pcivgamatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct pci_attach_args *pa = aux;
 
 	/*
@@ -248,7 +247,9 @@ pcivgammap(dev, offset, prot)
 	off_t offset;
 	int prot;
 {
+#if 0 /* XXX */
 	struct pcivga_softc *sc = (struct pcivga_softc *)dev;
+#endif
 	int rv;
 
 	rv = -1;
@@ -335,7 +336,6 @@ pcivga_putstr(id, row, col, cp, len)
 	struct pcivga_devconfig *dc = id;
 	bus_space_tag_t memt = dc->dc_memt;
 	bus_space_handle_t memh = dc->dc_memh;
-	char *dcp;
 	int i, off;
 
 	off = (row * dc->dc_ncol + col) * 2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.c,v 1.11 1996/10/16 00:00:40 cgd Exp $	*/
+/*	$NetBSD: prom.c,v 1.12 1996/11/13 21:13:11 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -26,6 +26,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 
@@ -39,8 +40,6 @@
 #include <dev/cons.h>
 
 /* XXX this is to fake out the console routines, while booting. */
-void promcnputc __P((dev_t, int));
-int promcngetc __P((dev_t));
 struct consdev promcons = { NULL, NULL, promcngetc, promcnputc,
 			    nullcnpollc, makedev(23,0), 1 };
 
@@ -65,7 +64,7 @@ init_prom_interface()
 	c = (struct crb*)((char*)hwrpb + hwrpb->rpb_crb_off);
 
         prom_dispatch_v.routine_arg = c->crb_v_dispatch;
-        prom_dispatch_v.routine = c->crb_v_dispatch->code;
+        prom_dispatch_v.routine = c->crb_v_dispatch->entry_va;
 
 	prom_getenv(PROM_E_TTY_DEV, buf, 4);
 	alpha_console = buf[0] - '0';
@@ -107,7 +106,7 @@ promcnputc(dev, c)
 	*to = c;
 
 	do {
-		ret.bits = prom_dispatch(PROM_R_PUTS, alpha_console, to, 1);
+		ret.bits = prom_putstr(alpha_console, to, 1);
 	} while ((ret.u.retval & 1) == 0);
 
 	if (!prom_mapped) {					/* XXX */
@@ -141,7 +140,7 @@ promcngetc(dev)
 			*rom_ptep = rom_pte;			/* XXX */
 			ALPHA_TBIA();				/* XXX */
 		}						/* XXX */
-                ret.bits = prom_dispatch(PROM_R_GETC, alpha_console);
+                ret.bits = prom_getc(alpha_console);
 		if (!prom_mapped) {				/* XXX */
 			*rom_ptep = saved_pte;			/* XXX */
 			ALPHA_TBIA();				/* XXX */
@@ -176,7 +175,7 @@ promcnlookc(dev, cp)
 		*rom_ptep = rom_pte;				/* XXX */
 		ALPHA_TBIA();					/* XXX */
 	}							/* XXX */
-	ret.bits = prom_dispatch(PROM_R_GETC, alpha_console);
+	ret.bits = prom_getc(alpha_console);
 	if (!prom_mapped) {					/* XXX */
 		*rom_ptep = saved_pte;				/* XXX */
 		ALPHA_TBIA();					/* XXX */
@@ -209,7 +208,7 @@ prom_getenv(id, buf, len)
 		*rom_ptep = rom_pte;				/* XXX */
 		ALPHA_TBIA();					/* XXX */
 	}							/* XXX */
-	ret.bits = prom_dispatch(PROM_R_GETENV, id, to, len);
+	ret.bits = prom_getenv_disp(id, to, len);
 	bcopy(to, buf, len);
 	if (!prom_mapped) {					/* XXX */
 		*rom_ptep = saved_pte;				/* XXX */
@@ -268,10 +267,8 @@ hwrpb_checksum()
 	return (sum);
 }
 
-void XentRestart __P((void));
-
 void
-hwrbp_restart_setup()
+hwrpb_restart_setup()
 {
 	struct pcs *p;
 
@@ -284,12 +281,12 @@ hwrbp_restart_setup()
 	hwrpb->rpb_vptb = VPTBASE;
 
 	/* when 'c'ontinuing from console halt, do a dump */
-	hwrpb->rpb_rest_term = (long (*)())&XentRestart;
+	hwrpb->rpb_rest_term = (u_int64_t)&XentRestart;
 	hwrpb->rpb_rest_term_val = 0x1;
 
 #if 0
 	/* don't know what this is really used by, so don't mess with it. */
-	hwrpb->rpb_restart = (long (*)())&XentRestart;
+	hwrpb->rpb_restart = (u_int64_t)&XentRestart;
 	hwrpb->rpb_restart_val = 0x2;
 #endif
 
@@ -298,7 +295,7 @@ hwrbp_restart_setup()
 	p->pcs_flags |= (PCS_RC | PCS_CV);
 }
 
-long
+u_int64_t
 console_restart(ra, ai, pv)
 	u_int64_t ra, ai, pv;
 {

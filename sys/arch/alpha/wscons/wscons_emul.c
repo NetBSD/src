@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons_emul.c,v 1.4 1996/10/13 03:00:47 christos Exp $	*/
+/*	$NetBSD: wscons_emul.c,v 1.5 1996/11/13 21:13:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -36,6 +36,11 @@
 #include <alpha/wscons/wsconsvar.h>
 #include <alpha/wscons/wscons_emul.h>
 #include <alpha/wscons/ascii.h>
+
+static int wscons_emul_input_normal __P((struct wscons_emul_data *, char));
+static int wscons_emul_input_haveesc __P((struct wscons_emul_data *, char));
+static void wscons_emul_docontrol __P((struct wscons_emul_data *, char));
+static int wscons_emul_input_control __P((struct wscons_emul_data *, char));
 
 void
 wscons_emul_attach(we, wo)

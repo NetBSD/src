@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.20 1996/10/13 02:59:50 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.21 1996/11/13 21:13:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -47,6 +47,7 @@
 /*
  * Dump the machine specific header information at the start of a core dump.
  */
+int
 cpu_coredump(p, vp, cred, chdr)
 	struct proc *p;
 	struct vnode *vp;
@@ -54,7 +55,6 @@ cpu_coredump(p, vp, cred, chdr)
 	struct core *chdr;
 {
 	int error;
-	register struct user *up = p->p_addr;
 	struct md_coredump cpustate;
 	struct coreseg cseg;
 	extern struct proc *fpcurproc;
@@ -136,7 +136,6 @@ cpu_fork(p1, p2)
 	pt_entry_t *ptep;
 	int i;
 	extern struct proc *fpcurproc;
-	extern void switch_trampoline(), exception_return(), child_return();
 
 	p2->p_md.md_tf = p1->p_md.md_tf;
 	p2->p_md.md_flags = p1->p_md.md_flags & MDP_FPUSED;
@@ -204,7 +203,6 @@ printf("NEW PROCESS %d USP = %p\n", p2->p_pid, p2->p_addr->u_pcb.pcb_hw.apcb_usp
 	 */
 	{
 		struct trapframe *p2tf;
-		extern void exception_return();
 
 		/*
 		 * Pick a stack pointer, leaving room for a trapframe;
@@ -261,8 +259,6 @@ cpu_set_kpc(p, pc)
 	void (*pc) __P((struct proc *));
 {
 	struct pcb *pcbp;
-	extern void switch_trampoline();
-	extern void exception_return();
 
 	pcbp = &p->p_addr->u_pcb;
 	pcbp->pcb_context[0] = (u_int64_t)pc;	/* s0 - pc to invoke */

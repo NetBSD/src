@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.13 1996/11/12 05:14:38 cgd Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.14 1996/11/13 21:13:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -89,7 +89,7 @@ mbattach(parent, self, aux)
 	struct confargs nca;
 	struct pcs *pcsp;
 	int i, cpuattachcnt;
-	extern int cputype, ncpus;
+	extern int ncpus;
 	extern const struct cpusw *cpu_fn_switch;
 
 	printf("\n");
@@ -106,7 +106,6 @@ mbattach(parent, self, aux)
 	 */
 	cpuattachcnt = 0;
 	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
-		struct pcs *pcsp;
 
 		pcsp = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off +
 		    (i * hwrpb->rpb_pcs_size));
