@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.18.2.1 2002/07/09 06:04:26 gehenna Exp $ */
+/* $NetBSD: machdep.c,v 1.18.2.2 2002/07/16 00:40:57 gehenna Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -415,8 +415,6 @@ void show_me_regs()
 		scr0, scr1, scr2, scr3);
 }
 
-
-paddr_t msgbuf_paddr;
 
 /*
  * This is called during initppc, before the system is really initialized.
