@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.10 2003/01/19 19:49:52 scw Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.11 2003/03/19 11:37:57 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -226,7 +226,8 @@ int already_in_db;
 void
 cpu_Debugger(void)
 {
-	asm volatile("trapa r63");
+
+	asm volatile("brk");
 }
 
 int
