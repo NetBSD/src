@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.6 2002/07/29 03:25:18 augustss Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.7 2002/12/28 06:14:07 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -43,6 +43,7 @@
 
 #include <machine/bus.h>
 #include <dev/pci/pcivar.h>
+#include <dev/isa/isavar.h>
 
 #include <dev/acpi/acpica.h>
 
@@ -57,6 +58,7 @@ struct acpibus_attach_args {
 	bus_space_tag_t aa_memt;	/* PCI MEM space tag */
 	pci_chipset_tag_t aa_pc;	/* PCI chipset */
 	int aa_pciflags;		/* PCI bus flags */
+	isa_chipset_tag_t aa_ic;	/* ISA chipset */
 };
 
 /*
@@ -108,6 +110,7 @@ struct acpi_softc {
 	pci_chipset_tag_t sc_pc;	/* PCI chipset tag */
 	int sc_pciflags;		/* PCI bus flags */
 	int sc_pci_bus;			/* internal PCI fixup */
+	isa_chipset_tag_t sc_ic;	/* ISA chipset tag */
 
 	void *sc_sdhook;		/* shutdown hook */
 
@@ -136,6 +139,7 @@ struct acpi_attach_args {
 	bus_space_tag_t aa_memt;	/* PCI MEM space tag */
 	pci_chipset_tag_t aa_pc;	/* PCI chipset tag */
 	int aa_pciflags;		/* PCI bus flags */
+	isa_chipset_tag_t aa_ic;	/* ISA chipset */
 };
 
 /*
