@@ -1,4 +1,4 @@
-/*	$NetBSD: test.C,v 1.2 2003/12/26 18:03:34 christos Exp $	*/
+/*	$NetBSD: human.cc,v 1.1 2003/12/27 01:16:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,21 +37,115 @@
  */
 
 /*
- * test.C: Test program for randomizer
+ * human.C: Human interface for dots, using rogue-like keys.
  */
-
 #include "defs.h"
-RCSID("$NetBSD: test.C,v 1.2 2003/12/26 18:03:34 christos Exp $")
+RCSID("$NetBSD: human.cc,v 1.1 2003/12/27 01:16:55 christos Exp $")
 
-#include <iostream>
-#include "random.h"
+#include "human.h"
+#include "board.h"
+#include "box.h"
 
-int
-main(void)
+#define CONTROL(a) ((a) & 037)
+
+HUMAN::HUMAN(const char c) :
+    PLAYER(c),
+    _curx(0),
+    _cury(1)
 {
-    RANDOM rd(10);
+}
 
-    for (size_t x = rd(); x < 10; x = rd())
-	std::cout << "x=" << x << std::endl;
-    return 0;
+void HUMAN::play(const BOARD& b, size_t& y, size_t& x, int& dir)
+{
+    int mv;
+    b.setpos(_cury, _curx);
+
+    for (;;) {
+	switch (mv = b.getmove()) {
+	case 'h': case 'H':
+	    _curx -= 2;
+	    break;
+
+	case 'l': case 'L':
+	    _curx += 2;
+	    break;
+
+	case 'k': case 'K':
+	    _cury -= 2;
+	    break;
+
+	case 'j': case 'J':
+	    _cury += 2;
+	    break;
+
+	case 'u': case 'U':
+	    _curx += 1;
+	    _cury -= 1;
+	    break;
+
+	case 'y': case 'Y':
+	    _curx -= 1;
+	    _cury -= 1;
+	    break;
+
+	case 'b': case 'B':
+	    _curx -= 1;
+	    _cury += 1;
+	    break;
+
+	case 'n': case 'N':
+	    _curx += 1;
+	    _cury += 1;
+	    break;
+
+	case 'q': case 'Q':
+	    exit(0);
+
+	case CONTROL('L'): case CONTROL('R'):
+	    b.clean();
+	    b.paint();
+	    break;
+
+	case ' ':
+	    {
+		x = _curx / 2;
+		y = _cury / 2;
+
+		if (_cury & 1) {
+		    if (_curx == 0)
+			dir = BOX::left;
+		    else {
+			x--;
+			dir = BOX::right;
+		    }
+		}
+
+		if (_curx & 1) {
+		    if (_cury == 0)
+			dir = BOX::top;
+		    else {
+			y--;
+			dir = BOX::bottom;
+		    }
+		}
+	    }
+	    return;
+
+	default:
+	    break;
+	}
+
+        // We add 2 before the comparison to avoid underflow
+	if ((2 + _curx) - (_curx & 1) < 2)
+	    _curx = (b.nx() * 2) + (_curx & 1);
+	if (_curx >= (b.nx() * 2) + 1)
+	    _curx = (_curx & 1);
+
+	if ((2 + _cury) - (_cury & 1) < 2)
+	    _cury = (b.ny() * 2) + (_cury & 1);
+	if (_cury >= (b.ny() * 2) + 1)
+	    _cury = (_cury & 1);
+
+	b.setpos(_cury, _curx);
+    }
 }
