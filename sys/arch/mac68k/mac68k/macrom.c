@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.16 1995/09/17 21:28:36 briggs Exp $	*/
+/*	$NetBSD: macrom.c,v 1.17 1995/09/20 13:03:21 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -483,15 +483,17 @@ mrg_setvectors(rom)
 
 	if (0 != mrg_ADBIntrPtr) {
 		mrg_romadbintr = mrg_ADBIntrPtr;
-		printf("mrg_setvectors: using ADBIntrPtr passed from booter: 0x%08x\n", mrg_ADBIntrPtr);
+		printf("mrg_setvectors: using ADBIntrPtr from booter: 0x%08x\n",
+			mrg_ADBIntrPtr);
 	} else
  		mrg_romadbintr = rom->adbintr;
-	mrg_romadbintr = rom->adbintr;
 	mrg_rompmintr = rom->pmintr;
 	mrg_ADBAlternateInit = rom->ADBAlternateInit;
 	mrg_InitEgret = rom->InitEgret;
 
-		/* mrg_adbstore becomes ADBBase */
+	/*
+	 * mrg_adbstore becomes ADBBase
+	 */
 	*((u_int32_t *)(mrg_adbstore + 0x130)) = (u_int32_t) rom->adb130intr;
 
 	jEgret = (void (*))0x40814800;
@@ -510,28 +512,12 @@ mrg_setvectors(rom)
 	mrg_OStraps[0x3f] = rom->InitUtil;	/* InitUtil */
 	mrg_OStraps[0x51] = rom->ReadXPRam;	/* ReadXPRam */
 	mrg_OStraps[0x52] = rom->WriteXPRam;	/* WriteXPRam */
-        jClkNoMem = (void (*)()) rom->jClkNoMem;
-
-	if (0 == jClkNoMem) {
-		printf("Help. Got NULL vector for jClkNoMem.\n");
-		panic("Please get this pointer in the sources (machdep.c) and comile a new kernel.\n");
-	}
-
-
-
-	mrg_OStraps[0x38] = rom->WriteParam;	/* WriteParam */
-	mrg_OStraps[0x3a] = rom->SetDateTime;	/* SetDateTime */
-	mrg_OStraps[0x3f] = rom->InitUtil;	/* InitUtil */
-	mrg_OStraps[0x51] = rom->ReadXPRam;	/* ReadXPRam */
-	mrg_OStraps[0x52] = rom->WriteXPRam;	/* WriteXPRam */
         jClkNoMem = (void (*)) rom->jClkNoMem;
 
 	if (0 == jClkNoMem) {
 		printf("WARNING: don't have a value for jClkNoMem, please contact:  walter@ghpc8.ihf.rwth-aachen.de\n");
 		printf("Can't read RTC without it. Using MacOS boot time.\n");
 	}
-
-
 
 #if defined(MRG_DEBUG)
 	printf("mrg: ROM adbintr 0x%08x\n", mrg_romadbintr);
@@ -545,7 +531,6 @@ mrg_setvectors(rom)
 	printf("mrg: OS trap 0x85 (PMgrOp) = 0x%08x\n", mrg_OStraps[0x85]);
 	printf("mrg: ROM ADBAltInit 0x%08x\n", mrg_ADBAlternateInit);
 	printf("mrg: ROM InitEgret  0x%08x\n", mrg_InitEgret);
-
 #endif
 }
 
