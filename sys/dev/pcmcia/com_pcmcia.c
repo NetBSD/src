@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.4 1998/06/09 07:32:54 thorpej Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.5 1998/06/21 18:41:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -72,12 +72,45 @@
 #define	PCMCIA_MANUFACTURER_IBM			0xa4
 #define	PCMCIA_PRODUCT_IBM_HOME_AND_AWAY	0x2e
 
+struct com_dev {
+	char *name;
+	int manufacturer;
+	int product;
+	char *cis1_info[4];
+};
+
+static struct com_dev com_devs[] = {
+	{ "3Com 3C562 Modem",
+	  PCMCIA_MANUFACTURER_3COM, PCMCIA_PRODUCT_3COM_3C562,
+	  { NULL, NULL, NULL, NULL } },
+	{ "Motorola Power 14.4 Modem",
+	  PCMCIA_MANUFACTURER_MOTOROLA, PCMCIA_PRODUCT_MOTOROLA_POWER144,
+	  { NULL, NULL, NULL, NULL } },
+	{ "IBM Home and Away Modem",
+	  PCMCIA_MANUFACTURER_IBM, PCMCIA_PRODUCT_IBM_HOME_AND_AWAY,
+	  { NULL, NULL, NULL, NULL } },
+	{ "Megahertz XJ2288 Modem",
+	  0xffffffff, 0xffff,
+	  { "MEGAHERTZ", "XJ2288", NULL, NULL } }
+};
+
+static struct com_dev generic = {
+	"Generic Modem",
+	0xffffffff, 0xffffffff,
+      	{ NULL, NULL, NULL, NULL }
+};
+
+static int com_devs_size = sizeof(com_devs) / sizeof(com_devs[0]);
+static struct com_dev *com_dev_match __P((struct pcmcia_card *));
+
 int com_pcmcia_match __P((struct device *, struct cfdata *, void *));
 void com_pcmcia_attach __P((struct device *, struct device *, void *));
 void com_pcmcia_cleanup __P((void *));
 
 int com_pcmcia_enable __P((struct com_softc *));
 void com_pcmcia_disable __P((struct com_softc *));
+int com_pcmcia_enable1 __P((struct com_softc *));
+void com_pcmcia_disable1 __P((struct com_softc *));
 
 struct com_pcmcia_softc {
 	struct com_softc sc_com;		/* real "com" softc */
@@ -93,38 +126,47 @@ struct cfattach com_pcmcia_ca = {
 	sizeof(struct com_pcmcia_softc), com_pcmcia_match, com_pcmcia_attach
 };
 
-struct com_dev {
-    char *name;
-    int manufacturer;
-    int product;
-    char *cis1_info0;
-    char *cis1_info1;
-    int function;
-} com_devs[] = {
-    { "3Com 3C562 Modem",
-      PCMCIA_MANUFACTURER_3COM, PCMCIA_PRODUCT_3COM_3C562,
-      NULL, NULL, 1 },
-    { "Motorola Power 14.4 Modem",
-      PCMCIA_MANUFACTURER_MOTOROLA, PCMCIA_PRODUCT_MOTOROLA_POWER144,
-      NULL, NULL, 0 },
-    { "IBM Home and Away Modem",
-      PCMCIA_MANUFACTURER_IBM, PCMCIA_PRODUCT_IBM_HOME_AND_AWAY,
-      NULL, NULL, 0 },
-    { "Megahertz XJ2288 Modem",
-      0xffffffff, 0xffff, "MEGAHERTZ", "XJ2288", 0 },
-};
+static struct com_dev *
+com_dev_match(card)
+	struct pcmcia_card *card;
+{
+	int i;
 
-#define com_dev_match(card, fct, n) \
-(((((com_devs[(n)].cis1_info0 == NULL) && \
-    (com_devs[(n)].cis1_info1 == NULL) && \
-    (com_devs[(n)].manufacturer == (card)->manufacturer) && \
-    (com_devs[(n)].product == (card)->product)) || \
-   ((com_devs[(n)].cis1_info0) && \
-    (com_devs[(n)].cis1_info1) && \
-    (strcmp(com_devs[(n)].cis1_info0, (card)->cis1_info[0]) == 0) && \
-    (strcmp(com_devs[(n)].cis1_info1, (card)->cis1_info[1]) == 0))) && \
-  (com_devs[(n)].function == fct)) \
- ?&com_devs[(n)]:NULL)
+	/* 1. check our table */
+	for (i = 0; i < com_devs_size; i++) {
+		if (com_devs[i].manufacturer != -1) {
+			/* manufacturer/product match */
+			if (com_devs[i].manufacturer == card->manufacturer &&
+			    com_devs[i].product == card->product)
+				return &com_devs[i];
+		} else {
+			/* cis strings match */
+			int j;
+
+			for (j = 0; j < 4; j++)
+				if (com_devs[i].cis1_info[j] &&
+				    strcmp(com_devs[i].cis1_info[j],
+				    card->cis1_info[j]))
+					break;
+			if (j == 4)
+				return &com_devs[i];
+		}
+	}
+			
+
+	/*
+	 * 2. Be selective about devices by checking for the word modem in
+	 *    the cis strings.
+	 */
+	for (i = 0; i < 4; i++)
+		if (card->cis1_info[i] &&
+		    pmatch("*[Mm][Oo][Dd][Ee][Mm]*",
+		    card->cis1_info[i], NULL) > 0)
+			return &generic;
+
+	return NULL;
+}
+
 
 int
 com_pcmcia_match(parent, match, aux)
@@ -134,25 +176,28 @@ com_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	int i;
-
-	for (i=0; i<(sizeof(com_devs)/sizeof(com_devs[0])); i++) {
-		if (com_dev_match(pa->card, pa->pf->number, i))
-			return(1);
-	}
 
 	/* find a cfe we can use (if it matches a standard COM port) */
-
 	for (cfe = pa->pf->cfe_head.sqh_first; cfe;
-	     cfe = cfe->cfe_list.sqe_next) {
+	    cfe = cfe->cfe_list.sqe_next)
 		if (cfe->iospace[0].start == IO_COM1 ||
 		    cfe->iospace[0].start == IO_COM2 ||
 		    cfe->iospace[0].start == IO_COM3 ||
 		    cfe->iospace[0].start == IO_COM4)
-			return(1);
-	}
+			break;
 
-	return(0);
+	/* No appropriate cfe, bail out */
+	if (cfe == NULL)
+		return 0;
+
+	/*
+	 * We found a cfe at a standard com port location; check if it
+	 * is really a modem/serial device
+	 */
+	if (com_dev_match(pa->card) == NULL)
+		return 0;
+
+	return 1;
 }
 
 void
@@ -164,7 +209,6 @@ com_pcmcia_attach(parent, self, aux)
 	struct com_softc *sc = &psc->sc_com;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	int i;
 	struct com_dev *comdev;
 
 	psc->sc_pf = pa->pf;
@@ -204,7 +248,7 @@ com_pcmcia_attach(parent, self, aux)
 
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
-	if (com_pcmcia_enable(sc))
+	if (com_pcmcia_enable1(sc))
 		printf(": function enable failed\n");
 
 	sc->enabled = 1;
@@ -224,24 +268,22 @@ com_pcmcia_attach(parent, self, aux)
 	sc->enable = com_pcmcia_enable;
 	sc->disable = com_pcmcia_disable;
 
-	com_attach_subr(sc);
+	if ((comdev = com_dev_match(pa->card)) != NULL)
+		printf(": %s", comdev->name);
 
-	for (i=0; i<(sizeof(com_devs)/sizeof(com_devs[0])); i++) {
-		if ((comdev = com_dev_match(pa->card, pa->pf->number, i))) {
-			printf(": %s\n", comdev->name);
-		}
-	}
+	com_attach_subr(sc);
 
 	sc->enabled = 0;
 	
-	com_pcmcia_disable(sc);
+	com_pcmcia_disable1(sc);
 }
 
-int com_pcmcia_enable(struct com_softc *sc)
+int
+com_pcmcia_enable(sc)
+	struct com_softc *sc;
 {
 	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *) sc;
 	struct pcmcia_function *pf = psc->sc_pf;
-	int ret;
 
 	/* establish the interrupt. */
 	psc->sc_ih = pcmcia_intr_establish(pf, IPL_SERIAL, comintr, sc);
@@ -250,6 +292,16 @@ int com_pcmcia_enable(struct com_softc *sc)
 		       sc->sc_dev.dv_xname);
 		return (1);
 	}
+	return com_pcmcia_enable1(sc);
+}
+
+int
+com_pcmcia_enable1(sc)
+	struct com_softc *sc;
+{
+	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *) sc;
+	struct pcmcia_function *pf = psc->sc_pf;
+	int ret;
 
 	if ((ret = pcmcia_function_enable(pf)))
 	    return(ret);
@@ -269,11 +321,21 @@ int com_pcmcia_enable(struct com_softc *sc)
 	return(ret);
 }
 
-void com_pcmcia_disable(struct com_softc *sc)
+void
+com_pcmcia_disable(sc)
+	struct com_softc *sc;
+{
+	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *) sc;
+
+	com_pcmcia_disable1(sc);
+	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+}
+
+void
+com_pcmcia_disable1(sc)
+	struct com_softc *sc;
 {
 	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *) sc;
 
 	pcmcia_function_disable(psc->sc_pf);
-
-	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
 }
