@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.9 1994/05/19 06:23:50 jtc Exp $
+#	$Id: Makefile,v 1.10 1994/05/21 05:20:25 cgd Exp $
 
 LIB=	compat
 CFLAGS+=-DLIBC_SCCS -DSYSLIBC_SCCS
@@ -11,8 +11,8 @@ NOPIC=	nopic
 	${.CURDIR}/regexp
 
 # compat 4.1 sources
-# missing: getpw.c gtty.c stty.c tell.c vlimit.c vtimes.c
-SRCS=	ftime.c
+# missing: getpw.c tell.c vlimit.c vtimes.c
+SRCS=	gtty.c ftime.c stty.c
 
 .if (${MACHINE} == "vax")
 # missing: (for vax) reset.s
