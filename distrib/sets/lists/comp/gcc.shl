@@ -1,7 +1,7 @@
-#	$NetBSD: gcc.shl,v 1.10 2004/09/16 06:50:19 he Exp $
+#	$NetBSD: gcc.shl,v 1.11 2004/12/08 19:37:34 jmc Exp $
 ./usr/lib/crtbeginT.o				comp-c-lib
-./usr/lib/libbfd.so.6				comp-c-shlib		bfd
-./usr/lib/libbfd.so.6.0				comp-c-shlib		bfd
+./usr/lib/libbfd.so.7				comp-c-shlib		bfd
+./usr/lib/libbfd.so.7.0				comp-c-shlib		bfd
 ./usr/lib/libg2c_pic.a				comp-fortran-lib
 ./usr/lib/libgcc_eh.a				comp-c-lib
 ./usr/lib/libgcc_eh_p.a				comp-c-proflib		profile
