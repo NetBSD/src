@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_desc.h,v 1.15 2004/11/16 16:45:51 oster Exp $	*/
+/*	$NetBSD: rf_desc.h,v 1.16 2004/12/12 20:53:15 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -39,8 +39,6 @@
 struct RF_RaidReconDesc_s {
 	RF_Raid_t *raidPtr;	/* raid device descriptor */
 	RF_RowCol_t col;	/* col of failed disk */
-	int     state;		/* how far along the reconstruction operation
-				 * has gotten */
 	RF_RaidDisk_t *spareDiskPtr;	/* describes target disk for recon
 					 * (not used in dist sparing) */
 	int     numDisksDone;	/* the number of surviving disks that have
