@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_lfs.8,v 1.7 2000/02/12 23:58:09 perseant Exp $
+.\"	$NetBSD: newfs_lfs.8,v 1.8 2000/07/04 22:35:05 perseant Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -87,9 +87,11 @@ option is provided for compatibility only.
 .It Fl m Ar free space \&%
 The percentage of space reserved from normal users; the minimum
 free space threshold.  The default value used is 10%.
-See
-.Xr tunefs 8
-for more details on how to set this option.
+.It Fl M Ar nsegs
+Reserve this many segments for use exclusively by the cleaner, instead
+of letting
+.Nm
+do the computation.  Do not use this option.
 .It Fl N
 Do not actually create the filesystem.
 .It Fl s Ar size

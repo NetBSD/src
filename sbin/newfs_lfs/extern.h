@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.1 1999/03/18 17:18:05 perseant Exp $	*/
+/*	$NetBSD: extern.h,v 1.2 2000/07/04 22:35:04 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -44,7 +44,7 @@ void	fatal __P((const char *fmt, ...));
 u_int	log2 __P((u_int));
 int	make_lfs
 	    __P((int, struct disklabel *, struct partition *, int,
-		int, int, int));
+		int, int, int, int));
 int	mkfs __P((struct partition *, char *, int, int));
 
 extern char	*progname;
