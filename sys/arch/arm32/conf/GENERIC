@@ -23,8 +23,8 @@ options		CPU_LATE_ABORT	# ARM7XX compatibility
 
 # FPA options
 
-options		FPE
-options		ARMFPE
+options		FPE		# Single precision FPE
+options		ARMFPE		# ARM Ltd FPE
 
 # File system options
 
@@ -55,8 +55,6 @@ options		ISO,TPIP	# OSI
 options		EON		# OSI tunneling over IP
 options		CCITT,LLC,HDLC	# X.25
 
-options		PLIP
-
 # Compatibility options
 
 options		COMPAT_43
@@ -70,6 +68,12 @@ options         TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
 #options	SYSVSEM		# System V-like semaphores
 #options	SYSVSHM		# System V-like memory sharing
 #options	SHMMAXPGS=1024	# 1024 pages is the default
+
+# Device options
+
+options		RAMDISK_HOOKS	# boottime setup of ramdisk
+options		RAMDISK_SIZE=0	# Size in KBytes
+options		PLIP		# Build plip device into lpt driver
 
 # Development options
 
@@ -95,7 +99,12 @@ mainbus0 at root
 cpu0 at mainbus?
 
 # The hydra multiprocessor device
-#hydra0 at mainbus?
+#hydrabus0 at mainbus?
+
+#cpu1 at hydrabus?
+#cpu2 at hydrabus?
+#cpu3 at hydrabus?
+#cpu4 at hydrabus?
 
 # The vidc
 vidcvideo0	at mainbus?
@@ -148,16 +157,20 @@ podulebus0	at root
 ptsc0	at podulebus?			# Power-Tec SCSI II card
 scsibus* at ptsc?
 
+oak0	at podulebus?			# Oak SCSI I card
+scsibus* at oak?
+
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 ch*	at scsibus? target ? lun ?	# SCSI auto-changers
-uk*	at scsibus? target ? lun ?	# SCSI unknown
+uk*	at scsibus? target ? lun ?	# SCSI unknown device
 
 #kie*	at podulebus? slot ? offset ?
 
-eb0	at podulebus?			# EtherB network slot cards
 ea0	at podulebus?			# Ether3 podules
+eb0	at podulebus?			# EtherB network slot cards
+eh0	at podulebus?			# EtherH network slot cards
 ie0	at podulebus?			# Ether1 podules
 
 pseudo-device	loop	1               # network loopback
