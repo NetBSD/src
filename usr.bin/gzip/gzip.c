@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.28 2004/03/28 08:18:14 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.29 2004/03/28 13:54:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.28 2004/03/28 08:18:14 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.29 2004/03/28 13:54:44 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -126,7 +126,6 @@ static	int	vflag;			/* verbose mode */
 #endif
 
 static	char	*suffix;
-
 #define suffix_len	(strlen(suffix) + 1)	/* len + nul */
 static	char	*newfile;		/* name of newly created file */
 static	char	*infile;		/* name of file coming in */
@@ -137,7 +136,6 @@ static	void	maybe_warn(const char *fmt, ...);
 static	void	maybe_warnx(const char *fmt, ...);
 static	void	gz_compress(FILE *, gzFile);
 static	off_t	gz_uncompress(gzFile, FILE *);
-static	void	copymodes(const char *, struct stat *);
 static	ssize_t	file_compress(char *);
 static	ssize_t	file_uncompress(char *);
 static	void	handle_pathname(char *);
@@ -154,6 +152,7 @@ static	void	prepend_gzip(char *, int *, char ***);
 static	void	handle_dir(char *, struct stat *);
 static	void	print_verbage(char *, char *, ssize_t, ssize_t);
 static	void	print_test(char *, int);
+static	void	copymodes(const char *, struct stat *);
 #endif
 
 #ifndef NO_BZIP2_SUPPORT
@@ -307,8 +306,10 @@ main(int argc, char **argv)
 			handle_pathname(argv[0]);
 		} while (*++argv);
 	}
+#ifndef SMALL
 	if (qflag == 0 && lflag && argc > 1)
 		print_list(-1, 0, "(totals)", 0);
+#endif
 	exit(0);
 }
 
@@ -493,6 +494,7 @@ gz_uncompress(gzFile in, FILE *out)
 	return (size);
 }
 
+#ifndef SMALL
 /*
  * set the owner, mode, flags & utimes for a file
  */
@@ -534,6 +536,7 @@ copymodes(const char *file, struct stat *sbp)
 	if (utimes(file, times) < 0)
 		maybe_warn("couldn't utimes: %s", file);
 }
+#endif
 
 /*
  * compress the given file: create a corresponding .gz file and remove the
@@ -621,7 +624,9 @@ file_compress(char *file)
 			size = osb.st_size;
 		}
 		newfile = outfile;
+#ifndef SMALL
 		copymodes(outfile, &isb);
+#endif
 	} else {
 lose:
 		size = 0;
@@ -664,6 +669,7 @@ file_uncompress(char *file)
 	    (header1[1] == GZIP_MAGIC1 || header1[1] == GZIP_OMAGIC1))
 		method = FT_GZIP;
 	else
+
 #ifndef NO_BZIP2_SUPPORT
 	if (memcmp(header1, BZIP2_MAGIC, 3) == 0 &&
 	    header1[3] >= '0' && header1[3] <= '9') {
@@ -674,6 +680,7 @@ file_uncompress(char *file)
 # endif
 	} else
 #endif
+
 #ifndef NO_COMPRESS_SUPPORT
 	if (memcmp(header1, Z_MAGIC, 2) == 0) {
 # ifndef SMALL
@@ -772,6 +779,7 @@ close_it:
 		}
 	} else
 #endif
+
 #ifndef NO_COMPRESS_SUPPORT
 	if (method == FT_Z) {
 		FILE *in, *out;
@@ -874,7 +882,9 @@ close_it:
 		newfile = outfile;
 		unlink(file);
 		size = osb.st_size;
+#ifndef SMALL
 		copymodes(outfile, &isb);
+#endif
 	}
 	return (size);
 
@@ -1088,9 +1098,11 @@ static void
 print_list(int fd, off_t in, const char *outfile, time_t ts)
 {
 	static int first = 1;
+#ifndef SMALL
 	static off_t in_tot, out_tot;
-	off_t out;
 	u_int32_t crc;
+#endif
+	off_t out;
 	int rv;
 
 	if (first) {
@@ -1105,10 +1117,13 @@ print_list(int fd, off_t in, const char *outfile, time_t ts)
 	first = 0;
 
 	/* print totals? */
+#ifndef SMALL
 	if (fd == -1) {
 		in = in_tot;
 		out = out_tot;
-	} else {
+	} else
+#endif
+	{
 		/* read the last 4 bytes - this is the uncompressed size */
 		rv = lseek(fd, (off_t)(-8), SEEK_END);
 		if (rv != -1) {
@@ -1117,9 +1132,11 @@ print_list(int fd, off_t in, const char *outfile, time_t ts)
 
 			if (read(fd, (char *)buf, sizeof(buf)) != sizeof(buf))
 				maybe_err(1, "read of uncompressed size");
-			crc = buf[0] | buf[1] << 8 | buf[2] << 16 | buf[3] << 24;
 			usize = buf[4] | buf[5] << 8 | buf[6] << 16 | buf[7] << 24;
 			out = (off_t)usize;
+#ifndef SMALL
+			crc = buf[0] | buf[1] << 8 | buf[2] << 16 | buf[3] << 24;
+#endif
 		}
 	}
 
@@ -1134,12 +1151,12 @@ print_list(int fd, off_t in, const char *outfile, time_t ts)
 		date[12] = 0;
 		printf("%5s %08x %11s ", "defla"/*XXX*/, crc, date);
 	}
+	in_tot += in;
+	out_tot += out;
 #endif
 	printf("%12llu %12llu ", (unsigned long long)in, (unsigned long long)out);
 	print_ratio(in, out, stdout);
 	printf(" %s\n", outfile);
-	in_tot += in;
-	out_tot += out;
 }
 
 /* display the usage of NetBSD gzip */
@@ -1149,7 +1166,7 @@ usage(void)
 
 	fprintf(stderr, "%s\n", gzip_version);
 	fprintf(stderr,
-    "usage: %s [-cdfhnNqrStvV123456789] [<file> [<file> ...]]\n"
+    "usage: %s [-" OPT_LIST "] [<file> [<file> ...]]\n"
 #ifndef SMALL
     " -c --stdout          write to stdout, keep original files\n"
     "    --to-stdout\n"
@@ -1173,7 +1190,6 @@ usage(void)
     ,
 #endif
 	    getprogname());
-	fflush(stderr);
 	exit(0);
 }
 
@@ -1183,7 +1199,6 @@ display_version(void)
 {
 
 	fprintf(stderr, "%s\n", gzip_version);
-	fflush(stderr);
 	exit(0);
 }
 
