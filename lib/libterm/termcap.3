@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)termcap.3	6.6 (Berkeley) 4/19/91
-.\"	$Id: termcap.3,v 1.2 1993/08/01 07:40:40 mycroft Exp $
+.\"	$Id: termcap.3,v 1.3 1993/11/14 08:59:39 cgd Exp $
 .\"
 .Dd April 19, 1991
 .Dt TERMCAP 3
@@ -52,7 +52,7 @@
 .Fn tgetnum "char *id"
 .Fn tgetflag "char *id"
 .Ft char *
-.Fn tgetstr "char *id" "char *area"
+.Fn tgetstr "char *id" "char **area"
 .Ft char *
 .Fn tgoto "char *cm" destcol destline
 .Fn tputs "register char *cp" "int affcnt" "int (*outc)()"
