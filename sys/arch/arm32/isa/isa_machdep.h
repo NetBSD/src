@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.3 1998/07/08 04:54:47 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.4 1998/10/05 01:05:00 mark Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -163,11 +163,17 @@ extern struct arm32_isa_chipset isa_chipset_tag;
 #define VGA_BUF             0xA0000
 #define VGA_BUF_LEN         (0xBFFFF - 0xA0000)
 
-
 void		isa_init __P((vm_offset_t, vm_offset_t));
 void		isa_io_init __P((vm_offset_t, vm_offset_t));
 void		isa_dma_init __P((void));
 vm_offset_t	isa_io_data_vaddr __P((void));
 vm_offset_t	isa_mem_data_vaddr __P((void));
+int isa_intr_alloc  __P((isa_chipset_tag_t ic, int mask, int type, int *irq));
+
+/*
+ * Miscellanous functions.
+ */
+void sysbeep __P((int, int));		/* beep with the system speaker */
+void isa_fillw __P((u_short val, void *addr, size_t len));
 
 #endif	/* _ARM32_ISA_MACHDEP_H_ XXX */
