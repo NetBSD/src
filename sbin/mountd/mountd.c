@@ -1,4 +1,4 @@
-/*	$NetBSD: mountd.c,v 1.25 1995/06/18 10:59:21 cgd Exp $	*/
+/*	$NetBSD: mountd.c,v 1.26 1995/06/22 02:37:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mountd.c	8.8 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$NetBSD: mountd.c,v 1.25 1995/06/18 10:59:21 cgd Exp $";
+static char rcsid[] = "$NetBSD: mountd.c,v 1.26 1995/06/22 02:37:38 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -1989,7 +1989,8 @@ check_dirpath(dirp)
 		}
 		cp++;
 	}
-	if (lstat(dirp, &sb) < 0 || !S_ISDIR(sb.st_mode))
+	if (lstat(dirp, &sb) < 0 ||
+	    (!S_ISDIR(sb.st_mode) && !S_ISREG(sb.st_mode)))
 		ret = 0;
 	return (ret);
 }
