@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.65 1998/05/05 01:15:41 mrg Exp $
+# 	$NetBSD: GENERIC,v 1.66 1998/05/20 00:00:12 pk Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -242,6 +242,13 @@ ms0	at zs1 channel 1	# mouse
 zs2	at obio0 addr 0xe0000000 level 12 flags 0x103	# sun4/300
 zstty2	at zs2 channel 0	# ttyc
 zstty3	at zs2 channel 1	# ttyd
+
+
+## Magma Serial/Parallel driver
+magma*	at sbus? slot ? offset ?
+mtty*	at magma?
+mbpp*	at magma?
+
 
 #### Disk controllers and disks
 
