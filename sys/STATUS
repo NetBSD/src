@@ -32,9 +32,9 @@ Port		Status of		comments
 		GENERIC kernel
 alpha		compiles		asc untested
 
-amiga		not yet
+amiga		compiles
 
-amigappc	depends on amiga I guess
+amigappc	
 
 arc
 
@@ -42,9 +42,9 @@ arm26
 
 arm32
 
-atari
+atari		non-scsi issues
 
-bebox
+bebox		compiles
 
 cobalt
 
@@ -82,15 +82,15 @@ newsmips	compiles, sc & spifi works
 
 next68k
 
-ofppc
+ofppc		non-scsi issues
 
 pc532
 
 pmax		compiles		xasc works, asc,sii,xsii untested
 
-prep
+prep		compiles
 
-sandpoint
+sandpoint	
 
 sgimips
 
