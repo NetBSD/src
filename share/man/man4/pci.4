@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.7 1997/11/11 02:03:45 thorpej Exp $
+.\"	$NetBSD: pci.4,v 1.8 1997/11/11 05:50:28 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -34,14 +34,14 @@
 .Os NetBSD
 .Sh NAME
 .Nm pci
-.Nd introduction to PCI bus machine-independent drivers and support
+.Nd introduction to machine-independent PCI bus support and drivers
 .Sh SYNOPSIS
 .Pp
 .Cd "pci* at ppb? bus ?"
 .Pp
 Other
 .Nm
-attachments are machine-dependent and depends on the bus topology and
+attachments are machine-dependent and depend on the bus topology and
 PCI bus interface of your system.  See
 .Xr intro 4
 for your system for details.
@@ -51,7 +51,7 @@ includes a machine-independent PCI bus subsystem and
 several machine-independent PCI device drivers.
 .Pp
 Your system may support additional PCI devices.  Drivers for PCI
-devices listed here are machine-dependent.
+devices not listed here are machine-dependent.
 Consult your system's
 .Xr intro 4
 for additional information.
