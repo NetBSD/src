@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.9 1998/12/29 03:13:10 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.10 1999/01/03 01:00:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -369,7 +369,8 @@ usbioctl(dev, cmd, data, flag, p)
 			}
 		}
 		r = usbd_do_request_flags(sc->sc_bus->devices[addr],
-					  &ur->request, ptr, ur->flags);
+					  &ur->request, ptr, 
+					  ur->flags, &ur->actlen);
 		if (r) {
 			error = EIO;
 			goto ret;
