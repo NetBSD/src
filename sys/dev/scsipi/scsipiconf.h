@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.52 2001/05/21 15:50:46 mjacob Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.53 2001/06/13 18:17:42 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -197,6 +197,7 @@ struct scsipi_adapter {
 	int	adapt_refcnt;		/* adapter's reference count */
 	int	adapt_openings;		/* total # of command openings */
 	int	adapt_max_periph;	/* max openings per periph */
+	int	adapt_flags;
 
 	void	(*adapt_request) __P((struct scsipi_channel *,
 		    scsipi_adapter_req_t, void *));
@@ -209,6 +210,9 @@ struct scsipi_adapter {
 	int	(*adapt_accesschk) __P((struct scsipi_periph *,
 			struct scsipi_inquiry_pattern *));
 };
+
+/* adapt_flags */
+#define SCSIPI_ADAPT_POLL_ONLY	0x01 /* Adaptor can't do interrupts. */
 
 #define	scsipi_adapter_minphys(chan, bp)				\
 	(*(chan)->chan_adapter->adapt_minphys)((bp))
