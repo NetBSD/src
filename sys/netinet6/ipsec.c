@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.92 2004/02/11 10:42:24 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.93 2004/02/24 15:12:52 wiz Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.92 2004/02/11 10:42:24 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.93 2004/02/24 15:12:52 wiz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -346,7 +346,7 @@ ipsec_get_tag(m)
  *		0	: bypass
  *		EACCES	: discard packet.
  *		ENOENT	: ipsec_acquire() in progress, maybe.
- *		others	: error occured.
+ *		others	: error occurred.
  *	others:	a pointer to SP
  *
  * NOTE: IPv6 mapped adddress concern is implemented here.
@@ -514,7 +514,7 @@ ipsec4_getpolicybysock(m, dir, so, error)
  *		0	: bypass
  *		EACCES	: discard packet.
  *		ENOENT	: ipsec_acquire() in progress, maybe.
- *		others	: error occured.
+ *		others	: error occurred.
  */
 struct secpolicy *
 ipsec4_getpolicybyaddr(m, dir, flag, error)
@@ -579,7 +579,7 @@ ipsec4_getpolicybyaddr(m, dir, flag, error)
  *		0	: bypass
  *		EACCES	: discard packet.
  *		ENOENT	: ipsec_acquire() in progress, maybe.
- *		others	: error occured.
+ *		others	: error occurred.
  *	others:	a pointer to SP
  */
 struct secpolicy *
@@ -742,7 +742,7 @@ ipsec6_getpolicybysock(m, dir, so, error)
  *		0	: bypass
  *		EACCES	: discard packet.
  *		ENOENT	: ipsec_acquire() in progress, maybe.
- *		others	: error occured.
+ *		others	: error occurred.
  */
 #ifndef IP_FORWARDING
 #define IP_FORWARDING 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_usr.c,v 1.8 2003/07/03 10:59:12 drochner Exp $	*/
+/*	$NetBSD: smb_usr.c,v 1.9 2004/02/24 15:12:53 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_usr.c,v 1.8 2003/07/03 10:59:12 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_usr.c,v 1.9 2004/02/24 15:12:53 wiz Exp $");
  
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -163,7 +163,7 @@ out:
 /*
  * Connect to the resource specified by smbioc_ossn structure.
  * It may either find an existing connection or try to establish a new one.
- * If no errors occured smb_vc returned locked and referenced.
+ * If no errors occurred smb_vc returned locked and referenced.
  */
 int
 smb_usr_opensession(struct smbioc_ossn *dp, struct smb_cred *scred,

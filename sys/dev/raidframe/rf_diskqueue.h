@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.14 2004/01/01 19:27:36 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.15 2004/02/24 15:12:52 wiz Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -79,7 +79,7 @@ struct RF_DiskQueueData_s {
 	struct buf *bp;		/* a bp to use to get this I/O done */
 	/* TAILQ bits for a queue for completed I/O requests */
 	TAILQ_ENTRY(RF_DiskQueueData_s) iodone_entries; 
-	int  error;             /* Indicate if an error occured 
+	int  error;             /* Indicate if an error occurred 
 				   on this I/O (1=yes, 0=no) */
 };
 #define RF_LOCK_DISK_QUEUE   0x01

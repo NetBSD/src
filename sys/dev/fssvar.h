@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.4 2004/02/14 00:00:56 hannken Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.5 2004/02/24 15:12:51 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ struct fss_softc {
 	struct simplelock sc_slock;	/* Protect this softc */
 	volatile int	sc_flags;	/* Flags */
 #define FSS_ACTIVE	0x01		/* Snapshot is active */
-#define FSS_ERROR	0x02		/* I/o error occured */
+#define FSS_ERROR	0x02		/* I/O error occurred */
 #define FSS_BS_THREAD	0x04		/* Kernel thread is running */
 #define FSS_EXCL	0x08		/* Exclusive access granted */
 #define FSS_BS_ALLOC	0x10		/* Allocate backing store */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.4 2003/08/13 08:08:48 ragge Exp $	*/
+/*	$NetBSD: rf.c,v 1.5 2004/02/24 15:12:52 wiz Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.4 2003/08/13 08:08:48 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.5 2004/02/24 15:12:52 wiz Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -798,7 +798,7 @@ rfc_intr(void *intarg)
 
 		if ((rfc_sc->sc_curbuf->b_flags & B_ERROR) != 0) {
 			/* 
-			 * An error occured while processing this buffer. 
+			 * An error occurred while processing this buffer. 
 			 * Finish it and try to get a new buffer to process.
 			 * Return if there are no buffers in the queues.
 			 * This loops until the queues are empty or a new
@@ -916,7 +916,7 @@ rfc_intr(void *intarg)
 
 		if ((rfc_sc->sc_curbuf->b_flags & B_ERROR) != 0) {
 			/* 
-			 * An error occured while processing this buffer. 
+			 * An error occurred while processing this buffer. 
 			 * Finish it and try to get a new buffer to process.
 			 * Return if there are no buffers in the queues.
 			 * This loops until the queues are empty or a new

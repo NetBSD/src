@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxkireg.h,v 1.3 2003/01/28 22:19:29 wiz Exp $	*/
+/*	$NetBSD: emuxkireg.h,v 1.4 2004/02/24 15:12:52 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -423,7 +423,7 @@
 
 #define EMU_DBG		0x52
 #define EMU_DBG_ZC			0x80000000
-#define  EMU_DBG_SATURATION_OCCURED	0x02000000
+#define  EMU_DBG_SATURATION_OCCURRED	0x02000000
 #define  EMU_DBG_SATURATION_ADDR	0x01ff0000
 #define  EMU_DBG_SINGLE_STEP		0x00008000
 #define  EMU_DBG_STEP			0x00004000

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.27 2004/01/16 15:23:31 cl Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.28 2004/02/24 15:12:51 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.27 2004/01/16 15:23:31 cl Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.28 2004/02/24 15:12:51 wiz Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -171,7 +171,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		 * that synchronous instruction traps that occur inside
 		 * critical sections in this library (SIGFPE, SIGILL, SIGBUS,
 		 * SIGSEGV) won't be handled at the precise location where
-		 * they occured, that's okay, because (1) we don't use any FP
+		 * they occurred, that's okay, because (1) we don't use any FP
 		 * and (2) SIGILL/SIGBUS/SIGSEGV should really just core dump.
 		 *
 		 * This also means that a thread that was interrupted to take
