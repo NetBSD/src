@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.53 2004/08/07 01:55:06 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.54 2004/08/13 13:34:42 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.53 2004/08/07 01:55:06 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.54 2004/08/13 13:34:42 agc Exp $");
 #endif
 #endif
 
@@ -94,6 +94,13 @@ pkg_do(char *pkg)
 				}
 				strcpy(PlayPen, cp2);
 			} else {
+				if (!usedot) {
+					/* only recognise a local uninstalled package if usedot was given */
+					warnx("can't find package file '%s'", fname);
+					code = 1;
+					goto bail;
+				}
+
 				/*
 				 * Apply a crude heuristic to see how much space the package will
 				 * take up once it's unpacked.  I've noticed that most packages
