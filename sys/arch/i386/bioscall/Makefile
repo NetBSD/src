@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.13 2003/10/26 07:25:36 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2003/12/25 21:02:58 jmc Exp $
 
 CPPFLAGS=	${APMCPPFLAGS}
 KSRC=${.CURDIR}/../../..
 ARCHSRC=${.CURDIR}/../..
 I386=${KSRC}/arch/i386
+X86=${KSRC}/arch/x86
 CPPFLAGS+=-I${ARCHSRC} -I${KSRC} -I${.CURDIR} -I${.OBJDIR} -D_LKM
 
 SRCS=	biostramp.S
@@ -19,6 +20,9 @@ biostramp.inc: biostramp.bin Makefile
 
 machine:
 	@rm -f machine && ln -s ${I386}/include machine
+
+x86:
+	@rm -f x86 && ln -s ${X86}/include x86
 
 .include <bsd.own.mk>
 
@@ -40,7 +44,7 @@ biostramp.bin: biostramp.obj
 biostramp.obj: ${OBJS} ${DEPS}
 	${LD} -Bstatic -N -Ttext 0 -e do_bios_call -o $@ $(OBJS)
 
-assym.h: machine ${KSRC}/kern/genassym.sh genassym.cf
+assym.h: machine x86 ${KSRC}/kern/genassym.sh genassym.cf
 	${HOST_SH} ${KSRC}/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
 	    < ${.CURDIR}/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
