@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_pci.c,v 1.3 1998/08/29 13:54:50 dante Exp $	*/
+/*	$NetBSD: adv_pci.c,v 1.4 1998/08/31 17:15:25 dante Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
@@ -15,43 +15,37 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *    This product includes software developed by the NetBSD
- *    Foundation, Inc. and its contributors.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 /*
  * Device probe and attach routines for the following
  * Advanced Systems Inc. SCSI controllers:
  *
  *    Connectivity Products:
- *      ABP510/5150 - Bus-Master ISA (240 CDB) (Footnote 1)
- *      ABP5140 - Bus-Master ISA PnP (16 CDB) (Footnote 1, 3)
- *      ABP5142 - Bus-Master ISA PnP with floppy (16 CDB) (Footnote 4)
  *      ABP920 - Bus-Master PCI (16 CDB)
- *      ABP930 - Bus-Master PCI (16 CDB) (Footnote 5)
+ *      ABP930 - Bus-Master PCI (16 CDB)		(Footnote 2)
  *      ABP930U - Bus-Master PCI Ultra (16 CDB)
  *      ABP930UA - Bus-Master PCI Ultra (16 CDB)
- *      ABP960 - Bus-Master PCI MAC/PC (16 CDB) (Footnote 2)
- *      ABP960U - Bus-Master PCI MAC/PC Ultra (16 CDB) (Footnote 2)
+ *      ABP960 - Bus-Master PCI MAC/PC (16 CDB)		(Footnote 1)
+ *      ABP960U - Bus-Master PCI MAC/PC Ultra (16 CDB)	(Footnote 1)
  *
  *   Single Channel Products:
- *      ABP542 - Bus-Master ISA with floppy (240 CDB)
- *      ABP742 - Bus-Master EISA (240 CDB)
- *      ABP842 - Bus-Master VL (240 CDB)
  *      ABP940 - Bus-Master PCI (240 CDB)
  *      ABP940U - Bus-Master PCI Ultra (240 CDB)
  *      ABP970 - Bus-Master PCI MAC/PC (240 CDB)
@@ -59,21 +53,13 @@
  *      ABP940UW - Bus-Master PCI Ultra-Wide (240 CDB)
  *
  *   Multi Channel Products:
- *      ABP752 - Dual Channel Bus-Master EISA (240 CDB Per Channel)
- *      ABP852 - Dual Channel Bus-Master VL (240 CDB Per Channel)
  *      ABP950 - Dual Channel Bus-Master PCI (240 CDB Per Channel)
  *      ABP980 - Four Channel Bus-Master PCI (240 CDB Per Channel)
  *      ABP980U - Four Channel Bus-Master PCI Ultra (240 CDB Per Channel)
  *
  *   Footnotes:
- *     1. This board has been shipped by HP with the 4020i CD-R drive.
- *        The board has no BIOS so it cannot control a boot device, but
- *        it can control any secondary SCSI device.
- *     2. This board has been sold by Iomega as a Jaz Jet PCI adapter.
- *     3. This board has been sold by SIIG as the i540 SpeedMaster.
- *     4. This board has been sold by SIIG as the i542 SpeedMaster.
- *     5. This board has been sold by SIIG as the Fast SCSI Pro PCI.
- *
+ *     1. This board has been sold by Iomega as a Jaz Jet PCI adapter.
+ *     2. This board has been sold by SIIG as the Fast SCSI Pro PCI.
  */
 
 #include <sys/types.h>
@@ -104,16 +90,12 @@
 
 /******************************************************************************/
 
-#ifdef	__BROKEN_INDIRECT_CONFIG
-int adv_pci_probe __P((struct device *, void *, void *));
-#else
-int adv_pci_probe __P((struct device *, struct cfdata *, void *));
-#endif
-void adv_pci_attach __P((struct device *, struct device *, void *));
+int	adv_pci_match __P((struct device *, struct cfdata *, void *));
+void	adv_pci_attach __P((struct device *, struct device *, void *));
 
 struct cfattach adv_pci_ca =
 {
-	sizeof(ASC_SOFTC), adv_pci_probe, adv_pci_attach
+	sizeof(ASC_SOFTC), adv_pci_match, adv_pci_attach
 };
 
 /******************************************************************************/
@@ -122,13 +104,11 @@ struct cfattach adv_pci_ca =
  * If we find one, note it's address (slot) and call
  * the actual probe routine to check it out.
  */
-#ifdef	__BROKEN_INDIRECT_CONFIG
 int 
-adv_pci_probe(struct device * parent, void *match, void *aux)
-#else
-int 
-adv_pci_probe(struct device * parent, struct cfdata * match, void *aux)
-#endif
+adv_pci_match(parent, match, aux)
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
 {
 	struct pci_attach_args *pa = aux;
 
@@ -147,7 +127,9 @@ adv_pci_probe(struct device * parent, struct cfdata * match, void *aux)
 
 
 void 
-adv_pci_attach(struct device * parent, struct device * self, void *aux)
+adv_pci_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
 	struct pci_attach_args *pa = aux;
 	ASC_SOFTC      *sc = (void *) self;
@@ -163,21 +145,21 @@ adv_pci_attach(struct device * parent, struct device * self, void *aux)
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ADVSYS)
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_ADVSYS_1200A:
-			printf(": AdvanSys ASC1200A SCSI\n");
+			printf(": AdvanSys ASC1200A SCSI adapter\n");
 			break;
 
 		case PCI_PRODUCT_ADVSYS_1200B:
-			printf(": AdvanSys ASC1200B SCSI\n");
+			printf(": AdvanSys ASC1200B SCSI adapter\n");
 			break;
 
 		case PCI_PRODUCT_ADVSYS_ULTRA:
 			switch (PCI_REVISION(pa->pa_class)) {
 			case ASC_PCI_REVISION_3050:
-				printf(": AdvanSys ASC3150 Ultra SCSI\n");
+				printf(": AdvanSys ABP-9xxUA SCSI adapter\n");
 				break;
 
 			case ASC_PCI_REVISION_3150:
-				printf(": AdvanSys ASC3050 Ultra SCSI\n");
+				printf(": AdvanSys ABP-9xxU SCSI adapter\n");
 				break;
 			}
 			break;
@@ -217,12 +199,14 @@ adv_pci_attach(struct device * parent, struct device * self, void *aux)
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_1200A ||
 		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_1200B) {
 			bhlcr &= 0xFFFF00FFul;
-			pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG, bhlcr);
+			pci_conf_write(pa->pa_pc, pa->pa_tag,
+					PCI_BHLC_REG, bhlcr);
 		} else if ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_ULTRA) &&
 			   (PCI_LATTIMER(bhlcr) < 0x20)) {
 			bhlcr &= 0xFFFF00FFul;
 			bhlcr |= 0x00002000ul;
-			pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG, bhlcr);
+			pci_conf_write(pa->pa_pc, pa->pa_tag,
+					PCI_BHLC_REG, bhlcr);
 		}
 	}
 
