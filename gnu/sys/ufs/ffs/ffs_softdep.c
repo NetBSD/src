@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.10 2000/05/27 06:51:30 thorpej Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.11 2000/05/30 17:26:08 mycroft Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -3896,6 +3896,7 @@ softdep_sync_metadata(v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct inodedep *inodedep;
 	struct pagedep *pagedep;
 	struct allocdirect *adp;
 	struct allocindir *aip;
@@ -3942,10 +3943,8 @@ softdep_sync_metadata(v)
 	 */
 	waitfor = MNT_NOWAIT;
 top:
-	if (getdirtybuf(&vp->v_dirtyblkhd.lh_first, MNT_WAIT) == 0) {
-		FREE_LOCK(&lk);
-		return (0);
-	}
+	if (getdirtybuf(&vp->v_dirtyblkhd.lh_first, MNT_WAIT) == 0)
+		goto clean;
 	bp = vp->v_dirtyblkhd.lh_first;
 loop:
 	/*
@@ -4120,23 +4119,33 @@ loop:
 	 * then we are done. For certain directories and block
 	 * devices, we may need to do further work.
 	 */
-	if (vp->v_dirtyblkhd.lh_first == NULL) {
+	if (vp->v_dirtyblkhd.lh_first != NULL) {
 		FREE_LOCK(&lk);
-		return (0);
+		/*
+		 * If we are trying to sync a block device, some of its buffers
+		 * may contain metadata that cannot be written until the
+		 * contents of some partially written files have been written
+		 * to disk. The only easy way to accomplish this is to sync the
+		 * entire filesystem (luckily this happens rarely).
+		 */
+		if (vp->v_type == VBLK && vp->v_specmountpoint &&
+		    !VOP_ISLOCKED(vp) &&
+		    (error = VFS_SYNC(vp->v_specmountpoint, MNT_WAIT,
+		     ap->a_cred, ap->a_p)) != 0)
+			return (error);
+		ACQUIRE_LOCK(&lk);
 	}
 
-	FREE_LOCK(&lk);
+clean:
 	/*
-	 * If we are trying to sync a block device, some of its buffers may
-	 * contain metadata that cannot be written until the contents of some
-	 * partially written files have been written to disk. The only easy
-	 * way to accomplish this is to sync the entire filesystem (luckily
-	 * this happens rarely).
+	 * If there is still an inodedep, we know that the inode has pending
+	 * modifications, and we must force it to be flushed to disk.  We do
+	 * this by explicitly setting IN_MODIFIED so that ffs_update() will
+	 * see it.
 	 */
-	if (vp->v_type == VBLK && vp->v_specmountpoint && !VOP_ISLOCKED(vp) &&
-	    (error = VFS_SYNC(vp->v_specmountpoint, MNT_WAIT, ap->a_cred,
-	     ap->a_p)) != 0)
-		return (error);
+	if (inodedep_lookup(VTOI(vp)->i_fs, VTOI(vp)->i_number, 0, &inodedep))
+		VTOI(vp)->i_flag |= IN_MODIFIED;
+	FREE_LOCK(&lk);
 	return (0);
 }
 
