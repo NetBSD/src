@@ -1,7 +1,4 @@
-/*	$NetBSD: endian.h,v 1.4 1997/10/20 09:57:05 jonathan Exp $	*/
+/*	$NetBSD: endian.h,v 1.5 1999/01/24 12:56:52 mycroft Exp $	*/
 
-/*
- * Define the order of bytes in a 32-bit word.
- */
 #define _BYTE_ORDER _LITTLE_ENDIAN
 #include <mips/endian.h>

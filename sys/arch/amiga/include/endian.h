@@ -1,8 +1,3 @@
-/*	$NetBSD: endian.h,v 1.7 1994/10/26 02:06:09 cgd Exp $	*/
-
-#ifndef _MACHINE_ENDIAN_H_
-#define _MACHINE_ENDIAN_H_
+/*	$NetBSD: endian.h,v 1.8 1999/01/24 12:56:51 mycroft Exp $	*/
 
 #include <m68k/endian.h>
-
-#endif
