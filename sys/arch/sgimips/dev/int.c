@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.6 2004/03/25 15:16:11 pooka Exp $	*/
+/*	$NetBSD: int.c,v 1.7 2004/04/11 12:05:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.6 2004/03/25 15:16:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.7 2004/04/11 12:05:37 pooka Exp $");
 
 #include "opt_cputype.h"
 
@@ -66,7 +66,6 @@ static void	int_attach(struct device *, struct device *, void *);
 void 		int_local0_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 void		int_local1_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 int 		int_mappable_intr(void *);
-void		int_intr(u_int, u_int, u_int, u_int);
 void		*int_intr_establish(int, int, int (*)(void *), void *);
 unsigned long	int_cal_timer(void);
 void		int_8254_cal(void);
@@ -99,8 +98,7 @@ int_attach(struct device *parent, struct device *self, void *aux)
 			address = INT_IP22;
 		else
 			address = INT_IP24;
-	}
-	else
+	} else
 		panic("\nint0: passed match, but failed attach?");
 
 	printf(" addr 0x%x", address);
@@ -367,19 +365,19 @@ int_8254_cal(void)
 
 	s = splhigh();
 
-	bus_space_write_1(iot, ioh, INT2_TIMER_CLEAR + 15,
+	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 15,
                                 TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT); 
-	bus_space_write_1(iot, ioh, INT2_TIMER_CLEAR + 3, (20000 / hz) % 256);
+	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 3, (20000 / hz) % 256);
 	wbflush();
 	delay(4);
-	bus_space_write_1(iot, ioh, INT2_TIMER_CLEAR + 3, (20000 / hz) / 256);
+	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 3, (20000 / hz) / 256);
 
-	bus_space_write_1(iot, ioh, INT2_TIMER_CLEAR + 15,
+	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 15,
                                 TIMER_SEL2|TIMER_RATEGEN|TIMER_16BIT); 
-	bus_space_write_1(iot, ioh, INT2_TIMER_CLEAR + 11, 50);
+	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 11, 50);
 	wbflush();
 	delay(4);
-	bus_space_write_1(iot, ioh, INT2_TIMER_CLEAR + 11, 0);
+	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 11, 0);
 	splx(s);
 }
 
