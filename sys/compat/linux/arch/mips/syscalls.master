@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.1 2001/09/22 21:14:37 manu Exp $  
+	$NetBSD: syscalls.master,v 1.2 2001/09/30 20:52:41 manu Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -257,7 +257,8 @@
 147	STD		{ int linux_sys_cacheflush(void *addr, \
 			    int bytes, int cache); }
 148	UNIMPL		cachectl
-149	UNIMPL		sysmips
+149	STD		{ int linux_sys_sysmips(int cmd, int arg1, \
+			    int arg2, int arg3); }
 150	UNIMPL
 151	NOARGS		{ pid_t sys_getsid(pid_t pid); }
 152	STD		{ int linux_sys_fdatasync(int fd); }
@@ -346,12 +347,18 @@
 208	UNIMPL
 209	UNIMPL
 210	UNIMPL		mmap2
-211	UNIMPL		truncate64
+211	STD		{ int linux_sys_truncate64(const char *path, \
+			    off_t length); }
 212	UNIMPL		ftruncate64
-213	UNIMPL		stat64
-214	UNIMPL		lstat64
-215	UNIMPL		fstat64
+213	STD		{ int linux_sys_stat64(const char *path, \
+			     struct linux_stat64 *sp); }
+214	STD		{ int linux_sys_lstat64(const char *path, \
+			     struct linux_stat64 *sp); }
+215	STD		{ int linux_sys_fstat64(int fd, \
+			     struct linux_stat64 *sp); }
 216	UNIMPL		pivot_root
 217	UNIMPL		mincore
 218	UNIMPL		modvise
 219	UNIMPL		getdents64
+220	STD		{ int linux_sys_fcntl64(unsigned int fd, \
+			    unsigned int cmd, unsigned long arg); }

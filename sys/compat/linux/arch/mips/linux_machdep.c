@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.1 2001/09/22 21:19:10 manu Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.2 2001/09/30 20:52:40 manu Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@
 #include <sys/exec_elf.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
+#include <sys/sysctl.h>
 #include <miscfs/specfs/specdev.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -200,7 +201,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	f->f_regs[A2] = (int)&fp->lsf_sc;
 
 	f->f_regs[SP] = (int)fp;
-	f->f_regs[RA] = (int)fp->lsf_code;
+	f->f_regs[RA] = (int)p->p_sigctx.ps_sigcode;
 	f->f_regs[T9] = (int)catcher;
 	f->f_regs[PC] = (int)catcher;
 
@@ -350,11 +351,11 @@ linux_sys_new_uname(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	return linux_sys_uname(p, v, retval); 
+	return linux_sys_uname(p, v, retval);
 }
 
 /*
- * In Linux, cacheflush is icurrently mplemented
+ * In Linux, cacheflush is icurrently implemented
  * as a whole cache flush (arguments are ignored)
  * we emulate this broken beahior.
  */
@@ -368,3 +369,58 @@ linux_sys_cacheflush(p, v, retval)
 	return 0;
 }
 
+/*
+ * This system call is depecated in Linux, but 
+ * some binaries and some libraries use it.
+ */
+int
+linux_sys_sysmips(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_sysmips_args {
+		syscallarg(int) cmd;
+		syscallarg(int) arg1;
+		syscallarg(int) arg2;
+		syscallarg(int) arg3;
+	} *uap = v;
+	int error;
+	
+	switch (SCARG(uap, cmd)) {
+	case LINUX_SETNAME: {
+		char nodename [LINUX___NEW_UTS_LEN + 1];
+		int name;
+		size_t len;
+
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			return error;
+		if ((error = copyinstr((char *)SCARG(uap, arg1), nodename, 
+		    LINUX___NEW_UTS_LEN, &len)) != 0)
+			return error;
+
+		name = KERN_HOSTNAME;
+		return (kern_sysctl(&name, 1, 0, 0, nodename, len, p));
+		
+		break;
+	}
+	case LINUX_MIPS_ATOMIC_SET:	/* XXX not implemented */
+		break;
+	case LINUX_MIPS_FIXADE:		/* XXX not implemented */
+		break;
+	case LINUX_FLUSH_CACHE:
+		MachFlushCache();
+		break;
+	case LINUX_MIPS_RDNVRAM:
+		return EIO;
+		break;
+	default:
+		return EINVAL;
+		break;
+	}
+#if 1 /* def DEBUG_LINUX */
+	printf("linux_sys_sysmips(): unimplemented command %d\n", 
+	    SCARG(uap,cmd));	
+#endif /* DEBUG_LINUX */
+	return 0;
+}

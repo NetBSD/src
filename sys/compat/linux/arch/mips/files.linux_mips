@@ -1,4 +1,4 @@
-#	$NetBSD: files.linux_mips,v 1.1 2001/09/22 21:19:10 manu Exp $
+#	$NetBSD: files.linux_mips,v 1.2 2001/09/30 20:52:40 manu Exp $
 #
 # Config file description for mips-dependent Linux compat code.
 
@@ -16,3 +16,4 @@ file	compat/linux/common/linux_sigaction.c		compat_linux
 file	compat/linux/common/linux_socketcall.c		compat_linux
 file	compat/linux/common/linux_llseek.c		compat_linux
 file	compat/linux/common/linux_olduname.c		compat_linux
+file	compat/linux/common/linux_file64.c		compat_linux
