@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.2 2001/02/23 22:02:43 bjh21 Exp $	*/
+/*	$NetBSD: types.h,v 1.3 2001/04/28 15:41:31 kleink Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #define	_ARM_TYPES_H_
 
 #include <sys/cdefs.h>
-#include <machine/int_types.h>
+#include <arm/int_types.h>
 
 #if defined(_KERNEL)
 typedef struct label_t {	/* Used by setjmp & longjmp */
@@ -58,21 +58,7 @@ typedef vm_offset_t	vaddr_t;
 typedef vm_size_t	vsize_t;
 #endif
 
-/*
- * Basic integral types.  Omit the typedef if
- * not possible for a machine/compiler combination.
- */
-#define	__BIT_TYPES_DEFINED__
-typedef	__int8_t	   int8_t;
-typedef	__uint8_t	 u_int8_t;
-typedef	__int16_t	  int16_t;
-typedef	__uint16_t	u_int16_t;
-typedef	__int32_t	  int32_t;
-typedef	__uint32_t	u_int32_t;
-typedef	__int64_t	  int64_t;
-typedef	__uint64_t	u_int64_t;
-
-typedef int32_t                 register_t;
+typedef int		register_t;
 
 #define __HAVE_MINIMAL_EMUL
 

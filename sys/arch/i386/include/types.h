@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.28 2001/04/14 06:49:32 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.29 2001/04/28 15:41:31 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -55,21 +55,7 @@ typedef unsigned long	vaddr_t;
 typedef unsigned long	vsize_t;
 #endif
 
-/*
- * Basic integral types.  Omit the typedef if
- * not possible for a machine/compiler combination.
- */
-#define	__BIT_TYPES_DEFINED__
-typedef	__int8_t	   int8_t;
-typedef	__uint8_t	 u_int8_t;
-typedef	__int16_t	  int16_t;
-typedef	__uint16_t	u_int16_t;
-typedef	__int32_t	  int32_t;
-typedef	__uint32_t	u_int32_t;
-typedef	__int64_t	  int64_t;
-typedef	__uint64_t	u_int64_t;
-
-typedef int32_t			register_t;
+typedef int		register_t;
 
 /* The x86 does not have strict alignment requirements. */
 #define	__NO_STRICT_ALIGNMENT

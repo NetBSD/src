@@ -1,6 +1,6 @@
-/* $NetBSD: types.h,v 1.21 2001/04/28 15:41:31 kleink Exp $ */
+/*	$NetBSD: strtoumax.c,v 1.1 2001/04/28 15:41:30 kleink Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -31,39 +31,98 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)types.h	8.3 (Berkeley) 1/5/94
  */
 
-#ifndef	_MACHTYPES_H_
-#define	_MACHTYPES_H_
-
 #include <sys/cdefs.h>
-#include <machine/int_types.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
+static char sccsid[] = "from: @(#)strtoul.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: strtoumax.c,v 1.1 2001/04/28 15:41:30 kleink Exp $");
+#endif
+#endif /* LIBC_SCCS and not lint */
 
-#if defined(_KERNEL)
-typedef struct label_t {
-	long	val[10];
-} label_t;
+#include "namespace.h"
+#include <assert.h>
+#include <ctype.h>
+#include <errno.h>
+#include <inttypes.h>
+
+#ifdef __weak_alias
+__weak_alias(strtoumax, _strtoumax)
 #endif
 
-/* NB: This should probably be if defined(_KERNEL) */
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
-typedef unsigned long	paddr_t;
-typedef unsigned long	psize_t;
-typedef unsigned long	vaddr_t;
-typedef unsigned long	vsize_t;
-#endif
+/*
+ * Convert a string to an uintmax_t.
+ *
+ * Ignores `locale' stuff.  Assumes that the upper and lower case
+ * alphabets and digits are each contiguous.
+ */
+uintmax_t
+strtoumax(nptr, endptr, base)
+	const char *nptr;
+	char **endptr;
+	int base;
+{
+	const char *s;
+	uintmax_t acc, cutoff;
+	int c;
+	int neg, any, cutlim;
 
-typedef long int	register_t;
+	_DIAGASSERT(nptr != NULL);
+	/* endptr may be NULL */
 
-#define __HAVE_DEVICE_REGISTER
-#define	__HAVE_GENERIC_SOFT_INTERRUPTS
-#define __HAVE_NWSCONS
-#define	__HAVE_ATOMIC_OPERATIONS
-#define	__HAVE_CPU_COUNTER
-#define __HAVE_SYSCALL_INTERN
-#define	__HAVE_MINIMAL_EMUL
-#define	__HAVE_AST_PERPROC
+	/*
+	 * See strtol for comments as to the logic used.
+	 */
+	s = nptr;
+	do {
+		c = (unsigned char) *s++;
+	} while (isspace(c));
+	if (c == '-') {
+		neg = 1;
+		c = *s++;
+	} else {
+		neg = 0;
+		if (c == '+')
+			c = *s++;
+	}
+	if ((base == 0 || base == 16) &&
+	    c == '0' && (*s == 'x' || *s == 'X')) {
+		c = s[1];
+		s += 2;
+		base = 16;
+	}
+	if (base == 0)
+		base = c == '0' ? 8 : 10;
 
-#endif	/* _MACHTYPES_H_ */
+	cutoff = UINTMAX_MAX / (uintmax_t)base;
+	cutlim = (int)(UINTMAX_MAX % (uintmax_t)base);
+	for (acc = 0, any = 0;; c = (unsigned char) *s++) {
+		if (isdigit(c))
+			c -= '0';
+		else if (isalpha(c))
+			c -= isupper(c) ? 'A' - 10 : 'a' - 10;
+		else
+			break;
+		if (c >= base)
+			break;
+		if (any < 0)
+			continue;
+		if (acc > cutoff || (acc == cutoff && c > cutlim)) {
+			any = -1;
+			acc = UINTMAX_MAX;
+			errno = ERANGE;
+		} else {
+			any = 1;
+			acc *= (uintmax_t)base;
+			acc += c;
+		}
+	}
+	if (neg && any > 0)
+		acc = -acc;
+	if (endptr != 0)
+		/* LINTED interface specification */
+		*endptr = (char *)(any ? s - 1 : nptr);
+	return (acc);
+}

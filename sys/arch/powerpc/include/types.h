@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.11 2001/03/04 03:25:34 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.12 2001/04/28 15:41:32 kleink Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -35,7 +35,7 @@
 #define	_MACHTYPES_H_
 
 #include <sys/cdefs.h>
-#include <machine/int_types.h>
+#include <powerpc/int_types.h>
 
 #if defined(_KERNEL)
 typedef struct label_t {
@@ -49,21 +49,7 @@ typedef	unsigned long	paddr_t, vaddr_t;
 typedef	unsigned long	psize_t, vsize_t;
 #endif
 
-/*
- * Basic integral types.  Omit the typedef if
- * not possible for a machine/compiler combination.
- */
-#define	__BIT_TYPES_DEFINED__
-typedef	__int8_t	   int8_t;
-typedef	__uint8_t	 u_int8_t;
-typedef	__int16_t	  int16_t;
-typedef	__uint16_t	u_int16_t;
-typedef	__int32_t	  int32_t;
-typedef	__uint32_t	u_int32_t;
-typedef	__int64_t	  int64_t;
-typedef	__uint64_t	u_int64_t;
-
-typedef	int32_t			register_t;
+typedef int		register_t;
 
 #define __HAVE_CPU_COUNTER
 
