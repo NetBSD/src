@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.15 2001/05/26 21:27:10 chs Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.16 2001/07/07 07:51:38 scw Exp $	*/
 
 /*
  * This file was taken from from next68k/dev/bus_dma.c, which was originally
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.15 2001/05/26 21:27:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.16 2001/07/07 07:51:38 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
 
-	bzero(mapstore, mapsize);
+	memset(mapstore, 0, mapsize);
 	map = (struct mvme68k_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
