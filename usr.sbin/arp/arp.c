@@ -42,13 +42,12 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$Id: arp.c,v 1.7 1995/02/26 20:16:49 chopps Exp $";
+static char *rcsid = "$Id: arp.c,v 1.8 1995/02/27 22:00:14 chopps Exp $";
 #endif /* not lint */
 
 /*
  * arp - display, set, and delete arp table entries
  */
-
 
 #include <sys/param.h>
 #include <sys/file.h>
@@ -59,24 +58,35 @@ static char *rcsid = "$Id: arp.c,v 1.7 1995/02/26 20:16:49 chopps Exp $";
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/route.h>
-
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-
 #include <arpa/inet.h>
 
 #include <netdb.h>
 #include <errno.h>
+#include <err.h>
 #include <nlist.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <paths.h>
 
-extern int errno;
+int delete __P((const char *, const char *));
+void dump __P((u_long));
+int ether_aton __P((const char *, u_char *));
+void ether_print __P((const u_char *));
+int file __P((char *));
+void get __P((const char *));
+int getinetaddr __P((const char *, struct in_addr *));
+void getsocket __P((void));
+int rtmsg __P((int));
+int set __P((int, char **));
+void usage __P((void));
+
 static int pid;
-static int kflag;
 static int nflag;
 static int s = -1;
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -88,58 +98,58 @@ main(argc, argv)
 		switch((char)ch) {
 		case 'a':
 			dump(0);
-			exit(0);
+			return (0);
 		case 'd':
 			if (argc < 3 || argc > 4)
 				usage();
-			delete(argv[2], argv[3]);
-			exit(0);
+			(void)delete(argv[2], argv[3]);
+			return (0);
 		case 'n':
 			nflag = 1;
-			continue;
+			break;
 		case 's':
 			if (argc < 4 || argc > 7)
 				usage();
-			exit(set(argc-2, &argv[2]) ? 1 : 0);
+			return (set(argc-2, &argv[2]) ? 1 : 0);
 		case 'f':
 			if (argc != 3)
 				usage();
-			exit(file(argv[2]));
+			return (file(argv[2]));
 		case '?':
 		default:
 			usage();
 		}
-	if (argc != 2)
+	if (argc == 2 || (argc == 3 && nflag))
+		get(argv[argc - 1]);
+	else
 		usage();
-	get(argv[1]);
-	exit(0);
+	return (0);
 }
 
 /*
  * Process a file to set standard arp entries
  */
+int
 file(name)
 	char *name;
 {
-	FILE *fp;
-	int i, retval;
 	char line[100], arg[5][50], *args[5];
+	int i, retval;
+	FILE *fp;
 
-	if ((fp = fopen(name, "r")) == NULL) {
-		fprintf(stderr, "arp: cannot open %s\n", name);
-		exit(1);
-	}
+	if ((fp = fopen(name, "r")) == NULL)
+		err(1, "cannot open %s", name);
 	args[0] = &arg[0][0];
 	args[1] = &arg[1][0];
 	args[2] = &arg[2][0];
 	args[3] = &arg[3][0];
 	args[4] = &arg[4][0];
 	retval = 0;
-	while(fgets(line, 100, fp) != NULL) {
+	while (fgets(line, 100, fp) != NULL) {
 		i = sscanf(line, "%s %s %s %s %s", arg[0], arg[1], arg[2],
 		    arg[3], arg[4]);
 		if (i < 2) {
-			fprintf(stderr, "arp: bad line: %s\n", line);
+			warnx("bad line: %s", line);
 			retval = 1;
 			continue;
 		}
@@ -150,14 +160,14 @@ file(name)
 	return (retval);
 }
 
-getsocket() {
-	if (s < 0) {
-		s = socket(PF_ROUTE, SOCK_RAW, 0);
-		if (s < 0) {
-			perror("arp: socket");
-			exit(1);
-		}
-	}
+void
+getsocket()
+{
+	if (s >= 0)
+		return;
+	s = socket(PF_ROUTE, SOCK_RAW, 0);
+	if (s < 0)
+		err(1, "socket");
 }
 
 struct	sockaddr_in so_mask = {8, 0, 0, { 0xffffffff}};
@@ -172,32 +182,28 @@ struct	{
 /*
  * Set an individual arp entry 
  */
+int
 set(argc, argv)
 	int argc;
 	char **argv;
 {
-	struct hostent *hp;
-	register struct sockaddr_inarp *sin = &sin_m;
+	register struct sockaddr_inarp *sin;
 	register struct sockaddr_dl *sdl;
-	register struct rt_msghdr *rtm = &(m_rtmsg.m_rtm);
+	register struct rt_msghdr *rtm;
 	u_char *ea;
-	char *host = argv[0], *eaddr = argv[1];
+	char *host = argv[0], *eaddr;
+
+	sin = &sin_m;
+	rtm = &(m_rtmsg.m_rtm);
+	eaddr = argv[1];
 
 	getsocket();
 	argc -= 2;
 	argv += 2;
-	sdl_m = blank_sdl;
-	sin_m = blank_sin;
-	sin->sin_addr.s_addr = inet_addr(host);
-	if (sin->sin_addr.s_addr == -1) {
-		if (!(hp = gethostbyname(host))) {
-			fprintf(stderr, "arp: %s: ", host);
-			herror((char *)NULL);
-			return (1);
-		}
-		bcopy((char *)hp->h_addr, (char *)&sin->sin_addr,
-		    sizeof sin->sin_addr);
-	}
+	sdl_m = blank_sdl;		/* struct copy */
+	sin_m = blank_sin;		/* struct copy */
+	if (getinetaddr(host, &sin->sin_addr) == -1)
+		return (1);
 	ea = (u_char *)LLADDR(&sdl_m);
 	if (ether_aton(eaddr, ea) == 0)
 		sdl_m.sdl_alen = 6;
@@ -205,21 +211,22 @@ set(argc, argv)
 	while (argc-- > 0) {
 		if (strncmp(argv[0], "temp", 4) == 0) {
 			struct timeval time;
-			gettimeofday(&time, 0);
+			(void)gettimeofday(&time, 0);
 			expire_time = time.tv_sec + 20 * 60;
 		}
 		else if (strncmp(argv[0], "pub", 3) == 0) {
 			flags |= RTF_ANNOUNCE;
 			doing_proxy = SIN_PROXY;
 		} else if (strncmp(argv[0], "trail", 5) == 0) {
-			printf("%s: Sending trailers is no longer supported\n",
-				host);
+			(void)printf(
+			    "%s: Sending trailers is no longer supported\n",
+			     host);
 		}
 		argv++;
 	}
 tryagain:
 	if (rtmsg(RTM_GET) < 0) {
-		perror(host);
+		warn("%s", host);
 		return (1);
 	}
 	sin = (struct sockaddr_inarp *)(rtm + 1);
@@ -233,12 +240,13 @@ tryagain:
 			goto overwrite;
 		}
 		if (doing_proxy == 0) {
-			printf("set: can only proxy for %s\n", host);
+			(void)printf("set: can only proxy for %s\n", host);
 			return (1);
 		}
 		if (sin_m.sin_other & SIN_PROXY) {
-			printf("set: proxy entry exists for non 802 device\n");
-			return(1);
+			(void)printf(
+			    "set: proxy entry exists for non 802 device\n");
+			return (1);
 		}
 		sin_m.sin_other = SIN_PROXY;
 		export_only = 1;
@@ -246,7 +254,8 @@ tryagain:
 	}
 overwrite:
 	if (sdl->sdl_family != AF_LINK) {
-		printf("cannot intuit interface index and type for %s\n", host);
+		(void)printf("cannot intuit interface index and type for %s\n",
+		    host);
 		return (1);
 	}
 	sdl_m.sdl_type = sdl->sdl_type;
@@ -257,28 +266,21 @@ overwrite:
 /*
  * Display an individual arp entry
  */
+void
 get(host)
-	char *host;
+	const char *host;
 {
-	struct hostent *hp;
-	struct sockaddr_inarp *sin = &sin_m;
+	struct sockaddr_inarp *sin;
 	u_char *ea;
 
-	sin_m = blank_sin;
-	sin->sin_addr.s_addr = inet_addr(host);
-	if (sin->sin_addr.s_addr == -1) {
-		if (!(hp = gethostbyname(host))) {
-			fprintf(stderr, "arp: %s: ", host);
-			herror((char *)NULL);
-			exit(1);
-		}
-		bcopy((char *)hp->h_addr, (char *)&sin->sin_addr,
-		    sizeof sin->sin_addr);
-	}
+	sin = &sin_m;
+	sin_m = blank_sin;		/* struct copy */
+	if (getinetaddr(host, &sin->sin_addr) == -1)
+		exit(1);
 	dump(sin->sin_addr.s_addr);
 	if (found_entry == 0) {
-		printf("%s (%s) -- no entry\n",
-		    host, inet_ntoa(sin->sin_addr));
+		(void)printf("%s (%s) -- no entry\n", host,
+		    inet_ntoa(sin->sin_addr));
 		exit(1);
 	}
 }
@@ -286,34 +288,29 @@ get(host)
 /*
  * Delete an arp entry 
  */
+int
 delete(host, info)
-	char *host;
-	char *info;
+	const char *host;
+	const char *info;
 {
-	struct hostent *hp;
-	register struct sockaddr_inarp *sin = &sin_m;
-	register struct rt_msghdr *rtm = &m_rtmsg.m_rtm;
+	register struct sockaddr_inarp *sin;
+	register struct rt_msghdr *rtm;
 	struct sockaddr_dl *sdl;
 	u_char *ea;
 	char *eaddr;
 
+	sin = &sin_m;
+	rtm = &m_rtmsg.m_rtm;
+
 	if (info && strncmp(info, "pro", 3) )
 		export_only = 1;
 	getsocket();
-	sin_m = blank_sin;
-	sin->sin_addr.s_addr = inet_addr(host);
-	if (sin->sin_addr.s_addr == -1) {
-		if (!(hp = gethostbyname(host))) {
-			fprintf(stderr, "arp: %s: ", host);
-			herror((char *)NULL);
-			return (1);
-		}
-		bcopy((char *)hp->h_addr, (char *)&sin->sin_addr,
-		    sizeof sin->sin_addr);
-	}
+	sin_m = blank_sin;		/* struct copy */
+	if (getinetaddr(host, &sin->sin_addr) == -1)
+		return (1);
 tryagain:
 	if (rtmsg(RTM_GET) < 0) {
-		perror(host);
+		warn("%s", host);
 		return (1);
 	}
 	sin = (struct sockaddr_inarp *)(rtm + 1);
@@ -328,7 +325,7 @@ tryagain:
 		}
 	}
 	if (sin_m.sin_other & SIN_PROXY) {
-		fprintf(stderr, "delete: can't locate %s\n",host);
+		warnx("delete: can't locate %s", host);
 		return (1);
 	} else {
 		sin_m.sin_other = SIN_PROXY;
@@ -336,22 +333,25 @@ tryagain:
 	}
 delete:
 	if (sdl->sdl_family != AF_LINK) {
-		printf("cannot locate %s\n", host);
+		(void)printf("cannot locate %s\n", host);
 		return (1);
 	}
-	if (rtmsg(RTM_DELETE) == 0)
-		printf("%s (%s) deleted\n", host, inet_ntoa(sin->sin_addr));
+	if (rtmsg(RTM_DELETE)) 
+		return (1);
+	(void)printf("%s (%s) deleted\n", host, inet_ntoa(sin->sin_addr));
+	return (0);
 }
 
 /*
  * Dump the entire arp table
  */
+void
 dump(addr)
-u_long addr;
+	u_long addr;
 {
 	int mib[6];
 	size_t needed;
-	char *host, *malloc(), *lim, *buf, *next;
+	char *host, *lim, *buf, *next;
 	struct rt_msghdr *rtm;
 	struct sockaddr_inarp *sin;
 	struct sockaddr_dl *sdl;
@@ -365,11 +365,11 @@ u_long addr;
 	mib[4] = NET_RT_FLAGS;
 	mib[5] = RTF_LLINFO;
 	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
-		quit("route-sysctl-estimate");
+		err(1, "route-sysctl-estimate");
 	if ((buf = malloc(needed)) == NULL)
-		quit("malloc");
+		err(1, "malloc");
 	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
-		quit("actual retrieval of routing table");
+		err(1, "actual retrieval of routing table");
 	lim = buf + needed;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
@@ -392,43 +392,46 @@ u_long addr;
 			if (h_errno == TRY_AGAIN)
 				nflag = 1;
 		}
-		printf("%s (%s) at ", host, inet_ntoa(sin->sin_addr));
+		(void)printf("%s (%s) at ", host, inet_ntoa(sin->sin_addr));
 		if (sdl->sdl_alen)
 			ether_print(LLADDR(sdl));
 		else
-			printf("(incomplete)");
+			(void)printf("(incomplete)");
 		if (rtm->rtm_rmx.rmx_expire == 0)
-			printf(" permanent");
+			(void)printf(" permanent");
 		if (sin->sin_other & SIN_PROXY)
-			printf(" published (proxy only)");
+			(void)printf(" published (proxy only)");
 		if (rtm->rtm_addrs & RTA_NETMASK) {
 			sin = (struct sockaddr_inarp *)
 				(sdl->sdl_len + (char *)sdl);
 			if (sin->sin_addr.s_addr == 0xffffffff)
-				printf(" published");
+				(void)printf(" published");
 			if (sin->sin_len != 8)
-				printf("(wierd)");
+				(void)printf("(wierd)");
 		}
-		printf("\n");
+		(void)printf("\n");
 	}
 }
 
+void
 ether_print(cp)
-	u_char *cp;
+	const u_char *cp;
 {
-	printf("%x:%x:%x:%x:%x:%x", cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
+	(void)printf("%x:%x:%x:%x:%x:%x", cp[0], cp[1], cp[2], cp[3], cp[4],
+	    cp[5]);
 }
 
+int
 ether_aton(a, n)
-	char *a;
+	const char *a;
 	u_char *n;
 {
 	int i, o[6];
 
-	i = sscanf(a, "%x:%x:%x:%x:%x:%x", &o[0], &o[1], &o[2],
-					   &o[3], &o[4], &o[5]);
+	i = sscanf(a, "%x:%x:%x:%x:%x:%x", &o[0], &o[1], &o[2], &o[3], &o[4],
+	    &o[5]);
 	if (i != 6) {
-		fprintf(stderr, "arp: invalid Ethernet address '%s'\n", a);
+		warnx("invalid Ethernet address '%s'", a);
 		return (1);
 	}
 	for (i=0; i<6; i++)
@@ -436,35 +439,42 @@ ether_aton(a, n)
 	return (0);
 }
 
+void
 usage()
 {
-	printf("usage: arp hostname\n");
-	printf("       arp -a [kernel] [kernel_memory]\n");
-	printf("       arp -d hostname\n");
-	printf("       arp -s hostname ether_addr [temp] [pub]\n");
-	printf("       arp -f filename\n");
+	(void)fprintf(stderr, "usage: arp [-n] hostname\n");
+	(void)fprintf(stderr, "usage: arp [-n] -a\n");
+	(void)fprintf(stderr, "usage: arp -d hostname\n");
+	(void)fprintf(stderr,
+	    "usage: arp -s hostname ether_addr [temp] [pub]\n");
+	(void)fprintf(stderr, "usage: arp -f filename\n");
 	exit(1);
 }
 
+int
 rtmsg(cmd)
+	int cmd;
 {
 	static int seq;
 	int rlen;
-	register struct rt_msghdr *rtm = &m_rtmsg.m_rtm;
-	register char *cp = m_rtmsg.m_space;
+	register struct rt_msghdr *rtm;
+	register char *cp;
 	register int l;
 
+	rtm = &m_rtmsg.m_rtm;
+	cp = m_rtmsg.m_space;
 	errno = 0;
+
 	if (cmd == RTM_DELETE)
 		goto doit;
-	bzero((char *)&m_rtmsg, sizeof(m_rtmsg));
+	(void)memset(&m_rtmsg, 0, sizeof(m_rtmsg));
 	rtm->rtm_flags = flags;
 	rtm->rtm_version = RTM_VERSION;
 
 	switch (cmd) {
 	default:
-		fprintf(stderr, "arp: internal wrong cmd\n");
-		exit(1);
+		errx(1, "internal wrong cmd");
+		/*NOTREACHED*/
 	case RTM_ADD:
 		rtm->rtm_addrs |= RTA_GATEWAY;
 		rtm->rtm_rmx.rmx_expire = expire_time;
@@ -485,7 +495,7 @@ rtmsg(cmd)
 	}
 #define NEXTADDR(w, s) \
 	if (rtm->rtm_addrs & (w)) { \
-		bcopy((char *)&s, cp, sizeof(s)); cp += sizeof(s);}
+		(void)memcpy(cp, &s, sizeof(s)); cp += sizeof(s);}
 
 	NEXTADDR(RTA_DST, sin_m);
 	NEXTADDR(RTA_GATEWAY, sdl_m);
@@ -498,7 +508,7 @@ doit:
 	rtm->rtm_type = cmd;
 	if ((rlen = write(s, (char *)&m_rtmsg, l)) < 0) {
 		if (errno != ESRCH || cmd != RTM_DELETE) {
-			perror("writing to routing socket");
+			warn("writing to routing socket");
 			return (-1);
 		}
 	}
@@ -506,14 +516,26 @@ doit:
 		l = read(s, (char *)&m_rtmsg, sizeof(m_rtmsg));
 	} while (l > 0 && (rtm->rtm_seq != seq || rtm->rtm_pid != pid));
 	if (l < 0)
-		(void) fprintf(stderr, "arp: read from routing socket: %s\n",
-		    strerror(errno));
+		warn("read from routing socket");
 	return (0);
 }
 
-quit(msg)
-char *msg;
+int
+getinetaddr(host, inap)
+	const char *host;
+	struct in_addr *inap;
 {
-	fprintf(stderr, "%s\n", msg);
-	exit(1);
+	extern char *__progname;	/* Program name, from crt0. */
+	struct hostent *hp;
+	u_long addr;
+
+	if ((inap->s_addr = inet_addr(host)) != INADDR_NONE) 
+		return (0);
+	if ((hp = gethostbyname(host)) == NULL) {
+		(void)fprintf(stderr, "%s: %s: ", __progname, host);
+		herror(NULL);
+		return (-1);
+	}
+	(void)memcpy(inap, hp->h_addr, sizeof(*inap));
+	return (0);
 }

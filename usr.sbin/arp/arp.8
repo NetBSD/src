@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)arp.8	8.1 (Berkeley) 6/6/93
-.\"	$Id: arp.8,v 1.5 1994/09/17 00:54:42 mycroft Exp $
+.\"	$Id: arp.8,v 1.6 1995/02/27 22:00:07 chopps Exp $
 .\"
 .Dd June 6, 1993
 .Dt ARP 8
@@ -40,8 +40,10 @@
 .Nd address resolution display and control
 .Sh SYNOPSIS
 .Nm arp
+.Op Fl n
 .Ar hostname
 .Nm arp
+.Op Fl n
 .Fl a
 .Nm arp
 .Fl d Ar hostname
@@ -76,6 +78,10 @@ A super-user may delete an entry for the host called
 with the
 .Fl d
 flag.
+.It Fl n
+Show network addresses as numbers (normally
+.Nm arp
+attempts to display addresses symbolically).
 .It Fl s Ar hostname ether_addr
 Create an
 .Tn ARP
