@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_ioctl.c,v 1.3 2002/08/25 19:03:13 manu Exp $ */
+/*	$NetBSD: irix_ioctl.c,v 1.4 2002/09/06 13:18:43 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.3 2002/08/25 19:03:13 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.4 2002/09/06 13:18:43 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.3 2002/08/25 19:03:13 manu Exp $");
 #include <sys/vnode.h>
 #include <sys/types.h>
 #include <sys/syscallargs.h>
+#include <sys/conf.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -80,6 +81,7 @@ irix_sys_ioctl(p, v, retval)
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
+	extern const struct cdevsw irix_usema_cdevsw;
 	u_long	cmd;
 	caddr_t data;
 	struct file *fp;
@@ -120,7 +122,9 @@ irix_sys_ioctl(p, v, retval)
 	if ((cmd & IRIX_UIOC_MASK) == IRIX_UIOC) {
 		FILE_USE(fp);
 		vp = (struct vnode*)fp->f_data;
-		if (vp->v_type != VCHR || vp->v_rdev != irix_usemaclonedev) {
+		if (vp->v_type != VCHR ||
+		    cdevsw_lookup(vp->v_rdev) != &irix_usema_cdevsw ||
+		    minor(vp->v_rdev) != IRIX_USEMACLNDEV_MINOR) {
 			error = ENOTTY;
 			goto out;
 		}

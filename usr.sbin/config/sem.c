@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.30 2002/06/05 10:56:19 lukem Exp $	*/
+/*	$NetBSD: sem.c,v 1.31 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,6 +83,8 @@ static int onlist(struct nvlist *, void *);
 static const char **fixloc(const char *, struct attr *, struct nvlist *);
 static const char *makedevstr(int, int);
 
+extern const char *yyfile;
+
 void
 initsem(void)
 {
@@ -102,6 +104,8 @@ initsem(void)
 	errdev.d_name = "<internal>";
 
 	TAILQ_INIT(&allpseudo);
+
+	TAILQ_INIT(&alldevms);
 
 	s_ifnet = intern("ifnet");
 	s_qmark = intern("?");
@@ -551,17 +555,17 @@ setmajor(struct devbase *d, int n)
 static const char *
 makedevstr(int maj, int min)
 {
-	struct devbase *dev;
+	struct devm *dm;
 	char buf[32];
 
-	TAILQ_FOREACH(dev, &allbases, d_next) {
-		if (dev->d_major == maj)
+	TAILQ_FOREACH(dm, &alldevms, dm_next) {
+		if (dm->dm_bmajor == maj)
 			break;
 	}
-	if (dev == NULL)
+	if (dm == NULL)
 		(void)sprintf(buf, "<%d/%d>", maj, min);
 	else
-		(void)sprintf(buf, "%s%d%c", dev->d_name,
+		(void)sprintf(buf, "%s%d%c", dm->dm_name,
 		    min / maxpartitions, (min % maxpartitions) + 'a');
 
 	return (intern(buf));
@@ -578,6 +582,7 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 {
 	struct nvlist *nv;
 	struct devbase *dev;
+	struct devm *dm;
 	const char *cp;
 	int maj, min, i, l;
 	int unit;
@@ -649,13 +654,17 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 		nv->nv_int = NODEV;
 		nv->nv_ifunit = unit;	/* XXX XXX XXX */
 	} else {
-		if (dev->d_major == NODEV) {
+		TAILQ_FOREACH(dm, &alldevms, dm_next) {
+			if (strcmp(dm->dm_name, dev->d_name) == 0)
+				break;
+		}
+		if (dm == NULL) {
 			error("%s: can't make %s device from `%s'",
 			    name, what, nv->nv_str);
 			return (1);
 		}
 		nv->nv_int =
-		    makedev(dev->d_major, unit * maxpartitions + part);
+		    makedev(dm->dm_bmajor, unit * maxpartitions + part);
 	}
 
 	nv->nv_name = dev->d_name;
@@ -1005,6 +1014,37 @@ delpseudo(const char *name)
 	TAILQ_REMOVE(&allpseudo, i, i_next);
 	if (ht_remove(devitab, name))
 		panic("delpseudo(%s) - can't remove from devitab", name);
+}
+
+void
+adddevm(const char *name, int cmajor, int bmajor, struct nvlist *options)
+{
+	struct devm *dm;
+
+	if (cmajor < 0 || cmajor >= 4096) {
+		error("character major %d is invalid", cmajor);
+		nvfreel(options);
+		return;
+	}
+
+	if (bmajor < -1 || bmajor >= 4096) {
+		error("block major %d is invalid", bmajor);
+		nvfreel(options);
+		return;
+	}
+
+	dm = emalloc(sizeof(*dm));
+	dm->dm_srcfile = yyfile;
+	dm->dm_srcline = currentline();
+	dm->dm_name = name;
+	dm->dm_cmajor = cmajor;
+	dm->dm_bmajor = bmajor;
+	dm->dm_opts = options;
+
+	TAILQ_INSERT_TAIL(&alldevms, dm, dm_next);
+
+	maxcdevm = MAX(maxcdevm, dm->dm_cmajor);
+	maxbdevm = MAX(maxbdevm, dm->dm_bmajor);
 }
 
 void

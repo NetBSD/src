@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.34 2002/06/22 02:09:12 ross Exp $	*/
+/*	$NetBSD: gram.y,v 1.35 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -105,7 +105,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %token	DEFPARAM DEFFLAG DEFPSEUDO DEVICE DEVCLASS DUMPS ENDFILE XFILE XOBJECT
 %token	FILE_SYSTEM FLAGS IDENT INCLUDE XMACHINE MAJOR MAKEOPTIONS
 %token	MAXUSERS MAXPARTITIONS MINOR ON OPTIONS PREFIX PSEUDO_DEVICE ROOT
-%token	SOURCE TYPE WITH NEEDS_COUNT NEEDS_FLAG NO
+%token	SOURCE TYPE WITH NEEDS_COUNT NEEDS_FLAG NO BLOCK CHAR DEVICE_MAJOR
 %token	<val> NUMBER
 %token	<str> PATHNAME QSTRING WORD EMPTY
 %token	ENDDEFS
@@ -142,6 +142,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %type	<str>	optfile_opt
 %type	<list>	subarches_opt subarches
 %type	<str>	filename stringvalue locname
+%type	<val>	device_major_block device_major_char
 
 %%
 
@@ -192,6 +193,17 @@ file:
 
 object:
 	XOBJECT filename fopts oflgs	{ addobject($2, $3, $4); };
+
+device_major:
+	DEVICE_MAJOR WORD device_major_char device_major_block fopts
+					{ adddevm($2, $3, $4, $5); };
+
+device_major_block:
+	BLOCK NUMBER			{ $$ = $2; } |
+	/* empty */			{ $$ = -1; };
+
+device_major_char:
+	CHAR NUMBER			{ $$ = $2; };
 
 /* order of options is important, must use right recursion */
 fopts:
@@ -251,6 +263,7 @@ dev_def:
 one_def:
 	file |
 	object |
+	device_major |
 	include |
 	prefix |
 	DEVCLASS WORD			{ (void)defattr($2, NULL, 1); } |

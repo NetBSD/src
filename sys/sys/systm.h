@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.149 2002/08/25 22:28:40 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.150 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -101,9 +101,6 @@ extern const char version[];	/* system version */
 extern int autonicetime;        /* time (in seconds) before autoniceval */
 extern int autoniceval;         /* proc priority after autonicetime */
 
-extern int nblkdev;		/* number of entries in bdevsw */
-extern int nchrdev;		/* number of entries in cdevsw */
-
 extern int selwait;		/* select timeout address */
 
 extern int maxmem;		/* max memory per process */
@@ -124,8 +121,10 @@ extern const char *rootspec;	/* how root device was specified */
  * is used by the swap pager to indirect through the routines
  * in sys/vm/vm_swap.c.
  */
-extern dev_t swapdev;		/* swapping device */
+extern const dev_t swapdev;	/* swapping device */
 extern struct vnode *swapdev_vp;/* vnode equivalent to above */
+
+extern const dev_t zerodev;	/* /dev/zero */
 
 typedef int	sy_call_t(struct proc *, void *, register_t *);
 
@@ -168,10 +167,6 @@ int	enosys __P((void));
 int	enoioctl __P((void));
 int	enxio __P((void));
 int	eopnotsupp __P((void));
-
-#if defined(LKM) || defined(_LKM)
-int	lkmenodev __P((void));
-#endif
 
 enum hashtype {
 	HASH_LIST,

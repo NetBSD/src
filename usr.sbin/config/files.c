@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.15 2002/06/05 10:56:18 lukem Exp $	*/
+/*	$NetBSD: files.c,v 1.16 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -325,6 +325,88 @@ fixobjects(void)
 	}
 	return (err);
 }     
+
+/*
+ * We have finished reading everything.  Tack the devsws down: calculate
+ * selection.
+ */
+int
+fixdevsw(void)
+{
+	struct devm *dm, *res;
+	char mstr[16];
+
+	fixdevmtab = ht_new();
+
+	TAILQ_FOREACH(dm, &alldevms, dm_next) {
+		if (dm->dm_opts != NULL &&
+		    !expr_eval(dm->dm_opts, fixsel, NULL))
+			continue;
+
+		res = ht_lookup(fixdevmtab, intern(dm->dm_name));
+		if (res != NULL) {
+			if (res->dm_cmajor != dm->dm_cmajor ||
+			    res->dm_cmajor != dm->dm_bmajor) {
+				xerror(res->dm_srcfile, res->dm_srcline,
+				       "device-major '%s' is inconsistent: "
+				       "block %d, char %d", res->dm_name,
+				       res->dm_bmajor, res->dm_cmajor);
+				xerror(dm->dm_srcfile, dm->dm_srcline,
+				       "device-major '%s' is inconsistent: "
+				       "block %d, char %d", dm->dm_name,
+				       dm->dm_bmajor, dm->dm_cmajor);
+				return (1);
+			}
+		} else {
+			if (ht_insert(fixdevmtab, intern(dm->dm_name), dm)) {
+				panic("fixdevsw: %s char %d block %d",
+				      dm->dm_name, dm->dm_cmajor,
+				      dm->dm_bmajor);
+			}
+		}
+
+		if (ht_lookup(cdevmtab, intern(dm->dm_name)) != NULL) {
+			xerror(dm->dm_srcfile, dm->dm_srcline,
+			       "device-major of character device '%s' is "
+			       "already defined", dm->dm_name);
+			return (1);
+		}
+		(void)snprintf(mstr, sizeof(mstr), "%d", dm->dm_cmajor);
+		if (ht_lookup(cdevmtab, intern(mstr)) != NULL) {
+			xerror(dm->dm_srcfile, dm->dm_srcline,
+			       "device-major of character major '%d' "
+			       "is already defined", dm->dm_cmajor);
+			return (1);
+		}
+		if (ht_insert(cdevmtab, intern(dm->dm_name), dm) ||
+		    ht_insert(cdevmtab, intern(mstr), dm)) {
+			panic("fixdevsw: %s character major %d",
+			      dm->dm_name, dm->dm_cmajor);
+		}
+		if (dm->dm_bmajor != -1) {
+			if (ht_lookup(bdevmtab, intern(dm->dm_name)) != NULL) {
+				xerror(dm->dm_srcfile, dm->dm_srcline,
+				       "device-major of block device '%s' "
+				       "is already defined", dm->dm_name);
+				return (1);
+			}
+			(void)snprintf(mstr, sizeof(mstr), "%d", dm->dm_bmajor);
+			if (ht_lookup(bdevmtab, intern(mstr)) != NULL) {
+				xerror(dm->dm_srcfile, dm->dm_srcline,
+				       "device-major of block major '%d' "
+				       "is already defined", dm->dm_bmajor);
+				return (1);
+			}
+			if (ht_insert(bdevmtab, intern(dm->dm_name), dm) || 
+			    ht_insert(bdevmtab, intern(mstr), dm)) {
+				panic("fixdevsw: %s block major %d",
+				      dm->dm_name, dm->dm_bmajor);
+			}
+		}
+	}
+
+	return (0);
+}
 
 /*
  * Called when evaluating a needs-count expression.  Make sure the

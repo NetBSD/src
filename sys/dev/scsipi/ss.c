@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.39 2002/07/22 14:59:44 hannken Exp $	*/
+/*	$NetBSD: ss.c,v 1.40 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.39 2002/07/22 14:59:44 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.40 2002/09/06 13:18:43 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,16 @@ struct cfattach ss_ca = {
 };
 
 extern struct cfdriver ss_cd;
+
+dev_type_open(ssopen);
+dev_type_close(ssclose);
+dev_type_read(ssread);
+dev_type_ioctl(ssioctl);
+
+const struct cdevsw ss_cdevsw = {
+	ssopen, ssclose, ssread, nowrite, ssioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 void    ssstrategy __P((struct buf *));
 void    ssstart __P((struct scsipi_periph *));
@@ -175,9 +185,7 @@ ssdetach(struct device *self, int flags)
 	int s, cmaj, mn;
 
 	/* locate the major number */
-	for (cmaj = 0; cmaj <= nchrdev; cmaj++)
-		if (cdevsw[cmaj].d_open == ssopen)
-			break;
+	cmaj = cdevsw_lookup_major(&ss_cdevsw);
 
 	s = splbio();
 

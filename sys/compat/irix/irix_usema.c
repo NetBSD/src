@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.5 2002/08/25 19:03:13 manu Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.5 2002/08/25 19:03:13 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.5 2002/08/25 19:03:13 manu Exp $");
 #include <sys/malloc.h>
 #include <sys/poll.h>
 #include <sys/queue.h>
+#include <sys/conf.h>
 
 #include <miscfs/genfs/genfs.h>
 
@@ -68,13 +69,17 @@ __KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.5 2002/08/25 19:03:13 manu Exp $");
 #include <compat/irix/irix_ioctl.h>
 #include <compat/irix/irix_syscallargs.h>
 
-#include <machine/irix_machdep.h>
+dev_type_open(irix_usemaopen);
+dev_type_close(irix_usemaclose);
+dev_type_read(irix_usemaread);
+dev_type_write(irix_usemawrite);
+dev_type_ioctl(irix_usemaioctl);
+dev_type_poll(irix_usemapoll);
 
-/*
- * dev_t for the usemaclone device
- */
-const dev_t irix_usemaclonedev = 
-    makedev(IRIX_USEMADEV_MAJOR, IRIX_USEMACLNDEV_MINOR);
+const struct cdevsw irix_usema_cdevsw = {
+	irix_usemaopen, irix_usemaclose, irix_usemaread, irix_usemawrite,
+	irix_usemaioctl, nostop, notty, irix_usemapoll, nommap,
+};
 
 /*
  * semaphore list, and operations on the list
