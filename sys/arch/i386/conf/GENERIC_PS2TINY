@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.3 2001/09/01 21:52:27 atatat Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.4 2001/11/06 01:57:07 enami Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -49,17 +49,17 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 options 	UCONSOLE        # users can use TIOCCONS (for xconsole)
 options 	INSECURE        # disable kernel security levels
 
-options	RTC_OFFSET=-600 # hardware clock is this many mins. west of GMT
+options 	RTC_OFFSET=-600 # hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 
 #options 	KTRACE          # system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
@@ -133,11 +133,11 @@ options 	INET6		# IPV6
 #options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
-#options	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
+#options 	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
 #options 	I2OVERBOSE	# verbose I2O driver messages
 options 	MCAVERBOSE      # verbose MCA device autoconfig messages
 
-options		NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
+options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
 options 	WSEMUL_VT100            # VT100 / VT220 emulation
 options 	WS_KERNEL_FG=WSCOL_GREEN
@@ -161,7 +161,7 @@ isa0	at mainbus0
 
 # wscons
 pckbc0		at isa?			# pc keyboard controller
-options		PCKBCDEBUG
+options 	PCKBCDEBUG
 #pcconskbd*	at pckbc?
 #pms*		at pckbc?		# PS/2 mouse for wsmouse
 #wsmouse*	at pms?
@@ -169,7 +169,7 @@ pckbd*		at pckbc?               # PC keyboard
 wskbd*		at pckbd? console ?
 vga0		at isa?
 wsdisplay*	at vga? console ?
-options	WSDISPLAY_DEFAULTSCREENS=4
+options 	WSDISPLAY_DEFAULTSCREENS=4
 
 com0	at isa? port 0x3f8 irq 4	# "SERIAL_!"
 lpt0	at isa? port 0x3bc irq 7	# "PARALLEL_1"
