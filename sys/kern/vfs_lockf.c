@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_lockf.c	7.7 (Berkeley) 7/2/91
- *	$Id: vfs_lockf.c,v 1.2 1994/04/25 03:49:43 cgd Exp $
+ *	$Id: vfs_lockf.c,v 1.3 1994/05/19 05:04:07 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -52,7 +52,7 @@
  */
 lf_advlock(head, size, id, op, fl, flags)
 	struct lockf **head;
-	u_quad_t size;
+	off_t size;
 	caddr_t id;
 	int op;
 	register struct flock *fl;
@@ -625,6 +625,7 @@ lf_findoverlap(lf, lock, type, prev, overlap)
 /*
  * Add a lock to the end of the blocked list.
  */
+void
 lf_addblock(lock, blocked)
 	struct lockf *lock;
 	struct lockf *blocked;

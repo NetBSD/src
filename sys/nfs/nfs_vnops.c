@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vnops.c	7.60 (Berkeley) 5/24/91
- *	$Id: nfs_vnops.c,v 1.30 1994/04/25 03:50:21 cgd Exp $
+ *	$Id: nfs_vnops.c,v 1.31 1994/05/19 05:04:09 cgd Exp $
  */
 
 /*
@@ -53,9 +53,11 @@
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/dir.h>
-#include <sys/lockf.h>
 #include <miscfs/specfs/specdev.h> /* XXX */
 #include <miscfs/fifofs/fifo.h> /* XXX */
+
+#include <ufs/quota.h>
+#include <ufs/inode.h>	/* for IFTOVT, and lockf struct */
 
 #include <nfs/nfsv2.h>
 #include <nfs/nfs.h>
@@ -64,9 +66,6 @@
 #include <nfs/xdr_subs.h>
 #include <nfs/nfsm_subs.h>
 #include <nfs/nfsiom.h>
-
-#include <ufs/quota.h>
-#include <ufs/inode.h>	/* for IFTOVT */
 
 /* Defs */
 #define	TRUE	1
