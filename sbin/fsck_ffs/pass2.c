@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.12 1995/03/18 14:55:52 cgd Exp $	*/
+/*	$NetBSD: pass2.c,v 1.13 1996/05/21 12:42:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$NetBSD: pass2.c,v 1.12 1995/03/18 14:55:52 cgd Exp $";
+static char rcsid[] = "$NetBSD: pass2.c,v 1.13 1996/05/21 12:42:38 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,7 @@ pass2()
 	struct dinode dino;
 	char pathbuf[MAXPATHLEN + 1];
 
+	memset((char *)&dino, 0, sizeof dino);
 	switch (statemap[ROOTINO]) {
 
 	case USTATE:
