@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.31 2002/11/26 18:49:41 christos Exp $	*/
+/*	$NetBSD: midi.c,v 1.32 2003/01/31 02:16:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.31 2002/11/26 18:49:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.32 2003/01/31 02:16:23 thorpej Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -879,7 +879,7 @@ midi_attach_mi(struct midi_hw_if *mhwp, void *hdlp, struct device *dev)
 
 #ifdef DIAGNOSTIC
 	if (mhwp == NULL) {
-		printf("midi_attach_mi: NULL\n");
+		aprint_error("midi_attach_mi: NULL\n");
 		return (0);
 	}
 #endif
