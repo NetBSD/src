@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.35 2003/02/21 15:14:08 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.36 2003/03/04 08:34:12 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -816,6 +816,7 @@ s_sctrap:
 	.globl	_C_LABEL(extint_call)
 extintr:
 	INTRENTER
+	mr	3,1			/* make intrframe available */
 _C_LABEL(extint_call):
 	bl	_C_LABEL(extint_call)	/* to be filled in later */
 
