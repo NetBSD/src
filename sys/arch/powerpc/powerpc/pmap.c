@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.36 2001/03/15 06:10:47 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.37 2001/03/24 05:30:57 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1441,7 +1441,7 @@ pmap_activate(p)
 		curpm = pcb->pcb_pmreal;
 
 		/* Save kernel SR. */
-		__asm __volatile("mfsr %0,14" : "=r"(ksr) :);
+		__asm __volatile("mfsr %0,%1" : "=r"(ksr) : "n"(KERNEL_SR) );
 
 		/*
 		 * Set new segment registers.  We use the pmap's real
@@ -1449,13 +1449,16 @@ pmap_activate(p)
 		 */
 		rpm = pcb->pcb_pmreal;
 		for (i = 0; i < 16; i++) {
+			/* Do not reload the kernel segment register. */
+			if (i == KERNEL_SR) continue;
+
 			seg = rpm->pm_sr[i];
 			__asm __volatile("mtsrin %0,%1"
 			    :: "r"(seg), "r"(i << ADDR_SR_SHFT));
 		}
 
 		/* Restore kernel SR. */
-		__asm __volatile("mtsr 14,%0" :: "r"(ksr));
+		__asm __volatile("mtsr %0,%1" :: "n"(KERNEL_SR), "r"(ksr));
 
 		/* Interrupts are OK again. */
 		psl |= PSL_EE;
