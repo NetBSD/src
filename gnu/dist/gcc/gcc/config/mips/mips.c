@@ -6731,7 +6731,7 @@ compute_frame_size (size)
       if (regs_ever_live[regno] && !call_used_regs[regno])
 	{
 	  fp_reg_size += FP_INC * UNITS_PER_FPREG;
-	  fmask |= ((1 << FP_INC) - 1) << (regno - FP_REG_FIRST);
+	  fmask |= ((1L << FP_INC) - 1) << (regno - FP_REG_FIRST);
 	}
     }
 
