@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.awk,v 1.1 1997/02/03 21:31:17 gwr Exp $
+#	$NetBSD: genassym.awk,v 1.2 1997/09/10 16:25:07 gwr Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,30 +44,38 @@ BEGIN {
 	len = 0;
 	val = 0;
 	str = "";
+	translate = 0;
 }
 
-/\t\.ascii/ {
+# This marks the beginning of the part we should translate.
+# Note: leading _ is absent on some platforms (e.g. alpha).
+/^_?assyms:/ {
+	translate = 1;
+}
+
+/^\t\.ascii/ {
+	if (!translate)
+		next;
+	# Get NAME from "NAME\0"
 	len = length($2);
 	str = substr($2,2,len-4);
 	printf("#define\t%s\t", str);
 	next;
 }
 
-/\t\.skip/ {
+/^\t\.(skip|zero)/ {
 	next;
 }
 
-/\t\.long/ {
-	val = 0 + $2;
-	if ((val < 0) || (val > 999))
-		printf("0x%x\n", val);
-	else
-		printf("%d\n", val);
+/^\t\.(long|quad)/ {
+	if (!translate)
+		next;
+	printf("%s\n", $2);
 	next;
 }
 
 # This marks the end of the part we should translate.
-# Note: leading _ is allowed but not required.
-/nassyms:/ {
+# Note: leading _ is absent on some platforms (e.g. alpha).
+/^_?nassyms:/ {
 	exit;
 }
