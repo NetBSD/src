@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.39 1999/02/27 16:13:59 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.40 1999/05/16 16:56:35 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -214,9 +214,6 @@ int	(*sbuserr_handler) __P((void));
 int	(*vmeerr_handler) __P((void));
 int	(*moduleerr_handler) __P((void));
 
-int	nmisync1; /*XXX*/
-int	nmisync2;
-int	nmifatal;
 
 void
 nmi_hard()
@@ -229,18 +226,22 @@ nmi_hard()
 	char bits[64];
 	u_int afsr, afva;
 
-	if (cpuinfo.master == 0) {
-		while (nmisync1 == 0) ;
-		printf("CPU%d: held\n", cpuinfo.mid);
-		while (nmisync2 != 0) ;
-		/* XXX - should check module errors here */
-		if (nmifatal == 0)
-			return;
-		prom_halt();
+	afsr = afva = 0;
+	if ((*cpuinfo.get_asyncflt)(&afsr, &afva) == 0) {
+		printf("Async registers (mid %d): afsr=%s; afva=0x%x%x\n",
+			cpuinfo.mid,
+			bitmask_snprintf(afsr, AFSR_BITS, bits, sizeof(bits)),
+			(afsr & AFSR_AFA) >> AFSR_AFA_RSHIFT, afva);
 	}
 
-	nmisync2 = 1;
-	nmisync1 = 1;
+	if (cpuinfo.master == 0) {
+		/*
+		 * For now, just return.
+		 * Should wait on damage analysis done by the master.
+		 */
+		return;
+	}
+
 	/*
 	 * Examine pending system interrupts.
 	 */
@@ -269,16 +270,6 @@ nmi_hard()
 			fatal |= (*moduleerr_handler)();
 	}
 
-	if ((*cpuinfo.get_asyncflt)(&afsr, &afva) == 0) {
-		printf("Async registers: afsr=%s; afva=0x%x%x\n",
-			bitmask_snprintf(afsr, AFSR_BITS, bits, sizeof(bits)),
-			(afsr & AFSR_AFA) >> AFSR_AFA_RSHIFT, afva);
-	}
-
-
-	nmisync1 = 0;
-	nmifatal = fatal;
-	nmisync2 = 0;
 	if (fatal)
 		panic("nmi");
 }
