@@ -1,6 +1,5 @@
-# $NetBSD: md.macppc,v 1.23 2003/01/18 17:50:26 thorpej Exp $
+# $NetBSD: md.macppc,v 1.24 2003/09/24 05:00:16 matt Exp $
 ./usr/include/macppc	comp-c-include
-./usr/include/macppc/_G_config.h	comp-c-include
 ./usr/include/macppc/adbsys.h	comp-c-include
 ./usr/include/macppc/ansi.h	comp-c-include
 ./usr/include/macppc/aout_machdep.h	comp-c-include

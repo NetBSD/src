@@ -1,2 +1,3 @@
-# $NetBSD: obsolete.sandpoint,v 1.2 2002/11/17 02:48:07 lukem Exp $
+# $NetBSD: obsolete.sandpoint,v 1.3 2003/09/24 05:00:17 matt Exp $
+./usr/include/sandpoint/_G_config.h
 ./usr/include/sandpoint/conf.h

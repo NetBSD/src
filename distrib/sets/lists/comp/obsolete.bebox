@@ -1,4 +1,5 @@
-# $NetBSD: obsolete.bebox,v 1.4 2002/11/17 02:48:02 lukem Exp $
+# $NetBSD: obsolete.bebox,v 1.5 2003/09/24 05:00:16 matt Exp $
+./usr/include/bebox/_G_config.h
 ./usr/include/bebox/bat.h
 ./usr/include/bebox/conf.h
 ./usr/include/bebox/display.h

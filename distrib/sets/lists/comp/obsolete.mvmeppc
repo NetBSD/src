@@ -1,0 +1,2 @@
+# $NetBSD: obsolete.mvmeppc,v 1.1 2003/09/24 05:00:16 matt Exp $
+./usr/include/mvmeppc/_G_config.h

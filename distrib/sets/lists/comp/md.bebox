@@ -1,6 +1,5 @@
-# $NetBSD: md.bebox,v 1.20 2003/01/18 17:50:22 thorpej Exp $
+# $NetBSD: md.bebox,v 1.21 2003/09/24 05:00:16 matt Exp $
 ./usr/include/bebox	comp-c-include
-./usr/include/bebox/_G_config.h	comp-c-include
 ./usr/include/bebox/ansi.h	comp-c-include
 ./usr/include/bebox/aout_machdep.h	comp-c-include
 ./usr/include/bebox/asm.h	comp-c-include
