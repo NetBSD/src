@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.12 1999/04/26 01:04:45 tsubai Exp $
+.\"	$NetBSD: contents,v 1.13 1999/04/28 19:33:41 leo Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -531,11 +531,6 @@ all related programs, and their manual pages.
 .if r_sparc .Em 1.4M gzipped, 5M uncompressed
 .if r_x68k .Em 1.3M gzipped, 4.5M uncompressed
 .El
-.if r_atari \{\
-.(tag Note:
-An X server distribution set is currently not available.
-.tag)
-.\}
 .
 .
 .ie \n[pc532] \{\
@@ -610,6 +605,7 @@ The basic files needed for a complete X
 client environment. This does not include
 the X servers.
 .br
+.if r_atari .Em 2.5M gzipped 7.9M uncompressed
 .if r_hp300 .Em 2.5M gzipped, 7.6M uncompressed
 .if r_i386 .Em 2.7M gzipped, 8.1M uncompressed
 .if r_mac68k .Em 2.34 M gzipped, 7.46M uncompressed
@@ -619,6 +615,7 @@ the X servers.
 .It Sy xcomp
 The extra libraries and include files needed to compile X source code.
 .br
+.if r_atari .Em 1.6M gzipped, 6.8M uncompressed
 .if r_hp300 .Em 1.7M gzipped, 7.1M uncompressed
 .if r_i386 .Em 1.8M gzipped, 7.3M uncompressed
 .if r_mac68k .Em 1.57M gzipped, 6.38M uncompressed
@@ -628,6 +625,7 @@ The extra libraries and include files needed to compile X source code.
 .It Sy xcontrib
 Programs that were contributed to X.
 .br
+.if r_atari .Em 179K gzipped, 670K uncompressed
 .if r_hp300 .Em 183K gzipped, 686K uncompressed
 .if r_i386 .Em 187K gzipped, 614K uncompressed
 .if r_mac68k .Em 178K gzipped, 661K uncompressed
@@ -639,6 +637,15 @@ Fonts needed by X.
 .br
 .Em 6.2M gzipped, 7.5M uncompressed
 .
+.if r_atari \{\
+.Pp
+.It Sy xserver
+The Xservers and some programs not shared with the other m68k ports. Please
+consult the X specific section in the atari FAQ as to which server you should
+use.
+.br
+.Em 6.2M gzipped, 15.7M uncompressed
+.\}
 .if r_i386 \{\
 .Pp
 .It Sy xserver
@@ -759,8 +766,10 @@ make a slip connection, configure an ethernet, mount an NFS
 file system or ftp. You can also load distribution sets from
 a SCSI tape or from one of your existing GEMDOS partitions.
 .Pp
-These floppies are named
+The floppies meant for 720KB disks are named
 .Pa miniroot.fs.1 No and Pa miniroot.fs.2 .
+There is also an image for an 1.44MB disk:
+.Pa miniroot.fs .
 .El
 .Pp
 There are also TOS utilities in the
