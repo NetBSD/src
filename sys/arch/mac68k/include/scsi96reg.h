@@ -24,12 +24,53 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: scsi96reg.h,v 1.1 1994/06/26 13:22:32 briggs Exp $
+ * $Id: scsi96reg.h,v 1.2 1994/07/07 00:29:37 briggs Exp $
  *
  */
 
 #ifndef _MACHINE_SCSI96REG_H_
 #define _MACHINE_SCSI96REG_H_
+
+typedef volatile unsigned char	v_uchar;
+
+#define PAD(x)	u_char	x [15];
+struct ncr53c96regs {
+	v_uchar	tcreg_lsb;	/* r == ctc, w == stc */
+	PAD(pad0);
+	v_uchar	tcreg_msb;	/* r == ctc, w == stc */
+	PAD(pad1);
+	v_uchar	fifo;		/* fifo reg */
+	PAD(pad2);
+	v_uchar	cmdreg;		/* command reg */
+	PAD(pad3);
+	v_uchar	statreg;	/* status reg */
+#define sdidreg	statreg
+	PAD(pad4);
+	v_uchar	instreg;	/* interrupt status reg */
+#define stimreg	instreg
+	PAD(pad5);
+	v_uchar	isreg;		/* internal state reg */
+	PAD(pad6);
+	v_uchar	fifostatereg;	/* fifo state reg */
+	PAD(pad7);
+	v_uchar	ctrlreg1;	/* control register 1 */
+	PAD(pad8);
+	v_uchar	clkfactorreg;	/* clock factor register */
+	PAD(pad9);
+	v_uchar	ftmreg;		/* forced test mode register */
+	PAD(pad10);
+	v_uchar	ctrlreg2;	/* control register 2 */
+	PAD(pad11);
+	v_uchar	ctrlreg3;	/* control register 3 */
+	PAD(pad12);
+	v_uchar	unused1;	/* unknown */
+	PAD(pad13);
+	v_uchar	unused2;	/* unknown */
+	PAD(pad14);
+	v_uchar	dareg;		/* data alignment register */
+	PAD(pad15);
+};
+#undef PAD
 
 #define	NCR96_CTCREG	0x0	/* Current transfer count.	R   */
 				/* 16 bits, LSB first. */
