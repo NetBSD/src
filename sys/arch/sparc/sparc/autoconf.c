@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.205 2004/04/04 08:54:29 gson Exp $ */
+/*	$NetBSD: autoconf.c,v 1.206 2004/04/04 10:09:41 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.205 2004/04/04 08:54:29 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.206 2004/04/04 10:09:41 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -175,9 +175,6 @@ find_cpus()
 #if defined(SUN4M) || defined(SUN4D)
 	int node;
 #endif
-#if defined(SUN4D)
-	int unode;
-#endif
 	/*
 	 * Set default processor architecture version
 	 *
@@ -204,6 +201,8 @@ find_cpus()
 #if defined(SUN4D)
 	node = findroot();
 	for (node = firstchild(node); node; node = nextsibling(node)) {
+		int unode;
+
 		if (strcmp(prom_getpropstring(node, "name"), "cpu-unit") != 0)
 				continue;
 		for (unode = firstchild(node); unode;
