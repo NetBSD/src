@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.6 2000/06/17 09:28:25 soda Exp $	
+.\"	$NetBSD: legal.common,v 1.6.2.1 2000/08/31 23:21:33 itojun Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -229,3 +229,13 @@ the NetBSD Project.
 
 This product includes software developed by Niklas Hallqvist,
 C Stone and Job de Haas.
+
+This product includes software developed by Eric Young (eay@mincom.oz.au).
+
+This product includes software developed by the OpenSSL Project
+for use in the OpenSSL Toolkit (http://www.openssl.org/).
+
+This product includes software developed by the University of Oregon.
+
+This product includes software developed by the University of Southern
+California and/or Information Sciences Institute.
