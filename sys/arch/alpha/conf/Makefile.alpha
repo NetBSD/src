@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.73 2002/09/24 13:30:41 ad Exp $
+#	$NetBSD: Makefile.alpha,v 1.74 2004/06/04 04:45:49 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -95,3 +95,8 @@ MKDEP_AFLAGS=	-x assembler-with-cpp ${AFLAGS}
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND

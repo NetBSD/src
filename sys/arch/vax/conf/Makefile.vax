@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.72 2003/12/10 04:59:35 simonb Exp $
+#	$NetBSD: Makefile.vax,v 1.73 2004/06/04 04:45:51 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -101,3 +101,8 @@ unimpl_emul.o: assym.h
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND
