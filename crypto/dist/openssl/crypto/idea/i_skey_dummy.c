@@ -64,20 +64,24 @@
 #include <stdlib.h>
 
 __warn_references(idea_set_encrypt_key,
-    "IDEA is a patented algorithm; use libcrypto_idea.a")
+    "IDEA is a patented algorithm; link against libcrypto_idea.a")
 __warn_references(idea_set_decrypt_key,
-    "IDEA is a patented algorithm; use libcrypto_idea.a")
+    "IDEA is a patented algorithm; link against libcrypto_idea.a")
 
 void idea_set_encrypt_key(unsigned char *key, IDEA_KEY_SCHEDULE *ks)
 {
 
-	fprintf(stderr, "IDEA is a patented algorithm; use libcrypto_idea.a\n");
+	fprintf(stderr,
+	    "IDEA is a patented algorithm; link against libcrypto_idea.a. "
+	    "Aborting...\n");
 	exit(1);
 }
 
 void idea_set_decrypt_key(IDEA_KEY_SCHEDULE *ek, IDEA_KEY_SCHEDULE *dk)
 {
 
-	fprintf(stderr, "IDEA is a patented algorithm; use libcrypto_idea.a\n");
+	fprintf(stderr,
+	    "IDEA is a patented algorithm; link against libcrypto_idea.a. "
+	    "Aborting...\n");
 	exit(1);
 }
