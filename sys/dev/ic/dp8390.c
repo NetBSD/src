@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.50 2002/09/27 15:37:16 provos Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.51 2002/12/21 15:24:42 kristerw Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.50 2002/09/27 15:37:16 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.51 2002/12/21 15:24:42 kristerw Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.50 2002/09/27 15:37:16 provos Exp $");
 
 #ifdef DEBUG
 #define __inline__	/* XXX for debugging porpoises */
+int	dp8390_debug = 0;
 #endif
 
 static __inline__ void	dp8390_xmit __P((struct dp8390_softc *));
@@ -82,8 +83,6 @@ static __inline__ int	dp8390_write_mbuf __P((struct dp8390_softc *,
 			    struct mbuf *, int));
 
 static int		dp8390_test_mem __P((struct dp8390_softc *));
-
-int	dp8390_debug = 0;
 
 /*
  * Standard media init routine for the dp8390.
