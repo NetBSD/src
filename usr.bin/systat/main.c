@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 1999/12/20 21:04:41 jwise Exp $	*/
+/*	$NetBSD: main.c,v 1.23 2000/01/07 04:47:24 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.22 1999/12/20 21:04:41 jwise Exp $");
+__RCSID("$NetBSD: main.c,v 1.23 2000/01/07 04:47:24 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -101,13 +101,16 @@ main(argc, argv)
 	egid = getegid();
 	(void)setegid(getgid());
 
-	while ((ch = getopt(argc, argv, "M:N:w:")) != -1)
+	while ((ch = getopt(argc, argv, "M:N:nw:")) != -1)
 		switch(ch) {
 		case 'M':
 			memf = optarg;
 			break;
 		case 'N':
 			nlistf = optarg;
+			break;
+		case 'n':
+			nflag = !nflag;
 			break;
 		case 'w':
 			if ((naptime = atoi(optarg)) <= 0)
@@ -220,7 +223,7 @@ main(argc, argv)
 static void
 usage()
 {
-	fprintf(stderr, "usage: systat [-M core] [-N system] [-w wait] "
+	fprintf(stderr, "usage: systat [-n] [-M core] [-N system] [-w wait] "
 		"[display] [refresh-interval]\n");
 	exit(1);
 }
