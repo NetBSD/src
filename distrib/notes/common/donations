@@ -1,4 +1,4 @@
-.\"	$NetBSD: donations,v 1.17 2000/11/01 10:59:43 scw Exp $
+.\"	$NetBSD: donations,v 1.18 2001/02/06 16:08:59 reinoud Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -88,6 +88,7 @@ Jason R. Thorpe
 Steve Wadlow
 Krister Walfridsson
 Jim Wise
+Reinoud Zandijk
 Christos Zoulas
 .Ed
 .Pp
