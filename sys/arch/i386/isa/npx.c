@@ -32,24 +32,24 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.7.4.1 1993/09/24 08:49:19 mycroft Exp $
+ *	$Id: npx.c,v 1.7.4.2 1993/10/07 14:49:27 mycroft Exp $
  */
-#include "npx.h"
-#if NNPX > 0
 
 #include "param.h"
 #include "systm.h"
 #include "conf.h"
 #include "file.h"
 #include "proc.h"
-#include "machine/cpu.h"
-#include "machine/pcb.h"
-#include "machine/trap.h"
 #include "ioctl.h"
-#include "i386/isa/icu.h"
+#include "sys/device.h"
+#include "machine/cpu.h"
+#include "machine/cpufunc.h"
+#include "machine/pcb.h"
 #include "machine/specialreg.h"
-#include "i386/isa/isa_device.h"
+#include "machine/trap.h"
+#include "i386/isa/isavar.h"
 #include "i386/isa/isa.h"
+#include "i386/isa/icu.h"
 
 /*
  * 387 and 287 Numeric Coprocessor Extension (NPX) Driver.
@@ -57,8 +57,6 @@
 
 #ifdef	__GNUC__
 
-#define	disable_intr()		__asm("cli")
-#define	enable_intr()		__asm("sti")
 #define	fldcw(addr)		__asm("fldcw %0" : : "m" (*addr))
 #define	fnclex()		__asm("fnclex")
 #define	fninit()		__asm("fninit")
@@ -78,8 +76,6 @@
 
 #else	/* not __GNUC__ */
 
-void	disable_intr	__P((void));
-void	enable_intr	__P((void));
 void	fldcw		__P((caddr_t addr));
 void	fnclex		__P((void));
 void	fninit		__P((void));
@@ -103,48 +99,38 @@ extern	struct gate_descriptor idt[];
 int	npxdna		__P((void));
 void	npxexit		__P((struct proc *p));
 void	npxinit		__P((u_int control));
-void	npxintr		__P((struct intrframe frame));
 void	npxsave		__P((struct save87 *addr));
-static	int	npxattach	__P((struct isa_device *dvp));
-static	int	npxprobe	__P((struct isa_device *dvp));
-static	int	npxprobe1	__P((struct isa_device *dvp));
 
-struct	isa_driver npxdriver = {
-	npxprobe, npxattach, "npx",
+struct	npx_softc {
+	struct	device sc_dev;
+	struct	isadev sc_id;
+	struct	intrhand sc_ih;
 };
 
-u_int	npx0mask;
-struct proc	*npxproc;
+static int npxprobe __P((struct device *, struct cfdata *, void *));
+static void npxforceintr __P((void *));
+static void npxattach __P((struct device *, struct device *, void *));
+static int npxintr __P((void *));
 
-static	bool_t			npx_ex16;
-static	bool_t			npx_exists;
-static	struct gate_descriptor	npx_idt_probeintr;
-static	int			npx_intrno;
-static	volatile u_int		npx_intrs_while_probing;
-static	bool_t			npx_irq13;
+struct	cfdriver npxcd =
+{ NULL, "npx", npxprobe, npxattach, sizeof(struct npx_softc) };
+
+struct	proc *npxproc;
+static	int floating_point = 0;
+
+enum	npxtype {
+	NONE,
+	INTERRUPT,
+	TRAP,
+};
+static	enum npxtype npxtype = NONE;
+static	u_short npxaddr;
+
 static	volatile u_int		npx_traps_while_probing;
 
 /*
- * Special interrupt handlers.  Someday intr0-intr15 will be used to count
- * interrupts.  We'll still need a special exception 16 handler.  The busy
- * latch stuff in probintr() can be moved to npxprobe().
+ * Special interrupt handlers.  We need a special exception 16 handler.
  */
-void probeintr(void);
-asm ( \
-	".text;" \
-	"_probeintr:;" \
-	"ss;" \
-	"incl	_npx_intrs_while_probing;" \
-	"pushl	%eax;" \
-	"movb	$0x20,%al;"	/* EOI (asm in strings loses cpp features) */ \
-	"outb	%al,$0xa0;"	/* IO_ICU2 */ \
-	"outb	%al,$0x20;"	/* IO_ICU1 */ \
-	"movb	$0,%al;" \
-	"outb	%al,$0xf0;"	/* clear BUSY# latch */ \
-	"popl	%eax;" \
-	"iret" \
-);
-
 void probetrap(void);
 asm
 ("
@@ -163,60 +149,31 @@ _probetrap:
  * need to use interrupts.  Return 1 if device exists.
  */
 static int
-npxprobe(dvp)
-	struct isa_device *dvp;
+npxprobe(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
 {
-	int	result;
-	u_long	save_eflags;
-	u_char	save_icu1_mask;
-	u_char	save_icu2_mask;
-	struct	gate_descriptor save_idt_npxintr;
-	struct	gate_descriptor save_idt_npxtrap;
-	/*
-	 * This routine is now just a wrapper for npxprobe1(), to install
-	 * special npx interrupt and trap handlers, to enable npx interrupts
-	 * and to disable other interrupts.  Someday isa_configure() will
-	 * install suitable handlers and run with interrupts enabled so we
-	 * won't need to do so much here.
-	 */
-	npx_intrno = NRSVIDT + ffs(dvp->id_irq) - 1;
-	save_eflags = read_eflags();
-	disable_intr();
-	save_icu1_mask = inb(IO_ICU1 + 1);
-	save_icu2_mask = inb(IO_ICU2 + 1);
-	save_idt_npxintr = idt[npx_intrno];
-	save_idt_npxtrap = idt[16];
-	outb(IO_ICU1 + 1, ~(IRQ_SLAVE | dvp->id_irq));
-	outb(IO_ICU2 + 1, ~(dvp->id_irq >> 8));
-	setidt(16, probetrap, SDT_SYS386TGT, SEL_KPL);
-	setidt(npx_intrno, probeintr, SDT_SYS386IGT, SEL_KPL);
-	npx_idt_probeintr = idt[npx_intrno];
-	enable_intr();
-	result = npxprobe1(dvp);
-	disable_intr();
-	outb(IO_ICU1 + 1, save_icu1_mask);
-	outb(IO_ICU2 + 1, save_icu2_mask);
-	idt[npx_intrno] = save_idt_npxintr;
-	idt[16] = save_idt_npxtrap;
-	write_eflags(save_eflags);
-	return (result);
-}
+	struct	isa_attach_args *ia = aux;
+	u_short	iobase = ia->ia_iobase;
+	u_short	irq = ia->ia_irq;
+	int	control, status;
 
-static int
-npxprobe1(dvp)
-	struct isa_device *dvp;
-{
-	int control;
-	int status;
-#ifdef lint
-	npxintr();
+#ifdef DIAGNOSTIC
+	if (cf->cf_unit != 0)
+		panic("npxprobe: unit != 0");
 #endif
+
+	if (iobase == IOBASEUNK)
+		return 0;
+
 	/*
 	 * Partially reset the coprocessor, if any.  Some BIOS's don't reset
 	 * it after a warm boot.
 	 */
-	outb(0xf1, 0);		/* full reset on some systems, NOP on others */
-	outb(0xf0, 0);		/* clear BUSY# latch */
+	outb(iobase + 1, 0);	/* full reset on some systems, NOP on others */
+	outb(iobase + 0, 0);	/* clear BUSY# latch */
+
 	/*
 	 * Prepare to trap all ESC (i.e., NPX) instructions and all WAIT
 	 * instructions.  We must set the CR0_MP bit and use the CR0_TS
@@ -232,10 +189,12 @@ npxprobe1(dvp)
 	 * Setting it should fail or do nothing on lesser processors.
 	 */
 	load_cr0(rcr0() | CR0_MP | CR0_NE);
+
 	/*
 	 * But don't trap while we're probing.
 	 */
 	stop_emulating();
+
 	/*
 	 * Finish resetting the coprocessor, if any.  If there is an error
 	 * pending, then we may get a bogus IRQ13, but probeintr() will handle
@@ -243,15 +202,8 @@ npxprobe1(dvp)
 	 * IRQ13 and cleared the BUSY# latch early to handle them anyway.
 	 */
 	fninit();
-	DELAY(1000);		/* wait for any IRQ13 (fwait might hang) */
-#ifdef DIAGNOSTIC
-	if (npx_intrs_while_probing != 0)
-		printf("fninit caused %u bogus npx interrupt(s)\n",
-		       npx_intrs_while_probing);
-	if (npx_traps_while_probing != 0)
-		printf("fninit caused %u bogus npx trap(s)\n",
-		       npx_traps_while_probing);
-#endif
+	delay(1000);		/* wait for any IRQ13 (fwait might hang) */
+
 	/*
 	 * Check for a status of mostly zero.
 	 */
@@ -264,69 +216,93 @@ npxprobe1(dvp)
 		control = 0x5a5a;	
 		fnstcw(&control);
 		if ((control & 0x1f3f) == 0x033f) {
-			npx_exists = 1;
-			/*
-			 * We have an npx, now divide by 0 to see if exception
-			 * 16 works.
-			 */
-			control &= ~(1 << 2);	/* enable divide by 0 trap */
-			fldcw(&control);
-			npx_traps_while_probing = npx_intrs_while_probing = 0;
-			fp_divide_by_0();
-			if (npx_traps_while_probing != 0) {
+			if (irq == IRQUNK) {
+				u_long	save_eflags;
+				struct	gate_descriptor save_idt_npxtrap;
+
+				save_eflags = read_eflags();
+				save_idt_npxtrap = idt[16];
+				setidt(16, probetrap, SDT_SYS386TGT, SEL_KPL);
+				irq = isa_discoverintr(npxforceintr, &control);
+				idt[16] = save_idt_npxtrap;
+				write_eflags(save_eflags);
+				if (irq != IRQNONE)
+					outb(iobase + 0, 0);	/* clear BUSY# latch */
+				if (npx_traps_while_probing != 0)
+					irq = IRQNONE;
+				else if (irq == IRQNONE)
+					return 0;
+				ia->ia_irq = irq;
+			}
+
+			if (irq == IRQNONE) {
 				/*
 				 * Good, exception 16 works.
 				 */
-				npx_ex16 = 1;
-				dvp->id_irq = 0;	/* zap the interrupt */
-				return 16;
-			}
-			if (npx_intrs_while_probing != 0) {
+				npxtype = TRAP;
+				return 1;
+			} else {
 				/*
 				 * Bad, we are stuck with IRQ13.
 				 */
-				npx_irq13 = 1;
-				npx0mask = dvp->id_irq;	/* npxattach too late */
-				return 16;
+				npxtype = INTERRUPT;
+				return 1;
 			}
+
 			/*
 			 * Worse, even IRQ13 is broken.  Use emulator.
 			 */
+			printf("npx%d: error reporting broken\n", cf->cf_unit);
 		}
 	}
+
 	/*
-	 * Probe failed, but we want to get to npxattach to initialize the
-	 * emulator and say that it has been installed.  XXX handle devices
-	 * that aren't really devices better.
+	 * Probe failed.
 	 */
-	dvp->id_irq = 0;
-	return 16;
+	return 0;
+}
+
+static void
+npxforceintr(aux)
+	void *aux;
+{
+	int	*control = aux;
+
+	/*
+	 * We have an npx, now divide by 0 to see if exception
+	 * 16 works.
+	 */
+	*control &= ~(1 << 2);	/* enable divide by 0 trap */
+	fldcw(control);
+	npx_traps_while_probing = 0;
+	fp_divide_by_0();
 }
 
 /*
  * Attach routine - announce which it is, and wire into system
  */
-int
-npxattach(dvp)
-	struct isa_device *dvp;
+static void
+npxattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	if (npx_ex16)
-		printf("npx%d: using exception 16\n", dvp->id_unit);
-	else if (npx_irq13)
-		;
-	else {
-#ifdef MATH_EMULATE
-		if (npx_exists)
-			printf("npx%d: error reporting broken, using emulator\n",
-				dvp->id_unit);
-		else
-			printf("npx%d: emulator\n", dvp->id_unit);
-#else
-		panic("npxattach: no math emulator in kernel!");
-#endif
+	struct	npx_softc *sc = (struct npx_softc *)self;
+	struct	isa_attach_args *ia = aux;
+	extern	int floating_point;
+
+	npxaddr = ia->ia_iobase;
+	floating_point = 1;
+	if (npxtype == TRAP)
+		printf(": using exception 16\n");
+	else
+		printf("\n");
+	isa_establish(&sc->sc_id, &sc->sc_dev);
+
+	if (npxtype == INTERRUPT) {
+		sc->sc_ih.ih_fun = npxintr;
+		sc->sc_ih.ih_arg = NULL;
+		intr_establish(ia->ia_irq, &sc->sc_ih, DV_DULL);
 	}
-	npxinit(__INITIAL_NPXCW__);
-	return (1);
 }
 
 /*
@@ -338,7 +314,7 @@ npxinit(control)
 {
 	struct save87 dummy;
 
-	if (!npx_exists)
+	if (!floating_point)
 		return;
 	/*
 	 * fninit has the same h/w bugs as fnsave.  Use the detoxified
@@ -381,28 +357,29 @@ npxexit(p)
  * Returning from the handler would be even less safe than usual because
  * IRQ13 exception handling makes exceptions even less precise than usual.
  */
-void
-npxintr(frame)
-	struct intrframe frame;
+int
+npxintr(aux)
+	void *aux;
 {
-	int code;
+	struct	intrframe *frame = aux;
+	int	code;
 
-	if (npxproc == NULL || !npx_exists) {
-		/* XXX no %p in stand/printf.c.  Cast to quiet gcc -Wall. */
-		printf("npxintr: npxproc = %lx, curproc = %lx, npx_exists = %d\n",
-		       (u_long) npxproc, (u_long) curproc, npx_exists);
-		panic("npxintr from nowhere");
+	if (npxproc == NULL || npxtype == NONE) {
+		/* XXX no %p in kern/subr_prf.c.  Cast to quiet gcc -Wall. */
+		printf("npxintr: npxproc = %lx, curproc = %lx, npxtype = %d\n",
+		       (u_long) npxproc, (u_long) curproc, npxtype);
+		return 0;
 	}
 	if (npxproc != curproc) {
-		printf("npxintr: npxproc = %lx, curproc = %lx, npx_exists = %d\n",
-		       (u_long) npxproc, (u_long) curproc, npx_exists);
-		panic("npxintr from non-current process");
+		printf("npxintr: npxproc = %lx, curproc = %lx, npxtype = %d\n",
+		       (u_long) npxproc, (u_long) curproc, npxtype);
+		return 0;
 	}
 	/*
 	 * Save state.  This does an implied fninit.  It had better not halt
 	 * the cpu or we'll hang.
 	 */
-	outb(0xf0, 0);
+	outb(npxaddr + 0, 0);			/* reset #BUSY latch */
 	fnsave(&curpcb->pcb_savefpu);
 	fwait();
 	/*
@@ -424,7 +401,7 @@ npxintr(frame)
 	/*
 	 * Pass exception to process.
 	 */
-	if (ISPL(frame.if_cs) == SEL_UPL) {
+	if (ISPL(frame->if_cs) == SEL_UPL) {
 		/*
 		 * Interrupt is essentially a trap, so we can afford to call
 		 * the SIGFPE handler (if any) as soon as the interrupt
@@ -436,7 +413,7 @@ npxintr(frame)
 		 * in doreti, and the frame for that could easily be set up
 		 * just before it is used).
 		 */
-		curproc->p_regs = (int *)&frame.if_es;
+		curproc->p_regs = (int *)&frame->if_es;
 #ifdef notyet
 		/*
 		 * Encode the appropriate code for detailed information on
@@ -464,6 +441,7 @@ npxintr(frame)
 		 */
 		psignal(npxproc, SIGFPE);
 	}
+	return 1;
 }
 
 /*
@@ -475,13 +453,14 @@ npxintr(frame)
 int
 npxdna()
 {
-	if (!npx_exists)
-		return (0);
+	if (npxtype == NONE)
+		return 0;
 	if (npxproc != NULL) {
 		printf("npxdna: npxproc = %lx, curproc = %lx\n",
 		       (u_long) npxproc, (u_long) curproc);
 		panic("npxdna");
 	}
+
 	stop_emulating();
 	/*
 	 * Record new context early in case frstor causes an IRQ13.
@@ -501,7 +480,7 @@ npxdna()
 	 */
 	frstor(&curpcb->pcb_savefpu);
 
-	return (1);
+	return 1;
 }
 
 /*
@@ -516,6 +495,7 @@ void
 npxsave(addr)
 	struct save87 *addr;
 {
+#if 0 /* XXXX */
 	u_char	icu1_mask;
 	u_char	icu2_mask;
 	u_char	old_icu1_mask;
@@ -530,11 +510,13 @@ npxsave(addr)
 	outb(IO_ICU2 + 1, old_icu2_mask & ~(npx0mask >> 8));
 	idt[npx_intrno] = npx_idt_probeintr;
 	enable_intr();
+#endif
 	stop_emulating();
 	fnsave(addr);
 	fwait();
 	start_emulating();
 	npxproc = NULL;
+#if 0 /* XXXX */
 	disable_intr();
 	icu1_mask = inb(IO_ICU1 + 1);	/* masks may have changed */
 	icu2_mask = inb(IO_ICU2 + 1);
@@ -545,6 +527,5 @@ npxsave(addr)
 	     | (old_icu2_mask & (npx0mask >> 8)));
 	idt[npx_intrno] = save_idt_npxintr;
 	enable_intr();		/* back to usual state */
+#endif
 }
-
-#endif /* NNPX > 0 */
