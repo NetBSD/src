@@ -1,4 +1,4 @@
-.\"	$NetBSD: verifiedexec.4,v 1.1 2003/04/29 11:49:51 augustss Exp $
+.\"	$NetBSD: verifiedexec.4,v 1.2 2003/04/29 12:38:01 wiz Exp $
 .\"
 .\" Copyright (c) 2002, Brett Lymn.  All rights reserved.
 .\"
@@ -26,13 +26,14 @@
 .\"
 .\"
 .Dd October 24, 2002
-.Dt VERIEXEC 4
+.Dt VERIFIEDEXEC 4
 .Os
 .Sh NAME
-.Nm veriexec
+.Nm verifiedexec
 .Nd Verified exec signature loader device
 .Sh SYNOPSIS
-.Cd "pseudo-device veriexec"
+.Cd options VERIFIED_EXEC
+.Cd pseudo-device verifiedexec 1
 .Sh DESCRIPTION
 The
 .Nm
