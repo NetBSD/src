@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.112 2000/05/06 16:35:14 sommerfeld Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.113 2000/05/10 01:19:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -967,6 +967,10 @@ ip_dooptions(m)
 		if (opt == IPOPT_NOP)
 			optlen = 1;
 		else {
+			if (cnt < IPOPT_OLEN + sizeof(*cp)) {
+				code = &cp[IPOPT_OLEN] - (u_char *)ip;
+				goto bad;
+			}
 			optlen = cp[IPOPT_OLEN];
 			if (optlen <= 0 || optlen > cnt) {
 				code = &cp[IPOPT_OLEN] - (u_char *)ip;
