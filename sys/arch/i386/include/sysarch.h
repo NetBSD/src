@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.5 1995/05/06 19:19:57 mycroft Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.6 1995/06/05 19:36:23 pk Exp $	*/
 
 #ifndef _I386_SYSARCH_H_
 #define _I386_SYSARCH_H_
@@ -24,6 +24,7 @@ struct i386_set_ldt_args {
 #ifndef _KERNEL
 int i386_get_ldt __P((int, union descriptor *, int));
 int i386_set_ldt __P((int, union descriptor *, int));
+int sysarch __P((int, char *));
 #endif
 
 #endif /* !_I386_SYSARCH_H_ */
