@@ -30,7 +30,6 @@
 ./usr/lkm/portal.o
 ./usr/lkm/procfs.o
 ./usr/lkm/umapfs.o
-./usr/mdec/fdboot
 ./usr/mdec/installboot
 ./usr/mdec/xxboot
 ./usr/sbin/grfconfig
