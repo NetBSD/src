@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.2 2001/11/24 16:38:16 minoura Exp $	*/
+/*	$NetBSD: installboot.c,v 1.3 2001/11/25 00:42:11 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -206,7 +206,7 @@ main(int argc, char *argv[])
 
 	if (checkparttype(target, fflag))
 		errx(1, "aborting");
-	if (merging && blocksize > bboffset)
+	if (merging && blocksize > bboffset && !floppy)
 		bboffset = blocksize;
 	if (bootprogsize > MAXBBSIZE - bboffset)
 		errx(1, "%s: boot block too big", bootprog);
