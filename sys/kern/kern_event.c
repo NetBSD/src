@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.11 2003/02/23 21:44:26 pk Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.12 2003/02/23 22:05:35 pk Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -626,6 +626,7 @@ sys_kqueue(struct lwp *l, void *v, register_t *retval)
 	fp->f_ops = &kqueueops;
 	kq = pool_get(&kqueue_pool, PR_WAITOK);
 	memset((char *)kq, 0, sizeof(struct kqueue));
+	simple_lock_init(&kq->kq_lock);
 	TAILQ_INIT(&kq->kq_head);
 	fp->f_data = (caddr_t)kq;	/* store the kqueue with the fp */
 	*retval = fd;
@@ -923,12 +924,14 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
  start:
 	kevp = kq->kq_kev;
 	s = splsched();
+	simple_lock(&kq->kq_lock);
 	if (kq->kq_count == 0) {
 		if (timeout < 0) { 
 			error = EWOULDBLOCK;
 		} else {
 			kq->kq_state |= KQ_SLEEP;
-			error = tsleep(kq, PSOCK | PCATCH, "kqread", timeout);
+			error = ltsleep(kq, PSOCK | PCATCH | PNORELOCK,
+					"kqread", timeout, &kq->kq_lock);
 		}
 		splx(s);
 		if (error == 0)
@@ -943,20 +946,26 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 
 	/* mark end of knote list */
 	TAILQ_INSERT_TAIL(&kq->kq_head, &marker, kn_tqe); 
+	simple_unlock(&kq->kq_lock);
 
 	while (count) {				/* while user wants data ... */
+		simple_lock(&kq->kq_lock);
 		kn = TAILQ_FIRST(&kq->kq_head);	/* get next knote */
 		TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe); 
 		if (kn == &marker) {		/* if it's our marker, stop */
+			/* What if it's some else's marker? */
+			simple_unlock(&kq->kq_lock);
 			splx(s);
 			if (count == maxevents)
 				goto retry;
 			goto done;
 		}
+		kq->kq_count--;
+		simple_unlock(&kq->kq_lock);
+
 		if (kn->kn_status & KN_DISABLED) {
 			/* don't want disabled events */
 			kn->kn_status &= ~KN_QUEUED;
-			kq->kq_count--;
 			continue;
 		}
 		if ((kn->kn_flags & EV_ONESHOT) == 0 &&
@@ -966,7 +975,6 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 			 * triggered again, so de-queue.
 			 */
 			kn->kn_status &= ~(KN_QUEUED | KN_ACTIVE);
-			kq->kq_count--;
 			continue;
 		}
 		*kevp = kn->kn_kevent;
@@ -975,7 +983,6 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 		if (kn->kn_flags & EV_ONESHOT) {
 			/* delete ONESHOT events after retrieval */
 			kn->kn_status &= ~KN_QUEUED;
-			kq->kq_count--;
 			splx(s);
 			kn->kn_fop->f_detach(kn);
 			knote_drop(kn, p, p->p_fd);
@@ -985,10 +992,12 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 			kn->kn_data = 0;
 			kn->kn_fflags = 0;
 			kn->kn_status &= ~(KN_QUEUED | KN_ACTIVE);
-			kq->kq_count--;
 		} else {
 			/* add event back on list */
+			simple_lock(&kq->kq_lock);
 			TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe); 
+			kq->kq_count++;
+			simple_unlock(&kq->kq_lock);
 		}
 		count--;
 		if (nkev == KQ_NEVENTS) {
@@ -1006,7 +1015,9 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 	}
 
 	/* remove marker */
+	simple_lock(&kq->kq_lock);
 	TAILQ_REMOVE(&kq->kq_head, &marker, kn_tqe); 
+	simple_unlock(&kq->kq_lock);
 	splx(s);
  done:
 	if (nkev != 0) {
@@ -1209,7 +1220,10 @@ kqueue_close(struct file *fp, struct proc *p)
 static void
 kqueue_wakeup(struct kqueue *kq)
 {
+	int s;
 
+	s = splsched();
+	simple_lock(&kq->kq_lock);
 	if (kq->kq_state & KQ_SLEEP) {		/* if currently sleeping ...  */
 		kq->kq_state &= ~KQ_SLEEP;
 		wakeup(kq);			/* ... wakeup */
@@ -1217,6 +1231,8 @@ kqueue_wakeup(struct kqueue *kq)
 
 	/* Notify select/poll and kevent. */
 	selnotify(&kq->kq_sel, 0);
+	simple_unlock(&kq->kq_lock);
+	splx(s);
 }
 
 /*
@@ -1371,12 +1387,14 @@ knote_enqueue(struct knote *kn)
 	int		s;
 
 	kq = kn->kn_kq;
-	s = splsched();
 	KASSERT((kn->kn_status & KN_QUEUED) == 0);
 
+	s = splsched();
+	simple_lock(&kq->kq_lock);
 	TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe); 
 	kn->kn_status |= KN_QUEUED;
 	kq->kq_count++;
+	simple_unlock(&kq->kq_lock);
 	splx(s);
 	kqueue_wakeup(kq);
 }
@@ -1390,12 +1408,14 @@ knote_dequeue(struct knote *kn)
 	struct kqueue	*kq;
 	int		s;
 
-	kq = kn->kn_kq;
-	s = splsched();
 	KASSERT(kn->kn_status & KN_QUEUED);
+	kq = kn->kn_kq;
 
+	s = splsched();
+	simple_lock(&kq->kq_lock);
 	TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe); 
 	kn->kn_status &= ~KN_QUEUED;
 	kq->kq_count--;
+	simple_unlock(&kq->kq_lock);
 	splx(s);
 }
