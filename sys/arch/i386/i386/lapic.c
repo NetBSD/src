@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.1.2.7 2000/02/21 21:10:28 sommerfeld Exp $ */
+/* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ lapic_map(lapic_base)
 
 	/*
 	 * Map local apic.  If we have a local apic, it's safe to assume
-	 * we're on a 486 or better and can use invpg and non-cacheable PTE's
+	 * we're on a 486 or better and can use invlpg and non-cacheable PTE's
 	 *
 	 * Whap the PTE "by hand" rather than calling pmap_kenter_pa because
 	 * the latter will attempt to invoke TLB shootdown code just as we
@@ -100,7 +100,7 @@ lapic_map(lapic_base)
 
 	pte = kvtopte(va);
 	*pte = lapic_base | PG_RW | PG_V | PG_N | pmap_pg_g;
-	pmap_update_pg(va);
+	invlpg(va);
 
 #ifdef MULTIPROCESSOR
 	cpu_init_first();	/* catch up to changed cpu_number() */
