@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70 2002/02/13 16:25:34 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.71 2002/03/04 02:19:08 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70 2002/02/13 16:25:34 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.71 2002/03/04 02:19:08 simonb Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -640,7 +640,6 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 void
 cpu_reboot(int howto, char *bootstr)
 {
-	extern int cold;
 
 	/* take a snap shot before clobbering any registers */
 	if (curproc)

@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.16 2002/03/03 22:47:28 martin Exp $ */
+/*	$NetBSD: stp4020.c,v 1.17 2002/03/04 02:19:11 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.16 2002/03/03 22:47:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.17 2002/03/04 02:19:11 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -981,7 +981,6 @@ stp4020_delay(ms)
 	unsigned int ms;
 {
 	unsigned int ticks;
-extern	int cold;
 
 	/* Convert to ticks */
 	ticks = (ms * hz ) / 1000000;

@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeii.c,v 1.4 2001/11/13 07:48:41 lukem Exp $ */
+/* $NetBSD: btvmeii.c,v 1.5 2002/03/04 02:19:10 simonb Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,10 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.4 2001/11/13 07:48:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.5 2002/03/04 02:19:10 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/device.h>
 
 #include <dev/pci/pcireg.h>
@@ -466,7 +467,6 @@ b3_2706_establish_vmeint(vsc, handle, prior, func, arg)
 	struct b3_2706_vmeintrhand *ih;
 	long lv;
 	int s;
-	extern int cold;
 
 	/* no point in sleeping unless someone can free memory. */
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
