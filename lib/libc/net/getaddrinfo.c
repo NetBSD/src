@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.52 2001/01/24 15:05:48 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.53 2001/01/25 22:50:55 jdolecek Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.52 2001/01/24 15:05:48 itojun Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.53 2001/01/25 22:50:55 jdolecek Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -256,7 +256,7 @@ static int res_searchN __P((const char *, struct res_target *));
 static int res_querydomainN __P((const char *, const char *,
 	struct res_target *));
 
-static char *ai_errlist[] = {
+static const char * const ai_errlist[] = {
 	"Success",
 	"Address family for hostname not supported",	/* EAI_ADDRFAMILY */
 	"Temporary failure in name resolution",		/* EAI_AGAIN      */
@@ -321,7 +321,8 @@ gai_strerror(ecode)
 {
 	if (ecode < 0 || ecode > EAI_MAX)
 		ecode = EAI_MAX;
-	return ai_errlist[ecode];
+	/* LINTED const castaway */
+	return (char *) ai_errlist[ecode];
 }
 
 void
