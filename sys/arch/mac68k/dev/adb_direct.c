@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.45 2001/11/20 03:19:41 chs Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.46 2002/03/05 17:39:25 shiba Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -2506,7 +2506,6 @@ adb_setup_hw_type(void)
 
 	case MACH_MACPB140:		/* PowerBook 140 */
 	case MACH_MACPB145:		/* PowerBook 145 */
-	case MACH_MACPB150:		/* PowerBook 150 */
 	case MACH_MACPB160:		/* PowerBook 160 */
 	case MACH_MACPB165:		/* PowerBook 165 */
 	case MACH_MACPB165C:		/* PowerBook 165c */
@@ -2521,6 +2520,7 @@ adb_setup_hw_type(void)
 #endif
 		break;
 
+	case MACH_MACPB150:		/* PowerBook 150 */
 	case MACH_MACPB210:		/* PowerBook Duo 210 */
 	case MACH_MACPB230:		/* PowerBook Duo 230 */
 	case MACH_MACPB250:		/* PowerBook Duo 250 */
