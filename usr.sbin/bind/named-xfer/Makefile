@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.6 1999/11/21 16:39:54 itojun Exp $
+#	$NetBSD: Makefile,v 1.7 1999/11/21 16:46:33 itojun Exp $
 
 .include "../Makefile.inc"
 .PATH:	${BIND_DIST_DIR}/bin/named-xfer ${BIND_DIST_DIR}/bin/named \
 	${BIND_DIST_DIR}/man
 
-NAMEDOBJ!=cd ${.CURDIR}/../named; make print-objdir
+NAMEDOBJ!=cd ${.CURDIR}/../named; ${MAKE} print-objdir
 
 PROG=	named-xfer
 SRCS=	${PROG}.c db_glue.c ns_glue.c tmp_version.c
