@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.19 2003/08/25 23:09:37 matt Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.20 2003/08/26 16:48:33 wiz Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,28 +38,33 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.19 2003/08/25 23:09:37 matt Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.20 2003/08/26 16:48:33 wiz Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/wait.h>
 #include <sys/socket.h>
-#include <sys/time.h>
 #include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/wait.h>
 
 #include <assert.h>
+#include <db.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <vis.h>
-#include <utmp.h>
-#include <utmpx.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <db.h>
+#include <utmp.h>
+/* don't define earlier, has side effects in fcntl.h */
+#define __LIBC12_SOURCE__
+#include <utmpx.h>
+#include <vis.h>
+
+__warn_references(getlastlogx,
+    "warning: reference to compatibility getlastlogx(); include <utmpx.h> for correct reference")
 
 static FILE *fp;
 static int readonly = 0;
@@ -416,12 +421,20 @@ lastlogxname(const char *fname)
 struct lastlogx *
 getlastlogx(uid_t uid, struct lastlogx *ll)
 {
+
+	return __getlastlogx13(_PATH_LASTLOGX, uid, ll);
+}
+
+struct lastlogx *
+__getlastlogx13(const char *fname, uid_t uid, struct lastlogx *ll)
+{
 	DBT key, data;
 	DB *db;
 
+	_DIAGASSERT(fname != NULL);
 	_DIAGASSERT(ll != NULL);
 
-	db = dbopen(llfile, O_RDONLY|O_SHLOCK, 0, DB_HASH, NULL);
+	db = dbopen(fname, O_RDONLY|O_SHLOCK, 0, DB_HASH, NULL);
 
 	if (db == NULL)
 		return NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sshlogin.c,v 1.11 2003/07/10 01:09:49 lukem Exp $	*/
+/*	$NetBSD: sshlogin.c,v 1.12 2003/08/26 16:48:34 wiz Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,7 +41,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: sshlogin.c,v 1.5 2002/08/29 15:57:25 stevesk Exp $");
-__RCSID("$NetBSD: sshlogin.c,v 1.11 2003/07/10 01:09:49 lukem Exp $");
+__RCSID("$NetBSD: sshlogin.c,v 1.12 2003/08/26 16:48:34 wiz Exp $");
 
 #include <util.h>
 #ifdef SUPPORT_UTMP
@@ -72,7 +72,7 @@ get_last_login_time(uid_t uid, const char *logname,
 
 	buf[0] = '\0';
 #ifdef SUPPORT_UTMPX
-	if ((llxp = getlastlogx(uid, &llx)) != NULL) {
+	if ((llxp = getlastlogx(_PATH_LASTLOGX, uid, &llx)) != NULL) {
 		if (bufsize > sizeof(llxp->ll_host) + 1)
 			bufsize = sizeof(llxp->ll_host) + 1;
 		strncpy(buf, llxp->ll_host, bufsize - 1);
