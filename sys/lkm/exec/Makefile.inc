@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.1 2000/12/08 23:05:33 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2001/12/12 11:49:04 lukem Exp $
 
 S!=	cd ${.CURDIR}/../../..;pwd
+
+NOMAN=	# defined
 
 .include "../Makefile.inc"
