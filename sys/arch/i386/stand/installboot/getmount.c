@@ -1,4 +1,4 @@
-/* $NetBSD: getmount.c,v 1.1 1997/06/13 22:15:04 drochner Exp $ */
+/* $NetBSD: getmount.c,v 1.2 1997/07/21 18:04:36 drochner Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -88,7 +88,7 @@ dotempmount(bdiskdev)
 		return (0);
 	}
 	if (verbose)
-		printf("mounted %s at %s\n", bdiskdev, dir);
+		fprintf(stderr, "mounted %s at %s\n", bdiskdev, dir);
 	tempmounted = 1;
 	return (dir);
 }
@@ -137,7 +137,7 @@ getmountpoint(diskdev)
 			return (buf[i].f_mntonname);
 		}
 	if (verbose)
-		printf("%s is not mounted\n", bdiskdev);
+		fprintf(stderr, "%s is not mounted\n", bdiskdev);
 	return (dotempmount(bdiskdev));
 }
 
@@ -147,7 +147,7 @@ cleanupmount(dir)
 {
 	if (tempmounted) {
 		if (verbose)
-			printf("unmounting\n");
+			fprintf(stderr, "unmounting\n");
 		unmount(dir, 0);
 		rmdir(dir);
 		tempmounted = 0;
