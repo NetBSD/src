@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.15 1998/02/08 05:22:10 gwr Exp $	*/
+/*	$NetBSD: cg4.c,v 1.16 1998/03/08 18:53:17 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -246,11 +246,11 @@ cg4attach(parent, self, args)
 #ifdef	_SUN3_
 		sc->sc_cg4type = CG4_TYPE_A;
 		sc->sc_ldcmap  = cg4a_ldcmap;
-		sc->sc_va_cmap = bus_mapin(BUS_OBIO, CG4A_OBIO_CMAP,
-		                           sizeof(struct amd_regs));
 		sc->sc_pa_overlay = ca->ca_paddr + CG4A_OFF_OVERLAY;
 		sc->sc_pa_enable  = ca->ca_paddr + CG4A_OFF_ENABLE;
 		sc->sc_pa_pixmap  = ca->ca_paddr + CG4A_OFF_PIXMAP;
+		sc->sc_va_cmap = bus_mapin(BUS_OBIO, CG4A_OBIO_CMAP,
+		                           sizeof(struct amd_regs));
 		cg4a_init(sc);
 #else	/* SUN3 */
 		panic("cgfour flags 0x10");
@@ -258,11 +258,12 @@ cg4attach(parent, self, args)
 	} else {
 		sc->sc_cg4type = CG4_TYPE_B;
 		sc->sc_ldcmap  = cg4b_ldcmap;
-		sc->sc_va_cmap = bus_mapin(ca->ca_bustype, ca->ca_paddr,
-					   sizeof(struct bt_regs));
 		sc->sc_pa_overlay = ca->ca_paddr + CG4B_OFF_OVERLAY;
 		sc->sc_pa_enable  = ca->ca_paddr + CG4B_OFF_ENABLE;
 		sc->sc_pa_pixmap  = ca->ca_paddr + CG4B_OFF_PIXMAP;
+		tmp               = ca->ca_paddr + CG4B_OFF_CMAP,
+		sc->sc_va_cmap = bus_mapin(ca->ca_bustype, tmp,
+		                           sizeof(struct bt_regs));
 		cg4b_init(sc);
 
 		/* Does it have a P4 register? */
