@@ -1,3 +1,5 @@
+/*	$NetBSD: pf.c,v 1.3 1997/03/25 03:07:27 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -32,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: pf.c,v 1.2 1997/03/17 10:39:53 veego Exp $";
+static char rcsid[] = "$NetBSD: pf.c,v 1.3 1997/03/25 03:07:27 thorpej Exp $";
 #endif
 
 #include <stdio.h>
