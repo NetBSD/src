@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_hppa.c,v 1.3 2003/10/21 12:22:37 itohy Exp $	*/
+/*	$NetBSD: dev_hppa.c,v 1.4 2003/10/21 13:10:42 itohy Exp $	*/
 
 /*	$OpenBSD: dev_hppa.c,v 1.5 1999/04/20 20:01:01 mickey Exp $	*/
 
@@ -184,9 +184,9 @@ putchar(int c)
 		break;
 	case '\n':
 		/*
-	 	* XXX fredette - probably only necessary
-	 	* when using a serial console?
-	 	*/
+		* XXX fredette - probably only necessary
+		* when using a serial console?
+		*/
 		cnputc(c);
 		c = '\r';
 		/* FALLTHROUGH */
