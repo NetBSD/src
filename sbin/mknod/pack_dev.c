@@ -1,4 +1,4 @@
-/*	$NetBSD: pack_dev.c,v 1.3 2002/01/31 22:43:42 tv Exp $	*/
+/*	$NetBSD: pack_dev.c,v 1.4 2003/05/08 09:38:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: pack_dev.c,v 1.3 2002/01/31 22:43:42 tv Exp $");
+__RCSID("$NetBSD: pack_dev.c,v 1.4 2003/05/08 09:38:03 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -84,13 +84,6 @@ pack_native(int n, u_long numbers[])
 	return (dev);
 }
 
-
-#define	major_netbsd(x)		((int32_t)((((x) & 0x000fff00) >>  8)))
-#define	minor_netbsd(x)		((int32_t)((((x) & 0xfff00000) >> 12) | \
-					   (((x) & 0x000000ff) >>  0)))
-#define	makedev_netbsd(x,y)	((dev_t)((((x) <<  8) & 0x000fff00) | \
-					 (((y) << 12) & 0xfff00000) | \
-					 (((y) <<  0) & 0x000000ff)))
 
 static dev_t
 pack_netbsd(int n, u_long numbers[])
