@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.139 2004/03/24 15:34:54 atatat Exp $	*/
+/*	$NetBSD: if.c,v 1.140 2004/04/21 04:17:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.139 2004/03/24 15:34:54 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.140 2004/04/21 04:17:28 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -904,7 +904,7 @@ if_clone_list(ifcr)
 /*ARGSUSED*/
 struct ifaddr *
 ifa_ifwithaddr(addr)
-	struct sockaddr *addr;
+	const struct sockaddr *addr;
 {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
@@ -939,7 +939,7 @@ ifa_ifwithaddr(addr)
 /*ARGSUSED*/
 struct ifaddr *
 ifa_ifwithdstaddr(addr)
-	struct sockaddr *addr;
+	const struct sockaddr *addr;
 {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
@@ -969,11 +969,11 @@ ifa_ifwithdstaddr(addr)
  */
 struct ifaddr *
 ifa_ifwithnet(addr)
-	struct sockaddr *addr;
+	const struct sockaddr *addr;
 {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
-	struct sockaddr_dl *sdl;
+	const struct sockaddr_dl *sdl;
 	struct ifaddr *ifa_maybe = 0;
 	u_int af = addr->sa_family;
 	char *addr_data = addr->sa_data, *cplim;
@@ -987,7 +987,7 @@ ifa_ifwithnet(addr)
 	}
 #ifdef NETATALK
 	if (af == AF_APPLETALK) {
-		struct sockaddr_at *sat, *sat2;
+		const struct sockaddr_at *sat, *sat2;
 		sat = (struct sockaddr_at *)addr;
 		for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
 		     ifp = TAILQ_NEXT(ifp, if_list)) {
@@ -1043,7 +1043,7 @@ ifa_ifwithnet(addr)
  */
 struct ifaddr *
 ifa_ifwithladdr(addr)
-	struct sockaddr *addr;
+	const struct sockaddr *addr;
 {
 	struct ifaddr *ia;
 
@@ -1082,12 +1082,12 @@ ifa_ifwithaf(af)
  */
 struct ifaddr *
 ifaof_ifpforaddr(addr, ifp)
-	struct sockaddr *addr;
+	const struct sockaddr *addr;
 	struct ifnet *ifp;
 {
 	struct ifaddr *ifa;
-	char *cp, *cp2, *cp3;
-	char *cplim;
+	const char *cp, *cp2, *cp3;
+	const char *cplim;
 	struct ifaddr *ifa_maybe = 0;
 	u_int af = addr->sa_family;
 
@@ -1331,6 +1331,12 @@ ifioctl(so, cmd, data, p)
 	struct ifdatareq *ifdr;
 	int s, error = 0;
 	short oif_flags;
+	int prived_error;
+
+	if (p)
+		prived_error = suser(p->p_ucred, &p->p_acflag);
+	else
+		prived_error = 0;
 
 	switch (cmd) {
 
@@ -1345,8 +1351,8 @@ ifioctl(so, cmd, data, p)
 	switch (cmd) {
 	case SIOCIFCREATE:
 	case SIOCIFDESTROY:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-			return (error);
+		if (prived_error)
+			return (prived_error);
 		return ((cmd == SIOCIFCREATE) ?
 			if_clone_create(ifr->ifr_name) :
 			if_clone_destroy(ifr->ifr_name));
@@ -1378,8 +1384,8 @@ ifioctl(so, cmd, data, p)
 		break;
 
 	case SIOCSIFFLAGS:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-			return (error);
+		if (prived_error != 0)
+			return (prived_error);
 		if (ifp->if_flags & IFF_UP && (ifr->ifr_flags & IFF_UP) == 0) {
 			s = splnet();
 			if_down(ifp);
@@ -1402,8 +1408,8 @@ ifioctl(so, cmd, data, p)
 		break;
 
 	case SIOCSIFCAP:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-			return (error);
+		if (prived_error != 0)
+			return (prived_error);
 		if ((ifcr->ifcr_capenable & ~ifp->if_capabilities) != 0)
 			return (EINVAL);
 		if (ifp->if_ioctl == NULL)
@@ -1460,8 +1466,8 @@ ifioctl(so, cmd, data, p)
 		break;
 
 	case SIOCSIFMETRIC:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-			return (error);
+		if (prived_error != 0)
+			return (prived_error);
 		ifp->if_metric = ifr->ifr_metric;
 		break;
 
@@ -1470,8 +1476,8 @@ ifioctl(so, cmd, data, p)
 		break;
 
 	case SIOCZIFDATA:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-			return (error);
+		if (prived_error != 0)
+			return (prived_error);
 		ifdr->ifdr_data = ifp->if_data;
 		/*
 		 * Assumes that the volatile counters that can be
@@ -1485,9 +1491,8 @@ ifioctl(so, cmd, data, p)
 	{
 		u_long oldmtu = ifp->if_mtu;
 
-		error = suser(p->p_ucred, &p->p_acflag);
-		if (error)
-			return (error);
+		if (prived_error)
+			return (prived_error);
 		if (ifp->if_ioctl == NULL)
 			return (EOPNOTSUPP);
 		error = (*ifp->if_ioctl)(ifp, cmd, data);
@@ -1511,8 +1516,8 @@ ifioctl(so, cmd, data, p)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 	case SIOCSIFMEDIA:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-			return (error);
+		if (prived_error != 0)
+			return (prived_error);
 		/* FALLTHROUGH */
 	case SIOCGIFPSRCADDR:
 	case SIOCGIFPDSTADDR:
@@ -1530,8 +1535,8 @@ ifioctl(so, cmd, data, p)
 	case SIOCS80211BSSID:
 	case SIOCS80211CHANNEL:
 		/* XXX:  need to pass proc pointer through to driver... */
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-			return (error);
+		if (prived_error != 0)
+			return (prived_error);
 	/* FALLTHROUGH */
 	default:
 		if (so->so_proto == 0)
