@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.36.2.2 2001/03/29 09:03:03 bouyer Exp $	*/
+/*	$NetBSD: sii.c,v 1.36.2.3 2001/03/29 10:42:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -168,9 +168,8 @@ struct	pmax_driver siidriver = {
  */
 void
 #if NXSII > 0
-siiattach(sc, dev)
+siiattach(sc)
 	struct siisoftc *sc;
-	struct scsipi_device *dev;
 #else
 siiattach(sc)
 	struct siisoftc *sc;

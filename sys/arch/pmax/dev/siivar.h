@@ -1,4 +1,4 @@
-/*	$NetBSD: siivar.h,v 1.4.16.2 2001/03/29 09:03:03 bouyer Exp $	*/
+/*	$NetBSD: siivar.h,v 1.4.16.3 2001/03/29 10:42:23 bouyer Exp $	*/
 
 #ifndef _SIIVAR_H
 #define _SIIVAR_H
@@ -54,7 +54,7 @@ int	siiintr __P((void *sc));
 /* Machine-indepedent back-end attach entry point */
 
 #if NXSII > 0
-void	siiattach __P((struct siisoftc *, struct scsipi_device *));
+void	siiattach __P((struct siisoftc *));
 void	sii_scsi_request __P((struct scsipi_channel *,
 				scsipi_adapter_req_t, void *));
 #else
