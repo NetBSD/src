@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.74 2002/04/11 20:27:40 heinz Exp $
+#	$NetBSD: MAKEDEV,v 1.74.2.1 2002/06/18 15:05:21 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -97,6 +97,7 @@
 #	isdntrc*	trace device
 #
 # Special purpose devices:
+#	clockctl clock control for non root users
 #	grf*	custom chip (grf0), Retina Z2/Z3 (grf1/grf2),
 #		Cirrus boards (grf3), A2410 (grf4) video,
 #		CyberVision 64 (grf5), ET4000 boards (grf6)
@@ -159,6 +160,7 @@ all)
 	makedev audio0 audio1 audio2 audio3
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
 	makedev isdns
+	makedev clockctl
 	;;
 
 floppy)
@@ -644,6 +646,13 @@ isdntrc*)
 	rm -f isdntrc$unit
 	mknod isdntrc$unit c 48 $unit
 	chmod 600 isdntrc$unit
+	;;
+
+clockctl)
+	rm -f clockctl
+	mknod clockctl c 55 0
+	chgrp ntpd clockctl
+	chmod 660 clockctl
 	;;
 
 local)
