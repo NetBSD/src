@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.54 2003/07/14 15:56:28 itojun Exp $	*/
+/*	$NetBSD: commands.c,v 1.55 2003/07/14 16:00:52 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.54 2003/07/14 15:56:28 itojun Exp $");
+__RCSID("$NetBSD: commands.c,v 1.55 2003/07/14 16:00:52 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -2154,7 +2154,6 @@ status(int argc, char *argv[])
     return 1;
 }
 
-#ifdef	SIGINFO
 /*
  * Function that gets called when SIGINFO is received.
  */
@@ -2163,7 +2162,6 @@ ayt_status(void)
 {
     return call(status, "status", "notmuch", 0);
 }
-#endif
 
 static const char *
 sockaddr_ntop(struct sockaddr *sa)
