@@ -1,4 +1,4 @@
-.\"	$NetBSD: getopt.3,v 1.30 2003/09/10 13:30:16 wiz Exp $
+.\"	$NetBSD: getopt.3,v 1.31 2003/09/23 10:26:54 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -164,7 +164,7 @@ extern int optind;
 int bflag, ch, fd;
 
 bflag = 0;
-while ((ch = getopt(argc, argv, "bf:")) != -1)
+while ((ch = getopt(argc, argv, "bf:")) != -1) {
 	switch (ch) {
 	case 'b':
 		bflag = 1;
@@ -180,6 +180,7 @@ while ((ch = getopt(argc, argv, "bf:")) != -1)
 	default:
 		usage();
 	}
+}
 argc -= optind;
 argv += optind;
 .Ed
@@ -267,30 +268,29 @@ that begins with a
 By default, a single dash causes
 .Fn getopt
 to return \-1.
-This is, we believe, compatible with System V.
 .Pp
 It is also possible to handle digits as option letters.
 This allows
 .Fn getopt
 to be used with programs that expect a number
-.Pq Dq Li \&-\&3
+.Pq Dq Li \-3
 as an option.
 This practice is wrong, and should not be used in any current development.
 It is provided for backward compatibility
 .Em only .
 The following code fragment works in most cases.
 .Bd -literal -offset indent
-int c;
+int ch;
 long length;
 char *p;
 
-while ((c = getopt(argc, argv, "0123456789")) != -1) {
-	switch (c) {
+while ((ch = getopt(argc, argv, "0123456789")) != -1) {
+	switch (ch) {
 	case '0': case '1': case '2': case '3': case '4':
 	case '5': case '6': case '7': case '8': case '9':
 		p = argv[optind - 1];
-		if (p[0] == '-' \*[Am]\*[Am] p[1] == c \*[Am]\*[Am] !p[2])
-			length = c - '0';
+		if (p[0] == '-' \*[Am]\*[Am] p[1] == ch \*[Am]\*[Am] !p[2])
+			length = ch - '0';
 		else
 			length = strtol(argv[optind] + 1, NULL, 10);
 		break;
