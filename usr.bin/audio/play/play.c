@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.26 2001/05/02 12:49:42 minoura Exp $	*/
+/*	$NetBSD: play.c,v 1.27 2002/01/13 04:43:18 ross Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -48,7 +48,7 @@
 int main (int, char *[]);
 void usage (void);
 void play (char *);
-void play_fd (char *, int);
+void play_fd (const char *, int);
 ssize_t audioctl_write_fromhdr (void *, size_t, int, size_t *);
 
 audio_info_t	info;
@@ -77,8 +77,8 @@ main(argc, argv)
 	int	ch;
 	int	iflag = 0;
 	int	verbose = 0;
-	char	*device = 0;
-	char	*ctldev = 0;
+	const char *device = 0;
+	const char *ctldev = 0;
 
 	while ((ch = getopt(argc, argv, "b:C:c:d:e:fhip:P:qs:Vv:")) != -1) {
 		switch (ch) {
@@ -280,63 +280,59 @@ play(file)
  */
 void
 play_fd(file, fd)
-	char    *file;
+	const char *file;
 	int     fd;
 {
 	char    *buffer = malloc(bufsize);
 	ssize_t hdrlen;
-	int     n;
-	size_t	datasize;
-	size_t	datainbuf;
+	int     nr, nw;
+	size_t	datasize = 0;
+	size_t	dataout = 0;
 
 	if (buffer == NULL)
 		err(1, "malloc of read buffer failed");
-
-	n = read(fd, buffer, bufsize);
-
-	if (n < 0)
-		err(1, "read of standard input failed");
-	if (n == 0)
-		errx(1, "EOF on standard input");
-
-	hdrlen = audioctl_write_fromhdr(buffer, n, ctlfd, &datasize);
+	nr = read(fd, buffer, bufsize);
+	if (nr < 0)
+		goto read_error;
+	if (nr == 0) {
+		if (fflag)
+			return;
+		else goto read_error;
+	}
+	hdrlen = audioctl_write_fromhdr(buffer, nr, ctlfd, &datasize);
 	if (hdrlen < 0) {
 		if (play_errstring)
 			errx(1, "%s: %s", play_errstring, file);
 		else
 			errx(1, "unknown audio file: %s", file);
 	}
-
-	/* advance the buffer if we have to */
 	if (hdrlen > 0) {
-		/* shouldn't happen */
-		if (hdrlen > n)
-			err(1, "bogus hdrlen %d > length %d?", (int)hdrlen, n);
-
-		memmove(buffer, buffer + hdrlen, n - hdrlen);
+		if (hdrlen >= nr)	/* shouldn't happen */
+			errx(1, "header seems really large");
+		memmove(buffer, buffer + hdrlen, nr - hdrlen);
+		nr -= hdrlen;
 	}
-
-	datainbuf = n;
-	do {
-		if (datasize < datainbuf) {
-			datainbuf = datasize;
-		}
-		else {
-			n = read(fd, buffer + datainbuf, MIN(bufsize - datainbuf, datasize));
-			if (n == -1)
-				err(1, "read of %s failed", file);
-			datainbuf += n;
-		}
-		if (write(audiofd, buffer, datainbuf) != datainbuf)
-			err(1, "write failed");
-
-		datasize -= datainbuf;
-		datainbuf = 0;
+	while(datasize == 0 || dataout < datasize) {
+		if (datasize != 0 && dataout + nr > datasize)
+			nr = datasize - dataout;
+		nw = write(audiofd, buffer, nr);
+		if (nw != nr)
+			goto write_error;
+		dataout += nw;
+		nr = read(fd, buffer, bufsize);
+		if (nr == -1)
+			goto read_error;
+		if (nr == 0)
+			break;
 	}
-	while (datasize);
-
+	/* something to think about: no message given for dataout < datasize */
 	if (ioctl(audiofd, AUDIO_DRAIN) < 0 && !qflag)
 		warn("audio drain ioctl failed");
+	return;
+read_error:
+	err(1, "read of standard input failed");
+write_error:
+	err(1, "audio device write failed");
 }
 
 /*
