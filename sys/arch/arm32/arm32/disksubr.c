@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.5 1996/10/13 03:05:50 christos Exp $ */
+/* $NetBSD: disksubr.c,v 1.6 1996/11/23 03:56:44 mark Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -236,7 +236,8 @@ readdisklabel(dev, strat, lp, osdep)
 */
 			for (loop = 0; loop < NRISCIX_PARTITIONS; ++loop) {
 				if (strcmp(rpt->partitions[loop].rp_name, "RiscBSD") == 0
-				    || strcmp(rpt->partitions[loop].rp_name, "NetBSD") == 0) {
+				    || strcmp(rpt->partitions[loop].rp_name, "NetBSD") == 0
+				    || strcmp(rpt->partitions[loop].rp_name, "Empty:") == 0) {
 					riscbsdpartoff = rpt->partitions[loop].rp_start;
 					break;
 				}
