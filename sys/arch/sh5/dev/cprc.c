@@ -1,4 +1,4 @@
-/*	$NetBSD: cprc.c,v 1.5 2003/01/01 02:11:57 thorpej Exp $	*/
+/*	$NetBSD: cprc.c,v 1.6 2003/03/13 14:37:36 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -109,6 +109,7 @@ cprcattach(struct device *parent, struct device *self, void *args)
 {
 	struct pbridge_attach_args *pa = args;
 	struct cprc_softc *sc = (struct cprc_softc *)self;
+	struct device *child;
 	int i;
 
 #ifdef notyet
@@ -124,9 +125,8 @@ cprcattach(struct device *parent, struct device *self, void *args)
 	printf(": Clock, Power and Watchdog/Reset Controller\n");
 
 	for (i = 0; cprc_subdevs[i] != NULL; i++) {
-		if (i == 0 &&
-		    config_found(self, (void *)cprc_subdevs[i], cprcprint) ==
-		    NULL)
+		child = config_found(self, (void *)cprc_subdevs[i], cprcprint);
+		if (i == 0 && child == NULL)
 			panic("%s: no clock driver configured!",self->dv_xname);
 	}
 }
