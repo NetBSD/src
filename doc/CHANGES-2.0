@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.451 2004/09/17 03:59:52 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.452 2004/09/17 04:02:03 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7385,3 +7385,9 @@ xfree/xc/extras/Xpm/sxpm/sxpm.man		1.2
 
 	Incorporate security fixes from Xorgs X11R6.8.1 release
 	[tron, ticket #852]
+
+sys/dev/ata/wd.c				patch
+
+	In case of error, reset the channel with AT_RST_NOCMD. We know the 
+	reset wont abort any command at this point.
+	[bouyer, ticket #853]
