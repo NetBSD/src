@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.116 2001/07/22 13:34:04 wiz Exp $	*/
+/*	$NetBSD: locore.s,v 1.117 2001/11/17 23:29:08 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -986,15 +986,7 @@ ENTRY_NOPROFILE(spurintr)	/* level 0 */
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	_ASM_LABEL(rei)
 
-ENTRY_NOPROFILE(lev1intr)	/* level 1: HIL XXX this needs to go away */
-	INTERRUPT_SAVEREG
-	jbsr	_C_LABEL(hilint)
-	INTERRUPT_RESTOREREG
-	addql	#1,_C_LABEL(intrcnt)+4
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-	jra	_ASM_LABEL(rei)
-
-ENTRY_NOPROFILE(intrhand)	/* levels 2 through 5 */
+ENTRY_NOPROFILE(intrhand)	/* levels 1 through 5 */
 	INTERRUPT_SAVEREG
 	movw	%sp@(22),%sp@-		| push exception vector info
 	clrw	%sp@-
