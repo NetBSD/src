@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isapnp.c,v 1.8 1999/03/22 10:00:13 mycroft Exp $	*/
+/*	$NetBSD: wss_isapnp.c,v 1.9 1999/03/22 14:29:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -156,7 +156,6 @@ wss_isapnp_attach(parent, self, aux)
 	ac->mode = 2;
 
 	sc->sc_ad1848.sc_ic = ipa->ipa_ic;
-	sc->sc_ad1848.sc_iooffs = 0;
 
 	sc->wss_ic = ipa->ipa_ic;
 	sc->wss_irq = ipa->ipa_irq[0].num;

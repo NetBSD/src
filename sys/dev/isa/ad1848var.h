@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.29 1999/02/19 16:15:06 mycroft Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.30 1999/03/22 14:29:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,6 @@ struct ad1848_isa_softc {
 	struct	ad1848_softc sc_ad1848;	/* AD1848 device */
 	void	*sc_ih;			/* interrupt vectoring */
 	isa_chipset_tag_t sc_ic;	/* ISA chipset info */
-	int	sc_iooffs;		/* offset from handle */
 
 	char	sc_playrun;		/* running in continuous mode */
 	char	sc_recrun;		/* running in continuous mode */

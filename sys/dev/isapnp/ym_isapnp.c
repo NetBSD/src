@@ -1,4 +1,4 @@
-/*	$NetBSD: ym_isapnp.c,v 1.8 1999/03/22 10:00:13 mycroft Exp $ */
+/*	$NetBSD: ym_isapnp.c,v 1.9 1999/03/22 14:29:14 mycroft Exp $ */
 
 
 /*
@@ -111,8 +111,7 @@ ym_isapnp_attach(parent, self, aux)
 	printf("\n");
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: error in region allocation\n", 
-		       ac->sc_dev.dv_xname);
+		printf("%s: error in region allocation\n", self->dv_xname);
 		return;
 	}
 
@@ -127,16 +126,19 @@ ym_isapnp_attach(parent, self, aux)
 	sc->sc_controlioh = ipa->ipa_io[4].h; 
 	
 	ac->sc_iot = sc->sc_iot;
-	ac->sc_ioh = sc->sc_ioh;
+	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, WSS_CODEC, 4,
+	    &ac->sc_ioh)) {
+		printf("%s: bus_space_subregion failed\n", self->dv_xname);
+		return;
+	}
 	ac->mode = 2;
 	ac->MCE_bit = MODE_CHANGE_ENABLE;
 	ac->chip_name = "OPL3-SA3";
 
 	sc->sc_ad1848.sc_ic  = sc->sc_ic;
-	sc->sc_ad1848.sc_iooffs = WSS_CODEC;
 
-	printf("%s: %s %s", ac->sc_dev.dv_xname, ipa->ipa_devident,
-	       ipa->ipa_devclass);
+	printf("%s: %s %s", self->dv_xname, ipa->ipa_devident,
+	    ipa->ipa_devclass);
 
 	ym_attach(sc);
 }

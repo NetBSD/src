@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.9 1999/03/22 07:27:46 mycroft Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.10 1999/03/22 14:29:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -143,8 +143,7 @@ ad1848_isa_read(sc, index)
 	int index;
 {
 	struct ad1848_isa_softc *isc = (struct ad1848_isa_softc *)sc;
-	return (bus_space_read_1((sc)->sc_iot, (sc)->sc_ioh,
-				 (isc)->sc_iooffs+(index)));
+	return (bus_space_read_1((sc)->sc_iot, (sc)->sc_ioh, (index)));
 }
 
 void
@@ -154,8 +153,7 @@ ad1848_isa_write(sc, index, value)
 	int value;
 {
 	struct ad1848_isa_softc *isc = (struct ad1848_isa_softc *)sc;
-	bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh,
-			  (isc)->sc_iooffs+(index), value);
+	bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh, (index), value);
 }
 
 /*
@@ -166,7 +164,7 @@ ad1848_isa_mapprobe(isc, iobase)
 	struct ad1848_isa_softc *isc;
 	int iobase;
 {
-	struct ad1848_softc *sc = (struct ad1848_softc *)&isc->sc_ad1848;
+	struct ad1848_softc *sc = &isc->sc_ad1848;
 
 	if (!AD1848_BASE_VALID(iobase)) {
 #ifdef AUDIO_DEBUG
@@ -175,7 +173,6 @@ ad1848_isa_mapprobe(isc, iobase)
 		return 0;
 	}
 
-	isc->sc_iooffs = 0;
 	/* Map the AD1848 ports */
 	if (bus_space_map(sc->sc_iot, iobase, AD1848_NPORT, 0, &sc->sc_ioh))
 		return 0;
@@ -194,7 +191,7 @@ int
 ad1848_isa_probe(isc)
 	struct ad1848_isa_softc *isc;
 {
-	struct ad1848_softc *sc = (struct ad1848_softc *)&isc->sc_ad1848;
+	struct ad1848_softc *sc = &isc->sc_ad1848;
 	u_char tmp, tmp1 = 0xff, tmp2 = 0xff;
 	int i;
 
@@ -381,7 +378,7 @@ void
 ad1848_isa_unmap(isc)
 	struct ad1848_isa_softc *isc;
 {
-	struct ad1848_softc *sc = (struct ad1848_softc *)&isc->sc_ad1848;
+	struct ad1848_softc *sc = &isc->sc_ad1848;
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, AD1848_NPORT);
 }
 
@@ -393,7 +390,7 @@ void
 ad1848_isa_attach(isc)
 	struct ad1848_isa_softc *isc;
 {
-	struct ad1848_softc *sc = (struct ad1848_softc *)&isc->sc_ad1848;
+	struct ad1848_softc *sc = &isc->sc_ad1848;
 
 	sc->sc_readreg = ad1848_isa_read;
 	sc->sc_writereg = ad1848_isa_write;
@@ -430,8 +427,6 @@ ad1848_isa_open(addr, flags)
 
 	DPRINTF(("ad1848_isa_open: sc=%p\n", sc));
 
-	sc->sc_intr = 0;
-
 	return (ad1848_open(&sc->sc_ad1848, flags));
 }
 
@@ -463,7 +458,7 @@ ad1848_isa_trigger_input(addr, start, end, blksize, intr, arg, param)
 	struct audio_params *param;
 {
 	struct ad1848_isa_softc *isc = addr;
-	struct ad1848_softc *sc = (struct ad1848_softc *)&isc->sc_ad1848;
+	struct ad1848_softc *sc = &isc->sc_ad1848;
 	u_int8_t reg;
 
 	isa_dmastart(isc->sc_ic, isc->sc_recdrq, start,
@@ -500,7 +495,7 @@ ad1848_isa_trigger_output(addr, start, end, blksize, intr, arg, param)
 	struct audio_params *param;
 {
 	struct ad1848_isa_softc *isc = addr;
-	struct ad1848_softc *sc = (struct ad1848_softc *)&isc->sc_ad1848;
+	struct ad1848_softc *sc = &isc->sc_ad1848;
 	u_int8_t reg;
 
 	isa_dmastart(isc->sc_ic, isc->sc_playdrq, start,
@@ -527,7 +522,7 @@ ad1848_isa_halt_input(addr)
 	void *addr;
 {
 	struct ad1848_isa_softc *isc = addr;
-	struct ad1848_softc *sc = (struct ad1848_softc *)&isc->sc_ad1848;
+	struct ad1848_softc *sc = &isc->sc_ad1848;
 
 	if (isc->sc_recrun) {
 		ad1848_halt_input(sc);
@@ -543,7 +538,7 @@ ad1848_isa_halt_output(addr)
 	void *addr;
 {
 	struct ad1848_isa_softc *isc = addr;
-	struct ad1848_softc *sc = (struct ad1848_softc *)&isc->sc_ad1848;
+	struct ad1848_softc *sc = &isc->sc_ad1848;
 
 	if (isc->sc_playrun) {
 		ad1848_halt_output(sc);
@@ -559,7 +554,7 @@ ad1848_isa_intr(arg)
 	void *arg;
 {
 	struct ad1848_isa_softc *isc = arg;
-	struct ad1848_softc *sc = (struct ad1848_softc *)&isc->sc_ad1848;
+	struct ad1848_softc *sc = &isc->sc_ad1848;
 	int retval = 0;
 	u_char status;
 
