@@ -1,4 +1,4 @@
-/*	$NetBSD: getmount.c,v 1.4 1998/06/01 14:13:34 kleink Exp $ */
+/*	$NetBSD: getmount.c,v 1.5 1998/07/28 20:10:54 drochner Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -46,6 +46,9 @@
 
 static int tempmounted = 0;
 
+static char *getbdev __P((char *));
+static char *dotempmount __P((char *));
+
 /* make block device name from character device name */
 static char *
 getbdev(dev)
@@ -57,7 +60,7 @@ getbdev(dev)
 		warnx("bad device name %s", dev);
 		return (0);
 	}
-	sprintf(bdiskdev, "/dev/%s", dev + 6);
+	(void) sprintf(bdiskdev, "/dev/%s", dev + 6);
 	return (bdiskdev);
 }
 
@@ -69,15 +72,12 @@ static char *
 dotempmount(bdiskdev)
 	char *bdiskdev;
 {
-	static char dir[] = "/tmp/installbootXXXXXX";
+	static char dirtmpl[] = "/tmp/installbootXXXXXX";
+	char *dir;
 	struct ufs_args data;
 
-	if (mktemp(dir) == NULL) {
-		warnx("mktemp failed");
-		return (0);
-	}
-	if (mkdir(dir, 0700)) {
-		warn("could not create temporary dir %s", dir);
+	if ((dir = mkdtemp(dirtmpl)) == NULL) {
+		warnx("mkdtemp failed");
 		return (0);
 	}
 	bzero(&data, sizeof(data));
@@ -86,11 +86,11 @@ dotempmount(bdiskdev)
 	/* this code if FFS only */
 	if (mount(MOUNT_FFS, dir, 0, &data) == -1) {
 		warn("mount %s->%s failed", bdiskdev, dir);
-		rmdir(dir);
+		(void) rmdir(dir);
 		return (0);
 	}
 	if (verbose)
-		fprintf(stderr, "mounted %s at %s\n", bdiskdev, dir);
+		(void) fprintf(stderr, "mounted %s at %s\n", bdiskdev, dir);
 	tempmounted = 1;
 	return (dir);
 }
@@ -139,7 +139,7 @@ getmountpoint(diskdev)
 			return (buf[i].f_mntonname);
 		}
 	if (verbose)
-		fprintf(stderr, "%s is not mounted\n", bdiskdev);
+		(void) fprintf(stderr, "%s is not mounted\n", bdiskdev);
 	return (dotempmount(bdiskdev));
 }
 
@@ -149,9 +149,9 @@ cleanupmount(dir)
 {
 	if (tempmounted) {
 		if (verbose)
-			fprintf(stderr, "unmounting\n");
-		unmount(dir, 0);
-		rmdir(dir);
+			(void) fprintf(stderr, "unmounting\n");
+		(void) unmount(dir, 0);
+		(void) rmdir(dir);
 		tempmounted = 0;
 	}
 }
