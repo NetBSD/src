@@ -1,3 +1,5 @@
+/*	$NetBSD: ip_extern.h,v 1.2 2001/03/31 11:37:51 aymeric Exp $	*/
+
 int ip_addstr __P((SCR *, const char *, size_t));
 int ip_attr __P((SCR *, scr_attr_t, int));
 int ip_baud __P((SCR *, u_long *));

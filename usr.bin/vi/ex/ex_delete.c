@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_delete.c,v 1.7 1998/01/09 08:07:45 perry Exp $	*/
+/*	$NetBSD: ex_delete.c,v 1.8 2001/03/31 11:37:50 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_delete.c	10.8 (Berkeley) 3/6/96";
+static const char sccsid[] = "@(#)ex_delete.c	10.9 (Berkeley) 10/23/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,7 +52,7 @@ ex_delete(sp, cmdp)
 		return (1);
 
 	/* Delete the lines. */
-	if (delete(sp, &cmdp->addr1, &cmdp->addr2, 1))
+	if (del(sp, &cmdp->addr1, &cmdp->addr2, 1))
 		return (1);
 
 	/* Set the cursor to the line after the last line deleted. */

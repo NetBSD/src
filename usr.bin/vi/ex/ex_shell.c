@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_shell.c,v 1.9 2000/10/18 01:42:10 tv Exp $	*/
+/*	$NetBSD: ex_shell.c,v 1.10 2001/03/31 11:37:50 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_shell.c	10.33 (Berkeley) 4/27/96";
+static const char sccsid[] = "@(#)ex_shell.c	10.38 (Berkeley) 8/19/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -57,15 +57,21 @@ ex_shell(sp, cmdp)
 	 */
 	(void)snprintf(buf, sizeof(buf), "%s -i", O_STR(sp, O_SHELL));
 
-	/* If we're stil in a vi screen, move out explicitly. */
+	/* Restore the window name. */
+	(void)sp->gp->scr_rename(sp, NULL, 0);
+
+	/* If we're still in a vi screen, move out explicitly. */
 	rval = ex_exec_proc(sp, cmdp, buf, NULL, !F_ISSET(sp, SC_SCR_EXWROTE));
+
+	/* Set the window name. */
+	(void)sp->gp->scr_rename(sp, sp->frp->name, 1);
 
 	/*
 	 * !!!
 	 * Historically, vi didn't require a continue message after the
 	 * return of the shell.  Match it.
 	 */
-	F_SET(sp, SC_EX_DONTWAIT);
+	F_SET(sp, SC_EX_WAIT_NO);
 
 	return (rval);
 }
@@ -96,7 +102,7 @@ ex_exec_proc(sp, cmdp, cmd, msg, need_newline)
 
 	/* Enter ex mode. */
 	if (F_ISSET(sp, SC_VI)) {
-		if (sp->gp->scr_screen(sp, SC_EX)) {
+		if (gp->scr_screen(sp, SC_EX)) {
 			ex_emsg(sp, cmdp->cmd->name, EXM_NOCANON);
 			return (1);
 		}
@@ -176,7 +182,7 @@ proc_wait(sp, pid, cmd, silent, okpipe)
 		p = msg_print(sp, cmd, &nf);
 		len = strlen(p);
 		msgq(sp, M_ERR, "%.*s%s: received signal: %s%s",
-		    (int)MIN(len, 20), p, len > 20 ? " ..." : "",
+		    MIN(len, 20), p, len > 20 ? " ..." : "",
 		    sigmsg(WTERMSIG(pstat)),
 		    WCOREDUMP(pstat) ? "; core dumped" : "");
 		if (nf)
@@ -198,7 +204,7 @@ proc_wait(sp, pid, cmd, silent, okpipe)
 			p = msg_print(sp, cmd, &nf);
 			len = strlen(p);
 			msgq(sp, M_ERR, "%.*s%s: exited with status %d",
-			    (int)MIN(len, 20), p, len > 20 ? " ..." : "",
+			    MIN(len, 20), p, len > 20 ? " ..." : "",
 			    WEXITSTATUS(pstat));
 			if (nf)
 				FREE_SPACE(sp, p, 0);

@@ -1,39 +1,13 @@
-.\"	$NetBSD: set.opt.roff,v 1.2 1998/01/09 08:07:27 perry Exp $
+.\"	$NetBSD: set.opt.roff,v 1.3 2001/03/31 11:37:48 aymeric Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
-.\" Copyright (c) 1994, 1995
+.\" Copyright (c) 1994, 1995, 1996
 .\"	Keith Bostic.  All rights reserved.
 .\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
-.\"    may be used to endorse or promote products derived from this software
-.\"    without specific prior written permission.
+.\" See the LICENSE file for redistribution information.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
-.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
-.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
-.\"
-.\"     @(#)set.opt.roff	8.59 (Berkeley) 5/16/96
+.\"     @(#)set.opt.roff	8.66 (Berkeley) 10/10/96
 .\"
 .SH 1 "Set Options"
 .pp
@@ -386,11 +360,14 @@ more information.
 .CO Vi
 only.
 If the first non-empty line of the file begins with the string
-.QT /\&* ,
+.QT # ,
+.QT /\&*
+or
+.QT // ,
 this option causes
 .CO vi
-to skip to the end of that C-language comment (probably a terribly boring
-legal notice) before displaying the file.
+to skip to the end of that shell, C or C++ comment (probably a
+terribly boring legal notice) before displaying the file.
 .KY directory
 .IP "directory, dir [environment variable TMPDIR, or /tmp]"
 The directory where temporary files are created.
@@ -757,6 +734,23 @@ recognized:
 <newline>.A<space>
 <newline>.##
 .)l
+.KY path
+.IP "path []"
+The path option can be used to specify a <colon>-separated list of
+paths, similar to the
+.LI PATH
+environment variable in the shells.
+If this option is set,
+the name of the file to be edited is not an absolute pathname,
+the first component of the filename is not
+.QT \&.
+or
+.QT \&.. ,
+and the file to be edited doesn't exist in the current directory,
+the elements of the
+.OP path
+option are sequentially searched for a file of the specified name.
+If such a file is found, it is edited.
 .\" I cannot get a double quote to print between the square brackets
 .\" to save my life.  The ONLY way I've been able to get this to work
 .\" is with the .tr command.
@@ -943,7 +937,7 @@ In the text to be edited, the character string
 .LI <char-pair>
 is one of the character pairs in the option's value),
 defines a section boundary in the same manner that
-.OP paragraph
+.OP paragraphs
 option boundaries are defined.
 .KY secure
 .IP "secure [off]"
@@ -1036,7 +1030,7 @@ See the
 .OP matchtime
 option for more information.
 .KY showmode
-.IP "showmode [off]"
+.IP "showmode, smd [off]"
 .CO Vi
 only.
 This option causes
@@ -1106,7 +1100,7 @@ See the
 .OP verbose
 option for more information.
 .KY tildeop
-.IP "tildeop"
+.IP "tildeop [off]"
 Modify the
 .CO ~
 command to take an associated motion.
@@ -1221,6 +1215,21 @@ scrolled by the
 and
 .CO <control-U>
 commands.
+.KY windowname
+.IP "windowname [off]"
+.CO Vi
+changes the name of the editor's icon/window to the current file name
+when it's possible and not destructive, i.e.,
+when the editor can restore it to its original value on exit or when
+the icon/window will be discarded as the editor exits.
+If the
+.OP windowname
+edit option is set,
+.CO vi
+will change the icon/window name even when it's destructive and the
+icon/window name will remain after the editor exits.
+(This is the case for
+.XR xterm 1 ).
 .KY wraplen
 .IP "wraplen, wl [0]"
 This option is identical to the

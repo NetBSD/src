@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tcl.c,v 1.2 1998/01/09 08:08:07 perry Exp $	*/
+/*	$NetBSD: ex_tcl.c,v 1.3 2001/03/31 11:37:50 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -14,7 +14,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_tcl.c	8.9 (Berkeley) 4/28/96";
+static const char sccsid[] = "@(#)ex_tcl.c	8.10 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -22,7 +22,6 @@ static const char sccsid[] = "@(#)ex_tcl.c	8.9 (Berkeley) 4/28/96";
 
 #include <bitstring.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <termios.h>

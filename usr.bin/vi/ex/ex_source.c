@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_source.c,v 1.7 1998/01/09 08:08:03 perry Exp $	*/
+/*	$NetBSD: ex_source.c,v 1.8 2001/03/31 11:37:50 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_source.c	10.10 (Berkeley) 4/22/96";
+static const char sccsid[] = "@(#)ex_source.c	10.12 (Berkeley) 8/10/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -64,8 +64,7 @@ ex_source(sp, cmdp)
 		goto err;
 	}
 
-	/* See ex.h for a discussion of SEARCH_TERMINATION. */
-	MALLOC(sp, bp, char *, (size_t)sb.st_size + SEARCH_TERMINATION);
+	MALLOC(sp, bp, char *, (size_t)sb.st_size + 1);
 	if (bp == NULL) {
 		(void)close(fd);
 		return (1);

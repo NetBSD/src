@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_cscope.c,v 1.2 1998/01/09 08:07:45 perry Exp $	*/
+/*	$NetBSD: ex_cscope.c,v 1.3 2001/03/31 11:37:50 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1996
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_cscope.c	10.6 (Berkeley) 5/16/96";
+static const char sccsid[] = "@(#)ex_cscope.c	10.13 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -27,7 +27,6 @@ static const char sccsid[] = "@(#)ex_cscope.c	10.6 (Berkeley) 5/16/96";
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,6 +35,7 @@ static const char sccsid[] = "@(#)ex_cscope.c	10.6 (Berkeley) 5/16/96";
 #include <unistd.h>
 
 #include "../common/common.h"
+#include "pathnames.h"
 #include "tag.h"
 
 #define	CSCOPE_DBFILE		"cscope.out"
@@ -79,7 +79,7 @@ typedef struct _cc {
 
 static CC const cscope_cmds[] = {
 	{ "add",   cscope_add,
-	   "Add a new cscope database", "add db-name" },
+	  "Add a new cscope database", "add file | directory" },
 	{ "find",  cscope_find,
 	  "Query the databases for a pattern", FINDHELP },
 	{ "help",  cscope_help,
@@ -99,7 +99,7 @@ static int	 get_paths __P((SCR *, CSC *));
 static CC const	*lookup_ccmd __P((char *));
 static int	 parse __P((SCR *, CSC *, TAGQ *, int *));
 static int	 read_prompt __P((SCR *, CSC *));
-static int	 run_cscope __P((SCR *, CSC *));
+static int	 run_cscope __P((SCR *, CSC *, char *));
 static int	 start_cscopes __P((SCR *, EXCMD *));
 static int	 terminate __P((SCR *, CSC *, int));
 
@@ -160,7 +160,7 @@ start_cscopes(sp, cmdp)
 	EXCMD *cmdp;
 {
 	size_t blen, len;
-	char *bp, *cscopes, *p;
+	char *bp, *cscopes, *p, *t;
 
 	/*
 	 * EXTENSION #1:
@@ -180,9 +180,11 @@ start_cscopes(sp, cmdp)
 	GET_SPACE_RET(sp, bp, blen, len);
 	memcpy(bp, cscopes, len + 1);
 
-	for (cscopes = bp; (p = strsep(&bp, "\t ")) != NULL;)
+	for (cscopes = t = bp; (p = strsep(&t, "\t :")) != NULL;)
 		if (*p != '\0')
 			(void)cscope_add(sp, cmdp, p);
+
+	FREE_SPACE(sp, bp, blen);
 	return (0);
 }
 
@@ -200,43 +202,51 @@ cscope_add(sp, cmdp, dname)
 	EX_PRIVATE *exp;
 	CSC *csc;
 	size_t len;
-	char path[MAXPATHLEN];
+	int cur_argc;
+	char *dbname, path[MAXPATHLEN];
 
 	exp = EXP(sp);
 
+	/*
+	 *  0 additional args: usage.
+	 *  1 additional args: matched a file.
+	 * >1 additional args: object, too many args.
+	 */
+	cur_argc = cmdp->argc;
 	if (argv_exp2(sp, cmdp, dname, strlen(dname)))
 		return (1);
-	/*
-	 *  0 args: impossible.
-	 *  1 args: usage.
-	 *  2 args: matched a directory.
-	 * >2 args: object, too many args.
-	 *
-	 * The 1 args case depends on the argv_sexp() function refusing
-	 * to return success without at least one non-blank character.
-	 */
-	switch (cmdp->argc) {
-	case 0:
-		abort();
-		/* NOTREACHED */
-	case 1:
+	if (cmdp->argc == cur_argc) {
 		(void)csc_help(sp, "add");
 		return (1);
-	case 2:
-		dname = cmdp->argv[1]->bp;
-		break;
-	default:
+	}
+	if (cmdp->argc == cur_argc + 1)
+		dname = cmdp->argv[cur_argc]->bp;
+	else {
 		ex_emsg(sp, dname, EXM_FILECOUNT);
 		return (1);
 	}
 
-	/* If the database file doesn't exist, we're done. */
-	(void)snprintf(path, sizeof(path),
-	    "%s/%s", cmdp->argv[1]->bp, CSCOPE_DBFILE);
-	if (stat(path, &sb)) {
-		msgq(sp, M_SYSERR, path);
+	/*
+	 * The user can specify a specific file (so they can have multiple
+	 * Cscope databases in a single directory) or a directory.  If the
+	 * file doesn't exist, we're done.  If it's a directory, append the
+	 * standard database file name and try again.  Store the directory
+	 * name regardless so that we can use it as a base for searches.
+	 */
+	if (stat(dname, &sb)) {
+		msgq(sp, M_SYSERR, dname);
 		return (1);
 	}
+	if (S_ISDIR(sb.st_mode)) {
+		(void)snprintf(path, sizeof(path),
+		    "%s/%s", dname, CSCOPE_DBFILE);
+		if (stat(path, &sb)) {
+			msgq(sp, M_SYSERR, path);
+			return (1);
+		}
+		dbname = CSCOPE_DBFILE;
+	} else if ((dbname = strrchr(dname, '/')) != NULL)
+		*dbname++ = '\0';
 
 	/* Allocate a cscope connection structure and initialize its fields. */
 	len = strlen(dname);
@@ -251,7 +261,7 @@ cscope_add(sp, cmdp, dname)
 		goto err;
 
 	/* Start the cscope process. */
-	if (run_cscope(sp, csc))
+	if (run_cscope(sp, csc, dbname))
 		goto err;
 
 	/*
@@ -354,9 +364,10 @@ alloc_err:
  *	Fork off the cscope process.
  */
 static int
-run_cscope(sp, csc)
+run_cscope(sp, csc, dbname)
 	SCR *sp;
 	CSC *csc;
+	char *dbname;
 {
 	int to_cs[2], from_cs[2];
 	char cmd[MAXPATHLEN * 2];
@@ -392,9 +403,10 @@ err:		if (to_cs[0] != -1)
 		(void)close(from_cs[0]);
 
 		/* Run the cscope command. */
-#define	CSCOPE_CMD_FMT		"cd '%s' && exec cscope -dl"
-		(void)snprintf(cmd, sizeof(cmd), CSCOPE_CMD_FMT, csc->dname);
-		(void)execl("/bin/sh", "sh", "-c", cmd, NULL);
+#define	CSCOPE_CMD_FMT		"cd '%s' && exec cscope -dl -f %s"
+		(void)snprintf(cmd, sizeof(cmd),
+		    CSCOPE_CMD_FMT, csc->dname, dbname);
+		(void)execl(_PATH_BSHELL, "sh", "-c", cmd, NULL);
 		msgq_str(sp, M_SYSERR, cmd, "execl: %s");
 		_exit (127);
 		/* NOTREACHED */
@@ -650,7 +662,7 @@ parse(sp, csc, tqp, matchesp)
 	TAG *tp;
 	recno_t slno;
 	size_t dlen, nlen, slen;
-	int ch, i, isnewer, nlines;
+	int ch, i, isolder, nlines;
 	char *dname, *name, *search, *p, *t, dummy[2], buf[2048];
 
 	for (;;) {
@@ -711,14 +723,14 @@ parse(sp, csc, tqp, matchesp)
 		slen = strlen(p);
 
 		/* Resolve the file name. */
-		csc_file(sp, csc, name, &dname, &dlen, &isnewer);
+		csc_file(sp, csc, name, &dname, &dlen, &isolder);
 
 		/*
-		 * If the file was modified less recently than the cscope
-		 * database, or there wasn't a search string, use the line
-		 * number.
+		 * If the file is older than the cscope database, that is,
+		 * the database was built since the file was last modified,
+		 * or there wasn't a search string, use the line number.
 		 */
-		if (!isnewer || strcmp(search, "<unknown>") == 0) {
+		if (isolder || strcmp(search, "<unknown>") == 0) {
 			search = NULL;
 			slen = 0;
 		}
@@ -762,12 +774,12 @@ io_err:	if (feof(csc->from_fp))
  *	Search for the right path to this file.
  */
 static void
-csc_file(sp, csc, name, dirp, dlenp, isnewerp)
+csc_file(sp, csc, name, dirp, dlenp, isolderp)
 	SCR *sp;
 	CSC *csc;
 	char *name, **dirp;
 	size_t *dlenp;
-	int *isnewerp;
+	int *isolderp;
 {
 	struct stat sb;
 	char **pp, buf[MAXPATHLEN];
@@ -784,7 +796,7 @@ csc_file(sp, csc, name, dirp, dlenp, isnewerp)
 		if (stat(buf, &sb) == 0) {
 			*dirp = *pp;
 			*dlenp = strlen(*pp);
-			*isnewerp = sb.st_mtime >= csc->mtime;
+			*isolderp = sb.st_mtime < csc->mtime;
 			return;
 		}
 	}
@@ -975,7 +987,7 @@ cscope_search(sp, tqp, tp)
 		m.lno = 1;
 		m.cno = 0;
 		if (f_search(sp, &m, &m,
-		    tp->search, NULL, SEARCH_CSCOPE | SEARCH_FILE)) {
+		    tp->search, tp->slen, NULL, SEARCH_CSCOPE | SEARCH_FILE)) {
 			tag_msg(sp, TAG_SEARCH, tqp->tag);
 			return (1);
 		}
