@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.28 2002/09/09 10:32:50 grant Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.29 2003/05/16 19:48:29 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,22 +43,11 @@ message md_hello
 
 }
 
-message fullpart
-{We are now going to install NetBSD on the disk %s.  You may
-choose to install NetBSD on the entire disk, or on part of the disk.
-
-Partial-disk installation creates a partition, or `slice', for NetBSD
-in your disk's MBR partition table. Whole-disk installation is
-`dangerously dedicated': it takes over the entire MBR. This WILL
-overwrite all existing data and OSes on the disk. It also prohibits later
-installation of multiple OSes on that disk (unless you overwrite NetBSD and
-reinstall using only part of the disk).
-
-Which would you like to do?
-}
-
 message wdtype
 {What kind of disk is %s?}
+
+message Select_type
+{Select type}
 
 message sectforward
 {Does your disk do AUTOMATIC sector forwarding?}
@@ -72,112 +61,12 @@ disklabel:	%d cylinders, %d heads, %d sectors
 real geometry:	%d cylinders, %d heads, %d sectors 
 }
 
-/* the %s's will expand into three character strings */
-message part_header
-{   Total disksize %d %s.
-
-   Start(%3s) End(%3s)   Size(%3s)  Kind
-   ---------- ---------- ---------- ----
-}
-
-message part_row_start_unused
-{%-1d:                                 }
-
-message part_row_start_used
-{%-1d: %-10d %-10d %-10d}
-
-message part_row_end
-{ %s\n}
-
-message setbiosgeom
-{You will be prompted for the geometry.  Please enter the values you
-want.  The number of cylinders should be <= 1024 and the number of sectors
-should be <= 63. If you have the BIOS set up to use > 1024 cylinders just
-truncate that number to 1024 here; NetBSD will know about the rest of the
-cylinders.
-
-}
-
-message confirmbiosgeom
-{Please verify if the BIOS disk geometry below is correct. The value for
-the number of cylinders may have been truncated to 1024. This is ok as
-long as the other numbers are correct; only 1024 cylinders can be
-specified in the MBR, the rest will be found in a different way by NetBSD.
-
-If you reenter the values, make sure that the values are correct and
-match those used by other systems on this disk. Values that do not match
-may result in data corruption.
-
-}
-
-message badgeom
-{The current values for your disk geometry are:
-
-}
-
-message realgeom
-{real geom: %d cyl, %d heads, %d sec  (NB: for comparison only)\n}
-
-message biosgeom
-{BIOS geom: %d cyl, %d heads, %d sec\n}
-
-message reentergeom
-{The values just entered for the geometry are not usable.  Please,
-reenter the geometry.
-}
-
-message ovrwrite
-{Your disk currently has a non-NetBSD partition.  Do you really want to
-overwrite that partition with NetBSD?
-}
-
-message parttable
-{The partition table on your disk currently looks like the following:
-}
-
-message editpart
-{You are editing partition %d. The highlighted partition is the partition
-you are editing.
-
-}
-
-message editparttable
-{Edit your DOS partition table.  The highlighted partition is the currently
-active partition.  The partition table currently looks like:
-
-}
-
-message mbrpart_start_special
-{
-  Special values that can be entered for the start value:
- -N:    start at the end of partition N
-  0:    start at the beginning of the disk
-}
-
-message mbrpart_size_special
-{
-  Special values that can be entered for the size value:
- -N:    size the partition so that it ends where partition N starts
-  0:    end at the end of the disk
-}
-
-message reeditpart
-{There are overlapping MBR partitions or there is not exactly one NetBSD
-partition. You should re-edit the MBR partition table.
-
-Do you want to re-edit it?
-}
-
-message nobsdpart
-{There is no NetBSD partition in the MBR partition table.}
-
-message multbsdpart
-{There are multiple NetBSD partitions in the MBR partition table.
-Partition %d will be the one used.}
-
-message dofdisk
-{Setting up the DOS partition table ...
-}
+message Choose_an_option
+{Choose an option}
+message Use_real_geometry
+{Use real geometry}
+message Use_disklabel_geometry
+{Use disklabel geometry}
 
 message dobad144
 {Installing the bad block table ...
@@ -190,6 +79,19 @@ Normal bootblocks use the BIOS console device as the console
 (usually the monitor and keyboard). Serial bootblocks use the first
 serial port as the console.
 }
+
+message Bootblocks_selection
+{Bootblocks selection}
+message Use_normal_bootblocks
+{Use normal bootblocks}
+message Use_serial_9600_bootblocks
+{Use serial (9600) bootblocks}
+message Use_serial_38400_bootblocks
+{Use serial (38400) bootblocks}
+message Use_serial_57600_bootblocks
+{Use serial (57600) bootblocks}
+message Use_serial_115200_bootblocks
+{Use serial (115200) bootblocks}
 
 message dobootblks
 {Installing boot blocks on %s....
@@ -231,6 +133,13 @@ ends beyond the 1024 BIOS cylinder boundary. To be sure that the system
 can be booted at all times, the entire root partition must lie below that
 limit. You can either: }
 
+message Reedit_both_MBR_and_label
+{Re-edit both MBR and label}
+message Reedit_the_label
+{Re-edit the label}
+message Use_it_anyway
+{Use it anyway}
+
 message onebiosmatch
 {This disk matches the following BIOS disk:
 
@@ -243,6 +152,13 @@ message onebiosmatch_header
 
 message onebiosmatch_row
 {%-6x %-10d %-7d %d\n}
+
+message This_is_the_correct_geometry
+{This is the correct geometry}
+message Set_the_geometry_by_hand
+{Set the geometry by hand}
+message Use_one_of_these_disks
+{Use one of these disks}
 
 message biosmultmatch
 {This disk matches the following BIOS disks:
@@ -277,65 +193,83 @@ sure you that you want to do this?
 
 (Answering 'no' will take you back to the partition edit menu.)}
 
-message installbootsel
-{You appear to have more than one operating system installed on your
-disk. Do you want to install a bootselector so that you can select
-which system to start up when your computer is (re)started?}
-
-message installmbr
-{The start of the NetBSD part of the disk lies outside of the range
-that the BIOS can address. The initial bootcode in the Master Boot
-Record needs to be able to use the extended BIOS interface to boot
-off this partition. Do you want to install the NetBSD bootcode into
-the Master Boot Record so that this is ensured? Note that this will
-overwrite the existing code in the MBR, like some bootselectors.}
-
-message installnormalmbr
-{You have chosen not to install a bootselector. If this was because you
-already have a bootselector installed, no further action is needed.
-However, if no bootselector is installed, the normal bootcode must be
-used, or your system will not boot properly. Do you want to use the normal
-NetBSD bootcode?}
-
-message configbootsel
-{Configure the different bootselection menu items. You can change the
-simple menu entries for the matching partition entries that are displayed
-when the system boots. Also, you can specify the timeout and default
-action to be taken (if no selection is made in the bootmenu).\n
-}
-
-message bootseltimeout
-{Boot menu timeout: %d\n}
-
-message defbootselopt
-{Default boot menu action: }
-
-message defbootseloptactive
-{boot the first active partition.\n}
-
-message defbootseloptpart
-{boot off partition %d.\n}
-
-message defbootseloptdisk
-{boot off hard disk %d.\n}
-
-message bootselitemname
-{Enter name for menu item}
-
-message bootseltimeoutval
-{Timeout value in seconds (0-3600)}
-
-message bootsel_header
-{Number Type                             Menu entry
------- -------------------------------- ----------
-}
-
-message bootsel_row
-{%-6d %-32s %s\n}
-
 message emulbackup
 {Either the /emul/aout or /emul directory on your system was a symbolic link
 pointing to an unmounted file system. It has been given a '.old' extension.
 Once you bring your upgraded system back up, you may need to take care
 of merging the newly created /emul/aout directory with the old one.
 }
+
+message Change_a
+{Change a}
+message Change_b
+{Change b}
+message NetBSD_partition_cant_change
+{NetBSD partition - can't change}
+message Whole_disk_cant_change
+{Whole disk - can't change}
+message Change_e
+{Change e}
+message Change_f
+{Change f}
+message Change_g
+{Change g}
+message Change_h
+{Change h}
+message Change_i
+{Change i}
+message Change_j
+{Change j}
+message Change_k
+{Change k}
+message Change_l
+{Change l}
+message Change_m
+{Change m}
+message Change_n
+{Change n}
+message Change_o
+{Change o}
+message Change_p
+{Change p}
+message Set_new_allocation_size
+{Set new allocation size}
+
+message Selection_toggles_inclusion
+{Selection toggles inclusion}
+message Kernel_GENERIC
+{Kernel (GENERIC)}
+message Kernel_GENERIC_TINY
+{Kernel (GENERIC_TINY)}
+message Kernel_GENERIC_LAPTOP
+{Kernel (GENERIC_LAPTOP)}
+message Kernel_GENERIC_DIAGNOSTIC
+{Kernel (GENERIC_DIAGNOSTIC)}
+message Kernel_GENERIC_PS2TINY
+{Kernel (GENERIC_PS2TINY)}
+message Base
+{Base}
+message System_etc
+{System (/etc)}
+message Compiler_Tools
+{Compiler Tools}
+message Games
+{Games}
+message Online_Manual_Pages
+{Online Manual Pages}
+message Miscellaneous
+{Miscellaneous}
+message Text_Processing_Tools
+{Text Processing Tools}
+message X11_base_and_clients
+{X11 base and clients}
+message X11_fonts
+{X11 fonts}
+message X11_servers
+{X11 servers}
+message X_contrib_clients
+{X contrib clients}
+message X11_programming
+{X11 programming}
+message X11_Misc
+{X11 Misc.}

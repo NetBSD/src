@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.19 2003/05/14 22:11:44 he Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.20 2003/05/16 19:48:29 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,24 +43,11 @@ message md_hello
 
 }
 
-message fullpart
-{Nous allons maintenant installer NetBSD sur votre disque %s. Vous devez
-choisir si vous voulez installer NetBSD sur la totalité du disque ou seulement
-sur une partie de celui-ci.
-Une installation sur une partie du disque crée une partition, ou `slice', pour
-NetBSD dans le secteur de démarage (Master Boot Record, alias MBR) de votre
-disque. Une installation sur la totalité du disque est `dangereusement
-dédiée' : elle réinitialise complétement le MBR, ce qui efface tout système
-d'exploitation ou données existants sur le disque. Cela rend également
-impossible l'installation ultérieure d'un deuxième système d'exploitation,
-sauf si vous reinstallez complètement NetBSD en utilisant uniquement une
-partie du disque.
-
-Que désirez vous faire ?
-}
-
 message wdtype
 {Quel type de disque est %s?}
+
+message Select_type
+{Choix du type de disque}
 
 message sectforward
 {Est ce que votre disque réassigne AUTOMATIQUEMENT les secteurs défectueux ?}
@@ -69,116 +56,16 @@ message dlgeom
 {Votre disque a déjà un label BSD. Ce label montre une géométrie différente
 de la géométrie réelle du disque. Les deux géométrie sont :
 
-disklabel:	%d cylindres, %d têtes, %d secteurs 
-géom réelle:	%d cylindres, %d têtes, %d secteurs 
+disklabel:	%d cylindres, %d têtes, %d secteurs
+géom réelle:	%d cylindres, %d têtes, %d secteurs
 }
 
-/* the %s's will expand into three character strings */
-message part_header
-{   Total disksize %d %s.
-
-   Début(%3s) Fin(%3s)   Taille(%3s) Type
-   ---------- ---------- ----------- ----
-}
-
-message part_row_start_unused
-{%-1d:                                  }
-
-message part_row_start_used
-{%-1d: %-10d %-10d %-11d}
-
-message part_row_end
-{ %s\n}
-
-message setbiosgeom
-{On va vous demander la géométrie. SVP entrer les valeur que vous désirez.
-Rappelez vous que le nombre de cylindre doit être <= 1024 et que le nombre
-de secteur doit être <=63. Si votre BIOS est configuré avec plus de 1024
-cylindre, tronquez ce nombre à 1024 ici, NetBSD saura utiliser les cylindres
-restant.
-}
-
-message confirmbiosgeom
-{SVP vérifiez que la géometrie du BIOS ci-dessous est correcte. Le nombre
-de cylindre à pu etre tronquée à 1024. Ce n'est pas un problème du moment
-que les autres paramètres sont corrects. Seulement 1024 cuylindres peuvent
-etre specifiés dans le secteur de boot, le reste sera trouvé d'une manière
-différente par NetBSD.
-
-Si vous réentrez ces valeurs, vérifiez qu'elles sont correctes et
-correspondent à celles utilisées par d'autre systèmes sur ce disque. Des
-valeurs différentes peuvent conduire à des pertes de données.
-}
-
-message badgeom
-{Les valeurs actuelles de la géométrie de votre disque sont :
-
-}
-
-message realgeom
-{ géom réelle: %d cylindres, %d têtes, %d secteurs (pour information)\n}
-
-message biosgeom
-{ géom fdisk:  %d cylindres, %d têtes, %d secteurs \n}
-
-message reentergeom
-{La géométrie que vous venez de spécifier n'est pas utilisable. SVP entrez
-de nouveau la géométrie.
-}
-
-message ovrwrite
-{Votre disque a actuellement une partition autre que NetBSD. Voulez vous
-vraiment l'écraser par une partition NetBSD ?
-}
-
-message parttable
-{La table des partitions de votre disque est :
-}
-
-message editpart
-{La partition %d ressemble à:
-
-}
-
-message editparttable
-{Editez votre table de partition DOS. La partition en surbrillance est
-actuellement active. La table des partitions est :
-
-}
-
-message mbrpart_start_special
-{
-  Valeurs spéciales qui peuvent être entrées pour la valeur Début:
- -N: commence à la fin de la parition N
-  0: commence au début du disque
-}
-
-message mbrpart_size_special
-{
-  Valeurs spéciales qui peuvent être entrées pour la valeur Taille:
-  -N: dimentionne la partition de façon à finir au début de la partition N
-   0: finit à la fin du disque
-}
-
-message reeditpart
-{Il y a des partitions BIOS qui se recouvrent ou bien vous n'avez pas
-exactement une partition NetBSD. Vous devez éditer de nouveau la table
-des partitions.
-
-Voulez vous la rééditer ?
-}
-
-message nobsdpart
-{Il n'y a pas de partition NetBSD dans la table des partitions du secteur de
-boot.}
-
-message multbsdpart
-{Il y a plusieurs partition NetBSD dans la table des partitions du secteur de
-boot. La partition %d sera utilisée.}
-
-message dofdisk
-{Configuration de la table des partition DOS ...
-}
+message Choose_an_option
+{Choisissez une option}
+message Use_real_geometry
+{Utilisation de la géométrie réelle}
+message Use_disklabel_geometry
+{Utilisation de la géométrie du disklabel}
 
 message dobad144
 {Installation de la table des block défectueux ...
@@ -187,6 +74,19 @@ message dobad144
 message getboottype
 {Aimez-vous installer l'ensemble normal de bootblocks ou de bootblocks serial?
 }
+
+message Bootblocks_selection
+{Sélection de Bootblocks}
+message Use_normal_bootblocks
+{Utilisez normal le bootblocks}
+message Use_serial_9600_bootblocks
+{Utilisez serial (9600) le bootblocks}
+message Use_serial_38400_bootblocks
+{Utilisez serial (38400) le bootblocks}
+message Use_serial_57600_bootblocks
+{Utilisez serial (57600) le bootblocks}
+message Use_serial_115200_bootblocks
+{Utilisez serial (115200) le bootblocks}
 
 message dobootblks
 {Installation des block de démarrage sur %s ...
@@ -198,6 +98,7 @@ message askfsroot1
 Et tout d'abord la partition racine. Il vous reste %d %s de libre sur
 votre disque.
 }
+
 message askfsroot2
 {Taille de la partition racine ? }
 
@@ -229,6 +130,14 @@ qui se termine après la limite du BIOS de 1024 cylindres. pour être sur que
 le système puisse etre toujours démaré, cette partition doit etre entièrement
 en dessous de cette limite. Vous pouvez: }
 
+message Reedit_both_MBR_and_label
+{Rééditer le secteur de boot et le label}
+message Reedit_the_label
+{Rééditer le label}
+message Use_it_anyway
+{L'utiliser tout de même}
+
+
 message onebiosmatch
 {Ce disque correspond au disque du BIOS suivant:
 
@@ -242,6 +151,13 @@ message onebiosmatch_header
 message onebiosmatch_row
 {%-6x %-10d %-7d %-10d\n}
 
+message This_is_the_correct_geometry
+{C'est le bon géométrie}
+message Set_the_geometry_by_hand
+{Entrer la géométrie}
+message Use_one_of_these_disks
+{Utiliser l'un de ces disques}
+
 message biosmultmatch
 {Ce disque correspond aux disques du BIOS suivants:
 
@@ -250,6 +166,13 @@ message biosmultmatch
 message biosmultmatch_header
 {   BIOS # cylinders  heads   sectors
    ------ ---------- ------- -------
+}
+
+message biosgeom_advise /* XXX translate */
+{
+Note: since sysinst was able to uniquely match the disk you chose with a disk
+known to the BIOS, the values displayed above are very likely correct, and
+should not be changed. Only change them if they are very obviously wrong.
 }
 
 message biosmultmatch_row
@@ -268,50 +191,84 @@ ne sera peut-etre pas possible. Voulez-vous reelement faire ceci ?
 
 ('Non' vous ramènera au menu d'edition des partitions.)}
 
-message installbootsel
-{Il me semble que vous avez plusieur système d'exploitation sur ce disque.
-Voulez-vous installer un selecteur de boot qui vous permettra de choisir
-quel système chargé lorsque votre ordinateur est (re)démarré?}
-
-message installmbr
-{Le début de la partition de votre disque réservée à NetBSD se trouve en-dehors
-de l'espace que le BIOS peut adresser. Le programme d'amorcage du secteur de
-demmarage doit utiliser l'interface étendue du BIOS pour ammorcer depuis cette
-partition. Voulez-vous installer le programme d'amorcage de NetBSD pour etre
-sur de pouvoir démarer depuis cette partition ? Notez que cela va écraser
-le programme d'amorcage existant, comme un selecteur de boot.}
-
-message configbootsel
-{Configurez les differents choix du selecteur de boot. Vous pouvez changer
-le menu proposé pour chaque partition lorsque le système demarre.
-Vous pouvez également préciser le choix par defaut et le temps d'attente.\n
+message emulbackup	/* XXX translate */
+{Either the /emul/aout or /emul directory on your system was a symbolic link
+pointing to an unmounted file system. It has been given a '.old' extension.
+Once you bring your upgraded system back up, you may need to take care
+of merging the newly created /emul/aout directory with the old one.
 }
 
-message bootseltimeout
-{Temps d'attente: %d\n}
+message Change_a
+{Changer a}
+message Change_b
+{Changer b}
+message NetBSD_partition_cant_change
+{Partition de NetBSD - Changement impossible}
+message Whole_disk_cant_change
+{Totalité du disque - Changement impossible}
+message Change_e
+{Changer e}
+message Change_f
+{Changer f}
+message Change_g
+{Changer g}
+message Change_h
+{Changer h}
+message Change_i
+{Changer i}
+message Change_j
+{Changer j}
+message Change_k
+{Changer k}
+message Change_l
+{Changer l}
+message Change_m
+{Changer m}
+message Change_n
+{Changer n}
+message Change_o
+{Changer o}
+message Change_p
+{Changer p}
+message Set_new_allocation_size
+{Changer d'unité}
 
-message defbootselopt
-{Action par defaut: }
+message Selection_toggles_inclusion
+{Sélection des composants}
+message Kernel_GENERIC
+{Kernel (GENERIC)}
+message Kernel_GENERIC_TINY
+{Kernel (GENERIC_TINY)}
+message Kernel_GENERIC_LAPTOP
+{Kernel (GENERIC_LAPTOP)}
+message Kernel_GENERIC_DIAGNOSTIC
+{Kernel (GENERIC_DIAGNOSTIC)}
+message Kernel_GENERIC_PS2TINY
+{Kernel (GENERIC_PS2TINY)}
+message Base
+{Base}
+message System_etc
+{System (/etc)}
+message Compiler_Tools
+{Outils de développement}
+message Games
+{Jeux}
+message Online_Manual_Pages
+{Pages de manuel}
+message Miscellaneous
+{Divers}
+message Text_Processing_Tools
+{Outils de manipulation de textes}
+message X11_base_and_clients
+{X11 base et clients}
+message X11_fonts
+{X11 polices}
+message X11_servers
+{X11 serveurs}
+message X_contrib_clients
+{X11 clients contribués}
+message X11_programming
+{X11 développement}
+message X11_Misc
+{X11 Misc.}
 
-message defbootseloptactive
-{Démarrer la première partition active.\n}
-
-message defbootseloptpart
-{Démarrer depuis la partition %d.\n}
-
-message defbootseloptdisk
-{Demarrer depuis le disque %d.\n}
-
-message bootselitemname
-{Entrez un nom pour ce choix}
-
-message bootseltimeoutval
-{Temps d'attente en secondes (0-3600)}
-
-message bootsel_header
-{Numéro Type                             Nom
------- -------------------------------- ---
-}
-
-message bootsel_row
-{%-6d %-32s %s\n}

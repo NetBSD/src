@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2002/10/17 02:05:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 2003/05/16 19:48:29 dsl Exp $
 #
 # Makefile for i386
 #
@@ -10,5 +10,11 @@ SRCS=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
 	label.c target.c md.c mbr.c aout2elf.c
 
 fdisk.o md.o:	menu_defs.h msg_defs.h
+
+MENUS_MD=	menus.md menus.mbr
+MSG_MD=		msg.md.${SYSINSTLANG} msg.mbr.${SYSINSTLANG}
+MD_OPTIONS=	BOOTSEL
+
+CPPFLAGS+=	-DBOOTSEL
 
 .include "../../Makefile.inc"
