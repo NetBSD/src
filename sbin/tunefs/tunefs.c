@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.23 2001/09/03 15:04:39 lukem Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.24 2001/09/06 02:16:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.23 2001/09/03 15:04:39 lukem Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.24 2001/09/06 02:16:01 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,9 +95,9 @@ main(int argc, char *argv[])
 {
 #ifdef TUNEFS_SOFTDEP
 	int		softdep;
-#define	OPTSTRING	"AFNa:d:e:k:m:n:o:t:"
+#define	OPTSTRING	"AFNa:d:e:g:h:k:m:n:o:t:"
 #else
-#define	OPTSTRING	"AFNa:d:e:k:m:o:t:"
+#define	OPTSTRING	"AFNa:d:e:g:h:k:m:o:t:"
 #endif
 	struct stat	st;
 	int		i, ch, Aflag, Fflag, Nflag;
@@ -105,9 +105,11 @@ main(int argc, char *argv[])
 	const char	*special, *chg[2];
 	char		device[MAXPATHLEN];
 	int		maxbpg, maxcontig, minfree, rotdelay, optim, trackskew;
+	int		avgfilesize, avgfpdir;
 
 	Aflag = Fflag = Nflag = 0;
 	maxbpg = maxcontig = minfree = rotdelay = optim = trackskew = -1;
+	avgfilesize = avgfpdir = -1;
 #ifdef TUNEFS_SOFTDEP
 	softdep = -1;
 #endif
@@ -146,6 +148,16 @@ main(int argc, char *argv[])
 			    1, INT_MAX);
 			break;
 
+		case 'g':
+			avgfilesize = getnum(optarg,
+			    "average file size", 1, INT_MAX);
+			break;
+
+		case 'h':
+			avgfpdir = getnum(optarg,
+			    "expected number of files per directory",
+			    1, INT_MAX);
+			break;
 
 		case 'm':
 			minfree = getnum(optarg,
@@ -271,6 +283,10 @@ main(int argc, char *argv[])
 	}
 	CHANGEVAL(sblock.fs_trackskew, trackskew,
 	    "track skew in sectors", "");
+	CHANGEVAL(sblock.fs_avgfilesize, avgfilesize,
+	    "average file size", "");
+	CHANGEVAL(sblock.fs_avgfpdir, avgfpdir,
+	    "expected number of files per directory", "");
 
 	if (Nflag) {
 		fprintf(stdout, "tunefs: current settings of %s\n", special);
@@ -290,6 +306,11 @@ main(int argc, char *argv[])
 #endif
 		fprintf(stdout, "\toptimization preference: %s\n",
 		    chg[sblock.fs_optim]);
+		fprintf(stdout, "\taverage file size: %d\n",
+		    sblock.fs_avgfilesize);
+		fprintf(stdout,
+		    "\texpected number of files per directory: %d\n",
+		    sblock.fs_avgfpdir);
 		fprintf(stdout, "\ttrack skew %d sectors\n",
 		    sblock.fs_trackskew);
 		fprintf(stdout, "tunefs: no changes made\n");
@@ -336,6 +357,8 @@ usage(void)
 	fprintf(stderr, "\t-a maximum contiguous blocks\n");
 	fprintf(stderr, "\t-d rotational delay between contiguous blocks\n");
 	fprintf(stderr, "\t-e maximum blocks per file in a cylinder group\n");
+	fprintf(stderr, "\t-g average file size\n");
+	fprintf(stderr, "\t-h expected number of files per directory\n");
 	fprintf(stderr, "\t-k track skew in sectors\n");
 	fprintf(stderr, "\t-m minimum percentage of free space\n");
 #ifdef TUNEFS_SOFTDEP
