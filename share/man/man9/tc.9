@@ -1,4 +1,4 @@
-.\"     $NetBSD: tc.9,v 1.2 2001/10/22 08:21:33 wiz Exp $
+.\"     $NetBSD: tc.9,v 1.3 2001/10/29 19:01:05 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,7 +48,7 @@
 .Nm tc_badaddr ,
 .Nm TC_DENSE_TO_SPARSE ,
 .Nm TC_PHYS_TO_UNCACHED
-.Nd TurboChannel bus
+.Nd TURBOchannel bus
 .Sh SYNOPSIS
 .Fd #include <machine/bus.h>
 .Fd #include <dev/tc/tcvar.h>
@@ -75,17 +75,17 @@
 .Sh DESCRIPTION
 The
 .Nm
-device provides support for the DEC TurboChannel bus found on all DEC
+device provides support for the DEC TURBOchannel bus found on all DEC
 TURBOchannel machines with MIPS (DECstation 5000 series, excluding the
-5000/200) and Alpha (3000-series) systems.  TurboChannel is a 32-bit
+5000/200) and Alpha (3000-series) systems.  TURBOchannel is a 32-bit
 wide synchronous DMA-capable bus, running at 25 MHz on higher-end
 machines and at 12.5 MHz on lower-end machines.
 .Sh DATA TYPES
-Drivers for devices attached to the TurboChannel bus will make use of
+Drivers for devices attached to the TURBOchannel bus will make use of
 the following data types:
 .Bl -tag -width compact
 .It Fa struct tc_attach_args
-A structure use to inform the driver of TurboChannel bus properties.
+A structure use to inform the driver of TURBOchannel bus properties.
 It contains the following members:
 .Bd -literal
 	bus_space_tag_t	ta_memt;
@@ -100,7 +100,7 @@ It contains the following members:
 .Pp
 The
 .Em ta_busspeed
-member specifies the TurboChannel bus speed and is useful for
+member specifies the TURBOchannel bus speed and is useful for
 time-related functions.  Values values are
 .Em TC_SPEED_12_5_MHZ
 for the 12.5 MHz bus and
@@ -143,8 +143,8 @@ it.
 A write memory barrier.  Any CPU-to-memory writes before before the
 barrier must complete before any CPU-to-memory writes after it.
 .It Fn tc_syncbus ""
-Synchronise writes on the TurboChannel bus by ensuring CPU writes are
-propagated across the TurboChannel bus.
+Synchronise writes on the TURBOchannel bus by ensuring CPU writes are
+propagated across the TURBOchannel bus.
 .It Fn tc_badaddr "tcaddr"
 Returns non-zero if the given address
 .Fa tcaddr
@@ -152,8 +152,8 @@ is invalid.
 .It Fn TC_DENSE_TO_SPARSE "addr"
 Convert the given physical address
 .Fa addr
-in TurboChannel dense space to the corresponding address in
-TurboChannel sparse space.
+in TURBOchannel dense space to the corresponding address in
+TURBOchannel sparse space.
 .It Fn TC_PHYS_TO_UNCACHED "addr"
 Convert the given system memory physical address
 .Fa addr
@@ -161,15 +161,15 @@ to the physical address of the corresponding region that is not
 cached.
 .El
 .Sh AUTOCONFIGURATION
-The TurboChannel bus is a direct-connection bus.  During
+The TURBOchannel bus is a direct-connection bus.  During
 autoconfiguration, the parent specifies the name of the found
-TurboChannel module into the
+TURBOchannel module into the
 .Fa ta_modname
 member of the
 .Em tc_attach_args
 structure.  Drivers should match on this name.
 .Sh DMA SUPPORT
-The TurboChannel bus supports 32-bit, bidirectional DMA transfers.
+The TURBOchannel bus supports 32-bit, bidirectional DMA transfers.
 Support is provided by the standard
 .Xr bus_dma 9
 interface.
