@@ -1143,7 +1143,8 @@ extern struct rtx_def *sh_builtin_saveregs ();
   else if ((GET_CODE (X) == POST_INC || GET_CODE (X) == PRE_DEC)	\
 	   && BASE_REGISTER_RTX_P (XEXP ((X), 0)))			\
     goto LABEL;								\
-  else if (GET_CODE (X) == PLUS && MODE != PSImode)			\
+  else if (GET_CODE (X) == PLUS						\
+      && ((MODE) != PSImode || reload_completed))			\
     {									\
       rtx xop0 = XEXP ((X), 0);						\
       rtx xop1 = XEXP ((X), 1);						\
