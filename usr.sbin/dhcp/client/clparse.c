@@ -42,13 +42,11 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: clparse.c,v 1.1.1.6 1999/03/26 17:49:19 mellon Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: clparse.c,v 1.1.1.7 1999/03/29 23:00:49 mellon Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
 #include "dhctoken.h"
-
-static TIME parsed_time;
 
 struct client_config top_level_config;
 
@@ -62,9 +60,7 @@ int read_client_conf ()
 	FILE *cfile;
 	char *val;
 	int token;
-	int declaration = 0;
 	struct client_config *config;
-	struct client_state *state;
 	struct interface_info *ip;
 
 	new_parse (path_dhclient_conf);
@@ -327,7 +323,6 @@ int parse_X (cfile, buf, max)
 	int token;
 	char *val;
 	int len;
-	u_int8_t *s;
 
 	token = peek_token (&val, cfile);
 	if (token == NUMBER_OR_NAME || token == NUMBER) {
@@ -421,9 +416,7 @@ void parse_interface_declaration (cfile, outer_config)
 	int token;
 	char *val;
 
-	struct interface_info dummy_interface, *ip;
-	struct client_state dummy_state;
-	struct client_config dummy_config;
+	struct interface_info *ip;
 
 	token = next_token (&val, cfile);
 	if (token != STRING) {
@@ -658,7 +651,6 @@ void parse_client_lease_declaration (cfile, lease, ipp)
 {
 	int token;
 	char *val;
-	char *t, *n;
 	struct interface_info *ip;
 
 	switch (next_token (&val, cfile)) {
@@ -804,11 +796,6 @@ struct option *parse_option_decl (cfile, options)
 
 	/* Parse the option data... */
 	do {
-		/* Set a flag if this is an array of a simple type (i.e.,
-		   not an array of pairs of IP addresses, or something
-		   like that. */
-		int uniform = option -> format [1] == 'A';
-
 		for (fmt = option -> format; *fmt; fmt++) {
 			if (*fmt == 'A')
 				break;
