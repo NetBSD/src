@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.15 2000/10/02 18:32:55 abs Exp $	*/
+/*	$NetBSD: fmt.c,v 1.16 2002/03/02 13:55:13 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,14 +43,14 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-__RCSID("$NetBSD: fmt.c,v 1.15 2000/10/02 18:32:55 abs Exp $");
+__RCSID("$NetBSD: fmt.c,v 1.16 2002/03/02 13:55:13 wiz Exp $");
 #endif /* not lint */
 
+#include <ctype.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <locale.h>
 
 /*
  * fmt -- format the concatenation of input files or standard input
@@ -78,18 +78,18 @@ int	center;
 
 char	*headnames[] = {"To", "Subject", "Cc", 0};
 
-static void	fmt __P((FILE *));
-static int	ispref __P((const char *, const char *));
-static void	leadin __P((void));
-static void	oflush __P((void));
-static void	pack __P((const char *, int));
-static void	prefix __P((const char *, int));
-static void	setout __P((void));
-static void	split __P((const char *, int));
-static void	tabulate __P((char *));
+static void	fmt(FILE *);
+static int	ispref(const char *, const char *);
+static void	leadin(void);
+static void	oflush(void);
+static void	pack(const char *, int);
+static void	prefix(const char *, int);
+static void	setout(void);
+static void	split(const char *, int);
+static void	tabulate(char *);
 
-int	ishead __P((const char *));
-int	main __P((int, char **));
+int	ishead(const char *);
+int	main(int, char **);
 
 /*
  * Drive the whole formatter by managing input files.  Also,
@@ -98,9 +98,7 @@ int	main __P((int, char **));
  */
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	FILE *fi;
 	int errs = 0;
@@ -161,8 +159,7 @@ main(argc, argv)
  * and sending each line down for analysis.
  */
 static void
-fmt(fi)
-	FILE *fi;
+fmt(FILE *fi)
 {
 	char linebuf[BUFSIZ], canonb[BUFSIZ];
 	char *cp, *cp2;
@@ -294,9 +291,7 @@ fmt(fi)
  * it on a line by itself.
  */
 static void
-prefix(line, add_space)
-	const char line[];
-	int add_space;
+prefix(const char line[], int add_space)
 {
 	const char *cp;
 	char **hp;
@@ -344,9 +339,7 @@ prefix(line, add_space)
  * line packer.
  */
 static void
-split(line, add_space)
-	const char line[];
-	int add_space;
+split(const char line[], int add_space)
 {
 	const char *cp;
 	char *cp2;
@@ -404,7 +397,7 @@ char	*outp;				/* Pointer in above */
  * Initialize the output section.
  */
 static void
-setout()
+setout(void)
 {
 	outp = NOSTR;
 }
@@ -430,9 +423,7 @@ setout()
  *	char word[];
  */
 static void
-pack(word,wl)
-	const char word[];
-	int wl;
+pack(const char word[], int wl)
 {
 	const char *cp;
 	int s, t;
@@ -469,7 +460,7 @@ pack(word,wl)
  * line prefix.
  */
 static void
-oflush()
+oflush(void)
 {
 	if (outp == NOSTR)
 		return;
@@ -483,8 +474,7 @@ oflush()
  * output on standard output (finally).
  */
 static void
-tabulate(line)
-	char line[];
+tabulate(char line[])
 {
 	char *cp;
 	int b, t;
@@ -523,7 +513,7 @@ tabulate(line)
  * leading blanks.
  */
 static void
-leadin()
+leadin(void)
 {
 	int b;
 	char *cp;
@@ -537,8 +527,7 @@ leadin()
  * Is s1 a prefix of s2??
  */
 static int
-ispref(s1, s2)
-	const char *s1, *s2;
+ispref(const char *s1, const char *s2)
 {
 
 	while (*s1++ == *s2)
