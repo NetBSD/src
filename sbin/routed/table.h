@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)table.h	5.8 (Berkeley) 6/1/90
- *	$Id: table.h,v 1.4 1993/08/01 18:24:34 mycroft Exp $
+ *	from: @(#)table.h	8.1 (Berkeley) 6/5/93
+ *	$Id: table.h,v 1.5 1994/05/13 08:04:52 mycroft Exp $
  */
 
 /*
@@ -57,12 +57,14 @@ struct rt_entry {
 	struct	rt_entry *rt_back;
 	union {
 		struct	rtentry rtu_rt;
-		struct {
+		struct rtuentry {
 			u_long	rtu_hash;
 			struct	sockaddr rtu_dst;
 			struct	sockaddr rtu_router;
-			short	rtu_flags;
-			short	rtu_state;
+			short	rtu_rtflags; /* used by rtioctl */
+			short	rtu_wasted[5];
+			int	rtu_flags;
+			int	rtu_state;
 			int	rtu_timer;
 			int	rtu_metric;
 			int	rtu_ifmetric;
@@ -71,7 +73,7 @@ struct rt_entry {
 	} rt_rtu;
 };
 
-#define	rt_rt		rt_rtu.rtu_rt			/* pass to ioctl */
+#define	rt_rt		rt_rtu.rtu_entry		/* pass to ioctl */
 #define	rt_hash		rt_rtu.rtu_entry.rtu_hash	/* for net or host */
 #define	rt_dst		rt_rtu.rtu_entry.rtu_dst	/* match value */
 #define	rt_router	rt_rtu.rtu_entry.rtu_router	/* who to forward to */
@@ -99,7 +101,7 @@ struct rt_entry {
 /*
  * Flags are same as kernel, with this addition for af_rtflags:
  */
-#define	RTF_SUBNET	0x8000		/* pseudo: route to subnet */
+#define	RTF_SUBNET	0x80000		/* pseudo: route to subnet */
 
 struct	rthash nethash[ROUTEHASHSIZ];
 struct	rthash hosthash[ROUTEHASHSIZ];

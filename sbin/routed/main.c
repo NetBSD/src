@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983, 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +32,14 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983, 1988 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1983, 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)main.c	5.23 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: main.c,v 1.4 1993/08/01 18:24:26 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/5/93";*/
+static char *rcsid = "$Id: main.c,v 1.5 1994/05/13 08:04:43 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -92,6 +92,14 @@ main(argc, argv)
 	}
 	addr.sin_family = AF_INET;
 	addr.sin_port = sp->s_port;
+	r = socket(AF_ROUTE, SOCK_RAW, 0);
+	/* later, get smart about lookingforinterfaces */
+	if (r)
+		shutdown(r, 0); /* for now, don't want reponses */
+	else {
+		fprintf(stderr, "routed: no routing socket\n");
+		exit(1);
+	}
 	s = getsocket(AF_INET, SOCK_DGRAM, &addr);
 	if (s < 0)
 		exit(1);
@@ -129,7 +137,7 @@ main(argc, argv)
 		exit(1);
 	}
 
-	if (debug == 0)
+	if (debug == 0 && tflags == 0)
 		daemon(0, 0);
 	/*
 	 * Any extra argument is considered
