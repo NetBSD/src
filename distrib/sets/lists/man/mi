@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.672.2.10 2004/10/01 03:33:18 jmc Exp $
+# $NetBSD: mi,v 1.672.2.10.2.1 2005/02/06 07:45:12 jmc Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1382,6 +1382,7 @@
 ./usr/share/man/cat5/ipf.0			man-ipf-catman		.cat
 ./usr/share/man/cat5/ipf.conf.0			man-ipf-catman		.cat
 ./usr/share/man/cat5/ipf6.conf.0		man-ipf-catman		.cat
+./usr/share/man/cat5/ipmon.0			man-ipf-catman		.cat
 ./usr/share/man/cat5/ipnat.0			man-ipf-catman		.cat
 ./usr/share/man/cat5/ipnat.conf.0		man-ipf-catman		.cat
 ./usr/share/man/cat5/ippool.0			man-ipf-catman		.cat
@@ -3459,6 +3460,7 @@
 ./usr/share/man/man5/ipf.5			man-ipf-man		.man
 ./usr/share/man/man5/ipf.conf.5			man-ipf-man		.man
 ./usr/share/man/man5/ipf6.conf.5		man-ipf-man		.man
+./usr/share/man/man5/ipmon.5			man-ipf-man		.man
 ./usr/share/man/man5/ipnat.5			man-ipf-man		.man
 ./usr/share/man/man5/ipnat.conf.5		man-ipf-man		.man
 ./usr/share/man/man5/ippool.5			man-ipf-man		.man
