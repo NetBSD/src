@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vnops.c	7.60 (Berkeley) 5/24/91
- *	$Id: nfs_vnops.c,v 1.29 1994/04/21 23:23:37 cgd Exp $
+ *	$Id: nfs_vnops.c,v 1.30 1994/04/25 03:50:21 cgd Exp $
  */
 
 /*
@@ -53,6 +53,7 @@
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/dir.h>
+#include <sys/lockf.h>
 #include <miscfs/specfs/specdev.h> /* XXX */
 #include <miscfs/fifofs/fifo.h> /* XXX */
 
@@ -341,8 +342,8 @@ nfs_dogetattr(vp, vap, cred, tryhard, p)
 		return (0);
 
 	np = VTONFS(vp);
-	if (np->n_delayed_atime.tv_sec != VNOVAL ||
-	    np->n_delayed_mtime.tv_sec != VNOVAL) {
+	if (np->n_delayed_atime.ts_sec != VNOVAL ||
+	    np->n_delayed_mtime.ts_sec != VNOVAL) {
 		VATTR_NULL(vap);
 		error = nfs_setattr(vp, vap, cred, p);
 		bcopy((caddr_t)&np->n_vattr, (caddr_t)vap, sizeof(*vap));
@@ -399,24 +400,24 @@ nfs_setattr(vp, vap, cred, p)
 	sp->sa_atime.tv_sec = txdr_unsigned(vap->va_atime.tv_sec);
 	sp->sa_atime.tv_usec = txdr_unsigned(vap->va_flags);
 #else
-	if (vap->va_atime.tv_sec == VNOVAL &&
-	    np->n_delayed_atime.tv_sec != VNOVAL) {
+	if (vap->va_atime.ts_sec == VNOVAL &&
+	    np->n_delayed_atime.ts_sec != VNOVAL) {
 		txdr_time(&np->n_delayed_atime, &sp->sa_atime);
 	} else {
 		txdr_time(&vap->va_atime, &sp->sa_atime);
 	}
 #endif
-	if (vap->va_mtime.tv_sec == VNOVAL &&
-	    np->n_delayed_mtime.tv_sec != VNOVAL) {
+	if (vap->va_mtime.ts_sec == VNOVAL &&
+	    np->n_delayed_mtime.ts_sec != VNOVAL) {
 		txdr_time(&np->n_delayed_mtime, &sp->sa_mtime);
 	} else {
 		txdr_time(&vap->va_mtime, &sp->sa_mtime);
 	}
-	np->n_delayed_atime.tv_sec = VNOVAL;
-	np->n_delayed_mtime.tv_sec = VNOVAL;
+	np->n_delayed_atime.ts_sec = VNOVAL;
+	np->n_delayed_mtime.ts_sec = VNOVAL;
 
-	if (vap->va_size != VNOVAL || vap->va_mtime.tv_sec != VNOVAL ||
-	    vap->va_atime.tv_sec != VNOVAL) {
+	if (vap->va_size != VNOVAL || vap->va_mtime.ts_sec != VNOVAL ||
+	    vap->va_atime.ts_sec != VNOVAL) {
 		if (np->n_flag & NMODIFIED) {
 			np->n_flag &= ~NMODIFIED;
 			if (vap->va_size == 0)
@@ -478,18 +479,18 @@ nfs_lookup(vp, ndp, p)
 			error = 0;
 		} else if (ndp->ni_isdotdot) {
 			nfs_unlock(vp);
-			error = vget(vdp);
+			error = vget(vdp, 1);
 			if (!error && lockparent && *ndp->ni_next == '\0')
 				nfs_lock(vp);
 		} else {
-			error = vget(vdp);
+			error = vget(vdp, 1);
 			if (!lockparent || error || *ndp->ni_next != '\0')
 				nfs_unlock(vp);
 		}
 		if (!error) {
 			if (vpid == vdp->v_id) {
 			   if (!nfs_dogetattr(vdp, &vattr, ndp->ni_cred, 0, p)&&
-			       vattr.va_ctime.tv_sec == VTONFS(vdp)->n_ctime) {
+			       vattr.va_ctime.ts_sec == VTONFS(vdp)->n_ctime) {
 				nfsstats.lookupcache_hits++;
 				if (flag != LOOKUP && *ndp->ni_next == 0)
 					ndp->ni_nameiop |= SAVENAME;
@@ -623,7 +624,7 @@ nfsmout:
 	if (flag != LOOKUP && *ndp->ni_next == 0)
 		ndp->ni_nameiop |= SAVENAME;
 	if (error == 0 && ndp->ni_makeentry) {
-		np->n_ctime = np->n_vattr.va_ctime.tv_sec;
+		np->n_ctime = np->n_vattr.va_ctime.ts_sec;
 		cache_enter(ndp);
 	}
 	return (error);
@@ -1275,7 +1276,7 @@ nfs_readdir(vp, uiop, cred, eofflagp, cookies, ncookies)
 	if (uiop->uio_offset != 0 && uiop->uio_offset == np->n_direofoffset &&
 	    (np->n_flag & NMODIFIED) == 0 &&
 	    nfs_dogetattr(vp, &vattr, cred, 0, uiop->uio_procp) == 0 &&
-	    np->n_mtime == vattr.va_mtime.tv_sec) {
+	    np->n_mtime == vattr.va_mtime.ts_sec) {
 		*eofflagp = 1;
 		nfsstats.direofcache_hits++;
 		return (0);
@@ -1821,7 +1822,7 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	enum vtype type;
 	u_short mode;
 	long rdev;
-	struct timeval mtime;
+	struct timespec mtime;
 	struct vnode *nvp;
 
 	md = *mdp;
@@ -1879,7 +1880,7 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 				*vpp = vp = nvp;
 			}
 		}
-		np->n_mtime = mtime.tv_sec;
+		np->n_mtime = mtime.ts_sec;
 	}
 	vap = &np->n_vattr;
 	vap->va_type = type;
@@ -1892,11 +1893,9 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 		np->n_size = vap->va_size;
 		vnode_pager_setsize(vp, np->n_size);
 	}
-	vap->va_size_rsv = 0;
 	vap->va_blocksize = fxdr_unsigned(long, fp->fa_blocksize);
 	vap->va_rdev = (dev_t)rdev;
 	vap->va_bytes = fxdr_unsigned(long, fp->fa_blocks) * NFS_FABLKSIZE;
-	vap->va_bytes_rsv = 0;
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
 	vap->va_fileid = fxdr_unsigned(long, fp->fa_fileid);
 	/* jfw@ksr.com 6/2/93 */
@@ -1946,9 +1945,9 @@ nfs_getattrcache(vp, vap)
 			vnode_pager_setsize(vp, np->n_size);
 		} else if (np->n_size > vap->va_size)
 			vap->va_size = np->n_size;
-		if (np->n_delayed_atime.tv_sec != VNOVAL)
+		if (np->n_delayed_atime.ts_sec != VNOVAL)
 			vap->va_atime = np->n_delayed_atime; 
-		if (np->n_delayed_mtime.tv_sec != VNOVAL)
+		if (np->n_delayed_mtime.ts_sec != VNOVAL)
 			vap->va_mtime = np->n_delayed_mtime; 
 		return (0);
 	} else {
@@ -1969,7 +1968,7 @@ nfsspec_read(vp, uio, ioflag, cred)
 	/*
 	 * Set access time.
 	 */
-	VTONFS(vp)->n_delayed_atime = time;
+	TIMEVAL_TO_TIMESPEC(&time, &(VTONFS(vp)->n_delayed_atime));
 	return (spec_read(vp, uio, ioflag, cred));
 }
 
@@ -1985,7 +1984,7 @@ nfsspec_write(vp, uio, ioflag, cred)
 	/*
 	 * Set change time.
 	 */
-	VTONFS(vp)->n_delayed_mtime = time;
+	TIMEVAL_TO_TIMESPEC(&time, &(VTONFS(vp)->n_delayed_mtime));
 	return (spec_write(vp, uio, ioflag, cred));
 }
 
@@ -2000,8 +1999,8 @@ nfsspec_close(vp, fflag, cred, p)
 	struct ucred *cred;
 	struct proc *p;
 {
-	if (VTONFS(vp)->n_delayed_mtime.tv_sec != VNOVAL ||
-	    VTONFS(vp)->n_delayed_atime.tv_sec != VNOVAL) {
+	if (VTONFS(vp)->n_delayed_mtime.ts_sec != VNOVAL ||
+	    VTONFS(vp)->n_delayed_atime.ts_sec != VNOVAL) {
 		struct vattr va;
 		VATTR_NULL(&va);
 		nfs_setattr(vp, &va, cred, p);
@@ -2022,7 +2021,7 @@ nfsfifo_read(vp, uio, ioflag, cred)
 	/*
 	 * Set access time.
 	 */
-	VTONFS(vp)->n_delayed_atime = time;
+	TIMEVAL_TO_TIMESPEC(&time, &(VTONFS(vp)->n_delayed_atime));
 	return (fifo_read(vp, uio, ioflag, cred));
 }
 
@@ -2038,7 +2037,7 @@ nfsfifo_write(vp, uio, ioflag, cred)
 	/*
 	 * Set change time.
 	 */
-	VTONFS(vp)->n_delayed_mtime = time;
+	TIMEVAL_TO_TIMESPEC(&time, &(VTONFS(vp)->n_delayed_mtime));
 	return (fifo_write(vp, uio, ioflag, cred));
 }
 
@@ -2053,8 +2052,8 @@ nfsfifo_close(vp, fflag, cred, p)
 	struct ucred *cred;
 	struct proc *p;
 {
-	if (VTONFS(vp)->n_delayed_mtime.tv_sec != VNOVAL ||
-	    VTONFS(vp)->n_delayed_atime.tv_sec != VNOVAL) {
+	if (VTONFS(vp)->n_delayed_mtime.ts_sec != VNOVAL ||
+	    VTONFS(vp)->n_delayed_atime.ts_sec != VNOVAL) {
 		struct vattr va;
 		VATTR_NULL(&va);
 		nfs_setattr(vp, &va, cred, p);

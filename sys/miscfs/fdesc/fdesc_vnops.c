@@ -37,7 +37,7 @@
  * From:
  *	Id: fdesc_vnops.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: fdesc_vnops.c,v 1.11 1994/01/09 17:33:19 ws Exp $
+ *	$Id: fdesc_vnops.c,v 1.12 1994/04/25 03:49:55 cgd Exp $
  */
 
 /*
@@ -87,7 +87,7 @@ loop:
 	if (ix >= 0 && ix < FD_MAX && ix != FD_ROOT) {
 		nvpp = &fdescvp[ix];
 		if (*nvpp) {
-			if (vget(*nvpp))
+			if (vget(*nvpp, 1))
 				goto loop;
 			VOP_UNLOCK(*nvpp);
 			*vpp = *nvpp;
@@ -378,12 +378,9 @@ fdesc_attr(fd, vap, cred, p)
 			vap->va_fileid = stb.st_ino;
 			vap->va_size = stb.st_size;
 			vap->va_blocksize = stb.st_blksize;
-			vap->va_atime.tv_sec = stb.st_atime;
-			vap->va_atime.tv_usec = 0;
-			vap->va_mtime.tv_sec = stb.st_mtime;
-			vap->va_mtime.tv_usec = 0;
-			vap->va_ctime.tv_sec = stb.st_ctime;
-			vap->va_ctime.tv_usec = 0;
+			vap->va_atime = stb.st_atimespec;
+			vap->va_mtime = stb.st_mtimespec;
+			vap->va_ctime = stb.st_ctimespec;
 			vap->va_gen = stb.st_gen;
 			vap->va_flags = stb.st_flags;
 			vap->va_rdev = stb.st_rdev;
@@ -453,8 +450,7 @@ fdesc_getattr(vp, vap, cred, p)
 		vap->va_gid = 0;
 		vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
 		vap->va_blocksize = DEV_BSIZE;
-		vap->va_atime.tv_sec = boottime.tv_sec;
-		vap->va_atime.tv_usec = 0;
+		TIMEVAL_TO_TIMESPEC(&boottime, &vap->va_atime);
 		vap->va_mtime = vap->va_atime;
 		vap->va_ctime = vap->va_ctime;
 		vap->va_gen = 0;

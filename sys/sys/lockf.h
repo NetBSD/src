@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)lockf.h	7.1 (Berkeley) 2/1/91
- *	$Id: lockf.h,v 1.1 1994/03/09 21:24:58 ws Exp $
+ *	$Id: lockf.h,v 1.2 1994/04/25 03:50:31 cgd Exp $
  */
 
 #ifndef _SYS_LOCKF_H_
@@ -66,8 +66,17 @@ struct lockf {
 /*
  * Public lock manipulation routines
  */
-extern struct lockf *lf_remove();	/* Remove a lock */
-extern struct lockf *lf_getblock();	/* Return the first blocking lock */
+int lf_advlock __P((struct lockf **head, u_quad_t size, caddr_t id, int op,
+		    struct flock *fl, int flags));
+int lf_setlock __P((struct lockf *lock));
+int lf_clearlock __P((struct lockf *unlock));
+int lf_getlock __P((struct lockf *lock, struct flock *fl));
+struct lockf *lf_getblock __P((struct lockf *lock));
+int lf_findoverlap __P((struct lockf *lf, struct lockf *lock, int type,
+			struct lockf ***prev, struct lockf **overlap));
+void lf_setblock __P((struct lockf *lock, struct lockf *blocked));
+void lf_split __P((struct lockf *lock1, struct lockf *lock2));
+void lf_wakelock __P((struct lockf *listhead));
 
 #ifdef	LOCKF_DEBUG
 extern int lockf_debug;

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_bio.c	7.19 (Berkeley) 4/16/91
- *	$Id: nfs_bio.c,v 1.9 1994/04/21 07:49:07 cgd Exp $
+ *	$Id: nfs_bio.c,v 1.10 1994/04/25 03:50:18 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -109,15 +109,15 @@ nfs_bioread(vp, uio, ioflag, cred)
 			if (error = nfs_dogetattr(vp, &vattr, cred, 1,
 			    uio->uio_procp))
 				return (error);
-			np->n_mtime = vattr.va_mtime.tv_sec;
+			np->n_mtime = vattr.va_mtime.ts_sec;
 		} else {
 			if (error = nfs_dogetattr(vp, &vattr, cred, 1,
 			    uio->uio_procp))
 				return (error);
-			if (np->n_mtime != vattr.va_mtime.tv_sec) {
+			if (np->n_mtime != vattr.va_mtime.ts_sec) {
 				np->n_direofoffset = 0;
 				vinvalbuf(vp, TRUE);
-				np->n_mtime = vattr.va_mtime.tv_sec;
+				np->n_mtime = vattr.va_mtime.ts_sec;
 			}
 		}
 	}
