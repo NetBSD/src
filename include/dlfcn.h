@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn.h,v 1.6 1998/05/06 20:28:54 kleink Exp $	*/
+/*	$NetBSD: dlfcn.h,v 1.7 1998/05/12 21:17:09 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -35,6 +35,15 @@
 
 #include <sys/cdefs.h>
 
+#if !defined(_XOPEN_SOURCE)
+typedef struct _dl_info {
+	const char	*dli_fname;	/* File defining the symbol */
+	void		*dli_fbase;	/* Base address */
+	const char	*dli_sname;	/* Symbol name */
+	void		*dli_saddr;	/* Symbol address */
+} Dl_info;
+#endif /* !defined(_XOPEN_SOURCE) */
+
 /*
  * User interface to the run-time linker.
  */
@@ -43,6 +52,7 @@ extern void	*dlopen __P((const char *, int));
 extern int	dlclose __P((void *));
 extern void	*dlsym __P((void *, const char *));
 #if !defined(_XOPEN_SOURCE)
+extern int	dladdr __P((void *, Dl_info *));
 extern int	dlctl __P((void *, int, void *));
 #endif
 extern char	*dlerror __P((void));
@@ -62,6 +72,7 @@ __END_DECLS
  */
 #if !defined(_XOPEN_SOURCE)
 #define DL_GETERRNO	1
+#define DL_GETSYMBOL	2
 #if 0
 #define DL_SETSRCHPATH	x
 #define DL_GETLIST	x
