@@ -8,7 +8,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)infrun.c	6.4 (Berkeley) 5/8/91";*/
-static char rcsid[] = "$Id: infrun.c,v 1.2 1993/08/01 18:47:49 mycroft Exp $";
+static char rcsid[] = "$Id: infrun.c,v 1.3 1994/01/28 02:17:44 mycroft Exp $";
 #endif /* not lint */
 
 /* Start and stop the inferior process, for GDB.
@@ -161,7 +161,6 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Needed by IN_SIGTRAMP on some machines (e.g. vax).  */
 #include <sys/user.h>
 
-extern char *sys_siglist[];
 extern int errno;
 
 /* Sigtramp is a routine that the kernel calls (which then calls the
