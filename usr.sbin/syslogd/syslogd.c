@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.18 2004/11/17 03:02:14 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.19 2004/11/17 03:08:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.18 2004/11/17 03:02:14 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.19 2004/11/17 03:08:14 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -713,8 +713,12 @@ printline(char *hname, char *msg)
 	if (pri &~ (LOG_FACMASK|LOG_PRIMASK))
 		pri = DEFUPRI;
 
-	/* don't allow users to log kernel messages */
-	if (LOG_FAC(pri) == LOG_KERN)
+	/*
+	 * Don't allow users to log kernel messages.
+	 * NOTE: Since LOG_KERN == 0, this will also match
+	 *	 messages with no facility specified.
+	 */
+	if ((pri & LOG_FACMASK) == LOG_KERN)
 		pri = LOG_MAKEPRI(LOG_USER, LOG_PRI(pri));
 
 	q = line;
