@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.110 2000/05/27 00:40:45 sommerfeld Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.111 2000/06/21 05:43:33 matt Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -390,14 +390,28 @@ sys_execve(p, v, retval)
 
 		vcp = &pack.ep_vmcmds.evs_cmds[i];
 		error = (*vcp->ev_proc)(p, vcp);
+#ifdef DEBUG
+		if (error) {
+			if (i > 0)
+				printf("vmcmd[%d] = %#lx/%#lx @ %#lx\n", i-1,
+				       vcp[-1].ev_addr, vcp[-1].ev_len,
+				       vcp[-1].ev_offset);
+			printf("vmcmd[%d] = %#lx/%#lx @ %#lx\n", i,
+			       vcp->ev_addr, vcp->ev_len, vcp->ev_offset);
+		}
+#endif
 	}
 
 	/* free the vmspace-creation commands, and release their references */
 	kill_vmcmds(&pack.ep_vmcmds);
 
 	/* if an error happened, deallocate and punt */
-	if (error)
+	if (error) {
+#ifdef DEBUG
+		printf("execve: vmcmd %i failed: %d\n", i-1, error);
+#endif
 		goto exec_abort;
+	}
 
 	/* remember information about the process */
 	arginfo.ps_nargvstr = argc;
@@ -405,12 +419,20 @@ sys_execve(p, v, retval)
 
 	stack = (char *) (USRSTACK - len);
 	/* Now copy argc, args & environ to new stack */
-	if (!(*pack.ep_emul->e_copyargs)(&pack, &arginfo, stack, argp))
+	if (!(*pack.ep_emul->e_copyargs)(&pack, &arginfo, stack, argp)) {
+#ifdef DEBUG
+		printf("execve: copyargs failed\n");
+#endif
 		goto exec_abort;
+	}
 
 	/* copy out the process's ps_strings structure */
-	if (copyout(&arginfo, (char *) PS_STRINGS, sizeof(arginfo)))
+	if (copyout(&arginfo, (char *) PS_STRINGS, sizeof(arginfo))) {
+#ifdef DEBUG
+		printf("execve: ps_strings copyout failed\n");
+#endif
 		goto exec_abort;
+	}
 
 	/* fill process ps_strings info */
 	p->p_psstr = PS_STRINGS;
@@ -423,8 +445,12 @@ sys_execve(p, v, retval)
 	if (szsigcode) {
 		if (copyout((char *)pack.ep_emul->e_sigcode,
 		    p->p_sigacts->ps_sigcode = (char *)PS_STRINGS - szsigcode,
-		    szsigcode))
+		    szsigcode)) {
+#ifdef DEBUG
+			printf("execve: sig trampoline copyout failed\n");
+#endif
 			goto exec_abort;
+		}
 #ifdef PMAP_NEED_PROCWR
 		/* This is code. Let the pmap do what is needed. */
 		pmap_procwr(p, (vaddr_t)p->p_sigacts->ps_sigcode, szsigcode);
