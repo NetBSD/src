@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.132 2003/03/19 11:36:32 dsl Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.133 2003/03/27 18:34:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.132 2003/03/19 11:36:32 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.133 2003/03/27 18:34:18 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -388,7 +388,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &nmaxproc);
 
 		if (!error && newp) {
-			if (nmaxproc < nprocs)
+			if (nmaxproc < 0 || nmaxproc >= PID_MAX)
 				return (EINVAL);
 
 #ifdef __HAVE_CPU_MAXPROC
