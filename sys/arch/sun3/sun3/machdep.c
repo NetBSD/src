@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.91 1997/04/09 20:49:06 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92 1997/04/28 22:08:36 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -107,6 +107,7 @@ extern char etext[];
 int	physmem;
 int	fputype;
 int	msgbufmapped;
+struct msgbuf *msgbufp;
 
 vm_offset_t vmmap;
 
@@ -136,13 +137,14 @@ static void initcpu __P((void));
 
 /*
  * Console initialization: called early on from main,
- * before vm init or startup.  Do enough configuration
- * to choose and initialize a console.
+ * before vm init or cpu_startup.  This system is able
+ * to setup the console much earlier than here (thanks
+ * to some help from the PROM monitor) so all that is
+ * left to do here is the debugger stuff.
  */
 void
 consinit()
 {
-	cninit();	/* See dev/zs.c */
 
 #ifdef KGDB
 	/* XXX - Ask on console for kgdb_dev? */
@@ -409,20 +411,20 @@ setregs(p, pack, stack, retval)
  */
 char	machine[] = "sun3";		/* cpu "architecture" */
 char	cpu_model[120];
-extern	long hostid;
 
+/*
+ * Determine which Sun3 model we are running on.
+ * We have to do this very early on the Sun3 because
+ * pmap_bootstrap() needs to know if it should avoid
+ * the video memory on the Sun3/50.  Therefore, this
+ * function just prints out what we already know.
+ */
 void
 identifycpu()
 {
-    /*
-     * actual identification done earlier because i felt like it,
-     * and i believe i will need the info to deal with some VAC, and awful
-     * framebuffer placement problems.  could be moved later.
-     */
-	strcpy(cpu_model, "Sun 3/");
 
-    /* should eventually include whether it has a VAC, mc6888x version, etc */
-	strcat(cpu_model, cpu_string);
+    /* Other stuff? (VAC, mc6888x version, etc.) */
+	sprintf(cpu_model, "Sun 3/%s", cpu_string);
 
 	printf("Model: %s (hostid %x)\n", cpu_model, (int) hostid);
 }
@@ -779,7 +781,7 @@ initcpu()
 /* straptrap() in trap.c */
 
 /* from hp300: badaddr() */
-/* peek_byte(), peek_word() moved to autoconf.c */
+/* peek_byte(), peek_word() moved to bus_subr.c */
 
 /* XXX: parityenable() ? */
 /* regdump() moved to regdump.c */
