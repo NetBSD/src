@@ -88,7 +88,15 @@ static char sccsid[] = "@(#)strtod.c	5.1 (Berkeley) 11/13/92";
  *	FLT_RADIX, FLT_ROUNDS, and DBL_MAX.
  */
 
+#ifdef i386
 #define IEEE_8087
+#endif
+#ifdef hp300
+#define IEEE_MC68k
+#endif
+#ifdef vax
+#define VAX
+#endif
 
 #ifdef DEBUG
 #include "stdio.h"
