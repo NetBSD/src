@@ -1,3 +1,4 @@
+/*	$NetBSD: log.h,v 1.1.1.2 2001/04/10 07:13:57 itojun Exp $	*/
 /*	$OpenBSD: log.h,v 1.2 2001/01/29 01:58:16 niklas Exp $	*/
 
 /*

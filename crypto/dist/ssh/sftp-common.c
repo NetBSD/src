@@ -1,3 +1,4 @@
+/*	$NetBSD: sftp-common.c,v 1.1.1.2 2001/04/10 07:14:08 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Damien Miller.  All rights reserved.

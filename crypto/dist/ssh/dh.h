@@ -1,4 +1,5 @@
-/*	$OpenBSD: dh.h,v 1.2 2001/01/29 01:58:15 niklas Exp $	*/
+/*	$NetBSD: dh.h,v 1.1.1.3 2001/04/10 07:13:55 itojun Exp $	*/
+/*	$OpenBSD: dh.h,v 1.5 2001/04/03 19:53:29 markus Exp $	*/
 
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
@@ -32,6 +33,17 @@ struct dhgroup {
 	BIGNUM *p;
 };
 
-DH *choose_dh(int minbits);
+DH	*choose_dh(int min, int nbits, int max);
+DH	*dh_new_group_asc(const char *, const char *);
+DH	*dh_new_group(BIGNUM *, BIGNUM *);
+DH	*dh_new_group1(void);
+
+void	dh_gen_key(DH *, int);
+int	dh_pub_is_valid(DH *dh, BIGNUM *dh_pub);
+
+int	dh_estimate(int bits);
+
+#define DH_GRP_MIN	1024
+#define DH_GRP_MAX	8192
 
 #endif

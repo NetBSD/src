@@ -1,3 +1,4 @@
+/*	$NetBSD: buffer.c,v 1.1.1.4 2001/04/10 07:13:51 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: buffer.c,v 1.10 2001/01/21 19:05:45 markus Exp $");
+RCSID("$OpenBSD: buffer.c,v 1.12 2001/04/07 08:55:15 markus Exp $");
 
 #include "xmalloc.h"
 #include "buffer.h"
@@ -112,7 +113,8 @@ void
 buffer_get(Buffer *buffer, char *buf, u_int len)
 {
 	if (len > buffer->end - buffer->offset)
-		fatal("buffer_get: trying to get more bytes than in buffer");
+		fatal("buffer_get: trying to get more bytes %d than in buffer %d",
+		    len, buffer->end - buffer->offset);
 	memcpy(buf, buffer->buf + buffer->offset, len);
 	buffer->offset += len;
 }
@@ -155,5 +157,5 @@ buffer_dump(Buffer *buffer)
 
 	for (i = buffer->offset; i < buffer->end; i++)
 		fprintf(stderr, " %02x", ucp[i]);
-	fprintf(stderr, "\n");
+	fprintf(stderr, "\r\n");
 }

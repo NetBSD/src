@@ -1,3 +1,4 @@
+/*	$NetBSD: dispatch.c,v 1.1.1.4 2001/04/10 07:13:55 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *

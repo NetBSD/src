@@ -1,3 +1,4 @@
+/*	$NetBSD: channels.h,v 1.1.1.6 2001/04/10 07:13:53 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -32,7 +33,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* RCSID("$OpenBSD: channels.h,v 1.28 2001/03/16 19:06:29 markus Exp $"); */
+/* RCSID("$OpenBSD: channels.h,v 1.30 2001/04/07 08:55:17 markus Exp $"); */
 
 #ifndef CHANNELS_H
 #define CHANNELS_H
@@ -53,7 +54,8 @@
 #define SSH_CHANNEL_LARVAL		10	/* larval session */
 #define SSH_CHANNEL_RPORT_LISTENER	11	/* Listening to a R-style port  */
 #define SSH_CHANNEL_CONNECTING		12
-#define SSH_CHANNEL_MAX_TYPE		13
+#define SSH_CHANNEL_DYNAMIC		13
+#define SSH_CHANNEL_MAX_TYPE		14
 
 /*
  * Data structure for channel data.  This is iniailized in channel_allocate
@@ -171,7 +173,8 @@ void    channel_free(int channel);
  * select bitmasks.
  */
 void
-channel_prepare_select(fd_set **readsetp, fd_set **writesetp, int *maxfdp);
+channel_prepare_select(fd_set **readsetp, fd_set **writesetp, int *maxfdp,
+    int rekeying);
 
 /*
  * After select, perform any appropriate operations for channels which have

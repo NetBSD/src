@@ -1,3 +1,4 @@
+/*	$NetBSD: readpass.h,v 1.1.1.2 2001/04/10 07:13:59 itojun Exp $	*/
 /*	$OpenBSD: readpass.h,v 1.2 2001/01/29 01:58:17 niklas Exp $	*/
 
 /*
