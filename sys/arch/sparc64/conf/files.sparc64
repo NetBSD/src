@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.78 2003/05/23 06:57:58 petrov Exp $
+#	$NetBSD: files.sparc64,v 1.79 2003/06/16 19:24:51 heas Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -89,6 +89,8 @@ device	auxio
 attach	auxio at ebus with auxio_ebus
 attach	auxio at sbus with auxio_sbus
 file	arch/sparc64/dev/auxio.c		auxio
+
+defflag	opt_auxio.h	BLINK
 
 attach lpt at ebus with lpt_ebus
 file	arch/sparc64/dev/lpt_ebus.c		lpt_ebus
