@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.15 1996/09/07 12:40:50 mycroft Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.16 1997/03/18 18:57:20 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -91,7 +91,6 @@ svr4_to_bsd_flags(l)
 	r |= (l & SVR4_O_NDELAY) ? O_NONBLOCK : 0;
 	r |= (l & SVR4_O_APPEND) ? O_APPEND : 0;
 	r |= (l & SVR4_O_SYNC) ? O_FSYNC : 0;
-	r |= (l & SVR4_O_RAIOSIG) ? O_ASYNC : 0;
 	r |= (l & SVR4_O_NONBLOCK) ? O_NONBLOCK : 0;
 	r |= (l & SVR4_O_PRIV) ? O_EXLOCK : 0;
 	r |= (l & SVR4_O_CREAT) ? O_CREAT : 0;
@@ -113,7 +112,6 @@ bsd_to_svr4_flags(l)
 	r |= (l & O_NDELAY) ? SVR4_O_NONBLOCK : 0;
 	r |= (l & O_APPEND) ? SVR4_O_APPEND : 0;
 	r |= (l & O_FSYNC) ? SVR4_O_SYNC : 0;
-	r |= (l & O_ASYNC) ? SVR4_O_RAIOSIG : 0;
 	r |= (l & O_NONBLOCK) ? SVR4_O_NONBLOCK : 0;
 	r |= (l & O_EXLOCK) ? SVR4_O_PRIV : 0;
 	r |= (l & O_CREAT) ? SVR4_O_CREAT : 0;
@@ -280,9 +278,24 @@ svr4_sys_fcntl(p, v, retval)
 		return error;
 
 	case F_SETFL:
-		SCARG(&fa, arg) =
-			(void *) svr4_to_bsd_flags((u_long) SCARG(uap, arg));
-		return sys_fcntl(p, &fa, retval);
+		{
+			/*
+			 * we must save the O_ASYNC flag, as that is
+			 * handled by ioctl(_, I_SETSIG, _) emulation.
+			 */
+			int cmd, flags;
+
+			cmd = SCARG(&fa, cmd); /* save it for a while */
+
+			SCARG(&fa, cmd) = F_GETFL;
+			if ((error = sys_fcntl(p, &fa, &flags)) != 0)
+				return error;
+			flags &= O_ASYNC;
+			flags |= svr4_to_bsd_flags((u_long) SCARG(uap, arg));
+			SCARG(&fa, cmd) = cmd;
+			SCARG(&fa, arg) = (void *) flags;
+			return sys_fcntl(p, &fa, retval);
+		}
 
 	case F_GETLK:
 	case F_SETLK:
