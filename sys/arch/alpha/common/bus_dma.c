@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.16 1998/02/24 07:38:03 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.17 1998/03/17 04:59:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,10 +38,11 @@
  */
 
 #include "opt_uvm.h"
+#include "opt_pmap_new.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.16 1998/02/24 07:38:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.17 1998/03/17 04:59:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -517,8 +518,12 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 		    addr += NBPG, va += NBPG, size -= NBPG) {
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
+#if defined(PMAP_NEW)
+			pmap_kenter_pa(va, addr, VM_PROT_READ | VM_PROT_WRITE);
+#else
 			pmap_enter(pmap_kernel(), va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE, TRUE);
+#endif
 		}
 	}
 
