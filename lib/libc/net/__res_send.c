@@ -1,4 +1,4 @@
-/*	$NetBSD: __res_send.c,v 1.2 1997/04/22 18:51:55 cgd Exp $	*/
+/*	$NetBSD: __res_send.c,v 1.3 1997/07/17 21:27:34 thorpej Exp $	*/
 
 /*
  * written by matthew green, 22/04/97.
@@ -15,9 +15,11 @@ __indr_reference(__res_send,res_send);
 #include <netinet/in.h>
 #include <resolv.h>
 
-extern int __res_send __P((const u_char *, int, u_char *, int));
+/* XXX THIS IS A MESS!  SEE <resolv.h> XXX */
 
 #undef res_send
+int	res_send __P((const u_char *, int, u_char *, int));
+
 int
 res_send(buf, buflen, ans, anssiz)
 	const u_char *buf;
