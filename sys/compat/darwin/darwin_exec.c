@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.6 2002/11/28 21:23:54 manu Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.7 2002/12/07 15:33:03 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.6 2002/11/28 21:23:54 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.7 2002/12/07 15:33:03 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,11 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.6 2002/11/28 21:23:54 manu Exp $")
 #include <compat/darwin/darwin_exec.h>
 #include <compat/darwin/darwin_signal.h>
 #include <compat/darwin/darwin_syscall.h>
+
+static void darwin_e_proc_exec(struct proc *, struct exec_package *);
+static void darwin_e_proc_fork(struct proc *, struct proc *);
+static void darwin_e_proc_exit(struct proc *);
+static void darwin_e_proc_init(struct proc *, struct vmspace *);
 
 extern char sigcode[], esigcode[];
 extern struct sysent darwin_sysent[];
@@ -88,9 +93,9 @@ const struct emul emul_darwin = {
 	sigcode,
 	esigcode,
 	setregs,
-	NULL,
-	NULL,
-	NULL,
+	darwin_e_proc_exec,
+	darwin_e_proc_fork,
+	darwin_e_proc_exit,
 #ifdef __HAVE_SYSCALL_INTERN
 	mach_syscall_intern,
 #else
@@ -105,8 +110,12 @@ const struct emul emul_darwin = {
  * extra information in case of dynamic binding.
  */
 int
-exec_darwin_copyargs(struct proc *p, struct exec_package *pack,
-    struct ps_strings *arginfo, char **stackp, void *argp)
+exec_darwin_copyargs(p, pack, arginfo, stackp, argp)
+	struct proc *p;
+	struct exec_package *pack;
+	struct ps_strings *arginfo;
+	char **stackp;
+	void *argp;
 {
 	struct exec_macho_emul_arg *emea;
 	struct exec_macho_object_header *macho_hdr;
@@ -172,7 +181,64 @@ exec_darwin_copyargs(struct proc *p, struct exec_package *pack,
 }
 
 int
-exec_darwin_probe(char **path) {
+exec_darwin_probe(path)
+	char **path;
+{
 	*path = (char *)emul_darwin.e_path;
 	return 0;
+}
+
+static void 
+darwin_e_proc_exec(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
+{
+	darwin_e_proc_init(p, p->p_vmspace);
+
+	return;
+}
+
+static void 
+darwin_e_proc_fork(p, parent)
+	struct proc *p;
+	struct proc *parent;
+{
+	struct darwin_emuldata *ded1;
+	struct darwin_emuldata *ded2;
+
+	p->p_emuldata = NULL;
+
+	/* Use parent's vmspace because our vmspace may not be setup yet */
+	darwin_e_proc_init(p, parent->p_vmspace);
+
+	ded1 = p->p_emuldata;
+	ded2 = parent->p_emuldata;
+
+	(void)memcpy(ded1, ded2, sizeof(struct darwin_emuldata));
+
+	return;
+}
+
+static void 
+darwin_e_proc_init(p, vmspace)
+	struct proc *p;
+	struct vmspace *vmspace;
+{
+	if (!p->p_emuldata)
+		p->p_emuldata = malloc(sizeof(struct darwin_emuldata),
+		    M_EMULDATA, M_WAITOK | M_ZERO);
+
+	mach_e_proc_init(p, vmspace);
+
+	return;
+}
+
+static void 
+darwin_e_proc_exit(p)
+	struct proc *p;
+{
+	free(p->p_emuldata, M_EMULDATA);
+	p->p_emuldata = NULL;
+
+	return;
 }
