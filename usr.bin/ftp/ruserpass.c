@@ -1,4 +1,4 @@
-/*	$NetBSD: ruserpass.c,v 1.14.2.1 1997/11/18 01:02:05 mellon Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.14.2.2 1998/11/10 18:49:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: ruserpass.c,v 1.14.2.1 1997/11/18 01:02:05 mellon Exp $");
+__RCSID("$NetBSD: ruserpass.c,v 1.14.2.2 1998/11/10 18:49:07 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: ruserpass.c,v 1.14.2.1 1997/11/18 01:02:05 mellon Exp $");
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -71,7 +72,7 @@ static char tokval[100];
 static struct toktab {
 	char *tokstr;
 	int tval;
-} toktab[]= {
+} toktab[] = {
 	{ "default",	DEFAULT },
 	{ "login",	LOGIN },
 	{ "password",	PASSWD },
@@ -85,10 +86,10 @@ static struct toktab {
 int
 ruserpass(host, aname, apass, aacct)
 	const char *host;
-	char **aname, **apass, **aacct;
+	const char **aname, **apass, **aacct;
 {
 	char *hdir, buf[BUFSIZ], *tmp;
-	char myname[MAXHOSTNAMELEN], *mydomain;
+	char myname[MAXHOSTNAMELEN + 1], *mydomain;
 	int t, i, c, usedefault = 0;
 	struct stat stb;
 
@@ -96,7 +97,7 @@ ruserpass(host, aname, apass, aacct)
 	if (hdir == NULL)
 		hdir = ".";
 	if (strlen(hdir) + sizeof(".netrc") < sizeof(buf)) {
-		(void)snprintf(buf, sizeof buf, "%s/.netrc", hdir);
+		(void)snprintf(buf, sizeof(buf), "%s/.netrc", hdir);
 	} else {
 		warnx("%s/.netrc: %s", hdir, strerror(ENAMETOOLONG));
 		return (0);
@@ -109,6 +110,7 @@ ruserpass(host, aname, apass, aacct)
 	}
 	if (gethostname(myname, sizeof(myname)) < 0)
 		myname[0] = '\0';
+	myname[sizeof(myname) - 1] = '\0';
 	if ((mydomain = strchr(myname, '.')) == NULL)
 		mydomain = "";
 next:
@@ -147,15 +149,14 @@ next:
 		while ((t = token()) && t != MACH && t != DEFAULT) switch(t) {
 
 		case LOGIN:
-			if (token())
-				if (*aname == NULL) {
-					*aname = strdup(tokval);
-					if (*aname == NULL)
-						err(1, "can't strdup *aname");
-				} else {
+			if (token()) {
+				if (*aname == NULL)
+					*aname = xstrdup(tokval);
+				else {
 					if (strcmp(*aname, tokval))
 						goto next;
 				}
+			}
 			break;
 		case PASSWD:
 			if ((*aname == NULL || strcmp(*aname, "anonymous")) &&
@@ -165,11 +166,8 @@ next:
 	warnx("Remove password or make file unreadable by others.");
 				goto bad;
 			}
-			if (token() && *apass == NULL) {
-				*apass = strdup(tokval);
-				if (*apass == NULL)
-					err(1, "can't strdup *apass");
-			}
+			if (token() && *apass == NULL)
+				*apass = xstrdup(tokval);
 			break;
 		case ACCOUNT:
 			if (fstat(fileno(cfile), &stb) >= 0
@@ -178,47 +176,48 @@ next:
 	warnx("Remove account or make file unreadable by others.");
 				goto bad;
 			}
-			if (token() && *aacct == NULL) {
-				*aacct = strdup(tokval);
-				if (*aacct == NULL)
-					err(1, "can't strdup *aacct");
-			}
+			if (token() && *aacct == NULL)
+				*aacct = xstrdup(tokval);
 			break;
 		case MACDEF:
 			if (proxy) {
 				(void)fclose(cfile);
 				return (0);
 			}
-			while ((c=getc(cfile)) != EOF)
+			while ((c = getc(cfile)) != EOF)
 				if (c != ' ' && c != '\t')
 					break;
 			if (c == EOF || c == '\n') {
-				puts("Missing macdef name argument.");
+				fputs("Missing macdef name argument.\n",
+				    ttyout);
 				goto bad;
 			}
 			if (macnum == 16) {
-				puts(
-"Limit of 16 macros have already been defined.");
+				fputs(
+			    "Limit of 16 macros have already been defined.\n",
+				    ttyout);
 				goto bad;
 			}
 			tmp = macros[macnum].mac_name;
 			*tmp++ = c;
-			for (i=0; i < 8 && (c=getc(cfile)) != EOF &&
+			for (i = 0; i < 8 && (c = getc(cfile)) != EOF &&
 			    !isspace(c); ++i) {
 				*tmp++ = c;
 			}
 			if (c == EOF) {
-				puts(
-"Macro definition missing null line terminator.");
+				fputs(
+			    "Macro definition missing null line terminator.\n",
+				    ttyout);
 				goto bad;
 			}
 			*tmp = '\0';
 			if (c != '\n') {
-				while ((c=getc(cfile)) != EOF && c != '\n');
+				while ((c = getc(cfile)) != EOF && c != '\n');
 			}
 			if (c == EOF) {
-				puts(
-"Macro definition missing null line terminator.");
+				fputs(
+			    "Macro definition missing null line terminator.\n",
+				    ttyout);
 				goto bad;
 			}
 			if (macnum == 0) {
@@ -230,9 +229,10 @@ next:
 			}
 			tmp = macros[macnum].mac_start;
 			while (tmp != macbuf + 4096) {
-				if ((c=getc(cfile)) == EOF) {
-				puts(
-"Macro definition missing null line terminator.");
+				if ((c = getc(cfile)) == EOF) {
+					fputs(
+			    "Macro definition missing null line terminator.\n",
+					    ttyout);
 					goto bad;
 				}
 				*tmp = c;
@@ -246,7 +246,8 @@ next:
 				tmp++;
 			}
 			if (tmp == macbuf + 4096) {
-				puts("4K macro buffer exceeded.");
+				fputs("4K macro buffer exceeded.\n",
+				    ttyout);
 				goto bad;
 			}
 			break;
