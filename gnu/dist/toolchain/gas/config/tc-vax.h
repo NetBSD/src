@@ -77,6 +77,13 @@ extern const struct relax_type md_relax_table[];
 	     && ! S_IS_WEAK ((FIX)->fx_addsy)		\
 	     && S_IS_DEFINED ((FIX)->fx_addsy)		\
 	     && ! S_IS_COMMON ((FIX)->fx_addsy)))
+#define	TC_FORCE_RELOCATION(FIX)			\
+	((FIX)->fx_r_type == BFD_RELOC_32_PLT_PCREL ||	\
+	 (FIX)->fx_r_type == BFD_RELOC_32_GOT_PCREL)
+
+#define	TC_FORCE_RELOCATION_SECTION(FIX, SEC)		\
+	((FIX)->fx_r_type == BFD_RELOC_32_PLT_PCREL ||	\
+	 (FIX)->fx_r_type == BFD_RELOC_32_GOT_PCREL)
 #endif
 
 /*
