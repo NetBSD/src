@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ecn.h,v 1.4 1999/07/06 12:23:20 itojun Exp $	*/
+/*	$NetBSD: ip_ecn.h,v 1.5 1999/07/09 23:41:17 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -34,6 +34,10 @@
  * ECN consideration on tunnel ingress/egress operation.
  * http://www.aciri.org/floyd/papers/draft-ipsec-ecn-00.txt
  */
+
+#if defined(_KERNEL) && !defined(_LKM)             
+#include "opt_inet.h"
+#endif                                             
 
 #define ECN_ALLOWED	1	/* ECN allowed */
 #define ECN_FORBIDDEN	0	/* ECN forbidden */

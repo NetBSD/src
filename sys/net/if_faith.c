@@ -39,7 +39,7 @@
 /*
  * Loopback interface driver for protocol testing and timing.
  */
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
+#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
 #endif
 

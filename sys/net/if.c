@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.49 1999/07/01 08:12:47 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.50 1999/07/09 23:41:16 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -63,6 +63,8 @@
  *
  *	@(#)if.c	8.5 (Berkeley) 1/9/95
  */
+
+#include "opt_inet.h"
 
 #include "opt_compat_linux.h"
 #include "opt_compat_svr4.h"
