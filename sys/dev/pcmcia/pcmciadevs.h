@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.102 2000/12/08 18:38:15 drochner Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.103 2000/12/19 16:54:14 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.103 2000/12/08 18:37:24 drochner Exp 
+ *	NetBSD: pcmciadevs,v 1.104 2000/12/19 16:53:41 thorpej Exp 
  */
 
 /*-
@@ -565,3 +565,6 @@
 #define	PCMCIA_CIS_MELCO_LPC2_TX	{ "MELCO", "LPC2-TX", NULL, NULL }
 #define	PCMCIA_PRODUCT_MELCO_LPC2_TX	-1
 #define	PCMCIA_STR_MELCO_LPC2_TX	"Melco LPC2-TX"
+#define	PCMCIA_CIS_SMC_2632W	{ "SMC", "SMC2632W", "Version 01.02", NULL
+#define	PCMCIA_PRODUCT_SMC_2632W	-1
+#define	PCMCIA_STR_SMC_2632W	"} SMC 2632 EZ Connect Wireless PC Card"
