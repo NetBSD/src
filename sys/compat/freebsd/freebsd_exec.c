@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.c,v 1.8 2000/11/21 00:37:53 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_exec.c,v 1.9 2000/12/01 12:28:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -49,7 +49,7 @@
 #include <machine/freebsd_machdep.h>
 
 #include <compat/freebsd/freebsd_exec.h>
-#include <compat/freebsd/freebsd_util.h>
+#include <compat/common/compat_util.h>
 
 #include <compat/freebsd/freebsd_syscall.h>
 
@@ -58,6 +58,7 @@ extern const char * const freebsd_syscallnames[];
 
 const struct emul emul_freebsd = {
 	"freebsd",
+	"/emul/freebsd",
 	NULL,
 	freebsd_sendsig,
 	FREEBSD_SYS_syscall,
@@ -132,7 +133,7 @@ ELFNAME2(freebsd,probe)(p, epp, veh, itp, pos)
 	}
 
 	if (itp[0]) {
-		if ((error = emul_find(p, NULL, freebsd_emul_path,
+		if ((error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path,
 		    itp, &bp, 0)))
 			return error;
 		if ((error = copystr(bp, itp, MAXPATHLEN, &i)) != 0)

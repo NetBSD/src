@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.61 2000/11/21 00:37:55 jdolecek Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.62 2000/12/01 12:28:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -169,6 +169,7 @@ extern char ultrix_sigcode[], ultrix_esigcode[];
 
 const struct emul emul_ultrix = {
 	"ultrix",
+	"/emul/ultrix",
 	NULL,
 	sendsig,
 	ULTRIX_SYS_syscall,

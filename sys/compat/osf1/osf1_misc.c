@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.60 2000/11/22 08:40:47 thorpej Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.61 2000/12/01 12:28:34 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -88,14 +88,12 @@
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscallargs.h>
-#include <compat/osf1/osf1_util.h>
+#include <compat/common/compat_util.h>
 #include <compat/osf1/osf1_cvt.h>
 
 #ifdef SYSCALL_DEBUG
 extern int scdebug;
 #endif
-
-const char osf1_emul_path[] = "/emul/osf1";
 
 int
 osf1_sys_classcntl(p, v, retval)
