@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.58 1999/10/30 22:49:58 thorpej Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.59 1999/11/02 06:23:50 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.58 1999/10/30 22:49:58 thorpej Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.59 1999/11/02 06:23:50 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -922,18 +922,18 @@ dopool()
 		if (first) {
 			(void)printf("Memory resource pool statistics\n");
 			(void)printf(
-			"%16s %6s %8s %8s %8s %7s %7s %6s %6s %6s %6s %6s\n",
+			"%-11s%5s%9s%5s%9s%6s%6s%6s%6s%6s%6s%5s\n",
 		 		"Name",
 				"Size",
 				"Requests",
-				"Failed",
+				"Fail",
 				"Releases",
-				"Pagereq",
-				"Pagerel",
+				"Pgreq",
+				"Pgrel",
 				"Npage",
 				"Hiwat",
-				"Minpage",
-				"Maxpage",
+				"Minpg",
+				"Maxpg",
 				"Idle");
 			first = 0;
 		}
@@ -942,7 +942,7 @@ dopool()
 		else
 			sprintf(maxp, "%6u", pp->pr_maxpages);
 		(void)printf(
-		    "%16s %6u %8lu %8lu %8lu %7lu %7lu %6u %6u %6u %6s %6lu\n",
+		    "%-11s%5u%9lu%5lu%9lu%6lu%6lu%6d%6d%6d%6s%5lu\n",
 			name, 
 			pp->pr_size,
 			pp->pr_nget,
