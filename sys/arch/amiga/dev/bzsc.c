@@ -1,4 +1,4 @@
-/*	$NetBSD: bzsc.c,v 1.25 1999/09/25 21:47:06 is Exp $	*/
+/*	$NetBSD: bzsc.c,v 1.26 1999/09/30 22:59:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -275,7 +275,7 @@ bzsc_write_reg(sc, reg, val)
 
 	bsc->sc_reg[reg * 2] = v;
 #ifdef DEBUG
-if (bzsc_trace_enable/* && sc->sc_nexus && sc->sc_nexus->xs->flags & SCSI_POLL*/ &&
+if (bzsc_trace_enable/* && sc->sc_nexus && sc->sc_nexus->xs->xs_control & XS_CTL_POLL*/ &&
   reg == NCR_CMD/* && bsc->sc_active*/) {
   bzsc_trace[(bzsc_trace_ptr - 1) & 127].yy = v;
 /*  printf(" cmd %x", v);*/
@@ -293,7 +293,7 @@ bzsc_dma_isintr(sc)
 		return 0;
 
 #ifdef DEBUG
-if (/*sc->sc_nexus && sc->sc_nexus->xs->flags & SCSI_POLL &&*/ bzsc_trace_enable) {
+if (/*sc->sc_nexus && sc->sc_nexus->xs->xs_control & XS_CTL_POLL &&*/ bzsc_trace_enable) {
   bzsc_trace[bzsc_trace_ptr].status = bsc->sc_reg[NCR_STAT * 2];
   bzsc_trace[bzsc_trace_ptr].xx = bsc->sc_reg[NCR_CMD * 2];
   bzsc_trace[bzsc_trace_ptr].yy = bsc->sc_active;

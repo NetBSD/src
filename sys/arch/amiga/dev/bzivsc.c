@@ -1,4 +1,4 @@
-/*	$NetBSD: bzivsc.c,v 1.7 1999/09/25 21:47:05 is Exp $	*/
+/*	$NetBSD: bzivsc.c,v 1.8 1999/09/30 22:59:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -271,7 +271,7 @@ bzivsc_write_reg(sc, reg, val)
 
 	bsc->sc_reg[reg * 4] = v;
 #ifdef DEBUG
-if (bzivsc_trace_enable/* && sc->sc_nexus && sc->sc_nexus->xs->flags & SCSI_POLL*/ &&
+if (bzivsc_trace_enable/* && sc->sc_nexus && sc->sc_nexus->xs->xs_control & XS_CTL_POLL */ &&
   reg == NCR_CMD/* && bsc->sc_active*/) {
   bzivsc_trace[(bzivsc_trace_ptr - 1) & 127].yy = v;
 /*  printf(" cmd %x", v);*/
@@ -289,7 +289,7 @@ bzivsc_dma_isintr(sc)
 		return 0;
 
 #ifdef DEBUG
-if (/*sc->sc_nexus && sc->sc_nexus->xs->flags & SCSI_POLL &&*/ bzivsc_trace_enable) {
+if (/*sc->sc_nexus && sc->sc_nexus->xs->xs_control & XS_CTL_POLL &&*/ bzivsc_trace_enable) {
   bzivsc_trace[bzivsc_trace_ptr].status = bsc->sc_reg[NCR_STAT * 4];
   bzivsc_trace[bzivsc_trace_ptr].xx = bsc->sc_reg[NCR_CMD * 4];
   bzivsc_trace[bzivsc_trace_ptr].yy = bsc->sc_active;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cbsc.c,v 1.9 1999/09/25 21:47:08 is Exp $	*/
+/*	$NetBSD: cbsc.c,v 1.10 1999/09/30 22:59:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -271,7 +271,7 @@ cbsc_write_reg(sc, reg, val)
 
 	csc->sc_reg[reg * 4] = v;
 #ifdef DEBUG
-if (cbsc_trace_enable/* && sc->sc_nexus && sc->sc_nexus->xs->flags & SCSI_POLL*/ &&
+if (cbsc_trace_enable/* && sc->sc_nexus && sc->sc_nexus->xs->xs_control & XS_CTL_POLL*/ &&
   reg == NCR_CMD/* && csc->sc_active*/) {
   cbsc_trace[(cbsc_trace_ptr - 1) & 127].yy = v;
 /*  printf(" cmd %x", v);*/
@@ -297,7 +297,7 @@ cbsc_dma_isintr(sc)
 	if ((csc->sc_reg[0x802] & CBSC_HB_CREQ) == 0)
 		return 0;
 #ifdef DEBUG
-if (/*sc->sc_nexus && sc->sc_nexus->xs->flags & SCSI_POLL &&*/ cbsc_trace_enable) {
+if (/*sc->sc_nexus && sc->sc_nexus->xs->xs_control & XS_CTL_POLL &&*/ cbsc_trace_enable) {
   cbsc_trace[cbsc_trace_ptr].status = csc->sc_reg[NCR_STAT * 4];
   cbsc_trace[cbsc_trace_ptr].xx = csc->sc_reg[NCR_CMD * 4];
   cbsc_trace[cbsc_trace_ptr].yy = csc->sc_active;

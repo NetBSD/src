@@ -1,4 +1,4 @@
-/*	$NetBSD: bztzsc.c,v 1.12 1999/09/25 21:47:06 is Exp $	*/
+/*	$NetBSD: bztzsc.c,v 1.13 1999/09/30 22:59:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -275,7 +275,7 @@ bztzsc_write_reg(sc, reg, val)
 
 	bsc->sc_reg[reg * 4] = v;
 #ifdef DEBUG
-if (bztzsc_trace_enable/* && sc->sc_nexus && sc->sc_nexus->xs->flags & SCSI_POLL*/ &&
+if (bztzsc_trace_enable/* && sc->sc_nexus && sc->sc_nexus->xs->xs_control & XS_CTL_POLL*/ &&
   reg == NCR_CMD/* && bsc->sc_active*/) {
   bztzsc_trace[(bztzsc_trace_ptr - 1) & 127].yy = v;
 /*  printf(" cmd %x", v);*/
@@ -298,7 +298,7 @@ bztzsc_dma_isintr(sc)
 		bsc->sc_reg[0xe0] = BZTZSC_PB_LED;	/* Turn LED off */
 
 #ifdef DEBUG
-if (/*sc->sc_nexus && sc->sc_nexus->xs->flags & SCSI_POLL &&*/ bztzsc_trace_enable) {
+if (/*sc->sc_nexus && sc->sc_nexus->xs->xs_control & XS_CTL_POLL &&*/ bztzsc_trace_enable) {
   bztzsc_trace[bztzsc_trace_ptr].status = bsc->sc_reg[NCR_STAT * 4];
   bztzsc_trace[bztzsc_trace_ptr].xx = bsc->sc_reg[NCR_CMD * 4];
   bztzsc_trace[bztzsc_trace_ptr].yy = bsc->sc_active;

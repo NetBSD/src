@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.16 1999/04/18 00:38:58 minoura Exp $	*/
+/*	$NetBSD: mha.c,v 1.17 1999/09/30 23:01:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -719,7 +719,7 @@ mha_scsi_cmd(xs)
 	SPC_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
 	    sc_link->scsipi_scsi.target));
 
-	flags = xs->flags;
+	flags = xs->xs_control;
 
 	/* Get a mha command block */
 	s = splbio();
@@ -758,7 +758,7 @@ mha_scsi_cmd(xs)
 
 	splx(s);
 
-	if (flags & SCSI_POLL) {
+	if (flags & XS_CTL_POLL) {
 		/* Not allowed to use interrupts, use polling instead */
 		return mha_poll(sc, acb);
 	}
@@ -800,7 +800,7 @@ mha_poll(sc, acb)
 		 */
 		if (SSR & SS_IREQUEST)
 			mhaintr(sc);
-		if ((xs->flags & ITSDONE) != 0)
+		if ((xs->xs_status & XS_STS_DONE) != 0)
 			break;
 		DELAY(10);
 #if 1
@@ -1008,7 +1008,7 @@ mha_done(sc, acb)
 		}
 	}
 
-	xs->flags |= ITSDONE;
+	xs->xs_status |= XS_STS_DONE;
 
 #if SPC_DEBUG
 	if ((mha_debug & SPC_SHOWMISC) != 0) {
@@ -1055,7 +1055,7 @@ mha_done(sc, acb)
 	TAILQ_INSERT_HEAD(&sc->free_list, acb, chain);
 	acb->flags = ACB_QFREE;
 #else
-	mha_free_acb(sc, acb, xs->flags);
+	mha_free_acb(sc, acb, xs->xs_control);
 #endif
 
 	ti->cmds++;
@@ -1950,13 +1950,13 @@ mhaintr(arg)
 					/* 最初は CMD PHASE ということらしい */
 					if (acb->dleft) {
 						/* データ転送がありうる場合 */
-						if (acb->xs->flags & SCSI_DATA_IN) {
+						if (acb->xs->xs_control & XS_CTL_DATA_IN) {
 							sc->sc_phase = DATA_IN_PHASE;
 							n = mha_datain(sc, sc->sc_dp, sc->sc_dleft);
 							sc->sc_dp += n;
 							sc->sc_dleft -= n;
 						}
-						else if (acb->xs->flags & SCSI_DATA_OUT) {
+						else if (acb->xs->xs_control & XS_CTL_DATA_OUT) {
 							sc->sc_phase = DATA_OUT_PHASE;
 							n = mha_dataout(sc, sc->sc_dp, sc->sc_dleft);
 							sc->sc_dp += n;
@@ -2130,7 +2130,7 @@ mha_show_scsi_cmd(acb)
 	int i;
 
 	scsi_print_addr(sc_link);
-	if ((acb->xs->flags & SCSI_RESET) == 0) {
+	if ((acb->xs->xs_control & XS_CTL_RESET) == 0) {
 		for (i = 0; i < acb->clen; i++) {
 			if (i)
 				printf(",");

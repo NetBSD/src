@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.13 1999/09/07 20:24:56 is Exp $	*/
+/*	$NetBSD: siop2.c,v 1.14 1999/09/30 22:59:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -187,14 +187,14 @@ siopng_scsicmd(xs)
 
 	slp = xs->sc_link;
 	sc = slp->adapter_softc;
-	flags = xs->flags;
+	flags = xs->xs_control;
 
 	/* XXXX ?? */
-	if (flags & SCSI_DATA_UIO)
+	if (flags & XS_CTL_DATA_UIO)
 		panic("siopng: scsi data uio requested");
 
 	/* XXXX ?? */
-	if (sc->sc_nexus && flags & SCSI_POLL)
+	if (sc->sc_nexus && flags & XS_CTL_POLL)
 /*		panic("siopng_scsicmd: busy");*/
 		printf("siopng_scsicmd: busy\n");
 
@@ -225,7 +225,7 @@ siopng_scsicmd(xs)
 
 	splx(s);
 
-	if (flags & SCSI_POLL || siopng_no_dma)
+	if (flags & XS_CTL_POLL || siopng_no_dma)
 		return(siopng_poll(sc, acb));
 	return(SUCCESSFULLY_QUEUED);
 }
@@ -286,7 +286,7 @@ siopng_poll(sc, acb)
 			}
 			siopng_scsidone(sc->sc_nexus, status);
 		}
-		if (xs->flags & ITSDONE)
+		if (xs->xs_status & XS_STS_DONE)
 			break;
 	}
 	splx(s);
@@ -337,7 +337,7 @@ siopng_sched(sc)
 		return;
 	}
 
-	if (acb->xs->flags & SCSI_RESET)
+	if (acb->xs->xs_control & XS_CTL_RESET)
 		siopngreset(sc);
 
 #if 0
@@ -407,7 +407,7 @@ siopng_scsidone(acb, stat)
 			xs->error = XS_BUSY;
 			break;
 #endif
-	xs->flags |= ITSDONE;
+	xs->xs_status |= XS_STS_DONE;
 
 	/*
 	 * Remove the ACB from whatever queue it's on.  We have to do a bit of
@@ -1550,7 +1550,7 @@ siopng_select(sc)
 #endif
 
 	rp = sc->sc_siopp;
-	if (acb->xs->flags & SCSI_POLL || siopng_no_dma) {
+	if (acb->xs->xs_control & XS_CTL_POLL || siopng_no_dma) {
 		sc->sc_flags |= SIOP_INTSOFF;
 		sc->sc_flags &= ~SIOP_INTDEFER;
 		if ((rp->siop_istat & 0x08) == 0) {

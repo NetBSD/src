@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.5 1998/12/31 09:44:42 mark Exp $	*/
+/*	$NetBSD: csc.c,v 1.6 1999/09/30 22:59:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -335,7 +335,7 @@ csc_scsicmd(xs)
 {
 	/* ensure command is polling for the moment */
 #if CSC_POLL > 0
-	xs->flags |= SCSI_POLL;
+	xs->xs_control |= XS_CTL_POLL;
 #endif
 	return(sfas_scsicmd(xs));
 }

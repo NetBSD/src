@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.41 1999/04/17 19:49:24 mhitch Exp $	*/
+/*	$NetBSD: idesc.c,v 1.42 1999/09/30 22:59:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -567,12 +567,12 @@ ide_scsicmd(xs)
 
 	slp = xs->sc_link;
 	dev = slp->adapter_softc;
-	flags = xs->flags;
+	flags = xs->xs_control;
 
-	if (flags & SCSI_DATA_UIO)
+	if (flags & XS_CTL_DATA_UIO)
 		panic("ide: scsi data uio requested");
 	
-	if (dev->sc_xs && flags & SCSI_POLL)
+	if (dev->sc_xs && flags & XS_CTL_POLL)
 		panic("ide_scsicmd: busy");
 
 	s = splbio();
@@ -597,7 +597,7 @@ ide_scsicmd(xs)
 	 */
 	ide_donextcmd(dev);
 
-	if (flags & SCSI_POLL)
+	if (flags & XS_CTL_POLL)
 		return(COMPLETE);
 	return(SUCCESSFULLY_QUEUED);
 }
@@ -615,9 +615,9 @@ ide_donextcmd(dev)
 
 	xs = dev->sc_xs;
 	slp = xs->sc_link;
-	flags = xs->flags;
+	flags = xs->xs_control;
 
-	if (flags & SCSI_RESET)
+	if (flags & XS_CTL_RESET)
 		idereset(dev);
 
 	dev->sc_stat[0] = -1;
@@ -626,7 +626,7 @@ ide_donextcmd(dev)
 		ide_scsidone(dev, -1);
 		return;
 	}
-	if (flags & SCSI_POLL || ide_no_int)
+	if (flags & XS_CTL_POLL || ide_no_int)
 		stat = ideicmd(dev, slp->scsipi_scsi.target, xs->cmd, xs->cmdlen, 
 		    xs->data, xs->datalen);
 	else if (idego(dev, xs) == 0)
@@ -676,7 +676,8 @@ ide_scsidone(dev, stat)
 			break;
 		}
 	}
-	xs->flags |= ITSDONE;
+
+	xs->xs_status |= XS_STS_DONE;
 
 	/*
 	 * grab next command before scsipi_done()
@@ -1448,7 +1449,7 @@ ide_atapi_icmd(dev, target, cbuf, clen, buf, len)
 #endif
 
 	dev->sc_cur = ide;
-	while ((xs->flags & ITSDONE) == 0) {
+	while ((xs->xs_status & XS_STS_DONE) == 0) {
 		ide_atapi_intr(dev);
 		for (i = 2000; i > 0; --i)
 			if ((regs->ide_status & IDES_DRQ) == 0)

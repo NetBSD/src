@@ -1,4 +1,4 @@
-/*	$NetBSD: ptsc.c,v 1.22 1998/12/05 19:43:41 mjacob Exp $	*/
+/*	$NetBSD: ptsc.c,v 1.23 1999/09/30 22:59:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -475,7 +475,7 @@ ptsc_scsicmd(xs)
 {
 	/* ensure command is polling for the moment */
 #if PTSC_POLL > 0
-	xs->flags |= SCSI_POLL;
+	xs->xs_control |= XS_CTL_POLL;
 #endif
 #if 0
 	printf("Opcode %d\n", (int)(xs->cmd->opcode));

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.9 1999/02/20 00:12:00 scw Exp $	*/
+/*	$NetBSD: sbic.c,v 1.10 1999/09/30 23:01:12 thorpej Exp $	*/
 
 /*
  * Changes Copyright (c) 1996 Steve Woodford
@@ -369,13 +369,13 @@ sbic_scsicmd(xs)
     struct scsipi_link    *slp = xs->sc_link;
     struct sbic_softc   *dev = slp->adapter_softc;
     struct sbic_acb     *acb;
-    int                 flags = xs->flags,
+    int                 flags = xs->xs_control,
                         s;
 
-    if ( flags & SCSI_DATA_UIO )
+    if ( flags & XS_CTL_DATA_UIO )
         panic("sbic: scsi data uio requested");
 
-    if ( dev->sc_nexus && (flags & SCSI_POLL) )
+    if ( dev->sc_nexus && (flags & XS_CTL_POLL) )
         panic("sbic_scsicmd: busy");
 
     if ( slp->scsipi_scsi.target == slp->scsipi_scsi.adapter_target )
@@ -401,7 +401,7 @@ sbic_scsicmd(xs)
         return(TRY_AGAIN_LATER);
     }
 
-    if ( flags & SCSI_DATA_IN )
+    if ( flags & XS_CTL_DATA_IN )
         acb->flags = ACB_ACTIVE | ACB_DATAIN;
     else
         acb->flags = ACB_ACTIVE;
@@ -413,7 +413,7 @@ sbic_scsicmd(xs)
     acb->pa_addr        = xs->data ? (char *)kvtop(xs->data) : 0;
     bcopy(xs->cmd, &acb->cmd, xs->cmdlen);
 
-    if ( flags & SCSI_POLL ) {
+    if ( flags & XS_CTL_POLL ) {
         /*
          * This has major side effects -- it locks up the machine
          */
@@ -525,16 +525,16 @@ sbic_sched(dev)
 #endif
 
     dev->sc_xs = xs = acb->xs;
-    flags      = xs->flags;
+    flags      = xs->xs_control;
 
-    if ( flags & SCSI_RESET )
+    if ( flags & XS_CTL_RESET )
         sbicreset(dev);
 
     dev->sc_stat[0] = -1;
     dev->target     = slp->scsipi_scsi.target;
     dev->lun        = slp->scsipi_scsi.lun;
 
-    if ( flags & SCSI_POLL || (!sbic_parallel_operations &&
+    if ( flags & XS_CTL_POLL || (!sbic_parallel_operations &&
                               (sbicdmaok(dev, xs) == 0)) )
         stat = sbicicmd(dev, &acb->cmd, acb->clen,
                         acb->sc_kv.dc_addr, acb->sc_kv.dc_count);
@@ -639,7 +639,7 @@ sbic_scsidone(acb, stat)
         xs->resid = 0;      /* XXXX */
     }
 
-    xs->flags |= ITSDONE;
+    xs->xs_status |= XS_STS_DONE;
 
     /*
      * Remove the ACB from whatever queue it's on.  We have to do a bit of
@@ -954,7 +954,7 @@ sbicerror(dev, csr)
         panic("sbicerror: dev->sc_xs == NULL");
 #endif
 
-    if ( xs->flags & SCSI_SILENT )
+    if ( xs->xs_control & XS_CTL_SILENT )
         return;
 
     printf("%s: csr == 0x%02x\n", dev->sc_dev.dv_xname, csr);
@@ -1109,7 +1109,7 @@ sbicselectbus(dev)
              * Nope, we've already negotiated.
              * Now see if we should allow the target to disconnect/reselect...
              */
-            if ( dev->sc_xs->flags & SCSI_POLL || dev->sc_flags & SBICF_ICMD ||
+            if ( dev->sc_xs->xs_control & XS_CTL_POLL || dev->sc_flags & SBICF_ICMD ||
                                                   !sbic_enable_reselect )
                 SEND_BYTE (regs, MSG_IDENTIFY | lun);
             else
@@ -2210,7 +2210,7 @@ sbicnextstate(dev, csr, asr)
             /*
              * Should we transfer using PIO or DMA ?
              */
-            if ( dev->sc_xs->flags & SCSI_POLL || dev->sc_flags & SBICF_ICMD ||
+            if ( dev->sc_xs->xs_control & XS_CTL_POLL || dev->sc_flags & SBICF_ICMD ||
                  acb->sc_dmacmd == 0 ) {
 
                 /*
@@ -2357,7 +2357,7 @@ sbicnextstate(dev, csr, asr)
             dev->sc_nexus = NULL;
             dev->sc_xs    = NULL;
 
-            if ( acb->xs->flags & SCSI_POLL || dev->sc_flags & SBICF_ICMD ||
+            if ( acb->xs->xs_control & XS_CTL_POLL || dev->sc_flags & SBICF_ICMD ||
                                                !sbic_parallel_operations )
                 return SBIC_STATE_DISCONNECT;
 

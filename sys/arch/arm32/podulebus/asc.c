@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.25 1998/12/05 19:43:40 mjacob Exp $	*/
+/*	$NetBSD: asc.c,v 1.26 1999/09/30 22:59:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -433,12 +433,12 @@ asc_scsicmd(xs)
 	/* ensure command is polling for the moment */
 #if ASC_POLL > 0
 	if (asc_poll)
-		xs->flags |= SCSI_POLL;
+		xs->xs_control |= XS_CTL_POLL;
 #endif
 
 /*	printf("id=%d lun=%dcmdlen=%d datalen=%d opcode=%02x flags=%08x status=%02x blk=%02x %02x\n",
 	    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun, xs->cmdlen, xs->datalen, xs->cmd->opcode,
-	    xs->flags, xs->status, xs->cmd->bytes[0], xs->cmd->bytes[1]);*/
+	    xs->xs_control, xs->status, xs->cmd->bytes[0], xs->cmd->bytes[1]);*/
 
 	return(sbic_scsicmd(xs));
 }
