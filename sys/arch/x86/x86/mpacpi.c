@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.26 2004/05/21 16:19:25 kochi Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.27 2004/05/21 16:20:36 kochi Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.26 2004/05/21 16:19:25 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.27 2004/05/21 16:20:36 kochi Exp $");
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -125,9 +125,8 @@ int mpacpi_ncpu;			/* number of cpus */
 int mpacpi_nintsrc;			/* number of non-device interrupts */
 
 #if NPCI > 0
-int mpacpi_npci;
+static int mpacpi_npci;
 static int mpacpi_maxpci;
-static int mpacpi_maxbuslevel;
 static int mpacpi_npciroots;
 static int mpacpi_npciknown;
 #endif
@@ -421,8 +420,6 @@ mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *ct, void **status)
 	mpr->mpr_level = (int)level;
 	TAILQ_INSERT_TAIL(&mpacpi_pcibusses, mpr, mpr_list);
 	mpacpi_npci++;
-	if ((int)level > mpacpi_maxbuslevel)
-		mpacpi_maxbuslevel = level;
 	return AE_OK;
 }
 
@@ -548,6 +545,9 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 	return 0;
 }
 
+/*
+ * Count number of elements in _PRT
+ */
 static int
 mpacpi_pcircount(struct mpacpi_pcibus *mpr)
 {
@@ -582,7 +582,7 @@ mpacpi_config_irouting(struct acpi_softc *acpi)
 	struct mpacpi_pcibus *mpr;
 #endif
 	int nintr, known;
-	int i, index;
+	int i;
 	struct mp_bus *mbp;
 	struct mp_intr_map *mpi;
 	struct ioapic_softc *ioapic;
@@ -626,7 +626,7 @@ mpacpi_config_irouting(struct acpi_softc *acpi)
 	mp_isa_bus = 0;
 #endif
 	mp_nbus = mp_isa_bus + 1;
-	mp_nintr = nintr + mpacpi_nintsrc + NUM_LEGACY_IRQS - 1;
+	mp_nintr = nintr;
 
 	mp_busses = malloc(sizeof(struct mp_bus) * mp_nbus, M_DEVBUF,
 	    M_NOWAIT|M_ZERO);
@@ -653,12 +653,12 @@ mpacpi_config_irouting(struct acpi_softc *acpi)
 	/*
 	 * Set up default identity mapping for ISA irqs to first ioapic.
 	 */
-	for (i = index = 0; i < NUM_LEGACY_IRQS; i++) {
+	for (i = mpacpi_intr_index = 0; i < NUM_LEGACY_IRQS; i++) {
 		if (i == 2)
 			continue;
-		mpi = &mp_intrs[index];
-		if (index < (NUM_LEGACY_IRQS - 2))
-			mpi->next = &mp_intrs[index + 1];
+		mpi = &mp_intrs[mpacpi_intr_index];
+		if (mpacpi_intr_index < (NUM_LEGACY_IRQS - 2))
+			mpi->next = &mp_intrs[mpacpi_intr_index + 1];
 		else
 			mpi->next = NULL;
 		mpi->bus = mbp;
@@ -674,10 +674,9 @@ mpacpi_config_irouting(struct acpi_softc *acpi)
 		mpi->flags = MPS_INTPO_DEF | (MPS_INTTR_DEF << 2);
 		mpi->global_int = i;
 		ioapic->sc_pins[i].ip_map = mpi;
-		index++;
+		mpacpi_intr_index++;
 	}
 
-	mpacpi_intr_index = index;
 	if (acpi_madt_map() != AE_OK)
 		panic("failed to map the MADT a second time");
 
