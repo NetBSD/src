@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.43 2003/10/30 18:13:38 mycroft Exp $	*/
+/*	$NetBSD: acpi.c,v 1.44 2003/10/30 18:15:35 mycroft Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.43 2003/10/30 18:13:38 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.44 2003/10/30 18:15:35 mycroft Exp $");
 
 #include "opt_acpi.h"
 
@@ -480,8 +480,8 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO *di)
 		printf("acpi: activated %s\n", di->HardwareId);
 	}
 
-	(void)AcpiGetObjectInfo(handle, di);
 #ifdef ACPI_DEBUG
+	(void)AcpiGetObjectInfo(handle, di);
 	printf("acpi_activate_device: %s, new status=%x\n", 
 	       di->HardwareId, di->CurrentStatus);
 #endif
