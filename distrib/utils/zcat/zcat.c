@@ -1,4 +1,4 @@
-/*	$NetBSD: zcat.c,v 1.2 1996/09/24 20:40:11 gwr Exp $	*/
+/*	$NetBSD: zcat.c,v 1.3 1998/11/12 16:49:47 thorpej Exp $	*/
 
 /* mini zcat.c -- a minimal zcat using the zlib compression library
  * Copyright (C) 1995-1996 Jean-loup Gailly.
@@ -121,4 +121,9 @@ int deflate (z_streamp strm, int flush)
 int deflateEnd (z_streamp strm)
 {
 	return(-1);
+}
+
+int deflateParams (z_streamp strm, int level, int strategy)
+{
+	return(Z_STREAM_ERROR);
 }
