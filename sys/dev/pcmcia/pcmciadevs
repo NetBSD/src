@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.21 1998/11/04 06:40:54 itohy Exp $
+$NetBSD: pcmciadevs,v 1.22 1998/12/18 21:12:14 thorpej Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@ vendor LINKSYS			0x0149	Linksys Corporation
 vendor SIMPLETECH		0x014d	Simple Technology
 vendor DAYNA			0x0194	Dayna Corporation
 vendor IODATA			0x01bf	I-O DATA
+vendor COREGA			0xc00f	Corega K.K.
 vendor HAGIWARASYSCOM		0xc012	Hagiwara SYS-COM
 
 /*
@@ -145,3 +146,4 @@ product YEDATA EXTERNAL_FDD	{ "Y-E&spDATA", "External&spFDD", NULL, NULL } Y-E D
 product DIGITAL DEPCMXX		{ "DIGITAL", "DEPCM-XX", NULL, NULL } DEC DEPCM-BA
 product TEAC IDECARDII		{ NULL, "NinjaATA-", NULL, NULL } TEAC IDE Card/II
 product LINKSYS ECARD_2	{ "LINKSYS", "E-CARD", NULL, NULL } Linksys E-Card
+product COREGA PCC_2	{ "corega&spK.K.", "corega&spEther&spPCC-T", NULL, NULL } Corega
