@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.51 2002/05/03 10:31:14 agc Exp $ */
+/* $NetBSD: user.c,v 1.52 2002/06/01 06:28:06 grant Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.51 2002/05/03 10:31:14 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.52 2002/06/01 06:28:06 grant Exp $");
 #endif
 
 #include <sys/types.h>
@@ -80,7 +80,7 @@ typedef struct user_t {
 	char		*u_shell;		/* user's shell */
 	char		*u_basedir;		/* base directory for home */
 	char		*u_expire;		/* when password will expire */
-	int		u_inactive;		/* inactive */
+	char		*u_inactive;		/* when account will expire */
 	char		*u_skeldir;		/* directory for startup files */
 	char		*u_class;		/* login class */
 	unsigned	u_rsize;		/* size of range array */
@@ -180,6 +180,7 @@ enum {
 #define PAX		"/bin/pax"
 #define RM		"/bin/rm"
 
+#define UNSET_INACTIVE	"Null (unset)"
 #define UNSET_EXPIRY	"Null (unset)"
 
 static int asystem(const char *fmt, ...)
@@ -416,7 +417,7 @@ creategid(char *group, int gid, char *name)
 		return 0;
 	}
 	if ((from = fopen(_PATH_GROUP, "r")) == NULL) {
-		warn("can't create gid for %s: can't open %s", name, _PATH_GROUP);
+		warn("can't create gid for `%s': can't open `%s'", name, _PATH_GROUP);
 		return 0;
 	}
 	if (flock(fileno(from), LOCK_EX | LOCK_NB) < 0) {
@@ -473,7 +474,7 @@ modify_gid(char *group, char *newent)
 	int		cc;
 
 	if ((from = fopen(_PATH_GROUP, "r")) == NULL) {
-		warn("can't create gid for %s: can't open %s", group, _PATH_GROUP);
+		warn("can't create gid for `%s': can't open `%s'", group, _PATH_GROUP);
 		return 0;
 	}
 	if (flock(fileno(from), LOCK_EX | LOCK_NB) < 0) {
@@ -560,7 +561,7 @@ append_group(char *user, int ngroups, char **groups)
 		}
 	}
 	if ((from = fopen(_PATH_GROUP, "r")) == NULL) {
-		warn("can't append group for %s: can't open %s", user, _PATH_GROUP);
+		warn("can't append group for `%s': can't open `%s'", user, _PATH_GROUP);
 		return 0;
 	}
 	if (flock(fileno(from), LOCK_EX | LOCK_NB) < 0) {
@@ -725,7 +726,7 @@ setdefaults(user_t *up)
 #ifdef EXTENSIONS
 	    fprintf(fp, "class\t\t%s\n", up->u_class) <= 0 ||
 #endif
-	    fprintf(fp, "inactive\t%d\n", up->u_inactive) <= 0 ||
+	    fprintf(fp, "inactive\t%s\n", (up->u_inactive == NULL) ?  UNSET_INACTIVE : up->u_inactive) <= 0 ||
 	    fprintf(fp, "expire\t\t%s\n", (up->u_expire == NULL) ?  UNSET_EXPIRY : up->u_expire) <= 0 ||
 	    fprintf(fp, "preserve\t%s\n", (up->u_preserve == 0) ? "false" : "true") <= 0) {
 		warn("can't write to `%s'", CONFFILE);
@@ -803,7 +804,14 @@ read_defaults(user_t *up)
 			} else if (strncmp(s, "inactive", 8) == 0) {
 				for (cp = s + 8 ; *cp && isspace(*cp) ; cp++) {
 				}
-				up->u_inactive = atoi(cp);
+				if (strcmp(cp, UNSET_INACTIVE) == 0) {
+					if (up->u_inactive) {
+						FREE(up->u_inactive);
+					}
+					up->u_inactive = NULL;
+				} else {
+					memsave(&up->u_inactive, cp, strlen(cp));
+				}
 #ifdef EXTENSIONS
 			} else if (strncmp(s, "range", 5) == 0) {
 				for (cp = s + 5 ; *cp && isspace(*cp) ; cp++) {
@@ -868,6 +876,7 @@ adduser(char *login, user_t *up)
 	struct stat	st;
 	struct tm	tm;
 	time_t		expire;
+	time_t		inactive;
 	char		password[PasswordLength + 1];
 	char		home[MaxFileNameLen];
 	char		buf[MaxFileNameLen];
@@ -964,13 +973,32 @@ adduser(char *login, user_t *up)
 		/* if home directory hasn't been given, make it up */
 		(void) snprintf(home, sizeof(home), "%s/%s", up->u_basedir, login);
 	}
+	inactive = 0;
+	if (up->u_inactive != NULL) {
+		(void) memset(&tm, 0, sizeof(tm));
+		if (strptime(up->u_inactive, "%c", &tm) != NULL) {
+			inactive = mktime(&tm);
+		} else if (strptime(up->u_inactive, "%B %d %Y", &tm) != NULL) {
+			inactive = mktime(&tm);
+		} else if (isdigit(up->u_inactive[0]) != NULL) {
+			inactive = atoi(up->u_inactive);
+		} else {
+			warnx("Warning: inactive time `%s' invalid, account expiry off",
+				up->u_inactive);
+		}
+	}
 	expire = 0;
 	if (up->u_expire != NULL) {
 		(void) memset(&tm, 0, sizeof(tm));
-		if (strptime(up->u_expire, "%c", &tm) == NULL) {
-			warnx("invalid time format `%s'", optarg);
-		} else {
+		if (strptime(up->u_expire, "%c", &tm) != NULL) {
 			expire = mktime(&tm);
+		} else if (strptime(up->u_expire, "%B %d %Y", &tm) != NULL) {
+			expire = mktime(&tm);
+		} else if (isdigit(up->u_expire[0]) != NULL) {
+			expire = atoi(up->u_expire);
+		} else {
+			warnx("Warning: expire time `%s' invalid, password expiry off",
+				up->u_expire);
 		}
 	}
 	if (lstat(home, &st) < 0 && !(up->u_flags & F_MKDIR)) {
@@ -988,7 +1016,7 @@ adduser(char *login, user_t *up)
 				up->u_password, password);
 		}
 	}
-	cc = snprintf(buf, sizeof(buf), "%s:%s:%d:%d:%s:%d:%ld:%s:%s:%s\n",
+	cc = snprintf(buf, sizeof(buf), "%s:%s:%d:%d:%s:%ld:%ld:%s:%s:%s\n",
 			login,
 			password,
 			up->u_uid,
@@ -998,7 +1026,7 @@ adduser(char *login, user_t *up)
 #else
 			"",
 #endif
-			up->u_inactive,
+			(long) inactive,
 			(long) expire,
 			up->u_comment,
 			home,
@@ -1142,14 +1170,31 @@ moduser(char *login, char *newlogin, user_t *up)
 				errx(EXIT_FAILURE, "group %s not found", up->u_primgrp);
 			}
 		}
-		if (up->u_flags |= F_INACTIVE)
-			pwp->pw_change = up->u_inactive;
+		if (up->u_flags & F_INACTIVE) {
+			(void) memset(&tm, 0, sizeof(tm));
+			if (strptime(up->u_inactive, "%c", &tm) != NULL) {
+				pwp->pw_change = mktime(&tm);
+			} else if (strptime(up->u_inactive, "%B %d %Y", &tm) != NULL) { 
+				pwp->pw_change = mktime(&tm);
+			} else if (isdigit(up->u_inactive[0]) != NULL) {
+				pwp->pw_change = atoi(up->u_inactive);
+			} else {
+				warnx("Warning: inactive time `%s' invalid, password expiry off",
+					up->u_inactive);
+			}
+		}
 		if (up->u_flags & F_EXPIRE) {
 			(void) memset(&tm, 0, sizeof(tm));
-			if (strptime(up->u_expire, "%c", &tm) == NULL)
-				warnx("invalid time format `%s'", optarg);
-			else
+			if (strptime(up->u_expire, "%c", &tm) != NULL) {
 				pwp->pw_expire = mktime(&tm);
+			} else if (strptime(up->u_expire, "%B %d %Y", &tm) != NULL) { 
+				pwp->pw_expire = mktime(&tm);
+			} else if (isdigit(up->u_expire[0]) != NULL) {
+				pwp->pw_expire = atoi(up->u_expire);
+			} else {
+				warnx("Warning: expire time `%s' invalid, password expiry off",
+					up->u_expire);
+			}
 		}
 		if (up->u_flags & F_COMMENT)
 			pwp->pw_gecos = up->u_comment;
@@ -1372,7 +1417,7 @@ useradd(int argc, char **argv)
 			break;
 		case 'f':
 			defaultfield = 1;
-			u.u_inactive = atoi(optarg);
+			memsave(&u.u_inactive, optarg, strlen(optarg));
 			break;
 		case 'g':
 			defaultfield = 1;
@@ -1434,7 +1479,7 @@ useradd(int argc, char **argv)
 #ifdef EXTENSIONS
 		(void) printf("class\t\t%s\n", u.u_class);
 #endif
-		(void) printf("inactive\t%d\n", u.u_inactive);
+		(void) printf("inactive\t%s\n", (u.u_inactive == NULL) ? UNSET_INACTIVE : u.u_inactive);
 		(void) printf("expire\t\t%s\n", (u.u_expire == NULL) ? UNSET_EXPIRY : u.u_expire);
 #ifdef EXTENSIONS
 		for (i = 0 ; i < u.u_rc ; i++) {
@@ -1496,7 +1541,7 @@ usermod(int argc, char **argv)
 			u.u_flags |= F_EXPIRE;
 			break;
 		case 'f':
-			u.u_inactive = atoi(optarg);
+			memsave(&u.u_inactive, optarg, strlen(optarg));
 			u.u_flags |= F_INACTIVE;
 			break;
 		case 'g':
