@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.1 2001/11/16 23:57:25 thorpej Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.2 2001/11/18 03:20:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -48,6 +48,13 @@
  *	int _swapcontext_u(ucontext_t *from_ctx, const ucontext_t *to_ctx)
  *		First, store the current context into from_ctx and then
  *		restore the current context from the to_ctx.
+ */
+
+/*
+ * XXX XXX XXX
+ * XXX Hardware FP context?
+ * XXX Software FP context?
+ * XXX XXX XXX
  */
 
 /*
