@@ -1,4 +1,4 @@
-/*	$NetBSD: print-pflog.c,v 1.1.1.1 2002/05/31 09:28:49 itojun Exp $	*/
+/*	$NetBSD: print-pflog.c,v 1.2 2002/06/15 01:33:44 matt Exp $	*/
 
 /*	$OpenBSD: print-pflog.c,v 1.9 2001/09/18 14:52:53 jakob Exp $	*/
 
@@ -24,8 +24,10 @@
  */
 
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-pflog.c,v 1.2 2002/02/06 11:05:35 guy Exp (LBL)";
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H
