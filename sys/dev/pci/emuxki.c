@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.22 2003/03/16 16:33:48 toshii Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.23 2003/03/17 12:20:27 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.22 2003/03/16 16:33:48 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.23 2003/03/17 12:20:27 toshii Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1422,8 +1422,8 @@ emuxki_voice_set_audioparms(struct emuxki_voice *voice, u_int8_t stereo,
 	 }
 	voice->b16 = b16;
 	if (voice->sample_rate != srate)
-		emuxki_voice_set_srate(voice, srate);
-	return (0);
+		error = emuxki_voice_set_srate(voice, srate);
+	return error;
 }
 
 /* voice audio parms (see just before) must be set prior to this */
