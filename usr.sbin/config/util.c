@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.10 1999/07/09 18:46:09 thorpej Exp $	*/
+/*	$NetBSD: util.c,v 1.11 2000/01/20 00:08:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -124,7 +124,7 @@ prefix_push(path)
 
 	pf = emalloc(sizeof(struct prefix));
 
-	if (prefixes != NULL) {
+	if (prefixes != NULL && *path != '/') {
 		cp = emalloc(strlen(prefixes->pf_prefix) + 1 +
 		    strlen(path) + 1);
 		(void) sprintf(cp, "%s/%s", prefixes->pf_prefix, path);
@@ -167,16 +167,23 @@ sourcepath(file)
 	size_t len;
 	char *cp;
 
-	len = strlen(srcdir) + 1 + strlen(file) + 1;
-	if (prefixes != NULL)
-		len += strlen(prefixes->pf_prefix) + 1;
+	if (prefixes != NULL && *prefixes->pf_prefix == '/')
+		len = strlen(prefixes->pf_prefix) + 1 + strlen(file) + 1;
+	else {
+		len = strlen(srcdir) + 1 + strlen(file) + 1;
+		if (prefixes != NULL)
+			len += strlen(prefixes->pf_prefix) + 1;
+	}
 
 	cp = emalloc(len);
 
-	if (prefixes != NULL)
-		(void) sprintf(cp, "%s/%s/%s", srcdir,
-		    prefixes->pf_prefix, file);
-	else
+	if (prefixes != NULL) {
+		if (*prefixes->pf_prefix == '/')
+			(void) sprintf(cp, "%s/%s", prefixes->pf_prefix, file);
+		else
+			(void) sprintf(cp, "%s/%s/%s", srcdir,
+			    prefixes->pf_prefix, file);
+	} else
 		(void) sprintf(cp, "%s/%s", srcdir, file);
 	return (cp);
 }
