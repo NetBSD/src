@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 1998/09/05 01:23:04 mark Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50 1998/09/13 08:19:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -749,59 +749,48 @@ zero_page_readwrite()
 /*
  * Send an interrupt to process.
  *
- * Stack is set up to allow sigcode stored in u. to call routine, followed by kcall
- * to sigreturn routine below.  After sigreturn resets the signal mask, the stack, and the
+ * Stack is set up to allow sigcode stored
+ * in u. to call routine, followed by kcall
+ * to sigreturn routine below.  After sigreturn
+ * resets the signal mask, the stack, and the
  * frame pointer, it returns to the user specified pc.
  */
-
 void
 sendsig(catcher, sig, mask, code)
 	sig_t catcher;
 	int sig;
-	int mask;
+	sigset_t *mask;
 	u_long code;
 {
 	struct proc *p = curproc;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
-	int oonstack;
+	int onstack;
 	extern char sigcode[], esigcode[];
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("Sendsig: sig=%d mask=%08x catcher=%p code=%08lx\n",
-		    sig, mask, catcher, code);
-#endif
-
 	tf = p->p_md.md_regs;
-	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
 
-	/*
-	 * Allocate space for the signal handler context.
-	 */
-	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
+	/* Do we need to jump onto the signal stack? */
+	onstack =
+	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+
+	/* Allocate space for the signal handler context. */
+	if (onstack)
 		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
-		    psp->ps_sigstk.ss_size - sizeof(struct sigframe));
-		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
-	} else {
-		fp = (struct sigframe *)tf->tf_usr_sp - 1;
-	}
+						  psp->ps_sigstk.ss_size);
+	else
+		fp = (struct sigframe *)tf->tf_usr_sp;
+	fp--;
 
-	/* 
-	 * Build the argument list for the signal handler.
-	 */
+	/* Build stack frame for signal trampoline. */
 	frame.sf_signum = sig;
 	frame.sf_code = code;
 	frame.sf_scp = &fp->sf_sc;
 	frame.sf_handler = catcher;
 
-	/*
-	 * Build the signal context to be used by sigreturn.
-	 */
-	frame.sf_sc.sc_onstack = oonstack;
-	frame.sf_sc.sc_mask   = mask;
+	/* Save register context. */
 	frame.sf_sc.sc_r0     = tf->tf_r0;
 	frame.sf_sc.sc_r1     = tf->tf_r1;
 	frame.sf_sc.sc_r2     = tf->tf_r2;
@@ -820,6 +809,22 @@ sendsig(catcher, sig, mask, code)
 	frame.sf_sc.sc_svc_lr = tf->tf_svc_lr;
 	frame.sf_sc.sc_pc     = tf->tf_pc;
 	frame.sf_sc.sc_spsr   = tf->tf_spsr;
+
+	/* Save signal stack. */
+	frame.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+
+	/* Save signal mask. */
+	frame.sf_sc.sc_mask = *mask;
+
+#ifdef COMPAT_13
+	/*
+	 * XXX We always have to save an old style signal mask because
+	 * XXX we might be delivering a signal to a process which will
+	 * XXX escape from the signal in a non-standard way and invoke
+	 * XXX sigreturn() directly.
+	 */
+	native_sigset_to_sigset13(mask, &frame.sf_sc.__sc_mask13);
+#endif
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
@@ -841,11 +846,6 @@ sendsig(catcher, sig, mask, code)
 	tf->tf_pc = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
 
 	cpu_cache_syncI();
-
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("Sendsig: sig=%d pc=%08x\n", sig, tf->tf_pc);
-#endif
 }
 
 
@@ -859,25 +859,17 @@ sendsig(catcher, sig, mask, code)
  * psr to gain improper privileges or to cause
  * a machine fault.
  */
-
 int
-sys_sigreturn(p, v, retval)
+sys___sigreturn14(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sys_sigreturn_args /* {
+	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext *scp, context;
 	struct trapframe *tf;
-
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("sigreturn: context=%p\n", SCARG(uap, sigcntxp));
-#endif
-
-	tf = p->p_md.md_regs;
 
 	/*
 	 * The trampoline code hands us the context.
@@ -885,27 +877,15 @@ sys_sigreturn(p, v, retval)
 	 * program jumps out of a signal handler.
 	 */
 	scp = SCARG(uap, sigcntxp);
-
 	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
 		return (EFAULT);
 
-	/*
-	 * Check for security violations.
-	 */
-
-	/* Make sure the processor mode has not been tampered with */
+	/* Make sure the processor mode has not been tampered with. */
 	if ((context.sc_spsr & PSR_MODE) != PSR_USR32_MODE)
-		return(EINVAL);
+		return (EINVAL);
 
-	if (context.sc_onstack & 01)
-		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
-	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
-	p->p_sigmask = context.sc_mask & ~sigcantmask;
-
-	/*
-	 * Restore signal context.
-	 */
+	/* Restore register context. */
+	tf = p->p_md.md_regs;
 	tf->tf_r0    = context.sc_r0;
 	tf->tf_r1    = context.sc_r1;
 	tf->tf_r2    = context.sc_r2;
@@ -924,6 +904,15 @@ sys_sigreturn(p, v, retval)
 	tf->tf_svc_lr = context.sc_svc_lr;
 	tf->tf_pc    = context.sc_pc;
 	tf->tf_spsr  = context.sc_spsr;
+
+	/* Restore signal stack. */
+	if (context.sc_onstack & SS_ONSTACK)
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+
+	/* Restore signal mask. */
+	(void) sigprocmask1(p, SIG_SETMASK, &context.sc_mask, 0);
 
 	return (EJUSTRETURN);
 }

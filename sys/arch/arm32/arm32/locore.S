@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.28 1998/06/24 19:31:16 mark Exp $	*/
+/*	$NetBSD: locore.S,v 1.29 1998/09/13 08:19:49 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -389,7 +389,7 @@ ENTRY_NP(sigcode)
  * Note: Don't use SIG_SCP as this make have been trashed by the program
  */
 	add	r0, sp, #SIGF_SC
-	swi	SYS_sigreturn
+	swi	SYS___sigreturn14
 
 /* Well if that failed we better exit quick ! */
 
