@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.15 1997/07/05 05:38:17 darrenr Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.16 1997/07/06 05:13:40 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993-1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * $Id: ip_fil.h,v 1.15 1997/07/05 05:38:17 darrenr Exp $
+ * $Id: ip_fil.h,v 1.16 1997/07/06 05:13:40 thorpej Exp $
  */
 
 #ifndef	__IP_FIL_H__
@@ -22,6 +22,7 @@
 #define	IPNAT_NAME	"/dev/ipnat"
 #define	IPSTATE_NAME	"/dev/ipstate"
 
+#ifndef SOLARIS
 #define	SOLARIS	(defined(sun) && (defined(__svr4__) || defined(__SVR4)))
 #endif
 
@@ -352,10 +353,12 @@ extern	int	iplioctl __P((dev_t, int, caddr_t, int));
 extern	int	iplopen __P((dev_t, int));
 extern	int	iplclose __P((dev_t, int));
 #else /* #ifndef _KERNEL */
-# if defined(__NetBSD__) && defined(PFIL_HOOKS)
-extern	int	ipfilterattach __P((int));
+/* Pesudo-device attach routine; no-op, really. */
+# if defined(__NetBSD__)
+extern	void	ipfilterattach __P((int));
+# else
+extern	void	iplattach __P((void));
 # endif
-extern	int	iplattach __P((void));
 extern	int	ipl_enable __P((void));
 extern	int	ipl_disable __P((void));
 # if	SOLARIS
