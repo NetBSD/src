@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.55 2000/07/22 14:59:23 jdolecek Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.56 2000/09/09 16:42:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -164,7 +164,8 @@ struct ctlname {
 #define	KERN_SYSVIPC_INFO	52	/* number of valid kern ids */
 #define	KERN_MSGBUF		53	/* kernel message buffer */
 #define	KERN_CONSDEV		54	/* dev_t: console terminal device */
-#define	KERN_MAXID		55	/* number of valid kern ids */
+#define	KERN_MAXPTYS		55	/* int: maximum number of ptys */
+#define	KERN_MAXID		56	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -222,6 +223,7 @@ struct ctlname {
 	{ "sysvipc_info", CTLTYPE_STRUCT }, \
 	{ "msgbuf", CTLTYPE_STRUCT }, \
 	{ "consdev", CTLTYPE_STRUCT }, \
+	{ "maxptys", CTLTYPE_INT }, \
 }
 
 /*
