@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.6 1997/10/03 15:53:08 christos Exp $	*/
+/*	$NetBSD: inet.c,v 1.7 2000/01/13 17:14:56 itojun Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996, 1997
@@ -39,7 +39,7 @@
 static const char rcsid[] =
     "@(#) Header: inet.c,v 1.21 97/07/17 14:24:58 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: inet.c,v 1.6 1997/10/03 15:53:08 christos Exp $");
+__RCSID("$NetBSD: inet.c,v 1.7 2000/01/13 17:14:56 itojun Exp $");
 #endif
 #endif
 
@@ -197,8 +197,14 @@ pcap_lookupnet(device, netp, maskp, errbuf)
 #endif
 	(void)strncpy(ifr.ifr_name, device, sizeof(ifr.ifr_name));
 	if (ioctl(fd, SIOCGIFADDR, (char *)&ifr) < 0) {
-		(void)snprintf(errbuf, PCAP_ERRBUF_SIZE, "SIOCGIFADDR: %s: %s",
-		    device, pcap_strerror(errno));
+		if (errno == EADDRNOTAVAIL) {
+			(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,
+			    "%s: no IPv4 address assigned", device);
+		} else {
+			(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,
+			    "SIOCGIFADDR: %s: %s",
+			    device, pcap_strerror(errno));
+		}
 		(void)close(fd);
 		return (-1);
 	}
