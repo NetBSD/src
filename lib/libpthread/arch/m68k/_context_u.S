@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.3 2001/11/19 21:46:04 scw Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.4 2001/11/20 23:49:58 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ ENTRY_NOPROFILE(_getcontext_u)
 	movl	%sp@,%a0
 	GETC
 	moveql	#0,%d0
-	rts
+	jmp	%a1@
 
 /*
  * int _setcontext_u(const ucontext_t *ctx)
