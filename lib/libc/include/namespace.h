@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.55 2000/07/05 11:44:02 ad Exp $	*/
+/*	$NetBSD: namespace.h,v 1.56 2000/07/05 12:03:50 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,13 +68,6 @@
 #define MD5Final		_MD5Final
 #define MD5Init			_MD5Init
 #define MD5Update		_MD5Update
-#define SHA1Data		_SHA1Data
-#define SHA1End			_SHA1End
-#define SHA1File		_SHA1File
-#define SHA1Final		_SHA1Final
-#define SHA1Init		_SHA1Init
-#define SHA1Transform		_SHA1Transform
-#define SHA1Update		_SHA1Update
 #define RMD160Data		_RMD160Data
 #define RMD160End		_RMD160End
 #define RMD160File		_RMD160File
@@ -82,6 +75,13 @@
 #define RMD160Init		_RMD160Init
 #define RMD160Transform		_RMD160Transform
 #define RMD160Update		_RMD160Update
+#define SHA1Data		_SHA1Data
+#define SHA1End			_SHA1End
+#define SHA1File		_SHA1File
+#define SHA1Final		_SHA1Final
+#define SHA1Init		_SHA1Init
+#define SHA1Transform		_SHA1Transform
+#define SHA1Update		_SHA1Update
 #define a64l			_a64l
 #define alarm			_alarm
 #define alphasort		_alphasort
