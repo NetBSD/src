@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.1 2001/11/24 02:09:11 thorpej Exp $
+# $NetBSD: ad.arm,v 1.2 2001/11/25 16:28:52 thorpej Exp $
 ./usr/include/arm			comp-c-include
 ./usr/include/arm/ansi.h		comp-c-include
 ./usr/include/arm/aout_machdep.h	comp-c-include
@@ -20,7 +20,6 @@
 ./usr/include/arm/bus.h			comp-c-include
 ./usr/include/arm/cdefs.h		comp-c-include
 ./usr/include/arm/disklabel.h		comp-c-include
-./usr/include/arm/disklabel_acorn.h	comp-c-include
 ./usr/include/arm/elf_machdep.h		comp-c-include
 ./usr/include/arm/endian.h		comp-c-include
 ./usr/include/arm/endian_machdep.h	comp-c-include

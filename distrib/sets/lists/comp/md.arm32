@@ -1,4 +1,4 @@
-# $NetBSD: md.arm32,v 1.53 2001/11/24 02:09:11 thorpej Exp $
+# $NetBSD: md.arm32,v 1.54 2001/11/25 16:28:52 thorpej Exp $
 ./usr/include/arm32			comp-c-include
 ./usr/include/arm32/_G_config.h		comp-c-include
 ./usr/include/arm32/ansi.h		comp-c-include
@@ -13,7 +13,6 @@
 ./usr/include/arm32/db_machdep.h	comp-c-include
 ./usr/include/arm32/devmap.h		comp-c-include
 ./usr/include/arm32/disklabel.h		comp-c-include
-./usr/include/arm32/disklabel_acorn.h	comp-c-include
 ./usr/include/arm32/elf_machdep.h	comp-c-include
 ./usr/include/arm32/endian.h		comp-c-include
 ./usr/include/arm32/endian_machdep.h	comp-c-include
