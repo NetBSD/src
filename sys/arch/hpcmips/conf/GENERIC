@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.151 2004/06/26 07:32:06 abs Exp $
+# $NetBSD: GENERIC,v 1.152 2004/07/01 17:45:12 uch Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.151 $"
+#ident 		"GENERIC-$Revision: 1.152 $"
 
 maxusers	16
 
@@ -401,8 +401,8 @@ txcsbus1	at tx39biu? platform SHARP_TELIOS
 
 # IO module manager (virtual bridge) DO NOT DELETE
 txioman* at txsim?
-# iochip 0 TX39 internal IO
-#	 1 TX39 internal MFIO
+# iochip 0 TX39 internal MFIO
+#	 1 TX39 internal IO
 #	 2 BETTY IO
 #	(3) ITE IO notyet
 #	(4) Plum2 IO (EXTPW[0:2]) notyet
