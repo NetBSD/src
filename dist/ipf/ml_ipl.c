@@ -1,11 +1,9 @@
-/*	$NetBSD: ml_ipl.c,v 1.2 2000/05/03 11:40:17 veego Exp $	*/
+/*	$NetBSD: ml_ipl.c,v 1.2.4.1 2002/02/09 16:55:33 he Exp $	*/
 
 /*
- * Copyright (C) 1993-2000 by Darren Reed.
+ * Copyright (C) 1993-2001 by Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.  The author accepts no
+ * See the IPFILTER.LICENCE file for details on licencing.
  * responsibility and is not changed in any way.
  *
  * I hate legaleese, don't you ?

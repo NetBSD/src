@@ -1,11 +1,9 @@
-/*	$NetBSD: ipft_hx.c,v 1.2 2000/05/03 11:40:16 veego Exp $	*/
+/*	$NetBSD: ipft_hx.c,v 1.2.4.1 2002/02/09 16:55:32 he Exp $	*/
 
 /*
- * Copyright (C) 1995-2000 by Darren Reed.
+ * Copyright (C) 1995-2001 by Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  */
 #include <stdio.h>
 #include <ctype.h>
@@ -44,7 +42,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_hx.c	1.1 3/9/96 (C) 1996 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipft_hx.c,v 2.2 2000/03/13 22:10:24 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipft_hx.c,v 2.2.2.4 2001/12/08 15:44:50 darrenr Exp";
 #endif
 
 extern	int	opts;
@@ -95,6 +93,14 @@ int	cnt, *dir;
 	char	line[513];
 	ip_t	*ip;
 
+	/*
+	 * interpret start of line as possibly "[ifname]" or
+	 * "[in/out,ifname]".
+	 */
+	if (ifn)
+		*ifn = NULL;
+	if (dir)
+		*dir = 0;
  	ip = (ip_t *)buf;
 	while (fgets(line, sizeof(line)-1, tfp)) {
 		if ((s = index(line, '\n'))) {
@@ -111,21 +117,14 @@ int	cnt, *dir;
 			fflush(stdout);
 		}
 
-		/*
-		 * interpret start of line as possibly "[ifname]" or
-		 * "[in/out,ifname]".
-		 */
-		if (ifn)
-			*ifn = NULL;
-		if (dir)
-			*dir = 0;
-		if ((*buf == '[') && (s = index(line, ']'))) {
-			t = buf + 1;
-			if (t - s > 0) {
+		if ((*line == '[') && (s = index(line, ']'))) {
+			t = line + 1;
+			if (s - t > 0) {
+				*s++ = '\0';
 				if ((u = index(t, ',')) && (u < s)) {
 					u++;
 					if (ifn)
-						*ifn = u;
+						*ifn = strdup(u);
 					if (dir) {
 						if (*t == 'i')
 							*dir = 0;
@@ -134,7 +133,6 @@ int	cnt, *dir;
 					}
 				} else if (ifn)
 					*ifn = t;
-				*s++ = '\0';
 			}
 		} else
 			s = line;
