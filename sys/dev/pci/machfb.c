@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.2 2002/10/24 20:41:59 martin Exp $	*/
+/*	$NetBSD: machfb.c,v 1.3 2002/10/25 18:03:03 martin Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -40,6 +40,10 @@
 #include <sys/malloc.h>
 #include <sys/callout.h>
 
+#ifdef __sparc__
+#include <machine/openfirm.h>
+#endif
+
 #include <dev/ic/videomode.h>
 
 #include <dev/pci/pcivar.h>
@@ -54,8 +58,13 @@
 #include <dev/rasops/rasops.h>
 
 #define MACH64_REG_SIZE		1024
+#define MACH64_REG_OFF		0x7ffc00
 
 #define	NBARS		3	/* number of Mach64 PCI BARs */
+
+#ifdef __sparc__
+int sparc_screen_is_console(struct pci_attach_args *);
+#endif
 
 struct vga_bar {
 	bus_addr_t vb_base;
@@ -81,13 +90,11 @@ struct mach64_softc {
 #define sc_regbase	sc_bars[2].vb_base
 #define sc_regsize	sc_bars[2].vb_size
 
-	bus_space_handle_t sc_regh;
+	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_memh;
 
 	u_long aperbase;
 	size_t apersize;
-	u_long regbase;
-	size_t regsize;
 	size_t memsize;
 	int memtype;
 
@@ -229,7 +236,7 @@ void	mach64_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(machfb, sizeof(struct mach64_softc), mach64_match, mach64_attach,
     NULL, NULL);
 
-void	mach64_init(struct mach64_softc *, bus_space_tag_t);
+void	mach64_init(struct mach64_softc *);
 int	mach64_get_memsize(struct mach64_softc *);
 int	mach64_get_max_ramdac(struct mach64_softc *);
 void	mach64_get_mode(struct mach64_softc *, struct videomode *);
@@ -376,28 +383,28 @@ static inline u_int32_t
 regr(struct mach64_softc *sc, u_int32_t index)
 {
 
-	return (*(u_int32_t *)(sc->regbase + index));
+	return bus_space_read_4(sc->sc_memt, sc->sc_memh, MACH64_REG_OFF + index);
 }
 
 static inline u_int8_t
 regrb(struct mach64_softc *sc, u_int32_t index)
 {
 	
-	return (*(u_int8_t *)(sc->regbase + index));
+	return bus_space_read_1(sc->sc_memt, sc->sc_memh, MACH64_REG_OFF + index);
 }
 
 static inline void
 regw(struct mach64_softc *sc, u_int32_t index, u_int32_t data)
 {
 
-	*(u_int32_t *)(sc->regbase + index) = data;
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, MACH64_REG_OFF + index, data);
 }
 
 static inline void
 regwb(struct mach64_softc *sc, u_int32_t index, u_int8_t data)
 {
 
-	*(u_int8_t *)(sc->regbase + index) = data;
+	bus_space_write_1(sc->sc_memt, sc->sc_memh, MACH64_REG_OFF + index, data);
 }
 
 static inline void
@@ -471,14 +478,12 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_bars[bar].vb_type, &sc->sc_bars[bar].vb_base,
 		    &sc->sc_bars[bar].vb_size, &sc->sc_bars[bar].vb_flags);
 	}
+	sc->sc_memt = pa->pa_memt;
 
-	mach64_init(sc, pa->pa_memt);
+	mach64_init(sc);
 
-	sc->aperbase = (vaddr_t)bus_space_vaddr(pa->pa_memt, sc->sc_memh);
+	sc->aperbase = (vaddr_t)bus_space_vaddr(sc->sc_memt, sc->sc_memh);
 	sc->apersize = sc->sc_apersize;
-
-	sc->regbase = sc->aperbase + 0x7ffc00;
-	sc->regsize = MACH64_REG_SIZE;
 
 #if _BYTE_ORDER == _BIG_ENDIAN
 	sc->aperbase += 0x800000;
@@ -487,8 +492,8 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("%s: %d MB aperture at 0x%08x, %d KB registers at 0x%08x\n",
 	    sc->sc_dev.dv_xname, (u_int)(sc->apersize / (1024 * 1024)),
-	    (u_int)sc->aperbase, (u_int)(sc->regsize / 1024), 
-	    (u_int)sc->regbase);
+	    (u_int)sc->aperbase, (u_int)(MACH64_REG_SIZE / 1024), 
+	    (u_int)MACH64_REG_OFF);
 
 	if (mach64_chip_id == PCI_PRODUCT_ATI_MACH64_CT ||
 	    ((mach64_chip_id == PCI_PRODUCT_ATI_MACH64_VT || 
@@ -577,10 +582,16 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 
 	mach64_rasops_info.ri_ops.allocattr(&mach64_rasops_info, 0, 0, 0,
 	    &defattr);
-	wsdisplay_cnattach(&mach64_defaultscreen, &mach64_rasops_info, 
-	    0, 0, defattr);
 
+#ifdef __sparc__
+	console = sparc_screen_is_console(pa);
+#else
 	console = 1;
+#endif
+
+	if (console)
+		wsdisplay_cnattach(&mach64_defaultscreen, &mach64_rasops_info, 
+		    0, 0, defattr);
 	
 	aa.console = console;
 	aa.scrdata = &mach64_screenlist;
@@ -629,10 +640,9 @@ mach64_init_screen(struct mach64_softc *sc, struct mach64screen *scr,
 }
 
 void
-mach64_init(struct mach64_softc *sc, bus_space_tag_t memt)
+mach64_init(struct mach64_softc *sc)
 {
-
-	if (bus_space_map(memt, sc->sc_aperbase, sc->sc_apersize,
+	if (bus_space_map(sc->sc_memt, sc->sc_aperbase, sc->sc_apersize,
 		BUS_SPACE_MAP_LINEAR, &sc->sc_memh)) {
 		panic("%s: failed to map aperture", sc->sc_dev.dv_xname);
 	}
@@ -1267,3 +1277,17 @@ mach64_load_font(void *v, void *cookie, struct wsdisplay_font *data)
 
 	return 0;
 }
+
+#ifdef __sparc__
+int
+sparc_screen_is_console(struct pci_attach_args *pa)
+{
+	int node;
+
+	node = PCITAG_NODE(pa->pa_tag);
+	if (node == -1)
+		return 0;
+
+	return (node == OF_instance_to_package(OF_stdout()));
+}
+#endif
