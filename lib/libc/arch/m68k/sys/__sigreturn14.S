@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigreturn14.S,v 1.7 2003/08/07 16:42:14 agc Exp $	*/
+/*	$NetBSD: __sigreturn14.S,v 1.8 2003/09/22 14:42:03 cl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -33,13 +33,14 @@
  * SUCH DAMAGE.
  */
 
+#define __HAVE_SIGINFO
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 	RCSID("from: @(#)sigreturn.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: __sigreturn14.S,v 1.7 2003/08/07 16:42:14 agc Exp $")
+	RCSID("$NetBSD: __sigreturn14.S,v 1.8 2003/09/22 14:42:03 cl Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
