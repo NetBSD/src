@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15.6.1 1996/05/25 21:52:54 jtc Exp $
+#	$NetBSD: Makefile,v 1.15.6.2 1996/06/25 01:45:22 jtc Exp $
 
 #
 # Makefile for building a standalone send-pr.
@@ -20,7 +20,7 @@ GNATS_ROOT =
 GNATS_ADDR = gnats-bugs@gnats.netbsd.org
 
 # The default release for this send-pr.
-DEFAULT_RELEASE = 1.2_ALPHA
+DEFAULT_RELEASE = 1.2_BETA
 
 # The default organization for this send-pr.
 DEFAULT_ORGANIZATION =
