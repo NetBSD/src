@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.62 2001/02/04 19:12:09 eeh Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.63 2001/05/07 17:09:13 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -192,7 +192,7 @@ ELFNAME(check_header)(Elf_Ehdr *eh, int type)
 	if (eh->e_type != type)
 		return (ENOEXEC);
 
-	if (eh->e_shnum > 128 ||
+	if (eh->e_shnum > 512 ||
 	    eh->e_phnum > 128)
 		return (ENOEXEC);
 
