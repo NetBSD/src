@@ -55,7 +55,9 @@ static	const char *const initcoms [] = {
 #ifdef KSH
 	  "autoload=typeset -fu",
 	  "functions=typeset -f",
+# ifdef HISTORY
 	  "history=fc -l",
+# endif /* HISTORY */
 	  "integer=typeset -i",
 	  "nohup=nohup ",
 	  "local=typeset",
@@ -354,7 +356,7 @@ main(argc, argv)
 			include(substitute("$HOME/profile.ksh", 0), 0,
 				(char **) 0, 1);
 #else /* OS2 */
-		include("/etc/profile", 0, (char **) 0, 1);
+		include(KSH_SYSTEM_PROFILE, 0, (char **) 0, 1);
 		if (!Flag(FPRIVILEGED))
 			include(substitute("$HOME/.profile", 0), 0,
 				(char **) 0, 1);

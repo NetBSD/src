@@ -2,7 +2,7 @@
  * Source input, lexer and parser
  */
 
-/* $Id: lex.h,v 1.1.1.1 1996/09/21 23:35:15 jtc Exp $ */
+/* $Id: lex.h,v 1.1.1.2 1996/10/09 15:12:48 jtc Exp $ */
 
 #define	IDENT	64
 
@@ -49,7 +49,9 @@ struct source {
  */
 #define	SBASE	0		/* outside any lexical constructs */
 #define	SWORD	1		/* implicit quoting for substitute() */
+#ifdef KSH
 #define	SDPAREN	2		/* inside (( )), implicit quoting */
+#endif /* KSH */
 #define	SSQUOTE	3		/* inside '' */
 #define	SDQUOTE	4		/* inside "" */
 #define	SBRACE	5		/* inside ${} */
@@ -91,7 +93,9 @@ typedef union {
 #define	FUNCTION 274
 #define	TIME	275
 #define	REDIR	276
+#ifdef KSH
 #define MDPAREN	277		/* (( )) */
+#endif /* KSH */
 #define BANG	278		/* ! */
 #define DBRACKET 279		/* [[ .. ]] */
 #define COPROC	280		/* |& */

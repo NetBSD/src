@@ -282,6 +282,7 @@ get_command(cf)
 		t = nested(TBRACE, '{', '}');
 		break;
 
+#ifdef KSH
 	  case MDPAREN:
 	  {
 		static const char let_cmd[] = { CHAR, 'l', CHAR, 'e',
@@ -294,6 +295,7 @@ get_command(cf)
 		XPput(args, yylval.cp);
 		break;
 	  }
+#endif /* KSH */
 
 #ifdef KSH
 	  case DBRACKET: /* [[ .. ]] */
@@ -656,8 +658,8 @@ const	struct tokeninfo {
 	{ "&&",		LOGAND,	FALSE },
 	{ "||",		LOGOR,	FALSE },
 	{ ";;",		BREAK,	FALSE },
-	{ "((",		MDPAREN, FALSE },
 #ifdef KSH
+	{ "((",		MDPAREN, FALSE },
 	{ "|&",		COPROC,	FALSE },
 #endif /* KSH */
 	/* and some special cases... */
