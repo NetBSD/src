@@ -1,4 +1,4 @@
-.\" $NetBSD: bootpref.8,v 1.4 1999/11/24 13:36:14 jdc Exp $
+.\" $NetBSD: bootpref.8,v 1.5 2000/11/28 19:38:38 jdc Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Sh SYNOPSIS
 .Nm bootpref
 .Op -v
-.Op -o os
+.Op -b os
 .Op -d delay
 .Op -k kbd
 .Op -l lang
@@ -73,15 +73,15 @@ The program options are:
 .It Fl V
 verbose output (when setting preferences)
 .sp
-.It Fl o Ar netbsd
+.It Fl b Ar netbsd
 set the boot os to NetBSD
-.It Fl o Ar tos
+.It Fl b Ar tos
 set the boot os to TOS
-.It Fl o Ar linux
+.It Fl b Ar linux
 set the boot os to Linux
-.It Fl o Ar systemv
+.It Fl b Ar systemv
 set the boot os to System V
-.It Fl o Ar none
+.It Fl b Ar none
 set the boot os to none
 .sp
 .It Fl d Ar delay
