@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: nfsd,v 1.6 2004/10/11 14:11:43 lukem Exp $
+# $NetBSD: nfsd,v 1.7 2004/10/12 14:51:03 lukem Exp $
 #
 
 # PROVIDE: nfsd
@@ -14,4 +14,6 @@ command="/usr/sbin/${name}"
 required_vars="mountd rpcbind"
 
 load_rc_config $name
+load_rc_config_var rpcbind rpcbind
+load_rc_config_var mountd mountd
 run_rc_command "$1"
