@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.27 1999/10/25 13:47:10 kleink Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.28 1999/10/26 19:10:26 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -326,6 +326,10 @@ typedef struct {
 #define	ELF32_ST_BIND(info)		((info) >> 4)
 #define	ELF32_ST_TYPE(info)		((info) & 0xf)
 #define	ELF32_ST_INFO(bind,type)	(((bind) << 4 + ((type) & 0xf))
+
+#define	ELF64_ST_BIND(info)		((info) >> 4)
+#define	ELF64_ST_TYPE(info)		((info) & 0xf)
+#define	ELF64_ST_INFO(bind,type)	(((bind) << 4 + ((type) & 0xf))
 
 /*
  * Special section indexes
