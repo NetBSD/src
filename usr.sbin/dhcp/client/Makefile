@@ -30,6 +30,8 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+.include <bsd.own.mk>
+
 SUBDIR=	scripts
 SRCS   = dhclient.c clparse.c
 PROG   = dhclient
@@ -37,7 +39,7 @@ MAN    = dhclient.8 dhclient.conf.5 dhclient.leases.5 dhclient-script.8
 
 # XXX
 BINDIR?=	/sbin
-LDSTATIC=	-static
+LDSTATIC?=	-static
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
