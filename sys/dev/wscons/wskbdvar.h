@@ -1,4 +1,4 @@
-/* $NetBSD: wskbdvar.h,v 1.6 1998/08/02 14:18:07 drochner Exp $ */
+/* $NetBSD: wskbdvar.h,v 1.7 1999/07/29 18:20:03 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -74,6 +74,8 @@ struct wskbddev_attach_args {
 
 #define	wskbddevcf_console		cf_loc[WSKBDDEVCF_CONSOLE]	/* spec'd as console? */
 #define	WSKBDDEVCF_CONSOLE_UNK		(WSKBDDEVCF_CONSOLE_DEFAULT)
+
+#define	wskbddevcf_mux		cf_loc[WSKBDDEVCF_MUX]
 
 /*
  * Autoconfiguration helper functions.
