@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586var.h,v 1.7 1998/01/10 02:35:33 pk Exp $	*/
+/*	$NetBSD: i82586var.h,v 1.8 1998/01/15 16:08:32 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -247,13 +247,14 @@ struct ie_softc {
 	int	do_xmitnopchain;	/* Controls use of xmit NOP chains */
 
 	/* Multicast addresses */
-	/*char	mcast_addrs[ETHER_ADDR_LEN * IE_MAXMCAST];*/
-	char	*mcast_addrs;
-	int	mcast_addrs_size;
-	int	mcast_count;
-	int	want_mcsetup;		/* mcsetup flag */
+	char	*mcast_addrs;		/* Current MC filter addresses */
+	int	mcast_addrs_size;	/* Current size of MC buffer */
+	int	mcast_count;		/* Current # of addrs in buffer */
+	int	want_mcsetup;		/* run mcsetup at next opportunity */
 
 	int	promisc;		/* are we in promisc mode? */
+	int	async_cmd_inprogress;	/* we didn't wait for 586 to accept
+					   a command */
 
 #ifdef I82586_DEBUG
 	int	sc_debug;
