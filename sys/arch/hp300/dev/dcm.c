@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.37 1997/04/02 22:37:26 scottr Exp $	*/
+/*	$NetBSD: dcm.c,v 1.38 1997/04/04 18:16:07 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
@@ -246,17 +246,6 @@ struct	dcm_softc {
 #endif
 };
 
-int	dcmmatch __P((struct device *, struct cfdata *, void *));
-void	dcmattach __P((struct device *, struct device *, void *));
-
-struct cfattach dcm_ca = {
-	sizeof(struct dcm_softc), dcmmatch, dcmattach
-};
-
-struct cfdriver dcm_cd = {
-	NULL, "dcm", DV_TTY
-};
-
 cdev_decl(dcm);
 
 int	dcmintr __P((void *));
@@ -280,6 +269,17 @@ void	dcmcnprobe __P((struct consdev *));
 void	dcmcninit __P((struct consdev *));
 int	dcmcngetc __P((dev_t));
 void	dcmcnputc __P((dev_t, int));
+
+int	dcmmatch __P((struct device *, struct cfdata *, void *));
+void	dcmattach __P((struct device *, struct device *, void *));
+
+struct cfattach dcm_ca = {
+	sizeof(struct dcm_softc), dcmmatch, dcmattach
+};
+
+struct cfdriver dcm_cd = {
+	NULL, "dcm", DV_TTY
+};
 
 int
 dcmmatch(parent, match, aux)
@@ -308,7 +308,7 @@ dcmattach(parent, self, aux)
 	struct dcmdevice *dcm;
 	int brd = self->dv_unit;
 	int scode = da->da_scode;
-	int i, mbits, ipl;
+	int i, mbits, code, ipl;
 
 	sc->sc_flags = 0;
 
@@ -337,7 +337,11 @@ dcmattach(parent, self, aux)
 	ipl = DIO_IPL(dcm);
 	printf(" ipl %d", ipl);
 
-	if (dcmselftest(sc)) {
+	/*
+	 * XXX someone _should_ fix this; the self test screws
+	 * autoconfig messages.
+	 */
+	if ((sc->sc_flags & DCM_ISCONSOLE) && dcmselftest(sc)) {
 		printf("\n%s: self-test failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -371,6 +375,17 @@ dcmattach(parent, self, aux)
 
 	for (i = 0; i < NDCMPORT; i++)
 		sc->sc_modem[i]->mdmmsk = mbits;
+
+	/*
+	 * Get current state of mdmin register on all ports, so that
+	 * deltas will work properly.
+	 */
+	for (i = 0; i < NDCMPORT; i++) {
+		code = sc->sc_modem[i]->mdmin;
+		if (sc->sc_flags & DCM_STDDCE)
+			code = hp2dce_in(code);
+		sc->sc_mcndlast[i] = code;
+	}
 
 	dcm->dcm_ic = IC_IE;		/* turn all interrupts on */
 
@@ -749,9 +764,9 @@ dcmreadbuf(sc, port)
 	int port;
 {
 	struct dcmdevice *dcm = sc->sc_dcm;
-	struct tty *tp = sc->sc_tty[port];
 	struct dcmpreg *pp = dcm_preg(dcm, port);
 	struct dcmrfifo *fifo;
+	struct tty *tp;
 	int c, stat;
 	u_int head;
 	int nch = 0;
@@ -760,6 +775,10 @@ dcmreadbuf(sc, port)
 
 	dsp->rints++;
 #endif
+	tp = sc->sc_tty[port];
+	if (tp == NULL || (tp->t_state & TS_ISOPEN) == 0)
+		return;
+
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 #ifdef KGDB
 		if ((makedev(dcmmajor, minor(tp->t_dev)) == kgdb_dev) &&
@@ -839,7 +858,11 @@ dcmxint(sc, port)
 	struct dcm_softc *sc;
 	int port;
 {
-	struct tty *tp = sc->sc_tty[port];
+	struct tty *tp;
+
+	tp = sc->sc_tty[port];
+	if (tp == NULL || (tp->t_state & TS_ISOPEN) == 0)
+		return;
 
 	tp->t_state &= ~TS_BUSY;
 	if (tp->t_state & TS_FLUSH)
@@ -857,6 +880,8 @@ dcmmint(sc, port, mcnd)
 	struct dcmdevice *dcm = sc->sc_dcm;
 
 	tp = sc->sc_tty[port];
+	if (tp == NULL || (tp->t_state & TS_ISOPEN) == 0)
+		return;
 
 #ifdef DEBUG
 	if (dcmdebug & DDB_MODEM)
