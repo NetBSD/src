@@ -1,4 +1,4 @@
-.\"	$NetBSD: du.1,v 1.10 2001/07/08 15:34:14 simonb Exp $
+.\"	$NetBSD: du.1,v 1.11 2001/12/01 16:43:12 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -76,9 +76,9 @@ If the
 flag is specified, the number displayed is the number of kilobyte
 (1024 bytes) blocks. Partial numbers of blocks are rounded up.
 .It Fl m
-If the 
+If the
 .Fl m
-flag is specified, the number displayed is the number of megabyte 
+flag is specified, the number displayed is the number of megabyte
 (1024*1024 bytes) blocks.
 .It Fl c
 Display the grand total after all the arguments have been processed.
@@ -95,9 +95,9 @@ Filesystem mount points are not traversed.
 counts the storage used by symbolic links and not the files they
 reference unless the
 .Fl H
-or 
-.Fl L 
-option is specified.  
+or
+.Fl L
+option is specified.
 If either the
 .Fl H
 or
@@ -121,8 +121,8 @@ execution.
 .It Ev BLOCKSIZE
 If the environment variable
 .Ev BLOCKSIZE
-is set, and the 
-.Fl k 
+is set, and the
+.Fl k
 and
 .Fl m
 options are not specified, the block counts will be displayed in units of that

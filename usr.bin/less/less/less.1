@@ -1,4 +1,4 @@
-.\"	$NetBSD: less.1,v 1.10 2001/07/26 13:43:45 mrg Exp $
+.\"	$NetBSD: less.1,v 1.11 2001/12/01 16:43:16 wiz Exp $
 .\"
 .TH LESS 1 "Version 358: 08 Jul 2000"
 .SH NAME
@@ -30,7 +30,7 @@ less \- opposite of more (a filter for browsing text files)
 
 .SH DESCRIPTION
 .I Less
-is a program similar to 
+is a program similar to
 .I more
 (1), but which allows backward movement
 in the file as well as forward movement.
@@ -51,7 +51,7 @@ Commands are based on both
 .I more
 and
 .I vi.
-Commands may be preceded by a decimal number, 
+Commands may be preceded by a decimal number,
 called N in the descriptions below.
 The number is used by some commands, as indicated.
 
@@ -76,7 +76,7 @@ Scroll forward N lines, default 1.
 The entire N lines are displayed, even if N is more than the screen size.
 .IP "d or ^D"
 Scroll forward N lines, default one half of the screen size.
-If N is specified, it becomes the new default for 
+If N is specified, it becomes the new default for
 subsequent d and u commands.
 .IP "b or ^B or ESC-v"
 Scroll backward N lines, default one window (see option -z below).
@@ -89,7 +89,7 @@ The entire N lines are displayed, even if N is more than the screen size.
 Warning: some systems use ^Y as a special job control character.
 .IP "u or ^U"
 Scroll backward N lines, default one half of the screen size.
-If N is specified, it becomes the new default for 
+If N is specified, it becomes the new default for
 subsequent d and u commands.
 .IP "ESC-) or RIGHTARROW"
 Scroll horizontally right N characters, default half the screen width
@@ -153,16 +153,16 @@ Like }, but applies to square brackets rather than curly brackets.
 Followed by two characters,
 acts like {, but uses the two characters as open and close brackets,
 respectively.
-For example, "ESC ^F < >" could be used to 
+For example, "ESC ^F < >" could be used to
 go forward to the > which matches the < in the top displayed line.
 .IP "ESC-^B"
 Followed by two characters,
 acts like }, but uses the two characters as open and close brackets,
 respectively.
-For example, "ESC ^B < >" could be used to 
+For example, "ESC ^B < >" could be used to
 go backward to the < which matches the > in the bottom displayed line.
 .IP m
-Followed by any lowercase letter, 
+Followed by any lowercase letter,
 marks the current position with that letter.
 .IP "'"
 (Single quote.)
@@ -193,7 +193,7 @@ they modify the type of search rather than become part of the pattern:
 Search for lines which do NOT match the pattern.
 .IP "^E or *"
 Search multiple files.
-That is, if the search reaches the END of the current file 
+That is, if the search reaches the END of the current file
 without finding a match,
 the search continues in the next file in the command line list.
 The * modifier is available when invoked as less only.
@@ -204,7 +204,7 @@ regardless of what is currently displayed on the screen
 or the settings of the -a or -j options.
 The @ modifier is available when invoked as less only.
 .IP "^K"
-Highlight any text which matches the pattern on the current screen, 
+Highlight any text which matches the pattern on the current screen,
 but don't move to the first match (KEEP current position).
 .IP "^R"
 Don't interpret regular expression metacharacters;
@@ -220,7 +220,7 @@ Certain characters are special as in the / command:
 Search for lines which do NOT match the pattern.
 .IP "^E or *"
 Search multiple files.
-That is, if the search reaches the beginning of the current file 
+That is, if the search reaches the beginning of the current file
 without finding a match,
 the search continues in the previous file in the command line list.
 .IP "^F or @"
@@ -256,7 +256,7 @@ Repeat previous search, but in the reverse direction
 and crossing file boundaries.
 .IP "ESC-u"
 Undo search highlighting.
-Turn off highlighting of strings matching the current search pattern. 
+Turn off highlighting of strings matching the current search pattern.
 If highlighting is already off because of a previous ESC-u command,
 turn highlighting back on.
 Any search command will also turn highlighting back on.
@@ -267,10 +267,10 @@ Examine a new file.
 If the filename is missing, the "current" file (see the :n and :p commands
 below) from the list of files in the command line is re-examined.
 A percent sign (%) in the filename is replaced by the name of the
-current file.  
+current file.
 A pound sign (#) is replaced by the name of the previously examined file.
-However, two consecutive percent signs are simply 
-replaced with a single percent sign.  
+However, two consecutive percent signs are simply
+replaced with a single percent sign.
 This allows you to enter a filename that contains a percent sign
 in the name.
 Similarly, two consecutive pound signs are replaced with a single pound sign.
@@ -318,7 +318,7 @@ the current setting is printed and nothing is changed.
 Like the \- command, but takes a long option name (see OPTIONS below)
 rather than a single option letter.
 You must press RETURN after typing the option name.
-A ^P immediately after the second dash suppresses printing of a 
+A ^P immediately after the second dash suppresses printing of a
 message describing the new setting, as in the \- command.
 .IP \-+
 Followed by one of the command line option letters
@@ -350,19 +350,19 @@ rather than a single option letter.
 You must press RETURN after typing the option name.
 .IP +cmd
 Causes the specified cmd to be executed each time a new file is examined.
-For example, +G causes 
+For example, +G causes
 .I less
-to initially display each file starting at the end 
+to initially display each file starting at the end
 rather than the beginning.
 .IP V
-Prints the version number of 
-.I less 
+Prints the version number of
+.I less
 being run.
 .IP "q or Q or :q or :Q or ZZ"
 Exits
 .I less.
 .PP
-The following 
+The following
 four
 commands may or may not be valid, depending on your particular installation.
 .PP
@@ -375,7 +375,7 @@ See also the discussion of LESSEDIT under the section on PROMPTS below.
 .IP "! shell-command"
 Invokes a shell to run the shell-command given.
 A percent sign (%) in the command is replaced by the name of the
-current file.  
+current file.
 A pound sign (#) is replaced by the name of the previously examined file.
 "!!" repeats the last shell command.
 "!" with no shell command simply invokes a shell.
@@ -396,10 +396,10 @@ This only works if the input is a pipe, not an ordinary file.
 .SH OPTIONS
 Command line options are described below.
 Most options may be changed while
-.I less 
+.I less
 is running, via the "\-" command.
 .PP
-Most options may be given in one of two forms: 
+Most options may be given in one of two forms:
 either a dash followed by a single letter,
 or two dashes followed by a long option name.
 A long option name may be abbreviated as long as
@@ -413,20 +413,20 @@ the remainder of the name may be in either case.
 For example, --Quit-at-eof is equivalent to --QUIT-AT-EOF.
 .PP
 Options are also taken from the environment variable "LESS".
-For example, 
-to avoid typing "less -options ..." each time 
-.I less 
-is invoked, you might tell 
+For example,
+to avoid typing "less -options ..." each time
+.I less
+is invoked, you might tell
 .I csh:
 .sp
 setenv LESS "-options"
 .sp
-or if you use 
+or if you use
 .I sh:
 .sp
 LESS="-options"; export LESS
 .sp
-On MS-DOS, you don't need the quotes, but you should replace any 
+On MS-DOS, you don't need the quotes, but you should replace any
 percent signs in the options string by double percent signs.
 .sp
 The environment variable is parsed before the command line,
@@ -450,7 +450,7 @@ This option displays a summary of the commands accepted by
 it may be necessary to quote the question mark, thus: "-\\?".)
 .IP "-a or --search-skip-screen"
 Causes searches to start after the last line
-displayed on the screen, 
+displayed on the screen,
 thus skipping all lines displayed on the screen.
 By default, searches start at the second line on the screen
 (or after the last found line; see the -j option).
@@ -469,7 +469,7 @@ a large amount of memory to be allocated.
 The -B option disables this automatic allocation of buffers for pipes,
 so that only the number of buffers specified by the -b option are used.
 Warning: use of -B can result in erroneous display, since only the
-most recently viewed part of the file is kept in memory; 
+most recently viewed part of the file is kept in memory;
 any earlier data is lost.
 .IP "-c or --clear-screen"
 Causes full screen repaints to be painted from the top line down.
@@ -495,22 +495,22 @@ on a dumb terminal).
 .IP "-D\fBx\fP\fIcolor\fP or --color=\fBx\fP\fIcolor\fP"
 [MS-DOS only]
 Sets the color of the text displayed.
-\fBx\fP is a single character which selects the type of text whose color is 
+\fBx\fP is a single character which selects the type of text whose color is
 being set: n=normal, s=standout, d=bold, u=underlined, k=blink.
-\fIcolor\fP is a pair of numbers separated by a period.  
-The first number selects the foreground color and the second selects 
+\fIcolor\fP is a pair of numbers separated by a period.
+The first number selects the foreground color and the second selects
 the background color of the text.
 A single number \fIN\fP is the same as \fIN.0\fP.
 .IP "-e or --quit-at-eof"
-Causes 
-.I less 
+Causes
+.I less
 to automatically exit
 the second time it reaches end-of-file.
-By default, the only way to exit 
+By default, the only way to exit
 .I less
 is via the "q" command.
 .IP "-E or --QUIT-AT-EOF"
-Causes 
+Causes
 .I less
 to automatically exit the first time it reaches end-of-file.
 .IP "-f or --force"
@@ -526,13 +526,13 @@ Causes
 to automatically exit
 if the entire file can be displayed on the first screen.
 .IP "-g or --hilite-search"
-Normally, 
-.I less 
+Normally,
+.I less
 will highlight ALL strings which match the last search command.
-The -g option changes this behavior to highlight only the particular string 
+The -g option changes this behavior to highlight only the particular string
 which was found by the last search command.
-This can cause 
-.I less 
+This can cause
+.I less
 to run somewhat faster than the default.
 .IP "-G or --HILITE-SEARCH"
 The -G option suppresses all highlighting of strings found by search commands.
@@ -546,16 +546,16 @@ backward, -h0 is implied.)
 Causes searches to ignore case; that is,
 uppercase and lowercase are considered identical.
 This option is ignored if any uppercase letters
-appear in the search pattern; 
+appear in the search pattern;
 in other words,
 if a pattern contains uppercase letters, then that search does not ignore case.
 .IP "-I or --IGNORE-CASE"
-Like -i, but searches ignore case even if 
+Like -i, but searches ignore case even if
 the pattern contains uppercase letters.
 .IP "-j\fIn\fP or --jump-target=\fIn\fP"
 Specifies a line on the screen where the "target" line
 is to be positioned.
-A target line is the object of a text search, 
+A target line is the object of a text search,
 tag search, jump to a line number,
 jump to a file percentage, or jump to a marked position.
 The screen line is specified by a number: the top line on the screen
@@ -580,11 +580,11 @@ to open and interpret the named file as a
 Multiple -k options may be specified.
 If the LESSKEY or LESSKEY_SYSTEM environment variable is set, or
 if a lesskey file is found in a standard place (see KEY BINDINGS),
-it is also used as a 
+it is also used as a
 .I lesskey
 file.
 .IP "-m or --long-prompt"
-Causes 
+Causes
 .I less
 to prompt verbosely (like \fImore\fP),
 with the percent into the file.
@@ -592,9 +592,9 @@ By default,
 .I less
 prompts with a colon.
 .IP "-M or --LONG-PROMPT"
-Causes 
+Causes
 .I less
-to prompt even more verbosely than 
+to prompt even more verbosely than
 .I more.
 .IP "-n or --line-numbers"
 Suppresses line numbers.
@@ -615,7 +615,7 @@ Causes
 to copy its input to the named file as it is being viewed.
 This applies only when the input file is a pipe,
 not an ordinary file.
-If the file already exists, 
+If the file already exists,
 .I less
 will ask for confirmation before overwriting it.
 .IP "-O\fIfilename\fP or --LOG-FILE=\fIfilename\fP"
@@ -623,14 +623,14 @@ The -O option is like -o, but it will overwrite an existing
 file without asking for confirmation.
 .sp
 If no log file has been specified,
-the -o and -O options can be used from within 
+the -o and -O options can be used from within
 .I less
 to specify a log file.
 Without a file name, they will simply report the name of the log file.
 The "s" command is equivalent to specifying -o from within
 .I less.
 .IP "-p\fIpattern\fP or --pattern=\fIpattern\fP"
-The -p option on the command line is equivalent to 
+The -p option on the command line is equivalent to
 specifying +/\fIpattern\fP;
 that is, it tells
 .I less
@@ -639,23 +639,23 @@ to start at the first occurrence of \fIpattern\fP in the file.
 Provides a way to tailor the three prompt
 styles to your own preference.
 This option would normally be put in the LESS environment
-variable, rather than being typed in with each 
+variable, rather than being typed in with each
 .I less
 command.
 Such an option must either be the last option in the LESS variable,
 or be terminated by a dollar sign.
--Ps followed by a string changes the default (short) prompt 
+-Ps followed by a string changes the default (short) prompt
 to that string.
 -Pm changes the medium (-m) prompt.
 -PM changes the long (-M) prompt.
 -Ph changes the prompt for the help screen.
 -P= changes the message printed by the = command.
-All prompt strings consist of a sequence of 
+All prompt strings consist of a sequence of
 letters and special escape sequences.
 See the section on PROMPTS for more details.
 .IP "-q or --quiet or --silent"
 Causes moderately "quiet" operation:
-the terminal bell is not rung 
+the terminal bell is not rung
 if an attempt is made to scroll past the end of the file
 or before the beginning of the file.
 If the terminal has a "visual bell", it is used instead.
@@ -707,11 +707,11 @@ on the next line.
 The -t option, followed immediately by a TAG,
 will edit the file containing that tag.
 For this to work, there must be a file called "tags" in the
-current directory, which was previously built by the 
+current directory, which was previously built by the
 .I ctags
 (1) command.
-This option may also be specified from within 
-.I less 
+This option may also be specified from within
+.I less
 (using the \- command) as a way of examining a new file.
 The command ":t" is equivalent to specifying -t from within
 .I less.
@@ -721,18 +721,18 @@ Specifies a tags file to be used instead of "tags".
 Causes backspaces and carriage returns to be treated as printable characters;
 that is, they are sent to the terminal when they appear in the input.
 .IP "-U or --UNDERLINE-SPECIAL"
-Causes backspaces, tabs and carriage returns to be 
+Causes backspaces, tabs and carriage returns to be
 treated as control characters;
 that is, they are handled as specified by the -r option.
 .sp
 By default, if neither -u nor -U is given,
 backspaces which appear adjacent to an underscore character
 are treated specially:
-the underlined text is displayed 
+the underlined text is displayed
 using the terminal's hardware underlining capability.
 Also, backspaces which appear between two identical characters
-are treated specially: 
-the overstruck text is printed 
+are treated specially:
+the overstruck text is printed
 using the terminal's hardware boldface capability.
 Other backspaces are deleted, along with the preceding character.
 Carriage returns immediately followed by a newline are deleted.
@@ -740,7 +740,7 @@ other carriage returns are handled as specified by the -r option.
 Text which is overstruck or underlined can be searched for
 if neither -u nor -U is in effect.
 .IP "-V or --version"
-Displays the version number of 
+Displays the version number of
 .I less.
 .IP "-w or --hilite-unread"
 Temporarily highlights the first "new" line after a forward movement
@@ -752,7 +752,7 @@ The highlight is removed at the next command which causes movement.
 The entire line is highlighted, unless the -J option is in effect,
 in which case only the status column is highlighted.
 .IP "-W or --HILITE-UNREAD"
-Like -w, but temporarily highlights the first new line after any 
+Like -w, but temporarily highlights the first new line after any
 forward movement command larger than one line.
 .IP "-x\fIn\fP or --tabs=\fIn\fP"
 Sets tab stops every \fIn\fP positions.
@@ -777,10 +777,10 @@ The "z" may be omitted for compatibility with
 .I more.
 If the number
 .I n
-is negative, it indicates 
+is negative, it indicates
 .I n
 lines less than the current screen size.
-For example, if the screen is 24 lines, \fI-z-4\fP sets the 
+For example, if the screen is 24 lines, \fI-z-4\fP sets the
 scrolling window to 20 lines.  If the screen is resized to 40 lines,
 the scrolling window automatically changes to 36 lines.
 .IP -"\fIcc\fP\ or\ --quotes=\fIcc\fP
@@ -817,7 +817,7 @@ For example, +G tells
 .I less
 to start at the end of the file rather than the beginning,
 and +/xyz tells it to start at the first occurrence of "xyz" in the file.
-As a special case, +<number> acts like +<number>g; 
+As a special case, +<number> acts like +<number>g;
 that is, it starts the display at the specified line number
 (however, see the caveat under the "g" command above).
 If the option starts with ++, the initial command applies to
@@ -831,7 +831,7 @@ When entering command line at the bottom of the screen
 or the pattern for a search command),
 certain keys can be used to manipulate the command line.
 Most commands have an alternate form in [ brackets ] which can be used if
-a key does not exist on a particular keyboard. 
+a key does not exist on a particular keyboard.
 (The bracketed forms do not work in the MS-DOS version.)
 Any of these special keys may be entered literally by preceding
 it with the "literal" character, either ^V or ^A.
@@ -872,7 +872,7 @@ is entered into the command line.
 Repeated TABs will cycle thru the other matching filenames.
 If the completed filename is a directory, a "/" is appended to the filename.
 (On MS-DOS systems, a "\\" is appended.)
-The environment variable LESSSEPARATOR can be used to specify a 
+The environment variable LESSSEPARATOR can be used to specify a
 different character to append to a directory name.
 .IP "BACKTAB [ ESC-TAB ]"
 Like, TAB, but cycles in the reverse direction thru the matching filenames.
@@ -887,9 +887,9 @@ If you have changed your line-kill character in Unix to something
 other than ^U, that character is used instead of ^U.
 
 .SH "KEY BINDINGS"
-You may define your own 
+You may define your own
 .I less
-commands by using the program 
+commands by using the program
 .I lesskey
 (1)
 to create a lesskey file.
@@ -902,7 +902,7 @@ and to set environment variables.
 If the environment variable LESSKEY is set,
 .I less
 uses that as the name of the lesskey file.
-Otherwise, 
+Otherwise,
 .I less
 looks in a standard place for the lesskey file:
 On Unix systems,
@@ -926,24 +926,24 @@ manual page for more details.
 .P
 A system-wide lesskey file may also be set up to provide key bindings.
 If a key is defined in both a local lesskey file and in the
-system-wide file, key bindings in the local file take precedence over 
+system-wide file, key bindings in the local file take precedence over
 those in the system-wide file.
 If the environment variable LESSKEY_SYSTEM is set,
 .I less
 uses that as the name of the system-wide lesskey file.
 Otherwise,
-.I less 
+.I less
 looks in a standard place for the system-wide lesskey file:
 On Unix systems, the system-wide lesskey file is /usr/local/bin/.sysless.
-(However, if 
-.I less 
+(However, if
+.I less
 was built with a different binary directory than /usr/local/bin,
 that directory is where the .sysless file is found.)
 On MS-DOS and Windows systems, the system-wide lesskey file is c:\\_sysless.
 On OS/2 systems, the system-wide lesskey file is c:\\sysless.ini.
 
 .SH "INPUT PREPROCESSOR"
-You may define an "input preprocessor" for 
+You may define an "input preprocessor" for
 .I less.
 Before
 .I less
@@ -952,10 +952,10 @@ way the contents of the file are displayed.
 An input preprocessor is simply an executable program (or shell script),
 which writes the contents of the file to a different file,
 called the replacement file.
-The contents of the replacement file are then displayed 
+The contents of the replacement file are then displayed
 in place of the contents of the original file.
 However, it will appear to the user as if the original file is opened;
-that is, 
+that is,
 .I less
 will display the original filename as the name of the current file.
 .PP
@@ -963,17 +963,17 @@ An input preprocessor receives one command line argument, the original filename,
 as entered by the user.
 It should create the replacement file, and when finished,
 print the name of the replacement file to its standard output.
-If the input preprocessor does not output a replacement filename, 
+If the input preprocessor does not output a replacement filename,
 .I less
 uses the original file, as normal.
 The input preprocessor is not called when viewing standard input.
 To set up an input preprocessor, set the LESSOPEN environment variable
 to a command line which will invoke your input preprocessor.
-This command line should include one occurrence of the string "%s", 
+This command line should include one occurrence of the string "%s",
 which will be replaced by the filename
 when the input preprocessor command is invoked.
 .PP
-When 
+When
 .I less
 closes a file opened in such a way, it will call another program,
 called the input postprocessor,
@@ -981,11 +981,11 @@ which may perform any desired clean-up action (such as deleting the
 replacement file created by LESSOPEN).
 This program receives two command line arguments, the original filename
 as entered by the user, and the name of the replacement file.
-To set up an input postprocessor, set the LESSCLOSE environment variable 
+To set up an input postprocessor, set the LESSCLOSE environment variable
 to a command line which will invoke your input postprocessor.
-It may include two occurrences of the string "%s"; 
-the first is replaced with the original name of the file and 
-the second with the name of the replacement file, 
+It may include two occurrences of the string "%s";
+the first is replaced with the original name of the file and
+the second with the name of the replacement file,
 which was output by LESSOPEN.
 .PP
 For example, on many Unix systems, these two scripts will allow you
@@ -1001,7 +1001,7 @@ lessopen.sh:
 .br
 	*.Z)	uncompress -c $1  >/tmp/less.$$  2>/dev/null
 .br
-		if [ -s /tmp/less.$$ ]; then 
+		if [ -s /tmp/less.$$ ]; then
 .br
 			echo /tmp/less.$$
 .br
@@ -1028,21 +1028,21 @@ More complex LESSOPEN and LESSCLOSE scripts may be written
 to accept other types of compressed files, and so on.
 .PP
 It is also possible to set up an input preprocessor to
-pipe the file data directly to 
+pipe the file data directly to
 .I less,
 rather than putting the data into a replacement file.
-This avoids the need to decompress the entire file before 
+This avoids the need to decompress the entire file before
 starting to view it.
 An input preprocessor that works this way is called an input pipe.
 An input pipe, instead of writing the name of a replacement file on
 its standard output,
 writes the entire contents of the replacement file on its standard output.
 If the input pipe does not write any characters on its standard output,
-then there is no replacement file and 
+then there is no replacement file and
 .I less
 uses the original file, as normal.
 To use an input pipe,
-make the first character in the LESSOPEN environment variable a 
+make the first character in the LESSOPEN environment variable a
 vertical bar (|) to signify that the input preprocessor is an input pipe.
 .PP
 For example, on many Unix systems, this script will work like the
@@ -1124,7 +1124,7 @@ For example, "bccc4b." would mean character 0 is binary,
 1, 2 and 3 are control, 4, 5, 6 and 7 are binary, and 8 is normal.
 All characters after the last are taken to be the same as the last,
 so characters 9 through 255 would be normal.
-(This is an example, and does not necessarily 
+(This is an example, and does not necessarily
 represent any real character set.)
 .PP
 This table shows the value of LESSCHARDEF which is equivalent
@@ -1146,8 +1146,8 @@ to each of the possible values for LESSCHARSET:
 .br
 	next\ \ 	8bcccbcc18b95.bb125.bb
 .PP
-If neither LESSCHARSET nor LESSCHARDEF is set, 
-but your system supports the 
+If neither LESSCHARSET nor LESSCHARDEF is set,
+but your system supports the
 .I setlocale
 interface,
 .I less
@@ -1156,12 +1156,12 @@ setlocale is controlled by setting the LANG or LC_CTYPE environment variables.
 .PP
 Control and binary characters are displayed in standout (reverse video).
 Each such character is displayed in caret notation if possible
-(e.g. ^A for control-A).  Caret notation is used only if 
+(e.g. ^A for control-A).  Caret notation is used only if
 inverting the 0100 bit results in a normal printable character.
 Otherwise, the character is displayed as a hex number in angle brackets.
-This format can be changed by 
+This format can be changed by
 setting the LESSBINFMT environment variable.
-LESSBINFMT may begin with a "*" and one character to select 
+LESSBINFMT may begin with a "*" and one character to select
 the display attribute:
 "*k" is blinking, "*d" is bold, "*u" is underlined, "*s" is standout,
 and "*n" is normal.
@@ -1347,7 +1347,7 @@ The default value for LESSEDIT is:
 Note that this expands to the editor name, followed by a + and the
 line number, followed by the file name.
 If your editor does not accept the "+linenumber" syntax, or has other
-differences in invocation syntax, the LESSEDIT variable can be 
+differences in invocation syntax, the LESSEDIT variable can be
 changed to modify this default.
 
 .SH SECURITY
@@ -1380,10 +1380,10 @@ Less can also be compiled to be permanently in "secure" mode.
 
 .SH "ENVIRONMENT VARIABLES"
 Environment variables may be specified either in the system environment
-as usual, or in a 
+as usual, or in a
 .I lesskey
 (1) file.
-If environment variables are defined in more than one place, 
+If environment variables are defined in more than one place,
 variables defined in a local lesskey file take precedence over
 variables defined in the system environment, which take precedence
 over variables defined in the system-wide lesskey file.
@@ -1408,7 +1408,7 @@ Language for determining the character set.
 .IP LC_CTYPE
 Language for determining the character set.
 .IP LESS
-Options which are passed to 
+Options which are passed to
 .I less
 automatically.
 .IP LESSANSIENDCHARS
@@ -1454,7 +1454,7 @@ Takes precedence over the number of lines specified by the TERM variable.
 the window system's idea of the screen size takes precedence over the
 LINES and COLUMNS environment variables.)
 .IP PATH
-User's search path (used to find a lesskey file 
+User's search path (used to find a lesskey file
 on MS-DOS and OS/2 systems).
 .IP SHELL
 The shell used to execute the ! command, as well as to expand filenames.
@@ -1479,10 +1479,10 @@ the new files may be entered into the list in an unexpected order.
 .PP
 On certain older terminals (the so-called "magic cookie" terminals),
 search highlighting will cause an erroneous display.
-On such terminals, search highlighting is disabled by default 
+On such terminals, search highlighting is disabled by default
 to avoid possible problems.
 .PP
-In certain cases, when search highlighting is enabled and 
+In certain cases, when search highlighting is enabled and
 a search pattern begins with a ^,
 more text than the matching string may be highlighted.
 (This problem does not occur when less is compiled to use the POSIX
@@ -1490,10 +1490,10 @@ regular expression package.)
 .PP
 On some systems,
 .I setlocale
-claims that ASCII characters 0 thru 31 are control characters 
+claims that ASCII characters 0 thru 31 are control characters
 rather than binary characters.
-This causes 
-.I less 
+This causes
+.I less
 to treat some binary files as ordinary, non-binary files.
 To workaround this problem, set the environment variable
 LESSCHARSET to "ascii" (or whatever character set is appropriate).
@@ -1511,7 +1511,7 @@ under the terms of either
 the Free Software Foundation; or (2) the Less License.
 See the file README in the less distribution for more details
 regarding redistribution.
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with the source for less; see the file COPYING.
 If not, write to the Free Software Foundation, 59 Temple Place,
 Suite 330, Boston, MA  02111-1307, USA.
