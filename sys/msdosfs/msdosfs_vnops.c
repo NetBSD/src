@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.79.2.3 1999/08/20 05:39:36 cgd Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.79.2.4 1999/08/31 15:36:47 he Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -250,7 +250,7 @@ msdosfs_access(v)
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
 	struct msdosfsmount *pmp = dep->de_pmp;
-	mode_t mode = 0;
+	mode_t mode = ap->a_mode;
 
 	/*
 	 * Disallow write attempts on read-only file systems;
@@ -353,9 +353,10 @@ msdosfs_setattr(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	int error = 0;
+	int error = 0, de_changed = 0;
 	struct denode *dep = VTODE(ap->a_vp);
 	struct msdosfsmount *pmp = dep->de_pmp;
+	struct vnode *vp  = ap->a_vp;
 	struct vattr *vap = ap->a_vap;
 	struct ucred *cred = ap->a_cred;
 
@@ -386,11 +387,16 @@ msdosfs_setattr(v)
 		return 0;
 
 	if (vap->va_size != VNOVAL) {
+		if (vp->v_mount->mnt_flag & MNT_RDONLY)
+			return (EROFS);
 		error = detrunc(dep, (u_long)vap->va_size, 0, cred, ap->a_p);
 		if (error)
 			return (error);
+		de_changed = 1;
 	}
 	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL) {
+		if (vp->v_mount->mnt_flag & MNT_RDONLY)
+			return (EROFS);
 		if (cred->cr_uid != pmp->pm_uid &&
 		    (error = suser(cred, &ap->a_p->p_acflag)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
@@ -403,6 +409,7 @@ msdosfs_setattr(v)
 			unix2dostime(&vap->va_mtime, &dep->de_MDate, &dep->de_MTime, NULL);
 		dep->de_Attributes |= ATTR_ARCHIVE;
 		dep->de_flag |= DE_MODIFIED;
+		de_changed = 1;
 	}
 	/*
 	 * DOS files only have the ability to have their writability
@@ -410,6 +417,8 @@ msdosfs_setattr(v)
 	 * attribute.
 	 */
 	if (vap->va_mode != (mode_t)VNOVAL) {
+		if (vp->v_mount->mnt_flag & MNT_RDONLY)
+			return (EROFS);
 		if (cred->cr_uid != pmp->pm_uid &&
 		    (error = suser(cred, &ap->a_p->p_acflag)))
 			return (error);
@@ -419,11 +428,14 @@ msdosfs_setattr(v)
 		else
 			dep->de_Attributes |= ATTR_READONLY;
 		dep->de_flag |= DE_MODIFIED;
+		de_changed = 1;
 	}
 	/*
 	 * Allow the `archived' bit to be toggled.
 	 */
 	if (vap->va_flags != VNOVAL) {
+		if (vp->v_mount->mnt_flag & MNT_RDONLY)
+			return (EROFS);
 		if (cred->cr_uid != pmp->pm_uid &&
 		    (error = suser(cred, &ap->a_p->p_acflag)))
 			return (error);
@@ -432,8 +444,13 @@ msdosfs_setattr(v)
 		else
 			dep->de_Attributes |= ATTR_ARCHIVE;
 		dep->de_flag |= DE_MODIFIED;
+		de_changed = 1;
 	}
-	return (deupdat(dep, 1));
+
+	if (de_changed)
+		return (deupdat(dep, 1));
+	else
+		return (0);
 }
 
 int
