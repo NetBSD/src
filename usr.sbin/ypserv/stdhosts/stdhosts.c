@@ -1,4 +1,4 @@
-/*	$NetBSD: stdhosts.c,v 1.4 1997/10/07 14:56:11 lukem Exp $	 */
+/*	$NetBSD: stdhosts.c,v 1.5 1997/10/13 03:19:05 lukem Exp $	 */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -30,6 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: stdhosts.c,v 1.5 1997/10/13 03:19:05 lukem Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/socket.h>
