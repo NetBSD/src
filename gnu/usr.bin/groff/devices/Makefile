@@ -9,4 +9,8 @@ XDEVICES=	devX100 devX100-12 devX75 devX75-12
 
 SUBDIR=		devascii devlatin1 devdvi devps
 
+tags:
+
+depend:
+
 .include <bsd.subdir.mk>
