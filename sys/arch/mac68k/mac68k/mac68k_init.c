@@ -29,7 +29,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: mac68k_init.c,v 1.3 1994/07/02 13:04:49 briggs Exp $
+ * $Id: mac68k_init.c,v 1.4 1994/07/04 22:44:24 briggs Exp $
  *
  */
 
@@ -75,14 +75,17 @@ debug_translate(u_int val)
 	p = (u_int *) Sysseg1_pa;
 	/* Get root index */
 	f = (val&SG_IMASK1) >> SG_ISHIFT1;
+	strprintf("  root index", f);
 
 	p = (u_int *) (p[f] & ~0xf);
 	/* Get segment index */
 	f = (val&SG_IMASK2) >> SG_040ISHIFT;
+	strprintf("  segment index", f);
 	if (p[f]) {
 		p = (u_int *) (p[f] & ~0xf);
 		/* Get page index */
 		f = (val & SG_040PMASK) >> SG_PSHIFT;
+		strprintf("  page index", f);
 		if (p[f]) {
 			f = p[f] & ~0xf;
 			strprintf("     into", f + (val & 0xfff));
@@ -138,9 +141,9 @@ extern void	etext(); /* Okaaaaay... */
 	 */
 	Sysseg_pa = pstart;
 	Sysseg = vstart;
-	vstart += NBPG * 16; /* Amiga used 8 instead of 16 */
-	pstart += NBPG * 16; /* Amiga used 8 instead of 16 */
-	avail  -= NBPG * 16; /* Amiga used 8 instead of 16 */
+	vstart += NBPG * 16;
+	pstart += NBPG * 16;
+	avail  -= NBPG * 16;
 
 	/*
 	 * Allocate initial page table pages.
@@ -158,9 +161,9 @@ extern void	etext(); /* Okaaaaay... */
 	 */
 	Sysptmap = vstart;
 	Sysptmap_pa = pstart;
-	vstart += NBPG;
-	pstart += NBPG;
-	avail  -= NBPG;
+	vstart += NBPG * Sysptsize;
+	pstart += NBPG * Sysptsize;
+	avail  -= NBPG * Sysptsize;
 
 	/*
 	 * Set Sysmap; mapped after page table pages.
@@ -197,7 +200,7 @@ extern void	etext(); /* Okaaaaay... */
 		*sg++ = sg_proto;
 		if (pg_proto < pstart)
 			*pg++ = pg_proto;
-		else if (pg < (u_int *) (Sysptmap_pa + NBPG))
+		else if (pg < (u_int *) (Sysptmap_pa + NBPG * Sysptsize))
 			*pg++ = PG_NV;
 		sg_proto += MAC_040PTSIZE;
 		pg_proto += NBPG;
@@ -207,13 +210,15 @@ extern void	etext(); /* Okaaaaay... */
 	 */
 	do {
 		*sg++ = SG_NV;
-		if (pg < (u_int *) (Sysptmap_pa + NBPG))
+		if (pg < (u_int *) (Sysptmap_pa + NBPG * Sysptsize))
 			*pg++ = PG_NV;
-	} while (sg < (u_int *) (Sysseg_pa + NBPG * 16)); /* amiga had 8 */
+	} while (sg < (u_int *) (Sysseg_pa + NBPG * 16));
 
 	/*
-	 * The end of the last segment (0xFFFC 0000) of KVA space is
-	 * used to map the u-area of the current process (u + kernel stack)
+	 * Portions of the last segment of KVA space (0xFFF0 0000 -
+	 * 0xFFFF FFFF are mapped for the current process u-area.
+	 * Specifically, 0xFFFF C000 - 0xFFFF FFFF is mapped.  This
+	 * translates to (u + kernel stack).
 	 */
 	/*
 	 * Use next available slot.
@@ -232,7 +237,7 @@ extern void	etext(); /* Okaaaaay... */
 	 * Enter the page into the page table map.
 	 */
 	pg_proto = pstart | PG_RW | PG_CI | PG_V;
-	pg = (u_int *) (Sysptmap_pa + 1024); /****** Fix constant ******/
+	pg = (u_int *) (Sysptmap_pa + 1024);
 	*--pg = pg_proto;
 	/*
 	 * Invalidate all pte's (will validate u-area afterwards)
@@ -249,7 +254,7 @@ extern void	etext(); /* Okaaaaay... */
 	/*
 	 * Record KVA at which to access current u-area PTE(s).
 	 */
-	Umap = (u_int) Sysmap + MAC_MAX_PTSIZE - UPAGES * 4;
+	Umap = (u_int) Sysmap + NPTEPG*NBPG - HIGHPAGES * 4;
 
 	/*
 	 * Initialize kernel page table page(s) (assume load at VA 0)
@@ -281,7 +286,7 @@ extern void	etext(); /* Okaaaaay... */
 	 */
 	pg      -= ptextra;
 	pg2      = pg;
-	pg_proto = INTIOBASE | PG_RW | PG_CI | PG_V;
+	pg_proto = (INTIOBASE & PG_FRAME) | PG_RW | PG_CI | PG_V;
 	while (pg_proto < INTIOTOP) {
 		*pg++     = pg_proto;
 		pg_proto += NBPG;
@@ -290,7 +295,8 @@ extern void	etext(); /* Okaaaaay... */
 	/*
 	 * Go validate NuBus space.
 	 */
-	pg_proto = NBBASE | PG_RW | PG_CI | PG_V; /* Need CI, here? (akb) */
+	pg_proto = (NBBASE & PG_FRAME) | PG_RW | PG_CI | PG_V;
+					/* Need CI, here? (akb) */
 	while (pg_proto < NBTOP) {
 		*pg++     = pg_proto;
 		pg_proto += NBPG;
@@ -310,6 +316,19 @@ extern void	etext(); /* Okaaaaay... */
 	sg = (u_int *) ((((u_int *) Sysseg1)[i]) & ~0x7f);
 	sg += (((u_int) IOBase) & SG_IMASK2) >> SG_040ISHIFT;
 	while (sg_proto < (u_int) pg) {
+		*sg++ = sg_proto;
+		sg_proto += MAC_040PTSIZE;
+	}
+
+	/*
+	 * This is bogus..  This happens automatically
+	 * on the Amiga, I think...
+	 */
+	sg_proto = Sysptmap_pa | SG_RW | SG_V;
+	i = (((u_int) Sysmap) & SG_IMASK1) >> SG_ISHIFT1;
+	sg = (u_int *) ((((u_int *) Sysseg1)[i]) & ~0x7f);
+	sg += (((u_int) Sysmap) & SG_IMASK2) >> SG_040ISHIFT;
+	while (sg_proto < Sysptmap_pa + Sysptsize * NBPG) {
 		*sg++ = sg_proto;
 		sg_proto += MAC_040PTSIZE;
 	}
@@ -338,7 +357,7 @@ extern void	etext(); /* Okaaaaay... */
 	/*
 	 * Now go back and validate u-area PTE(s) in PT and in Umap.
 	 */
-	pg -= UPAGES;
+	pg -= HIGHPAGES;
 	pg2 = (u_int *) (umap_pa + 4*(NPTEPG - UPAGES));
 	pg_proto  = p0_u_area_pa | PG_RW | PG_V;
 	pg_proto |= PG_CCB;
@@ -384,6 +403,7 @@ extern void	etext(); /* Okaaaaay... */
 			: : "a" (Sysseg1_pa));
 	asm volatile (".word 0xf518" : : );
 	asm volatile ("movel #0x8000,d0; .word 0x4e7b,0x0003" : : );
+	TBIA();
 
 	/*
 	 * (akb) I think that this is
