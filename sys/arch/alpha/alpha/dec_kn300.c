@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.4 1998/05/05 20:10:05 mjacob Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.5 1998/07/08 00:44:32 mjacob Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.4 1998/05/05 20:10:05 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.5 1998/07/08 00:44:32 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.4 1998/05/05 20:10:05 mjacob Exp $")
 #include <machine/autoconf.h>
 #include <machine/conf.h>
 #include <machine/bus.h>
+#include <machine/frame.h>
+#include <machine/cpuconf.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
@@ -53,12 +55,17 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.4 1998/05/05 20:10:05 mjacob Exp $")
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
+#include <alpha/mcbus/mcbusreg.h>
+#include <alpha/mcbus/mcbusvar.h>
 #include <alpha/pci/mcpciareg.h>
 #include <alpha/pci/mcpciavar.h>
+#include <alpha/pci/pci_kn300.h>
+#include <machine/logout.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
+
 
 #include "pckbd.h"
 
@@ -70,6 +77,9 @@ static int comcnrate = CONSPEED;
 void dec_kn300_init __P((void));
 void dec_kn300_cons_init __P((void));
 static void dec_kn300_device_register __P((struct device *, void *));
+static void dec_kn300_mcheck_handler
+	__P((unsigned long, struct trapframe *, unsigned long, unsigned long));
+
 #define	ALPHASERVER_4100	"AlphaServer 4100"
 
 const struct alpha_variation_table dec_kn300_variations[] = {
@@ -94,6 +104,7 @@ dec_kn300_init()
 	platform.iobus = "mcbus";
 	platform.cons_init = NULL;
 	platform.device_register = dec_kn300_device_register;
+	platform.mcheck_handler = dec_kn300_mcheck_handler;
 }
 
 
@@ -290,5 +301,202 @@ dec_kn300_device_register(dev, aux)
 			found = 1;
 			return;
 		}
+	}
+}
+
+
+/*
+ * KN300 Machine Check Handlers.
+ */
+static void kn300_softerr __P((unsigned long, unsigned long,
+    unsigned long, struct trapframe *));
+
+static void kn300_mcheck __P((unsigned long, unsigned long,
+    unsigned long, struct trapframe *));
+
+/*
+ * "soft" error structure in system area for KN300 processor.
+ * It differs from the EV5 'common' structure in a minor but
+ * exceedingly stupid and annoying fashion.
+ */
+
+typedef struct {
+	/*
+	 * Should be mc_cc_ev5 structure. Contents are the same,
+	 * just in different places.
+	 */
+	u_int64_t	ei_stat;
+	u_int64_t	ei_addr;
+	u_int64_t	fill_syndrome;
+	u_int64_t	isr;
+	/*
+	 * Platform Specific Area
+	 */
+	u_int32_t	whami;
+	u_int32_t	sys_env;
+	u_int64_t	mcpcia_regs;
+	u_int32_t	pci_rev;
+	u_int32_t	mc_err0;
+	u_int32_t	mc_err1;
+	u_int32_t	cap_err;
+	u_int32_t	mdpa_stat;
+	u_int32_t	mdpa_syn;
+	u_int32_t	mdpb_stat;
+	u_int32_t	mdpb_syn;
+	u_int64_t	end_rsvd;
+} mc_soft300;
+#define	CAP_ERR_CRDX	204
+
+static void
+kn300_softerr(mces, type, logout, framep)
+	unsigned long mces;
+	unsigned long type;
+	unsigned long logout;
+	struct trapframe *framep;
+{
+	static const char *sys = "system";
+	static const char *proc = "processor";
+	int whami;
+	mc_hdr_ev5 *hdr;
+	mc_soft300 *ptr;
+	static const char *fmt1 = "        %-25s = 0x%l016x\n";
+
+	hdr = (mc_hdr_ev5 *) logout;
+	ptr = (mc_soft300 *) (logout + sizeof (*hdr));
+	whami = alpha_pal_whami();
+
+	printf("kn300: CPU ID %d %s correctable error corrected by %s\n", whami,
+	    (type == ALPHA_SYS_ERROR)?  sys : proc,
+	    ((hdr->mcheck_code & 0xff00) == (EV5_CORRECTED << 16))? proc :
+	    (((hdr->mcheck_code & 0xff00) == (CAP_ERR_CRDX << 16)) ?
+		"I/O Bridge Module" : sys));
+
+	printf("    Machine Check Code 0x%lx\n", hdr->mcheck_code);
+	printf("    Physical Addess of error %0xl016x", ptr->ei_addr);
+	if (ptr->ei_stat & 0x80000000L)
+		printf("Corrected ECC Error ");
+	if (ptr->ei_stat & 0x40000000L)
+		printf("in Memory ");
+	else
+		printf("in B-Cache ");
+	if (ptr->ei_stat & 0x400000000L)
+		printf("during I-Cache fill\n");
+	else
+		printf("during D-Cache fill\n");
+
+	printf(fmt1, "EI Status", ptr->ei_stat);
+	printf(fmt1, "Fill Syndrome", ptr->fill_syndrome);
+	printf(fmt1, "Interrupt Status Reg.", ptr->isr);
+	printf("\n");
+	printf(fmt1, "Whami Reg.", ptr->whami);
+	printf(fmt1, "Sys. Env. Reg.", ptr->sys_env);
+	printf(fmt1, "MCPCIA Regs.", ptr->mcpcia_regs);
+	printf(fmt1, "PCI Rev. Reg.", ptr->pci_rev);
+	printf(fmt1, "MC_ERR0 Reg.", ptr->mc_err0);
+	printf(fmt1, "MC_ERR1 Reg.", ptr->mc_err1);
+	printf(fmt1, "CAP_ERR Reg.", ptr->cap_err);
+	printf(fmt1, "MDPA_STAT Reg.", ptr->mdpa_stat);
+	printf(fmt1, "MDPA_SYN Reg.", ptr->mdpa_syn);
+	printf(fmt1, "MDPB_STAT Reg.", ptr->mdpb_stat);
+	printf(fmt1, "MDPB_SYN Reg.", ptr->mdpb_syn);
+
+	/*
+	 * Clear error by rewriting register.
+	 */
+	alpha_pal_wrmces(mces);
+}
+
+/*
+ * KN300 specific machine check handler
+ */
+
+static void
+kn300_mcheck(mces, type, logout, framep)
+	unsigned long mces;
+	unsigned long type;
+	unsigned long logout;
+	struct trapframe *framep;
+{
+	struct mchkinfo *mcp;
+	static const char *fmt1 = "        %-25s = 0x%l016x\n";
+	int i;	
+	mc_hdr_ev5 *hdr;
+	mc_uc_ev5 *ptr;
+	struct mcpcia_iodsnap *iodsnp;
+
+	/*
+	 * If we expected a machine check, just go handle it in common code.
+	 */
+	mcp = &mchkinfo[alpha_pal_whami()];
+	if (mcp->mc_expected) {
+		machine_check(mces, framep, type, logout);
+		return;
+	}
+
+	hdr = (mc_hdr_ev5 *) logout;
+	ptr = (mc_uc_ev5 *) (logout + sizeof (*hdr));
+	ev5_logout_print(hdr, ptr);
+
+	iodsnp = (struct mcpcia_iodsnap *) ((unsigned long) hdr +
+	    (unsigned long) hdr->la_system_offset);
+	for (i = 0; i < MCPCIA_PER_MCBUS; i++, iodsnp++) {
+		if (!IS_MCPCIA_MAGIC(iodsnp->pci_rev)) {
+			continue;
+		}
+		printf("        IOD %d register dump:\n", i);
+		printf(fmt1, "Base Addr of PCI bridge", iodsnp->base_addr);
+		printf(fmt1, "Whami Reg.", iodsnp->whami);
+		printf(fmt1, "Sys. Env. Reg.", iodsnp->sys_env);
+		printf(fmt1, "PCI Rev. Reg.", iodsnp->pci_rev);
+		printf(fmt1, "CAP_CTL Reg.", iodsnp->cap_ctrl);
+		printf(fmt1, "HAE_MEM Reg.", iodsnp->hae_mem);
+		printf(fmt1, "HAE_IO Reg.", iodsnp->hae_io);
+		printf(fmt1, "INT_CTL Reg.", iodsnp->int_ctl);
+		printf(fmt1, "INT_REG Reg.", iodsnp->int_reg);
+		printf(fmt1, "INT_MASK0 Reg.", iodsnp->int_mask0);
+		printf(fmt1, "INT_MASK1 Reg.", iodsnp->int_mask1);
+		printf(fmt1, "MC_ERR0 Reg.", iodsnp->mc_err0);
+		printf(fmt1, "MC_ERR1 Reg.", iodsnp->mc_err1);
+		printf(fmt1, "CAP_ERR Reg.", iodsnp->cap_err);
+		printf(fmt1, "PCI_ERR1 Reg.", iodsnp->pci_err1);
+		printf(fmt1, "MDPA_STAT Reg.", iodsnp->mdpa_stat);
+		printf(fmt1, "MDPA_SYN Reg.", iodsnp->mdpa_syn);
+		printf(fmt1, "MDPB_STAT Reg.", iodsnp->mdpb_stat);
+		printf(fmt1, "MDPB_SYN Reg.", iodsnp->mdpb_syn);
+
+	}
+	/*
+	 * Now that we've printed all sorts of useful information
+	 * and have decided that we really can't do any more to
+	 * respond to the error, go on to the common code for
+	 * final disposition. Usually this means that we die.
+	 */
+	/*
+	 * XXX: HANDLE PCI ERRORS HERE?
+	 */
+	machine_check(mces, framep, type, logout);
+}
+
+static void
+dec_kn300_mcheck_handler(mces, framep, vector, param)
+	unsigned long mces;
+	struct trapframe *framep;
+	unsigned long vector;
+	unsigned long param;
+{
+	switch (vector) {
+	case ALPHA_SYS_ERROR:
+	case ALPHA_PROC_ERROR:
+		kn300_softerr(mces, vector, param, framep);
+		break;
+
+	case ALPHA_SYS_MCHECK:
+	case ALPHA_PROC_MCHECK:
+		kn300_mcheck(mces, vector, param, framep);
+		break;
+	default:
+		printf("KN300_MCHECK: unknown check vector %x\n", vector);
+		machine_check(mces, framep, vector, param);
+		break;
 	}
 }
