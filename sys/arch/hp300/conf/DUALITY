@@ -1,4 +1,4 @@
-#	$NetBSD: DUALITY,v 1.34 1998/06/26 01:53:54 lukem Exp $
+#	$NetBSD: DUALITY,v 1.35 1999/07/29 10:37:16 augustss Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -31,6 +31,7 @@ options 	COMPAT_10	# compatibility with NetBSD 1.0
 options 	COMPAT_11	# compatibility with NetBSD 1.1
 options 	COMPAT_12	# compatibility with NetBSD 1.2
 options 	COMPAT_13	# compatibility with NetBSD 1.3
+options 	COMPAT_14	# compatibility with NetBSD 1.4
 options 	SYSVSHM		# System V-style shared memory
 #options 	SYSVSEM		# System V-style semaphores
 #options 	SYSVMSG		# System V-style message queues

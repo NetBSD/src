@@ -1,4 +1,4 @@
-# $NetBSD: RAWHIDE,v 1.6 1999/02/18 20:39:05 thorpej Exp $
+# $NetBSD: RAWHIDE,v 1.7 1999/07/29 10:37:13 augustss Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
@@ -30,6 +30,7 @@ options 	GATEWAY
 options 	COMPAT_43
 options 	COMPAT_12
 options 	COMPAT_13
+options 	COMPAT_14
 options 	SYSVMSG
 options 	SYSVSEM
 options 	SYSVSHM

@@ -1,4 +1,4 @@
-#	$NetBSD: BIKINI,v 1.14 1999/07/05 09:14:09 fvdl Exp $
+#	$NetBSD: BIKINI,v 1.15 1999/07/29 10:37:17 augustss Exp $
 #	From: GENERIC,v 1.220 1999/02/16 17:46:17 abs Exp
 #
 #	BIKINI -- Mycroft's development machine
@@ -77,6 +77,7 @@ options 	COMPAT_10	# NetBSD 1.0,
 options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_12	# NetBSD 1.2,
 options 	COMPAT_13	# NetBSD 1.3,
+options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_43	# and 4.3BSD
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 

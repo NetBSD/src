@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HADES,v 1.19 1998/11/20 12:54:37 leo Exp $
+#	$NetBSD: HADES,v 1.20 1999/07/29 10:37:16 augustss Exp $
 #
 # Medusa-Hades
 #
@@ -60,6 +60,7 @@ options 	COMPAT_10	# Compatibility to NetBSD1.0
 options 	COMPAT_11	# Compatibility to NetBSD1.1
 options 	COMPAT_12	# Compatibility to NetBSD1.2
 options 	COMPAT_13	# Compatibility to NetBSD1.3
+options 	COMPAT_14	# Compatibility to NetBSD1.4
 
 #
 # Support for System V IPC facilities.
