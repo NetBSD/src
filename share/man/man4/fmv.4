@@ -1,4 +1,4 @@
-.\" $NetBSD: fmv.4,v 1.6 2002/10/05 15:45:04 tsutsui Exp $
+.\" $NetBSD: fmv.4,v 1.7 2002/11/29 18:00:02 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,6 +61,10 @@ Supported boards include:
 .It Tn Fujitsu FMV-182A ISA Ethernet
 .It Tn Fujitsu FMV-183 ISA-PnP Ethernet
 .El
+.Pp
+For Fujitsu FMV-186/186A/188 PCI Ethernet adapters, use
+.Xr fxp 4
+driver.
 .Sh SEE ALSO
 .Xr ate 4 ,
 .Xr ifmedia 4 ,
