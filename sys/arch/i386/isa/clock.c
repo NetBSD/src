@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.54 1998/10/12 15:41:11 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.55 1998/10/13 15:14:13 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -522,7 +522,6 @@ inittodr(base)
 		printf("WARNING: invalid time in clock chip\n");
 		goto fstime;
 	}
-	/* XXX Does reading the century from NVRAM need to be at splclock? */
 	century = mc146818_read(NULL, NVRAM_CENTURY); /* XXX softc */
 	splx(s);
 
@@ -538,17 +537,17 @@ inittodr(base)
 		/* XXX note: saying "century is 20" might confuse the naive. */
 		printf("WARNING: NVRAM century is %d but RTC year is %d\n",
 		    century, yr);
-	}
-	/* Kludge to roll over century. */
-	if ((century == 19) && (tcentury == 20) && (yr == 00)) {
-		printf("WARNING: Setting NVRAM century to 20\n");
-		/* XXX Does writing the century need to be at splclock? */
-		s = splclock();
-		/* note: 0x20 = 20 in BCD. */
-		mc146818_write(NULL, NVRAM_CENTURY, 0x20); /* XXX softc */
-		splx(s);
-	} else {
-		printf("WARNING: CHECK AND RESET THE DATE!\n");
+
+		/* Kludge to roll over century. */
+		if ((century == 19) && (tcentury == 20) && (yr == 00)) {
+			printf("WARNING: Setting NVRAM century to 20\n");
+			s = splclock();
+			/* note: 0x20 = 20 in BCD. */
+			mc146818_write(NULL, NVRAM_CENTURY, 0x20); /*XXXsoftc*/
+			splx(s);
+		} else {
+			printf("WARNING: CHECK AND RESET THE DATE!\n");
+		}
 	}
 	yr = (tcentury == 20) ? yr+100 : yr;
  
@@ -655,7 +654,6 @@ resettodr()
 
 	s = splclock();
 	rtcput(&rtclk);
-	/* XXX Does writing the century need to be at splclock? */
 	mc146818_write(NULL, NVRAM_CENTURY, century); /* XXX softc */
 	splx(s);
 }
