@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.24 1997/06/05 00:27:13 pk Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.25 1997/06/05 01:52:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -65,23 +65,23 @@
  *	* swap in use.
  *	* swap enabled.
  *
- * The arguments to swap(2) are:
+ * The arguments to swapctl(2) are:
  *	int cmd;
  *	void *arg;
  *	int misc;
  * The cmd can be one of:
- *	SWAP_NSWAP - swap(2) returns the number of swap devices currently in
+ *	SWAP_NSWAP - swapctl(2) returns the number of swap devices currently in
  *		use.
- *	SWAP_STATS - swap(2) takes a struct ent * in (void *arg) and writes
+ *	SWAP_STATS - swapctl(2) takes a struct ent * in (void *arg) and writes
  *		misc or fewer (to zero) entries of configured swap devices,
  *		and returns the number of entries written or -1 on error.
- *	SWAP_ON - swap(2) takes a (char *) in arg to be the pathname of a
+ *	SWAP_ON - swapctl(2) takes a (char *) in arg to be the pathname of a
  *		device or file to begin swapping on, with it's priority in
  *		misc, returning 0 on success and -1 on error.
- *	SWAP_OFF - swap(2) takes a (char *) n arg to be the pathname of a
+ *	SWAP_OFF - swapctl(2) takes a (char *) n arg to be the pathname of a
  *		device or file to stop swapping on.  returning 0 or -1.
  *		XXX unwritten.
- *	SWAP_CTL - swap(2) changes the priority of a swap device, using the
+ *	SWAP_CTL - swapctl(2) changes the priority of a swap device, using the
  *		misc value.
  */
 
