@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.37.2.1 1999/10/19 17:39:36 thorpej Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.37.2.2 1999/11/01 22:54:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipiconf.h>
+#include <dev/scsipi/scsipi_base.h>
 #include <dev/scsipi/scsiconf.h>
 #include <sys/scsiio.h>
 
@@ -137,42 +138,47 @@ scsipi_user_done(xs)
 	struct scsi_ioctl *si;
 	scsireq_t *screq;
 	struct scsipi_periph *periph = xs->xs_periph;
+	int s;
 
 	bp = xs->bp;
-	if (bp == NULL) {	/* ALL user requests must have a buf */
+#ifdef DIAGNOSTIC
+	if (bp == NULL) {
 		scsipi_printaddr(periph);
-		printf("User command with no buf\n");
-		return;
+		printf("user command with no buf\n");
+		panic("scsipi_user_done");
 	}
+#endif
 	si = si_find(bp);
+#ifdef DIAGNOSTIC
 	if (si == NULL) {
 		scsipi_printaddr(periph);
-		printf("User command with no ioctl\n");
-		return;
+		printf("user command with no ioctl\n");
+		panic("scsipi_user_done");
 	}
+#endif
 
 	screq = &si->si_screq;
 
-	SC_DEBUG(xs->sc_link, SDEV_DB2, ("user-done\n"));
+	SC_DEBUG(xs->xs_periph, SCSIPI_DB2, ("user-done\n"));
 
 	screq->retsts = 0;
 	screq->status = xs->status;
 	switch (xs->error) {
 	case XS_NOERROR:
-		SC_DEBUG(sc_link, SDEV_DB3, ("no error\n"));
+		SC_DEBUG(periph, SCSIPI_DB3, ("no error\n"));
 		screq->datalen_used =
 		    xs->datalen - xs->resid;	/* probably rubbish */
 		screq->retsts = SCCMD_OK;
 		break;
 	case XS_SENSE:
-		SC_DEBUG(sc_link, SDEV_DB3, ("have sense\n"));
+		SC_DEBUG(periph, SCSIPI_DB3, ("have sense\n"));
 		screq->senselen_used = min(sizeof(xs->sense.scsi_sense),
 		    SENSEBUFLEN);
-		bcopy(&xs->sense.scsi_sense, screq->sense, screq->senselen);
+		memcpy(screq->sense, &xs->sense.scsi_sense, screq->senselen);
 		screq->retsts = SCCMD_SENSE;
 		break;
 	case XS_SHORTSENSE:
-		SC_DEBUG(sc_link, SDEV_DB3, ("have short sense\n"));
+		SC_DEBUG(periph, SCSIPI_DB3, ("have short sense\n"));
 		screq->senselen_used = min(sizeof(xs->sense.atapi_sense),
 		    SENSEBUFLEN);
 		bcopy(&xs->sense.scsi_sense, screq->sense, screq->senselen);
@@ -180,29 +186,35 @@ scsipi_user_done(xs)
 		break;
 	case XS_DRIVER_STUFFUP:
 		scsipi_printaddr(periph);
-		printf("host adapter code inconsistency\n");
+		printf("passthrough: adapter inconsistency\n");
 		screq->retsts = SCCMD_UNKNOWN;
 		break;
 	case XS_SELTIMEOUT:
-		SC_DEBUG(sc_link, SDEV_DB3, ("seltimeout\n"));
+		SC_DEBUG(periph, SCSIPI_DB3, ("seltimeout\n"));
 		screq->retsts = SCCMD_TIMEOUT;
 		break;
 	case XS_TIMEOUT:
-		SC_DEBUG(sc_link, SDEV_DB3, ("timeout\n"));
+		SC_DEBUG(periph, SCSIPI_DB3, ("timeout\n"));
 		screq->retsts = SCCMD_TIMEOUT;
 		break;
 	case XS_BUSY:
-		SC_DEBUG(sc_link, SDEV_DB3, ("busy\n"));
+		SC_DEBUG(periph, SCSIPI_DB3, ("busy\n"));
 		screq->retsts = SCCMD_BUSY;
 		break;
 	default:
 		scsipi_printaddr(periph);
-		printf("unknown error category %d from host adapter code\n",
+		printf("unknown error category %d from adapter\n",
 		    xs->error);
 		screq->retsts = SCCMD_UNKNOWN;
 		break;
 	}
 	biodone(bp); 	/* we're waiting on it in scsi_strategy() */
+
+	if (xs->xs_control & XS_CTL_ASYNC) {
+		s = splbio();
+		scsipi_put_xs(xs);
+		splx(s);
+	}
 }
 
 
@@ -240,7 +252,7 @@ scsistrategy(bp)
 	}
 	screq = &si->si_screq;
 	periph = si->si_periph;
-	SC_DEBUG(sc_link, SDEV_DB2, ("user_strategy\n"));
+	SC_DEBUG(periph, SCSIPI_DB2, ("user_strategy\n"));
 
 	/*
 	 * We're in trouble if physio tried to break up the transfer.
@@ -283,12 +295,12 @@ scsistrategy(bp)
 	if (error)
 		goto bad;
 
-	SC_DEBUG(sc_link, SDEV_DB3, ("about to sleep\n"));
+	SC_DEBUG(periph, SCSIPI_DB3, ("about to sleep\n"));
 	s = splbio();
 	while ((bp->b_flags & B_DONE) == 0)
 		tsleep(bp, PRIBIO, "scistr", 0);
 	splx(s);
-	SC_DEBUG(sc_link, SDEV_DB3, ("back from sleep\n"));
+	SC_DEBUG(periph, SCSIPI_DB3, ("back from sleep\n"));
 
 	return;
 
@@ -315,7 +327,7 @@ scsipi_do_ioctl(periph, dev, cmd, addr, flag, p)
 {
 	int error;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("scsipi_do_ioctl(0x%lx)\n", cmd));
+	SC_DEBUG(periph, SCSIPI_DB2, ("scsipi_do_ioctl(0x%lx)\n", cmd));
 
 	/* Check for the safe-ness of this request. */
 	switch (cmd) {
@@ -371,23 +383,21 @@ scsipi_do_ioctl(periph, dev, cmd, addr, flag, p)
 		si_free(si);
 		return (error);
 	}
-#if 0 /* XXX THORPEJ */
 	case SCIOCDEBUG: {
 		int level = *((int *)addr);
 
-		SC_DEBUG(sc_link, SDEV_DB3, ("debug set to %d\n", level));
-		sc_link->flags &= ~SDEV_DBX; /* clear debug bits */
+		SC_DEBUG(periph, SCSIPI_DB3, ("debug set to %d\n", level));
+		periph->periph_dbflags = 0;
 		if (level & 1)
-			sc_link->flags |= SDEV_DB1;
+			periph->periph_dbflags |= SCSIPI_DB1;
 		if (level & 2)
-			sc_link->flags |= SDEV_DB2;
+			periph->periph_dbflags |= SCSIPI_DB2;
 		if (level & 4)
-			sc_link->flags |= SDEV_DB3;
+			periph->periph_dbflags |= SCSIPI_DB3;
 		if (level & 8)
-			sc_link->flags |= SDEV_DB4;
+			periph->periph_dbflags |= SCSIPI_DB4;
 		return (0);
 	}
-#endif
 	case SCIOCRECONFIG:
 	case SCIOCDECONFIG:
 		return (EINVAL);

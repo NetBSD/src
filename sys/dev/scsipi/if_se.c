@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.25.2.1 1999/10/19 17:39:31 thorpej Exp $	*/
+/*	$NetBSD: if_se.c,v 1.25.2.2 1999/11/01 22:54:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -308,7 +308,7 @@ seattach(parent, self, aux)
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 	printf("\n");
-	SC_DEBUG(sc_link, SDEV_DB2, ("seattach: "));
+	SC_DEBUG(periph, SCSIPI_DB2, ("seattach: "));
 
 	/*
 	 * Store information needed to contact our base driver
@@ -1187,13 +1187,13 @@ seopen(dev, flag, fmt, p)
 	if ((error = scsipi_adapter_addref(adapt)) != 0)
 		return (error);
 
-	SC_DEBUG(sc_link, SDEV_DB1,
+	SC_DEBUG(periph, SCSIPI_DB1,
 	    ("scopen: dev=0x%x (unit %d (of %d))\n", dev, unit,
 	    se_cd.cd_ndevs));
 
 	periph->periph_flags |= PERIPH_OPEN;
 
-	SC_DEBUG(sc_link, SDEV_DB3, ("open complete\n"));
+	SC_DEBUG(periph, SCSIPI_DB3, ("open complete\n"));
 	return (0);
 }
 
@@ -1211,7 +1211,7 @@ seclose(dev, flag, fmt, p)
 	struct scsipi_periph *periph = sc->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 
-	SC_DEBUG(sc->sc_link, SDEV_DB1, ("closing\n"));
+	SC_DEBUG(sc->sc_periph, SCSIPI_DB1, ("closing\n"));
 
 	scsipi_wait_drain(periph);
 

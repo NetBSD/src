@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.24.2.4 1999/10/26 23:10:14 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.24.2.5 1999/11/01 22:54:16 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -691,7 +691,7 @@ aha_done(sc, ccb)
 	struct scsipi_sense_data *s1, *s2;
 	struct scsipi_xfer *xs = ccb->xs;
 
-	SC_DEBUG(xs->sc_link, SDEV_DB2, ("aha_done\n"));
+	SC_DEBUG(xs->xs_periph, SCSIPI_DB2, ("aha_done\n"));
 
 	/*
 	 * If we were a data transfer, unload the map that described
@@ -1149,13 +1149,14 @@ aha_scsipi_request(chan, req, arg)
 	struct aha_ccb *ccb;
 	int error, seg, flags, s;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("aha_scsipi_request\n"));
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
 		xs = arg;
 		periph = xs->xs_periph;
 		flags = xs->xs_control;
+
+		SC_DEBUG(periph, SCSIPI_DB2, ("aha_scsipi_request\n"));
 
 		/* Get a CCB to use. */
 		ccb = aha_get_ccb(sc);
@@ -1272,7 +1273,7 @@ aha_scsipi_request(chan, req, arg)
 		aha_queue_ccb(sc, ccb);
 		splx(s);
 
-		SC_DEBUG(sc_link, SDEV_DB3, ("cmd_sent\n"));
+		SC_DEBUG(periph, SCSIPI_DB3, ("cmd_sent\n"));
 		if ((flags & XS_CTL_POLL) == 0)
 			return;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.8.10.1 1999/10/19 17:39:38 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.8.10.2 1999/11/01 22:54:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@ scsipi_inqmatch(inqbuf, base, nmatches, matchsize, bestpriority)
 			continue;
 		priority += len;
 
-#ifdef SCSIDEBUG
+#ifdef SCSIPI_DEBUG
 		printf("scsipi_inqmatch: %d/%d/%d <%s, %s, %s>\n",
 		    priority, match->type, match->removable,
 		    match->vendor, match->product, match->revision);

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.32.2.5 1999/10/26 23:08:06 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.32.2.6 1999/11/01 22:54:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -322,6 +322,9 @@ struct scsipi_channel {
  *
  * XXX Given the way NetBSD's autoconfiguration works, this is ...
  * XXX nasty.
+ *
+ *	Well, it's a lot nicer than it used to be, but there could
+ *	still be an improvement.
  */
 struct scsipi_periph {
 	struct device *periph_dev;	/* pointer to peripherial's device */
@@ -344,6 +347,7 @@ struct scsipi_periph {
 	int	periph_quirks;		/* device's quirks */
 
 	int	periph_flags;		/* misc. flags */
+	int	periph_dbflags;		/* debugging flags */
 
 	int	periph_target;		/* target ID (drive # on ATAPI) */
 	int	periph_lun;		/* LUN (not used on ATAPI) */

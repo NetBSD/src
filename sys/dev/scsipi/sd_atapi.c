@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_atapi.c,v 1.5.2.1 1999/10/19 17:39:40 thorpej Exp $	*/
+/*	$NetBSD: sd_atapi.c,v 1.5.2.2 1999/11/01 22:54:20 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -115,7 +115,7 @@ sd_atapibus_attach(parent, self, aux)
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("sd_atapi_attach: "));
+	SC_DEBUG(periph, SCSIPI_DB2, ("sd_atapi_attach: "));
 
 	sd->type = (sa->sa_inqbuf.type & SID_TYPE);
 	scsipi_strvis(sd->name, 16, sa->sa_inqbuf.product, 16);
@@ -143,7 +143,7 @@ sd_atapibus_get_parms(sd, dp, flags)
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (void *)capacity_data, ATAPI_CAP_DESC_SIZE(1), SDRETRIES, 20000,
 	    NULL, flags | XS_CTL_DATA_IN);
-	SC_DEBUG(sd->sc_link, SDEV_DB2,
+	SC_DEBUG(sd->sc_periph, SCSIPI_DB2,
 	    ("sd_atapibus_get_parms: read format capacities error=%d\n",
 	    error));
 	if (error != 0)
@@ -189,7 +189,7 @@ sd_atapibus_get_parms(sd, dp, flags)
 	error = atapi_mode_sense(sd->sc_periph, ATAPI_FLEX_GEOMETRY_PAGE,
 	    (struct atapi_mode_header *)&sense_data, FLEXGEOMETRYPAGESIZE,
 	    flags, SDRETRIES, 20000);
-	SC_DEBUG(sd->sc_link, SDEV_DB2,
+	SC_DEBUG(sd->sc_periph, SCSIPI_DB2,
 	    ("sd_atapibus_get_parms: mode sense (flex) error=%d\n", error));
 	if (error != 0)
 		return (SDGP_RESULT_OK);

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.69.2.2 1999/10/20 22:46:17 thorpej Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.69.2.3 1999/11/01 22:54:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ scsi_scsipi_cmd(periph, scsipi_cmd, cmdlen, data, datalen,
 	struct scsipi_xfer *xs;
 	int error, s;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_scsipi_cmd\n"));
+	SC_DEBUG(periph, SCSIPI_DB2, ("scsi_scsipi_cmd\n"));
 
 #ifdef DIAGNOSTIC
 	if (bp != NULL && (flags & XS_CTL_ASYNC) == 0)

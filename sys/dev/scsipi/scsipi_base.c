@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.26.2.5 1999/10/26 23:08:06 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.26.2.6 1999/11/01 22:54:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -299,7 +299,7 @@ scsipi_get_xs(periph, flags)
 	struct scsipi_xfer *xs;
 	int s;
 
-	SC_DEBUG(sc_link, SDEV_DB3, ("scsipi_get_xs\n"));
+	SC_DEBUG(periph, SCSIPI_DB3, ("scsipi_get_xs\n"));
 
 	/*
 	 * If we're cold, make sure we poll.
@@ -355,11 +355,11 @@ scsipi_get_xs(periph, flags)
 			splx(s);
 			return (NULL);
 		}
-		SC_DEBUG(sc_link, SDEV_DB3, ("sleeping\n"));
+		SC_DEBUG(periph, SCSIPI_DB3, ("sleeping\n"));
 		periph->periph_flags |= PERIPH_WAITING;
 		(void) tsleep(periph, PRIBIO, "getxs", 0);
 	}
-	SC_DEBUG(sc_link, SDEV_DB3, ("calling pool_get\n"));
+	SC_DEBUG(periph, SCSIPI_DB3, ("calling pool_get\n"));
 	xs = pool_get(&scsipi_xfer_pool,
 	    ((flags & XS_CTL_NOSLEEP) != 0 ? PR_NOWAIT : PR_WAITOK));
 	if (xs == NULL) {
@@ -373,7 +373,7 @@ scsipi_get_xs(periph, flags)
 	}
 	splx(s);
 
-	SC_DEBUG(sc_link, SDEV_DB3, ("returning\n"));
+	SC_DEBUG(periph, SCSIPI_DB3, ("returning\n"));
 
 	if (xs != NULL) {
 		memset(xs, 0, sizeof(*xs));
@@ -403,7 +403,7 @@ scsipi_put_xs(xs)
 	struct scsipi_periph *periph = xs->xs_periph;
 	int flags = xs->xs_control;
 
-	SC_DEBUG(sc_link, SDEV_DB3, ("scsipi_free_xs\n"));
+	SC_DEBUG(periph, SCSIPI_DB3, ("scsipi_free_xs\n"));
 
 	TAILQ_REMOVE(&periph->periph_xferq, xs, device_q);
 	pool_put(&scsipi_xfer_pool, xs);
@@ -432,7 +432,7 @@ scsipi_put_xs(xs)
 		wakeup(periph);
 	} else {
 		if (periph->periph_switch->psw_start != NULL) {
-			SC_DEBUG(sc_link, SDEV_DB2,
+			SC_DEBUG(periph, SCSIPI_DB2,
 			    ("calling private start()\n"));
 			(*periph->periph_switch->psw_start)(periph);
 		}
@@ -624,30 +624,33 @@ scsipi_interpret_sense(xs)
 #endif
 
 	sense = &xs->sense.scsi_sense;
-#ifdef	SCSIDEBUG
-	if ((sc_link->flags & SDEV_DB1) != 0) {
+#ifdef SCSIPI_DEBUG
+	if (periph->periph_flags & SCSIPI_DB1) {
 		int count;
-		printf("code 0x%x valid 0x%x ",
+		scsipi_printaddr(periph);
+		printf(" sense debug information:\n");
+		printf("\tcode 0x%x valid 0x%x\n",
 			sense->error_code & SSD_ERRCODE,
 			sense->error_code & SSD_ERRCODE_VALID ? 1 : 0);
-		printf("seg 0x%x key 0x%x ili 0x%x eom 0x%x fmark 0x%x\n",
+		printf("\tseg 0x%x key 0x%x ili 0x%x eom 0x%x fmark 0x%x\n",
 			sense->segment,
 			sense->flags & SSD_KEY,
 			sense->flags & SSD_ILI ? 1 : 0,
 			sense->flags & SSD_EOM ? 1 : 0,
 			sense->flags & SSD_FILEMARK ? 1 : 0);
-		printf("info: 0x%x 0x%x 0x%x 0x%x followed by %d extra bytes\n",
+		printf("\ninfo: 0x%x 0x%x 0x%x 0x%x followed by %d "
+			"extra bytes\n",
 			sense->info[0],
 			sense->info[1],
 			sense->info[2],
 			sense->info[3],
 			sense->extra_len);
-		printf("extra: ");
+		printf("\textra: ");
 		for (count = 0; count < ADD_BYTES_LIM(sense); count++)
 			printf("0x%x ", sense->cmd_spec_info[count]);
 		printf("\n");
 	}
-#endif	/* SCSIDEBUG */
+#endif
 
 	/*
 	 * If the periph has it's own error handler, call it first.
@@ -655,7 +658,7 @@ scsipi_interpret_sense(xs)
 	 * it wants us to continue with normal error processing.
 	 */
 	if (periph->periph_switch->psw_error != NULL) {
-		SC_DEBUG(sc_link, SDEV_DB2,
+		SC_DEBUG(periph, SCSIPI_DB2,
 		    ("calling private err_handler()\n"));
 		error = (*periph->periph_switch->psw_error)(xs);
 		if (error != EJUSTRETURN)
@@ -955,11 +958,11 @@ scsipi_done(xs)
 	struct scsipi_channel *chan = periph->periph_channel;
 	int s, freezecnt;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("scsipi_done\n"));
-#ifdef	SCSIDEBUG
-	if ((sc_link->flags & SDEV_DB1) != 0)
+	SC_DEBUG(periph, SCSIPI_DB2, ("scsipi_done\n"));
+#ifdef SCSIPI_DEBUG
+	if (periph->periph_dbflags & SCSIPI_DB1)
 		show_scsipi_cmd(xs);
-#endif /* SCSIDEBUG */
+#endif
 
 	s = splbio();
 	/*
@@ -984,9 +987,9 @@ scsipi_done(xs)
 	 */
 	if ((xs->xs_control & XS_CTL_USERCMD) != 0) {
 		splx(s);
-		SC_DEBUG(sc_link, SDEV_DB3, ("calling user done()\n"));
+		SC_DEBUG(periph, SCSIPI_DB3, ("calling user done()\n"));
 		scsipi_user_done(xs);
-		SC_DEBUG(sc_link, SDEV_DB3, ("returned from user done()\n "));
+		SC_DEBUG(periph, SCSIPI_DB3, ("returned from user done()\n "));
 		goto out;
 	}
 
@@ -1423,9 +1426,9 @@ scsipi_execute_xs(xs)
 	xs->resid = xs->datalen;
 	xs->status = SCSI_OK;
 
-#ifdef SCSIDEBUG
-	if (xs->sc_link->flags & SDEV_DB3) {
-		printf("scsipi_exec_cmd: ");
+#ifdef SCSIPI_DEBUG
+	if (xs->xs_periph->periph_dbflags & SCSIPI_DB3) {
+		printf("scsipi_execute_xs: ");
 		show_scsipi_xs(xs);
 		printf("\n");
 	}
@@ -1728,21 +1731,28 @@ scsipi_async_event_max_openings(chan, mo)
 	struct scsipi_max_openings *mo;
 {
 	struct scsipi_periph *periph;
+	int minlun, maxlun;
 
-	periph = scsipi_lookup_periph(chan, mo->mo_target, mo->mo_lun);
-	if (periph == NULL) {
-		printf("%s:%d: xfer mode update for non-existent periph at "
-		    "target %d lun %d\n",
-		    chan->chan_adapter->adapt_dev->dv_xname,
-		    chan->chan_channel, mo->mo_target, mo->mo_lun);
-		return;
+	if (mo->mo_lun == -1) {
+		/*
+		 * Wildcarded; apply it to all LUNs.
+		 */
+		minlun = 0;
+		maxlun = chan->chan_nluns - 1;
+	} else
+		minlun = maxlun = mo->mo_lun;
+
+	for (; minlun <= maxlun; minlun++) {
+		periph = scsipi_lookup_periph(chan, mo->mo_target, minlun);
+		if (periph == NULL)
+			continue;
+
+		if (mo->mo_openings < periph->periph_openings)
+			periph->periph_openings = mo->mo_openings;
+		else if (mo->mo_openings > periph->periph_openings &&
+		    (periph->periph_flags & PERIPH_GROW_OPENINGS) != 0)
+			periph->periph_openings = mo->mo_openings;
 	}
-
-	if (mo->mo_openings < periph->periph_openings)
-		periph->periph_openings = mo->mo_openings;
-	else if (mo->mo_openings > periph->periph_openings &&
-	    (periph->periph_flags & PERIPH_GROW_OPENINGS) != 0)
-		periph->periph_openings = mo->mo_openings;
 }
 
 /*
@@ -1943,7 +1953,7 @@ scsipi_sync_factor_to_freq(factor)
 	return (10000000 / ((factor * 4) * 10));
 }
 
-#ifdef SCSIDEBUG
+#ifdef SCSIPI_DEBUG
 /*
  * Given a scsipi_xfer, dump the request, in all it's glory
  */
@@ -1955,7 +1965,7 @@ show_scsipi_xs(xs)
 	printf("xs(%p): ", xs);
 	printf("xs_control(0x%08x)", xs->xs_control);
 	printf("xs_status(0x%08x)", xs->xs_status);
-	printf("sc_link(%p)", xs->sc_link);
+	printf("periph(%p)", xs->xs_periph);
 	printf("retr(0x%x)", xs->xs_retries);
 	printf("timo(0x%x)", xs->timeout);
 	printf("cmd(%p)", xs->cmd);
@@ -1975,8 +1985,8 @@ show_scsipi_cmd(xs)
 	u_char *b = (u_char *) xs->cmd;
 	int i = 0;
 
-	(*xs->sc_link->sc_print_addr)(xs->sc_link);
-	printf("command: ");
+	scsipi_printaddr(xs->xs_periph);
+	printf(" command: ");
 
 	if ((xs->xs_control & XS_CTL_RESET) == 0) {
 		while (i < xs->cmdlen) {
@@ -2006,4 +2016,4 @@ show_mem(address, num)
 	}
 	printf("\n------------------------------\n");
 }
-#endif /*SCSIDEBUG */
+#endif /* SCSIPI_DEBUG */

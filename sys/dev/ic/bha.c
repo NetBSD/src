@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.33.2.5 1999/10/26 23:10:15 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.33.2.6 1999/11/01 22:54:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -297,13 +297,13 @@ bha_scsipi_request(chan, req, arg)
 	struct bha_ccb *ccb;
 	int error, seg, flags, s;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("bha_scsi_cmd\n"));
-
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
 		xs = arg;
 		periph = xs->xs_periph;
 		flags = xs->xs_control;
+
+		SC_DEBUG(periph, SCSIPI_DB2, ("bha_scsipi_request\n"));
 
 		/* Get a CCB to use. */
 		ccb = bha_get_ccb(sc);
@@ -426,7 +426,7 @@ bha_scsipi_request(chan, req, arg)
 		bha_queue_ccb(sc, ccb);
 		splx(s);
 
-		SC_DEBUG(sc_link, SDEV_DB3, ("cmd_sent\n"));
+		SC_DEBUG(periph, SCSIPI_DB3, ("cmd_sent\n"));
 		if ((flags & XS_CTL_POLL) == 0)
 			return;
 
@@ -602,7 +602,7 @@ bha_done(sc, ccb)
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct scsipi_xfer *xs = ccb->xs;
 
-	SC_DEBUG(xs->sc_link, SDEV_DB2, ("bha_done\n"));
+	SC_DEBUG(xs->xs_periph, SCSIPI_DB2, ("bha_done\n"));
 
 #ifdef BHADIAG
 	if (ccb->flags & CCB_SENDING) {

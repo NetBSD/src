@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.28.2.3 1999/10/20 22:53:31 thorpej Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.28.2.4 1999/11/01 22:54:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -167,7 +167,7 @@ atapibussubmatch(parent, cf, aux)
 
 #if 0
 void
-atapi_fixquirk(sc_link)
+atapi_fixquirk(periph)
 	struct scsipi_link *ad_link;
 {
 	struct ataparams *id = &ad_link->id;
@@ -351,10 +351,11 @@ atapi_probe_device(sc, target)
 
 		TAILQ_INIT(&periph->periph_xferq);
 
-#if defined(SCSIDEBUG) && DEBUGTYPE == BUS_ATAPI
-		if (DEBUGTARGET == -1 || target == DEBUGTARGET)
-			sc_link->flags |= DEBUGLEVEL;
-#endif /* SCSIDEBUG */
+#ifdef SCSIPI_DEBUG
+		if (SCSIPI_DEBUG_TYPE == SCSIPI_BUSTYPE_ATAPI &&
+		    SCSIPI_DEBUG_TARGET == target)
+			periph->periph_dbflags |= SCSIPI_DEBUG_FLAGS;
+#endif
 
 		periph->periph_type = ATAPI_CFG_TYPE(id->atap_config);
 		if (id->atap_config & ATAPI_CFG_REMOV)

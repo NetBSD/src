@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.37.2.5 1999/10/29 22:19:30 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.37.2.6 1999/11/01 22:54:16 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -156,11 +156,6 @@
 
 #define bootverbose	1
 
-#define DEBUGTARG	DEBUGTARGET
-#if DEBUGTARG < 0	/* Negative numbers for disabling cause warnings */
-#undef DEBUGTARG
-#define DEBUGTARG	17
-#endif
 #ifdef alpha		/* XXX */
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */ 
 extern paddr_t alpha_XXX_dmamap(vaddr_t);
@@ -778,7 +773,7 @@ ahc_run_waiting_queues(ahc)
 			timeout(ahc_timeout, (caddr_t)scb,
 				(scb->xs->timeout * hz) / 1000);
 		}
-		SC_DEBUG(scb->xs->sc_link, SDEV_DB3, ("cmd_sent\n"));
+		SC_DEBUG(scb->xs->xs_periph, SCSIPI_DB3, ("cmd_sent\n"));
 	}
 	/* Now deal with SCBs that require paging */
 	if((scb = ahc->waiting_scbs.stqh_first) != NULL) {
@@ -838,7 +833,7 @@ ahc_run_waiting_queues(ahc)
 					timeout(ahc_timeout, (caddr_t)scb,
 						(scb->xs->timeout * hz) / 1000);
 				}
-				SC_DEBUG(scb->xs->sc_link, SDEV_DB3,
+				SC_DEBUG(scb->xs->xs_periph, SCSIPI_DB3,
 					("cmd_paged-in\n"));
 				count++;
 
@@ -1557,7 +1552,7 @@ ahc_handle_seqint(ahc, intstat)
 
 #ifdef AHC_DEBUG
 		if((ahc_debug & AHC_SHOWSCBS)
-		   && xs->xs_periph->periph_target == DEBUGTARG)
+		   && xs->xs_periph->periph_target == SCSIPI_DEBUG_TARGET)
 			ahc_print_scb(scb);
 #endif
 		xs->status = scb->status;
@@ -1915,7 +1910,7 @@ ahc_done(ahc, scb)
 {
 	struct scsipi_xfer *xs = scb->xs;
 
-	SC_DEBUG(xs->sc_link, SDEV_DB2, ("ahc_done\n"));
+	SC_DEBUG(xs->xs_periph, SCSIPI_DB2, ("ahc_done\n"));
 
 #if defined(__NetBSD__)
 	/*
@@ -2389,7 +2384,7 @@ ahc_scsipi_request(chan, req, arg)
 	int	error;
 	int	s;
 
-	SC_DEBUG(xs->sc_link, SDEV_DB2, ("ahc_scsipi_request\n"));
+	SC_DEBUG(xs->xs_periph, SCSIPI_DB2, ("ahc_scsipi_request\n"));
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
@@ -2417,7 +2412,7 @@ ahc_scsipi_request(chan, req, arg)
 		}
 #endif
 
-		SC_DEBUG(xs->sc_link, SDEV_DB3, ("start scb(%p)\n", scb));
+		SC_DEBUG(xs->xs_periph, SCSIPI_DB3, ("start scb(%p)\n", scb));
 		scb->xs = xs;
 		if (flags & XS_CTL_RESET) {
 			scb->flags |= SCB_DEVICE_RESET|SCB_IMMED;
@@ -2453,7 +2448,7 @@ ahc_scsipi_request(chan, req, arg)
 		xs->resid = 0;
 		xs->status = 0;
 		if (xs->datalen) {
-			SC_DEBUG(xs->sc_link, SDEV_DB4,
+			SC_DEBUG(xs->xs_periph, SCSIPI_DB4,
 				 ("%ld @%p:- ", (long)xs->datalen, xs->data));
 
 			error = bus_dmamap_load(ahc->sc_dt, scb->dmamap_xfer,
@@ -2470,7 +2465,7 @@ ahc_scsipi_request(chan, req, arg)
 
 			default:
 				xs->error = XS_DRIVER_STUFFUP;
-				SC_DEBUGN(xs->sc_link, SDEV_DB4, ("\n"));
+				SC_DEBUGN(xs->xs_periph, SCSIPI_DB4, ("\n"));
 				printf("%s: error %d loading DMA map\n",
 				    ahc_name(ahc), error);
  out_bad:
@@ -2495,7 +2490,7 @@ ahc_scsipi_request(chan, req, arg)
 				    scb->dmamap_xfer->dm_segs[seg].ds_addr;
 				sg->len =
 				    scb->dmamap_xfer->dm_segs[seg].ds_len;
-				SC_DEBUGN(xs->sc_link, SDEV_DB4, ("0x%lx",
+				SC_DEBUGN(xs->xs_periph, SCSIPI_DB4, ("0x%lx",
 						(u_long)sg->addr));
 #if BYTE_ORDER == BIG_ENDIAN
 				sg->addr = bswap32(sg->addr);
@@ -2503,7 +2498,7 @@ ahc_scsipi_request(chan, req, arg)
 #endif
 				sg++;
 			}
-			SC_DEBUGN(xs->sc_link, SDEV_DB4, ("\n"));
+			SC_DEBUGN(xs->xs_periph, SCSIPI_DB4, ("\n"));
 			scb->SG_segment_count = seg;
 
 			/* Copy the first SG into the data pointer area */
@@ -2529,7 +2524,7 @@ ahc_scsipi_request(chan, req, arg)
 
 #ifdef AHC_DEBUG
 		if((ahc_debug & AHC_SHOWSCBS) &&
-			(xs->sc_link->AIC_SCSI_TARGET == DEBUGTARG))
+			(xs->xs_periph->AIC_SCSI_TARGET == SCSIPI_DEBUG_TARGET))
 			ahc_print_scb(scb);
 #endif
 		s = splbio();
@@ -2551,7 +2546,7 @@ ahc_scsipi_request(chan, req, arg)
 				timeout(ahc_timeout, (caddr_t)scb,
 					(xs->timeout * hz) / 1000);
 			}
-			SC_DEBUG(xs->sc_link, SDEV_DB3, ("cmd_sent\n"));
+			SC_DEBUG(xs->xs_periph, SCSIPI_DB3, ("cmd_sent\n"));
 		}
 		else {
 			scb->flags |= SCB_WAITINGQ;
@@ -2565,7 +2560,7 @@ ahc_scsipi_request(chan, req, arg)
 		/*
 		 * If we can't use interrupts, poll for completion
 		 */
-		SC_DEBUG(xs->sc_link, SDEV_DB3, ("cmd_poll\n"));
+		SC_DEBUG(xs->xs_periph, SCSIPI_DB3, ("cmd_poll\n"));
 		do {
 			if (ahc_poll(ahc, xs->timeout)) {
 				if (!(xs->xs_control & XS_CTL_SILENT))

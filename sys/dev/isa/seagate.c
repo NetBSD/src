@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.34.2.2 1999/10/26 23:10:17 thorpej Exp $	*/
+/*	$NetBSD: seagate.c,v 1.34.2.3 1999/11/01 22:54:15 thorpej Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -572,7 +572,7 @@ sea_scsipi_request(chan, req, arg)
 		periph = xs->xs_periph;
 		flags = xs->xs_control;
 
-		SC_DEBUG(sc_link, SDEV_DB2, ("sea_scsipi_requeset\n"));
+		SC_DEBUG(periph, SCSIPI_DB2, ("sea_scsipi_requeset\n"));
 
 		/* XXX Reset not implemented. */
 		if (flags & XS_CTL_RESET) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.26.2.1 1999/10/19 17:39:42 thorpej Exp $	*/
+/*	$NetBSD: ss.c,v 1.26.2.2 1999/11/01 22:54:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -129,7 +129,7 @@ ssattach(parent, self, aux)
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("ssattach: "));
+	SC_DEBUG(periph, SCSIPI_DB2, ("ssattach: "));
 
 	ss->flags |= SSF_AUTOCONF;
 
@@ -144,7 +144,7 @@ ssattach(parent, self, aux)
 	 * look for non-standard scanners with help of the quirk table
 	 * and install functions for special handling
 	 */
-	SC_DEBUG(sc_link, SDEV_DB2, ("ssattach:\n"));
+	SC_DEBUG(periph, SCSIPI_DB2, ("ssattach:\n"));
 	if (!bcmp(sa->sa_inqbuf.vendor, "MUSTEK", 6))
 		mustek_attach(ss, sa);
 	if (!bcmp(sa->sa_inqbuf.vendor, "HP      ", 8))
@@ -191,7 +191,7 @@ ssopen(dev, flag, mode, p)
 	periph = ss->sc_periph;
 	adapt = periph->periph_channel->chan_adapter;
 
-	SC_DEBUG(sc_link, SDEV_DB1, ("open: dev=0x%x (unit %d (of %d))\n", dev,
+	SC_DEBUG(periph, SCSIPI_DB1, ("open: dev=0x%x (unit %d (of %d))\n", dev,
 	    unit, ss_cd.cd_ndevs));
 
 	if (periph->periph_flags & PERIPH_OPEN) {
@@ -225,7 +225,7 @@ ssopen(dev, flag, mode, p)
 	if (ssmode == MODE_CONTROL)
 		return (0);
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("open complete\n"));
+	SC_DEBUG(periph, SCSIPI_DB2, ("open complete\n"));
 	return (0);
 
 bad:
@@ -250,7 +250,7 @@ ssclose(dev, flag, mode, p)
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 	int error;
 
-	SC_DEBUG(ss->sc_link, SDEV_DB1, ("closing\n"));
+	SC_DEBUG(ss->sc_periph, SCSIPI_DB1, ("closing\n"));
 
 	if (SSMODE(dev) == MODE_REWIND) {
 		if (ss->special && ss->special->rewind_scanner) {
@@ -338,7 +338,7 @@ ssstrategy(bp)
 	struct buf *dp;
 	int s;
 
-	SC_DEBUG(ss->sc_link, SDEV_DB1,
+	SC_DEBUG(ss->sc_periph, SCSIPI_DB1,
 	    ("ssstrategy %ld bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
 
 	/* If negative offset, error */
@@ -409,7 +409,7 @@ ssstart(periph)
 	struct ss_softc *ss = (void *)periph->periph_dev;
 	register struct buf *bp, *dp;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("ssstart "));
+	SC_DEBUG(periph, SCSIPI_DB2, ("ssstart "));
 	/*
 	 * See if there is a buf to do and we are not already
 	 * doing one
