@@ -1,4 +1,4 @@
-/* $NetBSD: linux_machdep.h,v 1.1 2001/08/26 16:18:03 manu Exp $ */
+/* $NetBSD: linux_machdep.h,v 1.2 2001/09/02 08:39:37 manu Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,8 +41,23 @@
 
 #include <compat/linux/common/linux_signal.h>
 
+#if defined(ELFSIZE) && (ELFSIZE == 64)
+struct linux_sigcontext {
+	unsigned long long sc_regs[32];
+	unsigned long long sc_fpregs[32];
+	unsigned long long sc_mdhi;
+	unsigned long long sc_mdlo;
+	unsigned long long sc_pc;
+	unsigned int sc_status;
+	unsigned int sc_ownedfp;
+	unsigned int sc_fpc_csr;
+	unsigned int sc_fpc_eir;
+	unsigned int sc_cause;
+	unsigned int sc_badvaddr;
+}
+#else
 /* 
- * From Linux's include/asm-mips/sigcontext.h 
+ * From Linux's include/asm-mips64/sigcontext.h 
  */
 struct linux_sigcontext { 
 	unsigned int lsc_regmask;		/* Unused */
@@ -60,6 +75,7 @@ struct linux_sigcontext {
 	unsigned int lsc_badvaddr;	  	/* Unused */
 	unsigned long lsc_sigset[4]; 		/* kernel's sigset_t */	
 };
+#endif
 
 /*
  * From Linux's include/asm-mips/elf.h
@@ -74,7 +90,7 @@ typedef linux_elf_greg_t linux_elf_gregset_t[LINUX_ELF_NGREG];
  */
 struct linux_sigframe {
 	unsigned int lsf_ass[4];
-	unsigned int u32 lsf_code[2];
+	unsigned int lsf_code[2];
 	struct linux_sigcontext lsf_sc;
 	sigset_t lsf_mask;
 };
