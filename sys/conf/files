@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.493 2002/02/02 18:37:44 jdolecek Exp $
+#	$NetBSD: files,v 1.494 2002/02/11 18:03:00 jdolecek Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -13,7 +13,7 @@ defparam			RTC_OFFSET
 defparam			DEFCORENAME
 defflag				UCONSOLE
 defflag				NEW_PIPE
-defflag				PIPE_SOCKETPAIR
+defflag	opt_pipe.h		PIPE_SOCKETPAIR PIPE_NODIRECT
 
 defflag				MULTIPROCESSOR
 
