@@ -1,4 +1,4 @@
-/*	$NetBSD: lastlogin.c,v 1.6 2001/02/19 23:22:44 cgd Exp $	*/
+/*	$NetBSD: lastlogin.c,v 1.7 2003/08/28 15:54:41 elric Exp $	*/
 /*
  * Copyright (c) 1996 John M. Vinopal
  * All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lastlogin.c,v 1.6 2001/02/19 23:22:44 cgd Exp $");
+__RCSID("$NetBSD: lastlogin.c,v 1.7 2003/08/28 15:54:41 elric Exp $");
 #endif
 
 #include <sys/types.h>
@@ -42,14 +42,34 @@ __RCSID("$NetBSD: lastlogin.c,v 1.6 2001/02/19 23:22:44 cgd Exp $");
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <utmp.h>
 #include <unistd.h>
 
+struct output {
+	char		 o_name[UT_NAMESIZE];
+	char		 o_line[UT_LINESIZE];
+	char		 o_host[UT_HOSTSIZE];
+	time_t		 o_time;
+	struct output	*next;
+};
+
 static	char *logfile = _PATH_LASTLOG;
 
+#define SORT_NONE	0x0000
+#define SORT_REVERSE	0x0001
+#define SORT_TIME	0x0002
+#define DOSORT(x)	((x) & (SORT_TIME))
+static	int sortlog = SORT_NONE;
+static	struct output *outstack = NULL;
+
 	int	main __P((int, char **));
-static	void	output __P((struct passwd *, struct lastlog *));
+static	int	comparelog __P((const void *, const void *));
+static	void	output __P((struct output *));
+static	void	process_entry __P((struct passwd *, struct lastlog *));
+static	void	push __P((struct output *));
+static	void	sortoutput __P((struct output *));
 static	void	usage __P((void));
 
 int
@@ -62,9 +82,20 @@ main(argc, argv)
 	struct passwd	*passwd;
 	struct lastlog	last;
 
-	while ((ch = getopt(argc, argv, "")) != -1) {
-		usage();
+	while ((ch = getopt(argc, argv, "rt")) != -1) {
+		switch (ch) {
+		case 'r':
+			sortlog |= SORT_REVERSE;
+			break;
+		case 't':
+			sortlog |= SORT_TIME;
+			break;
+		default:
+			usage();
+		}
 	}
+	argc -= optind;
+	argv += optind;
 
 	fp = fopen(logfile, "r");
 	if (fp == NULL)
@@ -91,7 +122,7 @@ main(argc, argv)
 				clearerr(fp);
 				continue;
 			}
-			output(passwd, &last);
+			process_entry(passwd, &last);
 		}
 	}
 	/* Read all lastlog entries, looking for active ones */
@@ -100,7 +131,7 @@ main(argc, argv)
 			if (last.ll_time == 0)
 				continue;
 			if ((passwd = getpwuid(i)) != NULL)
-				output(passwd, &last);
+				process_entry(passwd, &last);
 		}
 		if (ferror(fp))
 			warnx("fread error");
@@ -108,26 +139,107 @@ main(argc, argv)
 
 	setpassent(0);	/* Close passwd file pointers */
 
+	if (DOSORT(sortlog))
+		sortoutput(outstack);
+
 	fclose(fp);
 	exit(0);
 }
 
+static void
+process_entry(struct passwd *p, struct lastlog *l)
+{
+	struct output	o;
+
+	strncpy(o.o_name, p->pw_name, UT_NAMESIZE);
+	strncpy(o.o_line, l->ll_line, UT_LINESIZE);
+	strncpy(o.o_host, l->ll_host, UT_HOSTSIZE);
+	o.o_time = l->ll_time;
+	o.next = NULL;
+
+	/*
+	 * If we are sorting it, we need all the entries in memory so
+	 * push the current entry onto a stack.  Otherwise, we can just
+	 * output it.
+	 */
+	if (DOSORT(sortlog))
+		push(&o);
+	else
+		output(&o);
+}
+
+static void
+push(struct output *o)
+{
+	struct output	*out;
+
+	out = malloc(sizeof(*out));
+	if (!out)
+		err(EXIT_FAILURE, "malloc failed");
+	memcpy(out, o, sizeof(*out));
+	out->next = NULL;
+
+	if (outstack) {
+		out->next = outstack;
+		outstack = out;
+	} else {
+		outstack = out;
+	}
+}
+
+static void
+sortoutput(struct output *o)
+{
+	struct	output **outs;
+	struct	output *tmpo;
+	int	num;
+	int	i;
+
+	/* count the number of entries to display */
+	for (num=0, tmpo = o; tmpo; tmpo=tmpo->next, num++)
+		;
+
+	outs = malloc(sizeof(*outs) * num);
+	if (!outs)
+		err(EXIT_FAILURE, "malloc failed");
+	for (i=0, tmpo = o; i < num; tmpo=tmpo->next, i++)
+		outs[i] = tmpo;
+
+	mergesort(outs, num, sizeof(*outs), comparelog);
+
+	for (i=0; i < num; i++)
+		output(outs[i]);
+}
+
+static int
+comparelog(const void *left, const void *right)
+{
+	struct output *l = *(struct output **)left;
+	struct output *r = *(struct output **)right;
+	int order = (sortlog&SORT_REVERSE)?-1:1;
+
+	if (l->o_time < r->o_time)
+		return 1 * order;
+	if (l->o_time == r->o_time)
+		return 0;
+	return -1 * order;
+}
+
 /* Duplicate the output of last(1) */
 static void
-output(p, l)
-	struct passwd *p;
-	struct lastlog *l;
+output(struct output *o)
 {
+
 	printf("%-*.*s  %-*.*s %-*.*s   %s",
-		UT_NAMESIZE, UT_NAMESIZE, p->pw_name,
-		UT_LINESIZE, UT_LINESIZE, l->ll_line,
-		UT_HOSTSIZE, UT_HOSTSIZE, l->ll_host,
-		(l->ll_time) ? ctime(&(l->ll_time)) : "Never logged in\n");
+		UT_NAMESIZE, UT_NAMESIZE, o->o_name,
+		UT_LINESIZE, UT_LINESIZE, o->o_line,
+		UT_HOSTSIZE, UT_HOSTSIZE, o->o_host,
+		(o->o_time) ? ctime(&(o->o_time)) : "Never logged in\n");
 }
 
 static void
 usage()
 {
-	fprintf(stderr, "usage: %s [user ...]\n", getprogname());
+	fprintf(stderr, "usage: %s [-rt] [user ...]\n", getprogname());
 	exit(1);
 }
