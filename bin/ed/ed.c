@@ -1544,7 +1544,7 @@ dowrite(n, m, fn, mode)
 		for (lp = getptr(n); n <= m; n++, lp = lp->next) {
 			if ((s = gettxt(lp)) == (char *) ERR)
 				return ERR;
-			else if ((fputs(s, fp) < 0 || putc('\n', fp) < 0)) {
+			else if (fputs(strcat(s, "\n"), fp) < 0) {
 				sprintf(errmsg, "cannot write file");
 				return ERR;
 			}
