@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.9 2000/05/26 20:15:21 ragge Exp $ */
+/*	$NetBSD: boot.c,v 1.9.4.1 2000/07/27 16:44:21 matt Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -37,6 +37,8 @@
 #include "sys/param.h"
 #include "sys/reboot.h"
 #include "lib/libsa/stand.h"
+#include "lib/libsa/loadfile.h"
+#include "lib/libkern/libkern.h"
 
 #define V750UCODE(x)    ((x>>8)&255)
 
@@ -95,6 +97,7 @@ Xmain(struct rpb *prpb)
 {
 	int io;
 	int j, nu;
+	u_long marks[MARK_MAX];
 
 	/* First copy rpb/bqo to its new location */
 	bcopy((caddr_t)prpb, &bootrpb, sizeof(struct rpb));
@@ -138,10 +141,18 @@ Xmain(struct rpb *prpb)
 		int fileindex;
 		for (fileindex = 0; filelist[fileindex].name[0] != '\0';
 		    fileindex++) {
+			int err;
 			errno = 0;
 			if (!filelist[fileindex].quiet)
 				printf("> boot %s\n", filelist[fileindex].name);
-			exec(filelist[fileindex].name, 0, 0);
+			marks[MARK_START] = 0;
+			err = loadfile(filelist[fileindex].name, marks, LOAD_KERNEL|COUNT_KERNEL);
+			if (err == 0) {
+				machdep_start((char *)marks[MARK_ENTRY], 0,
+					      (void *)marks[MARK_START],
+					      (void *)marks[MARK_SYM],
+					      (void *)marks[MARK_END]);
+			}
 			if (!filelist[fileindex].quiet)
 				printf("%s: boot failed: %s\n", 
 				    filelist[fileindex].name, strerror(errno));
