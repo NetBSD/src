@@ -1,4 +1,4 @@
-/*	$NetBSD: device_pager.c,v 1.24 1997/01/03 18:03:14 mrg Exp $	*/
+/*	$NetBSD: device_pager.c,v 1.25 1998/06/10 22:41:03 tv Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -119,7 +119,7 @@ dev_pager_alloc(handle, size, prot, foff)
 		printf("dev_pager_alloc(%p, %lx, %x, %lx)\n",
 		    handle, size, prot, foff);
 #endif
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) && !defined(arm32)
 	/*
 	 * Pageout to device, should never happen.
 	 */
