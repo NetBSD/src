@@ -1,4 +1,4 @@
-#	$NetBSD: PS2,v 1.19 2001/04/22 19:15:05 jdolecek Exp $
+#	$NetBSD: PS2,v 1.20 2001/04/22 19:53:25 soren Exp $
 #
 #	Sample kernel config for PS/2 with MCA bus
 #
@@ -99,7 +99,6 @@ com0	at isa? port 0x3f8 irq 4	# "SERIAL_!"
 lpt0	at isa? port 0x3bc irq 7	# "PARALLEL_1"
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 fd*	at fdc? drive ?			# the drives themselves
-tr*	at mca? slot ?			# IBM Token Ring adapter
 
 # MCA serial interfaces
 com*	at mca? slot ?			# 16x50s on comm boards
@@ -110,6 +109,7 @@ ep*	at mca? slot ?			# 3Com EtherLink III (3c529)
 we*	at mca? slot ?			# WD/SMC Ethernet
 ate*	at mca? slot ?			# Allied Telesis AT1720
 ne*	at mca? slot ?			# Novell NE/2 and clones
+tr*	at mca? slot ?			# IBM Token Ring adapter
 
 # MCA ESDI controllers & disks
 edc*	at mca? slot ?			# IBM ESDI Disk Controllers
