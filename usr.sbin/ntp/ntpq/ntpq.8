@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntpq.8,v 1.7 2002/01/19 11:44:58 wiz Exp $
+.\"	$NetBSD: ntpq.8,v 1.8 2002/02/02 01:26:51 wiz Exp $
 .\" Converted from HTML to mandoc by ntp-html2mdoc.pl
 .\"
 .Dd March 29, 2000
@@ -420,6 +420,8 @@ of read.
 Like the readlist request, except the internal list variables are written
 instead of read.
 .El
+.Sh AUTHORS
+David L. Mills (mills@udel.edu)
 .Sh BUGS
 The peers command is non-atomic and may occasionally result in spurious
 error messages about invalid associations occurring and terminating the
@@ -427,5 +429,3 @@ command. The timeout time is a fixed constant, which means you wait a long
 time for timeouts since it assumes sort of a worst case. The program should
 improve the timeout estimate as it sends queries to a particular host,
 but doesn't.
-.Sh AUTHOR
-David L. Mills (mills@udel.edu)
