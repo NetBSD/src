@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.8 2002/09/04 15:31:06 scw Exp $
+#	$NetBSD: genassym.cf,v 1.9 2002/09/10 12:08:49 scw Exp $
 
 # Copyright 2002 Wasabi Systems, Inc.
 # All rights reserved.
@@ -67,8 +67,6 @@ define	_PTRSZ			sizeof(void *)
 
 define	SZ_CPU_INFO		sizeof(struct cpu_info)
 define	CI_SCHEDSTATE		offsetof(struct cpu_info, ci_schedstate)
-define	CI_SPIN_LOCKS		offsetof(struct cpu_info, ci_spin_locks)
-define	CI_SIMPLE_LOCKS		offsetof(struct cpu_info, ci_simple_locks)
 define	CI_CURPROC		offsetof(struct cpu_info, ci_curproc)
 define	CI_CURPCB		offsetof(struct cpu_info, ci_curpcb)
 define	CI_CURVSID		offsetof(struct cpu_info, ci_curvsid)
@@ -258,6 +256,12 @@ define	T_NMI			T_NMI
 define	T_WTLBMISS		T_WTLBMISS
 define	T_ITLBMISS		T_ITLBMISS
 
+# Critical Section constants
+define	CRIT_EXIT		CRIT_EXIT
+define	CRIT_SYNC_EXCEPTION	CRIT_SYNC_EXCEPTION
+define	CRIT_ASYNC_EXCEPTION	CRIT_ASYNC_EXCEPTION
+define	CRIT_TLBMISS_TRAP	CRIT_TLBMISS_TRAP
+
 # Process status constants
 define	SONPROC			SONPROC
 define	SRUN			SRUN
@@ -285,6 +289,8 @@ define	SH5_PTEH_ASID_SHIFT	SH5_PTEH_ASID_SHIFT
 define	SH5_PTEH_TLBCOOKIE_MASK	SH5_PTEH_TLBCOOKIE_MASK
 
 define	SH5_PTEL_CB_NOCACHE	SH5_PTEL_CB_NOCACHE
+define	SH5_PTEL_CB_WRITETHRU	SH5_PTEL_CB_WRITETHRU
+define	SH5_PTEL_CB_WRITEBACK	SH5_PTEL_CB_WRITEBACK
 define	SH5_PTEL_SZ_512MB	SH5_PTEL_SZ_512MB
 define	SH5_PTEL_PR_R		SH5_PTEL_PR_R
 define	SH5_PTEL_PR_W		SH5_PTEL_PR_W
