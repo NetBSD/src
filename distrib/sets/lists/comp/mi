@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.244 2000/07/07 11:05:08 itojun Exp $
+#	$NetBSD: mi,v 1.245 2000/07/08 00:53:40 enami Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1502,6 +1502,7 @@
 ./usr/share/man/cat2/issetugid.0	comp-syscall-catman
 ./usr/share/man/cat2/kill.0	comp-syscall-catman
 ./usr/share/man/cat2/ktrace.0	comp-syscall-catman
+./usr/share/man/cat2/lchflags.0	comp-syscall-catman
 ./usr/share/man/cat2/lchmod.0	comp-syscall-catman
 ./usr/share/man/cat2/lchown.0	comp-syscall-catman
 ./usr/share/man/cat2/lfs_bmapv.0	comp-syscall-catman
@@ -3117,6 +3118,7 @@
 ./usr/share/man/man2/issetugid.2		comp-syscall-man
 ./usr/share/man/man2/kill.2		comp-syscall-man
 ./usr/share/man/man2/ktrace.2		comp-syscall-man
+./usr/share/man/man2/lchflags.2		comp-syscall-man
 ./usr/share/man/man2/lchmod.2		comp-syscall-man
 ./usr/share/man/man2/lchown.2		comp-syscall-man
 ./usr/share/man/man2/lfs_bmapv.2	comp-syscall-man
