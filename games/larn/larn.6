@@ -1,4 +1,4 @@
-.\"	$NetBSD: larn.6,v 1.7 2002/09/26 16:12:41 wiz Exp $
+.\"	$NetBSD: larn.6,v 1.8 2002/09/26 18:32:02 wiz Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -105,7 +105,7 @@ may be used to set a few options for
 .Nm "" .
 A sequence of words terminated by whitespace is used to specify options.
 .Pp
-.Bl -tag -width "savefile: xsave-file-namex" -compact
+.Bl -tag -width "savefile: xxsave-file-namexx" -compact
 .It Sy 	Word
 .Sy 	Meaning
 .Pp
@@ -123,11 +123,11 @@ Disable beeping of the terminal.
 Choose your sex to be a man.
 .It female
 Choose your sex to be a woman.
-.It name: \*qyour name\*q
+.It name: Dq your name
 Choose your playing name.
-.It monster: \*qmonst name\*q
+.It monster: Dq monst name
 Choose a name for a monster.
-.It savefile: \*qsave-file-name\*q
+.It savefile: Dq save-file-name
 Define what the savegame filename will be.
 .El
 .Pp
@@ -145,7 +145,7 @@ In general, typing in '*' means all of what you are interested in.
 This is true when visiting the bank, or when contributing at altars.
 .Pp
 You can get out of the store, trading post, school, or home by hitting
-.Sy \*[Lt]esc\*[Gt] .
+.Sy Aq esc .
 .Pp
 When casting a spell, if you need a list of spells you can cast, type \fBD\fP
 as the first letter of your spell.
@@ -153,7 +153,7 @@ The available list of spells will be shown,
 after which you may enter the spell code.
 This only works on the 1st letter of the spell you are casting.
 .Sh AUTHOR
-Noah Morgan
+.An Noah Morgan
 .Sh FILES
 .Bl -tag -width "/var/games/larn.scores" -compact
 .It Pa /var/games/larn.scores

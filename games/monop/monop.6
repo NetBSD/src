@@ -1,4 +1,4 @@
-.\"	$NetBSD: monop.6,v 1.12 2002/09/26 16:12:41 wiz Exp $
+.\"	$NetBSD: monop.6,v 1.13 2002/09/26 18:32:03 wiz Exp $
 .\"
 .\" Copyright (c) 1980 The Regents of the University of California.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Nm monop
 .Nd Monopoly game
 .Sh SYNOPSIS
-.Nm /usr/games/monop
+.Nm
 .Op Ar file
 .Sh DESCRIPTION
 .Nm
@@ -53,8 +53,7 @@ no auction is held and the property remains unowned.
 .Nm
 The game, in effect, lends the player money,
 so it is possible to buy something which you cannot afford.
-However, as soon as a person goes into debt,
-he must
+However, as soon as a person goes into debt, he must
 .Dq fix the problem ,
 .Em i.e. ,
 make himself solvent, before play can continue.
@@ -107,7 +106,9 @@ If it is not owned, there is no rent.
 .El
 .It Ic where
 where players are: Tells you where all the players are.
-A `*' indicates the current player.
+A
+.Sq *
+indicates the current player.
 .It Ic own holdings
 List your own holdings,
 .Em i.e. ,
@@ -172,12 +173,13 @@ Read in a previously saved game from a file.
 It leaves the file intact.
 .It Ic roll
 Roll the dice and move forward to your new location.
-If you simply hit the \*[Lt]RETURN\*[Gt] key instead of a command,
-it is the same as typing
+If you simply hit the
+.Aq RETURN
+key instead of a command, it is the same as typing
 .Ic roll .
 .El
 .Sh AUTHOR
-Ken Arnold
+.An Ken Arnold
 .Sh FILES
 .Bl -tag -width /usr/share/games/cards.pck -compact
 .It Pa /usr/share/games/cards.pck

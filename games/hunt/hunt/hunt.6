@@ -1,4 +1,4 @@
-.\"	$NetBSD: hunt.6,v 1.6 2002/09/26 16:12:40 wiz Exp $
+.\"	$NetBSD: hunt.6,v 1.7 2002/09/26 18:32:02 wiz Exp $
 .\"
 .\"  hunt
 .\"  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -51,8 +51,9 @@ flag is given,
 .Nm
 queries the local network (or specific host)
 and reports on all active games found.
-This is useful for shell startup scripts, e.g.\&
-.Xr csh 1 Ns 's No .login .
+This is useful for shell startup scripts, e.g.,
+.Xr csh 1 Ns 's
+.Pa .login .
 .Pp
 The player name may be specified on the command line by using the
 .Fl n
@@ -105,7 +106,7 @@ mailing list (see
 .Xr huntd 6 ) .
 .Sh PLAYING HINTS
 .Nm
-only works on crt (vdt) terminals with at least 24 lines, 80 columns, and
+only works on CRT (vdt) terminals with at least 24 lines, 80 columns, and
 cursor addressing.
 The screen is divided in to 3 areas.
 On the right hand side is the status area.
@@ -280,7 +281,7 @@ he is and therefore less likely to hurt himself on landing.
 .\"close to every 30 deaths.
 .It
 Every 30 deaths or so, a
-.Dq ?
+.Dq \&?
 will appear.
 It is a wandering bomb which will explode when it hits someone, or
 when it is slimed.
@@ -321,8 +322,8 @@ option must be last.
 Other options are:
 .Ar scan , fly , nobeep , port=string , host=string ,
 and
-.Ar message=string
-\(em which correspond to the command line options.
+.Ar message=string ,
+which correspond to the command line options.
 String options cannot contain commas since commas
 are used to separate options.
 .It
@@ -384,7 +385,6 @@ We thank Don Kneller,
 John Thomason, Eric Pettersen, Mark Day,
 and Scott Weiner for providing
 endless hours of play-testing to improve the character of the game.
-We hope their significant others will forgive them;
-we certainly don't.
+We hope their significant others will forgive them; we certainly don't.
 .Sh BUGS
 To keep up the pace, not everything is as realistic as possible.
