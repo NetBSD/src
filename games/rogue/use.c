@@ -1,4 +1,4 @@
-/*	$NetBSD: use.c,v 1.4 1997/10/12 11:46:11 lukem Exp $	*/
+/*	$NetBSD: use.c,v 1.5 1998/11/10 13:01:32 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)use.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: use.c,v 1.4 1997/10/12 11:46:11 lukem Exp $");
+__RCSID("$NetBSD: use.c,v 1.5 1998/11/10 13:01:32 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ boolean see_invisible = 0;
 short extra_hp = 0;
 boolean detect_monster = 0;
 boolean con_mon = 0;
-char *strange_feeling = "you have a strange feeling for a moment, then it passes";
+const char *strange_feeling = "you have a strange feeling for a moment, then it passes";
 
 void
 quaff()
@@ -594,7 +594,7 @@ go_blind()
 	mvaddch(rogue.row, rogue.col, rogue.fchar);
 }
 
-char *
+const char *
 get_ench_color()
 {
 	if (halluc) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: throw.c,v 1.4 1997/10/12 11:46:07 lukem Exp $	*/
+/*	$NetBSD: throw.c,v 1.5 1998/11/10 13:01:32 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)throw.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: throw.c,v 1.4 1997/10/12 11:46:07 lukem Exp $");
+__RCSID("$NetBSD: throw.c,v 1.5 1998/11/10 13:01:32 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -269,7 +269,7 @@ void
 rand_around(i, r, c)
 	short i, *r, *c;
 {
-	static char* pos = "\010\007\001\003\004\005\002\006\0";
+	static char pos[] = "\010\007\001\003\004\005\002\006\0";
 	static short row, col;
 	short j;
 

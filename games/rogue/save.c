@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.4 1997/10/12 11:45:58 lukem Exp $	*/
+/*	$NetBSD: save.c,v 1.5 1998/11/10 13:01:32 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.4 1997/10/12 11:45:58 lukem Exp $");
+__RCSID("$NetBSD: save.c,v 1.5 1998/11/10 13:01:32 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ save_game()
 
 void
 save_into_file(sfile)
-	char *sfile;
+	const char *sfile;
 {
 	FILE *fp;
 	int file_id;
@@ -149,7 +149,7 @@ save_into_file(sfile)
 
 void
 restore(fname)
-	char *fname;
+	const char *fname;
 {
 	FILE *fp;
 	struct rogue_time saved_time, mod_time;
@@ -231,16 +231,16 @@ restore(fname)
 
 void
 write_pack(pack, fp)
-	object *pack;
+	const object *pack;
 	FILE *fp;
 {
 	object t;
 
 	while ((pack = pack->next_object) != NULL) {
-		r_write(fp, (char *) pack, sizeof(object));
+		r_write(fp, (const char *) pack, sizeof(object));
 	}
 	t.ichar = t.what_is = 0;
-	r_write(fp, (char *) &t, sizeof(object));
+	r_write(fp, (const char *) &t, sizeof(object));
 }
 
 void
@@ -310,8 +310,8 @@ rw_id(id_table, fp, n, wr)
 
 	for (i = 0; i < n; i++) {
 		if (wr) {
-			r_write(fp, (char *) &(id_table[i].value), sizeof(short));
-			r_write(fp, (char *) &(id_table[i].id_status),
+			r_write(fp, (const char *) &(id_table[i].value), sizeof(short));
+			r_write(fp, (const char *) &(id_table[i].id_status),
 				sizeof(unsigned short));
 			write_string(id_table[i].title, fp);
 		} else {
@@ -375,7 +375,7 @@ r_read(fp, buf, n)
 void
 r_write(fp, buf, n)
 	FILE *fp;
-	char *buf;
+	const char *buf;
 	int n;
 {
 	if (!write_failed) {
@@ -389,7 +389,7 @@ r_write(fp, buf, n)
 
 boolean
 has_been_touched(saved_time, mod_time)
-	struct rogue_time *saved_time, *mod_time;
+	const struct rogue_time *saved_time, *mod_time;
 {
 	if (saved_time->year < mod_time->year) {
 		return(1);
