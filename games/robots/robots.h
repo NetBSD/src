@@ -1,4 +1,4 @@
-/*	$NetBSD: robots.h,v 1.9 1999/05/15 23:56:36 christos Exp $	*/
+/*	$NetBSD: robots.h,v 1.10 1999/05/16 00:03:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -141,3 +141,4 @@ void	score __P((void));
 void	set_name __P((SCORE *));
 void	show_score __P((void));
 int	sign __P((int));
+char	automove __P((void));
