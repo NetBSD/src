@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.11 1994/10/06 18:41:26 chopps Exp $	*/
+/*	$NetBSD: advnops.c,v 1.12 1994/10/20 04:24:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -879,7 +879,7 @@ adosfs_pathconf(sp)
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
 		int a_name;
-		int *a_retval;
+		register_t *a_retval;
 	} */ *sp;
 {
 

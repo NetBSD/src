@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.55 1994/06/29 06:32:24 cgd Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.56 1994/10/20 04:22:43 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994 Christopher G. Demetriou
@@ -50,6 +50,8 @@
 #include <sys/mman.h>
 #include <sys/signalvar.h>
 #include <sys/stat.h>
+
+#include <sys/syscallargs.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -201,8 +203,12 @@ bad1:
 /* ARGSUSED */
 execve(p, uap, retval)
 	register struct proc *p;
-	register struct execve_args *uap;
-	int *retval;
+	register struct execve_args /* {
+		syscallarg(char *) path;
+		syscallarg(char * *) argp;
+		syscallarg(char * *) envp;
+	} */ *uap;
+	register_t *retval;
 {
 	int error, i;
 	struct exec_package pack;
@@ -230,12 +236,12 @@ execve(p, uap, retval)
 	}
 
 	/* init the namei data to point the file user's program name */
-	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, uap->path, p);
+	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 
 	/*
 	 * initialize the fields of the exec package.
 	 */
-	pack.ep_name = uap->path;
+	pack.ep_name = SCARG(uap, path);
 	MALLOC(pack.ep_hdr, void *, exec_maxhdrsz, M_EXEC, M_WAITOK);
 	pack.ep_hdrlen = exec_maxhdrsz;
 	pack.ep_hdrvalid = 0;
@@ -281,7 +287,7 @@ execve(p, uap, retval)
 	}
 
 	/* Now get argv & environment */
-	if (!(cpp = uap->argp)) {
+	if (!(cpp = SCARG(uap, argp))) {
 		error = EINVAL;
 		goto bad;
 	}
@@ -306,7 +312,7 @@ execve(p, uap, retval)
 	}
 
 	envc = 0;
-	if (cpp = uap->envp) {	/* environment need not be there */
+	if (cpp = SCARG(uap, envp)) {	/* environment need not be there */
 		while (1) {
 			len = argp + ARG_MAX - dp;
 			if (error = copyin(cpp, &sp, sizeof(sp)))

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.5 1994/08/30 03:01:01 mycroft Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.6 1994/10/20 04:26:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -1391,7 +1391,7 @@ union_pathconf(ap)
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
 		int a_name;
-		int *a_retval;
+		register_t *a_retval;
 	} */ *ap;
 {
 	int error;
