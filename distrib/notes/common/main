@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.28 2001/05/09 20:04:54 he Exp $
+.\"	$NetBSD: main,v 1.61.2.29 2001/05/09 22:38:13 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -235,6 +235,10 @@ The
 driver has added support for 3Com 3c555, 3c556 and 3c556B MiniPCI Ethernet
 cards.
 .It
+A driver for the on-board audio hardware found on many Apple
+PowerMacs has been added; see
+.Xr awacs 4 .
+.It
 The
 .Xr sip 4
 driver has been fixed to properly support the dp83815, as found in
@@ -307,6 +311,20 @@ reported through our problem tracking system have been fixed,
 and some other non-reported problems have also been found and fixed.
 See the CHANGES-1.5.1 file for the complete list.
 .if \n[FOR_RELEASE] \{\
+.if r_i386 \{
+.Ss New Compatibility Issues Introduced With NetBSD 1.5.1
+.Pp
+With the increase of the maximum number of partitions from 8 to 16
+on the i386 port, it is worth noting:
+.Bl -bullet
+.It
+Once you start using more than 8 partitions, you can no longer
+downgrade to a 1.5 kernel.
+.It
+The user-land tools which handle disklabels in 1.5.1 can not be
+used together with a 1.5 kernel.
+.El
+.\}
 .Ss Changes Between The NetBSD 1.4 and 1.5 Releases
 .Pp
 The
