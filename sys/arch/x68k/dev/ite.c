@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.21 2000/03/23 06:47:32 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.22 2000/05/25 03:30:19 itohy Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -761,9 +761,8 @@ ite_filter(c)
 	struct key key;
 	int s, i;
 
-	if (!kbd_ite)
+	if (!kbd_ite || !(kbd_tty = ite_tty[kbd_ite->device.dv_unit]))
 		return;
-	kbd_tty = ite_tty[kbd_ite->device.dv_unit];
 
 	/* have to make sure we're at spltty in here */
 	s = spltty ();
