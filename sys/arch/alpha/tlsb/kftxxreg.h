@@ -1,4 +1,4 @@
-/* $NetBSD: kftxxreg.h,v 1.4 1997/06/04 01:47:15 cgd Exp $ */
+/* $NetBSD: kftxxreg.h,v 1.5 1998/07/08 00:45:08 mjacob Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -72,3 +72,7 @@
 #define	KFT_ICCNSE	0x2040
 #define	KFT_ICCWTR	0x2100
 #define	KFT_IDPMSR	0x2B80
+#define	KFT_IDPNSE0	0x2A40
+#define	KFT_IDPNSE1	0x2140
+#define	KFT_IDPNSE2	0x2240
+#define	KFT_IDPNSE3	0x2340
