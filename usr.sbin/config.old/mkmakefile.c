@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkmakefile.c	5.33 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkmakefile.c,v 1.24 1994/05/21 08:34:10 cgd Exp $";
+static char rcsid[] = "$Id: mkmakefile.c,v 1.25 1995/04/28 07:01:06 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -415,7 +415,7 @@ do_rules(f)
 				break;
 
 			default:
-				printf("config: don't know rules for %s\n", np);
+				printf("config.old: don't know rules for %s\n", np);
 				break;
 			}
 			(void)sprintf(cmd, "${%s_%c%s}", ftype, toupper(och),
