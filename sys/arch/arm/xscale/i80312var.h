@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312var.h,v 1.6 2002/07/31 17:34:25 thorpej Exp $	*/
+/*	$NetBSD: i80312var.h,v 1.7 2002/08/01 19:55:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -175,8 +175,6 @@ void	i80312_mem_bs_init(bus_space_tag_t, void *);
 void	i80312_gpio_set_direction(uint8_t, uint8_t);
 void	i80312_gpio_set_val(uint8_t, uint8_t);
 uint8_t	i80312_gpio_get_val(void);
-
-void	i80312_pci_dma_init(bus_dma_tag_t, void *);
 
 void	i80312_pci_init(pci_chipset_tag_t, void *);
 
