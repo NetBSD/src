@@ -1,8 +1,18 @@
-/*	$NetBSD: binpatch.c,v 1.4 1994/10/26 02:06:55 cgd Exp $	*/
+/*	$NetBSD: binpatch.c,v 1.5 1995/07/04 18:06:49 chopps Exp $	*/
 
 #include <sys/types.h>
 #include <a.out.h>
 #include <stdio.h>
+
+#ifdef __NetBSD__
+/*
+ * assume NMAGIC files are linked at 0 (for kernel)
+ */
+#undef N_TXTADDR
+#define N_TXTADDR(ex) \
+	((N_GETMAGIC2(ex) == (ZMAGIC|0x10000) || N_GETMAGIC2(ex) == NMAGIC) ? \
+	0 : __LDPGSZ)
+#endif
 
 extern char *optarg;
 extern int optind;

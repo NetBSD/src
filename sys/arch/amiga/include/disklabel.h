@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.4 1994/10/26 02:06:07 cgd Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.5 1995/07/04 18:06:47 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -95,6 +95,7 @@ struct rdblock {
 #define RDBF_NORESELECT	0x8	/* do not use reselect */
 #define RDBF_DISKID	0x10	/* disk id is valid ?? */
 #define RDBF_CTRLID	0x20	/* ctrl id is valid ?? */
+#define RDBF_SYNC	0x40	/* drive supports SCSI synchronous mode */
 	
 struct ados_environ {
 	u_long tabsize;		/* 0: environ table size */

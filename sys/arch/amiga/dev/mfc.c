@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.5 1995/04/23 18:24:38 chopps Exp $ */
+/*	$NetBSD: mfc.c,v 1.6 1995/07/04 18:06:40 chopps Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -147,6 +147,7 @@ struct mfc_softc {
 #if NMFCS > 0
 struct mfcs_softc {
 	struct	device sc_dev;
+	struct	tty *sc_tty;
 	struct	duart_regs *sc_duart;
 	struct	mfc_regs *sc_regs;
 	struct	mfc_softc *sc_mfc;
@@ -207,7 +208,6 @@ int	mfcsswflags[NMFCS];
 #define SWFLAGS(dev) (mfcsswflags[dev & 31] | (((dev) & 0x80) == 0 ? TIOCFLAG_SOFTCAR : 0))
 
 struct	vbl_node mfcs_vbl_node[NMFCS];
-struct	tty *mfcs_tty[NMFCS];
 
 #ifdef notyet
 /*
@@ -446,20 +446,22 @@ mfcsopen(dev, flag, mode, p)
 	struct proc *p;
 {
 	struct tty *tp;
+	struct mfcs_softc *sc;
 	int unit, error, s;
 
 	error = 0;
 	unit = dev & 0x1f;
 
-	if (unit >= NMFCS || (mfcs_active & (1 << unit)) == 0)
+	if (unit >= mfcscd.cd_ndevs || (mfcs_active & (1 << unit)) == 0)
 		return (ENXIO);
+	sc = mfcscd.cd_devs[unit];
 
 	s = spltty();
 
-	if (mfcs_tty[unit])
-		tp = mfcs_tty[unit];
+	if (sc->sc_tty)
+		tp = sc->sc_tty;
 	else
-		tp = mfcs_tty[unit] = ttymalloc();
+		tp = sc->sc_tty = ttymalloc();
 
 	tp->t_oproc = (void (*) (struct tty *)) mfcsstart;
 	tp->t_param = mfcsparam;
@@ -550,7 +552,7 @@ mfcsclose(dev, flag, mode, p)
 
 	unit = dev & 31;
 
-	tp = mfcs_tty[unit];
+	tp = sc->sc_tty;
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	sc->sc_duart->ch_cr = 0x70;			/* stop break */
 
@@ -575,7 +577,7 @@ mfcsclose(dev, flag, mode, p)
 	if (tp != &mfcs_cons) {
 		remove_vbl_function(&mfcs_vbl_node[unit]);
 		ttyfree(tp);
-		mfcs_tty[unit] = (struct tty *) NULL;
+		sc->sc_tty = (struct tty *) NULL;
 	}
 #endif
 	return (0);
@@ -587,8 +589,9 @@ mfcsread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct tty *tp;
-	if ((tp = mfcs_tty[dev & 31]) == NULL)
+	struct mfcs_softc *sc = mfcscd.cd_devs[dev & 31];
+	struct tty *tp = sc->sc_tty;
+	if (tp == NULL)
 		return(ENXIO);
 	return((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
@@ -599,9 +602,10 @@ mfcswrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct tty *tp;
+	struct mfcs_softc *sc = mfcscd.cd_devs[dev & 31];
+	struct tty *tp = sc->sc_tty;
 
-	if ((tp = mfcs_tty[dev & 31]) == NULL)
+	if (tp == NULL)
 		return(ENXIO);
 	return((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
@@ -610,7 +614,9 @@ struct tty *
 mfcstty(dev)
 	dev_t dev;
 {
-	return (mfcs_tty[dev & 31]);
+	struct mfcs_softc *sc = mfcscd.cd_devs[dev & 31];
+
+	return (sc->sc_tty);
 }
 
 int
@@ -624,7 +630,7 @@ mfcsioctl(dev, cmd, data, flag, p)
 	register int error;
 	struct mfcs_softc *sc = mfcscd.cd_devs[dev & 31];
 
-	tp = mfcs_tty[unit];
+	tp = sc->sc_tty;
 	if (!tp)
 		return ENXIO;
 
@@ -976,8 +982,8 @@ mfcintr (scc)
 		}
 	}
 	if (istat & 0x01) {		/* channel A transmit interrupt */
-		tp = mfcs_tty[unit];
 		sc = mfcscd.cd_devs[unit];
+		tp = sc->sc_tty;
 		if (sc->ptr == sc->end) {
 			tp->t_state &= ~(TS_BUSY | TS_FLUSH);
 			scc->imask &= ~0x01;
@@ -991,8 +997,8 @@ mfcintr (scc)
 			regs->du_tba = *sc->ptr++;
 	}
 	if (istat & 0x10) {		/* channel B transmit interrupt */
-		tp = mfcs_tty[unit + 1];
 		sc = mfcscd.cd_devs[unit + 1];
+		tp = sc->sc_tty;
 		if (sc->ptr == sc->end) {
 			tp->t_state &= ~(TS_BUSY | TS_FLUSH);
 			scc->imask &= ~0x10;
@@ -1017,7 +1023,7 @@ mfcsxintr(unit)
 {
 	int s1, s2, ovfl;
 	struct mfcs_softc *sc = mfcscd.cd_devs[unit];
-	struct tty *tp = mfcs_tty[unit];
+	struct tty *tp = sc->sc_tty;
 
 	/*
 	 * Make sure we're not interrupted by another
@@ -1060,11 +1066,12 @@ int
 mfcseint(unit, stat)
 	int unit, stat;
 {
+	struct mfcs_softc *sc = mfcscd.cd_devs[unit];
 	struct tty *tp;
 	u_char ch;
 	int c;
 
-	tp = mfcs_tty[unit];
+	tp = sc->sc_tty;
 	ch = stat & 0xff;
 	c = ch;
 
@@ -1106,7 +1113,7 @@ mfcsmint(unit)
 	struct mfcs_softc *sc = mfcscd.cd_devs[unit];
 	u_char stat, last, istat;
 
-	tp = mfcs_tty[unit];
+	tp = sc->sc_tty;
 	if (!tp)
 		return;
 
