@@ -1,3 +1,5 @@
+.\" $NetBSD: round.3,v 1.2 2004/07/10 14:11:18 wiz Exp $
+.\"
 .\" Copyright (c) 2003, Steven G. Kargl
 .\" All rights reserved.
 .\"
@@ -22,10 +24,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $NetBSD: round.3,v 1.1 2004/07/10 13:49:10 junyoung Exp $
 .\" $FreeBSD: src/lib/msun/man/round.3,v 1.2 2004/06/20 09:27:17 das Exp $
 .\"
-.Dd July 9, 2004 
+.Dd July 9, 2004
 .Dt ROUND 3
 .Os
 .Sh NAME
@@ -47,7 +48,7 @@ and
 .Fn roundf
 functions return the nearest integral value to
 .Fa x ;
-if 
+if
 .Fa x
 lies halfway between two integral values, then these
 functions return the integral value with the larger
@@ -57,8 +58,8 @@ absolute value (i.e., they round away from zero).
 .Xr floor 3 ,
 .Xr ieee 3 ,
 .Xr math 3 ,
-.Xr rint 3 ,
-.Xr trunc 3
+.Xr rint 3
+.\" .Xr trunc 3
 .Sh STANDARDS
 The
 .Fn round
