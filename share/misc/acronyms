@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.70 2000/11/18 18:13:38 wiz Exp $
+$NetBSD: acronyms,v 1.71 2000/12/01 02:33:32 wiz Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -75,6 +75,7 @@ MYOB	mind your own business
 NBD	no big deal
 NFC	no fucking clue
 NFI	no fucking idea
+NFW	no fucking way
 NIH	not invented here
 NP	no problem
 NRFPT	not ready for prime time
