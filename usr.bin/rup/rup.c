@@ -1,4 +1,4 @@
-/*	$NetBSD: rup.c,v 1.13 1997/01/16 22:18:16 perry Exp $	*/
+/*	$NetBSD: rup.c,v 1.14 1997/08/24 10:53:16 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -33,8 +33,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: rup.c,v 1.13 1997/01/16 22:18:16 perry Exp $";
+__RCSID("$NetBSD: rup.c,v 1.14 1997/08/24 10:53:16 drochner Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -61,6 +62,9 @@ struct host_list {
 	struct in_addr addr;
 } *hosts;
 
+int search_host __P((struct in_addr));
+void remember_host __P((struct in_addr));
+
 int
 search_host(addr)
 	struct in_addr addr;
@@ -84,7 +88,7 @@ remember_host(addr)
 	struct host_list *hp;
 
 	if (!(hp = (struct host_list *)malloc(sizeof(struct host_list)))) {
-		err(1, NULL);
+		err(1, "malloc");
 		/* NOTREACHED */
 	}
 	hp->addr.s_addr = addr.s_addr;
@@ -110,6 +114,16 @@ enum sort_type {
 };
 enum sort_type sort_type;
 
+int compare __P((struct rup_data *, struct rup_data *));
+void remember_rup_data __P((char *, struct statstime *));
+int rstat_reply __P((char *, struct sockaddr_in *));
+int print_rup_data __P((char *, statstime *));
+void onehost __P((char *));
+void allhosts __P((void));
+int main __P((int, char *[]));
+void usage __P((void));
+
+int
 compare(d1, d2)
 	struct rup_data *d1;
 	struct rup_data *d2;
@@ -139,7 +153,7 @@ remember_rup_data(host, st)
                 rup_data = realloc (rup_data, 
 				rup_data_max * sizeof(struct rup_data));
                 if (rup_data == NULL) {
-                        err (1, NULL);
+                        err (1, "realloc");
 			/* NOTREACHED */
                 }
         }
@@ -274,7 +288,7 @@ allhosts()
 
 	clnt_stat = clnt_broadcast(RSTATPROG, RSTATVERS_TIME, RSTATPROC_STATS,
 				   xdr_void, NULL,
-				   xdr_statstime, &host_stat, rstat_reply);
+				   xdr_statstime, (char*)&host_stat, rstat_reply);
 	if (clnt_stat != RPC_SUCCESS && clnt_stat != RPC_TIMEDOUT) {
 		warnx("%s", clnt_sperrno(clnt_stat));
 		exit(1);
@@ -282,7 +296,8 @@ allhosts()
 
 	if (sort_type != SORT_NONE) {
 		putchar('\n');
-		qsort(rup_data, rup_data_idx, sizeof(struct rup_data), compare);
+		qsort(rup_data, rup_data_idx, sizeof(struct rup_data),
+		      (int (*)(const void*, const void*))compare);
 
 		for (i = 0; i < rup_data_idx; i++) {
 			print_rup_data(rup_data[i].host, &rup_data[i].statstime);
@@ -290,7 +305,7 @@ allhosts()
 	}
 }
 
-
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -330,7 +345,7 @@ main(argc, argv)
 	exit(0);
 }
 
-
+void
 usage()
 {
 	fprintf(stderr, "Usage: rup [-dhlt] [hosts ...]\n");
