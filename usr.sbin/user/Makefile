@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 1999/12/06 22:28:12 simonb Exp $
+# $NetBSD: Makefile,v 1.3 1999/12/06 22:44:47 simonb Exp $
 #
 CPPFLAGS+= -DEXTENSIONS
 
@@ -22,7 +22,6 @@ MAN= user.8 useradd.8 userdel.8 usermod.8 group.8 groupadd.8 groupdel.8 groupmod
 .include <bsd.prog.mk>
 
 install: ${PROG}
-	-mkdir -p ${EXAMPLE_DIR}
 	${INSTALL_DATA} dot.cshrc ${EXAMPLE_DIR}/.cshrc
 	${INSTALL_DATA} dot.login ${EXAMPLE_DIR}/.login
 	${INSTALL_DATA} dot.profile ${EXAMPLE_DIR}/.profile
