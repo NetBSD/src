@@ -1,4 +1,4 @@
-/*	$NetBSD: sf_fpsetsticky.c,v 1.2 1999/12/26 00:22:32 shin Exp $	*/
+/*	$NetBSD: sf_fpsetsticky.c,v 1.3 2000/02/22 03:14:22 mycroft Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 11, 1995
@@ -6,6 +6,8 @@
  */
 
 #include <ieeefp.h>
+
+void _mips_sfp_setsticky __P((int except));
 
 fp_except
 fpsetsticky(sticky)
