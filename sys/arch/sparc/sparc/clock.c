@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.74 2000/11/11 12:14:03 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.75 2000/11/11 12:19:20 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -129,8 +129,8 @@ bus_space_handle_t i7_bh;
 static bus_space_handle_t	mk_nvram_base;
 static bus_size_t		mk_nvram_size;
 
-static int oclockmatch __P((struct device *, struct cfdata *, void *));
-static void oclockattach __P((struct device *, struct device *, void *));
+static int oclockmatch(struct device *, struct cfdata *, void *);
+static void oclockattach(struct device *, struct device *, void *);
 
 struct cfattach oclock_ca = {
 	sizeof(struct device), oclockmatch, oclockattach
@@ -155,13 +155,13 @@ char		*eeprom_va = NULL;
 static int	eeprom_busy = 0;
 static int	eeprom_wanted = 0;
 static int	eeprom_nvram = 0;	/* non-zero if eeprom is on Mostek */
-static int	eeprom_take __P((void));
-static void	eeprom_give __P((void));
-static int	eeprom_update __P((char *, int, int));
+static int	eeprom_take(void));
+static void	eeprom_give(void));
+static int	eeprom_update(char *, int, int));
 #endif
 
-static int	eeprom_match __P((struct device *, struct cfdata *, void *));
-static void	eeprom_attach __P((struct device *, struct device *, void *));
+static int	eeprom_match(struct device *, struct cfdata *, void *);
+static void	eeprom_attach(struct device *, struct device *, void *);
 
 struct cfattach eeprom_ca = {
 	sizeof(struct device), eeprom_match, eeprom_attach
@@ -169,16 +169,12 @@ struct cfattach eeprom_ca = {
 
 extern struct cfdriver eeprom_cd;
 
-static int	clockmatch_mainbus
-			__P((struct device *, struct cfdata *, void *));
-static int	clockmatch_obio
-			__P((struct device *, struct cfdata *, void *));
-static void	clockattach_mainbus
-			__P((struct device *, struct device *, void *));
-static void	clockattach_obio
-			__P((struct device *, struct device *, void *));
+static int	clockmatch_mainbus (struct device *, struct cfdata *, void *);
+static int	clockmatch_obio(struct device *, struct cfdata *, void *);
+static void	clockattach_mainbus(struct device *, struct device *, void *);
+static void	clockattach_obio(struct device *, struct device *, void *);
 
-static void	clockattach __P((int, bus_space_tag_t, bus_space_handle_t));
+static void	clockattach(int, bus_space_tag_t, bus_space_handle_t);
 
 struct cfattach clock_mainbus_ca = {
 	sizeof(struct device), clockmatch_mainbus, clockattach_mainbus
@@ -190,12 +186,12 @@ struct cfattach clock_obio_ca = {
 
 extern struct cfdriver clock_cd;
 
-static int	timermatch_mainbus __P((struct device *, struct cfdata *, void *));
-static int	timermatch_obio __P((struct device *, struct cfdata *, void *));
-static void	timerattach_mainbus __P((struct device *, struct device *, void *));
-static void	timerattach_obio __P((struct device *, struct device *, void *));
+static int	timermatch_mainbus(struct device *, struct cfdata *, void *);
+static int	timermatch_obio(struct device *, struct cfdata *, void *);
+static void	timerattach_mainbus(struct device *, struct device *, void *);
+static void	timerattach_obio(struct device *, struct device *, void *);
 
-static void	timerattach __P((volatile int *, volatile int *));
+static void	timerattach(volatile int *, volatile int *);
 
 /*struct counter_4m	*counterreg_4m;*/
 struct timer_4m		*timerreg4m;
@@ -215,10 +211,10 @@ struct cfattach timer_obio_ca = {
 static todr_chip_handle_t todr_handle;
 struct idprom *idprom;
 
-static int clk_wenable __P((todr_chip_handle_t, int));
-static void stopcounter __P((struct counter_4m *));
-static void establish_hostid __P((struct idprom *));
-void myetheraddr __P((u_char *));
+static int clk_wenable(todr_chip_handle_t, int);
+static void stopcounter(struct counter_4m *);
+static void establish_hostid(struct idprom *);
+void myetheraddr(u_char *);
 
 int timerblurb = 10; /* Guess a value; used before clock is attached */
 
