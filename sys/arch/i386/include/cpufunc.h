@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.9 1997/07/05 20:49:46 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.10 1997/09/05 22:25:20 chuck Exp $	*/
 
 /*
  * Copyright (c) 1993 Charles Hannum.
@@ -49,6 +49,12 @@ static __inline int bdb(void)
 	__asm __volatile("int $3");
 	return (1);
 }
+
+static __inline void 
+invlpg(u_int addr)
+{ 
+        __asm __volatile("invlpg (%0)" : : "r" (addr) : "memory");
+}  
 
 static __inline void
 lidt(void *p)
@@ -101,6 +107,20 @@ rcr3(void)
 {
 	u_int val;
 	__asm __volatile("movl %%cr3,%0" : "=r" (val));
+	return val;
+}
+
+static __inline void
+lcr4(u_int val)
+{
+	__asm __volatile("movl %0,%%cr4" : : "r" (val));
+}
+
+static __inline u_int
+rcr4(void)
+{
+	u_int val;
+	__asm __volatile("movl %%cr4,%0" : "=r" (val));
 	return val;
 }
 
