@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_afmap.c,v 1.3 2001/04/13 23:29:55 thorpej Exp $	*/
+/*	$NetBSD: altq_afmap.c,v 1.4 2001/11/12 23:14:21 lukem Exp $	*/
 /*	$KAME: altq_afmap.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -34,6 +34,10 @@
  * flowinfo mechanism.  it's just put in the altq framework since
  * it is easy to add devices to altq.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.4 2001/11/12 23:14:21 lukem Exp $");
+
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
 #if (__FreeBSD__ != 2)

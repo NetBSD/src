@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.6 2001/09/10 06:34:57 itojun Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.7 2001/11/12 23:14:22 lukem Exp $	*/
 /*	$KAME: altq_subr.c,v 1.9 2001/09/04 06:31:15 kjc Exp $	*/
 
 /*
@@ -26,6 +26,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.7 2001/11/12 23:14:22 lukem Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"

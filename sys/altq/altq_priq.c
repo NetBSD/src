@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.c,v 1.4 2001/10/26 04:59:18 itojun Exp $	*/
+/*	$NetBSD: altq_priq.c,v 1.5 2001/11/12 23:14:22 lukem Exp $	*/
 /*	$KAME: altq_priq.c,v 1.2 2001/10/26 04:56:11 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -28,6 +28,9 @@
 /*
  * priority queue
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.5 2001/11/12 23:14:22 lukem Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"

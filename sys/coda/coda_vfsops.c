@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.13 2001/09/15 16:12:55 chs Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.14 2001/11/12 23:08:57 lukem Exp $	*/
 
 /*
  * 
@@ -43,6 +43,9 @@
  * University.  Contributers include David Steere, James Kistler, and
  * M. Satyanarayanan.  
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.14 2001/11/12 23:08:57 lukem Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
