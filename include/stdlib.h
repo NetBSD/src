@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.67 2004/05/27 02:58:14 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.68 2004/12/16 03:54:56 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -259,6 +259,7 @@ int	 cgetustr __P((char *, const char *, char **));
 
 int	 daemon __P((int, int));
 __aconst char *devname __P((dev_t, mode_t));
+dev_t	 getdevmajor __P((const char *, mode_t));
 int	 getloadavg __P((double [], int));
 
 void	 cfree __P((void *));
