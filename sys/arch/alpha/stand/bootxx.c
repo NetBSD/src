@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.2 1996/04/12 06:09:36 cgd Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.3 1996/06/14 20:04:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -135,7 +135,7 @@ main()
 	/* Init prom callback vector. */
 	init_prom_calls();
 
-	puts("\nNetBSD/Alpha primary boot...\n");
+	puts("\nNetBSD/Alpha Primary Boot\n");
 
 	bbinfop = (struct bbinfo *)&_end;
 	loadaddr = (char *)SECONDARY_LOAD_ADDRESS;
