@@ -1,4 +1,4 @@
-/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.27 1999/03/12 22:54:58 perry Exp $ */
+/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.28 1999/12/07 05:44:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -181,6 +181,14 @@ static long
     __C(CHIP,_smem_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 #define	CHIP_S_MEM_EX_STORE(v)		(__C(CHIP,_smem_ex_storage))
 #define	CHIP_S_MEM_EX_STORE_SIZE(v)	(sizeof __C(CHIP,_smem_ex_storage))
+#endif
+
+#ifndef CHIP_ADDR_SHIFT
+#define	CHIP_ADDR_SHIFT		5
+#endif
+
+#ifndef CHIP_SIZE_SHIFT
+#define	CHIP_SIZE_SHIFT		3
 #endif
 
 void
@@ -398,7 +406,8 @@ __C(CHIP,_xlate_addr_to_sparse_handle)(v, memaddr, memhp)
 	if (memaddr >= CHIP_S_MEM_W1_BUS_START(v) &&
 	    memaddr <= CHIP_S_MEM_W1_BUS_END(v)) {
 		*memhp =
-		    (ALPHA_PHYS_TO_K0SEG(CHIP_S_MEM_W1_SYS_START(v)) >> 5) +
+		    (ALPHA_PHYS_TO_K0SEG(CHIP_S_MEM_W1_SYS_START(v)) >>
+		     CHIP_ADDR_SHIFT) +
 		    (memaddr - CHIP_S_MEM_W1_BUS_START(v));
 		return (1);
 	} else
@@ -407,7 +416,8 @@ __C(CHIP,_xlate_addr_to_sparse_handle)(v, memaddr, memhp)
 	if (memaddr >= CHIP_S_MEM_W2_BUS_START(v) &&
 	    memaddr <= CHIP_S_MEM_W2_BUS_END(v)) {
 		*memhp =
-		    (ALPHA_PHYS_TO_K0SEG(CHIP_S_MEM_W2_SYS_START(v)) >> 5) +
+		    (ALPHA_PHYS_TO_K0SEG(CHIP_S_MEM_W2_SYS_START(v)) >>
+		     CHIP_ADDR_SHIFT) +
 		    (memaddr - CHIP_S_MEM_W2_BUS_START(v));
 		return (1);
 	} else
@@ -416,7 +426,8 @@ __C(CHIP,_xlate_addr_to_sparse_handle)(v, memaddr, memhp)
 	if (memaddr >= CHIP_S_MEM_W3_BUS_START(v) &&
 	    memaddr <= CHIP_S_MEM_W3_BUS_END(v)) {
 		*memhp =
-		    (ALPHA_PHYS_TO_K0SEG(CHIP_S_MEM_W3_SYS_START(v)) >> 5) +
+		    (ALPHA_PHYS_TO_K0SEG(CHIP_S_MEM_W3_SYS_START(v)) >>
+		     CHIP_ADDR_SHIFT) +
 		    (memaddr - CHIP_S_MEM_W3_BUS_START(v));
 		return (1);
 	} else
@@ -431,29 +442,29 @@ __C(CHIP,_xlate_sparse_handle_to_addr)(v, memh, memaddrp)
 	bus_addr_t *memaddrp;
 {
 
-	memh = ALPHA_K0SEG_TO_PHYS(memh << 5) >> 5;
+	memh = ALPHA_K0SEG_TO_PHYS(memh << CHIP_ADDR_SHIFT) >> CHIP_ADDR_SHIFT;
 
 #ifdef CHIP_S_MEM_W1_BUS_START
-	if ((memh << 5) >= CHIP_S_MEM_W1_SYS_START(v) &&
-	    (memh << 5) <= CHIP_S_MEM_W1_SYS_END(v)) {
+	if ((memh << CHIP_ADDR_SHIFT) >= CHIP_S_MEM_W1_SYS_START(v) &&
+	    (memh << CHIP_ADDR_SHIFT) <= CHIP_S_MEM_W1_SYS_END(v)) {
 		*memaddrp = CHIP_S_MEM_W1_BUS_START(v) +
-		    (memh - (CHIP_S_MEM_W1_SYS_START(v) >> 5));
+		    (memh - (CHIP_S_MEM_W1_SYS_START(v) >> CHIP_ADDR_SHIFT));
 		return (1);
 	} else
 #endif
 #ifdef CHIP_S_MEM_W2_BUS_START
-	if ((memh << 5) >= CHIP_S_MEM_W2_SYS_START(v) &&
-	    (memh << 5) <= CHIP_S_MEM_W2_SYS_END(v)) {
+	if ((memh << CHIP_ADDR_SHIFT) >= CHIP_S_MEM_W2_SYS_START(v) &&
+	    (memh << CHIP_ADDR_SHIFT) <= CHIP_S_MEM_W2_SYS_END(v)) {
 		*memaddrp = CHIP_S_MEM_W2_BUS_START(v) +
-		    (memh - (CHIP_S_MEM_W2_SYS_START(v) >> 5));
+		    (memh - (CHIP_S_MEM_W2_SYS_START(v) >> CHIP_ADDR_SHIFT));
 		return (1);
 	} else
 #endif
 #ifdef CHIP_S_MEM_W3_BUS_START
-	if ((memh << 5) >= CHIP_S_MEM_W3_SYS_START(v) &&
-	    (memh << 5) <= CHIP_S_MEM_W3_SYS_END(v)) {
+	if ((memh << CHIP_ADDR_SHIFT) >= CHIP_S_MEM_W3_SYS_START(v) &&
+	    (memh << CHIP_ADDR_SHIFT) <= CHIP_S_MEM_W3_SYS_END(v)) {
 		*memaddrp = CHIP_S_MEM_W3_BUS_START(v) +
-		    (memh - (CHIP_S_MEM_W3_SYS_START(v) >> 5));
+		    (memh - (CHIP_S_MEM_W3_SYS_START(v) >> CHIP_ADDR_SHIFT));
 		return (1);
 	} else
 #endif
@@ -723,7 +734,8 @@ __C(CHIP,_mem_read_1)(v, memh, off)
 
 	tmpmemh = memh + off;
 	offset = tmpmemh & 3;
-	port = (u_int32_t *)((tmpmemh << 5) | (0 << 3));
+	port = (u_int32_t *)((tmpmemh << CHIP_ADDR_SHIFT) |
+	    (0 << CHIP_SIZE_SHIFT));
 	val = *port;
 	rval = ((val) >> (8 * offset)) & 0xff;
 
@@ -748,7 +760,8 @@ __C(CHIP,_mem_read_2)(v, memh, off)
 
 	tmpmemh = memh + off;
 	offset = tmpmemh & 3;
-	port = (u_int32_t *)((tmpmemh << 5) | (1 << 3));
+	port = (u_int32_t *)((tmpmemh << CHIP_ADDR_SHIFT) |
+	    (1 << CHIP_SIZE_SHIFT));
 	val = *port;
 	rval = ((val) >> (8 * offset)) & 0xffff;
 
@@ -773,7 +786,8 @@ __C(CHIP,_mem_read_4)(v, memh, off)
 
 	tmpmemh = memh + off;
 	offset = tmpmemh & 3;
-	port = (u_int32_t *)((tmpmemh << 5) | (3 << 3));
+	port = (u_int32_t *)((tmpmemh << CHIP_ADDR_SHIFT) |
+	    (3 << CHIP_SIZE_SHIFT));
 	val = *port;
 #if 0
 	rval = ((val) >> (8 * offset)) & 0xffffffff;
@@ -856,7 +870,8 @@ __C(CHIP,_mem_write_1)(v, memh, off, val)
 		tmpmemh = memh + off;
 		offset = tmpmemh & 3;
 		nval = val << (8 * offset);
-		port = (u_int32_t *)((tmpmemh << 5) | (0 << 3));
+		port = (u_int32_t *)((tmpmemh << CHIP_ADDR_SHIFT) |
+		    (0 << CHIP_SIZE_SHIFT));
 		*port = nval;
 	}
         alpha_mb();
@@ -879,7 +894,8 @@ __C(CHIP,_mem_write_2)(v, memh, off, val)
 		tmpmemh = memh + off;
 		offset = tmpmemh & 3;
 	        nval = val << (8 * offset);
-	        port = (u_int32_t *)((tmpmemh << 5) | (1 << 3));
+	        port = (u_int32_t *)((tmpmemh << CHIP_ADDR_SHIFT) |
+	            (1 << CHIP_SIZE_SHIFT));
 	        *port = nval;
 	}
         alpha_mb();
@@ -902,7 +918,8 @@ __C(CHIP,_mem_write_4)(v, memh, off, val)
 		tmpmemh = memh + off;
 		offset = tmpmemh & 3;
 	        nval = val /*<< (8 * offset)*/;
-	        port = (u_int32_t *)((tmpmemh << 5) | (3 << 3));
+	        port = (u_int32_t *)((tmpmemh << CHIP_ADDR_SHIFT) |
+	            (3 << CHIP_SIZE_SHIFT));
 	        *port = nval;
 	}
         alpha_mb();

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_swiz_bus_io_chipdep.c,v 1.27 1998/08/30 23:29:10 cgd Exp $ */
+/* $NetBSD: pci_swiz_bus_io_chipdep.c,v 1.28 1999/12/07 05:44:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -207,6 +207,14 @@ static long
 #define	CHIP_IO_EX_STORE_SIZE(v)	(sizeof __C(CHIP, _io_ex_storage))
 #endif
 
+#ifndef CHIP_ADDR_SHIFT
+#define	CHIP_ADDR_SHIFT		5
+#endif
+
+#ifndef CHIP_SIZE_SHIFT
+#define	CHIP_SIZE_SHIFT		3
+#endif
+
 void
 __C(CHIP,_bus_io_init)(t, v)
 	bus_space_tag_t t;
@@ -326,15 +334,15 @@ __C(CHIP,_io_mapit)(v, ioaddr, iohp)
 #ifdef CHIP_IO_W1_BUS_START
 	if (ioaddr >= CHIP_IO_W1_BUS_START(v) &&
 	    ioaddr <= CHIP_IO_W1_BUS_END(v)) {
-		*iohp = (ALPHA_PHYS_TO_K0SEG(CHIP_IO_W1_SYS_START(v)) >> 5) +
-		    (ioaddr - CHIP_IO_W1_BUS_START(v));
+		*iohp = (ALPHA_PHYS_TO_K0SEG(CHIP_IO_W1_SYS_START(v)) >>
+		    CHIP_ADDR_SHIFT) + (ioaddr - CHIP_IO_W1_BUS_START(v));
 	} else
 #endif
 #ifdef CHIP_IO_W2_BUS_START
 	if (ioaddr >= CHIP_IO_W2_BUS_START(v) &&
 	    ioaddr <= CHIP_IO_W2_BUS_END(v)) {
-		*iohp = (ALPHA_PHYS_TO_K0SEG(CHIP_IO_W2_SYS_START(v)) >> 5) +
-		    (ioaddr - CHIP_IO_W2_BUS_START(v));
+		*iohp = (ALPHA_PHYS_TO_K0SEG(CHIP_IO_W2_SYS_START(v)) >>
+		    CHIP_ADDR_SHIFT) + (ioaddr - CHIP_IO_W2_BUS_START(v));
 	} else
 #endif
 	{
@@ -419,20 +427,20 @@ __C(CHIP,_io_unmap)(v, ioh, iosize, acct)
 	printf("io: freeing handle 0x%lx for 0x%lx\n", ioh, iosize);
 #endif
 
-	ioh = ALPHA_K0SEG_TO_PHYS(ioh << 5) >> 5;
+	ioh = ALPHA_K0SEG_TO_PHYS(ioh << CHIP_ADDR_SHIFT) >> CHIP_ADDR_SHIFT;
 
 #ifdef CHIP_IO_W1_BUS_START
-	if ((ioh << 5) >= CHIP_IO_W1_SYS_START(v) &&
-	    (ioh << 5) <= CHIP_IO_W1_SYS_END(v)) {
+	if ((ioh << CHIP_ADDR_SHIFT) >= CHIP_IO_W1_SYS_START(v) &&
+	    (ioh << CHIP_ADDR_SHIFT) <= CHIP_IO_W1_SYS_END(v)) {
 		ioaddr = CHIP_IO_W1_BUS_START(v) +
-		    (ioh - (CHIP_IO_W1_SYS_START(v) >> 5));
+		    (ioh - (CHIP_IO_W1_SYS_START(v) >> CHIP_ADDR_SHIFT));
 	} else
 #endif
 #ifdef CHIP_IO_W2_BUS_START
-	if ((ioh << 5) >= CHIP_IO_W2_SYS_START(v) &&
-	    (ioh << 5) <= CHIP_IO_W2_SYS_END(v)) {
+	if ((ioh << CHIP_ADDR_SHIFT) >= CHIP_IO_W2_SYS_START(v) &&
+	    (ioh << CHIP_ADDR_SHIFT) <= CHIP_IO_W2_SYS_END(v)) {
 		ioaddr = CHIP_IO_W2_BUS_START(v) +
-		    (ioh - (CHIP_IO_W2_SYS_START(v) >> 5));
+		    (ioh - (CHIP_IO_W2_SYS_START(v) >> CHIP_ADDR_SHIFT));
 	} else
 #endif
 	{
@@ -448,7 +456,7 @@ __C(CHIP,_io_unmap)(v, ioh, iosize, acct)
 		    CHIP_IO_W2_SYS_END(v));
 #endif
 		panic("%s: don't know how to unmap %lx",
-		    __S(__C(CHIP,_io_unmap)), (ioh << 5));
+		    __S(__C(CHIP,_io_unmap)), (ioh << CHIP_ADDR_SHIFT));
 	}
 
 #ifdef EXTENT_DEBUG
@@ -564,7 +572,8 @@ __C(CHIP,_io_read_1)(v, ioh, off)
 
 	tmpioh = ioh + off;
 	offset = tmpioh & 3;
-	port = (u_int32_t *)((tmpioh << 5) | (0 << 3));
+	port = (u_int32_t *)((tmpioh << CHIP_ADDR_SHIFT) |
+	    (0 << CHIP_SIZE_SHIFT));
 	val = *port;
 	rval = ((val) >> (8 * offset)) & 0xff;
 
@@ -586,7 +595,8 @@ __C(CHIP,_io_read_2)(v, ioh, off)
 
 	tmpioh = ioh + off;
 	offset = tmpioh & 3;
-	port = (u_int32_t *)((tmpioh << 5) | (1 << 3));
+	port = (u_int32_t *)((tmpioh << CHIP_ADDR_SHIFT) |
+	    (1 << CHIP_SIZE_SHIFT));
 	val = *port;
 	rval = ((val) >> (8 * offset)) & 0xffff;
 
@@ -608,7 +618,8 @@ __C(CHIP,_io_read_4)(v, ioh, off)
 
 	tmpioh = ioh + off;
 	offset = tmpioh & 3;
-	port = (u_int32_t *)((tmpioh << 5) | (3 << 3));
+	port = (u_int32_t *)((tmpioh << CHIP_ADDR_SHIFT) |
+	    (3 << CHIP_SIZE_SHIFT));
 	val = *port;
 #if 0
 	rval = ((val) >> (8 * offset)) & 0xffffffff;
@@ -683,7 +694,8 @@ __C(CHIP,_io_write_1)(v, ioh, off, val)
 	tmpioh = ioh + off;
 	offset = tmpioh & 3;
         nval = val << (8 * offset);
-        port = (u_int32_t *)((tmpioh << 5) | (0 << 3));
+        port = (u_int32_t *)((tmpioh << CHIP_ADDR_SHIFT) |
+            (0 << CHIP_SIZE_SHIFT));
         *port = nval;
         alpha_mb();
 }
@@ -702,7 +714,8 @@ __C(CHIP,_io_write_2)(v, ioh, off, val)
 	tmpioh = ioh + off;
 	offset = tmpioh & 3;
         nval = val << (8 * offset);
-        port = (u_int32_t *)((tmpioh << 5) | (1 << 3));
+        port = (u_int32_t *)((tmpioh << CHIP_ADDR_SHIFT) |
+            (1 << CHIP_SIZE_SHIFT));
         *port = nval;
         alpha_mb();
 }
@@ -721,7 +734,8 @@ __C(CHIP,_io_write_4)(v, ioh, off, val)
 	tmpioh = ioh + off;
 	offset = tmpioh & 3;
         nval = val /*<< (8 * offset)*/;
-        port = (u_int32_t *)((tmpioh << 5) | (3 << 3));
+        port = (u_int32_t *)((tmpioh << CHIP_ADDR_SHIFT) |
+            (3 << CHIP_SIZE_SHIFT));
         *port = nval;
         alpha_mb();
 }
