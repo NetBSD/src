@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.16 2000/06/24 04:26:45 eeh Exp $ */
+/*	$NetBSD: db_trace.c,v 1.17 2000/07/28 19:10:33 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -170,7 +170,7 @@ u_int64_t frame;
 				  f->fr_local[4], f->fr_local[5], f->fr_local[6], f->fr_local[7]);
 			db_printf("%llx %llx %llx %llx ",
 				  f->fr_arg[0], f->fr_arg[1], f->fr_arg[2], f->fr_arg[3]);
-			db_printf("%llx %llx %llxsp %llxpc=",
+			db_printf("%llx %llx %llx=sp %llx=pc:",
 				  f->fr_arg[4], f->fr_arg[5], f->fr_fp, f->fr_pc);
 			/* Sometimes this don't work.  Dunno why. */
 			db_printsym(f->fr_pc, DB_STGY_PROC, db_printf);
@@ -186,7 +186,7 @@ u_int64_t frame;
 				  f->fr_local[4], f->fr_local[5], f->fr_local[6], f->fr_local[7]);
 			db_printf("%llx %llx %llx %llx ",
 				  f->fr_arg[0], f->fr_arg[1], f->fr_arg[2], f->fr_arg[3]);
-			db_printf("%llx %llx %llxsp %llxpc=",
+			db_printf("%llx %llx %llx=sp %llx=pc",
 				  f->fr_arg[4], f->fr_arg[5], f->fr_fp, f->fr_pc);
 			db_printf("\n");	 
 		}
