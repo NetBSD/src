@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.37 2002/06/12 11:21:35 leo Exp $
+.\"	$NetBSD: sysinst,v 1.38 2002/06/12 12:19:53 grant Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1186,11 +1186,11 @@ on an HFS or HFS+ partition.
 .(pcmcia
 .
 Load a kernel tar file (i.e. the
-.Pa kern.tgz
+.Pa kern-GENERIC.tgz
 set file)
 on to your hard disk, for example by mounting the
 hard disk first, copying the
-.Pa kern.tgz
+.Pa kern-GENERIC.tgz
 file from floppy and unpacking it. Example:
 .Pp
 .Dl # Ic "mount /dev/wd0a /mnt"
