@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.318 2001/03/10 02:21:56 cgd Exp $
+#	$NetBSD: mi,v 1.319 2001/03/19 05:01:30 atatat Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -649,6 +649,7 @@
 ./usr/include/login_cap.h		comp-c-include
 ./usr/include/malloc.h			comp-c-include
 ./usr/include/math.h			comp-c-include
+./usr/include/md2.h			comp-c-include
 ./usr/include/md4.h			comp-c-include
 ./usr/include/md5.h			comp-c-include
 ./usr/include/memory.h			comp-c-include
@@ -2427,6 +2428,7 @@
 ./usr/share/man/cat3/lsearch.0	comp-c-catman
 ./usr/share/man/cat3/malloc.0	comp-c-catman
 ./usr/share/man/cat3/math.0	comp-c-catman
+./usr/share/man/cat3/md2.0	comp-c-catman
 ./usr/share/man/cat3/md4.0	comp-c-catman
 ./usr/share/man/cat3/md5.0		comp-c-catman
 ./usr/share/man/cat3/mdc2.0		comp-c-catman
@@ -4275,6 +4277,7 @@
 ./usr/share/man/man3/lsearch.3		comp-c-man
 ./usr/share/man/man3/malloc.3		comp-c-man
 ./usr/share/man/man3/math.3		comp-c-man
+./usr/share/man/man3/md2.3		comp-c-man
 ./usr/share/man/man3/md4.3		comp-c-man
 ./usr/share/man/man3/md5.3		comp-c-man
 ./usr/share/man/man3/mdc2.3		comp-c-man
