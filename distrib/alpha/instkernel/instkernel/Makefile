@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2000/05/02 16:06:45 sjg Exp $
+#	$NetBSD: Makefile,v 1.11 2000/05/07 18:21:17 mycroft Exp $
 
 .include "../../../../Makefile.inc"
 
@@ -17,6 +17,10 @@ all:
 
 clean cleandir distclean:
 	rm -f netbsd netbsd.gz
+
+release:
+	-mkdir -p ${RELEASEDIR}/binary/kernel
+	cp -p netbsd.gz ${RELEASEDIR}/binary/kernel/netbsd.INSTALL.gz
 
 # nothing to do here
 depend includes lint regress tags:
