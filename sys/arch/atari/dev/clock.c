@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.24 2001/01/29 08:32:23 leo Exp $	*/
+/*	$NetBSD: clock.c,v 1.25 2001/04/24 06:26:48 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -418,12 +418,21 @@ gettod()
 {
 	int			sps;
 	mc_todregs		clkregs;
+	u_int			regb;
 	struct clock_ymdhms	dt;
 
 	sps = splhigh();
+	regb = mc146818_read(RTC, MC_REGB);
 	MC146818_GETTOD(RTC, &clkregs);
 	splx(sps);
 
+	regb &= MC_REGB_24HR|MC_REGB_BINARY;
+	if (regb != (MC_REGB_24HR|MC_REGB_BINARY)) {
+		printf("Error: Nonstandard RealTimeClock Configuration -"
+			" value ignored\n"
+			"       A write to /dev/rtc will correct this.\n");
+			return(0);
+	}
 	if(clkregs[MC_SEC] > 59)
 		return(0);
 	if(clkregs[MC_MIN] > 59)
@@ -555,6 +564,8 @@ rtcwrite(dev, uio, flags)
 		return(EINVAL);
 
 	s = splclock();
+	mc146818_write(RTC, MC_REGB,
+		mc146818_read(RTC, MC_REGB) | MC_REGB_24HR | MC_REGB_BINARY);
 	MC146818_GETTOD(RTC, &clkregs);
 	splx(s);
 
