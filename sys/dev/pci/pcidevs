@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.66 1998/06/30 14:41:29 augustss Exp $
+$NetBSD: pcidevs,v 1.67 1998/07/10 20:40:06 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -482,6 +482,7 @@ vendor PMCSIERRA	0x11f8	PMC-Sierra
 vendor CYCLADES		0x120e	Cyclades
 vendor ESSENTIAL	0x120f	Essential Communications
 vendor 2MICRO		0x1217  2 Micro Inc
+vendor 3DFX		0x121A	3Dfx Interactive
 vendor ARIEL		0x1220	Ariel
 vendor AZTECH		0x122d	Aztech
 vendor 3DO		0x1239	The 3D0 Company
@@ -528,6 +529,9 @@ product	3COM 3C900TPO	0x9000	3c900 10Base-T
 product	3COM 3C900COMBO	0x9001	3c900 10Mbps-Combo
 product	3COM 3C905TX	0x9050	3c905 100Base-TX
 product	3COM 3C905T4	0x9051	3c905 100Base-T4
+
+/* 3Dfx Interactive producs */
+product 3DFX VOODOO	0x0001	Voodoo
 
 /* 3D Labs products */
 product 3DLABS 300SX	0x0001	GLINT 300SX
@@ -796,6 +800,8 @@ product INTEL 82371AB_USB	0x7112	82371AB USB Host Controller (PIIX4)
 product INTEL 82371AB_PMC	0x7113	82371AB Power Management Controller (PIIX4)
 product INTEL 82443LX		0x7180	82443LX PCI AGP Controller (PAC)
 product INTEL 82443LX_AGP	0x7181	82443LX AGP Device (PAC)
+product INTEL 82443BX		0x7190	82443BX	PCI AGP Controller (PAC)
+product INTEL 82443BX_AGP	0x7191	82443BX AGP Device (PAC)
 product INTEL PCI450_PB		0x84c4	82454KX/GX PCI Bridge (PB)
 product INTEL PCI450_MC		0x84c5	82451KX/GX Memory Controller (MC)
 
