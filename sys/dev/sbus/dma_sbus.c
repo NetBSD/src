@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_sbus.c,v 1.21 2004/03/17 17:04:58 pk Exp $ */
+/*	$NetBSD: dma_sbus.c,v 1.22 2004/06/27 18:28:26 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.21 2004/03/17 17:04:58 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.22 2004/06/27 18:28:26 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,12 +256,15 @@ dma_alloc_bustag(sc)
 	bus_space_tag_t sbt;
 
 	sbt = (bus_space_tag_t) malloc(sizeof(struct sparc_bus_space_tag),
-	    M_DEVBUF, M_NOWAIT|M_ZERO);
+	    M_DEVBUF, M_NOWAIT);
 	if (sbt == NULL)
 		return (NULL);
 
+	memcpy(sbt, sc->sc_lsi64854.sc_bustag, sizeof(*sbt));
 	sbt->cookie = sc;
 	sbt->parent = sc->sc_lsi64854.sc_bustag;
 	sbt->sparc_intr_establish = dmabus_intr_establish;
+	sbt->ranges = NULL;
+	sbt->nranges = 0;
 	return (sbt);
 }
