@@ -1,5 +1,5 @@
 #	from: @(#)files.sparc	8.1 (Berkeley) 7/19/93
-#	$Id: files.mac68k.newconf,v 1.5 1994/01/10 23:58:44 briggs Exp $
+#	$Id: files.mac68k.newconf,v 1.6 1994/01/20 23:55:16 briggs Exp $
 # files.mac68k.newconf
 # mac68k-specific configuration info
 
@@ -48,8 +48,10 @@ major {sd=4}
 device	st at scsibus: tape
 file	arch/mac68k/scsi/st.c		st needs-count
 major {st=5}
-#file	arch/mac68k/scsi/uk.c		uk needs-flag
-#file	arch/mac68k/scsi/su.c		su needs-flag
+device uk at scsibus
+device su at scsibus
+file	arch/mac68k/scsi/uk.c		uk needs-count
+file	arch/mac68k/scsi/su.c		su needs-count
 
 file	arch/mac68k/dev/asc.c		# this should be a real device...
 file	arch/mac68k/mac68k/disksubr.c		disk
