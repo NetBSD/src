@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.inc.mk,v 1.28 2003/11/07 00:05:24 lukem Exp $
+#	$NetBSD: bsd.inc.mk,v 1.29 2004/01/27 02:52:19 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -16,9 +16,9 @@ incinstall::	# ensure existence
 __incinstall: .USE
 	@cmp -s ${.ALLSRC} ${.TARGET} > /dev/null 2>&1 || \
 	    (${_MKSHMSG_INSTALL} ${.TARGET}; \
-	     ${_MKSHECHO} "${INSTALL_FILE:N-c} -c -o ${BINOWN} -g ${BINGRP} \
+	     ${_MKSHECHO} "${INSTALL_FILE} -c -o ${BINOWN} -g ${BINGRP} \
 		-m ${NONBINMODE} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}" && \
-	     ${INSTALL_FILE:N-c} -c -o ${BINOWN} -g ${BINGRP} \
+	     ${INSTALL_FILE} -c -o ${BINOWN} -g ${BINGRP} \
 		-m ${NONBINMODE} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET})
 
 .for F in ${INCS:O:u}
