@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.12 2003/07/25 08:26:25 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.13 2003/11/30 14:36:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,11 +46,11 @@
 #include <unistd.h>
 
 /* constants and defines */
-#define PART_ROOT	A
-#define PART_SWAP	B
-#define PART_RAW	C
-#define PART_USR	D	/* Can be after PART_FIRST_FREE */
-#define PART_FIRST_FREE	E
+#define PART_ROOT	PART_A
+#define PART_SWAP	PART_B
+#define PART_RAW	PART_C
+#define PART_USR	PART_D	/* Can be after PART_FIRST_FREE */
+#define PART_FIRST_FREE	PART_E
 
 #define DEFSWAPRAM	32	/* Assume at least this RAM for swap calc */
 #define DEFROOTSIZE	20	/* Default root size */
