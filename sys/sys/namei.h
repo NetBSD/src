@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)namei.h	7.15 (Berkeley) 5/15/91
+ *	from: @(#)namei.h	7.15 (Berkeley) 5/15/91
+ *	$Id: namei.h,v 1.3 1993/05/20 16:22:47 cgd Exp $
  */
 
 #ifndef _SYS_NAMEI_H_

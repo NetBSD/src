@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dmap.h	7.3 (Berkeley) 2/15/91
+ *	from: @(#)dmap.h	7.3 (Berkeley) 2/15/91
+ *	$Id: dmap.h,v 1.3 1993/05/20 16:22:06 cgd Exp $
  */
 
 #ifndef _SYS_DMAP_H_

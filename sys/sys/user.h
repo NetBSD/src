@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)user.h	7.19 (Berkeley) 5/4/91
+ *	from: @(#)user.h	7.19 (Berkeley) 5/4/91
+ *	$Id: user.h,v 1.3 1993/05/20 16:23:45 cgd Exp $
  */
 
 #ifndef _SYS_USER_H_

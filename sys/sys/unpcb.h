@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)unpcb.h	7.6 (Berkeley) 6/28/90
+ *	from: @(#)unpcb.h	7.6 (Berkeley) 6/28/90
+ *	$Id: unpcb.h,v 1.3 1993/05/20 16:23:43 cgd Exp $
  */
 
 #ifndef _SYS_UNPCB_H_

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ttychars.h	7.6 (Berkeley) 5/9/91
+ *	from: @(#)ttychars.h	7.6 (Berkeley) 5/9/91
+ *	$Id: ttychars.h,v 1.3 1993/05/20 16:23:30 cgd Exp $
  */
 
 #ifndef _SYS_TTYCHARS_H_

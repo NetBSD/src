@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)malloc.h	7.25 (Berkeley) 5/15/91
+ *	from: @(#)malloc.h	7.25 (Berkeley) 5/15/91
+ *	$Id: malloc.h,v 1.5 1993/05/20 16:22:35 cgd Exp $
  */
 
 #ifndef _SYS_MALLOC_H_

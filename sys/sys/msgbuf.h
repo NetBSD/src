@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)msgbuf.h	7.5 (Berkeley) 5/2/91
+ *	from: @(#)msgbuf.h	7.5 (Berkeley) 5/2/91
+ *	$Id: msgbuf.h,v 1.3 1993/05/20 16:22:45 cgd Exp $
  */
 
 #ifndef _SYS_MSGBUF_H_

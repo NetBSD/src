@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)termios.h	7.22 (Berkeley) 5/7/91
+ *	from: @(#)termios.h	7.22 (Berkeley) 5/7/91
+ *	$Id: termios.h,v 1.4 1993/05/20 16:23:19 cgd Exp $
  */
 
 #ifndef _SYS_TERMIOS_H_

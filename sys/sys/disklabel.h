@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)disklabel.h	7.19 (Berkeley) 5/7/91
+ *	from: @(#)disklabel.h	7.19 (Berkeley) 5/7/91
+ *	$Id: disklabel.h,v 1.3 1993/05/20 16:22:01 cgd Exp $
  */
 
 #ifndef _SYS_DISKLABEL_H_

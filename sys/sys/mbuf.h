@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mbuf.h	7.14 (Berkeley) 12/5/90
+ *	from: @(#)mbuf.h	7.14 (Berkeley) 12/5/90
+ *	$Id: mbuf.h,v 1.3 1993/05/20 16:22:39 cgd Exp $
  */
 
 #ifndef _SYS_MBUF_H_

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ttydev.h	7.8 (Berkeley) 5/9/91
+ *	from: @(#)ttydev.h	7.8 (Berkeley) 5/9/91
+ *	$Id: ttydev.h,v 1.3 1993/05/20 16:23:34 cgd Exp $
  */
 
 #ifndef _SYS_TTYDEV_H_

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vcmd.h	7.4 (Berkeley) 5/5/91
+ *	from: @(#)vcmd.h	7.4 (Berkeley) 5/5/91
+ *	$Id: vcmd.h,v 1.3 1993/05/20 16:23:48 cgd Exp $
  */
 
 #ifndef _SYS_VCMD_H_

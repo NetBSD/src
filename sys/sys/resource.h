@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)resource.h	7.5 (Berkeley) 3/17/91
+ *	from: @(#)resource.h	7.5 (Berkeley) 3/17/91
+ *	$Id: resource.h,v 1.3 1993/05/20 16:22:57 cgd Exp $
  */
 
 #ifndef _SYS_RESOURCE_H_
