@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.15 2001/11/24 16:38:07 perry Exp $
+.\"	$NetBSD: installboot.8,v 1.16 2001/11/26 00:14:19 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,6 +95,14 @@ boot program in the bootblock area on
 .Bd -literal -offset indent
 installboot /usr/mdec/xxboot /dev/rsd0a
 .Ed
+.Sh SEE ALSO
+.Xr dd 1 ,
+.Xr boot 8
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Nx 1.3 .
 .Sh BUGS
 If
 .Nm
@@ -124,11 +132,3 @@ time you install the bootblock.
 As normal dd is used to install the bootblock, you can only install onto
 your currently used root (or any other mounted) partition from single-user
 mode, or while otherwise running in insecure mode.
-.Sh SEE ALSO
-.Xr dd 1 ,
-.Xr boot 8
-.Sh HISTORY
-The
-.Nm
-command first appeared in
-.Nx 1.3
