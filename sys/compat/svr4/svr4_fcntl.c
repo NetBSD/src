@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.24 1998/06/30 19:42:56 thorpej Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.25 1998/06/30 23:34:05 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994, 1997 Christos Zoulas.  All rights reserved.
@@ -484,6 +484,21 @@ svr4_sys_pread(p, v, retval)
 
 
 int
+svr4_sys_pread64(p, v, retval)
+	register struct proc *p;
+	void *v; 
+	register_t *retval;
+{
+
+	/*
+	 * Just call the NetBSD native call; the arguments are
+	 * the same.
+	 */
+	return (sys_pread(p, v, retval));
+}
+
+
+int
 svr4_sys_pwrite(p, v, retval)
 	register struct proc *p;
 	void *v;
@@ -502,6 +517,21 @@ svr4_sys_pwrite(p, v, retval)
 	SCARG(pwa, offset) = SCARG(uap, offset);
 
 	return (sys_pwrite(p, &pwa, retval));
+}
+
+
+int
+svr4_sys_pwrite64(p, v, retval)
+	register struct proc *p;
+	void *v; 
+	register_t *retval;
+{
+
+	/*
+	 * Just call the NetBSD native call; the arguments are
+	 * the same.
+	 */
+	return (sys_pwrite(p, v, retval));
 }
 
 
