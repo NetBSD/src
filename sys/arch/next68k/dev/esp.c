@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.14 1999/01/27 06:37:49 dbj Exp $	*/
+/*	$NetBSD: esp.c,v 1.15 1999/02/01 12:53:48 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -203,12 +203,7 @@ espmatch_intio(parent, cf, aux)
   /* should probably probe here */
   /* Should also probably set up data from config */
 
-#if 1
-/* this code isn't working yet, don't match on it */
-	return(0);
-#else
 	return(1);
-#endif
 }
 
 void
@@ -438,7 +433,7 @@ esp_dma_isintr(sc)
 						ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD);
 			}
 			nextdma_intr(&esc->sc_scsi_dma);
-			return 1;
+			return 0;
 		}
 
 		/* Clear the DMAMOD bit in the DCTL register, since if this
