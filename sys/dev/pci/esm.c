@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.24 2004/04/23 21:13:06 itojun Exp $      */
+/*      $NetBSD: esm.c,v 1.25 2004/04/30 14:14:55 simonb Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.24 2004/04/23 21:13:06 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.25 2004/04/30 14:14:55 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1086,8 +1086,13 @@ esmch_set_format(struct esm_chinfo *ch, struct audio_params *p)
 	}
 	if (p->precision * p->factor == 8) {
 		aputype += 2;
-		if (p->encoding == AUDIO_ENCODING_ULINEAR)
+		switch (p->encoding) {
+		case AUDIO_ENCODING_ULINEAR:
+		case AUDIO_ENCODING_ULINEAR_BE:
+		case AUDIO_ENCODING_ULINEAR_LE:
 			wcreg_tpl |= WAVCACHE_CHCTL_U8;
+			break;
+		}
 	}
 	ch->wcreg_tpl = wcreg_tpl;
 	ch->aputype = aputype;
