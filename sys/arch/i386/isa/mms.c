@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.34 1999/01/23 15:03:50 drochner Exp $	*/
+/*	$NetBSD: mms.c,v 1.35 2000/01/08 02:57:25 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -242,7 +242,7 @@ mmsintr(arg)
 
 	if (dx || dy || changed)
 		wsmouse_input(sc->sc_wsmousedev,
-			      buttons, dx, dy, 0);
+			      buttons, dx, dy, 0, WSMOUSE_INPUT_DELTA);
 
 	return -1;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.23 2000/01/07 03:13:23 enami Exp $ */
+/* $NetBSD: wsconsio.h,v 1.24 2000/01/08 02:57:24 takemura Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -156,6 +156,7 @@ struct wskbd_map_data {
 #define		WSMOUSE_TYPE_USB	3	/* USB mouse */
 #define		WSMOUSE_TYPE_LMS	4	/* Logitech busmouse */
 #define		WSMOUSE_TYPE_MMS	5	/* Microsoft InPort mouse */
+#define		WSMOUSE_TYPE_TPANEL	6	/* Generic Touch Panel */
 
 /* Set resolution.  Not applicable to all mouse types. */
 #define	WSMOUSEIO_SRES		_IOR('W', 33, u_int)
@@ -171,6 +172,22 @@ struct wskbd_map_data {
 #define		WSMOUSE_RATE_MIN	0
 #define		WSMOUSE_RATE_DEFAULT	50
 #define		WSMOUSE_RATE_MAX	100
+
+/* Set/get sample coordinates for calibration */
+#define WSMOUSE_CALIBCOORDS_MAX		16
+#define WSMOUSE_CALIBCOORDS_RESET	-1
+struct wsmouse_calibcoords {
+	int minx, miny;		/* minimum value of X/Y */
+	int maxx, maxy;		/* maximum value of X/Y */
+	int samplelen;		/* number of samples available or
+				   WSMOUSE_CALIBCOORDS_RESET for raw mode */
+	struct wsmouse_calibcoord {
+		int rawx, rawy;	/* raw coordinate */
+		int x, y;	/* translated coordinate */
+	} samples[WSMOUSE_CALIBCOORDS_MAX];	/* sample coordinates */
+};
+#define	WSMOUSEIO_SCALIBCOORDS	_IOR('W', 36, struct wsmouse_calibcoords)
+#define	WSMOUSEIO_GCALIBCOORDS	_IOR('R', 37, struct wsmouse_calibcoords)
 
 /*
  * Display ioctls (64 - 95)

@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.9 1999/12/03 22:48:25 thorpej Exp $ */
+/* $NetBSD: psm.c,v 1.10 2000/01/08 02:57:23 takemura Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -319,7 +319,8 @@ int data;
 
 		if (sc->dx || dy || changed)
 			wsmouse_input(sc->sc_wsmousedev,
-				      sc->buttons, sc->dx, dy, 0);
+				      sc->buttons, sc->dx, dy, 0,
+				      WSMOUSE_INPUT_DELTA);
 		break;
 	}
 
