@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.710 2005/01/31 06:09:03 joff Exp $
+#	$NetBSD: files,v 1.711 2005/02/01 16:00:50 drochner Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -440,7 +440,7 @@ defparam opt_isp.h		ISP_LOGDEFAULT
 device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_netbsd.c		isp
-file	dev/ic/isp_target.c		isp
+file	dev/ic/isp_target.c		isp & isp_target_mode
 
 # LSILogic Fusion-MPT I/O Processor SCSI/FC Controllers
 #
