@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.69 2004/06/30 21:37:49 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.70 2004/07/28 19:15:47 pk Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.69 2004/06/30 21:37:49 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.70 2004/07/28 19:15:47 pk Exp $");
 
 #include "opt_ddb.h"
 
@@ -410,9 +410,11 @@ _sbus_bus_map(t, addr, size, flags, v, hp)
 {
 	int error;
 
-	if ((error = bus_space_translate_address_generic(
-			t->ranges, t->nranges, &addr)) != 0)
-		return (error);
+	if (t->ranges != NULL) {
+		if ((error = bus_space_translate_address_generic(
+				t->ranges, t->nranges, &addr)) != 0)
+			return (error);
+	}
 
 	return (bus_space_map(t->parent, addr, size, flags, hp));
 }
