@@ -49,7 +49,7 @@ static char sccsid[] = "@(#)err.c	5.2 (Berkeley) 3/19/93";
 
 extern char *__progname;		/* Program name, from crt0. */
 
-__dead void
+volatile void
 #ifdef __STDC__
 err(int eval, const char *fmt, ...)
 #else
@@ -59,7 +59,7 @@ err(eval, fmt, va_alist)
 	va_dcl
 #endif
 {
-	va_list ap;
+	_VA_LIST_ ap;
 #if __STDC__
 	va_start(ap, fmt);
 #else
@@ -69,11 +69,11 @@ err(eval, fmt, va_alist)
 	va_end(ap);
 }
 
-__dead void
+volatile void
 verr(eval, fmt, ap)
 	int eval;
 	const char *fmt;
-	va_list ap;
+	_VA_LIST_ ap;
 {
 	int sverrno;
 
@@ -87,7 +87,7 @@ verr(eval, fmt, ap)
 	exit(eval);
 }
 
-__dead void
+volatile void
 #if __STDC__
 errx(int eval, const char *fmt, ...)
 #else
@@ -97,7 +97,7 @@ errx(eval, fmt, va_alist)
 	va_dcl
 #endif
 {
-	va_list ap;
+	_VA_LIST_ ap;
 #if __STDC__
 	va_start(ap, fmt);
 #else
@@ -107,11 +107,11 @@ errx(eval, fmt, va_alist)
 	va_end(ap);
 }
 
-__dead void
+volatile void
 verrx(eval, fmt, ap)
 	int eval;
 	const char *fmt;
-	va_list ap;
+	_VA_LIST_ ap;
 {
 	(void)fprintf(stderr, "%s: ", __progname);
 	if (fmt != NULL)
@@ -130,7 +130,7 @@ warn(fmt, va_alist)
 	va_dcl
 #endif
 {
-	va_list ap;
+	_VA_LIST_ ap;
 #if __STDC__
 	va_start(ap, fmt);
 #else
@@ -143,7 +143,7 @@ warn(fmt, va_alist)
 void
 vwarn(fmt, ap)
 	const char *fmt;
-	va_list ap;
+	_VA_LIST_ ap;
 {
 	int sverrno;
 
@@ -166,7 +166,7 @@ warnx(fmt, va_alist)
 	va_dcl
 #endif
 {
-	va_list ap;
+	_VA_LIST_ ap;
 #ifdef __STDC__
 	va_start(ap, fmt);
 #else
@@ -179,7 +179,7 @@ warnx(fmt, va_alist)
 void
 vwarnx(fmt, ap)
 	const char *fmt;
-	va_list ap;
+	_VA_LIST_ ap;
 {
 	(void)fprintf(stderr, "%s: ", __progname);
 	if (fmt != NULL)
