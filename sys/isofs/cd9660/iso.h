@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.16 1997/01/24 00:26:31 cgd Exp $	*/
+/*	$NetBSD: iso.h,v 1.17 1997/01/24 00:44:40 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -137,13 +137,14 @@ struct iso_extended_attributes {
 
 extern __inline int isonum_711 __P((u_char *));
 extern __inline int isonum_712 __P((char *));
-/* XXX __inline int isonum_721 __P((u_char *)); */
-/* XXX __inline int isonum_722 __P((u_char *)); */
+extern __inline int isonum_721 __P((u_char *));
+extern __inline int isonum_722 __P((u_char *));
 extern __inline int isonum_723 __P((u_char *));
-/* XXX __inline int isonum_731 __P((u_char *)); */
-/* XXX __inline int isonum_732 __P((u_char *)); */
+extern __inline int isonum_731 __P((u_char *));
+extern __inline int isonum_732 __P((u_char *));
 extern __inline int isonum_733 __P((u_char *));
 
+/* 7.1.1: unsigned char */
 extern __inline int
 #if __STDC__
 isonum_711(u_char *p)
@@ -155,6 +156,7 @@ isonum_711(p)
 	return *p;
 }
 
+/* 7.1.2: signed(?) char */
 extern __inline int
 #if __STDC__
 isonum_712(char *p)
@@ -166,9 +168,31 @@ isonum_712(p)
 	return *p;
 }
 
-/* XXX extern __inline int isonum_721 __P((u_char *)); */
-/* XXX extern __inline int isonum_722 __P((u_char *)); */
+/* 7.2.1: unsigned little-endian 16-bit value.  NOT USED IN KERNEL. */
+extern __inline int
+isonum_721(p)
+	u_char *p;
+{
+#if defined(UNALIGNED_ACCESS) && (BYTE_ORDER == LITTLE_ENDIAN)
+	return *(u_int16t *)p;
+#else
+	return *p|((char)p[1] << 8);
+#endif
+}
 
+/* 7.2.2: unsigned big-endian 16-bit value.  NOT USED IN KERNEL. */
+extern __inline int     
+isonum_722(p)
+	unsigned char *p;
+{
+#if defined(UNALIGNED_ACCESS) && (BYTE_ORDER == BIG_ENDIAN)
+	return *(u_int16t *)p;
+#else
+	return ((char)*p << 8)|p[1];
+#endif
+} 
+
+/* 7.2.3: unsigned both-endian (little, then big) 16-bit value */
 extern __inline int
 #if __STDC__
 isonum_723(u_char *p)
@@ -189,9 +213,31 @@ isonum_723(p)
 #endif
 }
 
-/* XXX extern __inline int isonum_731 __P((u_char *)); */
-/* XXX extern __inline int isonum_732 __P((u_char *)); */
+/* 7.3.1: unsigned little-endian 32-bit value.  NOT USED IN KERNEL. */
+extern __inline int
+isonum_731(p)
+	u_char *p;
+{
+#if defined(UNALIGNED_ACCESS) && (BYTE_ORDER == LITTLE_ENDIAN)
+	return *(u_int32t *)p;
+#else
+	return *p|(p[1] << 8)|(p[2] << 16)|(p[3] << 24)
+#endif
+}
 
+/* 7.3.2: unsigned big-endian 32-bit value.  NOT USED IN KERNEL. */
+extern __inline int
+isonum_732(p)
+	unsigned char *p;
+{
+#if defined(UNALIGNED_ACCESS) && (BYTE_ORDER == BIG_ENDIAN)
+	return *(u_int32t *)p;
+#else
+	return (*p << 24)|(p[1] << 16)|(p[2] << 8)|p[3];
+#endif
+}
+
+/* 7.3.3: unsigned both-endian (little, then big) 32-bit value */
 extern __inline int
 #if __STDC__
 isonum_733(u_char *p)
