@@ -32,7 +32,7 @@
  */
 
 #include "kpasswd_locl.h"
-RCSID("$Id: kpasswdd.c,v 1.1.1.2 2000/08/02 19:58:57 assar Exp $");
+RCSID("$Id: kpasswdd.c,v 1.2 2000/09/13 11:29:26 fvdl Exp $");
 
 #include <kadm5/admin.h>
 #ifdef HAVE_DLFCN_H
@@ -402,6 +402,34 @@ out:
     krb5_auth_con_free (context, auth_context);
 }
 
+#ifdef INETD_SUPPORT
+/*
+ * XXX this code relies on getsockname() returning a valid local
+ * address for a "connected" DGRAM socket. This is true for most, but
+ * probably not all systems. For some systems, this could be done
+ * cleaner by using the IP_RECVDSTADDR option + recvmsg().
+ */
+static int
+get_local_addr(struct sockaddr *remote, int remlen,
+	       struct sockaddr *local, int *loclen)
+{
+	int s, ret;
+
+	s = socket(remote->sa_family, SOCK_DGRAM, 0);
+	if (s < 0)
+		return -1;
+
+	if (connect(s, remote, remlen) < 0) {
+		close(s);
+		return -1;
+	}
+
+	ret = getsockname(s, local, loclen);
+	close(s);
+	return ret;
+}
+#endif
+
 static int
 doit (krb5_keytab keytab, int port)
 {
@@ -410,11 +438,19 @@ doit (krb5_keytab keytab, int port)
     int *sockets;
     int maxfd;
     char *realm;
+    krb5_address *my_addrp;
     krb5_addresses addrs;
     unsigned n, i;
     fd_set real_fdset;
     struct sockaddr_storage __ss;
     struct sockaddr *sa = (struct sockaddr *)&__ss;
+#ifdef INETD_SUPPORT
+    int fdz = 0, ret2;
+    int from_inetd, fromlen, loclen;
+    krb5_address my_addr;
+    struct sockaddr_storage __local;
+    struct sockaddr *localsa = (struct sockaddr *)&__local;
+#endif
 
     ret = krb5_get_default_realm (context, &realm);
     if (ret)
@@ -432,35 +468,51 @@ doit (krb5_keytab keytab, int port)
 
     free (realm);
 
-    ret = krb5_get_all_server_addrs (context, &addrs);
-    if (ret)
-	krb5_err (context, 1, ret, "krb5_get_all_server_addrs");
+#ifdef INETD_SUPPORT
+    fromlen = sizeof __ss;
+    from_inetd = (getsockname(0, sa, &fromlen) == 0);
 
-    n = addrs.len;
+    if (!from_inetd) {
+#endif
+	 ret = krb5_get_all_server_addrs (context, &addrs);
+	 if (ret)
+	    krb5_err (context, 1, ret, "krb5_get_all_server_addrs");
 
-    sockets = malloc (n * sizeof(*sockets));
-    if (sockets == NULL)
-	krb5_errx (context, 1, "out of memory");
-    maxfd = 0;
-    FD_ZERO(&real_fdset);
-    for (i = 0; i < n; ++i) {
-	int sa_size;
+	n = addrs.len;
 
-	krb5_addr2sockaddr (&addrs.val[i], sa, &sa_size, port);
+	sockets = malloc (n * sizeof(*sockets));
+	if (sockets == NULL)
+	    krb5_errx (context, 1, "out of memory");
+	maxfd = 0;
+	FD_ZERO(&real_fdset);
+	for (i = 0; i < n; ++i) {
+	    int sa_size;
+
+	    krb5_addr2sockaddr (&addrs.val[i], sa, &sa_size, port);
 
 	
-	sockets[i] = socket (sa->sa_family, SOCK_DGRAM, 0);
-	if (sockets[i] < 0)
-	    krb5_err (context, 1, errno, "socket");
-	if (bind (sockets[i], sa, sa_size) < 0) {
-	    char str[128];
-	    size_t len;
-	    ret = krb5_print_address (&addrs.val[i], str, sizeof(str), &len);
-	    krb5_err (context, 1, errno, "bind(%s)", str);
+	    sockets[i] = socket (sa->sa_family, SOCK_DGRAM, 0);
+	    if (sockets[i] < 0)
+		krb5_err (context, 1, errno, "socket");
+	    if (bind (sockets[i], sa, sa_size) < 0) {
+		char str[128];
+		size_t len;
+		ret = krb5_print_address (&addrs.val[i], str, sizeof(str),
+		    &len);
+		krb5_err (context, 1, errno, "bind(%s)", str);
+	    }
+	    maxfd = max (maxfd, sockets[i]);
+	    FD_SET(sockets[i], &real_fdset);
 	}
-	maxfd = max (maxfd, sockets[i]);
-	FD_SET(sockets[i], &real_fdset);
+#ifdef INETD_SUPPORT
+    } else {
+	n = 1;
+	maxfd = 0;
+	sockets = &fdz;
+	FD_ZERO(&real_fdset);
+	FD_SET(0, &real_fdset);
     }
+#endif
 
     while(exit_flag == 0) {
 	int ret;
@@ -487,13 +539,35 @@ doit (krb5_keytab keytab, int port)
 			krb5_err (context, 1, errno, "recvfrom");
 		}
 
+#ifdef INETD_SUPPORT
+		if (from_inetd) {
+			loclen = sizeof __local;
+			ret2 = get_local_addr(sa, addrlen, localsa, &loclen);
+			if (ret2 < 0)
+				krb5_errx (context, errno, "get_local_addr");
+			ret2 = krb5_sockaddr2address(localsa, &my_addr);
+			if (ret2)
+				krb5_errx (context, ret2,
+				    "krb5_sockaddr2address");
+			my_addrp = &my_addr;
+		} else
+#endif
+		my_addrp = &addrs.val[i];
+
 		process (server, keytab, sockets[i],
-			 &addrs.val[i],
+			 my_addrp,
 			 sa, addrlen,
 			 buf, ret);
 	    }
+#ifdef INETD_SUPPORT
+	if (from_inetd)
+	    break;
+#endif
     }
-    krb5_free_addresses (context, &addrs);
+#ifdef INETD_SUPPORT
+    if (!from_inetd)
+#endif
+	krb5_free_addresses (context, &addrs);
     krb5_free_principal (context, server);
     krb5_free_context (context);
     return 0;
