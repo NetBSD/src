@@ -1,4 +1,4 @@
-	$NetBSD: prep,v 1.15 1998/01/09 18:45:47 perry Exp $	
+	$NetBSD: prep,v 1.16 1998/09/27 19:32:59 is Exp $	
 
 You will need an AmigaDOS hard drive prep tool to prepare your hard
 drives for use with NetBSD/Amiga.  HDToolBox is provided with the
@@ -129,3 +129,7 @@ Transferring the miniroot file system:
 	where /dev/rsd0b should be the device path of the swap partition
 	your system is configured to use.  Once the file is copied,
 	reboot back to AmigaDOS to boot the upgrade kernel.
+
+	CAVEAT: Once you have started installation once, whenever you abort it
+	and want to retry, you must reinstall the miniroot.fs on the swap
+	partition.
