@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.23 2002/11/26 18:49:42 christos Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.24 2003/06/13 15:09:17 uwe Exp $	*/
 
 /*
  * TODO
@@ -85,7 +85,7 @@ int irframetdebug = 0;
 /* Max size with framing. */
 #define MAX_IRDA_FRAME (2*IRDA_MAX_FRAME_SIZE + IRDA_MAX_EBOFS + 4)
 
-struct frame {
+struct irt_frame {
 	u_char *buf;
 	u_int len;
 };
@@ -120,7 +120,7 @@ struct irframet_softc {
 	u_int sc_nframes;
 	u_int sc_framei;
 	u_int sc_frameo;
-	struct frame sc_frames[MAXFRAMES];
+	struct irt_frame sc_frames[MAXFRAMES];
 	struct selinfo sc_rsel;
 	/* XXXJRT Nothing selnotify's sc_wsel */
 	struct selinfo sc_wsel;
