@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.4 2002/08/31 16:22:22 mycroft Exp $
+# $NetBSD: md.macppc,v 1.5 2002/09/01 15:38:56 mycroft Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/Xnest
 ./usr/X11R6/bin/Xvfb
@@ -19,6 +19,7 @@
 ./usr/X11R6/lib/X11/doc/README.rendition
 ./usr/X11R6/lib/X11/doc/RELNOTES
 ./usr/X11R6/lib/X11/doc/ServersOnly
+./usr/X11R6/lib/modules
 ./usr/X11R6/man/cat1/Xnest.0
 ./usr/X11R6/man/cat1/Xvfb.0
 ./usr/X11R6/man/cat5/XF86Config.0
