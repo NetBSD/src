@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.82 2002/10/02 16:51:48 thorpej Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.83 2002/10/19 18:01:59 atatat Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.82 2002/10/02 16:51:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.83 2002/10/19 18:01:59 atatat Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1853,7 +1853,7 @@ pccbb_intr_disestablish(sc, ih)
 #ifdef DIAGNOSTIC
 	for (pil = LIST_FIRST(&sc->sc_pil); pil != NULL;
 	     pil = LIST_NEXT(pil, pil_next)) {
-		printf("pccbb_intr_disestablish: pil %p\n", pil);
+		DPRINTF(("pccbb_intr_disestablish: pil %p\n", pil));
 		if (pil == ih) {
 			DPRINTF(("pccbb_intr_disestablish frees one pil\n"));
 			break;
