@@ -1,0 +1,448 @@
+File					Version		Requested by
+----					-------		------------
+
+sys/arch/i386/isa/npx.c			1.66		mycroft
+
+  Fix bogus delivery of FPU exception after process has exited.
+
+sys/kern/vfs_cluster.c			1.17		mycroft
+
+  Fix an error where we could write out an invalid block under heavy
+  load.
+
+sys/arch/i386/conf/GENERIC		1.129		mycroft
+
+  Fix impossible I/O addresses for uha1 and wt0.
+
+usr.sbin/inetd/inetd.c			1.41		mycroft
+
+  Fix problem with SIGPIPE being ignored by descendants of inetd.
+
+share/me/tmac.e				1.5-1.8		mycroft
+	 revisions			1.2		mycroft
+share/doc/usd/19.memacros/intro.me	1.3		mycroft
+share/doc/usd/20.meref/ref.me		1.3-1.5		mycroft
+
+  Fix superscript strings to work correctly in groff.
+
+sys/arch/mac68k/dev/if_mc.c		1.5		scottr
+distrib/hp300/miniroot/list		1.3		scottr
+
+  Fix build problems.
+
+sys/dev/scsipi/scsiconf.c		1.96		scottr
+
+  Add quirk table entries.
+
+sys/dev/ic/com.c			1.136-1.138	scottr
+	   z8530sc.c			1.7		scottr
+	   z8530tty.c			1.43-1.44	scottr
+
+  Fix hang during autoconfig on some systems.
+
+sys/arch/hp300/hp300/leds.c		1.2		scottr
+
+  Fix `inverted LEDs' problem.
+
+sys/arch/mac68k/dev/grf_iv.c		1.30-1.31	scottr
+
+  Fix video problems on some systems.
+
+sys/arch/mac68k/mac68k/machdep.c	1.187		scottr
+
+  Fix hang during startup on non-NuBus machines.
+
+distrib/notes/mac68k/hardware		1.13		ender
+
+  Document some known bugs.
+
+  [Also did 1.10-1.12, since they were fairly minor.]
+
+sys/arch/sun3x/conf/RAMDISK		patch		jeremy
+
+  Don't require the user to type in the root file system name.
+
+usr.sbin/pkg_install/*			all		hubertf
+
+  Fix various bugs (deinstalling symlinks to directories, y2k, etc.).
+
+share/mk/bsd.port.mk			delete		hubertf
+	 bsd.port.subdir.mk		delete		hubertf
+
+  Not used, and not compatible with pkgsrc.
+
+sys/netinet/tcp_input.c			1.45		kml
+	    tcp_output.c		1.30		kml
+	    tcp_subr.c			1.43		kml
+	    tcp_timer.c			1.31		kml
+
+  Fix an error that caused retransmissions and timeouts to happen too
+  quickly if the RTT was small.
+
+sys/netinet/tcp_output.c		1.29		kml
+	    tcp_subr.c			1.42		kml
+	    tcp_var.h			1.36		kml
+
+  Fix segment size computation when TCP options are present.
+
+sys/dev/scsipi/scsiconf.c		1.98		explorer
+
+  Add quirk table entries.
+
+sys/arch/amiga/dev/if_le.c		1.28		is
+
+  Fix spurious panics.
+
+sbin/ping/ping.c			1.36		kleink
+
+  Fix missing ntohs() in decoding of NEED FRAGMENT packets.
+
+usr.sbin/amd/mk-amd-map/mk-amd-map.c	1.7		tv
+					1.8		mycroft
+
+  Fix missing close of the DB file, and erroneous path names.
+
+bin/ps/ps.1				1.23		bouyer
+
+  Fix man page errors.
+
+  [Also pulled up some more fixes from fair.]
+
+sys/dev/isa/wd.c			patch		bouyer
+	    wdc.c			patch		bouyer
+	    wdlink.h			patch		bouyer
+
+  Fix incorrect block address calculation when retrying after an
+  error.
+
+sys/arch/i386/i386/ibcs2_machdep.c	1.5		scottb
+		   locore.s		1.189		scottb
+		   machdep.c		1.294		scottb
+		   trap.c		1.110		scottb
+		   trap.c		1.112		scottb
+sys/arch/i386/include/ibcs2_machdep.h	1.3		scottb
+sys/compat/common/kern_ipc_10.c		1.6		scottb
+sys/compat/ibcs2/TODO			1.4-1.5		scottb
+		 ibcs2_exec.c		1.14-1.15	scottb
+		 ibcs2_exec.h		1.5		scottb
+		 ibcs2_ioctl.c		1.14		scottb
+		 ibcs2_ipc.c		1.8		scottb
+		 ibcs2_misc.c		1.31		scottb
+		 ibcs2_misc.c		1.35		scottb
+		 ibcs2_mman.h		1.1		scottb
+		 ibcs2_stat.c		1.8-1.9		scottb
+		 ibcs2_statfs.h		1.3		scottb
+		 ibcs2_sysi86.h		1.2		scottb
+		 ibcs2_utsname.h	1.3		scottb
+		 syscalls.master	1.11		scottb
+		 syscalls.master	1.14		scottb
+sys/compat/svr4/svr4_ipc.c		1.4		scottb
+sys/kern/exec_elf32.c			1.27		scottb
+
+  Fix various emulation bugs.
+
+sys/arch/sparc/sparc/iommureg.h		1.5		pk
+
+  Fix random hangs on 4m class machines with MicroSPARC I CPUs.
+
+sys/kern/kern_ktrace.c			1.27		nathanw@mit.edu
+
+  Fix panics caused by KTROP_CLEARFILE.
+
+lib/libc/time/strptime.3		1.6-1.8		tv
+	      strptime.c		1.13-1.14	tv
+
+  Fix various man page and XPG conformance errors.
+
+distrib/notes/sun3/install		1.5		jeremy
+distrib/notes/sun3x/install		1.3		jeremy
+
+  Add documentation on installing from SunOS.
+
+usr.sbin/named/CHANGES			all		mrg
+	       Makefile			all		mrg
+	       README			all		mrg
+usr.sbin/named/named/Version.c		all		mrg
+		     ns_ncache.c	all		mrg
+		     ns_req.c		all		mrg
+		     ns_resp.c		all		mrg
+		     version.c		all		mrg
+usr.sbin/named/named-xfer/named-xfer.c	all		mrg
+
+  Fix buffer overruns.
+
+sys/net/if_atmsubr.c			1.13-1.14	bouyer
+	if_atm.h			1.9		bouyer
+
+  Fix byte-swapping of LLC type field on little-endian machines.
+
+sys/arch/atari/atari/machdep.c		patch		leo
+
+  Fix build error with COMPAT_SUNOS.
+
+sys/arch/amiga/amiga/pmap.c		1.45		is
+sys/arch/amiga/conf/GENERIC		1.101		is
+share/man/man4/options.4		1.43		is
+
+  Fix panics on machines with a lot of memory.
+
+usr.sbin/pwd_mkdb/pwd_mkdb.c		1.11-1.13	fair
+
+  Fix problems with password files getting truncated on I/O errors.
+
+sbin/mount/mount.c			1.42		ross
+
+  Fix null pointer dereference when upgrading mounts not in fstab.
+
+share/man/man4/tun.4			1.3		ross
+usr.sbin/xntp/ntpq/ntpq.8		1.6		ross
+
+  Fix formatting errors.
+
+bin/mv/mv.1				1.11		ross
+
+  Fix incorrect description of behaviour when moving across file
+  systems.
+
+gnu/games/chess/Makefile		1.15		ross
+		gnuchess.c		1.4		ross
+		uxdsp.c			1.3		ross
+
+  Make gnuchess work on the Alpha.
+
+sys/arch/alpha/include/asm.h		1.19		ross
+
+  Fix nested comment.
+
+sys/arch/alpha/alpha/promcons.c		1.11		ross
+
+  Poll the console at 50 Hz, rather than 1024 Hz.
+
+lib/csu/alpha/Makefile			1.16		cgd,ross
+	      crt0.c			1.14		cgd,ross
+	      crtbegin.c		1.6		cgd,ross
+	      crtend.c			1.6		cgd,ross
+
+  Fix calling of global constructors and destructors.
+
+bin/sh/*				all		christos
+distrib/utils/x_sh/Makefile		1.2-1.5		christos
+
+  Fix several bugs:
+  * `cd ./' didn't work.
+  * ${foo%%bar} expansion lost in some cases.
+  * Variable expansion did not handle trailing whitespace and word
+    splitting correctly in all cases.
+  * The Makefile didn't work for building x_sh.
+
+usr.bin/make/*				all		christos
+
+  Fix memory corruption problems.
+
+sys/dev/ic/isp.c			1.18		cgd
+
+  Fix problem with firmware not being downloaded on some machines.
+
+sys/arch/pmax/conf/GENERIC		1.28		simonb
+		   scsi.pmax		1.3		simonb
+sys/arch/pmax/dev/rz.c			1.38		simonb
+		  sii.c			1.32		simonb
+		  sii.c			patch		mhitch
+		  siivar.h		1.4		simonb
+sys/arch/pmax/pmax/conf-glue.c		1.17		simonb
+
+  Fix several bugs:
+  * Allow targets on all SCSI IDs.
+  * Set the host ID for the SII correctly on 2100 and 3100.
+  * Always configure targets on the second ASC.
+
+sys/arch/i386/i386/locore.s		1.190		drochner
+		   machdep.c		1.295		drochner
+		   machdep.c		1.297		drochner
+
+  Fix bootstrap of large (>~3MB) kernels.
+
+gnu/usr.bin/gcc/arch/i386/i386.md	1.2		drochner
+
+  Fix `ffs(x) - 1' optimization bug.
+
+sys/dev/isapnp/com_isapnp.c		patch		drochner
+
+  Fix missing initialization of sc_frequency.
+
+  Add more device IDs.
+
+sys/lib/libsa/bootp.c			1.15		drochner
+sys/nfs/nfs_bootdhcp.c			1.7		drochner
+
+  Reject 0.0.0.0 address from DHCP server.
+
+sys/lib/libsa/bootp.c			1.14		drochner
+
+  Always use 0.0.0.0 as our source IP address.
+
+sys/arch/i386/stand/lib/netif/elink3.c	1.3		drochner
+
+  Fix hangs on some machines.
+
+sys/arch/i386/stand/lib/netif/Makefile.inc	1.2	drochner
+			      dp8390.c		1.1	drochner
+			      dp8390.h		1.2-1.3	drochner
+			      wd80x3.c		1.5	drochner
+sys/arch/i386/stand/netboot/Makefile		1.15	drochner
+
+  Rewrite WD/SMC boot ROM support to make it more reliable.
+
+distrib/sets/lists/*			patch		cgd
+
+  Sync with reality.
+
+sys/arch/pmax/tc/mcclock_ioasic.c	-1.5		mhitch
+
+  Revert incorrect 1.3.1 pullup that caused clock initialization to
+  fail on some machines.
+
+sys/arch/*/include/float.h		all		mycroft
+sys/arch/mips/include/limits.h		1.11		mhitch
+
+  Fix precision errors, __flt_rounds() prototypes, and LDBL_*
+  definitions on some architectures.
+
+sys/compat/ossaudio/ossaudio.c		1.24		mycroft
+
+  Fix emulation of SETFRAGMENT if high bit of argument is set.
+
+sys/compat/linux/linux_misc.c		1.41		mycroft
+
+  Fix typo that caused utime() to set the time incorrectly.
+
+usr.sbin/rarpd/rarpd.c			1.23		mycroft
+
+  Fix `rarpd -a' on systems with non-Ethernet interfaces.
+
+usr.sbin/pkg_install/add/perform.c	1.10		agc
+
+  Fix bug that would cause pkg_delete(8) to remove the wrong directory
+  if it got multiple signals.
+
+sys/arch/i386/i386/locore.s		1.191		drochner
+
+  Fix copyoutstr() in i386 case to handle copy-on-write faults
+  correctly if the destination spans more than one page.
+
+sys/dev/isa/wd.c			patch		mycroft
+	    wdc.c			patch		mycroft
+	    wdlink.h			patch		mycroft
+	    wdreg.h			patch		mycroft
+sys/arch/alpha/isa/awd.c		patch		mycroft
+sys/arch/bebox/isa/wd.c			patch		mycroft
+
+  Fix error in handling LBA geometries >8GB.
+
+sys/dev/isa/wt.c			1.43		drochner
+
+  Fix broken I/O address calculations.
+
+sys/arch/sparc/dev/zs.c			1.59-1.60	mycroft
+sys/dev/ic/z8530sc.h			1.10		mycroft
+	   z8530tty.c			1.48		mycroft
+
+  Remove a previous workaround for a timing problem with console
+  output, which caused display glitches in DDB.  Fix the original
+  problem less invasively.
+
+lib/libterm/Makefile			1.16		cgd
+
+  Fix typo in LINKS for ELF systems.
+
+sys/arch/pmax/dev/bt459.c		1.11		jonathan
+
+  Fix colormap updates on CFB.
+
+gnu/usr.bin/gcc/arch/mips/netbsd.h	1.7		mycroft
+libexec/ld.elf_so/*			all		mycroft
+sys/arch/mips/include/elf_machdep.h	1.4		mhitch
+
+  Add support for MIPS (rather than distributing a ld.so executable
+  with no source).
+
+sys/arch/arm32/arm32/disassem.h		1.2		mark
+
+  Fix compilation error.
+
+distrib/sets/lists/xbase/mi		1.8		cgd
+
+  Remove . and ./usr.
+
+bin/csh/Makefile			1.18		fair
+	strpct.c			1.1-1.2		fair
+	time.c				1.10		fair
+
+  Fix CPU percentage printed by `time' when total usage is >6 hrs.
+
+bin/csh/csh.c				1.18-1.19	fair
+
+  Use _PATH_DEFPATH if $PATH is not set.
+
+etc/etc.pmax/MAKEDEV			1.21		jonathan
+sys/arch/pmax/pmax/conf.c		1.27		jonathan
+
+  Fix mismatches between MAKEDEV and cdevsw[].
+
+sys/arch/alpha/stand/common/loadfile.c	1.9		ross
+
+  Fix alignment of loaded symbol table, to avoid alignment faults
+  during bootstrap.
+
+sys/arch/arm32/arm32/ast.c		1.11		mark
+		     cpuswitch.S	1.20		mark
+		     stubs.c		1.19		mark
+		     vm_machdep.c	1.18		mark
+sys/arch/arm32/include/psl.h		1.8		mark
+
+  Rename some machine-specific constants to avoid conflicts with
+  ipfilter.
+
+sys/net/route.c				patch		kml
+sys/net/route.h				patch		kml
+sys/netinet/in.h			patch		kml
+sys/netinet/ip_icmp.c			patch		kml
+sys/netinet/ip_input.c			patch		kml
+sys/netinet/ip_output.c			patch		kml
+sys/netinet/ip_var.h			patch		kml
+sys/netinet/tcp_input.c			patch		kml
+sys/netinet/tcp_output.c		patch		kml
+sys/netinet/tcp_subr.c			patch		kml
+sys/netinet/tcp_usrreq.c		patch		kml
+sys/netinet/tcp_var.h			patch		kml
+
+  Fix problems with small MSS being used on the loopback interface
+  (introduced with `SYN cache' changes).
+
+  Time out PMTU routes.
+
+sys/sys/queue.h				all		kml
+
+  Needed for net/netinet changes.
+
+distrib/notes/amiga/upgrade		1.14		ross
+distrib/notes/i386/upgrade		1.13-1.14	ross
+distrib/notes/mac68k/upgrade		1.10-1.11	ross
+distrib/notes/pc532/upgrade		1.6		ross
+distrib/notes/x68k/upgrade		1.2-1.3		ross
+
+  Debogify the first paragraph.
+
+distrib/notes/alpha/contents		1.3-1.4		ross
+		    install		1.3-1.4		ross
+		    upgrade		1.3-1.5		ross
+
+  Remove references to separate toolchain in /usr/local, and other
+  cleanup.
+
+gnu/dist/gdb/alpha-tdep.c		patch		cgd
+	    alphanbsd-nat.c		patch		cgd
+gnu/dist/gdb/config/alpha/nm-nbsd.h	patch		cgd
+
+  Revert incorrect pullup that made GDB lose on the Alpha.
+
