@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.17 1997/10/19 11:45:45 explorer Exp $	*/
+/*	$NetBSD: comvar.h,v 1.18 1997/10/19 14:26:23 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -47,6 +47,7 @@ int com_is_console __P((bus_space_tag_t, int, bus_space_handle_t *));
 #define	COM_HW_NOIEN	0x01
 #define	COM_HW_FIFO	0x02
 #define	COM_HW_HAYESP	0x04
+#define	COM_HW_FLOW	0x08
 #define	COM_HW_CONSOLE	0x40
 #define	COM_HW_KGDB	0x80
 
@@ -77,7 +78,7 @@ struct com_softc {
 	int sc_fifolen;
 
 	u_char sc_msr, sc_msr_delta, sc_msr_mask, sc_mcr, sc_mcr_active, sc_lcr,
-	       sc_ier, sc_fifo, sc_dlbl, sc_dlbh;
+	       sc_ier, sc_fifo, sc_dlbl, sc_dlbh, sc_efr;
 	u_char sc_mcr_dtr, sc_mcr_rts, sc_msr_cts, sc_msr_dcd;
 
 	int sc_r_hiwat;
