@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.41 2004/01/29 04:58:50 dbj Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.42 2004/02/27 22:52:03 dbj Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.41 2004/01/29 04:58:50 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.42 2004/02/27 22:52:03 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +220,6 @@ db_nextframe(int **nextframe, int **retaddr, int **arg0, db_addr_t *ip,
 
 		/* The only argument to trap() or syscall() is the trapframe. */
 		tf = *(struct trapframe **)argp;
-		*ip = (db_addr_t)tf->tf_eip;
 		switch (is_trap) {
 		case TRAP:
 			(*pr)("--- trap (number %d) ---\n", tf->tf_trapno);
@@ -230,8 +229,10 @@ db_nextframe(int **nextframe, int **retaddr, int **arg0, db_addr_t *ip,
 			break;
 		case INTERRUPT:
 			(*pr)("--- interrupt ---\n");
+			tf = (struct trapframe *)argp;
 			break;
 		}
+		*ip = (db_addr_t)tf->tf_eip;
 		fp = (struct i386_frame *)tf->tf_ebp;
 		if (fp == NULL)
 			return 0;
@@ -258,6 +259,15 @@ db_nextframe(int **nextframe, int **retaddr, int **arg0, db_addr_t *ip,
 				*nextframe = (int *)ifp - 1;
 				break;
 			}
+		}
+		if (i == 4) {
+			(*pr)("DDB lost frame for ");
+			db_printsym(*ip, DB_STGY_ANY, pr);
+			(*pr)(", trying %p\n",argp);
+			/* I observe that the frame can be often found here, although
+			 * it has an err value of 0x18041969 instead of 0
+			 * I don't know why.  -- dbj */
+			*nextframe = argp;
 		}
 	}
 	return 1;
@@ -293,7 +303,8 @@ db_frame_info(int *frame, db_addr_t callpc, char **namep, db_expr_t *offp,
 		} else if (!strcmp(name, "trap")) {
 			*is_trap = TRAP;
 			narg = 0;
-		} else if (!strcmp(name, "syscall")) {
+		} else if (!strcmp(name, "syscall_plain") ||
+		           !strcmp(name, "syscall_fancy")) {
 			*is_trap = SYSCALL;
 			narg = 0;
 		} else if (name[0] == 'X') {
