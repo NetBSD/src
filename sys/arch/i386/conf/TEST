@@ -1,7 +1,7 @@
 #
 #	GENERIC -- everything that's currently supported
 #
-#	$Id: TEST,v 1.2 1993/09/24 08:45:03 mycroft Exp $
+#	$Id: TEST,v 1.3 1993/09/29 05:37:29 mycroft Exp $
 #
 
 # standard options
@@ -12,7 +12,7 @@ options		"I486_CPU"		# 486DX, 486SX, 486SLC, etc.
 
 options		GENERIC			# historical
 maxusers	16			# estimated number of users
-options		TIMEZONE="'5*60'"	# time zone to read RTC in
+options		TIMEZONE="5*60"		# time zone to read RTC in
 options		SWAPPAGER		# paging
 options		VNODEPAGER,DEVPAGER	# vnode and device node caching
 options		DDB			# kernel debugger; recommended
@@ -68,15 +68,15 @@ npx0 at isa? port 0xf0
 #com3 at isa? port 0x2e8
 
 #parallel ports
-#lpt0 at isa? port 0x378
-#lpt1 at isa? port 0x278
-#lpa0 at isa? port 0x3bc
+lpt0 at isa? port 0x378
+lpt1 at isa? port 0x278
+lpt2 at isa? port 0x3bc
 
 #bus mice
 #mms0 at isa? port 0x23c			# MicroSoft InPort
 #mms1 at isa? port 0x238
-#lms0 at isa? port 0x23c			# Logitech
-#lms1 at isa? port 0x238
+lms0 at isa? port 0x23c				# Logitech
+lms1 at isa? port 0x238
 #pms0 at isa? port 0x60				# PS/2 auxiliary port; broken
 
 #non-scsi disk controllers
