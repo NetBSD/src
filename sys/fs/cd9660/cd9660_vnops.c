@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.8 2004/01/26 10:39:30 hannken Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.9 2004/05/04 13:26:58 jrf Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.8 2004/01/26 10:39:30 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.9 2004/05/04 13:26:58 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,7 +345,7 @@ iso_uiodir(idp, dp, off)
 		--idp->ncookies;
 	}
 
-	if ((error = uiomove((caddr_t)dp, dp->d_reclen, idp->uio)) != 0)
+	if ((error = uiomove(dp, dp->d_reclen, idp->uio)) != 0)
 		return (error);
 	idp->uio_off = off;
 	return (0);
