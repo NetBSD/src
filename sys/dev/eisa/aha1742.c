@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1742.c,v 1.11 1993/05/22 08:01:00 cgd Exp $
+ *	$Id: aha1742.c,v 1.12 1993/06/09 22:36:46 deraadt Exp $
  */
 
 #include "ahb.h"
@@ -464,7 +464,7 @@ ahb_attach(struct isa_device *dev)
 		&dev->id_physid, &dev->id_unit, dev->id_flags);
 
 	/* only one for all boards */
-	if(firsttime==0 && masunit==0) {
+	if(firsttime==0) {
 		firsttime = 1;
 		ahb_timeout(0);
 	}

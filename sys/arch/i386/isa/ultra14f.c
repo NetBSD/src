@@ -15,7 +15,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: ultra14f.c,v 1.10 1993/05/22 08:01:41 cgd Exp $
+ *	$Id: ultra14f.c,v 1.11 1993/06/09 22:36:53 deraadt Exp $
  */
  
 #include <sys/types.h>
@@ -444,7 +444,7 @@ struct  isa_dev *dev;
 		&dev->id_physid, &dev->id_unit, dev->id_flags);
 
 	/* only one for all boards */
-	if(firsttime==0 && masunit==0) {
+	if(firsttime==0) {
 		firsttime = 1;
 		uha_timeout(0);
 	}

@@ -12,13 +12,16 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1542.c,v 1.9 1993/05/22 08:00:56 cgd Exp $
+ *	$Id: aha1542.c,v 1.10 1993/06/09 22:36:40 deraadt Exp $
  */
 
 /*
  * HISTORY
  * $Log: aha1542.c,v $
- * Revision 1.9  1993/05/22 08:00:56  cgd
+ * Revision 1.10  1993/06/09 22:36:40  deraadt
+ * minor silliness related to two or more controllers
+ *
+ * Revision 1.9  1993/05/22  08:00:56  cgd
  * add rcsids to everything and clean up headers
  *
  * Revision 1.8  1993/05/04  08:32:40  deraadt
@@ -529,11 +532,12 @@ int
 ahaattach(struct isa_device *dev)
 {
 	static int firsttime;
+	static u_long speedprint;	/* max 32 aha controllers */
 	int masunit = dev->id_masunit;
 	int r;
 
-	if(!firsttime) {
-		firsttime = 1;
+	if(!(speedprint & (1<<masunit))) {
+		speedprint |= (1<<masunit);
 		printf("aha%d: bus speed %dns\n", masunit, speed[masunit]);
 	}
 
@@ -541,8 +545,8 @@ ahaattach(struct isa_device *dev)
 		&dev->id_physid, &dev->id_unit, dev->id_flags);
 
 	/* only one for all boards */
-	if(masunit==0 && firsttime==1) {
-		firsttime = 2;
+	if(firsttime==0) {
+		firsttime = 1;
 		aha_timeout(0);
 	}
 	return r;
