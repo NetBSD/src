@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.43 1999/03/22 17:28:22 sommerfe Exp $
+	$NetBSD: syscalls.master,v 1.44 1999/09/07 06:24:56 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -44,6 +44,7 @@
 #include <compat/svr4/svr4_time.h>
 #include <compat/svr4/svr4_signal.h>
 #include <compat/svr4/svr4_ucontext.h>
+#include <compat/svr4/svr4_lwp.h>
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_statvfs.h>
 #include <compat/svr4/svr4_resource.h>
@@ -253,7 +254,7 @@
 142	UNIMPL		vtrace
 143	NOARGS		{ int sys_fork(void); } fork1
 144	UNIMPL		sigtimedwait
-145	UNIMPL		lwp_info
+145	STD		{ int svr4_sys__lwp_info(struct svr4_lwpinfo *lwpinfo);}
 146	UNIMPL		yield
 147	UNIMPL		lwp_sema_wait
 148	UNIMPL		lwp_sema_post
@@ -270,15 +271,18 @@
 			    struct itimerval *itv); }
 158	NOARGS		{ int sys_setitimer(u_int which, \
 			    struct itimerval *itv, struct itimerval *oitv); }
-159	UNIMPL		lwp_create
-160	UNIMPL		lwp_exit
-161	UNIMPL		lwp_suspend
-162	UNIMPL		lwp_continue
-163	UNIMPL		lwp_kill
-164	UNIMPL		lwp_self
-165	UNIMPL		lwp_getprivate
-166	UNIMPL		lwp_setprivate
-167	UNIMPL		lwp_wait
+159	STD		{ int svr4_sys__lwp_create(svr4_ucontext_t *uc, \
+			    unsigned long flags, svr4_lwpid_t *lwpid); }
+160	STD		{ int svr4_sys__lwp_exit(void); }
+161	STD		{ int svr4_sys__lwp_suspend(svr4_lwpid_t lwpid); }
+162	STD		{ int svr4_sys__lwp_continue(svr4_lwpid_t lwpid); }
+163	STD		{ int svr4_sys__lwp_kill(svr4_lwpid_t lwpid, \
+			    int signum); }
+164	STD		{ svr4_lwpid_t svr4_sys__lwp_self(void); }
+165	STD		{ void *svr4_sys__lwp_getprivate(void); }
+166	STD		{ int svr4_sys__lwp_setprivate(void *buffer); }
+167	STD		{ int svr4_sys__lwp_wait(svr4_lwpid_t wait_for, \
+			    svr4_lwpid_t *departed_lwp); }
 168	UNIMPL		lwp_mutex_unlock
 169	UNIMPL		lwp_mutex_lock
 170	UNIMPL		lwp_cond_wait
