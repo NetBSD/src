@@ -1,4 +1,4 @@
-/*	$NetBSD: odsyntax.c,v 1.13 2001/12/05 18:07:50 bjh21 Exp $	*/
+/*	$NetBSD: odsyntax.c,v 1.14 2001/12/07 01:23:42 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)odsyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: odsyntax.c,v 1.13 2001/12/05 18:07:50 bjh21 Exp $");
+__RCSID("$NetBSD: odsyntax.c,v 1.14 2001/12/07 01:23:42 bjh21 Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: odsyntax.c,v 1.13 2001/12/05 18:07:50 bjh21 Exp $");
 int deprecated;
 
 static void odoffset __P((int, char ***));
+static void posixtypes __P((char *));
 static void odprecede __P((void));
 
 
@@ -92,7 +93,6 @@ oldsyntax(argc, argvp)
 {
 	int ch;
 	char *p, **argv;
-	int x, y;
 
 	deprecated = 1;
 	argv = *argvp;
@@ -178,75 +178,7 @@ oldsyntax(argc, argvp)
 			add("4/4 \"    %011o \" \"\\n\"");
 			break;
 		case 't':
-			for (ch = 0; optarg[ch]; ) {
-				odprecede();
-				switch (optarg[ch]) {
-				case 'a':
-					ch++;
-					add("16/1 \"%3_u \" \"\\n\"");
-					break;
-				case 'c':
-					ch++;
-					add("16/1 \"%3_c \" \"\\n\"");
-					break;
-				case 'f':
-					ch++;
-					if      (optarg[ch] == 'F' ||
-						 optarg[ch] == '4') {
-						ch++;
-						add("4/4 \" %14.7e\" \"\\n\"");
-					}
-					else if (optarg[ch] == 'L' ||
-						 optarg[ch] == '8') {
-						ch++;
-						add("2/8 \" %16.14e\" \"\\n\"");
-					}
-					else if (optarg[ch] == 'D')
-						/* long doubles vary in size */
-						usage();
-					else
-						add("2/8 \" %16.14e\" \"\\n\"");
-					break;
-				case 'd':
-					x = 0;
-					goto extensions;
-				case 'o':
-					x = 1;
-					goto extensions;
-				case 'u':
-					x = 2;
-					goto extensions;
-				case 'x':
-					x = 3;
-				extensions:
-					ch++;
-					y = 2;
-					if      (optarg[ch] == 'C' ||
-						 optarg[ch] == '1') {
-						ch++;
-						y = 0;
-					}
-					else if (optarg[ch] == 'S' ||
-						 optarg[ch] == '2') {
-						ch++;
-						y = 1;
-					}
-					else if (optarg[ch] == 'I' ||
-						 optarg[ch] == '4') {
-						ch++;
-						y = 2;
-					}
-					else if (optarg[ch] == 'L' ||
-						 optarg[ch] == '8') {
-						ch++;
-						y = 3;
-					}
-					add(fmt[x][y]);
-					break;
-				default:
-					usage();
-				}
-			}
+			posixtypes(optarg);
 			break;
 		case 'v':
 			vflag = ALL;
@@ -275,6 +207,105 @@ oldsyntax(argc, argvp)
 
 	if (argc)
 		odoffset(argc, argvp);
+}
+
+/*
+ * Interpret a POSIX-style -t argument.
+ */
+static void
+posixtypes(type_string)
+	char *type_string;
+{
+	int x, y, size;
+
+	while (*type_string) {
+		odprecede();
+		switch (*type_string) {
+		case 'a':
+			type_string++;
+			add("16/1 \"%3_u \" \"\\n\"");
+			break;
+		case 'c':
+			type_string++;
+			add("16/1 \"%3_c \" \"\\n\"");
+			break;
+		case 'f':
+			type_string++;
+			if        (*type_string == 'F' ||
+				   *type_string == '4') {
+				type_string++;
+				add("4/4 \" %14.7e\" \"\\n\"");
+			} else if (*type_string == 'L' ||
+				   *type_string == '8') {
+				type_string++;
+				add("2/8 \" %16.14e\" \"\\n\"");
+			} else if (*type_string == 'D')
+				/* long doubles vary in size */
+				usage();
+			else
+				add("2/8 \" %16.14e\" \"\\n\"");
+			break;
+		case 'd':
+			x = 0;
+			goto extensions;
+		case 'o':
+			x = 1;
+			goto extensions;
+		case 'u':
+			x = 2;
+			goto extensions;
+		case 'x':
+			x = 3;
+		extensions:
+			type_string++;
+			y = 2;
+			if (isupper(*type_string)) {
+				switch(*type_string) {
+				case 'C':
+					size = sizeof(char);
+					break;
+				case 'S':
+					size = sizeof(short);
+					break;
+				case 'I':
+					size = sizeof(int);
+					break;
+				case 'L':
+					size = sizeof(long);
+					break;
+				default:
+					warnx("Bad type-size qualifier '%c'",
+					    *type_string);
+					usage();
+				}
+				type_string++;
+			} else if (isdigit(*type_string))
+				size = strtol(type_string, &type_string, 10);
+
+			switch (size) {
+			case 1:
+				y = 0;
+				break;
+			case 2:
+				y = 1;
+				break;
+			case 4:
+				y = 2;
+				break;
+			case 8:
+				y = 3;
+				break;
+			default:
+				warnx("%d-byte integer formats are not "
+				    "supported", size);
+				usage();
+			}
+			add(fmt[x][y]);
+			break;
+		default:
+			usage();
+		}
+	}
 }
 
 static void
