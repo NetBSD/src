@@ -1,14 +1,16 @@
-/*	$NetBSD: ipsec_mbuf.c,v 1.2 2003/08/13 20:13:59 jonathan Exp $	*/
+/*	$NetBSD: ipsec_mbuf.c,v 1.3 2003/08/20 22:33:40 jonathan Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec_mbuf.c,v 1.5.2.1 2003/01/24 05:11:35 sam Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.2 2003/08/13 20:13:59 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.3 2003/08/20 22:33:40 jonathan Exp $");
 
 /*
  * IPsec-specific mbuf routines.
  */
 
+#ifdef __FreeBSD__
 #include "opt_param.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

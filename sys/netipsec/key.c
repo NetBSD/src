@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.1 2003/08/13 20:06:51 jonathan Exp $	*/
+/*	$NetBSD: key.c,v 1.2 2003/08/20 22:33:40 jonathan Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/key.c,v 1.3.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,14 +32,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.1 2003/08/13 20:06:51 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.2 2003/08/20 22:33:40 jonathan Exp $");
 
 /*
  * This code is referd to RFC 2367
  */
 
 #include "opt_inet.h"
+#ifdef __FreeBSD__
 #include "opt_inet6.h"
+#endif
 #include "opt_ipsec.h"
 
 #include <sys/types.h>

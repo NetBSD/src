@@ -1,15 +1,17 @@
-/*	$NetBSD: ipsec_output.c,v 1.3 2003/08/15 17:14:31 jonathan Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.4 2003/08/20 22:33:40 jonathan Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec_output.c,v 1.3.2.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.3 2003/08/15 17:14:31 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.4 2003/08/20 22:33:40 jonathan Exp $");
 
 /*
  * IPsec output processing.
  */
 #include "opt_inet.h"
+#ifdef __FreeBSD__
 #include "opt_inet6.h"
+#endif
 #include "opt_ipsec.h"
 
 #include <sys/param.h>

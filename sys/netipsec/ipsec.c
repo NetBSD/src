@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.1 2003/08/13 20:06:50 jonathan Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.2 2003/08/20 22:33:40 jonathan Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,14 +32,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.1 2003/08/13 20:06:50 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.2 2003/08/20 22:33:40 jonathan Exp $");
 
 /*
  * IPsec controller part.
  */
 
 #include "opt_inet.h"
+#ifdef __FreeBSD__
 #include "opt_inet6.h"
+#endif
 #include "opt_ipsec.h"
 
 #include <sys/param.h>
