@@ -1,7 +1,7 @@
 Configuring FAITH IPv6-to-IPv4 TCP relay
 
 Kazu Yamamoto and Jun-ichiro itojun Hagino
-$NetBSD: README,v 1.7 2000/07/02 09:17:30 itojun Exp $
+$NetBSD: README,v 1.8 2000/07/04 20:08:32 thorpej Exp $
 $KAME: README,v 1.5 2000/07/02 08:50:50 itojun Exp $
 
 
@@ -57,7 +57,7 @@ The following example assumes:
 
 (3) Route packets toward FAITH prefix into "faith0" interface.
 
-	# ifconfig faith0 up
+	# ifconfig faith0 create up
 	# route add -inet6 3ffe:0501:1234:ffff:: -prefixlen 64 \
 		fe80::xxxx:yyyy:zzzz:wwww%faith0
 
