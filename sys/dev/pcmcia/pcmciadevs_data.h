@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.149 2001/11/26 04:19:13 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.150 2001/11/26 19:49:34 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.148 2001/11/26 04:18:26 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.147 2001/11/19 05:24:26 imp Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -218,13 +218,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "BUFFALO AirStation 11Mbps WLAN",	}
 	,
 	{
-	    PCMCIA_VENDOR_BUFFALO, PCMCIA_PRODUCT_BUFFALO_WLI_CF_S11G,
-	    PCMCIA_CIS_BUFFALO_WLI_CF_S11G,
-	    0,
-	    "BUFFALO (Melco Corporation)",
-	    "BUFFALO AirStation 11Mbps CF WLAN",	}
-	,
-	{
 	    PCMCIA_VENDOR_COMPAQ, PCMCIA_PRODUCT_COMPAQ_NC5004,
 	    PCMCIA_CIS_COMPAQ_NC5004,
 	    0,
@@ -391,6 +384,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "IBM Corporation",
 	    "IBM Token Ring 4/16",	}
+	,
+	{
+	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_SCSI,
+	    PCMCIA_CIS_IBM_SCSI,
+	    0,
+	    "IBM Corporation",
+	    "IBM SCSI PCMCIA",	}
 	,
 	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_PORTABLE_CDROM,
