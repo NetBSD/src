@@ -1,4 +1,4 @@
-/*	$NetBSD: ncavar.h,v 1.3 1999/02/19 16:15:06 mycroft Exp $	*/
+/*	$NetBSD: nca_isavar.h,v 1.1 2000/03/18 13:05:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c)  1998 The NetBSD Foundation, Inc.
