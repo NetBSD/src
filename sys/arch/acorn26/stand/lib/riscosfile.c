@@ -1,4 +1,4 @@
-/*	$NetBSD: riscosfile.c,v 1.2 2002/05/28 14:38:55 bjh21 Exp $	*/
+/*	$NetBSD: riscosfile.c,v 1.3 2003/08/21 23:15:18 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -37,7 +37,7 @@ struct riscosfile {
 };
 
 int
-riscos_open(char *path, struct open_file *f)
+riscos_open(const char *path, struct open_file *f)
 {
 	struct riscosfile *rf;
 	os_error *error;
