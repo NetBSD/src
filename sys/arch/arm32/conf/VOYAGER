@@ -1,4 +1,4 @@
-#	$NetBSD: VOYAGER,v 1.44 1999/01/23 22:18:43 sommerfe Exp $
+#	$NetBSD: VOYAGER,v 1.44.2.1 1999/04/20 19:39:50 perry Exp $
 #
 #	VOYAGER - Mark's development kernel
 #
@@ -263,6 +263,7 @@ pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd     4               # paging to files
 pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	md	1		# Ramdisk driver
+pseudo-device	rnd			# /dev/random and /dev/urandom
 
 makeoptions MONITOR="Taxan875+LR"
 #makeoptions MONITOR="AKF60"
