@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.4 2003/12/25 11:11:25 martin Exp $
+#	$NetBSD: list,v 1.5 2004/01/14 01:52:59 mrg Exp $
 
 SRCDIRS	bin sbin libexec usr.bin/less usr.bin usr.sbin gnu/usr.bin
 
@@ -41,6 +41,7 @@ PROG	sbin/mount_nfs
 PROG	sbin/newfs		sbin/mount_mfs
 PROG	sbin/newfs_lfs
 PROG	sbin/ping
+PROG	sbin/raidctl
 PROG	sbin/reboot		sbin/halt
 PROG	sbin/restore		sbin/rrestore
 PROG	sbin/route
