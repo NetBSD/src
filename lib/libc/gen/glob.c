@@ -1,3 +1,5 @@
+/*	$NetBSD: glob.c,v 1.5 1995/02/27 04:13:35 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93"; */
-static char *rcsid = "$Id: glob.c,v 1.4 1993/11/06 01:10:18 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
+#else
+static char rcsid[] = "$NetBSD: glob.c,v 1.5 1995/02/27 04:13:35 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*

@@ -1,5 +1,7 @@
-.\" Copyright (c) 1989, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: getmntinfo.3,v 1.5 1995/02/27 04:12:50 cgd Exp $
+.\"
+.\" Copyright (c) 1989, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,17 +31,17 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)getmntinfo.3	6.5 (Berkeley) 4/19/91
-.\"	$Id: getmntinfo.3,v 1.4 1994/08/29 03:27:36 mycroft Exp $
+.\"     @(#)getmntinfo.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd April 19, 1991
+.Dd June 9, 1993
 .Dt GETMNTINFO 3
 .Os
 .Sh NAME
 .Nm getmntinfo
 .Nd get information about mounted file systems
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
+.Fd #include <sys/param.h>
+.Fd #include <sys/ucred.h>
 .Fd #include <sys/mount.h>
 .Ft int
 .Fn getmntinfo "struct statfs **mntbufp" "int flags"
@@ -92,8 +94,7 @@ or
 .Sh HISTORY
 The
 .Fn getmntinfo
-function is
-.Ud .
+function first appeared in 4.4BSD.
 .Sh BUGS
 The
 .Fn getmntinfo

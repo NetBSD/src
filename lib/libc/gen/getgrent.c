@@ -1,6 +1,8 @@
+/*	$NetBSD: getgrent.c,v 1.11 1995/02/27 04:12:39 cgd Exp $	*/
+
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)getgrent.c	5.9 (Berkeley) 4/1/91";*/
-static char *rcsid = "$Id: getgrent.c,v 1.10 1994/08/02 05:15:25 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
+#else
+static char rcsid[] = "$NetBSD: getgrent.c,v 1.11 1995/02/27 04:12:39 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
