@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.23 2002/10/04 04:23:23 onoe Exp $	*/
+/*	$NetBSD: wivar.h,v 1.24 2002/11/16 06:02:54 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -63,7 +63,9 @@ struct wi_softc	{
 	int			sc_bap_id;
 	int			sc_bap_off;
 
+	u_int16_t		sc_dbm_adjust;
 	u_int16_t		sc_max_datalen;
+	u_int16_t		sc_frag_thresh;
 	u_int16_t		sc_rts_thresh;
 	u_int16_t		sc_system_scale;
 	u_int16_t		sc_tx_rate;
