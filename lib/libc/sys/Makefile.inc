@@ -1,13 +1,22 @@
-#	$NetBSD: Makefile.inc,v 1.74 1997/11/05 05:46:19 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.75 1997/11/05 23:43:22 cgd Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/sys ${.CURDIR}/sys
 
 # modules with non-default implementations on at least one architecture:
-SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S pipe.S ptrace.S \
-	sbrk.S setlogin.S sigpending.S sigprocmask.S sigreturn.S \
-	sigsuspend.S syscall.S
+SRCS+=	Ovfork.S brk.S exect.S fork.S pipe.S ptrace.S sbrk.S setlogin.S \
+	sigpending.S sigprocmask.S sigreturn.S sigsuspend.S syscall.S
+SRCS+=	cerror.S
+
+LSRCS+=	Lint_Ovfork.c Lint_brk.c Lint_exect.c Lint_fork.c Lint_pipe.c \
+	Lint_ptrace.c Lint_sbrk.c Lint_setlogin.c Lint_sigpending.c \
+	Lint_sigprocmask.c Lint_sigreturn.c Lint_sigsuspend.c \
+	Lint_syscall.c
+DPSRCS+= Lint_Ovfork.c Lint_brk.c Lint_exect.c Lint_fork.c Lint_pipe.c \
+	Lint_ptrace.c Lint_sbrk.c Lint_setlogin.c Lint_sigpending.c \
+	Lint_sigprocmask.c Lint_sigreturn.c Lint_sigsuspend.c \
+	Lint_syscall.c
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
