@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.1.4.2 2002/08/31 14:52:28 gehenna Exp $	*/
+/*	$NetBSD: sab.c,v 1.1.4.3 2002/08/31 15:03:46 gehenna Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -144,13 +144,6 @@ void sabtty_cnpollc(struct sabtty_softc *, int);
 void sabtty_shutdown(void *);
 int sabttyparam(struct sabtty_softc *, struct tty *, struct termios *);
 
-int sabopen(dev_t, int, int, struct proc *);
-int sabclose(dev_t, int, int, struct proc *);
-int sabread(dev_t, struct uio *, int);
-int sabwrite(dev_t, struct uio *, int);
-int sabioctl(dev_t, u_long, caddr_t, int, struct proc *);
-void sabstop(struct tty *, int);
-struct tty *sabtty(dev_t);
 void sabtty_cnputc(struct sabtty_softc *, int);
 int sabtty_cngetc(struct sabtty_softc *);
 void sabtty_abort(struct sabtty_softc *);
@@ -167,6 +160,20 @@ struct cfattach sabtty_ca = {
 };
 
 extern struct cfdriver sabtty_cd;
+
+dev_type_open(sabopen);
+dev_type_close(sabclose);
+dev_type_read(sabread);
+dev_type_write(sabwrite);
+dev_type_ioctl(sabioctl);
+dev_type_stop(sabstop);
+dev_type_tty(sabtty);
+dev_type_poll(sabpoll);
+
+const struct cdevsw sabtty_cdevsw = {
+	sabopen, sabclose, sabread, sabwrite, sabioctl,
+	sabstop, sabtty, sabpoll, nommap, D_TTY
+};
 
 struct sabtty_rate {
 	int baud;
