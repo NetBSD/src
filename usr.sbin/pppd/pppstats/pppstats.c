@@ -83,7 +83,11 @@ kvm_t	*kd;
 #ifdef sun
 char	*system = "/vmunix";
 #else
+#ifdef __NetBSD__
+char	*system = "/netbsd";
+#else
 char	*system = "/386bsd";
+#endif
 #endif
 
 #ifndef KVMLIB
