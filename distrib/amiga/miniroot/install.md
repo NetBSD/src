@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.3.2.4 1997/11/21 22:10:22 is Exp $
+#	$NetBSD: install.md,v 1.3.2.5 1997/11/21 23:09:42 is Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -126,80 +126,18 @@ md_native_fsopts() {
 	echo "ro"
 }
 
-#md_prep_disklabel()
-#{
-#	# $1 is the root disk
-#	# Note that the first part of this function is just a *very* verbose
-#	# version of md_label_disk().
-#
-#	cat << \__md_prep_disklabel_1
-#You now have to prepare your root disk for the installation of NetBSD. This
-#is further referred to as 'labeling' a disk.
-#
-#Hit the <return> key when you have read this...
-#__md_prep_disklabel_1
-#	getresp ""
-#
-#	edahdi /dev/r${1}c < /dev/null > /dev/null 2>&1
-#	if [ $? -eq 0 ]; then
-#		cat << \__md_prep_disklabel_2
-#The disk you wish to install on is partitioned with AHDI or an AHDI compatible
-#program. You have to assign some partitions to NetBSD before NetBSD is able
-#to use the disk. Change the 'id' of all partitions you want to use for NetBSD
-#filesystems to 'NBD'. Change the 'id' of the partition you wish to use for swap
-#to 'NBS' or 'SWP'.
-#
-#Hit the <return> key when you have read this...
-#__md_prep_disklabel_2
-#		getresp ""
-# 		edahdi /dev/r${1}c
-#	fi
-#
-#	# display example
-#	cat << \__md_prep_disklabel_3
-#Here is an example of what the partition information will look like once
-#you have entered the disklabel editor. Disk partition sizes and offsets
-#are in sector (most likely 512 bytes) units.
-#
-#[Example]
-#partition      start         (c/t/s)      nblks         (c/t/s)  type
-#
-# a (root)          0       (0/00/00)      31392     (109/00/00)  4.2BSD
-# b (swap)      31392     (109/00/00)      73440     (255/00/00)  swap
-# c (disk)          0       (0/00/00)    1070496    (3717/00/00)  unused
-# d (user)     104832     (364/00/00)      30528     (106/00/00)  4.2BSD
-# e (user)     135360     (470/00/00)      40896     (142/00/00)  4.2BSD
-# f (user)     176256     (612/00/00)      92160     (320/00/00)  4.2BSD
-# g (user)     268416     (932/00/00)     802080    (2785/00/00)  4.2BSD
-#
-#[End of example]
-#
-#Hit the <return> key when you have read this...
-#
-#__md_prep_disklabel_3
-#	getresp ""
-#	edlabel /dev/r${1}c
-#
-#	cat << \__md_prep_disklabel_4
-#
-#You will now be given the opportunity to place disklabels on any additional
-#disks on your system.
-#__md_prep_disklabel_4
-#
-#	_DKDEVS=`rmel ${1} ${_DKDEVS}`
-#	resp="X"	# force at least one iteration
-#	while [ "X$resp" != X"done" ]; do
-#		labelmoredisks
-#	done
-#}
-#
-#md_labeldisk() {
-#	edahdi /dev/r${1}c < /dev/null > /dev/null 2>&1
-#	[ $? -eq 0 ] && edahdi /dev/r${1}c
-#	edlabel /dev/r${1}c
-#}
-
 md_prep_disklabel() {
+	_DKDEVS=`md_get_diskdevs`
+	echo "If you like, you can now examine the labels of your disks."
+	echo ""
+	echo -n "Available are "${_DKDEVS}". Look at which? [skip this step] "
+	while [ "X$resp" != X"done" ]; do
+		getresp	"done"
+		echo ""
+		disklabel ${resp}
+		echo ""
+		echo -n "Available are "${_DKDEVS}". Look at which? [done] "
+	done
 }
 
 md_labeldisk() {

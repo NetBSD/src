@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.3.2.1 1997/11/09 20:17:20 mellon Exp $
+#	$NetBSD: list,v 1.3.2.2 1997/11/21 23:09:38 is Exp $
 
 # Amiga extra's
 LINK	instbin			sbin/mount_ados
@@ -7,6 +7,7 @@ SPECIAL mkdir			kern
 LINK	instbin			usr/bin/printf
 LINK	instbin			usr/bin/vi
 LINK	instbin			usr/sbin/loadkmap
+LINK	instbin			sbin/disklabel
 
 SYMLINK	../../instbin		usr/bin/netstat
 
