@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.16 2001/01/13 11:19:41 jdolecek Exp $	*/
+/*	$NetBSD: sort.c,v 1.17 2001/01/13 20:20:47 soren Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.16 2001/01/13 11:19:41 jdolecek Exp $");
+__RCSID("$NetBSD: sort.c,v 1.17 2001/01/13 20:20:47 soren Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -172,7 +172,7 @@ main(argc, argv)
 			break;
 		case '?':
 		default:
-			usage("");
+			usage(NULL);
 		}
 	}
 	if (cflag && argc > optind+1)
