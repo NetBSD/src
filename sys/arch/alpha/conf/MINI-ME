@@ -1,4 +1,4 @@
-# $NetBSD: MINI-ME,v 1.2 2000/05/23 02:04:30 thorpej Exp $
+# $NetBSD: MINI-ME,v 1.2.4.1 2000/07/12 20:57:12 thorpej Exp $
 #
 # mini-me.shagadelic.org - thorpej's Multia
 #
@@ -156,7 +156,8 @@ de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 #fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
 #isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 #le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
-ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+#ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
 #pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 #ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 #pciide*	at	pci? dev ? function ?		# PCI IDE controllers
@@ -231,7 +232,8 @@ sm*	at	pcmcia? function ?		# Megahertz Ethernet
 #scsibus* at	asc?
 #scsibus* at	bha?
 #scsibus* at	isp?
-scsibus* at	ncr?
+#scsibus* at	ncr?
+scsibus* at	siop?
 #scsibus* at	uha?
 
 # SCSI devices
