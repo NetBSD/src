@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.123 2001/07/23 14:55:26 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.124 2001/07/26 20:02:21 bouyer Exp $	*/
 
 
 /*
@@ -2911,15 +2911,21 @@ acer_chip_map(sc, pa)
 	    WDC_CAPABILITY_MODE;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
-		if (rev >= 0x20)
+		if (rev >= 0x20) {
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
+			if (rev >= 0xC4)
+				sc->sc_wdcdev.UDMA_cap = 5;
+			else if (rev >= 0xC4)
+				sc->sc_wdcdev.UDMA_cap = 4;
+			else
+				sc->sc_wdcdev.UDMA_cap = 2;
+		}
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
 	    
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.UDMA_cap = 2;
 	sc->sc_wdcdev.set_modes = acer_setup_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
@@ -2944,6 +2950,24 @@ acer_chip_map(sc, pa)
 	interface = PCI_INTERFACE(pci_conf_read(sc->sc_pc, sc->sc_tag,
 	    PCI_CLASS_REG));
 
+	/* From linux: enable "Cable Detection" */
+	if (rev >= 0xC2) {
+		pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_0x4B,
+		    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_0x4B_CDETECT)
+		    | 0x8);
+		/* set south-bridge's enable bit, m1533, 0x79 */
+		if (rev == 0xC2)
+			/* 1543C-B0 (m1533, 0x79, bit 2) */
+			pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_0x79,
+			    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_0x79)
+			    | ACER_0x79_REVC2_EN);
+		else
+			/* 1553/1535 (m1533, 0x79, bit 1) */
+			pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_0x79,
+			    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_0x79)
+			    | ACER_0x79_EN);
+	}
+
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
@@ -2953,8 +2977,9 @@ acer_chip_map(sc, pa)
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 			continue;
 		}
+		/* newer controllers seems to lack the ACER_CHIDS. Sigh */
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-		    acer_pci_intr);
+		     (rev >= 0xC2) ? pciide_pci_intr : acer_pci_intr);
 		if (cp->hw_ok == 0)
 			continue;
 		if (pciide_chan_candisable(cp)) {
@@ -2984,6 +3009,17 @@ acer_setup_channel(chp)
 	    acer_fifo_udma), DEBUG_PROBE);
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
+
+	if ((chp->ch_drive[0].drive_flags | chp->ch_drive[1].drive_flags) &
+	    DRIVE_UDMA) { /* check 80 pins cable */
+		if (pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_0x4A) &
+		    ACER_0x4A_80PIN(chp->channel)) {
+			if (chp->ch_drive[0].UDMA_mode > 2)
+				chp->ch_drive[0].UDMA_mode = 2;
+			if (chp->ch_drive[1].UDMA_mode > 2)
+				chp->ch_drive[1].UDMA_mode = 2;
+		}
+	}
 
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
@@ -3015,6 +3051,13 @@ acer_setup_channel(chp)
 			acer_fifo_udma |= 
 			    ACER_UDMA_TIM(chp->channel, drive,
 				acer_udma[drvp->UDMA_mode]);
+			/* XXX disable if one drive < UDMA3 ? */
+			if (drvp->UDMA_mode >= 3) {
+				pciide_pci_write(sc->sc_pc, sc->sc_tag,
+				    ACER_0x4B,
+				    pciide_pci_read(sc->sc_pc, sc->sc_tag,
+					ACER_0x4B) | ACER_0x4B_UDMA66);
+			}
 		} else {
 			/*
 			 * use Multiword DMA
