@@ -1,4 +1,4 @@
-# $NetBSD: files.wscons,v 1.3 1998/04/15 20:29:16 drochner Exp $
+# $NetBSD: files.wscons,v 1.4 1998/04/17 00:17:27 thorpej Exp $
 
 #
 # "Workstation Console" glue; attaches frame buffer to emulator & keyboard,
@@ -11,6 +11,8 @@
 # This could all be cleaned up, but it's not clear that it's worth the
 # trouble.
 #
+
+defopt	opt_wsemul.h WSEMUL_DEFAULT WSEMUL_NO_DUMB WSEMUL_SUN
 
 # this loses, but there's no way to define attributes which have attributes
 device	wsdisplay #tty?
