@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.39 1999/07/22 00:47:50 hubertf Exp $
+#	$NetBSD: security,v 1.40 1999/09/05 15:11:42 perry Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -639,7 +639,7 @@ if checkyesno check_disklabels; then
 	    egrep -v '\.(backup|current)$' > $LABELS
 	xargs rm < $LABELS
 
-	disks=`iostat -x | sed 1d | awk '$1 !~ /^[mf]d/ { print $1; }'`
+	disks=`iostat -x | sed 1d | awk '$1 !~ /^[cfm]d/ { print $1; }'`
 	for i in $disks; do
 		dlf="/var/backups/disklabel.$i"
 		disklabel $i > $dlf 2>/dev/null
