@@ -1,7 +1,7 @@
-/*	$NetBSD: i80312.c,v 1.9 2002/05/16 01:01:33 thorpej Exp $	*/
+/*	$NetBSD: i80312.c,v 1.10 2002/08/01 19:55:03 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2001 Wasabi Systems, Inc.
+ * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -43,6 +43,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#define	_ARM32_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 #include <arm/xscale/i80312reg.h>
@@ -63,7 +64,9 @@ struct bus_space i80312_bs_tag;
  */
 struct i80312_softc *i80312_softc;
 
-int	i80312_pcibus_print(void *, const char *);
+static void i80312_pci_dma_init(struct i80312_softc *);
+
+static int i80312_pcibus_print(void *, const char *);
 
 /*
  * i80312_attach:
@@ -251,13 +254,15 @@ i80312_attach(struct i80312_softc *sc)
 		    (1 << PCI_BRIDGE_BUS_SUBORDINATE_SHIFT));
 	}
 
-	/*
-	 * Initialize the bus space and DMA tags and the PCI chipset tag.
-	 */
+	/* Initialize the bus space tags. */
 	i80312_io_bs_init(&sc->sc_pci_iot, sc);
 	i80312_mem_bs_init(&sc->sc_pci_memt, sc);
-	i80312_pci_dma_init(&sc->sc_pci_dmat, sc);
+
+	/* Initialize the PCI chipset tag. */
 	i80312_pci_init(&sc->sc_pci_chipset, sc);
+
+	/* Initialize the DMA tags. */
+	i80312_pci_dma_init(sc);
 
 	/*
 	 * Attach the PCI bus.
@@ -288,7 +293,7 @@ i80312_attach(struct i80312_softc *sc)
  *	Autoconfiguration cfprint routine when attaching
  *	to the "pcibus" attribute.
  */
-int
+static int
 i80312_pcibus_print(void *aux, const char *pnp)
 {
 	struct pcibus_attach_args *pba = aux;
@@ -299,4 +304,38 @@ i80312_pcibus_print(void *aux, const char *pnp)
 	printf(" bus %d", pba->pba_bus);
 
 	return (UNCONF);
+}
+
+/*
+ * i80312_pci_dma_init:
+ *
+ *	Initialize the PCI DMA tag.
+ */
+static void
+i80312_pci_dma_init(struct i80312_softc *sc)
+{
+	bus_dma_tag_t dmat = &sc->sc_pci_dmat;
+	struct arm32_dma_range *dr = &sc->sc_pci_dma_range;
+ 
+	dr->dr_sysbase = sc->sc_sin_xlate;
+	dr->dr_busbase = sc->sc_sin_base;
+	dr->dr_len = sc->sc_sin_size; 
+
+	dmat->_ranges = dr;
+	dmat->_nranges = 1;
+
+	dmat->_dmamap_create = _bus_dmamap_create;
+	dmat->_dmamap_destroy = _bus_dmamap_destroy;
+	dmat->_dmamap_load = _bus_dmamap_load;
+	dmat->_dmamap_load_mbuf = _bus_dmamap_load_mbuf;
+	dmat->_dmamap_load_uio = _bus_dmamap_load_uio;
+	dmat->_dmamap_load_raw = _bus_dmamap_load_raw;
+	dmat->_dmamap_unload = _bus_dmamap_unload;
+	dmat->_dmamap_sync = _bus_dmamap_sync;
+
+	dmat->_dmamem_alloc = _bus_dmamem_alloc;
+	dmat->_dmamem_free = _bus_dmamem_free;
+	dmat->_dmamem_map = _bus_dmamem_map;
+	dmat->_dmamem_unmap = _bus_dmamem_unmap;
+	dmat->_dmamem_mmap = _bus_dmamem_mmap;
 }
