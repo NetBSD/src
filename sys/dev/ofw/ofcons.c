@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.11 2000/04/14 19:31:50 scw Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.12 2000/11/02 00:01:44 eeh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -137,7 +137,7 @@ ofcons_open(dev, flag, mode, p)
 		callout_reset(&sc->sc_poll_ch, 1, ofcons_poll, sc);
 	}
 
-	return (*linesw[tp->t_line].l_open)(dev, tp);
+	return (*tp->t_linesw->l_open)(dev, tp);
 }
 
 int
@@ -151,7 +151,7 @@ ofcons_close(dev, flag, mode, p)
 
 	callout_stop(&sc->sc_poll_ch);
 	sc->of_flags &= ~OFPOLL;
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 	return 0;
 }
@@ -165,7 +165,7 @@ ofcons_read(dev, uio, flag)
 	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
 	
-	return (*linesw[tp->t_line].l_read)(tp, uio, flag);
+	return (*tp->t_linesw->l_read)(tp, uio, flag);
 }
 
 int
@@ -177,7 +177,7 @@ ofcons_write(dev, uio, flag)
 	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
 	
-	return (*linesw[tp->t_line].l_write)(tp, uio, flag);
+	return (*tp->t_linesw->l_write)(tp, uio, flag);
 }
 
 int
@@ -192,7 +192,7 @@ ofcons_ioctl(dev, cmd, data, flag, p)
 	struct tty *tp = sc->of_tty;
 	int error;
 	
-	if ((error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p)) >= 0)
+	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p)) >= 0)
 		return error;
 	if ((error = ttioctl(tp, cmd, data, flag, p)) >= 0)
 		return error;
@@ -270,7 +270,7 @@ ofcons_poll(aux)
 	
 	while (OF_read(stdin, &ch, 1) > 0) {
 		if (tp && (tp->t_state & TS_ISOPEN))
-			(*linesw[tp->t_line].l_rint)(ch, tp);
+			(*tp->t_linesw->l_rint)(ch, tp);
 	}
 	callout_reset(&sc->sc_poll_ch, 1, ofcons_poll, sc);
 }
