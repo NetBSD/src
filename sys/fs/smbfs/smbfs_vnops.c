@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.24 2003/04/08 21:06:33 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.25 2003/04/09 18:57:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.24 2003/04/08 21:06:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.25 2003/04/09 18:57:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,36 +294,38 @@ smbfs_closel(struct vop_close_args *ap)
 	SMBVDEBUG("name=%.*s, pid=%d, c=%d\n",
 		(int)np->n_nmlen, np->n_name, p->p_pid, np->n_opencount);
 
-	smbfs_attr_cacheremove(vp);
-	smb_makescred(&scred, p, ap->a_cred);
-
-	if (np->n_opencount == 0) {
 #ifdef DIAGNOSTIC
-		if (vp->v_type != VDIR)
-			panic("smbfs_closel: negative opencount");
+	if (np->n_opencount == 0)
+		panic("smbfs_closel: negative opencount");
 #endif
-		return 0;
-	}
+
 	np->n_opencount--;
+	smbfs_attr_cacheremove(vp);
+
+	if (np->n_opencount) {
+		simple_unlock(&vp->v_interlock);
+		return (error);
+	}
+
+	smb_makescred(&scred, p, ap->a_cred);
 	if (vp->v_type == VDIR) {
 		struct smb_share *ssp = np->n_mount->sm_share;
 
-		if (np->n_opencount)
-			return 0;
 		if (np->n_dirseq) {
-			smbfs_findclose(np->n_dirseq, &scred);
+			struct smbfs_fctx *dctx = np->n_dirseq;
+
 			np->n_dirseq = NULL;
-		}
-		simple_unlock(&vp->v_interlock);
+			simple_unlock(&vp->v_interlock);
+			smbfs_findclose(dctx, &scred);
+		} else
+			simple_unlock(&vp->v_interlock);
+
 		if (SMB_CAPS(SSTOVC(ssp)) & SMB_CAP_NT_SMBS) {
 			error = smbfs_smb_close(ssp, np->n_fid,
 				&np->n_mtime, &scred);
 		} else
 			error = 0;
 	} else {
-		error = smbfs_vinvalbuf(vp, V_SAVE, ap->a_cred, p, 1);
-		if (np->n_opencount)
-			return error;
 		simple_unlock(&vp->v_interlock);
 
 		error = smbfs_smb_close(np->n_mount->sm_share, np->n_fid, 
@@ -344,10 +346,14 @@ smbfs_close(v)
 		struct vnode *a_vp;
 		int  a_fflag;
 		struct ucred *a_cred;
-		struct proc *p;
+		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	int error;
+
+	error = smbfs_vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p, 1);
+	if (error)
+		return (error);
 
 	simple_lock(&vp->v_interlock);
 	error = smbfs_closel(ap);
