@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.15 2001/01/08 13:57:23 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.16 2001/01/08 15:30:39 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -169,12 +169,7 @@
 char machine[] = "i386";		/* cpu "architecture" */
 char machine_arch[] = "i386";		/* machine == machine_arch */
 
-u_int cpu_serial[3];
-
 char bootinfo[BOOTINFO_MAXSIZE];
-
-/* Our exported CPU info; we have only one right now. */  
-struct cpu_info cpu_info_store;
 
 struct bi_devmatch *i386_alldisks = NULL;
 int i386_ndisks = 0;
@@ -221,76 +216,80 @@ void (*initclock_func) __P((void)) = i8254_initclocks;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int	mem_cluster_cnt;
 
-/*
- * The number of CPU cycles in one second.
- */
-u_int64_t cpu_tsc_freq;
-
 int	cpu_dump __P((void));
 int	cpu_dumpsize __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
 void	dumpsys __P((void));
 void	init386 __P((paddr_t));
 
-const struct i386_cache_info *cpu_itlb_info, *cpu_dtlb_info, *cpu_icache_info,
-    *cpu_dcache_info, *cpu_l2cache_info;
-
 const struct i386_cache_info {
+	size_t		cai_offset;
 	u_int8_t	cai_desc;
-	const struct i386_cache_info **cai_var;
 	const char	*cai_string;
 	u_int		cai_totalsize;
 	u_int		cai_linesize;
 } i386_cache_info[] = {
-	{ 0x01,		&cpu_itlb_info,		"32 4K entries 4-way",
-	  32,		4 * 1024 },
-	{ 0x02,		&cpu_itlb_info,		"2 4M entries",
-	  2,		4 * 1024 * 1024 },
-	{ 0x03,		&cpu_dtlb_info,		"64 4K entries 4-way",
-	  64,		4 * 1024 },
-	{ 0x04,		&cpu_dtlb_info,		"8 4M entries 4-way",
-	  8,		4 * 1024 * 1024 },
-	{ 0x06,		&cpu_icache_info,	"8K 32b/line 4-way",
-	  8 * 1024,	32 },
-	{ 0x08,		&cpu_icache_info,	"16K 32b/line 4-way",
-	  16 * 1024,	32 },
-	{ 0x0a,		&cpu_dcache_info,	"8K 32b/line 2-way",
-	  8 * 1024,	32 },
-	{ 0x0c,		&cpu_dcache_info,	"16K 32b/line 2/4-way",
-	  16 * 1024,	32 },
-	{ 0x40,		&cpu_l2cache_info,	"not present",
-	  0,		0 },
-	{ 0x41,		&cpu_l2cache_info,	"128K 32b/line 4-way",
-	  128 * 1024,	32 },
-	{ 0x42,		&cpu_l2cache_info,	"256K 32b/line 4-way",
-	  256 * 1024,	32 },
-	{ 0x43,		&cpu_l2cache_info,	"512K 32b/line 4-way",
-	  512 * 1024,	32 },
-	{ 0x44,		&cpu_l2cache_info,	"1M 32b/line 4-way",
-	  1 * 1024 * 1024, 32 },
-	{ 0x45,		&cpu_l2cache_info,	"2M 32b/line 4-way",
-	  2 * 1024 * 1024, 32 },
-	{ 0x82,		&cpu_l2cache_info,	"256K 32b/line 8-way",
-	  256 * 1024,	32 },
-	{ 0x84,		&cpu_l2cache_info,	"1M 32b/line 8-way",
-	  1 * 1024 * 1024, 32 },
-	{ 0x85,		&cpu_l2cache_info,	"2M 32b/line 8-way",
-	  2 * 1024 * 1024, 32 },
-
-	{ 0,		NULL,		NULL,	0,	0 },
+	{ offsetof(struct cpu_info, ci_itlb_info),
+	  0x01,	"4K: 32 entries 4-way", 32, 		4 * 1024 },
+	{ offsetof(struct cpu_info, ci_itlb2_info),
+	  0x02, "4M: 2 entries", 	2, 		4 * 1024 * 1024 },
+	{ offsetof(struct cpu_info, ci_dtlb_info),
+	  0x03,	"4K: 64 entries 4-way", 64, 		4 * 1024 },
+	{ offsetof(struct cpu_info, ci_dtlb2_info),
+	  0x04, "4M: 8 entries 4-way",   8, 		4 * 1024 * 1024 },
+	{ offsetof(struct cpu_info, ci_icache_info),
+	  0x06,	"8K 32b/line 4-way",    8 * 1024,	32 },
+	{ offsetof(struct cpu_info, ci_icache_info),
+	  0x08, "16K 32b/line 4-way",  16 * 1024,	32 },
+	{ offsetof(struct cpu_info, ci_dcache_info),
+	  0x0a, "8K 32b/line 2-way",    8 * 1024,	32 },
+	{ offsetof(struct cpu_info, ci_dcache_info),
+	  0x0c, "16K 32b/line 2/4-way", 16 * 1024,	32 },
+	{ offsetof(struct cpu_info, ci_l2cache_info),
+	  0x40,	"not present",		 0,		0 },
+	{ offsetof(struct cpu_info, ci_l2cache_info),
+	  0x41, "128K 32b/line 4-way", 128 * 1024,	32 },
+	{ offsetof(struct cpu_info, ci_l2cache_info),
+	  0x42,	"256K 32b/line 4-way", 256 * 1024,	32 },
+	{ offsetof(struct cpu_info, ci_l2cache_info),
+	  0x43, "512K 32b/line 4-way", 512 * 1024,	32 },
+	{ offsetof(struct cpu_info, ci_l2cache_info),
+	  0x44,	"1M 32b/line 4-way",   1 * 1024 * 1024, 32 },
+	{ offsetof(struct cpu_info, ci_l2cache_info),
+	  0x45,	"2M 32b/line 4-way",   2 * 1024 * 1024, 32 },
+	{ offsetof(struct cpu_info, ci_itlb_info),
+	  0x50,	"4K/4M: 64 entries",    64, 		4 * 1024 },
+	{ offsetof(struct cpu_info, ci_dtlb_info),
+	  0x5b,	"4K/4M: 64 entries",    64, 		4 * 1024 },
+	{ offsetof(struct cpu_info, ci_dcache_info),
+	  0x66,	"8K 64b/line 4-way",    8 * 1024,	64 },
+	{ offsetof(struct cpu_info, ci_icache_info),
+	  0x70,	"12K uOp cache 4-way",  12 * 1024,	32 },
+	{ offsetof(struct cpu_info, ci_l2cache_info),
+	  0x7a, "256K 64b/line 8-way", 256 * 1024,	64 },
+	{ offsetof(struct cpu_info, ci_l2cache_info),
+	  0x82, "256K 32b/line 8-way", 256 * 1024,	32 },
+	{ offsetof(struct cpu_info, ci_l2cache_info),
+	  0x84, "1M 32b/line 8-way",   1 * 1024 * 1024, 32 },
+	{ offsetof(struct cpu_info, ci_l2cache_info),
+	  0x85, "2M 32b/line 8-way", 2 * 1024 * 1024,   32 },
+	{ 0,
+	  0,	NULL,		     0,			0 },
 };
 
-const struct i386_cache_info *i386_cache_info_lookup __P((u_int8_t));
+static const struct i386_cache_info *i386_cache_info_lookup __P((u_int8_t));
 
 /*
  * Map Brand ID from cpuid instruction to brand name.
  * Source: Intel Processor Identification and the CPUID Instruction, AP-485
  */
-const char * const i386_p3_brand[] = {
-	"",		/* Unsupported */
-	"Celeron",	/* Intel (R) Celeron (TM) processor */
-	"",		/* Intel (R) Pentium (R) III processor */	
-	"Xeon",		/* Intel (R) Pentium (R) III Xeon (TM) processor */
+static const char * const i386_intel_brand[] = {
+	"",		    /* Unsupported */
+	"Celeron",	    /* Intel (R) Celeron (TM) processor */
+	"Pentium III",      /* Intel (R) Pentium (R) III processor */	
+	"Pentium III Xeon", /* Intel (R) Pentium (R) III Xeon (TM) processor */
+	"", "", "",	    /* Reserved */		
+	"Pentium 4"	    /* Intel (R) Pentium (R) 4 processor */
 };
 
 #ifdef COMPAT_NOMID
@@ -324,9 +323,6 @@ cpu_startup()
 	int sz, x;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
-#if 0
-	char buf[160];				/* about 2 line */
-#endif
 	char pbuf[9];
 #if NBIOSCALL > 0
 	extern int biostramp_image_size;
@@ -893,6 +889,7 @@ identifycpu(ci)
 	int family, model, step, modif;
 	const struct cpu_cpuid_nameclass *cpup = NULL;
 	char *cpuname = ci->ci_dev->dv_xname;
+	char buf[1024];
 
 	if (cpuid_level == -1) {
 #ifdef DIAGNOSTIC
@@ -960,29 +957,17 @@ identifycpu(ci)
 			 * recognize brand by Brand ID value.
 			 */
 			if (vendor == CPUVENDOR_INTEL && family >= 6
-			    && model >= 8 && cpu_brand_id && cpu_brand_id <= 3)
-				brand = i386_p3_brand[cpu_brand_id];
+			    && model >= 8 && cpu_brand_id && cpu_brand_id <= 8)
+				brand = i386_intel_brand[cpu_brand_id];
 		}
 	}
 
-	sprintf(cpu_model, "%s %s%s%s%s (%s-class)", vendorname, modifier, name,
-		(*brand) ? " " : "", brand,
-		classnames[class]);
-	printf("%s: %s\n", cpuname, cpu_model);
-
-	if (ci->ci_feature_flags) {
-		char buf[1024];
-		bitmask_snprintf(ci->ci_feature_flags, CPUID_FLAGS1,
-		    buf, sizeof(buf));
-		printf("%s: features %s\n", cpuname, buf);
-		bitmask_snprintf(ci->ci_feature_flags, CPUID_FLAGS2,
-		    buf, sizeof(buf));
-		printf("%s: features %s\n", cpuname, buf);
-	}
-	
 	cpu_class = class;
 	ci->cpu_class = class;
-	
+
+	/*
+	 * XXX the following needs to run on the CPU being probed..
+	 */
 	/*
 	 * Parse the cache info from `cpuid', if we have it.
 	 * XXX This is kinda ugly, but hey, so is the architecture...
@@ -1004,8 +989,13 @@ identifycpu(ci)
 						continue;
 					desc = (descs[i] >> (j * 8)) & 0xff;
 					cai = i386_cache_info_lookup(desc);
-					if (cai != NULL)
-						*cai->cai_var = cai;
+					if (cai != NULL) {
+						const struct i386_cache_info  **cp;
+						cp = (const struct i386_cache_info **)
+						    (((uint8_t *)ci)+
+							cai->cai_offset);
+						*cp = cai;
+					}
 				}
 			}
 
@@ -1013,48 +1003,88 @@ identifycpu(ci)
 		}
 	}
 
-#if XXX
-	printf("cpu0: %s", cpu_model);
-	if (cpu_tsc_freq != 0)
-		printf(", %qd.%02qd MHz", (cpu_tsc_freq + 4999) / 1000000,
-		    ((cpu_tsc_freq + 4999) / 10000) % 100);
-	printf("\n");
-	if (cpu_icache_info != NULL || cpu_dcache_info != NULL) {
-		printf("cpu0:");
-		if (cpu_icache_info)
-			printf(" I-cache %s", cpu_icache_info->cai_string);
-		if (cpu_dcache_info)
-			printf("%sD-cache %s",
-			    (cpu_icache_info != NULL) ? ", " : " ",
-			    cpu_dcache_info->cai_string);
-		printf("\n");
-	}
-	if (cpu_l2cache_info)
-		printf("cpu0: L2 cache %s\n", cpu_l2cache_info->cai_string);
-	if ((cpu_feature & CPUID_MASK1) != 0) {
-		bitmask_snprintf(cpu_feature, CPUID_FLAGS1,
-		    buf, sizeof(buf));
-		printf("cpu0: features %s\n", buf);
-	}
-	if ((cpu_feature & CPUID_MASK2) != 0) {
-		bitmask_snprintf(cpu_feature, CPUID_FLAGS2,
-		    buf, sizeof(buf));
-		printf("cpu0: features %s\n", buf);
-	}
-
-	if (cpuid_level >= 3 && ((cpu_feature & CPUID_PN) != 0)) {
-		printf("cpu0: serial number %04X-%04X-%04X-%04X-%04X-%04X\n",
-			cpu_serial[0] / 65536, cpu_serial[0] % 65536,
-			cpu_serial[1] / 65536, cpu_serial[1] % 65536,
-			cpu_serial[2] / 65536, cpu_serial[2] % 65536);
-	}
-#endif /* XXX */
 	/*
 	 * If the processor serial number misfeature is present and supported,
 	 * extract it here.
 	 */
 	if (cpuid_level >= 3 && (cpu_feature & CPUID_PN) != 0)
-		do_cpuid_serial(cpu_serial);
+		do_cpuid_serial(ci->ci_cpu_serial);
+
+#if defined(I586_CPU) || defined(I686_CPU)
+	/*
+	 * If we have a cycle counter, compute the approximate
+	 * CPU speed in MHz.
+	 */
+	if (ci->ci_feature_flags & CPUID_TSC) {
+		u_int64_t last_tsc;
+
+		last_tsc = rdtsc();
+		delay(100000);
+		ci->ci_tsc_freq = (rdtsc() - last_tsc) * 10;
+	}
+#endif
+	/* XXX end XXX */
+
+	sprintf(cpu_model, "%s %s%s%s%s (%s-class)", vendorname, modifier,
+	    name, (*brand) ? " " : "", brand, classnames[class]);
+	printf("%s: %s", cpuname, cpu_model);
+
+	if (ci->ci_tsc_freq != 0)
+		printf(", %qd.%02qd MHz", (ci->ci_tsc_freq + 4999) / 1000000,
+		    ((ci->ci_tsc_freq + 4999) / 10000) % 100);
+	printf("\n");
+
+	if (ci->ci_feature_flags) {
+		if ((ci->ci_feature_flags & CPUID_MASK1) != 0) {
+			bitmask_snprintf(ci->ci_feature_flags, CPUID_FLAGS1,
+			    buf, sizeof(buf));
+			printf("%s: features %s\n", cpuname, buf);
+		}
+		if ((ci->ci_feature_flags & CPUID_MASK2) != 0) {
+			bitmask_snprintf(ci->ci_feature_flags, CPUID_FLAGS2,
+			    buf, sizeof(buf));
+			printf("%s: features %s\n", cpuname, buf);
+		}
+	}
+	
+	
+	if (ci->ci_icache_info != NULL || ci->ci_dcache_info != NULL) {
+		printf("%s:", cpuname);
+		if (ci->ci_icache_info)
+			printf(" I-cache %s", ci->ci_icache_info->cai_string);
+		if (ci->ci_dcache_info)
+			printf("%sD-cache %s",
+			    (ci->ci_icache_info != NULL) ? ", " : " ",
+			    ci->ci_dcache_info->cai_string);
+		printf("\n");
+	}
+	if (ci->ci_l2cache_info)
+		printf("%s: L2 cache %s\n", cpuname,
+		    ci->ci_l2cache_info->cai_string);
+	if (ci->ci_itlb_info) {
+		printf("%s: ITLB %s", cpuname,
+		    ci->ci_itlb_info->cai_string);
+		if (ci->ci_itlb2_info) {
+			printf(", %s", ci->ci_itlb2_info->cai_string);
+		}
+		printf("\n");
+	}
+	if (ci->ci_dtlb_info) {
+		printf("%s: DTLB %s", cpuname,
+		    ci->ci_dtlb_info->cai_string);
+		if (ci->ci_dtlb2_info) {
+			printf(", %s", ci->ci_dtlb2_info->cai_string);
+		}
+		printf("\n");
+	}
+	
+	if (cpuid_level >= 3 && ((cpu_feature & CPUID_PN) != 0)) {
+		printf("%s: serial number %04X-%04X-%04X-%04X-%04X-%04X\n",
+		    cpuname,
+		    ci->ci_cpu_serial[0] / 65536, ci->ci_cpu_serial[0] % 65536,
+		    ci->ci_cpu_serial[1] / 65536, ci->ci_cpu_serial[1] % 65536,
+		    ci->ci_cpu_serial[2] / 65536, ci->ci_cpu_serial[2] % 65536);
+	}
 
 	/*
 	 * Now that we have told the user what they have,
@@ -1112,29 +1142,6 @@ identifycpu(ci)
 #endif
 	}
 
-#ifdef XXX
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
-	/*
-	 * On a 486 or above, enable ring 0 write protection.
-	 */
-	if (cpu_class >= CPUCLASS_486)
-		lcr0(rcr0() | CR0_WP);
-#endif
-
-#if defined(I586_CPU) || defined(I686_CPU)
-	/*
-	 * If we have a cycle counter, compute the approximate
-	 * CPU speed in MHz.
-	 */
-	if (cpu_feature & CPUID_TSC) {
-		u_int64_t last_tsc;
-
-		last_tsc = rdtsc();
-		delay(100000);
-		cpu_tsc_freq = (rdtsc() - last_tsc) * 10;
-	}
-#endif
-#endif /* XXX */
 }
 
 /*  

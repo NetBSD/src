@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.18 2001/01/07 22:59:26 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.19 2001/01/08 15:30:41 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -101,13 +101,23 @@ struct cpu_info {
 	u_int32_t	ci_signature;	 /* X86 cpuid type */
 	u_int32_t	ci_feature_flags;/* X86 CPUID feature bits */
 	u_int32_t	cpu_class;	 /* CPU class */
-
+	u_int32_t	ci_cpu_serial[3]; /* PIII serial number */
+	u_int64_t	ci_tsc_freq;	 /* cpu cycles/second */
+	
 	struct cpu_functions *ci_func;  /* start/stop functions */
 	void (*cpu_setup) __P((void)); 	/* proc-dependant init */
 
 	int		ci_want_resched;
 	int		ci_astpending;
 	struct trapframe *ci_ddb_regs;
+
+	const struct i386_cache_info *ci_itlb_info;
+	const struct i386_cache_info *ci_itlb2_info;
+	const struct i386_cache_info *ci_dtlb_info;
+	const struct i386_cache_info *ci_dtlb2_info;	
+	const struct i386_cache_info *ci_icache_info;
+	const struct i386_cache_info *ci_dcache_info;
+	const struct i386_cache_info *ci_l2cache_info;	
 };
 
 /*
@@ -181,7 +191,7 @@ extern void need_resched __P((struct cpu_info *));
 volatile u_int32_t astpending;
 
 #ifdef _KERNEL
-extern struct cpu_info cpu_info_store;
+extern struct cpu_info cpu_info_primary;
 
 #define	curcpu()		(&cpu_info_primary)
 #endif
