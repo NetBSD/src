@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_glue.S,v 1.8 1996/10/15 01:37:50 mark Exp $ */
+/* $NetBSD: armfpe_glue.S,v 1.9 1996/12/27 01:39:15 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -493,6 +493,18 @@ _arm_fpe_exception_glue:
 	ldmfd	sp!, {pc}^
 
 
+	.global	_arm_fpe_set_exception_mask
+_arm_fpe_set_exception_mask:
+	rfs	r1			/* Get FP status */
+	bic	r1, r1, #0x001f0000	/* Zero exception mask */
+	and	r0, r0, #0x0000001f	/* Mask new bits */
+	orr	r0, r1, r0, lsl #16	/* Merge */
+	wfs	r0			/* Set status */
+	mov	r0, r1, lsr #16		/* Return old mask */
+	mov	pc, lr			/* return */ 
+
+
 	.global _fpe_nexthandler
 _fpe_nexthandler:
 	.word	_undefinedinstruction_bounce
+
