@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_sample.c,v 1.2 1995/06/11 21:50:01 pk Exp $	*/
+/*	$NetBSD: rpc_sample.c,v 1.3 1997/10/09 15:13:21 mycroft Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -177,7 +177,7 @@ write_sample_server(def)
 			  f_print( fout, "extern \"C\"{\n");
 */
 			return_type(proc);
-			f_print(fout, "* \n");
+			f_print(fout, "*\n");
 			if( Cflag )
 			  pvname_svc(proc->proc_name, vp->vers_num);
 			else
