@@ -1669,8 +1669,9 @@ swfnd:
 	sti				# splx() doesn't do an sti/cli
 	SHOW_STI
 
+	xorl	%eax,%eax
 	movw    PCB_IML(%edx),%ax
-	pushl   %ax
+	pushl   %eax
 	call    _splx			# restore the process's ipl
 	addl	$4, %esp
 
