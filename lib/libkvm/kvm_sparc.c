@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc.c,v 1.20 1999/02/01 09:15:35 mrg Exp $	*/
+/*	$NetBSD: kvm_sparc.c,v 1.20.2.1 2000/10/06 14:50:14 he Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sparc.c,v 1.20 1999/02/01 09:15:35 mrg Exp $");
+__RCSID("$NetBSD: kvm_sparc.c,v 1.20.2.1 2000/10/06 14:50:14 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -227,7 +227,7 @@ _kvm_kvatop44c(kd, va, pa)
 		return (kd->nbpg - off);
 	}
 err:
-	_kvm_err(kd, 0, "invalid address (%x)", va);
+	_kvm_err(kd, 0, "invalid address (%lx)", va);
 	return (0);
 }
 
@@ -272,7 +272,7 @@ _kvm_kvatop4m(kd, va, pa)
 		return (0);
 
 	if (pread(kd->pmfd, &pte, sizeof(pte), foff) != sizeof(pte)) {
-		_kvm_syserr(kd, kd->program, "cannot read pte for %x", va);
+		_kvm_syserr(kd, kd->program, "cannot read pte for %lx", va);
 		return (0);
 	}
 
@@ -284,7 +284,7 @@ _kvm_kvatop4m(kd, va, pa)
 		return (kd->nbpg - off);
 	}
 err:
-	_kvm_err(kd, 0, "invalid address (%x)", va);
+	_kvm_err(kd, 0, "invalid address (%lx)", va);
 	return (0);
 }
 
@@ -348,7 +348,7 @@ _kvm_kvatop4u(kd, va, pa)
 	if ((pte & SPARC64_TLB_V) != 0)
 		return ((pte & SPARC64_TLB_PA_MASK) | (va & (kd->nbpg - 1)));
 err:
-	_kvm_err(kd, 0, "invalid address (%x)", va);
+	_kvm_err(kd, 0, "invalid address (%lx)", va);
 	return (0);
 }
 
@@ -382,7 +382,7 @@ _kvm_pa2off(kd, pa)
 		off += mp->size;
 	}
 	if (nmem < 0) {
-		_kvm_err(kd, 0, "invalid address (%x)", pa);
+		_kvm_err(kd, 0, "invalid address (%lx)", pa);
 		return (-1);
 	}
 
