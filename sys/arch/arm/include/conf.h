@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.1 2001/09/03 01:50:00 matt Exp $	*/
+/*	$NetBSD: conf.h,v 1.2 2001/09/09 09:54:13 toshii Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -99,6 +99,7 @@ cdev_decl(pc);
 cdev_decl(ofcons_);
 cdev_decl(ofd);
 cdev_decl(ofrtc);
+cdev_decl(sacom);
 cdev_decl(scr);
 cdev_decl(prof);
 #define ofromread  ofromrw
