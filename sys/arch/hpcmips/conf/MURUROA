@@ -2,12 +2,12 @@
 # Mycroft's WorkPad z50
 
 #
-# 	$NetBSD: MURUROA,v 1.6 2000/03/20 06:10:45 mycroft Exp $
+# 	$NetBSD: MURUROA,v 1.7 2000/03/23 04:43:41 mycroft Exp $
 # 	From: GENERIC,v 1.29 2000/02/12 03:21:06 shin Exp
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"MURUROA-$Revision: 1.6 $"
+#ident 		"MURUROA-$Revision: 1.7 $"
 
 maxusers	8
 
@@ -256,6 +256,7 @@ atapibus* at wdc? channel ?
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 #sm*	at pcmcia? function ?		# Megahertz Ethernet
+awi*	at pcmcia? function ?		# AMD 79c930 (802.11)
 
 com*	at pcmcia? function ?		# Modems and serial cards
 
