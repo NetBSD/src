@@ -1,7 +1,7 @@
-/*	$NetBSD: vme_machdep.c,v 1.3 1998/02/04 01:57:40 thorpej Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.4 1998/02/04 05:12:58 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -116,7 +116,7 @@ static int	sparc_vme4_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
 		    bus_size_t, struct proc *, int));
 static void	sparc_vme4_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
 static void	sparc_vme4_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t,
-		    int));
+		    bus_addr_t, bus_size_t, int));
 
 static int	sparc_vme4_dmamem_alloc __P((bus_dma_tag_t, bus_size_t,
 		    bus_size_t, bus_size_t, bus_dma_segment_t *,
@@ -133,7 +133,7 @@ static int	sparc_vme4m_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
 		    bus_size_t, struct proc *, int));
 static void	sparc_vme4m_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
 static void	sparc_vme4m_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t,
-		    int));
+		    bus_addr_t, bus_size_t, int));
 
 static int	sparc_vme4m_dmamem_alloc __P((bus_dma_tag_t, bus_size_t,
 		    bus_size_t, bus_size_t, bus_dma_segment_t *,
@@ -789,9 +789,11 @@ sparc_vme4_dmamem_free(t, segs, nsegs)
 }
 
 void
-sparc_vme4_dmamap_sync(t, map, ops)
+sparc_vme4_dmamap_sync(t, map, offset, len, ops)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
+	bus_addr_t offset;
+	bus_size_t len;
 	int ops;
 {
 
@@ -904,9 +906,11 @@ sparc_vme4m_dmamem_free(t, segs, nsegs)
 }
 
 void
-sparc_vme4m_dmamap_sync(t, map, ops)
+sparc_vme4m_dmamap_sync(t, map, offset, len, ops)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
+	bus_addr_t offset;
+	bus_size_t len;
 	int ops;
 {
 

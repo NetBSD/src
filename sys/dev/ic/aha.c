@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.13 1998/02/04 00:36:54 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.14 1998/02/04 05:14:03 thorpej Exp $	*/
 
 #undef AHADIAG
 #ifdef DDB
@@ -8,7 +8,7 @@
 #endif
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -842,7 +842,8 @@ aha_done(sc, ccb)
 	 * the data buffer.
 	 */
 	if (xs->datalen) {
-		bus_dmamap_sync(dmat, ccb->dmamap_xfer,
+		bus_dmamap_sync(dmat, ccb->dmamap_xfer, 0,
+		    ccb->dmamap_xfer->dm_mapsize,
 		    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
 		    BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(dmat, ccb->dmamap_xfer);
@@ -1377,7 +1378,8 @@ aha_scsi_cmd(xs)
 			goto bad;
 		}
 
-		bus_dmamap_sync(dmat, ccb->dmamap_xfer,
+		bus_dmamap_sync(dmat, ccb->dmamap_xfer, 0,
+		    ccb->dmamap_xfer->dm_mapsize,
 		    (flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
 		    BUS_DMASYNC_PREWRITE);
 

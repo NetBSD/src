@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.20 1998/02/04 00:36:52 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.21 1998/02/04 05:14:01 thorpej Exp $	*/
 
 #undef BHADIAG
 #ifdef DDB
@@ -8,7 +8,7 @@
 #endif
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -855,7 +855,8 @@ bha_done(sc, ccb)
 	 * the data buffer.
 	 */
 	if (xs->datalen) {
-		bus_dmamap_sync(dmat, ccb->dmamap_xfer,
+		bus_dmamap_sync(dmat, ccb->dmamap_xfer, 0,
+		    ccb->dmamap_xfer->dm_mapsize,
 		    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
 		    BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(dmat, ccb->dmamap_xfer);
@@ -1492,7 +1493,8 @@ bha_scsi_cmd(xs)
 			goto bad;
 		}
 
-		bus_dmamap_sync(dmat, ccb->dmamap_xfer,
+		bus_dmamap_sync(dmat, ccb->dmamap_xfer, 0,
+		    ccb->dmamap_xfer->dm_mapsize,
 		    (flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
 		    BUS_DMASYNC_PREWRITE);
 

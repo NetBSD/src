@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.4 1998/02/04 01:57:33 thorpej Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.5 1998/02/04 05:12:52 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -115,7 +115,7 @@ int	_isa_bus_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
 	    bus_dma_segment_t *, int, bus_size_t, int));
 void	_isa_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
 void	_isa_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t,
-	    int));
+	    bus_addr_t, bus_size_t, int));
 
 int	_isa_bus_dmamem_alloc __P((bus_dma_tag_t, bus_size_t, bus_size_t,
 	    bus_size_t, bus_dma_segment_t *, int, int *, int));
@@ -437,9 +437,11 @@ _isa_bus_dmamap_unload(t, map)
  * Synchronize an ISA DMA map.
  */
 void
-_isa_bus_dmamap_sync(t, map, ops)
+_isa_bus_dmamap_sync(t, map, offset, len, ops)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
+	bus_addr_t offset;
+	bus_size_t len;
 	int ops;
 {
 	struct bebox_isa_dma_cookie *cookie = map->_dm_cookie;
@@ -451,6 +453,15 @@ _isa_bus_dmamap_sync(t, map, ops)
 	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0) 
 		panic("_isa_bus_dmamap_sync: mix PRE and POST");
 
+#ifdef DIAGNOSTIC
+	if ((ops & (BUS_DMASYNC_PREWRITE|BUS_DMASYNC_POSTREAD)) != 0) {
+		if (offset >= map->dm_mapsize)
+			panic("_isa_bus_dmamap_sync: bad offset");
+		if (len == 0 || (offset + len) > map->dm_mapsize)
+			panic("_isa_bus_dmamap_sync: bad length");
+	}
+#endif
+
 	/*
 	 * Nothing to do for pre-read.
 	 */
@@ -461,8 +472,8 @@ _isa_bus_dmamap_sync(t, map, ops)
 		 * caller's buffer to the bounce buffer.
 		 */
 		if (cookie->id_flags & ID_IS_BOUNCING)
-			bcopy(cookie->id_origbuf, cookie->id_bouncebuf,
-			    cookie->id_origbuflen);
+			bcopy(cookie->id_origbuf + offset,
+			    cookie->id_bouncebuf + offset, len);
 	}
 
 	if (ops & BUS_DMASYNC_POSTREAD) {
@@ -471,8 +482,8 @@ _isa_bus_dmamap_sync(t, map, ops)
 		 * bounce buffer to the caller's buffer.
 		 */
 		if (cookie->id_flags & ID_IS_BOUNCING)
-			bcopy(cookie->id_bouncebuf, cookie->id_origbuf,
-			    cookie->id_origbuflen);
+			bcopy(cookie->id_bouncebuf + offset,
+			    cookie->id_origbuf + offset, len);
 	}
 
 	/*
@@ -481,7 +492,7 @@ _isa_bus_dmamap_sync(t, map, ops)
 
 #if 0
 	/* This is a noop anyhow, so why bother calling it? */
-	_bus_dmamap_sync(t, map, op);
+	_bus_dmamap_sync(t, map, offset, len, ops);
 #endif
 }
 
