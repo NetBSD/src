@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.61.4.4 2002/04/03 21:16:45 he Exp $	*/
+/*	$NetBSD: in.c,v 1.61.4.5 2003/08/04 19:11:46 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -590,6 +590,8 @@ in_purgeif(ifp)
 		in_purgeaddr(ifa, ifp);
 	}
 	in_purgemkludge(ifp);
+
+	igmp_purgeif(ifp);
 }
 
 /*
