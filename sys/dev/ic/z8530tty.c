@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.80 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.81 2002/09/24 13:23:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.80 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.81 2002/09/24 13:23:31 ad Exp $");
 
 #include "opt_kgdb.h"
 
@@ -1233,15 +1233,17 @@ zs_modem(zst, onoff)
 	struct zstty_softc *zst;
 	int onoff;
 {
-	struct zs_chanstate *cs = zst->zst_cs;
+	struct zs_chanstate *cs = zst->zst_cs, *ccs;
 
 	if (cs->cs_wr5_dtr == 0)
 		return;
 
+	ccs = (cs->cs_ctl_chan != NULL ? cs->cs_ctl_chan : cs);
+
 	if (onoff)
-		SET(cs->cs_preg[5], cs->cs_wr5_dtr);
+		SET(ccs->cs_preg[5], cs->cs_wr5_dtr);
 	else
-		CLR(cs->cs_preg[5], cs->cs_wr5_dtr);
+		CLR(ccs->cs_preg[5], cs->cs_wr5_dtr);
 
 	if (!cs->cs_heldchange) {
 		if (zst->zst_tx_busy) {
@@ -1259,8 +1261,10 @@ tiocm_to_zs(zst, how, ttybits)
 	u_long how;
 	int ttybits;
 {
-	struct zs_chanstate *cs = zst->zst_cs;
+	struct zs_chanstate *cs = zst->zst_cs, *ccs;
 	u_char zsbits;
+
+	ccs = (cs->cs_ctl_chan != NULL ? cs->cs_ctl_chan : cs);
 
 	zsbits = 0;
 	if (ISSET(ttybits, TIOCM_DTR))
@@ -1270,16 +1274,16 @@ tiocm_to_zs(zst, how, ttybits)
 
 	switch (how) {
 	case TIOCMBIC:
-		CLR(cs->cs_preg[5], zsbits);
+		CLR(ccs->cs_preg[5], zsbits);
 		break;
 
 	case TIOCMBIS:
-		SET(cs->cs_preg[5], zsbits);
+		SET(ccs->cs_preg[5], zsbits);
 		break;
 
 	case TIOCMSET:
-		CLR(cs->cs_preg[5], ZSWR5_RTS | ZSWR5_DTR);
-		SET(cs->cs_preg[5], zsbits);
+		CLR(ccs->cs_preg[5], ZSWR5_RTS | ZSWR5_DTR);
+		SET(ccs->cs_preg[5], zsbits);
 		break;
 	}
 
@@ -1297,11 +1301,13 @@ static int
 zs_to_tiocm(zst)
 	struct zstty_softc *zst;
 {
-	struct zs_chanstate *cs = zst->zst_cs;
+	struct zs_chanstate *cs = zst->zst_cs, *ccs;
 	u_char zsbits;
 	int ttybits = 0;
 
-	zsbits = cs->cs_preg[5];
+	ccs = (cs->cs_ctl_chan != NULL ? cs->cs_ctl_chan : cs);
+
+	zsbits = ccs->cs_preg[5];
 	if (ISSET(zsbits, ZSWR5_DTR))
 		SET(ttybits, TIOCM_DTR);
 	if (ISSET(zsbits, ZSWR5_RTS))
@@ -1363,19 +1369,21 @@ static void
 zs_hwiflow(zst)
 	struct zstty_softc *zst;
 {
-	struct zs_chanstate *cs = zst->zst_cs;
+	struct zs_chanstate *cs = zst->zst_cs, *ccs;
 
 	if (cs->cs_wr5_rts == 0)
 		return;
 
+	ccs = (cs->cs_ctl_chan != NULL ? cs->cs_ctl_chan : cs);
+
 	if (ISSET(zst->zst_rx_flags, RX_ANY_BLOCK)) {
-		CLR(cs->cs_preg[5], cs->cs_wr5_rts);
-		CLR(cs->cs_creg[5], cs->cs_wr5_rts);
+		CLR(ccs->cs_preg[5], cs->cs_wr5_rts);
+		CLR(ccs->cs_creg[5], cs->cs_wr5_rts);
 	} else {
-		SET(cs->cs_preg[5], cs->cs_wr5_rts);
-		SET(cs->cs_creg[5], cs->cs_wr5_rts);
+		SET(ccs->cs_preg[5], cs->cs_wr5_rts);
+		SET(ccs->cs_creg[5], cs->cs_wr5_rts);
 	}
-	zs_write_reg(cs, 5, cs->cs_creg[5]);
+	zs_write_reg(ccs, 5, ccs->cs_creg[5]);
 }
 
 
