@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.32 2004/01/20 19:52:40 kleink Exp $	*/
+/*	$NetBSD: math.h,v 1.33 2004/03/04 00:17:44 kleink Exp $	*/
 
 /*
  * ====================================================
@@ -41,6 +41,7 @@ union __long_double_u {
 
 #ifdef __HAVE_LONG_DOUBLE
 #define	__fpmacro_unary_floating(__name, __arg0)			\
+	/* LINTED */							\
 	((sizeof (__arg0) == sizeof (float))				\
 	?	__ ## __name ## f (__arg0)				\
 	: (sizeof (__arg0) == sizeof (double))				\
@@ -48,6 +49,7 @@ union __long_double_u {
 	:	__ ## __name ## l (__arg0))
 #else
 #define	__fpmacro_unary_floating(__name, __arg0)			\
+	/* LINTED */							\
 	((sizeof (__arg0) == sizeof (float))				\
 	?	__ ## __name ## f (__arg0)				\
 	:	__ ## __name ## d (__arg0))
