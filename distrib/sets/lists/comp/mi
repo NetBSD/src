@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.365 2001/09/04 04:08:01 wiz Exp $
+#	$NetBSD: mi,v 1.366 2001/09/06 00:21:11 wiz Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1390,6 +1390,8 @@
 ./usr/share/man/cat2/munmap.0		comp-c-catman
 ./usr/share/man/cat2/nanosleep.0	comp-c-catman
 ./usr/share/man/cat2/nfssvc.0		comp-c-catman
+./usr/share/man/cat2/ntp_adjtime.0		comp-c-catman
+./usr/share/man/cat2/ntp_gettime.0		comp-c-catman
 ./usr/share/man/cat2/open.0		comp-c-catman
 ./usr/share/man/cat2/pathconf.0		comp-c-catman
 ./usr/share/man/cat2/pipe.0		comp-c-catman
@@ -3536,6 +3538,8 @@
 ./usr/share/man/man2/munmap.2		comp-c-man
 ./usr/share/man/man2/nanosleep.2		comp-c-man
 ./usr/share/man/man2/nfssvc.2		comp-c-man
+./usr/share/man/man2/ntp_adjtime.2		comp-c-man
+./usr/share/man/man2/ntp_gettime.2		comp-c-man
 ./usr/share/man/man2/open.2		comp-c-man
 ./usr/share/man/man2/pathconf.2		comp-c-man
 ./usr/share/man/man2/pipe.2		comp-c-man
