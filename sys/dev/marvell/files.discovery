@@ -1,4 +1,4 @@
-#	$NetBSD: files.discovery,v 1.1 2003/03/05 22:08:18 matt Exp $
+#	$NetBSD: files.discovery,v 1.2 2003/03/16 07:05:33 matt Exp $
 #
 # Config file and device description for machine-independent support for
 # the Moverll (formerly Galileo Technologies) Discovery system controllers.
@@ -22,11 +22,11 @@ defparam	opt_marvell.h	GT_MPSC_DEFAULT_BAUD_RATE
 defparam	opt_marvell.h	GT_MPP_INTERRUPTS GT_MPP_WATCHDOG GT_BASE
 
 define	gt { [unit = -1] }
-device	gt: isabus, pcibus, gt
+device	gt: gt
 file	dev/marvell/gt.c			gt
 
 # PCI bus
-device	gtpci: isabus, pcibus, gt
+device	gtpci: isabus, pcibus
 attach	gtpci at gt
 file	dev/marvell/gtpci.c			gt & pci
 
@@ -44,3 +44,8 @@ file	dev/marvell/gtmpsc.c			gtmpsc needs-flag
 device	gtidma
 attach	gtidma at gt
 file	dev/marvell/gtidma.c			gtidma
+
+define	obio { [offset=-1], [size=0], [irq=-1] }
+device	obio: obio
+attach	obio at gt
+file	dev/marvell/obio.c			obio

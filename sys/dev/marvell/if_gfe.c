@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.1 2003/03/05 22:08:23 matt Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.2 2003/03/16 07:05:34 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -82,9 +82,11 @@
 #include <dev/marvell/if_gfevar.h>
 
 #define	GE_READ(sc, reg) \
-	gt_read((sc)->sc_dev.dv_parent, ETH_ ## reg ((sc)->sc_macno))
+	bus_space_read_4((sc)->sc_gt_memt, (sc)->sc_gt_memh, \
+	    ETH_ ## reg ((sc)->sc_macno))
 #define	GE_WRITE(sc, reg, v) \
-	gt_write((sc)->sc_dev.dv_parent, ETH_ ## reg ((sc)->sc_macno), (v))
+	bus_space_write_4((sc)->sc_gt_memt, (sc)->sc_gt_memh, \
+	    ETH_ ## reg ((sc)->sc_macno), (v))
 
 #define	GE_DEBUG
 #if 0
@@ -113,12 +115,21 @@ enum gfe_hash_op {
 	GE_HASH_ADD,		GE_HASH_REMOVE,
 };
 
+#if 1
+#define	htogt32(a)		htobe32(a)
+#define	gt32toh(a)		be32toh(a)
+#else
+#define	htogt32(a)		htole32(a)
+#define	gt32toh(a)		le32toh(a)
+#endif
+
 #define	STATIC
 
 STATIC int gfe_match (struct device *, struct cfdata *, void *);
 STATIC void gfe_attach (struct device *, struct device *, void *);
 
-STATIC int gfe_dmamem_alloc(struct gfe_softc *, struct gfe_dmamem *, int, size_t);
+STATIC int gfe_dmamem_alloc(struct gfe_softc *, struct gfe_dmamem *, int,
+	size_t, int);
 STATIC void gfe_dmamem_free(struct gfe_softc *, struct gfe_dmamem *);
 
 STATIC int gfe_ifioctl (struct ifnet *, u_long, caddr_t);
@@ -163,6 +174,8 @@ STATIC int gfe_hash_alloc(struct gfe_softc *);
 CFATTACH_DECL(gfe, sizeof(struct gfe_softc),
     gfe_match, gfe_attach, NULL, NULL);
 
+extern struct cfdriver gfe_cd;
+
 int
 gfe_match(struct device *parent, struct cfdata *cf, void *aux)
 {
@@ -170,7 +183,7 @@ gfe_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct gt_attach_args *ga = aux;
 	uint8_t enaddr[6];
 
-	if (ga->ga_unit > 2)
+	if (!GT_ETHEROK(gt, ga, &gfe_cd))
 		return 0;
 
 	if (gtget_macaddr(gt, ga->ga_unit, enaddr) < 0)
@@ -198,13 +211,16 @@ gfe_attach(struct device *parent, struct device *self, void *aux)
 	int phyaddr;
 	uint32_t sdcr;
 
-	sc->sc_memt = ga->ga_memt;
+	GT_ETHERFOUND(gt, ga);
+
+	sc->sc_gt_memt = ga->ga_memt;
+	sc->sc_gt_memh = ga->ga_memh;
 	sc->sc_dmat = ga->ga_dmat;
 	sc->sc_macno = ga->ga_unit;
 
 	callout_init(&sc->sc_co);
 
-	data = gt_read(parent, ETH_EPAR);
+	data = bus_space_read_4(sc->sc_gt_memt, sc->sc_gt_memh, ETH_EPAR);
 	phyaddr = ETH_EPAR_PhyAD_GET(data, sc->sc_macno);
 
 	gtget_macaddr(gt, sc->sc_macno, enaddr);
@@ -213,14 +229,20 @@ gfe_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pcxr = GE_READ(sc, EPCXR);
 	sc->sc_intrmask = GE_READ(sc, EIMR) | ETH_IR_MIIPhySTC;
 
-	printf(": address %s, phy %d", ether_sprintf(enaddr), phyaddr);
+	aprint_normal(": address %s", ether_sprintf(enaddr));
 
 #if defined(DEBUG)
-	printf(", pcr %#x, pcxr %#x", sc->sc_pcr, sc->sc_pcxr);
+	aprint_normal(", pcr %#x, pcxr %#x", sc->sc_pcr, sc->sc_pcxr);
 #endif
 
 	sc->sc_pcxr &= ~ETH_EPCXR_PRIOrx_Override;
-	sc->sc_pcxr |= ETH_EPCXR_RMIIEn;
+	if (sc->sc_dev.dv_cfdata->cf_flags & 1) {
+		aprint_normal(", phy %d (rmii)", phyaddr);
+		sc->sc_pcxr |= ETH_EPCXR_RMIIEn;
+	} else {
+		aprint_normal(", phy %d (mii)", phyaddr);
+		sc->sc_pcxr &= ~ETH_EPCXR_RMIIEn;
+	}
 	sc->sc_pcxr &= ~(3 << 14);
 	sc->sc_pcxr |= (ETH_EPCXR_MFL_1536 << 14);
 
@@ -238,7 +260,7 @@ gfe_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pcr &= ~ETH_EPCR_EN;
 
 #if defined(DEBUG)
-	printf(", pcr %#x, pcxr %#x", sc->sc_pcr, sc->sc_pcxr);
+	aprint_normal(", pcr %#x, pcxr %#x", sc->sc_pcr, sc->sc_pcxr);
 #endif
 
 	/*
@@ -252,7 +274,7 @@ gfe_attach(struct device *parent, struct device *self, void *aux)
 	GE_WRITE(sc, ESDCR, sdcr);
 	sc->sc_max_frame_length = 1536;
 
-	printf("\n");
+	aprint_normal("\n");
 	sc->sc_mii.mii_ifp = &sc->sc_ec.ec_if;
 	sc->sc_mii.mii_readreg = gfe_mii_read;
 	sc->sc_mii.mii_writereg = gfe_mii_write;
@@ -273,6 +295,7 @@ gfe_attach(struct device *parent, struct device *self, void *aux)
 	ifp = &sc->sc_ec.ec_if;
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
+	/* ifp->if_mowner = &sc->sc_mowner; */
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 #if 0
 	ifp->if_flags |= IFF_DEBUG;
@@ -295,12 +318,16 @@ gfe_attach(struct device *parent, struct device *self, void *aux)
 
 int
 gfe_dmamem_alloc(struct gfe_softc *sc, struct gfe_dmamem *gdm, int maxsegs,
-	size_t size)
+	size_t size, int flags)
 {
 	int error = 0;
 	GE_FUNC_ENTER(sc, "gfe_dmamem_alloc");
 	gdm->gdm_size = size;
 	gdm->gdm_maxsegs = maxsegs;
+
+#if 1
+	flags |= BUS_DMA_NOCACHE;
+#endif
 
 	error = bus_dmamem_alloc(sc->sc_dmat, gdm->gdm_size, NBPG,
 	    gdm->gdm_size, gdm->gdm_segs, gdm->gdm_maxsegs, &gdm->gdm_nsegs,
@@ -309,7 +336,7 @@ gfe_dmamem_alloc(struct gfe_softc *sc, struct gfe_dmamem *gdm, int maxsegs,
 		goto fail;
 
 	error = bus_dmamem_map(sc->sc_dmat, gdm->gdm_segs, gdm->gdm_nsegs,
-	    gdm->gdm_size, &gdm->gdm_kva, BUS_DMA_COHERENT|BUS_DMA_NOWAIT);
+	    gdm->gdm_size, &gdm->gdm_kva, flags | BUS_DMA_NOWAIT);
 	if (error)
 		goto fail;
 
@@ -320,19 +347,20 @@ gfe_dmamem_alloc(struct gfe_softc *sc, struct gfe_dmamem *gdm, int maxsegs,
 
 	error = bus_dmamap_load(sc->sc_dmat, gdm->gdm_map, gdm->gdm_kva,
 	    gdm->gdm_size, NULL, BUS_DMA_NOWAIT);
+	if (error)
+		goto fail;
 
-#if 1
-	{
-		size_t i;
-		for (i = 0; i < gdm->gdm_size; i += 32)
-			__asm __volatile("dcbf 0,%0" :: "r" (gdm->gdm_kva + i));
-	}
-#endif
+	/* invalidate from cache */
+	bus_dmamap_sync(sc->sc_dmat, gdm->gdm_map, 0, gdm->gdm_size,
+	    BUS_DMASYNC_PREREAD);
 fail:
 	if (error) {
 		gfe_dmamem_free(sc, gdm);
 		GE_DPRINTF(sc, (":err=%d", error));
 	}
+	GE_DPRINTF(sc, (":kva=%p/%#x,map=%p,nsegs=%d,pa=%x/%x",
+	    gdm->gdm_kva, gdm->gdm_size, gdm->gdm_map, gdm->gdm_map->dm_nsegs,
+	    gdm->gdm_map->dm_segs->ds_addr, gdm->gdm_map->dm_segs->ds_len));
 	GE_FUNC_EXIT(sc, "");
 	return error;
 }
@@ -497,7 +525,7 @@ gfe_ifwatchdog(struct ifnet *ifp)
 	printf("%s: device timeout",
 		sc->sc_dev.dv_xname);
 	if ((txq = sc->sc_txq[GE_TXPRIO_HI]) != NULL) {
-		unsigned int curtxdnum = (gt_read(sc->sc_dev.dv_parent, txq->txq_ectdp) - txq->txq_desc_busaddr) / 16;
+		unsigned int curtxdnum = (bus_space_read_4(sc->sc_gt_memt, sc->sc_gt_memh, txq->txq_ectdp) - txq->txq_desc_busaddr) / 16;
 		printf(" (fi=%d,lo=%d,cur=%d(%#x),icm=%#x) ",
 		    txq->txq_fi, txq->txq_lo, curtxdnum,
 		    txq->txq_descs[curtxdnum].ed_cmdsts,
@@ -521,6 +549,7 @@ gfe_rx_rxqalloc(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 	bus_size_t boff;
 
 	GE_FUNC_ENTER(sc, "gfe_rx_rxqalloc");
+	GE_DPRINTF(sc, ("(%d)", rxprio));
 	if (sc->sc_rxq[rxprio] != NULL) {
 		GE_FUNC_EXIT(sc, "");
 		return 0;
@@ -534,14 +563,15 @@ gfe_rx_rxqalloc(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 
 	memset(rxq, 0, sizeof(*rxq));
 
-	error = gfe_dmamem_alloc(sc, &rxq->rxq_desc_mem, 1, GE_RXDESC_MEMSIZE);
+	error = gfe_dmamem_alloc(sc, &rxq->rxq_desc_mem, 1,
+	    GE_RXDESC_MEMSIZE, 0);
 	if (error) {
 		free(rxq, M_DEVBUF);
 		GE_FUNC_EXIT(sc, "!!");
 		return error;
 	}
 	error = gfe_dmamem_alloc(sc, &rxq->rxq_buf_mem, GE_RXBUF_NSEGS,
-	    GE_RXBUF_MEMSIZE);
+	    GE_RXBUF_MEMSIZE, 0);
 	if (error) {
 		gfe_dmamem_free(sc, &rxq->rxq_desc_mem);
 		free(rxq, M_DEVBUF);
@@ -563,28 +593,27 @@ gfe_rx_rxqalloc(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		nxtaddr = rxq->rxq_desc_busaddr + sizeof(*rxd);
 	     idx < GE_RXDESC_MAX;
 	     idx++, rxd++, nxtaddr += sizeof(*rxd)) {
-		rxd->ed_cmdsts = htobe32(RX_CMD_F|RX_CMD_L|RX_CMD_O|RX_CMD_EI);
-		rxd->ed_lencnt = htobe32(GE_RXBUF_SIZE << 16);
-		rxd->ed_bufptr = htobe32(ds->ds_addr + boff);
+		rxd->ed_lencnt = htogt32(GE_RXBUF_SIZE << 16);
+		rxd->ed_cmdsts = htogt32(RX_CMD_F|RX_CMD_L|RX_CMD_O|RX_CMD_EI);
+		rxd->ed_bufptr = htogt32(ds->ds_addr + boff);
 		/*
 		 * update the nxtptr to point to the next txd.
 		 */
 		if (idx == GE_RXDESC_MAX - 1)
 			nxtaddr = rxq->rxq_desc_busaddr;
-		rxd->ed_nxtptr = htobe32(nxtaddr);
+		rxd->ed_nxtptr = htogt32(nxtaddr);
 		boff += GE_RXBUF_SIZE;
 		if (boff == ds->ds_len) {
 			ds++;
 			boff = 0;
 		}
-		__asm __volatile("dcbf 0,%0" :: "r" (rxd));
 	}
 	bus_dmamap_sync(sc->sc_dmat, rxq->rxq_desc_mem.gdm_map, 0,
 			rxq->rxq_desc_mem.gdm_map->dm_mapsize,
 			BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	bus_dmamap_sync(sc->sc_dmat, rxq->rxq_buf_mem.gdm_map, 0,
 			rxq->rxq_buf_mem.gdm_map->dm_mapsize,
-			BUS_DMASYNC_PREWRITE);
+			BUS_DMASYNC_PREREAD);
 
 	rxq->rxq_intrbits = ETH_IR_RxBuffer|ETH_IR_RxError;
 	switch (rxprio) {
@@ -651,11 +680,10 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		unsigned int cmdsts;
 		size_t buflen;
 
-		__asm __volatile("dcbi 0,%0" :: "r" (rxd));
 		bus_dmamap_sync(sc->sc_dmat, rxq->rxq_desc_mem.gdm_map,
 				rxq->rxq_fi * sizeof(*rxd), sizeof(*rxd),
 				BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-		cmdsts = be32toh(rxd->ed_cmdsts);
+		cmdsts = gt32toh(rxd->ed_cmdsts);
 		GE_DPRINTF(sc, (":%d=%#x", rxq->rxq_fi, cmdsts));
 		rxq->rxq_cmdsts = cmdsts;
 		/*
@@ -663,8 +691,11 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		 * But if the length has been rewritten, the packet is ours
 		 * so pretend the O bit is set.
 		 */
-		buflen = be32toh(rxd->ed_lencnt) & 0xffff;
+		buflen = gt32toh(rxd->ed_lencnt) & 0xffff;
 		if ((cmdsts & RX_CMD_O) && buflen == 0) {
+			bus_dmamap_sync(sc->sc_dmat, rxq->rxq_desc_mem.gdm_map,
+				rxq->rxq_fi * sizeof(*rxd), sizeof(*rxd),
+				BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 			break;
 		}
 
@@ -707,7 +738,7 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 
 		ifp->if_ibytes += buflen;
 		bus_dmamap_sync(sc->sc_dmat, rxq->rxq_buf_mem.gdm_map,
-		    rxq->rxq_fi * sizeof(*rxb), buflen, BUS_DMASYNC_POSTWRITE);
+		    rxq->rxq_fi * sizeof(*rxb), buflen, BUS_DMASYNC_POSTREAD);
 
 		KASSERT(m->m_len == 0 && m->m_pkthdr.len == 0);
 		memcpy(m->m_data + m->m_len, rxb->rb_data, buflen);
@@ -749,8 +780,13 @@ pkt_dump(sc,m->m_data+m->m_len,buflen);
 
 	   give_it_back:
 		rxd->ed_lencnt &= ~0xffff;	/* zero out length */
-		rxd->ed_cmdsts = htobe32(RX_CMD_F|RX_CMD_L|RX_CMD_O|RX_CMD_EI);
-		__asm __volatile("dcbf 0,%0" :: "r" (rxd));
+		rxd->ed_cmdsts = htogt32(RX_CMD_F|RX_CMD_L|RX_CMD_O|RX_CMD_EI);
+#if 0
+		GE_DPRINTF(sc, ("([%d]->%08lx.%08lx.%08lx.%08lx)",
+		    rxq->rxq_fi,
+		    ((unsigned long *)rxd)[0], ((unsigned long *)rxd)[1],
+		    ((unsigned long *)rxd)[2], ((unsigned long *)rxd)[3]));
+#endif
 		bus_dmamap_sync(sc->sc_dmat, rxq->rxq_desc_mem.gdm_map,
 				rxq->rxq_fi * sizeof(*rxd), sizeof(*rxd),
 				BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -799,16 +835,18 @@ gfe_rx_process(struct gfe_softc *sc, uint32_t cause, uint32_t intrmask)
 		GE_DPRINTF(sc, ("%s: rx queue %d filled at %u\n",
 		    sc->sc_dev.dv_xname, rxprio, rxq->rxq_fi));
 		memset(masks, 0, sizeof(masks));
+		bus_dmamap_sync(sc->sc_dmat, rxq->rxq_desc_mem.gdm_map,
+		    0, rxq->rxq_desc_mem.gdm_size,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 		for (idx = 0; idx < GE_RXDESC_MAX; idx++) {
 			volatile struct gt_eth_desc *rxd = &rxq->rxq_descs[idx];
 
-			__asm __volatile("dcbi 0,%0" :: "r" (rxd));
-			bus_dmamap_sync(sc->sc_dmat, rxq->rxq_desc_mem.gdm_map,
-			    idx * sizeof(*rxd), sizeof(*rxd),
-			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-			if (RX_CMD_O & be32toh(rxd->ed_cmdsts))
+			if (RX_CMD_O & gt32toh(rxd->ed_cmdsts))
 				masks[idx/32] |= 1 << (idx & 31);
 		}
+		bus_dmamap_sync(sc->sc_dmat, rxq->rxq_desc_mem.gdm_map,
+		    0, rxq->rxq_desc_mem.gdm_size,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 #if defined(DEBUG)
 		printf("%s: rx queue %d filled at %u=%#x(%#x/%#x)\n",
 		    sc->sc_dev.dv_xname, rxprio, rxq->rxq_fi,
@@ -998,15 +1036,18 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 		bus_dmamap_sync(sc->sc_dmat, txq->txq_desc_mem.gdm_map,
 				txq->txq_fi * sizeof(*txd), sizeof(*txd),
 				BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-		cmdsts = be32toh(txd2->ed_cmdsts);
+		cmdsts = gt32toh(txd2->ed_cmdsts);
 		if (cmdsts & TX_CMD_O) {
+			bus_dmamap_sync(sc->sc_dmat, txq->txq_desc_mem.gdm_map,
+				txq->txq_fi * sizeof(*txd), sizeof(*txd),
+				BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 			GE_FUNC_EXIT(sc, "@");
 			return 0;
 		}
 		if (++txq->txq_fi == GE_TXDESC_MAX)
 			txq->txq_fi = 0;
-		txq->txq_inptr = be32toh(txd2->ed_bufptr) - txq->txq_buf_busaddr;
-		pktlen = (be32toh(txd2->ed_lencnt) >> 16) & 0xffff;
+		txq->txq_inptr = gt32toh(txd2->ed_bufptr) - txq->txq_buf_busaddr;
+		pktlen = (gt32toh(txd2->ed_lencnt) >> 16) & 0xffff;
 		txq->txq_inptr += (pktlen + 7) & ~7;
 		txq->txq_nactive--;
 
@@ -1058,32 +1099,36 @@ GE_DPRINTF(sc,("\n"));
 pkt_dump(sc, txq->txq_buf_mem.gdm_kva + txq->txq_outptr, m->m_pkthdr.len);
 #endif
 	bus_dmamap_sync(sc->sc_dmat, txq->txq_buf_mem.gdm_map,
-	    txq->txq_outptr, m->m_pkthdr.len, BUS_DMASYNC_PREREAD);
-	txd->ed_bufptr = htobe32(txq->txq_buf_busaddr + txq->txq_outptr);
-	txd->ed_lencnt = htobe32(m->m_pkthdr.len << 16);
+	    txq->txq_outptr, m->m_pkthdr.len, BUS_DMASYNC_PREWRITE);
+	txd->ed_bufptr = htogt32(txq->txq_buf_busaddr + txq->txq_outptr);
+	txd->ed_lencnt = htogt32(m->m_pkthdr.len << 16);
+#if 0
 	bus_dmamap_sync(sc->sc_dmat, txq->txq_desc_mem.gdm_map,
 	    txq->txq_lo * sizeof(*txd), sizeof(*txd),
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-	GE_DPRINTF(sc, ("(p/l=%#lx/%d)",
-	    (unsigned long) txq->txq_buf_busaddr + txq->txq_outptr,
-	    m->m_pkthdr.len));
+#endif
+
 	/*
 	 * Request a buffer interrupt every 2/3 of the way thru the transmit
 	 * buffer.
 	 */
 	txq->txq_ei_gapcount += m->m_pkthdr.len + 7;
 	if (txq->txq_ei_gapcount > 2 * GE_TXBUF_SIZE / 3) {
-		txd->ed_cmdsts = htobe32(TX_CMD_FIRST|TX_CMD_LAST|TX_CMD_EI);
+		txd->ed_cmdsts = htogt32(TX_CMD_FIRST|TX_CMD_LAST|TX_CMD_EI);
 		txq->txq_ei_gapcount = 0;
 	} else {
-		txd->ed_cmdsts = htobe32(TX_CMD_FIRST|TX_CMD_LAST);
+		txd->ed_cmdsts = htogt32(TX_CMD_FIRST|TX_CMD_LAST);
 	}
-
+#if 0
+	GE_DPRINTF(sc, ("([%d]->%08lx.%08lx.%08lx.%08lx)", txq->txq_lo,
+	    ((unsigned long *)txd)[0], ((unsigned long *)txd)[1],
+	    ((unsigned long *)txd)[2], ((unsigned long *)txd)[3]));
+#endif
 	bus_dmamap_sync(sc->sc_dmat, txq->txq_desc_mem.gdm_map,
 	    txq->txq_lo * sizeof(*txd), sizeof(*txd),
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
-	txq->txq_outptr += (m->m_pkthdr.len + 7) & ~7;
+	txq->txq_outptr += (m->m_pkthdr.len + 31) & ~31;
 	/*
 	 * Tell the SDMA engine to "Fetch!"
 	 */
@@ -1138,14 +1183,14 @@ gfe_tx_done(struct gfe_softc *sc, enum gfe_txprio txprio, uint32_t intrmask)
 	}
 
 	while (txq->txq_nactive > 0) {
-		volatile struct gt_eth_desc *ed = &txq->txq_descs[txq->txq_fi];
+		volatile struct gt_eth_desc *txd = &txq->txq_descs[txq->txq_fi];
 		uint32_t cmdsts;
 		size_t pktlen;
 
 		bus_dmamap_sync(sc->sc_dmat, txq->txq_desc_mem.gdm_map,
-		    txq->txq_fi * sizeof(*ed), sizeof(*ed),
+		    txq->txq_fi * sizeof(*txd), sizeof(*txd),
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-		if ((cmdsts = be32toh(ed->ed_cmdsts)) & TX_CMD_O) {
+		if ((cmdsts = gt32toh(txd->ed_cmdsts)) & TX_CMD_O) {
 			/*
 			 * If the GT owns this descriptor and according
 			 * to the status register, the transmit engine
@@ -1187,15 +1232,26 @@ gfe_tx_done(struct gfe_softc *sc, enum gfe_txprio txprio, uint32_t intrmask)
 				GE_DPRINTF(sc, ("*"));
 			}
 #endif
+			bus_dmamap_sync(sc->sc_dmat, txq->txq_desc_mem.gdm_map,
+			    txq->txq_fi * sizeof(*txd), sizeof(*txd),
+			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 			GE_FUNC_EXIT(sc, "");
 			return intrmask;
 		}
+#if 0
+		GE_DPRINTF(sc, ("([%d]<-%08lx.%08lx.%08lx.%08lx)",
+		    txq->txq_lo,
+		    ((unsigned long *)txd)[0], ((unsigned long *)txd)[1],
+		    ((unsigned long *)txd)[2], ((unsigned long *)txd)[3]));
+#endif
 		GE_DPRINTF(sc, ("(%d)", txq->txq_fi));
 		if (++txq->txq_fi == GE_TXDESC_MAX)
 			txq->txq_fi = 0;
-		txq->txq_inptr = be32toh(ed->ed_bufptr) - txq->txq_buf_busaddr;
-		pktlen = (be32toh(ed->ed_lencnt) >> 16) & 0xffff;
-		txq->txq_inptr += (pktlen + 7) & ~7;
+		txq->txq_inptr = gt32toh(txd->ed_bufptr) - txq->txq_buf_busaddr;
+		pktlen = (gt32toh(txd->ed_lencnt) >> 16) & 0xffff;
+		txq->txq_inptr += (pktlen + 31) & ~31;
+		bus_dmamap_sync(sc->sc_dmat, txq->txq_buf_mem.gdm_map,
+		    txq->txq_inptr, pktlen, BUS_DMASYNC_POSTWRITE);
 
 		/* statistics */
 		sc->sc_ec.ec_if.if_opackets++;
@@ -1203,7 +1259,7 @@ gfe_tx_done(struct gfe_softc *sc, enum gfe_txprio txprio, uint32_t intrmask)
 		if (cmdsts & TX_STS_ES)
 			sc->sc_ec.ec_if.if_oerrors++;
 
-		ed->ed_bufptr = 0;
+		txd->ed_bufptr = 0;
 
 		sc->sc_ec.ec_if.if_timer = 5;
 		--txq->txq_nactive;
@@ -1241,14 +1297,14 @@ gfe_tx_start(struct gfe_softc *sc, enum gfe_txprio txprio)
 		}
 		memset(txq, 0, sizeof(*txq));
 		error = gfe_dmamem_alloc(sc, &txq->txq_desc_mem, 1,
-		    GE_TXMEM_SIZE);
+		    GE_TXMEM_SIZE, 0);
 		if (error) {
 			free(txq, M_DEVBUF);
 			GE_FUNC_EXIT(sc, "");
 			return error;
 		}
 		error = gfe_dmamem_alloc(sc, &txq->txq_buf_mem, 1,
-		    GE_TXBUF_SIZE);
+		    GE_TXBUF_SIZE, 0);
 		if (error) {
 			gfe_dmamem_free(sc, &txq->txq_desc_mem);
 			free(txq, M_DEVBUF);
@@ -1262,8 +1318,6 @@ gfe_tx_start(struct gfe_softc *sc, enum gfe_txprio txprio)
 	    (volatile struct gt_eth_desc *) txq->txq_desc_mem.gdm_kva;
 	txq->txq_desc_busaddr = txq->txq_desc_mem.gdm_map->dm_segs[0].ds_addr;
 	txq->txq_buf_busaddr = txq->txq_buf_mem.gdm_map->dm_segs[0].ds_addr;
-GE_DPRINTF(sc, ("(kva %#08lx, desc_bus %#08lx)", (unsigned long) txq->txq_descs,
-					(unsigned long) txq->txq_desc_busaddr));
 
 	txq->txq_pendq.ifq_maxlen = 10;
 	txq->txq_ei_gapcount = 0;
@@ -1280,12 +1334,12 @@ GE_DPRINTF(sc, ("(kva %#08lx, desc_bus %#08lx)", (unsigned long) txq->txq_descs,
 		 * update the nxtptr to point to the next txd.
 		 */
 		txd->ed_cmdsts = 0;
-		txd->ed_nxtptr = htobe32(addr);
+		txd->ed_nxtptr = htogt32(addr);
 	}
 	txq->txq_descs[GE_TXDESC_MAX-1].ed_nxtptr =
-	    htobe32(txq->txq_desc_busaddr);
+	    htogt32(txq->txq_desc_busaddr);
 	bus_dmamap_sync(sc->sc_dmat, txq->txq_desc_mem.gdm_map, 0,
-	    GE_TXMEM_SIZE, BUS_DMASYNC_PREREAD);
+	    GE_TXMEM_SIZE, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	switch (txprio) {
 	case GE_TXPRIO_HI:
@@ -1510,6 +1564,9 @@ gfe_whack(struct gfe_softc *sc, enum gfe_whack_op op)
 		GE_WRITE(sc, EPCR, sc->sc_pcr | ETH_EPCR_EN);
 		GE_WRITE(sc, EIMR, sc->sc_intrmask);
 		gfe_ifstart(&sc->sc_ec.ec_if);
+		GE_DPRINTF(sc, ("(ectdp0=%#x, ectdp1=%#x)",
+		    GE_READ(sc, ECTDP0), GE_READ(sc, ECTDP1)));
+		GE_FUNC_EXIT(sc, "");
 		return error;
 	case GE_WHACK_STOP:
 		break;
@@ -1681,7 +1738,8 @@ gfe_hash_entry_op(struct gfe_softc *sc, enum gfe_hash_op op,
 				return EBUSY;
 			*he_p = thishe ^ HSH_S;
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_hash_mem.gdm_map,
-			    hash * sizeof(he), sizeof(he), BUS_DMASYNC_PREREAD);
+			    hash * sizeof(he), sizeof(he),
+			    BUS_DMASYNC_PREWRITE);
 			GE_FUNC_EXIT(sc, "^");
 			return 0;
 		}
@@ -1718,7 +1776,7 @@ gfe_hash_entry_op(struct gfe_softc *sc, enum gfe_hash_op op,
 	 */
 	*maybe_he_p = he;
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_hash_mem.gdm_map,
-	    maybe_hash * sizeof(he), sizeof(he), BUS_DMASYNC_PREREAD);
+	    maybe_hash * sizeof(he), sizeof(he), BUS_DMASYNC_PREWRITE);
 	GE_FUNC_EXIT(sc, "+");
 	return 0;
 }
@@ -1838,7 +1896,8 @@ gfe_hash_alloc(struct gfe_softc *sc)
 	int error;
 	GE_FUNC_ENTER(sc, "gfe_hash_alloc");
 	sc->sc_hashmask = (sc->sc_pcr & ETH_EPCR_HS_512 ? 16 : 256)*1024 - 1;
-	error = gfe_dmamem_alloc(sc, &sc->sc_hash_mem, 1, sc->sc_hashmask + 1);
+	error = gfe_dmamem_alloc(sc, &sc->sc_hash_mem, 1, sc->sc_hashmask + 1,
+	    BUS_DMA_NOCACHE);
 	if (error) {
 		printf("%s: failed to allocate %d bytes for hash table: %d\n",
 		    sc->sc_dev.dv_xname, sc->sc_hashmask + 1, error);
@@ -1848,7 +1907,7 @@ gfe_hash_alloc(struct gfe_softc *sc)
 	sc->sc_hashtable = (uint64_t *) sc->sc_hash_mem.gdm_kva;
 	memset(sc->sc_hashtable, 0, sc->sc_hashmask + 1);
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_hash_mem.gdm_map,
-	    0, sc->sc_hashmask + 1, BUS_DMASYNC_PREREAD);
+	    0, sc->sc_hashmask + 1, BUS_DMASYNC_PREWRITE);
 	GE_FUNC_EXIT(sc, "");
 	return 0;
 }
