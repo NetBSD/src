@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.c,v 1.9 2001/05/26 13:18:42 kleink Exp $	*/
+/*	$NetBSD: multibyte.c,v 1.10 2001/06/21 02:20:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ansi.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: multibyte.c,v 1.9 2001/05/26 13:18:42 kleink Exp $");
+__RCSID("$NetBSD: multibyte.c,v 1.10 2001/06/21 02:20:24 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,6 +66,8 @@ __RCSID("$NetBSD: multibyte.c,v 1.9 2001/05/26 13:18:42 kleink Exp $");
 			state = malloc(___rune_sizestate(rl));		\
 		if (state && ___rune_initstate(rl))			\
 			(*___rune_initstate(rl))(rl, state);		\
+		if (state)						\
+			*(_RuneLocale**)state = rl;			\
 	}								\
     } while (/*CONSTCOND*/0)
 #define INIT(rl, state, state0, ps) \
@@ -99,6 +101,34 @@ __RCSID("$NetBSD: multibyte.c,v 1.9 2001/05/26 13:18:42 kleink Exp $");
 static _RuneLocale *_mbstate_get_locale __P((const mbstate_t *));
 static void _mbstate_set_locale __P((mbstate_t *, const _RuneLocale *));
 static int _mbstate_init_locale __P((mbstate_t *, const _RuneLocale *));
+static void _mbstate_fixup __P((mbstate_t *));
+
+/*
+ * check if mbstate is initialized or not.
+ * if just zero'd, initialize with current locale.
+ *
+ * XXX should be merged with _mbstate_get_locale?
+ */
+static void
+_mbstate_fixup(ps)
+	mbstate_t *ps;
+{
+	_RuneLocale *rl;
+
+	_DIAGASSERT(ps != NULL);
+
+	rl = *(_RuneLocale **)ps;
+	if (!rl) {
+		/*
+		 * perhaps ps is just zero'd.
+		 */
+		rl = _CurrentRuneLocale;
+		if (___rune_initstate(rl)) {
+			(*___rune_initstate(rl))((rl), ps);
+		}
+		_mbstate_set_locale(ps, rl);
+	}
+}
 
 static _RuneLocale *
 _mbstate_get_locale(ps)
@@ -140,7 +170,6 @@ _mbstate_init_locale(ps, rl)
 		rl = _CurrentRuneLocale;
 	if (*(_RuneLocale **)(void *)ps != rl) {
 		memset(ps, 0, sizeof(*ps));
-		_mbstate_set_locale(ps, rl);
 		return 0;
 	} else
 		return 1;
@@ -161,6 +190,7 @@ mbsinit(ps)
 	if (!ps)
 		return r;
 
+	_mbstate_fixup(*(mbstate_t**)&ps);
 	rl = _mbstate_get_locale(ps);
 
 	/* initialize the state */
@@ -231,13 +261,14 @@ mbrtowc(pwc, s, n, ps)
 		_mbstate_init_locale(&ls, NULL);
 		ps = &ls;
 	}
+	_mbstate_fixup(ps);
 	rl = _mbstate_get_locale(ps);
 
 	/* initialize the state */
 	INIT0(state0, rl0, rl);
 	INIT(rl0, state, state0, ps);
 
-	if (!s || !*s) {
+	if (!s) {
 		if (state && ___rune_initstate(rl0))
 			(*___rune_initstate(rl0))(rl0, state);
 		pwc = NULL;
@@ -246,6 +277,10 @@ mbrtowc(pwc, s, n, ps)
 	}
 
 	siz = (*___mbrtowc(rl0))(rl0, pwc, s, n, state);
+	if (!siz) {
+		if (state && ___rune_initstate(rl0))
+			(*___rune_initstate(rl0))(rl0, state);
+	}
 
 	CLEANUP(rl0, state, state0, ps);
 	return siz;
@@ -287,6 +322,7 @@ wcrtomb(s, wchar, ps)
 		_mbstate_init_locale(&ls, NULL);
 		ps = &ls;
 	}
+	_mbstate_fixup(ps);
 	rl = _mbstate_get_locale(ps);
 
 	/* initialize the state */
@@ -333,6 +369,7 @@ mbsrtowcs(pwcs, s, n, ps)
 	static _RuneLocale *rl0 = NULL;
 	void *state = NULL;
 	size_t siz;
+	const char *s0;
 
 	/* pwcs may be NULL */
 	/* s may be NULL */
@@ -342,22 +379,12 @@ mbsrtowcs(pwcs, s, n, ps)
 		_mbstate_init_locale(&ls, NULL);
 		ps = &ls;
 	}
+	_mbstate_fixup(ps);
 	rl = _mbstate_get_locale(ps);
 
 	/* initialize the state */
 	INIT0(state0, rl0, rl);
 	INIT(rl0, state, state0, ps);
-
-	if (!pwcs) {
-		if (!ps)
-			cnt = -1;
-		else {
-			if (state && ___rune_initstate(rl0))
-				(*___rune_initstate(rl0))(rl0, state);
-			cnt = 0;
-		}
-		goto bye;
-	}
 
 	if (s == 0 || *s == 0) {
 		if (!ps) {
@@ -368,28 +395,37 @@ mbsrtowcs(pwcs, s, n, ps)
 			(*___rune_initstate(rl0))(rl0, state);
 	}
 
+	if (!pwcs)
+		n = 1;
+
+	s0 = *s; /* to keep *s unchanged for now, use copy instead. */
 	while (n > 0) {
-		siz = (*___mbrtowc(rl0))(rl0, pwcs, *s, n, state);
+		siz = (*___mbrtowc(rl0))(rl0, pwcs, s0, MB_CUR_MAX, state);
 		switch (siz) {
 		case (size_t)-1:
 			errno = EILSEQ;
 			cnt = -1;
-			goto bye;
+			goto bye0;
 		case (size_t)-2:
-			(*s)++;
+			/* redundant shift sequences? */
+			s0 += MB_CUR_MAX;
 			break;
 		case 0:
-			(*s)++;
-			goto bye;
+			s0 = 0;
+			goto bye0;
 		default:
-			pwcs++;
+			if (pwcs) {
+				pwcs++;
+				n--;
+			}
 			cnt++;
-			(*s) += siz;
+			s0 += siz;
 			break;
 		}
-
-		n--;
 	}
+bye0:
+	if (pwcs)
+		*s = s0;
 
 bye:
 	CLEANUP(rl0, state, state0, ps);
@@ -426,6 +462,7 @@ wcsrtombs(s, pwcs, n, ps)
 	void *state = NULL;
 	char buf[MB_LEN_MAX];
 	size_t siz;
+	const wchar_t* pwcs0;
 
 	/* s may be NULL */
 	/* pwcs may be NULL */
@@ -435,22 +472,12 @@ wcsrtombs(s, pwcs, n, ps)
 		_mbstate_init_locale(&ls, NULL);
 		ps = &ls;
 	}
+	_mbstate_fixup(ps);
 	rl = _mbstate_get_locale(ps);
 
 	/* initialize the state */
 	INIT0(state0, rl0, rl);
 	INIT(rl0, state, state0, ps);
-
-	if (!s) {
-		if (!ps)
-			cnt = -1;
-		else {
-			if (state && ___rune_initstate(rl0))
-				(*___rune_initstate(rl0))(rl0, state);
-			cnt = 0;
-		}
-		goto bye;
-	}
 
 	if (pwcs == 0 || *pwcs == 0) {
 		if (!ps) {
@@ -461,22 +488,30 @@ wcsrtombs(s, pwcs, n, ps)
 			(*___rune_initstate(rl0))(rl0, state);
 	}
 
-	while ((int)n - cnt > 0) {
-		siz = (*___wcrtomb(rl0))(rl0, buf, sizeof(buf), **pwcs, state);
+	pwcs0 = *pwcs;
+	while (1) {
+		siz = (*___wcrtomb(rl0))(rl0, buf, sizeof(buf), *pwcs0, state);
 		if (siz == (size_t)-1) {
 			errno = EILSEQ;
 			return siz;
 		}
 
-		if (n - cnt < siz)
-			return cnt;
-		memcpy(s, buf, siz);
-		if (!**pwcs)
+		if (s) {
+			if (n - cnt < siz)
+				break;
+			memcpy(s, buf, siz);
+		}
+		if (!*pwcs0) {
+			pwcs0 = 0;
 			break;
+		}
+		if (s)
+			s += siz;
 		cnt += siz;
-		s += siz;
-		(*pwcs)++;
+		pwcs0++;
 	}
+	if (s)
+		*pwcs = pwcs0;
 bye:
 	CLEANUP(rl0, state, state0, ps);
 	return (cnt);
