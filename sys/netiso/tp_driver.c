@@ -1,7 +1,7 @@
-/*	$NetBSD: tp_driver.c,v 1.15 2001/11/13 01:10:49 lukem Exp $	*/
+/*	$NetBSD: tp_driver.c,v 1.16 2003/09/06 23:56:27 christos Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_driver.c,v 1.15 2001/11/13 01:10:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_driver.c,v 1.16 2003/09/06 23:56:27 christos Exp $");
 
 #include "tp_states.h"
 
@@ -37,7 +37,7 @@ static const struct act_ent {
 #include <netiso/cons.h>
 
 #define DRIVERTRACE TPPTdriver
-#define sbwakeup(sb)	sowakeup(p->tp_sock, sb);
+#define sbwakeup(sb, dir)	sowakeup(p->tp_sock, sb, dir);
 #define MCPY(d, w) (d ? m_copym(d, 0, (int)M_COPYALL, w): 0)
 
 static int trick_hc = 1;
@@ -382,7 +382,7 @@ _Xebec_action(a, e, p)
 		break;
 	case 0x1a:
 		tp0_stash(p, e);
-		sbwakeup(&p->tp_sock->so_rcv);
+		sbwakeup(&p->tp_sock->so_rcv, POLL_IN);
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_DATA]) {
@@ -392,7 +392,7 @@ _Xebec_action(a, e, p)
 		break;
 	case 0x1b:
 		tp_ctimeout(p, TM_inact, (int) p->tp_inact_ticks);
-		sbwakeup(&p->tp_sock->so_rcv);
+		sbwakeup(&p->tp_sock->so_rcv, POLL_IN);
 
 		doack = tp_stash(p, e);
 #ifdef ARGO_DEBUG
@@ -480,7 +480,7 @@ _Xebec_action(a, e, p)
 		}
 #endif
 		tp_indicate(T_XDATA, p, 0);
-		sbwakeup(&p->tp_Xrcv);
+		sbwakeup(&p->tp_Xrcv, POLL_IN);
 
 		(void) tp_emit(XAK_TPDU_type, p, p->tp_Xrcvnxt, 0, NULL);
 		SEQ_INC(p, p->tp_Xrcvnxt);
@@ -718,7 +718,7 @@ _Xebec_action(a, e, p)
 		if (p->tp_class != TP_CLASS_0) {
 			tp_ctimeout(p, TM_inact, (int) p->tp_inact_ticks);
 		}
-		sbwakeup(sb);
+		sbwakeup(sb, POLL_OUT);
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ACKRECV]) {
 			printf("GOOD ACK new sndnxt 0x%x\n", p->tp_sndnxt);
@@ -749,7 +749,7 @@ _Xebec_action(a, e, p)
 		tp_ctimeout(p, TM_inact, (int) p->tp_inact_ticks);
 		tp_cuntimeout(p, TM_retrans);
 
-		sbwakeup(&p->tp_sock->so_snd);
+		sbwakeup(&p->tp_sock->so_snd, POLL_OUT);
 
 		/* resume normal data */
 		tp_send(p);
