@@ -1,4 +1,4 @@
-#	$NetBSD: NEWCONF,v 1.5 1994/12/05 19:26:56 phil Exp $
+#	$NetBSD: NEWCONF,v 1.6 1994/12/22 03:23:23 phil Exp $
 #
 # TINY 532 Distribution, used only for early testing and initial distribution.
 #
@@ -54,15 +54,12 @@ options		"CONFIG_NEW"		# Use config.new stuff
 config		"netbsd"	root on sd0 swap on sd0
 
 membus0 at root
-#clock0 at membus?
-#timer0 at membus?
 
 #rd0 at membus?
 
 ncr0 at membus?
 
 scsibus0 at scsi?
-#tg* at scsi? target ?
 
 sd* at scsibus? target ? lun ?			# SCSI disks
 st* at scsibus? target ? lun ?			# SCSI tapes
