@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.29 1998/10/10 02:00:57 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.29.2.1 1998/10/15 00:42:45 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,10 +48,6 @@
 
 
 bdev_decl(sw);
-#include "rz.h"
-bdev_decl(rz);
-#include "tz.h"
-bdev_decl(tz);
 #include "sd.h"
 bdev_decl(sd);
 #include "st.h"
@@ -65,30 +61,30 @@ bdev_decl(vnd);
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_notdef(),			/* 0: SCSI disk */
-	bdev_notdef(),			/* 1: vax ht */
+	bdev_notdef(),			/* 0: nodev */
+	bdev_notdef(),			/* 1: ULTRIX vax ht */
 	bdev_disk_init(NVND,vnd),	/* 2: vnode disk driver */
-	bdev_notdef(),			/* 3: vax rk*/
-	bdev_swap_init(1,sw),		/* 4: swap pseudo-device*/
-	bdev_notdef(),			/* 5: vax tm */
-	bdev_notdef(),			/* 6: vax ts */
-	bdev_notdef(),			/* 7: vax mt */
-	bdev_notdef(),			/* 8: vax tu */
-	bdev_notdef(),			/* 9: ?? */
-	bdev_notdef(),			/* 10: ut */
-	bdev_notdef(),			/* 11: 11/730 idc */
-	bdev_notdef(),			/* 12: rx */
-	bdev_notdef(),			/* 13: uu */
-	bdev_notdef(),			/* 14: rl */
-	bdev_notdef(),			/* 15: tmscp */
-	bdev_notdef(),			/* 16: cs */
+	bdev_notdef(),			/* 3: ULTRIX vax rk*/
+	bdev_swap_init(1,sw),		/* 4: swap pseudo-device */
+	bdev_notdef(),			/* 5: ULTRIX vax tm */
+	bdev_notdef(),			/* 6: ULTRIX vax ts */
+	bdev_notdef(),			/* 7: ULTRIX vax mt */
+	bdev_notdef(),			/* 8: ULTRIX vax tu */
+	bdev_notdef(),			/* 9: nodev */
+	bdev_notdef(),			/* 10: ULTRIX ut */
+	bdev_notdef(),			/* 11: ULTRIX 11/730 idc */
+	bdev_notdef(),			/* 12: ULTRIX rx */
+	bdev_notdef(),			/* 13: ULTRIX uu */
+	bdev_notdef(),			/* 14: ULTRIX rl */
+	bdev_notdef(),			/* 15: ULTRIX tmscp */
+	bdev_notdef(),			/* 16: ULTRIX cs */
 	bdev_notdef(),			/* 17: md */
-	bdev_tape_init(NST,st),		/* 18: st */
-	bdev_disk_init(NSD,sd),		/* 19: sd */
-	bdev_tape_init(NTZ, tz),	/* 20: tz */
-	bdev_disk_init(NRZ,rz),		/* 21: ?? SCSI disk */ /*XXX*/
-	bdev_disk_init(NRZ,rz),		/* 22: ?? old SCSI disk */ /*XXX*/
-	bdev_notdef(),			/* 23: mscp */
+	bdev_tape_init(NST,st),		/* 18: SCSI tape */
+	bdev_disk_init(NSD,sd),		/* 19: SCSI disk */
+	bdev_notdef(),			/* 20: ULTRIX tz */
+	bdev_notdef(),			/* 21: ULTRIX rz */
+	bdev_notdef(),			/* 22: nodev */
+	bdev_notdef(),			/* 23: ULTRIX mscp */
 
 	bdev_disk_init(NCCD,ccd),	/* 24: concatenated disk driver */
 	bdev_disk_init(NCD,cd),		/* 25: SCSI CD-ROM */
@@ -113,81 +109,49 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
  */
 dev_t	swapdev = makedev(4, 0);
 
-
+#include "bpfilter.h"
+cdev_decl(bpf);
+cdev_decl(ccd);
+cdev_decl(cd);
 cdev_decl(cn);
-cdev_decl(sw);
 cdev_decl(ctty);
+#include "dc.h"
+cdev_decl(dc);
+dev_decl(filedesc,open);
+cdev_decl(fd);
+cdev_decl(log);
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 dev_type_read(mmrw);
 cdev_decl(mm);
 #include "pty.h"
-#define ptstty ptytty
 #define ptsioctl ptyioctl
+#define ptstty ptytty
 cdev_decl(pts);
-#define ptctty ptytty
 #define ptcioctl ptyioctl
+#define ptctty ptytty
 cdev_decl(ptc);
-cdev_decl(log);
-cdev_decl(fd);
 cdev_decl(sd);
-cdev_decl(st);
 #include "ss.h"
 cdev_decl(ss);
+cdev_decl(st);
+cdev_decl(sw);
+#include "tun.h"
+cdev_decl(tun);
 #include "uk.h"
 cdev_decl(uk);
 cdev_decl(vnd);
-cdev_decl(cd);
-cdev_decl(ccd);
-#include "bpfilter.h"
-cdev_decl(bpf);
-#include "dtop.h"
-cdev_decl(dtop);
-#include "dc_ioasic.h"
-#include "dc_ds.h"
-cdev_decl(dc);
-#include "scc.h"
-cdev_decl(scc);
-cdev_decl(rz);
-cdev_decl(tz);
-#include "rasterconsole.h"
-cdev_decl(rcons);
-#include "fb.h"
-cdev_decl(fb);
-#include "pm.h"
-cdev_decl(pm);
-#include "cfb.h"
-cdev_decl(cfb);
-#include "xcfb.h"
-cdev_decl(xcfb);
-#include "mfb.h"
-cdev_decl(mfb);
-dev_decl(filedesc,open);
-#include "tun.h"
-cdev_decl(tun);
 cdev_decl(vnd);
+#include "wsdisplay.h"
+cdev_decl(wsdisplay);
+#include "wskbd.h"
+cdev_decl(wskbd);
+#include "wsmouse.h"
+cdev_decl(wsmouse);
+#include "zstty.h"
+cdev_decl(zs);
 #include "ipfilter.h"
 #include "rnd.h"
-
-#include "scsibus.h"
-cdev_decl(scsibus);
-
-#if (NDC_DS > 0) || (NDC_IOASIC > 0)
-# define NDC 1
-#else
-# define NDC 0
-#endif
-
-
-/* a framebuffer with an attached mouse: */
-/* open, close, ioctl, poll, mmap */
-
-#define	cdev_fbm_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	dev_init(c,n,mmap) }
-
 
 struct cdevsw	cdevsw[] =
 {
@@ -199,60 +163,60 @@ struct cdevsw	cdevsw[] =
         cdev_ptc_init(NPTY,ptc),        /* 5: pseudo-tty master */
 	cdev_log_init(1,log),		/* 6: /dev/klog */
 	cdev_fd_init(1,filedesc),	/* 7: file descriptor pseudo-dev */
-	cdev_notdef(),			/* 8: old 2100/3100 frame buffer */
-	cdev_disk_init(NSD,sd),		/* 9: old slot for SCSI disk */
-	cdev_tape_init(NTZ,tz),		/* 10: SCSI tape */
+	cdev_disk_init(NCD,cd),		/* 8: SCSI CDROM */
+	cdev_disk_init(NSD,sd),		/* 9: SCSI disk */
+	cdev_tape_init(NST,st),		/* 10: SCSI tape */
 	cdev_disk_init(NVND,vnd),	/* 11: vnode disk driver */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 12: Berkeley packet filter */
-	cdev_notdef(),			/* 13: color frame buffer */
-	cdev_notdef(),			/* 14: maxine color frame buffer */
-	cdev_tty_init(NDTOP,dtop),	/* 15: desktop bus interface */
+	cdev_notdef(),			/* 13: nodev */
+	cdev_notdef(),			/* 14: nodev */
+	cdev_notdef(),			/* 15: nodev */
 	cdev_tty_init(NDC,dc),		/* 16: dc7085 serial interface */
-	cdev_tty_init(NSCC,scc),	/* 17: scc 82530 serial interface */
-	cdev_notdef(),			/* 18: mono frame buffer */
-        cdev_notdef(),		        /* 19: mt */
-	cdev_tty_init(NPTY,pts),	/* 20: pty slave  */
-        cdev_ptc_init(NPTY,ptc),        /* 21: pty master */
-	cdev_notdef(),			/* 22: dmf */
-	cdev_notdef(),			/* 23: vax 730 idc */
-	cdev_notdef(),			/* 24: dn-11 */
+	cdev_tty_init(NZSTTY,zs),	/* 17: z8530 serial interface */
+	cdev_notdef(),			/* 18: nodev */
+        cdev_notdef(),	        /* 19: ULTRIX mt */
+	cdev_notdef(),		/* 20: ULTRIX pty master */
+        cdev_notdef(), 		/* 21: ULTRIX pty slave */
+	cdev_notdef(),		/* 22: ULTRIX dmf */
+	cdev_notdef(),		/* 23: ULTRIX vax 730 idc */
+	cdev_notdef(),		/* 24: ULTRIX dn-11 */
 
-		/* 25-28 CSRG reserved to local sites, DEC sez: */
-	cdev_notdef(),		/* 25: gpib */
-	cdev_notdef(),		/* 26: lpa */
-	cdev_notdef(),		/* 27: psi */
-	cdev_notdef(),		/* 28: ib */
-	cdev_notdef(),		/* 29: ad */
-	cdev_notdef(),		/* 30: rx */
-	cdev_notdef(),		/* 31: ik */
-	cdev_notdef(),		/* 32: rl-11 */
-	cdev_notdef(),		/* 33: dhu/dhv */
-	cdev_notdef(),		/* 34: Vax Able dmz, mips dc  */
-	cdev_notdef(),		/* 35: qv */
-	cdev_notdef(),		/* 36: tmscp */
-	cdev_notdef(),		/* 37: vs */
-	cdev_notdef(),		/* 38: vax cn console */
-	cdev_notdef(),		/* 39: lta */
-	cdev_notdef(),		/* 40: crl (Venus, aka 8600 aka 11/790 console RL02) */
-	cdev_notdef(),		/* 41: cs */
-	cdev_notdef(),		/* 42: qd, Qdss, vcb02 */
+		/* 25-29 CSRG reserved to local sites, DEC sez: */
+	cdev_notdef(),		/* 25: ULTRIX gpib */
+	cdev_notdef(),		/* 26: ULTRIX lpa */
+	cdev_notdef(),		/* 27: ULTRIX psi */
+	cdev_notdef(),		/* 28: ULTRIX ib */
+	cdev_notdef(),		/* 29: ULTRIX ad */
+	cdev_notdef(),		/* 30: ULTRIX rx */
+	cdev_notdef(),		/* 31: ULTRIX ik */
+	cdev_notdef(),		/* 32: ULTRIX rl-11 */
+	cdev_notdef(),		/* 33: ULTRIX dhu/dhv */
+	cdev_notdef(),		/* 34: ULTRIX Vax Able dmz, mips dc  */
+	cdev_notdef(),		/* 35: ULTRIX qv */
+	cdev_notdef(),		/* 36: ULTRIX tmscp */
+	cdev_notdef(),		/* 37: ULTRIX vs */
+	cdev_notdef(),		/* 38: ULTRIX vax cn console */
+	cdev_notdef(),		/* 39: ULTRIX lta */
+	cdev_notdef(),		/* 40: ULTRIX crl (Venus, aka 8600 aka 11/790 console RL02) */
+	cdev_notdef(),		/* 41: ULTRIX cs */
+	cdev_notdef(),		/* 42: ULTRIX qd, Qdss, vcb02 */
 	cdev_mm_init(1,mm),	/* 43: errlog (VMS-lookalike puke) */
-	cdev_notdef(),		/* 44: dmb */
-	cdev_notdef(),		/* 45:  vax ss, mips scc */
-	cdev_tape_init(NST,st),	/* 46: st */
-	cdev_disk_init(NCD,cd),	/* 47: sd */
-	cdev_notdef(),		/* 48: Ultrix /dev/trace */
-	cdev_notdef(),		/* 49: sm (sysV shm?) */
-	cdev_notdef(),		/* 50 sg */
-	cdev_notdef(),		/* 51: sh tty */
-	cdev_notdef(),		/* 52: its */
+	cdev_notdef(),		/* 44: ULTRIX dmb */
+	cdev_notdef(),		/* 45: ULTRIX vax ss, mips scc */
+	cdev_notdef(),		/* 46: ULTRIX vax st */
+	cdev_notdef(),		/* 47: ULTRIX vax sd */
+	cdev_notdef(),		/* 48: ULTRIX /dev/trace */
+	cdev_notdef(),		/* 49: ULTRIX vax sm */
+	cdev_notdef(),		/* 50: ULTRIX vax sg */
+	cdev_notdef(),		/* 51: ULTRIX vax sh */
+	cdev_notdef(),		/* 52: ULTRIX its */
 	cdev_notdef(),		/* 53: nodev */
 	cdev_notdef(),		/* 54: nodev */
-	cdev_tape_init(NTZ,tz),	/* 55: ultrix-compatible scsi tape (tz) */
-	cdev_disk_init(NRZ,rz), /* 56: rz scsi, Ultrix gross coupling to PrestoServe driver */
+	cdev_notdef(),		/* 55: ULTRIX tz SCSI tape */
+	cdev_notdef(),		/* 56: ULTRIX rz SCSI disk */
 	cdev_notdef(),		/* 57: nodev */
-	cdev_notdef(),		/* 58: fc */
-	cdev_notdef(),		/* 59: mscp, again Ultrix gross coupling to PrestoServe driver */
+	cdev_notdef(),		/* 58: ULTRIX fc */
+	cdev_notdef(),		/* 59: ULTRIX fg */
 	cdev_notdef(),		/* 60: mscp, again Ultrix gross coupling to PrestoServe driver */
 	cdev_notdef(),		/* 61: mscp, again Ultrix gross coupling to PrestoServe driver */
 	cdev_notdef(),		/* 62: mscp, again Ultrix gross coupling to PrestoServe driver */
@@ -261,39 +225,35 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),		/* 65: mscp, again Ultrix gross coupling to PrestoServe driver */
 	cdev_notdef(),		/* 66: mscp, again Ultrix gross coupling to PrestoServe driver */
 	cdev_notdef(),		/* 67: mscp, again Ultrix gross coupling to PrestoServe driver */
-	cdev_notdef(),		/* 68: ld */
-	cdev_notdef(),		/* 69: /dev/audit */
-	cdev_notdef(),		/* 70: Mogul (nee' CMU) packetfilter */
-	cdev_notdef(),		/* 71: xcons, mips Ultrix /dev/xcons virtual console nightmare */
-	cdev_notdef(),		/* 72: xa */
-	cdev_notdef(),		/* 73: utx */
-	cdev_notdef(),		/* 74: sp */
-	cdev_notdef(),		/* 75: pr Ultrix PrestoServe NVRAM pseudo-device control device */
-	cdev_notdef(),		/* 76: ultrix disk shadowing */
-	cdev_notdef(),		/* 77: ek */
-	cdev_notdef(),		/* 78: msdup ? */
-	cdev_notdef(),		/* 79: so-called multimedia audio A */
-	cdev_notdef(),		/* 80: so-called multimedia audio B */
-	cdev_notdef(),		/* 81: so-called multimedia video in */
-	cdev_notdef(),		/* 82: so-called multimedia video out */
-	cdev_notdef(),		/* 83: fd */
-	cdev_notdef(),		/* 84: DTi */
-	cdev_tty_init(NRASTERCONSOLE,rcons), /* 85: rcons pseudo-dev */
-	cdev_fbm_init(NFB,fb),	/* 86: frame buffer pseudo-device */
+	cdev_notdef(),		/* 68: ULTRIX ld */
+	cdev_notdef(),		/* 69: ULTRIX /dev/audit */
+	cdev_notdef(),		/* 70: ULTRIX Mogul (nee' CMU) packetfilter */
+	cdev_notdef(),		/* 71: ULTRIX xcons, mips Ultrix /dev/xcons virtual console nightmare */
+	cdev_notdef(),		/* 72: ULTRIX xa */
+	cdev_notdef(),		/* 73: ULTRIX utx */
+	cdev_notdef(),		/* 74: ULTRIX sp - MV2000/VS3100 */
+	cdev_notdef(),		/* 75: ULTRIX pr - Prestoserve control device */
+	cdev_notdef(),		/* 76: ULTRIX disk shadowing */
+	cdev_notdef(),		/* 77: ULTRIX ek */
+	cdev_notdef(),		/* 78: ULTRIX msdup */
+	cdev_notdef(),		/* 79: ULTRIX multimedia audio A */
+	cdev_notdef(),		/* 80: ULTRIX multimedia audio B */
+	cdev_notdef(),		/* 81: ULTRIX multimedia video in */
+	cdev_notdef(),		/* 82: ULTRIX multimedia video out */
+	cdev_notdef(),		/* 83: Personal DECstation fdi */
+	cdev_notdef(),		/* 84: Personal DECstation dti */
+	cdev_notdef(),		/* 85: */
+	cdev_notdef(),		/* 86: */
 	cdev_disk_init(NCCD,ccd),	/* 87: concatenated disk driver */
-	cdev_notdef(),		/* 88: reserved for wscons fb */
-	cdev_notdef(),		/* 89: reserved for wscons kbd */
-	cdev_notdef(),		/* 90: reserved for wscons mouse */
+	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay), /* 88: wsdisplay */
+	cdev_mouse_init(NWSKBD,wskbd),		/* 89: kbd */
+	cdev_mouse_init(NWSMOUSE,wsmouse),	/* 90: mice */
 	cdev_ipf_init(NIPFILTER,ipl),	/* 91: ip-filter device */
 	cdev_rnd_init(NRND,rnd),	/* 92: random source pseudo-device */
 	cdev_bpftun_init(NTUN,tun),	/* 93: network tunnel */
 	cdev_lkm_init(NLKM,lkm),	/* 94: loadable module driver */
-	cdev_scsibus_init(NSCSIBUS,scsibus), /* 95: SCSI bus */
-
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
-
-int	mem_no = 2; 	/* major device number of memory special file */
 
 /*
  * Routine that identifies /dev/mem and /dev/kmem.
@@ -302,12 +262,7 @@ int
 iskmemdev(dev)
 	dev_t dev;
 {
-
-#ifdef COMPAT_BSD44
-	return (major(dev) == 2 && minor(dev) < 2);
-#else
 	return (major(dev) == 3 && minor(dev) < 2);
-#endif
 }
 
 /*
@@ -317,12 +272,7 @@ int
 iszerodev(dev)
 	dev_t dev;
 {
-
-#ifdef COMPAT_BSD44
-	return (major(dev) == 2 && minor(dev) == 12);
-#else
 	return (major(dev) == 3 && minor(dev) == 12);
-#endif
 }
 
 static int chrtoblktbl[] =  {
@@ -336,10 +286,10 @@ static int chrtoblktbl[] =  {
 	/*  5 */	NODEV,
 	/*  6 */	NODEV,
 	/*  7 */	NODEV,
-	/*  8 */	NODEV,
-	/*  9 */	NODEV,
-	/* 10 */	NODEV,
-	/* 11 */	2,
+	/*  8 */	25,		/* cd */
+	/*  9 */	19,		/* sd */
+	/* 10 */	18,		/* st */
+	/* 11 */	NODEV,
 	/* 12 */	NODEV,
 	/* 13 */	NODEV,
 	/* 14 */	NODEV,
@@ -375,7 +325,7 @@ static int chrtoblktbl[] =  {
 	/* 44 */	NODEV,
 	/* 45 */	NODEV,
 	/* 46 */	NODEV,
-	/* 47 */	19,		/* sd */
+	/* 47 */	NODEV,
 	/* 48 */	NODEV,
 	/* 49 */	NODEV,
 	/* 50 */	NODEV,
@@ -384,7 +334,7 @@ static int chrtoblktbl[] =  {
 	/* 53 */	NODEV,
 	/* 54 */	NODEV,
 	/* 55 */	NODEV,
-	/* 56 */	21,		/* 19 */ /* XXX rz, remapped to sd */
+	/* 56 */	NODEV,
 	/* 57 */	NODEV,
 	/* 58 */	NODEV,
 	/* 59 */	NODEV,
@@ -415,7 +365,7 @@ static int chrtoblktbl[] =  {
 	/* 84 */	NODEV,
 	/* 85 */	NODEV,
 	/* 86 */	NODEV,
-	/* 87 */	24,
+	/* 87 */	24,	/* ccd */
 	/* 88 */	NODEV,
 	/* 89 */	NODEV,
 	/* 90 */	NODEV,
@@ -423,7 +373,6 @@ static int chrtoblktbl[] =  {
 	/* 92 */	NODEV,
 	/* 93 */	NODEV,
 	/* 94 */	NODEV,
-	/* 95 */	NODEV,
 };
 
 /*

@@ -1,4 +1,5 @@
-/*	$NetBSD: machdep.c,v 1.120 1998/09/02 06:41:22 nisimura Exp $	*/
+/*	$Id: machdep.c,v 1.120.2.1 1998/10/15 00:42:44 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.120.2.1 1998/10/15 00:42:44 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120 1998/09/02 06:41:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.1 1998/10/15 00:42:44 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -86,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120 1998/09/02 06:41:22 nisimura Exp $
 
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
-
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
@@ -109,25 +109,17 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120 1998/09/02 06:41:22 nisimura Exp $
 #include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/maxine.h>
-#include <dev/tc/tcvar.h>
+#include <dev/tc/tcvar.h>		/* XXX */
+#include <dev/tc/ioasicvar.h>		/* ioasic_base */
 #include <dev/tc/ioasicreg.h>		/* cycl-counter on kn03 stepping */
-#include <dev/tc/ioasicvar.h>
 #include <pmax/dev/promiovar.h>		/* prom console I/O vector */
-
-#include <pmax/pmax/machdep.h>		/*  splXXX() function pointer hack */
 
 #include "le_ioasic.h"
 
 /* Motherboard or system-specific initialization vector */
 void		unimpl_os_init __P((void));
 void		unimpl_bus_reset __P((void));
-void		unimpl_enable_intr 
-		   __P ((u_int slotno, int (*handler) __P((intr_arg_t sc)),
-			 intr_arg_t sc, int onoff));
-
-int		unimpl_intr __P((u_int mask, u_int pc, 
-			      u_int statusReg, u_int causeReg));
-
+int		unimpl_intr __P((unsigned, unsigned, unsigned, unsigned));
 void		unimpl_cons_init __P((void));
 void		unimpl_device_register __P((struct device *, void *));
 const char*	unimpl_model_name __P((void));
@@ -135,8 +127,7 @@ void	 	unimpl_iointr __P ((void *, u_long));
 void 		unimpl_clockintr __P ((void *));
 void	 	unimpl_errintr __P ((void));
 
-
-struct platform  platform = {
+struct platform platform = {
 	"iobus not set",
 	unimpl_os_init,
 	unimpl_bus_reset,
@@ -146,13 +137,10 @@ struct platform  platform = {
 	unimpl_clockintr
 };
 
-
-
-
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char	cpu_model[40];	 
+char	cpu_model[40];
 
 /*  maps for VM objects */
 
@@ -164,66 +152,40 @@ vm_map_t phys_map = NULL;
 vm_map_t buffer_map;
 #endif
 
-int	maxmem;			/* max memory per process */
-int	physmem;		/* max supported memory, changes to actual */
-int	physmem_boardmax;	/* {model,simm}-specific bound on physmem */
+int	cpuspeed = 30;		/* Approx # of instructions per usec */
 int	systype;		/* Mother board type */
-u_long	le_iomem;		/* 128K for lance chip via. ASIC */
-
+int	maxmem;			/* Max memory per process */
+int	physmem;		/* Max supported memory, changes to actual */
+int	physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
+u_long	le_iomem;		/* 128K for lance chip via. IOASIC */
+volatile struct chiptime *mcclock_addr;
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
-/* Old 4.4bsd/pmax-derived interrupt-enable method */
+struct splvec splvec;
 
-void	(*tc_enable_interrupt)
-     __P ((u_int slotno, int (*handler) __P((void *sc)),
-          void *sc, int onoff)); 
+struct intrhand intrtab[MAX_DEV_NCOOKIES];
+u_int32_t iplmask[IPL_HIGH + 1];	/* interrupt mask bits for each IPL */
+u_int32_t oldiplmask[IPL_HIGH + 1];	/* old values for splx(s) */
+struct splsw *__spl;			/* model dependent spl call switch */
 
-
-/*
- * pmax still doesnt have code to build spl masks for both CPU hard-interrupt
- * register and baseboard interrupt-control registers at runtime.
- * Instead, we declare the standard splXXX names as function pointers,
- * and initialie them to point to the above functions to match
- * the way a specific motherboard is  wired up.
- */
-int	(*Mach_splbio) __P((void)) = splhigh;
-int	(*Mach_splnet)__P((void)) = splhigh;
-int	(*Mach_spltty)__P((void)) = splhigh;
-int	(*Mach_splimp)__P((void)) = splhigh;
-int	(*Mach_splclock)__P((void)) = splhigh;
-int	(*Mach_splstatclock)__P((void)) = splhigh;
-volatile struct chiptime *mcclock_addr;
-
+extern caddr_t esym;
 
 /*XXXjrs*/
 const	struct callback *callv;	/* pointer to PROM entry points */
 
-
-
-/*
- *  Local functions.
- */
-extern	int	atoi __P((const char *cp));
-int	initcpu __P((void));
-
-
-
-/* initialize bss, etc. from kernel start, before main() is called. */
-extern	void
-mach_init __P((int argc, char *argv[], u_int code,
-    const struct callback *cv));
-
-
-void	prom_halt __P((int, char *))   __attribute__((__noreturn__));
+void mach_init __P((int, char *[], unsigned, const struct callback *));
+void prom_haltbutton __P((void));
+void prom_halt __P((int, char *)) __attribute__((__noreturn__));
+int  initcpu __P((void));
+int  atoi __P((const char *));
+int  nullintr __P((void *));
 
 #ifdef DEBUG
 /* stacktrace code violates prototypes to get callee's registers */
 extern void stacktrace __P((void)); /*XXX*/
 #endif
-
-extern caddr_t esym;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -233,14 +195,10 @@ extern caddr_t esym;
  */
 int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
 
-/* locore callback-vector setup */
-extern void mips_vector_init  __P((void));
-
 
 /*
  * Do all the stuff that locore normally does before calling main().
  * Process arguments passed to us by the prom monitor.
- * Return the first page address following the system.
  */
 void
 mach_init(argc, argv, code, cv)
@@ -264,12 +222,12 @@ mach_init(argc, argv, code, cv)
 		i += (*(long *)(end + i + 4) + 3) & ~3;		/* strings */
 		esym = end + i + 4;
 		kernend = (caddr_t)mips_round_page(esym);
-		bzero(edata, end - edata);
+		memset(edata, 0, end - edata);
 	} else
 #endif
 	{
 		kernend = (caddr_t)mips_round_page(end);
-		bzero(edata, kernend - edata);
+		memset(edata, 0, kernend - edata);
 	}
 
 	/* Initialize callv so we can do PROM output... */
@@ -670,6 +628,11 @@ cpu_startup()
 	}
 #endif /* NLE_IOASIC */
 
+	for (i = 0; i < MAX_DEV_NCOOKIES; i++) {
+		intrtab[i].ih_func = nullintr;
+		intrtab[i].ih_arg = (void *)i;
+	}
+
 	/*
 	 * Configure the system.
 	 */
@@ -704,6 +667,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	}
 	/* NOTREACHED */
 }
+
 
 /*
  * PROM reset callback for reset switch.
@@ -745,6 +709,7 @@ prom_halt(howto, bootstr)
 	while(1) ;	/* fool gcc */
 	/*NOTREACHED*/
 }
+
 
 void
 cpu_reboot(howto, bootstr)
@@ -979,7 +944,7 @@ initcpu()
  */
 void
 delay(n)
-        int n;
+        unsigned n;
 {
         DELAY(n);
 }
@@ -1061,20 +1026,9 @@ unimpl_bus_reset()
 {
 	panic("sysconf.init didnt set bus_reset\n");
 }
-
-void
-unimpl_enable_intr(slotno, handler, sc, onoff)
-	u_int slotno;
-	int (*handler) __P((intr_arg_t sc));
-	 intr_arg_t sc;
-	int onoff;
-{
-	panic("sysconf.init didnt set enable_intr\n");	
-}
     
-
 int
-unimpl_intr (mask, pc, statusreg, causereg)
+unimpl_intr(mask, pc, statusreg, causereg)
 	u_int mask;
 	u_int pc;
 	u_int statusreg;
@@ -1095,7 +1049,6 @@ unimpl_device_register(sc, arg)
      void *arg;
 {
 	panic("sysconf.init didnt set device_register\n");	
-
 }
 
 const char*
@@ -1123,4 +1076,12 @@ void
 unimpl_errintr()
 {
 	panic("sysconf.init didnt set errintr_name\n");	
+}
+
+int
+nullintr(v)
+	void *v;
+{
+	printf("uncaught interrupt: cookie %d\n", (int)v);
+	return 1;
 }

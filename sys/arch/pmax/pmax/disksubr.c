@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16 1998/08/29 16:21:20 mrg Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.16.2.1 1998/10/15 00:42:45 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -35,8 +35,6 @@
  *	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
  */
 
-#include "opt_compat_ultrix.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -45,20 +43,9 @@
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
 
-#define	b_cylin	b_resid
-
-#ifdef COMPAT_ULTRIX
 #include <pmax/stand/dec_boot.h>
 
-extern char *
-compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
-		  struct disklabel *lp, struct cpu_disklabel *osdep));
-
-#endif
-
-char*	readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
-		       register struct disklabel *lp,
-		       struct cpu_disklabel *osdep));
+#define	b_cylin	b_resid
 
 /*
  * Attempt to read a disk label from a device
@@ -75,10 +62,13 @@ readdisklabel(dev, strat, lp, osdep)
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
-	register struct buf *bp;
+	int i;
+	struct buf *bp;
 	struct disklabel *dlp;
+	struct Dec_DiskLabel *ulp;
 	char *msg = NULL;
 
+	/* minimal requirements for archtypal disk label */
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
 	lp->d_npartitions = 1;
@@ -86,110 +76,62 @@ readdisklabel(dev, strat, lp, osdep)
 		lp->d_partitions[0].p_size = 0x1fffffff;
 	lp->d_partitions[0].p_offset = 0;
 
+	/* obtain buffer to probe drive with */
 	bp = geteblk((int)lp->d_secsize);
+
+	/* next, dig out disk label */
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
+	bp->b_cylin = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = LABELSECTOR / lp->d_secpercyl;
-	(*strat)(bp);
-	if (biowait(bp)) {
-		msg = "I/O error";
-	} else for (dlp = (struct disklabel *)bp->b_un.b_addr;
-	    dlp <= (struct disklabel *)(bp->b_un.b_addr+DEV_BSIZE-sizeof(*dlp));
-	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
-		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
-			if (msg == NULL)
-				msg = "no disk label";
-		} else if (dlp->d_npartitions > MAXPARTITIONS ||
-			   dkcksum(dlp) != 0)
-			msg = "disk label corrupted";
-		else {
-			*lp = *dlp;
-			msg = NULL;
-			break;
-		}
-	}
-	bp->b_flags = B_INVAL | B_AGE;
-	brelse(bp);
-	return (msg);
-}
-
-#ifdef COMPAT_ULTRIX
-/*
- * Given a buffer bp, try and interpret it as an Ultrix disk label,
- * putting the partition info into a native NetBSD label
- */
-char *
-compat_label(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat) __P((struct buf *bp));
-	register struct disklabel *lp;
-	struct cpu_disklabel *osdep;
-{
-	Dec_DiskLabel *dlp;
-	struct buf *bp = NULL;
-	char *msg = NULL;
-
-	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = dev;
-	bp->b_blkno = DEC_LABEL_SECTOR;
-	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = DEC_LABEL_SECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 
+	/* if successful, locate disk label within block and validate */
 	if (biowait(bp)) {
-                msg = "I/O error";
+		msg = "disk label read error";
 		goto done;
 	}
 
-	for (dlp = (Dec_DiskLabel *)bp->b_un.b_addr;
-	     dlp <= (Dec_DiskLabel *)(bp->b_un.b_addr+DEV_BSIZE-sizeof(*dlp));
-	     dlp = (Dec_DiskLabel *)((char *)dlp + sizeof(long))) {
-
-		int part;
-
-		if (dlp->magic != DEC_LABEL_MAGIC) {
-			printf("label: %x\n",dlp->magic);
-			msg = ((msg != NULL) ? msg: "no disk label");
-			goto done;
-		}
-
-#ifdef DIAGNOSTIC
-/*XXX*/		printf("Interpreting Ultrix label\n");
-#endif
-
-		lp->d_magic = DEC_LABEL_MAGIC;
-		lp->d_npartitions = 0;
-		for (part = 0;
-		     part <((MAXPARTITIONS<DEC_NUM_DISK_PARTS) ?
-			    MAXPARTITIONS : DEC_NUM_DISK_PARTS);
-		     part++) {
-			lp->d_partitions[part].p_size = dlp->map[part].numBlocks;
-			lp->d_partitions[part].p_offset = dlp->map[part].startBlock;
-			lp->d_partitions[part].p_fsize = 1024;
-			lp->d_partitions[part].p_fstype =
-			  (part==1) ? FS_SWAP : FS_BSDFFS;
-			lp->d_npartitions += 1;
-
-#ifdef DIAGNOSTIC
-			printf(" Ultrix label rz%d%c: start %d len %d\n",
-			       DISKUNIT(dev), "abcdefgh"[part],
-			       lp->d_partitions[part].p_offset,
-			       lp->d_partitions[part].p_size);
-#endif			
-		}
-		break;
+	/* check for a NetBSD disk label */
+	dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
+	if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC) {
+		if (dkcksum(dlp))
+			msg = "NetBSD disk label corrupted";
+		else
+			*lp = *dlp;
+		goto done;
 	}
 
+#define	STEP_THROUGH(p, bp, type) \
+    for ((p) = (type *)(bp); \
+	 (p) <= (type *)((bp) + DEV_BSIZE - sizeof(type)); \
+	 (p) = (type *)((char *)(p) + sizeof(long)))
+
+	/* check for an ULTRIX disk label */
+	STEP_THROUGH(ulp, bp->b_un.b_addr, struct Dec_DiskLabel) {
+	    if (ulp->magic == DEC_LABEL_MAGIC) {
+		lp->d_npartitions = MAXPARTITIONS;
+		i = 0;
+		do {
+			lp->d_partitions[i].p_size = ulp->map[i].numBlocks;
+			lp->d_partitions[i].p_offset = ulp->map[i].startBlock;
+			lp->d_partitions[i].p_fsize = 1024;
+			lp->d_partitions[i].p_fstype = FS_BSDFFS;
+			i += 1;
+		} while (i < lp->d_npartitions);
+		lp->d_magic = DEC_LABEL_MAGIC;
+		lp->d_npartitions = i;
+		lp->d_partitions[1].p_fstype = FS_SWAP;
+		goto done;
+	    }
+	}
+	msg = "no disk label";
 done:
-	bp->b_flags = B_INVAL | B_AGE;
+	bp->b_flags = B_INVAL | B_AGE | B_READ;
 	brelse(bp);
 	return (msg);
 }
-#endif /* COMPAT_ULTRIX */
-
 
 /*
  * Check new disk label for sensibility
@@ -197,12 +139,12 @@ done:
  */
 int
 setdisklabel(olp, nlp, openmask, osdep)
-	struct disklabel *olp, *nlp;
+	register struct disklabel *olp, *nlp;
 	u_long openmask;
 	struct cpu_disklabel *osdep;
 {
-	int i;
-	struct partition *opp, *npp;
+	register i;
+	register struct partition *opp, *npp;
 
 	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
 	    dkcksum(nlp) != 0)
@@ -233,11 +175,6 @@ setdisklabel(olp, nlp, openmask, osdep)
 	return (0);
 }
 
-/* encoding of disk minor numbers, should be elsewhere... */
-#define dkunit(dev)		(minor(dev) >> 3)
-#define dkpart(dev)		(minor(dev) & 07)
-#define dkminor(unit, part)	(((unit) << 3) | (part))
-
 /*
  * Write disk label back to device after modification.
  */
@@ -250,59 +187,39 @@ writedisklabel(dev, strat, lp, osdep)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
-	int labelpart;
-	int error = 0;
+	struct Dec_DiskLabel *ulp;
+	int error;
 
-	labelpart = dkpart(dev);
-	if (lp->d_partitions[labelpart].p_offset != 0) {
-		if (lp->d_partitions[0].p_offset != 0)
-			return (EXDEV);			/* not quite right */
-		labelpart = 0;
-	}
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = makedev(major(dev), dkminor(dkunit(dev), labelpart));
+	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART);
 	bp->b_blkno = LABELSECTOR;
+	bp->b_cylin = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_READ;
 	(*strat)(bp);
-	if ((error = biowait(bp)) != 0)
+	if ((error = biowait(bp)))
 		goto done;
-	for (dlp = (struct disklabel *)bp->b_un.b_addr;
-	    dlp <= (struct disklabel *)
-	      (bp->b_un.b_addr + lp->d_secsize - sizeof(*dlp));
-	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
-		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
-		    dkcksum(dlp) == 0) {
-			*dlp = *lp;
-			bp->b_flags = B_WRITE;
-			(*strat)(bp);
-			error = biowait(bp);
-			goto done;
+
+	STEP_THROUGH(ulp, bp->b_un.b_addr, struct Dec_DiskLabel) {
+		if (ulp->magic == DEC_LABEL_MAGIC) {
+		    error = EEXIST; /* don't corrupt ULTRIX disk */
+		    goto done;
 		}
 	}
-	error = ESRCH;
+
+	dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
+	*dlp = *lp;
+
+	bp->b_flags = B_WRITE;
+	(*strat)(bp);
+	error = biowait(bp);
+
 done:
 	brelse(bp);
 	return (error);
 }
 
-
-/*
- * was this the boot device ?
- */
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
-	/* see also arch/alpha/alpha/disksubr.c */
-	printf("Warning: boot path unknown\n");
-	return;
-}
-
 /* 
- * UNTESTED !!
- *
  * Determine the size of the transfer, and make sure it is
  * within the boundaries of the partition. Adjust transfer
  * if needed, and signal errors or early completion.
@@ -314,7 +231,7 @@ bounds_check_with_label(bp, lp, wlabel)
 	int wlabel;
 {
 
-	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
+	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
 	int labelsect = lp->d_partitions[0].p_offset;
 	int maxsz = p->p_size;
 	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;

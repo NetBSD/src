@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31 1998/03/26 03:12:05 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31.4.1 1998/10/15 00:42:45 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,61 +43,39 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31 1998/03/26 03:12:05 thorpej Exp $");
-
-/*
- * Setup the system to run on the current machine.
- *
- * Configure() is called at boot time.  Available
- * devices are determined (from possibilities mentioned in ioconf.c),
- * and the drivers are initialized.
- */
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31.4.1 1998/10/15 00:42:45 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/map.h>
-#include <sys/buf.h>
-#include <sys/dkstat.h>
 #include <sys/conf.h>
-#include <sys/dmap.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
+#include <sys/disk.h>
+#include <dev/cons.h>
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 #include <machine/sysconf.h>
 
-#include <pmax/dev/device.h>
-#include <pmax/pmax/turbochannel.h>
-
-
-/*
+/* 
  * The following several variables are related to
- * the configuration process, and are used in initializing
+ * the configuration process, and are used in initializing 
  * the machine.
  */
-int	cold = 1;	/* if 1, still working on cold-start */
-int	cpuspeed = 30;	/* approx # instr per usec. */
+int     cold = 1;       /* if 1, still working on cold-start */
 
-/*
- * XXX This should really be in a tcasic driver, or something.
- * XXX But right now even the 3100 code uses it.
- */
-tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
-
-
-void configure_scsi __P((void));
-
-void	findroot __P((struct device **, int *));
+extern u_int32_t iplmask[];
 
 struct devnametobdevmaj pmax_nam2blk[] = {
-	{ "rz",		21 },
-#ifdef notyet
-	{ "md",		XXX },
-#endif
+	{ "sd",		19 },
+	{ "cd",		25 },
 	{ NULL,		0 },
 };
 
+struct device	*booted_device;
+int	booted_slot, booted_unit, booted_partition;
+char	*booted_protocol;
+void	calculate_iplmask __P((void));
 
 /*
  * Determine mass storage and memory configuration for a machine.
@@ -111,103 +89,42 @@ configure()
 {
 	int s;
 
-	/*
-	 * Kick off autoconfiguration
-	 */
 	s = splhigh();
 	if (config_rootfound("mainbus", "mainbus") == NULL)
-	    panic("no mainbus found");
+		panic("no mainbus found");
 
 	/* Reset any bus errors due to probing nonexistent devices. */
-	(*platform.bus_reset)();
-
-	/* Configuration is finished, turn on interrupts. */
-#ifdef DEBUG
-	printf("autconfiguration done, spl back to 0x%x\n", s);
-#endif
+        (*platform.bus_reset)();
 	spl0();
-
-	/*
-	 * Probe SCSI bus using old-style pmax configuration table.
-	 * We do not yet have machine-independent SCSI support or polled
-	 * SCSI.
-	 */
-	printf("Beginning old-style SCSI device autoconfiguration\n");
-	configure_scsi();
+	
+	if (cn_tab->cn_dev == NODEV)
+		panic("No console driver.  Check kernel configuration.");
 
 	cold = 0;
+
+	printf("boot configuration: via %s, slot %d, unit %d, part %d: ",
+		booted_protocol ? booted_protocol : "UNKNOWN",
+		booted_slot, booted_unit, booted_partition);
+	printf("boot device: %s\n", booted_device->dv_xname);
+
+	calculate_iplmask();
+	printf("biomask %x netmask %x ttymask %x\n",
+	    iplmask[IPL_BIO], iplmask[IPL_NET], iplmask[IPL_TTY]);
+}
+
+void
+consinit()
+{
+	(*platform.cons_init)();
 }
 
 void
 cpu_rootconf()
 {
-	struct device *booted_device;
-	int booted_partition;
-
-	findroot(&booted_device, &booted_partition);
-
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition, pmax_nam2blk);
-}
-
-u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
-
-/*
- * Attempt to find the device from which we were booted.
- */
-void
-findroot(devpp, partp)
-	struct device **devpp;
-	int *partp;
-{
-	int i, majdev, unit, part, controller;
-	struct pmax_scsi_device *dp;
-	const char *bootdv_name;
-
-	/*
-	 * Default to "not found".
-	 */
-	*devpp = NULL;
-	*partp = 0;
-	bootdv_name = NULL;
-
-	if ((bootdev & B_MAGICMASK) != B_DEVMAGIC)
-		return;
-
-	majdev = B_TYPE(bootdev);
-	for (i = 0; pmax_nam2blk[i].d_name != NULL; i++) {
-		if (majdev == pmax_nam2blk[i].d_maj) {
-			bootdv_name = pmax_nam2blk[i].d_name;
-			break;
-		}
-	}
-
-	if (bootdv_name == NULL) {
-#if defined(DEBUG)
-		printf("findroot(): no name2blk for boot device %d\n", majdev);
-#endif
-		return;
-	}
-
-	controller = B_CONTROLLER(bootdev);
-	part = B_PARTITION(bootdev);
-	unit = B_UNIT(bootdev);
-
-	for (dp = scsi_dinit; dp->sd_driver != NULL; dp++) {
-		if (dp->sd_alive && dp->sd_drive == unit &&
-		    dp->sd_ctlr == controller &&
-		    dp->sd_driver->d_name[0] == bootdv_name[0] &&
-		    dp->sd_driver->d_name[1] == bootdv_name[1]) {
-			*devpp = dp->sd_devp;
-			*partp = part;
-			return;
-		}
-	}
-#if defined(DEBUG)
-	printf("findroot(): no driver for boot device %s\n", bootdv_name);
-#endif
 }
 
 /*
@@ -216,54 +133,92 @@ findroot(devpp, partp)
  */
 void
 makebootdev(cp)
-	register char *cp;
+	char *cp;
 {
-	int majdev, unit, part, ctrl;
+	booted_device = NULL;
+	booted_slot = booted_unit = -1;
+	booted_partition = 0;
+	booted_protocol = NULL;
 
-	if (*cp >= '0' && *cp <= '9') {
-		/* XXX should be able to specify controller */
-		if (cp[1] != '/' || cp[4] < '0' || cp[4] > '9')
-			goto defdev;
-		unit = cp[4] - '0';
-		if (cp[5] >= 'a' && cp[5] <= 'h')
-			part = cp[5] - 'a';
-		else
-			part = 0;
-		cp += 2;
-		for (majdev = 0; pmax_nam2blk[majdev].d_name != NULL;
-		    majdev++) {
-			if (cp[0] == pmax_nam2blk[majdev].d_name[0] &&
-			    cp[1] == pmax_nam2blk[majdev].d_name[1]) {
-				bootdev = MAKEBOOTDEV(
-				    pmax_nam2blk[majdev].d_maj, 0, 0,
-				    unit, part);
-				return;
-			}
-		}
-		goto defdev;
+	if (cp[0] == 'r' && cp[1] == 'z' && cp[2] == '(') {
+		if (cp[3] >= '0' && cp[3] <= '9' && cp[4] == ','
+		    && cp[5] >= '0' && cp[5] <= '9' && cp[6] == ','
+		    && cp[7] >= '0' && cp[7] <= '9' && cp[8] == ')')
+			return;
+		booted_slot = cp[3] - '0';
+		booted_unit = cp[5] - '0';
+		booted_partition = cp[7] - '0';
+		booted_protocol = "SCSI";
 	}
-	for (majdev = 0; pmax_nam2blk[majdev].d_name != NULL; majdev++)
-		if (cp[0] == pmax_nam2blk[majdev].d_name[0] &&
-		    cp[1] == pmax_nam2blk[majdev].d_name[1] &&
-		    cp[2] == '(')
-			goto fndmaj;
-defdev:
-	bootdev = B_DEVMAGIC;
-	return;
+	if (cp[0] >= '0' && cp[0] <= '9' && cp[1] == '/') {
+		booted_slot = cp[0] - '0';
+		booted_unit = booted_partition = 0;
+		if (cp[2] == 'r' && cp[3] == 'z'
+		    && cp[4] >= '0' && cp[4] <= '9') {
+			booted_protocol = "SCSI";
+			booted_unit = cp[4] - '0';
+		}
+		else if (strncmp(cp+2, "tftp", 4) == 0)
+			booted_protocol = "BOOTP";
+		else if (strncmp(cp+2, "mop", 3) == 0)
+			booted_protocol = "MOP";
+	}
+}
 
-fndmaj:
-	majdev = pmax_nam2blk[majdev].d_maj;
-	for (ctrl = 0, cp += 3; *cp >= '0' && *cp <= '9'; )
-		ctrl = ctrl * 10 + *cp++ - '0';
-	if (*cp == ',')
-		cp++;
-	for (unit = 0; *cp >= '0' && *cp <= '9'; )
-		unit = unit * 10 + *cp++ - '0';
-	if (*cp == ',')
-		cp++;
-	for (part = 0; *cp >= '0' && *cp <= '9'; )
-		part = part * 10 + *cp++ - '0';
-	if (*cp != ')')
-		goto defdev;
-	bootdev = MAKEBOOTDEV(majdev, 0, ctrl, unit, part);
+void
+calculate_iplmask()
+{
+	/*
+	 * IPL_NONE is used for hardware interrupts that are never blocked,
+	 * and do not block anything else.
+	 */
+	iplmask[IPL_NONE] = 0;
+	/*
+	 * Enforce a hierarchy that gives slow devices a better chance at not
+	 * dropping data.
+	 */
+	iplmask[IPL_BIO] |= iplmask[IPL_NONE];
+	iplmask[IPL_NET] |= iplmask[IPL_BIO];
+	iplmask[IPL_TTY] |= iplmask[IPL_NET];
+	/*
+	 * There are tty, network and disk drivers that use free() at interrupt
+	 * time, so imp > (tty | net | bio).
+	 */
+	iplmask[IPL_IMP] |= iplmask[IPL_TTY];
+	/*
+	 * Since run queues may be manipulated by both the statclock and tty,
+	 * network, and disk drivers, clock > imp.
+	 */
+	iplmask[IPL_CLOCK] |= iplmask[IPL_IMP];
+	/*
+	 * IPL_HIGH must block everything that can manipulate a run queue.
+	 */
+	iplmask[IPL_HIGH] |= iplmask[IPL_CLOCK];
+}
+
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
+
+struct xx_softc {
+	struct device sc_dev;
+	struct disk sc_dk;
+	int flag;
+	struct scsipi_link *sc_link;
+};	
+#define	SCSITARGETID(dev) ((struct xx_softc *)dev)->sc_link->scsipi_scsi.target
+
+int slot_in_progress; /* XXX - TC slot being probed, ugly backdoor interface */
+
+void
+dk_establish(dk, dev)
+	struct disk *dk;
+	struct device *dev;
+{
+	if (booted_device || strcmp(booted_protocol, "SCSI"))
+		return;
+	if (booted_slot != slot_in_progress)
+		return;
+	if (booted_unit != SCSITARGETID(dev))
+		return;
+	booted_device = dev;
 }

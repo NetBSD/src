@@ -1,9 +1,0 @@
-$NetBSD: version,v 1.8 1998/08/29 06:40:43 mrg Exp $
-
-1.1:
-1.2:	get it to work with V0 bootproms.
-1.4:	add oldmon support and network support.
-1.5:	bootprograms work unmodified across all platforms.
-1.6:	reorganization of boot program sources.
-1.7:	add libz, and re-reorganize sources into their correct subdirectories.
-1.8:	add support for automatically finding kernels other than /netbsd.

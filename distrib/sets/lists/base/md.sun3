@@ -1,9 +1,0 @@
-./sbin/edlabel
-./usr/lib/libstdc++.so.1.0
-./usr/mdec/bootxx
-./usr/mdec/installboot
-./usr/mdec/netboot
-./usr/mdec/tapeboot
-./usr/mdec/ufsboot
-./usr/sbin/eeprom
-./usr/sbin/screenblank
