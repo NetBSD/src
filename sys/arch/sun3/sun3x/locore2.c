@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.3 1997/01/17 16:27:17 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.4 1997/01/18 16:17:33 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -102,32 +102,27 @@ static void v_handler __P((int addr, char *str));
 static void
 sun3x_mode_monitor __P((void))
 {
-	/* Install PROM vector table and enable NMI clock. */
-	/* XXX - Disable watchdog action? */
+	/* Disable our level-5 clock. */
 	set_clk_mode(0, IREG_CLOCK_ENAB_5, 0);
+	/* Restore the PROM vector table */
 	setvbr(old_vector_table);
+	/* Enable the PROM NMI clock. */
 	set_clk_mode(IREG_CLOCK_ENAB_7, 0, 1);
-
-	loadcrp(&mon_crp);
+	/* XXX - Disable watchdog action? */
 }
 
 /*
  * Prepare for running the kernel
  */
 static void
-sun3x_mode_normal __P((void))
+sun3x_mode_kernel __P((void))
 {
-	struct pcb *pcb;
-
-	/* Install our vector table and disable the NMI clock. */
+	/* Disable the PROM NMI clock. */
 	set_clk_mode(0, IREG_CLOCK_ENAB_7, 0);
+	/* Restore our own vector table */
 	setvbr((void**)vector_table);
+	/* Enable our level-5 clock. */
 	set_clk_mode(IREG_CLOCK_ENAB_5, 0, 1);
-
-	pcb = curpcb ? curpcb :
-		pcb = &proc0paddr->u_pcb;
-
-	loadcrp(pcb->pcb_mmucrp);
 }
 
 /*
@@ -158,7 +153,7 @@ void sun3x_mon_abort()
 
 	/* We have continued from a PROM abort! */
 
-	sun3x_mode_normal();
+	sun3x_mode_kernel();
 	splx(s);
 }
 
@@ -166,6 +161,7 @@ void sun3x_mon_halt()
 {
 	(void) splhigh();
 	sun3x_mode_monitor();
+	loadcrp(&mon_crp);
 	mon_exit_to_mon();
 	/*NOTREACHED*/
 }
@@ -183,6 +179,7 @@ void sun3x_mon_reboot(bootstring)
 
 	(void) splhigh();
 	sun3x_mode_monitor();
+	loadcrp(&mon_crp);
 	mon_reboot(bootstring);
 	mon_exit_to_mon();
 	/*NOTREACHED*/
@@ -410,7 +407,7 @@ v_handler(addr, str)
 		switch (addr) {
 		case 0:			/* old g0 */
 		case 0xd:		/* 'd'ump short hand */
-			sun3x_mode_normal();
+			sun3x_mode_kernel();
 			panic("zero");
 			/*NOTREACHED*/
 
