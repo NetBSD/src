@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.49 1997/03/26 22:38:50 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.50 1997/06/14 22:24:08 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -267,6 +267,10 @@ mbattach(pdp, dp, auxp)
 	{
 		config_found(dp, "ser", simple_devprint);
 		config_found(dp, "par", simple_devprint);
+#include "audio.h"
+#if NAUDIO>0
+		config_found(dp, "aucc", simple_devprint);
+#endif
 		config_found(dp, "kbd", simple_devprint);
 		config_found(dp, "ms", simple_devprint);
 		config_found(dp, "ms", simple_devprint);

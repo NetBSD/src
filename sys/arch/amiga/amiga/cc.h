@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.h,v 1.7 1996/04/21 21:06:52 veego Exp $	*/
+/*	$NetBSD: cc.h,v 1.8 1997/06/14 22:24:02 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -42,6 +42,17 @@
 #if ! defined (LOADDR)
 #define LOADDR(x) (u_short)(((unsigned long)(x))&0xffff)
 #endif
+
+
+/* 
+ * Audio stuff 
+ */
+ struct audio_channel {
+	u_short play_count;
+	short	isaudio;
+	void  (*handler)(int);
+};
+
 
 /*
  * Vertical blank iterrupt sever chains.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.9 1996/04/21 21:06:50 veego Exp $	*/
+/*	$NetBSD: cc.c,v 1.10 1997/06/14 22:24:04 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -36,6 +36,7 @@
 
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cc.h>
+#include "audio.h"
 
 #if defined (__GNUC__)
 #define INLINE inline
@@ -322,13 +323,10 @@ copper_handler()
  * Audio stuff.
  */
 
-struct audio_channel {
-	u_short  play_count;
-};
 
 /* - channel[4] */
 /* the data for each audio channel and what to do with it. */
-static struct audio_channel channel[4];
+struct audio_channel channel[4];
 
 /* audio vbl node for vbl function  */
 struct vbl_node audio_vbl_node;    
@@ -346,8 +344,11 @@ cc_init_audio()
 	/*
 	 * initialize audio channels to off.
 	 */
-	for (i=0; i < 4; i++)
+	for (i=0; i < 4; i++) {
 		channel[i].play_count = 0;
+		channel[i].isaudio=0;
+		channel[i].handler=NULL;
+	}
 }
 
 
@@ -392,6 +393,13 @@ audio_handler()
 		 */
 		if ((ir & (flag << 7)) == 0)
 			continue;
+#if NAUDIO>0
+		custom.intreq=(flag<<7);
+		/* call audio handler with channel number */
+		if (channel[i].isaudio==1)
+			if (channel[i].handler)
+				(*channel[i].handler)(i);
+#endif
 
 		if (channel[i].play_count)
 			channel[i].play_count--;
@@ -402,6 +410,8 @@ audio_handler()
 			 */
 			custom.dmacon = flag;
 			custom.intena = (flag << 7);
+			if (channel[i].isaudio==-1)
+				channel[i].isaudio=0;
 		}
 		/*
 		 * clear this channels interrupt.
@@ -424,8 +434,19 @@ play_sample(len, data, period, volume, channels, count)
 	u_long count;
 {
 	u_short dmabits, ch;
+	register int i;
 
 	dmabits = channels & 0xf;
+
+	/* check to see, whether all channels are free */
+	for (i=0;i<4;i++) {
+		if ((1<<i)&dmabits)
+			if (channel[i].isaudio)
+				return; /* allocated */
+			else
+				channel[i].isaudio=-1; /* allocate */
+	}
+
 	custom.dmacon = dmabits;	/* turn off the correct channels */
 
 	/* load the channels */

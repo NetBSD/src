@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.56 1997/05/25 22:03:08 veego Exp $
+#	$NetBSD: files.amiga,v 1.57 1997/06/14 22:24:13 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -38,6 +38,11 @@ file	arch/amiga/dev/ser.c		ser needs-count
 device	par
 attach	par at mainbus
 file	arch/amiga/dev/par.c		par needs-count
+
+# audio
+device aucc: audio
+attach aucc at mainbus
+file   arch/amiga/dev/aucc.c		aucc needs-flag 
 
 # mouse
 device	ms: event
@@ -299,3 +304,4 @@ major	{vnd = 6}
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "../../../compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
+

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.75 1997/05/25 22:00:04 veego Exp $
+#	$NetBSD: GENERIC,v 1.76 1997/06/14 22:24:15 is Exp $
 
 #
 # GENERIC AMIGA
@@ -16,7 +16,6 @@ options 	RTC_OFFSET=300
 #
 options 	DRACO
 
-#
 # processors this kernel should support
 #
 options 	M68060		# support for 060
@@ -187,6 +186,8 @@ mfcs1		at mfc0 unit 1		# MFC serial
 
 drcom0		at mainbus0		# DraCo serial 0
 drcom1		at mainbus0		# DraCo serial 1, normally mouse
+
+aucc*		at mainbus0		# Amiga CC audio
 
 # Ethernet cards:
 le*		at zbus0		# A2065, Ameristar, Ariadne
