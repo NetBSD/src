@@ -1,0 +1,30 @@
+#
+#  -- SCPH-18000 used by uch@netbsd.org
+#
+# 	$NetBSD: AGATE,v 1.1 2001/10/16 15:38:31 uch Exp $
+#
+
+include 	"arch/playstation2/conf/std.playstation2"
+include 	"arch/playstation2/conf/config.playstation2"
+
+config		netbsd	root on wd0a type ffs
+config		nfsnetbsd root on smap0 type nfs
+
+makeoptions	DEFGP="-G 40"
+
+options		BUILTIN_KERNEL_LOADER
+
+options 	DDB			# in-kernel debugger
+
+options 	NMBCLUSTERS=4096 # Max. number of mbuf clusters
+
+options 	GATEWAY		# packet forwarding
+
+options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+options 	PPP_DEFLATE	# Deflate compression support for PPP
+options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+
+uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
+ucom*	at uplcom? portno ? 
+
+pseudo-device	ppp		2	# Point-to-Point Protocol
