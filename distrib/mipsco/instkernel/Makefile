@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2001/02/19 07:45:39 wdk Exp $
+#	$NetBSD: Makefile,v 1.2 2001/02/25 03:36:20 wdk Exp $
 
 .include "../../../Makefile.inc"
 .include <bsd.kernobj.mk>
 .include <bsd.own.mk>
 
-DISKBINDIR=	/installation/diskimage
-KERNBINDIR=	/binary/kernel
+DISKBINDIR=	${RELEASEDIR}/installation/diskimage
+KERNBINDIR=	${RELEASEDIR}/binary/kernel
 
 IMAGE=		diskimage
 IMAGESIZE=	4096 # 512 byte blocks, update disktab.diskimage if changed
@@ -33,7 +33,7 @@ MOUNT_POINT?=	/mnt
 BOOTINSTALL= ${DESTDIR}/usr/mdec/installboot ${VND_CDEV} \
 	${DESTDIR}/usr/mdec/bootxx_ffs
 
-all:	${IMAGE}.gz
+realall:	${IMAGE}.gz
 
 netbsd.gz: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd
@@ -71,21 +71,20 @@ unconfig:
 	-vnconfig -u ${VND}
 	-/bin/rm -f ${IMAGE} ${IMAGE}.gz
 
-realinstall:
+realinstall release:
+	-mkdir -p ${DISKBINDIR} ${KERNBINDIR}
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
-		-m ${NONBINMODE} ${IMAGE}.gz ${RELEASEDIR}${DISKBINDIR}
+		-m ${NONBINMODE} ${IMAGE}.gz ${DISKBINDIR}
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
-		-m ${BINMODE} netbsd.gz ${RELEASEDIR}${KERNBINDIR}/install.gz
+		-m ${BINMODE} netbsd.gz ${KERNBINDIR}/install.gz
 .ifdef ECOFF_KERNEL
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
 		-m ${BINMODE} netbsd.ecoff.gz \
-		${RELEASEDIR}${KERNBINDIR}/install.ecoff.gz
+		${KERNBINDIR}/install.ecoff.gz
 .endif #ECOFF_KERNEL
 
 clean cleandir distclean:
 	rm -f ${CLEANFILES}
 
-# XXX
-depend:
-
 .include <bsd.obj.mk>
+.include <bsd.depall.mk>
