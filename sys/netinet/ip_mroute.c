@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.64 2002/11/05 02:07:25 fair Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.65 2003/01/19 23:57:01 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989 Stephen Deering
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.64 2002/11/05 02:07:25 fair Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.65 2003/01/19 23:57:01 simonb Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1026,7 +1026,6 @@ ip_mforward(m, ifp)
 {
     struct ip *ip = mtod(m, struct ip *);
     struct mfc *rt;
-    u_char *ipoptions;
     static int srctun = 0;
     struct mbuf *mm;
     int s;
@@ -1045,7 +1044,7 @@ ip_mforward(m, ifp)
 	    ntohl(ip->ip_src.s_addr), ntohl(ip->ip_dst.s_addr), ifp);
 
     if (ip->ip_hl < (IP_HDR_LEN + TUNNEL_LEN) >> 2 ||
-	(ipoptions = (u_char *)(ip + 1))[1] != IPOPT_LSRR) {
+	((u_char *)(ip + 1))[1] != IPOPT_LSRR) {
 	/*
 	 * Packet arrived via a physical interface or
 	 * an encapuslated tunnel.
@@ -1526,7 +1525,6 @@ vif_input(m, va_alist)
 {
 	int off, proto;
 	va_list ap;
-	struct ip *ip;
 	struct vif *vifp;
 	int s;
 	struct ifqueue *ifq;
@@ -1542,8 +1540,6 @@ vif_input(m, va_alist)
 		mrtstat.mrts_bad_tunnel++;
 		return;
 	}
-
-	ip = mtod(m, struct ip *);
 
 	m_adj(m, off);
 	m->m_pkthdr.rcvif = vifp->v_ifp;
