@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.380 2003/02/16 00:18:59 lukem Exp $
+# $NetBSD: mi,v 1.381 2003/02/18 20:35:28 jdolecek Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -123,6 +123,7 @@
 ./sbin/mount_ufs	base-sysutil-root
 ./sbin/mount_umap	base-miscfs-root
 ./sbin/mount_union	base-miscfs-root
+./sbin/mount_smbfs	base-smbfs-root
 ./sbin/newbtconf	base-sysutil-root
 ./sbin/newfs		base-sysutil-root
 ./sbin/newfs_lfs	base-sysutil-root
