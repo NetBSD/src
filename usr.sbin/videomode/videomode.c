@@ -1,7 +1,8 @@
-/*	$NetBSD: videomode.c,v 1.1 1995/10/09 00:50:08 chopps Exp $	*/
+/*	$NetBSD: videomode.c,v 1.2 1995/10/09 13:52:49 chopps Exp $	*/
 
 /*
  * Copyright (c) 1995 Christian E. Hopps
+ * Copyright (c) 1994 Markus Wild
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christian E. Hopps.
+ *      This product includes software developed by Markus Wild
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
