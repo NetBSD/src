@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.66.2.5 1999/10/22 09:27:19 he Exp $ */
+/*	$NetBSD: wdc.c,v 1.66.2.6 2000/01/23 12:27:44 he Exp $ */
 
 
 /*
@@ -299,6 +299,12 @@ wdcattach(chp)
 	for (i = 0; i < 2; i++) {
 		chp->ch_drive[i].chnl_softc = chp;
 		chp->ch_drive[i].drive = i;
+		/*
+		 * Init error counter so that an error withing the first xfers
+		 * will trigger a downgrade
+		 */
+		chp->ch_drive[i].n_dmaerrs = NERRS_MAX-1;
+
 		/* If controller can't do 16bit flag the drives as 32bit */
 		if ((chp->wdc->cap &
 		    (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) ==
@@ -984,13 +990,24 @@ wdc_downgrade_mode(drvp)
 		return 0;
 
 	/*
+	 * If we were using Ultra-DMA mode > 2, downgrade to mode 2 first.
+	 * Maybe we didn't properly notice the cable type
+	 * If we were using Ultra-DMA mode 2, downgrade to mode 1 first.
+	 * It helps in some cases.
+	 */
+	if ((drvp->drive_flags & DRIVE_UDMA) && drvp->UDMA_mode >= 2) {
+		drvp->UDMA_mode = (drvp->UDMA_mode == 2) ? 1 : 2;
+		printf("%s: transfer error, downgrading to Ultra-DMA mode %d\n",
+		    drv_dev->dv_xname, drvp->UDMA_mode);
+	}
+
+	/*
 	 * If we were using ultra-DMA, don't downgrade to multiword DMA
 	 * if we noticed a CRC error. It has been noticed that CRC errors
 	 * in ultra-DMA lead to silent data corruption in multiword DMA.
 	 * Data corruption is less likely to occur in PIO mode.
 	 */
-
-	if ((drvp->drive_flags & DRIVE_UDMA) &&
+	else if ((drvp->drive_flags & DRIVE_UDMA) &&
 	    (drvp->drive_flags & DRIVE_DMAERR) == 0) {
 		drvp->drive_flags &= ~DRIVE_UDMA;
 		drvp->drive_flags |= DRIVE_DMA;
