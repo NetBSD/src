@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.5 1999/02/08 15:22:28 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.6 1999/02/21 00:52:04 hubertf Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
  *
@@ -28,7 +28,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef WDCDEBUG
 #define WDCDEBUG
+#endif /* WDCDEBUG */
 
 #include <sys/param.h>
 #include <sys/systm.h>
