@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.52 2002/08/25 20:21:45 thorpej Exp $	*/
+/*	$NetBSD: buf.h,v 1.53 2002/08/30 15:43:42 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -89,67 +89,6 @@
  * To avoid including <ufs/ffs/softdep.h> 
  */   
 LIST_HEAD(workhead, worklist);
-
-/*
- * XXX This interface will be removed in the near future!
- *
- * Device driver buffer queue.
- */
-struct buf_queue {
-	TAILQ_HEAD(bufq_head, buf) bq_head; /* actual list of buffers */
-	struct buf *bq_barrier;		    /* last B_ORDERED request */
-};
-
-#ifdef _KERNEL
-#define	BUFQ_FIRST(bufq)	TAILQ_FIRST(&(bufq)->bq_head)
-#define	BUFQ_NEXT(bp)		TAILQ_NEXT((bp), b_actq)
-
-#define	BUFQ_INIT(bufq)							\
-do {									\
-	TAILQ_INIT(&(bufq)->bq_head);					\
-	(bufq)->bq_barrier = NULL;					\
-} while (/*CONSTCOND*/0)
-
-#define	BUFQ_INSERT_HEAD(bufq, bp)					\
-do {									\
-	TAILQ_INSERT_HEAD(&(bufq)->bq_head, (bp), b_actq);		\
-	if (((bp)->b_flags & B_ORDERED) != 0 &&				\
-	    (bufq)->bq_barrier == NULL)					\
-		(bufq)->bq_barrier = (bp);				\
-} while (/*CONSTCOND*/0)
-
-#define	BUFQ_INSERT_TAIL(bufq, bp)					\
-do {									\
-	TAILQ_INSERT_TAIL(&(bufq)->bq_head, (bp), b_actq);		\
-	if (((bp)->b_flags & B_ORDERED) != 0)				\
-		(bufq)->bq_barrier = (bp);				\
-} while (/*CONSTCOND*/0)
-
-#define	BUFQ_INSERT_AFTER(bufq, lbp, bp)				\
-do {									\
-	KASSERT((bufq)->bq_barrier == NULL);				\
-	KASSERT(((bp)->b_flags & B_ORDERED) == 0);			\
-	TAILQ_INSERT_AFTER(&(bufq)->bq_head, (lbp), (bp), b_actq);	\
-} while (/*CONSTCOND*/0)
-
-#define	BUFQ_INSERT_BEFORE(bufq, lbp, bp)				\
-do {									\
-	KASSERT((bufq)->bq_barrier == NULL);				\
-	KASSERT(((bp)->b_flags & B_ORDERED) == 0);			\
-	TAILQ_INSERT_BEFORE((lbp), (bp), b_actq);			\
-} while (/*CONSTCOND*/0)
-
-#define	BUFQ_REMOVE(bufq, bp)						\
-do {									\
-	if ((bufq)->bq_barrier == (bp))					\
-		(bufq)->bq_barrier = TAILQ_PREV((bp), bufq_head, b_actq); \
-	TAILQ_REMOVE(&(bufq)->bq_head, (bp), b_actq);			\
-} while (/*CONSTCOND*/0)
-#endif /* _KERNEL */
-
-/*
- * XXX End of to be removed interface!
- */
 
 /*
  * Device driver buffer queue.
@@ -268,7 +207,6 @@ struct buf {
 #define	B_INVAL		0x00002000	/* Does not contain valid info. */
 #define	B_LOCKED	0x00004000	/* Locked in core (not reusable). */
 #define	B_NOCACHE	0x00008000	/* Do not cache block after use. */
-#define	B_ORDERED	0x00010000	/* ordered I/O request */
 #define	B_CACHE		0x00020000	/* Bread found us in the cache. */
 #define	B_PHYS		0x00040000	/* I/O to user memory. */
 #define	B_RAW		0x00080000	/* Set by physio for raw transfers. */
@@ -320,7 +258,6 @@ extern	struct pool bufpool;	/* I/O buf pool */
 __BEGIN_DECLS
 void	allocbuf __P((struct buf *, int));
 void	bawrite __P((struct buf *));
-void	bowrite __P((struct buf *));
 void	bdirty __P((struct buf *));
 void	bdwrite __P((struct buf *));
 void	biodone __P((struct buf *));
