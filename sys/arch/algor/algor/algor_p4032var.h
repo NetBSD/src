@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032var.h,v 1.1 2001/06/01 16:00:03 thorpej Exp $	*/
+/*	$NetBSD: algor_p4032var.h,v 1.2 2001/06/10 05:26:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,29 +59,30 @@ struct p4032_config {
  * These are indexes into the interrupt mapping table for the
  * on-board devices.
  */
-#define	P4032_IRQ_PCICTLR	0
-#define	P4032_IRQ_FLOPPY	1
-#define	P4032_IRQ_PCKBC		2
-#define	P4032_IRQ_COM1		3
-#define	P4032_IRQ_COM2		4
-#define	P4032_IRQ_LPT		5
-#define	P4032_IRQ_GPIO		6
-#define	P4032_IRQ_RTC		7
+#define	P4032_IRQ_PCICTLR	4
+#define	P4032_IRQ_FLOPPY	5
+#define	P4032_IRQ_PCKBC		6
+#define	P4032_IRQ_COM1		7
+#define	P4032_IRQ_COM2		8
+#define	P4032_IRQ_LPT		9
+#define	P4032_IRQ_GPIO		10
+#define	P4032_IRQ_RTC		11
 
 struct p4032_irqmap {
-	struct evcnt	*irqcount;
+	int		irqidx;
+	int		cpuintr;
 	int		irqreg;
-	u_int8_t	irqbit;
+	int		irqbit;
 	int		xbarreg;
 	int		xbarshift;
 };
 
 void	algor_p4032_intr_disestablish(void *, void *);
-void	*algor_p4032_intr_establish(const struct p4032_irqmap *, int,
+void	*algor_p4032_intr_establish(const struct p4032_irqmap *,
 	    int (*)(void *), void *);
 
 extern struct p4032_config p4032_configuration;
-extern const struct p4032_irqmap p4032_8bit_irqmap[];
+extern const struct p4032_irqmap p4032_irqmap[];
 
 void	algor_p4032loc_bus_io_init(bus_space_tag_t, void *);
 void	algor_p4032_bus_io_init(bus_space_tag_t, void *);
@@ -92,4 +93,6 @@ void	algor_p4032_dma_init(struct p4032_config *);
 void	algor_p4032_intr_init(struct p4032_config *);
 
 void	algor_p4032_iointr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+
+void	algor_p4032_cal_timer(bus_space_tag_t, bus_space_handle_t);
 #endif /* _KERNEL */
