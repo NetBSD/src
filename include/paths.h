@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.14 2000/05/27 06:08:28 matt Exp $	*/
+/*	$NetBSD: paths.h,v 1.14.2.1 2000/05/28 22:41:02 minoura Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -65,6 +65,7 @@
 #define	_PATH_KMEM	"/dev/kmem"
 #define	_PATH_KVMDB	"/var/db/kvm.db"
 #define	_PATH_LOCALE	"/usr/share/locale"
+#define	_PATH_LOCALE_UNSHARED	"/usr/libdata/locale"
 #define	_PATH_MAILDIR	"/var/mail"
 #define	_PATH_MAN	"/usr/share/man"
 #define	_PATH_MEM	"/dev/mem"

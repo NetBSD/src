@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2000/04/28 22:01:14 is Exp $
+#	$NetBSD: Makefile,v 1.6 2000/04/14 20:24:40 is Exp $
 
 MKMAN=no
 PROG=dotest

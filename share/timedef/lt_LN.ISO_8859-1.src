@@ -1,0 +1,14 @@
+# Generated from FreeBSD src/share/timedef/data/lt_LN.ISO_8859-1.src.
+
+abmon	Ian;Feb;Mar;Apr;Mai;Iun;Iul;Aug;Sep;Oct;Nov;Dec
+mon	Ianuarius;Februarius;Martius;Aprilis;Maius;Iunius;Iulius;Augustus;September;October;November;December
+
+abday	Sol;Lun;Mar;Mer;Iov;Ven;Sat
+day	dies Solis;dies Lunae;dies Martis;dies Mercurii;dies Iovis;dies Veneris;dies Saturni
+
+t_fmt	%H:%M:%S
+d_fmt	%d.%m.%y
+d_t_fmt	%a %e %b %X %Y
+am_pm	am;pm
+
+X_date_fmt	%a %e %b %Y %X %Z

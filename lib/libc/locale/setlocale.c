@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.17 1999/10/15 17:17:07 jdolecek Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.17.4.1 2000/05/28 22:41:05 minoura Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,10 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.17 1999/10/15 17:17:07 jdolecek Exp $");
+#ifndef __RCSID
+#define __RCSID(a)
+#endif
+__RCSID("$NetBSD: setlocale.c,v 1.17.4.1 2000/05/28 22:41:05 minoura Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,13 +53,27 @@ __RCSID("$NetBSD: setlocale.c,v 1.17 1999/10/15 17:17:07 jdolecek Exp $");
 #include "namespace.h"
 #include <sys/localedef.h>
 #include <ctype.h>
+#include <errno.h>
 #include <limits.h>
+#define __SINGLE_BYTE_LOCALE_SOURCE__
 #include <locale.h>
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef WITH_RUNE
 #include "ctypeio.h"
+#else
+#include <sys/stat.h>
+#include "collate.h"
+#include "timelocal.h"
+extern void __runetable_to_netbsd_ctype __P((void));
+extern int _xpg4_setrunelocale __P((char *));
+int __fl_rune_singlebyte = 0;
+#ifdef __NetBSD__
+#define _NO_NATIVE_ISSETUGID
+#endif
+#endif
 
 /*
  * Category names for getenv()
@@ -90,26 +107,78 @@ static char current_categories[_LC_LAST][32] = {
 static char new_categories[_LC_LAST][32];
 
 static char current_locale_string[_LC_LAST * 33];
+#ifndef WITH_RUNE
 static char *PathLocale;
+static char *PathLocaleUnshared;
+/*
+ * Data paths for each category.
+ */
+static char **paths[_LC_LAST] = {
+    &PathLocale,			/* LC_ALL */
+    &PathLocaleUnshared,		/* LC_COLLATE */
+    &PathLocaleUnshared,		/* LC_CTYPE */
+    &PathLocale,			/* LC_MONETARY */
+    &PathLocale,			/* LC_NUMERIC */
+    &PathLocale,			/* LC_TIME */
+    &PathLocale,			/* LC_MESSAGES */
+};
+#else
+#include "setlocale.h"
+#endif
 
 static char	*currentlocale __P((void));
 static char	*loadlocale __P((int));
+#ifdef WITH_RUNE
+static int	stub_load_locale __P((const char *, int));
+#endif
 
 char *
-setlocale(category, locale)
+__setlocale_mb(category, locale)
 	int category;
 	const char *locale;
 {
 	int i;
 	size_t len;
 	char *env, *r;
+	int found;
 
+#ifndef WITH_RUNE
 	/*
 	 * XXX potential security problem here with set-id programs
 	 * being able to read files the user can not normally read.
 	 */
-	if (!PathLocale && !(PathLocale = getenv("PATH_LOCALE")))
-		PathLocale = _PATH_LOCALE;
+	if (!PathLocale) {
+		if(getenv("PATH_LOCALE")) {
+			PathLocale = strdup(getenv("PATH_LOCALE"));
+			PathLocaleUnshared = PathLocale;
+		} else {
+			PathLocale = _PATH_LOCALE;
+			PathLocaleUnshared = _PATH_LOCALE_UNSHARED;
+		}
+	}
+#else
+	if (_PathLocale == NULL) {
+#ifndef _NO_NATIVE_ISSETUGID
+		char *p = getenv("PATH_LOCALE");
+
+		if (p != NULL && !issetugid()) {
+			if (strlen(p) + 1/*"/"*/ + ENCODING_LEN +
+			    1/*"/"*/ + CATEGORY_LEN >= PATH_MAX)
+				return(EFAULT);
+			_PathLocale = strdup(p);
+			if (_PathLocale == NULL)
+				return (errno);
+			_PathLocaleUnshared = _PathLocale;
+		} else {
+			_PathLocale = _PATH_LOCALE;
+			_PathLocaleUnshared = _PATH_LOCALE_UNSHARED;
+		}
+#else
+		_PathLocale = _PATH_LOCALE;
+		_PathLocaleUnshared = _PATH_LOCALE_UNSHARED;
+#endif
+	}
+#endif
 
 	if (category < 0 || category >= _LC_LAST)
 		return (NULL);
@@ -182,10 +251,17 @@ setlocale(category, locale)
 	if (category)
 		return (loadlocale(category));
 
-	for (i = 1; i < _LC_LAST; ++i)
-		(void) loadlocale(i);
+	found = 0;
+	for (i = 1; i < _LC_LAST; ++i) {
+		if ( loadlocale(i) != NULL )
+			found = 1;
+		else if ( !category ) {
+			found = 0;
+			break;
+		}
+	}
 
-	return (currentlocale());
+	return (found ? currentlocale():NULL);
 }
 
 static char *
@@ -212,7 +288,9 @@ static char *
 loadlocale(category)
 	int category;
 {
+#ifndef WITH_RUNE
 	char name[PATH_MAX];
+#endif
 
 	if (strcmp(new_categories[category], current_categories[category]) == 0)
 		return (current_categories[category]);
@@ -237,6 +315,9 @@ loadlocale(category)
 				free((void *)_tolower_tab_);
 				_tolower_tab_ = _C_tolower_;
 			}
+#ifdef WITH_RUNE
+                        (void)_xpg4_setrunelocale("C");
+#endif
 		}
 
 		(void)strncpy(current_categories[category],
@@ -245,29 +326,93 @@ loadlocale(category)
 		return current_categories[category];
 	}
 
+#ifndef WITH_RUNE
 	/*
 	 * Some day we will actually look at this file.
 	 */
 	(void)snprintf(name, sizeof(name), "%s/%s/%s",
-	    PathLocale, new_categories[category], categories[category]);
+	    *paths[category],
+	    new_categories[category], categories[category]);
+#endif
 
 	switch (category) {
 	case LC_CTYPE:
+#ifndef WITH_RUNE
 		if (__loadctype(name)) {
+#else
+                if (!_xpg4_setrunelocale(new_categories[category])) {
+                        __runetable_to_netbsd_ctype();
+#endif
 			(void)strncpy(current_categories[category],
 			    new_categories[category],
 			    sizeof(current_categories[category]) - 1);
 			return current_categories[category];
-		}
+                }
 		return NULL;
 
 	case LC_COLLATE:
+#ifdef WITH_RUNE
+		if (__collate_load_tables(new_categories[category]) == 0)
+			return new_categories[category];
+		(void)__collate_load_tables(current_categories[category]);
+		return NULL;
+#else
+		/* FALLTHROUGH */
+#endif
+	case LC_TIME:
+#ifdef WITH_RUNE
+		if (__time_load_locale(new_categories[category]) == 0)
+			return new_categories[category];
+		(void)__time_load_locale(current_categories[category]);
+		return NULL;
+
+#else
+		/* FALLTHROUGH */
+#endif
 	case LC_MESSAGES:
 	case LC_MONETARY:
 	case LC_NUMERIC:
-	case LC_TIME:
+#ifdef WITH_RUNE
+		if (stub_load_locale(new_categories[category], category) == 0)
+			return new_categories[category];
+		stub_load_locale(current_categories[category], category);
 		return NULL;
+#else
+		return NULL;
+#endif
 	}
 
 	return NULL;
+}
+
+/*
+ * Temporary code until we implement actual LC_* code.
+ */
+static int
+stub_load_locale(encoding, category)
+ const char *encoding;
+ int category;
+{
+	char name[PATH_MAX];
+	struct stat st;
+
+	if (!encoding)
+		return(1);
+	/*
+	 * The "C" and "POSIX" locale are always here.
+	 */
+	if (!strcmp(encoding, "C") || !strcmp(encoding, "POSIX"))
+		return(0);
+	if (!_PathLocale)	/* XXX: shouldn't we initialize this? */
+		return(1);
+	/* Range checking not needed, encoding has fixed size */
+	strcpy(name, *_LocalePaths[category]);
+	strcat(name, "/");
+	strcat(name, encoding);
+#if 0
+	/*
+	 * Some day we will actually look at this file.
+	 */
+#endif
+	return (stat(name, &st) != 0 || !S_ISDIR(st.st_mode));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.10 1999/04/24 08:10:33 simonb Exp $	*/
+/*	$NetBSD: ansi.h,v 1.10.10.1 2000/05/28 22:40:58 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -61,21 +61,23 @@
 #define	_BSD_UINTPTR_T_		unsigned int	/* uintptr_t */
 
 /*
- * Runes (wchar_t) is declared to be an ``int'' instead of the more natural
- * ``unsigned long'' or ``long''.  Two things are happening here.  It is not
- * unsigned so that EOF (-1) can be naturally assigned to it and used.  Also,
- * it looks like 10646 will be a 31 bit standard.  This means that if your
- * ints cannot hold 32 bits, you will be in trouble.  The reason an int was
- * chosen over a long is that the is*() and to*() routines take ints (says
- * ANSI C), but they use _RUNE_T_ instead of int.  By changing it here, you
- * lose a bit of ANSI conformance, but your programs will still work.
- *
- * Note that _WCHAR_T_ and _RUNE_T_ must be of the same type.  When wchar_t
- * and rune_t are typedef'd, _WCHAR_T_ will be undef'd, but _RUNE_T remains
- * defined for ctype.h.
+ * Types for the Multibyte Support Extension.
  */
-#define	_BSD_WCHAR_T_		int		/* wchar_t */
-#define	_BSD_WINT_T_		int		/* wint_t */
-#define	_BSD_RUNE_T_		int		/* rune_t */
+#define	_BSD_WCHAR_T_	int			/* wchar_t */
+#define _BSD_WINT_T_	int			/* wint_t */
+/*
+ * mbstate_t is opaque object.
+ * Real mbstate_t is defined in other position, and depend on
+ * each of wc/mb encoding schemes.
+ */
+typedef union {
+	char __funyu[32];
+#ifdef __GNUC__
+	long long __align;
+#else
+	long __align;
+#endif
+} __mbstate_t;
+#define _BSD_MBSTATE_T_		__mbstate_t	/* mbstate_t */
 
 #endif	/* _ANSI_H_ */

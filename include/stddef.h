@@ -1,4 +1,4 @@
-/*	$NetBSD: stddef.h,v 1.7 2000/01/10 16:58:38 kleink Exp $	*/
+/*	$NetBSD: stddef.h,v 1.7.2.1 2000/05/28 22:41:02 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,6 +50,16 @@ typedef	_BSD_SIZE_T_	size_t;
 #ifdef	_BSD_WCHAR_T_
 typedef	_BSD_WCHAR_T_	wchar_t;
 #undef	_BSD_WCHAR_T_
+#endif
+
+#ifdef	_BSD_WINT_T_
+typedef	_BSD_WINT_T_	wint_t;
+#undef	_BSD_WINT_T_
+#endif
+
+#ifdef	_BSD_MBSTATE_T_
+typedef	_BSD_MBSTATE_T_	mbstate_t;
+#undef	_BSD_MBSTATE_T_
 #endif
 
 #include <sys/null.h>
