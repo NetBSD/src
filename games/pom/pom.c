@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pom.c	5.3 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: pom.c,v 1.2 1993/08/01 18:53:16 mycroft Exp $";
+static char rcsid[] = "$Id: pom.c,v 1.3 1995/02/03 18:15:02 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -56,6 +56,7 @@ static char rcsid[] = "$Id: pom.c,v 1.2 1993/08/01 18:53:16 mycroft Exp $";
 
 #include <sys/time.h>
 #include <stdio.h>
+#include <string.h>
 #include <tzfile.h>
 #include <math.h>
 
@@ -78,7 +79,6 @@ main()
 	struct tm *GMT, *gmtime();
 	double days, today, tomorrow;
 	int cnt;
-	char *strerror();
 
 	if (gettimeofday(&tp,&tzp)) {
 		(void)fprintf(stderr, "pom: %s\n", strerror(errno));
@@ -111,6 +111,7 @@ main()
 				    today);
 		}
 	}
+	exit(0);
 }
 
 /*
