@@ -21,11 +21,17 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: dc21040reg.h,v 1.1.1.3 1995/08/17 17:06:54 cgd Exp $
+ * $Id: dc21040reg.h,v 1.1.1.4 1995/12/14 20:49:01 tls Exp $
  *
  * $Log: dc21040reg.h,v $
- * Revision 1.1.1.3  1995/08/17 17:06:54  cgd
- * Matt Thomas's dc21040 'de' driver, July 26, '95 snapshot.
+ * Revision 1.1.1.4  1995/12/14 20:49:01  tls
+ * 95/12/12 snapshot of Matt Thomas's 'de' driver
+ *
+ * Revision 1.11  1995/10/05  00:15:08  thomas
+ * add dc21140 watchdog timer definitions
+ *
+ * Revision 1.10  1995/09/22  15:04:41  thomas
+ * Fix COGENT OUI
  *
  * Revision 1.9  1995/07/26  18:32:13  thomas
  *  Finish DE425 support for BSD/OS.
@@ -266,6 +272,9 @@ typedef struct {
 #define	TULIP_DC21041_SIATXRX_BNC	0x0000F73DL
 #define	TULIP_DC21041_SIAGEN_BNC	0x00000006L
 
+#define	TULIP_WATCHDOG_TXDISABLE	0x00000001L
+#define	TULIP_WATCHDOG_RXDISABLE	0x00000010L
+
 #define	TULIP_BUSMODE_SWRESET		0x00000001L
 #define	TULIP_BUSMODE_DESCSKIPLEN_MASK	0x0000007CL
 #define	TULIP_BUSMODE_BIGENDIAN		0x00000080L
@@ -318,7 +327,7 @@ typedef struct {
 #define	TULIP_GP_EM100_INIT		0x00000009	/* No loopback --- point-to-point */
 #define	TULIP_OUI_COGENT_0		0x00
 #define	TULIP_OUI_COGENT_1		0x00
-#define	TULIP_OUI_COGENT_2		0x94
+#define	TULIP_OUI_COGENT_2		0x92
 #define	TULIP_COGENT_EM100_ID		0x12
 
 
