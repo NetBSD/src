@@ -1682,20 +1682,21 @@ elf_vax_relocate_section (output_bfd, info, input_bfd, input_section,
 		BFD_ASSERT (sgot != NULL);
 	      }
 
+	    if (!elf_hash_table (info)->dynamic_sections_created
+	        || (info->shared
+	         && info->symbolic
+	         && (h == NULL
+	          || (h->elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR))))
+	      {
+	        /* This is actually a static link, or it is a
+	           -Bsymbolic link and the symbol is defined
+	           locally.  Change the GOT32 entry to a PC32
+	           entry. */
+		break;
+	      }
+
 	    if (h != NULL)
 	      {
-		if (!elf_hash_table (info)->dynamic_sections_created
-	            || (info->shared
-		        && info->symbolic
-		        && (h->elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR)))
-		  {
-		    /* This is actually a static link, or it is a
-		       -Bsymbolic link and the symbol is defined
-		       locally.  Change the GOT32 entry to a PC32
-		       entry. */
-		    break;
-		  }
-
 		off = h->got.offset;
 		BFD_ASSERT (off != (bfd_vma) -1);
 
