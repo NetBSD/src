@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.15 2000/03/13 19:00:28 jdolecek Exp $
+$NetBSD: TODO,v 1.16 2001/02/12 21:25:30 jdolecek Exp $
 
 - Windows 2000 NTFS support
 
@@ -33,6 +33,9 @@ $NetBSD: TODO,v 1.15 2000/03/13 19:00:28 jdolecek Exp $
 - support mount update
 
 - really implement sync
+
+- change MALLOC()/FREE() to malloc()/free() where appropriate (if the
+  specified size if variable)
 
 - write necessary bits to support NTFS in libsa
 
