@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.60 1998/03/28 21:57:09 christos Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.61 1998/07/01 17:16:46 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -208,14 +208,14 @@ scsi_interpret_sense(xs)
 		key = sense->flags & SSD_KEY;
 
 		switch (key) {
-		case 0x0:	/* NO SENSE */
-		case 0x1:	/* RECOVERED ERROR */
+		case SKEY_NO_SENSE:
+		case SKEY_RECOVERABLE_ERROR:
 			if (xs->resid == xs->datalen)
 				xs->resid = 0;	/* not short read */
-		case 0xc:	/* EQUAL */
+		case SKEY_EQUAL:
 			error = 0;
 			break;
-		case 0x2:	/* NOT READY */
+		case SKEY_NOT_READY:
 			if ((sc_link->flags & SDEV_REMOVABLE) != 0)
 				sc_link->flags &= ~SDEV_MEDIA_LOADED;
 			if ((xs->flags & SCSI_IGNORE_NOT_READY) != 0)
@@ -224,14 +224,14 @@ scsi_interpret_sense(xs)
 				return (EIO);
 			error = EIO;
 			break;
-		case 0x5:	/* ILLEGAL REQUEST */
+		case SKEY_ILLEGAL_REQUEST:
 			if ((xs->flags & SCSI_IGNORE_ILLEGAL_REQUEST) != 0)
 				return (0);
 			if ((xs->flags & SCSI_SILENT) != 0)
 				return (EIO);
 			error = EINVAL;
 			break;
-		case 0x6:	/* UNIT ATTENTION */
+		case SKEY_UNIT_ATTENTION:
 			if ((sc_link->flags & SDEV_REMOVABLE) != 0)
 				sc_link->flags &= ~SDEV_MEDIA_LOADED;
 			if ((xs->flags & SCSI_IGNORE_MEDIA_CHANGE) != 0 ||
@@ -242,16 +242,16 @@ scsi_interpret_sense(xs)
 				return (EIO);
 			error = EIO;
 			break;
-		case 0x7:	/* DATA PROTECT */
+		case SKEY_WRITE_PROTECT:
 			error = EROFS;
 			break;
-		case 0x8:	/* BLANK CHECK */
+		case SKEY_BLANK_CHECK:
 			error = 0;
 			break;
-		case 0xb:	/* COMMAND ABORTED */
+		case SKEY_ABORTED_COMMAND:
 			error = ERESTART;
 			break;
-		case 0xd:	/* VOLUME OVERFLOW */
+		case SKEY_VOLUME_OVERFLOW:
 			error = ENOSPC;
 			break;
 		default:
@@ -268,16 +268,16 @@ scsi_interpret_sense(xs)
 			printf("%s", error_mes[key - 1]);
 			if ((sense->error_code & SSD_ERRCODE_VALID) != 0) {
 				switch (key) {
-				case 0x2:	/* NOT READY */
-				case 0x5:	/* ILLEGAL REQUEST */
-				case 0x6:	/* UNIT ATTENTION */
-				case 0x7:	/* DATA PROTECT */
+				case SKEY_NOT_READY:
+				case SKEY_ILLEGAL_REQUEST:
+				case SKEY_UNIT_ATTENTION:
+				case SKEY_WRITE_PROTECT:
 					break;
-				case 0x8:	/* BLANK CHECK */
+				case SKEY_BLANK_CHECK:
 					printf(", requested size: %d (decimal)",
 					    info);
 					break;
-				case 0xb:
+				case SKEY_ABORTED_COMMAND:
 					if (xs->retries)
 						printf(", retrying");
 					printf(", cmd 0x%x, info 0x%x",
