@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.11 1997/07/13 18:52:02 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.12 1998/05/07 19:24:21 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hash.c	8.9 (Berkeley) 6/16/94";
 #else
-__RCSID("$NetBSD: hash.c,v 1.11 1997/07/13 18:52:02 christos Exp $");
+__RCSID("$NetBSD: hash.c,v 1.12 1998/05/07 19:24:21 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -102,8 +102,10 @@ int hash_accesses, hash_collisions, hash_expansions, hash_overflows;
 extern DB *
 __hash_open(file, flags, mode, info, dflags)
 	const char *file;
-	int flags, mode, dflags;
+	int flags;
+	mode_t mode;
 	const HASHINFO *info;	/* Special directives for create */
+	int dflags;
 {
 	HTAB *hashp;
 	struct stat statbuf;

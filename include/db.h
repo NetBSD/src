@@ -1,4 +1,4 @@
-/*	$NetBSD: db.h,v 1.13 1994/10/26 00:55:48 cgd Exp $	*/
+/*	$NetBSD: db.h,v 1.14 1998/05/07 19:24:20 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -222,12 +222,12 @@ typedef struct {
 #endif
 
 __BEGIN_DECLS
-DB *dbopen __P((const char *, int, int, DBTYPE, const void *));
+DB *dbopen __P((const char *, int, mode_t, DBTYPE, const void *));
 
 #ifdef __DBINTERFACE_PRIVATE
-DB	*__bt_open __P((const char *, int, int, const BTREEINFO *, int));
-DB	*__hash_open __P((const char *, int, int, const HASHINFO *, int));
-DB	*__rec_open __P((const char *, int, int, const RECNOINFO *, int));
+DB	*__bt_open __P((const char *, int, mode_t, const BTREEINFO *, int));
+DB	*__hash_open __P((const char *, int, mode_t, const HASHINFO *, int));
+DB	*__rec_open __P((const char *, int, mode_t, const RECNOINFO *, int));
 void	 __dbpanic __P((DB *dbp));
 #endif
 __END_DECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_open.c,v 1.10 1998/02/20 09:27:20 mycroft Exp $	*/
+/*	$NetBSD: rec_open.c,v 1.11 1998/05/07 19:24:21 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)rec_open.c	8.10 (Berkeley) 9/1/94";
 #else
-__RCSID("$NetBSD: rec_open.c,v 1.10 1998/02/20 09:27:20 mycroft Exp $");
+__RCSID("$NetBSD: rec_open.c,v 1.11 1998/05/07 19:24:21 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,8 +63,10 @@ __RCSID("$NetBSD: rec_open.c,v 1.10 1998/02/20 09:27:20 mycroft Exp $");
 DB *
 __rec_open(fname, flags, mode, openinfo, dflags)
 	const char *fname;
-	int flags, mode, dflags;
+	int flags;
+	mode_t mode;
 	const RECNOINFO *openinfo;
+	int dflags;
 {
 	BTREE *t;
 	BTREEINFO btopeninfo;
