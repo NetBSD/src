@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.38 2000/05/31 01:40:02 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.39 2000/06/22 18:11:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -337,7 +337,7 @@ static int lfs_set_dirop(fs)
 
 #define	MARK_VNODE(dvp)  do {                                           \
         if (!((dvp)->v_flag & VDIROP)) {				\
-                lfs_vref(dvp);						\
+                (void)lfs_vref(dvp);					\
 		++lfs_dirvcount;					\
 	}								\
         (dvp)->v_flag |= VDIROP;					\
