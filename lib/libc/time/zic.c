@@ -1,12 +1,12 @@
-/*	$NetBSD: zic.c,v 1.11 1998/01/22 07:07:02 jtc Exp $	*/
+/*	$NetBSD: zic.c,v 1.12 1998/09/10 15:58:40 kleink Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
 #if 0
-static char	elsieid[] = "@(#)zic.c	7.93";
+static char	elsieid[] = "@(#)zic.c	7.94";
 #else
-__RCSID("$NetBSD: zic.c,v 1.11 1998/01/22 07:07:02 jtc Exp $");
+__RCSID("$NetBSD: zic.c,v 1.12 1998/09/10 15:58:40 kleink Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -609,9 +609,19 @@ const char * const	tofile;
 	if (!itsdir(toname))
 		(void) remove(toname);
 	if (link(fromname, toname) != 0) {
+		int	result;
+
 		if (mkdirs(toname) != 0)
 			(void) exit(EXIT_FAILURE);
-		if (link(fromname, toname) != 0) {
+		result = link(fromname, toname);
+#if (HAVE_SYMLINK - 0) 
+		if (result != 0) {
+			result = symlink(fromname, toname);
+			if (result == 0)
+warning(_("hard link failed, symbolic link used"));
+		}
+#endif
+		if (result != 0) {
 			const char *e = strerror(errno);
 
 			(void) fprintf(stderr,

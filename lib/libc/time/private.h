@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.11 1998/09/09 11:32:13 kleink Exp $	*/
+/*	$NetBSD: private.h,v 1.12 1998/09/10 15:58:40 kleink Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -29,7 +29,7 @@
 #ifndef lint
 #ifndef NOID
 #if 0
-static char	privatehid[] = "@(#)private.h	7.46";
+static char	privatehid[] = "@(#)private.h	7.47";
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -54,6 +54,10 @@ static char	privatehid[] = "@(#)private.h	7.46";
 #ifndef HAVE_STRERROR
 #define HAVE_STRERROR		1
 #endif /* !defined HAVE_STRERROR */
+
+#ifndef HAVE_SYMLINK
+#define HAVE_SYMLINK		1
+#endif /* !defined HAVE_SYMLINK */
 
 #ifndef HAVE_UNISTD_H
 #define HAVE_UNISTD_H		1
