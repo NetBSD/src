@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.12 2003/11/03 18:25:56 mycroft Exp $ */
+/* $NetBSD: com_acpi.c,v 1.13 2004/04/11 08:36:19 kochi Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.12 2003/11/03 18:25:56 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.13 2004/04/11 08:36:19 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,8 +104,8 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	/* parse resources */
-	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node, &res,
-	    &acpi_resource_parse_ops_default);
+	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node->ad_handle, "_CRS",
+	    &res, &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))
 		return;
 

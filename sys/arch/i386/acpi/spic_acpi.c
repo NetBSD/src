@@ -1,4 +1,4 @@
-/*	$NetBSD: spic_acpi.c,v 1.9 2003/11/03 18:07:10 mycroft Exp $	*/
+/*	$NetBSD: spic_acpi.c,v 1.10 2004/04/11 08:36:45 kochi Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.9 2003/11/03 18:07:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.10 2004/04/11 08:36:45 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,8 +100,8 @@ spic_acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = aa->aa_node;
 
 	/* Parse our resources. */
-	rv = acpi_resource_parse(&sc->sc_spic.sc_dev, sc->sc_node, &sc->sc_res,
-	    &acpi_resource_parse_ops_default);
+	rv = acpi_resource_parse(&sc->sc_spic.sc_dev, sc->sc_node->ad_handle,
+	    "_CRS", &sc->sc_res, &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))
 		return;
 
