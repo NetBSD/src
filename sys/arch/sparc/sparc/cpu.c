@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.128 2002/07/17 15:56:20 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.129 2002/08/09 14:46:04 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -883,7 +883,7 @@ getcacheinfo_sun4(sc, node)
 		ci->c_linesize = 16;
 		ci->c_l2linesize = 4;
 		ci->c_split = 0;
-		ci->c_nlines = ci->c_totalsize << ci->c_l2linesize;
+		ci->c_nlines = ci->c_totalsize >> ci->c_l2linesize;
 		break;
 	case CPUTYP_4_300:
 		ci->c_vactype = VAC_WRITEBACK;
@@ -892,7 +892,7 @@ getcacheinfo_sun4(sc, node)
 		ci->c_linesize = 16;
 		ci->c_l2linesize = 4;
 		ci->c_split = 0;
-		ci->c_nlines = ci->c_totalsize << ci->c_l2linesize;
+		ci->c_nlines = ci->c_totalsize >> ci->c_l2linesize;
 		sc->flags |= CPUFLG_SUN4CACHEBUG;
 		break;
 	case CPUTYP_4_400:
@@ -902,7 +902,7 @@ getcacheinfo_sun4(sc, node)
 		ci->c_linesize = 32;
 		ci->c_l2linesize = 5;
 		ci->c_split = 0;
-		ci->c_nlines = ci->c_totalsize << ci->c_l2linesize;
+		ci->c_nlines = ci->c_totalsize >> ci->c_l2linesize;
 		break;
 	}
 }
@@ -1032,7 +1032,7 @@ getcacheinfo_sun4c(sc, node)
 		panic("bad cache line size %d", l);
 	ci->c_l2linesize = i;
 	ci->c_associativity = 1;
-	ci->c_nlines = ci->c_totalsize << i;
+	ci->c_nlines = ci->c_totalsize >> i;
 
 	ci->c_vactype = VAC_WRITETHROUGH;
 
