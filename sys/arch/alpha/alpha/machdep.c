@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.96 1998/01/19 02:57:28 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.97 1998/01/24 16:46:23 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96 1998/01/19 02:57:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97 1998/01/24 16:46:23 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1026,10 +1026,12 @@ dumpsys()
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0) {
-		printf("\ndump to dev %x not possible\n", dumpdev);
+		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
+		    minor(dumpdev));
 		return;
 	}
-	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
+	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
+	    minor(dumpdev), dumplo);
 
 	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");

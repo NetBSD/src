@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 1997/10/19 15:32:57 oki Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 1998/01/24 16:46:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -727,12 +727,15 @@ dumpsys()
 	 * For dumps during autoconfiguration,
 	 * if dump device has already configured...
 	 */
-	if (dumpsize == 0) {
+	if (dumpsize == 0)
 		cpu_dumpconf();
-	}
-	if (dumplo < 0)
+	if (dumplo <= 0) {
+		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
+		    minor(dumpdev));
 		return;
-	printf("\ndumping to dev 0x%x, offset %ld\n", dumpdev, dumplo);
+	}
+	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
+	    minor(dumpdev), dumplo);
 
 	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");

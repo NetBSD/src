@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.96 1998/01/08 11:39:32 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.97 1998/01/24 16:46:45 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -817,9 +817,13 @@ dumpsys()
 	 */
 	if (dumpsize == 0)
 		cpu_dumpconf();
-	if (dumplo <= 0)
+	if (dumplo <= 0) {
+		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
+		    minor(dumpdev));
 		return;
-	printf("\ndumping to dev 0x%x, offset %ld\n", dumpdev, dumplo);
+	}
+	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
+	    minor(dumpdev), dumplo);
 
 	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");

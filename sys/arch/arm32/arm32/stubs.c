@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.19 1998/01/20 01:18:25 mark Exp $	*/
+/*	$NetBSD: stubs.c,v 1.20 1998/01/24 16:46:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -200,10 +200,13 @@ dumpsys()
 		if (dumpsize == 0)
 			return;
 	}
-	if (dumplo < 0)
+	if (dumplo <= 0) {
+		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
+		    minor(dumpdev));
 		return;
-	printf("\ndumping to dev %x, offset %d\n", (u_int)dumpdev,
-	    (u_int)dumplo);
+	}
+	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
+	    minor(dumpdev), dumplo);
 
 	blkno = dumplo;
 	dumpspace = page_hook0.va;
