@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.246 2003/04/18 00:35:14 mason Exp $ */
+/*	$NetBSD: wd.c,v 1.247 2003/04/18 04:32:19 explorer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.246 2003/04/18 00:35:14 mason Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.247 2003/04/18 04:32:19 explorer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -223,6 +223,8 @@ static const struct wd_quirk {
 	 * XXX notify thorpej@netbsd.org.
 	 */
 	{ "ST3120023AS",
+	  WD_QUIRK_SPLIT_MOD15_WRITE },
+	{ "ST380023AS",
 	  WD_QUIRK_SPLIT_MOD15_WRITE },
 
 	{ NULL,
