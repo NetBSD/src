@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.65.2.1 1994/08/17 19:15:17 mycroft Exp $
+ *	$Id: pccons.c,v 1.65.2.2 1994/10/09 09:37:07 mycroft Exp $
  */
 
 /*
@@ -149,6 +149,9 @@ char	partab[];
 
 extern pcopen(dev_t, int, int, struct proc *);
 
+#define	KBD_DELAY \
+	{ delay(6); }
+
 static inline int
 kbd_wait()
 {
@@ -156,7 +159,7 @@ kbd_wait()
 
 	for (i = 100000; i; i--)
 		if ((inb(KBSTATP) & KBS_IBF) == 0) {
-			delay(6);
+			KBD_DELAY;
 			return 1;
 		}
 	return 0;
@@ -216,7 +219,8 @@ kbd_cmd(val, polling)
 			for (i = 100000; i; i--) {
 				if (inb(KBSTATP) & KBS_DIB) {
 					register u_char c;
-					delay(6);
+
+					KBD_DELAY;
 					c = inb(KBDATAP);
 					if (c == KBR_ACK || c == KBR_ECHO) {
 						ack = 1;
@@ -233,6 +237,7 @@ kbd_cmd(val, polling)
 			}
 		else
 			for (i = 100000; i; i--) {
+				inb(KBSTATP);
 				if (ack)
 					return 1;
 				if (nak)
@@ -334,7 +339,7 @@ pcprobe(parent, self, aux)
 #if 1
 	/* Flush any garbage. */
 	while (inb(KBSTATP) & KBS_DIB) {
-		delay(6);
+		KBD_DELAY;
 		(void) inb(KBDATAP);
 	}
 	/* Reset the keyboard. */
@@ -343,7 +348,7 @@ pcprobe(parent, self, aux)
 		goto lose;
 	}
 	while ((inb(KBSTATP) & KBS_DIB) == 0);
-	delay(6);
+	KBD_DELAY;
 	if (inb(KBDATAP) != KBR_RSTDONE) {
 		printf("pcprobe: reset error %d\n", 2);
 		goto lose;
@@ -354,7 +359,7 @@ pcprobe(parent, self, aux)
 	 * flushing the buffer.
 	 */
 	while (inb(KBSTATP) & KBS_DIB) {
-		delay(6);
+		KBD_DELAY;
 		(void) inb(KBDATAP);
 	}
 	/* Just to be sure. */
@@ -666,13 +671,13 @@ pccnputc(dev, c)
 pccngetc(dev)
 	dev_t dev;
 {
-	register int s;
+	u_char oldpolling;
 	register char *cp;
-	u_char oldpolling = polling;
 
 	if (pc_xmode > 0)
 		return 0;
 
+	oldpolling = polling;
 	polling = 1;
 	do {
 		/* wait for byte */
@@ -1328,6 +1333,7 @@ sget()
 	static u_char capchar[2];
 
 top:
+	KBD_DELAY;
 	dt = inb(KBDATAP);
 
 	switch (dt) {
