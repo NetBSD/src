@@ -1,4 +1,4 @@
-.\"	$NetBSD: rndctl.8,v 1.6 2000/06/20 02:40:10 sommerfeld Exp $
+.\"	$NetBSD: rndctl.8,v 1.7 2000/08/28 13:27:37 joda Exp $
 .\"
 .\" Copyright (c) 1997 Michael Graff
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Op Fl t Ar devtype
 .Op Fl d Ar devname
 .Nm ""
-.Fl l
+.Fl ls
 .Op Fl t Ar devtype
 .Op Fl d Ar devname
 .Sh DESCRIPTION
@@ -79,6 +79,8 @@ flags are specified, only those specified by the
 or
 .Ar devname
 specified.
+.It Fl s
+Show entropy pool statistics.
 .It Fl t
 All devices of type
 .Ar devtype
