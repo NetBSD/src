@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.27 2003/10/25 18:35:42 christos Exp $        */
+/* $NetBSD: adwlib.c,v 1.28 2003/10/25 21:33:04 christos Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.27 2003/10/25 18:35:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.28 2003/10/25 21:33:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1917,7 +1917,8 @@ ADW_SOFTC	*sc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int		status;
-	u_int16_t	wdtr_able, sdtr_able, ppr_able, tagqng_able;
+	u_int16_t	wdtr_able, sdtr_able, tagqng_able;
+	u_int16_t	ppr_able = 0; /* XXX: gcc */
 	u_int8_t	tid, max_cmd[ADW_MAX_TID + 1];
 	u_int16_t	bios_sig;
 
