@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.10 2003/10/07 16:03:09 tsutsui Exp $	*/
+/*	$NetBSD: bus.h,v 1.11 2004/01/12 03:30:51 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@ typedef u_long	bus_space_handle_t;
 #define	SGIMIPS_BUS_SPACE_MEM		2
 #define	SGIMIPS_BUS_SPACE_MACE		3
 #define	SGIMIPS_BUS_SPACE_IO		4
+#define SGIMIPS_BUS_SPACE_CRIME		5
 
 /*
  *	int bus_space_map(bus_space_tag_t t, bus_addr_t addr,
@@ -142,12 +143,8 @@ void *	bus_space_vaddr(bus_space_tag_t t, bus_space_handle_t bsh);
 
 u_int8_t bus_space_read_1(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 u_int16_t bus_space_read_2(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-
-#define	bus_space_read_4(t, h, o)					\
-(wbflush(), /* XXX */							\
-     (void) t, (*(volatile u_int32_t *)((h) + (o))))
-
-#define bus_space_read_8(t, h, o) mips3_ld((u_int64_t *)((h) + (o)))
+u_int32_t bus_space_read_4(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+u_int64_t bus_space_read_8(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 /*
  *	void bus_space_read_multi_N(bus_space_tag_t tag,
@@ -239,15 +236,10 @@ void	bus_space_write_1(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 	    u_int8_t);
 void	bus_space_write_2(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 	    u_int16_t);
-
-#define	bus_space_write_4(t, h, o, v)					\
-do {									\
-	(void) t;							\
-	*(volatile u_int32_t *)((h) + (o)) = (v);			\
-	wbflush(); /* XXX */						\
-} while (0)
-
-#define bus_space_write_8(t, h, o, v) (mips3_sd((u_int64_t *)((h) + (o)), (v)))
+void	bus_space_write_4(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    u_int32_t);
+void	bus_space_write_8(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    u_int64_t);
 
 /*
  *	void bus_space_write_multi_N(bus_space_tag_t tag,
