@@ -1444,7 +1444,6 @@ single_step (ignore)
      int ignore; /* pid, but we don't need it */
 {
   CORE_ADDR pc;
-  unsigned int instruction;
   int offset;
   union {
     unsigned int code;			/* raw bits */
@@ -1486,7 +1485,7 @@ single_step (ignore)
   }
 
   /* Decode the instruction at the current PC and set breakpoints.  */
-  insn.code = read_memory_integer(pc, sizeof(instruction));
+  insn.code = read_memory_integer(pc, sizeof(insn));
   target_addr = step_addr = 0;
 
   /* Examine the opcode (top six bits). */
