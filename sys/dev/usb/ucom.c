@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.18 2000/04/05 21:24:11 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.19 2000/04/06 13:32:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,14 +79,6 @@ int ucomdebug = 0;
 #define	UCOMDIALOUT(x)		(minor(x) & UCOMDIALOUT_MASK)
 #define	UCOMCALLUNIT(x)		(minor(x) & UCOMCALLUNIT_MASK)
 
-/* 
- * These are the maximum number of bytes transferred per frame.
- * If some really high speed devices should use this driver they
- * may need to be increased, but this is good enough for modems.
- */
-#define UCOMIBUFSIZE 64
-#define UCOMOBUFSIZE 256
-
 struct ucom_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
 
@@ -98,11 +90,13 @@ struct ucom_softc {
 	usbd_pipe_handle	sc_bulkin_pipe;	/* bulk in pipe */
 	usbd_xfer_handle	sc_ixfer;	/* read request */
 	u_char			*sc_ibuf;	/* read buffer */
+	u_int			sc_ibufsize;	/* read buffer size */
 
 	int			sc_bulkout_no;	/* bulk out endpoint address */
 	usbd_pipe_handle	sc_bulkout_pipe;/* bulk out pipe */
 	usbd_xfer_handle	sc_oxfer;	/* write request */
 	u_char			*sc_obuf;	/* write buffer */
+	u_int			sc_obufsize;	/* write buffer size */
 
 	struct ucom_methods     *sc_methods;
 	void                    *sc_parent;
@@ -161,6 +155,8 @@ USB_ATTACH(ucom)
 	sc->sc_iface = uca->iface;
 	sc->sc_bulkout_no = uca->bulkout;
 	sc->sc_bulkin_no = uca->bulkin;
+	sc->sc_ibufsize = uca->ibufsize;
+	sc->sc_obufsize = uca->obufsize;
 	sc->sc_methods = uca->methods;
 	sc->sc_parent = uca->arg;
 	sc->sc_portno = uca->portno;
@@ -378,7 +374,7 @@ ucomopen(dev, flag, mode, p)
 			usbd_close_pipe(sc->sc_bulkout_pipe);
 			return (ENOMEM);
 		}
-		sc->sc_ibuf = usbd_alloc_buffer(sc->sc_ixfer, UCOMIBUFSIZE);
+		sc->sc_ibuf = usbd_alloc_buffer(sc->sc_ixfer, sc->sc_ibufsize);
 		if (sc->sc_ibuf == NULL) {
 			usbd_free_xfer(sc->sc_ixfer);
 			usbd_close_pipe(sc->sc_bulkin_pipe);
@@ -393,7 +389,7 @@ ucomopen(dev, flag, mode, p)
 			usbd_close_pipe(sc->sc_bulkout_pipe);
 			return (ENOMEM);
 		}
-		sc->sc_obuf = usbd_alloc_buffer(sc->sc_oxfer, UCOMOBUFSIZE);
+		sc->sc_obuf = usbd_alloc_buffer(sc->sc_oxfer, sc->sc_obufsize);
 		if (sc->sc_obuf == NULL) {
 			usbd_free_xfer(sc->sc_oxfer);
 			usbd_free_xfer(sc->sc_ixfer);
@@ -722,7 +718,7 @@ ucom_rts(sc, onoff)
 		    UCOM_SET_RTS, onoff);
 }
 
-void
+Static void
 ucom_status_change(sc)
 	struct ucom_softc *sc;
 {
@@ -812,6 +808,7 @@ Static void
 ucom_hwiflow(sc)
 	struct ucom_softc *sc;
 {
+	DPRINTF(("ucom_hwiflow:\n"));
 #if 0
 XXX
 	bus_space_tag_t iot = sc->sc_iot;
@@ -846,7 +843,7 @@ ucomstart(tp)
 
 	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP)) {
-		DPRINTFN(4,("ucomstart: stopped\n"));
+		DPRINTFN(4,("ucomstart: no go, state=0x%x\n", tp->t_state));
 		goto out;
 	}
 	if (sc->sc_tx_stopped)
@@ -873,9 +870,9 @@ ucomstart(tp)
 
 	SET(tp->t_state, TS_BUSY);
 
-	if (cnt > UCOMOBUFSIZE) {
+	if (cnt > sc->sc_obufsize) {
 		DPRINTF(("ucomstart: big buffer %d chars\n", cnt));
-		cnt = UCOMOBUFSIZE;
+		cnt = sc->sc_obufsize;
 	}
 	memcpy(sc->sc_obuf, data, cnt);
 
@@ -894,23 +891,25 @@ out:
 	splx(s);
 }
 
-void
+Static void
 ucomstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(tp->t_dev)];
+	DPRINTF(("ucomstop: flag=%d\n", flag));
+#if 0
+	/*struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(tp->t_dev)];*/
 	int s;
 
-	DPRINTF(("ucomstop: %d\n", flag));
 	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY)) {
 		DPRINTF(("ucomstop: XXX\n"));
-		sc->sc_tx_stopped = 1;
+		/* sc->sc_tx_stopped = 1; */
 		if (!ISSET(tp->t_state, TS_TTSTOP))
 			SET(tp->t_state, TS_FLUSH);
 	}
 	splx(s);
+#endif
 }
 
 Static void
@@ -958,7 +957,7 @@ ucomstartread(sc)
 	DPRINTFN(5,("ucomstartread: start\n"));
 	usbd_setup_xfer(sc->sc_ixfer, sc->sc_bulkin_pipe, 
 			(usbd_private_handle)sc, 
-			sc->sc_ibuf,  UCOMIBUFSIZE,
+			sc->sc_ibuf, sc->sc_ibufsize,
 			USBD_SHORT_XFER_OK | USBD_NO_COPY,
 			USBD_NO_TIMEOUT, ucomreadcb);
 	err = usbd_transfer(sc->sc_ixfer);
@@ -1001,6 +1000,8 @@ ucomreadcb(xfer, p, status)
 		DPRINTFN(7,("ucomreadcb: char=0x%02x\n", *cp));
 		if ((*rint)(*cp++, tp) == -1) {
 			/* XXX what should we do? */
+			printf("%s: lost %d chars\n", USBDEVNAME(sc->sc_dev),
+			       cc);
 			break;
 		}
 	}
@@ -1030,7 +1031,7 @@ ucom_cleanup(sc)
 
 #endif /* NUCOM > 0 */
 
-int
+Static int
 ucomprint(aux, pnp)
 	void *aux;
 	const char *pnp;
@@ -1041,7 +1042,7 @@ ucomprint(aux, pnp)
 	return (UNCONF);
 }
 
-int
+Static int
 ucomsubmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;

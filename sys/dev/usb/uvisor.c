@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.3 2000/04/05 11:12:48 augustss Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.4 2000/04/06 13:32:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -115,6 +115,9 @@ struct uvisor_connection_info {
 #define UVISOR_FUNCTION_REMOTE_FILE_SYS	0x04
 
 
+#define UVISORIBUFSIZE 1024
+#define UVISOROBUFSIZE 1024
+
 struct uvisor_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
 	usbd_device_handle	sc_udev;	/* device */
@@ -197,12 +200,6 @@ USB_ATTACH(uvisor)
 	sc->sc_udev = dev;
 	sc->sc_iface = iface;
 
-	uca.device = dev;
-	uca.iface = iface;
-	uca.methods = &uvisor_methods;
-	uca.arg = sc;
-	uca.portno = UCOM_UNK_PORTNO;
-
 	uca.bulkin = uca.bulkout = -1;
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		int addr, dir, attr;
@@ -236,6 +233,15 @@ USB_ATTACH(uvisor)
 		goto bad;
 	}
 	
+	uca.portno = UCOM_UNK_PORTNO;
+	/* bulkin, bulkout set above */
+	uca.ibufsize = UVISORIBUFSIZE;
+	uca.obufsize = UVISOROBUFSIZE;
+	uca.device = dev;
+	uca.iface = iface;
+	uca.methods = &uvisor_methods;
+	uca.arg = sc;
+
 	err = uvisor_init(sc);
 	if (err) {
 		printf("%s: init failed, %s\n", USBDEVNAME(sc->sc_dev),
