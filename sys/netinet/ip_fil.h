@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.5 1997/03/29 00:54:59 thorpej Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.6 1997/03/29 01:57:56 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * $Id: ip_fil.h,v 1.5 1997/03/29 00:54:59 thorpej Exp $
+ * $Id: ip_fil.h,v 1.6 1997/03/29 01:57:56 thorpej Exp $
  */
 
 #ifndef	__IP_FIL_H__
@@ -312,17 +312,19 @@ extern	char	iplbuf[3][IPLLOGSIZE];
 extern	struct frentry *ipfilter[2][2], *ipacct[2][2];
 extern	struct filterstats frstats[];
 
+extern	int	ipl_enable __P((void));
+extern	int	ipl_disable __P((void));
+
 #ifndef	_KERNEL
 extern	int	iplioctl __P((dev_t, int, caddr_t, int));
 extern	int	iplopen __P((dev_t, int));
 extern	int	iplclose __P((dev_t, int));
 #else
+/* Pseudo-device attach routine; no-op, really. */
 #if defined(__NetBSD__)
-extern	int	ipfilterattach __P((void));
-extern	int	ipfilterdetach __P((void));
+extern	void	ipfilterattach __P((int));
 #else
-extern	int	iplattach __P((void));
-extern	int	ipldetach __P((void));
+extern	void	iplattach __P((int));
 #endif /* __NetBSD__ */
 # if SOLARIS
 extern	int	iplioctl __P((dev_t, int, int, int, cred_t *, int *));
