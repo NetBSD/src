@@ -1,4 +1,4 @@
-/*	$NetBSD: __glob13.c,v 1.17 2001/03/18 22:40:20 christos Exp $	*/
+/*	$NetBSD: __glob13.c,v 1.18 2001/03/28 21:16:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: __glob13.c,v 1.17 2001/03/18 22:40:20 christos Exp $");
+__RCSID("$NetBSD: __glob13.c,v 1.18 2001/03/28 21:16:48 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -157,9 +157,6 @@ static void	 g_Ctoc __P((const Char *, char *));
 static int	 g_lstat __P((Char *, struct STAT *, glob_t *));
 static DIR	*g_opendir __P((Char *, glob_t *));
 static Char	*g_strchr __P((const Char *, int));
-#ifdef notdef
-static Char	*g_strcat __P((Char *, const Char *));
-#endif
 static int	 g_stat __P((Char *, struct STAT *, glob_t *));
 static int	 glob0 __P((const Char *, glob_t *));
 static int	 glob1 __P((Char *, glob_t *, size_t *));
@@ -201,8 +198,8 @@ glob(pattern, flags, errfunc, pglob)
 	bufnext = patbuf;
 	bufend = bufnext + MAXPATHLEN;
 	if (flags & GLOB_NOESCAPE) {
-	    while (bufnext < bufend && (c = *patnext++) != EOS) 
-		    *bufnext++ = c;
+		while (bufnext < bufend && (c = *patnext++) != EOS) 
+			*bufnext++ = c;
 	} else {
 		/* Protect the quoted characters. */
 		while (bufnext < bufend && (c = *patnext++) != EOS) 
@@ -306,7 +303,7 @@ globexp2(ptr, pattern, pglob, rv)
 		return 0;
 	}
 
-	for (i = 0, pl = pm = ptr; pm <= pe; pm++)
+	for (i = 0, pl = pm = ptr; pm <= pe; pm++) {
 		switch (*pm) {
 		case LBRACKET:
 			/* Ignore everything between [] */
@@ -327,8 +324,8 @@ globexp2(ptr, pattern, pglob, rv)
 
 		case RBRACE:
 			if (i) {
-			    i--;
-			    break;
+				i--;
+				break;
 			}
 			/* FALLTHROUGH */
 		case COMMA:
@@ -359,6 +356,7 @@ globexp2(ptr, pattern, pglob, rv)
 		default:
 			break;
 		}
+	}
 	*rv = 0;
 	return 0;
 }
@@ -493,7 +491,7 @@ glob0(pattern, pglob)
 			 * to avoid exponential behavior
 			 */
 			if (bufnext == patbuf || bufnext[-1] != M_ALL)
-			    *bufnext++ = M_ALL;
+				*bufnext++ = M_ALL;
 			break;
 		default:
 			*bufnext++ = CHAR(c);
@@ -592,8 +590,8 @@ glob2(pathbuf, pathend, pattern, pglob, limit)
 				return(0);
 		
 			if (((pglob->gl_flags & GLOB_MARK) &&
-			    pathend[-1] != SEP) && (S_ISDIR(sb.st_mode)
-			    || (S_ISLNK(sb.st_mode) &&
+			    pathend[-1] != SEP) && (S_ISDIR(sb.st_mode) ||
+			    (S_ISLNK(sb.st_mode) &&
 			    (g_stat(pathbuf, &sb, pglob) == 0) &&
 			    S_ISDIR(sb.st_mode)))) {
 				*pathend++ = SEP;
@@ -783,7 +781,8 @@ match(name, pat, patend)
 			do 
 			    if (match(name, pat, patend))
 				    return(1);
-			while (*name++ != EOS);
+			while (*name++ != EOS)
+				continue;
 			return(0);
 		case M_ONE:
 			if (*name++ == EOS)
@@ -906,27 +905,6 @@ g_strchr(str, ch)
 	} while (*str++);
 	return NULL;
 }
-
-#ifdef notdef
-static Char *
-g_strcat(dst, src)
-	Char *dst;
-	const Char* src;
-{
-	Char *sdst = dst;
-
-	_DIAGASSERT(dst != NULL);
-	_DIAGASSERT(src != NULL);
-
-	while (*dst++)
-		continue;
-	--dst;
-	while((*dst++ = *src++) != EOS)
-	    continue;
-
-	return (sdst);
-}
-#endif
 
 static void
 g_Ctoc(str, buf)
