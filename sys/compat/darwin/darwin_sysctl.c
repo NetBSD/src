@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.7 2002/12/28 00:15:23 manu Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.8 2003/01/03 14:47:27 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.7 2002/12/28 00:15:23 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.8 2003/01/03 14:47:27 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.7 2002/12/28 00:15:23 manu Exp $
 #include <compat/darwin/darwin_sysctl.h>
 #include <compat/darwin/darwin_syscallargs.h>
 
-pid_t darwin_init_pid;
+pid_t darwin_init_pid = 0;
 
 static int darwin_kern_sysctl
     (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
@@ -413,6 +413,10 @@ darwin_sys_getpid(p, v, retval)
 
 	ded = (struct darwin_emuldata *)p->p_emuldata;
 
+#ifdef DEBUG_DARWIN
+	printf("pid %d: fakepid = %d, mach_init_pid = %d\n", 
+	    p->p_pid, ded->ded_fakepid, darwin_init_pid);
+#endif
 	if (ded->ded_fakepid != 0)
 		*retval = ded->ded_fakepid;
 	else
