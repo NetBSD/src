@@ -1,4 +1,4 @@
-	$NetBSD: INSTALL,v 1.66 1998/09/18 06:15:58 abs Exp $
+	$NetBSD: INSTALL,v 1.67 1998/10/13 15:22:48 minoura Exp $
 #define	_FOR_RELEASE 0			/* 0 == snapshot; 1 == release */
 INSTALLATION NOTES for NetBSD/_MACH _VER
 
@@ -664,6 +664,7 @@ Aidan Cully		<aidan@NetBSD.ORG>
 Rob Deker		<deker@NetBSD.ORG>
 Chris G. Demetriou	<cgd@NetBSD.ORG>
 Matthias Drochner	<drochner@NetBSD.ORG>
+Enami Tsugutomo		<enami@NetBSD.ORG>
 Bernd Ernesti		<veego@NetBSD.ORG>
 Erik Fair		<fair@NetBSD.ORG>
 Hubert Feyrer		<hubertf@NetBSD.ORG>
@@ -691,11 +692,10 @@ Kevin Lahey		<kml@NetBSD.ORG>
 Ted Lemon		<mellon@NetBSD.ORG>
 Mike Long		<mikel@NetBSD.ORG>
 Paul Mackerras	 	<paulus@NetBSD.ORG>
-SAITOH Masanobu		<msaitoh@NetBSD.ORG>
 Neil J. McRae		<neil@NetBSD.ORG>
 Perry Metzger		<perry@NetBSD.ORG>
 Luke Mewburn		<lukem@NetBSD.ORG>
-MINOURA Makoto		<minoura@NetBSD.ORG>
+Minoura Makoto		<minoura@NetBSD.ORG>
 der Mouse		<mouse@NetBSD.ORG>
 Tohru Nishimura		<nisimura@NetBSD.ORG>
 Greg Oster		<oster@NetBSD.ORG>
@@ -706,6 +706,7 @@ Waldi Ravens		<waldi@moacs.indiv.nl.net>
 Darren Reed		<darrenr@NetBSD.ORG>
 Tim Rightnour		<garbled@NetBSD.ORG>
 Heiko W. Rupp		<hwr@NetBSD.ORG>
+SAITOH Masanobu		<msaitoh@NetBSD.ORG>
 Curt Sampson		<cjs@NetBSD.ORG>
 Wilfredo Sanchez	<wsanchez@NetBSD.ORG>
 Ty Sarna		<tsarna@NetBSD.ORG>
@@ -722,7 +723,6 @@ Kevin Sullivan		<sullivan@NetBSD.ORG>
 Kimmo Suominen		<kim@NetBSD.ORG>
 Matt Thomas		<matt@NetBSD.ORG>
 Christoph Toshok	<toshok@NetBSD.ORG>
-Enami Tsugutomo		<enami@NetBSD.ORG>
 Todd Vierling		<tv@NetBSD.ORG>
 Paul Vixie		<vixie@NetBSD.ORG>
 Krister Walfridsson	<kristerw@NetBSD.ORG>
