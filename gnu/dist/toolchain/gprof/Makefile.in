@@ -316,49 +316,49 @@ gprof$(EXEEXT): $(gprof_OBJECTS) $(gprof_DEPENDENCIES)
 	@rm -f gprof$(EXEEXT)
 	$(LINK) $(gprof_LDFLAGS) $(gprof_OBJECTS) $(gprof_LDADD) $(LIBS)
 
-gprof.info: gprof.texi
-gprof.dvi: gprof.texi
-
-
-DVIPS = dvips
-
-.texi.info:
-	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	$(MAKEINFO) -I $(srcdir) $<
-
-.texi.dvi:
-	TEXINPUTS=$(top_srcdir)/../texinfo/texinfo.tex:$$TEXINPUTS \
-	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
-
-.texi:
-	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	$(MAKEINFO) -I $(srcdir) $<
-
-.texinfo.info:
-	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	$(MAKEINFO) -I $(srcdir) $<
-
-.texinfo:
-	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	$(MAKEINFO) -I $(srcdir) $<
-
-.texinfo.dvi:
-	TEXINPUTS=$(top_srcdir)/../texinfo/texinfo.tex:$$TEXINPUTS \
-	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
-
-.txi.info:
-	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	$(MAKEINFO) -I $(srcdir) $<
-
-.txi.dvi:
-	TEXINPUTS=$(top_srcdir)/../texinfo/texinfo.tex:$$TEXINPUTS \
-	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
-
-.txi:
-	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	$(MAKEINFO) -I $(srcdir) $<
-.dvi.ps:
-	$(DVIPS) $< -o $@
+#  gprof.info: gprof.texi
+#  gprof.dvi: gprof.texi
+#  
+#  
+#  DVIPS = dvips
+#  
+#  .texi.info:
+#  	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
+#  	$(MAKEINFO) -I $(srcdir) $<
+#  
+#  .texi.dvi:
+#  	TEXINPUTS=$(top_srcdir)/../texinfo/texinfo.tex:$$TEXINPUTS \
+#  	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
+#  
+#  .texi:
+#  	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
+#  	$(MAKEINFO) -I $(srcdir) $<
+#  
+#  .texinfo.info:
+#  	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
+#  	$(MAKEINFO) -I $(srcdir) $<
+#  
+#  .texinfo:
+#  	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
+#  	$(MAKEINFO) -I $(srcdir) $<
+#  
+#  .texinfo.dvi:
+#  	TEXINPUTS=$(top_srcdir)/../texinfo/texinfo.tex:$$TEXINPUTS \
+#  	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
+#  
+#  .txi.info:
+#  	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
+#  	$(MAKEINFO) -I $(srcdir) $<
+#  
+#  .txi.dvi:
+#  	TEXINPUTS=$(top_srcdir)/../texinfo/texinfo.tex:$$TEXINPUTS \
+#  	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
+#  
+#  .txi:
+#  	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
+#  	$(MAKEINFO) -I $(srcdir) $<
+#  .dvi.ps:
+#  	$(DVIPS) $< -o $@
 
 install-info-am: $(INFO_DEPS)
 	@$(NORMAL_INSTALL)

@@ -127,58 +127,58 @@ Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	  && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
 
-info-stnd.info: info-stnd.texi
-info-stnd.dvi: info-stnd.texi
-
-
-info.info: info.texi $(info_TEXINFOS)
-info.dvi: info.texi $(info_TEXINFOS)
-
-
-texinfo: texinfo.txi
-texinfo.dvi: texinfo.txi
-
-
-DVIPS = dvips
-
-.texi.dvi:
-	TEXINPUTS=$(top_srcdir)/..:$$TEXINPUTS \
-	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
-
-.texi:
-	@cd $(srcdir) && rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	cd $(srcdir) \
-	  && $(MAKEINFO) `echo $< | sed 's,.*/,,'`
-
-.texinfo.info:
-	@cd $(srcdir) && rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	cd $(srcdir) \
-	  && $(MAKEINFO) `echo $< | sed 's,.*/,,'`
-
-.texinfo:
-	@cd $(srcdir) && rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	cd $(srcdir) \
-	  && $(MAKEINFO) `echo $< | sed 's,.*/,,'`
-
-.texinfo.dvi:
-	TEXINPUTS=$(top_srcdir)/..:$$TEXINPUTS \
-	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
-
-.txi.info:
-	@cd $(srcdir) && rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	cd $(srcdir) \
-	  && $(MAKEINFO) `echo $< | sed 's,.*/,,'`
-
-.txi.dvi:
-	TEXINPUTS=$(top_srcdir)/..:$$TEXINPUTS \
-	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
-
-.txi:
-	@cd $(srcdir) && rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	cd $(srcdir) \
-	  && $(MAKEINFO) `echo $< | sed 's,.*/,,'`
-.dvi.ps:
-	$(DVIPS) $< -o $@
+#  info-stnd.info: info-stnd.texi
+#  info-stnd.dvi: info-stnd.texi
+#  
+#  
+#  info.info: info.texi $(info_TEXINFOS)
+#  info.dvi: info.texi $(info_TEXINFOS)
+#  
+#  
+#  texinfo: texinfo.txi
+#  texinfo.dvi: texinfo.txi
+#  
+#  
+#  DVIPS = dvips
+#  
+#  .texi.dvi:
+#  	TEXINPUTS=$(top_srcdir)/..:$$TEXINPUTS \
+#  	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
+#  
+#  .texi:
+#  	@cd $(srcdir) && rm -f $@ $@-[0-9] $@-[0-9][0-9]
+#  	cd $(srcdir) \
+#  	  && $(MAKEINFO) `echo $< | sed 's,.*/,,'`
+#  
+#  .texinfo.info:
+#  	@cd $(srcdir) && rm -f $@ $@-[0-9] $@-[0-9][0-9]
+#  	cd $(srcdir) \
+#  	  && $(MAKEINFO) `echo $< | sed 's,.*/,,'`
+#  
+#  .texinfo:
+#  	@cd $(srcdir) && rm -f $@ $@-[0-9] $@-[0-9][0-9]
+#  	cd $(srcdir) \
+#  	  && $(MAKEINFO) `echo $< | sed 's,.*/,,'`
+#  
+#  .texinfo.dvi:
+#  	TEXINPUTS=$(top_srcdir)/..:$$TEXINPUTS \
+#  	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
+#  
+#  .txi.info:
+#  	@cd $(srcdir) && rm -f $@ $@-[0-9] $@-[0-9][0-9]
+#  	cd $(srcdir) \
+#  	  && $(MAKEINFO) `echo $< | sed 's,.*/,,'`
+#  
+#  .txi.dvi:
+#  	TEXINPUTS=$(top_srcdir)/..:$$TEXINPUTS \
+#  	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
+#  
+#  .txi:
+#  	@cd $(srcdir) && rm -f $@ $@-[0-9] $@-[0-9][0-9]
+#  	cd $(srcdir) \
+#  	  && $(MAKEINFO) `echo $< | sed 's,.*/,,'`
+#  .dvi.ps:
+#  	$(DVIPS) $< -o $@
 
 uninstall-info:
 	$(PRE_UNINSTALL)
