@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkfs.c	8.3 (Berkeley) 2/3/94";*/
-static char *rcsid = "$Id: mkfs.c,v 1.9 1994/06/08 19:30:26 mycroft Exp $";
+static char *rcsid = "$Id: mkfs.c,v 1.9.2.1 1994/07/20 20:10:59 cgd Exp $";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -934,7 +934,8 @@ alloc(size, mode)
 goth:
 	blkno = fragstoblks(&sblock, d);
 	clrblock(&sblock, cg_blksfree(&acg), blkno);
-	clrbit(cg_clustersfree(&acg), blkno);
+	if (sblock.fs_contigsumsize > 0)
+		clrbit(cg_clustersfree(&acg), blkno);
 	acg.cg_cs.cs_nbfree--;
 	sblock.fs_cstotal.cs_nbfree--;
 	fscs[0].cs_nbfree--;

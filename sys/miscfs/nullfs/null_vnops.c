@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vnops.c,v 1.2 1994/06/29 06:34:35 cgd Exp $	*/
+/*	$NetBSD: null_vnops.c,v 1.2.2.1 1994/07/20 20:16:42 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -250,8 +250,9 @@ null_bypass(ap)
 		 * are of our type.  Check for and don't map any
 		 * that aren't.  (We must always map first vp or vclean fails.)
 		 */
-		if (i && (*this_vp_p)->v_op != null_vnodeop_p) {
-			old_vps[i] = NULL;
+		if (i && (*this_vp_p == NULLVP ||
+		    (*this_vp_p)->v_op != null_vnodeop_p)) {
+			old_vps[i] = NULLVP;
 		} else {
 			old_vps[i] = *this_vp_p;
 			*(vps_p[i]) = NULLVPTOLOWERVP(*this_vp_p);
@@ -281,7 +282,7 @@ null_bypass(ap)
 	for (i = 0; i < VDESC_MAX_VPS; reles >>= 1, i++) {
 		if (descp->vdesc_vp_offsets[i] == VDESC_NO_OFFSET)
 			break;   /* bail out at end of list */
-		if (old_vps[i]) {
+		if (old_vps[i] != NULLVP) {
 			*(vps_p[i]) = old_vps[i];
 			if (reles & 1)
 				vrele(*(vps_p[i]));
