@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.13 1999/08/24 11:07:32 ad Exp $ */
+/*	 $NetBSD: rasops.c,v 1.14 1999/08/25 08:45:25 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.13 1999/08/24 11:07:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.14 1999/08/25 08:45:25 ad Exp $");
 
 #include "rasops_glue.h"
 
@@ -712,7 +712,7 @@ rasops_eraserows(cookie, row, num, attr)
 	long attr;
 {
 	struct rasops_info *ri;
-	int np, nw, cnt;
+	int np, nw, cnt, delta;
 	int32_t *dp, clr;
 	
 	ri = (struct rasops_info *)cookie;
@@ -731,7 +731,6 @@ rasops_eraserows(cookie, row, num, attr)
 #endif
 
 	clr = ri->ri_devcmap[(attr >> 16) & 15];
-	dp = (int32_t *)(ri->ri_bits + row * ri->ri_yscale);
 
 	/* 
 	 * XXX the wsdisplay_emulops interface seems a little deficient in
@@ -743,10 +742,14 @@ rasops_eraserows(cookie, row, num, attr)
 		np = ri->ri_stride >> 5;
 		nw = (ri->ri_stride >> 2) & 7;
 		num = ri->ri_height;
+		dp = (int32_t *)ri->ri_origbits;
+		delta = 0;
 	} else {
 		np = ri->ri_emustride >> 5;
 		nw = (ri->ri_emustride >> 2) & 7;
 		num *= ri->ri_font->fontheight;
+		dp = (int32_t *)(ri->ri_bits + row * ri->ri_yscale);
+		delta = ri->ri_delta;
 	}
 	
 	while (num--) {
@@ -767,7 +770,7 @@ rasops_eraserows(cookie, row, num, attr)
 			DELTA(dp, 4, int32_t *);
 		} 
 			
-		DELTA(dp, ri->ri_delta, int32_t *);
+		DELTA(dp, delta, int32_t *);
 	}
 }
 
