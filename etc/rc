@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.77 1997/05/11 05:08:16 cjs Exp $
+#	$NetBSD: rc,v 1.78 1997/06/12 15:18:58 mrg Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -59,7 +59,7 @@ fi
 
 trap "echo 'Boot interrupted.'; exit 1" 3
 
-swapon -a
+swapctl -A
 
 umount -a >/dev/null 2>&1
 mount -a -t nonfs
