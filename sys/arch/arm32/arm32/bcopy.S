@@ -1,4 +1,4 @@
-/* $NetBSD: bcopy.S,v 1.3 1996/06/12 19:58:43 mark Exp $ */
+/* $NetBSD: bcopy.S,v 1.4 1996/10/15 02:04:40 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -43,16 +43,23 @@
  * Created      : 16/05/95
  */
 
+ip	.req	r12
 sp	.req	r13
 lr	.req	r14
 pc	.req	r15
 
-.text
+	.text
 	.global _bcopy
 	.global _ovbcopy
 
 _bcopy:
 _ovbcopy:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	teq	r2, #0x00000000
 	moveq	r0, #0x00000000
 	moveq	pc, lr
@@ -65,7 +72,7 @@ bcopy_loop:
 	subs	r2, r2, #0x00000001
 	bne	bcopy_loop
 
-	mov	pc, r14
+	mov	pc, lr
 
 bcopy_back:
 	add	r0, r0, r2
@@ -77,12 +84,18 @@ bcopy_bloop:
 	subs	r2, r2, #0x00000001
 	bne	bcopy_bloop
 
-	mov	pc, r14
+	mov	pc, lr
 
 
 	.global	_memcpy
 
 _memcpy:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	teq	r2, #0x00000000
 	moveq	r0, #0x00000000
 	moveq	pc, lr
@@ -95,7 +108,7 @@ memcpy_loop:
 	subs	r2, r2, #0x00000001
 	bne	memcpy_loop
 
-	mov	pc, r14
+	mov	pc, lr
 
 memcpy_back:
 	add	r0, r0, r2
@@ -107,4 +120,4 @@ memcpy_bloop:
 	subs	r2, r2, #0x00000001
 	bne	memcpy_bloop
 
-	mov	pc, r14
+	mov	pc, lr
