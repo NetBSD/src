@@ -1,4 +1,4 @@
-/*	$NetBSD: fast_ipsec.c,v 1.3 2004/05/09 03:20:44 petrov Exp $ */
+/*	$NetBSD: fast_ipsec.c,v 1.4 2004/06/06 17:11:48 christos Exp $ */
 /* 	$FreeBSD: src/tools/tools/crypto/ipsecstats.c,v 1.1.4.1 2003/06/03 00:13:13 sam Exp $ */
 
 /*-
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __NetBSD__
-__RCSID("$NetBSD: fast_ipsec.c,v 1.3 2004/05/09 03:20:44 petrov Exp $");
+__RCSID("$NetBSD: fast_ipsec.c,v 1.4 2004/06/06 17:11:48 christos Exp $");
 #endif
 #endif /* not lint*/
 
@@ -75,10 +75,10 @@ ipsec_switch(u_long off, char * name)
 	
 	slen = 0;
 	status = sysctlbyname("net.inet.ipsec.stats", NULL, &slen, NULL, 0);
-	if (status == 0)
-	    return fast_ipsec_stats(off, name);
+	if (status == 0 && slen == sizeof(struct newipsecstat))
+		return fast_ipsec_stats(off, name);
 
-	return ipsec_stats(off, name);
+	return ipsec_stats(off, "ipsec");
 }
 
 
