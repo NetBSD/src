@@ -1,4 +1,4 @@
-/*	$NetBSD: nappi_nppb.c,v 1.1 2002/07/15 17:13:34 ichiro Exp $ */
+/*	$NetBSD: nappi_nppb.c,v 1.2 2002/07/21 14:26:05 ichiro Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -52,8 +52,42 @@
 static int	nppbmatch(struct device *, struct cfdata *, void *);
 static void	nppbattach(struct device *, struct device *, void *);
 
+int	nppb_intr(void *); /* XXX into i21555var.h */
+
 struct cfattach nppb_ca = {
 	sizeof(struct device), nppbmatch, nppbattach
+};
+
+#define NPPB_MMBA	0x10
+#define NPPB_IOBA	0x14
+
+#define CSR_READ_1(sc, reg)	\
+	bus_space_read_1(sc->sc_st, sc->sc_sh, reg)
+#define CSR_READ_2(sc, reg)	\
+	bus_space_read_2(sc->sc_st, sc->sc_sh, reg)
+#define CSR_READ_4(sc, reg)	\
+	bus_space_read_4(sc->sc_st, sc->sc_sh, reg)
+
+#define CSR_WRITE_1(sc, reg, val)	\
+	bus_space_write_1(sc->sc_st, sc->sc_sh, reg, val)
+#define CSR_WRITE_2(sc, reg, val)	\
+	bus_space_write_2(sc->sc_st, sc->sc_sh, reg, val)
+#define CSR_WRITE_4(sc, reg, val)	\
+	bus_space_write_4(sc->sc_st, sc->sc_sh, reg, val)
+
+struct nppb_softc {  /* XXX into i21555var.h */
+	struct device sc_dev;		/* generic device information */
+	bus_space_tag_t sc_st;		/* bus space tag */
+	bus_space_handle_t sc_sh;	/* bus space handle */
+
+	void *sc_ih;			/* interrupt handler cookie */
+};
+
+struct nppb_pci_softc {
+	struct nppb_softc psc_nppb;
+
+	pci_chipset_tag_t psc_pc;	/* pci chipset tag */
+	pcitag_t psc_tag;		/* pci register tag */
 };
 
 static int
@@ -87,12 +121,79 @@ nppbmatch(struct device *parent, struct cfdata *cf, void *aux)
 static void
 nppbattach(struct device *parent, struct device *self, void *aux)
 {
+	struct nppb_pci_softc *psc = (struct nppb_pci_softc *)self;
+	struct nppb_softc *sc = (struct nppb_softc *)self;
 	struct pci_attach_args *pa = aux;
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pci_intr_handle_t ih;
+	const char *intrstr = NULL;
 	char devinfo[256];
 
+	bus_space_tag_t iot, memt;
+	bus_space_handle_t ioh, memh;
+	int ioh_valid, memh_valid;
+
 	printf("\n");
+	psc->psc_pc = pc;
+	psc->psc_tag = pa->pa_tag;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 		PCI_REVISION(pa->pa_class));
+
+	/* Make sure bus-mastering is enabled. */
+	pci_conf_write(psc->psc_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
+	    PCI_COMMAND_MASTER_ENABLE);
+
+	/* Chip Reset */
+	pci_conf_write(psc->psc_pc, pa->pa_tag, 0xD8, 0x03);
+
+	/* Map control/status registers */
+	ioh_valid = (pci_mapreg_map(pa, NPPB_IOBA,
+			PCI_MAPREG_TYPE_IO, 0,
+			&iot, &ioh, NULL, NULL) == 0);
+	memh_valid = (pci_mapreg_map(pa, NPPB_MMBA,
+			PCI_MAPREG_TYPE_MEM |
+			PCI_MAPREG_MEM_TYPE_32BIT,
+			0, &memt, &memh, NULL, NULL) == 0);
+
+	if (memh_valid) {
+	    sc->sc_st = memt;
+            sc->sc_sh = memh;
+	} else if (ioh_valid) {
+	    sc->sc_st = iot;
+	    sc->sc_sh = ioh;
+	} else {
+	    printf(": unable to map device registers\n");
+	    return;
+	}
+
+	/* Map and establish our interrupt */
+	if (pci_intr_map(pa, &ih)) {
+		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		return;
+	}
+	intrstr = pci_intr_string(pc, ih);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, nppb_intr, sc);
+	if (sc->sc_ih == NULL) {
+		printf("%s: couldn't establish interrupt",
+		    sc->sc_dev.dv_xname);
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		return;
+	}
+	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+
+}
+
+/* XXX */
+int
+nppb_intr(void *arg)
+{
+#if 0
+	struct nppb_softc *sc = arg;
+#endif
+	return(0);
 }
