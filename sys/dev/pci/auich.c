@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.8 2002/01/14 01:29:13 augustss Exp $	*/
+/*	$NetBSD: auich.c,v 1.9 2002/02/02 11:13:44 augustss Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.8 2002/01/14 01:29:13 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.9 2002/02/02 11:13:44 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,11 +168,18 @@ struct auich_softc {
 
 	struct auich_dma *sc_dmas;
 
+	int  sc_fixed_rate;
+
 	void (*sc_pintr)(void *);
 	void *sc_parg;
 
 	void (*sc_rintr)(void *);
 	void *sc_rarg;
+
+	/* Power Management */
+	void *sc_powerhook;
+	int sc_suspend;
+	u_int16_t ext_status;
 };
 
 /* Debug */
@@ -221,6 +228,8 @@ int	auich_alloc_cdata(struct auich_softc *);
 int	auich_allocmem(struct auich_softc *, size_t, size_t,
 	    struct auich_dma *);
 int	auich_freemem(struct auich_softc *, struct auich_dma *);
+
+void	auich_powerhook(int, void *);
 
 struct audio_hw_if auich_hw_if = {
 	auich_open,
@@ -314,6 +323,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t csr;
 	const char *intrstr;
 	const struct auich_devtype *d;
+	u_int16_t ext_id, ext_status;
 
 	d = auich_lookup(pa);
 	if (d == NULL)
@@ -380,7 +390,24 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	if (ac97_attach(&sc->host_if) != 0)
 		return;
 
+	auich_read_codec(sc, AC97_REG_EXTENDED_ID, &ext_id);
+        if ((ext_id & (AC97_CODEC_DOES_VRA | AC97_CODEC_DOES_MICVRA)) != 0) {
+		auich_read_codec(sc, AC97_REG_EXTENDED_STATUS, &ext_status);
+        	if ((ext_id & AC97_CODEC_DOES_VRA) !=0)
+                	ext_status |= AC97_ENAB_VRA;
+        	if ((ext_id & AC97_CODEC_DOES_MICVRA) !=0)
+                	ext_status |= AC97_ENAB_MICVRA;
+        	auich_write_codec(sc, AC97_REG_EXTENDED_STATUS, ext_status);
+		sc->sc_fixed_rate = 0;
+	} else {
+		sc->sc_fixed_rate = 48000;
+	}
+
 	audio_attach_mi(&auich_hw_if, sc, &sc->sc_dev);
+
+	/* Watch for power change */
+	sc->sc_suspend = PWR_RESUME;
+	sc->sc_powerhook = powerhook_establish(auich_powerhook, sc);
 }
 
 int
@@ -547,11 +574,14 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 			continue;
 
 		inout = mode == AUMODE_PLAY ? ICH_PM_PCMO : ICH_PM_PCMI;
-
-		/*
-		 * XXX NEED TO DETERMINE WHICH RATES THE CODEC SUPPORTS!
-		 */
-		if (p->sample_rate != 48000)
+		
+		if ((p->sample_rate !=  8000) &&
+		    (p->sample_rate != 11025) &&
+		    (p->sample_rate != 16000) &&
+		    (p->sample_rate != 22050) &&
+		    (p->sample_rate != 32000) &&
+		    (p->sample_rate != 44100) &&
+		    (p->sample_rate != 48000))
 			return (EINVAL);
 
 		p->factor = 1;
@@ -636,7 +666,7 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 		auich_write_codec(sc, AC97_REG_POWER, val | inout);
 
 		auich_write_codec(sc, AC97_REG_PCM_FRONT_DAC_RATE,
-		    p->sample_rate);
+		    sc->sc_fixed_rate ? sc->sc_fixed_rate : p->sample_rate);
 		auich_read_codec(sc, AC97_REG_PCM_FRONT_DAC_RATE, &rate);
 		p->sample_rate = rate;
 
@@ -1127,4 +1157,41 @@ auich_alloc_cdata(struct auich_softc *sc)
 	bus_dmamem_free(sc->dmat, &seg, rseg);
  fail_0:
 	return (error);
+}
+
+void
+auich_powerhook(int why, void *addr)
+{
+	struct auich_softc *sc = (struct auich_softc *)addr;
+
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		/* Power down */
+		DPRINTF(1, ("%s: power down\n", sc->sc_dev.dv_xname));
+		sc->sc_suspend = why;
+		auich_read_codec(sc, AC97_REG_EXTENDED_STATUS, &sc->ext_status);
+		break;
+
+	case PWR_RESUME:
+		/* Wake up */
+		DPRINTF(1, ("%s: power resume\n", sc->sc_dev.dv_xname));
+		if (sc->sc_suspend == PWR_RESUME) {
+			printf("%s: resume without suspend.\n",
+			    sc->sc_dev.dv_xname);
+			sc->sc_suspend = why;
+			return;
+		}
+		sc->sc_suspend = why;
+		auich_reset_codec(sc);
+		DELAY(1000);
+		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+		auich_write_codec(sc, AC97_REG_EXTENDED_STATUS, sc->ext_status);
+		break;
+
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
+	}
 }
