@@ -19,14 +19,18 @@
  */
 
 /*
- * $Id: if_ae.c,v 1.6 1994/02/22 01:15:00 briggs Exp $
+ * $Id: if_ae.c,v 1.7 1994/02/23 04:39:49 briggs Exp $
  */
 
 /*
  * Modification history
  *
  * $Log: if_ae.c,v $
- * Revision 1.6  1994/02/22 01:15:00  briggs
+ * Revision 1.7  1994/02/23 04:39:49  briggs
+ * Bail out in the probe since it's not safe at the moment (hangs on my
+ * DaynaPort card).  Will fix when I get docs for the card.
+ *
+ * Revision 1.6  1994/02/22  01:15:00  briggs
  * Get rid of if_init assignment.
  *
  * Revision 1.5  1994/01/30  01:14:49  briggs
@@ -212,6 +216,9 @@ ae_probe(parent, cf, aux)
 			sc->arpcom.ac_enaddr[i] = *(sc->rom_addr + i*2);
 		break;
 	}
+
+printf("bailing in if_ae.c:ae_probe.\n");
+return 0;
 
 	/*
 	 * allocate one xmit buffer if < 16k, two buffers otherwise
