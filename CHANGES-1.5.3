@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.4 2001/10/24 15:03:54 jhawk Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.5 2001/10/25 19:23:14 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -185,3 +185,84 @@ sys/dev/pci/bktr/bktr_os.c			1.21
 
   Check unit count correctly (correct fencepost error)
   on device open.
+
+distrib/sets/lists/comp/mi			patch
+distrib/sets/lists/man/mi			patch
+distrib/sets/lists/man/obsolete.mi		patch
+distrib/utils/sysinst/arch/alpha/md.h		patch
+distrib/utils/sysinst/arch/i386/md.h		patch
+etc/etc.alpha/MAKEDEV				1.68-1.69
+etc/etc.i386/MAKEDEV				1.129,1.135
+share/man/man4/Makefile				patch
+share/man/man4/ca.4				deleted
+share/man/man4/cac.4				patch
+share/man/man4/iop.4				1.1-1.11 (new)
+share/man/man4/iopsp.4				1.1-1.4 (new)
+share/man/man4/ld.4				1.1-1.4 (new)
+share/man/man4/mlx.4				1.1-1.4,1.6
+share/man/man4/twe.4				1.1-1.7 (new)
+sys/arch/alpha/alpha/conf.c			patch
+sys/arch/alpha/conf/ALPHA			patch
+sys/arch/alpha/conf/GENERIC			patch
+sys/arch/alpha/conf/files.alpha			1.126 via patch
+sys/arch/arc/conf/files.arc			1.24
+sys/arch/arm32/conf/files.arm32			1.83
+sys/arch/atari/conf/files.atari			1.70
+sys/arch/bebox/conf/files.bebox			1.21
+sys/arch/cobalt/conf/files.cobalt		1.7
+sys/arch/i386/conf/GENERIC			patch
+sys/arch/i386/conf/INSTALL			patch
+sys/arch/i386/conf/files.i386			patch
+sys/arch/i386/i386/autoconf.c			patch
+sys/arch/i386/i386/conf.c			patch
+sys/arch/macppc/conf/files.macppc		1.36
+sys/arch/sparc64/conf/files.sparc64		patch
+sys/conf/files					patch
+sys/dev/Makefile				patch
+sys/dev/eisa/cac_eisa.c				1.1-1.2 (new)
+sys/dev/eisa/eisadevs				1.19-1.24
+sys/dev/eisa/eisadevs.h				regenerate
+sys/dev/eisa/eisadevs_data.h			regenerate
+sys/dev/eisa/files.eisa				1.22
+sys/dev/i2o/Makefile				1.1-1.4 (new)
+sys/dev/i2o/i2o.h				1.1-1.8 (new)
+sys/dev/i2o/iop.c				1.1-1.16 (new, via patch)
+sys/dev/i2o/iopio.h				1.1 (new)
+sys/dev/i2o/iopreg.h				1.1 (new)
+sys/dev/i2o/iopsp.c				1.1-1.10 (new, via patch)
+sys/dev/i2o/iopspvar.h				1.1-1.5 (new, via patch)
+sys/dev/i2o/iopvar.h				1.1-1.8 (new)
+sys/dev/i2o/ld_iop.c				1.1-1.9 (new)
+sys/dev/ic/ca.c					deleted
+sys/dev/ic/cac.c				1.10-1.18 via patch
+sys/dev/ic/cacreg.h				1.4-1.5 via patch
+sys/dev/ic/cacvar.h				1.6-1.8
+sys/dev/ic/ld_cac.c				1.1-1.3 (new)
+sys/dev/ic/ld_mlx.c				1.1-1.2 (new)
+sys/dev/ic/mlx.c				1.1-1.13 (new, via patch)
+sys/dev/ic/mlxio.h				1.1 (new)
+sys/dev/ic/mlxreg.h				1.1-1.3 (new)
+sys/dev/ic/mlxvar.h				1.1-1.4 (new)
+sys/dev/ld.c					1.1-1.11 (new)
+sys/dev/ldvar.h					1.1-1.5 (new)
+sys/dev/pci/Makefile				patch
+sys/dev/pci/cac_pci.c				1.5-1.10 via patch
+sys/dev/pci/files.pci				patch
+sys/dev/pci/iop_pci.c				1.1-1.5 (new, via patch)
+sys/dev/pci/ld_twe.c				1.1-1.7 (new)
+sys/dev/pci/mlx_pci.c				1.1-1.5 (new, via patch)
+sys/dev/pci/pci_subr.c				1.39-1.40
+sys/dev/pci/pcidevs				1.282,1.285,1.299
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
+sys/dev/pci/pcireg.h				1.31-1.32
+sys/dev/pci/twe.c				1.1-1.19 (new, via patch)
+sys/dev/pci/twereg.h				1.1-1.5 (new)
+sys/dev/pci/twevar.h				1.1-1.8 (new)
+sys/dev/scsipi/scsiconf.c			1.153
+sys/sys/conf.h					patch
+sys/sys/device.h				1.43
+sys/sys/disklabel.h				patch
+sys/sys/scsiio.h				1.9
+
+  Add Mylex DACC960, CAC-EISA, and I2O block/SCSI drivers.
