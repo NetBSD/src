@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.2 2002/02/25 20:19:26 christos Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.3 2002/03/05 16:16:02 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.2 2002/02/25 20:19:26 christos Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.3 2002/03/05 16:16:02 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: utmpx.c,v 1.2 2002/02/25 20:19:26 christos Exp $");
 #include <vis.h>
 #include <utmpx.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 static FILE *fp;
 static struct utmpx ut;
@@ -269,6 +270,22 @@ utmp_update(const struct utmpx *utx)
 		return NULL;
 	}
 
+}
+
+void
+updwtmpx(const char *file, const struct utmpx *utx)
+{
+	int fd = open(file, O_WRONLY | O_APPEND);
+	if (fd == -1) {
+		if ((fd = open(file, O_CREAT | O_WRONLY, 0644)) == -1)
+			return;
+		(void)memset(&ut, 0, sizeof(ut));
+		ut.ut_type = SIGNATURE;
+		(void)memcpy(ut.ut_user, vers, sizeof(vers));
+		(void)write(fd, &ut, sizeof(ut));
+	}
+	(void)write(fd, utx, sizeof(*utx));
+	(void)close(fd);
 }
 
 
