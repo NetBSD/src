@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: options.c,v 1.4 1994/01/25 05:58:10 paulus Exp $";
+static char rcsid[] = "$Id: options.c,v 1.5 1994/02/22 00:12:01 paulus Exp $";
 #endif
 
 #include <stdio.h>
@@ -85,6 +85,7 @@ static int setproxyarp __ARGS((void));
 static int setpersist __ARGS((void));
 static int setdologin __ARGS((void));
 static int setusehostname __ARGS((void));
+static int setnoipdflt __ARGS((void));
 static int setlcptimeout __ARGS((char **));
 static int setlcpterm __ARGS((char **));
 static int setlcpconf __ARGS((char **));
@@ -98,6 +99,8 @@ static int setpapreqs __ARGS((char **));
 static int setchaptimeout __ARGS((char **));
 static int setchapchal __ARGS((char **));
 static int setchapintv __ARGS((char **));
+static int setipcpaccl __ARGS((void));
+static int setipcpaccr __ARGS((void));
 
 static int number_option __ARGS((char *, long *, int));
 
@@ -125,6 +128,7 @@ extern int uselogin;
 extern char our_name[];
 extern char remote_name[];
 int usehostname;
+int disable_defaultip;
 
 /*
  * Valid arguments.
@@ -172,6 +176,7 @@ static struct cmd {
     "proxyarp", 0, setproxyarp,	/* Add proxy ARP entry */
     "persist", 0, setpersist,	/* Keep on reopening connection after close */
     "login", 0, setdologin,	/* Use system password database for UPAP */
+    "noipdefault", 0, setnoipdflt, /* Don't use name for default IP adrs */
     "lcp-restart", 1, setlcptimeout,	/* Set timeout for LCP */
     "lcp-max-terminate", 1, setlcpterm,	/* Set max #xmits for term-reqs */
     "lcp-max-configure", 1, setlcpconf,	/* Set max #xmits for conf-reqs */
@@ -185,6 +190,8 @@ static struct cmd {
     "chap-restart", 1, setchaptimeout,	/* Set timeout for CHAP */
     "chap-max-challenge", 1, setchapchal, /* Set max #xmits for challenge */
     "chap-interval", 1, setchapintv,	/* Set interval for rechallenge */
+    "ipcp-accept-local", 0, setipcpaccl, /* Accept peer's address for us */
+    "ipcp-accept-remote", 0, setipcpaccr, /* Accept peer's address for it */
     NULL
 };
 
@@ -926,6 +933,39 @@ setipaddr(arg)
 
 
 /*
+ * setnoipdflt - disable setipdefault()
+ */
+static int
+setnoipdflt()
+{
+    disable_defaultip = 1;
+    return 1;
+}
+
+
+/*
+ * setipcpaccl - accept peer's idea of our address
+ */
+static int
+setipcpaccl()
+{
+    ipcp_wantoptions[0].accept_local = 1;
+    return 1;
+}
+
+
+/*
+ * setipcpaccr - accept peer's idea of its address
+ */
+static int
+setipcpaccr()
+{
+    ipcp_wantoptions[0].accept_remote = 1;
+    return 1;
+}
+
+
+/*
  * setipdefault - default our local IP address based on our hostname.
  */
 void
@@ -938,7 +978,7 @@ setipdefault()
     /*
      * If local IP address already given, don't bother.
      */
-    if (wo->ouraddr != 0)
+    if (wo->ouraddr != 0 || disable_defaultip)
 	return;
 
     /*
@@ -946,6 +986,7 @@ setipdefault()
      * and take the first IP address as our local IP address.
      * If there isn't an IP address for our hostname, too bad.
      */
+    wo->accept_local = 1;	/* don't insist on this default value */
     if ((hp = gethostbyname(hostname)) == NULL)
 	return;
     local = *(long *)hp->h_addr;
