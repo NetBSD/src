@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.10.4.1 2000/08/07 00:28:46 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.10.4.2 2000/08/16 17:07:51 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -54,8 +54,8 @@
 
 #define GET_DEV(com) ((com) & 0xff)
 
-#define TO_OSSVOL(x) ((x) * 100 / 255)
-#define FROM_OSSVOL(x) (((x) > 100 ? 100 : (x)) * 255 / 100)
+#define TO_OSSVOL(x)	(((x) * 100 + 127) / 255)
+#define FROM_OSSVOL(x)	((((x) > 100 ? 100 : (x)) * 255 + 50) / 100)
 
 static struct audiodevinfo *getdevinfo(int);
 
