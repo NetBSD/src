@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 1997/10/19 23:36:26 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.13 1998/07/06 06:55:24 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.12 1997/10/19 23:36:26 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.13 1998/07/06 06:55:24 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -79,7 +79,7 @@ int     verbose = 1;                    /* to report kvm read errs */
 int     hz, stathz;
 char    c;
 char    *namp;
-char    hostname[MAXHOSTNAMELEN];
+char    hostname[MAXHOSTNAMELEN + 1];
 WINDOW  *wnd;
 int     CMDLINE;
 
@@ -94,8 +94,10 @@ main(argc, argv)
 	char **argv;
 {
 	int ch;
+	gid_t egid = getegid();
 	char errbuf[_POSIX2_LINE_MAX];
 
+	(void)setegid(getgid());
 	while ((ch = getopt(argc, argv, "M:N:w:")) != -1)
 		switch(ch) {
 		case 'M':
@@ -115,11 +117,15 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 	/*
-	 * Discard setgid privileges if not the running kernel so that bad
-	 * guys can't print interesting stuff from kernel memory.
+	 * Discard setgid privileges.  If not the running kernel, we toss
+	 * them away totally so that bad guys can't print interesting stuff
+	 * from kernel memory, otherwise switch back to kmem for the
+	 * duration of the kvm_openfiles() call.
 	 */
 	if (nlistf != NULL || memf != NULL)
-		setgid(getgid());
+		(void)setgid(getgid());
+	else
+		(void)setegid(egid);
 
 	while (argc > 0) {
 		if (isdigit(argv[0][0])) {
@@ -138,11 +144,15 @@ main(argc, argv)
 		}
 		argc--, argv++;
 	}
+
 	kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf);
 	if (kd == NULL) {
 		error("%s", errbuf);
 		exit(1);
 	}
+	/* get rid of it now anyway */
+	if (nlistf == NULL && memf == NULL)
+		(void)setgid(getgid());
 	if (kvm_nlist(kd, namelist)) {
 		nlisterr(namelist);
 		exit(1);
@@ -178,6 +188,7 @@ main(argc, argv)
 		die(0);
 	}
 	gethostname(hostname, sizeof (hostname));
+	hostname[sizeof(hostname) - 1] = '\0';
 	NREAD(X_HZ, &hz, LONG);
 	NREAD(X_STATHZ, &stathz, LONG);
 	(*curcmd->c_init)();

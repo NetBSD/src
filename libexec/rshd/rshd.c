@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.13 1998/02/28 13:29:03 enami Exp $	*/
+/*	$NetBSD: rshd.c,v 1.14 1998/07/06 06:48:56 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1992, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.13 1998/02/28 13:29:03 enami Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.14 1998/07/06 06:48:56 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,7 +160,7 @@ doit(fromp)
 	extern char *__rcmd_errstr;	/* syslog hook from libc/net/rcmd.c. */
 	struct hostent *hp;
 	struct passwd *pwd;
-	u_short port;
+	in_port_t port;
 	fd_set ready, readfrom;
 	int cc, nfd, pv[2], pid, s = -1;	/* XXX gcc */
 	int one = 1;
@@ -182,7 +182,7 @@ doit(fromp)
 	  }
 	}
 #endif
-	fromp->sin_port = ntohs((u_short)fromp->sin_port);
+	fromp->sin_port = ntohs((in_port_t)fromp->sin_port);
 	if (fromp->sin_family != AF_INET) {
 		syslog(LOG_ERR, "malformed \"from\" address (af %d)\n",
 		    fromp->sin_family);
@@ -530,11 +530,12 @@ int
 local_domain(h)
 	char *h;
 {
-	char localhost[MAXHOSTNAMELEN];
+	char localhost[MAXHOSTNAMELEN + 1];
 	char *p1, *p2;
 
 	localhost[0] = 0;
-	(void) gethostname(localhost, sizeof(localhost));
+	(void)gethostname(localhost, sizeof(localhost));
+	localhost[sizeof(localhost) - 1] = '\0';
 	p1 = topdomain(localhost);
 	p2 = topdomain(h);
 	if (p1 == NULL || p2 == NULL || !strcasecmp(p1, p2))

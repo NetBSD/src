@@ -1,4 +1,4 @@
-/*	$NetBSD: fsinfo.c,v 1.6 1997/10/26 00:25:41 christos Exp $	*/
+/*	$NetBSD: fsinfo.c,v 1.7 1998/07/06 06:45:42 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Erez Zadok
@@ -240,6 +240,7 @@ main(int argc, char *argv[])
     perror("gethostname");
     exit(1);
   }
+  hostname[sizeof(hostname) - 1] = '\0';
 
   /*
    * Get the username

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.12 1998/07/05 08:22:36 mrg Exp $	*/
+/*	$NetBSD: lock.c,v 1.13 1998/07/06 06:51:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: lock.c,v 1.12 1998/07/05 08:22:36 mrg Exp $");
+__RCSID("$NetBSD: lock.c,v 1.13 1998/07/06 06:51:23 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -103,7 +103,7 @@ main(argc, argv)
 	time_t curtime;
 	int ch, sectimeout, usemine;
 	char *ap, *mypw, *ttynam, *tzn;
-	char hostname[MAXHOSTNAMELEN], s[BUFSIZ], s1[BUFSIZ];
+	char hostname[MAXHOSTNAMELEN + 1], s[BUFSIZ], s1[BUFSIZ];
 
 	if (!(pw = getpwuid(getuid())))
 		errx(1, "unknown uid %d.", getuid());

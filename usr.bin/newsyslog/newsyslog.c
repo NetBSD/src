@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.14 1998/04/02 10:35:26 kleink Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.15 1998/07/06 06:54:06 mrg Exp $	*/
 
 /*
  * This file contains changes from the Open Software Foundation.
@@ -29,7 +29,7 @@ provided "as is" without express or implied warranty.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.14 1998/04/02 10:35:26 kleink Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.15 1998/07/06 06:54:06 mrg Exp $");
 #endif /* not lint */
 
 #ifndef CONF
@@ -94,7 +94,7 @@ time_t  timenow;
 int     syslog_pid;             /* read in from /etc/syslog.pid */
 #define MIN_PID		3
 #define MAX_PID		65534
-char    hostname[64];           /* hostname */
+char    hostname[MAXHOSTNAMELEN + 1];           /* hostname */
 char    *daytime;               /* timenow in human readable form */
 
 
@@ -203,7 +203,8 @@ PRS(argc,argv)
 		(void)fclose(f);
 
         /* Let's get our hostname */
-        (void) gethostname(hostname, sizeof(hostname));
+        (void)gethostname(hostname, sizeof(hostname));
+	hostname[sizeof(hostname) - 1] = '\0';
 
 	/* Truncate domain */
 	if ((p = strchr(hostname, '.')) != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: amd.c,v 1.7 1997/10/26 00:24:48 christos Exp $	*/
+/*	$NetBSD: amd.c,v 1.8 1998/07/06 06:45:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Erez Zadok
@@ -59,8 +59,8 @@ struct amu_global_options gopt;	/* where global options are stored */
 char pid_fsname[16 + MAXHOSTNAMELEN];	/* "kiska.southseas.nz:(pid%d)" */
 char *progname;			/* "amd" */
 char *hostdomain = "unknown.domain";
-char hostname[MAXHOSTNAMELEN] = "localhost";	/* Hostname */
-char hostd[2 * MAXHOSTNAMELEN];	/* Host+domain */
+char hostname[MAXHOSTNAMELEN + 1] = "localhost";	/* Hostname */
+char hostd[2 * MAXHOSTNAMELEN + 1];	/* Host+domain */
 char *endian = ARCH_ENDIAN;	/* Big or Little endian */
 char *cpu = HOST_CPU;		/* CPU type */
 char *PrimNetName;		/* name of primary network */
@@ -326,6 +326,7 @@ main(int argc, char *argv[])
     plog(XLOG_FATAL, "gethostname: %m");
     going_down(1);
   }
+  hostname[sizeof(hostname) - 1] = '\0';
 
   /*
    * Check it makes sense

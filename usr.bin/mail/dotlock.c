@@ -1,4 +1,4 @@
-/*	$NetBSD: dotlock.c,v 1.3 1997/10/19 14:12:30 mrg Exp $	*/
+/*	$NetBSD: dotlock.c,v 1.4 1998/07/06 06:51:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dotlock.c,v 1.3 1997/10/19 14:12:30 mrg Exp $");
+__RCSID("$NetBSD: dotlock.c,v 1.4 1998/07/06 06:51:55 mrg Exp $");
 #endif
 
 #include "rcv.h"
@@ -56,7 +56,7 @@ static int
 create_exclusive(fname)
 	const char *fname;
 {
-	char path[MAXPATHLEN], hostname[MAXHOSTNAMELEN];
+	char path[MAXPATHLEN], hostname[MAXHOSTNAMELEN + 1];
 	const char *ptr;
 	struct timeval tv;
 	pid_t pid;
@@ -64,8 +64,9 @@ create_exclusive(fname)
 	int fd, serrno;
 	struct stat st;
 
-	(void) gettimeofday(&tv, NULL);
-	(void) gethostname(hostname, MAXHOSTNAMELEN);
+	(void)gettimeofday(&tv, NULL);
+	(void)gethostname(hostname, sizeof hostname);
+	hostname[sizeof(hostname) - 1] = '\0';
 	pid = getpid();
 
 	cookie = pid ^ tv.tv_usec;

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 1998/03/30 01:52:02 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.26 1998/07/06 06:48:19 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.25 1998/03/30 01:52:02 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.26 1998/07/06 06:48:19 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ struct termios tmode, omode;
 
 int crmod, digit, lower, upper;
 
-char	hostname[MAXHOSTNAMELEN];
+char	hostname[MAXHOSTNAMELEN + 1];
 struct	utsname kerninfo;
 char	name[16];
 char	dev[] = _PATH_DEV;
@@ -192,8 +192,9 @@ main(argc, argv)
 /*
 	signal(SIGQUIT, SIG_DFL);
 */
-	openlog("getty", LOG_ODELAY|LOG_CONS|LOG_PID, LOG_AUTH);
+	openlog("getty", LOG_ODELAY|LOG_PID, LOG_AUTH);
 	gethostname(hostname, sizeof(hostname));
+	hostname[sizeof(hostname) - 1] = '\0';
 	if (hostname[0] == '\0')
 		strcpy(hostname, "Amnesiac");
 	uname(&kerninfo);

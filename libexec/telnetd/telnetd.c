@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.12 1997/10/20 02:12:17 enami Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.13 1998/07/06 06:49:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.12 1997/10/20 02:12:17 enami Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.13 1998/07/06 06:49:41 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -767,8 +767,8 @@ terminaltypeok(s)
 #endif	/* MAXHOSTNAMELEN */
 
 char *hostname;
-char host_name[MAXHOSTNAMELEN];
-char remote_host_name[MAXHOSTNAMELEN];
+char host_name[MAXHOSTNAMELEN + 1];
+char remote_host_name[MAXHOSTNAMELEN + 1];
 
 #ifndef	convex
 extern void telnet P((int, int));
@@ -853,7 +853,8 @@ doit(who)
 	remote_host_name[sizeof(remote_host_name)-1] = 0;
 	host = remote_host_name;
 
-	(void) gethostname(host_name, sizeof (host_name));
+	(void)gethostname(host_name, sizeof (host_name));
+	host_name[sizeof(host_name) - 1] = '\0';
 	hostname = host_name;
 
 #if	defined(AUTHENTICATION)

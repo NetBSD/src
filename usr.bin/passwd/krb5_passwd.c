@@ -1,4 +1,4 @@
-/*	$NetBSD: krb5_passwd.c,v 1.5 1997/10/19 12:29:44 lukem Exp $	*/
+/*	$NetBSD: krb5_passwd.c,v 1.6 1998/07/06 06:54:23 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)krb_passwd.c	5.4 (Berkeley) 3/1/91";
 #else
-__RCSID("$NetBSD: krb5_passwd.c,v 1.5 1997/10/19 12:29:44 lukem Exp $");
+__RCSID("$NetBSD: krb5_passwd.c,v 1.6 1998/07/06 06:54:23 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -845,8 +845,8 @@ finish()
 #ifdef KRB_NONETWORK
 #include <utmp.h>
 
-#ifndef MAXHOSTNAME
-#define MAXHOSTNAME 64
+#ifndef MAXHOSTNAMELEN
+#define MAXHOSTNAMELEN 64
 #endif
 
 int utfile;		/* Global utfile file descriptor for BSD version
@@ -896,7 +896,7 @@ int network_connected()
 struct utmp utmpent;
 struct utmp retutent, *tmpptr;
 char *display_indx;
-char currenthost[MAXHOSTNAME];
+char currenthost[MAXHOSTNAMELEN + 1];
 char *username,*tmpname;
 
 
@@ -967,6 +967,7 @@ char *username,*tmpname;
     /* Check if : is in hostname if so this is xwindow display */
 
     if (gethostname(currenthost,sizeof(currenthost))) return(1);
+    currenthost[sizeof(currenthost) - 1] = '\0';
 #ifdef NO_UT_HOST
     display_indx = (char *) 0;
 #else

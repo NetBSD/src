@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.27 1998/05/14 22:48:50 kml Exp $	*/
+/*	$NetBSD: route.c,v 1.28 1998/07/06 06:52:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.27 1998/05/14 22:48:50 kml Exp $");
+__RCSID("$NetBSD: route.c,v 1.28 1998/07/06 06:52:14 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -524,10 +524,13 @@ routename(in)
 
 	if (first) {
 		first = 0;
-		if (gethostname(domain, MAXHOSTNAMELEN) == 0 &&
-		    (cp = strchr(domain, '.')))
-			(void) strcpy(domain, cp + 1);
-		else
+		if (gethostname(domain, MAXHOSTNAMELEN) == 0) {
+			domain[sizeof(domain) - 1] = '\0';
+			if ((cp = strchr(domain, '.')))
+				(void)strcpy(domain, cp + 1);
+			else
+				domain[0] = 0;
+		} else
 			domain[0] = 0;
 	}
 	cp = 0;

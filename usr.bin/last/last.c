@@ -1,4 +1,4 @@
-/*	$NetBSD: last.c,v 1.9 1997/08/26 18:52:13 thorpej Exp $	*/
+/*	$NetBSD: last.c,v 1.10 1998/07/06 06:51:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: last.c,v 1.9 1997/08/26 18:52:13 thorpej Exp $");
+__RCSID("$NetBSD: last.c,v 1.10 1998/07/06 06:51:08 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -380,7 +380,7 @@ hostconv(arg)
 	char *arg;
 {
 	static int first = 1;
-	static char *hostdot, name[MAXHOSTNAMELEN];
+	static char *hostdot, name[MAXHOSTNAMELEN + 1];
 	char *argdot;
 
 	if (!(argdot = strchr(arg, '.')))
@@ -389,6 +389,7 @@ hostconv(arg)
 		first = 0;
 		if (gethostname(name, sizeof(name)))
 			err(1, "gethostname");
+		name[sizeof(name) - 1] = '\0';
 		hostdot = strchr(name, '.');
 	}
 	if (hostdot && !strcasecmp(hostdot, argdot))
