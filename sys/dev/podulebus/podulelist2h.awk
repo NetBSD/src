@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: podulelist2h.awk,v 1.4 1998/01/09 06:57:44 thorpej Exp $
+#	$NetBSD: podulelist2h.awk,v 1.1 2001/03/17 19:05:19 bjh21 Exp $
 #	from: devlist2h.awk,v 1.2 1996/01/22 21:08:09 cgd Exp
 #
 # Copyright (c) 1996 Mark Brinicombe
