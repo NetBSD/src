@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cons.c	7.2 (Berkeley) 5/9/91
- *	$Id: cons.c,v 1.15 1994/04/11 21:53:54 cgd Exp $
+ *	$Id: cons.c,v 1.16 1994/06/08 11:19:41 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -129,7 +129,7 @@ cnclose(dev, flag, mode, p)
 		vrele(cn_devvp);
 		cn_devvp = NULLVP;
 	}
-	if ((vfinddev(dev, VCHR, &vp) == 0) && vcount(vp))
+	if (vfinddev(dev, VCHR, &vp) && vcount(vp))
 		return (0);
 	return ((*cdevsw[major(dev)].d_close)(dev, flag, mode, p));
 }
