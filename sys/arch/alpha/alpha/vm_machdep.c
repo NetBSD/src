@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.50 1999/07/08 18:05:22 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.51 1999/11/13 00:27:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.50 1999/07/08 18:05:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.51 1999/11/13 00:27:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -375,7 +375,7 @@ vmapbuf(bp, len)
 		    &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		pmap_enter(vm_map_pmap(phys_map), taddr, trunc_page(pa),
-		    VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+		    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 	}
