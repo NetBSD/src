@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.40 2002/02/17 19:24:18 martin Exp $	*/
+/*	$NetBSD: wi.c,v 1.41 2002/02/18 14:41:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.40 2002/02/17 19:24:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.41 2002/02/18 14:41:50 yamt Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -186,6 +186,7 @@ wi_attach(sc)
 	if (memcmp(sc->sc_macaddr, empty_macaddr, ETHER_ADDR_LEN) == 0) {
 		printf("%s: could not get mac address, attach failed\n",
 		    sc->sc_dev.dv_xname);
+			splx(s);
 			return 1;
 	}
 
