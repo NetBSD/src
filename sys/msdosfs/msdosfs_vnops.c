@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.21 1994/09/28 11:31:35 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.22 1994/09/28 11:51:36 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -326,7 +326,8 @@ msdosfs_getattr(ap)
 	vap->va_ctime = vap->va_atime;
 	vap->va_flags = dep->de_flag;
 	vap->va_gen = 0;
-	vap->va_blocksize = dep->de_pmp->pm_bpcluster;
+	from: vap->va_blocksize = dep->de_pmp->pm_bpcluster;
+ *	$Id: msdosfs_vnops.c,v 1.22 1994/09/28 11:51:36 mycroft Exp $
 	vap->va_bytes = (dep->de_FileSize + dep->de_pmp->pm_crbomask) &
 	    			~(dep->de_pmp->pm_crbomask);
 	vap->va_type = ap->a_vp->v_type;
@@ -355,7 +356,8 @@ msdosfs_setattr(ap)
 	    (vap->va_fsid != VNOVAL) || (vap->va_fileid != VNOVAL) ||
 	    (vap->va_blocksize != VNOVAL) || (vap->va_rdev != VNOVAL) ||
 	    (vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL) ||
-	    (vap->va_uid != VNOVAL) || (vap->va_gid != VNOVAL)) {
+	    (vap->va_uid != VNOVAL) || (vap->va_gid != VNOVAL) ||
+	    (vap->va_flags != VNOVAL)) {
 #ifdef MSDOSFS_DEBUG
 		printf("msdosfs_setattr(): returning EINVAL\n");
 		printf("    va_type %d, va_nlink %x, va_fsid %x, va_fileid %x\n",
