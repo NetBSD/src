@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.392 2003/03/25 18:26:51 tshiozak Exp $
+# $NetBSD: mi,v 1.393 2003/03/27 09:56:12 zuntum Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1486,6 +1486,7 @@
 ./usr/share/misc/mail.tildehelp		base-reference-share
 ./usr/share/misc/map3270		base-reference-share
 ./usr/share/misc/na.phone		base-reference-share
+./usr/share/misc/na.postal		base-reference-share
 ./usr/share/misc/nslookup.help		base-reference-share
 ./usr/share/misc/termcap		base-reference-share
 ./usr/share/misc/termcap.db		base-reference-share
