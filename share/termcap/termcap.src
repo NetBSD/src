@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.49 1999/10/04 23:18:40 ad Exp $
+#	$NetBSD: termcap.src,v 1.50 1999/10/06 08:50:43 ad Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -11742,10 +11742,10 @@ v3220|LANPAR Vision II model 3220/3221/3222:\
 	:sr=\EM:ta=^I:ue=\E[m:up=\E[A:us=\E[4m:
 # `rasterconsole' provided by 4.4BSD, NetBSD and OpenBSD on SPARC, and 
 # DECstation/pmax.
-rcons|pmax|BSD rasterconsole:\
+rcons|BSD rasterconsole:\
 	:tc=sun-il:
 # Color version of above. Color currenly only provided by NetBSD.
-rcons-color|pmax-color|BSD rasterconsole with ANSI color:\
+rcons-color|BSD rasterconsole with ANSI color:\
 	:AF=\E[3%dm:AB=\E[4%dm:Co#8:pa#64:op=\E[m:ut:tc=rcons:
 
 # bebox -- an ansi style termcap entry without all the tc= fields which
