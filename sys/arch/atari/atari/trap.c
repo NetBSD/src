@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.24 1997/01/16 15:33:13 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.25 1997/04/09 19:41:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -285,7 +285,7 @@ kgdb_cont:
 #endif
 	}
 
-	regdump(fp, 128);
+	regdump((struct trapframe *)fp, 128);
 	DCIS(); /* XXX? push cache */
 
 	type &= ~T_USER;
