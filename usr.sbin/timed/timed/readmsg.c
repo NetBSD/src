@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)readmsg.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.3 $"
+#ident "$Revision: 1.4 $"
 #endif
 
 #include "globals.h"
@@ -170,11 +170,11 @@ again:
 	 */
 
 	(void)gettimeofday(&rtout, 0);
-	timevaladd(&rtout, intvl);
+	timeradd(&rtout, intvl, &rtout);
 	FD_ZERO(&ready);
 	for (;;) {
 		(void)gettimeofday(&rtime, 0);
-		timevalsub(&rwait, &rtout, &rtime);
+		timersub(&rtout, &rtime, &rwait);
 		if (rwait.tv_sec < 0)
 			rwait.tv_sec = rwait.tv_usec = 0;
 		else if (rwait.tv_sec == 0

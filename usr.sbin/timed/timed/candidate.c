@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)candidate.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.3 $"
+#ident "$Revision: 1.4 $"
 #endif
 
 #include "globals.h"
@@ -93,7 +93,7 @@ again:
 	then.tv_sec += 3;
 	for (;;) {
 		(void)gettimeofday(&wait, 0);
-		timevalsub(&wait,&then,&wait);
+		timersub(&then, &wait, &wait);
 		resp = readmsg(TSP_ANY, ANYADDR, &wait, net);
 		if (!resp)
 			return(MASTER);
