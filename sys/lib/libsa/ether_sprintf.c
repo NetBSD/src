@@ -1,4 +1,4 @@
-/*	$NetBSD: ether_sprintf.c,v 1.1 2003/03/12 16:46:31 drochner Exp $	*/
+/*	$NetBSD: ether_sprintf.c,v 1.2 2003/03/25 22:35:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -56,7 +56,7 @@
 /*
  * Convert Ethernet address to printable (loggable) representation.
  */
-static char digits[] = "0123456789abcdef";
+static const char digits[] = "0123456789abcdef";
 char *
 ether_sprintf(ap)
         u_char *ap;
