@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.14 1998/11/19 20:08:52 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.15 1998/12/08 00:17:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -126,6 +126,7 @@ scsipi_get_xs(sc_link, flags)
 	 */
 	if (xs != NULL) {
 		xs->flags = INUSE | flags;
+		TAILQ_INSERT_TAIL(&sc_link->pending_xfers, xs, device_q);
 		bzero(&xs->cmdstore, sizeof(xs->cmdstore));
 	}
 	return (xs);
@@ -145,6 +146,10 @@ scsipi_free_xs(xs, flags)
 {
 	struct scsipi_link *sc_link = xs->sc_link;
 
+	TAILQ_REMOVE(&sc_link->pending_xfers, xs, device_q);
+	if (TAILQ_FIRST(&sc_link->pending_xfers) == NULL &&
+	    (sc_link->flags & SDEV_WAITDRAIN) != 0)
+		wakeup(&sc_link->pending_xfers);
 	xs->flags &= ~INUSE;
 	pool_put(&scsipi_xfer_pool, xs);
 
@@ -161,6 +166,31 @@ scsipi_free_xs(xs, flags)
 			(*(sc_link->device->start))(sc_link->device_softc);
 		}
 	}
+}
+
+/*
+ * Wait for a scsipi_link's pending xfers to drain.
+ */
+void
+scsipi_wait_drain(sc_link)
+	struct scsipi_link *sc_link;
+{
+	int s;
+
+	s = splbio();
+	if (TAILQ_FIRST(&sc_link->pending_xfers) != NULL) {
+		sc_link->flags |= SDEV_WAITDRAIN;
+		(void) tsleep(&sc_link->pending_xfers, PRIBIO, "sxdrn", 0);
+		sc_link->flags &= ~SDEV_WAITDRAIN;
+	}
+#ifdef DIAGNOSTIC
+	if (TAILQ_FIRST(&sc_link->pending_xfers) != NULL) {
+		(*sc_link->sc_print_addr)(sc_link);
+		printf("still pending xfers after wait\n");
+		panic("scsipi_wait_drain");
+	}
+#endif
+	splx(s);
 }
 
 /*
