@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.4 1997/10/11 01:55:30 lukem Exp $	*/
+/*	$NetBSD: setup.c,v 1.5 1998/09/13 15:23:40 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif				/* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: setup.c,v 1.4 1997/10/11 01:55:30 lukem Exp $";
+__RCSID("$NetBSD: setup.c,v 1.5 1998/09/13 15:23:40 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -66,7 +66,7 @@ static char rcsid[] = "$NetBSD: setup.c,v 1.4 1997/10/11 01:55:30 lukem Exp $";
 #include <stdio.h>
 #include "hdr.h"		/* SEED lives in there; keep them coordinated. */
 
-#define USAGE "Usage: setup file > data.c (file is typically glorkz)\n"
+#define USAGE "Usage: setup file > data.c (file is typically glorkz)"
 
 #define YES 1
 #define NO  0
@@ -85,7 +85,7 @@ main(argc, argv)
 		errx(1, USAGE);
 
 	if ((infile = fopen(argv[1], "r")) == NULL)
-		err(1, "Can't read file %s.\n", argv[1]);
+		err(1, "Can't read file %s.", argv[1]);
 	puts("/*\n * data.c: created by setup from the ascii data file.");
 	puts(SIG1);
 	puts(SIG2);
@@ -97,7 +97,7 @@ main(argc, argv)
 
 	while ((c = getc(infile)) != EOF) {
 		if (linestart && c == ' ') {	/* Convert first spaces to tab */
-			printf("0x%02x,", ('\t' ^ random()) & 0xFF);
+			printf("0x%02x,", (unsigned int)('\t' ^ random()) & 0xFF);
 			while ((c = getc(infile)) == ' ' && c != EOF);
 			/* Drop the non-whitespace character through */
 			linestart = NO;
@@ -113,7 +113,7 @@ main(argc, argv)
 		}
 		if (count++ % LINE == 0)	/* Finished a line? */
 			printf("\n\t");
-		printf("0x%02x,", (c ^ random()) & 0xFF);
+		printf("0x%02x,", (unsigned int)(c ^ random()) & 0xFF);
 	}
 	puts("\n\t0\n};");
 	fclose(infile);
