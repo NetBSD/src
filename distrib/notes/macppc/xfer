@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.2 1999/09/15 04:06:00 ross Exp $
+.\"	$NetBSD: xfer,v 1.3 2000/06/17 15:05:26 martin Exp $
 .
 Installation is supported from several media types, including:
 .Bl -bullet -compact
@@ -40,7 +40,7 @@ for a system administrator, and is not trivial.
 If you are using a
 .Nx
 system as the boot-server, have a look at the
-.Xr disklabel 8
+.Xr diskless 8
 manual page for guidelines on how to proceed with this.  If the server runs
 another operating system, consult the documentation that came with it (i.e.
 add_client(8) on SunOS).
