@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0var.h,v 1.4 1998/07/23 19:26:05 thorpej Exp $	*/
+/*	$NetBSD: cs89x0var.h,v 1.5 1998/07/27 01:08:51 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -162,5 +162,12 @@ do {									\
 /* Miscellaneous definitions */
 
 #define MAXLOOP            0x8888
+
+void	cs_attach __P((struct cs_softc *sc, u_int8_t *enaddr,
+	    int *media, int nmedia, int defmedia));
+int	cs_verify_eeprom __P((bus_space_tag_t, bus_space_handle_t));
+int	cs_read_eeprom __P((bus_space_tag_t, bus_space_handle_t, int,
+	    u_int16_t *));
+int	cs_intr __P((void *));
 
 #endif /* _DEV_ISA_CS89X0VAR_H_ */
