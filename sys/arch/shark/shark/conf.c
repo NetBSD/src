@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 2002/04/10 20:13:20 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 2002/04/19 01:43:49 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -220,7 +220,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),		/* 37: was vidcconsole */
 	cdev_lkm_dummy(),		/* 38: removed cpu device */
 	cdev_lkm_dummy(),		/* 39: reserved */
-	cdev_mouse_init(NOPMS,pms),     /* 40: PS2 mouse driver */
+	cdev_mouse_init(NOPMS,opms),    /* 40: PS2 mouse driver */
 	cdev_lkm_dummy(),		/* 41: reserved */
 	cdev_lkm_dummy(),		/* 42: was iic */
 	cdev_lkm_dummy(),		/* 43: was rtc */
