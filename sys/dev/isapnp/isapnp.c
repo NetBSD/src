@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.23 1998/07/31 05:26:15 thorpej Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.24 1998/07/31 05:28:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -913,13 +913,13 @@ isapnp_callback(self)
 	/*
 	 * Look for cards.  If none are found, we say so and just return.
 	 */
-	found = isapnp_find(sc, 1);
-
-	printf("%s: read port 0x%x\n", sc->sc_dev.dv_xname, sc->sc_read_port);
-	if (found == 0) {
-		printf("%s: no PnP cards found\n", sc->sc_dev.dv_xname);
+	if (isapnp_find(sc, 1) == 0) {
+		printf("%s: no ISA Plug 'n Play cards found\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
+
+	printf("%s: read port 0x%x\n", sc->sc_dev.dv_xname, sc->sc_read_port);
 
 	/*
 	 * Now configure all of the cards.
