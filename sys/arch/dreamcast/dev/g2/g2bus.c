@@ -1,4 +1,4 @@
-/*	$NetBSD: g2bus.c,v 1.1 2001/01/31 18:33:24 thorpej Exp $	*/
+/*	$NetBSD: g2bus.c,v 1.2 2002/03/24 18:21:24 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -55,12 +55,10 @@ int	g2bussearch(struct device *, struct cfdata *, void *);
 int
 g2busmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
-  	struct shb_attach_args *sa = aux;
 
 	if (strcmp("g2bus", cf->cf_driver->cd_name))
 		return (0);
 
-	sa->ia_iosize = 0 /* */;
         return (1);
 }
 

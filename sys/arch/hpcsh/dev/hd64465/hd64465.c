@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465.c,v 1.1 2002/02/11 17:27:15 uch Exp $	*/
+/*	$NetBSD: hd64465.c,v 1.2 2002/03/24 18:21:26 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,10 +42,9 @@
 #include <sys/malloc.h>
 #include <sys/boot_flag.h>
 
+#include <sh3/exception.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <sh3/shbvar.h>
-
 #include <machine/debug.h>
 
 #include <hpcsh/dev/hd64465/hd64465var.h>
@@ -133,7 +132,6 @@ hd64465_match(struct device *parent, struct cfdata *cf, void *aux)
 void
 hd64465_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct shb_attach_args *ia = aux;
 	const struct hd64465_module *module;
 	struct hd64465_attach_args ha;
 	u_int16_t r;
@@ -156,7 +154,8 @@ hd64465_attach(struct device *parent, struct device *self, void *aux)
 		config_found(self, &ha, hd64465_print);
 	}	
 
-	shb_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, hd64465_intr, self);
+	intc_intr_establish(SH_INTEVT_IRL11, IST_LEVEL, IPL_TTY,
+	    hd64465_intr, self);
 }
 
 int
