@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.33 1996/04/29 12:07:32 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.33.4.1 1996/06/12 20:52:25 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -1349,11 +1349,12 @@ loop:
 						printf("fdc: %d -> threshold\n", thr);
 #endif
 					fdconf(fdc);
-					fdc->sc_state = DOIO;
 					fdc->sc_overruns = 0;
 				}
-				if (++fdc->sc_overruns < 3)
+				if (++fdc->sc_overruns < 3) {
+					fdc->sc_state = DOIO;
 					goto loop;
+				}
 			}
 			fdcretry(fdc);
 			goto loop;
