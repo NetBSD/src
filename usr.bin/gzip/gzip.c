@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.59 2004/07/12 02:50:38 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.60 2004/07/12 09:58:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.59 2004/07/12 02:50:38 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.60 2004/07/12 09:58:10 yamt Exp $");
 #endif /* not lint */
 
 /*
@@ -1600,7 +1600,7 @@ retry:
 			handle_dir(path, &sb);
 		else
 #endif
-			maybe_warn("%s is a directory", path);
+			maybe_warnx("%s is a directory", path);
 		goto out;
 	}
 
