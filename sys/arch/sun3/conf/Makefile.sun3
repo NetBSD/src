@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.94 2002/05/30 22:02:13 thorpej Exp $
+# $NetBSD: Makefile.sun3,v 1.95 2002/06/04 21:39:12 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -33,7 +33,11 @@ GENASSYM=	${SUN3}/${MACHTYPE}/genassym.cf
 ##
 CPPFLAGS+=	-Dsun3
 CFLAGS+=	${CMACHFLAGS} -msoft-float -fno-defer-pop
+.if defined(HAVE_GCC3)
+AFLAGS+=	-x assembler-with-cpp
+.else
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
+.endif
 
 ##
 ## (3) libkern and compat
