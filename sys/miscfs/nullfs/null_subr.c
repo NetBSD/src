@@ -1,4 +1,4 @@
-/*	$NetBSD: null_subr.c,v 1.12 1998/03/11 15:52:02 fvdl Exp $	*/
+/*	$NetBSD: null_subr.c,v 1.13 1998/09/30 06:50:10 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -250,6 +250,7 @@ null_node_create(mp, lowervp, newvpp, takelock)
 	int takelock;
 {
 	struct vnode *aliasvp;
+	int locked = 0;
 
 	if ((aliasvp = null_node_find(mp, lowervp)) != NULL) {
 		/*
@@ -279,6 +280,7 @@ null_node_create(mp, lowervp, newvpp, takelock)
 		/*
 		 * aliasvp is already VREF'd by getnewvnode()
 		 */
+		locked = 1;
 	}
 
 	vrele(lowervp);
@@ -298,9 +300,14 @@ null_node_create(mp, lowervp, newvpp, takelock)
 	/* lower node was locked: mark it as locked and take
 	   upper layer lock */
 	VTONULL(aliasvp)->null_flags |= NULL_LLOCK;
-	if (takelock)
-		vn_lock(aliasvp, LK_EXCLUSIVE | LK_RETRY);
-
+	if (takelock) {
+		if (!locked)
+			vn_lock(aliasvp, LK_EXCLUSIVE | LK_RETRY);
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(NULLFS_DIAGNOSTIC)
+		else
+			printf ("null_node_create: already locked\n");
+#endif
+	}
 	*newvpp = aliasvp;
 	return (0);
 }
