@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.3 1997/10/15 01:15:51 enami Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.4 1997/10/29 07:57:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -286,9 +286,34 @@ ne2000_detect(nict, nich, asict, asich)
 
 	delay(5000);
 
+	/*
+	 * Generic probe routine for testing for the existance of a DS8390.
+	 * Must be performed  after the NIC has just been reset.  This
+	 * works by looking at certain register values that are guaranteed
+	 * to be initialized a certain way after power-up or reset.
+	 *
+	 * Specifically:
+	 *
+	 *	Register		reset bits	set bits
+	 *	--------		----------	--------
+	 *	CR			TXP, STA	RD2, STP
+	 *	ISR					RST
+	 *	IMR			<all>
+	 *	DCR					LAS
+	 *	TCR			LB1, LB0
+	 *
+	 * We only look at CR and ISR, however, since looking at the others
+	 * would require changing register pages, which would be intrusive
+	 * if this isn't an 8390.
+	 */
+
 	tmp = bus_space_read_1(nict, nich, ED_P0_CR);
 	if ((tmp & (ED_CR_RD2 | ED_CR_TXP | ED_CR_STA | ED_CR_STP)) !=
 	    (ED_CR_RD2 | ED_CR_STP))
+		goto out;
+
+	tmp = bus_space_read_1(nict, nich, ED_P0_ISR);
+	if ((tmp & ED_ISR_RST) != ED_ISR_RST)
 		goto out;
 
 	bus_space_write_1(nict, nich,
