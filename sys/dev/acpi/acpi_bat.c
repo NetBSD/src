@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.1 2002/03/24 03:46:10 sommerfeld Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.2 2002/08/02 16:51:48 explorer Exp $	*/
 
 /*
  * Copyright 2001 Bill Sommerfeld.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.1 2002/03/24 03:46:10 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.2 2002/08/02 16:51:48 explorer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,9 @@ struct acpibat_softc {
 #define	ABAT_F_VERBOSE		0x01	/* verbose events */
 #define ABAT_F_PWRUNIT_MA	0x02 	/* mA instead of mW */
 
-#define ACM_RATEUNIT(sc) (((sc)->sc_flags & ABAT_F_PWRUNIT_MA)?"mA":"mW")
-#define ACM_CAPUNIT(sc) (((sc)->sc_flags & ABAT_F_PWRUNIT_MA)?"mAh":"mWh")
+#define ACM_RATEUNIT(sc) (((sc)->sc_flags & ABAT_F_PWRUNIT_MA)?"A":"W")
+#define ACM_CAPUNIT(sc) (((sc)->sc_flags & ABAT_F_PWRUNIT_MA)?"Ah":"Wh")
+#define ACM_SCALE(x)	((x) / 1000), ((x) % 1000)
 
 int	acpibat_match(struct device *, struct cfdata *, void *);
 void	acpibat_attach(struct device *, struct device *, void *);
@@ -214,12 +215,12 @@ acpibat_get_info(void *arg)
 	    p2[12].String.Pointer, p2[11].String.Pointer,
 	    p2[9].String.Pointer, p2[10].String.Pointer);
 
-	printf("%s: Design %d%s, Predicted %d%s Warn %d%s Low %d%s\n",
-	    sc->sc_dev.dv_xname,
-	    sc->sc_design_capacity, ACM_CAPUNIT(sc),
-	    sc->sc_pred_capacity, ACM_CAPUNIT(sc),
-	    sc->sc_warn_capacity, ACM_CAPUNIT(sc),
-	    sc->sc_low_capacity, ACM_CAPUNIT(sc));
+	printf("%s: Design %d.%03d%s, Predicted %d.%03d%s Warn %d.%03d%s Low %d.%03d%s\n",
+	       sc->sc_dev.dv_xname,
+	       ACM_SCALE(sc->sc_design_capacity), ACM_CAPUNIT(sc),
+	       ACM_SCALE(sc->sc_pred_capacity), ACM_CAPUNIT(sc),
+	       ACM_SCALE(sc->sc_warn_capacity), ACM_CAPUNIT(sc),
+	       ACM_SCALE(sc->sc_low_capacity), ACM_CAPUNIT(sc));
 out:
 	AcpiOsFree(buf.Pointer);
 }
@@ -258,17 +259,15 @@ acpibat_get_status(void *arg)
 	sc->sc_mv = p2[3].Integer.Value;
 
 	if (sc->sc_flags & ABAT_F_VERBOSE) {
-		printf("%s: %s%s: %dmV cap %d%s (%d%%) rate %d%s\n",
-		    sc->sc_dev.dv_xname,
-		    (sc->sc_status&4) ? "CRITICAL ":"",
-		    (sc->sc_status&1) ? "discharging" : (
-			    (sc->sc_status & 2) ? "charging" : "idle"),
-		    sc->sc_mv,
-		    sc->sc_capacity,
-		    ACM_CAPUNIT(sc),
-		    (sc->sc_capacity * 100) / sc->sc_design_capacity,
-		    sc->sc_rate,
-		    ACM_RATEUNIT(sc));
+		printf("%s: %s%s: %d.%03dV cap %d.%03d%s (%d%%) rate %d.%03d%s\n",
+		       sc->sc_dev.dv_xname,
+		       (sc->sc_status&4) ? "CRITICAL ":"",
+		       (sc->sc_status&1) ? "discharging" : (
+		               (sc->sc_status & 2) ? "charging" : "idle"),
+		       ACM_SCALE(sc->sc_mv),
+		       ACM_SCALE(sc->sc_capacity), ACM_CAPUNIT(sc),
+		       (sc->sc_capacity * 100) / sc->sc_design_capacity,
+		       ACM_SCALE(sc->sc_rate), ACM_RATEUNIT(sc));
 	}
 out:
 	AcpiOsFree(buf.Pointer);
