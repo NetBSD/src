@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.50.2.1 2001/03/30 21:34:21 he Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.50.2.2 2001/05/15 19:59:32 he Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@
 #include <sys/filedesc.h>
 #include <sys/exec_elf.h>
 #include <sys/disklabel.h>
+#include <sys/ioctl.h>
 #include <miscfs/specfs/specdev.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -89,7 +90,6 @@
  */
 #include "wsdisplay.h"
 #if (NWSDISPLAY > 0)
-#include <sys/ioctl.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplay_usl_io.h>
 #include "opt_xserver.h"
