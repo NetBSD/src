@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.43 2003/01/04 23:43:05 wiz Exp $ */
+/*	$NetBSD: if_gre.c,v 1.44 2003/02/23 04:28:10 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.43 2003/01/04 23:43:05 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.44 2003/02/23 04:28:10 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -188,7 +188,6 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct gre_softc *sc = ifp->if_softc;
 	struct greip *gh;
 	struct ip *ip;
-	u_char osrc;
 	u_short etype = 0;
 	struct mobile_h mob_h;
 
@@ -201,7 +200,6 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 	gh = NULL;
 	ip = NULL;
-	osrc = 0;
 
 #if NBPFILTER >0
 	if (ifp->if_bpf) {
