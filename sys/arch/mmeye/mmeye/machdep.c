@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2000/06/26 14:20:49 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2000/06/29 08:07:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -96,8 +96,6 @@
 #endif
 
 #include <dev/cons.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
