@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 1998/03/18 17:01:23 bouyer Exp $	*/
+/*	$NetBSD: extern.h,v 1.9 1998/07/26 20:28:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -29,7 +29,6 @@ ufs_daddr_t	allocblk __P((long));
 ino_t		allocdir __P((ino_t, ino_t, int));
 ino_t		allocino __P((ino_t request, int type));
 void		blkerror __P((ino_t, char *, ufs_daddr_t));
-char	       *blockcheck __P((char *));
 int		bread __P((int, char *, ufs_daddr_t, long));
 void		bufinit __P((void));
 void		bwrite __P((int, char *, ufs_daddr_t, long));
