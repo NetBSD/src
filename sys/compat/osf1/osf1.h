@@ -1,4 +1,4 @@
-/* $NetBSD: osf1.h,v 1.1 1999/04/24 06:56:25 cgd Exp $ */
+/* $NetBSD: osf1.h,v 1.2 1999/04/26 01:24:26 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -41,11 +41,57 @@
  * This file is up to date as of Digital UNIX V4.0.
  */
 
+#include <sys/types.h>
 #include <compat/osf1/osf1_errno.h>
+
+/* type definitions used by structures */
+
+typedef int32_t		osf1_dev_t;
+typedef u_int32_t	osf1_ino_t;
+typedef u_int32_t	osf1_mode_t;
+typedef u_int16_t	osf1_nlink_t;
+typedef u_int32_t	osf1_uid_t;
+typedef u_int32_t	osf1_gid_t;
+typedef u_int64_t	osf1_off_t;
+typedef int32_t		osf1_time_t;
+typedef int32_t		osf1_int;
+typedef u_int32_t	osf1_uint_t;
+typedef u_int64_t	osf1_sigset_t;
+typedef u_int64_t	osf1_size_t;
+typedef void		*osf1_void_ptr;	/* XXX hard to fix size */
+typedef void		*osf1_fcn_ptr;	/* XXX hard to fix size, bogus */
 
 
 /* fcntl.h */
 
+/* fcntl ops */
+#define OSF1_F_DUPFD		0
+#define OSF1_F_GETFD		1	/* uses flags, see below */
+#define OSF1_F_SETFD		2	/* uses flags, see below */
+#define OSF1_F_GETFL		3	/* uses flags, see below */
+#define OSF1_F_SETFL		4	/* uses flags, see below */
+#define OSF1_F_GETOWN		5
+#define OSF1_F_SETOWN		6
+#define OSF1_F_GETLK		7	/* uses osf1_flock, see below */
+#define OSF1_F_SETLK		8	/* uses osf1_flock, see below */
+#define OSF1_F_SETLKW		9	/* uses osf1_flock, see below */
+#define OSF1_F_RGETLK		10	/* [lock mgr op] */
+#define OSF1_F_RSETLK		11	/* [lock mgr op] */
+#define OSF1_F_CNVT		12	/* [lock mgr op] */
+#define OSF1_F_RSETLKW		13	/* [lock mgr op] */
+#define OSF1_F_PURGEFS		14	/* [lock mgr op] */
+#define OSF1_F_PURGENFS		15	/* [DECsafe op] */
+
+/* fcntl GETFD/SETFD flags */
+#define OSF1_FD_CLOEXEC		1
+
+/* fcntl GETFL/SETFL flags */
+/* XXX */
+
+/* struct osf1_flock, for GETLK/SETLK/SETLKW */
+/* XXX */
+
+/* open flags */
 #define OSF1_O_RDONLY		0x00000000
 #define OSF1_O_WRONLY		0x00000001
 #define OSF1_O_RDWR		0x00000002
@@ -61,7 +107,6 @@
 #define OSF1_O_TRUNC		0x00000400
 #define OSF1_O_EXCL		0x00000800
 #define OSF1_O_NOCTTY		0x00001000
-#define OSF1_O_DOCLONE		0x00002000	/* kernel only */
 #define OSF1_O_SYNC		0x00004000
 #define OSF1_O_NDELAY		0x00008000
 #define OSF1_O_DRD		0x00008000	/* == O_NDELAY, DON'T USE */
@@ -90,11 +135,13 @@
 
 /* mman.h */
 
+/* protection mask */
 #define OSF1_PROT_NONE		0		/* pseudo-flag */
 #define	OSF1_PROT_READ		0x0001
 #define	OSF1_PROT_WRITE		0x0002
 #define	OSF1_PROT_EXEC		0x0004
 
+/* mmap flags */
 #define OSF1_MAP_SHARED		0x0001
 #define OSF1_MAP_PRIVATE	0x0002
 
@@ -110,8 +157,20 @@
 #define OSF1_MAP_UNALIGNED	0x0800
 
 
+/* mount.h */
+
+#if 0
+osf1_mount.c:struct osf1_statfs {
+osf1_mount.c:struct osf1_ufs_args {
+osf1_mount.c:struct osf1_cdfs_args {
+osf1_mount.c:struct osf1_mfs_args {
+osf1_mount.c:struct osf1_nfs_args {
+#endif
+
+
 /* reboot.h */
 
+/* reboot flags */
 #define OSF1_RB_AUTOBOOT	0		/* pseudo-flag */
 
 #define OSF1_RB_ASKNAME		0x0001
@@ -125,5 +184,88 @@
 #define OSF1_RB_UNIPROC		0x0080
 #define OSF1_RB_PARAM		0x0100
 #define OSF1_RB_DUMP		0x0200
+
+
+/* signal.h */
+
+struct osf1_sigaction {
+	osf1_fcn_ptr	sa_handler;
+	osf1_sigset_t	sa_mask;
+	osf1_int	sa_flags;
+	osf1_int	sa_signo;
+};
+
+/* actually from sysmisc.h */
+struct osf1_sigaltstack {
+	osf1_void_ptr	ss_sp;
+	osf1_int	ss_flags;
+	osf1_size_t	ss_size;
+};
+
+/* sigaction flags */
+#define OSF1_SA_ONSTACK		0x00000001
+#define OSF1_SA_RESTART		0x00000002
+#define OSF1_SA_NOCLDSTOP	0x00000004
+#define OSF1_SA_NODEFER		0x00000008
+#define OSF1_SA_RESETHAND	0x00000010
+#define OSF1_SA_NOCLDWAIT	0x00000020
+#define OSF1_SA_SIGINFO		0x00000040
+
+/* sigaltstack flags */
+#define OSF1_SS_ONSTACK		0x00000001
+#define OSF1_SS_DISABLE		0x00000002
+#define OSF1_SS_NOMASK		0x00000004
+#define OSF1_SS_UCONTEXT	0x00000008
+
+
+/* socket.h */
+
+/* max message iov len */
+#define	OSF1_MSG_MAXIOVLEN	16
+
+/* send/recv-family message flags */
+#define OSF1_MSG_OOB		0x0001
+#define OSF1_MSG_PEEK		0x0002
+#define OSF1_MSG_DONTROUTE	0x0004
+#define OSF1_MSG_EOR		0x0008
+#define OSF1_MSG_TRUNC		0x0010
+#define OSF1_MSG_CTRUNC		0x0020
+#define OSF1_MSG_WAITALL	0x0040
+
+
+/* stat.h */
+
+struct osf1_stat {
+	osf1_dev_t	st_dev;
+	osf1_ino_t	st_ino;
+	osf1_mode_t	st_mode;
+	osf1_nlink_t	st_nlink;
+	osf1_uid_t	st_uid;
+	osf1_gid_t	st_gid;
+	osf1_dev_t	st_rdev;
+	osf1_off_t	st_size;
+	osf1_time_t	st_atime_sec;
+	osf1_int	st_spare1;
+	osf1_time_t	st_mtime_sec;
+	osf1_int	st_spare2;
+	osf1_time_t	st_ctime_sec;
+	osf1_int	st_spare3;
+	osf1_uint_t	st_blksize;
+	osf1_int	st_blocks;
+	osf1_uint_t	st_flags;
+	osf1_uint_t	st_gen;
+};
+
+
+/* uio.h */
+
+/*
+ * The X/Open version of this uses size_t iov_len, but we can't count on
+ * the not-in-int bits being zero.  (The non-X/Open version uses int.)
+ */
+struct osf1_iovec {
+	osf1_void_ptr	iov_base;
+	osf1_int	iov_len;
+};
 
 #endif /* _COMPAT_OSF1_OSF1_H_ */
