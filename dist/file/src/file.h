@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.5 2003/10/27 16:22:36 pooka Exp $	*/
+/*	$NetBSD: file.h,v 1.6 2003/11/12 02:08:11 matt Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -40,7 +40,9 @@
 #ifndef __file_h__
 #define __file_h__
 
+#ifdef __NetBSD__
 #include <sys/cdefs.h>
+#endif
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
