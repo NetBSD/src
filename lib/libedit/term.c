@@ -1085,38 +1085,6 @@ term_bind_arrow(el)
     dmap = el->el_map.type == MAP_VI ? el->el_map.vic : el->el_map.emacs;
 
     term_reset_arrow(el);
-
-    for (i = 0; i < 4; i++) {
-	p = el->el_term.t_str[arrow[i].key];
-	if (p && *p) {
-	    j = (unsigned char) *p;
-	    /*
-	     * Assign the arrow keys only if:
-	     *
-	     * 1. They are multi-character arrow keys and the user 
-	     *    has not re-assigned the leading character, or 
-	     *    has re-assigned the leading character to be
-	     *	  ED_SEQUENCE_LEAD_IN
-	     * 2. They are single arrow keys pointing to an unassigned key.
-	     */
-	    if (arrow[i].type == XK_NOD)
-		key_clear(el, map, p);
-	    else {
-		if (p[1] && (dmap[j] == map[j] || 
-			     map[j] == ED_SEQUENCE_LEAD_IN)) {
-		    key_add(el, p, &arrow[i].fun, arrow[i].type);
-		    map[j] = ED_SEQUENCE_LEAD_IN;
-		}
-		else if (map[j] == ED_UNASSIGNED) {
-		    key_clear(el, map, p);
-		    if (arrow[i].type == XK_CMD)
-			map[j] = arrow[i].fun.cmd;
-		    else
-			key_add(el, p, &arrow[i].fun, arrow[i].type);
-		}
-	    }
-	}
-    }
 }
 
 
