@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.24 1997/03/30 21:08:30 leo Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.25 1997/04/06 12:42:44 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -380,6 +380,12 @@ tt_poll_edma(SC_REQ *reqp)
 			return(0);
 		}
 		dmstat  = GET_TT_REG(NCR5380_DMSTAT);
+
+		if ((machineid & ATARI_HADES) && (dmstat & SC_DMA_REQ)) {
+			ncr5380_drq_intr();
+			dmstat  = GET_TT_REG(NCR5380_DMSTAT);
+		}
+
 		dmastat = SCSI_DMA->s_dma_ctrl;
 		if (dmstat & (SC_END_DMA|SC_BSY_ERR|SC_IRQ_SET))
 			break;
@@ -467,7 +473,6 @@ tt_get_dma_result(SC_REQ *reqp, u_long *bytes_left)
 }
 
 static u_char *dma_ptr;
-static int dbgflag = 3;
 void
 ncr5380_drq_intr()
 {
@@ -525,10 +530,21 @@ extern	int			*nofault;
 			SCSI_DMA->s_hdma_ctrl |= SDH_EOP;
 		}
 		else {
+			nofault = (int *) &faultbuf;
+
 			/*
-			 * Set the bus-error bit
+			 * Try to figure out if the byte-count was
+			 * zero because there was no (more) data or
+			 * because the dma_ptr is bogus.
 			 */
-			SCSI_DMA->s_hdma_ctrl |= SDH_BUSERR;
+			if (setjmp((label_t *) nofault)) {
+				/*
+				 * Set the bus-error bit
+				 */
+				SCSI_DMA->s_hdma_ctrl |= SDH_BUSERR;
+			}
+			__asm __volatile ("tstb	%0@(0)": : "a" (dma_ptr));
+			nofault = (int *)0;
 		}
 
 		/*
