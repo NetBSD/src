@@ -1,5 +1,7 @@
-/* $NetBSD: pnpbios.c,v 1.14 2000/04/26 20:33:46 thorpej Exp $ */
+/* $NetBSD: pnpbios.c,v 1.15 2000/04/27 16:41:59 thorpej Exp $ */
+
 /*
+ * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -61,6 +63,12 @@
 #include "isadma.h"
 #include "locators.h"
 
+#ifdef PNPBIOSVERBOSE
+int	pnpbiosverbose = 1;
+#else
+int	pnpbiosverbose = 0;
+#endif
+
 #ifdef PNPBIOSDEBUG
 #define	DPRINTF(x) printf x
 #else
@@ -82,6 +90,7 @@ struct pnpbios_softc {
 	int		sc_version;
 	int		sc_control;
 	int		sc_threadrun;
+	int		sc_docked;
 };
 
 #define	PNPGET4(p)	((p)[0] + ((p)[1] << 8) + \
@@ -112,6 +121,8 @@ void pnpbios_attachnode __P((struct pnpbios_softc *, int, const u_int8_t *,
 int pnp_scan __P((const u_int8_t **, size_t,struct pnpresources *, int));
 int pnpbios_submatch __P((struct device *, struct cfdata *, void *));
 extern int pnpbioscall __P((int));
+
+int pnpbios_update_dock_status __P((struct pnpbios_softc *));
 
 /* scanning functions */
 int pnp_compatid __P((struct pnpresources *, const void *, size_t));
@@ -263,9 +274,6 @@ pnpbios_attach(parent, self, aux)
 	caddr_t codeva, datava;
 	extern char pnpbiostramp[], epnpbiostramp[];
 	int res, num, i, size, idx;
-#ifdef PNPBIOSVERBOSE
-	struct pnpdockinfo di;
-#endif
 #ifdef PNPBIOSEVENTS
 	int evtype;
 #endif
@@ -289,6 +297,12 @@ pnpbios_attach(parent, self, aux)
 	datapbase = *(u_int32_t *)(p + 0x1d);
 	pnpbios_entry = *(u_int16_t *)(p + 0x11);
 
+	if (pnpbiosverbose) {
+		printf(": code %x, data %x, entry %x, control %x eventp %x\n%s",
+		    codepbase, datapbase, pnpbios_entry, sc->sc_control,
+		    (int)evaddrp, self->dv_xname);
+	}
+
 #ifdef PNPBIOSEVENTS
 	/* if we have an event mechnism queue a thread to deal with them */
 	evtype = (sc->sc_control & PNP_IC_CONTORL_EVENT_MASK);
@@ -299,11 +313,6 @@ pnpbios_attach(parent, self, aux)
 			printf("%s: couldn't map event flag 0x%08x\n",
 			    sc->sc_dev.dv_xname, evaddrp);
 	}
-#endif
-#ifdef PNPBIOSVERBOSE
-	printf(": code %x, data %x, entry %x, control %x eventp %x\n%s",
-	    codepbase, datapbase, pnpbios_entry, sc->sc_control,
-	    (int)evaddrp, self->dv_xname);
 #endif
 
 	codeva = pnpbios_mapit(codepbase, 0x10000,
@@ -341,18 +350,9 @@ pnpbios_attach(parent, self, aux)
 	    (int)sc->sc_evaddr));
 #endif
 
-	res = pnpbios_getdockinfo(&di);
-	if (res == PNP_RC_SYSTEM_NOT_DOCKED)
-		printf("%s: not docked\n", sc->sc_dev.dv_xname);
-	else if (res)
-		EDPRINTF(("%s: dockinfo fails 0x%02x\n",
-		    sc->sc_dev.dv_xname, res));
-	else {
-		char idstr[8];
-		pnpbios_id_to_string(di.di_id, idstr);
-		printf("%s: dock id %s serial number %d capabilities 0x%04x\n",
-		    sc->sc_dev.dv_xname, idstr, di.di_serial, di.di_cap);
-	}
+	/* Set initial dock status. */
+	sc->sc_docked = -1;
+	(void) pnpbios_update_dock_status(sc);
 
 	idx = 0;
 	for (i = 0; i < num && idx != 0xff; i++) {
@@ -386,6 +386,62 @@ pnpbios_attach(parent, self, aux)
 		}
 	}
 #endif
+}
+
+int
+pnpbios_update_dock_status(sc)
+	struct pnpbios_softc *sc;
+{
+	struct pnpdockinfo di;
+	const char *when, *style;
+	int res, odocked = sc->sc_docked;
+
+	res = pnpbios_getdockinfo(&di);
+	if (res == PNP_RC_SYSTEM_NOT_DOCKED) {
+		sc->sc_docked = 0;
+		if (odocked != sc->sc_docked)
+			printf("%s: not docked\n", sc->sc_dev.dv_xname);
+	} else if (res) {
+		EDPRINTF(("%s: dockinfo failed 0x%02x\n",
+		    sc->sc_dev.dv_xname, res));
+	} else {
+		sc->sc_docked = 1;
+		if (odocked != sc->sc_docked) {
+			char idstr[8];
+			pnpbios_id_to_string(di.di_id, idstr);
+			printf("%s: dock id %s", sc->sc_dev.dv_xname, idstr);
+			if (pnpbiosverbose) {
+				if (di.di_serial != -1)
+					printf(", serial number %d",
+					    di.di_serial);
+			}
+			switch (di.di_cap & PNP_DI_DOCK_STYLE_MASK) {
+			case PNP_DI_DOCK_STYLE_SUPRISE:
+				style = "surprise";
+				break;
+			case PNP_DI_DOCK_STYLE_VCR:
+				style = "controlled";
+				break;
+			}
+			switch (di.di_cap & PNP_DI_DOCK_WHEN_MASK) {
+			case PNP_DI_DOCK_WHEN_NO_POWER:
+				when = "cold";
+				break;
+			case PNP_DI_DOCK_WHEN_SUSPENDED:
+				when = "warm";
+				break;
+			case PNP_DI_DOCK_WHEN_RUNNING:
+				when = "hot";
+				break;
+			case PNP_DI_DOCK_WHEN_RESERVED:
+				when = "<reserved>";
+				break;
+			}
+			printf(", %s %s docking\n", style, when);
+		}
+	}
+
+	return (odocked);
 }
 
 int
@@ -715,17 +771,18 @@ pnpbios_attachnode(sc, idx, buf, len)
 	}
 
 	if (r.nummem + r.numio + r.numirq + r.numdma == 0) {
-#ifdef PNPBIOSVERBOSE
-		printf("%s", idstr);
-		if (r.longname)
-			printf(", %s", r.longname);
-		compatid = s.compatids;
-		while (compatid) {
-			printf(", %s", compatid->idstr);
-			compatid = compatid->next;
+		if (pnpbiosverbose) {
+			printf("%s", idstr);
+			if (r.longname)
+				printf(", %s", r.longname);
+			compatid = s.compatids;
+			while (compatid) {
+				printf(", %s", compatid->idstr);
+				compatid = compatid->next;
+			}
+			printf(" at %s index %d disabled\n",
+			    sc->sc_dev.dv_xname, idx);
 		}
-		printf(" at %s index %d disabled\n", sc->sc_dev.dv_xname, idx);
-#endif
 		return;
 	}
 
@@ -751,19 +808,19 @@ pnpbios_attachnode(sc, idx, buf, len)
 		compatid = compatid->next;
 	}
 
-#ifdef PNPBIOSVERBOSE
-	printf("%s", idstr);
-	if (r.longname)
-		printf(", %s", r.longname);
-	compatid = s.compatids;
-	while (compatid) {
-		printf(", %s", compatid->idstr);
-		compatid = compatid->next;
+	if (pnpbiosverbose) {
+		printf("%s", idstr);
+		if (r.longname)
+			printf(", %s", r.longname);
+		compatid = s.compatids;
+		while (compatid) {
+			printf(", %s", compatid->idstr);
+			compatid = compatid->next;
+		}
+		printf(" (");
+		pnpbios_printres(&r);
+		printf(") at %s index %d ignored\n", sc->sc_dev.dv_xname, idx);
 	}
-	printf(" (");
-	pnpbios_printres(&r);
-	printf(") at %s index %d ignored\n", sc->sc_dev.dv_xname, idx);
-#endif
 
 	return;
 
@@ -1353,10 +1410,42 @@ start:
 		switch (event) {
 		case PNP_EID_ABOUT_TO_CHANGE_CONFIG:
 			EDPRINTF(("pnpbios: about to change event\n"));
+			/*
+			 * The system is about to be docked or undocked.
+			 * Acknowledge the event, so that the procedure
+			 * can continue.
+			 * XXX When should we ever send an ABORT?
+			 */
+			pnpbios_sendmessage(PNP_RM_OK);
 			break;
 		case PNP_EID_DOCK_CHANGED:
+		    {
+			int odocked;
+
 			EDPRINTF(("pnpbios: dock changed event\n"));
+
+			odocked = pnpbios_update_dock_status(sc);
+			if (odocked == sc->sc_docked)
+				break;
+			switch (sc->sc_docked) {
+			case 0:
+				/* We have been undocked. */
+				/* XXX detach devices XXX */
+				break;
+
+			case 1:
+				/* We have been docked. */
+				/* XXX attach devices XXX */
+				break;
+
+			default:
+				/* getdockinfo failed! */
+				printf("%s: dock changed event, but unable "
+				    "to get dock info; event ignored\n",
+				    sc->sc_dev.dv_xname);
+			}
 			break;
+		    }
 		case PNP_EID_SYSTEM_DEVICE_CHANGED:
 			EDPRINTF(("pnpbios: system device changed event\n"));
 			break;
@@ -1371,12 +1460,10 @@ start:
 			break;
 		default:
 #ifdef DIAGNOSTIC
-#ifdef PNPBIOSVERBOSE
 			if (event & PNP_EID_OEM_DEFINED_BIT)
 				printf("%s: vendor defined event 0x%04x\n",
 				    sc->sc_dev.dv_xname, event);
 			else
-#endif
 				printf("%s: unkown event 0x%04x\n",
 				    sc->sc_dev.dv_xname, event);
 #endif
@@ -1388,4 +1475,3 @@ start:
 	kthread_exit(0);
 }
 #endif	/* PNPBIOSEVENTS */
-
