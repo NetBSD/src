@@ -1,4 +1,4 @@
-/*	$NetBSD: mappedcopy.c,v 1.3 1999/03/26 23:41:30 mycroft Exp $	*/
+/*	$NetBSD: mappedcopy.c,v 1.4 1999/03/31 14:18:49 minoura Exp $	*/
 
 /*
  * XXX This doesn't work yet.  Soon.  --thorpej@netbsd.org
@@ -70,6 +70,8 @@ int	mappedcopyoutcount;
  */
 u_int	mappedcopysize = -1;
 
+static caddr_t caddr1 = 0;
+
 /*
  * N.B. Both of these routines assume PAGE_SIZE == NBPG.
  */
@@ -84,7 +86,7 @@ mappedcopyin(f, t, count)
 	register size_t len;
 	int off, alignable;
 	pmap_t upmap;
-	extern caddr_t CADDR1;
+#define CADDR1 caddr1
 
 #ifdef DEBUG
 	if (mappedcopydebug & MDB_COPYIN)
@@ -92,6 +94,9 @@ mappedcopyin(f, t, count)
 		    fromp, top, (u_long)count, curproc->p_pid);
 	mappedcopyincount++;
 #endif
+
+	if (CADDR1 == 0)
+		CADDR1 = (caddr_t) uvm_km_valloc(kernel_map, NBPG);
 
 	kva = (vm_offset_t)CADDR1;
 	off = (int)((u_long)fromp & PAGE_MASK);
@@ -124,6 +129,7 @@ mappedcopyin(f, t, count)
 	}
 	pmap_remove(pmap_kernel(), kva, kva + PAGE_SIZE);
 	return (0);
+#undef CADDR1
 }
 
 int
@@ -136,7 +142,7 @@ mappedcopyout(f, t, count)
 	register size_t len;
 	int off, alignable;
 	pmap_t upmap;
-	extern caddr_t CADDR2;
+#define CADDR2 caddr1
 
 #ifdef DEBUG
 	if (mappedcopydebug & MDB_COPYOUT)
@@ -144,6 +150,9 @@ mappedcopyout(f, t, count)
 		    fromp, top, (u_long)count, curproc->p_pid);
 	mappedcopyoutcount++;
 #endif
+
+	if (CADDR2 == 0)
+		CADDR2 = (caddr_t) uvm_km_valloc(kernel_map, NBPG);
 
 	kva = (vm_offset_t) CADDR2;
 	off = (int)((u_long)top & PAGE_MASK);
@@ -176,4 +185,5 @@ mappedcopyout(f, t, count)
 	}
 	pmap_remove(pmap_kernel(), kva, kva + PAGE_SIZE);
 	return (0);
+#undef CADDR1
 }
