@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isapnp.c,v 1.10 2002/10/02 16:33:58 thorpej Exp $	*/
+/*	$NetBSD: ess_isapnp.c,v 1.11 2004/08/04 18:55:06 drochner Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_isapnp.c,v 1.10 2002/10/02 16:33:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_isapnp.c,v 1.11 2004/08/04 18:55:06 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,5 +127,5 @@ ess_isapnp_attach(parent, self, aux)
 
 	printf("%s:", sc->sc_dev.dv_xname);
 
-	essattach(sc);
+	essattach(sc, 0);
 }
