@@ -1,10 +1,15 @@
-/*	$NetBSD: hydrareg.h,v 1.2 2002/10/05 23:26:48 bjh21 Exp $	*/
+/*	$NetBSD: hydrareg.h,v 1.2.6.1 2002/10/26 10:26:38 bjh21 Exp $	*/
 
 /*
  * This file is in the Public Domain
  */
 
 /* Simtec Hydra register definitions */
+
+/*
+ * Documentation is at
+ * <http://www.simtec.co.uk/products/AUHYDRA/files/api.txt>.
+ */
 
 #define HYDRA_PHYS_BASE		0x03800000
 #define HYDRA_PHYS_SIZE		0x40
