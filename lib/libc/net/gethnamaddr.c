@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.50 2002/08/16 21:54:00 itojun Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.51 2002/08/22 16:32:14 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.50 2002/08/16 21:54:00 itojun Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.51 2002/08/22 16:32:14 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -440,6 +440,14 @@ getanswer(answer, anslen, qname, qtype)
 			if (n != host.h_length) {
 				cp += n;
 				continue;
+			}
+			if (type == T_AAAA) {
+				struct in6_addr in6;
+				memcpy(&in6, cp, IN6ADDRSZ);
+				if (IN6_IS_ADDR_V4MAPPED(&in6)) {
+					cp += n;
+					continue;
+				}
 			}
 			if (!haveanswer) {
 				int nn;
