@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.41.6.6 2002/08/01 02:43:19 nathanw Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.41.6.7 2002/08/02 19:51:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -498,7 +498,7 @@ sendsig(int sig, sigset_t *mask, u_long code)
 
 	default:
 		/* Don't know what trampoline version; kill it. */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 	}
 
 	tf->tf_r4 = sig;
