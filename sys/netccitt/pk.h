@@ -1,4 +1,4 @@
-/*	$NetBSD: pk.h,v 1.7 1998/09/13 16:21:18 christos Exp $	*/
+/*	$NetBSD: pk.h,v 1.8 2000/07/02 17:34:01 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -39,6 +39,9 @@
  *
  *	@(#)pk.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETCCITT_PK_H_
+#define _NETCCITT_PK_H_
 
 /*
  *
@@ -208,3 +211,5 @@ struct data_packet {
 #define	DTE_PRETENDDTE		0x0020
 
 #define MAXRESTARTCOLLISIONS	10
+
+#endif /* _NETCCITT_PK_H_ */
