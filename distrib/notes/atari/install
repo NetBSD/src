@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.9 1999/04/28 19:03:44 leo Exp $	
+.\"	$NetBSD: install,v 1.10 1999/04/30 18:29:16 leo Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,7 +65,7 @@ insert the BSD install floppy 1.  Now type `md0a' to tell the
 kernel to load the install filesystem into RAMdisk. While
 While the kernel is loading, it will show a '.' for each
 track loaded. After loading 80 tracks, it will ask you
-to insert the next floppy. At this time, inser the BSD
+to insert the next floppy. At this time, insert the BSD
 install floppy 2 and hit any key. The kernel continous
 loading another 40 tracks before it continues to boot.
 .(tag Note:
@@ -138,9 +138,9 @@ If you are labeling an empty SCSI disk, you can make life easy for
 yourself by selecting 'standarize geometry'. This allows you to
 select a 'sectors per track' and 'tracks/cylinder' value and have
 the (fictious) SCSI geometry changed accordingly. So if you select
-64 sect/track and 32 tracks/cylinder, each cilinder is exactly
+64 sect/track and 32 tracks/cylinder, each cylinder is exactly
 1Mb in size. Well, go ahead and don't forget to save your work
-before quitting!
+before you quit!
 .(tag Note:
 to make sure that NetBSD can create/mount filesystems on
 the partitions you defined, make sure the 'type' is entered
@@ -152,8 +152,6 @@ correctly:
 .It Tn MSDOS
 \- filesystems shared with GEM
 .El
-.Pp
-Just ignore it, it's harmless.
 .tag)
 .It
 Label additional disks
