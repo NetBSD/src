@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.23 2000/07/14 15:13:35 pk Exp $	*/
+/*	$NetBSD: psycho.c,v 1.24 2000/07/18 11:35:03 pk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -254,6 +254,7 @@ sabre_init(sc, ma, pba)
 	 */
 	sc->sc_regs = (struct psychoreg *)(u_long)ma->ma_address[0];
 	sc->sc_basepaddr = (paddr_t)ma->ma_reg[0].ur_paddr;
+	sc->sc_ign = 0x7c0; /* XXX - try not to hardcode? */
 
 	/* who? said a voice, incredulous */
 	sc->sc_mode = PSYCHO_MODE_SABRE;
@@ -456,45 +457,41 @@ psycho_init(sc, ma, pba)
 	printf("psycho: impl %d, version %d: ",
 		PSYCHO_GCSR_IMPL(csr), PSYCHO_GCSR_VERS(csr) );
 
+	sc->sc_ign = PSYCHO_GCSR_IGN(csr) << 6;
+
+	sc->sc_mode = PSYCHO_MODE_PSYCHO;
+
 	/*
-	 * OK, so the deal here is:
-	 *	- given our base register address, search our sibling
-	 *	  devices for a match.
-	 *	- if we find a match, we are attaching an almost
-	 *	  already setup PCI bus, the partner already done.
-	 *	- otherwise, we are doing the hard slog.
+	 * Match other psycho's that are already configured against
+	 * the base physical address. This will be the same for a
+	 * pair of devices that share register space.
 	 */
 	for (n = 0; n < psycho_cd.cd_ndevs; n++) {
 
-		osc = (struct psycho_softc *)&psycho_cd.cd_devs[n];
+		struct psycho_softc *asc =
+			(struct psycho_softc *)psycho_cd.cd_devs[n];
 
-		/*
-		 * I am not myself.
-		 */
-
-		/* XXX - we get sc_regs from the PROM, so this does not work */
-		if (osc == sc || osc->sc_regs != sc->sc_regs)
+		if (asc == NULL || asc == sc)
+			/* This entry is not there or it is me */
 			continue;
 
-		/*
-		 * OK, so we found a matching regs that wasn't me,
-		 * so that means my IOMMU is setup.
-		 */
+		if (asc->sc_basepaddr != sc->sc_basepaddr)
+			/* This is an unrelated psycho */
+			continue;
 
-		/* who? said a voice, incredulous */
-		sc->sc_mode = PSYCHO_MODE_PSYCHO_B;	/* XXX */
+		/* Found partner */
+		osc = asc;
 		break;
 	}
 
-	if (sc->sc_mode != PSYCHO_MODE_PSYCHO_B) {
-		sc->sc_mode = PSYCHO_MODE_PSYCHO_A;	/* XXX */
-	}
 
 	/* Oh, dear.  OK, lets get started */
 
-	/* XXX: check this is OK for real psycho */
-	/* setup the PCI control register */
-	csr = bus_space_read_8(sc->sc_bustag, (bus_space_handle_t)(u_long)&pci_ctl->pci_csr, 0);
+	/*
+	 * Setup the PCI control register
+	 */
+	csr = bus_space_read_8(sc->sc_bustag,
+			(bus_space_handle_t)(u_long)&pci_ctl->pci_csr, 0);
 	csr |= PCICTL_MRLM |
 	       PCICTL_ARB_PARK |
 	       PCICTL_ERRINTEN |
@@ -503,16 +500,16 @@ psycho_init(sc, ma, pba)
 		 PCICTL_CPU_PRIO |
 		 PCICTL_ARB_PRIO |
 		 PCICTL_RTRYWAIT);
-	bus_space_write_8(sc->sc_bustag, &pci_ctl->pci_csr, 0, csr);
+	bus_space_write_8(sc->sc_bustag,
+			(bus_space_handle_t)(u_long)&pci_ctl->pci_csr, 0, csr);
 
-	/* allocate our psycho_pbm */
+
+	/*
+	 * Allocate our psycho_pbm
+	 */
 	pp = sc->sc_psycho_this = malloc(sizeof *pp, M_DEVBUF, M_NOWAIT);
 	if (pp == NULL)
 		panic("could not allocate psycho pbm");
-	if (osc) {
-		sc->sc_psycho_other = osc->sc_psycho_this;
-		osc->sc_psycho_other = sc->sc_psycho_this;
-	}
 
 	memset(pp, 0, sizeof *pp);
 
@@ -551,14 +548,17 @@ psycho_init(sc, ma, pba)
 	printf("\n");
 
 	/*
-	 * and finally, if we a a psycho A, start up the IOMMU and
-	 * get us a config space tag, and punch in the physical address
-	 * of the PCI configuration space.  note that we use unmapped
-	 * access to PCI configuration space, relying on the bus space
-	 * macros to provide the proper ASI based on the bus tag.
+	 * And finally, if we're the first of a pair of psycho's to
+	 * arrive here, start up the IOMMU and get a config space tag.
+	 * Note that we use unmapped access to PCI configuration space,
+	 * relying on the bus space macros to provide the proper ASI based
+	 * on the bus tag.
 	 */
-	if (sc->sc_mode == PSYCHO_MODE_PSYCHO_A) {
+	if (osc == NULL) {
 		/*
+		 * Setup IOMMU and PCI configuration if we're the first
+		 * of a pair of psycho's to arrive here.
+		 *
 		 * We should calculate a TSB size based on amount of RAM
 		 * and number of bus controllers.
 		 *
@@ -577,7 +577,8 @@ psycho_init(sc, ma, pba)
 			panic("could not map psycho PCI configuration space");
 		sc->sc_configaddr = (off_t)bh;
 	} else {
-		/* for psycho B, we just copy the config tag and address */
+		/* Just copy IOMMU state, config tag and address */
+		sc->sc_is = osc->sc_is;
 		sc->sc_configtag = osc->sc_configtag;
 		sc->sc_configaddr = osc->sc_configaddr;
 	}
@@ -685,15 +686,22 @@ psycho_iommu_init(sc, tsbsize)
 	int tsbsize;
 {
 	char *name;
+	struct iommu_state *is;
+
+	is = malloc(sizeof(struct iommu_state), M_DEVBUF, M_NOWAIT);
+	if (is == NULL)
+		panic("psycho_iommu_init: malloc is");
+
+	sc->sc_is = is;
 
 	/* punch in our copies */
-	sc->sc_is.is_bustag = sc->sc_bustag;
-	sc->sc_is.is_iommu = &sc->sc_regs->psy_iommu;
+	is->is_bustag = sc->sc_bustag;
+	is->is_iommu = &sc->sc_regs->psy_iommu;
 
 	if (getproplen(sc->sc_node, "no-streaming-cache") < 0)
-		sc->sc_is.is_sb = 0;
+		is->is_sb = 0;
 	else
-		sc->sc_is.is_sb = &sc->sc_regs->psy_iommu_strbuf;
+		is->is_sb = &sc->sc_regs->psy_iommu_strbuf;
 
 	/* give us a nice name.. */
 	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
@@ -701,7 +709,7 @@ psycho_iommu_init(sc, tsbsize)
 		panic("couldn't malloc iommu name");
 	snprintf(name, 32, "%s dvma", sc->sc_dev.dv_xname);
 
-	iommu_init(name, &sc->sc_is, tsbsize);
+	iommu_init(name, is, tsbsize);
 }
 
 /*
@@ -1015,7 +1023,7 @@ psycho_intr_establish(t, ihandle, level, flags, handler, arg)
 
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
-	ih->ih_number = ino | 0x7c0;
+	ih->ih_number = ino | sc->sc_ign;
 	/*
 	 * If a `device class' level is specified, use it,
 	 * else get the PIL from a built-in table.
@@ -1048,7 +1056,7 @@ psycho_dmamap_load(t, map, buf, buflen, p, flags)
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
 	struct psycho_softc *sc = pp->pp_sc;
 
-	return (iommu_dvmamap_load(t, &sc->sc_is, map, buf, buflen, p, flags));
+	return (iommu_dvmamap_load(t, sc->sc_is, map, buf, buflen, p, flags));
 }
 
 void
@@ -1059,7 +1067,7 @@ psycho_dmamap_unload(t, map)
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
 	struct psycho_softc *sc = pp->pp_sc;
 
-	iommu_dvmamap_unload(t, &sc->sc_is, map);
+	iommu_dvmamap_unload(t, sc->sc_is, map);
 }
 
 int
@@ -1074,7 +1082,7 @@ psycho_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
 	struct psycho_softc *sc = pp->pp_sc;
 
-	return (iommu_dvmamap_load_raw(t, &sc->sc_is, map, segs, nsegs, flags, size));
+	return (iommu_dvmamap_load_raw(t, sc->sc_is, map, segs, nsegs, flags, size));
 }
 
 void
@@ -1091,11 +1099,11 @@ psycho_dmamap_sync(t, map, offset, len, ops)
 	if (ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) {
 		/* Flush the CPU then the IOMMU */
 		bus_dmamap_sync(t->_parent, map, offset, len, ops);
-		iommu_dvmamap_sync(t, &sc->sc_is, map, offset, len, ops);
+		iommu_dvmamap_sync(t, sc->sc_is, map, offset, len, ops);
 	}
 	if (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) {
 		/* Flush the IOMMU then the CPU */
-		iommu_dvmamap_sync(t, &sc->sc_is, map, offset, len, ops);
+		iommu_dvmamap_sync(t, sc->sc_is, map, offset, len, ops);
 		bus_dmamap_sync(t->_parent, map, offset, len, ops);
 	}
 
@@ -1115,7 +1123,7 @@ psycho_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
 	struct psycho_softc *sc = pp->pp_sc;
 
-	return (iommu_dvmamem_alloc(t, &sc->sc_is, size, alignment, boundary,
+	return (iommu_dvmamem_alloc(t, sc->sc_is, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags));
 }
 
@@ -1128,7 +1136,7 @@ psycho_dmamem_free(t, segs, nsegs)
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
 	struct psycho_softc *sc = pp->pp_sc;
 
-	iommu_dvmamem_free(t, &sc->sc_is, segs, nsegs);
+	iommu_dvmamem_free(t, sc->sc_is, segs, nsegs);
 }
 
 int
@@ -1143,7 +1151,7 @@ psycho_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
 	struct psycho_softc *sc = pp->pp_sc;
 
-	return (iommu_dvmamem_map(t, &sc->sc_is, segs, nsegs, size, kvap, flags));
+	return (iommu_dvmamem_map(t, sc->sc_is, segs, nsegs, size, kvap, flags));
 }
 
 void
@@ -1155,7 +1163,7 @@ psycho_dmamem_unmap(t, kva, size)
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
 	struct psycho_softc *sc = pp->pp_sc;
 
-	iommu_dvmamem_unmap(t, &sc->sc_is, kva, size);
+	iommu_dvmamem_unmap(t, sc->sc_is, kva, size);
 }
 
 #ifdef NOT_DEBUG
