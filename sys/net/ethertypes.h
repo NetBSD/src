@@ -1,4 +1,4 @@
-/*	$NetBSD: ethertypes.h,v 1.3 1998/02/09 17:43:45 perry Exp $	*/
+/*	$NetBSD: ethertypes.h,v 1.4 1998/09/09 04:32:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -49,9 +49,14 @@
 #define _NET_ETHERTYPES_H_
 
 #define	ETHERTYPE_PUP		0x0200	/* PUP protocol */
+#define	ETHERTYPE_NS		0x0600	/* XNS */
 #define	ETHERTYPE_IP		0x0800	/* IP protocol */
 #define	ETHERTYPE_ARP		0x0806	/* address resolution protocol */
 #define	ETHERTYPE_REVARP	0x8035	/* reverse addr resolution protocol */
+#define	ETHERTYPE_AT		0x809B	/* AppleTalk */
+#define	ETHERTYPE_AARP		0x80F3	/* AppleTalk AARP */
+#define	ETHERTYPE_IPV6		0x86DD	/* IP protocol version 6 */
+#define	ETHERTYPE_IPX		0x8137	/* Novell IPX */
 
 /*
  * The ETHERTYPE_NTRAILER packet types starting at ETHERTYPE_TRAIL have
