@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +32,16 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)print.c	5.4 (Berkeley) 6/10/91";*/
-static char rcsid[] = "$Id: print.c,v 1.8 1994/04/12 06:08:51 cgd Exp $";
+/*static char sccsid[] = "from: @(#)print.c	8.6 (Berkeley) 4/16/94";*/
+static char *rcsid = "$Id: print.c,v 1.9 1994/09/20 04:52:09 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
+
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "stty.h"
 #include "extern.h"
 
@@ -54,11 +56,10 @@ print(tp, wp, ldisc, fmt)
 	int ldisc;
 	enum FMT fmt;
 {
-	register struct cchar *p;
-	register long tmp;
-	register int cnt;
-	register u_char *cc;
-	int ispeed, ospeed;
+	struct cchar *p;
+	long tmp;
+	u_char *cc;
+	int cnt, ispeed, ospeed;
 	char buf1[100], buf2[100];
 
 	cnt = 0;
@@ -208,6 +209,7 @@ static void
 binit(lb)
 	char *lb;
 {
+
 	if (col) {
 		(void)printf("\n");
 		col = 0;
@@ -219,6 +221,7 @@ static void
 bput(s)
 	char *s;
 {
+
 	if (col == 0) {
 		col = printf("%s: %s", label, s);
 		return;
@@ -240,7 +243,7 @@ ccval(p, c)
 	char *bp;
 
 	if (c == _POSIX_VDISABLE)
-		return("<undef>");
+		return ("<undef>");
 
 	if (p->sub == VMIN || p->sub == VTIME) {
 		(void)snprintf(buf, sizeof(buf), "%d", c);
@@ -263,5 +266,5 @@ ccval(p, c)
 	else
 		*bp++ = c;
 	*bp = '\0';
-	return(buf);
+	return (buf);
 }

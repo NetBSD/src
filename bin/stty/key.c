@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,16 +32,18 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)key.c	5.3 (Berkeley) 6/10/91";*/
-static char rcsid[] = "$Id: key.c,v 1.8 1994/03/23 04:05:29 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)key.c	8.3 (Berkeley) 4/2/94";*/
+static char *rcsid = "$Id: key.c,v 1.9 1994/09/20 04:52:06 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
+
 #include <err.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "stty.h"
 #include "extern.h"
 
@@ -70,35 +72,42 @@ static struct key {
 #define	F_OFFOK		0x02			/* can turn off */
 	int flags;
 } keys[] = {
-	"all",		f_all,		0,
-	"cbreak",	f_cbreak,	F_OFFOK,
-	"cols",		f_columns,	F_NEEDARG,
-	"columns",	f_columns,	F_NEEDARG,
-	"cooked", 	f_sane,		0,
-	"dec",		f_dec,		0,
-	"everything",	f_everything,	0,
-	"extproc",	f_extproc,	F_OFFOK,
-	"ispeed",	f_ispeed,	F_NEEDARG,
-	"new",		f_tty,		0,
-	"nl",		f_nl,		F_OFFOK,
-	"old",		f_tty,		0,
-	"ospeed",	f_ospeed,	F_NEEDARG,
-	"raw",		f_raw,		F_OFFOK,
-	"rows",		f_rows,		F_NEEDARG,
-	"sane",		f_sane,		0,
-	"size",		f_size,		0,
-	"speed",	f_speed,	0,
-	"tty",		f_tty,		0,
+	{ "all",	f_all,		0 },
+	{ "cbreak",	f_cbreak,	F_OFFOK },
+	{ "cols",	f_columns,	F_NEEDARG },
+	{ "columns",	f_columns,	F_NEEDARG },
+	{ "cooked", 	f_sane,		0 },
+	{ "dec",	f_dec,		0 },
+	{ "everything",	f_everything,	0 },
+	{ "extproc",	f_extproc,	F_OFFOK },
+	{ "ispeed",	f_ispeed,	F_NEEDARG },
+	{ "new",	f_tty,		0 },
+	{ "nl",		f_nl,		F_OFFOK },
+	{ "old",	f_tty,		0 },
+	{ "ospeed",	f_ospeed,	F_NEEDARG },
+	{ "raw",	f_raw,		F_OFFOK },
+	{ "rows",	f_rows,		F_NEEDARG },
+	{ "sane",	f_sane,		0 },
+	{ "size",	f_size,		0 },
+	{ "speed",	f_speed,	0 },
+	{ "tty",	f_tty,		0 },
 };
 
+static int
+c_key(a, b)
+        const void *a, *b;
+{
+
+        return (strcmp(((struct key *)a)->name, ((struct key *)b)->name));
+}
+
+int
 ksearch(argvp, ip)
 	char ***argvp;
 	struct info *ip;
 {
-	register struct key *kp;
-	register char *name;
-	struct key tmp;
-	static int c_key __P((const void *, const void *));
+	char *name;
+	struct key *kp, tmp;
 
 	name = **argvp;
 	if (*name == '-') {
@@ -110,7 +119,7 @@ ksearch(argvp, ip)
 	tmp.name = name;
 	if (!(kp = (struct key *)bsearch(&tmp, keys,
 	    sizeof(keys)/sizeof(struct key), sizeof(struct key), c_key)))
-		return(0);
+		return (0);
 	if (!(kp->flags & F_OFFOK) && ip->off) {
 		warnx("illegal option -- %s", name);
 		usage();
@@ -120,14 +129,7 @@ ksearch(argvp, ip)
 		usage();
 	}
 	kp->f(ip);
-	return(1);
-}
-
-static
-c_key(a, b)
-        const void *a, *b;
-{
-        return(strcmp(((struct key *)a)->name, ((struct key *)b)->name));
+	return (1);
 }
 
 void
@@ -141,6 +143,7 @@ void
 f_cbreak(ip)
 	struct info *ip;
 {
+
 	if (ip->off)
 		f_sane(ip);
 	else {
@@ -156,6 +159,7 @@ void
 f_columns(ip)
 	struct info *ip;
 {
+
 	ip->win.ws_col = atoi(ip->arg);
 	ip->wset = 1;
 }
@@ -164,6 +168,7 @@ void
 f_dec(ip)
 	struct info *ip;
 {
+
 	ip->t.c_cc[VERASE] = (u_char)0177;
 	ip->t.c_cc[VKILL] = CTRL('u');
 	ip->t.c_cc[VINTR] = CTRL('c');
@@ -177,6 +182,7 @@ void
 f_everything(ip)
 	struct info *ip;
 {
+
 	print(&ip->t, &ip->win, ip->ldisc, BSD);
 }
 
@@ -184,13 +190,12 @@ void
 f_extproc(ip)
 	struct info *ip;
 {
-	int tmp;
 
 	if (ip->set) {
-		tmp = 1;
+		int tmp = 1;
 		(void)ioctl(ip->fd, TIOCEXT, &tmp);
 	} else {
-		tmp = 0;
+		int tmp = 0;
 		(void)ioctl(ip->fd, TIOCEXT, &tmp);
 	}
 }
@@ -199,6 +204,7 @@ void
 f_ispeed(ip)
 	struct info *ip;
 {
+
 	cfsetispeed(&ip->t, atoi(ip->arg));
 	ip->set = 1;
 }
@@ -207,6 +213,7 @@ void
 f_nl(ip)
 	struct info *ip;
 {
+
 	if (ip->off) {
 		ip->t.c_iflag |= ICRNL;
 		ip->t.c_oflag |= ONLCR;
@@ -221,6 +228,7 @@ void
 f_ospeed(ip)
 	struct info *ip;
 {
+
 	cfsetospeed(&ip->t, atoi(ip->arg));
 	ip->set = 1;
 }
@@ -229,6 +237,7 @@ void
 f_raw(ip)
 	struct info *ip;
 {
+
 	if (ip->off)
 		f_sane(ip);
 	else {
@@ -243,6 +252,7 @@ void
 f_rows(ip)
 	struct info *ip;
 {
+
 	ip->win.ws_row = atoi(ip->arg);
 	ip->wset = 1;
 }
@@ -251,6 +261,7 @@ void
 f_sane(ip)
 	struct info *ip;
 {
+
 	ip->t.c_cflag = TTYDEF_CFLAG | (ip->t.c_cflag & (CLOCAL|CRTSCTS));
 	ip->t.c_iflag = TTYDEF_IFLAG;
 	ip->t.c_iflag |= ICRNL;
@@ -265,6 +276,7 @@ void
 f_size(ip)
 	struct info *ip;
 {
+
 	(void)printf("%d %d\n", ip->win.ws_row, ip->win.ws_col);
 }
 
@@ -272,6 +284,7 @@ void
 f_speed(ip)
 	struct info *ip;
 {
+
 	(void)printf("%d\n", cfgetospeed(&ip->t));
 }
 
