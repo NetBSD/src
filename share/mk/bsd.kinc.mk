@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.7 1999/08/22 14:02:34 kleink Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.8 2000/01/22 19:45:41 mycroft Exp $
 
 # System configuration variables:
 #
@@ -122,7 +122,7 @@ incinstall::
 		t=${DESTDIR}$$1; \
 		shift; \
 		echo ".include <bsd.own.mk>"; \
-		echo "all:: $$t"; \
+		echo "realall: $$t"; \
 		echo ".PHONY: $$t"; \
 		echo "$$t:"; \
 		echo "	@echo \"$$t -> $$l\""; \
