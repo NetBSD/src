@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.95 2003/07/10 15:55:26 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.96 2003/07/11 14:25:15 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1067,4 +1067,9 @@ sys/dev/pci/pcidevs_data.h			regenerate
 
 	Add some intel devices, from Quentin Garnier in private mail.
 	[bouyer, ticket #1365]
+
+sys/netinet/ip_mroute.c				1.75 (via patch)
+
+	Better ip_mrouter_detach().
+	[itojun, ticket #1363]
 
