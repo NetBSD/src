@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.66 1999/08/24 23:29:09 sommerfeld Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.67 1999/08/25 14:42:35 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -611,7 +611,7 @@ kernfs_readdir(v)
 	struct uio *uio = ap->a_uio;
 	struct dirent d;
 	struct kern_target *kt;
-	int i;
+	off_t i;
 	int error;
 	off_t *cookies = NULL;
 	int ncookies = 0, nc = 0;

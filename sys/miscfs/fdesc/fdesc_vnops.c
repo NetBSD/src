@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.52 1999/08/24 23:29:08 sommerfeld Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.53 1999/08/25 14:42:35 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -678,7 +678,7 @@ fdesc_readdir(v)
 	struct uio *uio = ap->a_uio;
 	struct dirent d;
 	struct filedesc *fdp;
-	int i;
+	off_t i;
 	int error;
 	off_t *cookies = NULL;
 	int ncookies = 0;
@@ -773,7 +773,7 @@ fdesc_readdir(v)
 				if (fdp->fd_ofiles[i - 2] == NULL)
 					continue;
 				d.d_fileno = i - 2 + FD_STDIN;
-				d.d_namlen = sprintf(d.d_name, "%d", i - 2);
+				d.d_namlen = sprintf(d.d_name, "%d", (int) i - 2);
 				d.d_type = DT_UNKNOWN;
 				break;
 			}
