@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kern_lkm.c,v 1.7 1993/12/18 04:20:40 mycroft Exp $
+ *	$Id: kern_lkm.c,v 1.8 1994/01/08 05:51:17 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -210,11 +210,11 @@ int		flag;
 		 */
 		curp->size = resrvp->size;
 
-		curp->area = (char *)kmem_alloc( kmem_map, curp->size);/**/
+		curp->area = kmem_alloc( kmem_map, curp->size);/**/
 
 		curp->offset = 0;		/* load offset*/
 
-		resrvp->addr = (unsigned long)curp->area; /* ret kernel addr*/
+		resrvp->addr = curp->area; /* ret kernel addr*/
 
 #ifdef DEBUG
 		printf( "LKM: LMRESERV (actual   = 0x%08x)\n", curp->area);
