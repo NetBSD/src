@@ -1,4 +1,4 @@
-/*	$NetBSD: smb.h,v 1.8 2003/03/24 08:20:01 jdolecek Exp $	*/
+/*	$NetBSD: smb.h,v 1.9 2003/03/24 08:39:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -104,13 +104,24 @@ enum smb_dialects {
 /*
  * NTLM capabilities
  */
-#define	SMB_CAP_RAW_MODE	0x0001
-#define	SMB_CAP_MPX_MODE	0x0002
-#define	SMB_CAP_UNICODE		0x0004
-#define	SMB_CAP_LARGE_FILES	0x0008		/* 64 bit offsets supported */
-#define	SMB_CAP_NT_SMBS		0x0010
-#define	SMB_CAP_NT_FIND		0x0200
-#define	SMB_CAP_EXT_SECURITY	0x80000000
+#define	SMB_CAP_RAW_MODE		0x0001
+#define	SMB_CAP_MPX_MODE		0x0002
+#define	SMB_CAP_UNICODE			0x0004
+#define	SMB_CAP_LARGE_FILES		0x0008		/* 64 bit offsets supported */
+#define	SMB_CAP_NT_SMBS			0x0010
+#define	SMB_CAP_RPC_REMOTE_APIS		0x0020
+#define	SMB_CAP_STATUS32		0x0040
+#define	SMB_CAP_LEVEL_II_OPLOCKS	0x0080
+#define	SMB_CAP_LOCK_AND_READ		0x0100
+#define	SMB_CAP_NT_FIND			0x0200
+#define	SMB_CAP_DFS			0x1000
+#define	SMB_CAP_INFOLEVEL_PASSTHRU	0x2000
+#define	SMB_CAP_LARGE_READX		0x4000
+#define	SMB_CAP_LARGE_WRITEX		0x8000
+#define	SMB_CAP_UNIX			0x00800000
+#define	SMB_CAP_BULK_TRANSFER		0x20000000
+#define	SMB_CAP_COMPRESSED_DATA		0x40000000
+#define	SMB_CAP_EXT_SECURITY		0x80000000
 
 /*
  * File attributes
@@ -128,11 +139,12 @@ enum smb_dialects {
 #define	SMB_EFA_RDONLY		0x0001
 #define	SMB_EFA_HIDDEN		0x0002
 #define	SMB_EFA_SYSTEM		0x0004
+#define	SMB_EFA_DIRECTORY	0x0010
 #define	SMB_EFA_ARCHIVE		0x0020
 #define	SMB_EFA_NORMAL		0x0080
 #define	SMB_EFA_TEMPORARY	0x0100
 #define	SMB_EFA_COMPRESSED	0x0800
-#define	SMB_EFA_POSIX_SEMANTICS	0x00100000
+#define	SMB_EFA_POSIX_SEMANTICS	0x01000000
 #define	SMB_EFA_BACKUP_SEMANTICS 0x02000000
 #define	SMB_EFA_DELETE_ON_CLOSE	0x04000000
 #define	SMB_EFA_SEQUENTIAL_SCAN	0x08000000
@@ -267,6 +279,28 @@ enum smb_dialects {
 #define SMB_QUERY_FS_ATTRIBUTE_INFO	0x105
 
 /*
+ * SMB_TRANS2_QUERY_PATH levels
+ */
+#define	SMB_QUERY_FILE_STANDARD			1
+#define	SMB_QUERY_FILE_EA_SIZE			2
+#define	SMB_QUERY_FILE_EAS_FROM_LIST		3
+#define	SMB_QUERY_FILE_ALL_EAS			4
+#define	SMB_QUERY_FILE_IS_NAME_VALID		6
+#define	SMB_QUERY_FILE_BASIC_INFO		0x101
+#define	SMB_QUERY_FILE_STANDARD_INFO		0x102
+#define	SMB_QUERY_FILE_EA_INFO			0x103
+#define	SMB_QUERY_FILE_NAME_INFO		0x104
+#define	SMB_QUERY_FILE_ALL_INFO			0x107
+#define	SMB_QUERY_FILE_ALT_NAME_INFO		0x108
+#define	SMB_QUERY_FILE_STREAM_INFO		0x109
+#define	SMB_QUERY_FILE_COMPRESSION_INFO		0x10b
+#define	SMB_QUERY_FILE_UNIX_BASIC		0x200
+#define	SMB_QUERY_FILE_UNIX_LINK		0x201
+#define	SMB_QUERY_FILE_MAC_DT_GET_APPL		0x306
+#define	SMB_QUERY_FILE_MAC_DT_GET_ICON		0x307
+#define	SMB_QUERY_FILE_MAC_DT_GET_ICON_INFO	0x308
+
+/*
  * SMB_TRANS2_FIND_FIRST2 information levels
  */
 #define SMB_INFO_STANDARD		1
@@ -337,20 +371,34 @@ enum smb_dialects {
 #define ERRnofiles	18	/* no more files found in file search */
 #define ERRbadshare	32	/* Share mode can't be granted */
 #define ERRlock		33	/* A lock request conflicts with existing lock */
+#define ERRunsup	50	/* unsupported - Win 95 */
 #define ERRbaddevice	66	/* Bad Device Type */
-#define ERRbadnetname	67	/* Bad Network Name */	
+#define ERRnosuchshare	67	/* Bad Network Name */	
 #define ERRfilexists	80	/* The file named in the request already exists */
+#define ERRcannotopen	110	/* cannot open the file */
 #define ERRquota	112	/* W2K returns this if quota space exceeds */
-#define ERRinvname	123	/* Invalid Name */
+#define ERRinvalidname	123	/* Invalid Name */
+#define ERRunknownlevel 124
 #define ERRdirnempty	145	/* Directory Not Empty */
-#define ERReexists	183	/* Already Exists */
+#define ERRnotlocked	158	/* region was not locked by this context */
+#define ERRrename	183	/* Already Exists */
+#define ERRbadpipe	230	/* named pipe invalid */
+#define ERRpipebusy	231	/* all pipe instances are busy */
+#define ERRpipeclosing	232	/* close in progress */
+#define ERRnotconnected	233	/* nobody on other end of pipe */
+#define ERRmoredata	234	/* more data to be returned */
+#define ERRbaddirectory	267	/* invalid directory name */
+#define ERReasunsupported	282	/* extended attributes not supported */
+#define ERRunknownipc	2142
+#define ERRbuftoosmall	2123
+#define ERRnosuchprintjob	2151
 
 /*
  * Error codes for the ERRSRV class
  */
 #define ERRerror	1	/* Non-specific error code */
 #define ERRbadpw	2	/* Bad password */
-#define ERRsrvbaddevice	3	/* Reserved - Bad Device Type */
+#define ERRbadtype	3	/* Reserved - Bad Device Type */
 #define ERRaccess	4	/* The client doesn't have enough access rights */
 #define ERRinvnid	5	/* The Tid specified in a command is invalid */
 #define ERRinvnetname	6	/* Invalid server name in the tree connect */
@@ -402,6 +450,7 @@ enum smb_dialects {
 #define ERRwrongdisk	34	/* The wrong disk was found in a drive */
 #define ERRFCBunavail	35	/* No FCBs available */
 #define ERRsharebufexc	36	/* A sharing buffer has been exceeded */
+#define ERRdiskfull	39
 
 /*
  * RAP error codes (it seems that they returned not only by RAP)
