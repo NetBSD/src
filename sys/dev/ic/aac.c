@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.4 2002/09/27 03:18:11 thorpej Exp $	*/
+/*	$NetBSD: aac.c,v 1.5 2002/11/25 20:24:08 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.4 2002/09/27 03:18:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.5 2002/11/25 20:24:08 fvdl Exp $");
 
 #include "locators.h"
 
@@ -345,8 +345,8 @@ aac_describe_controller(struct aac_softc *sc)
 	}
 	if (bufsize != sizeof(*info)) {
 		printf("%s: "
-		    "RequestAdapterInfo returned wrong data size (%d != %d)\n",
-		    sc->sc_dv.dv_xname, bufsize, sizeof(*info));
+		    "RequestAdapterInfo returned wrong data size (%u != %ld)\n",
+		    sc->sc_dv.dv_xname, (unsigned)bufsize, (long)sizeof(*info));
 		return;
 	}
 	info = (struct aac_adapter_info *)&buf[0];
@@ -499,7 +499,7 @@ aac_init(struct aac_softc *sc)
 	 * list by virtue of a table.
 	 */
 	qaddr = &sc->sc_common->ac_qbuf[0] + AAC_QUEUE_ALIGN;
-	qaddr -= (u_int32_t)qaddr % AAC_QUEUE_ALIGN; 	/* XXX not portable */
+	qaddr -= (u_long)qaddr % AAC_QUEUE_ALIGN; 	/* XXX not portable */
 	sc->sc_queues = (struct aac_queue_table *)qaddr;
 	ip->CommHeaderAddress = htole32(sc->sc_common_seg.ds_addr +
 	    ((caddr_t)sc->sc_queues - (caddr_t)sc->sc_common));
@@ -642,8 +642,9 @@ aac_startup(struct aac_softc *sc)
 		}
 		if (rsize != sizeof(mir)) {
 			printf("%s: container info response wrong size "
-			    "(%d should be %d)\n",
-			    sc->sc_dv.dv_xname, rsize, sizeof(mir));
+			    "(%u should be %ld)\n",
+			    sc->sc_dv.dv_xname, (unsigned)rsize,
+			    (long)sizeof(mir));
 			continue;
 		}
 
@@ -937,7 +938,8 @@ aac_sync_fib(struct aac_softc *sc, u_int32_t command, u_int32_t xferstate,
 	fib->Header.StructType = AAC_FIBTYPE_TFIB;
 	fib->Header.Size = htole16(sizeof(*fib) + datasize);
 	fib->Header.SenderSize = htole16(sizeof(*fib));
-	fib->Header.SenderFibAddress = htole32((u_int32_t)fib);	/* XXX */
+	fib->Header.SenderFibAddress =
+	    htole32((u_int32_t)(u_long)fib);	/* XXX */
 	fib->Header.ReceiverFibAddress = htole32(fibpa);
 
 	/*
@@ -1107,7 +1109,8 @@ aac_ccb_submit(struct aac_softc *sc, struct aac_ccb *ac)
 	AAC_DPRINTF(AAC_D_QUEUE, ("aac_ccb_submit(%p, %p) ", sc, ac));
 
 	/* Fix up the address values. */
-	ac->ac_fib->Header.SenderFibAddress = htole32((u_int32_t)ac->ac_fib);
+	ac->ac_fib->Header.SenderFibAddress =
+	    htole32((u_int32_t)(u_long)ac->ac_fib);
 	ac->ac_fib->Header.ReceiverFibAddress = htole32(ac->ac_fibphys);
 
 	/* Save a pointer to the command for speedy reverse-lookup. */
@@ -1233,8 +1236,9 @@ aac_dequeue_fib(struct aac_softc *sc, int queue, u_int32_t *fib_size,
 
 	/* Fetch the entry. */
 	*fib_size = le32toh((sc->sc_qentries[queue] + ci)->aq_fib_size);
-	*fib_addr = le32toh((struct aac_fib *)
-	    (sc->sc_qentries[queue] + ci)->aq_fib_addr);
+	*fib_addr =
+	    (struct aac_fib *)(u_long)
+		le32toh((sc->sc_qentries[queue] + ci)->aq_fib_addr);
 
 	/* Update consumer index. */
 	sc->sc_queues->qt_qindex[queue][AAC_CONSUMER_INDEX] = ci + 1;
