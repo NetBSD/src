@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: set_e.sh,v 1.1 2005/03/31 08:52:49 yamt Exp $
+# $NetBSD: set_e.sh,v 1.2 2005/04/02 05:43:29 yamt Exp $
 
 rval=0
 exec >&2
@@ -44,5 +44,6 @@ check 'false' 'Y1'
 check '(false)' 'Y1'
 check 'false || false' 'Y1'
 check '/nonexistent' 'Y1'
+check 'f() { false; }; f' 'Y1'
 
 exit $rval
