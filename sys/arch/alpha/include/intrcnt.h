@@ -1,4 +1,4 @@
-/* $NetBSD: intrcnt.h,v 1.15 1998/06/26 21:55:09 ross Exp $ */
+/* $NetBSD: intrcnt.h,v 1.16 1998/06/27 10:10:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -279,7 +279,39 @@
 		ASCIZ "dec 1000 irq 12";				\
 		ASCIZ "dec 1000 irq 13";				\
 		ASCIZ "dec 1000 irq 14";				\
-/* 0x15b */	ASCIZ "dec 1000 irq 15";
+/* 0x15b */	ASCIZ "dec 1000 irq 15";				\
+		ASCIZ "eb66 irq 0";					\
+		ASCIZ "eb66 irq 1";					\
+		ASCIZ "eb66 irq 2";					\
+		ASCIZ "eb66 irq 3";					\
+/* 0x160 */	ASCIZ "eb66 irq 4";					\
+		ASCIZ "eb66 irq 5";					\
+		ASCIZ "eb66 irq 6";					\
+		ASCIZ "eb66 irq 7";					\
+		ASCIZ "eb66 irq 8";					\
+		ASCIZ "eb66 irq 9";					\
+		ASCIZ "eb66 irq 10";					\
+		ASCIZ "eb66 irq 11";					\
+		ASCIZ "eb66 irq 12";					\
+		ASCIZ "eb66 irq 13";					\
+		ASCIZ "eb66 irq 14";					\
+		ASCIZ "eb66 irq 15";					\
+		ASCIZ "eb66 irq 16";					\
+		ASCIZ "eb66 irq 17";					\
+		ASCIZ "eb66 irq 18";					\
+		ASCIZ "eb66 irq 19";					\
+/* 0x170 */	ASCIZ "eb66 irq 20";					\
+		ASCIZ "eb66 irq 21";					\
+		ASCIZ "eb66 irq 22";					\
+		ASCIZ "eb66 irq 23";					\
+		ASCIZ "eb66 irq 24";					\
+		ASCIZ "eb66 irq 25";					\
+		ASCIZ "eb66 irq 26";					\
+		ASCIZ "eb66 irq 27";					\
+		ASCIZ "eb66 irq 28";					\
+		ASCIZ "eb66 irq 29";					\
+		ASCIZ "eb66 irq 30";					\
+/* 0x17b*/	ASCIZ "eb66 irq 31";
 
 #define INTRCNT_DEFINITION						\
 /* 0x00 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
@@ -298,6 +330,8 @@
 /* 0x130 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
 /* 0x140 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
 /* 0x150 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
+/* 0x160 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
+/* 0x170 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
 
 #define	INTRCNT_CLOCK		0
 #define	INTRCNT_ISA_IRQ		(INTRCNT_CLOCK + 1)
@@ -335,6 +369,9 @@
 #define	INTRCNT_DEC_1000_IRQ	(INTRCNT_DEC_1000A_IRQ +	\
 					INTRCNT_DEC_1000A_IRQ_LEN)
 #define	INTRCNT_DEC_1000_IRQ_LEN	16
+#define	INTRCNT_EB66_IRQ	(INTRCNT_DEC_1000_IRQ +		\
+					INTRCNT_DEC_1000_IRQ_LEN)
+#define	INTRCNT_EB66_IRQ_LEN	32
 
 #ifndef _LOCORE
 extern volatile long intrcnt[];
