@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.556 2003/04/06 10:17:58 tsutsui Exp $
+# $NetBSD: mi,v 1.557 2003/04/15 19:46:38 jdolecek Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -269,6 +269,7 @@
 ./usr/share/man/cat1/passwd.0			man-util-catman
 ./usr/share/man/cat1/paste.0			man-util-catman
 ./usr/share/man/cat1/patch.0			man-util-catman
+./usr/share/man/cat1/pathchk.0			man-util-catman
 ./usr/share/man/cat1/pawd.0			man-amd-catman
 ./usr/share/man/cat1/pax.0			man-util-catman
 ./usr/share/man/cat1/pgrep.0			man-util-catman
@@ -2056,6 +2057,7 @@
 ./usr/share/man/man1/passwd.1			man-util-man
 ./usr/share/man/man1/paste.1			man-util-man
 ./usr/share/man/man1/patch.1			man-util-man
+./usr/share/man/man1/pathchk.1			man-util-man
 ./usr/share/man/man1/pawd.1			man-amd-man
 ./usr/share/man/man1/pax.1			man-util-man
 ./usr/share/man/man1/pgrep.1			man-util-man
