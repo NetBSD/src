@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.26 1998/07/04 22:18:48 jonathan Exp $	*/
+/*	$NetBSD: db_command.c,v 1.27 1998/07/05 14:33:56 tron Exp $	*/
 
 /* 
  * Mach Operating System
@@ -26,6 +26,7 @@
  * rights to redistribute these changes.
  */
 
+#include "opt_ddb.h"
 #include "opt_uvm.h"
 
 /*
