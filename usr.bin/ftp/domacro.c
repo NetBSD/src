@@ -1,4 +1,4 @@
-/*	$NetBSD: domacro.c,v 1.11 1998/05/20 00:54:26 christos Exp $	*/
+/*	$NetBSD: domacro.c,v 1.12 1998/06/04 08:28:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)domacro.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: domacro.c,v 1.11 1998/05/20 00:54:26 christos Exp $");
+__RCSID("$NetBSD: domacro.c,v 1.12 1998/06/04 08:28:35 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ domacro(argc, argv)
 	struct cmd *c;
 
 	if (argc < 2 && !another(&argc, &argv, "macro name")) {
-		printf("usage: %s macro_name\n", argv[0]);
+		fprintf(ttyout, "usage: %s macro_name\n", argv[0]);
 		code = -1;
 		return;
 	}
@@ -69,7 +69,7 @@ domacro(argc, argv)
 		}
 	}
 	if (i == macnum) {
-		printf("'%s' macro not found.\n", argv[1]);
+		fprintf(ttyout, "'%s' macro not found.\n", argv[1]);
 		code = -1;
 		return;
 	}
@@ -121,23 +121,25 @@ TOP:
 		makeargv();
 		c = getcmd(margv[0]);
 		if (c == (struct cmd *)-1) {
-			puts("?Ambiguous command.");
+			fputs("?Ambiguous command.\n", ttyout);
 			code = -1;
 		}
 		else if (c == 0) {
-			puts("?Invalid command.");
+			fputs("?Invalid command.\n", ttyout);
 			code = -1;
 		}
 		else if (c->c_conn && !connected) {
-			puts("Not connected.");
+			fputs("Not connected.\n", ttyout);
 			code = -1;
 		}
 		else {
-			if (verbose)
-				puts(line);
+			if (verbose) {
+				fputs(line, ttyout);
+				putc('\n', ttyout);
+			}
 			(*c->c_handler)(margc, margv);
 			if (bell && c->c_bell) {
-				(void)putchar('\007');
+				(void)putc('\007', ttyout);
 			}
 			(void)strcpy(line, line2);
 			makeargv();
