@@ -1,4 +1,4 @@
-/*	$NetBSD: utime.h,v 1.5 1998/02/02 21:08:16 perry Exp $	*/
+/*	$NetBSD: utime.h,v 1.6 1998/05/06 17:30:12 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,13 +38,19 @@
 #ifndef	_UTIME_H_
 #define	_UTIME_H_
 
-#include <sys/cdefs.h>
-#include <sys/types.h>
+#include <machine/ansi.h>
+
+#ifdef	_BSD_TIME_T_
+typedef	_BSD_TIME_T_	time_t;
+#undef	_BSD_TIME_T_
+#endif
 
 struct utimbuf {
 	time_t actime;		/* Access time */
 	time_t modtime;		/* Modification time */
 };
+
+#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 int utime __P((const char *, const struct utimbuf *));
