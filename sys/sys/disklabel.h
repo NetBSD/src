@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.78 2003/01/24 21:55:18 fvdl Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.79 2003/01/25 23:17:38 soren Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -314,6 +314,8 @@ static const char *const dktypenames[] = {
  * Filesystem type and version.
  * Used to interpret other filesystem-specific
  * per-partition information.
+ *
+ * These are used only for COMPAT_09 support.
  */
 #define	FS_UNUSED	0		/* unused */
 #define	FS_SWAP		1		/* swap */
