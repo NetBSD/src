@@ -1,24 +1,7 @@
-# $NetBSD: md.alpha,v 1.25 2001/01/27 23:48:33 jdolecek Exp $
+# $NetBSD: md.alpha,v 1.26 2001/12/04 00:12:45 jdolecek Exp $
 ./usr/bin/fdformat		base-util-bin
 ./usr/lib/libalpha.so.0		base-sys-shlib
 ./usr/lib/libalpha.so.0.0	base-sys-shlib
-./usr/lkm/adosfs.o		base-adosfs-lkm
-./usr/lkm/cd9660.o		base-sys-lkm
-./usr/lkm/coda.o		base-coda-lkm
-./usr/lkm/ext2fs.o		base-ext2fs-lkm
-./usr/lkm/fdesc.o		base-miscfs-lkm
-./usr/lkm/filecorefs.o		base-filecorefs-lkm
-./usr/lkm/if_ipl.o		base-ipf-lkm
-./usr/lkm/lfs.o			base-sys-lkm
-./usr/lkm/kernfs.o		base-sys-lkm
-./usr/lkm/mfs.o			base-sys-lkm
-./usr/lkm/msdosfs.o		base-sys-lkm
-./usr/lkm/ntfs.o		base-ntfs-lkm
-./usr/lkm/nullfs.o		base-miscfs-lkm
-./usr/lkm/overlay.o		base-miscfs-lkm
-./usr/lkm/portal.o		base-miscfs-lkm
-./usr/lkm/procfs.o		base-sys-lkm
-./usr/lkm/umapfs.o		base-miscfs-lkm
 ./usr/mdec/boot			base-sysutil-bin
 ./usr/mdec/bootxx.old		base-sysutil-bin
 ./usr/mdec/bootxx_cd9660	base-sysutil-bin
