@@ -116,6 +116,7 @@
 
         .globl  _C_LABEL(cpu),_C_LABEL(cpu_id),_C_LABEL(cpu_vendor)
 	.globl  _C_LABEL(cpuid_level),_C_LABEL(cpu_feature)
+	.globl	_C_LABEL(mpidle)
 
 	.global _C_LABEL(cpu_spinup_trampoline)
 	.global _C_LABEL(cpu_spinup_trampoline_end)
@@ -272,7 +273,9 @@ mp_cont:
 	HALTT(0x30,%ecx)	
 	pushl	%ecx
 	call	_C_LABEL(cpu_hatch)
-	HALT(0x33)	
+	HALT(0x33)
+	xorl	%esi,%esi
+	jmp	_C_LABEL(mpidle)
 mps:
 	hlt
 	jmp mps
