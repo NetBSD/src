@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.136 2003/01/21 20:50:43 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.137 2003/04/02 02:24:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -163,8 +163,8 @@ cpu_startup()
 
 	/* msgbuf_paddr was init'd in pmap */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_kenter_pa(msgbuf_vaddr + i * NBPG,
-		    msgbuf_paddr + i * NBPG, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(msgbuf_vaddr + i * PAGE_SIZE,
+		    msgbuf_paddr + i * PAGE_SIZE, VM_PROT_READ | VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
@@ -212,7 +212,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -258,7 +258,7 @@ cpu_startup()
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
 	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -702,7 +702,7 @@ cpu_dump()
 
 /*
  * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first NBPG of disk space
+ * Dumps always skip the first PAGE_SIZE of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
@@ -748,7 +748,7 @@ bad:
 /*
  * Dump the kernel's image to the swap partition.
  */
-#define BYTES_PER_DUMP  NBPG	/* must be a multiple of pagesize XXX small */
+#define BYTES_PER_DUMP  PAGE_SIZE /* must be a multiple of pagesize XXX small */
 static vaddr_t dumpspace;
 
 vaddr_t
@@ -896,8 +896,8 @@ alloc_pages(pages)
 	int pages;
 {
 	paddr_t p = avail_start;
-	avail_start += pages * NBPG;
-	memset((caddr_t) p, 0, pages * NBPG);
+	avail_start += pages * PAGE_SIZE;
+	memset((caddr_t) p, 0, pages * PAGE_SIZE);
 	return(p);
 }
 
@@ -924,10 +924,10 @@ map(pd, virtual, physical, protection, size)
 		}
 		if (physical != (paddr_t) -1) {
 			pt[ix2] = (pt_entry_t) (physical | protection | PG_V);
-			physical += NBPG;
-			size -= NBPG;
+			physical += PAGE_SIZE;
+			size -= PAGE_SIZE;
 		} else {
-			size -= (PTES_PER_PTP - ix2) * NBPG;
+			size -= (PTES_PER_PTP - ix2) * PAGE_SIZE;
 			ix2 = PTES_PER_PTP - 1;
 		}
 		if (++ix2 == PTES_PER_PTP) {
