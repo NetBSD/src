@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.122 2003/10/26 03:12:21 lukem Exp $
+#	$NetBSD: build.sh,v 1.123 2003/10/31 01:46:39 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -87,11 +87,7 @@ initdefaults()
 	# XXX Except that doesn't work on Solaris.
 	#
 	unset PWD
-	if [ "${uname_s}" = "SunOS" ]; then
-		TOP=$(pwd -P)
-	else
-		TOP=$(pwd)
-	fi
+	TOP=$(/bin/pwd -P)
 
 	# Set defaults.
 	#
@@ -833,7 +829,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.122 2003/10/26 03:12:21 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.123 2003/10/31 01:46:39 lukem Exp $
 #
 
 EOF
