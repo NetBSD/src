@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.363 2001/10/13 07:43:42 ichiro Exp $
+$NetBSD: pcidevs,v 1.364 2001/10/16 08:14:15 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1664,6 +1664,9 @@ product SIS 85C501		0x0406	85C501
 product SIS 85C496		0x0496	85C496
 product SIS 530HB		0x0530	530 Host to PCI Bridge
 product SIS 85C601		0x0601	85C601
+product SIS 645			0x0645	SiS 645 Host Bridge
+product SIS 650			0x0650	SiS 650 Host Bridge
+product SIS 730			0x0730	SiS 730 Host Bridge
 product SIS 735			0x0735	SiS 735 Host Bridge
 product SIS 900			0x0900	SiS 900 10/100 Ethernet
 product SIS 5597_IDE		0x5513	5597/5598 IDE controller
