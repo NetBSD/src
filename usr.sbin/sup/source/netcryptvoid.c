@@ -1,4 +1,4 @@
-/*	$NetBSD: netcryptvoid.c,v 1.6 2000/12/13 23:00:32 scw Exp $	*/
+/*	$NetBSD: netcryptvoid.c,v 1.7 2002/07/10 18:53:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -44,7 +44,7 @@
  *  you can only run unencrypted sups
  */
 
-#include <libc.h>
+#include "libc.h"
 #include "supcdefs.h"
 #include "supextern.h"
 #include "supmsg.h"

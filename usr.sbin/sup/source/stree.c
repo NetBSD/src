@@ -1,4 +1,4 @@
-/*	$NetBSD: stree.c,v 1.4 1999/04/12 20:48:07 pk Exp $	*/
+/*	$NetBSD: stree.c,v 1.5 2002/07/10 18:53:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -52,7 +52,7 @@
  **********************************************************************
  */
 
-#include <libc.h>
+#include "libc.h"
 #include <c.h>
 #include <sys/param.h>
 #include "supcdefs.h"
@@ -60,15 +60,15 @@
 
 #define Static		static		/* comment for debugging */
 
-Static TREE *Tmake __P((char *));
-Static TREE *Trotll __P((TREE *, TREE *));
-Static TREE *Trotlh __P((TREE *, TREE *));
-Static TREE *Trothl __P((TREE *, TREE *));
-Static TREE *Trothh __P((TREE *, TREE *));
-Static void Tbalance __P((TREE **));
-Static TREE *Tinsertavl __P((TREE **, char *, int, int *));
-Static int Tsubprocess __P((TREE *, int, int (*f )(TREE *, void *), void *));
-Static int Tprintone __P((TREE *, void *));
+Static TREE *Tmake(char *);
+Static TREE *Trotll(TREE *, TREE *);
+Static TREE *Trotlh(TREE *, TREE *);
+Static TREE *Trothl(TREE *, TREE *);
+Static TREE *Trothh(TREE *, TREE *);
+Static void Tbalance(TREE **);
+Static TREE *Tinsertavl(TREE **, char *, int, int *);
+Static int Tsubprocess(TREE *, int, int (*f )(TREE *, void *), void *);
+Static int Tprintone(TREE *, void *);
 
 
 /*************************************************************
@@ -301,7 +301,7 @@ Static
 int Tsubprocess (t,reverse,f,argp)
 TREE *t;
 int reverse;
-int (*f) __P((TREE *, void *));
+int (*f)(TREE *, void *);
 void *argp;
 {
 	register int x = SCMOK;
@@ -324,7 +324,7 @@ void *argp;
 /* VARARGS2 */
 int Trprocess (t,f,args)
 TREE *t;
-int (*f) __P((TREE *, void *));
+int (*f)(TREE *, void *);
 void *args;
 {
 	if (t == NULL)  return (SCMOK);
@@ -335,7 +335,7 @@ void *args;
 /* VARARGS2 */
 int Tprocess (t,f,args)
 TREE *t;
-int (*f) __P((TREE *, void *));
+int (*f)(TREE *, void *);
 void *args;
 {
 	if (t == NULL)  return (SCMOK);

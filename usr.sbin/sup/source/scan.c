@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.c,v 1.12 1999/04/12 20:48:07 pk Exp $	*/
+/*	$NetBSD: scan.c,v 1.13 2002/07/10 18:53:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -83,7 +83,7 @@
  **********************************************************************
  */
 
-#include <libc.h>
+#include "libc.h"
 #include <c.h>
 #include <vis.h>
 #include <sys/types.h>
@@ -176,25 +176,25 @@ extern int candorcs;
 /*************************************************
  ***   STATIC   R O U T I N E S    ***
  *************************************************/
-static void passdelim __P((char **, int ));
-static char *parserelease __P((TREELIST **, char *, char *));
-static int scanone __P((TREE *, void *));
-static void makescan __P((char *, char *));
-static void getscan __P((char *, char *));
-static void doscan __P((char *));
-static void readlistfile __P((char *));
-static void expTinsert __P((char *, TREE **, int, char *));
-static int listone __P((TREE *, void *));
-static void listentry __P((char *, char *, char *, int));
-static void listname __P((char *, struct stat *));
-static void listdir __P((char *, int));
-static int omitanyone __P((TREE *, void *));
-static int anyglob __P((char *, char *));
-static int getscanfile __P((char *));
-static void chkscanfile __P((char *));
-static void makescanfile __P((char *));
-static int recordone __P((TREE *, void *));
-static int recordexec __P((TREE *, void *));
+static void passdelim(char **, int );
+static char *parserelease(TREELIST **, char *, char *);
+static int scanone(TREE *, void *);
+static void makescan(char *, char *);
+static void getscan(char *, char *);
+static void doscan(char *);
+static void readlistfile(char *);
+static void expTinsert(char *, TREE **, int, char *);
+static int listone(TREE *, void *);
+static void listentry(char *, char *, char *, int);
+static void listname(char *, struct stat *);
+static void listdir(char *, int);
+static int omitanyone(TREE *, void *);
+static int anyglob(char *, char *);
+static int getscanfile(char *);
+static void chkscanfile(char *);
+static void makescanfile(char *);
+static int recordone(TREE *, void *);
+static int recordexec(TREE *, void *);
 
 
 /*************************************************

@@ -1,4 +1,4 @@
-/*	$NetBSD: libc.h,v 1.5 1998/07/26 15:52:46 mycroft Exp $	*/
+/*	$NetBSD: libc.h,v 1.6 2002/07/10 18:53:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -81,10 +81,6 @@
 #include <sys/types.h>
 #endif	/* _TYPES_ */
 
-#ifndef	_SYSENT_H_
-#include <sysent.h>
-#endif	/* _SYSENT_H_ */
-
 #ifndef	FILE
 #include <stdio.h>
 #endif	/* FILE */
@@ -102,19 +98,12 @@
 #endif	/* _TIME_H_ */
 
 /*  CMU stdio additions */
-#if defined(__STDC__)
 extern FILE *fopenp(const char*, const char*, char*, char*);
 extern FILE *fwantread(const char*, const char*, const char*, const char*);
 extern FILE *fwantwrite(const char*, const char*, const char*, const char*,
 			int);
-#else	/* __STDC__ */
-extern FILE *fopenp();
-extern FILE *fwantread();
-extern FILE *fwantwrite();
-#endif	/* __STDC__ */
 
 /* CMU string routines */
-#if defined(__STDC__)
 extern char* foldup(char*, const char*);
 extern char* folddown(char*, const char*);
 extern char* sindex(const char*, const char*);
@@ -150,142 +139,18 @@ extern unsigned int hexarg(const char**, const char*, const char*,
 			   unsigned int, unsigned int, unsigned int);
 extern unsigned int atoh(const char*);
 extern char *concat(const char*, int, ...);
-#else	/* __STDC__ */
-extern char *foldup(), *folddown();
-extern char *sindex(), *skipto(), *skipover(), *nxtarg();
-extern char *getstr(), *strarg();
-extern long getlong(), longarg();
-extern short getshort(), shortarg();
-extern float getfloat(), floatarg();
-extern double getdouble(), doublearg();
-extern unsigned int getoct(), octarg(), gethex(), hexarg();
-extern unsigned int atoo(), atoh();
-extern char *salloc();
-extern char *concat();
-#endif	/* __STDC__ */
 
 /* CMU library routines */
-#if defined(__STDC__)
 extern char *getname(int);
 extern char *pathof(char *);
 extern const char *errmsg(int);
-#else	/* __STDC__ */
-extern char *getname();
-extern char *pathof();
-extern const char *errmsg();
-#endif	/* __STDC__ */
 
 /*  CMU time additions */
-#if defined(__STDC__)
 extern long gtime(const struct tm*);
 extern long atot(const char*);
-#else	/* __STDC__ */
-extern long gtime();
-extern long atot();
-#endif	/* __STDC__ */
 
 /* 4.3 BSD standard library routines; taken from man(3) */
-#if defined(__STDC__)
-#if 0
-typedef int (*PFI)();
-#endif
 #if defined(c_plusplus)
 typedef int (*PFI2)(...);
 #endif /* c_plusplus */
-#if 0
-extern void abort(void);
-extern int abs(int);
-extern double atof(const char *);
-extern int atoi(const char *);
-extern long atol(const char *);
-extern void bcopy(const void *, void *, int);
-extern int bcmp(const void *, const void *, int);
-extern void bzero(void *, int);
-extern int ffs(int);
-extern char *crypt(const char *, const char *);
-extern void setkey(char *);
-extern void encrypt(char *, int);
-extern char *ecvt(double, int, int *, int *);
-extern char *fcvt(double, int, int *, int *);
-extern char *gcvt(double, int, char *);
-extern int execl(const char *, ...);
-extern int execv(const char *, const char **);
-extern int execle(const char *, ...);
-extern int exect(const char *, const char **, const char **);
-extern void exit(int);
-extern char *getenv(const char *);
-extern char *getlogin(void);
-extern int getopt(int, const char **, const char *);
-extern char *getpass(const char *);
-extern char *getusershell(void);
-extern void setusershell(void);
-extern void endusershell(void);
-extern char *getwd(char *);
-extern int initgroups(const char *, gid_t);
-extern void *malloc(unsigned);
-extern void free(void *);
-extern void *realloc(void *, unsigned);
-extern void *calloc(unsigned, unsigned);
-extern void *alloca(int);
-extern char *mktemp(char *);
-extern int mkstemp(char *);
-extern void monitor(PFI, PFI, short *, int, int);
-extern void monstartup(PFI, PFI);
-extern void moncontrol(int);
-extern int pause(void);
-#if defined(c_plusplus)
-extern void qsort(void *, int, int, PFI2);
-#else /* c_plusplus */
-extern void qsort(void *, int, int, PFI);
-#endif /* c_plusplus */
-extern long random(void);
-extern int srandom(int);
-extern void *initstate(unsigned, void *, int);
-extern void *setstate(void *);
-extern int rcmd(char **, int, const char *, const char *, const char *, int);
-extern int rresvport(int *);
-extern int ruserok(char *, int, const char *, const char *);
-extern char *re_comp(char *);
-extern int re_exec(char *);
-extern int rexec(char **, int, const char *, const char *, const char *,
-		 int *);
-extern int setuid(uid_t);
-extern int seteuid(uid_t);
-extern int setruid(uid_t);
-extern int setgid(gid_t);
-extern int setegid(gid_t);
-extern int setrgid(gid_t);
-extern void sleep(unsigned);
-extern void swab(void *, void *, int);
-extern int system(const char *);
-extern char *ttyname(int);
-extern int isatty(int);
-extern int ttyslot(void);
-extern unsigned ualarm(unsigned, unsigned);
-extern void usleep(unsigned);
-#endif
-#else	/* __STDC__ */
-extern double atof();
-extern long atol();
-extern char *crypt();
-extern char *ecvt();
-extern char *fcvt();
-extern char *gcvt();
-extern char *getenv();
-extern char *getlogin();
-extern char *getpass();
-extern char *getusershell();
-extern char *getwd();
-extern char *malloc();
-extern char *realloc();
-extern char *calloc();
-extern char *alloca();
-extern char *mktemp();
-extern long random();
-extern char *initstate();
-extern char *setstate();
-extern char *re_comp();
-extern char *ttyname();
-extern unsigned ualarm();
-#endif	/* __STDC__ */
 #endif	/* not _LIBC_H_ */

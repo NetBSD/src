@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.12 1998/11/02 04:00:24 kim Exp $	*/
+/*	$NetBSD: expand.c,v 1.13 2002/07/10 18:53:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -70,7 +70,7 @@
 #endif
 #include <pwd.h>
 #include <ctype.h>
-#include <libc.h>
+#include "libc.h"
 #include <setjmp.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -89,23 +89,15 @@ static	int	bufcnt;			/* current number in buffer */
 
 #define fixit(a) (a[0] ? a : ".")
 
-#ifndef __P
-#ifdef __STDC__
-#define __P(a)	a
-#else
-#define __P(a)	()
-#endif
-#endif
-
-int expand __P((char *, char **, int));
-static void glob __P((char *));
-static void matchdir __P((char *));
-static int execbrc __P((char *, char *));
-static int match __P((char *, char *));
-static int amatch __P((char *, char *));
-static void addone __P((char *, char *));
-static int addpath __P((int));
-static int gethdir __P((char *, int));
+int expand(char *, char **, int);
+static void glob(char *);
+static void matchdir(char *);
+static int execbrc(char *, char *);
+static int match(char *, char *);
+static int amatch(char *, char *);
+static void addone(char *, char *);
+static int addpath(int);
+static int gethdir(char *, int);
 
 int expand(spec, buffer, bufsize)
 	register char *spec;

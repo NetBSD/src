@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmain.c,v 1.15 2001/09/16 16:34:45 wiz Exp $	*/
+/*	$NetBSD: supcmain.c,v 1.16 2002/07/10 18:53:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -346,10 +346,10 @@ int rpauseflag;				/* don't disable resource pausing */
 int xpatchflag;				/* crosspatched with remote system */
 int portdebug;				/* network debugging ports */
 
-int main __P((int, char **));
-static int checkcoll __P((TREE *, void *));
-static void doswitch __P((char *, TREE **, int *, int *));
-static char *init __P((int, char **));
+int main(int, char **);
+static int checkcoll(TREE *, void *);
+static void doswitch(char *, TREE **, int *, int *);
+static char *init(int, char **);
 
 /*************************************
  ***    M A I N   R O U T I N E    ***
@@ -595,11 +595,7 @@ char **argv;
 	int oflags,aflags;
 	int cwant;
 #ifdef	MACH
-#ifdef	__STDC__
 	void (*oldsigsys)();
-#else
-	int (*oldsigsys)();
-#endif
 #endif /* MACH */
 
 	sysflag = FALSE;		/* not system upgrade */

@@ -1,4 +1,4 @@
-/*	$NetBSD: errmsg.c,v 1.5 1998/08/04 04:33:15 mikel Exp $	*/
+/*	$NetBSD: errmsg.c,v 1.6 2002/07/10 18:53:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -37,7 +37,7 @@
 #include "supextern.h"
 
 #ifndef __NetBSD__
-static char *itoa __P((char *, unsigned));
+static char *itoa(char *, unsigned);
 
 static char *itoa(p,n)
 char *p;
