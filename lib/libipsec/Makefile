@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.4 2000/03/13 21:23:55 itojun Exp $
+# $NetBSD: Makefile,v 1.5 2000/05/09 05:52:54 thorpej Exp $
 
 LIB=	ipsec
 CFLAGS+=-g
-CPPFLAGS+=-DIPSEC_DEBUG -DIPSEC -DINET6 -I. -DYY_NO_UNPUT
+CPPFLAGS+=-DIPSEC_DEBUG -DIPSEC -DINET6 -I${.CURDIR} -I. -DYY_NO_UNPUT
 
 SRCS+=	ipsec_strerror.c policy_parse.y policy_token.l
 SRCS+=	ipsec_get_policylen.c ipsec_dump_policy.c
