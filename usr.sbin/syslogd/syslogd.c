@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.17 2004/11/17 02:57:45 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.18 2004/11/17 03:02:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.17 2004/11/17 02:57:45 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.18 2004/11/17 03:02:14 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -697,16 +697,18 @@ printline(char *hname, char *msg)
 {
 	int c, pri;
 	char *p, *q, line[MAXLINE + 1];
+	long n;
 
 	/* test for special codes */
 	pri = DEFUPRI;
 	p = msg;
 	if (*p == '<') {
-		pri = 0;
-		while (isdigit((unsigned char)*++p))
-			pri = 10 * pri + (*p - '0');
-		if (*p == '>')
-			++p;
+		errno = 0;
+		n = strtol(p + 1, &q, 10);
+		if (*q == '>' && n >= 0 && n < INT_MAX && errno == 0) {
+			p = q + 1;
+			pri = (int)n;
+		}
 	}
 	if (pri &~ (LOG_FACMASK|LOG_PRIMASK))
 		pri = DEFUPRI;
