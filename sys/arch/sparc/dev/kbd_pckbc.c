@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_pckbc.c,v 1.1 2002/10/03 16:27:04 uwe Exp $ */
+/*	$NetBSD: kbd_pckbc.c,v 1.2 2002/10/21 15:36:35 uwe Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -26,11 +26,89 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*-
+ * Copyright (c) 1990 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * William Jolitz and Don Ahn.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)pccons.c	5.11 (Berkeley) 5/21/91
+ */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd_pckbc.c,v 1.1 2002/10/03 16:27:04 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd_pckbc.c,v 1.2 2002/10/21 15:36:35 uwe Exp $");
 
 /*
- * Pretend we are a Type5 keyboard with US101A layout.
+ * Serve JavaStation-1 PS/2 keyboard as a Type5 keyboard with US101A
+ * layout.  Since stock Xsun(1) knows this layout, JavaStation-1 gets
+ * X for free.  When sparc port is switched to wscons and its X server
+ * knows how to talk wskbd, this driver will no longer be necessary,
+ * and we will be able to attach the keyboard with the MI pckbc(4) driver.
  */
 
 #include <sys/param.h>
@@ -38,7 +116,6 @@ __KERNEL_RCSID(0, "$NetBSD: kbd_pckbc.c,v 1.1 2002/10/03 16:27:04 uwe Exp $");
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/select.h>
 #include <sys/syslog.h>
 
@@ -46,8 +123,8 @@ __KERNEL_RCSID(0, "$NetBSD: kbd_pckbc.c,v 1.1 2002/10/03 16:27:04 uwe Exp $");
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <machine/kbd.h>
-#include <machine/kbio.h>
+#include <dev/sun/kbd_reg.h>
+#include <dev/sun/kbio.h>
 
 #include <dev/pckbc/pckbdreg.h>
 
@@ -61,11 +138,11 @@ __KERNEL_RCSID(0, "$NetBSD: kbd_pckbc.c,v 1.1 2002/10/03 16:27:04 uwe Exp $");
 
 
 struct kbd_pckbc_softc {
-	struct kbd_softc	sc_kbd;
+	struct kbd_softc sc_kbd;
 
 	/* pckbc attachment */
-	pckbc_tag_t		sc_kbctag;
-	pckbc_slot_t		sc_kbcslot;
+	pckbc_tag_t sc_kbctag;
+	pckbc_slot_t sc_kbcslot;
 
 	/*
 	 * Middle layer data.
@@ -97,7 +174,7 @@ static int	kbd_pckbc_close(struct kbd_softc *);
 static int	kbd_pckbc_do_cmd(struct kbd_softc *, int, int);
 static int	kbd_pckbc_set_leds(struct kbd_softc *, int, int);
 
-struct kbd_ops kbd_ops_pckbc = {
+static const struct kbd_ops kbd_ops_pckbc = {
 	kbd_pckbc_open,
 	kbd_pckbc_close,
 	kbd_pckbc_do_cmd,
@@ -105,7 +182,7 @@ struct kbd_ops kbd_ops_pckbc = {
 };
 
 
-static u_int8_t	kbd_pckbc_xt_to_sun[];
+static const u_int8_t	kbd_pckbc_xt_to_sun[];
 
 static int	kbd_pckbc_set_xtscancode(pckbc_tag_t, pckbc_slot_t);
 static void	kbd_pckbc_input(void *, int);
@@ -140,7 +217,6 @@ kbd_pckbc_attach(parent, self, aux)
 	struct kbd_pckbc_softc *sc = (void *)self;
 	struct pckbc_attach_args *pa = aux;
 	struct kbd_softc *kbd = &sc->sc_kbd;
-	struct kbd_state *ks = &kbd->k_state;
 
 	/* save our attachment to pckbc */
 	sc->sc_kbctag = pa->pa_tag;
@@ -149,29 +225,22 @@ kbd_pckbc_attach(parent, self, aux)
 	/* provide upper layer a link to our middle layer */
 	kbd->k_ops = &kbd_ops_pckbc;
 
-	/* pre-fill keyboard id/layout */
-	ks->kbd_id = KB_SUN4;
-	ks->kbd_layout = 19;	/* US101A */
+	/* pre-fill keyboard type/layout */
+	kbd->k_state.kbd_id = KB_SUN4;	/* NB: type5 keyboards actually report type4 */
+	kbd->k_state.kbd_layout = 19;	/* US101A */
 
-	if (1) {
+	if (1) { /* XXX: pckbc_machdep_cnattach should tell us */
 		/*
 		 * Hookup ourselves as the console input channel
 		 */
 		extern void kd_attach_input(struct cons_channel *);
 		struct cons_channel *cc;
 
-		if ((cc = malloc(sizeof *cc, M_DEVBUF, M_NOWAIT)) == NULL)
+		if ((cc = kbd_cc_alloc(kbd)) == NULL)
 			return;
 
-		cc->cc_dev = self;
-		cc->cc_iopen = kbd_cc_open;
-		cc->cc_iclose = kbd_cc_close;
-		cc->cc_upstream = NULL;	/* will be provided by upper driver */
-	        kd_attach_input(cc); /* XXX ???? */
-
-		kbd->k_cc = cc;
+	        kd_attach_input(cc);	/* XXX ???? */
 		kbd->k_isconsole = 1;
-
 		printf(": console input");
 	}
 
@@ -281,7 +350,7 @@ kbd_pckbc_open(kbd)
 
 	ks = &kbd->k_state;
 
-	/* tolerate extra calls. */
+	/* tolerate extra calls */
 	if (sc->sc_isopen)
 		return (0);
 
@@ -289,14 +358,14 @@ kbd_pckbc_open(kbd)
 
 	/* reset the keyboard (and enable interrupts?) */
 
-	/* initialize the table pointers for this type */
+	/*
+	 * Initialize the table pointers for this type/layout.
+	 * NB: fixed type/layout were preset during attach.
+	 */
 	kbd_xlate_init(ks);
-
-	/* layout US101A */
 
 	if (error == 0)
 		sc->sc_isopen = 1;
-
 	return (error);
 }
 
@@ -313,7 +382,7 @@ kbd_pckbc_close(kbd)
 
 
 /*
- * Middle layer feeds talks sun keyboard protocol to us.
+ * Upper layer talks sun keyboard protocol to us.
  */
 /* ARGSUSED2 */
 static int
@@ -330,7 +399,7 @@ kbd_pckbc_do_cmd(kbd, suncmd, isioctl)
 	case KBD_CMD_NOBELL:	/* FALLTHROUGH */
 	case KBD_CMD_CLICK:	/* FALLTHROUGH */
 	case KBD_CMD_NOCLICK:
-		/* do nothing */
+		/* not supported, do nothing */
 		DPRINTF(("%s: ignoring KIOCCMD 0x%02x\n",
 			 kbd->k_dev.dv_xname, suncmd));
 		break;
@@ -397,45 +466,13 @@ kbd_pckbc_input(vsc, data)
 {
 	struct kbd_pckbc_softc *sc = vsc;
 	struct kbd_softc *kbd = &sc->sc_kbd;
-	struct kbd_state *ks = &kbd->k_state;
 	int sunkey;
-	int keysym;
 
-	/* convert to sun scan code (up/down is encoded in the high bit) */
+	/* convert to sun make/break code */
 	if (!kbd_pckbc_decode(sc, data, &sunkey))
 		return;
 
-	if (kbd->k_evmode) {
-		/*
-		 * Keyboard is generating events.  Turn this keystroke
-		 * into an event and put it in the queue.
-		 */
-		kbd_input_event(kbd, sunkey);
-		return;
-	}
-
-	/* Console input */
-
-	/* Any input stops auto-repeat (i.e. key release). */
-
-	/* Translate this code to a keysym */
-	keysym = kbd_code_to_keysym(ks, sunkey);
-
-	/* Pass up to the next layer. */
-	if (kbd_input_keysym(kbd, keysym)) {
-		log(LOG_WARNING, "%s: code=0x%x with mod=0x%x"
-				 " produced unexpected keysym 0x%x\n",
-		    kbd->k_dev.dv_xname,
-		    sunkey, ks->kbd_modbits, keysym);
-		/* No point in auto-repeat here. */
-		return;
-	}
-
-	/* Does this symbol get auto-repeat? */
-	if (KEYSYM_NOREPEAT(keysym))
-		return;
-
-	/* Setup for auto-repeat after initial delay. */
+	kbd_input(kbd, sunkey);
 }
 
 
@@ -510,7 +547,7 @@ kbd_pckbc_decode(sc, data, sundata)
 	return (1);
 }
 
-static u_int8_t kbd_pckbc_xt_to_sun[256] = {
+static const u_int8_t kbd_pckbc_xt_to_sun[256] = {
 /* 0x00 */   0,	/*             */
 /* 0x01 */  29,	/* Esc         */
 /* 0x02 */  30,	/* 1           */

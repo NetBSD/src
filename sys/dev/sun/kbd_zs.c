@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_zs.c,v 1.14 2002/10/03 16:13:26 uwe Exp $	*/
+/*	$NetBSD: kbd_zs.c,v 1.15 2002/10/21 15:36:35 uwe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.14 2002/10/03 16:13:26 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.15 2002/10/21 15:36:35 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,12 +74,13 @@ __KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.14 2002/10/03 16:13:26 uwe Exp $");
 
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
-#include <machine/vuid_event.h>
-#include <machine/kbd.h>
+#include <dev/sun/vuid_event.h>
 #include <dev/sun/event_var.h>
+#include <dev/sun/kbd_reg.h>
 #include <dev/sun/kbd_xlate.h>
 #include <dev/sun/kbdvar.h>
 #include <dev/sun/kbdsunvar.h>
+
 
 /****************************************************************
  * Interface to the lower layer (zscc)
@@ -159,23 +160,16 @@ kbd_zs_attach(parent, self, aux)
 		/*
 		 * Hookup ourselves as the console input channel
 		 */
-		struct cons_channel *cc;
+		struct cons_channel *cc = kbd_cc_alloc(&k->k_kbd);
 
-		if ((cc = malloc(sizeof *cc, M_DEVBUF, M_NOWAIT)) == NULL)
+		if (cc == NULL)
 			return;
 
-		cc->cc_dev = self;
-		cc->cc_iopen = kbd_cc_open;
-		cc->cc_iclose = kbd_cc_close;
-		cc->cc_upstream = NULL;
 		cons_attach_input(cc, args->consdev);
-		k->k_kbd.k_cc = cc;
 		k->k_kbd.k_isconsole = 1;
 		printf(" (console input)");
 	}
 	printf("\n");
-
-	callout_init(&k->k_repeat_ch);
 
 	/* Initialize the speed, etc. */
 	s = splzs();
@@ -194,10 +188,6 @@ kbd_zs_attach(parent, self, aux)
 
 	/* Do this before any calls to kbd_rint(). */
 	kbd_xlate_init(&k->k_kbd.k_state);
-
-	/* XXX - Do this in open? */
-	k->k_repeat_start = hz/2;
-	k->k_repeat_step = hz/20;
 
 	/* Magic sequence. */
 	k->k_magic1 = KBD_L1;
