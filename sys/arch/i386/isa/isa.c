@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.64 1994/11/04 06:40:14 mycroft Exp $	*/
+/*	$NetBSD: isa.c,v 1.65 1994/11/04 08:55:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -73,10 +73,9 @@ isaprint(aux, isa)
 	if (ia->ia_iosize > 1)
 		printf("-0x%x", ia->ia_iobase + ia->ia_iosize - 1);
 	if (ia->ia_msize)
-		printf(" iomem 0x%x", ia->ia_maddr - atdevbase + 0xa0000);
+		printf(" iomem 0x%x", kvtop(ia->ia_maddr));
 	if (ia->ia_msize > 1)
-		printf("-0x%x",
-		    ia->ia_maddr - atdevbase + 0xa0000 + ia->ia_msize - 1);
+		printf("-0x%x", kvtop(ia->ia_maddr) + ia->ia_msize - 1);
 	if (ia->ia_irq)
 		printf(" irq %d", ffs(ia->ia_irq) - 1);
 	if (ia->ia_drq != (u_short)-1)
