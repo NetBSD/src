@@ -1,4 +1,4 @@
-/*	$NetBSD: res_comp.c,v 1.3 2004/05/20 19:43:39 christos Exp $	*/
+/*	$NetBSD: res_comp.c,v 1.4 2004/05/21 15:35:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -75,11 +75,13 @@
 static const char sccsid[] = "@(#)res_comp.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_comp.c,v 1.1.2.1.4.1 2004/03/09 08:33:54 marka Exp";
 #else
-__RCSID("$NetBSD: res_comp.c,v 1.3 2004/05/20 19:43:39 christos Exp $");
+__RCSID("$NetBSD: res_comp.c,v 1.4 2004/05/21 15:35:05 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
+
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/param.h>
 #include <netinet/in.h>
@@ -90,6 +92,16 @@ __RCSID("$NetBSD: res_comp.c,v 1.3 2004/05/20 19:43:39 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 #include "port_after.h"
+
+#ifdef __weak_alias
+__weak_alias(dn_expand,_dn_expand)
+__weak_alias(dn_comp,__dn_comp)
+__weak_alias(dn_skipname,__dn_skipname)
+__weak_alias(res_hnok,__res_hnok)
+__weak_alias(res_ownok,__res_ownok)
+__weak_alias(res_mailok,__res_mailok)
+__weak_alias(res_dnok,__res_dnok)
+#endif
 
 /*
  * Expand compressed domain name 'src' to full domain name.
