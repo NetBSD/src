@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.51 1999/07/10 19:41:01 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.52 1999/07/10 20:46:42 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.51 1999/07/10 19:41:01 christos Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.52 1999/07/10 20:46:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,13 +117,22 @@ static int empty __P((FILE *, FILE *, int));
 
 union sockunion {
 	struct sockinet {
+#ifdef BSD4_4
 		u_char si_len;
 		u_char si_family;
+#else
+		u_short si_family;
+#endif
 		u_short si_port;
+#ifndef BSD4_4
+		u_char  si_pad[sizeof(struct sockaddr_in6) - sizeof(u_int)];
+		u_char	si_len;
+#endif
 	} su_si;
 	struct sockaddr_in  su_sin;
 	struct sockaddr_in6 su_sin6;
 };
+
 #define su_len		su_si.si_len
 #define su_family	su_si.si_family
 #define su_port		su_si.si_port
