@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.5 1999/12/17 00:32:25 garbled Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.6 2000/03/09 07:04:08 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@ struct tctrl_softc {
 #define TCTRL_SEND_REQUEST		0x0001
 #define TCTRL_APM_CTLOPEN		0x0002
 	unsigned int	sc_wantdata;
+	volatile unsigned short	sc_lcdstate;
 	enum { TCTRL_IDLE, TCTRL_ARGS,
 		TCTRL_ACK, TCTRL_DATA } sc_state;
 	u_int8_t	sc_cmdbuf[16];
@@ -133,6 +134,7 @@ static void tctrl_read_ext_status __P((void));
 static void tctrl_read_event_status __P((void *arg));
 static int tctrl_apm_record_event __P((struct tctrl_softc *sc,
 	u_int event_type));
+static void tctrl_init_lcd __P((void));
 
 struct cfattach tctrl_ca = {
 	sizeof(struct tctrl_softc), tctrl_match, tctrl_attach
@@ -243,6 +245,13 @@ tctrl_attach(parent, self, aux)
 	sc->sc_esensors[1].units = ENVSYS_SVOLTS_DC;
 	sprintf(sc->sc_esensors[2].desc, "%s", "DC-In Voltage");
 	sc->sc_esensors[2].units = ENVSYS_SVOLTS_DC;
+
+	/* initialize the LCD */
+	tctrl_init_lcd();
+
+	/* initialize sc_lcdstate */
+	sc->sc_lcdstate = 0;
+	tctrl_set_lcd(2, 0);
 }
 
 static int
@@ -420,6 +429,191 @@ tctrl_setup_bitport(void)
 	splx(s);
 }
 
+/*
+ * The tadpole microcontroller is not preprogrammed with icon
+ * representations.  The machine boots with the DC-IN light as
+ * a blank (all 0x00) and the other lights, as 4 rows of horizontal
+ * bars.  The below code initializes the icons in the system to
+ * sane values.  Some of these icons could be used for any purpose
+ * desired, namely the pcmcia, LAN and WAN lights.  For the disk spinner,
+ * only the backslash is unprogrammed.  (sigh)
+ *
+ * programming the icons is simple.  It is a 5x8 matrix, which each row a
+ * bitfield in the order 0x10 0x08 0x04 0x02 0x01.
+ */
+
+static void
+tctrl_init_lcd(void)
+{
+	struct tctrl_req req;
+
+	req.cmdbuf[0] = TS102_OP_BLK_DEF_SPCL_CHAR;
+	req.cmdlen = 11;
+	req.rsplen = 1;
+	req.cmdbuf[1] = 0x08;	/*len*/
+	req.cmdbuf[2] = TS102_BLK_OFF_DEF_DC_GOOD;
+	req.cmdbuf[3] =  0x00;	/* ..... */
+	req.cmdbuf[4] =  0x00;	/* ..... */
+	req.cmdbuf[5] =  0x1f;	/* XXXXX */
+	req.cmdbuf[6] =  0x00;	/* ..... */
+	req.cmdbuf[7] =  0x15;	/* X.X.X */
+	req.cmdbuf[8] =  0x00;	/* ..... */
+	req.cmdbuf[9] =  0x00;	/* ..... */
+	req.cmdbuf[10] = 0x00;	/* ..... */
+	req.p = NULL;
+	tadpole_request(&req, 1);
+
+	req.cmdbuf[0] = TS102_OP_BLK_DEF_SPCL_CHAR;
+	req.cmdlen = 11;
+	req.rsplen = 1;
+	req.cmdbuf[1] = 0x08;	/*len*/
+	req.cmdbuf[2] = TS102_BLK_OFF_DEF_BACKSLASH;
+	req.cmdbuf[3] =  0x00;	/* ..... */
+	req.cmdbuf[4] =  0x10;	/* X.... */
+	req.cmdbuf[5] =  0x08;	/* .X... */
+	req.cmdbuf[6] =  0x04;	/* ..X.. */
+	req.cmdbuf[7] =  0x02;	/* ...X. */
+	req.cmdbuf[8] =  0x01;	/* ....X */
+	req.cmdbuf[9] =  0x00;	/* ..... */
+	req.cmdbuf[10] = 0x00;	/* ..... */
+	req.p = NULL;
+	tadpole_request(&req, 1);
+
+	req.cmdbuf[0] = TS102_OP_BLK_DEF_SPCL_CHAR;
+	req.cmdlen = 11;
+	req.rsplen = 1;
+	req.cmdbuf[1] = 0x08;	/*len*/
+	req.cmdbuf[2] = TS102_BLK_OFF_DEF_WAN1;
+	req.cmdbuf[3] =  0x0c;	/* .XXX. */
+	req.cmdbuf[4] =  0x16;	/* X.XX. */
+	req.cmdbuf[5] =  0x10;	/* X.... */
+	req.cmdbuf[6] =  0x15;	/* X.X.X */
+	req.cmdbuf[7] =  0x10;	/* X.... */
+	req.cmdbuf[8] =  0x16;	/* X.XX. */
+	req.cmdbuf[9] =  0x0c;	/* .XXX. */
+	req.cmdbuf[10] = 0x00;	/* ..... */
+	req.p = NULL;
+	tadpole_request(&req, 1);
+
+	req.cmdbuf[0] = TS102_OP_BLK_DEF_SPCL_CHAR;
+	req.cmdlen = 11;
+	req.rsplen = 1;
+	req.cmdbuf[1] = 0x08;	/*len*/
+	req.cmdbuf[2] = TS102_BLK_OFF_DEF_WAN2;
+	req.cmdbuf[3] =  0x0c;	/* .XXX. */
+	req.cmdbuf[4] =  0x0d;	/* .XX.X */
+	req.cmdbuf[5] =  0x01;	/* ....X */
+	req.cmdbuf[6] =  0x15;	/* X.X.X */
+	req.cmdbuf[7] =  0x01;	/* ....X */
+	req.cmdbuf[8] =  0x0d;	/* .XX.X */
+	req.cmdbuf[9] =  0x0c;	/* .XXX. */
+	req.cmdbuf[10] = 0x00;	/* ..... */
+	req.p = NULL;
+	tadpole_request(&req, 1);
+
+	req.cmdbuf[0] = TS102_OP_BLK_DEF_SPCL_CHAR;
+	req.cmdlen = 11;
+	req.rsplen = 1;
+	req.cmdbuf[1] = 0x08;	/*len*/
+	req.cmdbuf[2] = TS102_BLK_OFF_DEF_LAN1;
+	req.cmdbuf[3] =  0x00;	/* ..... */
+	req.cmdbuf[4] =  0x04;	/* ..X.. */
+	req.cmdbuf[5] =  0x08;	/* .X... */
+	req.cmdbuf[6] =  0x13;	/* X..XX */
+	req.cmdbuf[7] =  0x08;	/* .X... */
+	req.cmdbuf[8] =  0x04;	/* ..X.. */
+	req.cmdbuf[9] =  0x00;	/* ..... */
+	req.cmdbuf[10] = 0x00;	/* ..... */
+	req.p = NULL;
+	tadpole_request(&req, 1);
+
+	req.cmdbuf[0] = TS102_OP_BLK_DEF_SPCL_CHAR;
+	req.cmdlen = 11;
+	req.rsplen = 1;
+	req.cmdbuf[1] = 0x08;	/*len*/
+	req.cmdbuf[2] = TS102_BLK_OFF_DEF_LAN2;
+	req.cmdbuf[3] =  0x00;	/* ..... */
+	req.cmdbuf[4] =  0x04;	/* ..X.. */
+	req.cmdbuf[5] =  0x02;	/* ...X. */
+	req.cmdbuf[6] =  0x19;	/* XX..X */
+	req.cmdbuf[7] =  0x02;	/* ...X. */
+	req.cmdbuf[8] =  0x04;	/* ..X.. */
+	req.cmdbuf[9] =  0x00;	/* ..... */
+	req.cmdbuf[10] = 0x00;	/* ..... */
+	req.p = NULL;
+	tadpole_request(&req, 1);
+
+	req.cmdbuf[0] = TS102_OP_BLK_DEF_SPCL_CHAR;
+	req.cmdlen = 11;
+	req.rsplen = 1;
+	req.cmdbuf[1] = 0x08;	/*len*/
+	req.cmdbuf[2] = TS102_BLK_OFF_DEF_PCMCIA;
+	req.cmdbuf[3] =  0x00;	/* ..... */
+	req.cmdbuf[4] =  0x0c;	/* .XXX. */
+	req.cmdbuf[5] =  0x1f;	/* XXXXX */
+	req.cmdbuf[6] =  0x1f;	/* XXXXX */
+	req.cmdbuf[7] =  0x1f;	/* XXXXX */
+	req.cmdbuf[8] =  0x1f;	/* XXXXX */
+	req.cmdbuf[9] =  0x00;	/* ..... */
+	req.cmdbuf[10] = 0x00;	/* ..... */
+	req.p = NULL;
+	tadpole_request(&req, 1);
+}
+
+
+
+/*
+ * set the blinken-lights on the lcd.  what:
+ * what = 0 off,  what = 1 on,  what = 2 toggle
+ */
+
+void
+tctrl_set_lcd(what, which)
+	int what;
+	unsigned short which;
+{
+	struct tctrl_softc *sc;
+	struct tctrl_req req;
+	int s;
+	
+	sc = (struct tctrl_softc *) tctrl_cd.cd_devs[TCTRL_STD_DEV];
+	s = splts102();
+
+	/* provide a quick exit to save cpu time */
+	if ((what == 1 && sc->sc_lcdstate & which) ||
+	    (what == 0 && !(sc->sc_lcdstate & which))) {
+		splx(s);
+		return;
+	}
+	/*
+	 * the mask setup on this particular command is *very* bizzare
+	 * and totally undocumented.
+	 */
+	if ((what == 1) || (what == 2 && !(sc->sc_lcdstate & which))) {
+		req.cmdbuf[2] = (u_int8_t)(which&0xff);
+		req.cmdbuf[3] = (u_int8_t)(which>>8);
+	} else {
+		req.cmdbuf[2] = 0;
+		req.cmdbuf[3] = 0;
+	}
+	req.cmdbuf[0] = TS102_OP_CTL_LCD;
+	req.cmdbuf[4] = (u_int8_t)(~which>>8);
+	req.cmdbuf[1] = (u_int8_t)(~which&0xff);
+
+	/* XXX this thing is wierd.... */
+	req.cmdlen = 3;
+	req.rsplen = 2;
+#if 0
+	req.cmdlen = 5;
+	req.rsplen = 4;
+#endif
+	req.p = NULL;
+	tadpole_request(&req, 1);
+	s = splts102();
+	sc->sc_lcdstate = (unsigned short)req.rspbuf[0];
+	splx(s);
+}
+
 static void
 tctrl_read_ext_status(void)
 {
@@ -557,7 +751,8 @@ tadpole_request(req, spin)
 
 	/* we spin for certain commands, like poweroffs */
 	if (spin) {
-		for (i = 0; i < 30000; i++) {
+/*		for (i = 0; i < 30000; i++) {*/
+		while (sc->sc_wantdata == 1) {
 			tctrl_intr(sc);
 			DELAY(1);
 		}
@@ -793,6 +988,8 @@ tctrlioctl(dev, cmd, data, flags, p)
 		tadpole_request(&req, 0);
 		c = req.rspbuf[0];
 		powerp->battery_life = c;
+		if (c > 0x70)	/* the tadpole sometimes dips below zero, and */
+			c = 0;	/* into the 255 range. */
 		powerp->minutes_left = (45 * c) / 100; /* XXX based on 45 min */
 		if (powerp->battery_state != APM_BATT_CHARGING) {
 			if (c < 0x20)
@@ -882,7 +1079,7 @@ tctrlioctl(dev, cmd, data, flags, p)
 			req.p = p;
 			tadpole_request(&req, 0);
 			envdata->cur.data_us =             /* 273160? */
-			    (u_int32_t)((int)((int)req.rspbuf[0]-32)*5000/9+273000);
+			    (u_int32_t)((int)((int)req.rspbuf[0]-32)*5000000/9+273150000);
 			envdata->validflags |= ENVSYS_FCURVALID;
 			req.cmdbuf[0] = TS102_OP_RD_MAX_TEMP;
 			req.cmdlen = 1;
@@ -890,7 +1087,7 @@ tctrlioctl(dev, cmd, data, flags, p)
 			req.p = p;
 			tadpole_request(&req, 0);
 			envdata->max.data_us =
-			    (u_int32_t)((int)((int)req.rspbuf[0]-32)*5000/9+273000);
+			    (u_int32_t)((int)((int)req.rspbuf[0]-32)*5000000/9+273150000);
 			envdata->validflags |= ENVSYS_FMAXVALID;
 			req.cmdbuf[0] = TS102_OP_RD_MIN_TEMP;
 			req.cmdlen = 1;
@@ -898,7 +1095,7 @@ tctrlioctl(dev, cmd, data, flags, p)
 			req.p = p;
 			tadpole_request(&req, 0);
 			envdata->min.data_us =
-			    (u_int32_t)((int)((int)req.rspbuf[0]-32)*5000/9+273000);
+			    (u_int32_t)((int)((int)req.rspbuf[0]-32)*5000000/9+273150000);
 			envdata->validflags |= ENVSYS_FMINVALID;
 			envdata->units = sc->sc_esensors[envdata->sensor].units;
 			break;
@@ -913,7 +1110,7 @@ tctrlioctl(dev, cmd, data, flags, p)
 			req.rsplen = 2;
 			req.p = p;
 			tadpole_request(&req, 0);
-			envdata->cur.data_s = (int32_t)req.rspbuf[0]*1000/11;
+			envdata->cur.data_s = (int32_t)req.rspbuf[0]*1000000/11;
 			break;			
 		}
 		break;
@@ -983,3 +1180,29 @@ tctrlpoll(dev, events, p)
 
 	return (revents);
 }
+/* DO NOT SET THIS OPTION */
+#ifdef TADPOLE_BLINK
+void
+cpu_disk_unbusy(busy)
+        int busy;
+{
+	static struct timeval tctrl_ds_timestamp;
+        struct timeval dv_time, diff_time;
+	struct tctrl_softc *sc;
+
+	sc = (struct tctrl_softc *) tctrl_cd.cd_devs[TCTRL_STD_DEV];
+
+	/* quickly bail */
+	if (!(sc->sc_lcdstate & TS102_LCD_DISK_ACTIVE) || busy > 0)
+		return;
+
+        /* we aren't terribly concerned with precision here */
+        dv_time = mono_time;
+        timersub(&dv_time, &tctrl_ds_timestamp, &diff_time);
+
+	if (diff_time.tv_sec > 0) {
+                tctrl_set_lcd(0, TS102_LCD_DISK_ACTIVE);
+		tctrl_ds_timestamp = mono_time;
+	}
+}
+#endif
