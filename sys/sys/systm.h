@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.45 1996/03/17 02:43:09 pk Exp $	*/
+/*	$NetBSD: systm.h,v 1.46 1996/03/31 21:36:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -119,24 +119,26 @@ extern	void	_remque	__P((void *));
 int	nullop __P((void *));
 int	enodev __P((void));
 int	enosys __P((void));
-int	lkmenodev __P((dev_t, int, int, struct proc *));
 int	enoioctl __P((void));
 int	enxio __P((void));
 int	eopnotsupp __P((void));
+
+int	lkmenodev __P((void));
+
 int	seltrue __P((dev_t dev, int which, struct proc *p));
 void	*hashinit __P((int count, int type, u_long *hashmask));
 int	sys_nosys __P((struct proc *, void *, register_t *));
 
 void	panic __P((const char *, ...)) 
-    __attribute__((__noreturn__,__format__(printf,1,2)));
+    __attribute__((__noreturn__,__format__(__kprintf__,1,2)));
 void	printf __P((const char *, ...))
-    __attribute__((__format__(printf,1,2))); 
+    __attribute__((__format__(__kprintf__,1,2))); 
 void	uprintf __P((const char *, ...))
-    __attribute__((__format__(printf,1,2))); 
+    __attribute__((__format__(__kprintf__,1,2))); 
 int	sprintf __P((char *buf, const char *, ...))
-    __attribute__((__format__(printf,2,3)));
+    __attribute__((__format__(__kprintf__,2,3)));
 void	ttyprintf __P((struct tty *, const char *, ...))
-    __attribute__((__format__(printf,2,3)));
+    __attribute__((__format__(__kprintf__,2,3)));
 
 void	tablefull __P((const char *));
 
