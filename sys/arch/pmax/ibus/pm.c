@@ -1,4 +1,4 @@
-/* $NetBSD: pm.c,v 1.1.2.6 1999/01/11 22:17:50 drochner Exp $ */
+/* $NetBSD: pm.c,v 1.1.2.7 1999/03/02 01:32:02 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.6 1999/01/11 22:17:50 drochner Exp $");
+__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.7 1999/03/02 01:32:02 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ struct hwcursor {
 	struct wsdisplay_curpos cc_size;
 #define	CURSOR_MAX_SIZE	16
 	u_int8_t cc_color[6];
-	u_int16_t cc_image[16 + 16];
+	u_int32_t cc_image[16 + 16];
 };
 
 struct pm_softc {
@@ -701,13 +701,13 @@ pcc_load_curshape(sc)
 	struct pm_softc *sc;
 {
 	volatile struct pccreg *pcc = sc->sc_pcc;
-	u_int16_t *bp;
+	u_int32_t *bp;
 	int i;
 
 	pcc->pcc_cmdr = sc->sc_pcccmdr | PCC_LODSA;
 	bp = sc->sc_cursor.cc_image;
 	for (i = 0; i < sizeof(sc->sc_cursor.cc_image); i++) {
-		pcc->pcc_memory = *bp++;
+		pcc->pcc_memory = (u_int16_t)*bp++;
 	}
 	pcc->pcc_cmdr = sc->sc_pcccmdr;
 }
