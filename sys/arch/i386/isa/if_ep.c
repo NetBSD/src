@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.16 1994/02/15 22:57:09 mycroft Exp $
+ *	$Id: if_ep.c,v 1.17 1994/02/16 07:26:50 hpeyerl Exp $
  */
 /*
  * TODO:
@@ -121,7 +121,7 @@ static int epbusyeeprom __P((struct isa_device * is));
  * Rudimentary support for multiple cards is here but is not
  * currently handled.  In the future we will have to add code
  * for tagging the cards for later activation.  We wanna do something
- * about the id_port.  We're limited due to current config procedure.
+ * about the ELINK_ID_PORT.  We're limited due to current config procedure.
  * Magnum config holds promise of a fix but we'll have to wait a bit.
  */
 int
@@ -130,37 +130,36 @@ epprobe(is)
 {
 	struct ep_softc *sc = &ep_softc[is->id_unit];
 	u_short k;
-	int	id_port = 0x100;/* XXX */
 
 	outw(BASE + EP_COMMAND, GLOBAL_RESET);
 	DELAY(1000);
-	outb(id_port, 0xc0);	/* Global reset to id_port. */
+	elink_reset();	/* global reset to ELINK_ID_PORT */
 	DELAY(1000);
-	epsendidseq(id_port);
+	epsendidseq(ELINK_ID_PORT);
 	DELAY(1000);
 
 	/*
 	 * MFG_ID should have 0x6d50.
 	 * PROD_ID should be 0x9[0-f]50
 	 */
-	k = epreadeeprom(id_port, EEPROM_MFG_ID);
+	k = epreadeeprom(ELINK_ID_PORT, EEPROM_MFG_ID);
 	if (k != MFG_ID)
 		return (0);
-	k = epreadeeprom(id_port, EEPROM_PROD_ID);
+	k = epreadeeprom(ELINK_ID_PORT, EEPROM_PROD_ID);
 	if ((k & 0xf0ff) != (PROD_ID & 0xf0ff))
 		return (0);
 
-	k = epreadeeprom(id_port, EEPROM_ADDR_CFG);	/* get addr cfg */
+	k = epreadeeprom(ELINK_ID_PORT, EEPROM_ADDR_CFG);	/* get addr cfg */
 	k = (k & 0x1f) * 0x10 + 0x200;			/* decode base addr. */
 	if (k != is->id_iobase)
 		return (0);
 
-	k = epreadeeprom(id_port, EEPROM_RESOURCE_CFG);
+	k = epreadeeprom(ELINK_ID_PORT, EEPROM_RESOURCE_CFG);
 	k >>= 12;
 	if (is->id_irq != (1 << ((k == 2) ? 9 : k)))
 		return (0);
 
-	outb(id_port, ACTIVATE_ADAPTER_TO_CONFIG);
+	outb(ELINK_ID_PORT, ACTIVATE_ADAPTER_TO_CONFIG);
 
 	return (0x10);		/* 16 bytes of I/O space used. */
 }
