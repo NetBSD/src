@@ -431,14 +431,14 @@ do_verify (messagep, repository)
 
     /* FIXME? Do we really want to skip this on noexec?  What do we do
        for the other administrative files?  */
-    if (noexec)
+    if (noexec || repository == NULL)
 	return;
 
     /* Get the name of the verification script to run  */
 
-    if (repository != NULL)
-	(void) Parse_Info (CVSROOTADM_VERIFYMSG, repository, 
-			   verifymsg_proc, 0);
+    if (Parse_Info (CVSROOTADM_VERIFYMSG, repository, verifymsg_proc, 0) > 0)
+	error (1, 0, "Message verification failed");
+
     if (!verifymsg_script)
 	return;
 
@@ -554,6 +554,7 @@ do_verify (messagep, repository)
     if (unlink_file (fname) < 0)
 	error (0, errno, "cannot remove %s", fname);
     free (fname);
+    free( verifymsg_script );
 }
 
 /*
@@ -940,7 +941,7 @@ logfile_write (repository, filter, message, logfp, changes)
     }
 
     setup_tmpfile (pipefp, "", changes);
-    (void) fprintf (pipefp, "Log Message:\n%s\n", message);
+    (void) fprintf (pipefp, "Log Message:\n%s\n", (message) ? message : "");
     if (logfp != (FILE *) 0)
     {
 	(void) fprintf (pipefp, "Status:\n");

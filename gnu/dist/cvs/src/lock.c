@@ -55,25 +55,27 @@
    1.  Check for EROFS.  Maybe useful, although in the presence of NFS
    EROFS does *not* mean that the file system is unchanging.
 
-   2.  Provide a means to put the cvs locks in some directory apart from
-   the repository (CVSROOT/locks; a -l option in modules; etc.).
-
-   3.  Provide an option to disable locks for operations which only
+   2.  Provide an option to disable locks for operations which only
    read (see above for some of the consequences).
 
-   4.  Have a server internally do the locking.  Probably a good
+   3.  Have a server internally do the locking.  Probably a good
    long-term solution, and many people have been working hard on code
    changes which would eventually make it possible to have a server
    which can handle various connections in one process, but there is
-   much, much work still to be done before this is feasible.
-
-   5.  Like #4 but use shared memory or something so that the servers
-   merely need to all be on the same machine.  This is a much smaller
-   change to CVS (it functions much like #2; shared memory might be an
-   unneeded complication although it presumably would be faster).  */
+   much, much work still to be done before this is feasible.  */
 
 #include "cvs.h"
 #include <assert.h>
+
+#ifdef HAVE_NANOSLEEP
+# include "xtime.h"
+#else /* HAVE_NANOSLEEP */
+# if !defined HAVE_USLEEP && defined HAVE_SELECT
+    /* use select as a workaround */
+#   include "xselect.h"
+# endif /* !defined HAVE_USLEEP && defined HAVE_SELECT */
+#endif /* !HAVE_NANOSLEEP */
+
 
 struct lock {
     /* This is the directory in which we may have a lock named by the
@@ -679,6 +681,7 @@ static int
 readers_exist (repository)
     char *repository;
 {
+    char *lockdir;
     char *line;
     DIR *dirp;
     struct dirent *dp;
@@ -689,9 +692,12 @@ readers_exist (repository)
     (void) time (&now);
 #endif
 
+    lockdir = lock_name (repository, "");
+    lockdir[strlen (lockdir) - 1] = '\0';   /* remove trailing slash */
+
     do {
-	if ((dirp = CVS_OPENDIR (repository)) == NULL)
-	    error (1, 0, "cannot open directory %s", repository);
+	if ((dirp = CVS_OPENDIR (lockdir)) == NULL)
+	    error (1, 0, "cannot open directory %s", lockdir);
 
 	ret = 0;
 	errno = 0;
@@ -699,12 +705,8 @@ readers_exist (repository)
 	{
 	    if (CVS_FNMATCH (CVSRFLPAT, dp->d_name, 0) == 0)
 	    {
-		/* ignore our own readlock, if any */
-		if (readlock && strcmp (readlock, dp->d_name) == 0)
-		    continue;
-
-		line = xmalloc (strlen (repository) + strlen (dp->d_name) + 5);
-		(void) sprintf (line, "%s/%s", repository, dp->d_name);
+		line = xmalloc (strlen (lockdir) + 1 + strlen (dp->d_name) + 1);
+		(void) sprintf (line, "%s/%s", lockdir, dp->d_name);
 		if ( CVS_STAT (line, &sb) != -1)
 		{
 #ifdef CVS_FUDGELOCKS
@@ -771,9 +773,14 @@ set_lockers_name (statp)
 }
 
 /*
- * Persistently tries to make the directory "lckdir",, which serves as a
- * lock. If the create time on the directory is greater than CVSLCKAGE
+ * Persistently tries to make the directory "lckdir", which serves as a
+ * lock.
+ *
+ * #ifdef CVS_FUDGELOCKS
+ * If the create time on the directory is greater than CVSLCKAGE
  * seconds old, just try to remove the directory.
+ * #endif
+ *
  */
 static int
 set_lock (lock, will_wait)
@@ -781,6 +788,7 @@ set_lock (lock, will_wait)
     int will_wait;
 {
     int waited;
+    long us;
     struct stat sb;
     mode_t omask;
 #ifdef CVS_FUDGELOCKS
@@ -797,6 +805,7 @@ set_lock (lock, will_wait)
      * directory before they exit.
      */
     waited = 0;
+    us = 1;
     lock->have_lckdir = 0;
     for (;;)
     {
@@ -858,6 +867,33 @@ set_lock (lock, will_wait)
 	/* if he wasn't willing to wait, return an error */
 	if (!will_wait)
 	    return (L_LOCKED);
+
+	/* if possible, try a very short sleep without a message */
+	if (!waited && us < 1000)
+	{
+	    us += us;
+#if defined HAVE_NANOSLEEP
+	    {
+		struct timespec ts;
+		ts.tv_sec = 0;
+		ts.tv_nsec = us * 1000;
+		(void)nanosleep (&ts, NULL);
+		continue;
+	    }
+#elif defined HAVE_USLEEP
+	    (void)usleep (us);
+	    continue;
+#elif defined HAVE_SELECT
+	    {
+		struct timeval tv;
+		tv.tv_sec = 0;
+		tv.tv_usec = us;
+		(void)select (0, (fd_set *)NULL, (fd_set *)NULL, (fd_set *)NULL, &tv);
+		continue;
+	    }
+#endif
+	}
+
 	lock_wait (lock->repository);
 	waited = 1;
     }
@@ -974,7 +1010,7 @@ lock_tree_for_write (argc, argv, local, which, aflag)
     err = start_recursion ((FILEPROC) NULL, lock_filesdoneproc,
 			   (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL, NULL, argc,
 			   argv, local, which, aflag, CVS_LOCK_NONE,
-			   (char *) NULL, 0);
+			   (char *) NULL, 0, (char *) NULL);
     sortlist (lock_tree_list, fsortcmp);
     if (Writer_Lock (lock_tree_list) != 0)
 	error (1, 0, "lock failed - giving up");
