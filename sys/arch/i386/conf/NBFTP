@@ -1,4 +1,4 @@
-#	$NetBSD: NBFTP,v 1.15 1999/09/19 21:50:06 ad Exp $
+#	$NetBSD: NBFTP,v 1.16 1999/09/27 23:59:51 ad Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	NBFTP -- ftp/sup.netbsd.org server machine
@@ -297,6 +297,7 @@ lpt2	at isa? port 0x3bc
 #adw*	at pci? dev ? function ?	# AdvanSys 9xxUW SCSI
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
+#dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 #isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 #pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
@@ -337,6 +338,7 @@ ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 scsibus* at ahc?
 #scsibus* at aic?
 scsibus* at bha?
+#scsibus* at dpt?
 #scsibus* at isp?
 #scsibus* at nca?
 scsibus* at ncr?
