@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.5 2002/07/10 01:54:00 fvdl Exp $	*/
+/*	$NetBSD: fpu.h,v 1.6 2003/01/26 00:05:37 fvdl Exp $	*/
 
 #ifndef	_X86_64_FPU_H_
 #define	_X86_64_FPU_H_
@@ -91,11 +91,11 @@ struct trapframe;
 
 extern void fpuinit(void);
 extern void fpudrop(void);
-extern void fpusave(void);
-extern void fpudiscard(struct proc *);
+extern void fpusave(struct lwp *);
+extern void fpudiscard(struct lwp *);
 extern void fputrap(struct trapframe *);
 
-extern struct proc *fpuproc;
+extern struct lwp *fpulwp;
 
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.7 2002/12/03 22:03:01 fvdl Exp $	*/
+/*	$NetBSD: pmap.h,v 1.8 2003/01/26 00:05:37 fvdl Exp $	*/
 
 /*
  *
@@ -428,10 +428,10 @@ extern pd_entry_t *pdes[];
  * prototypes
  */
 
-void		pmap_activate __P((struct proc *));
+void		pmap_activate __P((struct lwp *));
 void		pmap_bootstrap __P((vaddr_t));
 boolean_t	pmap_clear_attrs __P((struct vm_page *, unsigned));
-void		pmap_deactivate __P((struct proc *));
+void		pmap_deactivate __P((struct lwp *));
 static void	pmap_page_protect __P((struct vm_page *, vm_prot_t));
 void		pmap_page_remove  __P((struct vm_page *));
 static void	pmap_protect __P((struct pmap *, vaddr_t,
@@ -578,7 +578,7 @@ paddr_t vtophys __P((vaddr_t));
 vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, vm_prot_t));
 
 #if 0   /* XXXfvdl was USER_LDT, need to check if that can be supported */
-void	pmap_ldt_cleanup __P((struct proc *));
+void	pmap_ldt_cleanup __P((struct lwp *));
 #define	PMAP_FORK
 #endif /* USER_LDT */
 

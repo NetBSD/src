@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.5 2002/07/04 10:44:00 fvdl Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.6 2003/01/26 00:05:39 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,6 +56,8 @@
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/signal.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -80,9 +82,9 @@ extern struct vm_map *kernel_map;
 int x86_64_get_ioperm __P((struct proc *, void *, register_t *));
 int x86_64_set_ioperm __P((struct proc *, void *, register_t *));
 #endif
-int x86_64_iopl __P((struct proc *, void *, register_t *));
-int x86_64_get_mtrr __P((struct proc *, void *, register_t *));
-int x86_64_set_mtrr __P((struct proc *, void *, register_t *));
+int x86_64_iopl __P((struct lwp *, void *, register_t *));
+int x86_64_get_mtrr __P((struct lwp *, void *, register_t *));
+int x86_64_set_mtrr __P((struct lwp *, void *, register_t *));
 
 /* XXXfvdl disabled USER_LDT stuff until I check this stuff */
 
@@ -286,13 +288,14 @@ out:
 #endif	/* USER_LDT */
 
 int
-x86_64_iopl(p, args, retval)
-	struct proc *p;
+x86_64_iopl(l, args, retval)
+	struct lwp *l;
 	void *args;
 	register_t *retval;
 {
 	int error;
-	struct trapframe *tf = p->p_md.md_regs;
+	struct proc *p = l->l_proc;
+	struct trapframe *tf = l->l_md.md_regs;
 	struct x86_64_iopl_args ua;
 
 	if (securelevel > 1)
@@ -355,7 +358,7 @@ x86_64_set_ioperm(p, args, retval)
 #endif
 
 int
-x86_64_get_mtrr(struct proc *p, void *args, register_t *retval)
+x86_64_get_mtrr(struct lwp *l, void *args, register_t *retval)
 {
 	struct x86_64_get_mtrr_args ua;
 	int error, n;
@@ -371,7 +374,7 @@ x86_64_get_mtrr(struct proc *p, void *args, register_t *retval)
 	if (error != 0)
 		return error;
 
-	error = mtrr_get(ua.mtrrp, &n, p, MTRR_GETSET_USER);
+	error = mtrr_get(ua.mtrrp, &n, l->l_proc, MTRR_GETSET_USER);
 
 	copyout(&n, ua.n, sizeof (int));
 
@@ -379,10 +382,11 @@ x86_64_get_mtrr(struct proc *p, void *args, register_t *retval)
 }
 
 int
-x86_64_set_mtrr(struct proc *p, void *args, register_t *retval)
+x86_64_set_mtrr(struct lwp *l, void *args, register_t *retval)
 {
 	int error, n;
 	struct x86_64_set_mtrr_args ua;
+	struct proc *p = l->l_proc;
 
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
@@ -409,8 +413,8 @@ x86_64_set_mtrr(struct proc *p, void *args, register_t *retval)
 }
 
 int
-sys_sysarch(p, v, retval)
-	struct proc *p;
+sys_sysarch(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -423,45 +427,45 @@ sys_sysarch(p, v, retval)
 	switch(SCARG(uap, op)) {
 #if defined(USER_LDT) && 0
 	case X86_64_GET_LDT: 
-		error = x86_64_get_ldt(p, SCARG(uap, parms), retval);
+		error = x86_64_get_ldt(l, SCARG(uap, parms), retval);
 		break;
 
 	case X86_64_SET_LDT: 
-		error = x86_64_set_ldt(p, SCARG(uap, parms), retval);
+		error = x86_64_set_ldt(l, SCARG(uap, parms), retval);
 		break;
 #endif
 	case X86_64_IOPL: 
-		error = x86_64_iopl(p, SCARG(uap, parms), retval);
+		error = x86_64_iopl(l, SCARG(uap, parms), retval);
 		break;
 
 #if 0
 	case X86_64_GET_IOPERM: 
-		error = x86_64_get_ioperm(p, SCARG(uap, parms), retval);
+		error = x86_64_get_ioperm(l, SCARG(uap, parms), retval);
 		break;
 
 	case X86_64_SET_IOPERM: 
-		error = x86_64_set_ioperm(p, SCARG(uap, parms), retval);
+		error = x86_64_set_ioperm(l, SCARG(uap, parms), retval);
 		break;
 #endif
 
 	case X86_64_GET_MTRR:
-		error = x86_64_get_mtrr(p, SCARG(uap, parms), retval);
+		error = x86_64_get_mtrr(l, SCARG(uap, parms), retval);
 		break;
 	case X86_64_SET_MTRR:
-		error = x86_64_set_mtrr(p, SCARG(uap, parms), retval);
+		error = x86_64_set_mtrr(l, SCARG(uap, parms), retval);
 		break;
 
 #if defined(PERFCTRS) && 0
 	case X86_64_PMC_INFO:
-		error = pmc_info(p, SCARG(uap, parms), retval);
+		error = pmc_info(l, SCARG(uap, parms), retval);
 		break;
 
 	case X86_64_PMC_STARTSTOP:
-		error = pmc_startstop(p, SCARG(uap, parms), retval);
+		error = pmc_startstop(l, SCARG(uap, parms), retval);
 		break;
 
 	case X86_64_PMC_READ:
-		error = pmc_read(p, SCARG(uap, parms), retval);
+		error = pmc_read(l, SCARG(uap, parms), retval);
 		break;
 #endif
 	default:

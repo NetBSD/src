@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.4 2002/07/14 12:20:45 fvdl Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.5 2003/01/26 00:05:37 fvdl Exp $	*/
 
 #ifndef _X86_64_MACHINE_FRAMEASM_H
 #define _X86_64_MACHINE_FRAMEASM_H
@@ -70,5 +70,15 @@
 	movw	24(%rsp),%es		; \
 99:	addq	$48,%rsp		; \
 	iretq
+
+
+#define CHECK_ASTPENDING(reg)	movq	_C_LABEL(curlwp)(%rip),reg	; \
+				cmpq	$0, reg				; \
+				je	99f				; \
+				movq	L_PROC(reg), reg		; \
+				cmpl	$0, P_MD_ASTPENDING(reg)	; \
+				99:
+
+#define CLEAR_ASTPENDING(reg)	movl	$0, P_MD_ASTPENDING(reg)
 
 #endif /* _X86_64_MACHINE_FRAMEASM_H */

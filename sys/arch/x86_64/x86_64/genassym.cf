@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.8 2002/11/29 22:17:18 fvdl Exp $
+#	$NetBSD: genassym.cf,v 1.9 2003/01/26 00:05:39 fvdl Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -107,8 +107,8 @@ if NISA > 0
 include <machine/isa_machdep.h>
 endif
 
-define	SRUN			SRUN
-define	SONPROC			SONPROC
+define	LSRUN			LSRUN
+define	LSONPROC		LSONPROC
 
 define	L3_SLOT_KERNBASE	pl3_pi(KERNBASE)
 define	L2_SLOT_KERNBASE	pl2_pi(KERNBASE)
@@ -119,17 +119,22 @@ define	VM_MIN_KERNEL_ADDRESS	(unsigned long long)VM_MIN_KERNEL_ADDRESS
 
 define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
-define	P_ADDR			offsetof(struct proc, p_addr)
-define	P_BACK			offsetof(struct proc, p_back)
-define	P_FORW			offsetof(struct proc, p_forw)
-define	P_PRIORITY		offsetof(struct proc, p_priority)
-define	P_STAT			offsetof(struct proc, p_stat)
-define	P_WCHAN			offsetof(struct proc, p_wchan)
+define		L_ADDR			offsetof(struct lwp, l_addr)
+define		L_BACK			offsetof(struct lwp, l_back)
+define		L_FORW			offsetof(struct lwp, l_forw)
+define		L_PRIORITY		offsetof(struct lwp, l_priority)
+define		L_STAT			offsetof(struct lwp, l_stat)
+define		L_WCHAN			offsetof(struct lwp, l_wchan)
+define		L_PROC			offsetof(struct lwp, l_proc)
+define		L_MD_TSS_SEL		offsetof(struct lwp, l_md.md_tss_sel)
+define		L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
+define		L_CPU			offsetof(struct lwp, l_cpu)
+
 define	P_FLAG			offsetof(struct proc, p_flag)
-define	P_MD_TSS_SEL		offsetof(struct proc, p_md.md_tss_sel)
-define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
+define	P_NRAS			offsetof(struct proc, p_nras)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
+define	P_MD_ASTPENDING		offsetof(struct proc, p_md.md_astpending)
 
 define	P_SYSTEM		P_SYSTEM
 define	P_32			P_32
