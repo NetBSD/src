@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.547 2004/11/29 06:24:36 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.548 2004/12/06 05:46:45 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -8148,3 +8148,9 @@ share/tmac/doc-common                           patch
 gnu/usr.bin/groff/tmac/mdoc.local               patch
 
 	Welcome to 2.0 (finally)
+
+sys/arch/prep/stand/mkbootimage/mkbootimage.c	1.11 (via patch)
+
+	Needed updates to allow this to build on a NetBSD host.
+
+{NOTE: Moved 2.0-release tag for this file and CHANGES-2.0, LAST_MINUTE}
