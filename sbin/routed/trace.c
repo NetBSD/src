@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.29 2003/07/12 14:36:07 itojun Exp $	*/
+/*	$NetBSD: trace.c,v 1.30 2004/04/21 19:01:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -41,7 +41,7 @@
 #include <fcntl.h>
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: trace.c,v 1.29 2003/07/12 14:36:07 itojun Exp $");
+__RCSID("$NetBSD: trace.c,v 1.30 2004/04/21 19:01:17 christos Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -147,7 +147,7 @@ naddr_ntoa(naddr a)
 
 
 const char *
-saddr_ntoa(struct sockaddr *sa)
+saddr_ntoa(const struct sockaddr *sa)
 {
 	return (sa == 0) ? "?" : naddr_ntoa(S_ADDR(sa));
 }
