@@ -1,4 +1,4 @@
-.\"	$NetBSD: linkaddr.3,v 1.6 1999/06/25 16:13:21 sommerfeld Exp $
+.\"	$NetBSD: linkaddr.3,v 1.7 2001/09/16 02:23:09 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -66,11 +66,11 @@ string representing some of the information present, including the
 link level address itself, and the interface name or number, if present.
 This facility is experimental and is still subject to change.
 .Pp
-Prior to a call to 
+Prior to a call to
 .Fn link_addr ,
-.Fa sdl->sdl_len 
+.Fa sdl->sdl_len
 must be initialized to the size of the link-level socket structure,
-typically 
+typically
 .Fa sizeof(struct sockaddr_dl) .
 .Pp
 For
