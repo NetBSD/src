@@ -1,4 +1,4 @@
-/*	$NetBSD: rand_key.c,v 1.3 2003/07/23 05:57:01 itojun Exp $	*/
+/*	$NetBSD: orand_key.c,v 1.1 2003/07/24 15:14:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 2003 WIDE Project.
