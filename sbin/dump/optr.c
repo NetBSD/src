@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.27 2002/08/16 20:21:49 itojun Exp $	*/
+/*	$NetBSD: optr.c,v 1.28 2002/08/18 08:03:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.27 2002/08/16 20:21:49 itojun Exp $");
+__RCSID("$NetBSD: optr.c,v 1.28 2002/08/18 08:03:35 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -177,10 +177,13 @@ alarmcatch(int dummy)
 void
 interrupt(int signo)
 {
+	int errno_save;
 
+	errno_save = errno;
 	msg("Interrupt received.\n");
 	if (query("Do you want to abort dump?"))
 		dumpabort(0);
+	errno = errno_save;
 }
 
 /*
