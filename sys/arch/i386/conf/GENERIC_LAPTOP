@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.76 2003/09/09 07:14:01 itojun Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.77 2003/09/27 13:16:16 mrg Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.76 $"
+#ident 		"GENERIC-$Revision: 1.77 $"
 
 maxusers	32		# estimated number of users
 
@@ -497,6 +497,7 @@ fd*	at fdc? drive ?			# the drives themselves
 # Network Interfaces
 
 # PCI network interfaces
+bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
