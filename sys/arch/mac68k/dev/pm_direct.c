@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.11 2000/03/19 07:37:58 scottr Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.12 2000/04/05 07:18:07 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -447,6 +447,8 @@ pm_pmgrop_pm1(pmdata)
 					/* restore formar value */
 					via_reg(VIA1, vDirA) = via1_vDirA;
 					via_reg(VIA1, vIER) = via1_vIER;
+					if (s != 0x81815963)
+						splx(s);
 					return 0xffffcd38;
 				}
 
@@ -534,7 +536,7 @@ pm_pmgrop_pm1(pmdata)
 			pm_buf = (u_char *)pmdata->r_buf;
 			for (i = 0; i < num_pm_data; i++) {
 				if ((rval = pm_receive_pm1(&pm_data)) != 0)
-					break;				/* timeout */
+					break;		/* timeout */
 				pm_buf[i] = pm_data;
 			}
 
@@ -1055,8 +1057,10 @@ pm_adb_op(buffer, compRout, data, command)
 	}
 
 	rval = pmgrop(&pmdata);
-	if (rval != 0)
+	if (rval != 0) {
+		splx(s);
 		return 1;
+	}
 
 	adbWaiting = 1;
 	adbWaitingCmd = command;
@@ -1075,8 +1079,10 @@ pm_adb_op(buffer, compRout, data, command)
 			(void)intr_dispatch(0x70);
 #endif
 #endif
-		if ((--delay) < 0)
+		if ((--delay) < 0) {
+			splx(s);
 			return 1;
+		}
 	}
 
 	/* this command enables the interrupt by operating ADB devices */
