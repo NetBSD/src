@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.77 2000/02/12 22:01:31 augustss Exp $
+$NetBSD: usbdevs,v 1.78 2000/02/13 23:10:02 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@ $NetBSD: usbdevs,v 1.77 2000/02/12 22:01:31 augustss Exp $
 
 vendor AOX		0x03e8	Aox Inc.
 vendor HP		0x03f0	Hewlett Packard
+vendor FUTURE		0x0403	Future Technology Devices
 vendor NEC		0x0409	NEC
 vendor KODAK		0x040a	Eastman Kodak Corp.
 vendor MELCO		0x0411	Melco Inc.
@@ -61,6 +62,7 @@ vendor LOGITECH		0x046d	Logitech Inc.
 vendor BTC		0x046e	Behavior Tech. Computer
 vendor PHILIPS		0x0471	Philips
 vendor CONNECTIX	0x0478	Connectix Corp.
+vendor KENSINGTON	0x047d	Kensington
 vendor LUCENT		0x047e	Lucent
 vendor STMICRO		0x0483	STMicroelectronics
 vendor ACER		0x04a5	Acer Peripheral Inc.
@@ -137,6 +139,9 @@ product 3COM HOMECONN		0x009d	HomeConnect USB Camera
 product 3COM 3C19250		0x03E8	3C19250 Ethernet adapter
 product 3COM USR56K		0x3021	U.S.Robotics 56000 Voice Faxmodem Pro
 
+product 3COMUSR OFFICECONN	0x0082	3Com OfficeConnect Analog Modem
+product 3COMUSR USRISDN		0x008f	3Com U.S. Robotics Pro ISDN TA
+product	3COMUSR	HOMECONN	0x009d	3Com HomeConnect camera
 product 3COMUSR USR56K		0x3021	U.S.Robotics 56000 Voice Faxmodem Pro
 
 /* Acer products */
@@ -201,6 +206,7 @@ product CHERRY MY3000HUB	0x0003	My3000 hub
 
 /* Chic Technology products */
 product CHIC MOUSE1		0x0001	mouse
+product CHIC CYPRESS		0x0003	Cypress USB Mouse
 
 /* Chicony products */
 product CHICONY KB8933		0x0001	KB-8933 keyboard
@@ -262,12 +268,19 @@ product EPSON PRINTER3		0x0003	ISD USB Smart Cable
 /* Gravis products */
 product GRAVIS GAMEPADPRO	0x4001	GamePad Pro
 
+/* Future Technology Devices products */
+product FUTURE SERIAL		0x8372	Serial converter
+
 /* Handspring Inc. */
 product HANDSPRING VISOR	0x0100	Handspring Visor
 
 /* HP products */
 product HP 4100C		0x0101	Scanjet 4100C
 product HP S20			0x0102	Photosmart S20
+product HP 4200C		0x0105	ScanJet 4200C
+product HP 6200C		0x0201	ScanJet 6200C
+product HP S20b			0x0202	PhotoSmart S20
+product HP 3300C		0x0205	ScanJet 3300C
 product HP 5200			0x0401	Scanjet 5200
 product HP 6300C		0x0601	Scanjet 6300C
 product HP 970CSE		0x1004	Deskjet 970Cse
@@ -289,7 +302,12 @@ product IOMEGA ZIP100		0x0001	Zip 100
 /* Kawatsu products */
 product KAWATSU MH4000P		0x0003	MiniHub 4000P
 
+/* Kensington products */
+product KENSINGTON ORBIT	0x1003	Orbit USB/PS2 trackball
+product KENSINGTON TURBOBALL	0x1005	TurboBall
+
 /* Kodak products */
+product KODAK DC220		0x0100	Digital Science DC220
 product KODAK DC260		0x0110	Digital Science DC260
 product KODAK DC265		0x0111	Digital Science DC265
 product KODAK DC290		0x0112	Digital Science DC290
@@ -315,8 +333,12 @@ product LOGITECH M2452		0x0203	M2452 keyboard
 product LOGITECH M4848		0x0301	M4848 mouse
 product LOGITECH QUICKCAM	0x0801	QuickCam
 product LOGITECH QUICKCAMPRO	0x0810	QuickCam Pro
+product LOGITECH N43		0xc000	N43
 product LOGITECH N48		0xc001	N48 mouse
 product LOGITECH MBA47		0xc002	M-BA47 mouse
+product LOGITECH WMMOUSE	0xc004	WingMan Gaming Mouse
+product LOGITECH WMPAD		0xc208	WingMan GamePad Extreme
+product LOGITECH WMJOY		0xc281	WingMan Force joystick 
 
 /* Lucent products */
 product LUCENT EVALKIT		0x1001	USS-720 evaluation kit
@@ -328,10 +350,12 @@ product MACALLY MOUSE1		0x0101	mouse
 product MELCO LUATX		0x0001	LU-ATX Ethernet
 
 /* Microsoft products */
+product MICROSOFT SIDEPREC	0x0008	SideWinder Precision Pro
 product MICROSOFT INTELLIMOUSE	0x0009	IntelliMouse
 product MICROSOFT NATURALKBD	0x000b	Natural Keyboard Elite
 product MICROSOFT DDS80		0x0014	Digital Sound System 80
 product MICROSOFT SIDEWINDER	0x001a	Sidewinder Precision Racing Wheel
+product MICROSOFT INTELLIEYE	0x0025	IntelliEye mouse
 product MICROSOFT INETPRO	0x002b	Internet Keyboard Pro
 
 /* Midiman products */
@@ -429,6 +453,8 @@ product VISION VC6452V002	0x0002	VC6452V002 Camera
 
 /* Wacom products */
 product WACOM CT0405U		0x0000	CT-0405-U Tablet
+product WACOM GRAPHIRE		0x0010	Graphire
+product WACOM INTUOSA5		0x0021	Intuos A5
 
 /* Zoom Telephonics Inc. products */
 product ZOOM 2986L		0x9700	2986L Fax modem
