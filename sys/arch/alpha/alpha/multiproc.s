@@ -1,4 +1,4 @@
-/* $NetBSD: multiproc.s,v 1.3 1999/02/23 03:20:03 thorpej Exp $ */
+/* $NetBSD: multiproc.s,v 1.4 1999/05/31 20:40:23 ross Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.3 1999/02/23 03:20:03 thorpej Exp $")
+__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.4 1999/05/31 20:40:23 ross Exp $")
 
 /*
  * Multiprocessor glue code.
@@ -58,8 +58,8 @@ inc5:	.stabs	__FILE__,132,0,0,inc5; .loc	1 __LINE__
 NESTED_NOPROFILE(cpu_spinup_trampoline,0,0,ra,0,0)
 	mov	pv, s0			/* squirrel away argument */
 
-	br	pv, Lcst1		/* compute new GP */
-Lcst1:	LDGP(pv)
+	br	pv, 1f			/* compute new GP */
+1:	LDGP(pv)
 
 	/* Invalidate TLB and I-stream. */
 	ldiq	a0, -2			/* TBIA */
@@ -75,6 +75,6 @@ Lcst1:	LDGP(pv)
 	CALL(cpu_hatch)
 
 	/* cpu_hatch() returned!  Just halt (forever). */
-Lcst2:	call_pal PAL_halt
-	br	zero, Lcst2
+2:	call_pal PAL_halt
+	br	zero, 2b
 	END(cpu_spinup_trampoline)
