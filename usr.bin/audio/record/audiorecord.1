@@ -1,4 +1,4 @@
-.\"	$NetBSD: audiorecord.1,v 1.12 2001/05/02 12:49:42 minoura Exp $
+.\"	$NetBSD: audiorecord.1,v 1.13 2001/05/04 23:42:23 wiz Exp $
 .\"
 .\" Copyright (c) 1998-1999 Matthew R. Green
 .\" All rights reserved.
@@ -37,6 +37,7 @@
 .Op Fl afhV
 .Op Fl b Ar balance
 .Op Fl C Ar ctl
+.Op Fl c Ar channels
 .Op Fl d Ar device
 .Op Fl e Ar encoding
 .Op Fl i Ar info
@@ -67,6 +68,9 @@ Set the audio control device to be
 .Ar ctl .
 The default is
 .Pa /dev/audioctl0 .
+.It Fl c
+Set number of channels to
+.Ar channels .
 .It Fl d
 Set the audio device to be
 .Ar device .
