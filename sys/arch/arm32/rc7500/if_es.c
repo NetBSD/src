@@ -1,4 +1,4 @@
-/* $NetBSD: if_es.c,v 1.7 1997/03/15 18:09:32 is Exp $ */
+/* $NetBSD: if_es.c,v 1.8 1997/07/28 18:07:13 mark Exp $ */
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -76,6 +76,8 @@
 #include <arm32/mainbus/if_esreg.h>
 #include <arm32/mainbus/mainbus.h>
 
+#include "locators.h"
+
 #define SWAP(x) (((x & 0xff) << 8) | ((x >> 8) & 0xff))
 
 /*
@@ -140,6 +142,10 @@ esprobe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
+	/* We need a base address */
+	if (mb->mb_iobase == MAINBUSCF_BASE_DEFAULT)
+		return(0);
+
 /*
  * This is a driver for the ethernet controller on the RC7500 motherboard.
  * It would be nice to be able to probe rather that using conditional
