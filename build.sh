@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.124 2003/11/12 15:51:45 lukem Exp $
+#	$NetBSD: build.sh,v 1.125 2003/11/14 12:38:12 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -346,55 +346,56 @@ Usage: ${progname} [-EnorUu] [-a arch] [-B buildid] [-D dest] [-j njob]
 		[-V var=[value]] [-w wrapper] [-Z var]   operation [...]
 
  Build operations (all imply "obj" and "tools"):
-    build               Run "make build"
-    distribution        Run "make distribution" (includes DESTDIR/etc/ files)
-    release             Run "make release" (includes kernels & distrib media)
+    build               Run "make build".
+    distribution        Run "make distribution" (includes DESTDIR/etc/ files).
+    release             Run "make release" (includes kernels & distrib media).
 
  Other operations:
-    help                Show this message (and exit)
+    help                Show this message and exit.
     makewrapper         Create ${toolprefix}make-\${MACHINE} wrapper and ${toolprefix}make.
-                        (Always done)
-    obj                 Run "make obj" (default unless -o is used)
-    tools               Build and install tools
-    install=idir        Run "make installworld" to \`idir'
-                        (useful after 'distribution' or 'release')
+                        Always performed.
+    obj                 Run "make obj".  [Default unless -o is used]
+    tools               Build and install tools.
+    install=idir        Run "make installworld" to \`idir' to install all sets
+			except \`etc'.  Useful after "distribution" or "release"
     kernel=conf         Build kernel with config file \`conf'
-    releasekernel=conf  Install kernel built by kernel=conf to RELEASEDIR
-    sets                Create binary sets in RELEASEDIR/MACHINE/binary/sets
-    sourcesets          Create source sets in RELEASEDIR/source/sets
-    params              Display various make(1) parameters
+    releasekernel=conf  Install kernel built by kernel=conf to RELEASEDIR.
+    sets                Create binary sets in RELEASEDIR/MACHINE/binary/sets.
+			DESTDIR should be populated beforehand.
+    sourcesets          Create source sets in RELEASEDIR/source/sets.
+    params              Display various make(1) parameters.
 
  Options:
-    -a arch     Set MACHINE_ARCH to arch (otherwise deduced from MACHINE)
-    -B buildId  Set BUILDID to buildId
+    -a arch     Set MACHINE_ARCH to arch.  [Default: deduced from MACHINE]
+    -B buildId  Set BUILDID to buildId.
     -D dest     Set DESTDIR to dest.  [Default: destdir.MACHINE]
     -E          Set "expert" mode; disables various safety checks.
                 Should not be used without expert knowledge of the build system
-    -j njob     Run up to njob jobs in parallel; see make(1)
-    -M obj      Set obj root directory to obj (sets MAKEOBJDIRPREFIX)
+    -j njob     Run up to njob jobs in parallel; see make(1) -j.
+    -M obj      Set obj root directory to obj; sets MAKEOBJDIRPREFIX.
                 Unsets MAKEOBJDIR.
-    -m mach     Set MACHINE to mach (not required if NetBSD native)
+    -m mach     Set MACHINE to mach; not required if NetBSD native.
     -N noisy	Set the noisyness level of the build:
 		    0	Quiet
 		    1	Operations are described, commands are suppressed
 		    2	Full output
 		[Default: 2]
-    -n          Show commands that would be executed, but do not execute them
-    -O obj      Set obj root directory to obj (sets a MAKEOBJDIR pattern).
+    -n          Show commands that would be executed, but do not execute them.
+    -O obj      Set obj root directory to obj; sets a MAKEOBJDIR pattern.
                 Unsets MAKEOBJDIRPREFIX.
-    -o          Set MKOBJDIRS=no (do not create objdirs at start of build)
+    -o          Set MKOBJDIRS=no; do not create objdirs at start of build.
     -R release  Set RELEASEDIR to release.  [Default: releasedir]
-    -r          Remove contents of TOOLDIR and DESTDIR before building
+    -r          Remove contents of TOOLDIR and DESTDIR before building.
     -T tools    Set TOOLDIR to tools.  If unset, and TOOLDIR is not set in
-                the environment, ${toolprefix}make will be (re)built unconditionally
-    -U          Set MKUNPRIVED=yes (build without requiring root privileges;
-    		install from an UNPRIVED build with proper file permissions)
-    -u          Set MKUPDATE=yes (do not run "make clean" first).
+                the environment, ${toolprefix}make will be (re)built unconditionally.
+    -U          Set MKUNPRIVED=yes; build without requiring root privileges,
+    		install from an UNPRIVED build with proper file permissions.
+    -u          Set MKUPDATE=yes; do not run "make clean" first.
 		Without this, everything is rebuilt, including the tools.
-    -V v=[val]  Set variable \`v' to \`val'
-    -w wrapper  Create ${toolprefix}make script as wrapper
+    -V v=[val]  Set variable \`v' to \`val'.
+    -w wrapper  Create ${toolprefix}make script as wrapper.
                 [Default: \${TOOLDIR}/bin/${toolprefix}make-\${MACHINE}]
-    -Z v        Unset ("zap") variable \`v'
+    -Z v        Unset ("zap") variable \`v'.
 
 _usage_
 	exit 1
@@ -829,7 +830,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.124 2003/11/12 15:51:45 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.125 2003/11/14 12:38:12 lukem Exp $
 #
 
 EOF
@@ -993,7 +994,14 @@ main()
 			buildtools
 			;;
 
-		obj|build|distribution|release|sets|sourcesets|params)
+		sets)
+			statusmsg "Building sets from pre-populated ${DESTDIR}"
+			${runcmd} "${makewrapper}" ${parallel} ${op} ||
+			    bomb "Failed to make ${op}"
+			statusmsg "Successful make ${op}"
+			;;
+			
+		obj|build|distribution|release|sourcesets|params)
 			${runcmd} "${makewrapper}" ${parallel} ${op} ||
 			    bomb "Failed to make ${op}"
 			statusmsg "Successful make ${op}"
