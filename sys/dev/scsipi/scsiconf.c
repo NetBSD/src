@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.58 1996/07/05 16:19:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -346,7 +346,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "SEAGATE ", "ST296N          ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "TOSHIBA ", "MK538FB         ", "6027"}, SDEV_NOLUNS},
-
+	{{T_DIRECT, T_REMOV,
+	 "iomega", "jaz 1GB", 		 ""},	  SDEV_NOMODESENSE},
 
 	/* XXX: QIC-36 tape behind Emulex adapter.  Very broken. */
 	{{T_SEQUENTIAL, T_REMOV,

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.9 1996/03/19 03:05:15 mycroft Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
  * SCSI interface description
@@ -174,6 +174,36 @@ union disk_pages {
 		u_int8_t reserved2;
 		u_int8_t reserved3;
     	} rigid_geometry;
+	struct page_flex_geometry {
+		u_int8_t pg_code;	/* page code (should be 5) */
+		u_int8_t pg_length;	/* page length (should be 0x1e) */
+		u_int8_t xfr_rate[2];
+		u_int8_t nheads;	/* number of heads */
+		u_int8_t ph_sec_tr;	/* physical sectors per track */
+		u_int8_t bytes_s[2];	/* bytes per sector */
+		u_int8_t ncyl[2];	/* number of cylinders */
+		u_int8_t st_cyl_wp[2];	/* start cyl., write precomp */
+		u_int8_t st_cyl_rwc[2];	/* start cyl., red. write cur */
+		u_int8_t driv_step[2];	/* drive step rate */
+		u_int8_t driv_step_w;	/* drive step pulse width */
+		u_int8_t head_settle[2];/* head settle delay */
+		u_int8_t motor_on;	/* motor on delay */
+		u_int8_t motor_off;	/* motor off delay */
+		u_int8_t flags;		/* various flags */
+#define MOTOR_ON		0x20	/* motor on (pin 16)? */
+#define START_AT_SECTOR_1	0x40	/* start at sector 1  */
+#define READY_VALID		0x20	/* RDY (pin 34) valid */
+		u_int8_t step_p_cyl;	/* step pulses per cylinder */
+		u_int8_t write_pre;	/* write precompensation */
+		u_int8_t head_load;	/* head load delay */
+		u_int8_t head_unload;	/* head unload delay */
+		u_int8_t pin_34_2;	/* pin 34 (6) pin 2 (7/11) definition */
+		u_int8_t pin_4_1;	/* pin 4 (8/9) pin 1 (13) definition */
+		u_int8_t reserved1;
+		u_int8_t reserved2;
+		u_int8_t reserved3;
+		u_int8_t reserved4;
+	} flex_geometry;
 };
 
 #endif /* _SCSI_SCSI_DISK_H */
