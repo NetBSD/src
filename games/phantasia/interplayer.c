@@ -1,4 +1,4 @@
-/*	$NetBSD: interplayer.c,v 1.4 1999/09/08 21:17:53 jsm Exp $	*/
+/*	$NetBSD: interplayer.c,v 1.5 1999/09/08 21:57:19 jsm Exp $	*/
 
 /*
  * interplayer.c - player to player routines for Phantasia
@@ -12,7 +12,7 @@ checkbattle()
 	long    foeloc = 0L;	/* location in file of person to fight */
 
 	Users = 0;
-	fseek(Playersfp, 0L, 0);
+	fseek(Playersfp, 0L, SEEK_SET);
 
 	while (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1) {
 		if (Other.p_status != S_OFF
@@ -356,7 +356,7 @@ checktampered()
 	long    loc = 0L;	/* location in energy void file */
 
 	/* first check for energy voids */
-	fseek(Energyvoidfp, 0L, 0);
+	fseek(Energyvoidfp, 0L, SEEK_SET);
 	while (fread((char *) &Enrgyvoid, SZ_VOIDSTRUCT, 1, Energyvoidfp) == 1)
 		if (Enrgyvoid.ev_active
 		    && Enrgyvoid.ev_x == Player.p_x
@@ -508,7 +508,7 @@ tampered(what, arg1, arg2)
 					addstr("You made to position of Valar!\n");
 					Player.p_specialtype = SC_VALAR;
 					Player.p_lives = 5;
-					fseek(Playersfp, 0L, 0);
+					fseek(Playersfp, 0L, SEEK_SET);
 					loc = 0L;
 					while (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
 						/* search for existing valar */
@@ -545,7 +545,7 @@ userlist(ingameflag)
 		mvaddstr(8, 0, "You cannot see anyone.\n");
 		return;
 	}
-	fseek(Playersfp, 0L, 0);
+	fseek(Playersfp, 0L, SEEK_SET);
 	mvaddstr(8, 0,
 	    "Name                         X         Y    Lvl Type Login    Status\n");
 
@@ -607,7 +607,7 @@ throneroom()
 	if (Player.p_specialtype < SC_KING)
 		/* not already king -- assumes crown */
 	{
-		fseek(Playersfp, 0L, 0);
+		fseek(Playersfp, 0L, SEEK_SET);
 		while (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
 			if (Other.p_specialtype == SC_KING && Other.p_status != S_NOTUSED)
 				/* found old king */
@@ -643,7 +643,7 @@ throneroom()
 		fclose(fp);
 
 		/* clear all energy voids; retain location of holy grail */
-		fseek(Energyvoidfp, 0L, 0);
+		fseek(Energyvoidfp, 0L, SEEK_SET);
 		fread((char *) &Enrgyvoid, SZ_VOIDSTRUCT, 1, Energyvoidfp);
 		fp = fopen(_PATH_VOID, "w");
 		fwrite((char *) &Enrgyvoid, SZ_VOIDSTRUCT, 1, fp);
@@ -718,7 +718,7 @@ dotampered()
 				/* collect taxes */
 			{
 				fread((char *) &temp1, sizeof(double), 1, fp);
-				fseek(fp, 0L, 0);
+				fseek(fp, 0L, SEEK_SET);
 				/* clear out value */
 				temp2 = 0.0;
 				fwrite((char *) &temp2, sizeof(double), 1, fp);
@@ -765,7 +765,7 @@ dotampered()
 			if (Player.p_palantir)
 				/* need a palantir to seek */
 			{
-				fseek(Energyvoidfp, 0L, 0);
+				fseek(Energyvoidfp, 0L, SEEK_SET);
 				fread((char *) &Enrgyvoid, SZ_VOIDSTRUCT, 1, Energyvoidfp);
 				temp1 = distance(Player.p_x, Enrgyvoid.ev_x, Player.p_y, Enrgyvoid.ev_y);
 				temp1 += ROLL(-temp1 / 10.0, temp1 / 5.0);	/* add some error */
@@ -865,10 +865,10 @@ writevoid(vp, loc)
 	long    loc;
 {
 
-	fseek(Energyvoidfp, loc, 0);
+	fseek(Energyvoidfp, loc, SEEK_SET);
 	fwrite((char *) vp, SZ_VOIDSTRUCT, 1, Energyvoidfp);
 	fflush(Energyvoidfp);
-	fseek(Energyvoidfp, 0L, 0);
+	fseek(Energyvoidfp, 0L, SEEK_SET);
 }
 
 long
@@ -876,7 +876,7 @@ allocvoid()
 {
 	long    loc = 0L;	/* location of new energy void */
 
-	fseek(Energyvoidfp, 0L, 0);
+	fseek(Energyvoidfp, 0L, SEEK_SET);
 	while (fread((char *) &Enrgyvoid, SZ_VOIDSTRUCT, 1, Energyvoidfp) == 1)
 		if (Enrgyvoid.ev_active)
 			loc += SZ_VOIDSTRUCT;

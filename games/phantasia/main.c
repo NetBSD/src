@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 1999/09/08 21:17:54 jsm Exp $	*/
+/*	$NetBSD: main.c,v 1.8 1999/09/08 21:57:19 jsm Exp $	*/
 
 /*
  * Phantasia 3.3.2 -- Interterminal fantasy game
@@ -626,7 +626,7 @@ titlelist()
 		fclose(fp);
 	}
 	/* search for king */
-	fseek(Playersfp, 0L, 0);
+	fseek(Playersfp, 0L, SEEK_SET);
 	while (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
 		if (Other.p_specialtype == SC_KING &&
 		    Other.p_status != S_NOTUSED)
@@ -642,7 +642,7 @@ titlelist()
 		mvaddstr(4, 24, "There is no ruler at this time.");
 
 	/* search for valar */
-	fseek(Playersfp, 0L, 0);
+	fseek(Playersfp, 0L, SEEK_SET);
 	while (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
 		if (Other.p_specialtype == SC_VALAR && Other.p_status != S_NOTUSED)
 			/* found the valar */
@@ -652,7 +652,7 @@ titlelist()
 			break;
 		}
 	/* search for council of the wise */
-	fseek(Playersfp, 0L, 0);
+	fseek(Playersfp, 0L, SEEK_SET);
 	Lines = 10;
 	while (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
 		if (Other.p_specialtype == SC_COUNCIL && Other.p_status != S_NOTUSED)
@@ -671,7 +671,7 @@ titlelist()
 	hiexp = 0.0;
 	nxtlvl = hilvl = 0;
 
-	fseek(Playersfp, 0L, 0);
+	fseek(Playersfp, 0L, SEEK_SET);
 	while (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
 		if (Other.p_experience > hiexp && Other.p_specialtype <= SC_KING && Other.p_status != S_NOTUSED)
 			/* highest found so far */

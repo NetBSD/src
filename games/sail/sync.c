@@ -1,4 +1,4 @@
-/*	$NetBSD: sync.c,v 1.11 1999/02/10 00:45:46 hubertf Exp $	*/
+/*	$NetBSD: sync.c,v 1.12 1999/09/08 21:57:20 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sync.c,v 1.11 1999/02/10 00:45:46 hubertf Exp $");
+__RCSID("$NetBSD: sync.c,v 1.12 1999/09/08 21:57:20 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -262,7 +262,7 @@ Sync()
 	}
 	if (n <= 0)
 		return -1;
-	(void) fseek(sync_fp, sync_seek, 0);
+	(void) fseek(sync_fp, sync_seek, SEEK_SET);
 	for (;;) {
 		switch (fscanf(sync_fp, "%d%d%d", &type, &shipnum, &isstr)) {
 		case 3:

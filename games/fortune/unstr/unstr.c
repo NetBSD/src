@@ -1,4 +1,4 @@
-/*	$NetBSD: unstr.c,v 1.5 1999/08/21 07:02:46 simonb Exp $	*/
+/*	$NetBSD: unstr.c,v 1.6 1999/09/08 21:57:17 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)unstr.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: unstr.c,v 1.5 1999/08/21 07:02:46 simonb Exp $");
+__RCSID("$NetBSD: unstr.c,v 1.6 1999/09/08 21:57:17 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,7 +140,7 @@ order_unstr(tbl)
 
 	for (i = 0; i < tbl->str_numstr; i++) {
 		(void) fread((char *) &pos, 1, sizeof pos, Dataf);
-		(void) fseek(Inf, be64toh(pos), 0);
+		(void) fseek(Inf, be64toh(pos), SEEK_SET);
 		if (i != 0)
 			(void) printf("%c\n", Delimch);
 		for (;;) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: getword.c,v 1.5 1997/10/11 01:16:30 lukem Exp $	*/
+/*	$NetBSD: getword.c,v 1.6 1999/09/08 21:57:17 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getword.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: getword.c,v 1.5 1997/10/11 01:16:30 lukem Exp $");
+__RCSID("$NetBSD: getword.c,v 1.6 1999/09/08 21:57:17 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ getword()
 	inf = Dict;
 	for (;;) {
 		pos = (double) rand() / (RAND_MAX + 1.0) * (double) Dict_size;
-		fseek(inf, pos, 0);
+		fseek(inf, pos, SEEK_SET);
 		if (fgets(Word, BUFSIZ, inf) == NULL)
 			continue;
 		if (fgets(Word, BUFSIZ, inf) == NULL)

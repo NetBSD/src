@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.8 1999/09/08 21:17:51 jsm Exp $	*/
+/*	$NetBSD: save.c,v 1.9 1999/09/08 21:57:18 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.8 1999/09/08 21:17:51 jsm Exp $");
+__RCSID("$NetBSD: save.c,v 1.9 1999/09/08 21:57:18 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -152,7 +152,7 @@ rest_f(file)
 	char	buf[80];
 	STAT	sbuf;
 
-	if ((inf = open(file, 0)) < 0) {
+	if ((inf = open(file, O_RDONLY)) < 0) {
 		warn("%s", file);
 		exit(1);
 	}

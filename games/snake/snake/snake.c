@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.c,v 1.11 1999/09/08 21:45:31 jsm Exp $	*/
+/*	$NetBSD: snake.c,v 1.12 1999/09/08 21:57:21 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: snake.c,v 1.11 1999/09/08 21:45:31 jsm Exp $");
+__RCSID("$NetBSD: snake.c,v 1.12 1999/09/08 21:57:21 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -506,14 +506,14 @@ post(iscore, flag)
 	/* Figure out what happened in the past */
 	read(rawscores, &allbscore, sizeof(short));
 	read(rawscores, &allbwho, sizeof(short));
-	lseek(rawscores, uid * sizeof(short), 0);
+	lseek(rawscores, uid * sizeof(short), SEEK_SET);
 	read(rawscores, &oldbest, sizeof(short));
 	if (!flag)
 		return (score > oldbest ? 1 : 0);
 
 	/* Update this jokers best */
 	if (score > oldbest) {
-		lseek(rawscores, uid * sizeof(short), 0);
+		lseek(rawscores, uid * sizeof(short), SEEK_SET);
 		write(rawscores, &score, sizeof(short));
 		pr("You bettered your previous best of $%d\n", oldbest);
 	} else
@@ -522,7 +522,7 @@ post(iscore, flag)
 	/* See if we have a new champ */
 	p = getpwuid(allbwho);
 	if (p == NULL || score > allbscore) {
-		lseek(rawscores, 0, 0);
+		lseek(rawscores, 0, SEEK_SET);
 		write(rawscores, &score, sizeof(short));
 		write(rawscores, &uid, sizeof(short));
 		if (allbwho)

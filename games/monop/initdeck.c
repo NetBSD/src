@@ -1,4 +1,4 @@
-/*	$NetBSD: initdeck.c,v 1.8 1999/09/08 21:17:52 jsm Exp $	*/
+/*	$NetBSD: initdeck.c,v 1.9 1999/09/08 21:57:18 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)initdeck.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: initdeck.c,v 1.8 1999/09/08 21:17:52 jsm Exp $");
+__RCSID("$NetBSD: initdeck.c,v 1.9 1999/09/08 21:57:18 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ main(ac, av)
 	 */
 	CC_D.offsets = (off_t *)calloc(CC_D.num_cards + 1, sizeof (off_t));
 	CH_D.offsets = (off_t *)calloc(CH_D.num_cards + 1, sizeof (off_t));
-	fseek(inf, 0L, 0);
+	fseek(inf, 0L, SEEK_SET);
 	if ((outf = fopen(outfile, "w")) == NULL) {
 		perror(outfile);
 		exit(0);
@@ -122,7 +122,7 @@ main(ac, av)
 	putem();
 
 	fclose(inf);
-	fseek(outf, 0, 0L);
+	fseek(outf, 0, SEEK_SET);
 
 	/* number of community chest cards first... */
 	nc = htobe32(CC_D.num_cards);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fight.c,v 1.4 1998/08/30 09:19:39 veego Exp $	*/
+/*	$NetBSD: fight.c,v 1.5 1999/09/08 21:57:18 jsm Exp $	*/
 
 /*
  * fight.c   Phantasia monster fighting routines
@@ -844,7 +844,7 @@ callmonster(which)
 	which = MIN(which, 99);	/* make sure within range */
 
 	/* fill structure */
-	fseek(Monstfp, (long) which * (long) SZ_MONSTERSTRUCT, 0);
+	fseek(Monstfp, (long) which * (long) SZ_MONSTERSTRUCT, SEEK_SET);
 	fread((char *) &Curmonster, SZ_MONSTERSTRUCT, 1, Monstfp);
 
 	/* handle some special monsters */
@@ -879,7 +879,7 @@ callmonster(which)
 			/* pick another name */
 		{
 			which = (int) ROLL(0.0, 100.0);
-			fseek(Monstfp, (long) which * (long) SZ_MONSTERSTRUCT, 0);
+			fseek(Monstfp, (long) which * (long) SZ_MONSTERSTRUCT, SEEK_SET);
 			fread(&Othermonster, SZ_MONSTERSTRUCT, 1, Monstfp);
 			strcpy(Curmonster.m_name, Othermonster.m_name);
 		}
