@@ -1,4 +1,4 @@
-/*	$NetBSD: psychovar.h,v 1.9 2003/03/22 06:33:10 nakayama Exp $	*/
+/*	$NetBSD: psychovar.h,v 1.10 2003/04/21 12:14:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -30,6 +30,8 @@
 
 #ifndef _SPARC64_DEV_PSYCHOVAR_H_
 #define _SPARC64_DEV_PSYCHOVAR_H_
+
+#include <dev/sysmon/sysmonvar.h>
 
 /* per real PCI bus info */
 struct psycho_softc;
@@ -121,6 +123,9 @@ struct psycho_softc {
 #define	PSYCHO_MODE_PSYCHO	2	/* i'm a psycho (w*nker) */
 
 	struct iommu_state		*sc_is;
+
+	struct sysmon_pswitch		*sc_smcontext;	/* power switch definition */
+	int				sc_powerpressed;/* already signaled */
 };
 
 /* get a PCI offset address from bus_space_handle_t */
