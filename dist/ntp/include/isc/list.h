@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.1.1.1 2003/12/04 16:05:22 drochner Exp $	*/
+/*	$NetBSD: list.h,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
 
 /*
  * Copyright (C) 1997-2001  Internet Software Consortium.

@@ -1,4 +1,4 @@
-/*	$NetBSD: precision.c,v 1.1.1.2 2003/12/04 16:05:35 drochner Exp $	*/
+/*	$NetBSD: precision.c,v 1.2 2003/12/04 16:23:38 drochner Exp $	*/
 
 #include "ntp_unixtime.h"
 

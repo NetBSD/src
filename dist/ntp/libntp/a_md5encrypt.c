@@ -1,4 +1,4 @@
-/*	$NetBSD: a_md5encrypt.c,v 1.1.1.3 2003/12/04 16:05:23 drochner Exp $	*/
+/*	$NetBSD: a_md5encrypt.c,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
 
 /*
  *	MD5 interface for rsaref2.0

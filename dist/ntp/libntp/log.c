@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.1.1.2 2003/12/04 16:05:24 drochner Exp $	*/
+/*	$NetBSD: log.c,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
 
 /* Microsoft Developer Support Copyright (c) 1993 Microsoft Corporation. */
 

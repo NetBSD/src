@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_trimtsip.c,v 1.1.1.2 2003/12/04 16:05:24 drochner Exp $	*/
+/*	$NetBSD: clk_trimtsip.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
 
 /*
  * /src/NTP/ntp-4/libparse/clk_trimtsip.c,v 4.13 1999/11/28 09:13:51 kardel RELEASE_19991128_A

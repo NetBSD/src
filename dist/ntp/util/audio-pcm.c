@@ -1,4 +1,4 @@
-/*	$NetBSD: audio-pcm.c,v 1.1.1.1 2003/12/04 16:05:34 drochner Exp $	*/
+/*	$NetBSD: audio-pcm.c,v 1.2 2003/12/04 16:23:38 drochner Exp $	*/
 
 /*
  * audio-pcm.c - Scope out the PCM audio stuff
