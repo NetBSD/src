@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.10 2000/02/03 21:27:35 chopps Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.11 2000/02/04 08:45:41 chopps Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -557,6 +557,9 @@ ray_attach(parent, self, aux)
 		goto fail;
 	}
 
+	/* clear any interrupt if present */
+	REG_WRITE(sc, RAY_HCSIR, 0);
+
 	/*
 	 * set the parameters that will survive stop/init
 	 */
@@ -573,10 +576,11 @@ ray_attach(parent, self, aux)
 	 */
 	/* The version isn't the most accurate way, but it's easy. */
 	printf("%s: firmware version %d\n", sc->sc_dev.dv_xname,sc->sc_version);
-	printf("%s: supported rates %0x:%0x:%0x:%0x:%0x:%0x:%0x:%0x\n",
-	    sc->sc_xname, ep->e_rates[0], ep->e_rates[1], ep->e_rates[2],
-	    ep->e_rates[3], ep->e_rates[4], ep->e_rates[5], ep->e_rates[6],
-	    ep->e_rates[7]);
+	if (sc->sc_version != SC_BUILD_4)
+		printf("%s: supported rates %0x:%0x:%0x:%0x:%0x:%0x:%0x:%0x\n",
+		    sc->sc_xname, ep->e_rates[0], ep->e_rates[1],
+		    ep->e_rates[2], ep->e_rates[3], ep->e_rates[4],
+		    ep->e_rates[5], ep->e_rates[6], ep->e_rates[7]);
 	printf("%s: 802.11 address %s\n", sc->sc_xname,
 	    ether_sprintf(ep->e_station_addr));
 
@@ -704,11 +708,14 @@ ray_enable(sc)
 
 	RAY_DPRINTF(("%s: enable\n", sc->sc_xname));
 
-	sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_NET, ray_intr, sc);
-	if (sc->sc_ih == NULL)
-		return (EIO);
-	if ((error = ray_init(sc)))
-		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+	if ((error = ray_init(sc)) == 0) {
+		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_NET,
+		    ray_intr, sc);
+		if (sc->sc_ih == NULL) {
+			ray_stop(sc);
+			return (EIO);
+		}
+	}
 	return (error);
 }
 
@@ -754,6 +761,8 @@ ray_init(sc)
 	if (pcmcia_function_enable(sc->sc_pf))
 		return (EIO);
 
+	RAY_DPRINTF(("%s: init post-enable\n", sc->sc_xname));
+
 	/* reset some values */
 	memset(sc->sc_ccsinuse, 0, sizeof(sc->sc_ccsinuse));
 	sc->sc_havenet = 0;
@@ -792,10 +801,8 @@ ray_init(sc)
 		SRAM_WRITE_FIELD_1(sc, ccs, ray_cmd, c_status,
 		    RAY_CCS_STATUS_FREE);
 
-#if 0
 	/* clear the interrupt if present */
 	REG_WRITE(sc, RAY_HCSIR, 0);
-#endif
 
 	/* we are now up and running -- and are busy until download is cplt */
 	sc->sc_if.if_flags |= IFF_RUNNING | IFF_OACTIVE;
