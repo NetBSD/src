@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pvt.h,v 1.4 1997/03/05 23:55:54 gwr Exp $	*/
+/*	$NetBSD: pmap_pvt.h,v 1.5 1997/03/21 22:46:16 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -152,9 +152,6 @@ struct pmap_physmem_struct {
 	int             pmem_pvbase; /* Offset within the pv list      */
 	struct pmap_physmem_struct *pmem_next; /* Next block of memory */
 };
-
-/* XXX Temporary statement about the 3/80 */
-#define SUN3X_80_MEM_BANKS	4
 
 /* Internal function definitions. */
 a_tmgr_t *get_a_table __P((void));
