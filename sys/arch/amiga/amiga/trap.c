@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53 1997/01/16 15:30:57 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.54 1997/04/09 19:33:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -239,7 +239,7 @@ panictrap(type, code, v, fp)
 	static int panicing = 0;
 	if (panicing++ == 0) {
 		printf("trap type %d, code = %x, v = %x\n", type, code, v);
-		regdump(fp, 128);
+		regdump((struct trapframe *)fp, 128);
 	}
 	type &= ~T_USER;
 #ifdef DEBUG
