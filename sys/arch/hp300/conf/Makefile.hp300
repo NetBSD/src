@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.50 1997/02/04 05:08:33 perry Exp $
+#	$NetBSD: Makefile.hp300,v 1.51 1997/03/13 09:24:21 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -104,19 +104,9 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-# XXX not quite ready yet
-#assym.h: $S/kern/genassym.sh ${HP300}/hp300/genassym.cf
-#	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-#	    < ${HP300}/hp300/genassym.cf > assym.h
-
-assym.h: genassym
-	./genassym >assym.h
-
-genassym: genassym.o
-	${CC} -o $@ genassym.o
-
-genassym.o: ${HP300}/hp300/genassym.c
-	${HOSTED_C}
+assym.h: $S/kern/genassym.sh ${HP300}/hp300/genassym.cf
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    < ${HP300}/hp300/genassym.cf > assym.h || rm assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
