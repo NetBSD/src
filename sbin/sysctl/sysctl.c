@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.45 2001/02/19 22:56:23 cgd Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.46 2001/03/09 01:02:11 chs Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.45 2001/02/19 22:56:23 cgd Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.46 2001/03/09 01:02:11 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -298,6 +298,7 @@ parse(string, flags)
 	struct list *lp;
 	int mib[CTL_MAXNAME];
 	char *cp, *bufp, buf[BUFSIZ];
+	double loads[3];
 
 	bufp = buf;
 	snprintf(buf, BUFSIZ, "%s", string);
@@ -377,7 +378,7 @@ parse(string, flags)
 		case KERN_NTPTIME:
 			if (flags == 0)
 				return;
-			warnx("Use xntpdc -c kerninfo to view %s information",
+			warnx("Use ntpdc -c kerninfo to view %s information",
 			    string);
 			return;
 		case KERN_MBUF:
@@ -403,35 +404,25 @@ parse(string, flags)
 		break;
 
 	case CTL_VM:
-		if (mib[1] == VM_LOADAVG) {
-			double loads[3];
-
+		switch (mib[1]) {
+		case VM_LOADAVG:
 			getloadavg(loads, 3);
 			if (!nflag)
 				printf("%s: ", string);
 			printf("%.2f %.2f %.2f\n", loads[0], loads[1],
 			    loads[2]);
 			return;
-		}
-		if (mib[1] == VM_NKMEMPAGES) {
-			size_t nkmempages_len;
-			int nkmempages;
 
-			nkmempages_len = sizeof(nkmempages);
-
-			if (sysctl(mib, 2, &nkmempages, &nkmempages_len,
-			    NULL, 0)) {
-				warn("unable to get %s", string);
-				return;
+		case VM_METER:
+		case VM_UVMEXP:
+		case VM_UVMEXP2:
+			if (flags) {
+				warnx("Use vmstat or systat to view %s"
+				    "information", string);
 			}
-			if (!nflag)
-				printf("%s: ", string);
-			printf("%d\n", nkmempages);
-		}
-		if (flags == 0)
 			return;
-		warnx("Use vmstat or systat to view %s information", string);
-		return;
+		}
+		break;
 
 	case CTL_NET:
 		if (mib[1] == PF_INET) {
@@ -1051,7 +1042,7 @@ sysctl_proc(string, bufpp, mib, flags, typep)
 		cp = &name[strlen(name)];
 		*cp++ = '.';
 		strcpy(cp, "curproc");
-		parse (name, Aflag);
+		parse(name, Aflag);
 		return (-1);
 	}
 	cp = strsep(bufpp, ".");

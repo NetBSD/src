@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.29 2001/01/28 23:30:46 thorpej Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.30 2001/03/09 01:02:12 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -78,6 +78,7 @@
 #include <sys/kernel.h>
 #include <sys/pool.h>
 #include <sys/buf.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm.h>
 
@@ -98,7 +99,6 @@
 static void		uvmpd_scan __P((void));
 static boolean_t	uvmpd_scan_inactive __P((struct pglist *));
 static void		uvmpd_tune __P((void));
-
 
 /*
  * uvm_wait: wait (sleep) for the page daemon to free some pages
@@ -250,10 +250,7 @@ uvm_pageout(void *arg)
 		 */
 
 		if (uvmexp.free + uvmexp.paging < uvmexp.freetarg ||
-		    uvmexp.inactive < uvmexp.inactarg ||
-		    uvmexp.vnodepages >
-		    (uvmexp.active + uvmexp.inactive + uvmexp.wired +
-		     uvmexp.free) * 13 / 16) {
+		    uvmexp.inactive < uvmexp.inactarg) {
 			uvmpd_scan();
 		}
 
@@ -371,9 +368,9 @@ uvmpd_scan_inactive(pglst)
 	int swnpages, swcpages;				/* XXX: see below */
 	int swslot;
 	struct vm_anon *anon;
-	boolean_t swap_backed, vnode_only;
+	boolean_t swap_backed;
 	vaddr_t start;
-	int dirtyreacts, vpgs;
+	int dirtyreacts, t;
 	UVMHIST_FUNC("uvmpd_scan_inactive"); UVMHIST_CALLED(pdhist);
 
 	/*
@@ -394,7 +391,6 @@ uvmpd_scan_inactive(pglst)
 	swnpages = swcpages = 0;
 	free = 0;
 	dirtyreacts = 0;
-	vnode_only = FALSE;
 
 	for (p = TAILQ_FIRST(pglst); p != NULL || swslot != 0; p = nextpg) {
 
@@ -417,33 +413,24 @@ uvmpd_scan_inactive(pglst)
 			free = uvmexp.free;
 			uvm_unlock_fpageq(s);
 
-			/* XXXUBC */
-			vpgs = uvmexp.vnodepages -
-				(uvmexp.active + uvmexp.inactive +
-				 uvmexp.wired + uvmexp.free) * 13 / 16;
-
 			if (free + uvmexp.paging >= uvmexp.freetarg << 2 ||
-			    vpgs > 0 || dirtyreacts == UVMPD_NUMDIRTYREACTS) {
-				if (vpgs <= 0) {
-					UVMHIST_LOG(pdhist,"  met free target: "
-						    "exit loop", 0, 0, 0, 0);
-					retval = TRUE;
+			    dirtyreacts == UVMPD_NUMDIRTYREACTS) {
+				UVMHIST_LOG(pdhist,"  met free target: "
+					    "exit loop", 0, 0, 0, 0);
+				retval = TRUE;
 
-					if (swslot == 0)
-						/* exit now if no
-                                                   swap-i/o pending */
-						break;
-
-					/* set p to null to signal final
-                                           swap i/o */
-					p = NULL;
-				} else {
-					vnode_only = TRUE;
+				if (swslot == 0) {
+					/* exit now if no swap-i/o pending */
+					break;
 				}
+
+				/* set p to null to signal final swap i/o */
+				p = NULL;
 			}
 		}
 
 		if (p) {	/* if (we have a new page to consider) */
+
 			/*
 			 * we are below target and have a new page to consider.
 			 */
@@ -452,16 +439,44 @@ uvmpd_scan_inactive(pglst)
 
 			/*
 			 * move referenced pages back to active queue and
-			 * skip to next page (unlikely to happen since
-			 * inactive pages shouldn't have any valid mappings
-			 * and we cleared reference before deactivating).
+			 * skip to next page.
 			 */
+
 			if (pmap_is_referenced(p)) {
 				uvm_pageactivate(p);
 				uvmexp.pdreact++;
 				continue;
 			}
-			
+
+			/*
+			 * enforce the minimum thresholds on different
+			 * types of memory usage.  if reusing the current
+			 * page would reduce that type of usage below its
+			 * minimum, reactivate the page instead and move
+			 * on to the next page.
+			 */
+
+			t = uvmexp.active + uvmexp.inactive + uvmexp.free;
+			if (p->uanon &&
+			    uvmexp.anonpages <= (t * uvmexp.anonmin) >> 8) {
+				uvm_pageactivate(p);
+				uvmexp.pdreanon++;
+				continue;
+			}
+			if (p->uobject && UVM_OBJ_IS_VTEXT(p->uobject) &&
+			    uvmexp.vtextpages <= (t * uvmexp.vtextmin) >> 8) {
+				uvm_pageactivate(p);
+				uvmexp.pdrevtext++;
+				continue;
+			}
+			if (p->uobject && UVM_OBJ_IS_VNODE(p->uobject) &&
+			    !UVM_OBJ_IS_VTEXT(p->uobject) &&
+			    uvmexp.vnodepages <= (t * uvmexp.vnodemin) >> 8) {
+				uvm_pageactivate(p);
+				uvmexp.pdrevnode++;
+				continue;
+			}
+
 			/*
 			 * first we attempt to lock the object that this page
 			 * belongs to.  if our attempt fails we skip on to
@@ -477,18 +492,15 @@ uvmpd_scan_inactive(pglst)
 			 * case, the anon can "take over" the loaned page
 			 * and make it its own.
 			 */
-		
+
 			/* is page part of an anon or ownerless ? */
 			if ((p->pqflags & PQ_ANON) || p->uobject == NULL) {
-				if (vnode_only) {
-					uvm_pageactivate(p);
-					continue;
-				}
 				anon = p->uanon;
 				KASSERT(anon != NULL);
-				if (!simple_lock_try(&anon->an_lock))
+				if (!simple_lock_try(&anon->an_lock)) {
 					/* lock failed, skip this page */
 					continue;
+				}
 
 				/*
 				 * if the page is ownerless, claim it in the
@@ -511,15 +523,10 @@ uvmpd_scan_inactive(pglst)
 			} else {
 				uobj = p->uobject;
 				KASSERT(uobj != NULL);
-				if (vnode_only &&
-				    UVM_OBJ_IS_VNODE(uobj) == 0) {
-					uvm_pageactivate(p);
-					continue;
-				}
-				if (!simple_lock_try(&uobj->vmobjlock))
+				if (!simple_lock_try(&uobj->vmobjlock)) {
 					/* lock failed, skip this page */
 					continue;
-
+				}
 				if (p->flags & PG_BUSY) {
 					simple_unlock(&uobj->vmobjlock);
 					uvmexp.pdbusy++;
@@ -538,8 +545,9 @@ uvmpd_scan_inactive(pglst)
 			 */
 
 			pmap_page_protect(p, VM_PROT_NONE);
-			if ((p->flags & PG_CLEAN) != 0 && pmap_is_modified(p))
+			if ((p->flags & PG_CLEAN) != 0 && pmap_is_modified(p)) {
 				p->flags &= ~PG_CLEAN;
+			}
 
 			if (p->flags & PG_CLEAN) {
 				if (p->pqflags & PQ_SWAPBACKED) {
@@ -577,8 +585,7 @@ uvmpd_scan_inactive(pglst)
 			 * free target when all the current pageouts complete.
 			 */
 
-			if (free + uvmexp.paging > uvmexp.freetarg << 2 &&
-			    !vnode_only) {
+			if (free + uvmexp.paging > uvmexp.freetarg << 2) {
 				if (anon) {
 					simple_unlock(&anon->an_lock);
 				} else {
@@ -634,7 +641,7 @@ uvmpd_scan_inactive(pglst)
 			 * first mark the page busy so that no one else will
 			 * touch the page.
 			 */
-		
+
 			swap_backed = ((p->pqflags & PQ_SWAPBACKED) != 0);
 			p->flags |= PG_BUSY;		/* now we own it */
 			UVM_PAGE_OWN(p, "scan_inactive");
@@ -936,7 +943,7 @@ uvmpd_scan_inactive(pglst)
 			 */
 
 			nextpg = NULL;
-			
+
 			/*
 			 * lock page queues here just so they're always locked
 			 * at the end of the loop.
