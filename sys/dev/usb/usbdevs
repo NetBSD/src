@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.126 2000/10/24 14:51:24 augustss Exp $
+$NetBSD: usbdevs,v 1.127 2000/11/15 14:36:09 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -724,6 +724,7 @@ product SOLIDYEAR KEYBOARD	0x2101	Solid Year USB keyboard
 
 /* SONY products */
 product SONY DSC		0x0010	Sony DSC cameras
+product SONY MSC		0x0032	Sony MSC memory stick slot
 
 /* STMicroelectronics products */
 product STMICRO COMMUNICATOR	0x7554	USB Communicator
