@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.50 2002/10/16 21:45:31 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.51 2002/10/16 22:38:36 soren Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.50 2002/10/16 21:45:31 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.51 2002/10/16 22:38:36 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -1938,26 +1938,15 @@ void
 cpio_usage(void)
 {
 
-#if 1
-	(void)fputs(
-	    "Usage: cpio -i [-BcdfmrStuv] [ -C blksize ] [ -H header ]\n",
-	    stderr);
-	(void)fputs("  [ -I file ] [ pattern ... ]\n", stderr);
-	(void)fputs("Usage: cpio -o [-aABcLv] [ -C bufsize ] [ -H header ]\n",
-	    stderr);
-	(void)fputs("  [ -O file ]\n", stderr);
-	(void)fputs("Usage: cpio -p [ adlLmuv ] directory\n", stderr);
-#else
-	/* no E, M, R, V, b, k or s */
-	(void)fputs("Usage: cpio -i [-bBcdfkmrsStuvV] [ -C bufsize ]\n", stderr);
-	(void)fputs("  [ -E file ] [ -H header ] [ -I file [ -M message ] ]\n",
-	    stderr);
-	(void)fputs("  [ -R id ] [ pattern ... ]\n", stderr);
-	(void)fputs("Usage: cpio -o [-aABcLvV] [ -C bufsize ] [ -H header ]\n",
-	    stderr);
-	(void)fputs("  [ -O file [ -M message ] ]\n", stderr);
-	(void)fputs("Usage: cpio -p [ adlLmuvV ] [ -R id ] directory\n", stderr);
-#endif
+	(void)fputs("Usage: cpio -o [-aABcLvzZ] [-C bytes] [-F archive] "
+		    "[-H format] [-O archive]\n"
+		    "               < name-list [> archive]\n"
+		    "       cpio -i [-bBcdfmrsStuvzZ6] [-C bytes] [-E file] "
+		    "[-F archive] [-H format] \n"
+		    "               [-I archive] "
+		    "[pattern ...] [< archive]\n"
+		    "       cpio -p [-adlLmuv] destination-directory "
+		    "< name-list\n", stderr);
 	exit(1);
 	/* NOTREACHED */
 }
