@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.100 2003/04/21 18:12:22 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.101 2003/04/21 21:45:59 fvdl Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.100 2003/04/21 18:12:22 fvdl Exp $
+ * $Id: aic7xxx.c,v 1.101 2003/04/21 21:45:59 fvdl Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -484,7 +484,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 		ahc_set_scsi_status(scb, hscb->shared_data.status.scsi_status);
 		switch (hscb->shared_data.status.scsi_status) {
 		case SCSI_STATUS_OK:
-			printf("%s: Interrupted for status of 0 (???)\n",
+			printf("%s: Interrupted for status of 0 (?)\n",
 			       ahc_name(ahc));
 			break;
 		case SCSI_STATUS_CMD_TERMINATED:
