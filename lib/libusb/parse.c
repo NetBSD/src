@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.2 1999/05/11 21:15:46 augustss Exp $	*/
+/*	$NetBSD: parse.c,v 1.3 1999/05/12 00:04:49 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -355,4 +355,24 @@ hid_report_size(report_desc_t r, enum hid_kind k, int *idp)
 	hid_end_parse(d);
 	size = h.pos + id;
 	return ((size + 7) / 8);
+}
+
+int
+hid_locate(desc, u, k, h)
+	report_desc_t desc;
+	unsigned int u;
+	enum hid_kind k;
+	hid_item_t *h;
+{
+	hid_data_t d;
+
+	for (d = hid_start_parse(desc, 1<<k); hid_get_item(d, h); ) {
+		if (h->kind == k && !(h->flags & HIO_CONST) && h->usage == u) {
+			hid_end_parse(d);
+			return (1);
+		}
+	}
+	hid_end_parse(d);
+	h->report_size = 0;
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: data.c,v 1.2 1999/05/11 21:15:46 augustss Exp $	*/
+/*	$NetBSD: data.c,v 1.3 1999/05/12 00:04:49 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -29,13 +29,13 @@
 #include <stdlib.h>
 #include "usb.h"
 
-unsigned int
-getdata(void *p, hid_item_t *h)
+int
+get_data(void *p, hid_item_t *h)
 {
 	unsigned char *buf = p;
 	unsigned int hpos = h->pos;	/* bit position of data */
 	unsigned int hsize = h->report_size; /* bit length of data */
-	unsigned int data;
+	int data;
 	int i, end, offs;
 
 	if (hsize == 0)
@@ -50,7 +50,27 @@ getdata(void *p, hid_item_t *h)
 	if (h->logical_minimum < 0) {
 		/* Need to sign extend */
 		hsize = sizeof data * 8 - hsize;
-		data = ((int)data << hsize) >> hsize;
+		data = (data << hsize) >> hsize;
 	}
 	return (data);
 }
+
+void
+set_data(void *p, hid_item_t *h, int data)
+{
+	unsigned char *buf = p;
+	unsigned int hpos = h->pos;	/* bit position of data */
+	unsigned int hsize = h->report_size; /* bit length of data */
+	int i, end, offs;
+
+	if (hsize != 32)
+		data &= (1 << hsize) - 1;
+	data <<= (hpos % 8);
+
+	offs = hpos / 8;
+	end = (hpos + hsize) / 8 - offs;
+	data = 0;
+	for (i = 0; i <= end; i++)
+		buf[offs + i] |= (data >> (i*8)) & 0xff;
+}
+
