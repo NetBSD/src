@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.141 2003/10/15 19:54:30 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.142 2003/10/15 20:26:33 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.141 2003/10/15 19:54:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.142 2003/10/15 20:26:33 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -622,9 +622,9 @@ __wdcprobe(chp, poll)
 		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
 		    chp->channel, st0, st1), DEBUG_PROBE);
 
-		if ((st0 & 0x7f) == 0x7f || st0 == WDSD_IBM)
+		if (st0 == 0xff || st0 == WDSD_IBM)
 			ret_value &= ~0x01;
-		if ((st1 & 0x7f) == 0x7f || st1 == (WDSD_IBM | 0x10))
+		if (st1 == 0xff || st1 == (WDSD_IBM | 0x10))
 			ret_value &= ~0x02;
 		/* Register writability test, drive 0. */
 		if (ret_value & 0x01) {
@@ -1192,8 +1192,6 @@ __wdcwait_reset(chp, drv_mask, poll)
 end:
 	if (er0 != 0x01 && er0 != 0x81)
 		drv_mask &= ~0x01;
-	if (er1 != 0x01)
-		drv_mask &= ~0x02;
 	WDCDEBUG_PRINT(("%s:%d:0: after reset, sc=0x%x sn=0x%x "
 	    "cl=0x%x ch=0x%x\n",
 	     chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
