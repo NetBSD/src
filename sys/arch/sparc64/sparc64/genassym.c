@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: genassym.c,v 1.2 1998/07/07 03:05:04 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -169,6 +169,7 @@ main()
 	off("PCB_RW", struct pcb, pcb_rw);
 	off("PCB_SP", struct pcb, pcb_sp);
 	off("PCB_PC", struct pcb, pcb_pc);
+	off("PCB_LASTCALL", struct pcb, lastcall);
 	siz("PCB_SIZE", struct pcb);
 
 	/* trapframe fields */
@@ -223,6 +224,7 @@ main()
 	off("ZL_RBUF", struct zs_line, zl_rbuf);
 	def("ZSRR1_DO_bit", ffs(ZSRR1_DO) - 1);
 #endif
+#ifdef notyet
 	/* audio trap handler fields */
 	off("AU_AMD", struct auio, au_amd);
 	off("AU_RDATA", struct auio, au_rdata);
@@ -234,7 +236,7 @@ main()
 	off("AMD_IR", struct amd7930, ir);
 	off("AMD_BBRB", struct amd7930, bbrb);
 	off("AMD_BBTB", struct amd7930, bbtb);
-
+#endif
 /*	def("PROM_BASE", PROM_BASE); */
 
 	off("PV_NODEOPS", struct promvec, pv_nodeops);

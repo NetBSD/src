@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: mem.c,v 1.2 1998/07/07 03:05:05 eeh Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -126,7 +126,7 @@ mmrw(dev, uio, flags)
 
 		/* minor device 0 is physical memory */
 		case 0:
-#if 0
+#if 1
 			v = uio->uio_offset;
 			if (!pmap_pa_exists(v)) {
 				error = EFAULT;
@@ -175,21 +175,24 @@ mmrw(dev, uio, flags)
 				case UIO_USERSPACE:
 					if (uio->uio_rw == UIO_READ)
 						while (cnt--)
-							stba(v++, ASI_AIUS, lduba(d++, ASI_PHYS_CACHED));
+							if(subyte(d++, lduba(v++, ASI_PHYS_CACHED))) {
+								error = EFAULT;
+								goto unlock;
+							}
 					else
 						while (cnt--)
-							stba(d++, ASI_PHYS_CACHED, lduba(v++, ASI_AIUS));
+							stba(v++, ASI_PHYS_CACHED, fubyte(d++));
 					if (error)
-						return (error);
+						goto unlock;
 					break;
 					
 				case UIO_SYSSPACE:
 					if (uio->uio_rw == UIO_READ)
 						while (cnt--)
-							stba(v++, ASI_P, lduba(d++, ASI_PHYS_CACHED));
+							stba(d++, ASI_P, lduba(v++, ASI_PHYS_CACHED));
 					else
 						while (cnt--)
-							stba(d++, ASI_PHYS_CACHED, lduba(v++, ASI_P));
+							stba(v++, ASI_PHYS_CACHED, lduba(d++, ASI_P));
 					break;
 				}
 				iov->iov_base += cnt;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.2 1998/07/07 03:05:03 eeh Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.
@@ -9,49 +9,13 @@
 #define	_MACHINE_CDEFS_H_
 
 #ifdef __ELF__
-
 #define	_C_LABEL(x)	x
-
-#ifdef __GNUC__
-#define	__RENAME(x)	__asm__(___STRING(_C_LABEL(x)))
 #else
-#define __RENAME(x)
+#define	_C_LABEL(x)	__CONCAT(_,x)
 #endif
 
-#define	__DO_NOT_DO_WEAK__		/* NO WEAK SYMS IN LIBC YET */
-
-#ifndef __DO_NOT_DO_WEAK__
-#define	__indr_reference(sym,alias)	/* nada, since we do weak refs */
-#endif /* !__DO_NOT_DO_WEAK__ */
-
-#ifdef __STDC__
-
-#ifndef __DO_NOT_DO_WEAK__
-#define	__weak_alias(alias,sym)						\
-    __asm__(".weak " #alias " ; " #alias " = " #sym);
-#endif /* !__DO_NOT_DO_WEAK__ */
-#define	__warn_references(sym,msg)					\
-    __asm__(".section .gnu.warning." #sym " ; .ascii \"" msg "\" ; .text");
-
-#else /* !__STDC__ */
-
-#ifndef __DO_NOT_DO_WEAK__
-#define	__weak_alias(alias,sym)						\
-    __asm__(".weak alias ; alias = sym");
-#endif /* !__DO_NOT_DO_WEAK__ */
-#define	__warn_references(sym,msg)					\
-    __asm__(".section .gnu.warning.sym ; .ascii msg ; .text");
-
-#endif /* !__STDC__ */
-
-#else /* !__ELF__ */
-
-#define	_C_LABEL(x)	__CONCAT(_,x)
-
 #ifdef __GNUC__
 #define	__RENAME(x)	__asm__(___STRING(_C_LABEL(x)))
-#else
-#define __RENAME(x)
 #endif
 
 #ifdef __GNUC__
@@ -75,9 +39,11 @@
 #define __warn_references(sym,msg)
 #endif
 
-#endif /* __ELF__ */
+#ifdef __ELF__
+/* XXX: we should be able to do weak as __indr_reference, and __weak_alias. */
+#undef __indr_reference
+#undef __warn_references
+#define __warn_references(sym,msg)
+#endif
 
 #endif /* !_MACHINE_CDEFS_H_ */
-
-
-
