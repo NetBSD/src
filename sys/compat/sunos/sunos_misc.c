@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.50 1995/06/24 20:22:46 christos Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.51 1995/06/25 13:11:44 briggs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,7 +64,6 @@
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/reboot.h>
-#include <sys/exec.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mman.h>
@@ -207,6 +206,7 @@ sunos_mount(p, uap, retval)
 	struct sunos_mount_args *uap;
 	register_t *retval;
 {
+	struct emul *e = p->p_emul;
 	int oflags = SCARG(uap, flags), nflags, error;
 	char fsname[MFSNAMELEN];
 
@@ -654,11 +654,11 @@ sunos_nfssvc(p, uap, retval)
 	struct sunos_nfssvc_args *uap;
 	register_t *retval;
 {
+	struct emul *e = p->p_emul;
 	struct nfssvc_args outuap;
 	struct nfsd_srvargs nfsdarg;
 	struct sockaddr sa;
 	int error;
-	extern char sigcode[], esigcode[];
 
 #if 0
 	bzero(&outuap, sizeof outuap);
@@ -1145,6 +1145,7 @@ sunos_sigvec(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
+	extern struct emul emul_sunos;
 	struct sigvec vec;
 	register struct sigacts *ps = p->p_sigacts;
 	register struct sigvec *sv;
