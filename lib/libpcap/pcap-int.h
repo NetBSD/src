@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-int.h,v 1.7 1999/07/02 16:03:41 simonb Exp $	*/
+/*	$NetBSD: pcap-int.h,v 1.8 2001/02/07 17:35:56 itojun Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -46,6 +46,7 @@
 struct pcap_sf {
 	FILE *rfile;
 	int swapped;
+	int hdrsize;
 	int version_major;
 	int version_minor;
 	u_char *base;
@@ -97,6 +98,49 @@ struct pcap {
 	struct bpf_program fcode;
 
 	char errbuf[PCAP_ERRBUF_SIZE];
+};
+
+/*
+ * This is a timeval as stored in disk in a dumpfile.
+ * It has to use the same types everywhere, independent of the actual
+ * `struct timeval'
+ */
+
+struct pcap_timeval {
+    bpf_int32 tv_sec;		/* seconds */
+    bpf_int32 tv_usec;		/* microseconds */
+};
+
+/*
+ * How a `pcap_pkthdr' is actually stored in the dumpfile.
+ *
+ * Do not change the format of this structure, in any way (this includes
+ * changes that only affect the length of fields in this structure),
+ * and do not make the time stamp anything other than seconds and
+ * microseconds (e.g., seconds and nanoseconds).  Instead:
+ *
+ *	introduce a new structure for the new format;
+ *
+ *	send mail to "tcpdump-workers@tcpdump.org", requesting a new
+ *	magic number for your new capture file format, and, when
+ *	you get the new magic number, put it in "savefile.c";
+ *
+ *	use that magic number for save files with the changed record
+ *	header;
+ *
+ *	make the code in "savefile.c" capable of reading files with
+ *	the old record header as well as files with the new record header
+ *	(using the magic number to determine the header format).
+ *
+ * Then supply the changes to "patches@tcpdump.org", so that future
+ * versions of libpcap and programs that use it (such as tcpdump) will
+ * be able to read your new capture file format.
+ */
+
+struct pcap_sf_pkthdr {
+    struct pcap_timeval ts;	/* time stamp */
+    bpf_u_int32 caplen;		/* length of portion present */
+    bpf_u_int32 len;		/* length this packet (off wire) */
 };
 
 int	yylex(void);
