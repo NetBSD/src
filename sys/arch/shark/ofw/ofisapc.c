@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisapc.c,v 1.2 2002/09/27 20:35:32 thorpej Exp $	*/
+/*	$NetBSD: ofisapc.c,v 1.3 2002/10/01 19:18:57 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -53,9 +53,8 @@ int ofisapcprobe __P((struct device *, struct cfdata *, void *));
 void ofisapcattach __P((struct device *, struct device *, void *));
 
 
-const struct cfattach ofisapc_ca = {
-	sizeof(struct device), ofisapcprobe, ofisapcattach
-};
+CFATTACH_DECL(ofisapc, sizeof(struct device),
+    ofisapcprobe, ofisapcattach, NULL, NULL)
 
 extern struct cfdriver ofisapc_cd;
 
