@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.60 2004/11/14 03:30:09 atatat Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.61 2004/11/21 04:30:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.60 2004/11/14 03:30:09 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.61 2004/11/21 04:30:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -728,7 +728,7 @@ pipe_direct_write(fp, wpipe, uio)
 			 pgs, UVM_LOAN_TOPAGE);
 	if (error) {
 		pipe_loan_free(wpipe);
-		return (error);
+		return (ENOMEM); /* so that caller fallback to ordinary write */
 	}
 
 	/* Enter the loaned pages to kva */
