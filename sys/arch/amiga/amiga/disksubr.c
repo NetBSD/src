@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.31 1999/06/02 21:09:03 is Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.32 2000/01/18 19:35:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -79,7 +79,6 @@ struct rdbmap {
 	} tab[0];
 };
 
-#define b_cylin b_resid
 #define baddr(bp) (void *)((bp)->b_un.b_addr)
 
 u_long rdbchksum __P((void *));
@@ -162,7 +161,7 @@ readdisklabel(dev, strat, lp, clp)
 	 */
 	for (nextb = 0; nextb < RDB_MAXBLOCKS; nextb++) {
 		bp->b_blkno = nextb;
-		bp->b_cylin = bp->b_blkno / lp->d_secpercyl;
+		bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
 #ifdef SD_C_ADJUSTS_NR
@@ -256,7 +255,7 @@ readdisklabel(dev, strat, lp, clp)
 	cindex = 0;
 	for (nextb = rbp->partbhead; nextb != RDBNULL; nextb = pbp->next) {
 		bp->b_blkno = nextb;
-		bp->b_cylin = bp->b_blkno / lp->d_secpercyl;
+		bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
 #ifdef SD_C_ADJUSTS_NR
@@ -561,7 +560,7 @@ bounds_check_with_label(bp, lp, wlabel)
 	/*
 	 * calc cylinder for disksort to order transfers with
 	 */
-	bp->b_cylin = (bp->b_blkno + pp->p_offset) / lp->d_secpercyl;
+	bp->b_cylinder = (bp->b_blkno + pp->p_offset) / lp->d_secpercyl;
 	return(1);
 }
 
