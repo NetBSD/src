@@ -3,7 +3,7 @@
    Definitions for address trees... */
 
 /*
- * Copyright (c) 1996-1999 Internet Software Consortium.
+ * Copyright (c) 1996-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,6 +46,22 @@ typedef struct _pair {
 	caddr_t car;
 	struct _pair *cdr;
 } *pair;
+
+struct option_chain_head {
+	int refcnt;
+	pair first;
+};
+
+struct enumeration_value {
+	const char *name;
+	u_int8_t value;
+};
+
+struct enumeration {
+	struct enumeration *next;
+	const char *name;
+	struct enumeration_value *values;
+};	
 
 /* Tree node types... */
 #define TREE_CONCAT		1
@@ -182,7 +198,8 @@ enum expr_op {
 	expr_remainder,
 	expr_binary_and,
 	expr_binary_or,
-	expr_binary_xor
+	expr_binary_xor,
+	expr_client_state
 };
 
 struct expression {
@@ -281,6 +298,7 @@ struct packet; /* forward */
 struct option_state; /* forward */
 struct decoded_option_state; /* forward */
 struct lease; /* forward */
+struct client_state; /* forward */
 
 struct universe {
 	const char *name;
@@ -289,11 +307,13 @@ struct universe {
 					     unsigned);
 	void (*save_func) (struct universe *, struct option_state *,
 			   struct option_cache *);
-	void (*foreach) (struct packet *, struct lease *,
+	void (*foreach) (struct packet *,
+			 struct lease *, struct client_state *,
 			 struct option_state *, struct option_state *,
 			 struct binding_scope **, struct universe *, void *,
 			 void (*) (struct option_cache *, struct packet *,
-				   struct lease *, struct option_state *,
+				   struct lease *, struct client_state *,
+				   struct option_state *,
 				   struct option_state *,
 				   struct binding_scope **,
 				   struct universe *, void *));
@@ -303,10 +323,10 @@ struct universe {
 					 struct option_state *,
 					 const char *, int);
 	int (*decode) (struct option_state *,
-		       unsigned char *, unsigned, struct universe *);
+		       const unsigned char *, unsigned, struct universe *);
 	int (*encapsulate) (struct data_string *, struct packet *,
-			    struct lease *, struct option_state *,
-			    struct option_state *,
+			    struct lease *, struct client_state *,
+			    struct option_state *, struct option_state *,
 			    struct binding_scope **,
 			    struct universe *);
 	void (*store_tag) PROTO ((unsigned char *, u_int32_t));

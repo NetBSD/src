@@ -3,7 +3,7 @@
    Subroutines for dealing with connections. */
 
 /*
- * Copyright (c) 1999-2000 Internet Software Consortium.
+ * Copyright (c) 1999-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,6 +43,18 @@
 
 #include <omapip/omapip_p.h>
 #include <arpa/inet.h>
+#include <arpa/nameser.h>
+
+
+#if defined (TRACING)
+static void trace_connect_input (trace_type_t *, unsigned, char *);
+static void trace_connect_stop (trace_type_t *);
+static void trace_disconnect_input (trace_type_t *, unsigned, char *);
+static void trace_disconnect_stop (trace_type_t *);
+trace_type_t *trace_connect;
+trace_type_t *trace_disconnect;
+extern omapi_array_t *trace_listeners;
+#endif
 
 OMAPI_OBJECT_ALLOC (omapi_connection,
 		    omapi_connection_object_t, omapi_type_connection)
@@ -107,6 +119,10 @@ isc_result_t omapi_connect_list (omapi_object_t *c,
 	omapi_connection_object_t *obj;
 	int flag;
 	struct sockaddr_in local_sin;
+#if defined (TRACING)
+	trace_addr_t *addrs;
+	u_int16_t naddrs;
+#endif
 
 	obj = (omapi_connection_object_t *)0;
 	status = omapi_connection_allocate (&obj, MDL);
@@ -125,86 +141,293 @@ isc_result_t omapi_connect_list (omapi_object_t *c,
 		return status;
 	}
 
-	/* Create a socket on which to communicate. */
-	obj -> socket =
-		socket (PF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (obj -> socket < 0) {
-		omapi_connection_dereference (&obj, MDL);
-		if (errno == EMFILE || errno == ENFILE || errno == ENOBUFS)
-			return ISC_R_NORESOURCES;
-		return ISC_R_UNEXPECTED;
-	}
-
-	/* Set up the local address, if any. */
-	if (local_addr) {
-		/* Only do TCPv4 so far. */
-		if (local_addr -> addrtype != AF_INET) {
-			omapi_connection_dereference (&obj, MDL);
-			return ISC_R_INVALIDARG;
-		}
-		local_sin.sin_port = htons (local_addr -> port);
-		memcpy (&local_sin.sin_addr,
-			local_addr -> address,
-			local_addr -> addrlen);
-#if defined (HAVE_SA_LEN)
-		local_sin.sin_len = sizeof local_addr;
-#endif
-		local_sin.sin_family = AF_INET;
-		memset (&local_sin.sin_zero, 0, sizeof local_sin.sin_zero);
-
-		if (bind (obj -> socket, (struct sockaddr *)&local_sin,
-			  sizeof local_sin) < 0) {
-			omapi_object_dereference ((omapi_object_t **)&obj,
-						  MDL);
-			if (errno == EADDRINUSE)
-				return ISC_R_ADDRINUSE;
-			if (errno == EADDRNOTAVAIL)
-				return ISC_R_ADDRNOTAVAIL;
-			if (errno == EACCES)
-				return ISC_R_NOPERM;
-			return ISC_R_UNEXPECTED;
-		}
-	}
-
-#if defined (HAVE_SETFD)
-	if (fcntl (obj -> socket, F_SETFD, 1) < 0) {
-		close (obj -> socket);
-		omapi_connection_dereference (&obj, MDL);
-		return ISC_R_UNEXPECTED;
-	}
-#endif
-
-	/* Set the SO_REUSEADDR flag (this should not fail). */
-	flag = 1;
-	if (setsockopt (obj -> socket, SOL_SOCKET, SO_REUSEADDR,
-			(char *)&flag, sizeof flag) < 0) {
-		omapi_connection_dereference (&obj, MDL);
-		return ISC_R_UNEXPECTED;
-	}
-	
-	/* Set the file to nonblocking mode. */
-	if (fcntl (obj -> socket, F_SETFL, O_NONBLOCK) < 0) {
-		omapi_connection_dereference (&obj, MDL);
-		return ISC_R_UNEXPECTED;
-	}
-
 	/* Store the address list on the object. */
 	omapi_addr_list_reference (&obj -> connect_list, remote_addrs, MDL);
 	obj -> cptr = 0;
-
-	status = (omapi_register_io_object
-		  ((omapi_object_t *)obj,
-		   0, omapi_connection_writefd,
-		   0, omapi_connection_connect,
-		   omapi_connection_reaper));
-	if (status != ISC_R_SUCCESS)
-		goto out;
 	obj -> state = omapi_connection_unconnected;
-	status = omapi_connection_connect ((omapi_object_t *)obj);
+
+#if defined (TRACING)
+	/* If we're playing back, don't actually try to connect - just leave
+	   the object available for a subsequent connect or disconnect. */
+	if (!trace_playback ()) {
+#endif
+		/* Create a socket on which to communicate. */
+		obj -> socket =
+			socket (PF_INET, SOCK_STREAM, IPPROTO_TCP);
+		if (obj -> socket < 0) {
+			omapi_connection_dereference (&obj, MDL);
+			if (errno == EMFILE || errno == ENFILE
+			    || errno == ENOBUFS)
+				return ISC_R_NORESOURCES;
+			return ISC_R_UNEXPECTED;
+		}
+
+		/* Set up the local address, if any. */
+		if (local_addr) {
+			/* Only do TCPv4 so far. */
+			if (local_addr -> addrtype != AF_INET) {
+				omapi_connection_dereference (&obj, MDL);
+				return ISC_R_INVALIDARG;
+			}
+			local_sin.sin_port = htons (local_addr -> port);
+			memcpy (&local_sin.sin_addr,
+				local_addr -> address,
+				local_addr -> addrlen);
+#if defined (HAVE_SA_LEN)
+			local_sin.sin_len = sizeof local_addr;
+#endif
+			local_sin.sin_family = AF_INET;
+			memset (&local_sin.sin_zero, 0,
+				sizeof local_sin.sin_zero);
+			
+			if (bind (obj -> socket, (struct sockaddr *)&local_sin,
+				  sizeof local_sin) < 0) {
+				omapi_object_dereference ((omapi_object_t **)
+							  &obj, MDL);
+				if (errno == EADDRINUSE)
+					return ISC_R_ADDRINUSE;
+				if (errno == EADDRNOTAVAIL)
+					return ISC_R_ADDRNOTAVAIL;
+				if (errno == EACCES)
+					return ISC_R_NOPERM;
+				return ISC_R_UNEXPECTED;
+			}
+		}
+
+#if defined (HAVE_SETFD)
+		if (fcntl (obj -> socket, F_SETFD, 1) < 0) {
+			close (obj -> socket);
+			omapi_connection_dereference (&obj, MDL);
+			return ISC_R_UNEXPECTED;
+		}
+#endif
+
+		/* Set the SO_REUSEADDR flag (this should not fail). */
+		flag = 1;
+		if (setsockopt (obj -> socket, SOL_SOCKET, SO_REUSEADDR,
+				(char *)&flag, sizeof flag) < 0) {
+			omapi_connection_dereference (&obj, MDL);
+			return ISC_R_UNEXPECTED;
+		}
+	
+		/* Set the file to nonblocking mode. */
+		if (fcntl (obj -> socket, F_SETFL, O_NONBLOCK) < 0) {
+			omapi_connection_dereference (&obj, MDL);
+			return ISC_R_UNEXPECTED;
+		}
+
+		status = (omapi_register_io_object
+			  ((omapi_object_t *)obj,
+			   0, omapi_connection_writefd,
+			   0, omapi_connection_connect,
+			   omapi_connection_reaper));
+		if (status != ISC_R_SUCCESS)
+			goto out;
+		status = omapi_connection_connect ((omapi_object_t *)obj);
+#if defined (TRACING)
+	}
+	omapi_connection_register (obj, MDL);
+#endif
+
       out:
 	omapi_connection_dereference (&obj, MDL);
 	return status;
 }
+
+#if defined (TRACING)
+omapi_array_t *omapi_connections;
+
+OMAPI_ARRAY_TYPE(omapi_connection, omapi_connection_object_t)
+
+void omapi_connection_trace_setup (void) {
+	trace_connect = trace_type_register ("connect", (void *)0,
+					     trace_connect_input,
+					     trace_connect_stop, MDL);
+	trace_disconnect = trace_type_register ("disconnect", (void *)0,
+						trace_disconnect_input,
+						trace_disconnect_stop, MDL);
+}
+
+void omapi_connection_register (omapi_connection_object_t *obj,
+				const char *file, int line)
+{
+	isc_result_t status;
+	trace_iov_t iov [6];
+	int iov_count = 0;
+	int32_t connect_index, listener_index;
+	static int32_t index;
+
+	if (!omapi_connections) {
+		status = omapi_connection_array_allocate (&omapi_connections,
+							  file, line);
+		if (status != ISC_R_SUCCESS)
+			return;
+	}
+
+	status = omapi_connection_array_extend (omapi_connections, obj,
+						(int *)0, file, line);
+	if (status != ISC_R_SUCCESS) {
+		obj -> index = -1;
+		return;
+	}
+
+	if (trace_record ()) {
+		/* Connection registration packet:
+		   
+		     int32_t index
+		     int32_t listener_index [-1 means no listener]
+		   u_int16_t remote_port
+		   u_int16_t local_port
+		   u_int32_t remote_addr
+		   u_int32_t local_addr */
+
+		connect_index = htonl (index);
+		index++;
+		if (obj -> listener)
+			listener_index = htonl (obj -> listener -> index);
+		else
+			listener_index = htonl (-1);
+		iov [iov_count].buf = (char *)&connect_index;
+		iov [iov_count++].len = sizeof connect_index;
+		iov [iov_count].buf = (char *)&listener_index;
+		iov [iov_count++].len = sizeof listener_index;
+		iov [iov_count].buf = (char *)&obj -> remote_addr.sin_port;
+		iov [iov_count++].len = sizeof obj -> remote_addr.sin_port;
+		iov [iov_count].buf = (char *)&obj -> local_addr.sin_port;
+		iov [iov_count++].len = sizeof obj -> local_addr.sin_port;
+		iov [iov_count].buf = (char *)&obj -> remote_addr.sin_addr;
+		iov [iov_count++].len = sizeof obj -> remote_addr.sin_addr;
+		iov [iov_count].buf = (char *)&obj -> local_addr.sin_addr;
+		iov [iov_count++].len = sizeof obj -> local_addr.sin_addr;
+
+		status = trace_write_packet_iov (trace_connect,
+						 iov_count, iov, file, line);
+	}
+}
+
+static void trace_connect_input (trace_type_t *ttype,
+				 unsigned length, char *buf)
+{
+	struct sockaddr_in remote, local;
+	int32_t connect_index, listener_index;
+	char *s = buf;
+	omapi_connection_object_t *obj;
+	isc_result_t status;
+
+	if (length != ((sizeof connect_index) +
+		       (sizeof remote.sin_port) +
+		       (sizeof remote.sin_addr)) * 2) {
+		log_error ("Trace connect: invalid length %d", length);
+		return;
+	}
+
+	memset (&remote, 0, sizeof remote);
+	memset (&local, 0, sizeof local);
+	memcpy (&connect_index, buf, sizeof connect_index);
+	s += sizeof connect_index;
+	memcpy (&listener_index, buf, sizeof listener_index);
+	s += sizeof listener_index;
+	memcpy (&remote.sin_port, s, sizeof remote.sin_port);
+	s += sizeof remote.sin_port;
+	memcpy (&local.sin_port, s, sizeof local.sin_port);
+	s += sizeof local.sin_port;
+	memcpy (&remote.sin_addr, s, sizeof remote.sin_addr);
+	s += sizeof remote.sin_addr;
+	memcpy (&local.sin_addr, s, sizeof local.sin_addr);
+	s += sizeof local.sin_addr;
+
+	connect_index = ntohl (connect_index);
+	listener_index = ntohl (listener_index);
+
+	/* If this was a connect to a listener, then we just slap together
+	   a new connection. */
+	if (listener_index != -1) {
+		omapi_listener_object_t *listener;
+		listener = (omapi_listener_object_t *)0;
+		omapi_array_foreach_begin (trace_listeners,
+					   omapi_listener_object_t, lp) {
+			if (lp -> address.sin_port == local.sin_port) {
+				omapi_listener_reference (&listener, lp, MDL);
+				omapi_listener_dereference (&lp, MDL);
+				break;
+			}
+		} omapi_array_foreach_end (trace_listeners,
+					   omapi_listener_object_t, lp);
+		if (!listener) {
+			log_error ("%s%ld, addr %s, port %d",
+				   "Spurious traced listener connect - index ",
+				   (long int)listener_index,
+				   inet_ntoa (local.sin_addr),
+				   ntohs (local.sin_port));
+			return;
+		}
+		obj = (omapi_connection_object_t *)0;
+		status = omapi_listener_connect (&obj, listener, -1, &remote);
+		if (status != ISC_R_SUCCESS) {
+			log_error ("traced listener connect: %s",
+				   isc_result_totext (status));
+		}
+		if (obj)
+			omapi_connection_dereference (&obj, MDL);
+		omapi_listener_dereference (&listener, MDL);
+		return;
+	}
+
+	/* Find the matching connect object, if there is one. */
+	omapi_array_foreach_begin (omapi_connections,
+				   omapi_connection_object_t, lp) {
+		if (lp -> local_addr.sin_port == local.sin_port &&
+		    (lp -> local_addr.sin_addr.s_addr == htonl (INADDR_ANY) ||
+		     (lp -> local_addr.sin_addr.s_addr ==
+		      local.sin_addr.s_addr))) {
+			lp -> state = omapi_connection_connected;
+			lp -> remote_addr = remote;
+			lp -> remote_addr.sin_family = AF_INET;
+			omapi_addr_list_dereference (&lp -> connect_list, MDL);
+			lp -> index = connect_index;
+			status = omapi_signal_in ((omapi_object_t *)lp,
+						  "connect");
+			omapi_connection_dereference (&lp, MDL);
+			return;
+		}
+	} omapi_array_foreach_end (omapi_connections,
+				   omapi_connection_object_t, lp);
+						 
+	log_error ("Spurious traced connect - index %ld, addr %s, port %d",
+		   (long int)connect_index, inet_ntoa (remote.sin_addr),
+		   ntohs (remote.sin_port));
+	return;
+}
+
+static void trace_connect_stop (trace_type_t *ttype) { }
+
+static void trace_disconnect_input (trace_type_t *ttype,
+				    unsigned length, char *buf)
+{
+	int32_t *index;
+	if (length != sizeof *index) {
+		log_error ("trace disconnect: wrong length %d", length);
+		return;
+	}
+	
+	index = (int32_t *)buf;
+
+	omapi_array_foreach_begin (omapi_connections,
+				   omapi_connection_object_t, lp) {
+		if (lp -> index == ntohl (*index)) {
+			omapi_disconnect ((omapi_object_t *)lp, 1);
+			omapi_connection_dereference (&lp, MDL);
+			return;
+		}
+	} omapi_array_foreach_end (omapi_connections,
+				   omapi_connection_object_t, lp);
+
+	log_error ("trace disconnect: no connection matching index %ld",
+		   (long int)ntohl (*index));
+}
+
+static void trace_disconnect_stop (trace_type_t *ttype) { }
+#endif
 
 /* Disconnect a connection object from the remote end.   If force is nonzero,
    close the connection immediately.   Otherwise, shut down the receiving end
@@ -214,6 +437,7 @@ isc_result_t omapi_disconnect (omapi_object_t *h,
 			       int force)
 {
 	omapi_connection_object_t *c;
+	isc_result_t status;
 
 #ifdef DEBUG_PROTOCOL
 	log_debug ("omapi_disconnect(%s)", force ? "force" : "");
@@ -223,24 +447,45 @@ isc_result_t omapi_disconnect (omapi_object_t *h,
 	if (c -> type != omapi_type_connection)
 		return ISC_R_INVALIDARG;
 
-	if (!force) {
-		/* If we're already disconnecting, we don't have to do
-		   anything. */
-		if (c -> state == omapi_connection_disconnecting)
-			return ISC_R_SUCCESS;
+#if defined (TRACING)
+	if (trace_record ()) {
+		int32_t index;
 
-		/* Try to shut down the socket - this sends a FIN to the
-		   remote end, so that it won't send us any more data.   If
-		   the shutdown succeeds, and we still have bytes left to
-		   write, defer closing the socket until that's done. */
-		if (!shutdown (c -> socket, SHUT_RD)) {
-			if (c -> out_bytes > 0) {
-				c -> state = omapi_connection_disconnecting;
-				return ISC_R_SUCCESS;
-			}
+		index = htonl (c -> index);
+		status = trace_write_packet (trace_disconnect,
+					     sizeof index, (char *)&index,
+					     MDL);
+		if (status != ISC_R_SUCCESS) {
+			trace_stop ();
+			log_error ("trace_write_packet: %s",
+				   isc_result_totext (status));
 		}
 	}
-	close (c -> socket);
+	if (!trace_playback ()) {
+#endif
+		if (!force) {
+			/* If we're already disconnecting, we don't have to do
+			   anything. */
+			if (c -> state == omapi_connection_disconnecting)
+				return ISC_R_SUCCESS;
+
+			/* Try to shut down the socket - this sends a FIN to
+			   the remote end, so that it won't send us any more
+			   data.   If the shutdown succeeds, and we still
+			   have bytes left to write, defer closing the socket
+			   until that's done. */
+			if (!shutdown (c -> socket, SHUT_RD)) {
+				if (c -> out_bytes > 0) {
+					c -> state =
+						omapi_connection_disconnecting;
+					return ISC_R_SUCCESS;
+				}
+			}
+		}
+		close (c -> socket);
+#if defined (TRACING)
+	}
+#endif
 	c -> state = omapi_connection_closed;
 
 	/* Disconnect from I/O object, if any. */
@@ -456,7 +701,11 @@ static isc_result_t make_dst_key (DST_KEY **dst_key, omapi_object_t *a) {
 			(a, (omapi_object_t *)0, "key", &key);
 
 	if (status == ISC_R_SUCCESS) {
-		if (omapi_td_strcmp (algorithm -> value, "hmac-md5") == 0) {
+		if ((algorithm -> value -> type == omapi_datatype_data ||
+		     algorithm -> value -> type == omapi_datatype_string) &&
+		    strncasecmp ((char *)algorithm -> value -> u.buffer.value,
+		                 NS_TSIG_ALG_HMAC_MD5 ".",
+		                 algorithm -> value -> u.buffer.len) == 0) {
 			algorithm_id = KEY_HMAC_MD5;
 		} else {
 			status = ISC_R_INVALIDARG;

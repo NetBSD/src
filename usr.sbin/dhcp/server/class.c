@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: class.c,v 1.1.1.2.2.1 2000/10/18 04:11:40 tv Exp $ Copyright (c) 1998-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: class.c,v 1.1.1.2.2.2 2001/04/04 20:56:22 he Exp $ Copyright (c) 1998-2000 The Internet Software Consortium.  All rights reserved.\n";
 
 #endif /* not lint */
 
@@ -84,10 +84,10 @@ void classification_setup ()
 void classify_client (packet)
 	struct packet *packet;
 {
-	execute_statements ((struct binding_value **)0,
-			    packet, (struct lease *)0, packet -> options,
-			    (struct option_state *)0, &global_scope,
-			    default_classification_rules);
+	execute_statements ((struct binding_value **)0, packet,
+			    (struct lease *)0, (struct client_state *)0,
+			    packet -> options, (struct option_state *)0,
+			    &global_scope, default_classification_rules);
 }
 
 int check_collection (packet, lease, collection)
@@ -116,6 +116,7 @@ int check_collection (packet, lease, collection)
 		if (class -> expr) {
 			status = (evaluate_boolean_expression_result
 				  (&ignorep, packet, lease,
+				   (struct client_state *)0,
 				   packet -> options, (struct option_state *)0,
 				   lease ? &lease -> scope : &global_scope,
 				   class -> expr));
@@ -138,6 +139,7 @@ int check_collection (packet, lease, collection)
 		if (class -> submatch) {
 			status = (evaluate_data_expression
 				  (&data, packet, lease,
+				   (struct client_state *)0,
 				   packet -> options, (struct option_state *)0,
 				   lease ? &lease -> scope : &global_scope,
 				   class -> submatch));
