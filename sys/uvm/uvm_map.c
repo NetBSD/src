@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.82 2000/10/11 17:21:11 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.83 2000/10/11 17:27:58 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2779,8 +2779,17 @@ void
 uvmspace_share(p1, p2)
 	struct proc *p1, *p2;
 {
+	struct vmspace *ovm = p2->p_vmspace;
+
+	if (ovm != NULL)
+		pmap_deactivate(p2);
+
 	p2->p_vmspace = p1->p_vmspace;
 	p1->p_vmspace->vm_refcnt++;
+	pmap_activate(p2);
+
+	if (ovm != NULL)
+		uvmspace_free(ovm);
 }
 
 /*

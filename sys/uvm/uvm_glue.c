@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.41 2000/09/23 00:43:10 enami Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.42 2000/10/11 17:27:59 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -278,9 +278,10 @@ uvm_fork(p1, p2, shared, stack, stacksize, func, arg)
 	struct user *up = p2->p_addr;
 	int rv;
 
-	if (shared == TRUE)
+	if (shared == TRUE) {
+		p2->p_vmspace = NULL;
 		uvmspace_share(p1, p2);			/* share vmspace */
-	else
+	} else
 		p2->p_vmspace = uvmspace_fork(p1->p_vmspace); /* fork vmspace */
 
 	/*
