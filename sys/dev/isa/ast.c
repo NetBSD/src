@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.40 1997/10/19 18:56:46 thorpej Exp $	*/
+/*	$NetBSD: ast.c,v 1.41 1997/10/20 18:43:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -162,6 +162,8 @@ astattach(parent, self, aux)
 	bus_space_tag_t iot = ia->ia_iot;
 	int i, iobase;
 
+	printf("\n");
+
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_iobase = ia->ia_iobase;
 
@@ -169,16 +171,17 @@ astattach(parent, self, aux)
 		iobase = sc->sc_iobase + i * COM_NPORTS;
 		if (!com_is_console(iot, iobase, &sc->sc_slaveioh[i]) &&
 		    bus_space_map(iot, iobase, COM_NPORTS, 0,
-			&sc->sc_slaveioh[i]))
-			panic("astattach: couldn't map slave %d", i);
+			&sc->sc_slaveioh[i])) {
+			printf("%s: can't map i/o space for slave %d\n",
+			    sc->sc_dev.dv_xname, i);
+			return;
+		}
 	}
 
 	/*
 	 * Enable the master interrupt.
 	 */
 	bus_space_write_1(iot, sc->sc_slaveioh[3], 7, 0x80);
-
-	printf("\n");
 
 	for (i = 0; i < NSLAVES; i++) {
 		ca.ca_slave = i;

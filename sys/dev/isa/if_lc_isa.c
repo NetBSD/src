@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lc_isa.c,v 1.3 1997/10/20 13:46:53 fvdl Exp $ */
+/*	$NetBSD: if_lc_isa.c,v 1.4 1997/10/20 18:43:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -157,18 +157,20 @@ lemac_isa_attach(
 
     /* Map i/o space. */
     sc->sc_iot = ia->ia_iot;
-    if (bus_space_map(sc->sc_iot, ia->ia_iobase, ia->ia_iosize, 0, &sc->sc_ioh))
-	panic("\n%s: can't map i/o space 0x%x-0x%x\n",
-	      sc->sc_dv.dv_xname,
-	      ia->ia_iobase, ia->ia_iobase + ia->ia_iosize - 1);
+    if (bus_space_map(sc->sc_iot, ia->ia_iobase, ia->ia_iosize, 0,
+      &sc->sc_ioh)) {
+	printf(": can't map i/o space\n");
+	return;
+    }
 
     if (ia->ia_msize && ia->ia_maddr) {
 	sc->sc_memt = ia->ia_memt;
 	/* Map memory space. */
-	if (bus_space_map(sc->sc_memt, ia->ia_maddr, ia->ia_msize, 0, &sc->sc_memh))
-	    panic("\n%s: can't map iomem space 0x%x-0x%x\n",
-		  sc->sc_dv.dv_xname,
-		  ia->ia_maddr, ia->ia_maddr + ia->ia_msize - 1);
+	if (bus_space_map(sc->sc_memt, ia->ia_maddr, ia->ia_msize, 0,
+	  &sc->sc_memh)) {
+	    printf(": can't map mem space\n");
+	    return;
+	}
     }
 
     sc->sc_ats = shutdownhook_establish(lemac_shutdown, sc);

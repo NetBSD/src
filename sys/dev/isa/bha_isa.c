@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.9 1997/10/19 18:56:48 thorpej Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.10 1997/10/20 18:43:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -122,14 +122,18 @@ bha_isa_attach(parent, self, aux)
 
 	printf("\n");
 
-	if (bus_space_map(iot, ia->ia_iobase, BHA_ISA_IOSIZE, 0, &ioh))
-		panic("bha_isa_attach: bus_space_map failed");
+	if (bus_space_map(iot, ia->ia_iobase, BHA_ISA_IOSIZE, 0, &ioh)) {
+		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		return;
+	}
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->sc_dmat = ia->ia_dmat;
-	if (!bha_find(iot, ioh, &bpd))
-		panic("bha_isa_attach: bha_find failed");
+	if (!bha_find(iot, ioh, &bpd)) {
+		printf("%s: bha_find failed\n", sc->sc_dev.dv_xname);
+		return;
+	}
 
 	sc->sc_dmaflags = 0;
 	if (bpd.sc_drq != -1)

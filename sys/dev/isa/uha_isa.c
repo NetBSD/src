@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.10 1997/10/19 18:57:17 thorpej Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.11 1997/10/20 18:43:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -137,14 +137,18 @@ uha_isa_attach(parent, self, aux)
 
 	printf("\n");
 
-	if (bus_space_map(iot, ia->ia_iobase, UHA_ISA_IOSIZE, 0, &ioh))
-		panic("uha_isa_attach: bus_space_map failed!");
+	if (bus_space_map(iot, ia->ia_iobase, UHA_ISA_IOSIZE, 0, &ioh)) {
+		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		return;
+	}
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->sc_dmat = dmat;
-	if (!u14_find(iot, ioh, &upd))
-		panic("uha_isa_attach: u14_find failed!");
+	if (!u14_find(iot, ioh, &upd)) {
+		printf("%s: u14_find failed\n", sc->sc_dev.dv_xname);
+		return;
+	}
 
 	if (upd.sc_drq != -1) {
 		sc->sc_dmaflags = 0;
