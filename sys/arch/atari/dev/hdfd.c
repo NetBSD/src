@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.41 2003/08/07 16:26:59 agc Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.42 2003/09/29 01:20:41 cl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.41 2003/08/07 16:26:59 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.42 2003/09/29 01:20:41 cl Exp $");
 
 #include "opt_ddb.h"
 
@@ -340,7 +340,7 @@ fdcprobe(parent, cfp, aux)
 		return 0;
 
 	if (bus_space_map(mb_tag, FD_IOBASE, FD_IOSIZE, 0,
-						(caddr_t*)&fdio_addr)) {
+				(caddr_t*)(void *)&fdio_addr)) {
 		printf("fdcprobe: cannot map io-area\n");
 		mb_free_bus_space_tag(mb_tag);
 		return (0);
