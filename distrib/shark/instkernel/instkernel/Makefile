@@ -1,32 +1,16 @@
-#	$NetBSD: Makefile,v 1.4 2002/03/30 06:55:18 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5 2002/04/11 15:40:01 lukem Exp $
 
-.include "../../../../Makefile.inc"
 .include <bsd.own.mk>
-
-TOP=	${.CURDIR}/../../../..
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
 
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 RAMDISK=	${RAMDISKDIR}/ramdisk.fs
+TARGETS=	INSTALL	${RAMDISK}
 
-KERNEL?=${KERNOBJDIR}/INSTALL/netbsd
+INSTALL.post=	OBJCOPY=${OBJCOPY:Q} SIZE=${SIZE:Q} \
+		    ${KERNSRCDIR}/arch/arm/conf/elf2aout.sh \
+		    netbsd.tmp netbsd.tmp
 
-all:
-	cp ${KERNEL} netbsd
-	${MDSETIMAGE} -v netbsd ${RAMDISK}
-	${STRIP} netbsd
-	OBJCOPY=${OBJCOPY:Q} SIZE=${SIZE:Q} \
-	    ${TOP}/sys/arch/arm/conf/elf2aout.sh netbsd netbsd
-	gzip -9f netbsd
+MDSETDIR=	binary/kernel
 
-clean cleandir distclean:
-	rm -f netbsd netbsd.gz
-
-release:
-	-mkdir -p ${RELEASEDIR}/binary/kernel
-	cp -p netbsd.gz ${RELEASEDIR}/binary/kernel/netbsd.INSTALL.gz
-
-# nothing to do here
-depend includes lint regress tags:
-
-.include <bsd.kernobj.mk>
-.include <bsd.obj.mk>
+.include "${DISTRIBDIR}/common/Makefile.mdset"
