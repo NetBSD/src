@@ -28,10 +28,10 @@ DEBUG  = -g
 INCLUDES = $(BINDINC) -I$(TOP)/includes
 CFLAGS = $(DEBUG) $(PREDEFINES) $(INCLUDES) $(COPTS)
 
-all:	libdhcpctl.a test cltest $(CATMANPAGES)
+all:	libdhcpctl.a svtest cltest $(CATMANPAGES)
 
-test:	test.o libdhcpctl.a ../omapip/libomapi.a
-	$(CC) $(DEBUG) $(LFLAGS) -o test test.o libdhcpctl.a \
+svtest:	test.o libdhcpctl.a ../omapip/libomapi.a
+	$(CC) $(DEBUG) $(LFLAGS) -o svtest test.o libdhcpctl.a \
 			../omapip/libomapi.a $(LIBS)
 
 cltest:	cltest.o libdhcpctl.a ../omapip/libomapi.a
@@ -69,7 +69,7 @@ depend:
 	$(MKDEP) $(INCLUDES) $(PREDEFINES) $(SRC)
 
 clean:
-	-rm -f $(OBJ) test.o test cltest.o cltest
+	-rm -f $(OBJ) test.o svtest cltest.o cltest
 
 realclean: clean
 	-rm -f libdhcpctl.a *~ $(CATMANPAGES) $(SEDMANPAGES)
