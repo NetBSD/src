@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.77 2002/02/07 01:56:02 ross Exp $
+#	$NetBSD: bsd.man.mk,v 1.78 2002/02/11 21:15:00 mycroft Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -68,13 +68,20 @@ ${_MNUMBERS:@N@.$N.$N${MANSUFFIX}@}:			# build rule
 .for F in ${MANPAGES:S/${MANSUFFIX}$//:O:u}
 _F:=		${DESTDIR}${MANDIR}/man${F:T:E}${MANSUBDIR}/${F}${MANSUFFIX}
 
+.if !defined(UPDATE)
+${_F}!		${F}${MANSUFFIX} __installpage		# install rule
+.if !defined(BUILD) && !make(all) && !make(${F})
+${_F}!		.MADE					# no build at install
+.endif
+.else
 ${_F}:		${F}${MANSUFFIX} __installpage		# install rule
-manpages::	${_F}
-.PRECIOUS:	${_F}					# keep if install fails
-#.PHONY:		${UPDATE:D:U${_F}}			# clobber unless UPDATE
 .if !defined(BUILD) && !make(all) && !make(${F})
 ${_F}:		.MADE					# no build at install
 .endif
+.endif
+
+manpages::	${_F}
+.PRECIOUS:	${_F}					# keep if install fails
 .endfor
 
 manlinks: manpages					# symlink install
@@ -117,13 +124,21 @@ ${_MNUMBERS:@N@.$N.cat$N${MANSUFFIX}@}: ${CATDEPS}	# build rule
 
 .for F in ${CATPAGES:S/${MANSUFFIX}$//:O:u}
 _F:=		${DESTDIR}${MANDIR}/${F:T:E}${MANSUBDIR}/${F:R}.0${MANSUFFIX}
+
+.if !defined(UPDATE)
+${_F}!		${F}${MANSUFFIX} __installpage		# install rule
+.if !defined(BUILD) && !make(all) && !make(${F})
+${_F}!		.MADE					# no build at install
+.endif
+.else
 ${_F}:		${F}${MANSUFFIX} __installpage		# install rule
-catpages::	${_F}
-.PRECIOUS:	${_F}					# keep if install fails
-#.PHONY:		${UPDATE:D:U${_F}}			# noclobber install
 .if !defined(BUILD) && !make(all) && !make(${F})
 ${_F}:		.MADE					# no build at install
 .endif
+.endif
+
+catpages::	${_F}
+.PRECIOUS:	${_F}					# keep if install fails
 .endfor
 
 catlinks: catpages					# symlink install
@@ -161,13 +176,21 @@ ${_MNUMBERS:@N@.$N.html$N@}: ${HTMLDEPS}			# build rule
 .for F in ${HTMLPAGES:O:u}
 # construct installed path
 _F:=		${HTMLDIR}/${F:T:E}${MANSUBDIR}/${F:R:S-/index$-/x&-}.html
+
+.if !defined(UPDATE)
+${_F}!		${F} __installpage			# install rule
+.if !defined(BUILD) && !make(all) && !make(${F})
+${_F}!		.MADE					# no build at install
+.endif
+.else
 ${_F}:		${F} __installpage			# install rule
-htmlpages::	${_F}
-.PRECIOUS:	${_F}					# keep if install fails
-#.PHONY:		${UPDATE:D:U${_F}}			# noclobber install
 .if !defined(BUILD) && !make(all) && !make(${F})
 ${_F}:		.MADE					# no build at install
 .endif
+.endif
+
+htmlpages::	${_F}
+.PRECIOUS:	${_F}					# keep if install fails
 .endfor
 
 cleanhtml:

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.196 2001/12/28 01:40:50 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.197 2002/02/11 21:15:00 mycroft Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -349,6 +349,9 @@ __archiveinstall: .USE
 	${RANLIB} -t ${.TARGET}
 	chmod ${LIBMODE} ${.TARGET}
 
+__archivesymlinkpic: .USE
+	${INSTALL_SYMLINK} ${.ALLSRC} ${.TARGET}
+
 DPSRCS+=	${SRCS:M*.[ly]:C/\..$/.c/}
 CLEANFILES+=	${DPSRCS} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 
@@ -419,58 +422,77 @@ libinstall::
 .if ${MKLINKLIB} != "no"
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}.a
-.if !defined(UPDATE)
-.PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}.a
-.endif
 
+.if !defined(UPDATE)
+.if !defined(BUILD) && !make(all) && !make(lib${LIB}.a)
+${DESTDIR}${LIBDIR}/lib${LIB}.a! .MADE
+.endif
+${DESTDIR}${LIBDIR}/lib${LIB}.a! lib${LIB}.a __archiveinstall
+.else
 .if !defined(BUILD) && !make(all) && !make(lib${LIB}.a)
 ${DESTDIR}${LIBDIR}/lib${LIB}.a: .MADE
 .endif
 ${DESTDIR}${LIBDIR}/lib${LIB}.a: lib${LIB}.a __archiveinstall
 .endif
+.endif
 
 .if ${MKPROFILE} != "no"
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 .PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
-.if !defined(UPDATE)
-.PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
-.endif
 
+.if !defined(UPDATE)
+.if !defined(BUILD) && !make(all) && !make(lib${LIB}_p.a)
+${DESTDIR}${LIBDIR}/lib${LIB}_p.a! .MADE
+.endif
+${DESTDIR}${LIBDIR}/lib${LIB}_p.a! lib${LIB}_p.a __archiveinstall
+.else
 .if !defined(BUILD) && !make(all) && !make(lib${LIB}_p.a)
 ${DESTDIR}${LIBDIR}/lib${LIB}_p.a: .MADE
 .endif
 ${DESTDIR}${LIBDIR}/lib${LIB}_p.a: lib${LIB}_p.a __archiveinstall
 .endif
+.endif
 
 .if ${MKPIC} != "no" && ${MKPICINSTALL} != "no"
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 .PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
-.if !defined(UPDATE)
-.PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
-.endif
 
+.if !defined(UPDATE)
+.if !defined(BUILD) && !make(all) && !make(lib${LIB}_pic.a)
+${DESTDIR}${LIBDIR}/lib${LIB}_pic.a! .MADE
+.endif
+.if ${MKPICLIB} == "no"
+${DESTDIR}${LIBDIR}/lib${LIB}_pic.a! lib${LIB}.a __archivesymlinkpic
+.else
+${DESTDIR}${LIBDIR}/lib${LIB}_pic.a! lib${LIB}_pic.a __archiveinstall
+.endif
+.else
 .if !defined(BUILD) && !make(all) && !make(lib${LIB}_pic.a)
 ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a: .MADE
 .endif
 .if ${MKPICLIB} == "no"
-${DESTDIR}${LIBDIR}/lib${LIB}_pic.a:
-	${INSTALL_SYMLINK} lib${LIB}.a ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
+${DESTDIR}${LIBDIR}/lib${LIB}_pic.a: lib${LIB}.a __archivesymlinkpic
 .else
 ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a: lib${LIB}_pic.a __archiveinstall
+.endif
 .endif
 .endif
 
 .if ${MKPIC} != "no" && defined(SHLIB_FULLVERSION)
 libinstall:: ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}
 .PRECIOUS: ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}
-.if !defined(UPDATE)
-.PHONY: ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}
-.endif
 
+.if !defined(UPDATE)
+.if !defined(BUILD) && !make(all) && !make(lib${LIB}.so.${SHLIB_FULLVERSION})
+${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}! .MADE
+.endif
+${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}! lib${LIB}.so.${SHLIB_FULLVERSION}
+.else
 .if !defined(BUILD) && !make(all) && !make(lib${LIB}.so.${SHLIB_FULLVERSION})
 ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: .MADE
 .endif
 ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: lib${LIB}.so.${SHLIB_FULLVERSION}
+.endif
 	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 		${.ALLSRC} ${.TARGET}
 .if ${_LIBSODIR} != ${LIBDIR}
@@ -501,14 +523,18 @@ ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: lib${LIB}.so.${SHLIB_F
 .if ${MKLINT} != "no" && ${MKLINKLIB} != "no" && !empty(LOBJS)
 libinstall:: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
 .PRECIOUS: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
-.if !defined(UPDATE)
-.PHONY: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
-.endif
 
+.if !defined(UPDATE)
+.if !defined(BUILD) && !make(all) && !make(llib-l${LIB}.ln)
+${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln! .MADE
+.endif
+${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln! llib-l${LIB}.ln
+.else
 .if !defined(BUILD) && !make(all) && !make(llib-l${LIB}.ln)
 ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: .MADE
 .endif
 ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: llib-l${LIB}.ln
+.endif
 	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 		${.ALLSRC} ${DESTDIR}${LINTLIBDIR}
 .endif

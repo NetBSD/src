@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.153 2002/02/07 07:43:24 pk Exp $
+#	$NetBSD: bsd.prog.mk,v 1.154 2002/02/11 21:15:01 mycroft Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -165,18 +165,22 @@ PROGNAME?=${PROG}
 
 proginstall:: ${DESTDIR}${BINDIR}/${PROGNAME}
 .PRECIOUS: ${DESTDIR}${BINDIR}/${PROGNAME}
-.if !defined(UPDATE)
-.PHONY: ${DESTDIR}${BINDIR}/${PROGNAME}
-.endif
 
 __proginstall: .USE
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 		${STRIPFLAG} ${.ALLSRC} ${.TARGET}
 
+.if !defined(UPDATE)
+${DESTDIR}${BINDIR}/${PROGNAME}! ${PROG} __proginstall
+.if !defined(BUILD) && !make(all) && !make(${PROG})
+${DESTDIR}${BINDIR}/${PROGNAME}! .MADE
+.endif
+.else
+${DESTDIR}${BINDIR}/${PROGNAME}: ${PROG} __proginstall
 .if !defined(BUILD) && !make(all) && !make(${PROG})
 ${DESTDIR}${BINDIR}/${PROGNAME}: .MADE
 .endif
-${DESTDIR}${BINDIR}/${PROGNAME}: ${PROG} __proginstall
+.endif
 .endif
 
 .if !target(proginstall)
@@ -191,9 +195,6 @@ SCRIPTSMODE?=${BINMODE}
 
 scriptsinstall:: ${SCRIPTS:@S@${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}@}
 .PRECIOUS: ${SCRIPTS:@S@${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}@}
-.if !defined(UPDATE)
-.PHONY: ${SCRIPTS:@S@${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}@}
-.endif
 
 __scriptinstall: .USE
 	${INSTALL_FILE} \
@@ -203,10 +204,17 @@ __scriptinstall: .USE
 	    ${.ALLSRC} ${.TARGET}
 
 .for S in ${SCRIPTS:O:u}
+.if !defined(UPDATE)
+${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}! ${S} __scriptinstall
+.if !defined(BUILD) && !make(all) && !make(${S})
+${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}! .MADE
+.endif
+.else
+${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}: ${S} __scriptinstall
 .if !defined(BUILD) && !make(all) && !make(${S})
 ${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}: .MADE
 .endif
-${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}: ${S} __scriptinstall
+.endif
 .endfor
 .endif
 
