@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/04/18 23:55:50 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.2 2002/04/25 22:33:50 bjh21 Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
@@ -22,7 +22,7 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		${_SRC_TOP_}/etc/services
 
 MDSETTARGETS=	INSTALL		ramdisk.fs	-
-MDSETDIR=	${RELEASEDIR}/installation
+MDSETDIR=	installation/misc
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
 .include "${DISTRIBDIR}/common/Makefile.makedev"
