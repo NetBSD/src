@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.27 2004/06/06 01:37:41 christos Exp $
+#	$NetBSD: Makefile,v 1.28 2005/01/10 02:58:59 lukem Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/3/94
+
+.include <bsd.own.mk>
 
 PROG=	ftp
 SRCS=	cmds.c cmdtab.c complete.c domacro.c fetch.c ftp.c main.c \
@@ -16,7 +18,7 @@ LDADD+=	-ledit -ltermcap
 DPADD+=	${LIBEDIT} ${LIBTERMCAP}
 .endif
 
-.if !defined(SMALLPROG) || defined(SMALLPROG_INET6)
+.if (!defined(SMALLPROG) || defined(SMALLPROG_INET6)) && (${USE_INET6} != "no")
 CPPFLAGS+= -DINET6
 .endif
 

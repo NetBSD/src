@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2004/10/01 15:26:35 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2005/01/10 02:58:59 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,10 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/sys
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/dist/ipf
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/dist/ipf/netinet
 CPPFLAGS+=	-DSTATETOP -D__UIO_EXPOSE
+
+.if (${USE_INET6} == "no")
+CPPFLAGS+=	-DNOINET6
+.endif
 
 IPFOBJDIR!=	cd $(.CURDIR)/../libipf && ${PRINTOBJDIR}
 DPADD+=		${IPFOBJDIR}/libipf.a ${LIBKVM}

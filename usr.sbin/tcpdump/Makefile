@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2004/09/30 06:40:19 dyoung Exp $	
+#	$NetBSD: Makefile,v 1.38 2005/01/10 02:58:59 lukem Exp $	
 
 .include <bsd.own.mk>
 
@@ -29,9 +29,6 @@ SRCS=	addrtoname.c cpack.c gmpls.c gmt2local.c machdep.c oui.c parsenfsfh.c \
 	print-udp.c print-vjc.c print-vrrp.c print-wb.c print-zephyr.c \
 	setsignal.c smbutil.c tcpdump.c util.c
 
-SRCS+=	print-ip6.c print-ip6opts.c print-ripng.c print-icmp6.c print-frag6.c \
-	print-rt6.c print-ospf6.c print-dhcp6.c
-
 SRCS+=	bpf_dump.c
 
 SRCS+=	version.c
@@ -52,11 +49,11 @@ AWKS= atime.awk packetdat.awk stime.awk send-ack.awk
 
 CPPFLAGS+= \
 	-DHAVE___ATTRIBUTE__=1 -DHAVE_FCNTL_H=1 -DHAVE_RPC_RPCENT_H=1 \
-	-DHAVE_NETINET_IF_ETHER_H=1 -DTIME_WITH_SYS_TIME=1 -DINET6=1 \
+	-DHAVE_NETINET_IF_ETHER_H=1 -DTIME_WITH_SYS_TIME=1 \
 	-DHAVE_GETADDRINFO=1 -DHAVE_GETNAMEINFO=1 -DHAVE_SOCKADDR_SA_LEN=1 \
 	-DSIZEOF_CHAR=1 -DSIZEOF_SHORT=2 -DSIZEOF_INT=4 -DSIZEOF_LONG=4 \
 	-DHAVE_ADDRINFO=1 -DHAVE_SOCKADDR_STORAGE=1 -DHAVE_INADDRSZ=1 \
-	-DHAVE_IN6ADDRSZ=1 -DHAVE_RES_USE_INET6=1 -DHAVE_VFPRINTF=1 \
+	-DHAVE_IN6ADDRSZ=1 -DHAVE_VFPRINTF=1 \
 	-DHAVE_STRCASECMP=1 -DHAVE_STRLCAT=1 -DHAVE_STRLCPY=1 \
 	-DHAVE_STRDUP=1 -DHAVE_ETHER_NTOHOST=1 -DUSE_ETHER_NTOHOST=1 \
 	-DHAVE_SETLINEBUF=1 -DHAVE_VSNPRINTF=1 -DHAVE_SNPRINTF=1 \
@@ -66,6 +63,13 @@ CPPFLAGS+= \
 CPPFLAGS+=-DLBL_ALIGN=1
 CPPFLAGS+=-DTCPDUMP_DO_SMB=1
 CPPFLAGS+=-D_U_="__attribute__((unused))"
+
+.if (${USE_INET6} != "no")
+SRCS+=	print-ip6.c print-ip6opts.c print-ripng.c print-icmp6.c print-frag6.c \
+	print-rt6.c print-ospf6.c print-dhcp6.c
+
+CPPFLAGS+=-DINET6=1 -DHAVE_RES_USE_INET6=1 
+.endif
 
 .if (${MKCRYPTO} != "no")
 CPPFLAGS+=-DHAVE_LIBCRYPTO=1 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2002/09/18 14:00:41 lukem Exp $
+#	$NetBSD: Makefile,v 1.28 2005/01/10 02:58:59 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -20,7 +20,12 @@ BINMODE=2555
 LINKS=	${BINDIR}/systat ${BINDIR}/sysstat
 MLINKS+=systat.1 sysstat.1
 
-CPPFLAGS+=-DINET6 -DIPSEC
-SRCS+=	ip6.c ipsec.c
+CPPFLAGS+=-DIPSEC
+SRCS+=	ipsec.c
+
+.if (${USE_INET6} != "no")
+CPPFLAGS+=-DINET6
+SRCS+=	ip6.c
+.endif
 
 .include <bsd.prog.mk>
