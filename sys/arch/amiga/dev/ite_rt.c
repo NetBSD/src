@@ -1,6 +1,9 @@
 /*
- *	$Id: ite_rt.c,v 1.9 1994/05/08 05:53:20 chopps Exp $
+ *	$Id: ite_rt.c,v 1.10 1994/06/15 19:06:21 chopps Exp $
  */
+
+#include "grfrt.h"
+#if NGRFRT > 0
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -442,3 +445,5 @@ void retina_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
       retina_clear (ip, sy, ip->cols - count, 1, count);
     }		
 }
+
+#endif /* NGRFRT */
