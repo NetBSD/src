@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.54 2001/04/17 18:49:26 thorpej Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.54.2.1 2001/07/10 14:01:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -90,6 +90,7 @@ const struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_fcntl_desc, spec_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_poll_desc, spec_poll },			/* poll */
+	{ &vop_kqfilter_desc, spec_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, spec_revoke },		/* revoke */
 	{ &vop_mmap_desc, spec_mmap },			/* mmap */
 	{ &vop_fsync_desc, spec_fsync },		/* fsync */
@@ -471,6 +472,32 @@ spec_poll(v)
 		return (genfs_poll(v));
 	}
 }
+
+/* ARGSUSED */
+int
+spec_kqfilter(v)
+	void *v;
+{
+	struct vop_kqfilter_args /* {
+		struct vnode	*a_vp;
+		struct proc	*a_kn;
+	} */ *ap = v;
+	dev_t dev;
+
+	switch (ap->a_vp->v_type) {
+
+	case VCHR:
+		dev = ap->a_vp->v_rdev;
+		return (*cdevsw[major(dev)].d_kqfilter)(dev, ap->a_kn);
+	default:
+#if 1	/* XXXLUKEM; no genfs_kqfilter (yet) */
+		return (0);
+#else
+		return (genfs_kqfilter(v));
+#endif
+	}
+}
+
 /*
  * Synch buffers associated with a block device
  */
