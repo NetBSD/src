@@ -1,4 +1,4 @@
-/*	$NetBSD: field_types.c,v 1.3 2001/06/13 10:45:58 wiz Exp $	*/
+/*	$NetBSD: field_types.c,v 1.4 2002/08/07 13:57:03 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -122,7 +122,7 @@ set_field_type(FIELD *fptr, FIELDTYPE *type, ...)
 	field = (fptr == NULL)? &_formi_default_field : fptr;
 
 	field->type = type;
-	_formi_create_field_args(type, &fptr->args, &type->link, &args,
+	_formi_create_field_args(type, &field->args, &type->link, &args,
 				 &error);
 	va_end(args);
 	
