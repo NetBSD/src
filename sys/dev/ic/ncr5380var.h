@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.15 2000/03/18 16:13:27 mycroft Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.16 2000/03/18 17:07:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -45,7 +45,7 @@
  *	sparc: si and sw drivers; easy to convert
  *	sun3: si driver; need bus.h first
  */
-#if defined(__i386__) || defined(__vax__)
+#if defined(__i386__) || defined(__vax__) || defined(__mips__)
 # define NCR5380_USE_BUS_SPACE
 #endif
 
