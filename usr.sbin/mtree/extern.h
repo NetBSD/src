@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.25 2002/10/08 00:34:08 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.26 2002/12/23 04:40:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,6 @@
  
 #include <err.h> 
 #include <fts.h>
-#include <vis.h>
 
 #if HAVE_NETDB_H
 /* For MAXHOSTNAMELEN on some platforms. */
@@ -61,7 +60,7 @@ int	 check_excludes(const char *, const char *);
 int	 compare(NODE *, FTSENT *);
 int	 crc(int, u_int32_t *, u_int32_t *);
 void	 cwalk(void);
-void	 dump_nodes(const char *, NODE *);
+void	 dump_nodes(const char *, NODE *, int);
 void	 init_excludes(void);
 int	 matchtags(NODE *);
 void	 mtree_err(const char *, ...)

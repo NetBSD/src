@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.41 2002/11/29 02:07:34 grant Exp $	*/
+/*	$NetBSD: create.c,v 1.42 2002/12/23 04:40:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.41 2002/11/29 02:07:34 grant Exp $");
+__RCSID("$NetBSD: create.c,v 1.42 2002/12/23 04:40:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,14 +74,11 @@ __RCSID("$NetBSD: create.c,v 1.41 2002/11/29 02:07:34 grant Exp $");
 
 #define	INDENTNAMELEN	15
 #define	MAXLINELEN	80
-#define VISFLAGS        VIS_CSTYLE
 
 static gid_t gid;
 static uid_t uid;
 static mode_t mode;
 static u_long flags;
-static char codebuf[4*MAXPATHLEN + 1];
-static const char extra[] = { ' ', '\t', '\n', '\\', '#', '\0' };
 
 static int	dsort(const FTSENT **, const FTSENT **);
 static void	output(int *, const char *, ...)
@@ -148,16 +145,14 @@ statf(FTSENT *p)
 {
 	u_int32_t len, val;
 	int fd, indent;
-	const char *name;
+	const char *name, *path;
 #if !defined(NO_MD5) || !defined(NO_RMD160) || !defined(NO_SHA1)
 	char digestbuf[41];	/* large enough for {MD5,RMD160,SHA1}File() */
 #endif
 
-	strsvis(codebuf, p->fts_name, VISFLAGS, extra);
-	if (S_ISDIR(p->fts_statp->st_mode))
-		indent = printf("%s", codebuf);
-	else
-		indent = printf("    %s", codebuf);
+	path = vispath(p->fts_name);
+	indent = printf("%s%s",
+	    S_ISDIR(p->fts_statp->st_mode) ? "" : "    ", path);
 
 	if (indent > INDENTNAMELEN)
 		indent = MAXLINELEN;
