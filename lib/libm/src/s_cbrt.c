@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_cbrt.c,v 1.5 1994/08/10 20:31:59 jtc Exp $";
+static char rcsid[] = "$Id: s_cbrt.c,v 1.6 1994/08/18 23:06:25 jtc Exp $";
 #endif
 
 #include "math.h"
@@ -21,9 +21,9 @@ static char rcsid[] = "$Id: s_cbrt.c,v 1.5 1994/08/10 20:31:59 jtc Exp $";
  * Return cube root of x
  */
 #ifdef __STDC__
-static const unsigned 
+static const u_int32_t
 #else
-static unsigned 
+static u_int32_t
 #endif
 	B1 = 715094163, /* B1 = (682-0.03306235651)*2**20 */
 	B2 = 696219795; /* B2 = (664-0.03306235651)*2**20 */
@@ -46,10 +46,10 @@ G =  3.57142857142857150787e-01; /* 5/14      = 0x3FD6DB6D, 0xB6DB6DB7 */
 	double x;
 #endif
 {
-	int	hx;
+	int32_t	hx;
 	double r,s,t=0.0,w;
-	unsigned sign;
-	unsigned int high,low;
+	u_int32_t sign;
+	u_int32_t high,low;
 
 	GET_HIGH_WORD(hx,x);
 	sign=hx&0x80000000; 		/* sign= sign(x) */

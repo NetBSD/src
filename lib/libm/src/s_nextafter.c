@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_nextafter.c,v 1.5 1994/08/10 20:32:57 jtc Exp $";
+static char rcsid[] = "$Id: s_nextafter.c,v 1.6 1994/08/18 23:07:13 jtc Exp $";
 #endif
 
 /* IEEE functions
@@ -31,8 +31,8 @@ static char rcsid[] = "$Id: s_nextafter.c,v 1.5 1994/08/10 20:32:57 jtc Exp $";
 	double x,y;
 #endif
 {
-	int	hx,hy,ix,iy;
-	unsigned lx,ly;
+	int32_t hx,hy,ix,iy;
+	u_int32_t lx,ly;
 
 	EXTRACT_WORDS(hx,lx,x);
 	EXTRACT_WORDS(hy,ly,y);

@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_erff.c,v 1.1 1994/08/10 20:32:13 jtc Exp $";
+static char rcsid[] = "$Id: s_erff.c,v 1.2 1994/08/18 23:06:38 jtc Exp $";
 #endif
 
 #include "math.h"
@@ -106,12 +106,12 @@ sb7  = -2.2440952301e+01; /* 0xc1b38712 */
 	float x;
 #endif
 {
-	int hx,ix,i;
+	int32_t hx,ix,i;
 	float R,S,P,Q,s,y,z,r;
 	GET_FLOAT_WORD(hx,x);
 	ix = hx&0x7fffffff;
 	if(ix>=0x7f800000) {		/* erf(nan)=nan */
-	    i = ((unsigned)hx>>31)<<1;
+	    i = ((u_int32_t)hx>>31)<<1;
 	    return (float)(1-i)+one/x;	/* erf(+-inf)=+-1 */
 	}
 
@@ -163,13 +163,13 @@ sb7  = -2.2440952301e+01; /* 0xc1b38712 */
 	float x;
 #endif
 {
-	int hx,ix;
+	int32_t hx,ix;
 	float R,S,P,Q,s,y,z,r;
 	GET_FLOAT_WORD(hx,x);
 	ix = hx&0x7fffffff;
 	if(ix>=0x7f800000) {			/* erfc(nan)=nan */
 						/* erfc(+-inf)=0,2 */
-	    return (float)(((unsigned)hx>>31)<<1)+one/x;
+	    return (float)(((u_int32_t)hx>>31)<<1)+one/x;
 	}
 
 	if(ix < 0x3f580000) {		/* |x|<0.84375 */

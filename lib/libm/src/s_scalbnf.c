@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_scalbnf.c,v 1.1 1994/08/10 20:33:03 jtc Exp $";
+static char rcsid[] = "$Id: s_scalbnf.c,v 1.2 1994/08/18 23:10:15 jtc Exp $";
 #endif
 
 #include "math.h"
@@ -37,7 +37,7 @@ tiny   = 1.0e-30;
 	float x; int n;
 #endif
 {
-	int  k,ix;
+	int32_t k,ix;
 	GET_FLOAT_WORD(ix,x);
         k = (ix&0x7f800000)>>23;		/* extract exponent */
         if (k==0) {				/* 0 or subnormal x */

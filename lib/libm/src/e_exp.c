@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_exp.c,v 1.5 1994/08/10 20:30:44 jtc Exp $";
+static char rcsid[] = "$Id: e_exp.c,v 1.6 1994/08/18 23:05:18 jtc Exp $";
 #endif
 
 /* __ieee754_exp(x)
@@ -111,8 +111,8 @@ P5   =  4.13813679705723846039e-08; /* 0x3E663769, 0x72BEA4D0 */
 #endif
 {
 	double y,hi,lo,c,t;
-	int k,xsb;
-	unsigned hx;
+	int32_t k,xsb;
+	u_int32_t hx;
 
 	GET_HIGH_WORD(hx,x);
 	xsb = (hx>>31)&1;		/* sign bit of x */
@@ -121,7 +121,7 @@ P5   =  4.13813679705723846039e-08; /* 0x3E663769, 0x72BEA4D0 */
     /* filter out non-finite argument */
 	if(hx >= 0x40862E42) {			/* if |x|>=709.78... */
             if(hx>=0x7ff00000) {
-	        unsigned int lx;
+	        u_int32_t lx;
 		GET_LOW_WORD(lx,x);
 		if(((hx&0xfffff)|lx)!=0) 
 		     return x+x; 		/* NaN */
@@ -154,12 +154,12 @@ P5   =  4.13813679705723846039e-08; /* 0x3E663769, 0x72BEA4D0 */
 	if(k==0) 	return one-((x*c)/(c-2.0)-x); 
 	else 		y = one-((lo-(x*c)/(2.0-c))-hi);
 	if(k >= -1021) {
-	    unsigned int hy;
+	    u_int32_t hy;
 	    GET_HIGH_WORD(hy,y);
 	    SET_HIGH_WORD(y,hy+(k<<20));	/* add k to y's exponent */
 	    return y;
 	} else {
-	    unsigned int hy;
+	    u_int32_t hy;
 	    GET_HIGH_WORD(hy,y);
 	    SET_HIGH_WORD(y,hy+((k+1000)<<20));	/* add k to y's exponent */
 	    return y*twom1000;

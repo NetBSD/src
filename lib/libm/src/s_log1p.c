@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_log1p.c,v 1.5 1994/08/10 20:32:41 jtc Exp $";
+static char rcsid[] = "$Id: s_log1p.c,v 1.6 1994/08/18 23:06:59 jtc Exp $";
 #endif
 
 /* double log1p(double x)
@@ -112,7 +112,7 @@ static double zero = 0.0;
 #endif
 {
 	double hfsq,f,c,s,z,R,u;
-	int k,hx,hu,ax;
+	int32_t k,hx,hu,ax;
 
 	GET_HIGH_WORD(hx,x);
 	ax = hx&0x7fffffff;
@@ -130,7 +130,7 @@ static double zero = 0.0;
 		else
 		    return x - x*x*0.5;
 	    }
-	    if(hx>0||hx<=((int)0xbfd2bec3)) {
+	    if(hx>0||hx<=((int32_t)0xbfd2bec3)) {
 		k=0;f=x;hu=1;}	/* -0.2929<x<0.41422 */
 	} 
 	if (hx >= 0x7ff00000) return x+x;

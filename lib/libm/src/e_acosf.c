@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_acosf.c,v 1.1 1994/08/10 20:30:29 jtc Exp $";
+static char rcsid[] = "$Id: e_acosf.c,v 1.2 1994/08/18 23:04:53 jtc Exp $";
 #endif
 
 #include "math.h"
@@ -48,7 +48,7 @@ qS4 =  7.7038154006e-02; /* 0x3d9dc62e */
 #endif
 {
 	float z,p,q,r,w,s,c,df;
-	int hx,ix;
+	int32_t hx,ix;
 	GET_FLOAT_WORD(hx,x);
 	ix = hx&0x7fffffff;
 	if(ix==0x3f800000) {		/* |x|==1 */
@@ -73,7 +73,7 @@ qS4 =  7.7038154006e-02; /* 0x3d9dc62e */
 	    w = r*s-pio2_lo;
 	    return pi - (float)2.0*(s+w);
 	} else {			/* x > 0.5 */
-	    int idf;
+	    int32_t idf;
 	    z = (one-x)*(float)0.5;
 	    s = sqrtf(z);
 	    df = s;

@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_expm1f.c,v 1.1 1994/08/10 20:32:16 jtc Exp $";
+static char rcsid[] = "$Id: s_expm1f.c,v 1.2 1994/08/18 23:06:40 jtc Exp $";
 #endif
 
 #include "math.h"
@@ -47,8 +47,8 @@ Q5  =  -2.0109921195e-07; /* 0xb457edbb */
 #endif
 {
 	float y,hi,lo,c,t,e,hxs,hfx,r1;
-	int k,xsb;
-	unsigned hx;
+	int32_t k,xsb;
+	u_int32_t hx;
 
 	GET_FLOAT_WORD(hx,x);
 	xsb = hx&0x80000000;		/* sign bit of x */
@@ -107,7 +107,7 @@ Q5  =  -2.0109921195e-07; /* 0xb457edbb */
 	       	if(x < (float)-0.25) return -(float)2.0*(e-(x+(float)0.5));
 	       	else 	      return  one+(float)2.0*(x-e);
 	    if (k <= -2 || k>56) {   /* suffice to return exp(x)-1 */
-	        int i;
+	        int32_t i;
 	        y = one-(e-x);
 		GET_FLOAT_WORD(i,y);
 		SET_FLOAT_WORD(y,i+(k<<23));	/* add k to y's exponent */
@@ -115,13 +115,13 @@ Q5  =  -2.0109921195e-07; /* 0xb457edbb */
 	    }
 	    t = one;
 	    if(k<23) {
-	        int i;
+	        int32_t i;
 	        SET_FLOAT_WORD(t,0x3f800000 - (0x1000000>>k)); /* t=1-2^-k */
 	       	y = t-(e-x);
 		GET_FLOAT_WORD(i,y);
 		SET_FLOAT_WORD(y,i+(k<<23));	/* add k to y's exponent */
 	   } else {
-	        int i;
+	        int32_t i;
 		SET_FLOAT_WORD(t,((0x7f-k)<<23));	/* 2^-k */
 	       	y = x-(e+t);
 	       	y += one;

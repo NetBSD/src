@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_cbrtf.c,v 1.1 1994/08/10 20:32:01 jtc Exp $";
+static char rcsid[] = "$Id: s_cbrtf.c,v 1.2 1994/08/18 23:06:27 jtc Exp $";
 #endif
 
 #include "math.h"
@@ -49,10 +49,10 @@ G =  3.5714286566e-01; /* 5/14      = 0x3eb6db6e */
 	float x;
 #endif
 {
-	int	hx;
 	float r,s,t;
-	unsigned sign;
-	unsigned int high;
+	int32_t hx;
+	u_int32_t sign;
+	u_int32_t high;
 
 	GET_FLOAT_WORD(hx,x);
 	sign=hx&0x80000000; 		/* sign= sign(x) */

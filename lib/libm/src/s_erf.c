@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_erf.c,v 1.5 1994/08/10 20:32:11 jtc Exp $";
+static char rcsid[] = "$Id: s_erf.c,v 1.6 1994/08/18 23:06:36 jtc Exp $";
 #endif
 
 /* double erf(double x)
@@ -198,12 +198,12 @@ sb7  = -2.24409524465858183362e+01; /* 0xC03670E2, 0x42712D62 */
 	double x;
 #endif
 {
-	int hx,ix,i;
+	int32_t hx,ix,i;
 	double R,S,P,Q,s,y,z,r;
 	GET_HIGH_WORD(hx,x);
 	ix = hx&0x7fffffff;
 	if(ix>=0x7ff00000) {		/* erf(nan)=nan */
-	    i = ((unsigned)hx>>31)<<1;
+	    i = ((u_int32_t)hx>>31)<<1;
 	    return (double)(1-i)+one/x;	/* erf(+-inf)=+-1 */
 	}
 
@@ -254,13 +254,13 @@ sb7  = -2.24409524465858183362e+01; /* 0xC03670E2, 0x42712D62 */
 	double x;
 #endif
 {
-	int hx,ix;
+	int32_t hx,ix;
 	double R,S,P,Q,s,y,z,r;
 	GET_HIGH_WORD(hx,x);
 	ix = hx&0x7fffffff;
 	if(ix>=0x7ff00000) {			/* erfc(nan)=nan */
 						/* erfc(+-inf)=0,2 */
-	    return (double)(((unsigned)hx>>31)<<1)+one/x;
+	    return (double)(((u_int32_t)hx>>31)<<1)+one/x;
 	}
 
 	if(ix < 0x3feb0000) {		/* |x|<0.84375 */

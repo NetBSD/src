@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_modf.c,v 1.5 1994/08/10 20:32:53 jtc Exp $";
+static char rcsid[] = "$Id: s_modf.c,v 1.6 1994/08/18 23:07:09 jtc Exp $";
 #endif
 
 /*
@@ -40,8 +40,8 @@ static double one = 1.0;
 	double x,*iptr;
 #endif
 {
-	int i0,i1,j0;
-	unsigned i;
+	int32_t i0,i1,j0;
+	u_int32_t i;
 	EXTRACT_WORDS(i0,i1,x);
 	j0 = ((i0>>20)&0x7ff)-0x3ff;	/* exponent of x */
 	if(j0<20) {			/* integer part in high x */
@@ -51,7 +51,7 @@ static double one = 1.0;
 	    } else {
 		i = (0x000fffff)>>j0;
 		if(((i0&i)|i1)==0) {		/* x is integral */
-		    unsigned int high;
+		    u_int32_t high;
 		    *iptr = x;
 		    GET_HIGH_WORD(high,x);
 		    INSERT_WORDS(x,high&0x80000000,0);	/* return +-0 */
@@ -62,15 +62,15 @@ static double one = 1.0;
 		}
 	    }
 	} else if (j0>51) {		/* no fraction part */
-	    unsigned int high;
+	    u_int32_t high;
 	    *iptr = x*one;
 	    GET_HIGH_WORD(high,x);
 	    INSERT_WORDS(x,high&0x80000000,0);	/* return +-0 */
 	    return x;
 	} else {			/* fraction part in low x */
-	    i = ((unsigned)(0xffffffff))>>(j0-20);
+	    i = ((u_int32_t)(0xffffffff))>>(j0-20);
 	    if((i1&i)==0) { 		/* x is integral */
-	        unsigned int high;
+	        u_int32_t high;
 		*iptr = x;
 		GET_HIGH_WORD(high,x);
 		INSERT_WORDS(x,high&0x80000000,0);	/* return +-0 */

@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: k_cosf.c,v 1.1 1994/08/10 20:31:36 jtc Exp $";
+static char rcsid[] = "$Id: k_cosf.c,v 1.2 1994/08/18 23:06:10 jtc Exp $";
 #endif
 
 #include "math.h"
@@ -41,7 +41,7 @@ C6  = -1.1359647598e-11; /* 0xad47d74e */
 #endif
 {
 	float a,hz,z,r,qx;
-	int ix;
+	int32_t ix;
 	GET_FLOAT_WORD(ix,x);
 	ix &= 0x7fffffff;			/* ix = |x|'s high word*/
 	if(ix<0x32000000) {			/* if x < 2**27 */

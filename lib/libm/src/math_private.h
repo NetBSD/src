@@ -11,13 +11,14 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $Id: math_private.h,v 1.1 1994/08/10 20:31:51 jtc Exp $
+ * $Id: math_private.h,v 1.2 1994/08/18 23:06:19 jtc Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
 #define _MATH_PRIVATE_H_
 
 #include <machine/endian.h>
+#include <sys/types.h>
 
 /* The original fdlibm code used statements like:
 	n0 = ((*(int*)&one)>>29)^1;		* index of high word *
@@ -40,9 +41,8 @@ typedef union
   double value;
   struct 
   {
-    /* FIXME: Assumes 32 bit int.  */
-    unsigned int msw;
-    unsigned int lsw;
+    u_int32_t msw;
+    u_int32_t lsw;
   } parts;
 } ieee_double_shape_type;
 
@@ -55,9 +55,8 @@ typedef union
   double value;
   struct 
   {
-    /* FIXME: Assumes 32 bit int.  */
-    unsigned int lsw;
-    unsigned int msw;
+    u_int32_t lsw;
+    u_int32_t msw;
   } parts;
 } ieee_double_shape_type;
 

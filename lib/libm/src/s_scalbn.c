@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_scalbn.c,v 1.5 1994/08/10 20:33:02 jtc Exp $";
+static char rcsid[] = "$Id: s_scalbn.c,v 1.6 1994/08/18 23:10:13 jtc Exp $";
 #endif
 
 /* 
@@ -41,7 +41,7 @@ tiny   = 1.0e-300;
 	double x; int n;
 #endif
 {
-	int  k,hx,lx;
+	int32_t k,hx,lx;
 	EXTRACT_WORDS(hx,lx,x);
         k = (hx&0x7ff00000)>>20;		/* extract exponent */
         if (k==0) {				/* 0 or subnormal x */

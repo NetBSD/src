@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_rint.c,v 1.5 1994/08/10 20:32:59 jtc Exp $";
+static char rcsid[] = "$Id: s_rint.c,v 1.6 1994/08/18 23:07:16 jtc Exp $";
 #endif
 
 /*
@@ -44,8 +44,8 @@ TWO52[2]={
 	double x;
 #endif
 {
-	int i0,j0,sx;
-	unsigned i,i1;
+	int32_t i0,j0,sx;
+	u_int32_t i,i1;
 	double w,t;
 	EXTRACT_WORDS(i0,i1,x);
 	sx = (i0>>31)&1;
@@ -75,7 +75,7 @@ TWO52[2]={
 	    if(j0==0x400) return x+x;	/* inf or NaN */
 	    else return x;		/* x is integral */
 	} else {
-	    i = ((unsigned)(0xffffffff))>>(j0-20);
+	    i = ((u_int32_t)(0xffffffff))>>(j0-20);
 	    if((i1&i)==0) return x;	/* x is integral */
 	    i>>=1;
 	    if((i1&i)!=0) i1 = (i1&(~i))|((0x40000000)>>(j0-20));

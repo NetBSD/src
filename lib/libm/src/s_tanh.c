@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_tanh.c,v 1.4 1994/08/10 20:33:15 jtc Exp $";
+static char rcsid[] = "$Id: s_tanh.c,v 1.5 1994/08/18 23:10:22 jtc Exp $";
 #endif
 
 /* Tanh(x)
@@ -55,7 +55,7 @@ static double one=1.0, two=2.0, tiny = 1.0e-300;
 #endif
 {
 	double t,z;
-	int jx,ix;
+	int32_t jx,ix;
 
     /* High word of |x|. */
 	GET_HIGH_WORD(jx,x);

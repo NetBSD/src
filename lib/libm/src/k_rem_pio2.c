@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: k_rem_pio2.c,v 1.4 1994/08/10 20:31:38 jtc Exp $";
+static char rcsid[] = "$Id: k_rem_pio2.c,v 1.5 1994/08/18 23:06:11 jtc Exp $";
 #endif
 
 /*
@@ -165,13 +165,13 @@ two24   =  1.67772160000000000000e+07, /* 0x41700000, 0x00000000 */
 twon24  =  5.96046447753906250000e-08; /* 0x3E700000, 0x00000000 */
 
 #ifdef __STDC__
-	int __kernel_rem_pio2(double *x, double *y, int e0, int nx, int prec, const int *ipio2) 
+	int __kernel_rem_pio2(double *x, double *y, int e0, int nx, int prec, const int32_t *ipio2) 
 #else
 	int __kernel_rem_pio2(x,y,e0,nx,prec,ipio2) 	
-	double x[], y[]; int e0,nx,prec; int ipio2[];
+	double x[], y[]; int e0,nx,prec; int32_t ipio2[];
 #endif
 {
-	int jz,jx,jv,jp,jk,carry,n,iq[20],i,j,k,m,q0,ih;
+	int32_t jz,jx,jv,jp,jk,carry,n,iq[20],i,j,k,m,q0,ih;
 	double z,fw,f[20],fq[20],q[20];
 
     /* initialize jk*/
@@ -196,15 +196,15 @@ twon24  =  5.96046447753906250000e-08; /* 0x3E700000, 0x00000000 */
 recompute:
     /* distill q[] into iq[] reversingly */
 	for(i=0,j=jz,z=q[jz];j>0;i++,j--) {
-	    fw    =  (double)((int)(twon24* z));
-	    iq[i] =  (int)(z-two24*fw);
+	    fw    =  (double)((int32_t)(twon24* z));
+	    iq[i] =  (int32_t)(z-two24*fw);
 	    z     =  q[j-1]+fw;
 	}
 
     /* compute n */
 	z  = scalbn(z,q0);		/* actual value of z */
 	z -= 8.0*floor(z*0.125);		/* trim off integer >= 8 */
-	n  = (int) z;
+	n  = (int32_t) z;
 	z -= (double)n;
 	ih = 0;
 	if(q0>0) {	/* need iq[jz-1] to determine n */
@@ -263,11 +263,11 @@ recompute:
 	} else { /* break z into 24-bit if necessary */
 	    z = scalbn(z,-q0);
 	    if(z>=two24) { 
-		fw = (double)((int)(twon24*z));
-		iq[jz] = (int)(z-two24*fw);
+		fw = (double)((int32_t)(twon24*z));
+		iq[jz] = (int32_t)(z-two24*fw);
 		jz += 1; q0 += 24;
-		iq[jz] = (int) fw;
-	    } else iq[jz] = (int) z ;
+		iq[jz] = (int32_t) fw;
+	    } else iq[jz] = (int32_t) z ;
 	}
 
     /* convert integer "bit" chunk to floating-point value */

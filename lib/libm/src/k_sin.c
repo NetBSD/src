@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: k_sin.c,v 1.5 1994/08/10 20:31:41 jtc Exp $";
+static char rcsid[] = "$Id: k_sin.c,v 1.6 1994/08/18 23:06:14 jtc Exp $";
 #endif
 
 /* __kernel_sin( x, y, iy)
@@ -66,7 +66,7 @@ S6  =  1.58969099521155010221e-10; /* 0x3DE5D93A, 0x5ACFD57C */
 #endif
 {
 	double z,r,v;
-	int ix;
+	int32_t ix;
 	GET_HIGH_WORD(ix,x);
 	ix &= 0x7fffffff;			/* high word of x */
 	if(ix<0x3e400000)			/* |x| < 2**-27 */

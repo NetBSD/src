@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_finitef.c,v 1.1 1994/08/10 20:32:23 jtc Exp $";
+static char rcsid[] = "$Id: s_finitef.c,v 1.2 1994/08/18 23:06:45 jtc Exp $";
 #endif
 
 /*
@@ -32,7 +32,7 @@ static char rcsid[] = "$Id: s_finitef.c,v 1.1 1994/08/10 20:32:23 jtc Exp $";
 	float x;
 #endif
 {
-	int ix;
+	int32_t ix;
 	GET_FLOAT_WORD(ix,x);
-	return  (unsigned)((ix&0x7fffffff)-0x7f800000)>>31;
+	return (int)((u_int32_t)((ix&0x7fffffff)-0x7f800000)>>31);
 }

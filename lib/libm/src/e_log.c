@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_log.c,v 1.5 1994/08/10 20:31:10 jtc Exp $";
+static char rcsid[] = "$Id: e_log.c,v 1.6 1994/08/18 23:05:41 jtc Exp $";
 #endif
 
 /* __ieee754_log(x)
@@ -98,8 +98,8 @@ static double zero   =  0.0;
 #endif
 {
 	double hfsq,f,s,z,R,w,t1,t2,dk;
-	int k,hx,i,j;
-	unsigned lx;
+	int32_t k,hx,i,j;
+	u_int32_t lx;
 
 	EXTRACT_WORDS(hx,lx,x);
 

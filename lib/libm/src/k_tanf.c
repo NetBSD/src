@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: k_tanf.c,v 1.1 1994/08/10 20:31:48 jtc Exp $";
+static char rcsid[] = "$Id: k_tanf.c,v 1.2 1994/08/18 23:06:18 jtc Exp $";
 #endif
 
 #include "math.h"
@@ -51,7 +51,7 @@ T[] =  {
 #endif
 {
 	float z,r,v,w,s;
-	int ix,hx;
+	int32_t ix,hx;
 	GET_FLOAT_WORD(hx,x);
 	ix = hx&0x7fffffff;	/* high word of |x| */
 	if(ix<0x31800000)			/* x < 2**-28 */
@@ -87,7 +87,7 @@ T[] =  {
 			   simply return -1.0/(x+r) here */
      /*  compute -1.0/(x+r) accurately */
 	    float a,t;
-	    int i;
+	    int32_t i;
 	    z  = w;
 	    GET_FLOAT_WORD(i,z);
 	    SET_FLOAT_WORD(z,i&0xfffff000);

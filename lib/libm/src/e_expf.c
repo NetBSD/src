@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_expf.c,v 1.1 1994/08/10 20:30:46 jtc Exp $";
+static char rcsid[] = "$Id: e_expf.c,v 1.2 1994/08/18 23:05:20 jtc Exp $";
 #endif
 
 #include "math.h"
@@ -50,8 +50,8 @@ P5   =  4.1381369442e-08; /* 0x3331bb4c */
 #endif
 {
 	float y,hi,lo,c,t;
-	int k,xsb;
-	unsigned hx;
+	int32_t k,xsb;
+	u_int32_t hx;
 
 	GET_FLOAT_WORD(hx,x);
 	xsb = (hx>>31)&1;		/* sign bit of x */
@@ -90,12 +90,12 @@ P5   =  4.1381369442e-08; /* 0x3331bb4c */
 	if(k==0) 	return one-((x*c)/(c-(float)2.0)-x); 
 	else 		y = one-((lo-(x*c)/((float)2.0-c))-hi);
 	if(k >= -125) {
-	    unsigned int hy;
+	    u_int32_t hy;
 	    GET_FLOAT_WORD(hy,y);
 	    SET_FLOAT_WORD(y,hy+(k<<23));	/* add k to y's exponent */
 	    return y;
 	} else {
-	    unsigned int hy;
+	    u_int32_t hy;
 	    GET_FLOAT_WORD(hy,y);
 	    SET_FLOAT_WORD(y,hy+((k+100)<<23));	/* add k to y's exponent */
 	    return y*twom100;
