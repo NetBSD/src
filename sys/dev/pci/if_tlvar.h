@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlvar.h,v 1.2 1998/08/15 16:49:33 bouyer Exp $	*/
+/*	$NetBSD: if_tlvar.h,v 1.3 1999/01/11 22:45:42 tron Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -38,12 +38,8 @@
 struct tl_product_desc {
 	u_int32_t tp_product;
 	int tp_tlphymedia;
-	int tp_flags;
 	const char *tp_desc;
 };
-
-/* tp_flags */
-#define	TPF_BROKEN_MEM	0x00000001	/* memory-mapped access is broken */
 
 struct tl_softc {
 	struct device sc_dev;		/* base device */
