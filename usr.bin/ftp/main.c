@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.8 1995/09/08 01:06:36 tls Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.9 1995/09/14 01:39:52 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ static char rcsid[] = "$NetBSD: main.c,v 1.8 1995/09/08 01:06:36 tls Exp $";
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "ftp_var.h"
