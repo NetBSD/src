@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.4 2003/01/20 05:26:46 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.5 2003/01/20 06:58:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 
 #define	_NGREG	39		/* GR0-31, CR, LR, SRR0, SRR1, CTR, XER, MQ */
 
-typedef	int		__greg_t;
+typedef	long		__greg_t;
 typedef	__greg_t	__gregset_t[_NGREG];
 
 #define	_REG_R0		0
