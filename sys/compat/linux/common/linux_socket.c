@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.26 2000/12/22 23:41:16 fvdl Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.27 2000/12/29 20:07:53 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -631,6 +631,14 @@ linux_ioctl_socket(p, uap, retval)
 		pt.com = SCARG(uap, com);
 		pt.data = SCARG(uap, data);
 		error = ioctlf(fp, PTIOCLINUX, (caddr_t)&pt, p);
+		/*
+		 * XXX hack: if the function returns EJUSTRETURN,       
+		 * it has stuffed a sysctl return value in pt.data.
+		 */
+		if (error == EJUSTRETURN) {
+			retval[0] = (register_t)pt.data;
+			error = 0;
+		}
 		goto out;
 	}
 
