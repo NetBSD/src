@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.125 2003/01/07 16:20:14 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.126 2003/01/09 04:58:58 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -270,7 +270,7 @@ trap(type, psr, pc, tf)
 {
 	struct proc *p;
 	struct pcb *pcb;
-	int n;
+	int n, s;
 	char bits[64];
 	u_quad_t sticks;
 	int sig;
@@ -470,6 +470,9 @@ badtrap:
 
 		if (cpuinfo.fpproc != p) {		/* we do not have it */
 			struct cpu_info *cpi;
+			int s;
+
+			s = splclock();
 			FPU_LOCK();
 			if (cpuinfo.fpproc != NULL) {	/* someone else had it*/
 				savefpstate(cpuinfo.fpproc->p_md.md_fpstate);
@@ -493,6 +496,7 @@ badtrap:
 			cpuinfo.fpproc = p;		/* now we do have it */
 			p->p_md.md_fpu = curcpu();
 			FPU_UNLOCK();
+			splx(s);
 		}
 		tf->tf_psr |= PSR_EF;
 		break;
@@ -593,11 +597,13 @@ badtrap:
 		 */
 		if (p != cpuinfo.fpproc)
 			panic("fpe without being the FP user");
+		s = splclock();
 		FPU_LOCK();
 		savefpstate(p->p_md.md_fpstate);
 		cpuinfo.fpproc = NULL;
 		p->p_md.md_fpu = NULL;
 		FPU_UNLOCK();
+		splx(s);
 		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
 		fpu_cleanup(p, p->p_md.md_fpstate);
 		/* fpu_cleanup posts signals if needed */

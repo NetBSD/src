@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.214 2003/01/06 18:32:31 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.215 2003/01/09 04:58:58 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -396,6 +396,7 @@ setregs(p, pack, stack)
 	struct trapframe *tf = p->p_md.md_tf;
 	struct fpstate *fs;
 	int psr;
+	int s;
 
 	/* Don't allow misaligned code by default */
 	p->p_md.md_flags &= ~MDP_FIXALIGN;
@@ -415,6 +416,7 @@ setregs(p, pack, stack)
 		 * we must get rid of it, and the only way to do that is
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
+		s = splclock();
 		FPU_LOCK();
 		if ((cpi = p->p_md.md_fpu) != NULL) {
 			if (cpi->fpproc != p)
@@ -430,6 +432,7 @@ setregs(p, pack, stack)
 		}
 		p->p_md.md_fpu = NULL;
 		FPU_UNLOCK();
+		splx(s);
 		free((void *)fs, M_SUBPROC);
 		p->p_md.md_fpstate = NULL;
 	}

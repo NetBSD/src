@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.67 2003/01/06 18:32:31 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.68 2003/01/09 04:58:59 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -233,10 +233,12 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	bcopy((caddr_t)opcb, (caddr_t)npcb, sizeof(struct pcb));
 	if (p1->p_md.md_fpstate != NULL) {
 		struct cpu_info *cpi;
+		int s;
 
 		p2->p_md.md_fpstate = malloc(sizeof(struct fpstate),
 		    M_SUBPROC, M_WAITOK);
 
+		s = splclock();
 		FPU_LOCK();
 		if ((cpi = p1->p_md.md_fpu) != NULL) {
 			if (cpi->fpproc != p1)
@@ -253,10 +255,12 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		bcopy(p1->p_md.md_fpstate, p2->p_md.md_fpstate,
 		    sizeof(struct fpstate));
 		FPU_UNLOCK();
+		splx(s);
 	} else
 		p2->p_md.md_fpstate = NULL;
 
 	p2->p_md.md_fpu = NULL;
+	p2->p_md.md_cpuset = 0;
 
 	/*
 	 * Setup (kernel) stack frame that will by-pass the child
@@ -317,6 +321,9 @@ cpu_exit(p)
 
 	if ((fs = p->p_md.md_fpstate) != NULL) {
 		struct cpu_info *cpi;
+		int s;
+
+		s = splclock();
 		FPU_LOCK();
 		if ((cpi = p->p_md.md_fpu) != NULL) {
 			if (cpi->fpproc != p)
@@ -331,6 +338,7 @@ cpu_exit(p)
 			cpi->fpproc = NULL;
 		}
 		FPU_UNLOCK();
+		splx(s);
 		free((void *)fs, M_SUBPROC);
 	}
 	switchexit(p);
