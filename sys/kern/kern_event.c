@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.1.1.1.2.8 2002/02/21 20:36:12 jdolecek Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.1.1.1.2.9 2002/03/15 21:51:49 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -370,8 +370,7 @@ filt_procattach(struct knote *kn)
 		kn->kn_flags &= ~EV_FLAG1;
 	}
 
-	/* XXXLUKEM */
-	/* XXX lock the proc here while adding to the list? */
+	/* XXXSMP lock the process? */
 	SLIST_INSERT_HEAD(&p->p_klist, kn, kn_selnext);
 
 	return (0);
@@ -396,8 +395,9 @@ filt_procdetach(struct knote *kn)
 	if (kn->kn_status & KN_DETACHED)
 		return;
 
-	/* XXXLUKEM */
-	/* XXX locking?  this might modify another process. */
+	KASSERT(pfind(kn->kn_id) == p);
+
+	/* XXXSMP lock the process? */
 	SLIST_REMOVE(&p->p_klist, kn, knote, kn_selnext);
 }
 
@@ -518,17 +518,15 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) nevents;
 		syscallarg(const struct timespec *) timeout;
 	} */ *uap = v;
-	struct filedesc	*fdp;
 	struct kevent	*kevp;
 	struct kqueue	*kq;
 	struct file	*fp;
 	struct timespec	ts;
 	int		i, n, nerrors, error;
 
-	fdp = p->p_fd;			/* check that we're dealing with a kq */
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
-	    (fp->f_type != DTYPE_KQUEUE))
+	/* check that we're dealing with a kq */
+	fp = fd_getfile(p->p_fd, SCARG(uap, fd));
+	if (!fp || fp->f_type != DTYPE_KQUEUE)
 		return (EBADF);
 
 	FILE_USE(fp);
@@ -543,9 +541,9 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 	kq = (struct kqueue *)fp->f_data;
 	nerrors = 0;
 
-				/* traverse list of events to register */
+	/* traverse list of events to register */
 	while (SCARG(uap, nchanges) > 0) {
-				/* copyin a maximum of KQ_EVENTS at each pass */
+		/* copyin a maximum of KQ_EVENTS at each pass */
 		n = MIN(SCARG(uap, nchanges), KQ_NEVENTS);
 		error = copyin(SCARG(uap, changelist), kq->kq_kev,
 		    n * sizeof(struct kevent));
@@ -554,7 +552,7 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 		for (i = 0; i < n; i++) {
 			kevp = &kq->kq_kev[i];
 			kevp->flags &= ~EV_SYSFLAGS;
-					/* register each knote */
+			/* register each knote */
 			error = kqueue_register(kq, kevp, p);
 			if (error) {
 				if (SCARG(uap, nevents) != 0) {
@@ -582,7 +580,7 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 		goto done;
 	}
 
-					/* actually scan through the events */
+	/* actually scan through the events */
 	error = kqueue_scan(fp, SCARG(uap, nevents), SCARG(uap, eventlist),
 	    SCARG(uap, timeout), p, retval);
  done:
@@ -607,13 +605,15 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 	kn = NULL;
 	error = 0;
 	kfilter = kfilter_byfilter(kev->filter);
-	if (kfilter == NULL || kfilter->filtops == NULL)
-		return (EINVAL);	/* filter not found nor implemented */
+	if (kfilter == NULL || kfilter->filtops == NULL) {
+		/* filter not found nor implemented */
+		return (EINVAL);
+	}
 
-					/* search if knote already exists */
-	if (kfilter->filtops->f_isfd) {	/* monitoring a file descriptor */
-		if ((u_int)kev->ident >= fdp->fd_nfiles ||
-		    (fp = fdp->fd_ofiles[kev->ident]) == NULL)
+	/* search if knote already exists */
+	if (kfilter->filtops->f_isfd) {
+		/* monitoring a file descriptor */
+		if ((fp = fd_getfile(fdp, kev->ident)) == NULL)
 			return (EBADF);	/* validate descriptor */
 		FILE_USE(fp);
 
@@ -624,10 +624,10 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 					break;
 		}
 	} else {
-					/*
-					 * not monitoring a file descriptor, so
-					 * lookup knotes in internal hash table
-					 */
+		/*
+		 * not monitoring a file descriptor, so
+		 * lookup knotes in internal hash table
+		 */
 		if (fdp->fd_knhashmask != 0) {
 			struct klist *list;
 			
@@ -649,9 +649,11 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 	/*
 	 * kn now contains the matching knote, or NULL if no match
 	 */
-	if (kev->flags & EV_ADD) {		/* add knote */
+	if (kev->flags & EV_ADD) {
+		/* add knote */
 
-		if (kn == NULL) {		/* create new knote */
+		if (kn == NULL) {
+			/* create new knote */
 			kn = pool_get(&knote_pool, PR_WAITOK);
 			if (kn == NULL) {
 				error = ENOMEM;
@@ -678,7 +680,9 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 				knote_drop(kn, p);
 				goto done;
 			}
-		} else {			/* modify existing knote */
+		} else {
+			/* modify existing knote */
+
 			/*
 			 * The user may change some filter values after the
 			 * initial EV_ADD, but doing so will not reset any 
@@ -988,25 +992,21 @@ kqueue_fcntl(struct file *fp, u_int com, caddr_t data, struct proc *p)
  * struct fileops poll method for a kqueue descriptor.
  * Determine if kqueue has events pending.
  */
-/*ARGSUSED*/
 static int
 kqueue_poll(struct file *fp, int events, struct proc *p)
 {
 	struct kqueue	*kq;
-	int		revents, s;
+	int		revents;
 
 	kq = (struct kqueue *)fp->f_data;
 	revents = 0;
-	s = splnet();		/* XXXLUKEM: is this correct? */
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (kq->kq_count) {
 			revents |= events & (POLLIN | POLLRDNORM);
 		} else {
-				/* XXXLUKEM: splsched() for next? */
 			selrecord(p, &kq->kq_sel);
 		}
 	}
-	splx(s);
 	return (revents);
 }
 
@@ -1014,7 +1014,6 @@ kqueue_poll(struct file *fp, int events, struct proc *p)
  * struct fileops stat method for a kqueue descriptor.
  * Returns dummy info, with st_size being number of events pending.
  */
-/*ARGSUSED*/
 static int
 kqueue_stat(struct file *fp, struct stat *st, struct proc *p)
 {
@@ -1032,7 +1031,6 @@ kqueue_stat(struct file *fp, struct stat *st, struct proc *p)
  * struct fileops close method for a kqueue descriptor.
  * Cleans up kqueue.
  */
-/*ARGSUSED*/
 static int
 kqueue_close(struct file *fp, struct proc *p)
 {
@@ -1067,7 +1065,7 @@ kqueue_close(struct file *fp, struct proc *p)
 				kn0 = SLIST_NEXT(kn, kn_link);
 				if (kq == kn->kn_kq) {
 					kn->kn_fop->f_detach(kn);
-		/* XXX non-fd release of kn->kn_ptr */
+					/* XXX non-fd release of kn->kn_ptr */
 					pool_put(&knote_pool, kn);
 					*knp = kn0;
 				} else {
@@ -1109,6 +1107,7 @@ kqueue_kqfilter(struct file *fp, struct knote *kn)
 {
 	struct kqueue *kq;
 
+	KASSERT(fp == kn->kn_fp);
 	kq = (struct kqueue *)kn->kn_fp->f_data;
 	if (kn->kn_filter != EVFILT_READ)
 		return (1);
@@ -1169,10 +1168,7 @@ knote_attach(struct knote *kn, struct filedesc *fdp)
 	int		size;
 
 	if (! kn->kn_fop->f_isfd) {
-					/*
-					 * if knote is not on an fd, store
-					 * on internal hash table.
-					 */
+		/* if knote is not on an fd, store on internal hash table */
 		if (fdp->fd_knhashmask == 0)
 			fdp->fd_knhash = hashinit(KN_HASHSIZE, HASH_LIST,
 			    M_KEVENT, M_WAITOK, &fdp->fd_knhashmask);
@@ -1180,32 +1176,42 @@ knote_attach(struct knote *kn, struct filedesc *fdp)
 		goto done;
 	}
 
-					/*
-					 * otherwise, knote is on an fd.
-					 * knotes are stored in fd_knlist
-					 * indexed by kn->kn_id.
-					 */
+	/*
+	 * otherwise, knote is on an fd.
+	 * knotes are stored in fd_knlist indexed by kn->kn_id.
+	 */
 	if (fdp->fd_knlistsize <= kn->kn_id) {
-						/* expand list if too small */
+		/* expand list, it's too small */
 		size = fdp->fd_knlistsize;
-		while (size <= kn->kn_id)
-			size += KQ_EXTENT;	/* grow in KQ_EXTENT chunks */
+		while (size <= kn->kn_id) {
+			/* grow in KQ_EXTENT chunks */
+			size += KQ_EXTENT;
+		}
 		list = malloc(size * sizeof(struct klist *), M_KEVENT,M_WAITOK);
-						/* copy existing knlist */
-		memcpy((caddr_t)list, (caddr_t)fdp->fd_knlist,
-		    fdp->fd_knlistsize * sizeof(struct klist *));
-						/* zero new sections */
-		memset((caddr_t)list +
-		    fdp->fd_knlistsize * sizeof(struct klist *), 0,
+		if (fdp->fd_knlist) {
+			/* copy existing knlist */
+			memcpy((caddr_t)list, (caddr_t)fdp->fd_knlist,
+			    fdp->fd_knlistsize * sizeof(struct klist *));
+		}
+		/*
+		 * Zero new memory. Stylistically, SLIST_INIT() should be
+		 * used here, but that does same thing as the memset() anyway.
+		 */
+		memset(&list[fdp->fd_knlistsize], 0,
 		    (size - fdp->fd_knlistsize) * sizeof(struct klist *));
-		if (fdp->fd_knlist != NULL)	/* switch to new knlist */
-			FREE(fdp->fd_knlist, M_KEVENT);
+
+		/* switch to new knlist */
+		if (fdp->fd_knlist != NULL)
+			free(fdp->fd_knlist, M_KEVENT);
 		fdp->fd_knlistsize = size;
 		fdp->fd_knlist = list;
 	}
-	list = &fdp->fd_knlist[kn->kn_id];	/* get list head for this fd */
+
+	/* get list head for this fd */
+	list = &fdp->fd_knlist[kn->kn_id];
  done:
-	SLIST_INSERT_HEAD(list, kn, kn_link);	/* add new knote */
+	/* add new knote */
+	SLIST_INSERT_HEAD(list, kn, kn_link);
 	kn->kn_status = 0;
 }
 
