@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.3 1997/10/19 14:04:29 enami Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.4 1998/01/12 09:36:54 thorpej Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -71,10 +71,6 @@ void	pcmcia_attach __P((struct device *, struct device *, void *));
 int	pcmcia_print __P((void *, const char *));
 
 int	pcmcia_card_intr __P((void *));
-
-struct cfdriver pcmcia_cd = {
-	NULL, "pcmcia", DV_DULL
-};
 
 struct cfattach pcmcia_ca = {
 	sizeof(struct pcmcia_softc), pcmcia_match, pcmcia_attach
