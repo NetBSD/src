@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/01/23 16:25:22 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.2 2001/01/23 22:24:20 jdolecek Exp $
 
 DIST=	${.CURDIR}/../../dist
 .PATH:	${DIST}/nawk
@@ -8,8 +8,6 @@ SRCS=	awkgram.y b.c lex.c lib.c main.c parse.c proctab.c run.c tran.c
 CPPFLAGS+=	-I${DIST}/nawk -I.
 LDADD+=	-lm
 DPADD+=	${LIBM}
-YFLAGS=	-d
-
-CLEANFILES+=	y.tab.h
+YHEADER=	yes
 
 .include <bsd.prog.mk>
