@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_dma.c,v 1.8 1998/09/01 21:28:04 thorpej Exp $ */
+/* $NetBSD: mcpcia_dma.c,v 1.9 1999/02/12 06:07:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.8 1998/09/01 21:28:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.9 1999/02/12 06:07:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ mcpcia_dma_init(ccp)
 	    sizeof(u_int64_t), NULL, 0);
 
 	if (ccp->cc_sgmap.aps_ptpa & (1024-1)) {
-		panic("mcpcia_dma_init: bad page table address %x",
+		panic("mcpcia_dma_init: bad page table address 0x%lx",
 			ccp->cc_sgmap.aps_ptpa);
 	}
 
