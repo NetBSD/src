@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.39.2.2 1997/11/28 08:55:41 mellon Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.39.2.3 1998/10/01 17:56:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -33,6 +33,43 @@
  * SUCH DAMAGE.
  *
  *	@(#)in_pcb.c	8.2 (Berkeley) 1/4/94
+ */
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Public Access Networks Corporation ("Panix").  It was developed under
+ * contract to Panix by Eric Haszlakiewicz and Thor Lancelot Simon.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions  
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the NetBSD
+ *      Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS 
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF  
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/param.h>
@@ -225,16 +262,21 @@ in_pcbconnect(v, nam)
 	if (in_ifaddr.tqh_first != 0) {
 		/*
 		 * If the destination address is INADDR_ANY,
-		 * use the primary local address.
+		 * use any local address (likely loopback).
 		 * If the supplied address is INADDR_BROADCAST,
-		 * and the primary interface supports broadcast,
-		 * choose the broadcast address for that interface.
+		 * use the broadcast address of an interface
+		 * which supports broadcast. (loopback does not)
 		 */
+
 		if (in_nullhost(sin->sin_addr))
-			sin->sin_addr = in_ifaddr.tqh_first->ia_addr.sin_addr;
-		else if (sin->sin_addr.s_addr == INADDR_BROADCAST &&
-		  (in_ifaddr.tqh_first->ia_ifp->if_flags & IFF_BROADCAST))
-			sin->sin_addr = in_ifaddr.tqh_first->ia_broadaddr.sin_addr;
+		    sin->sin_addr = in_ifaddr.tqh_first->ia_broadaddr.sin_addr;
+		else if (sin->sin_addr.s_addr == INADDR_BROADCAST)
+		    for (ia = in_ifaddr.tqh_first; ia != NULL;
+		      ia = ia->ia_list.tqe_next)
+			if (ia->ia_ifp->if_flags & IFF_BROADCAST) {
+			    sin->sin_addr = ia->ia_broadaddr.sin_addr;
+			    break;
+			}
 	}
 	/*
 	 * If we haven't bound which network number to use as ours,
@@ -278,19 +320,25 @@ in_pcbconnect(v, nam)
 		 * corresponding to the outgoing interface
 		 * unless it is the loopback (in case a route
 		 * to our address on another net goes to loopback).
+		 * 
+		 * XXX Is this still true?  Do we care?
 		 */
 		if (ro->ro_rt && !(ro->ro_rt->rt_ifp->if_flags & IFF_LOOPBACK))
 			ia = ifatoia(ro->ro_rt->rt_ifa);
 		if (ia == 0) {
-			u_int16_t fport = sin->sin_port;
+		    u_int16_t fport = sin->sin_port;
 
-			sin->sin_port = 0;
-			ia = ifatoia(ifa_ifwithladdr(sintosa(sin)));
-			sin->sin_port = fport;
-			if (ia == 0)
-				ia = in_ifaddr.tqh_first;
-			if (ia == 0)
-				return (EADDRNOTAVAIL);
+		    sin->sin_port = 0;
+		    ia = ifatoia(ifa_ifwithladdr(sintosa(sin)));
+		    sin->sin_port = fport;
+		    if (ia == 0)
+			/* Find 1st non-loopback AF_INET address */
+			for (ia = in_ifaddr.tqh_first ; ia != NULL ;
+				ia = ia->ia_list.tqe_next)
+			    if (!(ia->ia_ifp->if_flags & IFF_LOOPBACK))
+				break;
+		    if (ia == 0)
+			return (EADDRNOTAVAIL);
 		}
 		/*
 		 * If the destination address is multicast and an outgoing
@@ -305,10 +353,7 @@ in_pcbconnect(v, nam)
 			imo = inp->inp_moptions;
 			if (imo->imo_multicast_ifp != NULL) {
 				ifp = imo->imo_multicast_ifp;
-				for (ia = in_ifaddr.tqh_first; ia != 0;
-				    ia = ia->ia_list.tqe_next)
-					if (ia->ia_ifp == ifp)
-						break;
+				IFP_TO_IA(ifp, ia);		/* XXX */
 				if (ia == 0)
 					return (EADDRNOTAVAIL);
 			}
@@ -521,7 +566,7 @@ in_rtchange(inp, errno)
 		 * output is attempted.
 		 */
 	}
-	/* SHOULD NOTIFY HIGHER-LEVEL PROTOCOLS */
+	/* XXX SHOULD NOTIFY HIGHER-LEVEL PROTOCOLS */
 }
 
 struct inpcb *
