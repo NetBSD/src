@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.1 1998/09/11 04:56:32 eeh Exp $	*/
+/*	$NetBSD: ffs.S,v 1.2 1998/09/13 23:54:44 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)ffs.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: ffs.S,v 1.1 1998/09/11 04:56:32 eeh Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.2 1998/09/13 23:54:44 eeh Exp $")
 #endif
 #endif  /* LIBC_SCCS and not lint */
 
@@ -99,7 +99,7 @@ ENTRY(_C_LABEL(ffs))
 	retl
 	 add	%o0, 24, %o0
 
-ENTRY(_C_LABEL(ffstab))
+ENTRY(_C_LABEL(__ffstab))
 	.byte	-24,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1 /* 00-0f */
 	.byte	5,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* 10-1f */
 	.byte	6,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* 20-2f */

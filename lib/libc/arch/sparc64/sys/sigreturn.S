@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.S,v 1.1 1998/09/11 04:56:36 eeh Exp $	*/
+/*	$NetBSD: sigreturn.S,v 1.2 1998/09/13 23:54:45 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,12 +44,13 @@
 #if 0
 	.asciz "@(#)sigreturn.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: sigreturn.S,v 1.1 1998/09/11 04:56:36 eeh Exp $")
+	RCSID("$NetBSD: sigreturn.S,v 1.2 1998/09/13 23:54:45 eeh Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
+_ENTRY(__sigreturn14)
 ENTRY(sigreturn)
 	mov	SYS_sigreturn, %g1
 	t	ST_SYSCALL

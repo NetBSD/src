@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.1 1998/09/11 04:56:29 eeh Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.2 1998/09/13 23:54:44 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: setjmp.S,v 1.1 1998/09/11 04:56:29 eeh Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.2 1998/09/13 23:54:44 eeh Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,7 +69,7 @@ ENTRY(setjmp)
 	 */
 	mov	%o0, %o2	/* build sigcontext in [%o2] */
 	mov	1, %o0		/* SIG_BLOCK */
-	mov	SYS_sigprocmask, %g1
+	mov	SYS___sigprocmask14, %g1
 	clr	%o1		/* sigprocmask(SIG_BLOCK, (sigset_t *)NULL) */
 	t	ST_SYSCALL
 	st	%o0, [%o2 + 4]	/* sc.sc_mask = current mask; */
@@ -109,7 +109,7 @@ ENTRY(longjmp)
 	 mov	1, %i1
 1:
 	st	%i1, [%i0 + 28]	/* sc.sc_o0 = v; */
-	mov	SYS_sigreturn, %g1
+	mov	SYS___sigreturn14, %g1
 	mov	%i0, %o0
 	t	ST_SYSCALL	/* sigreturn(scp); */
 
