@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.82 2003/10/28 14:49:53 yamt Exp $ */
+/*	$NetBSD: apm.c,v 1.83 2004/07/03 22:29:13 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.82 2003/10/28 14:49:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.83 2004/07/03 22:29:13 mycroft Exp $");
 
 #include "apm.h"
 #if NAPM > 1
@@ -534,8 +534,11 @@ apm_suspend(sc)
 
 	dopowerhooks(PWR_SUSPEND);
 
-	/* XXX cgd */
-	(void)apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_SUSPEND);
+	if (apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_SUSPEND)) {
+		struct bioscallregs b;
+		b.BX = 0;
+		apm_resume(sc, &b);
+	}
 }
 
 static void
@@ -558,8 +561,11 @@ apm_standby(sc)
 
 	dopowerhooks(PWR_STANDBY);
 
-	/* XXX cgd */
-	(void)apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_STANDBY);
+	if (apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_STANDBY)) {
+		struct bioscallregs b;
+		b.BX = 0;
+		apm_resume(sc, &b);
+	}
 }
 
 static void
