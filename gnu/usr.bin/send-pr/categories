@@ -5,13 +5,15 @@ bin
 port-alpha
 port-amiga
 port-arm32
-port-sparc
+port-atari
 port-hp300
 port-i386
-port-mac
 port-m68k
+port-mac
 port-pc532
 port-pmax
+port-sparc
+port-sparc
 port-sun3
 port-vax
 standards
