@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.3 2000/12/22 06:04:21 itojun Exp $	*/
+/*	$NetBSD: yacc.y,v 1.4 2001/01/28 00:28:01 thorpej Exp $	*/
 
 %{
 /*-
@@ -43,7 +43,7 @@
 static char sccsid[] = "@(#)yacc.y	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$FreeBSD$";
 #else
-__RCSID("$NetBSD: yacc.y,v 1.3 2000/12/22 06:04:21 itojun Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.4 2001/01/28 00:28:01 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: yacc.y,v 1.3 2000/12/22 06:04:21 itojun Exp $");
 
 #include "ldef.h"
 
-char	*locale_file = "<stdout>";
+const char	*locale_file = "<stdout>";
 
 rune_map	maplower = { { 0, }, };
 rune_map	mapupper = { { 0, }, };
