@@ -1,4 +1,4 @@
-# $NetBSD: defs.mk,v 1.3 2003/08/17 18:03:26 christos Exp $
+# $NetBSD: defs.mk,v 1.4 2003/09/26 17:37:56 christos Exp $
 G_GDB_OBJS=\
 annotate.o \
 arch-utils.o \
@@ -141,22 +141,6 @@ target.o \
 thread.o \
 top.o \
 tracepoint.o \
-tui-file.o \
-tui-hooks.o \
-tui-out.o \
-tui.o \
-tuiCommand.o \
-tuiData.o \
-tuiDataWin.o \
-tuiDisassem.o \
-tuiGeneralWin.o \
-tuiIO.o \
-tuiLayout.o \
-tuiRegs.o \
-tuiSource.o \
-tuiSourceWin.o \
-tuiStack.o \
-tuiWin.o \
 typeprint.o \
 ui-file.o \
 ui-out.o \
@@ -210,6 +194,24 @@ stabs.o \
 syms.o \
 targets.o \
 tekhex.o
+
+G_TUI_OBJS= \
+tui-file.o \
+tui-hooks.o \
+tui-out.o \
+tui.o \
+tuiCommand.o \
+tuiData.o \
+tuiDataWin.o \
+tuiDisassem.o \
+tuiGeneralWin.o \
+tuiIO.o \
+tuiLayout.o \
+tuiRegs.o \
+tuiSource.o \
+tuiSourceWin.o \
+tuiStack.o \
+tuiWin.o
 
 G_OPCODES_OBJS=\
 dis-buf.o \
