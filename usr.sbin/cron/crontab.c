@@ -1,4 +1,4 @@
-/*	$NetBSD: crontab.c,v 1.9 1998/02/22 12:17:31 christos Exp $	*/
+/*	$NetBSD: crontab.c,v 1.10 1998/04/01 20:59:08 kleink Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: crontab.c,v 2.13 1994/01/17 03:20:37 vixie Exp";
 #else
-__RCSID("$NetBSD: crontab.c,v 1.9 1998/02/22 12:17:31 christos Exp $");
+__RCSID("$NetBSD: crontab.c,v 1.10 1998/04/01 20:59:08 kleink Exp $");
 #endif
 #endif
 
@@ -43,12 +43,12 @@ __RCSID("$NetBSD: crontab.c,v 1.9 1998/02/22 12:17:31 christos Exp $");
 #ifdef USE_UTIMES
 # include <sys/time.h>
 #else
-# include <time.h>
 # include <utime.h>
 #endif
 #if defined(POSIX)
 # include <locale.h>
 #endif
+#include <time.h>
 
 
 #define NHEADER_LINES 3
