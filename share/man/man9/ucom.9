@@ -1,4 +1,4 @@
-.\"	$NetBSD: ucom.9,v 1.8 2002/02/07 03:15:10 ross Exp $
+.\"	$NetBSD: ucom.9,v 1.9 2002/06/01 00:27:19 nathanw Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -93,13 +93,13 @@ the number of the bulk output pipe.
 .It Dv u_int ibufsize
 the size of the read requests on the bulk in pipe.
 .It Dv u_int ibufsizepad
-the size of the input buffer.  This is usually the same
-as .Dv ibufsize.
+the size of the input buffer.  This is usually the same as
+.Dv ibufsize.
 .It Dv u_int obufsize
 the size of the write requests on the bulk out pipe.
 .It Dv u_int ibufsizepad
-the size of the output buffer.  This is usually the same
-as .Dv obufsize.
+the size of the output buffer.  This is usually the same as
+.Dv obufsize.
 .It Dv usbd_device_handle device
 a handle to the device.
 .It usbd_interface_handle iface
