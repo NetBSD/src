@@ -1,4 +1,4 @@
-/*	$NetBSD: bog.c,v 1.10 1999/07/14 17:23:53 hubertf Exp $	*/
+/*	$NetBSD: bog.c,v 1.11 1999/07/21 04:02:29 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)bog.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: bog.c,v 1.10 1999/07/14 17:23:53 hubertf Exp $");
+__RCSID("$NetBSD: bog.c,v 1.11 1999/07/21 04:02:29 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,6 +131,9 @@ main(argc, argv)
 	long seed;
 	int ch, done, i, selfuse, sflag;
 	char *bspec, *p;
+
+	/* revoke setgid privileges */
+	setregid(getgid(), getgid());
 
 	seed = 0;
 	batch = debug = reuse = selfuse = sflag = 0;
