@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.29 1999/12/13 15:17:19 itojun Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.30 2000/03/06 20:52:12 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -855,7 +855,7 @@ fddi_ifattach(ifp)
 	ifp->if_mtu = FDDIMTU;
 	ifp->if_output = fddi_output;
 	ifp->if_input = fddi_input;
-	ifp->if_baudrate = 100000000;
+	ifp->if_baudrate = IF_Mbps(100);
 #ifdef IFF_NOTRAILERS
 	ifp->if_flags |= IFF_NOTRAILERS;
 #endif
