@@ -1,3 +1,5 @@
+/*	$NetBSD: malloc.c,v 1.18 1999/07/04 03:12:47 thorpej Exp $	*/
+
 /*
  * ----------------------------------------------------------------------------
  * "THE BEER-WARE LICENSE" (Revision 42):
@@ -69,7 +71,6 @@
 #   include <sys/param.h>
 #   define malloc_pageshift             PGSHIFT
 #   define malloc_minsize               16U
-#   define MADV_FREE                    MADV_DONTNEED
 #endif /* __NetBSD__ */
 
 #if defined(__sparc__) && defined(sun)
@@ -81,7 +82,6 @@
 #   define INIT_MMAP() \
 	{ if ((fdzero=open("/dev/zero", O_RDWR, 0000)) == -1) \
 	    wrterror("open of /dev/zero"); }
-#   define MADV_FREE			MADV_DONTNEED
 #endif /* __sparc__ */
 
 /* Insert your combination here... */
@@ -185,6 +185,10 @@ struct pgfree {
 
 #ifndef INIT_MMAP
 #define INIT_MMAP()
+#endif
+
+#ifndef MADV_FREE
+#define MADV_FREE MADV_DONTNEED
 #endif
 
 /* Set when initialization has been done */
