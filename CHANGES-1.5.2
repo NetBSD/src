@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.2,v 1.1.2.28 2001/08/22 19:08:16 tv Exp $
+#	$NetBSD: CHANGES-1.5.2,v 1.1.2.29 2001/09/09 23:42:48 tv Exp $
 
 A complete list of changes from NetBSD 1.5.1 to NetBSD 1.5.2:
 
@@ -23,10 +23,12 @@ libexec/telnetd/utility.c			1.18 via patch
   Security-related fixups for telnet
     Bound-check all "*nfrontp++" code.  From OpenBSD and Heimdal.
     Complain if file descriptor goes above FD_SETSIZE.  From OpenBSD.
+  Fixes SA#2001-012.
 
 crypto/dist/openssl/crypto/rand/md_rand.c	1.2
 
   Fix a pseudo-random number generator weakness. Noted on bugtraq.
+  Fixes SA#2001-013.
 
 sys/arch/i386/include/reg.h			1.16
 
@@ -163,7 +165,7 @@ sbin/dump/main.c				1.37 via patch
 
   Temporarily drop setgid (for setgid tty) privileges, but restore them
   if we fork to perform an operator notification. Generalize pre-existing
-  #ifdef RDUMP code.
+  #ifdef RDUMP code.  Fixes SA#2001-014.
 
 sys/arch/mips/mips/locore_mips3.S		1.70
 sys/arch/mips/mips/vm_machdep.c			1.77-1.78
@@ -238,7 +240,7 @@ share/man/man9/lock.9				1.4-1.8
 
 libexec/telnetd/termstat.c			1.9-1.10
 
-  Add missing parentheses; fixes PR bin/13612.
+  Add missing parentheses; fixes PR#13612.
 
 distrib/notes/common/main			patch
 distrib/notes/common/sysinst			patch
@@ -261,7 +263,7 @@ lib/libossaudio/soundcard.h			1.11
 sys/compat/ossaudio/ossaudio.c			1.34-1.35
 
   Correctly calculate input and output hardware buffer sizes.
-  Fixes PR lib/12796.
+  Fixes PR#12796.
 
 dist/dhcp/*					sync at 2001-August-16
 distrib/notes/common/main			patch
@@ -314,3 +316,11 @@ gnu/dist/sendmail/sendmail/version.c		patch
   Fix a security hole in command line argument parsing, which can
   lead to a hijack of local root privilege.  Fixed in sendmail 8.11.6;
   here, version number bumped to 8.11.3nb1 to note the difference.
+
+distrib/notes/common/main			patch
+
+  Add list of differences from 1.5.1.
+
+distrib/notes/common/main			patch
+
+  Update 1.5.2 release date.
