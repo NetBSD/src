@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.25 1996/02/26 23:40:34 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.26 1996/03/03 16:48:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
@@ -1404,12 +1404,16 @@ dcm_console_scan(scode, va, arg)
 	}
 #endif
 
+	/* Only raise priority. */
+	if (pri > cp->cn_pri)
+		cp->cn_pri = pri;
+
 	/*
 	 * If our priority is higher than the currently-remembered
 	 * console, stash our priority, for the benefit of dcmcninit().
 	 */
-	if ((cp->cn_pri > conpri) || force) {
-		conpri = cp->cn_pri = pri;
+	if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri)) || force) {
+		cn_tab = cp;
 		if (scode >= 132) {
 			dioiidev = (u_char *)va;
 			return ((dioiidev[0x101] + 1) * 0x100000);
