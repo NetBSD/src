@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.14 1999/07/05 17:55:34 thorpej Exp $	 */
+/*	$NetBSD: rtld.h,v 1.15 1999/08/01 19:47:07 kleink Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -182,6 +182,7 @@ typedef struct Struct_Obj_Entry {
 #if defined(_RTLD_SOURCE)
 
 extern struct r_debug _rtld_debug;
+extern Search_Path *_rtld_default_paths;
 extern Obj_Entry *_rtld_objlist;
 extern Obj_Entry **_rtld_objtail;
 extern Obj_Entry _rtld_objself;
