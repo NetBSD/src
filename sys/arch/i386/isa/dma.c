@@ -85,7 +85,7 @@ isa_dmastart(flags, addr, nbytes, chan)
 	}
 
 	/* translate to physical */
-	phys = pmap_extract(pmap_kernel(), (vm_offset_t)addr);
+	phys = pmap_extract(kernel_pmap, (vm_offset_t)addr);
 
 	if ((chan & 4) == 0) {
 		/*
@@ -211,7 +211,7 @@ isa_dmarangecheck(va, length, chan)
 
 	endva = round_page(va + length);
 	for (; va < endva ; va += NBPG) {
-		phys = trunc_page(pmap_extract(pmap_kernel(), va));
+		phys = trunc_page(pmap_extract(kernel_pmap, va));
 		if (phys == 0)
 			panic("isa_dmacheck: no physical page present");
 		if (phys >= (1<<24)) 
