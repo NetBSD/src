@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.33 1998/11/13 12:07:51 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.34 1999/04/26 21:54:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -148,7 +148,8 @@ struct ctlname {
 #define	KERN_SHORTCORENAME	36	/* int: programs dump core as "core" */
 #define	KERN_SYNCHRONIZED_IO	37	/* int: POSIX synchronized I/O */
 #define	KERN_IOV_MAX		38	/* int: max iovec's for readv(2) etc. */
-#define	KERN_MAXID		39	/* number of valid kern ids */
+#define	KERN_MBUF		39	/* node: mbuf parameters */
+#define	KERN_MAXID		40	/* number of valid kern ids */
 
 #define CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -190,6 +191,7 @@ struct ctlname {
 	{ "shortcorename", CTLTYPE_INT }, \
 	{ "synchronized_io", CTLTYPE_INT }, \
 	{ "iov_max", CTLTYPE_INT }, \
+	{ "mbuf", CTLTYPE_NODE }, \
 }
 
 /*
@@ -403,6 +405,7 @@ int sysctl_ntptime __P((char *, size_t *));
 #ifdef GPROF
 int sysctl_doprof __P((int *, u_int, void *, size_t *, void *, size_t));
 #endif
+int sysctl_dombuf __P((int *, u_int, void *, size_t *, void *, size_t));
 
 void fill_eproc __P((struct proc *, struct eproc *));
 
