@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.36 1999/12/15 02:02:16 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.37 2000/01/05 02:57:29 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -179,15 +179,6 @@ static RF_SparetWait_t *rf_sparet_wait_queue;	/* requests to install a
 static RF_SparetWait_t *rf_sparet_resp_queue;	/* responses from
 						 * installation process */
 
-static struct rf_recon_req *recon_queue = NULL;	/* used to communicate
-						 * reconstruction
-						 * requests */
-
-
-decl_simple_lock_data(, recon_queue_mutex)
-#define LOCK_RECON_Q_MUTEX() simple_lock(&recon_queue_mutex)
-#define UNLOCK_RECON_Q_MUTEX() simple_unlock(&recon_queue_mutex)
-
 /* prototypes */
 static void KernelWakeupFunc(struct buf * bp);
 static void InitBP(struct buf * bp, struct vnode *, unsigned rw_flag, 
@@ -302,6 +293,13 @@ int raidlookup __P((char *, struct proc * p, struct vnode **));
 
 static void rf_markalldirty __P((RF_Raid_t *));
 
+void rf_ReconThread __P((struct rf_recon_req *));
+/* XXX what I want is: */
+/*void rf_ReconThread __P((RF_Raid_t *raidPtr));  */
+void rf_RewriteParityThread __P((RF_Raid_t *raidPtr));
+void rf_CopybackThread __P((RF_Raid_t *raidPtr));
+void rf_ReconstructInPlaceThread __P((struct rf_recon_req *));
+
 void
 raidattach(num)
 	int     num;
@@ -334,7 +332,6 @@ raidattach(num)
 	}
 
 	rf_sparet_wait_queue = rf_sparet_resp_queue = NULL;
-	recon_queue = NULL;
 
 	for (i = 0; i < numraid; i++)
 		raidPtrs[i] = NULL;
@@ -676,7 +673,6 @@ raidioctl(dev, cmd, data, flag, p)
 	int retcode = 0;
 	int row;
 	int column;
-	int s;
 	struct rf_recon_req *rrcopy, *rr;
 	RF_ComponentLabel_t *component_label;
 	RF_ComponentLabel_t ci_label;
@@ -718,7 +714,7 @@ raidioctl(dev, cmd, data, flag, p)
 	case RAIDFRAME_GET_SIZE:
 	case RAIDFRAME_FAIL_DISK:
 	case RAIDFRAME_COPYBACK:
-	case RAIDFRAME_CHECKRECON:
+	case RAIDFRAME_CHECK_RECON_STATUS:
 	case RAIDFRAME_GET_COMPONENT_LABEL:
 	case RAIDFRAME_SET_COMPONENT_LABEL:
 	case RAIDFRAME_ADD_HOT_SPARE:
@@ -726,6 +722,8 @@ raidioctl(dev, cmd, data, flag, p)
 	case RAIDFRAME_INIT_LABELS:
 	case RAIDFRAME_REBUILD_IN_PLACE:
 	case RAIDFRAME_CHECK_PARITY:
+	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS:
+	case RAIDFRAME_CHECK_COPYBACK_STATUS:
 		if ((rs->sc_flags & RAIDF_INITED) == 0)
 			return (ENXIO);
 	}
@@ -795,6 +793,12 @@ raidioctl(dev, cmd, data, flag, p)
 		/* allow this many simultaneous IO's to this RAID device */
 		raidPtrs[unit]->openings = RAIDOUTSTANDING;
 
+		/* XXX should be moved to rf_Configure() */
+
+		raidPtrs[unit]->copyback_in_progress = 0;
+		raidPtrs[unit]->parity_rewrite_in_progress = 0;
+		raidPtrs[unit]->recon_in_progress = 0;
+		
 		if (retcode == 0) {
 			retcode = raidinit(dev, raidPtrs[unit], unit);
 			rf_markalldirty( raidPtrs[unit] );
@@ -971,22 +975,17 @@ raidioctl(dev, cmd, data, flag, p)
 			raidPtrs[unit]->parity_good = RF_RAID_CLEAN;
 			return(0);
 		}
+		
+		if (raidPtrs[unit]->parity_rewrite_in_progress == 1) {
+			/* Re-write is already in progress! */
+			return(EINVAL);
+		}
 
 		/* borrow the thread of the requesting process */
 
-		s = splbio();
-		retcode = rf_RewriteParity(raidPtrs[unit]);
-		splx(s);
-		/* return I/O Error if the parity rewrite fails */
-
-		if (retcode) {
-			retcode = EIO;
-		} else {
-			/* set the clean bit!  If we shutdown correctly,
-			 the clean bit on each component label will get
-			 set */
-			raidPtrs[unit]->parity_good = RF_RAID_CLEAN;
-		}
+		retcode = RF_CREATE_THREAD(raidPtrs[unit]->parity_rewrite_thread,
+					   rf_RewriteParityThread,
+					   raidPtrs[unit],"raid_parity");
 		return (retcode);
 
 
@@ -1007,6 +1006,11 @@ raidioctl(dev, cmd, data, flag, p)
 			return(EINVAL);
 		}
 
+		if (raidPtrs[unit]->recon_in_progress == 1) {
+			/* a reconstruct is already in progress! */
+			return(EINVAL);
+		}
+
 		componentPtr = (RF_SingleComponent_t *) data;
 		memcpy( &component, componentPtr, 
 			sizeof(RF_SingleComponent_t));
@@ -1017,10 +1021,16 @@ raidioctl(dev, cmd, data, flag, p)
 		    (column < 0) || (column >= raidPtrs[unit]->numCol)) {
 			return(EINVAL);
 		}
-		printf("Attempting a rebuild in place\n");
-		s = splbio();
-		retcode = rf_ReconstructInPlace(raidPtrs[unit], row, column);
-		splx(s);
+
+		RF_Malloc(rrcopy, sizeof(*rrcopy), (struct rf_recon_req *));
+
+		rrcopy->raidPtr = (void *) raidPtrs[unit];
+		rrcopy->row = row;
+		rrcopy->col = column;
+
+		retcode = RF_CREATE_THREAD(raidPtrs[unit]->recon_thread,
+					   rf_ReconstructInPlaceThread,
+					   rrcopy,"raid_reconip");
 		return(retcode);
 
 	case RAIDFRAME_GET_INFO:
@@ -1126,12 +1136,9 @@ raidioctl(dev, cmd, data, flag, p)
 		bcopy(rr, rrcopy, sizeof(*rr));
 		rrcopy->raidPtr = (void *) raidPtrs[unit];
 
-		LOCK_RECON_Q_MUTEX();
-		rrcopy->next = recon_queue;
-		recon_queue = rrcopy;
-		wakeup(&recon_queue);
-		UNLOCK_RECON_Q_MUTEX();
-
+		retcode = RF_CREATE_THREAD(raidPtrs[unit]->recon_thread,
+					   rf_ReconThread,
+					   rrcopy,"raid_recon");
 		return (0);
 
 		/* invoke a copyback operation after recon on whatever disk
@@ -1143,28 +1150,53 @@ raidioctl(dev, cmd, data, flag, p)
 			return(EINVAL);
 		}
 
-		/* borrow the current thread to get this done */
+		if (raidPtrs[unit]->copyback_in_progress == 1) {
+			/* Copyback is already in progress! */
+			return(EINVAL);
+		}
 
-		s = splbio();
-		rf_CopybackReconstructedData(raidPtrs[unit]);
-		splx(s);
-		return (0);
+		retcode = RF_CREATE_THREAD(raidPtrs[unit]->copyback_thread,
+					   rf_CopybackThread,
+					   raidPtrs[unit],"raid_copyback");
+		return (retcode);
 
 		/* return the percentage completion of reconstruction */
-	case RAIDFRAME_CHECKRECON:
+	case RAIDFRAME_CHECK_RECON_STATUS:
 		if (raidPtrs[unit]->Layout.map->faultsTolerated == 0) {
 			/* This makes no sense on a RAID 0 */
 			return(EINVAL);
 		}
-
-		row = *(int *) data;
-		if (row < 0 || row >= raidPtrs[unit]->numRow)
-			return (EINVAL);
+		row = 0; /* XXX we only consider a single row... */
 		if (raidPtrs[unit]->status[row] != rf_rs_reconstructing)
 			*(int *) data = 100;
 		else
 			*(int *) data = raidPtrs[unit]->reconControl[row]->percentComplete;
 		return (0);
+
+	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS:
+		if (raidPtrs[unit]->Layout.map->faultsTolerated == 0) {
+			/* This makes no sense on a RAID 0 */
+			return(EINVAL);
+		}
+		if (raidPtrs[unit]->parity_rewrite_in_progress == 1) {
+			*(int *) data = 100 * raidPtrs[unit]->parity_rewrite_stripes_done / raidPtrs[unit]->Layout.numStripe;
+		} else {
+			*(int *) data = 100;
+		}
+		return (0);
+
+	case RAIDFRAME_CHECK_COPYBACK_STATUS:
+		if (raidPtrs[unit]->Layout.map->faultsTolerated == 0) {
+			/* This makes no sense on a RAID 0 */
+			return(EINVAL);
+		}
+		if (raidPtrs[unit]->copyback_in_progress == 1) {
+			*(int *) data = 100 * raidPtrs[unit]->copyback_stripes_done / raidPtrs[unit]->Layout.numStripe;
+		} else {
+			*(int *) data = 100;
+		}
+		return (0);
+
 
 		/* the sparetable daemon calls this to wait for the kernel to
 		 * need a spare table. this ioctl does not return until a
@@ -1336,45 +1368,6 @@ raidinit(dev, raidPtr, unit)
 	return (retcode);
 }
 
-/*
- * This kernel thread never exits.  It is created once, and persists
- * until the system reboots.
- */
-
-void 
-rf_ReconKernelThread()
-{
-	struct rf_recon_req *req;
-	int     s;
-
-	/* XXX not sure what spl() level we should be at here... probably
-	 * splbio() */
-	s = splbio();
-
-	while (1) {
-		/* grab the next reconstruction request from the queue */
-		LOCK_RECON_Q_MUTEX();
-		while (!recon_queue) {
-			UNLOCK_RECON_Q_MUTEX();
-			tsleep(&recon_queue, PRIBIO,
-			       "raidframe recon", 0);
-			LOCK_RECON_Q_MUTEX();
-		}
-		req = recon_queue;
-		recon_queue = recon_queue->next;
-		UNLOCK_RECON_Q_MUTEX();
-
-		/*
-	         * If flags specifies that we should start recon, this call
-	         * will not return until reconstruction completes, fails, 
-		 * or is aborted.
-	         */
-		rf_FailDisk((RF_Raid_t *) req->raidPtr, req->row, req->col,
-		    ((req->flags & RF_FDFLAGS_RECON) ? 1 : 0));
-
-		RF_Free(req, sizeof(*req));
-	}
-}
 /* wake up the daemon & tell it to get us a spare table
  * XXX
  * the entries in the queues should be tagged with the raidPtr
@@ -1523,6 +1516,7 @@ raidstart(raidPtr)
 		/* XXX we're still at splbio() here... do we *really* 
 		   need to be? */
 
+		
 		retcode = rf_DoAccess(raidPtr, (bp->b_flags & B_READ) ?
 				      RF_IO_TYPE_READ : RF_IO_TYPE_WRITE,
 				      do_async, raid_addr, num_blocks,
@@ -1550,7 +1544,10 @@ rf_DispatchKernelIO(queue, req)
 	struct raidbuf *raidbp = NULL;
 	struct raid_softc *rs;
 	int     unit;
+	int s;
 
+	s=0;
+	/* s = splbio();*/ /* want to test this */
 	/* XXX along with the vnode, we also need the softc associated with
 	 * this device.. */
 
@@ -1652,6 +1649,7 @@ rf_DispatchKernelIO(queue, req)
 		panic("bad req->type in rf_DispatchKernelIO");
 	}
 	db1_printf(("Exiting from DispatchKernelIO\n"));
+	/* splx(s); */ /* want to test this */
 	return (0);
 }
 /* this is the callback function associated with a I/O invoked from
@@ -2293,4 +2291,91 @@ rf_update_component_labels( raidPtr )
 		}
 	}
 	/* 	printf("Component labels updated\n"); */
+}
+
+void 
+rf_ReconThread(req)
+	struct rf_recon_req *req;
+{
+	int     s;
+	RF_Raid_t *raidPtr;
+
+	s = splbio();
+	raidPtr = (RF_Raid_t *) req->raidPtr;
+	raidPtr->recon_in_progress = 1;
+
+	rf_FailDisk((RF_Raid_t *) req->raidPtr, req->row, req->col,
+		    ((req->flags & RF_FDFLAGS_RECON) ? 1 : 0));
+
+	/* XXX get rid of this! we don't need it at all.. */
+	RF_Free(req, sizeof(*req));
+
+	raidPtr->recon_in_progress = 0;
+	splx(s);
+
+	/* That's all... */
+	kthread_exit(0);        /* does not return */
+}
+
+void
+rf_RewriteParityThread(raidPtr)
+	RF_Raid_t *raidPtr;
+{
+	int retcode;
+	int s;
+
+	raidPtr->parity_rewrite_in_progress = 1;
+	s = splbio();
+	retcode = rf_RewriteParity(raidPtr);
+	splx(s);
+	if (retcode) {
+		printf("raid%d: Error re-writing parity!\n",raidPtr->raidid);
+	} else {
+		/* set the clean bit!  If we shutdown correctly,
+		   the clean bit on each component label will get
+		   set */
+		raidPtr->parity_good = RF_RAID_CLEAN;
+	}
+	raidPtr->parity_rewrite_in_progress = 0;
+
+	/* That's all... */
+	kthread_exit(0);        /* does not return */
+}
+
+
+void
+rf_CopybackThread(raidPtr)
+	RF_Raid_t *raidPtr;
+{
+	int s;
+
+	raidPtr->copyback_in_progress = 1;
+	s = splbio();
+	rf_CopybackReconstructedData(raidPtr);
+	splx(s);
+	raidPtr->copyback_in_progress = 0;
+
+	/* That's all... */
+	kthread_exit(0);        /* does not return */
+}
+
+
+void
+rf_ReconstructInPlaceThread(req)
+	struct rf_recon_req *req;
+{
+	int retcode;
+	int s;
+	RF_Raid_t *raidPtr;
+	
+	s = splbio();
+	raidPtr = req->raidPtr;
+	raidPtr->recon_in_progress = 1;
+	retcode = rf_ReconstructInPlace(raidPtr, req->row, req->col);
+	RF_Free(req, sizeof(*req));
+	raidPtr->recon_in_progress = 0;
+	splx(s);
+
+	/* That's all... */
+	kthread_exit(0);        /* does not return */
 }
