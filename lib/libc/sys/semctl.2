@@ -1,4 +1,4 @@
-.\"	$NetBSD: semctl.2,v 1.3 1997/11/27 07:37:18 mikel Exp $	
+.\"	$NetBSD: semctl.2,v 1.4 1997/11/27 10:25:04 mikel Exp $	
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.\"/
+.\"
 .Dd August 17, 1995
 .Dt SEMCTL 2
 .Os NetBSD
@@ -59,13 +59,16 @@ is a union of the following fields:
     struct  semid_ds *buf;  /* buffer for IPC_{STAT,SET} */
     u_short *array;         /* array for GETALL & SETALL */
 .Ed
-
+.Pp
 The
 .Bf -literal
 semid_ds
 .Ef
-structure used in the IPC_SET and IPC_STAT commands is defined
-as follows in
+structure used in the
+.Dv IPC_SET
+and
+.Dv IPC_STAT
+commands is defined as follows in
 .Aq Pa sys/sem.h :
 .Bd -literal
 struct semid_ds {
@@ -76,7 +79,7 @@ struct semid_ds {
     time_t  sem_ctime;         /* last change time */
 };
 .Ed
-
+.Pp
 The
 .Bf -literal
 ipc_perm
@@ -99,7 +102,7 @@ struct ipc_perm {
     key_t key;	 /* user specified msg/sem/shm key */
 };
 .Ed
-
+.Pp
 .Fn semctl
 provides the following operations:
 .Bl -tag -width IPC_RMIDX
@@ -107,7 +110,7 @@ provides the following operations:
 Return the value of the semaphore.
 .It Dv SETVAL
 Set the value of the semaphore to
-.Va arg.val .
+.Fa arg.val .
 .It Dv GETPID
 Return the pid of the last process that did an operation on this semaphore.
 .It Dv GETNCNT
@@ -116,14 +119,14 @@ Return the number of processes waiting to acquire the semaphore.
 Return the number of processes waiting for the value of the semaphore to
 reach 0.
 .It Dv GETALL
-Return the values for all the semaphores associated with 
+Return the values of all the semaphores associated with 
 .Fa semid .
 .It Dv SETALL
-Set the values for all the semaphores that are associated with the semaphore
+Set the values of all the semaphores that are associated with the semaphore
 identifier
 .Fa semid
 to the corresponding values in
-.Va arg.array .
+.Fa arg.array .
 .It Dv IPC_STAT
 Gather statistics about a semaphore and place the information in the
 .Bf -literal
@@ -158,7 +161,7 @@ or
 .Va sem_perm.uid
 values in the data structure associated with the semaphore can do this.
 .El
-
+.Pp
 The permission to read or change a message queue (see
 .Xr semop 2 )
 is determined by the
@@ -176,7 +179,13 @@ effective gid can match either
 or
 .Va sem_perm.gid .
 .Sh RETURN VALUES
-For the GETVAL, GETPID, GETNCNT and GETZCNT operations,
+For the
+.Dv GETVAL ,
+.Dv GETPID ,
+.Dv GETNCNT ,
+and
+.Dv GETZCNT
+operations,
 .Fn semctl
 returns one of the values described above if successful. All other operations
 will make
@@ -190,7 +199,11 @@ will fail if:
 .Bl -tag -width Er
 .It Bq Er EPERM
 .Fa cmd
-is equal to IPC_SET or IPC_RMID and the caller is not the super-user, nor does
+is equal to
+.Dv IPC_SET
+or
+.Dv IPC_RMID
+and the caller is not the super-user, nor does
 the effective uid match either the
 .Va sem_perm.uid
 or
@@ -201,7 +214,7 @@ The caller has no operation permission for this semaphore.
 .It Bq Er EINVAL
 .Fa semid
 is not a valid message semaphore identifier.
-
+.Pp
 .Va cmd
 is not a valid command.
 .It Bq Er EFAULT
