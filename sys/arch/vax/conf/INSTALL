@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.13 2000/12/19 15:51:50 tsutsui Exp $
+#	$NetBSD: INSTALL,v 1.14 2001/01/28 21:01:52 ragge Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -16,11 +16,13 @@ options 	"VAX630"	# MV II
 options 	"VAX650"	# MV III, 3600, 3800, 3900
 options 	"VAX660"	# VAX 4000/200
 options 	"VAX670"	# VAX 4000/300
+options 	"VAX680"	# VAX 4000/[45]00
 options 	"VAX410"	# VS 2000
 options 	"VAX43"		# VS 3100/76
 options 	"VAX46"		# VS 4000/60
 options 	"VAX48"		# VS 4000 VLC
 options 	"VAX49"		# VS 4000/90
+options 	"VAX53"		# VAX 4000/105A
 
 # Max users on system; this is just a hint
 maxusers	8
@@ -133,6 +135,8 @@ hp*		at mba? drive?	# RM/RP disk drives
 
 # Devices on internal MicroVAX bus
 uba0		at ibus?	# Q-Bus adapter
+dz0		at ibus?	# VAX 4000/105A serial lines
+#asc0		at ibus?	# VAX 4000/105A SCSI ctlr
 
 # Disk controllers at Unibus
 uda0		at uba?	csr 0172150	# UDA50/RQDX?

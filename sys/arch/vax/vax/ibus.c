@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.5 2000/06/04 18:02:35 ragge Exp $ */
+/*	$NetBSD: ibus.c,v 1.6 2001/01/28 21:01:53 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -70,6 +70,8 @@ ibus_match(struct device *parent, struct cfdata *cf, void *aux)
 #define	MVNIADDR 0x20084400
 #define	SGECADDR 0x20008000
 #define SHACADDR 0x20004200
+#define	DZADDR	 0x25000000
+#define	SCSIADDR 0x26000080
 
 void
 ibus_attach(struct device *parent, struct device *self, void *aux)
@@ -83,6 +85,15 @@ ibus_attach(struct device *parent, struct device *self, void *aux)
 		ibus_dma_init(sc);
 	}
 #endif
+	/*
+	 * Maybe it has the dz serial lines
+	 */
+	bp.type = "dz";
+	va = vax_map_physmem(DZADDR, 1);
+	if (badaddr((caddr_t)va, 2) == 0)
+		config_found(self, &bp, ibus_print);
+	vax_unmap_physmem(va, 1);
+
 	/*
 	 * There may be a SGEC. Is badaddr() enough here?
 	 */
@@ -109,6 +120,16 @@ ibus_attach(struct device *parent, struct device *self, void *aux)
 	if (badaddr((caddr_t)va + 0x48, 4) == 0)
 		config_found(self, &bp, ibus_print);
 	vax_unmap_physmem(va, 1);
+
+	/*
+	 * NCR SCSI controller could be there
+	 */
+	bp.type = "asc";
+	va = vax_map_physmem(SCSIADDR, 1);
+	if (badaddr((caddr_t)va + 0x48, 2) == 0)
+		config_found(self, &bp, ibus_print);
+	vax_unmap_physmem(va, 1);
+
 	/*
 	 * All MV's have a Qbus.
 	 */
