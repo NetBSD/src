@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.10 2002/03/22 22:30:02 kristerw Exp $	*/
+/*	$NetBSD: lexi.c,v 1.11 2002/05/26 22:53:38 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lexi.c,v 1.10 2002/03/22 22:30:02 kristerw Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.11 2002/05/26 22:53:38 wiz Exp $");
 #endif
 #endif				/* not lint */
 
@@ -125,7 +125,7 @@ char    chartype[128] =
 
 
 int
-lexi()
+lexi(void)
 {
 	int     unary_delim;	/* this is set to 1 if the current token
 				 * 
@@ -586,9 +586,7 @@ stop_lit:
  * Add the given keyword to the keyword table, using val as the keyword type
  */
 void
-addkey(key, val)
-	char   *key;
-	int     val;
+addkey(char *key, int val)
 {
 	struct templ *p = specials;
 	while (p->rwd)
