@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vfs_conf.c	7.3 (Berkeley) 6/28/90
- *	$Id: vfs_conf.c,v 1.15 1994/03/09 21:23:48 ws Exp $
+ *	$Id: vfs_conf.c,v 1.16 1994/04/12 05:03:03 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -133,7 +133,7 @@ struct vfsops *vfssw[] = {
 #else
 	(struct vfsops *)0,
 #endif
-	(struct vfsops *)0,	/* 9 = MOUNT_AFS */
+	(struct vfsops *)0,	/* 9 = XXX CURRENTLY EMPTY */
 #ifdef PROCFS
 	&procfs_vfsops,		/* 10 = MOUNT_PROCFS */
 #else
