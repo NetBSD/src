@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.c,v 1.8 1999/01/22 02:36:13 thorpej Exp $	*/
+/*	$NetBSD: ypserv.c,v 1.9 1999/02/18 06:03:47 abs Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv.c,v 1.8 1999/01/22 02:36:13 thorpej Exp $");
+__RCSID("$NetBSD: ypserv.c,v 1.9 1999/02/18 06:03:47 abs Exp $");
 #endif
 
 #include <sys/types.h>
@@ -75,16 +75,18 @@ const char *svcname;
 #define SIG_PF void(*)(int)
 #endif
 
-#ifdef DEBUG
-#define RPC_SVC_FG
-#endif
-
 #define _RPCSVC_CLOSEDOWN 120
 static int _rpcpmstart;		/* Started by a port monitor ? */
 static int _rpcfdtype;		/* Whether Stream or Datagram ? */
 static int _rpcsvcdirty;	/* Still serving ? */
 
 int	usedns;
+#ifdef DEBUG
+int	foreground = 1;
+#else
+int	foreground;
+#endif
+
 #ifdef LIBWRAP
 int	lflag;
 #endif
@@ -101,14 +103,10 @@ static	void closedown __P((void));
 static
 void _msgout(char* msg)
 {
-#ifdef RPC_SVC_FG
-	if (_rpcpmstart)
-		syslog(LOG_ERR, msg);
-	else
-		warnx("%s", msg);
-#else
-	syslog(LOG_ERR, msg);
-#endif
+	if (foreground && ! _rpcpmstart)
+                warnx("%s", msg);
+        else
+                syslog(LOG_ERR, msg);
 }
 
 static void
@@ -324,15 +322,18 @@ main(argc, argv)
 	proto = 0;		/* XXX gcc -Wuninitialized */
 
 #ifdef LIBWRAP
-#define	GETOPTSTR	"dl"
+#define	GETOPTSTR	"dfl"
 #else
-#define	GETOPTSTR	"d"
+#define	GETOPTSTR	"df"
 #endif
 
 	while ((ch = getopt(argc, argv, GETOPTSTR)) != -1) {
 		switch (ch) {
 		case 'd':
 			usedns = 1;
+			break;
+		case 'f':
+			foreground = 1;
 			break;
 
 #ifdef LIBWRAP
@@ -351,10 +352,8 @@ main(argc, argv)
 	if (geteuid() != 0)
 		errx(1, "must run as root");
 
-#ifndef RPC_SVC_FG
-	if (daemon(0, 0))
+	if (!foreground && daemon(0, 0))
 		err(1, "can't detach");
-#endif
 
 	openlog(__progname, LOG_PID, LOG_DAEMON);
 	syslog(LOG_INFO, "starting");
