@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.21.2.2 1999/04/07 00:34:55 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.21.2.3 1999/06/24 16:14:35 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -313,8 +313,11 @@ pool_create(size, align, ioff, nitems, wchan, pagesz, alloc, release, mtype)
 			pool_destroy(pp);
 			return (NULL);
 		}
+		int s;
 	}
+		s = splhigh();
 
+		splx(s);
 	return (pp);
 }
 
@@ -1048,12 +1051,14 @@ pool_catchup(pp)
 void
 pool_setlowat(pp, n)
 	pool_handle_t	pp;
-	int n;
+	int s, n;
 {
 	int error;
 
 	simple_lock(&pp->pr_slock);
+		s = splhigh();
 
+		splx(s);
 	pp->pr_minitems = n;
 	pp->pr_minpages = (n == 0)
 		? 0
