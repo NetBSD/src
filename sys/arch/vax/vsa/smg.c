@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.2 1998/06/05 22:02:56 ragge Exp $ */
+/*	$NetBSD: smg.c,v 1.3 1998/06/07 18:32:04 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -327,6 +327,8 @@ smg_alloc_screen(v, type, cookiep, curxp, curyp, defattrp)
 	long *defattrp;
 {
 	*cookiep = malloc(sizeof(struct smg_screen), M_DEVBUF, M_WAITOK);
+	bzero(*cookiep, sizeof(struct smg_screen));
+	*curxp = *curyp = *defattrp = 0;
 	return 0;
 }
 
