@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.3 2001/05/07 09:42:30 minoura Exp $	*/
+/*	$NetBSD: vs.c,v 1.4 2001/05/15 09:10:05 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -326,22 +326,22 @@ vs_query_encoding(void *hdl, struct audio_encoding *fp)
 	DPRINTF(("vs_query_encoding\n"));
 	switch (fp->index) {
 	case 0:
-		strcpy(fp->name, AudioEmulaw);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 1:
 		strcpy(fp->name, AudioEadpcm);
 		fp->encoding = AUDIO_ENCODING_ADPCM;
 		fp->precision = 4;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATE;
+		fp->flags = 0;
 		break;
-	case 2:
+	case 1:
 		strcpy(fp->name, AudioEulinear);
 		fp->encoding = AUDIO_ENCODING_ULINEAR;
 		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATE;
+		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+	case 2:
+		strcpy(fp->name, AudioEmulaw);
+		fp->encoding = AUDIO_ENCODING_ULAW;
+		fp->precision = 8;
+		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	default:
 		return EINVAL;
