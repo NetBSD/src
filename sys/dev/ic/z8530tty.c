@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.22 1997/11/01 17:09:09 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.23 1997/11/01 17:12:54 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -163,7 +163,7 @@ struct zstty_softc {
 	 * also be stopped for ^S; this sets TS_TTSTOP in tp->t_state.
 	 */
 	int 	zst_tbc;			/* transmit byte count */
-	caddr_t	zst_tba;			/* transmit buffer address */
+	u_char *zst_tba;			/* transmit buffer address */
 	int 	zst_heldtbc;		/* held tbc while xmission stopped */
 
 	/* Flags to communicate with zstty_softint() */
