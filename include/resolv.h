@@ -1,9 +1,9 @@
-/*
- * ++Copyright++ 1983, 1987, 1989, 1993
- * -
+/*	$NetBSD: resolv.h,v 1.10.2.2 1998/10/31 12:36:36 lukem Exp $	*/
+
+/*-
  * Copyright (c) 1983, 1987, 1989, 1993
- *    The Regents of the University of California.  All rights reserved.
- * 
+ *	The Regents of the University of California.  All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -14,12 +14,12 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- * 	This product includes software developed by the University of
- * 	California, Berkeley and its contributors.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -31,6 +31,9 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)resolv.h	8.1 (Berkeley) 6/2/93
+ *	Id: resolv.h,v 4.9.1.2 1993/05/17 09:59:01 vixie Exp
  * -
  * Portions Copyright (c) 1993 by Digital Equipment Corporation.
  * 
@@ -53,20 +56,11 @@
  * --Copyright--
  */
 
-/*
- *	@(#)resolv.h	8.1 (Berkeley) 6/2/93
- *	$Id: resolv.h,v 1.10.2.1 1997/05/23 19:58:29 lukem Exp $
- */
-
 #ifndef _RESOLV_H_
 #define	_RESOLV_H_
 
 #include <sys/param.h>
-#if (!defined(BSD)) || (BSD < 199306)
-# include <sys/bitypes.h>
-#else
-# include <sys/types.h>
-#endif
+#include <sys/types.h>
 #include <sys/cdefs.h>
 #include <stdio.h>
 
@@ -97,6 +91,8 @@
 #define	MAXDFLSRCH		3	/* # default domain levels to try */
 #define	MAXDNSRCH		6	/* max # domains in search path */
 #define	LOCALDOMAINPARTS	2	/* min levels in name that is "local" */
+#define	MAXDNSLUS		4	/* max # of host lookup types */
+		/* XXX deprecate MAXDNSLUS after full nsswitch merge */
 
 #define	RES_TIMEOUT		5	/* min. seconds between retries */
 #define	MAXRESOLVSORT		10	/* number of net to sort on */
@@ -121,6 +117,7 @@ struct __res_state {
 		struct in_addr	addr;
 		u_int32_t	mask;
 	} sort_list[MAXRESOLVSORT];
+	char	lookups[MAXDNSLUS];
 };
 
 /*
@@ -182,9 +179,9 @@ typedef res_sendhookact (*res_send_rhook)__P((const struct sockaddr_in *ns,
 					      int *resplen));
 
 struct res_sym {
-	int	number;		/* Identifying number, like T_MX */
-	char *	name;		/* Its symbolic name, like "MX" */
-	char *	humanname;	/* Its fun name, like "mail exchanger" */
+	int		number;		/* Identifying number, like T_MX */
+	__aconst char *	name;		/* Its symbolic name, like "MX" */
+	__aconst char *	humanname;	/* Its fun name, like "mail exchanger" */
 };
 
 extern struct __res_state _res;
