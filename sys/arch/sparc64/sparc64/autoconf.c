@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.94 2004/03/19 15:22:43 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.95 2004/03/21 14:10:08 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.94 2004/03/19 15:22:43 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.95 2004/03/21 14:10:08 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -78,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.94 2004/03/19 15:22:43 pk Exp $");
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
-#include <machine/idprom.h>
 #include <machine/sparc64.h>
 #include <machine/cpu.h>
 #include <machine/pmap.h>
@@ -102,7 +101,6 @@ int printspl = 0;
 extern	int kgdb_debug_panic;
 #endif
 
-static	int rootnode;
 char	machine_model[100];
 
 static	char *str2hex __P((char *, int *));
@@ -234,6 +232,8 @@ bootstrap(nctx)
 	extern void OF_sym2val32 __P((void *));
 	extern void OF_val2sym32 __P((void *));
 #endif
+
+	prom_init();
 
 	/* Initialize the PROM console so printf will not panic */
 	(*cn_tab->cn_init)(cn_tab);
@@ -553,37 +553,6 @@ mbprint(aux, name)
 }
 
 int
-findroot()
-{
-	register int node;
-
-	if ((node = rootnode) == 0 && (node = OF_peer(0)) == 0)
-		panic("no PROM root device");
-	rootnode = node;
-	return (node);
-}
-
-/*
- * Given a `first child' node number, locate the node with the given name.
- * Return the node number, or 0 if not found.
- */
-int
-findnode(first, name)
-	int first;
-	register const char *name;
-{
-	int node;
-	char buf[32];
-
-	for (node = first; node; node = OF_peer(node)) {
-		if ((OF_getprop(node, "name", buf, sizeof(buf)) > 0) &&
-			(strcmp(buf, name) == 0))
-			return (node);
-	}
-	return (0);
-}
-
-int
 mainbus_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -755,247 +724,6 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbus_match, mainbus_attach, NULL, NULL);
 
-int
-prom_getprop(node, name, size, nitem, bufp)
-	int	node;
-	char	*name;
-	size_t	size;
-	int	*nitem;
-	void	*bufp;
-{
-	void	*buf;
-	long	len;
-
-	len = prom_getproplen(node, name);
-	if (len <= 0)
-		return (ENOENT);
-
-	if ((len % size) != 0)
-		return (EINVAL);
-
-	buf = *(void **)bufp;
-	if (buf == NULL) {
-		/* No storage provided, so we allocate some */
-		buf = malloc(len, M_DEVBUF, M_NOWAIT);
-		if (buf == NULL)
-			return (ENOMEM);
-	} else {
-		if (size * (*nitem) < len)
-			return (ENOMEM);
-	}
-
-	OF_getprop(node, name, buf, len);
-	*(void **)bufp = buf;
-	*nitem = len / size;
-	return (0);
-}
-
-
-/*
- * Internal form of proplen().  Returns the property length.
- */
-long
-prom_getproplen(node, name)
-	int node;
-	char *name;
-{
-	return (OF_getproplen(node, name));
-}
-
-/*
- * Return a string property.  There is a (small) limit on the length;
- * the string is fetched into a static buffer which is overwritten on
- * subsequent calls.
- */
-char *
-prom_getpropstring(node, name)
-	int node;
-	char *name;
-{
-	static char stringbuf[32];
-
-	return (prom_getpropstringA(node, name, stringbuf, sizeof stringbuf));
-}
-
-/* Alternative prom_getpropstring(), where caller provides the buffer */
-char *
-prom_getpropstringA(node, name, buffer, bufsize)
-	int node;
-	char *name;
-	char *buffer;
-	size_t bufsize;
-{
-	int blen = bufsize - 1;
-
-	if (prom_getprop(node, name, 1, &blen, &buffer) != 0)
-		blen = 0;
-
-	buffer[blen] = '\0';	/* usually unnecessary */
-	return (buffer);
-}
-
-/*
- * Fetch an integer (or pointer) property.
- * The return value is the property, or the default if there was none.
- */
-int
-prom_getpropint(node, name, deflt)
-	int node;
-	char *name;
-	int deflt;
-{
-	int intbuf;
-
-	if (OF_getprop(node, name, &intbuf, sizeof(intbuf)) != sizeof(intbuf))
-		return (deflt);
-
-	return (intbuf);
-}
-
-/*
- * OPENPROM functions.  These are here mainly to hide the OPENPROM interface
- * from the rest of the kernel.
- */
-int
-firstchild(node)
-	int node;
-{
-
-	return OF_child(node);
-}
-
-int
-nextsibling(node)
-	int node;
-{
-
-	return OF_peer(node);
-}
-
-/* The following are used primarily in consinit() */
-
-int
-node_has_property(node, prop)	/* returns 1 if node has given property */
-	register int node;
-	register const char *prop;
-{
-	return (OF_getproplen(node, (caddr_t)prop) != -1);
-}
-
-/*
- * Get the global "options" node Id.
- */
-int prom_getoptionsnode()
-{
-static	int optionsnode;
-
-	if (optionsnode == 0) {
-		optionsnode = findnode(firstchild(findroot()), "options");
-	}
-	return optionsnode;
-}
-
-/*
- * Return a property string value from the global "options" node.
- */
-int prom_getoption(const char *name, char *buf, int buflen)
-{
-	int node = prom_getoptionsnode();
-	int error, len;
-
-	if (buflen == 0)
-		return (EINVAL);
-
-	if (node == 0)
-		return (ENOENT);
-
-	len = buflen - 1;
-	if ((error = prom_getprop(node, (char *)name, 1, &len, &buf)) != 0)
-		return error;
-
-	buf[len] = '\0';
-	return (0);
-}
-
-struct idprom *
-prom_getidprom(void)
-{
-static struct idprom idprom;
-	int node, len;
-	u_long h;
-	u_char *dst;
-
-	if (idprom.id_format != 0)
-		/* Already got it */
-		return (&idprom);
-
-	/*
-	 * Fetch the `idprom' property at the root node.
-	 */
-	dst = (char *)&idprom;
-	len = sizeof(struct idprom);
-	node = findroot();
-	if (prom_getprop(node, "idprom", 1, &len, &dst) != 0) {
-		printf("`idprom' property cannot be read: "
-			"cannot get ethernet address");
-	}
-
-	/* Establish hostid */
-	h =  idprom.id_machine << 24;
-	h |= idprom.id_hostid[0] << 16;
-	h |= idprom.id_hostid[1] << 8;
-	h |= idprom.id_hostid[2];
-	hostid = h;
-
-	return (&idprom);
-}
-
-void prom_getether(node, cp)
-	int node;
-	u_char *cp;
-{
-	struct idprom *idp = prom_getidprom();
-	char buf[6+1], *bp;
-	int nitem;
-
-	if (node == 0)
-		goto read_idprom;
-
-	/*
-	 * First, try the node's "mac-address" property.
-	 * This property is set by the adapter's firmware if the
-	 * device has already been opened for traffic, e.g. for
-	 * net booting.  Its value might be `0-terminated', probably
-	 * because the Forth ROMs uses `xdrstring' instead of `xdrbytes'
-	 * to construct the property.
-	 */
-	nitem = 6+1;
-	bp = buf;
-	if (prom_getprop(node, "mac-address", 1, &nitem, &bp) == 0 &&
-	    nitem >= 6) {
-		memcpy(cp, bp, 6);
-		return;
-	}
-
-	/*
-	 * Next, check the global "local-mac-address?" switch to see
-	 * if we should try to extract the node's "local-mac-address"
-	 * property.
-	 */
-	if (prom_getoption("local-mac-address?", buf, sizeof buf) != 0 ||
-	    strcmp(buf, "true") != 0)
-		goto read_idprom;
-
-	/* Retrieve the node's "local-mac-address" property, if any */
-	nitem = 6;
-	if (prom_getprop(node, "local-mac-address", 1, &nitem, &cp) == 0 &&
-	    nitem == 6)
-		return;
-
-	/* Fall back on the machine's global ethernet address */
-read_idprom:
-	memcpy(cp, idp->id_ether, 6);
-}
 
 #ifdef RASTERCONSOLE
 /*
@@ -1021,13 +749,14 @@ romgetcursoraddr(rowp, colp)
 }
 #endif /* RASTERCONSOLE */
 
-void
-callrom()
+#if 0
+void callrom()
 {
 
 	__asm __volatile("wrpr	%%g0, 0, %%tl" : );
 	OF_enter();
 }
+#endif
 
 /*
  * find a device matching "name" and unit number
