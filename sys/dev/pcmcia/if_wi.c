@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.20 2000/05/23 08:41:49 enami Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.21 2000/06/06 14:01:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1260,7 +1260,7 @@ static int wi_ioctl(ifp, command, data)
 		 * by NUL.  XXX.
 		 */
 		if (sc->sc_enabled == 0)
-			/* Return the desried ID */
+			/* Return the desired ID */
 			ws = &sc->wi_netid;
 		else {
 			wreq.wi_type = WI_RID_CURRENT_SSID;
