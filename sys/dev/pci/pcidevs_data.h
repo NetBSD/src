@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.254 2000/08/21 15:33:46 enami Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.255 2000/08/29 01:18:17 wiz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -4894,6 +4894,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_HAUPPAUGE, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Hauppauge Computer Works",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_COMPAQ, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Compaq",
@@ -7708,12 +7714,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_CONEXANT, 0,
-	    PCI_KNOWNDEV_NOPROD,
-	    "Conexant Systems",
-	    NULL,
-	},
-	{
 	    PCI_VENDOR_NETGEAR, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Netgear",
@@ -7735,6 +7735,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_CMEDIA, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "C-Media Electronics Inc",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ASKEY, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Askey Computer Corp.",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_AVERMEDIA, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Avermedia Technologies",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_CONEXANT, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Conexant Systems",
 	    NULL,
 	},
 	{
