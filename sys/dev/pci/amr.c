@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.18 2003/10/29 02:27:32 mycroft Exp $	*/
+/*	$NetBSD: amr.c,v 1.19 2003/11/05 16:03:27 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.18 2003/10/29 02:27:32 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.19 2003/11/05 16:03:27 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,10 +272,12 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 		reg = pci_conf_read(pc, pa->pa_tag, i);
 		switch (PCI_MAPREG_TYPE(reg)) {
 		case PCI_MAPREG_TYPE_MEM:
-			memreg = i;
+			if (PCI_MAPREG_MEM_SIZE(reg) != 0)
+				memreg = i;
 			break;
 		case PCI_MAPREG_TYPE_IO:
-			ioreg = i;
+			if (PCI_MAPREG_IO_SIZE(reg) != 0)
+				ioreg = i;
 			break;
 
 		}
