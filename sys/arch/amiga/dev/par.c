@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.18 1999/08/05 18:08:09 thorpej Exp $	*/
+/*	$NetBSD: par.c,v 1.19 2000/03/16 16:37:20 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -112,10 +112,13 @@ parmatch(pdp, cfp, auxp)
 	struct cfdata *cfp;
 	void *auxp;
 {
+	static int par_found = 0;
 
-	if (matchname((char *)auxp, "par") && cfp->cf_unit == 0)
-		return(1);
-	return(0);
+	if (!matchname((char *)auxp, "par") || par_found)
+		return(0);
+
+	par_found = 1;
+	return(1);
 }
 
 void
