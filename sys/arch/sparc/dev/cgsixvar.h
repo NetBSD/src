@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixvar.h,v 1.2 2000/03/19 15:38:45 pk Exp $ */
+/*	$NetBSD: cgsixvar.h,v 1.3 2000/03/30 13:57:51 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@ struct cgsix_softc {
 	volatile int *sc_fhc;			/* FHC register */
 	volatile struct cg6_thc *sc_thc;	/* THC registers */
 	volatile struct cg6_tec_xxx *sc_tec;	/* TEC registers */
+	volatile struct cg6_fbc *sc_fbc;	/* FBC registers */
 	short	sc_fhcrev;		/* hardware rev */
 	short	sc_blanked;		/* true if blanked */
 	struct	cg6_cursor sc_cursor;	/* software cursor info */

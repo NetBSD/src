@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixreg.h,v 1.5 1998/03/21 19:45:45 pk Exp $ */
+/*	$NetBSD: cgsixreg.h,v 1.6 2000/03/30 13:57:51 pk Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -71,7 +71,7 @@
  * we have only seen rev 1 & 2.
  */
 
-/* offsets */
+/* Control register banks offsets */
 #define CGSIX_ROM_OFFSET	0x000000
 #define CGSIX_BT_OFFSET		0x200000
 #define CGSIX_DHC_OFFSET	0x240000
@@ -114,18 +114,18 @@
  * The layout of the THC.
  */
 struct cg6_thc {
-	u_int	thc_xxx0[512];	/* ??? */
-	u_int	thc_hsync1;	/* horizontal sync timing */
-	u_int	thc_hsync2;	/* more hsync timing */
-	u_int	thc_hsync3;	/* yet more hsync timing */
-	u_int	thc_vsync1;	/* vertical sync timing */
-	u_int	thc_vsync2;	/* only two of these */
-	u_int	thc_refresh;	/* refresh counter */
-	u_int	thc_misc;	/* miscellaneous control & status */
-	u_int	thc_xxx1[56];	/* ??? */
-	u_int	thc_cursxy;	/* cursor x,y position (16 bits each) */
-	u_int	thc_cursmask[32];	/* cursor mask bits */
-	u_int	thc_cursbits[32];	/* what to show where mask enabled */
+	u_int32_t	thc_xxx0[512];	/* ??? */
+	u_int32_t	thc_hsync1;	/* horizontal sync timing */
+	u_int32_t	thc_hsync2;	/* more hsync timing */
+	u_int32_t	thc_hsync3;	/* yet more hsync timing */
+	u_int32_t	thc_vsync1;	/* vertical sync timing */
+	u_int32_t	thc_vsync2;	/* only two of these */
+	u_int32_t	thc_refresh;	/* refresh counter */
+	u_int32_t	thc_misc;	/* miscellaneous control & status */
+	u_int32_t	thc_xxx1[56];	/* ??? */
+	u_int32_t	thc_cursxy;	/* cursor x,y position (16 bits each) */
+	u_int32_t	thc_cursmask[32];/* cursor mask bits */
+	u_int32_t	thc_cursbits[32];/* what to show where mask enabled */
 };
 
 /* bits in thc_misc */
@@ -151,11 +151,59 @@ struct cg6_thc {
  * Partial description of TEC (needed to get around FHC rev 1 bugs).
  */
 struct cg6_tec_xxx {
-	u_int	tec_mv;		/* matrix stuff */
-	u_int	tec_clip;	/* clipping stuff */
-	u_int	tec_vdc;	/* ??? */
+	u_int32_t	tec_mv;		/* matrix stuff */
+	u_int32_t	tec_clip;	/* clipping stuff */
+	u_int32_t	tec_vdc;	/* ??? */
 };
 
+/*
+ * Partial description of FBC
+ *
+ * Most of this we don't care about; here are only the portions
+ * we need, most notably the blitter.  Comments are merely my
+ * best guesses as to register functions, based largely on the
+ * X11R6.4 sunGX code.  Some of these are here only so we can
+ * stuff canned values in them (eg, offx).
+ */
+struct cg6_fbc {
+	u_int32_t fbc_pad1[2];
+	u_int32_t fbc_clip;		/* function unknown */
+	u_int32_t fbc_pad2[1];
+	u_int32_t fbc_s;		/* global status */
+	u_int32_t fbc_draw;		/* drawing pipeline status */
+	u_int32_t fbc_blit;		/* blitter status */
+	u_int32_t fbc_pad3[25];
+	u_int32_t fbc_x0;		/* blitter, src llx */
+	u_int32_t fbc_y0;		/* blitter, src lly */
+	u_int32_t fbc_pad4[2];
+	u_int32_t fbc_x1;		/* blitter, src urx */
+	u_int32_t fbc_y1;		/* blitter, src ury */
+	u_int32_t fbc_pad5[2];
+	u_int32_t fbc_x2;		/* blitter, dst llx */
+	u_int32_t fbc_y2;		/* blitter, dst lly */
+	u_int32_t fbc_pad6[2];
+	u_int32_t fbc_x3;		/* blitter, dst urx */
+	u_int32_t fbc_y3;		/* blitter, dst ury */
+	u_int32_t fbc_pad7[2];
+	u_int32_t fbc_offx;		/* x offset for drawing */
+	u_int32_t fbc_offy;		/* y offset for drawing */
+	u_int32_t fbc_pad8[6];
+	u_int32_t fbc_clipminx;		/* clip rectangle llx */
+	u_int32_t fbc_clipminy;		/* clip rectangle lly */
+	u_int32_t fbc_pad9[2];
+	u_int32_t fbc_clipmaxx;		/* clip rectangle urx */
+	u_int32_t fbc_clipmaxy;		/* clip rectangle ury */
+	u_int32_t fbc_pad10[2];
+	u_int32_t fbc_fg;		/* fg value for rop */
+	u_int32_t fbc_pad11[1];
+	u_int32_t fbc_alu;		/* operation to be performed */
+	u_int32_t fbc_pad12[509];
+	u_int32_t fbc_arectx;		/* rectangle drawing, x coord */
+	u_int32_t fbc_arecty;		/* rectangle drawing, y coord */
+	/* actually much more, but nothing more we need */
+};
+
+#if _CG6_LAYOUT_NOT_USED_ANYMORE
 /*
  * This structure exists only to compute the layout of the CG6
  * hardware.  Each of the individual substructures lives on a
@@ -214,3 +262,4 @@ struct cg6_layout {
 	/* Video RAM at 0x800000 */
 	char	cg6_ram[1024 * 1024];	/* approx.? */
 };
+#endif
