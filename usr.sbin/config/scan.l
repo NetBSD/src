@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.25 1999/07/09 06:44:59 thorpej Exp $	*/
+/*	$NetBSD: scan.l,v 1.26 2000/01/05 11:24:02 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -212,6 +212,7 @@ include(fname, ateof, conditional)
 	struct incl *in;
 	char *s;
 	static int havedirs;
+	extern int vflag;
 
 	if (havedirs == 0) {
 		havedirs = 1;
@@ -223,6 +224,9 @@ include(fname, ateof, conditional)
 		if (conditional == 0)
 			error("cannot open %s for reading: %s\n", s,
 			    strerror(errno));
+		else if (vflag)
+			warn("cannot open conditional include file %s: %s",
+			     s, strerror(errno));
 		free(s);
 		return (-1);
 	}
