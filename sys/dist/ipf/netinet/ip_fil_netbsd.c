@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.10 2005/02/21 22:01:52 martin Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.11 2005/02/28 09:26:36 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -1388,7 +1388,7 @@ frdest_t *fdp;
 	struct ifnet *ifp;
 	frentry_t *fr;
 	u_long mtu;
-	int error;
+	int error = 0;
 
 	ro = &ip6route;
 	fr = fin->fin_fr;
@@ -1429,20 +1429,14 @@ frdest_t *fdp;
 		dst6->sin6_addr.s6_addr16[1] = htons(ifp->if_index);
 
 	{
-#if (__NetBSD_Version__ >= 106010000)
-		struct in6_addr finaldst = fin->fin_dst6;
-		int frag;
-#endif
+		struct in6_ifextra *ife;
+
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			dst6 = (struct sockaddr_in6 *)ro->ro_rt->rt_gateway;
 		ro->ro_rt->rt_use++;
 
-#if (__NetBSD_Version__ <= 106009999)
-		mtu = nd_ifinfo[ifp->if_index].linkmtu;
-#else
-		/* Determine path MTU. */
-		error = ip6_getpmtu(ro, ro, ifp, &finaldst, &mtu, &frag);
-#endif
+		ife = (struct in6_ifextra *)(ifp)->if_afdata[AF_INET6];
+		mtu = ife->nd_ifinfo[ifp->if_index].linkmtu;
 		if ((error == 0) && (m0->m_pkthdr.len <= mtu)) {
 			*mpp = NULL;
 			error = nd6_output(ifp, ifp, m0, dst6, rt);
