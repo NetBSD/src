@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.27 2000/01/10 08:03:50 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.28 2000/01/12 22:39:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.27 2000/01/10 08:03:50 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.28 2000/01/12 22:39:27 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: conf.c,v 1.27 2000/01/10 08:03:50 lukem Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <glob.h>
+#include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,8 +70,6 @@ __RCSID("$NetBSD: conf.c,v 1.27 2000/01/10 08:03:50 lukem Exp $");
 static char *strend __P((const char *, char *));
 static int filetypematch __P((char *, int));
 
-struct ftpclass curclass;
-
 
 /*
  * Initialise curclass to an `empty' state
@@ -88,6 +87,7 @@ init_curclass()
 		cnext = conv->next;
 		free(conv);
 	}
+
 	curclass.checkportcmd = 0;
 	REASSIGN(curclass.classname, NULL);
 	curclass.conversions =	NULL;
@@ -101,12 +101,13 @@ init_curclass()
 	REASSIGN(curclass.motd, xstrdup(_PATH_FTPLOGINMESG));
 	REASSIGN(curclass.notify, NULL);
 	curclass.passive =	1;
+	curclass.portmin =	0;
+	curclass.portmax =	0;
 	curclass.rateget =	0;
 	curclass.rateput =	0;
 	curclass.timeout =	900;		/* 15 minutes */
 	curclass.umask =	027;
 	curclass.upload =	1;
-
 }
 
 /*
@@ -318,6 +319,50 @@ parse_conf(findclass)
 				curclass.passive = 0;
 			else
 				curclass.passive = 1;
+
+		} else if (strcasecmp(word, "portrange") == 0) {
+			int minport, maxport;
+			char *min, *max;
+
+			if (none) {
+				curclass.portmin = 0;
+				curclass.portmax = 0;
+				continue;
+			}
+			if (EMPTYSTR(arg))
+				continue;
+			min = arg;
+			NEXTWORD(p, max);
+			if (EMPTYSTR(max)) {
+				syslog(LOG_WARNING,
+				   "%s line %d: missing maxport argument",
+				   infile, (int)line);
+				continue;
+			}
+			minport = (int)strtol(min, &endp, 10);
+			if (*endp != 0 || minport < IPPORT_RESERVED ||
+			    minport > IPPORT_ANONMAX) {
+				syslog(LOG_WARNING,
+				    "%s line %d: invalid minport %s",
+				    infile, (int)line, min);
+				continue;
+			}
+			maxport = (int)strtol(max, &endp, 10);
+			if (*endp != 0 || maxport < IPPORT_RESERVED ||
+			    maxport > IPPORT_ANONMAX) {
+				syslog(LOG_WARNING,
+				    "%s line %d: invalid maxport %s",
+				    infile, (int)line, max);
+				continue;
+			}
+			if (minport >= maxport) {
+				syslog(LOG_WARNING,
+				    "%s line %d: minport %d >= maxport %d",
+				    infile, (int)line, minport, maxport);
+				continue;
+			}
+			curclass.portmin = minport;
+			curclass.portmax = maxport;
 
 		} else if (strcasecmp(word, "rateget") == 0) {
 			if (none || EMPTYSTR(arg))
