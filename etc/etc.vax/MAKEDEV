@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.44 2002/02/14 13:42:05 ross Exp $
+#	$NetBSD: MAKEDEV,v 1.45 2002/02/25 07:35:17 atatat Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -465,7 +465,7 @@ pty*)
 		if [ $jn -ge 16 ]; then
 			skip=$(($class * 30 + 256 - 16))
 		fi
-		unit=$(($class * 62 + $jn + $skip))
+		unit=$(($class * 16 + $jn + $skip))
 		mknod tty$name$j c 20 $unit
 		mknod pty$name$j c 21 $unit
 		jn=$(($jn + 1))
