@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.149 2001/04/16 22:41:10 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.150 2001/06/05 04:42:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1070,7 +1070,14 @@ loop:
 	}
 	if (vp == NULL || vp->v_tag != VT_NON || vp->v_type != VBLK) {
 		MALLOC(nvp->v_specinfo, struct specinfo *,
-			sizeof(struct specinfo), M_VNODE, M_WAITOK);
+			sizeof(struct specinfo), M_VNODE, M_NOWAIT);
+		/* XXX Erg. */
+		if (nvp->v_specinfo == NULL) {
+			simple_unlock(&spechash_slock);
+			uvm_wait("checkalias");
+			goto loop;
+		}
+
 		nvp->v_rdev = nvp_rdev;
 		nvp->v_hashchain = vpp;
 		nvp->v_specnext = *vpp;
