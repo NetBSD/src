@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.29 1998/02/11 01:47:04 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.30 1998/03/30 06:05:39 mycroft Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -107,9 +107,8 @@
 extern	vm_offset_t avail_end;
 
 #define	IDTVEC(name)	__CONCAT(X,name)
-/* default interrupt vector table entries */
-typedef (*vector) __P((void));
-extern vector IDTVEC(intr)[];
+typedef void (vector) __P((void));
+extern vector *IDTVEC(intr)[];
 void isa_strayintr __P((int));
 void intr_calculatemasks __P((void));
 int fakeintr __P((void *));
@@ -259,7 +258,7 @@ intr_calculatemasks()
 
 	/* First, figure out which levels each IRQ uses. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
-		register int levels = 0;
+		int levels = 0;
 		for (q = intrhand[irq]; q; q = q->ih_next)
 			levels |= 1 << q->ih_level;
 		intrlevel[irq] = levels;
@@ -267,7 +266,7 @@ intr_calculatemasks()
 
 	/* Then figure out which IRQs use each level. */
 	for (level = 0; level < NIPL; level++) {
-		register int irqs = 0;
+		int irqs = 0;
 		for (irq = 0; irq < ICU_LEN; irq++)
 			if (intrlevel[irq] & (1 << level))
 				irqs |= 1 << irq;
@@ -325,7 +324,7 @@ intr_calculatemasks()
 
 	/* And eventually calculate the complete masks. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
-		register int irqs = 1 << irq;
+		int irqs = 1 << irq;
 		for (q = intrhand[irq]; q; q = q->ih_next)
 			irqs |= imask[q->ih_level];
 		intrmask[irq] = irqs;
@@ -333,7 +332,7 @@ intr_calculatemasks()
 
 	/* Lastly, determine which IRQs are actually in use. */
 	{
-		register int irqs = 0;
+		int irqs = 0;
 		for (irq = 0; irq < ICU_LEN; irq++)
 			if (intrhand[irq])
 				irqs |= 1 << irq;
