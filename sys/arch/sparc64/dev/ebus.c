@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.44 2004/03/21 12:50:14 martin Exp $	*/
+/*	$NetBSD: ebus.c,v 1.45 2004/03/21 16:29:42 pk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.44 2004/03/21 12:50:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.45 2004/03/21 16:29:42 pk Exp $");
 
 #include "opt_ddb.h"
 
@@ -129,31 +129,32 @@ ebus_match(parent, match, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
-	char name[10];
+	char *name;
 	int node;
 
 	/* Only attach if there's a PROM node. */
 	node = PCITAG_NODE(pa->pa_tag);
-	if (node == -1) return (0);
+	if (node == -1)
+		return (0);
+
+	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_BRIDGE)
+		return (0);
 
 	/* Match a real ebus */
-	OF_getprop(node, "name", &name, sizeof(name));
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
-	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
+	name = prom_getpropstring(node, "name");
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_EBUS &&
 		strcmp(name, "ebus") == 0)
 		return (1);
 
 	/* Or a real ebus III */
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
-	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_EBUSIII &&
 		strcmp(name, "ebus") == 0)
 		return (1);
 
 	/* Or a PCI-ISA bridge XXX I hope this is on-board. */
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_ISA) {
+	if (PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_ISA) {
 		return (1);
 	}
 
