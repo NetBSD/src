@@ -1,3 +1,4 @@
+/*	$NetBSD: uscanner.c,v 1.2 2000/09/23 05:05:31 augustss Exp $	*/
 /*	$FreeBSD$	*/
 
 /*
