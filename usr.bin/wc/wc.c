@@ -47,6 +47,10 @@ static char sccsid[] = "@(#)wc.c	5.7 (Berkeley) 3/2/91";
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
 
 #define DEL	0177			/* del char */
 #define NL	012			/* newline char */
@@ -62,59 +66,57 @@ main(argc, argv)
 {
 	extern int optind;
 	register int ch;
-	int total;
+
+	while ((ch = getopt(argc, argv, "lwc")) != EOF)
+		switch((char)ch) {
+		case 'l':
+			doline = 1;
+			break;
+		case 'w':
+			doword = 1;
+			break;
+		case 'c':
+			dochar = 1;
+			break;
+		case '?':
+		default:
+			fputs("usage: wc [-lwc] [files]\n", stderr);
+			exit(1);
+		}
+	argv += optind;
+	argc -= optind;
 
 	/*
 	 * wc is unusual in that its flags are on by default, so,
 	 * if you don't get any arguments, you have to turn them
 	 * all on.
 	 */
-	if (argc > 1 && argv[1][0] == '-' && argv[1][1]) {
-		while ((ch = getopt(argc, argv, "lwc")) != EOF)
-			switch((char)ch) {
-			case 'l':
-				doline = 1;
-				break;
-			case 'w':
-				doword = 1;
-				break;
-			case 'c':
-				dochar = 1;
-				break;
-			case '?':
-			default:
-				fputs("usage: wc [-lwc] [files]\n", stderr);
-				exit(1);
-			}
-		argv += optind;
-		argc -= optind;
-	}
-	else {
-		++argv;
-		--argc;
+	if (!doline && !doword && !dochar) {
 		doline = doword = dochar = 1;
 	}
 
-	total = 0;
 	if (!*argv) {
 		cnt((char *)NULL);
 		putchar('\n');
-	}
-	else do {
-		cnt(*argv);
-		printf(" %s\n", *argv);
-		++total;
-	} while(*++argv);
+	} else {
+		int dototal = (argc > 1);
 
-	if (total > 1) {
-		if (doline)
-			printf(" %7ld", tlinect);
-		if (doword)
-			printf(" %7ld", twordct);
-		if (dochar)
-			printf(" %7ld", tcharct);
-		puts(" total");
+		do {
+			cnt(*argv);
+			printf(" %s\n", *argv);
+		} while(*++argv);
+
+		if (dototal) {
+			if (doline)
+				printf(" %7ld", tlinect);
+			if (doword)
+				printf(" %7ld", twordct);
+			if (dochar)
+				printf(" %7ld", tcharct);
+			puts(" total");
+		}
 	}
+
 	exit(0);
 }
 
@@ -132,7 +134,7 @@ cnt(file)
 	linect = wordct = charct = 0;
 	if (file) {
 		if ((fd = open(file, O_RDONLY, 0)) < 0) {
-			perror(file);
+			fprintf (stderr, "wc: %s: %s\n", file, strerror(errno));
 			exit(1);
 		}
 		if (!doword) {
@@ -144,7 +146,8 @@ cnt(file)
 			if (doline) {
 				while(len = read(fd, buf, MAXBSIZE)) {
 					if (len == -1) {
-						perror(file);
+						fprintf (stderr, "wc: %s: %s\n",
+							file, strerror(errno));
 						exit(1);
 					}
 					charct += len;
@@ -172,7 +175,8 @@ cnt(file)
 				int ifmt;
 
 				if (fstat(fd, &sbuf)) {
-					perror(file);
+					fprintf (stderr, "wc: %s: %s\n",
+						file, strerror(errno));
 					exit(1);
 				}
 
@@ -192,48 +196,47 @@ cnt(file)
 	/* do it the hard way... */
 	for (gotsp = 1; len = read(fd, buf, MAXBSIZE);) {
 		if (len == -1) {
-			perror(file);
+			fprintf (stderr, "wc: %s: %s\n", file, strerror(errno));
 			exit(1);
 		}
 		charct += len;
-		for (C = buf; len--; ++C)
-			switch(*C) {
-				case NL:
+		for (C = buf; len--; ++C) {
+			if (isspace (*C)) {
+				gotsp = 1;
+				if (*C == NL) {
 					++linect;
-				case TAB:
-				case SPACE:
-					gotsp = 1;
-					continue;
-				default:
-#ifdef notdef
-					/*
-					 * This line of code implements the
-					 * original V7 wc algorithm, i.e.
-					 * a non-printing character doesn't
-					 * toggle the "word" count, so that
-					 * "  ^D^F  " counts as 6 spaces,
-					 * while "foo^D^Fbar" counts as 8
-					 * characters.
-					 *
-					 * test order is important -- gotsp
-					 * will normally be NO, so test it
-					 * first
-					 */
-					if (gotsp && *C > SPACE && *C < DEL) {
+				}
+			} else {
+#if 0
+				/*
+				 * This line of code implements the
+				 * original V7 wc algorithm, i.e.
+				 * a non-printing character doesn't
+				 * toggle the "word" count, so that
+				 * "  ^D^F  " counts as 6 spaces,
+				 * while "foo^D^Fbar" counts as 8
+				 * characters.
+				 *
+				 * test order is important -- gotsp
+				 * will normally be NO, so test it
+				 * first
+				 */
+				if (gotsp && *C > SPACE && *C < DEL) ...
 #endif
-					/*
-					 * This line implements the manual
-					 * page, i.e. a word is a "maximal
-					 * string of characters delimited by
-					 * spaces, tabs or newlines."  Notice
-					 * nothing was said about a character
-					 * being printing or non-printing.
-					 */
-					if (gotsp) {
-						gotsp = 0;
-						++wordct;
-					}
+				/*
+				 * This line implements the POSIX
+				 * spec, i.e. a word is a "maximal
+				 * string of characters delimited by
+				 * whitespace."  Notice nothing was
+				 * said about a character being
+				 * printing or non-printing.
+				 */
+				if (gotsp) {
+					gotsp = 0;
+					++wordct;
+				}
 			}
+		}
 	}
 	if (doline) {
 		tlinect += linect;
