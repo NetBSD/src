@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.18.2.10 2001/03/12 13:30:29 bouyer Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.18.2.11 2001/03/27 13:08:12 bouyer Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -88,16 +88,15 @@
 
 struct isposinfo {
 	struct device		_dev;
-	struct scsipi_link	_link;
-	struct scsipi_link	_link_b;
+	struct scsipi_channel	_chan;
+	struct scsipi_channel	_chan_b;
 	struct scsipi_adapter   _adapter;
 	int	splsaved;
 	int	mboxwaiting;
 	u_int32_t	islocked;
 	u_int32_t	onintstack;
 	unsigned int		: 30,
-		no_mbox_ints	: 1,
-		blocked		: 1;
+		no_mbox_ints	: 1;
 	union {
 		u_int64_t	_wwn;
 		u_int16_t	_discovered[2];
@@ -169,12 +168,11 @@ struct isposinfo {
 #endif
 
 #define	XS_T			struct scsipi_xfer
-#define	XS_CHANNEL(xs)		\
-	(((int) (xs)->sc_link->scsipi_scsi.channel == SCSI_CHANNEL_ONLY_ONE) ? \
-	    0 : (xs)->sc_link->scsipi_scsi.channel)
-#define	XS_ISP(xs)		(xs)->sc_link->adapter_softc
-#define	XS_LUN(xs)		((int) (xs)->sc_link->scsipi_scsi.lun)
-#define	XS_TGT(xs)		((int) (xs)->sc_link->scsipi_scsi.target)
+#define	XS_CHANNEL(xs)		((int) (xs)->xs_periph->periph_channel)
+#define	XS_ISP(xs)		\
+	((void *)(xs)->xs_periph->periph_channel->chan_adapter->adapt_dev)
+#define	XS_LUN(xs)		((int) (xs)->xs_periph->periph_lun)
+#define	XS_TGT(xs)		((int) (xs)->xs_periph->periph_target)
 #define	XS_CDBP(xs)		((caddr_t) (xs)->cmd)
 #define	XS_CDBLEN(xs)		(xs)->cmdlen
 #define	XS_XFRLEN(xs)		(xs)->datalen
