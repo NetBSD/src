@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.81 1997/10/10 01:53:30 fvdl Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.82 1997/10/12 23:13:35 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -810,9 +810,19 @@ nfs_lookup(v)
 	wantparent = flags & (LOCKPARENT|WANTPARENT);
 	nmp = VFSTONFS(dvp->v_mount);
 	np = VTONFS(dvp);
-	if ((error = cache_lookup(dvp, vpp, cnp)) != 0 && error != ENOENT) {
+	if ((error = cache_lookup(dvp, vpp, cnp)) != 0) {
 		struct vattr vattr;
 		int vpid;
+
+		if (error == ENOENT) {
+			if (!VOP_GETATTR(dvp, &vattr, cnp->cn_cred,
+			    cnp->cn_proc) && vattr.va_mtime.tv_sec ==
+			    VTONFS(dvp)->n_nctime)
+				return (ENOENT);
+			cache_purge(dvp);
+			np->n_nctime = 0;
+			goto dorpc;
+		}
 
 		newvp = *vpp;
 		vpid = newvp->v_id;
@@ -845,6 +855,7 @@ nfs_lookup(v)
 		}
 		*vpp = NULLVP;
 	}
+dorpc:
 	error = 0;
 	newvp = NULLVP;
 	nfsstats.lookupcache_misses++;
@@ -913,6 +924,13 @@ nfs_lookup(v)
 	*vpp = newvp;
 	nfsm_reqdone;
 	if (error) {
+		if (error == ENOENT && (cnp->cn_flags & MAKEENTRY) &&
+		    cnp->cn_nameiop != CREATE) {
+			if (VTONFS(dvp)->n_nctime == 0)
+				VTONFS(dvp)->n_nctime =
+				    VTONFS(dvp)->n_vattr.va_mtime.tv_sec;
+			cache_enter(dvp, NULL, cnp);
+		}
 		if (newvp != NULLVP)
 			vrele(newvp);
 		if ((cnp->cn_nameiop == CREATE || cnp->cn_nameiop == RENAME) &&
@@ -1861,8 +1879,11 @@ nfs_mkdir(v)
 	if (error) {
 		if (newvp)
 			vrele(newvp);
-	} else
+	} else {
+		if (cnp->cn_flags & MAKEENTRY)
+			cache_enter(dvp, newvp, cnp);
 		*ap->a_vpp = newvp;
+	}
 	FREE(cnp->cn_pnbuf, M_NAMEI);
 	vrele(dvp);
 	return (error);
