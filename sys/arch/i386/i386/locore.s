@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.249 2001/09/21 14:12:50 fvdl Exp $	*/
+/*	$NetBSD: locore.s,v 1.249.6.1 2002/03/17 23:07:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -252,6 +252,19 @@ _C_LABEL(biosextmem):	.long	REALEXTMEM
 	.space 512
 tmpstk:
 
+/*
+ * Allocate space for proc0.  This needs to be aligned to a 16-byte
+ * boundary (the locking primitives depend on this).
+ */
+	.section .bss
+	.globl	_C_LABEL(proc0)
+#ifdef __ELF__
+	.align	16
+#else
+	.align	4
+#endif
+_C_LABEL(proc0):
+	.space	PROC_SIZEOF
 
 #define	_RELOC(x)	((x) - KERNBASE)
 #define	RELOC(x)	_RELOC(_C_LABEL(x))

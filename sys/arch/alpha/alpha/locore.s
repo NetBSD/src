@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.98.8.1 2002/03/10 21:41:32 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.98.8.2 2002/03/17 23:07:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.98.8.1 2002/03/10 21:41:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.98.8.2 2002/03/17 23:07:43 thorpej Exp $");
 
 #include "assym.h"
 
@@ -222,6 +222,15 @@ NESTED_NOPROFILE(locorestart,1,0,ra,0,0)
 	/* This should never happen. */
 	PANIC("main() returned",Lmain_returned_pmsg)
 	END(locorestart)
+
+/*
+ * Allocate space for proc0; this needs to be aligned to a 16-byte
+ * boundary.
+ */
+	.section .bss
+	.align	4
+EXPORT(proc0)
+	.space	PROC_SIZEOF
 
 /**************************************************************************/
 

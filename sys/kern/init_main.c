@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.199.2.3 2002/03/10 21:05:10 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.199.2.4 2002/03/17 23:07:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.199.2.3 2002/03/10 21:05:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.199.2.4 2002/03/17 23:07:42 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -125,7 +125,7 @@ const char copyright[] =
 /* Components of the first process -- never freed. */
 struct	session session0;
 struct	pgrp pgrp0;
-struct	proc proc0 __attribute__((aligned(16))); /* See kern_proc.c */
+/* proc0 allocated by machine-dependent code, aligned to 16-byte boundary */
 struct	pcred cred0;
 struct	filedesc0 filedesc0;
 struct	cwdinfo cwdi0;

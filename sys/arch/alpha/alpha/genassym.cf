@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.4 2001/04/29 06:54:03 thorpej Exp $
+# $NetBSD: genassym.cf,v 1.4.12.1 2002/03/17 23:07:43 thorpej Exp $
 
 #
 # Copyright (c) 1994, 1995 Gordon W. Ross
@@ -44,6 +44,7 @@ include <sys/proc.h>
 include <sys/sched.h>
 include <sys/mbuf.h>
 include <sys/msgbuf.h>
+include <sys/rwlock.h>
 include <sys/user.h>
 include <sys/syscall.h>
 
@@ -115,6 +116,7 @@ define	ALPHA_PTE_KR		ALPHA_PTE_KR
 define	ALPHA_PTE_KW		ALPHA_PTE_KW
 
 # Important offsets into the proc struct & associated constants
+define	PROC_SIZEOF		sizeof(struct proc)
 define	P_FORW			offsetof(struct proc, p_forw)
 define	P_BACK			offsetof(struct proc, p_back)
 define	P_ADDR			offsetof(struct proc, p_addr)
