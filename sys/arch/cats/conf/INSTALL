@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.11 2002/02/10 17:36:55 wiz Exp $
+#	$NetBSD: INSTALL,v 1.12 2002/02/16 15:47:10 skrll Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -240,7 +240,7 @@ sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 # PCI network interfaces
 de*	at pci? dev ? function ?	# DC21X4X-based ethernet cards
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
-#ep*	at pci? dev ? function ?	# 3C590 ethernet cards
+ep*	at pci? dev ? function ?	# 3C590 ethernet cards
 ex*	at pci? dev ? function ?	# 3Com 90x[B]
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 #esh*	at pci? dev ? function ?	# Essential HIPPI card
