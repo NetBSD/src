@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2001/01/14 21:37:55 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2001/01/14 21:45:01 mycroft Exp $
 #
 
 # Ross Harvey <ross@netbsd.org>
@@ -38,9 +38,7 @@ ARGS_MORE=	${PRESET} -dformat=more -P-h -Tascii -mtty-char
 #	.Ss "Install notes for NetBSD/\*[MACHINE]"
 #
 
-.for i in ps txt html more
-all: ${TARG}.$i
-.endfor
+all: ${TARGS}
 
 ${TARG}.ps: ${SRCS}
 	groff ${ARGS_PS}   -mdoc      ${MAIN} > $@
@@ -69,16 +67,10 @@ release:
 	@false
 .else
 release:
-.for i in ${TARGS}
-	${ICMD} ${i} ${RELEASEDIR}/.
-.endfor
+	${ICMD} ${TARGS} ${RELEASEDIR}/.
 .endif
 
 .PATH: ${.CURDIR}/../common
-
-# make the "afterdepend" rule happy
-.depend:
-	@touch $@
 
 cleannotes:
 	rm -f [Ee]rrs mklog core *.core ${TARGS}
