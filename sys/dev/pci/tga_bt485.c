@@ -1,4 +1,4 @@
-/* $NetBSD: tga_bt485.c,v 1.2 1998/08/18 08:07:45 thorpej Exp $ */
+/* $NetBSD: tga_bt485.c,v 1.3 1998/08/18 08:22:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -75,6 +75,7 @@ const struct tga_ramdac_conf tga_ramdac_bt485 = {
 	tga_bt485_set_curpos,
 	tga_bt485_get_curpos,
 	tga_bt485_get_curmax,
+	NULL,			/* check_curcmap; not needed */
 	NULL,			/* set_curcmap; not needed */
 	NULL,			/* get_curcmap; not needed */
 };
@@ -335,9 +336,9 @@ tga_bt485_set_cursor(dc, cursorp)
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
 		count = cursorp->cmap.count;
 		index = cursorp->cmap.index;
-		copyin(cursorp->cmap.red, &data->cmap_r[index], count);
-		copyin(cursorp->cmap.green, &data->cmap_g[index], count);
-		copyin(cursorp->cmap.blue, &data->cmap_b[index], count);
+		copyin(cursorp->cmap.red, &data->curcmap_r[index], count);
+		copyin(cursorp->cmap.green, &data->curcmap_g[index], count);
+		copyin(cursorp->cmap.blue, &data->curcmap_b[index], count);
 		data->changed |= DATA_CURCMAP_CHANGED;
 	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
