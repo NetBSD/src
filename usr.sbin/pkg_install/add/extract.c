@@ -1,11 +1,11 @@
-/*	$NetBSD: extract.c,v 1.23.2.2 2002/12/12 22:58:22 he Exp $	*/
+/*	$NetBSD: extract.c,v 1.23.2.3 2003/02/08 07:46:17 jmc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.17 1997/10/08 07:45:35 charnier Exp";
 #else
-__RCSID("$NetBSD: extract.c,v 1.23.2.2 2002/12/12 22:58:22 he Exp $");
+__RCSID("$NetBSD: extract.c,v 1.23.2.3 2003/02/08 07:46:17 jmc Exp $");
 #endif
 #endif
 
@@ -108,12 +108,12 @@ extract_plist(char *home, package_t *pkg)
 	Boolean preserve;
 
 	maxargs = sysconf(_SC_ARG_MAX) / 2;	/* Just use half the argument space */
-	where_args = alloca(maxargs);
+	where_args = malloc(maxargs);
 	if (!where_args) {
 		cleanup(0);
 		errx(2, "can't get argument list space");
 	}
-	perm_args = alloca(maxargs);
+	perm_args = malloc(maxargs);
 	if (!perm_args) {
 		cleanup(0);
 		errx(2, "can't get argument list space");
@@ -143,9 +143,9 @@ extract_plist(char *home, package_t *pkg)
 	Directory = home;
 
 	/* Open Package Database for writing */
-	if (pkgdb_open(0) == -1) {
+	if (!pkgdb_open(ReadWrite)) {
 		cleanup(0);
-		err(1, "can't open pkgdb");
+		err(EXIT_FAILURE, "can't open pkgdb");
 	}
 	/* Do it */
 	while (p) {
@@ -294,10 +294,6 @@ extract_plist(char *home, package_t *pkg)
 			break;
 
 		case PLIST_CMD:
-			if (last_file == NULL && strchr(p->name, '%') != NULL) {
-				cleanup(0);
-				errx(2, "no last file specified for '%s' command", p->name);
-			}
 			format_cmd(cmd, sizeof(cmd), p->name, Directory, last_file);
 			PUSHOUT(Directory);
 			if (Verbose)
@@ -335,5 +331,7 @@ extract_plist(char *home, package_t *pkg)
 	}
 	PUSHOUT(Directory);
 	pkgdb_close();
+	free(perm_args);
+	free(where_args);
 	return 1;
 }
