@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.10 2003/08/29 00:46:05 thorpej Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.11 2003/08/29 01:28:51 thorpej Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,9 +39,9 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * Id: //depot/aic7xxx/aic7xxx/aic79xx.c#192 $
+ * Id: //depot/aic7xxx/aic7xxx/aic79xx.c#193 $
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.c,v 1.14 2003/05/26 21:18:48 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.c,v 1.15 2003/05/26 21:26:51 gibbs Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.10 2003/08/29 00:46:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.11 2003/08/29 01:28:51 thorpej Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -4433,7 +4433,7 @@ ahd_handle_ign_wide_residue(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
 
 		sgptr = ahd_inb_scbram(ahd, SCB_RESIDUAL_SGPTR);
 		if ((sgptr & SG_LIST_NULL) != 0
-		 && ahd_inb(ahd, DATA_COUNT_ODD) == 1) {
+		 && (ahd_inb(ahd, SCB_TASK_ATTRIBUTE) & SCB_XFERLEN_ODD) != 0) {
 			/*
 			 * If the residual occurred on the last
 			 * transfer and the transfer request was
@@ -4446,29 +4446,20 @@ ahd_handle_ign_wide_residue(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
 			uint32_t sglen;
 
 			/* Pull in the rest of the sgptr */
-			sgptr |=
-			    (ahd_inb_scbram(ahd, SCB_RESIDUAL_SGPTR + 3) << 24)
-			  | (ahd_inb_scbram(ahd, SCB_RESIDUAL_SGPTR + 2) << 16)
-			  | (ahd_inb_scbram(ahd, SCB_RESIDUAL_SGPTR + 1) << 8);
-			sgptr &= SG_PTR_MASK;
-			data_cnt =
-			    (ahd_inb_scbram(ahd, SCB_RESIDUAL_DATACNT+3) << 24)
-			  | (ahd_inb_scbram(ahd, SCB_RESIDUAL_DATACNT+2) << 16)
-			  | (ahd_inb_scbram(ahd, SCB_RESIDUAL_DATACNT+1) << 8)
-			  | (ahd_inb_scbram(ahd, SCB_RESIDUAL_DATACNT));
-
-			data_addr = (((uint64_t)ahd_inb(ahd, SHADDR + 7)) << 56)
-				  | (((uint64_t)ahd_inb(ahd, SHADDR + 6)) << 48)
-				  | (((uint64_t)ahd_inb(ahd, SHADDR + 5)) << 40)
-				  | (((uint64_t)ahd_inb(ahd, SHADDR + 4)) << 32)
-				  | (ahd_inb(ahd, SHADDR + 3) << 24)
-				  | (ahd_inb(ahd, SHADDR + 2) << 16)
-				  | (ahd_inb(ahd, SHADDR + 1) << 8)
-				  | (ahd_inb(ahd, SHADDR));
-
+			sgptr = ahd_inl_scbram(ahd, SCB_RESIDUAL_SGPTR);
+			data_cnt = ahd_inl_scbram(ahd, SCB_RESIDUAL_DATACNT);
+			if ((sgptr & SG_LIST_NULL) != 0) {
+				/*
+				 * The residual data count is not updated
+				 * for the command run to completion case.
+				 * Explcitly zero the count.
+				 */
+				data_cnt &= ~AHD_SG_LEN_MASK;
+			}
+			data_addr = ahd_inq(ahd, SHADDR);
 			data_cnt += 1;
 			data_addr -= 1;
-
+			sgptr &= SG_PTR_MASK;
 			if ((ahd->flags & AHD_64BIT_ADDRESSING) != 0) {
 				struct ahd_dma64_seg *sg;
 
@@ -4536,16 +4527,17 @@ ahd_handle_ign_wide_residue(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
 								  sg);
 				}
 			}
-			ahd_outb(ahd, SCB_RESIDUAL_SGPTR + 3, sgptr >> 24);
-			ahd_outb(ahd, SCB_RESIDUAL_SGPTR + 2, sgptr >> 16);
-			ahd_outb(ahd, SCB_RESIDUAL_SGPTR + 1, sgptr >> 8);
-			ahd_outb(ahd, SCB_RESIDUAL_SGPTR, sgptr);
+			/*
+			 * Toggle the "oddness" of the transfer length
+			 * to handle this mid-transfer ignore wide
+			 * residue.  This ensures that the oddness is
+			 * correct for subsequent data transfers.
+			 */
+			ahd_outb(ahd, SCB_TASK_ATTRIBUTE,
+			    ahd_inb(ahd, SCB_TASK_ATTRIBUTE) ^ SCB_XFERLEN_ODD);
 
-			ahd_outb(ahd, SCB_RESIDUAL_DATACNT + 3, data_cnt >> 24);
-			ahd_outb(ahd, SCB_RESIDUAL_DATACNT + 2, data_cnt >> 16);
-			ahd_outb(ahd, SCB_RESIDUAL_DATACNT + 1, data_cnt >> 8);
-			ahd_outb(ahd, SCB_RESIDUAL_DATACNT, data_cnt);
-
+			ahd_outl(ahd, SCB_RESIDUAL_SGPTR, sgptr);
+			ahd_outl(ahd, SCB_RESIDUAL_DATACNT, data_cnt);
 			/*
 			 * The FIFO's pointers will be updated if/when the
 			 * sequencer re-enters a data phase.
