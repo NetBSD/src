@@ -1,4 +1,4 @@
-/*	$NetBSD: ubareg.h,v 1.2 1994/10/26 08:02:43 cgd Exp $	*/
+/*	$NetBSD: ubareg.h,v 1.3 1995/02/13 00:44:23 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -109,7 +109,7 @@ struct dwbua_regs {
 	int	pad3[10];
 	int	bua_bdps[20];		/* buffered data path space *//*???*/
 	int	pad4[8];
-	struct	pte bua_map[UBAPAGES];	/* unibus map registers */
+	pt_entry_t bua_map[UBAPAGES];	/* unibus map registers */
 	int	pad5[UBAIOPAGES];	/* no maps for device address space */
 };
 
@@ -159,7 +159,7 @@ struct uba_regs {
 	int	uba_brrvr[4];		/* receive vector registers */
 	int	uba_dpr[16];		/* buffered data path register */
 	int	pad2[480];
-	struct	pte uba_map[UBAPAGES];	/* unibus map register */
+	pt_entry_t uba_map[UBAPAGES];	/* unibus map register */
 	int	pad3[UBAIOPAGES];	/* no maps for device address space */
 };
 #endif
@@ -232,7 +232,7 @@ struct uba_regs {
 /* the DELAY is for a hardware problem */
 #define	UBA_PURGE750(uba, bdp) { \
     ((uba)->uba_dpr[bdp] |= (UBADPR_PURGE|UBADPR_NXM|UBADPR_UCE)); \
-    DELAY(8); \
+    {int N=8;while(N--);} \
 }
 #else
 #define UBA_PURGE750(uba, bdp)
