@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sipreg.h,v 1.2.4.2 2001/03/13 20:25:44 he Exp $	*/
+/*	$NetBSD: if_sipreg.h,v 1.2.4.3 2003/09/08 07:10:12 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -231,7 +231,7 @@ struct sip_desc {
 #define	RXCFG_AEP	0x80000000	/* accept error packets */
 #define	RXCFG_ARP	0x40000000	/* accept runt packets */
 #define	RXCFG_ATX	0x10000000	/* accept transmit packets */
-#define	RXCFG_AJAB	0x08000000	/* accept jabber packets */
+#define	RXCFG_ALP	0x08000000	/* accept long packets */
 #define	RXCFG_MXDMA	0x00700000	/* max DMA burst size */
 #define	RXCFG_MXDMA_512	0x00000000	/*     512 bytes */
 #define	RXCFG_MXDMA_4	0x00100000	/*       4 bytes */
