@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.20 2004/06/20 18:25:54 hannken Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.21 2004/12/20 03:12:20 dbj Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,9 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.20 2004/06/20 18:25:54 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.21 2004/12/20 03:12:20 dbj Exp $");
 
+#if defined(_KERNEL_OPT)
 #include "opt_quota.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -231,7 +233,7 @@ ufs_init()
 		return;
 
 #ifdef _LKM
-	pool_init(ufs_direct_pool, sizeof(struct direct), 0, 0, 0, "ufsdirpl",
+	pool_init(&ufs_direct_pool, sizeof(struct direct), 0, 0, 0, "ufsdirpl",
 	    &pool_allocator_nointr);
 #endif
 
