@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.53 1995/08/08 21:10:18 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.54 1995/08/13 00:32:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -141,9 +141,9 @@ static vm_offset_t temp_seg_va;
  */
 
 /*
- * Note that PMAP_LOCK is used in routines called at splnet() and
+ * Note that PMAP_LOCK is used in routines called at splsoftnet() and
  * MUST NOT lower the priority.  For this reason we arrange that:
- *    splimp = max(splnet,splbio)
+ *    splimp = max(splsoftnet,splbio)
  * Would splvm() be more natural here? (same level as splimp).
  */
 #define splpmap splimp
