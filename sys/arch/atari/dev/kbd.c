@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.7 1996/03/17 01:26:51 thorpej Exp $	*/
+/*	$NetBSD: kbd.c,v 1.8 1996/03/27 12:15:28 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -49,7 +49,7 @@
 #include <machine/iomap.h>
 #include <machine/mfp.h>
 #include <machine/acia.h>
-#include <machine/video.h>
+#include <atari/dev/ym2149reg.h>
 #include <atari/dev/itevar.h>
 #include <atari/dev/kbdreg.h>
 #include <atari/dev/event_var.h>
@@ -430,8 +430,8 @@ kbdbell()
 
 	sps = spltty();
 	for (i = 0; i < sizeof(sound); i++) {
-		SOUND->sd_selr = i;
-		SOUND->sd_wdat = sound[i];
+		YM2149->sd_selr = i;
+		YM2149->sd_wdat = sound[i];
 	}
 	splx(sps);
 }
