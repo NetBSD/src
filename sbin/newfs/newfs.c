@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.54 2002/01/07 12:00:09 simonb Exp $	*/
+/*	$NetBSD: newfs.c,v 1.55 2002/01/15 07:41:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.54 2002/01/07 12:00:09 simonb Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.55 2002/01/15 07:41:50 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -555,8 +555,8 @@ main(int argc, char *argv[])
 			pp = &lp->d_partitions[*cp - 'a'];
 		if (pp->p_size == 0)
 			errx(1, "`%c' partition is unavailable", *cp);
-		if (pp->p_fstype == FS_BOOT)
-			errx(1, "`%c' partition overlaps boot program", *cp);
+		if (pp->p_fstype != FS_BSDFFS)
+			errx(1, "`%c' partition type is not `4.2BSD'", *cp);
 	}	/* !Fflag && !mfs */
 
 	if (fssize == 0)
