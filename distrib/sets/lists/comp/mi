@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.554 2003/04/06 13:34:33 he Exp $
+#	$NetBSD: mi,v 1.555 2003/04/06 13:37:01 he Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -4031,26 +4031,26 @@
 ./usr/share/man/cat9/vflush.0		comp-sys-catman
 ./usr/share/man/cat9/vflushbuf.0		comp-sys-catman
 ./usr/share/man/cat9/vfs.0		comp-sys-catman
-./usr/share/man/cat9/vfs_attach.0		comp-sys-catmaN
-./usr/share/man/cat9/vfs_busy.0		comp-sys-catmaN
-./usr/share/man/cat9/vfs_detach.0		comp-sys-catmaN
-./usr/share/man/cat9/vfs_export.0		comp-sys-catmaN
+./usr/share/man/cat9/vfs_attach.0		comp-sys-catman
+./usr/share/man/cat9/vfs_busy.0		comp-sys-catman
+./usr/share/man/cat9/vfs_detach.0		comp-sys-catman
+./usr/share/man/cat9/vfs_export.0		comp-sys-catman
 ./usr/share/man/cat9/vfs_export_lookup.0		comp-sys-catman
 ./usr/share/man/cat9/vfs_getnewfsid.0		comp-sys-catman
-./usr/share/man/cat9/vfs_getopsbyname.0		comp-sys-catmaN
-./usr/share/man/cat9/vfs_getvfs.0		comp-sys-catmaN
-./usr/share/man/cat9/vfs_mountedon.0		comp-sys-catmaN
-./usr/share/man/cat9/vfs_mountroot.0		comp-sys-catmaN
-./usr/share/man/cat9/vfs_reinit.0		comp-sys-catmaN
+./usr/share/man/cat9/vfs_getopsbyname.0		comp-sys-catman
+./usr/share/man/cat9/vfs_getvfs.0		comp-sys-catman
+./usr/share/man/cat9/vfs_mountedon.0		comp-sys-catman
+./usr/share/man/cat9/vfs_mountroot.0		comp-sys-catman
+./usr/share/man/cat9/vfs_reinit.0		comp-sys-catman
 ./usr/share/man/cat9/vfs_rootmountalloc.0		comp-sys-catman
-./usr/share/man/cat9/vfs_setpublic.0		comp-sys-catmaN
-./usr/share/man/cat9/vfs_showexport.0		comp-sys-catmaN
+./usr/share/man/cat9/vfs_setpublic.0		comp-sys-catman
+./usr/share/man/cat9/vfs_showexport.0		comp-sys-catman
 ./usr/share/man/cat9/vfs_shutdown.0		comp-sys-catman
-./usr/share/man/cat9/vfs_sysctl.0		comp-sys-catmaN
-./usr/share/man/cat9/vfs_unbusy.0		comp-sys-catmaN
-./usr/share/man/cat9/vfs_unmountall.0		comp-sys-catmaN
+./usr/share/man/cat9/vfs_sysctl.0		comp-sys-catman
+./usr/share/man/cat9/vfs_unbusy.0		comp-sys-catman
+./usr/share/man/cat9/vfs_unmountall.0		comp-sys-catman
 ./usr/share/man/cat9/vfsops.0		comp-sys-catman
-./usr/share/man/cat9/vfssubr.0		comp-sys-catmaN
+./usr/share/man/cat9/vfssubr.0		comp-sys-catman
 ./usr/share/man/cat9/vget.0		comp-sys-catman
 ./usr/share/man/cat9/vgone.0		comp-sys-catman
 ./usr/share/man/cat9/vgonel.0		comp-sys-catman
