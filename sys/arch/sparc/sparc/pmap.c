@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.131 1998/10/06 19:24:03 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.132 1998/10/08 21:47:34 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -418,18 +418,6 @@ static u_long segfixmask = 0xffffffff; /* all bits valid to start */
 /*
  * pseudo-functions for mnemonic value
  */
-#define getcontext4()		lduba(AC_CONTEXT, ASI_CONTROL)
-#define getcontext4m()		lda(SRMMU_CXR, ASI_SRMMU)
-#define getcontext()		(CPU_ISSUN4M \
-					? getcontext4m() \
-					: getcontext4()  )
-
-#define setcontext4(c)		stba(AC_CONTEXT, ASI_CONTROL, c)
-#define setcontext4m(c)		sta(SRMMU_CXR, ASI_SRMMU, c)
-#define setcontext(c)		(CPU_ISSUN4M \
-					? setcontext4m(c) \
-					: setcontext4(c)  )
-
 #define	getsegmap(va)		(CPU_ISSUN4C \
 					? lduba(va, ASI_SEGMAP) \
 					: (lduha(va, ASI_SEGMAP) & segfixmask))
@@ -442,17 +430,10 @@ static u_long segfixmask = 0xffffffff; /* all bits valid to start */
 #define	setregmap(va, smeg)	stha((va)+2, ASI_REGMAP, (smeg << 8))
 
 #if defined(SUN4M)
-#define getpte4m(va)		lda((va & 0xFFFFF000) | ASI_SRMMUFP_L3, \
-				    ASI_SRMMUFP)
-void	setpgt4m __P((int *ptep, int pte));
-void	setpte4m __P((vaddr_t va, int pte));
-void	setptesw4m __P((struct pmap *pm, vaddr_t va, int pte));
+void		setpgt4m __P((int *ptep, int pte));
+void		setpte4m __P((vaddr_t va, int pte));
+void		setptesw4m __P((struct pmap *pm, vaddr_t va, int pte));
 static u_int	getptesw4m __P((struct pmap *pm, vaddr_t va));
-#endif
-
-#if defined(SUN4) || defined(SUN4C)
-#define	getpte4(va)		lda(va, ASI_PTE)
-#define	setpte4(va, pte)	sta(va, ASI_PTE, pte)
 #endif
 
 /* Function pointer messiness for supporting multiple sparc architectures

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.5 1998/09/26 20:14:48 pk Exp $ */
+/*	$NetBSD: kgdb_machdep.c,v 1.6 1998/10/08 21:47:34 pk Exp $ */
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -102,15 +102,6 @@
 #include <machine/cpu.h>
 
 #include <sparc/sparc/asm.h>
-
-#if defined(SUN4M)
-#define getpte4m(va) \
-	lda(((u_long)va & 0xFFFFF000) | ASI_SRMMUFP_L3, ASI_SRMMUFP)
-#endif
-
-#if defined(SUN4) || defined(SUN4C)
-#define	getpte4(va)		lda(va, ASI_PTE)
-#endif
 
 static __inline void kgdb_copy __P((char *, char *, int));
 static __inline void kgdb_zero __P((char *, int));
