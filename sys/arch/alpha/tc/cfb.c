@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.19 1998/06/30 09:02:08 drochner Exp $ */
+/* $NetBSD: cfb.c,v 1.20 1998/10/22 01:03:08 briggs Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.19 1998/06/30 09:02:08 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.20 1998/10/22 01:03:08 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -376,7 +376,6 @@ cfb_load_font(v, cookie, first, num, stride, data)
 	return (EINVAL);
 }
 
-#if 0
 int
 cfb_cnattach(addr)
 	tc_addr_t addr;
@@ -393,4 +392,3 @@ cfb_cnattach(addr)
 	cfb_consaddr = addr;
 	return(0);
 }
-#endif

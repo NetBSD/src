@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_500.c,v 1.15 1997/09/02 13:20:23 thorpej Exp $ */
+/* $NetBSD: tc_3000_500.c,v 1.16 1998/10/22 01:03:09 briggs Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.15 1997/09/02 13:20:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.16 1998/10/22 01:03:09 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.15 1997/09/02 13:20:23 thorpej Exp
 
 #include <machine/autoconf.h>
 #include <machine/pte.h>
+#include <machine/rpb.h>
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
 #endif
@@ -44,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.15 1997/09/02 13:20:23 thorpej Exp
 #include <dev/tc/tcvar.h>
 #include <alpha/tc/tc_conf.h>
 #include <alpha/tc/tc_3000_500.h>
+#include <alpha/tc/sfbvar.h>
 
 void	tc_3000_500_intr_setup __P((void));
 void	tc_3000_500_intr_establish __P((struct device *, void *,
@@ -52,6 +54,7 @@ void	tc_3000_500_intr_disestablish __P((struct device *, void *));
 void	tc_3000_500_iointr __P((void *, unsigned long));
 
 int	tc_3000_500_intrnull __P((void *));
+int	tc_3000_500_fb_cnattach __P((u_int64_t));
 
 #define C(x)	((void *)(u_long)x)
 #define	KV(x)	(ALPHA_PHYS_TO_K0SEG(x))
@@ -258,6 +261,41 @@ tc_3000_500_iointr(framep, vec)
 #undef PRINTINTR
 #endif
 	} while (ifound);
+}
+
+/*
+ * tc_3000_500_fb_cnattach --
+ *	Attempt to map the CTB output device to a slot and attach the
+ * framebuffer as the output side of the console.
+ */
+int
+tc_3000_500_fb_cnattach(turbo_slot)
+	u_int64_t turbo_slot;
+{
+	u_int32_t output_slot;
+
+	output_slot = turbo_slot & 0xffffffff;
+
+	if (output_slot >= tc_3000_500_nslots) {
+		return 0;
+	}
+
+	if (hwrpb->rpb_variation & SV_GRAPHICS) {
+		if (output_slot == 0) {
+			sfb_cnattach(KV(0x1e0000000) + 0x02000000);
+			return 1;
+		}
+	} else {
+		/*
+		 * Slots 0-2 in the tc_3000_500_slots array are only
+		 * on the 500 models that also have the CXTurbo
+		 * (500/800/900) and a total of 6 TC slots.  For the
+		 * 400/600/700, slots 0-2 are in table locations 3-5, so
+		 * offset the CTB slot by 3 to get the address in our table.
+		 */
+		output_slot += 3;
+	}
+	return tc_fb_cnattach(tc_3000_500_slots[output_slot-1].tcs_addr);
 }
 
 #if 0

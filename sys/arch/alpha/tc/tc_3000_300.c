@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_300.c,v 1.15 1997/09/02 13:20:20 thorpej Exp $ */
+/* $NetBSD: tc_3000_300.c,v 1.16 1998/10/22 01:03:09 briggs Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.15 1997/09/02 13:20:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.16 1998/10/22 01:03:09 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,12 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.15 1997/09/02 13:20:20 thorpej Exp
 #include <alpha/tc/tc_conf.h>
 #include <alpha/tc/tc_3000_300.h>
 #include <alpha/tc/ioasicreg.h>
-
-void	tc_3000_300_intr_setup __P((void));
-void	tc_3000_300_intr_establish __P((struct device *, void *,
-	    tc_intrlevel_t, int (*)(void *), void *));
-void	tc_3000_300_intr_disestablish __P((struct device *, void *));
-void	tc_3000_300_iointr __P((void *, unsigned long));
+#include <alpha/tc/sfbvar.h>
 
 int	tc_3000_300_intrnull __P((void *));
 
@@ -266,4 +261,29 @@ tc_3000_300_iointr(framep, vec)
 #undef PRINTINTR
 #endif
 	} while (ifound);
+}
+
+/*
+ * tc_3000_300_fb_cnattach --
+ *	Attempt to map the CTB output device to a slot and attach the
+ * framebuffer as the output side of the console.
+ */
+int
+tc_3000_300_fb_cnattach(turbo_slot)
+	u_int64_t turbo_slot;
+{
+	u_int32_t output_slot;
+
+	output_slot = turbo_slot & 0xffffffff;
+
+	if (output_slot >= tc_3000_300_nslots) {
+		return 0;
+	}
+
+	if (output_slot == 0) {
+		sfb_cnattach(KV(0x1c0000000) + 0x02000000);
+		return 1;
+	}
+
+	return tc_fb_cnattach(tc_3000_300_slots[output_slot-1].tcs_addr);
 }

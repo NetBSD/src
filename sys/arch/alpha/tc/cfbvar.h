@@ -1,4 +1,4 @@
-/* $NetBSD: cfbvar.h,v 1.4 1998/10/19 00:32:44 briggs Exp $ */
+/* $NetBSD: cfbvar.h,v 1.5 1998/10/22 01:03:08 briggs Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -31,6 +31,8 @@
 #include <dev/rcons/raster.h>
 #include <dev/wscons/wscons_raster.h>
 
+extern int	cfb_cnattach __P((tc_addr_t));
+
 struct cfb_devconfig;
 struct fbcmap;
 struct fbcursor;
@@ -61,7 +63,3 @@ struct cfb_softc {
 
 	int nscreens;
 };
-
-#if 0
-int cfb_cnattach __P((tc_addr_t));
-#endif

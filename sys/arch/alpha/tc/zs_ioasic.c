@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.3 1998/07/04 22:18:15 jonathan Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.4 1998/10/22 01:03:09 briggs Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.3 1998/07/04 22:18:15 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.4 1998/10/22 01:03:09 briggs Exp $");
 
 /*
  * Zilog Z8530 Dual UART driver (machine-dependent part).  This driver
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.3 1998/07/04 22:18:15 jonathan Exp $
 #include <dev/tc/tcvar.h>
 #include <alpha/tc/ioasicreg.h>
 #include <dev/tc/ioasicvar.h>
+#include <dev/dec/zskbdvar.h>
 
 #include <alpha/tc/zs_ioasicvar.h>
 
@@ -106,6 +107,7 @@ struct zs_chanstate *zs_ioasic_conschanstate;
 
 int	zs_getc __P((struct zs_chanstate *));
 void	zs_putc __P((struct zs_chanstate *, int));
+void	zs_ioasic_cninit __P((tc_addr_t, tc_offset_t, int));
 
 /*
  * Some warts needed by z8530tty.c
@@ -148,8 +150,7 @@ static u_char zs_ioasic_init_reg[16] = {
 	0,	/* 8: alias for data port */
 	ZSWR9_MASTER_IE | ZSWR9_VECTOR_INCL_STAT,
 	0,	/*10: Misc. TX/RX control bits */
-	ZSWR11_TXCLK_BAUD | ZSWR11_RXCLK_BAUD |
-	    ZSWR11_TRXC_OUT_ENA | ZSWR11_TRXC_BAUD,
+	ZSWR11_TXCLK_BAUD | ZSWR11_RXCLK_BAUD,
 	22,	/*12: BAUDLO (default=9600) */
 	0,	/*13: BAUDHI (default=9600) */
 	ZSWR14_BAUD_ENA | ZSWR14_BAUD_FROM_PCLK,
@@ -717,11 +718,16 @@ zs_putc(cs, c)
 
 /*****************************************************************/
 
-int
-zs_ioasic_cnattach(ioasic_addr, zs_offset, channel, rate, cflag)
+/*
+ * zs_ioasic_cninit --
+ *	Initialize the serial channel for console use--either the
+ * primary keyboard or as the serial console.
+ */
+void
+zs_ioasic_cninit(ioasic_addr, zs_offset, channel)
 	tc_addr_t ioasic_addr;
 	tc_offset_t zs_offset;
-	int channel, rate, cflag;
+	int channel;
 {
 	struct zs_chanstate *cs;
 	tc_addr_t zs_addr;
@@ -749,7 +755,6 @@ zs_ioasic_cnattach(ioasic_addr, zs_offset, channel, rate, cflag)
 	zc = zs_ioasic_get_chan_addr(zs_addr, channel);
 
 	/* Setup temporary chanstate. */
-	cs->cs_defcflag = cflag;
 	cs->cs_reg_csr  = (volatile u_char *)&zc->zc_csr;
 	cs->cs_reg_data = (volatile u_char *)&zc->zc_data;
 
@@ -769,11 +774,6 @@ zs_ioasic_cnattach(ioasic_addr, zs_offset, channel, rate, cflag)
 	} else
 		cs->cs_private = NULL;
 
-	/* XXX: Preserve BAUD rate from boot loader. */
-	/* XXX: Also, why reset the chip here? -gwr */
-	/* cs->cs_defspeed = zs_get_speed(cs); */
-	cs->cs_defspeed = 9600;				/* XXX */
-
 	/* Clear the master interrupt enable. */
 	zs_write_reg(cs, 9, 0);
 
@@ -785,8 +785,48 @@ zs_ioasic_cnattach(ioasic_addr, zs_offset, channel, rate, cflag)
 
 	/* Point the console at the SCC. */
 	cn_tab = &zs_ioasic_cons;
+}
+
+/*
+ * zs_ioasic_cnattach --
+ *	Initialize and attach a serial console.
+ */
+int
+zs_ioasic_cnattach(ioasic_addr, zs_offset, channel, rate, cflag)
+	tc_addr_t ioasic_addr;
+	tc_offset_t zs_offset;
+	int channel, rate, cflag;
+{
+	zs_ioasic_cninit(ioasic_addr, zs_offset, channel);
+
+	zs_ioasic_conschanstate->cs_defspeed = rate;
+	zs_ioasic_conschanstate->cs_defcflag = cflag;
+
+	/* Point the console at the SCC. */
+	cn_tab = &zs_ioasic_cons;
 
 	return (0);
+}
+
+/*
+ * zs_ioasic_lk201_cnattach --
+ *	Initialize and attach the primary keyboard.
+ */
+int
+zs_ioasic_lk201_cnattach(ioasic_addr, zs_offset, channel)
+	tc_addr_t ioasic_addr;
+	tc_offset_t zs_offset;
+	int channel;
+{
+#if (NZSKBD > 0)
+	zs_ioasic_cninit(ioasic_addr, zs_offset, channel);
+	zs_ioasic_conschanstate->cs_defspeed = 4800;
+	zs_ioasic_conschanstate->cs_defcflag =
+	     (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
+	return (zskbd_cnattach(zs_ioasic_conschanstate));
+#else
+	return (ENXIO);
+#endif
 }
 
 int

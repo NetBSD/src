@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.19 1998/06/30 09:02:08 drochner Exp $ */
+/* $NetBSD: sfb.c,v 1.20 1998/10/22 01:03:08 briggs Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.19 1998/06/30 09:02:08 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.20 1998/10/22 01:03:08 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,9 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.19 1998/06/30 09:02:08 drochner Exp $");
 #include <dev/tc/tcvar.h>
 #include <machine/sfbreg.h>
 #include <alpha/tc/sfbvar.h>
-#if 0
 #include <alpha/tc/bt459reg.h>
-#endif
 
 #include <dev/rcons/raster.h>
 #include <dev/wscons/wscons_raster.h>
@@ -105,10 +103,16 @@ static void	sfb_free_screen __P((void *, void *));
 static void	sfb_show_screen __P((void *, void *));
 static int	sfb_load_font __P((void *, void *, int, int, int, void *));
 
-#if 0
 void	sfb_blank __P((struct sfb_devconfig *));
 void	sfb_unblank __P((struct sfb_devconfig *));
-#endif
+
+void	sfb_put_cmap __P((struct sfb_devconfig *, struct fbcmap *));
+void	sfb_get_cmap __P((struct sfb_devconfig *, struct fbcmap *));
+int     sfb_set_curpos __P((struct sfb_devconfig *, struct fbcurpos *));
+int     sfb_get_curpos __P((struct sfb_devconfig *, struct fbcurpos *));
+int     sfb_get_curmax __P((struct sfb_devconfig *, struct fbcurpos *));
+int     sfb_set_cursor __P((struct sfb_devconfig *, struct fbcursor *));
+int     sfb_get_cursor __P((struct sfb_devconfig *, struct fbcursor *));
 
 struct wsdisplay_accessops sfb_accessops = {
 	sfbioctl,
@@ -199,13 +203,13 @@ sfb_getdevconfig(dense_addr, dc)
 	tc_wmb();
 	for (i = 0; i < 256; i++) {
 		(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_CMAPDATA)) =
-		    i ? 0xff : 0;
+		  dc->dc_cmap_red[i] = i ? 0xff : 0;
 		tc_wmb();
 		(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_CMAPDATA)) =
-		    i ? 0xff : 0;
+		  dc->dc_cmap_green[i] = i ? 0xff : 0;
 		tc_wmb();
 		(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_CMAPDATA)) =
-		    i ? 0xff : 0;
+		  dc->dc_cmap_blue[i] = i ? 0xff : 0;
 		tc_wmb();
 	}
 	/* end XXX XXX XXX */
@@ -213,6 +217,90 @@ sfb_getdevconfig(dense_addr, dc)
 	/* clear the screen */
 	for (i = 0; i < dc->dc_ht * dc->dc_rowbytes; i += sizeof(u_int32_t))
 		*(u_int32_t *)(dc->dc_videobase + i) = 0x00000000;
+
+	/* disable hardware cursor */
+	dc->dc_cursor_enable = 0;
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_ADDRLOW)) =
+	    BT459_REG_CCR;
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_ADDRHIGH)) =
+	    BT459_REG_CCR >> 8;
+	tc_wmb();
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_REGDATA)) = 0x00;
+	tc_wmb();
+
+	/* initialize the cursor position  */
+	dc->dc_curpos_x = 368;
+	dc->dc_curpos_y = 34;
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_ADDRLOW)) = 
+	    BT459_REG_CXLO;
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_ADDRHIGH)) =
+	    BT459_REG_CXLO >> 8;
+	tc_wmb();
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_REGDATA)) =
+	    dc->dc_curpos_x;
+	tc_wmb();
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_REGDATA)) =
+	    dc->dc_curpos_x >> 8;
+	tc_wmb();
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_REGDATA)) =
+	    dc->dc_curpos_y;
+	tc_wmb();
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_REGDATA)) =
+	    dc->dc_curpos_y >> 8;
+	tc_wmb();
+
+	/* initialize the cursor color  */
+	dc->dc_cursor_red[0] = 0xff;
+	dc->dc_cursor_green[0] = 0xff;
+	dc->dc_cursor_blue[0] = 0xff;
+	dc->dc_cursor_red[1] = 0x00;
+	dc->dc_cursor_green[1] = 0x00;
+	dc->dc_cursor_blue[1] = 0x00;
+	dc->dc_cursor_red[2] = 0xff;
+	dc->dc_cursor_green[2] = 0xff;
+	dc->dc_cursor_blue[2] = 0xff;
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_ADDRLOW)) =
+	    BT459_REG_CCOLOR_1;
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_ADDRHIGH)) =
+	    BT459_REG_CCOLOR_1 >> 8;
+	tc_wmb();
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_REGDATA)) =
+	    dc->dc_cursor_red[0];
+	tc_wmb();
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_REGDATA)) =
+	    dc->dc_cursor_green[0];
+	tc_wmb();
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_REGDATA)) =
+	    dc->dc_cursor_blue[0];
+	tc_wmb();
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_ADDRLOW)) =
+	    BT459_REG_CCOLOR_2;
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_ADDRHIGH)) =
+	    BT459_REG_CCOLOR_2 >> 8;
+	tc_wmb();
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_REGDATA)) =
+	    dc->dc_cursor_red[1];
+	tc_wmb();
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_REGDATA)) =
+	    dc->dc_cursor_green[1];
+	tc_wmb();
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_REGDATA)) =
+	    dc->dc_cursor_blue[1];
+	tc_wmb();
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_ADDRLOW)) =
+	    BT459_REG_CCOLOR_3;
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_ADDRHIGH)) =
+	    BT459_REG_CCOLOR_3 >> 8;
+	tc_wmb();
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_REGDATA)) =
+	    dc->dc_cursor_red[2];
+	tc_wmb();
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_REGDATA)) =
+	    dc->dc_cursor_green[2];
+	tc_wmb();
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_REGDATA)) =
+	    dc->dc_cursor_blue[2];
+	tc_wmb();
 
 	/* initialize the raster */
 	rap = &dc->dc_raster;
@@ -301,46 +389,42 @@ sfbioctl(v, cmd, data, flag, p)
 #undef fbt
 		return (0);
 
-#if 0
 	case FBIOPUTCMAP:
-		return (*tgar->tgar_set_cmap)(dc, (struct fbcmap *)data);
+		sfb_put_cmap(dc, (struct fbcmap *)data);
+		return (0);
 
 	case FBIOGETCMAP:
-		return (*tgar->tgar_get_cmap)(dc, (struct fbcmap *)data);
-#endif
+		sfb_get_cmap(dc, (struct fbcmap *)data);
+		return (0);
 
 	case FBIOGATTR:
 		return (ENOTTY);			/* XXX ? */
 
-#if 0
 	case FBIOSVIDEO:
 		if (*(int *)data == FBVIDEO_OFF)
 			sfb_blank(sc->sc_dc);
 		else
 			sfb_unblank(sc->sc_dc);
 		return (0);
-#endif
 
 	case FBIOGVIDEO:
 		*(int *)data = dc->dc_blanked ? FBVIDEO_OFF : FBVIDEO_ON;
 		return (0);
 
-#if 0
 	case FBIOSCURSOR:
-		return (*tgar->tgar_set_cursor)(dc, (struct fbcursor *)data);
+		return sfb_set_cursor(dc, (struct fbcursor *)data);
 
 	case FBIOGCURSOR:
-		return (*tgar->tgar_get_cursor)(dc, (struct fbcursor *)data);
+		return sfb_get_cursor(dc, (struct fbcursor *)data);
 
 	case FBIOSCURPOS:
-		return (*tgar->tgar_set_curpos)(dc, (struct fbcurpos *)data);
+		return sfb_set_curpos(dc, (struct fbcurpos *)data);
 
 	case FBIOGCURPOS:
-		return (*tgar->tgar_get_curpos)(dc, (struct fbcurpos *)data);
+		return sfb_get_curpos(dc, (struct fbcurpos *)data);
 
 	case FBIOGCURMAX:
-		return (*tgar->tgar_get_curmax)(dc, (struct fbcurpos *)data);
-#endif
+		return sfb_get_curmax(dc, (struct fbcurpos *)data);
 	}
 	return (-1);
 }
@@ -411,7 +495,6 @@ sfb_load_font(v, cookie, first, num, stride, data)
 	return (EINVAL);
 }
 
-#if 0
 int
 sfb_cnattach(addr)
 	tc_addr_t addr;
@@ -428,9 +511,7 @@ sfb_cnattach(addr)
 	sfb_consaddr = addr;
 	return(0);
 }
-#endif
 
-#if 0
 /*
  * Functions to blank and unblank the display.
  */
@@ -459,4 +540,318 @@ sfb_unblank(dc)
 		tc_wmb();
 	}
 }
-#endif
+
+void
+sfb_put_cmap(dc, cmap)
+     struct sfb_devconfig *dc;
+     struct fbcmap *cmap;
+{
+	char *ramdacregp;
+	int i;
+	int max_i;
+  
+	ramdacregp = (char *)dc->dc_vaddr + SFB_RAMDAC_OFFSET;
+
+	if (cmap->index > 255) {
+		return;
+	}
+	max_i = cmap->index + cmap->count;
+	if (max_i > 256) {
+		max_i = 256;
+	}
+
+	for (i=cmap->index ; i<max_i ; i++) {
+		dc->dc_cmap_red[i] = cmap->red[i];
+		dc->dc_cmap_green[i] = cmap->green[i];
+		dc->dc_cmap_blue[i] = cmap->blue[i];
+	}
+	/* Initialize the RAMDAC/colormap */
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_ADDRLOW)) =
+	    cmap->index;
+	(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_ADDRHIGH)) = 0;
+	tc_wmb();
+	for (i=cmap->index ; i<max_i ; i++) {
+		(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_CMAPDATA)) =
+		    dc->dc_cmap_red[i];
+		tc_wmb();
+		(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_CMAPDATA)) =
+		    dc->dc_cmap_green[i];
+		tc_wmb();
+		(*(volatile u_int32_t *)(ramdacregp + SFB_RAMDAC_CMAPDATA)) =
+		    dc->dc_cmap_blue[i];
+		tc_wmb();
+	}
+}
+
+void 
+sfb_get_cmap(dc, cmap)
+	struct sfb_devconfig *dc;
+	struct fbcmap  *cmap;
+{
+	int i;
+	int max_i;
+
+	if (cmap->index > 255) {
+		return;
+	}
+	max_i = cmap->index + cmap->count;
+	if (max_i > 256) {
+		max_i = 256;
+	}
+
+	for (i = cmap->index; i < max_i; i++) {
+		cmap->red[i] = dc->dc_cmap_red[i];
+		cmap->green[i] = dc->dc_cmap_green[i];
+		cmap->blue[i] = dc->dc_cmap_blue[i];
+	}
+}
+
+int 
+sfb_set_curpos(dc, curpos)
+	struct sfb_devconfig *dc;
+	struct fbcurpos *curpos;
+{
+	char *ramdacregp;
+
+	dc->dc_curpos_x = curpos->x + 368;
+	dc->dc_curpos_y = curpos->y + 34;
+
+	ramdacregp = (char *) dc->dc_vaddr + SFB_RAMDAC_OFFSET;
+
+	(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_ADDRLOW)) =
+	    BT459_REG_CXLO;
+	(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_ADDRHIGH)) =
+	    BT459_REG_CXLO >> 8;
+	tc_wmb();
+
+	(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_REGDATA)) =
+	    dc->dc_curpos_x;
+	tc_wmb();
+	(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_REGDATA)) =
+	    dc->dc_curpos_x >> 8;
+	tc_wmb();
+	(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_REGDATA)) =
+	    dc->dc_curpos_y;
+	tc_wmb();
+	(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_REGDATA)) =
+	    dc->dc_curpos_y >> 8;
+	tc_wmb();
+
+	return 0;
+}
+
+int 
+sfb_get_curpos(dc, curpos)
+	struct sfb_devconfig *dc;
+	struct fbcurpos *curpos;
+{
+	curpos->x = dc->dc_curpos_x - 368;
+	curpos->y = dc->dc_curpos_y - 34;
+
+	return 0;
+}
+
+int 
+sfb_get_curmax(dc, curpos)
+	struct sfb_devconfig *dc;
+	struct fbcurpos *curpos;
+{
+	curpos->x = 1280;
+	curpos->y = 1024;
+
+	return 0;
+}
+
+int 
+sfb_set_cursor(dc, cursor)
+	struct sfb_devconfig *dc;
+	struct fbcursor *cursor;
+{
+	unsigned char buf;
+	char *ramdacregp;
+	int result, i;
+
+	result = 0;
+
+	ramdacregp = (char *) dc->dc_vaddr + SFB_RAMDAC_OFFSET;
+
+	if (cursor->set & FB_CUR_SETCUR) {
+		(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_ADDRLOW)) =
+		    BT459_REG_CCR;
+		(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_ADDRHIGH)) =
+		    BT459_REG_CCR >> 8;
+		tc_wmb();
+
+		dc->dc_cursor_enable = cursor->enable;
+
+		if (cursor->enable == 0) {
+			(*(volatile u_int32_t *)
+			    (ramdacregp + SFB_RAMDAC_REGDATA)) = 0x00;
+		} else {
+			(*(volatile u_int32_t *)
+			    (ramdacregp + SFB_RAMDAC_REGDATA)) = 0xc0;
+		}
+		tc_wmb();
+
+		result |= 0;
+	}
+	if (cursor->set & FB_CUR_SETPOS) {
+		result |= sfb_set_curpos(dc, &cursor->pos);
+	}
+	if (cursor->set & FB_CUR_SETHOT) {
+		result |= sfb_set_curpos(dc, &cursor->pos);
+	}
+	if (cursor->set & FB_CUR_SETCMAP) {
+		for (i = 0; i < 3; i++) {
+			dc->dc_cursor_red[i] = cursor->cmap.red[i];
+			dc->dc_cursor_green[i] = cursor->cmap.green[i];
+			dc->dc_cursor_blue[i] = cursor->cmap.blue[i];
+		}
+
+		(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_ADDRLOW)) =
+		    BT459_REG_CCOLOR_1;
+		(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_ADDRHIGH)) =
+		    BT459_REG_CCOLOR_1 >> 8;
+		tc_wmb();
+
+		(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_REGDATA)) =
+		    cursor->cmap.red[0];
+		tc_wmb();
+		(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_REGDATA)) =
+		    cursor->cmap.green[0];
+		tc_wmb();
+		(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_REGDATA)) =
+		    cursor->cmap.blue[0];
+		tc_wmb();
+
+		(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_ADDRLOW)) =
+		    BT459_REG_CCOLOR_2;
+		(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_ADDRHIGH)) =
+		    BT459_REG_CCOLOR_2 >> 8;
+		tc_wmb();
+
+		(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_REGDATA)) =
+		    cursor->cmap.red[1];
+		tc_wmb();
+		(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_REGDATA)) =
+		    cursor->cmap.green[1];
+		tc_wmb();
+		(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_REGDATA)) =
+		    cursor->cmap.blue[1];
+		tc_wmb();
+
+		(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_ADDRLOW)) =
+		    BT459_REG_CCOLOR_3;
+		(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_ADDRHIGH)) =
+		    BT459_REG_CCOLOR_3 >> 8;
+		tc_wmb();
+
+		(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_REGDATA)) =
+		    cursor->cmap.red[2];
+		tc_wmb();
+		(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_REGDATA)) =
+		    cursor->cmap.green[2];
+		tc_wmb();
+		(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_REGDATA)) =
+		    cursor->cmap.blue[2];
+		tc_wmb();
+
+		result |= 0;
+	}
+	if (cursor->set & FB_CUR_SETSHAPE) {
+		for (i = 0; i < 512; i++) {
+			buf = (cursor->image[i] & 0x01) |
+			    ((cursor->image[i] & 0x02) << 1) |
+			    ((cursor->image[i] & 0x04) << 2) |
+			    ((cursor->image[i] & 0x08) << 3);
+			dc->dc_cursor_bitmap[i + i] = buf;
+			buf = ((cursor->image[i] & 0x10) >> 4) |
+			    ((cursor->image[i] & 0x20) >> 3) |
+			    ((cursor->image[i] & 0x40) >> 2) |
+			    ((cursor->image[i] & 0x80) >> 1);
+			dc->dc_cursor_bitmap[i + i + 1] = buf;
+		}
+
+		for (i = 0; i < 512; i++) {
+			buf = ((cursor->mask[i] & 0x01) << 1) |
+			    ((cursor->mask[i] & 0x02) << 2) |
+			    ((cursor->mask[i] & 0x04) << 3) |
+			    ((cursor->mask[i] & 0x08) << 4);
+			dc->dc_cursor_bitmap[i + i] |= buf;
+			buf = ((cursor->mask[i] & 0x10) >> 3) |
+			    ((cursor->mask[i] & 0x20) >> 2) |
+			    ((cursor->mask[i] & 0x40) >> 1) |
+			    (cursor->mask[i] & 0x80);
+			dc->dc_cursor_bitmap[i + i + 1] |= buf;
+		}
+
+		(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_ADDRLOW)) =
+		    BT459_REG_CRAM_BASE;
+		(*(volatile u_int32_t *) (ramdacregp + SFB_RAMDAC_ADDRHIGH)) =
+		    BT459_REG_CRAM_BASE >> 8;
+		tc_wmb();
+
+		for (i = 0; i < 1024; i++) {
+			(*(volatile u_int32_t *)
+			    (ramdacregp + SFB_RAMDAC_REGDATA)) =
+			    dc->dc_cursor_bitmap[i];
+			tc_wmb();
+		}
+		result |= 0;
+	}
+	return result;
+}
+
+int 
+sfb_get_cursor(dc, cursor)
+	struct sfb_devconfig *dc;
+	struct fbcursor *cursor;
+{
+	int result, i, j, k;
+
+	result = 0;
+
+	if (cursor->set & FB_CUR_SETCUR) {
+		cursor->enable = dc->dc_cursor_enable;
+	}
+	if (cursor->set & FB_CUR_SETPOS) {
+		result |= sfb_get_curpos(dc, &cursor->pos);
+	}
+	if (cursor->set & FB_CUR_SETHOT) {
+		result |= sfb_get_curpos(dc, &cursor->pos);
+	}
+	if (cursor->set & FB_CUR_SETCMAP) {
+		for (i = 0; i < 3; i++) {
+			cursor->cmap.red[i] = dc->dc_cursor_red[i];
+			cursor->cmap.green[i] = dc->dc_cursor_green[i];
+			cursor->cmap.blue[i] = dc->dc_cursor_blue[i];
+		}
+	}
+	if (cursor->set & FB_CUR_SETSHAPE) {
+		cursor->size.x = 64;
+		cursor->size.y = 64;
+		for (i = 0; i < 512; i++) {
+			j = i + i;
+			k = j + 1;
+			cursor->image[i] =
+			    (dc->dc_cursor_bitmap[j] & 0x01) |
+			    ((dc->dc_cursor_bitmap[j] & 0x04) >> 1) |
+			    ((dc->dc_cursor_bitmap[j] & 0x10) >> 2) |
+			    ((dc->dc_cursor_bitmap[j] & 0x40) >> 3) |
+			    ((dc->dc_cursor_bitmap[k] & 0x01) << 4) |
+			    ((dc->dc_cursor_bitmap[k] & 0x04) << 3) |
+			    ((dc->dc_cursor_bitmap[k] & 0x10) << 2) |
+			    ((dc->dc_cursor_bitmap[k] & 0x40) << 1);
+			cursor->mask[i] =
+			    ((dc->dc_cursor_bitmap[j] & 0x02) >> 1) |
+			    ((dc->dc_cursor_bitmap[j] & 0x08) >> 2) |
+			    ((dc->dc_cursor_bitmap[j] & 0x20) >> 3) |
+			    ((dc->dc_cursor_bitmap[j] & 0x80) >> 4) |
+			    ((dc->dc_cursor_bitmap[k] & 0x02) << 3) |
+			    ((dc->dc_cursor_bitmap[k] & 0x08) << 2) |
+			    ((dc->dc_cursor_bitmap[k] & 0x20) << 1) |
+			    (dc->dc_cursor_bitmap[k] & 0x80);
+		}
+	}
+	return result;
+}
