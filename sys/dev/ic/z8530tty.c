@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.17 1997/07/17 01:19:19 jtk Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.18 1997/08/07 19:22:45 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -1228,7 +1228,7 @@ zstty_softint(cs)
 	register struct zstty_softc *zst;
 	register struct linesw *line;
 	register struct tty *tp;
-	register int get, c, s;
+	register int get, c, s, t;
 	int ringmask, overrun;
 	register u_short ring_data;
 	register u_char rr0, delta;
@@ -1286,10 +1286,10 @@ zstty_softint(cs)
 	 * so unblock here ONLY if TS_TBLOCK has not been set.
 	 */
 	if (zst->zst_rx_blocked && ((tp->t_state & TS_TBLOCK) == 0)) {
-		(void) splzs();
+		t = splzs();
 		zst->zst_rx_blocked = 0;
 		zs_hwiflow(zst, 0);	/* unblock input */
-		(void) spltty();
+		splx(t);
 	}
 
 	/*
@@ -1300,11 +1300,11 @@ zstty_softint(cs)
 	if (zst->zst_st_check) {
 		zst->zst_st_check = 0;
 
-		(void) splzs();
+		t = splzs();
 		rr0 = cs->cs_rr0;
 		delta = cs->cs_rr0_delta;
 		cs->cs_rr0_delta = 0;
-		(void) spltty();
+		splx(t);
 
 		/* Note, the MD code may use DCD for something else. */
 		if (delta & cs->cs_rr0_dcd) {
