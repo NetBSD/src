@@ -1,7 +1,8 @@
-/*	$NetBSD: infinity.c,v 1.4 1997/05/08 13:38:38 matthias Exp $	*/
+/*	$NetBSD: infinity.c,v 1.5 1997/07/13 18:45:39 christos Exp $	*/
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: infinity.c,v 1.4 1997/05/08 13:38:38 matthias Exp $";
+__RCSID("$NetBSD: infinity.c,v 1.5 1997/07/13 18:45:39 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <math.h>

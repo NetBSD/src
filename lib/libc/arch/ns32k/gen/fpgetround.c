@@ -1,12 +1,13 @@
-/*	$NetBSD: fpgetround.c,v 1.2 1997/05/08 13:38:34 matthias Exp $	*/
+/*	$NetBSD: fpgetround.c,v 1.3 1997/07/13 18:45:32 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 28, 1995
  * Public domain.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: fpgetround.c,v 1.2 1997/05/08 13:38:34 matthias Exp $";
+__RCSID("$NetBSD: fpgetround.c,v 1.3 1997/07/13 18:45:32 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <ieeefp.h>
