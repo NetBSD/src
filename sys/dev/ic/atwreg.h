@@ -1,4 +1,4 @@
-/*	$NetBSD: atwreg.h,v 1.7 2004/02/17 21:20:55 dyoung Exp $	*/
+/*	$NetBSD: atwreg.h,v 1.8 2004/05/31 11:40:56 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.  All rights reserved.
@@ -101,11 +101,17 @@
 #define ATW_RDR		0x10	/* Receive demand */
 #define ATW_WRDP	0x14	/* Current receive descriptor pointer */
 #define ATW_RDB		0x18	/* Receive descriptor base address */
-#define ATW_CSR3A	0x1C	/* Unused */
+#define ATW_CSR3A	0x1C	/* Unused (on ADM8211A) */
+#define ATW_C_TDBH	0x1C	/* Transmit descriptor base address,
+				 * high-priority packet
+				 */
 #define ATW_TDBD	0x20	/* Transmit descriptor base address, DCF */
 #define ATW_TDBP	0x24	/* Transmit descriptor base address, PCF */
 #define ATW_STSR	0x28	/* Status */
 #define ATW_CSR5A	0x2C	/* Unused */
+#define ATW_C_TDBB	0x2C	/* Transmit descriptor base address, buffered
+				 * broadcast/multicast packet
+				 */
 #define ATW_NAR		0x30	/* Network access */
 #define ATW_CSR6A	0x34	/* Unused */
 #define ATW_IER		0x38	/* Interrupt enable */
@@ -210,6 +216,29 @@
 #define ATW_FRCTL_VER_MASK	BITS(29, 30)	/* protocol version */
 #define ATW_FRCTL_ORDER		BIT(28)		/* order bit */
 #define ATW_FRCTL_MAXPSP	BIT(27)		/* maximum power saving */
+#define ATW_C_FRCTL_PRSP	BIT(26)		/* 1: driver sends probe
+						 *    response
+						 * 0: ASIC sends prresp
+						 */
+#define ATW_C_FRCTL_DRVBCON	BIT(25)		/* 1: driver sends beacons
+						 * 0: ASIC sends beacons
+						 */
+#define ATW_C_FRCTL_DRVLINKCTRL	BIT(24)		/* 1: driver controls link LED
+						 * 0: ASIC controls link LED
+						 */
+#define ATW_C_FRCTL_DRVLINKON	BIT(23)		/* 1: turn on link LED
+						 * 0: turn off link LED
+						 */
+#define ATW_C_FRCTL_CTX_DATA	BIT(22)		/* 0: set by CSR28
+						 * 1: random
+						 */
+#define ATW_C_FRCTL_RSVFRM	BIT(21)		/* 1: receive "reserved" 
+						 * frames, 0: ignore
+						 * reserved frames
+						 */
+#define ATW_C_FRCTL_CFEND	BIT(19)		/* write to send CF_END,
+						 * ADM8211C/CR clears
+						 */
 #define ATW_FRCTL_DOZEFRM	BIT(18)		/* select pre-sleep frame */
 #define ATW_FRCTL_PSAWAKE	BIT(17)		/* MAC is awake (?) */
 #define ATW_FRCTL_PSMODE	BIT(16)		/* MAC is power-saving (?) */
@@ -272,6 +301,18 @@
 #define ATW_NAR_CFP		BIT(27)		/* indicate more TX data to
 						 * point coordinator
 						 */
+#define ATW_C_NAR_APSTA		BIT(26)		/* 0: STA mode
+						 * 1: AP mode
+						 */
+#define ATW_C_NAR_TDBBE		BIT(25)		/* 0: disable TDBB
+						 * 1: enable TDBB
+						 */
+#define ATW_C_NAR_TDBHE		BIT(24)		/* 0: disable TDBH
+						 * 1: enable TDBH
+						 */
+#define ATW_C_NAR_TDBHT		BIT(23)		/* write 1 to make ASIC
+						 * poll TDBH once; ASIC clears
+						 */
 #define ATW_NAR_SF		BIT(21)		/* store and forward: ignore
 						 * TX threshold
 						 */
@@ -289,6 +330,9 @@
 #define ATW_NAR_MM		BIT(7)		/* RX any multicast */
 #define ATW_NAR_PR		BIT(6)		/* promiscuous mode */
 #define ATW_NAR_EA		BIT(5)		/* match ad hoc packets (?) */
+#define ATW_NAR_DISPCF		BIT(4)		/* 1: PCF *not* supported
+						 * 0: PCF supported
+						 */
 #define ATW_NAR_PB		BIT(3)		/* pass bad packets */
 #define ATW_NAR_STPDMA		BIT(2)		/* stop DMA, abort packet */
 #define ATW_NAR_SR		BIT(1)		/* start/stop receive */
@@ -334,6 +378,28 @@
 #define ATW_LPC_LPCO		BIT(16)		/* lost packet counter overflow */
 #define ATW_LPC_LPC_MASK	BITS(0, 15)	/* lost packet counter */
 
+#define	ATW_TEST1_CONTROL	BIT(31)		/* "0: read from dxfer_control,
+						 * 1: read from dxfer_state"
+						 */
+#define	ATW_TEST1_DBGREAD_MASK	BITS(30,28)	/* "control of read data,
+						 * debug only"
+						 */
+#define	ATW_TEST1_TXWP_MASK	BITS(27,25)	/* select ATW_WTDP content? */
+#define	ATW_TEST1_TXWP_TDBD	LSHIFT(0x0, ATW_TEST1_TXWP_MASK)
+#define	ATW_TEST1_TXWP_TDBH	LSHIFT(0x1, ATW_TEST1_TXWP_MASK)
+#define	ATW_TEST1_TXWP_TDBB	LSHIFT(0x2, ATW_TEST1_TXWP_MASK)
+#define	ATW_TEST1_TXWP_TDBP	LSHIFT(0x3, ATW_TEST1_TXWP_MASK)
+#define	ATW_TEST1_RSVD0_MASK	BITS(24,6)	/* reserved */
+#define	ATW_TEST1_TESTMODE_MASK	BITS(5,4)
+#define	ATW_TEST1_TESTMODE_NORMAL	LSHIFT(0x0, )	/* normal operation */
+#define	ATW_TEST1_TESTMODE_MACONLY	LSHIFT(0x1, )	/* MAC-only mode */
+#define	ATW_TEST1_TESTMODE_NORMAL2	LSHIFT(0x2, )	/* normal operation */
+#define	ATW_TEST1_TESTMODE_MONITOR	LSHIFT(0x3, )	/* monitor mode */
+
+#define	ATW_TEST1_DUMP_MASK	BITS(3,0)		/* select dump signal
+							 * from dxfer (huh?)
+							 */
+
 #define ATW_SPR_SRS		BIT(11)		/* activate SEEPROM access */
 #define ATW_SPR_SDO		BIT(3)		/* data out of SEEPROM */
 #define ATW_SPR_SDI		BIT(2)		/* data into SEEPROM */
@@ -358,6 +424,16 @@
 #define ATW_TEST0_TS_SUSPENDED		LSHIFT(6, ATW_TEST0_TS_MASK)
 /* Running - close transmit descriptor */
 #define ATW_TEST0_TS_CLOSE		LSHIFT(7, ATW_TEST0_TS_MASK)
+
+/* ADM8211C/CR registers */ 
+/* Suspended */
+#define ATW_C_TEST0_TS_SUSPENDED	LSHIFT(4, ATW_TEST0_TS_MASK)
+/* Descriptor write */
+#define ATW_C_TEST0_TS_CLOSE		LSHIFT(5, ATW_TEST0_TS_MASK)
+/* Last descriptor write */
+#define ATW_C_TEST0_TS_CLOSELAST	LSHIFT(6, ATW_TEST0_TS_MASK)
+/* FIFO full */
+#define ATW_C_TEST0_TS_FIFOFULL		LSHIFT(7, ATW_TEST0_TS_MASK)
 
 #define ATW_TEST0_RS_MASK	BITS(25, 23)	/* Receive process state */
 
@@ -456,6 +532,11 @@
 						 * 1: MAC; needed by Intersil
 						 * BBP
 						 */
+#define	ATW_C_SYNCTL_MMICE	BIT(25)		/* ADM8211C/CR define this
+						 * bit. 0: latch data on
+						 * negative edge, 1: positive
+						 * edge.
+						 */
 #define ATW_SYNCTL_RFTYPE_MASK	BITS(24, 22)	/* RF type */
 #define ATW_SYNCTL_DATA_MASK	BITS(21, 0)	/* synthesizer setting */
 
@@ -464,7 +545,9 @@
 						 * RTS.
 						 */
 #define ATW_PLCPHD_SERVICE_MASK	BITS(23, 16)	/* service field in PLCP
-						 * header
+						 * header; with RFMD BBP,
+						 * sets Tx power for beacon,
+						 * RTS, ATIM.
 						 */
 #define ATW_PLCPHD_PMBL		BIT(15)		/* 0: long preamble, 1: short */
 
@@ -539,6 +622,7 @@
 #define ATW_PAR0_PAB2_MASK	BITS(16, 23)	/* MAC address byte 2 */
 #define ATW_PAR0_PAB3_MASK	BITS(24, 31)	/* MAC address byte 3 */
 
+#define	ATW_C_PAR1_CTD		BITS(16,31)	/* Continuous Tx pattern */ 
 #define ATW_PAR1_PAB5_MASK	BITS(8, 15)	/* MAC address byte 5 */
 #define ATW_PAR1_PAB4_MASK	BITS(0, 7)	/* MAC address byte 4 */
 
@@ -582,7 +666,22 @@
 #define ATW_BCNT_PLCPL_MASK	BITS(15,8)	/* 5.5M PLCP length (us) */
 #define ATW_BCNT_BCNT_MASK	BITS(7,0)	/* byte count of beacon frame */
 
-#define ATW_TSC_TSC_MASK	BITS(3,0)	/* TSFT countdown value */
+/* For ADM8211C/CR */
+/* ATW_C_TSC_TIMTABSEL = 1 */
+#define ATW_C_BCNT_EXTEN1	BIT(31)		/* 11M beacon len. extension */
+#define ATW_C_BCNT_BEANLEN1	BITS(30,16)	/* beacon length in us */
+/* ATW_C_TSC_TIMTABSEL = 0 */
+#define ATW_C_BCNT_EXTEN0	BIT(15)		/* 11M beacon len. extension */
+#define ATW_C_BCNT_BEANLEN0	BIT(14,0)	/* beacon length in us */
+
+#define ATW_C_TSC_TIMOFS	BITS(31,24)	/* I think this is the
+						 * SRAM offset for the TIM
+						 */
+#define ATW_C_TSC_TIMLEN	BITS(21,12)	/* length of TIM */
+#define ATW_C_TSC_TIMTABSEL	BIT(4)		/* select TIM table 0 or 1 */
+#define ATW_TSC_TSC_MASK	BITS(3,0)	/* TSFT countdown value, 0
+						 * disables
+						 */
 
 #define ATW_SYNRF_SELSYN	BIT(31)	/* 0: MAC controls SYN IF pins,
 					 * 1: ATW_SYNRF controls SYN IF pins.
@@ -611,6 +710,12 @@
 #define ATW_SYNRF_PAPE		BIT(23)	/* if SELRF = 1, direct control of
 					 * PAPE pin
 					 */
+#define ATW_C_SYNRF_TRSW	BIT(22)	/* if SELRF = 1, direct control of
+					 * TRSW pin
+					 */
+#define ATW_C_SYNRF_TRSWN	BIT(21)	/* if SELRF = 1, direct control of
+					 * TRSWn pin
+					 */
 #define ATW_SYNRF_INTERSIL_EN	BIT(20)	/* if SELRF = 1, enables
 					 * some signal used by the
 					 * Intersil RF front-end?
@@ -619,12 +724,25 @@
 #define ATW_SYNRF_PHYRST	BIT(18)	/* if SELRF = 1, direct control of
 					 * PHYRST# pin
 					 */
+/* 1: force TXPE = RXPE = 1 if ATW_CMDR[27] = 0. */
+#define ATW_C_SYNRF_RF2958PD	ATW_SYNRF_PHYRST
 
 #define ATW_BPLI_BP_MASK	BITS(31,16)	/* beacon interval in TU */
 #define ATW_BPLI_LI_MASK	BITS(15,0)	/* STA listen interval in
 						 * beacon intervals
 						 */
 
+#define ATW_C_CAP0_TIMLEN1	BITS(31,24)	/* TIM table 1 len in bytes
+						 * including TIM ID (XXX huh?)
+						 */
+#define ATW_C_CAP0_TIMLEN0	BITS(23,16)	/* TIM table 0 len in bytes,
+						 * including TIM ID (XXX huh?)
+						 */
+#define	ATW_C_CAP0_CWMAX	BITS(11,8)	/* 1 <= CWMAX <= 5 fixes CW?
+						 * 5 < CWMAX <= 9 sets max?
+						 * 10?
+						 * default 0
+						 */
 #define ATW_CAP0_RCVDTIM	BIT(4)		/* receive every DTIM */
 #define ATW_CAP0_CHN_MASK	BITS(3,0)	/* current DSSS channel */
 
@@ -649,6 +767,7 @@
 						 * in 1 microsecond.
 						 * Depends PCI bus speed?
 						 */
+#define ATW_C_TOFS0_TUCNT_MASK	BITS(14,10)	/* PIFS (microseconds) */
 #define ATW_TOFS0_TUCNT_MASK	BITS(9,0)	/* TU counter in microseconds */
 
 /* TBD TOFS1 */
@@ -679,6 +798,10 @@
 #define ATW_WEPCTL_WR		BIT(28)		/* */
 #define ATW_WEPCTL_RD		BIT(27)		/* */
 #define ATW_WEPCTL_WEPRXBYP	BIT(25)		/* bypass WEP on RX */
+#define ATW_WEPCTL_SHKEY	BIT(24)		/* 1: pass to host if tbl
+						 * lookup fails, 0: use
+						 * shared-key
+						 */
 #define ATW_WEPCTL_UNKNOWN0	BIT(23)		/* has something to do with
 						 * revision 0x20. Possibly
 						 * selects a different WEP
