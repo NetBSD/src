@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_subr.c,v 1.1 1995/09/17 19:56:41 pk Exp $ */
+/*	$NetBSD: rcons_subr.c,v 1.2 1995/10/04 23:57:26 pk Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -55,34 +55,22 @@
 #include <dev/rcons/rcons.h>
 #include <dev/rcons/raster.h>
 
-void rcons_text(struct rconsole *, char *, int);
-void rcons_pctrl(struct rconsole *, int);
-void rcons_esc(struct rconsole *, int);
-void rcons_doesc(struct rconsole *, int);
-void rcons_cursor(struct rconsole *);
-void rcons_invert(struct rconsole *, int);
-void rcons_clear2eop(struct rconsole *);
-void rcons_clear2eol(struct rconsole *);
-void rcons_scroll(struct rconsole *, int);
-void rcons_delchar(struct rconsole *, int);
-void rcons_delline(struct rconsole *, int);
-void rcons_insertchar(struct rconsole *, int);
-void rcons_insertline(struct rconsole *, int);
+#include "rcons_subr.h"
 
 extern void rcons_bell(struct rconsole *);
 
-#define RCONS_ISPRINT(c) ((c) >= ' ' && (c) <= '~')
+#define RCONS_ISPRINT(c) ((((c) >= ' ') && ((c) <= '~')) || ((c) > 160))
 #define RCONS_ISDIGIT(c) ((c) >= '0' && (c) <= '9')
 
 /* Output (or at least handle) a string sent to the console */
 void
 rcons_puts(rc, str, n)
 	register struct rconsole *rc;
-	register char *str;
+	register unsigned char *str;
 	register int n;
 {
 	register int c, i, j;
-	register char *cp;
+	register unsigned char *cp;
 
 	/* Jump scroll */
 	/* XXX maybe this should be an option? */
@@ -150,14 +138,14 @@ rcons_puts(rc, str, n)
 void
 rcons_text(rc, str, n)
 	register struct rconsole *rc;
-	register char *str;
+	register unsigned char *str;
 	register int n;
 {
 	register int x, y, op;
 
 	x = *rc->rc_col * rc->rc_font->width + rc->rc_xorigin;
 	y = *rc->rc_row * rc->rc_font->height +
-	    rc->rc_font_ascent + rc->rc_yorigin;
+	    rc->rc_font->ascent + rc->rc_yorigin;
 	op = RAS_SRC;
 	if (((rc->rc_bits & FB_STANDOUT) != 0) ^
 	    ((rc->rc_bits & FB_INVERT) != 0))

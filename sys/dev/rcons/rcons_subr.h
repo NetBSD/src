@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_font.c,v 1.1 1995/09/17 19:56:38 pk Exp $ */
+/*	$NetBSD: rcons_subr.h,v 1.1 1995/10/04 23:57:28 pk Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,30 +41,21 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)rcons_font.c	8.1 (Berkeley) 6/11/93
+ *	extracted from: @(#)rcons_subr.c	8.1 (Berkeley) 6/11/93
  */
 
-#ifdef _KERNEL
-#include <sys/param.h>
-#include <sys/kernel.h>
-#include <sys/device.h>
-#else
-#include <sys/types.h>
-#include "myfbdevice.h"
-#endif
-
-#include <dev/rcons/raster.h>
-#include <dev/rcons/rcons.h>
-#include <dev/rcons/gallant19.h>
-
-void
-rcons_font(rc)
-	register struct rconsole *rc;
-{
-
-	/* XXX really rather get this from the prom */
-	rc->rc_font = &gallant19;
-
-	/* Get distance to top and bottom of font from font origin */
-	rc->rc_font_ascent = -(rc->rc_font->chars)['a'].homey;
-}
+extern void rcons_puts __P((struct rconsole *, unsigned char *, int));
+extern void rcons_font __P((struct rconsole *));
+extern void rcons_text __P((struct rconsole *, unsigned char *, int));
+extern void rcons_pctrl __P((struct rconsole *, int));
+extern void rcons_esc __P((struct rconsole *, int));
+extern void rcons_doesc __P((struct rconsole *, int));
+extern void rcons_cursor __P((struct rconsole *));
+extern void rcons_invert __P((struct rconsole *, int));
+extern void rcons_clear2eop __P((struct rconsole *));
+extern void rcons_clear2eol __P((struct rconsole *));
+extern void rcons_scroll __P((struct rconsole *, int));
+extern void rcons_delchar __P((struct rconsole *, int));
+extern void rcons_delline __P((struct rconsole *, int));
+extern void rcons_insertchar __P((struct rconsole *, int));
+extern void rcons_insertline __P((struct rconsole *, int));
