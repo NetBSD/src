@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.11 2002/05/15 02:18:22 lukem Exp $	*/
+/*	$NetBSD: installboot.h,v 1.12 2002/05/15 09:44:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -100,6 +100,15 @@ struct ib_fs {
 	uint32_t	 needswap;
 };
 
+struct bbinfo_params {
+	const char	*magic;
+	uint32_t	offset;
+	uint32_t	blocksize;
+	uint32_t	maxsize;
+	uint32_t	headeroffset;
+	int		littleendian;
+};
+
 extern struct ib_mach	machines[];
 extern struct ib_fs	fstypes[];
 
@@ -110,6 +119,11 @@ int		set_sunsum(ib_params *, uint16_t *, uint16_t);
 int		no_parseopt(ib_params *, const char *);
 int		no_setboot(ib_params *);
 int		no_clearboot(ib_params *);
+
+	/* bbinfo.c */
+int		shared_bbinfo_clearboot(ib_params *, struct bbinfo_params *);
+int		shared_bbinfo_setboot(ib_params *, struct bbinfo_params *,
+		    int (*)(ib_params *, struct bbinfo_params *, char *));
 
 	/* fstypes.c */
 int		hardcode_stage2(ib_params *, uint32_t *, ib_block *);

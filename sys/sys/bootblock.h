@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.4 2002/05/14 06:34:21 lukem Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.5 2002/05/15 09:44:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -74,6 +74,23 @@
 #endif
 
 /*
+ * shared --
+ *	definintions shared by many platforms
+ */
+
+	/* Maximum # of blocks in bbi_block_table, each bbi_block_size long */
+#define	SHARED_BBINFO_MAXBLOCKS	118	/* so sizeof(shared_bbinfo) == 512 */
+
+struct shared_bbinfo {
+	uint8_t bbi_magic[32];
+	int32_t bbi_block_size;
+	int32_t bbi_block_count;
+	int32_t bbi_block_table[SHARED_BBINFO_MAXBLOCKS];
+};
+
+
+
+/*
  * alpha --
  *	Alpha (disk, but also tape) Boot Block.
  * 
@@ -110,6 +127,16 @@ struct alpha_boot_block {
 		*(cksum) = _cksum;					\
 	} while (0)
 
+
+/*
+ * macppc
+ */
+
+#define MACPPC_BOOT_BLOCK_OFFSET	2048
+#define MACPPC_BOOT_BLOCK_BLOCKSIZE	512
+#define MACPPC_BOOT_BLOCK_MAX_SIZE	(512 * 12)
+	/* Magic string -- 32 bytes long (including the NUL) */
+#define	MACPPC_BBINFO_MAGIC		"NetBSD/macppc bootxx   20020515"
 
 /*
  * pmax --
@@ -156,20 +183,8 @@ struct pmax_boot_block {
 #define SPARC_BOOT_BLOCK_OFFSET		512
 #define SPARC_BOOT_BLOCK_BLOCKSIZE	512
 #define SPARC_BOOT_BLOCK_MAX_SIZE	(512 * 15)
-
-	/* Maximum # of blocks in bbi_block_table, each bbi_block_size long */
-#define	SPARC_BBINFO_MAXBLOCKS		256
-
 	/* Magic string -- 32 bytes long (including the NUL) */
-#define	SPARC_BBINFO_MAGIC		"NetBSD/sparc bootxx            "
-#define	SPARC_BBINFO_MAGICSIZE		sizeof(SPARC_BBINFO_MAGIC)
-
-struct sparc_bbinfo {
-	uint8_t bbi_magic[SPARC_BBINFO_MAGICSIZE];
-	int32_t bbi_block_size;
-	int32_t bbi_block_count;
-	int32_t bbi_block_table[SPARC_BBINFO_MAXBLOCKS];
-};
+#define	SPARC_BBINFO_MAGIC		"NetBSD/sparc bootxx    20020515"
 
 
 /*
@@ -188,20 +203,8 @@ struct sparc_bbinfo {
 #define SUN68K_BOOT_BLOCK_OFFSET	512
 #define SUN68K_BOOT_BLOCK_BLOCKSIZE	512
 #define SUN68K_BOOT_BLOCK_MAX_SIZE	(512 * 15)
-
-	/* Maximum # of blocks in bbi_block_table, each bbi_block_size long */
-#define	SUN68K_BBINFO_MAXBLOCKS		64
-
 	/* Magic string -- 32 bytes long (including the NUL) */
-#define	SUN68K_BBINFO_MAGIC		"NetBSD/sun68k bootxx           "
-#define	SUN68K_BBINFO_MAGICSIZE		sizeof(SUN68K_BBINFO_MAGIC)
-
-struct sun68k_bbinfo {
-	uint8_t bbi_magic[SUN68K_BBINFO_MAGICSIZE];
-	int32_t bbi_block_size;
-	int32_t bbi_block_count;
-	int32_t bbi_block_table[SUN68K_BBINFO_MAXBLOCKS];
-};
+#define	SUN68K_BBINFO_MAGIC		"NetBSD/sun68k bootxx   20020515"
 
 
 /*
