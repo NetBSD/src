@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ttold.c,v 1.18 2003/01/18 08:44:27 thorpej Exp $	 */
+/*	$NetBSD: svr4_ttold.c,v 1.19 2003/01/20 07:18:59 simonb Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_ttold.c,v 1.18 2003/01/18 08:44:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_ttold.c,v 1.19 2003/01/20 07:18:59 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -156,7 +156,7 @@ svr4_sgttyb_to_bsd_sgttyb(ss, bs)
 	bs->sg_erase  =	ss->sg_erase;	
 	bs->sg_kill   = ss->sg_kill;
 	bs->sg_flags  = ss->sg_flags;
-};
+}
 
 
 static void
