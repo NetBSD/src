@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.36 2002/03/23 09:06:50 hamajima Exp $
+#	$NetBSD: MAKEDEV,v 1.36.2.1 2002/08/10 00:09:07 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -644,9 +644,11 @@ audio*)
 	;;  
 
 local)
-	umask 0
-	sh $0.local all
-	umask 77
+	if [ -f "$0.local" ]; then
+		umask 0
+		sh $0.local all
+		umask 77
+	fi
 	;;
 
 *)
