@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.h,v 1.3 2003/01/18 18:45:54 christos Exp $	*/
+/*	$NetBSD: pthread_debug.h,v 1.4 2003/01/27 21:01:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,7 +53,16 @@
 #define PTHREADD_SPINPREEMPT	11
 #define PTHREADD_RESOLVELOCKS	12
 #define PTHREADD_SWITCHTO	13
-#define PTHREADD_NCOUNTERS	14
+#define PTHREADD_MUTEX_LOCK	14
+#define PTHREADD_MUTEX_LOCK_SLOW	15
+#define PTHREADD_MUTEX_TRYLOCK	16
+#define PTHREADD_MUTEX_UNLOCK	17
+#define PTHREADD_MUTEX_UNLOCK_UNBLOCK	18
+#define PTHREADD_COND_WAIT	19
+#define PTHREADD_COND_TIMEDWAIT	20
+#define PTHREADD_COND_SIGNAL	21
+#define PTHREADD_COND_BROADCAST	22
+#define PTHREADD_NCOUNTERS	23
 
 #define PTHREADD_INITCOUNTERNAMES { \
 	"pthread_create()",	/*  0 CREATE */		\
@@ -70,6 +79,15 @@
 	"spin preemption",     	/* 11 SPINPREEMPT */	\
 	"resolvelocks",		/* 12 RESOLVELOCKS */	\
 	"switchto",		/* 13 SPINUNLOCKS */	\
+	"mutex lock",		/* 14 MUTEX_LOCK */	\
+	"mutex lock (slow)",   	/* 15 MUTEX_LOCK_SLOW */	\
+	"mutex trylock",	/* 16 MUTEX_TRYLOCK */	\
+	"mutex unlock",		/* 17 MUTEX_UNLOCK */	\
+	"mutex unlock (wake)",  /* 18 MUTEX_UNLOCK_UNBLOCK */	\
+	"cond wait",		/* 19 COND_WAIT */	\
+	"cond timedwait",      	/* 20 COND_TIMEDWAIT */	\
+	"cond broadcast",	/* 21 COND_BROADCAST */	\
+	"cond signal",		/* 22 COND_SIGNAL */	\
 }
 
 #define PTHREAD__DEBUG_SHMKEY	(0x000f)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.6 2003/01/22 13:49:14 scw Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.7 2003/01/27 21:01:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -169,6 +169,7 @@ pthread_mutex_lock(pthread_mutex_t *mutex)
 		return EINVAL;
 #endif
 
+	PTHREADD_ADD(PTHREADD_MUTEX_LOCK);
 	/*
 	 * Note that if we get the lock, we don't have to deal with any
 	 * non-default lock type handling.
@@ -193,6 +194,7 @@ pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 
 	self = pthread__self();
 
+	PTHREADD_ADD(PTHREADD_MUTEX_LOCK_SLOW);
 	while (/*CONSTCOND*/1) {
 		if (pthread__simple_lock_try(&mutex->ptm_lock))
 			break; /* got it! */
@@ -272,6 +274,7 @@ pthread_mutex_trylock(pthread_mutex_t *mutex)
 		return EINVAL;
 #endif
 
+	PTHREADD_ADD(PTHREADD_MUTEX_TRYLOCK);
 	if (pthread__simple_lock_try(&mutex->ptm_lock) == 0) {
 		struct mutex_private *mp;
 
@@ -319,6 +322,7 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 	if (mutex->ptm_lock != __SIMPLELOCK_LOCKED)
 		return EPERM; /* Not exactly the right error. */
 #endif
+	PTHREADD_ADD(PTHREADD_MUTEX_UNLOCK);
 
 	GET_MUTEX_PRIVATE(mutex, mp);
 
@@ -352,9 +356,10 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 	pthread_spinunlock(self, &mutex->ptm_interlock);
 
 	/* Give the head of the blocked queue another try. */
-	if (blocked)
+	if (blocked) {
+		PTHREADD_ADD(PTHREADD_MUTEX_UNLOCK_UNBLOCK);
 		pthread__sched(self, blocked);
-
+	}
 	return 0;
 }
 

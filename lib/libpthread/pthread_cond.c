@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.2 2003/01/18 10:34:15 thorpej Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.3 2003/01/27 21:01:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -106,6 +106,7 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 		return EINVAL;
 #endif
 	self = pthread__self();
+	PTHREADD_ADD(PTHREADD_COND_WAIT);
 	pthread_spinlock(self, &cond->ptc_lock);
 #ifdef ERRORCHECK
 	if (cond->ptc_mutex == NULL)
@@ -189,6 +190,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		}
 	}
 #endif
+	PTHREADD_ADD(PTHREADD_COND_TIMEDWAIT);
 	wait.ptw_thread = self;
 	wait.ptw_cond = cond;
 	retval = 0;
@@ -263,6 +265,7 @@ pthread_cond_signal(pthread_cond_t *cond)
 	if ((cond == NULL) || (cond->ptc_magic != _PT_COND_MAGIC))
 		return EINVAL;
 #endif
+	PTHREADD_ADD(PTHREADD_COND_SIGNAL);
 
 	self = pthread__self();
 	SDPRINTF(("(cond signal %p) Signaling %p\n",
@@ -294,6 +297,7 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 		return EINVAL;
 #endif
 
+	PTHREADD_ADD(PTHREADD_COND_BROADCAST);
 	self = pthread__self();
 	SDPRINTF(("(cond signal %p) Broadcasting %p\n",
 	    self, cond));
