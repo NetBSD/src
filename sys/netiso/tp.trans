@@ -1,4 +1,4 @@
-/*	$NetBSD: tp.trans,v 1.10 2005/02/11 06:21:21 simonb Exp $	*/
+/*	$NetBSD: tp.trans,v 1.11 2005/02/26 22:39:49 perry Exp $	*/
 
 /* NEW */
 /*-
@@ -37,13 +37,13 @@
 
                       All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of IBM not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 IBM DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -69,11 +69,11 @@ SOFTWARE.
  * some hooks exist for data on (dis)connect, but it's ***NOT***SUPPORTED***
  * (read: may not work!)
  *
- * I tried to put everything that causes a change of state in here, hence 
+ * I tried to put everything that causes a change of state in here, hence
  * there are some seemingly trivial events  like T_DETACH and T_LISTEN_req.
  *
  * Almost everything having to do w/ setting & cancelling timers is here
- * but once it was debugged, I moved the setting of the 
+ * but once it was debugged, I moved the setting of the
  * keepalive (sendack) timer to tp_emit(), where an AK_TPDU is sent.
  * This is so the code wouldn't be duplicated all over creation in here.
  *
@@ -112,9 +112,9 @@ int 	tp_emit(),
 		tp_goodack(),				tp_goodXack(),
 		tp_stash()
 ;
-void	tp_indicate(),				tp_getoptions(),	
+void	tp_indicate(),				tp_getoptions(),
 		tp_soisdisconnecting(), 	tp_soisdisconnected(),
-		tp_recycle_tsuffix(),		
+		tp_recycle_tsuffix(),
 #ifdef TP_DEBUG_TIMERS
 		tp_etimeout(),				tp_euntimeout(),
 		tp_ctimeout(),				tp_cuntimeout(),
@@ -134,11 +134,11 @@ typedef  struct tp_pcb tpcb_struct;
 
 *STATES
 
-TP_CLOSED 	
+TP_CLOSED
 TP_CRSENT
 TP_AKWAIT
 TP_OPEN
-TP_CLOSING 
+TP_CLOSING
 TP_REFWAIT
 TP_LISTENING	/* Local to this implementation */
 TP_CONFIRMING	/* Local to this implementation */
@@ -146,19 +146,19 @@ TP_CONFIRMING	/* Local to this implementation */
 *EVENTS		{ struct timeval e_time; } 		SYNONYM  E
 
  /*
-  * C (typically cancelled) timers  - 
+  * C (typically cancelled) timers  -
   *
   * let these be the first ones so for the sake of convenience
   * their values are 0--> n-1
-  * DO NOT CHANGE THE ORDER OF THESE TIMER EVENTS!! 
+  * DO NOT CHANGE THE ORDER OF THESE TIMER EVENTS!!
   */
- TM_inact		
- TM_retrans		
-				/* TM_retrans is used for all 
-				 * simple retransmissions - CR,CC,XPD,DR 
+ TM_inact
+ TM_retrans
+				/* TM_retrans is used for all
+				 * simple retransmissions - CR,CC,XPD,DR
 				 */
 
- TM_sendack		
+ TM_sendack
 				/* TM_sendack does dual duty - keepalive AND closed-window
 				 * Probes.
 				 * It's set w/ keepalive-ticks every time an ack is sent.
@@ -166,10 +166,10 @@ TP_CONFIRMING	/* Local to this implementation */
 				 * Whenever a DT arrives which doesn't require immediate acking,
 				 * a separate fast-timeout flag is set ensuring 200ms response.
 				 */
- TM_notused	
+ TM_notused
 
- /* 
-  * E (typically expired) timers - these may be in any order. 
+ /*
+  * E (typically expired) timers - these may be in any order.
   * These cause procedures to be executed directly; may not
   * cause an 'event' as we know them here.
   */
@@ -194,35 +194,35 @@ TP_CONFIRMING	/* Local to this implementation */
 				  u_short		e_sref;
 				  u_char		e_reason;
 				}
- DC_TPDU		
+ DC_TPDU
  CC_TPDU   	 	{ struct mbuf 	*e_data;	/* first field */
 				  int 			e_datalen; /* 2nd field */
 				  u_short		e_sref;
 				  u_int			e_cdt;
 				}
- AK_TPDU		{ u_int			e_cdt;	
-				  SeqNum 	 	e_seq;		
-				  SeqNum 	 	e_subseq;		
-				  u_char 	 	e_fcc_present;		
+ AK_TPDU		{ u_int			e_cdt;
+				  SeqNum 	 	e_seq;
+				  SeqNum 	 	e_subseq;
+				  u_char 	 	e_fcc_present;
 				}
  DT_TPDU		{ struct mbuf	*e_data; 	/* first field */
 				  int 			e_datalen; /* 2nd field */
 				  u_int 		e_eot;
-				  SeqNum		e_seq; 
+				  SeqNum		e_seq;
 				}
  XPD_TPDU		{ struct mbuf 	*e_data;	/* first field */
 				  int 			e_datalen; 	/* 2nd field */
-				  SeqNum 		e_seq;	
+				  SeqNum 		e_seq;
 				}
  XAK_TPDU		{ SeqNum 		e_seq;		}
 
- T_CONN_req 
+ T_CONN_req
  T_DISC_req		{ u_char		e_reason; 	}
  T_LISTEN_req
  T_DATA_req
- T_XPD_req	
- T_USR_rcvd	
- T_USR_Xrcvd	
+ T_XPD_req
+ T_USR_rcvd
+ T_USR_Xrcvd
  T_DETACH
  T_NETRESET
  T_ACPT_req
@@ -240,14 +240,14 @@ SAME			<==			TP_AKWAIT			[ CC_TPDU, DC_TPDU, XAK_TPDU ]
 
 /* applicable in TP4, TP0 */
 SAME			<==			TP_REFWAIT								DR_TPDU
-	( $$.e_sref !=  0 ) 
+	( $$.e_sref !=  0 )
 	{
 		(void) tp_emit(DC_TPDU_type, $P, 0, 0, NULL);
 	}
 ;
-	
+
 /* applicable in TP4, TP0 */
-SAME			<==			TP_REFWAIT			[ CR_TPDU, CC_TPDU, DT_TPDU, 
+SAME			<==			TP_REFWAIT			[ CR_TPDU, CC_TPDU, DT_TPDU,
 					DR_TPDU, XPD_TPDU, AK_TPDU, XAK_TPDU, DC_TPDU, ER_TPDU ]
 	DEFAULT
 	{
@@ -278,7 +278,7 @@ SAME			<==			TP_CRSENT								 AK_TPDU
 ;
 
 /* applicable in TP4, TP0 */
-SAME			<==			TP_CRSENT	
+SAME			<==			TP_CRSENT
 					[ CR_TPDU, DC_TPDU, DT_TPDU, XPD_TPDU,  XAK_TPDU ]
 	DEFAULT
 	NULLACTION
@@ -286,7 +286,7 @@ SAME			<==			TP_CRSENT
 
 /* applicable in TP4, TP0 */
 SAME			<==			TP_CLOSED					[ DT_TPDU, XPD_TPDU,
-										ER_TPDU, DC_TPDU, AK_TPDU, XAK_TPDU ] 
+										ER_TPDU, DC_TPDU, AK_TPDU, XAK_TPDU ]
 	DEFAULT
 	NULLACTION
 ;
@@ -307,13 +307,13 @@ SAME			<==			TP_OPEN						  DC_TPDU
 
 /* applicable in TP4, TP0 */
 SAME			<==		 	TP_LISTENING  [DR_TPDU, CC_TPDU, DT_TPDU, XPD_TPDU,
-										 ER_TPDU, DC_TPDU, AK_TPDU, XAK_TPDU ] 
-	DEFAULT	
+										 ER_TPDU, DC_TPDU, AK_TPDU, XAK_TPDU ]
+	DEFAULT
 	NULLACTION
 ;
 
 /* applicable in TP4, TP0 */
-TP_LISTENING	<==			TP_CLOSED  							T_LISTEN_req 
+TP_LISTENING	<==			TP_CLOSED  							T_LISTEN_req
 	DEFAULT
 	NULLACTION
 ;
@@ -326,14 +326,14 @@ TP_CLOSED  		<== 		[ TP_LISTENING, TP_CLOSED ] 			T_DETACH
 	}
 ;
 
-TP_CONFIRMING	<==		 TP_LISTENING  								CR_TPDU 
+TP_CONFIRMING	<==		 TP_LISTENING  								CR_TPDU
 	( $P.tp_class == TP_CLASS_0)
 	{
 		$P.tp_refstate = REF_OPEN; /* has timers ??? */
 	}
 ;
 
-TP_CONFIRMING		<==		 TP_LISTENING  							CR_TPDU 
+TP_CONFIRMING		<==		 TP_LISTENING  							CR_TPDU
 	DEFAULT
 	{
 		IFTRACE(D_CONN)
@@ -347,14 +347,14 @@ TP_CONFIRMING		<==		 TP_LISTENING  							CR_TPDU
 
 		if ($$.e_datalen > 0) {
 			/* n/a for class 0 */
-			ASSERT($P.tp_Xrcv.sb_cc == 0); 
+			ASSERT($P.tp_Xrcv.sb_cc == 0);
 			sbappendrecord(&$P.tp_Xrcv, $$.e_data);
-			$$.e_data = NULL; 
-		} 
+			$$.e_data = NULL;
+		}
 	}
 ;
 
-TP_OPEN		<==		 TP_CONFIRMING  								T_ACPT_req 
+TP_OPEN		<==		 TP_CONFIRMING  								T_ACPT_req
 	( $P.tp_class == TP_CLASS_0 )
 	{
 		IncStat(ts_tp0_conn);
@@ -404,7 +404,7 @@ TP_CLOSED		<==		 TP_CONFIRMING								T_ACPT_req
 ;
 
 /* applicable in TP4, TP0 */
-TP_CRSENT		<==		TP_CLOSED								T_CONN_req 
+TP_CRSENT		<==		TP_CLOSED								T_CONN_req
 	DEFAULT
 	{
 		int error;
@@ -417,7 +417,7 @@ TP_CRSENT		<==		TP_CLOSED								T_CONN_req
 		data =  MCPY($P.tp_ucddata, M_WAIT);
 		if (data) {
 			IFDEBUG(D_CONN)
-				printf("T_CONN_req.trans m_copy cc 0x%x\n", 
+				printf("T_CONN_req.trans m_copy cc 0x%x\n",
 					$P.tp_ucddata);
 				dump_mbuf(data, "sosnd @ T_CONN_req");
 			ENDDEBUG
@@ -425,7 +425,7 @@ TP_CRSENT		<==		TP_CLOSED								T_CONN_req
 
 		if (error = tp_emit(CR_TPDU_type, $P, 0, 0, data) )
 			return error; /* driver WON'T change state; will return error */
-		
+
 		$P.tp_refstate = REF_OPEN; /* has timers */
 		if($P.tp_class != TP_CLASS_0) {
 			$P.tp_retrans = $P.tp_Nretrans;
@@ -435,14 +435,14 @@ TP_CRSENT		<==		TP_CLOSED								T_CONN_req
 ;
 
 /* applicable in TP4, TP0, but state TP_AKWAIT doesn't apply to TP0 */
-TP_REFWAIT 		<==		[ TP_CRSENT, TP_AKWAIT, TP_OPEN ] 			DR_TPDU 
+TP_REFWAIT 		<==		[ TP_CRSENT, TP_AKWAIT, TP_OPEN ] 			DR_TPDU
 	DEFAULT
 	{
 		sbflush(&$P.tp_Xrcv); /* purge non-delivered data data */
 		if ($$.e_datalen > 0) {
 			sbappendrecord(&$P.tp_Xrcv, $$.e_data);
 			$$.e_data = NULL;
-		} 
+		}
 		if ($P.tp_state == TP_OPEN)
 			tp_indicate(T_DISCONNECT, $P, 0);
 		else {
@@ -463,17 +463,17 @@ TP_REFWAIT 		<==		[ TP_CRSENT, TP_AKWAIT, TP_OPEN ] 			DR_TPDU
 				$P.tp_flags &= ~TPF_DELACK;
 			}
 			tp_cuntimeout($P, TM_retrans);
-			if( $$.e_sref !=  0 ) 
+			if( $$.e_sref !=  0 )
 				(void) tp_emit(DC_TPDU_type, $P, 0, 0, NULL);
 		}
 	}
 ;
 
-SAME 			<==		TP_CLOSED 									DR_TPDU 
+SAME 			<==		TP_CLOSED 									DR_TPDU
 	DEFAULT
 	{
 		if( $$.e_sref != 0 )
-			(void) tp_emit(DC_TPDU_type, $P, 0, 0, NULL); 
+			(void) tp_emit(DC_TPDU_type, $P, 0, 0, NULL);
 		/* reference timer already set - reset it to be safe (???) */
 		tp_euntimeout($P, TM_reference); /* all */
 		tp_etimeout($P, TM_reference, (int)$P.tp_refer_ticks);
@@ -483,7 +483,7 @@ SAME 			<==		TP_CLOSED 									DR_TPDU
 /* NBS(34) */
 TP_REFWAIT 		<==  	TP_CRSENT  									ER_TPDU
 	DEFAULT
-	{	
+	{
 		tp_cuntimeout($P, TM_retrans);
 		tp_indicate(ER_TPDU, $P, $$.e_reason);
 		tp_soisdisconnected($P);
@@ -493,7 +493,7 @@ TP_REFWAIT 		<==  	TP_CRSENT  									ER_TPDU
 /* NBS(27) */
 TP_REFWAIT		<==		TP_CLOSING									DR_TPDU
 	DEFAULT
-	{	 
+	{
 		tp_cuntimeout($P, TM_retrans);
 		tp_soisdisconnected($P);
 	}
@@ -504,16 +504,16 @@ TP_REFWAIT		<==		TP_CLOSING									DR_TPDU
 /* NBS(27) */
 TP_REFWAIT		<==		TP_CLOSING									ER_TPDU
 	DEFAULT
-	{	 
+	{
 		tp_indicate(ER_TPDU, $P, $$.e_reason);
 		tp_cuntimeout($P, TM_retrans);
 		tp_soisdisconnected($P);
 	}
 ;
 /* NBS(27) */
-TP_REFWAIT		<==		TP_CLOSING									DC_TPDU 
+TP_REFWAIT		<==		TP_CLOSING									DC_TPDU
 	DEFAULT
-	{	 
+	{
 		tp_cuntimeout($P, TM_retrans);
 		tp_soisdisconnected($P);
 	}
@@ -555,9 +555,9 @@ TP_CLOSING 		<== 	[ TP_AKWAIT, TP_OPEN ]  					ER_TPDU
 	}
 ;
 /* NBS(6) */
-TP_OPEN			<==		TP_CRSENT									CC_TPDU 
-	($P.tp_class == TP_CLASS_0) 
-	{	
+TP_OPEN			<==		TP_CRSENT									CC_TPDU
+	($P.tp_class == TP_CLASS_0)
+	{
 		tp_cuntimeout($P, TM_retrans);
 		IncStat(ts_tp0_conn);
 		$P.tp_fcredit = 1;
@@ -565,11 +565,11 @@ TP_OPEN			<==		TP_CRSENT									CC_TPDU
 	}
 ;
 
-TP_OPEN			<==		TP_CRSENT									CC_TPDU 
+TP_OPEN			<==		TP_CRSENT									CC_TPDU
 	DEFAULT
-	{	
+	{
 		IFDEBUG(D_CONN)
-			printf("trans: CC_TPDU in CRSENT state flags 0x%x\n", 
+			printf("trans: CC_TPDU in CRSENT state flags 0x%x\n",
 			    (int)$P.tp_flags);
 		ENDDEBUG
 		IncStat(ts_tp4_conn);
@@ -600,7 +600,7 @@ TP_OPEN			<==		TP_CRSENT									CC_TPDU
 ;
 
 /* TP4 only */
-SAME			<==		TP_CRSENT									TM_retrans 
+SAME			<==		TP_CRSENT									TM_retrans
 	(	$P.tp_retrans > 0 )
 	{
 		struct mbuf *data = NULL;
@@ -627,9 +627,9 @@ SAME			<==		TP_CRSENT									TM_retrans
 ;
 
 /* TP4 only  */
-TP_REFWAIT		<==		TP_CRSENT									TM_retrans 
+TP_REFWAIT		<==		TP_CRSENT									TM_retrans
 	DEFAULT /* no more CR retransmissions */
-	{ 	
+	{
 		IncStat(ts_conn_gaveup);
 		$P.tp_sock->so_error = ETIMEDOUT;
 		tp_indicate(T_DISCONNECT, $P, ETIMEDOUT);
@@ -638,13 +638,13 @@ TP_REFWAIT		<==		TP_CRSENT									TM_retrans
 ;
 
 /* TP4 only */
-SAME 			<==	 TP_AKWAIT											CR_TPDU 
+SAME 			<==	 TP_AKWAIT											CR_TPDU
 	DEFAULT
 	/* duplicate CR (which doesn't really exist in the context of
-	 * a connectionless network layer) 
+	 * a connectionless network layer)
 	 * Doesn't occur in class 0.
 	 */
-	{	
+	{
 		int error;
 		struct mbuf *data = MCPY($P.tp_ucddata, M_WAIT);
 
@@ -657,7 +657,7 @@ SAME 			<==	 TP_AKWAIT											CR_TPDU
 ;
 
 /* TP4 only */
-TP_OPEN			<==		TP_AKWAIT 										DT_TPDU 
+TP_OPEN			<==		TP_AKWAIT 										DT_TPDU
 	( IN_RWINDOW( $P, $$.e_seq,
 					$P.tp_rcvnxt, SEQ($P, $P.tp_rcvnxt + $P.tp_lcredit)) )
 	{
@@ -684,18 +684,18 @@ TP_OPEN			<==		TP_AKWAIT 										DT_TPDU
 		ENDDEBUG
 
 		if (doack) {
-			(void) tp_emit(AK_TPDU_type, $P, $P.tp_rcvnxt, 0, NULL ); 
+			(void) tp_emit(AK_TPDU_type, $P, $P.tp_rcvnxt, 0, NULL );
 			tp_ctimeout($P, TM_sendack, (int)$P.tp_keepalive_ticks);
 		} else
 			tp_ctimeout( $P, TM_sendack, (int)$P.tp_sendack_ticks);
-		
+
 		IFDEBUG(D_DATA)
 			printf("after stash calling sbwakeup\n");
 		ENDDEBUG
 	}
 ;
 
-SAME			<==		TP_OPEN 									DT_TPDU 
+SAME			<==		TP_OPEN 									DT_TPDU
 	( $P.tp_class == TP_CLASS_0 )
 	{
 		tp0_stash($P, $E);
@@ -708,7 +708,7 @@ SAME			<==		TP_OPEN 									DT_TPDU
 ;
 
 /* TP4 only */
-SAME			<==		TP_OPEN 									DT_TPDU 
+SAME			<==		TP_OPEN 									DT_TPDU
 	( IN_RWINDOW( $P, $$.e_seq,
 					$P.tp_rcvnxt, SEQ($P, $P.tp_rcvnxt + $P.tp_lcredit)) )
 	{
@@ -723,10 +723,10 @@ SAME			<==		TP_OPEN 									DT_TPDU
 		ENDDEBUG
 
 		if(doack)
-			(void) tp_emit(AK_TPDU_type, $P, $P.tp_rcvnxt, 0, NULL ); 
+			(void) tp_emit(AK_TPDU_type, $P, $P.tp_rcvnxt, 0, NULL );
 		else
 			tp_ctimeout_MIN( $P, TM_sendack, (int)$P.tp_sendack_ticks);
-		
+
 		IFDEBUG(D_DATA)
 			printf("after stash calling sbwakeup\n");
 		ENDDEBUG
@@ -736,7 +736,7 @@ SAME			<==		TP_OPEN 									DT_TPDU
 /* Not in window  - we must ack under certain circumstances, namely
  * a) if the seq number is below lwe but > lwe - (max credit ever given)
  * (to handle lost acks) Can use max-possible-credit for this ^^^.
- * and 
+ * and
  * b) seq number is > uwe but < uwe + previously sent & withdrawn credit
  *
  * (see 12.2.3.8.1 of ISO spec, p. 73)
@@ -745,7 +745,7 @@ SAME			<==		TP_OPEN 									DT_TPDU
 /* TP4 only */
 SAME 			<== 	[ TP_OPEN, TP_AKWAIT ]							DT_TPDU
 	DEFAULT /* Not in window */
-	{ 	
+	{
 		IFTRACE(D_DATA)
 			tptrace(TPPTmisc, "NIW seq rcvnxt lcredit ",
 				$$.e_seq, $P.tp_rcvnxt, $P.tp_lcredit, 0);
@@ -753,7 +753,7 @@ SAME 			<== 	[ TP_OPEN, TP_AKWAIT ]							DT_TPDU
 		IncStat(ts_dt_niw);
 		m_freem($$.e_data);
 		tp_ctimeout($P, TM_inact, (int)$P.tp_inact_ticks);
-		(void) tp_emit(AK_TPDU_type, $P, $P.tp_rcvnxt, 0, NULL ); 
+		(void) tp_emit(AK_TPDU_type, $P, $P.tp_rcvnxt, 0, NULL );
 	}
 ;
 
@@ -771,10 +771,10 @@ TP_OPEN			<==		TP_AKWAIT										AK_TPDU
 		soisconnected($P.tp_sock);
 		IFTRACE(D_CONN)
 			struct socket *so = $P.tp_sock;
-			tptrace(TPPTmisc, 
+			tptrace(TPPTmisc,
 			"called sosiconn: so so_state rcv.sb_sel rcv.sb_flags",
 				so, so->so_state, so->so_rcv.sb_sel, so->so_rcv.sb_flags);
-			tptrace(TPPTmisc, 
+			tptrace(TPPTmisc,
 			"called sosiconn 2: so_qlen so_error so_rcv.sb_cc so_head",
 				so->so_qlen, so->so_error, so->so_rcv.sb_cc, so->so_head);
 		ENDTRACE
@@ -797,7 +797,7 @@ TP_OPEN 		<== 	[ TP_OPEN, TP_AKWAIT ]						XPD_TPDU
 			soisconnected($P.tp_sock);
 			tp_ctimeout($P, TM_sendack, (int)$P.tp_keepalive_ticks);
 			tp_ctimeout($P, TM_inact, (int)$P.tp_inact_ticks);
-		} 
+		}
 		IFTRACE(D_XPD)
 		tptrace(TPPTmisc, "XPD tpdu accepted Xrcvnxt, e_seq datalen m_len\n",
 				$P.tp_Xrcvnxt,$$.e_seq,  $$.e_datalen, $$.e_data->m_len);
@@ -822,15 +822,15 @@ SAME			<==		TP_OPEN 									T_USR_Xrcvd
 	DEFAULT
 	{
 		if( $P.tp_Xrcv.sb_cc == 0 ) {
-			/* kludge for select(): */ 
+			/* kludge for select(): */
 			/* $P.tp_sock->so_state &= ~SS_OOBAVAIL; */
 		}
 	}
 	/* OLD WAY:
-	 * Ack only after the user receives the XPD.  This is better for 
+	 * Ack only after the user receives the XPD.  This is better for
 	 * users that use one XPD right after another.
-	 * Acking right away (the NEW WAY, see the prev. transition) is 
-	 * better for occasional * XPD, when the receiving user doesn't 
+	 * Acking right away (the NEW WAY, see the prev. transition) is
+	 * better for occasional * XPD, when the receiving user doesn't
 	 * want to read the XPD immediately (which is session's behavior).
 	 *
 		int error = tp_emit(XAK_TPDU_type, $P, $P.tp_Xrcvnxt, 0, NULL);
@@ -845,7 +845,7 @@ SAME			<==		TP_OPEN 									T_USR_Xrcvd
  * to put the connection data.
  * On the other hand, we need not to have it sitting around forever.
  * This is a problem with the idea of trying to accommodate
- * data on connect w/ a passive-open user interface. 
+ * data on connect w/ a passive-open user interface.
  */
 /* TP4 only */
 
@@ -938,7 +938,7 @@ TP_CLOSING		<==	[ TP_AKWAIT, TP_OPEN, TP_CRSENT, TP_CONFIRMING ]  T_DISC_req
 		}
 		if (data) {
 			IFDEBUG(D_CONN)
-				printf("T_DISC_req.trans tp_ucddata 0x%x\n", 
+				printf("T_DISC_req.trans tp_ucddata 0x%x\n",
 					$P.tp_ucddata);
 				dump_mbuf(data, "ucddata @ T_DISC_req");
 			ENDDEBUG
@@ -963,7 +963,7 @@ SAME			<==		TP_AKWAIT									TM_retrans
 		$P.tp_retrans--;
 		$P.tp_cong_win = 1 * $P.tp_l_tpdusize;
 
-		if( error = tp_emit(CC_TPDU_type, $P, 0, 0, data) ) 
+		if( error = tp_emit(CC_TPDU_type, $P, 0, 0, data) )
 			$P.tp_sock->so_error = error;
 		tp_ctimeout($P, TM_retrans, (int)$P.tp_cc_ticks);
 	}
@@ -993,7 +993,7 @@ TP_CLOSING 		<==		TP_OPEN		   [ TM_inact, TM_retrans, TM_data_retrans ]
 	DEFAULT
 	{
 		tp_euntimeout($P, TM_data_retrans); /* all */
-		tp_cuntimeout($P, TM_inact); 
+		tp_cuntimeout($P, TM_inact);
 		tp_cuntimeout($P, TM_sendack);
 
 		IncStat(ts_conn_gaveup);
@@ -1018,8 +1018,8 @@ SAME			<==		TP_OPEN										TM_retrans
 
 			IFTRACE(D_XPD)
 				tptrace(TPPTmisc, "XPD retrans: Xuna Xsndnxt sndnxt snduna",
-					$P.tp_Xuna, $P.tp_Xsndnxt, $P.tp_sndnxt, 
-					$P.tp_snduna); 
+					$P.tp_Xuna, $P.tp_Xsndnxt, $P.tp_sndnxt,
+					$P.tp_snduna);
 			ENDTRACE
 			IFDEBUG(D_XPD)
 				dump_mbuf(m, "XPD retrans emitting M");
@@ -1036,7 +1036,7 @@ SAME			<==		TP_OPEN										TM_retrans
 /* TP4 only */
 SAME 			<==		TP_OPEN									TM_data_retrans
 	($P.tp_rxtshift < TP_NRETRANS)
-	{	
+	{
 		$P.tp_rxtshift++;
 		(void) tp_data_retrans($P);
 	}
@@ -1045,7 +1045,7 @@ SAME 			<==		TP_OPEN									TM_data_retrans
 /* TP4 only */
 SAME	 		<==		TP_CLOSING									TM_retrans
 	(	$P.tp_retrans > 0 )
-	{	
+	{
 		$P.tp_retrans--;
 		(void) tp_emit(DR_TPDU_type, $P, 0, E_TP_DR_NO_REAS, NULL);
 		IncStat(ts_retrans_dr);
@@ -1056,7 +1056,7 @@ SAME	 		<==		TP_CLOSING									TM_retrans
 /* TP4 only */
 TP_REFWAIT 		<==		TP_CLOSING									TM_retrans
 	DEFAULT	/* no more retrans - gave up */
-	{	
+	{
 		$P.tp_sock->so_error = ETIMEDOUT;
 		$P.tp_refstate = REF_FROZEN;
 		tp_recycle_tsuffix( $P );
@@ -1081,11 +1081,11 @@ TP_CLOSED 		<==		TP_REFWAIT 									TM_reference
 /* A duplicate CR from connectionless network layer can't happen */
 SAME 			<== 	TP_OPEN 							[ CR_TPDU, CC_TPDU ]
 	DEFAULT
-	{	
+	{
 		if( $P.tp_class != TP_CLASS_0) {
 			tp_ctimeout($P, TM_inact, (int)$P.tp_inact_ticks);
 			if ( $E.ev_number == CC_TPDU )
-				(void) tp_emit(AK_TPDU_type, $P, $P.tp_rcvnxt, 0, NULL); 
+				(void) tp_emit(AK_TPDU_type, $P, $P.tp_rcvnxt, 0, NULL);
 		}
 		/* ignore it if class 0 - state tables are blank for this */
 	}
@@ -1108,7 +1108,7 @@ SAME			<== 	TP_OPEN									T_DATA_req
 SAME			<==		TP_OPEN										T_XPD_req
 	DEFAULT
 		/* T_XPD_req was issued by sosend iff xpd socket buf was empty
-		 * at time of sosend(), 
+		 * at time of sosend(),
 		 * AND (which means) there were no unacknowledged XPD tpdus outstanding!
 		 */
 	{
@@ -1123,20 +1123,20 @@ SAME			<==		TP_OPEN										T_XPD_req
 
 			IFTRACE(D_XPD)
 				tptrace(TPPTmisc, "XPD req: Xuna Xsndnxt sndnxt snduna",
-					$P.tp_Xuna, $P.tp_Xsndnxt, $P.tp_sndnxt, 
-					$P.tp_snduna); 
+					$P.tp_Xuna, $P.tp_Xsndnxt, $P.tp_sndnxt,
+					$P.tp_snduna);
 			ENDTRACE
 			IFDEBUG(D_XPD)
 				printf("T_XPD_req: sb_cc 0x%x\n", $P.tp_Xsnd.sb_cc);
 				dump_mbuf(m, "XPD req emitting M");
 			ENDDEBUG
-			error = 
+			error =
 				tp_emit(XPD_TPDU_type, $P, $P.tp_Xuna, 1, m);
 			$P.tp_retrans = $P.tp_Nretrans;
 
 			tp_ctimeout($P, TM_retrans, (int)$P.tp_rxtcur);
 			SEQ_INC($P, $P.tp_Xsndnxt);
-		} 
+		}
 		if(trick_hc)
 			return error;
 	}
@@ -1146,7 +1146,7 @@ SAME			<==		TP_OPEN										T_XPD_req
 SAME 			<==		TP_OPEN 									AK_TPDU
 	( tp_goodack($P, $$.e_cdt, $$.e_seq, $$.e_subseq)  )
 
-	/* tp_goodack == true means 
+	/* tp_goodack == true means
 	 * EITHER it actually acked something heretofore unacknowledged
 	 * OR no news but the credit should be processed.
 	 */
@@ -1171,7 +1171,7 @@ SAME			<==		TP_OPEN 			 						 AK_TPDU
 	DEFAULT
 	{
 		IFTRACE(D_ACKRECV)
-			tptrace(TPPTmisc, "BOGUS ACK fcc_present, tp_r_subseq e_subseq", 
+			tptrace(TPPTmisc, "BOGUS ACK fcc_present, tp_r_subseq e_subseq",
 				$$.e_fcc_present, $P.tp_r_subseq, $$.e_subseq, 0);
 		ENDTRACE
 		if( $P.tp_class != TP_CLASS_0 ) {
@@ -1182,7 +1182,7 @@ SAME			<==		TP_OPEN 			 						 AK_TPDU
 				(void) tp_emit(AK_TPDU_type, $P, $P.tp_rcvnxt, 1, NULL);
 			}
 			tp_ctimeout($P, TM_inact, (int)$P.tp_inact_ticks);
-		} 
+		}
 	}
 ;
 
@@ -1204,11 +1204,11 @@ SAME			<==		TP_OPEN 			 						 AK_TPDU
 /* TP4 only */
 SAME			<== 	TP_OPEN										XAK_TPDU
 	( tp_goodXack($P, $$.e_seq) )
-	/* tp_goodXack checks for good ack, removes the correct 
+	/* tp_goodXack checks for good ack, removes the correct
 	 * tpdu from the queue and  returns 1 if ack was legit, 0 if not.
 	 * also updates tp_Xuna
 	 */
-	{	
+	{
 		tp_ctimeout($P, TM_inact, (int)$P.tp_inact_ticks);
 		tp_cuntimeout($P, TM_retrans);
 
@@ -1228,17 +1228,17 @@ SAME			<==		TP_OPEN 			 						XAK_TPDU
 		ENDTRACE
 		if( $P.tp_class != TP_CLASS_0 ) {
 			tp_ctimeout($P, TM_inact, (int)$P.tp_inact_ticks);
-		} 
+		}
 	}
 ;
 
 /* TP4 only */
-SAME			<==		TP_OPEN 								TM_sendack 
+SAME			<==		TP_OPEN 								TM_sendack
 	DEFAULT
-	{	
+	{
 		int timo;
 		IFTRACE(D_TIMER)
-			tptrace(TPPTsendack, -1, $P.tp_lcredit, $P.tp_sent_uwe, 
+			tptrace(TPPTsendack, -1, $P.tp_lcredit, $P.tp_sent_uwe,
 			$P.tp_sent_lcdt, 0);
 		ENDTRACE
 		IncPStat($P, tps_n_TMsendack);
@@ -1263,7 +1263,7 @@ SAME			<==		TP_OPEN 									T_USR_rcvd
 ;
 
 /* TP4 only */
-		/* If old credit was zero, 
+		/* If old credit was zero,
 		 * we'd better inform other side that we now have space
 		 * But this is not enough.  Sender might not yet have
 		 * seen an ack with cdt 0 but it might still think the
@@ -1274,7 +1274,7 @@ SAME			<==		TP_OPEN 									T_USR_rcvd
 		 */
 SAME			<==		TP_OPEN 									T_USR_rcvd
 	DEFAULT
-	{	
+	{
 		if( trick_hc ) {
 			SeqNum ack_thresh;
 			/*
@@ -1299,8 +1299,8 @@ SAME			<==		TP_OPEN 									T_USR_rcvd
 /* applicable in TP4, TP0 */
 SAME			<==		TP_REFWAIT 				[ T_USR_rcvd, T_USR_Xrcvd ]
 	DEFAULT
-	/* This happens if other end sent a DR when  the user was waiting 
-	 * on a receive.  
+	/* This happens if other end sent a DR when  the user was waiting
+	 * on a receive.
 	 * Processing the DR includes putting us in REFWAIT state.
 	 */
 	{
@@ -1311,7 +1311,7 @@ SAME			<==		TP_REFWAIT 				[ T_USR_rcvd, T_USR_Xrcvd ]
 
 /* TP0 only */
 TP_REFWAIT		<==		[ TP_OPEN, TP_CRSENT, TP_LISTENING ] 	T_NETRESET
-	( $P.tp_class != TP_CLASS_4 ) 
+	( $P.tp_class != TP_CLASS_4 )
 		/* 0 or (4 and 0) */
 		/* in OPEN class will be 0 or 4 but not both */
 		/* in CRSENT or LISTENING it could be in negotiation, hence both */
@@ -1329,7 +1329,7 @@ SAME		<==		[ TP_OPEN, TP_CRSENT, TP_AKWAIT,
 	DEFAULT
 	NULLACTION
 ;
- 
+
 /* applicable in TP4, TP0 */
 SAME			<==		[ TP_CLOSED, TP_REFWAIT ]				T_NETRESET
 	DEFAULT

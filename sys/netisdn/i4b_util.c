@@ -27,7 +27,7 @@
  *	i4b_util.c - layer 2 utility routines
  *	-------------------------------------
  *
- *	$Id: i4b_util.c,v 1.7 2003/10/03 16:38:44 pooka Exp $ 
+ *	$Id: i4b_util.c,v 1.8 2005/02/26 22:39:49 perry Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_util.c,v 1.7 2003/10/03 16:38:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_util.c,v 1.8 2005/02/26 22:39:49 perry Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_util.c,v 1.7 2003/10/03 16:38:44 pooka Exp $");
 void
 i4b_establish_data_link(l2_softc_t *l2sc)
 {
-	i4b_l1_activate(l2sc);	
+	i4b_l1_activate(l2sc);
 
 	i4b_clear_exception_conditions(l2sc);
 
@@ -88,7 +88,7 @@ i4b_establish_data_link(l2_softc_t *l2sc)
 
 	i4b_T200_restart(l2sc);
 
-	i4b_T203_stop(l2sc);	
+	i4b_T203_stop(l2sc);
 }
 
 /*---------------------------------------------------------------------------*
@@ -100,12 +100,12 @@ i4b_clear_exception_conditions(l2_softc_t *l2sc)
 	int s;
 
 	s = splnet();
-	
+
 /*XXX -------------------------------------------------------------- */
 /*XXX is this really appropriate here or should it moved elsewhere ? */
 
 	i4b_Dcleanifq(&l2sc->i_queue);
-	
+
 	if(l2sc->ua_num != UA_EMPTY)
 	{
 		i4b_Dfreembuf(l2sc->ua_frame);
@@ -119,7 +119,7 @@ i4b_clear_exception_conditions(l2_softc_t *l2sc)
 
 	l2sc->own_busy = 0;
 
-	l2sc->ack_pend = 0;	
+	l2sc->ack_pend = 0;
 
 	splx(s);
 }
@@ -149,7 +149,7 @@ i4b_nr_error_recovery(l2_softc_t *l2sc)
 	i4b_mdl_error_ind(l2sc, "i4b_nr_error_recovery", MDL_ERR_J);
 
 	i4b_establish_data_link(l2sc);
-	
+
 	l2sc->l3initiated = 0;
 }
 
@@ -178,7 +178,7 @@ i4b_invoke_retransmission(l2_softc_t *l2sc, int nr)
 	s = splnet();
 
 	NDBGL2(L2_ERROR, "nr = %d", nr );
-	
+
 	while(l2sc->vs != nr)
 	{
 		NDBGL2(L2_ERROR, "nr(%d) != vs(%d)", nr, l2sc->vs);
@@ -205,7 +205,7 @@ i4b_invoke_retransmission(l2_softc_t *l2sc, int nr)
 		}
 
 /* XXXXXXXXXXXXXXXXX */
-			
+
 		i4b_i_frame_queued_up(l2sc);
 	}
 
@@ -280,15 +280,15 @@ i4b_rxd_ack(l2_softc_t *l2sc, struct isdn_l3_driver *drv, int nr)
 		int s;
 
 		s = splnet();
-		
+
 		M128DEC(nr);
 
 		if(l2sc->ua_num != nr)
 			NDBGL2(L2_ERROR, "((N(R)-1)=%d) != (UA=%d) !!!", nr, l2sc->ua_num);
-			
+
 		i4b_Dfreembuf(l2sc->ua_frame);
 		l2sc->ua_num = UA_EMPTY;
-		
+
 		splx(s);
 	}
 }
@@ -327,6 +327,6 @@ i4b_l2_nr_ok(int nr, int va, int vs)
 	}
 	return 1;		/* good */
 }
-	
+
 #endif /* NI4BQ921 > 0 */
 

@@ -27,7 +27,7 @@
  *	i4b_lme.c - layer management entity
  *	-------------------------------------
  *
- *	$Id: i4b_lme.c,v 1.6 2003/10/03 16:38:44 pooka Exp $ 
+ *	$Id: i4b_lme.c,v 1.7 2005/02/26 22:39:49 perry Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_lme.c,v 1.6 2003/10/03 16:38:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_lme.c,v 1.7 2005/02/26 22:39:49 perry Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -78,9 +78,9 @@ void
 i4b_mdl_assign_ind(l2_softc_t *l2sc)
 {
 	NDBGL2(L2_PRIM, "isdnif %d", l2sc->drv->isdnif);
-	
+
 	i4b_l1_activate(l2sc);
-	
+
 	if(l2sc->tei_valid == TEI_VALID)
 	{
 		l2sc->T202func = (void(*)(void*))i4b_tei_verify;
@@ -92,7 +92,7 @@ i4b_mdl_assign_ind(l2_softc_t *l2sc)
 		l2sc->T202func = (void(*)(void*))i4b_tei_assign;
 		l2sc->N202 = N202DEF;
 		i4b_tei_assign(l2sc);
-	}		
+	}
 }
 
 /*---------------------------------------------------------------------------*
@@ -124,13 +124,13 @@ i4b_mdl_error_ind(l2_softc_t *l2sc, char *where, int errorcode)
 
 	if(errorcode > MDL_ERR_MAX)
 		errorcode = MDL_ERR_MAX;
-		
+
 	NDBGL2(L2_ERROR, "isdnif = %d, location = %s",
 	    l2sc->drv->isdnif, where);
 	NDBGL2(L2_ERROR, "error = %s", error_text[errorcode]);
 
 	switch(errorcode)
-	{	
+	{
 		case MDL_ERR_A:
 		case MDL_ERR_B:
 			break;
@@ -162,5 +162,5 @@ i4b_mdl_error_ind(l2_softc_t *l2sc, char *where, int errorcode)
 			break;
 	}
 }
- 
+
 #endif /* NI4BQ921 > 0 */

@@ -27,7 +27,7 @@
  *	i4b_ctl.c - i4b system control port driver
  *	------------------------------------------
  *
- *	$Id: i4b_ctl.c,v 1.12 2003/10/03 16:38:44 pooka Exp $
+ *	$Id: i4b_ctl.c,v 1.13 2005/02/26 22:39:49 perry Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ctl.c,v 1.12 2003/10/03 16:38:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ctl.c,v 1.13 2005/02/26 22:39:49 perry Exp $");
 
 #include "isdnctl.h"
 
@@ -127,7 +127,7 @@ static struct cdevsw i4bctl_cdevsw = {
 	/* bmaj */      -1
 };
 #else
-static struct cdevsw i4bctl_cdevsw = 
+static struct cdevsw i4bctl_cdevsw =
 	{ i4bctlopen,	i4bctlclose,	noread,		nowrite,
 	  i4bctlioctl,	nostop,		nullreset,	nodevtotty,
 	  POLLFIELD,	nommap,		NULL,	"i4bctl", NULL,	-1 };
@@ -188,7 +188,7 @@ void dummy_i4bctlattach(struct device*, struct device *, void *);
 static struct cfdriver i4bctlcd =
 	{ NULL, "i4bctl", i4bctlmatch, dummy_i4bctlattach, DV_DULL,
 	  sizeof(struct cfdriver) };
-struct devsw i4bctlsw = 
+struct devsw i4bctlsw =
 	{ &i4bctlcd,
 	  i4bctlopen,	i4bctlclose,	noread,		nowrite,
 	  i4bctlioctl,	seltrue,	nommap,		nostrat,
@@ -244,9 +244,9 @@ isdnctlopen(dev_t dev, int flag, int fmt, struct proc *p)
 
 	if(openflag)
 		return (EBUSY);
-	
+
 	openflag = 1;
-	
+
 	return (0);
 }
 
@@ -267,10 +267,10 @@ PDEVSTATIC int
 isdnctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 #if DO_I4B_DEBUG
-	ctl_debug_t *cdbg;	
+	ctl_debug_t *cdbg;
 	int error = 0;
 #endif
-	
+
 #if !DO_I4B_DEBUG
 	return(ENODEV);
 #else
@@ -286,7 +286,7 @@ isdnctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			cdbg->l3 = i4b_l3_debug;
 			cdbg->l4 = i4b_l4_debug;
 			break;
-		
+
 		case I4B_CTL_SET_DEBUG:
 			cdbg = (ctl_debug_t *)data;
 			i4b_l1_debug = cdbg->l1;
@@ -326,7 +326,7 @@ isdnctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
                         	error = EINVAL;
 				break;
 			}
-			  
+
 			memcpy(&l2s->lapdstat, &sc->stat, sizeof(lapdstat_t));
                         break;
                 }
@@ -342,7 +342,7 @@ isdnctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
                         	error = EINVAL;
 				break;
 			}
-			  
+
 			memset(&sc->stat, 0, sizeof(lapdstat_t));
                         break;
                 }

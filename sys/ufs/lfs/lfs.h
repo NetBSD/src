@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.75 2005/02/26 05:40:42 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.76 2005/02/26 22:32:20 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -248,7 +248,7 @@ extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 #else /* ! _KERNEL */
 # define LFS_BWRITE_LOG(bp)		VOP_BWRITE((bp))
 #endif /* _KERNEL */
-	
+
 #ifdef _KERNEL
 /* Filehandle structure for exported LFSes */
 struct lfid {
@@ -759,7 +759,7 @@ struct lfs {
 	TAILQ_HEAD(, inode) lfs_dchainhd; /* dirop vnodes */
 	TAILQ_HEAD(, inode) lfs_pchainhd; /* paging vnodes */
 #define LFS_RESHASH_WIDTH 17
-	LIST_HEAD(, lfs_res_blk) lfs_reshash[LFS_RESHASH_WIDTH]; 
+	LIST_HEAD(, lfs_res_blk) lfs_reshash[LFS_RESHASH_WIDTH];
 	int	  lfs_pdflush;		 /* pagedaemon wants us to flush */
 	u_int32_t **lfs_suflags;	/* Segment use flags */
 #ifdef _KERNEL

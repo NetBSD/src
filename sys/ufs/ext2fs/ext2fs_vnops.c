@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.58 2005/02/09 23:02:10 ws Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.59 2005/02/26 22:32:20 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.58 2005/02/09 23:02:10 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.59 2005/02/26 22:32:20 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ ext2fs_mknod(v)
 	struct vnode **vpp = ap->a_vpp;
 	struct inode *ip;
 	int error;
-	struct mount	*mp;	
+	struct mount	*mp;
 	ino_t		ino;
 
 	if ((error = ext2fs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
@@ -417,7 +417,7 @@ ext2fs_setattr(v)
 			return (EROFS);
 		if (cred->cr_uid != ip->i_e2fs_uid &&
 			(error = suser(cred, &p->p_acflag)) &&
-			((vap->va_vaflags & VA_UTIMES_NULL) == 0 || 
+			((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 			(error = VOP_ACCESS(vp, VWRITE, cred, p))))
 			return (error);
 		if (vap->va_atime.tv_sec != VNOVAL)
@@ -793,7 +793,7 @@ abortit:
 	 * directory hierarchy above the target, as this would
 	 * orphan everything below the source directory. Also
 	 * the user must have write permission in the source so
-	 * as to be able to change "..". We must repeat the call 
+	 * as to be able to change "..". We must repeat the call
 	 * to namei, as the parent directory is unlocked by the
 	 * call to checkpath().
 	 */
@@ -820,7 +820,7 @@ abortit:
 	}
 	/*
 	 * 2) If target doesn't exist, link the target
-	 *    to the source and unlink the source. 
+	 *    to the source and unlink the source.
 	 *    Otherwise, rewrite the target directory
 	 *    entry to reference the source inode and
 	 *    expunge the original entry's existence.
@@ -978,7 +978,7 @@ abortit:
 			dp->i_flag |= IN_CHANGE;
 			error = vn_rdwr(UIO_READ, fvp, (caddr_t)&dirbuf,
 				sizeof (struct ext2fs_dirtemplate), (off_t)0,
-				UIO_SYSSPACE, IO_NODELOCKED, 
+				UIO_SYSSPACE, IO_NODELOCKED,
 				tcnp->cn_cred, (size_t *)0, NULL);
 			if (error == 0) {
 					namlen = dirbuf.dotdot_namlen;

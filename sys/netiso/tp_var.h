@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_var.h,v 1.8 2004/04/20 02:13:26 matt Exp $	*/
+/*	$NetBSD: tp_var.h,v 1.9 2005/02/26 22:39:49 perry Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ int tp_driver   (struct tp_pcb *, struct tp_event *);
 int tp_emit (int, struct tp_pcb *, SeqNum, u_int, struct mbuf *);
 int tp_error_emit (int, u_long, struct sockaddr_iso *,
 		       struct sockaddr_iso *, struct mbuf *, int,
-		       struct tp_pcb *, caddr_t, 
+		       struct tp_pcb *, caddr_t,
 		       int (*) (struct mbuf *, ...));
 
 /* tp_inet.c */

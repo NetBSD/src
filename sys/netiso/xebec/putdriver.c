@@ -1,4 +1,4 @@
-/*	$NetBSD: putdriver.c,v 1.6 2001/11/13 01:10:52 lukem Exp $	*/
+/*	$NetBSD: putdriver.c,v 1.7 2005/02/26 22:39:49 perry Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putdriver.c,v 1.6 2001/11/13 01:10:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putdriver.c,v 1.7 2005/02/26 22:39:49 perry Exp $");
 
 #include <stdio.h>
 #include "main.h"
@@ -92,7 +92,7 @@ static char *strings[] = {
 	protocol,
 	"_debug;\n\textern FILE *",
 	protocol,
-	"_astringfile;\n", 
+	"_astringfile;\n",
 	(char *)0,
 	(char *)0,
 	(char *)0,
@@ -139,7 +139,7 @@ static char *strings[] = {
 	"\n_XEBEC_PG int _Xebec_action(a,e,p)\nint a;\nstruct ",
 	protocol,
 	"_event *e;\n",
-	protocol, 
+	protocol,
 	PCBNAME,
 	" *p;\n{\n",
 	"switch(a) {\n",
@@ -163,15 +163,15 @@ static char *strings[] = {
 	"\n_XEBEC_PG int\n_Xebec_index( e,p )\n",
 	"\tstruct ",
 	protocol,
-	"_event *e;\n\t", 
-	protocol, 
+	"_event *e;\n\t",
+	protocol,
 	PCBNAME,
 	" *p;\n{\nswitch( (e->ev_number<<",
 	Eventshiftstring,
 	")+(p->",
-	protocol, 
+	protocol,
 	statename,
-	") ) {\n", 
+	") ) {\n",
 	(char *)0,
 	(char *)0,
 	(char *)0,
@@ -233,11 +233,11 @@ static struct { int start; int finish; } parts[] = {
 };
 
 void
-putdriver(f, x) 
+putdriver(f, x)
 	FILE *f;
 	int x;
 {
-	register int i; 
+	register int i;
 
 	for( i = parts[x].start; i<= parts[x].finish; i++)
 		fprintf(f, "%s", strings[i]);

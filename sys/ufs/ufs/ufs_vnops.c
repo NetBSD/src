@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.125 2005/01/24 21:34:48 dbj Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.126 2005/02/26 22:32:20 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.125 2005/01/24 21:34:48 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.126 2005/02/26 22:32:20 perry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -128,7 +128,7 @@ ufs_mknod(void *v)
 	struct vnode	**vpp;
 	struct inode	*ip;
 	int		error;
-	struct mount	*mp;	
+	struct mount	*mp;
 	ino_t		ino;
 
 	vap = ap->a_vap;
@@ -236,7 +236,7 @@ ufs_access(void *v)
 		struct proc	*a_p;
 	} */ *ap = v;
 	struct vnode	*vp;
-	struct inode	*ip; 
+	struct inode	*ip;
 	mode_t		mode;
 #ifdef QUOTA
 	int		error;
@@ -397,7 +397,7 @@ ufs_setattr(void *v)
 			    securelevel > 0)
 				return (EPERM);
 			/* Snapshot flag cannot be set or cleared */
-			if ((vap->va_flags & SF_SNAPSHOT) != 
+			if ((vap->va_flags & SF_SNAPSHOT) !=
 			    (ip->i_flags & SF_SNAPSHOT))
 				return (EPERM);
 			ip->i_flags = vap->va_flags;
@@ -461,7 +461,7 @@ ufs_setattr(void *v)
 			return (EPERM);
 		if (cred->cr_uid != ip->i_uid &&
 		    (error = suser(cred, &p->p_acflag)) &&
-		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 || 
+		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 		    (error = VOP_ACCESS(vp, VWRITE, cred, p))))
 			return (error);
 		if (vap->va_atime.tv_sec != VNOVAL)
@@ -975,7 +975,7 @@ ufs_rename(void *v)
 	 * directory hierarchy above the target, as this would
 	 * orphan everything below the source directory. Also
 	 * the user must have write permission in the source so
-	 * as to be able to change "..". We must repeat the call 
+	 * as to be able to change "..". We must repeat the call
 	 * to namei, as the parent directory is unlocked by the
 	 * call to checkpath().
 	 */
@@ -1003,7 +1003,7 @@ ufs_rename(void *v)
 	}
 	/*
 	 * 2) If target doesn't exist, link the target
-	 *    to the source and unlink the source. 
+	 *    to the source and unlink the source.
 	 *    Otherwise, rewrite the target directory
 	 *    entry to reference the source inode and
 	 *    expunge the original entry's existence.
@@ -1027,7 +1027,7 @@ ufs_rename(void *v)
 			dp->i_flag |= IN_CHANGE;
 			if (DOINGSOFTDEP(tdvp))
 				softdep_change_linkcnt(dp);
-			if ((error = VOP_UPDATE(tdvp, NULL, NULL, 
+			if ((error = VOP_UPDATE(tdvp, NULL, NULL,
 			    UPDATE_DIROP)) != 0) {
 				dp->i_ffs_effnlink--;
 				dp->i_nlink--;
@@ -1097,7 +1097,7 @@ ufs_rename(void *v)
 			error = EISDIR;
 			goto bad;
 		}
-		if ((error = ufs_dirrewrite(dp, xp, ip->i_number, 
+		if ((error = ufs_dirrewrite(dp, xp, ip->i_number,
 		    IFTODT(ip->i_mode), doingdirectory && newparent ?
 		    newparent : doingdirectory, IN_CHANGE | IN_UPDATE)) != 0)
 			goto bad;
@@ -1554,7 +1554,7 @@ ufs_symlink(void *v)
 
 /*
  * Vnode op for reading directories.
- * 
+ *
  * The routine below assumes that the on-disk format of a directory
  * is the same as that defined by <sys/dirent.h>. If the on-disk
  * format changes, then it will be necessary to do a conversion
@@ -1676,7 +1676,7 @@ ufs_readdir(void *v)
 		for (off = offstart, dp = dpstart; off < uio->uio_offset; ) {
 			off += dp->d_reclen;
 			*(cookies++) = off;
-			dp = (struct dirent *)((caddr_t)dp + dp->d_reclen);	
+			dp = (struct dirent *)((caddr_t)dp + dp->d_reclen);
 		}
 	}
 	uio->uio_resid += lost;
@@ -2161,7 +2161,7 @@ ufs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
         UVMHIST_FUNC("ufs_gop_alloc"); UVMHIST_CALLED(ubchist);
 
         error = 0;
-        bshift = vp->v_mount->mnt_fs_bshift;                  
+        bshift = vp->v_mount->mnt_fs_bshift;
         bsize = 1 << bshift;
 
         delta = off & (bsize - 1);

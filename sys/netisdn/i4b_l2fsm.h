@@ -27,7 +27,7 @@
  *      i4b_l2fsm.h - layer 2 FSM
  *      -------------------------
  *
- *	$Id: i4b_l2fsm.h,v 1.1.1.1 2001/01/05 12:49:56 martin Exp $ 
+ *	$Id: i4b_l2fsm.h,v 1.2 2005/02/26 22:39:49 perry Exp $
  *
  * $FreeBSD$
  *
@@ -79,6 +79,6 @@ enum Q921_events {
 	EV_ILL,		/* Illegal */
 	N_EVENTS
 };
-	
+
 #endif /* _I4B_L2FSM_H_ */
 

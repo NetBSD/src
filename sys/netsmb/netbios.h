@@ -1,4 +1,4 @@
-/*	$NetBSD: netbios.h,v 1.4 2004/02/24 15:12:53 wiz Exp $	*/
+/*	$NetBSD: netbios.h,v 1.5 2005/02/26 22:39:50 perry Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -96,14 +96,14 @@
 #define	NBNS_NMFLAG_TC		0x20	/* truncation occurred */
 #define	NBNS_NMFLAG_AA		0x40	/* authoritative answer */
 
-/* 
+/*
  * resolver: Question types
  */
 #define	NBNS_QUESTION_TYPE_NB		0x0020
 #define NBNS_QUESTION_TYPE_NBSTAT	0x0021
 
-/* 
- * resolver: Question class 
+/*
+ * resolver: Question class
  */
 #define NBNS_QUESTION_CLASS_IN	0x0001
 

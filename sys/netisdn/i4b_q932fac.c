@@ -27,7 +27,7 @@
  *	i4b_q932fac.c - Q932 facility handling
  *	--------------------------------------
  *
- *	$Id: i4b_q932fac.c,v 1.3 2001/11/13 01:06:23 lukem Exp $ 
+ *	$Id: i4b_q932fac.c,v 1.4 2005/02/26 22:39:49 perry Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_q932fac.c,v 1.3 2001/11/13 01:06:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_q932fac.c,v 1.4 2005/02/26 22:39:49 perry Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -94,8 +94,8 @@ i4b_aoc(unsigned char *buf, call_desc_t *cd)
 	int len;
 
 	cd->units_type = CHARGE_INVALID;
-	cd->units = -1;			
-	
+	cd->units = -1;
+
 	buf++;		/* length */
 
 	len = *buf;
@@ -126,18 +126,18 @@ i4b_aoc(unsigned char *buf, call_desc_t *cd)
 	NDBGL3(L3_A_MSG, "Remote Operations Protocol");
 
 	/* next byte */
-	
+
 	buf++;
 	len--;
 
 	/* initialize variables for do_component */
-	
+
 	byte_len = 0;
 	byte_buf = buf;
-	state = ST_EXP_COMP_TYP;	
+	state = ST_EXP_COMP_TYP;
 
 	/* decode facility */
-	
+
 	do_component(len);
 
 	switch(operation_value)
@@ -147,19 +147,19 @@ i4b_aoc(unsigned char *buf, call_desc_t *cd)
 			cd->units = 0;
 			return(0);
 			break;
-			
+
 		case FAC_OPVAL_AOC_D_UNIT:
 			cd->units_type = CHARGE_AOCD;
 			cd->units = units;
 			return(0);
 			break;
-			
+
 		case FAC_OPVAL_AOC_E_CUR:
 			cd->units_type = CHARGE_AOCE;
 			cd->units = 0;
 			return(0);
 			break;
-			
+
 		case FAC_OPVAL_AOC_E_UNIT:
 			cd->units_type = CHARGE_AOCE;
 			cd->units = units;
@@ -172,7 +172,7 @@ i4b_aoc(unsigned char *buf, call_desc_t *cd)
 			return(-1);
 			break;
 	}
-	return(-1);	
+	return(-1);
 }
 
 /*---------------------------------------------------------------------------*
@@ -191,11 +191,11 @@ again:
 	/*----------------------------------------*/
 	/* first component element: component tag */
 	/*----------------------------------------*/
-	
+
 	/* tag class bits */
 
 	comp_tag_class = (*byte_buf & 0xc0) >> 6;
-	
+
 	switch(comp_tag_class)
 	{
 		case FAC_TAGCLASS_UNI:
@@ -211,15 +211,15 @@ again:
 	/* tag form bit */
 
 	comp_tag_form = (*byte_buf & 0x20) > 5;
-	
+
 	/* tag code bits */
 
 	comp_tag_code = *byte_buf & 0x1f;
-	
+
 	if(comp_tag_code == 0x1f)
 	{
 		comp_tag_code = 0;
-		
+
 		byte_buf++;
 		byte_len++;
 
@@ -238,24 +238,24 @@ again:
 
 	byte_buf++;
 	byte_len++;
-	
+
 	/*--------------------------------------------*/
 	/* second component element: component length */
 	/*--------------------------------------------*/
-	
+
 	comp_length = 0;
-	
+
 	if(*byte_buf & 0x80)
 	{
 		int i = *byte_buf & 0x7f;
 
 		byte_len += i;
-		
+
 		for(;i > 0;i++)
 		{
 			byte_buf++;
 			comp_length += (*byte_buf * (i*256));
-		}	
+		}
 	}
 	else
 	{
@@ -263,10 +263,10 @@ again:
 	}
 
 	next_state(comp_tag_class, comp_tag_form, comp_tag_code, -1);
-	
+
 	byte_len++;
 	byte_buf++;
-	
+
 	/*---------------------------------------------*/
 	/* third component element: component contents */
 	/*---------------------------------------------*/
@@ -275,20 +275,20 @@ again:
 	{
 		do_component(comp_length);
 	}
-	else 
+	else
 	{
-		int val = 0;		
+		int val = 0;
 		if(comp_tag_class == FAC_TAGCLASS_UNI)
 		{
 			switch(comp_tag_code)
 			{
 				case FAC_CODEUNI_INT:
 				case FAC_CODEUNI_ENUM:
-				case FAC_CODEUNI_BOOL:				
+				case FAC_CODEUNI_BOOL:
 					if(comp_length)
 					{
 						int i;
-				
+
 						for(i = comp_length-1; i >= 0; i--)
 						{
 							val += (*byte_buf + (i*255));
@@ -297,11 +297,11 @@ again:
 						}
 					}
 					break;
-				default:	
+				default:
 					if(comp_length)
 					{
 						int i;
-				
+
 						for(i = comp_length-1; i >= 0; i--)
 						{
 							byte_buf++;
@@ -317,10 +317,10 @@ again:
 			if(comp_length)
 			{
 				int i;
-		
+
 				for(i = comp_length-1; i >= 0; i--)
 				{
-					val += (*byte_buf + (i*255)); 
+					val += (*byte_buf + (i*255));
 					byte_buf++;
 					byte_len++;
 				}
@@ -397,9 +397,9 @@ F_3(int val)
 	if(val != -1)
 	{
 		NDBGL3(L3_A_MSG, "Operation Value = %d", val);
-	
+
 		operation_value = val;
-		
+
 		if((val == FAC_OPVAL_AOC_D_UNIT) || (val == FAC_OPVAL_AOC_E_UNIT))
 		{
 			units = 0;
@@ -540,8 +540,8 @@ static struct statetab {
 	{ST_EXP_TOCI,		FAC_TAGFORM_PRI,	FAC_TAGCLASS_COS,	2,			F_8		},
 	{ST_EXP_DBID,		FAC_TAGFORM_PRI,	FAC_TAGCLASS_COS,	3,			F_9		},
 	{-1,			-1,			-1,			-1,			NULL		}
-};	
-	
+};
+
 /*---------------------------------------------------------------------------*
  *	state decode for do_component
  *---------------------------------------------------------------------------*/

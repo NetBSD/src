@@ -27,7 +27,7 @@
  *	i4b_l2if.c - Layer 3 interface to Layer 2
  *	-------------------------------------------
  *
- *	$Id: i4b_l2if.c,v 1.9 2004/05/06 21:11:04 martin Exp $ 
+ *	$Id: i4b_l2if.c,v 1.10 2005/02/26 22:39:49 perry Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2if.c,v 1.9 2004/05/06 21:11:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2if.c,v 1.10 2005/02/26 22:39:49 perry Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -100,7 +100,7 @@ int i4b_status_tab[] = {
 	6,	/*	ST_IWA,	*/
 	6,	/*	ST_IWR,	*/
 	1,	/*	ST_OW,	*/
-	6,	/*	ST_IWL,	*/	
+	6,	/*	ST_IWL,	*/
 };
 
 /*---------------------------------------------------------------------------*
@@ -110,7 +110,7 @@ static unsigned char
 make_q931_cause(cause_t cause)
 {
 	register unsigned char ret;
-	
+
 	switch(GET_CAUSE_TYPE(cause))
 	{
 		case CAUSET_Q850:
@@ -149,11 +149,11 @@ i4b_dl_establish_ind(struct isdn_l3_driver * drv)
 	/* first set DL up in controller descriptor */
 	NDBGL3(L3_MSG, "isdnif %d DL established!", drv->isdnif);
 	drv->dl_est = DL_UP;
-	
+
 	found = 0;
 
 	/* second, inform all (!) active call of the event */
-	
+
 	for(i=0; i < num_call_desc; i++)
 	{
 		if( (call_desc[i].cdid != 0)
@@ -162,7 +162,7 @@ i4b_dl_establish_ind(struct isdn_l3_driver * drv)
 			found++;
 		}
 	}
-	
+
 	if(found == 0)
 	{
 		NDBGL3(L3_ERR, "ERROR, no cdid for isdnif %d found!",
@@ -195,7 +195,7 @@ i4b_dl_establish_cnf(struct isdn_l3_driver * drv)
 			found++;
 		}
 	}
-	
+
 	if(found == 0)
 	{
 		NDBGL3(L3_ERR, "ERROR, no cdid for isdnif %d found!",
@@ -218,15 +218,15 @@ i4b_dl_release_ind(struct isdn_l3_driver * drv)
 	int found = 0;
 
 	NDBGL2(L2_PRIM, "DL-RELEASE-IND isdnif %d", drv->isdnif);
-	
+
 	/* first set controller to down */
-	
+
 	drv->dl_est = DL_DOWN;
-	
+
 	found = 0;
 
 	/* second, inform all (!) active calls of the event */
-	
+
 	for(i=0; i < num_call_desc; i++)
 	{
 		if(call_desc[i].cdid != 0
@@ -235,7 +235,7 @@ i4b_dl_release_ind(struct isdn_l3_driver * drv)
 			found++;
 		}
 	}
-	
+
 	if(found == 0)
 	{
 		/* this is not an error since it might be a normal call end */
@@ -251,7 +251,7 @@ int
 i4b_dl_release_cnf(struct isdn_l3_driver * drv)
 {
 	NDBGL2(L2_PRIM, "DL-RELEASE-CONF isdnif %d", drv->isdnif);
-	
+
 	drv->dl_est = DL_DOWN;
 	return(0);
 }
@@ -289,17 +289,17 @@ i4b_l3_tx_connect(call_desc_t *cd)
 	u_char *ptr;
 
 	NDBGL3(L3_PRIM, "isdnif %d, cr = 0x%02x", cd->isdnif, cd->cr);
-	
+
 	if((m = i4b_Dgetmbuf(I_FRAME_HDRLEN + MSG_CONNECT_LEN)) == NULL)
 		panic("i4b_l3_tx_connect: can't allocate mbuf");
 
 	ptr = m->m_data + I_FRAME_HDRLEN;
-	
+
 	*ptr++ = PD_Q931;		/* protocol discriminator */
 	*ptr++ = 0x01;			/* call reference length */
 	*ptr++ = setup_cr(cd, cd->cr);	/* call reference value */
 	*ptr++ = CONNECT;		/* message type = connect */
-	
+
 	i4b_dl_data_req(l2sc, l2sc->drv, m);
 }
 
@@ -313,7 +313,7 @@ i4b_l3_tx_release_complete(call_desc_t *cd, int send_cause_flag)
 	struct mbuf *m;
 	u_char *ptr;
 	int len = I_FRAME_HDRLEN + MSG_RELEASE_COMPLETE_LEN;
-	
+
 	if(send_cause_flag == 0)
 	{
 		len -= 4;
@@ -325,19 +325,19 @@ i4b_l3_tx_release_complete(call_desc_t *cd, int send_cause_flag)
 		NDBGL3(L3_PRIM, "isdnif=%d, cr=0x%02x, cause=0x%x",
 			cd->isdnif, cd->cr, cd->cause_out);
 	}
-		
+
 	if((m = i4b_Dgetmbuf(len)) == NULL)
 		panic("i4b_l3_tx_release_complete: can't allocate mbuf");
 
 	ptr = m->m_data + I_FRAME_HDRLEN;
-	
+
 	*ptr++ = PD_Q931;		/* protocol discriminator */
 	*ptr++ = 0x01;			/* call reference length */
 	*ptr++ = setup_cr(cd, cd->cr);	/* call reference value */
 	*ptr++ = RELEASE_COMPLETE;	/* message type = release complete */
 
 	if(send_cause_flag)
-	{		
+	{
 		*ptr++ = IEI_CAUSE;		/* cause ie */
 		*ptr++ = CAUSE_LEN;
 		*ptr++ = CAUSE_STD_LOC_OUT;
@@ -358,12 +358,12 @@ i4b_l3_tx_disconnect(call_desc_t *cd)
 	u_char *ptr;
 
 	NDBGL3(L3_PRIM, "isdnif %d, cr = 0x%02x", cd->isdnif, cd->cr);
-	
+
 	if((m = i4b_Dgetmbuf(I_FRAME_HDRLEN + MSG_DISCONNECT_LEN)) == NULL)
 		panic("i4b_l3_tx_disconnect: can't allocate mbuf");
 
 	ptr = m->m_data + I_FRAME_HDRLEN;
-	
+
 	*ptr++ = PD_Q931;		/* protocol discriminator */
 	*ptr++ = 0x01;			/* call ref length */
 	*ptr++ = setup_cr(cd, cd->cr);	/* call reference value */
@@ -391,7 +391,7 @@ i4b_l3_tx_setup(call_desc_t *cd)
 	int msglen = I_FRAME_HDRLEN + MSG_SETUP_LEN + slen + dlen +
 			    (cd->bprot == BPROT_NONE ? 1 : 0);
 
-	if (slen == 0) 
+	if (slen == 0)
 		msglen -= IEI_CALLINGPN_LEN+2;	/* whole IE not send */
 
 	/*
@@ -402,23 +402,23 @@ i4b_l3_tx_setup(call_desc_t *cd)
 	 */
 
 	NDBGL3(L3_PRIM, "isdnif %d, cr = 0x%02x", cd->isdnif, cd->cr);
-	
+
 	if((m = i4b_Dgetmbuf(msglen)) == NULL)
 	{
 		panic("i4b_l3_tx_setup: can't allocate mbuf");
 	}
 
 	cd->crflag = CRF_ORIG;		/* we are the originating side */
-	
+
 	ptr = m->m_data + I_FRAME_HDRLEN;
-	
+
 	*ptr++ = PD_Q931;		/* protocol discriminator */
 	*ptr++ = 0x01;			/* call ref length */
 	*ptr++ = setup_cr(cd, cd->cr);	/* call reference value */
 	*ptr++ = SETUP;			/* message type = setup */
 
-	*ptr++ = IEI_SENDCOMPL;		/* sending complete */	
-	
+	*ptr++ = IEI_SENDCOMPL;		/* sending complete */
+
 	*ptr++ = IEI_BEARERCAP;		/* bearer capability */
 
 	/* XXX
@@ -427,7 +427,7 @@ i4b_l3_tx_setup(call_desc_t *cd)
 	 * separate configuration item for the bearer capability.
 	 * For now, it is switched by the choosen b protocol (-hm)
 	 */
-	 
+
 	switch(cd->bprot)
 	{
 		case BPROT_NONE:	/* telephony */
@@ -479,7 +479,7 @@ i4b_l3_tx_setup(call_desc_t *cd)
 	*ptr++ = NUMBER_TYPEPLAN;	/* type of number, number plan id */
 	strncpy(ptr, cd->dst_telno, dlen);
 	ptr += dlen;
-	
+
 	i4b_dl_data_req(l2sc, l2sc->drv, m);
 }
 
@@ -494,12 +494,12 @@ i4b_l3_tx_connect_ack(call_desc_t *cd)
 	u_char *ptr;
 
 	NDBGL3(L3_PRIM, "isdnif %d, cr = 0x%02x", cd->isdnif, cd->cr);
-	
+
 	if((m = i4b_Dgetmbuf(I_FRAME_HDRLEN + MSG_CONNECT_ACK_LEN)) == NULL)
 		panic("i4b_l3_tx_connect_ack: can't allocate mbuf");
 
 	ptr = m->m_data + I_FRAME_HDRLEN;
-	
+
 	*ptr++ = PD_Q931;		/* protocol discriminator */
 	*ptr++ = 0x01;			/* call reference length */
 	*ptr++ = setup_cr(cd, cd->cr);	/* call reference value */
@@ -519,12 +519,12 @@ i4b_l3_tx_status(call_desc_t *cd, u_char q850cause)
 	u_char *ptr;
 
 	NDBGL3(L3_PRIM, "isdnif %d, cr = 0x%02x", cd->isdnif, cd->cr);
-	
+
 	if((m = i4b_Dgetmbuf(I_FRAME_HDRLEN + MSG_STATUS_LEN)) == NULL)
 		panic("i4b_l3_tx_status: can't allocate mbuf");
 
 	ptr = m->m_data + I_FRAME_HDRLEN;
-	
+
 	*ptr++ = PD_Q931;		/* protocol discriminator */
 	*ptr++ = 0x01;			/* call reference length */
 	*ptr++ = setup_cr(cd, cd->cr);	/* call reference value */
@@ -538,7 +538,7 @@ i4b_l3_tx_status(call_desc_t *cd, u_char q850cause)
 	*ptr++ = IEI_CALLSTATE;		/* call state ie */
 	*ptr++ = CALLSTATE_LEN;
 	*ptr++ = i4b_status_tab[cd->Q931state];
-		
+
 	i4b_dl_data_req(l2sc, l2sc->drv, m);
 }
 
@@ -554,7 +554,7 @@ i4b_l3_tx_release(call_desc_t *cd, int send_cause_flag)
 	int len = I_FRAME_HDRLEN + MSG_RELEASE_LEN;
 
 	NDBGL3(L3_PRIM, "isdnif %d, cr = 0x%02x", cd->isdnif, cd->cr);
-	
+
 	if(send_cause_flag == 0)
 		len -= 4;
 
@@ -562,7 +562,7 @@ i4b_l3_tx_release(call_desc_t *cd, int send_cause_flag)
 		panic("i4b_l3_tx_release: can't allocate mbuf");
 
 	ptr = m->m_data + I_FRAME_HDRLEN;
-	
+
 	*ptr++ = PD_Q931;		/* protocol discriminator */
 	*ptr++ = 0x01;			/* call reference length */
 	*ptr++ = setup_cr(cd, cd->cr);	/* call reference value */
@@ -593,9 +593,9 @@ i4b_l3_tx_alert(call_desc_t *cd)
 		panic("i4b_l3_tx_alert: can't allocate mbuf");
 
 	NDBGL3(L3_PRIM, "isdnif %d, cr = 0x%02x", cd->isdnif, cd->cr);
-	
+
 	ptr = m->m_data + I_FRAME_HDRLEN;
-	
+
 	*ptr++ = PD_Q931;		/* protocol discriminator */
 	*ptr++ = 0x01;			/* call reference length */
 	*ptr++ = setup_cr(cd, cd->cr);	/* call reference value */

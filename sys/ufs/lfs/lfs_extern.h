@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.62 2005/02/26 05:40:42 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.63 2005/02/26 22:32:20 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ extern struct pool lfs_lbnentry_pool;   /* memory pool for balloc accounting */
 
 extern int locked_queue_count;
 extern long locked_queue_bytes;
-extern int lfs_subsys_pages;	
+extern int lfs_subsys_pages;
 extern int lfs_dirvcount;
 extern struct simplelock lfs_subsys_lock;
 

@@ -26,8 +26,8 @@
  *
  *      i4b_l3fsm.c - layer 3 FSM
  *      -------------------------
- * 
- *	$Id: i4b_l3fsm.h,v 1.1.1.1 2001/01/05 12:49:56 martin Exp $ 
+ *
+ *	$Id: i4b_l3fsm.h,v 1.2 2005/02/26 22:39:49 perry Exp $
  *
  * $FreeBSD$
  *
@@ -56,10 +56,10 @@ enum Q931_states {
 	ST_IWR,		/* incoming call, wait establish, then reject */
 	ST_OW,		/* outgoing call, wait establish */
 	ST_IWL,		/* incoming call, wait establish, then alert */
-	
+
 	ST_SUSE,	/* SUBroutine SETs new state on exit */
 	ST_ILL,		/* Illegal */
-	
+
 	N_STATES	/* number of states */
 };
 
@@ -72,7 +72,7 @@ enum Q931_events {
 	EV_SETACRS,	/* setup response accept from l4	*/
 	EV_SETRJRS,	/* setup response reject from l4	*/
 	EV_SETDCRS,	/* setup response dontcare from l4	*/
-	
+
 	EV_SETUP,	/* incoming SETUP message from L2	*/
 	EV_STATUS,	/* incoming STATUS message from L2	*/
 	EV_RELEASE,	/* incoming RELEASE message from L2	*/
@@ -80,28 +80,28 @@ enum Q931_events {
 	EV_SETUPAK,	/* incoming SETUP ACK message from L2	*/
 	EV_CALLPRC,	/* incoming CALL PROCEEDING from L2	*/
 	EV_ALERT,	/* incoming ALERT message from L2	*/
-	EV_CONNECT,	/* incoming CONNECT message from L2	*/	
+	EV_CONNECT,	/* incoming CONNECT message from L2	*/
 	EV_PROGIND,	/* incoming Progress IND from L2	*/
 	EV_DISCONN,	/* incoming DISCONNECT message from L2	*/
 	EV_CONACK,	/* incoming CONNECT ACK message from L2	*/
 	EV_STATENQ,	/* incoming STATUS ENQ message from L2	*/
 	EV_INFO,	/* incoming INFO message from L2	*/
 	EV_FACILITY,	/* FACILITY message			*/
-	
-	EV_T303EXP,	/* Timer T303 expired			*/	
+
+	EV_T303EXP,	/* Timer T303 expired			*/
 	EV_T305EXP,	/* Timer T305 expired			*/
-	EV_T308EXP,	/* Timer T308 expired			*/	
-	EV_T309EXP,	/* Timer T309 expired			*/	
-	EV_T310EXP,	/* Timer T310 expired			*/	
-	EV_T313EXP,	/* Timer T313 expired			*/	
-	
+	EV_T308EXP,	/* Timer T308 expired			*/
+	EV_T309EXP,	/* Timer T309 expired			*/
+	EV_T310EXP,	/* Timer T310 expired			*/
+	EV_T313EXP,	/* Timer T313 expired			*/
+
 	EV_DLESTIN,	/* dl establish indication from l2	*/
 	EV_DLRELIN,	/* dl release indication from l2	*/
 	EV_DLESTCF,	/* dl establish confirm from l2		*/
 	EV_DLRELCF,	/* dl release indication from l2	*/
-	
-	EV_ILL,		/* Illegal */	
+
+	EV_ILL,		/* Illegal */
 	N_EVENTS
 };
-	
+
 #endif /* _I4B_L3FSM_H_ */

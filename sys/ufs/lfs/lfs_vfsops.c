@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.163 2005/02/26 05:40:42 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.164 2005/02/26 22:32:20 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.163 2005/02/26 05:40:42 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.164 2005/02/26 22:32:20 perry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -232,7 +232,7 @@ lfs_writerd(void *arg)
 		 * If global state wants a flush, flush everything.
 		 */
 		simple_lock(&lfs_subsys_lock);
-		while (lfs_do_flush || locked_queue_count > LFS_MAX_BUFS || 
+		while (lfs_do_flush || locked_queue_count > LFS_MAX_BUFS ||
 			locked_queue_bytes > LFS_MAX_BYTES ||
 			lfs_subsys_pages > LFS_MAX_PAGES) {
 
@@ -245,7 +245,7 @@ lfs_writerd(void *arg)
 			if (locked_queue_bytes > LFS_MAX_BYTES)
 				printf("daemon: lqb = %ld, max %ld\n",
 					locked_queue_bytes, LFS_MAX_BYTES);
-			if (lfs_subsys_pages > LFS_MAX_PAGES) 
+			if (lfs_subsys_pages > LFS_MAX_PAGES)
 				printf("daemon: lssp = %d, max %d\n",
 					lfs_subsys_pages, LFS_MAX_PAGES);
 #endif /* DEBUG_LFS_FLUSH */
@@ -309,7 +309,7 @@ lfs_mountroot()
 	struct mount *mp;
 	struct proc *p = curproc;	/* XXX */
 	int error;
-	
+
 	if (root_device->dv_class != DV_DISK)
 		return (ENODEV);
 
@@ -634,7 +634,7 @@ update_inoblk(struct lfs *fs, daddr_t offset, struct ucred *cred,
 			if (dip->di_size != ip->i_size)
 				VOP_TRUNCATE(vp, dip->di_size, 0, NOCRED, p);
 			/* Get mode, link count, size, and times */
-			memcpy(ip->i_din.ffs1_din, dip, 
+			memcpy(ip->i_din.ffs1_din, dip,
 			       offsetof(struct ufs1_dinode, di_db[0]));
 
 			/* Then the rest, except di_blocks */
@@ -708,7 +708,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 	 * of the segment, skip the superblock.
 	 */
 	if (sntod(fs, dtosn(fs, offset)) == offset) {
-		LFS_SEGENTRY(sup, fs, dtosn(fs, offset), bp); 
+		LFS_SEGENTRY(sup, fs, dtosn(fs, offset), bp);
 		if (sup->su_flags & SEGUSE_SUPERBLOCK)
 			offset += btofsb(fs, LFS_SBPAD);
 		brelse(bp);
@@ -718,7 +718,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 	error = bread(devvp, fsbtodb(fs, offset), fs->lfs_sumsize, cred, &bp);
 	if (error)
 		return -1;
-	
+
 	/* Check summary checksum */
 	ssp = (SEGSUM *)bp->b_data;
 	if (flags & CHECK_CKSUM) {
@@ -965,11 +965,11 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		if (dfs->dlfs_inodefmt > LFS_MAXINODEFMT)
 			printf("lfs_mountfs: warning: unknown inode format %d\n",
 			       dfs->dlfs_inodefmt);
-	
-		if (dfs->dlfs_version == 1) 
+
+		if (dfs->dlfs_version == 1)
 			fsbsize = secsize;
 		else {
-			fsbsize = 1 << (dfs->dlfs_bshift - dfs->dlfs_blktodb + 
+			fsbsize = 1 << (dfs->dlfs_bshift - dfs->dlfs_blktodb +
 				dfs->dlfs_fsbtodb);
 			/*
 			 * Could be, if the frag size is large enough, that we
@@ -983,7 +983,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 					(long long)sb_addr, (long long)(dfs->dlfs_sboffs[0] <<
 						 dfs->dlfs_fsbtodb));
 /* #endif */
-				sb_addr = dfs->dlfs_sboffs[0] << 
+				sb_addr = dfs->dlfs_sboffs[0] <<
 					  dfs->dlfs_fsbtodb;
 				brelse(bp);
 				continue;
@@ -1001,7 +1001,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	if (dfs->dlfs_sboffs[1] &&
 	    dfs->dlfs_sboffs[1] - LFS_LABELPAD / fsbsize > LFS_SBPAD / fsbsize)
 	{
-		error = bread(devvp, dfs->dlfs_sboffs[1] * (fsbsize / secsize), 
+		error = bread(devvp, dfs->dlfs_sboffs[1] * (fsbsize / secsize),
 			LFS_SBPAD, cred, &abp);
 		if (error)
 			goto out;
@@ -1060,7 +1060,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	 */
 	if (fsbtob(fs, LFS_NRESERVE(fs)) > LFS_MAX_BYTES && !ronly) {
 		printf("lfs_mount: to mount this filesystem read/write,"
-		       " we need BUFPAGES >= %lld\n", 
+		       " we need BUFPAGES >= %lld\n",
 			(long long)((bufmem_hiwater / bufmem_lowater) *
 			LFS_INVERSE_MAX_BYTES(
 				fsbtob(fs, LFS_NRESERVE(fs))) >> PAGE_SHIFT));
@@ -1068,7 +1068,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		error = EFBIG; /* XXX needs translation */
 		goto out;
 	}
-	
+
 	/* Before rolling forward, lock so vget will sleep for other procs */
 	fs->lfs_flags = LFS_NOTYET;
 	fs->lfs_rfpid = p->p_pid;
@@ -1238,12 +1238,12 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 			nextserial++;
 			if (sntod(fs, oldoffset) != sntod(fs, offset)) {
 				LFS_SEGENTRY(sup, fs, dtosn(fs, oldoffset),
-					     bp); 
+					     bp);
 				if (!(sup->su_flags & SEGUSE_DIRTY))
 					--fs->lfs_nclean;
 				sup->su_flags |= SEGUSE_DIRTY;
 				LFS_WRITESEGENTRY(sup, fs, dtosn(fs, oldoffset),
-					     bp); 
+					     bp);
 			}
 
 #ifdef DEBUG_LFS_RFW
@@ -1317,15 +1317,15 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		lfs_writesuper(fs, fs->lfs_sboffs[0]);
 		lfs_writesuper(fs, fs->lfs_sboffs[1]);
 	}
-	
+
 	/* Allow vget now that roll-forward is complete */
 	fs->lfs_flags &= ~(LFS_NOTYET);
 	wakeup(&fs->lfs_flags);
 
 	/*
-	 * Initialize the ifile cleaner info with information from 
+	 * Initialize the ifile cleaner info with information from
 	 * the superblock.
-	 */ 
+	 */
 	LFS_CLEANERINFO(cip, fs, bp);
 	cip->clean = fs->lfs_nclean;
 	cip->dirty = fs->lfs_nseg - fs->lfs_nclean;
@@ -1334,10 +1334,10 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	(void) LFS_BWRITE_LOG(bp); /* Ifile */
 
 	/*
-	 * Mark the current segment as ACTIVE, since we're going to 
+	 * Mark the current segment as ACTIVE, since we're going to
 	 * be writing to it.
 	 */
-	LFS_SEGENTRY(sup, fs, dtosn(fs, fs->lfs_offset), bp); 
+	LFS_SEGENTRY(sup, fs, dtosn(fs, fs->lfs_offset), bp);
 	sup->su_flags |= SEGUSE_DIRTY | SEGUSE_ACTIVE;
 	fs->lfs_nactive++;
 	LFS_WRITESEGENTRY(sup, fs, dtosn(fs, fs->lfs_offset), bp);  /* Ifile */
@@ -1507,7 +1507,7 @@ lfs_statvfs(struct mount *mp, struct statvfs *sbp, struct proc *p)
 		sbp->f_bavail = sbp->f_bfree - sbp->f_bresvd;
 	else
 		sbp->f_bavail = 0;
-	
+
 	sbp->f_files = fs->lfs_bfree / btofsb(fs, fs->lfs_ibsize) * INOPB(fs);
 	sbp->f_ffree = sbp->f_files - fs->lfs_nfiles;
 	sbp->f_favail = sbp->f_ffree;
@@ -1636,7 +1636,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	/* Read in the disk contents for the inode, copy into the inode. */
 	retries = 0;
     again:
-	error = bread(ump->um_devvp, fsbtodb(fs, daddr), 
+	error = bread(ump->um_devvp, fsbtodb(fs, daddr),
 		(fs->lfs_version == 1 ? fs->lfs_bsize : fs->lfs_ibsize),
 		NOCRED, &bp);
 	if (error) {
@@ -2019,7 +2019,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 
 			version = sp->fip->fi_version;
 			(void) lfs_writeseg(fs, sp);
-			
+
 			sp->fip->fi_version = version;
 			sp->fip->fi_ino = ip->i_number;
 			/* Add the current file to the segment summary. */
@@ -2108,7 +2108,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
         uvm_lock_pageq();
         for (i = 0; i < npages; i++) {
                 pg = pgs[i];
-                
+
                 if (pg->flags & PG_PAGEOUT)
                         uvmexp.paging--;
                 if (pg->flags & PG_DELWRI) {

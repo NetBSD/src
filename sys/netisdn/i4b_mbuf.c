@@ -27,7 +27,7 @@
  *	i4b - mbuf handling support routines
  *	------------------------------------
  *
- *	$Id: i4b_mbuf.c,v 1.3 2001/11/13 01:06:23 lukem Exp $ 
+ *	$Id: i4b_mbuf.c,v 1.4 2005/02/26 22:39:49 perry Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_mbuf.c,v 1.3 2001/11/13 01:06:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_mbuf.c,v 1.4 2005/02/26 22:39:49 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ i4b_Dgetmbuf(int len)
 		printf("i4b_getmbuf: error - len(%d) > MCLBYTES(%d)\n",
 					len, MCLBYTES);
 #endif
-		
+
 		return(NULL);
 	}
 
@@ -101,7 +101,7 @@ i4b_Dgetmbuf(int len)
 
 	/* did we actually get the mbuf ? */
 
-	if(!m)	
+	if(!m)
 	{
 
 #ifdef I4B_MBUF_DEBUG
@@ -122,7 +122,7 @@ i4b_Dgetmbuf(int len)
 #ifdef I4B_MBUF_DEBUG
 			printf("i4b_getbuf: error - MCLGET failed, len(%d)\n", len);
 #endif
-			
+
 			return (NULL);
 		}
 	}
@@ -150,7 +150,7 @@ i4b_Dcleanifq(struct ifqueue *ifq)
 {
 	struct mbuf *m;
 	int x = splnet();
-	
+
 	while(!IF_QEMPTY(ifq))
 	{
 		IF_DEQUEUE(ifq, m);
@@ -175,7 +175,7 @@ i4b_Bgetmbuf(int len)
 		printf("i4b_getmbuf: error - len(%d) > MCLBYTES(%d)\n",
 					len, MCLBYTES);
 #endif
-		
+
 		return(NULL);
 	}
 
@@ -183,7 +183,7 @@ i4b_Bgetmbuf(int len)
 
 	/* did we actually get the mbuf ? */
 
-	if(!m)	
+	if(!m)
 	{
 
 #ifdef I4B_MBUF_DEBUG
@@ -204,7 +204,7 @@ i4b_Bgetmbuf(int len)
 #ifdef I4B_MBUF_DEBUG
 			printf("i4b_getbuf: error - MCLGET failed, len(%d)\n", len);
 #endif
-			
+
 			return (NULL);
 		}
 	}
@@ -232,7 +232,7 @@ i4b_Bcleanifq(struct ifqueue *ifq)
 {
 	struct mbuf *m;
 	int x = splnet();
-	
+
 	while(!IF_QEMPTY(ifq))
 	{
 		IF_DEQUEUE(ifq, m);

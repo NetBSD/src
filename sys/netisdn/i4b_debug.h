@@ -27,7 +27,7 @@
  *	i4b_debug.h - i4b debug header file
  *	-----------------------------------
  *
- *	$Id: i4b_debug.h,v 1.4 2003/09/25 15:54:41 pooka Exp $ 
+ *	$Id: i4b_debug.h,v 1.5 2005/02/26 22:39:49 perry Exp $
  *
  * $FreeBSD$
  *
@@ -61,15 +61,15 @@ extern unsigned int i4b_l4_debug;
 #define NDBGL2(bits, fmt, args...)				 	\
 	if(bits & i4b_l2_debug)						\
 	{ printf("i4b-L2 %s: " fmt "\n", __FUNCTION__ , ##args ); }
-	
+
 #define NDBGL3(bits, fmt, args...)				 	\
 	if(bits & i4b_l3_debug)						\
 	{ printf("i4b-L3 %s: " fmt "\n", __FUNCTION__ , ##args ); }
-	
+
 #define NDBGL4(bits, fmt, args...)				 	\
 	if(bits & i4b_l4_debug)						\
 	{ printf("i4b-L4 %s: " fmt "\n", __FUNCTION__ , ##args ); }
-	
+
 #else /* !DO_I4B_DEBUG */
 
 #define NDBGL1(bits, fmt, args...);
@@ -198,9 +198,9 @@ typedef struct {
 	unsigned int	l1;
 	unsigned int	l2;
 	unsigned int	l3;
-	unsigned int	l4;	
+	unsigned int	l4;
 } ctl_debug_t;
-	
+
 #define	I4B_CTL_GET_DEBUG	_IOR('C', 0, ctl_debug_t)
 
 #define	I4B_CTL_SET_DEBUG	_IOW('C', 1, ctl_debug_t)
@@ -269,7 +269,7 @@ typedef struct {
 	u_long	tx_dm;		/* DM	*/
 	u_long	tx_disc;	/* DISC */
 	u_long	tx_ua;		/* UA	*/
-	u_long	tx_frmr;	/* FRMR	*/	
+	u_long	tx_frmr;	/* FRMR	*/
 	u_long	tx_tei;		/* TEI	*/
 
 	/* receive */
@@ -285,8 +285,8 @@ typedef struct {
 	u_long	rx_xid;		/* XID	*/
 	u_long	rx_dm;		/* DM	*/
 	u_long	rx_ua;		/* UA	*/
-	u_long	rx_frmr;	/* FRMR	*/	
-	
+	u_long	rx_frmr;	/* FRMR	*/
+
 	/* errors */
 
 	u_long	err_rx_len;	/* incorrect length */

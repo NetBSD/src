@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.10 2005/02/21 17:52:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.11 2005/02/26 22:32:20 perry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -705,7 +705,7 @@ cgaccount(cg, vp, data, passno)
 		}
 	}
 	if ((error = VOP_BALLOC(vp, lblktosize(fs, (off_t)(base + loc)),
-	    fs->fs_bsize, KERNCRED, B_METAONLY, &ibp)) != 0)	
+	    fs->fs_bsize, KERNCRED, B_METAONLY, &ibp)) != 0)
 		return (error);
 	indiroff = (base + loc - NDADDR) % NINDIR(fs);
 	for ( ; loc < len; loc++, indiroff++) {
@@ -831,7 +831,7 @@ expunge_ufs1(snapvp, cancelip, fs, acctfunc, expungetype)
 /*
  * Descend an indirect block chain for vnode cancelvp accounting for all
  * its indirect blocks in snapvp.
- */ 
+ */
 static int
 indiracct_ufs1(snapvp, cancelvp, level, blkno, lbn, rlbn, remblks,
 	    blksperindir, fs, acctfunc, expungetype)
@@ -1120,7 +1120,7 @@ expunge_ufs2(snapvp, cancelip, fs, acctfunc, expungetype)
 /*
  * Descend an indirect block chain for vnode cancelvp accounting for all
  * its indirect blocks in snapvp.
- */ 
+ */
 static int
 indiracct_ufs2(snapvp, cancelvp, level, blkno, lbn, rlbn, remblks,
 	    blksperindir, fs, acctfunc, expungetype)
@@ -1834,7 +1834,7 @@ ffs_copyonwrite(v, bp)
 	ip = TAILQ_FIRST(&ump->um_snapshots);
 	if (ip == NULL) {
 		VI_UNLOCK(devvp);
-		return 0; 
+		return 0;
 	}
 	/*
 	 * First check to see if it is in the preallocated list.

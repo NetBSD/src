@@ -1,4 +1,4 @@
-/*	$NetBSD: dirhash.h,v 1.1 2005/01/23 19:37:05 rumble Exp $	*/
+/*	$NetBSD: dirhash.h,v 1.2 2005/02/26 22:32:20 perry Exp $	*/
 
 /*
  * Copyright (c) 2001 Ian Dowse.  All rights reserved.
@@ -66,7 +66,7 @@
  * candidates is much larger than the configured memry limit). In this
  * case it limits the number of hash builds to 1/DH_SCOREINIT of the
  * number of accesses.
- */ 
+ */
 #define DH_SCOREINIT	8	/* initial dh_score when dirhash built */
 #define DH_SCOREMAX	64	/* max dh_score value */
 

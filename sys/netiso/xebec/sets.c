@@ -1,4 +1,4 @@
-/*	$NetBSD: sets.c,v 1.7 2001/11/13 01:10:52 lukem Exp $	*/
+/*	$NetBSD: sets.c,v 1.8 2005/02/26 22:39:49 perry Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sets.c,v 1.7 2001/11/13 01:10:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sets.c,v 1.8 2005/02/26 22:39:49 perry Exp $");
 
 #include "main.h"
 #include "malloc.h"
@@ -22,9 +22,9 @@ __KERNEL_RCSID(0, "$NetBSD: sets.c,v 1.7 2001/11/13 01:10:52 lukem Exp $");
 struct Object *CurrentEvent = (struct Object *)0;
 struct Object *Objtree;
 struct Object dummy;
-/* 
+/*
  * define a set w/ type and name
- * return a set number 
+ * return a set number
  */
 #undef NULL
 #define NULL (struct Object *)0
@@ -131,7 +131,7 @@ end_states(f)
 	fprintf(f, "struct %s_event {\n\tint ev_number;\n", &protocol[0]);
 	IFDEBUG(X)
 		/* finish sstring[] & start estring[] */
-		fprintf(astringfile, 
+		fprintf(astringfile,
 		"};\n\nchar *%s_estring[] = {\n", protocol);
 	ENDDEBUG
 }
@@ -139,11 +139,11 @@ end_states(f)
 int FirstEventAttribute = 1;
 
 static void
-insert(o) 
+insert(o)
 	struct Object *o;
 {
 	struct Object *p = Objtree;
-	struct Object **q = &Objtree; 
+	struct Object **q = &Objtree;
 	int val=1;
 
 
@@ -156,7 +156,7 @@ insert(o)
 			fprintf(stderr, "No states may be defined after *TRANSITIONS\n");
 			Exit(-1);
 		}
-		o->obj_number =  Nstates++ ; 
+		o->obj_number =  Nstates++ ;
 		if(Nstates > MAXSTATES) {
 			fprintf(stderr, "Too many states\n");
 			Exit(-1);
@@ -166,7 +166,7 @@ insert(o)
 			fprintf(astringfile, "\"%s(0x%x)\",\n", o->obj_name, o->obj_number);
 		ENDDEBUG
 	} else {
-		/* EVENTSET */ 
+		/* EVENTSET */
 		if( ! states_done )  {
 			fprintf(stderr, "states must precede events\n");
 			Exit(-1);
@@ -181,7 +181,7 @@ insert(o)
 				fprintf(Efile,  "\n\tunion{\n"); /*} */
 				FirstEventAttribute = 0;
 			}
-			fprintf(Efile, 
+			fprintf(Efile,
 			"struct %s %s%s;\n\n", o->obj_struc, EV_PREFIX,  o->obj_name);
 		}
 		fprintf(Efile, "#define %s 0x%x\n", o->obj_name, o->obj_number);
@@ -229,10 +229,10 @@ insert(o)
 }
 
 void
-delete(o) 
+delete(o)
 	struct Object *o;
 {
-	register struct Object *p = o->obj_right; 
+	register struct Object *p = o->obj_right;
 	register struct Object *q;
 	register struct Object *newparent;
 	register struct Object **np_childlink;
@@ -276,7 +276,7 @@ delete(o)
 		p = o->obj_left;
 	}
 	*np_childlink = p;
-	if(p) 
+	if(p)
 		p->obj_parent = newparent;
 
 	IFDEBUG(T)
@@ -295,13 +295,13 @@ int keep;
 	IFDEBUG(o)
 		printf("defineset(0x%x,%s, %s)\n", type , adr, keep?"KEEP":"NO_KEEP");
 	ENDDEBUG
-	
+
 	onew = (struct Object *)Malloc(sizeof (struct Object));
 	bzero(onew, sizeof(struct Object));
 	onew->obj_name = adr;
 	onew->obj_kind = OBJ_SET;
 	onew->obj_type = type;
-	if(keep) 
+	if(keep)
 		insert( onew );
 		/* address already stashed before calling defineset */
 	IFDEBUG(o)
@@ -337,9 +337,9 @@ defineitem(type, adr, struc)
 	IFDEBUG(o)
 		printf("defineitem(0x%x, %s at 0x%p, %s)\n", type, adr, adr, struc);
 	ENDDEBUG
-	
+
 	if((onew = lookup( type, adr ))) {
-		fprintf(stderr, 
+		fprintf(stderr,
 	"Internal error at defineitem: trying to redefine obj type 0x%x, adr %s\n",
 			type, adr);
 		exit(1);
@@ -366,7 +366,7 @@ member(o, adr)
 	IFDEBUG(o)
 		printf("member(0x%p, %s)\n", o, adr);
 	ENDDEBUG
-	
+
 	oold = lookup(  o->obj_type, adr );
 
 	onew = (struct Object *)Malloc(sizeof (struct Object));
@@ -414,7 +414,7 @@ AddCurrentEventName(x)
 	register char **x;
 {
 	register char *n = EV_PREFIX; ;
-	
+
 	if( CurrentEvent == (struct Object *)0 ) {
 		fprintf(stderr, "No event named!  BARF!\n"); Exit(-1);
 	}
@@ -448,7 +448,7 @@ dumptree(o,i)
 		fprintf(stdout, "%3d NULL\n", i);
 	} else {
 		dumptree(o->obj_left, i+1);
-		for(j=0; j<i; j++) 
+		for(j=0; j<i; j++)
 			fputc(' ', stdout);
 		fprintf(stdout, "%3d 0x%p: %s\n", i,o, OBJ_NAME(o));
 		dumptree(o->obj_right, i+1);
@@ -487,6 +487,6 @@ dump_trans( pred, oldstate, newstate, action, event )
 	fprintf(stdout, " <== ");
 	dumpit(oldstate);
 	dumpit(event);
-	fprintf(stdout, "\n\t\t%s\n\t\t%s\n", pred?pred:"DEFAULT", 
+	fprintf(stdout, "\n\t\t%s\n\t\t%s\n", pred?pred:"DEFAULT",
 		action);
 }

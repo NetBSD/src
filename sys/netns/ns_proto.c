@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_proto.c,v 1.14 2005/01/23 18:41:56 matt Exp $	*/
+/*	$NetBSD: ns_proto.c,v 1.15 2005/02/26 22:39:50 perry Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_proto.c,v 1.14 2005/01/23 18:41:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_proto.c,v 1.15 2005/02/26 22:39:50 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -95,7 +95,7 @@ const struct protosw nssw[] = {
 };
 
 struct domain nsdomain =
-    { PF_NS, "network systems", 0, 0, 0, 
+    { PF_NS, "network systems", 0, 0, 0,
       nssw, &nssw[sizeof(nssw)/sizeof(nssw[0])],
       rn_inithead, 16, sizeof(struct sockaddr_ns)};
 

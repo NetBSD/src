@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.26 2004/04/19 00:10:48 matt Exp $	*/
+/*	$NetBSD: ns.c,v 1.27 2005/02/26 22:39:50 perry Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns.c,v 1.26 2004/04/19 00:10:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns.c,v 1.27 2005/02/26 22:39:50 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ ns_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 
 	case SIOCSIFADDR:
 		return (ns_ifinit(ifp, ia, satosns(&ifr->ifr_addr), 1));
-	
+
 	case SIOCAIFADDR:
 		dstIsNew = 0;
 		hostIsNew = 1;

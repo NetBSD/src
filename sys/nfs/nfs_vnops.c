@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.219 2005/01/26 10:33:54 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.220 2005/02/26 22:39:50 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.219 2005/01/26 10:33:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.220 2005/02/26 22:39:50 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -298,7 +298,7 @@ nfs_null(vp, cred, procp)
 	int error = 0;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	struct nfsnode *np = VTONFS(vp);
-	
+
 	nfsm_reqhead(np, NFSPROC_NULL, 0);
 	nfsm_request(np, NFSPROC_NULL, procp, cred);
 	nfsm_reqdone;
@@ -603,7 +603,7 @@ nfs_getattr(v)
 	int error = 0;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(vp);
-	
+
 	/*
 	 * Update local times for special files.
 	 */
@@ -860,7 +860,7 @@ nfs_lookup(v)
 	 * If the directory/name pair is found in the name cache,
 	 * we have to ensure the directory has not changed from
 	 * the time the cache entry has been created. If it has,
-	 * the cache entry has to be ignored. 
+	 * the cache entry has to be ignored.
 	 */
 	error = cache_lookup_raw(dvp, vpp, cnp);
 	KASSERT(dvp != *vpp);
@@ -1495,7 +1495,7 @@ retry:
 					    NFSX_V3WRITEVERF);
 					/*
 					 * note NFSMNT_STALEWRITEVERF
-					 * if we're the first thread to 
+					 * if we're the first thread to
 					 * notice it.
 					 */
 					if ((nmp->nm_iflag &
@@ -2621,7 +2621,7 @@ nfs_readdirrpc(vp, uiop, cred)
 #endif
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 		more_dirs = fxdr_unsigned(int, *tl);
-	
+
 		/* loop thru the dir entries, doctoring them to 4bsd form */
 		while (more_dirs && bigenough) {
 #ifndef NFS_V2_ONLY
@@ -2690,7 +2690,7 @@ nfs_readdirrpc(vp, uiop, cred)
 			if (v3) {
 				nfsm_dissect(tl, u_int32_t *,
 				    3 * NFSX_UNSIGNED);
-			} else 
+			} else
 #endif
 			{
 				nfsm_dissect(tl, u_int32_t *,
@@ -2703,7 +2703,7 @@ nfs_readdirrpc(vp, uiop, cred)
 						uiop->uio_offset =
 						    fxdr_swapcookie3(tl);
 					else
-						uiop->uio_offset = 
+						uiop->uio_offset =
 						    fxdr_cookie3(tl);
 				}
 				else
@@ -2838,7 +2838,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 		dnp->n_cookieverf.nfsuquad[0] = *tl++;
 		dnp->n_cookieverf.nfsuquad[1] = *tl++;
 		more_dirs = fxdr_unsigned(int, *tl);
-	
+
 		/* loop thru the dir entries, doctoring them to 4bsd form */
 		while (more_dirs && bigenough) {
 			nfsm_dissect(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
@@ -2961,9 +2961,9 @@ nfs_readdirplusrpc(vp, uiop, cred)
 			    nfsm_adv(nfsm_rndup(i));
 			}
 			if (newvp != NULLVP) {
-			    if (newvp == vp) 
-				vrele(newvp); 
-			    else 
+			    if (newvp == vp)
+				vrele(newvp);
+			    else
 				vput(newvp);
 			    newvp = NULLVP;
 			}
@@ -3194,7 +3194,7 @@ nfs_commit(vp, offset, cnt, procp)
 	printf("commit %lu - %lu\n", (unsigned long)offset,
 	    (unsigned long)(offset + cnt));
 #endif
-	
+
 	simple_lock(&nmp->nm_slock);
 	if ((nmp->nm_iflag & NFSMNT_HASWRITEVERF) == 0) {
 		simple_unlock(&nmp->nm_slock);

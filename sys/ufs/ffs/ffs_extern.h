@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.41 2004/08/29 10:13:48 hannken Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.42 2005/02/26 22:32:20 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -160,7 +160,7 @@ SYSCTL_SETUP_PROTO(sysctl_vfs_ffs_setup);
 
 __END_DECLS
 
- 
+
 /*
  * Snapshot function prototypes.
  */

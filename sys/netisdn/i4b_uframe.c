@@ -27,7 +27,7 @@
  *	i4b_uframe.c - routines for handling U-frames
  *	-----------------------------------------------
  *
- *	$Id: i4b_uframe.c,v 1.5 2002/05/21 10:31:11 martin Exp $ 
+ *	$Id: i4b_uframe.c,v 1.6 2005/02/26 22:39:49 perry Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_uframe.c,v 1.5 2002/05/21 10:31:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_uframe.c,v 1.6 2005/02/26 22:39:49 perry Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -81,9 +81,9 @@ i4b_rxd_u_frame(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 	u_char *ptr = m->m_data;
 
 	int sapi = GETSAPI(*(ptr + OFF_SAPI));
-	int tei = GETTEI(*(ptr + OFF_TEI));	
+	int tei = GETTEI(*(ptr + OFF_TEI));
 	int pfbit = GETUPF(*(ptr + OFF_CNTL));
-	
+
 	switch(*(ptr + OFF_CNTL) & ~UPFBIT)
 	{
 		/* commands */
@@ -122,14 +122,14 @@ i4b_rxd_u_frame(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 			{
 				l2sc->stat.err_rx_badui++;
 				NDBGL2(L2_U_ERR, "unknown UI frame!");
-				i4b_Dfreembuf(m);				
+				i4b_Dfreembuf(m);
 			}
 			break;
-			
+
 		case DISC:
 			if((l2sc->tei_valid == TEI_VALID) &&
 			   (l2sc->tei == GETTEI(*(ptr+OFF_TEI))))
-			{		
+			{
 				l2sc->stat.rx_disc++;
 				NDBGL2(L2_U_MSG, "DISC, sapi = %d, tei = %d", sapi, tei);
 				l2sc->rxd_PF = pfbit;
@@ -141,19 +141,19 @@ i4b_rxd_u_frame(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 		case XID:
 			if((l2sc->tei_valid == TEI_VALID) &&
 			   (l2sc->tei == GETTEI(*(ptr+OFF_TEI))))
-			{		
+			{
 				l2sc->stat.rx_xid++;
 				NDBGL2(L2_U_MSG, "XID, sapi = %d, tei = %d", sapi, tei);
 			}
-			i4b_Dfreembuf(m);			
+			i4b_Dfreembuf(m);
 			break;
-			
+
 		/* responses */
 
 		case DM:
 			if((l2sc->tei_valid == TEI_VALID) &&
 			   (l2sc->tei == GETTEI(*(ptr+OFF_TEI))))
-			{		
+			{
 				l2sc->stat.rx_dm++;
 				NDBGL2(L2_U_MSG, "DM, sapi = %d, tei = %d", sapi, tei);
 				i4b_print_frame(m->m_len, m->m_data);
@@ -162,18 +162,18 @@ i4b_rxd_u_frame(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 			}
 			i4b_Dfreembuf(m);
 			break;
-			
+
 		case UA:
 			if((l2sc->tei_valid == TEI_VALID) &&
 			   (l2sc->tei == GETTEI(*(ptr+OFF_TEI))))
-			{		
+			{
 				l2sc->stat.rx_ua++;
 				NDBGL2(L2_U_MSG, "UA, sapi = %d, tei = %d", sapi, tei);
 				l2sc->rxd_PF = pfbit;
 				i4b_next_l2state(l2sc, drv, EV_RXUA);
 			}
-			i4b_Dfreembuf(m);			
-			break;			
+			i4b_Dfreembuf(m);
+			break;
 
 		case FRMR:
 			if((l2sc->tei_valid == TEI_VALID) &&
@@ -184,23 +184,23 @@ i4b_rxd_u_frame(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 				l2sc->rxd_PF = pfbit;
 				i4b_next_l2state(l2sc, drv, EV_RXFRMR);
 			}
-			i4b_Dfreembuf(m);			
+			i4b_Dfreembuf(m);
 			break;
 
 		default:
 			if((l2sc->tei_valid == TEI_VALID) &&
 			   (l2sc->tei == GETTEI(*(ptr+OFF_TEI))))
-			{		
+			{
 				NDBGL2(L2_U_ERR, "UNKNOWN TYPE ERROR, sapi = %d, tei = %d, frame = ", sapi, tei);
 				i4b_print_frame(m->m_len, m->m_data);
 			}
 			else
-			{		
+			{
 				NDBGL2(L2_U_ERR, "not mine -  UNKNOWN TYPE ERROR, sapi = %d, tei = %d, frame = ", sapi, tei);
 				i4b_print_frame(m->m_len, m->m_data);
 			}
-			l2sc->stat.err_rx_badui++;			
-			i4b_Dfreembuf(m);			
+			l2sc->stat.err_rx_badui++;
+			i4b_Dfreembuf(m);
 			break;
 	}
 }
@@ -212,12 +212,12 @@ struct mbuf *
 i4b_build_u_frame(l2_softc_t *l2sc, crbit_to_nt_t crbit, pbit_t pbit, u_char type)
 {
 	struct mbuf *m;
-	
+
 	if((m = i4b_Dgetmbuf(U_FRAME_LEN)) == NULL)
 		return(NULL);
 
 	PUTSAPI(SAPI_CCP, crbit, m->m_data[OFF_SAPI]);
-		
+
 	PUTTEI(l2sc->tei, m->m_data[OFF_TEI]);
 
 	if(pbit)
@@ -250,7 +250,7 @@ i4b_tx_dm(l2_softc_t *l2sc, fbit_t fbit)
 {
 	struct mbuf *m;
 
-	l2sc->stat.tx_dm++;	
+	l2sc->stat.tx_dm++;
 	NDBGL2(L2_U_MSG, "tx DM, tei = %d", l2sc->tei);
 	m = i4b_build_u_frame(l2sc, CR_RSP_TO_NT, fbit, DM);
 	l2sc->driver->ph_data_req(l2sc->l1_token, m, MBUF_FREE);
@@ -263,7 +263,7 @@ void
 i4b_tx_disc(l2_softc_t *l2sc, pbit_t pbit)
 {
 	struct mbuf *m;
-	
+
 	l2sc->stat.tx_disc++;
 	NDBGL2(L2_U_MSG, "tx DISC, tei = %d", l2sc->tei);
 	m = i4b_build_u_frame(l2sc, CR_CMD_TO_NT, pbit, DISC);
@@ -277,7 +277,7 @@ void
 i4b_tx_ua(l2_softc_t *l2sc, fbit_t fbit)
 {
 	struct mbuf *m;
-	
+
 	l2sc->stat.tx_ua++;
 	NDBGL2(L2_U_MSG, "tx UA, tei = %d", l2sc->tei);
 	m = i4b_build_u_frame(l2sc, CR_RSP_TO_NT, fbit, UA);
@@ -291,7 +291,7 @@ void
 i4b_tx_frmr(l2_softc_t *l2sc, fbit_t fbit)
 {
 	struct mbuf *m;
-	
+
 	l2sc->stat.tx_frmr++;
 	NDBGL2(L2_U_MSG, "tx FRMR, tei = %d", l2sc->tei);
 	m = i4b_build_u_frame(l2sc, CR_RSP_TO_NT, fbit, FRMR);
