@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.65 2003/05/08 13:03:19 christos Exp $
+#	$NetBSD: Makefile,v 1.66 2003/05/15 10:13:36 dsl Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -44,17 +44,32 @@ CLEANFILES+= ${GENSRCS} y.tab.h
 token.h: mktokens
 	${HOST_SH} ${.ALLSRC}
 
-builtins.c builtins.h: mkbuiltins shell.h builtins.def
+builtins.h: builtins.c
+	[ -f ${.TARGET} ]
+
+builtins.c: mkbuiltins shell.h builtins.def
 	${HOST_SH} ${.ALLSRC} ${.OBJDIR}
+	[ -f builtins.h ]
+	touch builtins.h
 
 init.c: mkinit ${SHSRCS}
 	./${.ALLSRC}
 
-nodes.c nodes.h: mknodes nodetypes nodes.c.pat
-	./${.ALLSRC}
+nodes.h: nodes.c
+	[ -f ${.TARGET} ]
 
-syntax.c syntax.h: mksyntax
+nodes.c: mknodes nodetypes nodes.c.pat
 	./${.ALLSRC}
+	[ -f nodes.h ]
+	touch nodes.h
+
+syntax.h: syntax.c
+	[ -f ${.TARGET} ]
+
+syntax.c: mksyntax
+	./${.ALLSRC}
+	[ -f syntax.h ]
+	touch syntax.h
 
 mkinit: mkinit.c
 	${HOST_LINK.c} -o mkinit ${.IMPSRC}
