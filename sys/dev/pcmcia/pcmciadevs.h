@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.131 2001/06/29 14:57:17 christos Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.132 2001/07/09 06:58:26 itojun Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.131 2001/06/29 14:56:22 christos Exp 
+ *	NetBSD: pcmciadevs,v 1.132 2001/07/09 06:57:59 itojun Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -138,6 +138,9 @@
 #define	PCMCIA_CIS_3COM_3CCFEM556BI	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3CCFEM556BI	0x0556
 #define	PCMCIA_STR_3COM_3CCFEM556BI	"3Com/Megahertz 3CCFEM556BI Ethernet/Modem"
+#define	PCMCIA_CIS_3COM_3CRWE62092A	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_3COM_3CRWE62092A	0x2092
+#define	PCMCIA_STR_3COM_3CRWE62092A	"3Com 3CRWE62092A Wireless LAN"
 
 /* Compaq Products */
 #define	PCMCIA_CIS_COMPAQ2_CPQ_10_100	{ NULL, NULL, NULL, NULL }
