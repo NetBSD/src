@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.35 2004/02/13 11:36:17 wiz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.35.10.1 2005/02/02 12:30:37 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35 2004/02/13 11:36:17 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35.10.1 2005/02/02 12:30:37 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernel_ipt.h"
@@ -1183,7 +1183,7 @@ pmap_map_device(paddr_t pa, u_int len)
 			panic("pmap_map_device: out of device bootstrap kva");
 		pmap_device_kva_start += len;
 	} else
-		rv = va = uvm_km_valloc(kernel_map, len);
+		rv = va = uvm_km_alloc(kernel_map, len, 0, UVM_KMF_VAONLY);
 
 	while (len) {
 		idx = kva_to_iptidx(va);
@@ -2946,7 +2946,8 @@ pmap_pool_ualloc(struct pool *pp, int flags)
 	if (uvm.page_init_done != TRUE)
 		return ((void *)uvm_pageboot_alloc(PAGE_SIZE));
 
-	return ((void *)uvm_km_alloc_poolpage((flags & PR_WAITOK)?TRUE:FALSE));
+	return ((void *)uvm_km_alloc_poolpage(kmem_map,
+	    (flags & PR_WAITOK) ? TRUE : FALSE));
 }
 
 static void
