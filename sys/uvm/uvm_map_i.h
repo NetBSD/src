@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map_i.h,v 1.15 1999/06/14 22:05:23 thorpej Exp $	*/
+/*	$NetBSD: uvm_map_i.h,v 1.16 1999/07/01 20:07:05 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -128,6 +128,7 @@ uvm_map_setup(map, min, max, flags)
 	lockinit(&map->lock, PVM, "vmmaplk", 0, 0);
 	simple_lock_init(&map->ref_lock);
 	simple_lock_init(&map->hint_lock);
+	simple_lock_init(&map->flags_lock);
 
 	/*
 	 * If the map is interrupt safe, place it on the list
