@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.53 2002/10/04 13:19:05 simonb Exp $	*/
+/*	$NetBSD: init.c,v 1.54 2003/04/17 18:04:47 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.53 2002/10/04 13:19:05 simonb Exp $");
+__RCSID("$NetBSD: init.c,v 1.54 2003/04/17 18:04:47 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -1404,7 +1404,7 @@ mfs_dev(void)
 	case 0:
 		if (chdir("/dev") == -1)
 			goto fail;
-		(void)execl("/bin/sh", "sh", "./MAKEDEV", "all", NULL); 
+		(void)execl("/bin/sh", "sh", "./MAKEDEV", "init", NULL); 
 		goto fail;
 
 	case -1:
