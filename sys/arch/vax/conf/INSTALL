@@ -1,9 +1,14 @@
-#	$NetBSD: INSTALL,v 1.7 2000/08/26 02:32:57 matt Exp $
+#	$NetBSD: INSTALL,v 1.8 2000/09/25 11:46:40 abs Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
 
 include		"arch/vax/conf/std.vax"
+
+# Saving space
+makeoptions     COPTS="-Os"             # Optimise for space. Implies -O2
+#options        VNODE_OP_NOINLINE       # Don't inline vnode op calls
+#options        NFS_V2_ONLY             # Exclude NFS3 and NQNFS code
 
 # Here are all different supported CPU types listed.
 options 	"VAX8600"

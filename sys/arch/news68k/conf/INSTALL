@@ -1,8 +1,13 @@
-# 	$NetBSD: INSTALL,v 1.6 2000/09/13 13:52:21 tsutsui Exp $
+# 	$NetBSD: INSTALL,v 1.7 2000/09/25 11:46:39 abs Exp $
 
 #	config for bootable floppy kernel
 #
 include		"arch/news68k/conf/std.news68k"
+
+# Saving space
+makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
+#options	VNODE_OP_NOINLINE	# Don't inline vnode op calls
+#options	NFS_V2_ONLY		# Exclude NFS3 and NQNFS code
 
 maxusers	4
 
@@ -15,8 +20,6 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MINIROOTSIZE=2880	# 1.44 Megabytes
-
-makeoptions	COPTS="-Os"
 
 # Standard system options
 #options 	KTRACE			# system call tracing support
