@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.300.2.1 2000/02/20 18:37:36 sommerfeld Exp $
+#	$NetBSD: GENERIC,v 1.300.2.2 2000/02/21 19:33:00 sommerfeld Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.300.2.1 $"
+#ident 		"GENERIC-$Revision: 1.300.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -195,7 +195,6 @@ config		netbsd	root on ? type ?
 
 mainbus0 at root
 cpu* at mainbus? apid ?
-
 #ioapic* at mainbus? apid ?
 
 #apm0	at mainbus0			# Advanced power management
