@@ -31,11 +31,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)disklabel.h	7.19 (Berkeley) 5/7/91
- *	$Id: disklabel.h,v 1.20 1994/02/24 01:05:56 paulus Exp $
+ *	$Id: disklabel.h,v 1.21 1994/05/08 18:21:37 chopps Exp $
  */
 
 #ifndef _SYS_DISKLABEL_H_
 #define _SYS_DISKLABEL_H_
+
+#ifdef amiga
+#include <machine/disklabel.h>
+#endif
 
 /*
  * Disk description table, see disktab(5)
@@ -335,7 +339,7 @@ struct cpu_disklabel {
 #endif /* i386 */
 
 #if defined(hp300) || defined(mac68k) || defined(vax) || defined(pc532) || \
-    defined(sun3) || defined(amiga) || defined(sparc) || defined(da30)
+    defined(sun3) || defined(sparc) || defined(da30)
 struct cpu_disklabel {
 };
 #endif
