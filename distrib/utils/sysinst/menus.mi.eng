@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.eng,v 1.7.2.3 1997/11/02 20:41:40 mellon Exp $	*/
+/*	$NetBSD: menus.mi.eng,v 1.7.2.4 1997/11/06 00:37:11 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -235,7 +235,7 @@ menu distmedium, title "  Select medium";
 				 got_dist = get_via_cdrom(); }, exit; 
 	option "floppy", action { process_menu (MENU_distset);
 				  got_dist = get_via_floppy(); }, exit;
-	option "none",  action { nodist = 1; };
+	option "none",  action { nodist = 1; }, exit;
 
 menu distset, title " Select your distribution";
 	display action { msg_display (MSG_distset); };
