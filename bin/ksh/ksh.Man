@@ -1,5 +1,5 @@
 '\" t
-.\" $NetBSD: ksh.Man,v 1.13 2003/03/22 12:13:03 kristerw Exp $
+.\" $NetBSD: ksh.Man,v 1.14 2003/03/29 18:38:48 perry Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -54,7 +54,7 @@ interactive and shell script use.
 Its command language is a superset of the \fIsh\fP(1) shell language.
 .ksh)
 .sh(
-\fBsh\fP is a reimplementation of the Bourne shell, a command
+\fBsh\fP is a re-implementation of the Bourne shell, a command
 interpreter for both interactive and script use.
 .sh)
 .\"{{{  Shell Startup
