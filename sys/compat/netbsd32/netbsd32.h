@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.5 1999/03/25 16:27:56 mrg Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.6 1999/03/25 16:58:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -28,14 +28,14 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _COMPAT_SPARC32_SPARC32_H_
-#define _COMPAT_SPARC32_SPARC32_H_
+#ifndef _COMPAT_NETBSD32_NETBSD32_H_
+#define _COMPAT_NETBSD32_NETBSD32_H_
 /* We need to change the size of register_t */
 #ifdef syscallargs
 #undef syscallargs
 #endif
 /*
- * SPARC 32-bit compatibility module.
+ * NetBSD 32-bit compatibility module.
  */
 
 #include <sys/mount.h>
@@ -415,8 +415,16 @@ typedef u_int32_t netbsd32_outsnamep_t;
 
 /*
  * machine depedant section; must define:
- *	netbsd32_sigcontextp_t	- point to sigcontext
- *	<arch32>_sigcontext
+ *	struct netbsd32_sigcontext
+ *		- 32bit compatibility sigcontext for this arch.
+ *	netbsd32_sigcontextp_t
+ *		- type of pointer to above, normally u_int32_t
+ *	void netbsd32_setregs(struct proc *p, struct exec_package *pack,
+ *	    u_long stack /* XXX */);
+ *	int compat_netbsd32_sigreturn(struct proc *p, void *v,
+ *	    register_t *retval);
+ *	void netbsd32_sendsig(sig_t catcher, int sig, int mask, u_long code);
+ *		- the above are
  */
 
 #include <machine/netbsd32_machdep.h>
@@ -426,20 +434,20 @@ typedef u_int32_t netbsd32_outsnamep_t;
  * note that they do *NOT* act like good macros and put ()'s around all
  * arguments cuz this _breaks_ SCARG().
  */
-#define SPARC32TO64(s32uap, uap, name) \
+#define NETBSD32TO64(s32uap, uap, name) \
 	    SCARG(uap, name) = SCARG(s32uap, name)
-#define SPARC32TOP(s32uap, uap, name, type) \
+#define NETBSD32TOP(s32uap, uap, name, type) \
 	    SCARG(uap, name) = (type *)(u_long)(u_int)SCARG(s32uap, name)
-#define SPARC32TOX(s32uap, uap, name, type) \
+#define NETBSD32TOX(s32uap, uap, name, type) \
 	    SCARG(uap, name) = (type)SCARG(s32uap, name)
-#define SPARC32TOX64(s32uap, uap, name, type) \
+#define NETBSD32TOX64(s32uap, uap, name, type) \
 	    SCARG(uap, name) = (type)(u_long)SCARG(s32uap, name)
 
 /* and some standard versions */
-#define	SPARC32TO64_UAP(name)		SPARC32TO64(uap, &ua, name);
-#define	SPARC32TOP_UAP(name, type)	SPARC32TOP(uap, &ua, name, type);
-#define	SPARC32TOX_UAP(name, type)	SPARC32TOX(uap, &ua, name, type);
-#define	SPARC32TOX64_UAP(name, type)	SPARC32TOX64(uap, &ua, name, type);
+#define	NETBSD32TO64_UAP(name)		NETBSD32TO64(uap, &ua, name);
+#define	NETBSD32TOP_UAP(name, type)	NETBSD32TOP(uap, &ua, name, type);
+#define	NETBSD32TOX_UAP(name, type)	NETBSD32TOX(uap, &ua, name, type);
+#define	NETBSD32TOX64_UAP(name, type)	NETBSD32TOX64(uap, &ua, name, type);
 
 /*
  * random other stuff
@@ -448,7 +456,7 @@ typedef u_int32_t netbsd32_outsnamep_t;
  
 extern const char netbsd32_emul_path[];
   
-#define SPARC32_CHECK_ALT_EXIST(p, sgp, path) \
+#define NETBSD32_CHECK_ALT_EXIST(p, sgp, path) \
     emul_find(p, sgp, netbsd32_emul_path, (char *)path, (char **)&path, 0)
 
-#endif /* _COMPAT_SPARC32_SPARC32_H_ */
+#endif /* _COMPAT_NETBSD32_NETBSD32_H_ */

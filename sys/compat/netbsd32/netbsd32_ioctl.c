@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.2 1999/03/25 16:22:49 mrg Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.3 1999/03/25 16:58:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -494,9 +494,9 @@ compat_netbsd32_ioctl(p, v, retval)
 	if (data)
 		SCARG(&ua, data) = data;
 	else
-		SPARC32TOP_UAP(data, void);
-	SPARC32TO64_UAP(fd);
-	SPARC32TOX_UAP(com, u_long);
+		NETBSD32TOP_UAP(data, void);
+	NETBSD32TO64_UAP(fd);
+	NETBSD32TOX_UAP(com, u_long);
 
 	/* call the real ioctl */
 	rv = sys_ioctl(p, &ua, retval);
