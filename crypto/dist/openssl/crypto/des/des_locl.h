@@ -61,9 +61,6 @@
 
 #include <openssl/e_os2.h>
 
-#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN16)
-#define OPENSSL_SYS_MSDOS
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -32,19 +32,10 @@ typedef __uint32_t        SW_U32;
 typedef unsigned long     SW_U32;                 /* 32 bit integer   */
 #endif
  
-#if defined(OPENSSL_SYS_WIN32)
   typedef struct _SW_U64 {
       SW_U32 low32;
       SW_U32 high32;
   } SW_U64;                                         /* 64 bit integer   */
-#elif defined(OPENSSL_SYS_MACINTOSH_CLASSIC)
-  typedef longlong SW_U64
-#else /* Unix variants */
-  typedef struct _SW_U64 {
-      SW_U32 low32;
-      SW_U32 high32;
-  } SW_U64;                                         /* 64 bit integer   */
-#endif
 
 /* status codes */
 #define SW_OK                 (0L)
@@ -156,26 +147,9 @@ typedef struct _SW_LARGENUMBER {
                             /*   bytes in network (big endian) order  */
 } SW_LARGENUMBER;               
 
-#if defined(OPENSSL_SYS_WIN32)
-    #include <windows.h>
-    typedef HANDLE          SW_OSHANDLE;          /* handle to kernel object */
-    #define SW_OS_INVALID_HANDLE  INVALID_HANDLE_VALUE
-    #define SW_CALLCONV _stdcall
-#elif defined(OPENSSL_SYS_MACINTOSH_CLASSIC)
-    /* async callback mechanisms */
-    /* swiftCallbackLevel */
-    #define SW_MAC_CALLBACK_LEVEL_NO         0		
-    #define SW_MAC_CALLBACK_LEVEL_HARDWARE   1	/* from the hardware ISR */
-    #define SW_MAC_CALLBACK_LEVEL_SECONDARY  2	/* as secondary ISR */
-    typedef int             SW_MAC_CALLBACK_LEVEL;
-    typedef int             SW_OSHANDLE;
-    #define SW_OS_INVALID_HANDLE  (-1)
-    #define SW_CALLCONV
-#else /* Unix variants */
     typedef int             SW_OSHANDLE;          /* handle to driver */
     #define SW_OS_INVALID_HANDLE  (-1)
     #define SW_CALLCONV
-#endif 
 
 typedef struct _SW_CRT {
     SW_LARGENUMBER  p;      /* prime number p                         */

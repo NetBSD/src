@@ -12,20 +12,6 @@
 /*
  *  Only WIN32 support for now
  */
-#if defined(WIN32)
-
-  #define CCA_LIB_NAME "CSUNSAPI"
-
-  #define CSNDPKX   "CSNDPKX_32"
-  #define CSNDKRR   "CSNDKRR_32"
-  #define CSNDPKE   "CSNDPKE_32"
-  #define CSNDPKD   "CSNDPKD_32"
-  #define CSNDDSV   "CSNDDSV_32"
-  #define CSNDDSG   "CSNDDSG_32"
-  #define CSNBRNG   "CSNBRNG_32"
-
-  #define SECURITYAPI __stdcall
-#else
     /* Fixme!!         
       Find out the values of these constants for other platforms.
     */
@@ -40,7 +26,6 @@
   #define CSNBRNG   "CSNBRNG"
 
   #define SECURITYAPI
-#endif
 
 /*
  * security API prototypes

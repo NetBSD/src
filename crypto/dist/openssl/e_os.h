@@ -88,181 +88,34 @@ extern "C" {
 #define DEVRANDOM_EGD "/var/run/egd-pool","/dev/egd-pool","/etc/egd-pool","/etc/entropy"
 #endif
 
-#if defined(OPENSSL_SYS_VXWORKS)
-#  define NO_SYS_PARAM_H
-#  define NO_CHMOD
-#  define NO_SYSLOG
-#endif
   
-#if defined(OPENSSL_SYS_MACINTOSH_CLASSIC)
-# if macintosh==1
-#  ifndef MAC_OS_GUSI_SOURCE
-#    define MAC_OS_pre_X
-#    define NO_SYS_TYPES_H
-     typedef long ssize_t;
-#  endif
-#  define NO_SYS_PARAM_H
-#  define NO_CHMOD
-#  define NO_SYSLOG
-#  undef  DEVRANDOM
-#  define GETPID_IS_MEANINGLESS
-# endif
-#endif
 
 /********************************************************************
  The Microsoft section
  ********************************************************************/
 /* The following is used becaue of the small stack in some
  * Microsoft operating systems */
-#if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYSNAME_WIN32)
-#  define MS_STATIC	static
-#else
 #  define MS_STATIC
-#endif
 
-#if defined(OPENSSL_SYS_WIN32) && !defined(WIN32)
-#  define WIN32
-#endif
-#if defined(OPENSSL_SYS_WIN16) && !defined(WIN16)
-#  define WIN16
-#endif
-#if defined(OPENSSL_SYS_WINDOWS) && !defined(WINDOWS)
-#  define WINDOWS
-#endif
-#if defined(OPENSSL_SYS_MSDOS) && !defined(MSDOS)
-#  define MSDOS
-#endif
 
 #if defined(MSDOS) && !defined(GETPID_IS_MEANINGLESS)
 #  define GETPID_IS_MEANINGLESS
 #endif
 
-#ifdef WIN32
-#define get_last_sys_error()	GetLastError()
-#define clear_sys_error()	SetLastError(0)
-#if !defined(WINNT)
-#define WIN_CONSOLE_BUG
-#endif
-#else
 #define get_last_sys_error()	errno
 #define clear_sys_error()	errno=0
-#endif
 
-#if defined(WINDOWS)
-#define get_last_socket_error()	WSAGetLastError()
-#define clear_socket_error()	WSASetLastError(0)
-#define readsocket(s,b,n)	recv((s),(b),(n),0)
-#define writesocket(s,b,n)	send((s),(b),(n),0)
-#define EADDRINUSE		WSAEADDRINUSE
-#elif defined(__DJGPP__)
-#define WATT32
-#define get_last_socket_error()	errno
-#define clear_socket_error()	errno=0
-#define closesocket(s)		close_s(s)
-#define readsocket(s,b,n)	read_s(s,b,n)
-#define writesocket(s,b,n)	send(s,b,n,0)
-#elif defined(MAC_OS_pre_X)
-#define get_last_socket_error()	errno
-#define clear_socket_error()	errno=0
-#define closesocket(s)		MacSocket_close(s)
-#define readsocket(s,b,n)	MacSocket_recv((s),(b),(n),true)
-#define writesocket(s,b,n)	MacSocket_send((s),(b),(n))
-#elif defined(OPENSSL_SYS_VMS)
-#define get_last_socket_error() errno
-#define clear_socket_error()    errno=0
-#define ioctlsocket(a,b,c)      ioctl(a,b,c)
-#define closesocket(s)          close(s)
-#define readsocket(s,b,n)       recv((s),(b),(n),0)
-#define writesocket(s,b,n)      send((s),(b),(n),0)
-#else
 #define get_last_socket_error()	errno
 #define clear_socket_error()	errno=0
 #define ioctlsocket(a,b,c)	ioctl(a,b,c)
 #define closesocket(s)		close(s)
 #define readsocket(s,b,n)	read((s),(b),(n))
 #define writesocket(s,b,n)	write((s),(b),(n))
-#endif
 
-#ifdef WIN16
-#  define OPENSSL_NO_FP_API
-#  define MS_CALLBACK	_far _loadds
-#  define MS_FAR	_far
-#else
 #  define MS_CALLBACK
 #  define MS_FAR
-#endif
 
 
-#if (defined(WINDOWS) || defined(MSDOS))
-
-#  ifdef __DJGPP__
-#    include <unistd.h>
-#    include <sys/stat.h>
-#    include <sys/socket.h>
-#    include <tcp.h>
-#    include <netdb.h>
-#    define _setmode setmode
-#    define _O_TEXT O_TEXT
-#    define _O_BINARY O_BINARY
-#  endif /* __DJGPP__ */
-
-#  ifndef S_IFDIR
-#    define S_IFDIR	_S_IFDIR
-#  endif
-
-#  ifndef S_IFMT
-#    define S_IFMT	_S_IFMT
-#  endif
-
-#  if !defined(WINNT) && !defined(__DJGPP__)
-#    define NO_SYSLOG
-#  endif
-#  define NO_DIRENT
-
-#  ifdef WINDOWS
-#    include <windows.h>
-#    include <stddef.h>
-#    include <errno.h>
-#    include <string.h>
-#    include <malloc.h>
-#  endif
-#  include <io.h>
-#  include <fcntl.h>
-
-
-#  define ssize_t long
-
-#  if defined (__BORLANDC__)
-#    define _setmode setmode
-#    define _O_TEXT O_TEXT
-#    define _O_BINARY O_BINARY
-#    define _int64 __int64
-#    define _kbhit kbhit
-#  endif
-
-#  if defined(WIN16) && defined(SSLEAY) && defined(_WINEXITNOPERSIST)
-#    define EXIT(n) _wsetexit(_WINEXITNOPERSIST)
-#    define OPENSSL_EXIT(n) do { if (n == 0) EXIT(n); return(n); } while(0)
-#  else
-#    define EXIT(n) return(n)
-#  endif
-#  define LIST_SEPARATOR_CHAR ';'
-#  ifndef X_OK
-#    define X_OK	0
-#  endif
-#  ifndef W_OK
-#    define W_OK	2
-#  endif
-#  ifndef R_OK
-#    define R_OK	4
-#  endif
-#  define OPENSSL_CONF	"openssl.cnf"
-#  define SSLEAY_CONF	OPENSSL_CONF
-#  define NUL_DEV	"nul"
-#  define RFILE		".rnd"
-#    define DEFAULT_HOME  "C:"
-
-#else /* The non-microsoft world world */
 
      /* !defined VMS */
 #    ifdef OPENSSL_UNISTD
@@ -272,12 +125,6 @@ extern "C" {
 #    endif
 #    ifndef NO_SYS_TYPES_H
 #      include <sys/types.h>
-#    endif
-#    if defined(NeXT) || defined(OPENSSL_SYS_NEWS4)
-#      define pid_t int /* pid_t is missing on NEXTSTEP/OPENSTEP
-                         * (unless when compiling with -D_POSIX_SOURCE,
-                         * which doesn't work for us) */
-#      define ssize_t int /* ditto */
 #    endif
 
 #    define OPENSSL_CONF	"openssl.cnf"
@@ -289,77 +136,29 @@ extern "C" {
 
 #  define SSLeay_getpid()	getpid()
 
-#endif
 
 
 /*************/
 
 #ifdef USE_SOCKETS
-#  if defined(WINDOWS) || defined(MSDOS)
-      /* windows world */
-
-#      define SSLeay_Write(a,b,c)	write_s(a,b,c,0)
-#      define SSLeay_Read(a,b,c)	read_s(a,b,c)
-#      define SHUTDOWN(fd)		close_s(fd)
-#      define SHUTDOWN2(fd)		close_s(fd)
-
-#  elif defined(MAC_OS_pre_X)
-
-#    include "MacSocket.h"
-#    define SSLeay_Write(a,b,c)		MacSocket_send((a),(b),(c))
-#    define SSLeay_Read(a,b,c)		MacSocket_recv((a),(b),(c),true)
-#    define SHUTDOWN(fd)		MacSocket_close(fd)
-#    define SHUTDOWN2(fd)		MacSocket_close(fd)
-
-#  else
 
 #    ifndef NO_SYS_PARAM_H
 #      include <sys/param.h>
 #    endif
 
 #    include <netdb.h>
-#    if defined(OPENSSL_SYS_VMS_NODECC)
-#      include <socket.h>
-#      include <in.h>
-#      include <inet.h>
-#    else
 #      include <sys/socket.h>
 #      ifdef FILIO_H
 #        include <sys/filio.h> /* Added for FIONBIO under unixware */
 #      endif
 #      include <netinet/in.h>
 #      include <arpa/inet.h>
-#    endif
-
-#    if defined(NeXT) || defined(_NEXT_SOURCE)
-#      include <sys/fcntl.h>
-#      include <sys/types.h>
-#    endif
 
 
-#    ifdef __QNX__
-#      include <sys/select.h>
-#    endif
 
-#    if defined(sun)
-#      include <sys/filio.h>
-#    else
-#      ifndef VMS
+
 #        include <sys/ioctl.h>
-#      else
-	 /* ioctl is only in VMS > 7.0 and when socketshr is not used */
-#        if !defined(TCPIP_TYPE_SOCKETSHR) && defined(__VMS_VER) && (__VMS_VER > 70000000)
-#          include <sys/ioctl.h>
-#        endif
-#      endif
-#    endif
 
-#    ifdef VMS
-#      include <unixio.h>
-#      if defined(TCPIP_TYPE_SOCKETSHR)
-#        include <socketshr.h>
-#      endif
-#    endif
 
 #    define SSLeay_Read(a,b,c)     read((a),(b),(c))
 #    define SSLeay_Write(a,b,c)    write((a),(b),(c))
@@ -368,26 +167,9 @@ extern "C" {
 #    ifndef INVALID_SOCKET
 #    define INVALID_SOCKET	(-1)
 #    endif /* INVALID_SOCKET */
-#  endif
 #endif
 
-#if defined(__ultrix)
-#  ifndef ssize_t
-#    define ssize_t int 
-#  endif
-#endif
 
-#if defined(sun) && !defined(__svr4__) && !defined(__SVR4)
-  /* include headers first, so our defines don't break it */
-#include <stdlib.h>
-#include <string.h>
-  /* bcopy can handle overlapping moves according to SunOS 4.1.4 manpage */
-# define memmove(s1,s2,n) bcopy((s2),(s1),(n))
-# define strtoul(s,e,b) ((unsigned long int)strtol((s),(e),(b)))
-extern char *sys_errlist[]; extern int sys_nerr;
-# define strerror(errnum) \
-	(((errnum)<0 || (errnum)>=sys_nerr) ? NULL : sys_errlist[errnum])
-#endif
 
 #ifndef OPENSSL_EXIT
 # if defined(MONOLITH) && !defined(OPENSSL_C)
@@ -402,56 +184,13 @@ extern char *sys_errlist[]; extern int sys_nerr;
 /* do we need to do this for getenv.
  * Just define getenv for use under windows */
 
-#ifdef WIN16
-/* How to do this needs to be thought out a bit more.... */
-/*char *GETENV(char *);
-#define Getenv	GETENV*/
-#define Getenv	getenv
-#else
 #define Getenv getenv
-#endif
 
 #define DG_GCC_BUG	/* gcc < 2.6.3 on DGUX */
 
-#ifdef sgi
-#define IRIX_CC_BUG	/* all version of IRIX I've tested (4.* 5.*) */
-#endif
 
-#if defined(OPENSSL_SYS_OS2) && defined(__EMX__)
-# include <io.h>
-# include <fcntl.h>
-# define NO_SYSLOG
-# define strcasecmp stricmp
-#endif
 
 /* vxworks */
-#if defined(OPENSSL_SYS_VXWORKS)
-#include <ioLib.h>
-#include <tickLib.h>
-#include <sysLib.h>
-
-#define TTY_STRUCT int
-
-#define sleep(a) taskDelay((a) * sysClkRateGet())
-#if defined(ioctlsocket)
-#undef ioctlsocket
-#endif
-#define ioctlsocket(a,b,c) ioctl((a),(b),*(c))
-
-#include <vxWorks.h>
-#include <sockLib.h>
-#include <taskLib.h>
-
-#define getpid taskIdSelf
-
-/* NOTE: these are implemented by helpers in database app!
- * if the database is not linked, we need to implement them
- * elswhere */
-struct hostent *gethostbyname(const char *name);
-struct hostent *gethostbyaddr(const char *addr, int length, int type);
-struct servent *getservbyname(const char *name, const char *proto);
-
-#endif
 /* end vxworks */
 
 #ifdef  __cplusplus
