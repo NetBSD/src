@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.3 1997/03/15 18:11:21 is Exp $	*/
+/*	$NetBSD: aha.c,v 1.4 1997/03/28 23:47:08 mycroft Exp $	*/
 
 #undef AHADIAG
 #ifdef DDB
@@ -8,7 +8,7 @@
 #endif
 
 /*
- * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -256,8 +256,9 @@ aha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
 }
 
 void
-aha_attach(sc)
+aha_attach(sc, apd)
 	struct aha_softc *sc;
+	struct aha_probe_data *apd;
 {
 
 	aha_inquire_setup_information(sc);
@@ -270,7 +271,7 @@ aha_attach(sc)
 	 */
 	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = sc->sc_scsi_dev;
+	sc->sc_link.adapter_target = apd->sc_scsi_dev;
 	sc->sc_link.adapter = &aha_switch;
 	sc->sc_link.device = &aha_dev;
 	sc->sc_link.openings = 2;
@@ -712,7 +713,7 @@ int
 aha_find(iot, ioh, sc)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	struct aha_softc *sc;
+	struct aha_probe_data *sc;
 {
 	int i;
 	u_char sts;
@@ -747,7 +748,7 @@ aha_find(iot, ioh, sc)
 	 */
 	delay(1000);		/* for Bustek 545 */
 	config.cmd.opcode = AHA_INQUIRE_CONFIG;
-	aha_cmd(iot, ioh, sc,
+	aha_cmd(iot, ioh, (struct aha_softc *)0,
 	    sizeof(config.cmd), (u_char *)&config.cmd,
 	    sizeof(config.reply), (u_char *)&config.reply);
 	switch (config.reply.chan) {
@@ -795,7 +796,7 @@ aha_find(iot, ioh, sc)
 		return (0);
 	}
 
-	if (sc != NULL) {
+	if (sc) {
 		sc->sc_irq = irq;
 		sc->sc_drq = drq;
 		sc->sc_scsi_dev = config.reply.scsi_dev;

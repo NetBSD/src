@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.10 1997/03/13 00:38:51 cgd Exp $	*/
+/*	$NetBSD: bha.c,v 1.11 1997/03/28 23:47:10 mycroft Exp $	*/
 
 #undef BHADIAG
 #ifdef DDB
@@ -8,7 +8,7 @@
 #endif
 
 /*
- * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -271,8 +271,9 @@ bad:
  * Attach all the sub-devices we can find
  */
 void
-bha_attach(sc)
+bha_attach(sc, bpd)
 	struct bha_softc *sc;
+	struct bha_probe_data *bpd;
 {
 
 	bha_inquire_setup_information(sc);
@@ -285,11 +286,11 @@ bha_attach(sc)
 	 */
 	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = sc->sc_scsi_dev;
+	sc->sc_link.adapter_target = bpd->sc_scsi_dev;
 	sc->sc_link.adapter = &bha_switch;
 	sc->sc_link.device = &bha_dev;
 	sc->sc_link.openings = 4;
-	sc->sc_link.max_target = sc->sc_iswide ? 15 : 7;
+	sc->sc_link.max_target = bpd->sc_iswide ? 15 : 7;
 
 	/*
 	 * ask the adapter what subunits are present
@@ -728,7 +729,7 @@ int
 bha_find(iot, ioh, sc)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	struct bha_softc *sc;
+	struct bha_probe_data *sc;
 {
 	int i, iswide;
 	u_char sts;
@@ -788,7 +789,7 @@ bha_find(iot, ioh, sc)
 	delay(1000);
 	inquire.cmd.opcode = BHA_INQUIRE_EXTENDED;
 	inquire.cmd.len = sizeof(inquire.reply);
-	i = bha_cmd(iot, ioh, sc,
+	i = bha_cmd(iot, ioh, (struct bha_softc *)0,
 	    sizeof(inquire.cmd), (u_char *)&inquire.cmd,
 	    sizeof(inquire.reply), (u_char *)&inquire.reply);
 
@@ -830,7 +831,7 @@ bha_find(iot, ioh, sc)
 	 */
 	delay(1000);
 	config.cmd.opcode = BHA_INQUIRE_CONFIG;
-	bha_cmd(iot, ioh, sc,
+	bha_cmd(iot, ioh, (struct bha_softc *)0,
 	    sizeof(config.cmd), (u_char *)&config.cmd,
 	    sizeof(config.reply), (u_char *)&config.reply);
 	switch (config.reply.chan) {
@@ -952,7 +953,7 @@ bha_init(sc)
 	/*
 	 * Poll targets 8 - 15 if we have a wide bus.
 	 */
-	if (sc->sc_iswide) {
+	if (ISWIDE(sc)) {
 		devices.cmd.opcode = BHA_INQUIRE_DEVICES_2;
 		bha_cmd(iot, ioh, sc,
 		    sizeof(devices.cmd), (u_char *)&devices.cmd,
@@ -961,7 +962,7 @@ bha_init(sc)
 
 	/* Obtain setup information from. */
 	rlen = sizeof(setup.reply) +
-	    (sc->sc_iswide ? sizeof(setup.reply_w) : 0);
+	    (ISWIDE(sc) ? sizeof(setup.reply_w) : 0);
 	setup.cmd.opcode = BHA_INQUIRE_SETUP;
 	setup.cmd.len = rlen;
 	bha_cmd(iot, ioh, sc,
@@ -975,7 +976,7 @@ bha_init(sc)
 
 	for (i = 0; i < 8; i++)
 		period.reply.period[i] = setup.reply.sync[i].period * 5 + 20;
-	if (sc->sc_iswide) {
+	if (ISWIDE(sc)) {
 		for (i = 0; i < 8; i++)
 			period.reply_w.period[i] =
 			    setup.reply_w.sync[i].period * 5 + 20;
@@ -983,7 +984,7 @@ bha_init(sc)
 
 	if (sc->sc_firmware[0] >= '3') {
 		rlen = sizeof(period.reply) +
-		    (sc->sc_iswide ? sizeof(period.reply_w) : 0);
+		    (ISWIDE(sc) ? sizeof(period.reply_w) : 0);
 		period.cmd.opcode = BHA_INQUIRE_PERIOD;
 		period.cmd.len = rlen;
 		bha_cmd(iot, ioh, sc,
@@ -1000,7 +1001,7 @@ bha_init(sc)
 		    sc->sc_dev.dv_xname, i,
 		    setup.reply.sync[i].offset, period.reply.period[i] * 10);
 	}
-	if (sc->sc_iswide) {
+	if (ISWIDE(sc)) {
 		for (i = 0; i < 8; i++) {
 			if (!setup.reply_w.sync[i].valid ||
 			    (!setup.reply_w.sync[i].offset &&

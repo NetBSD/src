@@ -1,7 +1,7 @@
-/*	$NetBSD: bhavar.h,v 1.5 1996/12/20 21:35:12 thorpej Exp $	*/
+/*	$NetBSD: bhavar.h,v 1.6 1997/03/28 23:47:11 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,28 +56,33 @@ struct bha_mbx {
 
 struct bha_softc {
 	struct device sc_dev;
+
 	bus_space_tag_t sc_iot;
-
 	bus_space_handle_t sc_ioh;
-	int sc_irq, sc_drq;
 	void *sc_ih;
-
-	char sc_model[7],
-	     sc_firmware[6];
 
 	struct bha_mbx sc_mbx;		/* all our mailboxes */
 #define	wmbx	(&sc->sc_mbx)
 	struct bha_ccb *sc_ccbhash[CCB_HASH_SIZE];
 	TAILQ_HEAD(, bha_ccb) sc_free_ccb, sc_waiting_ccb;
 	int sc_numccbs, sc_mbofull;
-	int sc_scsi_dev;		/* adapters scsi id */
 	struct scsi_link sc_link;	/* prototype for devs */
+
+	char sc_model[7],
+	     sc_firmware[6];
+};
+
+struct bha_probe_data {
+	int sc_irq, sc_drq;
+	int sc_scsi_dev;		/* adapters scsi id */
 	int sc_iswide;			/* adapter is wide */
 };
 
+#define	ISWIDE(sc)	(sc->sc_link.max_target >= 8)
+
 int	bha_find __P((bus_space_tag_t, bus_space_handle_t,
-	    struct bha_softc *));
-void	bha_attach __P((struct bha_softc *));
+	    struct bha_probe_data *));
+void	bha_attach __P((struct bha_softc *, struct bha_probe_data *));
 int	bha_intr __P((void *));
 
 int	bha_disable_isacompat __P((struct bha_softc *));

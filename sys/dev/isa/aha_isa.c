@@ -1,7 +1,7 @@
-/*	$NetBSD: aha_isa.c,v 1.2 1997/03/15 18:11:36 is Exp $	*/
+/*	$NetBSD: aha_isa.c,v 1.3 1997/03/28 23:47:12 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -66,25 +66,25 @@ aha_isa_probe(parent, match, aux)
 	void *match, *aux;
 {
 	struct isa_attach_args *ia = aux;
-	struct aha_softc sc;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
+	struct aha_probe_data apd;
 	int rv;
 
 	if (bus_space_map(iot, ia->ia_iobase, AHA_ISA_IOSIZE, 0, &ioh))
 		return (0);
 
-	rv = aha_find(iot, ioh, &sc);
+	rv = aha_find(iot, ioh, &apd);
 
 	bus_space_unmap(iot, ioh, AHA_ISA_IOSIZE);
 
 	if (rv) {
-		if (ia->ia_irq != -1 && ia->ia_irq != sc.sc_irq)
+		if (ia->ia_irq != -1 && ia->ia_irq != apd.sc_irq)
 			return (0);
-		if (ia->ia_drq != -1 && ia->ia_drq != sc.sc_drq)
+		if (ia->ia_drq != -1 && ia->ia_drq != apd.sc_drq)
 			return (0);
-		ia->ia_irq = sc.sc_irq;
-		ia->ia_drq = sc.sc_drq;
+		ia->ia_irq = apd.sc_irq;
+		ia->ia_drq = apd.sc_drq;
 		ia->ia_msize = 0;
 		ia->ia_iosize = AHA_ISA_IOSIZE;
 	}
@@ -103,22 +103,23 @@ aha_isa_attach(parent, self, aux)
 	struct aha_softc *sc = (void *)self;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
+	struct aha_probe_data apd;
 	isa_chipset_tag_t ic = ia->ia_ic;
 
 	printf("\n");
 
 	if (bus_space_map(iot, ia->ia_iobase, AHA_ISA_IOSIZE, 0, &ioh))
-		panic("aha_attach: bus_space_map failed!");
+		panic("aha_isa_attach: bus_space_map failed");
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
-	if (!aha_find(iot, ioh, sc))
-		panic("aha_attach: aha_find failed!");
+	if (!aha_find(iot, ioh, &apd))
+		panic("aha_isa_attach: aha_find failed");
 
-	if (sc->sc_drq != -1)
-		isa_dmacascade(sc->sc_drq);
+	if (apd.sc_drq != -1)
+		isa_dmacascade(apd.sc_drq);
 
-	sc->sc_ih = isa_intr_establish(ic, sc->sc_irq, IST_EDGE, IPL_BIO,
+	sc->sc_ih = isa_intr_establish(ic, apd.sc_irq, IST_EDGE, IPL_BIO,
 	    aha_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
@@ -126,5 +127,5 @@ aha_isa_attach(parent, self, aux)
 		return;
 	}
 
-	aha_attach(sc);
+	aha_attach(sc, &apd);
 }

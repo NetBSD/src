@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.7 1996/12/10 21:27:48 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.8 1997/03/28 23:47:14 mycroft Exp $	*/
 
 #undef	AHBDEBUG
 #ifdef DDB
@@ -8,7 +8,7 @@
 #endif
 
 /*
- * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -87,33 +87,36 @@
 
 struct ahb_softc {
 	struct device sc_dev;
-	bus_space_tag_t sc_iot;
 
+	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
-	int sc_irq;
 	void *sc_ih;
 
 	struct ahb_ecb *sc_ecbhash[ECB_HASH_SIZE];
 	TAILQ_HEAD(, ahb_ecb) sc_free_ecb;
 	struct ahb_ecb *sc_immed_ecb;	/* an outstanding immediete command */
 	int sc_numecbs;
-	int sc_scsi_dev;		/* our scsi id */
 	struct scsi_link sc_link;
 };
 
-void ahb_send_mbox __P((struct ahb_softc *, int, struct ahb_ecb *));
-void ahb_send_immed __P((struct ahb_softc *, u_long, struct ahb_ecb *));
-int ahbintr __P((void *));
-void ahb_free_ecb __P((struct ahb_softc *, struct ahb_ecb *));
-struct ahb_ecb *ahb_get_ecb __P((struct ahb_softc *, int));
-struct ahb_ecb *ahb_ecb_phys_kv __P((struct ahb_softc *, physaddr));
-void ahb_done __P((struct ahb_softc *, struct ahb_ecb *));
-int ahb_find __P((bus_space_tag_t, bus_space_handle_t, struct ahb_softc *));
-void ahb_init __P((struct ahb_softc *));
-void ahbminphys __P((struct buf *));
-int ahb_scsi_cmd __P((struct scsi_xfer *));
-int ahb_poll __P((struct ahb_softc *, struct scsi_xfer *, int));
-void ahb_timeout __P((void *));
+struct ahb_probe_data {
+	int sc_irq;
+	int sc_scsi_dev;
+};
+
+void	ahb_send_mbox __P((struct ahb_softc *, int, struct ahb_ecb *));
+void	ahb_send_immed __P((struct ahb_softc *, u_long, struct ahb_ecb *));
+int	ahbintr __P((void *));
+void	ahb_free_ecb __P((struct ahb_softc *, struct ahb_ecb *));
+struct	ahb_ecb *ahb_get_ecb __P((struct ahb_softc *, int));
+struct	ahb_ecb *ahb_ecb_phys_kv __P((struct ahb_softc *, physaddr));
+void	ahb_done __P((struct ahb_softc *, struct ahb_ecb *));
+int	ahb_find __P((bus_space_tag_t, bus_space_handle_t, struct ahb_probe_data *));
+void	ahb_init __P((struct ahb_softc *));
+void	ahbminphys __P((struct buf *));
+int	ahb_scsi_cmd __P((struct scsi_xfer *));
+int	ahb_poll __P((struct ahb_softc *, struct scsi_xfer *, int));
+void	ahb_timeout __P((void *));
 
 integrate void ahb_reset_ecb __P((struct ahb_softc *, struct ahb_ecb *));
 integrate void ahb_init_ecb __P((struct ahb_softc *, struct ahb_ecb *));
@@ -194,6 +197,7 @@ ahbattach(parent, self, aux)
 	eisa_chipset_tag_t ec = ea->ea_ec;
 	eisa_intr_handle_t ih;
 	const char *model, *intrstr;
+	struct ahb_probe_data apd;
 
 	if (!strcmp(ea->ea_idstring, "ADP0000"))
 		model = EISA_PRODUCT_ADP0000;
@@ -213,7 +217,7 @@ ahbattach(parent, self, aux)
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
-	if (ahb_find(iot, ioh, sc))
+	if (ahb_find(iot, ioh, &apd))
 		panic("ahbattach: ahb_find failed!");
 
 	ahb_init(sc);
@@ -224,15 +228,15 @@ ahbattach(parent, self, aux)
 	 */
 	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = sc->sc_scsi_dev;
+	sc->sc_link.adapter_target = apd.sc_scsi_dev;
 	sc->sc_link.adapter = &ahb_switch;
 	sc->sc_link.device = &ahb_dev;
 	sc->sc_link.openings = 4;
 	sc->sc_link.max_target = 7;
 
-	if (eisa_intr_map(ec, sc->sc_irq, &ih)) {
+	if (eisa_intr_map(ec, apd.sc_irq, &ih)) {
 		printf("%s: couldn't map interrupt (%d)\n",
-		    sc->sc_dev.dv_xname, sc->sc_irq);
+		    sc->sc_dev.dv_xname, apd.sc_irq);
 		return;
 	}
 	intrstr = eisa_intr_string(ec, ih);
@@ -586,7 +590,7 @@ int
 ahb_find(iot, ioh, sc)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	struct ahb_softc *sc;
+	struct ahb_probe_data *sc;
 {
 	u_char intdef;
 	int i, irq, busid;
@@ -661,8 +665,8 @@ ahb_find(iot, ioh, sc)
 	/* who are we on the scsi bus? */
 	busid = (bus_space_read_1(iot, ioh, SCSIDEF) & HSCSIID);
 
-	/* if we want to fill in softc, do so now */
-	if (sc != NULL) {
+	/* if we want to return data, do so now */
+	if (sc) {
 		sc->sc_irq = irq;
 		sc->sc_scsi_dev = busid;
 	}
