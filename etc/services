@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.61 2003/01/19 17:49:39 pooka Exp $
+#	$NetBSD: services,v 1.62 2003/01/20 09:06:02 salo Exp $
 #
 # Network services, Internet style
 #
@@ -132,6 +132,8 @@ isakmp		500/tcp			# IPsec Key Management (ISAKMP/Oakley)
 isakmp		500/udp			# IPsec Key Management (ISAKMP/Oakley)
 ripng		521/tcp			# RIP for IPv6
 ripng		521/udp			# RIP for IPv6
+silc		706/tcp			# Secure Internet Live Conferencing
+silc		706/udp			# Secure Internet Live Conferencing
 
 #
 # UNIX specific services
