@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.54 1999/05/05 20:01:03 thorpej Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.55 1999/05/13 01:00:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ linux_sys_wait4(p, v, retval)
 		syscallarg(struct rusage *) rusage;
 	} */ *uap = v;
 	struct sys_wait4_args w4a;
-	int error, *status, tstat;
+	int error, *status, tstat, options, linux_options;
 	caddr_t sg;
 
 	if (SCARG(uap, status) != NULL) {
@@ -156,9 +156,22 @@ linux_sys_wait4(p, v, retval)
 	} else
 		status = NULL;
 
+	linux_options = SCARG(uap, options);
+	options = 0;
+	if (linux_options &
+	    ~(LINUX_WAIT4_WNOHANG|LINUX_WAIT4_WUNTRACED|LINUX_WAIT4_WCLONE))
+		return (EINVAL);
+
+	if (linux_options & LINUX_WAIT4_WNOHANG)
+		options |= WNOHANG;
+	if (linux_options & LINUX_WAIT4_WUNTRACED)
+		options |= WUNTRACED;
+	if (linux_options & LINUX_WAIT4_WCLONE)
+		options |= WALTSIG;
+
 	SCARG(&w4a, pid) = SCARG(uap, pid);
 	SCARG(&w4a, status) = status;
-	SCARG(&w4a, options) = SCARG(uap, options);
+	SCARG(&w4a, options) = options;
 	SCARG(&w4a, rusage) = SCARG(uap, rusage);
 
 	if ((error = sys_wait4(p, &w4a, retval)))
