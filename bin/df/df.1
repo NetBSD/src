@@ -1,4 +1,4 @@
-.\"	$NetBSD: df.1,v 1.18 2000/06/26 21:16:15 christos Exp $
+.\"	$NetBSD: df.1,v 1.19 2000/10/15 17:50:10 kleink Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd display free disk space
 .Sh SYNOPSIS
 .Nm
-.Op Fl aikln
+.Op Fl aiklnP
 .Op Fl t Ar type
 .Op Ar file | Ar file_system ...
 .Sh DESCRIPTION
@@ -95,6 +95,35 @@ When this option is specified,
 .Nm
 will not request new statistics from the file systems, but will respond
 with the possibly stale statistics that were previously obtained.
+.It Fl P
+Produce output in the following portable format:
+.Pp
+If both the
+.Fl P
+and
+.Fl k
+option are specified, the output will be preceeded by the following header
+line, formatted to match the data following it:
+.Bd -literal
+"Filesystem 1024-blocks Used Available Capacity Mounted on\\n"
+.Ed
+.Pp
+If the
+.Fl P
+option is specified without the
+.Fl k
+options, the output will be preceeded by the following header line,
+formatted to matche the data following it:
+.Bd -literal
+"Filesystem <blksize>-blocks Used Available Capacity Mounted on\\n"
+.Ed
+.Pp
+The header line is followed by data formatted as follows:
+.Bd -literal
+"%s %d %d %d %d%% %s\\n", <file system name>, <total space>,
+    <space used>, <space free>, <percentage used>,
+    <file system root>
+.Ed
 .It Fl t Ar type
 Is used to indicate the actions should only be taken on
 filesystems of the specified type.
