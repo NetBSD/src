@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.29 2000/05/22 10:18:46 elric Exp $	*/
+/*	$NetBSD: exec.c,v 1.29.4.1 2000/11/03 02:36:20 tv Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.29 2000/05/22 10:18:46 elric Exp $");
+__RCSID("$NetBSD: exec.c,v 1.29.4.1 2000/11/03 02:36:20 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -911,20 +911,23 @@ typecmd(argc, argv)
 
 		switch (entry.cmdtype) {
 		case CMDNORMAL: {
-			int j = entry.u.index;
-			const char *path = pathval();
-			char *name;
-			if (j == -1) 
-				name = argv[i];
-			else {
-				do { 
+			if (strchr(argv[i], '/') == NULL) {
+				const char *path = pathval();
+				char *name;
+				int j = entry.u.index;
+				do {
 					name = padvance(&path, argv[i]);
 					stunalloc(name);
 				} while (--j >= 0);
+				out1fmt(" is%s %s\n",
+				    cmdp ? " a tracked alias for" : "", name);
+			} else {
+				if (access(argv[i], X_OK) == 0)
+					out1fmt(" is %s\n", argv[i]);
+				else
+					out1fmt(": %s\n", strerror(errno));
 			}
-			out1fmt(" is%s %s\n",
-			    cmdp ? " a tracked alias for" : "", name);
-			break;
+ 			break;
 		}
 		case CMDFUNCTION:
 			out1str(" is a shell function\n");
@@ -935,7 +938,7 @@ typecmd(argc, argv)
 			break;
 
 		default:
-			out1str(" not found\n");
+			out1str(": not found\n");
 			err |= 127;
 			break;
 		}
