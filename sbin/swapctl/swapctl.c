@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.23 2003/10/21 02:32:54 fvdl Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.24 2003/12/20 11:22:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999 Matthew R. Green
@@ -39,6 +39,7 @@
  *			or all non-block devices
  *	-a <dev>	add this device
  *	-d <dev>	remove this swap device
+ *	-h		use humanize_number(3) for listing
  *	-l		list swap devices
  *	-s		short listing of swap devices
  *	-k		use kilobytes
@@ -55,7 +56,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: swapctl.c,v 1.23 2003/10/21 02:32:54 fvdl Exp $");
+__RCSID("$NetBSD: swapctl.c,v 1.24 2003/12/20 11:22:25 mrg Exp $");
 #endif
 
 
@@ -108,6 +109,9 @@ do { \
 int	kflag;		/* display in 1K blocks */
 #define	KFLAG_CMDS	(CMD_l | CMD_s)
 
+int	hflag;		/* display with humanize_number */
+#define HFLAG_CMDS	(CMD_l | CMD_s)
+
 int	pflag;		/* priority was specified */
 #define	PFLAG_CMDS	(CMD_A | CMD_a | CMD_c)
 
@@ -148,7 +152,7 @@ main(argc, argv)
 	}
 #endif
 
-	while ((c = getopt(argc, argv, "ADUacdlkp:st:z")) != -1) {
+	while ((c = getopt(argc, argv, "ADUacdhlkp:st:z")) != -1) {
 		switch (c) {
 		case 'A':
 			SET_COMMAND(CMD_A);
@@ -172,6 +176,10 @@ main(argc, argv)
 
 		case 'd':
 			SET_COMMAND(CMD_d);
+			break;
+
+		case 'h':
+			hflag = 1;
 			break;
 
 		case 'l':
@@ -246,11 +254,11 @@ main(argc, argv)
 	/* Dispatch the command. */
 	switch (command) {
 	case CMD_l:
-		list_swap(pri, kflag, pflag, 0, 1);
+		list_swap(pri, kflag, pflag, 0, 1, hflag);
 		break;
 
 	case CMD_s:
-		list_swap(pri, kflag, pflag, 0, 0);
+		list_swap(pri, kflag, pflag, 0, 0, hflag);
 		break;
 
 	case CMD_c:
@@ -568,6 +576,6 @@ usage()
 	fprintf(stderr, "       %s -a [-p priority] path\n", progname);
 	fprintf(stderr, "       %s -c -p priority path\n", progname);
 	fprintf(stderr, "       %s -d path\n", progname);
-	fprintf(stderr, "       %s -l | -s [-k]\n", progname);
+	fprintf(stderr, "       %s -l | -s [-k|-h]\n", progname);
 	exit(1);
 }
