@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.10 2002/03/17 09:46:00 martin Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.11 2002/03/17 11:08:31 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.10 2002/03/17 09:46:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.11 2002/03/17 11:08:31 martin Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -382,8 +382,8 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 			cd->bri = mcr->controller;	/* fill cd */
 			cd->bprot = mcr->bprot;
-			cd->driver = mcr->driver;
-			cd->driver_unit = mcr->driver_unit;
+			cd->bchan_driver_index = mcr->driver;
+			cd->bchan_driver_unit = mcr->driver_unit;
 			cd->cr = get_rand_cr(cd->bri);
 
 			cd->shorthold_data.shorthold_algorithm = mcr->shorthold_data.shorthold_algorithm;
@@ -466,8 +466,8 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 			T400_stop(cd);
 
-			cd->driver = mcrsp->driver;
-			cd->driver_unit = mcrsp->driver_unit;
+			cd->bchan_driver_index = mcrsp->driver;
+			cd->bchan_driver_unit = mcrsp->driver_unit;
 			cd->max_idle_time = mcrsp->max_idle_time;
 
 			cd->shorthold_data.shorthold_algorithm = SHA_FIXU;

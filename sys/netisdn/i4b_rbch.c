@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.6 2002/03/17 09:46:01 martin Exp $
+ *	$Id: i4b_rbch.c,v 1.7 2002/03/17 11:08:32 martin Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.6 2002/03/17 09:46:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.7 2002/03/17 11:08:32 martin Exp $");
 
 #include "isdnbchan.h"
 
@@ -852,8 +852,9 @@ rbch_timeout(struct rbch_softc *sc)
 		sc->sc_linb = sc->sc_iinb;
 		sc->sc_loutb = sc->sc_ioutb;
 
-		i4b_l4_accounting(BDRV_RBCH, unit, ACCT_DURING,
-			 sc->sc_ioutb, sc->sc_iinb, ro, ri, sc->sc_ioutb, sc->sc_iinb);
+		if (sc->sc_cd)
+			i4b_l4_accounting(sc->sc_cd->cdid, ACCT_DURING,
+			    sc->sc_ioutb, sc->sc_iinb, ro, ri, sc->sc_ioutb, sc->sc_iinb);
  	}
 	START_TIMER(sc->sc_callout, rbch_timeout, sc, I4BRBCHACCTINTVL*hz);
 }
@@ -920,14 +921,16 @@ rbch_disconnect(void *softc, void *cdp)
 
 	sc->sc_devstate &= ~ST_CONNECTED;
 
-	sc->sc_cd = NULL;
-	
 #if I4BRBCHACCT
-	i4b_l4_accounting(BDRV_RBCH, sc->sc_unit, ACCT_FINAL,
-		 sc->sc_ioutb, sc->sc_iinb, 0, 0, sc->sc_ioutb, sc->sc_iinb);
+	if (sc->sc_cd)
+		i4b_l4_accounting(sc->sc_cd->cdid, ACCT_FINAL,
+		    sc->sc_ioutb, sc->sc_iinb, 0, 0, sc->sc_ioutb, sc->sc_iinb);
 
 	STOP_TIMER(sc->sc_callout, rbch_timeout, sc);
 #endif		
+
+	sc->sc_cd = NULL;
+
 	splx(s);
 }
 	
