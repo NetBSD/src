@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.9 2002/08/13 11:18:34 wiz Exp $
+# $NetBSD: ad.arm,v 1.10 2002/08/13 22:43:52 thorpej Exp $
 ./usr/include/arm			comp-c-include
 ./usr/include/arm/ansi.h		comp-c-include
 ./usr/include/arm/aout_machdep.h	comp-c-include
@@ -18,6 +18,7 @@
 ./usr/include/arm/asm.h			comp-c-include
 ./usr/include/arm/bswap.h		comp-c-include
 ./usr/include/arm/bus.h			comp-c-include
+./usr/include/arm/byte_swap.h		comp-c-include
 ./usr/include/arm/cdefs.h		comp-c-include
 ./usr/include/arm/cpu.h			comp-c-include
 ./usr/include/arm/db_machdep.h		comp-c-include
