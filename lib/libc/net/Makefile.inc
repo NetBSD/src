@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.3 (Berkeley) 2/21/91
-#	$Id: Makefile.inc,v 1.15 1994/10/28 17:30:22 cgd Exp $
+#	$Id: Makefile.inc,v 1.16 1994/10/31 06:53:48 glass Exp $
 
 # net sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/net ${.CURDIR}/net
@@ -45,7 +45,7 @@ MLINKS+=getservent.3 endservent.3 getservent.3 getservbyname.3 \
 	getservent.3 getservbyport.3 getservent.3 setservent.3
 MLINKS+=inet.3 addr.3 inet.3 inet_addr.3 inet.3 inet_lnaof.3 \
 	inet.3 inet_makeaddr.3 inet.3 inet_netof.3 inet.3 inet_network.3 \
-	inet.3 inet_ntoa.3 inet.3 network.3 inet.3 ntoa.3
+	inet.3 inet_ntoa.3 inet.3 network.3 inet.3 ntoa.3 inet.3 inet_aton.3
 MLINKS+=ns.3 ns_addr.3 ns.3 ns_ntoa.3
 MLINKS+=rcmd.3 iruserok.3 rcmd.3 rresvport.3 rcmd.3 ruserok.3
 MLINKS+=resolver.3 dn_comp.3 resolver.3 dn_expand.3 resolver.3 res_init.3 \
