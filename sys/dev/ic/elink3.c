@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.3 1996/05/03 17:44:59 christos Exp $	*/
+/*	$NetBSD: elink3.c,v 1.4 1996/05/03 19:08:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -91,7 +91,6 @@ void epread __P((struct ep_softc *));
 struct mbuf *epget __P((struct ep_softc *, int));
 void epmbuffill __P((void *));
 void epmbufempty __P((struct ep_softc *));
-void epstop __P((struct ep_softc *));
 void epsetfilter __P((struct ep_softc *));
 void epsetlink __P((struct ep_softc *));
 
