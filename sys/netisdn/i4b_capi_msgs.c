@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_capi_msgs.c,v 1.1 2003/09/25 15:34:38 pooka Exp $	*/
+/*	$NetBSD: i4b_capi_msgs.c,v 1.2 2003/09/26 15:17:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -28,6 +28,9 @@
  *
  * $FreeBSD: src/sys/i4b/capi/capi_msgs.c,v 1.2 2001/10/21 08:51:54 hm Exp $
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i4b_capi_msgs.c,v 1.2 2003/09/26 15:17:23 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
