@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.24 2004/08/21 12:03:16 rearnsha Exp $	*/
+/*	$NetBSD: undefined.c,v 1.25 2004/10/24 06:58:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.24 2004/08/21 12:03:16 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.25 2004/10/24 06:58:14 skrll Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -155,9 +155,9 @@ gdb_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 				ksi.ksi_code = TRAP_BRKPT;
 				ksi.ksi_addr = (u_int32_t *)addr;
 				ksi.ksi_trap = 0;
-				KERNEL_PROC_LOCK(l->l_proc);
+				KERNEL_PROC_LOCK(l);
 				trapsignal(l, &ksi);
-				KERNEL_PROC_UNLOCK(l->l_proc);
+				KERNEL_PROC_UNLOCK(l);
 				return 0;
 			}
 #ifdef KGDB
