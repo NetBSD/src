@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.27 1996/02/13 23:44:32 christos Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -243,7 +243,7 @@ udp_input(m, va_alist)
 			 * port.  It * assumes that an application will never
 			 * clear these options after setting them.
 			 */
-			if ((last->so_options&(SO_REUSEPORT|SO_REUSEADDR) == 0))
+			if ((last->so_options&(SO_REUSEPORT|SO_REUSEADDR)) == 0)
 				break;
 		}
 
