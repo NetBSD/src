@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2004/03/06 03:31:06 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/03/14 17:00:30 matt Exp $
 
 .include <bsd.own.mk>
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/doc
 
 CPPSCRIPTS=		BugReport
-CPPSCRIPTFLAGS=		-DXF86_VERSION=4.3.0
+CPPSCRIPTFLAGS=		-DXF86_VERSION=4.4.0
 SCRIPTS=		BugReport
 SCRIPTSDIR_BugReport=	${X11USRLIBDIR}/X11/doc
 
