@@ -64,6 +64,7 @@ exitcmd		exit
 expcmd		exp let
 exportcmd	export readonly
 #exprcmd	expr test [
+falsecmd	false
 histcmd		fc
 fgcmd -j	fg
 getoptscmd	getopts
