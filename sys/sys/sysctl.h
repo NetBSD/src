@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.105 2004/01/03 23:29:42 tron Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.106 2004/01/07 21:17:01 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -60,7 +60,7 @@
 #define SYSCTL_NAMELEN	32	/* longest name allowed for a node */
 
 #define CREATE_BASE	(1024)	/* start of dynamic mib allocation */
-#define SYSCTL_DEFSIZE	16	/* initial size of a child set */
+#define SYSCTL_DEFSIZE	8	/* initial size of a child set */
 
 /*
  * Each subsystem defined by sysctl defines a list of variables
@@ -940,24 +940,24 @@ __END_DECLS
 #endif	/* !_KERNEL */
 
 struct sysctlnode {
-	uint sysctl_flags;
-	int sysctl_num;
-	size_t sysctl_size;
-	char sysctl_name[SYSCTL_NAMELEN];
+	uint sysctl_flags;		/* flags and type */
+	int sysctl_num;			/* mib number */ 
+	size_t sysctl_size;		/* size of instrumented data */
+	char sysctl_name[SYSCTL_NAMELEN]; /* node name */
 	union {
 		struct {
-			uint scn_csize;
-			uint scn_clen;
-			struct sysctlnode *scn_child;
+			uint scn_csize;	/* size of child node array */
+			uint scn_clen;	/* number of valid children */
+			struct sysctlnode *scn_child; /* array of child nodes */
 		} scu_node;
-		int scu_alias;
-		int scu_idata;
-		u_quad_t scu_qdata;
-		void *scu_data;
+		int scu_alias;		/* node this node refers to */
+		int scu_idata;		/* immediate "int" data */
+		u_quad_t scu_qdata;	/* immediate "u_quad_t" data */
+		void *scu_data;		/* pointer to external data */
 	} sysctl_un;
-	sysctlfn sysctl_func;
-	struct sysctlnode *sysctl_parent;
-	uint sysctl_ver;
+	sysctlfn sysctl_func;		/* access helper function */
+	struct sysctlnode *sysctl_parent; /* parent of this node */
+	uint sysctl_ver;		/* node's version vs. rest of tree */
 };
 
 #define sysctl_csize	sysctl_un.scu_node.scn_csize
