@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2002/01/02 09:17:48 tron Exp $
+#	$NetBSD: Makefile,v 1.38 2002/02/11 21:36:35 tv Exp $
 
 REQUIRETOOLS=	yes
 
@@ -11,6 +11,7 @@ NOLINT=		# defined
 
 .if defined(USE_NEW_TOOLCHAIN)
 
+.if exists(${.CURDIR}/${MACHINE_ARCH}.mk)
 .include "${.CURDIR}/${MACHINE_ARCH}.mk"
 
 TOP=		${.CURDIR}/../..
@@ -69,6 +70,9 @@ INCSDIR=	/usr/include/g++
 .include <bsd.lib.mk>
 
 ${OBJS} ${SOBJS} ${POBJS}: ${.CURDIR}/${MACHINE_ARCH}.mk
+.else
+.include <bsd.prog.mk> # do nothing
+.endif
 
 .else
 #
