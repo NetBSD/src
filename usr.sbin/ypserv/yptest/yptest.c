@@ -1,4 +1,4 @@
-/*	$NetBSD: yptest.c,v 1.5 2001/02/19 23:22:52 cgd Exp $	 */
+/*	$NetBSD: yptest.c,v 1.6 2002/07/06 00:47:55 wiz Exp $	 */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yptest.c,v 1.5 2001/02/19 23:22:52 cgd Exp $");
+__RCSID("$NetBSD: yptest.c,v 1.6 2002/07/06 00:47:55 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -48,13 +48,11 @@ __RCSID("$NetBSD: yptest.c,v 1.5 2001/02/19 23:22:52 cgd Exp $");
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 
-int	main __P((int, char *[]));
-static	int yptest_foreach __P((int, char *, int, char *, int, char *));
+int	main(int, char *[]);
+static	int yptest_foreach(int, char *, int, char *, int, char *);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char **argv)
 {
 	char *Domain, *Value, *Key2;
 	char *Map = "passwd.byname";
@@ -115,13 +113,8 @@ main(argc, argv)
 }
 
 static int
-yptest_foreach(status, key, keylen, val, vallen, data)
-	int status;
-	char *key;
-	int keylen;
-	char *val;
-	int vallen;
-	char *data;
+yptest_foreach(int status, char *key, int keylen, char *val, int vallen,
+	       char *data)
 {
 
 	if (status == YP_NOMORE)
