@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.87 2004/04/18 20:46:39 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.88 2004/04/18 21:49:09 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.87 2004/04/18 20:46:39 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.88 2004/04/18 21:49:09 pk Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -671,7 +671,13 @@ srmmu_vcache_flush_page(va, ctx)
 
 	cachestats.cs_npgflush++;
 	p = (char *)va;
-	ls = CACHEINFO.c_linesize;
+
+	/*
+	 * XXX - if called early during bootstrap, we don't have the cache
+	 *	 info yet. Make up a cache line size (double-word aligned)
+	 */
+	if ((ls = CACHEINFO.c_linesize) == 0)
+		ls = 8;
 	i = PAGE_SIZE;
 	octx = getcontext4m();
 	trapoff();
@@ -709,8 +715,14 @@ srmmu_vcache_flush_range(int va, int len, int ctx)
 	char *p;
 	int octx;
 
+	/*
+	 * XXX - if called early during bootstrap, we don't have the cache
+	 *	 info yet. Make up a cache line size (double-word aligned)
+	 */
+	if ((ls = CACHEINFO.c_linesize) == 0)
+		ls = 8;
+
 	/* Compute # of cache lines covered by this range */
-	ls = CACHEINFO.c_linesize;
 	offset = va & (ls - 1);
 	i = len + offset;
 	p = (char *)(va & ~(ls - 1));
