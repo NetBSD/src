@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.10 2003/06/11 21:35:47 dsl Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.11 2003/06/12 10:51:41 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.md.en,v 1.2 2001/11/29 23:21:00 thorpej Exp 	*/
 
@@ -39,37 +39,4 @@
  */
 
 /* Menu definitions for sysinst. playstation2 version, machine dependent. */
-
-menu wdtype, title  "Wybierz typ";
-	display action { msg_display (MSG_wdtype, diskdev); };
-	option "IDE", 	exit;
-	option "ESDI", 	exit, action
-		{ msg_display (MSG_sectforward);
-		  process_menu (MENU_yesno, NULL);
-		  if (yesno)
-			doessf = "sf:";
-		};
-	option "ST506", exit, action
-		{ msg_display (MSG_sectforward);
-		  process_menu (MENU_yesno, NULL);
-		  if (yesno)
-			doessf = "sf:";
-		};
-
-
-menu dlgeom, title "Wybierz opcje";
-	display action { msg_display (MSG_dlgeom, diskdev, dlcyl, dlhead,
-				dlsec, disk->dd_cyl, disk->dd_head,
-				disk->dd_sec);
-			};
-	option "Uzyj prawdziwej geometrii", exit, action {
-			dlcyl  = disk->dd_cyl;
-			dlhead = disk->dd_head;
-			dlsec  = disk->dd_sec;
-		};
-	option "Uzyj geometrii disklabel", exit, action {
-			disk->dd_cyl = dlcyl;
-			disk->dd_head = dlhead;
-			disk->dd_sec = dlsec;
-		};
 

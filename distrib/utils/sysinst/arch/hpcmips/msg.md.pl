@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.8 2003/06/11 21:35:42 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.9 2003/06/12 10:51:40 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.4 2002/03/23 03:24:34 shin Exp */
 
@@ -45,22 +45,6 @@ message md_hello
 
 }
 
-message wdtype
-{Jakim rodzajem dysku jest %s?}
-
-message sectforward
-{Czy twoj dysk przesuwa AUTOMATYCZNIE sektory?}
-
-message dlgeom
-{Wyglada na to, ze twoj dysk, %s, zostal juz skonfigurowany za pomoca
-BSD disklabel i disklabel raportuje, ze geometria jest inna od prawdziwej.
-Te dwie geometrie to:
-
-disklabel:		%d cylindrow, %d glowic, %d sektorow 
-prawdziwa geometria:	%d cylindrow, %d glowic, %d sektorow 
-}
-
-/* the %s's will expand into three character strings */
 message dobad144
 {Instalowanie tablicy zlych blokow ...
 }
@@ -72,12 +56,6 @@ message getboottype
 message dobootblks
 {Instalowanie bootblokow na %s....
 }
-
-message cyl1024
-{Disklabel (zestaw partycji) ktory skonfigurowales ma glowna partycje, ktora
-konczy sie poza 1024 cylindrem BIOS. Aby byc pewnym, ze system bedzie
-mogl sie zawsze uruchomic, cala glowna partycja powinna znajdowac sie ponizej
-tego ograniczenia. Mozesz ponadto: }
 
 message onebiosmatch
 {Ten dysk odpowiada ponizszemu dyskowi BIOS:
@@ -115,9 +93,6 @@ message biosmultmatch_row
 
 message pickdisk
 {Wybierz dysk: }
-
-message wmbrfail
-{Nadpisanie MBR nie powiodlo sie. Nie moge kontynuowac.}
 
 message partabovechs
 {Czesc NetBSD dysku lezy poza obszarem, ktory BIOS w twojej maszynie moze

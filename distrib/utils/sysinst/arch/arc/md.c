@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.14 2003/06/11 21:35:38 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.15 2003/06/12 10:51:38 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,7 +56,6 @@
 
 mbr_sector_t mbr;
 int mbr_len;
-int c1024_resp;
 struct disklist *disklist = NULL;
 struct nativedisk_info *nativedisk;
 struct biosdisk_info *biosdisk = NULL;
