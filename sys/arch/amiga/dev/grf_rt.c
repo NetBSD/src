@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.36 1998/01/12 10:39:39 thorpej Exp $	*/
+/*	$NetBSD: grf_rt.c,v 1.37 1999/03/25 23:20:00 is Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -30,6 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "opt_amigacons.h"
 #include "grfrt.h"
 #if NGRFRT > 0
 

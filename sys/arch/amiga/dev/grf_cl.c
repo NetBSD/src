@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.23 1999/03/14 09:17:19 veego Exp $	*/
+/*	$NetBSD: grf_cl.c,v 1.24 1999/03/25 23:20:00 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -33,6 +33,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "opt_amigacons.h"
 #include "grfcl.h"
 #if NGRFCL > 0
 
