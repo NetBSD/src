@@ -1,4 +1,4 @@
-/* $Id: platid_name.c,v 1.4 2000/02/17 21:31:39 mycroft Exp $ */
+/* $Id: platid_name.c,v 1.5 2000/03/31 12:46:23 jun Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -86,6 +86,8 @@ struct platid_name platid_name_table[] = {
 	  "NEC MC-R320" },
 	{ &platid_mask_MACH_NEC_MCR_FORDOCOMO,
 	  "NEC MobileGearII for DoCoMo" },
+	{ &platid_mask_MACH_NEC_MCR_MPRO700,
+	  "NEC MobilePro 700" },
 	{ &platid_mask_MACH_NEC_MCR_5XX,
 	  "NEC MC-R500 series" },
 	{ &platid_mask_MACH_NEC_MCR_500,
@@ -237,4 +239,4 @@ struct platid_name platid_name_table[] = {
 	{ &platid_mask_MACH_IBM_WORKPAD_26011AU,
 	  "IBM WorkPad z50 2601 1AU" },
 };
-int platid_name_table_size = 98;
+int platid_name_table_size = 99;
