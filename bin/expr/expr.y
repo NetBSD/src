@@ -56,7 +56,6 @@ char **av;
 %left <val> '+' '-'
 %left <val> '*' '/' '%'
 %left <val> ':'
-%left UNARY
 
 %token <val> TOKEN
 %type <val> start expr
@@ -124,6 +123,7 @@ struct val *vp;
 {
 	if (vp->type == string)
 		free (vp->u.s);	
+	free (vp);
 }
 
 
