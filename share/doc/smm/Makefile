@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.2.1.2 (Berkeley) 5/7/91
-#	$Id: Makefile,v 1.4 1993/09/30 23:31:17 jtc Exp $
+#	$Id: Makefile,v 1.5 1994/02/10 01:54:22 cgd Exp $
 
 # Missing: 03.kdebug 09.uucpimpl 12.uchanges 13.kchanges 17.security
 #	   18.password 19.porttour 21.uucpnet
@@ -15,9 +15,6 @@ SUBDIR+=01.setup
 .elif	${MACHINE} == "vax"
 SUBDIR+=01.setup
 .endif
-
-beforeinstall:
-	@install -d -o root -g wheel -m 755 ${DESTDIR}${BINDIR}
 
 realinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${FILES} \
