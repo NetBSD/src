@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.25 1995/06/12 00:09:47 mycroft Exp $	*/
+/*	$NetBSD: if_el.c,v 1.26 1995/07/23 17:05:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -547,33 +547,33 @@ elread(sc, buf, len)
 	caddr_t buf;
 	int len;
 {
-	register struct ether_header *eh;
+	struct ifnet *ifp;
 	struct mbuf *m;
-
-	eh = (struct ether_header *)buf;
-	len -= sizeof(struct ether_header);
-	if (len <= 0)
-		return;
+	struct ether_header *eh;
 
 	/* Pull packet off interface. */
-	m = elget(buf, len, &sc->sc_arpcom.ac_if);
+	ifp = &sc->sc_arpcom.ac_if;
+	m = elget(buf, len, ifp);
 	if (m == 0)
 		return;
+
+	/* We assume that the header fit entirely in one mbuf. */
+	eh = mtod(m, struct ether_header *);
 
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to bpf.
 	 */
-	if (sc->sc_arpcom.ac_if.if_bpf) {
-		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m);
+	if (ifp->if_bpf) {
+		bpf_mtap(ifp->if_bpf, m);
 
 		/*
 		 * Note that the interface cannot be in promiscuous mode if
 		 * there are no BPF listeners.  And if we are in promiscuous
 		 * mode, we have to check if this packet is really ours.
 		 */
-		if ((sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC) &&
+		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
 		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
 			    sizeof(eh->ether_dhost)) != 0) {
@@ -583,7 +583,12 @@ elread(sc, buf, len)
 	}
 #endif
 
-	ether_input(&sc->sc_arpcom.ac_if, eh, m);
+	/* We assume that the header fit entirely in one mbuf. */
+	m->m_pkthdr.len -= sizeof(*eh);
+	m->m_len -= sizeof(*eh);
+	m->m_data += sizeof(*eh);
+
+	ether_input(ifp, eh, m);
 }
 
 /*
@@ -593,65 +598,45 @@ elread(sc, buf, len)
  */
 struct mbuf *
 elget(buf, totlen, ifp)
-        caddr_t buf;
-        int totlen;
-        struct ifnet *ifp;
+	caddr_t buf;
+	int totlen;
+	struct ifnet *ifp;
 {
-        struct mbuf *top, **mp, *m, *p;
-        int len;
-        register caddr_t cp = buf;
-        char *epkt;
+	struct mbuf *top, **mp, *m;
+	int len;
 
-        buf += sizeof(struct ether_header);
-        cp = buf;
-        epkt = cp + totlen;
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == 0)
+		return 0;
+	m->m_pkthdr.rcvif = ifp;
+	m->m_pkthdr.len = totlen;
+	len = MHLEN;
+	top = 0;
+	mp = &top;
 
-        MGETHDR(m, M_DONTWAIT, MT_DATA);
-        if (m == 0)
-                return 0;
-        m->m_pkthdr.rcvif = ifp;
-        m->m_pkthdr.len = totlen;
-        m->m_len = MHLEN;
-        top = 0;
-        mp = &top;
+	while (totlen > 0) {
+		if (top) {
+			MGET(m, M_DONTWAIT, MT_DATA);
+			if (m == 0) {
+				m_freem(top);
+				return 0;
+			}
+			len = MLEN;
+		}
+		if (totlen >= MINCLSIZE) {
+			MCLGET(m, M_DONTWAIT);
+			if (m->m_flags & M_EXT)
+				len = MCLBYTES;
+		}
+		m->m_len = len = min(totlen, len);
+		bcopy((caddr_t)cp, mtod(m, caddr_t), len);
+		buf += len;
+		totlen -= len;
+		*mp = m;
+		mp = &m->m_next;
+	}
 
-        while (totlen > 0) {
-                if (top) {
-                        MGET(m, M_DONTWAIT, MT_DATA);
-                        if (m == 0) {
-                                m_freem(top);
-                                return 0;
-                        }
-                        m->m_len = MLEN;
-                }
-                len = min(totlen, epkt - cp);
-                if (len >= MINCLSIZE) {
-                        MCLGET(m, M_DONTWAIT);
-                        if (m->m_flags & M_EXT)
-                                m->m_len = len = min(len, MCLBYTES);
-                        else
-                                len = m->m_len;
-                } else {
-                        /*
-                         * Place initial small packet/header at end of mbuf.
-                         */
-                        if (len < m->m_len) {
-                                if (top == 0 && len + max_linkhdr <= m->m_len)
-                                        m->m_data += max_linkhdr;
-                                m->m_len = len;
-                        } else
-                                len = m->m_len;
-                }
-                bcopy(cp, mtod(m, caddr_t), (unsigned)len);
-                cp += len;
-                *mp = m;
-                mp = &m->m_next;
-                totlen -= len;
-                if (cp == epkt)
-                        cp = buf;
-        }
-
-        return top;
+	return top;
 }
 
 /*
