@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.249 2000/06/05 23:14:23 gmcgarry Exp $
+# $NetBSD: mi,v 1.250 2000/06/07 01:31:39 thorpej Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/as.info
@@ -476,6 +476,7 @@
 ./usr/share/man/cat4/ncr.0
 ./usr/share/man/cat4/ne.0
 ./usr/share/man/cat4/nele.0
+./usr/share/man/cat4/netconfig.0
 ./usr/share/man/cat4/netintro.0
 ./usr/share/man/cat4/networking.0
 ./usr/share/man/cat4/ns.0
@@ -515,6 +516,7 @@
 ./usr/share/man/cat4/rmidi.0
 ./usr/share/man/cat4/rnd.0
 ./usr/share/man/cat4/route.0
+./usr/share/man/cat4/rpc.0
 ./usr/share/man/cat4/rtfps.0
 ./usr/share/man/cat4/sb.0
 ./usr/share/man/cat4/scsi.0
@@ -898,7 +900,6 @@
 ./usr/share/man/cat8/ping6.0
 ./usr/share/man/cat8/pipe.0
 ./usr/share/man/cat8/poweroff.0
-./usr/share/man/cat8/portmap.0
 ./usr/share/man/cat8/pppd.0
 ./usr/share/man/cat8/pppstats.0
 ./usr/share/man/cat8/praliases.0
@@ -946,6 +947,7 @@
 ./usr/share/man/cat8/rpc.sprayd.0
 ./usr/share/man/cat8/rpc.statd.0
 ./usr/share/man/cat8/rpc.yppasswdd.0
+./usr/share/man/cat8/rpcbind.0
 ./usr/share/man/cat8/rpcinfo.0
 ./usr/share/man/cat8/rquotad.0
 ./usr/share/man/cat8/rrestore.0
@@ -1491,6 +1493,7 @@
 ./usr/share/man/man4/ncr.4
 ./usr/share/man/man4/ne.4
 ./usr/share/man/man4/nele.4
+./usr/share/man/man4/netconfig.4
 ./usr/share/man/man4/netintro.4
 ./usr/share/man/man4/networking.4
 ./usr/share/man/man4/ns.4
@@ -1530,6 +1533,7 @@
 ./usr/share/man/man4/rmidi.4
 ./usr/share/man/man4/rnd.4
 ./usr/share/man/man4/route.4
+./usr/share/man/man4/rpc.4
 ./usr/share/man/man4/rtfps.4
 ./usr/share/man/man4/sb.4
 ./usr/share/man/man4/scsi.4
@@ -1914,7 +1918,6 @@
 ./usr/share/man/man8/ping6.8
 ./usr/share/man/man8/pipe.8
 ./usr/share/man/man8/poweroff.8
-./usr/share/man/man8/portmap.8
 ./usr/share/man/man8/pppd.8
 ./usr/share/man/man8/pppstats.8
 ./usr/share/man/man8/praliases.8
@@ -1962,6 +1965,7 @@
 ./usr/share/man/man8/rpc.sprayd.8
 ./usr/share/man/man8/rpc.statd.8
 ./usr/share/man/man8/rpc.yppasswdd.8
+./usr/share/man/man8/rpcbind.8
 ./usr/share/man/man8/rpcinfo.8
 ./usr/share/man/man8/rquotad.8
 ./usr/share/man/man8/rrestore.8

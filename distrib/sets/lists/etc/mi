@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.57 2000/05/13 08:13:56 lukem Exp $
+# $NetBSD: mi,v 1.58 2000/06/07 01:31:39 thorpej Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -45,6 +45,7 @@
 ./etc/namedb/loopback.v6
 ./etc/namedb/named.conf
 ./etc/namedb/root.cache
+./etc/netconfig
 ./etc/networks
 ./etc/newsyslog.conf
 ./etc/nsswitch.conf
@@ -103,7 +104,6 @@
 ./etc/rc.d/nfslocking
 ./etc/rc.d/ntpd
 ./etc/rc.d/ntpdate
-./etc/rc.d/portmap
 ./etc/rc.d/postfix
 ./etc/rc.d/ppp
 ./etc/rc.d/pwcheck
@@ -114,6 +114,7 @@
 ./etc/rc.d/root
 ./etc/rc.d/route6d
 ./etc/rc.d/routed
+./etc/rc.d/rpcbind
 ./etc/rc.d/rtadvd
 ./etc/rc.d/rtsold
 ./etc/rc.d/rwho

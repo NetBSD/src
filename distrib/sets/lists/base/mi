@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.164 2000/05/18 07:22:57 shin Exp $
+# $NetBSD: mi,v 1.165 2000/06/07 01:31:38 thorpej Exp $
 .
 ./altroot
 ./bin
@@ -632,7 +632,6 @@
 ./usr/sbin/pkg_create
 ./usr/sbin/pkg_delete
 ./usr/sbin/pkg_info
-./usr/sbin/portmap
 ./usr/sbin/postalias
 ./usr/sbin/postcat
 ./usr/sbin/postconf
@@ -667,6 +666,7 @@
 ./usr/sbin/rpc.pcnfsd
 ./usr/sbin/rpc.statd
 ./usr/sbin/rpc.yppasswdd
+./usr/sbin/rpcbind
 ./usr/sbin/rtadvd
 ./usr/sbin/rtquery
 ./usr/sbin/rtsold
