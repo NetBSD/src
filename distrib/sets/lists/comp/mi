@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.231.2.17 2001/05/15 19:53:56 he Exp $
+#	$NetBSD: mi,v 1.231.2.18 2001/10/25 18:05:32 he Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -83,6 +83,8 @@
 ./usr/include/dev/i2c	comp-c-include
 ./usr/include/dev/i2c/i2c_bus.h	comp-c-include
 ./usr/include/dev/i2c/i2c_eeprom.h	comp-c-include
+./usr/include/dev/i2o/i2o.h		comp-c-include
+./usr/include/dev/i2o/iopio.h		comp-c-include
 ./usr/include/dev/ic	comp-c-include
 ./usr/include/dev/ic/ad1848reg.h	comp-c-include
 ./usr/include/dev/ic/ahareg.h	comp-c-include
@@ -147,6 +149,8 @@
 ./usr/include/dev/ic/mc6845reg.h		comp-c-include
 ./usr/include/dev/ic/midwayreg.h		comp-c-include
 ./usr/include/dev/ic/midwayvar.h		comp-c-include
+./usr/include/dev/ic/mlxio.h			comp-c-include
+./usr/include/dev/ic/mlxreg.h			comp-c-include
 ./usr/include/dev/ic/ncr5380reg.h		comp-c-include
 ./usr/include/dev/ic/ncr5380var.h		comp-c-include
 ./usr/include/dev/ic/ncr53c400reg.h		comp-c-include

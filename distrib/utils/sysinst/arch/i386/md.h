@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.17.4.6 2001/08/06 22:02:17 he Exp $	*/
+/*	$NetBSD: md.h,v 1.17.4.7 2001/10/25 18:05:26 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -105,7 +105,7 @@ EXTERN distinfo special_kernel_list[]
  */
 EXTERN	char *disk_names[]
 #ifdef MAIN
-= {"wd", "sd", "ca", NULL}
+= {"wd", "sd", "ld", NULL}
 #endif
 ;
 
@@ -115,9 +115,9 @@ EXTERN	char *disk_names[]
  * this must return 1 for a character that matches the first
  * characters of each member of disk_names.
  *
- * On  i386, that means matching 'w' for st-506/ide, 's' for sd and 'c' for ca.
+ * On  i386, that means matching 'w' for st-506/ide, 's' for sd and 'l' for ld.
  */
-#define ISDISKSTART(dn)	(dn == 'w' || dn == 's' || dn == 'c')
+#define ISDISKSTART(dn)	(dn == 'w' || dn == 's' || dn == 'l')
 
 /*
  * Machine-specific command to write a new label to a disk.

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.354.2.15 2001/05/06 15:18:54 he Exp $
+#	$NetBSD: GENERIC,v 1.354.2.16 2001/10/25 18:05:28 he Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.354.2.15 $"
+#ident 		"GENERIC-$Revision: 1.354.2.16 $"
 
 maxusers	32		# estimated number of users
 
@@ -143,6 +143,7 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
+options		I2OVERBOSE	# verobse I2O driver messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 #options	PNPBIOSDEBUG	# more fullsome Pnp BIOS debugging messages
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
@@ -372,6 +373,11 @@ lpt2	at isa? port 0x3bc
 #viapm*	at pci? dev ? function ?
 #viaenv* at viapm?
 
+# I2O devices
+iop*	at pci? dev ? function ?	# I/O processors
+iopsp*	at iop? tid ?			# SCSI ports
+ld*	at iop? tid ?			# block devices
+
 # SCSI Controllers and Devices
 
 # PCI SCSI controllers
@@ -431,6 +437,7 @@ scsibus* at aic?
 scsibus* at bha?
 scsibus* at dpt?
 scsibus* at esp?
+scsibus* at iopsp?
 scsibus* at isp?
 #scsibus* at nca?
 #scsibus* at ncr?
@@ -450,8 +457,14 @@ ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # RAID controllers and devices
-cac*	at pci? dev ? function ?	# Compaq array controller
-ca*	at cac? unit ?			# Compaq array disk device
+cac*	at eisa? slot ?			# Compaq array controllers
+cac*	at pci? dev ? function ?	# Compaq array controllers
+mlx*	at pci? dev ? function ?	# Mylex DAC960 family
+twe*	at pci? dev ? function ?	# 3ware Escalade family
+
+ld*	at cac? unit ?
+ld*	at mlx? unit ?
+ld*	at twe? unit ?
 
 # IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.
