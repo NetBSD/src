@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.52 2000/01/16 09:37:18 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.53 2000/01/16 09:41:22 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -477,8 +477,10 @@ ukbd_intr(xfer, addr, status)
 	DPRINTFN(5, ("          mod=0x%02x key0=0x%02x key1=0x%02x\n",
 		     ud->modifiers, ud->keycode[0], ud->keycode[1]));
 
-	if (ud->keycode[0] == KEY_ERROR)
+	if (ud->keycode[0] == KEY_ERROR) {
+		DPRINTF(("ukbd_intr: KEY_ERROR\n"));
 		return;		/* ignore  */
+	}
 	nkeys = 0;
 	mod = ud->modifiers;
 	omod = sc->sc_odata.modifiers;
