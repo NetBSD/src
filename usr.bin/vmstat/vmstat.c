@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.80 2001/05/01 19:36:58 thorpej Exp $ */
+/* $NetBSD: vmstat.c,v 1.81 2001/05/02 01:26:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.80 2001/05/01 19:36:58 thorpej Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.81 2001/05/02 01:26:04 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -553,6 +553,9 @@ dosum(void)
 
 	(void)printf("%9u bytes per page\n", uvmexp.pagesize);
 
+	(void)printf("%9u page color%s\n",
+	    uvmexp.ncolors, uvmexp.ncolors == 1 ? "" : "s");
+
 	(void)printf("%9u pages managed\n", uvmexp.npages);
 	(void)printf("%9u pages free\n", uvmexp.free);
 	(void)printf("%9u pages active\n", uvmexp.active);
@@ -605,8 +608,6 @@ dosum(void)
 	    uvmexp.colorhit);
 	(void)printf("%9u pagealloc desired color not avail\n",
 	    uvmexp.colormiss);
-	(void)printf("%9u page color%s\n",
-	    uvmexp.ncolors, uvmexp.ncolors == 1 ? "" : "s");
 
 	(void)printf("%9u faults with no memory\n", uvmexp.fltnoram);
 	(void)printf("%9u faults with no anons\n", uvmexp.fltnoanon);
