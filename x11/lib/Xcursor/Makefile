@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/01/06 06:15:45 rtr Exp $
+#	$NetBSD: Makefile,v 1.5 2004/01/08 04:45:12 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -29,9 +29,8 @@ FILESMODE_xcursor-config=${BINMODE}
 .PHONY:		xcursor.pc xcursor-config
 all dependall:	xcursor.pc xcursor-config
 
-# XXX this should be ${SHELL} but I'm not getting joy w/ it.
 XCURSORDIR=	${X11SRCDIR.xc}/lib/Xcursor
-CONFIG_SUBST=	sh ${XCURSORDIR}/config-subst \
+CONFIG_SUBST=	${HOST_SH} ${XCURSORDIR}/config-subst \
 		prefix="${X11ROOTDIR}" \
 		exec_prefix="${X11BINDIR}" \
 		libdir="${X11USRLIBDIR}" \
