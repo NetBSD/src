@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.20 1999/08/07 10:36:49 ragge Exp $	*/
+/*	$NetBSD: ka650.c,v 1.21 2000/04/20 18:55:50 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -83,6 +83,9 @@ struct	cpu_dep	ka650_calls = {
 	2,	/* SCB pages */
 	ka650_halt,
 	ka650_reboot,
+	0,
+	0,
+	CPU_RAISEIPL,	/* Needed for the LANCE chip */
 };
 
 /*
