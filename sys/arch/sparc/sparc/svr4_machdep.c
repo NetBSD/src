@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.15 1996/03/16 23:31:50 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.16 1996/03/26 19:09:31 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -54,7 +54,6 @@
 #include <machine/svr4_machdep.h>
 
 static void svr4_getsiginfo __P((union svr4_siginfo *, int, u_long, caddr_t));
-#define DEBUG_SVR4
 
 #ifdef DEBUG
 extern int sigdebug;
@@ -113,10 +112,8 @@ svr4_getcontext(p, uc, mask, oonstack)
 	int mask, oonstack;
 {
 	struct trapframe *tf = (struct trapframe *)p->p_md.md_tf;
-	struct sigacts *psp = p->p_sigacts;
 	svr4_greg_t *r = uc->uc_mcontext.greg;
 	struct svr4_sigaltstack *s = &uc->uc_stack;
-	struct sigaltstack *sf = &psp->ps_sigstk;
 #ifdef FPU_CONTEXT
 	svr4_fregset_t *f = &uc->uc_mcontext.freg;
 	struct fpstate *fps = p->p_md.md_fpstate;
@@ -179,9 +176,12 @@ svr4_getcontext(p, uc, mask, oonstack)
 #endif
 
 	/*
-	 * Get the signal stack
+	 * Set the signal stack to something reasonable
 	 */
-	bsd_to_svr4_sigaltstack(sf, s);
+	/* XXX: Don't really know what to do with this */
+	s->ss_sp = (char *) ((r[SVR4_SPARC_SP] & ~0xfff) - 8192);
+	s->ss_size = 8192;
+	s->ss_flags = 0;
 
 	/*
 	 * Get the signal mask
@@ -261,11 +261,8 @@ svr4_setcontext(p, uc)
 		    (r[SVR4_SPARC_PSR] & PSR_ICC);
 		tf->tf_pc = r[SVR4_SPARC_PC];
 		tf->tf_npc = r[SVR4_SPARC_nPC];
-#if 0
 		tf->tf_y = r[SVR4_SPARC_Y];
-#endif
 
-#if 0
 		/* Restore everything */
 		tf->tf_global[1] = r[SVR4_SPARC_G1];
 		tf->tf_global[2] = r[SVR4_SPARC_G2];
@@ -274,15 +271,13 @@ svr4_setcontext(p, uc)
 		tf->tf_global[5] = r[SVR4_SPARC_G5];
 		tf->tf_global[6] = r[SVR4_SPARC_G6];
 		tf->tf_global[7] = r[SVR4_SPARC_G7];
-#endif
-#if 0
+
 		tf->tf_out[0] = r[SVR4_SPARC_O0];
 		tf->tf_out[1] = r[SVR4_SPARC_O1];
 		tf->tf_out[2] = r[SVR4_SPARC_O2];
 		tf->tf_out[3] = r[SVR4_SPARC_O3];
 		tf->tf_out[4] = r[SVR4_SPARC_O4];
 		tf->tf_out[5] = r[SVR4_SPARC_O5];
-#endif
 		tf->tf_out[6] = r[SVR4_SPARC_O6];
 		tf->tf_out[7] = r[SVR4_SPARC_O7];
 	}
@@ -575,15 +570,30 @@ svr4_trap(type, p)
 		break;
 
 	case T_SVR4_GETHRTIME:
-		uprintf("T_SVR4_GETHRTIME\n");
-		break;
-
+		/*
+		 * this list like gethrtime(3). To implement this
+		 * correctly we need a timer that does not get affected
+		 * adjtime(), or settimeofday(). For now we use
+		 * microtime, and convert to nanoseconds...
+		 */
+		/*FALLTHROUGH*/
 	case T_SVR4_GETHRVTIME:
-		uprintf("T_SVR4_GETHRVTIME\n");
+		/*
+		 * This is like gethrvtime(3). Since we don't have lwp
+		 * we massage microtime() output
+		 */
+		{
+			struct timeval  tv;
+
+			microtime(&tv);
+			tf->tf_out[0] = tv.tv_sec;
+			tf->tf_out[1] = tv.tv_usec * 1000;
+		}
 		break;
 
 	case T_SVR4_GETHRESTIME:
 		{
+			/* I assume this is like gettimeofday(3) */
 			struct timeval  tv;
 
 			microtime(&tv);
