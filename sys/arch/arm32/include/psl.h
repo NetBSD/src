@@ -1,4 +1,4 @@
-/* $NetBSD: psl.h,v 1.1 1996/01/31 23:22:44 mark Exp $ */
+/* $NetBSD: psl.h,v 1.2 1996/03/08 16:35:17 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -39,23 +39,46 @@
  * Eventually this will become a set of defines.
  *
  * Created      : 21/07/95
- * Last updated : 01/09/95
- *
- *    $Id: psl.h,v 1.1 1996/01/31 23:22:44 mark Exp $
  */
 
-u_int spl __P((u_int));
-u_int sple __P((u_int));
-u_int splx __P((u_int));
-u_int spl0 __P(());
-u_int splhigh __P(());
-u_int splbio __P(());
-u_int splnet __P(());
-u_int spltty __P(());
-u_int splimp __P(());
-u_int splclock __P(());
-u_int splstatclock __P(());
-u_int splsoftclock __P(());
-u_int splsoftnet __P(());
+/*
+ * These are the different SPL states
+ *
+ * Each state has an interrupt mask associated with it which
+ * indicate which interrupts are allowed.
+ */
+
+#define SPL_0		0
+#define SPL_SOFT	1
+#define SPL_BIO		2
+#define SPL_NET		3
+#define SPL_TTY		4
+#define SPL_CLOCK	5
+#define SPL_IMP		6
+#define SPL_HIGH	7
+#define SPL_LEVELS	8
+
+#define spl0()		splx(SPL_0)
+#define splhigh()	splx(SPL_HIGH)
+#define splbio()	raisespl(SPL_BIO)
+#define splnet()	raisespl(SPL_NET)
+#define spltty()	raisespl(SPL_TTY)
+#define splimp()	raisespl(SPL_IMP)
+#define splclock()	raisespl(SPL_CLOCK)
+#define splstatclock()	raisespl(SPL_CLOCK)
+#define splsoftnet()	raisespl(SPL_SOFT)
+
+#ifndef _LOCORE
+int raisespl __P((int));
+int lowerspl __P((int));
+int splx __P((int));
+int splsoftclock __P(());
+
+#ifdef _KERNEL
+extern int current_spl_level;
+
+extern u_int spl_masks[SPL_LEVELS];
+#endif /* _KERNEL */
+#endif /* _LOCORE */
 
 /* End of psl.h */
