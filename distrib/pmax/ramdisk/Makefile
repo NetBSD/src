@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.25 2002/04/12 03:28:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.26 2002/04/12 05:15:18 lukem Exp $
 
-.include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
-
-DISKIMAGE=	diskimage.tgz
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
 
 IMAGE=		ramdisk.fs
-IMAGESIZE=	6144b
+IMAGETAR=	diskimage.tgz
+IMAGESIZE=	3m
 MAKEFS_FLAGS=	-f 15
 
 WARNS=		1
@@ -31,21 +30,11 @@ HACKSRC=	${DISTRIBDIR}/utils/libhack
 ${CRUNCHBIN}:	libhack.o
 
 
-${DISKIMAGE}: ${WORKBUILT} ${WORKSPEC}
-	( cd ${WORKDIR}; \
-	    GZIP=-9 ${PAX} -w -d -z -N ${DESTDIR}/etc -M < ${WORKSPEC} \
-	) > ${.TARGET}.tmp \
-	&& mv ${.TARGET}.tmp ${.TARGET}
+realall: ${IMAGE} .WAIT ${IMAGETAR}
 
-CLEANFILES+=	${DISKIMAGE} ${DISKIMAGE}.tmp
-
-
-
-realall: ${IMAGE} .WAIT ${DISKIMAGE}
-
-release: check_RELEASEDIR .WAIT ${DISKIMAGE}
+release: check_RELEASEDIR .WAIT ${IMAGETAR}
 	-mkdir -p ${RELEASEDIR}/installation/netboot
-	${RELINSTALL} ${DISKIMAGE} ${RELEASEDIR}/installation/netboot
+	${RELINSTALL} ${IMAGETAR} ${RELEASEDIR}/installation/netboot
 
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
