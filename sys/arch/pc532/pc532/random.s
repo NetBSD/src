@@ -1,4 +1,4 @@
-/*	$NetBSD: random.s,v 1.2 1994/10/26 08:25:17 cgd Exp $	*/
+/*	$NetBSD: random.s,v 1.3 1997/05/08 13:44:14 matthias Exp $	*/
 
 /*
  * Copyright (c) 1990,1993 The Regents of the University of California.
@@ -40,36 +40,20 @@
  *
  * The result is in (0,2^31), e.g., it's always positive.
  *
- * written by Phil Nelson for ns32k.
+ * Stolen from sys/arch/m68k/m68k/random.s by Matthias Pfaller.
  */
-
 #include <machine/asm.h>
 
-	.data
-randseed:
-	.long	1
+ASDATA_D(randseed, 1)
 
-	.text
 ENTRY(random)
-	enter [r2],0
-	movzwd	randseed(pc), r2	/* 1st 16 bit multiply */
-	muld	16807, r2		/* result is positive */
-	movd	r2, r1
-	bicd	0xffff0000, r2		/* save bottom 16 bits */
-	ashd	-16, r1			/* move top 16 to bottom */
-	movzwd	randseed+2(pc), r0	/* 2n 16 bit multiply */
-	muld	16807, r0		
-	addd	r0, r1			/* add to top 16 bits of first  */
-	movd	r1, r0			/* save a copy in r0 */
-	bicd	0xffff8000, r1		/* move "bottom" 15 to r2 */
-	ashd	16, r1
-	addd	r2, r1			/* this is now p! */
-	ashd	-15, r0			/* this is now q! */
-	addd	r1, r0			/* q+r */
-	bfc	nocarry
-	subd	0x7fffffff, r0
-
-nocarry:
-	movd	r0, randseed(pc)
-	exit [r2]
+	movzwd	16807,r0
+	meid	_ASM_LABEL(randseed)(pc),r0
+	addd	r0,r0
+	addcd	r1,r1
+	addd	r1,r1
+	addd	r1,r0
+	addcd	1,r0
+	lshd	-1,r0
+	movd	r0,_ASM_LABEL(randseed)(pc)
 	ret	0
