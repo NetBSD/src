@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.59 2003/05/10 10:20:31 lukem Exp $
+# $NetBSD: postinstall,v 1.60 2003/05/13 02:41:27 lukem Exp $
 #
 # Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -655,9 +655,8 @@ do_obsolete()
 	[ -n "$1" ] || err 2 "USAGE: do_obsolete  fix|check"
 	op=$1
 
-	failed=0
-
-	sort -ru ${DEST_DIR}/var/db/obsolete/* |
+	sort -ru ${DEST_DIR}/var/db/obsolete/* | (
+		failed=0
 		while read ofile; do
 			ofile=${DEST_DIR}${ofile#.}
 			cmd="rm"
@@ -680,8 +679,10 @@ do_obsolete()
 				msg "Removed obsolete ${ftype} ${ofile}"
 			fi
 		done
+		exit ${failed}
+	)
 
-	return ${failed}
+	return $?
 }
 
 #
