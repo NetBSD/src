@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.123 2004/10/15 21:29:03 enami Exp $ */
+/* $NetBSD: vmstat.c,v 1.124 2004/11/05 19:56:34 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.123 2004/10/15 21:29:03 enami Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.124 2004/11/05 19:56:34 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -477,7 +477,7 @@ choosedrives(char **argv)
 #define	BACKWARD_COMPATIBILITY
 	for (ndrives = 0; *argv; ++argv) {
 #ifdef	BACKWARD_COMPATIBILITY
-		if (isdigit(**argv))
+		if (isdigit((unsigned char)**argv))
 			break;
 #endif
 		for (i = 0; i < dk_ndrive; i++) {
