@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_time.c,v 1.10 2000/10/11 14:46:22 is Exp $	*/
+/*	$NetBSD: pr_time.c,v 1.11 2000/12/20 01:20:38 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pr_time.c	8.2 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: pr_time.c,v 1.10 2000/10/11 14:46:22 is Exp $");
+__RCSID("$NetBSD: pr_time.c,v 1.11 2000/12/20 01:20:38 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,11 +79,11 @@ pr_attime(started, now)
 
 	/* If not today, use day-hour-am/pm. */
 	else if (tp->tm_yday != tnow_yday)
-		fmt = __CONCAT("%a%", "I%p");
+		fmt = "%a%" "I%p";
 
 	/* Default is hh:mm{am,pm}. */
 	else
-		fmt = __CONCAT("%l:%", "M%p");
+		fmt = "%l:%" "M%p";
 
 	(void)strftime(buf, sizeof(buf), fmt, tp);
 	buf[sizeof(buf) - 1] = '\0';
