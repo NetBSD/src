@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.5 1994/12/14 13:03:35 mycroft Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.6 1994/12/16 05:55:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -924,13 +924,7 @@ ffs_alloccgblk(fs, cgp, bpref)
 		bno = bpref;
 		goto gotit;
 	}
-	/*
-	 * check for a block available on the same cylinder
-	 */
-	cylno = cbtocylno(fs, bpref);
-	if (cg_blktot(cgp)[cylno] == 0)
-		goto norot;
-	if (fs->fs_cpc == 0) {
+	if (fs->fs_cpc == 0 || fs->fs_nrpos <= 1) {
 		/*
 		 * Block layout information is not available.
 		 * Leaving bpref unchanged means we take the
@@ -941,6 +935,12 @@ ffs_alloccgblk(fs, cgp, bpref)
 		 */
 		goto norot;
 	}
+	/*
+	 * check for a block available on the same cylinder
+	 */
+	cylno = cbtocylno(fs, bpref);
+	if (cg_blktot(cgp)[cylno] == 0)
+		goto norot;
 	/*
 	 * check the summary information to see if a block is 
 	 * available in the requested cylinder starting at the
