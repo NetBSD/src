@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.23 1999/01/16 07:48:24 lukem Exp $	*/
+/*	$NetBSD: res_init.c,v 1.24 1999/07/01 18:19:35 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "Id: res_init.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.23 1999/01/16 07:48:24 lukem Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.24 1999/07/01 18:19:35 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,6 +78,7 @@ __RCSID("$NetBSD: res_init.c,v 1.23 1999/01/16 07:48:24 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <netdb.h>
 
 #if defined(_LIBC) && defined(__weak_alias)
 __weak_alias(res_init,_res_init);
@@ -98,6 +99,9 @@ struct __res_state _res = {
 	RES_DEFAULT,			/* options flags */
 	1,                         	/* number of name servers */
 };
+#ifdef INET6
+struct __res_state_ext _res_ext;
+#endif /* INET6 */
 
 /*
  * Set up default settings.  If the configuration file exist, the values
@@ -134,8 +138,27 @@ res_init()
 #ifdef SEARCH_LOCAL_DOMAINS
 	int dots;
 #endif
+#ifdef INET6
+	struct sockaddr_in6 *sin6;
+	struct addrinfo *ai;
+	static char nsport[32];
+	struct addrinfo hints;
+#endif
 
 	_res.id = res_randomid();
+#ifdef INET6
+	if (nsport[0] == '\0')
+		sprintf(nsport, "%u", NAMESERVER_PORT);
+	sin6 = (struct sockaddr_in6 *)&_res_ext.nsaddr;
+	sin6->sin6_len = sizeof(struct sockaddr_in6);
+	sin6->sin6_family = AF_INET6;
+	sin6->sin6_port = htons(NAMESERVER_PORT);
+#ifdef USELOOPBACK
+	sin6->sin6_addr = in6addr_loopback;
+#else
+	sin6->sin6_addr = in6addr_any;
+#endif
+#endif
 	_res.nsaddr.sin_len = sizeof(struct sockaddr_in);
 	_res.nsaddr.sin_family = AF_INET;
 	_res.nsaddr.sin_port = htons(NAMESERVER_PORT);
@@ -253,11 +276,37 @@ res_init()
 		}
 		/* read nameservers to query */
 		if (MATCH(buf, "nameserver") && nserv < MAXNS) {
-		   struct in_addr a;
+#ifdef INET6
+		    char *q;
+#else /* INET6 */
+		    struct in_addr a;
+#endif /* INET6 */
 
 		    cp = buf + sizeof("nameserver") - 1;
 		    while (*cp == ' ' || *cp == '\t')
 			cp++;
+#ifdef INET6
+		    if ((*cp == '\0') || (*cp == '\n'))
+			continue;
+		    for (q = cp; *q; q++) {
+			if (isspace(*q)) {
+			    *q = '\0';
+			    break;
+			}
+		    }
+		    memset(&hints, 0, sizeof(hints));
+		    hints.ai_flags = AI_NUMERICHOST;
+		    if (getaddrinfo(cp, nsport, &hints, &ai) == 0) {
+			memcpy(&_res_ext.nsaddr_list[nserv],
+				ai->ai_addr, ai->ai_addrlen);
+			/* for compatibility */
+			if (ai->ai_family == AF_INET)
+			    memcpy(&_res.nsaddr_list[nserv],
+				    ai->ai_addr, ai->ai_addrlen);
+			nserv++;
+			freeaddrinfo(ai);
+		    }
+#else /* INET6 */
 		    if ((*cp != '\0') && (*cp != '\n') && inet_aton(cp, &a)) {
 			_res.nsaddr_list[nserv].sin_len = sizeof(struct sockaddr_in);
 			_res.nsaddr_list[nserv].sin_family = AF_INET;
@@ -266,10 +315,16 @@ res_init()
 			_res.nsaddr_list[nserv].sin_addr = a;
 			nserv++;
 		    }
+#endif /* INET6 */
 		    continue;
 		}
 		if (MATCH(buf, "sortlist")) {
 		    struct in_addr a;
+#ifdef INET6
+		    struct in6_addr a6;
+		    int m, i;
+		    u_char *u;
+#endif /* INET6 */
 
 		    cp = buf + sizeof("sortlist") - 1;
 		    while (nsort < MAXRESOLVSORT) {
@@ -303,8 +358,58 @@ res_init()
 				_res.sort_list[nsort].mask = 
 				    net_mask(_res.sort_list[nsort].addr);
 			    }
+#ifdef INET6
+			    _res_ext.sort_list[nsort].af = AF_INET;
+			    _res_ext.sort_list[nsort].addr.ina =
+				_res.sort_list[nsort].addr;
+			    _res_ext.sort_list[nsort].mask.ina.s_addr =
+				_res.sort_list[nsort].mask;
+#endif /* INET6 */
 			    nsort++;
 			}
+#ifdef INET6
+			else if (inet_pton(AF_INET6, net, &a6) == 1) {
+			    _res_ext.sort_list[nsort].af = AF_INET6;
+			    _res_ext.sort_list[nsort].addr.in6a = a6;
+			    u = (u_char *)&_res_ext.sort_list[nsort].mask.in6a;
+			    *cp++ = n;
+			    net = cp;
+			    while (*cp && *cp != ';' &&
+				    isascii(*cp) && !isspace(*cp))
+				cp++;
+			    m = n;
+			    n = *cp;
+			    *cp = 0;
+			    switch (m) {
+			    case '/':
+				m = atoi(net);
+				break;
+			    case '&':
+				if (inet_pton(AF_INET6, net, u) == 1) {
+				    m = -1;
+				    break;
+				}
+				/*FALLTHRU*/
+			    default:
+				m = sizeof(struct in6_addr) * NBBY;
+				break;
+			    }
+			    if (m >= 0) {
+				for (i = 0; i < sizeof(struct in6_addr); i++) {
+				    if (m <= 0) {
+					*u = 0;
+				    } else {
+					m -= NBBY;
+					*u = (u_char)~0;
+					if (m < 0)
+					    *u <<= -m;
+				    }
+				    u++;
+				}
+			    }
+			    nsort++;
+			}
+#endif /* INET6 */
 			*cp = n;
 		    }
 		    continue;
