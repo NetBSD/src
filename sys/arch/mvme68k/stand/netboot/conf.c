@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 1996/05/17 21:08:38 chuck Exp $ */
+/*	$NetBSD: conf.c,v 1.4 2001/06/10 14:12:49 scw Exp $ */
 
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -32,3 +32,4 @@ int n_netif_drivers = sizeof(netif_drivers) / sizeof(netif_drivers[0]);
 int netif_debug;
 int debug;
 int errno;
+int try_bootp = 1;
