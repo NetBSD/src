@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.31 1998/02/20 00:11:02 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.32 1998/05/22 19:29:00 tv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -647,7 +647,7 @@ cfcrosscheck(cf, what, nv)
 			    devunit >= 0)
 				goto loop;
 		(void)fprintf(stderr,
-		    "%s%d: %s says %s on %s, but there's no %s\n",
+		    "%s:%d: %s says %s on %s, but there's no %s\n",
 		    conffile, cf->cf_lineno,
 		    cf->cf_name, what, nv->nv_str, nv->nv_str);
 		errs++;
