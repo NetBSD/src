@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.12 1995/09/02 05:41:12 briggs Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.13 1995/09/03 14:37:53 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -116,10 +116,10 @@ adb_init()
 
 	/* Initialize ADB */
 #if defined(MRG_DEBUG)
-	printf("adb: calling ADBReInit\n");
+	printf("adb: calling ADBAlternateInit\n");
 #endif
 
-	ADBReInit();
+	ADBAlternateInit();
 
 #if defined(MRG_DEBUG)
 	printf("adb: done with ADBReInit\n");

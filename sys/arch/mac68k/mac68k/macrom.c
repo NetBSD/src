@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.8 1995/08/02 11:53:02 briggs Exp $	*/
+/*	$NetBSD: macrom.c,v 1.9 1995/09/03 14:37:16 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -73,6 +73,8 @@ u_char mrg_adbstore3[512];
 caddr_t	mrg_romadbintr = (caddr_t)0x40807002;	/* ROM ADB interrupt */
 caddr_t	mrg_rompmintr = 0;			/* ROM PM (?) interrupt */
 char *mrg_romident = NULL;			/* ident string for ROMs */
+caddr_t mrg_ADBAlternateInit = 0;
+caddr_t mrg_InitEgret = 0;
 
 /*
  * Last straw functions; we didn't set them up, so freak out!
@@ -471,28 +473,13 @@ mrg_setvectors(rom)
 	mrg_romident = rom->romident;
 	mrg_romadbintr = rom->adbintr;
 	mrg_rompmintr = rom->pmintr;
+	mrg_ADBAlternateInit = rom->ADBAlternateInit;
+	mrg_InitEgret = rom->InitEgret;
 
-	/* mrg_adbstore becomes ADBBase */
+		/* mrg_adbstore becomes ADBBase */
 	*((u_int32_t *)(mrg_adbstore + 0x130)) = (u_int32_t) rom->adb130intr;
 
-	/* in MacIIvi otherwise uninitialized when ADBReInit() runs */
-        if (current_mac_model->class == MACH_CLASSIIsi) {
-	    int i;
-
-	    /* Egret and ADBReInit look into these */
-	    *((u_int32_t *)(0x0dd0)) = 0x0000773f;
-	    *((u_int32_t *)(0x0dd4)) = 0x000001a6;
-
-	    for (i=0; i<4; i++)				/* some basic inits */
-		*((u_int32_t *)(0x174 + 4*i)) = 0;
-	    *((unsigned short *)(0x216)) = 0;
-	    *((unsigned short *)(mrg_adbstore + 0x184)) = 0xff01;
-
-		/* IIsi crap */
-	    *((u_int32_t *)(mrg_adbstore + 0x180)) = 0x4081517c;
-	    *((u_int32_t *)(mrg_adbstore + 0x194)) = 0x408151ea;
-	    jEgret = (void (*))0x40814800;
-        }
+	jEgret = (void (*))0x40814800;
 
 	mrg_OStraps[0x77] = rom->CountADBs;
 	mrg_OStraps[0x78] = rom->GetIndADB;
@@ -512,7 +499,9 @@ mrg_setvectors(rom)
 	printf("mrg: OS trap 0x7a (SetADBInfo) = 0x%08x\n", mrg_OStraps[0x7a]);
 	printf("mrg: OS trap 0x7b (ADBReInit) = 0x%08x\n", mrg_OStraps[0x7b]);
 	printf("mrg: OS trap 0x7c (ADBOp) = 0x%08x\n", mrg_OStraps[0x7c]);
-	printf("mrg: OS trap 0x7c (PMgrOp) = 0x%08x\n", mrg_OStraps[0x85]);
+	printf("mrg: OS trap 0x85 (PMgrOp) = 0x%08x\n", mrg_OStraps[0x85]);
+	printf("mrg: ROM ADBAltInit 0x%08x\n", mrg_ADBAlternateInit);
+	printf("mrg: ROM InitEgret  0x%08x\n", mrg_InitEgret);
 
 #endif
 }
@@ -664,22 +653,53 @@ mrg_init()
 #endif
 }
 
+void setup_egret(void)
+{
+	if (0 != mrg_InitEgret){
+
+	/* This initializes ADBState (mrg_ADBStore2) and
+	   enables interrupts */
+		asm("	movml	a0-a2, sp@-
+			movl	%1, a0		/* ADBState, mrg_adbstore2 */
+			movl	%0, a1
+			jbsr	a1@
+			movml	sp@+, a0-a2 "
+			:
+			: "g" (mrg_InitEgret), "g" (ADBState));
+	}
+	else printf("Help ...  No vector for InitEgret!!");
+}
+
 void
 mrg_initadbintr()
 {
 	int i;
 
-	if (current_mac_model->class == MACH_CLASSIIsi) {
-		/* This initializes ADBState (mrg_ADBStore2) and
-                   enables interrupts */
-		asm("	movml	a0-a2, sp@-
-			movl	0x0de0, a0      /* ADBState, mrg_ADBStore2 */
-			movl	_ROMBase,a1
-			addl	#0x147c4,a1	/* EgretInitAlt */
-						/* avoids calling _NewPtr */
-			jbsr	a1@
-			movml	sp@+, a0-a2 ");
-	} else {
+	if (mac68k_machine.do_graybars)
+		printf("Got following HwCfgFlags: 0x%4x, 0x%8x, 0x%8x\n",
+				HwCfgFlags, HwCfgFlags2, HwCfgFlags3);
+
+        if ( (HwCfgFlags == 0) && (HwCfgFlags2 == 0) && (HwCfgFlags3 == 0) ){
+
+		printf("Caution: No HwCfgFlags from Booter, using defaults "
+			"for MacIIsi.\n");
+
+		/* Egret and ADBReInit look into these HwCfgFlags */
+		HwCfgFlags = 0xfc00;	
+		HwCfgFlags2 = 0x0000773f;
+		HwCfgFlags3 = 0x000001a6;
+
+		printf("Using HwCfgFlags: 0x%4x, 0x%8x, 0x%8x\n",
+			HwCfgFlags, HwCfgFlags2, HwCfgFlags3);
+	}
+
+	if ( (HwCfgFlags3 & 0x0e) == 0x06 ) {
+printf("setup_egret:\n");
+	    setup_egret();
+printf("setup_egret: back\n");
+	} 
+
+	if (current_mac_model->class == MACH_CLASSII) {
 	    via_reg(VIA1, vIFR) = 0x4; /* XXX - why are we setting the flag?  */
             via_reg(VIA1, vIER) = 0x84; /* enable ADB interrupt. */
 	}	
@@ -720,4 +740,30 @@ mrg_fixupROMBase(obase, nbase)
 
 	if (IS_ROM_ADDR(mrg_romident))
 		mrg_romident = mrg_romident - oldbase + newbase;
+
+	if (IS_ROM_ADDR(mrg_ADBAlternateInit))
+		mrg_ADBAlternateInit = mrg_ADBAlternateInit - oldbase + newbase;
+
+	if (IS_ROM_ADDR(mrg_InitEgret))
+		mrg_InitEgret = mrg_InitEgret - oldbase + newbase;
 }
+
+/*WRU 950828: begin */
+void ADBAlternateInit(void)
+{
+	if (0 == mrg_ADBAlternateInit){
+		ADBReInit();
+	}
+	else {
+ 		asm("
+			movml	a0-a6/d0-d7, sp@-
+			movl	%0, a1
+			movl	%1, a3
+			jbsr	a1@
+			movml	sp@+, a0-a6/d0-d7"
+	
+			: 
+			: "g" (mrg_ADBAlternateInit), "g" (ADBBase) );
+	}
+}
+/*WRU 950828: end */
