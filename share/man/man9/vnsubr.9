@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnsubr.9,v 1.16 2003/06/30 19:12:34 wiz Exp $
+.\"     $NetBSD: vnsubr.9,v 1.17 2003/10/21 22:01:24 hannken Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,7 +51,9 @@
 .Nm vn_setrecurse ,
 .Nm vn_open ,
 .Nm vn_stat ,
-.Nm vn_writechk
+.Nm vn_writechk ,
+.Nm vn_start_write ,
+.Nm vn_finished_write
 .Nd high-level convenience functions for vnode operations
 .Sh SYNOPSIS
 .In sys/param.h
@@ -89,6 +91,10 @@
 .Fn vn_stat "struct vnode *vp" "struct stat *sb" "struct proc *p"
 .Ft int
 .Fn vn_writechk "struct vnode *vp"
+.Ft int
+.Fn vn_start_write "struct vnode *vp" "struct mount **mpp" "int flags"
+.Ft void
+.Fn vn_finished_write "struct mount *mp" "int flags"
 .Sh DESCRIPTION
 The high-level functions described in this page are convenience
 functions for simplified access to the vnode operations described in
@@ -253,6 +259,50 @@ Common code to check for write permission on the vnode
 A vnode is read-only if it is in use as a process's text image.
 If the vnode is read-only ETEXTBSY is returned, otherwise zero is
 returned to indicate that the vnode can be written to.
+.It Fn vn_start_write "vp" "mpp" "flags"
+Prepare to start a file system write operation.
+If the operation is permitted, bump the count of operations in progress and
+proceed.
+If a suspend request is in progress (see
+.Xr vfs_write_suspend 9 ) ,
+wait until the suspension is over
+and proceed.
+If
+.Fa vp
+is not
+.Dv NULL ,
+its mount point is assigned to
+.Fa mpp .
+If the
+.Dv V_WAIT
+flag is set,
+.Fn vn_start_write
+waits until the suspension is over.
+Otherwise it returns
+.Er EWOULDBLOCK .
+If the
+.Dv V_PCATCH
+flag is set,
+.Dv PCATCH
+gets added to the
+.Fn tsleep
+flags.
+If the
+.Dv V_SLEEPONLY
+flag is set, the operations count is not bumped.
+If the
+.Dv V_LOWER
+flag is set, no further vnodes must be locked.
+If it is not set, no vnodes must be already locked.
+If the operation is permitted zero is returned, otherwise
+.Er EWOULDBLOCK
+is returned.
+.It Fn vn_finished_write "mp" "flags"
+A file system write operation has finished.
+Adjust the count of operations in progress and return.
+Only the
+.Dv V_LOWER
+flag is valid.
 .El
 .Sh ERRORS
 .Bl -tag -width Er
@@ -275,8 +325,10 @@ framework can be found.
 All pathnames are relative to
 .Pa /usr/src .
 .Pp
-The high-level convenience functions are implemented within the file
-.Pa sys/kern/vfs_vnops.c .
+The high-level convenience functions are implemented within the files
+.Pa sys/kern/vfs_vnops.c
+and
+.Pa sys/sys/vnode.h .
 .Sh SEE ALSO
 .Xr file 9 ,
 .Xr intro 9 ,
