@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.20 1997/09/09 23:02:05 is Exp $
+#	$NetBSD: install.sub,v 1.21 1997/09/25 06:25:50 leo Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -589,6 +589,27 @@ fi
 }
 
 install_ftp() {
+	local	_f
+	local	_sets
+	local	_next
+
+	# Build a script to extract valid files from a list
+	# of filenames on stdin.
+	# XXX : Can we use this on more places? Leo.
+
+	echo "#!/bin/sh" > /tmp/fname_filter.sh
+	echo "while read line; do"	>> /tmp/fname_filter.sh
+	echo "    case \$line in"	>> /tmp/fname_filter.sh
+	for _f in $THESETS; do
+		echo "    $_f.tar.gz|$_f.tgz|$_f.${VERSION}.aa)" \
+					>> /tmp/fname_filter.sh
+		echo '        echo -n "$line ";;' \
+					>> /tmp/fname_filter.sh
+	done
+	echo "        *) ;;"		>> /tmp/fname_filter.sh
+	echo "    esac"			>> /tmp/fname_filter.sh
+	echo "done"			>> /tmp/fname_filter.sh
+
 	# Get several parameters from the user, and create
 	# a shell script that directs the appropriate
 	# commands into ftp.
@@ -605,14 +626,6 @@ __install_ftp_1
 		echo -n "Server IP? [${_ftp_server_ip}] "
 		getresp "${_ftp_server_ip}"
 		_ftp_server_ip=$resp
-	done
-
-	# Get server directory
-	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
-		echo -n "Server directory? [${_ftp_server_dir}] "
-		getresp "${_ftp_server_dir}"
-		_ftp_server_dir=$resp
 	done
 
 	# Get login name
@@ -634,33 +647,89 @@ __install_ftp_1
 		_ftp_server_password=$resp
 	done
 
-	# Get list of files for mget.
 	cat << \__install_ftp_2
 
-You will now be asked for files to extract.  Enter one file at a time.
-When you are done entering files, enter 'done'.
-
+You will be asked to enter the name of the directory that contains the
+installation sets. When you enter a '?' you will see a listing of the
+current directory on the server.
 __install_ftp_2
-	echo "#!/bin/sh" > /tmp/ftp-script.sh
-	echo "cd /mnt" >> /tmp/ftp-script.sh
-	echo "ftp -i -n $_ftp_server_ip << \__end_commands" >> \
-	    /tmp/ftp-script.sh
-	echo "user $_ftp_server_login $_ftp_server_password" >> \
-	    /tmp/ftp-script.sh
-	echo "bin" >> /tmp/ftp-script.sh
-	echo "cd $_ftp_server_dir" >> /tmp/ftp-script.sh
+	_sets=""
+	while [ -z "$_sets" ]
+	do
+		resp=""		# force one iteration
+		while [ "X${resp}" = X"" ]; do
+			echo -n "Server directory? [${_ftp_server_dir}] "
+		    getresp "${_ftp_server_dir}"
+		    if [ "X$resp" = 'X?' -a -z "$_ftp_server_dir" ]; then
+			resp=""
+		    fi
+		done
+		if [ $resp != '?' ]; then
+			_ftp_server_dir=$resp
+		fi
 
-	resp=""		# force one interation
-	while [ "X${resp}" != X"done" ]; do
-		echo -n "File? [done] "
-		getresp "done"
-		if [ "X${resp}" = X"done" ]; then
+		# Build the basics of an ftp-script...
+		echo "#!/bin/sh" > /tmp/ftp-script.sh
+		echo "cd /mnt" >> /tmp/ftp-script.sh
+		echo "ftp -i -n $_ftp_server_ip << \__end_commands" >> \
+		    /tmp/ftp-script.sh
+		echo "user $_ftp_server_login $_ftp_server_password" >> \
+		    /tmp/ftp-script.sh
+		echo "bin" >> /tmp/ftp-script.sh
+		echo "cd $_ftp_server_dir" >> /tmp/ftp-script.sh
+
+		# Make a copy of this script that lists the directory
+		# contents, and use that to determine the files to get.
+		cat /tmp/ftp-script.sh	>  /tmp/ftp-dir.sh
+		echo "ls"		>> /tmp/ftp-dir.sh
+		echo "quit"		>> /tmp/ftp-dir.sh
+		echo "__end_commands"	>> /tmp/ftp-dir.sh
+
+		if [ $resp = '?' ]; then
+			sh /tmp/ftp-dir.sh
+		else
+			_sets=`sh /tmp/ftp-dir.sh | sh /tmp/fname_filter.sh`
+		fi
+	done
+	rm -f /tmp/ftp-dir.sh /tmp/fname_filter.sh
+
+	while : ; do
+		echo "The following sets are available for extraction:"
+		echo "(marked sets have already been extracted)"
+		echo ""
+
+		_next=""
+		for _f in $_sets ; do
+			if isin $_f $_setsdone; then
+				echo -n "[X] "
+				_next=""
+			else
+				echo -n "    "
+				if [ -z "$_next" ]; then _next=$_f; fi
+			fi
+			echo $_f
+		done
+		echo ""
+
+		# Get name of the file and add extraction command
+		# to the ftp-script.
+		if [ "X$_next" = "X" ]; then resp=n; else resp=y; fi
+		echo -n "Continue to add filenames [$resp]? "
+		getresp "$resp"
+		if [ "$resp" = "n" ]; then
 			break
 		fi
 
-		_ftp_file=`echo ${resp} | cutword 1'`
-		echo "get ${_ftp_file} |\"tar --unlink -zxvpf -\"" >> \
-		    /tmp/ftp-script.sh
+		echo -n "File name [$_next]? "
+		getresp "$_next"
+		if isin $resp $_sets; then
+			echo "get $resp |\"tar --unlink -zxvpf -\"" >> \
+					/tmp/ftp-script.sh
+			_setsdone="$resp $_setsdone"
+		else
+			echo "You entered an invalid filename."
+			echo ""
+		fi
 	done
 
 	echo "quit" >> /tmp/ftp-script.sh
