@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.64 2000/07/28 04:08:44 itojun Exp $
+.\"	$NetBSD: sysctl.3,v 1.65 2000/08/02 12:26:54 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -744,6 +744,7 @@ The variable specifies the maximum number of outgoing ICMP error messages,
 per second.
 ICMP error messages that exceeded the value are subject to rate limitation
 and will not go out from the node.
+Negative value disables rate limitation.
 .It Li tcp.rfc1323
 Returns 1 if RFC1323 extensions to TCP are enabled.
 .It Li tcp.sendspace
@@ -828,6 +829,7 @@ The variable specifies the maximum number of outgoing TCP RST packets,
 per second.
 TCP RST packet that exceeded the value are subject to rate limitation
 and will not go out from the node.
+Negative value disables rate limitation.
 .It Li udp.checksum
 Returns 1 when UDP checksums are being computed and checked.
 Disabling UDP checksums is strongly discouraged.
@@ -1000,6 +1002,7 @@ The variable specifies the maximum number of outgoing ICMPv6 error messages,
 per second.
 ICMPv6 error messages that exceeded the value are subject to rate limitation
 and will not go out from the node.
+Negative value disables rate limitation.
 .It Li icmp6.nd6_maxnudhint
 IPv6 neighbor discovery permits upper layer protocols to supply reachability
 hints, to avoid unnecessary neighbor discovery exchanges.
