@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.3 2004/09/27 07:56:14 martin Exp $	*/
+/*	$NetBSD: dk.c,v 1.4 2004/09/27 15:22:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.4 2004/09/27 15:22:42 martin Exp $");
 
 #include "opt_dkwedge.h"
 
