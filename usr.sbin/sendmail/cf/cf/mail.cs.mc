@@ -34,10 +34,21 @@ divert(-1)
 #
 
 include(`../m4/cf.m4')
-VERSIONID(`@(#)ucbarpa.mc	8.1 (Berkeley) 6/7/93')
+VERSIONID(`@(#)mail.cs.mc	8.1 (Berkeley) 6/7/93')
+OSTYPE(ultrix4.1)dnl
 DOMAIN(cs.exposed)dnl
-OSTYPE(bsd4.4)dnl
+FEATURE(notsticky)dnl
 MAILER(local)dnl
 MAILER(smtp)dnl
-MAILER(uucp)dnl
-SITECONFIG(uucp.ucbarpa, ucbarpa, U)
+define(`confUSERDB_SPEC', ``/usr/local/lib/users.cs.db,/usr/local/lib/users.eecs.db'')dnl
+DDBerkeley.EDU
+
+# hosts for which we accept and forward mail (must be in .Berkeley.EDU)
+CF CS
+FF/etc/sendmail.cw
+
+LOCAL_RULE_0
+R< @ $=F . $D . > : $*		$@ $>7 $2		@here:... -> ...
+R$* $=O $* < @ $=F . $D . >	$@ $>7 $1 $2 $3		...@here -> ...
+
+R$* < @ $=F . $D . >		$#local $: $1		use UDB

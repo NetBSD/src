@@ -34,10 +34,9 @@ divert(-1)
 #
 
 include(`../m4/cf.m4')
-VERSIONID(`@(#)ucbarpa.mc	8.1 (Berkeley) 6/7/93')
-DOMAIN(cs.exposed)dnl
-OSTYPE(bsd4.4)dnl
+VERSIONID(`@(#)auspex.mc	8.1 (Berkeley) 6/7/93')
+OSTYPE(sunos4.1)dnl
+DOMAIN(cs.hidden)dnl
+FEATURE(use_cw_file)dnl
 MAILER(local)dnl
 MAILER(smtp)dnl
-MAILER(uucp)dnl
-SITECONFIG(uucp.ucbarpa, ucbarpa, U)
