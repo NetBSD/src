@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.49 2004/03/17 17:04:59 pk Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.50 2004/06/27 16:08:42 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.49 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.50 2004/06/27 16:08:42 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -113,10 +113,12 @@ static void	sparc_vme_intr_disestablish __P((void *, void *));
 
 static int	vmebus_translate __P((struct sparcvme_softc *, vme_am_t,
 				      vme_addr_t, bus_addr_t *));
+#ifdef notyet
 #if defined(SUN4M)
 static void	sparc_vme_iommu_barrier __P(( bus_space_tag_t, bus_space_handle_t,
 					  bus_size_t, bus_size_t, int));
 
+#endif /* SUN4M */
 #endif
 
 /*
@@ -209,29 +211,6 @@ struct extent *vme_dvmamap;
 #define VME_IOMMU_DVMA_AM24_END		0xff900000
 #define VME_IOMMU_DVMA_AM32_BASE	VME_IOMMU_DVMA_BASE
 #define VME_IOMMU_DVMA_AM32_END		IOMMU_DVMA_END
-
-struct sparc_bus_space_tag sparc_vme_bus_tag = {
-	NULL, /* cookie */
-	NULL, /* parent bus tag */
-	NULL, /* ranges */
-	0,    /* nranges */
-	NULL, /* bus_map */
-	NULL, /* bus_unmap */
-	NULL, /* bus_subregion */
-	NULL, /* barrier */
-	NULL, /* mmap */
-	NULL, /* intr_establish */
-#if __FULL_SPARC_BUS_SPACE
-	NULL, /* read_1 */
-	NULL, /* read_2 */
-	NULL, /* read_4 */
-	NULL, /* read_8 */
-	NULL, /* write_1 */
-	NULL, /* write_2 */
-	NULL, /* write_4 */
-	NULL  /* write_8 */
-#endif
-};
 
 struct vme_chipset_tag sparc_vme_chipset_tag = {
 	NULL,
@@ -339,10 +318,6 @@ vmeattach_mainbus(parent, self, aux)
 /*XXX*/	sparc_vme_chipset_tag.vct_dmamap_destroy = sparc_vct_dmamap_destroy;
 /*XXX*/	sparc_vme4_dma_tag._cookie = self;
 
-#if 0
-	sparc_vme_bus_tag.parent = ma->ma_bustag;
-	vba.vba_bustag = &sparc_vme_bus_tag;
-#endif
 	vba.va_vct = &sparc_vme_chipset_tag;
 	vba.va_bdt = &sparc_vme4_dma_tag;
 	vba.va_slaveconfig = 0;
@@ -393,11 +368,7 @@ vmeattach_iommu(parent, self, aux)
 /*XXX*/	sparc_vme_chipset_tag.vct_dmamap_create = sparc_vct_iommu_dmamap_create;
 /*XXX*/	sparc_vme_chipset_tag.vct_dmamap_destroy = sparc_vct_dmamap_destroy;
 /*XXX*/	sparc_vme_iommu_dma_tag._cookie = self;
-	sparc_vme_bus_tag.sparc_bus_barrier = sparc_vme_iommu_barrier;
 
-#if 0
-	vba.vba_bustag = &sparc_vme_bus_tag;
-#endif
 	vba.va_vct = &sparc_vme_chipset_tag;
 	vba.va_bdt = &sparc_vme_iommu_dma_tag;
 	vba.va_slaveconfig = 0;
@@ -457,8 +428,6 @@ vmeattach_iommu(parent, self, aux)
 		panic("%s: can't map IOC flush registers", self->dv_xname);
 	}
 	sc->sc_iocflush = (u_int32_t *)bh;
-
-/*XXX*/	sparc_vme_bus_tag.cookie = sc->sc_reg;
 
 	/*
 	 * Get "range" property.
@@ -629,6 +598,7 @@ sparc_vme_mmap_cookie(addr, mod, hp)
 		0/*prot is ignored*/, 0));
 }
 
+#ifdef notyet
 #if defined(SUN4M)
 void
 sparc_vme_iommu_barrier(t, h, offset, size, flags)
@@ -643,6 +613,7 @@ sparc_vme_iommu_barrier(t, h, offset, size, flags)
 	/* Read async fault status to flush write-buffers */
 	(*(volatile int *)&vbp->vmebus_afsr);
 }
+#endif /* SUN4M */
 #endif
 
 
