@@ -1,4 +1,4 @@
-/* $NetBSD: mdsetimage.c,v 1.5 2002/02/23 02:30:37 thorpej Exp $ */
+/* $NetBSD: mdsetimage.c,v 1.6 2002/03/02 12:21:14 mrg Exp $ */
 /* from: NetBSD: mdsetimage.c,v 1.15 2001/03/21 23:46:48 cgd Exp $ */
 
 /*
@@ -38,7 +38,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mdsetimage.c,v 1.5 2002/02/23 02:30:37 thorpej Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.6 2002/03/02 12:21:14 mrg Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: mdsetimage.c,v 1.5 2002/02/23 02:30:37 thorpej Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #include <bfd.h>
 
