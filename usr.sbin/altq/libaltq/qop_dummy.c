@@ -29,27 +29,25 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <stdio.h>
-#include <string.h>
 #include <errno.h>
 #include <syslog.h>
 
 #include <altq/altq.h>
 #include "altq_qop.h"
 
-int null_interface_parser(const char *ifname, int argc, char **argv);
-int null_class_parser(const char *ifname, const char *class_name,
-		      const char *parent_name, int argc, char **argv);
-int qcmd_nop_add_if(const char *ifname);
-static int nop_attach(struct ifinfo *ifinfo);
-static int nop_detach(struct ifinfo *ifinfo);
-static int nop_clear(struct ifinfo *ifinfo);
-static int nop_enable(struct ifinfo *ifinfo);
-static int nop_disable(struct ifinfo *ifinfo);
-static int nop_add_class(struct classinfo *clinfo);
-static int nop_modify_class(struct classinfo *clinfo, void *arg);
-static int nop_delete_class(struct classinfo *clinfo);
-static int nop_add_filter(struct fltrinfo *fltrinfo);
-static int nop_delete_filter(struct fltrinfo *fltrinfo);
+int null_interface_parser(const char *, int, char **);
+int null_class_parser(const char *, const char *, const char *, int, char **);
+int qcmd_nop_add_if(const char *);
+static int nop_attach(struct ifinfo *);
+static int nop_detach(struct ifinfo *);
+static int nop_clear(struct ifinfo *);
+static int nop_enable(struct ifinfo *);
+static int nop_disable(struct ifinfo *);
+static int nop_add_class(struct classinfo *);
+static int nop_modify_class(struct classinfo *, void *);
+static int nop_delete_class(struct classinfo *);
+static int nop_add_filter(struct fltrinfo *);
+static int nop_delete_filter(struct fltrinfo *);
 
 struct qdisc_ops nop_qdisc = {
 	ALTQT_NONE,

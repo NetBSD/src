@@ -1,4 +1,4 @@
-/*	$KAME: tbrconfig.c,v 1.2 2000/12/03 05:04:55 kjc Exp $	*/
+/*	$KAME: tbrconfig.c,v 1.3 2001/05/08 04:36:39 itojun Exp $	*/
 /*
  * Copyright (C) 2000
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -72,7 +72,7 @@ main(int argc, char **argv)
 	rate = 0;
 	depth = 0;
 
-	while ((ch = getopt(argc, argv, "ad")) != EOF) {
+	while ((ch = getopt(argc, argv, "ad")) != -1) {
 		switch (ch) {
 		case 'a':
 			list_all();
