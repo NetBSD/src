@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.74 2004/04/11 02:58:25 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.75 2004/04/11 03:03:31 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -766,3 +766,13 @@ sys/arch/hp300/dev/frodo.c			1.17
 	COM_HW_NOIEN for APCI com(4) ports.
 
 	[tsutsui, ticket #116]
+
+sys/arch/hp300/dev/grf_tc.c			1.29
+sys/arch/hp300/dev/grf_hy.c			1.22
+sys/arch/hp300/dev/grf_gb.c			1.26
+sys/arch/hp300/dev/grf_rb.c			1.27
+sys/arch/hp300/dev/grf_dv.c			1.27
+
+	Check mapped device VA by badaddr() in cnattach functions for 
+	framebuffers.
+	[tsutsui, ticket #117]
