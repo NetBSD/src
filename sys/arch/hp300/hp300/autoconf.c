@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.32 1997/01/31 20:20:53 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.33 1997/02/05 20:56:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -644,7 +644,6 @@ setbootdev()
 	/*
 	 * Get parent's info.
 	 */
-	cdd = dev_data_lookup(root_device->dv_parent);
 	switch (type) {
 	case 2:
 		/*
