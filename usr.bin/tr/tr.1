@@ -1,4 +1,4 @@
-.\"	$NetBSD: tr.1,v 1.14 2004/03/24 06:35:53 fair Exp $
+.\"	$NetBSD: tr.1,v 1.15 2004/03/24 11:38:27 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -66,11 +66,11 @@ The following options are available:
 Complements the set of characters in
 .Ar string1 ,
 that is
-.Qq \&-c \&ab
+.Fl c Ar \&ab
 includes every character except for
-.Qq \&a
+.Sq a
 and
-.Qq \&b .
+.Sq b .
 .It Fl d
 The
 .Fl d
@@ -190,14 +190,14 @@ Class names are:
 \." .Ar string1 .
 \." .Pp
 With the exception of the
-.Qq upper
+.Dq upper
 and
-.Qq lower
+.Dq lower
 classes, characters in the classes are in unspecified order.
 In the
-.Qq upper
+.Dq upper
 and
-.Qq lower
+.Dq lower
 classes, characters are entered in ascending order.
 .Pp
 For specific information as to which ASCII characters are included
@@ -212,9 +212,9 @@ If there is a secondary ordering within the equivalence class, the
 characters are ordered in ascending sequence.
 Otherwise, they are ordered after their encoded values.
 An example of an equivalence class might be
-.Qq \&c
+.Dq \&c
 and
-.Qq \&ch
+.Dq \&ch
 in Spanish;
 English has no equivalence classes.
 .It [#*n]
@@ -241,7 +241,7 @@ it's interpreted as a decimal value.
 exits 0 on success, and \*[Gt]0 if an error occurs.
 .Sh EXAMPLES
 The following examples are shown as given to the shell:
-.sp
+.Pp
 Create a list of the words in
 .Ar file1 ,
 one per line, where a word is taken to be a maximal string of letters:
@@ -261,9 +261,9 @@ Strip out non-printable characters from
 .Sh COMPATIBILITY
 .At V
 has historically implemented character ranges using the syntax
-.Qq [c-c]
+.Dq [c-c]
 instead of the
-.Qq c-c
+.Dq c-c
 used by historic
 .Bx
 implementations and standardized by POSIX.
@@ -274,11 +274,11 @@ the range is intended to map in another range, i.e. the command
 .Ic "tr [a-z] [A-Z]"
 .Pp
 will work as it will map the
-.Qq \&[
+.Sq \&[
 character in
 .Ar string1
 to the
-.Qq \&[
+.Sq \&[
 character in
 .Ar string2 .
 However, if the shell script is deleting or squeezing characters as in
@@ -287,22 +287,22 @@ the command
 .Ic "tr -d [a-z]"
 .Pp
 the characters
-.Qq \&[
+.Sq \&[
 and
-.Qq \&]
+.Sq \&]
 will be included in the deletion or compression list which would
 not have happened under an historic
 .At V
 implementation.
 Additionally, any scripts that depended on the sequence
-.Qq a-z
+.Dq a-z
 to represent the three characters
-.Qq \&a ,
-.Qq \&- ,
+.Sq \&a ,
+.Sq \&- ,
 and
-.Qq \&z
+.Sq \&z
 will have to be rewritten as
-.Qq a\e-z .
+.Dq a\e-z .
 .Pp
 The
 .Nm
@@ -334,7 +334,7 @@ has less characters than
 is permitted by POSIX but is not required.
 Shell scripts attempting to be portable to other POSIX systems should use
 the
-.Qq [#*]
+.Dq [#*]
 convention instead of relying on this behavior.
 .Sh BUGS
 .Nm
@@ -342,8 +342,7 @@ was originally designed to work with
 .Tn US-ASCII .
 Its use with character sets that do not share all the properties of
 .Tn US-ASCII ,
-e.g.
-a symmetric set of upper and lower case characters
+e.g., a symmetric set of upper and lower case characters
 that can be algorithmically converted one to the other,
 may yield unpredictable results.
 .Pp
