@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.135.6.5 2002/04/17 00:03:36 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.135.6.6 2002/10/05 06:19:39 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -309,8 +309,8 @@ Lloaddone:
 /* set kernel stack, user SP, lwp0, and initial pcb */
 	movl	_C_LABEL(proc0paddr),%a1 | get proc0 pcb addr
 	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
-	lea	_C_LABEL(proc0),%a2	| initialize lwp0.p_addr so that
-	movl	%a1,%a2@(P_ADDR)	|   we don't deref NULL in trap()
+	lea	_C_LABEL(lwp0),%a2	| initialize lwp0.l_addr so that
+	movl	%a1,%a2@(L_ADDR)	|   we don't deref NULL in trap()
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init %USP
 	movl	%a1,_C_LABEL(curpcb)	| lwp0 is running
@@ -345,8 +345,8 @@ Lnocache0:
 	movw	#PSL_USER,%sp@-		| in user mode
 	clrl	%sp@-			| stack adjust count and padding
 	lea	%sp@(-64),%sp		| construct space for D0-D7/A0-A7
-	lea	_C_LABEL(proc0),%a0	| save pointer to frame
-	movl	%sp,%a0@(P_MD_REGS)	|   in lwp0.l_md.md_regs
+	lea	_C_LABEL(lwp0),%a0	| save pointer to frame
+	movl	%sp,%a0@(L_MD_REGS)	|   in lwp0.l_md.md_regs
 
 	jra	_C_LABEL(main)		| main()
 	PANIC("main() returned")
@@ -670,7 +670,7 @@ Ltrap1:
  * command in %d0, addr in %a1, length in %d1
  */
 ENTRY_NOPROFILE(trap12)
-	movl	_C_LABEL(curproc),%a0
+	movl	_C_LABEL(curlwp),%a0
 	movl	%a0@(L_PROC),%sp@-	| push proc pointer
 	movl	%d1,%sp@-		| push length
 	movl	%a1,%sp@-		| push addr
