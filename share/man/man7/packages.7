@@ -1,10 +1,10 @@
-.\"	$NetBSD: packages.7,v 1.17 1999/07/24 15:37:03 mjl Exp $
+.\"	$NetBSD: packages.7,v 1.18 1999/08/29 22:42:11 rh Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
 .\"	This file is in the public domain.
 .\"
-.Dd July 22, 1998
+.Dd Aug 30, 1999
 .Dt PACKAGES 7
 .Os
 .Sh NAME
@@ -511,11 +511,24 @@ apply them.
 .It PKG_VERBOSE
 If set, print out more information about the automatic manual
 page handling, and package deletion (see the
-.Dq install
-and
+.Dq install,
 .Dq deinstall
+and
+.Dq update
 targets),
 and also sets PATCH_DEBUG as well.
+.It REINSTALL
+Use
+.Dq reinstall
+instead of
+.Sq ${INSTALL_TARGET}
+and
+.Sq ${DEPENDS_TARGET}
+as installation target for updating packages (see the
+.Dq update
+target).  Also leave out the
+.Dq clean
+target when traversing package directories.
 .El
 .Sh INSTALL VARIABLES
 This section documents variables that serve as convenient aliases.
@@ -589,6 +602,8 @@ Install the results of a build, ignoring
 flag.
 .It deinstall	
 Remove the installation.
+.It update	
+Update the installation of the current and all dependent packages.
 .It package	
 Create a binary package other people can use.
 .It describe
