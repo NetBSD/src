@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.2 2004/01/02 14:31:31 martin Exp $	*/
+/*	$NetBSD: __clone.S,v 1.3 2004/01/23 13:45:43 martin Exp $	*/
 
 /*-     
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ ENTRY(__clone)
 	 */
 	mov	SYS___clone, %g1
 	t	ST_SYSCALL
-	be	9f
+	bcs	9f
 	 tst	%o1		! %o1 (rv[1]) == 0 in parent
 
 1:	bz	2f		! yes, parent
