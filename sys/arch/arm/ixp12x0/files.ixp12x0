@@ -1,0 +1,31 @@
+#       $NetBSD: files.ixp12x0,v 1.1 2002/07/15 16:27:16 ichiro Exp $
+#
+# Configuration info for Intel IXP12x0 CPU support
+#
+
+file	arch/arm/ixp12x0/ixp12x0_intr.c
+file	arch/arm/ixp12x0/ixp12x0_irq.S
+
+# IXP1200 Slow peripheral devices
+device	ixpsip { [addr=-1], [size=0], [intr=-1] }: bus_space_generic
+file	arch/arm/ixp12x0/ixpsip.c		ixpsip
+file	arch/arm/ixp12x0/ixpsip_io.c		ixpsip
+
+# IXP12x0 Processor CPU support
+# IXP1200 IX,PCI,SRAM bus
+device	ixpio: pcibus, bus_space_generic
+file	arch/arm/ixp12x0/ixp12x0.c		ixpio
+file	arch/arm/ixp12x0/ixp12x0_io.c		ixpio
+file	arch/arm/ixp12x0/ixp12x0_pci.c          ixpio
+file	arch/arm/ixp12x0/ixp12x0_pci_dma.c      ixpio
+
+# clock device
+device	ixpclk 
+attach	ixpclk at ixpsip
+file	arch/arm/ixp12x0/ixp12x0_clk.c		ixpclk needs-flag
+
+# com
+device	ixpcom: tty
+attach	ixpcom at ixpsip
+file	arch/arm/ixp12x0/ixp12x0_com.c		ixpcom needs-flag
+file	arch/arm/ixp12x0/ixp12x0_com_io.c	ixpcom
