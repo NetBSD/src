@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.88 2004/02/13 11:36:18 wiz Exp $ */
+/*	$NetBSD: autoconf.c,v 1.89 2004/03/16 13:14:34 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,12 +48,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.88 2004/02/13 11:36:18 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.89 2004/03/16 13:14:34 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/disklabel.h>
@@ -77,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.88 2004/02/13 11:36:18 wiz Exp $");
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
+#include <machine/idprom.h>
 #include <machine/sparc64.h>
 #include <machine/cpu.h>
 #include <machine/pmap.h>
@@ -886,6 +888,88 @@ node_has_property(node, prop)	/* returns 1 if node has given property */
 	register const char *prop;
 {
 	return (OF_getproplen(node, (caddr_t)prop) != -1);
+}
+
+struct idprom *
+prom_getidprom(void)
+{
+static struct idprom idprom;
+	int node, len;
+	u_long h;
+	u_char *dst;
+
+	if (idprom.id_format != 0)
+		/* Already got it */
+		return (&idprom);
+
+	/*
+	 * Fetch the `idprom' property at the root node.
+	 */
+	dst = (char *)&idprom;
+	len = sizeof(struct idprom);
+	node = findroot();
+	if (PROM_getprop(node, "idprom", 1, &len, &dst) != 0) {
+		printf("`idprom' property cannot be read: "
+			"cannot get ethernet address");
+	}
+
+	/* Establish hostid */
+	h =  idprom.id_machine << 24;
+	h |= idprom.id_hostid[0] << 16;
+	h |= idprom.id_hostid[1] << 8;
+	h |= idprom.id_hostid[2];
+	hostid = h;
+
+	return (&idprom);
+}
+
+void prom_getether(node, cp)
+	int node;
+	u_char *cp;
+{
+	struct idprom *idp = prom_getidprom();
+	int optionsnode;
+	char buf[6+1], *bp;
+	int nitem;
+
+	if (node == 0)
+		goto read_idprom;
+
+	/*
+	 * First, try the node's "mac-address" property.
+	 * This property is set by the adapter's firmware if the
+	 * device has already been opened for traffic, e.g. for
+	 * net booting.  Its value might be `0-terminated', probably
+	 * because the Forth ROMs uses `xdrstring' instead of `xdrbytes'
+	 * to construct the property.
+	 */
+	nitem = 6+1;
+	bp = buf;
+	if (PROM_getprop(node, "mac-address", 1, &nitem, &bp) == 0 &&
+	    nitem >= 6) {
+		memcpy(cp, bp, 6);
+		return;
+	}
+
+	/*
+	 * Next, check the global "local-mac-address?" switch to see
+	 * if we should try to extract the node's "local-mac-address"
+	 * property.
+	 */
+	optionsnode = findnode(firstchild(findroot()), "options");
+	if (strcmp(PROM_getpropstring(optionsnode, "local-mac-address?"),
+			  "true") != 0)
+		goto read_idprom;
+
+	/* Retrieve the node's "local-mac-address" property, if any */
+	nitem = 6;
+	if (PROM_getprop(node, "local-mac-address", 1, &nitem, &cp) == 0 &&
+	    nitem == 6)
+		return;
+
+	/* Fall back on the machine's global ethernet address */
+read_idprom:
+	memcpy(cp, idp->id_ether, 6);
 }
 
 #ifdef RASTERCONSOLE
