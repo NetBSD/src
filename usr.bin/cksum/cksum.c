@@ -42,17 +42,20 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)cksum.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: cksum.c,v 1.4 1994/12/24 16:02:45 cgd Exp $";
+static char *rcsid = "$Id: cksum.c,v 1.5 1995/01/15 06:43:52 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdio.h>
+
+#include <err.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
 #include "extern.h"
 
 void usage __P((void));
@@ -62,27 +65,32 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int optind;
 	u_int32_t len, val;
 	register int ch, fd, rval;
 	char *fn;
 	int (*cfncn) __P((int, u_int32_t *, u_int32_t *));
 	void (*pfncn) __P((char *, u_int32_t, u_int32_t));
+	extern char *__progname;
 
-	cfncn = crc;
-	pfncn = pcrc;
-	while ((ch = getopt(argc, argv, "o:")) != EOF)
+	if (!strcmp(__progname, "sum")) {
+		cfncn = csum1;
+		pfncn = psum1;
+	} else {
+		cfncn = crc;
+		pfncn = pcrc;
+	}
+
+	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch(ch) {
 		case 'o':
-			if (*optarg == '1') {
+			if (!strcmp(optarg, "1")) {
 				cfncn = csum1;
 				pfncn = psum1;
-			} else if (*optarg == '2') {
+			} else if (!strcmp(optarg, "2")) {
 				cfncn = csum2;
 				pfncn = psum2;
 			} else {
-				(void)fprintf(stderr,
-				    "cksum: illegal argument to -o option\n");
+				warnx("illegal argument to -o option");
 				usage();
 			}
 			break;
@@ -100,15 +108,13 @@ main(argc, argv)
 		if (*argv) {
 			fn = *argv++;
 			if ((fd = open(fn, O_RDONLY, 0)) < 0) {
-				(void)fprintf(stderr, "cksum: %s: %s\n",
-				    fn, strerror(errno));
+				warn("%s", fn);
 				rval = 1;
 				continue;
 			}
 		}
 		if (cfncn(fd, &val, &len)) {
-			(void)fprintf(stderr, "cksum: %s: %s\n",
-			    fn ? fn : "stdin", strerror(errno));
+			warn("%s", fn ? fn : "stdin");
 			rval = 1;
 		} else
 			pfncn(fn, val, len);
@@ -120,6 +126,7 @@ main(argc, argv)
 void
 usage()
 {
+
 	(void)fprintf(stderr, "usage: cksum [-o 1 | 2] [file ...]\n");
 	exit(1);
 }
