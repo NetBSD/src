@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.17 2000/03/11 08:53:33 shin Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.18 2000/03/13 01:46:45 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -640,10 +640,7 @@ vrkiu_ioctl(scx, cmd, data, flag, p)
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
-		/*
-		 * XXX, fix me !
-		 */
-		*(int *)data = WSKBD_TYPE_PC_XT;
+		*(int *)data = WSKBD_TYPE_HPC_KBD;
 		return 0;
 	case WSKBDIO_SETLEDS:
 		DPRINTF(("%s(%d): no LED\n", __FILE__, __LINE__));
