@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_le.c	7.6 (Berkeley) 5/8/91
- *	$Id: if_le.c,v 1.14 1994/07/07 01:31:00 mycroft Exp $
+ *	$Id: if_le.c,v 1.15 1994/07/10 17:53:12 mycroft Exp $
  */
 
 #include "le.h"
@@ -391,89 +391,6 @@ leinit(sc)
 }
 
 /*
- * Setup output on interface.
- * Get another datagram to send off of the interface queue, and map it to the
- * interface before starting the output.
- * Called only at splimp or interrupt level.
- */
-int
-lestart(ifp)
-	struct ifnet *ifp;
-{
-	register struct le_softc *sc = &le_softc[ifp->if_unit];
-	struct mbuf *m0, *m;
-	u_char *buffer;
-	int len;
-	int i;
-	struct mds *cdm;
-
-	if ((sc->sc_arpcom.ac_if.if_flags ^ IFF_RUNNING) &
-	    (IFF_RUNNING | IFF_OACTIVE))
-		return;
-
-outloop:
-	if (sc->sc_no_td >= NTBUF) {
-		sc->sc_arpcom.ac_if.if_flags |= IFF_OACTIVE;
-#ifdef LEDEBUG
-		if (sc->sc_debug)
-			printf("no_td = %x, last_td = %x\n", sc->sc_no_td,
-			    sc->sc_last_td);
-#endif
-		return;
-	}
-
-	cdm = &sc->sc_td[sc->sc_last_td];
-#if 0 /* XXX redundant */
-	if (cdm->flags & LE_OWN)
-		return;
-#endif
-	
-	IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
-	if (!m)
-		return;
-
-	++sc->sc_no_td;
-
-	/*
-	 * Copy the mbuf chain into the transmit buffer.
-	 */
-	buffer = sc->sc_tbuf + (BUFSIZE * sc->sc_last_td);
-	len = 0;
-	for (m0 = m; m; m = m->m_next) {
-		bcopy(mtod(m, caddr_t), buffer, m->m_len);
-		buffer += m->m_len;
-		len += m->m_len;
-	}
-
-#if NBPFILTER > 0
-	if (sc->sc_arpcom.ac_if.if_bpf)
-		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m0);
-#endif
-
-	m_freem(m0);
-	len = max(len, ETHER_MIN_LEN);
-
-	/*
-	 * Init transmit registers, and set transmit start flag.
-	 */
-	cdm->bcnt = -len;
-	cdm->mcnt = 0;
-	cdm->flags |= LE_OWN | LE_STP | LE_ENP;
-
-#ifdef LEDEBUG
-	if (sc->sc_debug)
-		xmit_print(sc, sc->sc_last_td);
-#endif
-		
-	lewrcsr(sc, 0, LE_INEA | LE_TDMD);
-
-	/* possible more packets */
-	if (++sc->sc_last_td >= NTBUF)
-		sc->sc_last_td = 0;
-	goto outloop;
-}
-
-/*
  * Controller interrupt.
  */
 int
@@ -558,6 +475,99 @@ out:
 #define NEXTTDS \
 	if (++tmd == NTBUF) tmd=0, cdm=sc->sc_td; else ++cdm
 	
+/*
+ * Setup output on interface.
+ * Get another datagram to send off of the interface queue, and map it to the
+ * interface before starting the output.
+ * Called only at splimp or interrupt level.
+ */
+int
+lestart(ifp)
+	struct ifnet *ifp;
+{
+	register struct le_softc *sc = &le_softc[ifp->if_unit];
+	register int tmd;
+	struct mds *cdm;
+	struct mbuf *m0, *m;
+	u_char *buffer;
+	int len;
+
+	if ((sc->sc_arpcom.ac_if.if_flags & (IFF_RUNNING | IFF_OACTIVE)) !=
+	    IFF_RUNNING)
+		return;
+
+	tmd = sc->sc_last_td;
+	cdm = &sc->sc_td[tmd];
+
+	for (;;) {
+		if (sc->sc_no_td >= NTBUF) {
+			sc->sc_arpcom.ac_if.if_flags |= IFF_OACTIVE;
+#ifdef LEDEBUG
+			if (sc->sc_debug)
+				printf("no_td = %d, last_td = %d\n", sc->sc_no_td,
+				    sc->sc_last_td);
+#endif
+			break;
+		}
+
+#ifdef LEDEBUG
+		if (cdm->flags & LE_OWN) {
+			sc->sc_arpcom.ac_if.if_flags |= IFF_OACTIVE;
+			printf("missing buffer, no_td = %d, last_td = %d\n",
+			    sc->sc_no_td, sc->sc_last_td);
+		}
+#endif
+
+		IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
+		if (!m)
+			break;
+
+		++sc->sc_no_td;
+
+		/*
+		 * Copy the mbuf chain into the transmit buffer.
+		 */
+		buffer = sc->sc_tbuf + (BUFSIZE * sc->sc_last_td);
+		len = 0;
+		for (m0 = m; m; m = m->m_next) {
+			bcopy(mtod(m, caddr_t), buffer, m->m_len);
+			buffer += m->m_len;
+			len += m->m_len;
+		}
+
+#ifdef LEDEBUG
+		if (len > ETHER_MAX_LEN)
+			printf("packet length %d\n", len);
+#endif
+
+#if NBPFILTER > 0
+		if (sc->sc_arpcom.ac_if.if_bpf)
+			bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m0);
+#endif
+
+		m_freem(m0);
+		len = max(len, ETHER_MIN_LEN);
+
+		/*
+		 * Init transmit registers, and set transmit start flag.
+		 */
+		cdm->bcnt = -len;
+		cdm->mcnt = 0;
+		cdm->flags = LE_OWN | LE_STP | LE_ENP;
+
+#ifdef LEDEBUG
+		if (sc->sc_debug)
+			xmit_print(sc, sc->sc_last_td);
+#endif
+		
+		lewrcsr(sc, 0, LE_INEA | LE_TDMD);
+
+		NEXTTDS;
+	}
+
+	sc->sc_last_td = tmd;
+}
+
 void
 letint(unit)
 	int unit;
@@ -650,7 +660,7 @@ lerint(unit)
 		} else if (cdm->flags & (LE_STP | LE_ENP) != (LE_STP | LE_ENP)) {
 			do {
 				cdm->mcnt = 0;
-				cdm->flags |= LE_OWN;
+				cdm->flags = LE_OWN;
 				NEXTRDS;
 			} while ((cdm->flags & (LE_OWN | LE_ERR | LE_STP | LE_ENP)) == 0);
 			sc->sc_last_rd = rmd;
@@ -670,7 +680,7 @@ lerint(unit)
 		}
 			
 		cdm->mcnt = 0;
-		cdm->flags |= LE_OWN;
+		cdm->flags = LE_OWN;
 		NEXTRDS;
 #ifdef LEDEBUG
 		if (sc->sc_debug)
