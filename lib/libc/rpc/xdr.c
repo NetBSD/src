@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)xdr.c 1.35 87/08/12";*/
 /*static char *sccsid = "from: @(#)xdr.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$Id: xdr.c,v 1.1 1993/10/07 07:30:23 cgd Exp $";
+static char *rcsid = "$Id: xdr.c,v 1.2 1994/08/09 00:50:30 jtc Exp $";
 #endif
 
 /*
@@ -253,7 +253,7 @@ xdr_char(xdrs, cp)
 bool_t
 xdr_u_char(xdrs, cp)
 	XDR *xdrs;
-	char *cp;
+	u_char *cp;
 {
 	u_int u;
 
