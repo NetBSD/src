@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.2 2003/01/17 23:10:29 thorpej Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.3 2003/10/04 05:57:51 junyoung Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
@@ -48,21 +48,21 @@
 	subl	$TF_PUSHSIZE,%esp	; \
 	movl	%gs,TF_GS(%esp)	; \
 	movl	%fs,TF_FS(%esp) ; \
+	movl	%eax,TF_EAX(%esp)	; \
 	movl	%es,TF_ES(%esp) ; \
 	movl	%ds,TF_DS(%esp) ; \
+	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
 	movl	%edi,TF_EDI(%esp)	; \
 	movl	%esi,TF_ESI(%esp)	; \
-	movl	%eax,TF_EAX(%esp)	; \
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
 	movl	%eax,%ds	; \
 	movl	%ebp,TF_EBP(%esp)	; \
 	movl	%eax,%es	; \
 	movl	%ebx,TF_EBX(%esp)	; \
 	movl	%eax,%gs	; \
-	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax	; \
 	movl	%edx,TF_EDX(%esp)	; \
-	movl	%eax,%fs	; \
+	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax	; \
 	movl	%ecx,TF_ECX(%esp)	; \
+	movl	%eax,%fs	; \
 	TLOG
 
 #define	INTRFASTEXIT \
