@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.44 1999/09/15 12:30:59 augustss Exp $
+$NetBSD: usbdevs,v 1.45 1999/09/15 13:57:09 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,9 +50,9 @@ vendor LEXMARK		0x043d	Lexmark International Inc.
 vendor NANAO		0x0440	NANAO Corp.
 vendor THRUST		0x044f	Thrustmaster
 vendor TI		0x0451  Texas Instruments
-vendor GENIUS		0x0458	KYE Systems Corp.
+vendor KYE		0x0458	KYE Systems Corp.
 vendor MICROSOFT	0x045e	Microsoft
-vendor KENSINGTON	0x0461	Primax Electronics
+vendor PRIMAX		0x0461	Primax Electronics
 vendor CHERRY		0x046a	Cherry Mikroschalter GmbH
 vendor LOGITECH		0x046d	Logitech Inc.
 vendor BTC		0x046e	Behavior Tech. Computer
@@ -68,7 +68,7 @@ vendor KONICA		0x04c8	Konica Corp.
 vendor SHUTTLE		0x04e6	Shuttle Technology
 vendor CHICONY		0x04f2	Chicony Electronics Co., Ltd.
 vendor BROTHER		0x04f9	Brother Industries Corp.
-vendor JAZZ		0x04fa	Dallas Semiconductor
+vendor DALLAS		0x04fa	Dallas Semiconductor
 vendor BELKIN		0x050d	Belkin Components
 vendor KAWATSU		0x050f	Kawatsu Semiconductor, Inc.
 vendor APC		0x051d	American Power Conversion
@@ -80,7 +80,7 @@ vendor PERACOM		0x0565	Peracom Networks Inc.
 vendor WACOM		0x056a	WACOM Corp. Ltd.
 vendor ETEK		0x056c	e-TEK Labs
 vendor EIZO		0x056d	EIZO
-vendor AGILER		0x056e	Elecom Corp. Ltd.
+vendor ELECOM		0x056e	Elecom Corp. Ltd.
 vendor ROCKFIRE		0x0583	Rockfire
 vendor IOMEGA		0x059b	Iomega Corp.
 vendor OMNIVISION	0x05a9	OmniVision
@@ -128,18 +128,18 @@ product THRUST FUSION_PAD	0xa0a3	Fusion Digital Gamepad
 /* Texas Intel products */
 product TI UTUSB41		0x1446	UT-USB41 hub
 
-/* Genius products */
-product GENIUS NICHE		0x0001	Niche mouse
-product GENIUS FLIGHT2000	0x1004	Flight 2000 joystick
+/* (KYE) Genius products */
+product KYE NICHE		0x0001	Niche mouse
+product KYE FLIGHT2000		0x1004	Flight 2000 joystick
 
 /* Microsoft products */
 product MICROSOFT INTELLIMOUSE	0x0009	IntelliMouse
 product MICROSOFT NATURALKBD	0x000b	Natural Keyboard Elite
 product MICROSOFT DDS80		0x0014	Digital Sound System 80
 
-/* Kensington products */
-product KENSINGTON COMFORT	0x4d01	Comfort
-product KENSINGTON MOUSEINABOX	0x4d02	Mouse-in-a-Box
+/* Primax products */
+product PRIMAX COMFORT		0x4d01	Comfort
+product PRIMAX MOUSEINABOX	0x4d02	Mouse-in-a-Box
 
 /* Cherry products */
 product CHERRY MY3000KBD	0x0001	My3000 keyboard
@@ -187,8 +187,8 @@ product CHICONY KB8933		0x0001	KB-8933 keyboard
 /* Brother Industries products */
 product	BROTHER HL1050		0x0002	HL-1050 laser printer
 
-/* Jazz products */
-product JAZZ J6502		0x4201	J-6502 speakers
+/* Dallas Semiconductor products */
+product DALLAS J6502		0x4201	J-6502 speakers
 
 /* Kawatsu products */
 product KAWATSU MH4000P		0x0003	MiniHub 4000P
@@ -222,7 +222,7 @@ product EIZO HUB		0x0000	hub
 product EIZO MONITOR		0x0001	monitor
 
 /* Agiler products */
-product AGILER MOUSE29UO	0x0002	mouse 29UO
+product ELECOM MOUSE29UO	0x0002	mouse 29UO
 
 /* Rockfire products */
 product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB
