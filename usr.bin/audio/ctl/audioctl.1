@@ -1,4 +1,4 @@
-.\" $NetBSD: audioctl.1,v 1.2 1997/05/15 16:38:34 augustss Exp $
+.\" $NetBSD: audioctl.1,v 1.3 1997/08/18 21:35:26 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -70,8 +70,8 @@ attempts to set the specified variables to the given values.
 .Pp
 The
 .Fl f
-flag can be used to give an alternative sound device, the default is
-.Pa /dev/sound.
+flag can be used to give an alternative audio control device, the default is
+.Pa /dev/audioctl .
 .Pp
 The
 .Fl n
@@ -88,8 +88,8 @@ like this
 or
 .Dl (audioctl -f /dev/stdout -w blocksize=1024; cat file.au) > /dev/audio
 .Sh FILES
-.Bl -tag -width /dev/sound
-.It Pa /dev/sound
+.Bl -tag -width /dev/audioctl
+.It Pa /dev/audioctl
 audio device
 .El
 .Sh SEE ALSO
