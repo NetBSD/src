@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.86 2003/09/05 06:55:46 wiz Exp $
+.\"	$NetBSD: make.1,v 1.87 2003/09/10 08:44:31 jmmv Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd September 4, 2003
+.Dd September 10, 2003
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -116,6 +116,8 @@ Print debugging information about archive searching and caching.
 Print debugging information about conditional evaluation.
 .It Ar d
 Print debugging information about directory searching and caching.
+.It Ar f
+Print debugging information about loop evaluation.
 .It Ar "g1"
 Print the input graph before making anything.
 .It Ar "g2"
