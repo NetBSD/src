@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930var.h,v 1.1 1995/04/25 20:05:38 pk Exp $ */
+/*	$NetBSD: amd7930var.h,v 1.2 1995/05/04 19:43:32 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,6 +61,7 @@ struct auio {
 	u_char	*au_rend;		/* end of record data */
 	u_char	*au_pdata;		/* play data */
 	u_char	*au_pend;		/* end of play data */
+	struct	evcnt au_intrcnt;	/* statistics */
 };
 
 /*
