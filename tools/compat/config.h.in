@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h.in,v 1.10 2002/02/26 22:29:38 tv Exp $	*/
+/*	$NetBSD: config.h.in,v 1.11 2002/03/07 18:28:46 tv Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_CONFIG_H__
 #define	__NETBSD_COMPAT_CONFIG_H__
@@ -80,6 +80,10 @@
 /* Typedefs that might be missing. */
 
 #undef size_t
+#undef uint8_t
+#undef uint16_t
+#undef uint32_t
+#undef uint64_t
 #undef u_int8_t
 #undef u_int16_t
 #undef u_int32_t
