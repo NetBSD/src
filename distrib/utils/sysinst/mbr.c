@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.20 1999/09/04 19:49:23 soren Exp $ */
+/*	$NetBSD: mbr.c,v 1.21 2000/03/14 22:42:48 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -236,7 +236,7 @@ edit_mbr(partition)
 		int numfreebsd, freebsdpart;	/* dual-boot */
 
 		/* Ask for sizes, which partitions, ... */
-		ask_sizemult();
+		ask_sizemult(bcylsize);
 		bsdpart = freebsdpart = -1;
 		activepart = -1;
 		for (i = 0; i<4; i++)
