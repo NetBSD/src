@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.6 2003/02/23 19:30:13 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.7 2003/02/23 19:35:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -74,11 +74,6 @@
 #include <fs/smbfs/smbfs.h>
 #include <fs/smbfs/smbfs_node.h>
 #include <fs/smbfs/smbfs_subr.h>
-
-#ifdef __NetBSD__
-#define PROC_LOCK(x) 
-#define PROC_UNLOCK(x)
-#endif
 
 /*#define SMBFS_RWGENERIC*/
 
@@ -274,9 +269,7 @@ smbfs_writevnode(struct vnode *vp, struct uio *uiop,
 	if (uiop->uio_resid == 0)
 		return 0;
 	if (p && uiop->uio_offset + uiop->uio_resid > p->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
-		PROC_LOCK(p);
 		psignal(p, SIGXFSZ);
-		PROC_UNLOCK(p);
 		return EFBIG;
 	}
 	smb_makescred(&scred, p, cred);
