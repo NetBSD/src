@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.2 2000/06/29 07:44:04 mrg Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.3 2000/09/04 23:11:42 tsubai Exp $	*/
 
 /*
  * Mach Operating System
@@ -59,10 +59,6 @@ db_read_bytes(addr, size, data)
 		*data++ = *src++;
 }
 
-#if !defined(PMAP_NEW)
-pt_entry_t *pmap_pte __P((pmap_t, vaddr_t));
-#endif
-
 /*
  * Write bytes to kernel address space for debugger.
  */
@@ -74,38 +70,8 @@ db_write_bytes(addr, size, data)
 {
 	register char	*dst;
 
-	register pt_entry_t *ptep0 = 0;
-	pt_entry_t	oldmap0 = { 0 };
-	vaddr_t		addr1;
-	register pt_entry_t *ptep1 = 0;
-	pt_entry_t	oldmap1 = { 0 };
-	extern char	etext;
-
-	if (addr >= VM_MIN_KERNEL_ADDRESS &&
-	    addr < (vaddrt_t)&etext) {
-		ptep0 = pmap_pte(pmap_kernel(), addr);
-		oldmap0 = *ptep0;
-		*(int *)ptep0 |= /* INTEL_PTE_WRITE */ PG_RW;
-
-		addr1 = sh3_trunc_page(addr + size - 1);
-		if (sh3_trunc_page(addr) != addr1) {
-			/* data crosses a page boundary */
-			ptep1 = pmap_pte(pmap_kernel(), addr1);
-			oldmap1 = *ptep1;
-			*(int *)ptep1 |= /* INTEL_PTE_WRITE */ PG_RW;
-		}
-		pmap_update();
-	}
-
 	dst = (char *)addr;
 
 	while (size-- > 0)
 		*dst++ = *data++;
-
-	if (ptep0) {
-		*ptep0 = oldmap0;
-		if (ptep1)
-			*ptep1 = oldmap1;
-		pmap_update();
-	}
 }
