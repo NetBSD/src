@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.13 2000/05/28 19:30:19 dante Exp $	*/
+/*	$NetBSD: config.c,v 1.14 2000/05/29 21:10:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)config.c	8.8 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: config.c,v 1.13 2000/05/28 19:30:19 dante Exp $");
+__RCSID("$NetBSD: config.c,v 1.14 2000/05/29 21:10:42 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -215,41 +215,6 @@ addentry(tp, newent, head)
 		TAILQ_INSERT_HEAD(&tp->list, ep, q);
 	else
 		TAILQ_INSERT_TAIL(&tp->list, ep, q);
-}
-
-/*
- * removelist() and renamelist() are used by catman(8)
- */
-void
-removelist(name)
-	const char *name;
-{
-	TAG *tp;
-	ENTRY *ep;
-
-	tp = getlist(name);
-	while ((ep = tp->list.tqh_first) != NULL) {
-		free(ep->s);
-		TAILQ_REMOVE(&tp->list, ep, q);
-	}
-	free(tp->s);
-	TAILQ_REMOVE(&head, tp, q);
-
-}
-
-TAG *
-renamelist(oldname, newname)
-	const char *oldname;
-	const char *newname;
-{
-	TAG *tp;
-
-	if(!(tp = getlist(oldname)))
-		return (NULL);
-	free(tp->s);
-	if(!(tp->s = strdup(newname)))
-		err(1, "malloc");
-	return (tp);
 }
 
 #ifdef MANDEBUG
