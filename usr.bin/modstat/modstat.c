@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: modstat.c,v 1.6 1995/06/27 00:18:19 jtc Exp $
+ *	$Id: modstat.c,v 1.6.6.1 1996/12/11 00:44:43 mrg Exp $
  */
 
 #include <stdio.h>
@@ -73,7 +73,7 @@ dostat(devfd, modnum, modname)
 	struct lmc_stat	sbuf;
 
 	if (modname != NULL)
-		strcpy(sbuf.name, modname);
+		strncpy(sbuf.name, modname, sizeof sbuf.name);
 
 	sbuf.id = modnum;
 
