@@ -1,4 +1,4 @@
-/*	$NetBSD: getc.c,v 1.7 1998/01/09 08:08:25 perry Exp $	*/
+/*	$NetBSD: getc.c,v 1.8 2001/03/31 11:37:51 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -51,7 +51,8 @@ cs_init(sp, csp)
 {
 	int isempty;
 
-	if (db_eget(sp, csp->cs_lno, (char **)&csp->cs_bp, &csp->cs_len, &isempty)) {
+	if (db_eget(sp, csp->cs_lno, (char **) &csp->cs_bp, &csp->cs_len,
+	    &isempty)) {
 		if (isempty)
 			msgq(sp, M_BERR, "177|Empty file");
 		return (1);
@@ -180,8 +181,8 @@ cs_prev(sp, csp)
 			csp->cs_flags = CS_SOF;
 			break;
 		}
-		if (db_get(sp,			/* The line should exist. */
-		    --csp->cs_lno, DBG_FATAL, (char **)&csp->cs_bp, &csp->cs_len)) {
+		if (db_get(sp, --csp->cs_lno,	/* The line should exist. */
+		    DBG_FATAL, (char **) &csp->cs_bp, &csp->cs_len)) {
 			++csp->cs_lno;
 			return (1);
 		}

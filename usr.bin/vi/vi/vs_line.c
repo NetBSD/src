@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_line.c,v 1.3 2000/10/18 01:42:12 tv Exp $	*/
+/*	$NetBSD: vs_line.c,v 1.4 2001/03/31 11:37:52 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)vs_line.c	10.18 (Berkeley) 5/13/96";
+static const char sccsid[] = "@(#)vs_line.c	10.19 (Berkeley) 9/26/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -140,9 +140,8 @@ vs_line(sp, smp, yp, xp)
 		if (O_ISSET(sp, O_NUMBER)) {
 			cols_per_screen -= O_NUMBER_LENGTH;
 			if ((!dne || smp->lno == 1) && skip_cols == 0) {
-				nlen = snprintf(cbuf,
-				    sizeof(cbuf), O_NUMBER_FMT,
-				    (unsigned long)smp->lno);
+				nlen = snprintf(cbuf, sizeof(cbuf),
+				    O_NUMBER_FMT, (unsigned long) smp->lno);
 				(void)gp->scr_addstr(sp, cbuf, nlen);
 			}
 		}
@@ -224,7 +223,9 @@ empty:					(void)gp->scr_addstr(sp,
 		offset_in_line = smp->c_sboff;
 		offset_in_char = smp->c_scoff;
 		p = &p[offset_in_line];
-		if (skip_cols > cols_per_screen)
+
+		/* Set cols_per_screen to 2nd and later line length. */
+		if (O_ISSET(sp, O_LEFTRIGHT) || skip_cols > cols_per_screen)
 			cols_per_screen = sp->cols;
 		goto display;
 	}
@@ -244,7 +245,9 @@ empty:					(void)gp->scr_addstr(sp,
 		smp->c_sboff = offset_in_line;
 		smp->c_scoff = offset_in_char;
 		p = &p[offset_in_line];
-		if (skip_cols > cols_per_screen)
+
+		/* Set cols_per_screen to 2nd and later line length. */
+		if (O_ISSET(sp, O_LEFTRIGHT) || skip_cols > cols_per_screen)
 			cols_per_screen = sp->cols;
 		goto display;
 	}
@@ -261,6 +264,9 @@ empty:					(void)gp->scr_addstr(sp,
 			if ((scno += chlen) >= skip_cols)
 				break;
 		}
+
+		/* Set cols_per_screen to 2nd and later line length. */
+		cols_per_screen = sp->cols;
 
 		/* Put starting info for this line in the cache. */
 		if (scno != skip_cols) {
@@ -283,10 +289,7 @@ empty:					(void)gp->scr_addstr(sp,
 				continue;
 			scno -= cols_per_screen;
 
-			/*
-			 * Reset the cols_per_screen to second and subsequent
-			 * line length.
-			 */
+			/* Set cols_per_screen to 2nd and later line length. */
 			cols_per_screen = sp->cols;
 
 			/*
@@ -506,7 +509,7 @@ vs_number(sp)
 
 		(void)gp->scr_move(sp, smp - HMAP, 0);
 		len = snprintf(nbuf, sizeof(nbuf), O_NUMBER_FMT,
-		    (unsigned long)smp->lno);
+		    (unsigned long) smp->lno);
 		(void)gp->scr_addstr(sp, nbuf, len);
 	}
 	(void)gp->scr_move(sp, oldy, oldx);

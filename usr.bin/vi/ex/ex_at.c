@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_at.c,v 1.7 1998/01/09 08:07:41 perry Exp $	*/
+/*	$NetBSD: ex_at.c,v 1.8 2001/03/31 11:37:50 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_at.c	10.10 (Berkeley) 4/27/96";
+static const char sccsid[] = "@(#)ex_at.c	10.12 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -110,16 +110,15 @@ ex_at(sp, cmdp)
 	    tp != (void *)&cbp->textq; tp = tp->q.cqe_prev)
 		len += tp->len + 1;
 
-	/* See ex.h for a discussion of SEARCH_TERMINATION. */
-	MALLOC_RET(sp, ecp->cp, char *, len * 2 + SEARCH_TERMINATION);
+	MALLOC_RET(sp, ecp->cp, char *, len * 2);
 	ecp->o_cp = ecp->cp;
 	ecp->o_clen = len;
 	ecp->cp[len] = '\0';
 
 	/* Copy the buffer into the command space. */
-	for (p = ecp->cp + len + SEARCH_TERMINATION, tp = cbp->textq.cqh_last;
+	for (p = ecp->cp + len, tp = cbp->textq.cqh_last;
 	    tp != (void *)&cbp->textq; tp = tp->q.cqe_prev) {
-		memmove(p, tp->lb, tp->len);
+		memcpy(p, tp->lb, tp->len);
 		p += tp->len;
 		*p++ = '\n';
 	}

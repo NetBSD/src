@@ -1,28 +1,34 @@
-#	$NetBSD: Makefile,v 1.2 1998/01/09 08:07:25 perry Exp $
+#	$NetBSD: Makefile,v 1.3 2001/03/31 11:37:48 aymeric Exp $
 #
-#	@(#)Makefile	8.18 (Berkeley) 3/27/96
+#	@(#)Makefile	8.20 (Berkeley) 8/18/96
 
-DIR=	usd/13.viref
-SRCS=	vi.ref ex.cmd.roff set.opt.roff vi.cmd.roff ref.so
-MACROS=	-me
-CLEANFILES+=vi.ref.ps vi.ref.txt index index.so
+DIR=		usd/13.viref
+SRCS=		vi.ref ex.cmd.roff set.opt.roff vi.cmd.roff ref.so
+MACROS=		-me
+CLEANFILES+=	vi.ref.txt vi.ref.ps index index.so
 
-paper.ps: vi.ref index.so
-	soelim vi.ref | ${TBL} | ${ROFF} > ${.TARGET}
-	rm -f vi.ref.ps && mv $@ vi.ref.ps
+all: vi.ref.txt vi.ref.ps
 
 vi.ref.txt: vi.ref index.so
 	soelim vi.ref | ${TBL} | groff ${MACROS} -Tascii > $@
+	rm -f index
+	chmod 444 $@
+
+vi.ref.ps: vi.ref index.so
+	soelim vi.ref | ${TBL} | ${ROFF} ${MACROS} > $@
+	rm -f index
+	chmod 444 $@
 
 index.so: vi.ref
 	# Build index.so, side-effect of building the paper.
-	soelim vi.ref | ${TBL} | ${ROFF} > /dev/null
+	soelim vi.ref | ${TBL} | ${ROFF} ${MACROS} > /dev/null
 	sed -e 's/MINUSSIGN/\\-/' \
 	    -e 's/DOUBLEQUOTE/""/' \
 	    -e "s/SQUOTE/'/" \
 	    -e 's/ /__SPACE/g' < index | \
 	sort -u '-t	' +0 -1 +1n | awk -f merge.awk | \
-	sed -e 's/__SPACE/ /g' > index.so
+	sed -e 's/__SPACE/ /g' > $@
 	rm -f index
+	chmod 444 $@
 
 .include <bsd.doc.mk>

@@ -1,4 +1,4 @@
-.\"	$NetBSD: vi.apwh.ms,v 1.2 1998/01/09 08:07:32 perry Exp $
+.\"	$NetBSD: vi.apwh.ms,v 1.3 2001/03/31 11:37:49 aymeric Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,8 +31,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)vi.apwh.ms	8.1 (Berkeley) 6/8/93
+.\"	@(#)vi.apwh.ms	8.2 (Berkeley) 8/18/96
 .\"
+.nr LL 6.5i
+.nr FL 6.5i
 .TL
 Vi Command & Function Reference
 .AU CB 2675

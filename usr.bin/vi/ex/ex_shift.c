@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_shift.c,v 1.7 1998/01/09 08:08:03 perry Exp $	*/
+/*	$NetBSD: ex_shift.c,v 1.8 2001/03/31 11:37:50 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_shift.c	10.10 (Berkeley) 3/6/96";
+static const char sccsid[] = "@(#)ex_shift.c	10.11 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -148,7 +148,7 @@ shift(sp, cmdp, rl)
 			*tbp++ = ' ';
 
 		/* Add the original line. */
-		memmove(tbp, p + oldidx, len - oldidx);
+		memcpy(tbp, p + oldidx, len - oldidx);
 
 		/* Set the replacement line. */
 		if (db_set(sp, from, bp, (tbp + (len - oldidx)) - bp)) {

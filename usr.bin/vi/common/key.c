@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.2 1998/01/09 08:06:41 perry Exp $	*/
+/*	$NetBSD: key.c,v 1.3 2001/03/31 11:37:46 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)key.c	10.30 (Berkeley) 4/3/96";
+static const char sccsid[] = "@(#)key.c	10.33 (Berkeley) 9/24/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -563,7 +563,7 @@ retry:	istimeout = remap_cnt = 0;
 		 * If we're reading new characters, check any scripting
 		 * windows for input.
 		 */
-		if (F_ISSET(gp, G_SCRIPT) && sscr_input(sp))
+		if (F_ISSET(gp, G_SCRWIN) && sscr_input(sp))
 			return (1);
 loop:		if (gp->scr_event(sp, argp,
 		    LF_ISSET(EC_INTERRUPT | EC_QUOTED | EC_RAW), timeout))
@@ -792,11 +792,11 @@ v_event_err(sp, evp)
 	case E_TIMEOUT:
 		msgq(sp, M_ERR, "286|Unexpected timeout event");
 		break;
+	case E_WRESIZE:
+		msgq(sp, M_ERR, "316|Unexpected resize event");
+		break;
 	case E_WRITE:
 		msgq(sp, M_ERR, "287|Unexpected write event");
-		break;
-	case E_WRITEQUIT:
-		msgq(sp, M_ERR, "288|Unexpected write-and-quit event");
 		break;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_funcs.c,v 1.3 2000/05/31 19:49:23 jdc Exp $	*/
+/*	$NetBSD: cl_funcs.c,v 1.4 2001/03/31 11:37:45 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)cl_funcs.c	10.40 (Berkeley) 5/16/96";
+static const char sccsid[] = "@(#)cl_funcs.c	10.50 (Berkeley) 9/24/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -475,6 +475,17 @@ cl_refresh(sp, repaint)
 	SCR *sp;
 	int repaint;
 {
+	CL_PRIVATE *clp;
+
+	clp = CLP(sp);
+
+	/*
+	 * If we received a killer signal, we're done, there's no point
+	 * in refreshing the screen.
+	 */
+	if (clp->killersig)
+		return (0);
+
 	/*
 	 * If repaint is set, the editor is telling us that we don't know
 	 * what's on the screen, so we have to repaint from scratch.
@@ -492,13 +503,41 @@ cl_refresh(sp, repaint)
  * cl_rename --
  *	Rename the file.
  *
- * PUBLIC: int cl_rename __P((SCR *));
+ * PUBLIC: int cl_rename __P((SCR *, char *, int));
  */
 int
-cl_rename(sp)
+cl_rename(sp, name, on)
 	SCR *sp;
+	char *name;
+	int on;
 {
-	return (0);			/* Curses doesn't care. */
+	GS *gp;
+	CL_PRIVATE *clp;
+	char *ttype;
+
+	gp = sp->gp;
+	clp = CLP(sp);
+
+	ttype = OG_STR(gp, GO_TERM);
+
+	/*
+	 * XXX
+	 * We can only rename windows for xterm.
+	 */
+	if (on) {
+		if (F_ISSET(clp, CL_RENAME_OK) &&
+		    !strncmp(ttype, "xterm", sizeof("xterm") - 1)) {
+			F_SET(clp, CL_RENAME);
+			(void)printf(XTERM_RENAME, name);
+			(void)fflush(stdout);
+		}
+	} else
+		if (F_ISSET(clp, CL_RENAME)) {
+			F_CLR(clp, CL_RENAME);
+			(void)printf(XTERM_RENAME, ttype);
+			(void)fflush(stdout);
+		}
+	return (0);
 }
 
 /*
@@ -535,7 +574,7 @@ cl_suspend(sp, allowedp)
 	 */
 	if (F_ISSET(sp, SC_EX)) { 
 		/* Save the terminal settings, and restore the original ones. */
-		if (F_ISSET(gp, G_STDIN_TTY)) {
+		if (F_ISSET(clp, CL_STDIN_TTY)) {
 			(void)tcgetattr(STDIN_FILENO, &t);
 			(void)tcsetattr(STDIN_FILENO,
 			    TCSASOFT | TCSADRAIN, &clp->orig);
@@ -547,7 +586,7 @@ cl_suspend(sp, allowedp)
 		/* Time passes ... */
 
 		/* Restore terminal settings. */
-		if (F_ISSET(gp, G_STDIN_TTY))
+		if (F_ISSET(clp, CL_STDIN_TTY))
 			(void)tcsetattr(STDIN_FILENO, TCSASOFT | TCSADRAIN, &t);
 		return (0);
 	}
@@ -578,6 +617,9 @@ cl_suspend(sp, allowedp)
 	/* Restore the cursor keys to normal mode. */
 	(void)keypad(stdscr, FALSE);
 
+	/* Restore the window name. */
+	(void)cl_rename(sp, NULL, 0);
+
 #ifdef HAVE_BSD_CURSES
 	(void)cl_attr(sp, SA_ALTERNATE, 0);
 #else
@@ -597,13 +639,27 @@ cl_suspend(sp, allowedp)
 
 	/* Time passes ... */
 
+	/*
+	 * If we received a killer signal, we're done.  Leave everything
+	 * unchanged.  In addition, the terminal has already been reset
+	 * correctly, so leave it alone.
+	 */
+	if (clp->killersig) {
+		F_CLR(clp, CL_SCR_EX_INIT | CL_SCR_VI_INIT);
+		return (0);
+	}
+
 #ifdef HAVE_BSD_CURSES
 	/* Restore terminal settings. */
-	if (F_ISSET(gp, G_STDIN_TTY))
+	if (F_ISSET(clp, CL_STDIN_TTY))
 		(void)tcsetattr(STDIN_FILENO, TCSASOFT | TCSADRAIN, &t);
 
 	(void)cl_attr(sp, SA_ALTERNATE, 1);
 #endif
+
+	/* Set the window name. */
+	(void)cl_rename(sp, sp->frp->name, 1);
+
 	/* Put the cursor keys into application mode. */
 	(void)keypad(stdscr, TRUE);
 
@@ -630,8 +686,8 @@ void
 cl_usage()
 {
 #define	USAGE "\
-usage: ex [-eFRrsv] [-c command] [-t tag] [-w size] [file ...]\n\
-usage: vi [-eFlRrv] [-c command] [-t tag] [-w size] [file ...]\n"
+usage: ex [-eFRrSsv] [-c command] [-t tag] [-w size] [file ...]\n\
+usage: vi [-eFlRrSv] [-c command] [-t tag] [-w size] [file ...]\n"
 	(void)fprintf(stderr, "%s", USAGE);
 #undef	USAGE
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.9 2000/05/31 19:49:26 jdc Exp $	*/
+/*	$NetBSD: vi.c,v 1.10 2001/03/31 11:37:52 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)vi.c	10.47 (Berkeley) 5/18/96";
+static const char sccsid[] = "@(#)vi.c	10.57 (Berkeley) 10/13/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -41,7 +41,7 @@ static gcret_t	v_cmd __P((SCR *, VICMD *, VICMD *, VICMD *, int *, int *));
 static int	v_count __P((SCR *, ARG_CHAR_T, u_long *));
 static void	v_dtoh __P((SCR *));
 static int	v_init __P((SCR *));
-static gcret_t	v_key __P((SCR *, int, EVENT *, u_int));
+static gcret_t	v_key __P((SCR *, int, EVENT *, u_int32_t));
 static int	v_keyword __P((SCR *));
 static int	v_motion __P((SCR *, VICMD *, VICMD *, int *));
 
@@ -72,7 +72,6 @@ vi(spp)
 	SCR *next, *sp;
 	VICMD cmd, *vp;
 	VI_PRIVATE *vip;
-	u_int flags;
 	int comcount, mapped, rval;
 
 	/* Get the first screen. */
@@ -89,11 +88,13 @@ vi(spp)
 	/* Initialize the vi screen. */
 	if (v_init(sp))
 		return (1);
-	(void)gp->scr_attr(sp, SA_ALTERNATE, 1);
+
+	/* Set the focus. */
+	(void)sp->gp->scr_rename(sp, sp->frp->name, 1);
 
 	for (vip = VIP(sp), rval = 0;;) {
 		/* Resolve messages. */
-		if (!MAPPED_KEYS_WAITING(sp) && vs_resolve(sp))
+		if (!MAPPED_KEYS_WAITING(sp) && vs_resolve(sp, NULL, 0))
 			goto ret;
 
 		/*
@@ -263,10 +264,14 @@ gc_event:
 			if (next == NULL)
 				break;
 
-			/* Switch, and display a status line. */
+			/* Switch screens, change focus. */
 			sp = next;
 			vip = VIP(sp);
+			(void)sp->gp->scr_rename(sp, sp->frp->name, 1);
+
+			/* Don't trust the cursor. */
 			F_SET(vip, VIP_CUR_INVALID);
+
 			continue;
 		}
 
@@ -375,14 +380,14 @@ intr:			CLR_INTERRUPT(sp);
 
 			/*
 			 * If the current screen is still displayed, it will
-			 * want a new status line.
+			 * need a new status line.
 			 */
-			if (F_ISSET(sp, SC_STATUS) && vs_resolve(sp))
-				goto ret;
+			F_SET(sp, SC_STATUS);
 
-			/* Switch screens. */
+			/* Switch screens, change focus. */
 			sp = sp->nextdisp;
 			vip = VIP(sp);
+			(void)sp->gp->scr_rename(sp, sp->frp->name, 1);
 
 			/* Don't trust the cursor. */
 			F_SET(vip, VIP_CUR_INVALID);
@@ -392,8 +397,11 @@ intr:			CLR_INTERRUPT(sp);
 				return (1);
 		}
 
-		/* If the last command switched files, we don't care. */
-		F_CLR(sp, SC_FSWITCH);
+		/* If the last command switched files, change focus. */
+		if (F_ISSET(sp, SC_FSWITCH)) {
+			F_CLR(sp, SC_FSWITCH);
+			(void)sp->gp->scr_rename(sp, sp->frp->name, 1);
+		}
 
 		/* If leaving vi, return to the main editor loop. */
 		if (F_ISSET(gp, G_SRESTART) || F_ISSET(sp, SC_EX)) {
@@ -578,12 +586,6 @@ v_cmd(sp, dp, vp, ismotion, comcountp, mappedp)
 		if (dp == NULL)
 			goto usage;
 
-		/* A repeatable command must have been executed. */
-		if (!F_ISSET(dp, VC_ISDOT)) {
-			msgq(sp, M_ERR, "208|No command to repeat");
-			return (GC_ERR);
-		}
-
 		/*
 		 * !!!
 		 * If a '.' is immediately entered after an undo command, we
@@ -595,6 +597,12 @@ v_cmd(sp, dp, vp, ismotion, comcountp, mappedp)
 			vp->kp = &vikeys['u'];
 			F_SET(vp, VC_ISDOT);
 			return (GC_OK);
+		}
+
+		/* Otherwise, a repeatable command must have been executed. */
+		if (!F_ISSET(dp, VC_ISDOT)) {
+			msgq(sp, M_ERR, "208|No command to repeat");
+			return (GC_ERR);
 		}
 
 		/* Set new count/buffer, if any, and return. */
@@ -632,7 +640,7 @@ v_cmd(sp, dp, vp, ismotion, comcountp, mappedp)
 	/*
 	 * Special case: '[', ']' and 'Z' commands.  Doesn't the fact that
 	 * the *single* characters don't mean anything but the *doubled*
-	 * characters do just frost your shorts?
+	 * characters do, just frost your shorts?
 	 */
 	if (vp->key == '[' || vp->key == ']' || vp->key == 'Z') {
 		/*
@@ -640,8 +648,14 @@ v_cmd(sp, dp, vp, ismotion, comcountp, mappedp)
 		 * cancelled by <escape>, the terminal was beeped instead.
 		 * POSIX.2-1992 probably didn't notice, and requires that
 		 * they be cancelled instead of beeping.  Seems fine to me.
+		 *
+		 * Don't set the EC_MAPCOMMAND flag, apparently ] is a popular
+		 * vi meta-character, and we don't want the user to wait while
+		 * we time out a possible mapping.  This *appears* to match
+		 * historic vi practice, but with mapping characters, you Just
+		 * Never Know.
 		 */
-		KEY(key, EC_MAPCOMMAND);
+		KEY(key, 0);
 
 		if (vp->key != key) {
 usage:			if (ismotion == NULL)
@@ -920,13 +934,17 @@ static int
 v_init(sp)
 	SCR *sp;
 {
+	GS *gp;
 	VI_PRIVATE *vip;
 
+	gp = sp->gp;
 	vip = VIP(sp);
 
 	/* Switch into vi. */
-	if (sp->gp->scr_screen(sp, SC_VI))
+	if (gp->scr_screen(sp, SC_VI))
 		return (1);
+	(void)gp->scr_attr(sp, SA_ALTERNATE, 1);
+
 	F_CLR(sp, SC_EX | SC_SCR_EX);
 	F_SET(sp, SC_VI);
 
@@ -1198,9 +1216,10 @@ v_key(sp, command_events, evp, ec_flags)
 			if (vs_repaint(sp, evp))
 				return (GC_FATAL);
 			break;
+		case E_WRESIZE:
+			return (GC_ERR);
 		case E_QUIT:
 		case E_WRITE:
-		case E_WRITEQUIT:
 			if (command_events)
 				return (GC_EVENT);
 			/* FALLTHROUGH */

@@ -1,14 +1,19 @@
-#	$NetBSD: Makefile,v 1.3 2001/01/22 17:48:27 itojun Exp $
+#	$NetBSD: Makefile,v 1.4 2001/03/31 11:37:44 aymeric Exp $
 #
-#	@(#)Makefile	8.23 (Berkeley) 5/2/96
+#	@(#)Makefile	8.29 (Berkeley) 10/19/96
 
-CAT=	dutch english german ru_RU.KOI8-R swedish
-FILES=	../cl/*.c ../common/*.c ../ex/*.c ../perl_api/*.c ../tcl_api/*.c \
-	../tk/*.c ../vi/*.c
+CAT=		dutch english french german ru_RU.KOI8-R spanish swedish
+VI_FILES=	../cl/*.c ../common/*.c ../ex/*.c ../vi/*.c
 
-all: dump ${CAT}
+HOSTPROG=	dump
+SRCS=		dump.c
+MKMAN=		no
 
-${CAT}: english.base
+CLEANFILES+=	${CAT} english.base *.check __ck1 __ck2
+
+all: ${CAT}
+
+${CAT}: english.base ${HOSTPROG}
 	@echo "... $@";							\
 	rm -f $@;							\
 	sort -u $@.base |						\
@@ -36,8 +41,8 @@ ${CAT}: english.base
 		grep 'NOT LEGAL' $@;					\
 	fi
 
-CHK=	dutch.check english.check german.check ru_RU.KOI8-R.check \
-	swedish.check
+CHK=	dutch.check english.check french.check german.check \
+	ru_RU.KOI8-R.check spanish.check swedish.check
 check: ${CHK}
 ${CHK}: ${CAT}
 	@echo "... $@";							\
@@ -48,16 +53,15 @@ ${CHK}: ${CAT}
 			printf "%03d\n", nline;				\
 	}' < $$f.base;							\
 	echo =========================;					\
-	echo "MISSING ERROR MESSAGES (FIX!!!):";			\
-	awk '{print $$1}' < $$f.base > __ck1;				\
-	awk '{print $$1}' < english.base > __ck2;			\
-	join -v 2 __ck1 __ck2;						\
+	echo "MISSING ERROR MESSAGES (Please add!):";			\
+	awk '{print $$1}' < $$f.base | sort -u > __ck1;			\
+	awk '{print $$1}' < english.base | sort -u > __ck2;		\
+	comm -13 __ck1 __ck2;						\
 	echo =========================;					\
 	echo "Extra error messages (just delete them):";		\
-	join -v 1 __ck1 __ck2;						\
-	rm -f __ck1 __ck2;						\
+	comm -23 __ck1 __ck2;						\
 	echo =========================;					\
-	echo "MESSAGES WITH THE SAME MESSAGE ID's (FIX!!!):";		\
+	echo "MESSAGES WITH THE SAME MESSAGE ID's (FIX!):";		\
 	for j in							\
 	    `sed '/^$$/d' < $$f.base | sort -u |			\
 	    awk '{print $$1}' | uniq -d`; do				\
@@ -73,15 +77,12 @@ ${CHK}: ${CAT}
 	awk '$$1 != 1 { print $$0 }' | sort -n;				\
 	echo =========================) > $@
 
-english.base: dump ${FILES} #Makefile
-	./dump ${FILES} |\
+english.base: dump ${VI_FILES} #Makefile
+	./dump ${VI_FILES} |\
 	sed -e '/|/!d' \
 	    -e 's/|/ "/' \
-	    -e 's/^"//' |\
+	    -e 's/^"//' \
+	    -e 's/\\"/"/g' |\
 	sort -n > $@
 
-dump: dump.c
-	${CC} -O -o dump dump.c
-
-clean:
-	rm -f dump dump.o ${CAT} english.base *.check __ck1 __ck2
+.include <bsd.hostprog.mk>

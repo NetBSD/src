@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_args.c,v 1.7 1998/01/09 08:07:40 perry Exp $	*/
+/*	$NetBSD: ex_args.c,v 1.8 2001/03/31 11:37:49 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_args.c	10.14 (Berkeley) 4/27/96";
+static const char sccsid[] = "@(#)ex_args.c	10.16 (Berkeley) 7/13/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -101,6 +101,9 @@ ex_next(sp, cmdp)
 		if ((frp = file_add(sp, *sp->cargv)) == NULL)
 			return (1);
 		noargs = 0;
+
+		/* Display a file count with the welcome message. */
+		F_SET(sp, SC_STATUS_CNT);
 	} else {
 		if ((frp = file_add(sp, sp->cargv[1])) == NULL)
 			return (1);
@@ -150,6 +153,9 @@ ex_N_next(sp, cmdp)
 
 	/* The arguments are a replacement file list. */
 	new->cargv = new->argv = ex_buildargv(sp, cmdp, NULL);
+
+	/* Display a file count with the welcome message. */
+	F_SET(new, SC_STATUS_CNT);
 
 	/* Set up the switch. */
 	sp->nextdisp = new;
@@ -239,7 +245,9 @@ ex_rew(sp, cmdp)
 	    (FL_ISSET(cmdp->iflags, E_C_FORCE) ? FS_FORCE : 0)))
 		return (1);
 
-	F_SET(sp, SC_FSWITCH);
+	/* Switch and display a file count with the welcome message. */
+	F_SET(sp, SC_FSWITCH | SC_STATUS_CNT);
+
 	return (0);
 }
 

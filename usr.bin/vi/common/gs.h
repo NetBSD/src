@@ -1,4 +1,4 @@
-/*	$NetBSD: gs.h,v 1.3 2000/05/31 19:49:25 jdc Exp $	*/
+/*	$NetBSD: gs.h,v 1.4 2001/03/31 11:37:46 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -8,7 +8,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	@(#)gs.h	10.29 (Berkeley) 4/15/96
+ *	@(#)gs.h	10.34 (Berkeley) 9/24/96
  */
 
 #define	TEMPORARY_FILE_STRING	"/tmp"	/* Default temporary file name. */
@@ -40,15 +40,15 @@ struct _fref {
 	u_int16_t flags;
 };
 
-/* Action argument to scr_exadjust(). */
+/* Action arguments to scr_exadjust(). */
 typedef enum { EX_TERM_CE, EX_TERM_SCROLL } exadj_t;
 
-/* Screen attribute argument to scr_attr(). */
+/* Screen attribute arguments to scr_attr(). */
 typedef enum { SA_ALTERNATE, SA_INVERSE } scr_attr_t;
 
-/* Key type argument to scr_keyval(). */
+/* Key type arguments to scr_keyval(). */
 typedef enum { KEY_VEOF, KEY_VERASE, KEY_VKILL, KEY_VWERASE } scr_keyval_t;
- 
+
 /*
  * GS:
  *
@@ -67,8 +67,8 @@ struct _gs {
 	void	*tcl_interp;		/* Tcl_Interp *: Tcl interpreter. */
 
 	void	*cl_private;		/* Curses support private area. */
+	void	*ip_private;		/* IP support private area. */
 	void	*tk_private;		/* Tk/Tcl support private area. */
-	void	*xaw_private;		/* XAW support private area. */
 
 					/* File references. */
 	CIRCLEQ_HEAD(_frefh, _fref) frefq;
@@ -84,7 +84,7 @@ struct _gs {
 #define	DEFAULT_NOPRINT	'\1'		/* Emergency non-printable character. */
 	CHAR_T	 noprint;		/* Cached, unprintable character. */
 
-	char	*tmp_bp;		/* Temporary buffer. */
+	void	*tmp_bp;		/* Temporary buffer. */
 	size_t	 tmp_blen;		/* Temporary buffer size. */
 
 	/*
@@ -141,10 +141,10 @@ struct _gs {
 #define	G_BELLSCHED	0x0002		/* Bell scheduled. */
 #define	G_INTERRUPTED	0x0004		/* Interrupted. */
 #define	G_RECOVER_SET	0x0008		/* Recover system initialized. */
-#define	G_SCRIPT	0x0010		/* Scripting windows running. */
-#define	G_SNAPSHOT	0x0020		/* Always snapshot files. */
-#define	G_SRESTART	0x0040		/* Screen restarted. */
-#define	G_STDIN_TTY	0x0080		/* Standard input is a tty. */
+#define	G_SCRIPTED	0x0010		/* Ex script session. */
+#define	G_SCRWIN	0x0020		/* Scripting windows running. */
+#define	G_SNAPSHOT	0x0040		/* Always snapshot files. */
+#define	G_SRESTART	0x0080		/* Screen restarted. */
 #define	G_TMP_INUSE	0x0100		/* Temporary buffer in use. */
 	u_int32_t flags;
 
@@ -158,7 +158,7 @@ struct _gs {
 					/* Beep/bell/flash the terminal. */
 	int	(*scr_bell) __P((SCR *));
 					/* Display a busy message. */
-	void	(*scr_busy) __P((SCR *, char const *, busy_t));
+	void	(*scr_busy) __P((SCR *, const char *, busy_t));
 					/* Clear to the end of the line. */
 	int	(*scr_clrtoeol) __P((SCR *));
 					/* Return the cursor location. */
@@ -184,7 +184,7 @@ struct _gs {
 					/* Refresh the screen. */
 	int	(*scr_refresh) __P((SCR *, int));
 					/* Rename the file. */
-	int	(*scr_rename) __P((SCR *));
+	int	(*scr_rename) __P((SCR *, char *, int));
 					/* Set the screen type. */
 	int	(*scr_screen) __P((SCR *, u_int32_t));
 					/* Suspend the editor. */

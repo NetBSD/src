@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_read.c,v 1.2 1998/01/09 08:06:24 perry Exp $	*/
+/*	$NetBSD: cl_read.c,v 1.3 2001/03/31 11:37:45 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)cl_read.c	10.13 (Berkeley) 5/3/96";
+static const char sccsid[] = "@(#)cl_read.c	10.15 (Berkeley) 9/24/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -87,7 +87,7 @@ retest:	if (LF_ISSET(EC_INTERRUPT) || F_ISSET(clp, CL_SIGINT)) {
 				return (1);
 			if (changed) {
 				(void)cl_resize(sp, lines, columns);
-				evp->e_event = E_INTERRUPT;
+				evp->e_event = E_WRESIZE;
 				return (0);
 			}
 			/* No real change, ignore the signal. */
@@ -150,6 +150,7 @@ cl_read(sp, flags, bp, blen, nrp, tp)
 	input_t rval;
 	int maxfd, nr, term_reset;
 
+	gp = sp->gp;
 	clp = CLP(sp);
 	term_reset = 0;
 
@@ -159,8 +160,7 @@ cl_read(sp, flags, bp, blen, nrp, tp)
 	 *    when trying to complete a map, but we're going to hang
 	 *    on the next read anyway.
 	 */
-	gp = sp->gp;
-	if (!F_ISSET(gp, G_STDIN_TTY)) {
+	if (!F_ISSET(clp, CL_STDIN_TTY)) {
 		switch (nr = read(STDIN_FILENO, bp, blen)) {
 		case 0:
 			return (INP_EOF);
@@ -223,7 +223,7 @@ cl_read(sp, flags, bp, blen, nrp, tp)
 	 * It's ugly that we wait on scripting file descriptors here, but it's
 	 * the only way to keep from locking out scripting windows.
 	 */
-	if (F_ISSET(gp, G_SCRIPT)) {
+	if (F_ISSET(gp, G_SCRWIN)) {
 loop:		FD_ZERO(&rdfd);
 		FD_SET(STDIN_FILENO, &rdfd);
 		maxfd = STDIN_FILENO;

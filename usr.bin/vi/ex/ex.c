@@ -1,4 +1,4 @@
-/*	$NetBSD: ex.c,v 1.10 2001/01/14 02:22:29 aymeric Exp $	*/
+/*	$NetBSD: ex.c,v 1.11 2001/03/31 11:37:49 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex.c	10.46 (Berkeley) 5/15/96";
+static const char sccsid[] = "@(#)ex.c	10.57 (Berkeley) 10/10/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -77,7 +77,7 @@ ex(spp)
 	}
 
 	/* If reading from a file, errors should have name and line info. */
-	if (!F_ISSET(gp, G_STDIN_TTY)) {
+	if (F_ISSET(gp, G_SCRIPTED)) {
 		gp->excmd.if_lno = 1;
 		gp->excmd.if_name = "script";
 	}
@@ -132,7 +132,7 @@ ex(spp)
 		}
 		F_INIT(&gp->excmd, E_NRSEP);
 
-		if (ex_cmd(sp) && !F_ISSET(gp, G_STDIN_TTY))
+		if (ex_cmd(sp) && F_ISSET(gp, G_SCRIPTED))
 			return (1);
 
 		if (INTERRUPTED(sp)) {
@@ -203,7 +203,7 @@ ex_cmd(sp)
 	GS *gp;
 	MARK cur;
 	recno_t lno;
-	size_t arg1_len, len;
+	size_t arg1_len, discard, len;
 	u_int32_t flags;
 	long ltmp;
 	int at_found, gv_found;
@@ -429,7 +429,7 @@ loop:	ecp = gp->ecq.lh_first;
 				goto skip_srch;
 			}
 			break;
-		case 'E': case 'N': case 'P': case 'T': case 'V':
+		case 'E': case 'F': case 'N': case 'P': case 'T': case 'V':
 			newscreen = 1;
 			p[0] = tolower(p[0]);
 			break;
@@ -456,7 +456,7 @@ loop:	ecp = gp->ecq.lh_first;
 		if ((ecp->cmd = ex_comm_search(p, namelen)) == NULL)
 			switch (p[0]) {
 			case 'k':
-				if (p[1] && !p[2]) {
+				if (namelen == 2) {
 					ecp->cp -= namelen - 1;
 					ecp->clen += namelen - 1;
 					ecp->cmd = &cmds[C_K];
@@ -619,20 +619,15 @@ skip_srch:	if (ecp->cmd == &cmds[C_VISUAL_EX] && F_ISSET(sp, SC_VI))
 	 *	:s/a/b/|s/c/d|set
 	 *
 	 * was also legal, i.e. the historic ex parser (using the word loosely,
-	 * since "parser" implies some regularity) delimited the RE's based on
-	 * its delimiter and not anything so irretrievably vulgar as a command
-	 * syntax.
-	 *
-	 * One thing that makes this easier is that we can ignore most of the
-	 * command termination conditions for the commands that want to take
-	 * the command up to the next newline.  None of them are legal in .exrc
-	 * files, so if we're here, we only dealing with a single line, and we
-	 * can just eat it.
+	 * since "parser" implies some regularity of syntax) delimited the RE's
+	 * based on its delimiter and not anything so irretrievably vulgar as a
+	 * command syntax.
 	 *
 	 * Anyhow, the following code makes this all work.  First, for the
 	 * special cases we move past their special argument(s).  Then, we
 	 * do normal command processing on whatever is left.  Barf-O-Rama.
 	 */
+	discard = 0;		/* Characters discarded from the command. */
 	arg1_len = 0;
 	ecp->save_cmd = ecp->cp;
 	if (ecp->cmd == &cmds[C_EDIT] || ecp->cmd == &cmds[C_EX] ||
@@ -659,9 +654,8 @@ skip_srch:	if (ecp->cmd == &cmds[C_VISUAL_EX] && F_ISSET(sp, SC_VI))
 		 * The historic implementation ignored all escape characters
 		 * so there was no way to put a space or newline into the +cmd
 		 * field.  We do a simplistic job of fixing it by moving to the
-		 * first whitespace character that isn't escaped by a literal
-		 * next character.  The literal next characters are stripped
-		 * as they're no longer useful.
+		 * first whitespace character that isn't escaped.  The escaping
+		 * characters are stripped as no longer useful.
 		 */
 		if (ecp->clen > 0 && *ecp->cp == '+') {
 			++ecp->cp;
@@ -669,8 +663,9 @@ skip_srch:	if (ecp->cmd == &cmds[C_VISUAL_EX] && F_ISSET(sp, SC_VI))
 			for (arg1 = p = ecp->cp;
 			    ecp->clen > 0; --ecp->clen, ++ecp->cp) {
 				ch = *ecp->cp;
-				if (IS_ESCAPE(sp,
-				    ecp, ch) && ecp->clen > 1) {
+				if (IS_ESCAPE(sp, ecp, ch) &&
+				    ecp->clen > 1) {
+					++discard;
 					--ecp->clen;
 					ch = *++ecp->cp;
 				} else if (isblank(ch))
@@ -684,22 +679,49 @@ skip_srch:	if (ecp->cmd == &cmds[C_VISUAL_EX] && F_ISSET(sp, SC_VI))
 		}
 	} else if (ecp->cmd == &cmds[C_BANG] ||
 	    ecp->cmd == &cmds[C_GLOBAL] || ecp->cmd == &cmds[C_V]) {
-		ecp->cp += ecp->clen;
-		ecp->clen = 0;
+		/*
+		 * QUOTING NOTE:
+		 *
+		 * We use backslashes to escape <newline> characters, although
+		 * this wasn't historic practice for the bang command.  It was
+		 * for the global and v commands, and it's common usage when
+		 * doing text insert during the command.  Escaping characters
+		 * are stripped as no longer useful.
+		 */
+		for (p = ecp->cp; ecp->clen > 0; --ecp->clen, ++ecp->cp) {
+			ch = *ecp->cp;
+			if (ch == '\\' && ecp->clen > 1 && ecp->cp[1] == '\n') {
+				++discard;
+				--ecp->clen;
+				ch = *++ecp->cp;
+
+				++gp->if_lno;
+				++ecp->if_lno;
+			} else if (ch == '\n')
+				break;
+			*p++ = ch;
+		}
 	} else if (ecp->cmd == &cmds[C_READ] || ecp->cmd == &cmds[C_WRITE]) {
 		/*
-		 * Move to the next character.  If it's a '!', it's a filter
-		 * command and we want to eat it all, otherwise, we're done.
+		 * For write commands, if the next character is a <blank>, and
+		 * the next non-blank character is a '!', it's a filter command
+		 * and we want to eat everything up to the <newline>.  For read
+		 * commands, if the next non-blank character is a '!', it's a
+		 * filter command and we want to eat everything up to the next
+		 * <newline>.  Otherwise, we're done.
 		 */
-		for (; ecp->clen > 0; --ecp->clen, ++ecp->cp) {
+		for (tmp = 0; ecp->clen > 0; --ecp->clen, ++ecp->cp) {
 			ch = *ecp->cp;
-			if (!isblank(ch))
+			if (isblank(ch))
+				tmp = 1;
+			else
 				break;
 		}
-		if (ecp->clen > 0 && ch == '!') {
-			ecp->cp += ecp->clen;
-			ecp->clen = 0;
-		}
+		if (ecp->clen > 0 && ch == '!' &&
+		    (ecp->cmd == &cmds[C_READ] || tmp))
+			for (; ecp->clen > 0; --ecp->clen, ++ecp->cp)
+				if (ecp->cp[0] == '\n')
+					break;
 	} else if (ecp->cmd == &cmds[C_SUBSTITUTE]) {
 		/*
 		 * Move to the next non-whitespace character, we'll use it as
@@ -752,7 +774,7 @@ skip_srch:	if (ecp->cmd == &cmds[C_VISUAL_EX] && F_ISSET(sp, SC_VI))
 	 * no longer useful.
 	 */
 	vi_address = ecp->clen != 0 && ecp->cp[0] != '\n';
-	for (cnt = 0, p = ecp->cp; ecp->clen > 0; --ecp->clen, ++ecp->cp) {
+	for (p = ecp->cp; ecp->clen > 0; --ecp->clen, ++ecp->cp) {
 		ch = ecp->cp[0];
 		if (IS_ESCAPE(sp, ecp, ch) && ecp->clen > 1) {
 			tmp = ecp->cp[1];
@@ -761,9 +783,9 @@ skip_srch:	if (ecp->cmd == &cmds[C_VISUAL_EX] && F_ISSET(sp, SC_VI))
 					++gp->if_lno;
 					++ecp->if_lno;
 				}
+				++discard;
 				--ecp->clen;
 				++ecp->cp;
-				++cnt;
 				ch = tmp;
 			}
 		} else if (ch == '\n' || ch == '|') {
@@ -783,7 +805,7 @@ skip_srch:	if (ecp->cmd == &cmds[C_VISUAL_EX] && F_ISSET(sp, SC_VI))
 	ecp->cp = ecp->save_cmd;
 	ecp->save_cmd = p;
 	ecp->save_cmdlen = ecp->clen;
-	ecp->clen = ((ecp->save_cmd - ecp->cp) - 1) - cnt;
+	ecp->clen = ((ecp->save_cmd - ecp->cp) - 1) - discard;
 
 	/*
 	 * QUOTING NOTE:
@@ -814,7 +836,7 @@ skip_srch:	if (ecp->cmd == &cmds[C_VISUAL_EX] && F_ISSET(sp, SC_VI))
 	 * case where the 0 address is only valid if it's a default address.
 	 *
 	 * Also, set a flag if we set the default addresses.  Some commands
-	 * (ex: z) care if the user specified an address of if we just used
+	 * (ex: z) care if the user specified an address or if we just used
 	 * the current cursor.
 	 */
 	switch (F_ISSET(ecp, E_ADDR1 | E_ADDR2 | E_ADDR2_ALL | E_ADDR2_NONE)) {
@@ -1204,7 +1226,7 @@ usage:		msgq(sp, M_ERR, "086|Usage: %s", ecp->cmd->usage);
 	/*
 	 * Verify that the addresses are legal.  Check the addresses here,
 	 * because this is a place where all ex addresses pass through.
-	 * (They don't all pass through ep_line(), for instance.)  We're
+	 * (They don't all pass through ex_line(), for instance.)  We're
 	 * assuming that any non-existent line doesn't exist because it's
 	 * past the end-of-file.  That's a pretty good guess.
 	 *
@@ -1337,7 +1359,7 @@ addr_verify:
 	 */
 	if (F_ISSET(ecp, E_NRSEP)) {
 		if (sp->ep != NULL &&
-		    F_ISSET(sp, SC_EX) && F_ISSET(gp, G_STDIN_TTY) &&
+		    F_ISSET(sp, SC_EX) && !F_ISSET(gp, G_SCRIPTED) &&
 		    (F_ISSET(ecp, E_USELASTCMD) || ecp->cmd == &cmds[C_SCROLL]))
 			gp->scr_ex_adjust(sp, EX_TERM_SCROLL);
 		F_CLR(ecp, E_NRSEP);
@@ -1350,7 +1372,7 @@ addr_verify:
 	 * Interrupts behave like errors, for now.
 	 */
 	if (ecp->cmd->fn(sp, ecp) || INTERRUPTED(sp)) {
-		if (!F_ISSET(gp, G_STDIN_TTY))
+		if (F_ISSET(gp, G_SCRIPTED))
 			F_SET(sp, SC_EXIT_FORCE);
 		goto err;
 	}
@@ -1375,7 +1397,7 @@ addr_verify:
 	 * lines message -- that's wrong enough that we don't match it.
 	 */
 	if (F_ISSET(sp, SC_EX))
-		msgq_rpt(sp);
+		mod_rpt(sp);
 
 	/*
 	 * Integrate any offset parsed by the underlying command, and make
@@ -1410,9 +1432,9 @@ addr_verify:
 	}
 
 	/*
-	 * If the command was successful may want to display a line based on
-	 * the autoprint option or an explicit print flag.  (Make sure that
-	 * there's a line to display.)  Also, the autoprint edit option is
+	 * If the command executed successfully, we may want to display a line
+	 * based on the autoprint option or an explicit print flag.  (Make sure
+	 * that there's a line to display.)  Also, the autoprint edit option is
 	 * turned off for the duration of global commands.
 	 */
 	if (F_ISSET(sp, SC_EX) && sp->ep != NULL && sp->lno != 0) {
@@ -1456,16 +1478,11 @@ addr_verify:
 	 *
 	 * This can happen more than once -- the historic vi simply hung or
 	 * dropped core, of course.  Prepend the + command back into the
-	 * current command and continue.  We may have to add up to two more
-	 * characters, a <literal next> and a command separator.  We know
-	 * that it will still fit because we discarded at least one space
-	 * and the + character.
+	 * current command and continue.  We may have to add an additional
+	 * <literal next> character.  We know that it will fit because we
+	 * discarded at least one space and the + character.
 	 */
 	if (arg1_len != 0) {
-		/* Add in a command separator. */
-		*--ecp->save_cmd = '\n';
-		++ecp->save_cmdlen;
-
 		/*
 		 * If the last character of the + command was a <literal next>
 		 * character, it would be treated differently because of the
@@ -1478,15 +1495,15 @@ addr_verify:
 
 		ecp->save_cmd -= arg1_len;
 		ecp->save_cmdlen += arg1_len;
-		memmove(ecp->save_cmd, arg1, arg1_len);
+		memcpy(ecp->save_cmd, arg1, arg1_len);
 
 		/*
 		 * Any commands executed from a +cmd are executed starting at
-		 * the last line, first column of the file -- NOT the first
-		 * nonblank.)  The main file startup code doesn't know that a
-		 * +cmd was set, however, so it may have put us at the top of
-		 * the file.  (Note, this is safe because we must have switched
-		 * files to get here.)
+		 * the first column of the last line of the file -- NOT the
+		 * first nonblank.)  The main file startup code doesn't know
+		 * that a +cmd was set, however, so it may have put us at the
+		 * top of the file.  (Note, this is safe because we must have
+		 * switched files to get here.)
 		 */
 		F_SET(ecp, E_MOVETOEND);
 	}
@@ -1807,7 +1824,7 @@ ex_line(sp, ecp, mp, isaddrp, errp)
 	GS *gp;
 	long total, val;
 	int isneg;
-	int (*sf) __P((SCR *, MARK *, MARK *, char *, char **, u_int));
+	int (*sf) __P((SCR *, MARK *, MARK *, char *, size_t, char **, u_int));
 	char *endp;
 
 	gp = sp->gp;
@@ -1895,8 +1912,9 @@ ex_line(sp, ecp, mp, isaddrp, errp)
 
 search:		mp->lno = sp->lno;
 		mp->cno = sp->cno;
-		if (sf(sp, mp, mp,
-		    ecp->cp, &endp, SEARCH_MSG | SEARCH_PARSE | SEARCH_SET)) {
+		if (sf(sp, mp, mp, ecp->cp, ecp->clen, &endp,
+		    SEARCH_MSG | SEARCH_PARSE | SEARCH_SET |
+		    (F_ISSET(ecp, E_SEARCH_WMSG) ? SEARCH_WMSG : 0))) {
 			*errp = 1;
 			return (0);
 		}
@@ -2124,12 +2142,9 @@ ex_load(sp)
 	 * the current line number, and get a new copy of the command for
 	 * the parser.  Note, the original pointer almost certainly moved,
 	 * so we have play games.
-	 *
-	 * See ex.h for a discussion of SEARCH_TERMINATION.
 	 */
 	ecp->cp = ecp->o_cp;
-	memmove(ecp->cp,
-	    ecp->cp + ecp->o_clen + SEARCH_TERMINATION, ecp->o_clen);
+	memcpy(ecp->cp, ecp->cp + ecp->o_clen, ecp->o_clen);
 	ecp->clen = ecp->o_clen;
 	ecp->range_lno = sp->lno = rp->start++;
 
@@ -2184,7 +2199,7 @@ ex_unknown(sp, cmd, len)
 
 	GET_SPACE_GOTO(sp, bp, blen, len + 1);
 	bp[len] = '\0';
-	memmove(bp, cmd, len);
+	memcpy(bp, cmd, len);
 	msgq_str(sp, M_ERR, bp, "098|The %s command is unknown");
 	FREE_SPACE(sp, bp, blen);
 

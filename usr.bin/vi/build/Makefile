@@ -1,14 +1,14 @@
-#	$NetBSD: Makefile,v 1.16 2001/01/22 17:48:27 itojun Exp $
+#	$NetBSD: Makefile,v 1.17 2001/03/31 11:37:44 aymeric Exp $
 #
-# from: @(#)Makefile.in	8.56 (Berkeley) 5/18/96
+#	@(#)Makefile.in	8.75 (Berkeley) 10/23/96
 
 .include <bsd.own.mk>
 
 WARNS=	0
 CPPFLAGS+=-I${.CURDIR} -I${.CURDIR}/../include -DGTAGS
 
-LDADD+= -lcurses
-DPADD+= ${LIBCURSES}
+LDADD+=	-lcurses
+DPADD+=	${LIBCURSES}
 PROG=	vi
 SRCS=	cl_bsd.c cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 	cut.c delete.c ex.c ex_abbrev.c ex_append.c ex_args.c ex_argv.c \
@@ -29,14 +29,14 @@ SRCS=	cl_bsd.c cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 	v_zexit.c vi.c vs_line.c vs_msg.c vs_refresh.c vs_relative.c \
 	vs_smap.c vs_split.c
 
-LINKS=  ${BINDIR}/vi ${BINDIR}/ex ${BINDIR}/vi ${BINDIR}/view
-MLINKS= vi.1 ex.1 vi.1 view.1
+LINKS=	${BINDIR}/vi ${BINDIR}/ex ${BINDIR}/vi ${BINDIR}/view
+MLINKS=	vi.1 ex.1 vi.1 view.1
 
 .PATH: ${.CURDIR}/../vi ${.CURDIR}/../ex ${.CURDIR}/../cl
 .PATH: ${.CURDIR}/../common ${.CURDIR}/../docs/USD.doc/vi.man
 
 .if ${MKSHARE} != "no"
-cat=	dutch english german ru_RU.KOI8-R swedish
+cat=	dutch english french german ru_RU.KOI8-R spanish swedish
 FILES=${cat:S@^@${.CURDIR}/../catalog/@g}
 FILESDIR=/usr/share/vi/catalog
 .endif
