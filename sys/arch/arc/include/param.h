@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.14 2000/06/30 17:55:12 itojun Exp $	*/
+/*	$NetBSD: param.h,v 1.15 2001/05/30 12:28:39 mrg Exp $	*/
 /*      $OpenBSD: param.h,v 1.9 1997/04/30 09:54:15 niklas Exp $ */
 
 /*
@@ -98,9 +98,9 @@
 #define	MCLOFSET	(MCLBYTES - 1)
 #ifndef NMBCLUSTERS
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_gateway.h"
-#endif /* _KERNEL && ! _LKM */
+#endif
 
 #ifdef GATEWAY
 #define	NMBCLUSTERS	2048		/* map size, max cluster allocation */

@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscall.c,v 1.4 2001/01/03 22:15:38 thorpej Exp $ */
+/* $NetBSD: osf1_syscall.c,v 1.5 2001/05/30 12:28:38 mrg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -94,14 +94,14 @@
  * rights to redistribute these changes.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 #endif
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.4 2001/01/03 22:15:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.5 2001/05/30 12:28:38 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15 2000/05/26 21:19:29 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16 2001/05/30 12:28:39 mrg Exp $	*/
 /*	$OpenBSD: cpu.h,v 1.9 1998/01/28 13:46:10 pefo Exp $ */
 
 #ifndef _ARC_CPU_H_
@@ -13,7 +13,7 @@
 #include <mips/cpuregs.h>
 
 #ifndef _LOCORE
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #endif
 

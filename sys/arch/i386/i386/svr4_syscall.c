@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscall.c,v 1.13 2000/12/13 01:24:46 mycroft Exp $	*/
+/*	$NetBSD: svr4_syscall.c,v 1.14 2001/05/30 12:28:44 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
 #include "opt_ktrace.h"

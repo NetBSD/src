@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.67 2001/01/09 05:05:35 joff Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.68 2001/05/30 11:57:18 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.15 2000/12/14 18:35:13 mycroft Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.16 2001/05/30 12:28:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
 #include "opt_ktrace.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.51 2000/12/19 21:09:55 scw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.52 2001/05/30 12:28:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,7 +48,7 @@
  * Exported definitions unique to amiga/68k cpu support.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #endif
 
