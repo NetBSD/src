@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdump.c,v 1.4 2002/02/18 09:37:11 itojun Exp $	*/
+/*	$NetBSD: tcpdump.c,v 1.5 2002/05/31 09:45:47 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000
@@ -34,9 +34,9 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/tcpdump.c,v 1.173 2001/12/22 22:12:23 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/tcpdump.c,v 1.176 2002/05/16 10:25:58 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: tcpdump.c,v 1.4 2002/02/18 09:37:11 itojun Exp $");
+__RCSID("$NetBSD: tcpdump.c,v 1.5 2002/05/31 09:45:47 itojun Exp $");
 #endif
 #endif
 
@@ -90,6 +90,7 @@ int vflag;			/* verbose */
 int xflag;			/* print packet in hex */
 int Xflag;			/* print packet in ascii as well as hex */
 off_t Cflag = 0;                /* rotate dump files after this many bytes */
+int Aflag = 0;                  /* print packet only in ascii observing LF, CR, TAB, SPACE */
 
 char *espsecret = NULL;		/* ESP secret key */
 
@@ -165,6 +166,9 @@ static struct printer printers[] = {
 #ifdef DLT_LTALK
 	{ ltalk_if_print,	DLT_LTALK },
 #endif
+#ifdef DLT_PFLOG
+	{ pflog_if_print, 	DLT_PFLOG },
+#endif
 	{ NULL,			0 },
 };
 
@@ -225,12 +229,18 @@ main(int argc, char **argv)
 	
 	opterr = 0;
 	while (
-	    (op = getopt(argc, argv, "ac:C:deE:fF:i:lm:nNOpqr:Rs:StT:uvw:xXY")) != -1)
+	    (op = getopt(argc, argv, "aAc:C:deE:fF:i:lm:nNOpqr:Rs:StT:uvw:xXY")) != -1)
 		switch (op) {
 
 		case 'a':
 			++aflag;
 			break;
+
+               case 'A':
+                       ++xflag;
+                       ++Xflag;
+                       ++Aflag;
+                       break; 
 
 		case 'c':
 			cnt = atoi(optarg);
@@ -491,6 +501,8 @@ main(int argc, char **argv)
 	if (pcap_loop(pd, cnt, printer, pcap_userdata) < 0) {
 		(void)fprintf(stderr, "%s: pcap_loop: %s\n",
 		    program_name, pcap_geterr(pd));
+		cleanup(0);
+		pcap_close(pd);
 		exit(1);
 	}
 	if (RFileName == NULL)
@@ -510,7 +522,8 @@ cleanup(int signo)
 		putc('\n', stderr);
 		info(1);
 	}
-	exit(0);
+	if (signo)
+		exit(0);
 }
 
 void
@@ -645,7 +658,7 @@ usage(void)
 	(void)fprintf(stderr, "%s version %s\n", program_name, version);
 	(void)fprintf(stderr, "libpcap version %s\n", pcap_version);
 	(void)fprintf(stderr,
-"Usage: %s [-adeflnNOpqRStuvxX] [ -c count ] [ -C file_size ]\n", program_name);
+"Usage: %s [-aAdeflnNOpqRStuvxX] [ -c count ] [ -C file_size ]\n", program_name);
 	(void)fprintf(stderr,
 "\t\t[ -F file ] [ -i interface ] [ -r file ] [ -s snaplen ]\n");
 	(void)fprintf(stderr,

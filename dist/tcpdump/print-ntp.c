@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ntp.c,v 1.3 2002/02/18 09:37:08 itojun Exp $	*/
+/*	$NetBSD: print-ntp.c,v 1.4 2002/05/31 09:45:46 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -29,9 +29,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-ntp.c,v 1.32 2001/08/20 15:36:57 fenner Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-ntp.c,v 1.33 2002/04/25 04:57:59 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-ntp.c,v 1.3 2002/02/18 09:37:08 itojun Exp $");
+__RCSID("$NetBSD: print-ntp.c,v 1.4 2002/05/31 09:45:46 itojun Exp $");
 #endif
 #endif
 
@@ -162,7 +162,7 @@ ntp_print(register const u_char *cp, u_int length)
 		break;
 
 	case PRIM_REF:
-		fn_printn((char *)&(bp->refid), 4, NULL);
+		fn_printn((u_char *)&(bp->refid), 4, NULL);
 		break;
 
 	case INFO_QUERY:

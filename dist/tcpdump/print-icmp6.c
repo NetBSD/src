@@ -1,4 +1,4 @@
-/*	$NetBSD: print-icmp6.c,v 1.4 2002/02/18 09:37:07 itojun Exp $	*/
+/*	$NetBSD: print-icmp6.c,v 1.5 2002/05/31 09:45:45 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-icmp6.c,v 1.56 2001/06/27 02:48:43 itojun Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-icmp6.c,v 1.60 2002/05/30 22:01:34 itojun Exp";
 #else
-__RCSID("$NetBSD: print-icmp6.c,v 1.4 2002/02/18 09:37:07 itojun Exp $");
+__RCSID("$NetBSD: print-icmp6.c,v 1.5 2002/05/31 09:45:45 itojun Exp $");
 #endif
 #endif
 
@@ -363,6 +363,28 @@ icmp6_print(const u_char *bp, const u_char *bp2)
 	case ICMP6_NI_REPLY:
 		icmp6_nodeinfo_print(icmp6len, bp, ep);
 		break;
+	case ICMP6_HADISCOV_REQUEST:
+	case ICMP6_HADISCOV_REPLY:
+	{
+		struct in6_addr *in6;
+		u_int32_t *res;
+		u_char *cp;
+		printf("icmp6: ha discovery %s: ",
+		       dp->icmp6_type == ICMP6_HADISCOV_REQUEST ?
+		       "request" : "reply");
+		TCHECK(dp->icmp6_data16[0]);
+		printf("id=%d", ntohs(dp->icmp6_data16[0]));
+		cp = (u_char *)dp + icmp6len;
+		res = (u_int32_t *)(dp + 1);
+		in6 = (struct in6_addr *)(res + 2);
+		for (; (u_char *)in6 < cp; in6++) {
+			TCHECK(*in6);
+			printf(", %s", ip6addr_string(in6));
+		}
+		break;
+	}
+	case ICMP6_MOBILEPREFIX_SOLICIT:
+	case ICMP6_MOBILEPREFIX_ADVERT:
 	default:
 		printf("icmp6: type-#%d", dp->icmp6_type);
 		break;
@@ -454,6 +476,7 @@ icmp6_opt_print(const u_char *bp, int resid)
 	const struct icmp6_opts_redirect *opr;
 	const struct nd_opt_mtu *opm;
 	const struct nd_opt_advinterval *opa;
+	const struct nd_opt_homeagent_info *oph;
 	const struct nd_opt_route_info *opri;
 	const u_char *cp, *ep;
 	struct in6_addr in6, *in6p;
@@ -552,6 +575,14 @@ icmp6_opt_print(const u_char *bp, int resid)
 			/*(*/
 			printf(")");
 			break;                
+		case ND_OPT_HOMEAGENT_INFO:
+			oph = (struct nd_opt_homeagent_info *)op;
+			TCHECK(oph->nd_opt_hai_lifetime);
+			printf("(ha info:");	/*)*/
+			printf(" pref=%d", ntohs(oph->nd_opt_hai_preference));
+			printf(", lifetime=%u", ntohs(oph->nd_opt_hai_lifetime));
+			printf(")");
+			break;                
 		case ND_OPT_ROUTE_INFO:
 			opri = (struct nd_opt_route_info *)op;
 			TCHECK(opri->nd_opt_rti_lifetime);
@@ -581,7 +612,7 @@ icmp6_opt_print(const u_char *bp, int resid)
 			printf(")");
 			break;
 		default:
-			printf("(unknwon opt_type=%d, opt_len=%d)",
+			printf("(unknown opt_type=%d, opt_len=%d)",
 			       op->nd_opt_type, op->nd_opt_len);
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-bgp.c,v 1.3 2002/02/18 09:37:05 itojun Exp $	*/
+/*	$NetBSD: print-bgp.c,v 1.4 2002/05/31 09:45:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -37,9 +37,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-     "@(#) Header: /tcpdump/master/tcpdump/print-bgp.c,v 1.27 2001/10/18 09:52:17 itojun Exp";
+     "@(#) Header: /tcpdump/master/tcpdump/print-bgp.c,v 1.29 2002/05/24 17:49:29 hannes Exp";
 #else
-__RCSID("$NetBSD: print-bgp.c,v 1.3 2002/02/18 09:37:05 itojun Exp $");
+__RCSID("$NetBSD: print-bgp.c,v 1.4 2002/05/31 09:45:45 itojun Exp $");
 #endif
 #endif
 
@@ -201,8 +201,15 @@ static const char *bgpattr_type[] = {
 		sizeof(bgpattr_type)/sizeof(bgpattr_type[0]), (x))
 
 /* Subsequent address family identifier, RFC2283 section 7 */
+#define SAFNUM_RES          0
+#define SAFNUM_UNICAST      1
+#define SAFNUM_MULTICAST    2
+#define SAFNUM_UNIMULTICAST 3
+/* labeled BGP RFC3107 */
+#define SAFNUM_LABUNICAST   4
+
 static const char *bgpattr_nlri_safi[] = {
-	"Reserved", "Unicast", "Multicast", "Unicast+Multicast",
+    "Reserved", "Unicast", "Multicast", "Unicast+Multicast", "labeled Unicast"
 };
 #define bgp_attr_nlri_safi(x) \
 	num_or_str(bgpattr_nlri_safi, \
@@ -297,6 +304,43 @@ decode_prefix4(const u_char *pd, char *buf, u_int buflen)
 	}
 	snprintf(buf, buflen, "%s/%d", getname((u_char *)&addr), plen);
 	return 1 + (plen + 7) / 8;
+}
+
+static int
+decode_labeled_prefix4(const u_char *pd, char *buf, u_int buflen)
+{
+	struct in_addr addr;
+	u_int plen;
+
+	plen = pd[0];   /* get prefix length */
+
+        /* this is one of the weirdnesses of rfc3107
+           the label length (actually the label + COS bits)
+           is added of the prefix length;
+           we also do only read out just one label -
+           there is no real application for advertisment of
+           stacked labels in a asingle BGP message
+        */
+
+        plen-=24; /* adjust prefixlen - labellength */
+
+	if (plen < 0 || 32 < plen)
+		return -1;
+
+	memset(&addr, 0, sizeof(addr));
+	memcpy(&addr, &pd[4], (plen + 7) / 8);
+	if (plen % 8) {
+		((u_char *)&addr)[(plen + 7) / 8 - 1] &=
+			((0xff00 >> (plen % 8)) & 0xff);
+	}
+        /* the label may get offsetted by 4 bits so lets shift it right */
+	snprintf(buf, buflen, "%s/%d label:%u %s",
+                 getname((u_char *)&addr),
+                 plen,
+                 EXTRACT_24BITS(pd+1)>>4,
+                 ((pd[3]&1)==0) ? "(BOGUS: Bottom of Stack NOT set!)" : "(bottom)" );
+
+	return 4 + (plen + 7) / 8;
 }
 
 #ifdef INET6
@@ -420,7 +464,7 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 		if (safi >= 128)
 			printf(" %s vendor specific,", af_name(af));
 		else {
-			printf(" %s %s,", af_name(af),
+			printf(" AFI %s SAFI %s,", af_name(af),
 				bgp_attr_nlri_safi(safi));
 		}
 		p += 3;
@@ -469,26 +513,34 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 				p += p[0] + 1;
 			}
 			printf(",");
-		}
+		} else {
+                printf(" no spna,");
+                }
 
 		printf(" NLRI");
 		while (len - (p - dat) > 0) {
 			switch (af) {
 			case AFNUM_INET:
+                            if(safi==SAFNUM_LABUNICAST) {
+                                advance = decode_labeled_prefix4(p, buf, sizeof(buf));
+                            } else {
 				advance = decode_prefix4(p, buf, sizeof(buf));
-				printf(" %s", buf);
-				break;
+                            }
+                            if (advance<0)
+                                break;
+                            printf(" %s", buf);
+                            break;
 #ifdef INET6
 			case AFNUM_INET6:
-				advance = decode_prefix6(p, buf, sizeof(buf));
-				printf(" %s", buf);
-				break;
+                            advance = decode_prefix6(p, buf, sizeof(buf));
+                            printf(" %s", buf);
+                            break;
 #endif
 			default:
-				printf(" (unknown af)");
-				advance = 0;
-				p = dat + len;
-				break;
+                            printf(" (unknown af)");
+                            advance = 0;
+                            p = dat + len;
+                            break;
 			}
 
 			p += advance;
@@ -502,7 +554,7 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 		if (safi >= 128)
 			printf(" %s vendor specific,", af_name(af));
 		else {
-			printf(" %s %s,", af_name(af),
+			printf(" AFI %s SAFI %s,", af_name(af),
 				bgp_attr_nlri_safi(safi));
 		}
 		p += 3;
@@ -511,9 +563,15 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 		while (len - (p - dat) > 0) {
 			switch (af) {
 			case AFNUM_INET:
+                            if(safi==SAFNUM_LABUNICAST) {
+                                advance = decode_labeled_prefix4(p, buf, sizeof(buf));
+                            } else {
 				advance = decode_prefix4(p, buf, sizeof(buf));
-				printf(" %s", buf);
-				break;
+                            }
+                            if (advance<0)
+                                break;
+                            printf(" %s", buf);
+                            break;
 #ifdef INET6
 			case AFNUM_INET6:
 				advance = decode_prefix6(p, buf, sizeof(buf));

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2002/02/18 09:45:11 itojun Exp $	
+#	$NetBSD: Makefile,v 1.28 2002/05/31 09:45:47 itojun Exp $	
 
 .include <bsd.own.mk>
 
@@ -19,10 +19,10 @@ SRCS=	addrtoname.c gmt2local.c machdep.c parsenfsfh.c \
 	print-ipx.c print-isakmp.c print-isoclns.c print-krb.c \
 	print-l2tp.c print-lane.c print-lcp.c print-llc.c print-lwres.c \
 	print-msdp.c print-mobile.c print-mpls.c print-nfs.c \
-	print-ntp.c print-null.c print-ospf.c print-pim.c \
-	print-ppp.c print-pppoe.c print-pptp.c print-radius.c \
-	print-raw.c print-rip.c print-rx.c print-sctp.c \
-	print-sl.c print-sll.c print-snmp.c \
+	print-ntp.c print-null.c print-ospf.c print-pflog.c \
+	print-pim.c print-ppp.c print-pppoe.c print-pptp.c \
+	print-radius.c print-raw.c print-rip.c print-rx.c \
+	print-sctp.c print-sl.c print-sll.c print-snmp.c \
 	print-stp.c print-sunrpc.c print-tcp.c \
 	print-telnet.c print-tftp.c print-timed.c print-token.c \
 	print-udp.c print-vjc.c print-vrrp.c print-wb.c print-zephyr.c \

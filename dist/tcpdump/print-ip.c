@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ip.c,v 1.3 2002/02/18 09:37:07 itojun Exp $	*/
+/*	$NetBSD: print-ip.c,v 1.4 2002/05/31 09:45:45 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-ip.c,v 1.100 2001/09/17 21:58:03 fenner Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-ip.c,v 1.104 2002/05/29 09:47:04 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-ip.c,v 1.3 2002/02/18 09:37:07 itojun Exp $");
+__RCSID("$NetBSD: print-ip.c,v 1.4 2002/05/31 09:45:45 itojun Exp $");
 #endif
 #endif
 
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: print-ip.c,v 1.3 2002/02/18 09:37:07 itojun Exp $");
 
 #include <netinet/in.h>
 
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -264,13 +265,12 @@ ip_print(register const u_char *bp, register u_int length)
 	register const u_char *cp;
 	u_char nh;
 	int advance;
+	struct protoent *proto;
 
 	ip = (const struct ip *)bp;
 #ifdef LBL_ALIGN
 	/*
 	 * If the IP header is not aligned, copy into abuf.
-	 * This will never happen with BPF.  It does happen raw packet
-	 * dumps from -r.
 	 */
 	if ((long)ip & 3) {
 		static u_char *abuf = NULL;
@@ -468,7 +468,11 @@ again:
 			break;
 
 		default:
-			(void)printf(" ip-proto-%d %d", nh, len);
+			if ((proto = getprotobynumber(nh)) != NULL)
+				(void)printf(" %s", proto->p_name);
+			else
+				(void)printf(" ip-proto-%d", nh);
+			printf(" %d", len);
 			break;
 		}
 	}
@@ -487,11 +491,17 @@ again:
 	if (off & 0x3fff) {
 		/*
 		 * if this isn't the first frag, we're missing the
-		 * next level protocol header.  print the ip addr.
+		 * next level protocol header.  print the ip addr
+		 * and the protocol.
 		 */
-		if (off & 0x1fff)
+		if (off & 0x1fff) {
 			(void)printf("%s > %s:", ipaddr_string(&ip->ip_src),
 				      ipaddr_string(&ip->ip_dst));
+			if ((proto = getprotobynumber(ip->ip_p)) != NULL)
+				(void)printf(" %s", proto->p_name);
+			else
+				(void)printf(" ip-proto-%d", ip->ip_p);
+		}
 #ifndef IP_MF
 #define IP_MF 0x2000
 #endif /* IP_MF */
@@ -544,8 +554,9 @@ again:
 		if ((u_char *)ip + hlen <= snapend) {
 			sum = in_cksum((const u_short *)ip, hlen, 0);
 			if (sum != 0) {
-				(void)printf("%sbad cksum %x!", sep,
-					     ntohs(ip->ip_sum));
+				(void)printf("%sbad cksum %x (->%x)!", sep,
+					     ntohs(ip->ip_sum),
+					     ntohs(ip->ip_sum)-sum);
 				sep = ", ";
 			}
 		}
