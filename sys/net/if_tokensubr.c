@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.6 1999/05/29 22:36:07 bad Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.7 1999/05/30 00:39:07 bad Exp $	*/
 
 /*
  * Copyright (c) 1997-1999
@@ -245,7 +245,7 @@ token_output(ifp, m0, dst, rt0)
 		}
 		else {
 			bcopy((caddr_t)ar_tha(ah), (caddr_t)edst, sizeof(edst));
-			trh = mtod(m, struct token_header *);
+			trh = (struct token_header *)M_TRHSTART(m);
 			trh->token_ac = TOKEN_AC;
 			trh->token_fc = TOKEN_FC;
 			if (trh->token_shost[0] & TOKEN_RI_PRESENT) {
