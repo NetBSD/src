@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.60 1998/09/07 08:17:39 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.61 1998/12/28 04:54:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.60 1998/09/07 08:17:39 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.61 1998/12/28 04:54:01 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,33 +160,12 @@ int	swaitint = SWAITINT;
 char	proctitle[BUFSIZ];	/* initial part of title */
 #endif /* HASSETPROCTITLE */
 
-#define LOGCMD(cmd, file) \
-	if (logging > 1) \
-	    syslog(LOG_INFO,"%s %s%s", cmd, \
-		*(file) == '/' ? "" : curdir(), file);
-#define LOGCMD2(cmd, file1, file2) \
-	 if (logging > 1) \
-	    syslog(LOG_INFO,"%s %s%s %s%s", cmd, \
-		*(file1) == '/' ? "" : curdir(), file1, \
-		*(file2) == '/' ? "" : curdir(), file2);
-#define LOGBYTES(cmd, file, cnt) \
-	if (logging > 1) { \
-		if (cnt == (off_t)-1) \
-		    syslog(LOG_INFO,"%s %s%s", cmd, \
-			*(file) == '/' ? "" : curdir(), file); \
-		else \
-		    syslog(LOG_INFO, "%s %s%s = %qd bytes", \
-			cmd, (*(file) == '/') ? "" : curdir(), file, \
-			(long long)cnt); \
-	}
-
 static void	 ack __P((char *));
 static void	 myoob __P((int));
 static int	 checkuser __P((const char *, const char *, int, int));
 static int	 checkaccess __P((const char *));
 static FILE	*dataconn __P((char *, off_t, char *));
 static void	 dolog __P((struct sockaddr_in *));
-static char	*curdir __P((void));
 static void	 end_login __P((void));
 static FILE	*getdatasock __P((char *));
 static char	*gunique __P((char *));
@@ -203,20 +182,6 @@ int	main __P((int, char *[]));
 int	klogin __P((struct passwd *, char *, char *, char *));
 void	kdestroy __P((void));
 #endif
-
-static char *
-curdir()
-{
-	static char path[MAXPATHLEN+1+1];	/* path + '/' + '\0' */
-
-	if (getcwd(path, sizeof(path)-2) == NULL)
-		return ("");
-	if (path[1] != '\0')		/* special case for root dir. */
-		strcat(path, "/");
-	/* For guest account, skip / since it's chrooted */
-	return (guest ? path+1 : path);
-}
-
 int
 main(argc, argv)
 	int argc;
@@ -793,7 +758,7 @@ retrieve(cmd, name)
 	}
 	if (cmd != NULL) {
 		char line[BUFSIZ];
-		char temp[MAXPATHLEN];
+		char temp[MAXPATHLEN + 1];
 
 		(void)snprintf(temp, sizeof(temp), "%s", TMPFILE);
 		stderrfd = mkstemp(temp);
@@ -808,7 +773,7 @@ retrieve(cmd, name)
 		if (errno != 0) {
 			perror_reply(550, name);
 			if (log) {
-				LOGCMD("get", name);
+				logcmd("get", -1, name, NULL);
 			}
 		}
 		if (stderrfd != -1)
@@ -848,7 +813,7 @@ retrieve(cmd, name)
 	pdata = -1;
 done:
 	if (log)
-		LOGBYTES("get", name, byte_count);
+		logcmd("get", byte_count, name, NULL);
 	closerv = (*closefunc)(fin);
 	if (sendrv == 0) {
 		FILE *err;
@@ -897,7 +862,7 @@ store(name, mode, unique)
 
 	if (unique && stat(name, &st) == 0 &&
 	    (name = gunique(name)) == NULL) {
-		LOGCMD(*mode == 'w' ? "put" : "append", name);
+		logcmd(*mode == 'w' ? "put" : "append", -1, name, NULL);
 		return;
 	}
 
@@ -907,7 +872,7 @@ store(name, mode, unique)
 	closefunc = fclose;
 	if (fout == NULL) {
 		perror_reply(553, name);
-		LOGCMD(*mode == 'w' ? "put" : "append", name);
+		logcmd(*mode == 'w' ? "put" : "append", -1, name, NULL);
 		return;
 	}
 	byte_count = -1;
@@ -952,7 +917,7 @@ store(name, mode, unique)
 	data = -1;
 	pdata = -1;
 done:
-	LOGBYTES(*mode == 'w' ? "put" : "append", name, byte_count);
+	logcmd(*mode == 'w' ? "put" : "append", byte_count, name, NULL);
 	(*closefunc)(fout);
 }
 
@@ -1429,7 +1394,7 @@ delete(name)
 	char *name;
 {
 
-	LOGCMD("delete", name);
+	logcmd("delete", -1, name, NULL);
 	if (remove(name) < 0)
 		perror_reply(550, name);
 	else
@@ -1470,7 +1435,7 @@ makedir(name)
 	char *name;
 {
 
-	LOGCMD("mkdir", name);
+	logcmd("mkdir", -1, name, NULL);
 	if (mkdir(name, 0777) < 0)
 		perror_reply(550, name);
 	else
@@ -1482,7 +1447,7 @@ removedir(name)
 	char *name;
 {
 
-	LOGCMD("rmdir", name);
+	logcmd("rmdir", -1, name, NULL);
 	if (rmdir(name) < 0)
 		perror_reply(550, name);
 	else
@@ -1520,7 +1485,7 @@ renamecmd(from, to)
 	char *from, *to;
 {
 
-	LOGCMD2("rename", from, to);
+	logcmd("rename", -1, from, to);
 	if (rename(from, to) < 0)
 		perror_reply(550, "rename");
 	else
@@ -1662,7 +1627,7 @@ static char *
 gunique(local)
 	char *local;
 {
-	static char new[MAXPATHLEN];
+	static char new[MAXPATHLEN + 1];
 	struct stat st;
 	int count, len;
 	char *cp;
@@ -1793,7 +1758,7 @@ send_file_list(whichf)
 			continue;
 
 		while ((dir = readdir(dirp)) != NULL) {
-			char nbuf[MAXPATHLEN];
+			char nbuf[MAXPATHLEN + 1];
 
 			if (dir->d_name[0] == '.' && dir->d_namlen == 1)
 				continue;
@@ -1852,20 +1817,8 @@ char *
 conffilename(s)
 	const char *s;
 {
-	static char filename[MAXPATHLEN];
+	static char filename[MAXPATHLEN + 1];
 
 	(void)snprintf(filename, sizeof(filename), "%s/%s", confdir ,s);
 	return filename;
-}
-
-char *
-xstrdup(s)
-	const char *s;
-{
-	char *new = strdup(s);
-
-	if (new == NULL)
-		fatal("Local resource failure: malloc");
-		/* NOTREACHED */
-	return (new);
 }
