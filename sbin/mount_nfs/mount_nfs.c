@@ -41,7 +41,8 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)mount_nfs.c	8.3 (Berkeley) 3/27/94";
+/*static char sccsid[] = "from: @(#)mount_nfs.c	8.3 (Berkeley) 3/27/94";*/
+static char *rcsid = "$Id: mount_nfs.c,v 1.2 1994/06/24 12:04:53 pk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -187,6 +188,7 @@ main(argc, argv)
 		case 'd':
 			nfsargsp->flags |= NFSMNT_DUMBTIMR;
 			break;
+#if 0 /* XXXX */
 		case 'g':
 			num = strtol(optarg, &p, 10);
 			if (*p || num <= 0)
@@ -195,6 +197,7 @@ main(argc, argv)
 			nfsargsp->maxgrouplist = num;
 			nfsargsp->flags |= NFSMNT_MAXGRPS;
 			break;
+#endif
 		case 'i':
 			nfsargsp->flags |= NFSMNT_INT;
 			break;
@@ -423,16 +426,19 @@ getnfsargs(spec, nfsargsp)
 			warnx("bad net address %s", hostp);
 			return (0);
 		}
-		if ((nfsargsp->flags & NFSMNT_KERB) &&
-		    (hp = gethostbyaddr((char *)&saddr.sin_addr.s_addr,
-		    sizeof (u_long), AF_INET)) == (struct hostent *)0) {
+		if ((nfsargsp->flags & NFSMNT_KERB)) {
+		    if ((hp = gethostbyaddr((char *)&saddr.sin_addr.s_addr,
+			 sizeof (u_long), AF_INET)) == (struct hostent *)0) {
 			warnx("can't reverse resolve net address");
 			return (0);
+		    }
+		    bcopy(hp->h_addr, (caddr_t)&saddr.sin_addr, hp->h_length);
 		}
 	} else if ((hp = gethostbyname(hostp)) == NULL) {
 		warnx("can't get net id for host");
 		return (0);
-	}
+	} else
+		bcopy(hp->h_addr, (caddr_t)&saddr.sin_addr, hp->h_length);
 #ifdef KERBEROS
 	if (nfsargsp->flags & NFSMNT_KERB) {
 		strncpy(inst, hp->h_name, INST_SZ);
@@ -442,7 +448,6 @@ getnfsargs(spec, nfsargsp)
 	}
 #endif /* KERBEROS */
 
-	bcopy(hp->h_addr, (caddr_t)&saddr.sin_addr, hp->h_length);
 	nfhret.stat = EACCES;	/* Mark not yet successful */
 	while (retrycnt > 0) {
 		saddr.sin_family = AF_INET;
