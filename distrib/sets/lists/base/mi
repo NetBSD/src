@@ -70,6 +70,7 @@
 ./sbin/ifconfig
 ./sbin/init
 ./sbin/ipf
+./sbin/lmcctl
 ./sbin/mknod
 ./sbin/modload
 ./sbin/modunload
