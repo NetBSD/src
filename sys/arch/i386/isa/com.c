@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.31.2.4 1994/08/24 07:29:42 mycroft Exp $
+ *	$Id: com.c,v 1.31.2.5 1994/09/16 17:31:02 cgd Exp $
  */
 
 /*
@@ -296,6 +296,11 @@ comopen(dev, flag, mode, p)
 		ttsetwater(tp);
 
 		iobase = sc->sc_iobase;
+		/* Set the FIFO threshold based on the receive speed. */
+		if (sc->sc_hwflags & COM_HW_FIFO)
+			outb(iobase + com_fifo,
+			    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
+			    (tp->t_ispeed <= 1200 ? FIFO_TRIGGER_1 : FIFO_TRIGGER_8));
 		/* flush any pending I/O */
 		(void) inb(iobase + com_lsr);
 		(void) inb(iobase + com_data);
@@ -555,21 +560,31 @@ comparam(tp, t)
 
 	s = spltty();
 
-	/* Set the FIFO threshold based on the receive speed. */
-	if (sc->sc_hwflags & COM_HW_FIFO)
-		outb(iobase + com_fifo,
-		    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
-		    (t->c_ispeed <= 1200 ? FIFO_TRIGGER_1 : FIFO_TRIGGER_8));
-
 	if (ospeed == 0)
 		outb(iobase + com_mcr, sc->sc_mcr &= ~MCR_DTR);
-	else
-		outb(iobase + com_mcr, sc->sc_mcr |= MCR_DTR);
+
+	/*
+	 * Set the FIFO threshold based on the receive speed, if we are
+	 * changing it.
+	 *
+	 * XXX
+	 * It would be better if we waited for the FIFO to empty, so we don't
+	 * lose any in-transit characters.
+	 */
+	if (tp->t_ispeed != t->c_ispeed) {
+		if (sc->sc_hwflags & COM_HW_FIFO)
+			outb(iobase + com_fifo,
+			    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
+			    (t->c_ispeed <= 1200 ? FIFO_TRIGGER_1 : FIFO_TRIGGER_8));
+	}
 
 	outb(iobase + com_cfcr, cfcr | CFCR_DLAB);
 	outb(iobase + com_dlbl, ospeed);
 	outb(iobase + com_dlbh, ospeed>>8);
 	outb(iobase + com_cfcr, cfcr);
+
+	if (ospeed != 0)
+		outb(iobase + com_mcr, sc->sc_mcr |= MCR_DTR);
 
 	/* When not using CRTSCTS, RTS follows DTR. */
 	if ((t->c_cflag & CRTSCTS) == 0) {
