@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.195 2002/04/12 19:32:30 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.196 2002/04/13 17:05:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.195 2002/04/12 19:32:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.196 2002/04/13 17:05:16 christos Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -660,6 +660,15 @@ com_detach(self, flags)
 	mn |= COMDIALOUT_MASK;
 	vdevgone(maj, mn, mn, VCHR);
 
+	if (sc->sc_rbuf == NULL) {
+		/*
+		 * Ring buffer allocation failed in the com_attach_subr,
+		 * only the tty is allocated, and nothing else.
+		 */
+		ttyfree(sc->sc_tty);
+		return 0;
+	}
+	
 	/* Free the receive buffer. */
 	free(sc->sc_rbuf, M_DEVBUF);
 
