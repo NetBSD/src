@@ -1,6 +1,5 @@
-# $NetBSD: shl.mi,v 1.21 2001/08/25 15:49:12 thorpej Exp $
+# $NetBSD: shl.mi,v 1.22 2001/08/25 16:46:17 thorpej Exp $
 ./usr/lib/libasn1_pic.a		comp-c-piclib
-./usr/lib/libbfd.so.4.0		comp-util-bin
 ./usr/lib/libbz2_pic.a		comp-c-piclib
 ./usr/lib/libc_pic.a		comp-c-piclib
 ./usr/lib/libcdk_pic.a		comp-c-piclib
