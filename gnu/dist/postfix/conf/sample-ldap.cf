@@ -23,6 +23,13 @@
 #ldap_server_port = 389
 
 # The ldap_query_filter parameter specifies the filter used for queries.
+# The replacement for "%s" is the address input into the map; e.g.
+# for alias maps, the "user" part (the RFC 2822 local-part) of
+# "user@domain.com" for To: addresses destined for local delivery 
+# (those matching $mydestination or a virtual domain), and all of
+# "user@domain.com" (the RFC 2822 addr-spec) for other addresses.
+# "%u" provides just the user portion of the input, and "%d" provides
+# just the hostname.
 #
 #ldap_query_filter = (mailacceptinggeneralid=%s)
 
@@ -30,6 +37,13 @@
 # the search.
 #
 #ldap_result_attribute = maildrop
+
+# The ldap_special_result_attribute lists the attribute(s) of an
+# entry which contain links, either ldap url's or distinguished names.
+# The entries referenced by these links are (recursively) treated as if
+# they were contained in the referencing entity.
+#
+# ldap_special_result_attribute =
 
 # The ldap_scope parameter specifies the LDAP search scope: sub, base, or one.
 #
