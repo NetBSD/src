@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.21 2003/10/26 23:11:15 chris Exp $	*/
+/*	$NetBSD: syscall.c,v 1.22 2003/10/29 04:38:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.21 2003/10/26 23:11:15 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.22 2003/10/29 04:38:50 mycroft Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -336,8 +336,6 @@ syscall_fancy(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 	register_t *ap, *args, copyargs[MAXARGS], rval[2];
 	ksiginfo_t ksi;
 
-	args = NULL;
-
 	KERNEL_PROC_LOCK(p);
 
 	switch (insn & SWI_OS_MASK) { /* Which OS is the SWI from? */
@@ -407,11 +405,11 @@ syscall_fancy(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 	else {
 		KASSERT(nargs <= MAXARGS);
 		memcpy(copyargs, ap, nap * sizeof(register_t));
+		args = copyargs;
 		error = copyin((void *)frame->tf_usr_sp, copyargs + nap,
 		    (nargs - nap) * sizeof(register_t));
 		if (error)
 			goto bad;
-		args = copyargs;
 	}
 
 	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
