@@ -1,14 +1,15 @@
 #! /bin/sh
 #
-# Written by J.T. Conklin <jtc@netbsd.org>.
-#
-# Little addons to handle also linked and unformated man pages
-# by Thorsten Frueauf <frueauf@ira.uka.de>.
+# written by matthew green <mrg@eterna.com.au>, based on the
+# original by J.T. Conklin <jtc@netbsd.org> and Thorsten
+# Frueauf <frueauf@ira.uka.de>.
 #
 # Public domain.
 #
 
-trap "rm -f /tmp/whatis$$; exit 1" 1 2 15
+LIST=/tmp/makewhatislist$$
+TMP=/tmp/whatis$$
+trap "rm -f $LIST $TMP; exit 1" 1 2 15
 
 MANDIR=${1-/usr/share/man}
 if test ! -d "$MANDIR"; then 
@@ -16,32 +17,24 @@ if test ! -d "$MANDIR"; then
 	exit 1
 fi
 
-find $MANDIR \( -type f -or -type l \) -name '*.0' -print | while read file
+find $MANDIR \( -type f -o -type l \) -name '*.[0-9]*' -ls | \
+    sort -n | awk '{if (u[$1]) next; u[$1]++ ; print $11}' > $LIST
+ 
+egrep '\.[1-9]$' $LIST | xargs /usr/libexec/getNAME | \
+	sed -e 's/ [a-zA-Z0-9]* \\-/ -/' >> $TMP
+
+egrep '\.0$' $LIST | while read file
 do
 	sed -n -f /usr/share/man/makewhatis.sed $file;
-done > /tmp/whatis$$
+done > $TMP
 
-find $MANDIR \( -type f -or -type l \) -name '*.[1-9]' -print | while read file
-do
-	nroff -man $file | sed -n -f /usr/share/man/makewhatis.sed;
-done >> /tmp/whatis$$
-
-find $MANDIR \( -type f -or -type l \) -name '*.[1-9]?' -print | while read file
-do
-	nroff -man $file | sed -n -f /usr/share/man/makewhatis.sed;
-done >> /tmp/whatis$$
-	
-find $MANDIR \( -type f -or -type l \) -name '*.0.Z' -print | while read file
-do
-	zcat $file | sed -n -f /usr/share/man/makewhatis.sed;
-done >> /tmp/whatis$$
-
-find $MANDIR \( -type f -or -type l \) -name '*.0.gz' -print | while read file
+egrep '\.[0].(gz|Z)$' $LIST | while read file
 do
 	gzip -fdc $file | sed -n -f /usr/share/man/makewhatis.sed;
-done >> /tmp/whatis$$
+done >> $TMP
 
-sort -u -o /tmp/whatis$$ /tmp/whatis$$
+sort -u -o $TMP $TMP
 
-install -o bin -g bin -m 444 /tmp/whatis$$ "$MANDIR/whatis.db"
+install -o bin -g bin -m 444 $TMP "$MANDIR/whatis.db"
+rm -f $LIST $TMP
 exit 0
