@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.45 2002/11/23 15:21:39 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.46 2002/11/23 15:45:32 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -1496,4 +1496,12 @@ bin/rcp/rcp.c					1.30
 	It's a very bad habit to store file sizes in int's, so change it to
 	off_t instead. Obviously noone has tried to rcp files larger than 2GB.
 	[ragge, ticket #1008]
+
+sys/lib/libkern/ffs.c				1.9
+
+	#undef ffs before the ffs() function definition, so that the name
+	isn't rewrote to __builtin_ffs() on gcc 2.95+; this fixes compilation
+	on sun2
+	also change the comment for function
+	[skrll, ticket #1009]
 
