@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.6 2002/12/23 20:41:47 pooka Exp $	*/
+/*	$NetBSD: bus.h,v 1.7 2003/01/28 01:08:05 kent Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -488,6 +488,7 @@ __SGIMIPS_copy_region(4)
 #define	BUS_DMA_BUS4		0x080
 #define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
+#define	BUS_DMA_NOCACHE		0x400	/* hint: map non-cached memory */
 
 #define	SGIMIPS_DMAMAP_COHERENT	0x10000	/* no cache flush necessary on sync */
 
