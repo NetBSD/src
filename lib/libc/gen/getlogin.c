@@ -1,4 +1,4 @@
-/*	$NetBSD: getlogin.c,v 1.6 1995/02/27 04:12:47 cgd Exp $	*/
+/*	$NetBSD: getlogin.c,v 1.7 1996/09/23 02:43:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getlogin.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getlogin.c,v 1.6 1995/02/27 04:12:47 cgd Exp $";
+static char rcsid[] = "$NetBSD: getlogin.c,v 1.7 1996/09/23 02:43:11 thorpej Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,7 +56,7 @@ getlogin()
 	static char logname[MAXLOGNAME + 1];
 
 	if (__logname_valid == 0) {
-		if (_getlogin(logname, sizeof(logname) - 1) < 0)
+		if (__getlogin(logname, sizeof(logname) - 1) < 0)
 			return ((char *)NULL);
 		__logname_valid = 1;
 	}
