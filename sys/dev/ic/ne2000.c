@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.37 2001/11/13 13:14:42 lukem Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.37.10.1 2003/01/27 05:26:51 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.37 2001/11/13 13:14:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.37.10.1 2003/01/27 05:26:51 jmc Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -485,10 +485,16 @@ ne2000_write_mbuf(sc, m, buf)
 	bus_space_handle_t nich = sc->sc_regh;
 	bus_space_tag_t asict = nsc->sc_asict;
 	bus_space_handle_t asich = nsc->sc_asich;
-	int savelen;
+	int savelen, padlen;
 	int maxwait = 100;	/* about 120us */
 
 	savelen = m->m_pkthdr.len;
+	if (savelen < ETHER_MIN_LEN - ETHER_CRC_LEN) {
+		padlen = ETHER_MIN_LEN - ETHER_CRC_LEN - savelen;
+		savelen = ETHER_MIN_LEN - ETHER_CRC_LEN;
+	} else
+		padlen = 0;
+
 
 	/* Select page 0 registers. */
 	NIC_BARRIER(nict, nich);
@@ -528,6 +534,11 @@ ne2000_write_mbuf(sc, m, buf)
 				    NE2000_ASIC_DATA, mtod(m, u_int8_t *),
 				    m->m_len);
 			}
+		}
+		if (padlen) {
+			for(; padlen > 0; padlen--)
+				bus_space_write_1(asict, asich,
+				    NE2000_ASIC_DATA, 0);
 		}
 	} else {
 		/* NE2000s are a bit trickier. */
@@ -599,6 +610,11 @@ ne2000_write_mbuf(sc, m, buf)
 			savebyte[1] = 0;
 			bus_space_write_stream_2(asict, asich, NE2000_ASIC_DATA,
 			    *(u_int16_t *)savebyte);
+		}
+		if (padlen) {
+			for(; padlen > 0; padlen -= 2)
+				bus_space_write_stream_2(asict, asich,
+				    NE2000_ASIC_DATA, 0);
 		}
 	}
 	NIC_BARRIER(nict, nich);
