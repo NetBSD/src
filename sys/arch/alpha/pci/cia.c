@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.27 1997/09/17 01:34:18 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.27.2.1 1997/10/27 01:11:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.27 1997/09/17 01:34:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.27.2.1 1997/10/27 01:11:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,6 +136,7 @@ ciaattach(parent, self, aux)
 	struct cia_softc *sc = (struct cia_softc *)self;
 	struct cia_config *ccp;
 	struct pcibus_attach_args pba;
+	char bits[64];
 
 	/* note that we've attached the chipset; can't have 2 CIAs. */
 	ciafound = 1;
@@ -148,14 +149,11 @@ ciaattach(parent, self, aux)
 	ccp = sc->sc_ccp = &cia_configuration;
 	cia_init(ccp, 1);
 
-	printf(": DECchip 21171/21172 Core Logic chipset rev. %d\n",
-	    ccp->cc_rev);
-	
-	/*
-	 * XXX Should we print any more?  We only care about BWX right now.
-	 */
-	if (ccp->cc_cnfg & CNFG_BWEN)
-		printf("%s: EV56 BWX enabled\n", self->dv_xname);
+	printf(": DECchip 2117%d Core Logic chipset\n", ccp->cc_rev);
+	if (ccp->cc_cnfg)
+		printf("%s: extended capabilities: %s\n", self->dv_xname,
+		    bitmask_snprintf(ccp->cc_cnfg, CIA_CSR_CNFG_BITS,
+		    bits, sizeof(bits)));
 
 	switch (hwrpb->rpb_type) {
 #ifdef DEC_KN20AA
