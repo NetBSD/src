@@ -1,5 +1,5 @@
-/*	$NetBSD: pcap-namedb.h,v 1.1.1.3 1997/10/03 15:38:50 christos Exp $	*/
-
+.\" $NetBSD: pcap-namedb.h,v 1.1.1.4 2004/09/19 21:31:45 dyoung Exp $
+.\
 /*
  * Copyright (c) 1994, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -32,11 +32,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) Header: pcap-namedb.h,v 1.5 96/07/14 03:00:14 leres Exp  (LBL)
+ * @(#) Header: /tcpdump/master/libpcap/pcap-namedb.h,v 1.8 2000/07/29 07:36:43 guy Exp  (LBL)
  */
 
 #ifndef lib_pcap_ethers_h
 #define lib_pcap_ethers_h
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * As returned by the pcap_next_etherent()
@@ -57,6 +61,9 @@ u_char *pcap_ether_hostton(const char*);
 u_char *pcap_ether_aton(const char *);
 
 bpf_u_int32 **pcap_nametoaddr(const char *);
+#ifdef INET6
+struct addrinfo *pcap_nametoaddrinfo(const char *);
+#endif
 bpf_u_int32 pcap_nametonetaddr(const char *);
 
 int	pcap_nametoport(const char *, int *, int *);
@@ -74,5 +81,9 @@ int	pcap_nametoeproto(const char *);
 int __pcap_atodn(const char *, bpf_u_int32 *);
 int __pcap_atoin(const char *, bpf_u_int32 *);
 u_short	__pcap_nametodnaddr(const char *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -1,5 +1,5 @@
-/*	$NetBSD: etherent.c,v 1.1.1.3 1997/10/03 15:38:39 christos Exp $	*/
-
+.\" $NetBSD: etherent.c,v 1.1.1.4 2004/09/19 21:31:39 dyoung Exp $
+.\
 /*
  * Copyright (c) 1990, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -24,11 +24,15 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static const char rcsid[] =
-    "@(#) Header: etherent.c,v 1.20 96/09/26 23:28:00 leres Exp  (LBL)";
+static const char rcsid[] _U_ =
+    "@(#) Header: /tcpdump/master/libpcap/etherent.c,v 1.21.6.1 2003/11/15 23:26:38 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: etherent.c,v 1.1.1.3 1997/10/03 15:38:39 christos Exp $");
+__RCSID("$NetBSD: etherent.c,v 1.1.1.4 2004/09/19 21:31:39 dyoung Exp $");
 #endif
+#endif
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #include <sys/types.h>
@@ -42,7 +46,6 @@ __RCSID("$NetBSD: etherent.c,v 1.1.1.3 1997/10/03 15:38:39 christos Exp $");
 
 #include <pcap-namedb.h>
 
-#include "gnuc.h"
 #ifdef HAVE_OS_PROTO_H
 #include "os-proto.h"
 #endif

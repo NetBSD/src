@@ -1,5 +1,5 @@
-/*	$NetBSD: optimize.c,v 1.1.1.3 1997/10/03 15:38:44 christos Exp $	*/
-
+.\" $NetBSD: optimize.c,v 1.1.1.4 2004/09/19 21:31:42 dyoung Exp $
+.\
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -25,25 +25,27 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static const char rcsid[] =
-    "@(#) Header: optimize.c,v 1.60 96/09/26 23:28:14 leres Exp  (LBL)";
+static const char rcsid[] _U_ =
+    "@(#) Header: /tcpdump/master/libpcap/optimize.c,v 1.76.2.3 2003/12/22 00:26:36 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: optimize.c,v 1.1.1.3 1997/10/03 15:38:44 christos Exp $");
+__RCSID("$NetBSD: optimize.c,v 1.1.1.4 2004/09/19 21:31:42 dyoung Exp $");
 #endif
 #endif
 
-#include <sys/types.h>
-#include <sys/time.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
 
+#include <errno.h>
+
 #include "pcap-int.h"
 
 #include "gencode.h"
 
-#include "gnuc.h"
 #ifdef HAVE_OS_PROTO_H
 #include "os-proto.h"
 #endif
@@ -122,9 +124,6 @@ static void opt_peep(struct block *);
 static void opt_stmt(struct stmt *, int[], int);
 static void deadstmt(struct stmt *, struct stmt *[]);
 static void opt_deadstores(struct block *);
-static void opt_blk(struct block *, int);
-static int use_conflict(struct block *, struct block *);
-static void opt_j(struct edge *);
 static struct block *fold_edge(struct block *, struct edge *);
 static inline int eq_blk(struct block *, struct block *);
 static int slength(struct slist *);
@@ -768,50 +767,39 @@ opt_peep(b)
 	 * is a known constant, we can merge this value into the
 	 * comparison.
 	 */
-	if (last->s.code == (BPF_ALU|BPF_SUB|BPF_X) &&
-	    !ATOMELEM(b->out_use, A_ATOM)) {
-		val = b->val[X_ATOM];
-		if (vmap[val].is_const) {
-			int op;
-
-			b->s.k += vmap[val].const_val;
-			op = BPF_OP(b->s.code);
-			if (op == BPF_JGT || op == BPF_JGE) {
-				struct block *t = JT(b);
-				JT(b) = JF(b);
-				JF(b) = t;
-				b->s.k += 0x80000000;
+	if (BPF_OP(b->s.code) == BPF_JEQ) {
+		if (last->s.code == (BPF_ALU|BPF_SUB|BPF_X) &&
+		    !ATOMELEM(b->out_use, A_ATOM)) {
+			val = b->val[X_ATOM];
+			if (vmap[val].is_const) {
+				/*
+				 * sub x  ->	nop
+				 * jeq #y	jeq #(x+y)
+				 */
+				b->s.k += vmap[val].const_val;
+				last->s.code = NOP;
+				done = 0;
+			} else if (b->s.k == 0) {
+				/*
+				 * sub #x  ->	nop
+				 * jeq #0	jeq #x
+				 */
+				last->s.code = NOP;
+				b->s.code = BPF_CLASS(b->s.code) |
+					BPF_OP(b->s.code) | BPF_X;
+				done = 0;
 			}
-			last->s.code = NOP;
-			done = 0;
-		} else if (b->s.k == 0) {
-			/*
-			 * sub x  ->	nop
-			 * j  #0	j  x
-			 */
-			last->s.code = NOP;
-			b->s.code = BPF_CLASS(b->s.code) | BPF_OP(b->s.code) |
-				BPF_X;
-			done = 0;
 		}
-	}
-	/*
-	 * Likewise, a constant subtract can be simplified.
-	 */
-	else if (last->s.code == (BPF_ALU|BPF_SUB|BPF_K) &&
-		 !ATOMELEM(b->out_use, A_ATOM)) {
-		int op;
+		/*
+		 * Likewise, a constant subtract can be simplified.
+		 */
+		else if (last->s.code == (BPF_ALU|BPF_SUB|BPF_K) &&
+			 !ATOMELEM(b->out_use, A_ATOM)) {
 
-		b->s.k += last->s.k;
-		last->s.code = NOP;
-		op = BPF_OP(b->s.code);
-		if (op == BPF_JGT || op == BPF_JGE) {
-			struct block *t = JT(b);
-			JT(b) = JF(b);
-			JF(b) = t;
-			b->s.k += 0x80000000;
+			last->s.code = NOP;
+			b->s.k += last->s.k;
+			done = 0;
 		}
-		done = 0;
 	}
 	/*
 	 * and #k	nop
@@ -824,6 +812,16 @@ opt_peep(b)
 		last->s.code = NOP;
 		done = 0;
 		opt_not(b);
+	}
+	/*
+	 * jset #0        ->   never
+	 * jset #ffffffff ->   always
+	 */
+	if (b->s.code == (BPF_JMP|BPF_K|BPF_JSET)) {
+		if (b->s.k == 0)
+			JT(b) = JF(b);
+		if (b->s.k == 0xffffffff)
+			JF(b) = JT(b);
 	}
 	/*
 	 * If the accumulator is a known constant, we can compute the
@@ -942,7 +940,10 @@ opt_stmt(s, val, alter)
 		op = BPF_OP(s->code);
 		if (alter) {
 			if (s->k == 0) {
-				if (op == BPF_ADD || op == BPF_SUB ||
+				/* don't optimize away "sub #0"
+				 * as it may be needed later to
+				 * fixup the generated math code */
+				if (op == BPF_ADD ||
 				    op == BPF_LSH || op == BPF_RSH ||
 				    op == BPF_OR) {
 					s->code = NOP;
@@ -991,18 +992,17 @@ opt_stmt(s, val, alter)
 		 * that is 0, and simplify.  This may not seem like
 		 * much of a simplification but it could open up further
 		 * optimizations.
-		 * XXX We could also check for mul by 1, and -1, etc.
+		 * XXX We could also check for mul by 1, etc.
 		 */
 		if (alter && vmap[val[A_ATOM]].is_const
 		    && vmap[val[A_ATOM]].const_val == 0) {
-			if (op == BPF_ADD || op == BPF_OR ||
-			    op == BPF_LSH || op == BPF_RSH || op == BPF_SUB) {
+			if (op == BPF_ADD || op == BPF_OR) {
 				s->code = BPF_MISC|BPF_TXA;
 				vstore(s, &val[A_ATOM], val[X_ATOM], alter);
 				break;
 			}
 			else if (op == BPF_MUL || op == BPF_DIV ||
-				 op == BPF_AND) {
+				 op == BPF_AND || op == BPF_LSH || op == BPF_RSH) {
 				s->code = BPF_LD|BPF_IMM;
 				s->k = 0;
 				vstore(s, &val[A_ATOM], K(s->k), alter);
@@ -1111,6 +1111,14 @@ opt_blk(b, do_stmts)
 	int i;
 	bpf_int32 aval;
 
+#if 0
+	for (s = b->stmts; s && s->next; s = s->next)
+		if (BPF_CLASS(s->s.code) == BPF_JMP) {
+			do_stmts = 0;
+			break;
+		}
+#endif
+
 	/*
 	 * Initialize the atom values.
 	 * If we have no predecessors, everything is undefined.
@@ -1139,7 +1147,7 @@ opt_blk(b, do_stmts)
 	 * already there, or if this block is a return,
 	 * eliminate all the statements.
 	 */
-	if (do_stmts && 
+	if (do_stmts &&
 	    ((b->out_use == 0 && aval != 0 &&b->val[A_ATOM] == aval) ||
 	     BPF_CLASS(b->s.code) == BPF_RET)) {
 		if (b->stmts != 0) {
@@ -1480,6 +1488,8 @@ opt_blks(root, do_stmts)
 
 	init_val();
 	maxlevel = root->level;
+
+	find_inedges(root);
 	for (i = maxlevel; i >= 0; --i)
 		for (p = levels[i]; p; p = p->link)
 			opt_blk(p, do_stmts);
@@ -1497,6 +1507,8 @@ opt_blks(root, do_stmts)
 			opt_j(&p->ef);
 		}
 	}
+
+	find_inedges(root);
 	for (i = 1; i <= maxlevel; ++i) {
 		for (p = levels[i]; p; p = p->link) {
 			or_pullup(p);
@@ -1568,21 +1580,24 @@ opt_loop(root, do_stmts)
 {
 
 #ifdef BDEBUG
-	if (dflag > 1)
+	if (dflag > 1) {
+		printf("opt_loop(root, %d) begin\n", do_stmts);
 		opt_dump(root);
+	}
 #endif
 	do {
 		done = 1;
 		find_levels(root);
 		find_dom(root);
 		find_closure(root);
-		find_inedges(root);
 		find_ud(root);
 		find_edom(root);
 		opt_blks(root, do_stmts);
 #ifdef BDEBUG
-		if (dflag > 1)
+		if (dflag > 1) {
+			printf("opt_loop(root, %d) bottom, done=%d\n", do_stmts, done);
 			opt_dump(root);
+		}
 #endif
 	} while (!done);
 }
@@ -1602,7 +1617,19 @@ bpf_optimize(rootp)
 	opt_loop(root, 0);
 	opt_loop(root, 1);
 	intern_blocks(root);
+#ifdef BDEBUG
+	if (dflag > 1) {
+		printf("after intern_blocks()\n");
+		opt_dump(root);
+	}
+#endif
 	opt_root(rootp);
+#ifdef BDEBUG
+	if (dflag > 1) {
+		printf("after opt_root()\n");
+		opt_dump(root);
+	}
+#endif
 	opt_cleanup();
 }
 
@@ -1776,6 +1803,20 @@ number_blks_r(p)
 /*
  * Return the number of stmts in the flowgraph reachable by 'p'.
  * The nodes should be unmarked before calling.
+ *
+ * Note that "stmts" means "instructions", and that this includes
+ *
+ *	side-effect statements in 'p' (slength(p->stmts));
+ *
+ *	statements in the true branch from 'p' (count_stmts(JT(p)));
+ *
+ *	statements in the false branch from 'p' (count_stmts(JF(p)));
+ *
+ *	the conditional jump itself (1);
+ *
+ *	an extra long jump if the true branch requires it (p->longjt);
+ *
+ *	an extra long jump if the false branch requires it (p->longjf).
  */
 static int
 count_stmts(p)
@@ -1787,7 +1828,7 @@ count_stmts(p)
 		return 0;
 	Mark(p);
 	n = count_stmts(JT(p)) + count_stmts(JF(p));
-	return slength(p->stmts) + n + 1;
+	return slength(p->stmts) + n + 1 + p->longjt + p->longjf;
 }
 
 /*
@@ -1809,17 +1850,23 @@ opt_init(root)
 	unMarkAll();
 	n = count_blocks(root);
 	blocks = (struct block **)malloc(n * sizeof(*blocks));
+	if (blocks == NULL)
+		bpf_error("malloc");
 	unMarkAll();
 	n_blocks = 0;
 	number_blks_r(root);
 
 	n_edges = 2 * n_blocks;
 	edges = (struct edge **)malloc(n_edges * sizeof(*edges));
+	if (edges == NULL)
+		bpf_error("malloc");
 
 	/*
 	 * The number of levels is bounded by the number of nodes.
 	 */
 	levels = (struct block **)malloc(n_blocks * sizeof(*levels));
+	if (levels == NULL)
+		bpf_error("malloc");
 
 	edgewords = n_edges / (8 * sizeof(bpf_u_int32)) + 1;
 	nodewords = n_blocks / (8 * sizeof(bpf_u_int32)) + 1;
@@ -1827,6 +1874,8 @@ opt_init(root)
 	/* XXX */
 	space = (bpf_u_int32 *)malloc(2 * n_blocks * nodewords * sizeof(*space)
 				 + n_edges * edgewords * sizeof(*space));
+	if (space == NULL)
+		bpf_error("malloc");
 	p = space;
 	all_dom_sets = p;
 	for (i = 0; i < n; ++i) {
@@ -1863,7 +1912,9 @@ opt_init(root)
 	 */
 	maxval = 3 * max_stmts;
 	vmap = (struct vmapinfo *)malloc(maxval * sizeof(*vmap));
-	vnode_base = (struct valnode *)malloc(maxval * sizeof(*vmap));
+	vnode_base = (struct valnode *)malloc(maxval * sizeof(*vnode_base));
+	if (vmap == NULL || vnode_base == NULL)
+		bpf_error("malloc");
 }
 
 /*
@@ -1893,6 +1944,7 @@ convert_code_r(p)
 	int slen;
 	u_int off;
 	int extrajmps;		/* number of extra jumps inserted */
+	struct slist **offset = NULL;
 
 	if (p == 0 || isMarked(p))
 		return (1);
@@ -1909,13 +1961,90 @@ convert_code_r(p)
 
 	p->offset = dst - fstart;
 
+	/* generate offset[] for convenience  */
+	if (slen) {
+		offset = (struct slist **)calloc(slen, sizeof(struct slist *));
+		if (!offset) {
+			bpf_error("not enough core");
+			/*NOTREACHED*/
+		}
+	}
+	src = p->stmts;
+	for (off = 0; off < slen && src; off++) {
+#if 0
+		printf("off=%d src=%x\n", off, src);
+#endif
+		offset[off] = src;
+		src = src->next;
+	}
+
+	off = 0;
 	for (src = p->stmts; src; src = src->next) {
 		if (src->s.code == NOP)
 			continue;
 		dst->code = (u_short)src->s.code;
 		dst->k = src->s.k;
+
+		/* fill block-local relative jump */
+		if (BPF_CLASS(src->s.code) != BPF_JMP || src->s.code == (BPF_JMP|BPF_JA)) {
+#if 0
+			if (src->s.jt || src->s.jf) {
+				bpf_error("illegal jmp destination");
+				/*NOTREACHED*/
+			}
+#endif
+			goto filled;
+		}
+		if (off == slen - 2)	/*???*/
+			goto filled;
+
+	    {
+		int i;
+		int jt, jf;
+		char *ljerr = "%s for block-local relative jump: off=%d";
+
+#if 0
+		printf("code=%x off=%d %x %x\n", src->s.code,
+			off, src->s.jt, src->s.jf);
+#endif
+
+		if (!src->s.jt || !src->s.jf) {
+			bpf_error(ljerr, "no jmp destination", off);
+			/*NOTREACHED*/
+		}
+
+		jt = jf = 0;
+		for (i = 0; i < slen; i++) {
+			if (offset[i] == src->s.jt) {
+				if (jt) {
+					bpf_error(ljerr, "multiple matches", off);
+					/*NOTREACHED*/
+				}
+
+				dst->jt = i - off - 1;
+				jt++;
+			}
+			if (offset[i] == src->s.jf) {
+				if (jf) {
+					bpf_error(ljerr, "multiple matches", off);
+					/*NOTREACHED*/
+				}
+				dst->jf = i - off - 1;
+				jf++;
+			}
+		}
+		if (!jt || !jf) {
+			bpf_error(ljerr, "no destination found", off);
+			/*NOTREACHED*/
+		}
+	    }
+filled:
 		++dst;
+		++off;
 	}
+	if (offset)
+		free(offset);
+
 #ifdef BDEBUG
 	bids[dst - fstart] = p->id + 1;
 #endif
@@ -1974,18 +2103,20 @@ icode_to_fcode(root, lenp)
 	struct bpf_insn *fp;
 
 	/*
-	 * Loop doing convert_codr_r() until no branches remain
+	 * Loop doing convert_code_r() until no branches remain
 	 * with too-large offsets.
 	 */
 	while (1) {
 	    unMarkAll();
 	    n = *lenp = count_stmts(root);
-    
+
 	    fp = (struct bpf_insn *)malloc(sizeof(*fp) * n);
+	    if (fp == NULL)
+		    bpf_error("malloc");
 	    memset((char *)fp, 0, sizeof(*fp) * n);
 	    fstart = fp;
 	    ftail = fp + n;
-    
+
 	    unMarkAll();
 	    if (convert_code_r(root))
 		break;
@@ -1993,6 +2124,36 @@ icode_to_fcode(root, lenp)
 	}
 
 	return fp;
+}
+
+/*
+ * Make a copy of a BPF program and put it in the "fcode" member of
+ * a "pcap_t".
+ *
+ * If we fail to allocate memory for the copy, fill in the "errbuf"
+ * member of the "pcap_t" with an error message, and return -1;
+ * otherwise, return 0.
+ */
+int
+install_bpf_program(pcap_t *p, struct bpf_program *fp)
+{
+	size_t prog_size;
+
+	/*
+	 * Free up any already installed program.
+	 */
+	pcap_freecode(&p->fcode);
+
+	prog_size = sizeof(*fp->bf_insns) * fp->bf_len;
+	p->fcode.bf_len = fp->bf_len;
+	p->fcode.bf_insns = (struct bpf_insn *)malloc(prog_size);
+	if (p->fcode.bf_insns == NULL) {
+		snprintf(p->errbuf, sizeof(p->errbuf),
+			 "malloc: %s", pcap_strerror(errno));
+		return (-1);
+	}
+	memcpy(p->fcode.bf_insns, fp->bf_insns, prog_size);
+	return (0);
 }
 
 #ifdef BDEBUG

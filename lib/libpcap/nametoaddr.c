@@ -1,7 +1,7 @@
-/*	$NetBSD: nametoaddr.c,v 1.1.1.3 1997/10/03 15:38:43 christos Exp $	*/
-
+.\" $NetBSD: nametoaddr.c,v 1.1.1.4 2004/09/19 21:31:41 dyoung Exp $
+.\
 /*
- * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
+ * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,33 +27,54 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static const char rcsid[] =
-    "@(#) Header: nametoaddr.c,v 1.47 97/06/13 13:16:19 leres Exp  (LBL)";
+static const char rcsid[] _U_ =
+    "@(#) Header: /tcpdump/master/libpcap/nametoaddr.c,v 1.68.2.3 2003/11/19 18:13:48 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: nametoaddr.c,v 1.1.1.3 1997/10/03 15:38:43 christos Exp $");
+__RCSID("$NetBSD: nametoaddr.c,v 1.1.1.4 2004/09/19 21:31:41 dyoung Exp $");
 #endif
 #endif
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef WIN32
+#include <pcap-stdinc.h>
+
+#else /* WIN32 */
 
 #include <sys/param.h>
 #include <sys/types.h>				/* concession to AIX */
 #include <sys/socket.h>
 #include <sys/time.h>
 
-#if __STDC__
-struct mbuf;
-struct rtentry;
+#include <netinet/in.h>
+#endif /* WIN32 */
+
+/*
+ * XXX - why was this included even on UNIX?
+ */
+#ifdef __MINGW32__
+#include "IP6_misc.h"
 #endif
 
-#include <net/if.h>
-#include <netinet/in.h>
+#ifndef WIN32
+#ifdef HAVE_ETHER_HOSTTON
+#ifdef HAVE_NETINET_IF_ETHER_H
+struct mbuf;		/* Squelch compiler warnings on some platforms for */
+struct rtentry;		/* declarations in <net/if.h> */
+#include <net/if.h>	/* for "struct ifnet" in "struct arpcom" on Solaris */
 #include <netinet/if_ether.h>
+#endif /* HAVE_NETINET_IF_ETHER_H */
+#endif /* HAVE_ETHER_HOSTTON */
 #include <arpa/inet.h>
+#include <netdb.h>
+#endif /* WIN32 */
 
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <memory.h>
-#include <netdb.h>
 #include <stdio.h>
 
 #include "pcap-int.h"
@@ -61,7 +82,6 @@ struct rtentry;
 #include "gencode.h"
 #include <pcap-namedb.h>
 
-#include "gnuc.h"
 #ifdef HAVE_OS_PROTO_H
 #include "os-proto.h"
 #endif
@@ -101,6 +121,24 @@ pcap_nametoaddr(const char *name)
 		return 0;
 }
 
+#ifdef INET6
+struct addrinfo *
+pcap_nametoaddrinfo(const char *name)
+{
+	struct addrinfo hints, *res;
+	int error;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;	/*not really*/
+	error = getaddrinfo(name, NULL, &hints, &res);
+	if (error)
+		return NULL;
+	else
+		return res;
+}
+#endif /*INET6*/
+
 /*
  *  Convert net name to internet address.
  *  Return 0 upon failure.
@@ -108,12 +146,19 @@ pcap_nametoaddr(const char *name)
 bpf_u_int32
 pcap_nametonetaddr(const char *name)
 {
+#ifndef WIN32
 	struct netent *np;
 
 	if ((np = getnetbyname(name)) != NULL)
 		return np->n_net;
 	else
 		return 0;
+#else
+	/*
+	 * There's no "getnetbyname()" on Windows.
+	 */
+	return 0;
+#endif
 }
 
 /*
@@ -125,36 +170,38 @@ int
 pcap_nametoport(const char *name, int *port, int *proto)
 {
 	struct servent *sp;
-	char *other;
+	int tcp_port = -1;
+	int udp_port = -1;
 
-	sp = getservbyname(name, (char *)0);
-	if (sp != NULL) {
-		NTOHS(sp->s_port);
-		*port = sp->s_port;
-		*proto = pcap_nametoproto(sp->s_proto);
-		/*
-		 * We need to check /etc/services for ambiguous entries.
-		 * If we find the ambiguous entry, and it has the
-		 * same port number, change the proto to PROTO_UNDEF
-		 * so both TCP and UDP will be checked.
-		 */
-		if (*proto == IPPROTO_TCP)
-			other = "udp";
-		else
-			other = "tcp";
-
-		sp = getservbyname(name, other);
-		if (sp != 0) {
-			NTOHS(sp->s_port);
+	/*
+	 * We need to check /etc/services for ambiguous entries.
+	 * If we find the ambiguous entry, and it has the
+	 * same port number, change the proto to PROTO_UNDEF
+	 * so both TCP and UDP will be checked.
+	 */
+	sp = getservbyname(name, "tcp");
+	if (sp != NULL) tcp_port = ntohs(sp->s_port);
+	sp = getservbyname(name, "udp");
+	if (sp != NULL) udp_port = ntohs(sp->s_port);
+	if (tcp_port >= 0) {
+		*port = tcp_port;
+		*proto = IPPROTO_TCP;
+		if (udp_port >= 0) {
+			if (udp_port == tcp_port)
+				*proto = PROTO_UNDEF;
 #ifdef notdef
-			if (*port != sp->s_port)
+			else
 				/* Can't handle ambiguous names that refer
 				   to different port numbers. */
 				warning("ambiguous port %s in /etc/services",
 					name);
 #endif
-			*proto = PROTO_UNDEF;
 		}
+		return 1;
+	}
+	if (udp_port >= 0) {
+		*port = udp_port;
+		*proto = IPPROTO_UDP;
 		return 1;
 	}
 #if defined(ultrix) || defined(__osf__)
@@ -192,6 +239,9 @@ struct eproto eproto_db[] = {
 	{ "pup", ETHERTYPE_PUP },
 	{ "xns", ETHERTYPE_NS },
 	{ "ip", ETHERTYPE_IP },
+#ifdef INET6
+	{ "ip6", ETHERTYPE_IPV6 },
+#endif
 	{ "arp", ETHERTYPE_ARP },
 	{ "rarp", ETHERTYPE_REVARP },
 	{ "sprite", ETHERTYPE_SPRITE },
@@ -293,7 +343,7 @@ pcap_ether_aton(const char *s)
 		if (*s == ':')
 			s += 1;
 		d = xdtoi(*s++);
-		if (isxdigit(*s)) {
+		if (isxdigit((unsigned char)*s)) {
 			d <<= 4;
 			d |= xdtoi(*s++);
 		}
@@ -311,7 +361,7 @@ pcap_ether_hostton(const char *name)
 	register struct pcap_etherent *ep;
 	register u_char *ap;
 	static FILE *fp = NULL;
-	static init = 0;
+	static int init = 0;
 
 	if (!init) {
 		fp = fopen(PCAP_ETHERS_FILE, "r");
@@ -322,7 +372,7 @@ pcap_ether_hostton(const char *name)
 		return (NULL);
 	else
 		rewind(fp);
-	
+
 	while ((ep = pcap_next_etherent(fp)) != NULL) {
 		if (strcmp(ep->name, name) == 0) {
 			ap = (u_char *)malloc(6);
@@ -337,7 +387,17 @@ pcap_ether_hostton(const char *name)
 }
 #else
 
-#ifndef sgi
+/*
+ * XXX - perhaps this should, instead, be declared in "lbl/os-XXX.h" files,
+ * for those OS versions that don't declare it, rather than being declared
+ * here?  That way, for example, we could declare it on FreeBSD 2.x (which
+ * doesn't declare it), but not on FreeBSD 3.x (which declares it like
+ * this) or FreeBSD 4.x (which declares it with its first argument as
+ * "const char *", so no matter how we declare it here, it'll fail to
+ * compile on one of 3.x or 4.x).
+ */
+#if !defined(sgi) && !defined(__NetBSD__) && !defined(__FreeBSD__) && \
+       !defined(_UNICOSMP)
 extern int ether_hostton(char *, struct ether_addr *);
 #endif
 
@@ -375,5 +435,6 @@ __pcap_nametodnaddr(const char *name)
 #else
 	bpf_error("decnet name support not included, '%s' cannot be translated\n",
 		name);
+	return(0);
 #endif
 }
