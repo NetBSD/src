@@ -1,4 +1,4 @@
-/*	$NetBSD: vax.c,v 1.2 2002/04/03 06:29:11 lukem Exp $	*/
+/*	$NetBSD: vax.c,v 1.1 2002/04/03 09:09:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: vax.c,v 1.2 2002/04/03 06:29:11 lukem Exp $");
+__RCSID("$NetBSD: vax.c,v 1.1 2002/04/03 09:09:04 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
