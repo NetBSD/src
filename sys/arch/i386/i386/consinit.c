@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.2 1999/12/21 16:06:31 drochner Exp $	*/
+/*	$NetBSD: consinit.c,v 1.3 2000/06/09 04:58:34 soda Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -53,6 +53,7 @@
 #include "pckbc.h"
 #if (NPCKBC > 0)
 #include <dev/isa/isareg.h>
+#include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
 #endif
 #include "pckbd.h" /* for pckbc_machdep_cnattach */
@@ -167,7 +168,8 @@ consinit()
 		if (0) goto dokbd; /* XXX stupid gcc */
 dokbd:
 #if (NPCKBC > 0)
-		pckbc_cnattach(I386_BUS_SPACE_IO, IO_KBD, PCKBC_KBD_SLOT);
+		pckbc_cnattach(I386_BUS_SPACE_IO, IO_KBD, KBCMDP,
+		    PCKBC_KBD_SLOT);
 #endif
 		return;
 	}
