@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.14 1997/01/06 04:48:00 mark Exp $ */
+/* $NetBSD: if_eh.c,v 1.15 1997/03/15 18:09:38 is Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -83,15 +83,14 @@
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
-#include <net/netisr.h>
-#include <net/route.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
@@ -132,7 +131,7 @@ struct eh_softc {
 	irqhandler_t	sc_ih;
 
 	/* Network subsystem interface */
-	struct arpcom	sc_arpcom;
+	struct ethercom	sc_ethercom;
 	int 		promisc;
 
 	/* Driver defined state variables */
@@ -236,10 +235,11 @@ ehattach(parent, self, aux)
 {
 	struct eh_softc *sc = (void *) self;
 	struct podule_attach_args *pa = (void *)aux;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int irq;
 	int counter;
 	int temp;
+	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 	/* Check a few things about the attach args */
 
@@ -400,18 +400,18 @@ ehattach(parent, self, aux)
 	 * Do what we do for the EtherB card as this card uses the same slot
 	 */
 
-	sc->sc_arpcom.ac_enaddr[0] = 0x00;
-	sc->sc_arpcom.ac_enaddr[1] = 0x00;
-	sc->sc_arpcom.ac_enaddr[2] = 0xa4;
-	sc->sc_arpcom.ac_enaddr[3] = bootconfig.machine_id[2] + 0x10;
-	sc->sc_arpcom.ac_enaddr[4] = bootconfig.machine_id[1];
-	sc->sc_arpcom.ac_enaddr[5] = bootconfig.machine_id[0];
+	myaddr[0] = 0x00;
+	myaddr[1] = 0x00;
+	myaddr[2] = 0xa4;
+	myaddr[3] = bootconfig.machine_id[2] + 0x10;
+	myaddr[4] = bootconfig.machine_id[1];
+	myaddr[5] = bootconfig.machine_id[0];
 
 	/* Copy the ether addr cards filter */
 
 	PAGE(1);
 	for (counter=0; counter<6; counter++)
-		SetReg(((counter+1)<<2), sc->sc_arpcom.ac_enaddr[counter]);
+		SetReg(((counter+1)<<2), myaddr[counter]);
 	PAGE(0);
 
 	/* Fill in my application form to attach to the networking system */
@@ -426,7 +426,7 @@ ehattach(parent, self, aux)
 	/* Signed, dated then sent */
 
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, myaddr);
 
 	/* Attach to bpf filter if it is present. */
 
@@ -436,7 +436,7 @@ ehattach(parent, self, aux)
 
 	/* Not print some stuff for the attach line, starting with the address */
 
-	PRINTF(" address %s", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	PRINTF(" address %s", ether_sprintf(myaddr));
 
 	/* Now the transfer mode we're operating in */
 
@@ -526,14 +526,14 @@ ehstart(ifp)
 
 		/* Copy a frame out of the mbufs */
 
-		IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
+		IF_DEQUEUE(&ifp->if_snd, m);
 		if ( !m )
 			break;
 
 		/* Give the packet to the bpf, if any. */
 #if NBPFILTER > 0
-		if (sc->sc_arpcom.ac_if.if_bpf)
-			bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m);
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m);
 #endif
 
 	        buffer = txbuf;
@@ -600,7 +600,7 @@ ehioctl(ifp, cmd, data)
 #ifdef INET
 		case AF_INET:
 			ehinit(sc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
+			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
@@ -640,7 +640,7 @@ ehwatchdog(ifp)
 	struct eh_softc *sc = ifp->if_softc;
 
 	log (LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname );
-	sc->sc_arpcom.ac_if.if_oerrors++;
+	ifp->if_oerrors++;
 
 	ehinit (sc);
 }
@@ -877,9 +877,12 @@ void
 ehinit(sc)
 	struct eh_softc *sc;
 {
+	struct ifnet *ifp;
 	int card_freestart;
 	int counter;
 	register int s;
+
+	ifp = &sc->sc_ethercom.ec_if;
 
 	s = splhigh();	/* XXX - jasper */
 
@@ -902,8 +905,8 @@ ehinit(sc)
 	if ( card_freestart > sc->sc_physend ) {
 		printf ( "eh: card short of ram %02x required %02x present\n",
 		    card_freestart, sc->sc_physstart );
-	        sc->sc_arpcom.ac_if.if_flags &= ~IFF_RUNNING;
-		sc->sc_arpcom.ac_if.if_flags |= IFF_OACTIVE;
+	        ifp->if_flags &= ~IFF_RUNNING;
+		ifp->if_flags |= IFF_OACTIVE;
 		splx(s);    /* XXX -japser */
 		return;
 	}
@@ -965,7 +968,7 @@ ehinit(sc)
 	SetReg ( EH_CURR,   sc->sc_nxtpkt >> 8 );
 
 	for ( counter=0; counter<6; counter++ )
-		SetReg ( ((counter+1)<<2), sc->sc_arpcom.ac_enaddr[counter] );
+		SetReg ( ((counter+1)<<2), LLADDR(ifp->if_sadl)[counter] );
 
 	/* Put controller into start mode COM = 0x22 */
 
@@ -977,10 +980,10 @@ ehinit(sc)
 
 	/* Interface is up */
 
-	sc->sc_arpcom.ac_if.if_flags |= IFF_RUNNING;
-	sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
 
-	ehstart(&sc->sc_arpcom.ac_if);
+	ehstart(ifp);
 	splx(s);    /* XXX -japser */
 }
 
@@ -1005,7 +1008,7 @@ void
 eh_rint(sc)
 	struct eh_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *top, **mp, *m;
 	struct ether_header eh;
 /*	struct ether_header *eh;*/
@@ -1141,7 +1144,7 @@ eh_rint(sc)
 					len+=m0->m_len;
 				}
 
-				bpf_tap(sc->sc_arpcom.ac_if.if_bpf, buf, len);*/
+				bpf_tap(ifp->if_bpf, buf, len);*/
 
 				struct mbuf m0;
 				m0.m_len = sizeof(struct ether_header);
@@ -1157,7 +1160,7 @@ eh_rint(sc)
 				 */
 				if ((ifp->if_flags & IFF_PROMISC) &&
 				    (eh.ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-				    bcmp(eh.ether_dhost, sc->sc_arpcom.ac_enaddr,
+				    bcmp(eh.ether_dhost, LLADDR(ifp->if_sadl),
 					    sizeof(eh.ether_dhost)) != 0) {
 					m_freem(m);
 					goto skip;
@@ -1229,7 +1232,7 @@ ehintr(arg)
 	}
 
 	if ( isr & ISR_PTX ) {
-		struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+		struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 		int status;
 		INTR_ACK ( ISR_PTX );
 		ifp->if_timer=0;

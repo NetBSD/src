@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990reg.h,v 1.2 1997/03/09 21:12:41 leo Exp $	*/
+/*	$NetBSD: am7990reg.h,v 1.3 1997/03/15 18:11:26 is Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.

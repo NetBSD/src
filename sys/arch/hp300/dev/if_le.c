@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.37 1997/01/30 09:18:53 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.38 1997/03/15 18:09:47 is Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -49,10 +49,11 @@
 #include <sys/device.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #include <machine/autoconf.h>
@@ -178,10 +179,10 @@ leattach(parent, self, aux)
 	 * Read the ethernet address off the board, one nibble at a time.
 	 */
 	cp = (char *)(lestd[3] + (int)addr);
-	for (i = 0; i < sizeof(sc->sc_arpcom.ac_enaddr); i++) {
-		sc->sc_arpcom.ac_enaddr[i] = (*++cp & 0xF) << 4;
+	for (i = 0; i < sizeof(sc->sc_enaddr); i++) {
+		sc->sc_enaddr[i] = (*++cp & 0xF) << 4;
 		cp++;
-		sc->sc_arpcom.ac_enaddr[i] |= *++cp & 0xF;
+		sc->sc_enaddr[i] |= *++cp & 0xF;
 		cp++;
 	}
 

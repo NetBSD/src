@@ -33,9 +33,10 @@
 #include <sys/device.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 
 #include <ipkdb/ipkdb.h>
 #include <machine/ipkdb.h>

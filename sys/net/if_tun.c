@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.29 1996/10/13 02:11:07 christos Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.30 1997/03/15 18:12:29 is Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -36,15 +36,17 @@
 #include <machine/cpu.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 #include <net/netisr.h>
 #include <net/route.h>
+
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS

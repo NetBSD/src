@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.32 1996/10/21 22:40:50 thorpej Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.33 1997/03/15 18:11:40 is Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -52,17 +52,17 @@
 #include <sys/device.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
+
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
@@ -103,7 +103,7 @@
 struct eg_softc {
 	struct device sc_dev;
 	void *sc_ih;
-	struct arpcom sc_arpcom;	/* Ethernet common part */
+	struct ethercom sc_ethercom;	/* Ethernet common part */
 	bus_space_tag_t sc_iot;		/* bus space identifier */
 	bus_space_handle_t sc_ioh;	/* i/o handle */
 	u_int8_t eg_rom_major;		/* Cards ROM version (major number) */ 
@@ -397,7 +397,8 @@ egattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 	printf("\n");
 
@@ -431,11 +432,11 @@ egattach(parent, self, aux)
 		egprintpcb(sc);
 		return;
 	}
-	bcopy(&sc->eg_pcb[2], sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
+	bcopy(&sc->eg_pcb[2], myaddr, ETHER_ADDR_LEN);
 
 	printf("%s: ROM v%d.%02d %dk address %s\n", self->dv_xname,
 	    sc->eg_rom_major, sc->eg_rom_minor, sc->eg_ram,
-	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	    ether_sprintf(myaddr));
 
 	sc->eg_pcb[0] = EG_CMD_SETEADDR; /* Set station address */
 	if (egwritePCB(sc) != 0) {
@@ -466,7 +467,7 @@ egattach(parent, self, aux)
 	
 	/* Now we can attach the interface. */
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, myaddr);
 	
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -480,7 +481,7 @@ void
 eginit(sc)
 	register struct eg_softc *sc;
 {
-	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	register struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
@@ -676,13 +677,13 @@ egintr(arg)
 			if (sc->eg_pcb[6] || sc->eg_pcb[7]) {
 				DPRINTF(("%s: packet dropped\n",
 				    sc->sc_dev.dv_xname));
-				sc->sc_arpcom.ac_if.if_oerrors++;
+				sc->sc_ethercom.ec_if.if_oerrors++;
 			} else
-				sc->sc_arpcom.ac_if.if_opackets++;
-			sc->sc_arpcom.ac_if.if_collisions +=
+				sc->sc_ethercom.ec_if.if_opackets++;
+			sc->sc_ethercom.ec_if.if_collisions +=
 			    sc->eg_pcb[8] & 0xf;
-			sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
-			egstart(&sc->sc_arpcom.ac_if);
+			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
+			egstart(&sc->sc_ethercom.ec_if);
 			serviced = 1;
 			break;
 
@@ -725,7 +726,7 @@ egread(sc, buf, len)
 	caddr_t buf;
 	int len;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
 	struct ether_header *eh;
 	
@@ -764,7 +765,7 @@ egread(sc, buf, len)
 		 */
 		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
+		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
 			    sizeof(eh->ether_dhost)) != 0) {
 			m_freem(m);
 			return;
@@ -786,7 +787,7 @@ egget(sc, buf, totlen)
 	caddr_t buf;
 	int totlen;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *top, **mp, *m;
 	int len;
 
@@ -845,7 +846,7 @@ egioctl(ifp, cmd, data)
 #ifdef INET
 		case AF_INET:
 			eginit(sc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
+			arp_ifinit(ifp, ifa);
 			break;
 #endif
 #ifdef NS
@@ -855,11 +856,10 @@ egioctl(ifp, cmd, data)
 				
 			if (ns_nullhost(*ina))
 				ina->x_host =
-				   *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
+				   *(union ns_host *)LLADDR(ifp->if_sadl);
 			else
-				bcopy(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr));
+				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
+				    ETHER_ADDR_LEN);
 			/* Set new address. */
 			eginit(sc);
 			break;
@@ -929,7 +929,7 @@ egwatchdog(ifp)
 	struct eg_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	sc->sc_arpcom.ac_if.if_oerrors++;
+	sc->sc_ethercom.ec_if.if_oerrors++;
 
 	egreset(sc);
 }

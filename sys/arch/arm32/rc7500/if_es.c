@@ -1,4 +1,4 @@
-/* $NetBSD: if_es.c,v 1.6 1997/02/04 02:23:35 mark Exp $ */
+/* $NetBSD: if_es.c,v 1.7 1997/03/15 18:09:32 is Exp $ */
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -54,15 +54,14 @@
 #include <sys/device.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
-#include <net/route.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
@@ -89,7 +88,7 @@
 struct	es_softc {
 	struct	device sc_dev;
 	irqhandler_t sc_ih;
-	struct	arpcom sc_arpcom;	/* common Ethernet structures */
+	struct	ethercom sc_ethercom;	/* common Ethernet structures */
 	u_int	sc_base;	/* base address of board */
 	int	nrxovrn;
 	u_int	sc_intctl;
@@ -163,7 +162,7 @@ esprobe(parent, match, aux)
 
 /*
  * XXX - FIX ME
- * fake a ethernet address.
+ * fake an Ethernet address.
  */
 unsigned long vendor_id = 0x007f00;	/* just make one */
 
@@ -174,8 +173,9 @@ esattach(parent, self, aux)
 {
 	struct es_softc *sc = (void *)self;
 	struct mainbus_attach_args *mbap = aux;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	unsigned long ser;
+	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 	sc->sc_base = mbap->mb_iobase;
 
@@ -184,17 +184,17 @@ esattach(parent, self, aux)
 	 * Manufacturer decides the 3 first bytes, i.e. ethernet vendor ID.
 	 * (Currently only Ameristar.)
 	 */
-	sc->sc_arpcom.ac_enaddr[0] = (vendor_id >> 16) & 0xff;
-	sc->sc_arpcom.ac_enaddr[1] = (vendor_id >> 8) & 0xff;
-	sc->sc_arpcom.ac_enaddr[2] = vendor_id & 0xff;
+	myaddr[0] = (vendor_id >> 16) & 0xff;
+	myaddr[1] = (vendor_id >> 8) & 0xff;
+	myaddr[2] = vendor_id & 0xff;
 
 	/*
 	 * XXX We should have a serial number on board!!!!
 	 * Serial number for board contains last 3 bytes.
 	 */
-	sc->sc_arpcom.ac_enaddr[3] = (ser >> 16) & 0xff;
-	sc->sc_arpcom.ac_enaddr[4] = (ser >>  8) & 0xff;
-	sc->sc_arpcom.ac_enaddr[5] = (ser      ) & 0xff;
+	myaddr[3] = (ser >> 16) & 0xff;
+	myaddr[4] = (ser >>  8) & 0xff;
+	myaddr[5] = (ser      ) & 0xff;
 
 	/* Initialize ifnet structure. */
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
@@ -208,10 +208,10 @@ esattach(parent, self, aux)
 
 	/* Attach the interface. */
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, myaddr);
 
 	/* Print additional info when attached. */
-	printf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf(": address %s\n", ether_sprintf(myaddr));
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -265,7 +265,7 @@ static void
 esinit(sc)
 	struct es_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	register u_int iobase = sc->sc_base;
 	int s;
 
@@ -292,9 +292,9 @@ esinit(sc)
 	outl(iobase + BANKSEL, BSR_BANK1);
 	outl(iobase + B1CR, (CR_ALLONES | CR_NO_WAIT_ST | CR_16BIT));
 	outl(iobase + B1CTR, CTR_AUTO_RLSE);
-	outl(iobase + B1IAR1, *((u_short *) &sc->sc_arpcom.ac_enaddr[0]));
-	outl(iobase + B1IAR3, *((u_short *) &sc->sc_arpcom.ac_enaddr[2]));
-	outl(iobase + B1IAR5, *((u_short *) &sc->sc_arpcom.ac_enaddr[4]));
+	outl(iobase + B1IAR1, *((u_short *) LLADDR(ifp->if_sadl)[0]));
+	outl(iobase + B1IAR3, *((u_short *) LLADDR(ifp->if_sadl)[2]));
+	outl(iobase + B1IAR5, *((u_short *) LLADDR(ifp->if_sadl)[4]));
 
 	outl(iobase + BANKSEL, BSR_BANK2);
 	outl(iobase + B2MMUCR, MMUCR_RESET);
@@ -338,7 +338,7 @@ esintr(arg)
 
 #ifdef ESDEBUG
 	while ((smc->b2.bsr & BSR_BANKMSK) != BSR_BANK2 &&
-	    sc->sc_arpcom.ac_if.if_flags & IFF_RUNNING) {
+	    sc->sc_ethercom.ec_if.if_flags & IFF_RUNNING) {
 		printf("%s: intr BSR not 2: %04x\n", sc->sc_dev.dv_xname,
 		    smc->b2.bsr);
 		smc->b2.bsr = BSR_BANK2;
@@ -379,7 +379,7 @@ esintr(arg)
 		    intsts);
 		outb(iobase + B2IST, ACK_RX_OVRN);
 		printf ("->%02x\n", inb(iobase + B2IST));
-		sc->sc_arpcom.ac_if.if_ierrors++;
+		sc->sc_ethercom.ec_if.if_ierrors++;
 		if (sc->nrxovrn++ >= 10) {
 			outl(iobase + B2MMUCR, MMUCR_RESET);
 			sc->nrxovrn = 0;
@@ -403,7 +403,7 @@ esintr(arg)
 					break;
 			}
 			outb(iobase + B2PNR, save_pnr);
-			sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
 		}
 #ifdef ESDEBUG
 		else if (esdebug || 1) {
@@ -439,7 +439,7 @@ esintr(arg)
 			outl(iobase + BANKSEL, BSR_BANK0);
 			ecr = inl(iobase + B0ECR);	/* Get error counters */
 			if (ecr & ECR_CCMSK)
-				sc->sc_arpcom.ac_if.if_collisions += (ecr & 0x0f) +
+				sc->sc_ethercom.ec_if.if_collisions += (ecr & 0x0f) +
 				    ((ecr >> 4) & 0x0f);
 			outl(iobase + BANKSEL, BSR_BANK2);
 		}
@@ -482,7 +482,7 @@ zzzz:
 			outl(iobase + BANKSEL, BSR_BANK0);
 			outl(iobase + B0TCR, inl(iobase + B0TCR) | TCR_TXENA);
 			outl(iobase + BANKSEL, BSR_BANK2);
-			sc->sc_arpcom.ac_if.if_oerrors++;
+			sc->sc_ethercom.ec_if.if_oerrors++;
 			sc->sc_intctl |= MSK_TX_EMPTY | MSK_TX;
 		} else {
 			/*
@@ -515,7 +515,7 @@ zzzz:
 	}
 
 	/* output packets */
-	estint(&sc->sc_arpcom.ac_if);
+	estint(&sc->sc_ethercom.ec_if);
 
 #ifdef ESDEBUG
 	while ((smc->b2.bsr & BSR_BANKMSK) != BSR_BANK2) {
@@ -593,7 +593,7 @@ esrint(sc)
 		outl(iobase + B2MMUCR, MMUCR_REMRLS_RX);
 		while (inl(iobase + B2MMUCR) & MMUCR_BUSY)
 			;
-		++sc->sc_arpcom.ac_if.if_ierrors;
+		++sc->sc_ethercom.ec_if.if_ierrors;
 #ifdef ESDEBUG
 		if (--sc->sc_smcbusy) {
 			printf("%s: esrintr busy on bad packet exit\n",
@@ -635,7 +635,7 @@ esrint(sc)
 #endif
 
 	pktlen -= sizeof(struct ether_header);
-	ifp = &sc->sc_arpcom.ac_if;
+	ifp = &sc->sc_ethercom.ec_if;
 	ifp->if_ipackets++;
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
@@ -677,18 +677,18 @@ esrint(sc)
 	 * Check if there's a BPF listener on this interface.  If so, hand off
 	 * the raw packet to bpf.
 	 */
-	if (sc->sc_arpcom.ac_if.if_bpf) {
-		bpf_tap(sc->sc_arpcom.ac_if.if_bpf, pktbuf, pktlen);
-		/* bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, top);*/
+	if (sc->sc_ethercom.ec_if.if_bpf) {
+		bpf_tap(sc->sc_ethercom.ec_if.if_bpf, pktbuf, pktlen);
+		/* bpf_mtap(sc->sc_ethercom.ec_if.if_bpf, top);*/
 
 		/*
 		 * Note that the interface cannot be in promiscuous mode if
 		 * there are no BPF listeners.  And if we are in promiscuous
 		 * mode, we have to check if this packet is really ours.
 		 */
-		if ((sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC) &&
+		if ((sc->sc_ethercom.ec_if.if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
+		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
 			    sizeof(eh->ether_dhost)) != 0) {
 			m_freem(top);
 			return;
@@ -731,9 +731,9 @@ esstart(ifp)
 	int i;
 	u_char active_pnr;
 
-	if ((sc->sc_arpcom.ac_if.if_flags & (IFF_RUNNING | IFF_OACTIVE)) !=
+	if ((sc->sc_ethercom.ec_if.if_flags & (IFF_RUNNING | IFF_OACTIVE)) !=
 	    IFF_RUNNING) {
-		IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
+		IF_DEQUEUE(&sc->sc_ethercom.ec_if.if_snd, m);
 		if (m)
 			m_freem(m);
 		return;
@@ -751,7 +751,7 @@ esstart(ifp)
 	}
 #endif
 
-	IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
+	IF_DEQUEUE(&sc->sc_ethercom.ec_if.if_snd, m);
 	if (!m)
 		return;
 
@@ -776,8 +776,8 @@ esstart(ifp)
 	}
 
 #if NBPFILTER > 0
-	if (sc->sc_arpcom.ac_if.if_bpf)
-		bpf_tap(sc->sc_arpcom.ac_if.if_bpf, (char *)pktbuf, len);
+	if (sc->sc_ethercom.ec_if.if_bpf)
+		bpf_tap(sc->sc_ethercom.ec_if.if_bpf, (char *)pktbuf, len);
 #endif
 
 	pktctlw = 0;
@@ -790,7 +790,7 @@ esstart(ifp)
 	}
 
 	if (inb(iobase + B2ARR) & ARR_FAILED) {
-		sc->sc_arpcom.ac_if.if_flags |= IFF_OACTIVE;
+		sc->sc_ethercom.ec_if.if_flags |= IFF_OACTIVE;
 		sc->sc_intctl |= MSK_ALLOC;
 		goto esstart_out;
 	}
@@ -814,7 +814,7 @@ esstart(ifp)
 		printf("%s: esstart - PNR changed %x->%x\n",
 		    sc->sc_dev.dv_xname, active_pnr, inb(iobase + B2PNR));
 
-	sc->sc_arpcom.ac_if.if_opackets++;	/* move to interrupt? */
+	sc->sc_ethercom.ec_if.if_opackets++;	/* move to interrupt? */
 	sc->sc_intctl |= MSK_TX_EMPTY | MSK_TX;
 
 esstart_out:
@@ -855,7 +855,7 @@ esioctl(ifp, command, data)
 #ifdef INET
 		case AF_INET:
 			esinit(sc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
+			arp_ifinit(ifp, ifa);
 			break;
 #endif
 #ifdef NS
@@ -865,11 +865,10 @@ esioctl(ifp, command, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
-				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
+				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else
 				bcopy(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr));
+				    LLADDR(ifp->if_sadl), ETHER_ADDR_LEN));
 			/* Set new address. */
 			esinit(sc);
 			break;
@@ -918,8 +917,8 @@ esioctl(ifp, command, data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
-		    ether_delmulti(ifr, &sc->sc_arpcom);
+		    ether_addmulti(ifr, &sc->sc_ethercom) :
+		    ether_delmulti(ifr, &sc->sc_ethercom);
 
 		if (error == ENETRESET) {
 			/*
@@ -958,7 +957,7 @@ eswatchdog(ifp)
 	struct es_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++sc->sc_arpcom.ac_if.if_oerrors;
+	++ifp->.if_oerrors;
 
 	esreset(sc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.1.1.1 1997/02/24 01:45:13 jeremy Exp $	*/
+/*	$NetBSD: esp.c,v 1.2 1997/03/15 18:11:03 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.

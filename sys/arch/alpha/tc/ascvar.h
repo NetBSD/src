@@ -1,4 +1,4 @@
-/*	$NetBSD: ascvar.h,v 1.1 1997/02/27 01:19:41 thorpej Exp $	*/
+/*	$NetBSD: ascvar.h,v 1.2 1997/03/15 18:09:17 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.

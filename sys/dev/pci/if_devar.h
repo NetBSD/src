@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.4 1997/03/06 22:32:24 thorpej Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.5 1997/03/15 18:11:57 is Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -466,8 +466,10 @@ struct _tulip_softc_t {
     bus_space_tag_t tulip_bustag;
     bus_space_handle_t tulip_bushandle;	/* CSR region handle */
     pci_chipset_tag_t tulip_pc;
-#endif
+    struct ethercom tulip_ec;
+#else
     struct arpcom tulip_ac;
+#endif
     tulip_regfile_t tulip_csrs;
     u_int32_t tulip_flags;
 #define	TULIP_WANTSETUP		0x00000001
@@ -591,6 +593,9 @@ struct _tulip_softc_t {
     tulip_srom_connection_t tulip_conntype;
     tulip_desc_t tulip_rxdescs[TULIP_RXDESCS];
     tulip_desc_t tulip_txdescs[TULIP_TXDESCS];
+#if defined(__NetBSD__)
+    u_int8_t tulip_enaddr[ETHER_ADDR_LEN];
+#endif
 };
 
 #if defined(TULIP_HDR_DATA)
@@ -811,11 +816,14 @@ extern struct cfattach de_ca;
 extern struct cfdriver de_cd;
 #define	TULIP_UNIT_TO_SOFTC(unit)	((tulip_softc_t *) de_cd.cd_devs[unit])
 #define TULIP_IFP_TO_SOFTC(ifp)         ((tulip_softc_t *)((ifp)->if_softc))
-#define	tulip_xname			tulip_ac.ac_if.if_xname
+#define	tulip_xname			tulip_ec.ec_if.if_xname
 #define	tulip_unit			tulip_dev.dv_unit
 #define	loudprintf			printf
 #define	TULIP_PRINTF_FMT		"%s"
 #define	TULIP_PRINTF_ARGS		sc->tulip_xname
+#define TULIP_ETHERCOM			sc->tulip_ec
+#define TULIP_MULTICAST_CNT		sc->tulip_ec.ec_multicnt
+#define TULIP_ARPINITPAR		ifp
 #if defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
 #define TULIP_KVATOPHYS(sc, va)		alpha_XXX_dmamap((vm_offset_t)(va))
@@ -833,12 +841,36 @@ extern struct cfdriver de_cd;
 #define	TULIP_BURSTSIZE(unit)		3
 #endif
 
+#ifndef TULIP_ETHERCOM		
+#define TULIP_ETHERCOM			sc->tulip_ac
+#endif
+
+#ifndef TULIP_MULTICAST_CNT		
+#define TULIP_MULTICAST_CNT		sc->tulip_ac.ac_multicnt
+#endif
+
+#ifndef TULIP_ARPINITPAR		
+#define TULIP_ARPINITPAR		&sc->tulip_ac
+#endif
+
+#if defined(__NetBSD__)
+#define	tulip_if	tulip_ec.ec_if
+#define	tulip_name	tulip_ec.ec_if.if_name
+#ifndef tulip_unit
+#define	tulip_unit	tulip_ec.ec_if.if_unit
+#endif
+#define	tulip_hwaddr	tulip_enaddr
+#define tulip_bpf	tulip_ec.ec_if.if_bpf
+
+#else /* __NetBSD__ */
+
 #define	tulip_if	tulip_ac.ac_if
+#define	tulip_name	tulip_ac.ac_if.if_name
 #ifndef tulip_unit
 #define	tulip_unit	tulip_ac.ac_if.if_unit
 #endif
-#define	tulip_name	tulip_ac.ac_if.if_name
 #define	tulip_hwaddr	tulip_ac.ac_enaddr
+#endif /* __NetBSD__ */
 
 #if !defined(tulip_bpf) && (!defined(__bsdi__) || _BSDI_VERSION >= 199401)
 #define	tulip_bpf	tulip_ac.ac_if.if_bpf

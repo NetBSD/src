@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.43 1997/03/10 22:58:22 pk Exp $	*/
+/*	$NetBSD: if_le.c,v 1.44 1997/03/15 18:10:38 is Exp $	*/
 
 /*-
  * Copyright (c) 1996
@@ -54,10 +54,11 @@
 #include <sys/malloc.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #include <machine/autoconf.h>
@@ -147,7 +148,7 @@ lehwinit(sc)
 	struct le_softc *lesc = (struct le_softc *)sc;
 
 	if (CPU_ISSUN4M && lesc->sc_dma) {
-		struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+		struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 		if (ifp->if_flags & IFF_LINK0)
 			lesc->sc_dma->sc_regs->csr |= DE_AUI_TP;
@@ -167,7 +168,7 @@ lenocarrier(sc)
 	struct le_softc *lesc = (struct le_softc *)sc;
 
 	if (CPU_ISSUN4M && lesc->sc_dma) {
-		struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+		struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 		/* 
 		 * Check if the user has requested a certain cable type, and
@@ -332,7 +333,7 @@ leattach(parent, self, aux)
 		break;
 	}
 
-	myetheraddr(sc->sc_arpcom.ac_enaddr);
+	myetheraddr(sc->sc_enaddr);
 
 	sc->sc_copytodesc = am7990_copytobuf_contig;
 	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;

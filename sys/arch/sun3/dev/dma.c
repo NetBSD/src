@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.2 1997/02/24 15:02:23 gwr Exp $ */
+/*	$NetBSD: dma.c,v 1.3 1997/03/15 18:11:00 is Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.

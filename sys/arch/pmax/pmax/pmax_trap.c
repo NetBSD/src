@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.39 1996/10/13 03:39:54 christos Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.40 1997/03/15 18:10:30 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -82,9 +82,10 @@
 #include <sys/mbuf.h>
 #include <netinet/in.h>
 #include <net/if.h>
-#include <netinet/if_ether.h>
+#include <net/if_ether.h>
+#include <netinet/if_inarp.h>
 
-struct ifnet; struct arpcom;
+struct ifnet; struct ethercom;
 #include <dev/ic/am7990var.h>		/* Lance interrupt for kn01 */
 
 #include "asc.h"

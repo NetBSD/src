@@ -1,4 +1,4 @@
-/*	$NetBSD: if_inarp.h,v 1.26 1997/03/15 18:12:35 is Exp $	*/
+/*	$NetBSD: ethertypes.h,v 1.2 1997/03/15 18:12:19 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -35,45 +35,30 @@
  *	@(#)if_ether.h	8.1 (Berkeley) 6/10/93
  */
 
-struct llinfo_arp {
-	LIST_ENTRY(llinfo_arp) la_list;
-	struct	rtentry *la_rt;
-	struct	mbuf *la_hold;		/* last packet until resolved/timeout */
-	long	la_asked;		/* last time we QUERIED for this addr */
-#define la_timer la_rt->rt_rmx.rmx_expire /* deletion time in seconds */
-};
+/*
+ * Ethernet protocol types.
+ *
+ * According to "assigned numbers", the Ethernet protocol numbers are also
+ * used as ARP protocol type numbers.
+ *
+ * I factor them out here to avoid pulling all the Ethernet header file
+ * into the hardware independent ARP code. -is
+ */
 
-struct sockaddr_inarp {
-	u_int8_t  sin_len;
-	u_int8_t  sin_family;
-	u_int16_t sin_port;
-	struct	  in_addr sin_addr;
-	struct	  in_addr sin_srcaddr;
-	u_int16_t sin_tos;
-	u_int16_t sin_other;
-#define SIN_PROXY 1
-};
+#ifndef _ETHERTYPE_H_
+#define _ETHERTYPE_H_
+
+#define	ETHERTYPE_PUP		0x0200	/* PUP protocol */
+#define	ETHERTYPE_IP		0x0800	/* IP protocol */
+#define	ETHERTYPE_ARP		0x0806	/* address resolution protocol */
+#define	ETHERTYPE_REVARP	0x8035	/* reverse addr resolution protocol */
 
 /*
- * IP and ethernet specific routing flags
+ * The ETHERTYPE_NTRAILER packet types starting at ETHERTYPE_TRAIL have
+ * (type-ETHERTYPE_TRAIL)*512 bytes of data followed
+ * by an ETHER type (as given above) and then the (variable-length) header.
  */
-#define	RTF_USETRAILERS	RTF_PROTO1	/* use trailers */
-#define	RTF_ANNOUNCE	RTF_PROTO2	/* announce new arp entry */
+#define	ETHERTYPE_TRAIL		0x1000		/* Trailer packet */
+#define	ETHERTYPE_NTRAILER	16
 
-#ifdef _KERNEL
-struct	ifqueue arpintrq;
-void arp_ifinit __P((struct ifnet *, struct ifaddr *));
-void arp_rtrequest __P((int, struct rtentry *, struct sockaddr *));
-int arpresolve __P((struct ifnet *, struct rtentry *, struct mbuf *,
-		    struct sockaddr *, u_char *));
-void arpintr __P((void));
-int arpioctl __P((u_long, caddr_t));
-void arpwhohas __P((struct ifnet *, struct in_addr *));
-
-void revarpinput __P((struct mbuf *));
-void in_revarpinput __P((struct mbuf *));
-void revarprequest __P((struct ifnet *));
-int revarpwhoarewe __P((struct ifnet *, struct in_addr *, struct in_addr *));
-int revarpwhoami __P((struct in_addr *, struct ifnet *));
-int db_show_arptab __P((void));
-#endif
+#endif /* _ETHERTYPE_H_ */

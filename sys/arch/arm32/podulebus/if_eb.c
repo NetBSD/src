@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.11 1996/10/14 23:50:21 mark Exp $ */
+/* $NetBSD: if_eb.c,v 1.12 1997/03/15 18:09:37 is Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -64,13 +64,14 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
@@ -125,7 +126,7 @@ struct eb_softc {
 	podule_t *sc_podule;		/* Our podule */
 	int sc_podule_number;		/* Our podule number */
 	u_int sc_iobase;		/* base I/O addr */
-	struct arpcom sc_arpcom;	/* ethernet common */
+	struct ethercom sc_ethercom;	/* ethernet common */
 	char sc_pktbuf[EB_BUFSIZ]; 	/* frame buffer */
 	int sc_config1;			/* Current config1 bits */
 	int sc_config2;			/* Current config2 bits */
@@ -282,10 +283,11 @@ ebattach(parent, self, aux)
 {
 	struct eb_softc *sc = (void *)self;
 	struct podule_attach_args *pa = (void *)aux;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int loop;
 	int sum;
 	int id;
+	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 /*	dprintf(("Attaching %s...\n", sc->sc_dev.dv_xname));*/
 
@@ -307,9 +309,9 @@ ebattach(parent, self, aux)
 	WriteShort(sc->sc_iobase + EB_8004_CONFIG1, EB_BUFCODE_STATION_ADDR);
 	
 	for (sum = 0, loop = 0; loop < ETHER_ADDR_LEN; ++loop) {
-		sc->sc_arpcom.ac_enaddr[loop] =
+		myaddr[loop] =
 		    ReadByte(sc->sc_iobase + EB_8004_BUFWIN);
-		sum += sc->sc_arpcom.ac_enaddr[loop];
+		sum += myaddr[loop];
 	}
 
 /*
@@ -325,12 +327,12 @@ ebattach(parent, self, aux)
  */
 
 	if (sum == 0 || sum == 0x10) {
-		sc->sc_arpcom.ac_enaddr[0] = 0x00;
-		sc->sc_arpcom.ac_enaddr[1] = 0x00;
-		sc->sc_arpcom.ac_enaddr[2] = 0xa4;
-		sc->sc_arpcom.ac_enaddr[3] = bootconfig.machine_id[2] + 0x10;
-		sc->sc_arpcom.ac_enaddr[4] = bootconfig.machine_id[1];
-		sc->sc_arpcom.ac_enaddr[5] = bootconfig.machine_id[0];
+		myaddr[0] = 0x00;
+		myaddr[1] = 0x00;
+		myaddr[2] = 0xa4;
+		myaddr[3] = bootconfig.machine_id[2] + 0x10;
+		myaddr[4] = bootconfig.machine_id[1];
+		myaddr[5] = bootconfig.machine_id[0];
 	}
 
 	/* Get the product ID */
@@ -341,9 +343,11 @@ ebattach(parent, self, aux)
 	/* Print out some information for the user. */
 
 	if ((id & 0xf0) == 0xa0)
-		printf(" SEEQ80C04 rev %x address %s", id & 0x0f, ether_sprintf(sc->sc_arpcom.ac_enaddr));
+		printf(" SEEQ80C04 rev %x address %s", id & 0x0f,
+		    ether_sprintf(myaddr));
 	else
-		printf(" SEEQ???? rev %02x address %s", id, ether_sprintf(sc->sc_arpcom.ac_enaddr));
+		printf(" SEEQ???? rev %02x address %s", id,
+		    ether_sprintf(myaddr);
 
 	sc->sc_irqclaimed = 0;
 
@@ -380,7 +384,7 @@ ebattach(parent, self, aux)
 
 /*	dprintf(("Attaching interface...\n"));*/
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, myaddr);
 
 	/* Finally, attach to bpf filter if it is present. */
 
@@ -679,7 +683,7 @@ eb_stop(sc)
 
 	/* Cancel any watchdog timer */
 	
-	sc->sc_arpcom.ac_if.if_timer = 0;
+	sc->sc_ethercom.ec_if.if_timer = 0;
 }
 
 
@@ -718,6 +722,9 @@ eb_hardreset(sc)
 {
 	u_int iobase = sc->sc_iobase;
 	int loop;
+	struct ifnet *ifp;
+
+	ifp = &sc->sc_ethercom.ec_if;
 
 	dprintf(("eb_hardreset()\n"));
 
@@ -745,7 +752,8 @@ eb_hardreset(sc)
 	WriteShort(sc->sc_iobase + EB_8004_CONFIG1,
 	    sc->sc_config1 | EB_BUFCODE_STATION_ADDR);
 	for (loop = 0; loop < ETHER_ADDR_LEN; ++loop) {
-		WriteByte(sc->sc_iobase + EB_8004_BUFWIN, sc->sc_arpcom.ac_enaddr[loop]);
+		WriteByte(sc->sc_iobase + EB_8004_BUFWIN,
+		    LLADDR(ifp->if_sadl)[loop]);
 	}
 }
 
@@ -868,7 +876,7 @@ static int
 eb_init(sc)
 	struct eb_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int iobase = sc->sc_iobase;
 	int s;
 
@@ -969,12 +977,12 @@ eb_start(ifp)
 
 	/* Don't do anything if output is active. */
 
-	if (sc->sc_arpcom.ac_if.if_flags & IFF_OACTIVE)
+	if (ifp->if_flags & IFF_OACTIVE)
 		return;
 
 	/* Mark interface as output active */
 	
-	sc->sc_arpcom.ac_if.if_flags |= IFF_OACTIVE;
+	ifp->if_flags |= IFF_OACTIVE;
 
 	/* tx packets */
 
@@ -995,16 +1003,19 @@ ebtxpacket(sc)
 {
 	u_int iobase = sc->sc_iobase;
 	struct mbuf *m, *m0;
+	struct ifnet *ifp;
 	int len;
+
+	ifp = &sc->sc_ethercom.ec_if;
 
 /* Dequeue the next datagram. */
 
-	IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m0);
+	IF_DEQUEUE(&ifp->if_snd, m0);
 
 /* If there's nothing to send, return. */
 
 	if (!m0) {
-		sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+		ifp->if_flags &= ~IFF_OACTIVE;
 		sc->sc_config2 |= EB_CFG2_OUTPUT;
 		WriteShort(iobase + EB_8004_CONFIG2, sc->sc_config2);
 #ifdef EB_TX_DEBUG
@@ -1015,8 +1026,8 @@ ebtxpacket(sc)
 
 	/* Give the packet to the bpf, if any. */
 #if NBPFILTER > 0
-	if (sc->sc_arpcom.ac_if.if_bpf)
-		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m0);
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m0);
 #endif
 
 #ifdef EB_TX_DEBUG
@@ -1108,6 +1119,7 @@ ebintr(arg)
 	void *arg;
 {
 	register struct eb_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int iobase = sc->sc_iobase;
 	int status, s;
 	u_int txstatus;
@@ -1156,9 +1168,9 @@ ebintr(arg)
  */
 
 		if (txstatus & EB_TXHDR_COLLISION) {
-			sc->sc_arpcom.ac_if.if_collisions++;
+			ifp->if_collisions++;
 		} else if (txstatus & EB_TXHDR_ERROR_MASK) {
-			sc->sc_arpcom.ac_if.if_oerrors++;
+			ifp->if_oerrors++;
 		}
 
 /*		if (txstatus & EB_TXHDR_ERROR_MASK) {
@@ -1166,7 +1178,7 @@ ebintr(arg)
 		}*/
 
 		if (txstatus & EB_PKTHDR_DONE) {
-			sc->sc_arpcom.ac_if.if_opackets++;
+			ifp->if_opackets++;
 
 			/* Tx next packet */
 
@@ -1188,7 +1200,7 @@ ebintr(arg)
 
 /* Install a watchdog timer needed atm to fixed rx lockups */
 
-		sc->sc_arpcom.ac_if.if_timer = EB_TIMEOUT;
+		ifp->if_timer = EB_TIMEOUT;
 
 /* Processes the received packets */
 		ebgetpackets(sc);
@@ -1214,6 +1226,7 @@ void
 ebgetpackets(sc)
 	struct eb_softc *sc;
 {
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int iobase = sc->sc_iobase;
 	int addr;
 	int len;
@@ -1268,7 +1281,7 @@ ebgetpackets(sc)
 /* Did we have any errors ? then note error and go to next packet */
 
 		if (status & 0x0f) {
-			++sc->sc_arpcom.ac_if.if_ierrors;
+			++ifp->if_ierrors;
 			printf("rx packet error (%02x) - dropping packet\n", status & 0x0f);
 			sc->sc_config2 |= EB_CFG2_OUTPUT;
 			WriteShort(iobase + EB_8004_CONFIG2, sc->sc_config2);
@@ -1281,7 +1294,7 @@ ebgetpackets(sc)
 /* Is the packet too big ? - this will probably be trapped above as a receive error */
 
 		if (len > ETHER_MAX_LEN) {
-			++sc->sc_arpcom.ac_if.if_ierrors;
+			++ifp->if_ierrors;
 			printf("rx packet size error len=%d\n", len);
 			sc->sc_config2 |= EB_CFG2_OUTPUT;
 			WriteShort(iobase + EB_8004_CONFIG2, sc->sc_config2);
@@ -1297,7 +1310,7 @@ ebgetpackets(sc)
 		dprintf(("%s-->", ether_sprintf(sc->sc_pktbuf+6)));
 		dprintf(("%s\n", ether_sprintf(sc->sc_pktbuf)));
 #endif
-		sc->sc_arpcom.ac_if.if_ipackets++;
+		ifp->if_ipackets++;
 		/* Pass data up to upper levels. */
 		ebread(sc, (caddr_t)sc->sc_pktbuf, len);
 
@@ -1336,15 +1349,17 @@ ebread(sc, buf, len)
 	int len;
 {
 	register struct ether_header *eh;
+	struct ifnet *ifp;
 	struct mbuf *m;
 
+	ifp = &sc->sc_ethercom.ec_if;
 	eh = (struct ether_header *)buf;
 	len -= sizeof(struct ether_header);
 	if (len <= 0)
 		return;
 
 	/* Pull packet off interface. */
-	m = ebget(buf, len, &sc->sc_arpcom.ac_if);
+	m = ebget(buf, len, ifp);
 	if (m == 0)
 		return;
 
@@ -1353,18 +1368,18 @@ ebread(sc, buf, len)
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to bpf.
 	 */
-	if (sc->sc_arpcom.ac_if.if_bpf) {
-		bpf_tap(sc->sc_arpcom.ac_if.if_bpf, buf, len + sizeof(struct ether_header));
-/*		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m);*/
+	if (ifp->if_bpf) {
+		bpf_tap(ifp->if_bpf, buf, len + sizeof(struct ether_header));
+/*		bpf_mtap(ifp->if_bpf, m);*/
 
 		/*
 		 * Note that the interface cannot be in promiscuous mode if
 		 * there are no BPF listeners.  And if we are in promiscuous
 		 * mode, we have to check if this packet is really ours.
 		 */
-		if ((sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC) &&
+		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
+		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
 			    sizeof(eh->ether_dhost)) != 0) {
 			m_freem(m);
 			return;
@@ -1372,7 +1387,7 @@ ebread(sc, buf, len)
 	}
 #endif
 
-	ether_input(&sc->sc_arpcom.ac_if, eh, m);
+	ether_input(ifp, eh, m);
 }
 
 /*
@@ -1469,7 +1484,7 @@ eb_ioctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			arp_ifinit(&sc->sc_arpcom, ifa);
+			arp_ifinit(ifp, ifa);
 			dprintf(("Interface eb is coming up (AF_INET)\n"));
 			eb_init(sc);
 			break;
@@ -1482,11 +1497,10 @@ eb_ioctl(ifp, cmd, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
-				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
+				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else
 				bcopy(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr));
+				    LLADDR(ifp->if_sadl), ETHER_ADDR_LEN;
 			/* Set new address. */
 			dprintf(("Interface eb is coming up (AF_NS)\n"));
 			eb_init(sc);
@@ -1557,7 +1571,7 @@ eb_watchdog(ifp)
 	struct eb_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	sc->sc_arpcom.ac_if.if_oerrors++;
+	ifp->if_oerrors++;
 	dprintf(("eb_watchdog: "));
 	dprintf(("st=%04x\n", ReadShort(sc->sc_iobase + EB_8004_STATUS)));
 
@@ -1567,7 +1581,7 @@ eb_watchdog(ifp)
 
 /*	printf("%s: Reinitialised\n", sc->sc_dev.dv_xname);*/
 
-	sc->sc_arpcom.ac_if.if_timer = 0;
+	ifp->if_timer = 0;
 }
 
 /* End of if_eb.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.23 1996/10/13 01:37:49 christos Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.24 1997/03/15 18:11:44 is Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -66,15 +66,14 @@
 #include <sys/syslog.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
-#include <net/route.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
@@ -117,9 +116,8 @@ struct mbuf *hpget();
  * This structure contains the output queue for the interface, its address, ...
  */
 struct hp_softc {
-	struct arpcom ns_ac;	/* Ethernet common part */
+	struct ethercom ns_ec;	/* Ethernet common part */
 #define	ns_if		ns_ac.ac_if	/* network-visible interface */
-#define	ns_addrp	ns_ac.ac_enaddr	/* hardware Ethernet address */
 	int     ns_flags;
 #define	DSF_LOCK	1	/* block re-entering enstart */
 	int     ns_oactive;
@@ -137,6 +135,8 @@ struct hp_softc {
 #if NBPFILTER > 0
 	caddr_t ns_bpf;
 #endif
+	u_int8_t ns_addrp[ETHER_ADDR_LEN]; /* hardware Ethernet address */
+	
 }
         hp_softc[NHP];
 #define	ENBUFSIZE	(sizeof(struct ether_header) + ETHERMTU + 2 + ETHER_MIN_LEN)

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pica,v 1.4 1996/03/27 11:02:20 jonathan Exp $
+#	$NetBSD: files.pica,v 1.5 1997/03/15 18:10:23 is Exp $
 maxpartitions 8
 maxusers 2 8 64
 
@@ -24,7 +24,7 @@ file	arch/pica/pica/clock.c		clock
 file	arch/pica/pica/clock_mc.c	clock
 
 #	Ethernet chip
-device sn: ifnet, ether
+device sn: ifnet, ether, arp
 attach sn at pica
 file	arch/pica/dev/if_sn.c		sn	needs-count
 

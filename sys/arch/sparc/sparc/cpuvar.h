@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.1 1997/03/11 00:55:24 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.2 1997/03/15 18:10:41 is Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.

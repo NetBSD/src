@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.c,v 1.2 1997/02/20 00:32:15 gwr Exp $	*/
+/*	$NetBSD: clock_subr.c,v 1.3 1997/03/15 18:11:16 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

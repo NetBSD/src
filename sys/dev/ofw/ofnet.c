@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.4 1996/10/16 19:33:21 ws Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.5 1997/03/15 18:11:51 is Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,10 +41,11 @@
 #include <sys/syslog.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #include <dev/ofw/openfirm.h>
@@ -67,7 +68,7 @@ struct ofn_softc {
 	struct device sc_dev;
 	int sc_phandle;
 	int sc_ihandle;
-	struct arpcom sc_arpcom;
+	struct ethercom sc_ethercom;
 };
 
 static int ofnprobe __P((struct device *, void *, void *));
@@ -119,10 +120,11 @@ ofnattach(parent, self, aux)
 	void *aux;
 {
 	struct ofn_softc *of = (void *)self;
-	struct ifnet *ifp = &of->sc_arpcom.ac_if;
+	struct ifnet *ifp = &of->sc_ethercom.ec_if;
 	struct ofprobe *ofp = aux;
 	char path[256];
 	int l;
+	u_int8_t myaddr[ETHER_ADDR_LEN];
 	
 	of->sc_phandle = ofp->phandle;
 #if NIPKDB_OFN > 0
@@ -138,10 +140,10 @@ ofnattach(parent, self, aux)
 	    || (path[l] = 0, !(of->sc_ihandle = OF_open(path))))
 		panic("ofnattach: unable to open");
 	if (OF_getprop(ofp->phandle, "mac-address",
-		       of->sc_arpcom.ac_enaddr, sizeof of->sc_arpcom.ac_enaddr)
+		       myaddr, sizeof myaddr)
 	    < 0)
 		panic("ofnattach: no max-address");
-	printf(": address %s\n", ether_sprintf(of->sc_arpcom.ac_enaddr));
+	printf(": address %s\n", ether_sprintf(myaddr));
 	
 	bcopy(of->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = of;
@@ -151,11 +153,10 @@ ofnattach(parent, self, aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
 
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, myaddr);
 
 #if NBPFILTER > 0
-	bpfattach(&of->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
-		  sizeof(struct ether_header));
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
 	dk_establish(0, self);					/* XXX */
@@ -167,7 +168,7 @@ static void
 ofnread(of)
 	struct ofn_softc *of;
 {
-	struct ifnet *ifp = &of->sc_arpcom.ac_if;
+	struct ifnet *ifp = &of->sc_ethercom.ec_if;
 	struct ether_header *eh;
 	struct mbuf *m, **mp, *head;
 	int l, len;
@@ -250,7 +251,7 @@ static void
 ofninit(of)
 	struct ofn_softc *of;
 {
-	struct ifnet *ifp = &of->sc_arpcom.ac_if;
+	struct ifnet *ifp = &of->sc_ethercom.ec_if;
 
 	if (ifp->if_flags & IFF_RUNNING)
 		return;
@@ -267,7 +268,7 @@ ofnstop(of)
 	struct ofn_softc *of;
 {
 	untimeout(ofntimer, of);
-	of->sc_arpcom.ac_if.if_flags &= ~IFF_RUNNING;
+	of->sc_ethercom.ec_if.if_flags &= ~IFF_RUNNING;
 }
 
 static void
@@ -336,7 +337,7 @@ ofnioctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef	INET
 		case AF_INET:
-			arp_ifinit(&of->sc_arpcom, ifa);
+			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
@@ -371,7 +372,7 @@ ofnwatchdog(ifp)
 	struct ofn_softc *of = ifp->if_softc;
 	
 	log(LOG_ERR, "%s: device timeout\n", of->sc_dev.dv_xname);
-	of->sc_arpcom.ac_if.if_oerrors++;
+	ifp->if_oerrors++;
 	ofnstop(of);
 	ofninit(of);
 }
@@ -384,7 +385,7 @@ ipkdbofstart(kip)
 	int unit = kip->unit - 1;
 	
 	if (ipkdb_of)
-		ipkdbattach(kip, &ipkdb_of->sc_arpcom);
+		ipkdbattach(kip, &ipkdb_of->sc_ethercom);
 }
 
 static void

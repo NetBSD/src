@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide_io_asm.S,v 1.1 1997/02/23 04:00:32 mark Exp $	*/
+/*	$NetBSD: rapide_io_asm.S,v 1.2 1997/03/15 18:09:41 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
