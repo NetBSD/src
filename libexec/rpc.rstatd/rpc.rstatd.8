@@ -1,4 +1,4 @@
-.\"	$NetBSD: rpc.rstatd.8,v 1.10 1999/03/25 01:56:13 bgrayson Exp $
+.\"	$NetBSD: rpc.rstatd.8,v 1.11 2002/01/15 02:26:48 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -44,7 +44,7 @@
 .Sh DESCRIPTION
 .Nm
 is a server which returns performance statistics obtained from the kernel.
-These statistics are read using the 
+These statistics are read using the
 .Xr rup 1
 command.
 The
@@ -57,26 +57,24 @@ The
 argument specifies the number of seconds that
 .Nm
 should stay active, updating its internal statistics every
-second.  If no value is specified, 20 seconds will be used.  After 
+second.  If no value is specified, 20 seconds will be used.  After
 .Ar interval
-seconds with no new RPC requests, 
+seconds with no new RPC requests,
 if
 .Nm
-was invoked from 
+was invoked from
 .Xr inetd 8 ,
 .Nm
-exits.  Otherwise, 
+exits.  Otherwise,
 .Nm
 loops, becoming dormant until it receives a new RPC
 request, and staying active until
 .Ar interval
 seconds pass with no new requests.
-
 .Pp
 .Nm
-uses an RPC protocol defined in 
+uses an RPC protocol defined in
 .Pa /usr/include/rpcsvc/rstat.x .
 .Sh SEE ALSO
 .Xr rup 1 ,
 .Xr inetd 8
-
