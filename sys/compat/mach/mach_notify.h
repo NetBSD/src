@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_notify.h,v 1.3 2003/11/17 01:52:14 manu Exp $ */
+/*	$NetBSD: mach_notify.h,v 1.4 2003/11/17 13:20:06 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -111,6 +111,8 @@ void mach_notify_port_dead_name(struct lwp *, struct mach_right *);
 #define MACH_BUS_ADRALN		1
 #define MACH_SEGV_MAPERR	2
 #define MACH_TRAP_BRKPT		1
+#define MACH_ILL_ILLOPC		2
+#define MACH_ILL_PRVOPC		3
 
 /* Exception behaviors and associated messages Id */
 
