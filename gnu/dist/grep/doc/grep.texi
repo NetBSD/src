@@ -301,11 +301,14 @@ directories are silently skipped.  If @var{action} is @samp{recurse},
 equivalent to the @samp{-r} option.
 
 @item -H
+@itemx -o
 @itemx --with-filename
 @opindex -H
+@opindex -o
 @opindex --With-filename
 @cindex with filename prefix
-Print the filename for each match.
+Print the filename for each match. @samp{-o} has been added to NetBSD's grep
+for 4.4BSD compatibility.
 
 @item -h
 @itemx --no-filename
