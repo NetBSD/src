@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.61.2.3 2004/06/07 09:54:21 tron Exp $ */
+/* $NetBSD: wsconsio.h,v 1.61.2.4 2004/06/13 08:22:01 jdc Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -433,8 +433,8 @@ struct wsdisplay_scroll_data {
 #define	WSDISPLAY_SCROLL_DOFASTLINES	0x01
 #define	WSDISPLAY_SCROLL_DOSLOWLINES	0x02
 #define	WSDISPLAY_SCROLL_DOALL		0x03
-	uint16_t	fastlines;
-	uint16_t	slowlines;
+	u_int		fastlines;
+	u_int		slowlines;
 };
 
 #define	WSDISPLAYIO_DGSCROLL	_IOR('W', 87, struct wsdisplay_scroll_data)
