@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.86.2.7 1997/10/14 23:35:08 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.86.2.8 1997/10/16 10:54:01 enami Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -255,6 +255,7 @@ ep*	at pcmcia? function ?
 ne*	at pcmcia? function ?
 sm*	at pcmcia? function ?
 com*	at pcmcia? function ?
+aic*	at pcmcia? function ?
 
 include	"arch/i386/conf/GENERIC.local"
 
