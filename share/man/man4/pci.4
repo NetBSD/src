@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.26 2000/03/20 18:16:16 ad Exp $
+.\"	$NetBSD: pci.4,v 1.27 2000/03/31 05:50:00 tsarna Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -159,6 +159,8 @@ device interface.
 .Pp
 .Ss Audio devices
 .Bl -tag -width speaker -offset indent
+.It auvia
+VIA VT82C686A integrated AC'97 sound device.
 .It clcs
 Cirrus Logic CS4280 sound device.
 .It eap
