@@ -1,4 +1,4 @@
-#	$NetBSD: EBSA285,v 1.4 1999/03/27 07:11:36 explorer Exp $
+#	$NetBSD: EBSA285,v 1.5 1999/03/27 23:27:58 nathanw Exp $
 #
 #	EBSA285 -- EBSA285 Architecture Kernel
 #
@@ -252,12 +252,8 @@ ne*	at pci? dev ? function ?	# NE2000 compat ethernet
 # PCI audio devices
 #eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 
-# USB Audio devices
-#uaudio*	at uhub? port ?
-
 # Audio support
 #audio*	at eap?
-#audio*	at uaudio?
 
 # Pseudo-Devices
 
