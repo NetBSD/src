@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.35 1999/02/09 19:50:28 kml Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.36 1999/02/10 14:37:25 tron Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -41,7 +41,7 @@
 #include <sys/select.h>			/* for struct selinfo */
 #include <sys/queue.h>
 
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_sb_max.h"
 #else
 struct uio;
