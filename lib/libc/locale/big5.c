@@ -1,4 +1,4 @@
-/*	$NetBSD: big5.c,v 1.7 2001/01/27 05:40:18 tsutsui Exp $	*/
+/*	$NetBSD: big5.c,v 1.8 2001/06/21 02:20:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)big5.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: big5.c,v 1.7 2001/01/27 05:40:18 tsutsui Exp $");
+__RCSID("$NetBSD: big5.c,v 1.8 2001/06/21 02:20:24 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -142,6 +142,7 @@ _BIG5_mbrtowc(rl, pwcs, s, n, state)
 	_BIG5State *ps;
 	rune_t rune;
 	int c;
+	int chlenbak;
 
 	/* rl appears to be unused */
 	/* pwcs may be NULL */
@@ -149,6 +150,7 @@ _BIG5_mbrtowc(rl, pwcs, s, n, state)
 	_DIAGASSERT(state != NULL);
 
 	ps = state;
+	chlenbak = ps->chlen;
 
 	/* make sure we have the first byte in the buffer */
 	switch (ps->chlen) {
@@ -197,7 +199,7 @@ _BIG5_mbrtowc(rl, pwcs, s, n, state)
 	if (!rune)
 		return 0;
 	else
-		return c;
+		return c - chlenbak;
 
 encoding_error:
 	ps->chlen = 0;
