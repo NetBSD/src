@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.1 1996/12/16 20:38:03 cgd Exp $	*/
+/*	$NetBSD: rtld.c,v 1.2 1996/12/18 22:27:29 cgd Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -51,12 +51,13 @@
 
 #include <ctype.h>
 
+#include <dlfcn.h>
 #include "debug.h"
 #include "rtld.h"
 
-/* FIXME - Theses don't belong here. */
-#define RTLD_LAZY	1
-#define RTLD_NOW	2
+#ifndef RTLD_NOW
+#define	RTLD_NOW	(RTLD_LAZY + 1)
+#endif
 
 /*
  * Debugging support.
