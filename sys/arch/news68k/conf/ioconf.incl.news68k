@@ -1,8 +1,0 @@
-/* $NetBSD: ioconf.incl.news68k,v 1.1 2000/02/08 16:17:29 tsutsui Exp $ */
-
-#include <sys/param.h>
-#include <sys/conf.h>
-#include <sys/device.h>
-#include <sys/mount.h>
-
-#include <machine/cpu.h>
