@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.26 1994/03/08 12:21:59 mycroft Exp $
+ *	$Id: fd.c,v 1.27 1994/03/10 18:10:41 mycroft Exp $
  *
  * Largely rewritten to handle multiple controllers and drives
  * By Julian Elischer, Sun Apr  4 16:34:33 WST 1993
@@ -400,13 +400,13 @@ set_motor(fdcu_t fdcu, fdu_t fdu, int reset)
 	outb(fdc_data[fdcu].baseport+fdout,
 		selunit
 		| (reset ? 0 : (FDO_FRST|FDO_FDMAEN))
-		| (m0 ? FDO_MOEN0 : 0)
-		| (m1 ? FDO_MOEN1 : 0));
+		| (m0 ? FDO_MOEN(0) : 0)
+		| (m1 ? FDO_MOEN(1) : 0));
 	TRACE1("[0x%x->fdout]",(
 		selunit
 		| (reset ? 0 : (FDO_FRST|FDO_FDMAEN))
-		| (m0 ? FDO_MOEN0 : 0)
-		| (m1 ? FDO_MOEN1 : 0)));
+		| (m0 ? FDO_MOEN(0) : 0)
+		| (m1 ? FDO_MOEN(1) : 0)));
 }
 
 fd_turnoff(fdu_t fdu)
