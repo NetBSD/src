@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.1.1.1 2003/03/25 22:30:18 pooka Exp $	*/
+/*	$NetBSD: file.h,v 1.2 2003/04/15 21:36:18 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -39,6 +39,8 @@
 
 #ifndef __file_h__
 #define __file_h__
+
+#include <sys/cdefs.h>
 
 #ifndef __linux__
 #define _LARGEFILE_SOURCE
@@ -214,6 +216,10 @@ extern char *sys_errlist[];
 static const char *rcsid(const char *p) { \
 	return rcsid(p = id); \
 }
+#ifndef __RCSID
+#define __RCSID FILE_RCSID
+#endif
+
 #else
 
 #endif /* __file_h__ */
