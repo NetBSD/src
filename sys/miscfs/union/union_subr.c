@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.29 1999/03/24 05:51:27 mrg Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.30 1999/03/24 05:53:59 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -399,7 +399,7 @@ loop:
 			if (un->un_flags & UN_LOCKED) {
 				vrele(UNIONTOV(un));
 				un->un_flags |= UN_WANTED;
-				sleep((caddr_t)un, PINOD);
+				sleep((caddr_t)&un->un_flags, PINOD);
 				goto loop;
 			}
 			un->un_flags |= UN_LOCKED;
