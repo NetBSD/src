@@ -1,4 +1,4 @@
-/	$NetBSD: units.lib,v 1.6 2001/01/30 00:22:29 mjl Exp $
+/	$NetBSD: units.lib,v 1.7 2001/01/30 12:26:11 wiz Exp $
 
 / primitive units
 
@@ -264,7 +264,7 @@ lebanonpound		.000578 $
 malaysiaringgit		.338 $
 maltalira		2.6042 $
 mexicopeso		.3205128 $
-netherlandguilder	.52 $
+netherlandsguilder	.52 $
 newzealanddollar	.539 $
 norwaykrone		.139 $
 pakistanrupee		.037 $
