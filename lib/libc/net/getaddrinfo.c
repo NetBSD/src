@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.71 2004/05/23 16:54:12 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.72 2004/05/27 18:40:07 christos Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.71 2004/05/23 16:54:12 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.72 2004/05/27 18:40:07 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -1455,8 +1455,6 @@ _files_getaddrinfo(void *rv, void *cb_data, va_list ap)
 }
 
 #ifdef YP
-static char *__ypdomain;
-
 /*ARGSUSED*/
 static struct addrinfo *
 _yphostent(char *line, const struct addrinfo *pai)
@@ -1543,10 +1541,14 @@ _yp_getaddrinfo(void *rv, void *cb_data, va_list ap)
 {
 	struct addrinfo sentinel, *cur;
 	struct addrinfo *ai = NULL;
-	static char *__ypcurrent;
-	int __ypcurrentlen, r;
+	char *ypbuf;
+	int ypbuflen, r;
 	const char *name;
 	const struct addrinfo *pai;
+	char *ypdomain;
+
+	if (_yp_check(&ypdomain) == 0)
+		return NS_UNAVAIL;
 
 	name = va_arg(ap, char *);
 	pai = va_arg(ap, const struct addrinfo *);
@@ -1554,42 +1556,33 @@ _yp_getaddrinfo(void *rv, void *cb_data, va_list ap)
 	memset(&sentinel, 0, sizeof(sentinel));
 	cur = &sentinel;
 
-	if (!__ypdomain) {
-		if (_yp_check(&__ypdomain) == 0)
-			return NS_UNAVAIL;
-	}
-	if (__ypcurrent)
-		free(__ypcurrent);
-	__ypcurrent = NULL;
-
 	/* hosts.byname is only for IPv4 (Solaris8) */
 	if (pai->ai_family == PF_UNSPEC || pai->ai_family == PF_INET) {
-		r = yp_match(__ypdomain, "hosts.byname", name,
-			(int)strlen(name), &__ypcurrent, &__ypcurrentlen);
+		r = yp_match(ypdomain, "hosts.byname", name,
+			(int)strlen(name), &ypbuf, &ypbuflen);
 		if (r == 0) {
 			struct addrinfo ai4;
 
 			ai4 = *pai;
 			ai4.ai_family = AF_INET;
-			ai = _yphostent(__ypcurrent, &ai4);
+			ai = _yphostent(ypbuf, &ai4);
 			if (ai) {
 				cur->ai_next = ai;
 				while (cur && cur->ai_next)
 					cur = cur->ai_next;
 			}
 		}
+		free(ypbuf);
 	}
 
 	/* ipnodes.byname can hold both IPv4/v6 */
-	r = yp_match(__ypdomain, "ipnodes.byname", name,
-		(int)strlen(name), &__ypcurrent, &__ypcurrentlen);
+	r = yp_match(ypdomain, "ipnodes.byname", name,
+		(int)strlen(name), &ypbuf, &ypbuflen);
 	if (r == 0) {
-		ai = _yphostent(__ypcurrent, pai);
-		if (ai) {
+		ai = _yphostent(ypbuf, pai);
+		if (ai)
 			cur->ai_next = ai;
-			while (cur && cur->ai_next)
-				cur = cur->ai_next;
-		}
+		free(ypbuf);
 	}
 
 	if (sentinel.ai_next == NULL) {
