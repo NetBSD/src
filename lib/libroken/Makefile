@@ -1,5 +1,5 @@
-# $NetBSD: Makefile,v 1.1.1.1 2000/06/16 19:27:32 thorpej Exp $
-DIST=		${.CURDIR}/../../dist
+# $NetBSD: Makefile,v 1.2 2000/06/16 22:46:43 thorpej Exp $
+DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/roken
 .PATH: ${.CURDIR}/../../include/heimdal
 
