@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.92 2000/03/13 23:52:42 soren Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.93 2000/03/27 09:44:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -1258,6 +1258,7 @@ msdosfs_mkdir(v)
 	struct msdosfsmount *pmp = pdep->de_pmp;
 	struct buf *bp;
 	struct timespec ts;
+	int async = pdep->de_pmp->pm_mountp->mnt_flag & MNT_ASYNC;
 
 	/*
 	 * If this is the root directory and there is no space left we
@@ -1316,7 +1317,9 @@ msdosfs_mkdir(v)
 		putushort(denp[1].deHighClust, pdep->de_StartCluster >> 16);
 	}
 
-	if ((error = bwrite(bp)) != 0)
+	if (async)
+		bdwrite(bp);
+	else if ((error = bwrite(bp)) != 0)
 		goto bad;
 
 	/*
