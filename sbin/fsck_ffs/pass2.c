@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.26 1999/11/15 19:18:25 fvdl Exp $	*/
+/*	$NetBSD: pass2.c,v 1.27 1999/11/17 00:29:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.26 1999/11/15 19:18:25 fvdl Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.27 1999/11/17 00:29:54 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,13 +157,13 @@ pass2()
 		} else if ((inp->i_isize & (DIRBLKSIZ - 1)) != 0) {
 			getpathname(pathbuf, inp->i_number, inp->i_number);
 			if (usedsoftdep)
-				pfatal("%s %s: LENGTH %d NOT MULTIPLE OF %d",
-					"DIRECTORY", pathbuf, inp->i_isize,
-					DIRBLKSIZ);
+				pfatal("%s %s: LENGTH %qd NOT MULTIPLE OF %d",
+					"DIRECTORY", pathbuf,
+					(long long)inp->i_isize, DIRBLKSIZ);
 			else
-				pwarn("%s %s: LENGTH %d NOT MULTIPLE OF %d",
-					"DIRECTORY", pathbuf, inp->i_isize,
-					DIRBLKSIZ);
+				pwarn("%s %s: LENGTH %qd NOT MULTIPLE OF %d",
+					"DIRECTORY", pathbuf,
+					(long long)inp->i_isize, DIRBLKSIZ);
 			if (preen)
 				printf(" (ADJUSTED)\n");
 			inp->i_isize = roundup(inp->i_isize, DIRBLKSIZ);
