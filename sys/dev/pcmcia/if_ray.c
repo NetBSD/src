@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.18 2000/03/26 20:25:30 kleink Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.19 2000/04/22 22:36:14 thorpej Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -1357,7 +1357,7 @@ ray_recv(sc, ccs)
 	struct ieee80211_frame *frame;
 	struct ether_header *eh;
 	struct mbuf *m;
-	size_t pktlen, len, lenread;
+	size_t pktlen, fudge, len, lenread;
 	bus_size_t bufp, ebufp, tmp;
 	struct ifnet *ifp;
 	u_int8_t *src, *d;
@@ -1376,6 +1376,18 @@ ray_recv(sc, ccs)
 
 	m = 0;
 	ifp = &sc->sc_if;
+
+	/*
+	 * If we're expecting the E2-in-802.11 encapsulation that the
+	 * WebGear Windows driver produces, fudge the packet forward
+	 * in the mbuf by 2 bytes so that the payload after the
+	 * Ethernet header will be aligned.  If we end up getting a
+	 * packet that's not of this type, we'll just drop it anyway.
+	 */
+	if (ifp->if_flags & IFF_LINK0)
+		fudge = 2;
+	else
+		fudge = 0;
 
 	/* it looks like at least with build 4 there is no CRC in length */
 	first = RAY_GET_INDEX(ccs);
@@ -1401,7 +1413,7 @@ ray_recv(sc, ccs)
 		ifp->if_ierrors++;
 		goto done;
 	}
-	if (pktlen > MHLEN) {
+	if ((pktlen + fudge) > MHLEN) {
 		/* XXX should allow chaining? */
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
@@ -1415,6 +1427,7 @@ ray_recv(sc, ccs)
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = pktlen;
 	m->m_len = pktlen;
+	m->m_data += fudge;
 	d = mtod(m, u_int8_t *);
 
 	RAY_DPRINTF(("%s: recv ccs index %d\n", sc->sc_xname, first));
