@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_unix.c,v 1.12 1998/07/26 11:39:26 mycroft Exp $	*/
+/*	$NetBSD: auth_unix.c,v 1.13 1998/11/15 17:24:07 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)auth_unix.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)auth_unix.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: auth_unix.c,v 1.12 1998/07/26 11:39:26 mycroft Exp $");
+__RCSID("$NetBSD: auth_unix.c,v 1.13 1998/11/15 17:24:07 christos Exp $");
 #endif
 #endif
 
@@ -140,7 +140,7 @@ authunix_create(machname, uid, gid, len, aup_gids)
 	}
 #endif
 	auth->ah_ops = &auth_unix_ops;
-	auth->ah_private = (caddr_t)au;
+	auth->ah_private = au;
 	auth->ah_verf = au->au_shcred = _null_auth;
 	au->au_shfaults = 0;
 
@@ -190,9 +190,9 @@ authunix_create_default()
 {
 	int len;
 	char machname[MAXHOSTNAMELEN + 1];
-	int uid;
-	int gid;
-	int gids[NGRPS];
+	uid_t uid;
+	gid_t gid;
+	gid_t gids[NGRPS];
 
 	if (gethostname(machname, sizeof machname) == -1)
 		abort();
@@ -201,13 +201,16 @@ authunix_create_default()
 	gid = getegid();
 	if ((len = getgroups(NGRPS, gids)) < 0)
 		abort();
-	return (authunix_create(machname, uid, gid, len, gids));
+	/* XXX: interface problem; those should all have been unsigned */
+	return (authunix_create(machname, (int)uid, (int)gid, len,
+	    (int *)gids));
 }
 
 /*
  * authunix operations
  */
 
+/* ARGSUSED */
 static void
 authunix_nextverf(auth)
 	AUTH *auth;
@@ -314,7 +317,7 @@ authunix_destroy(auth)
 	if (auth->ah_verf.oa_base != NULL)
 		mem_free(auth->ah_verf.oa_base, auth->ah_verf.oa_length);
 
-	mem_free((caddr_t)auth, sizeof(*auth));
+	mem_free(auth, sizeof(*auth));
 }
 
 /*
