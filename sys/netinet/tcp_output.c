@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.30 1998/03/19 22:29:34 kml Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.31 1998/03/24 03:10:02 kml Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -134,7 +134,7 @@ tcp_segsize(tp, txsegsizep, rxsegsizep)
 		size = ifp->if_mtu - sizeof(struct tcpiphdr);
 	else
 		size = tcp_mssdflt;
-	size -= tcp_optlen(tp);
+	size -= (tcp_optlen(tp) + ip_optlen(tp->t_inpcb));
 
  out:
 	*txsegsizep = min(tp->t_peermss, size);
