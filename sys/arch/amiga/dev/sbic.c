@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.30 1998/05/23 20:51:06 is Exp $	*/
+/*	$NetBSD: sbic.c,v 1.31 1998/05/24 19:32:35 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -42,8 +42,6 @@
 /*
  * AMIGA AMD 33C93 scsi adaptor driver
  */
-
-#include "opt_m68kcpu.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

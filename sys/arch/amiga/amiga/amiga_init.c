@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.60 1998/05/23 20:51:08 is Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.61 1998/05/24 19:32:37 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -30,9 +30,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "opt_m68kcpu.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
