@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.39 2003/12/04 19:38:21 atatat Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.40 2003/12/12 03:52:56 atatat Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.39 2003/12/04 19:38:21 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.40 2003/12/12 03:52:56 atatat Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -408,7 +408,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTL_MACHDEP, CTL_EOL);
 
 	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
-		       CTLTYPE_STRUCT, "debug", NULL,
+		       CTLTYPE_INT, "debug", NULL,
 		       NULL, 0, &kernel_debug, 0,
 		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
 	sysctl_createv(SYSCTL_PERMANENT,
