@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpcivar.h,v 1.2 2003/03/16 07:05:34 matt Exp $	*/
+/*	$NetBSD: gtpcivar.h,v 1.3 2003/03/18 19:32:46 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -77,6 +77,8 @@ gtpci_write(struct gtpci_chipset *gtpc, bus_size_t reg, uint32_t val)
 	(void) bus_space_read_4(gtpc->gtpc_gt_memt, gtpc->gtpc_gt_memh,
 	    gtpc->gtpc_syncreg);
 }
+
+void	gtpci_bus_configure(struct gtpci_chipset *);
 
 pcitag_t gtpci_make_tag(pci_chipset_tag_t, int, int, int);
 void	gtpci_decompose_tag(pci_chipset_tag_t, pcitag_t, int *, int *, int *);
