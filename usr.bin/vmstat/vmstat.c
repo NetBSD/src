@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.24 1995/09/24 06:34:47 phil Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.25 1995/10/08 06:39:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: vmstat.c,v 1.24 1995/09/24 06:34:47 phil Exp $";
+static char rcsid[] = "$NetBSD: vmstat.c,v 1.25 1995/10/08 06:39:16 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -766,7 +766,7 @@ dointr()
 	}
 	kread(X_INTRCNT, intrcnt, (size_t)nintr);
 	kread(X_INTRNAMES, intrname, (size_t)inamlen);
-	(void)printf("interrupt      total      rate\n");
+	(void)printf("interrupt       total     rate\n");
 	inttotal = 0;
 	nintr /= sizeof(long);
 	while (--nintr >= 0) {
