@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_portal.c,v 1.7 1996/03/23 02:37:48 mrg Exp $	*/
+/*	$NetBSD: mount_portal.c,v 1.8 1996/04/13 01:31:54 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.4 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$NetBSD: mount_portal.c,v 1.7 1996/03/23 02:37:48 mrg Exp $";
+static char rcsid[] = "$NetBSD: mount_portal.c,v 1.8 1996/04/13 01:31:54 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ static char rcsid[] = "$NetBSD: mount_portal.c,v 1.7 1996/03/23 02:37:48 mrg Exp
 #include "pathnames.h"
 #include "portald.h"
 
-struct mntopt mopts[] = {
+const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	{ NULL }
 };
