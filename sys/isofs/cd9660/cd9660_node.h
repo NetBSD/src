@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.h,v 1.9 1994/12/13 22:33:18 mycroft Exp $	*/
+/*	$NetBSD: cd9660_node.h,v 1.10 1994/12/24 15:30:09 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -120,6 +120,7 @@ int cd9660_select __P((struct vop_select_args *));
 int cd9660_mmap __P((struct vop_mmap_args *));
 int cd9660_seek __P((struct vop_seek_args *));
 int cd9660_readdir __P((struct vop_readdir_args *));
+int cd9660_readlink __P((struct vop_readlink_args *));
 int cd9660_abortop __P((struct vop_abortop_args *));
 int cd9660_inactive __P((struct vop_inactive_args *));
 int cd9660_reclaim __P((struct vop_reclaim_args *));

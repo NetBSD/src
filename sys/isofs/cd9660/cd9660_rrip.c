@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.10 1994/12/13 22:33:22 mycroft Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.11 1994/12/24 15:30:10 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -469,7 +469,6 @@ cd9660_rrip_loop(isodir,ana,table)
 	register ISO_SUSP_HEADER *phead;
 	register ISO_SUSP_HEADER *pend;
 	struct buf *bp = NULL;
-	int i;
 	char *pwhead;
 	int result;
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.12 1994/12/15 19:54:13 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.13 1994/12/24 15:30:12 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -57,6 +57,7 @@
 #include <sys/stat.h>
 
 #include <isofs/cd9660/iso.h>
+#include <isofs/cd9660/iso_rrip.h>
 #include <isofs/cd9660/cd9660_node.h>
 
 extern int enodev ();
@@ -83,8 +84,10 @@ struct vfsops cd9660_vfsops = {
  */
 #define ROOTNAME	"root_device"
 
-static iso_mountfs();
+static int iso_mountfs __P((struct vnode *devvp, struct mount *mp,
+		struct proc *p, struct iso_args *argp));
 
+int
 cd9660_mountroot()
 {
 	register struct mount *mp;
@@ -138,6 +141,7 @@ cd9660_mountroot()
  *
  * mount system call
  */
+int
 cd9660_mount(mp, path, data, ndp, p)
 	register struct mount *mp;
 	char *path;
@@ -209,7 +213,8 @@ cd9660_mount(mp, path, data, ndp, p)
 /*
  * Common code for mount and mountroot
  */
-static iso_mountfs(devvp, mp, p, argp)
+static int
+iso_mountfs(devvp, mp, p, argp)
 	register struct vnode *devvp;
 	struct mount *mp;
 	struct proc *p;
@@ -218,13 +223,10 @@ static iso_mountfs(devvp, mp, p, argp)
 	register struct iso_mnt *isomp = (struct iso_mnt *)0;
 	struct buf *bp = NULL;
 	dev_t dev = devvp->v_rdev;
-	caddr_t base, space;
-	int havepart = 0, blks;
 	int error = EINVAL, i, size;
 	int needclose = 0;
 	int ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
 	extern struct vnode *rootvp;
-	int j;
 	int iso_bsize;
 	int iso_blknum;
 	struct iso_volume_descriptor *vdp;
@@ -379,6 +381,7 @@ out:
  * Nothing to do at the moment.
  */
 /* ARGSUSED */
+int
 cd9660_start(mp, flags, p)
 	struct mount *mp;
 	int flags;
@@ -397,7 +400,7 @@ cd9660_unmount(mp, mntflags, p)
 	struct proc *p;
 {
 	register struct iso_mnt *isomp;
-	int i, error, ronly, flags = 0;
+	int error, flags = 0;
 	
 	if (mntflags & MNT_FORCE) {
 		extern int doforce;
@@ -433,6 +436,7 @@ cd9660_unmount(mp, mntflags, p)
 /*
  * Return root of a filesystem
  */
+int
 cd9660_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
@@ -469,13 +473,13 @@ cd9660_quotactl(mp, cmd, uid, arg, p)
 /*
  * Get file system statistics.
  */
+int
 cd9660_statfs(mp, sbp, p)
 	struct mount *mp;
 	register struct statfs *sbp;
 	struct proc *p;
 {
 	register struct iso_mnt *isomp;
-	register struct fs *fs;
 	
 	isomp = VFSTOISOFS(mp);
 
@@ -804,13 +808,13 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
  * Vnode pointer to File handle
  */
 /* ARGSUSED */
+int
 cd9660_vptofh(vp, fhp)
 	struct vnode *vp;
 	struct fid *fhp;
 {
 	register struct iso_node *ip = VTOI(vp);
 	register struct ifid *ifhp;
-	register struct iso_mnt *mp = ip->i_mnt;
 	
 	ifhp = (struct ifid *)fhp;
 	ifhp->ifid_len = sizeof(struct ifid);
