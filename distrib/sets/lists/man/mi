@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.697 2004/05/25 00:20:39 tsarna Exp $
+# $NetBSD: mi,v 1.698 2004/05/25 10:31:46 lha Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -181,6 +181,7 @@
 ./usr/share/man/cat1/kdestroy.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat1/kdump.0			man-debug-catman	.cat
 ./usr/share/man/cat1/kf.0			man-obsolete		obsolete
+./usr/share/man/cat1/kgetcred.0			man-krb5-catman		kerberos
 ./usr/share/man/cat1/kill.0			man-util-catman		.cat
 ./usr/share/man/cat1/kinit.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat1/klist.0			man-krb5-catman		kerberos,.cat
@@ -2285,6 +2286,7 @@
 ./usr/share/man/man1/kdestroy.1			man-krb5-man		kerberos,.man
 ./usr/share/man/man1/kdump.1			man-debug-man		.man
 ./usr/share/man/man1/kf.1			man-obsolete		obsolete
+./usr/share/man/man1/kgetcred.1			man-krb5-catman		kerberos
 ./usr/share/man/man1/kill.1			man-util-man		.man
 ./usr/share/man/man1/kinit.1			man-krb5-man		kerberos,.man
 ./usr/share/man/man1/klist.1			man-krb5-man		kerberos,.man

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.482 2004/05/19 19:32:24 christos Exp $
+# $NetBSD: mi,v 1.483 2004/05/25 10:31:46 lha Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -460,6 +460,7 @@
 ./usr/bin/kdestroy				base-krb5-bin		kerberos
 ./usr/bin/kdump					base-debug-bin
 ./usr/bin/kf					base-obsolete		obsolete
+./usr/bin/kgetcred				base-krb5-bin		kerberos
 ./usr/bin/kinit					base-krb5-bin		kerberos
 ./usr/bin/klist					base-krb5-bin		kerberos
 ./usr/bin/kpasswd				base-krb5-bin		kerberos
