@@ -62,7 +62,11 @@
 
 extern        char *vmmap;		/* poor name! */
 
+#ifndef NO_RTC
 int have_rtc = 1;			/* For access to rtc. */
+#else
+int have_rtc = 0;			/* For no rtc. */
+#endif
 #define ROM_ORIGIN	0xFFF00000	/* Mapped origin! */
 
 /* Do the actual reading and writing of the rtc.  We have to read
