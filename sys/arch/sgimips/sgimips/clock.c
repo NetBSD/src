@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 2001/05/11 03:42:59 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.3 2001/10/10 13:24:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,6 +62,7 @@ clockattach(dev, fns)
 	struct device *dev;
 	const struct clockfns *fns;
 {
+
 	if (clockfns != NULL)
 		panic("clockattach: multiple clocks");
 
@@ -102,6 +103,10 @@ setstatclockrate(newhz)
 void
 cpu_initclocks()
 {
+
+	if (clockfns == NULL)
+		panic("cpu_initclocks: clock device not attached");
+
 	(*clockfns->cf_init)(clockdev);
 }
 
