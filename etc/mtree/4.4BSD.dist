@@ -1,5 +1,5 @@
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
-#	$Id: 4.4BSD.dist,v 1.3 1994/06/19 04:40:07 cgd Exp $
+#	$Id: 4.4BSD.dist,v 1.4 1994/06/20 03:11:36 cgd Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1130,9 +1130,9 @@ ms
 # ./usr/share/ms
 ..
 
-# ./usr/share/nls		XXX
+# ./usr/share/nls
 nls
-# ./usr/share/nls		XXX
+# ./usr/share/nls
 ..
 
 # ./usr/share/skel
