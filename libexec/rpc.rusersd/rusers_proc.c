@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rusers_proc.c,v 1.7 1993/11/23 04:40:28 cgd Exp $";
+static char rcsid[] = "$Id: rusers_proc.c,v 1.8 1994/12/23 14:29:42 cgd Exp $";
 #endif /* not lint */
 
 #include <signal.h>
@@ -188,7 +188,7 @@ getidle(char *tty, char *display)
 int *
 rusers_num()
 {
-        int num_users = 0;
+        static int num_users = 0;
 	struct utmp usr;
 
         ufp = fopen(_PATH_UTMP, "r");
@@ -402,7 +402,7 @@ rusers_service(rqstp, transp)
 		goto leave;
 	}
 	bzero((char *)&argument, sizeof(argument));
-	if (!svc_getargs(transp, xdr_argument, &argument)) {
+	if (!svc_getargs(transp, xdr_argument, (caddr_t)&argument)) {
 		svcerr_decode(transp);
 		goto leave;
 	}
@@ -410,7 +410,7 @@ rusers_service(rqstp, transp)
 	if (result != NULL && !svc_sendreply(transp, xdr_result, result)) {
 		svcerr_systemerr(transp);
 	}
-	if (!svc_freeargs(transp, xdr_argument, &argument)) {
+	if (!svc_freeargs(transp, xdr_argument, (caddr_t)&argument)) {
 		(void)fprintf(stderr, "unable to free arguments\n");
 		exit(1);
 	}

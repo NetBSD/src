@@ -1,5 +1,5 @@
 /*
-**	$Id: netbsd.c,v 1.3 1994/05/14 19:39:03 cgd Exp $
+**	$Id: netbsd.c,v 1.4 1994/12/23 14:29:35 cgd Exp $
 **
 ** netbsd.c		Low level kernel access functions for NetBSD
 **
@@ -189,7 +189,8 @@ int k_getuid(faddr, fport, laddr, lport, uid)
     return -1;
 
   {
-    int siz, rv;
+    size_t siz;
+    int rv;
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_FILE;

@@ -29,7 +29,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$Id: rstat_proc.c,v 1.9 1994/05/25 19:40:40 pk Exp $";
+static char rcsid[] = "$Id: rstat_proc.c,v 1.10 1994/12/23 14:29:40 cgd Exp $";
 #endif
 
 /*
@@ -94,7 +94,8 @@ struct nlist nl[] = {
 #endif
 	"",
 };
-int firstifnet, numintfs;	/* chain of ethernet interfaces */
+long firstifnet;		/* chain of ethernet interfaces */
+int numintfs;
 int stats_service();
 
 extern int from_inetd;
@@ -211,7 +212,8 @@ rstatproc_havedisk_1()
 void
 updatestat()
 {
-	int off, i, hz;
+	long off;
+	int i, hz;
 	struct vmmeter cnt;
 	struct ifnet ifnet;
 	double avrun[3];
@@ -326,7 +328,7 @@ updatestat()
 		stats_all.s1.if_ierrors += ifnet.if_data.ifi_ierrors;
 		stats_all.s1.if_oerrors += ifnet.if_data.ifi_oerrors;
 		stats_all.s1.if_collisions += ifnet.if_data.ifi_collisions;
-		off = (int) ifnet.if_next;
+		off = (long)ifnet.if_next;
 	}
 	gettimeofday((struct timeval *)&stats_all.s3.curtime,
 		(struct timezone *) 0);
@@ -336,7 +338,7 @@ updatestat()
 setup()
 {
 	struct ifnet ifnet;
-	int off;
+	long off;
 	char errbuf[_POSIX2_LINE_MAX];
 
 	kfd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, errbuf);
@@ -351,7 +353,7 @@ setup()
         }
 
 	if (kvm_read(kfd, (long)nl[X_IFNET].n_value, &firstifnet,
-                     sizeof(int)) != sizeof(int))  {
+                     sizeof(long)) != sizeof(long))  {
 		syslog(LOG_ERR, "rstat: can't read firstifnet from kmem\n");
 		exit(1);
         }
@@ -364,7 +366,7 @@ setup()
 			exit(1);
 		}
 		numintfs++;
-		off = (int) ifnet.if_next;
+		off = (long)ifnet.if_next;
 	}
 }
 
@@ -455,7 +457,7 @@ rstat_service(rqstp, transp)
 		goto leave;
 	}
 	bzero((char *)&argument, sizeof(argument));
-	if (!svc_getargs(transp, xdr_argument, &argument)) {
+	if (!svc_getargs(transp, xdr_argument, (caddr_t)&argument)) {
 		svcerr_decode(transp);
 		goto leave;
 	}
@@ -463,7 +465,7 @@ rstat_service(rqstp, transp)
 	if (result != NULL && !svc_sendreply(transp, xdr_result, result)) {
 		svcerr_systemerr(transp);
 	}
-	if (!svc_freeargs(transp, xdr_argument, &argument)) {
+	if (!svc_freeargs(transp, xdr_argument, (caddr_t)&argument)) {
 		(void)fprintf(stderr, "unable to free arguments\n");
 		exit(1);
 	}

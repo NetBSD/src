@@ -1,5 +1,5 @@
 /*
-**	$Id: parse.c,v 1.3 1994/02/04 23:42:25 cgd Exp $
+**	$Id: parse.c,v 1.4 1994/12/23 14:29:36 cgd Exp $
 **
 ** parse.c                         This file contains the protocol parser
 **
@@ -12,6 +12,7 @@
 */
 
 #include <stdio.h>
+#include <string.h>
 #include <errno.h>
 #include <ctype.h>
 #include <pwd.h>
