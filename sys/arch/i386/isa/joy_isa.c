@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isa.c,v 1.2 1997/10/31 07:59:54 mycroft Exp $	*/
+/*	$NetBSD: joy_isa.c,v 1.3 1998/03/22 12:53:55 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -45,7 +45,7 @@
 
 #define JOY_NPORTS    1
 
-int	joy_isa_probe __P((struct device *, void *, void *));
+int	joy_isa_probe __P((struct device *, struct cfdata *, void *));
 void	joy_isa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach joy_isa_ca = {
@@ -55,7 +55,8 @@ struct cfattach joy_isa_ca = {
 int
 joy_isa_probe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;

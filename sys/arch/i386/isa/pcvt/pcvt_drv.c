@@ -112,7 +112,7 @@ static char vt_description[];
 void pccnpollc(Dev_t, int);
 #endif
 #if PCVT_NETBSD > 100
-int pcprobe(struct device *, void *, void *);
+int pcprobe(struct device *, struct cfdata *, void *);
 #endif
 #if PCVT_NETBSD > 9
 void pcattach(struct device *, struct device *, void *);
@@ -121,7 +121,7 @@ void pcattach(struct device *, struct device *, void *);
 
 #if PCVT_NETBSD > 100	/* NetBSD-current Feb 20 1995 */
 int
-pcprobe(struct device *parent, void *match, void *aux)
+pcprobe(struct device *parent, struct cfdata *match, void *aux)
 #else /* !PCVT_NETBSD > 100 */
 
 #if PCVT_NETBSD > 9
