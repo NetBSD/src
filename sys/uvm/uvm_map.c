@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.144 2003/11/01 11:09:02 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.145 2003/11/01 19:45:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.144 2003/11/01 11:09:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.145 2003/11/01 19:45:13 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -891,6 +891,9 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 
 		prev_entry->end += size;
 		map->size += size;
+		uvm_rb_fixup(map, prev_entry);
+
+		uvm_tree_sanity(map, "map backmerged");
 
 		UVMHIST_LOG(maphist,"<- done (via backmerge)!", 0, 0, 0, 0);
 		if (new_entry) {
@@ -1038,9 +1041,13 @@ forwardmerge:
 		} else {
 			prev_entry->next->start -= size;
 			map->size += size;
+			if (prev_entry != &map->header)
+				uvm_rb_fixup(map, prev_entry);
 			if (uobj)
 				prev_entry->next->offset = uoffset;
 		}
+
+		uvm_tree_sanity(map, "map forwardmerged");
 
 		UVMHIST_LOG(maphist,"<- done forwardmerge", 0, 0, 0, 0);
 		if (new_entry) {
