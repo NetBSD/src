@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: sparc-nat.c,v 1.3 1994/05/17 14:02:09 pk Exp $
+	$Id: sparc-nat.c,v 1.4 1994/05/19 15:50:27 pk Exp $
 */
 
 #include "defs.h"
@@ -28,6 +28,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include <sys/ptrace.h>
 #include <sys/wait.h>
 #include <machine/reg.h>
+#include <machine/pcb.h>
 
 /* We don't store all registers immediately when requested, since they
    get sent over in large chunks anyway.  Instead, we accumulate most
@@ -306,25 +307,28 @@ fetch_kcore_registers (pcb)
 struct pcb *pcb;
 {
 	struct rwindow win;
+	int i;
+	u_long sp;
 
 	/* We only do integer registers */
+	sp = pcb->pcb_sp;
 
-	supply_register(SP_REGNUM, (char *)&pcb.pcb_sp);
-	supply_register(PC_REGNUM, (char *)&pcb.pcb_pc);
-	supply_register(O7_REGNUM, (char *)&pcb.pcb_pc);
-	supply_register(PS_REGNUM, (char *)&pcb.pcb_psr);
-	supply_register(WIM_REGNUM, (char *)&pcb.pcb_wim);
+	supply_register(SP_REGNUM, (char *)&pcb->pcb_sp);
+	supply_register(PC_REGNUM, (char *)&pcb->pcb_pc);
+	supply_register(O7_REGNUM, (char *)&pcb->pcb_pc);
+	supply_register(PS_REGNUM, (char *)&pcb->pcb_psr);
+	supply_register(WIM_REGNUM, (char *)&pcb->pcb_wim);
 	/*
 	 * Read last register window saved on stack.
 	 */
-	if (target_read_memory(sp, &win, sizeof win)) {
-		printf("cannot read register window at sp=%x\n", pcb.pcb_sp);
+	if (target_read_memory(sp, (char *)&win, sizeof win)) {
+		printf("cannot read register window at sp=%x\n", pcb->pcb_sp);
 		bzero((char *)&win, sizeof win);
 	}
 	for (i = 0; i < sizeof(win.rw_local); ++i)
-		supply_register(i + L0_REGNUM, &win.rw_local[i]);
+		supply_register(i + L0_REGNUM, (char *)&win.rw_local[i]);
 	for (i = 0; i < sizeof(win.rw_in); ++i)
-		supply_register(i + I0_REGNUM, &win.rw_in[i]);
+		supply_register(i + I0_REGNUM, (char *)&win.rw_in[i]);
 	/*
 	 * read the globals & outs saved on the stack (for a trap frame).
 	 */
@@ -332,7 +336,7 @@ struct pcb *pcb;
 	for (i = 1; i < 14; ++i) {
 		u_long val;
  
-		if (target_read_memory(sp + i*4, &val, sizeof val) == 0)
+		if (target_read_memory(sp + i*4, (char *)&val, sizeof val) == 0)
 			supply_register(i, (char *)&val);
 	}
 #if 0
@@ -349,10 +353,10 @@ clear_regs()
 	int i;
 
 	for (i = 0; i < FP0_REGNUM; ++i)
-		supply_register(i, &reg);
+		supply_register(i, (char *)&reg);
 	for (; i < FP0_REGNUM + 32; ++i) /* XXX */
-		supply_register(i, &freg);
+		supply_register(i, (char *)&freg);
 	for (; i < NUM_REGS; ++i)
-		supply_register(i, &reg);
+		supply_register(i, (char *)&reg);
 }
 
