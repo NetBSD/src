@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.1 2001/11/18 23:35:20 scw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.2 2001/11/20 19:26:09 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -289,7 +289,7 @@ Lupcall_no_old_preempt:
 	movl	%a3,%a2
 	movl	%a3@(PT_NEXT),%a3
 	moveql	#-1,%d0
-	bra	pthread__switch_away
+	bra	Lpthread__switch_away
 	NOTREACHED
 
 Lupcall_no_new_preempt:		
