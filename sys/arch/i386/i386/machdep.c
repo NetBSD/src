@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.220 1997/01/16 23:21:14 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.221 1997/02/13 00:59:12 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -1177,28 +1177,6 @@ dumpsys()
 	printf("\n\n");
 	delay(5000000);		/* 5 seconds */
 }
-
-#ifdef HZ
-/*
- * If HZ is defined we use this code, otherwise the code in
- * /sys/i386/i386/microtime.s is used.  The other code only works
- * for HZ=100.
- */
-void
-microtime(tvp)
-	register struct timeval *tvp;
-{
-	int s = splhigh();
-
-	*tvp = time;
-	tvp->tv_usec += tick;
-	splx(s);
-	while (tvp->tv_usec > 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-}
-#endif /* HZ */
 
 /*
  * Clear registers on exec
