@@ -1,4 +1,4 @@
-#	$NetBSD: files.dreamcast,v 1.17 2002/03/24 18:14:27 uch Exp $
+#	$NetBSD: files.dreamcast,v 1.18 2002/03/27 10:44:38 uch Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
 maxpartitions 8
@@ -15,7 +15,6 @@ include "dev/pci/files.pci"
 file	arch/dreamcast/dreamcast/conf.c
 file	arch/dreamcast/dreamcast/machdep.c
 file	arch/dreamcast/dreamcast/autoconf.c
-file	arch/dreamcast/dreamcast/procfs_machdep.c	procfs
 file	arch/dreamcast/dreamcast/clock_machdep.c
 file	arch/sh3/sh3/disksubr.c				disk
 
