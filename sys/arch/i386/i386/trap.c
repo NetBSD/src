@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.77 1995/04/07 22:29:48 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.78 1995/04/13 20:48:14 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -526,14 +526,13 @@ syscall(frame)
 		callp = sysent;
 		break;
 #ifdef COMPAT_SVR4
-	case EMUL_IBCS2_ELF:
+	case EMUL_SVR4:
 		nsys = nsvr4_sysent;
 		callp = svr4_sysent;
 		break;
 #endif
 #ifdef COMPAT_IBCS2
-	case EMUL_IBCS2_COFF:
-	case EMUL_IBCS2_XOUT:
+	case EMUL_IBCS2:
 		nsys = nibcs2_sysent;
 		callp = ibcs2_sysent;
 		if (IBCS2_HIGH_SYSCALL(code))
@@ -656,7 +655,7 @@ syscall(frame)
 	bad:
 		switch(p->p_emul) {
 #ifdef COMPAT_SVR4
-		case EMUL_IBCS2_ELF:
+		case EMUL_SVR4:
 			error = svr4_error[error];
 			break;
 #endif
@@ -666,8 +665,8 @@ syscall(frame)
 			break;
 #endif
 #ifdef COMPAT_IBCS2
-		case EMUL_IBCS2_COFF:
-		case EMUL_IBCS2_XOUT:
+		case EMUL_IBCS2:
+		case EMUL_IBCS2:
 			error = bsd2ibcs_errno[error];
 			break;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.38 1995/03/26 20:24:32 jtc Exp $	*/
+/*	$NetBSD: proc.h,v 1.39 1995/04/13 20:48:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -210,9 +210,8 @@ struct	proc {
 #define	EMUL_SUNOS	1		/* sunos 4.x binaries */
 #define	EMUL_HPUX	2		/* HPUX binaries */
 #define	EMUL_ULTRIX	3		/* Ultrix binaries */
-#define	EMUL_IBCS2_ELF	4		/* Intel Binary compat; SVR4 */
-#define	EMUL_IBCS2_COFF	5		/* Intel Binary compat; SCO Unix */
-#define	EMUL_IBCS2_XOUT	6		/* Intel Binary compat; SCO Xenix */
+#define	EMUL_SVR4	4		/* Intel Binary compat; SVR4 */
+#define	EMUL_IBCS2	5		/* Intel Binary compat; SCO, ISC */
 #define	EMUL_OSF1	7		/* OSF/1 binaries */
 #define	EMUL_LINUX	9		/* Linux a.out binaries */
 
