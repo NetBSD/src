@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.12 1999/11/12 18:18:38 joda Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.13 1999/11/15 06:01:11 haya Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 and 1999
@@ -461,83 +461,93 @@ cardbus_attach_card(sc)
   nfunction = CARDBUS_HDRTYPE_MULTIFN(bhlc) ? 8 : 1;
 
   for(function = 0; function < nfunction; function++) {
-      struct cardbus_attach_args ca;
+    struct cardbus_attach_args ca;
 
-      tag = cardbus_make_tag(cc, cf, sc->sc_bus, sc->sc_device, function);
+    tag = cardbus_make_tag(cc, cf, sc->sc_bus, sc->sc_device, function);
+  
+    id = cardbus_conf_read(cc, cf, tag, CARDBUS_ID_REG);
+    class = cardbus_conf_read(cc, cf, tag, CARDBUS_CLASS_REG);
+    cis_ptr = cardbus_conf_read(cc, cf, tag, CARDBUS_CIS_REG);
+  
+    /* Invalid vendor ID value? */
+    if (CARDBUS_VENDOR(id) == 0xffff) {
+      continue;
+    }
       
-      id = cardbus_conf_read(cc, cf, tag, CARDBUS_ID_REG);
-      class = cardbus_conf_read(cc, cf, tag, CARDBUS_CLASS_REG);
-      cis_ptr = cardbus_conf_read(cc, cf, tag, CARDBUS_CIS_REG);
-      
-      /* Invalid vendor ID value? */
-      if (CARDBUS_VENDOR(id) == 0xffff)
-	  continue;
-      
-      DPRINTF(("cardbus_attach_card: Vendor 0x%x, Product 0x%x, CIS 0x%x\n",
-	       CARDBUS_VENDOR(id), CARDBUS_PRODUCT(id), cis_ptr));
-      
-      enable_function(sc, cdstatus, function);
+    DPRINTF(("cardbus_attach_card: Vendor 0x%x, Product 0x%x, CIS 0x%x\n",
+	     CARDBUS_VENDOR(id), CARDBUS_PRODUCT(id), cis_ptr));
 
-      /* we need to allocate the ct here, since we might 
-	 need it when reading the CIS */
-      if (NULL == (ct = (cardbus_devfunc_t)malloc(sizeof(struct cardbus_devfunc),
-						  M_DEVBUF, M_NOWAIT))) {
-	  panic("no room for cardbus_tag");
-      }
+    enable_function(sc, cdstatus, function);
 
-      ct->ct_cc = sc->sc_cc;
-      ct->ct_cf = sc->sc_cf;
-      ct->ct_bus = sc->sc_bus;
-      ct->ct_dev = sc->sc_device;
-      ct->ct_func = function;
-      ct->ct_sc = sc;
-      ct->ct_next = NULL;
-      *previous_next = ct;
-
-      ca.ca_unit = sc->sc_dev.dv_unit;
-      ca.ca_ct = ct;
-
-      ca.ca_iot = sc->sc_iot;
-      ca.ca_memt = sc->sc_memt;
-      ca.ca_dmat = sc->sc_dmat;
-
-      ca.ca_tag = tag;
-      ca.ca_device = sc->sc_device;
-      ca.ca_function = function;
-      ca.ca_id = id;
-      ca.ca_class = class;
-
-      ca.ca_intrline = sc->sc_intrline;
-
-      bzero(tuple, 2048);
-
-      if(cardbus_read_tuples(&ca, cis_ptr, tuple, sizeof(tuple))) {
-	  printf("cardbus_attach_card: failed to read CIS\n");
-	  free(ct, M_DEVBUF);
-	  disable_function(sc, function);
-	  continue;
-      }
+    /* clean up every BAR */
+    cardbus_conf_write(cc, cf, tag, CARDBUS_BASE0_REG, 0);
+    cardbus_conf_write(cc, cf, tag, CARDBUS_BASE1_REG, 0);
+    cardbus_conf_write(cc, cf, tag, CARDBUS_BASE2_REG, 0);
+    cardbus_conf_write(cc, cf, tag, CARDBUS_BASE3_REG, 0);
+    cardbus_conf_write(cc, cf, tag, CARDBUS_BASE4_REG, 0);
+    cardbus_conf_write(cc, cf, tag, CARDBUS_BASE5_REG, 0);
+    cardbus_conf_write(cc, cf, tag, CARDBUS_ROM_REG, 0);
     
+    /*
+     * We need to allocate the ct here, since we might 
+     * need it when reading the CIS
+     */
+    if (NULL == (ct = (cardbus_devfunc_t)malloc(sizeof(struct cardbus_devfunc),
+						M_DEVBUF, M_NOWAIT))) {
+      panic("no room for cardbus_tag");
+    }
+
+    ct->ct_cc = sc->sc_cc;
+    ct->ct_cf = sc->sc_cf;
+    ct->ct_bus = sc->sc_bus;
+    ct->ct_dev = sc->sc_device;
+    ct->ct_func = function;
+    ct->ct_sc = sc;
+    ct->ct_next = NULL;
+    *previous_next = ct;
+
+    ca.ca_unit = sc->sc_dev.dv_unit;
+    ca.ca_ct = ct;
+
+    ca.ca_iot = sc->sc_iot;
+    ca.ca_memt = sc->sc_memt;
+    ca.ca_dmat = sc->sc_dmat;
+
+    ca.ca_tag = tag;
+    ca.ca_device = sc->sc_device;
+    ca.ca_function = function;
+    ca.ca_id = id;
+    ca.ca_class = class;
+
+    ca.ca_intrline = sc->sc_intrline;
+
+    bzero(tuple, 2048);
+
+    if(cardbus_read_tuples(&ca, cis_ptr, tuple, sizeof(tuple))) {
+      printf("cardbus_attach_card: failed to read CIS\n");
+    } else {
 #ifdef CARDBUS_DEBUG
       decode_tuples(tuple, 2048, print_tuple, NULL);
 #endif
       decode_tuples(tuple, 2048, parse_tuple, &ca.ca_cis);
-    
-    
-      if (NULL == (csc = config_found_sm((void *)sc, &ca, cardbusprint, cardbussubmatch))) {
-	  /* do not match */
-	  disable_function(sc, function);
-	  free(ct, M_DEVBUF);
-	  *previous_next = NULL;
-      } else {
-	  /* found */
-	  previous_next = &(ct->ct_next);
-	  ct->ct_device = csc;
-	  ++no_work_funcs;
-      }
+    }
+
+    if (NULL == (csc = config_found_sm((void *)sc, &ca, cardbusprint, cardbussubmatch))) {
+      /* do not match */
+      disable_function(sc, function);
+      free(ct, M_DEVBUF);
+      *previous_next = NULL;
+    } else {
+      /* found */
+      previous_next = &(ct->ct_next);
+      ct->ct_device = csc;
+      ++no_work_funcs;
+    }
   }
-  /* XXX power down pseudo function 8 (this will power down the card
-     if no functions were attached) */
+  /*
+   * XXX power down pseudo function 8 (this will power down the card
+   * if no functions were attached).
+   */
   disable_function(sc, 8);
 
   return no_work_funcs;
