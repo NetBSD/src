@@ -66,7 +66,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: idesc.c,v 1.4 1994/06/22 16:20:48 chopps Exp $
+ *	$Id: idesc.c,v 1.5 1994/10/06 19:54:28 chopps Exp $
  *
  *
  */
@@ -149,6 +149,8 @@ typedef volatile struct regs *ide_regmap_p;
 
 #define	IDEC_READP	0xec
 
+#define IDECTL_IDS	0x02		/* Interrupt disable */
+
 struct ideparams {
 	/* drive info */
 	short	idep_config;		/* general configuration */
@@ -212,6 +214,7 @@ struct idec_softc
 	struct device sc_dev;
 	struct	scsi_link sc_link;	/* proto for sub devices */
 	ide_regmap_p	sc_cregs;	/* driver specific regs */
+	volatile u_char *sc_a1200;	/* A1200 interrupt control */
 	TAILQ_HEAD(,ide_pending) sc_xslist;	/* LIFO */
 	struct	ide_pending sc_xsstore[8][8];	/* one for every unit */
 	struct	scsi_xfer *sc_xs;	/* transfer from high level code */
@@ -348,7 +351,9 @@ idescattach(pdp, dp, auxp)
 	else {
 		/* Let's hope the A1200 will work with the same regs */
 		sc->sc_cregs = rp = (ide_regmap_p) ztwomap(0xda0000);
+		sc->sc_a1200 = ztwomap(0xda8000 + 0x1000);
 		sc->sc_flags |= IDECF_A1200;
+		printf(" A1200 @ %x:%x", rp, sc->sc_a1200);
 	}
 
 #ifdef DEBUG
@@ -449,9 +454,6 @@ ide_adinfo()
 /*
  * used by specific ide controller
  *
- * it appears that the higher level code does nothing with LUN's
- * so I will too.  I could plug it in, however so could they
- * in scsi_scsi_cmd().
  */
 int
 ide_scsicmd(xs)
@@ -518,6 +520,11 @@ ide_donextcmd(dev)
 		idereset(dev);
 
 	dev->sc_stat[0] = -1;
+	/* Weed out invalid targets & LUNs here */
+	if (slp->target > 1 || slp->lun != 0) {
+		ide_scsidone(dev, -1);
+		return;
+	}
 	if (flags & SCSI_NOMASK || ide_no_int)
 		stat = ideicmd(dev, slp->target, xs->cmd, xs->cmdlen, 
 		    xs->data, xs->datalen/*, phase*/);
@@ -1097,13 +1104,20 @@ idesc_intr()
 		return (0);
 	regs = dev->sc_cregs;
 	if (dev->sc_flags & IDECF_A1200) {
-		if (regs->ide_intpnd < 0)
+		if (*dev->sc_a1200 & 0x80) {
+#if 0
+			printf ("idesc_intr: A1200 interrupt %x\n", *dev->sc_a1200);
+#endif
+			dummy = regs->ide_status;	/* XXX */
+			*dev->sc_a1200 = 0x7c | (*dev->sc_a1200 & 0x03);
+		}
+		else
 			return (0);
 	} else {
 		if (regs->ide_intpnd >= 0)
 			return (0);
+		dummy = regs->ide_status;
 	}
-	dummy = regs->ide_status;
 #ifdef DEBUG
 	if (ide_debug)
 		printf ("idesc_intr: %02x\n", dummy);

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	kbd.c
- *	$Id: kbd.c,v 1.9 1994/05/08 05:53:24 chopps Exp $
+ *	$Id: kbd.c,v 1.10 1994/10/06 19:54:30 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,7 +275,7 @@ kbdgetcn ()
   ciaa.cra |= (1 << 6);	/* serial line output */
   ciaa.sdr = 0xff;		/* ack */
   /* wait 200 microseconds */
-  DELAY(200);    /* XXXX only works as long as DELAY doesn't use a timer and waits.. */
+  DELAY(2000);    /* XXXX only works as long as DELAY doesn't use a timer and waits.. */
   ciaa.cra &= ~(1 << 6);
   ciaa.sdr = in;
 
