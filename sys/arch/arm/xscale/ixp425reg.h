@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425reg.h,v 1.3 2003/05/31 00:58:40 ichiro Exp $ */
+/*	$NetBSD: ixp425reg.h,v 1.4 2003/06/02 10:40:52 ichiro Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -117,7 +117,9 @@
 #define	IXP425_UART1_HWBASE	(IXP425_IO_HWBASE + IXP425_UART1_OFFSET)
 
 #define	IXP425_UART0_VBASE	(IXP425_IO_VBASE + IXP425_UART0_OFFSET)
+						/* 0xf0000000 */
 #define	IXP425_UART1_VBASE	(IXP425_IO_VBASE + IXP425_UART1_OFFSET)
+						/* 0xf0001000 */
 
 /* registers */
 /* Buffer and Divisor */
@@ -232,11 +234,12 @@
 
 /*
  * Interrupt Controller Unit.
- *
+ *  PA 0xc8003000
  */
 
 #define	IXP425_IRQ_HWBASE	IXP425_IO_HWBASE + IXP425_INTR_OFFSET
 #define	IXP425_IRQ_VBASE	IXP425_IO_VBASE  + IXP425_INTR_OFFSET
+						/* 0xf0003000 */
 #define	IXP425_IRQ_SIZE		0x00000020UL
 
 #define	IXP425_INT_STATUS	(IXP425_IRQ_VBASE + 0x00)
@@ -300,7 +303,8 @@
  */
 #define	IXP425_EXP_HWBASE	0xc4000000UL
 #define	IXP425_EXP_VBASE	(IXP425_IO_VBASE + IXP425_IO_SIZE)
-#define	IXP425_EXP_SIZE		IXP425_REG_SIZE
+						/* 0xf0010000 */
+#define	IXP425_EXP_SIZE		IXP425_REG_SIZE	/* 0x1000 */
 
 /* offset */
 #define	EXP_TIMING_CS0_OFFSET		0x0000
@@ -366,10 +370,67 @@
 /*
  * PCI
  */
-/* PCI Configuration Registers */
 #define IXP425_PCI_HWBASE	0xc0000000
 #define IXP425_PCI_VBASE	(IXP425_EXP_VBASE + IXP425_EXP_SIZE)
+							/* 0xf0011000 */
 #define	IXP425_PCI_SIZE		IXP425_REG_SIZE		/* 0x1000 */
+
+/*
+ * Mapping registers of IXP425 PCI Configuration
+ */
+/* PCI_ID_REG			0x00 */
+/* PCI_COMMAND_STATUS_REG	0x04 */
+/* PCI_CLASS_REG		0x08 */
+/* PCI_BHLC_REG			0x0c */
+#define	PCI_MAPREG_BAR0		0x10	/* Base Address 0 */
+#define	PCI_MAPREG_BAR1		0x14	/* Base Address 1 */
+#define	PCI_MAPREG_BAR2		0x18	/* Base Address 2 */
+#define	PCI_MAPREG_BAR3		0x1c	/* Base Address 3 */
+#define	PCI_MAPREG_BAR4		0x20	/* Base Address 4 */
+#define	PCI_MAPREG_BAR5		0x24	/* Base Address 5 */
+/* PCI_SUBSYS_ID_REG		0x2c */
+/* PCI_INTERRUPT_REG		0x3c */
+#define	PCI_RTOTTO		0x40
+
+/* PCI Controller Configuration Offset */
+#define	PCI_NP_AD		0x00
+#define	PCI_NP_CBE		0x04
+#define	PCI_NP_WDATA		0x08
+#define	PCI_NP_RDATA		0x0c
+#define	PCI_CRP_AD_CBE		0x10
+#define	PCI_CRP_AD_WDATA	0x14
+#define	PCI_CRP_AD_RDATA	0x18
+#define	PCI_CSR			0x1c
+#define	PCI_ISR			0x20
+#define	PCI_INTEN		0x24
+#define	PCI_DMACTRL		0x28
+#define	PCI_AHBMEMBASE		0x2c
+#define	PCI_AHBIOBASE		0x30
+#define	PCI_PCIMEMBASE		0x34
+#define	PCI_AHBDOORBELL		0x38
+#define	PCI_PCIDOORBELL		0x3c
+#define	PCI_ATPDMA0_AHBADDR	0x40
+#define	PCI_ATPDMA0_PCIADDR	0x44
+#define	PCI_ATPDMA0_LENGTH	0x48
+#define	PCI_ATPDMA1_AHBADDR	0x4c
+#define	PCI_ATPDMA1_PCIADDR	0x50
+#define	PCI_ATPDMA1_LENGTH	0x54
+#define	PCI_PTADMA0_AHBADDR	0x58
+#define	PCI_PTADMA0_PCIADDR	0x5c
+#define	PCI_PTADMA0_LENGTH	0x60
+#define	PCI_PTADMA1_AHBADDR	0x64
+#define	PCI_PTADMA1_PCIADDR	0x68
+#define	PCI_PTADMA1_LENGTH	0x6c
+
+/* PCI target(T)/initiator(I) Interface Commands */
+#define	COMMAND_IA		0x0	/* Interrupt Acknowledge   (I)*/
+#define	COMMAND_SC		0x1	/* Special Cycle	   (I)*/
+#define	COMMAND_IO_READ		0x2	/* I/O Read		(T)(I) */
+#define	COMMAND_IO_WRITE	0x3	/* I/O Write		(T)(I) */
+#define	COMMAND_MEM_READ	0x6	/* Memory Read		(T)(I) */
+#define	COMMAND_MEM_WRITE	0x7	/* Memory Write		(T)(I) */
+#define	COMMAND_CONF_READ	0xa	/* Configuration Read	(T)(I) */
+#define	COMMAND_CONF_WRITE	0xb	/* Configuration Write	(T)(I) */
 
 /*
  * Performance Monitoring Unit          (CP14)
