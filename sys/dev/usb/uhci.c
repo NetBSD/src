@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.52 1999/09/13 21:33:25 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.53 1999/09/15 10:25:31 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -407,13 +407,52 @@ uhci_init(sc)
 	sc->sc_bus.pipe_size = sizeof(struct uhci_pipe);
 
 	sc->sc_suspend = PWR_RESUME;
-	powerhook_establish(uhci_power, sc);
+	sc->sc_powerhook = powerhook_establish(uhci_power, sc);
 
 	DPRINTFN(1,("uhci_init: enabling\n"));
 	UWRITE2(sc, UHCI_INTR, UHCI_INTR_TOCRCIE | UHCI_INTR_RIE | 
 		UHCI_INTR_IOCE | UHCI_INTR_SPIE);	/* enable interrupts */
 
 	return (uhci_run(sc, 1));		/* and here we go... */
+}
+
+int
+uhci_activate(self, act)
+	device_ptr_t self;
+	enum devact act;
+{
+	/*struct uhci_softc *sc = (struct uhci_softc *)self;*/
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		return (EOPNOTSUPP);
+		break;
+
+	case DVACT_DEACTIVATE:
+		break;
+	}
+	return (rv);
+}
+
+int
+uhci_detach(self, flags)
+	device_ptr_t self;
+	int flags;
+{
+	struct uhci_softc *sc = (struct uhci_softc *)self;
+	int rv = 0;
+
+	if (sc->sc_child != NULL)
+		rv = config_detach(sc->sc_child, flags);
+	
+	if (rv != 0)
+		return (rv);
+
+	powerhook_disestablish(sc->sc_powerhook);
+	/* free data structures XXX */
+
+	return (rv);
 }
 
 usbd_status
