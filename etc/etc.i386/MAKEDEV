@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.107 2000/04/29 00:10:37 abs Exp $
+#	$NetBSD: MAKEDEV,v 1.108 2000/05/02 11:59:40 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -169,6 +169,7 @@ usbs)
 	sh $0 uhid0 uhid1 uhid2 uhid3
 	sh $0 ulpt0 ulpt1
 	sh $0 ttyU0 ttyU1
+	sh $0 urio0
 	;;
 
 std)
@@ -223,6 +224,16 @@ ulpt*)
 	mknod $ulpt c $major $unit
 	chown root.wheel $ulpt
 	chmod 600 $ulpt
+	;;
+
+urio*)
+	unit=${i#urio}
+	urio=urio$unit
+	major=70
+	rm -f $urio
+	mknod $urio c $major $unit
+	chown root.wheel $urio
+	chmod 666 $urio
 	;;
 
 ttyU*)
