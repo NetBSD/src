@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.4 2000/06/14 22:02:43 veego Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.5 2000/09/12 15:00:06 minoura Exp $
 
 #
 #	INSTALL_SMALL -- `small' installation kernel.
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"INSTALL_SMALL-$Revision: 1.4 $"
+#ident 		"INSTALL_SMALL-$Revision: 1.5 $"
 
 maxusers	8
 
@@ -242,7 +242,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
 #zstty5	at zsc2 channel 1
 #par0	at intio0 addr 0xe8c000 	# Builtin printer port
 
-#pseudo-device	sram			# battery-backuped static RAM
+pseudo-device	sram			# battery-backuped static RAM
 #pseudo-device	bell			# OPM bell
 
 #xcom0	at mainbus0			# NS16550 fast serial
