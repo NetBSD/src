@@ -60,6 +60,10 @@
    we want to retain compatibility with older gcc versions.  */
 #define DEFAULT_PCC_STRUCT_RETURN 0
 
+/* Don't do function CSE; it tickles bugs in other parts of the toolchain
+   when used on pic code. */
+#define NO_FUNCTION_CSE
+
 /* Finalize the trampoline by flushing the insn cache.  */
 
 #undef FINALIZE_TRAMPOLINE
