@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxkireg.h,v 1.2 2001/12/23 22:52:49 jdolecek Exp $	*/
+/*	$NetBSD: emuxkireg.h,v 1.3 2003/01/28 22:19:29 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -538,7 +538,7 @@
 #define	 EMU_DSP_IN_LVDLM1	4
 #define	 EMU_DSP_IN_LVDCOS	5
 #define	 EMU_DSP_IN_LVDLM2	6
-#define	EMU_DSP_IN_UNKOWN	7
+#define	EMU_DSP_IN_UNKNOWN	7
 
 #define	EMU_DSP_OUTL_BASE	0x020
 #define	EMU_DSP_OUTL(num)	(EMU_DSP_IOL(EMU_DSP_OUTL_BASE, num))
