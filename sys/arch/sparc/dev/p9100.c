@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.4 1999/08/02 20:36:57 matt Exp $ */
+/*	$NetBSD: p9100.c,v 1.5 1999/08/11 01:41:06 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,50 +37,6 @@
  */
 
 /*
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
- * This software was developed by the Computer Systems Engineering group
- * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
- * contributed to Berkeley.
- *
- * All advertising materials mentioning features or use of this software
- * must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Lawrence Berkeley Laboratory.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	@(#)p9100.c	8.2 (Berkeley) 10/30/93
- */
-
-/*
  * color display (p9100) driver.
  *
  * Does not handle interrupts, even though they can occur.
@@ -114,6 +70,11 @@
 #include <sparc/dev/p9100reg.h>
 #endif
 #include <sparc/dev/sbusvar.h>
+
+#include "tctrl.h"
+#if NTCTRL > 0
+#include <sparc/dev/tctrlvar.h>
+#endif
 
 /* per-display variables */
 struct p9100_softc {
@@ -158,6 +119,7 @@ static int	p9100_sbus_match(struct device *, struct cfdata *, void *);
 static void	p9100_sbus_attach(struct device *, struct device *, void *);
 
 static void	p9100unblank(struct device *);
+static void	p9100_shutdown(void *);
 
 /* cdevsw prototypes */
 cdev_decl(p9100);
@@ -300,9 +262,32 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	/* make sure we are not blanked */
 	p9100_set_video(sc, 1);
 
+	if (shutdownhook_establish(p9100_shutdown, sc) == NULL) {
+		panic("%s: could not establish shutdown hook",
+		      sc->sc_dev.dv_xname);
+	}
+
 	if (isconsole) {
 		printf(" (console)\n");
 #ifdef RASTERCONSOLE
+		for (i = 0; i < fb->fb_type.fb_size; i++) {
+		     if (fb->fb_pixels[i] == 0) {
+			 fb->fb_pixels[i] = 1;
+		     } else if (fb->fb_pixels[i] == (char) 255) {
+			 fb->fb_pixels[i] = 0;
+		     }
+		}
+		sc->sc_cmap.cm_map[0][0] = 0;
+		sc->sc_cmap.cm_map[0][1] = 0;
+		sc->sc_cmap.cm_map[0][2] = 0;
+		sc->sc_cmap.cm_map[1][0] = 0xff;
+		sc->sc_cmap.cm_map[1][1] = 0xff;
+		sc->sc_cmap.cm_map[1][2] = 0xff;
+		p9100loadcmap(sc, 0, 2);
+		sc->sc_cmap.cm_map[255][0] = 0xff;
+		sc->sc_cmap.cm_map[255][1] = 0xff;
+		sc->sc_cmap.cm_map[255][2] = 0xff;
+		p9100loadcmap(sc, 255, 1);
 		fbrcons_init(fb);
 #endif
 	} else
@@ -310,6 +295,37 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 
 	if (sa->sa_node == fbnode)
 		fb_attach(fb, isconsole);
+}
+
+static void
+p9100_shutdown(arg)
+	void *arg;
+{
+	struct p9100_softc *sc = arg;
+	struct fbdevice *fb = &sc->sc_fb;
+	int i;
+
+#ifdef RASTERCONSOLE
+	for (i = 0; i < fb->fb_type.fb_size; i++) {
+	     if (fb->fb_pixels[i] == 1) {
+		 fb->fb_pixels[i] = 0;
+	     } else if (fb->fb_pixels[i] == 0) {
+		 fb->fb_pixels[i] = 255;
+	     }
+	}
+	sc->sc_cmap.cm_map[0][0] = 0xff;
+	sc->sc_cmap.cm_map[0][1] = 0xff;
+	sc->sc_cmap.cm_map[0][2] = 0xff;
+	sc->sc_cmap.cm_map[1][0] = 0;
+	sc->sc_cmap.cm_map[1][1] = 0;
+	sc->sc_cmap.cm_map[1][2] = 0x80;
+	p9100loadcmap(sc, 0, 2);
+	sc->sc_cmap.cm_map[255][0] = 0;
+	sc->sc_cmap.cm_map[255][1] = 0;
+	sc->sc_cmap.cm_map[255][2] = 0;
+	p9100loadcmap(sc, 255, 1);
+#endif
+	p9100_set_video(sc, 1);
 }
 
 int
@@ -435,6 +451,11 @@ p9100_set_video(struct p9100_softc *sc, int enable)
 	else
 		v &= ~VIDEO_ENABLED;
 	p9100_ctl_write_4(sc, SCRN_RPNT_CTL_1, v);
+#if NTCTRL > 0
+	/* Turn On/Off the TFT if we know how.
+	 */
+	tadpole_set_video(enable);
+#endif
 }
 
 static int
