@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.71 1997/10/19 02:29:20 mikel Exp $	*/
+/*	$NetBSD: systm.h,v 1.72 1997/10/24 17:37:47 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -162,20 +162,7 @@ void	printf __P((const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,1,2)));
 int	sprintf __P((char *buf, const char *, ...))
     __attribute__((__format__(__printf__,2,3)));
-
-#ifdef __powerpc__			/* XXX XXX XXX */
-/*
- * Comment stolen from <sys/syslog.h>
- *
- * Don't use va_list in the vprintf() prototype.   Va_list is typedef'd in two
- * places (<machine/varargs.h> and <machine/stdarg.h>), so if we include one
- * of them here we may collide with the other includes.  We instead get
- * _BSD_VA_LIST_ from <machine/ansi.h> and use it.
- */
-#include <machine/ansi.h>
-#include <sys/cdefs.h>
 void	vprintf __P((const char *, _BSD_VA_LIST_));
-#endif /* __powerpc__ */		/* XXX XXX XXX */
 
 void	panic __P((const char *, ...))
 #ifdef __KPRINTF_ATTRIBUTE__
@@ -197,6 +184,7 @@ void	ovbcopy __P((const void *, void *, size_t));
 void	bzero __P((void *, size_t));
 int	bcmp __P((const void *, const void *, size_t));
 
+void	*memchr __P((const void *, int, size_t));
 int      memcmp __P((const void *, const void *, size_t));
 void    *memcpy __P((void *, const void *, size_t));
 void    *memmove __P((void *, const void *, size_t));
