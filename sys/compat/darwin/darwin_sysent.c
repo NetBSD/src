@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_sysent.c,v 1.30 2003/09/03 07:29:30 manu Exp $ */
+/* $NetBSD: darwin_sysent.c,v 1.31 2003/09/06 11:18:03 manu Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.30 2003/09/03 07:29:30 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.31 2003/09/06 11:18:03 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -434,12 +434,12 @@ struct sysent darwin_sysent[] = {
 	    sys_nosys },			/* 186 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 187 = unimplemented */
-	{ 2, s(struct bsd_compat_12_sys_stat_args), 0,
-	    bsd_compat_12_sys_stat },		/* 188 = stat12 */
-	{ 2, s(struct compat_12_sys_fstat_args), 0,
-	    compat_12_sys_fstat },		/* 189 = fstat */
-	{ 2, s(struct bsd_compat_12_sys_lstat_args), 0,
-	    bsd_compat_12_sys_lstat },		/* 190 = lstat12 */
+	{ 2, s(struct darwin_sys_stat_args), 0,
+	    darwin_sys_stat },			/* 188 = stat12 */
+	{ 2, s(struct darwin_sys_fstat_args), 0,
+	    darwin_sys_fstat },			/* 189 = fstat */
+	{ 2, s(struct darwin_sys_lstat_args), 0,
+	    darwin_sys_lstat },			/* 190 = lstat12 */
 	{ 2, s(struct bsd_sys_pathconf_args), 0,
 	    bsd_sys_pathconf },			/* 191 = pathconf */
 	{ 2, s(struct sys_fpathconf_args), 0,
