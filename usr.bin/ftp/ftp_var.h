@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.49 1999/11/26 23:26:05 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.50 1999/12/05 22:50:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
 #define	FTP_PRODUCT	"NetBSD-ftp"
 #endif
 #ifndef FTP_VERSION
-#define	FTP_VERSION	"19991127"
+#define	FTP_VERSION	"19991206"
 #endif
 
 #ifdef SMALL
