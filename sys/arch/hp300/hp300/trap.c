@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.46 1996/10/14 08:07:23 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.47 1996/10/14 20:06:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -160,7 +160,7 @@ int mmupid = -1;
 #define MDB_FOLLOW	1
 #define MDB_WBFOLLOW	2
 #define MDB_WBFAILED	4
-#define MDB_ISPID(p)	(((p) != NULL) && ((p) == mmupid))
+#define MDB_ISPID(p)	((p) == mmupid)
 #endif
 
 /*
@@ -263,6 +263,15 @@ trap(type, code, v, frame)
 	cnt.v_trap++;
 	p = curproc;
 	ucode = 0;
+
+	/* I have verified that this DOES happen! -gwr */
+	if (p == NULL)
+		p = &proc0;
+#ifdef DIAGNOSTIC
+	if (p->p_addr == NULL)
+		panic("trap: no pcb");
+#endif
+
 	if (USERMODE(frame.f_sr)) {
 		type |= T_USER;
 		sticks = p->p_sticks;
@@ -526,16 +535,15 @@ trap(type, code, v, frame)
 		 * If we were doing profiling ticks or other user mode
 		 * stuff from interrupt code, Just Say No.
 		 */
-		if ((p != NULL && p->p_addr != NULL) &&
-		    (p->p_addr->u_pcb.pcb_onfault == fubail ||
-		     p->p_addr->u_pcb.pcb_onfault == subail))
+		if (p->p_addr->u_pcb.pcb_onfault == fubail ||
+		    p->p_addr->u_pcb.pcb_onfault == subail)
 			goto copyfault;
 		/* fall into ... */
 
 	case T_MMUFLT|T_USER:	/* page fault */
 	    {
 		register vm_offset_t va;
-		register struct vmspace *vm = p ? p->p_vmspace : NULL;
+		register struct vmspace *vm = p->p_vmspace;
 		register vm_map_t map;
 		int rv;
 		vm_prot_t ftype;
@@ -555,8 +563,7 @@ trap(type, code, v, frame)
 		 * argument space is lazy-allocated.
 		 */
 		if ((type & T_USER) == 0 &&
-		    ((p == NULL || p->p_addr == NULL ||
-		      p->p_addr->u_pcb.pcb_onfault == 0) || KDFAULT(code)))
+		    ((p->p_addr->u_pcb.pcb_onfault == 0) || KDFAULT(code)))
 			map = kernel_map;
 		else
 			map = vm ? &vm->vm_map : kernel_map;
@@ -590,7 +597,7 @@ trap(type, code, v, frame)
 #endif
 		rv = vm_fault(map, va, ftype, FALSE);
 #ifdef DEBUG
-		if (rv && p != NULL && MDB_ISPID(p->p_pid))
+		if (rv && MDB_ISPID(p->p_pid))
 			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
 #endif
