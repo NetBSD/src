@@ -1,7 +1,8 @@
-PROG=	mount_miscfs
-MAN8=	mount_kernfs.0 mount_fdesc.0
+#
+#	$Id: Makefile,v 1.1.2.2 1993/07/20 02:34:48 cgd Exp $
+#
 
-LINKS=	${BINDIR}/mount_miscfs ${BINDIR}/mount_fdesc \
-	${BINDIR}/mount_miscfs ${BINDIR}/mount_kernfs
+PROG=	mount_kernfs
+MAN8=	mount_kernfs.0
 
 .include <bsd.prog.mk>
