@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.15 2003/06/23 11:53:42 agc Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.16 2003/07/13 07:59:24 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rndctl.c,v 1.15 2003/06/23 11:53:42 agc Exp $");
+__RCSID("$NetBSD: rndctl.c,v 1.16 2003/07/13 07:59:24 itojun Exp $");
 #endif
 
 
@@ -141,14 +141,14 @@ strflags(u_int32_t fl)
 	if (fl & RND_FLAG_NO_ESTIMATE)
 		;
 	else
-		strcat(str, "estimate");
+		strlcat(str, "estimate", sizeof(str));
 
 	if (fl & RND_FLAG_NO_COLLECT)
 		;
 	else {
 		if (str[0])
-			strcat(str, ", ");
-		strcat(str, "collect");
+			strlcat(str, ", ", sizeof(str));
+		strlcat(str, "collect", sizeof(str));
 	}
 
 	return (str);
