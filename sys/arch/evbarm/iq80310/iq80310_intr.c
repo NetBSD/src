@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.18 2002/10/09 00:03:42 thorpej Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.19 2003/06/16 20:01:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -207,14 +207,14 @@ iq80310_intr_calculate_masks(void)
 	 * splvm() blocks all interrupts that use the kernel memory
 	 * allocation facilities.
 	 */
-	iq80310_imask[IPL_IMP] |= iq80310_imask[IPL_TTY];
+	iq80310_imask[IPL_VM] |= iq80310_imask[IPL_TTY];
 
 	/*
 	 * Audio devices are not allowed to perform memory allocation
 	 * in their interrupt routines, and they have fairly "real-time"
 	 * requirements, so give them a high interrupt priority.
 	 */
-	iq80310_imask[IPL_AUDIO] |= iq80310_imask[IPL_IMP];
+	iq80310_imask[IPL_AUDIO] |= iq80310_imask[IPL_VM];
 
 	/*
 	 * splclock() must block anything that uses the scheduler.

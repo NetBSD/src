@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.8 2003/03/23 14:12:25 chris Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.9 2003/06/16 20:00:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.8 2003/03/23 14:12:25 chris Exp $");
+__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.9 2003/06/16 20:00:57 thorpej Exp $");
 
 #include "opt_irqstats.h"
 
@@ -189,14 +189,14 @@ footbridge_intr_calculate_masks(void)
 	 * splvm() blocks all interrupts that use the kernel memory
 	 * allocation facilities.
 	 */
-	footbridge_imask[IPL_IMP] |= footbridge_imask[IPL_TTY];
+	footbridge_imask[IPL_VM] |= footbridge_imask[IPL_TTY];
 
 	/*
 	 * Audio devices are not allowed to perform memory allocation
 	 * in their interrupt routines, and they have fairly "real-time"
 	 * requirements, so give them a high interrupt priority.
 	 */
-	footbridge_imask[IPL_AUDIO] |= footbridge_imask[IPL_IMP];
+	footbridge_imask[IPL_AUDIO] |= footbridge_imask[IPL_VM];
 
 	/*
 	 * splclock() must block anything that uses the scheduler.

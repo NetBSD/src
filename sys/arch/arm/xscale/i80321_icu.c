@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_icu.c,v 1.6 2002/10/09 00:03:42 thorpej Exp $	*/
+/*	$NetBSD: i80321_icu.c,v 1.7 2003/06/16 20:00:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -249,14 +249,14 @@ i80321_intr_calculate_masks(void)
 	 * splvm() blocks all interrupts that use the kernel memory
 	 * allocation facilities.
 	 */
-	i80321_imask[IPL_IMP] |= i80321_imask[IPL_TTY];
+	i80321_imask[IPL_VM] |= i80321_imask[IPL_TTY];
 
 	/*
 	 * Audio devices are not allowed to perform memory allocation
 	 * in their interrupt routines, and they have fairly "real-time"
 	 * requirements, so give them a high interrupt priority.
 	 */
-	i80321_imask[IPL_AUDIO] |= i80321_imask[IPL_IMP];
+	i80321_imask[IPL_AUDIO] |= i80321_imask[IPL_VM];
 
 	/*
 	 * splclock() must block anything that uses the scheduler.

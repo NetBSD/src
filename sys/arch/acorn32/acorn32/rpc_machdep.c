@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.56 2003/05/22 05:47:04 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.57 2003/06/16 20:00:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -56,7 +56,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.56 2003/05/22 05:47:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.57 2003/06/16 20:00:56 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -249,9 +249,9 @@ cpu_reboot(int howto, char *bootstr)
 #ifdef DIAGNOSTIC
 	printf("boot: howto=%08x curlwp=%p\n", howto, curlwp);
 
-	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_imp=%08x\n",
+	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_vm=%08x\n",
 	    irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
-	    irqmasks[IPL_IMP]);
+	    irqmasks[IPL_VM]);
 	printf("ipl_audio=%08x ipl_clock=%08x ipl_none=%08x\n",
 	    irqmasks[IPL_AUDIO], irqmasks[IPL_CLOCK], irqmasks[IPL_NONE]);
 

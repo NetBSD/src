@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.15 2003/04/02 03:55:53 thorpej Exp $	*/
+/*	$NetBSD: stubs.c,v 1.16 2003/06/16 20:01:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -235,7 +235,7 @@ set_spl_masks()
 	spl_masks[_SPL_NET]	   = imask[IPL_NET];
 	spl_masks[_SPL_SOFTSERIAL] = imask[IPL_SOFTSERIAL];
 	spl_masks[_SPL_TTY]	   = imask[IPL_TTY];
-	spl_masks[_SPL_IMP]	   = imask[IPL_IMP];
+	spl_masks[_SPL_VM]	   = imask[IPL_VM];
 	spl_masks[_SPL_AUDIO]	   = imask[IPL_AUDIO];
 	spl_masks[_SPL_CLOCK]	   = imask[IPL_CLOCK];
 	spl_masks[_SPL_HIGH]	   = imask[IPL_HIGH];
@@ -269,7 +269,7 @@ ipl_to_spl(ipl)
 		return _SPL_SOFTSERIAL;
 	case IPL_TTY:
 		return _SPL_TTY;
-	case IPL_IMP:
+	case IPL_VM:
 		return _SPL_IMP;
 	case IPL_AUDIO:
 		return _SPL_AUDIO;

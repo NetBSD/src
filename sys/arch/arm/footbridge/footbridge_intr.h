@@ -1,4 +1,4 @@
-/* 	$NetBSD: footbridge_intr.h,v 1.4 2003/01/03 00:56:00 thorpej Exp $	*/
+/* 	$NetBSD: footbridge_intr.h,v 1.5 2003/06/16 20:00:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
 #define IPL_NET		5	/* network */
 #define IPL_SOFTSERIAL	6	/* serial software interrupts */
 #define IPL_TTY		7	/* terminal */
-#define IPL_IMP		8	/* memory allocation */
+#define IPL_VM		8	/* memory allocation */
 #define IPL_AUDIO	9	/* audio */
 #define IPL_CLOCK	10	/* clock */
 #define IPL_STATCLOCK	11	/* statclock */
@@ -170,7 +170,7 @@ void	_setsoftintr(int);
 #define splsoftserial()	_splraise(IPL_SOFTSERIAL)
 #define	spltty()	_splraise(IPL_TTY)
 #define spllpt()        spltty()
-#define	splvm()		_splraise(IPL_IMP)
+#define	splvm()		_splraise(IPL_VM)
 #define	splaudio()	_splraise(IPL_AUDIO)
 #define	splclock()	_splraise(IPL_CLOCK)
 #define	splstatclock()	_splraise(IPL_STATCLOCK)

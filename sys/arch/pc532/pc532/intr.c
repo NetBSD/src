@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.26 2002/11/22 13:26:41 simonb Exp $	*/
+/*	$NetBSD: intr.c,v 1.27 2003/06/16 20:01:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -214,7 +214,7 @@ intr_establish(intr, vector, arg, use, blevel, rlevel, mode)
 	 * There are tty, network and disk drivers that use free() at interrupt
 	 * time, so imp > (tty | net | bio).
 	 */
-	imask[IPL_IMP] |= imask[IPL_TTY] | imask[IPL_NET] | imask[IPL_BIO];
+	imask[IPL_VM] |= imask[IPL_TTY] | imask[IPL_NET] | imask[IPL_BIO];
 
 	/*
 	 * Enforce a hierarchy that gives slow devices a better chance at not

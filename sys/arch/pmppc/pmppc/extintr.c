@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.7 2003/01/24 11:55:19 augustss Exp $	*/
+/*	$NetBSD: extintr.c,v 1.8 2003/06/16 20:01:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -364,10 +364,10 @@ intr_calculatemasks()
 	 * There are tty, network and disk drivers that use free() at interrupt
 	 * time, so imp > (tty | net | bio).
 	 */
-	imask[IPL_IMP] |= imask[IPL_TTY];
+	imask[IPL_VM] |= imask[IPL_TTY];
 
 #ifdef IPL_AUDIO
-	imask[IPL_AUDIO] |= imask[IPL_IMP];
+	imask[IPL_AUDIO] |= imask[IPL_VM];
 #endif
 
 	/*
@@ -378,7 +378,7 @@ intr_calculatemasks()
 #ifdef IPL_AUDIO
 	imask[IPL_CLOCK] |= imask[IPL_AUDIO];
 #else
-	imask[IPL_CLOCK] |= imask[IPL_IMP];
+	imask[IPL_CLOCK] |= imask[IPL_VM];
 #endif
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.3 2003/03/23 14:12:26 chris Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.4 2003/06/16 20:00:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.3 2003/03/23 14:12:26 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.4 2003/06/16 20:00:57 thorpej Exp $");
 
 #include "opt_irqstats.h"
 
@@ -237,14 +237,14 @@ intr_calculatemasks()
 	 * There are tty, network and disk drivers that use free() at interrupt
 	 * time, so imp > (tty | net | bio).
 	 */
-	imask[IPL_IMP] |= imask[IPL_TTY];
-	imask[IPL_AUDIO] |= imask[IPL_IMP];
+	imask[IPL_VM] |= imask[IPL_TTY];
+	imask[IPL_AUDIO] |= imask[IPL_VM];
 
 	/*
 	 * Since run queues may be manipulated by both the statclock and tty,
 	 * network, and disk drivers, clock > imp.
 	 */
-	imask[IPL_CLOCK] |= imask[IPL_IMP];
+	imask[IPL_CLOCK] |= imask[IPL_VM];
 	imask[IPL_STATCLOCK] |= imask[IPL_CLOCK];
 
 	/*
