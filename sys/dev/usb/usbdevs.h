@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.31 1999/06/05 14:14:42 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.32 1999/06/26 00:08:15 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.31 1999/06/05 14:14:02 augustss Exp 
+ *	NetBSD: usbdevs,v 1.32 1999/06/26 00:07:35 augustss Exp 
  */
 
 /*
@@ -190,6 +190,7 @@
 /* Logitech products */
 #define	USB_PRODUCT_LOGITECH_M2452	0x0203		/* M2452 keyboard */
 #define	USB_PRODUCT_LOGITECH_M4848	0x0301		/* M4848 mouse */
+#define	USB_PRODUCT_LOGITECH_USBPS2	0xc001		/* USB-PS/2 mouse */
 
 /* Chic Technology products */
 #define	USB_PRODUCT_CHIC_MOUSE1	0x0001		/* mouse */
