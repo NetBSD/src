@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.54.2.6 2004/12/26 17:38:25 kent Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.54.2.7 2004/12/28 14:54:19 kent Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -37,6 +37,7 @@
 #ifndef _SYS_DEV_AUDIO_IF_H_
 #define _SYS_DEV_AUDIO_IF_H_
 #include <sys/types.h>
+#include <sys/audioio.h>
 
 /* check we have an audio(4) configured into kernel */
 #if defined(_KERNEL_OPT)
@@ -102,11 +103,18 @@ audio_stream_get_used(const audio_stream_t *p)
 	return o <= i ? i - o : p->end - o + i - p->start;
 }
 
+#define audio_stream_add(p, v, d) \
+do { \
+	v += d; \
+	if (v >= p->end) \
+		v -= p->end - p->start; \
+} while (/*CONSTCOND*/0)
+
 /**
  * an interface to fill a audio stream buffer
  */
 typedef struct stream_fetcher {
-	int (*fetch_to)(struct stream_fetcher *, audio_stream_t *, int, int *);
+	int (*fetch_to)(struct stream_fetcher *, audio_stream_t *, int);
 } stream_fetcher_t;
 
 /**
@@ -114,10 +122,14 @@ typedef struct stream_fetcher {
  * This must be an extension of stream_fetcher_t.
  */
 typedef struct stream_filter {
+/* public: */
 	stream_fetcher_t base;
 	void (*dtor)(struct stream_filter *);
 	void (*set_fetcher)(struct stream_filter *, stream_fetcher_t *);
 	void (*set_inputbuffer)(struct stream_filter *, audio_stream_t *);
+/* private: */
+	stream_fetcher_t *prev;
+	audio_stream_t *src;
 } stream_filter_t;
 
 /**
