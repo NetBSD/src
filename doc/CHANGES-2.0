@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.35 2004/04/05 06:44:03 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.36 2004/04/05 20:55:35 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -346,4 +346,85 @@ distrib/mvme68k/miniroot/list			1.14
 
 	Adapt to the replacement of gawk with nawk, source accessible as awk.
 	[he, ticket #53]
+
+sys/dev/pci/emuxki.c				1.32
+sys/dev/pci/joy_pci.c				1.8
+sys/dev/pci/pcidevs				1.618
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Added another SB Live! 5.1 soundcard and joystick version
+	[martti, ticket #54]
+
+sys/kern/kern_sig.c				1.191-1.193
+sys/sys/siginfo.h				1.12
+
+	Replace memset's of ksiginfo_t with KSI_INIT (which is the proper way 
+	to initialize ksiginfo_t structures).
+	Add the notion of an "empty" ksiginfo_t (one where on signo is filled 
+	in).
+	Add an initializer for them: KSI_INIT_EMPTY
+	Add a predicate for them: KSI_EMPTY_P
+	Don't bother storing empty ksiginfo_t's since they have no information.
+	Change uses of KSI_INIT to KSI_INIT_EMPTY where no other information 
+	other than the signo is being filled in.
+	When a process is being traced (debugged) and a catchable signal 
+	arrives, make sure to save its ksiginfo_t for eventual delivery.
+	This makes debugging SA_SIGINFO signal handlers work.
+	[matt, ticket #56]
+
+usr.sbin/ipf/Makefile.inc			1.13
+usr.sbin/ipf/ipfstat/Makefile			1.18
+usr.sbin/ipf/ipnat/Makefile			1.23
+usr.sbin/ipf/ippool/Makefile			1.7
+
+	Move kvm library spec to Makefile.inc, so that it gets specified
+	after the ipf library, since the ipf library depends on some functions
+	from the kvm library.
+	Fixes a build problem observed when building for sun2 (though I
+	won't claim understanding why this doesn't show up elsewhere).
+	[he, ticket #57]
+
+sys/arch/i386/stand/misc/Makefile		1.5
+
+	Fix uudecoding of object files.
+	[groo, ticket #58]
+
+sys/dev/pci/if_bge.c				1.67
+
+	Fix mistaken arguments to bge_set_thresh(); the prior revision would
+	pass the bge_softc * to a function expecting the struct ifnet*,
+	triggering a panic every time the Rx-mitigation value is changed via
+	sysctl.
+	[jonathan, ticket #59]
+
+sys/arch/sparc64/dev/pci_machdep.c		1.46
+
+	OF_getprop can get only the first "reg" property with a statically
+	allocated buffer, but prom_getprop cannot.
+	This should fix a "kernel trap 30: data access exception" when you
+	invoke a pcictl(8).
+	[nakayama, ticket #60]
+
+dist/dhcp/includes/cf/netbsd.h			1.4
+
+	"gcc -m32 -mcpu=ultrasparc" defines __sparc_v9__, so __sparc64__ is
+	more appropriate to indicate a 64-bit environment.
+	[nakayama, ticket #61]
+
+sys/arch/macppc/conf/GENERIC			1.173
+
+	Enable "INSECURE" kernel option so that GENERIC kernels are capable of
+	running XF4 servers.  while this isn't the best solution, it is the
+	only one we have for the forseeable future, and there is long-standing
+	precedent in the i386 port.
+	[mrg, ticket #64]
+
+sys/arch/i386/i386/identcpu.c			1.11
+
+	- fix i386_intel_brand[]: it was missing a empty reserved entry at 0xD
+	  causing Mobile Pentium 4 to be shown as a Mobile Celeron.
+	- fix intel_family6_name() for brand=0xB && signature >= 0xF13
+	- fix a potential out-of-bounds array reference
+	[mrg, ticket #65]
 
