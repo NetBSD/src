@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.29 1999/11/12 18:39:39 drochner Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.29.2.1 2000/02/20 17:55:13 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -47,6 +47,11 @@
 #include "isa.h"
 #include "apm.h"
 #include "pnpbios.h"
+#include "mpbios.h"
+
+#include <machine/cpuvar.h>
+#include <machine/i82093var.h>
+#include <machine/mpbiosvar.h>
 
 #if NAPM > 0
 #include <machine/bioscall.h>
@@ -77,6 +82,8 @@ union mainbus_attach_args {
 #if NPNPBIOS > 0
 	struct pnpbios_attach_args mba_paa;
 #endif
+	struct cpu_attach_args mba_caa;
+	struct apic_attach_args aaa_caa;
 };
 
 /*
@@ -123,6 +130,26 @@ mainbus_attach(parent, self, aux)
 	union mainbus_attach_args mba;
 
 	printf("\n");
+
+#if NMPBIOS > 0
+	if (mpbios_probe(self))
+		mpbios_scan(self);
+	else
+#endif
+	{
+		struct cpu_attach_args caa;
+		extern u_long cpu_id;
+		
+		memset(&caa, 0, sizeof(caa));
+		caa.caa_name = "cpu";
+		caa.cpu_number = 0;
+		caa.cpu_role = CPU_ROLE_SP;
+		caa.cpu_func = 0;
+		caa.cpu_signature = cpu_id;
+		caa.feature_flags = cpu_feature;
+		
+		config_found(self, &caa, mainbus_print);
+	}
 
 #if NPNPBIOS > 0
 	if (pnpbios_probe()) {
