@@ -1,3 +1,4 @@
+/*	$NetBSD: atomicio.h,v 1.1.1.3 2001/04/10 07:13:48 itojun Exp $	*/
 /*	$OpenBSD: atomicio.h,v 1.3 2001/03/02 18:54:30 deraadt Exp $	*/
 
 /*

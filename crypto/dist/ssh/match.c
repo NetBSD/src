@@ -1,3 +1,4 @@
+/*	$NetBSD: match.c,v 1.1.1.5 2001/04/10 07:13:57 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland

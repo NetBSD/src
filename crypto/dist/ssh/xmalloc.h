@@ -1,3 +1,4 @@
+/*	$NetBSD: xmalloc.h,v 1.1.1.3 2001/04/10 07:14:23 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland

@@ -1,3 +1,4 @@
+/*	$NetBSD: auth1.c,v 1.1.1.7 2001/04/10 07:13:49 itojun Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -10,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth1.c,v 1.19 2001/03/08 18:47:12 stevesk Exp $");
+RCSID("$OpenBSD: auth1.c,v 1.22 2001/03/23 12:02:49 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -83,7 +84,7 @@ do_authloop(Authctxt *authctxt)
 #ifdef KRB4
 	    (!options.kerberos_authentication || options.kerberos_or_local_passwd) &&
 #endif
-	    auth_password(pw, "")) {
+	    auth_password(authctxt, "")) {
 		auth_log(authctxt, 1, "without authentication", "");
 		return;
 	}
@@ -244,7 +245,7 @@ do_authloop(Authctxt *authctxt)
 			packet_integrity_check(plen, 4 + dlen, type);
 
 			/* Try authentication with the password. */
-			authenticated = auth_password(pw, password);
+			authenticated = auth_password(authctxt, password);
 
 			memset(password, 0, strlen(password));
 			xfree(password);
@@ -284,6 +285,12 @@ do_authloop(Authctxt *authctxt)
 			log("Unknown message during authentication: type %d", type);
 			break;
 		}
+#ifdef BSD_AUTH
+		if (authctxt->as) {
+			auth_close(authctxt->as);
+			authctxt->as = NULL;
+		}
+#endif
 		if (!authctxt->valid && authenticated)
 			fatal("INTERNAL ERROR: authenticated invalid user %s",
 			    authctxt->user);
@@ -366,9 +373,6 @@ do_authentication()
 	packet_send();
 	packet_write_wait();
 
-	xfree(authctxt->user);
-	xfree(authctxt);
-
 	/* Perform session preparation. */
-	do_authenticated(pw);
+	do_authenticated(authctxt);
 }

@@ -1,3 +1,4 @@
+/*	$NetBSD: hostfile.h,v 1.1.1.5 2001/04/10 07:13:55 itojun Exp $	*/
 /*	$OpenBSD: hostfile.h,v 1.7 2001/02/08 19:30:51 itojun Exp $	*/
 
 /*

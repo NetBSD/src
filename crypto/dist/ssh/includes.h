@@ -1,3 +1,4 @@
+/*	$NetBSD: includes.h,v 1.1.1.3 2001/04/10 07:13:55 itojun Exp $	*/
 /*	$OpenBSD: includes.h,v 1.14 2001/01/29 01:58:16 niklas Exp $	*/
 
 /*
