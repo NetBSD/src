@@ -1,4 +1,4 @@
-/*	$NetBSD: rp.c,v 1.2 2000/05/19 10:43:51 itojun Exp $	*/
+/*	$NetBSD: rp.c,v 1.3 2000/07/23 23:05:38 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1999 LSIIT Laboratory.
@@ -195,11 +195,13 @@ init_rp6_and_bsr6()
 u_int16
 bootstrap_initial_delay()
 {
-//    long            AddrDelay;
-//    long            Delay;
-//    long            log_mask;
-//    int             log_of_2;
-//    u_int8          bestPriority;
+#if 0
+    long            AddrDelay;
+    long            Delay;
+    long            log_mask;
+    int             log_of_2;
+    u_int8          bestPriority;
+#endif
 
     /*
      * The bootstrap timer initial value (if Cand-BSR). It depends of the
@@ -212,52 +214,48 @@ bootstrap_initial_delay()
      * 2 - (myAddr/2^31);
      */
 
-//    bestPriority = max(curr_bsr_priority, my_bsr_priority);
-//    if (bestPriority == my_bsr_priority)
- //   {
-//	AddrDelay = ntohl(curr_bsr_address) - ntohl(my_bsr_address);
+#if 0
+    bestPriority = max(curr_bsr_priority, my_bsr_priority);
+    if (bestPriority == my_bsr_priority)
+    {
+	AddrDelay = ntohl(curr_bsr_address) - ntohl(my_bsr_address);
 	/* Calculate the integer part of log_2 of (bestAddr - myAddr) */
 	/*
 	 * To do so, have to find the position number of the first bit from
 	 * left which is `1`
 	 */
-//	log_mask = sizeof(AddrDelay) << 3;
-//	log_mask = (1 << (log_mask - 1));	/* Set the leftmost bit to
-//						 * `1` */
-/*	for (log_of_2 = (sizeof(AddrDelay) << 3) - 1; log_of_2; log_of_2--)
+	log_mask = sizeof(AddrDelay) << 3;
+	log_mask = (1 << (log_mask - 1));	/* Set the leftmost bit to
+						 * `1` */
+	for (log_of_2 = (sizeof(AddrDelay) << 3) - 1; log_of_2; log_of_2--)
 	{
 	    if (AddrDelay & log_mask)
 		break;
 	    else
-*/
-//		log_mask >>= 1;	/* Start shifting `1` on right */
-/* }
+		log_mask >>= 1;	/* Start shifting `1` on right */
+	}
 	AddrDelay = log_of_2 / 16;
     }
     else
 	AddrDelay = 2 - (ntohl(my_bsr_address) / (1 << 31));
 
     Delay = 1 + bestPriority - my_bsr_priority;
- */
-   /* Calculate log_2(Delay) */
-//    log_mask = sizeof(Delay) << 3;
-//    log_mask = (1 << (log_mask - 1)); 	
-/* Set the leftmost bit to `1` 
-*/
+    /* Calculate log_2(Delay) */
+    /* Set the leftmost bit to `1` */
+    log_mask = sizeof(Delay) << 3;
+    log_mask = (1 << (log_mask - 1)); 	
 
- /*   for (log_of_2 = (sizeof(Delay) << 3) - 1; log_of_2; log_of_2--)
+    for (log_of_2 = (sizeof(Delay) << 3) - 1; log_of_2; log_of_2--)
     {
 	if (Delay & log_mask)
 	    break;
 	else
-*/
-//	    log_mask >>= 1;	/* Start shifting `1` on right */
-
-/* }
+	    log_mask >>= 1;	/* Start shifting `1` on right */
+    }
 
     Delay = 5 + 2 * Delay + AddrDelay;
     return (u_int16) Delay;
-*/
+#endif
 
 	/* Temporary implementation */
 	return (RANDOM()%my_bsr_period);
