@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.55 1994/05/05 05:36:35 cgd Exp $
+ *	$Id: isa.c,v 1.56 1994/10/07 09:08:29 mycroft Exp $
  */
 
 /*
@@ -96,23 +96,19 @@ config_search(fn, parent, aux)
 			int old = cd->cd_ndevs, new;
 			void **nsp;
 
-			if (old == 0) {
-				nsp = malloc(MINALLOCSIZE, M_DEVBUF, M_NOWAIT);
-				if (!nsp)
-					panic("config_search: creating dev array");
-				bzero(nsp, MINALLOCSIZE);
-				cd->cd_ndevs = MINALLOCSIZE / sizeof(void *);
-			} else {
-				new = old;
-				do {
-					new *= 2;
-				} while (new <= id->id_unit);
-				cd->cd_ndevs = new;
-				nsp = malloc(new * sizeof(void *), M_DEVBUF,
-				    M_NOWAIT);
-				if (!nsp)
-					panic("config_search: expanding dev array");
-				bzero(nsp, new * sizeof(void *));
+			if (old == 0)
+				new = MINALLOCSIZE / sizeof(void *);
+			else
+				new = old * 2;
+			while (new <= id->id_unit)
+				new *= 2;
+			cd->cd_ndevs = new;
+			nsp = malloc(new * sizeof(void *), M_DEVBUF, M_NOWAIT);
+			if (nsp == 0)
+				panic("config_search: %sing dev array",
+				    old != 0 ? "expand" : "creat");
+			bzero(nsp + old, (new - old) * sizeof(void *));
+			if (old != 0) {
 				bcopy(cd->cd_devs, nsp, old * sizeof(void *));
 				free(cd->cd_devs, M_DEVBUF);
 			}
