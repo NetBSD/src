@@ -1,4 +1,4 @@
-/*	$NetBSD: swaplist.c,v 1.1.2.1 1997/06/01 09:03:35 mrg Exp $	*/
+/*	$NetBSD: swaplist.c,v 1.1.2.2 1997/06/01 13:11:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -114,7 +114,7 @@ list_swap(pri, kflag, pflag, tflag, dolong)
 	if (tflag)
 		(void)printf("%dM/%dM swap space\n",
 		    dbtob(totalinuse) / (1024 * 1024),
-		    dbtob(totalsize - totalinuse) / (1024 * 1024));
+		    dbtob(totalsize) / (1024 * 1024));
 	else if (dolong == 0)
 (void)printf("total: %dk bytes allocated = %dk used, %dk available\n",
 		    dbtob(totalsize) / 1024,
