@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_tcp.c,v 1.6 1996/12/20 20:48:17 cgd Exp $	*/
+/*	$NetBSD: clnt_tcp.c,v 1.7 1997/02/08 04:38:02 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: clnt_tcp.c,v 1.6 1996/12/20 20:48:17 cgd Exp $";
+static char *rcsid = "$NetBSD: clnt_tcp.c,v 1.7 1997/02/08 04:38:02 mycroft Exp $";
 #endif
  
 /*
@@ -411,7 +411,7 @@ readtcp(ct, buf, len)
 	if (len == 0)
 		return (0);
 	fd.fd = ct->ct_sock;
-	fd.events = fd.revents = POLLIN;
+	fd.events = POLLIN;
 	while (TRUE) {
 		switch (poll(&fd, 1, milliseconds)) {
 		case 0:

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_udp.c,v 1.5 1996/12/17 03:55:27 mrg Exp $	*/
+/*	$NetBSD: clnt_udp.c,v 1.6 1997/02/08 04:38:03 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)clnt_udp.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: clnt_udp.c,v 1.5 1996/12/17 03:55:27 mrg Exp $";
+static char *rcsid = "$NetBSD: clnt_udp.c,v 1.6 1997/02/08 04:38:03 mycroft Exp $";
 #endif
 
 /*
@@ -281,7 +281,7 @@ send_again:
 	reply_msg.acpted_rply.ar_results.where = resultsp;
 	reply_msg.acpted_rply.ar_results.proc = xresults;
 	fd.fd = cu->cu_sock;
-	fd.events = fd.revents = POLLIN;
+	fd.events = POLLIN;
 	for (;;) {
 		switch (poll(&fd, 1, milliseconds)) {
 		case 0:
