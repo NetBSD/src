@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.31 2002/03/05 04:48:03 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.32 2002/03/23 01:56:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -138,12 +138,6 @@ typedef struct pv_addr {
 #define	PTE_CACHE	1
 
 /*
- * _KERNEL specific macros, functions and prototypes
- */
-
-#ifdef  _KERNEL
-
-/*
  * Commonly referenced structures
  */
 extern struct pmap	kernel_pmap_store;
@@ -195,8 +189,6 @@ boolean_t	pmap_pageidlezero __P((paddr_t));
  * The current top of kernel VM
  */
 extern vaddr_t	pmap_curmaxkvaddr;
-
-#endif	/* _KERNEL */
 
 /*
  * Useful macros and constants 
