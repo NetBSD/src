@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.9 1998/12/18 13:00:33 mrg Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.10 1998/12/18 13:18:43 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)uipc_syscalls.c	8.4 (Berkeley) 2/21/94
  */
+
+#define COMPAT_OLDSOCK /* used by <sys/socket.h> */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +169,6 @@ compat_43_sys_recv(p, v, retval)
 	return (recvit(p, SCARG(uap, s), &msg, (caddr_t)0, retval));
 }
 
-#ifdef MSG_COMPAT
 int
 compat_43_sys_recvfrom(p, v, retval)
 	struct proc *p;
@@ -186,9 +187,7 @@ compat_43_sys_recvfrom(p, v, retval)
 	SCARG(uap, flags) |= MSG_COMPAT;
 	return (sys_recvfrom(p, uap, retval));
 }
-#endif
 
-#ifdef MSG_COMPAT
 /*
  * Old recvmsg.  This code takes advantage of the fact that the old msghdr
  * overlays the new one, missing only the flags, and with the (old) access
@@ -238,7 +237,6 @@ done:
 		FREE(iov, M_IOV);
 	return (error);
 }
-#endif
 
 int
 compat_43_sys_send(p, v, retval)
@@ -266,7 +264,6 @@ compat_43_sys_send(p, v, retval)
 	return (sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval));
 }
 
-#ifdef MSG_COMPAT
 int
 compat_43_sys_sendmsg(p, v, retval)
 	struct proc *p;
@@ -306,4 +303,3 @@ done:
 		FREE(iov, M_IOV);
 	return (error);
 }
-#endif
