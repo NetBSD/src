@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.7 1998/08/28 22:56:08 dbj Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.8 1999/01/31 07:02:34 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -96,6 +96,11 @@ static char romprint_hextable[] = "0123456789abcdef@";
 #endif
 
 u_char rom_enetaddr[6];
+u_char rom_boot_dev[20];
+u_char rom_boot_arg[20];
+u_char rom_boot_info[20];
+u_char rom_boot_file[20];
+u_char rom_bootfile[MG_boot_how-MG_bootfile];
 
 void
 next68k_bootargs(args)
@@ -203,7 +208,6 @@ next68k_bootargs(args)
     }
   }
 
-#if 1
 	{
 		int i;
 		ROM_PUTS("Memory segments found:\r\n");
@@ -221,12 +225,10 @@ next68k_bootargs(args)
 			ROM_PUTS("\r\n");
 		}
 	}
-#endif
 
   /* Read the ethernet address from rom, this should be done later
    * in device driver somehow.
    */
-#if 1
   {
     int i;
 		ROM_PUTS("Ethernet address: ");
@@ -237,30 +239,39 @@ next68k_bootargs(args)
     }
 		ROM_PUTS("\r\n");
   }
-#else
-  {
-		ROM_PUTS("Ethernet address: ");
-		RELOC(rom_enetaddr[0], u_char) = MONRELOC(u_char *, MG_clientetheraddr)[0];
-		ROM_PUTX(RELOC(rom_enetaddr[0],u_char));
-		ROM_PUTS(":");
-		RELOC(rom_enetaddr[1], u_char) = MONRELOC(u_char *, MG_clientetheraddr)[1];
-		ROM_PUTX(RELOC(rom_enetaddr[1],u_char));
-		ROM_PUTS(":");
-		RELOC(rom_enetaddr[2], u_char) = MONRELOC(u_char *, MG_clientetheraddr)[2];
-		ROM_PUTX(RELOC(rom_enetaddr[2],u_char));
-		ROM_PUTS(":");
-		RELOC(rom_enetaddr[3], u_char) = MONRELOC(u_char *, MG_clientetheraddr)[3];
-		ROM_PUTX(RELOC(rom_enetaddr[3],u_char));
-		ROM_PUTS(":");
-		RELOC(rom_enetaddr[4], u_char) = MONRELOC(u_char *, MG_clientetheraddr)[4];
-		ROM_PUTX(RELOC(rom_enetaddr[4],u_char));
-		ROM_PUTS(":");
-		RELOC(rom_enetaddr[5], u_char) = MONRELOC(u_char *, MG_clientetheraddr)[5];
-		ROM_PUTX(RELOC(rom_enetaddr[5],u_char));
-		ROM_PUTS("\r\n");
-  }
-#endif
+
+	/* Read the boot args
+	 */
+	{
+		int i;
+		for(i=0;i<sizeof(rom_bootfile);i++) {
+			RELOC(rom_bootfile[i], u_char) = MONRELOC(u_char, MG_bootfile+i);
+		}
+
+		for(i=0;i<sizeof(rom_boot_dev);i++) {
+			RELOC(rom_boot_dev[i], u_char) = MONRELOC(u_char *, MG_boot_dev)[i];
+			if (MONRELOC(u_char *, MG_boot_dev)[i] == '\0') break;
+		}
+		RELOC(rom_boot_dev[sizeof(rom_boot_dev)-1], u_char) = 0;
+
+		for(i=0;i<sizeof(rom_boot_arg);i++) {
+			RELOC(rom_boot_arg[i], u_char) = MONRELOC(u_char *, MG_boot_arg)[i];
+			if (MONRELOC(u_char *, MG_boot_arg)[i] == '\0') break;
+		}
+		RELOC(rom_boot_arg[sizeof(rom_boot_arg)-1], u_char) = 0;
+
+		for(i=0;i<sizeof(rom_boot_info);i++) {
+			RELOC(rom_boot_info[i], u_char) = MONRELOC(u_char *, MG_boot_info)[i];
+			if (MONRELOC(u_char *, MG_boot_info)[i] == '\0') break;
+		}
+		RELOC(rom_boot_info[sizeof(rom_boot_info)-1], u_char) = 0;
+
+		for(i=0;i<sizeof(rom_boot_file);i++) {
+			RELOC(rom_boot_file[i], u_char) = MONRELOC(u_char *, MG_boot_file)[i];
+			if (MONRELOC(u_char *, MG_boot_file)[i] == '\0') break;
+		}
+		RELOC(rom_boot_file[sizeof(rom_boot_file)-1], u_char) = 0;
+	}
 
 	ROM_PUTS("Check serial port A for console.\r\n");
-
 }
