@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.155 2003/12/28 22:36:37 atatat Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.156 2003/12/29 04:16:25 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.155 2003/12/28 22:36:37 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.156 2003/12/29 04:16:25 atatat Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -167,10 +167,8 @@ sysctl_copyin(const struct lwp *l, const void *uaddr, void *kaddr, size_t len)
 
 	if (l != NULL)
 		return (copyin(uaddr, kaddr, len));
-
-	memcpy(kaddr, uaddr, len);
-
-	return (0);
+	else
+		return (kcopy(uaddr, kaddr, len));
 }
 
 static inline int
@@ -179,10 +177,8 @@ sysctl_copyout(const struct lwp *l, const void *kaddr, void *uaddr, size_t len)
 
 	if (l != NULL)
 		return (copyout(kaddr, uaddr, len));
-
-	memcpy(uaddr, kaddr, len);
-
-	return (0);
+	else
+		return (kcopy(kaddr, uaddr, len));
 }
 
 static inline int
@@ -449,7 +445,7 @@ sysctl_unlock(struct lwp *l)
  * sysctl_locate -- Finds the node matching the given mib under the
  * given tree (via rv).  If no tree is given, we fall back to the
  * native tree.  The current process (via l) is used for access
- * control on the tree (some nodes may be traverable only by root) and
+ * control on the tree (some nodes may be traversable only by root) and
  * on return, nip will show how many numbers in the mib were consumed.
  */
 int
@@ -653,12 +649,12 @@ sysctl_create(SYSCTLFN_RWARGS)
 	 * root, and can't add nodes to a parent that's not writeable
 	 */
 	if (l != NULL) {
+#ifndef SYSCTL_DISALLOW_CREATE
 		if (securelevel > 0)
 			return (EPERM);
 		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
 		if (error)
 			return (error);
-#ifndef SYSCTL_DISALLOW_CREATE
 		if (!(rnode->sysctl_flags & SYSCTL_READWRITE))
 #endif /* SYSCTL_DISALLOW_CREATE */
 			return (EPERM);
@@ -858,29 +854,27 @@ sysctl_create(SYSCTLFN_RWARGS)
 				return (EINVAL);
 			}
 			else {
-				char *v, *e;
+				char v[PAGE_SIZE], *e;
 				size_t s;
 
 				/*
-				 * arbitrary limit here...
+				 * we want a rough idea of what the
+				 * size is now
 				 */
-				e = NULL; /* XXX: gcc on NetBSD/sparc */
-				for (s = PAGE_SIZE, v = nnode.sysctl_data;
-				     s < 32 * PAGE_SIZE;
-				     s += PAGE_SIZE, v += PAGE_SIZE) {
-/*
- * XXX @@@ the use of uvm_kernacc() can generate false negatives on
- * some ports, so this needs to be refined shortly.
- */
-					if (!uvm_kernacc(v, PAGE_SIZE, rw))
-						return (EFAULT);
-					e = memchr(v, '\0', PAGE_SIZE);
-					if (e != NULL)
-						break;
-				}
-				if (s >= 32 * PAGE_SIZE)
-					return (ERANGE);
-				sz = e - ((char*)nnode.sysctl_data) + 1;
+				e = nnode.sysctl_data;
+				do {
+					error = copystr(e, &v[0], sizeof(v),
+							&s);
+					if (error) {
+						if (error != ENAMETOOLONG)
+							return (error);
+						e += PAGE_SIZE;
+						if ((e - 32 * PAGE_SIZE) >
+						    (char*)nnode.sysctl_data)
+							return (ERANGE);
+					}
+				} while (error != 0);
+				sz = s + (e - (char*)nnode.sysctl_data);
 			}
 		}
 		break;
@@ -914,7 +908,7 @@ sysctl_create(SYSCTLFN_RWARGS)
 	 *  0   1   1  -> kptr
 	 *  1   0   0  -> EINVAL
 	 *  1   0   1  -> own
-	 *  1   1   0  -> kptr, no own (check via uvm_kernacc)
+	 *  1   1   0  -> kptr, no own (fault on lookup)
 	 *  1   1   1  -> uptr, own
 	 */
 	if (type != CTLTYPE_NODE) {
@@ -953,27 +947,24 @@ sysctl_create(SYSCTLFN_RWARGS)
 					nnode.sysctl_data = (void*)symaddr;
 				}
 #endif /* NKSYMS > 0 */
-				if (!uvm_kernacc(nnode.sysctl_data, sz, rw)) {
-#ifdef HAVE_SOLUTION_TO_UVM_KERNACC_PROBLEM
-					/* XXX @@@ what is fix? */
-					return (EFAULT);
-#else /* HAVE_SOLUTION_TO_UVM_KERNACC_PROBLEM */
-/*
- * XXX @@@ the use of uvm_kernacc() can generate false negatives on
- * some ports, so this needs to be refined shortly.  by checking here
- * to see if SYSCTL_PERMANENT is set in the root, we can differentiate
- * between nodes being created from sysctl_init() during bootstrap and
- * "other nodes", so we can at least allow the bootstrap to succeed by
- * simply "trusting" the kernel not to shoot itself in the foot right
- * from the start.
- */
-					if ((sysctl_root.sysctl_flags &
-					    SYSCTL_PERMANENT)) {
-						printf("fault 2 %p %lu %d\n", nnode.sysctl_data, (unsigned long)sz, rw);
-						return (EFAULT);
-					}
-#endif /* HAVE_SOLUTION_TO_UVM_KERNACC_PROBLEM */
-				}
+				/*
+				 * Ideally, we'd like to verify here
+				 * that this address is acceptable,
+				 * but...
+				 *
+				 * - it might be valid now, only to
+				 *   become invalid later
+				 *
+				 * - it might be invalid only for the
+				 *   moment and valid later
+				 *
+				 * - or something else.
+				 *
+				 * Since we can't get a good answer,
+				 * we'll just accept the address as
+				 * given, and fault on individual
+				 * lookups.
+				 */
 			}
 		}
 		else if (nnode.sysctl_func == NULL)
@@ -1179,12 +1170,14 @@ sysctl_destroy(SYSCTLFN_RWARGS)
 	 * writeable
 	 */
 	if (l != NULL) {
+#ifndef SYSCTL_DISALLOW_CREATE
 		if (securelevel > 0)
 			return (EPERM);
 		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
 		if (error)
 			return (error);
 		if (!(rnode->sysctl_flags & SYSCTL_READWRITE))
+#endif /* SYSCTL_DISALLOW_CREATE */
 			return (EPERM);
 	}
 
