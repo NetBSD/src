@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.56 2000/07/13 17:32:51 thorpej Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.57 2000/08/07 02:51:04 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/namei.h>
+#include <sys/proc.h>
 #include <sys/ptrace.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
