@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 1997/10/09 21:20:16 christos Exp $
+#	$NetBSD: Makefile,v 1.8 1998/10/07 02:25:12 simonb Exp $
 
-LIB=	wrap 
+LIB=	wrap
 
 SRCS=	hosts_access.c options.c shell_cmd.c rfc931.c eval.c hosts_ctl.c \
 	refuse.c percent_x.c clean_exit.c fix_options.c socket.c \
