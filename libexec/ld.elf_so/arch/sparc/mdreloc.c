@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.29 2002/09/26 01:59:16 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.30 2002/09/26 02:05:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -175,7 +175,7 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 	 * The second entry holds the object identification.
 	 * Note: each PLT entry is three words long.
 	 */
-#define SAVE	0x9de3bfa8	/* i.e. `save %sp,-88,%sp' */
+#define SAVE	0x9de3bfa0	/* i.e. `save %sp,-96,%sp' */
 #define CALL	0x40000000
 #define NOP	0x01000000
 	obj->pltgot[0] = SAVE;

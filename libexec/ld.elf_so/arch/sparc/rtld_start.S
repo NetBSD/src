@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.12 2002/09/26 01:59:16 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.13 2002/09/26 02:05:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 _rtld_start:
 	mov	0, %fp			/* Erect a fence post for ourselves */
 	mov	%g1, %l1		/* save ps_strings */
-	sub	%sp, 24+8, %sp		/* room for return args and save area */
+	sub	%sp, 32+8, %sp		/* room for return args and save area */
 
 	sethi	%hi(_GLOBAL_OFFSET_TABLE_-4), %l7
 	call	.LLGETPC0
@@ -65,11 +65,11 @@ _rtld_start:
 
 	sub	%l7, %l0, %o1		/* relocbase */
 	call	_rtld
-	 add	%sp, 24+64, %o0		/* &argc - 8 */
+	 add	%sp, 96, %o0		/* &argc - 8 */
 
-	ld	[%sp + 24+64], %g3	/* arg: cleanup */
-	ld	[%sp + 24+64 + 4], %g2	/* arg: obj */
-	add	%sp, 24+8, %sp		/* restore stack pointer */
+	ld	[%sp + 96], %g3	/* arg: cleanup */
+	ld	[%sp + 96 + 4], %g2	/* arg: obj */
+	add	%sp, 32+8, %sp		/* restore stack pointer */
 
 	jmp	%o0
 	 mov	%l1, %g1		/* restore ps_strings */
