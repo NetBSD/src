@@ -37,7 +37,7 @@
 /*
  * greconfig - frontend to set/query tunnel endpoints
  *
- * $NetBSD: greconfig.c,v 1.6 1999/09/30 12:35:54 soren Exp $
+ * $NetBSD: greconfig.c,v 1.7 2002/06/09 09:05:51 martin Exp $
  */
 
 #include <stdio.h>
@@ -106,28 +106,28 @@ main(int argc, char **argv)
 				break;
 			default:
 				usage();
-				exit(1); 
+				exit(EXIT_FAILURE); 
 		}
 
 	if (inf == NULL) {
 		usage();
-		exit(2);
+		exit(EXIT_FAILURE);
 	}
 
 	if (strncmp("gre", inf, 3) != 0) {
 		usage();
-		exit(3);
+		exit(EXIT_FAILURE);
 	}
 
 	if ((proto != 47) && (proto != 55)) {
 		usage();
-		exit(4);
+		exit(EXIT_FAILURE);
 	}
 
 	s = socket(PF_INET, SOCK_DGRAM, 0);
 	if (s < 0) {
 		perror("socket() failed:");
-		exit(5);
+		exit(EXIT_FAILURE);
 	}
 	if (pflag) {	/* IPPROTO_GRE is default in kernel */
 		strncpy(ifr.ifr_name, inf, sizeof(ifr.ifr_name));
@@ -181,7 +181,7 @@ main(int argc, char **argv)
 	}
 	close(s);
 
-	exit(0);
+	exit(EXIT_SUCCESS);
 }
 
 void
@@ -200,11 +200,13 @@ name2sa(char *name, struct sockaddr **sa)
 	static struct sockaddr_in s;
 
 	hp = gethostbyname(name);
+	if (hp == NULL)
+		errx(EXIT_FAILURE, "Host \"%s\" not found\n", name);
 
 	bzero(&s, sizeof(struct sockaddr_in));
 	s.sin_family = hp->h_addrtype;
 	if (hp->h_addrtype != AF_INET)
-		errx(5, "Only internet addresses allowed, not %s\n", name);
+		errx(EXIT_FAILURE, "Only internet addresses allowed, not %s\n", name);
 	bcopy(hp->h_addr, &s.sin_addr, hp->h_length);
 	si = &s;
 
