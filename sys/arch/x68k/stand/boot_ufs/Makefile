@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/11/24 16:18:44 minoura Exp $
+#	$NetBSD: Makefile,v 1.8 2001/12/05 02:07:09 minoura Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ BOOT_TEXT=	006000		# Secondary (/boot)
 
 PROG=		xx$(BOOT)
 LINKS=		${BINDIR}/xx$(BOOT) ${BINDIR}/sd$(BOOT)
-LINKS=		${BINDIR}/xx$(BOOT) ${BINDIR}/fd$(BOOT)
+LINKS+=		${BINDIR}/xx$(BOOT) ${BINDIR}/fd$(BOOT)
 BINDIR=		/usr/mdec
 STRIPFLAG=
 BINMODE=	444
