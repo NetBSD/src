@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.17 2003/04/07 01:46:41 hubertf Exp $	*/
+/*	$NetBSD: rsh.c,v 1.18 2003/05/15 00:47:48 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.17 2003/04/07 01:46:41 hubertf Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.18 2003/05/15 00:47:48 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -571,15 +571,16 @@ char *
 copyargs(char **argv)
 {
 	int cc;
-	char **ap, *args, *p;
+	char **ap, *args, *p, *ep;
 
 	cc = 0;
 	for (ap = argv; *ap; ++ap)
 		cc += strlen(*ap) + 1;
 	if (!(args = malloc((u_int)cc)))
 		err(1, "malloc");
+	ep = args + cc;
 	for (p = args, *p = '\0', ap = argv; *ap; ++ap) {
-		(void)strcpy(p, *ap);
+		(void)strlcpy(p, *ap, ep - p);
 		p += strlen(p);
 		if (ap[1])
 			*p++ = ' ';
