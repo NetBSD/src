@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 1995/11/15 22:49:51 pk Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 1997/07/10 06:24:55 mikel Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -52,9 +52,14 @@ struct info {
 	struct winsize win;                     /* window info */
 }; 
 
+int        ksearch __P((char ***, struct info *));
+int        msearch __P((char ***, struct info *));
 void       printjob __P((void));
 void       recvjob __P((void));
 void       sttyclearflags __P((struct termios *tp, int flags));
 void       sttysetflags __P((struct termios *tp, int flags));
 void       sttyclearlflags __P((struct termios *tp, int flags));
 void       sttysetlflags __P((struct termios *tp, int flags));
+
+/* XXX from libc/net/rcmd.c */
+int        __ivaliduser __P((FILE *, u_int32_t, const char *, const char *));
