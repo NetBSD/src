@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_ofisa.c,v 1.1 1998/07/30 14:15:59 augustss Exp $	*/
+/*	$NetBSD: ess_ofisa.c,v 1.2 1998/07/30 21:22:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,10 +70,9 @@ ess_ofisa_match(parent, cf, aux)
 {
 	struct ofisa_attach_args *aa = aux;
 	const char *compatible_strings[] = {
-		"pnpPNP,b000",			/* generic SB 1.5 */
-		"pnpPNP,b001",			/* generic SB 2.0 */
-		"pnpPNP,b002",			/* generic SB Pro */
-		"pnpPNP,b003",			/* generic SB 16 */
+		"ESST,es1887-codec",		/* ESS 1887 */
+		"ESST,es1888-codec",		/* ESS 1888 */
+		"ESST,es888-codec",		/* ESS 888 */
 		NULL,
 	};
 	int rv = 0;
@@ -106,8 +105,8 @@ ess_ofisa_attach(parent, self, aux)
 	 * We expect:
 	 *
 	 *	1 i/o register region
-	 *	1 interrupt
-	 *	1 or 2 dma channels
+	 *	2 interrupts
+	 *	2 dma channels
 	 */
 
 	n = ofisa_reg_get(aa->oba.oba_phandle, &reg, 1);
