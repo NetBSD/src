@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc,v 1.5 2002/11/24 20:58:06 martin Exp $
+#	$NetBSD: majors.sparc,v 1.6 2003/02/20 12:02:31 martin Exp $
 #
 # Device majors for sparc
 #
@@ -94,3 +94,11 @@ device-major	clcd		char 124		clcd
 device-major	clockctl	char 125		clockctl
 device-major	systrace	char 126		systrace
 device-major	cgd		char 127 block 26	cgd
+device-major	kttcp		char 128		kttcp
+device-major	dmoverio	char 129		dmoverio
+device-major	verifiedexec	char 130		verifiedexec
+device-major	fwiso		char 131		fwiso
+device-major	dpt		char 132		dpt
+device-major	twe		char 133		twe
+device-major	nsmb		char 134		nsmb		
+
