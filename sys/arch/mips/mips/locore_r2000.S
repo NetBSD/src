@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r2000.S,v 1.13 1995/05/05 02:45:31 mellon Exp $	*/
+/*	$NetBSD: locore_r2000.S,v 1.14 1995/08/13 00:16:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1942,6 +1942,15 @@ LEAF(splsoftclock)
 	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENA_CUR)
 END(splsoftclock)
 
+LEAF(splsoftnet)
+	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
+	li	t0, ~(MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
+	and	t0, t0, v0
+	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	j	ra
+	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENA_CUR)
+END(splsoftnet)
+
 LEAF(Mach_spl0)
 	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
 	li	t0, ~(MACH_INT_MASK_0|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
@@ -1953,7 +1962,7 @@ END(Mach_spl0)
 
 LEAF(Mach_spl1)
 	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MACH_INT_MASK_1|MACH_SOFT_INT_MASK_0|MACH_SOFT_INT_MASK_1)
+	li	t0, ~(MACH_INT_MASK_1|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
 	and	t0, t0, v0
 	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
 	j	ra
