@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp_var.h,v 1.11 1999/11/19 10:41:42 bouyer Exp $	*/
+/*	$NetBSD: igmp_var.h,v 1.12 2002/05/12 20:33:50 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 Stephen Deering.
@@ -66,7 +66,7 @@ struct igmpstat {
 };
 
 #ifdef _KERNEL
-struct igmpstat igmpstat;
+extern	struct igmpstat igmpstat;
 
 /*
  * Macro to compute a random timer value between 1 and (IGMP_MAX_REPORTING_
