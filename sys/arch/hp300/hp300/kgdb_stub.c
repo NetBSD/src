@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.3 1995/04/12 08:30:40 mycroft Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.4 1996/09/07 22:26:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -49,7 +49,7 @@
  */
 #ifdef KGDB
 #ifndef lint
-static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.3 1995/04/12 08:30:40 mycroft Exp $";
+static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.4 1996/09/07 22:26:49 mycroft Exp $";
 #endif
 
 #include <sys/param.h>
@@ -206,25 +206,17 @@ computeSignal(type)
 
 	switch (type) {
 	case T_BUSERR:
-		sigval = SIGBUS;
-		break;
 	case T_ADDRERR:
 		sigval = SIGBUS;
 		break;
 	case T_ILLINST:
+	case T_PRIVINST:
 		sigval = SIGILL;
 		break;
 	case T_ZERODIV:
-		sigval = SIGFPE;
-		break;
 	case T_CHKINST:
-		sigval = SIGFPE;
-		break;
 	case T_TRAPVINST:
 		sigval = SIGFPE;
-		break;
-	case T_PRIVINST:
-		sigval = SIGILL;
 		break;
 	case T_TRACE:
 		sigval = SIGTRAP;
@@ -239,8 +231,6 @@ computeSignal(type)
 		sigval = SIGILL;
 		break;
 	case T_FPERR:
-		sigval = SIGFPE;
-		break;
 	case T_COPERR:
 		sigval = SIGFPE;
 		break;

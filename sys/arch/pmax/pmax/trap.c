@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.39 1996/08/09 05:11:02 mhitch Exp $	*/
+/*	$NetBSD: trap.c,v 1.40 1996/09/07 22:26:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -582,7 +582,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 			goto err;
 		}
 		ucode = vadr;
-		i = (rv == KERN_PROTECTION_FAILURE) ? SIGBUS : SIGSEGV;
+		i = SIGSEGV;
 		break;
 	    }
 
@@ -590,7 +590,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 	case T_ADDR_ERR_ST+T_USER:	/* misaligned or kseg access */
 	case T_BUS_ERR_IFETCH+T_USER:	/* BERR asserted to cpu */
 	case T_BUS_ERR_LD_ST+T_USER:	/* BERR asserted to cpu */
-		i = SIGSEGV;
+		i = SIGBUS;
 		break;
 
 	case T_SYSCALL+T_USER:
