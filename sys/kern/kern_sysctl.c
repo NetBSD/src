@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.76 2000/08/08 23:42:07 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.77 2000/09/09 16:42:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -46,6 +46,7 @@
 #include "opt_insecure.h"
 #include "opt_defcorename.h"
 #include "opt_sysv.h"
+#include "pty.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,6 +253,10 @@ int defcorenamelen = sizeof(DEFCORENAME);
 extern	int	kern_logsigexit;
 extern	fixpt_t	ccpu;
 
+#if NPTY > 0
+extern int nptys, maxptys;
+#endif
+
 /*
  * kernel related system variables.
  */
@@ -268,6 +273,9 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int error, level, inthostid;
 	int old_autonicetime;
 	int old_vnodes;
+#if NPTY > 0
+	int old_maxptys;
+#endif
 	dev_t consdev;
 
 	/* All sysctl names at this level, except for a few, are terminal. */
@@ -472,6 +480,16 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			consdev = NODEV;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
 		    sizeof consdev));
+#if NPTY > 0
+	case KERN_MAXPTYS:
+		old_maxptys = maxptys;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &maxptys);
+		if (old_maxptys > maxptys) {
+			maxptys = old_maxptys;
+			return (EINVAL);
+		}
+		return (error);
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}
