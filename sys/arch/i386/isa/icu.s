@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1993 Charles Hannum.
  * Copyright (c) 1989, 1990 William F. Jolitz.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,18 +36,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.19.4.7 1993/10/12 23:33:57 mycroft Exp $
+ *	$Id: icu.s,v 1.19.4.8 1993/10/13 01:18:19 mycroft Exp $
  */
 
 /*
  * AT/386
  * Vector interrupt control section
- */
-
-/*
- * XXX - this file is now misnamed.  All spls are now soft and the only thing
- * related to the hardware icu is that the bit numbering is the same in the
- * soft priority masks as in the hard ones.
  */
 
 /*
@@ -123,8 +118,7 @@ INTRLOCAL(unpend_v_next):
 	ALIGN_TEXT
 doreti:
 	COUNT_EVENT(_intrcnt_spl, 1)
-	addl	$4,%esp	# discard unit arg
-	popl	%eax	# get previous priority
+	popl	%eax			# get previous priority
 /*
  * Now interrupt frame is a trap frame!
  *
@@ -135,22 +129,13 @@ doreti:
 	movl	%eax,%edx
 	notl	%eax
 	andl	_ipending,%eax
-	jne	INTRLOCAL(unpend_v)
+	jnz	INTRLOCAL(unpend_v)
 INTRLOCAL(none_to_unpend):
 	testl   %edx,%edx		# returning to zero priority?
-	jne	1f			# nope, going to non-zero priority
-	movl	_netisr,%eax
-	testl   %eax,%eax		# check for softint s/traps
-	jne	2f			# there are some
-	jmp	test_resched		# XXX - schedule jumps better
-	COUNT_EVENT(_intrcnt_spl, 2)	# XXX
-
-	ALIGN_TEXT	# XXX
-1:	# XXX
-	COUNT_EVENT(_intrcnt_spl, 3)
+	jz	2f			# nope, going to non-zero priority
+	popal
 	popl	%es
 	popl	%ds
-	popal
 	addl	$8,%esp
 	iret
 
@@ -160,13 +145,11 @@ INTRLOCAL(none_to_unpend):
 	.globl  c ; \
 	btrl	$s,_netisr ; \
 	jnc	1f ; \
-	COUNT_EVENT(_intrcnt_spl, event) ; \
 	call	c ; \
 1:
 
 	ALIGN_TEXT
 2:
-	COUNT_EVENT(_intrcnt_spl, 4)
 /*
  * XXX - might need extra locking while testing reg copy of netisr, but
  * interrupt routines setting it would not cause any new problems (since we
@@ -174,7 +157,7 @@ INTRLOCAL(none_to_unpend):
  * splnone)
  */
 	testl   $~((1 << NETISR_SCLK) | (1 << NETISR_AST)),%eax
-	je	test_ASTs	# no net stuff, just temporary AST's
+	jz	test_ASTs	# no net stuff, just temporary AST's
 	FASTSPL_VARMASK(_netmask)
 	DONET(NETISR_RAW, _rawintr, 5)
 #ifdef INET
@@ -195,36 +178,25 @@ test_ASTs:
 	jnc	test_resched
 	COUNT_EVENT(_intrcnt_spl, 9)
 	FASTSPL($ASTMASK)
-/*
- * Back to an interrupt frame for a moment.
- */
-	pushl   $0	# previous cpl (probably not used)
-	pushl   $0x7f	# dummy unit number
+	pushl   $0		# previous cpl (not used)
+	movl	%esp,%eax	# pointer to frame
+	pushl	%eax
 	call	_softclock
-	addl	$8,%esp	# discard dummies
+	addl	$8,%esp		# discard dummies
 	FASTSPL($0)
 test_resched:
-#ifdef notused1
 	btrl	$NETISR_AST,_netisr
 	jnc	2f
-#endif
-#ifdef notused2
-	cmpl	$0,_want_resched
-	je	2f
-#endif
-	cmpl	$0,_astpending	# XXX - put it back in netisr to
-	je	2f	# reduce the number of tests
 	testb   $SEL_RPL_MASK,TRAPF_CS_OFF(%esp)
 					# to non-kernel (i.e., user)?
-	je	2f	# nope, leave
+	jz	2f	# nope, leave
 	COUNT_EVENT(_intrcnt_spl, 10)
-	movl	$0,_astpending
 	call	_trap
 2:
 	COUNT_EVENT(_intrcnt_spl, 11)
+	popal
 	popl	%es
 	popl	%ds
-	popal
 	addl	$8,%esp
 	iret
 
@@ -244,8 +216,7 @@ in_splnone:
 	pushl	%eax
 	testl   $~((1 << NETISR_SCLK) | (1 << NETISR_AST)),_netisr
 	jz	INTRLOCAL(over_net_stuff_for_splnone)
-	movl	_netmask,%eax	# mask off those network devices
-	movl	%eax,_cpl	# set new priority
+	FASTSPL_VARMASK(_netmask)
 	DONET(NETISR_RAW, _rawintr, 20)
 #ifdef INET
 	DONET(NETISR_IP, _ipintr, 21)
@@ -260,7 +231,7 @@ in_splnone:
 	DONET(NETISR_ISO, _clnlintr, 28)
 #endif
 INTRLOCAL(over_net_stuff_for_splnone):
-	movl	$0,_cpl	# set new priority
+	FASTSPL($0)
 	movl	_ipending,%eax
 	testl   %eax,%eax
 	jne	INTRLOCAL(unpend_V)
