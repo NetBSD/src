@@ -1,0 +1,496 @@
+.de It
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH cdk_swindow 3 "18 March 1997"
+.SH NAME
+newCDKSwindow, activateCDKSwindow, injectCDKSwindow, setCDKSwindow,
+setCDKSwindowContents, getCDKSwindowContents,
+setCDKSwindowBox, getCDKSwindowBox,
+setCDKSwindowULChar, setCDKSwindowURChar,
+setCDKSwindowLLChar, setCDKSwindowLRChar,
+setCDKSwindowVerticalChar, setCDKSwindowHorizontalChar,
+setCDKSwindowBoxAttribute,
+setCDKSwindowBackgroundColor,
+drawCDKSwindow, eraseCDKSwindow, cleanCDKSwindow, addCDKSwindow, 
+execCDKSwindow, trimCDKSwindow, saveCDKSwindowInformation,
+jumpToLineCDKSwindow, loadCDKSwindowInformation, dumpCDKSwindow, 
+destroyCDKSwindow, setCDKSwindowPreProcess, setCDKSwindowPostProcess \- 
+Creates a managed curses swindow widget.
+.SH SYNOPSIS
+.LP
+.B cc
+.RI "[ " "flag" " \|.\|.\|. ] " "file" " \|.\|.\|."
+.B \-lcdk
+.RI "[ " "library" " \|.\|.\|. ]"
+.LP
+#include <cdk.h>
+.LP
+.BI "CDKSWINDOW *newCDKSwindow (CDKSCREEN *" "cdkscreen",
+.BI "int " "xpos",
+.BI "int " "ypos",
+.BI "int " "height",
+.BI "int " "width",
+.BI "char *" "title",
+.BI "int " "saveLines",
+.BI "boolean " "box",
+.BI "boolean " "shadow");
+.LP
+.BI "void activateCDKSwindow (CDKSWINDOW *" "swindow",
+.BI "chtype * " "actions");
+.LP
+.BI "int injectCDKSwindow (CDKSWINDOW *" "swindow",
+.BI "chtype " "input");
+.LP
+.BI "void setCDKSwindow (CDKSWINDOW *" "swindow",
+.BI "char **" "info",
+.BI "int " "lines",
+.BI "boolean " "box");
+.LP
+.BI "void setCDKSwindowContents (CDKSWINDOW *" "swindow",
+.BI "char **" "info",
+.BI "int " "lines");
+.LP
+.BI "char **getCDKSwindowContents (CDKSWINDOW *" "swindow");
+.LP
+.BI "void setCDKSwindowULChar (CDKSWINDOW *", "swindow",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKSwindowURChar (CDKSWINDOW *", "swindow",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKSwindowLLChar (CDKSWINDOW *", "swindow",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKSwindowLRChar (CDKSWINDOW *", "swindow",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKSwindowVerticalChar (CDKSWINDOW *", "swindow",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKSwindowHorizontalChar (CDKSWINDOW *", "swindow",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKSwindowBoxAttribute (CDKSWINDOW *", "swindow",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKSwindowBackgroundColor (CDKSWINDOW *", "swindow",
+.BI "char * " "color");
+.LP
+.BI "void moveCDKSwindow (CDKSWINDOW *" "swindow",
+.BI "int " "box",
+.BI "int " "box",
+.BI "boolean " "relative",
+.BI "boolean " "refresh");
+.LP
+.BI "void positionCDKSwindow (CDKSWINDOW *" "swindow");
+.LP
+.BI "void drawCDKSwindow (CDKSWINDOW *" "swindow",
+.BI "boolean " "box");
+.LP
+.BI "void eraseCDKSwindow (CDKSWINDOW *" "swindow");
+.LP
+.BI "void cleanCDKSwindow (CDKSWINDOW *" "swindow");
+.LP
+.BI "void addCDKSwindow (CDKSWINDOW *" "swindow",
+.BI "char *" "info",
+.BI "int " "insertPosition");
+.LP
+.BI "int execCDKSwindow (CDKSWINDOW *" "swindow",
+.BI "char * " "command",
+.BI "int " "insertPosition");
+.LP
+.BI "void trimCDKSwindow (CDKSWINDOW *" "swindow",
+.BI "int " "start",
+.BI "int " "finish");
+.LP
+.BI "void saveCDKSwindowInformation (CDKSWINDOW *" "swindow");
+.LP
+.BI "void jumpToLineCDKSwindow (CDKSWINDOW *" "swindow",
+.BI "int " "line");
+.LP
+.BI "void loadCDKSwindowInformation (CDKSWINDOW *" "swindow");
+.LP
+.BI "void dumpCDKSwindow (CDKSWINDOW *" "swindow",
+.BI "char *" "filename");
+.LP
+.BI "void destroyCDKSwindow (CDKSWINDOW *" "swindow");
+.LP
+.BI "void setCDKSwindowPreProcess (CDKSWINDOW *" "swindow",
+.BI "PROCESSFN " "callback",
+.BI "void * " "data");
+.LP
+.BI "void setCDKSwindowPostProcess (CDKSWINDOW *" "swindow",
+.BI "PROCESSFN " "callback",
+.BI "void * " "data");
+.LP
+.BI "void bindCDKObject (EObjectType " "widgetType",
+.BI "void *" "object",
+.BI "chtype " "key",
+.BI "BINDFN " "function",
+.BI "void *" "data");
+.SH DESCRIPTION
+The Cdk scrolling window widget creates a widget which can be used to display
+messages. The following are functions which create or manipulate the Cdk 
+swindow box widget.
+
+.SH AVAILABLE FUNCTIONS
+CDKSWINDOW *newCDKSwindow (CDKSCREEN *\f2screen\f1, int \f2xpos\f1, int \f2ypos\f1, int \f2height\f1, int \f2width\f1, char *\f2title\f1, int \f2saveLines\f1, boolean \f2box\f1);
+.RS 3
+This function creates a pointer to a swindow widget. The \f2screen\f1 parameter
+is the screen you wish this widget to be placed in. The parameter \f2xpos\f1
+controls the placement of the object along the horizontal axis. This parameter
+can accept an integer value or one of the pre-defined values of \f4LEFT\f1,
+\f4RIGHT\f1, and \f4CENTER\f1. The parameter \f2ypos\f1 controls the placement
+of the object along the vertical axis. This parameter can accept an integer 
+value or one of the pre-defined values of \f4TOP\f1, \f4BOTTOM\f1, and \f4CENTER\f1.
+The parameters \f2height\f1 and \f2width\f1 control the height and width of the 
+widget. If you provide a value of zero for either of the height or the width, the 
+widget will be created with the full width and height of the screen. If you provide 
+a negative value, the widget will be created the full height or width minus the 
+value provided. The \f2title\f1 parameter is the string which will be displayed at 
+the top of the widget. The title can be more than one line; just provide a carriage 
+return character at the line break. The parameter \f2saveLines\f1 is the number of 
+lines to save before throwing information away. The \f2box\f1 parameter states 
+whether the widget will be drawn with a box around it or not. The \f2shadow\f1 
+parameter accepts a boolean value to turn the shadow on or off around this widget.
+If the widget could not be created then a \f4NULL\f1 pointer is returned.
+.RE
+
+int activateCDKSwindow (CDKSWINDOW *\f2swindow\f1, chtype *\f2actions\f1);
+.RS 3
+This function activates the swindow widget and lets the user interact with the
+widget. The parameter \f2swindow\f1 is a pointer to a non-NULL swindow widget.
+If the \f2actions\f1 parameter is passed with a non-NULL value, the characters
+in the array will be injected into the widget. To activate the widget
+interactively pass in a \f4NULL\f1 pointer for \f2actions\f1. If the character
+entered into this widget is \f4RETURN\f1 or \f4TAB\f1 then this function will
+return 1.  It will also set the structure member \f4exitType\f1 to \f4vNORMAL\f1.
+If the character entered into this widget was \f4ESCAPE\f1 then the widget will
+return a value of -1 and the structure member \f4exitType\f1 will be set to
+\f4vESCAPE_HIT\f1.
+.RE
+
+void injectCDKSwindow (CDKSWINDOW *\f2swindow\f1, chtype \f2character\f1);
+.RS 3
+This function injects a single character into the widget. The parameter 
+\f2swindow\f1 is a pointer to a non-NULL swindow widget. The parameter 
+\f2character\f1 is the character to inject into the widget. If the character 
+injected into this widget was \f4RETURN\f1 then the character injected into
+this widget is \f4RETURN\f1 or \f4TAB\f1 then this function will return 1. It
+will also set the structure member \f4exitType\f1 to \f4vNORMAL\f1. If the 
+character entered into this widget was \f4ESCAPE\f1 then the widget will return
+a value of -1 and the structure member \f4exitType\f1 will be set to
+\f4vESCAPE_HIT\f1. Any other character injected into the widget will set the 
+structure member \f4exitType\f1 to \f4vEARLY_EXIT\f1 and the function will 
+return -1.
+.RE
+
+void setCDKSwindow (CDKSWINDOW *\f2swindow\f1, char **\f2info\f1, int \f2lines\f1, boolean \f2box\f1);
+.RS 3
+This function lets the programmer modify certain elements of an already defined
+swindow widget. The parameter \f2info\f1 is a \f4char **\f1 of the information
+to set in the scrolling window; \f2lines\f1 is the number of lines being added.
+The other parameter names correspond to the same parameter names listed in the 
+\f4newCDKSwindow\f1 function.
+.RE
+
+void setCDKSwindowContents (CDKSWINDOW *\f2swindow\f1, char **\f2info\f1, int \f2lines\f1);
+.RS 3
+This function lets the programmer modify certain elements of an already defined
+swindow widget. The parameter \f2info\f1 is a \f4char **\f1 of the information
+to set in the scrolling window; \f2lines\f1 is the number of lines being added.
+.RE
+
+char **getCDKSwindowContents (CDKSWINDOW *\f2swindow\f1, int *\f2lines\f1);
+.RS 3
+This returns the contents of the scrolling window. The parameter \f2lines\f1 will be
+set to the number of lines returned.
+.RE
+
+void setCDKSwindowBox (CDKSWINDOW *\f2swindow\f1, boolean \f2boxWidget\f1);
+.RS 3
+This sets whether or not the widget will be draw with a box around it.
+.RE
+
+boolean getCDKSwindowBox (CDKSWINDOW *\f2swindow\f1);
+.RS 3
+This returns whether or not the widget will be drawn with a box around it.
+.RE
+
+void setCDKSwindowULChar (CDKSWINDOW *\f2swindow\f1, chtype \f2character\f1);
+.RS 3
+This function sets the upper left hand corner of the widgets box to
+the given character.
+.RE
+
+void setCDKSwindowURChar (CDKSWINDOW *\f2swindow\f1, chtype \f2character\f1);
+.RS 3
+This function sets the upper right hand corner of the widgets box to
+the given character.
+.RE
+
+void setCDKSwindowLLChar (CDKSWINDOW *\f2swindow\f1, chtype \f2character\f1);
+.RS 3
+This function sets the lower left hand corner of the widgets box to
+the given character.
+.RE
+
+void setCDKSwindowLRChar (CDKSWINDOW *\f2swindow\f1, chtype \f2character\f1);
+.RS 3
+This function sets the lower right hand corner of the widgets box to
+the given character.
+.RE
+
+void setCDKSwindowVerticalChar (CDKSWINDOW *\f2swindow\f1, chtype \f2character\f1);
+.RS 3
+This function sets the vertical drawing character for the box to
+the given character.
+.RE
+
+void setCDKSwindowHorizontalChar (CDKSWINDOW *\f2swindow\f1, chtype \f2character\f1);
+.RS 3
+This function sets the horizontal drawing character for the box to
+the given character.
+.RE
+
+void setCDKSwindowBoxAttribute (CDKSWINDOW *\f2swindow\f1, chtype \f2attribute\f1);
+.RS 3
+This function sets the attribute of the box.
+.RE
+
+void setCDKSwindowBackgroundColor (CDKSWINDOW *\f2swindow\f1, char *\f2color\f1);
+.RS 3
+This sets the background color of the widget. The parameter \f2color\f1
+is in the format of the Cdk format strings. To get more information look
+at the \f4cdk_display\f1 manual page.
+.RE
+
+void moveCDKSwindow (CDKSWINDOW *\f2swindow\f1, int \f2xpos\f1, int \f2ypos\f1, boolean \f2relative\f1, boolean \f2refresh\f1);
+.RS 3
+This function moves the given widget to the given position. The parameters
+\f2xpos\f1 and \f2ypos\f1 is the new position of the widget. The parameter
+\f2xpos\f1 can accept an integer value or one of the pre-defined values of
+\f4TOP\f1, \f4BOTTOM\f1, and \f4CENTER\f1. The parameter \f2ypos\f1 can 
+accept an integer value or one of the pre-defined values of \f4LEFT\f1,
+\f4RIGHT\f1, and \f4CENTER\f1. The parameter \f2relative\f1 states whether
+the \f2xpos\f1/\f2ypos\f1 pair is a relative move or an absolute move. For
+example if \f2xpos\f1 = 1 and \f2ypos\f1 = 2 and \f2relative\f1 = \f2TRUE\f1,
+then the widget would move one row down and two columns right. If the value
+of \f2relative\f1 was \f2FALSE\f1 then the widget would move to the position
+(1,2). Do not use the values of \f4TOP\f1, \f4BOTTOM\f1, \f4LEFT\f1, 
+\f4RIGHT\f1, or \f4CENTER\f1 when \f2relative\f1 = \f4TRUE\f1. (wierd things 
+may happen). The final parameter \f2refresh\f1 is a boolean value which 
+states whether the widget will get refreshed after the move or not.
+.RE
+
+void positionCDKSwindow (CDKSWINDOW *\f2swindow\f1);
+.RS 3
+This function allows the user to move the widget around the screen via the
+cursor/keypad keys. The following key bindings can be used to move the
+widget around the screen.
+.LP
+.nf
+\f4Key Bindings\f1
+.RS 3
+\f2Key          Action\f1
+Up Arrow     Moves the widget up one line.
+Down Arrow   Moves the widget down one line.
+Left Arrow   Moves the widget left one column
+Right Arrow  Moves the widget right one column
+Keypad-1     Moves the widget down one line
+             and left one column.
+Keypad-2     Moves the widget down one line.
+Keypad-3     Moves the widget down one line
+             and right one column.
+Keypad-4     Moves the widget left one column
+Keypad-5     Centers the widget both vertically
+             and horizontally.
+Keypad-6     Moves the widget right one column
+Keypad-7     Moves the widget up one line
+             and left one column.
+Keypad-8     Moves the widget up one line.
+Keypad-9     Moves the widget up one line
+             and right one column.
+t            Moves the widget to the top of the screen.
+b            Moves the widget to the bottom of the screen.
+l            Moves the widget to the left of the screen.
+r            Moves the widget to the right of the screen.
+c            Centers the widget between the left and 
+             right of the window.
+C            Centers the widget between the top and 
+             bottom of the window.
+Escape       Returns the widget to it's original position.
+Return       Exits the function and leaves the widget
+             where it was.
+.fi
+.RE
+.RS 3
+.LP
+Keypad means that if the keyboard you are using has a keypad, then the
+Num-Lock light has to be on in order to use the keys as listed. (The
+numeric keys at the top of the keyboard will work as well.)
+.LP
+void drawCDKSwindow (CDKSWINDOW *\f2swindow\f1, boolean \f2box\f1);
+.RS 3
+This function draws the swindow widget on the screen. The \f2box\f1 option 
+draws the widget with or without a box.
+.RE
+
+void eraseCDKSwindow (CDKSWINDOW *\f2swindow\f1);
+.RS 3
+This function removes the widget from the screen. This does \f4NOT\f1 destroy
+the widget.
+.RE 
+
+void cleanCDKSwindow (CDKSWINDOW *\f2swindow\f1);
+.RS 3
+This function clears the information from the window.
+.RE
+
+void addCDKSwindow (CDKSWINDOW *\f2swindow\f1, char *\f2info\f1, int \f2insertPosition\f1);
+.RS 3
+This function adds information to a defined scrolling window. The information
+is supplied by the \f2info\f1 parameter. The information is immediately added
+to the scrolling window. The position of the new information is governed by
+the value of the parameter \f2insertPosition\f1. This parameter can accept
+two values: \f4TOP\f1 or \f4BOTTOM\f1.
+.RE
+
+void execCDKSwindow (CDKSWINDOW *\f2swindow\f1, char *\f2command\f1, int \f2insertPosition\f1);
+.RS 3
+This function allows the user to execute a shell command and have the output
+of the shell command direct itself to the scrolling window. The \f2command\f1
+parameter is the command to execute while \f2insertPosition\f1 is where the
+output is to insert itself within the scrolling window.
+.RE
+
+void trimCDKSwindow (CDKSWINDOW *\f2swindow\f1, int \f2start\f1, int \f2end\f1);
+.RS 3
+This function removes information from the scrolling window. The parameters
+\f2start\f1 and \f2end\f1 state where to start cutting from and where to stop.
+The first element in the scrolling window starts at index 0.
+.RE
+
+void saveCDKSwindowInformation (CDKSWINDOW *\f2swindow\f1)
+.RS 3
+This function allows the user to save the contents of the scrolling window
+into a file. This function is interactive, and will ask for a filename.
+.RE
+
+void jumpToLineCDKSwindow (CDKSWINDOW *\f2swindow\f1, int \f2line\f1);
+.RS 3
+This function moves the scrolling window to the given line. The parameter
+\f2line\f1 can accept and integer or one of the two predefined values of
+\f4TOP\f1 and \f4BOTTOM\f1.
+.RE
+
+void loadCDKSwindowInformation (CDKSWINDOW *\f2swindow\f1)
+.RS 3
+This function allows the user to load the contents of a file into the 
+scrolling window. This function is interactive, and will ask for a filename.
+.RE
+
+int dumpCDKSwindowInformation (CDKSWINDOW *\f2swindow\f1, char *\f2filename\f1)
+.RS 3
+This function saves the contents of the scrolling window into the file
+specified by the \f2filename\f1 parameter. It returns -1 on failure,
+and the number of lines saved if the dump was successful.
+.RE
+
+void destroyCDKSwindow (CDKSWINDOW *\f2swindow\f1);
+.RS 3
+This function removes the widget from the screen and frees up any memory the
+object may be using.
+.RE
+
+void setCDKSwindowPreProcess (CDKSWINDOW *\f2swindow\f1, PROCESSFN \f2function\f1, void *\f2data\f1);
+.RS 3
+This function allows the user to have the widget call a function after a key
+is hit and before the key is applied to the widget. The parameter \f2function\f1
+if of type \f4PROCESSFN\f1. The parameter \f2data\f1 is a pointer to 
+\f4void\f1. To learn more about pre-processing read the \f4cdk_process\f1
+manual page.
+.RE
+ 
+void setCDKSwindowPostProcess (CDKSWINDOW *\f2swindow\f1, PROCESSFN \f2function\f1, void *\f2data\f1);
+.RS 3
+This function allows the user to have the widget call a function after the
+key has been applied to the widget.  The parameter \f2function\f1 if of type
+\f4PROCESSFN\f1. The parameter \f2data\f1 is a pointer to \f4void\f1. To
+learn more about post-processing read the \f4cdk_process\f1 manual page.
+.RE
+
+void bindCDKObject (EObjectType \f2widgetType\f1, void *\f2object\f1, char \f2key\f1, BINDFN \f2function\f1, void *\f2data\f1);
+.RS 3
+This function allows the user to create special key bindings. The 
+\f2widgetType\f1 parameter is a defined type which states what Cdk object 
+type is being used.  To learn more about the type \f4EObjectType\f1 read 
+the \f4cdk_binding\f1 manual page. The \f2object\f1 parameter is the pointer
+to the widget object. The \f2key\f1 is the character to bind. The 
+\f2function\f1 is the function type. To learn more about the key binding 
+callback function types read the \f4cdk_binding\f1 manual page. The last 
+parameter \f2data\f1 is a pointer to any data that needs to get passed to 
+the callback function.
+.RE
+.SH KEY BINDINGS
+When the widget is activated there are several default key bindings which will
+help the user enter or manipulate the information quickly. The following table
+outlines the keys and their actions for this widget.
+.LP
+.nf
+.RS 3
+\f2Key          Action\f1
+Left Arrow  Scrolls the window left one character.
+Right Arrow Scrolls the window right one character.
+Up Arrow    Scrolls the window up one line.
+Down Arrow  Scrolls the window up down line.
+Prev Page   Scrolls the window backwards one page.
+Ctrl-B      Scrolls the window backwards one page.
+b           Scrolls the window backwards one page.
+B           Scrolls the window backwards one page.
+Next Page   Scrolls the window forwards one page.
+Ctrl-F      Scrolls the window forwards one page.
+Space       Scrolls the window forwards one page.
+f           Scrolls the window forwards one page.
+F           Scrolls the window forwards one page.
+Home        Moves the whole list to the far left character.
+|           Moves the whole list to the far left character.
+End         Moves the whole list to the far right character.
+$           Moves the whole list to the far right character.
+g           Moves to the top of the scrolling window.
+1           Moves to the top of the scrolling window.
+G           Moves to the bottom of the scrolling window.
+l           Loads a file into the scrolling window.
+L           Loads a file into the scrolling window.
+s           Saves the contents of the scrolling window into a file.
+S           Saves the contents of the scrolling window into a file.
+Return      Exits the widget and returns 1. This also sets
+            the structure member \f4exitType\f1 in the widget
+            pointer to the value of \f4vNORMAL\f1.
+Tab         Exits the widget and returns 1. This also sets
+            the structure member \f4exitType\f1 in the widget
+            pointer to the value of \f4vNORMAL\f1.
+Escape      Exits the widget and returns -1. This also sets
+            the structure member \f4exitType\f1 in the widget
+            pointer to the value of \f4vESCAPE_HIT\f1.
+Ctrl-L      Refreshes the screen.
+.RE
+.fi
+.SH SEE ALSO
+.BR cdk (3),
+.BR cdk_binding (3),
+.BR cdk_display (3),
+.BR cdk_screen (3)
+.SH NOTES
+.PP
+The header file \f4<cdk.h>\f1 automatically includes the header files
+\f4<curses.h>\f1, \f4<stdlib.h>\f1, \f4<string.h>\f1, \f4<ctype.h>\f1,
+\f4<unistd.h>\f1, \f4<dirent.h>\f1, \f4<time.h>\f1, \f4<errno.h>\f1,
+\f4<pwd.h>\f1, \f4<grp.h>\f1, \f4<sys/stat.h>\f1, and \f4<sys/types.h>\f1.
+The \f4<curses.h>\f1 header file includes \f4<stdio.h>\f1 and \f4<unctrl.h>\f1.
+.PP
+If you have \f4Ncurses\f1 installed on your machine add -DNCURSES to the 
+compile line to include the Ncurses header files instead.

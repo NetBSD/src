@@ -1,0 +1,476 @@
+.de It
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH cdk_template 3 "18 March 1997"
+.SH NAME
+newCDKTemplate, activateCDKTemplate, injectCDKTemplate, setCDKTemplate,
+setCDKTemplateValue, getCDKTemplateValue,
+setCDKTemplateMin, getCDKTemplateMin,
+setCDKTemplateBox, getCDKTemplateBox,
+setCDKTemplateULChar, setCDKTemplateURChar,
+setCDKTemplateLLChar, setCDKTemplateLRChar,
+setCDKTemplateVerticalChar, setCDKTemplateHorizontalChar,
+setCDKTemplateBoxAttribute,
+setCDKTemplateBackgroundColor,
+setCDKTemplateCB, drawCDKTemplate, eraseCDKTemplate, cleanCDKTemplate, 
+mixCDKTemplate, unmixCDKTemplate, destroyCDKTemplate, setCDKTemplatePreProcess,
+setCDKTemplatePostProcess \- Creates a managed curses template 
+widget.
+.SH SYNOPSIS
+.LP
+.B cc
+.RI "[ " "flag" " \|.\|.\|. ] " "file" " \|.\|.\|."
+.B \-lcdk
+.RI "[ " "library" " \|.\|.\|. ]"
+.LP
+#include <cdk.h>
+.LP
+.BI "CDKTEMPLATE *newCDKTemplate (CDKSCREEN *" "cdkscreen",
+.BI "int " "xpos",
+.BI "int " "ypos",
+.BI "char *" "title",
+.BI "char *" "label",
+.BI "char *" "plate",
+.BI "char *" "overlay",
+.BI "boolean " "box",
+.BI "boolean " "shadow");
+.LP
+.BI "char *activateCDKTemplate (CDKTEMPLATE *" "template",
+.BI "chtype * " "actions");
+.LP
+.BI "char *injectCDKTemplate (CDKTEMPLATE *" "template",
+.BI "chtype " "input");
+.LP
+.BI "void setCDKTemplate (CDKTEMPLATE *" "template",
+.BI "char *" "value",
+.BI "boolean " "box");
+.LP
+.BI "void setCDKTemplateValue (CDKTEMPLATE *" "template",
+.BI "char *" "value");
+.LP
+.BI "char *getCDKTemplateValue (CDKTEMPLATE *" "template");
+.LP
+.BI "void setCDKTemplateMin (CDKTEMPLATE *" "template",
+.BI "int " "minimum");
+.LP
+.BI "int getCDKTemplateMin (CDKTEMPLATE *" "template");
+.LP
+.BI "void setCDKTemplateBox (CDKTEMPLATE *" "template",
+.BI "boolean " "box");
+.LP
+.BI "boolean getCDKTemplateBox (CDKTEMPLATE *" "template");
+.LP
+.BI "void setCDKTemplateCB (CDKTEMPLATE *" "template",
+.BI "TEMPLATECB " "callbackFunction");
+.LP
+.BI "void setCDKTemplateULChar (CDKTEMPLATE *", "template",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKTemplateURChar (CDKTEMPLATE *", "template",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKTemplateLLChar (CDKTEMPLATE *", "template",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKTemplateLRChar (CDKTEMPLATE *", "template",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKTemplateVerticalChar (CDKTEMPLATE *", "template",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKTemplateHorizontalChar (CDKTEMPLATE *", "template",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKTemplateBoxAttribute (CDKTEMPLATE *", "template",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKTemplateBackgroundColor (CDKTEMPLATE *", "template",
+.BI "char * " "color");
+.LP
+.BI "void moveCDKTemplate (CDKTEMPLATE *" "template",
+.BI "int " "box",
+.BI "int " "box",
+.BI "boolean " "relative",
+.BI "boolean " "refresh");
+.LP
+.BI "void positionCDKTemplate (CDKTEMPLATE *" "template");
+.LP
+.BI "void drawCDKTemplate (CDKTEMPLATE *" "template",
+.BI "boolean " "box");
+.LP
+.BI "void eraseCDKTemplate (CDKTEMPLATE *" "template");
+.LP
+.BI "void cleanCDKTemplate (CDKTEMPLATE *" "template");
+.LP
+.BI "char *mixCDKTemplate (CDKTEMPLATE *" "template");
+.LP
+.BI "char *unmixCDKTemplate (CDKTEMPLATE *" "template");
+.LP
+.BI "void destroyCDKTemplate (CDKTEMPLATE *" "template");
+.LP
+.BI "void setCDKTemplatePreProcess (CDKTEMPLATE *" "template",
+.BI "PROCESSFN " "callback",
+.BI "void * " "data");
+.LP
+.BI "void setCDKTemplatePostProcess (CDKTEMPLATE *" "template",
+.BI "PROCESSFN " "callback",
+.BI "void * " "data");
+.LP
+.BI "void bindCDKObject (EObjectType " "widgetType",
+.BI "void *" "object",
+.BI "chtype " "key",
+.BI "BINDFN " "function",
+.BI "void *" "data");
+.SH DESCRIPTION
+The Cdk template widget creates a template widget which allows a user to type 
+information into an entry field with a pre-set field format. Typical uses for
+this widget would be a date field or a time field. The following are functions
+which create or manipulate the Cdk template box widget.
+
+.SH AVAILABLE FUNCTIONS
+CDKTEMPLATE *newCDKTemplate (CDKSCREEN *\f2screen\f1, int \f2xpos\f1, int \f2ypos\f1, char *\f2title\f1, char *\f2label\f1, char *\f2plate\f1, char *\f2overlay\f1, boolean \f2box\f1, boolean \f2shadow\f1);
+.RS 3
+This function creates a pointer to a template widget. The \f2screen\f1 parameter
+is the screen you wish this widget to be placed in. The parameter \f2xpos\f1
+controls the placement of the object along the horizontal axis. This parameter
+can accept an integer value or one of the pre-defined values of \f4LEFT\f1,
+\f4RIGHT\f1, and \f4CENTER\f1. The parameter \f2ypos\f1 controls the placement
+of the object along the vertical axis. This parameter can accept an integer 
+value or one of the pre-defined values of \f4TOP\f1, \f4BOTTOM\f1, and \f4CENTER\f1.
+The \f2title\f1 parameter is the string which will be displayed at the top of the 
+widget. The title can be more than one line; just provide a carriage return 
+character at the line break. The \f2label\f1 parameter is the 
+string which will be displayed in the label of the template field. The 
+\f2plate\f1 parameter defines what character is allowed at what position 
+in the template field. This is done by creating a character plate by using 
+special format character to tell the template widget what type of character 
+is allowed where in the template widget.  The following table lists all of
+the current format types.
+.LP
+.nf 
+.RS 3
+\f2Plate_Character   Effect\f1
+#                 Accepts an integer value.
+A                 Accepts an alphabetic value.
+C                 Accepts an alphabetic value. Automatically
+                  converts the character to upper case.
+c                 Accepts an alphabetic value. Automatically
+                  converts the character to lower case.
+M                 Accepts alphanumeric characters.
+X                 Accepts alphanumeric characters. Automatically
+                  converts the character to upper case.
+x                 Accepts alphanumeric characters. Automatically
+                  converts the character to upper case.
+Anything else     Ignored and assumed a non-editable position.
+.fi
+.RE
+.LP
+The \f2overlay\f1 parameter is the overlay of the template field. If the field
+needed some sort of overlay, this parameter supplies this. A date field could
+have YY/MM/DD, the overlay parameter would display YY/MM/DD on an empty template
+field.  The \f2box\f1 parameter states whether the widget will be drawn with a 
+box around it or not. The \f2shadow\f1 parameter accepts a boolean value to 
+turn the shadow on or off around this widget. The \f2box\f1 parameter states 
+whether the widget will be drawn with a box around it or not. The \f2shadow\f1 
+parameter accepts a boolean value to turn the shadow on or off around this 
+widget. If the widget could not be created then a \f4NULL\f1 pointer is returned.
+.RE
+
+char *activateCDKTemplate (CDKTEMPLATE *\f2template\f1, chtype *\f2actions\f1);
+.RS 3
+This function activates the template widget and lets the user interact with the
+widget. The parameter \f2template\f1 is a pointer to a non-NULL template widget.
+If the \f2actions\f1 parameter is passed with a non-NULL value, the characters
+in the array will be injected into the widget. To activate the widget
+interactively pass in a \f4NULL\f1 pointer for \f2actions\f1. If the character entered
+into this widget is \f4RETURN\f1 or \f4TAB\f1 then this function will return 
+a \f4char *\f1 representing the information typed into the widget and the 
+structure member \f4exitType\f1 will be set to \f4vNORMAL\f1. If the character
+entered was \f4ESCAPE\f1 then the function will returns \f4NULL\f1 pointer and 
+the structure member \f4exitType\f1 is set to \f4vESCAPE_HIT\f1.
+.RE
+
+char *injectCDKTemplate (CDKTEMPLATE *\f2template\f1, chtype \f2character\f1);
+.RS 3
+This function injects a single character into the widget. The parameter 
+\f2template\f1 is a pointer to a non-NULL template. The parameter 
+\f2character\f1 is the character to inject into the widget. If the character 
+injected into this widget was \f4RETURN\f1 or \f4TAB\f1 then this function will
+return a \f4char *\f1 representing the information typed into the widget and the 
+structure member \f4exitType\f1 will be set to \f4vNORMAL\f1. If the character
+entered was \f4ESCAPE\f1 then the function will returns \f4NULL\f1 pointer and 
+the structure member \f4exitType\f1 is set to \f4vESCAPE_HIT\f1. Any other 
+character injected into the widget will set the structure member \f4exitType\f1 
+to \f4vEARLY_EXIT\f1 and the function will return a \f4NULL\f1 pointer.
+.RE
+
+void setCDKTemplate (CDKTEMPLATE *\f2template\f1, char *\f2value\f1, boolean \f2box\f1);
+.RS 3
+This function lets the programmer modify certain elements of an already defined
+template widget. The parameter names correspond to the same parameter names 
+listed in the \f4newCDKTemplate\f1 function.
+.RE
+
+void setCDKTemplateValue (CDKTEMPLATE *template, char *value);
+.RS 3
+This sets the value in the widget.
+.RE
+
+char *getCDKTemplateValue (CDKTEMPLATE *template);
+.RS 3
+This returns the current value of the widget.
+.RE
+
+void setCDKTemplateMin (CDKTEMPLATE *template, int min);
+.RS 3
+This sets the minimum number of characters that have to be entered
+before the widget will exit.
+.RE 
+
+int getCDKTemplateMin (CDKTEMPLATE *template);
+.RS 3
+This returns the minimum characters that have to be entered before the
+widget will exit.
+.RE
+
+void setCDKTemplateBox (CDKTEMPLATE *template, boolean Box);
+.RS 3
+This sets whether or not the widget will be draw with a box around it.
+.RE
+
+boolean getCDKTemplateBox (CDKTEMPLATE *template);
+.RS 3
+This returns whether or not the widget will be drawn with a box around it.
+.RE
+
+void setCDKTemplateULChar (CDKTEMPLATE *\f2template\f1, chtype \f2character\f1);
+.RS 3
+This function sets the upper left hand corner of the widgets box to
+the given character.
+.RE
+
+void setCDKTemplateURChar (CDKTEMPLATE *\f2template\f1, chtype \f2character\f1);
+.RS 3
+This function sets the upper right hand corner of the widgets box to
+the given character.
+.RE
+
+void setCDKTemplateLLChar (CDKTEMPLATE *\f2template\f1, chtype \f2character\f1);
+.RS 3
+This function sets the lower left hand corner of the widgets box to
+the given character.
+.RE
+
+void setCDKTemplateLRChar (CDKTEMPLATE *\f2template\f1, chtype \f2character\f1);
+.RS 3
+This function sets the lower right hand corner of the widgets box to
+the given character.
+.RE
+
+void setCDKTemplateVerticalChar (CDKTEMPLATE *\f2template\f1, chtype \f2character\f1);
+.RS 3
+This function sets the vertical drawing character for the box to
+the given character.
+.RE
+
+void setCDKTemplateHorizontalChar (CDKTEMPLATE *\f2template\f1, chtype \f2character\f1);
+.RS 3
+This function sets the horizontal drawing character for the box to
+the given character.
+.RE
+
+void setCDKTemplateBoxAttribute (CDKTEMPLATE *\f2template\f1, chtype \f2attribute\f1);
+.RS 3
+This function sets the attribute of the box.
+.RE
+
+void setCDKTemplateBackgroundColor (CDKTEMPLATE *\f2template\f1, char *\f2color\f1);
+.RS 3
+This sets the background color of the widget. The parameter \f2color\f1
+is in the format of the Cdk format strings. To get more information look
+at the \f4cdk_display\f1 manual page.
+.RE
+
+void setCDKTemplateCB (CDKTEMPLATE *\f2template\f1, TEMPLATECB \f2callbackFunction\f1);
+.RS 3
+This function allows the programmer to set a different widget input handler.
+The parameter \f2callbackFunction\f1 is of type \f4TEMPLATECB\f1. The current
+default function is \f4CDKTemplateCallBack\f1.
+.RE
+
+void moveCDKTemplate (CDKTEMPLATE *\f2template\f1, int \f2xpos\f1, int \f2ypos\f1, boolean \f2relative\f1, boolean \f2refresh\f1);
+.RS 3
+This function moves the given widget to the given position. The parameters
+\f2xpos\f1 and \f2ypos\f1 is the new position of the widget. The parameter
+\f2xpos\f1 can accept an integer value or one of the pre-defined values of
+\f4TOP\f1, \f4BOTTOM\f1, and \f4CENTER\f1. The parameter \f2ypos\f1 can 
+accept an integer value or one of the pre-defined values of \f4LEFT\f1,
+\f4RIGHT\f1, and \f4CENTER\f1. The parameter \f2relative\f1 states whether
+the \f2xpos\f1/\f2ypos\f1 pair is a relative move or an absolute move. For
+example if \f2xpos\f1 = 1 and \f2ypos\f1 = 2 and \f2relative\f1 = \f2TRUE\f1,
+then the widget would move one row down and two columns right. If the value
+of \f2relative\f1 was \f2FALSE\f1 then the widget would move to the position
+(1,2). Do not use the values of \f4TOP\f1, \f4BOTTOM\f1, \f4LEFT\f1, 
+\f4RIGHT\f1, or \f4CENTER\f1 when \f2relative\f1 = \f4TRUE\f1. (wierd things
+may happen). The final parameter \f2refresh\f1 is a boolean value which 
+states whether the widget will get refreshed after the move or not.
+.RE
+
+void positionCDKTemplate (CDKTEMPLATE *\f2template\f1);
+.RS 3
+This function allows the user to move the widget around the screen via the
+cursor/keypad keys. The following key bindings can be used to move the
+widget around the screen.
+.LP
+.nf
+\f4Key Bindings\f1
+.RS 3
+\f2Key          Action\f1
+Up Arrow     Moves the widget up one line.
+Down Arrow   Moves the widget down one line.
+Left Arrow   Moves the widget left one column
+Right Arrow  Moves the widget right one column
+Keypad-1     Moves the widget down one line
+             and left one column.
+Keypad-2     Moves the widget down one line.
+Keypad-3     Moves the widget down one line
+             and right one column.
+Keypad-4     Moves the widget left one column
+Keypad-5     Centers the widget both vertically
+             and horizontally.
+Keypad-6     Moves the widget right one column
+Keypad-7     Moves the widget up one line
+             and left one column.
+Keypad-8     Moves the widget up one line.
+Keypad-9     Moves the widget up one line
+             and right one column.
+t            Moves the widget to the top of the screen.
+b            Moves the widget to the bottom of the screen.
+l            Moves the widget to the left of the screen.
+r            Moves the widget to the right of the screen.
+c            Centers the widget between the left and 
+             right of the window.
+C            Centers the widget between the top and 
+             bottom of the window.
+Escape       Returns the widget to it's original position.
+Return       Exits the function and leaves the widget
+             where it was.
+.fi
+.RE
+.RS 3
+.LP
+Keypad means that if the keyboard you are using has a keypad, then the
+Num-Lock light has to be on in order to use the keys as listed. (The
+numeric keys at the top of the keyboard will work as well.)
+.LP
+void drawCDKTemplate (CDKTEMPLATE *\f2template\f1, boolean \f2box\f1);
+.RS 3
+This function draws the template widget on the screen. The \f2box\f1 option 
+draws the widget with or without a box.
+.RE
+
+void eraseCDKTemplate (CDKTEMPLATE *\f2template\f1);
+.RS 3
+This function removes the widget from the screen. This does \f4NOT\f1 destroy
+the widget.
+.RE
+
+void cleanCDKTemplate (CDKTEMPLATE *\f2template\f1);
+.RS 3
+This function clears the information from the field.
+.RE
+
+char *mixCDKTemplate (CDKTEMPLATE *\f2template\f1);
+.RS 3
+This function returns a \f4char *\f1 pointer to the field value and the 
+plate.
+.RE
+
+char *unmixCDKTemplate (CDKTEMPLATE *\f2template\f1);
+.RS 3
+This function returns a \f4char *\f1 pointer to the field value without any
+plate characters.
+.RE
+
+void destroyCDKTemplate (CDKTEMPLATE *\f2template\f1);
+.RS 3
+This function removes the widget from the screen and frees up any memory the
+object may be using.
+.RE
+
+void setCDKTemplatePreProcess (CDKTEMPLATE *\f2template\f1, PROCESSFN \f2function\f1, void *\f2data\f1);
+.RS 3
+This function allows the user to have the widget call a function after a key
+is hit and before the key is applied to the widget. The parameter \f2function\f1
+if of type \f4PROCESSFN\f1. The parameter \f2data\f1 is a pointer to 
+\f4void\f1. To learn more about pre-processing read the \f4cdk_process\f1
+manual page.
+.RE
+ 
+void setCDKTemplatePostProcess (CDKTEMPLATE *\f2template\f1, PROCESSFN \f2function\f1, void *\f2data\f1);
+.RS 3
+This function allows the user to have the widget call a function after the
+key has been applied to the widget.  The parameter \f2function\f1 if of type
+\f4PROCESSFN\f1. The parameter \f2data\f1 is a pointer to \f4void\f1. To
+learn more about post-processing read the \f4cdk_process\f1 manual page.
+.RE
+
+void bindCDKObject (EObjectType \f2widgetType\f1, void *\f2object\f1, char \f2key\f1, BINDFN \f2function\f1, void *\f2data\f1);
+.RS 3
+This function allows the user to create special key bindings. The 
+\f2widgetType\f1 parameter is a defined type which states what Cdk object 
+type is being used.  To learn more about the type \f4EObjectType\f1 read the 
+\f4cdk_binding\f1 manual page. The \f2object\f1 parameter is the pointer to 
+the widget object. The \f2key\f1 is the character to bind. The \f2function\f1 
+is the function type. To learn more about the key binding callback function 
+types read the \f4cdk_binding\f1 manual page. The last parameter \f2data\f1 
+is a pointer to any data that needs to get passed to the callback function.
+.RE
+
+.SH KEY BINDINGS
+When the widget is activated there are several default key bindings which will
+help the user enter or manipulate the information quickly. The following table
+outlines the keys and their actions for this widget.
+.LP
+.nf
+.RS 3
+\f2Key          Action\f1
+Delete      Deletes the character to the left of the cursor.
+Backspace   Deletes the character to the left of the cursor.
+Ctrl-P      Pastes whatever is in the paste buffer, into the widget.
+Ctrl-K      Cuts the contents from the widget and saves a copy in 
+            the paste buffer.
+Ctrl-T      Copies the contents of the widget into the paste buffer.
+Ctrl-E      Erases the contents of the widget.
+Return      Exits the widget and returns a \f4char *\f1 representing
+            the information which was typed into the field. It also
+            sets the structure member \f4exitType\f1 in the widget
+            pointer to \f4vNORMAL\f1.
+Tab         Exits the widget and returns a \f4char *\f1 representing
+            the information which was typed into the field. It also
+            sets the structure member \f4exitType\f1 in the widget
+            pointer to \f4vNORMAL\f1.
+Escape      Exits the widget and returns a \f4NULL\f1 pointer. It also
+            sets the structure member \f4exitType\f1 in the widget pointer
+            to the value of \f4vESCAPE_HIT\f1.
+Ctrl-L      Refreshes the screen.
+.RE 
+.fi
+.SH SEE ALSO
+.BR cdk (3),
+.BR cdk_binding (3),
+.BR cdk_display (3),
+.BR cdk_screen (3)
+.SH NOTES
+.PP
+The header file \f4<cdk.h>\f1 automatically includes the header files
+\f4<curses.h>\f1, \f4<stdlib.h>\f1, \f4<string.h>\f1, \f4<ctype.h>\f1,
+\f4<unistd.h>\f1, \f4<dirent.h>\f1, \f4<time.h>\f1, \f4<errno.h>\f1,
+\f4<pwd.h>\f1, \f4<grp.h>\f1, \f4<sys/stat.h>\f1, and \f4<sys/types.h>\f1.
+The \f4<curses.h>\f1 header file includes \f4<stdio.h>\f1 and \f4<unctrl.h>\f1.
+.PP
+If you have \f4Ncurses\f1 installed on your machine add -DNCURSES to the 
+compile line to include the Ncurses header files instead.

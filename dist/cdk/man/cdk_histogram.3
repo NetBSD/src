@@ -1,0 +1,403 @@
+.de It
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH cdk_histogram 3 "24 April 1997"
+.SH NAME
+newCDKHistogram, setCDKHistogram, 
+setCDKHistogramValue, getCDKHistogramValue, getCDKHistogramLowValue, getCDKHistogramHighValue,
+setCDKHistogramViewType, getCDKHistogramViewType,
+setCDKHistogramFillerChar, getCDKHistogramFillerChar,
+setCDKHistogramStatsPos, getCDKHistogramStatsPos,
+setCDKHistogramStatsAttr, getCDKHistogramStatsAttr,
+setCDKHistogramBox, getCDKHistogramBox,
+setCDKHistogramULChar, setCDKHistogramURChar,
+setCDKHistogramLLChar, setCDKHistogramLRChar,
+setCDKHistogramVerticalChar, setCDKHistogramHorizontalChar,
+setCDKHistogramBoxAttribute,
+setCDKHistogramBackgroundColor,
+drawCDKHistogram, eraseCDKHistogram, 
+destroyCDKHistogram \- Creates a managed curses histogram widget.
+.SH SYNOPSIS
+.LP
+.B cc
+.RI "[ " "flag" " \|.\|.\|. ] " "file" " \|.\|.\|."
+.B \-lcdk
+.RI "[ " "library" " \|.\|.\|. ]"
+.LP
+#include <cdk.h>
+.LP
+.BI "CDKHISTOGRAM *newCDKHistogram (CDKSCREEN *" "cdkscreen",
+.BI "int " "xpos",
+.BI "int " "ypos",
+.BI "char *" "title",
+.BI "int " "height",
+.BI "int " "width",
+.BI "int " "orient",
+.BI "char *" "label",
+.BI "boolean " "box",
+.BI "boolean " "shadow");
+.LP
+.BI "void setCDKHistogram (CDKHISTOGRAM *" "histogram",
+.BI "EHistogramDisplayType " "viewType",
+.BI "int " "statsPos",
+.BI "chtype " "statsAttribute",
+.BI "int " "lowValue",
+.BI "int " "highValue",
+.BI "int " "currentValue",
+.BI "chtype " "fillerCharacter",
+.BI "boolean " "box");
+.LP
+.BI "void setCDKHistogramValue (CDKHISTOGRAM *" "histogram",
+.BI "int " "lowValue",
+.BI "int " "highValue",
+.BI "int " "currentValue");
+.LP
+.BI "int getCDKHistogramLowValue (CDKHISTOGRAM *" "histogram");
+.LP
+.BI "int getCDKHistogramHighValue (CDKHISTOGRAM *" "histogram");
+.LP
+.BI "int getCDKHistogramValue (CDKHISTOGRAM *" "histogram");
+.LP
+.BI "void setCDKHistogramViewType (DKHISTOGRAM *" "histogram",
+.BI "EHistogramDisplayType " "viewType");
+.LP
+.BI "EHistogramDisplayType getCDKHistogramViewType (DKHISTOGRAM *" "histogram");
+.LP
+.BI "void setCDKHistogramFillerChar (DKHISTOGRAM *" "histogram",
+.BI "chtype " "fillerCharacter");
+.LP
+.BI "chtype getCDKHistogramFillerChar (DKHISTOGRAM *" "histogram");
+.LP
+.BI "void setCDKHistogramStatsPos (DKHISTOGRAM *" "histogram",
+.BI "int " "statsPosition");
+.LP
+.BI "int getCDKHistogramStatsPos (DKHISTOGRAM *" "histogram");
+.LP
+.BI "void setCDKHistogramStatsAttr (DKHISTOGRAM *" "histogram",
+.BI "chtype " "statsAttribute");
+.LP
+.BI "chtype getCDKHistogramStatsAttr (DKHISTOGRAM *" "histogram");
+.LP
+.BI "void setCDKHistogramBox (DKHISTOGRAM *" "histogram",
+.BI "boolean " "box");
+.LP
+.BI "boolean getCDKHistogramBox (DKHISTOGRAM *" "histogram");
+.LP
+.BI "void setCDKHistogramULChar (CDKHISTOGRAM *", "histogram",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKHistogramURChar (CDKHISTOGRAM *", "histogram",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKHistogramLLChar (CDKHISTOGRAM *", "histogram",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKHistogramLRChar (CDKHISTOGRAM *", "histogram",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKHistogramVerticalChar (CDKHISTOGRAM *", "histogram",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKHistogramHorizontalChar (CDKHISTOGRAM *", "histogram",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKHistogramBoxAttribute (CDKHISTOGRAM *", "histogram",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKHistogramBackgroundColor (CDKHISTOGRAM *", "histogram",
+.BI "char * " "color");
+.LP
+.BI "void moveCDKHistogram (CDKHISTOGRAM *" "histogram",
+.BI "int " "box",
+.BI "int " "box",
+.BI "boolean " "relative",
+.BI "boolean " "refresh");
+.LP
+.BI "void positionCDKHistogram (CDKHISTOGRAM *" "histogram");
+.LP
+.BI "void drawCDKHistogram (CDKHISTOGRAM *" "histogram",
+.BI "boolean " "box");
+.LP
+.BI "void eraseCDKHistogram (CDKHISTOGRAM *" "histogram");
+.LP
+.BI "void destroyCDKHistogram (CDKHISTOGRAM *" "histogram");
+.LP
+.SH DESCRIPTION
+The Cdk histogram widget creates a histogram widget. This widget can draw a 
+vertical or horizontal histogram. The following are functions which create or 
+manipulate the Cdk histogram box widget.
+
+.SH AVAILABLE FUNCTIONS
+CDKHISTOGRAM *newCDKHistogram (CDKSCREEN *\f2screen\f1, int \f2xpos\f1, int \f2ypos\f1, char *\f2title\f1, int \f2height\f1, int \f2width\f1, int \f2orient\f1, char *\f2label\f1, boolean \f2box\f1, boolean \f2shadow\f1);
+.RS 3
+This function creates a pointer to a histogram widget. The \f2screen\f1 parameter
+is the screen you wish this widget to be placed in. The parameter \f2xpos\f1
+controls the placement of the object along the horizontal axis. This parameter
+can accept an integer value or one of the pre-defined values of \f4LEFT\f1,
+\f4RIGHT\f1, and \f4CENTER\f1. The parameter \f2ypos\f1 controls the placement
+of the object along the vertical axis. This parameter can accept an integer 
+value or one of the pre-defined values of \f4TOP\f1, \f4BOTTOM\f1, and \f4CENTER\f1.
+The \f2title\f1 parameter is the string which will be displayed at the top of the 
+widget. The title can be more than one line; just provide a carriage return 
+character at the line break. The parameters \f2height\f1 and \f2width\f1 control 
+the height and width of the widget. If you provide a value of zero for either 
+of the height or the width, the widget will be created with the full width and 
+height of the screen. If you provide a negative value, the widget will be created
+the full height or width minus the value provided. The \f2orient\f1
+parameter specifies the orientation of the histogram. This parameter accepts 
+two values: \f4VERTICAL\f1 and \f4HORIZONTAL\f1. The \f2label\f1 parameter 
+specifies the contents of the label of the histogram. The \f2box\f1 parameter 
+states whether the widget will be drawn with a box around it or not. The 
+\f2shadow\f1 parameter accepts a boolean value to turn the shadow on or 
+off around this widget. If the widget could not be created then a \f4NULL\f1
+pointer is returned.
+.RE
+
+void setCDKHistogram (CDKHISTOGRAM *\f2histogram\f1, EHistogramDisplayType \f2viewType\f1, int \f2statsPosition\f1, chtype \f2statsAttribute\f1, int \f2lowValue\f1, int \f2highValue\f1, int \f2currentValue\f1, chtype \f2fillerCharacter\f1, boolean \f2box\f1);
+.RS 3
+This function lets the programmer set the specific values of the histogram 
+widget.  The parameter \f2viewType\f1 specifies the type of histogram to draw.
+The following table lists the valid values and the results.
+.LP
+.RS 3
+.nf 
+\f2Display_Type      Result\f1
+vNONE             Displays no information
+                  about the current values.
+vPERCENT          Displays the current
+                  value as a percentage.
+vFRACTION         Displays the current
+                  value as a fraction.
+vREAL             Displays the current value.
+.fi
+.RE
+.LP
+The \f2statsPosition\f1 parameter states where the statistics will be 
+displayed. It accepts \f4TOP\f1, \f4BOTTOM\f1, and \f4CENTER\f1. The parameter
+\f2statsAttribute\f1 sets the attributes of the statistics. The parameters 
+\f2lowValue\f1, \f2highValue\f1, and \f2currentValue\f1 are the low, high, 
+and current values respectively. The \f2filler\f1 character is the character 
+to use in the unused space in the histogram. The \f2box\f1 option draws 
+the widget with or without a box.
+.RE
+
+void setCDKHistogramValue (CDKHISTOGRAM *\f2histogram\f1, int \f2low\f1, int \f2high\f1, int \f2value\f1);
+.RS 3
+This sets the low, high, and current value of the histogram.
+.RE
+
+int getCDKHistogramLowValue (CDKHISTOGRAM *\f2histogram\f1);
+.RS 3
+This returns the low value of the histogram.
+.RE
+
+int getCDKHistogramHighValue (CDKHISTOGRAM *\f2histogram\f1);
+.RS 3
+This returns the high value of the histogram.
+.RE
+
+int getCDKHistogramValue (CDKHISTOGRAM *\f2histogram\f1);
+.RS 3
+This returns the current value of the histogram.
+.RE
+
+void setCDKHistogramViewType (CDKHISTOGRAM *\f2histogram\f1, EHistogramViewType \f2viewType\f1);
+.RS 3
+This sets the view type of the histogram. Look at the \f4setCDKHistogram\f1 section in this
+man page for more details.
+.RE
+
+EHistogramViewType getCDKHistogramViewType (CDKHISTOGRAM *\f2histogram\f1);
+.RS 3
+This returns the view type of the histogram widget.
+.RE
+
+void setCDKHistogramFillerChar (CDKHISTOGRAM *\f2histogram\f1, chtype \f2fillerChar\f1);
+.RS 3
+This sets the character to use when drawing the histogram bar.
+.RE
+
+chtype getCDKHistogramFillerChar (CDKHISTOGRAM *\f2histogram\f1);
+.RS 3
+This returns the character being used to draw the histogram bar.
+.RE
+
+void setCDKHistogramStatsPos (CDKHISTOGRAM *\f2histogram\f1, int \f2statsPos\f1);
+.RS 3
+This sets where the statistics will be drawn on the widget. Look at the 
+\f4setCDKHistogram\f1 section in this man page for more details.
+.RE
+
+int getCDKHistogramStatsPos (CDKHISTOGRAM *\f2histogram\f1);
+.RS 3
+This returns where the histogram will draw the statistics.
+.RE
+
+void setCDKHistogramStatsAttr (CDKHISTOGRAM *\f2histogram\f1, int \f2statsAttribute\f1);
+.RS 3
+This sets the attribute to use when drawing the histogram statistics.
+.RE
+
+chtype getCDKHistogramStatsAttr (CDKHISTOGRAM *\f2histogram\f1);
+.RS 3
+This returns the attribute of the statistics of the histogram.
+.RE
+
+void setCDKHistogramBox (CDKHISTOGRAM *\f2histogram\f1, boolean \f2boxWidget\f1);
+.RS 3
+This sets whether or not the widget will be draw with a box around it.
+.RE
+
+boolean getCDKHistogramBox (CDKHISTOGRAM *\f2histogram\f1);
+.RS 3
+This returns whether or not the widget will be drawn with a box around it.
+.RE
+
+void setCDKHistogramULChar (CDKHISTOGRAM *\f2histogram\f1, chtype \f2character\f1);
+.RS 3
+This function sets the upper left hand corner of the widgets box to
+the given character.
+.RE
+
+void setCDKHistogramURChar (CDKHISTOGRAM *\f2histogram\f1, chtype \f2character\f1);
+.RS 3
+This function sets the upper right hand corner of the widgets box to
+the given character.
+.RE
+
+void setCDKHistogramLLChar (CDKHISTOGRAM *\f2histogram\f1, chtype \f2character\f1);
+.RS 3
+This function sets the lower left hand corner of the widgets box to
+the given character.
+.RE
+
+void setCDKHistogramLRChar (CDKHISTOGRAM *\f2histogram\f1, chtype \f2character\f1);
+.RS 3
+This function sets the lower right hand corner of the widgets box to
+the given character.
+.RE
+
+void setCDKHistogramVerticalChar (CDKHISTOGRAM *\f2histogram\f1, chtype \f2character\f1);
+.RS 3
+This function sets the vertical drawing character for the box to
+the given character.
+.RE
+
+void setCDKHistogramHorizontalChar (CDKHISTOGRAM *\f2histogram\f1, chtype \f2character\f1);
+.RS 3
+This function sets the horizontal drawing character for the box to
+the given character.
+.RE
+
+void setCDKHistogramBoxAttribute (CDKHISTOGRAM *\f2histogram\f1, chtype \f2attribute\f1);
+.RS 3
+This function sets the attribute of the box.
+.RE
+
+void setCDKHistogramBackgroundColor (CDKHISTOGRAM *\f2histogram\f1, char *\f2color\f1);
+.RS 3
+This sets the background color of the widget. The parameter \f2color\f1
+is in the format of the Cdk format strings. To get more information look
+at the \f4cdk_display\f1 manual page.
+.RE
+
+void moveCDKHistogram (CDKHISTOGRAM *\f2histogram\f1, int \f2xpos\f1, int \f2ypos\f1, boolean \f2relative\f1, boolean \f2refresh\f1);
+.RS 3
+This function moves the given widget to the given position. The parameters
+\f2xpos\f1 and \f2ypos\f1 is the new position of the widget. The parameter
+\f2xpos\f1 can accept an integer value or one of the pre-defined values of
+\f4TOP\f1, \f4BOTTOM\f1, and \f4CENTER\f1. The parameter \f2ypos\f1 can 
+accept an integer value or one of the pre-defined values of \f4LEFT\f1,
+\f4RIGHT\f1, and \f4CENTER\f1. The parameter \f2relative\f1 states whether
+the \f2xpos\f1/\f2ypos\f1 pair is a relative move or an absolute move. For
+example if \f2xpos\f1 = 1 and \f2ypos\f1 = 2 and \f2relative\f1 = \f2TRUE\f1,
+then the widget would move one row down and two columns right. If the value
+of \f2relative\f1 was \f2FALSE\f1 then the widget would move to the position
+(1,2). Do not use the values of \f4TOP\f1, \f4BOTTOM\f1, \f4LEFT\f1, 
+\f4RIGHT\f1, or \f4CENTER\f1 when \f2relative\f1 = \f4TRUE\f1. (wierd things 
+may happen). The final parameter \f2refresh\f1 is a boolean value which states 
+whether the widget will get refreshed after the move or not.
+.RE
+
+void positionCDKHistogram (CDKHISTOGRAM *\f2histogram\f1);
+.RS 3
+This function allows the user to move the widget around the screen via the
+cursor/keypad keys. The following key bindings can be used to move the
+widget around the screen.
+.LP
+.nf
+\f4Key Bindings\f1
+.RS 3
+\f2Key          Action\f1
+Up Arrow     Moves the widget up one line.
+Down Arrow   Moves the widget down one line.
+Left Arrow   Moves the widget left one column
+Right Arrow  Moves the widget right one column
+Keypad-1     Moves the widget down one line
+             and left one column.
+Keypad-2     Moves the widget down one line.
+Keypad-3     Moves the widget down one line
+             and right one column.
+Keypad-4     Moves the widget left one column
+Keypad-5     Centers the widget both vertically
+             and horizontally.
+Keypad-6     Moves the widget right one column
+Keypad-7     Moves the widget up one line
+             and left one column.
+Keypad-8     Moves the widget up one line.
+Keypad-9     Moves the widget up one line
+             and right one column.
+t            Moves the widget to the top of the screen.
+b            Moves the widget to the bottom of the screen.
+l            Moves the widget to the left of the screen.
+r            Moves the widget to the right of the screen.
+c            Centers the widget between the left and 
+             right of the window.
+C            Centers the widget between the top and 
+             bottom of the window.
+Escape       Returns the widget to it's original position.
+Return       Exits the function and leaves the widget
+             where it was.
+.fi
+.RE
+.RS 3
+.LP
+Keypad means that if the keyboard you are using has a keypad, then the
+Num-Lock light has to be on in order to use the keys as listed. (The
+numeric keys at the top of the keyboard will work as well.)
+.LP
+void drawCDKHistogram (CDKHISTOGRAM *\f2histogram\f1, boolean \f2box\f1);
+.RS 3
+This function draws the histogram widget on the screen. The \f2box\f1 option 
+draws the widget with or without a box.
+.RE
+
+void eraseCDKHistogram (CDKHISTOGRAM *\f2histogram\f1);
+.RS 3
+This function removes the widget from the screen. This does \f4NOT\f1 destroy
+the widget.
+.RE
+
+void destroyCDKHistogram (CDKHISTOGRAM *\f2histogram\f1);
+.RS 3
+This function removes the widget from the screen and frees up any memory the
+object may be using.
+.RE
+.SH SEE ALSO
+.BR cdk (3),
+.BR cdk_binding (3),
+.BR cdk_display (3),
+.BR cdk_screen (3)
+.SH NOTES
+.PP
+The header file \f4<cdk.h>\f1 automatically includes the header files
+\f4<curses.h>\f1, \f4<stdlib.h>\f1, \f4<string.h>\f1, \f4<ctype.h>\f1,
+\f4<unistd.h>\f1, \f4<dirent.h>\f1, \f4<time.h>\f1, \f4<errno.h>\f1,
+\f4<pwd.h>\f1, \f4<grp.h>\f1, \f4<sys/stat.h>\f1, and \f4<sys/types.h>\f1.
+The \f4<curses.h>\f1 header file includes \f4<stdio.h>\f1 and \f4<unctrl.h>\f1.
+.PP
+If you have \f4Ncurses\f1 installed on your machine add -DNCURSES to the 
+compile line to include the Ncurses header files instead.

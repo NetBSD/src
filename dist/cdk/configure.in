@@ -1,0 +1,110 @@
+dnl
+dnl Process this file with autoconf to produce a configure script.
+dnl
+AC_INIT(include/cdk.h)
+AC_CONFIG_HEADER(include/cdk_config.h:include/config.hin)
+
+CF_CHECK_CACHE
+
+dnl
+dnl Checks for programs.
+dnl
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_GCC_TRADITIONAL
+AC_PROG_RANLIB 
+AC_PROG_INSTALL
+
+AC_C_CONST
+
+CF_DISABLE_ECHO
+CF_PROG_EXT
+CF_LIB_PREFIX
+
+AC_ARG_WITH(warnings,
+[  --with-warnings         turn on gcc warnings, for debugging ],[
+	CF_GCC_ATTRIBUTES
+	CF_GCC_WARNINGS
+])
+
+dnl
+dnl Checks for libraries.
+dnl
+
+AC_MSG_CHECKING(if you want to link with dbmalloc for testing)
+AC_ARG_WITH(dbmalloc,
+	[  --with-dbmalloc         test: use Conor Cahill's dbmalloc library],
+	[with_dbmalloc=$withval],
+	[with_dbmalloc=no])
+AC_MSG_RESULT($with_dbmalloc)
+if test $with_dbmalloc = yes ; then
+	AC_CHECK_LIB(dbmalloc,debug_malloc)
+fi
+
+AC_MSG_CHECKING(if you want to link with dmalloc for testing)
+AC_ARG_WITH(dmalloc,
+	[  --with-dmalloc          test: use Gray Watson's dmalloc library],
+	[with_dmalloc=$withval],
+	[with_dmalloc=no])
+AC_MSG_RESULT($with_dmalloc)
+if test $with_dmalloc = yes ; then
+	AC_CHECK_LIB(dmalloc,dmalloc_debug)
+fi
+
+dnl
+dnl Checks for header files.
+dnl
+AC_HEADER_DIRENT
+AC_HEADER_STDC
+AC_CHECK_HEADERS(\
+limits.h \
+unistd.h \
+)
+
+dnl
+dnl Checks for typedefs, structures, and compiler characteristics.
+dnl
+AC_TYPE_MODE_T
+AC_STRUCT_TM
+CF_CURSES_CHTYPE
+CF_GETOPT_HEADER
+
+dnl
+dnl Checks for library functions.
+dnl
+AC_TYPE_SIGNAL
+AC_CHECK_FUNCS(\
+getcwd \
+mktime \
+radixsort \
+strdup \
+strerror \
+)
+
+CF_FUNC_LSTAT
+
+dnl Check for curses libraries last, since XCurses has dependencies which
+dnl break the checks for other functions.
+AC_ARG_WITH(ncurses,
+	[  --with-ncurses          compile/link with ncurses library],
+	[	
+	CF_NCURSES_CPPFLAGS
+	CF_NCURSES_LIBS
+	],
+	[
+dnl	AC_ARG_WITH(pdcurses,
+dnl		[  --with-pdcurses         compile/link with pdcurses X11 library],
+dnl		[
+dnl		CF_PDCURSES_X11
+dnl		],
+dnl		[
+		CF_CURSES_LIBS
+dnl		])
+	])
+
+CF_CURSES_FUNCS(start_color)
+
+dnl
+dnl Set pre-processor compile time variables.
+dnl
+AC_OUTPUT(Makefile examples/Makefile demos/Makefile,,,sort)

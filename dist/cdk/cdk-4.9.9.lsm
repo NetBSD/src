@@ -1,0 +1,18 @@
+Begin3
+Title:		Curses Development Kit
+Version:	4.9.9
+Entered-date:	22DEC98
+Description:	CDK is a widget set developed on top of the basic curses
+		library. It contains 21 ready to use widgets. Some which
+		are a text entry field, a scrolling list, a selection list,
+		a alphalist, pull-down menu, radio list, viewer widget,
+		dialog box, and many more.
+Keywords:	Curses, Library, Widget Set
+Author:		glover@tuzo.erin.utoronto (Mike Glover)
+Maintained-by:	mike@vexus.ca (Vexus Consulting Group)
+Primary-site:	http://www.vexus.ca/CDK.html
+Alternate-site:
+Original-site:
+Platforms:	Linux, Solaris. AIX, BSD, SGI, HPUX, NT, 
+Copying-policy:	BSD License.
+End
