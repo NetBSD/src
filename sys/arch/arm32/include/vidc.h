@@ -1,4 +1,4 @@
-/* $NetBSD: vidc.h,v 1.3 1996/06/03 21:58:26 mark Exp $ */
+/* $NetBSD: vidc.h,v 1.4 1996/10/14 23:05:34 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -45,8 +45,8 @@
  * Based on kate/display/vidc.h
  */
 
-#ifndef __vidc_h
-#define __vidc_h
+#ifndef	_ARM32_VIDC_H_
+#define	_ARM32_VIDC_H_
 
 /* VIDC20 Base addresses */
 
@@ -150,6 +150,8 @@
 
 #define VRAM_BASE 0x02000000
 
+#ifndef _LOCORE
+
 /* Video memory descriptor */
 
 typedef struct
@@ -181,7 +183,11 @@ struct vidc_state {
 	int dctl;
 };
 
+#ifdef CPU_ARM7500
+#define	VIDC_FREF	32000000
+#else
 #define VIDC_FREF	24000000
+#endif	/* CPU_ARM7500 */
 
 #ifdef _KERNEL
 extern int  vidc_write		__P((u_int /*reg*/, int /*value*/));
@@ -190,7 +196,7 @@ extern void vidc_setpalette	__P((struct vidc_state */*vidc*/));
 extern void vidc_stdpalette	__P(());
 extern int  vidc_col		__P((int /*red*/, int /*green*/, int /*blue*/));
 extern struct vidc_state vidc_current[];
-#endif
+#endif	/* _KERNEL */
 
 struct vidc_mode {
     int pixel_rate;
@@ -248,6 +254,8 @@ struct vidc_info
     int cursor_flash;
   };
 
+#endif	/* !_LOCORE */
+
 #define COLOUR_BLACK_1 0x00
 #define COLOUR_WHITE_1 0x01
 
@@ -260,7 +268,7 @@ struct vidc_info
 #define COLOUR_BLACK_8 0x00
 #define COLOUR_WHITE_8 0x07
 
-#endif
+#endif	/* !_ARM32_VIDC_H */
 
 /* End of vidc.h */
 
