@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1542.c,v 1.14.2.8 1994/02/02 06:05:01 mycroft Exp $
+ *	$Id: aha1542.c,v 1.14.2.9 1994/02/02 11:14:50 mycroft Exp $
  */
 
 /*
@@ -295,10 +295,10 @@ struct aha_data {
 	int aha_dma;				/* out DMA req channel */
 	int aha_scsi_dev;			/* ourscsi bus address */
 	struct scsi_link sc_link;		/* prototype for subdevs */
-}	*ahadata[NAHA];
+};
 
 int aha_cmd();	/* XXX must be varargs to prototype */
-int ahaprobe __P((struct device *, struct cfdata *, void *));
+int ahaprobe __P((struct device *, struct device *, void *));
 void ahaattach __P((struct device *, struct device *, void *));
 u_int aha_adapter_info __P((struct aha_data *));
 int ahaintr __P((void *));
@@ -489,45 +489,24 @@ aha_cmd(aha, icnt, ocnt, wait, retval, opcode, args)
  * autoconf.c
  */
 int
-ahaprobe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
+ahaprobe(parent, self, aux)
+	struct device *parent, *self;
 	void *aux;
 {
-	int unit = cf->cf_unit;
-	struct aha_data *aha;
-	register struct isa_attach_args *ia = aux;
-	u_short iobase = ia->ia_iobase;
+	struct isa_attach_args *ia = aux;
+	struct aha_data *aha = (void *)self;
 
-	if (iobase == IOBASEUNK)
+	if (ia->ia_iobase == IOBASEUNK)
 		return 0;
 
-	/*
-	 * a quick safety check so we can be sleazy later
-	 */
-	if (sizeof(struct aha_data) > NBPG) {
-		printf("aha struct > pagesize\n");
-		return 0;
-	}
-
-	aha = malloc(sizeof(struct aha_data), M_TEMP, M_NOWAIT);
-	if (!aha) {
-		printf("aha%d: cannot malloc!\n", unit);
-		return 0;
-	}
-	bzero(aha, sizeof(*aha));
-	ahadata[unit] = aha;
-	aha->aha_base = iobase;
+	aha->aha_base = ia->ia_iobase;
 
 	/*
 	 * Try initialise a unit at this location
 	 * sets up dma and bus speed, loads aha->aha_int
 	 */
-	if (aha_find(aha) != 0) {
-		ahadata[unit] = NULL;
-		free(aha, M_TEMP);
+	if (aha_find(aha) != 0)
 		return 0;
-	}
 
 	/*
 	 * Calculate the xor product of the aha struct's
@@ -551,10 +530,9 @@ ahaprobe(parent, cf, aux)
 		ia->ia_irq = (1 << aha->aha_int);
 	} else {
 		if (ia->ia_irq != (1 << aha->aha_int)) {
-			printf("aha%d: irq mismatch, %x != %x\n", unit,
-				ia->ia_irq, (1 << aha->aha_int));
-			ahadata[unit] = NULL;
-			free(aha, M_TEMP);
+			printf("aha%d: irq mismatch, %x != %x\n",
+				aha->sc_dev.dv_unit, ia->ia_irq,
+				1 << aha->aha_int);
 			return 0;
 		}
 	}
@@ -563,10 +541,8 @@ ahaprobe(parent, cf, aux)
 		ia->ia_drq = aha->aha_dma;
 	} else {
 		if (ia->ia_drq != aha->aha_dma) {
-			printf("aha%d: drq mismatch, %x != %x\n", unit,
-				ia->ia_drq, aha->aha_dma);
-			ahadata[unit] = NULL;
-			free(aha, M_TEMP);
+			printf("aha%d: drq mismatch, %x != %x\n",
+				aha->sc_dev.dv_unit, ia->ia_drq, aha->aha_dma);
 			return 0;
 		}
 	}
@@ -589,15 +565,8 @@ ahaattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	int unit = self->dv_unit;
-	struct aha_data *aha = ahadata[unit];
 	struct isa_attach_args *ia = aux;
-
-	bcopy((char *)aha + sizeof(struct device),
-	      (char *)self + sizeof(struct device),
-	      sizeof(struct aha_data) - sizeof(struct device));
-	free(aha, M_TEMP);
-	ahadata[unit] = aha = (struct aha_data *)self;
+	struct aha_data *aha = (void *)self;
 
 	/* need to recalculate */
 	aha->kv_phys_xor = (long int) aha ^ (KVTOPHYS(aha));
