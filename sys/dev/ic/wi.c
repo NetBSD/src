@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.57 2002/03/30 15:58:45 ichiro Exp $	*/
+/*	$NetBSD: wi.c,v 1.58 2002/03/30 16:44:59 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.57 2002/03/30 15:58:45 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.58 2002/03/30 16:44:59 ichiro Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1693,7 +1693,7 @@ wi_init(ifp)
 			 * (ichiro@netbsd.org)
 			 */
 			if (sc->sc_firmware_type == WI_INTERSIL &&
-			    sc->sc_firmware_ver < 802 ) {
+			    sc->sc_sta_firmware_ver < 802 ) {
 				/* firm ver < 0.8 variant 2 */
 				WI_SETVAL(WI_RID_PROMISC, 1);
 			}
@@ -2011,6 +2011,17 @@ wi_get_id(sc)
 		break;
 	}
 
+	/* get primary firmware version */
+	memset(&ver, 0, sizeof(ver));
+	ver.wi_type = WI_RID_PRI_IDENTITY;
+	ver.wi_len = 5;
+	wi_read_record(sc, (struct wi_ltv_gen *)&ver);
+	LE16TOH(ver.wi_ver[1]);
+	LE16TOH(ver.wi_ver[2]);
+	LE16TOH(ver.wi_ver[3]);
+	sc->sc_pri_firmware_ver = ver.wi_ver[2] * 10000 +
+	    ver.wi_ver[3] * 100 + ver.wi_ver[1];
+
 	/* get station firmware version */
 	memset(&ver, 0, sizeof(ver));
 	ver.wi_type = WI_RID_STA_IDENTITY;
@@ -2019,10 +2030,10 @@ wi_get_id(sc)
 	LE16TOH(ver.wi_ver[1]);
 	LE16TOH(ver.wi_ver[2]);
 	LE16TOH(ver.wi_ver[3]);
-	sc->sc_firmware_ver = ver.wi_ver[2] * 10000 +
+	sc->sc_sta_firmware_ver = ver.wi_ver[2] * 10000 +
 	    ver.wi_ver[3] * 100 + ver.wi_ver[1];
 	if (sc->sc_firmware_type == WI_INTERSIL &&
-	    (sc->sc_firmware_ver == 10102 || sc->sc_firmware_ver == 20102)) {
+	    (sc->sc_sta_firmware_ver == 10102 || sc->sc_sta_firmware_ver == 20102)) {
 		struct wi_ltv_str sver;
 		char *p;
 
@@ -2034,16 +2045,22 @@ wi_get_id(sc)
 		    *(p = (char *)sver.wi_str) == 'V' &&
 		    p[2] == '.' && p[5] == '-' && p[8] == '\0') {
 			sc->sc_firmware_type = WI_SYMBOL;
-			sc->sc_firmware_ver = (p[1] - '0') * 10000 +
+			sc->sc_sta_firmware_ver = (p[1] - '0') * 10000 +
 			    (p[3] - '0') * 1000 + (p[4] - '0') * 100 +
 			    (p[6] - '0') * 10 + (p[7] - '0');
 		}
 	}
-	printf(", Station Firmware: %s %u.%u.%u\n",
-	    (sc->sc_firmware_type == WI_LUCENT ? "Lucent" :
-	    (sc->sc_firmware_type == WI_SYMBOL ? "Symbol" : "Intersil")),
-	    sc->sc_firmware_ver / 10000, (sc->sc_firmware_ver % 10000) / 100,
-	    sc->sc_firmware_ver % 100);
+
+	printf("\n%s Firmware: ",
+	     sc->sc_firmware_type == WI_LUCENT ? "Lucent" :
+	    (sc->sc_firmware_type == WI_SYMBOL ? "Symbol" : "Intersil"));
+	if (sc->sc_firmware_type != WI_LUCENT)	/* XXX */
+	    printf("Primary (%u.%u.%u), ", sc->sc_pri_firmware_ver / 10000,
+		    (sc->sc_pri_firmware_ver % 10000) / 100,
+		    sc->sc_pri_firmware_ver % 100);
+	printf("Station (%u.%u.%u)\n",
+	    sc->sc_sta_firmware_ver / 10000, (sc->sc_sta_firmware_ver % 10000) / 100,
+	    sc->sc_sta_firmware_ver % 100);
 
 	return;
 }
