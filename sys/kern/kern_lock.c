@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.76 2004/05/18 11:55:59 yamt Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.77 2004/05/18 11:59:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.76 2004/05/18 11:55:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.77 2004/05/18 11:59:11 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1371,14 +1371,33 @@ _kernel_proc_lock(struct lwp *l)
 
 	SCHED_ASSERT_UNLOCKED();
 	spinlockmgr(&kernel_lock, LK_EXCLUSIVE, 0);
-	l->l_flag |= L_BIGLOCK;
 }
 
 void
 _kernel_proc_unlock(struct lwp *l)
 {
 
-	l->l_flag &= ~L_BIGLOCK;
 	spinlockmgr(&kernel_lock, LK_RELEASE, 0);
+}
+
+int
+_kernel_lock_release_all()
+{
+	int hold_count;
+
+	if (lockstatus(&kernel_lock) == LK_EXCLUSIVE)
+		hold_count = spinlock_release_all(&kernel_lock);
+	else
+		hold_count = 0;
+
+	return hold_count;
+}
+
+void
+_kernel_lock_acquire_count(int hold_count)
+{
+
+	if (hold_count != 0)
+		spinlock_acquire_count(&kernel_lock, hold_count);
 }
 #endif /* MULTIPROCESSOR */
