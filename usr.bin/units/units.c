@@ -14,7 +14,7 @@
  * I would appreciate (though I do not require) receiving a copy of any
  * improvements you might make to this program.
  *
- *	$Id: units.c,v 1.4 1996/03/21 18:06:48 jtc Exp $
+ *	$Id: units.c,v 1.5 1996/04/01 21:43:53 mark Exp $
  */
 
 #include <ctype.h>
@@ -631,14 +631,14 @@ main(int argc, char **argv)
 
 	struct unittype have, want;
 	char havestr[81], wantstr[81];
-	char optchar;
+	int optchar;
 	char *userfile = 0;
 	int quiet = 0;
 
 	extern char *optarg;
 	extern int optind;
 
-	while (EOF != (optchar = getopt(argc, argv, "vqf:"))) {
+	while ((optchar = getopt(argc, argv, "vqf:")) != -1) {
 		switch (optchar) {
 		case 'f':
 			userfile = optarg;
