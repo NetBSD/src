@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.35.2.2 2004/11/17 16:38:51 wiz Exp $
+.\"	$NetBSD: syslogd.8,v 1.35.2.3 2004/11/18 20:51:40 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd November 17, 2004
+.Dd November 18, 2004
 .Dt SYSLOGD 8
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd log systems messages
 .Sh SYNOPSIS
 .Nm
-.Op Fl dnrSs
+.Op Fl dnrSsUv
 .Bk -words
 .Op Fl f Ar config_file
 .Ek
@@ -127,6 +127,22 @@ after the sockets and log files have been opened.
 Set UID to
 .Ar user
 after the sockets and log files have been opened.
+.It Fl U
+Unique priority logging.
+Only log messages at the priority specified by the selector in the
+configuration file.
+Without this option, messages at the specified priority or higher are
+logged.
+This option changes the default priority comparison from
+.Sq >=
+to
+.Sq = .
+.It Fl v
+Verbose logging.
+If specified once, the numberic facility and priority are logged with
+each locally-written message.
+If specified more than once, the names of the facility and priority are
+logged with each locally-written message.
 .El
 .Pp
 .Nm
