@@ -133,10 +133,11 @@ void    master_listen_init(MASTER_SERV *serv)
 			salen, hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST)) {
 		    strncpy(hbuf, "?????", sizeof(hbuf));
 		}
-		end_point = concatenate(hbuf, ":", serv->name, (char *) 0);
+		end_point = concatenate(hbuf, ":", MASTER_INET_PORT(serv),
+		    (char *) 0);
 #else
 		end_point = concatenate(inet_ntoa(MASTER_INET_ADDRLIST(serv)->addrs[n]),
-					":", serv->name, (char *) 0);
+		    ":", MASTER_INET_PORT(serv), (char *) 0);
 #endif
 		serv->listen_fd[n]
 		    = inet_listen(end_point, serv->max_proc > var_proc_limit ?
