@@ -1,4 +1,4 @@
-/*	$NetBSD: makeinfo.c,v 1.11 2004/07/12 23:41:53 wiz Exp $	*/
+/*	$NetBSD: makeinfo.c,v 1.12 2004/07/13 22:55:17 wiz Exp $	*/
 
 /* makeinfo -- convert Texinfo source into other formats.
    Id: makeinfo.c,v 1.63 2004/04/09 21:17:17 karl Exp
@@ -3934,7 +3934,7 @@ execute_string (format, va_alist)
 
   /* If insertion stack level changes during execution, that means a multiline
      command is used inside braces or @section ... kind of commands.  */
-  if (insertion_level_at_start != insertion_level)
+  if (insertion_level_at_start != insertion_level && !executing_macro)
     {
       line_error (_("Multiline command %c%s used improperly"),
           COMMAND_PREFIX,
