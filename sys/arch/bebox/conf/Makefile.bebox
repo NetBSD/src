@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bebox,v 1.11 1999/01/15 23:37:06 thorpej Exp $
+#	$NetBSD: Makefile.bebox,v 1.12 1999/06/24 01:19:51 sakamoto Exp $
 
 # Makefile for NetBSD
 #
@@ -17,6 +17,8 @@
 #
 # -DTRACE	compile in kernel tracing hooks
 # -DQUOTA	compile in file system quotas
+
+.include <bsd.own.mk>
 
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
@@ -56,6 +58,7 @@ LINKFLAGS=	-N -Ttext 0x3100 -e __start
 STRIPFLAGS=	--strip-debug
 
 ### find out what to use for libkern
+KERN_AS=	obj
 .include "$S/lib/libkern/Makefile.inc"
 .ifndef PROF
 LIBKERN=	${KERNLIB}
@@ -164,7 +167,7 @@ depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${BEBOX}/bebox/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+#	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
 	  ${CPPFLAGS} < ${BEBOX}/bebox/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
