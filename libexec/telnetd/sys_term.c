@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.29 2001/08/29 00:32:26 wiz Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.30 2001/08/30 23:25:15 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.29 2001/08/29 00:32:26 wiz Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.30 2001/08/30 23:25:15 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,10 +54,6 @@ __RCSID("$NetBSD: sys_term.c,v 1.29 2001/08/29 00:32:26 wiz Exp $");
 # define PARENT_DOES_UTMP
 #endif
 
-#ifdef	NEWINIT
-#include <initreq.h>
-int	utmp_len = MAXHOSTNAMELEN;	/* sizeof(init_request.host) */
-#else	/* NEWINIT*/
 # ifdef	UTMPX
 # include <utmpx.h>
 struct	utmpx wtmp;
@@ -78,7 +74,6 @@ char	wtmpf[]	= "/etc/wtmp";
 #include <tmpdir.h>
 #include <sys/wait.h>
 # endif	/* CRAY */
-#endif	/* NEWINIT */
 
 #ifdef	STREAMSPTY
 #include <sac.h>
@@ -1045,30 +1040,16 @@ tty_rspeed(val)
 
 
 #ifdef PARENT_DOES_UTMP
-# ifndef NEWINIT
 extern	struct utmp wtmp;
 extern char wtmpf[];
-# else	/* NEWINIT */
-int	gotalarm;
-
-	/* ARGSUSED */
-	void
-nologinproc(sig)
-	int sig;
-{
-	gotalarm++;
-}
-# endif	/* NEWINIT */
 #endif /* PARENT_DOES_UTMP */
 
-#ifndef	NEWINIT
 # ifdef PARENT_DOES_UTMP
 extern void utmp_sig_init P((void));
 extern void utmp_sig_reset P((void));
 extern void utmp_sig_wait P((void));
 extern void utmp_sig_notify P((int));
 # endif /* PARENT_DOES_UTMP */
-#endif
 
 /*
  * getptyslave()
@@ -1077,19 +1058,16 @@ extern void utmp_sig_notify P((int));
  * that is necessary.  The return value is a file descriptor
  * for the slave side.
  */
-#if	!defined(CRAY) || !defined(NEWINIT)
 extern int def_tspeed, def_rspeed;
 # ifdef	TIOCGWINSZ
 	extern int def_row, def_col;
 # endif
-#endif
 
     void
 getptyslave()
 {
 	register int t = -1;
 
-#if	!defined(CRAY) || !defined(NEWINIT)
 # ifdef	LINEMODE
 	int waslm;
 # endif
@@ -1203,7 +1181,6 @@ getptyslave()
 	set_termbuf();
 	if (login_tty(t) == -1)
 		fatalperror(net, "login_tty");
-#endif	/* !defined(CRAY) || !defined(NEWINIT) */
 	if (net > 2)
 		(void) close(net);
 #if	defined(AUTHENTICATION) && defined(NO_LOGIN_F) && defined(LOGIN_R)
@@ -1219,7 +1196,6 @@ getptyslave()
 #endif
 }
 
-#if	!defined(CRAY) || !defined(NEWINIT)
 #ifndef	O_NOCTTY
 #define	O_NOCTTY	0
 #endif
@@ -1281,7 +1257,6 @@ cleanopen(ttyline)
 	return(t);
 #endif /* OPENPTY_PTY */
 }
-#endif	/* !defined(CRAY) || !defined(NEWINIT) */
 
 #if BSD <= 43
 
@@ -1339,9 +1314,6 @@ login_tty(t)
 }
 #endif	/* BSD <= 43 */
 
-#ifdef	NEWINIT
-char *gen_id = "fe";
-#endif
 
 /*
  * startslave(host)
@@ -1358,12 +1330,6 @@ startslave(host, autologin, autoname)
 	char *autoname;
 {
 	register int i;
-#ifdef	NEWINIT
-	extern char *ptyip;
-	struct init_request request;
-	void nologinproc();
-	register int n;
-#endif	/* NEWINIT */
 
 #if	defined(AUTHENTICATION)
 	if (!autoname || !autoname[0])
@@ -1375,7 +1341,6 @@ startslave(host, autologin, autoname)
 	}
 #endif
 
-#ifndef	NEWINIT
 # ifdef	PARENT_DOES_UTMP
 	utmp_sig_init();
 # endif	/* PARENT_DOES_UTMP */
@@ -1430,62 +1395,6 @@ startslave(host, autologin, autoname)
 		start_login(host, autologin, autoname);
 		/*NOTREACHED*/
 	}
-#else	/* NEWINIT */
-
-	/*
-	 * Init will start up login process if we ask nicely.  We only wait
-	 * for it to start up and begin normal telnet operation.
-	 */
-	if ((i = open(INIT_FIFO, O_WRONLY)) < 0) {
-		char tbuf[128];
-
-		(void)snprintf(tbuf, sizeof tbuf, "Can't open %s\n", INIT_FIFO);
-		fatalperror(net, tbuf);
-	}
-	memset((char *)&request, 0, sizeof(request));
-	request.magic = INIT_MAGIC;
-	SCPYN(request.gen_id, gen_id);
-	SCPYN(request.tty_id, &line[8]);
-	SCPYN(request.host, host);
-	SCPYN(request.term_type, terminaltype ? terminaltype : "network");
-	request.signal = SIGCLD;
-	request.pid = getpid();
-#ifdef BFTPDAEMON
-	/*
-	 * Are we working as the bftp daemon?
-	 */
-	if (bftpd) {
-		SCPYN(request.exec_name, BFTPPATH);
-	}
-#endif /* BFTPDAEMON */
-	if (write(i, (char *)&request, sizeof(request)) < 0) {
-		char tbuf[128];
-
-		(void)snprintf(tbuf, sizeof tbuf, "Can't write to %s\n", INIT_FIFO);
-		fatalperror(net, tbuf);
-	}
-	(void) close(i);
-	(void) signal(SIGALRM, nologinproc);
-	for (i = 0; ; i++) {
-		char tbuf[128];
-
-		alarm(15);
-		n = read(pty, ptyip, BUFSIZ);
-		if (i == 3 || n >= 0 || !gotalarm)
-			break;
-		gotalarm = 0;
-		(void)snprintf(tbuf, sizeof tbuf,
-		    "telnetd: waiting for /etc/init to start login process on %s\r\n", line);
-		(void)write(net, tbuf, strlen(tbuf));
-	}
-	if (n < 0 && gotalarm)
-		fatal(net, "/etc/init didn't start login process");
-	pcc += n;
-	alarm(0);
-	(void) signal(SIGALRM, SIG_DFL);
-
-	return;
-#endif	/* NEWINIT */
 }
 
 char	*envinit[3];
@@ -1506,7 +1415,6 @@ init_env()
 	environ = envinit;
 }
 
-#ifndef	NEWINIT
 
 /*
  * start_login(host)
@@ -1810,7 +1718,6 @@ addarg(argv, val)
 	*cpp = 0;
 	return(argv);
 }
-#endif	/* NEWINIT */
 
 /*
  * scrub_env()
@@ -1901,10 +1808,6 @@ cleanup(sig)
 	exit(1);
 # endif
 #else	/* PARENT_DOES_UTMP */
-# ifdef	NEWINIT
-	(void) shutdown(net, 2);
-	exit(1);
-# else	/* NEWINIT */
 #  ifdef CRAY
 	static int incleanup = 0;
 	register int t;
@@ -1953,11 +1856,10 @@ cleanup(sig)
 		cleantmp(&wtmp);
 #  endif /* CRAY */
 	exit(1);
-# endif	/* NEWINT */
 #endif	/* PARENT_DOES_UTMP */
 }
 
-#if defined(PARENT_DOES_UTMP) && !defined(NEWINIT)
+#if defined(PARENT_DOES_UTMP)
 /*
  * _utmp_sig_rcv
  * utmp_sig_init
