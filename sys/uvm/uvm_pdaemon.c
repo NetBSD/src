@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.53 2003/08/28 13:12:19 pk Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.54 2003/09/01 12:16:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.53 2003/08/28 13:12:19 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.54 2003/09/01 12:16:17 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -773,11 +773,6 @@ uvmpd_scan(void)
 	 */
 
 	UVMHIST_LOG(pdhist, "  starting 'free' loop",0,0,0,0);
-
-	/*
-	 * alternate starting queue between swap and object based on the
-	 * low bit of uvmexp.pdrevs (which we bump by one each call).
-	 */
 
 	pages_freed = uvmexp.pdfreed;
 	uvmpd_scan_inactive(&uvm.page_inactive);
