@@ -1,4 +1,4 @@
-/*	$NetBSD: com4.c,v 1.12 2000/09/22 12:37:32 jsm Exp $	*/
+/*	$NetBSD: com4.c,v 1.13 2000/09/22 12:38:10 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com4.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com4.c,v 1.12 2000/09/22 12:37:32 jsm Exp $");
+__RCSID("$NetBSD: com4.c,v 1.13 2000/09/22 12:38:10 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -304,8 +304,12 @@ drop(name)
 					else if (*name == 'G')
 						puts("Given anyway.");
 				}
-			} else
+			} else if (testbit(location[position].objects, value))
 				puts("Kicked.");
+			else if (testbit(wear, value))
+				puts("Not while it's being worn.");
+			else
+				puts("Not found.");
 		}
 		if (wordnumber < wordcount - 1 && wordvalue[++wordnumber] == AND)
 			wordnumber++;
