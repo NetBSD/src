@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.34 2005/03/09 23:12:28 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.35 2005/03/15 08:16:39 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -677,7 +677,7 @@ Notes:		http://mail-index.NetBSD.org/tech-kern/2004/12/25/0005.html
 			pc532 (simonb@)
 			alpha, i386, mac68k, macppc, pmax, shark,
 			    sparc, sparc64, sun3, x68k (chs@)
-			cobalt, dreamcast, hp300, news68k (tsutsui@)
+			cobalt, dreamcast, hp300, news68k, newsmips (tsutsui@)
 			amiga (mhitch@)
 			cats, hp700 (skrll@)
 
@@ -686,8 +686,9 @@ Notes:		http://mail-index.NetBSD.org/tech-kern/2004/12/25/0005.html
 
 		known to have a problem:
 			hp300 (chs@, hang immediately after loading kernel)
-			newsmips (tsutsui@,
-		    http://mail-index.NetBSD.org/tech-kern/2005/03/09/0007.html)
+
+			luna68k (and, if any, other m68k ports which use TTR)
+			needs to be revisited.
 
 		buildable:
 			src/sys/arch/acorn26/conf/GENERIC
