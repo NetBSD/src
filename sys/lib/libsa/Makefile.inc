@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2000/02/01 05:25:51 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2000/12/05 17:01:19 sommerfeld Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -45,7 +45,7 @@ SAMAKE= \
 	    SAMISCCPPFLAGS=${SAMISCCPPFLAGS:Q} \
 	    ${SAMISCMAKEFLAGS}
 
-${SALIB}:		.NOTMAIN __always_make_salib
+${SALIB}:		.NOTMAIN .MAKE __always_make_salib
 	@echo making sure the sa library is up to date...
 .if (${SA_AS} == "library")
 	@${SAMAKE} libsa.a
@@ -53,7 +53,7 @@ ${SALIB}:		.NOTMAIN __always_make_salib
 	@${SAMAKE} libsa.o
 .endif
 
-${SALIB_PROF}:		.NOTMAIN __always_make_salib
+${SALIB_PROF}:		.NOTMAIN .MAKE __always_make_salib
 	@echo making sure the profiled sa library is up to date...
 .if (${SA_AS} == "library")
 	@${SAMAKE} libsa_p.a
@@ -62,17 +62,17 @@ ${SALIB_PROF}:		.NOTMAIN __always_make_salib
 .endif
 
 clean:			.NOTMAIN cleansalib
-cleansalib:		.NOTMAIN __always_make_salib
+cleansalib:		.NOTMAIN .MAKE __always_make_salib
 	@echo cleaning the sa library objects
 	@${SAMAKE} clean
 
 cleandir distclean:	.NOTMAIN cleandirsalib
-cleandirsalib:		.NOTMAIN __always_make_salib
+cleandirsalib:		.NOTMAIN .MAKE __always_make_salib
 	@echo cleandiring the sa library objects
 	@${SAMAKE} cleandir
 
 depend:			.NOTMAIN dependsalib
-dependsalib:		.NOTMAIN __always_make_salib
+dependsalib:		.NOTMAIN .MAKE __always_make_salib
 	@echo depending the sa library objects
 	@${SAMAKE} depend
 

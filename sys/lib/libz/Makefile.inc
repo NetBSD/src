@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2000/02/01 05:25:52 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2000/12/05 17:01:19 sommerfeld Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -45,7 +45,7 @@ ZMAKE= \
 	    ZMISCCPPFLAGS=${ZMISCCPPFLAGS:Q} \
 	    ${ZMISCMAKEFLAGS}
 
-${ZLIB}:		.NOTMAIN __always_make_zlib
+${ZLIB}:		.NOTMAIN .MAKE __always_make_zlib
 	@echo making sure the z library is up to date...
 .if (${Z_AS} == "library")
 	@${ZMAKE} libz.a
@@ -53,7 +53,7 @@ ${ZLIB}:		.NOTMAIN __always_make_zlib
 	@${ZMAKE} libz.o
 .endif
 
-${ZLIB_PROF}:		.NOTMAIN __always_make_zlib
+${ZLIB_PROF}:		.NOTMAIN .MAKE __always_make_zlib
 	@echo making sure the profiled z library is up to date...
 .if (${Z_AS} == "library")
 	@${ZMAKE} libz_p.a
@@ -62,17 +62,17 @@ ${ZLIB_PROF}:		.NOTMAIN __always_make_zlib
 .endif
 
 clean:			.NOTMAIN cleanzlib
-cleanzlib:		.NOTMAIN __always_make_zlib
+cleanzlib:		.NOTMAIN .MAKE __always_make_zlib
 	@echo cleaning the z library objects
 	@${ZMAKE} clean
 
 cleandir distclean:	.NOTMAIN cleandirzlib
-cleandirzlib:		.NOTMAIN __always_make_zlib
+cleandirzlib:		.NOTMAIN .MAKE __always_make_zlib
 	@echo cleandiring the z library objects
 	@${ZMAKE} cleandir
 
 depend:			.NOTMAIN dependzlib
-dependzlib:		.NOTMAIN __always_make_zlib
+dependzlib:		.NOTMAIN .MAKE __always_make_zlib
 	@echo depending the z library objects
 	@${ZMAKE} depend
 
