@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.118 2004/08/08 11:02:10 jdolecek Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.119 2004/09/17 23:20:21 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.118 2004/08/08 11:02:10 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.119 2004/09/17 23:20:21 enami Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -290,8 +290,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Duplicate sub-structures as needed.
 	 * Increase reference counts on shared objects.
 	 * The p_stats and p_sigacts substructs are set in uvm_fork().
+	 * Inherit SUGID, STOPFORK and STOPEXEC flags.
 	 */
-	p2->p_flag = (p1->p_flag & P_SUGID);
+	p2->p_flag = p1->p_flag & (P_SUGID | P_STOPFORK | P_STOPEXEC);
 	p2->p_emul = p1->p_emul;
 	p2->p_execsw = p1->p_execsw;
 
@@ -338,9 +339,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		simple_unlock(&p1->p_limit->p_slock);
 		p2->p_limit = p1->p_limit;
 	}
-
-	/* Inherit STOPFORK and STOPEXEC flags */
-	p2->p_flag |= p1->p_flag & (P_STOPFORK | P_STOPEXEC);
 
 	if (p1->p_session->s_ttyvp != NULL && p1->p_flag & P_CONTROLT)
 		p2->p_flag |= P_CONTROLT;
@@ -410,7 +408,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	/* Now safe for scheduler to see child process */
 	s = proclist_lock_write();
-	p2->p_stat = SIDL;			/* protect against others */
 	p2->p_exitsig = exitsig;		/* signal for parent on exit */
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
 	proclist_unlock_write(s);
