@@ -27,7 +27,7 @@
 #define	SYS_chown	16
 #define	SYS_break	17
 #define	SYS_getfsstat	18
-#define	SYS_lseek	19
+				/* 19 is old lseek */
 #define	SYS_getpid	20
 #define	SYS_mount	21
 #define	SYS_unmount	22
@@ -46,9 +46,9 @@
 #define	SYS_fchflags	35
 #define	SYS_sync	36
 #define	SYS_kill	37
-#define	SYS_stat	38
+				/* 38 is old stat */
 #define	SYS_getppid	39
-#define	SYS_lstat	40
+				/* 40 is old lstat */
 #define	SYS_dup	41
 #define	SYS_pipe	42
 #define	SYS_getegid	43
@@ -70,7 +70,7 @@
 #define	SYS_execve	59
 #define	SYS_umask	60
 #define	SYS_chroot	61
-#define	SYS_fstat	62
+				/* 62 is old fstat */
 #define	SYS_getkerninfo	63
 #define	SYS_getpagesize	64
 #define	SYS_msync	65
@@ -79,7 +79,7 @@
 				/* 68 is obsolete vwrite */
 #define	SYS_sbrk	69
 #define	SYS_sstk	70
-#define	SYS_mmap	71
+				/* 71 is old mmap */
 #define	SYS_vadvise	72
 #define	SYS_munmap	73
 #define	SYS_mprotect	74
@@ -135,8 +135,8 @@
 #define	SYS_setreuid	126	/* compatibility; still used by libc */
 #define	SYS_setregid	127	/* compatibility; still used by libc */
 #define	SYS_rename	128
-#define	SYS_truncate	129
-#define	SYS_ftruncate	130
+				/* 129 is old truncate */
+				/* 130 is old ftruncate */
 #define	SYS_flock	131
 #define	SYS_mkfifo	132
 #define	SYS_sendto	133
@@ -173,5 +173,12 @@
 #define	SYS_setgid	181
 #define	SYS_setegid	182
 #define	SYS_seteuid	183
+#define	SYS_stat	188
+#define	SYS_fstat	189
+#define	SYS_lstat	190
+#define	SYS_mmap	197
+#define	SYS_lseek	199
+#define	SYS_truncate	200
+#define	SYS_ftruncate	201
 
 #endif /* _SYS_SYSCALL_H */
