@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.25 2003/04/19 19:35:34 fvdl Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.26 2003/04/20 15:48:25 fvdl Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.25 2003/04/19 19:35:34 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.26 2003/04/20 15:48:25 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,6 +142,9 @@ ahc_eisa_attach(parent, self, aux)
 	ahc->tag = iot;
 	ahc->bsh = ioh;
 	ahc->channel = 'A';
+
+	if (ahc_softc_init(ahc) != 0)
+		goto free_io;
 
 	ahc_intr_enable(ahc, FALSE);
 
