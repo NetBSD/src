@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 1997/06/05 19:38:16 leo Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 1997/08/29 19:47:52 leo Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -54,23 +54,34 @@
  */
 #include <machine/psl.h>
 
-#define _spl(s) \
-({ \
-        register int _spl_r; \
-\
-        __asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
-                "&=d" (_spl_r) : "di" (s)); \
-        _spl_r; \
+#define _spl(s)								\
+({									\
+        register int _spl_r;						\
+									\
+        __asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" :		\
+                "&=d" (_spl_r) : "di" (s));				\
+        _spl_r;								\
 })
 
-#define	_splraise(s) \
-({ \
-	register int _spl_r; \
-\
-	__asm __volatile ("clrl %0; movew sr,%0;" : "&=d" (_spl_r) : ); \
-	if ((_spl_r & PSL_IPL) < ((s) & PSL_IPL)) \
-		__asm __volatile ("movew %0,sr;" : : "di" (s)); \
-	_spl_r; \
+#define _splraise(s)							\
+({									\
+	int _spl_r;							\
+									\
+	__asm __volatile ("						\
+		clrl	d0					;	\
+		movw	sr,d0					;	\
+		movl	d0,%0					;	\
+		andw	#0x700,d0				;	\
+		movw	%1,d1					;	\
+		andw	#0x700,d1				;	\
+		cmpw	d0,d1					;	\
+		jle	1f					;	\
+		movw	%1,sr					;	\
+	    1:"							:	\
+		    "&=d" (_spl_r)				:	\
+		    "di" (s)					:	\
+		    "d0", "d1");					\
+	_spl_r;								\
 })
 
 /* spl0 requires checking for software interrupts */
@@ -97,11 +108,10 @@
 #define splhigh()	spl7()
 #define splsched()	spl7()
 
-#define splx(s)         (s & PSL_IPL ? _spl(s) : spl0())
+#define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())
 
 #ifdef _KERNEL
 int spl0 __P((void));
 #endif /* _KERNEL */
 
 #endif /* _ATARI_INTR_H_ */
-
