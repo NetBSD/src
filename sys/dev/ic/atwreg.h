@@ -1,4 +1,4 @@
-/*	$NetBSD: atwreg.h,v 1.4 2004/01/10 06:30:36 dyoung Exp $	*/
+/*	$NetBSD: atwreg.h,v 1.5 2004/01/29 09:53:18 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.  All rights reserved.
@@ -49,6 +49,8 @@
 
 /* Macros for bit twiddling. */
 
+#ifndef _BIT_TWIDDLE
+#define _BIT_TWIDDLE
 /* nth bit, BIT(0) == 0x1. */
 #define BIT(n) (((n) == 32) ? 0 : ((u_int32_t) 1 << (n)))
 
@@ -86,6 +88,8 @@
 #define MASK_AND_RSHIFT(x, mask) (((x) & (mask)) >> MASK_TO_SHIFT(mask))
 #define LSHIFT(x, mask) ((x) << MASK_TO_SHIFT(mask))
 #define MASK_AND_REPLACE(reg, val, mask) ((reg & ~mask) | LSHIFT(val, mask))
+
+#endif /* _BIT_TWIDDLE */
 
 /* ADM8211 Host Control and Status Registers */
 
