@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.252 2003/05/18 08:28:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.253 2003/06/08 23:49:21 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -291,7 +291,8 @@ OBSOLETE.files=		base comp etc games man misc text
 
 install-obsolete-lists:
 	mkdir -p ${OBSOLETE.dir}
-	(cd ${NETBSDSRCDIR}/distrib/sets; sh ./makeobsolete -t ${OBSOLETE.dir})
+	(cd ${NETBSDSRCDIR}/distrib/sets && \
+	    MAKE=${MAKE:Q} ${HOST_SH} ./makeobsolete -t ${OBSOLETE.dir})
 .for file in ${OBSOLETE.files}
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    ${OBSOLETE.dir}/${file} ${DESTDIR}/var/db/obsolete
