@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.hp700,v 1.4 2003/10/10 20:08:00 jdolecek Exp $
+# $NetBSD: Makefile.hp700,v 1.5 2003/11/01 18:23:37 matt Exp $
 
 # Makefile for NetBSD
 #
@@ -32,8 +32,6 @@ GENASSYM=	${HP700}/hp700/genassym.cf
 ## (2) compile settings
 ##
 CPPFLAGS+=	-Dhppa -Dhp700
-# XXX fredette - the compiler blows up with -O2:
-COPTS+=		-O0
 .if ${IDENT:M-DDDB} != ""
 COPTS+=		-fno-omit-frame-pointer
 .endif
