@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.20 1998/02/21 00:37:07 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.21 1998/02/23 03:11:26 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -114,7 +114,7 @@ adbmatch(parent, cf, aux)
 static void
 adbattach(parent, dev, aux)
 	struct device *parent, *dev;
-	void   *aux;
+	void *aux;
 {
 	printf(" (ADB event device)\n");
 	adb_init();
@@ -122,9 +122,9 @@ adbattach(parent, dev, aux)
 
 void 
 adb_enqevent(event)
-    adb_event_t *event;
+	adb_event_t *event;
 {
-	int     s;
+	int s;
 
 	s = spladb();
 
@@ -153,7 +153,7 @@ adb_enqevent(event)
 
 void 
 adb_handoff(event)
-    adb_event_t *event;
+	adb_event_t *event;
 {
 	if (adb_isopen && !adb_polling) {
 		adb_enqevent(event);
@@ -166,9 +166,9 @@ adb_handoff(event)
 
 void 
 adb_autorepeat(keyp)
-    void *keyp;
+	void *keyp;
 {
-	int     key = (int) keyp;
+	int key = (int)keyp;
 
 	adb_rptevent.bytes[0] |= 0x80;
 	microtime(&adb_rptevent.timestamp);
@@ -186,9 +186,9 @@ adb_autorepeat(keyp)
 
 void 
 adb_dokeyupdown(event)
-    adb_event_t *event;
+	adb_event_t *event;
 {
-	int     adb_key;
+	int adb_key;
 
 	if (event->def_addr == 2) {
 		adb_key = event->u.k.key & 0x7f;
@@ -197,17 +197,17 @@ adb_dokeyupdown(event)
 			/* ignore shift & control */
 			if (adb_repeating != -1) {
 				untimeout(adb_autorepeat,
-				    (void *) adb_rptevent.u.k.key);
+				    (void *)adb_rptevent.u.k.key);
 			}
 			adb_rptevent = *event;
 			adb_repeating = adb_key;
 			timeout(adb_autorepeat,
-			    (void *) adb_key, adb_rptdelay);
+			    (void *)adb_key, adb_rptdelay);
 		} else {
 			if (adb_repeating != -1) {
 				adb_repeating = -1;
 				untimeout(adb_autorepeat,
-				    (void *) adb_rptevent.u.k.key);
+				    (void *)adb_rptevent.u.k.key);
 			}
 			adb_rptevent = *event;
 		}
@@ -219,7 +219,7 @@ static  adb_ms_buttons = 0;
 
 void 
 adb_keymaybemouse(event)
-    adb_event_t *event;
+	adb_event_t *event;
 {
 	static int optionkey_down = 0;
 	adb_event_t new_event;
@@ -326,7 +326,7 @@ adb_keymaybemouse(event)
 
 void 
 adb_processevent(event)
-    adb_event_t *event;
+	adb_event_t *event;
 {
 	adb_event_t new_event;
 	int i, button_bit, max_byte, mask, buttons;
@@ -404,9 +404,9 @@ adb_processevent(event)
 
 int 
 adbopen(dev, flag, mode, p)
-    dev_t dev;
-    int flag, mode;
-    struct proc *p;
+	dev_t dev;
+	int flag, mode;
+	struct proc *p;
 {
 	register int unit;
 	int error = 0;
@@ -433,9 +433,9 @@ adbopen(dev, flag, mode, p)
 
 int 
 adbclose(dev, flag, mode, p)
-    dev_t dev;
-    int flag, mode;
-    struct proc *p;
+	dev_t dev;
+	int flag, mode;
+	struct proc *p;
 {
 	int s = spladb();
 
@@ -449,9 +449,9 @@ adbclose(dev, flag, mode, p)
 
 int 
 adbread(dev, uio, flag)
-    dev_t dev;
-    struct uio *uio;
-    int flag;
+	dev_t dev;
+	struct uio *uio;
+	int flag;
 {
 	int s, error;
 	int willfit;
@@ -498,9 +498,9 @@ adbread(dev, uio, flag)
 
 int 
 adbwrite(dev, uio, flag)
-    dev_t dev;
-    struct uio *uio;
-    int flag;
+	dev_t dev;
+	struct uio *uio;
+	int flag;
 {
 	return 0;
 }
@@ -508,11 +508,11 @@ adbwrite(dev, uio, flag)
 
 int 
 adbioctl(dev, cmd, data, flag, p)
-    dev_t dev;
-    int cmd;
-    caddr_t data;
-    int flag;
-    struct proc *p;
+	dev_t dev;
+	int cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
 {
 	switch (cmd) {
 	case ADBIOC_DEVSINFO: {
@@ -522,7 +522,7 @@ adbioctl(dev, cmd, data, flag, p)
 		int adbaddr;
 		int i;
 
-		di = (void *) data;
+		di = (void *)data;
 
 		/* Initialize to no devices */
 		for (i = 0; i < 16; i++)
@@ -543,7 +543,7 @@ adbioctl(dev, cmd, data, flag, p)
 	case ADBIOC_GETREPEAT:{
 		adb_rptinfo_t *ri;
 
-		ri = (void *) data;
+		ri = (void *)data;
 		ri->delay_ticks = adb_rptdelay;
 		ri->interval_ticks = adb_rptinterval;
 		break;
@@ -552,7 +552,7 @@ adbioctl(dev, cmd, data, flag, p)
 	case ADBIOC_SETREPEAT:{
 		adb_rptinfo_t *ri;
 
-		ri = (void *) data;
+		ri = (void *)data;
 		adb_rptdelay = ri->delay_ticks;
 		adb_rptinterval = ri->interval_ticks;
 		break;
@@ -565,7 +565,7 @@ adbioctl(dev, cmd, data, flag, p)
 	case ADBIOC_LISTENCMD:{
 		adb_listencmd_t *lc;
 
-		lc = (void *) data;
+		lc = (void *)data;
 	}
 
 	default:
