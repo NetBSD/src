@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)df.c	8.7 (Berkeley) 4/2/94";*/
-static char rcsid[] = "$Id: df.c,v 1.17 1995/01/30 18:10:51 mycroft Exp $";
+static char rcsid[] = "$Id: df.c,v 1.18 1995/01/30 19:30:13 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -127,11 +127,11 @@ main(argc, argv)
 					warn("%s", *argv);
 					continue;
 				}
-			} else if ((stbuf.st_mode & S_IFMT) == S_IFCHR) {
+			} else if (S_ISCHR(stbuf.st_mode)) {
 				if (!ufs_df(*argv, &mntbuf[mntsize]))
 					++mntsize;
 				continue;
-			} else if ((stbuf.st_mode & S_IFMT) == S_IFBLK) {
+			} else if (S_ISBLK(stbuf.st_mode)) {
 				if ((mntpt = getmntpt(*argv)) == 0) {
 					mntpt = mktemp(strdup("/tmp/df.XXXXXX"));
 					mdev.fspec = *argv;

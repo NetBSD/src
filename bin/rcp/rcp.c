@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rcp.c	5.32 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$Id: rcp.c,v 1.6 1994/12/04 07:12:00 cgd Exp $";
+static char rcsid[] = "$Id: rcp.c,v 1.7 1995/01/30 19:37:34 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -407,7 +407,7 @@ verifydir(cp)
 	struct stat stb;
 
 	if (stat(cp, &stb) >= 0) {
-		if ((stb.st_mode & S_IFMT) == S_IFDIR)
+		if (S_ISDIR(stb.st_mode))
 			return;
 		errno = ENOTDIR;
 	}
@@ -493,7 +493,7 @@ source(argc, argv)
 		}
 		if (fstat(f, &stb) < 0)
 			goto notreg;
-		switch (stb.st_mode&S_IFMT) {
+		switch (stb.st_mode & S_IFMT) {
 
 		case S_IFREG:
 			break;

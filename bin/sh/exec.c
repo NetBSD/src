@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)exec.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: exec.c,v 1.13 1995/01/15 09:29:16 mycroft Exp $";
+static char *rcsid = "$Id: exec.c,v 1.14 1995/01/30 19:38:05 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -487,7 +487,7 @@ loop:
 			goto loop;
 		}
 		e = EACCES;	/* if we fail, this will be the error */
-		if ((statb.st_mode & S_IFMT) != S_IFREG)
+		if (!S_ISREG(statb.st_mode))
 			goto loop;
 		if (pathopt) {		/* this is a %func directory */
 			stalloc(strlen(fullname) + 1);
