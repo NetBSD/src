@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.43 2000/04/15 04:38:08 simonb Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.44 2000/04/15 17:43:53 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -498,10 +498,6 @@ int proc_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 int debug_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		      struct proc *));
 #endif
-int vm_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		   struct proc *));
-int fs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		   struct proc *));
 int net_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *));
 int cpu_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
