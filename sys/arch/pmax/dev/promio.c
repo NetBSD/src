@@ -1,4 +1,4 @@
-/*	$NetBSD: promio.c,v 1.25 1998/03/30 09:44:03 jonathan Exp $	*/
+/*	$NetBSD: promio.c,v 1.26 1999/01/27 03:12:24 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,13 +43,13 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: promio.c,v 1.25 1998/03/30 09:44:03 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promio.c,v 1.26 1999/01/27 03:12:24 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <dev/cons.h>
 
-#include <pmax/stand/dec_prom.h>
+#include <pmax/stand/libsa/dec_prom.h>
 #include <pmax/dev/promiovar.h>
 #include <pmax/pmax/pmaxtype.h>
 
