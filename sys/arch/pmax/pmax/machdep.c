@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.120.2.15 1999/06/11 00:53:35 nisimura Exp $ */
+/*	$NetBSD: machdep.c,v 1.120.2.16 1999/09/09 07:09:33 nisimura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,13 +43,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.15 1999/06/11 00:53:35 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.16 1999/09/09 07:09:33 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
-#include "le_ioasic.h"			/* XXX will go XXX */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +138,6 @@ void	prom_halt __P((int, char *)) __attribute__((__noreturn__));
 int	prom_systype __P((void));
 
 /* XXX should go XXX */
-u_long	le_iomem;		/* 128K IOASIC buffer for lance chip */
 volatile struct chiptime *mcclock_addr;
 /* XXX XXX XXX */
 
@@ -327,7 +325,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	db_machine_init();
 	/* init symbols if present */
 	if (esym)
-		ddb_init(*(int *)&end, ((int *)&end) + 1, (int*)esym);
+		ddb_init(esym - ssym, ssym, esym);
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
@@ -568,31 +566,6 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-
-	/*
-	 * XXX THE FOLLOWING SECTION NEEDS TO BE REPLACED
-	 * XXX WITH BUS_DMA(9).
-	 * XXXXXX Huh?  BUS_DMA(9)  doesnt support  gap16 lance copy buffers.
-	 * XXXXXX We use the copy suport  in am7990 instead.
-	 */
-
-#if NLE_IOASIC > 0
-	/*
-	 * Steal 128k of memory for the LANCE chip on machine where
-	 * it does DMA through the IOCTL ASIC.  It must be physically
-	 * contiguous and aligned on a 128k boundary.
-	 */
-	{
-		extern paddr_t avail_start, avail_end;
-		struct pglist mlist;
-
-		TAILQ_INIT(&mlist);
-		if (uvm_pglistalloc(128 * 1024, avail_start,
-		    avail_end - PAGE_SIZE, 128 * 1024, 0, &mlist, 1, FALSE))
-			panic("startup: unable to steal LANCE DMA area");
-		le_iomem = VM_PAGE_TO_PHYS(mlist.tqh_first);
-	}
-#endif /* NLE_IOASIC */
 }
 
 
