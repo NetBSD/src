@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.160 2002/12/25 22:05:10 petrov Exp $	*/
+/*	$NetBSD: locore.s,v 1.161 2003/01/15 06:15:05 chs Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -6293,8 +6293,7 @@ ENTRY(tlb_flush_all)
 
 0:
 	ldxa	[%o0] ASI_DMMU_TLB_TAG, %o2		! fetch the TLB tag
-	brlz	%o2, 1f					! global bit set?  skip
-	 andcc	%o2, %o5, %o1				! context 0?
+	andcc	%o2, %o5, %o1				! context 0?
 	bz,pt	%xcc, 1f				! if so, skip
 	 set	CTX_SECONDARY, %o2
 
@@ -6317,8 +6316,7 @@ ENTRY(tlb_flush_all)
 
 0:
 	ldxa	[%o0] ASI_IMMU_TLB_TAG, %o2		! fetch the TLB tag
-	brlz	%o2, 1f					! global bit set?  skip
-	 andcc	%o2, %o5, %o1				! context 0?
+	andcc	%o2, %o5, %o1				! context 0?
 	bz,pt	%xcc, 1f				! if so, skip
 	 set	CTX_SECONDARY, %o2
 
