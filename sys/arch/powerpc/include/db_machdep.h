@@ -1,5 +1,5 @@
 /*	$OpenBSD: db_machdep.h,v 1.2 1997/03/21 00:48:48 niklas Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.15 2003/01/22 21:44:54 kleink Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.16 2003/03/14 06:23:48 matt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -63,7 +63,7 @@ typedef struct powerpc_saved_state db_regs_t;
 extern	db_regs_t	ddb_regs;		/* register state */
 #define DDB_REGS	(&ddb_regs)
 
-#define	PC_REGS(regs)	((db_addr_t)(regs)->iar)
+#define	PC_REGS(regs)	(*(db_addr_t *)&(regs)->iar)
 
 #define	BKPT_ASM	"trap"		/* should match BKPT_INST */
 #define	BKPT_INST	0x7fe00008	/* breakpoint instruction */
