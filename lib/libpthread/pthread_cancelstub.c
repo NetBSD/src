@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.1.2.3 2002/08/02 22:20:48 nathanw Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.1.2.4 2002/08/14 23:22:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -158,6 +158,20 @@ __msync13(void *addr, size_t len, int flags)
 	self = pthread__self();
 	pthread__testcancel(self);
 	retval = _sys___msync13(addr, len, flags);
+	pthread__testcancel(self);
+
+	return retval;
+}
+
+int
+nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
+{
+	int retval;
+	pthread_t self;
+
+	self = pthread__self();
+	pthread__testcancel(self);
+	retval = _sys_nanosleep(rqtp, rmtp);
 	pthread__testcancel(self);
 
 	return retval;
