@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.39.2.1 2000/07/12 21:04:18 thorpej Exp $
+# $NetBSD: INSTALL,v 1.39.2.2 2000/08/11 18:23:20 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -232,6 +232,8 @@ bha*	at	eisa? slot ?			# BusLogic 7xx SCSI
 ep*	at	eisa? slot ?			# 3COM 3c579 Ethernet (untested)
 fea*	at	eisa? slot ?			# DEC DEFEA FDDI
 tlp*	at	eisa? slot ?			# DEC DE-425 Ethernet
+depca*	at	eisa? slot ?			# DEC DE-422 Ethernet
+le*	at	depca?
 uha*	at	eisa? slot ?			# UltraStor 24f SCSI (unt.)
 
 # SCSI bus support
