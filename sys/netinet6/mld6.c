@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.25 2003/08/22 21:53:09 itojun Exp $	*/
+/*	$NetBSD: mld6.c,v 1.26 2004/03/28 08:28:50 christos Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.25 2003/08/22 21:53:09 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.26 2004/03/28 08:28:50 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -172,8 +172,6 @@ void
 mld6_start_listening(in6m)
 	struct in6_multi *in6m;
 {
-	int s = splsoftnet();
-
 	/*
 	 * RFC2710 page 10:
 	 * The node never sends a Report or Done for the link-scope all-nodes
@@ -195,7 +193,6 @@ mld6_start_listening(in6m)
 		in6m->in6m_state = MLD_IREPORTEDLAST;
 		mld_timers_are_running = 1;
 	}
-	splx(s);
 }
 
 void
