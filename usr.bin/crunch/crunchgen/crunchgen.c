@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.12 2000/01/09 04:54:53 tsutsui Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.13 2000/01/09 16:37:28 sommerfeld Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchgen.c,v 1.12 2000/01/09 04:54:53 tsutsui Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.13 2000/01/09 16:37:28 sommerfeld Exp $");
 #endif
 
 #include <stdlib.h>
@@ -516,11 +516,11 @@ void fillin_program(prog_t *p)
 	}
     }
     if(!p->objdir && p->srcdir) {
-	(void)snprintf(path, sizeof(path), "%s/obj", p->srcdir);
+	(void)snprintf(path, sizeof(path), "%s/obj.%s", p->srcdir, machine);
 	if(is_dir(path))
 	    p->objdir = strdup(path);
 	else {
-	    (void)snprintf(path, sizeof(path), "%s/obj.%s", p->srcdir, machine);
+	    (void)snprintf(path, sizeof(path), "%s/obj", p->srcdir);
 	    if(is_dir(path))
 		p->objdir = strdup(path);
 	    else
