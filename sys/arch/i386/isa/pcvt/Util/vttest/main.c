@@ -91,8 +91,8 @@ main() {
 
 #ifdef UNIX
   initterminal(setjmp(intrenv));
-  signal(SIGINT, onbrk);
-  signal(SIGTERM, onterm);
+  signal(SIGINT, (void (*) __P((int))) onbrk);
+  signal(SIGTERM, (void (*) __P((int))) onterm);
   reading = 0;
 #else
   initterminal(0);
@@ -1912,7 +1912,7 @@ bye () {
 
 #ifdef UNIX
 onbrk() {
-  signal(SIGINT, onbrk);
+  signal(SIGINT, (void (*) __P((int))) onbrk);
   if (reading)
     brkrd = 1;
   else
@@ -1920,7 +1920,7 @@ onbrk() {
 }
 
 onterm() {
-  signal(SIGTERM, onterm);
+  signal(SIGTERM, (void (*) __P((int))) onterm);
   longjmp(intrenv, 1);
 }
 #endif
