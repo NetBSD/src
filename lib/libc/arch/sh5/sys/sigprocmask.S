@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.2 2002/07/10 11:43:16 scw Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.3 2002/07/10 11:45:51 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 #if 0
 	RCSID("from: @(#)sigprocmask.s	5.2 (Berkeley) 6/6/90")
 #else
-	RCSID("$NetBSD: sigprocmask.S,v 1.2 2002/07/10 11:43:16 scw Exp $")
+	RCSID("$NetBSD: sigprocmask.S,v 1.3 2002/07/10 11:45:51 scw Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -86,9 +86,10 @@ WARN_REFERENCES(sigprocmask, \
     "warning: reference to compatibility sigprocmask(); include <signal.h> for correct reference")
 
 ENTRY(sigprocmask)
-	ptb/u	1f, tr0			/* These six instructions */
+	pta/u	1f, tr0			/* These 7 instructions */
 	gettr	tr0, r0			/* work by magic. ;-) */
 	movi	1, r1			/* SIG_BLOCK */
+	andc	r0, r1, r0		/* But we can use it to clear r0.0 */
 	cmveq	r3, r1, r2		/* r2 = SIG_BLOCK; iff set == NULL */
 	cmveq	r3, r0, r3		/* r3 = &0; iff set == NULL */
 	ld.l	r3, 0, r3		/* r3 = *r3; */
