@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.64 2004/07/14 07:26:12 tls Exp $	*/
+/*	$NetBSD: savecore.c,v 1.65 2004/10/16 03:48:15 dsainty Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.64 2004/07/14 07:26:12 tls Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.65 2004/10/16 03:48:15 dsainty Exp $");
 #endif
 #endif /* not lint */
 
@@ -149,17 +149,18 @@ void	Write(int, void *, int);
 int
 main(int argc, char *argv[])
 {
-	int ch, level;
+	int ch, level, testonly;
 	char *ep;
 
 	dirname = NULL;
 	kernel = NULL;
 	level = 1;		/* default to fastest gzip compression */
+	testonly = 0;
 	gzmode[0] = 'w';
 
 	openlog("savecore", LOG_PERROR, LOG_DAEMON);
 
-	while ((ch = getopt(argc, argv, "cdfN:vzZ:")) != -1)
+	while ((ch = getopt(argc, argv, "cdfnN:vzZ:")) != -1)
 		switch(ch) {
 		case 'c':
 			clear = 1;
@@ -170,6 +171,9 @@ main(int argc, char *argv[])
 			break;
 		case 'f':
 			force = 1;
+			break;
+		case 'n':
+			testonly = 1;
 			break;
 		case 'N':
 			kernel = optarg;
@@ -192,7 +196,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc != (clear ? 0 : 1))
+	if (argc != ((clear || testonly) ? 0 : 1))
 		usage();
 
 	gzmode[1] = level + '0';
@@ -206,13 +210,17 @@ main(int argc, char *argv[])
 	(void)time(&now);
 	kmem_setup();
 
-	if (clear) {
+	if (clear && !testonly) {
 		clear_dump();
 		exit(0);
 	}
 
 	if (!dump_exists() && !force)
 		exit(1);
+
+	if (testonly)
+		/* If -n was passed and there was a dump, exit at level 0 */
+		exit(0);
 
 	check_kmem();
 
@@ -794,6 +802,6 @@ void
 usage(void)
 {
 	(void)syslog(LOG_ERR,
-	    "usage: savecore [-cfvz] [-N system] [-Z level] directory");
+	    "usage: savecore [-cfnvz] [-N system] [-Z level] directory");
 	exit(1);
 }
