@@ -718,6 +718,7 @@
 ./usr/share/man/cat8/rwhod.0
 ./usr/share/man/cat8/sa.0
 ./usr/share/man/cat8/savecore.0
+./usr/share/man/cat8/scsictl.0
 ./usr/share/man/cat8/sendmail.0
 ./usr/share/man/cat8/showmount.0
 ./usr/share/man/cat8/shutdown.0
@@ -1769,6 +1770,7 @@
 ./usr/share/man/man8/rwhod.8
 ./usr/share/man/man8/sa.8
 ./usr/share/man/man8/savecore.8
+./usr/share/man/man8/scsictl.8
 ./usr/share/man/man8/sendmail.8
 ./usr/share/man/man8/showmount.8
 ./usr/share/man/man8/shutdown.8
