@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.123 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.124 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -331,3 +331,6 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	pppoectl: Add a "-f configfile" option.  [mrg 20030322]
 	vax: Add device driver for RX01/RX02 floppies (rfc/rf).
 		From Jochen Kunz. [ragge 20030323]
+	sh5: Shared libraries now supported on SH5 (but not yet enabled
+		in bsd.own.mk due to sundry toolchain issues).
+		[scw 20030325]
