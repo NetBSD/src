@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.15 1997/03/12 18:13:18 mycroft Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.16 1997/03/16 19:43:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$NetBSD: xinstall.c,v 1.15 1997/03/12 18:13:18 mycroft Exp $";
+static char rcsid[] = "$NetBSD: xinstall.c,v 1.16 1997/03/16 19:43:20 christos Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -67,16 +67,23 @@ static char rcsid[] = "$NetBSD: xinstall.c,v 1.15 1997/03/12 18:13:18 mycroft Ex
 
 struct passwd *pp;
 struct group *gp;
-int docopy, dodir, dostrip;
+int docopy, dodir, dostrip, dolink;
 int mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 char pathbuf[MAXPATHLEN];
 uid_t uid;
 gid_t gid;
 
+#define LN_ABSOLUTE	0x01
+#define LN_RELATIVE	0x02
+#define LN_HARD		0x04
+#define LN_SYMBOLIC	0x08
+#define LN_MIXED	0x10
+
 #define	DIRECTORY	0x01		/* Tell install it's a directory. */
 #define	SETFLAGS	0x02		/* Tell install to set flags. */
 
 void	copy __P((int, char *, int, char *, off_t));
+void	makelink __P((char *, char *));
 void	install __P((char *, char *, u_long, u_int));
 void	install_dir __P((char *));
 u_long	string_to_flags __P((char **, u_long *, u_long *));
@@ -93,10 +100,11 @@ main(argc, argv)
 	u_long fset;
 	u_int iflags;
 	int ch, no_target;
-	char *flags, *to_name, *group = NULL, *owner = NULL;
+	char *p;
+	char *flags = NULL, *to_name, *group = NULL, *owner = NULL;
 
 	iflags = 0;
-	while ((ch = getopt(argc, argv, "cf:g:m:o:sd")) != EOF)
+	while ((ch = getopt(argc, argv, "cf:g:l:m:o:sd")) != EOF)
 		switch((char)ch) {
 		case 'c':
 			docopy = 1;
@@ -124,6 +132,34 @@ main(argc, argv)
 		case 'd':
 			dodir = 1;
 			break;
+		case 'l':
+			for (p = optarg; *p; p++)
+				switch (*p) {
+				case 's':
+					dolink &= ~(LN_HARD|LN_MIXED);
+					dolink |= LN_SYMBOLIC;
+					break;
+				case 'h':
+					dolink &= ~(LN_SYMBOLIC|LN_MIXED);
+					dolink |= LN_HARD;
+					break;
+				case 'm':
+					dolink &= ~(LN_SYMBOLIC|LN_HARD);
+					dolink |= LN_MIXED;
+					break;
+				case 'a':
+					dolink &= ~LN_RELATIVE;
+					dolink |= LN_ABSOLUTE;
+					break;
+				case 'r':
+					dolink &= ~LN_ABSOLUTE;
+					dolink |= LN_RELATIVE;
+					break;
+				default:
+					errx(1, "%c: invalid link type", *p);
+					break;
+				}
+			break;
 		case '?':
 		default:
 			usage();
@@ -132,7 +168,11 @@ main(argc, argv)
 	argv += optind;
 
 	/* copy and strip options make no sense when creating directories */
-	if ((docopy || dostrip) && dodir)
+	if ((docopy || dostrip || dolink) && dodir)
+		usage();
+
+	/* strip and flags make no sense with links */
+	if ((dostrip || flags) && dolink)
 		usage();
 
 	/* must have at least two arguments, except when creating directories */
@@ -170,7 +210,7 @@ main(argc, argv)
 			err(1, "%s", *argv);
 		if (!S_ISREG(to_sb.st_mode))
 			errx(1, "%s: %s", to_name, strerror(EFTYPE));
-		if (to_sb.st_dev == from_sb.st_dev &&
+		if (!dolink && to_sb.st_dev == from_sb.st_dev &&
 		    to_sb.st_ino == from_sb.st_ino)
 			errx(1, "%s and %s are the same file", *argv, to_name);
 		/*
@@ -186,6 +226,73 @@ main(argc, argv)
 	}
 	install(*argv, to_name, fset, iflags);
 	exit(0);
+}
+
+/*
+ * makelink --
+ *	make a link from source to destination
+ */
+void
+makelink(from_name, to_name)
+	char *from_name;
+	char *to_name;
+{
+	char src[MAXPATHLEN], dst[MAXPATHLEN], lnk[MAXPATHLEN];
+
+	/* Try hard links first */
+	if (dolink & (LN_HARD|LN_MIXED)) {
+		if (link(from_name, to_name) == -1) {
+			if ((dolink & LN_HARD) || errno != EXDEV)
+				err(1, "link %s -> %s", from_name, to_name);
+		}
+		else
+			return;
+	}
+
+	/* Symbolic links */
+	if (dolink & LN_ABSOLUTE) {
+		/* Convert source path to absolute */
+		if (realpath(from_name, src) == NULL)
+			err(1, "%s", src);
+		if (symlink(src, to_name) == -1)
+			err(1, "symlink %s -> %s", src, to_name);
+		return;
+	}
+
+	if (dolink & LN_RELATIVE) {
+		char *s, *d;
+
+		/* Resolve pathnames */
+		if (realpath(from_name, src) == NULL)
+			err(1, "%s", src);
+		if (realpath(to_name, dst) == NULL)
+			err(1, "%s", dst);
+
+		/* trim common path components */
+		for (s = src, d = dst; *s == *d; s++, d++)
+			continue;
+		while (*s != '/')
+			s--, d--;
+
+		/* count the number of directories we need to backtrack */
+		for (++d, lnk[0] = '\0'; *d; d++)
+			if (*d == '/')
+				(void) strcat(lnk, "../");
+
+		(void) strcat(lnk, ++s);
+
+		if (symlink(lnk, dst) == -1)
+			err(1, "symlink %s -> %s", lnk, dst);
+		return;
+	}
+
+	/*
+	 * If absolute or relative was not specified, 
+	 * try the names the user provided
+	 */
+	if (symlink(from_name, to_name) == -1)
+		err(1, "symlink %s -> %s", src, to_name);
+
 }
 
 /*
@@ -230,6 +337,11 @@ install(from_name, to_name, fset, flags)
 	    to_sb.st_flags & (NOCHANGEBITS))
 		(void)chflags(to_name, to_sb.st_flags & ~(NOCHANGEBITS));
 	(void)unlink(to_name);
+
+	if (dolink) {
+		makelink(from_name, to_name);
+		return;
+	}
 
 	/* Create target. */
 	if ((to_fd = open(to_name,
