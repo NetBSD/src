@@ -1,4 +1,4 @@
-.\"	$NetBSD: mknetid.8,v 1.2 1997/10/02 14:16:25 lukem Exp $
+.\"	$NetBSD: mknetid.8,v 1.3 1997/10/07 14:23:53 lukem Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -59,7 +59,7 @@ file.
 The options are as follows:
 .Bl -tag -width "-p passwdfile"
 .It Fl d Ar domain
-YP domain to use instead of the default.
+YP domain to use instead of the default domain.
 .It Fl g Ar groupfile
 Alternate
 .Xr group 5
@@ -95,6 +95,7 @@ Keep quiet about multiple occurrences of a uid; ignore all but the first.
 .It Pa /etc/passwd
 .El
 .Sh SEE ALSO
+.Xr domainname 1 ,
 .Xr group 5 ,
 .Xr hosts 5 ,
 .Xr netid 5 ,
