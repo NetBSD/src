@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)syslog.c	5.36 (Berkeley) 10/4/92";*/
-static char *rcsid = "$Id: syslog.c,v 1.5 1993/11/24 19:43:57 jtc Exp $";
+static char *rcsid = "$Id: syslog.c,v 1.5.4.1 1995/04/26 00:37:27 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -140,7 +140,6 @@ vsyslog(pri, fmt, ap)
 	/* substitute error message for %m */
 	{
 		register char ch, *t1, *t2;
-		char *strerror();
 
 		for (t1 = fmt_cpy; ch = *fmt; ++fmt)
 			if (ch == '%' && fmt[1] == 'm') {
