@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.14 1999/08/21 19:19:23 jdc Exp $	*/
+/*	$NetBSD: label.c,v 1.14.8.1 2000/10/18 17:51:14 tv Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.14 1999/08/21 19:19:23 jdc Exp $");
+__RCSID("$NetBSD: label.c,v 1.14.8.1 2000/10/18 17:51:14 tv Exp $");
 #endif
 
 #include <sys/types.h>
@@ -210,8 +210,7 @@ savenewlabel(lp, nparts)
 	f = fopen("/tmp/disktab", "a");
 #else
 	/* Create the disktab.preinstall */
-	run_prog(0, 0, NULL, "cp /etc/disktab.preinstall /etc/disktab");
-	f = fopen("/etc/disktab", "a");
+	f = fopen("/etc/disktab", "w");
 #endif
 	if (logging)
 		(void)fprintf(log, "Creating disklabel %s\n", bsddiskname);
@@ -348,20 +347,31 @@ incorelabel(dkname, lp)
 	return (0);
 }
 
-/* Ask for a partition offser, check bounds and does the needed roudups */
+/* Ask for a partition offset, check bounds and do the needed roudups */
 int
 getpartoff(msg_no, defpartstart)
 	msg msg_no;
 	int defpartstart;
 {
-	char isize[20];
-	int i, localsizemult;
+	char isize[20], maxpartc;
+	int i, localsizemult, partn;
 
+	maxpartc = 'a' + getmaxpartitions() - 1;
 	while (1) {
+		msg_table_add(MSG_label_offset_special, maxpartc);
 		snprintf (isize, 20, "%d", (defpartstart)/sizemult);
 		msg_prompt_add(msg_no, (defpartstart > 0) ? isize : NULL,
 		    isize, 20);
-		atofsb(isize, &i, &localsizemult);
+		if (isize[1] == '\0' && isize[0] >= 'a' &&
+		    isize[0] <= maxpartc) {
+			partn = isize[0] - 'a';
+			i = bsdlabel[partn].pi_size + bsdlabel[partn].pi_offset;
+			localsizemult = 1;
+		} else if (atoi(isize) == -1) {
+			i = ptstart;
+			localsizemult = 1;
+		} else
+			atofsb(isize, &i, &localsizemult);
 		if (i < 0)
 			continue;
 		/* round to cylinder size if localsizemult != 1 */
@@ -388,15 +398,27 @@ getpartsize(msg_no, partstart, defpartsize)
 	int partstart;
 	int defpartsize;
 {
-	char isize[20];
+	char isize[20], maxpartc;
 	int i, partend, localsizemult;
 	int fsptend = ptstart + fsptsize;
+	int partn;
 
+	maxpartc = 'a' + getmaxpartitions() - 1;
 	while (1) {
+		msg_table_add(MSG_label_size_special, maxpartc);
 		snprintf (isize, 20, "%d", (defpartsize)/sizemult);
 		msg_prompt_add (msg_no, (defpartsize != 0) ? isize : 0,
 		    isize, 20);
-		atofsb(isize, &i, &localsizemult);
+		if (isize[1] == '\0' && isize[0] >= 'a' &&
+		    isize[0] <= maxpartc) {
+			partn = isize[0] - 'a';
+			i = bsdlabel[partn].pi_offset - partstart;
+			localsizemult = 1;
+		} else if (atoi(isize) == -1) {
+			i = fsptend - partstart;
+			localsizemult = 1;
+		} else
+			atofsb(isize, &i, &localsizemult);
 		if (i < 0)
 			continue;
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.23 2000/03/14 22:42:50 fvdl Exp $	*/
+/*	$NetBSD: md.c,v 1.23.4.1 2000/10/18 17:51:19 tv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -283,7 +283,7 @@ int	md_post_newfs (void)
 #if 0
 	/* XXX boot blocks ... */
 	printf(msg_string(MSG_dobootblks), diskdev);
-	run_prog(0, 1, NULL, "/sbin/disklabel -B %s /dev/r%sc",
+	run_prog(RUN_DISPLAY, NULL, "/sbin/disklabel -B %s /dev/r%sc",
 	    "-b /usr/mdec/rzboot -s /usr/mdec/bootrz", diskdev);
 #endif
 	return 0;
@@ -509,9 +509,20 @@ md_cleanup_install(void)
 	if (scripting)
 		(void)fprintf(script, "%s\n", sedcmd);
 	do_system(sedcmd);
-	run_prog(1, 0, NULL, "mv -f %s %s", realto, realfrom);
-	run_prog(0, 0, NULL, "rm -f %s", target_expand("/sysinst"));
-	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.termcap"));
-	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.profile"));
+	run_prog(RUN_FATAL, NULL, "mv -f %s %s", realto, realfrom);
+	run_prog(0, NULL, "rm -f %s", target_expand("/sysinst"));
+	run_prog(0, NULL, "rm -f %s", target_expand("/.termcap"));
+	run_prog(0, NULL, "rm -f %s", target_expand("/.profile"));
 #endif
+}
+
+int
+md_pre_update()
+{
+	return 1;
+}
+
+void
+md_init()
+{
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.1 2000/01/21 11:26:00 shin Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.1.4.1 2000/10/18 17:51:20 tv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,7 +69,9 @@ real geometry:	%d cylinders, %d heads, %d sectors
 
 /* the %s's will expand into three character strings */
 message part_header
-{   Start(%3s) Size(%3s)  End(%3s)   Kind
+{   Total disksize %d sectors
+
+   Start(%3s) Size(%3s)  End(%3s)   Kind
    ---------- ---------- ---------- ----
 }
 

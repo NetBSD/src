@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5.4.2 2000/09/21 14:06:29 minoura Exp $ */
+/*	$NetBSD: md.c,v 1.5.4.3 2000/10/18 17:51:25 tv Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -203,7 +203,8 @@ md_newdisk(void)
 {
 	msg_display(MSG_newdisk, diskdev, diskdev);
 
-	return run_prog(1, 1, MSG_NONE, "/usr/mdec/newdisk -v %s", diskdev);
+	return run_prog(RUN_FATAL|RUN_DISPLAY, MSG_NONE,
+	    "/usr/mdec/newdisk -v %s", diskdev);
 }
 
 /*
@@ -240,7 +241,7 @@ md_post_newfs(void)
 {
 	/* boot blocks ... */
 	msg_display(MSG_dobootblks, diskdev);
-	return run_prog(0, 1, NULL,
+	return run_prog(RUN_DISPLAY, NULL,
 	    "/usr/mdec/installboot /usr/mdec/sdboot /dev/r%sa",
 	    diskdev);
 }
@@ -329,9 +330,20 @@ md_cleanup_install(void)
 		(void)fprintf(script, "%s\n", sedcmd);
 	do_system(sedcmd);
 
-	run_prog(1, 0, NULL, "mv -f %s %s", realto, realfrom);
+	run_prog(RUN_FATAL, NULL, "mv -f %s %s", realto, realfrom);
 #endif
-	run_prog(0, 0, NULL, "rm -f %s", target_expand("/sysinst"));
-	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.termcap"));
-	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.profile"));
+	run_prog(0, NULL, "rm -f %s", target_expand("/sysinst"));
+	run_prog(0, NULL, "rm -f %s", target_expand("/.termcap"));
+	run_prog(0, NULL, "rm -f %s", target_expand("/.profile"));
+}
+
+int
+md_pre_update()
+{
+	return 1;
+}
+
+void
+md_init()
+{
 }
