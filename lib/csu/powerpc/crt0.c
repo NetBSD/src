@@ -1,10 +1,9 @@
-/* $NetBSD: crt0.c,v 1.16 2000/06/14 06:49:00 cgd Exp $ */
+/* $NetBSD: crt0.c,v 1.17 2000/06/14 16:09:54 thorpej Exp $ */
 
 /*
+ * Copyright (c) 1997 Jason R. Thorpe.
  * Copyright (c) 1995 Christopher G. Demetriou
  * All rights reserved.
- *
- * Modificiations for NetBSD/powerpc by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -84,7 +83,7 @@ _start(argc, argv, envp, obj, cleanup, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.16 2000/06/14 06:49:00 cgd Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.17 2000/06/14 16:09:54 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
