@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.69.2.3 2002/06/23 17:41:47 jdolecek Exp $ */
+/*	$NetBSD: conf.c,v 1.69.2.4 2002/06/28 07:27:40 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -258,7 +258,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 98 */
 	cdev_fb_init(NCGFOURTEEN,cgfourteen), /* 99: /dev/cgfourteen */
 	cdev_tty_init(NMTTY,mtty),	/* 100 */
-	cdev__ocrwip_init(NMBPP,mbpp),	/* 101 */
+	cdev__ocrwi_init(NMBPP,mbpp),	/* 101 */
 	cdev_notdef(),			/* 102 */
 	cdev_notdef(),			/* 103 */
 	cdev_notdef(),			/* 104 */
