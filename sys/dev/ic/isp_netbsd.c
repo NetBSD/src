@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.61 2003/09/27 03:43:08 tls Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.62 2003/10/08 19:51:01 pk Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.61 2003/09/27 03:43:08 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.62 2003/10/08 19:51:01 pk Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
@@ -789,7 +789,7 @@ isp_fc_worker(void *arg)
 		s = splbio();
 		while (isp->isp_osinfo.threadwork) {
 			isp->isp_osinfo.threadwork = 0;
-			if (isp_fc_runstate(isp, 10 * 1000000) == 0) {
+			if (isp_fc_runstate(isp, 250000) == 0) {
 				break;
 			}
 			if  (isp->isp_osinfo.loop_checked &&
