@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.19 2000/05/26 03:34:30 jhawk Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.20 2000/05/26 20:51:25 ragge Exp $	*/
 
 /* 
  * :set tabs=4
@@ -242,13 +242,13 @@ struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
  *	stackbase - Lowest stack value
  */
 static void
-db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase, pr) {
+db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase,
+    void (*pr)(const char *, ...)) {
 	u_int nargs, arg_base, regs;
 	VAX_CALLFRAME *tmp_frame;
 	db_expr_t	diff;
 	db_sym_t	sym;
 	char		*symname;
-	void		(*pr) __P((const char *, ...));
 
 	(*pr)("Stack traceback : \n");
 	if (IN_USERLAND(fp)) {
