@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.62 1998/09/30 23:01:30 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.63 1998/09/30 23:47:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -345,38 +345,6 @@ GLOBAL(trap0)
 	moveml	sp@+,#0x7FFF		| restore most registers
 	addql	#8,sp			| pop SP and stack adjust
 	jra	_ASM_LABEL(rei)		| all done
-
-/*
- * Trap 1 action depends on the emulation type:
- * NetBSD: sigreturn "syscall"
- *   HPUX: user breakpoint
- */
-GLOBAL(trap1)
-#if 0 /* COMPAT_HPUX */
-	/* If process is HPUX, this is a user breakpoint. */
-	jne	_C_LABEL(trap15)	| HPUX user breakpoint
-#endif
-	jra	_ASM_LABEL(sigreturn)	| NetBSD
-
-/*
- * Trap 2 action depends on the emulation type:
- * NetBSD: user breakpoint -- See XXX below...
- *  SunOS: cache flush
- *   HPUX: sigreturn
- */
-GLOBAL(trap2)
-#if 0 /* COMPAT_HPUX */
-	/* If process is HPUX, this is a sigreturn call */
-	jne	_ASM_LABEL(sigreturn)
-#endif
-	jra	_C_LABEL(trap15)	| NetBSD user breakpoint
-| XXX - Make NetBSD use trap 15 for breakpoints?
-| XXX - That way, we can allow this cache flush...
-| XXX SunOS trap #2 (and NetBSD?)
-| Flush on-chip cache (leave it enabled)
-|	movl	#IC_CLEAR,d0
-|	movc	d0,cacr
-|	rte
 
 /*
  * Trap 12 is the entry point for the cachectl "syscall"
