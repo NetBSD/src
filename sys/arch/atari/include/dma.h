@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.h,v 1.7 1995/07/11 18:27:31 leo Exp $	*/
+/*	$NetBSD: dma.h,v 1.8 1996/02/22 10:11:41 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -94,7 +94,9 @@ struct dma {
 #define	DMA_LOCK_GRANT	2	/* DMA lock granted			*/
 
 #ifdef _KERNEL
-int	st_dmagrab __P((void (*)(), void (*)(), void *, int *, int));
+typedef void (*dma_farg)(void*);
+
+int	st_dmagrab __P((dma_farg, dma_farg, void *, int *, int));
 void	st_dmafree __P((void *, int *));
 int	st_dmawanted __P((void));
 void	st_dmaaddr_set __P((caddr_t));

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.14 1996/01/23 09:35:15 leo Exp $	*/
+/*	$NetBSD: zs.c,v 1.15 1996/02/22 10:11:37 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -176,6 +176,13 @@ struct cfdriver zscd = {
 	NULL, "zs", (cfmatch_t)zsmatch, zsattach, DV_TTY,
 	sizeof(struct zs_softc), NULL, 0 };
 
+/* {b,c}devsw[] function prototypes */
+dev_type_open(zsopen);
+dev_type_close(zsclose);
+dev_type_read(zsread);
+dev_type_write(zswrite);
+dev_type_ioctl(zsioctl);
+
 /* Interrupt handlers. */
 int		zshard __P((long));
 static int	zssoft __P((long));
@@ -192,7 +199,6 @@ static int	zsparam __P((struct tty *, struct termios *));
 static int	zsbaudrate __P((int, int, int *, int *, int *, int *));
 
 /* Routines purely local to this driver. */
-static void	zs_reset __P((volatile struct zschan *, int, int));
 static int	zs_modem __P((struct zs_chanstate *, int, int));
 static void	zs_loadchannelregs __P((volatile struct zschan *, u_char *));
 
@@ -221,7 +227,6 @@ void		*aux;
 	register struct zs_softc		*zi;
 	register struct zs_chanstate		*cs;
 	register volatile struct zsdevice	*addr;
-	register struct tty			*tp;
 		 char				tmp;
 
 	addr      = (struct zsdevice *)AD_SCC;
@@ -817,7 +822,7 @@ struct proc	*p;
 		break;
 	}
 	case TIOCSFLAGS: {
-		int userbits, driverbits = 0;
+		int userbits = 0;
 
 		error = suser(p->p_ucred, &p->p_acflag);
 		if(error != 0)

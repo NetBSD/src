@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.14 1996/02/02 18:05:52 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.15 1996/02/22 10:11:21 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -53,6 +53,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
+#include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
@@ -172,6 +173,17 @@ struct fd_types {
 typedef void	(*FPV)();
 
 /*
+ * {b,c}devsw[] function prototypes
+ */
+dev_type_open(Fdopen);
+dev_type_close(fdclose);
+dev_type_read(fdread);
+dev_type_write(fdwrite);
+dev_type_ioctl(fdioctl);
+dev_type_size(fdsize);
+dev_type_dump(fddump);
+
+/*
  * Private drive functions....
  */
 static void	fdstart __P((struct fd_softc *));
@@ -236,8 +248,9 @@ void		*auxp;
 	extern struct cfdriver fdcd;
 
 	struct fd_softc	fdsoftc;
-	int		i, nfound, first_found = 0;
+	int		i, nfound, first_found;
 
+	nfound = first_found = 0;
 	printf("\n");
 	fddeselect();
 	for(i = 0; i < NR_DRIVES; i++) {
@@ -247,7 +260,8 @@ void		*auxp;
 		 */
 		fdsoftc.unit  = i;
 		fdsoftc.flags = 0;
-		st_dmagrab(fdcint, fdtestdrv, &fdsoftc, &lock_stat, 0);
+		st_dmagrab((dma_farg)fdcint, (dma_farg)fdtestdrv, &fdsoftc,
+								&lock_stat, 0);
 		st_dmafree(&fdsoftc, &lock_stat);
 
 		if(!(fdsoftc.flags & FLPF_NOTRESP)) {
@@ -301,7 +315,6 @@ struct device	*pdp;
 struct cfdata	*cfp;
 void		*auxp;
 {
-	int	unit = (int)auxp;
 	return(1);
 }
 
@@ -324,6 +337,7 @@ void		*auxp;
 	disk_attach(&sc->dkdev);
 }
 
+int
 fdioctl(dev, cmd, addr, flag, p)
 dev_t		dev;
 u_long		cmd;
@@ -332,7 +346,6 @@ caddr_t		addr;
 struct proc	*p;
 {
 	struct fd_softc *sc;
-	void		*data;
 
 	sc = getsoftc(fdcd, DISKUNIT(dev));
 
@@ -358,9 +371,8 @@ struct proc	*p;
 		case DIOCWDINFO:
 		case DIOCWLABEL:
 #endif /* notyet */
-		default:
-			return(ENOTTY);
 	}
+	return(ENOTTY);
 }
 
 /*
@@ -371,6 +383,7 @@ struct proc	*p;
  *	partition 0: 360Kb
  *	partition 1: 780Kb
  */
+int
 Fdopen(dev, flags, devtype, proc)
 dev_t		dev;
 int		flags, devtype;
@@ -437,7 +450,8 @@ struct proc	*proc;
 		 */
 		sc->flags |= FLPF_INOPEN|FLPF_GETSTAT;
 		sps = splbio();
-		st_dmagrab(fdcint, fdstatus, sc, &lock_stat, 0);
+		st_dmagrab((dma_farg)fdcint, (dma_farg)fdstatus, sc,
+								&lock_stat, 0);
 		while(sc->flags & FLPF_GETSTAT)
 			tsleep((caddr_t)sc, PRIBIO, "Fdopen", 0);
 		splx(sps);
@@ -466,8 +480,10 @@ struct proc	*proc;
 #ifdef FLP_DEBUG
 	printf("Fdopen open succeeded on type %d\n", sc->part);
 #endif
+	return (0);
 }
 
+int
 fdclose(dev, flags, devtype, proc)
 dev_t		dev;
 int		flags, devtype;
@@ -492,7 +508,7 @@ struct buf	*bp;
 {
 	struct fd_softc	 *sc;
 	struct disklabel *lp;
-	int		 sps, nblocks;
+	int		 sps;
 
 	sc = getsoftc(fdcd, DISKUNIT(bp->b_dev));
 
@@ -523,7 +539,8 @@ struct buf	*bp;
 		if (fd_state & FLP_MON)
 			untimeout((FPV)fdmotoroff, (void*)sc);
 		fd_state = FLP_IDLE;
-		st_dmagrab(fdcint, fdstart, sc, &lock_stat, 0);
+		st_dmagrab((dma_farg)fdcint, (dma_farg)fdstart, sc,
+							&lock_stat, 0);
 	}
 	splx(sps);
 
@@ -539,7 +556,11 @@ done:
  * no dumps to floppy disks thank you.
  */
 int
-fddump(dev_t dev)
+fddump(dev, blkno, va, size)
+dev_t	dev;
+daddr_t	blkno;
+caddr_t	va;
+size_t	size;
 {
 	return(ENXIO);
 }
@@ -555,17 +576,19 @@ dev_t dev;
 }
 
 int
-fdread(dev, uio)
+fdread(dev, uio, flags)
 dev_t		dev;
 struct uio	*uio;
+int		flags;
 {
 	return(physio(fdstrategy, NULL, dev, B_READ, fdminphys, uio));
 }
 
 int
-fdwrite(dev, uio)
+fdwrite(dev, uio, flags)
 dev_t		dev;
 struct uio	*uio;
+int		flags;
 {
 	return(physio(fdstrategy, NULL, dev, B_WRITE, fdminphys, uio));
 }
@@ -679,7 +702,7 @@ register struct fd_softc	*sc;
 #ifdef FLP_DEBUG
 	printf("fddone: Staring job on unit %d\n", sc1->unit);
 #endif
-	st_dmagrab(fdcint, fdstart, sc1, &lock_stat, 0);
+	st_dmagrab((dma_farg)fdcint, (dma_farg)fdstart, sc1, &lock_stat, 0);
 }
 
 static int
@@ -749,11 +772,11 @@ static void
 fd_xfer(sc)
 struct fd_softc	*sc;
 {
-	register int	head = 0;
+	register int	head;
 	register int	track, sector, hbit;
-		 int	i;
 		 u_long	phys_addr;
 
+	head = track = 0;
 	switch(fd_state) {
 	    case FLP_XFER:
 		/*
@@ -1106,7 +1129,8 @@ struct fd_softc	*sc;
 			if(selected) {
 				int tmp;
 
-				st_dmagrab(fdcint, fdmoff, sc, &tmp, 0);
+				st_dmagrab((dma_farg)fdcint, (dma_farg)fdmoff,
+								sc, &tmp, 0);
 			}
 			else  fd_state = FLP_IDLE;
 			break;
@@ -1182,7 +1206,7 @@ static void
 fdtestdrv(fdsoftc)
 struct fd_softc	*fdsoftc;
 {
-	int	i, status;
+	int	status;
 
 	/*
 	 * Select the right unit and head.
@@ -1217,7 +1241,7 @@ fdgetdisklabel(sc, dev)
 struct fd_softc *sc;
 dev_t			dev;
 {
-	struct disklabel	*lp, *dlp;
+	struct disklabel	*lp;
 	int			part;
 
 	/*
