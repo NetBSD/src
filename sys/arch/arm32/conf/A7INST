@@ -1,4 +1,4 @@
-#	$NetBSD: A7INST,v 1.26 2000/03/06 03:16:24 mark Exp $
+#	$NetBSD: A7INST,v 1.27 2000/08/30 21:29:16 is Exp $
 #
 #	A7INST - A7000 install configuration
 #
@@ -97,7 +97,7 @@ options 	COMPAT_12	# NetBSD 1.2 compatibility.
 
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
 #options 	MEMORY_DISK_SIZE=0	# Size in blocks
-options 	MINIROOTSIZE=3400	# Size in blocks
+options 	MINIROOTSIZE=3800	# Size in blocks
 options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Miscellaneous kernel options
