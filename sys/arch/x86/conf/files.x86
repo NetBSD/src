@@ -1,0 +1,27 @@
+#	$NetBSD: files.x86,v 1.1 2003/02/26 21:26:09 fvdl Exp $
+
+# options for MP configuration through the MP spec
+defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUGA
+
+# MTRR support
+defflag                 MTRR
+
+define  mainbus { [apid = -1] }
+
+file	arch/x86/x86/apic.c		ioapic | lapic
+file	arch/x86/x86/i8259.c
+file	arch/x86/x86/intr.c
+file	arch/x86/x86/softintr.c
+file	arch/x86/x86/bus_machdep.c
+file	arch/x86/x86/ipi.c		multiprocessor
+file	arch/x86/x86/mtrr_i686.c	mtrr
+
+define lapic
+file	arch/x86/x86/lapic.c		lapic needs-flag
+
+device ioapic: lapic
+attach ioapic at mainbus
+file	arch/x86/x86/ioapic.c		ioapic needs-flag
+
+# MP configuration using Intel SMP specification 1.4
+file 	arch/x86/x86/mpbios.c		mpbios
