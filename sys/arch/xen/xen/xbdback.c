@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.1.2.3 2005/03/08 22:24:10 bouyer Exp $      */
+/*      $NetBSD: xbdback.c,v 1.1.2.4 2005/03/09 12:43:01 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -108,21 +108,21 @@ struct xbd_vbd {
 SLIST_HEAD(, xbdback_instance) xbdback_instances;
 
 /*
- * For each request from a guest, we need a virtual address space to
- * which we'll map the foreing pages for the I/O. These resources are
- * preallocated at boot time, and free elements are maintained in a linked
- * list. The linked list elements are also used to describe a request being
- * handled by a block device driver.
+ * For each request from a guest, a xbdback_request is allocated from a pool.
+ * This will describe the request until completion.
  */
 struct xbdback_request {
 	struct buf rq_buf; /* our I/O */
-	SLIST_ENTRY(xbdback_request) next;
-	blkif_request_t *rq_req; /* the request itself */
 	vaddr_t rq_vaddr; /* the virtual address to map the request at */
-	paddr_t rq_ma[BLKIF_MAX_PAGES_PER_REQUEST]; /* machine address to map */
 	struct xbdback_instance *rq_xbdi; /* our xbd instance */
+	/* from the request: */
+	paddr_t rq_ma[BLKIF_MAX_PAGES_PER_REQUEST]; /* machine address to map */
+	int rq_nrsegments; /* number of ma entries */
+	int rq_id;
+	int rq_operation;
 };
-SLIST_HEAD(, xbdback_request) free_xbdback_requests;
+
+struct pool xbdback_request_pool;
 
 static void xbdback_ctrlif_rx(ctrl_msg_t *, unsigned long);
 static int  xbdback_evthandler(void *);
@@ -145,8 +145,6 @@ xbdback_init()
 {
 	ctrl_msg_t cmsg;
 	blkif_be_driver_status_t st;
-	struct xbdback_request *xbd_req;
-	int i;
 
 	if ( !(xen_start_info.flags & SIF_INITDOMAIN) &&
 	     !(xen_start_info.flags & SIF_BLK_BE_DOMAIN) )
@@ -159,18 +157,11 @@ xbdback_init()
 	 * and send driver up message.
 	 */
 	SLIST_INIT(&xbdback_instances);
-	SLIST_INIT(&free_xbdback_requests);
+	pool_init(&xbdback_request_pool, sizeof(struct xbdback_request),
+	    0, 0, 0, "xbbp", NULL);
 	/* we allocate enouth to handle a whole ring at once */
-	for (i = 0; i < BLKIF_RING_SIZE; i++) {
-		xbd_req = malloc(sizeof(struct xbdback_request),
-		    M_DEVBUF, M_NOWAIT | M_ZERO);
-		if (xbd_req == NULL) {
-			printf("xbdback: failed to allocate %dth "
-			    "xbd_req\n", i);
-			break;
-		}
-		SLIST_INSERT_HEAD(&free_xbdback_requests, xbd_req, next);
-	}
+	if (pool_prime(&xbdback_request_pool, BLKIF_RING_SIZE) != 0)
+		printf("xbdback: failed to prime pool\n");
 
 	(void)ctrl_if_register_receiver(CMSG_BLKIF_BE, xbdback_ctrlif_rx,
 	    CALLBACK_IN_BLOCKING_CONTEXT);
@@ -559,11 +550,10 @@ xbdback_io(struct xbdback_instance *xbdi, blkif_request_t *req)
 		return EINVAL;
 	}
 
-	xbd_req = SLIST_FIRST(&free_xbdback_requests);
+	xbd_req = pool_get(&xbdback_request_pool, PR_NOWAIT);
 	if (xbd_req == NULL) {
-		panic("xbd_req"); /* XXX */
+		return ENOMEM;
 	}
-	SLIST_REMOVE_HEAD(&free_xbdback_requests, next);
 
 	xbd_req->rq_xbdi = xbdi;
 
@@ -620,8 +610,7 @@ xbdback_io(struct xbdback_instance *xbdi, blkif_request_t *req)
 		break;
 	}
 end:
-	xbd_req->rq_req = NULL;
-	SLIST_INSERT_HEAD(&free_xbdback_requests, xbd_req, next);
+	pool_put(&xbdback_request_pool, xbd_req);
 	return error;
 }
 
@@ -630,7 +619,7 @@ xbdback_shm_callback(void *arg)
 {
 	struct xbdback_request *xbd_req = arg;
 
-	switch(xen_shm_map(xbd_req->rq_ma, xbd_req->rq_req->nr_segments,
+	switch(xen_shm_map(xbd_req->rq_ma, xbd_req->rq_nrsegments,
 	    xbd_req->rq_xbdi->domid, &xbd_req->rq_vaddr, XSHM_CALLBACK)) {
 	case ENOMEM:
 		return -1; /* will try again later */
@@ -638,10 +627,9 @@ xbdback_shm_callback(void *arg)
 		xbdback_do_io(xbd_req);
 		return 0;
 	default:
-		xbdback_send_reply(xbd_req->rq_xbdi, xbd_req->rq_req->id,
-		    xbd_req->rq_req->operation, BLKIF_RSP_ERROR);
-		xbd_req->rq_req = NULL;
-		SLIST_INSERT_HEAD(&free_xbdback_requests, xbd_req, next);
+		xbdback_send_reply(xbd_req->rq_xbdi, xbd_req->rq_id,
+		    xbd_req->rq_operation, BLKIF_RSP_ERROR);
+		pool_put(&xbdback_request_pool, xbd_req);
 		return 0;
 	}
 }
@@ -674,10 +662,9 @@ xbdback_iodone(struct buf *bp)
 		error = BLKIF_RSP_OKAY;
 	XENPRINTF(("xbdback_io domain %d: end reqest error=%d\n",
 	    xbdi->domid, error));
-	xbdback_send_reply(xbdi, xbd_req->rq_req->id,
-	    xbd_req->rq_req->operation, error);
-	xbd_req->rq_req = NULL;
-	SLIST_INSERT_HEAD(&free_xbdback_requests, xbd_req, next);
+	xbdback_send_reply(xbdi, xbd_req->rq_id,
+	    xbd_req->rq_operation, error);
+	pool_put(&xbdback_request_pool, xbd_req);
 }
 
 static int
@@ -696,15 +683,13 @@ xbdback_probe(struct xbdback_instance *xbdi, blkif_request_t *req)
 		printf("xbdback_probe: %d segments\n", req->nr_segments);
 		return EINVAL;
 	}
-	xbd_req = SLIST_FIRST(&free_xbdback_requests);
+	xbd_req = pool_get(&xbdback_request_pool, PR_NOWAIT);
 	if (xbd_req == NULL) {
 		panic("xbd_req"); /* XXX */
 	}
-	SLIST_REMOVE_HEAD(&free_xbdback_requests, next);
 	xbd_req->rq_xbdi = xbdi;
 	if (xbdback_map_shm(req, xbd_req) < 0) {
-		xbd_req->rq_req = NULL;
-		SLIST_INSERT_HEAD(&free_xbdback_requests, xbd_req, next);
+		pool_put(&xbdback_request_pool, xbd_req);
 		return EINVAL;
 	}
 	vdisk_reply = (void *)xbd_req->rq_vaddr;
@@ -727,8 +712,7 @@ xbdback_probe(struct xbdback_instance *xbdi, blkif_request_t *req)
 	xbdback_unmap_shm(xbd_req);
 	XENPRINTF(("xbdback_probe: nreplies=%d\n", i));
 	xbdback_send_reply(xbdi, req->id, req->operation, i);
-	xbd_req->rq_req = NULL;
-	SLIST_INSERT_HEAD(&free_xbdback_requests, xbd_req, next);
+	pool_put(&xbdback_request_pool, xbd_req);
 	return 0;
 }
 
@@ -746,7 +730,7 @@ xbdback_send_reply(struct xbdback_instance *xbdi, int id, int op, int status)
 	resp->operation = op;
 	resp->status    = status;
 	xbdi->resp_prod++;
-	__insn_barrier(); /* ensure guest see all ou replies */
+	__insn_barrier(); /* ensure guest see all our replies */
 	xbdi->blk_ring->resp_prod = xbdi->resp_prod;
 	hypervisor_notify_via_evtchn(xbdi->evtchn);
 }
@@ -757,7 +741,9 @@ xbdback_map_shm(blkif_request_t *req, struct xbdback_request *xbd_req)
 {
 	int i;
 
-	xbd_req->rq_req = req;
+	xbd_req->rq_nrsegments = req->nr_segments;
+	xbd_req->rq_id = req->id;
+	xbd_req->rq_operation = req->operation;
 
 #ifdef DIAGNOSTIC
 	if (req->nr_segments <= 0 ||
@@ -778,12 +764,7 @@ xbdback_map_shm(blkif_request_t *req, struct xbdback_request *xbd_req)
 static void
 xbdback_unmap_shm(struct xbdback_request *xbd_req)
 {
-	paddr_t ma[BLKIF_MAX_PAGES_PER_REQUEST];
-	int i;
-
-	for (i = 0; i < xbd_req->rq_req->nr_segments; i++)
-		ma[i] = (xbd_req->rq_req->frame_and_sects[i] & ~PAGE_MASK);
-	xen_shm_unmap(xbd_req->rq_vaddr, ma, xbd_req->rq_req->nr_segments,
-	    xbd_req->rq_xbdi->domid);
+	xen_shm_unmap(xbd_req->rq_vaddr, xbd_req->rq_ma,
+	    xbd_req->rq_nrsegments, xbd_req->rq_xbdi->domid);
 	xbd_req->rq_vaddr = -1;
 }
