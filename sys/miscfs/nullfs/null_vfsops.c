@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.26 2000/03/16 19:00:26 jdolecek Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.27 2000/06/10 18:27:03 assar Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -168,7 +168,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	 * Make sure that the mount point is sufficiently initialized
 	 * that the node create call will work.
 	 */
-	vfs_getnewfsid(mp, MOUNT_NULL);
+	vfs_getnewfsid(mp);
 
 	nmp->nullm_size = sizeof (struct null_node);
 	nmp->nullm_tag = VT_NULL;
