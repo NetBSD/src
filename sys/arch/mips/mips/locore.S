@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.39 1997/07/07 03:54:31 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.40 1997/07/20 19:40:25 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1122,15 +1122,13 @@ ALEAF(baderr)
 	li	v0, -1
 END(fswintrberr)
 
-/* XXX 
- * XXX 
- * second-level (after locore vectors)  jump tables
- * were here */
+/*
+ * mips1 or mips3 specific locore code
+ */
 
-
-#if 1	/* R2000/r3000 support, default on pmaxes */
+#ifdef MIPS1
 # include "locore_r2000.S"
-#endif	/* R2000/r3000 support, default on pmaxes */
+#endif
 
 #ifdef MIPS3		/* R4000 support  */
 # include "locore_r4000.S"

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.71 1997/07/20 03:46:20 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.72 1997/07/20 19:40:19 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -108,7 +108,8 @@ int (*mips_hardware_intr) __P((unsigned mask, unsigned pc, unsigned status,
 /*
  * Exception-handling functions, called via ExceptionTable from locore
  */
-extern void mips1_KernGenException __P((void));
+#ifdef MIPS1
+ extern void mips1_KernGenException __P((void));
 extern void mips1_UserGenException __P((void));
 extern void mips1_TLBMissException __P((void));
 extern void mips1_SystemCall __P((void));
@@ -117,6 +118,7 @@ extern void mips1_UserIntr __P((void));
 /* marks end of vector code */
 extern void mips1_UTLBMiss	__P((void));
 extern void mips1_exceptionentry_end __P((void));
+#endif
 
 #ifdef MIPS3
 extern void mips3_KernGenException __P((void));
@@ -136,6 +138,7 @@ extern void mips3_exceptionentry_end __P((void));
 #endif
 
 
+#ifdef MIPS1
 void (*mips1_ExceptionTable[]) __P((void)) = {
 /*
  * The kernel exception handlers.
@@ -208,6 +211,7 @@ void (*mips1_ExceptionTable[]) __P((void)) = {
     mips1_UserGenException,		/* 20 */
     mips1_UserGenException,		/* 31 */
 };
+#endif	/* MIPS1 */
 
 #ifdef MIPS3		/* r4000 family (mips-III cpu) */
 
@@ -1784,6 +1788,7 @@ mips3_dump_tlb(first, last, printfn)
 }
 #endif /* MIPS3 */
 
+#ifdef MIPS1
 /*
  * Dump mips1 TLB contents.
  * called by mips3 locore after in-kernel TLB miss.
@@ -1816,7 +1821,7 @@ mips1_dump_tlb(first, last, printfn)
 		tlbno++;
 	}
 }
-
+#endif /* MIPS1 */
 
 /*
  *  Dump TLB after panic.
