@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 
 #ifndef lint
 /*static char sccsid[] = "@(#)env.c	8.3 (Berkeley) 4/2/94";*/
-__RCSID("$NetBSD: env.c,v 1.11 1999/11/02 10:53:17 lukem Exp $");
+__RCSID("$NetBSD: env.c,v 1.12 1999/11/02 10:56:32 lukem Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -66,7 +66,7 @@ main(argc, argv)
 
 	setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "i")) != -1)
+	while ((ch = getopt(argc, argv, "-i")) != -1)
 		switch((char)ch) {
 		case '-':			/* obsolete */
 		case 'i':
