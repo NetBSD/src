@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 1999/12/07 17:58:04 soren Exp $
+#	$NetBSD: Makefile.inc,v 1.8 1999/12/07 22:33:49 soren Exp $
 
 # Ross Harvey <ross@netbsd.org>
 
@@ -17,11 +17,11 @@ ICMD=	${INSTALL} ${RENAME} ${PRESERVE} ${COPY}	\
 
 PRESET=	${GFLAGS} -dV=$V -dV_S=${V_S} -dMACHINE=$M -d.CURDIR=${.CURDIR} -r$M=1 
 
-POST_PLAIN= -P-b -P-u -P-o -Tlatin1
+POST_PLAIN= -P-b -P-u -P-o
 
 ARGS_PS=	${PRESET} -dformat=PostScript
-ARGS_TXT=	${PRESET} -dformat=ASCII ${POST_PLAIN}
-ARGS_HTML=	${PRESET} -dformat=HTML  ${POST_PLAIN} -ww
+ARGS_TXT=	${PRESET} -dformat=ASCII ${POST_PLAIN} -Tascii -Tascii
+ARGS_HTML=	${PRESET} -dformat=HTML ${POST_PLAIN} -Tlatin1 -ww
 ARGS_MORE=	${PRESET} -dformat=more -P-h -Tlatin1
 
 #
