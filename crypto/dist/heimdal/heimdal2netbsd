@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: heimdal2netbsd,v 1.8 2004/04/02 15:11:21 lha Exp $
+# $NetBSD: heimdal2netbsd,v 1.9 2004/09/14 08:08:20 lha Exp $
 
 if [ \! -f kuser/kinit.c ]; then 
 	echo "`basename $0`: should be run in top src directory" 1>&2
@@ -73,10 +73,11 @@ update_inc lib/hdb/hdb.h
 update_inc lib/sl/ss.h
 
 rm -r doc/standardisation
-echo 'configure --prefix=/usr --with-krb4=/usr --with-krb4-include=/usr/include/kerberosIV'
-echo 'find . -name Makefile.in -o -name Makefile -o -name \*~ -exec rm {} \;'
+echo 'commands to run:
+echo '   configure --prefix=/usr --with-krb4=/usr --with-krb4-include=/usr/include/kerberosIV'
+echo '   find . -name Makefile.in -o -name Makefile -o -name \*~ -exec rm {} \;'
 echo 'Remember to update files in basesrc/include/heimdal/.'
-echo 'cvs -d ... import src/crypto/dist/heimdal HEIMDAL heimdal-0-...'
-echo 'cvs -d ... checkout -kk -jheimdal-old -jheimdal-new src/crypto/dist/heimdal
+echo '   cvs -d ... import src/crypto/dist/heimdal HEIMDAL heimdal-0-...'
+echo '   cvs -d ... checkout -kk -jheimdal-old -jheimdal-new src/crypto/dist/heimdal'
 
 exit 0
