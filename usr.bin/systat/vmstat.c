@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.19 1999/03/24 05:51:32 mrg Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.20 1999/09/30 13:16:27 soren Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.19 1999/03/24 05:51:32 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.20 1999/09/30 13:16:27 soren Exp $");
 #endif /* not lint */
 
 /*
@@ -322,7 +322,7 @@ labelkre()
 	for (i = 0; i < dk_ndrive && j < MAXDRIVES; i++)
 		if (dk_select[i]) {
 			mvprintw(DISKROW, DISKCOL + 5 + 5 * j,
-				"  %3.3s", dr_name[j]);
+				" %4.4s", dr_name[j]);
 			j++;
 		}
 	for (i = 0; i < nintr; i++) {
@@ -474,7 +474,7 @@ showkre()
 	for (i = 0, c = 0; i < dk_ndrive && c < MAXDRIVES; i++)
 		if (dk_select[i]) {
 			mvprintw(DISKROW, DISKCOL + 5 + 5 * c,
-				"  %3.3s", dr_name[i]);
+				" %4.4s", dr_name[i]);
 			dinfo(i, ++c);
 		}
 	putint(s.nchcount, NAMEIROW + 2, NAMEICOL, 9);
@@ -656,5 +656,5 @@ dinfo(dn, c)
 	putint((int)((float)cur.dk_seek[dn]/etime+0.5), DISKROW + 1, c, 5);
 	putint((int)((float)cur.dk_xfer[dn]/etime+0.5), DISKROW + 2, c, 5);
 	putint((int)(words/etime + 0.5), DISKROW + 3, c, 5);
-	putfloat(atime/etime, DISKROW + 4, c, 5, 1, 1);
+	putfloat(atime/etime, DISKROW + 4, c, 5, 2, 1);
 }
