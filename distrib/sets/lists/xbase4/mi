@@ -1,4 +1,8 @@
-# $NetBSD: mi,v 1.6 2003/03/01 00:11:29 tron Exp $
+# $NetBSD: mi,v 1.7 2003/03/01 07:31:36 tron Exp $
+./etc/X11
+./etc/fonts
+./etc/fonts/fonts.conf
+./etc/fonts/fonts.dtd
 ./usr/X11R6/bin/bdftruncate
 ./usr/X11R6/bin/beforelight
 ./usr/X11R6/bin/cxpm

@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.17 2002/09/16 23:04:39 thorpej Exp $
+#	$NetBSD: checkflist,v 1.18 2003/03/01 07:31:35 tron Exp $
 #
 # Verify output of makeflist against contents of $DESTDIR.
 
@@ -24,7 +24,7 @@ while : ; do
 	case $1 in
 	-x11)
 		xargs="-x"
-		origin=./usr/X11R6
+		origin="./etc/X11 ./etc/fonts ./usr/X11R6"
 		;;
 	-both)
 		xargs="-b"
