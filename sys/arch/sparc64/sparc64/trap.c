@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.97 2003/10/27 00:15:24 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.98 2003/11/01 01:38:46 cl Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.97 2003/10/27 00:15:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.98 2003/11/01 01:38:46 cl Exp $");
 
 #define NEW_FPSTATE
 
@@ -442,6 +442,10 @@ userret(l, pc, oticks)
 {
 	struct proc *p = l->l_proc;
 	int sig;
+
+	/* Generate UNBLOCKED upcall. */
+	if (l->l_flag & L_SA_BLOCKING)
+		sa_unblock_userret(l);
 
 	/* take pending signals */
 	while ((sig = CURSIG(l)) != 0)
