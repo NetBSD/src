@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_aout.h,v 1.11 2002/11/01 22:58:44 thorpej Exp $	*/
+/*	$NetBSD: cdefs_aout.h,v 1.12 2002/12/05 05:47:24 simonb Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.
@@ -68,7 +68,7 @@
 #define	__KERNEL_SCCSID(_n,_s)
 #define	__KERNEL_COPYRIGHT(_n, _s) __IDSTRING(__CONCAT(copyright,_n),_s)
 
-#ifdef __lint__
+#ifndef __lint__
 #define	__link_set_make_entry(set, sym, type)				\
 	static void const * const __link_set_##set##_sym_##sym = &sym;	\
 	__asm(".stabs \"___link_set_" #set "\", " #type ", 0, 0, _" #sym)
