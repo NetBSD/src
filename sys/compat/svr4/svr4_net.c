@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.10 1996/06/05 19:07:37 christos Exp $	 */
+/*	$NetBSD: svr4_net.c,v 1.11 1996/08/30 23:06:24 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -220,6 +220,7 @@ svr4_stream_get(fp)
 	st = malloc(sizeof(struct svr4_strm), M_NETADDR, M_WAITOK);
 	st->s_family = so->so_proto->pr_domain->dom_family;
 	st->s_cmd = ~0;
+	st->s_afd = -1;
 	so->so_internal = st;
 
 	return st;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_socket.c,v 1.1 1996/04/11 12:43:30 christos Exp $	*/
+/*	$NetBSD: svr4_socket.c,v 1.2 1996/08/30 23:06:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -77,6 +77,8 @@ svr4_find_socket(p, fp, dev, ino)
 	void *cookie = ((struct socket *) fp->f_data)->so_internal;
 
 	if (!initialized) {
+		DPRINTF(("svr4_find_socket: uninitialized [%p,%d,%d]\n",
+		    p, dev, ino));
 		TAILQ_INIT(&svr4_head);
 		initialized = 1;
 		return NULL;

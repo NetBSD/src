@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stropts.h,v 1.7 1996/06/05 19:07:38 christos Exp $	 */
+/*	$NetBSD: svr4_stropts.h,v 1.8 1996/08/30 23:06:37 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -73,6 +73,13 @@ struct svr4_strbuf {
 #define SVR4_I_GETCLTIME     (SVR4_STR|33)
 #define SVR4_I_CANPUT        (SVR4_STR|34)
 
+/*
+ * The following two ioctls are OS specific and
+ * undocumented.
+ */
+#define SVR4__I_BIND_RSVD    (SVR4_STR|242)
+#define SVR4__I_RELE_RSVD    (SVR4_STR|243)
+
 /* Struct passed for SVR4_I_STR */
 struct svr4_strioctl {
 	u_long	 cmd;
@@ -89,7 +96,8 @@ struct svr4_strioctl {
  */
 struct svr4_strm {
 	int	s_family;	/* socket family */
-	int	s_cmd;		/* last getmsg reply or putmsg request */
+	int	s_cmd;		/* last getmsg reply or putmsg request	*/
+	int	s_afd;		/* last accepted fd; [for fd_insert]	*/
 };
 
 /*
@@ -114,6 +122,14 @@ struct svr4_infocmd {
 	long	serv;
 	long	current;
 	long	provider;
+};
+
+struct svr4_strfdinsert {
+	struct svr4_strbuf	ctl;
+	struct svr4_strbuf	data;
+	long			flags;
+	int 			fd;
+	int			offset;
 };
 
 struct svr4_netaddr_in {
