@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.33 1996/05/12 23:54:22 mycroft Exp $	*/
+/*	$NetBSD: wt.c,v 1.34 1996/09/05 15:37:18 mycroft Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -168,7 +168,7 @@ int wtstatus __P((struct wt_softc *sc));
 void wtrewind __P((struct wt_softc *sc));
 int wtreadfm __P((struct wt_softc *sc));
 int wtwritefm __P((struct wt_softc *sc));
-u_char wtpoll __P((struct wt_softc *sc, int mask, int bits));
+u_char wtsoft __P((struct wt_softc *sc, int mask, int bits));
 
 int wtprobe __P((struct device *, void *, void *));
 void wtattach __P((struct device *, struct device *, void *));
@@ -789,7 +789,7 @@ wtwritefm(sc)
  * While controller status & mask == bits continue waiting.
  */
 u_char
-wtpoll(sc, mask, bits)
+wtsoft(sc, mask, bits)
 	struct wt_softc *sc;
 	int mask, bits;
 {
@@ -813,7 +813,7 @@ wtpoll(sc, mask, bits)
 		x = inb(sc->STATPORT);
 		if ((x & mask) != bits)
 			return x;
-		tsleep((caddr_t)wtpoll, WTPRI, "wtpoll", 1);
+		tsleep((caddr_t)wtsoft, WTPRI, "wtsoft", 1);
 	}
 }
 
@@ -830,7 +830,7 @@ wtcmd(sc, cmd)
 
 	WTDBPRINT(("wtcmd() cmd=0x%x\n", cmd));
 	s = splbio();
-	x = wtpoll(sc, sc->BUSY | sc->NOEXCEP, sc->BUSY | sc->NOEXCEP); /* ready? */
+	x = wtsoft(sc, sc->BUSY | sc->NOEXCEP, sc->BUSY | sc->NOEXCEP); /* ready? */
 	if ((x & sc->NOEXCEP) == 0) {			/* error */
 		splx(s);
 		return 0;
@@ -839,9 +839,9 @@ wtcmd(sc, cmd)
 	outb(sc->CMDPORT, cmd);				/* output the command */
 
 	outb(sc->CTLPORT, sc->REQUEST | sc->ONLINE);	/* set request */
-	wtpoll(sc, sc->BUSY, sc->BUSY);			/* wait for ready */
+	wtsoft(sc, sc->BUSY, sc->BUSY);			/* wait for ready */
 	outb(sc->CTLPORT, sc->IEN | sc->ONLINE);	/* reset request */
-	wtpoll(sc, sc->BUSY, 0);			/* wait for not ready */
+	wtsoft(sc, sc->BUSY, 0);			/* wait for not ready */
 	splx(s);
 	return 1;
 }
@@ -895,7 +895,7 @@ wtstart(sc, flag, vaddr, len)
 	u_char x;
 
 	WTDBPRINT(("wtstart()\n"));
-	x = wtpoll(sc, sc->BUSY | sc->NOEXCEP, sc->BUSY | sc->NOEXCEP); /* ready? */
+	x = wtsoft(sc, sc->BUSY | sc->NOEXCEP, sc->BUSY | sc->NOEXCEP); /* ready? */
 	if ((x & sc->NOEXCEP) == 0) {
 		sc->flags |= TPEXCEP;	/* error */
 		return 0;
@@ -1050,17 +1050,17 @@ wtstatus(sc)
 	int s;
 
 	s = splbio();
-	wtpoll(sc, sc->BUSY | sc->NOEXCEP, sc->BUSY | sc->NOEXCEP); /* ready? */
+	wtsoft(sc, sc->BUSY | sc->NOEXCEP, sc->BUSY | sc->NOEXCEP); /* ready? */
 	outb(sc->CMDPORT, QIC_RDSTAT);	/* send `read status' command */
 
 	outb(sc->CTLPORT, sc->REQUEST | sc->ONLINE);	/* set request */
-	wtpoll(sc, sc->BUSY, sc->BUSY);			/* wait for ready */
+	wtsoft(sc, sc->BUSY, sc->BUSY);			/* wait for ready */
 	outb(sc->CTLPORT, sc->ONLINE);			/* reset request */
-	wtpoll(sc, sc->BUSY, 0);			/* wait for not ready */
+	wtsoft(sc, sc->BUSY, 0);			/* wait for not ready */
 
 	p = (char *)&sc->error;
 	while (p < (char *)&sc->error + 6) {
-		u_char x = wtpoll(sc, sc->BUSY | sc->NOEXCEP, sc->BUSY | sc->NOEXCEP);
+		u_char x = wtsoft(sc, sc->BUSY | sc->NOEXCEP, sc->BUSY | sc->NOEXCEP);
 		if ((x & sc->NOEXCEP) == 0) {	/* error */
 			splx(s);
 			return 0;
@@ -1069,7 +1069,7 @@ wtstatus(sc)
 		*p++ = inb(sc->DATAPORT);	/* read status byte */
 
 		outb(sc->CTLPORT, sc->REQUEST | sc->ONLINE); /* set request */
-		wtpoll(sc, sc->BUSY, 0);	/* wait for not ready */
+		wtsoft(sc, sc->BUSY, 0);	/* wait for not ready */
 		outb(sc->CTLPORT, sc->ONLINE);	/* unset request */
 	}
 	splx(s);
