@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbmips,v 1.10 2003/10/10 22:42:39 jdolecek Exp $
+#	$NetBSD: majors.evbmips,v 1.11 2003/12/10 02:04:00 jmc Exp $
 #
 # Device majors for evbmips
 #
@@ -78,4 +78,4 @@ device-major	ksyms		char 76			ksyms
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
-# sys/dev/majors.
+# sys/conf/majors.
