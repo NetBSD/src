@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/08/18 12:39:42 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2002/08/18 14:06:54 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -9,8 +9,9 @@ DBG=		-Os
 CRUNCHBIN=	rescue
 CRUNCHENV=	# empty - don't want SMALLPROG defined
 LISTS=		${.CURDIR}/list
-MTREECONF=	${DISTRIBDIR}/common/mtree.dot
-IMAGEDEPENDS=	${CRUNCHBIN}
+TARGETDIR=	${DESTDIR}/rescue
+PARSELISTENV+=  TARGETDIR=${TARGETDIR:Q}
+
 
 .for f in bim edlabel fdisk ldconfig pdisk
 PROG_${f}!=	cd ${NETBSDSRCDIR}/sbin/${f} && ${MAKE} -V PROG
@@ -27,11 +28,10 @@ PARSELISTENV+=	LDD_CMD=ldd_aout
 
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
-.include "${DISTRIBDIR}/common/Makefile.image"
 
-realall: ${WORKBUILT} ${WORKSPEC}
+realall: ${CRUNCHBIN}
 
-install:
-#	XXX: implement
+install: ${CRUNCHBIN}
+	${PARSELIST} -v mode=install ${LISTS} | ${MAKE} -f - install
 
 .include <bsd.prog.mk>
