@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.16 2001/01/08 15:30:39 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.17 2001/01/10 04:38:32 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -296,8 +296,8 @@ static const char * const i386_intel_brand[] = {
 static int exec_nomid	__P((struct proc *, struct exec_package *));
 #endif
 
-void cyrix6x86_cpu_setup __P((void));
-void winchip_cpu_setup __P((void));
+void cyrix6x86_cpu_setup __P((struct cpu_info *));
+void winchip_cpu_setup __P((struct cpu_info *));
 
 static __inline u_char
 cyrix_read_reg(u_char reg)
@@ -715,7 +715,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"486"		/* Default */
 			},
-			NULL
+			cyrix6x86_cpu_setup /* XXX ?? */
 		},
 		/* Family 5 */
 		{
@@ -795,8 +795,25 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 };
 
 void
-cyrix6x86_cpu_setup()
+cyrix6x86_cpu_setup(ci)
+	struct cpu_info *ci;
 {
+	/*
+	 * i8254 latch check routine:
+	 *     National Geode (formerly Cyrix MediaGX) has a serious bug in
+	 *     its built-in i8254-compatible clock module.
+	 *     Set the variable 'clock_broken_latch' to indicate it.
+	 */
+
+	extern int clock_broken_latch;
+	
+	switch (ci->ci_signature) {
+	case 0x440:     /* Cyrix MediaGX */
+	case 0x540:     /* GXm */
+		clock_broken_latch = 1;
+		break;
+	}
+	
 	/* set up various cyrix registers */
 	/* Enable suspend on halt */
 	cyrix_write_reg(0xc2, cyrix_read_reg(0xc2) | 0x08);
@@ -818,12 +835,11 @@ cyrix6x86_cpu_setup()
 }
 
 void
-winchip_cpu_setup()
+winchip_cpu_setup(ci)
+	struct cpu_info *ci;
 {
 #if defined(I586_CPU)
-	extern int cpu_id;
-
-	switch (CPUID2MODEL(cpu_id)) { /* model */
+	switch (CPUID2MODEL(ci->ci_signature)) { /* model */
 	case 4:	/* WinChip C6 */
 		cpu_feature &= ~CPUID_TSC;
 		printf("WARNING: WinChip C6: broken TSC disabled\n");
@@ -831,59 +847,98 @@ winchip_cpu_setup()
 #endif
 }
 
+
+#define CPUID(code, eax, ebx, ecx, edx) 			\
+	asm ("cpuid"						\
+	    : "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)	\
+	    : "a" (code));
+
+void
+cpu_probe_features(ci)
+	struct cpu_info *ci;
+{
+	const struct i386_cache_info *cai;
+	u_int descs[4];
+	int iterations, i, j;
+	u_int8_t desc;
+	u_int32_t dummy1, dummy2, brand;
+		
+	if (ci->ci_cpuid_level < 0)
+		return;
+
+	CPUID(0, ci->ci_cpuid_level,
+	    ci->ci_vendor[0],
+	    ci->ci_vendor[2],
+	    ci->ci_vendor[1]);
+	ci->ci_vendor[3] = 0;
+	
+	if (ci->ci_cpuid_level < 1)
+		return;
+	
+	CPUID(1, ci->ci_signature, brand,
+	    dummy1, ci->ci_feature_flags);
+
+	/* Brand is low order 8 bits of ebx */
+	ci->ci_brand_id = brand & 0xff;
+	
+	if (ci->ci_cpuid_level < 2)
+		return;
+	
+	/*
+	 * Parse the cache info from `cpuid', if we have it.
+	 * XXX This is kinda ugly, but hey, so is the architecture...
+	 */
+
+	CPUID(2, descs[0], descs[1], descs[2], descs[3]);
+	
+	iterations = descs[0] & 0xff;
+	while (iterations-- > 0) {
+		for (i = 0; i < 4; i++) {
+			if (descs[i] & 0x80000000)
+				continue;
+			for (j = 0; j < 4; j++) {
+				if (i == 0 && j == 0)
+					continue;
+				desc = (descs[i] >> (j * 8)) & 0xff;
+				if (desc == 0)
+					continue;
+				cai = i386_cache_info_lookup(desc);
+				if (cai != NULL) {
+					const struct i386_cache_info  **cp;
+					cp = (const struct i386_cache_info **)
+					    (((uint8_t *)ci)+
+						cai->cai_offset);
+					*cp = cai;
+				}
+			}
+		}
+		CPUID(2, descs[0], descs[1], descs[2], descs[3]);
+	}
+
+	if (ci->ci_cpuid_level < 3)
+		return;
+	
+	/*
+	 * If the processor serial number misfeature is present and supported,
+	 * extract it here.
+	 */
+	if ((ci->ci_feature_flags & CPUID_PN) != 0) 
+	{
+		ci->ci_cpu_serial[0] = ci->ci_signature;
+		CPUID(3, dummy1, dummy2,
+		    ci->ci_cpu_serial[2],
+		    ci->ci_cpu_serial[1]);
+	}
+}
+
 /*
  * Print identification for the given CPU.
- * XXX XXX
- * This is not as clean as one might like, because it references
- *
- * the "cpuid_level" and "cpu_vendor" globals.
- * cpuid_level isn't so bad, since both CPU's will hopefully
- * be of the same level.
- *
- * The Intel multiprocessor spec doesn't give us the cpu_vendor
- * information; however, the chance of multi-vendor SMP actually
- * ever *working* is sufficiently low that it's probably safe to assume
- * all processors are of the same vendor.
  */
- 
-static void
-do_cpuid(u_int which, u_int *rv)
-{
-	register u_int eax __asm("%eax") = which;
-
-	__asm __volatile(
-	"	cpuid			;"
-	"	movl	%%eax,0(%2)	;"
-	"	movl	%%ebx,4(%2)	;"
-	"	movl	%%ecx,8(%2)	;"
-	"	movl	%%edx,12(%2)	"
-	: "=a" (eax)
-	: "0" (eax), "S" (rv)
-	: "ebx", "ecx", "edx");
-}
-
-static void
-do_cpuid_serial(u_int *serial)
-{
-	__asm __volatile(
-	"	movl	$1,%%eax	;"
-	"	cpuid			;"
-	"	movl	%%eax,0(%0)	;"
-	"	movl	$3,%%eax	;"
-	"	cpuid			;"
-	"	movl	%%edx,4(%0)	;"
-	"	movl	%%ecx,8(%0)	"
-	: /* no imputs */
-	: "S" (serial)
-	: "eax", "ebx", "ecx", "edx");
-}
 
 void
 identifycpu(ci)
 	struct cpu_info *ci;
 {
-	extern char cpu_vendor[];
-	extern int cpu_brand_id;
 	const char *name, *modifier, *vendorname, *brand = "";
 	int class = CPUCLASS_386, vendor, i, max;
 	int family, model, step, modif;
@@ -891,7 +946,7 @@ identifycpu(ci)
 	char *cpuname = ci->ci_dev->dv_xname;
 	char buf[1024];
 
-	if (cpuid_level == -1) {
+	if (ci->ci_cpuid_level == -1) {
 #ifdef DIAGNOSTIC
 		if (cpu < 0 || cpu >=
 		    (sizeof i386_nocpuid_cpus/sizeof(struct cpu_nocpuid_nameclass)))
@@ -917,7 +972,7 @@ identifycpu(ci)
 #endif
 
 		for (i = 0; i < max; i++) {
-			if (!strncmp(cpu_vendor,
+			if (!strncmp((char *)ci->ci_vendor,
 			    i386_cpuid_cpus[i].cpu_id, 12)) {
 				cpup = &i386_cpuid_cpus[i];
 				break;
@@ -926,8 +981,8 @@ identifycpu(ci)
 
 		if (cpup == NULL) {
 			vendor = CPUVENDOR_UNKNOWN;
-			if (cpu_vendor[0] != '\0')
-				vendorname = &cpu_vendor[0];
+			if (ci->ci_vendor[0] != '\0')
+				vendorname = (char *)&ci->ci_vendor[0];
 			else
 				vendorname = "Unknown";
 			if (family > CPU_MAXFAMILY)
@@ -957,58 +1012,18 @@ identifycpu(ci)
 			 * recognize brand by Brand ID value.
 			 */
 			if (vendor == CPUVENDOR_INTEL && family >= 6
-			    && model >= 8 && cpu_brand_id && cpu_brand_id <= 8)
-				brand = i386_intel_brand[cpu_brand_id];
+			    && model >= 8 && ci->ci_brand_id &&
+			    ci->ci_brand_id <= 8)
+				brand = i386_intel_brand[ci->ci_brand_id];
 		}
 	}
 
 	cpu_class = class;
-	ci->cpu_class = class;
+	ci->ci_cpu_class = class;
 
 	/*
 	 * XXX the following needs to run on the CPU being probed..
 	 */
-	/*
-	 * Parse the cache info from `cpuid', if we have it.
-	 * XXX This is kinda ugly, but hey, so is the architecture...
-	 */
-	if (cpuid_level != -1) {
-		const struct i386_cache_info *cai;
-		u_int descs[4];
-		int iterations, j;
-		u_int8_t desc;
-
-		do_cpuid(2, descs);
-		iterations = descs[0] & 0xff;
-		while (iterations-- > 0) {
-			for (i = 0; i < 4; i++) {
-				if (descs[i] & 0x80000000)
-					continue;
-				for (j = 0; j < 4; j++) {
-					if (i == 0 && j == 0)
-						continue;
-					desc = (descs[i] >> (j * 8)) & 0xff;
-					cai = i386_cache_info_lookup(desc);
-					if (cai != NULL) {
-						const struct i386_cache_info  **cp;
-						cp = (const struct i386_cache_info **)
-						    (((uint8_t *)ci)+
-							cai->cai_offset);
-						*cp = cai;
-					}
-				}
-			}
-
-			do_cpuid(2, descs);
-		}
-	}
-
-	/*
-	 * If the processor serial number misfeature is present and supported,
-	 * extract it here.
-	 */
-	if (cpuid_level >= 3 && (cpu_feature & CPUID_PN) != 0)
-		do_cpuid_serial(ci->ci_cpu_serial);
 
 #if defined(I586_CPU) || defined(I686_CPU)
 	/*
@@ -1078,7 +1093,7 @@ identifycpu(ci)
 		printf("\n");
 	}
 	
-	if (cpuid_level >= 3 && ((cpu_feature & CPUID_PN) != 0)) {
+	if (ci->ci_cpuid_level >= 3 && (ci->ci_feature_flags & CPUID_PN)) {
 		printf("%s: serial number %04X-%04X-%04X-%04X-%04X-%04X\n",
 		    cpuname,
 		    ci->ci_cpu_serial[0] / 65536, ci->ci_cpu_serial[0] % 65536,
@@ -1886,6 +1901,9 @@ init386(first_avail)
 	u_int64_t seg_start, seg_end;
 	u_int64_t seg_start1, seg_end1;
 
+	cpu_probe_features(&cpu_info_primary);
+	cpu_feature = cpu_info_primary.ci_feature_flags;
+	
 	proc0.p_addr = proc0paddr;
 	curpcb = &proc0.p_addr->u_pcb;
 
@@ -1904,17 +1922,23 @@ init386(first_avail)
 	if (PAGE_SIZE != NBPG)
 		panic("init386: PAGE_SIZE != NBPG");
 
+	/*
+	 * Save a few pages at the start of physical memory so we play nice
+	 * with various BIOS features.
+	 * Page 0 contains miscellaneous BIOS data.
+	 * Even if it didn't, our VM system doesn't like using zero as a
+	 * physical page number.
+	 * We also need pages in low memory (one each) for secondary CPU
+	 * startup and for BIOS calls, plus a page table page to map
+	 * them into the first few pages of the kernel's pmap.
+	 */
 #ifdef MULTIPROCESSOR
-	/* leave room for bioscall just to avoid too much chaos */
-	avail_start = 4*PAGE_SIZE;	/* save us a page for trampoline code and
-				 one additional PT page! */
+	avail_start = 4*PAGE_SIZE;
 #else
 #if NBIOSCALL > 0
-	avail_start = 3*PAGE_SIZE; /* save us a page for trampoline code and
-				      one additional PT page! */
+	avail_start = 3*PAGE_SIZE;
 #else
-	avail_start = PAGE_SIZE; /* BIOS leaves data in low memory */
-				 /* and VM system doesn't work with phys 0 */
+	avail_start = PAGE_SIZE; 
 #endif
 #endif
 

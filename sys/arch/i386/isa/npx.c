@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.70.8.9 2001/01/09 03:29:49 sommerfeld Exp $	*/
+/*	$NetBSD: npx.c,v 1.70.8.10 2001/01/10 04:38:34 sommerfeld Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -214,6 +214,18 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 	return (rv);
 }
 
+void npxinit(ci)
+	struct cpu_info *ci;
+{
+	lcr0(rcr0() & ~(CR0_EM|CR0_TS));
+	fninit();
+	if (npx586bug1(4195835, 3145727) != 0)
+		printf("%s: WARNING: Pentium FDIV bug detected!\n",
+		    ci->ci_dev->dv_xname);
+	lcr0(rcr0() | (CR0_TS));
+}
+
+
 /*
  * Common attach routine.
  */
@@ -224,11 +236,7 @@ npxattach(struct npx_softc *sc)
 	npx_softc = sc;
 	npx_type = sc->sc_type;
 
-	lcr0(rcr0() & ~(CR0_EM|CR0_TS));
-	fninit();
-	if (npx586bug1(4195835, 3145727) != 0)
-		printf("WARNING: Pentium FDIV bug detected!\n");
-	lcr0(rcr0() | (CR0_TS));
+	npxinit(&cpu_info_primary);
 	i386_fpu_present = 1;
 }
 
@@ -260,7 +268,7 @@ npxintr(void *arg)
 	sc = npx_softc;
 
 	uvmexp.traps++;
-	IPRINTF(("%s: fp intr\n", ci->ci_dev.dv_xname));
+	IPRINTF(("%s: fp intr\n", ci->ci_dev->dv_xname));
 
 	/*
 	 * Clear the interrupt latch.
@@ -374,10 +382,15 @@ npxdna(struct cpu_info *ci)
 	int s;
 	
 	if (npx_type == NPX_NONE) {
-		IPRINTF(("%s: fp emul\n", ci->ci_dev.dv_xname));
+		IPRINTF(("%s: fp emul\n", ci->ci_dev->dv_xname));
 		return (0);
 	}
 
+	if (ci->ci_fpsaving) {
+		printf("recursive npx trap; cr0=%x\n", rcr0());
+		return (0);
+	}
+	
 	s = splipi();		/* lock out IPI's while we clean house.. */
 #ifdef MULTIPROCESSOR
 	p = ci->ci_curproc;
@@ -385,7 +398,7 @@ npxdna(struct cpu_info *ci)
 	p = curproc;
 #endif
 	
-	IPRINTF(("%s: dna for %p\n", ci->ci_dev.dv_xname, p));	
+	IPRINTF(("%s: dna for %p\n", ci->ci_dev->dv_xname, p));	
 	/*
 	 * If someone else was using our FPU, save their state (which does an
 	 * implicit initialization); otherwise, initialize the FPU state to
@@ -395,14 +408,14 @@ npxdna(struct cpu_info *ci)
 		npxsave_cpu(ci, 1);
 	else {
 		clts();
-		IPRINTF(("%s: fp init\n", ci->ci_dev.dv_xname));
+		IPRINTF(("%s: fp init\n", ci->ci_dev->dv_xname));
 		fninit();
 		fwait();
 		stts();
 	}
 	splx(s);
 
-	IPRINTF(("%s: done saving\n", ci->ci_dev.dv_xname));		
+	IPRINTF(("%s: done saving\n", ci->ci_dev->dv_xname));		
 	KDASSERT(ci->ci_fpcurproc == NULL);
 #ifndef MULTIPROCESSOR
 	KDASSERT(p->p_addr->u_pcb.pcb_fpcpu == NULL);
@@ -452,7 +465,7 @@ npxsave_cpu (struct cpu_info *ci, int save)
 	if (p == NULL)
 		return;
 
-	IPRINTF(("%s: fp cpu %s %p\n", ci->ci_dev.dv_xname,
+	IPRINTF(("%s: fp cpu %s %p\n", ci->ci_dev->dv_xname,
 	    save? "save" : "flush", p));
 	
 	if (save) {
@@ -516,7 +529,7 @@ npxsave_proc(struct proc *p, int save)
 	if (oci == NULL)
 		return;
 	
-	IPRINTF(("%s: fp proc %s %p\n", ci->ci_dev.dv_xname,
+	IPRINTF(("%s: fp proc %s %p\n", ci->ci_dev->dv_xname,
 	    save? "save" : "flush", p));
 
 #if defined(MULTIPROCESSOR)
@@ -528,8 +541,8 @@ npxsave_proc(struct proc *p, int save)
 		int spincount;
 		
 		IPRINTF(("%s: fp ipi to %s %s %p\n",
-		    ci->ci_dev.dv_xname,
-		    oci->ci_dev.dv_xname,
+		    ci->ci_dev->dv_xname,
+		    oci->ci_dev->dv_xname,
 		    save? "save" : "flush", p));
 
 		i386_send_ipi(oci,

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.19 2001/01/08 15:30:41 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.20 2001/01/10 04:38:33 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -96,16 +96,18 @@ struct cpu_info {
 	u_int32_t ci_ipis;		/* interprocessor interrupts pending */
 	int sc_apic_version;		/* local APIC version */
 
-	u_int32_t	ci_level;
-	u_int32_t	ci_vendor[4];
+	u_int32_t	ci_cpuid_level;
 	u_int32_t	ci_signature;	 /* X86 cpuid type */
 	u_int32_t	ci_feature_flags;/* X86 CPUID feature bits */
-	u_int32_t	cpu_class;	 /* CPU class */
+	u_int32_t	ci_cpu_class;	 /* CPU class */
+	u_int32_t	ci_brand_id;	 /* Intel brand id */	
+	u_int32_t	ci_vendor[4];	 /* vendor string */
 	u_int32_t	ci_cpu_serial[3]; /* PIII serial number */
 	u_int64_t	ci_tsc_freq;	 /* cpu cycles/second */
 	
 	struct cpu_functions *ci_func;  /* start/stop functions */
-	void (*cpu_setup) __P((void)); 	/* proc-dependant init */
+	void (*cpu_setup) __P((struct cpu_info *));
+ 					/* proc-dependant init */
 
 	int		ci_want_resched;
 	int		ci_astpending;
@@ -138,6 +140,7 @@ struct cpu_info {
 #define	CPUF_PRESENT	0x1000		/* CPU is present */
 #define	CPUF_RUNNING	0x2000		/* CPU is running */
 #define	CPUF_PAUSE	0x4000		/* CPU is paused in DDB */
+#define	CPUF_GO		0x8000		/* CPU should start running */
 
 /*
  * We statically allocate the CPU info for the primary CPU (or,
@@ -273,7 +276,7 @@ struct cpu_nocpuid_nameclass {
 	const char *cpu_vendorname;
 	const char *cpu_name;
 	int cpu_class;
-	void (*cpu_setup) __P((void));
+	void (*cpu_setup) __P((struct cpu_info *));
 };
 
 
@@ -284,19 +287,16 @@ struct cpu_cpuid_nameclass {
 	struct cpu_cpuid_family {
 		int cpu_class;
 		const char *cpu_models[CPU_MAXMODEL+2];
-		void (*cpu_setup) __P((void));
+		void (*cpu_setup) __P((struct cpu_info *));
 	} cpu_family[CPU_MAXFAMILY - CPU_MINFAMILY + 1];
 };
 
 #ifdef _KERNEL
 extern int biosbasemem;
 extern int biosextmem;
+extern int cpu_feature;
 extern int cpu;
 extern int cpu_class;
-extern int cpu_feature;
-extern int cpu_id;
-extern char cpu_vendor[];
-extern int cpuid_level;
 extern const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[];
 extern const struct cpu_cpuid_nameclass i386_cpuid_cpus[];
 
@@ -325,6 +325,8 @@ void	i8254_microtime __P((struct timeval *));
 void	i8254_initclocks __P((void));
 
 /* cpu.c */
+
+void	cpu_probe_features __P((struct cpu_info *));
 
 /* npx.c */
 void	npxsave_proc __P((struct proc *, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.29.2.3 2000/06/25 19:37:05 sommerfeld Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.29.2.4 2001/01/10 04:38:33 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -152,8 +152,6 @@ mainbus_attach(parent, self, aux)
 		caa.cpu_number = 0;
 		caa.cpu_role = CPU_ROLE_SP;
 		caa.cpu_func = 0;
-		caa.cpu_signature = cpu_id;
-		caa.feature_flags = cpu_feature;
 		
 		config_found(self, &caa, mainbus_print);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.21 2001/01/09 03:29:51 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.22 2001/01/10 04:38:32 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -270,9 +270,8 @@
  */
 	.data
 
-	.globl	_C_LABEL(cpu),_C_LABEL(cpu_id),_C_LABEL(cpu_vendor)
-	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature)
-	.globl	_C_LABEL(cpu_brand_id)
+	.globl	_C_LABEL(cpu)
+	.globl	_C_LABEL(cpu_feature)
 	.globl	_C_LABEL(esym),_C_LABEL(boothowto)
 	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
 #ifdef COMPAT_OLDBOOT
@@ -315,14 +314,8 @@ _C_LABEL(lapic_tpr):
 
 _C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
 					#   or Pentium, or..
-_C_LABEL(cpu_id):	.long	0	# saved from `cpuid' instruction
 _C_LABEL(cpu_feature):	.long	0	# feature flags from 'cpuid'
 					#   instruction
-_C_LABEL(cpuid_level):	.long	-1	# max. level accepted by 'cpuid'
-					#   instruction
-_C_LABEL(cpu_vendor):	.space	16	# vendor string returned by `cpuid'
-					#   instruction
-_C_LABEL(cpu_brand_id):	.long	0	# brand ID from 'cpuid' instruction
 _C_LABEL(esym):		.long	0	# ptr to end of syms
 _C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
 _C_LABEL(proc0paddr):	.long	0
@@ -417,6 +410,10 @@ start:	movw	$0x1234,0x472			# warm boot
 	popfl
 
 	/* Find out our CPU type. */
+
+	xorl	%eax,%eax
+	decl	%eax
+	movl	%eax,RELOC(cpu_info_primary)+CPU_INFO_LEVEL
 
 try386:	/* Try to toggle alignment check flag; does not exist on 386. */
 	pushfl
@@ -574,20 +571,7 @@ trycyrix486:
 try586:	/* Use the `cpuid' instruction. */
 	xorl	%eax,%eax
 	cpuid
-	movl	%eax,RELOC(cpuid_level)
-	movl	%ebx,RELOC(cpu_vendor)	# store vendor string
-	movl	%edx,RELOC(cpu_vendor)+4
-	movl	%ecx,RELOC(cpu_vendor)+8
-	movl	$0,  RELOC(cpu_vendor)+12
-
-	movl	$1,%eax
-	cpuid
-	movl	%eax,RELOC(cpu_id)	# store cpu_id and features
-	movl	%edx,RELOC(cpu_feature)
-
-	/* Brand ID is bits 0-7 of %ebx */
-	andl	$255,%ebx
-	movl	%ebx,RELOC(cpu_brand_id)
+	movl	%eax,RELOC(cpu_info_primary)+CPU_INFO_LEVEL
 
 2:
 	/*

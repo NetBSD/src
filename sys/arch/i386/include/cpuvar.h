@@ -1,4 +1,4 @@
-/* $NetBSD: cpuvar.h,v 1.1.2.5 2000/09/23 17:30:07 sommerfeld Exp $ */
+/* $NetBSD: cpuvar.h,v 1.1.2.6 2001/01/10 04:38:34 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -85,8 +85,6 @@ struct cpu_attach_args {
 	int cpu_number;
 	int cpu_role;
 	struct cpu_functions *cpu_func;
-	int cpu_signature;
-	int feature_flags;
 };
 
 #define MP_PICMODE	0x00000001      /* System booted in picmode */

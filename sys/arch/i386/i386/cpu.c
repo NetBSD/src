@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.18 2001/01/07 22:59:23 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.19 2001/01/10 04:38:32 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -139,6 +139,7 @@ u_int32_t cpus_running = 0;
 
 void    	cpu_hatch __P((void *));
 static void    	cpu_boot_secondary __P((struct cpu_info *ci));
+static void    	cpu_start_secondary __P((struct cpu_info *ci));
 static void	cpu_copy_trampoline __P((void));
 
 /*
@@ -215,8 +216,6 @@ cpu_attach(parent, self, aux)
 
 	ci->ci_dev = self;
 	ci->ci_cpuid = caa->cpu_number;
-	ci->ci_signature = caa->cpu_signature;
-	ci->ci_feature_flags = caa->feature_flags;
 	ci->ci_func = caa->cpu_func;
 
 #if defined(MULTIPROCESSOR)
@@ -242,6 +241,7 @@ cpu_attach(parent, self, aux)
 	pcb->pcb_tss.tss_esp =
 	    kstack + USPACE - 16 - sizeof (struct trapframe);
 	pcb->pcb_pmap = pmap_kernel();
+	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_cr3 = pcb->pcb_pmap->pm_pdirpa;
 #endif
 
@@ -280,10 +280,17 @@ cpu_attach(parent, self, aux)
 		 * report on an AP
 		 */
 		printf("apid %d (application processor)\n", caa->cpu_number);
-		ci->ci_flags |= CPUF_PRESENT | CPUF_AP;
-		identifycpu(ci);
-		ci->ci_next = cpu_info_list->ci_next;
-		cpu_info_list->ci_next = ci;
+
+#if defined(MULTIPROCESSOR)
+		cpu_start_secondary(ci);
+		if (ci->ci_flags & CPUF_PRESENT) {
+			identifycpu(ci);
+			ci->ci_next = cpu_info_list->ci_next;
+			cpu_info_list->ci_next = ci;
+		}
+#else
+		printf("%s: not started\n", sc->sc_dev.dv_xname);
+#endif
 		break;
 		
 	default:
@@ -310,13 +317,13 @@ cpu_init(ci)
 {
 	/* configure the CPU if needed */
 	if (ci->cpu_setup != NULL)
-		(*ci->cpu_setup)();
+		(*ci->cpu_setup)(ci);
 
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 	/*
 	 * On a 486 or above, enable ring 0 write protection.
 	 */
-	if (ci->cpu_class >= CPUCLASS_486)
+	if (ci->ci_cpu_class >= CPUCLASS_486)
 		lcr0(rcr0() | CR0_WP);
 #endif
 #if defined(I686_CPU)
@@ -384,7 +391,7 @@ cpu_init_idle_pcbs()
 }
 
 void
-cpu_boot_secondary (ci)
+cpu_start_secondary (ci)
 	struct cpu_info *ci;
 {
 	struct pcb *pcb;
@@ -396,6 +403,8 @@ cpu_boot_secondary (ci)
 	
 	pcb = ci->ci_idle_pcb;
 
+	ci->ci_flags |= CPUF_AP;
+	
 	printf("%s: starting\n", ci->ci_dev->dv_xname);
 
 	CPU_STARTUP(ci);
@@ -403,11 +412,11 @@ cpu_boot_secondary (ci)
 	/*
 	 * wait for it to become ready
 	 */
-	for (i = 100000; (!(ci->ci_flags & CPUF_RUNNING)) && i>0;i--) {
+	for (i = 100000; (!(ci->ci_flags & CPUF_PRESENT)) && i>0;i--) {
 		delay(10);
 	}
-	if (! (ci->ci_flags & CPUF_RUNNING)) {
-		printf("cpu failed to become ready\n");
+	if (! (ci->ci_flags & CPUF_PRESENT)) {
+		printf("%s: failed to become ready\n", ci->ci_dev->dv_xname);
 #if defined(MPDEBUG) && defined(DDB)
 		printf("dropping into debugger; continue from here to resume boot\n");
 		Debugger();
@@ -416,6 +425,28 @@ cpu_boot_secondary (ci)
 
 	CPU_START_CLEANUP(ci);
 }
+
+void
+cpu_boot_secondary(ci)
+	struct cpu_info *ci;
+{
+	int i;
+	
+	ci->ci_flags |= CPUF_GO; /* XXX atomic */
+
+	for (i = 100000; (!(ci->ci_flags & CPUF_RUNNING)) && i>0;i--) {
+		delay(10);
+	}
+	if (! (ci->ci_flags & CPUF_RUNNING)) {
+		printf("cpu failed to start\n");
+#if defined(MPDEBUG) && defined(DDB)
+		printf("dropping into debugger; continue from here to resume boot\n");
+		Debugger();
+#endif
+	}
+}
+
+	
 
 /*
  * The CPU ends up here when its ready to run
@@ -431,20 +462,38 @@ cpu_hatch(void *v)
 	struct cpu_info *ci = (struct cpu_info *)v;
 	int s;
 	
+	cpu_probe_features(ci);
+	cpu_feature &= ci->ci_feature_flags;
+	
+#ifdef DEBUG
+	if (ci->ci_flags & CPUF_PRESENT)
+		panic("%s: already running!?", ci->ci_dev->dv_xname);
+#endif
+
+	ci->ci_flags |= CPUF_PRESENT;
+
+	lapic_enable();
+	lapic_initclocks();
+	
+	while ((ci->ci_flags & CPUF_GO) == 0)
+		delay(10);
+#ifdef DEBUG
+	if (ci->ci_flags & CPUF_RUNNING)
+		panic("%s: already running!?", ci->ci_dev->dv_xname);
+#endif
+
+	lcr0(ci->ci_idle_pcb->pcb_cr0);
+	lapic_set_lvt();
+	npxinit(ci);
 	cpu_init_idt();
 	gdt_init_cpu();
+
 	lldt(GSEL(GLDT_SEL, SEL_KPL));
-	if (ci->ci_flags & CPUF_RUNNING) {
-		panic("%s: already running!?", ci->ci_dev->dv_xname);
-	}
-	lapic_enable();
-	lapic_set_lvt();
 
 	cpu_init(ci);
 
 	s = splhigh();
 	enable_intr();
-	lapic_initclocks();
 	printf("%s: CPU %d running\n",ci->ci_dev->dv_xname, cpu_number());
 	microtime(&ci->ci_schedstate.spc_runtime);
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.1.2.10 2001/01/03 17:02:06 thorpej Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.1.2.11 2001/01/10 04:38:33 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -534,16 +534,14 @@ mpbios_scan(self)
 	if (mp_fps->mpfb1 != 0) {
 		struct mpbios_proc pe;
 
-		extern int cpu_id, cpu_feature;	/* XXX */
-
 		printf("\n%s: MP default configuration %d\n",
 		    self->dv_xname, mp_fps->mpfb1);
 		
 		/* use default addresses */
 		pe.apic_id = cpu_number();
 		pe.cpu_flags = PROCENTRY_FLAG_EN|PROCENTRY_FLAG_BP;
-		pe.cpu_signature = cpu_id;
-		pe.feature_flags = cpu_feature;
+		pe.cpu_signature = cpu_info_primary.ci_signature;
+		pe.feature_flags = cpu_info_primary.ci_feature_flags;
 
 		mpbios_cpu((u_int8_t *)&pe, self);
 
@@ -567,8 +565,8 @@ mpbios_scan(self)
 		if (mp_cth == NULL)
 			panic ("mpbios_scan: no config (can't happen?)");
 
-		printf("\n%s: MP OEM %8.8s Product %12.12s\n",
-		    self->dv_xname, mp_cth->oem_id, mp_cth->product_id);
+		printf(" (%8.8s %12.12s)\n",
+		    mp_cth->oem_id, mp_cth->product_id);
 
 		/*
 		 * Walk the table once, counting items
@@ -680,13 +678,6 @@ mpbios_cpu(ent, self)
 	caa.caa_name   = "cpu";
 	caa.cpu_number = entry->apic_id;
 	caa.cpu_func = &mpbios_cpu_funcs;
-	caa.cpu_signature = entry->cpu_signature;
-
-	/*
-	 * XXX this is truncated to just contain the low-order 16 bits
-	 * of the flags on at least some MP bioses
-	 */
-	caa.feature_flags = entry->feature_flags;
 
 	config_found_sm(self, &caa, mp_print, mp_match);
 }
@@ -1110,7 +1101,7 @@ mpbios_cpu_start(struct cpu_info *ci)
 
 		delay(10000);
 
-		if (ci->ci_feature_flags & CPUID_APIC) {
+		if (cpu_feature & CPUID_APIC) {
 
 			if ((error = i386_ipi(MP_TRAMPOLINE/NBPG,ci->ci_cpuid,
 			    LAPIC_DLMODE_STARTUP)) != 0)

@@ -5,13 +5,6 @@ showstoppers for merge back to -current:
  - rewrite interrupt dispatch so that multi-level shared interrupts
    are no longer broken.
 
- - Sort out:
-	- cpu feature probes [runs on new cpu]
-	- identify_cpu() output [runs on BSP] 
-	- cpu initialization [runs on new cpu];
-   finish banishing most global variables containing cpu configuration 
-   information to struct cpu_info
-
  - figure out why ahc on serverworks fails to find its interrupt.
 
  - careful code review of all diffs from -current
@@ -19,6 +12,14 @@ showstoppers for merge back to -current:
  - test and fix npx on i386 (npx exceptions through ISA interrupts).
 
 "would be nice":
+
+ - use atomic ops to modify ci_flags and cpu_feature to avoid losing bits.
+
+ - verify that cyrix 486 isn't blown out of the water by machdep changes.
+
+ - verify that cyrix clock chip bug fix isn't broken.
+
+ - make sure BSP always attaches first!
 
  - stop all cpu's on shutdown.
 
@@ -41,4 +42,11 @@ DONE:
 [2001/01/08  22:29:56  sommerfeld]
 fixed three bugs; !MP kernel now comes up multiuser.
 
-	
+ - Sort out:
+	- cpu feature probes [runs on new cpu]
+	- identify_cpu() output [runs on BSP] 
+	- cpu initialization [runs on new cpu];
+   finish banishing most global variables containing cpu configuration 
+   information to struct cpu_info
+[2001/01/09  22:27:38  sommerfeld]
+completed.  significant rewrite of cpu spinup required.
