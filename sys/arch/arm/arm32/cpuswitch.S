@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.3.2.26 2002/12/31 01:03:47 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.3.2.27 2003/01/03 21:19:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -589,10 +589,9 @@ ENTRY(cpu_switch)
 
 .Lswitch_exited:
 	/*
-	 * We skip the cache purge because switch_exit()/switch_lwp_exit()
-	 * already did it.  Load up registers the way .Lcs_cache_purge_skipped
-	 * expects.  Userpsace access already blocked by switch_exit()/
-	 * switch_lwp_exit().
+	 * We skip the cache purge because switch_exit() already did it.
+	 * Load up registers the way .Lcs_cache_purge_skipped expects.
+	 * Userpsace access already blocked by switch_exit().
 	 */
 	ldr	r9, [r6, #(L_ADDR)]		/* r9 = new PCB */
 	ldr	r3, .Lblock_userspace_access
@@ -663,158 +662,78 @@ ENTRY(cpu_switchto)
 	b	.Lswitch_resume
 
 /*
- * void switch_exit(struct lwp *l, struct lwp *l0);
+ * void switch_exit(struct lwp *l, struct lwp *l0, void (*exit)(struct lwp *));
  * Switch to lwp0's saved context and deallocate the address space and kernel
  * stack for l.  Then jump into cpu_switch(), as if we were in lwp0 all along.
  */
 
-/* LINTSTUB: Func: void switch_exit(struct lwp *l, struct lwp *l0) */
+/* LINTSTUB: Func: void switch_exit(struct lwp *l, struct lwp *l0, void (*)(struct lwp *)) */
 ENTRY(switch_exit)
 	/*
-	 * r0 = lwp
-	 * r1 = lwp0
+	 * The process is going away, so we can use callee-saved
+	 * registers here without having to save them.
 	 */
 
-	mov	r3, r0
-
-	/* In case we fault */
+	mov	r4, r0
 	ldr	r0, .Lcurlwp
-	mov	r2, #0x00000000
-	str	r2, [r0]
 
-/*	ldr	r0, .Lcurpcb
-	str	r2, [r0]*/
+	mov	r5, r1
+	ldr	r1, .Lblock_userspace_access
+
+	mov	r6, r2
+
+	/*
+	 * r4 = lwp
+	 * r5 = lwp0
+	 * r6 = exit func
+	 */
+
+	mov	r2, #0x00000000		/* curlwp = NULL */
+	str	r2, [r0]
 
 	/*
 	 * Don't allow user space access between the purge and the switch.
 	 */
-	ldr	r0, .Lblock_userspace_access
 	mov	r2, #0x00000001
-	str	r2, [r0]
+	str	r2, [r1]
 
 	/* Switch to lwp0 context */
-
-	stmfd	sp!, {r0-r3}
 
 	ldr	r0, .Lcpufuncs
 	mov	lr, pc
 	ldr	pc, [r0, #CF_IDCACHE_WBINV_ALL]
 
-	ldmfd	sp!, {r0-r3}
+	ldr	r2, [r5, #(L_ADDR)]
+
+	/*
+	 * r2 = lwp0's PCB
+	 */
 
 	IRQdisable
 
-	ldr	r2, [r1, #(L_ADDR)]
 	ldr	r0, [r2, #(PCB_PAGEDIR)]
 
 	/* Switch the memory to the new process */
-	ldr	r4, .Lcpufuncs
+	ldr	r1, .Lcpufuncs
 	mov	lr, pc
-	ldr	pc, [r4, #CF_CONTEXT_SWITCH]
-       
+	ldr	pc, [r1, #CF_CONTEXT_SWITCH]
+
+	ldr	r0, .Lcurpcb
+   
 	/* Restore all the save registers */
 	add	r7, r2, #PCB_R8
 	ldmia	r7, {r8-r13}
 
-	/* This is not really needed ! */
-	/* Yes it is for the su and fu routines */
-	ldr	r0, .Lcurpcb
-	str	r2, [r0]
+	str	r2, [r0]	/* curpcb = lwp0's PCB */
 
 	IRQenable
-
-/*	str	r3, [sp, #-0x0004]!*/
 
 	/*
 	 * Schedule the vmspace and stack to be freed.
 	 */
-	mov	r0, r3			/* exit2(l) */
-	bl	_C_LABEL(exit2)
-
-	/* Paranoia */
-	mov	r0, #0x00000000
-	ldr	r1, .Lcurlwp
-	str	r0, [r1]
-
-	ldr	r7, .Lwhichqs		/* r7 = &whichqs */
-	mov	r5, #0x00000000		/* r5 = old lwp = NULL */
-	b	.Lswitch_search
-
-/*
- * void switch_lwp_exit(struct lwp *l, struct lwp *l0);
- * Switch to lwp0's saved context and deallocate the address space and kernel
- * stack for l.  Then jump into cpu_switch(), as if we were in lwp0 all along.
- */
-
-/* LINTSTUB: Func: void switch_exit(struct lwp *l, struct lwp *l0) */
-ENTRY(switch_lwp_exit)
-	/*
-	 * r0 = lwp
-	 * r1 = lwp0
-	 */
-
-	mov	r3, r0
-
-	/* In case we fault */
-	mov	r2, #0x00000000
-	ldr	r0, .Lcurlwp
-	str	r2, [r0]
-
-/*	ldr	r0, .Lcurpcb
-	str	r2, [r0]*/
-
-	/*
-	 * Don't allow user space access between the purge and the switch.
-	 */
-	ldr	r0, .Lblock_userspace_access
-	mov	r2, #0x00000001
-	str	r2, [r0]
-
-	/* Switch to lwp0 context */
-
-	stmfd	sp!, {r0-r3}
-
-	ldr	r0, .Lcpufuncs
-	add	lr, pc, #.Lsle_cache_purged - . - 8
-	ldr	pc, [r0, #CF_IDCACHE_WBINV_ALL]
-
-.Lsle_cache_purged:
-	ldmfd	sp!, {r0-r3}
-
-	IRQdisable
-
-	ldr	r2, [r1, #(L_ADDR)]
-	ldr	r0, [r2, #(PCB_PAGEDIR)]
-
-	/* Switch the memory to the new process */
-	ldr	r4, .Lcpufuncs
-	add	lr, pc, #.Lsle_context_switched - . - 8
-	ldr	pc, [r4, #CF_CONTEXT_SWITCH]
-       
-.Lsle_context_switched:
-	/* Restore all the save registers */
-	add	r7, r2, #PCB_R8
-	ldmia	r7, {r8-r13}
-
-	/* This is not really needed ! */
-	/* Yes it is for the su and fu routines */
-	ldr	r0, .Lcurpcb
-	str	r2, [r0]
-
-	IRQenable
-
-/*	str	r3, [sp, #-0x0004]!*/
-
-	/*
-	 * Schedule the vmspace and stack to be freed.
-	 */
-	mov	r0, r3			/* lwp_exit2(l) */
-	bl	_C_LABEL(lwp_exit2)
-
-	/* Paranoia */
-	ldr	r1, .Lcurlwp
-	mov	r0, #0x00000000
-	str	r0, [r1]
+	mov	r0, r4			/* {lwp_}exit2(l) */
+	mov	lr, pc
+	mov	pc, r6
 
 	ldr	r7, .Lwhichqs		/* r7 = &whichqs */
 	mov	r5, #0x00000000		/* r5 = old lwp = NULL */
