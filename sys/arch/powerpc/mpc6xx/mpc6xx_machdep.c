@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc6xx_machdep.c,v 1.10 2003/01/18 06:23:31 thorpej Exp $	*/
+/*	$NetBSD: mpc6xx_machdep.c,v 1.11 2003/01/19 02:46:08 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -120,7 +120,8 @@ mpc6xx_init(void (*handler)(void))
 #ifdef ALTIVEC
 	int msr;
 #endif
-	int exc, scratch;
+	uintptr_t exc;
+	register_t scratch;
 	size_t size;
 #ifdef MULTIPROCESSOR
 	struct cpu_info * const ci = &cpu_info[0];
@@ -394,7 +395,8 @@ mpc6xx_install_extint(void (*handler)(void))
 
 #ifdef	DIAGNOSTIC
 	if (offset > 0x1ffffff)
-		panic("install_extint: %p too far away (%#x)", handler, offset);
+		panic("install_extint: %p too far away (%#lx)", handler,
+		    (unsigned long) offset);
 #endif
 	__asm __volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
 	    :	"=r" (omsr), "=r" (msr)
@@ -412,7 +414,9 @@ mpc6xx_install_extint(void (*handler)(void))
 void
 mpc6xx_startup(const char *model)
 {
-	u_int sz, i, base, residual;
+	uintptr_t sz;
+	u_int i;
+	u_long base, residual;
 	int error;
 	caddr_t v;
 	vaddr_t minaddr, maxaddr;
@@ -452,7 +456,7 @@ mpc6xx_startup(const char *model)
 	 * Find out how much space we need, allocate it,
 	 * and then give everything true virtual addresses.
 	 */
-	sz = (int)allocsys(NULL, NULL);
+	sz = (uintptr_t)allocsys(NULL, NULL);
 	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
 		panic("startup: no room for tables");
 	if (allocsys(v, NULL) - v != sz)
@@ -590,21 +594,21 @@ kvtop(caddr_t addr)
 {
 	vaddr_t va;
 	paddr_t pa;
-	int off;
+	uintptr_t off;
 	extern char end[];
 
 	if (addr < end)
-		return (int)addr;
+		return (paddr_t)addr;
 
 	va = trunc_page((vaddr_t)addr);
-	off = (int)addr - va;
+	off = (uintptr_t)addr - va;
 
 	if (pmap_extract(pmap_kernel(), va, &pa) == FALSE) {
 		/*printf("kvtop: zero page frame (va=0x%x)\n", addr);*/
-		return (int)addr;
+		return (paddr_t)addr;
 	}
 
-	return((int)pa + off);
+	return(pa + off);
 }
 
 /*
