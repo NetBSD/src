@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 1997/12/17 21:16:54 scw Exp $
+# $NetBSD: Makefile,v 1.8 1999/02/13 02:54:33 lukem Exp $
 # edlabel (Edit Disk LABEL)
 
 .if (${MACHINE} == "sun3") || (${MACHINE} == "sun3x") || \
@@ -9,6 +9,6 @@ LDADD+=-lutil
 DPADD+=${LIBUTIL}
 .endif
 
-NOMAN=
+MKMAN=	no
 
 .include <bsd.prog.mk>

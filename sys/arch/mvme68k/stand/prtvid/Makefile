@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 1997/05/07 15:59:10 mycroft Exp $
+#	$NetBSD: Makefile,v 1.3 1999/02/13 02:54:47 lukem Exp $
 
 PROG=	prtvid
-NOMAN=
+MKMAN=	no
 
 # only needed during build
 proginstall::

@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.6 1998/08/01 11:22:52 scw Exp $
+#	$NetBSD: Makefile,v 1.7 1999/02/13 02:54:47 lukem Exp $
 
 LIB=bug
 
-NOPIC=
-NOPROFILE=
+MKPIC=no
+MKPROFILE=no
 
 S=${.CURDIR}/../../../..
 DIR_SA=$S/lib/libsa

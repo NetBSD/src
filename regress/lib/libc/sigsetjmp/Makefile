@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 1997/10/26 21:51:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 1999/02/13 02:54:32 lukem Exp $
 
 PROG=	sigsetjmptest
 SRCS=	jmptest.c
-NOMAN=	noman, no way, man
+MKMAN=	no
 
 CPPFLAGS+= -DTEST_SIGSETJMP
 

@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.18 1998/09/27 17:22:11 lukem Exp $
+#	$NetBSD: Makefile,v 1.19 1999/02/13 02:54:55 lukem Exp $
+
+.include <bsd.own.mk>
 
 MFILESDIR=	/usr/share/misc
 MFILES=		magic
 MAGIC=		${FILESDIR}/${FILES}
-.if !defined(NOSHARE)
+.if ${MKSHARE} != "no"
 FILESDIR=	${MFILESDIR}
 FILES=		${MFILES}
 .endif
@@ -24,7 +26,7 @@ MAGFILES=	$(.CURDIR)/Header \
 		$(.CURDIR)/magdir/netbsd \
 		${MAGDIRF}
 
-.if !defined(NOSHARE)
+.if ${MKSHARE} != "no"
 magic:		$(MAGFILES)
 	cat $(MAGFILES) > $(.TARGET)
 .else

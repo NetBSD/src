@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 1998/09/27 17:22:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.18 1999/02/13 02:54:34 lukem Exp $
 #
 #	@(#)Makefile	8.3 (Berkeley) 5/16/94
 
@@ -14,7 +14,7 @@
 # 25.tbl 26.refer 27.invert 29.diction
 
 BINDIR=	/usr/share/doc/usd
-.if !defined(NOSHARE)
+.if ${MKSHARE} != "no"
 FILES=	00.contents Makefile Title
 .endif
 SUBDIR=	18.msdiffs 19.memacros 20.meref

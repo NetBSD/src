@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1998/09/27 17:22:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 1999/02/13 02:55:00 lukem Exp $
 # from: $Id: Makefile,v 8.1 1994/12/15 06:23:48 vixie Exp 
 
 .PATH:	${.CURDIR}/../nslookup \
@@ -11,7 +11,7 @@ DPADD=	${LIBL}
 LDADD=	-ll
 CLEANFILES+=	commands.c lex.yy.c lex.yy.o
 MAN=	nslookup.8
-.if !defined(NOSHARE)
+.if ${MKSHARE} != "no"
 FILES=	nslookup.help
 FILESDIR=/usr/share/misc
 .endif

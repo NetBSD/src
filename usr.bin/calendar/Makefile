@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.9 1998/09/27 17:22:10 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 1999/02/13 02:54:54 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
+.include <bsd.own.mk>
+
 PROG=	calendar
-.if !defined (NOSHARE)
+.if ${MKSHARE} != "no"
 FILESDIR=/usr/share/calendar
 FILES!= echo ${.CURDIR}/calendars/calendar.*
 .endif

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.24 1999/02/12 10:51:28 drochner Exp $
+#	$NetBSD: Makefile,v 1.25 1999/02/13 02:54:51 lukem Exp $
 
 LIB=	sa
-NOPIC=
-NOPROFILE=
+MKPIC=	no
+MKPROFILE=no
 
 SA_USE_CREAD?= no
 SA_INCLUDE_NET?= yes

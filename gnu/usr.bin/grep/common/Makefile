@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1999/02/11 17:26:23 tv Exp $
+#	$NetBSD: Makefile,v 1.3 1999/02/13 02:54:25 lukem Exp $
 
 LIB=		common
 SRCS=		bindtextdom.c dcgettext.c dgettext.c gettext.c finddomain.c \
@@ -9,10 +9,10 @@ SRCS+=		grep.c dfa.c kwset.c obstack.c savedir.c getopt.c getopt1.c \
 CPPFLAGS+=	-DGNULOCALEDIR=\"/usr/share/locale\" \
 		-DLOCALE_ALIAS_PATH=\"/usr/share/locale:.\"
 
-NOLINT=
-NOPIC=
-NOPROFILE=
-NOLINKLIB=
+MKLINT=		no
+MKPIC=		no
+MKPROFILE=	no
+MKLINKLIB=	no
 
 .include <bsd.lib.mk>
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1998/08/28 22:36:56 tv Exp $
+#	$NetBSD: Makefile,v 1.5 1999/02/13 02:54:23 lukem Exp $
 
 HAVE_GCC28!= ${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
@@ -18,7 +18,7 @@ INCSDIR=	/usr/include/objc
 CPPFLAGS+=	-I. -I${ARCH}/${MACHINE_ARCH} -I${ARCH} \
 		-I${DIST}/config -I${DIST}
 
-NOLINT=		nolint (Objective-C)
+MKLINT=		no
 
 DIST=		${.CURDIR}/../../dist/gcc
 ARCH=		${.CURDIR}/../../usr.bin/egcs/arch

@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 1998/09/27 17:22:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 1999/02/13 02:54:59 lukem Exp $
 
-.if !defined(NOSHARE)
+.include <bsd.own.mk>
+
+.if ${MKSHARE} != "no"
 FILESDIR= /usr/share/examples/ipf
 MAN=	mkfilters.1
 

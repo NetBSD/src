@@ -1,7 +1,7 @@
-# $NetBSD: Makefile.inc,v 1.6 1997/07/14 15:07:04 veego Exp $
+# $NetBSD: Makefile.inc,v 1.7 1999/02/13 02:54:38 lukem Exp $
 
 BINDIR=/usr/share/keymaps/amiga
-NOMAN=
+MKMAN=	no
 CLEANFILES=${FILES}
 
 all: ${PROG} ${FILES}

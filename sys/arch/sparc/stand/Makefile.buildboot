@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.2 1999/02/06 13:34:15 hannken Exp $
+#	$NetBSD: Makefile.buildboot,v 1.3 1999/02/13 02:54:48 lukem Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -7,7 +7,7 @@ S=	${.CURDIR}/../../../..
 COMMONSOURCE=	srt0.S promdev.c dvma.c
 
 SRCS=		${COMMONSOURCE} ${PROGSOURCE}
-NOMAN=
+MKMAN=		no
 BINMODE=	444
 
 RELOC_SUN4=	0x240000

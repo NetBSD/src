@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 1999/02/11 15:42:16 tv Exp $
+#	$NetBSD: Makefile,v 1.2 1999/02/13 02:54:29 lukem Exp $
 
 PROG=		texindex
 SRCS=		texindex.c
-NOMAN=
+MKMAN=		no
 
 .include <bsd.prog.mk>
 

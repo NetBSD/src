@@ -1,7 +1,7 @@
-# $NetBSD: Makefile,v 1.1.1.1 1998/05/28 12:39:23 leo Exp $
+# $NetBSD: Makefile,v 1.2 1999/02/13 02:54:39 lukem Exp $
 
 PROG=	bootpref
-NOMAN=	yes
+MKMAN=	no
 BINDIR=	/usr/sbin
 
 CFLAGS+= -Wall

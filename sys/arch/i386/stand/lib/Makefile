@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.9 1999/01/30 17:46:53 christos Exp $
+#	$NetBSD: Makefile,v 1.10 1999/02/13 02:54:46 lukem Exp $
 
 S?=	${.CURDIR}/../../../../
 
 LIB= i386
-NOPIC=
-NOPROFILE=
+MKPIC=no
+MKPROFILE=no
 
 I386_INCLUDE_DISK?= yes
 I386_INCLUDE_DOS?= no

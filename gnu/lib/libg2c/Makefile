@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1998/10/20 18:11:04 matt Exp $
+#	$NetBSD: Makefile,v 1.5 1999/02/13 02:54:23 lukem Exp $
 
 LIB=		g2c
 
@@ -62,7 +62,7 @@ POBJS+=		${E77OBJS:.o=.po}
 CLEANFILES+=	${LIBF77SRCS}
 DPSRCS+=	g2c.h
 
-NOLINT=		nolint (FORTRAN runtime)
+MKLINT=		no
 
 CPPFLAGS+=	-I. -I${.CURDIR} -I${ARCH} -I${ARCH}/${MACHINE_ARCH} \
 		-I${DIST}/libf2c -I${DIST}/libf2c/libF77 \

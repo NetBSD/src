@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 1999/01/31 21:45:08 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.17 1999/02/13 02:54:25 lukem Exp $
 
 .if !defined(GCC_MAKEFILE_INC)
 GCC_MAKEFILE_INC=1
@@ -10,7 +10,7 @@ GCC_MAKEFILE_INC=1
     (${MACHINE_ARCH} == "sparc") || (${MACHINE_ARCH} == "sparc64")
 USE_EGCS_HAIFA=1
 .endif
-#NOMAN=1
+#MKMAN=no
 
 # gcc has files with a "rs6000" prefix for powerpc
 GNU_ARCH.powerpc=rs6000

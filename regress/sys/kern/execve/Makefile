@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.9 1999/01/10 02:54:12 castor Exp $
+#	$NetBSD: Makefile,v 1.10 1999/02/13 02:54:33 lukem Exp $
 
 PROG=	doexec
-NOMAN=	noman, no way, man
+MKMAN=	no
 
 LDSTATIC= -static		# only static compilation makes sense here
 

@@ -10,16 +10,14 @@ LFLAGS+= -I
 LDADD=	-lm -ly -ll
 DPADD=	${LIBM} ${LIBY} ${LIBL}
 
-NOMAN=
-NOSHARED=	no shared linkage
+MKMAN=	no
+MKPIC=	no
 
 CFLAGS+= -I. #-g
 YFLAGS+= -d
 
 CLEANFILES+= y.tab.h
 CLEANFILES+= y.output	# comment file from bison
-
-NOMAN=	yes
 
 .include <bsd.prog.mk>
 

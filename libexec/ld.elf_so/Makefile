@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.19 1999/02/07 17:23:03 christos Exp $
+#	$NetBSD: Makefile,v 1.20 1999/02/13 02:54:30 lukem Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
-.if ((${OBJECT_FMT} == "ELF") && !defined(NOPIC))
+.if ${OBJECT_FMT} == "ELF" && ${MKPIC} != "no"
 PROG=	ld.elf_so
 .endif
 
@@ -49,6 +49,6 @@ includes:
 	done
 .endif
 
-NOMAN=
+MKMAN=	no
 
 .include <bsd.prog.mk>

@@ -1,5 +1,5 @@
 PROG=	loadfont
 
-NOMAN=	yes
+MKMAN=	no
 
 .include <bsd.prog.mk>
