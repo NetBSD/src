@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.50 2002/06/08 14:56:26 yamt Exp $	*/
+/*	$NetBSD: if.c,v 1.51 2002/06/19 16:42:09 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.50 2002/06/08 14:56:26 yamt Exp $");
+__RCSID("$NetBSD: if.c,v 1.51 2002/06/19 16:42:09 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -286,11 +286,15 @@ intpr(interval, ifnetaddr, pfunc)
 						sin6.sin6_len = sizeof(struct sockaddr_in6);
 						sin6.sin6_family = AF_INET6;
 						sin6.sin6_addr = inm.in6m_addr;
-						sin6.sin6_scope_id =
-						    ntohs(*(u_int16_t *)
-							&sin6.sin6_addr.s6_addr[2]);
-						sin6.sin6_addr.s6_addr[2] = 0;
-						sin6.sin6_addr.s6_addr[3] = 0;
+#ifdef KAME_SCOPEID
+						if (sin6.sin6_addr.s6_addr[1] == 0x02) {
+							sin6.sin6_scope_id =
+							    ntohs(*(u_int16_t *)
+								&sin6.sin6_addr.s6_addr[2]);
+							sin6.sin6_addr.s6_addr[2] = 0;
+							sin6.sin6_addr.s6_addr[3] = 0;
+						}
+#endif
 						if (getnameinfo((struct sockaddr *)&sin6,
 						    sin6.sin6_len, hbuf,
 						    sizeof(hbuf), NULL, 0,
