@@ -1,4 +1,4 @@
-/*	$NetBSD: whois.c,v 1.10 1999/09/03 13:51:28 itojun Exp $	*/
+/*	$NetBSD: whois.c,v 1.11 1999/09/06 06:23:08 itojun Exp $	*/
 
 /*
  * RIPE version marten@ripe.net
@@ -61,7 +61,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: whois.c,v 1.10 1999/09/03 13:51:28 itojun Exp $");
+__RCSID("$NetBSD: whois.c,v 1.11 1999/09/06 06:23:08 itojun Exp $");
 #endif
 #endif /* not lint */
 #endif /* not RIPE */
@@ -269,7 +269,7 @@ int main(argc, argv)
   FILE *sfo;
   int ch;
   struct addrinfo *dst, hints;
-  int socktype=PF_UNSPEC;
+  int af=PF_UNSPEC;
   int error;
   char *host, *whoishost;
   int optp=0;
@@ -321,10 +321,10 @@ int main(argc, argv)
 #endif
       switch((char)ch) {
       case '4':
-	socktype = PF_INET;
+	af = PF_INET;
 	break;
       case '6':
-	socktype = PF_INET6;
+	af = PF_INET6;
 	break;
       case 'h':
 	host = optarg;
@@ -440,7 +440,7 @@ int main(argc, argv)
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_flags = AI_CANONNAME;
-    hints.ai_family = socktype;
+    hints.ai_family = af;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = 0;
     error = getaddrinfo(host, optport, &hints, &dst);
@@ -451,10 +451,11 @@ int main(argc, argv)
     
       whoishost=NICHOST;
     
-      if (verb) fprintf(stderr, "Default host: %s\n\n", whoishost);
+      if (verb)
+	fprintf(stderr, "Default host: %s\n\n", whoishost);
       memset(&hints, 0, sizeof(hints));
       hints.ai_flags = AI_CANONNAME;
-      hints.ai_family = socktype;
+      hints.ai_family = af;
       hints.ai_socktype = SOCK_STREAM;
       hints.ai_protocol = 0;
       error = getaddrinfo(host, optport , &hints, &dst);
@@ -470,10 +471,11 @@ int main(argc, argv)
 #endif
   }
   else {
-    if (verb) fprintf(stderr, "Trying: %s\n\n", host);
+    if (verb)
+      fprintf(stderr, "Trying: %s\n\n", host);
     memset(&hints, 0, sizeof(hints));
     hints.ai_flags = AI_CANONNAME;
-    hints.ai_family = socktype;
+    hints.ai_family = af;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = 0;
     error = getaddrinfo(host, optport, &hints, &dst);
@@ -484,19 +486,21 @@ int main(argc, argv)
     }
   }
   
-  while (1) {
+  for (/*nothing*/; dst; dst = dst->ai_next) {
     s = socket(dst->ai_family, dst->ai_socktype, dst->ai_protocol);
+    if (s < 0)
+      continue;
     if (connect(s, dst->ai_addr, dst->ai_addrlen) < 0) {
+      close(s);
       if (verb) (void)fprintf(stderr, "whois: connect miss\n");
-      if (dst->ai_next == NULL) {
-	perror("whois: connect");
-	exit(1);
-      } else {
-	dst = dst->ai_next;
-      }
       continue;
     }
+    /*okay*/
     break;
+  }
+  if (dst == NULL) {
+    perror("whois: connect");
+    exit(1);
   }
   if (verb) (void)fprintf(stderr, "whois: connect success\n");
 
