@@ -1,6 +1,7 @@
-#	$NetBSD: std.playstation2,v 1.5 2002/12/09 22:54:15 simonb Exp $
+#	$NetBSD: std.playstation2,v 1.6 2003/08/30 22:44:40 chs Exp $
 
 machine playstation2 mips
+makeoptions	MACHINE_ARCH="mipsel"
 
 options 	MIPS3
 options 	MIPS3_5900
