@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.65 2002/11/07 17:49:08 thorpej Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.66 2003/01/30 23:43:33 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.65 2002/11/07 17:49:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.66 2003/01/30 23:43:33 thorpej Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
@@ -442,7 +442,7 @@ rip_ctloutput(op, so, level, optname, m)
 	case PRCO_GETOPT:
 		switch (optname) {
 		case IP_HDRINCL:
-			*m = m_get(M_WAIT, M_SOOPTS);
+			*m = m_get(M_WAIT, MT_SOOPTS);
 			(*m)->m_len = sizeof (int);
 			*mtod(*m, int *) = inp->inp_flags & INP_HDRINCL ? 1 : 0;
 			break;
