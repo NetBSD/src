@@ -1,4 +1,4 @@
-/* $NetBSD: if_es.c,v 1.8 1997/07/28 18:07:13 mark Exp $ */
+/*	$NetBSD: if_es.c,v 1.9 1997/10/14 21:45:21 mark Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -54,6 +54,7 @@
 #include <sys/device.h>
 
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/if_ether.h>
 
 #ifdef INET
@@ -73,7 +74,7 @@
 #include <machine/irqhandler.h>
 #include <machine/io.h>
 #include <machine/katelib.h>
-#include <arm32/mainbus/if_esreg.h>
+#include <arm32/rc7500/if_esreg.h>
 #include <arm32/mainbus/mainbus.h>
 
 #include "locators.h"
@@ -126,7 +127,7 @@ static void esrint __P((struct es_softc *));
 static void esinit __P((struct es_softc *));
 static void esreset __P((struct es_softc *));
 
-int esprobe __P((struct device *, void *, void *));
+int esprobe __P((struct device *, struct cfdata *, void *));
 void esattach __P((struct device *, struct device *, void *));
 
 struct cfattach es_ca = {
@@ -140,8 +141,10 @@ struct cfdriver es_cd = {
 int
 esprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
+	struct mainbus_attach_args *mb = aux;
 	/* We need a base address */
 	if (mb->mb_iobase == MAINBUSCF_BASE_DEFAULT)
 		return(0);
@@ -298,9 +301,9 @@ esinit(sc)
 	outl(iobase + BANKSEL, BSR_BANK1);
 	outl(iobase + B1CR, (CR_ALLONES | CR_NO_WAIT_ST | CR_16BIT));
 	outl(iobase + B1CTR, CTR_AUTO_RLSE);
-	outl(iobase + B1IAR1, *((u_short *) LLADDR(ifp->if_sadl)[0]));
-	outl(iobase + B1IAR3, *((u_short *) LLADDR(ifp->if_sadl)[2]));
-	outl(iobase + B1IAR5, *((u_short *) LLADDR(ifp->if_sadl)[4]));
+	outl(iobase + B1IAR1, *((u_short *) &LLADDR(ifp->if_sadl)[0]));
+	outl(iobase + B1IAR3, *((u_short *) &LLADDR(ifp->if_sadl)[2]));
+	outl(iobase + B1IAR5, *((u_short *) &LLADDR(ifp->if_sadl)[4]));
 
 	outl(iobase + BANKSEL, BSR_BANK2);
 	outl(iobase + B2MMUCR, MMUCR_RESET);
@@ -328,7 +331,7 @@ esinit(sc)
 	/* Attempt to start output, if any. */
 	esstart(ifp);
  
-	splx(s);
+	(void)splx(s);
 }
 
 static int
@@ -720,7 +723,7 @@ estint(ifp)
 	int s;
 	s = splnet();
 	esstart(ifp);
-	splx(s);
+	(void)splx(s);
 }
 
 static void
@@ -940,7 +943,7 @@ esioctl(ifp, command, data)
 		error = EINVAL;
 	}
 
-	splx(s);
+	(void)splx(s);
 	return (error);
 }
 
@@ -953,7 +956,7 @@ esreset(sc)
 	s = splimp();
 	esstop(sc);
 	esinit(sc);
-	splx(s);
+	(void)splx(s);
 }
 
 static void
@@ -963,7 +966,7 @@ eswatchdog(ifp)
 	struct es_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++ifp->.if_oerrors;
+	++ifp->if_oerrors;
 
 	esreset(sc);
 }
