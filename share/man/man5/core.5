@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)core.5	6.3 (Berkeley) 4/29/91
-.\"	$Id: core.5,v 1.2 1993/08/01 07:35:34 mycroft Exp $
+.\"	$Id: core.5,v 1.3 1994/03/19 18:52:30 mycroft Exp $
 .\"
 .Dd April 29, 1991
 .Dt CORE 5
@@ -47,8 +47,9 @@ to disk for later examination by one of the aviailable debuggers.
 (See
 .Xr sigaction 2 . )
 This memory image is written to a file named
-.Nm core
-in the working directory;
+.Nm program.core
+in the working directory (where ``program'' is the name of the process
+which terminated abnormally, typically the name of an executable file);
 provided the terminated process had write permission in the directory,
 and provided the abnormality did not caused
 a system crash.
