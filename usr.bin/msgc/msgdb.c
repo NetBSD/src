@@ -1,4 +1,4 @@
-/*	$NetBSD: msgdb.c,v 1.9 1999/07/04 10:35:19 cgd Exp $	*/
+/*	$NetBSD: msgdb.c,v 1.10 1999/07/04 21:30:15 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -141,28 +141,31 @@ write_msg_file ()
 		"#include <stdarg.h>\n"
 		"#include <curses.h>\n"
 		"\n"
+		"typedef const char *msg;\n"
+		"\n"
 		"/* Prototypes */\n"
 		"int  msg_window(WINDOW *window);\n"
-		"char *msg_string (int msg_no);\n"
+		"const char *msg_string (msg msg_no);\n"
 		"void msg_clear(void);\n"
 		"void msg_standout(void);\n"
 		"void msg_standend(void);\n"
-		"void msg_display(int msg_no,...);\n"
-		"void msg_display_add(int msg_no,...);\n"
-		"int  msg_printf (char *fmt, ...);\n"
-		"int  msg_printf_add (char *fmt, ...);\n"
-		"void msg_prompt (int msg_no, char *def,"
+		"void msg_display(msg msg_no,...);\n"
+		"void msg_display_add(msg msg_no,...);\n"
+		"int  msg_printf (const char *fmt, ...);\n"
+		"int  msg_printf_add (const char *fmt, ...);\n"
+		"void msg_prompt (msg msg_no, const char *def,"
 			" char *val, int max_chars, ...);\n"
-		"void msg_prompt_add (int msg_no, char *def,"
+		"void msg_prompt_add (msg msg_no, const char *def,"
 			" char *val, int max_chars, ...);\n"
-		"void msg_prompt_noecho (int msg_no, char *def,"
+		"void msg_prompt_noecho (msg msg_no, const char *def,"
 			" char *val, int max_chars, ...);\n"
-		"void msg_table_add(int msg_no,...);\n"
+		"void msg_table_add(msg msg_no,...);\n"
 		"\n"
 		"/* Message names */\n"
 	      );
+	(void) fprintf (out_file, "#define MSG_NONE\tNULL\n");
 	for (t=head; t != NULL; t = t->next) {
-		(void) fprintf (out_file, "#define MSG_%s\t%d\n",
+		(void) fprintf (out_file, "#define MSG_%s\t((msg)(long)%d)\n",
 				t->id, t->msg_no);
 	}
 	(void) fprintf (out_file, "\n#endif\n");
@@ -181,7 +184,7 @@ write_msg_file ()
 	(void)fprintf (out_file, "#include \"%s\"\n", hname);
 
 	/* msg_list */
-	(void)fprintf (out_file, "char *msg_list[] = {\n");
+	(void)fprintf (out_file, "const char *msg_list[] = {\n");
 	for (t=head ; t != NULL; t = t->next) 
 		write_str (out_file, t->msg);
 	(void)fprintf (out_file, "NULL};\n");
