@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: grfabs_cc.c,v 1.1 1994/02/13 21:10:31 chopps Exp $
+ *	$Id: grfabs_cc.c,v 1.2 1994/03/14 15:02:28 chopps Exp $
  *
  *  abstract interface for custom chips to the amiga abstract graphics driver.
  *
@@ -678,7 +678,7 @@ cc_mode_vbl_handler(d)
 	u_short vp = ((custom.vposr & 0x0007) << 8) | ((custom.vhposr) >> 8);
 
 	if (vp < 12) {
-		custom.cop1lc = PREP_DMA_MEM(h_this_data->frames[F_LONG]);
+		custom.cop1lc = PREP_DMA_MEM(DMDATA(d)->frames[F_LONG]);
 		custom.copjmp1 = 0;
 	}
 }
