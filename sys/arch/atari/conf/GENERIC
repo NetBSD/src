@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.1.1.1 1995/03/26 07:12:16 leo Exp $
+#	$NetBSD: GENERIC,v 1.2 1995/05/28 19:56:16 leo Exp $
 #
 # Maximal ATARI-TT
 #
@@ -20,7 +20,8 @@ options		"M68030"	# support for 030
 
 options		TIMEZONE=300	# Set the timezone that the kernel will use
 options		DST=1		# Set the timezone that the kernel will use
-options		FPCOPROC	# Support for MC68881/MC68882
+options		HZ=64		# Set the clock-rate (48/64/96)
+
 
 #
 # Networking options
@@ -46,6 +47,13 @@ options		DEVPAGER	# Pager
 #
 options		PANICWAIT	# Require keystroke to dump/reboot
 options		DDB		# Kernel debugger
+
+#
+# File system related options
+#
+options		QUOTA		# Disk quotas for local disks
+options		NFSSERVER	# Network File System server side code
+options		NFSCLIENT	# Network File System client side code
 
 #
 # Compatability options for various existing systems

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ATARITT,v 1.1.1.1 1995/03/26 07:12:16 leo Exp $
+#	$NetBSD: ATARITT,v 1.2 1995/05/28 19:56:14 leo Exp $
 #
 # ATARI-TT
 #
@@ -20,8 +20,8 @@ options		"M68030"	# support for 030
 
 options		TIMEZONE=300	# Set the timezone that the kernel will use
 options		DST=1		# Set the timezone that the kernel will use
+options		HZ=64		# Set the clock-rate (48/64/96)
 
-options		FPCOPROC	# Support for MC68881/MC68882
 #options	FPSP
 
 #
@@ -48,6 +48,11 @@ options		DEVPAGER	# Pager
 #
 options		PANICWAIT	# Require keystroke to dump/reboot
 options		DDB		# Kernel debugger
+
+#
+# File system related options
+#
+#options		NFSCLIENT	# Network File System client side code
 
 #
 # Compatability options for various existing systems
