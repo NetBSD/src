@@ -29,7 +29,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$Id: rstat_proc.c,v 1.13 1995/06/24 16:05:38 pk Exp $";
+static char rcsid[] = "$Id: rstat_proc.c,v 1.14 1995/07/09 00:30:11 pk Exp $";
 #endif
 
 /*
@@ -384,7 +384,7 @@ rstat_service(rqstp, transp)
 		int fill;
 	} argument;
 	char *result;
-	bool_t (*xdr_argument) __P((...)), (*xdr_result) __P((...));
+	xdrproc_t xdr_argument, xdr_result;
 	char *(*local) __P((void *, struct svc_req *));
 
 	switch (rqstp->rq_proc) {
@@ -393,8 +393,8 @@ rstat_service(rqstp, transp)
 		goto leave;
 
 	case RSTATPROC_STATS:
-		xdr_argument = xdr_void;
-		xdr_result = xdr_statstime;
+		xdr_argument = (xdrproc_t)xdr_void;
+		xdr_result = (xdrproc_t)xdr_statstime;
                 switch (rqstp->rq_vers) {
                 case RSTATVERS_ORIG:
                         local = (char *(*) __P((void *, struct svc_req *)))
@@ -415,8 +415,8 @@ rstat_service(rqstp, transp)
 		break;
 
 	case RSTATPROC_HAVEDISK:
-		xdr_argument = xdr_void;
-		xdr_result = xdr_u_int;
+		xdr_argument = (xdrproc_t)xdr_void;
+		xdr_result = (xdrproc_t)xdr_u_int;
                 switch (rqstp->rq_vers) {
                 case RSTATVERS_ORIG:
                         local = (char *(*) __P((void *, struct svc_req *)))
