@@ -1,4 +1,4 @@
-/*	$NetBSD: alloca.S,v 1.2 2001/11/13 20:03:38 chris Exp $	*/
+/*	$NetBSD: alloca.S,v 1.3 2003/04/05 23:08:51 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -41,8 +41,4 @@ ENTRY(alloca)
 	bic	r0, r0, #0x00000007
 	sub	sp, sp, r0		/* Adjust the stack pointer */
 	mov	r0, sp			/* r0 = base of new space */
-#ifdef __APCS_26__
-	movs	r15, r14		/* return */
-#else
 	mov	r15, r14		/* return */
-#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.3 2002/08/17 19:54:31 thorpej Exp $	*/
+/*	$NetBSD: cerror.S,v 1.4 2003/04/05 23:08:52 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -45,11 +45,7 @@ ASENTRY(CERROR)
 	str	r4, [r0]
 	mvn	r0, #0x00000000
 	mvn	r1, #0x00000000
-#ifdef __APCS_26__
-	ldmfd	sp!, {r4, pc}^
-#else
 	ldmfd	sp!, {r4, pc}
-#endif
 #else
 #ifdef PIC
 	/* Setup the GOT */
@@ -64,11 +60,7 @@ ASENTRY(CERROR)
 	str	r0, [r1]
 	mvn	r0, #0x00000000
 	mvn	r1, #0x00000000
-#ifdef __APCS_26__
-	movs	pc, lr
-#else
 	mov	pc, lr
-#endif
 
 #ifdef PIC
 	.align	0

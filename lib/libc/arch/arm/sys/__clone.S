@@ -1,4 +1,4 @@
-/* $NetBSD: __clone.S,v 1.3 2002/08/27 21:38:20 mycroft Exp $ */
+/* $NetBSD: __clone.S,v 1.4 2003/04/05 23:08:52 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher Gilbert
@@ -61,11 +61,7 @@ ENTRY(__clone)
 	teq	r1, #0x00
 
 	/* if this is the parent then just return the pid */
-#ifdef __APCS_26__
-	moveqs	r15, r14
-#else
 	moveq	r15, r14
-#endif
 	/*
 	 * This is the child
 	 * load the function and arg off the stack
