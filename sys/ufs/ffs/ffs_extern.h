@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.14 2000/02/14 22:00:22 fvdl Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.15 2000/03/16 18:20:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -94,7 +94,6 @@ void ffs_dinode_swap __P((struct dinode *, struct dinode *));
 void ffs_csum_swap __P((struct csum *, struct csum *, int));
 
 /* ffs_inode.c */
-void ffs_init __P((void));
 int ffs_update __P((void *));
 int ffs_truncate __P((void *));
 
@@ -111,6 +110,8 @@ void ffs_clrblock __P((struct fs *, u_char *, ufs_daddr_t));
 void ffs_setblock __P((struct fs *, unsigned char *, ufs_daddr_t));
 
 /* ffs_vfsops.c */
+void ffs_init __P((void));
+void ffs_done __P((void));
 int ffs_mountroot __P((void));
 int ffs_mount __P((struct mount *, const char *, void *, struct nameidata *,
 		   struct proc *));

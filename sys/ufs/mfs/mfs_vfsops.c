@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.22 2000/01/21 23:43:10 thorpej Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.23 2000/03/16 18:20:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -92,6 +92,7 @@ struct vfsops mfs_vfsops = {
 	ffs_fhtovp,
 	ffs_vptofh,
 	mfs_init,
+	mfs_done,
 	ffs_sysctl,
 	NULL,
 	ufs_check_export,
@@ -104,8 +105,22 @@ struct vfsops mfs_vfsops = {
 void
 mfs_init()
 {
+	/*
+	 * ffs_init() ensures to initialize necessary resources
+	 * only once.
+	 */
+	ffs_init();
 }
 
+void
+mfs_done()
+{
+	/*
+	 * ffs_done() ensures to free necessary resources
+	 * only once, when it's no more needed.
+	 */
+	ffs_done();
+}
 
 /*
  * Called by main() when mfs is going to be mounted as root.
