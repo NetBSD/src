@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.3 1998/09/05 13:52:15 pk Exp $ */
+/*	$NetBSD: installboot.c,v 1.4 1999/04/28 15:22:25 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -53,17 +53,30 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "loadfile.h"
+
 int	verbose, nowrite, hflag;
 char	*boot, *proto, *dev;
 
+#if 0
+#ifdef __ELF__
+#define SYMNAME(a)	a
+#else
+#define SYMNAME(a)	__CONCAT("_",a)
+#endif
+#else
+/* XXX: Hack in libc nlist works with both formats */
+#define SYMNAME(a)	__CONCAT("_",a)
+#endif
+
 struct nlist nl[] = {
 #define X_BLOCKTABLE	0
-	{"_block_table"},
+	{ {SYMNAME("block_table")} },
 #define X_BLOCKCOUNT	1
-	{"_block_count"},
+	{ {SYMNAME("block_count")} },
 #define X_BLOCKSIZE	2
-	{"_block_size"},
-	{NULL}
+	{ {SYMNAME("block_size")} },
+	{ {NULL} }
 };
 daddr_t	*block_table;		/* block number array in prototype image */
 int32_t	*block_count_p;		/* size of this array */
@@ -84,8 +97,10 @@ int 		main __P((int, char *[]));
 static void
 usage()
 {
-	fprintf(stderr,
-		"usage: installboot [-n] [-v] [-h] [-a <karch>] <boot> <proto> <device>\n");
+	extern char *__progname;
+	(void)fprintf(stderr,
+	    "Usage: %s [-n] [-v] [-h] [-a <karch>] <boot> <proto> <device>\n",
+	    __progname);
 	exit(1);
 }
 
@@ -203,10 +218,8 @@ loadprotoblocks(fname, size)
 	long *size;
 {
 	int	fd, sz;
-	char	*bp;
-	struct	stat statbuf;
-	struct	exec *hp;
-	long	off;
+	u_long	ap, bp, st, en;
+	u_long	marks[MARK_MAX];
 
 	/* Locate block number array in proto file */
 	if (nlist(fname, nl) != 0) {
@@ -226,89 +239,80 @@ loadprotoblocks(fname, size)
 		return NULL;
 	}
 
-	if ((fd = open(fname, O_RDONLY)) < 0) {
-		warn("open: %s", fname);
+	marks[MARK_START] = 0;
+	if ((fd = loadfile(fname, marks, COUNT_TEXT|COUNT_DATA)) == -1)
 		return NULL;
-	}
-	if (fstat(fd, &statbuf) != 0) {
-		warn("fstat: %s", fname);
-		close(fd);
-		return NULL;
-	}
-	if ((bp = calloc(roundup(statbuf.st_size, DEV_BSIZE), 1)) == NULL) {
-		warnx("malloc: %s: no memory", fname);
-		close(fd);
-		return NULL;
-	}
-	if (read(fd, bp, statbuf.st_size) != statbuf.st_size) {
-		warn("read: %s", fname);
-		free(bp);
-		close(fd);
-		return NULL;
-	}
-	close(fd);
+	(void)close(fd);
 
-	hp = (struct exec *)bp;
-	sz = (hflag ? sizeof(*hp) : 0) + hp->a_text + hp->a_data;
+	sz = (marks[MARK_END] - marks[MARK_START]) + (hflag ? 32 : 0);
 	sz = roundup(sz, DEV_BSIZE);
+	st = marks[MARK_START];
+	en = marks[MARK_ENTRY];
 
-	/* Calculate the symbols' location within the proto file */
-	off = N_DATOFF(*hp) - N_DATADDR(*hp) - (hp->a_entry - N_TXTADDR(*hp));
-	block_table = (daddr_t *) (bp + nl[X_BLOCKTABLE].n_value + off);
-	block_count_p = (int32_t *)(bp + nl[X_BLOCKCOUNT].n_value + off);
-	block_size_p = (int32_t *) (bp + nl[X_BLOCKSIZE].n_value + off);
+	if ((ap = (u_long)malloc(sz)) == NULL) {
+		warn("malloc: %s", "");
+		return NULL;
+	}
+
+	bp = ap + (hflag ? 32 : 0);
+	marks[MARK_START] = bp - st;
+	if ((fd = loadfile(fname, marks, LOAD_TEXT|LOAD_DATA)) == -1)
+		return NULL;
+	(void)close(fd);
+
+	block_table = (daddr_t *) (bp + nl[X_BLOCKTABLE].n_value - st);
+	block_count_p = (int32_t *)(bp + nl[X_BLOCKCOUNT].n_value - st);
+	block_size_p = (int32_t *) (bp + nl[X_BLOCKSIZE].n_value - st);
 	if ((int)block_table & 3) {
-		warn("%s: invalid address: block_table = %x",
+		warn("%s: invalid address: block_table = %p",
 		     fname, block_table);
-		free(bp);
-		close(fd);
+		free((void *)bp);
 		return NULL;
 	}
 	if ((int)block_count_p & 3) {
-		warn("%s: invalid address: block_count_p = %x",
+		warn("%s: invalid address: block_count_p = %p",
 		     fname, block_count_p);
-		free(bp);
-		close(fd);
+		free((void *)bp);
 		return NULL;
 	}
 	if ((int)block_size_p & 3) {
-		warn("%s: invalid address: block_size_p = %x",
+		warn("%s: invalid address: block_size_p = %p",
 		     fname, block_size_p);
-		free(bp);
-		close(fd);
+		free((void *)bp);
 		return NULL;
 	}
 	max_block_count = *block_count_p;
 
 	if (verbose) {
-		printf("%s: entry point %#x\n", fname, hp->a_entry);
+		printf("%s: entry point %#lx\n", fname, en);
 		printf("%s: a.out header %s\n", fname,
-			hflag?"left on":"stripped off");
-		printf("proto bootblock size %ld\n", sz);
-		printf("room for %d filesystem blocks at %#x\n",
-			max_block_count, nl[X_BLOCKTABLE].n_value);
+		    hflag ? "left on" : "stripped off");
+		printf("proto bootblock size %d\n", sz);
+		printf("room for %d filesystem blocks at %#lx\n",
+		    max_block_count, nl[X_BLOCKTABLE].n_value);
 	}
 
-	/*
-	 * We convert the a.out header in-vitro into something that
-	 * Sun PROMs understand.
-	 * Old-style (sun4) ROMs do not expect a header at all, so
-	 * we turn the first two words into code that gets us past
-	 * the 32-byte header where the actual code begins. In assembly
-	 * speak:
-	 *	.word	MAGIC		! a NOP
-	 *	ba,a	start		!
-	 *	.skip	24		! pad
-	 * start:
-	 */
-
+	if (hflag) {
+		/*
+		 * We convert the a.out header in-vitro into something that
+		 * Sun PROMs understand.
+		 * Old-style (sun4) ROMs do not expect a header at all, so
+		 * we turn the first two words into code that gets us past
+		 * the 32-byte header where the actual code begins. In assembly
+		 * speak:
+		 *	.word	MAGIC		! a NOP
+		 *	ba,a	start		!
+		 *	.skip	24		! pad
+		 * start:
+		 */
 #define SUN_MAGIC	0x01030107
 #define SUN4_BASTART	0x30800007	/* i.e.: ba,a `start' */
-	*((int *)bp) = SUN_MAGIC;
-	*((int *)bp + 1) = SUN4_BASTART;
+		*((int *)ap) = SUN_MAGIC;
+		*((int *)ap + 1) = SUN4_BASTART;
+	}
 
 	*size = sz;
-	return (hflag ? bp : (bp + sizeof(struct exec)));
+	return (char *)ap;
 }
 
 static void

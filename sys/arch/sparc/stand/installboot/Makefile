@@ -1,9 +1,18 @@
-#	$NetBSD: Makefile,v 1.8 1999/02/13 02:54:49 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 1999/04/28 15:22:25 christos Exp $
 
 .include <bsd.own.mk>
 
-PROG=		installboot
-MKMAN=		no
+WARNS?=1
+PROG=	installboot
+SRCS=	installboot.c loadfile.c
+MKMAN=	no
+CFLAGS+=-g
+
+LIBSA=${.CURDIR}/../../../../lib/libsa
+
+.PATH.c: ${LIBSA}
+
+CPPFLAGS+=-I${LIBSA}
 
 LDSTATIC?=	-static
 
