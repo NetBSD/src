@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)strtoul.c	5.3 (Berkeley) 2/23/91";*/
-static char rcsid[] = "$Id: strtoul.c,v 1.2 1993/08/01 18:36:54 mycroft Exp $";
+static char rcsid[] = "$Id: strtoul.c,v 1.3 1993/08/25 22:22:31 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <limits.h>
@@ -103,6 +103,6 @@ strtoul(nptr, endptr, base)
 	} else if (neg)
 		acc = -acc;
 	if (endptr != 0)
-		*endptr = any ? s - 1 : (char *)nptr;
+		*endptr = (char *) (any ? s - 1 : nptr);
 	return (acc);
 }
