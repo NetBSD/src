@@ -1,4 +1,4 @@
-/*	$NetBSD: _startup.c,v 1.13 1997/03/24 17:57:12 gwr Exp $	*/
+/*	$NetBSD: _startup.c,v 1.14 1997/04/25 18:29:58 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -51,7 +51,6 @@
 #include <machine/mon.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
-#include <machine/idprom.h>
 #include <machine/obio.h>
 #include <machine/machdep.h>
 
@@ -78,21 +77,12 @@ int mmutype = -1;	/* MMU_68030 */
  * Now our own stuff.
  */
 
-unsigned char cpu_machine_id = 0;
-char *cpu_string = NULL;
-int cpu_has_vme = 0;
-int has_iocache = 0;
-
-int msgbufmapped = 0;
-struct msgbuf *msgbufp = NULL;
-
 struct user *proc0paddr;	/* proc[0] pcb address (u-area VA) */
 extern struct pcb *curpcb;
 
 /* First C code called by locore.s */
 void _bootstrap __P((struct exec));
 
-static void _verify_hardware __P((void));
 static void _vm_init __P((struct exec *kehp));
 
 
@@ -113,7 +103,6 @@ _save_symtab(kehp)
 	/*
 	 * First, sanity-check the exec header.
 	 */
-	mon_printf("_save_symtab: ");
 	if ((kehp->a_midmag & 0xFFF0) != 0x0100) {
 		errdesc = "magic";
 		goto err;
@@ -148,7 +137,7 @@ _save_symtab(kehp)
 	endp += sizeof(int);	/* past length word */
 	endp += *symsz;			/* past nlist array */
 
-	/* Check the string table length. */
+	/* Sanity-check the string table length. */
 	strsz = (int*)endp;
 	if ((*strsz < 4) || (*strsz > 0x80000)) {
 		errdesc = "strsize";
@@ -158,11 +147,10 @@ _save_symtab(kehp)
 	/* Success!  We have a valid symbol table! */
 	endp += *strsz;			/* past strings */
 	esym = endp;
-	mon_printf(" found %d + %d\n", *symsz, *strsz);
 	return;
 
  err:
-	mon_printf(" no symbols (bad %s)\n", errdesc);
+	mon_printf("_save_symtab: bad %s\n", errdesc);
 }
 #endif	/* DDB && !SYMTAB_SPACE */
 
@@ -224,46 +212,6 @@ _vm_init(kehp)
 
 
 /*
- * XXX - Should empirically estimate the divisor...
- * Note that the value of delay_divisor is roughly
- * 2048 / cpuclock	(where cpuclock is in MHz).
- */
-int delay_divisor = 82;		/* assume the fastest (3/260) */
-
-static void
-_verify_hardware()
-{
-	unsigned char machtype;
-
-	machtype = identity_prom.idp_machtype;
-	if ((machtype & CPU_ARCH_MASK) != SUN3X_ARCH) {
-		mon_printf("not a sun3x?\n");
-		sunmon_abort();
-	}
-
-	cpu_machine_id = machtype & SUN3X_IMPL_MASK;
-	switch (cpu_machine_id) {
-
-	case SUN3X_MACH_80 :
-		cpu_string = "80";  	/* Hydra */
-		delay_divisor = 102;	/* 20 MHz ? XXX */
-		cpu_has_vme = FALSE;
-		break;
-
-	case SUN3X_MACH_470:
-		cpu_string = "470"; 	/* Pegasus */
-		delay_divisor = 82; 	/* 25 MHz ? XXX */
-		cpu_has_vme = TRUE;
-		break;
-
-	default:
-		mon_printf("unknown sun3x model\n");
-		sunmon_abort();
-	}
-}
-
-
-/*
  * This is called from locore.s just after the kernel is remapped
  * to its proper address, but before the call to main().  The work
  * done here corresponds to various things done in locore.s on the
@@ -281,11 +229,11 @@ _bootstrap(keh)
 	/* set v_handler, get boothowto */
 	sunmon_init();
 
-	/* Find devices we need early (like the IDPROM). */
+	/*
+	 * Find and save OBIO mappings needed early,
+	 * and call some init functions.
+	 */
 	obio_init();
-
-	/* Note: must come after obio_init (for IDPROM). */
-	_verify_hardware();	/* get CPU type, etc. */
 
 	/* handle kernel mapping, pmap_bootstrap(), etc. */
 	_vm_init(&keh);
@@ -297,6 +245,7 @@ _bootstrap(keh)
 	 * This is done after obio_init() / intreg_init() finds
 	 * the interrupt register and disables the NMI clock so
 	 * it will not cause "spurrious level 7" complaints.
+	 * Done after _vm_init so the PROM can debug that.
 	 */
 	setvbr((void **)vector_table);
 
