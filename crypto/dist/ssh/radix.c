@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.1.1.1.2.3 2001/12/11 00:00:25 he Exp $	*/
+/*	$NetBSD: radix.c,v 1.1.1.1.2.4 2002/04/26 17:01:13 he Exp $	*/
 /*
  * Copyright (c) 1999 Dug Song.  All rights reserved.
  *
@@ -75,15 +75,15 @@ typedef u_short my_u_short;
 	(cp) += 4; \
 }
 
-#define GETSTRING(s, p, p_l) {			\
-    char *p_targ = (p) + p_l;		\
+#define GETSTRING(s, p, p_l, s_l) {		\
+    char *p_targ = (p) + (s_l < p_l ? s_l : p_l);\
     char *s_c = (s);			\
     char *p_c = (p);			\
     while (*p_c && (p_c < p_targ)) {		\
 	*s_c++ = *p_c++;			\
     }						\
     if (p_c == p_targ) {			\
-	return 1;				\
+	return 0;				\
     }						\
     *s_c = *p_c++;				\
     (p_l) = (p_l) - (p_c - (p));		\
@@ -167,12 +167,12 @@ radix_to_creds(const char *buf, CREDENTIALS *creds)
 	p++;
 	len--;
 
-	GETSTRING(creds->service, p, len);
-	GETSTRING(creds->instance, p, len);
-	GETSTRING(creds->realm, p, len);
+	GETSTRING(creds->service, p, len, sizeof creds->service);
+	GETSTRING(creds->instance, p, len, sizeof creds->instance);
+	GETSTRING(creds->realm, p, len, sizeof creds->realm);
 
-	GETSTRING(creds->pname, p, len);
-	GETSTRING(creds->pinst, p, len);
+	GETSTRING(creds->pname, p, len, sizeof creds->pname);
+	GETSTRING(creds->pinst, p, len, sizeof creds->pinst);
 	/* Ignore possibly different realm. */
 	while (*p && len)
 		p++, len--;
