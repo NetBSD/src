@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.140 2005/01/06 15:29:35 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.141 2005/04/04 20:35:31 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -97,7 +97,7 @@ MLINKS+=getfsent.3 endfsent.3 getfsent.3 getfsfile.3 getfsent.3 getfsspec.3 \
 	getfsent.3 getfstype.3 getfsent.3 setfsent.3
 MLINKS+=getgrent.3 endgrent.3 getgrent.3 setgroupent.3 getgrent.3 getgrgid.3 \
 	getgrent.3 getgrnam.3 getgrent.3 setgrent.3
-MLINKS+=getgrent.3 getgrgid_r.3 getgrent.3 getgrnam_r.3
+MLINKS+=getgrent.3 getgrgid_r.3 getgrent.3 getgrnam_r.3 getgent.3 getgrent_r.3
 MLINKS+=getgrouplist.3 getgroupmembership.3
 MLINKS+=gethostname.3 sethostname.3
 MLINKS+=getlastlogx.3 getutmp.3 getlastlogx.3 getutmpx.3
@@ -108,7 +108,7 @@ MLINKS+=getnetgrent.3 endnetgrent.3 getnetgrent.3 innetgr.3 \
 MLINKS+=getprogname.3 setprogname.3
 MLINKS+=getpwent.3 endpwent.3 getpwent.3 setpassent.3 getpwent.3 getpwnam.3 \
 	getpwent.3 getpwuid.3 getpwent.3 setpwent.3
-MLINKS+=getpwent.3 getpwnam_r.3 getpwent.3 getpwuid_r.3
+MLINKS+=getpwent.3 getpwnam_r.3 getpwent.3 getpwuid_r.3 getpwent.3 getpwent_r.3
 # getpwent.3 setpwfile.3 - deprecated
 MLINKS+=getttyent.3 endttyent.3 getttyent.3 getttynam.3 getttyent.3 setttyent.3
 MLINKS+=getusershell.3 endusershell.3 getusershell.3 setusershell.3
