@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.1.1.1 1997/03/14 02:40:33 perry Exp $	*/
+/*	$NetBSD: am7990.c,v 1.2 1997/03/15 22:20:02 perry Exp $	*/
 
 /* mostly from netbsd:sys/arch/i386/netboot/ne2100.c
  memory allocation now 1 chunk, added deallocation
@@ -28,18 +28,18 @@ extern void bzero __P((void*, int)); /* XXX */
 
 extern u_char eth_myaddr[6];
 
-extern int rap, rdp;
+extern int lance_rap, lance_rdp;
 
 static caddr_t dmamem;
 
 #define LA(adr) vtophys(adr)
 
 /* Lance register offsets */
-#define LA_CSR          rdp
-#define LA_CSR1         rdp
-#define LA_CSR2         rdp
-#define LA_CSR3         rdp
-#define LA_RAP          rap
+#define LA_CSR          lance_rdp
+#define LA_CSR1         lance_rdp
+#define LA_CSR2         lance_rdp
+#define LA_CSR3         lance_rdp
+#define LA_RAP          lance_rap
 
 /*
  * Some driver specific constants.
@@ -55,6 +55,24 @@ static initblock_t *initblock;		/* initialization block */
 static tmde_t *tmd;			/* transmit ring */
 static rmde_t *rmd;			/* receive ring */
 static char rbuffer[NRCVRING][LANCEBUFSIZE]; /* receive buffers */
+
+/*
+ * Stop ethernet board
+ */
+void am7990_stop()
+{
+    long l;
+
+    /* stop chip and disable DMA access */
+    outw(LA_RAP, RDP_CSR0);
+    outw(LA_CSR, CSR_STOP);
+    for (l = 0; (inw(LA_CSR) & CSR_STOP) == 0; l++) {
+	if (l >= MAXLOOP) {
+	    printf("Lance failed to stop\n");
+	    return;
+	}
+    }
+}
 
 /*
  * Reset ethernet board
@@ -76,14 +94,7 @@ void am7990_init()
     rmd = (rmde_t *)(tmd + 1);
 
     /* stop the chip, and make sure it did */
-    outw(LA_RAP, RDP_CSR0);
-    outw(LA_CSR, CSR_STOP);
-    for (l = 0; (inw(LA_CSR) & CSR_STOP) == 0; l++) {
-	if (l >= MAXLOOP) {
-	    printf("Lance failed to stop\n");
-	    return;
-	}
-    }
+    am7990_stop();
 
     /* fill lance initialization block */
     bzero(initblock, sizeof(initblock_t));
@@ -141,24 +152,6 @@ void am7990_init()
 	if (l >= MAXLOOP) {
 	    printf("Lance not started\n");
 	    break;
-	}
-    }
-}
-
-/*
- * Stop ethernet board
- */
-void am7990_stop()
-{
-    long l;
-
-    /* stop chip and disable DMA access */
-    outw(LA_RAP, RDP_CSR0);
-    outw(LA_CSR, CSR_STOP);
-    for (l = 0; (inw(LA_CSR) & CSR_STOP) == 0; l++) {
-	if (l >= MAXLOOP) {
-	    printf("Lance failed to stop\n");
-	    return;
 	}
     }
 }
