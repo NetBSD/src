@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_pager.c	8.1 (Berkeley) 6/11/93
- *	$Id: vm_pager.c,v 1.9 1993/12/20 12:40:23 cgd Exp $
+ *	$Id: vm_pager.c,v 1.10 1994/01/07 18:11:38 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -225,7 +225,7 @@ vm_pager_map_page(m)
 	vm_offset_t kva;
 
 #ifdef DEBUG
-	if ((m->flags & PG_BUSY) == 0)
+	if (!(m->flags & PG_BUSY))
 		panic("vm_pager_map_page: page not busy");
 	if (m->flags & PG_PAGEROWNED)
 		printf("vm_pager_map_page: page %x already in pager\n", m);
