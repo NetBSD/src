@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.179.2.17 2002/07/24 06:57:23 lukem Exp $
+.\"	$NetBSD: main,v 1.179.2.18 2002/07/24 07:06:46 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -630,6 +630,8 @@ Support for
 .Tn "Windows 2000"
 .Sq NTFS
 (NTFS5).
+.It
+Tagged queueing support for SCSI drivers based on the ncr53c9x controller.
 .bullet)
 .
 .Ss2 Security
