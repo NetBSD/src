@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: lp,v 1.2 1997/10/05 12:48:36 mrg Exp $
+#	$NetBSD: lp,v 1.3 1998/07/07 02:01:37 mrg Exp $
 #
 # Copyright (c) 1995 Joerg Wunsch
 #
@@ -50,12 +50,14 @@ dest=${LPDEST:-${PRINTER:-lp}}
 # XXX We include the -o flag as a dummy.  Posix 1003.2 does not require
 # it, but the rationale mentions it as a possible future extension.
 #
-while getopts "cd:n:o:" option
+while getopts "cd:n:o:s" option
 do
 	case $option in
 
 	c)			# copy files before printing
 		symlink="";;
+	s)			# symlink files (SVR4 compatibility)
+		symlink="-s";;
 	d)			# destination
 		dest="${OPTARG}";;
 	n)			# number of copies
