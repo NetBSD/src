@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.4 2004/04/26 22:05:04 cl Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.5 2004/05/02 20:38:35 cl Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.4 2004/04/26 22:05:04 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.5 2004/05/02 20:38:35 cl Exp $");
 
 #include "opt_xen.h"
 
@@ -205,6 +205,7 @@ xen_parse_cmdline(int what, union xen_cmdline_parseinfo *xcp)
 						*opt++ = ':';
 				}
 			}
+			break;
 
 		case XEN_PARSE_CONSOLE:
 			if (strncasecmp(opt, "console=", 8) == 0)
