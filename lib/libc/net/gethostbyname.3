@@ -1,4 +1,4 @@
-.\"	$NetBSD: gethostbyname.3,v 1.11 1998/02/05 18:48:44 perry Exp $
+.\"	$NetBSD: gethostbyname.3,v 1.12 1998/04/28 20:25:53 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -75,7 +75,7 @@ following structure describing an internet host
 referenced by name or by address, respectively.
 This structure contains either the information obtained from the name server,
 .Xr named 8 ,
-broken-out fields from a line in 
+broken-out fields from a line in
 .Pa /etc/hosts ,
 or database entries supplied by the
 .Xr yp 8
@@ -136,7 +136,7 @@ If the
 flag is non-zero,
 this sets the option to send all queries to the name server using
 .Tn TCP
-and to retain the connection after each call to 
+and to retain the connection after each call to
 .Fn gethostbyname
 or
 .Fn gethostbyaddr .
@@ -155,7 +155,7 @@ connection.
 .It Pa /etc/hosts
 .El
 .Sh DIAGNOSTICS
-Error return status from 
+Error return status from
 .Fn gethostbyname
 and
 .Fn gethostbyaddr
@@ -193,8 +193,8 @@ A retry at some later time may succeed.
 Some unexpected server failure was encountered.
 This is a non-recoverable error.
 .It Dv NO_DATA
-The requested name is valid but does not have an IP address; 
-this is not a temporary error.  
+The requested name is valid but does not have an IP address;
+this is not a temporary error.
 This means that the name is known to the name server but there is no address
 associated with this name.
 Another type of request to the name server using this domain name
@@ -209,14 +209,12 @@ for example, a mail-forwarder may be registered for this domain.
 .Sh CAVEAT
 The
 .Fn gethostent
-function
-is defined, and
+function is defined, and
 .Fn sethostent
 and
 .Fn endhostent
-are redefined,
-when
-.Xr libc 3
+are redefined, when
+.Pa libc.a
 is built to use only the routines to lookup in
 .Pa /etc/hosts
 and not the name server.
@@ -248,7 +246,7 @@ closes the file.
 .Sh HISTORY
 The
 .Fn herror
-function appeared in 
+function appeared in
 .Bx 4.3 .
 The
 .Fn endhostent ,
