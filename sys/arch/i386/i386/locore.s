@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.233.2.18 2002/10/18 02:37:43 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.233.2.19 2002/10/18 04:05:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -2233,7 +2233,7 @@ preempt_dequeue:
 	/* Jump into the middle of cpu_switch */
 
 	xorl	%eax,%eax
-	j switch_resume
+	jmp switch_resume
 
 	
 /*
@@ -2320,7 +2320,7 @@ ENTRY(switch_exit)
 	.globl  _C_LABEL(uvmspace_free),_C_LABEL(kernel_map)
 	.globl	_C_LABEL(uvm_km_free),_C_LABEL(tss_free)
 /* LINTSTUB: Func: void switch_exit(struct lwp *l) */
-ENTRY(switch_exit)
+ENTRY(switch_lwp_exit)
 	movl	4(%esp),%edi		# old process
 #ifndef MULTIPROCESSOR
 	movl	$_C_LABEL(lwp0),%ebx
