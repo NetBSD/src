@@ -1,3 +1,5 @@
+/*	$NetBSD: ip_state.c,v 1.2 1997/01/05 21:32:24 veego Exp $	*/
+
 /*
  * (C)opyright 1995 by Darren Reed.
  *
@@ -7,7 +9,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_state.c,v 1.1 1997/01/05 13:48:11 mrg Exp $";
+static	char	rcsid[] = "Id: ip_state.c,v 1.1.1.1.4.7 1996/12/02 11:51:59 darrenr Exp";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
