@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.159 2004/03/26 06:43:25 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.160 2004/05/31 11:42:00 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.159 2004/03/26 06:43:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.160 2004/05/31 11:42:00 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -987,8 +987,6 @@ wi_start(struct ifnet *ifp)
 				continue;
 			}
                         wh = mtod(m0, struct ieee80211_frame *);
-			if (ic->ic_flags & IEEE80211_F_WEPON)
-				wh->i_fc[1] |= IEEE80211_FC1_WEP;
 			if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
 			    !IEEE80211_IS_MULTICAST(wh->i_addr1) &&
 			    (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
