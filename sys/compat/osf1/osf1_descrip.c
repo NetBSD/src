@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_descrip.c,v 1.9 2001/04/09 09:39:10 jdolecek Exp $ */
+/* $NetBSD: osf1_descrip.c,v 1.10 2001/04/09 10:08:51 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -281,27 +281,14 @@ osf1_sys_fstat2(p, v, retval)
 		return (EBADF);
 
 	FILE_USE(fp);
+	error = (*fp->f_ops->fo_stat)(fp->f_data, &ub, p);
+	FILE_UNUSE(fp, p);
 
-	switch (fp->f_type) {
-
-	case DTYPE_VNODE:
-		error = vn_stat((struct vnode *)fp->f_data, &ub, p);
-		break;
-
-	case DTYPE_SOCKET:
-		error = soo_stat((struct socket *)fp->f_data, &ub, p);
-		break;
-
-	default:
-		panic("ofstat");
-		/*NOTREACHED*/
-	}
 	osf1_cvt_stat2_from_native(&ub, &oub);
 	if (error == 0)
 		error = copyout((caddr_t)&oub, (caddr_t)SCARG(uap, sb),
 		    sizeof (oub));
 
-	FILE_UNUSE(fp, p);
 	return (error);
 }
 
