@@ -607,6 +607,11 @@ case "${targ}" in
     targ_underscore=yes
     ;;
 
+  vax-*-sysv3)
+    targ_defvec=vaxcoff_vec
+    targ_underscore=yes
+    ;;
+
   we32k-*-*)
     targ_defvec=we32kcoff_vec
     ;;

@@ -587,6 +587,7 @@ extern const bfd_target sunos_big_vec;
 extern const bfd_target tekhex_vec;
 extern const bfd_target tic30_aout_vec;
 extern const bfd_target tic30_coff_vec;
+extern const bfd_target vaxcoff_vec;
 extern const bfd_target vaxnetbsd_vec;
 extern const bfd_target host_aout_vec;
 extern const bfd_target versados_vec;
@@ -800,6 +801,7 @@ static const bfd_target * const _bfd_target_vector[] = {
 	&tekhex_vec,
 	&tic30_aout_vec,
 	&tic30_coff_vec,
+	&vaxcoff_vec,
 	&vaxnetbsd_vec,
 	&versados_vec,
 	&we32kcoff_vec,

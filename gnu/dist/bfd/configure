@@ -2829,6 +2829,7 @@ do
     tekhex_vec)			tb="$tb tekhex.lo" ;;
     tic30_aout_vec)		tb="$tb aout-tic30.lo" ;;
     tic30_coff_vec)		tb="$tb coff-tic30.lo" ;;
+    vaxcoff_vec)		tb="$tb coff-vax.lo" ;;
     we32kcoff_vec)		tb="$tb coff-we32k.lo" ;;
     z8kcoff_vec)		tb="$tb coff-z8k.lo reloc16.lo" ;;
     w65_vec)			tb="$tb coff-w65.lo reloc16.lo" ;;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1999/12/26 19:48:01 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.14 2000/01/11 05:48:30 matt Exp $
 
 LIB=		bfd
 
@@ -208,8 +208,8 @@ SRCS+=			elf64-sparc.c elf64.c
 .if (${MACHINE_ARCH} == "vax" || !defined(BFD_SLIM))
 ARCHES+=		vax
 DEFAULT_VEC.vax=	vaxnetbsd_vec
-SELECT_VECS+=		${DEFAULT_VEC.vax}
-SRCS+=			cpu-vax.c vaxnetbsd.c vax-dis.c aout32.c
+SELECT_VECS+=		${DEFAULT_VEC.vax} vaxcoff_vec
+SRCS+=			cpu-vax.c vaxnetbsd.c vax-dis.c aout32.c coff-vax.c
 .endif
 
 # uniq-ify SRCS and SELECT_VECS
