@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_maxine.c,v 1.6.4.10 1999/05/11 06:43:16 nisimura Exp $ */
+/*	$NetBSD: dec_maxine.c,v 1.6.4.11 1999/05/26 05:24:54 nisimura Exp $ */
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
  *
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.10 1999/05/11 06:43:16 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.11 1999/05/26 05:24:54 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,13 +142,12 @@ void
 dec_maxine_init()
 {
 	platform.iobus = "tcmaxine";
-
 	platform.bus_reset = dec_maxine_bus_reset;
 	platform.cons_init = dec_maxine_cons_init;
 	platform.device_register = dec_maxine_device_register;
 
 	/* clear any memory errors from probes */
-	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(XINE_REG_TIMEOUT) = 0;
+	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(XINE_REG_TIMEOUT) = 0;
 	kn02ca_wbflush();
 
 	ioasic_base = MIPS_PHYS_TO_KSEG1(XINE_SYS_ASIC);
@@ -175,18 +174,18 @@ dec_maxine_init()
 #endif
 	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
 
-	*(volatile u_int *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
-	*(volatile u_int *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
+	*(u_int32_t *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
+	*(u_int32_t *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
 #if 0
-	*(volatile u_int *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
-	*(volatile u_int *)(ioasic_base + IOASIC_DTOP_DECODE) = 10;
-	*(volatile u_int *)(ioasic_base + IOASIC_FLOPPY_DECODE) = 13;
-	*(volatile u_int *)(ioasic_base + IOASIC_CSR) = 0x00001fc1;
+	*(u_int32_t *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
+	*(u_int32_t *)(ioasic_base + IOASIC_DTOP_DECODE) = 10;
+	*(u_int32_t *)(ioasic_base + IOASIC_FLOPPY_DECODE) = 13;
+	*(u_int32_t *)(ioasic_base + IOASIC_CSR) = 0x00001fc1;
 #endif
 	/*
 	 * Initialize interrupts.
 	 */
-	*(volatile u_int *)(ioasic_base + IOASIC_INTR) = 0;
+	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
 	kn02ca_wbflush();
 
 	sprintf(cpu_model, "Personal DECstation 5000/%d (MAXINE)", cpu_mhz);
@@ -202,10 +201,10 @@ dec_maxine_bus_reset()
 	 * Reset interrupts, clear any error conditions from probes
 	 */
 
-	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(XINE_REG_TIMEOUT) = 0;
+	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(XINE_REG_TIMEOUT) = 0;
 	kn02ca_wbflush();
 
-	*(volatile u_int *)(ioasic_base + IOASIC_INTR) = 0;
+	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
 	kn02ca_wbflush();
 }
 
@@ -351,7 +350,7 @@ dec_maxine_intr(cpumask, pc, status, cause)
 #if 0
 	_splset(MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 #else
-	return ((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_ENA_CUR);
+	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 #endif
 }
 
@@ -359,7 +358,7 @@ void
 kn02ca_wbflush()
 {
 	/* read once IOASIC_INTR */
-	__asm __volatile("lw $2,0xbc040120");
+	__asm __volatile("lw $0,0xbc040120");
 }
 
 unsigned

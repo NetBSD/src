@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.120.2.13 1999/05/21 02:18:27 nisimura Exp $ */
+/*	$NetBSD: machdep.c,v 1.120.2.14 1999/05/26 05:24:54 nisimura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.13 1999/05/21 02:18:27 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.14 1999/05/26 05:24:54 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -135,7 +135,6 @@ void	mach_init __P((int, char *[], int, int, u_int, char *));
 unsigned (*clkread) __P((void)); /* high resolution timer if available */
 unsigned nullclkread __P((void));
 
-void	prom_haltbutton __P((void));
 void	prom_halt __P((int, char *)) __attribute__((__noreturn__));
 int	prom_systype __P((void));
 
