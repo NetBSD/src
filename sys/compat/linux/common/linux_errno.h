@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_errno.h,v 1.9 2002/01/17 15:11:38 rjs Exp $	*/
+/*	$NetBSD: linux_errno.h,v 1.9.18.1 2004/06/22 08:52:55 tron Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -80,12 +80,14 @@
 /* depending on the machine architechture. */
 #if defined(__i386__)
 #include <compat/linux/arch/i386/linux_errno.h>
-#elif defined(__alpha__)
-#include <compat/linux/arch/alpha/linux_errno.h>
+#elif defined(__mips__)
+#include <compat/linux/arch/mips/linux_errno.h>
 #elif defined(__alpha__)
 #include <compat/linux/arch/alpha/linux_errno.h>
 #elif defined(__powerpc__)
 #include <compat/linux/arch/powerpc/linux_errno.h>
+#elif defined(__m68k__)
+#include <compat/linux/arch/m68k/linux_errno.h>
 #elif defined(__arm__)
 #include <compat/linux/arch/arm/linux_errno.h>
 #else
