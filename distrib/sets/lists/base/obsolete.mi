@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.21 2001/03/21 16:25:38 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.22 2001/03/31 09:35:35 itojun Exp $
 /bin/rcorder
 /dev/log
 /etc/disklabels
@@ -46,6 +46,8 @@
 /usr/share/doc/smm/01.setup/tahoe
 /usr/share/doc/smm/01.setup/vax
 /usr/share/games/ching
+/usr/share/locale/en_US.UTF-2
+/usr/share/locale/en_US.UTF-2/LC_CTYPE
 /usr/share/lkm
 /usr/share/lkm/misc
 /usr/share/lkm/misc/module
