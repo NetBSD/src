@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.22 1998/02/19 23:09:30 thorpej Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.23 1998/02/25 23:24:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.22 1998/02/19 23:09:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.23 1998/02/25 23:24:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.22 1998/02/19 23:09:30 thorpej Ex
 #include <sys/reboot.h>
 #include <sys/mount.h>			/* fsid_t for syscallargs */
 #include <sys/proc.h>
+#include <sys/buf.h>
+#include <sys/clist.h>  
+#include <sys/callout.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/syscallargs.h>
@@ -69,6 +72,15 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.22 1998/02/19 23:09:30 thorpej Ex
 #include <sys/core.h>
 #include <sys/kcore.h>  
 #include <machine/kcore.h>
+#ifdef SYSVMSG
+#include <sys/msg.h>
+#endif
+#ifdef SYSVSEM
+#include <sys/sem.h>
+#endif
+#ifdef SYSVSHM
+#include <sys/shm.h>
+#endif
 
 #include <vm/vm.h>
 
@@ -91,9 +103,27 @@ mips_locore_jumpvec_t mips_locore_jumpvec = {
   NULL, NULL
 };
 
+/*
+ * Declare these as initialized data so we can patch them.
+ */
+int	nswbuf = 0;
+#ifdef NBUF
+int	nbuf = NBUF;
+#else
+int	nbuf = 0;
+#endif
+#ifdef BUFPAGES
+int	bufpages = BUFPAGES;
+#else
+int	bufpages = 0;
+#endif
 
 int cpu_mhz;
 
+struct	user *proc0paddr;
+struct	proc nullproc;		/* for use by switch_exit() */
+
+caddr_t	msgbufaddr;
 
 /*
  * Forward declarations
@@ -250,16 +280,6 @@ mips3_vector_init()
 void
 mips_vector_init()
 {
-
-
-#ifdef notyet
-	register caddr_t v;
-	extern char edata[], end[];
-
-	/* clear the BSS segment */
-	v = (caddr_t)mips_round_page(end);
-	bzero(edata, v - edata);
-#endif
 	int i;
 
 	(void) &i;		/* shut off gcc unused-variable warnings */
@@ -939,4 +959,174 @@ dumpsys()
 	}
 	printf("\n\n");
 	delay(5000000);		/* 5 seconds */
+}
+
+/*
+ * Allocate space for system data structures.  We are given
+ * a starting virtual address and we return a final virtual
+ * address; along the way, we set each data structure pointer.
+ *
+ * We call allocsys() with 0 to find out how much space we want,
+ * allocate that much and fill it with zeroes, and the call
+ * allocsys() again with the correct base virtual address.
+ */
+caddr_t  
+allocsys(v) 
+	caddr_t v;
+{                       
+
+#define valloc(name, type, num) \
+	    (name) = (type *)v; v = (caddr_t)ALIGN((name)+(num))
+
+#ifdef REAL_CLISTS
+	valloc(cfree, struct cblock, nclist);
+#endif
+	valloc(callout, struct callout, ncallout);
+#ifdef SYSVSHM
+	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
+#endif
+#ifdef SYSVSEM
+	valloc(sema, struct semid_ds, seminfo.semmni);
+	valloc(sem, struct sem, seminfo.semmns);
+	/* This is pretty disgusting! */
+	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
+#endif
+#ifdef SYSVMSG
+	valloc(msgpool, char, msginfo.msgmax);
+	valloc(msgmaps, struct msgmap, msginfo.msgseg);
+	valloc(msghdrs, struct msg, msginfo.msgtql);
+	valloc(msqids, struct msqid_ds, msginfo.msgmni);
+#endif
+	
+	/*
+	 * Determine how many buffers to allocate.  We allocate more
+	 * than the BSD standard of using 10% of memory for the first 2 Meg,
+	 * 5% of remaining.  We just allocate a flat 10%.  Ensure a minimum
+	 * of 16 buffers.  We allocate 1/2 as many swap buffer headers
+	 * as file i/o buffers.
+	 */
+	if (bufpages == 0)
+		bufpages = physmem / 10 / CLSIZE;
+	if (nbuf == 0) {
+		nbuf = bufpages;
+		if (nbuf < 16)
+			nbuf = 16;
+	}
+	if (nswbuf == 0) {
+		nswbuf = (nbuf / 2) &~ 1;	/* force even */
+		if (nswbuf > 256)
+			nswbuf = 256;		/* sanity */
+	}
+	valloc(swbuf, struct buf, nswbuf);
+	valloc(buf, struct buf, nbuf);
+
+	return (v);
+#undef valloc
+}
+
+void
+mips_init_msgbuf()
+{
+	size_t sz = round_page(MSGBUFSIZE);
+	struct vm_physseg *vps;
+
+	vps = &vm_physmem[vm_nphysseg - 1];
+
+	/* shrink so that it'll fit in the last segment */
+	if ((vps->avail_end - vps->avail_start) < atop(sz))
+		sz = ptoa(vps->avail_end - vps->avail_start);
+
+	vps->end -= atop(sz);
+	vps->avail_end -= atop(sz);
+	msgbufaddr = (caddr_t) MIPS_PHYS_TO_KSEG0(ptoa(vps->end));
+	initmsgbuf(msgbufaddr, sz);
+
+	/* Remove the last segment if it now has no pages. */
+	if (vps->start == vps->end)
+		vm_nphysseg--;
+
+	/* warn if the message buffer had to be shrunk */
+	if (sz != round_page(MSGBUFSIZE))
+		printf("WARNING: %ld bytes not available for msgbuf "
+		    "in last cluster (%d used)\n",
+		    round_page(MSGBUFSIZE), sz);
+}
+
+/*
+ * Initialize the U-area for proc0 and for nullproc.  Since these
+ * need to be set up before we can probe for memory, we have to use
+ * stolen pages before they're loaded into the VM system.
+ *
+ * "space" is 2 * UPAGES * PAGE_SIZE in size, must be page aligned,
+ * and in KSEG0.
+ */
+void
+mips_init_proc0(space)
+	caddr_t space;
+{
+	struct tlb tlb;
+	u_long pa;
+	int i;
+
+	proc0.p_addr = proc0paddr = (struct user *)space;
+	curpcb = (struct pcb *)proc0.p_addr;
+	proc0.p_md.md_regs = proc0paddr->u_pcb.pcb_regs;
+
+	pa = MIPS_KSEG0_TO_PHYS(proc0.p_addr);
+
+	if (CPUISMIPS3) {
+		for (i = 0; i < UPAGES; i += 2) {
+			tlb.tlb_mask = MIPS3_PG_SIZE_4K;
+			tlb.tlb_hi = mips3_vad_to_vpn((UADDR +
+			    (i << PGSHIFT))) | 1;
+			tlb.tlb_lo0 = vad_to_pfn(pa) |
+			    MIPS3_PG_V | MIPS3_PG_M | MIPS3_PG_CACHED;
+			tlb.tlb_lo1 = vad_to_pfn(pa + NBPG) |
+			    MIPS3_PG_V | MIPS3_PG_M | MIPS3_PG_CACHED;
+			proc0.p_md.md_upte[i] = tlb.tlb_lo0;
+			proc0.p_md.md_upte[i + 1] = tlb.tlb_lo1;
+			mips3_TLBWriteIndexedVPS(i, &tlb);
+			pa += PAGE_SIZE * 2;
+		}
+
+		mips3_FlushDCache(MIPS_KSEG0_TO_PHYS(proc0.p_addr),
+		    UPAGES * PAGE_SIZE);
+		mips3_HitFlushDCache(UADDR, UPAGES * PAGE_SIZE);
+	} else {
+		for (i = 0; i < UPAGES; i++) {
+			proc0.p_md.md_upte[i] =
+			    pa | MIPS1_PG_V | MIPS1_PG_M;
+			mips1_TLBWriteIndexed(i, (UADDR + (i << PGSHIFT)) |
+			    (1 << MIPS1_TLB_PID_SHIFT),
+			    proc0.p_md.md_upte[i]);
+			pa += PAGE_SIZE;
+		}
+	}
+
+	MachSetPID(1);
+
+	nullproc.p_addr = (struct user *)(space + (UPAGES * PAGE_SIZE));
+	nullproc.p_md.md_regs = nullproc.p_addr->u_pcb.pcb_regs;
+
+	bcopy("nullproc", nullproc.p_comm, sizeof("nullproc"));
+
+	pa = MIPS_KSEG0_TO_PHYS(nullproc.p_addr);
+
+	if (CPUISMIPS3) {
+		for (i = 0; i < UPAGES; i += 2) {
+			nullproc.p_md.md_upte[i] = vad_to_pfn(pa) |
+			    MIPS3_PG_V | MIPS3_PG_M | MIPS3_PG_CACHED;
+			nullproc.p_md.md_upte[i + 1] =
+			    vad_to_pfn(pa + NBPG) |
+			    MIPS3_PG_V | MIPS3_PG_M | MIPS3_PG_CACHED;
+			pa += PAGE_SIZE * 2;
+		}
+		mips3_FlushDCache(MIPS_KSEG0_TO_PHYS(nullproc.p_addr),
+		    UPAGES * PAGE_SIZE);
+	} else {
+		for (i = 0; i < UPAGES; i++) {
+			nullproc.p_md.md_upte[i] = pa | MIPS1_PG_V | MIPS1_PG_M;
+			pa += PAGE_SIZE;
+		}
+	}
 }
