@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.15 2004/12/07 14:50:56 thorpej Exp $	*/
+/*	$NetBSD: btl.c,v 1.16 2005/01/22 07:35:34 tsutsui Exp $	*/
 /*	NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp 	*/
 
 #undef BTDIAG
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.15 2004/12/07 14:50:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.16 2005/01/22 07:35:34 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -136,27 +136,27 @@ struct bt_softc {
 int     bt_debug = 0;
 #endif /* BTDEBUG */
 
-int bt_cmd __P((int, struct bt_softc *, int, u_char *, int, u_char *));
-integrate void bt_finish_ccbs __P((struct bt_softc *));
-int btintr __P((void *));
-integrate void bt_reset_ccb __P((struct bt_softc *, struct bt_ccb *));
-void bt_free_ccb __P((struct bt_softc *, struct bt_ccb *));
-integrate void bt_init_ccb __P((struct bt_softc *, struct bt_ccb *));
-struct bt_ccb *bt_get_ccb __P((struct bt_softc *, int));
-struct bt_ccb *bt_ccb_phys_kv __P((struct bt_softc *, u_long));
-void bt_queue_ccb __P((struct bt_softc *, struct bt_ccb *));
-void bt_collect_mbo __P((struct bt_softc *));
-void bt_start_ccbs __P((struct bt_softc *));
-void bt_done __P((struct bt_softc *, struct bt_ccb *));
-int bt_find __P((struct isa_attach_args *, struct bt_softc *));
-void bt_init __P((struct bt_softc *));
-void bt_inquire_setup_information __P((struct bt_softc *));
-void btminphys __P((struct buf *));
-int bt_scsi_cmd __P((struct scsipi_xfer *));
-int bt_poll __P((struct bt_softc *, struct scsipi_xfer *, int));
-void bt_timeout __P((void *arg));
-void bt_free_buf __P((struct bt_softc *, struct bt_buf *));
-struct bt_buf * bt_get_buf __P((struct bt_softc *, int));
+int bt_cmd(int, struct bt_softc *, int, u_char *, int, u_char *);
+integrate void bt_finish_ccbs(struct bt_softc *);
+int btintr(void *);
+integrate void bt_reset_ccb(struct bt_softc *, struct bt_ccb *);
+void bt_free_ccb(struct bt_softc *, struct bt_ccb *);
+integrate void bt_init_ccb(struct bt_softc *, struct bt_ccb *);
+struct bt_ccb *bt_get_ccb(struct bt_softc *, int);
+struct bt_ccb *bt_ccb_phys_kv(struct bt_softc *, u_long);
+void bt_queue_ccb(struct bt_softc *, struct bt_ccb *);
+void bt_collect_mbo(struct bt_softc *);
+void bt_start_ccbs(struct bt_softc *);
+void bt_done(struct bt_softc *, struct bt_ccb *);
+int bt_find(struct isa_attach_args *, struct bt_softc *);
+void bt_init(struct bt_softc *);
+void bt_inquire_setup_information(struct bt_softc *);
+void btminphys(struct buf *);
+int bt_scsi_cmd(struct scsipi_xfer *);
+int bt_poll(struct bt_softc *, struct scsipi_xfer *, int);
+void bt_timeout(void *arg);
+void bt_free_buf(struct bt_softc *, struct bt_buf *);
+struct bt_buf * bt_get_buf(struct bt_softc *, int);
 
 /* the below structure is so we have a default dev struct for out link struct */
 struct scsipi_device bt_dev = {
@@ -166,9 +166,9 @@ struct scsipi_device bt_dev = {
 	NULL,			/* Use default 'done' routine */
 };
 
-int	btprobe __P((struct device *, struct cfdata *, void *));
-void	btattach __P((struct device *, struct device *, void *));
-int	btprint __P((void *, const char *));
+int	btprobe(struct device *, struct cfdata *, void *);
+void	btattach(struct device *, struct device *, void *);
+int	btprint(void *, const char *);
 
 CFATTACH_DECL(btl, sizeof(struct bt_softc),
     btprobe, btattach, NULL, NULL);
@@ -193,11 +193,8 @@ struct btl_config *btl_conf = NULL;
  * tells it to read in a scsi command.
  */
 int
-bt_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
-	int iobase;
-	struct bt_softc *sc;
-	int icnt, ocnt;
-	u_char *ibuf, *obuf;
+bt_cmd(int iobase, struct bt_softc *sc, int icnt, int ocnt, u_char *ibuf,
+    u_char *obuf)
 {
 	const char *name;
 	int i;
@@ -318,10 +315,7 @@ bt_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
  * autoconf.c
  */
 int
-btprobe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+btprobe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 
@@ -347,9 +341,7 @@ btprobe(parent, match, aux)
  * Attach all the sub-devices we can find
  */
 void
-btattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+btattach(struct device *parent, struct device *self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct bt_softc *sc = (void *)self;
@@ -423,8 +415,7 @@ btattach(parent, self, aux)
 }
 
 integrate void
-bt_finish_ccbs(sc)
-	struct bt_softc *sc;
+bt_finish_ccbs(struct bt_softc *sc)
 {
 	struct bt_mbx_in *wmbi;
 	struct bt_ccb *ccb;
@@ -513,8 +504,7 @@ AGAIN:
  * Catch an interrupt from the adaptor
  */
 int
-btintr(arg)
-	void *arg;
+btintr(void *arg)
 {
 	struct bt_softc *sc = arg;
 	int iobase = sc->sc_iobase;
@@ -557,9 +547,7 @@ btintr(arg)
 }
 
 integrate void
-bt_reset_ccb(sc, ccb)
-	struct bt_softc *sc;
-	struct bt_ccb *ccb;
+bt_reset_ccb(struct bt_softc *sc, struct bt_ccb *ccb)
 {
 
 	ccb->flags = 0;
@@ -569,9 +557,7 @@ bt_reset_ccb(sc, ccb)
  * A ccb is put onto the free list.
  */
 void
-bt_free_ccb(sc, ccb)
-	struct bt_softc *sc;
-	struct bt_ccb *ccb;
+bt_free_ccb(struct bt_softc *sc, struct bt_ccb *ccb)
 {
 	int s;
 
@@ -594,9 +580,7 @@ bt_free_ccb(sc, ccb)
  * A buf is put onto the free list.
  */
 void
-bt_free_buf(sc, buf)
-	struct bt_softc *sc;
-	struct bt_buf *buf;
+bt_free_buf(struct bt_softc *sc, struct bt_buf *buf)
 {
 	int s;
 
@@ -616,9 +600,7 @@ bt_free_buf(sc, buf)
 }
 
 integrate void
-bt_init_ccb(sc, ccb)
-	struct bt_softc *sc;
-	struct bt_ccb *ccb;
+bt_init_ccb(struct bt_softc *sc, struct bt_ccb *ccb)
 {
 	int hashnum;
 
@@ -640,9 +622,7 @@ bt_init_ccb(sc, ccb)
  * If there are none, either return an error or sleep.
  */
 struct bt_ccb *
-bt_get_ccb(sc, nosleep)
-	struct bt_softc *sc;
-	int nosleep;
+bt_get_ccb(struct bt_softc *sc, int nosleep)
 {
 	struct bt_ccb *ccb;
 	int s;
@@ -676,9 +656,7 @@ out:
  * If there are none, either return an error or sleep.
  */
 struct bt_buf *
-bt_get_buf(sc, nosleep)
-	struct bt_softc *sc;
-	int nosleep;
+bt_get_buf(struct bt_softc *sc, int nosleep)
 {
 	struct bt_buf *buf;
 	int s;
@@ -709,9 +687,7 @@ out:
  * Given a physical address, find the ccb that it corresponds to.
  */
 struct bt_ccb *
-bt_ccb_phys_kv(sc, ccb_phys)
-	struct bt_softc *sc;
-	u_long ccb_phys;
+bt_ccb_phys_kv(struct bt_softc *sc, u_long ccb_phys)
 {
 	int hashnum = CCB_HASH(ccb_phys);
 	struct bt_ccb *ccb = sc->sc_ccbhash[hashnum];
@@ -728,9 +704,7 @@ bt_ccb_phys_kv(sc, ccb_phys)
  * Queue a CCB to be sent to the controller, and send it if possible.
  */
 void
-bt_queue_ccb(sc, ccb)
-	struct bt_softc *sc;
-	struct bt_ccb *ccb;
+bt_queue_ccb(struct bt_softc *sc, struct bt_ccb *ccb)
 {
 
 	TAILQ_INSERT_TAIL(&sc->sc_waiting_ccb, ccb, chain);
@@ -741,8 +715,7 @@ bt_queue_ccb(sc, ccb)
  * Garbage collect mailboxes that are no longer in use.
  */
 void
-bt_collect_mbo(sc)
-	struct bt_softc *sc;
+bt_collect_mbo(struct bt_softc *sc)
 {
 	struct bt_mbx_out *wmbo;	/* Mail Box Out pointer */
 
@@ -768,8 +741,7 @@ bt_collect_mbo(sc)
  * Send as many CCBs as we have empty mailboxes for.
  */
 void
-bt_start_ccbs(sc)
-	struct bt_softc *sc;
+bt_start_ccbs(struct bt_softc *sc)
 {
 	int iobase = sc->sc_iobase;
 	struct bt_mbx_out *wmbo;	/* Mail Box Out pointer */
@@ -823,9 +795,7 @@ bt_start_ccbs(sc)
  * went. Wake up the owner if waiting
  */
 void
-bt_done(sc, ccb)
-	struct bt_softc *sc;
-	struct bt_ccb *ccb;
+bt_done(struct bt_softc *sc, struct bt_ccb *ccb)
 {
 	struct scsipi_sense_data *s1, *s2;
 	struct scsipi_xfer *xs = ccb->xs;
@@ -914,9 +884,7 @@ bt_done(sc, ccb)
  * Find the board and find it's irq/drq
  */
 int
-bt_find(ia, sc)
-	struct isa_attach_args *ia;
-	struct bt_softc *sc;
+bt_find(struct isa_attach_args *ia, struct bt_softc *sc0
 {
 	int iobase = ia->ia_iobase;
 	int i;
@@ -1092,8 +1060,7 @@ bt_find(ia, sc)
  * Start the board, ready for normal operation
  */
 void
-bt_init(sc)
-	struct bt_softc *sc;
+bt_init(struct bt_softc *sc)
 {
 	int iobase = sc->sc_iobase;
 	struct bt_devices devices;
@@ -1167,8 +1134,7 @@ bt_init(sc)
 }
 
 void
-bt_inquire_setup_information(sc)
-	struct bt_softc *sc;
+bt_inquire_setup_information(struct bt_softc *sc)
 {
 	int iobase = sc->sc_iobase;
 	struct bt_model model;
@@ -1228,8 +1194,7 @@ bt_inquire_setup_information(sc)
 }
 
 void
-btminphys(bp)
-	struct buf *bp;
+btminphys(struct buf *bp)
 {
 
 	if (bp->b_bcount > ((BT_NSEG - 1) << PGSHIFT))
@@ -1242,8 +1207,7 @@ btminphys(bp)
  * the unit, target and lu.
  */
 int
-bt_scsi_cmd(xs)
-	struct scsipi_xfer *xs;
+bt_scsi_cmd(struct scsipi_xfer *xs)
 {
 	struct scsipi_link *sc_link = xs->sc_link;
 	struct bt_softc *sc = sc_link->adapter_softc;
@@ -1382,10 +1346,7 @@ badbuf:
  * Poll a particular unit, looking for a particular xs
  */
 int
-bt_poll(sc, xs, count)
-	struct bt_softc *sc;
-	struct scsipi_xfer *xs;
-	int count;
+bt_poll(struct bt_softc *sc, struct scsipi_xfer *xs, int count)
 {
 	int iobase = sc->sc_iobase;
 
@@ -1406,8 +1367,7 @@ bt_poll(sc, xs, count)
 }
 
 void
-bt_timeout(arg)
-	void *arg;
+bt_timeout(void *arg)
 {
 	struct bt_ccb *ccb = arg;
 	struct scsipi_xfer *xs = ccb->xs;

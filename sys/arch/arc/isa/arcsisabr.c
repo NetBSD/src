@@ -1,4 +1,4 @@
-/*	$NetBSD: arcsisabr.c,v 1.5 2003/08/07 16:26:50 agc Exp $	*/
+/*	$NetBSD: arcsisabr.c,v 1.6 2005/01/22 07:35:34 tsutsui Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcsisabr.c,v 1.5 2003/08/07 16:26:50 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcsisabr.c,v 1.6 2005/01/22 07:35:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,25 +99,19 @@ CFATTACH_DECL(arcsisabr, sizeof(struct isabr_softc),
 extern struct cfdriver arcsisabr_cd;
 
 int
-arcsisabrmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+arcsisabrmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct confargs *ca = aux;
 
         /* Make sure that we're looking for a ARCSISABR. */
         if (strcmp(ca->ca_name, arcsisabr_cd.cd_name) != 0)
-                return (0);
+                return 0;
 
-	return (1);
+	return 1;
 }
 
 void
-arcsisabrattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+arcsisabrattach(struct device *parent, struct device *self, void *aux)
 {
 	struct isabr_softc *sc = (struct isabr_softc *)self;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_jazz.c,v 1.9 2003/08/14 09:35:26 tsutsui Exp $	*/
+/*	$NetBSD: bus_dma_jazz.c,v 1.10 2005/01/22 07:35:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2003 Izumi Tsutsui.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma_jazz.c,v 1.9 2003/08/14 09:35:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma_jazz.c,v 1.10 2005/01/22 07:35:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,30 +48,30 @@ typedef struct jazz_tlbmap {
 	bus_addr_t vaddr;
 } *jazz_tlbmap_t;
 
-static int	jazz_bus_dmamap_alloc_sgmap __P((bus_dma_tag_t,
-		    bus_dma_segment_t *, int, bus_size_t, struct proc *, int));
-static void	jazz_bus_dmamap_free_sgmap __P((bus_dma_tag_t,
-		    bus_dma_segment_t *, int));
+static int	jazz_bus_dmamap_alloc_sgmap(bus_dma_tag_t,
+		    bus_dma_segment_t *, int, bus_size_t, struct proc *, int);
+static void	jazz_bus_dmamap_free_sgmap(bus_dma_tag_t,
+		    bus_dma_segment_t *, int);
 
-int	jazz_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int,
-	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
-void	jazz_bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
-int	jazz_bus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int));
-int	jazz_bus_dmamap_load_mbuf __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int));
-int	jazz_bus_dmamap_load_uio __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int));
-int	jazz_bus_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int));
-void	jazz_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-void	jazz_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_addr_t, bus_size_t, int));
+int	jazz_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int,
+	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
+void	jazz_bus_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
+int	jazz_bus_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int);
+int	jazz_bus_dmamap_load_mbuf(bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int);
+int	jazz_bus_dmamap_load_uio(bus_dma_tag_t, bus_dmamap_t,
+	    struct uio *, int);
+int	jazz_bus_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int);
+void	jazz_bus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+void	jazz_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t,
+	    bus_addr_t, bus_size_t, int);
 
 void
-jazz_bus_dma_tag_init(t)
-	bus_dma_tag_t t;
+jazz_bus_dma_tag_init(bus_dma_tag_t t)
 {
+
 	_bus_dma_tag_init(t);
 
 	t->_dmamap_create = jazz_bus_dmamap_create;
@@ -87,13 +87,8 @@ jazz_bus_dma_tag_init(t)
 }
 
 static int
-jazz_bus_dmamap_alloc_sgmap(t, segs, nsegs, boundary, p, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t boundary;
-	struct proc *p;
-	int flags;
+jazz_bus_dmamap_alloc_sgmap(bus_dma_tag_t t, bus_dma_segment_t *segs,
+    int nsegs, bus_size_t boundary, struct proc *p, int flags)
 {
 	jazz_dma_pte_t *dmapte;
 	bus_addr_t addr;
@@ -106,19 +101,16 @@ jazz_bus_dmamap_alloc_sgmap(t, segs, nsegs, boundary, p, flags)
 		    JAZZ_DMA_PAGE_SIZE;
 		dmapte = jazz_dmatlb_alloc(npte, boundary, flags, &addr);
 		if (dmapte == NULL)
-			return (ENOMEM);
+			return ENOMEM;
 		segs[i].ds_addr = addr + off;
 
 		jazz_dmatlb_map_pa(segs[i]._ds_paddr, segs[i].ds_len, dmapte);
 	}
-	return (0);
+	return 0;
 }
 
 static void
-jazz_bus_dmamap_free_sgmap(t, segs, nsegs)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
+jazz_bus_dmamap_free_sgmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 {
 	int i, npte;
 	bus_addr_t addr;
@@ -137,14 +129,8 @@ jazz_bus_dmamap_free_sgmap(t, segs, nsegs)
  * nsegments is 1, allocate jazzdmatlb here, too.
  */
 int
-jazz_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
+jazz_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
+    bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
 {
 	struct arc_bus_dmamap *map;
 	jazz_tlbmap_t tlbmap;
@@ -158,20 +144,20 @@ jazz_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 		flags &= ~BUS_DMA_ALLOCNOW;
 
 	if ((flags & BUS_DMA_ALLOCNOW) == 0)
-		return (_bus_dmamap_create(t, size, nsegments, maxsegsz,
-		    boundary, flags, dmamp));
+		return _bus_dmamap_create(t, size, nsegments, maxsegsz,
+		    boundary, flags, dmamp);
 
 	tlbmap = malloc(sizeof(struct jazz_tlbmap), M_DMAMAP,
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK);
 	if (tlbmap == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 
 	npte = jazz_dma_page_round(maxsegsz) / JAZZ_DMA_PAGE_SIZE + 1;
 	tlbmap->ptebase =
 	    jazz_dmatlb_alloc(npte, boundary, flags, &tlbmap->vaddr);
 	if (tlbmap->ptebase == NULL) {
 		free(tlbmap, M_DMAMAP);
-		return (ENOMEM);
+		return ENOMEM;
 	}
 
 	error = _bus_dmamap_create(t, size, 1, maxsegsz, boundary,
@@ -179,12 +165,12 @@ jazz_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	if (error != 0) {
 		jazz_dmatlb_free(tlbmap->vaddr, npte);
 		free(tlbmap, M_DMAMAP);
-		return (error);
+		return error;
 	}
 	map = *dmamp;
 	map->_dm_cookie = (void *)tlbmap;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -192,9 +178,7 @@ jazz_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
  * free jazzdmatlb, too.
  */
 void
-jazz_bus_dmamap_destroy(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+jazz_bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
 	if ((map->_dm_flags & BUS_DMA_ALLOCNOW) != 0) {
@@ -215,13 +199,8 @@ jazz_bus_dmamap_destroy(t, map)
  * function for loading a direct-mapped DMA map with a linear buffer.
  */
 int
-jazz_bus_dmamap_load(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+jazz_bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags)
 {
 	int error;
 
@@ -240,7 +219,7 @@ jazz_bus_dmamap_load(t, map, buf, buflen, p, flags)
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = 1;
 
-		return (0);
+		return 0;
 	}
 
 	error = _bus_dmamap_load(t, map, buf, buflen, p, flags);
@@ -249,48 +228,42 @@ jazz_bus_dmamap_load(t, map, buf, buflen, p, flags)
 		error = jazz_bus_dmamap_alloc_sgmap(t, map->dm_segs,
 		    map->dm_nsegs, map->_dm_boundary, p, flags);
 	}
-	return (error);
+	return error;
 }
 
 /*
  * Like jazz_bus_dmamap_load(), but for mbufs.
  */
 int
-jazz_bus_dmamap_load_mbuf(t, map, m0, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct mbuf *m0;
-	int flags;
+jazz_bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
+    int flags)
 {
 	int error;
 
 	if ((map->_dm_flags & BUS_DMA_ALLOCNOW) != 0)
 		/* BUS_DMA_ALLOCNOW is valid only for linear buffer. */
-		return (ENODEV); /* XXX which errno is better? */
+		return ENODEV; /* XXX which errno is better? */
 
 	error = _bus_dmamap_load_mbuf(t, map, m0, flags);
 	if (error == 0) {
 		error = jazz_bus_dmamap_alloc_sgmap(t, map->dm_segs,
 		    map->dm_nsegs, map->_dm_boundary, NULL, flags);
 	}
-	return (error);
+	return error;
 }
 
 /*
  * Like jazz_bus_dmamap_load(), but for uios.
  */
 int
-jazz_bus_dmamap_load_uio(t, map, uio, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct uio *uio;
-	int flags;
+jazz_bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
+    int flags)
 {
 	int error;
 
 	if ((map->_dm_flags & BUS_DMA_ALLOCNOW) != 0)
 		/* BUS_DMA_ALLOCNOW is valid only for linear buffer. */
-		return (ENODEV); /* XXX which errno is better? */
+		return ENODEV; /* XXX which errno is better? */
 
 	error = jazz_bus_dmamap_load_uio(t, map, uio, flags);
 	if (error == 0) {
@@ -299,43 +272,37 @@ jazz_bus_dmamap_load_uio(t, map, uio, flags)
 		    uio->uio_segflg == UIO_USERSPACE ? uio->uio_procp : NULL,
 		    flags);
 	}
-	return (error);
+	return error;
 }
 
 /*
  * Like _bus_dmamap_load(), but for raw memory.
  */
 int
-jazz_bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
+jazz_bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
+    bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
 	int error;
 
 	if ((map->_dm_flags & BUS_DMA_ALLOCNOW) != 0)
 		/* BUS_DMA_ALLOCNOW is valid only for linear buffer. */
-		return (ENODEV); /* XXX which errno is better? */
+		return ENODEV; /* XXX which errno is better? */
 
 	error = _bus_dmamap_load_raw(t, map, segs, nsegs, size, flags);
 	if (error == 0) {
 		error = jazz_bus_dmamap_alloc_sgmap(t, map->dm_segs,
 		    map->dm_nsegs, map->_dm_boundary, NULL, flags);
 	}
-	return (error);
+	return error;
 }
 
 /*
  * unload a DMA map.
  */
 void
-jazz_bus_dmamap_unload(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+jazz_bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
+
 	if ((map->_dm_flags & BUS_DMA_ALLOCNOW) != 0) {
 		/* DMA TLB should be preserved */
 		map->dm_mapsize = 0;
@@ -351,16 +318,13 @@ jazz_bus_dmamap_unload(t, map)
  * Function for MIPS3 DMA map synchronization.
  */
 void
-jazz_bus_dmamap_sync(t, map, offset, len, ops)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_addr_t offset;
-	bus_size_t len;
-	int ops;
+jazz_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
+    bus_size_t len, int ops)
 {
+
 	/* Flush DMA TLB */
 	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0)
 		jazz_dmatlb_flush();
 
-	return (_bus_dmamap_sync(t, map, offset, len, ops));
+	return _bus_dmamap_sync(t, map, offset, len, ops);
 }

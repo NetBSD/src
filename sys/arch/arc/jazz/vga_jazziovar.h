@@ -1,4 +1,4 @@
-/* $NetBSD: vga_jazziovar.h,v 1.2 2001/06/13 15:12:28 soda Exp $ */
+/* $NetBSD: vga_jazziovar.h,v 1.3 2005/01/22 07:35:34 tsutsui Exp $ */
 /* NetBSD: vga_isavar.h,v 1.1 1998/03/22 15:14:36 drochner Exp  */
 
 /*
@@ -28,4 +28,4 @@
  * rights to redistribute these changes.
  */
 
-int	vga_jazzio_cnattach __P((char *));
+int	vga_jazzio_cnattach(char *);

@@ -1,4 +1,4 @@
-/* $NetBSD: pccons_isavar.h,v 1.1 2001/06/13 15:05:45 soda Exp $ */
+/* $NetBSD: pccons_isavar.h,v 1.2 2005/01/22 07:35:34 tsutsui Exp $ */
 /* NetBSD: vga_isavar.h,v 1.1 1998/03/22 15:14:36 drochner Exp  */
 
 /*
@@ -28,6 +28,6 @@
  * rights to redistribute these changes.
  */
 
-int pccons_isa_cnattach __P((bus_space_tag_t, bus_space_tag_t));
+int pccons_isa_cnattach(bus_space_tag_t, bus_space_tag_t);
 
 extern struct pccons_config *pccons_isa_conf;

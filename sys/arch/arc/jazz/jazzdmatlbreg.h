@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzdmatlbreg.h,v 1.2 2000/06/10 12:56:46 soda Exp $	*/
+/*	$NetBSD: jazzdmatlbreg.h,v 1.3 2005/01/22 07:35:34 tsutsui Exp $	*/
 /*	$OpenBSD: dma.h,v 1.3 1997/04/19 17:19:51 pefo Exp $	*/
 
 /*
@@ -64,6 +64,6 @@
  */
 
 typedef struct jazz_dma_pte {
-	u_int32_t	lo_addr;	/* Low part of translation addr */
-	u_int32_t	hi_addr;	/* High part of translation addr */
+	uint32_t	lo_addr;	/* Low part of translation addr */
+	uint32_t	hi_addr;	/* High part of translation addr */
 } jazz_dma_pte_t;
