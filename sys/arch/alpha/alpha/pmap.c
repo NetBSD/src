@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.161 2001/04/21 23:51:14 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.162 2001/04/22 00:34:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.161 2001/04/21 23:51:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.162 2001/04/22 00:34:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2275,12 +2275,12 @@ pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr, vsize_t len,
  *	pmap operations.
  */
 void
-pmap_update(void)
+pmap_update(pmap_t pmap)
 {
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_update()\n");
+		printf("pmap_update(%p)\n", pmap);
 #endif
 
 	/*
