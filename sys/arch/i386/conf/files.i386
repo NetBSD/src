@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.237 2003/05/11 18:24:12 fvdl Exp $
+#	$NetBSD: files.i386,v 1.238 2003/05/14 12:04:56 drochner Exp $
 #
 # new style config file for i386 architecture
 #
@@ -226,12 +226,8 @@ file	arch/i386/isa/npx.c		npx needs-flag
 attach	npx at isa with npx_isa
 file	arch/i386/isa/npx_isa.c		npx_isa
 
-# attribute used to represent the "keyboard controller"
-# XXX should be a real device
-define	pckbcport { [irq = -1], [port = -1] }
-
 # PC console support a la "pccons"
-device	pc: tty, pckbcport
+device	pc: tty
 attach	pc at isa
 device	pcconskbd
 attach	pcconskbd at pckbc
