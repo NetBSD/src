@@ -77,6 +77,9 @@
 int	avefree = 0;		/* XXX */
 int	readbuffers = 0;	/* XXX allow kgdb to read kernel buffer pool */
 
+static void swapout __P((struct proc *));
+
+int
 kernacc(addr, len, rw)
 	caddr_t addr;
 	int len, rw;
@@ -86,6 +89,7 @@ kernacc(addr, len, rw)
 	return (kerncheckprot(addr, len, prot));
 }
 
+int
 kerncheckprot(addr, len, prot)
 	caddr_t addr;
 	int len, prot;
@@ -111,6 +115,7 @@ kerncheckprot(addr, len, prot)
 	return(rv == TRUE);
 }
 
+int
 useracc(addr, len, rw)
 	caddr_t addr;
 	int len, rw;
@@ -189,6 +194,7 @@ vsunlock(addr, len, dirtied)
  * after cpu_fork returns in the child process.  We do nothing here
  * after cpu_fork returns.
  */
+int
 vm_fork(p1, p2, isvfork)
 	register struct proc *p1, *p2;
 	int isvfork;
@@ -393,6 +399,7 @@ noswap:
  * they are swapped.  Else, we swap the longest-sleeping or stopped process,
  * if any, otherwise the longest-resident process.
  */
+void
 swapout_threads()
 {
 	register struct proc *p;
@@ -449,6 +456,7 @@ swapout_threads()
 	}
 }
 
+static void
 swapout(p)
 	register struct proc *p;
 {
