@@ -1,4 +1,4 @@
-.\" $NetBSD: isdnd.rc.5,v 1.7 2002/04/10 23:35:07 martin Exp $
+.\" $NetBSD: isdnd.rc.5,v 1.8 2002/04/11 12:34:31 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isdnd.rc.5,v 1.7 2002/04/10 23:35:07 martin Exp $
+.\"	$Id: isdnd.rc.5,v 1.8 2002/04/11 12:34:31 wiz Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -299,17 +299,17 @@ is 5 seconds and the maximum parameter allowed is 180 seconds.
 For network interfaces using ISDN as a transport medium it does not make
 sense to mark the interfaces UP before running
 .Nm isdnd .
-Typicaly this interfaces are configured, but marked down, in the respective
+Typically these interfaces are configured, but marked down, in the respective
 .Pa ifconfig.*
-file. When starting,
+file.  When starting,
 .Nm isdnd
-recognizes this interfaces (configured with some address, marked down, and
+recognizes these interfaces (configured with some address, marked down, and
 having a matching config entry) and marks them up. On shutdown,
 .Nm isdnd
 marks all interfaces changed at startup DOWN again.
 .Pp
-In rare circumstances you might not want this automatic handling. 
-In this cases add a
+In rare circumstances you might not want this automatic handling.
+In this cases add an
 .Em autoupdown=no
 line to the config file entry.
 .It Li b1protocol
@@ -333,7 +333,7 @@ The number of outgoing calls allowed within the time period specified by
 .Em budget-calloutperiod .
 (optional)
 .It Li budget-calloutsfile
-A path/filename to which the number of successfull callouts are written.
+A path/filename to which the number of successful callouts are written.
 The contents of the file is preserved when it exists during startup of isdnd.
 The format of this file is: start time, last update time, number of calls.
 (optional)
@@ -341,7 +341,7 @@ The format of this file is: start time, last update time, number of calls.
 If set to
 .Em on
 rotate budget-calloutsfile every night when an attempt is made to update
-the file on a new day. The statistics for the previous day are witten to
+the file on a new day. The statistics for the previous day are written to
 a file with the filename specified by budget-calloutsfile to which a hyphen
 and the new day's (!) day of month number is appended. (optional)
 .It Li budget-callbackperiod
@@ -534,7 +534,7 @@ to a remote site and for accounting purposes. (mandatory)
 .It Li ppp-auth-paranoid
 If set to
 .Em no ,
-the remote site is not required to prove its authentity for connections
+the remote site is not required to prove its authenticity for connections
 that are initiated by the local site.
 The default is
 .Em yes
@@ -552,7 +552,7 @@ Set to
 if the other side does not support re-challenging for chap.
 The default is
 .Em yes ,
-which causes verification of the remote site's authentity once in a while.
+which causes verification of the remote site's authenticity once in a while.
 .Pp
 This keyword is only used if
 .Em ppp-expect-auth
@@ -561,7 +561,7 @@ has been set to chap for an
 PPP interface.
 (optional)
 .It Li ppp-expect-auth
-The local site expects the authentity of the remote site to be proved by
+The local site expects the authenticity of the remote site to be proved by
 the specified method.
 The supported methods are:
 .Pp
@@ -591,7 +591,7 @@ This keyword is only used for the
 PPP interfaces.
 (optional)
 .It Li ppp-expect-name
-The name that has to be provided by the remote site to prove its authentity.
+The name that has to be provided by the remote site to prove its authenticity.
 .Pp
 This keyword is only used if
 .Em ppp-expect-auth
@@ -600,7 +600,7 @@ has been set to pap or chap for an
 PPP interface.
 (optional)
 .It Li ppp-expect-password
-The secret that has to be provided by the remote site to prove its authentity.
+The secret that has to be provided by the remote site to prove its authenticity.
 .Pp
 This keyword is only used if
 .Em ppp-expect-auth
@@ -637,7 +637,7 @@ has been set to pap or chap for an
 PPP interface.
 (optional)
 .It Li ppp-send-password
-The secret used to prove the local site's authentity to the remote site.
+The secret used to prove the local site's authenticity to the remote site.
 .Pp
 This keyword is only used if
 .Em ppp-send-auth
@@ -725,7 +725,7 @@ This parameter configures a raw HDLC IP over ISDN interface.
 .It Ar isp
 This parameter configures a synchronous PPP over ISDN interface.
 .It Ar rbch
-This specifies a Raw B CHannel access interface.
+This specifies a Raw B Channel access interface.
 .It Ar tel
 ISDN telephony.
 .It Ar ing
