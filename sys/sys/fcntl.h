@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.11 1997/11/05 15:44:17 kleink Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.12 1997/11/06 01:59:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -53,7 +53,7 @@
 #include <sys/types.h>
 #ifndef _POSIX_SOURCE
 #include <sys/stat.h>
-#endif /* !_POSIX_SOURCE /*
+#endif /* !_POSIX_SOURCE */
 #endif /* !_KERNEL */
 
 /*
