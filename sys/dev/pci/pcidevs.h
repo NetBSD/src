@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.288 2000/12/31 14:04:26 ad Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.289 2001/01/03 23:15:14 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.282 2000/12/31 14:03:24 ad Exp 
+ *	NetBSD: pcidevs,v 1.283 2001/01/03 23:14:39 mycroft Exp 
  */
 
 /*
@@ -562,6 +562,7 @@
 #define	PCI_VENDOR_ADP	0x9004		/* Adaptec */
 #define	PCI_VENDOR_ADP2	0x9005		/* Adaptec (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_ATRONICS	0x907f		/* Atronics */
+#define	PCI_VENDOR_CHRYSALIS	0xcafe		/* Chrysalis-ITS */
 #define	PCI_VENDOR_ARC	0xedd8		/* ARC Logic */
 #define	PCI_VENDOR_INVALID	0xffff		/* INVALID VENDOR ID */
 
@@ -868,6 +869,9 @@
 #define	PCI_PRODUCT_CHIPS_65548	0x00dc		/* 65548 */
 #define	PCI_PRODUCT_CHIPS_65550	0x00e0		/* 65550 */
 #define	PCI_PRODUCT_CHIPS_65554	0x00e4		/* 65554 */
+
+/* Chrysalis products */
+#define	PCI_PRODUCT_CHRYSALIS_LUNAVPN	0x0001		/* LunaVPN */
 
 /* Cirrus Logic products */
 #define	PCI_PRODUCT_CIRRUS_CL_GD7548	0x0038		/* CL-GD7548 */
