@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.16 1995/03/29 07:35:35 briggs Exp $	*/
+/*	$NetBSD: param.h,v 1.17 1995/04/22 13:17:51 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -234,5 +234,7 @@
 
 /* watch out for side effects */
 #define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())
+
+#define DELAY(ms)	delay(ms)
 
 #endif /* _MACHINE_PARAM_H_ */
