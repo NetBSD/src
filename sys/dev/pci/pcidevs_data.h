@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.513 2003/03/06 22:25:44 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.514 2003/03/13 17:55:58 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.512 2003/03/06 22:25:23 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.513 2003/03/13 17:55:24 joda Exp 
  */
 
 /*
@@ -5533,13 +5533,25 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2MX,
 	    0,
 	    "Nvidia Corporation",
-	    "GeForce2 MX [NV11]",
+	    "GeForce2 MX",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2MX200,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce2 MX 100/200",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2GO,
 	    0,
 	    "Nvidia Corporation",
 	    "GeForce2 Go",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO2_MXR,
+	    0,
+	    "Nvidia Corporation",
+	    "Quadro2 MXR/EX",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2,
@@ -5566,6 +5578,84 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Quadro2",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4_MX460,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce4 MX 460",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4_MX440,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce4 MX 440",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4_MX420,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce4 MX 420",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_MX440_SE,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce4 MX 440 SE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_500XGL,
+	    0,
+	    "Nvidia Corporation",
+	    "Quadro4 500XGL",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_200NVS,
+	    0,
+	    "Nvidia Corporation",
+	    "Quadro4 200/400NVS",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_MX440_8X,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce4 MX 440 (AGP8X)",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_MX440_SE_8X,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce4 MX 440 SE (AGP8X)",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_MX420_8X,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce4 MX 420 (AGP8X)",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_580XGL,
+	    0,
+	    "Nvidia Corporation",
+	    "Quadro4 580 XGL",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_280NVS,
+	    0,
+	    "Nvidia Corporation",
+	    "Quadro4 280 NVS",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_380XGL,
+	    0,
+	    "Nvidia Corporation",
+	    "Quadro4 380 XGL",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2_IGP,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce2 Integrated GPU",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_MCP_AC,
 	    0,
 	    "Nvidia Corporation",
@@ -5576,6 +5666,126 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Nvidia Corporation",
 	    "nForce ATA100 IDE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_MX_IGP,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce4 MX Integrated GPU",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE3,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce3",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE3_TI200,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce3 Ti 200",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE3_TI500,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce3 Ti 500",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO_DCC,
+	    0,
+	    "Nvidia Corporation",
+	    "Quadro DCC",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4_TI4600,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce4 Ti 4600",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4_TI4400,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce4 Ti 4400",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4_TI4200,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce4 Ti 4200",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_900XGL,
+	    0,
+	    "Nvidia Corporation",
+	    "Quadro4 900XGL",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_750XGL,
+	    0,
+	    "Nvidia Corporation",
+	    "Quadro4 750XGL",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_700XGL,
+	    0,
+	    "Nvidia Corporation",
+	    "Quadro4 700XGL",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_TI_4800,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce4 Ti 4800",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_TI_4200_8X,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce4 Ti 4200 (AGP8X)",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_TI_4800_SE,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce4 Ti 4800 SE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_980_XGL,
+	    0,
+	    "Nvidia Corporation",
+	    "Quadro4 980 XGL",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_780_XGL,
+	    0,
+	    "Nvidia Corporation",
+	    "Quadro4 780 XGL",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_FX5800U,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce FX 5800 Ultra",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_FX5800,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce FX 5800",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO_FX_2000,
+	    0,
+	    "Nvidia Corporation",
+	    "Quadro FX 2000",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO_FX_1000,
+	    0,
+	    "Nvidia Corporation",
+	    "Quadro FX 1000",
 	},
 	{
 	    PCI_VENDOR_NVIDIA_SGS, PCI_PRODUCT_NVIDIA_SGS_RIVA128,
