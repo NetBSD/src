@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.241 2001/12/28 01:32:41 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.242 2001/12/28 06:57:41 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -21,6 +21,7 @@ NEED_OWN_INSTALL_TARGET?=	yes
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64" || \
+    ${MACHINE_ARCH} == "x86_64" || \
     ${MACHINE} == "next68k" || \
     ${MACHINE} == "sun3" || \
     ${MACHINE} == "mvme68k" || \
