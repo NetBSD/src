@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.184 1998/02/24 07:00:14 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.185 1998/02/24 07:06:39 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -2883,7 +2883,8 @@ bus_space_alloc(t, rstart, rend, size, alignment, boundary, flags, bpap, bshp)
 	 * Do the requested allocation.
 	 */
 	error = extent_alloc_subregion(iomem_ex, rstart, rend, size, alignment,
-	    boundary, EX_NOWAIT | (iomem_malloc_safe ?  EX_MALLOCOK : 0),
+	    boundary,
+	    EX_FAST | EX_NOWAIT | (iomem_malloc_safe ?  EX_MALLOCOK : 0),
 	    &bpa);
 
 	if (error)
