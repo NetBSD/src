@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.11 2002/10/11 02:10:09 oster Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.12 2002/11/12 00:01:32 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.11 2002/10/11 02:10:09 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.12 2002/11/12 00:01:32 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -188,6 +188,7 @@ rf_LookupRUStatus(
 		p->flags = flags;
 		p->rbuf = NULL;
 		p->writeRbuf = NULL;
+		p->xorBufCount = 0;
 		p->blockCount = 0;
 		p->procWaitList = NULL;
 		p->blockWaitList = NULL;
