@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.7 1999/12/13 08:25:16 itohy Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.8 2000/08/07 16:35:34 kleink Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -36,7 +36,7 @@
 #define	_C_LABEL(x)	x
 #endif
 
-#ifdef __STDC__
+#if __STDC__
 #define	___RENAME(x)	__asm__(___STRING(_C_LABEL(x)))
 #else
 #if defined(__sh3__)
@@ -53,7 +53,7 @@
 #define	__indr_reference(sym,alias)	/* nada, since we do weak refs */
 #endif /* !__DO_NOT_DO_WEAK__ */
 
-#ifdef __STDC__
+#if __STDC__
 
 #ifndef __DO_NOT_DO_WEAK__
 #define	__weak_alias(alias,sym)						\
@@ -77,7 +77,7 @@
 
 #endif /* !__STDC__ */
 
-#ifdef __STDC__
+#if __STDC__
 #define	__SECTIONSTRING(_sec, _str)					\
 	__asm__(".section " #_sec " ; .asciz \"" _str "\" ; .text")
 #else

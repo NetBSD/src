@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_aout.h,v 1.4 1999/12/13 08:25:16 itohy Exp $	*/
+/*	$NetBSD: cdefs_aout.h,v 1.5 2000/08/07 16:35:34 kleink Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.
@@ -10,7 +10,7 @@
 
 #define	_C_LABEL(x)	__CONCAT(_,x)
 
-#ifdef __STDC__
+#if __STDC__
 #define	___RENAME(x)	__asm__(___STRING(_C_LABEL(x)))
 #else
 #define	___RENAME(x)	____RENAME(_/**/x)
@@ -18,7 +18,7 @@
 #endif
 
 #ifdef __GNUC__
-#ifdef __STDC__
+#if __STDC__
 #define	__indr_reference(sym,alias)					\
 	__asm__(".stabs \"_" #alias "\",11,0,0,0");			\
 	__asm__(".stabs \"_" #sym "\",1,0,0,0");

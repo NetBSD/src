@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.36 2000/05/27 12:22:24 kleink Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.37 2000/08/07 16:35:33 kleink Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -86,7 +86,7 @@
 #define	___STRING(x)	__STRING(x)
 #define	___CONCAT(x,y)	__CONCAT(x,y)
 
-#if defined(__STDC__) || defined(__cplusplus)
+#if __STDC__ || defined(__cplusplus)
 #define	__P(protos)	protos		/* full-blown ANSI C */
 #define	__CONCAT(x,y)	x ## y
 #define	__STRING(x)	#x
