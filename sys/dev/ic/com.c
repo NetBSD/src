@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.170 2000/03/23 07:01:29 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.171 2000/03/30 02:04:30 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,6 @@ int comprobeHAYESP __P((bus_space_handle_t hayespioh, struct com_softc *sc));
 #if defined(DDB) || defined(KGDB)
 static void com_enable_debugport __P((struct com_softc *));
 #endif
-void	com_attach_subr	__P((struct com_softc *sc));
 void	com_config	__P((struct com_softc *));
 void	com_shutdown	__P((struct com_softc *));
 int	comspeed	__P((long, long));
