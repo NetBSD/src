@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: upgrade.tmpl,v 1.1 1998/11/19 08:58:06 sakamoto Exp $
+#	$NetBSD: upgrade.tmpl,v 1.2 1998/11/24 06:40:31 sakamoto Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -212,19 +212,6 @@ echo    "Re-mounting root partition read-write..."
 mount -u -o rw /dev/${drivename}a /mnt
 if [ $? != 0 ]; then
 	echo	"FATAL ERROR: RE-MOUNT FAILED."
-	echo	"It in unclear why this error would occur.  It looks"
-	echo	"like you may end up having to upgrade by hand."
-	exit 1
-fi
-echo	"Done."
-
-echo	""
-echo	"Updating boot blocks on ${drivename}..."
-# shouldn't be needed, but...
-$DONTDOIT rm -f /mnt/boot
-$DONTDOIT /usr/mdec/installboot /usr/mdec/biosboot.sym /dev/r${drivename}a
-if [ $? != 0 ]; then
-	echo	"FATAL ERROR: UPDATE OF DISK LABEL FAILED."
 	echo	"It in unclear why this error would occur.  It looks"
 	echo	"like you may end up having to upgrade by hand."
 	exit 1
