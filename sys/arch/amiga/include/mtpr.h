@@ -1,4 +1,4 @@
-/*	$NetBSD: mtpr.h,v 1.10 1996/05/09 20:31:53 is Exp $	*/
+/*	$NetBSD: mtpr.h,v 1.10.12.1 1997/09/01 20:06:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,6 +79,9 @@ extern unsigned char ssir;
 #define setsoftnet()	(ssir |= SIR_NET, setsoftint())
 #define setsoftclock()	(ssir |= SIR_CLOCK, setsoftint())
 #define setsoftcback()	(ssir |= SIR_CBACK, setsoftint())
+
+void softintr_schedule __P((void *));
+void *softintr_establish __P((int,  void (*)(void *), void *));
 
 #endif /* _KERNEL */
 

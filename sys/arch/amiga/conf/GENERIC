@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.81.2.2 1997/08/27 21:45:08 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.81.2.3 1997/09/01 20:06:34 thorpej Exp $
 
 #
 # GENERIC AMIGA
@@ -194,8 +194,8 @@ mfcs1		at mfc0 unit 1		# MFC serial
 #mfcp1		at mfc1 unit 0
 
 drbbc0		at mainbus0		# DraCo battery backed clock
-drcom0		at mainbus0		# DraCo serial 0
-drcom1		at mainbus0		# DraCo serial 1, normally mouse
+drsupio0	at mainbus0		# DraCo superio chip
+com*		at drsupio? port ?	# DraCo serial
 
 a2kbbc0 	at mainbus0		# A2000 battery backed clock
 a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
