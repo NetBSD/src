@@ -38,21 +38,28 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)rmt.c	5.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: rmt.c,v 1.6 1995/04/13 02:07:23 mycroft Exp $";
+#if 0
+static char sccsid[] = "from: @(#)rmt.c	5.6 (Berkeley) 6/1/90";
+#else
+static char rcsid[] = "$NetBSD: rmt.c,v 1.7 1997/07/01 07:42:28 mikel Exp $";
+#endif
 #endif /* not lint */
 
 /*
  * rmt
  */
-#include <stdio.h>
-#include <sgtty.h>
 #include <sys/types.h>
+#include <sys/ioctl.h>
+#include <sys/mtio.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/mtio.h>
+
 #include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 int	tape = -1;
 
@@ -71,6 +78,11 @@ FILE	*debug;
 #define	DEBUG1(f,a)	if (debug) fprintf(debug, f, a)
 #define	DEBUG2(f,a1,a2)	if (debug) fprintf(debug, f, a1, a2)
 
+void	 getstring __P((char *));
+char	*checkbuf __P((char *, int));
+void	 error __P((int));
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -89,7 +101,7 @@ main(argc, argv)
 top:
 	errno = 0;
 	rval = 0;
-	if (read(0, &c, 1) != 1)
+	if (read(STDIN_FILENO, &c, 1) != 1)
 		exit(0);
 	switch (c) {
 
@@ -115,7 +127,7 @@ top:
 	case 'L':
 		getstring(count); getstring(pos);
 		DEBUG2("rmtd: L %s %s\n", count, pos);
-		rval = lseek(tape, atoi(count), atoi(pos));
+		rval = lseek(tape, (off_t)strtoq(count, NULL, 10), atoi(pos));
 		if (rval < 0)
 			goto ioerror;
 		goto respond;
@@ -126,7 +138,7 @@ top:
 		DEBUG1("rmtd: W %s\n", count);
 		record = checkbuf(record, n);
 		for (i = 0; i < n; i += cc) {
-			cc = read(0, &record[i], n - i);
+			cc = read(STDIN_FILENO, &record[i], n - i);
 			if (cc <= 0) {
 				DEBUG("rmtd: premature eof\n");
 				exit(2);
@@ -146,32 +158,37 @@ top:
 		if (rval < 0)
 			goto ioerror;
 		(void) sprintf(resp, "A%d\n", rval);
-		(void) write(1, resp, strlen(resp));
-		(void) write(1, record, rval);
+		(void) write(STDOUT_FILENO, resp, strlen(resp));
+		(void) write(STDOUT_FILENO, record, rval);
 		goto top;
 
 	case 'I':
 		getstring(op); getstring(count);
 		DEBUG2("rmtd: I %s %s\n", op, count);
-		{ struct mtop mtop;
-		  mtop.mt_op = atoi(op);
-		  mtop.mt_count = atoi(count);
-		  if (ioctl(tape, MTIOCTOP, (char *)&mtop) < 0)
-			goto ioerror;
-		  rval = mtop.mt_count;
+		{
+			struct mtop mtop;
+
+			mtop.mt_op = atoi(op);
+			mtop.mt_count = atoi(count);
+			if (ioctl(tape, MTIOCTOP, (char *)&mtop) < 0)
+				goto ioerror;
+			rval = mtop.mt_count;
 		}
 		goto respond;
 
 	case 'S':		/* status */
 		DEBUG("rmtd: S\n");
-		{ struct mtget mtget;
-		  if (ioctl(tape, MTIOCGET, (char *)&mtget) < 0)
-			goto ioerror;
-		  rval = sizeof (mtget);
-		  (void) sprintf(resp, "A%d\n", rval);
-		  (void) write(1, resp, strlen(resp));
-		  (void) write(1, (char *)&mtget, sizeof (mtget));
-		  goto top;
+		{
+			struct mtget mtget;
+
+			if (ioctl(tape, MTIOCGET, (char *)&mtget) < 0)
+				goto ioerror;
+			rval = sizeof (mtget);
+			(void) sprintf(resp, "A%d\n", rval);
+			(void) write(STDOUT_FILENO, resp, strlen(resp));
+			(void) write(STDOUT_FILENO, (char *)&mtget,
+			    sizeof (mtget));
+			goto top;
 		}
 
 	default:
@@ -181,21 +198,22 @@ top:
 respond:
 	DEBUG1("rmtd: A %d\n", rval);
 	(void) sprintf(resp, "A%d\n", rval);
-	(void) write(1, resp, strlen(resp));
+	(void) write(STDOUT_FILENO, resp, strlen(resp));
 	goto top;
 ioerror:
 	error(errno);
 	goto top;
 }
 
+void
 getstring(bp)
 	char *bp;
 {
 	int i;
 	char *cp = bp;
 
-	for (i = 0; i < SSIZE; i++) {
-		if (read(0, cp+i, 1) != 1)
+	for (i = 0; i < SSIZE - 1; i++) {
+		if (read(STDIN_FILENO, cp+i, 1) != 1)
 			exit(0);
 		if (cp[i] == '\n')
 			break;
@@ -208,7 +226,6 @@ checkbuf(record, size)
 	char *record;
 	int size;
 {
-	extern char *malloc();
 
 	if (size <= maxrecsize)
 		return (record);
@@ -221,16 +238,17 @@ checkbuf(record, size)
 	}
 	maxrecsize = size;
 	while (size > 1024 &&
-	       setsockopt(0, SOL_SOCKET, SO_RCVBUF, &size, sizeof (size)) < 0)
+	    setsockopt(0, SOL_SOCKET, SO_RCVBUF, &size, sizeof (size)) < 0)
 		size -= 1024;
 	return (record);
 }
 
+void
 error(num)
 	int num;
 {
 
 	DEBUG2("rmtd: E %d (%s)\n", num, strerror(num));
 	(void) sprintf(resp, "E%d\n%s\n", num, strerror(num));
-	(void) write(1, resp, strlen(resp));
+	(void) write(STDOUT_FILENO, resp, strlen(resp));
 }
