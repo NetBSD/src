@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)savecore.c	5.26 (Berkeley) 4/8/91";*/
-static char rcsid[] = "$Id: savecore.c,v 1.7 1994/04/04 22:45:08 cgd Exp $";
+static char rcsid[] = "$Id: savecore.c,v 1.8 1994/04/06 01:41:32 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -112,7 +112,7 @@ int	clear;
 
 char	*path __P((char *));
 char	*find_dev __P((dev_t, int));
-off_t	Lseek __P((int, off_t, int));
+off_t	Lseek __P((int, long, int));
 
 main(argc, argv)
 	char **argv;
@@ -518,7 +518,7 @@ Read(fd, buff, size)
 off_t
 Lseek(fd, off, flag)
 	int fd, flag;
-	off_t off;
+	long off;
 {
 	long ret;
 
