@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.32 1997/02/20 00:23:25 scottr Exp $	*/
+/*	$NetBSD: ite.c,v 1.33 1997/04/08 04:47:08 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,6 +93,8 @@ static inline void putpixel1 __P((int, int, int *, int));
 static void	putpixel2 __P((int, int, int *, int));
 static void	putpixel4 __P((int, int, int *, int));
 static void	putpixel8 __P((int, int, int *, int));
+static void	putpixel16 __P((int, int, int *, int));
+static void	putpixel32 __P((int, int, int *, int));
 static void	reversepixel1 __P((int, int, int));
 static void	writechar __P((char, int, int, int));
 static void	drawcursor __P((void));
@@ -257,12 +259,58 @@ putpixel8(xx, yy, c, num)
 	}
 }
 
+static void
+putpixel16(xx, yy, c, num)
+	int xx, yy;
+	int *c;
+	int num;
+{
+	unsigned short	*sc;
+	int		videorowshorts;
+	unsigned char	uc;
+
+	sc = (unsigned short *)videoaddr;
+
+	videorowshorts = videorowbytes >> 1;
+	sc += yy * videorowshorts + xx;
+	while (num--) {
+		uc = (*c++ & 0xff);
+		*sc = (uc << 8) | uc;
+		sc += videorowshorts;
+	}
+}
+
+static void
+putpixel32(xx, yy, c, num)
+	int xx, yy;
+	int *c;
+	int num;
+{
+	unsigned long	*sc;
+	int		videorowlongs;
+	unsigned char	uc;
+
+	sc = (unsigned long *)videoaddr;
+
+	videorowlongs = videorowbytes >> 2;
+	sc += yy * videorowlongs + xx;
+	while (num--) {
+		uc = (*c++ & 0xff);
+		*sc = (uc << 24) | (uc << 16) | (uc << 8) | uc;
+		sc += videorowlongs;
+}
+}
+
 static void 
 reversepixel1(xx, yy, num)
 	int xx, yy, num;
 {
 	unsigned int mask;
 	unsigned char *sc;
+	unsigned long *sl;
+	unsigned short *ss;
+	int		videorowshorts;
+	int		videorowlongs;
 
 	sc = (unsigned char *) videoaddr;
 	mask = 0;		/* Get rid of warning from compiler */
@@ -284,6 +332,24 @@ reversepixel1(xx, yy, num)
 		mask = 255;
 		sc += yy * videorowbytes + xx;
 		break;
+	case 16:
+		videorowshorts = videorowbytes >> 1;
+		ss = (unsigned short *) videoaddr;
+		ss += yy * videorowshorts + xx;
+		while (num--) {
+			*ss ^= 0xffff;
+			ss += videorowshorts;
+		}
+		return;
+	case 32:
+		videorowlongs = videorowbytes >> 2;
+		sl = (unsigned long *) videoaddr;
+		sl += yy * videorowlongs + xx;
+		while (num--) {
+			*sl ^= 0xffffffff;
+			sl += videorowlongs;
+		}
+		return;
 	default:
 		panic("reversepixel(): unsupported bit depth");
 	}
@@ -327,6 +393,8 @@ writechar(ch, x, y, attr)
 	case 2:
 	case 4:
 	case 8:
+	case 16:
+	case 32:
 		for (j = 0; j < CHARWIDTH; j++) {
 			mask = 1 << (CHARWIDTH - 1 - j);
 			for (i = 0; i < CHARHEIGHT; i++)
@@ -1156,8 +1224,8 @@ itecnprobe(struct consdev * cp)
 	return 0;
 }
 
-int
-itecninit(struct consdev * cp)
+void
+itereset()
 {
 	ite_initted = 1;
 	width = videosize & 0xffff;
@@ -1187,10 +1255,29 @@ itecninit(struct consdev * cp)
 		reversepixel = reversepixel1;
 		screenrowbytes = width;
 		break;
-	}
+	case 16:
+		putpixel = putpixel16;
+		reversepixel = reversepixel1;
+		screenrowbytes = width*2;
+		break;
+	case 32:
+		putpixel = putpixel32;
+		reversepixel = reversepixel1;
+		screenrowbytes = width*4;
+		break;
+  	}
+  
+  	vt100_reset();
+}
+  
+int
+itecninit(struct consdev * cp)
+{
+	if (ite_initted)
+		return 0;
 
-	vt100_reset();
-
+	ite_initted = 1;
+	itereset();
 	return iteon(cp->cn_dev, 0);
 }
 
