@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.528 2005/02/22 07:39:25 lukem Exp $
+# $NetBSD: mi,v 1.529 2005/02/22 14:39:58 peter Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -131,7 +131,7 @@
 ./sbin/halt					base-sysutil-root
 ./sbin/ifconfig					base-netutil-root
 ./sbin/init					base-sysutil-root
-./sbin/ipf					base-netutil-root
+./sbin/ipf					base-netutil-root	ipfilter
 ./sbin/ipppctl					base-netutil-root
 ./sbin/ispppcontrol				base-obsolete		obsolete
 ./sbin/lmcctl					base-netutil-root
@@ -170,7 +170,7 @@
 ./sbin/nfsd					base-obsolete		obsolete
 ./sbin/nfsiod					base-obsolete		obsolete
 ./sbin/nologin					base-sysutil-root
-./sbin/pfctl					base-netutil-root
+./sbin/pfctl					base-netutil-root	pf
 ./sbin/ping					base-netutil-root
 ./sbin/ping6					base-netutil-root	inet6
 ./sbin/poweroff					base-sysutil-root
@@ -830,7 +830,7 @@
 ./usr/libexec/cpp				base-obsolete		obsolete
 ./usr/libexec/dnskeygen				base-obsolete		obsolete
 ./usr/libexec/fingerd				base-netutil-bin
-./usr/libexec/ftp-proxy				base-netutil-bin
+./usr/libexec/ftp-proxy				base-netutil-bin	pf
 ./usr/libexec/ftpd				base-netutil-bin
 ./usr/libexec/getNAME				base-man-bin
 ./usr/libexec/getty				base-sysutil-bin
@@ -888,9 +888,9 @@
 ./usr/libexec/sftp-server			base-secsh-bin		crypto
 ./usr/libexec/sm.bin				base-sendmail-usr
 ./usr/libexec/smrsh				base-sendmail-bin	sendmail
-./usr/libexec/spamd				base-netutil-bin
-./usr/libexec/spamd-setup			base-netutil-bin
-./usr/libexec/spamlogd				base-netutil-bin
+./usr/libexec/spamd				base-netutil-bin	pf
+./usr/libexec/spamd-setup			base-netutil-bin	pf
+./usr/libexec/spamlogd				base-netutil-bin	pf
 ./usr/libexec/ssh-keysign			base-secsh-bin		crypto
 ./usr/libexec/telnetd				base-netutil-bin
 ./usr/libexec/tftpd				base-netutil-bin
@@ -913,7 +913,7 @@
 ./usr/sbin/amd					base-amd-bin
 ./usr/sbin/amq					base-amd-bin
 ./usr/sbin/arp					base-netutil-bin
-./usr/sbin/authpf				base-netutil-bin
+./usr/sbin/authpf				base-netutil-bin	pf
 ./usr/sbin/bootpd				base-bootserver-bin
 ./usr/sbin/bootpef				base-bootserver-bin
 ./usr/sbin/bootpgw				base-bootserver-bin
@@ -967,15 +967,15 @@
 ./usr/sbin/installboot				base-sysutil-bin
 ./usr/sbin/iopctl				base-sysutil-bin
 ./usr/sbin/iostat				base-sysutil-bin
-./usr/sbin/ipfs					base-netutil-bin
-./usr/sbin/ipfstat				base-netutil-bin
-./usr/sbin/ipftest				base-netutil-bin
-./usr/sbin/ipmon				base-netutil-bin
-./usr/sbin/ipnat				base-router-bin
-./usr/sbin/ippool				base-netutil-root
-./usr/sbin/ipresend				base-netutil-bin
-./usr/sbin/ipsend				base-netutil-bin
-./usr/sbin/iptest				base-netutil-bin
+./usr/sbin/ipfs					base-netutil-bin	ipfilter
+./usr/sbin/ipfstat				base-netutil-bin	ipfilter
+./usr/sbin/ipftest				base-netutil-bin	ipfilter
+./usr/sbin/ipmon				base-netutil-bin	ipfilter
+./usr/sbin/ipnat				base-router-bin		ipfilter
+./usr/sbin/ippool				base-netutil-root	ipfilter
+./usr/sbin/ipresend				base-netutil-bin	ipfilter
+./usr/sbin/ipsend				base-netutil-bin	ipfilter
+./usr/sbin/iptest				base-netutil-bin	ipfilter
 ./usr/sbin/irdaattach				base-sysutil-bin
 ./usr/sbin/isdnd				base-isdn-bin
 ./usr/sbin/isdnmonitor				base-isdn-bin
@@ -1119,7 +1119,7 @@
 ./usr/sbin/slstats				base-slip-bin
 ./usr/sbin/smrsh				base-obsolete		obsolete
 ./usr/sbin/sntp					base-ntp-bin
-./usr/sbin/spamdb				base-netutil-bin
+./usr/sbin/spamdb				base-netutil-bin	pf
 ./usr/sbin/spawn				base-obsolete		obsolete
 ./usr/sbin/spray				base-rpcutil-bin
 ./usr/sbin/sshd					base-secsh-bin		crypto
