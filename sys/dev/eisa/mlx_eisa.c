@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.5 2001/11/15 09:48:03 lukem Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.6 2001/12/18 13:38:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.5 2001/11/15 09:48:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.6 2001/12/18 13:38:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.5 2001/11/15 09:48:03 lukem Exp $");
 #include <dev/ic/mlxio.h>
 #include <dev/ic/mlxvar.h>
 
-#define MLX_EISA_SLOT_OFFSET		0x0c89
+#define MLX_EISA_SLOT_OFFSET		0x0c80
 #define MLX_EISA_IOSIZE			(0x0ce0 - MLX_EISA_SLOT_OFFSET)
 #define MLX_EISA_IOCONF1		(0x0cc1 - MLX_EISA_SLOT_OFFSET)
 #define MLX_EISA_IOCONF2		(0x0cc3 - MLX_EISA_SLOT_OFFSET)
@@ -269,6 +269,8 @@ mlx_v1_fw_handshake(struct mlx_softc *mlx, int *error, int *param1, int *param2)
 	 */
 	if ((mlx->mlx_flags & MLXF_FW_INITTED) == 0) {
 		mlx_outb(mlx, MLX_V1REG_ODB_EN, 1);
+		DELAY(1000);
+		mlx_outb(mlx, MLX_V1REG_ODB, 1);
 		DELAY(1000);
 		mlx_outb(mlx, MLX_V1REG_IDB, MLX_V1_IDB_SACK);
 		DELAY(1000);
