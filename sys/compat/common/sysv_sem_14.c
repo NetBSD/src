@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem_14.c,v 1.1 1999/08/25 04:47:12 thorpej Exp $	*/
+/*	$NetBSD: sysv_sem_14.c,v 1.2 2000/06/02 15:53:04 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -48,7 +48,10 @@
 
 #include <sys/syscallargs.h>
 
-void
+static void semid_ds14_to_native __P((struct semid_ds14 *, struct semid_ds *));
+static void native_to_semid_ds14 __P((struct semid_ds *, struct semid_ds14 *));
+
+static void
 semid_ds14_to_native(osembuf, sembuf)
 	struct semid_ds14 *osembuf;
 	struct semid_ds *sembuf;
@@ -63,7 +66,7 @@ semid_ds14_to_native(osembuf, sembuf)
 #undef CVT
 }
 
-void
+static void
 native_to_semid_ds14(sembuf, osembuf)
 	struct semid_ds *sembuf;
 	struct semid_ds14 *osembuf;
