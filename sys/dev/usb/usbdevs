@@ -1,4 +1,4 @@
-a$NetBSD: usbdevs,v 1.38 1999/08/25 16:28:12 augustss Exp $
+a$NetBSD: usbdevs,v 1.39 1999/08/25 23:23:17 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@ vendor IOMEGA		0x059b	Iomega Corporation
 vendor BELKIN		0x05ab	In-System Design
 vendor APPLE		0x05ac	Apple Computer
 vendor EIZONANAO	0x05e7	EIZO Nanao
+vendor PIENGINEERING	0x05f3  P.I. Engineering
 vendor CHIC		0x05fe	Chic Technology
 vendor MACALLY		0x0618	Macally
 vendor MULTITECH	0x06e0	MultiTech
@@ -194,6 +195,9 @@ product BELKIN F5U002		0x0002	Parallel printer adapter
 product LOGITECH M2452		0x0203	M2452 keyboard
 product LOGITECH M4848		0x0301	M4848 mouse
 product LOGITECH USBPS2		0xc001	USB-PS/2 mouse
+
+/* P.I. Engineering products */
+product PIENGINEERING PS2USB	0x020b	PS2 to Mac USB Adapter
 
 /* Chic Technology products */
 product CHIC MOUSE1		0x0001	mouse
