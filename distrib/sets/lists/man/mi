@@ -16,6 +16,10 @@
 ./usr/share/man/cat1/bdes.0
 ./usr/share/man/cat1/bg.0
 ./usr/share/man/cat1/biff.0
+./usr/share/man/cat1/bunzip2.0
+./usr/share/man/cat1/bzcat.0
+./usr/share/man/cat1/bzip2.0
+./usr/share/man/cat1/bzip2recover.0
 ./usr/share/man/cat1/c++filt.0
 ./usr/share/man/cat1/cal.0
 ./usr/share/man/cat1/calendar.0
@@ -145,6 +149,7 @@
 ./usr/share/man/cat1/md5.0
 ./usr/share/man/cat1/merge.0
 ./usr/share/man/cat1/mesg.0
+./usr/share/man/cat1/midiplay.0
 ./usr/share/man/cat1/mixerctl.0
 ./usr/share/man/cat1/mkdep.0
 ./usr/share/man/cat1/mkdir.0
@@ -218,6 +223,7 @@
 ./usr/share/man/cat1/sh.0
 ./usr/share/man/cat1/shar.0
 ./usr/share/man/cat1/shlock.0
+./usr/share/man/cat1/shuffle.0
 ./usr/share/man/cat1/size.0
 ./usr/share/man/cat1/skey.0
 ./usr/share/man/cat1/skeyaudit.0
@@ -346,6 +352,7 @@
 ./usr/share/man/cat4/guspnp.0
 ./usr/share/man/cat4/icmp.0
 ./usr/share/man/cat4/idp.0
+./usr/share/man/cat4/ifmedia.0
 ./usr/share/man/cat4/inet.0
 ./usr/share/man/cat4/ip.0
 ./usr/share/man/cat4/ipf.0
@@ -417,6 +424,10 @@
 ./usr/share/man/cat4/vnd.0
 ./usr/share/man/cat4/wds.0
 ./usr/share/man/cat4/we.0
+./usr/share/man/cat4/wscons.0
+./usr/share/man/cat4/wsdisplay.0
+./usr/share/man/cat4/wskbd.0
+./usr/share/man/cat4/wsmouse.0
 ./usr/share/man/cat4/wss.0
 ./usr/share/man/cat4/wt.0
 ./usr/share/man/cat4/ym.0
@@ -715,6 +726,7 @@
 ./usr/share/man/cat8/spray.0
 ./usr/share/man/cat8/sprayd.0
 ./usr/share/man/cat8/statd.0
+./usr/share/man/cat8/statmsg.0
 ./usr/share/man/cat8/stdethers.0
 ./usr/share/man/cat8/stdhosts.0
 ./usr/share/man/cat8/sticky.0
@@ -725,6 +737,7 @@
 ./usr/share/man/cat8/swapctl.0
 ./usr/share/man/cat8/swapon.0
 ./usr/share/man/cat8/sync.0
+./usr/share/man/cat8/sysconfd.0
 ./usr/share/man/cat8/sysctl.0
 ./usr/share/man/cat8/syslogd.0
 ./usr/share/man/cat8/talkd.0
@@ -911,8 +924,8 @@
 ./usr/share/man/cat9/m_split.0
 ./usr/share/man/cat9/malloc.0
 ./usr/share/man/cat9/mbuf.0
-./usr/share/man/cat9/microtime.0
 ./usr/share/man/cat9/mi_switch.0
+./usr/share/man/cat9/microtime.0
 ./usr/share/man/cat9/mono_time.0
 ./usr/share/man/cat9/mtocl.0
 ./usr/share/man/cat9/mtod.0
@@ -1050,6 +1063,10 @@
 ./usr/share/man/man1/bdes.1
 ./usr/share/man/man1/bg.1
 ./usr/share/man/man1/biff.1
+./usr/share/man/man1/bunzip2.1
+./usr/share/man/man1/bzcat.1
+./usr/share/man/man1/bzip2.1
+./usr/share/man/man1/bzip2recover.1
 ./usr/share/man/man1/c++filt.1
 ./usr/share/man/man1/cal.1
 ./usr/share/man/man1/calendar.1
@@ -1179,6 +1196,7 @@
 ./usr/share/man/man1/md5.1
 ./usr/share/man/man1/merge.1
 ./usr/share/man/man1/mesg.1
+./usr/share/man/man1/midiplay.1
 ./usr/share/man/man1/mixerctl.1
 ./usr/share/man/man1/mkdep.1
 ./usr/share/man/man1/mkdir.1
@@ -1252,6 +1270,7 @@
 ./usr/share/man/man1/sh.1
 ./usr/share/man/man1/shar.1
 ./usr/share/man/man1/shlock.1
+./usr/share/man/man1/shuffle.1
 ./usr/share/man/man1/size.1
 ./usr/share/man/man1/skey.1
 ./usr/share/man/man1/skeyaudit.1
@@ -1380,6 +1399,7 @@
 ./usr/share/man/man4/guspnp.4
 ./usr/share/man/man4/icmp.4
 ./usr/share/man/man4/idp.4
+./usr/share/man/man4/ifmedia.4
 ./usr/share/man/man4/inet.4
 ./usr/share/man/man4/ip.4
 ./usr/share/man/man4/ipf.4
@@ -1451,6 +1471,10 @@
 ./usr/share/man/man4/vnd.4
 ./usr/share/man/man4/wds.4
 ./usr/share/man/man4/we.4
+./usr/share/man/man4/wscons.4
+./usr/share/man/man4/wsdisplay.4
+./usr/share/man/man4/wskbd.4
+./usr/share/man/man4/wsmouse.4
 ./usr/share/man/man4/wss.4
 ./usr/share/man/man4/wt.4
 ./usr/share/man/man4/ym.4
@@ -1749,6 +1773,7 @@
 ./usr/share/man/man8/spray.8
 ./usr/share/man/man8/sprayd.8
 ./usr/share/man/man8/statd.8
+./usr/share/man/man8/statmsg.8
 ./usr/share/man/man8/stdethers.8
 ./usr/share/man/man8/stdhosts.8
 ./usr/share/man/man8/sticky.8
@@ -1759,6 +1784,7 @@
 ./usr/share/man/man8/swapctl.8
 ./usr/share/man/man8/swapon.8
 ./usr/share/man/man8/sync.8
+./usr/share/man/man8/sysconfd.8
 ./usr/share/man/man8/sysctl.8
 ./usr/share/man/man8/syslogd.8
 ./usr/share/man/man8/talkd.8
@@ -1945,8 +1971,8 @@
 ./usr/share/man/man9/m_split.9
 ./usr/share/man/man9/malloc.9
 ./usr/share/man/man9/mbuf.9
-./usr/share/man/man9/microtime.9
 ./usr/share/man/man9/mi_switch.9
+./usr/share/man/man9/microtime.9
 ./usr/share/man/man9/mono_time.9
 ./usr/share/man/man9/mtocl.9
 ./usr/share/man/man9/mtod.9
