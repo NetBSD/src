@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.32 1999/02/16 18:11:52 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.33 1999/02/22 10:12:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -1900,6 +1900,10 @@ cy693_setup_channel(chp)
 		    CY_CMD_CTRL_IOW_PULSE_OFF(drive));
 		cy_cmd_ctrl |= (cy_pio_rec[drvp->PIO_mode] <<
 		    CY_CMD_CTRL_IOW_REC_OFF(drive));
+		cy_cmd_ctrl |= (cy_pio_pulse[drvp->PIO_mode] <<
+		    CY_CMD_CTRL_IOR_PULSE_OFF(drive));
+		cy_cmd_ctrl |= (cy_pio_rec[drvp->PIO_mode] <<
+		    CY_CMD_CTRL_IOR_REC_OFF(drive));
 	}
 	pci_conf_write(sc->sc_pc, sc->sc_tag, CY_CMD_CTRL, cy_cmd_ctrl);
 	pciide_print_modes(cp);
