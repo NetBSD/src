@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.2 1997/01/17 03:42:15 jeremy Exp $	*/
+/*	$NetBSD: if_le.c,v 1.3 1997/01/17 16:15:44 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -146,7 +146,8 @@ le_attach(parent, self, aux)
 	struct confargs *ca = aux;
 
 	lesc->sc_r1 = (struct lereg1 *)
-	    obio_alloc(ca->ca_paddr, sizeof(struct lereg1));
+	    bus_mapin(ca->ca_bustype, ca->ca_paddr,
+	              sizeof(struct lereg1));
 
 	lesc->sc_kmem = malloc(LE_MEMSIZE, M_DEVBUF, M_NOWAIT);
 	sc->sc_memsize = LE_MEMSIZE;
