@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/04/25 03:43:26 garbled Exp $
+#	$NetBSD: Makefile,v 1.2 2001/04/25 18:32:02 garbled Exp $
 
 FILES=	form preform help
 FILESDIR=${BINDIR}/sushi/network/exports/addexport
@@ -7,5 +7,5 @@ SCRIPTS+= script7 script8 script9 scripta scriptb script
 SCRIPTSDIR=${BINDIR}/sushi/network/exports/addexport
 MKOBJ=	no
 
-.include "../../../Makefile.inc"
+.include "../../../../Makefile.inc"
 .include <bsd.prog.mk>
