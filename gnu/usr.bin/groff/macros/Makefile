@@ -13,7 +13,11 @@ clean:
 
 cleandir:
 
+depend:
+
 obj:
+
+tags:
 
 install:
 	-for t in $(TMACS); do \
