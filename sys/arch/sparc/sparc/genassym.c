@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.15 1995/06/28 04:31:23 cgd Exp $ */
+/*	$NetBSD: genassym.c,v 1.16 1996/03/14 21:09:09 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,6 +78,10 @@
 
 #define	off(what, str, mem) def(what, (int)offsetof(str, mem))
 
+void def __P((char *, int));
+void flush __P((void));
+int main __P((void));
+
 void
 def(what, where)
 	char *what;
@@ -100,6 +104,7 @@ flush()
 	}
 }
 
+int
 main()
 {
 
@@ -216,5 +221,5 @@ main()
 
 	flush();
 
-	exit(0);
+	return(0);
 }

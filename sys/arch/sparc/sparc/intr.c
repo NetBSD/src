@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.9 1995/07/04 12:34:37 paulus Exp $ */
+/*	$NetBSD: intr.c,v 1.10 1996/03/14 21:09:12 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,17 +45,42 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/socket.h>
 
 #include <vm/vm.h>
 
+#include <dev/cons.h>
+
 #include <net/netisr.h>
+#include <net/if.h>
 
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
 #include <machine/instr.h>
 #include <machine/trap.h>
 
+#ifdef INET
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
+#include <netinet/ip_var.h>
+#endif
+#ifdef NS
+#include <netns/ns_var.h>
+#endif
+#ifdef ISO
+#include <netiso/iso.h>
+#include <netiso/clnp.h>
+#endif
+#include "ppp.h"
+#if NPPP > 0
+#include <net/ppp_defs.h>
+#include <net/if_ppp.h>
+#endif
+
+void	strayintr __P((struct clockframe *));
+int	soft01intr __P((void *));
 
 /*
  * Stray interrupt handler.  Clear it if possible.
@@ -67,9 +92,9 @@ strayintr(fp)
 {
 	static int straytime, nstray;
 	int timesince;
+	static const char fmt1[] = "stray interrupt ipl %x pc=%x npc=%x psr=%b\n";
 
-	printf("stray interrupt ipl %x pc=%x npc=%x psr=%b\n",
-	    fp->ipl, fp->pc, fp->npc, fp->psr, PSR_BITS);
+	printf(fmt1, fp->ipl, fp->pc, fp->npc, fp->psr, PSR_BITS);
 	timesince = time.tv_sec - straytime;
 	if (timesince <= 10) {
 		if (++nstray > 9)
@@ -80,10 +105,7 @@ strayintr(fp)
 	}
 }
 
-extern int clockintr();		/* level 10 (clock) interrupt code */
 static struct intrhand level10 = { clockintr };
-
-extern int statintr();		/* level 14 (statclock) interrupt code */
 static struct intrhand level14 = { statintr };
 
 /*
@@ -129,7 +151,6 @@ soft01intr(fp)
 			if (n & (1 << NETISR_ISO))
 				clnlintr();
 #endif
-#include "ppp.h"
 #if NPPP > 0
 			if (n & (1 << NETISR_PPP))
 				pppintr();
@@ -137,7 +158,7 @@ soft01intr(fp)
 		}
 		if (sir.sir_which[SIR_CLOCK]) {
 			sir.sir_which[SIR_CLOCK] = 0;
-			softclock(fp);
+			softclock();
 		}
 	}
 	return (1);

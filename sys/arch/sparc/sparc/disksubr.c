@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.11 1996/01/07 22:03:12 thorpej Exp $ */
+/*	$NetBSD: disksubr.c,v 1.12 1996/03/14 21:09:07 christos Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -32,12 +32,14 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/ioccom.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/dkbad.h>
+#include <sys/cpu.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -72,7 +74,6 @@ dk_establish(dk, dev)
 	struct device *dev;
 {
 	struct bootpath *bp = bootpath_store(0, NULL); /* restore bootpath! */
-	char name[10];
 	struct scsibus_softc *sbsc;
 	int targ, lun;
 
@@ -139,7 +140,7 @@ dk_establish(dk, dev)
 char *
 readdisklabel(dev, strat, lp, clp)
 	dev_t dev; 
-	void (*strat)();
+	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {
@@ -243,9 +244,10 @@ setdisklabel(olp, nlp, openmask, clp)
  * Write disk label back to device after modification.
  * Current label is already in clp->cd_block[]
  */
+int
 writedisklabel(dev, strat, lp, clp)
 	dev_t dev;
-	void (*strat)();
+	void (*strat) __P((struct buf *));
 	register struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {
@@ -539,6 +541,7 @@ sun_dkioctl(dk, cmd, data, partition)
 int
 isbad(bt, cyl, trk, sec)
 	register struct dkbad *bt;
+	int cyl, trk, sec;
 {
 	register int i;
 	register long blk, bblk;

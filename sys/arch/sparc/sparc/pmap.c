@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.52 1996/02/29 22:15:13 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.53 1996/03/14 21:09:23 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -362,6 +362,27 @@ static u_long segfixmask = 0xffffffff; /* all bits valid to start */
 	}								\
 } while (0)
 
+static void sortm __P((struct memarr *, int));
+void	mmu_reservemon __P((int *, int *));
+void	ctx_alloc __P((struct pmap *));
+void	ctx_free __P((struct pmap *));
+void	pv_changepte __P((struct pvlist *, int, int));
+int	pv_syncflags __P((struct pvlist *));
+void	pv_unlink __P((struct pvlist *, struct pmap *, vm_offset_t));
+int	pv_link __P((struct pvlist *, struct pmap *, vm_offset_t));
+void	pv_flushcache __P((struct pvlist *));
+void	pmap_enk __P((struct pmap *, vm_offset_t, vm_prot_t, int, 
+		      struct pvlist *, int));
+void	pmap_enu __P((struct pmap *, vm_offset_t, vm_prot_t, int, 
+		      struct pvlist *, int));
+void	kvm_iocache __P((caddr_t, int));
+#ifdef DEBUG
+void	pm_check __P((char *, struct pmap *));
+void	pm_check_k __P((char *, struct pmap *));
+void	pm_check_u __P((char *, struct pmap *));
+#endif
+
+
 /*
  * Sort a memory array by address.
  */
@@ -532,8 +553,11 @@ void
 mmu_reservemon(nrp, nsp)
 	register int *nrp, *nsp;
 {
-	register u_int va, eva;
-	register int mmureg, mmuseg, i, nr, ns, vr, lastvr;
+	register u_int va = 0, eva = 0;
+	register int mmuseg, i, nr, ns, vr, lastvr;
+#ifdef MMU_3L
+	register int mmureg;
+#endif
 	register struct regmap *rp;
 
 #if defined(SUN4)
@@ -686,7 +710,7 @@ me_alloc(mh, newpm, newvreg, newvseg)
 		panic("me_alloc: stealing from kernel");
 #ifdef DEBUG
 	if (pmapdebug & (PDB_MMU_ALLOC | PDB_MMU_STEAL))
-		printf("me_alloc: stealing pmeg %x from pmap %x\n",
+		printf("me_alloc: stealing pmeg %x from pmap %p\n",
 		    me->me_cookie, pm);
 #endif
 	/*
@@ -799,7 +823,7 @@ me_free(pm, pmeg)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_MMU_ALLOC)
-		printf("me_free: freeing pmeg %d from pmap %x\n",
+		printf("me_free: freeing pmeg %d from pmap %p\n",
 		    me->me_cookie, pm);
 	if (me->me_cookie != pmeg)
 		panic("me_free: wrong mmuentry");
@@ -1004,7 +1028,6 @@ mmu_pagein(pm, va, prot)
 	register int va, prot;
 {
 	register int *pte;
-	register struct mmuentry *me;
 	register int vr, vs, pmeg, i, s, bits;
 	struct regmap *rp;
 	struct segmap *sp;
@@ -1087,7 +1110,7 @@ ctx_alloc(pm)
 	if (pm->pm_ctx)
 		panic("ctx_alloc pm_ctx");
 	if (pmapdebug & PDB_CTX_ALLOC)
-		printf("ctx_alloc(%x)\n", pm);
+		printf("ctx_alloc(%p)\n", pm);
 #endif
 	gap_start = pm->pm_gap_start;
 	gap_end = pm->pm_gap_end;
@@ -1110,7 +1133,7 @@ ctx_alloc(pm)
 		if (c->c_pmap == NULL)
 			panic("ctx_alloc cu_pmap");
 		if (pmapdebug & (PDB_CTX_ALLOC | PDB_CTX_STEAL))
-			printf("ctx_alloc: steal context %x from %x\n",
+			printf("ctx_alloc: steal context %x from %p\n",
 			    cnum, c->c_pmap);
 #endif
 		c->c_pmap->pm_ctx = NULL;
@@ -1228,7 +1251,7 @@ pv_changepte(pv0, bis, bic)
 	register int *pte;
 	register struct pvlist *pv;
 	register struct pmap *pm;
-	register int va, vr, vs, i, flags;
+	register int va, vr, vs, flags;
 	int ctx, s;
 	struct regmap *rp;
 	struct segmap *sp;
@@ -1321,7 +1344,7 @@ pv_syncflags(pv0)
 {
 	register struct pvlist *pv;
 	register struct pmap *pm;
-	register int tpte, va, vr, vs, pmeg, i, flags;
+	register int tpte, va, vr, vs, pmeg, flags;
 	int ctx, s;
 	struct regmap *rp;
 	struct segmap *sp;
@@ -1500,11 +1523,12 @@ pv_link(pv, pm, va)
  * Walk the given list and flush the cache for each (MI) page that is
  * potentially in the cache. Called only if vactype != VAC_NONE.
  */
+void
 pv_flushcache(pv)
 	register struct pvlist *pv;
 {
 	register struct pmap *pm;
-	register int i, s, ctx;
+	register int s, ctx;
 
 	write_user_windows();	/* paranoia? */
 
@@ -1548,7 +1572,10 @@ pmap_bootstrap(nctx, nregion, nsegment)
 	int nsegment, nctx, nregion;
 {
 	register union ctxinfo *ci;
-	register struct mmuentry *mmuseg, *mmureg;
+	register struct mmuentry *mmuseg;
+#ifdef MMU_3L
+	register struct mmuentry *mmureg;
+#endif
 	struct   regmap *rp;
 	register int i, j;
 	register int npte, zseg, vr, vs;
@@ -1562,7 +1589,6 @@ pmap_bootstrap(nctx, nregion, nsegment)
 	extern char *esym;
 	char *theend = end;
 #endif
-	extern caddr_t reserve_dumppages(caddr_t);
 
 	switch (cputyp) {
 	case CPU_SUN4C:
@@ -1899,7 +1925,7 @@ pmap_init()
 	int pass1, nmem;
 	register struct memarr *mp;
 	vm_offset_t sva, va, eva;
-	vm_offset_t pa;
+	vm_offset_t pa = 0;
 
 	if (PAGE_SIZE != NBPG)
 		panic("pmap_init: CLSIZE!=1");
@@ -2004,7 +2030,7 @@ pmap_create(size)
 	pm = (struct pmap *)malloc(sizeof *pm, M_VMPMAP, M_WAITOK);
 #ifdef DEBUG
 	if (pmapdebug & PDB_CREATE)
-		printf("pmap_create: created %x\n", pm);
+		printf("pmap_create: created %p\n", pm);
 #endif
 	bzero((caddr_t)pm, sizeof *pm);
 	pmap_pinit(pm);
@@ -2019,12 +2045,12 @@ void
 pmap_pinit(pm)
 	register struct pmap *pm;
 {
-	register int i, size;
+	register int size;
 	void *urp;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_CREATE)
-		printf("pmap_pinit(%x)\n", pm);
+		printf("pmap_pinit(%p)\n", pm);
 #endif
 
 	size = NUREG * sizeof(struct regmap);
@@ -2062,7 +2088,7 @@ pmap_destroy(pm)
 		return;
 #ifdef DEBUG
 	if (pmapdebug & PDB_DESTROY)
-		printf("pmap_destroy(%x)\n", pm);
+		printf("pmap_destroy(%p)\n", pm);
 #endif
 	simple_lock(&pm->pm_lock);
 	count = --pm->pm_refcount;
@@ -2086,7 +2112,7 @@ pmap_release(pm)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_DESTROY)
-		printf("pmap_release(%x)\n", pm);
+		printf("pmap_release(%p)\n", pm);
 #endif
 #ifdef MMU_3L
 	if (pm->pm_reglist.tqh_first)
@@ -2170,7 +2196,7 @@ pmap_remove(pm, va, endva)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_REMOVE)
-		printf("pmap_remove(%x, %x, %x)\n", pm, va, endva);
+		printf("pmap_remove(%p, %x, %x)\n", pm, va, endva);
 #endif
 
 	if (pm == pmap_kernel()) {
@@ -2513,7 +2539,7 @@ pmap_page_protect(pa, prot)
 	register struct pvlist *pv, *pv0, *npv;
 	register struct pmap *pm;
 	register int va, vr, vs, pteva, tpte;
-	register int flags, nleft, i, s, ctx, doflush;
+	register int flags, nleft, i, s, ctx;
 	struct regmap *rp;
 	struct segmap *sp;
 
@@ -2696,7 +2722,7 @@ pmap_protect(pm, sva, eva, prot)
 	vm_offset_t sva, eva;
 	vm_prot_t prot;
 {
-	register int va, nva, vr, vs, pteva;
+	register int va, nva, vr, vs;
 	register int s, ctx;
 	struct regmap *rp;
 	struct segmap *sp;
@@ -2804,13 +2830,13 @@ pmap_changeprot(pm, va, prot, wired)
 	vm_prot_t prot;
 	int wired;
 {
-	register int vr, vs, tpte, newprot, ctx, i, s;
+	register int vr, vs, tpte, newprot, ctx, s;
 	struct regmap *rp;
 	struct segmap *sp;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_CHANGEPROT)
-		printf("pmap_changeprot(%x, %x, %x, %x)\n",
+		printf("pmap_changeprot(%p, %x, %x, %x)\n",
 		    pm, va, prot, wired);
 #endif
 
@@ -2918,7 +2944,7 @@ pmap_enter(pm, va, pa, prot, wired)
 
 	if (VA_INHOLE(va)) {
 #ifdef DEBUG
-		printf("pmap_enter: pm %x, va %x, pa %x: in MMU hole\n",
+		printf("pmap_enter: pm %p, va %x, pa %x: in MMU hole\n",
 			pm, va, pa);
 #endif
 		return;
@@ -2926,7 +2952,7 @@ pmap_enter(pm, va, pa, prot, wired)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
-		printf("pmap_enter(%x, %x, %x, %x, %x)\n",
+		printf("pmap_enter(%p, %x, %x, %x, %x)\n",
 		    pm, va, pa, prot, wired);
 #endif
 
@@ -2960,6 +2986,7 @@ pmap_enter(pm, va, pa, prot, wired)
 }
 
 /* enter new (or change existing) kernel mapping */
+void
 pmap_enk(pm, va, prot, wired, pv, pteproto)
 	register struct pmap *pm;
 	vm_offset_t va;
@@ -3084,6 +3111,7 @@ printf("pmap_enk: changing existing va=>pa entry: va %x, pteproto %x\n",
 }
 
 /* enter new (or change existing) user mapping */
+void
 pmap_enu(pm, va, prot, wired, pv, pteproto)
 	register struct pmap *pm;
 	vm_offset_t va;
@@ -3551,6 +3579,7 @@ pmap_phys_address(x)
  * We just assert PG_NC for each PTE; the addresses must reside
  * in locked kernel space.  A cache flush is also done.
  */
+void
 kvm_uncache(va, npages)
 	register caddr_t va;
 	register int npages;
@@ -3574,6 +3603,7 @@ kvm_uncache(va, npages)
  * We just assert PG_NC for each PTE; the addresses must reside
  * in locked kernel space.  A cache flush is also done.
  */
+void
 kvm_iocache(va, npages)
 	register caddr_t va;
 	register int npages;
@@ -3636,6 +3666,7 @@ pmap_prefer(foff, vap)
 	*vap = va + d;
 }
 
+void
 pmap_redzone()
 {
 	setpte(KERNBASE, 0);
@@ -3645,7 +3676,7 @@ pmap_redzone()
 /*
  * Check consistency of a pmap (time consuming!).
  */
-int
+void
 pm_check(s, pm)
 	char *s;
 	struct pmap *pm;
@@ -3656,7 +3687,7 @@ pm_check(s, pm)
 		pm_check_u(s, pm);
 }
 
-int
+void
 pm_check_u(s, pm)
 	char *s;
 	struct pmap *pm;
@@ -3702,16 +3733,15 @@ pm_check_u(s, pm)
 				"# of pte's: %d, should be %d",
 				s, vr, rp->rg_nsegmap, n);
 	}
-	return 0;
+	return;
 }
 
-int
+void
 pm_check_k(s, pm)
 	char *s;
 	struct pmap *pm;
 {
 	struct regmap *rp;
-	struct segmap *sp;
 	int vr, vs, n;
 
 	for (vr = NUREG; vr < NUREG+NKREG; vr++) {
@@ -3731,7 +3761,7 @@ pm_check_k(s, pm)
 				"# of pte's: %d, should be %d\n",
 				s, vr, rp->rg_nsegmap, n);
 	}
-	return 0;
+	return;
 }
 #endif
 
@@ -3760,10 +3790,9 @@ pmap_dumpmmu(dump, blkno)
 	register int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
 {
 	register int pmeg;
-	register int addr;	/* unused kernel virtual address */
 	register int i;
 	register int *pte, *ptend;
-	register int error;
+	register int error = 0;
 	register int *kp;
 	int buffer[dbtob(1) / sizeof(int)];
 

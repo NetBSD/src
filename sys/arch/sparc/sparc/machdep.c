@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 1996/03/14 00:11:29 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.59 1996/03/14 21:09:17 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,6 +63,7 @@
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
 #include <sys/syscallargs.h>
+#include <sys/cpu.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -75,12 +76,14 @@
 #include <sys/exec.h>
 #include <sys/sysctl.h>
 
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+
 #include <machine/autoconf.h>
 #include <machine/frame.h>
 #include <machine/cpu.h>
-
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
+#include <machine/pmap.h>
+#include <machine/oldmon.h>
 
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cache.h>
@@ -124,7 +127,9 @@ vm_offset_t dvma_base, dvma_end;
 struct map *dvmamap;
 static int ndvmamap;	/* # of entries in dvmamap */
 
-caddr_t allocsys();
+caddr_t allocsys __P((caddr_t));
+void	dumpsys __P((void));
+void	stackdump __P((void));
 
 /*
  * Machine-dependent startup code
@@ -416,6 +421,7 @@ struct sigframe {
 /*
  * machine dependent system variables.
  */
+int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
@@ -473,7 +479,7 @@ sendsig(catcher, sig, mask, code)
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig: %s[%d] sig %d newusp %x scp %x\n",
+		printf("sendsig: %s[%d] sig %d newusp %p scp %p\n",
 		    p->p_comm, p->p_pid, sig, fp, &fp->sf_sc);
 #endif
 	/* 
@@ -526,7 +532,7 @@ sendsig(catcher, sig, mask, code)
 	}
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sendsig: %s[%d] sig %d scp %x\n",
+		printf("sendsig: %s[%d] sig %d scp %p\n",
 		       p->p_comm, p->p_pid, sig, &fp->sf_sc);
 #endif
 	/*
@@ -579,7 +585,7 @@ sys_sigreturn(p, v, retval)
 		sigexit(p, SIGILL);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: %s[%d], sigcntxp %x\n",
+		printf("sigreturn: %s[%d], sigcntxp %p\n",
 		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
 #endif
 	scp = SCARG(uap, sigcntxp);
@@ -673,6 +679,7 @@ u_long	dumpmag = 0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 
+void
 dumpconf()
 {
 	register int nblks, nmem;
@@ -727,6 +734,7 @@ reserve_dumppages(p)
 /*
  * Write a crash dump.
  */
+void
 dumpsys()
 {
 	register int psize;
@@ -823,15 +831,16 @@ dumpsys()
  * get the fp and dump the stack as best we can.  don't leave the
  * current stack page
  */
+void
 stackdump()
 {
-	struct frame *fp = (struct frame *)getfp(), *sfp;
+	struct frame *fp = getfp(), *sfp;
 
 	sfp = fp;
-	printf("Frame pointer is at 0x%x\n", fp);
+	printf("Frame pointer is at %p\n", fp);
 	printf("Call traceback:\n");
 	while (fp && ((u_long)fp >> PGSHIFT) == ((u_long)sfp >> PGSHIFT)) {
-		printf("  pc = %x  args = (%x, %x, %x, %x, %x, %x) fp = %x\n",
+		printf("  pc = %x  args = (%x, %x, %x, %x, %x, %x, %x) fp = %p\n",
 		    fp->fr_pc, fp->fr_arg[0], fp->fr_arg[1], fp->fr_arg[2],
 		    fp->fr_arg[3], fp->fr_arg[4], fp->fr_arg[5], fp->fr_arg[6],
 		    fp->fr_fp);
@@ -922,12 +931,10 @@ oldmon_w_trace(va)
 	u_long va;
 {
 	u_long stop;
-	extern u_long *par_err_reg;
-	volatile u_long *memreg = (u_long *) par_err_reg;
 	struct frame *fp;
 
 	if (curproc)
-		printf("curproc = %x, pid %d\n", curproc, curproc->p_pid);
+		printf("curproc = %p, pid %d\n", curproc, curproc->p_pid);
 	else
 		printf("no curproc\n");
 
@@ -943,7 +950,7 @@ oldmon_w_trace(va)
 	printf("stop at %x\n", stop);
 	fp = (struct frame *) va;
 	while (round_up((u_long) fp) == stop) {
-		printf("  %x(%x, %x, %x, %x, %x, %x) fp %x\n", fp->fr_pc, 
+		printf("  %x(%x, %x, %x, %x, %x, %x, %x) fp %p\n", fp->fr_pc, 
 		    fp->fr_arg[0], fp->fr_arg[1], fp->fr_arg[2], fp->fr_arg[3], 
 		    fp->fr_arg[4], fp->fr_arg[5], fp->fr_arg[6], fp->fr_fp);
 		fp = fp->fr_fp;
@@ -980,13 +987,14 @@ oldmon_w_cmd(va, ar)
 }
 #endif /* SUN4 */
 
-u_int
+int
 ldcontrolb(addr)
 caddr_t addr;
 {
 	struct pcb *xpcb;
 	extern struct user *proc0paddr;
-	u_long saveonfault, res;
+	u_long saveonfault;
+	int res;
 	int s;
 
 	s = splhigh();
