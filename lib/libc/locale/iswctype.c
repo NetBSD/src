@@ -1,4 +1,4 @@
-/*	$NetBSD: iswctype.c,v 1.12 2003/03/21 13:48:53 scw Exp $	*/
+/*	$NetBSD: iswctype.c,v 1.13 2003/04/06 18:33:23 tshiozak Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iswctype.c,v 1.12 2003/03/21 13:48:53 scw Exp $");
+__RCSID("$NetBSD: iswctype.c,v 1.13 2003/04/06 18:33:23 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -70,7 +70,8 @@ __runetype_w(c)
 {
 	_RuneLocale *rl = _CurrentRuneLocale;
 
-	return (_RUNE_ISCACHED(c) ? rl->rl_runetype[c] : ___runetype_mb(c));
+	return (_RUNE_ISCACHED(c) ?
+		rl->rl_runetype[c] : ___runetype_mb(c));
 }
 
 static __inline int
