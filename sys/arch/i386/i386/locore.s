@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.3 1993/10/09 08:41:37 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.4 1993/10/09 09:59:35 mycroft Exp $
  */
 
 
@@ -1487,7 +1487,6 @@ sw0:	.asciz	"swtch"
 Idle:
 sti_for_idle:
 	sti
-	SHOW_STI
 	ALIGN_TEXT
 idle:
 	pushl	$0			# process pending interrupts
@@ -1506,9 +1505,7 @@ badsw:
 /*
  * Swtch()
  */
-ENTRY(swtch)
-
-	incl	_cnt+V_SWTCH
+ENTRY(cpu_swtch)
 
 	/* switch to new process. first, save context as needed */
 
@@ -1552,14 +1549,11 @@ ENTRY(swtch)
 	/* save is done, now choose a new process or idle */
 sw1:
 	cli				# splhigh doesn't do a cli
-	SHOW_CLI
-
 	movl	_whichqs,%edi
 2:
-	# XXX - bsf is sloow
 	bsfl	%edi,%eax		# find a full q
 	je	sti_for_idle		# if none, idle
-	# XX update whichqs?
+	# XXX update whichqs?
 swfnd:
 	btrl	%eax,%edi		# clear q full status
 	jnb	2b		# if it was clear, look for another
@@ -1633,7 +1627,6 @@ swfnd:
 2:
 #endif
 	sti				# splx() doesn't do an sti/cli
-	SHOW_STI
 
 	movw    PCB_IML(%edx),%ax
 	pushl   %ax
@@ -1984,43 +1977,6 @@ IDTVEC(syscall)
 	pushl	_cpl
 	pushl	$0
 	jmp	doreti
-
-#ifdef SHOW_A_LOT
-
-/*
- * 'show_bits' was too big when defined as a macro.  The line length for some
- * enclosing macro was too big for gas.  Perhaps the code would have blown
- * the cache anyway.
- */
-
-	ALIGN_TEXT
-show_bits:
-	pushl	%eax
-	SHOW_BIT(0)
-	SHOW_BIT(1)
-	SHOW_BIT(2)
-	SHOW_BIT(3)
-	SHOW_BIT(4)
-	SHOW_BIT(5)
-	SHOW_BIT(6)
-	SHOW_BIT(7)
-	SHOW_BIT(8)
-	SHOW_BIT(9)
-	SHOW_BIT(10)
-	SHOW_BIT(11)
-	SHOW_BIT(12)
-	SHOW_BIT(13)
-	SHOW_BIT(14)
-	SHOW_BIT(15)
-	popl	%eax
-	ret
-
-	.data
-bit_colors:
-	.byte	GREEN,RED,0,0
-	.text
-
-#endif /* SHOW_A_LOT */
 
 #include "i386/isa/vector.s"
 #include "i386/isa/icu.s"
