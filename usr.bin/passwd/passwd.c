@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.15 2000/01/26 01:18:48 aidan Exp $	*/
+/*	$NetBSD: passwd.c,v 1.16 2000/02/14 04:36:21 aidan Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "from: @(#)passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: passwd.c,v 1.15 2000/01/26 01:18:48 aidan Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.16 2000/02/14 04:36:21 aidan Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,27 +53,53 @@ __RCSID("$NetBSD: passwd.c,v 1.15 2000/01/26 01:18:48 aidan Exp $");
 #include <unistd.h>
 
 #include "extern.h"
+
+static struct pw_module_s {
+	const char *argv0;
+	const char *args;
+	const char *usage;
+	int (*pw_init) __P((const char *));
+	int (*pw_arg) __P((char, const char *));
+	int (*pw_arg_end) __P((void));
+	void (*pw_end) __P((void));
+
+	int (*pw_chpw) __P((const char*));
+	int invalid;
+#define	INIT_INVALID 1
+#define ARG_INVALID 2
+	int use_class;
+} pw_modules[] = {
+#ifdef KERBEROS5
+	{ NULL, "5ku:", "[-5] [-k] [-u principal]",
+	    krb5_init, krb5_arg, krb5_arg_end, krb5_end, krb5_chpw, 0, 0 },
+	{ "kpasswd", "5ku:", "[-5] [-k] [-u principal]",
+	    krb5_init, krb5_arg, krb5_arg_end, krb5_end, krb5_chpw, 0, 0 },
+#endif
+#ifdef KERBEROS
+	{ NULL, "4ku:i:r:", "[-4] [-k] [-u user] [-i instance] [-r realm]",
+	    krb4_init, krb4_arg, krb4_arg_end, krb4_end, krb4_chpw, 0, 0 },
+	{ "kpasswd", "4ku:i:r:", "[-4] [-k] [-u user] [-i instance] [-r realm]",
+	    krb4_init, krb4_arg, krb4_arg_end, krb4_end, krb4_chpw, 0, 0 },
+#endif
+#ifdef YP
+	{ NULL, "y", "[-y]",
+	    yp_init, yp_arg, yp_arg_end, yp_end, yp_chpw, 0, 0 },
+	{ "yppasswd", "", "[-y]",
+	    yp_init, yp_arg, yp_arg_end, yp_end, yp_chpw, 0, 0 },
+#endif
+	/* local */
+	{ NULL, "l", "[-l]",
+	    local_init, local_arg, local_arg_end, local_end, local_chpw, 0, 0 },
+
+	/* terminator */
+	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+};
  
 void	usage __P((void)); 
-
-/*
- * Note on configuration:
- *      Generally one would not use both Kerberos and YP
- *      to maintain passwords.
- */
-
-int use_kerberos;
-int use_yp;
-int yppwd;
-int yflag;
 
 extern	char *__progname;		/* from crt0.o */
 
 int	main __P((int, char **));
-
-#ifdef YP
-extern int _yp_check __P((char **));	/* buried deep inside libc */
-#endif
 
 int
 main(argc, argv)
@@ -83,87 +109,123 @@ main(argc, argv)
 	extern int optind;
 	int ch;
 	char *username;
-#if defined(KERBEROS)
-	char *iflag = 0, *rflag = 0;
-#endif
-#if defined(KERBEROS) || defined(KERBEROS5)
-	char *uflag = 0;
-#endif
+	char optstring[64];  /* if we ever get more than 64 args, shoot me. */
+	const char *curopt, *optopt;
+	int i, j;
+	int valid;
+	int use_always;
 
-#if defined(KERBEROS) || defined(KERBEROS5)
-	if (strcmp(__progname, "kpasswd") == 0)
-		use_kerberos = 1;
-	else
-		use_kerberos = krb_check();
-#endif
-#ifdef	YP
-	use_yp = _yp_check(NULL);
-#endif
+	/* allow passwd modules to do argv[0] specific processing */
+	use_always = 0;
+	valid = 0;
+	for (i = 0; pw_modules[i].pw_init != NULL; i++) {
+		pw_modules[i].invalid = 0;
+		if (pw_modules[i].argv0) {
+			/*
+			 * If we have a module that matches this progname, be
+			 * sure that no modules but those that match this
+			 * progname can be used.  If we have a module that
+			 * matches against a particular progname, but does NOT
+			 * match this one, don't use that module.
+			 */
+			if ((strcmp(__progname, pw_modules[i].argv0) == 0) &&
+			    use_always == 0) {
+				for (j = 0; j < i; j++) {
+					pw_modules[j].invalid |= INIT_INVALID;
+					(*pw_modules[j].pw_end)();
+				}
+				use_always = 1;
+			} else if (use_always == 0)
+				pw_modules[i].invalid |= INIT_INVALID;
+		} else if (use_always)
+			pw_modules[i].invalid |= INIT_INVALID;
 
-	if (strcmp(__progname, "yppasswd") == 0) {
-#ifdef YP
-		if (!use_yp)
-			errx(1, "YP not in use.");
-		use_kerberos = 0;
-		yppwd = 1;
-#else
-		errx(1, "YP support not compiled in.");
-#endif
+		if (pw_modules[i].invalid)
+			continue;
+
+		pw_modules[i].invalid |= (*pw_modules[i].pw_init)(__progname) ?
+		    /* zero on success, non-zero on error */
+		    INIT_INVALID : 0;
+
+		if (! pw_modules[i].invalid)
+			valid = 1;
 	}
 
-	while ((ch = getopt(argc, argv, "lkyi:r:u:")) != -1)
-		switch (ch) {
-		case 'l':		/* change local password file */
-			if (yppwd)
-				usage();
-			use_kerberos = 0;
-			use_yp = 0;
-			break;
-#ifdef KERBEROS
-		case 'i':
-			iflag = optarg;
-			break;
-		case 'r':
-			rflag = optarg;
-			break;
-#endif
-#if defined(KERBEROS) || defined(KERBEROS5)
-		case 'u':
-			uflag = optarg;
-			break;	
-#endif
-		case 'k':		/* change Kerberos password */
-#if defined(KERBEROS) || defined(KERBEROS5)
-			if (yppwd)
-				usage();
-			use_kerberos = 1;
-			use_yp = 0;
-			break;
-#endif
-#ifndef KERBEROS
-		case 'i':
-		case 'r':
-			errx(1, "Kerberos4 support not compiled in.");
-#endif
-#if !defined(KERBEROS) && !defined(KERBEROS5)
-		case 'u':
-			errx(1, "Kerberos support not compiled in.");
-#endif
-		case 'y':		/* change YP password */
-#ifdef	YP
-			if (yppwd)
-				usage();
-			if (!use_yp)
-				errx(1, "YP not in use.");
-			use_kerberos = 0;
-			yflag = 1;
-			break;
-#else
-			errx(1, "YP support not compiled in.");
-#endif
-		default:
-			usage();
+	if (valid == 0)
+		errx(1, "Can't change password.");
+
+	/* Build the option string from the individual modules' option
+	 * strings.  Note that two modules can share a single option
+	 * letter. */
+	optstring[0] = '\0';
+	j = 0;
+	for (i = 0; pw_modules[i].pw_init != NULL; i++) {
+		if (pw_modules[i].invalid)
+			continue;
+
+		curopt = pw_modules[i].args;
+		while (*curopt != '\0') {
+			if ((optopt = strchr(optstring, *curopt)) == (char *) 0) {
+				optstring[j++] = *curopt;
+				if (curopt[1] == ':') {
+					curopt++;
+					optstring[j++] = *curopt;
+				}
+				optstring[j] = '\0';
+			} else if ((optopt[1] == ':' && curopt[1] != ':') ||
+			    (optopt[1] != ':' && curopt[1] == ':')) {
+				errx(1, "NetBSD ERROR!  Different password "
+				    "modules have two different ideas about "
+				    "%c argument format.", curopt[0]);
+			}
+			curopt++;
 		}
+	}
+
+	while ((ch = getopt(argc, argv, optstring)) != -1)
+	{
+		valid = 0;
+		for (i = 0; pw_modules[i].pw_init != NULL; i++) {
+			if (pw_modules[i].invalid)
+				continue;
+			if ((optopt = strchr(pw_modules[i].args, ch)) != (char *) 0) {
+				j = (optopt[1] == ':') ?
+				    ! (*pw_modules[i].pw_arg)(ch, optarg) :
+				    ! (*pw_modules[i].pw_arg)(ch, (char *) 0);
+				if (j != 0)
+					pw_modules[i].invalid |= ARG_INVALID;
+				if (pw_modules[i].invalid)
+					(*pw_modules[i].pw_end)();
+			} else {
+				/* arg doesn't match this module */
+				pw_modules[i].invalid |= ARG_INVALID;
+				(*pw_modules[i].pw_end)();
+			}
+			if (! pw_modules[i].invalid)
+				valid = 1;
+		}
+		if (! valid) {
+			usage();
+			exit(1);
+		}
+	}
+
+	/* select which module to use to actually change the password. */
+	use_always = 0;
+	valid = 0;
+	for (i = 0; pw_modules[i].pw_init != NULL; i++)
+		if (! pw_modules[i].invalid) {
+			pw_modules[i].use_class = (*pw_modules[i].pw_arg_end)();
+			if (pw_modules[i].use_class != PW_DONT_USE)
+				valid = 1;
+			if (pw_modules[i].use_class == PW_USE_FORCE)
+				use_always = 1;
+		}
+
+
+	if (! valid)
+		/* hang the DJ */
+		errx(1, "No valid password module specified.");
 
 	argc -= optind;
 	argv += optind;
@@ -176,15 +238,6 @@ main(argc, argv)
 	case 0:
 		break;
 	case 1:
-#ifdef KERBEROS5
-		if (use_kerberos && strcmp(argv[0], username)) {
-			errx(1, "%s\n\t%s\n%s\n",
-			     "to change another user's Kerberos password, do",
-			     "\"kinit <user>; passwd; kdestroy\";",
-			     "to change a user's local passwd, use\
-			     \"passwd -l <user>\"");
-		}
-#endif
 		username = argv[0];
 		break;
 	default:
@@ -192,30 +245,31 @@ main(argc, argv)
 		exit(1);
 	}
 
-#if defined(KERBEROS5)
-	if (use_kerberos)
-		exit(kadm5_passwd(username));
-#elif defined(KERBEROS)
-	if (uflag && (iflag || rflag))
-		errx(1, "-u cannot be used with -r or -i");
-
-	if (use_kerberos)
-		exit(kadm_passwd(username, iflag, rflag, uflag));
-#endif
-#ifdef	YP
-	if (use_yp)
-		exit(yp_passwd(username));
-#endif
-	exit(local_passwd(username));
+	/* allow for fallback to other chpw() methods. */
+	for (i = 0; pw_modules[i].pw_init != NULL; i++) {
+		if (pw_modules[i].invalid)
+			continue;
+		if ((use_always && pw_modules[i].use_class == PW_USE_FORCE) ||
+		    (!use_always && pw_modules[i].use_class == PW_USE)) {
+			valid = (*pw_modules[i].pw_chpw)(username);
+			(*pw_modules[i].pw_end)();
+			if (valid >= 0)
+				exit(valid);
+			/* return value < 0 indicates continuation. */
+		}
+	}
+	exit(1);
 }
 
 void
 usage()
 {
+	int i;
 
-	if (yppwd)
-		fprintf(stderr, "usage: %s user\n", __progname);
-	else
-		fprintf(stderr, "usage: %s [-l] [-k] [-y] [-i instance] [-r realm] [-u fullname] user\n", __progname);
+	fprintf(stderr, "usage:\n");
+	for (i = 0; pw_modules[i].pw_init != NULL; i++)
+		if (! (pw_modules[i].invalid & INIT_INVALID))
+			fprintf(stderr, "\t%s %s [user]\n", __progname,
+			    pw_modules[i].usage);
 	exit(1);
 }
