@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.14 1994/12/13 18:42:59 gwr Exp $	*/
+/*	$NetBSD: mem.c,v 1.15 1995/04/07 04:44:26 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -51,6 +51,7 @@
 #include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/systm.h>
+#include <sys/uio.h>
 #include <sys/malloc.h>
 
 #include <vm/vm.h>
@@ -63,8 +64,9 @@
 
 extern int eeprom_uio();
 
-extern vm_offset_t avail_start;
-extern int physmem;
+extern vm_offset_t avail_start, avail_end;
+extern vm_offset_t vmempage;
+
 caddr_t zeropage;
 
 /*
@@ -82,11 +84,24 @@ mmrw(dev, uio, flags)
 	int flags;
 {
 	register int o;
-	register u_int c;
-	register caddr_t v;
+	register u_int c, v;
 	register struct iovec *iov;
 	int error = 0;
+	static int physlock;
 
+	if (minor(dev) == 0) {
+		if (vmempage == 0)
+			return (EIO);
+		/* lock against other uses of shared vmempage */
+		while (physlock > 0) {
+			physlock++;
+			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
+			    "mmrw", 0);
+			if (error)
+				return (error);
+		}
+		physlock = 1;
+	}
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
 		if (iov->iov_len == 0) {
@@ -100,45 +115,45 @@ mmrw(dev, uio, flags)
 
 /* minor device 0 is physical memory */
 		case 0:
-			o = uio->uio_offset;
-#ifndef DEBUG
-			/* allow reads only in RAM (except for DEBUG) */
-			if (o >= (u_int)physmem)
-				return (EFAULT);
-#endif
-			if (o >= avail_start) {
-				vm_offset_t kva, pa;
-
-				pa = trunc_page(o);
-				o &= PGOFSET;
-				kva = kmem_alloc_wait(phys_map, 1);
-				pmap_enter(kernel_pmap, kva, pa | PMAP_NC,
-					uio->uio_rw == UIO_READ ?
-						VM_PROT_READ : VM_PROT_WRITE, TRUE);
-				v = (caddr_t) kva + o;
-				c = min(uio->uio_resid, (u_int)(NBPG - o));
-				error = uiomove(v, (int)c, uio);
-				pmap_remove(kernel_pmap, kva, kva + NBPG);
-				kmem_free_wakeup(phys_map, kva, 1);
-				continue;
+			v = uio->uio_offset;
+			/* allow reads only in RAM */
+			if (v >= avail_end) {
+				error = EFAULT;
+				goto unlock;
 			}
-			/*
-			 * The offset was below avail_start, where the pmap
-			 * will refuse to create mappings.  Everything below
-			 * there is mapped linearly with physical zero at
-			 * virtual KERNBASE, so use kmem! (hack alert! 8-)
-			 */
-			v = (caddr_t)KERNBASE + o;
-			goto use_kmem;
+			if (v < avail_start) {
+				/*
+				 * The offset was below avail_start, where the pmap
+				 * will refuse to create mappings.  Everything below
+				 * there is mapped linearly with physical zero at
+				 * virtual KERNBASE, so use kmem! (hack alert! 8-)
+				 */
+				v += KERNBASE;
+				goto use_kmem;
+			}
+			/* Temporarily map the memory at vmempage. */
+			pmap_enter(kernel_pmap, vmempage,
+			    trunc_page(v), uio->uio_rw == UIO_READ ?
+			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
+			o = (int)uio->uio_offset & PGOFSET;
+			c = min(uio->uio_resid, (u_int)(NBPG - o));
+			error = uiomove((caddr_t)vmempage + o, (int)c, uio);
+			pmap_remove(kernel_pmap, vmempage, vmempage + NBPG);
+			continue;
 
 /* minor device 1 is kernel memory */
+		/* XXX - Allow access to the PROM? */
 		case 1:
-			v = (caddr_t)(long)uio->uio_offset;
+			v = uio->uio_offset;
 		use_kmem:
-			c = min(iov->iov_len, NBPG);	/* MAXPHYS? */
-			if (!kernacc(v, c,
+			o = v & PGOFSET;
+			c = min(uio->uio_resid, (u_int)(NBPG - o));
+			if (!kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
-				return (EFAULT);
+			{
+				error = EFAULT;
+				goto unlock;
+			}
 			error = uiomove(v, (int)c, uio);
 			continue;
 
@@ -156,8 +171,8 @@ mmrw(dev, uio, flags)
 /* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
 		case 12:
 			if (uio->uio_rw == UIO_WRITE) {
-				uio->uio_resid = 0;
-				return (0);
+				c = iov->iov_len;
+				break;
 			}
 			/*
 			 * On the first call, allocate and zero a page
@@ -182,6 +197,12 @@ mmrw(dev, uio, flags)
 		uio->uio_offset += c;
 		uio->uio_resid -= c;
 	}
+unlock:
+	if (minor(dev) == 0) {
+		if (physlock > 1)
+			wakeup((caddr_t)&physlock);
+		physlock = 0;
+	}
 	return (error);
 }
 
@@ -205,7 +226,7 @@ mmmap(dev, off, prot)
 	 * This could be extended to allow access to IO space but
 	 * it is probably better to make device drivers do it.
 	 */
-	if ((u_int)off >= (u_int)physmem)
+	if ((u_int)off >= (u_int)avail_end)
 		return (-1);
 	return (sun3_btop(off));
 }
