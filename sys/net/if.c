@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.73 2000/10/04 22:37:41 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.74 2000/10/07 03:41:38 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -1153,6 +1153,8 @@ ifioctl(so, cmd, data, p)
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (error);
 		/* FALLTHROUGH */
+	case SIOCGIFPSRCADDR:
+	case SIOCGIFPDSTADDR:
 	case SIOCGIFMEDIA:
 		if (ifp->if_ioctl == 0)
 			return (EOPNOTSUPP);
