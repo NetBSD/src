@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1 2003/02/26 21:26:12 fvdl Exp $	*/
+/*	$NetBSD: intr.c,v 1.2 2003/03/02 18:27:15 fvdl Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -58,11 +58,6 @@
 #if NIOAPIC > 0
 #include <machine/i82093var.h> 
 #include <machine/mpbiosvar.h>
-#endif
-
-#include "mca.h"
-#if NMCA > 0
-#include <machine/mca_machdep.h>                /* for MCA_system */
 #endif
 
 #if NLAPIC > 0
