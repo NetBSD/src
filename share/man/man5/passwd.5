@@ -1,4 +1,4 @@
-.\"	$NetBSD: passwd.5,v 1.10 1998/04/28 06:00:55 fair Exp $
+.\"	$NetBSD: passwd.5,v 1.11 1998/09/05 19:21:24 kleink Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -116,9 +116,9 @@ style database of user attributes.
 .Pp
 The
 .Ar change
-field is the number in seconds,
-.Dv GMT ,
-from the epoch, until the
+field is the number of seconds from the epoch,
+.Dv UTC ,
+until the
 password for the account must be changed.
 This field may be left empty to turn off the password aging feature.
 If this is set to
@@ -128,9 +128,9 @@ login.
 .Pp
 The
 .Ar expire
-field is the number in seconds,
-.Dv GMT ,
-from the epoch, until the
+field is the number of seconds from the epoch,
+.Dv UTC ,
+until the
 account expires.
 This field may be left empty to turn off the account aging feature.
 .Pp
