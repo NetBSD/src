@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.15 1997/10/20 00:49:54 lukem Exp $	*/
+/*	$NetBSD: touch.c,v 1.15.2.1 1997/10/21 18:27:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.15 1997/10/20 00:49:54 lukem Exp $");
+__RCSID("$NetBSD: touch.c,v 1.15.2.1 1997/10/21 18:27:21 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -67,6 +67,11 @@ void	stime_arg2 __P((char *, int, struct timeval *));
 void	stime_file __P((char *, struct timeval *));
 void	usage __P((void));
 
+int	hflag;		/* needed by the following */
+
+int	change_file_times __P((const char *, const struct timeval *));
+int	get_file_status __P((const char *, struct stat *));
+
 int
 main(argc, argv)
 	int argc;
@@ -74,10 +79,8 @@ main(argc, argv)
 {
 	struct stat sb;
 	struct timeval tv[2];
-	int aflag, cflag, fflag, hflag, mflag, ch, fd, len, rval, timeset;
+	int aflag, cflag, fflag, mflag, ch, fd, len, rval, timeset;
 	char *p;
-	int (*change_file_times) __P((const char *, const struct timeval *));
-	int (*get_file_status) __P((const char *, struct stat *));
 
 	setlocale(LC_ALL, "");
 
@@ -121,14 +124,8 @@ main(argc, argv)
 	if (aflag == 0 && mflag == 0)
 		aflag = mflag = 1;
 
-	if (hflag) {
+	if (hflag)
 		cflag = 1;		/* Don't create new file */
-		change_file_times = lutimes;
-		get_file_status = lstat;
-	} else {
-		change_file_times = utimes;
-		get_file_status = stat;
-	}
 
 	/*
 	 * If no -r or -t flag, at least two operands, the first of which
@@ -152,7 +149,7 @@ main(argc, argv)
 
 	for (rval = 0; *argv; ++argv) {
 		/* See if the file exists. */
-		if ((*get_file_status)(*argv, &sb))
+		if (get_file_status(*argv, &sb))
 			if (!cflag) {
 				/* Create the file. */
 				fd = open(*argv,
@@ -175,7 +172,7 @@ main(argc, argv)
 			TIMESPEC_TO_TIMEVAL(&tv[1], &sb.st_mtimespec);
 
 		/* Try utimes(2). */
-		if (!(*change_file_times)(*argv, tv))
+		if (!change_file_times(*argv, tv))
 			continue;
 
 		/* If the user specified a time, nothing else we can do. */
@@ -190,7 +187,7 @@ main(argc, argv)
 		 * The permission checks are different, too, in that the
 		 * ability to write the file is sufficient.  Take a shot.
 		 */
-		 if (!(*change_file_times)(*argv, NULL))
+		 if (!change_file_times(*argv, NULL))
 			continue;
 
 		/* Try reading/writing. */
@@ -358,6 +355,30 @@ err:			rval = 1;
 		warn("%s: permissions modified", fname);
 	}
 	return (rval);
+}
+
+int
+change_file_times(path, tvp)
+	const char *path;
+	const struct timeval *tvp;
+{
+
+	if (hflag)
+		return (lutimes(path, tvp));
+
+	return (utimes(path, tvp));
+}
+
+int
+get_file_status(path, sb)
+	const char *path;
+	struct stat *sb;
+{
+
+	if (hflag)
+		return (lstat(path, sb));
+
+	return (stat(path, sb));
 }
 
 __dead void
