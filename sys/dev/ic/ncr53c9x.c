@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.83 2001/07/10 00:36:36 chs Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.84 2001/07/26 15:51:04 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -638,7 +638,7 @@ ncr53c9x_select(sc, ecb)
 	if ((ecb->xs->xs_control & XS_CTL_POLL) == 0) {
 		int timeout = ecb->timeout;
 
-		if (hz > 100 && timeout > 1000)
+		if (timeout > 1000000)
 			timeout = (timeout / 1000) * hz;
 		else
 			timeout = (timeout * hz) / 1000;
@@ -2854,7 +2854,7 @@ ncr53c9x_abort(sc, ecb)
 		 * Reschedule timeout.
 		 */
 		timeout = ecb->timeout;
-		if (hz > 100 && timeout > 1000)
+		if (timeout > 1000000)
 			timeout = (timeout / 1000) * hz;
 		else
 			timeout = (timeout * hz) / 1000;
