@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3000_500.c,v 1.5 1996/06/13 18:32:02 cgd Exp $	*/
+/*	$NetBSD: dec_3000_500.c,v 1.6 1996/09/17 21:04:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -94,7 +94,7 @@ dec_3000_500_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	static int found;
+	static int found, initted, scsiboot, netboot;
 	static struct device *scsidev;
 	struct bootdev_data *b = bootdev_data;
 	struct device *parent = dev->dv_parent;
@@ -104,7 +104,16 @@ dec_3000_500_device_register(dev, aux)
 	if (found)
 		return;
 
-	if (strcmp(cd->cd_name, "esp") == 0) {
+	if (!initted) {
+		scsiboot = (strcmp(b->protocol, "SCSI") == 0);
+		netboot = (strcmp(b->protocol, "BOOTP") == 0);
+#if 0
+		printf("scsiboot = %d, netboot = %d\n", scsiboot, netboot);
+#endif
+		initted =1;
+	}
+
+	if (scsiboot && (strcmp(cd->cd_name, "esp") == 0)) {
 		if (b->slot == 6 &&
 		    strcmp(parent->dv_cfdata->cf_driver->cd_name, "tcds")
 		      == 0) {
@@ -117,9 +126,12 @@ dec_3000_500_device_register(dev, aux)
 #endif
 			}
 		}
-	} else if (strcmp(cd->cd_name, "sd") == 0 ||
-	    strcmp(cd->cd_name, "st") == 0 ||
-	    strcmp(cd->cd_name, "cd") == 0) {
+	}
+
+	if (scsiboot &&
+	    (strcmp(cd->cd_name, "sd") == 0 ||
+	     strcmp(cd->cd_name, "st") == 0 ||
+	     strcmp(cd->cd_name, "cd") == 0)) {
 		struct scsibus_attach_args *sa = aux;
 
 		if (scsidev == NULL)
@@ -154,4 +166,26 @@ dec_3000_500_device_register(dev, aux)
 #endif
 		found = 1;
 	}
+
+	if (netboot) {
+                if (b->slot == 7 && strcmp(cd->cd_name, "le") == 0 &&
+		    strcmp(parent->dv_cfdata->cf_driver->cd_name, "ioasic")
+		     == 0) {
+			/*
+			 * no need to check ioasic_attach_args, since only
+			 * one le on ioasic.
+			 */
+
+			booted_device = dev;
+#if 0
+			printf("\nbooted_device = %s\n", booted_device->dv_xname);
+#endif
+			found = 1;
+			return;
+		}
+
+		/*
+		 * XXX GENERIC SUPPORT FOR TC NETWORK BOARDS
+		 */
+        }
 }
