@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.167 2002/05/07 09:37:28 onoe Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.167.4.1 2002/05/31 16:21:28 tv Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.167 2002/05/07 09:36:50 onoe Exp 
+ *	NetBSD: pcmciadevs,v 1.167.4.1 2002/05/31 16:20:46 tv Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -188,6 +188,9 @@
 #define	PCMCIA_CIS_BAY_STACK_660	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_BAY_STACK_660	0x0807
 #define	PCMCIA_STR_BAY_STACK_660	"BayStack 660 Wireless LAN"
+#define	PCMCIA_CIS_BAY_EMOBILITY_11B	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_BAY_EMOBILITY_11B	0x080a
+#define	PCMCIA_STR_BAY_EMOBILITY_11B	"e-Mobility 11Mb Wireless LAN"
 
 /* BreezeCOM */
 #define	PCMCIA_CIS_BREEZECOM_BREEZENET	{ NULL, NULL, NULL, NULL }
