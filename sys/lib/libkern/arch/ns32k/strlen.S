@@ -1,3 +1,5 @@
+/*	$NetBSD: strlen.S,v 1.2 1998/04/03 22:59:30 matthias Exp $	*/
+
 /* 
  * Written by Randy Hyde, 1993
  * Public domain.
@@ -6,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strlen.S,v 1.1 1996/11/07 07:36:28 matthias Exp $")
+	RCSID("$NetBSD: strlen.S,v 1.2 1998/04/03 22:59:30 matthias Exp $")
 #endif
 
 /*
@@ -15,7 +17,7 @@
  *	compute the length of the string s.
  */
 
-ENTRY(strlen)
+KENTRY(strlen, 4)
 	enter	[r3,r4],0
 	movd	B_ARG0,r0
 
@@ -99,14 +101,14 @@ ENTRY(strlen)
 	
 7:	subd	B_ARG0,r0
 	exit	[r3,r4]
-	ret	0
+	ret	ARGS
 
 8:	addqd	1,r0
 	subd	B_ARG0,r0
 	exit	[r3,r4]
-	ret	0
+	ret	ARGS
 
 9:	addqd	2,r0
 	subd	B_ARG0,r0
 	exit	[r3,r4]
-	ret	0
+	ret	ARGS

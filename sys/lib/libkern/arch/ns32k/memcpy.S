@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.S,v 1.2 1998/02/22 09:08:35 mycroft Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.3 1998/04/03 22:59:29 matthias Exp $	*/
 
 /* 
  * Written by Matthias Pfaller, 1996
@@ -8,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memcpy.S,v 1.2 1998/02/22 09:08:35 mycroft Exp $")
+	RCSID("$NetBSD: memcpy.S,v 1.3 1998/04/03 22:59:29 matthias Exp $")
 # if defined(BCOPY)
 	RCSID("$Masqueraded: as bcopy $")
 # endif
@@ -24,7 +24,7 @@
  *	copy len bytes from the string s to d.
  */
 
-ENTRY(memcpy)
+KENTRY(memcpy, 12)
 #elif defined(BCOPY)
 /*
  * void
@@ -37,7 +37,7 @@ ENTRY(memcpy)
 ALTENTRY(ovbcopy,bcopy)
 # endif
 
-ENTRY(bcopy)
+KENTRY(bcopy, 12)
 #else
 /*
  * void *
@@ -46,7 +46,7 @@ ENTRY(bcopy)
  *	s and d may overlap.
  */
 
-ENTRY(memmove)
+KENTRY(memmove, 12)
 #endif
 	enter	[r3],0
 	movd	B_ARG2,r0
@@ -91,7 +91,7 @@ ENTRY(memmove)
 	movd	B_ARG0,r0
 #endif
 	exit	[r3]
-	ret	0
+	ret	ARGS
 
 #if defined(MEMMOVE) || defined(BCOPY)
 2:	addd	r0,r1
@@ -126,5 +126,5 @@ ENTRY(memmove)
 	movd	B_ARG0,r0
 #endif
 	exit	[r3]
-	ret	0
+	ret	ARGS
 #endif
