@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrlabel.c,v 1.3.2.1 1999/08/20 05:06:06 cgd Exp $	*/
+/*	$NetBSD: mbrlabel.c,v 1.3.2.2 1999/09/26 05:32:09 cgd Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mbrlabel.c,v 1.3.2.1 1999/08/20 05:06:06 cgd Exp $");
+__RCSID("$NetBSD: mbrlabel.c,v 1.3.2.2 1999/09/26 05:32:09 cgd Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -55,7 +55,7 @@ int main __P((int, char **));
 void usage __P((void));
 void getlabel __P((int));
 void setlabel __P((int));
-int getparts __P((int, int, u_int32_t));
+int getparts __P((int, int, u_int32_t, u_int32_t));
 int nbsdtype __P((int));
 u_int32_t getlong __P((void *p));
 
@@ -132,10 +132,11 @@ getlong(p)
 }
 
 int
-getparts(sd, np, off)
+getparts(sd, np, off, eoff)
 	int sd;
 	int np;
 	u_int32_t off;
+	u_int32_t eoff;
 {
 	unsigned char buf[DEV_BSIZE];
 	struct mbr_partition parts[NMBRPART];
@@ -162,6 +163,7 @@ getparts(sd, np, off)
 			break;
 		case MBR_PTYPE_EXT:
 		case MBR_PTYPE_EXT_LBA:
+		case MBR_PTYPE_EXT_LNX:
 			/* Will be handled below */
 			break;
 		default:
@@ -193,10 +195,14 @@ getparts(sd, np, off)
 			np++;
 	}
 	for (i = 0; i < NMBRPART; i++) {
+		u_int32_t poff;
+
 		switch (parts[i].mbrp_typ) {
 		case MBR_PTYPE_EXT:
 		case MBR_PTYPE_EXT_LBA:
-			np = getparts(sd, np, getlong(&parts[i].mbrp_start) + off);
+		case MBR_PTYPE_EXT_LNX:
+			poff = getlong(&parts[i].mbrp_start) + eoff;
+			np = getparts(sd, np, poff, eoff ? eoff : poff);
 			break;
 		default:
 			break;
@@ -231,7 +237,7 @@ main(argc, argv)
 		exit(1);
 	}
 	getlabel(sd);
-	np = getparts(sd, FIRSTPART, MBR_BBSECTOR);
+	np = getparts(sd, FIRSTPART, MBR_BBSECTOR, 0);
 	if (np > label.d_npartitions)
 		label.d_npartitions = np;
 	setlabel(sd);
