@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.9 1995/09/02 19:44:45 leo Exp $	*/
+/*	$NetBSD: trap.c,v 1.9.2.1 1995/10/13 21:04:18 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,6 +65,11 @@
 #include <machine/reg.h>
 #include <machine/mtpr.h>
 #include <machine/pte.h>
+
+#ifdef COMPAT_SUNOS
+#include <compat/sunos/sunos_syscall.h>
+extern struct emul emul_sunos;
+#endif
 
 /*
  * XXX Hack until I can figure out what to do about this code's removal
@@ -727,7 +732,7 @@ syscall(code, frame)
 		 * on the stack to skip, the argument follows the syscall
 		 * number without a gap.
 		 */
-		if (code != SUNOS_SYS_sunos_sigreturn) {
+		if (code != SUNOS_SYS_sigreturn) {
 			frame.f_regs[SP] += sizeof (int);
 			/*
 			 * remember that we adjusted the SP, 
