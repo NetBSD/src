@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.41 1998/04/24 05:53:29 scottr Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.42 1998/04/26 03:59:18 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -80,11 +80,7 @@ int		numranges; /* = 0 == don't use the ranges */
 u_long	low[8];
 u_long	high[8];
 int	vidlen;
-extern int		nbnumranges;
-extern u_long	nbphys[];
-extern u_long	nblog[];
-extern   signed long	nblen[];
-#define VIDMAPSIZE	btoc(m68k_round_page(vidlen))
+#define VIDMAPSIZE	btoc(vidlen)
 extern u_int32_t	mac68k_vidlog;
 extern u_int32_t	mac68k_vidphys;
 extern u_int32_t	videoaddr;
@@ -127,7 +123,7 @@ pmap_bootstrap(nextpa, firstpa)
 	st_entry_t protoste, *ste;
 	pt_entry_t protopte, *pte, *epte;
 
-	vidlen = ((videosize >> 16) & 0xffff) * videorowbytes + PGOFSET;
+	vidlen = m68k_round_page(((videosize >> 16) & 0xffff) * videorowbytes);
 
 	/*
 	 * Calculate important physical addresses:
@@ -568,14 +564,13 @@ bootstrap_mac68k(tc)
 			printf("Done.\n");
 	} else {
 		/* MMU not enabled.  Fake up ranges. */
-		nbnumranges = 0;
 		numranges = 1;
 		low[0] = 0;
 		high[0] = mac68k_machine.mach_memsize * (1024 * 1024);
 		if (mac68k_machine.do_graybars)
 			printf("Faked range to byte 0x%lx.\n", high[0]);
 	}
-	nextpa = load_addr + (((int)esym + NBPG - 1) & PG_FRAME);
+	nextpa = load_addr + m68k_round_page(esym);
 
 	if (mac68k_machine.do_graybars)
 		printf("Bootstrapping the pmap system.\n");
@@ -589,15 +584,13 @@ bootstrap_mac68k(tc)
 		panic("Don't know how to relocate video!\n");
 
 	if (mac68k_machine.do_graybars)
-		printf("Moving ROMBase from %p to %p.\n",
-			oldROMBase, ROMBase);
+		printf("Moving ROMBase from %p to %p.\n", oldROMBase, ROMBase);
 
 	mrg_fixupROMBase(oldROMBase, ROMBase);
 
 	if (mac68k_machine.do_graybars)
 		printf("Video address 0x%lx -> 0x%lx.\n",
-			(unsigned long) videoaddr,
-			(unsigned long) newvideoaddr);
+		    (unsigned long)videoaddr, (unsigned long)newvideoaddr);
 
 	mac68k_set_io_offsets(IOBase);
 
