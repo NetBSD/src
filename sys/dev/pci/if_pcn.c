@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.22 2003/10/25 18:31:11 christos Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.22.4.1 2005/01/24 21:43:53 he Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
 #include "opt_pcn.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.22 2003/10/25 18:31:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.22.4.1 2005/01/24 21:43:53 he Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1171,7 +1171,10 @@ pcn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			error = pcn_init(ifp);
+			if (ifp->if_flags & IFF_RUNNING)
+				error = pcn_init(ifp);
+			else
+				error = 0;
 		}
 		break;
 	}
