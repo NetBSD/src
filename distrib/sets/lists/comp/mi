@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.646 2003/12/11 09:46:27 dyoung Exp $
+#	$NetBSD: mi,v 1.647 2003/12/14 17:15:31 thorpej Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -128,6 +128,7 @@
 ./usr/include/dev/ata			comp-c-include
 ./usr/include/dev/ata/atareg.h		comp-c-include
 ./usr/include/dev/ata/atavar.h		comp-c-include
+./usr/include/dev/ata/satareg.h		comp-c-include
 ./usr/include/dev/ccdvar.h		comp-c-include
 ./usr/include/dev/cgdvar.h		comp-c-include
 ./usr/include/dev/dec			comp-c-include
