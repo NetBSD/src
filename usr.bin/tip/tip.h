@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
+/*	$NetBSD: tip.h,v 1.8 1997/11/22 07:28:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,20 +41,26 @@
  */
 
 #include <sys/types.h>
-#include <machine/endian.h>
+#include <sys/dir.h>
 #include <sys/file.h>
+#include <sys/ioctl.h>
+#include <sys/param.h>
 #include <sys/time.h>
+#include <sys/wait.h>
+#include <machine/endian.h>
 
-#include <termios.h>
+#include <ctype.h>
+#include <err.h>
+#include <errno.h>
+#include <libgen.h>
+#include <pwd.h>
+#include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pwd.h>
-#include <ctype.h>
-#include <setjmp.h>
+#include <termios.h>
 #include <unistd.h>
-#include <errno.h>
 
 /*
  * Remote host attributes
@@ -101,6 +107,10 @@ typedef
 		char	v_access;	/* protection of touchy ones */
 		char	*v_abrev;	/* possible abreviation */
 		char	*v_value;	/* casted to a union later */
+				/*
+				 * XXX:	this assumes that the storage space 
+				 *	of a pointer >= that of a long
+				 */
 	}
 	value_t;
 
@@ -131,9 +141,9 @@ typedef
 typedef
 	struct {
 		char	*acu_name;
-		int	(*acu_dialer)();
-		int	(*acu_disconnect)();
-		int	(*acu_abort)();
+		int	(*acu_dialer) __P((char *, char *));
+		void	(*acu_disconnect) __P((void));
+		void	(*acu_abort) __P((void));
 	}
 	acu_t;
 
@@ -166,10 +176,10 @@ typedef
 
 typedef
 	struct {
-		char	e_char;		/* char to match on */
-		char	e_flags;	/* experimental, priviledged */
-		char	*e_help;	/* help string */
-		int 	(*e_func)();	/* command */
+		char	e_char;			/* char to match on */
+		char	e_flags;		/* experimental, priviledged */
+		char	*e_help;		/* help string */
+		void 	(*e_func) __P((char));	/* command */
 	}
 	esctable_t;
 
@@ -188,6 +198,8 @@ extern value_t	vtable[];	/* variable table */
 /*
  * Definition of indices into variable table so
  *  value(DEFINE) turns into a static address.
+ *
+ * XXX: keep in sync with vtable[] in vars.c
  */
 
 #define BEAUTIFY	0
@@ -224,12 +236,6 @@ extern value_t	vtable[];	/* variable table */
 #define	LECHO		31
 #define	PARITY		32
 
-#define NOVAL	((value_t *)NULL)
-#define NOACU	((acu_t *)NULL)
-#define NOSTR	((char *)NULL)
-#define NOFILE	((FILE *)NULL)
-#define NOPWD	((struct passwd *)0)
-
 struct termios	term;		/* current mode of terminal */
 struct termios	defterm;	/* initial mode of terminal */
 struct termios	defchars;	/* current mode with initial chars */
@@ -263,6 +269,89 @@ char	*uucplock;		/* name of lock file for uucp's */
 int	odisc;				/* initial tty line discipline */
 extern	int disc;			/* current tty discpline */
 
-extern	char *ctrl();
-extern	char *vinterp();
-extern	char *connect();
+extern acu_t		acutable[];
+extern esctable_t	etable[];
+extern unsigned char	evenpartab[];
+
+void	alrmtimeout __P((int));
+int	any __P((char, char *));
+void	chdirectory __P((char));
+void	cleanup __P((int));
+char   *connect __P((void));
+void	consh __P((char));
+char   *ctrl __P((char));
+int	cumain __P((int, char **));
+void	cu_put __P((char));
+void	cu_take __P((char));
+void	daemon_uid __P((void));
+void	disconnect __P((char *));
+char   *expand __P((char *));
+void	finish __P((char));
+void	genbrk __P((char));
+void	getfl __P((char));
+char   *getremote __P((char *));
+void	help __P((char));
+int	hunt __P((char *));
+char   *interp __P((char *));
+void	logent __P((char *, char *, char *, char *));
+void	loginit __P((void));
+void	pipefile __P((char));
+void	pipeout __P((char));
+int	prompt __P((char *, char *));
+void	pwrite __P((int, char *, int));
+void	raw __P((void));
+void	send __P((char));
+void	sendfile __P((char));
+void	setparity __P((char *));
+void	setscript __P((void));
+void	shell __P((char));
+void	shell_uid __P((void));
+int	speed __P((int));
+void	suspend __P((char));
+void	tandem __P((char *));
+void	tipabort __P((char *));
+void	tipout __P((void));
+void	ttysetup __P((int));
+void	unraw __P((void));
+void	user_uid __P((void));
+int	uu_lock __P((char *));	
+int	uu_unlock __P((char *));	
+void	variable __P((char));
+void	vinit __P((void));
+char   *vinterp __P((char *, char));
+void	vlex __P((char *));
+int	vstring __P((char *, char *));
+
+void	biz22_abort __P((void));
+void	biz22_disconnect __P((void));
+int	biz22f_dialer __P((char *, char *));
+int	biz22w_dialer __P((char *, char *));
+void	biz31_abort __P((void));
+void	biz31_disconnect __P((void));
+int	biz31f_dialer __P((char *, char *));
+int	biz31w_dialer __P((char *, char *));
+void	cour_abort __P((void));
+int	cour_dialer __P((char *, char *));
+void	cour_disconnect __P((void));
+int	df02_dialer __P((char *, char *));
+int	df03_dialer __P((char *, char *));
+void	df_abort __P((void));
+void	df_disconnect __P((void));
+void	dn_abort __P((void));
+int	dn_dialer __P((char *, char *));
+void	dn_disconnect __P((void));
+void	hay_abort __P((void));
+int	hay_dialer __P((char *, char *));
+void	hay_disconnect __P((void));
+void	t3000_abort __P((void));
+int	t3000_dialer __P((char *, char *));
+void	t3000_disconnect __P((void));
+void	v3451_abort __P((void));
+int	v3451_dialer __P((char *, char *));
+void	v3451_disconnect __P((void));
+void	v831_abort __P((void));
+int	v831_dialer __P((char *, char *));
+void	v831_disconnect __P((void));
+void	ven_abort __P((void));
+int	ven_dialer __P((char *, char *));
+void	ven_disconnect __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.4 1994/12/24 17:56:28 cgd Exp $	*/
+/*	$NetBSD: log.c,v 1.5 1997/11/22 07:28:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: log.c,v 1.4 1994/12/24 17:56:28 cgd Exp $";
+__RCSID("$NetBSD: log.c,v 1.5 1997/11/22 07:28:44 lukem Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -49,6 +50,7 @@ static	FILE *flog = NULL;
  * Log file maintenance routines
  */
 
+void
 logent(group, num, acu, message)
 	char *group, *num, *acu, *message;
 {
@@ -62,8 +64,8 @@ logent(group, num, acu, message)
 		perror("tip: flock");
 		return;
 	}
-	if ((user = getlogin()) == NOSTR)
-		if ((pwd = getpwuid(getuid())) == NOPWD)
+	if ((user = getlogin()) == NULL)
+		if ((pwd = getpwuid(getuid())) == NULL)
 			user = "???";
 		else
 			user = pwd->pw_name;
@@ -82,6 +84,7 @@ logent(group, num, acu, message)
 	(void) flock(fileno(flog), LOCK_UN);
 }
 
+void
 loginit()
 {
 	flog = fopen(value(LOG), "a");

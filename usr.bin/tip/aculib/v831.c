@@ -1,4 +1,4 @@
-/*	$NetBSD: v831.c,v 1.5 1996/12/29 10:42:01 cgd Exp $	*/
+/*	$NetBSD: v831.c,v 1.6 1997/11/22 07:28:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,33 +33,32 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)v831.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: v831.c,v 1.5 1996/12/29 10:42:01 cgd Exp $";
+__RCSID("$NetBSD: v831.c,v 1.6 1997/11/22 07:28:58 lukem Exp $");
 #endif /* not lint */
 
 /*
  * Routines for dialing up on Vadic 831
  */
 #include "tip.h"
-#include <termios.h>
-
-int	v831_abort();
-static	void alarmtr();
-static	int dialit();
-static	char *sanitize();
-extern	int errno;
 
 static jmp_buf jmpbuf;
 static int child = -1;
 
+static	void	alarmtr __P((int));
+static	int	dialit __P((char *, char *));
+static	char   *sanitize __P((char *));
+
+int
 v831_dialer(num, acu)
         char *num, *acu;
 {
-        int status, pid, connected = 1;
-        register int timelim;
+        int status, pid;
+        int timelim;
 
         if (boolean(value(VERBOSE)))
                 printf("\nstarting call...");
@@ -119,7 +118,8 @@ v831_dialer(num, acu)
 }
 
 static void
-alarmtr()
+alarmtr(dummy)
+	int dummy;
 {
         alarm(0);
         longjmp(jmpbuf, 1);
@@ -129,6 +129,7 @@ alarmtr()
  * Insurance, for some reason we don't seem to be
  *  hanging up...
  */
+void
 v831_disconnect()
 {
 	struct termios	cntrl;
@@ -148,6 +149,7 @@ v831_disconnect()
         close(FD);
 }
 
+void
 v831_abort()
 {
 
@@ -186,13 +188,13 @@ struct vaconfig {
 
 static int
 dialit(phonenum, acu)
-	register char *phonenum;
+	char *phonenum;
 	char *acu;
 {
-        register struct vaconfig *vp;
+        struct vaconfig *vp;
 	struct termios cntrl;
         char c;
-        int i, two = 2;
+        int i;
 
         phonenum = sanitize(phonenum);
 #ifdef DEBUG
@@ -248,10 +250,10 @@ dialit(phonenum, acu)
 
 static char *
 sanitize(s)
-	register char *s;
+	char *s;
 {
         static char buf[128];
-        register char *cp;
+        char *cp;
 
         for (cp = buf; *s; s++) {
 		if (!isdigit(*s) && *s == '<' && *s != '_')

@@ -1,4 +1,4 @@
-/*	$NetBSD: tipout.c,v 1.5 1996/12/29 10:34:12 cgd Exp $	*/
+/*	$NetBSD: tipout.c,v 1.6 1997/11/22 07:28:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)tipout.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: tipout.c,v 1.5 1996/12/29 10:34:12 cgd Exp $";
+__RCSID("$NetBSD: tipout.c,v 1.6 1997/11/22 07:28:48 lukem Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -50,12 +51,18 @@ static char rcsid[] = "$NetBSD: tipout.c,v 1.5 1996/12/29 10:34:12 cgd Exp $";
 
 static	jmp_buf sigbuf;
 
+void	intEMT __P((int));
+void	intIOT __P((int));
+void	intSYS __P((int));
+void	intTERM __P((int));
+
 /*
  * TIPOUT wait state routine --
  *   sent by TIPIN when it wants to posses the remote host
  */
 void
-intIOT()
+intIOT(dummy)
+	int dummy;
 {
 
 	write(repdes[1],&ccc,1);
@@ -68,10 +75,11 @@ intIOT()
  *  accepts script file name over the pipe and acts accordingly
  */
 void
-intEMT()
+intEMT(dummy)
+	int dummy;
 {
 	char c, line[256];
-	register char *pline = line;
+	char *pline = line;
 	char reply;
 
 	read(fildes[0], &c, 1);
@@ -98,7 +106,8 @@ intEMT()
 }
 
 void
-intTERM()
+intTERM(dummy)
+	int dummy;
 {
 
 	if (boolean(value(SCRIPT)) && fscript != NULL)
@@ -107,7 +116,8 @@ intTERM()
 }
 
 void
-intSYS()
+intSYS(dummy)
+	int dummy;
 {
 
 	setboolean(value(BEAUTIFY), !boolean(value(BEAUTIFY)));
@@ -117,12 +127,12 @@ intSYS()
 /*
  * ****TIPOUT   TIPOUT****
  */
+void
 tipout()
 {
 	char buf[BUFSIZ];
-	register char *cp;
-	register int cnt;
-	extern int errno;
+	char *cp;
+	int cnt;
 	int omask;
 
 	signal(SIGINT, SIG_IGN);
@@ -139,7 +149,7 @@ tipout()
 			/* lost carrier */
 			if (cnt < 0 && errno == EIO) {
 				sigblock(sigmask(SIGTERM));
-				intTERM();
+				intTERM(0);
 				/*NOTREACHED*/
 			}
 			continue;

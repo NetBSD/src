@@ -1,4 +1,4 @@
-/*	$NetBSD: acu.c,v 1.4 1996/12/29 10:34:03 cgd Exp $	*/
+/*	$NetBSD: acu.c,v 1.5 1997/11/22 07:28:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,20 +33,23 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)acu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: acu.c,v 1.4 1996/12/29 10:34:03 cgd Exp $";
+__RCSID("$NetBSD: acu.c,v 1.5 1997/11/22 07:28:40 lukem Exp $");
 #endif /* not lint */
 
 #include "tip.h"
 
-static acu_t *acu = NOACU;
+static acu_t *acu = NULL;
 static int conflag;
-static void acuabort();
-static acu_t *acutype();
 static jmp_buf jmpbuf;
+
+static void	acuabort __P((int));
+static acu_t   *acutype __P((char *));
+
 /*
  * Establish connection for tip
  *
@@ -66,16 +69,21 @@ static jmp_buf jmpbuf;
 char *
 connect()
 {
-	register char *cp = PN;
+	char *cp = PN;
 	char *phnum, string[256];
 	FILE *fd;
 	int tried = 0;
 
+#if __GNUC__		/* XXX pacify gcc */
+	(void)&cp;
+	(void)&tried;
+#endif
+
 	if (!DU) {		/* regular connect message */
-		if (CM != NOSTR)
-			pwrite(FD, CM, size(CM));
+		if (CM != NULL)
+			pwrite(FD, CM, strlen(CM));
 		logent(value(HOST), "", DV, "call completed");
-		return (NOSTR);
+		return (NULL);
 	}
 	/*
 	 * @ =>'s use data base in PHONES environment variable
@@ -88,16 +96,16 @@ connect()
 		signal(SIGQUIT, SIG_IGN);
 		printf("\ncall aborted\n");
 		logent(value(HOST), "", "", "call aborted");
-		if (acu != NOACU) {
+		if (acu != NULL) {
 			setboolean(value(VERBOSE), FALSE);
 			if (conflag)
-				disconnect(NOSTR);
+				disconnect(NULL);
 			else
 				(*acu->acu_abort)();
 		}
 		return ("interrupt");
 	}
-	if ((acu = acutype(AT)) == NOACU)
+	if ((acu = acutype(AT)) == NULL)
 		return ("unknown ACU type");
 	if (*cp != '@') {
 		while (*cp) {
@@ -106,23 +114,23 @@ connect()
 			if (*cp)
 				*cp++ = '\0';
 			
-			if (conflag = (*acu->acu_dialer)(phnum, CU)) {
-				if (CM != NOSTR)
-					pwrite(FD, CM, size(CM));
+			if ((conflag = (*acu->acu_dialer)(phnum, CU)) != 0) {
+				if (CM != NULL)
+					pwrite(FD, CM, strlen(CM));
 				logent(value(HOST), phnum, acu->acu_name,
 					"call completed");
-				return (NOSTR);
+				return (NULL);
 			} else
 				logent(value(HOST), phnum, acu->acu_name,
 					"call failed");
 			tried++;
 		}
 	} else {
-		if ((fd = fopen(PH, "r")) == NOFILE) {
+		if ((fd = fopen(PH, "r")) == NULL) {
 			printf("%s: ", PH);
 			return ("can't open phone number file");
 		}
-		while (fgets(string, sizeof(string), fd) != NOSTR) {
+		while (fgets(string, sizeof(string), fd) != NULL) {
 			for (cp = string; !any(*cp, " \t\n"); cp++)
 				;
 			if (*cp == '\n') {
@@ -143,13 +151,13 @@ connect()
 			if (*cp)
 				*cp++ = '\0';
 			
-			if (conflag = (*acu->acu_dialer)(phnum, CU)) {
+			if ((conflag = (*acu->acu_dialer)(phnum, CU)) != 0) {
 				fclose(fd);
-				if (CM != NOSTR)
-					pwrite(FD, CM, size(CM));
+				if (CM != NULL)
+					pwrite(FD, CM, strlen(CM));
 				logent(value(HOST), phnum, acu->acu_name,
 					"call completed");
-				return (NOSTR);
+				return (NULL);
 			} else
 				logent(value(HOST), phnum, acu->acu_name,
 					"call failed");
@@ -164,6 +172,7 @@ connect()
 	return (tried ? "call failed" : "missing phone number");
 }
 
+void
 disconnect(reason)
 	char *reason;
 {
@@ -171,7 +180,7 @@ disconnect(reason)
 		logent(value(HOST), "", DV, "call terminated");
 		return;
 	}
-	if (reason == NOSTR) {
+	if (reason == NULL) {
 		logent(value(HOST), "", acu->acu_name, "call terminated");
 		if (boolean(value(VERBOSE)))
 			printf("\r\ndisconnecting...");
@@ -182,6 +191,7 @@ disconnect(reason)
 
 static void
 acuabort(s)
+	int s;
 {
 	signal(s, SIG_IGN);
 	longjmp(jmpbuf, 1);
@@ -189,13 +199,12 @@ acuabort(s)
 
 static acu_t *
 acutype(s)
-	register char *s;
+	char *s;
 {
-	register acu_t *p;
-	extern acu_t acutable[];
+	acu_t *p;
 
 	for (p = acutable; p->acu_name != '\0'; p++)
 		if (!strcmp(s, p->acu_name))
 			return (p);
-	return (NOACU);
+	return (NULL);
 }

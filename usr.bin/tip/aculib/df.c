@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.4 1995/10/29 00:49:51 pk Exp $	*/
+/*	$NetBSD: df.c,v 1.5 1997/11/22 07:28:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)df.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: df.c,v 1.4 1995/10/29 00:49:51 pk Exp $";
+__RCSID("$NetBSD: df.c,v 1.5 1997/11/22 07:28:54 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -47,8 +48,11 @@ static char rcsid[] = "$NetBSD: df.c,v 1.4 1995/10/29 00:49:51 pk Exp $";
 #include "tip.h"
 
 static jmp_buf Sjbuf;
-static void timeout();
 
+static	int	df_dialer __P((char *, char *, int));
+static	void	timeout __P((int));
+
+int
 df02_dialer(num, acu)
 	char *num, *acu;
 {
@@ -56,6 +60,7 @@ df02_dialer(num, acu)
 	return (df_dialer(num, acu, 0));
 }
 
+int
 df03_dialer(num, acu)
 	char *num, *acu;
 {
@@ -63,14 +68,19 @@ df03_dialer(num, acu)
 	return (df_dialer(num, acu, 1));
 }
 
+static int
 df_dialer(num, acu, df03)
 	char *num, *acu;
 	int df03;
 {
-	register int f = FD;
+	int f = FD;
 	struct termios cntrl;
-	int speed = 0, rw = 2;
+	int speed = 0;
 	char c = '\0';
+
+#if __GNUC__	/* XXX pacify gcc */
+	(void)&speed;
+#endif
 
 	tcgetattr(f, &cntrl);
 	cntrl.c_cflag |= HUPCL;
@@ -116,9 +126,9 @@ df_dialer(num, acu, df03)
 	return (c == 'A');
 }
 
+void
 df_disconnect()
 {
-	int rw = 2;
 
 	write(FD, "\001", 1);
 	sleep(1);
@@ -126,6 +136,7 @@ df_disconnect()
 }
 
 
+void
 df_abort()
 {
 
@@ -134,7 +145,8 @@ df_abort()
 
 
 static void
-timeout()
+timeout(dummy)
+	int dummy;
 {
 
 	longjmp(Sjbuf, 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: v3451.c,v 1.6 1997/02/11 09:24:20 mrg Exp $	*/
+/*	$NetBSD: v3451.c,v 1.7 1997/11/22 07:28:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)v3451.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: v3451.c,v 1.6 1997/02/11 09:24:20 mrg Exp $";
+__RCSID("$NetBSD: v3451.c,v 1.7 1997/11/22 07:28:57 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -47,21 +48,22 @@ static char rcsid[] = "$NetBSD: v3451.c,v 1.6 1997/02/11 09:24:20 mrg Exp $";
 
 static	jmp_buf Sjbuf;
 
-static	int expect(), notin(), prefix();
-static	void vawrite(), alarmtr();
+static	void	alarmtr __P((int));
+static	int	expect __P((char *));
+static	int	notin __P((char *, char *));
+static	int	prefix __P((char *, char *));
+static	void	vawrite __P((char *, int));
 
+int
 v3451_dialer(num, acu)
-	register char *num;
+	char *num;
 	char *acu;
 {
 	sig_t func;
 	int ok;
-	int slow = number(value(BAUDRATE)) < 1200, rw = 2;
+	int slow = number(value(BAUDRATE)) < 1200;
 	char phone[50];
 	struct termios cntrl;
-#ifdef ACULOG
-	char line[80];
-#endif
 
 	/*
 	 * Get in synch
@@ -128,12 +130,14 @@ v3451_dialer(num, acu)
 	return (1);
 }
 
+void
 v3451_disconnect()
 {
 
 	close(FD);
 }
 
+void
 v3451_abort()
 {
 
@@ -142,7 +146,7 @@ v3451_abort()
 
 static void
 vawrite(cp, delay)
-	register char *cp;
+	char *cp;
 	int delay;
 {
 
@@ -150,13 +154,19 @@ vawrite(cp, delay)
 		write(FD, cp, 1);
 }
 
-static
+static int
 expect(cp)
-	register char *cp;
+	char *cp;
 {
 	char buf[300];
-	register char *rp = buf;
+	char *rp = buf;
 	int timeout = 30, online = 0;
+
+#if __GNUC__	/* XXX pacify gcc */
+	(void)&online;
+	(void)&rp;
+	(void)&timeout;
+#endif
 
 	if (strcmp(cp, "\"\"") == 0)
 		return (1);
@@ -190,7 +200,8 @@ expect(cp)
 }
 
 static void
-alarmtr()
+alarmtr(dummy)
+	int dummy;
 {
 	longjmp(Sjbuf, 1);
 }
@@ -206,11 +217,11 @@ notin(sh, lg)
 	return (1);
 }
 
-static
+static int
 prefix(s1, s2)
-	register char *s1, *s2;
+	char *s1, *s2;
 {
-	register char c;
+	char c;
 
 	while ((c = *s1++) == *s2++)
 		if (c == '\0')

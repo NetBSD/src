@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.14 1997/05/14 00:20:05 mellon Exp $	*/
+/*	$NetBSD: tip.c,v 1.15 1997/11/22 07:28:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: tip.c,v 1.14 1997/05/14 00:20:05 mellon Exp $";
+__RCSID("$NetBSD: tip.c,v 1.15 1997/11/22 07:28:47 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -64,25 +64,29 @@ int rates[] = {
 };
 
 int	disc = TTYDISC;		/* tip normally runs this way */
-void	intprompt();
-void	timeout();
-void	cleanup();
-char	*sname();
+
+int	escape __P((void));
+int	main __P((int, char **));
+void	intprompt __P((int));
+void	tipin __P((void));
+
 char	PNbuf[256];			/* This limits the size of a number */
 
+int
 main(argc, argv)
+	int argc;
 	char *argv[];
 {
-	char *system = NOSTR;
-	register int i;
-	register char *p;
+	char *system = NULL;
+	int i;
+	char *p;
 	char sbuf[12];
 
 	gid = getgid();
 	egid = getegid();
 	uid = getuid();
 	euid = geteuid();
-	if (equal(sname(argv[0]), "cu")) {
+	if (equal(basename(argv[0]), "cu")) {
 		cumode = 1;
 		cumain(argc, argv);
 		goto cucommon;
@@ -97,6 +101,7 @@ main(argc, argv)
 		exit(1);
 	}
 
+/* XXX: use getopt */
 	for (; argc > 1; argv++, argc--) {
 		if (argv[1][0] != '-')
 			system = argv[1];
@@ -117,7 +122,7 @@ main(argc, argv)
 		}
 	}
 
-	if (system == NOSTR)
+	if (system == NULL)
 		goto notnumber;
 	if (isalpha(*system))
 		goto notnumber;
@@ -135,7 +140,7 @@ main(argc, argv)
 	for (p = system; *p; p++)
 		*p = '\0';
 	PN = PNbuf;
-	(void)snprintf(sbuf, sizeof sbuf, "tip%d", BR);
+	(void)snprintf(sbuf, sizeof sbuf, "tip%d", (int)BR);
 	system = sbuf;
 
 notnumber:
@@ -169,12 +174,12 @@ notnumber:
 	 * Kludge, their's no easy way to get the initialization
 	 *   in the right order, so force it here
 	 */
-	if ((PH = getenv("PHONES")) == NOSTR)
+	if ((PH = getenv("PHONES")) == NULL)
 		PH = _PATH_PHONES;
 	vinit();				/* init variables */
 	setparity("even");			/* set the parity table */
 	if ((i = speed(number(value(BAUDRATE)))) == 0) {
-		printf("tip: bad baud rate %d\n", number(value(BAUDRATE)));
+		printf("tip: bad baud rate %d\n", (int)number(value(BAUDRATE)));
 		daemon_uid();
 		(void)uu_unlock(uucplock);
 		exit(3);
@@ -187,7 +192,7 @@ notnumber:
 	 */
 	if (HW)
 		ttysetup(i);
-	if (p = connect()) {
+	if ((p = connect()) != NULL) {
 		printf("\07%s\n[EOT]\n", p);
 		daemon_uid();
 		(void)uu_unlock(uucplock);
@@ -215,7 +220,7 @@ cucommon:
 	raw();
 
 	pipe(fildes); pipe(repdes);
-	(void)signal(SIGALRM, timeout);
+	(void)signal(SIGALRM, alrmtimeout);
 
 	/*
 	 * Everything's set up now:
@@ -225,15 +230,23 @@ cucommon:
 	 * so, fork one process for local side and one for remote.
 	 */
 	printf(cumode ? "Connected\r\n" : "\07connected\r\n");
-	if (pid = fork())
+	switch (pid = fork()) {
+	default:
 		tipin();
-	else
+		break;
+	case 0:
 		tipout();
+		break;
+	case -1:
+		err(1, "can't fork");
+	}
 	/*NOTREACHED*/
+	exit(0);	/* XXX: pacify gcc */
 }
 
 void
-cleanup()
+cleanup(dummy)
+	int dummy;
 {
 
 	daemon_uid();
@@ -253,6 +266,7 @@ cleanup()
  */
 static int uidswapped;
 
+void
 user_uid()
 {
 	if (uidswapped == 0) {
@@ -261,6 +275,7 @@ user_uid()
 	}
 }
 
+void
 daemon_uid()
 {
 
@@ -270,6 +285,7 @@ daemon_uid()
 	}
 }
 
+void
 shell_uid()
 {
 	seteuid(uid);
@@ -278,6 +294,7 @@ shell_uid()
 /*
  * put the controlling keyboard into raw mode
  */
+void
 raw()
 {
 	tcsetattr(0, TCSADRAIN, &term);
@@ -287,6 +304,7 @@ raw()
 /*
  * return keyboard to normal mode
  */
+void
 unraw()
 {
 	tcsetattr(0, TCSADRAIN, &defterm);
@@ -299,13 +317,18 @@ static	jmp_buf promptbuf;
  *  in from the terminal.  Handles signals & allows use of
  *  normal erase and kill characters.
  */
+int
 prompt(s, p)
 	char *s;
-	register char *p;
+	char *p;
 {
-	register int c;
-	register char *b = p;
+	int c;
+	char *b = p;
 	sig_t oint, oquit;
+
+#if __GNUC__		/* XXX: pacify gcc */
+	(void)&p;
+#endif
 
 	stoprompt = 0;
 	oint = signal(SIGINT, intprompt);
@@ -327,7 +350,8 @@ prompt(s, p)
  * Interrupt service routine during prompting
  */
 void
-intprompt()
+intprompt(dummy)
+	int dummy;
 {
 
 	(void)signal(SIGINT, SIG_IGN);
@@ -339,6 +363,7 @@ intprompt()
 /*
  * ****TIPIN   TIPIN****
  */
+void
 tipin()
 {
 	char gch, bol = 1;
@@ -380,16 +405,15 @@ tipin()
 	}
 }
 
-extern esctable_t etable[];
-
 /*
  * Escape handler --
  *  called on recognition of ``escapec'' at the beginning of a line
  */
+int
 escape()
 {
-	register char gch;
-	register esctable_t *p;
+	char gch;
+	esctable_t *p;
 	char c = character(value(ESCAPE));
 
 	gch = (getchar()&STRIP_PAR);
@@ -407,10 +431,11 @@ escape()
 	return (gch);
 }
 
+int
 speed(n)
 	int n;
 {
-	register int *p;
+	int *p;
 
 	for (p = rates; *p != -1;  p++)
 		if (*p == n)
@@ -418,8 +443,9 @@ speed(n)
 	return 0;
 }
 
+int
 any(c, p)
-	register char c, *p;
+	char c, *p;
 {
 	while (p && *p)
 		if (*p++ == c)
@@ -427,24 +453,14 @@ any(c, p)
 	return (0);
 }
 
-size(s)
-	register char	*s;
-{
-	register int i = 0;
-
-	while (s && *s++)
-		i++;
-	return (i);
-}
-
 char *
 interp(s)
-	register char *s;
+	char *s;
 {
 	static char buf[256];
-	register char *p = buf, c, *q;
+	char *p = buf, c, *q;
 
-	while (c = *s++) {
+	while ((c = *s++) != 0) {
 		for (q = "\nn\rr\tt\ff\033E\bb"; *q; q++)
 			if (*q++ == c) {
 				*p++ = '\\'; *p++ = *q;
@@ -483,10 +499,11 @@ ctrl(c)
 /*
  * Help command
  */
+void
 help(c)
 	char c;
 {
-	register esctable_t *p;
+	esctable_t *p;
 
 	printf("%c\r\n", c);
 	for (p = etable; p->e_char; p++) {
@@ -501,6 +518,7 @@ help(c)
 /*
  * Set up the "remote" tty's state
  */
+void
 ttysetup(speed)
 	int speed;
 {
@@ -523,22 +541,6 @@ ttysetup(speed)
 	tcsetattr(FD, TCSAFLUSH, &cntrl);
 }
 
-/*
- * Return "simple" name from a file name,
- * strip leading directories.
- */
-char *
-sname(s)
-	register char *s;
-{
-	register char *p = s;
-
-	while (*s)
-		if (*s++ == '/')
-			p = s;
-	return (p);
-}
-
 static char partab[0200];
 
 /*
@@ -546,14 +548,14 @@ static char partab[0200];
  * We are doing 8 bit wide output, so we just generate a character
  * with the right parity and output it.
  */
+void
 pwrite(fd, buf, n)
 	int fd;
 	char *buf;
-	register int n;
+	int n;
 {
-	register int i;
-	register char *bp;
-	extern int errno;
+	int i;
+	char *bp;
 
 	bp = buf;
 	if (bits8 == 0)
@@ -572,14 +574,14 @@ pwrite(fd, buf, n)
 /*
  * Build a parity table with appropriate high-order bit.
  */
+void
 setparity(defparity)
 	char *defparity;
 {
-	register int i, flip, clr, set;
+	int i, flip, clr, set;
 	char *parity;
-	extern unsigned char evenpartab[];
 
-	if (value(PARITY) == NOSTR)
+	if (value(PARITY) == NULL)
 		value(PARITY) = defparity;
 	parity = value(PARITY);
 	if (equal(parity, "none")) {
@@ -601,5 +603,5 @@ setparity(defparity)
 		(void) fflush(stderr);
 	}
 	for (i = 0; i < 0200; i++)
-		partab[i] = (evenpartab[i] ^ flip | set) & clr;
+		partab[i] = ((evenpartab[i] ^ flip) | set) & clr;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vars.c,v 1.4 1997/05/17 20:17:38 pk Exp $	*/
+/*	$NetBSD: vars.c,v 1.5 1997/11/22 07:28:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)vars.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: vars.c,v 1.4 1997/05/17 20:17:38 pk Exp $";
+__RCSID("$NetBSD: vars.c,v 1.5 1997/11/22 07:28:51 lukem Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -58,7 +59,7 @@ value_t vtable[] = {
 	{ "eofwrite",	STRING|IREMOTE|INIT,	(READ|WRITE)<<PUBLIC,
 	  "eofw",	(char *)&OE },
 	{ "eol",	STRING|IREMOTE|INIT,	(READ|WRITE)<<PUBLIC,
-	  NOSTR,	(char *)&EL },
+	  NULL,		(char *)&EL },
 	{ "escape",	CHAR,			(READ|WRITE)<<PUBLIC,
 	  "es",		(char *)'~' },
 	{ "exceptions",	STRING|INIT|IREMOTE,	(READ|WRITE)<<PUBLIC,
@@ -70,9 +71,9 @@ value_t vtable[] = {
 	{ "host",	STRING|IREMOTE|INIT,	READ<<PUBLIC,
 	  "ho",		(char *)&HO },
 	{ "log",	STRING|INIT,		(READ|WRITE)<<ROOT,
-	  NOSTR,	_PATH_ACULOG },
+	  NULL,		_PATH_ACULOG },
 	{ "phones",	STRING|INIT|IREMOTE,	READ<<PUBLIC,
-	  NOSTR,	(char *)&PH },
+	  NULL,		(char *)&PH },
 	{ "prompt",	CHAR,			(READ|WRITE)<<PUBLIC,
 	  "pr",		(char *)'\n' },
 	{ "raise",	BOOL,			(READ|WRITE)<<PUBLIC,
@@ -82,7 +83,7 @@ value_t vtable[] = {
 	{ "record",	STRING|INIT|IREMOTE,	(READ|WRITE)<<PUBLIC,
 	  "rec",	(char *)&RE },
 	{ "remote",	STRING|INIT|IREMOTE,	READ<<PUBLIC,
-	  NOSTR,	(char *)&RM },
+	  NULL,		(char *)&RM },
 	{ "script",	BOOL,			(READ|WRITE)<<PUBLIC,
 	  "sc",		(char *)FALSE },
 	{ "tabexpand",	BOOL,			(READ|WRITE)<<PUBLIC,
@@ -92,7 +93,7 @@ value_t vtable[] = {
 	{ "SHELL",	STRING|ENVIRON|INIT,	(READ|WRITE)<<PUBLIC,
 	  NULL,		_PATH_BSHELL },
 	{ "HOME",	STRING|ENVIRON,		(READ|WRITE)<<PUBLIC,
-	  NOSTR,	NOSTR },
+	  NULL,		NULL },
 	{ "echocheck",	BOOL,			(READ|WRITE)<<PUBLIC,
 	  "ec",		(char *)FALSE },
 	{ "disconnect",	STRING|IREMOTE|INIT,	(READ|WRITE)<<PUBLIC,
@@ -113,5 +114,5 @@ value_t vtable[] = {
 	  "le",		(char *)FALSE },
 	{ "parity",	STRING|INIT|IREMOTE,	(READ|WRITE)<<PUBLIC,
 	  "par",	(char *)&PA },
-	{ NOSTR, 0, 0, NOSTR, NOSTR }
+	{ NULL,	0, 0, NULL, NULL }
 };

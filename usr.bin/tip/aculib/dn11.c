@@ -1,4 +1,4 @@
-/*	$NetBSD: dn11.c,v 1.4 1995/10/29 00:49:53 pk Exp $	*/
+/*	$NetBSD: dn11.c,v 1.5 1997/11/22 07:28:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dn11.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: dn11.c,v 1.4 1995/10/29 00:49:53 pk Exp $";
+__RCSID("$NetBSD: dn11.c,v 1.5 1997/11/22 07:28:55 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -45,18 +46,17 @@ static char rcsid[] = "$NetBSD: dn11.c,v 1.4 1995/10/29 00:49:53 pk Exp $";
  */
 #include "tip.h"
 
-int dn_abort();
-void alarmtr();
 static jmp_buf jmpbuf;
 static int child = -1, dn;
 
+static	void	alarmtr __P((int));
+
+int
 dn_dialer(num, acu)
 	char *num, *acu;
 {
-	extern errno;
-	char *p, *q, phone[40];
-	int lt, nw, connected = 1;
-	register int timelim;
+	int lt, nw;
+	int timelim;
 	struct termios cntrl;
 
 	if (boolean(value(VERBOSE)))
@@ -116,8 +116,9 @@ dn_dialer(num, acu)
 	return (1);
 }
 
-void
-alarmtr()
+static void
+alarmtr(dummy)
+	int dummy;
 {
 	alarm(0);
 	longjmp(jmpbuf, 1);
@@ -127,6 +128,7 @@ alarmtr()
  * Insurance, for some reason we don't seem to be
  *  hanging up...
  */
+void
 dn_disconnect()
 {
 
@@ -136,6 +138,7 @@ dn_disconnect()
 	close(FD);
 }
 
+void
 dn_abort()
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.7 1997/05/14 00:20:01 mellon Exp $	*/
+/*	$NetBSD: hunt.c,v 1.8 1997/11/22 07:28:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,39 +33,40 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)hunt.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: hunt.c,v 1.7 1997/05/14 00:20:01 mellon Exp $";
+__RCSID("$NetBSD: hunt.c,v 1.8 1997/11/22 07:28:43 lukem Exp $");
 #endif /* not lint */
 
 #include "tip.h"
 
-extern char *getremote();
-extern char *rindex();
-
 static	jmp_buf deadline;
 static	int deadfl;
 
+void	dead __P((int));
+
 void
-dead()
+dead(dummy)
+	int dummy;
 {
 	deadfl = 1;
 	longjmp(deadline, 1);
 }
 
-long
+int
 hunt(name)
 	char *name;
 {
-	register char *cp;
+	char *cp;
 	sig_t f;
 
 	f = signal(SIGALRM, dead);
-	while (cp = getremote(name)) {
+	while ((cp = getremote(name)) != NULL) {
 		deadfl = 0;
-		uucplock = rindex(cp, '/')+1;
+		uucplock = strrchr(cp, '/')+1;
 		if (uu_lock(uucplock) < 0)
 			continue;
 		/*
@@ -95,10 +96,10 @@ hunt(name)
 			tcsetattr(FD, TCSAFLUSH, &cntrl);
 			ioctl(FD, TIOCEXCL, 0);
 			signal(SIGALRM, SIG_DFL);
-			return ((long)cp);
+			return (cp != NULL);
 		}
 		(void)uu_unlock(uucplock);
 	}
 	signal(SIGALRM, f);
-	return (deadfl ? -1 : (long)cp);
+	return (deadfl ? -1 : cp != NULL);
 }

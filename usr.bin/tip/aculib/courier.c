@@ -1,4 +1,4 @@
-/*	$NetBSD: courier.c,v 1.7 1997/02/11 09:24:16 mrg Exp $	*/
+/*	$NetBSD: courier.c,v 1.8 1997/11/22 07:28:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)courier.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: courier.c,v 1.7 1997/02/11 09:24:16 mrg Exp $";
+__RCSID("$NetBSD: courier.c,v 1.8 1997/11/22 07:28:53 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -45,23 +46,30 @@ static char rcsid[] = "$NetBSD: courier.c,v 1.7 1997/02/11 09:24:16 mrg Exp $";
  * Derived from Hayes driver.
  */
 #include "tip.h"
-#include <sys/ioctl.h>
-#include <stdio.h>
 
 #define	MAXRETRY	5
 
-static	void sigALRM();
 static	int timeout = 0;
 static	int connected = 0;
-static	jmp_buf timeoutbuf, intbuf;
-static	int coursync(), cour_connect(), cour_swallow();
-static	void cour_napx();
+static	jmp_buf timeoutbuf;
 
+static	int	cour_connect __P((void));
+static	void	cour_nap __P((void));
+static	void	cour_napx __P((int));
+static	int	cour_swallow __P((char *));
+static	int	coursync __P((void));
+#ifdef DEBUG
+static	void	cour_verbose_read __P((void));
+#endif
+static	void	cour_write __P((int, char *, int));
+static	void	sigALRM __P((int));
+
+int
 cour_dialer(num, acu)
-	register char *num;
+	char *num;
 	char *acu;
 {
-	register char *cp;
+	char *cp;
 #ifdef ACULOG
 	char line[80];
 #endif
@@ -105,7 +113,7 @@ badsynch:
 #ifdef ACULOG
 	if (timeout) {
 		(void)snprintf(line, sizeof line, "%d second dial timeout",
-			number(value(DIALTIMEOUT)));
+			(int)number(value(DIALTIMEOUT)));
 		logent(value(HOST), num, "cour", line);
 	}
 #endif
@@ -114,6 +122,7 @@ badsynch:
 	return (connected);
 }
 
+void
 cour_disconnect()
 {
 	 /* first hang up the modem*/
@@ -124,6 +133,7 @@ cour_disconnect()
 	close(FD);
 }
 
+void
 cour_abort()
 {
 	cour_write(FD, "\r", 1);	/* send anything to abort the call */
@@ -131,7 +141,8 @@ cour_abort()
 }
 
 static void
-sigALRM()
+sigALRM(dummy)
+	int dummy;
 {
 	printf("\07timeout waiting for reply\n");
 	timeout = 1;
@@ -140,10 +151,14 @@ sigALRM()
 
 static int
 cour_swallow(match)
-  register char *match;
-  {
+	char *match;
+{
 	sig_t f;
 	char c;
+
+#if __GNUC__	/* XXX pacify gcc */
+	(void)&match;
+#endif
 
 	f = signal(SIGALRM, sigALRM);
 	timeout = 0;
@@ -177,12 +192,12 @@ struct baud_msg {
 	char *msg;
 	int baud;
 } baud_msg[] = {
-	"",		B300,
-	" 1200",	B1200,
-	" 2400",	B2400,
-	" 9600",	B9600,
-	" 9600/ARQ",	B9600,
-	0,		0,
+	{ "",		B300 },
+	{ " 1200",	B1200 },
+	{ " 2400",	B2400 },
+	{ " 9600",	B9600 },
+	{ " 9600/ARQ",	B9600 },
+	{ 0,		0 }
 };
 
 static int
@@ -194,12 +209,17 @@ cour_connect()
 	struct baud_msg *bm;
 	sig_t f;
 
+#if __GNUC__	/* XXX pacify gcc */
+	(void)&nc;
+	(void)&nl;
+#endif
+
 	if (cour_swallow("\r\n") == 0)
 		return (0);
 	f = signal(SIGALRM, sigALRM);
 again:
 	nc = 0; nl = sizeof(dialer_buf)-1;
-	bzero(dialer_buf, sizeof(dialer_buf));
+	memset(dialer_buf, 0, sizeof(dialer_buf));
 	timeout = 0;
 	for (nc = 0, nl = sizeof(dialer_buf)-1 ; nl > 0 ; nc++, nl--) {
 		if (setjmp(timeoutbuf))
@@ -249,9 +269,7 @@ again:
 			putchar(c);
 #endif
 	}
-error1:
 	printf("%s\r\n", dialer_buf);
-error:
 	signal(SIGALRM, f);
 	return (0);
 }
@@ -270,7 +288,7 @@ coursync()
 	while (already++ < MAXRETRY) {
 		tcflush(FD, TCIOFLUSH);
 		cour_write(FD, "\rAT Z\r", 6);	/* reset modem */
-		bzero(buf, sizeof(buf));
+		memset(buf, 0, sizeof(buf));
 		sleep(1);
 		ioctl(FD, FIONREAD, &len);
 		if (len) {
@@ -279,8 +297,8 @@ coursync()
 			buf[len] = '\0';
 			printf("coursync: (\"%s\")\n\r", buf);
 #endif
-			if (index(buf, '0') || 
-		   	   (index(buf, 'O') && index(buf, 'K')))
+			if (strchr(buf, '0') || 
+		   	   (strchr(buf, 'O') && strchr(buf, 'K')))
 				return(1);
 		}
 		/*
@@ -302,10 +320,11 @@ coursync()
 	return (0);
 }
 
+static void
 cour_write(fd, cp, n)
-int fd;
-char *cp;
-int n;
+	int fd;
+	char *cp;
+	int n;
 {
 #ifdef notdef
 	if (boolean(value(VERBOSE)))
@@ -321,6 +340,7 @@ int n;
 }
 
 #ifdef DEBUG
+static void
 cour_verbose_read()
 {
 	int n = 0;
@@ -347,12 +367,13 @@ static napms = 50; /* Give the courier 50 milliseconds between characters */
 
 static int ringring;
 
+void
 cour_nap()
 {
 	
 	int omask;
         struct itimerval itv, oitv;
-        register struct itimerval *itp = &itv;
+        struct itimerval *itp = &itv;
         struct sigvec vec, ovec;
 
         timerclear(&itp->it_interval);
@@ -375,7 +396,8 @@ cour_nap()
 }
 
 static void
-cour_napx()
+cour_napx(dummy)
+	int dummy;
 {
         ringring = 1;
 }

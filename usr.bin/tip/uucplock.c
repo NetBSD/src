@@ -1,4 +1,4 @@
-/*	$NetBSD: uucplock.c,v 1.8 1997/08/25 19:32:02 kleink Exp $	*/
+/*	$NetBSD: uucplock.c,v 1.9 1997/11/22 07:28:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -33,21 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)uucplock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: uucplock.c,v 1.8 1997/08/25 19:32:02 kleink Exp $";
+__RCSID("$NetBSD: uucplock.c,v 1.9 1997/11/22 07:28:49 lukem Exp $");
 #endif /* not lint */
 
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/file.h>
-#include <sys/dir.h>
-#include <errno.h>
 #include "pathnames.h"
+#include "tip.h"
 
 /* 
  * uucp style locking routines
@@ -55,6 +50,7 @@ static char rcsid[] = "$NetBSD: uucplock.c,v 1.8 1997/08/25 19:32:02 kleink Exp 
  * 	  -1 - failure
  */
 
+int
 uu_lock(ttyname)
 	char *ttyname;
 {
@@ -117,6 +113,7 @@ uu_lock(ttyname)
 	return(0);
 }
 
+int
 uu_unlock(ttyname)
 	char *ttyname;
 {
