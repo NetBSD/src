@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.45 1998/06/26 17:50:20 is Exp $	*/
+/*	$NetBSD: ser.c,v 1.46 1998/06/29 19:31:19 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -292,8 +292,8 @@ seropen(dev, flag, mode, p)
 		s2 = splser();
 		/*
 		 * XXX here: hw enable,
-		 * fetch current modem control status
 		 */
+		last_ciab_pra = ciab.pra;
 
 		splx(s2);
 		t.c_ispeed = 0;
