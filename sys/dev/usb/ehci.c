@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.70 2004/09/17 10:55:07 yamt Exp $	*/
+/*	$NetBSD: ehci.c,v 1.71 2004/10/21 11:05:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.70 2004/09/17 10:55:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.71 2004/10/21 11:05:39 augustss Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1013,7 +1013,7 @@ ehci_allocx(struct usbd_bus *bus)
 		xfer = malloc(sizeof(struct ehci_xfer), M_USB, M_NOWAIT);
 	}
 	if (xfer != NULL) {
-		memset(xfer, 0, sizeof (struct ehci_xfer));
+		memset(xfer, 0, sizeof(struct ehci_xfer));
 #ifdef DIAGNOSTIC
 		EXFER(xfer)->isdone = 1;
 		xfer->busy_free = XFER_BUSY;
@@ -1463,10 +1463,7 @@ Static usb_hub_descriptor_t ehci_hubd = {
 };
 
 Static int
-ehci_str(p, l, s)
-	usb_string_descriptor_t *p;
-	int l;
-	char *s;
+ehci_str(usb_string_descriptor_t *p, int l, char *s)
 {
 	int i;
 
