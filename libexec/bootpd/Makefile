@@ -1,6 +1,14 @@
-# bootp/Makefile
-# $Id: Makefile,v 1.3 1994/05/27 22:05:44 gwr Exp $
+# bootpd/Makefile
+# $Id: Makefile,v 1.4 1994/05/30 20:08:05 gwr Exp $
 
-SUBDIR= bootpd bootpgw bootptest bootpef
+PROG=	bootpd
+CFLAGS+= -DETC_ETHERS -DSYSLOG -DDEBUG -DVEND_CMU
 
-.include <bsd.subdir.mk>
+SRCS=	bootpd.c dovend.c readfile.c hash.c dumptab.c \
+	 lookup.c getif.c hwaddr.c report.c tzone.c
+
+MAN5=	bootptab.0
+MAN8=	bootpd.0
+MLINKS= bootpd.8 bootpgw.8
+
+.include <bsd.prog.mk>
