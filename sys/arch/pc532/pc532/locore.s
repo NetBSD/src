@@ -106,6 +106,12 @@ _PL_zero:	.long	0
 start:
 	br here_we_go
 
+	.align 4
+.globl  __boot_flags	/* First cut at flags from a boot program */
+__boot_flags:
+	.long 0		/* 0 => nothing sent in by boot loader. */
+	.long 0		/* Other information? */
+
 	.align 4	/* So the trap table is double aligned. */
 int_base_tab:		/* Here is the fixed jump table for traps! */
 	.long __trap_nvi
