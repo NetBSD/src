@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.86 1997/05/31 21:21:59 cjs Exp $
+#	$NetBSD: bsd.prog.mk,v 1.87 1997/09/29 15:02:49 gwr Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -25,6 +25,7 @@ LIBCRTEND?=
 .endif
 
 LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
+LIBBFD?=	${DESTDIR}/usr/lib/libbfd.a
 LIBC?=		${DESTDIR}/usr/lib/libc.a
 LIBC_PIC?=	${DESTDIR}/usr/lib/libc_pic.a
 LIBCOMPAT?=	${DESTDIR}/usr/lib/libcompat.a
