@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.21 1994/09/19 19:28:07 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.22 1994/09/22 02:34:49 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -100,7 +100,7 @@ msdosfs_mount(mp, path, data, ndp, p)
 	 * continue, otherwise return.
 	 */
 	if (mp->mnt_flag & MNT_UPDATE) {
-		pmp = (struct msdosfsmount *) mp->mnt_data;
+		pmp = VFSTOMSDOSFS(mp);
 		error = 0;
 		if (pmp->pm_ronly == 0 && (mp->mnt_flag & MNT_RDONLY)) {
 			flags = WRITECLOSE;
@@ -211,7 +211,7 @@ msdosfs_mount(mp, path, data, ndp, p)
 	 * fill in the filesystem stats structure as best we can with
 	 * whatever applies from a dos file system.
 	 */
-	pmp = (struct msdosfsmount *) mp->mnt_data;
+	pmp = VFSTOMSDOSFS(mp);
 	copyinstr(path, (caddr_t) mp->mnt_stat.f_mntonname,
 	    sizeof(mp->mnt_stat.f_mntonname) - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size,
@@ -488,7 +488,7 @@ msdosfs_unmount(mp, mntflags, p)
 {
 	int flags = 0;
 	int error;
-	struct msdosfsmount *pmp = (struct msdosfsmount *) mp->mnt_data;
+	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	struct vnode *vp = pmp->pm_devvp;
 
 	/* only the mounter, or superuser can unmount */
@@ -537,7 +537,7 @@ msdosfs_root(mp, vpp)
 	struct vnode **vpp;
 {
 	struct denode *ndep;
-	struct msdosfsmount *pmp = (struct msdosfsmount *) (mp->mnt_data);
+	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	int error;
 
 	error = deget(pmp, MSDOSFSROOT, MSDOSFSROOT_OFS, NULL, &ndep);
@@ -570,7 +570,7 @@ msdosfs_statfs(mp, sbp, p)
 	struct statfs *sbp;
 	struct proc *p;
 {
-	struct msdosfsmount *pmp = (struct msdosfsmount *) mp->mnt_data;
+	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 
 	/*
 	 * Fill in the stat block.
@@ -668,7 +668,7 @@ msdosfs_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
 	int *exflagsp;
 	struct ucred **credanonp;
 {
-	struct msdosfsmount *pmp = (struct msdosfsmount *) mp->mnt_data;
+	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	struct defid *defhp = (struct defid *) fhp;
 	struct denode *dep;
 	struct netcred *np;

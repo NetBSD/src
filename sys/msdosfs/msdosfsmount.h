@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.7 1994/08/21 18:44:17 ws Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.8 1994/09/22 02:34:51 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -81,6 +81,8 @@ struct msdosfsmount {
 	char pm_waitonfat;	/* wait for writes of the fat to complt, when 0 use bdwrite, else use bwrite */
 	struct netexport pm_export;	/* export information */
 };
+
+#define	VFSTOMSDOSFS(mp)	((struct msdosfsmount *)mp->mnt_data)
 
 /* Number of bits in one pm_inusemap item: */
 #define	N_INUSEBITS	(8 * sizeof(u_int))
