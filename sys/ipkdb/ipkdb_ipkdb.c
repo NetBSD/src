@@ -36,6 +36,7 @@
 
 #include <net/if.h>
 #include <net/route.h>
+#include <net/if_ether.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
