@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.77 1998/12/09 01:11:26 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.78 1999/01/13 17:41:44 drochner Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -209,6 +209,15 @@ wscons)
 	sh $0 ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
 	sh $0 wsmouse0 wsmouse1 wsmouse2 wsmouse3
 	sh $0 wskbd0 wskbd1 wskbd2 wskbd3
+	sh $0 ttyEcfg
+	;;
+
+ttyEcfg)
+	chr=47
+	rm -f ttyEcfg
+	mknod ttyEcfg c $chr 255
+	chown root.wheel ttyEcfg
+	chmod 600 ttyEcfg
 	;;
 
 ttyE*)
