@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.399 2001/11/10 06:23:01 gmcgarry Exp $
+#	$NetBSD: mi,v 1.400 2001/11/10 06:24:47 gmcgarry Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1875,6 +1875,7 @@
 ./usr/share/man/cat3/getservbyname.0	comp-c-catman
 ./usr/share/man/cat3/getservbyport.0	comp-c-catman
 ./usr/share/man/cat3/getservent.0	comp-c-catman
+./usr/share/man/cat3/getskeyprompt.0		comp-c-catman
 ./usr/share/man/cat3/getsubopt.0	comp-c-catman
 ./usr/share/man/cat3/gettext.0		comp-c-catman
 ./usr/share/man/cat3/getttyent.0	comp-c-catman
@@ -2465,6 +2466,18 @@
 ./usr/share/man/cat3/sinf.0	comp-c-catman
 ./usr/share/man/cat3/sinh.0	comp-c-catman
 ./usr/share/man/cat3/sinhf.0	comp-c-catman
+./usr/share/man/cat3/skey.0		comp-c-catman
+./usr/share/man/cat3/skey_authenticate.0		comp-c-catman
+./usr/share/man/cat3/skey_get_algorithm.0		comp-c-catman
+./usr/share/man/cat3/skey_haskey.0		comp-c-catman
+./usr/share/man/cat3/skey_keyinfo.0		comp-c-catman
+./usr/share/man/cat3/skey_passcheck.0		comp-c-catman
+./usr/share/man/cat3/skey_set_algorithm.0		comp-c-catman
+./usr/share/man/cat3/skeychallenge.0		comp-c-catman
+./usr/share/man/cat3/skeygetnext.0		comp-c-catman
+./usr/share/man/cat3/skeylookup.0		comp-c-catman
+./usr/share/man/cat3/skeyverify.0		comp-c-catman
+./usr/share/man/cat3/skeyzero.0		comp-c-catman
 ./usr/share/man/cat3/sl_add.0	comp-c-catman
 ./usr/share/man/cat3/sl_find.0	comp-c-catman
 ./usr/share/man/cat3/sl_free.0	comp-c-catman
@@ -4292,6 +4305,7 @@
 ./usr/share/man/man3/getservbyname.3		comp-c-man
 ./usr/share/man/man3/getservbyport.3		comp-c-man
 ./usr/share/man/man3/getservent.3		comp-c-man
+./usr/share/man/man3/getskeyprompt.3		comp-c-man
 ./usr/share/man/man3/getsubopt.3		comp-c-man
 ./usr/share/man/man3/gettext.3		comp-c-man
 ./usr/share/man/man3/getttyent.3		comp-c-man
@@ -4882,6 +4896,18 @@
 ./usr/share/man/man3/sinf.3		comp-c-man
 ./usr/share/man/man3/sinh.3		comp-c-man
 ./usr/share/man/man3/sinhf.3		comp-c-man
+./usr/share/man/man3/skey.3		comp-c-man
+./usr/share/man/man3/skey_authenticate.3		comp-c-man
+./usr/share/man/man3/skey_get_algorithm.3		comp-c-man
+./usr/share/man/man3/skey_haskey.3		comp-c-man
+./usr/share/man/man3/skey_keyinfo.3		comp-c-man
+./usr/share/man/man3/skey_passcheck.3		comp-c-man
+./usr/share/man/man3/skey_set_algorithm.3		comp-c-man
+./usr/share/man/man3/skeychallenge.3		comp-c-man
+./usr/share/man/man3/skeygetnext.3		comp-c-man
+./usr/share/man/man3/skeylookup.3		comp-c-man
+./usr/share/man/man3/skeyverify.3		comp-c-man
+./usr/share/man/man3/skeyzero.3		comp-c-man
 ./usr/share/man/man3/sl_add.3		comp-c-man
 ./usr/share/man/man3/sl_find.3		comp-c-man
 ./usr/share/man/man3/sl_free.3		comp-c-man
