@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.65.2.2 2001/06/29 03:56:42 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.65.2.3 2001/06/29 06:00:40 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -959,9 +959,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	 * of the danger that the clock was turned back between the last
 	 * checkpoint and crash.  This would roll forward garbage.
 	 *
-	 * v2 filesystems can have this problem too if the filesystem was ever
-	 * newfs'd, but this can easily be prevented by zeroing it before
-	 * newfs.
+	 * v2 filesystems don't have this problem because they use a
+	 * monotonically increasing serial number instead of a timestamp.
 	 */
 #ifdef LFS_DO_ROLLFORWARD
 	do_rollforward = !fs->lfs_ronly;
