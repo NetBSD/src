@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sun3,v 1.1.2.2 2002/05/30 07:14:53 gehenna Exp $
+#	$NetBSD: majors.sun3,v 1.1.2.3 2002/07/15 01:22:16 gehenna Exp $
 #
 # Device majors for sun3/sun3x
 #
@@ -57,3 +57,4 @@ device-major	scsibus		char 81			scsibus
 device-major	raid		char 82  block 25	raid
 device-major	svr4_net	char 83			compat_svr4
 device-major	clockctl	char 84			clockctl
+device-major	systrace	char 85			systrace

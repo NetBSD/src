@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sun2,v 1.1.2.2 2002/05/30 07:14:53 gehenna Exp $
+#	$NetBSD: majors.sun2,v 1.1.2.3 2002/07/15 01:22:06 gehenna Exp $
 #
 # Device majors for sun2
 #
@@ -52,3 +52,4 @@ device-major	svr4_net	char 83			compat_svr4
 
 device-major	pcons		char 88			pcons
 device-major	clockctl	char 89			clockctl
+device-major	systrace	char 90			systrace

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.shark,v 1.1.2.2 2002/05/30 07:14:52 gehenna Exp $
+#	$NetBSD: majors.shark,v 1.1.2.3 2002/07/15 01:21:06 gehenna Exp $
 #
 # Device majors for shark
 #
@@ -55,3 +55,4 @@ device-major	raid		char 71  block 71	raid
 device-major	openfirm	char 77			ofwgencfg
 
 device-major	clockctl	char 84			clockctl
+device-major	systrace	char 85			systrace

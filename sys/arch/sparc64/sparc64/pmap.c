@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.119.2.1 2002/05/30 15:35:57 gehenna Exp $	*/
+/*	$NetBSD: pmap.c,v 1.119.2.2 2002/07/15 01:21:58 gehenna Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1281,7 +1281,7 @@ remap_data:
 		pmap_kernel()->pm_segs=(paddr_t *)(u_long)newp;
 		pmap_kernel()->pm_physaddr = newp;
 		/* mark kernel context as busy */
-		((paddr_t*)ctxbusy)[0] = (int)pmap_kernel()->pm_physaddr;
+		ctxbusy[0] = pmap_kernel()->pm_physaddr;
 	}
 	/*
 	 * finish filling out kernel pmap.
@@ -1480,7 +1480,6 @@ pmap_init()
 		panic("pmap_init: PAGE_SIZE!=NBPG");
 
 	size = sizeof(struct pv_entry) * physmem;
-	TAILQ_INIT(&mlist);
 	if (uvm_pglistalloc((psize_t)size, (paddr_t)0, (paddr_t)-1,
 		(paddr_t)NBPG, (paddr_t)0, &mlist, 1, 0) != 0)
 		panic("cpu_start: no memory");

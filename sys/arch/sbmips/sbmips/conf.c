@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.3.4.1 2002/05/16 13:22:42 gehenna Exp $ */
+/* $NetBSD: conf.c,v 1.3.4.2 2002/07/15 01:20:56 gehenna Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
 #include <sys/param.h>
 #include <sys/conf.h>
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.3.4.1 2002/05/16 13:22:42 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.3.4.2 2002/07/15 01:20:56 gehenna Exp $");
 
 /*
  * Returns true if dev is /dev/mem or /dev/kmem.
