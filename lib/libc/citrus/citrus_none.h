@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_none.h,v 1.2 2003/03/05 20:18:16 tshiozak Exp $	*/
+/*	$NetBSD: citrus_none.h,v 1.3 2003/06/25 09:51:38 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -29,7 +29,8 @@
 #ifndef _CITRUS_NONE_H_
 #define _CITRUS_NONE_H_
 
-extern struct _citrus_ctype_ops_rec _citrus_NONE_ctype_ops;
-extern struct _citrus_iconv_stdencoding_ops_rec _citrus_NONE_iconv_stdencoding_ops;
+extern struct _citrus_ctype_ops_rec	_citrus_NONE_ctype_ops;
+extern struct _citrus_stdenc_ops	_citrus_NONE_stdenc_ops;
+extern struct _citrus_stdenc_traits	_citrus_NONE_stdenc_traits;
 
 #endif

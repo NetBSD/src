@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mskanji.c,v 1.5 2002/03/28 10:53:49 yamt Exp $	*/
+/*	$NetBSD: citrus_mskanji.c,v 1.6 2003/06/25 09:51:48 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mskanji.c,v 1.5 2002/03/28 10:53:49 yamt Exp $");
+__RCSID("$NetBSD: citrus_mskanji.c,v 1.6 2003/06/25 09:51:48 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -75,8 +75,12 @@ __RCSID("$NetBSD: citrus_mskanji.c,v 1.5 2002/03/28 10:53:49 yamt Exp $");
 #include <wchar.h>
 #include <sys/types.h>
 #include <limits.h>
+
+#include "citrus_namespace.h"
+#include "citrus_types.h"
 #include "citrus_module.h"
 #include "citrus_ctype.h"
+#include "citrus_stdenc.h"
 #include "citrus_mskanji.h"
 
 
@@ -265,45 +269,167 @@ _citrus_MSKanji_wcrtomb_priv(_MSKanjiEncodingInfo * __restrict ei,
 			     _MSKanjiState * __restrict psenc,
 			     size_t * __restrict nresult)
 {
+	int ret;
 
 	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(psenc != NULL);
 	_DIAGASSERT(s != NULL);
 
+	/* reset state */
+	if (wc == 0) {
+		*nresult = 0; /* stateless */
+		return 0;
+	}
+
 	/* check invalid sequence */
-	if (wc & ~0xffff)
-		goto ilseq;
+	if (wc & ~0xffff) {
+		ret = EILSEQ;
+		goto err;
+	}
 
 	if (wc & 0xff00) {
-		if (n < 2)
-			goto ilseq;
+		if (n < 2) {
+			ret = E2BIG;
+			goto err;
+		}
 
 		s[0] = (wc >> 8) & 0xff;
 		s[1] = wc & 0xff;
-		if (!_mskanji1(s[0] & 0xff) || !_mskanji2(s[1] & 0xff))
-			goto ilseq;
+		if (!_mskanji1(s[0] & 0xff) || !_mskanji2(s[1] & 0xff)) {
+			ret = EILSEQ;
+			goto err;
+		}
 
 		*nresult = 2;
-		return (0);
+		return 0;
 	} else {
 		s[0] = wc & 0xff;
-		if (_mskanji1(s[0] & 0xff))
-			goto ilseq;
+		if (_mskanji1(s[0] & 0xff)) {
+			ret = EILSEQ;
+			goto err;
+		}
 
 		*nresult = 1;
-		return (0);
+		return 0;
 	}
 
-ilseq:
+err:
 	*nresult = (size_t)-1;
-	return EILSEQ;
+	return ret;
 }
 
 
+static __inline int
+/*ARGSUSED*/
+_citrus_MSKanji_stdenc_wctocs(_MSKanjiEncodingInfo * __restrict ei,
+			      _csid_t * __restrict csid,
+			      _index_t * __restrict idx, wchar_t wc)
+{
+	_index_t row, col;
+
+	_DIAGASSERT(csid != NULL && idx != NULL);
+
+	if ((_wc_t)wc < 0x80) {
+		/* ISO-646 */
+		*csid = 0;
+		*idx = (_index_t)wc;
+	} else if ((_wc_t)wc < 0x100) {
+		/* KANA */
+		*csid = 1;
+		*idx = (_index_t)wc & 0x7F;
+	} else if ((0x8140 <= (_wc_t)wc && (_wc_t)wc <= 0x9FFC) ||
+		   (0xE040 <= (_wc_t)wc && (_wc_t)wc <= 0xFCFC)) {
+		/* Kanji (containing Gaiji zone) */
+		/*
+		 * 94^2 zone (contains a part of Gaiji (0xED40 - 0xEEFC)):
+		 * 0x8140 - 0x817E -> 0x2121 - 0x215F
+		 * 0x8180 - 0x819E -> 0x2160 - 0x217E
+		 * 0x819F - 0x81FC -> 0x2221 - 0x227E
+		 *
+		 * 0x8240 - 0x827E -> 0x2321 - 0x235F
+		 *  ...
+		 * 0x9F9F - 0x9FFc -> 0x5E21 - 0x5E7E
+		 *
+		 * 0xE040 - 0xE07E -> 0x5F21 - 0x5F5F
+		 *  ...
+		 * 0xEF9F - 0xEFFC -> 0x7E21 - 0x7E7E
+		 *
+		 * extended Gaiji zone:
+		 * 0xF040 - 0xFCFC
+		 */
+		*csid = 2;
+		row = ((_wc_t)wc >> 8) - 0x81;
+		if (row >= 0x5F)
+			row -= 0x40;
+		row = row * 2 + 0x21;
+		col = (wc & 0xFF) - 0x1F;
+		if (col >= 0x61)
+			col -= 1;
+		if (col > 0x7E) {
+			row += 1;
+			col -= 0x5E;
+		}
+		*idx = ((_index_t)row << 8) | col;
+	} else
+		return EILSEQ;
+
+	return 0;
+}
+
+static __inline int
+/*ARGSUSED*/
+_citrus_MSKanji_stdenc_cstowc(_MSKanjiEncodingInfo * __restrict ei,
+			      wchar_t * __restrict wc,
+			      _csid_t csid, _index_t idx)
+{
+	u_int32_t row, col;
+
+	_DIAGASSERT(wc != NULL);
+
+	switch (csid) {
+	case 0:
+		/* ISO-646 */
+		if (idx >= 0x80)
+			return EILSEQ;
+		*wc = (wchar_t)idx;
+		break;
+	case 1:
+		/* kana */
+		if (idx >= 0x80)
+			return EILSEQ;
+		*wc = (wchar_t)idx + 0x80;
+		break;
+	case 2:
+		/* kanji */
+		row = (idx >> 8);
+		col = idx & 0x7F;
+		if (row<0x21 || row>0x97 || col<0x21 || col>0x7E)
+			return EILSEQ;
+		row -= 0x21; col -= 0x21;
+		if ((row & 1)==0) {
+			col += 0x40;
+			if (col>=0x7F)
+				col += 1;
+		} else
+			col += 0x9F;
+		if (row<0x3E)
+			row = row/2 + 0x81;
+		else
+			row = row/2 + 0xc1;
+		*wc = ((wchar_t)row << 8) | col;
+		break;
+	default:
+		return EILSEQ;
+	}
+
+	return 0;
+}
+
 static int
 /*ARGSUSED*/
-_citrus_MSKanji_stdencoding_init(_MSKanjiEncodingInfo *  __restrict ei,
-				 const void * __restrict var, size_t lenvar)
+_citrus_MSKanji_encoding_module_init(_MSKanjiEncodingInfo *  __restrict ei,
+				     const void * __restrict var,
+				     size_t lenvar)
 {
 
 	_DIAGASSERT(cl != NULL);
@@ -312,7 +438,7 @@ _citrus_MSKanji_stdencoding_init(_MSKanjiEncodingInfo *  __restrict ei,
 }
 
 static void
-_citrus_MSKanji_stdencoding_uninit(_MSKanjiEncodingInfo *ei)
+_citrus_MSKanji_encoding_module_uninit(_MSKanjiEncodingInfo *ei)
 {
 }
 
@@ -324,3 +450,12 @@ _CITRUS_CTYPE_DECLS(MSKanji);
 _CITRUS_CTYPE_DEF_OPS(MSKanji);
 
 #include "citrus_ctype_template.h"
+
+/* ----------------------------------------------------------------------
+ * public interface for stdenc
+ */
+
+_CITRUS_STDENC_DECLS(MSKanji);
+_CITRUS_STDENC_DEF_OPS(MSKanji);
+
+#include "citrus_stdenc_template.h"

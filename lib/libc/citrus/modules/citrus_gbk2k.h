@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_gbk2k.h,v 1.1 2003/03/25 18:26:54 tshiozak Exp $ */
+/* $NetBSD: citrus_gbk2k.h,v 1.2 2003/06/25 09:51:43 tshiozak Exp $ */
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -31,6 +31,7 @@
 
 __BEGIN_DECLS
 _CITRUS_CTYPE_GETOPS_FUNC(GBK2K);
+_CITRUS_STDENC_GETOPS_FUNC(GBK2K);
 __END_DECLS
 
 #endif

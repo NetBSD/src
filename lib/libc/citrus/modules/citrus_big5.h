@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_big5.h,v 1.1 2002/03/17 22:14:22 tshiozak Exp $	*/
+/*	$NetBSD: citrus_big5.h,v 1.2 2003/06/25 09:51:41 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -31,6 +31,7 @@
 
 __BEGIN_DECLS
 _CITRUS_CTYPE_GETOPS_FUNC(BIG5);
+_CITRUS_STDENC_GETOPS_FUNC(BIG5);
 __END_DECLS
 
 #endif

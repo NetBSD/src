@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.21 2003/03/05 20:18:15 tshiozak Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.22 2003/06/25 09:51:28 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -399,14 +399,14 @@ _FUNCNAME(ctype_init)(void ** __restrict cl,
 
 	*cl = (void *)cei;
 
-	return _FUNCNAME(stdencoding_init)(_CEI_TO_EI(cei), var, lenvar);
+	return _FUNCNAME(encoding_module_init)(_CEI_TO_EI(cei), var, lenvar);
 }
 
 static void
 _FUNCNAME(ctype_uninit)(void *cl)
 {
 	if (cl) {
-		_FUNCNAME(stdencoding_uninit)(_CEI_TO_EI(_TO_CEI(cl)));
+		_FUNCNAME(encoding_module_uninit)(_CEI_TO_EI(_TO_CEI(cl)));
 		free(cl);
 	}
 }
@@ -585,6 +585,8 @@ _FUNCNAME(ctype_wcrtomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 	err = _FUNCNAME(wcrtomb_priv)(_CEI_TO_EI(_TO_CEI(cl)), s,
 			    _ENCODING_MB_CUR_MAX(_CEI_TO_EI(_TO_CEI(cl))),
 			    wc, psenc, nresult);
+	if (err == E2BIG)
+		err = EINVAL;
 	_RESTART_END(wcrtomb, _TO_CEI(cl), pspriv, psenc);
 
 	return err;

@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_big5.c,v 1.5 2002/03/28 10:53:48 yamt Exp $	*/
+/*	$NetBSD: citrus_big5.c,v 1.6 2003/06/25 09:51:41 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_big5.c,v 1.5 2002/03/28 10:53:48 yamt Exp $");
+__RCSID("$NetBSD: citrus_big5.c,v 1.6 2003/06/25 09:51:41 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -77,8 +77,12 @@ __RCSID("$NetBSD: citrus_big5.c,v 1.5 2002/03/28 10:53:48 yamt Exp $");
 #include <wchar.h>
 #include <sys/types.h>
 #include <limits.h>
+
+#include "citrus_namespace.h"
+#include "citrus_types.h"
 #include "citrus_module.h"
 #include "citrus_ctype.h"
+#include "citrus_stdenc.h"
 #include "citrus_big5.h"
 
 /* ----------------------------------------------------------------------
@@ -166,8 +170,8 @@ _citrus_BIG5_check2(u_int c)
 
 static int
 /*ARGSUSED*/
-_citrus_BIG5_stdencoding_init(_BIG5EncodingInfo * __restrict ei,
-			      const void * __restrict var, size_t lenvar)
+_citrus_BIG5_encoding_module_init(_BIG5EncodingInfo * __restrict ei,
+				  const void * __restrict var, size_t lenvar)
 {
 	_DIAGASSERT(ei != NULL);
 
@@ -178,7 +182,7 @@ _citrus_BIG5_stdencoding_init(_BIG5EncodingInfo * __restrict ei,
 
 static void
 /*ARGSUSED*/
-_citrus_BIG5_stdencoding_uninit(_BIG5EncodingInfo *ei)
+_citrus_BIG5_encoding_module_uninit(_BIG5EncodingInfo *ei)
 {
 }
 
@@ -281,30 +285,43 @@ _citrus_BIG5_wcrtomb_priv(_BIG5EncodingInfo * __restrict ei,
 			  size_t n, wchar_t wc, _BIG5State * __restrict psenc,
 			  size_t * __restrict nresult)
 {
-	int l;
+	int l, ret;
 
 	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(nresult != 0);
 	_DIAGASSERT(s != NULL);
 
+	/* reset state */
+	if (wc == 0) {
+		*nresult = 0; /* stateless */
+		return 0;
+	}
+
 	/* check invalid sequence */
-	if (wc & ~0xffff)
-		goto ilseq;
+	if (wc & ~0xffff) {
+		ret = EILSEQ;
+		goto err;
+	}
 
 	if (wc & 0x8000) {
 		if (_citrus_BIG5_check((wc >> 8) & 0xff) != 2 ||
-		    !_citrus_BIG5_check2(wc & 0xff))
-			goto ilseq;
+		    !_citrus_BIG5_check2(wc & 0xff)) {
+			ret = EILSEQ;
+			goto err;
+		}
 		l = 2;
 	} else {
-		if (wc & ~0xff || !_citrus_BIG5_check(wc & 0xff))
-			goto ilseq;
+		if (wc & ~0xff || !_citrus_BIG5_check(wc & 0xff)) {
+			ret = EILSEQ;
+			goto err;
+		}
 		l = 1;
 	}
 
 	if (n < l) {
 		/* bound check failure */
-		goto ilseq;
+		ret = E2BIG;
+		goto err;
 	}
 
 	if (l == 2) {
@@ -315,13 +332,62 @@ _citrus_BIG5_wcrtomb_priv(_BIG5EncodingInfo * __restrict ei,
 
 	*nresult = l;
 
-	return (0);
+	return 0;
 
-ilseq:
+err:
 	*nresult = (size_t)-1;
-	return (EILSEQ);
+	return ret;
 }
 
+static __inline int
+/*ARGSUSED*/
+_citrus_BIG5_stdenc_wctocs(_BIG5EncodingInfo * __restrict ei,
+			   _csid_t * __restrict csid,
+			   _index_t * __restrict idx, wchar_t wc)
+{
+
+	_DIAGASSERT(csid != NULL && idx != NULL);
+
+	if (wc<0x100)
+		*csid = 0;
+	else
+		*csid = 1;
+	*idx = (_index_t)wc;
+		
+	return 0;
+}
+
+static __inline int
+/*ARGSUSED*/
+_citrus_BIG5_stdenc_cstowc(_BIG5EncodingInfo * __restrict ei,
+			   wchar_t * __restrict wc,
+			   _csid_t csid, _index_t idx)
+{
+	u_int8_t h, l;
+
+	_DIAGASSERT(wc != NULL);
+
+	switch (csid) {
+	case 0:
+		if (idx>=0x80U)
+			return EILSEQ;
+		*wc = (wchar_t)idx;
+		break;
+	case 1:
+		if (idx>=0x10000U)
+			return EILSEQ;
+		h = idx >> 8;
+		l = idx;
+		if (h<0xA1 || h>0xF9 || l<0x40 || l>0xFE)
+			return EILSEQ;
+		*wc = (wchar_t)idx;
+		break;
+	default:
+		return EILSEQ;
+	}
+
+	return 0;
+}
 
 /* ----------------------------------------------------------------------
  * public interface for ctype
@@ -331,3 +397,13 @@ _CITRUS_CTYPE_DECLS(BIG5);
 _CITRUS_CTYPE_DEF_OPS(BIG5);
 
 #include "citrus_ctype_template.h"
+
+
+/* ----------------------------------------------------------------------
+ * public interface for stdenc
+ */
+
+_CITRUS_STDENC_DECLS(BIG5);
+_CITRUS_STDENC_DEF_OPS(BIG5);
+
+#include "citrus_stdenc_template.h"

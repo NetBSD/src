@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_euctw.h,v 1.1 2002/03/17 22:14:23 tshiozak Exp $	*/
+/*	$NetBSD: citrus_euctw.h,v 1.2 2003/06/25 09:51:42 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -31,6 +31,7 @@
 
 __BEGIN_DECLS
 _CITRUS_CTYPE_GETOPS_FUNC(EUCTW);
+_CITRUS_STDENC_GETOPS_FUNC(EUCTW);
 __END_DECLS
 
 #endif

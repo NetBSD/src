@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.22 2003/05/03 03:24:01 lukem Exp $	*/
+/*	$NetBSD: paths.h,v 1.23 2003/06/25 09:51:26 tshiozak Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -66,6 +66,9 @@
 #define	_PATH_DEVNULL	"/dev/null"
 #define	_PATH_DRUM	"/dev/drum"
 #define	_PATH_I18NMODULE "/usr/lib/i18n"
+#define	_PATH_ICONV	"/usr/share/i18n/iconv"
+#define	_PATH_ESDB	"/usr/share/i18n/esdb"
+#define	_PATH_CSMAPPER	"/usr/share/i18n/csmapper"
 #define	_PATH_KMEM	"/dev/kmem"
 #define	_PATH_KSYMS	"/dev/ksyms"
 #define	_PATH_KVMDB	"/var/db/kvm.db"
