@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.34 2000/01/26 09:44:11 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.35 2000/02/11 07:00:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -105,13 +105,13 @@
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vaddr_t)0)
-/* PTDPTDI<<PDSHIFT - UPAGES*NBPG */
-#define VM_MAXUSER_ADDRESS	((vaddr_t)0xefbfe000)
-/* PTDPTDI<<PDSHIFT + PTDPTDI<<PGSHIFT */
-#define VM_MAX_ADDRESS		((vaddr_t)0xeffbf000)
-/* KPTDI<<PDSHIFT */
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xf0000000)
-/* APTDPTDI<<PDSHIFT */
+/* (PDSLOT_PTE << PDSHIFT) - UPAGES*NBPG */
+#define VM_MAXUSER_ADDRESS	((vaddr_t)0xbfbfe000)
+/* (PDSLOT_PTE << PDSHIFT) + (PDSLOT_PTE << PGSHIFT) */
+#define VM_MAX_ADDRESS		((vaddr_t)0xbfeff000)
+/* PDSLOT_KERN << PDSHIFT */
+#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xc0000000)
+/* PDSLOT_APTE << PDSHIFT */
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xffc00000)
 
 /* XXX max. amount of KVM to be used by buffers. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.38 1999/12/04 21:20:34 ragge Exp $	*/
+/*	$NetBSD: param.h,v 1.39 2000/02/11 07:00:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -76,8 +76,8 @@
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
-#define	KERNBASE	0xf0000000	/* start of kernel virtual space */
-#define	KERNTEXTOFF	0xf0100000	/* start of kernel text */
+#define	KERNBASE	0xc0000000	/* start of kernel virtual space */
+#define	KERNTEXTOFF	0xc0100000	/* start of kernel text */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
