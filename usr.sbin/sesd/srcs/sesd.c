@@ -1,4 +1,4 @@
-/* $NetBSD: sesd.c,v 1.2 2000/02/22 06:06:08 mjacob Exp $ */
+/* $NetBSD: sesd.c,v 1.3 2000/10/11 20:23:56 is Exp $ */
 /* $FreeBSD: $ */
 /* $OpenBSD: $ */
 /*
@@ -56,7 +56,7 @@ main(a, v)
 	int a;
 	char **v;
 {
-	static char *usage =
+	static const char usage[] =
 	    "usage: %s [ -d ] [ -t pollinterval ] device [ device ]\n";
 	int fd, polltime, dev, devbase, nodaemon;
 	ses_encstat stat, *carray;
