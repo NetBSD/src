@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.13 1995/03/21 09:09:55 cgd Exp $	*/
+/*	$NetBSD: output.c,v 1.14 1995/05/11 21:29:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)output.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: output.c,v 1.13 1995/03/21 09:09:55 cgd Exp $";
+static char rcsid[] = "$NetBSD: output.c,v 1.14 1995/05/11 21:29:50 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,18 +59,20 @@ static char rcsid[] = "$NetBSD: output.c,v 1.13 1995/03/21 09:09:55 cgd Exp $";
 
 #include <stdio.h>	/* defines BUFSIZ */
 #include <string.h>
-#include "shell.h"
-#include "syntax.h"
-#include "output.h"
-#include "memalloc.h"
-#include "error.h"
 #ifdef __STDC__
-#include "stdarg.h"
+#include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 #include <errno.h>
 #include <unistd.h>
+#include <stdlib.h>
+
+#include "shell.h"
+#include "syntax.h"
+#include "output.h"
+#include "memalloc.h"
+#include "error.h"
 
 
 #define OUTBUFSIZ BUFSIZ

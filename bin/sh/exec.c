@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.15 1995/03/21 09:08:59 cgd Exp $	*/
+/*	$NetBSD: exec.c,v 1.16 1995/05/11 21:29:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,11 +38,18 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)exec.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: exec.c,v 1.15 1995/03/21 09:08:59 cgd Exp $";
+static char rcsid[] = "$NetBSD: exec.c,v 1.16 1995/05/11 21:29:02 christos Exp $";
 #endif
 #endif /* not lint */
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <stdlib.h>
 
 /*
  * When commands are first encountered, they are entered in a hash table.
@@ -70,12 +77,8 @@ static char rcsid[] = "$NetBSD: exec.c,v 1.15 1995/03/21 09:08:59 cgd Exp $";
 #include "error.h"
 #include "init.h"
 #include "mystring.h"
+#include "show.h"
 #include "jobs.h"
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
 
 
 #define CMDTABLESIZE 31		/* should be prime */
@@ -96,21 +99,12 @@ STATIC struct tblentry *cmdtable[CMDTABLESIZE];
 STATIC int builtinloc = -1;		/* index in path of %builtin, or -1 */
 
 
-#ifdef __STDC__
-STATIC void tryexec(char *, char **, char **);
-STATIC void execinterp(char **, char **);
-STATIC void printentry(struct tblentry *, int);
-STATIC void clearcmdentry(int);
-STATIC struct tblentry *cmdlookup(char *, int);
-STATIC void delete_cmd_entry(void);
-#else
-STATIC void tryexec();
-STATIC void execinterp();
-STATIC void printentry();
-STATIC void clearcmdentry();
-STATIC struct tblentry *cmdlookup();
-STATIC void delete_cmd_entry();
-#endif
+STATIC void tryexec __P((char *, char **, char **));
+STATIC void execinterp __P((char **, char **));
+STATIC void printentry __P((struct tblentry *, int));
+STATIC void clearcmdentry __P((int));
+STATIC struct tblentry *cmdlookup __P((char *, int));
+STATIC void delete_cmd_entry __P((void));
 
 
 
@@ -153,7 +147,9 @@ tryexec(cmd, argv, envp)
 	char **envp;
 	{
 	int e;
+#ifndef BSD
 	char *p;
+#endif
 
 #ifdef SYSV
 	do {
@@ -345,7 +341,7 @@ hashcmd(argc, argv)
 	while ((name = *argptr) != NULL) {
 		if ((cmdp = cmdlookup(name, 0)) != NULL
 		 && (cmdp->cmdtype == CMDNORMAL
-		     || cmdp->cmdtype == CMDBUILTIN && builtinloc >= 0))
+		     || (cmdp->cmdtype == CMDBUILTIN && builtinloc >= 0)))
 			delete_cmd_entry();
 		find_command(name, &entry, 1);
 		if (verbose) {
@@ -571,7 +567,7 @@ hashcd() {
 	for (pp = cmdtable ; pp < &cmdtable[CMDTABLESIZE] ; pp++) {
 		for (cmdp = *pp ; cmdp ; cmdp = cmdp->next) {
 			if (cmdp->cmdtype == CMDNORMAL
-			 || cmdp->cmdtype == CMDBUILTIN && builtinloc >= 0)
+			 || (cmdp->cmdtype == CMDBUILTIN && builtinloc >= 0))
 				cmdp->rehash = 1;
 		}
 	}
@@ -602,8 +598,8 @@ changepath(newval)
 	for (;;) {
 		if (*old != *new) {
 			firstchange = index;
-			if (*old == '\0' && *new == ':'
-			 || *old == ':' && *new == '\0')
+			if ((*old == '\0' && *new == ':')
+			 || (*old == ':' && *new == '\0'))
 				firstchange++;
 			old = new;	/* ignore subsequent differences */
 		}
@@ -612,8 +608,6 @@ changepath(newval)
 		if (*new == '%' && bltin < 0 && prefix("builtin", new + 1))
 			bltin = index;
 		if (*new == ':') {
-			char c = *(new+1);
-
 			index++;
 		}
 		new++, old++;
@@ -644,8 +638,10 @@ clearcmdentry(firstchange)
 	for (tblp = cmdtable ; tblp < &cmdtable[CMDTABLESIZE] ; tblp++) {
 		pp = tblp;
 		while ((cmdp = *pp) != NULL) {
-			if (cmdp->cmdtype == CMDNORMAL && cmdp->param.index >= firstchange
-			 || cmdp->cmdtype == CMDBUILTIN && builtinloc >= firstchange) {
+			if ((cmdp->cmdtype == CMDNORMAL &&
+			     cmdp->param.index >= firstchange)
+			 || (cmdp->cmdtype == CMDBUILTIN &&
+			     builtinloc >= firstchange)) {
 				*pp = cmdp->next;
 				ckfree(cmdp);
 			} else {

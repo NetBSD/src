@@ -1,4 +1,4 @@
-/*	$NetBSD: mystring.h,v 1.8 1995/03/21 09:09:46 cgd Exp $	*/
+/*	$NetBSD: mystring.h,v 1.9 1995/05/11 21:29:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,22 +35,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mystring.h	8.1 (Berkeley) 5/31/93
+ *	@(#)mystring.h	8.2 (Berkeley) 5/4/95
  */
 
 #include <string.h>
 
-#ifdef __STDC__
-void scopyn(const char *, char *, int);
-int prefix(const char *, const char *);
-int number(const char *);
-int is_number(const char *);
-#else
-void scopyn();
-int prefix();
-int number();
-int is_number();
-#endif
+void scopyn __P((const char *, char *, int));
+int prefix __P((const char *, const char *));
+int number __P((const char *));
+int is_number __P((const char *));
 
 #define equal(s1, s2)	(strcmp(s1, s2) == 0)
 #define scopy(s1, s2)	((void)strcpy(s2, s1))

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkinit.c,v 1.12 1995/03/21 09:09:36 cgd Exp $	*/
+/*	$NetBSD: mkinit.c,v 1.13 1995/05/11 21:29:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -44,9 +44,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)mkinit.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)mkinit.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: mkinit.c,v 1.12 1995/03/21 09:09:36 cgd Exp $";
+static char rcsid[] = "$NetBSD: mkinit.c,v 1.13 1995/05/11 21:29:34 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -156,16 +156,22 @@ struct text decls;			/* declarations */
 int amiddecls;				/* for formatting */
 
 
-void readfile(), doevent(), doinclude(), dodecl(), output();
-void addstr(), addchar(), writetext();
-FILE *ckfopen();
-void *ckmalloc __P((int));
-void error();
-int file_changed();
+void readfile __P((char *));
 int match __P((char *, char *));
 int gooddefine __P((char *));
-char *savestr();
+void doevent __P((struct event *, FILE *, char *));
+void doinclude __P((char *));
+void dodecl __P((char *, FILE *));
+void output __P((void));
+int file_changed __P((void));
 int touch __P((char *));
+void addstr __P((char *, struct text *));
+void addchar __P((int, struct text *));
+void writetext __P((struct text *, FILE *));
+FILE *ckfopen __P((char *, char *));
+void *ckmalloc __P((int));
+char *savestr __P((char *)); 
+void error __P((char *));  
 
 #define equal(s1, s2)	(strcmp(s1, s2) == 0)
 

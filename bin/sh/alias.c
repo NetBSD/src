@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.c,v 1.5 1995/03/21 09:08:40 cgd Exp $	*/
+/*	$NetBSD: alias.c,v 1.6 1995/05/11 21:28:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,12 +38,13 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)alias.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)alias.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: alias.c,v 1.5 1995/03/21 09:08:40 cgd Exp $";
+static char rcsid[] = "$NetBSD: alias.c,v 1.6 1995/05/11 21:28:40 christos Exp $";
 #endif
 #endif /* not lint */
 
+#include <stdlib.h>
 #include "shell.h"
 #include "input.h"
 #include "output.h"
@@ -57,6 +58,8 @@ static char rcsid[] = "$NetBSD: alias.c,v 1.5 1995/03/21 09:08:40 cgd Exp $";
 
 struct alias *atab[ATABSIZE];
 
+STATIC void setalias __P((char *, char *));
+STATIC int unalias __P((char *));
 STATIC struct alias **hashalias __P((char *));
 
 STATIC
@@ -215,7 +218,7 @@ aliascmd(argc, argv)
 			}
 		return (0);
 	}
-	while (n = *++argv) {
+	while ((n = *++argv) != NULL) {
 		if ((v = strchr(n+1, '=')) == NULL) /* n+1: funny ksh stuff */
 			if ((ap = lookupalias(n, 0)) == NULL) {
 				outfmt(out2, "alias: %s not found\n", n);

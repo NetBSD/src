@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.11 1995/03/21 09:10:04 cgd Exp $	*/
+/*	$NetBSD: redir.c,v 1.12 1995/05/11 21:30:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,11 +38,19 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)redir.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: redir.c,v 1.11 1995/03/21 09:10:04 cgd Exp $";
+static char rcsid[] = "$NetBSD: redir.c,v 1.12 1995/05/11 21:30:10 christos Exp $";
 #endif
 #endif /* not lint */
+
+#include <sys/types.h>
+#include <signal.h>
+#include <string.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 /*
  * Code for dealing with input/output redirection.
@@ -56,12 +64,6 @@ static char rcsid[] = "$NetBSD: redir.c,v 1.11 1995/03/21 09:10:04 cgd Exp $";
 #include "output.h"
 #include "memalloc.h"
 #include "error.h"
-#include <sys/types.h>
-#include <signal.h>
-#include <string.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <unistd.h>
 
 
 #define EMPTY -2		/* marks an unused slot in redirtab */
@@ -84,14 +86,8 @@ MKINIT struct redirtab *redirlist;
 */
 int fd0_redirected = 0;
 
-#ifdef __STDC__
-STATIC void openredirect(union node *, char *);
-STATIC int openhere(union node *);
-#else
-STATIC void openredirect();
-STATIC int openhere();
-#endif
-
+STATIC void openredirect __P((union node *, char[10 ]));
+STATIC int openhere __P((union node *));
 
 
 /*
@@ -228,7 +224,7 @@ openhere(redir)
 	union node *redir;
 	{
 	int pip[2];
-	int len;
+	int len = 0;
 
 	if (pipe(pip) < 0)
 		error("Pipe call failed");

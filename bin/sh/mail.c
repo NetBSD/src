@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.c,v 1.8 1995/03/21 09:09:22 cgd Exp $	*/
+/*	$NetBSD: mail.c,v 1.9 1995/05/11 21:29:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)mail.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)mail.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: mail.c,v 1.8 1995/03/21 09:09:22 cgd Exp $";
+static char rcsid[] = "$NetBSD: mail.c,v 1.9 1995/05/11 21:29:22 christos Exp $";
 #endif
 #endif /* not lint */
 

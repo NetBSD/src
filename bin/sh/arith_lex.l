@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: arith_lex.l,v 1.4 1995/03/21 09:08:45 cgd Exp $	*/
+/*	$NetBSD: arith_lex.l,v 1.5 1995/05/11 21:28:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,13 +39,15 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)arith_lex.l	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)arith_lex.l	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: arith_lex.l,v 1.4 1995/03/21 09:08:45 cgd Exp $";
+static char sccsid[] = "$NetBSD: arith_lex.l,v 1.5 1995/05/11 21:28:46 christos Exp $";
 #endif
 #endif /* not lint */
 
+#include <unistd.h>
 #include "y.tab.h"
+#include "error.h"
 
 extern yylval;
 extern char *arith_buf, *arith_startbuf;
@@ -82,6 +84,7 @@ extern char *arith_buf, *arith_startbuf;
 .	{ error("arith: syntax error: \"%s\"\n", arith_startbuf); }
 %%
 
+void
 arith_lex_reset() {
 	YY_NEW_FILE;
 }

@@ -53,7 +53,7 @@ expr:	ARITH_LPAREN expr ARITH_RPAREN = { $$ = $2; }
 	| ARITH_NUM
 	;
 %%
-/*	$NetBSD: arith.y,v 1.5 1995/03/21 09:08:43 cgd Exp $	*/
+/*	$NetBSD: arith.y,v 1.6 1995/05/11 21:28:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -93,9 +93,9 @@ expr:	ARITH_LPAREN expr ARITH_RPAREN = { $$ = $2; }
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)arith.y	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)arith.y	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: arith.y,v 1.5 1995/03/21 09:08:43 cgd Exp $";
+static char sccsid[] = "$NetBSD: arith.y,v 1.6 1995/05/11 21:28:45 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -106,6 +106,7 @@ static char rcsid[] = "$NetBSD: arith.y,v 1.5 1995/03/21 09:08:43 cgd Exp $";
 
 char *arith_buf, *arith_startbuf;
 
+int
 arith(s)
 	char *s; 
 {
@@ -121,6 +122,7 @@ arith(s)
 	return (result);
 }
 
+void
 yyerror(s)
 	char *s;
 {
@@ -134,7 +136,9 @@ yyerror(s)
 /*
  *  The exp(1) builtin.
  */
+int
 expcmd(argc, argv)
+	int argc;
 	char **argv;
 {
 	char *p;

@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.7 1995/03/31 21:58:13 christos Exp $	*/
+/*	$NetBSD: histedit.c,v 1.8 1995/05/11 21:29:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,31 +38,33 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)histedit.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: histedit.c,v 1.7 1995/03/31 21:58:13 christos Exp $";
+static char rcsid[] = "$NetBSD: histedit.c,v 1.8 1995/05/11 21:29:12 christos Exp $";
 #endif
 #endif /* not lint */
 
-/*
- * Editline and history functions (and glue).
- */
 #include <sys/param.h>
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+/*
+ * Editline and history functions (and glue).
+ */
 #include "shell.h"
 #include "parser.h"
 #include "var.h"
 #include "options.h"
+#include "main.h"
 #include "output.h"
 #include "mystring.h"
+#ifndef NO_HISTORY
+#include "myhistedit.h"
+#endif
 #include "error.h"
 #include "eval.h"
-#include "histedit.h"
 #include "memalloc.h"
-#include "extern.h"
 
 #define MAXHISTLOOPS	4	/* max recursions through fc */
 #define DEFEDITOR	"ed"	/* default editor *should* be $EDITOR */
@@ -73,8 +75,6 @@ int displayhist;
 static FILE *el_in, *el_out;
 
 STATIC char *fc_replace __P((const char *, char *, char *));
-int not_fcnumber __P((char *));
-int str_to_event __P((char *, int));
 
 /*
  * Set history and editing status.  Called whenever the status may
@@ -149,7 +149,8 @@ bad:
 
 
 void
-sethistsize() {
+sethistsize()
+{
 	char *cp;
 	int histsize;
 
@@ -169,7 +170,7 @@ sethistsize() {
 int
 histcmd(argc, argv)
 	int argc;
-	char *argv[];
+	char **argv;
 {
 	extern char *optarg;
 	extern int optind, optopt, optreset;
@@ -186,6 +187,21 @@ histcmd(argc, argv)
 	struct jmploc *volatile savehandler;
 	char editfile[MAXPATHLEN + 1];
 	FILE *efp;
+#ifdef __GNUC__
+	/* Avoid longjmp clobbering */
+	(void) &editor;
+	(void) &lflg;
+	(void) &nflg;
+	(void) &rflg;
+	(void) &sflg;
+	(void) &firststr;
+	(void) &laststr;
+	(void) &pat;
+	(void) &repl;
+	(void) &efp;
+	(void) &argc;
+	(void) &argv;
+#endif
 
 	if (hist == NULL)
 		error("history not active");
@@ -377,6 +393,7 @@ histcmd(argc, argv)
 		--active;
 	if (displayhist)
 		displayhist = 0;
+	return 0;
 }
 
 STATIC char *

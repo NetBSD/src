@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.12 1995/03/21 09:08:48 cgd Exp $	*/
+/*	$NetBSD: cd.c,v 1.13 1995/05/11 21:28:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,14 +38,15 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)cd.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: cd.c,v 1.12 1995/03/21 09:08:48 cgd Exp $";
+static char rcsid[] = "$NetBSD: cd.c,v 1.13 1995/05/11 21:28:49 christos Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 
@@ -61,22 +62,14 @@ static char rcsid[] = "$NetBSD: cd.c,v 1.12 1995/03/21 09:08:48 cgd Exp $";
 #include "output.h"
 #include "memalloc.h"
 #include "error.h"
+#include "redir.h"
 #include "mystring.h"
-#include "extern.h"
+#include "show.h"
 
-
-#ifdef __STDC__
-STATIC int docd(char *, int);
-STATIC void updatepwd(char *);
-STATIC void getpwd(void);
-STATIC char *getcomponent(void);
-#else
-STATIC int docd();
-STATIC void updatepwd();
-STATIC void getpwd();
-STATIC char *getcomponent();
-#endif
-
+STATIC int docd __P((char *, int));
+STATIC char *getcomponent __P((void));
+STATIC void updatepwd __P((char *));
+STATIC void getpwd __P((void));
 
 char *curdir;			/* current working directory */
 char *prevdir;			/* previous working directory */
@@ -119,6 +112,8 @@ cdcmd(argc, argv)
 		}
 	}
 	error("can't cd to %s", dest);
+	/*NOTREACHED*/
+	return 0;
 }
 
 
@@ -177,7 +172,7 @@ top:
 	}
 	first = 1;
 	while ((q = getcomponent()) != NULL) {
-		if (q[0] == '\0' || q[0] == '.' && q[1] == '\0')
+		if (q[0] == '\0' || (q[0] == '.' && q[1] == '\0'))
 			continue;
 		if (! first)
 			STPUTC('/', p);
@@ -370,7 +365,7 @@ getpwd() {
 	pip[1] = -1;
 	p = buf;
 	while ((i = read(pip[0], p, buf + MAXPWD - p)) > 0
-	     || i == -1 && errno == EINTR) {
+	     || (i == -1 && errno == EINTR)) {
 		if (i > 0)
 			p += i;
 	}
