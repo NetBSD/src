@@ -1,4 +1,4 @@
-/*      $NetBSD: sushi.h,v 1.1 2001/01/05 01:28:40 garbled Exp $       */
+/*      $NetBSD: sushi.h,v 1.2 2001/01/05 18:57:25 thorpej Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,11 +35,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SMIT_H_
-#define _SMIT_H_
+#ifndef _SUSHI_H_
+#define _SUSHI_H_
 
 #include <nl_types.h>
 
 void bailout(const char *fmt, ...);
 
-#endif	/* _SMIT_H_ */
+#endif	/* _SUSHI_H_ */
