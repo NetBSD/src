@@ -1,4 +1,4 @@
-.\"	$NetBSD: inet.4,v 1.5 1999/03/16 01:19:16 garbled Exp $
+.\"	$NetBSD: inet.4,v 1.6 2000/06/26 16:11:37 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -71,10 +71,10 @@ Sockets bound to the Internet protocol family utilize
 the following addressing structure,
 .Bd -literal -offset indent
 struct sockaddr_in {
-	short	sin_family;
-	u_short	sin_port;
-	struct	in_addr sin_addr;
-	char	sin_zero[8];
+	sa_family_t	sin_family;
+	u_int16_t	sin_port;
+	struct in_addr	sin_addr;
+	int8_t		sin_zero[8];
 };
 .Ed
 .Pp
