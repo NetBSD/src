@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 1999/07/29 19:14:37 augustss Exp $	*/
+/*	$NetBSD: conf.c,v 1.9 2000/03/21 17:31:12 deberg Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -163,7 +163,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 9 */
 	cdev_notdef(),			/* 10 */
 	cdev_notdef(),			/* 11 */
-	cdev_tty_init(NZSTTY,zs),	/* 12: 2 mac serial ports -- BG*/
+	cdev_tty_init(NZSTTY,zs),	/* 12: 2 NeXT serial ports */
 	cdev_disk_init(NSD,sd),		/* 13: SCSI disk */
 	cdev_tape_init(NST,st),		/* 14: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 15: SCSI CD-ROM */
