@@ -199,8 +199,11 @@ The Install Procedure:
 		gdb -w /netbsd
 		set scndefaultrate = YOUR_BAUD_RATE
 		quit
+	where YOUR_BAUD_RATE is the actual value, 19200, 38400 or
+	something slower than 9600.
 	If you set scndefaultrate to something bogus, you'll probably
 	not be able to reboot... So be carefull!
+	
 
   l) Reboot the machine and it should come up in multi-user mode *IF*
 	you got it configured correctly.
