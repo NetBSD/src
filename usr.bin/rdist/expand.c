@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.10 1997/10/19 13:58:56 lukem Exp $	*/
+/*	$NetBSD: expand.c,v 1.11 1997/10/19 19:31:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: expand.c,v 1.10 1997/10/19 13:58:56 lukem Exp $");
+__RCSID("$NetBSD: expand.c,v 1.11 1997/10/19 19:31:19 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -319,7 +319,7 @@ matchdir(pattern)
 	}
 	if (fstat(dirp->dd_fd, &stb) < 0)
 		goto patherr1;
-	if (!ISDIR(stb.st_mode)) {
+	if (!S_ISDIR(stb.st_mode)) {
 		errno = ENOTDIR;
 		goto patherr1;
 	}
@@ -516,7 +516,7 @@ slash:
 			while (*s)
 				addpath(*s++);
 			addpath('/');
-			if (stat(path, &stb) == 0 && ISDIR(stb.st_mode))
+			if (stat(path, &stb) == 0 && S_ISDIR(stb.st_mode))
 				if (*p == '\0') {
 					if (which & E_TILDE)
 						Cat(path, "");

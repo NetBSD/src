@@ -1,4 +1,4 @@
-/*	$NetBSD: aux.c,v 1.7 1997/10/19 13:48:21 mycroft Exp $	*/
+/*	$NetBSD: aux.c,v 1.8 1997/10/19 19:27:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: aux.c,v 1.7 1997/10/19 13:48:21 mycroft Exp $");
+__RCSID("$NetBSD: aux.c,v 1.8 1997/10/19 19:27:40 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ isdir(name)
 
 	if (stat(name, &sbuf) < 0)
 		return(0);
-	return((sbuf.st_mode & S_IFMT) == S_IFDIR);
+	return (S_ISDIR(sbuf.st_mode));
 }
 
 /*
