@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)clri.c	8.2 (Berkeley) 9/23/93";*/
-static char *rcsid = "$Id: clri.c,v 1.7 1994/09/23 02:18:30 mycroft Exp $";
+static char *rcsid = "$Id: clri.c,v 1.8 1995/01/30 20:02:47 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -68,8 +68,9 @@ main(argc, argv)
 	register struct dinode *ip;
 	register int fd;
 	struct dinode ibuf[MAXBSIZE / sizeof (struct dinode)];
-	long generation, bsize;
+	int32_t generation;
 	off_t offset;
+	size_t bsize;
 	int inonum;
 	char *fs, sblock[SBSIZE];
 
@@ -121,7 +122,7 @@ main(argc, argv)
 		ip->di_gen = generation;
 
 		/* backup and write the block */
-		if (lseek(fd, (off_t)-bsize, SEEK_CUR) < 0)
+		if (lseek(fd, offset, SEEK_SET) < 0)
 			err(1, "%s", fs);
 		if (write(fd, ibuf, bsize) != bsize)
 			err(1, "%s", fs);
