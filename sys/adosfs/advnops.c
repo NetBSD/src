@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.59 2001/05/28 02:50:51 chs Exp $	*/
+/*	$NetBSD: advnops.c,v 1.60 2001/05/30 11:40:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_quota.h"
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.15 2000/03/30 12:45:43 augustss Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.16 2001/05/30 11:46:34 mrg Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -51,7 +51,7 @@ extern void le_dec_copytobuf_gap2 __P((struct lance_softc *, void *,
 extern void le_dec_copyfrombuf_gap2 __P((struct lance_softc *, void *,
 	    int, int));
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.53 2001/03/23 21:10:48 fvdl Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.54 2001/05/30 11:42:12 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -40,7 +40,7 @@
  *	@(#)cd9660_vfsops.c	8.18 (Berkeley) 5/22/95
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
 #endif
 
