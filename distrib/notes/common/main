@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.15 2001/04/06 03:10:54 he Exp $
+.\"	$NetBSD: main,v 1.61.2.16 2001/04/06 03:13:33 he Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -252,7 +252,7 @@ to fix among many other things core dumps in
 .It
 Various fixes and enhancements to INET6 and IPSEC code.
 .It
-Heimdal, our
+The Heimdal
 .Xr kerberos 8
 implementation has been upgraded to version 0.3e.
 .El
