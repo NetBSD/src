@@ -132,6 +132,18 @@
 #endif
 #endif
 
+#ifdef TE_LINUX
+#define FPU_DEFAULT FPU_ARCH_FPA
+#endif
+
+#ifdef TE_NetBSD
+#ifdef OBJ_ELF
+#define FPU_DEFAULT FPU_ARCH_VFP  /* Soft-float, but VFP order. */
+#else
+#define FPU_DEFAULT FPU_ARCH_FPA  /* Soft-float, but FPA order. */
+#endif
+#endif
+
 /* For backwards compatibility we default to the FPA.  */
 #ifndef FPU_DEFAULT
 #define FPU_DEFAULT FPU_ARCH_FPA
@@ -9253,10 +9265,16 @@ md_begin ()
     }
   else if (mfpu_opt == -1)
     {
+#if !(defined (TE_LINUX) || defined(TE_NetBSD))
+      /* Some environments specify a default FPU.  If they don't, infer
+	 it from the processor.  */
       if (mcpu_fpu_opt != -1)
 	mfpu_opt = mcpu_fpu_opt;
       else
 	mfpu_opt = march_fpu_opt;
+#else
+      mfpu_opt = FPU_DEFAULT;
+#endif
     }
 
   if (mfpu_opt == -1)
