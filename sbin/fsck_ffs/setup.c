@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.31 1997/09/20 06:16:33 lukem Exp $	*/
+/*	$NetBSD: setup.c,v 1.32 1997/09/24 09:24:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.31 1997/09/20 06:16:33 lukem Exp $");
+__RCSID("$NetBSD: setup.c,v 1.32 1997/09/24 09:24:23 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,9 @@ setup(dev)
 	 * Read in the superblock, looking for alternates if necessary
 	 */
 	if (readsb(1) == 0) {
+#ifdef LITE2BORKEN
 		skipclean = 0;
+#endif
 		if (bflag || preen || calcsb(dev, fsreadfd, &proto) == 0)
 			return(0);
 		if (reply("LOOK FOR ALTERNATE SUPERBLOCKS") == 0)
