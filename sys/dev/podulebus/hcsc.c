@@ -1,4 +1,4 @@
-/*	$NetBSD: hcsc.c,v 1.6 2001/06/12 11:52:03 bjh21 Exp $	*/
+/*	$NetBSD: hcsc.c,v 1.7 2001/07/04 15:01:08 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -75,7 +75,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.6 2001/06/12 11:52:03 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.7 2001/07/04 15:01:08 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.6 2001/06/12 11:52:03 bjh21 Exp $");
 
 #include <dev/podulebus/podulebus.h>
 #include <dev/podulebus/podules.h>
+#include <dev/podulebus/powerromreg.h>
 
 #include <dev/podulebus/hcscreg.h>
 
@@ -132,8 +133,14 @@ hcsc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 
+	/* Normal ROM */
 	if (pa->pa_product == PODULE_HCCS_IDESCSI &&
 	    strncmp(pa->pa_descr, "SCSI", 4) == 0)
+		return 1;
+	/* PowerROM */
+	if (pa->pa_product == PODULE_ALSYSTEMS_SCSI &&
+	    podulebus_initloader(pa) == 0 &&
+	    podloader_callloader(pa, 0, 0) == PRID_HCCS_SCSI1)
 		return 1;
 	return 0;
 }
