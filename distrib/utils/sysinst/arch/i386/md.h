@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.26 2000/12/22 10:12:15 mrg Exp $	*/
+/*	$NetBSD: md.h,v 1.27 2001/01/27 07:34:39 jmc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -110,6 +110,8 @@ EXTERN	char *disk_names[]
 #endif
 ;
 
+/* Bootblock type */
+EXTERN char *boottype INIT("");
 
 /*
  * Legal start character for a disk for checking input. 
