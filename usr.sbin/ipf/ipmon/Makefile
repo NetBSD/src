@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.17.2.2 2004/03/29 10:45:13 tron Exp $
+#	$NetBSD: Makefile,v 1.17.2.3 2004/03/31 07:59:34 tron Exp $
 
 PROG=		ipmon
 SRCS=		ipmon.c ipmon_y.c ipmon_l.c
 MAN=		ipmon.8
 
-CPPFLAGS+=	-DLOGFAC=LOG_LOCAL0
+CPPFLAGS+=	-DLOGFAC=LOG_LOCAL0 -I.
 
 CLEANFILES+=	ipmon_y.c ipmon_y.h
 CLEANFILES+=	ipmon_l.c ipmon_l.h
