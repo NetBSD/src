@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.19 1995/10/12 21:28:32 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.20 1995/11/03 02:35:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -661,6 +661,7 @@ ccdstart(cs, bp)
 	struct ccdbuf *cbp;
 	caddr_t addr;
 	daddr_t bn;
+	struct partition *pp;
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
@@ -682,8 +683,11 @@ ccdstart(cs, bp)
 	/*
 	 * Translate the partition-relative block number to an absolute.
 	 */
-	bn = (bp->b_blkno +
-	    cs->sc_dkdev.dk_label.d_partitions[DISKPART(bp->b_dev)].p_offset);
+	bn = bp->b_blkno;
+	if (DISKPART(bp->b_dev) != RAW_PART) {
+		pp = &cs->sc_dkdev.dk_label.d_partitions[DISKPART(bp->b_dev)];
+		bn += pp->p_offset;
+	}
 
 	/*
 	 * Allocate component buffers and fire off the requests
