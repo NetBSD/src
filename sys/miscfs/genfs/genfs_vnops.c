@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.10 1998/08/13 09:59:53 kleink Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.11 1999/03/05 21:09:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,16 +81,14 @@ genfs_fsync(v)
 		struct proc *a_p;
 	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
-	struct timespec ts;
+	int wait;
 
-	vflushbuf(vp, (ap->a_flags & FSYNC_WAIT) != 0);
-	if ((ap->a_flags & FSYNC_DATAONLY) != 0) {
+	wait = (ap->a_flags & FSYNC_WAIT) != 0;
+	vflushbuf(vp, wait);
+	if ((ap->a_flags & FSYNC_DATAONLY) != 0)
 		return (0);
-	} else {
-		TIMEVAL_TO_TIMESPEC(&time, &ts);
-		return (VOP_UPDATE(ap->a_vp, &ts, &ts,
-		    (ap->a_flags & FSYNC_WAIT) != 0));
-	}
+	else
+		return (VOP_UPDATE(ap->a_vp, NULL, NULL, wait));
 }
 
 int

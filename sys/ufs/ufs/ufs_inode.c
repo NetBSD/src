@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.12 1998/12/04 11:02:30 bouyer Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.13 1999/03/05 21:09:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -69,7 +69,6 @@ ufs_inactive(v)
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct proc *p = ap->a_p;
-	struct timespec ts;
 	int mode, error = 0;
 	extern int prtactive;
 
@@ -95,10 +94,8 @@ ufs_inactive(v)
 		VOP_VFREE(vp, ip->i_number, mode);
 	}
 
-	if (ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) {
-		TIMEVAL_TO_TIMESPEC(&time, &ts);
-		VOP_UPDATE(vp, &ts, &ts, 0);
-	}
+	if (ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE))
+		VOP_UPDATE(vp, NULL, NULL, 0);
 out:
 	VOP_UNLOCK(vp, 0);
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.34 1998/09/01 04:04:10 thorpej Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.35 1999/03/05 21:09:48 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -331,10 +331,8 @@ deupdat(dep, waitfor)
 	struct denode *dep;
 	int waitfor;
 {
-	struct timespec ts;
 
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	return (VOP_UPDATE(DETOV(dep), &ts, &ts, waitfor));
+	return (VOP_UPDATE(DETOV(dep), NULL, NULL, waitfor));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.16 1999/03/05 20:47:07 mycroft Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.17 1999/03/05 21:09:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -154,7 +154,6 @@ lfs_truncate(v)
 	register struct vnode *vp = ap->a_vp;
 	off_t length = ap->a_length;
 	struct buf *bp, *sup_bp;
-	struct timespec ts;
 	struct ifile *ifp;
 	struct inode *ip;
 	struct lfs *fs;
@@ -166,7 +165,6 @@ lfs_truncate(v)
 	int e1, e2, depth, lastseg, num, offset, seg, freesize;
 
 	ip = VTOI(vp);
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	if (vp->v_type == VLNK && vp->v_mount->mnt_maxsymlinklen > 0) {
 #ifdef DIAGNOSTIC
 		if (length != 0)
@@ -175,7 +173,7 @@ lfs_truncate(v)
 		bzero((char *)&ip->i_ffs_shortlink, (u_int)ip->i_ffs_size);
 		ip->i_ffs_size = 0;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(vp, &ts, &ts, 0));
+		return (VOP_UPDATE(vp, NULL, NULL, 0));
 	}
 #ifdef UVM
 	uvm_vnp_setsize(vp, length);
@@ -188,7 +186,7 @@ lfs_truncate(v)
 	/* If length is larger than the file, just update the times. */
 	if (ip->i_ffs_size <= length) {
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(vp, &ts, &ts, 0));
+		return (VOP_UPDATE(vp, NULL, NULL, 0));
 	}
 
 	/*
@@ -371,6 +369,6 @@ lfs_truncate(v)
 	fs->lfs_avail += fragstodb(fs, a_released);
 	e1 = vinvalbuf(vp, (length > 0) ? V_SAVE : 0, ap->a_cred, ap->a_p,
 	    0, 0); 
-	e2 = VOP_UPDATE(vp, &ts, &ts, 0);
+	e2 = VOP_UPDATE(vp, NULL, NULL, 0);
 	return (e1 ? e1 : e2 ? e2 : 0);
 }

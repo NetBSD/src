@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.26 1999/03/05 20:47:07 mycroft Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.27 1999/03/05 21:09:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -169,7 +169,6 @@ ffs_truncate(v)
 	struct buf *bp;
 	int offset, size, level;
 	long count, nblocks, vflags, blocksreleased = 0;
-	struct timespec ts;
 	register int i;
 	int aflags, error, allerror;
 	off_t osize;
@@ -177,7 +176,6 @@ ffs_truncate(v)
 	if (length < 0)
 		return (EINVAL);
 	oip = VTOI(ovp);
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	if (ovp->v_type == VLNK &&
 	    (oip->i_ffs_size < ovp->v_mount->mnt_maxsymlinklen ||
 	     (ovp->v_mount->mnt_maxsymlinklen == 0 &&
@@ -189,11 +187,11 @@ ffs_truncate(v)
 		memset((char *)&oip->i_ffs_shortlink, 0, (u_int)oip->i_ffs_size);
 		oip->i_ffs_size = 0;
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, &ts, &ts, 1));
+		return (VOP_UPDATE(ovp, NULL, NULL, 1));
 	}
 	if (oip->i_ffs_size == length) {
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, &ts, &ts, 0));
+		return (VOP_UPDATE(ovp, NULL, NULL, 0));
 	}
 #ifdef QUOTA
 	if ((error = getinoquota(oip)) != 0)
@@ -232,7 +230,7 @@ ffs_truncate(v)
 		else
 			bawrite(bp);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, &ts, &ts, 1));
+		return (VOP_UPDATE(ovp, NULL, NULL, 1));
 	}
 	/*
 	 * Shorten the size of the file. If the file is not being
@@ -297,7 +295,7 @@ ffs_truncate(v)
 	for (i = NDADDR - 1; i > lastblock; i--)
 		oip->i_ffs_db[i] = 0;
 	oip->i_flag |= IN_CHANGE | IN_UPDATE;
-	if ((error = VOP_UPDATE(ovp, &ts, &ts, 1)) != 0)
+	if ((error = VOP_UPDATE(ovp, NULL, NULL, 1)) != 0)
 		allerror = error;
 	/*
 	 * Having written the new inode to disk, save its new configuration
