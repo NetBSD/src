@@ -1,4 +1,4 @@
-/*	$NetBSD: biostramp.S,v 1.2 1996/09/09 11:31:41 jtk Exp $	*/
+/*	$NetBSD: biostramp.S,v 1.3 1996/09/09 18:42:51 mycroft Exp $	*/
 /*-
  * Copyright (c) 1996 John T. Kohl.  All rights reserved.
  *
@@ -57,16 +57,6 @@
  *
  */
 
-#define ASM
-#define _LOCORE
-
-#define addr32	.byte 0x67
-#define data32	.byte 0x66
-
-/* these from locore.s: */
-#define	ALIGN_TEXT	.align	2,0x90	/* 4-byte boundaries, NOP-filled */
-#define	ENTRY(name)	.globl _ ## name; ALIGN_TEXT; _ ## name:
-
 #include "assym.h"
 #include "apm.h"
 #if NAPM > 0
@@ -75,6 +65,9 @@
 #include <machine/segments.h>
 #include <machine/apmvar.h>
 #include <machine/psl.h>
+#include <machine/asm.h>
+#define	addr32	.byte 0x67
+#define	data32	.byte 0x66
 
 	.set MYBASE,NBPG
 	.set MYSCRATCH,NBPG+NBPG
