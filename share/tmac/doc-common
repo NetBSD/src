@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-common,v 1.38 2000/05/14 13:16:47 tsutsui Exp $
+.\"	$NetBSD: doc-common,v 1.38.4.1 2000/06/24 11:06:16 soren Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -178,6 +178,7 @@
 .			if "\\$3"pmax"     .as vT /\\$3\ 
 .			if "\\$3"powerpc"  .as vT /\\$3\ 
 .			if "\\$3"prep"     .as vT /\\$3\ 
+.			if "\\$3"sgimips"  .as vT /\\$3\ 
 .			if "\\$3"sh3"      .as vT /\\$3\ 
 .			if "\\$3"sparc"    .as vT /\\$3\ 
 .			if "\\$3"sparc64"  .as vT /\\$3\ 
