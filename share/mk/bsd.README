@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.80 2001/10/13 06:06:55 jmc Exp $
+#	$NetBSD: bsd.README,v 1.81 2001/10/30 15:17:16 wiz Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -500,9 +500,15 @@ from bsd.lib.mk and bsd.prog.mk.
 The include file <bsd.inc.mk> defines the includes target and uses two
 variables:
 
-INCS	The list of include files
+INCS		The list of include files
 
-INCSDIR	The location to install the include files.
+INCSDIR		The location to install the include files.
+
+INCSNAME	Target name of the include file, if only one; same as
+		FILESNAME, but for include files.
+
+INCSNAME_<file>	The name file <file> should be installed as, if not <file>,
+		same as FILESNAME_<file>, but for include files.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
