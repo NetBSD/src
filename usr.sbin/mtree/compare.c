@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.28 2001/10/04 04:51:27 lukem Exp $	*/
+/*	$NetBSD: compare.c,v 1.29 2001/10/09 04:50:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.28 2001/10/04 04:51:27 lukem Exp $");
+__RCSID("$NetBSD: compare.c,v 1.29 2001/10/09 04:50:00 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -230,6 +230,23 @@ typeerr:		LABEL;
 			(void)printf(")\n");
 		tab = "\t";
 	skip:
+	}
+	if (s->flags & F_DEV &&
+	    (s->type == F_BLOCK || s->type == F_CHAR) &&
+	    s->st_rdev != p->fts_statp->st_rdev) {
+		LABEL;
+		(void)printf("%sdevice (%#x, %#x",
+		    tab, s->st_rdev, p->fts_statp->st_rdev);
+		if (uflag) {
+	/* XXXLUKEM: unlink first ? */
+			if (mknod(p->fts_accpath, s->st_mode, s->st_rdev))
+				(void)printf(", not modified: %s)\n",
+				    strerror(errno));
+			else
+				(void)printf(", modified)\n");
+		} else
+			(void)printf(")\n");
+		tab = "\t";
 	}
 	if (s->flags & F_NLINK && s->type != F_DIR &&
 	    s->st_nlink != p->fts_statp->st_nlink) {
