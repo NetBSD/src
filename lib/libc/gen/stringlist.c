@@ -1,4 +1,4 @@
-/*	$NetBSD: stringlist.c,v 1.7 1999/11/27 06:19:32 lukem Exp $	*/
+/*	$NetBSD: stringlist.c,v 1.8 1999/11/28 03:44:09 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: stringlist.c,v 1.7 1999/11/27 06:19:32 lukem Exp $");
+__RCSID("$NetBSD: stringlist.c,v 1.8 1999/11/28 03:44:09 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -69,21 +69,23 @@ sl_init()
 
 	sl = malloc(sizeof(StringList));
 	if (sl == NULL)
-		err(1, "stringlist");
+		return (NULL);
 
 	sl->sl_cur = 0;
 	sl->sl_max = _SL_CHUNKSIZE;
 	sl->sl_str = malloc(sl->sl_max * sizeof(char *));
-	if (sl->sl_str == NULL)
-		err(1, "stringlist");
-	return sl;
+	if (sl->sl_str == NULL) {
+		free(sl);
+		sl = NULL;
+	}
+	return (sl);
 }
 
 
 /*
  * sl_add(): Add an item to the string list
  */
-void
+int
 sl_add(sl, name)
 	StringList *sl;
 	char *name;
@@ -92,12 +94,16 @@ sl_add(sl, name)
 	_DIAGASSERT(sl != NULL);
 
 	if (sl->sl_cur == sl->sl_max - 1) {
+		char	**new;
+
 		sl->sl_max += _SL_CHUNKSIZE;
-		sl->sl_str = realloc(sl->sl_str, sl->sl_max * sizeof(char *));
-		if (sl->sl_str == NULL)
-			err(1, "stringlist");
+		new = (char **)realloc(sl->sl_str, sl->sl_max * sizeof(char *));
+		if (new == NULL)
+			return (-1);
+		sl->sl_str = new;
 	}
 	sl->sl_str[sl->sl_cur++] = name;
+	return (0);
 }
 
 
@@ -142,5 +148,5 @@ sl_find(sl, name)
 		if (strcmp(sl->sl_str[i], name) == 0)
 			return sl->sl_str[i];
 
-	return NULL;
+	return (NULL);
 }
