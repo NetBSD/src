@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.23 2000/03/16 18:26:49 jdolecek Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.24 2000/11/27 08:39:57 chs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -113,6 +113,7 @@ void ufs_ihashrem __P((struct inode *));
 
 /* ufs_inode.c */
 int ufs_reclaim __P((struct vnode *, struct proc *));
+int ufs_balloc_range __P((struct vnode *, off_t, off_t, struct ucred *, int));
 
 /* ufs_lookup.c */
 void ufs_dirbad __P((struct inode *, doff_t, char *));

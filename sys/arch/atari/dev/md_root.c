@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.14 2000/01/21 23:29:02 thorpej Exp $	*/
+/*	$NetBSD: md_root.c,v 1.15 2000/11/27 08:39:40 chs Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -159,7 +159,6 @@ struct proc		*proc;
 	 * Initialize our buffer header:
 	 */
 	memset(&buf, 0, sizeof(buf));
-	buf.b_rcred = buf.b_wcred = proc->p_ucred;
 	buf.b_vnbufs.le_next = NOLIST;
 	buf.b_flags = B_BUSY;
 	buf.b_dev   = ld_dev;

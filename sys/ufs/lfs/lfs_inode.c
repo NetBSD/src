@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.48 2000/11/27 03:33:57 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.49 2000/11/27 08:39:56 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -288,7 +288,6 @@ lfs_truncate(v)
 			return (error);
 		oip->i_ffs_size = length;
 		uvm_vnp_setsize(ovp, length);
-		(void) uvm_vnp_uncache(ovp);
 		(void) VOP_BWRITE(bp);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(ovp, NULL, NULL, 0));
@@ -338,7 +337,6 @@ lfs_truncate(v)
 		odb = btodb(bp->b_bcount);
 		oip->i_ffs_size = length;
 		size = blksize(fs, oip, lbn);
-		(void) uvm_vnp_uncache(ovp);
 		if (ovp->v_type != VDIR)
 			memset((char *)bp->b_data + offset, 0,
 			       (u_int)(size - offset));

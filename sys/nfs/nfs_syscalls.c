@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.47 2000/11/24 23:30:03 chs Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.48 2000/11/27 08:39:50 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -970,10 +970,7 @@ nfssvc_iod(p)
 		    nmp->nm_bufqwant = FALSE;
 		    wakeup(&nmp->nm_bufq);
 		}
-		if (bp->b_flags & B_READ)
-		    (void) nfs_doio(bp, bp->b_rcred, (struct proc *)0);
-		else
-		    (void) nfs_doio(bp, bp->b_wcred, (struct proc *)0);
+		(void) nfs_doio(bp, NULL);
 		/*
 		 * If there are more than one iod on this mount, then defect
 		 * so that the iods can be shared out fairly between the mounts

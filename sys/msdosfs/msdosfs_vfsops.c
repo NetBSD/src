@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.70 2000/09/19 22:02:10 fvdl Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.71 2000/11/27 08:39:47 chs Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -699,6 +699,9 @@ msdosfs_mountfs(devvp, mp, p, argp)
         mp->mnt_stat.f_fsid.val[0] = (long)dev;
         mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_MSDOS);
 	mp->mnt_flag |= MNT_LOCAL;
+	mp->mnt_dev_bshift = pmp->pm_bnshift;
+	mp->mnt_fs_bshift = pmp->pm_cnshift;
+
 #ifdef QUOTA
 	/*
 	 * If we ever do quotas for DOS filesystems this would be a place

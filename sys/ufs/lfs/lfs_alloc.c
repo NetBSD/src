@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.44 2000/11/27 03:33:57 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.45 2000/11/27 08:39:55 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -229,7 +229,6 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 	}
 	ip->i_ffs_size += fs->lfs_bsize;
 	uvm_vnp_setsize(vp, ip->i_ffs_size);
-	(void)uvm_vnp_uncache(vp);
 	VOP_UNLOCK(vp, 0);
 	
 	i = (blkno - fs->lfs_segtabsz - fs->lfs_cleansz) *

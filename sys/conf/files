@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.404 2000/11/26 17:44:02 ad Exp $
+#	$NetBSD: files,v 1.405 2000/11/27 08:39:41 chs Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1060,6 +1060,7 @@ file ufs/ufs/ufs_vnops.c		ffs | lfs | mfs | ext2fs
 file uvm/uvm_amap.c
 file uvm/uvm_anon.c
 file uvm/uvm_aobj.c
+file uvm/uvm_bio.c
 file uvm/uvm_device.c
 file uvm/uvm_fault.c
 file uvm/uvm_glue.c
