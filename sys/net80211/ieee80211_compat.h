@@ -1,3 +1,4 @@
+/*	$NetBSD: ieee80211_compat.h,v 1.2 2003/09/14 01:14:54 dyoung Exp $	*/
 /*-
  * Copyright (c) 2003, 2004 David Young
  * All rights reserved.
