@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.56 2001/12/09 03:07:44 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.57 2001/12/31 07:00:15 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.56 2001/12/09 03:07:44 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.57 2001/12/31 07:00:15 chs Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -461,7 +461,7 @@ uvm_vnp_setsize(vp, newsize)
 	 */
 
 	if (vp->v_size > pgend && vp->v_size != VSIZENOTSET) {
-		(void) uvn_put(uobj, pgend, 0, PGO_FREE);
+		(void) uvn_put(uobj, pgend, 0, PGO_FREE | PGO_SYNCIO);
 	} else {
 		simple_unlock(&uobj->vmobjlock);
 	}
