@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.4 2002/09/02 13:55:03 scw Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.5 2002/09/06 15:37:14 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -142,6 +142,7 @@ const struct db_variable db_regs[] = {
 	{ "tr6", (long *)&ddb_regs.tf_callee.tr6, db_var_reg },
 	{ "tr7", (long *)&ddb_regs.tf_callee.tr7, db_var_reg },
 
+	{ "usr", (long *)&ddb_regs.tf_state.sf_usr, db_var_reg },
 	{ "sr",  (long *)&ddb_regs.tf_state.sf_ssr, db_var_reg },
 	{ "pc",  (long *)&ddb_regs.tf_state.sf_spc, db_var_reg }
 };
