@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.8 2002/10/06 03:16:25 provos Exp $	*/
+/*	$NetBSD: filter.c,v 1.9 2002/10/08 14:49:23 provos Exp $	*/
 /*	$OpenBSD: filter.c,v 1.16 2002/08/08 21:18:20 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filter.c,v 1.8 2002/10/06 03:16:25 provos Exp $");
+__RCSID("$NetBSD: filter.c,v 1.9 2002/10/08 14:49:23 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -53,33 +53,38 @@ extern int allow;
 extern int noalias;
 extern int connected;
 extern char cwd[];
+extern char home[];
+extern char username[];
 
 static void logic_free(struct logic *);
-static int filter_match(struct intercept_tlq *, struct logic *);
+static int filter_match(struct intercept_pid *, struct intercept_tlq *,
+    struct logic *);
 static void filter_review(struct filterq *);
 static void filter_templates(const char *);
 static int filter_template(int, struct policy *, int);
+static int filter_quickpredicate(struct filter *);
 static void filter_policyrecord(struct policy *, struct filter *, const char *,
     const char *, char *);
 static void filter_replace(char *, size_t, char *, char *);
 
 static int
-filter_match(struct intercept_tlq *tls, struct logic *logic)
+filter_match(struct intercept_pid *icpid, struct intercept_tlq *tls,
+    struct logic *logic)
 {
 	struct intercept_translate *tl;
-	int off = 0;
+	int off = 0, res;
 
 	switch (logic->op) {
 	case LOGIC_NOT:
-		return (!filter_match(tls, logic->left));
+		return (!filter_match(icpid, tls, logic->left));
 	case LOGIC_OR:
-		if (filter_match(tls, logic->left))
+		if (filter_match(icpid, tls, logic->left))
 			return (1);
-		return (filter_match(tls, logic->right));
+		return (filter_match(icpid, tls, logic->right));
 	case LOGIC_AND:
-		if (!filter_match(tls, logic->left))
+		if (!filter_match(icpid, tls, logic->left))
 			return (0);
-		return (filter_match(tls, logic->right));
+		return (filter_match(icpid, tls, logic->right));
 	default:
 		break;
 	}
@@ -87,6 +92,9 @@ filter_match(struct intercept_tlq *tls, struct logic *logic)
 	/* Now we just have a logic single */
 	if (logic->type == NULL)
 		goto match;
+
+	if (tls == NULL)
+		errx(1, "filter_match has no translators");
 
 	TAILQ_FOREACH(tl, tls, next) {
 		if (!tl->trans_valid)
@@ -105,11 +113,47 @@ filter_match(struct intercept_tlq *tls, struct logic *logic)
 		return (0);
 
  match:
-	return (logic->filter_match(tl, logic));
+	/* We need to do dynamic expansion on the data */
+	if (logic->filterdata && (logic->flags & LOGIC_NEEDEXPAND)) {
+		char *old = logic->filterdata;
+		size_t oldlen = logic->filterlen;
+
+		logic->filterdata = filter_dynamicexpand(icpid, old);
+		logic->filterlen = strlen(logic->filterdata) + 1;
+
+		res = logic->filter_match(tl, logic);
+
+		logic->filterdata = old;
+		logic->filterlen = oldlen;
+	} else
+		res = logic->filter_match(tl, logic);
+
+	return (res);
+}
+
+/* Evaluate filter predicate */
+
+int
+filter_predicate(struct intercept_pid *icpid, struct predicate *pdc)
+{
+	int negative;
+	int res = 0;
+
+	if (!pdc->p_flags)
+		return (1);
+
+	negative = pdc->p_flags & PREDIC_NEGATIVE;
+	if (pdc->p_flags & PREDIC_UID)
+		res = icpid->uid == pdc->p_uid;
+	else if (pdc->p_flags & PREDIC_GID)
+		res = icpid->uid == pdc->p_uid;
+
+	return (negative ? !res : res);
 }
 
 short
-filter_evaluate(struct intercept_tlq *tls, struct filterq *fls, int *pflags)
+filter_evaluate(struct intercept_tlq *tls, struct filterq *fls,
+    struct intercept_pid *icpid)
 {
 	struct filter *filter, *last = NULL;
 	short action, laction = 0;
@@ -117,7 +161,8 @@ filter_evaluate(struct intercept_tlq *tls, struct filterq *fls, int *pflags)
 	TAILQ_FOREACH(filter, fls, next) {
 		action = filter->match_action;
 
-		if (filter_match(tls, filter->logicroot)) {
+		if (filter_predicate(icpid, &filter->match_predicate) &&
+		    filter_match(icpid, tls, filter->logicroot)) {
 			/* Profile feedback optimization */
 			filter->match_count++;
 			if (last != NULL && last->match_action == action &&
@@ -128,7 +173,7 @@ filter_evaluate(struct intercept_tlq *tls, struct filterq *fls, int *pflags)
 
 			if (action == ICPOLICY_NEVER)
 				action = filter->match_error;
-			*pflags = filter->match_flags;
+			icpid->uflags = filter->match_flags;
 			return (action);
 		}
 
@@ -351,6 +396,28 @@ filter_modifypolicy(int fd, int policynr, const char *emulation,
 	}
 }
 
+/* In non-root case, evaluate predicates early */ 
+
+static int
+filter_quickpredicate(struct filter *filter)
+{
+	struct predicate *pdc;
+	struct intercept_pid icpid;
+
+	pdc = &filter->match_predicate;
+	if (!pdc->p_flags)
+		return (1);
+
+	intercept_setpid(&icpid);
+
+	if (!filter_predicate(&icpid, pdc))
+		return (0);
+
+	memset(pdc, 0, sizeof(filter->match_predicate));
+
+	return (1);
+}
+
 int
 filter_prepolicy(int fd, struct policy *policy)
 {
@@ -358,6 +425,7 @@ filter_prepolicy(int fd, struct policy *policy)
 	struct filter *filter, *parsed;
 	struct filterq *fls;
 	short action, future;
+	extern int iamroot;
 
 	/* Commit all matching pre-filters */
 	for (filter = TAILQ_FIRST(&policy->prefilters);
@@ -376,9 +444,11 @@ filter_prepolicy(int fd, struct policy *policy)
 			    __func__, __LINE__, filter->rule);
 
 		if (future == ICPOLICY_ASK) {
-			fls = systrace_policyflq(policy, policy->emulation,
-			    filter->name);
-			TAILQ_INSERT_TAIL(fls, parsed, next);
+			if (iamroot || filter_quickpredicate(parsed)) {
+				fls = systrace_policyflq(policy,
+				    policy->emulation, filter->name);
+				TAILQ_INSERT_TAIL(fls, parsed, next);
+			}
 		} else {
 			filter_modifypolicy(fd, policy->policynr,
 			    policy->emulation, filter->name, future);
@@ -398,7 +468,7 @@ filter_prepolicy(int fd, struct policy *policy)
 short
 filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
     int policynr, const char *emulation, const char *name,
-    char *output, short *pfuture, int *pflags)
+    char *output, short *pfuture, struct intercept_pid *icpid)
 {
 	char line[2*MAXPATHLEN], *p;
 	struct filter *filter;
@@ -407,7 +477,7 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 	int first = 1;
 
 	*pfuture = ICPOLICY_ASK;
-	*pflags = 0;
+	icpid->uflags = 0;
 
 	if ((policy = systrace_findpolnr(policynr)) == NULL)
 		errx(1, "%s:%d: no policy %d", __func__, __LINE__, policynr);
@@ -505,10 +575,10 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 				continue;
 			}
 
-			if (fls == NULL)
-				action = ICPOLICY_PERMIT;
+			if (fls != NULL)
+				action = filter_evaluate(tls, fls, icpid);
 			else
-				action = filter_evaluate(tls, fls, pflags);
+				action = ICPOLICY_PERMIT;
 			if (action == ICPOLICY_ASK) {
 				printf("Filter unmatched.\n");
 				continue;
@@ -532,7 +602,7 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 			continue;
 
 		TAILQ_INSERT_TAIL(fls, filter, next);
-		action = filter_evaluate(tls, fls, pflags);
+		action = filter_evaluate(tls, fls, icpid);
 		if (action == ICPOLICY_ASK) {
 			TAILQ_REMOVE(fls, filter, next);
 			printf("Filter unmatched. Freeing it\n");
@@ -563,21 +633,43 @@ char *
 filter_expand(char *data)
 {
 	static char expand[2*MAXPATHLEN];
-	char *what;
 
-	if (data != NULL)
-		strlcpy(expand, data, sizeof(expand));
+	strlcpy(expand, data, sizeof(expand));
 
-	what = getenv("HOME");
-	if (what != NULL)
-		filter_replace(expand, sizeof(expand), "$HOME", what);
-	what = getenv("USER");
-	if (what != NULL)
-		filter_replace(expand, sizeof(expand), "$USER", what);
-
+	filter_replace(expand, sizeof(expand), "$HOME", home);
+	filter_replace(expand, sizeof(expand), "$USER", username);
 	filter_replace(expand, sizeof(expand), "$CWD", cwd);
 
 	return (expand);
+}
+
+char *
+filter_dynamicexpand(struct intercept_pid *icpid, char *data)
+{
+	static char expand[2*MAXPATHLEN];
+
+	strlcpy(expand, data, sizeof(expand));
+
+	filter_replace(expand, sizeof(expand), "$HOME", icpid->home);
+	filter_replace(expand, sizeof(expand), "$USER", icpid->username);
+	filter_replace(expand, sizeof(expand), "$CWD", icpid->cwd);
+
+	return (expand);
+}
+
+/* Checks if the string needs expansion */
+
+int
+filter_needexpand(char *data)
+{
+	if (strstr(data, "$HOME") != NULL)
+		return (1);
+	if (strstr(data, "$USER") != NULL)
+		return (1);
+	if (strstr(data, "$CWD") != NULL)
+		return (1);
+
+	return (0);
 }
 
 int
