@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)print.c	5.9 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: print.c,v 1.8 1993/08/01 18:59:08 mycroft Exp $";
+static char rcsid[] = "$Id: print.c,v 1.9 1993/08/14 12:30:04 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -460,7 +460,7 @@ getpcpu(k)
 #define	fxtofl(fixpt)	((double)(fixpt) / fscale)
 
 	/* XXX - I don't like this */
-	if (p->p_time == 0 || (p->p_stat & SZOMB) || (p->p_flag & SLOAD) == 0)
+	if (p->p_time == 0 || (p->p_stat == SZOMB) || (p->p_flag & SLOAD) == 0)
 		return (0.0);
 	if (rawcpu)
 		return (100.0 * fxtofl(p->p_pctcpu));
