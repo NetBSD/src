@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.36 2003/10/13 21:13:30 scw Exp $	*/
+/*	$NetBSD: fault.c,v 1.37 2003/10/15 14:07:03 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.36 2003/10/13 21:13:30 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.37 2003/10/15 14:07:03 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -513,15 +513,12 @@ we_re_toast:
 	/* STM or CDT instruction ? */
 	else if ((fault_instruction & 0x0a100000) == 0x08000000)
 		ftype = VM_PROT_WRITE; 
-#ifdef __XSCALE__
 	/* STRH, STRD instruction ? */
 	else if ((fault_instruction & 0x0e1000b0) == 0x000000b0)
 		ftype = VM_PROT_WRITE;
-#else
-	/* STRH, STRSH or STRSB instruction ? */
+	/* STRSH or STRSB instruction ? */
 	else if ((fault_instruction & 0x0e100090) == 0x00000090)
 		ftype = VM_PROT_WRITE; 
-#endif
 	/* SWP instruction ? */
 	else if ((fault_instruction & 0x0fb00ff0) == 0x01000090)
 		ftype = VM_PROT_READ | VM_PROT_WRITE;
