@@ -1,4 +1,4 @@
-/* $NetBSD: SYS.h,v 1.3 1996/08/07 17:39:44 mark Exp $ */
+/* $NetBSD: SYS.h,v 1.4 1996/10/17 22:47:14 jtc Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,16 +42,34 @@
 #include <sys/syscall.h>
 
 #ifdef __STDC__
-#define SYSCALL(x)	.text; .align 0; ENTRY(x) ; swi SYS_ ## x; bcs cerror;
-#define RSYSCALL(x)	SYSCALL(x) ; mov r15, r14
-#define PSEUDO(x, y)	.text; .align 0; ENTRY(x); swi SYS_ ## y; mov r15, r14
+#define SYSTRAP(x)	swi SYS_ ## x
+#else
+#define SYSTRAP(x)	swi SYS_/**/x
+#endif
 
-#else	/* !__STDC__ */
+#define SYSCALL(x) \
+	.text; .align 0; \
+	ENTRY(x) ; \
+	SYSTRAP(x); \
+	bcs cerror;
 
-#define SYSCALL(x)	.text; .align 0; ENTRY(x) ; swi SYS_/**/x; bcs cerror;
-#define RSYSCALL(x)	SYSCALL(x) ; mov r15, r14
-#define PSEUDO(x, y)	.text; .align 0; ENTRY(x); swi SYS_/**/y; mov r15, r14
+#define RSYSCALL(x) \
+	SYSCALL(x); \
+	mov r15, r14
 
-#endif	/* __STDC__ */
+#define SYSCALL_NOERROR(x) \
+	.text; .align 0; \
+	ENTRY(x); \
+	SYSTRAP(x)
+
+#define RSYSCALL_NOERROR(x) \
+	SYSCALL_NOERROR(x); \
+	mov r15, r14
+
+#define PSEUDO(x, y) \
+	.text; .align 0; \
+	ENTRY(x); \
+	SYSTRAP(y); \
+	mov r15, r14
 
 	.globl	cerror
