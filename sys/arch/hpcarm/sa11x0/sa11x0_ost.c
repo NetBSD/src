@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.2 2001/02/23 04:31:19 ichiro Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.3 2001/03/09 18:55:29 toshii Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -73,7 +73,7 @@ struct saost_softc {
 
 static struct saost_softc *saost_sc = NULL;
 
-#define TIMER_FREQUENCY         3686400         /* 3.6468MHz */
+#define TIMER_FREQUENCY         3686400         /* 3.6864MHz */
 #define TICKS_PER_MICROSECOND   (TIMER_FREQUENCY/1000000)
 
 
@@ -235,13 +235,17 @@ void
 delay(usecs)
 	u_int usecs;
 {
-	int limit, tick, otick;
+	u_int32_t tick, otick, delta;
+	int j, csec, usec;
 
-	usecs *= TICKS_PER_MICROSECOND;
+	csec = usecs / 10000;
+	usec = usecs % 10000;
+	
+	usecs = (TIMER_FREQUENCY / 100) * csec
+	    + (TIMER_FREQUENCY / 100) * usec / 10000;
 
 	if (! saost_sc) {
 		/* clock isn't initialized yet */
-		int j;
 		for(; usecs > 0; usecs--)
 			for(j = 100; j > 0; j--)
 				;
@@ -249,14 +253,15 @@ delay(usecs)
 	}
 
 	otick = gettick();
-	limit = 0xffffffff;
 
-	while (usecs > 0) {
+	while (1) {
+		for(j = 100; j > 0; j--)
+			;
 		tick = gettick();
-		if (tick < otick)
-			usecs -= limit - (otick - tick);
-		else
-			usecs -= tick - otick;
+		delta = tick - otick;
+		if (delta > usecs)
+			break;
+		usecs -= delta;
 		otick = tick;
 	}
 }
