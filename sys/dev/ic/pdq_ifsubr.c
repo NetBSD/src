@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.25 1999/05/18 23:52:56 thorpej Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.26 2000/03/07 00:33:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -326,7 +326,7 @@ pdq_os_addr_fill(
 
     ETHER_FIRST_MULTI(step, PDQ_FDDICOM(sc), enm);
     while (enm != NULL && num_addrs > 0) {
-	if (bcmp(enm->enm_addrlo, enm->enm_addrlo, 6) == 0) {
+	if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
 	    ((u_short *) addr->lanaddr_bytes)[0] = ((u_short *) enm->enm_addrlo)[0];
 	    ((u_short *) addr->lanaddr_bytes)[1] = ((u_short *) enm->enm_addrlo)[1];
 	    ((u_short *) addr->lanaddr_bytes)[2] = ((u_short *) enm->enm_addrlo)[2];
