@@ -1,4 +1,4 @@
-/*	$NetBSD: kstream-des.c,v 1.3 2002/08/29 14:38:56 itojun Exp $	*/
+/*	$NetBSD: kstream-des.c,v 1.4 2002/08/29 14:53:58 itojun Exp $	*/
 
 /* DES-encrypted-stream implementation for MIT Kerberos.
    Written by Ken Raeburn (Raeburn@Cygnus.COM), based on algorithms
@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <openssl/des.h>
+#include <des.h>
 #include <kerberosIV/kstream.h>
 
 typedef struct {
