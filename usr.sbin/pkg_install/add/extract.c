@@ -1,11 +1,11 @@
-/*	$NetBSD: extract.c,v 1.23 2001/09/26 13:48:27 hubertf Exp $	*/
+/*	$NetBSD: extract.c,v 1.23.4.1 2003/07/13 09:45:20 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.17 1997/10/08 07:45:35 charnier Exp";
 #else
-__RCSID("$NetBSD: extract.c,v 1.23 2001/09/26 13:48:27 hubertf Exp $");
+__RCSID("$NetBSD: extract.c,v 1.23.4.1 2003/07/13 09:45:20 jlam Exp $");
 #endif
 #endif
 
@@ -34,7 +34,7 @@ __RCSID("$NetBSD: extract.c,v 1.23 2001/09/26 13:48:27 hubertf Exp $");
 #include "add.h"
 
 #define TAR_ARGS	" cf - "
-#define TARX_CMD	"|" TAR_FULLPATHNAME " xf - -C "
+#define TARX_CMD	"|" TAR_CMD " xpf - -C "
 
 /* 
  * This macro is used to determine if the 'where_args'  buffer is big enough to add the
@@ -50,16 +50,16 @@ __RCSID("$NetBSD: extract.c,v 1.23 2001/09/26 13:48:27 hubertf Exp $");
 		|| (strlen(str) + 3 + perm_count >= maxargs))
 
 #define PUSHOUT(todir) /* push out string */				\
-        if (where_count > sizeof(TAR_FULLPATHNAME) + sizeof(TAR_ARGS)-1) {	\
+        if (where_count > sizeof(TAR_CMD) + sizeof(TAR_ARGS)-1) {		\
 		    strcat(where_args, TARX_CMD);			\
 		    strcat(where_args, todir);				\
 		    if (system(where_args)) {				\
 			cleanup(0);					\
 			errx(2, "can not invoke %lu byte %s pipeline: %s", \
-				(u_long)strlen(where_args), TAR_FULLPATHNAME,	\
+				(u_long)strlen(where_args), TAR_CMD,	\
 				where_args);				\
 		    }							\
-		    strcpy(where_args, TAR_FULLPATHNAME TAR_ARGS);	\
+		    strcpy(where_args, TAR_CMD TAR_ARGS);			\
 		    where_count = strlen(where_args);			\
 	}								\
 	if (perm_count) {						\
@@ -108,17 +108,17 @@ extract_plist(char *home, package_t *pkg)
 	Boolean preserve;
 
 	maxargs = sysconf(_SC_ARG_MAX) / 2;	/* Just use half the argument space */
-	where_args = alloca(maxargs);
+	where_args = malloc(maxargs);
 	if (!where_args) {
 		cleanup(0);
 		errx(2, "can't get argument list space");
 	}
-	perm_args = alloca(maxargs);
+	perm_args = malloc(maxargs);
 	if (!perm_args) {
 		cleanup(0);
 		errx(2, "can't get argument list space");
 	}
-	strcpy(where_args, TAR_FULLPATHNAME TAR_ARGS);
+	strcpy(where_args, TAR_CMD TAR_ARGS);
 	/*
 	 * we keep track of how many characters are stored in 'where_args' with 'where_count'.
 	 * Note this doesn't include the trailing null character.
@@ -143,9 +143,9 @@ extract_plist(char *home, package_t *pkg)
 	Directory = home;
 
 	/* Open Package Database for writing */
-	if (pkgdb_open(0) == -1) {
+	if (!pkgdb_open(ReadWrite)) {
 		cleanup(0);
-		err(1, "can't open pkgdb");
+		err(EXIT_FAILURE, "can't open pkgdb");
 	}
 	/* Do it */
 	while (p) {
@@ -294,10 +294,6 @@ extract_plist(char *home, package_t *pkg)
 			break;
 
 		case PLIST_CMD:
-			if (last_file == NULL && strchr(p->name, '%') != NULL) {
-				cleanup(0);
-				errx(2, "no last file specified for '%s' command", p->name);
-			}
 			format_cmd(cmd, sizeof(cmd), p->name, Directory, last_file);
 			PUSHOUT(Directory);
 			if (Verbose)
@@ -335,5 +331,7 @@ extract_plist(char *home, package_t *pkg)
 	}
 	PUSHOUT(Directory);
 	pkgdb_close();
+	free(perm_args);
+	free(where_args);
 	return 1;
 }

@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.36.2.1 2002/07/22 16:47:33 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.36.2.2 2003/07/13 09:45:24 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.36.2.1 2002/07/22 16:47:33 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.36.2.2 2003/07/13 09:45:24 jlam Exp $");
 #endif
 #endif
 
@@ -180,7 +180,7 @@ require_delete(char *home, int tryall)
 	/* save cwd */
 	oldcwd = open(".", O_RDONLY, 0);
 	if (oldcwd == -1)
-		err(1, "cannot open \".\"");
+		err(EXIT_FAILURE, "cannot open \".\"");
 
 	(void) snprintf(pkgdir, sizeof(pkgdir), "%s",
 	    (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR);
@@ -233,7 +233,7 @@ require_delete(char *home, int tryall)
 			    Prefix ? "-p" : "",
 			    Prefix ? Prefix : "",
 			    Verbose ? "-v" : "",
-			    Force ? "-f" : "",
+			    (Force > 1) ? "-f -f" : (Force == 1) ? "-f" : "",
 			    NoDeInstall ? "-D" : "",
 			    CleanDirs ? "-d" : "",
 			    Fake ? "-n" : "",
@@ -551,6 +551,12 @@ pkg_do(char *pkg)
 		warnx("unable to change directory to %s! deinstall failed", LogDir);
 		return 1;
 	}
+	if (fexists(PRESERVE_FNAME)) {
+		printf("Package `%s' is marked as not for deletion\n", pkg);
+		if (Force <= 1) {
+			return 1;
+		}
+	}
 	if (!isemptyfile(REQUIRED_BY_FNAME)) {
 		/* This package is required by others. Either nuke
 		 * them (-r), or stop. */
@@ -613,7 +619,7 @@ pkg_do(char *pkg)
 	if (fexists(REQUIRE_FNAME)) {
 		if (Verbose)
 			printf("Executing 'require' script.\n");
-		vsystem("%s +x %s", CHMOD, REQUIRE_FNAME);	/* be sure */
+		vsystem("%s +x %s", CHMOD_CMD, REQUIRE_FNAME);	/* be sure */
 		if (vsystem("./%s %s DEINSTALL", REQUIRE_FNAME, pkg)) {
 			warnx("package %s fails requirements %s", pkg,
 			    Force ? "" : "- not deleted");
@@ -625,7 +631,7 @@ pkg_do(char *pkg)
 		if (Fake)
 			printf("Would execute de-install script at this point (arg: DEINSTALL).\n");
 		else {
-			vsystem("%s +x %s", CHMOD, DEINSTALL_FNAME);	/* make sure */
+			vsystem("%s +x %s", CHMOD_CMD, DEINSTALL_FNAME);	/* make sure */
 			if (vsystem("./%s %s DEINSTALL", DEINSTALL_FNAME, pkg)) {
 				warnx("deinstall script returned error status");
 				if (!Force)
@@ -672,11 +678,10 @@ pkg_do(char *pkg)
 			}
 		}
 	}
-	/* Change out of LogDir before we remove it */
-	if (chdir(home) == FAIL) {
-		cleanup(0);
-		errx(2, "Toto! This doesn't look like Kansas anymore!");
-	}
+	/* Change out of LogDir before we remove it.
+	 * Do not fail here, as the package is not yet completely deleted! */
+	if (chdir(home) == FAIL)
+		warnx("Oops - removed current working directory.  Oh, well.");
 	if (!Fake) {
 		/* Finally nuke the +-files and the pkgdb-dir (/var/db/pkg/foo) */
 		if (vsystem("%s -r %s", REMOVE_CMD, LogDir)) {
@@ -698,14 +703,14 @@ pkg_perform(lpkg_head_t *pkghead)
 	/* save cwd */
 	oldcwd = open(".", O_RDONLY, 0);
 	if (oldcwd == -1)
-		err(1, "cannot open \".\"");
+		err(EXIT_FAILURE, "cannot open \".\"");
 
 	while ((lpp = TAILQ_FIRST(pkghead))) {
 		err_cnt += pkg_do(lpp->lp_name);
 		TAILQ_REMOVE(pkghead, lpp, lp_link);
 		free_lpkg(lpp);
 		if (fchdir(oldcwd) == FAIL)
-			err(1, "unable to change to previous directory");
+			err(EXIT_FAILURE, "unable to change to previous directory");
 	}
 	close(oldcwd);
 	return err_cnt;

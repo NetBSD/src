@@ -1,11 +1,11 @@
-/*	$NetBSD: pl.c,v 1.22 2002/02/18 00:57:54 hubertf Exp $	*/
+/*	$NetBSD: pl.c,v 1.22.4.1 2003/07/13 09:45:23 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.22 2002/02/18 00:57:54 hubertf Exp $");
+__RCSID("$NetBSD: pl.c,v 1.22.4.1 2003/07/13 09:45:23 jlam Exp $");
 #endif
 #endif
 
@@ -47,7 +47,7 @@ CheckSymlink(char *name, char *prefix, size_t prefixcc)
 	int     cc;
 	int     i;
 
-	if ((cc = readlink(name, oldtgt, sizeof(oldtgt))) > 0) {
+	if ((cc = readlink(name, oldtgt, sizeof(oldtgt) - 1)) > 0) {
 		oldtgt[cc] = 0;
 		if (strncmp(oldtgt, prefix, prefixcc) == 0 && oldtgt[prefixcc] == '/') {
 			for (slashc = 0, slash = &name[prefixcc + 1]; (slash = strchr(slash, '/')) != (char *) NULL; slash++, slashc++) {
@@ -120,9 +120,9 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 	int     dirc;
 
 	/* Open Package Database for writing */
-	if (update_pkgdb && pkgdb_open(0) == -1) {
+	if (update_pkgdb && !pkgdb_open(ReadWrite)) {
 		cleanup(0);
-		err(1, "can't open pkgdb");
+		err(EXIT_FAILURE, "can't open pkgdb");
 	}
 
 	for (dirc = 0, p = pkg->head; p; p = p->next) {
@@ -149,7 +149,10 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 			if (update_pkgdb) {
 				char   *s, t[FILENAME_MAX];
 
-				(void) snprintf(t, sizeof(t), "%s/%s", cwd, p->name);
+				(void) snprintf(t, sizeof(t), "%s%s%s",
+					cwd,
+					(strcmp(cwd, "/") == 0) ? "" : "/",
+					p->name);
 
 				s = pkgdb_retrieve(t);
 #ifdef PKGDB_DEBUG
@@ -172,7 +175,10 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 			} else {
 				/* after @cwd */
 				/* prepend DESTDIR if set?  - HF */
-				(void) snprintf(name, sizeof(name), "%s/%s", cwd, p->name);
+				(void) snprintf(name, sizeof(name), "%s%s%s",
+					cwd,
+					(strcmp(cwd, "/") == 0) ? "" : "/",
+					p->name);
 			}
 			if (lstat(name, &st) < 0) {
 				warnx("can't stat `%s'", name);

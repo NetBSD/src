@@ -1,4 +1,4 @@
-/*	$NetBSD: path.c,v 1.1 2002/07/19 19:04:40 yamt Exp $	*/
+/*	$NetBSD: path.c,v 1.1.4.1 2003/07/13 09:45:28 jlam Exp $	*/
 
 /*-
  * Copyright (c)2002 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: path.c,v 1.1 2002/07/19 19:04:40 yamt Exp $");
+__RCSID("$NetBSD: path.c,v 1.1.4.1 2003/07/13 09:45:28 jlam Exp $");
 #endif
 
 #include <err.h>
@@ -36,14 +36,21 @@ __RCSID("$NetBSD: path.c,v 1.1 2002/07/19 19:04:40 yamt Exp $");
 #include "lib.h"
 
 struct pathhead PkgPath = TAILQ_HEAD_INITIALIZER(PkgPath);
+static struct path *prepend = 0;
 
+static struct path *path_new_entry(const char *cp, size_t len);
+
+/*
+ * path_create: make PkgPath from a given string.
+ *
+ * => relative pathes are resolved to absolute ones.
+ * => if NULL is passed, use "." instead. XXX
+ */
 void
 path_create(const char *path)
 {
 	const char *cp;
 	size_t len;
-	char cwd[MAXPATHLEN];
-	size_t cwdlen;
 
 	path_free();
 
@@ -54,10 +61,6 @@ path_create(const char *path)
 	if (Verbose)
 		printf("parsing: %s\n", path);
 
-	if (getcwd(cwd, sizeof(cwd)) == NULL)
-		err(1, "getcwd");
-	cwdlen = strlen(cwd);
-
 	cp = path;
 	while (*cp) {
 		len = strcspn(cp, ";");
@@ -65,28 +68,7 @@ path_create(const char *path)
 			/* add a new path */
 			struct path *new;
 
-			new = malloc(sizeof(*new));
-			if (new == NULL)
-				err(1, "path_create");
-
-			if (!IS_FULLPATH(cp) && !IS_URL(cp)) {
-				/* this is a relative path */
-				size_t total;
-
-				total = cwdlen + 1 + len + 1;
-				new->pl_path = malloc(total);
-				if (new->pl_path == NULL)
-					err(1, "path_create");
-				snprintf(new->pl_path, total, "%s/%*.*s", cwd, (int)len, (int)len, cp);
-			}
-			else {
-				new->pl_path = malloc(len + 1);
-				if (new->pl_path == NULL)
-					err(1, "path_create");
-				memcpy(new->pl_path, cp, len);
-				new->pl_path[len] = '\0';
-			}
-
+			new = path_new_entry(cp, len);
 			if (Verbose)
 				printf("path: %s\n", new->pl_path);
 			TAILQ_INSERT_TAIL(&PkgPath, new, pl_entry);
@@ -99,6 +81,9 @@ path_create(const char *path)
 	}
 }
 
+/*
+ * path_free: free PkgPath.
+ */
 void
 path_free()
 {
@@ -111,6 +96,74 @@ path_free()
 	}
 }
 
+/*
+ * path_new_entry: Generate a new 'struct path' entry to be included in
+ * 'PkgPath' using the first 'len' characters of 'cp'.
+ */
+static struct path *
+path_new_entry(const char *cp, size_t len)
+{
+	struct path *new;
+
+	new = malloc(sizeof(*new));
+	if (new == NULL)
+		err(EXIT_FAILURE, "path_create");
+
+	if (!IS_FULLPATH(cp) && !IS_URL(cp)) {
+		/* this is a relative path */
+		size_t total;
+		char cwd[MAXPATHLEN];
+		size_t cwdlen;
+
+		if (getcwd(cwd, sizeof(cwd)) == NULL)
+			err(EXIT_FAILURE, "getcwd");
+		cwdlen = strlen(cwd);
+		total = cwdlen + 1 + len + 1;
+		new->pl_path = malloc(total);
+		if (new->pl_path == NULL)
+			err(EXIT_FAILURE, "path_create");
+		snprintf(new->pl_path, total, "%s/%*.*s", cwd, (int)len, (int)len, cp);
+	}
+	else {
+		new->pl_path = malloc(len + 1);
+		if (new->pl_path == NULL)
+			err(EXIT_FAILURE, "path_create");
+		memcpy(new->pl_path, cp, len);
+		new->pl_path[len] = '\0';
+	}
+	return new;
+}
+
+/*
+ * path_prepend_from_pkgname: prepend the path for a package onto 'PkgPath'
+ */
+void
+path_prepend_from_pkgname(const char *pkgname)
+{
+	char *ptr;
+	if ((ptr = strrchr(pkgname , '/'))) {
+		prepend = path_new_entry(pkgname, ptr - pkgname);
+		TAILQ_INSERT_HEAD(&PkgPath, prepend, pl_entry);
+	}
+}
+
+/*
+ * path_prepend_clear: Remove any prepended entry from 'PkgPath'
+ */
+void
+path_prepend_clear()
+{
+	if (prepend) {
+		TAILQ_REMOVE(&PkgPath, prepend, pl_entry);
+		prepend = 0;
+	}
+}
+
+/*
+ * path_setenv: construct string from PkgPath and set it to a environment.
+ *
+ * => the environment name is given by envname.
+ */
 void
 path_setenv(const char *envname)
 {
@@ -124,7 +177,7 @@ path_setenv(const char *envname)
 
 	env = malloc(len);
 	if (env == NULL)
-		err(1, "path_setenv");
+		err(EXIT_FAILURE, "path_setenv");
 
 	env0 = env;
 	envend = env + len;
@@ -134,7 +187,7 @@ path_setenv(const char *envname)
 
 		r = snprintf(env, envend - env, "%s%s", sep, p->pl_path);
 		if (r < 0 || r >= envend - env)
-			err(1, "snprintf");
+			err(EXIT_FAILURE, "snprintf");
 		env += r;
 		sep = ";";
 	}
@@ -142,6 +195,6 @@ path_setenv(const char *envname)
 	if (Verbose)
 		printf("%s = %s\n", envname, env0);
 	if (setenv(envname, env0, 1) != 0)
-		err(1, "setenv");
+		err(EXIT_FAILURE, "setenv");
 	free(env0);
 }

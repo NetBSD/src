@@ -1,6 +1,6 @@
-.\" $NetBSD: pkg_delete.1,v 1.24 2002/02/08 01:38:53 ross Exp $
+.\" $NetBSD: pkg_delete.1,v 1.24.4.1 2003/07/13 09:45:24 jlam Exp $
 .\"
-.\" FreeBSD install - a package for the installation and maintainance
+.\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -42,13 +42,14 @@ command.
 Since the
 .Nm
 command may execute scripts or programs provided by a package file,
-your system may be susceptible to ``trojan horses'' or other subtle
+your system may be susceptible to ``Trojan horses'' or other subtle
 attacks from miscreants who create dangerous package files.
 .Pp
 You are advised to verify the competence and identity of those who
-provide installable package files.  For extra protection, examine all
-the package control files in the package record directory (
-.Pa /var/db/pkg/\*[Lt]pkg-name\*[Gt]/ ) .
+provide installable package files.
+For extra protection, examine all the package control files in the
+package record directory
+.Pa ( /var/db/pkg/\*[Lt]pkg-name\*[Gt]/ ) .
 Pay particular
 attention to any +INSTALL, +DEINSTALL, +REQUIRE or +MTREE_DIRS files,
 and inspect the +CONTENTS file for
@@ -75,22 +76,25 @@ If the
 .Fl F
 flag is given, one or more (absolute) filenames may be specified and
 the Package Database will be consulted for the package to which the
-given file belongs. These packages are then deinstalled.
+given file belongs.
+These packages are then deinstalled.
 .It Fl D
 If a deinstallation script exists for a given package, do not execute it.
 .It Fl d
-Remove empty directories created by file cleanup.  By default, only
-files/directories explicitly listed in a package's contents (either as
-normal files/directories or with the
+Remove empty directories created by file cleanup.
+By default, only files/directories explicitly listed in a package's
+contents (either as normal files/directories or with the
 .Cm @dirrm
-directive) will be removed at deinstallation time.  This option tells
+directive) will be removed at deinstallation time.
+This option tells
 .Nm
 to also remove any directories that were emptied as a result of removing
 the package.
 .It Fl F
 Any pkg-name given will be interpreted as pathname which is
 subsequently transformed in a (real) package name via the Package
-Database. That way, packges can be deleted by giving a filename
+Database.
+That way, packages can be deleted by giving a filename
 instead of the package-name.
 .It Fl f
 Force removal of the package, even if a dependency is recorded or the
@@ -105,21 +109,24 @@ touch the package or its files itself.
 Set
 .Ar prefix
 as the directory in which to delete files from any installed packages
-which do not explicitly set theirs.  For most packages, the prefix will
+which do not explicitly set theirs.
+For most packages, the prefix will
 be set automatically to the installed location by
 .Xr pkg_add 1 .
 .It Fl R
 Like the
 .Fl r
-option, this does a recursive delete. The
+option, this does a recursive delete.
+The
 .Fl R
 option deletes the given package and any packages required by
-it, unless some other package still needs them. This can be used
-to delete a package and all the packages it needs.
+it, unless some other package still needs them.
+This can be used to delete a package and all the packages it needs.
 .It Fl r
 .Nm
 first builds a list of all packages that require (directly and indirectly)
-the one being deleted.  It then deletes these packages using
+the one being deleted.
+It then deletes these packages using
 .Nm
 with the given options before deleting the user specified package.
 .It Fl V
@@ -129,7 +136,8 @@ Turn on verbose output.
 .El
 .Sh TECHNICAL DETAILS
 .Nm
-does pretty much what it says.  It examines installed package records in
+does pretty much what it says.
+It examines installed package records in
 .Pa /var/db/pkg/\*[Lt]pkg-name\*[Gt] ,
 deletes the package contents, and finally removes the package records.
 .Pp
@@ -140,11 +148,18 @@ will list those dependent packages and refuse to delete the package
 .Fl f
 option is given).
 .Pp
+If a package has been marked as a
+.Cm preserved
+package, it will not be able to be deleted
+(unless more than one occurrence of the
+.Fl f
+option is given).
+.Pp
 If a filename is given instead of a package name, the package of which
 the given file belongs to can be deleted if the
 .Fl F
-Flag is given. The filename needs to be absolute, see the output
-produced by the pkg_info
+Flag is given.
+The filename needs to be absolute, see the output produced by the pkg_info
 .Fl aF
 command.
 .Pp
@@ -163,8 +178,8 @@ then this is executed first as
 is the name of the package in question and
 .Ar DEINSTALL
 is a keyword denoting that this is a deinstallation)
-to see whether or not deinstallation should continue.  A non-zero exit
-status means no, unless the
+to see whether or not deinstallation should continue.
+A non-zero exit status means no, unless the
 .Fl f
 option is specified.
 .Pp
@@ -190,7 +205,8 @@ before deleting all files and as:
 .Ar \*[Lt]pkg-name\*[Gt]
 .Ar POST-DEINSTALL
 .Ed
-after deleting them. Passing the keywords
+after deleting them.
+Passing the keywords
 .Ar DEINSTALL
 and
 .Ar POST-DEINSTALL
@@ -201,7 +217,8 @@ All scripts are called with the environment variable
 .Ev PKG_PREFIX
 set to the installation prefix (see the
 .Fl p
-option above).  This allows a package author to write a script
+option above).
+This allows a package author to write a script
 that reliably performs some action on the directory where the package
 is installed, even if the user might have changed it by specifying the
 .Fl p
@@ -215,6 +232,7 @@ or
 .Xr pkg_create 1 ,
 .Xr pkg_info 1 ,
 .Xr mktemp 3 ,
+.Xr packages 7 ,
 .Xr mtree 8
 .Sh AUTHORS
 .Bl -tag -width indent -compact

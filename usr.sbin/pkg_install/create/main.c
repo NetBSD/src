@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.21 2002/06/09 14:14:50 yamt Exp $	*/
+/*	$NetBSD: main.c,v 1.21.2.1 2003/07/13 09:45:22 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: main.c,v 1.17 1997/10/08 07:46:23 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.21 2002/06/09 14:14:50 yamt Exp $");
+__RCSID("$NetBSD: main.c,v 1.21.2.1 2003/07/13 09:45:22 jlam Exp $");
 #endif
 #endif
 
@@ -24,7 +24,7 @@ __RCSID("$NetBSD: main.c,v 1.21 2002/06/09 14:14:50 yamt Exp $");
 #include "lib.h"
 #include "create.h"
 
-static const char Options[] = "ORhlVvFf:p:P:C:c:d:i:k:L:r:t:X:D:m:s:S:b:B:UI:";
+static const char Options[] = "B:C:D:FI:L:OP:RS:UVX:b:c:d:f:hi:k:lm:n:p:r:s:t:v";
 
 char   *Prefix = NULL;
 char   *Comment = NULL;
@@ -42,6 +42,7 @@ char   *BuildVersion = NULL;
 char   *BuildInfo = NULL;
 char   *SizePkg = NULL;
 char   *SizeAll = NULL;
+char   *Preserve = NULL;
 char   *SrcDir = NULL;
 char   *realprefix = NULL;
 char    PlayPen[FILENAME_MAX];
@@ -73,6 +74,7 @@ main(int argc, char **argv)
 	lpkg_head_t pkgs;
 	lpkg_t *lpp;
 
+	setprogname(argv[0]);
 	while ((ch = getopt(argc, argv, Options)) != -1)
 		switch (ch) {
 		case 'v':
@@ -157,6 +159,10 @@ main(int argc, char **argv)
 
 		case 'm':
 			Mtree = optarg;
+			break;
+
+		case 'n':
+			Preserve = optarg;
 			break;
 
 		case 'P':

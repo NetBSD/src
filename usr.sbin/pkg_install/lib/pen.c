@@ -1,11 +1,11 @@
-/*	$NetBSD: pen.c,v 1.22 2002/07/20 08:36:19 grant Exp $	*/
+/*	$NetBSD: pen.c,v 1.22.2.1 2003/07/13 09:45:28 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.22 2002/07/20 08:36:19 grant Exp $");
+__RCSID("$NetBSD: pen.c,v 1.22.2.1 2003/07/13 09:45:28 jlam Exp $");
 #endif
 #endif
 
@@ -156,13 +156,13 @@ make_playpen(char *pen, size_t pensize, size_t sz)
 		strcpy(Previous, Current);
 	else if (!getcwd(Previous, FILENAME_MAX)) {
 		cleanup(0);
-		err(1, "fatal error during execution: getcwd");
+		err(EXIT_FAILURE, "fatal error during execution: getcwd");
 	}
 	if (chdir(pen) == FAIL) {
 		cleanup(0);
 		errx(2, "can't chdir to '%s'", pen);
 	}
-	strcpy(Current, pen); CurrentSet = 1;
+	CurrentSet = 0; strcpy(Current, pen); CurrentSet = 1;
 	
 	return Previous;
 }
@@ -197,9 +197,11 @@ leave_playpen(char *save)
 }
 
 /*
- * Return free disk space (in bytes) on given file system
+ * Return free disk space (in bytes) on given file system.
+ * Returns size in a uint64_t since off_t isn't 64 bits on all
+ * operating systems.
  */
-off_t
+uint64_t
 min_free(char *tmpdir)
 {
 	struct statfs buf;
@@ -208,5 +210,5 @@ min_free(char *tmpdir)
 		warn("statfs");
 		return -1;
 	}
-	return (off_t) buf.f_bavail * (off_t) buf.f_bsize;
+	return (uint64_t) buf.f_bavail * (uint64_t) buf.f_bsize;
 }

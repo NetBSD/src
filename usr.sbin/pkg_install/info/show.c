@@ -1,11 +1,11 @@
-/*	$NetBSD: show.c,v 1.25 2002/07/20 04:59:47 yamt Exp $	*/
+/*	$NetBSD: show.c,v 1.25.2.1 2003/07/13 09:45:25 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: show.c,v 1.11 1997/10/08 07:47:38 charnier Exp";
 #else
-__RCSID("$NetBSD: show.c,v 1.25 2002/07/20 04:59:47 yamt Exp $");
+__RCSID("$NetBSD: show.c,v 1.25.2.1 2003/07/13 09:45:25 jlam Exp $");
 #endif
 #endif
 
@@ -228,7 +228,8 @@ show_files(char *title, package_t *plist)
 		switch (p->type) {
 		case PLIST_FILE:
 			if (!ign) {
-				printf("%s/%s\n", dir, p->name);
+				printf("%s%s%s\n", dir,
+					(strcmp(dir, "/") == 0) ? "" : "/", p->name);
 			}
 			ign = FALSE;
 			break;

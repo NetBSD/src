@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.40 2002/07/19 19:04:37 yamt Exp $	*/
+/*	$NetBSD: perform.c,v 1.40.2.1 2003/07/13 09:45:25 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.40 2002/07/19 19:04:37 yamt Exp $");
+__RCSID("$NetBSD: perform.c,v 1.40.2.1 2003/07/13 09:45:25 jlam Exp $");
 #endif
 #endif
 
@@ -63,7 +63,7 @@ pkg_do(char *pkg)
 		if (*pkg != '/') {
 			if (!getcwd(fname, FILENAME_MAX)) {
 				cleanup(0);
-				err(1, "fatal error during execution: getcwd");
+				err(EXIT_FAILURE, "fatal error during execution: getcwd");
 			}
 			len = strlen(fname);
 			(void) snprintf(&fname[len], sizeof(fname) - len, "/%s", pkg);
@@ -130,7 +130,7 @@ pkg_do(char *pkg)
 				char    try[FILENAME_MAX];
 				snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkg);
 				if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
-					add_to_list_fn, &pkgs) != 0) {
+					add_to_list_fn, &pkgs) > 0) {
 					return 0;	/* we've just appended some names to the pkgs list,
 							 * they will be processed after this package. */
 				}
@@ -175,6 +175,9 @@ pkg_do(char *pkg)
 		/* Start showing the package contents */
 		if (!Quiet) {
 			printf("%sInformation for %s:\n\n", InfoPrefix, pkg);
+			if (fexists(PRESERVE_FNAME)) {
+				printf("*** PACKAGE MAY NOT BE DELETED ***\n");
+			}
 		}
 		if (Flags & SHOW_COMMENT) {
 			show_file("Comment:\n", COMMENT_FNAME);
@@ -225,6 +228,9 @@ pkg_do(char *pkg)
 			show_file("Size in bytes including required pkgs: ", SIZE_ALL_FNAME);
 		}
 		if (!Quiet) {
+			if (fexists(PRESERVE_FNAME)) {
+				printf("*** PACKAGE MAY NOT BE DELETED ***\n\n");
+			}
 			puts(InfoPrefix);
 		}
 		free_plist(&plist);
@@ -272,7 +278,11 @@ CheckForPkg(char *pkgspec, char *dbdir)
 
 	if (strpbrk(pkgspec, "<>[]?*{")) {
 		/* expensive (pattern) match */
-		return !findmatchingname(dbdir, pkgspec, foundpkg, dbdir);
+		error = findmatchingname(dbdir, pkgspec, foundpkg, dbdir);
+		if (error == -1)
+			return 1;
+		else
+			return !error;
 	}
 	/* simple match */
 	(void) snprintf(buf, sizeof(buf), "%s/%s", dbdir, pkgspec);
@@ -285,7 +295,7 @@ CheckForPkg(char *pkgspec, char *dbdir)
 		
 		char    try[FILENAME_MAX];
 		snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkgspec);
-		if (findmatchingname(dbdir, try, foundpkg, dbdir) != 0) {
+		if (findmatchingname(dbdir, try, foundpkg, dbdir) > 0) {
 			error = 0;
 		}
 	}
@@ -319,18 +329,10 @@ pkg_perform(lpkg_head_t *pkghead)
 			return 1;
 
 		if (File2Pkg) {
-			/* Show all files with the package they belong to */
-			char   *file, *pkg;
 
-			/* pkg_info -Fa => Dump pkgdb */
-			if (pkgdb_open(1) == -1) {
-				err(1, "cannot open pkgdb");
-			}
-			while ((file = pkgdb_iter())) {
-				pkg = pkgdb_retrieve(file);
-				printf("%-50s %s\n", file, pkg);
-			}
-			pkgdb_close();
+			/* Show all files with the package they belong to */
+			pkgdb_dump();
+
 		} else {
 			/* Show all packges with description */
 			if ((dirp = opendir(tmp)) != (DIR *) NULL) {

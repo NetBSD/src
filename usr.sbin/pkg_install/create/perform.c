@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.33 2002/07/19 19:04:36 yamt Exp $	*/
+/*	$NetBSD: perform.c,v 1.33.2.1 2003/07/13 09:45:23 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.33 2002/07/19 19:04:36 yamt Exp $");
+__RCSID("$NetBSD: perform.c,v 1.33.2.1 2003/07/13 09:45:23 jlam Exp $");
 #endif
 #endif
 
@@ -46,12 +46,15 @@ make_dist(const char *home, const char *pkg, const char *suffix, const package_t
 	const plist_t *p;
 	int     ret;
 	char   *args[50];	/* Much more than enough. */
-	int     nargs = 0;
+	int     nargs = 1;
 	int     pipefds[2];
 	FILE   *totar;
 	pid_t   pid;
 
-	args[nargs++] = TAR_CMD;/* argv[0] */
+	if ((args[0] = strrchr(TAR_CMD, '/')) == NULL)
+		args[0] = TAR_CMD;
+	else
+		args[0]++;
 
 	if (*pkg == '/')
 		(void) snprintf(tball, sizeof(tball), "%s.%s", pkg, suffix);
@@ -77,7 +80,7 @@ make_dist(const char *home, const char *pkg, const char *suffix, const package_t
 	args[nargs] = NULL;
 
 	if (Verbose)
-		printf("Creating gzip'd %s ball in '%s'\n", TAR_CMD, tball);
+		printf("Creating binary pkg '%s'\n", tball);
 
 	/* Set up a pipe for passing the filenames, and fork off a tar process. */
 	if (pipe(pipefds) == -1) {
@@ -86,13 +89,13 @@ make_dist(const char *home, const char *pkg, const char *suffix, const package_t
 	}
 	if ((pid = fork()) == -1) {
 		cleanup(0);
-		errx(2, "cannot fork process for %s", TAR_FULLPATHNAME);
+		errx(2, "cannot fork process for %s", TAR_CMD);
 	}
 	if (pid == 0) {		/* The child */
 		dup2(pipefds[0], 0);
 		close(pipefds[0]);
 		close(pipefds[1]);
-		execv(TAR_FULLPATHNAME, args);
+		execvp(TAR_CMD, args);
 		cleanup(0);
 		errx(2, "failed to execute %s command", TAR_CMD);
 	}
@@ -134,6 +137,9 @@ make_dist(const char *home, const char *pkg, const char *suffix, const package_t
 	}
 	if (SizeAll) {
 		(void) fprintf(totar, "%s\n", SIZE_ALL_FNAME);
+	}
+	if (Preserve) {
+		(void) fprintf(totar, "%s\n", PRESERVE_FNAME);
 	}
 
 	for (p = plist->head; p; p = p->next) {
@@ -378,6 +384,11 @@ pkg_perform(lpkg_head_t *pkgs)
 		copy_file(Home, SizeAll, SIZE_ALL_FNAME);
 		add_plist(&plist, PLIST_IGNORE, NULL);
 		add_plist(&plist, PLIST_FILE, SIZE_ALL_FNAME);
+	}
+	if (Preserve) {
+		copy_file(Home, Preserve, PRESERVE_FNAME);
+		add_plist(&plist, PLIST_IGNORE, NULL);
+		add_plist(&plist, PLIST_FILE, PRESERVE_FNAME);
 	}
 
 	/* Finally, write out the packing list */

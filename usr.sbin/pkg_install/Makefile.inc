@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.18 2002/06/21 14:49:40 agc Exp $
+# $NetBSD: Makefile.inc,v 1.18.2.1 2003/07/13 09:45:19 jlam Exp $
 # Original from FreeBSD, no rcs id.
 
 .include <bsd.own.mk>
@@ -6,54 +6,40 @@
 LIBINSTALL != cd ${.CURDIR}/../lib && ${PRINTOBJDIR}
 CPPFLAGS+=-I${.CURDIR}/../lib ${DEBUG} -DBINDIR='"${BINDIR}"'
 
-.if !defined(OPSYS)
-.if exists(/usr/bin/uname)
-OPSYS!= /usr/bin/uname -s
-.elif exists(/bin/uname)
-OPSYS!= /bin/uname -s
-.else
-OPSYS="unknown"
-.endif
-.endif
+# If building for Zoularis on Solaris, some other Makefile should do:
+#LOCALBASE?= /usr/pkg
+#ZOULARISBASE?=  ${LOCALBASE}/bsd
+#BINDIR=${ZOULARISBASE}/bin
+#TAR_CMD?= ${BINDIR}/tar
+#FTP_CMD?= ${BINDIR}/ftp
+#CPPFLAGS+=-DTAR_CMD='"${TAR_CMD}"' -DFTP_CMD='"${FTP_CMD}"'
+#CHMOD_CMD?= /usr/bin/chmod
+#CHOWN_CMD?= /usr/bin/chown
+#CHGRP_CMD?= /usr/bin/chgrp
+#WARNS=0
 
-.if ${OPSYS} == "NetBSD"
-CHMOD?= /bin/chmod
-CHOWN?= /usr/sbin/chown
-CHGRP?= /usr/bin/chgrp
+# If building for Zoularis on Linux, some other Makefile should do:
+#CHMOD_CMD?= /bin/chmod
+#CHOWN_CMD?= /bin/chown
+#CHGRP_CMD?= /bin/chgrp
+
+# UNDER NO CIRCUMSTANCES SHOULD THIS MAKEFILE TEST THE OUTPUT OF uname!!
+# DOING SO BREAKS CROSS COMPILING.
+
+#CHMOD_CMD?= /bin/chmod
+#CHOWN_CMD?= /usr/sbin/chown
+#CHGRP_CMD?= /usr/bin/chgrp
 WARNS=2
-.elif ${OPSYS} == "SunOS"
-LOCALBASE?= /usr/pkg
-TAR_CMD?= tar
-FTP_CMD?= tar
-ZOULARISBASE?=	${LOCALBASE}/bsd
-TAR_FULLPATHNAME?= ${ZOULARISBASE}/bin/${TAR_CMD}
-FTP_FULLPATHNAME?= ${ZOULARISBASE}/bin/${FTP_CMD}
-CPPFLAGS+=-DTAR_CMD='"${TAR_CMD}"' -DTAR_FULLPATHNAME='"${TAR_FULLPATHNAME}"'
-CPPFLAGS+=-DFTP_CMD='"${FTP_CMD}"' -DFTP_FULLPATHNAME='"${FTP_FULLPATHNAME}"'
-BINDIR=${ZOULARISBASE}/bin
-CHMOD?= /usr/bin/chmod
-CHOWN?= /usr/bin/chown
-CHGRP?= /usr/bin/chgrp
-WARNS=0
-.elif ${OPSYS} == "Linux"
-CHMOD?= /bin/chmod
-CHOWN?= /bin/chown
-CHGRP?= /bin/chgrp
-.endif
 
-CPPFLAGS+= -DCHMOD='"${CHMOD}"' -DCHOWN='"${CHOWN}"' -DCHGRP='"${CHGRP}"'
+#CPPFLAGS+= -DCHMOD_CMD='"${CHMOD_CMD}"' -DCHOWN_CMD='"${CHOWN_CMD}"'
+#CPPFLAGS+= -DCHGRP_CMD='"${CHGRP_CMD}"'
 
 DPADD+=	${LIBINSTALL}/libinstall.a
-LDADD+=	-L${LIBINSTALL} -linstall
+LDADD+=	-L${LIBINSTALL} -linstall -ltermcap
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
 .endif
-
-
-
-
-
 
 #CFLAGS+=	-g
 #STRIPFLAG=	# unset
