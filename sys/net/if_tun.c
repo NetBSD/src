@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.25 1996/05/22 13:42:57 mycroft Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.26 1996/06/25 22:15:13 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -70,7 +70,7 @@ int	tun_ioctl __P((struct ifnet *, u_long, caddr_t));
 int	tun_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 		       struct rtentry *rt));
 
-static int tuninit __P((struct tun_softc *));
+static void tuninit __P((struct tun_softc *));
 
 void
 tunattach(unused)
@@ -169,7 +169,9 @@ tunclose(dev, flag, mode, p)
 			    ifa = ifa->ifa_list.tqe_next) {
 				if (ifa->ifa_addr->sa_family == AF_INET) {
 					rtinit(ifa, (int)RTM_DELETE,
-					    tp->tun_flags & TUN_DSTADDR ? RTF_HOST : 0);
+					       tp->tun_flags & TUN_DSTADDR
+							? RTF_HOST
+							: 0);
 				}
 			}
 		}
@@ -182,7 +184,7 @@ tunclose(dev, flag, mode, p)
 	return (0);
 }
 
-static int
+static void
 tuninit(tp)
 	struct tun_softc *tp;
 {
@@ -193,8 +195,9 @@ tuninit(tp)
 
 	ifp->if_flags |= IFF_UP | IFF_RUNNING;
 
+	tp->tun_flags &= ~(TUN_IASET|TUN_DSTADDR);
 	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
-	    ifa = ifa->ifa_list.tqe_next) {
+	     ifa = ifa->ifa_list.tqe_next) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			struct sockaddr_in *sin;
 
@@ -202,13 +205,15 @@ tuninit(tp)
 			if (sin && sin->sin_addr.s_addr)
 				tp->tun_flags |= TUN_IASET;
 
-			sin = satosin(ifa->ifa_dstaddr);
-			if (sin && sin->sin_addr.s_addr)
-				tp->tun_flags |= TUN_DSTADDR;
+			if (ifp->if_flags & IFF_POINTOPOINT) {
+				sin = satosin(ifa->ifa_dstaddr);
+				if (sin && sin->sin_addr.s_addr)
+					tp->tun_flags |= TUN_DSTADDR;
+			}
 		}
 	}
 
-	return 0;
+	return;
 }
 
 /*
@@ -231,6 +236,9 @@ tun_ioctl(ifp, cmd, data)
 	case SIOCSIFDSTADDR:
 		tuninit((struct tun_softc *)(ifp->if_softc));
 		TUNDEBUG("%s: destination address set\n", ifp->if_xname);
+		break;
+	case SIOCSIFBRDADDR:
+		TUNDEBUG("%s: broadcast address set\n", ifp->if_xname);
 		break;
 	default:
 		error = EINVAL;
@@ -259,7 +267,7 @@ tun_output(ifp, m0, dst, rt)
 		TUNDEBUG ("%s: not ready 0%o\n", ifp->if_xname,
 			  tp->tun_flags);
 		m_freem (m0);
-		return EHOSTDOWN;
+		return (EHOSTDOWN);
 	}
 
 #if NBPFILTER > 0
@@ -285,6 +293,16 @@ tun_output(ifp, m0, dst, rt)
 	switch(dst->sa_family) {
 #ifdef INET
 	case AF_INET:
+		if (tp->tun_flags & TUN_PREPADDR) {
+			/* Simple link-layer header */
+			M_PREPEND(m0, dst->sa_len, M_DONTWAIT);
+			if (m0 == NULL) {
+				IF_DROP(&ifp->if_snd);
+				return (ENOBUFS);
+			}
+			bcopy(dst, mtod(m0, char *), dst->sa_len);
+		}
+
 		s = splimp();
 		if (IF_QFULL(&ifp->if_snd)) {
 			IF_DROP(&ifp->if_snd);
@@ -300,7 +318,7 @@ tun_output(ifp, m0, dst, rt)
 #endif
 	default:
 		m_freem(m0);
-		return EAFNOSUPPORT;
+		return (EAFNOSUPPORT);
 	}
 
 	if (tp->tun_flags & TUN_RWAIT) {
@@ -314,7 +332,7 @@ tun_output(ifp, m0, dst, rt)
 			psignal(p, SIGIO);
 	}
 	selwakeup(&tp->tun_rsel);
-	return 0;
+	return (0);
 }
 
 /*
@@ -335,21 +353,52 @@ tunioctl(dev, cmd, data, flag, p)
 	case TUNSDEBUG:
 		tundebug = *(int *)data;
 		break;
+
 	case TUNGDEBUG:
 		*(int *)data = tundebug;
 		break;
+
+	case TUNSIFMODE:
+		switch (*(int *)data) {
+		case IFF_POINTOPOINT:
+		case IFF_BROADCAST:
+			s = splimp();
+			if (tp->tun_if.if_flags & IFF_UP) {
+				splx(s);
+				return (EBUSY);
+			}
+			tp->tun_if.if_flags &=
+				~(IFF_BROADCAST|IFF_POINTOPOINT);
+			tp->tun_if.if_flags |= *(int *)data;
+			splx(s);
+			break;
+		default:
+			return (EINVAL);
+			break;
+		}
+		break;
+
+	case TUNSLMODE:
+		if (*(int *)data)
+			tp->tun_flags |= TUN_PREPADDR;
+		else
+			tp->tun_flags &= ~TUN_PREPADDR;
+		break;
+
 	case FIONBIO:
 		if (*(int *)data)
 			tp->tun_flags |= TUN_NBIO;
 		else
 			tp->tun_flags &= ~TUN_NBIO;
 		break;
+
 	case FIOASYNC:
 		if (*(int *)data)
 			tp->tun_flags |= TUN_ASYNC;
 		else
 			tp->tun_flags &= ~TUN_ASYNC;
 		break;
+
 	case FIONREAD:
 		s = splimp();
 		if (tp->tun_if.if_snd.ifq_head)
@@ -358,12 +407,15 @@ tunioctl(dev, cmd, data, flag, p)
 			*(int *)data = 0;
 		splx(s);
 		break;
+
 	case TIOCSPGRP:
 		tp->tun_pgrp = *(int *)data;
 		break;
+
 	case TIOCGPGRP:
 		*(int *)data = tp->tun_pgrp;
 		break;
+
 	default:
 		return (ENOTTY);
 	}
@@ -388,8 +440,7 @@ tunread(dev, uio, ioflag)
 
 	TUNDEBUG ("%s: read\n", ifp->if_xname);
 	if ((tp->tun_flags & TUN_READY) != TUN_READY) {
-		TUNDEBUG ("%s: not ready 0%o\n", ifp->if_xname,
-			  tp->tun_flags);
+		TUNDEBUG ("%s: not ready 0%o\n", ifp->if_xname, tp->tun_flags);
 		return EHOSTDOWN;
 	}
 
@@ -401,10 +452,13 @@ tunread(dev, uio, ioflag)
 		if (m0 == 0) {
 			if (tp->tun_flags & TUN_NBIO) {
 				splx(s);
-				return EWOULDBLOCK;
+				return (EWOULDBLOCK);
 			}
 			tp->tun_flags |= TUN_RWAIT;
-			tsleep((caddr_t)tp, PZERO + 1, "tunread", 0);
+			if (tsleep((caddr_t)tp, PZERO|PCATCH, "tunread", 0)) {
+				splx(s);
+				return (EINTR);
+			}
 		}
 	} while (m0 == 0);
 	splx(s);
@@ -424,7 +478,7 @@ tunread(dev, uio, ioflag)
 	}
 	if (error)
 		ifp->if_ierrors++;
-	return error;
+	return (error);
 }
 
 /*
@@ -437,22 +491,55 @@ tunwrite(dev, uio, ioflag)
 	int		ioflag;
 {
 	int		unit = minor (dev);
-	struct ifnet	*ifp = &tunctl[unit].tun_if;
+	struct tun_softc *tp = &tunctl[unit];
+	struct ifnet	*ifp = &tp->tun_if;
 	struct mbuf	*top, **mp, *m;
-	int		error=0, s, tlen, mlen;
+	struct ifqueue	*ifq;
+	struct sockaddr	dst;
+	int		isr, error=0, s, tlen, mlen;
 
 	TUNDEBUG("%s: tunwrite\n", ifp->if_xname);
 
+	if (tp->tun_flags & TUN_PREPADDR) {
+		if (uio->uio_resid < sizeof(dst))
+			return (EIO);
+		error = uiomove((caddr_t)&dst, sizeof(dst), uio);
+		if (dst.sa_len > sizeof(dst)) {
+			/* Duh.. */
+			char discard;
+			int n = dst.sa_len - sizeof(dst);
+			while (n--)
+				if ((error = uiomove(&discard, 1, uio)) != 0)
+					return (error);
+		}
+	} else {
+#ifdef INET
+		dst.sa_family = AF_INET;
+#endif
+	}
+
 	if (uio->uio_resid < 0 || uio->uio_resid > TUNMTU) {
 		TUNDEBUG("%s: len=%d!\n", ifp->if_xname, uio->uio_resid);
-		return EIO;
+		return (EIO);
 	}
+
+	switch (dst.sa_family) {
+#ifdef INET
+	case AF_INET:
+		ifq = &ipintrq;
+		isr = NETISR_IP;
+		break;
+#endif
+	default:
+		return (EAFNOSUPPORT);
+	}
+
 	tlen = uio->uio_resid;
 
 	/* get a header mbuf */
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
-		return ENOBUFS;
+		return (ENOBUFS);
 	mlen = MHLEN;
 
 	top = 0;
@@ -475,14 +562,14 @@ tunwrite(dev, uio, ioflag)
 		if (top)
 			m_freem (top);
 		ifp->if_ierrors++;
-		return error;
+		return (error);
 	}
 
 	top->m_pkthdr.len = tlen;
 	top->m_pkthdr.rcvif = ifp;
 
 #if NBPFILTER > 0
-	if (tunctl[unit].tun_bpf) {
+	if (tp->tun_bpf) {
 		/*
 		 * We need to prepend the address family as
 		 * a four byte field.  Cons up a dummy header
@@ -497,23 +584,23 @@ tunwrite(dev, uio, ioflag)
 		m.m_len = sizeof(af);
 		m.m_data = (char *)&af;
 
-		bpf_mtap(tunctl[unit].tun_bpf, &m);
+		bpf_mtap(tp->tun_bpf, &m);
 	}
 #endif
 
 	s = splimp();
-	if (IF_QFULL (&ipintrq)) {
-		IF_DROP(&ipintrq);
+	if (IF_QFULL(ifq)) {
+		IF_DROP(ifq);
 		splx(s);
 		ifp->if_collisions++;
 		m_freem(top);
-		return ENOBUFS;
+		return (ENOBUFS);
 	}
-	IF_ENQUEUE(&ipintrq, top);
+	IF_ENQUEUE(ifq, top);
 	splx(s);
 	ifp->if_ipackets++;
-	schednetisr(NETISR_IP);
-	return error;
+	schednetisr(isr);
+	return (error);
 }
 
 /*
@@ -540,17 +627,17 @@ tunselect(dev, rw, p)
 			splx(s);
 			TUNDEBUG("%s: tunselect q=%d\n", ifp->if_xname,
 			    ifp->if_snd.ifq_len);
-			return 1;
+			return (1);
 		}
 		selrecord(p, &tp->tun_rsel);
 		break;
 	case FWRITE:
 		splx(s);
-		return 1;
+		return (1);
 	}
 	splx(s);
 	TUNDEBUG("%s: tunselect waiting\n", ifp->if_xname);
-	return 0;
+	return (0);
 }
 
 #endif  /* NTUN */
