@@ -1,5 +1,4 @@
-/*	$NetBSD: get_myaddress.c,v 1.11 2000/01/22 22:19:17 mycroft Exp $	*/
-
+/*	$NetBSD: svc_dg.h,v 1.1 2000/06/02 23:11:16 fvdl Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -29,48 +28,22 @@
  * Mountain View, California  94043
  */
 
-#include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char *sccsid = "@(#)get_myaddress.c 1.4 87/08/11 Copyr 1984 Sun Micro";
-static char *sccsid = "@(#)get_myaddress.c	2.1 88/07/29 4.0 RPCSRC";
-#else
-__RCSID("$NetBSD: get_myaddress.c,v 1.11 2000/01/22 22:19:17 mycroft Exp $");
-#endif
-#endif
-
 /*
- * get_myaddress.c
- *
- * Get client's IP address via ioctl.  This avoids using the yellowpages.
- * Copyright (C) 1984, Sun Microsystems, Inc.
+ * XXX - this file exists only so that the rpcbind code can pull it in.
+ * This should go away. It should only be include by svc_dg.c and
+ * rpcb_svc_com.c in the rpcbind code.
  */
 
-#include "namespace.h"
+/*
+ * kept in xprt->xp_p2
+ */
+struct svc_dg_data {
+	/* XXX: optbuf should be the first field, used by ti_opts.c code */
+	size_t		su_iosz;		/* size of send.recv buffer */
+	u_int32_t	su_xid;			/* transaction id */
+	XDR		su_xdrs;			/* XDR handle */
+	char		su_verfbody[MAX_AUTH_BYTES];	/* verifier body */
+	void		*su_cache;		/* cached data, NULL if none */
+};
 
-#include <sys/types.h>
-#include <sys/socket.h>
-
-#include <assert.h>
-#include <string.h>
-
-#include <rpc/rpc.h>
-#include <rpc/pmap_prot.h>
-
-
-#ifdef __weak_alias
-__weak_alias(get_myaddress,_get_myaddress)
-#endif
-
-int
-get_myaddress(addr)
-	struct sockaddr_in *addr;
-{
-	_DIAGASSERT(addr != NULL);
-
-	memset((void *) addr, 0, sizeof(*addr));
-	addr->sin_family = AF_INET;
-	addr->sin_port = htons(PMAPPORT);
-	addr->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-	return (0);
-}
+#define __rpcb_get_dg_xidp(x)	(&((struct svc_dg_data *)(x)->xp_p2)->su_xid)
