@@ -1,4 +1,4 @@
-/*	$NetBSD: cnwctl.c,v 1.5 1999/12/01 03:40:51 sommerfeld Exp $	*/
+/*	$NetBSD: cnwctl.c,v 1.6 2001/08/18 17:10:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Berkeley Software Design, Inc.
@@ -72,7 +72,7 @@ main(int argc, char **argv)
 	rate = 0;
 	interface = "cnw0";
 
-	while ((c = getopt(argc, argv, "d:i:k:sS")) != EOF)
+	while ((c = getopt(argc, argv, "d:i:k:sS")) != -1)
 		switch (c) {
 		case 'd':
 			domain = strtol(optarg, &e, 0);
