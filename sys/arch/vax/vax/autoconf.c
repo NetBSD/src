@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.34 1998/10/06 04:04:31 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.35 1998/10/06 20:46:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -73,6 +73,21 @@ struct devnametobdevmaj vax_nam2blk[] = {
 	{ "md",		23 },
 	{ NULL,		0 },
 };
+
+void
+configure()
+{
+
+	if (config_rootfound("mainbus", NULL) == NULL)
+		panic("mainbus not configured");
+
+	/*
+	 * We're ready to start up. Clear CPU and soft cold start flags.
+	 */
+	cold = 0;
+	if (dep_call->cpu_clrf) 
+		(*dep_call->cpu_clrf)();
+}
 
 void
 cpu_rootconf()

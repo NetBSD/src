@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.63 1998/10/06 04:04:31 matt Exp $	 */
+/* $NetBSD: machdep.c,v 1.64 1998/10/06 20:46:01 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -338,15 +338,7 @@ cpu_startup()
 	/*
 	 * Configure the system.
 	 */
-	if (config_rootfound("mainbus", NULL) == NULL)
-		panic("mainbus not configured");
-
-	/*
-	 * We're ready to start up. Clear CPU and soft cold start flags.
-	 */
-	cold = 0;
-	if (dep_call->cpu_clrf)
-		(*dep_call->cpu_clrf)();
+	configure();
 }
 
 /*
