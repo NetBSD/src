@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.160 1999/04/18 22:02:47 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.161 1999/04/19 19:27:31 ross Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -2177,17 +2177,17 @@ com_common_putc(iot, ioh, c)
 	int timo;
 
 	/* wait for any pending transmission to finish */
-	timo = 1500;
+	timo = 150000;
 	while (!ISSET(bus_space_read_1(iot, ioh, com_lsr), LSR_TXRDY) && --timo)
-		delay(100);
+		continue;
 
 	bus_space_write_1(iot, ioh, com_data, c);
 	COM_BARRIER(iot, ioh, BR | BW);
 
 	/* wait for this transmission to complete */
-	timo = 15000;
+	timo = 1500000;
 	while (!ISSET(bus_space_read_1(iot, ioh, com_lsr), LSR_TXRDY) && --timo)
-		delay(100);
+		continue;
 
 	splx(s);
 }
