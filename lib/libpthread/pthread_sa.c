@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.34 2005/01/06 17:34:52 mycroft Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.35 2005/01/06 17:38:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.34 2005/01/06 17:34:52 mycroft Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.35 2005/01/06 17:38:29 mycroft Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -134,6 +134,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		pthread__assert(t->pt_vpid == sas[1]->sa_cpu);
 		t->pt_blockedlwp = sas[1]->sa_id;
 		t->pt_blockgen += 2;
+//		pthread__assert(t->pt_blockgen <= t->pt_unblockgen + 2);
 		if (t->pt_cancel)
 			_lwp_wakeup(t->pt_blockedlwp);
 #ifdef PTHREAD__DEBUG
@@ -181,6 +182,8 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		 * a signal will be on a run queue, and not in upcall limbo.
 		 */
 		si = arg;
+		SDPRINTF(("(up %p) signal %d %p\n", self,
+			     ev ? sas[1]->sa_id : -1, si));
 		if (ev)
 			pthread__signal(self, pthread__sa_id(sas[1]), si);
 		else
@@ -220,6 +223,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 			     pthread__uc_pc(UC(self->pt_next))));
 		self->pt_switchtouc = UC(self);
 		self->pt_switchto = self;
+		pthread__assert(self->pt_blockgen == self->pt_unblockgen);
 		pthread__switch(self, self->pt_next);
 		/*NOTREACHED*/
 		pthread__abort();
@@ -272,7 +276,13 @@ pthread__find_interrupted(int type, struct sa_t *sas[], int ev, int intr,
 		}
 		if (victim->pt_type == PT_THREAD_UPCALL) {
 			/* Case 1: Upcall. Must be resumed. */
-				SDPRINTF((" upcall"));
+			SDPRINTF((" upcall"));
+			if (victim->pt_spinlocks > 0) {
+				SDPRINTF((" lockholder %d",
+				    victim->pt_spinlocks));
+			} else
+				SDPRINTF((" nonlockholder"));
+			}
 			resume = 1;
 			if (victim->pt_next) {
 				/*
@@ -312,7 +322,7 @@ pthread__find_interrupted(int type, struct sa_t *sas[], int ev, int intr,
 				}
 			} else {
 				/* Case 2B: Non-lockholder. */
-					SDPRINTF((" nonlockholder"));
+				SDPRINTF((" nonlockholder"));
 				if (victim->pt_next) {
 					/*
 					 * Case 2B1: Non-lockholder on a chain
@@ -348,11 +358,19 @@ pthread__find_interrupted(int type, struct sa_t *sas[], int ev, int intr,
 			pthread__assert(victim->pt_next == NULL);
 			victim->pt_next = nextint;
 			nextint = victim;
+#ifdef PTHREAD__DEBUG
+			for (; victim; victim = victim->pt_next)
+				pthread__assert(victim->pt_next != nextint);
+#endif
 		} else {
 			pthread__assert(victim->pt_parent == NULL);
 			pthread__assert(victim->pt_next == NULL);
 			victim->pt_next = nextsched;
 			nextsched = victim;
+#ifdef PTHREAD__DEBUG
+			for (; victim; victim = victim->pt_next)
+				pthread__assert(victim->pt_next != nextsched);
+#endif
 		}
 		SDPRINTF(("\n"));
 	}
@@ -454,6 +472,8 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 				if (victim->pt_switchto) {
 					/* We're done with you. */
 					SDPRINTF((" recyclable"));
+					pthread__assert(victim != prev);
+					pthread__assert(!prev || prev->pt_next);
 					/*
 					 * Clear trap context, which is
 					 * no longer useful.
@@ -580,6 +600,7 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 				     self, intqueue, PUC(intqueue), 
 				     pthread__uc_pc(UC(intqueue)), 
 				     pthread__uc_sp(UC(intqueue))));
+			pthread__assert(self->pt_blockgen == self->pt_unblockgen);
 			pthread__switch(self, intqueue);
 			SDPRINTF(("(rl %p) returned from chain\n",
 			    self));
@@ -597,6 +618,7 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 				     PUC(self->pt_next),
 				     pthread__uc_pc(UC(self->pt_next)), 
 				     pthread__uc_sp(UC(self->pt_next))));
+			pthread__assert(self->pt_blockgen == self->pt_unblockgen);
 			pthread__switch(self, self->pt_next);
 		}
 
