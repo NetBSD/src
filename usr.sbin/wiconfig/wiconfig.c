@@ -1,5 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.12 2001/05/06 03:28:57 ichiro Exp $	*/
-
+/*	$NetBSD: wiconfig.c,v 1.13 2001/05/15 04:16:21 ichiro Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -69,7 +68,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wiconfig.c,v 1.12 2001/05/06 03:28:57 ichiro Exp $";
+	"@(#) $Id: wiconfig.c,v 1.13 2001/05/15 04:16:21 ichiro Exp $";
 #endif
 
 struct wi_table {
@@ -451,20 +450,24 @@ static struct wi_table wi_table[] = {
 	    'r', "RTS threshold" },
 	{ WI_RID_CREATE_IBSS, WI_BOOL, "Create IBSS:\t\t\t\t",
 	    'c', "create ibss" },
+	{ WI_RID_MICROWAVE_OVEN, WI_WORDS, "Microwave oven robustness:\t\t",
+	  'M', "microwave oven robustness enabled" },
+	{ WI_RID_ROAMING_MODE, WI_WORDS, "Roaming mode(1:firm,3:disable):\t\t",
+	  'R', "roaming mode" },
 	{ WI_RID_SYSTEM_SCALE, WI_WORDS, "Access point density:\t\t\t",
 	    'a', "system scale" },
 	{ WI_RID_PM_ENABLED, WI_WORDS, "Power Mgmt (1=on, 0=off):\t\t",
 	    'P', "power management enabled" },
-	{ WI_RID_MAX_SLEEP, WI_WORDS, "Max sleep time:\t\t\t\t",
+	{ WI_RID_MAX_SLEEP, WI_WORDS, "Max sleep time (msec):\t\t\t",
 	    'S', "max sleep duration" },
-	{ WI_RID_MICROWAVE_OVEN, WI_WORDS, "Microwave oven robustness:\t\t",
-	  'M', "microwave oven robustness enabled" },
 	{ 0, WI_NONE }
 };
 
 static struct wi_table wi_crypt_table[] = {
 	{ WI_RID_ENCRYPTION, WI_BOOL, "WEP encryption:\t\t\t\t",
 	    'e', "encryption" },
+	{ WI_RID_AUTH_CNTL, WI_WORDS, "Authentication type \n(1=OpenSys, 2=Shared Key):\t\t",
+	    'A', "authentication type" },
         { WI_RID_TX_CRYPT_KEY, WI_WORDS, "TX encryption key:\t\t\t" },
         { WI_RID_DEFLT_CRYPT_KEYS, WI_KEYSTRUCT, "Encryption keys:\t\t\t" },
 	{ 0, WI_NONE }
@@ -640,6 +643,7 @@ usage()
 	    "       [-c 0|1] [-q SSID] [-p port type] [-a access point density]\n"
 	    "       [-m MAC address] [-d max data length] [-r RTS threshold]\n"
 	    "       [-f frequency] [-M 0|1] [-P 0|1] [-S max sleep duration]\n"
+	    "       [-A 0|1 ] [-R 1|3]\n"
 	    ,
 	    getprogname());
 	exit(1);
@@ -672,7 +676,7 @@ int main(argc, argv)
 	}
 
 	while ((ch = getopt(argc, argv,
-	    "a:c:d:e:f:hi:k:m:n:op:q:r:s:t:M:S:P:T:")) != -1) {
+	    "a:c:d:e:f:hi:k:m:n:op:q:r:s:t:A:M:S:P:R:T:")) != -1) {
 		if (ch != 'i')
 			dumpinfo = 0;
 		/*
