@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
  *
- *      $Id: sd.c,v 1.18.2.4 1993/11/24 19:19:49 mycroft Exp $
+ *      $Id: sd.c,v 1.18.2.5 1993/11/24 20:24:26 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -110,13 +110,12 @@ sdattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct sd_data *sd;
-	struct disk_parms *dp;
+	struct sd_data *sd = (struct sd_data *)self;
+	struct disk_parms *dp = &sd->params;
 	struct scsi_link *sc_link = aux;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("sdattach: "));
 
-	dp = &sd->params;
 	/*
 	 * Store information needed to contact our base driver
 	 */
@@ -141,7 +140,7 @@ sdattach(parent, self, aux)
 	 * request must specify this.
 	 */
 	sd_get_parms(sd, SCSI_NOSLEEP | SCSI_NOMASK);
-	printf("%s: %dMB (%d total sec), %d cyl, %d head, %d sec, %d bytes/sec\n",
+	printf(": %dMB (%d total sec), %d cyl, %d head, %d sec, %d bytes/sec\n",
 	       self->dv_xname, dp->disksize / ((1024L * 1024L) / dp->secsiz),
 	       dp->disksize, dp->cyls, dp->heads, dp->sectors, dp->secsiz);
 	sd->flags |= SDINIT;
