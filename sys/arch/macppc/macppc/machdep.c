@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.104.4.12 2002/10/18 02:38:38 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.104.4.13 2002/10/18 19:13:37 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -647,7 +647,7 @@ ofkbd_cngetc(dev)
  * (though by the time our IPI is processed, it may have been flushed already).
  */
 void
-mp_save_fpu_proc(l)
+mp_save_fpu_lwp(l)
 	struct lwp *l;
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
@@ -690,7 +690,7 @@ mp_save_fpu_proc(l)
  * this function).
  */
 void
-mp_save_vec_proc(l)
+mp_save_vec_lwp(l)
 	struct lwp *l;
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
@@ -719,9 +719,9 @@ mp_save_vec_proc(l)
 		if (pcb->pcb_veccpu == NULL)
 			return;
 	}
-	printf("mp_save_vec_proc{%d} pid = %d.%d, veccpu->ci_cpuid = %d\n",
+	printf("mp_save_vec_lwp{%d} pid = %d.%d, veccpu->ci_cpuid = %d\n",
 	    cpu_number(), l->l_proc->p_pid, l->l_lid, veccpu->ci_cpuid);
-	panic("mp_save_vec_proc");
+	panic("mp_save_vec_lwp");
 #endif
 }
 #endif /* ALTIVEC */
