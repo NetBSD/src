@@ -1,4 +1,4 @@
-#	$NetBSD: files.iq80310,v 1.7 2002/02/07 21:34:23 thorpej Exp $
+#	$NetBSD: files.iq80310,v 1.8 2002/04/12 19:02:31 thorpej Exp $
 #
 # Intel IQ80310 evaluation board configuration info
 #
@@ -23,11 +23,10 @@ file	arch/evbarm/iq80310/iq80310_timer.c
 file	arch/evbarm/iq80310/iq80310_pci.c
 
 # IQ80310 on-board devices (including CPLD)
-device	obio {[addr = -1]}
+device	obio {[addr = -1]}: bus_space_generic
 attach	obio at mainbus
 file	arch/evbarm/iq80310/obio.c			obio
 file	arch/evbarm/iq80310/obio_space.c		obio
-file	arch/evbarm/iq80310/obio_space_asm.S		obio
 
 # on-board XR 16550 UARTs
 attach	com at obio with com_obio
