@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.5 2002/07/26 15:41:56 rafal Exp $
+.\"	$NetBSD: install,v 1.6 2004/01/04 15:06:44 sekiya Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -125,25 +125,28 @@ upgrade boot programs.
 The
 .Nx*M
 CD-ROM is not ISO-formatted.
-Since the older SGI PROMs do not understand ISO/CD-9660 formats,
-the CD-ROM image is generated with an SGI Volume Header and an
-FFS-formatted (BSD4.2) partition for the distribution.
-Furthermore, since the file system is FFS, the CD cannot be mounted under IRIX.
+Since SGI PROMs can not boot from an ISO/CD-9660 filesystem,
+the CD-ROM image is generated with an SGI Volume Header for the bootstrap loader
+and an ISO/CD-9660-formatted partition for the distribution.
 .Pp
 To install from a
 .Nx*M
-CD-ROM, follow the procedure above for
-setting the PROM environment for SystemPartition, OSLoadPartition, OSLoader
-and OSLoadFilename.
-The SCSI and DISK values used should be for your attached CD-ROM drive, where
+CD-ROM, enter the PROM command-line environment and execute one of the following
+commands, replacing
 .Ar X
-is the SCSI-ID of the CD-ROM.
-.
-Using the PROM command-line interface,
-you can boot the CD-ROM installation kernel as follows:
+with the SCSI-ID of the CD-ROM:
 .Pp
+(for most Indigo2 (IP22) and Indy (IP24) machines)
 .(tag 12n -offset indent -compact
-.It Ic ">> boot"
+.It Ic ">> boot -f scsi(0)cdrom(X)rdisk(0)partition(8)ip2xboot"
+.tag)
+(for Indigo (IP20) and Indigo2/Indy machines with old PROMs)
+.(tag 12n -offset indent -compact
+.It Ic ">> boot -f scsi(0)cdrom(X)rdisk(0)partition(8)aoutboot"
+.tag)
+(for O2 (IP32) machines)
+.(tag 12n -offset indent -compact
+.It Ic ">> boot -f scsi(0)cdrom(X)rdisk(0)partition(8)ip3xboot"
 .tag)
 .Pp
 .Ss2 Installation for diskless configurations
@@ -158,22 +161,17 @@ suffix, you must first uncompress it using the
 .Pa gunzip
 program.
 You must also decide which kernel you need to boot.
-.\" Because of differences in SGI hardware between different machines,
-.\" the kernel load addresses differ.
-.\" You will need GENERIC_INDY for the Indy and Indigo2,
-.\" while GENERIC should be enough for the O2.
-If your PROM can load ELF kernels directly (see the 
-.Sx Preparing Your System for NetBSD installation
-section above), the GENERIC_INDY kernel will be sufficient.
-Otherwise, you will need the ECOFF version of the GENERIC_INDY
-kernel (
-.Pa netbsd.ecoff-GENERIC_INDY ).
+Because of differences in SGI hardware between different machines,
+the kernel load addresses differ.
+You will need GENERIC32_IP2x for the Indy and Indigo2,
+ecoff-GENERIC32_IP2x for the Indigo (and Indy/Indigo2 machines with old PROMs),
+and GENERIC32_IP3x for the O2.
 .Pp
-.Dl server# Ic gunzip netbsd-GENERIC_INDY.gz
-.Dl server# Ic cp netbsd-GENERIC_INDY /tftpboot/netbsd-sgimips
+.Dl server# Ic gzip -d -c netbsd-GENERIC32_IP2x.gz > /tftpboot/netbsd-sgimips
 or
-.Dl server# Ic gunzip netbsd.ecoff-GENERIC_INDY.gz
-.Dl server# Ic cp netbsd.ecoff-GENERIC_INDY /tftpboot/netbsd-sgimips
+.Dl server# Ic gzip -d -c netbsd.ecoff-GENERIC32_IP2x.gz > /tftpboot/netbsd-sgimips
+or
+.Dl server# Ic gzip -d -c netbsd-GENERIC32_IP2x.gz > /tftpboot/netbsd-sgimips
 .
 .Pp
 Note that your DHCP server must be configured to specify
@@ -206,8 +204,8 @@ you know how to configure DHCP and TFTP services on your server.
 .(enum
 Place the install kernel into the TFTP server's download area.
 Just as above, you need to place the correct bootable kernel into the
-TFTP server's download area.  However, instead of a GENERIC_INDY kernel,
-you must use the correct INDY_INSTALL kernel.  This kernel contains a
+TFTP server's download area.  However, instead of a GENERIC kernel,
+you must use the correct INSTALL kernel.  This kernel contains a
 ramdisk with the installation tools and will allow you to proceed with
 installation without further setup.
 .Pp
@@ -216,8 +214,8 @@ If the kernel has a
 suffix, you must first uncompress it using the
 .Pa gunzip
 program.
-As above, you must choose either the ELF (netbsd-INDY_INSTALL) or ECOFF
-(netbsd-INDY_INSTALL.ecoff) kernel.
+As above, you must choose either the netbsd-INSTALL32_IP2x, 
+netbsd-INSTALL32_IP2x.ecoff, or netbsd-INSTALL32_IP3x kernel.
 .Pp
 Note that your DHCP server must be configured to specify
 this file as the boot file for the client.
@@ -235,7 +233,7 @@ Once you've booted the installation kernel you will need to
 select your terminal type.
 Use
 .\" .Ic iris-ansi
-.\" for an SGI graphics console (Not currently supported),
+.\" for an SGI graphics console,
 .Ic vt100
 for a serial console with a vt100-compatible terminal, or
 .Ic xterm
