@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 2004/03/03 22:58:34 matt Exp $
+#	$NetBSD: genassym.cf,v 1.2 2004/03/04 00:16:47 matt Exp $
 
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,11 +40,13 @@ include <ucontext.h>
 include <signal.h>
 
 define UC_LEN		sizeof(ucontext_t)
-define UC_LINK		offsetof(ucontext_t, uc_link)
 define UC_FLAGS		offsetof(ucontext_t, uc_flags)
+define UC_LINK		offsetof(ucontext_t, uc_link)
+define UC_STACK		offsetof(ucontext_t, uc_stack)
 define UC_SIGMASK	offsetof(ucontext_t, uc_sigmask)
 define UC_GREGS		offsetof(ucontext_t, uc_mcontext.__gregs)
 define _UC_SIGMASK	_UC_SIGMASK
+define _UC_STACK	_UC_STACK
 define _UC_CPU		_UC_CPU
 
 define _REG_R0		4*_REG_R0
@@ -59,6 +61,11 @@ define _REG_SP		4*_REG_SP
 define _REG_FP		4*_REG_FP
 define _REG_PC		4*_REG_PC
 define _REG_PSL		4*_REG_PSL
+
+define	SS_SP		offsetof(stack_t, ss_sp)
+define	SS_SIZE		offsetof(stack_t, ss_size)
+define	SS_FLAGS	offsetof(stack_t, ss_flags)
+define	SS_ONSTACK	SS_ONSTACK
 
 define	SC_LEN		sizeof(struct sigcontext)
 define	SC_ONSTACK	offsetof(struct sigcontext, sc_onstack)
