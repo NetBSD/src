@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.36 2004/12/15 14:03:52 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.37 2004/12/15 17:30:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -248,7 +248,9 @@ ASENTRY_NOPROFILE(start)
 	movl	#EXTIOTOP1200,%a0@
 
 	RELOC(ctrl_power, %a0);
-	movl	#0xe1000000,%a0@	| CTRL_POWER port for news1200
+	movl	#CTRL_POWER1200,%a0@	| CTRL_POWER port for news1200
+	RELOC(ctrl_led, %a0);
+	movl	#CTRL_LED1200,%a0@	| CTRL_LED port for news1200
 	jra	Lcom030
 
 Lnot1200:
@@ -294,7 +296,9 @@ Lnot1200:
 	movl	#EXTIOTOP1700,%a0@
 
 	RELOC(ctrl_power, %a0);
-	movl	#0xe1380000,%a0@	| CTRL_POWER port for news1700
+	movl	#CTRL_POWER1700,%a0@	| CTRL_POWER port for news1700
+	RELOC(ctrl_led, %a0);
+	movl	#CTRL_LED1700,%a0@	| CTRL_LED port for news1700
 Lcom030:
 
 	RELOC(vectab,%a0)
@@ -1146,17 +1150,27 @@ Lnocache5:
 	trap	#15
 	/* NOTREACHED */
 
+/*
+ * debug_led():
+ * control LED routines for debugging
+ * used as break point before printf enabled
+ */
 ASENTRY_NOPROFILE(debug_led)
-	lea	0xe0dc0000,%a0
+	RELOC(ctrl_led,%a0)		| assume %a5 still has base address
 	movl	%d0,%a0@
 
 1:	nop
 	jmp	1b
 	rts
 
+/*
+ * debug_led2():
+ * similar to debug_led(), but used after MMU enabled
+ */
 ASENTRY_NOPROFILE(debug_led2)
-	movl	_C_LABEL(intiobase),%d1
-	addl    #(0xe0dc0000-INTIOBASE1700),%d1
+	movl	_C_LABEL(ctrl_led),%d1
+	subl	_C_LABEL(intiobase_phys),%d1
+	addl	_C_LABEL(intiobase),%d1
 	movl    %d1,%a0
 	movl	%d0,%a0@
 
@@ -1238,6 +1252,9 @@ GLOBAL(extiotop_phys)
 
 GLOBAL(ctrl_power)
 	.long	0		| PA of power control port
+
+GLOBAL(ctrl_led)
+	.long	0		| PA of LED control port
 
 GLOBAL(cache_ctl)
 	.long	0		| KVA of external cache control port
