@@ -1,4 +1,4 @@
-/*	$NetBSD: qereg.h,v 1.1 1999/01/17 20:44:18 pk Exp $	*/
+/*	$NetBSD: qereg.h,v 1.1.2.1 1999/04/23 15:08:38 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -135,11 +135,11 @@ struct qe_cregs {
 			"b\3RXSMALL\0b\4RXDROP\0b\5RXIRQ\0"		\
 			"b\6CECOFLOW\0b\7FCOFLOW\0b\10RLCOLL\0"		\
 			"b\11RXFOFLOW\0b\12MCOFLOW\0b\13RUOFLOW\0"	\
-			"b\14RCCOFLOW\0b\15TXSERR\0b\16TXPERR\0"	\
-			"b\17TXLERR\0b\20TXDERROR\0b\21TCCOFLOW\0"	\
-			"b\22TXIRQ\0b\23BERROR\0b\24JERROR\0"		\
-			"b\25FUFLOW\0b\26LCOLL\0b\27ERETRIES\0"		\
-			"b\30CLOSS\0b\31EDEFER\0\0"
+			"b\14RCCOFLOW\0b\20TXSERR\0b\21TXPERR\0"	\
+			"b\22TXLERR\0b\23TXDERROR\0b\24TCCOFLOW\0"	\
+			"b\25TXIRQ\0b\26BERROR\0b\27JERROR\0"		\
+			"b\30FUFLOW\0b\31LCOLL\0b\32ERETRIES\0"		\
+			"b\33CLOSS\0b\32EDEFER\0\0"
 
 /*
  * Errors: all status bits except for TX/RX IRQ
