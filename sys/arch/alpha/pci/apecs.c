@@ -1,4 +1,4 @@
-/*	$NetBSD: apecs.c,v 1.14 1996/11/11 21:02:32 cgd Exp $	*/
+/*	$NetBSD: apecs.c,v 1.15 1996/11/25 03:56:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -86,10 +86,10 @@ apecsmatch(parent, match, aux)
  * Set up the chipset's function pointers.
  */
 void
-apecs_init(acp)
+apecs_init(acp, mallocsafe)
 	struct apecs_config *acp;
+	int mallocsafe;
 {
-
 	acp->ac_comanche_pass2 =
 	    (REGVAL(COMANCHE_ED) & COMANCHE_ED_PASS2) != 0;
 	acp->ac_memwidth =
@@ -97,12 +97,21 @@ apecs_init(acp)
 	acp->ac_epic_pass2 =
 	    (REGVAL(EPIC_DCSR) & EPIC_DCSR_PASS2) != 0;
 
+	acp->ac_haxr1 = REGVAL(EPIC_HAXR1);
+	acp->ac_haxr2 = REGVAL(EPIC_HAXR2);
+
 	/*
 	 * Can't set up SGMAP data here; can be called before malloc().
+	 * XXX THIS COMMENT NO LONGER MAKES SENSE.
 	 */
 
-	acp->ac_iot = apecs_lca_bus_io_init(acp);
-	acp->ac_memt = apecs_lca_bus_mem_init(acp);
+	if (!acp->ac_initted) {
+		/* don't do these twice since they set up extents */
+		acp->ac_iot = apecs_bus_io_init(acp);
+		acp->ac_memt = apecs_bus_mem_init(acp);
+	}
+	acp->ac_mallocsafe = mallocsafe;
+
 	apecs_pci_init(&acp->ac_pc, acp);
 
 	/* Turn off DMA window enables in PCI Base Reg 1. */
@@ -117,6 +126,8 @@ apecs_init(acp)
 		alpha_XXX_dmamap_or = 0x40000000;		/* XXX */
 	}							/* XXX */
 	/* XXX XXX END XXX XXX */
+
+	acp->ac_initted = 1;
 }
 
 void
@@ -136,7 +147,7 @@ apecsattach(parent, self, aux)
 	 * (maybe), but doesn't hurt to do twice.
 	 */
 	acp = sc->sc_acp = &apecs_configuration;
-	apecs_init(acp);
+	apecs_init(acp, 1);
 
 	/* XXX SGMAP FOO */
 
@@ -175,7 +186,7 @@ apecsprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-        register struct pcibus_attach_args *pba = aux;
+	register struct pcibus_attach_args *pba = aux;
 
 	/* only PCIs can attach to APECSes; easy. */
 	if (pnp)
