@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.28 2003/04/21 08:54:42 itojun Exp $	*/
+/*	$NetBSD: trace.c,v 1.29 2003/07/12 14:36:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -41,7 +41,7 @@
 #include <fcntl.h>
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: trace.c,v 1.28 2003/04/21 08:54:42 itojun Exp $");
+__RCSID("$NetBSD: trace.c,v 1.29 2003/07/12 14:36:07 itojun Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -76,7 +76,7 @@ qstring(u_char *s, int len)
 	static char buf[8*20+1];
 	char *p;
 	u_char *s2, c;
-
+	int n;
 
 	for (p = buf; len != 0 && p < &buf[sizeof(buf)-1]; len--) {
 		c = *s++;
@@ -111,7 +111,10 @@ qstring(u_char *s, int len)
 			*p++ = 'b';
 			break;
 		default:
-			p += sprintf(p,"%o",c);
+			n = snprintf(p, sizeof(buf) - (p - buf), "%o", c);
+			if (n <= 0)
+				goto exit;
+			p += n;
 			break;
 		}
 	}
