@@ -1,4 +1,4 @@
-/*	$NetBSD: lsu.c,v 1.1 2000/10/19 14:06:02 ad Exp $	*/
+/*	$NetBSD$	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 /*
- * El-cheapo disk driver for use by RAID controllers.
+ * Disk driver for use by RAID controllers.
  */
 
 #include "rnd.h"
@@ -62,13 +62,14 @@
 #include <sys/rnd.h>
 #endif
 
-#include <dev/lsu/lsuvar.h>
+#include <dev/lsuvar.h>
 
 static void	lsugetdefaultlabel(struct lsu_softc *, struct disklabel *);
 static void	lsugetdisklabel(struct lsu_softc *);
 static int	lsulock(struct lsu_softc *);
 static void	lsuminphys(struct buf *bp);
 static void	lsushutdown(void *);
+static void	lsustart(struct lsu_softc *, struct buf *);
 static void	lsuunlock(struct lsu_softc *);
 
 extern struct	cfdriver lsu_cd;
@@ -108,6 +109,7 @@ lsuattach(struct lsu_softc *sc)
 	/* Set the `shutdownhook'. */
 	if (lsu_sdh == NULL)
 		lsu_sdh = shutdownhook_establish(lsushutdown, NULL);
+	BUFQ_INIT(&sc->sc_bufq);
 }
 
 static void
@@ -278,13 +280,28 @@ lsuioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 void
 lsustrategy(struct buf *bp)
 {
-	struct disklabel *lp;
 	struct lsu_softc *sc;
-	int part, unit, rv, s;
+	int s;
 
-	unit = DISKUNIT(bp->b_dev);
+	sc = device_lookup(&lsu_cd, DISKUNIT(bp->b_dev));
+
+	s = splbio();
+	if (sc->sc_queuecnt == sc->sc_maxqueuecnt) {
+		BUFQ_INSERT_TAIL(&sc->sc_bufq, bp);
+		splx(s);
+		return;
+	}
+	splx(s);
+	lsustart(sc, bp);
+}
+
+static void
+lsustart(struct lsu_softc *sc, struct buf *bp)
+{
+	struct disklabel *lp;
+	int part, s, rv;
+
 	part = DISKPART(bp->b_dev);
-	sc = device_lookup(&lsu_cd, unit);
 	lp = sc->sc_dk.dk_label;
 
 	/*
@@ -331,12 +348,9 @@ lsustrategy(struct buf *bp)
 
 	s = splbio();
 	disk_busy(&sc->sc_dk);
+	sc->sc_queuecnt++;
 	splx(s);
 
-	/*
-	 * XXX We shouldn't really allow processes to sleep at this point;
-	 * in reality it won't matter too much.
-	 */
 	if ((rv = (*sc->sc_start)(sc, bp)) != 0) {
 		bp->b_error = rv;
 		bp->b_flags |= B_ERROR;
@@ -352,7 +366,6 @@ lsudone(struct lsu_softc *sc, struct buf *bp)
 {
 
 	if ((bp->b_flags & B_ERROR) != 0) {
-		/* XXX Ha ha. */
 		diskerr(bp, "lsu", "error", LOG_PRINTF, 0, sc->sc_dk.dk_label);
 		printf("\n");
 	}
@@ -362,6 +375,12 @@ lsudone(struct lsu_softc *sc, struct buf *bp)
 	rnd_add_uint32(&sc->sc_rnd_source, bp->b_rawblkno);
 #endif
 	biodone(bp);
+	sc->sc_queuecnt--;
+
+	if ((bp = BUFQ_FIRST(&sc->sc_bufq)) != NULL) {
+		BUFQ_REMOVE(&sc->sc_bufq, bp);
+		lsustart(sc, bp);
+	}
 }
 
 int
