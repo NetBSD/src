@@ -1,5 +1,5 @@
 #
-#	$Id: files.pc532,v 1.3 1994/02/22 22:54:44 phil Exp $
+#	$Id: files.pc532,v 1.4 1994/03/08 19:47:51 phil Exp $
 #
 arch/pc532/pc532/autoconf.c		standard 
 arch/pc532/pc532/clock.c		standard
@@ -24,7 +24,7 @@ arch/pc532/pc532/db_disasm.c		optional ddb
 arch/pc532/pc532/db_interface.c		optional ddb
 arch/pc532/pc532/db_trace.c		optional ddb
 arch/pc532/pc532/icuinit.c		standard  #   interrupt control
-arch/pc532/pc532/con_putc.c		standard  #   pc532 test stuff
+dev/cons.c				standard  #   console driver
 scsi/scsiconf.c				optional scsi
 scsi/sd.c				optional sd device-driver requires scsi
 scsi/st.c				optional st device-driver requires scsi
