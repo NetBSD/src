@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/10/10 05:13:55 enami Exp $
+#	$NetBSD: Makefile,v 1.7 2001/10/13 06:15:20 jmc Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
@@ -52,6 +52,7 @@ CRUNCHCONF=	${CBIN}.conf
 MTREECONF=	mtree.conf
 
 CRUNCHGEN?=	crunchgen
+MTREE?=		mtree
 DISKTYPE?=	miniroot
 
 all: netbsd.INSTALL ${IMAGE}
@@ -70,7 +71,7 @@ ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS} dot.profile
 	#newfs -B ${FS_END} -m 0 -o space -i 5120 -c 80 ${VND_RDEV} ${DISKTYPE}
 	newfs -B ${FS_END} -m 0 -o space ${VND_RDEV} ${DISKTYPE}
 	mount -o softdep ${VND_DEV} ${MOUNT_POINT}
-	mtree -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -u
+	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}

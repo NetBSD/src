@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/10/10 05:13:55 enami Exp $
+#	$NetBSD: Makefile,v 1.3 2001/10/13 06:15:20 jmc Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -23,6 +23,7 @@ CRUNCHCONF=	${CBIN}.conf
 MTREECONF=	mtree.conf
 
 CRUNCHGEN?=	crunchgen
+MTREE?=		mtree
 
 SIZE=           2048k
 DISKTYPE=	floppyinstfs
@@ -37,7 +38,7 @@ ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS}
 	disklabel -f ${.CURDIR}/disktab -rw ${VND_CDEV} ${DISKTYPE}
 	newfs -B be -m 0 -o space -i 6144 -c 128 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	mtree -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -u
+	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${.CURDIR}/${LISTS}
 	@echo ""

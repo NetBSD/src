@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2001/10/10 05:13:52 enami Exp $
+#	$NetBSD: Makefile,v 1.17 2001/10/13 06:15:16 jmc Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -24,6 +24,7 @@ CRUNCHCONF=	${CBIN}.conf
 MTREECONF=	mtree.conf
 
 CRUNCHGEN?=	crunchgen
+MTREE?=		mtree
 
 DISKTYPE=	install-ramdisk
 RDSIZE=		3800
@@ -43,7 +44,7 @@ all: ${AUXTARGETS} ${CBIN}
 	disklabel -rw ${VND_CRDEV} ${DISKTYPE}
 	newfs -B le -m 0 -o space -i 5120 -c 100 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	mtree -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -u
+	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${.CURDIR}/runlist.sh ${.CURDIR}/${LISTS}

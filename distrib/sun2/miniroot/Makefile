@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/05/18 00:16:40 fredette Exp $
+#	$NetBSD: Makefile,v 1.2 2001/10/13 06:15:20 jmc Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -22,6 +22,8 @@ VND_DEV?=	/dev/${VND}a
 VND_RDEV?=	/dev/r${VND}a
 VND_CRDEV?=	/dev/r${VND}c
 
+MTREE?=		mtree
+
 # These are all the parameters for the miniroot: (12MB)
 DISKTYPE=	miniroot
 SIZE=		12
@@ -38,7 +40,7 @@ ${IMAGE}.gz: ${TREE} ${LISTS} install.sub
 	disklabel -f ${.CURDIR}/disktab -rw ${VND} ${DISKTYPE}
 	newfs ${NEWFSARGS} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	mtree -def ${TREE} -p ${MOUNT_POINT}/ -u
+	${MTREE} -def ${TREE} -p ${MOUNT_POINT}/ -u
 	cp ${KERNEL}  ${MOUNT_POINT}/netbsd
 	TOPDIR=${TOP} CURDIR=${.CURDIR} DESTDIR=${DESTDIR} \
 	  OBJDIR=${.OBJDIR} TARGDIR=${MOUNT_POINT} \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2001/10/10 05:13:55 enami Exp $
+#	$NetBSD: Makefile,v 1.29 2001/10/13 06:15:20 jmc Exp $
 #
 # ramdisk.fs is the microroot filesystem intended for use with
 # the INSTALL kernel. It provides just enough tools to extract the
@@ -27,6 +27,7 @@ LISTS=		list
 MTREECONF=	mtree.conf
 
 CRUNCHGEN?=	crunchgen
+MTREE?=		mtree
 
 # image size in 512-byte blocks
 SIZE=		1360
@@ -42,7 +43,7 @@ all: ${CBIN}
 	#disklabel -W ${VND_CDEV}
 	newfs -B be -m 0 -o space -i ${INO_BYTES} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	mtree -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -u
+	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${MINIROOT} REALCURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${MINIROOT}/runlist.sh ${.CURDIR}/${LISTS}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2001/10/10 05:13:56 enami Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2001/10/13 06:15:21 jmc Exp $
 
 .include "${TOP}/Makefile.inc"
 
@@ -19,6 +19,7 @@ CRUNCHCONF=	${CBIN}.conf
 MTREECONF=	mtree.conf
 
 CRUNCHGEN?=	crunchgen
+MTREE?=		mtree
 
 realall: ${IMAGE}
 
@@ -30,7 +31,7 @@ ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS}
 	vnconfig -v -c ${VND_CDEV} ${IMAGE} ${RAMDISKGEOM}
 	newfs -B be -m 0 -o space -i ${RAMDISKBPI} -c ${RAMDISKCPG} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	mtree -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -U
+	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -U
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    KERNOBJDIR=${KERNOBJDIR} COMMONDIR=${TOP}/ramdisk-common \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${.CURDIR}/${LISTS}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2001/10/10 05:13:53 enami Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2001/10/13 06:15:17 jmc Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -19,6 +19,7 @@ CRUNCHCONF=	${COMMONDIR}/${CBIN}.conf
 MTREECONF=	${COMMONDIR}/mtree.conf
 
 CRUNCHGEN?=	crunchgen
+MTREE?=		mtree
 
 DISKTYPE=	floppy3
 
@@ -28,7 +29,7 @@ realall: ${AUXTARGETS} ${CBIN}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
 	newfs -B le -m 0 -o space -i 5120 -c 80 ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	mtree -def ${MTREECONF} -p ${MOUNT_POINT}/ -u
+	${MTREE} -def ${MTREECONF} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
 	@echo ""
