@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.27 2001/11/27 01:06:30 thorpej Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.28 2001/12/02 22:54:26 bouyer Exp $	*/
 
 /*
  * Copyright 1997
@@ -78,6 +78,7 @@
 
 #if NWD > 0 || NSD > 0 || NCD > 0
 #include <dev/ata/atavar.h>
+#include <dev/ata/wdvar.h>
 #endif
 #if NSD > 0 || NCD > 0
 #include <dev/scsipi/scsi_all.h>
@@ -436,11 +437,11 @@ ofw_device_register(struct device *dev, void *aux)
 #endif
 #if NWD > 0
 		if (!strcmp(cd_name, "wd")) {
-			struct ata_atapi_attach *aa = aux;
+			struct ata_device *adev = aux;
 			char *cp = strchr(boot_component, '@');
 			if (cp != NULL
-			    && aa->aa_drv_data->drive == strtoul(cp+1, NULL, 16)
-			    && aa->aa_channel == 0) {
+			    && adev->adev_drv_data->drive == strtoul(cp+1, NULL, 16)
+			    && adev->adev_channel == 0) {
 				booted_device = dev;
 				return;
 			}
