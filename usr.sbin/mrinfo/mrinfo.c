@@ -1,3 +1,5 @@
+/*	$NetBSD: mrinfo.c,v 1.3 1995/10/03 23:20:45 thorpej Exp $	*/
+
 /*
  * This tool requests configuration info from a multicast router
  * and prints the reply (if any).  Invoke it as:
@@ -61,7 +63,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $Id: mrinfo.c,v 1.2 1995/06/07 17:38:35 cgd Exp $";
+    "@(#) $NetBSD: mrinfo.c,v 1.3 1995/10/03 23:20:45 thorpej Exp $";
 /*  original rcsid:
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 */
