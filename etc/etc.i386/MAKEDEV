@@ -358,6 +358,7 @@ audio*)
 	mknod audio c 42 128
 	chown root.wheel audio sound
 	chmod 666 audio sound
+	;;
 	
 local)
 	umask 0
