@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.c,v 1.5 1998/10/13 22:57:26 dante Exp $        */
+/*      $NetBSD: advlib.c,v 1.6 1998/10/14 13:28:47 dante Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -1224,17 +1224,10 @@ AscMemSumLramWord(iot, ioh, s_addr, words)
 {
 	u_int32_t       sum = 0L;
 	u_int16_t       i;
-	u_int16_t	w;
 
 
-	printf("\nreading\n");
-	for (i = 0; i < words; i++, s_addr += 2) {
-		w = AscReadLramWord(iot, ioh, s_addr);
-		if(i < 5)
-			printf("0x%x ", w);
-		sum += w;
-	}
-	printf("\n");
+	for (i = 0; i < words; i++, s_addr += 2)
+		sum += AscReadLramWord(iot, ioh, s_addr);
 
 	return (sum);
 }
