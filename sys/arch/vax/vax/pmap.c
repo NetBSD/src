@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.c,v 1.21 1996/02/02 23:12:34 mycroft Exp $     */
+/*      $NetBSD: pmap.c,v 1.22 1996/02/11 13:41:35 ragge Exp $     */
 #define DEBUG
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -58,7 +58,7 @@ static	void	free_pv_entry();
 
 
 #define	ISTACK_SIZE (4 * NBPG)
-#define	PTE_TO_PV(pte)	(PHYS_TO_PV(pte->pg_pfn<<PGSHIFT))
+#define	PTE_TO_PV(pte)	(PHYS_TO_PV((pte&PG_FRAME)<<PGSHIFT))
 
 
 
@@ -504,8 +504,7 @@ pmap_remove(pmap, start, slut)
 	pmap_t	pmap;
 	vm_offset_t	start, slut;
 {
-	pt_entry_t	*ptestart, *pteslut, *temp;
-	u_int		i,s;
+	u_int		*ptestart, *pteslut, i, s, *temp;
 	pv_entry_t	pv;
 	vm_offset_t	countup;
 
@@ -514,20 +513,23 @@ if(startpmapdebug) printf("pmap_remove: pmap=0x %x, start=0x %x, slut=0x %x\n",
 	   pmap, start, slut);
 #endif
 
-	if(!pmap) return;
+	if (!pmap)
+		return;
 	if(!pmap->pm_pcb&&start<0x80000000) return; /* No page registers */
 /* First, get pte first address */
 	if(start<0x40000000){ /* P0 */
-		if(!(temp=pmap->pm_pcb->P0BR)) return; /* No page table */
+		if (!(temp = (unsigned *)pmap->pm_pcb->P0BR))
+			return; /* No page table */
 		ptestart=&temp[start>>PGSHIFT];
 		pteslut=&temp[slut>>PGSHIFT];
 		if(pteslut>&temp[(pmap->pm_pcb->P0LR&~AST_MASK)])
 			pteslut=&temp[(pmap->pm_pcb->P0LR&~AST_MASK)];
 	} else if(start>0x7fffffff){ /* System region */
-		ptestart=&Sysmap[(start&0x3fffffff)>>PGSHIFT];
-		pteslut=&Sysmap[(slut&0x3fffffff)>>PGSHIFT];
+		ptestart=(u_int *)&Sysmap[(start&0x3fffffff)>>PGSHIFT];
+		pteslut=(u_int *)&Sysmap[(slut&0x3fffffff)>>PGSHIFT];
 	} else { /* P1 (stack) region */
-		if(!(temp=pmap->pm_pcb->P1BR)) return; /* No page table */
+		if (!(temp = (unsigned *)pmap->pm_pcb->P1BR))
+			return; /* No page table */
 		pteslut=&temp[(slut&0x3fffffff)>>PGSHIFT];
 		ptestart=&temp[(start&0x3fffffff)>>PGSHIFT];
 		if(ptestart<&temp[pmap->pm_pcb->P1LR])
@@ -542,15 +544,15 @@ printf("pmap_remove: ptestart %x, pteslut %x, pv %x\n",ptestart, pteslut,pv);
 	s=splimp();
 	for(countup=start;ptestart<pteslut;ptestart+=2, countup+=PAGE_SIZE){
 
-		if(!ptestart->pg_pfn)
+		if(!(*ptestart&PG_FRAME))
 			continue; /* not valid phys addr,no mapping */
 
-		pv=PTE_TO_PV(ptestart);
+		pv=PTE_TO_PV(*ptestart);
 		if(!remove_pmap_from_mapping(pv,pmap)){
 			panic("pmap_remove: pmap not in pv_table");
 		}
-		ptestart[0].pg_v = 0;
-		ptestart[1].pg_v = 0;
+		*ptestart=0;
+		*(ptestart+1)=0;
 	}
 	mtpr(0,PR_TBIA);
 	splx(s);
@@ -866,88 +868,94 @@ void
 pmap_zero_page(phys)
 	vm_offset_t    phys;
 {
-	int s;
+	int	s;
 
 #ifdef DEBUG
 if(startpmapdebug)printf("pmap_zero_page(phys %x, vmmap %x, pte_cmap %x\n",
 	phys,vmmap,pte_cmap);
 #endif
-	s=splimp();
-	pte_cmap[0]=(phys>>PGSHIFT)|PG_V|PG_KW;
-	pte_cmap[1]=pte_cmap[0]+1;
-	mtpr(vmmap,PR_TBIS);
-	mtpr(vmmap+NBPG,PR_TBIS);
-	bzero((void *)vmmap,NBPG*2);
-	pte_cmap[0]=pte_cmap[1]=0;
-	mtpr(vmmap,PR_TBIS);
-	mtpr(vmmap+NBPG,PR_TBIS);
+	s = splimp();
+	pte_cmap[0] = (phys >> PGSHIFT) | PG_V|PG_KW;
+	pte_cmap[1] = pte_cmap[0] + 1;
+	mtpr(vmmap, PR_TBIS);
+	mtpr(vmmap+ NBPG, PR_TBIS);
+	bzero((void *)vmmap, NBPG * 2);
+	pte_cmap[0] = pte_cmap[1] = 0;
+	mtpr(vmmap, PR_TBIS);
+	mtpr(vmmap + NBPG, PR_TBIS);
 	splx(s);
 }
 
 pt_entry_t *
-pmap_virt2pte(pmap,vaddr)
+pmap_virt2pte(pmap, vaddr)
 	pmap_t	pmap;
 	u_int	vaddr;
 {
-	pt_entry_t *pte;
-	u_int scr;
+	u_int *pte, scr;
 
-	if(vaddr<0x40000000){
-		pte=pmap->pm_pcb->P0BR;
-		if((vaddr>>PGSHIFT)>(pmap->pm_pcb->P0LR&~AST_MASK)) return 0;
-	} else if(vaddr<(u_int)0x80000000){
-		pte=pmap->pm_pcb->P1BR;
-		if(((vaddr&0x3fffffff)>>PGSHIFT)<pmap->pm_pcb->P1LR) return 0;
-	} else {
-		pte=Sysmap;
-	}
+	if (vaddr < 0x40000000) {
+		pte = (unsigned *)pmap->pm_pcb->P0BR;
+		if ((vaddr >> PGSHIFT) > (pmap->pm_pcb->P0LR & ~AST_MASK))
+			return 0;
+	} else if (vaddr < (u_int)0x80000000) {
+		pte = (unsigned *)pmap->pm_pcb->P1BR;
+		if (((vaddr & 0x3fffffff) >> PGSHIFT) < pmap->pm_pcb->P1LR)
+			return 0;
+	} else
+		pte = (u_int *)Sysmap;
 
-	vaddr&=(u_int)0x3fffffff;
+	vaddr &= (u_int)0x3fffffff;
 
-	return(&pte[vaddr>>PGSHIFT]);
+	return ((pt_entry_t *)&pte[vaddr >> PGSHIFT]);
 }
 
-pmap_expandp0(pmap,ny_storlek)
-	struct pmap *pmap;
+pmap_expandp0(pmap, ny_storlek)
+	struct	pmap *pmap;
 {
-	u_int tmp,s,size,osize,oaddr,astlvl,*i,j;
+	u_int	tmp, s, size, osize, oaddr, astlvl;
 
-	astlvl=pmap->pm_pcb->P0LR&AST_MASK;
-	osize=(pmap->pm_pcb->P0LR&~AST_MASK)*4;
-	size=ny_storlek*4;
-	tmp=kmem_alloc_wait(pte_map, size);
-	s=splhigh();
-	if(osize) blkcpy(pmap->pm_pcb->P0BR, (void*)tmp,osize);
-	oaddr=(u_int)pmap->pm_pcb->P0BR;
-	mtpr(tmp,PR_P0BR);
-	mtpr(((size>>2)|astlvl),PR_P0LR);
-	mtpr(0,PR_TBIA);
-	pmap->pm_pcb->P0BR=(void*)tmp;
-	pmap->pm_pcb->P0LR=((size>>2)|astlvl);
+	astlvl = pmap->pm_pcb->P0LR & AST_MASK;
+	osize = (pmap->pm_pcb->P0LR & ~AST_MASK) * 4;
+	size = ny_storlek * 4;
+	tmp = kmem_alloc_wait(pte_map, size);
+	if (osize)
+		blkcpy(pmap->pm_pcb->P0BR, (void*)tmp, osize);
+
+	s = splimp();
+	oaddr = (u_int)pmap->pm_pcb->P0BR;
+	mtpr(tmp, PR_P0BR);
+	mtpr(((size >> 2) | astlvl), PR_P0LR);
+	mtpr(0, PR_TBIA);
+	pmap->pm_pcb->P0BR = (void*)tmp;
+	pmap->pm_pcb->P0LR = ((size >> 2) | astlvl);
 	splx(s);
+
 	if(osize)
 		kmem_free_wakeup(pte_map, (vm_offset_t)oaddr, osize);
 }
 
 pmap_expandp1(pmap)
-	struct pmap *pmap;
+	struct	pmap *pmap;
 {
-	u_int tmp,s,size,osize,oaddr,*i,j;
+	u_int	tmp, s, size, osize, oaddr;
 
-	osize=0x800000-(pmap->pm_pcb->P1LR*4);
-	size=osize+PAGE_SIZE;
-	tmp=kmem_alloc_wait(pte_map, size);
-	s=splhigh();
+	osize = 0x800000 - (pmap->pm_pcb->P1LR * 4);
+	size = osize + PAGE_SIZE;
+	tmp = kmem_alloc_wait(pte_map, size);
 
-	if(osize) blkcpy((void*)pmap->pm_stack, (void*)tmp+PAGE_SIZE,osize);
-	oaddr=pmap->pm_stack;
-	pmap->pm_pcb->P1BR=(void*)(tmp+size-0x800000);
-	pmap->pm_pcb->P1LR=(0x800000-size)>>2;
-	pmap->pm_stack=tmp;
-	mtpr(pmap->pm_pcb->P1BR,PR_P1BR);
-	mtpr(pmap->pm_pcb->P1LR,PR_P1LR);
-	mtpr(0,PR_TBIA);
+	if (osize)
+		blkcpy((void*)pmap->pm_stack, (void*)tmp + PAGE_SIZE, osize);
+
+	s = splimp();
+	oaddr = pmap->pm_stack;
+	pmap->pm_pcb->P1BR = (void*)(tmp + size - 0x800000);
+	pmap->pm_pcb->P1LR = (0x800000 - size) >> 2;
+	pmap->pm_stack = tmp;
+	mtpr(pmap->pm_pcb->P1BR, PR_P1BR);
+	mtpr(pmap->pm_pcb->P1LR, PR_P1LR);
+	mtpr(0, PR_TBIA);
 	splx(s);
+
 	if (osize)
 		kmem_free_wakeup(pte_map, (vm_offset_t)oaddr, osize);
 }
