@@ -1,7 +1,7 @@
-/* $NetBSD: iomd_irq.S,v 1.11 1997/01/06 02:35:46 mark Exp $ */
+/*	$NetBSD: iomd_irq.S,v 1.12 1997/02/04 06:49:09 mark Exp $	*/
 
 /*
- * Copyright (c) 1994-1996 Mark Brinicombe.
+ * Copyright (c) 1994-1997 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -55,7 +55,7 @@
  * R14 in SVC mode.  
  */
 
-#ifdef CPU_SA110
+#if 1
 
 #define PUSHFRAMEINSVC \
 	stmdb	sp, {r0-r3};		/* Save 4 registers */ \
