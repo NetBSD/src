@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.1.2.4 1997/12/05 21:49:42 jonathan Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.1.2.5 1997/12/15 06:06:47 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -53,7 +53,7 @@ message upgrade
 {mise à jour}
 
 message hello
-{Bienvenue dans sysinst, l'outil d'installation de NetBSD-@@VERSION@@  .
+{Bienvenue dans sysinst, l'outil d'installation de NetBSD-@@VERSION@@.
 Cet utilitaire a été conçu pour vous aider à installer ou à mettre à jour
 NetBSD sur votre disque dur avec un minimum de travail.
 Dans les menus suivants, vous pourrez changer de sélection soit en tapant la
@@ -226,8 +226,8 @@ message sizechoice
 l'unité que vous voulez utiliser. Si vous choisissez le megaoctets, la taille
 sera proche de votre choix tout en conservant un nombre entier de cylindres.
 Si vous choisissez le secteur, vous pourrez plus précisément choisir la taille
-mais rappelez vous que pour plus d'efficacité la taille de votre partition doit
-être un multiple exact de votre taille de cylindre qui est :
+mais rappelez vous que pour plus d'efficacité la taille de votre partition
+doit être un multiple exact de votre taille de cylindre qui est :
 %d secteurs/cylindre.
 }
 
