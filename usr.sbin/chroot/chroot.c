@@ -41,33 +41,53 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)chroot.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: chroot.c,v 1.6 1997/10/18 04:06:32 lukem Exp $");
+__RCSID("$NetBSD: chroot.c,v 1.7 1998/10/06 03:47:51 mrg Exp $");
 #endif
 #endif /* not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <grp.h>
 #include <paths.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 int	main __P((int, char **));
-void	usage __P((void));
+void	usage __P((void)) __attribute__((__noreturn__));
+
+char	*user;		/* user to switch to before running program */
+char	*group;		/* group to switch to ... */
+char	*grouplist;	/* group list to switch to ... */
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int ch;
-	char *shell;
+	struct group *gp;
+	struct passwd *pw;
+	char *shell, *endp, *comma;
+	gid_t gid = 0, gidlist[NGROUPS_MAX];
+	uid_t uid = 0;
+	int ch, gids;
 
-	while ((ch = getopt(argc, argv, "")) != -1)
+	while ((ch = getopt(argc, argv, "G:g:u:")) != -1)
 		switch(ch) {
+		case 'u':
+			user = optarg;
+			break;
+		case 'g':
+			group = optarg;
+			break;
+		case 'G':
+			grouplist = optarg;
+			break;
 		case '?':
 		default:
 			usage();
@@ -78,8 +98,64 @@ main(argc, argv)
 	if (argc < 1)
 		usage();
 
+	if (group) {
+		if (isdigit(*group)) {
+			gid = (gid_t)strtol(group, &endp, 0);
+			if (endp == group)
+				goto getgroup;
+		} else {
+getgroup:
+			if ((gp = getgrnam(group)))
+				gid = gp->gr_gid;
+			else
+				errx(1, "no such group %s", group);
+		}
+	}
+
+	for (gids = 0; grouplist; ) {
+		comma = strchr(grouplist, ',');
+
+		if (comma)
+			*comma++ = '\0';
+
+		if (isdigit(*grouplist)) {
+			gidlist[gids] = (gid_t)strtol(grouplist, &endp, 0);
+			if (endp == grouplist)
+				goto getglist;
+		} else {
+getglist:
+			if ((gp = getgrnam(grouplist)))
+				gidlist[gids] = gp->gr_gid;
+			else
+				errx(1, "no such group %s", group);
+		}
+		gids++;
+		grouplist = comma;
+	}
+
+	if (user) {
+		if (isdigit(*user)) {
+			uid = (uid_t)strtol(user, &endp, 0);
+			if (endp == user)
+				goto getuser;
+		} else {
+getuser:
+			if ((pw = getpwnam(user)))
+				uid = pw->pw_uid;
+			else
+				errx(1, "no such user %s", user);
+		}
+	}
+
 	if (chdir(argv[0]) || chroot("."))
 		err(1, "%s", argv[0]);
+
+	if (gids && setgroups(gids, gidlist) < 0)
+		err(1, "setgroups");
+	if (group && setgid(gid) < 0)
+		err(1, "setgid");
+	if (user && setuid(uid) < 0)
+		err(1, "setuid");
 
 	if (argv[1]) {
 		execvp(argv[1], &argv[1]);
@@ -96,6 +172,7 @@ main(argc, argv)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: chroot newroot [command]\n");
+	(void)fprintf(stderr, "usage: chroot [-g group] [-G group,group,...] "
+	    "[-u user] newroot [command]\n");
 	exit(1);
 }
