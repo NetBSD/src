@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.10 1998/08/08 22:12:30 thorpej Exp $	*/
+/*	$NetBSD: if_media.h,v 1.11 1998/08/12 23:23:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -278,12 +278,15 @@ struct ifmedia_description {
 	{ IFM_NONE,			"none" },			\
 									\
 	{ IFM_ETHER|IFM_10_T,		"10baseT" },			\
+	{ IFM_ETHER|IFM_10_T,		"10baseT/UTP" },		\
 	{ IFM_ETHER|IFM_10_T,		"UTP" },			\
 	{ IFM_ETHER|IFM_10_T,		"10UTP" },			\
 	{ IFM_ETHER|IFM_10_2,		"10base2" },			\
+	{ IFM_ETHER|IFM_10_2,		"10base2/BNC" },		\
 	{ IFM_ETHER|IFM_10_2,		"BNC" },			\
 	{ IFM_ETHER|IFM_10_2,		"10BNC" },			\
 	{ IFM_ETHER|IFM_10_5,		"10base5" },			\
+	{ IFM_ETHER|IFM_10_5,		"10base5/AUI" },		\
 	{ IFM_ETHER|IFM_10_5,		"AUI" },			\
 	{ IFM_ETHER|IFM_10_5,		"10AUI" },			\
 	{ IFM_ETHER|IFM_100_TX,		"100baseTX" },			\
