@@ -1,7 +1,7 @@
-/*	$NetBSD: lock.h,v 1.32 2000/07/14 07:16:45 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.33 2000/08/07 21:55:22 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -297,6 +297,7 @@ void	_simple_unlock(__volatile struct simplelock *, const char *, int);
 void	simple_lock_init(struct simplelock *);
 void	simple_lock_dump(void);
 void	simple_lock_freecheck(void *, void *);
+void	simple_lock_switchcheck(void);
 #elif defined(MULTIPROCESSOR)
 #define	simple_lock_init(alp)	__cpu_simple_lock_init(&(alp)->lock_data)
 #define	simple_lock(alp)	__cpu_simple_lock(&(alp)->lock_data)

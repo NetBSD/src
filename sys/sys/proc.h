@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.98 2000/06/08 05:50:40 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.99 2000/08/07 21:55:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -179,8 +179,7 @@ struct	proc {
 
 	struct	vnode *p_textvp;	/* Vnode of executable. */
 
-	short   p_locks;		/* DEBUG: lockmgr count of held locks */
-	short   p_simple_locks;		/* DEBUG: count of held simple locks */
+	int	p_locks;		/* DEBUG: lockmgr count of held locks */
 
 	int	p_holdcnt;		/* If non-zero, don't swap. */
 	struct	emul *p_emul;		/* Emulation information */
