@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.93 2003/11/11 20:25:26 jonathan Exp $	*/
+/*	$NetBSD: in.c,v 1.94 2004/04/21 18:40:41 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.93 2003/11/11 20:25:26 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.94 2004/04/21 18:40:41 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -232,7 +232,7 @@ in_fmtaddr(addr)
 
 	addr.s_addr = ntohl(addr.s_addr);
 
-	sprintf(buf, "%d.%d.%d.%d",
+	snprintf(buf, sizeof(buf), "%d.%d.%d.%d",
 		(addr.s_addr >> 24) & 0xFF,
 		(addr.s_addr >> 16) & 0xFF,
 		(addr.s_addr >>  8) & 0xFF,

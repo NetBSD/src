@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.36 2003/06/29 22:31:16 fvdl Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.37 2004/04/21 18:40:38 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.36 2003/06/29 22:31:16 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.37 2004/04/21 18:40:38 itojun Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -223,7 +223,7 @@ check_shell:
 #endif
 #ifdef FDSCRIPTS
 	} else
-		sprintf(*tmpsap++, "/dev/fd/%d", epp->ep_fd);
+		snprintf(*tmpsap++, MAXPATHLEN, "/dev/fd/%d", epp->ep_fd);
 #endif
 	*tmpsap = NULL;
 

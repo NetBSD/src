@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.95 2004/01/25 18:06:48 hannken Exp $	*/
+/*	$NetBSD: ccd.c,v 1.96 2004/04/21 18:40:37 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.95 2004/01/25 18:06:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.96 2004/04/21 18:40:37 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,7 +258,7 @@ ccdattach(num)
 	/* Initialize per-softc structures. */
 	for (i = 0; i < num; i++) {
 		cs = &ccd_softc[i];
-		sprintf(cs->sc_xname, "ccd%d", i);	/* XXX */
+		snprintf(cs->sc_xname, sizeof(cs->sc_xname), "ccd%d", i);
 		cs->sc_dkdev.dk_name = cs->sc_xname;	/* XXX */
 		lockinit(&cs->sc_lock, PRIBIO, "ccdlk", 0, 0);
 	}
