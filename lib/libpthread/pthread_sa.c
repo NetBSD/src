@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.17 2002/02/08 07:24:43 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.18 2002/02/08 07:27:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -364,7 +364,11 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 						prev->pt_next = next;
 					else
 						intqueue = next;
-
+				} else {
+					/* Not finished yet.
+					 * Leave it in the interrupted queue.
+					 */
+					prev = victim;
 				}
 			}
 			if (switchto) {
