@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.101 2000/10/19 20:23:00 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.102 2000/10/29 06:30:51 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -817,6 +817,8 @@ tcp_drop(tp, errno)
 	if (tp->t_inpcb && tp->t_in6pcb)
 		panic("tcp_drop: both t_inpcb and t_in6pcb are set");
 #endif
+	if (!tp->t_inpcb && !tp->t_in6pcb)
+		return NULL;
 #ifdef INET
 	if (tp->t_inpcb)
 		so = tp->t_inpcb->inp_socket;
@@ -825,8 +827,6 @@ tcp_drop(tp, errno)
 	if (tp->t_in6pcb)
 		so = tp->t_in6pcb->in6p_socket;
 #endif
-	else
-		return NULL;
 
 	if (TCPS_HAVERCVDSYN(tp->t_state)) {
 		tp->t_state = TCPS_CLOSED;
