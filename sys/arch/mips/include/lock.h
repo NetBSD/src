@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.4 2002/12/05 02:56:51 simonb Exp $	*/
+/*	$NetBSD: lock.h,v 1.5 2003/09/26 22:46:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,11 +44,6 @@
 
 #ifndef _MIPS_LOCK_H_
 #define	_MIPS_LOCK_H_
-
-typedef	__volatile int		__cpu_simple_lock_t;
-
-#define	__SIMPLELOCK_LOCKED	1
-#define	__SIMPLELOCK_UNLOCKED	0
 
 static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *lp)

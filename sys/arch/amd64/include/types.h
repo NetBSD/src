@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.3 2003/08/07 16:26:36 agc Exp $	*/
+/*	$NetBSD: types.h,v 1.4 2003/09/26 22:46:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,6 +54,11 @@ typedef unsigned long	vsize_t;
 
 typedef long int		register_t;
 typedef int			register32_t;
+
+typedef	__volatile int		__cpu_simple_lock_t;
+
+#define	__SIMPLELOCK_LOCKED	1
+#define	__SIMPLELOCK_UNLOCKED	0
 
 /* The amd64 does not have strict alignment requirements. */
 #define	__NO_STRICT_ALIGNMENT

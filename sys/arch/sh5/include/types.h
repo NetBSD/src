@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.7 2003/04/28 23:16:24 bjh21 Exp $	*/
+/*	$NetBSD: types.h,v 1.8 2003/09/26 22:46:01 nathanw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -74,6 +74,15 @@ typedef struct label_t {
 	register_t val[34];
 } label_t;
 #endif
+
+#ifndef _LP64
+typedef	__volatile long long	__cpu_simple_lock_t;
+#else
+typedef __volatile long		__cpu_simple_lock_t;
+#endif
+
+#define	__SIMPLELOCK_LOCKED	1
+#define	__SIMPLELOCK_UNLOCKED	0
 
 #define	__HAVE_DEVICE_REGISTER
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS

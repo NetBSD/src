@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.43 2003/08/07 16:28:00 agc Exp $	*/
+/*	$NetBSD: types.h,v 1.44 2003/09/26 22:46:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -55,6 +55,11 @@ typedef unsigned long	vsize_t;
 typedef int		pmc_evid_t;
 typedef __uint64_t	pmc_ctr_t;
 typedef int		register_t;
+
+typedef	__volatile int		__cpu_simple_lock_t;
+
+#define	__SIMPLELOCK_LOCKED	1
+#define	__SIMPLELOCK_UNLOCKED	0
 
 /* The x86 does not have strict alignment requirements. */
 #define	__NO_STRICT_ALIGNMENT

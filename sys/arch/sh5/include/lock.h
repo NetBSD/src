@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.2 2002/12/07 22:31:33 scw Exp $	*/
+/*	$NetBSD: lock.h,v 1.3 2003/09/26 22:46:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,15 +42,6 @@
 
 #ifndef _SH5_LOCK_H_
 #define	_SH5_LOCK_H_
-
-#ifndef _LP64
-typedef	__volatile long long	__cpu_simple_lock_t;
-#else
-typedef __volatile long		__cpu_simple_lock_t;
-#endif
-
-#define	__SIMPLELOCK_LOCKED	1
-#define	__SIMPLELOCK_UNLOCKED	0
 
 static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
