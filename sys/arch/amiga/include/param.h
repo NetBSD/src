@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
  *	@(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.6 1994/02/11 07:02:43 chopps Exp $
+ *	$Id: param.h,v 1.7 1994/02/23 03:18:34 hpeyerl Exp $
  */
 
 /*
@@ -107,6 +107,8 @@
 #ifndef NKMEMCLUSTERS
 #define	NKMEMCLUSTERS	(3072*1024/CLBYTES)
 #endif
+
+#define MAXPARTITIONS	16
 
 /* pages ("clicks") to disk blocks */
 #define	ctod(x)	((x)<<(PGSHIFT-DEV_BSHIFT))
