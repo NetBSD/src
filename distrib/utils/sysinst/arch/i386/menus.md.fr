@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.1.2.5 1998/05/29 20:48:52 mycroft Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.1.2.6 1998/11/16 07:02:47 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -96,7 +96,7 @@ menu confirmbiosgeom, y=16;
 		msg_display_add(MSG_badgeom);
 		disp_cur_geom ();
 	};
-	option "Entrer à nouveau la géométrie",
+	option "Entrer à nouveau la géométrie du BIOS",
 		action  { msg_clear(); set_fdisk_geom(); };
 	option "Continuer l'installation",
 		action  {
