@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.499 2002/03/04 13:24:11 sommerfeld Exp $
+#	$NetBSD: files,v 1.500 2002/03/09 21:21:57 kent Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -209,6 +209,8 @@ define	radiodev	{ }
 #
 define	mulaw
 define	auconv
+define	aurateconv
+file	dev/aurateconv.c	aurateconv	needs-flag
 
 # audio and midi devices, attaches to audio hardware driver
 #
