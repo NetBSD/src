@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.6 2003/10/28 06:55:45 mrg Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.7 2003/10/30 05:12:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -220,7 +220,7 @@ Lcpu_switch1:
 	dbcs	%d1,2b
 	eorib	#31,%d1
 	movw	#PSL_HIGHIPL,%sr
-	movw	%a0@,%d0		| check again
+	movl	%a0@,%d0		| check again
 	btstl	%d1,%d0
 	beqs	1b			| Rescan at HIGHIPL process moved
 	moveq	#1,%d0			| Double check for higher priority
