@@ -1,4 +1,4 @@
-/*	$NetBSD: sunmon.c,v 1.1 1997/01/21 00:04:37 gwr Exp $	*/
+/*	$NetBSD: sunmon.c,v 1.2 1997/01/23 23:54:26 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,20 +41,11 @@
 #include <sys/reboot.h>
 
 #include <machine/mon.h>
-#include <machine/pte.h>
+#include <machine/machdep.h>
 
 #include <sun3/sun3/interreg.h>
 #include <sun3/sun3/vector.h>
-
 #include <sun3/sun3/sunmon.h>
-
-/* XXX - Hmmm... */
-#ifdef	sun3
-#include <sun3/sun3/machdep.h>
-#endif
-#ifdef	sun3x
-#include <sun3x/sun3x/machdep.h>
-#endif
 
 static void **sunmon_vbr;
 
