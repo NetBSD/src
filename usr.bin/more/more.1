@@ -31,7 +31,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)more.1	5.15 (Berkeley) 7/29/91
-.\"	$Id: more.1,v 1.5 1994/01/11 18:22:48 jtc Exp $
+.\"	$Id: more.1,v 1.6 1995/08/06 09:22:36 ghudson Exp $
 .\"
 .Dd July 29, 1991
 .Dt MORE 1
@@ -73,6 +73,16 @@ If the
 option is set, when
 .Nm more
 needs to change the entire display, it will paint from the top line down.
+.It Fl d
+The
+.Fl d
+option causes the default prompt to include the basic directions
+``[Press space to continue, 'q' to quit.]''.  The
+.Fl d
+option also causes the message ``[Press 'h' for instructions.]'' to be
+displayed when an invalid command is entered (normally, the bell is
+rung).  This option is useful in environments where users may not be
+experienced with pagers.
 .It Fl e
 Normally, if displaying a single file,
 .Nm more
