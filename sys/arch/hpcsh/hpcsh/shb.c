@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.2 2001/02/21 16:28:03 uch Exp $	*/
+/*	$NetBSD: shb.c,v 1.3 2001/02/24 20:17:45 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -37,6 +37,7 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 
+#include <machine/autoconf.h>
 #include <machine/intr.h>
 #include <sh3/cpufunc.h>
 #include <sh3/intcreg.h>
@@ -79,9 +80,9 @@ shbmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct shbus_attach_args *iba = aux;
+	struct mainbus_attach_args *ma = aux;
 
-	if (strcmp(iba->iba_busname, cf->cf_driver->cd_name))
+	if (strcmp(ma->ma_name, cf->cf_driver->cd_name))
 		return (0);
 
         return (1);
@@ -93,12 +94,11 @@ shbattach(parent, self, aux)
 	void *aux;
 {
 	struct shb_softc *sc = (struct shb_softc *)self;
-	struct shbus_attach_args *iba = aux;
 
 	printf("\n");
 
-	sc->sc_iot = iba->iba_iot;
-	sc->sc_memt = iba->iba_memt;
+	sc->sc_iot = BUS_SPACE_TAG_ANONYMOUS;
+	sc->sc_memt = BUS_SPACE_TAG_ANONYMOUS;
 
 	TAILQ_INIT(&sc->sc_subdevs);
 	config_search(shbsearch, self, NULL);
