@@ -38,7 +38,7 @@
 #endif
 #include "getarg.h"
 
-RCSID("$Id: ftpd.c,v 1.1.1.1 2000/06/16 18:46:19 thorpej Exp $");
+RCSID("$Id: ftpd.c,v 1.1.1.2 2000/12/29 01:42:58 assar Exp $");
 
 static char version[] = "Version 6.00";
 
@@ -195,7 +195,6 @@ parse_auth_level(char *str)
  * Print usage and die.
  */
 
-static int debug_flag;
 static int interactive_flag;
 static char *guest_umask_string;
 static char *port_string;
@@ -216,8 +215,8 @@ struct getargs args[] = {
     { NULL, 't', arg_integer, &ftpd_timeout, "initial timeout" },
     { NULL, 'T', arg_integer, &maxtimeout, "max timeout" },
     { NULL, 'u', arg_string, &umask_string, "umask for user logins" },
-    { NULL, 'd', arg_flag, &debug_flag, "enable debugging" },
-    { NULL, 'v', arg_flag, &debug_flag, "enable debugging" },
+    { NULL, 'd', arg_flag, &debug, "enable debugging" },
+    { NULL, 'v', arg_flag, &debug, "enable debugging" },
     { "builtin-ls", 'B', arg_flag, &use_builtin_ls, "use built-in ls to list files" },
     { "version", 0, arg_flag, &version_flag },
     { "help", 'h', arg_flag, &help_flag }
@@ -776,7 +775,7 @@ int do_login(int code, char *passwd)
 		  "%s: anonymous/%s",
 		  remotehost,
 		  passwd);
-	setproctitle(proctitle);
+	setproctitle("%s", proctitle);
 #endif /* HAVE_SETPROCTITLE */
 	if (logging) {
 	    char data_addr[256];
@@ -796,7 +795,7 @@ int do_login(int code, char *passwd)
 	reply(code, "User %s logged in.", pw->pw_name);
 #ifdef HAVE_SETPROCTITLE
 	snprintf(proctitle, sizeof(proctitle), "%s: %s", remotehost, pw->pw_name);
-	setproctitle(proctitle);
+	setproctitle("%s", proctitle);
 #endif /* HAVE_SETPROCTITLE */
 	if (logging) {
 	    char data_addr[256];
@@ -1771,7 +1770,7 @@ dolog(struct sockaddr *sa)
 	inaddr2str (sin->sin_addr, remotehost, sizeof(remotehost));
 #ifdef HAVE_SETPROCTITLE
 	snprintf(proctitle, sizeof(proctitle), "%s: connected", remotehost);
-	setproctitle(proctitle);
+	setproctitle("%s", proctitle);
 #endif /* HAVE_SETPROCTITLE */
 
 	if (logging) {

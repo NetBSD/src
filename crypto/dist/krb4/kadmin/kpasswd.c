@@ -25,7 +25,7 @@ or implied warranty.
 
 #include "kadm_locl.h"
 
-RCSID("$Id: kpasswd.c,v 1.1.1.1 2000/06/16 18:46:06 thorpej Exp $");
+RCSID("$Id: kpasswd.c,v 1.1.1.2 2000/12/29 01:43:07 assar Exp $");
 
 static void
 usage(int value)

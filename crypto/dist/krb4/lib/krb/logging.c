@@ -34,7 +34,7 @@
 #include "krb_locl.h"
 #include <klog.h>
 
-RCSID("$Id: logging.c,v 1.1.1.1 2000/06/16 18:45:54 thorpej Exp $");
+RCSID("$Id: logging.c,v 1.1.1.2 2000/12/29 01:43:17 assar Exp $");
 
 struct krb_log_facility {
     char filename[MaxPathLen]; 
@@ -52,6 +52,9 @@ krb_vlogger(struct krb_log_facility *f, const char *format, va_list args)
 	file = f->file;
     else if (f->filename && f->filename[0])
 	file = fopen(f->filename, "a");
+
+    if (file == NULL)
+      return KFAILURE;
 
     ret = f->func(file, format, args);
 

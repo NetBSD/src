@@ -25,7 +25,7 @@
 #include <ctype.h>
 #include <errno.h>
 
-RCSID("$Id: editline.c,v 1.1.1.1 2000/06/16 18:45:49 thorpej Exp $");
+RCSID("$Id: editline.c,v 1.1.1.2 2000/12/29 01:43:48 assar Exp $");
 
 /*
 **  Manifest constants.
@@ -220,6 +220,7 @@ TTYinfo()
     char		*term;
     char		buff[2048];
     char		*bp;
+    char		*tmp;
 #if	defined(TIOCGWINSZ)
     struct winsize	W;
 #endif	/* defined(TIOCGWINSZ) */
@@ -246,7 +247,11 @@ TTYinfo()
        TTYrows = SCREEN_ROWS;
        return;
     }
-    backspace = strdup(tgetstr("le", &bp));
+    tmp = tgetstr("le", &bp);
+    if (tmp != NULL)
+	backspace = strdup(tmp);
+    else
+	backspace = "\b";
     TTYwidth = tgetnum("co");
     TTYrows = tgetnum("li");
 

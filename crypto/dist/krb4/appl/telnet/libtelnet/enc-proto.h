@@ -55,7 +55,7 @@
  * or implied warranty.
  */
 
-/* $Id: enc-proto.h,v 1.1.1.1 2000/06/16 18:46:28 thorpej Exp $ */
+/* $Id: enc-proto.h,v 1.1.1.2 2000/12/29 01:42:33 assar Exp $ */
 
 #if	defined(ENCRYPTION)
 Encryptions *findencryption (int);

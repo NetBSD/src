@@ -15,7 +15,7 @@
 
 #include "adm_locl.h"
 
-RCSID("$Id: kdb_edit.c,v 1.1.1.1 2000/06/16 18:46:05 thorpej Exp $");
+RCSID("$Id: kdb_edit.c,v 1.1.1.2 2000/12/29 01:42:18 assar Exp $");
 
 #ifdef DEBUG
 extern  kerb_debug;

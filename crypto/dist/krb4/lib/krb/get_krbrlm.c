@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: get_krbrlm.c,v 1.1.1.1 2000/06/16 18:45:53 thorpej Exp $");
+RCSID("$Id: get_krbrlm.c,v 1.1.1.2 2000/12/29 01:43:13 assar Exp $");
 
 /*
  * krb_get_lrealm takes a pointer to a string, and a number, n.  It fills

@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: get_default_username.c,v 1.1.1.1 2000/06/16 18:46:00 thorpej Exp $");
+RCSID("$Id: get_default_username.c,v 1.1.1.2 2000/12/29 01:43:24 assar Exp $");
 #endif /* HAVE_CONFIG_H */
 
 #include "roken.h"
