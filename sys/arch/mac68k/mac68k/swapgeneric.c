@@ -42,8 +42,8 @@
 
 #include <sys/device.h>
 
-extern int ufs_mountroot();
-int (*mountroot)() = ufs_mountroot;
+extern int ffs_mountroot();
+int (*mountroot)() = ffs_mountroot;
 
 dev_t	rootdev = NODEV;
 dev_t	dumpdev = NODEV;
