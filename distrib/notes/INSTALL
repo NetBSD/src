@@ -63,11 +63,10 @@ into the NetBSD _VER release. Some of the significant changes include:
 	libsa based two stage boot system. This has permitted
 	integration of compressed boot support (see below).
 
-	Many ports (including NetBSD/i386) now support booting of
-	compressed kernels, and feature new "Single Floppy" install
-	systems that boot compressed install kernels and ramdisks. We
-	intend to do substantial work on improving ease of
-	installation in the future.
+	Many ports NetBSD/i386) now support booting of compressed
+	kernels, and feature new "Single Floppy" install systems that
+	boot compressed install kernels and ramdisks. We intend to do
+	substantial work on improving ease of installation in the future.
 
 	"ypserv" has been added, thus completing our support for the
 	"yp" network information system suite.
@@ -77,7 +76,7 @@ into the NetBSD _VER release. Some of the significant changes include:
 
 	TCP now has a SYN "compressed state engine" which provides
 	increased robustness under high levels of received SYNs (as in
-	the case of "SYN flood" attacks.) (Much of this code was
+	the case of "SYN flood" attacks.)  (Much of this code was
 	derived from sources provided by BSDI.)
 
 	An initial implementation of Path MTU discovery has been
@@ -92,7 +91,7 @@ into the NetBSD _VER release. Some of the significant changes include:
 	massively improved performance in low real memory conditions.
 
 	A new swap subsystem has radically improved configuration and
-	management of swap devices and swap files.
+	management of swap devices and adds swapping to files.
 
 	Userland ntp support, including xntpd, has been integrated.
 
@@ -106,8 +105,8 @@ into the NetBSD _VER release. Some of the significant changes include:
 	applications.
 
 	The XFree86 X source tree has been made a supported part of
-	the NetBSD distribution, and X servers, libraries and
-	utilities are now shipped with our releases.
+	the NetBSD distribution, and X servers (if built for this
+	port), libraries and utilities are now shipped with our releases.
 
 	The ftp(1) program has been made astoundingly overfunctional.
 	It supports command line editing, tab completion, status bars,
@@ -116,19 +115,32 @@ into the NetBSD _VER release. Some of the significant changes include:
 
 	All ports now use "new" config. Old config has been laid to rest.
 
+	The arp subsystem and API has been rewritten to detach it from
+	being very ethernet-centric.
+
+	Many kernel interface manuals have been written and added to
+	manual section 9.
+
+	Several ports support much more hardware.
+
+	Many updates to bring NetBSD closer to standards compliance.
+
+	Most third party packages have been updated to the latest stable
+	release.
+
 As has been noted, there have also been innumerable bug fixes.	
 
 Kernel interfaces have continued to be refined, and more subsystems
 and device drivers are shared among the different ports. You can look
-for this trend to continue.
+for this trend to continue to continue.
 
 NetBSD _VER also includes some refinement to the NetBSD binary emulation
 system (which includes FreeBSD, HP-UX, iBCS2, Linux, OSF/1, SunOS, SVR4,
 Solaris and Ultrix compatibility), bringing NetBSD closer to the goal of
 making the emulation as accurate as possible.
 
-In the near future, we hope to integrate a fully rewritten VM
-subsystem, kernel threads, and SMP support.
+In the near future, we hope to integrate a fully rewritten Virtual
+Memory subsystem, kernel threads, and SMP support.
 
 #include "whatis"
 
