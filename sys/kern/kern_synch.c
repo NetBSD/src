@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.101.2.29 2002/12/31 01:03:52 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.101.2.30 2003/01/06 17:29:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.29 2002/12/31 01:03:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.30 2003/01/06 17:29:47 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -253,28 +253,33 @@ schedcpu(void *arg)
 	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
 	struct lwp *l;
 	struct proc *p;
-	int s, s1;
+	int s, s1, minslp;
 	unsigned int newcpu;
 	int clkhz;
 
 	proclist_lock_read();
-	LIST_FOREACH(l, &alllwp, l_list) {
+	LIST_FOREACH(p, &allproc, p_list) {
 		/*
 		 * Increment time in/out of memory and sleep time
 		 * (if sleeping).  We ignore overflow; with 16-bit int's
 		 * (remember them?) overflow takes 45 days.
 		 */
-		p = l->l_proc;
-		l->l_swtime++;
-		if (l->l_stat == LSSLEEP || l->l_stat == LSSTOP || 
-		    l->l_stat == LSSUSPENDED)
-			l->l_slptime++;
+		minslp = 2;
+		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+			l->l_swtime++;
+			if (l->l_stat == LSSLEEP || l->l_stat == LSSTOP || 
+			    l->l_stat == LSSUSPENDED) {
+				l->l_slptime++;
+				minslp = min(minslp, l->l_slptime);
+			} else
+				minslp = 0;
+		}
 		p->p_pctcpu = (p->p_pctcpu * ccpu) >> FSHIFT;
 		/*
 		 * If the process has slept the entire second,
 		 * stop recalculating its priority until it wakes up.
 		 */
-		if (l->l_slptime > 1)
+		if (minslp > 1)
 			continue;
 		s = splstatclock();	/* prevent state changes */
 		/*
@@ -287,23 +292,27 @@ schedcpu(void *arg)
                 	100 * (((fixpt_t) p->p_cpticks)
 				<< (FSHIFT - CCPU_SHIFT)) / clkhz;
 #else
-		l->l_pctcpu += ((FSCALE - ccpu) *
+		p->p_pctcpu += ((FSCALE - ccpu) *
 			(p->p_cpticks * FSCALE / clkhz)) >> FSHIFT;
 #endif
 		p->p_cpticks = 0;
 		newcpu = (u_int)decay_cpu(loadfac, p->p_estcpu);
 		p->p_estcpu = newcpu;
 		SCHED_LOCK(s1);
-		resetpriority(l);
-		if (l->l_priority >= PUSER) {
-			if (l->l_stat == LSRUN &&
-			    (l->l_flag & L_INMEM) &&
-			    (l->l_priority / PPQ) != (l->l_usrpri / PPQ)) {
-				remrunqueue(l);
-				l->l_priority = l->l_usrpri;
-				setrunqueue(l);
-			} else
-				l->l_priority = l->l_usrpri;
+		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+			if (l->l_slptime > 1)
+				continue;
+			resetpriority(l);
+			if (l->l_priority >= PUSER) {
+				if (l->l_stat == LSRUN &&
+				    (l->l_flag & L_INMEM) &&
+				    (l->l_priority / PPQ) != (l->l_usrpri / PPQ)) {
+					remrunqueue(l);
+					l->l_priority = l->l_usrpri;
+					setrunqueue(l);
+				} else
+					l->l_priority = l->l_usrpri;
+			}
 		}
 		SCHED_UNLOCK(s1);
 		splx(s);
