@@ -39,30 +39,34 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)hostname.c	5.4 (Berkeley) 5/31/90";*/
-static char rcsid[] = "$Id: hostname.c,v 1.4 1993/08/01 18:59:40 mycroft Exp $";
+static char rcsid[] = "$Id: hostname.c,v 1.5 1993/09/10 01:24:53 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <sys/param.h>
+
+static void usage __P((void));
 
 main(argc,argv)
 	int argc;
 	char **argv;
 {
-	extern int optind;
 	int ch, sflag;
-	char hostname[MAXHOSTNAMELEN], *p, *index();
+	char hostname[MAXHOSTNAMELEN], *p;
 
 	sflag = 0;
-	while ((ch = getopt(argc, argv, "s")) != EOF)
+	while ((ch = getopt(argc, argv, "s")) != -1)
 		switch((char)ch) {
 		case 's':
 			sflag = 1;
 			break;
 		case '?':
 		default:
-			fputs("hostname [-s] [hostname]\n", stderr);
-			exit(1);
+			usage();
+			/* NOTREACHED */
 		}
 	argv += optind;
 
@@ -81,4 +85,11 @@ main(argc,argv)
 		puts(hostname);
 	}
 	exit(0);
+}
+
+static void 
+usage ()
+{
+	(void)fprintf(stderr, "usage: hostname [-s] [hostname]\n");
+	exit(1);
 }

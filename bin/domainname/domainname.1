@@ -30,35 +30,29 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)domainname.1	6.8 (Berkeley) 7/27/91
-.\"	$Id: domainname.1,v 1.2 1993/08/01 07:48:46 mycroft Exp $
+.\"	$Id: domainname.1,v 1.3 1993/09/10 01:24:45 jtc Exp $
 .\"
 .Dd July 27, 1991
 .Dt DOMAINNAME 1
 .Os BSD 4.2
 .Sh NAME
 .Nm domainname
-.Nd set or print name of current host system
+.Nd set or print the name of the current domain
 .Sh SYNOPSIS
 .Nm domainname
-.Op Fl s
-.Op Ar nameofhost
+.Op Ar name-of-domain
 .Sh DESCRIPTION
-.Nm Hostname
-prints the name of the current host.  The super-user can
-set the domainname by supplying an argument; this is usually done in the
+.Nm Domainname
+prints the domain name of the current host.  The super-user can
+set the domain name by supplying an argument; this is usually done in the
 network initialization script
 .Pa /etc/netstart ,
 normally run at boot
 time.
-.Pp
-Options:
-.Bl -tag -width flag
-.It Fl s
-Trims off any domain information from the printed
-name.
-.El
 .Sh SEE ALSO
-.Xr getdomainname 2
+.Xr hostname 1 ,
+.Xr getdomainname 2 ,
+.Xr setdomainname 2 
 .Sh HISTORY
 The
 .Nm domainname
