@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.124.4.14 2003/01/03 16:55:25 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.124.4.15 2003/01/03 17:25:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -320,12 +320,12 @@ cpu_mainbus_attach(parent, self, aux)
 	} else if (node != 0 && (error = PROM_getprop(node, "mailbox",
 					sizeof(struct openprom_addr),
 					&n, (void **)&rrp)) == 0) {
-		if (rrp[0].oa_space != 0)
-			panic("%s: mailbox in I/O space", self->dv_xname);
-
 		/* XXX - map cached/uncached? If cached, deal with
 		 *	 cache congruency!
 		 */
+		if (rrp[0].oa_space == 0)
+			printf("%s: mailbox in mem space\n", self->dv_xname);
+
 		if (bus_space_map(ma->ma_bustag,
 				BUS_ADDR(rrp[0].oa_space, rrp[0].oa_base),
 				rrp[0].oa_size,
@@ -640,14 +640,13 @@ extern void cpu_hatch __P((void));	/* in locore.s */
 }
 
 /*
- * Call a function on every CPU.  One must hold xpmsg_lock around
- * this function.
+ * Call a function on every CPU.
  */
 void
 xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	int	(*func)(int, int, int, int);
 	int	arg0, arg1, arg2, arg3;
-	int	cpuset;	/* XXX unused; cpus to send to: we do all */
+	u_int	cpuset;
 {
 	int s, n, i, done;
 	volatile struct xpmsg_func *p;
@@ -659,7 +658,7 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	 */
 	if (cpus == NULL) {
 		p = &cpuinfo.msg.u.xpmsg_func;
-		if (func)
+		if (func && (cpuset & (1 << cpuinfo.ci_cpuid)) != 0)
 			p->retval = (*func)(arg0, arg1, arg2, arg3); 
 		return;
 	}
@@ -676,7 +675,10 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 
 		if (CPU_NOTREADY(cpi))
 			continue;
-		
+
+		if ((cpuset & (1 << cpi->ci_cpuid)) == 0)
+			continue;
+
 		simple_lock(&cpi->msg.lock);
 		cpi->msg.tag = XPMSG_FUNC;
 		cpi->flags &= ~CPUFLG_GOTMSG;
@@ -693,7 +695,7 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	 * Second, call ourselves.
 	 */
 	p = &cpuinfo.msg.u.xpmsg_func;
-	if (func)
+	if (func && (cpuset & (1 << cpuinfo.ci_cpuid)) != 0)
 		p->retval = (*func)(arg0, arg1, arg2, arg3); 
 
 	/*
@@ -716,6 +718,8 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 
 			if (CPU_NOTREADY(cpi))
 				continue;
+			if ((cpuset & (1 << cpi->ci_cpuid)) == 0)
+				continue;
 
 			if ((cpi->flags & CPUFLG_GOTMSG) == 0) {
 				done = 0;
@@ -728,6 +732,9 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 
 		if (CPU_NOTREADY(cpi))
 			continue;
+		if ((cpuset & (1 << cpi->ci_cpuid)) == 0)
+			continue;
+
 		simple_unlock(&cpi->msg.lock);
 		if ((cpi->flags & CPUFLG_GOTMSG) == 0)
 			printf(" cpu%d", cpi->ci_cpuid);

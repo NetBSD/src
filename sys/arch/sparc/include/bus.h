@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.26.4.6 2002/12/11 06:12:07 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.26.4.7 2003/01/03 17:25:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -87,6 +87,22 @@ typedef u_long		bus_size_t;
 	((((u_int64_t)(u_int32_t)(io))<<32) | (u_int32_t)(pa))
 
 /*
+ * If __FULL_SPARC_BUS_SPACE is not defined, define it to 0.  We normally
+ * don't need to deal with bus_space_{read,write}*() needing to be
+ * functions rather than simple memory accesses.  We expose the option
+ * to the user via FULL_SPARC_BUS_SPACE.
+ */
+#ifdef FULL_SPARC_BUS_SPACE
+#define __FULL_SPARC_BUS_SPACE  1
+#endif
+
+#ifndef __FULL_SPARC_BUS_SPACE
+#define __FULL_SPARC_BUS_SPACE  0
+#endif
+
+#define __BUS_SPACE_HAS_STREAM_METHODS	1
+
+/*
  * Access methods for bus resources and address space.
  */
 typedef struct sparc_bus_space_tag	*bus_space_tag_t;
@@ -144,6 +160,51 @@ struct sparc_bus_space_tag {
 				void *,			/*handler arg*/
 				void (*)(void)));	/*optional fast vector*/
 
+#if __FULL_SPARC_BUS_SPACE
+	u_int8_t (*sparc_read_1) __P((
+				bus_space_tag_t space,
+				bus_space_handle_t handle,
+				bus_size_t offset));
+
+	u_int16_t (*sparc_read_2) __P((
+				bus_space_tag_t space,
+				bus_space_handle_t handle,
+				bus_size_t offset));
+
+	u_int32_t (*sparc_read_4) __P((
+				bus_space_tag_t space,
+				bus_space_handle_t handle,
+				bus_size_t offset));
+
+	u_int64_t (*sparc_read_8) __P((
+				bus_space_tag_t space,
+				bus_space_handle_t handle,
+				bus_size_t offset));
+
+	void	(*sparc_write_1) __P((
+				bus_space_tag_t space,
+				bus_space_handle_t handle,
+				bus_size_t offset,
+				u_int8_t value));
+
+	void	(*sparc_write_2) __P((
+				bus_space_tag_t space,
+				bus_space_handle_t handle,
+				bus_size_t offset,
+				u_int16_t value));
+
+	void	(*sparc_write_4) __P((
+				bus_space_tag_t space,
+				bus_space_handle_t handle,
+				bus_size_t offset,
+				u_int32_t value));
+
+	void	(*sparc_write_8) __P((
+				bus_space_tag_t space,
+				bus_space_handle_t handle,
+				bus_size_t offset,
+				u_int64_t value));
+#endif
 };
 
 #if 0
@@ -364,22 +425,91 @@ int bus_space_probe __P((
  * described by tag/handle/offset.
  */
 
-#define	bus_space_read_1(t, h, o)					\
+#define	bus_space_read_1_real(t, h, o)					\
 	    ((void)(t), *(volatile u_int8_t *)((h) + (o)))
 
-#define	bus_space_read_2(t, h, o)					\
+#define	bus_space_read_2_real(t, h, o)					\
 	    ((void)(t), *(volatile u_int16_t *)((h) + (o)))
 
-#define	bus_space_read_4(t, h, o)					\
+#define	bus_space_read_4_real(t, h, o)					\
 	    ((void)(t), *(volatile u_int32_t *)((h) + (o)))
 
-#define	bus_space_read_8(t, h, o)					\
+#define	bus_space_read_8_real(t, h, o)					\
 	    ((void)(t), *(volatile u_int64_t *)((h) + (o)))
 
-#define bus_space_read_stream_1 bus_space_read_1
-#define bus_space_read_stream_2 bus_space_read_2
-#define bus_space_read_stream_4 bus_space_read_4
-#define bus_space_read_stream_8 bus_space_read_8
+
+#if __FULL_SPARC_BUS_SPACE
+
+static __inline__ u_int8_t bus_space_read_1 __P((bus_space_tag_t,
+						  bus_space_handle_t,
+						  bus_size_t));
+static __inline__ u_int16_t bus_space_read_2 __P((bus_space_tag_t,
+						  bus_space_handle_t,
+						  bus_size_t));
+static __inline__ u_int32_t bus_space_read_4 __P((bus_space_tag_t,
+						  bus_space_handle_t,
+						  bus_size_t));
+static __inline__ u_int64_t bus_space_read_8 __P((bus_space_tag_t,
+						  bus_space_handle_t,
+						  bus_size_t));
+
+static __inline__ u_int8_t
+bus_space_read_1(t, h, o)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+{
+	return t->sparc_read_1 ?
+		(*t->sparc_read_1)(t, h, o) :
+		bus_space_read_1_real(t, h, o);
+}
+
+static __inline__ u_int16_t
+bus_space_read_2(t, h, o)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+{
+	return t->sparc_read_2 ?
+		(*t->sparc_read_2)(t, h, o) :
+		bus_space_read_2_real(t, h, o);
+}
+
+static __inline__ u_int32_t
+bus_space_read_4(t, h, o)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+{
+	return t->sparc_read_4 ?
+		(*t->sparc_read_4)(t, h, o) :
+		bus_space_read_4_real(t, h, o);
+}
+
+static __inline__ u_int64_t
+bus_space_read_8(t, h, o)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+{
+	return t->sparc_read_8 ?
+		(*t->sparc_read_8)(t, h, o) :
+		bus_space_read_8_real(t, h, o);
+}
+
+#else /* __FULL_SPARC_BUS_SPACE */
+
+#define	bus_space_read_1	bus_space_read_1_real
+#define	bus_space_read_2	bus_space_read_2_real
+#define	bus_space_read_4	bus_space_read_4_real
+#define	bus_space_read_8	bus_space_read_8_real
+
+#endif /* __FULL_SPARC_BUS_SPACE */
+
+#define bus_space_read_stream_1 bus_space_read_1_real
+#define bus_space_read_stream_2 bus_space_read_2_real
+#define bus_space_read_stream_4 bus_space_read_4_real
+#define bus_space_read_stream_8 bus_space_read_8_real
 
 
 /*
@@ -391,26 +521,107 @@ int bus_space_probe __P((
  * described by tag/handle/offset.
  */
 
-#define	bus_space_write_1(t, h, o, v)	do {				\
+#define	bus_space_write_1_real(t, h, o, v)	do {			\
 	((void)(t), (void)(*(volatile u_int8_t *)((h) + (o)) = (v)));	\
 } while (/* CONSTCOND */ 0)
 
-#define	bus_space_write_2(t, h, o, v)	do {				\
+#define	bus_space_write_2_real(t, h, o, v)	do {			\
 	((void)(t), (void)(*(volatile u_int16_t *)((h) + (o)) = (v)));	\
 } while (/* CONSTCOND */ 0)
 
-#define	bus_space_write_4(t, h, o, v)	do {				\
+#define	bus_space_write_4_real(t, h, o, v)	do {			\
 	((void)(t), (void)(*(volatile u_int32_t *)((h) + (o)) = (v)));	\
 } while (/* CONSTCOND */ 0)
 
-#define	bus_space_write_8(t, h, o, v)	do {				\
+#define	bus_space_write_8_real(t, h, o, v)	do {			\
 	((void)(t), (void)(*(volatile u_int64_t *)((h) + (o)) = (v)));	\
 } while (/* CONSTCOND */ 0)
 
-#define bus_space_write_stream_1 bus_space_write_1
-#define bus_space_write_stream_2 bus_space_write_2
-#define bus_space_write_stream_4 bus_space_write_4
-#define bus_space_write_stream_8 bus_space_write_8
+
+#if __FULL_SPARC_BUS_SPACE
+
+static __inline__ void bus_space_write_1 __P((bus_space_tag_t,
+					      bus_space_handle_t,
+					      bus_size_t,
+					      const u_int8_t));
+static __inline__ void bus_space_write_2 __P((bus_space_tag_t,
+					      bus_space_handle_t,
+					      bus_size_t,
+					      const u_int16_t));
+static __inline__ void bus_space_write_4 __P((bus_space_tag_t,
+					      bus_space_handle_t,
+					      bus_size_t,
+					      const u_int32_t));
+static __inline__ void bus_space_write_8 __P((bus_space_tag_t,
+					      bus_space_handle_t,
+					      bus_size_t,
+					      const u_int64_t));
+
+static __inline__ void
+bus_space_write_1(t, h, o, v)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	u_int8_t		v;
+{
+	if (t->sparc_write_1)
+		(*t->sparc_write_1)(t, h, o, v);
+	else
+		bus_space_write_1_real(t, h, o, v);
+}
+
+static __inline__ void
+bus_space_write_2(t, h, o, v)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	u_int16_t		v;
+{
+	if (t->sparc_write_2)
+		(*t->sparc_write_2)(t, h, o, v);
+	else
+		bus_space_write_2_real(t, h, o, v);
+}
+
+static __inline__ void
+bus_space_write_4(t, h, o, v)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	u_int32_t		v;
+{
+	if (t->sparc_write_4)
+		(*t->sparc_write_4)(t, h, o, v);
+	else
+		bus_space_write_4_real(t, h, o, v);
+}
+
+static __inline__ void
+bus_space_write_8(t, h, o, v)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	u_int64_t		v;
+{
+	if (t->sparc_write_8)
+		(*t->sparc_write_8)(t, h, o, v);
+	else
+		bus_space_write_8_real(t, h, o, v);
+}
+
+#else /* __FULL_SPARC_BUS_SPACE */
+
+#define	bus_space_write_1	bus_space_write_1_real
+#define	bus_space_write_2	bus_space_write_2_real
+#define	bus_space_write_4	bus_space_write_4_real
+#define	bus_space_write_8	bus_space_write_8_real
+
+#endif /* __FULL_SPARC_BUS_SPACE */
+
+#define bus_space_write_stream_1 bus_space_write_1_real
+#define bus_space_write_stream_2 bus_space_write_2_real
+#define bus_space_write_stream_4 bus_space_write_4_real
+#define bus_space_write_stream_8 bus_space_write_8_real
 
 
 /*
@@ -490,11 +701,68 @@ bus_space_read_multi_8(t, h, o, a, c)
 		*a++ = bus_space_read_8(t, h, o);
 }
 
+#ifndef __FULL_SPARC_BUS_SPACE
 #define bus_space_read_multi_stream_1 bus_space_read_multi_1
 #define bus_space_read_multi_stream_2 bus_space_read_multi_2
 #define bus_space_read_multi_stream_4 bus_space_read_multi_4
 #define bus_space_read_multi_stream_8 bus_space_read_multi_8
 
+#else
+
+#define bus_space_read_multi_stream_1 bus_space_read_multi_1
+
+static void bus_space_read_multi_stream_2 __P((bus_space_tag_t,
+					bus_space_handle_t,
+					bus_size_t,
+					u_int16_t *,
+					bus_size_t));
+
+static void bus_space_read_multi_stream_4 __P((bus_space_tag_t,
+					bus_space_handle_t,
+					bus_size_t,
+					u_int32_t *,
+					bus_size_t));
+
+static void bus_space_read_multi_stream_8 __P((bus_space_tag_t,
+					bus_space_handle_t,
+					bus_size_t,
+					u_int64_t *,
+					bus_size_t));
+
+static __inline__ void
+bus_space_read_multi_stream_2(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o, c;
+	u_int16_t		*a;
+{
+	while (c-- > 0)
+		*a++ = bus_space_read_2_real(t, h, o);
+}
+
+static __inline__ void
+bus_space_read_multi_stream_4(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o, c;
+	u_int32_t		*a;
+{
+	while (c-- > 0)
+		*a++ = bus_space_read_4_real(t, h, o);
+}
+
+static __inline__ void
+bus_space_read_multi_stream_8(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o, c;
+	u_int64_t		*a;
+{
+	while (c-- > 0)
+		*a++ = bus_space_read_8_real(t, h, o);
+}
+
+#endif	/* __FULL_SPARC_BUS_SPACE */
 
 /*
  *	void bus_space_write_multi_N __P((bus_space_tag_t tag,
@@ -568,11 +836,67 @@ bus_space_write_multi_8(t, h, o, a, c)
 		bus_space_write_8(t, h, o, *a++);
 }
 
+#ifndef __FULL_SPARC_BUS_SPACE
+
 #define bus_space_write_multi_stream_1 bus_space_write_multi_1
 #define bus_space_write_multi_stream_2 bus_space_write_multi_2
 #define bus_space_write_multi_stream_4 bus_space_write_multi_4
 #define bus_space_write_multi_stream_8 bus_space_write_multi_8
 
+#else
+
+#define bus_space_write_multi_stream_1 bus_space_write_multi_1
+
+static void bus_space_write_multi_stream_2 __P((bus_space_tag_t,
+					 bus_space_handle_t,
+					 bus_size_t,
+					 const u_int16_t *,
+					 bus_size_t));
+static void bus_space_write_multi_stream_4 __P((bus_space_tag_t,
+					 bus_space_handle_t,
+					 bus_size_t,
+					 const u_int32_t *,
+					 bus_size_t));
+static void bus_space_write_multi_stream_8 __P((bus_space_tag_t,
+					 bus_space_handle_t,
+					 bus_size_t,
+					 const u_int64_t *,
+					 bus_size_t));
+
+static __inline__ void
+bus_space_write_multi_stream_2(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o, c;
+	const u_int16_t		*a;
+{
+	while (c-- > 0)
+		bus_space_write_2_real(t, h, o, *a++);
+}
+
+static __inline__ void
+bus_space_write_multi_stream_4(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o, c;
+	const u_int32_t		*a;
+{
+	while (c-- > 0)
+		bus_space_write_4_real(t, h, o, *a++);
+}
+
+static __inline__ void
+bus_space_write_multi_stream_8(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o, c;
+	const u_int64_t		*a;
+{
+	while (c-- > 0)
+		bus_space_write_8_real(t, h, o, *a++);
+}
+
+#endif	/* __FULL_SPARC_BUS_SPACE */
 
 /*
  *	void bus_space_set_multi_N __P((bus_space_tag_t tag,

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45.4.7 2002/12/11 06:12:08 thorpej Exp $ */
+/*	$NetBSD: cpu.h,v 1.45.4.8 2003/01/03 17:25:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -158,14 +158,6 @@ extern int cpu_arch;
 
 /* Number of CPUs in the system */
 extern int ncpu;
-
-/*
- * Only one process may own the FPU state.
- *
- * XXX this must be per-cpu (eventually)
- */
-extern struct lwp *fpproc;	/* FPU owner */
-extern int foundfpu;		/* true => we have an FPU */
 
 /*
  * Interrupt handler chains.  Interrupt handlers should return 0 for

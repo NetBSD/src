@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.2.2.8 2002/12/11 06:12:15 thorpej Exp $ */
+/*	$NetBSD: msiiep.c,v 1.2.2.9 2003/01/03 17:25:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.2.2.8 2002/12/11 06:12:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.2.2.9 2003/01/03 17:25:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -157,7 +157,17 @@ static struct sparc_bus_space_tag mspcic_io_tag = {
 	NULL,			/* bus_space_subregion */
 	NULL,			/* bus_space_barrier */
 	mspcic_bus_mmap,	/* bus_space_mmap */
-	mspcic_intr_establish	/* bus_intr_establish */
+	mspcic_intr_establish,	/* bus_intr_establish */
+#if __FULL_SPARC_BUS_SPACE
+	NULL,			/* read_1 */
+	NULL,			/* read_2 */
+	NULL,			/* read_4 */
+	NULL,			/* read_8 */
+	NULL,			/* write_1 */
+	NULL,			/* write_2 */
+	NULL,			/* write_4 */
+	NULL			/* write_8 */
+#endif
 };
 
 static struct sparc_bus_space_tag mspcic_mem_tag = {
@@ -171,6 +181,16 @@ static struct sparc_bus_space_tag mspcic_mem_tag = {
 	NULL,			/* bus_space_barrier */
 	mspcic_bus_mmap,	/* bus_space_mmap */
 	mspcic_intr_establish	/* bus_intr_establish */
+#if __FULL_SPARC_BUS_SPACE
+	NULL,			/* read_1 */
+	NULL,			/* read_2 */
+	NULL,			/* read_4 */
+	NULL,			/* read_8 */
+	NULL,			/* write_1 */
+	NULL,			/* write_2 */
+	NULL,			/* write_4 */
+	NULL			/* write_8 */
+#endif
 };
 
 
