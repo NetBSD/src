@@ -4,7 +4,6 @@
 ./usr/bin/palette
 ./usr/bin/rtcalarm
 ./usr/bin/tvctrl
-./usr/lib/libstdc++.so.1.0
 ./usr/mdec/fdboot
 ./usr/mdec/installboot
 ./usr/mdec/loadbsd.x
