@@ -1,4 +1,4 @@
-/* $NetBSD: cia_dma.c,v 1.1.2.3 1997/06/05 18:47:40 thorpej Exp $ */
+/* $NetBSD: cia_dma.c,v 1.1.2.4 1997/06/06 00:32:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.1.2.3 1997/06/05 18:47:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.1.2.4 1997/06/06 00:32:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -334,7 +334,7 @@ cia_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
 	struct cia_config *ccp = t->_cookie;
 	int error;
 
-	error = pci_pte64_sgmap_load(t, map, buf, buflen, p, flags,
+	error = pci_sgmap_pte64_load(t, map, buf, buflen, p, flags,
 	    &ccp->cc_sgmap);
 	if (error == 0)
 		CIA_TLB_INVALIDATE();
@@ -370,7 +370,7 @@ cia_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
 	struct cia_config *ccp = t->_cookie;
 	int error;
 
-	error = pci_pte64_sgmap_load_mbuf(t, map, m, flags, &ccp->cc_sgmap);
+	error = pci_sgmap_pte64_load_mbuf(t, map, m, flags, &ccp->cc_sgmap);
 	if (error == 0)
 		CIA_TLB_INVALIDATE();
 
@@ -405,7 +405,7 @@ cia_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
 	struct cia_config *ccp = t->_cookie;
 	int error;
 
-	error = pci_pte64_sgmap_load_uio(t, map, uio, flags, &ccp->cc_sgmap);
+	error = pci_sgmap_pte64_load_uio(t, map, uio, flags, &ccp->cc_sgmap);
 	if (error == 0)
 		CIA_TLB_INVALIDATE();
 
@@ -444,7 +444,7 @@ cia_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
 	struct cia_config *ccp = t->_cookie;
 	int error;
 
-	error = pci_pte64_sgmap_load_raw(t, map, segs, nsegs, size, flags,
+	error = pci_sgmap_pte64_load_raw(t, map, segs, nsegs, size, flags,
 	    &ccp->cc_sgmap);
 	if (error == 0)
 		CIA_TLB_INVALIDATE();
@@ -466,7 +466,7 @@ cia_bus_dmamap_unload_sgmap(t, map)
 	 * Invalidate any SGMAP page table entries used by this
 	 * mapping.
 	 */
-	pci_pte64_sgmap_unload(t, map, &ccp->cc_sgmap);
+	pci_sgmap_pte64_unload(t, map, &ccp->cc_sgmap);
 	CIA_TLB_INVALIDATE();
 
 	/*

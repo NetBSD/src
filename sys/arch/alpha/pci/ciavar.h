@@ -1,4 +1,4 @@
-/* $NetBSD: ciavar.h,v 1.7.2.2 1997/06/03 07:07:38 thorpej Exp $ */
+/* $NetBSD: ciavar.h,v 1.7.2.3 1997/06/06 00:32:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
-#include <alpha/pci/pci_pte64_sgmap.h>
+#include <alpha/pci/pci_sgmap_pte64.h>
 
 /*
  * A 21171 chipset's configuration.
