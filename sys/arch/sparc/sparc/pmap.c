@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.78 1997/03/31 22:03:11 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.79 1997/04/09 23:53:40 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1819,40 +1819,16 @@ ctx_alloc(pm)
 		 * XXX: Do we have to flush cache after reloading ctx tbl?
 		 */
 
-		/*
-		 * We install kernel mappings into the pmap here, since when
-		 * the kernel expands it only propagates the expansion to pmaps
-		 * corresponding to valid contexts. Thus it is possible (and
-		 * it has happened!) that a pmap is created just before
-		 * the kernel expands, but the pmap gets a context *after*
-		 * the kernel expands, thus missing getting mappings.
-		 */
-#if 0
-		qcopy(&pmap_kernel()->pm_reg_ptps[VA_VREG(KERNBASE)],
-		      &pm->pm_reg_ptps[VA_VREG(KERNBASE)],
-		      NKREG * sizeof(int));
-#endif
-		qcopy(&cpuinfo.L1_ptps[VA_VREG(KERNBASE)],
-		      &pm->pm_reg_ptps[VA_VREG(KERNBASE)],
-		      NKREG * sizeof(int));
-		/*
-		 * We must also install the regmap/segmap/etc stuff for
-		 * kernel maps.
-		 */
-		qcopy(&pmap_kernel()->pm_regmap[VA_VREG(KERNBASE)],
-		       &pm->pm_regmap[VA_VREG(KERNBASE)],
-		       NKREG * sizeof(struct regmap));
-
+#ifdef DEBUG
 #if 0
 		ctxbusyvector[cnum] = 1; /* mark context as busy */
 #endif
-#ifdef DEBUG
 		if (pm->pm_reg_ptps_pa == 0)
 			panic("ctx_alloc: no region table in current pmap");
 #endif
 		/*setcontext(0); * paranoia? can we modify curr. ctx? */
-		cpuinfo.ctx_tbl[cnum] =
-			(pm->pm_reg_ptps_pa >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD;
+		setpgt4m(&cpuinfo.ctx_tbl[cnum],
+			(pm->pm_reg_ptps_pa >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
 
 		setcontext(cnum);
 		if (doflush)
@@ -2938,6 +2914,7 @@ pmap_bootstrap4m(void)
 	register struct memarr *mp;
 	register int reg, seg;
 	unsigned int ctxtblsize;
+	caddr_t pagetables_start, pagetables_end;
 	extern char end[];
 	extern char etext[];
 	extern caddr_t reserve_dumppages(caddr_t);
@@ -3059,6 +3036,7 @@ pmap_bootstrap4m(void)
 	p += (0 - DVMA4M_BASE) / 1024;
 	bzero(kernel_iopte_table, p - (caddr_t) kernel_iopte_table);
 
+	pagetables_start = p;
 	/*
 	 * Allocate context table.
 	 * To keep supersparc happy, minimum aligment is on a 4K boundary.
@@ -3099,12 +3077,8 @@ pmap_bootstrap4m(void)
 
 	/* Round to next page and mark end of stolen pages */
 	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
+	pagetables_end = p;
 	unavail_end = (int)p - KERNBASE;
-
-	/* Mark all MMU tables uncacheable, if required */
-	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)
-		kvm_uncache((caddr_t)kernel_iopte_table,
-			    ((u_int)p - (u_int)kernel_iopte_table) >> PGSHIFT);
 
 	/*
 	 * Since we've statically allocated space to map the entire kernel,
@@ -3119,8 +3093,8 @@ pmap_bootstrap4m(void)
 		VA2PA((caddr_t)pmap_kernel()->pm_reg_ptps);
 
 	/* Install L1 table in context 0 */
-	cpuinfo.ctx_tbl[0] =
-	    (pmap_kernel()->pm_reg_ptps_pa >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD;
+	setpgt4m(&cpuinfo.ctx_tbl[0],
+	    (pmap_kernel()->pm_reg_ptps_pa >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
 
 	/* XXX:rethink - Store pointer to region table address */
 	cpuinfo.L1_ptps = pmap_kernel()->pm_reg_ptps;
@@ -3227,7 +3201,8 @@ pmap_bootstrap4m(void)
 		struct segmap *sp;
 		int pte;
 
-		if ((int)q >= avail_start && (int)q < unavail_start)
+		if ((int)q >= KERNBASE + avail_start &&
+		    (int)q < KERNBASE + unavail_start)
 			/* This gap is part of VM-managed pages */
 			continue;
 
@@ -3265,6 +3240,12 @@ pmap_bootstrap4m(void)
 	 * Now switch to kernel pagetables (finally!)
 	 */
 	mmu_install_tables(&cpuinfo);
+
+	/* Mark all MMU tables uncacheable, if required */
+	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)
+		kvm_uncache(pagetables_start,
+			    (pagetables_end - pagetables_start) >> PGSHIFT);
+
 }
 
 void
@@ -3513,6 +3494,8 @@ pmap_pinit(pm)
 	}
 #if defined(SUN4M)
 	else {
+		int i;
+
 		/*
 		 * We must allocate and initialize hardware-readable (MMU)
 		 * pagetables. We must also map the kernel regions into this
@@ -3538,6 +3521,11 @@ pmap_pinit(pm)
 		pm->pm_reg_ptps_pa = VA2PA(urp);
 		qzero(urp, SRMMU_L1SIZE * sizeof(int));
 
+		/* Copy kernel regions */
+		for (i = 0; i < NKREG; i++) {
+			setpgt4m(&pm->pm_reg_ptps[VA_VREG(KERNBASE) + i],
+				 cpuinfo.L1_ptps[VA_VREG(KERNBASE) + i]);
+		}
 	}
 #endif
 
@@ -5665,34 +5653,24 @@ pmap_extract4m(pm, va)
 	register struct pmap *pm;
 	vm_offset_t va;
 {
-	register int tpte;
+	register int pte;
 
 	if (pm == NULL) {
 		printf("pmap_extract: null pmap\n");
 		return (0);
 	}
 
-#if 0
-	if (pm->pm_ctx) {
-		int ctx = getcontext4m();
-		CHANGE_CONTEXTS(ctx, pm->pm_ctxnum);
-		tpte = getpte4m(va);
-		setcontext4m(ctx);
-	} else
-		tpte = getptesw4m(pm, va);
-#else
-	tpte = getptesw4m(pm, va);
-#endif
+	pte = getptesw4m(pm, va);
 
 #ifdef DEBUG
-	if ((tpte & SRMMU_TETYPE) != SRMMU_TEPTE) {
+	if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE) {
 		printf("pmap_extract: invalid pte of type %d\n",
-		       tpte & SRMMU_TETYPE);
+		       pte & SRMMU_TETYPE);
 		return (0);
 	}
 #endif
 
-	return (ptoa((tpte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT) | VA_OFF(va));
+	return (ptoa((pte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT) | VA_OFF(va));
 }
 #endif /* sun4m */
 
@@ -6011,6 +5989,7 @@ pmap_zero_page4m(pa)
 {
 	register caddr_t va;
 	register int pte;
+	int ctx;
 
 	if (((pa & (PMAP_TNC & ~PMAP_NC)) == 0) && managed(pa)) {
 		/*
@@ -6028,10 +6007,14 @@ pmap_zero_page4m(pa)
 	else
 		pte &= ~SRMMU_PG_C;
 
+	/* XXX - must use context 0 or else setpte4m() will fail */
+	ctx = getcontext4m();
+	setcontext4m(0);
 	va = vpage[0];
 	setpte4m((vm_offset_t) va, pte);
 	qzero(va, NBPG);
 	setpte4m((vm_offset_t) va, SRMMU_TEINVALID);
+	setcontext4m(ctx);
 }
 
 /*
@@ -6049,6 +6032,7 @@ pmap_copy_page4m(src, dst)
 {
 	register caddr_t sva, dva;
 	register int spte, dpte;
+	int ctx;
 
 	if (managed(src)) {
 		if (CACHEINFO.c_vactype == VAC_WRITEBACK)
@@ -6069,6 +6053,9 @@ pmap_copy_page4m(src, dst)
 	else
 		dpte &= ~SRMMU_PG_C;
 
+	/* XXX - must use context 0 or else setpte4m() will fail */
+	ctx = getcontext4m();
+	setcontext4m(0);
 	sva = vpage[0];
 	dva = vpage[1];
 	setpte4m((vm_offset_t) sva, spte);
@@ -6077,6 +6064,7 @@ pmap_copy_page4m(src, dst)
 	cache_flush_page((int)sva);
 	setpte4m((vm_offset_t) sva, SRMMU_TEINVALID);
 	setpte4m((vm_offset_t) dva, SRMMU_TEINVALID);
+	setcontext4m(ctx);
 }
 #endif /* Sun4M */
 
