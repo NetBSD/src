@@ -1,12 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2005/03/23 11:09:59 martin Exp $
+#	$NetBSD: Makefile,v 1.2 2005/03/26 10:22:27 martin Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
 .include "../../../../Makefile.serverlib"
-
-.if 0
-DRISRCS = ffb_dri.c
-.endif 
 
 MODULE=	sunffb_drv
 MAN=	sunffb.4
@@ -16,7 +12,7 @@ SRCS=	ffb_driver.c ffb_accel.c ffb_attr.c ffb_stip.c ffb_bcopy.c \
 	ffb_cplane.c ffb_fspans.c ffb_point.c ffb_seg.c ffb_plygon.c \
 	ffb_line.c ffb_glyph.c ffb_frect.c ffb_circle.c ffb_checks.c \
 	ffb_stubs.c ffb_gc.c ffb_gspans.c ffb_sspans.c ffb_zeroarc.c \
-	ffb_cursor.c ffb_dga.c ffb_dac.c ffb_wid.c ffb_dbe.c ${DRISRCS}
+	ffb_cursor.c ffb_dga.c ffb_dac.c ffb_wid.c ffb_dbe.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/sunffb \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
@@ -35,6 +31,17 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/sunffb \
                 -I${DESTDIR}${X11INCDIR}/X11 \
                 -I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${XSERVERINCDIR}
+
+
+.if ${X11DRI} != "no"
+SRCS+=		ffb_dri.c
+
+CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/GL/dri \
+		-I${X11SRCDIR.xc}/lib/GL/dri \
+		-I${X11SRCDIR.xc}/include
+
+CPPFLAGS+=	${X11FLAGS.DRI}
+.endif
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}
