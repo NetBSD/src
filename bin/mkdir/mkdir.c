@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdir.c,v 1.23 1999/05/26 15:51:09 kleink Exp $	*/
+/*	$NetBSD: mkdir.c,v 1.24 2000/10/10 14:30:40 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-__RCSID("$NetBSD: mkdir.c,v 1.23 1999/05/26 15:51:09 kleink Exp $");
+__RCSID("$NetBSD: mkdir.c,v 1.24 2000/10/10 14:30:40 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ main(argc, argv)
 	char *argv[];
 {
 	int ch, exitval, pflag;
-	mode_t *set;
+	void *set;
 	mode_t mode, dir_mode;
 
 	(void)setlocale(LC_ALL, "");
@@ -92,6 +92,7 @@ main(argc, argv)
 			if ((set = setmode(optarg)) == NULL)
 				errx(1, "invalid file mode: %s", optarg);
 			mode = getmode(set, S_IRWXU | S_IRWXG | S_IRWXO);
+			free(set);
 			break;
 		case '?':
 		default:
