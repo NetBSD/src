@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.28 2002/10/05 21:25:24 fvdl Exp $	*/
+/*	$NetBSD: intr.h,v 1.29 2002/11/01 01:12:44 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,15 +54,16 @@
  * avoid overruns, so serial > high.
  */
 #define	IPL_NONE	0x00	/* nothing */
-#define	IPL_SOFTCLOCK	0x50	/* timeouts */
-#define	IPL_SOFTNET	0x60	/* protocol stacks */
-#define	IPL_BIO		0x70	/* block I/O */
-#define	IPL_NET		0x80	/* network */
-#define	IPL_SOFTSERIAL	0x90	/* serial */
-#define	IPL_TTY		0xa0	/* terminal */
-#define	IPL_IMP		0xb0	/* memory allocation */
-#define	IPL_AUDIO	0xc0	/* audio */
-#define	IPL_CLOCK	0xd0	/* clock */
+#define	IPL_SOFTCLOCK	0x40	/* timeouts */
+#define	IPL_SOFTNET	0x50	/* protocol stacks */
+#define	IPL_BIO		0x60	/* block I/O */
+#define	IPL_NET		0x70	/* network */
+#define	IPL_SOFTSERIAL	0x80	/* serial */
+#define	IPL_TTY		0x90	/* terminal */
+#define	IPL_IMP		0xa0	/* memory allocation */
+#define	IPL_AUDIO	0xb0	/* audio */
+#define	IPL_CLOCK	0xc0	/* clock */
+#define IPL_SCHED	IPL_CLOCK
 #define	IPL_HIGH	0xd0	/* everything */
 #define	IPL_SERIAL	0xd0	/* serial */
 #define IPL_IPI		0xe0	/* inter-processor interrupts */
@@ -175,7 +176,7 @@ spllower(int ncpl)
 #define	splvm()		splraise(IPL_IMP)
 #define	splhigh()	splraise(IPL_HIGH)
 #define	spl0()		spllower(IPL_NONE)
-#define	splsched()	splhigh()
+#define	splsched()	splraise(IPL_SCHED)
 #define spllock() 	splhigh()
 #define	splx(x)		spllower(x)
 
