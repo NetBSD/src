@@ -1,9 +1,10 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.8 1994/07/19 04:29:57 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.9 1994/08/21 18:44:00 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
  * Copyright (C) 1994 TooLs GmbH.
  * All rights reserved.
+ * Original code by Paul Popelka (paulp@uts.amdahl.com) (see below).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

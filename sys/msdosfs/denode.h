@@ -1,9 +1,10 @@
-/*	$NetBSD: denode.h,v 1.7 1994/07/19 04:29:55 mycroft Exp $	*/
+/*	$NetBSD: denode.h,v 1.8 1994/08/21 18:43:49 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
  * Copyright (C) 1994 TooLs GmbH.
  * All rights reserved.
+ * Original code by Paul Popelka (paulp@uts.amdahl.com) (see below).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

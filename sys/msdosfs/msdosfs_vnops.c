@@ -1,9 +1,10 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.19 1994/08/09 18:44:12 ws Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.20 1994/08/21 18:44:13 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
  * Copyright (C) 1994 TooLs GmbH.
  * All rights reserved.
+ * Original code by Paul Popelka (paulp@uts.amdahl.com) (see below).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -714,8 +715,7 @@ errexit:
 				error = 0;
 		}
 	} else {
-		if (ioflag & IO_UNIT)
-			error = deupdat(dep, &time, 1);
+		error = deupdat(dep, &time, 1);
 	}
 	return error;
 }
