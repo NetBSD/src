@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.15 2005/01/19 19:31:28 xtraeme Exp $	*/
+/*	$NetBSD: inode.c,v 1.16 2005/02/05 14:26:05 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.15 2005/01/19 19:31:28 xtraeme Exp $");
+__RCSID("$NetBSD: inode.c,v 1.16 2005/02/05 14:26:05 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,7 +191,7 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 	int32_t *ap;
 	int32_t *aplim;
 	struct bufarea *bp;
-	int i, n, (*func) __P((struct inodesc *)), nif;
+	int i, n, (*func)(struct inodesc *), nif;
 	u_int64_t sizepb;
 	char buf[BUFSIZ];
 	char pathbuf[MAXPATHLEN + 1];
