@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.15 2001/06/02 10:47:55 bjh21 Exp $
+# $NetBSD: FOURMEG,v 1.16 2001/06/24 10:36:09 bjh21 Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -141,11 +141,19 @@ ei*		at podulebus0 slot ?	# Acorn AKA25 (Ether1)
 ea*		at podulebus0 slot ?	# Atomwide Ether3
 eh*		at podulebus0 slot ?	# i-cubed EtherH (E100/200/500)
 
-#dtide*		at podulebus0 slot ?	# D.T. Software IDE interface
-#wd*		at dtide? channel ? drive ?
+dtide*		at podulebus0 slot ?	# D.T. Software IDE interface
+wd*		at dtide? channel ? drive ? # IDE hard discs
+atapibus*	at dtide? channel ?	# ATAPI devices
+
+hcide*		at podulebus0 slot ?	# HCCS IDE interface
+wd*		at hcide? channel ? drive ? # IDE hard discs
+atapibus*	at hcide? channel ?	# ATAPI devices
 
 hcsc*		at podulebus0 slot ?	# HCCS 8-bit SCSI interface
 scsibus*	at hcsc?
+
+oak*		at podulebus0 slot ?	# Oak Solutions 16-bit SCSI interface
+scsibus*	at oak?
 
 upc0		at iobus0 base 0x010000	# I/O chip on IOEB machines
 #com0		at upc0			# Serial port
@@ -153,8 +161,8 @@ upc0		at iobus0 base 0x010000	# I/O chip on IOEB machines
 wdc0		at upc0			# IDE controller
 
 wd*		at wdc? drive ?		# IDE hard discs
-#atapibus*	at wdc?			# ATAPI devices
-#cd*		at atapibus? drive ?	# ATAPI CD-ROM drives
+atapibus*	at wdc?			# ATAPI devices
+cd*		at atapibus? drive ?	# ATAPI CD-ROM drives
 #sd*		at atapibus? drive ?	# ATAPI disk drives
 #uk*		at atapibus? drive ?	# ATAPI unknown
 
