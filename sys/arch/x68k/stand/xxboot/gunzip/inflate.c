@@ -100,7 +100,7 @@
  */
 
 #ifdef RCSID
-static char rcsid[] = "$NetBSD: inflate.c,v 1.1 1998/09/01 20:03:46 itohy Exp $";
+static char rcsid[] = "$NetBSD: inflate.c,v 1.2 1999/03/27 15:01:34 minoura Exp $";
 #endif
 
 #include <sys/types.h>
@@ -118,7 +118,7 @@ static char rcsid[] = "$NetBSD: inflate.c,v 1.1 1998/09/01 20:03:46 itohy Exp $"
 #ifdef BOOT
 static voidp fake_malloc_for_inflate OF((unsigned));
 static void fake_free_for_inflate OF((void));
-#ifndef __m68k__
+#if !defined (__m68k__) || 1
 static
 #endif
 int get_byte OF((void));
@@ -297,7 +297,7 @@ const ush mask_bits[] = {
 #endif
 #endif
 
-#if defined(__GNUC__) && defined(__m68k__)
+#if defined(__GNUC__) && defined(__m68k__) && 0	/* XXX: minoura Mar. 99 */
 #ifdef BOOT
 /* optimize for size */
 #define NEEDBITS(n) {	\
