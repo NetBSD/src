@@ -1,3 +1,4 @@
+/*	$NetBSD: exec_aout.c,v 1.6 1997/08/02 21:30:17 perry Exp $	*/
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994 University of Maryland
@@ -24,7 +25,11 @@
  *			   Computer Science Department
  *			   University of Maryland at College Park
  */
-
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: exec_aout.c,v 1.6 1997/08/02 21:30:17 perry Exp $");
+#endif
+ 
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
