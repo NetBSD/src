@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ipnat,v 1.12 2004/10/11 15:00:51 christos Exp $
+# $NetBSD: ipnat,v 1.13 2004/10/12 14:51:03 lukem Exp $
 #
 
 # PROVIDE: ipnat
@@ -36,4 +36,5 @@ ipnat_start()
 }
 
 load_rc_config $name
+load_rc_config_var ipfilter ipfilter
 run_rc_command "$1"
