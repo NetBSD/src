@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.84 1997/09/02 18:54:28 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.84.2.1 1997/09/08 23:26:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84 1997/09/02 18:54:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84.2.1 1997/09/08 23:26:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1225,12 +1225,13 @@ sendsig(catcher, sig, mask, code)
 	struct sigcontext *scp, ksc;
 	struct trapframe *frame;
 	struct sigacts *psp = p->p_sigacts;
+	struct sigaction *sa = &psp->ps_sigact[sig];
 	int oonstack, fsize, rndfsize;
 	extern char sigcode[], esigcode[];
 	extern struct proc *fpcurproc;
 
 	frame = p->p_md.md_tf;
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	oonstack = p->p_sigstk.ss_flags & SS_ONSTACK;
 	fsize = sizeof ksc;
 	rndfsize = ((fsize + 15) / 16) * 16;
 	/*
@@ -1241,10 +1242,10 @@ sendsig(catcher, sig, mask, code)
 	 * the space with a `brk'.
 	 */
 	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
-		scp = (struct sigcontext *)(psp->ps_sigstk.ss_sp +
-		    psp->ps_sigstk.ss_size - rndfsize);
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+	    (sa->sa_flags & SA_ONSTACK)) {
+		scp = (struct sigcontext *)(p->p_sigstk.ss_sp +
+		    p->p_sigstk.ss_size - rndfsize);
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		scp = (struct sigcontext *)(alpha_pal_rdusp() - rndfsize);
 	if ((u_long)scp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
@@ -1266,8 +1267,6 @@ sendsig(catcher, sig, mask, code)
 		 */
 		SIGACTION(p, SIGILL) = SIG_DFL;
 		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
 		p->p_sigmask &= ~sig;
 		psignal(p, SIGILL);
 		return;
@@ -1384,9 +1383,9 @@ sys_sigreturn(p, v, retval)
 	 * Restore the user-supplied information
 	 */
 	if (ksc.sc_onstack)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = ksc.sc_mask &~ sigcantmask;
 
 	p->p_md.md_tf->tf_regs[FRAME_PC] = ksc.sc_pc;
