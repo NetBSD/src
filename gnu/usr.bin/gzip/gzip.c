@@ -45,7 +45,7 @@ static char  *license_msg[] = {
  */
 
 #ifdef RCSID
-static char rcsid[] = "$Id: gzip.c,v 1.6 1999/08/20 02:36:28 simonb Exp $";
+static char rcsid[] = "$Id: gzip.c,v 1.7 2000/11/17 01:31:26 simonb Exp $";
 #endif
 
 #include <ctype.h>
@@ -951,7 +951,7 @@ local char *get_suffix(name)
     int nlen, slen;
     char suffix[MAX_SUFFIX+3]; /* last chars of name, forced to lower case */
     static char *known_suffixes[] =
-       {z_suffix, ".gz", ".z", ".taz", ".tgz", "-gz", "-z", "_z",
+       {z_suffix, ".gz", ".z", ".taz", ".tgz", "-gz", "-z", "_z", ".bz2",
 #ifdef MAX_EXT_CHARS
           "z",
 #endif
