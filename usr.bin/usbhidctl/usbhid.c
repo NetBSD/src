@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.c,v 1.3 1998/07/13 20:56:28 augustss Exp $	*/
+/*	$NetBSD: usbhid.c,v 1.4 1998/07/23 13:48:59 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <err.h>
+#include <ctype.h>
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
 
@@ -264,7 +265,7 @@ int
 main(int argc, char **argv)
 {
 	int f, r;
-	char *dev = 0;
+	char devname[100], *dev = 0;
 	int ch;
 	extern char *optarg;
 	extern int optind;
@@ -307,6 +308,14 @@ main(int argc, char **argv)
 		usage();
 	names = argv;
 	nnames = argc;
+
+	if (dev[0] != '/') {
+		if (isdigit(dev[0]))
+			sprintf(devname, "/dev/uhid%s", dev);
+		else
+			sprintf(devname, "/dev/%s", dev);
+		dev = devname;
+	}
 
 	init_hid(table);
 
