@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.26 2000/07/04 03:29:00 thorpej Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.27 2000/10/11 22:03:33 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -187,7 +187,7 @@ tlphyattach(parent, self, aux)
 		}
 	}
 	if (sc->sc_mii.mii_capabilities & BMSR_MEDIAMASK) {
-		printf(sep);
+		printf("%s", sep);
 		mii_phy_add_media(&sc->sc_mii);
 	} else if ((sc->sc_tlphycap &
 		    (TLPHY_MEDIA_10_2 | TLPHY_MEDIA_10_5)) == 0)
