@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.24 2000/05/26 21:20:17 thorpej Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.25 2000/05/27 11:44:54 mason Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,6 +47,8 @@
 #include <sys/device.h>
 #include <sys/lock.h>
 #include <sys/sched.h>
+
+#include <sparc/include/reg.h>
 
 #include <sparc/sparc/cache.h>	/* for cacheinfo */
 
