@@ -1,4 +1,4 @@
-/*	$NetBSD: getrpcport.c,v 1.6 1996/03/29 23:00:53 jtc Exp $	*/
+/*	$NetBSD: getrpcport.c,v 1.7 1996/12/20 20:23:22 cgd Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getrpcport.c 1.3 87/08/11 SMI";*/
 /*static char *sccsid = "from: @(#)getrpcport.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: getrpcport.c,v 1.6 1996/03/29 23:00:53 jtc Exp $";
+static char *rcsid = "$NetBSD: getrpcport.c,v 1.7 1996/12/20 20:23:22 cgd Exp $";
 #endif
 
 /*
@@ -44,6 +44,7 @@ static char *rcsid = "$NetBSD: getrpcport.c,v 1.6 1996/03/29 23:00:53 jtc Exp $"
 #include <rpc/rpc.h>
 #include <netdb.h>
 #include <sys/socket.h>
+#include <rpc/pmap_clnt.h>
 
 int
 getrpcport(host, prognum, versnum, proto)
