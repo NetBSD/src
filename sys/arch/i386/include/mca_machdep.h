@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.h,v 1.6 2001/05/02 13:16:33 jdolecek Exp $	*/
+/*	$NetBSD: mca_machdep.h,v 1.7 2001/11/23 22:29:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,6 +30,8 @@
 #ifndef _I386_MCA_MACHDEP_H_
 #define _I386_MCA_MACHDEP_H_
 
+#include <machine/bus.h>
+
 /*
  * i386-specific definitions for MCA autoconfiguration.
  */
@@ -48,7 +50,7 @@ struct i386_mca_chipset {
         void * /*struct mca_dma_state*/ ic_dmastate;
 };
 
-typedef struct i386_mca_chipse *mca_chipset_tag_t;
+typedef struct i386_mca_chipset *mca_chipset_tag_t;
 typedef int mca_intr_handle_t;
 
 /*
@@ -58,6 +60,7 @@ struct mcabus_attach_args;
 
 void	mca_attach_hook(struct device *, struct device *,
 		struct mcabus_attach_args *);
+int	mca_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_dmamap_t *, int);
 const struct evcnt *mca_intr_evcnt(mca_chipset_tag_t, mca_intr_handle_t);
 void	*mca_intr_establish(mca_chipset_tag_t, mca_intr_handle_t,
 		int, int (*)(void *), void *);
