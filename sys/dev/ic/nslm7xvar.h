@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.6 2000/08/02 21:50:37 bouyer Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.7 2000/08/03 09:27:01 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -88,6 +88,7 @@
 /* Bank0 regs */
 #define WB_BANK0_CHIPID	0x58
 #define WB_CHIPID_83781		0x10
+#define WB_CHIPID_83781_2	0x11
 #define WB_CHIPID_83782		0x30
 #define WB_CHIPID_83627		0x21
 #define WB_CHIPID_83697		0x60
