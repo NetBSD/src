@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.106 2001/12/26 09:40:16 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.107 2002/06/05 10:20:50 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.106 2001/12/26 09:40:16 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.107 2002/06/05 10:20:50 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -957,6 +957,15 @@ progressmeter(int flag)
 	if (filesize > 0) {
 		if (bytes <= 0 || elapsed <= 0.0 || cursize > filesize) {
 			len += snprintf(buf + len, BUFLEFT, "   --:-- ETA");
+		} else if (flag == 1) {
+			i = elapsed / SECSPERHOUR;
+			if (i)
+				len += snprintf(buf + len, BUFLEFT, "%2d:", i);
+			else
+				len += snprintf(buf + len, BUFLEFT, "   ");
+			i = (int)elapsed % SECSPERHOUR;
+			len += snprintf(buf + len, BUFLEFT,
+			    "%02d:%02d    ", i / 60, i % 60);
 		} else if (wait.tv_sec >= STALLTIME) {
 			len += snprintf(buf + len, BUFLEFT, " - stalled -");
 		} else {

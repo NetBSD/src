@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.80 2002/03/18 20:14:03 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.81 2002/06/05 10:20:50 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -108,7 +108,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.80 2002/03/18 20:14:03 thorpej Exp $");
+__RCSID("$NetBSD: main.c,v 1.81 2002/06/05 10:20:50 lukem Exp $");
 #endif
 #endif /* not lint */
 
