@@ -1,4 +1,4 @@
-# $NetBSD: country,v 1.10 2003/04/10 19:50:08 kleink Exp $
+# $NetBSD: country,v 1.11 2003/07/23 17:04:51 kleink Exp $
 #
 # ISO 3166-1 Country Codes
 #
@@ -199,6 +199,7 @@ San Marino	SM	SMR	674
 Sao Tome and Principe	ST	STP	678
 Saudi Arabia	SA	SAU	682
 Senegal	SN	SEN	686
+Serbia and Montenegro	CS	SCG	891
 Seychelles	SC	SYC	690
 Sierra Leone	SL	SLE	694
 Singapore	SG	SGP	702
@@ -247,6 +248,5 @@ Virgin Islands (U.S.)	VI	VIR	850
 Wallis and Futuna Islands	WF	WLF	876
 Western Sahara	EH	ESH	732
 Yemen	YE	YEM	887
-Yugoslavia	YU	YUG	891
 Zambia	ZM	ZMB	894
 Zimbabwe	ZW	ZWE	716
