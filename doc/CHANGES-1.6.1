@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.40 2002/11/22 17:19:48 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.41 2002/11/22 17:55:56 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -1440,4 +1440,42 @@ syssrc/sys/arch/sparc64/sparc64/machdep.c	1.131,1.133 via patch
 	ignores PMAP_LITTLE, don't bother to pass that as flags. We've
 	already changed the ASIs used to access the mapped pages acordingly.
 	[martin, ticket #917]
+
+sys/arch/sparc/dev/cgfourteen.c			1.25
+sys/arch/sparc/dev/cgfourteenvar.h		1.4
+sys/arch/sparc/dev/sbus.c			1.46
+sys/arch/sparc/dev/sbusvar.h			1.12
+sys/arch/sparc/dev/vme_machdep.c		1.36
+sys/arch/sparc/sparc/autoconf.c			1.172
+sys/arch/sparc/sparc/iommu.c			1.66
+sys/arch/sparc/sparc/iommuvar.h			1.6
+sys/arch/sparc/sparc/timer.c			1.6
+sys/arch/sparc64/dev/sbus.c			1.51
+sys/arch/sparc64/dev/sbusvar.h			1.11
+sys/dev/sbus/be.c				1.33
+sys/dev/sbus/esp_sbus.c				1.21
+sys/dev/sbus/if_hme_sbus.c			1.12
+sys/dev/sbus/p9100.c				1.9
+sys/dev/sbus/qe.c				1.24
+sys/dev/sbus/qec.c				1.20
+sys/dev/sbus/qecvar.h				1.5
+sys/dev/sbus/sbusvar.h				1.18
+sys/dev/sbus/tcx.c				1.8
+
+	Use the structures defined in bsd_openprom.h for "reg", "range",
+	and "intr" properties, rather than having identical-except-for-names
+	sbus_* and iommu_* versions.
+	[martin, ticket #948]
+
+sys/dev/ic/ncr53c9x.c				1.94-1.103
+sys/dev/ic/ncr53c9xvar.h			1.36-1.39
+sys/dev/sbus/esp_sbus.c				1.22
+
+	Additional fixes to make 16 targets work on FAS366.
+	[martin, ticket #948]
+
+sys/dev/ic/lsi64854.c				1.21-1.22
+
+	Adjust residual counter for wide transfers.
+	[martin, ticket #948]
 
