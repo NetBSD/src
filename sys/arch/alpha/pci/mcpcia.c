@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.3 1998/06/06 01:33:23 thorpej Exp $ */
+/* $NetBSD: mcpcia.c,v 1.4 1998/07/08 00:58:09 mjacob Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.3 1998/06/06 01:33:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.4 1998/07/08 00:58:09 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,8 @@ mcpcia_init(mcp)
 	 */
 	ctl = REGVAL(MCPCIA_WHOAMI(mcp));
 	mcbus_primary.mcbus_cpu_mid = MCBUS_CPU_MID(ctl);
-	if ((ctl & CPU_Fill_Err) == 0 && mcbus_primary.mcbus_valid == 0) {
+	if ((MCBUS_CPU_INFO(ctl) & CPU_Fill_Err) == 0 &&
+	    mcbus_primary.mcbus_valid == 0) {
 		mcbus_primary.mcbus_bcache =
 		    MCBUS_CPU_INFO(ctl) & CPU_BCacheMask;
 		mcbus_primary.mcbus_valid = 1;
@@ -205,6 +206,17 @@ mcpcia_init(mcp)
 	alpha_mb();
 	ccp->cc_initted = 1;
 }
+
+/* #define	TEST_PROBE_DEATH	1 */
+#ifdef	TEST_PROBE_DEATH
+static void
+die_heathen_dog(void *arg)
+{
+	struct mcpcia_softc *mcp = arg;
+	/* this causes a fatal machine check (0x670) */
+	REGVAL(MCPCIA_CAP_DIAG(mcp)) |= CAP_DIAG_MC_ADRPE;
+}
+#endif
 
 void
 mcpcia_config_cleanup()
@@ -223,4 +235,10 @@ mcpcia_config_cleanup()
 		/* force stall while write completes */
 		ctl =  REGVAL(MCPCIA_INT_MASK0(mcp));
 	}
+#ifdef	TEST_PROBE_DEATH
+	{
+		extern int hz;
+		(void) timeout (die_heathen_dog, (void *) mcpcias, 30 * hz);
+	}
+#endif
 }
