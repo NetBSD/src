@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.19 1999/01/29 11:17:59 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.20 1999/02/02 13:01:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -303,6 +303,9 @@ scsipi_interpret_sense(xs)
 			error = EINVAL;
 			break;
 		case SKEY_UNIT_ATTENTION:
+			if (sense->add_sense_code == 0x29 &&
+			    sense->add_sense_code_qual == 0x00)
+				return (ERESTART); /* device or bus reset */
 			if ((sc_link->flags & SDEV_REMOVABLE) != 0)
 				sc_link->flags &= ~SDEV_MEDIA_LOADED;
 			if ((xs->flags & SCSI_IGNORE_MEDIA_CHANGE) != 0 ||
@@ -567,7 +570,7 @@ scsipi_done(xs)
 	 */
 retry:
 	error = sc_err1(xs, 1);
-	if (error == ERESTART)
+	if (error == ERESTART) {
 		switch (scsipi_command_direct(xs)) {
 		case SUCCESSFULLY_QUEUED:
 			return;
@@ -577,6 +580,7 @@ retry:
 		case COMPLETE:
 			goto retry;
 		}
+	}
 
 	bp = xs->bp;
 	if (bp) {
