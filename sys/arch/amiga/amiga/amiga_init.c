@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.26 1995/02/12 19:34:15 chopps Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.27 1995/04/02 20:38:09 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -237,9 +237,23 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	 * outside the Zorro II I/O area.
 	 */
 	for (ZBUSAVAIL = 0, cd = cfdev, ncd = ncfdev; ncd > 0; ncd--, cd++) {
-		if ((cd->rom.type & 0xe0) == 0x80 ||
-		    ((cd->rom.type & 0xe0) == 0xc0 && !isztwopa(cd->addr)))
-			ZBUSAVAIL += amiga_round_page(cd->size);
+		int bd_type = cd->rom.type & (ERT_TYPEMASK | ERTF_MEMLIST);
+
+		if (bd_type != ERT_ZORROIII &&
+		    (bd_type != ERT_ZORROII || isztwopa(cd->addr)))
+			continue;	/* It's not Z2 or Z3 I/O board */
+		/*
+		 *  Hack to adjust board size for Zorro III boards that
+		 *  do not specify an extended size or subsize.  This is
+		 *  specifically for the GVP Spectrum and hopefully won't
+		 *  break with other boards that configure like this.
+		 */
+		if (bd_type == ERT_ZORROIII &&
+		    !(cd->rom.flags & ERFF_EXTENDED) &&
+		    (cd->rom.flags & ERT_Z3_SSMASK) == 0)
+			cd->size = 0x10000 <<
+			    ((cd->rom.type - 1) & ERT_MEMMASK);
+		ZBUSAVAIL += amiga_round_page(cd->size);
 	}
 
 	/*
@@ -704,66 +718,6 @@ rollcolor(color)
 		((volatile struct Custom *)CUSTOMbase)->color[0] = color;
 	splx(s);
 }
-
-#ifdef DEBUG
-void
-dump_segtable(stp)
-	u_int *stp;
-{
-	u_int *s, *es;
-	int shift, i;
-
-	s = stp;
-#ifdef M68040
-	if (cpu040) {
-		es = s + (AMIGA_040STSIZE >> 2);
-		shift = SG4_ISHIFT;
-	} else
-#endif
-	{
-		es = s + (AMIGA_STSIZE >> 2);
-		shift = SG_ISHIFT;
-	}
-
-	/* 
-	 * XXX need changes for 68040 
-	 */
-	for (i = 0; s < es; s++, i++)
-		if (*s & SG_V)
-			printf("$%08lx: $%08lx\t", i << shift, *s & SG_FRAME);
-	printf("\n");
-}
-
-void
-dump_pagetable(ptp, i, n)
-	u_int *ptp, i, n;
-{
-	u_int *p, *ep;
-
-	p = ptp + i;
-	ep = p + n;
-	for (; p < ep; p++, i++)
-		if (*p & PG_V)
-			printf("$%08lx -> $%08lx\t", i, *p & PG_FRAME);
-	printf("\n");
-}
-
-u_int
-vmtophys(ste, vm)
-	u_int *ste, vm;
-{
-	ste = (u_int *) (*(ste + (vm >> SEGSHIFT)) & SG_FRAME);
-#ifdef M68040
-	if (cpu040)
-		ste += (vm & SG4_PMASK) >> PGSHIFT;
-	else
-#endif
-		ste += (vm & SG_PMASK) >> PGSHIFT;
-	return((*ste & -NBPG) | (vm & (NBPG - 1)));
-}
-
-#endif
-
 
 /*
  * Kernel reloading code 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.11 1994/12/03 12:26:50 chopps Exp $	*/
+/*	$NetBSD: pte.h,v 1.12 1995/04/02 20:39:02 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,12 +74,14 @@ typedef u_int st_entry_t;
 #define SG_PSHIFT	13
 
 /* 68040 additions */
-#define SG4_IMASK1	0xfe000000
-#define SG4_ISHIFT1	25
-#define SG4_IMASK2	0x01fc0000
-#define SG4_IMASK	0xfffc0000
-#define SG4_PMASK	0x0003e000
-#define SG4_ISHIFT	18
+#define SG4_MASK1	0xfe000000	/* pointer table 1 index mask */
+#define SG4_SHIFT1	25
+#define SG4_MASK2	0x01fc0000	/* pointer table 2 index mask */
+#define	SG4_SHIFT2	18
+#define SG4_MASK3	0x0003e000	/* page table index mask */
+#define	SG4_SHIFT3	13
+#define	SG4_ADDR1	0xfffffe00	/* pointer table address mask */
+#define	SG4_ADDR2	0xffffff00	/* page table address mask */
 
 #define	PG_V		0x00000001
 #define	PG_NV		0x00000000

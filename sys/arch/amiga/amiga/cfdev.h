@@ -1,4 +1,4 @@
-/*	$NetBSD: cfdev.h,v 1.2 1994/10/26 02:01:40 cgd Exp $	*/
+/*	$NetBSD: cfdev.h,v 1.3 1995/04/02 20:38:17 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -42,6 +42,15 @@ struct expanrom {
 	u_short	idiagvec;
 	u_long	resv;
 };
+
+#define	ERT_TYPEMASK	0xc0		/* Board type mask */
+#define	ERT_ZORROII	0xc0		/* Zorro II type */
+#define	ERT_ZORROIII	0x80		/* Zorro III type */
+#define	ERTF_MEMLIST	(1 << 5)	/* Add board to free memory list */
+#define	ERT_MEMMASK	0x07		/* Board size */
+
+#define	ERFF_EXTENDED	(1 << 5)	/* Used extended size table */
+#define	ERT_Z3_SSMASK	0x0f		/* Zorro III Sub-Size */
 
 struct cfdev {
 	u_char	resv0[14];

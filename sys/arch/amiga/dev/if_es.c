@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.1 1995/02/13 00:27:08 chopps Exp $	*/
+/*	$NetBSD: if_es.c,v 1.2 1995/04/02 20:38:45 chopps Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -274,16 +274,19 @@ esintr(sc)
 	struct es_softc *sc;
 {
 	int i;
+	u_short intsts, intact;
 	int done = 0;
 	union smcregs *smc;
 
 	smc = sc->sc_base;
-	if ((smc->b2.msk & smc->b2.ist) == 0)
+	intsts = smc->b2.ist;
+	intact = smc->b2.msk & intsts;
+	if ((intact) == 0)
 		return (0);
 #ifdef ESDEBUG
 	if (esdebug)
 		printf ("%s: esintr ist %02x msk %02x",
-		    sc->sc_dev.dv_xname, smc->b2.ist, smc->b2.msk);
+		    sc->sc_dev.dv_xname, intsts, smc->b2.msk);
 #endif
 	smc->b2.msk = 0;
 #ifdef ESDEBUG
@@ -292,12 +295,12 @@ esintr(sc)
 		    smc->b2.ist, smc->b2.ist, smc->b2.pnr, smc->b2.arr,
 		    smc->b2.fifo);
 #endif
-	if (smc->b2.ist & IST_ALLOC && sc->sc_intctl & MSK_ALLOC) {
+	if (intact & IST_ALLOC) {
 		sc->sc_intctl &= ~MSK_ALLOC;
 #ifdef ESDEBUG
 		if (esdebug || 1)
 			printf ("%s: ist %02x\n", sc->sc_dev.dv_xname,
-			    smc->b2.ist);
+			    intsts);
 #endif
 		if ((smc->b2.arr & ARR_FAILED) == 0) {
 #ifdef ESDEBUG
@@ -315,18 +318,18 @@ esintr(sc)
 	while ((smc->b2.fifo & FIFO_REMPTY) == 0) {
 		esrint(sc);
 	}
-	if (smc->b2.ist & IST_RX_OVRN) {
+	if (intact & IST_RX_OVRN) {
 		printf ("%s: Overrun ist %02x", sc->sc_dev.dv_xname,
-		    smc->b2.ist);
+		    intsts);
 		smc->b2.ist = ACK_RX_OVRN;
 		printf ("->%02x\n", smc->b2.ist);
 		sc->sc_if.if_ierrors++;
 	}
-	if (smc->b2.ist & IST_TX) {
+	if (intact & IST_TX) {
 #ifdef ESDEBUG
 		if (esdebug)
 			printf ("%s: TX INT ist %02x",
-			    sc->sc_dev.dv_xname, smc->b2.ist);
+			    sc->sc_dev.dv_xname, intsts);
 #endif
 		smc->b2.ist = ACK_TX;
 #ifdef ESDEBUG
@@ -334,20 +337,34 @@ esintr(sc)
 			printf ("->%02x\n", smc->b2.ist);
 #endif
 		smc->b0.bsr = 0x0000;
-		printf ("%s: EPH status %04x\n", sc->sc_dev.dv_xname,
-		   smc->b0.ephsr);
-		if ((smc->b0.ephsr & EPHSR_TX_SUC) == 0) {
-			smc->b0.tcr |= TCR_TXENA;
-			sc->sc_if.if_oerrors++;
+		if ((smc->b0.tcr & TCR_TXENA) == 0) {
+			printf ("%s: IST %02x masked %02x EPH status %04x tcr %04x\n",
+			    sc->sc_dev.dv_xname, intsts, intact, smc->b0.ephsr,
+			    smc->b0.tcr);
+			if ((smc->b0.ephsr & EPHSR_TX_SUC) == 0) {
+				smc->b0.tcr |= TCR_TXENA;
+				sc->sc_if.if_oerrors++;
+			}
 		}
+		/*
+		 * else - got a TX interrupt, but TCR_TXENA is still set??
+		 */
+#if 0
+		else if ((intact & IST_TX_EMPTY) == 0) {
+			printf("%s: unexpected TX interrupt %02x %02x",
+			    sc->sc_dev.dv_xname, intsts, intact);
+			smc->b2.bsr = 0x0200;
+			printf (" %02x\n", smc->b2.ist);
+		}
+#endif
 		smc->b2.bsr = 0x0200;
 	}
-	if (smc->b2.ist & IST_TX_EMPTY) {
+	if (intact & IST_TX_EMPTY) {
 		u_short ecr;
 #ifdef ESDEBUG
 		if (esdebug)
 			printf ("%s: TX EMPTY %02x",
-			    sc->sc_dev.dv_xname, smc->b2.ist);
+			    sc->sc_dev.dv_xname, intsts);
 #endif
 		smc->b2.ist = ACK_TX_EMPTY;
 #ifdef ESDEBUG
@@ -593,7 +610,7 @@ if (esdebug)
 if (esdebug)
   printf("-no xmit bufs r1 %x\n", smc->b2.pnr);
 #endif
-			sc->sc_intctl |= 0x0008;
+			sc->sc_intctl |= MSK_ALLOC;
 			break;
 		}
 		smc->b2.pnr = smc->b2.arr;
@@ -677,7 +694,7 @@ if (esdebug)
 #endif
 		m_freem(m0);
 		sc->sc_ac.ac_if.if_opackets++;	/* move to interrupt? */
-		sc->sc_intctl |= 0x0006;
+		sc->sc_intctl |= MSK_TX_EMPTY | MSK_TX;
 	}
 	smc->b2.msk = sc->sc_intctl;
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.18 1995/03/28 18:37:27 jtc Exp $	*/
+/*	$NetBSD: genassym.c,v 1.19 1995/04/02 20:38:20 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -131,12 +131,6 @@ main()
 	printf("#define\tPG_CI %d\n", PG_CI);
 	printf("#define\tPG_PROT %d\n", PG_PROT);
 	printf("#define\tPG_FRAME %d\n", PG_FRAME);
-	printf("#define\tSG_V %d\n", SG_V);
-	printf("#define\tSG_NV %d\n", SG_NV);
-	printf("#define\tSG_RW %d\n", SG_RW);
-	printf("#define\tSG_FRAME %d\n", SG_FRAME);
-	printf("#define\tSG_ISHIFT %d\n", SG_ISHIFT);
-	printf("#define\tSG4_ISHIFT %d\n", SG4_ISHIFT);
 	printf("#define\tPCB_FLAGS %d\n", &pcb->pcb_flags);
 	printf("#define\tPCB_PS %d\n", &pcb->pcb_ps);
 	printf("#define\tPCB_USTP %d\n", &pcb->pcb_ustp);

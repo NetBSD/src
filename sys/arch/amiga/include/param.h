@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.19 1995/03/28 18:15:11 jtc Exp $	*/
+/*	$NetBSD: param.h,v 1.20 1995/04/02 20:39:00 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,7 +66,7 @@
 
 #define NBSEG		(cpu040 ? 32*NBPG : 2048*NBPG)	/* bytes/segment */
 #define	SEGOFSET	(NBSEG-1)			/* byte offset into segment */
-#define	SEGSHIFT	(cpu040 ? 18 : 24)		/* LOG2(NBSEG) */
+#define	SEGSHIFT	24		/* LOG2(NBSEG) [68030 value] */
 
 #define	KERNBASE	0x0		/* start of kernel virtual */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
@@ -145,8 +145,6 @@
 #define amiga_trunc_seg(x)	((unsigned)(x) & ~(NBSEG-1))
 #define amiga_round_page(x)	((((unsigned)(x)) + NBPG - 1) & ~(NBPG-1))
 #define amiga_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
-#define amiga_btos(x)		((unsigned)(x) >> SEGSHIFT)
-#define amiga_stob(x)		((unsigned)(x) << SEGSHIFT)
 #define amiga_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define amiga_ptob(x)		((unsigned)(x) << PGSHIFT)
 

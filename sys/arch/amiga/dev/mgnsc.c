@@ -1,4 +1,4 @@
-/*	$NetBSD: mgnsc.c,v 1.11 1995/03/05 13:01:28 chopps Exp $	*/
+/*	$NetBSD: mgnsc.c,v 1.12 1995/04/02 20:38:53 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -116,6 +116,7 @@ mgnscattach(pdp, dp, auxp)
 	 */
 	sc->sc_clock_freq = 0x0240;
 	
+	alloc_sicallback();
 	siopinitialize(sc);
 
 	sc->sc_link.adapter_softc = sc;
@@ -156,6 +157,7 @@ mgnscprint(auxp, pnp)
  * This way, the actual processing of the interrupt can be deferred
  * until splbio is unblocked.
  */
+
 int
 mgnsc_dmaintr(sc)
 	struct siop_softc *sc;
@@ -176,7 +178,6 @@ mgnsc_dmaintr(sc)
 	sc->sc_istat = istat;
 	sc->sc_dstat = rp->siop_dstat;
 	sc->sc_sstat0 = rp->siop_sstat0;
-	add_sicallback(siopintr, sc, NULL);
-	siopintr(sc);
+	add_sicallback (siopintr, sc, NULL);
 	return (1);
 }
