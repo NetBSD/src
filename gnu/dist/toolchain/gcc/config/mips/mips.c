@@ -6278,8 +6278,10 @@ function_prologue (file, size)
 	  fprintf (file, "\t.cprestore %ld\n", current_frame_info.args_size);
 	}
 
+#ifdef DWARF2_UNWIND_INFO
       if (dwarf2out_do_frame ())
 	dwarf2out_def_cfa ("", STACK_POINTER_REGNUM, tsize);
+#endif
     }
 }
 
