@@ -1,4 +1,4 @@
-.\"	$NetBSD: pwd.1,v 1.14 1999/03/22 18:30:46 garbled Exp $
+.\"	$NetBSD: pwd.1,v 1.15 1999/05/31 14:37:20 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,29 +50,30 @@
 writes the absolute pathname of the current working directory to
 the standard output.
 .Pp
-The
-.Nm
-utility exits 0 on success, and >0 if an error occurs.
-.Pp
 The following options are available:
 .Bl -tag -width indent
 .It Fl L
-Print the logical path to the current working directory, as defined
-by the shell in the evironment variable PWD.
+Print the logical path to the current working directory, as indicated
+by the shell in the evironment variable
+.Ev PWD ,
+if possible.
 .It Fl P
 Print the physical path to the current working directory, with symbolic
 links in the path resolved. This is the default.
 .El
-.Sh STANDARDS
+.Sh DIAGNOSTICS
 The
 .Nm
-utility is expected to be
-.St -p1003.2
-compatible.
+utility exits 0 on success, and >0 if an error occurs.
 .Sh SEE ALSO
 .Xr cd 1 ,
 .Xr csh 1 ,
 .Xr getcwd 3
+.Sh STANDARDS
+The
+.Nm
+utility is expected to be conforming to
+.St -p1003.2 .
 .Sh BUGS
 In
 .Xr csh 1
