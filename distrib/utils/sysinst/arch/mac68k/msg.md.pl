@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.5 2002/10/20 22:06:18 rnestor Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.6 2003/06/06 14:31:27 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.10 2001/07/26 22:47:34 wiz Exp */
 
@@ -157,6 +157,14 @@ message dodiskmap
 {Konfigurowanie Mapy Partycji Dysku ...
 }
 
+message label_error	/* XXX translate */
+{The new on-disk partition label does not match the one currently in-core.
+Any attempt to proceed will most likely result in damage to any pre-existing
+disk partitions. However your new Disk Partition Map has been written to
+the disk and will be available the next time NetBSD is booted. Please
+reboot immediately and restart the Installation Process.
+}
+
 message mapdebug
 {Mapa partycji:
 HFS count: %d
@@ -219,3 +227,13 @@ message parttable_fix_fixing
 
 message parttable_fix_fine
 {Partycja %s%c jest w porzadku!\n}
+
+message dump_line
+{%s\n}
+
+message emulbackup
+{Albo /emul/aout albo /emul w twoim systemie byl symbolicznym linkiem
+wskazujacym na niezamontowany system. Zostalo mu dodane rozszerzenie '.old'.
+Kiedy juz uruchomisz swoj zaktualizowany system, mozliwe ze bedziesz musial
+zajac sie polaczeniem nowo utworzonego /emul/aout ze starym.
+}

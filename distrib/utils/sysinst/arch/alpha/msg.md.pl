@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.2 2002/04/09 19:48:01 hubertf Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.3 2003/06/06 14:31:24 dsl Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.6 2000/12/03 01:54:47 minoura Exp */
 
@@ -57,28 +57,3 @@ message dobootblks
 {Instalowanie bootblokow na %s....
 }
 
-message askfsroot
-{Bede pytal o rozmiary partcyji, a na niektorych o punkty montazu.
-
-Najpierw partcyja glowna. Masz %d %s wolnego miejsca na dysku.
-Rozmiar partycji glownej? }
-
-message askfsswap
-{
-Nastepnie partycja wymiany. Masz %d %s wolnego miejsca na dysku.
-Rozmiar partycji wymiany? }
-
-message askfsusr
-{
-Nastepnie partycja /usr.  Masz %d %s wolnego miejsca na dysku.
-Rozmiar partycji /usr? }
-
-message otherparts
-{Nadal masz wolna przestrzen na dysku. Podaj rozmiary i punkty montazu
-dla ponizszych partycji.
-
-}
-
-message askfspart
-{Nastepna partycja jest /dev/%s%c.  Masz %d %s wolnego miejsca na dysku.
-Rozmiar partycji? }

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.6 2000/12/03 01:54:47 minoura Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.7 2003/06/06 14:31:24 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,30 +56,3 @@ message dobootblks
 {Installation du block de démarrage sur %s ...
 }
 
-message askfsroot
-{Je vais vous demander la taille et le point de "montage" de quelque partitions.
-
-Et tout d'abord la partition racine. Il vous reste %d %s de libre sur votre
-disque.
-Taille de la partition racine ? }
-
-message askfsswap
-{
-Et maintenant la taille de swap. Il vous reste %d %s de libre sur votre disque.
-Taille du swap ? }
-
-message askfsusr
-{
-Et ensuite la partition /usr. Il vous reste %d %s de libre sur votre disque.
-Taille de la partition/usr ? }
-
-
-message otherparts
-{Il vous reste de l'espace libre non alloué sur votre disque. SVP donnez la taille et le point de " montage " des partitions suivantes.
-
-}
-
-message askfspart
-{La partition suivante est /dev/%s%c . Il vous reste %d %s de libre sur votre
-disque.
-Taille de la partition ? }

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.48 2003/05/16 19:29:18 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.49 2003/06/06 14:31:23 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -128,11 +128,6 @@ message badname
 Les disques suivants sont disponibles : %s
 \nSur quel disque voulez vous installer NetBSD ?}
 
-message disktoosmall
-{Votre disque est trop petit pour une installation standard. Vous devez entrer
-vous-même la taille des partitions.
-}
-
 message pleasemountroot
 {Le système de fichiers racine n'est pas monté. SVP, montez le.
 
@@ -212,6 +207,38 @@ message defaultunit
 {Tailles et offsets sont en %s, sauf si vous spécifiez une unitée ('M' pour
 mégactets, 'c' pour cylindres, 's' pour secteurs) à la fin de votre nombre.
 }
+
+message ptnsizes	/* XXX translate */
+{You can now change the sizes for the system partitions.  The default is
+to allocate all the space to the root filesystem, however you may wish
+to have separate /usr (additional system files), /var (log files etc)
+or /home (users' home directories).
+
+Free space will be added to the partition marked with a '+'.
+}
+
+message ptnheaders	/* XXX translate */
+{
+       MB Cylinders   Sectors    Filesystem
+}
+
+message askfsmount	/* XXX translate */
+{Mount pount?}
+
+message askfssize	/* XXX translate */
+{Size for %s in %s?}
+
+message askunits	/* XXX translate */
+{Change input units (sectors/cylinders/MB)}
+
+message add_another_ptn	/* XXX translate */
+{Add a user defined partition}
+
+message fssizesok	/* XXX translate */
+{Accept partition sizes.  Free space %d %s, %d free partitions.}
+
+message fssizesbad	/* XXX translate */
+{Reduce partition sizes by %d %s (%d sectors).}
 
 message startoutsidedisk
 {La valeur que vous avez spécifiée est en dehors du disque

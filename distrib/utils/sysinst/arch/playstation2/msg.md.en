@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.5 2003/05/18 18:54:08 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.6 2003/06/06 14:31:29 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -65,36 +65,6 @@ message dobad144
 message dobootblks
 {Installing boot blocks on %s....
 }
-
-message askfsroot1
-{I will be asking for partition information.
-
-First the root partition.  You have %d %s left on your disk.
-}
-
-message askfsroot2
-{Root partition size? }
-
-message askfsswap1
-{
-Next the swap partition.  You have %d %s left on your disk.
-}
-
-message askfsswap2
-{Swap partition size? }
-
-message otherparts
-{You still have some space remaining unallocated on your disk.  Please
-give sizes and mount points for the following partitions.
-
-}
-
-message askfspart1
-{The next partition is /dev/%s%c.  You have %d %s left on your disk.
-}
-
-message askfspart2
-{Partition size? }
 
 message cyl1024
 {The disklabel (set of partitions) you specified has a root partition that

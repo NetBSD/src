@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.4 1999/07/06 06:10:07 cgd Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.5 2003/06/06 14:31:29 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,3 +37,15 @@
  */
 
 /* pc532 machine dependent messages, french */
+
+message md_hello
+{Si vous avez démarré sur une disquette, vous pouvez maintenant la retirer.
+
+}
+
+message askboot		/* XXX translate */
+{Size of the boot images partition in sectors? }
+
+message dobootblks
+{Installation des block de démarrage sur %s ...
+}

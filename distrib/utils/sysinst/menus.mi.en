@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.en,v 1.68 2003/06/04 20:05:12 dsl Exp $	*/
+/*	$NetBSD: menus.mi.en,v 1.69 2003/06/06 14:31:22 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -90,16 +90,7 @@ menu ok, title "Hit enter to continue";
 menu layout, title  "Choose your installation";
 	option "Standard", 	  exit, action { layoutkind = 1; md_set_no_x(); };
 	option "Standard with X", exit, action { layoutkind = 2; };
-	option "Custom", 	  exit, action { layoutkind = 3; };
 	option "Use Existing", 	  exit, action { layoutkind = 4; };
-
-menu layoutparts, exit, title "Choose file systems";
-	display action { show_cur_filesystems (); };
-	option "swap",		  action { layout_swap = (layout_swap & 1) - 1; };
-	option "/usr",		  action { layout_usr = (layout_usr & 1) - 1; };
-	option "/var",	 	  action { layout_var = (layout_var & 1) - 1; };
-	option "/home",		  action { layout_home = (layout_home & 1) - 1; };
-	option "/tmp (mfs)",	  action { layout_tmp = (layout_tmp & 1) - 1; };
 
 menu sizechoice, title  "Choose your size specifier";
 	option "Megabytes", exit, action 
