@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.23 1997/03/13 20:07:49 mycroft Exp $	*/
+/*	$NetBSD: input.c,v 1.24 1997/03/13 21:57:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-static char rcsid[] = "$NetBSD: input.c,v 1.23 1997/03/13 20:07:49 mycroft Exp $";
+static char rcsid[] = "$NetBSD: input.c,v 1.24 1997/03/13 21:57:33 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -183,6 +183,7 @@ pread()
 	parsenextc = parsefile->buf;
 
 retry:
+#ifndef NO_HISTORY
 	if (parsefile->fd == 0 && el) {
 		const char *rl_cp;
 
@@ -193,9 +194,10 @@ retry:
 			/* XXX - BUFSIZE should redesign so not necessary */
 			(void) strcpy(parsenextc, rl_cp);
 		}
-	} else {
+	} else
+#endif
 		nr = read(parsefile->fd, parsenextc, BUFSIZ - 1);
-	}
+
 
 	if (nr <= 0) {
                 if (nr < 0) {
