@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.55 2002/07/20 08:40:19 grant Exp $	*/
+/*	$NetBSD: file.c,v 1.55.2.1 2003/07/13 09:45:26 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.55 2002/07/20 08:40:19 grant Exp $");
+__RCSID("$NetBSD: file.c,v 1.55.2.1 2003/07/13 09:45:26 jlam Exp $");
 #endif
 #endif
 
@@ -184,7 +184,7 @@ fileURLHost(const char *fname, char *where, int max)
 	assert(max > 0);
 
 	if ((i = URLlength(fname)) < 0) {	/* invalid URL? */
-		errx(1, "fileURLhost called with a bad URL: `%s'", fname);
+		errx(EXIT_FAILURE, "fileURLhost called with a bad URL: `%s'", fname);
 	}
 	fname += i;
 	/* Do we have a place to stick our work? */
@@ -209,7 +209,7 @@ fileURLFilename(const char *fname, char *where, int max)
 	assert(max > 0);
 
 	if ((i = URLlength(fname)) < 0) {	/* invalid URL? */
-		errx(1, "fileURLFilename called with a bad URL: `%s'", fname);
+		errx(EXIT_FAILURE, "fileURLFilename called with a bad URL: `%s'", fname);
 	}
 	fname += i;
 	/* Do we have a place to stick our work? */
@@ -240,7 +240,7 @@ fileGetURL(const char *spec)
 
 	rp = NULL;
 	if (!IS_URL(spec)) {
-		errx(1, "fileGetURL was called with non-url arg '%s'", spec);
+		errx(EXIT_FAILURE, "fileGetURL was called with non-URL arg '%s'", spec);
 	}
 
  	/* Some sanity checks on the URL */
@@ -356,7 +356,7 @@ fileFindByPath(const char *fname)
 	struct path *path;
 
 	/*
-	 * 1. if fname is an absolute pathname or a url,
+	 * 1. if fname is an absolute pathname or a URL,
 	 *    just use it.
 	 */
 	if (IS_FULLPATH(fname) || IS_URL(fname))
@@ -378,7 +378,7 @@ fileFindByPath(const char *fname)
 		else {
 			char cwdtmp[MAXPATHLEN];
 			if (getcwd(cwdtmp, sizeof(cwdtmp)) == NULL)
-				errx(1, "getcwd");
+				errx(EXIT_FAILURE, "getcwd");
 			snprintf(tmp, sizeof(tmp), "%s/%s/%s", cwdtmp, cp2, fname);
 		}
 		cp = resolvepattern(tmp);
@@ -526,23 +526,23 @@ int
 unpack(const char *pkg, const char *flist)
 {
 	char    args[10] = "-";
-	char   *cp;
+	const char *decompress_cmd;
+	const char *suf;
 
-	/*
-         * Figure out by a crude heuristic whether this or not this is probably
-         * compressed.
-         */
 	if (!IS_STDIN(pkg)) {
-		cp = strrchr(pkg, '.');
-		if (cp) {
-			cp++;
-			if (strchr(cp, 'z') || strchr(cp, 'Z'))
-				strcat(args, "z");
-		}
+		suf = suffix_of(pkg);
+		if (!strcmp(suf, "tbz") || !strcmp(suf, "bz2"))
+			decompress_cmd = BZIP2_CMD " -c -d";
+		else if (!strcmp(suf, "tgz") || !strcmp(suf, "gz"))
+			decompress_cmd = GZIP_CMD " -c -d";
+		else if (!strcmp(suf, "tar"))
+			decompress_cmd = "cat";
+		else
+			errx(EXIT_FAILURE, "don't know how to decompress %s, sorry", pkg);
 	} else
-		strcat(args, "z");
-	strcat(args, "xpf");
-	if (vsystem("%s %s %s %s", TAR_FULLPATHNAME, args, pkg, flist ? flist : "")) {
+		decompress_cmd = GZIP_CMD " -c -d";
+	strcat(args, "xpf -");
+	if (vsystem("%s %s | %s %s %s", decompress_cmd, pkg, TAR_CMD, args, flist ? flist : "")) {
 		warnx("%s extract of %s failed!", TAR_CMD, pkg);
 		return 1;
 	}
@@ -568,7 +568,11 @@ format_cmd(char *buf, size_t size, char *fmt, char *dir, char *name)
 
 	for (bufp = buf; (int) (bufp - buf) < size && *fmt;) {
 		if (*fmt == '%') {
-			switch (*++fmt) {
+			if (*++fmt != 'D' && name == NULL) {
+				cleanup(0);
+				errx(2, "no last file available for '%s' command", buf);
+			}
+			switch (*fmt) {
 			case 'F':
 				strnncpy(bufp, size - (int) (bufp - buf), name, strlen(name));
 				bufp += strlen(bufp);

@@ -1,6 +1,6 @@
-.\" $NetBSD: pkg_add.1,v 1.33 2002/02/08 01:38:52 ross Exp $
+.\" $NetBSD: pkg_add.1,v 1.33.4.1 2003/07/13 09:45:21 jlam Exp $
 .\"
-.\" FreeBSD install - a package for the installation and maintainance
+.\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -17,14 +17,14 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd March 12, 2001
+.Dd August 15, 2002
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
 .Nm pkg_add
 .Nd a utility for installing and upgrading software package distributions
 .Sh SYNOPSIS
-.Nm ""
+.Nm
 .Op Fl fIMnRSuVv
 .Bk -words
 .Op Fl s Ar verification-type
@@ -53,19 +53,20 @@ depends on or requires from both local disk and via FTP.
 Since the
 .Nm
 command may execute scripts or programs contained within a package file,
-your system may be susceptible to ``trojan horses'' or other subtle
+your system may be susceptible to ``Trojan horses'' or other subtle
 attacks from miscreants who create dangerous package files.
 .Pp
 You are advised to verify the competence and identity of those who
-provide installable package files.  For extra protection, use the
-digital signatures provided where possible (see the
+provide installable package files.
+For extra protection, use the digital signatures provided where possible
+(see the
 .Fl s
 option), or, failing that, use the
 .Fl M
 flag to extract the package file, and inspect its contents and scripts
-to ensure it poses no danger to your system's integrity.  Pay particular
-attention to any +INSTALL, +DEINSTALL, +REQUIRE or +MTREE_DIRS files,
-and inspect the +CONTENTS file for
+to ensure it poses no danger to your system's integrity.
+Pay particular attention to any +INSTALL, +DEINSTALL, +REQUIRE
+or +MTREE_DIRS files, and inspect the +CONTENTS file for
 .Cm @cwd ,
 .Cm @mode
 (check for setuid),
@@ -97,7 +98,8 @@ Any dependencies required by the installed package will be searched
 in the same location that the original package was installed from.
 .It Fl f
 Force installation to proceed even if prerequisite packages are not
-installed or the requirements script fails.  Although
+installed or the requirements script fails.
+Although
 .Nm
 will still try to find and auto-install missing prerequisite packages,
 a failure to find one will not be fatal.
@@ -106,11 +108,13 @@ If an installation script exists for a given package, do not execute it.
 .It Fl M
 Run in
 .Cm MASTER
-mode.  This is a very specialized mode for running
+mode.
+This is a very specialized mode for running
 .Nm
 and is meant to be run in conjunction with
 .Cm SLAVE
-mode.  When run in this mode,
+mode.
+When run in this mode,
 .Nm
 does no work beyond extracting the package into a temporary staging
 area (see the
@@ -131,15 +135,16 @@ Set
 .Ar prefix
 as the directory in which to extract files from a package.
 If a package has set its default directory, it will be overridden
-by this flag.  Note that only the first
+by this flag.
+Note that only the first
 .Cm @cwd
 directive will be replaced, since
 .Nm
 has no way of knowing which directory settings are relative and
-which are absolute.  It is rare in any case to see more than one
-directory transition made, but when such does happen and you wish
-to have control over *all* directory transitions, then you
-may then wish to look into the use of
+which are absolute.
+It is rare in any case to see more than one directory transition made,
+but when such does happen and you wish to have control over *all* directory
+transitions, then you may then wish to look into the use of
 .Cm MASTER
 and
 .Cm SLAVE
@@ -149,21 +154,24 @@ and
 .Fl S
 options).
 .It Fl R
-Do not record the installation of a package.  This means
-that you cannot deinstall it later, so only use this option if
+Do not record the installation of a package.
+This means that you cannot deinstall it later, so only use this option if
 you know what you are doing!
 .It Fl S
 Run in
 .Cm SLAVE
-mode.  This is a very specialized mode for running
+mode.
+This is a very specialized mode for running
 .Nm
 and is meant to be run in conjunction with
 .Cm MASTER
-mode.  When run in this mode,
+mode.
+When run in this mode,
 .Nm
 expects the release contents to be already extracted and waiting
 in the staging area, the location of which is read as a string
-from stdin.  The complete packing list is also read from stdin,
+from stdin.
+The complete packing list is also read from stdin,
 and the contents then acted on as normal.
 .It Fl s Ar verification-type
 Use a callout to an external program to verify the binary package
@@ -173,12 +181,12 @@ as the binary package.
 At the present time, the following verification types
 are defined: none, gpg and pgp5.
 The signature will be verified at install time, and the results
-will be displayed. If the signature type is anything other than
-none, the user will be asked if
+will be displayed.
+If the signature type is anything other than none, the user will be asked if
 .Nm
-should proceed to install the binary package. The user must then
-take the decision whether to proceed or not, depending upon the
-amount of trust that is placed in the signatory of the binary
+should proceed to install the binary package.
+The user must then take the decision whether to proceed or not, depending
+upon the amount of trust that is placed in the signatory of the binary
 package.
 Please note that, at the current time, it is not possible to use
 the verification feature when using
@@ -197,8 +205,8 @@ By default, this is the string
 but it may be necessary to override it in the situation where
 space in your
 .Pa /var/tmp
-directory is limited.  Be sure to leave some number of `X' characters
-for
+directory is limited.
+Be sure to leave some number of `X' characters for
 .Xr mktemp 3
 to fill in with a unique ID.
 .Pp
@@ -207,6 +215,10 @@ You can get a performance boost by setting the staging area
 to reside on the same disk partition as target directories for package
 file installation; often this is
 .Pa /usr .
+.It Fl u
+If the package that's being installed is already installed, either
+in the same or a different version, an update is performed.
+See below for a more detailed description of the process.
 .It Fl V
 Print version number and exit.
 .It Fl v
@@ -217,8 +229,9 @@ One or more
 .Ar pkg-name
 arguments may be specified, each being either a file containing the
 package (these usually ending with the ``.tgz'' suffix) or a
-URL pointing at a file available on an ftp or web site.  Thus you may
-extract files directly from their anonymous ftp or WWW locations (e.g.
+URL pointing at a file available on an ftp or web site.
+Thus you may extract files directly from their anonymous ftp or WWW
+locations (e.g.
 .Nm
 ftp://ftp.netbsd.org/pub/NetBSD/packages/1.5/i386/shells/bash-2.04.tgz).
 Note:  If you wish to use
@@ -230,8 +243,9 @@ the variable
 .Bf -emphasis
 FTP_PASSIVE_MODE
 .Ef
-to some value in your environment.  Otherwise, the more standard
-ACTIVE mode may be used.  If
+to some value in your environment.
+Otherwise, the more standard ACTIVE mode may be used.
+If
 .Nm
 consistently fails to fetch a package from a site known to work,
 it may be because you have a firewall that demands the usage of
@@ -242,7 +256,7 @@ ftp.
 .Sh TECHNICAL DETAILS
 .Nm
 extracts each package's "packing list"
-into a special staging directory in /tmp (or $PKG_TMPDIR if set)
+into a special staging directory in /var/tmp (or $PKG_TMPDIR if set)
 and then runs through the following sequence to fully extract the contents
 of the package:
 .Bl -enum -offset indent
@@ -256,20 +270,25 @@ option is not given.
 .Pp
 If the
 .Fl u
-option is given, it's assumed the package should be upgraded instead.
-This is prepared by moving an existing
+option is given, it's assumed the package should be replaced by the
+new version instead.  Before doing so, all packages that depend on the
+pkg being upgraded are checked if they also work with the new version.
+If that test is successful, replacing is prepared by moving an existing
 .Pa +REQUIRED_BY
-file aside (if it exists), and by running
+file aside (if it exists), and running
 .Xr pkg_delete 1
-on the installed package. Installation then procedes as if the package
-was not installed.
+on the installed package.
+Installation then proceeds as if the package
+was not installed, and restores the
+.Pa +REQUIRED_BY
+file afterwards.
 .It
 A check is made to determine if the package conflicts (from
 .Cm @pkgcfl
 directives, see
 .Xr pkg_create 1 )
-with an already recorded as installed package. If it is,
-installation is terminated.
+with an already recorded as installed package.
+If it is, installation is terminated.
 .It
 All package dependencies (from
 .Cm @pkgdep
@@ -288,7 +307,7 @@ The only currently implemented option is
 .Cm @option extract-in-place ,
 which causes the package to be extracted directly into its
 prefix directory rather than moving it through a staging area in
-.Pa /tmp .
+.Pa /var/tmp .
 .It
 If
 .Cm @option extract-in-place
@@ -399,7 +418,8 @@ scripts are called with the environment variable
 .Ev PKG_PREFIX
 set to the installation prefix (see the
 .Fl p
-option above).  This allows a package author to write a script
+option above).
+This allows a package author to write a script
 that reliably performs some action on the directory where the package
 is installed, even if the user might change it with the
 .Fl p
@@ -412,15 +432,16 @@ The value of the
 is used if a given package can't be found, it's usually set to
 .Pa /usr/pkgsrc/packages/All .
 The environment variable
-should be a series of entries separated by semicolons.  Each entry
-consists of a directory name or URL. The current directory may be indicated
-implicitly by an empty directory name, or explicitly by a single
-period. FTP URLs may not end with a slash.
+should be a series of entries separated by semicolons.
+Each entry consists of a directory name or URL.
+The current directory may be indicated implicitly by an empty directory
+name, or explicitly by a single period.
+FTP URLs may not end with a slash.
 .Ss PKG_DBDIR
 Where to register packages instead of
 .Pa /var/db/pkg .
 .Ss PKG_TMPDIR
-Staging directory for installing packages, defaults to /tmp.
+Staging directory for installing packages, defaults to /var/tmp.
 Set to directory with lots of free disk if you run out of
 space when installing a binary package.
 .Sh EXAMPLES
@@ -461,6 +482,7 @@ The URL can be put into an environment variable,
 .Xr pkg_info 1 ,
 .Xr mktemp 3 ,
 .Xr sysconf 3 ,
+.Xr packages 7 ,
 .Xr mtree 8
 .Sh AUTHORS
 .Bl -tag -width indent -compact

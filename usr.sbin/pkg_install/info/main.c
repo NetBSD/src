@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.30 2002/07/19 19:04:37 yamt Exp $	*/
+/*	$NetBSD: main.c,v 1.30.2.1 2003/07/13 09:45:25 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.30 2002/07/19 19:04:37 yamt Exp $");
+__RCSID("$NetBSD: main.c,v 1.30.2.1 2003/07/13 09:45:25 jlam Exp $");
 #endif
 #endif
 
@@ -64,9 +64,11 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	int     ch, rc;
 	lpkg_t *lpp;
+	int     ch;
+	int	rc;
 
+	setprogname(argv[0]);
 	while ((ch = getopt(argc, argv, Options)) != -1)
 		switch (ch) {
 		case 'a':
@@ -179,7 +181,7 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc == 0 && !Flags) {
+	if (argc == 0 && !Flags && !CheckPkg) {
 		/* No argument or flags specified - assume -Ia */
 		Flags = SHOW_INDEX;
 		AllInstalled = TRUE;
@@ -201,15 +203,15 @@ main(int argc, char **argv)
 	if (CheckPkg && File2Pkg) {
 		char   *s;
 
-		if (pkgdb_open(1) == -1)
-			err(1, "cannot open pkgdb");
+		if (!pkgdb_open(ReadOnly))
+			err(EXIT_FAILURE, "cannot open pkgdb");
 
 		s = pkgdb_retrieve(CheckPkg);
 
 		if (s) {
 			CheckPkg = strdup(s);
 		} else {
-			errx(1, "No matching pkg for %s.", CheckPkg);
+			errx(EXIT_FAILURE, "No matching pkg for %s.", CheckPkg);
 		}
 
 		pkgdb_close();
@@ -219,8 +221,8 @@ main(int argc, char **argv)
 
 	/* Get all the remaining package names, if any */
 	if (File2Pkg && !AllInstalled)
-		if (pkgdb_open(1) == -1) {
-			err(1, "cannot open pkgdb");
+		if (pkgdb_open(ReadOnly) == -1) {
+			err(EXIT_FAILURE, "cannot open pkgdb");
 		}
 	while (*argv) {
 		/* pkgdb: if -F flag given, don't add pkgnames to the "pkgs"
@@ -235,12 +237,22 @@ main(int argc, char **argv)
 				lpp = alloc_lpkg(s);
 				TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
 			} else
-				errx(1, "No matching pkg for %s.", *argv);
+				errx(EXIT_FAILURE, "No matching pkg for %s.", *argv);
 		} else {
 			if (ispkgpattern(*argv)) {
-				if (findmatchingname(_pkgdb_getPKGDB_DIR(), *argv, add_to_list_fn, &pkgs) == 0)
-					errx(1, "No matching pkg for %s.", *argv);
+				if (findmatchingname(_pkgdb_getPKGDB_DIR(), *argv, add_to_list_fn, &pkgs) <= 0)
+					errx(EXIT_FAILURE, "No matching pkg for %s.", *argv);
 			} else {
+				char   *dbdir;
+				char   *tmp;
+
+				dbdir = (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR;
+				if (**argv == '/' && strncmp(*argv, dbdir, strlen(dbdir)) == 0) {
+					*argv += strlen(dbdir) + 1;
+					if ((*argv)[strlen(*argv) - 1] == '/') {
+						(*argv)[strlen(*argv) - 1] = 0;
+					}
+				}
 				lpp = alloc_lpkg(*argv);
 				TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
 			}

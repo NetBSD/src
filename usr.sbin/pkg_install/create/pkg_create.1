@@ -1,6 +1,6 @@
-.\" $NetBSD: pkg_create.1,v 1.32 2002/03/05 13:01:21 agc Exp $
+.\" $NetBSD: pkg_create.1,v 1.32.4.1 2003/07/13 09:45:23 jlam Exp $
 .\"
-.\" FreeBSD install - a package for the installation and maintainance
+.\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd April 21, 1995
+.Dd January 10, 2003
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -82,6 +82,9 @@
 .Op Fl S Ar size-all-file
 .Ek
 .Bk -words
+.Op Fl n Ar preserve-file
+.Ek
+.Bk -words
 .Op Fl t Ar template
 .Ek
 .Bk -words
@@ -98,12 +101,14 @@
 The
 .Nm
 command is used to create packages that will subsequently be fed to
-one of the package extraction/info utilities.  The input description
-and command line arguments for the creation of a package are not
-really meant to be human-generated, though it is easy enough to
-do so.  It is more expected that you will use a front-end tool for
-the job rather than muddling through it yourself. Nonetheless, a short
-description of the input syntax is included in this document.
+one of the package extraction/info utilities.
+The input description and command line arguments for the creation of a
+package are not really meant to be human-generated, though it is easy
+enough to do so.
+It is more expected that you will use a front-end tool for
+the job rather than muddling through it yourself.
+Nonetheless, a short description of the input syntax is included in this
+document.
 .Sh OPTIONS
 The following command line options are supported:
 .Bl -tag -width indent
@@ -114,18 +119,18 @@ so that users of binary packages can see what
 .Xr make 1
 definitions
 were used to control the build when creating the
-binary package. This allows various build definitions
-to be retained in a binary package and viewed wherever it is installed,
-using
+binary package.
+This allows various build definitions to be retained in a binary package
+and viewed wherever it is installed, using
 .Xr pkg_info 1 .
 .It Fl b Ar build-version-file
 Install the file
 .Ar build-version-file
 so that users of binary packages can see what versions of
 the files used to control the build were used when creating the
-binary package. This allows some fine-grained version control information
-to be retained in a binary package and viewed wherever it is installed,
-using
+binary package.
+This allows some fine-grained version control information to be retained
+in a binary package and viewed wherever it is installed, using
 .Xr pkg_info 1 .
 .It Fl C Ar cpkgs
 Set the initial package conflict list to
@@ -139,12 +144,12 @@ Fetch package ``one line description'' from file
 .Ar desc
 or, if preceded by
 .Cm - ,
-the argument itself.  This string should also
-give some idea of which version of the product (if any) the package
-represents.
+the argument itself.
+This string should also give some idea of which version of the product
+(if any) the package represents.
 .It Fl D Ar displayfile
-Display the file after installing the package. Useful for things like
-legal notices on almost-free software, etc.
+Display the file after installing the package.
+Useful for things like legal notices on almost-free software, etc.
 .It Fl d Ar [-]desc
 Fetch long description for package from file
 .Ar desc
@@ -170,26 +175,28 @@ staged installations of packages.
 .It Fl i Ar iscript
 Set
 .Ar iscript
-to be the install procedure for the package.  This can be any
-executable program (or shell script).  It will be invoked automatically
-when the package is later installed.
+to be the install procedure for the package.
+This can be any executable program (or shell script).
+It will be invoked automatically when the package is later installed.
 .It Fl k Ar dscript
 Set
 .Ar dscript
-to be the de-install procedure for the package.  This can be any
-executable program (or shell script).  It will be invoked automatically
+to be the de-install procedure for the package.
+This can be any executable program (or shell script).
+It will be invoked automatically
 when the package is later (if ever) de-installed.
 .It Fl L Ar SrcDir
 This sets the package's @src directive; see below for a description
 of what this does.
 .It Fl l
 Check that any symbolic links which are to be placed in the package are
-relative to the current prefix. This means using
+relative to the current prefix.
+This means using
 .Xr unlink 2
 and
 .Xr symlink 2
 to remove and re-link
-any symbolic links which are targetted at full path names.
+any symbolic links which are targeted at full path names.
 .It Fl m Ar mtreefile
 Run
 .Xr mtree 8
@@ -237,22 +244,28 @@ parent directories.
 .It Fl r Ar rscript
 Set
 .Ar rscript
-to be the ``requirements'' procedure for the package.  This can be any
-executable program (or shell script).  It will be invoked automatically
-at installation/deinstallation time to determine whether or not
-installation/deinstallation should proceed.
+to be the ``requirements'' procedure for the package.
+This can be any executable program (or shell script).
+It will be invoked automatically at installation/deinstallation time to
+determine whether or not installation/deinstallation should proceed.
 .It Fl S Ar size-all-file
 Store the given file for later querying with the
 .Xr pkg_info 1
 .Ar -S
-flag. The file is expected to contain the size (in bytes) of all files of
+flag.
+The file is expected to contain the size (in bytes) of all files of
 this package plus any required packages added up and stored as a
 ASCII string, terminated by a newline.
+.It Fl n Ar preserve-file
+The file is used to denote that the package should not be deleted.
+This is intended for use where the deletion of packages may present
+a bootstrap problem.
 .It Fl s Ar size-pkg-file
 Store the given file for later querying with the
 .Xr pkg_info 1
 .Ar -s
-flag. The file is expected to contain the the size (in bytes) of all files of
+flag.
+The file is expected to contain the the size (in bytes) of all files of
 this package added up and stored as a ASCII string, terminated by a newline.
 .It Fl t Ar template
 Use
@@ -264,8 +277,8 @@ By default, this is the string
 but it may be necessary to override it in the situation where
 space in your
 .Pa /tmp
-directory is limited.  Be sure to leave some number of `X' characters
-for
+directory is limited.
+Be sure to leave some number of `X' characters for
 .Xr mktemp 3
 to fill in with a unique ID.
 .It Fl U
@@ -281,7 +294,8 @@ as a
 .Fl -exclude-from
 argument to
 .Cm tar
-when creating final package.  See
+when creating final package.
+See
 .Cm tar
 man page (or run
 .Cm tar
@@ -294,12 +308,15 @@ The ``packing list'' format (see
 .Fl f )
 is fairly simple, being
 nothing more than a single column of filenames to include in the
-package.  However, since absolute pathnames are generally a bad idea
+package.
+However, since absolute pathnames are generally a bad idea
 for a package that could be installed potentially anywhere, there is
 another method of specifying where things are supposed to go
 and, optionally, what ownership and mode information they should be
-installed with.  This is done by imbeding specialized command sequences
-in the packing list. Briefly described, these sequences are:
+installed with.
+This is done by embedding specialized command sequences
+in the packing list.
+Briefly described, these sequences are:
 .Bl -tag -width indent -compact
 .It Cm @cwd Ar directory
 Set the internal directory pointer to point to
@@ -317,50 +334,54 @@ for package creation but not extraction.
 .It Cm @exec Ar command
 Execute
 .Ar command
-as part of the unpacking process.  If
+as part of the unpacking process.
+If
 .Ar command
 contains any of the following sequences somewhere in it, they will
-be expanded inline.  For the following examples, assume that
+be expanded inline.
+For the following examples, assume that
 .Cm @cwd
 is set to
 .Pa /usr/local
 and the last extracted file was
 .Pa bin/emacs .
 .Bl -tag -width indent -compact
-.It Cm "%F"
+.It Cm "\&%F"
 Expands to the last filename extracted (as specified), in the example case
 .Pa bin/emacs
-.It Cm "%D"
+.It Cm "\&%D"
 Expand to the current directory prefix, as set with
 .Cm @cwd ,
 in the example case
 .Pa /usr/local .
-.It Cm "%B"
+.It Cm "\&%B"
 Expand to the ``basename'' of the fully qualified filename, that
 is the current directory prefix, plus the last filespec, minus
-the trailing filename.  In the example case, that would be
+the trailing filename.
+In the example case, that would be
 .Pa /usr/local/bin .
-.It Cm "%f"
+.It Cm "\&%f"
 Expand to the ``filename'' part of the fully qualified name, or
 the converse of
-.Cm %B ,
+.Cm \&%B ,
 being in the example case,
 .Pa emacs .
 .El
 .It Cm @unexec Ar command
 Execute
 .Ar command
-as part of the deinstallation process.  Expansion of special
-.Cm %
+as part of the deinstallation process.
+Expansion of special
+.Cm \&%
 sequences is the same as for
 .Cm @exec .
 This command is not executed during the package add, as
 .Cm @exec
-is, but rather when the package is deleted.  This is useful
-for deleting links and other ancillary files that were created
-as a result of adding the package, but not directly known to
-the package's table of contents (and hence not automatically
-removable).  The advantage of using
+is, but rather when the package is deleted.
+This is useful for deleting links and other ancillary files that were created
+as a result of adding the package, but not directly known to the package's
+table of contents (and hence not automatically removable).
+The advantage of using
 .Cm @unexec
 over a deinstallation script is that you can use the ``special
 sequence expansion'' to get at files regardless of where they've
@@ -372,8 +393,8 @@ Set default permission for all subsequently extracted files to
 Format is the same as that used by the
 .Cm chmod
 command (well, considering that it's later handed off to it, that's
-no surprise).  Use without an arg to set back to default (extraction)
-permissions.
+no surprise).
+Use without an arg to set back to default (extraction) permissions.
 .It Cm @option Ar option
 Set internal package options, the only two currently supported ones
 being
@@ -397,8 +418,8 @@ Set default group ownership for all subsequently extracted files to
 Use without an arg to set back to default (extraction)
 group ownership.
 .It Cm @comment Ar string
-Imbed a comment in the packing list.  Useful in
-trying to document some particularly hairy sequence that
+Imbed a comment in the packing list.
+Useful in trying to document some particularly hairy sequence that
 may trip someone up later.
 .It Cm @ignore
 Used internally to tell extraction to ignore the next file (don't
@@ -406,27 +427,30 @@ copy it anywhere), as it's used for some special purpose.
 .It Cm @ignore_inst
 Similar to
 .Cm @ignore ,
-but the ignoring of the next file is delayed one evaluation cycle.  This
-makes it possible to use this directive in the
+but the ignoring of the next file is delayed one evaluation cycle.
+This makes it possible to use this directive in the
 .Ar packinglist
 file, so you can pack a
 specialized datafile in with a distribution for your install script (or
 something) yet have the installer ignore it.
 .It Cm @name Ar name
-Set the name of the package.  This is mandatory and is usually
-put at the top.  This name is potentially different than the name of
-the file it came in, and is used when keeping track of the package
-for later deinstallation.  Note that
+Set the name of the package.
+This is mandatory and is usually put at the top.
+This name is potentially different than the name of the file it came in,
+and is used when keeping track of the package for later deinstallation.
+Note that
 .Nm
 will derive this field from the package name and add it automatically
 if none is given.
 .It Cm @dirrm Ar name
 Declare directory
 .Pa name
-to be deleted at deinstall time.  By default, directories created by a
-package installation are not deleted when the package is deinstalled;
-this provides an explicit directory cleanup method.  This directive
-should appear at the end of the package list.  If more than one
+to be deleted at deinstall time.
+By default, directories created by a package installation are not deleted
+when the package is deinstalled; this provides an explicit directory cleanup
+method.
+This directive should appear at the end of the package list.
+If more than one
 .Cm @dirrm
 directives are used, the directories are removed in the order specified.
 The
@@ -439,7 +463,8 @@ as an
 .Xr mtree 8
 input file to be used at install time (see
 .Fl m
-above).  Only the first
+above).
+Only the first
 .Cm @mtree
 directive is honored.
 .It Cm @display Ar name
@@ -451,12 +476,14 @@ above).
 .It Cm @pkgdep Ar pkgname
 Declare a dependency on the
 .Ar pkgname
-package.  The
+package.
+The
 .Ar pkgname
 package must be installed before this package may be
 installed, and this package must be deinstalled before the
 .Ar pkgname
-package is deinstalled.  Multiple
+package is deinstalled.
+Multiple
 .Cm @pkgdep
 directives may be used if the package depends on multiple other packages.
 .It Cm @blddep Ar pkgname
@@ -478,7 +505,8 @@ and so cannot co-exist on the same system.
 .Xr pkg_admin 1 ,
 .Xr pkg_delete 1 ,
 .Xr pkg_info 1 ,
-.Xr sysconf 3
+.Xr sysconf 3 ,
+.Xr packages 7
 .Sh HISTORY
 The
 .Nm
@@ -499,7 +527,8 @@ wildcard dependency processing, pkgdb, pkg size recording etc.
 Hard links between files in a distribution must be bracketed by
 .Cm @cwd
 directives in order to be preserved as hard links when the package is
-extracted.  They additionally must not end up being split between
+extracted.
+They additionally must not end up being split between
 .Cm tar
 invocations due to exec argument-space limitations (this depends on the
 value returned by

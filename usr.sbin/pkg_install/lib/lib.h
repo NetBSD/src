@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.43.2.1 2002/07/22 16:47:34 agc Exp $ */
+/* $NetBSD: lib.h,v 1.43.2.2 2003/07/13 09:45:27 jlam Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -63,9 +63,13 @@
 #define TAR_CMD	"tar"
 #endif
 
-/* Full path name of TAR_CMD */
-#ifndef TAR_FULLPATHNAME
-#define TAR_FULLPATHNAME	"/usr/bin/tar"
+/* Define gzip and bzip2, used to unpack binary packages */
+#ifndef GZIP_CMD
+#define GZIP_CMD "gzip"
+#endif
+
+#ifndef BZIP2_CMD
+#define BZIP2_CMD "bzip2"
 #endif
 
 /* Define ftp as a string, in case the ftp client is called something else */
@@ -73,9 +77,16 @@
 #define FTP_CMD "ftp"
 #endif
 
-/* Full path name of FTP_CMD */
-#ifndef FTP_FULLPATHNAME
-#define FTP_FULLPATHNAME       "/usr/bin/ftp"
+#ifndef CHOWN_CMD
+#define CHOWN_CMD "chown"
+#endif
+
+#ifndef CHMOD_CMD
+#define CHMOD_CMD "chmod"
+#endif
+
+#ifndef CHGRP_CMD
+#define CHGRP_CMD "chgrp"
 #endif
 
 /* Where we put logging information by default, else ${PKG_DBDIR} if set */
@@ -100,6 +111,7 @@
 #define BUILD_INFO_FNAME	"+BUILD_INFO"
 #define SIZE_PKG_FNAME		"+SIZE_PKG"
 #define SIZE_ALL_FNAME		"+SIZE_ALL"
+#define PRESERVE_FNAME		"+PRESERVE"
 #define VIEWS_FNAME		"+VIEWS"
 
 #define CMD_CHAR		'@'	/* prefix for extended PLIST cmd */
@@ -115,6 +127,11 @@
 #define TAILQ_FIRST(head)               ((head)->tqh_first)
 #define TAILQ_NEXT(elm, field)          ((elm)->field.tqe_next)
 #endif
+
+enum {
+	ReadWrite,
+	ReadOnly
+};
 
 
 /* Enumerated constants for plist entry types */
@@ -194,7 +211,7 @@ void    cleanup(int);
 char   *make_playpen(char *, size_t, size_t);
 char   *where_playpen(void);
 void    leave_playpen(char *);
-off_t   min_free(char *);
+uint64_t min_free(char *);
 void    save_dirs(char **c, char **p);
 void    restore_dirs(char *c, char *p);
 void    show_version(void);
@@ -269,9 +286,10 @@ int     pkgdb_open(int);
 void    pkgdb_close(void);
 int     pkgdb_store(const char *, const char *);
 char   *pkgdb_retrieve(const char *);
+void	pkgdb_dump(void);
 int     pkgdb_remove(const char *);
-char   *pkgdb_iter(void);
-char   *_pkgdb_getPKGDB_FILE(void);
+int	pkgdb_remove_pkg(const char *);
+char   *_pkgdb_getPKGDB_FILE(char *, unsigned);
 char   *_pkgdb_getPKGDB_DIR(void);
 
 /* List of packages functions */
@@ -286,6 +304,6 @@ int     pkg_perform(lpkg_head_t *);
 extern Boolean Verbose;
 extern Boolean Fake;
 extern Boolean Force;
-extern int upgrade;
+extern Boolean Replace;
 
 #endif				/* _INST_LIB_LIB_H_ */

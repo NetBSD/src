@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.35 2002/07/20 08:36:19 grant Exp $	*/
+/*	$NetBSD: plist.c,v 1.35.2.1 2003/07/13 09:45:28 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.35 2002/07/20 08:36:19 grant Exp $");
+__RCSID("$NetBSD: plist.c,v 1.35.2.1 2003/07/13 09:45:28 jlam Exp $");
 #endif
 #endif
 
@@ -331,8 +331,8 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 	Boolean preserve;
 	char    tmp[FILENAME_MAX], *name = NULL;
 
-	if (pkgdb_open(0) == -1) {
-		err(1, "cannot open pkgdb");
+	if (!pkgdb_open(ReadWrite)) {
+		err(EXIT_FAILURE, "cannot open pkgdb");
 	}
 
 	preserve = find_plist_option(pkg, "preserve") ? TRUE : FALSE;
@@ -377,10 +377,8 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 					if ((cp = MD5File(tmp, buf)) != NULL) {
 						/* Mismatch? */
 						if (strcmp(cp, p->next->name + ChecksumHeaderLen) != 0) {
-							if (Verbose) {
-								printf("%s fails original MD5 checksum - %s\n",
-								    tmp, Force ? "deleted anyway." : "not deleted.");
-							}
+							printf("original MD5 checksum failed, %s: %s\n",
+							    Force ? "deleting anyway" : "not deleting", tmp);
 							if (!Force) {
 								fail = FAIL;
 								continue;
