@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.190 1996/02/18 22:44:27 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.191 1996/03/01 21:49:49 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -402,7 +402,7 @@ identifycpu()
 #endif
 #ifndef I586_CPU
 	case CPUCLASS_586:
-		printf("NOTICE: this kernel does not support Pentium CPU class");
+		printf("NOTICE: this kernel does not support Pentium CPU class\n");
 #ifdef I486_CPU
 		printf("NOTICE: lowering CPU class to i486\n");
 		cpu_class = CPUCLASS_486;
@@ -411,7 +411,7 @@ identifycpu()
 #endif
 #ifndef I486_CPU
 	case CPUCLASS_486:
-		printf("NOTICE: this kernel does not support i486 CPU class");
+		printf("NOTICE: this kernel does not support i486 CPU class\n");
 #ifdef I386_CPU
 		printf("NOTICE: lowering CPU class to i386\n");
 		cpu_class = CPUCLASS_386;
@@ -420,7 +420,7 @@ identifycpu()
 #endif
 #ifndef I386_CPU
 	case CPUCLASS_386:
-		printf("NOTICE: this kernel does not support i386 CPU class");
+		printf("NOTICE: this kernel does not support i386 CPU class\n");
 		panic("no appropriate CPU class available");
 #endif
 	default:
