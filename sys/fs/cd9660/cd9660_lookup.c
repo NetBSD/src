@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.1 2002/12/23 17:52:08 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.2 2003/01/20 02:25:49 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.1 2002/12/23 17:52:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.2 2003/01/20 02:25:49 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -120,7 +120,6 @@ cd9660_lookup(v)
 	struct vnode *tdp;		/* returned by cd9660_vget_internal */
 	u_long bmask;			/* block offset mask */
 	int lockparent;			/* 1 => lockparent flag is set */
-	int wantparent;			/* 1 => wantparent or lockparent flag */
 	int error;
 	ino_t ino = 0;
 	int reclen;
@@ -144,7 +143,6 @@ cd9660_lookup(v)
 	dp = VTOI(vdp);
 	imp = dp->i_mnt;
 	lockparent = flags & LOCKPARENT;
-	wantparent = flags & (LOCKPARENT|WANTPARENT);
 	
 	/*
 	 * Check accessiblity of directory.
