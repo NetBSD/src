@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.6 2002/09/24 18:17:24 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.7 2003/01/12 21:37:59 uwe Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -32,7 +32,7 @@
  * Only tested on IGA 1682 in Krups JavaStation-NC.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.6 2002/09/24 18:17:24 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.7 2003/01/12 21:37:59 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,8 +260,11 @@ igsfb_common_attach(sc, isconsole)
 	/*
 	 * XXX: console attachment needs rethinking
 	 */
+	sc->sc_nscreens = 0;
 	if (isconsole) {
 		long defattr;
+
+		sc->sc_nscreens = 1;
 		(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 		wsdisplay_cnattach(&igsfb_stdscreen, ri, 0, 0, defattr);
 	}
@@ -915,9 +918,18 @@ igsfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	int *curxp, *curyp;
 	long *attrp;
 {
+	struct igsfb_softc *sc = v;
 
-	/* TODO */
-	return (ENOMEM);
+	if (sc->sc_nscreens > 0) /* only do single screen for now */
+		return (ENOMEM);
+
+	sc->sc_nscreens = 1;
+
+	*cookiep = sc->sc_ri;	/* emulcookie */
+	*curxp = *curyp = 0;
+	(*sc->sc_ri->ri_ops.allocattr)(sc->sc_ri, 0, 0, 0, attrp);
+
+	return (0);
 }
 
 
