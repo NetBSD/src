@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.28 2001/06/04 20:56:56 aymeric Exp $	*/
+/*	$NetBSD: fortune.c,v 1.29 2001/06/04 21:21:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.28 2001/06/04 20:56:56 aymeric Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.29 2001/06/04 21:21:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,28 +173,35 @@ int	 maxlen_in_list __P((FILEDESC *));
 # if HAVE_REGCMP
 #  define	RE_INIT()
 #  define	RE_COMP(p)	(Re_pat = regcmp(p, NULL))
-#  define	BAD_COMP(f)	((f) == NULL)
+#  define	RE_ERROR()	"Invalid pattern"
+#  define	RE_OK()		(Re_pat != NULL)
 #  define	RE_EXEC(p)	regex(Re_pat, (p))
 #  define	RE_FREE()
 
 char	*Re_pat;
+char	*Re_error;
 
 char	*regcmp(), *regex();
 # elif HAVE_RE_COMP
 #  define	RE_INIT()
-#  define	RE_COMP(p)	(p = re_comp(p))
-#  define	BAD_COMP(f)	((f) != NULL)
+#  define	RE_COMP(p)	(Re_error = re_comp(p))
+#  define	RE_ERROR()	Re_error
+#  define	RE_OK()		(Re_error == NULL)
 #  define	RE_EXEC(p)	re_exec(p)
 #  define	RE_FREE()
 # elif HAVE_REGCOMP
 #  include <regex.h>
 regex_t *Re_pat = NULL;
+int	 Re_code;
+char	 Re_error[1024];
 #  define	RE_INIT()	if (Re_pat == NULL && \
-				    (Re_pat = calloc(sizeof(*Re_pat), 1)) == NULL)\
-					err(1, NULL)
-#  define	RE_COMP(p)	(regcomp(Re_pat, p, REG_EXTENDED))
-#  define	BAD_COMP(f)	((f) != 0)
+				    (Re_pat = calloc(sizeof(*Re_pat), 1)) \
+				    == NULL) err(1, NULL)
+#  define	RE_COMP(p)	(Re_code = regcomp(Re_pat, p, REG_EXTENDED))
+#  define	RE_OK()		(Re_code == 0)
 #  define	RE_EXEC(p)	(!regexec(Re_pat, p, 0, NULL, 0))
+#  define	RE_ERROR()	(regerror(Re_code, Re_pat, Re_error, \
+				    sizeof(Re_error)), Re_error)
 #  define	RE_FREE()	if (Re_pat != NULL) \
 					regfree(Re_pat), Re_pat = NULL
 # else
@@ -390,12 +397,9 @@ getargs(argc, argv)
 		if (ignore_case)
 			pat = conv_pat(pat);
 		RE_INIT();
-		if (BAD_COMP(RE_COMP(pat))) {
-#if defined(HAVE_REGCMP) || defined(HAVE_REGCOMP)
-			errx(1, "bad pattern: %s", pat);
-#else	/* !HAVE_REGCMP && !HAVE_REGCOMP */
-			warnx("%s", pat);
-#endif	/* !HAVE_REGCMP && !HAVE_REGCOMP */
+		RE_COMP(pat);
+		if (!RE_OK()) {
+			warnx("%s: `%s'", RE_ERROR(), pat);
 			RE_FREE();
 		}
 	}
@@ -1319,6 +1323,9 @@ matches_in_list(list)
 	char		*sp;
 	FILEDESC	*fp;
 	int		 in_file;
+
+	if (!RE_OK())
+		return;
 
 	for (fp = list; fp != NULL; fp = fp->next) {
 		if (fp->child != NULL) {
