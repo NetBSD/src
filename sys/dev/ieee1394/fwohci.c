@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.41 2001/07/18 02:59:54 onoe Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.42 2001/09/07 11:04:35 haya Exp $	*/
 
 #define DOUBLEBUF 1
 #define NO_THREAD 1
@@ -1020,6 +1020,15 @@ fwohci_ctx_free(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 	struct fwohci_buf *fb;
 	struct fwohci_handler *fh;
 
+#if DOUBLEBUF
+	if (TAILQ_FIRST(&fc->fc_buf) > TAILQ_FIRST(&fc->fc_buf2)) {
+		struct fwohci_buf_s fctmp;
+
+		fctmp = fc->fc_buf;
+		fc->fc_buf = fc->fc_buf2;
+		fc->fc_buf2 = fctmp;
+	}
+#endif
 	while ((fh = LIST_FIRST(&fc->fc_handler)) != NULL)
 		fwohci_handler_set(sc, fh->fh_tcode, fh->fh_key1, fh->fh_key2,
 		    NULL, NULL);
