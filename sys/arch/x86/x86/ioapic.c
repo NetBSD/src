@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.4 2003/05/04 22:01:57 fvdl Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.5 2003/05/11 13:49:02 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -517,3 +517,23 @@ ioapic_delroute(struct pic *pic, struct cpu_info *ci, int pin,
 	}
 	ioapic_hwmask(pic, pin);
 }
+
+#ifdef DDB
+void ioapic_dump(void);
+
+void
+ioapic_dump(void)
+{
+	struct ioapic_softc *sc;
+	struct ioapic_pin *ip;
+	int p;
+
+	for (sc = ioapics; sc != NULL; sc = sc->sc_next) {
+		for (p = 0; p < sc->sc_apic_sz; p++) {
+			ip = &sc->sc_pins[p];
+			if (ip->ip_type != IST_NONE)
+				ioapic_print_redir(sc, "dump", p);
+		}
+	}
+}
+#endif
