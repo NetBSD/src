@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.114 2003/12/04 19:38:24 atatat Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.115 2004/03/10 18:50:45 drochner Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.114 2003/12/04 19:38:24 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.115 2004/03/10 18:50:45 drochner Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -282,8 +282,7 @@ udp_input(m, va_alist)
 			if (m->m_pkthdr.csum_flags & M_CSUM_NO_PSEUDOHDR)
 				hw_csum = in_cksum_phdr(ip->ip_src.s_addr,
 				    ip->ip_dst.s_addr,
-				    htonl(hw_csum + ntohs(ip->ip_len) +
-				    IPPROTO_UDP));
+				    htons(hw_csum + len + IPPROTO_UDP));
 			if ((hw_csum ^ 0xffff) != 0)
 				goto badcsum;
 			break;
