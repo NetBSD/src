@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2000/11/01 07:57:56 garbled Exp $
+#	$NetBSD: Makefile,v 1.15 2000/11/12 00:54:58 matt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -52,11 +52,12 @@ all: ${AUXTARGETS} ${CBIN}
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_CDEV}
+	gzip -c9 ${IMAGE} > ${IMAGE}.gz
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND_CDEV}
-	-/bin/rm -f ${IMAGE}
+	-/bin/rm -f ${IMAGE} ${IMAGE}.gz
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	${CRUNCHGEN} -D ${TOP}/../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
@@ -65,7 +66,7 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all
 
 clean cleandir distclean:
-	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c
+	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${IMAGE}.gz ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
