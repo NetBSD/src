@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.36 2001/04/28 15:41:29 kleink Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.37 2001/11/04 13:57:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.36 2001/04/28 15:41:29 kleink Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.37 2001/11/04 13:57:30 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -835,9 +835,9 @@ cvt(value, ndigits, flags, sign, decpt, ch, length)
 }
 
 static int
-exponent(p0, exp, fmtch)
+exponent(p0, expon, fmtch)
 	char *p0;
-	int exp, fmtch;
+	int expon, fmtch;
 {
 	char *p, *t;
 	char expbuf[MAXEXP];
@@ -846,23 +846,23 @@ exponent(p0, exp, fmtch)
 
 	p = p0;
 	*p++ = fmtch;
-	if (exp < 0) {
-		exp = -exp;
+	if (expon < 0) {
+		expon = -expon;
 		*p++ = '-';
 	}
 	else
 		*p++ = '+';
 	t = expbuf + MAXEXP;
-	if (exp > 9) {
+	if (expon > 9) {
 		do {
-			*--t = to_char(exp % 10);
-		} while ((exp /= 10) > 9);
-		*--t = to_char(exp);
+			*--t = to_char(expon % 10);
+		} while ((expon /= 10) > 9);
+		*--t = to_char(expon);
 		for (; t < expbuf + MAXEXP; *p++ = *t++);
 	}
 	else {
 		*p++ = '0';
-		*p++ = to_char(exp);
+		*p++ = to_char(expon);
 	}
 	return (p - p0);
 }
