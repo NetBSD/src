@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.14 1997/09/02 13:18:13 thorpej Exp $ */
+/* $NetBSD: disksubr.c,v 1.15 1998/08/24 02:37:16 tv Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.14 1997/09/02 13:18:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.15 1998/08/24 02:37:16 tv Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -160,12 +160,12 @@ done:
  */
 int
 setdisklabel(olp, nlp, openmask, clp)
-	register struct disklabel *olp, *nlp;
+	struct disklabel *olp, *nlp;
 	u_long openmask;
 	struct cpu_disklabel *clp;
 {
-	register i;
-	register struct partition *opp, *npp;
+	int i;
+	struct partition *opp, *npp;
 
 	/* sanity clause */
 	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0 ||
@@ -220,7 +220,7 @@ int
 writedisklabel(dev, strat, lp, clp)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
-	register struct disklabel *lp;
+	struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {
 	struct buf *bp; 
