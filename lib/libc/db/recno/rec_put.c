@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_put.c,v 1.11 1998/12/09 12:42:51 christos Exp $	*/
+/*	$NetBSD: rec_put.c,v 1.12 2002/11/11 20:09:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rec_put.c	8.7 (Berkeley) 8/18/94";
 #else
-__RCSID("$NetBSD: rec_put.c,v 1.11 1998/12/09 12:42:51 christos Exp $");
+__RCSID("$NetBSD: rec_put.c,v 1.12 2002/11/11 20:09:21 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -264,7 +264,7 @@ __rec_iput(t, nrec, data, flags)
 	 * the offset array, shift the pointers up.
 	 */
 	nbytes = NRLEAFDBT(data->size);
-	if (h->upper - h->lower < nbytes + sizeof(indx_t)) {
+	if ((u_int32_t) (h->upper - h->lower) < nbytes + sizeof(indx_t)) {
 		status = __bt_split(t, h, NULL, data, dflags, nbytes,
 		    (u_int32_t)idx);
 		if (status == RET_SUCCESS)

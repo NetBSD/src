@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_close.c,v 1.10 1998/08/18 23:50:09 thorpej Exp $	*/
+/*	$NetBSD: rec_close.c,v 1.11 2002/11/11 20:05:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rec_close.c	8.6 (Berkeley) 8/18/94";
 #else
-__RCSID("$NetBSD: rec_close.c,v 1.10 1998/08/18 23:50:09 thorpej Exp $");
+__RCSID("$NetBSD: rec_close.c,v 1.11 2002/11/11 20:05:53 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -160,7 +160,8 @@ __rec_sync(dbp, flags)
 		 */
 		status = (dbp->seq)(dbp, &key, &data, R_FIRST);
 		while (status == RET_SUCCESS) {
-			if (write(t->bt_rfd, data.data, data.size) != data.size)
+			if (write(t->bt_rfd, data.data, data.size) !=
+			    (ssize_t) data.size)
 				return (RET_ERROR);
 			status = (dbp->seq)(dbp, &key, &data, R_NEXT);
 		}
@@ -172,7 +173,8 @@ __rec_sync(dbp, flags)
 		while (status == RET_SUCCESS) {
 			iov[0].iov_base = data.data;
 			iov[0].iov_len = data.size;
-			if (writev(t->bt_rfd, iov, 2) != data.size + 1)
+			if (writev(t->bt_rfd, iov, 2) !=
+			    (ssize_t) (data.size + 1))
 				return (RET_ERROR);
 			status = (dbp->seq)(dbp, &key, &data, R_NEXT);
 		}
