@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.34 2002/12/05 17:04:25 jdc Exp $	*/
+/*	$NetBSD: setterm.c,v 1.35 2003/01/27 21:12:29 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.34 2002/12/05 17:04:25 jdc Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.35 2003/01/27 21:12:29 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,8 @@ __RCSID("$NetBSD: setterm.c,v 1.34 2002/12/05 17:04:25 jdc Exp $");
 #include "curses_private.h"
 
 static int zap(SCREEN *screen);
+
+static int does_esc_m(char *cap);
 
 struct tinfo *_cursesi_genbuf;
 
@@ -113,8 +115,6 @@ static char	*_PC,
 	};
 
 attr_t	 __mask_op, __mask_me, __mask_ue, __mask_se;
-
-const char *__attroff = "\x1b[m";
 
 int
 setterm(char *type)
@@ -225,68 +225,74 @@ _cursesi_setterm(char *type, SCREEN *screen)
 
 	/*
 	 * Precalculate conflict info for color/attribute end commands.
-	 * Add a hack for xterm-like terminals where "\E[m" will turn off
-	 * other attributes.
 	 */
 	screen->mask_op = __ATTRIBUTES & ~__COLOR;
 	if (screen->tc_op != NULL) {
-		if (screen->tc_se != NULL &&
-		    (!strcmp(screen->tc_op, screen->tc_se) ||
-		    !strcmp(screen->tc_op, __attroff)))
-			screen->mask_op &= ~__STANDOUT;
-		if (screen->tc_ue != NULL &&
-		    (!strcmp(screen->tc_op, screen->tc_ue) ||
-		    !strcmp(screen->tc_op, __attroff)))
-			screen->mask_op &= ~__UNDERSCORE;
-		if (screen->tc_me != NULL &&
-		    (!strcmp(screen->tc_op, screen->tc_me) ||
-		    !strcmp(screen->tc_op, __attroff)))
-			screen->mask_op &= ~__TERMATTR;
+		if (does_esc_m(screen->tc_op))
+			screen->mask_op &=
+			    ~(__STANDOUT | __UNDERSCORE | __TERMATTR);
+		else {
+			if (screen->tc_se != NULL &&
+			    !strcmp(screen->tc_op, screen->tc_se))
+				screen->mask_op &= ~__STANDOUT;
+			if (screen->tc_ue != NULL &&
+			    !strcmp(screen->tc_op, screen->tc_ue))
+				screen->mask_op &= ~__UNDERSCORE;
+			if (screen->tc_me != NULL &&
+			    !strcmp(screen->tc_op, screen->tc_me))
+				screen->mask_op &= ~__TERMATTR;
+		}
 	}
 	screen->mask_me = __ATTRIBUTES & ~__TERMATTR;
 	if (screen->tc_me != NULL) {
-		if (screen->tc_se != NULL &&
-		    (!strcmp(screen->tc_me, screen->tc_se) ||
-		    !strcmp(screen->tc_me, __attroff)))
-			screen->mask_me &= ~__STANDOUT;
-		if (screen->tc_ue != NULL &&
-		    (!strcmp(screen->tc_me, screen->tc_ue) ||
-		    !strcmp(screen->tc_me, __attroff)))
-			screen->mask_me &= ~__UNDERSCORE;
-		if (screen->tc_op != NULL &&
-		    (!strcmp(screen->tc_me, screen->tc_op) ||
-		    !strcmp(screen->tc_me, __attroff)))
-			screen->mask_me &= ~__COLOR;
+		if (does_esc_m(screen->tc_me))
+			screen->mask_me &=
+			    ~(__STANDOUT | __UNDERSCORE | __COLOR);
+		else {
+			if (screen->tc_se != NULL &&
+			    !strcmp(screen->tc_me, screen->tc_se))
+				screen->mask_me &= ~__STANDOUT;
+			if (screen->tc_ue != NULL &&
+			    !strcmp(screen->tc_me, screen->tc_ue))
+				screen->mask_me &= ~__UNDERSCORE;
+			if (screen->tc_op != NULL &&
+			    !strcmp(screen->tc_me, screen->tc_op))
+				screen->mask_me &= ~__COLOR;
+		}
 	}
 	screen->mask_ue = __ATTRIBUTES & ~__UNDERSCORE;
 	if (screen->tc_ue != NULL) {
-		if (screen->tc_se != NULL &&
-		    (!strcmp(screen->tc_ue, screen->tc_se) ||
-		    !strcmp(screen->tc_ue, __attroff)))
-			screen->mask_ue &= ~__STANDOUT;
-		if (screen->tc_me != NULL &&
-		    (!strcmp(screen->tc_ue, screen->tc_me) ||
-		    !strcmp(screen->tc_ue, __attroff)))
-			screen->mask_ue &= ~__TERMATTR;
-		if (screen->tc_op != NULL &&
-		    (!strcmp(screen->tc_ue, screen->tc_op) ||
-		    !strcmp(screen->tc_ue, __attroff)))
-			screen->mask_ue &= ~__COLOR;
+		if (does_esc_m(screen->tc_ue))
+			screen->mask_ue &=
+			    ~(__STANDOUT | __TERMATTR | __COLOR);
+		else {
+			if (screen->tc_se != NULL &&
+			    !strcmp(screen->tc_ue, screen->tc_se))
+				screen->mask_ue &= ~__STANDOUT;
+			if (screen->tc_me != NULL &&
+			    !strcmp(screen->tc_ue, screen->tc_me))
+				screen->mask_ue &= ~__TERMATTR;
+			if (screen->tc_op != NULL &&
+			    !strcmp(screen->tc_ue, screen->tc_op))
+				screen->mask_ue &= ~__COLOR;
+		}
 	}
 	screen->mask_se = __ATTRIBUTES & ~__STANDOUT;
 	if (screen->tc_se != NULL) {
-		if (screen->tc_ue != NULL &&
-		    (!strcmp(screen->tc_se, screen->tc_ue) ||
-		    !strcmp(screen->tc_se, __attroff)))
-			screen->mask_se &= ~__UNDERSCORE;
-		if (screen->tc_me != NULL &&
-		    (!strcmp(screen->tc_se, screen->tc_me) ||
-		    !strcmp(screen->tc_se, __attroff)))
-			screen->mask_se &= ~__TERMATTR;
-		if (screen->tc_op != NULL &&
-		    (!strcmp(screen->tc_se, screen->tc_op) ||
-		    !strcmp(screen->tc_se, __attroff)))
-			screen->mask_se &= ~__COLOR;
+		if (does_esc_m(screen->tc_se))
+			screen->mask_se &=
+				~(__UNDERSCORE | __TERMATTR | __COLOR);
+		else {
+			if (screen->tc_ue != NULL &&
+			    !strcmp(screen->tc_se, screen->tc_ue))
+				screen->mask_se &= ~__UNDERSCORE;
+			if (screen->tc_me != NULL &&
+			    !strcmp(screen->tc_se, screen->tc_me))
+				screen->mask_se &= ~__TERMATTR;
+			if (screen->tc_op != NULL &&
+			    !strcmp(screen->tc_se, screen->tc_op))
+				screen->mask_se &= ~__COLOR;
+		}
 	}
 
 	return (unknown ? ERR : OK);
@@ -423,4 +429,42 @@ char	*
 getcap(char *name)
 {
 	return (t_agetstr(_cursesi_genbuf, name));
+}
+
+/*
+ * does_esc_m --
+ * A hack for xterm-like terminals where "\E[m" or "\E[0m" will turn off
+ * other attributes, so we check for this in the capability passed to us.
+ * Note that we can't just do simple string comparison, as the capability
+ * may contain multiple, ';' separated sequence parts.
+ *
+ */
+static int
+does_esc_m(char *cap)
+{
+#define CAP_LEN	253		/* termcap capability size - 3 */
+	char parts[CAP_LEN];
+	size_t len;
+	char *part;
+	const char *sep = ";";
+
+	/* Is it just "\E[m" or "\E[0m"? */
+	if (!strcmp(cap, "\x1b[m") || !strcmp(cap, "\x1b[0m"))
+		return 1;
+
+	/* Does it start "\E[" and end with "m"? */
+	if (strlen(cap) > 3 && cap[0] == '\x1b' && cap[1] == '[' &&
+	    cap[strlen(cap) - 1] == 'm') {
+		/* Check for a '0' between the ';'s */
+		len=strlen(cap);
+		strlcpy(parts, &cap[2],
+		    len - 2 > CAP_LEN ? CAP_LEN : len - 2);
+		part=strtok(parts, sep);
+		while (part != NULL) {
+			if (!strcmp(part, "0"))
+				return 1;
+			part=strtok(NULL, "0");
+		}
+	}
+	return 0;
 }
