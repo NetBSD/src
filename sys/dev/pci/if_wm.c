@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.39 2003/07/29 19:49:50 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.40 2003/09/04 19:32:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,8 +40,6 @@
  *
  * TODO (in order of importance):
  *
- *	- Make GMII work on the i82543.
- *
  *	- Fix hw VLAN assist.
  *
  *	- Jumbo frames -- requires changes to network stack due to
@@ -49,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.39 2003/07/29 19:49:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.40 2003/09/04 19:32:19 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
