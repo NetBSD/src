@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.10 1999/05/11 02:20:56 thorpej Exp $	*/
+/*	$NetBSD: gencode.c,v 1.11 1999/05/11 06:36:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: gencode.c,v 1.93 97/06/12 14:22:47 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.10 1999/05/11 02:20:56 thorpej Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.11 1999/05/11 06:36:26 thorpej Exp $");
 #endif
 #endif
 
@@ -515,12 +515,12 @@ init_linktype(type)
 
 	case DLT_PPP_ETHER:		/* NetBSD PPP over Ethernet */
 		/*
-		 * This still includes the Ethernet header, since
-		 * the Ethertype is used to dispatch Session vs.
-		 * Discovery.
+		 * This includes the Ethernet header (since we need
+		 * the ethertype to dispatch Session vs. Discovery)
+		 * and the PPPoE (RFC 2516) header.
 		 */
-		off_linktype = 14;
-		off_nl = 16;
+		off_linktype = 20;
+		off_nl = 22;
 		return;
 
 	case DLT_FDDI:
