@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.8 1995/02/23 17:50:58 ragge Exp $
+#       $NetBSD: files.vax,v 1.9 1995/03/29 22:50:49 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -19,10 +19,11 @@ file	arch/vax/vax/sbi.c		sbi needs-flag
 file	arch/vax/vax/bi.c		bi needs-flag
 
 device	mba at sbi { drive = -1 }
-file	arch/vax/mba/mba.c		mba needs-count
+file	arch/vax/mba/mba.c		mba needs-flag
 
 device  hp at mba
-file    arch/vax/mba/hp.c		hp needs-count
+file    arch/vax/mba/hp.c		hp needs-flag
+major	{hp = 0}
 
 device	uba at sbi, bi { csr }
 file	arch/vax/uba/uba.c		uba needs-count
@@ -35,11 +36,16 @@ file	arch/vax/if/if_de.c		de needs-count
 
 device	ra at uda	
 file	arch/vax/vax/mscp.c		ra needs-count
+major	{ra = 9}
 
 # TK50/TU81 at UBA
 device	tmscp at uba {drive = -1}
 device	tms at tmscp
 file	arch/vax/uba/tmscp.c		tmscp needs-count
+
+# DEQNA/DELQA used on Qbus
+device	qe at uba:ifnet, ether
+file	arch/vax/if/if_qe.c		qe needs-count
 
 # These devices aren't tested (or even compiled!)
 # They are just included here to make some files happy ;)
@@ -202,7 +208,7 @@ file	arch/vax/vax/autoconf.c
 file	netinet/in_cksum.c		inet
 file	arch/vax/vax/random.s		inet
 file	arch/vax/vax/disksubr.c		ffs
-file	arch/vax/if/if_uba.c		de
+file	arch/vax/if/if_uba.c		de qe
 
 # Dom h{ra f}r vara kvar s} l{nge f}r vi se vilka vi beh|ver...
 #arch/vax/vax/crl.c           standard
@@ -235,7 +241,6 @@ file	arch/vax/if/if_uba.c		de
 #arch/vax/if/if_hy.c          optional hy device-driver
 #arch/vax/if/if_il.c          optional il device-driver
 #arch/vax/if/if_pcl.c         optional pcl device-driver
-#arch/vax/if/if_qe.c          optional qe device-driver
 ##arch/vax/if/if_uba.c         optional ns device-driver
 #arch/vax/if/if_vv.c          optional vv device-driver
 #arch/vax/if/raw_hy.c         optional hy device-driver
