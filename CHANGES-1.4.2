@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.17 1999/08/31 15:52:24 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.18 1999/09/03 09:17:28 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -214,3 +214,16 @@ sys/msdosfs/msdosfs_vnops.c			1.86
 
   Do not permit writing to read-only mounted msdosfs file system,
   fixing PR#7619.  (jdolecek)
+
+sys/sys/fcntl.h					1.17
+sys/kern/vfs_vnops.c				1.38
+sys/kern/kern_sig.c				1.93
+
+  Don't allow coredump to follow symlinks, this has security 
+  implications.  (bouyer)
+
+sys/ufs/lfs/lfs_alloc.c				1.23
+sys/ufs/lfs/lfs_segment.c			1.28
+
+  Fix a printf format bug that gives compiler warnings/errors on 
+  64-bit platforms, fixing PR#8241.  (perseant)
