@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)login.c	5.78 (Berkeley) 6/29/92";*/
-static char rcsid[] = "$Id: login.c,v 1.8 1993/12/02 04:30:47 mycroft Exp $";
+static char rcsid[] = "$Id: login.c,v 1.9 1994/05/24 06:51:03 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -79,6 +79,7 @@ void	 sigint __P((int));
 void	 sleepexit __P((int));
 char	*stypeof __P((char *));
 void	 timedout __P((int));
+int	 pwcheck __P((char *, char *, char *, char *));
 #ifdef KERBEROS
 int	 klogin __P((struct passwd *, char *, char *, char *));
 #endif
@@ -257,9 +258,9 @@ main(argc, argv)
 			if (rval == 0)
 				authok = 1;
 			else if (rval == 1)
-				rval = strcmp(crypt(p, salt), pwd->pw_passwd);
+				rval = pwcheck(username, p, salt, pwd->pw_passwd);
 #else
-			rval = strcmp(crypt(p, salt), pwd->pw_passwd);
+			rval = pwcheck(username, p, salt, pwd->pw_passwd);
 #endif
 		}
 		bzero(p, strlen(p));
@@ -427,6 +428,23 @@ main(argc, argv)
 	execlp(pwd->pw_shell, tbuf, 0);
 	(void)fprintf(stderr, "%s: %s\n", pwd->pw_shell, strerror(errno));
 	exit(1);
+}
+
+int
+pwcheck(user, p, salt, passwd)
+	char *user, *p, *salt, *passwd;
+{
+#ifdef SKEY
+	if (strcasecmp(p, "s/key") == 0) {
+		if (skey_haskey(user)) {
+			fprintf(stderr, "You have no s/key. ");
+			return 1;
+		} else {
+			return skey_authenticate(user);
+		}
+	}
+#endif
+	return strcmp(crypt(p, salt), passwd);
 }
 
 #ifdef	KERBEROS
