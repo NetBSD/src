@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2001/06/14 05:58:19 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2001/06/14 15:29:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -211,13 +211,6 @@ mach_init(int argc, char *argv[], char *envp[])
 	kernendpfn   = atop(MIPS_KSEG0_TO_PHYS(kernend));
 
 	/*
-	 * The Algorithmics boards have PMON firmware; set up our
-	 * PMON state.
-	 */
-	led_display('p', 'm', 'o', 'n');
-	pmon_init(envp);
-
-	/*
 	 * Initialize bus space tags and bring up the console.
 	 */
 #if defined(ALGOR_P4032)
@@ -318,6 +311,13 @@ mach_init(int argc, char *argv[], char *envp[])
 		strcpy(cpu_model, "Algorithmics P-6032");
 	    }
 #endif /* ALGOR_P4032 || ALGOR_P5064 || ALGOR_P6032 */
+
+	/*
+	 * The Algorithmics boards have PMON firmware; set up our
+	 * PMON state.
+	 */
+	led_display('p', 'm', 'o', 'n');
+	pmon_init(envp);
 
 	/*
 	 * Get the Ethernet address of the on-board Ethernet.
