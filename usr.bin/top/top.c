@@ -1,4 +1,4 @@
-/*	$NetBSD: top.c,v 1.19 2004/02/13 11:36:24 wiz Exp $	*/
+/*	$NetBSD: top.c,v 1.20 2004/07/23 13:31:50 wiz Exp $	*/
 
 const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
@@ -49,7 +49,7 @@ const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: top.c,v 1.19 2004/02/13 11:36:24 wiz Exp $");
+__RCSID("$NetBSD: top.c,v 1.20 2004/07/23 13:31:50 wiz Exp $");
 #endif
 
 #include "os.h"
@@ -324,7 +324,7 @@ char *argv[];
 	      default:
 		fprintf(stderr, "\
 Top version %s\n\
-Usage: %s [-ISbinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
+Usage: %s [-bIinqSuv] [-d count] [-o field] [-s time] [-U username] [number]\n",
 			version_string(), myname);
 		exit(1);
 	    }
