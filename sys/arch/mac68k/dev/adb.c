@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.26 1998/10/26 07:09:37 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.27 1999/02/11 06:41:07 ender Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -169,9 +169,9 @@ adbattach(parent, dev, aux)
 		/* Get the ADB information */
 		adbaddr = GetIndADB(&adbdata, adbindex);
 
-		aa_args.origaddr = adbdata.origADBAddr;
+		aa_args.origaddr = (int)(adbdata.origADBAddr);
 		aa_args.adbaddr = adbaddr;
-		aa_args.handler_id = adbdata.devType;
+		aa_args.handler_id = (int)(adbdata.devType);
 
 		(void)config_found(dev, &aa_args, adbprint);
 	}

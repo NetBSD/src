@@ -1,4 +1,4 @@
-/*	$Id: msvar.h,v 1.1 1998/10/23 01:16:24 ender Exp $	*/
+/*	$Id: msvar.h,v 1.2 1999/02/11 06:41:09 ender Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -40,9 +40,9 @@ struct ms_softc {
 	struct	device	sc_dev;
 
 	/* ADB info */
-	u_int8_t	origaddr;	/* ADB device type (ADBADDR_MS) */
-	u_int8_t	adbaddr;	/* current ADB address */
-	u_int8_t	handler_id;	/* type of mouse */
+	int		origaddr;	/* ADB device type (ADBADDR_MS) */
+	int		adbaddr;	/* current ADB address */
+	int		handler_id;	/* type of mouse */
 
 	/* Extended Mouse Protocol info, faked for non-EMP mice */
 	u_int8_t	sc_class;	/* mouse class (mouse, trackball) */

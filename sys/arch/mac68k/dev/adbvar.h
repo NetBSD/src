@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.13 1998/11/14 03:20:47 briggs Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.14 1999/02/11 06:41:08 ender Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -36,9 +36,9 @@
  * Arguments used to attach a device to the Apple Desktop Bus
  */
 struct adb_attach_args {
-	unsigned char	origaddr;
-	unsigned char	adbaddr;
-	unsigned char	handler_id;
+	int	origaddr;
+	int	adbaddr;
+	int	handler_id;
 };
 
 typedef struct adb_trace_xlate_s {

@@ -1,4 +1,4 @@
-/*	$Id: aed.c,v 1.5 1998/12/19 21:41:13 scottr Exp $	*/
+/*	$Id: aed.c,v 1.6 1999/02/11 06:41:08 ender Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -538,8 +538,8 @@ aedioctl(dev, cmd, data, flag, p)
 		for (i = 1; i <= totaldevs; i++) {
 			adbaddr = GetIndADB(&adbdata, i);
 			di->dev[adbaddr].addr = adbaddr;
-			di->dev[adbaddr].default_addr = adbdata.origADBAddr;
-			di->dev[adbaddr].handler_id = adbdata.devType;
+			di->dev[adbaddr].default_addr = (int)(adbdata.origADBAddr);
+			di->dev[adbaddr].handler_id = (int)(adbdata.devType);
 			}
 
 		/* Must call ADB Manager to get devices now */
