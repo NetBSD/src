@@ -1,4 +1,4 @@
-/*	$NetBSD: pwctl_vrgiu.c,v 1.4 2000/09/10 15:30:32 sato Exp $	*/
+/*	$NetBSD: pwctl_vrgiu.c,v 1.5 2000/10/17 11:37:20 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -70,6 +70,7 @@ struct pwctl_vrgiu_softc {
 	config_hook_tag sc_hook_tag;
 	config_hook_tag sc_hook_hardpower;
 	int sc_save;
+	int sc_initvalue;
 };
 
 static int	pwctl_vrgiu_match __P((struct device *, struct cfdata *,
@@ -121,7 +122,11 @@ pwctl_vrgiu_attach(parent, self, aux)
 	sc->sc_id = loc[NEWGPBUSIFCF_ID];
 	sc->sc_on = loc[NEWGPBUSIFCF_ACTIVE] ? 1 : 0;
 	sc->sc_off = loc[NEWGPBUSIFCF_ACTIVE] ? 0 : 1;
-	printf(" port=%d id=%ld on=%d", sc->sc_port, sc->sc_id, sc->sc_on);
+	sc->sc_initvalue = loc[NEWGPBUSIFCF_INITVALUE];
+	printf(" port=%d id=%ld on=%d%s",
+		 sc->sc_port, sc->sc_id, sc->sc_on,
+		 sc->sc_initvalue == -1 ? "" :
+		 sc->sc_initvalue ? " init=on" : " init=off");
 
 	if (sc->sc_port == NEWGPBUSIFCF_PORT_DEFAULT ||
 	    sc->sc_id == NEWGPBUSIFCF_ID_DEFAULT) {
@@ -136,6 +141,9 @@ pwctl_vrgiu_attach(parent, self, aux)
 						pwctl_vrgiu_hardpower, sc);
 
 	}
+	if (sc->sc_initvalue != -1)
+		sc->sc_gf->gf_portwrite(sc->sc_gc, sc->sc_port,
+					sc->sc_initvalue ? sc->sc_on : sc->sc_off);
 	printf("\n");
 }
 

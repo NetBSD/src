@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.40 2000/10/04 13:53:54 uch Exp $
+#	$NetBSD: files.hpcmips,v 1.41 2000/10/17 11:37:23 sato Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -136,7 +136,7 @@ file arch/hpcmips/vr/cmu.c			vrcmu needs-flag
 
 device	vrisabif {[platform = -1], [isaportoffset=0], [isamemoffset=0]}		# GIU attachment
 device  gpbusif {[platform = -1], [comctrl = -1], [button0 = -1], [button1 = -1], [button2 = -1], [button3 = -1], [button4 = -1], [button5 = -1], [button6 = -1], [button7 = -1], [button8 = -1], [button9 = -1], [button10 = -1], [button11 = -1]} 
-device  newgpbusif { [platform = -1], [id = -1], [port = -1], [active = 1], [level = -1] }
+device  newgpbusif { [platform = -1], [id = -1], [port = -1], [active = 1], [level = -1], [initvalue = -1] }
 
 device vrgiu: vrisabif, gpbusif, newgpbusif
 attach vrgiu at vrip
