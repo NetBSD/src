@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.5 1999/07/08 16:04:56 sommerfeld Exp $	*/
+/*	$NetBSD: route6d.c,v 1.6 1999/07/08 16:11:40 itojun Exp $	*/
 
 /*
  * KAME Header: /cvsroot/hydrangea-freebsd/kit/src/route6d/Attic/route6d.c,v 1.1.2.12.2.5.2.8.2.10.2.32 1999/07/06 09:23:36 itojun Exp
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.5 1999/07/08 16:04:56 sommerfeld Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.6 1999/07/08 16:11:40 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -1080,7 +1080,7 @@ void riprecv()
 			rrt->rrt_gw = nh;
 			*nq = *np;
 			applyplen(&nq->rip6_dest, nq->rip6_plen);
-			if (nq->rip6_plen == sizeof(struct in6_addr)*8)
+			if (nq->rip6_plen == sizeof(struct in6_addr) * 8)
 				rrt->rrt_flags |= RTF_HOST;
 
 			/* Put the route to the list */
