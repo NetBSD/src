@@ -1,5 +1,5 @@
 /*
-**	$Id: parse.c,v 1.4 1994/12/23 14:29:36 cgd Exp $
+**	$Id: parse.c,v 1.5 1995/05/21 00:39:13 mycroft Exp $
 **
 ** parse.c                         This file contains the protocol parser
 **
@@ -227,9 +227,9 @@ int parse(fp, laddr, faddr)
 	}
 
 	if (rcode == 4)
-	  laddr2.s_addr = inet_addr(lhostaddr);
+	  (void) inet_aton(lhostaddr, &laddr2);
 	
-	faddr2.s_addr = inet_addr(fhostaddr);
+	(void) inet_aton(fhostaddr, &faddr2);
 
 	proxy(&laddr2, &faddr2, lport, fport, NULL);
 	continue;
@@ -280,7 +280,7 @@ int parse(fp, laddr, faddr)
 	  continue;
 	}
 	
-	faddr2.s_addr = inet_addr(fhostaddr);
+	(void) inet_aton(fhostaddr, &faddr2);
       }
       
       else
