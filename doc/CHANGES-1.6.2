@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.50 2003/06/19 02:26:50 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.51 2003/06/19 02:29:50 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -646,3 +646,12 @@ sys/arch/sparc64/sparc64/intr.c			1.43
 
 	Fix yet another inverted comparison.
 	[martin, ticket #1318]
+
+usr.bin/vi/vi/v_txt.c				1.11
+
+	When an error occurs in v_txt(), leave input mode too.
+	Otherwise, (among other things) db_get() thinks it can re-use the TEXT
+	buffers when it's not true, leading to a crash because that TEXT buffer
+	will be released just before it is actually used to create a new one.
+	This fixes PR#21797.
+	[aymeric, ticket #1320]
