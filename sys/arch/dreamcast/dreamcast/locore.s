@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.10 2001/10/27 03:46:19 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.11 2002/02/17 20:53:01 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -808,9 +808,11 @@ sw1:	mov	#1, r1
 
 	ldc	r0, r0_bank	/* save r0 = &qs[i] */
 	mov	r2, r4
+	mov.l	r1, @-r15
 	mov.l	XL_ConvVtoP, r0
 	jsr	@r0
 	nop
+	mov.l	@r15+, r1
 	mov	r0, r2
 
 	mov.l	@r2, r8		/* r8 = qs[i].p_forw */
@@ -829,9 +831,11 @@ sw1:	mov	#1, r1
 	add	r1, r3
 
 	mov	r3, r4
+	mov.l	r2, @-r15
 	mov.l	XL_ConvVtoP, r0
 	jsr	@r0
 	nop
+	mov.l	@r15+, r2
 	mov	r0, r3
 
 	mov.l	@r3, r9		/* r9 = qs[i].p_forw->p_forw */
@@ -1382,19 +1386,12 @@ XLexphandler:	.long	_C_LABEL(exphandler)
 	 */
 #ifdef SH4
 ENTRY(ConvVtoP)
-	mov.l	r1, @-r15
-	mov.l	r2, @-r15
-	mov.l	r3, @-r15
-	mov.l	r5, @-r15
-#ifdef SH4 /*  cache flush */
 	sts.l	pr, @-r15
 	mov.l	r4, @-r15
 	mov.l	XL_cacheflush, r0
 	jsr	@r0
 	nop
 	mov.l	@r15+, r4
-	lds.l	@r15+, pr
-#endif
 	mov	r4, r0
 	mov.l	XL_CSMASK, r1
 	mov.l	XL_KCSAREA, r2
@@ -1430,19 +1427,13 @@ ENTRY(ConvVtoP)
 	and	r1, r4
 	or	r4, r2
 	or	r5, r2
-	mov	r2, r0		/* r0 = Physical address */
+	mov	r2, r0		/* r0 = P2 address */
 1:
-	mov.l	@r15+, r5
-	mov.l	@r15+, r3
-	mov.l	@r15+, r2
-	mov.l	@r15+, r1
+	lds.l	@r15+, pr
 	rts
 	nop
-#else
+#else /* SH4 */
 ENTRY(ConvVtoP)
-	mov.l	r1, @-r15
-	mov.l	r2, @-r15
-	mov.l	r3, @-r15
 	mov	r4, r0
 	mov.l	XL_CSMASK, r1
 	mov.l	XL_KCSAREA, r2
@@ -1473,15 +1464,11 @@ ENTRY(ConvVtoP)
 	not	r1, r1
 	and	r1, r4
 	or	r4, r2
-	mov	r2, r0		/* r0 = Physical address */
+	mov	r2, r0		/* r0 = P1 address */
 1:
-	mov.l	@r15+, r3
-	mov.l	@r15+, r2
-	mov.l	@r15+, r1
-
 	rts
 	nop
-#endif
+#endif /* SH4 */
 
 	.align	2
 XL_PT_MASK:	.long	PT_MASK
