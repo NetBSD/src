@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.29 1999/06/20 22:07:28 cgd Exp $	*/
+/*	$NetBSD: extern.h,v 1.30 1999/06/24 14:46:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -35,7 +35,6 @@
  *	@(#)extern.h	8.3 (Berkeley) 10/9/94
  */
 
-struct fd_set;
 struct sockaddr;
 struct tm;
 
@@ -68,7 +67,6 @@ void	domacro __P((int, char **));
 char   *domap __P((char *));
 void	doproxy __P((int, char **));
 char   *dotrans __P((char *));
-int     empty __P((struct fd_set *, int));
 int	foregroundproc __P((void));
 void	ftpvis __P((char *, size_t, const char *, size_t));
 int	ftp_login __P((const char *, const char *, const char *));
