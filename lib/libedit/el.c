@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.19 2000/09/04 22:06:29 lukem Exp $	*/
+/*	$NetBSD: el.c,v 1.20 2000/11/11 22:18:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.19 2000/09/04 22:06:29 lukem Exp $");
+__RCSID("$NetBSD: el.c,v 1.20 2000/11/11 22:18:57 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -223,7 +223,7 @@ el_set(EditLine *el, int op, ...)
 
 		default:
 			rv = -1;
-			abort();
+			EL_ABORT((el->el_errfile, "Bad op %d\n", op));
 			break;
 		}
 		break;
@@ -341,7 +341,7 @@ el_get(EditLine *el, int op, void *ret)
 
 		default:
 			rv = -1;
-			abort();
+			EL_ABORT((el->errfile, "Bad op %d\n", op));
 			break;
 		}
 		break;

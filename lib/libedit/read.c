@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.17 2000/09/04 22:06:31 lukem Exp $	*/
+/*	$NetBSD: read.c,v 1.18 2000/11/11 22:18:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.17 2000/09/04 22:06:31 lukem Exp $");
+__RCSID("$NetBSD: read.c,v 1.18 2000/11/11 22:18:58 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -238,7 +238,7 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, char *ch)
 				break;
 #endif
 			default:
-				abort();
+				EL_ABORT((el->el_errfile, "Bad XK_ type \n"));
 				break;
 			}
 		}

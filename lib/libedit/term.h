@@ -1,4 +1,4 @@
-/*	$NetBSD: term.h,v 1.10 2000/09/04 22:06:33 lukem Exp $	*/
+/*	$NetBSD: term.h,v 1.11 2000/11/11 22:18:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -80,7 +80,9 @@ typedef struct {
 #define	A_K_UP		1
 #define	A_K_LT		2
 #define	A_K_RT		3
-#define	A_K_NKEYS	4
+#define	A_K_HO		4
+#define	A_K_EN		5
+#define	A_K_NKEYS	6
 
 protected void	term_move_to_line(EditLine *, int);
 protected void	term_move_to_char(EditLine *, int);
