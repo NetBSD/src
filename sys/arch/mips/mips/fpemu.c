@@ -1,4 +1,4 @@
-/*	$NetBSD: fpemu.c,v 1.8 2002/01/12 01:37:08 enami Exp $ */
+/*	$NetBSD: fpemu.c,v 1.9 2002/01/12 01:40:37 enami Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -88,7 +88,7 @@ update_pc(frame, cause)
 
 	if (cause & MIPS_CR_BR_DELAY)
 		frame->f_regs[PC] = MachEmulateBranch(frame, frame->f_regs[PC],
-		    curpcb->pcb_fpregs.r_regs[FSR - FPBASE], 0);
+		    PCB_FSR(curpcb), 0);
 	else
 		frame->f_regs[PC] += 4;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.38 2001/11/14 18:15:21 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.39 2002/01/12 01:40:37 enami Exp $	*/
 
 /*
  * Mach Operating System
@@ -550,7 +550,7 @@ branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
 	vaddr_t ra;
 	unsigned fpucsr;
 
-	fpucsr = (curproc) ? curproc->p_addr->u_pcb.pcb_fpregs.r_regs[32] : 0;
+	fpucsr = curproc ? PCB_FSR(&curproc->p_addr->u_pcb) : 0;
 	ra = MachEmulateBranch((struct frame *)regs, pc, fpucsr, 0);
 	return ra;
 }
