@@ -1,5 +1,5 @@
-/*	$NetBSD: in6.c,v 1.42 2001/02/11 04:29:30 itojun Exp $	*/
-/*	$KAME: in6.c,v 1.107 2000/10/06 04:58:30 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.43 2001/02/11 06:49:52 itojun Exp $	*/
+/*	$KAME: in6.c,v 1.175 2001/02/10 15:44:58 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -118,6 +118,9 @@ const struct in6_addr in6mask32 = IN6MASK32;
 const struct in6_addr in6mask64 = IN6MASK64;
 const struct in6_addr in6mask96 = IN6MASK96;
 const struct in6_addr in6mask128 = IN6MASK128;
+
+const struct sockaddr_in6 sa6_any = {sizeof(sa6_any), AF_INET6,
+				     0, 0, IN6ADDR_ANY_INIT, 0};
 
 static int in6_lifaddr_ioctl __P((struct socket *, u_long, caddr_t,
 	struct ifnet *, struct proc *));

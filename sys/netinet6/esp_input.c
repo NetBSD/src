@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_input.c,v 1.14 2001/01/24 09:04:16 itojun Exp $	*/
-/*	$KAME: esp_input.c,v 1.50 2001/01/23 08:59:37 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.15 2001/02/11 06:49:51 itojun Exp $	*/
+/*	$KAME: esp_input.c,v 1.52 2001/02/07 04:58:47 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -946,12 +946,12 @@ esp6_ctlinput(cmd, sa, d)
 {
 	const struct newesp *espp;
 	struct newesp esp;
+	struct ip6ctlparam *ip6cp = NULL, ip6cp1;
 	struct secasvar *sav;
 	struct ip6_hdr *ip6;
 	struct mbuf *m;
 	int off;
-	struct in6_addr finaldst;
-	struct in6_addr s;
+	struct sockaddr_in6 sa6_src, sa6_dst;
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
@@ -961,20 +961,10 @@ esp6_ctlinput(cmd, sa, d)
 
 	/* if the parameter is from icmp6, decode it. */
 	if (d != NULL) {
-		struct ip6ctlparam *ip6cp = (struct ip6ctlparam *)d;
+		ip6cp = (struct ip6ctlparam *)d;
 		m = ip6cp->ip6c_m;
 		ip6 = ip6cp->ip6c_ip6;
 		off = ip6cp->ip6c_off;
-
-		/* translate addresses into internal form */
-		bcopy(ip6cp->ip6c_finaldst, &finaldst, sizeof(finaldst));
-		if (IN6_IS_ADDR_LINKLOCAL(&finaldst)) {
-			finaldst.s6_addr16[1] =
-			    htons(m->m_pkthdr.rcvif->if_index);
-		}
-		bcopy(&ip6->ip6_src, &s, sizeof(s));
-		if (IN6_IS_ADDR_LINKLOCAL(&s))
-			s.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
 	} else {
 		m = NULL;
 		ip6 = NULL;
@@ -982,6 +972,24 @@ esp6_ctlinput(cmd, sa, d)
 
 	if (ip6) {
 		/*
+		 * Notify the error to all possible sockets via pfctlinput2.
+		 * Since the upper layer information (such as protocol type,
+		 * source and destination ports) is embedded in the encrypted
+		 * data and might have been cut, we can't directly call
+		 * an upper layer ctlinput function. However, the pcbnotify
+		 * function will consider source and destination addresses
+		 * as well as the flow info value, and may be able to find
+		 * some PCB that should be notified.
+		 * Although pfctlinput2 will call esp6_ctlinput(), there is
+		 * no possibility of an infinite loop of function calls,
+		 * because we don't pass the inner IPv6 header.
+		 */
+		bzero(&ip6cp1, sizeof(ip6cp1));
+		ip6cp1.ip6c_src = ip6cp->ip6c_src;
+		pfctlinput2(cmd, sa, (void *)&ip6cp1);
+
+		/*
+		 * Then go to special cases that need ESP header information.
 		 * XXX: We assume that when ip6 is non NULL,
 		 * M and OFF are valid.
 		 */
@@ -1002,12 +1010,15 @@ esp6_ctlinput(cmd, sa, d)
 
 		if (cmd == PRC_MSGSIZE) {
 			int valid = 0;
+
 			/*
 			 * Check to see if we have a valid SA corresponding to
 			 * the address in the ICMP message payload.
 			 */
-			sav = key_allocsa(AF_INET6, (caddr_t)&s,
-			    (caddr_t)&finaldst, IPPROTO_ESP, espp->esp_spi);
+			sav = key_allocsa(AF_INET6,
+					  (caddr_t)&sa6_src.sin6_addr,
+					  (caddr_t)&sa6_dst, IPPROTO_ESP,
+					  espp->esp_spi);
 			if (sav) {
 				if (sav->state == SADB_SASTATE_MATURE ||
 				    sav->state == SADB_SASTATE_DYING)
@@ -1018,17 +1029,14 @@ esp6_ctlinput(cmd, sa, d)
 			/* XXX Further validation? */
 
 			/*
-			 * Now that we've validated that we are actually
-			 * communicating with the host indicated in the ICMPv6
-			 * message, recalculate the new MTU, and create the
-			 * corresponding routing entry.
+			 * Depending on the value of "valid" and routing table
+			 * size (mtudisc_{hi,lo}wat), we will:
+			 * - recalcurate the new MTU and create the
+			 *   corresponding routing entry, or
+			 * - ignore the MTU change notification.
 			 */
 			icmp6_mtudisc_update((struct ip6ctlparam *)d, valid);
-
-			return;
 		}
-
-		/* we normally notify single pcb here */
 	} else {
 		/* we normally notify any pcb here */
 	}
