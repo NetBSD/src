@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.118 2000/12/18 02:32:51 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.119 2001/01/10 00:20:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.118 2000/12/18 02:32:51 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.119 2001/01/10 00:20:49 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -335,7 +335,7 @@ main(int argc, char *argv[])
 
 		case 't':
 		case 'T':
-			syslog(LOG_ERR,
+			syslog(LOG_WARNING,
 			    "-%c has been deprecated in favour of ftpd.conf",
 			    ch);
 			break;
@@ -370,7 +370,7 @@ main(int argc, char *argv[])
 		default:
 			if (optopt == 'a' || optopt == 'C')
 				exit(1);
-			syslog(LOG_ERR, "unknown flag -%c ignored", optopt);
+			syslog(LOG_WARNING, "unknown flag -%c ignored", optopt);
 			break;
 		}
 	}
@@ -460,12 +460,12 @@ main(int argc, char *argv[])
 	(void) signal(SIGPIPE, lostconn);
 	(void) signal(SIGCHLD, SIG_IGN);
 	if (signal(SIGURG, myoob) == SIG_ERR)
-		syslog(LOG_ERR, "signal: %m");
+		syslog(LOG_WARNING, "signal: %m");
 
 	/* Try to handle urgent data inline */
 #ifdef SO_OOBINLINE
 	if (setsockopt(0, SOL_SOCKET, SO_OOBINLINE, (char *)&on, sizeof(on)) < 0)
-		syslog(LOG_ERR, "setsockopt: %m");
+		syslog(LOG_WARNING, "setsockopt: %m");
 #endif
 	/* Set keepalives on the socket to detect dropped connections.  */
 #ifdef SO_KEEPALIVE
@@ -477,7 +477,7 @@ main(int argc, char *argv[])
 
 #ifdef	F_SETOWN
 	if (fcntl(fileno(stdin), F_SETOWN, getpid()) == -1)
-		syslog(LOG_ERR, "fcntl F_SETOWN: %m");
+		syslog(LOG_WARNING, "fcntl F_SETOWN: %m");
 #endif
 	logremotehost(&his_addr);
 	/*
@@ -494,7 +494,7 @@ main(int argc, char *argv[])
 #ifdef KERBEROS5
 	kerror = krb5_init_context(&kcontext);
 	if (kerror) {
-		syslog(LOG_NOTICE, "%s when initializing Kerberos context",
+		syslog(LOG_ERR, "%s when initializing Kerberos context",
 		    error_message(kerror));
 		exit(0);
 	}
@@ -1270,7 +1270,7 @@ retrieve(char *argv[], const char *name)
 			    "Command returned an exit status of %d",
 			    closerv);
 			if (isconversion)
-				syslog(LOG_INFO,
+				syslog(LOG_WARNING,
 				    "retrieve command: '%s' returned %d",
 				    argv[0], closerv);
 		}
