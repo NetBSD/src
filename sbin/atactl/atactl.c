@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.10 2000/10/10 20:24:50 is Exp $	*/
+/*	$NetBSD: atactl.c,v 1.11 2001/02/19 22:56:17 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,8 +76,6 @@ const	char *dvname;			/* device name */
 char	dvname_store[MAXPATHLEN];	/* for opendisk(3) */
 const	char *cmdname;			/* command user issued */
 const	char *argnames;			/* helpstring: expected arguments */
-
-extern const char *__progname;		/* from crt0.o */
 
 void	device_identify __P((int, char *[]));
 void	device_setidle __P((int, char *[]));
@@ -204,7 +202,7 @@ usage()
 	int i;
 
 	fprintf(stderr, "Usage: %s device command [arg [...]]\n",
-	    __progname);
+	    getprogname());
 
 	fprintf(stderr, "   Available device commands:\n");
 	for (i=0; commands[i].cmd_name != NULL; i++)

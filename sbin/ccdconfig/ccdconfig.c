@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.33 2001/01/28 00:59:27 thorpej Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.34 2001/02/19 22:56:18 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.33 2001/01/28 00:59:27 thorpej Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.34 2001/02/19 22:56:18 cgd Exp $");
 #endif
 
 #include <sys/param.h>
@@ -67,8 +67,6 @@ __RCSID("$NetBSD: ccdconfig.c,v 1.33 2001/01/28 00:59:27 thorpej Exp $");
 #include <dev/ccdvar.h>
 
 #include "pathnames.h"
-
-extern	char *__progname;
 
 
 static	size_t lineno;
@@ -721,13 +719,14 @@ flags_to_val(flags)
 static void
 usage()
 {
+	const char *progname = getprogname();
 
-	fprintf(stderr, "usage: %s [-cv] ccd ileave [flags] %s\n", __progname,
-	    "dev [...]");
-	fprintf(stderr, "       %s -C [-v] [-f config_file]\n", __progname);
-	fprintf(stderr, "       %s -u [-v] ccd [...]\n", __progname);
-	fprintf(stderr, "       %s -U [-v] [-f config_file]\n", __progname);
-	fprintf(stderr, "       %s -g [-M core] [-N system] %s\n", __progname,
-	    "[ccd [...]]");
+	fprintf(stderr, "usage: %s [-cv] ccd ileave [flags] dev [...]\n",
+	    progname);
+	fprintf(stderr, "       %s -C [-v] [-f config_file]\n", progname);
+	fprintf(stderr, "       %s -u [-v] ccd [...]\n", progname);
+	fprintf(stderr, "       %s -U [-v] [-f config_file]\n", progname);
+	fprintf(stderr, "       %s -g [-M core] [-N system] [ccd [...]]\n",
+	    progname);
 	exit(1);
 }
