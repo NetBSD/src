@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.18 2001/01/23 06:34:56 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.19 2001/03/16 05:00:47 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@
 #include "opt_compat_netbsd.h"
 #include "opt_cpureset_delay.h"
 #include "opt_compat_svr4.h"
+#include "opt_realmem.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -368,7 +369,7 @@ cpu_startup()
 	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
+				UVM_ADV_NORMAL, 0)) != 0)
 		panic("cpu_startup: cannot allocate VM for buffers");
 	minaddr = (vaddr_t)buffers;
 	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
@@ -1897,7 +1898,9 @@ init386(first_avail)
 {
 	extern void consinit __P((void));
 	extern struct extent *iomem_ex;
+#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 	struct btinfo_memmap *bim;
+#endif
 	struct region_descriptor region;
 	int x, first16q;
 	u_int64_t seg_start, seg_end;
@@ -1950,6 +1953,7 @@ init386(first_avail)
 	 */
 	pmap_bootstrap((vaddr_t)atdevbase + IOM_SIZE);
 
+#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 	/*
 	 * Check to see if we have a memory map from the BIOS (passed
 	 * to us by the boot program.
@@ -2051,6 +2055,7 @@ init386(first_avail)
 			mem_cluster_cnt++;
 		}
 	}
+#endif /* ! REALBASEMEM && ! REALEXTMEM */
 
 	/*
 	 * If the loop above didn't find any valid segment, fall back to

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.17.10.9 2001/01/10 04:38:32 sommerfeld Exp $
+#	$NetBSD: genassym.cf,v 1.17.10.10 2001/03/16 05:00:47 sommerfeld Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,6 +87,10 @@ include <sys/resourcevar.h>
 include <sys/device.h>
 include <sys/user.h>
 include <sys/mbuf.h>
+include <netinet/in.h>
+include <netinet/in_systm.h>
+include <netinet/ip.h>
+include <netinet/ip_var.h>
 
 include <uvm/uvm.h>
 
@@ -156,6 +160,9 @@ define	P_SYSTEM		P_SYSTEM
 define	M_DATA			offsetof(struct mbuf, m_data)
 define	M_LEN			offsetof(struct mbuf, m_len)
 define	M_NEXT			offsetof(struct mbuf, m_next)
+
+define	IP_SRC			offsetof(struct ip, ip_src)
+define	IP_DST			offsetof(struct ip, ip_dst)
 
 define	V_TRAP			offsetof(struct uvmexp, traps)
 define	V_INTR			offsetof(struct uvmexp, intrs)
