@@ -1,4 +1,4 @@
-/*	$NetBSD: pwctl_vrgiu.c,v 1.2 2000/02/09 14:39:06 takemura Exp $	*/
+/*	$NetBSD: pwctl_vrgiu.c,v 1.3 2000/02/11 03:20:21 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -49,6 +49,14 @@
 #include <hpcmips/vr/vrgiureg.h>
 
 #include "locators.h"
+
+#define PWCTLVRGIUDEBUG
+#ifdef PWCTLVRGIUDEBUG
+int	pwctl_vrgiu_debug = 0;
+#define	DPRINTF(arg) if (pwctl_vrgiu_debug) printf arg;
+#else
+#define	DPRINTF(arg)
+#endif
 
 struct pwctl_vrgiu_softc {
 	struct device sc_dev;
@@ -130,8 +138,8 @@ pwctl_vrgiu_hook(ctx, type, id, msg)
 {
 	struct pwctl_vrgiu_softc *sc = ctx;
 
-	printf("pwctl hook: port %d %s(%d)", sc->sc_port,
-	       msg ? "ON" : "OFF", msg ? sc->sc_on : sc->sc_off);
+	DPRINTF(("pwctl hook: port %d %s(%d)", sc->sc_port,
+		 msg ? "ON" : "OFF", msg ? sc->sc_on : sc->sc_off));
 	sc->sc_gf->gf_portwrite(sc->sc_gc, sc->sc_port,
 				msg ? sc->sc_on : sc->sc_off);
 	return (0);
