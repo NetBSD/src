@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.738 2004/11/11 01:53:41 christos Exp $
+#	$NetBSD: mi,v 1.739 2004/11/11 19:00:31 jdolecek Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -840,7 +840,6 @@
 ./usr/include/miscfs/overlay/overlay.h		comp-c-include
 ./usr/include/miscfs/portal/portal.h		comp-c-include
 ./usr/include/miscfs/procfs/procfs.h		comp-c-include
-./usr/include/miscfs/ptyfs/ptyfs.h		comp-c-include
 ./usr/include/miscfs/specfs/specdev.h		comp-c-include
 ./usr/include/miscfs/syncfs/syncfs.h		comp-c-include
 ./usr/include/miscfs/umapfs/umap.h		comp-c-include
