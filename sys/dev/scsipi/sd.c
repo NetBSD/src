@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.59 1995/01/30 11:47:59 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.60 1995/03/07 21:46:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -125,6 +125,10 @@ struct scsi_inquiry_pattern sd_patterns[] = {
 	{T_DIRECT, T_FIXED,
 	 "",         "",                 ""},
 	{T_DIRECT, T_REMOV,
+	 "",         "",                 ""},
+	{T_OPTICAL, T_FIXED,
+	 "",         "",                 ""},
+	{T_OPTICAL, T_REMOV,
 	 "",         "",                 ""},
 };
 
@@ -652,7 +656,7 @@ sdgetdisklabel(sd)
 
 	strncpy(sd->sc_dk.dk_label.d_typename, "SCSI disk", 16);
 	sd->sc_dk.dk_label.d_type = DTYPE_SCSI;
-	strncpy(sd->sc_dk.dk_label.d_packname, "ficticious", 16);
+	strncpy(sd->sc_dk.dk_label.d_packname, "fictitious", 16);
 	sd->sc_dk.dk_label.d_secperunit = sd->params.disksize;
 	sd->sc_dk.dk_label.d_rpm = 3600;
 	sd->sc_dk.dk_label.d_interleave = 1;
@@ -777,9 +781,9 @@ sd_get_parms(sd, flags)
 	    SDRETRIES, 6000, NULL, flags | SCSI_DATA_IN) != 0) {
 		printf("%s: could not mode sense (4)", sd->sc_dev.dv_xname);
 	fake_it:
-		printf("; using ficticious geometry\n");
+		printf("; using fictitious geometry\n");
 		/*
-		 * use adaptec standard ficticious geometry
+		 * use adaptec standard fictitious geometry
 		 * this depends on which controller (e.g. 1542C is
 		 * different. but we have to put SOMETHING here..)
 		 */
