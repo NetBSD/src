@@ -57,8 +57,8 @@ struct	command {
 #define	TCP	0x1
 #define	UDP	0x2
 
-#define KREAD(addr, buf, len)  kvm_ckread((addr), (buf), (len))
+#define KREAD(addr, buf, len)  kvm_ckread((addr), (buf), (len), # addr)
 #define NVAL(indx)  namelist[(indx)].n_value
 #define NPTR(indx)  (void *)NVAL((indx))
-#define NREAD(indx, buf, len) kvm_ckread(NPTR((indx)), (buf), (len))
+#define NREAD(indx, buf, len) kvm_ckread(NPTR((indx)), (buf), (len), # indx)
 #define LONG	(sizeof (long))
