@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.24.4.13 2003/02/07 20:16:37 tron Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.24.4.14 2003/02/07 20:19:11 tron Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.24.4.13 2003/02/07 20:16:37 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.24.4.14 2003/02/07 20:19:11 tron Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -173,7 +173,7 @@ static void pppoe_timeout(void *);
 /* sending actual protocol controll packets */
 static int pppoe_send_padi(struct pppoe_softc *);
 static int pppoe_send_padr(struct pppoe_softc *);
-static int pppoe_send_padt(struct pppoe_softc *);
+static int pppoe_send_padt(struct ifnet *, u_int, const u_int8_t *);
 
 /* raw output */
 static int pppoe_output(struct pppoe_softc *, struct mbuf *);
@@ -640,28 +640,9 @@ pppoe_data_input(struct mbuf *m)
 	sc = pppoe_find_softc_by_session(session, m->m_pkthdr.rcvif);
 	if (sc == NULL) {
 #ifdef PPPOE_TERM_UNKNOWN_SESSIONS
-		struct mbuf *m0;
-		struct sockaddr dst;
-		struct ether_header *eh;
-		u_int8_t *p;
-
 		printf("pppoe: input for unknown session 0x%x, sending PADT\n",
 		    session);
-
-		m0 = pppoe_get_mbuf(PPPOE_HEADERLEN);
-		if (!m0)
-			goto drop;
-		p = mtod(m0, u_int8_t *);
-		PPPOE_ADD_HEADER(p, PPPOE_CODE_PADT, session, 0);
-
-		memset(&dst, 0, sizeof dst);
-		dst.sa_family = AF_UNSPEC;
-		eh = (struct ether_header*)&dst.sa_data;
-		eh->ether_type = htons(ETHERTYPE_PPPOE);
-		memcpy(&eh->ether_dhost, shost, ETHER_ADDR_LEN);
-
-		m0->m_flags &= ~(M_BCAST|M_MCAST);
-		m->m_pkthdr.rcvif->if_output(m->m_pkthdr.rcvif, m0, &dst, NULL);
+		pppoe_send_padt(m->m_pkthdr.rcvif, session, shost);
 #endif
 		goto drop;
 	}
@@ -1036,7 +1017,7 @@ pppoe_disconnect(struct pppoe_softc *sc)
 		if (sc->sc_sppp.pp_if.if_flags & IFF_DEBUG)
 			printf("%s: disconnecting\n",
 			    sc->sc_sppp.pp_if.if_xname);
-		err = pppoe_send_padt(sc);
+		err = pppoe_send_padt(sc->sc_eth_if, sc->sc_session, (const u_int8_t *)&sc->sc_dest);
 	}
 
 	/* cleanup softc */
@@ -1126,23 +1107,27 @@ pppoe_send_padr(struct pppoe_softc *sc)
 
 /* send a PADT packet */
 static int
-pppoe_send_padt(struct pppoe_softc *sc)
+pppoe_send_padt(struct ifnet *outgoing_if, u_int session, const u_int8_t *dest)
 {
+	struct ether_header *eh;
+	struct sockaddr dst;
 	struct mbuf *m0;
 	u_int8_t *p;
 
-	if (sc->sc_state < PPPOE_STATE_SESSION)
-		return EIO;
-
-#ifdef PPPOE_DEBUG
-	printf("%s: sending PADT\n", sc->sc_sppp.pp_if.if_xname);
-#endif
 	m0 = pppoe_get_mbuf(PPPOE_HEADERLEN);
 	if (!m0)
-		return ENOBUFS;
+		return EIO;
 	p = mtod(m0, u_int8_t *);
-	PPPOE_ADD_HEADER(p, PPPOE_CODE_PADT, sc->sc_session, 0);
-	return pppoe_output(sc, m0);
+	PPPOE_ADD_HEADER(p, PPPOE_CODE_PADT, session, 0);
+
+	memset(&dst, 0, sizeof dst);
+	dst.sa_family = AF_UNSPEC;
+	eh = (struct ether_header*)&dst.sa_data;
+	eh->ether_type = htons(ETHERTYPE_PPPOEDISC);
+	memcpy(&eh->ether_dhost, dest, ETHER_ADDR_LEN);
+
+	m0->m_flags &= ~(M_BCAST|M_MCAST);
+	return outgoing_if->if_output(outgoing_if, m0, &dst, NULL);
 }
 
 static void
