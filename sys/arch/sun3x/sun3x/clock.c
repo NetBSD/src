@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 1997/01/26 06:17:07 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 1997/01/27 22:24:03 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -60,8 +60,6 @@
 #include <machine/machdep.h>
 
 #include <sun3/sun3/interreg.h>
-#include <sun3/sun3/sunmon.h>
-
 #include "mostek48t02.h"
 
 #define	CLOCK_PRI	5
@@ -196,7 +194,7 @@ void clock_init()
 	}
 
 	/* Turn off clock interrupts until cpu_initclocks() */
-	/* isr_init() already set the interrupt reg to zero. */
+	/* intreg_init() already cleared the interrupt register. */
 }
 
 /*
@@ -253,7 +251,6 @@ clock_intr(cf)
 	*interrupt_reg |=  IREG_CLOCK_ENAB_5;
 #endif
 
-	/* XXX - Need to do anything? */
 	hardclock(&cf);
 }
 

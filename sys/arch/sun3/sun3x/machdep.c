@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 1997/01/23 22:48:40 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 1997/01/27 22:25:20 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -91,8 +91,6 @@
 #include <machine/dvma.h>
 #include <machine/db_machdep.h>
 #include <machine/machdep.h>
-
-#include <sun3/sun3/sunmon.h>
 
 extern char *cpu_string;
 extern char version[];
