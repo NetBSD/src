@@ -1,4 +1,4 @@
-/*	$NetBSD: microtime.s,v 1.11 1994/11/04 19:11:13 mycroft Exp $	*/
+/*	$NetBSD: microtime.s,v 1.12 1994/11/05 02:16:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -37,6 +37,9 @@
 #include <i386/isa/isareg.h>
 #include <i386/isa/timerreg.h>
 
+#define	IRQ_BIT(irq_num)	(1 << ((irq_num) % 8))
+#define	IRQ_BYTE(irq_num)	((irq_num) / 8)
+
 /*
  * Use a higher resolution version of microtime if HZ is not
  * overridden (i.e. it is 100Hz).
@@ -54,7 +57,7 @@ ENTRY(microtime)
 	movl	(%ebx),%edi		# sec = time.tv_sec
 	movl	4(%ebx),%esi		# usec = time.tv_usec
 
-	movl	$(TIMER_SEL0|TIMER_LATCH),%eax
+	movb	$(TIMER_SEL0|TIMER_LATCH),%al
 	outb	%al,$TIMER_MODE		# latch timer 0's counter
 
 	# Read counter value into ebx, LSB first
@@ -90,19 +93,23 @@ ENTRY(microtime)
 	# condition by reading the interrupt request register out of the ICU.
 	# If it overflowed, we add in one clock period.
 
-	movl	$11932,%edx	# subtract counter value from limit since
-	subl	%ebx,%edx	#   it counts down
+	movl	$11932,%edx	# timer limit
+
+	testb	$IRQ_BIT(0),_ipending + IRQ_BYTE(0)
+	jnz	1f
 
 	cmpl	$12,%ebx	# check for potential overflow
-	jbe	1f
+	jbe	2f
 	
 	inb	$IO_ICU1,%al	# read IRR in ICU
-	orb	_ipending,%al	# and soft intr reg
-	testb	$(1 << 0),%al	# is a timer interrupt pending?
-	jz	1f
-	addl	$11932,%edx	# add another tick
+	testb	$IRQ_BIT(0),%al	# is a timer interrupt pending?
+	jz	2f
+
+1:	subl	%edx,%ebx	# add another tick
 	
-1:	sti			# enable interrupts
+2:	subl	%ebx,%edx	# subtract counter value from limit
+
+	sti			# enable interrupts
 
 	movl	%edx,%eax	# movl %edx,%eax; imull $1000,%eax,%eax
 	sall	$10,%eax
