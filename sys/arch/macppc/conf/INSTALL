@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.66 2003/09/06 03:25:28 itojun Exp $
+#	$NetBSD: INSTALL,v 1.67 2003/09/10 18:06:26 grant Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -77,6 +77,7 @@ ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+gem*	at pci? dev ? function ?	# gmac ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sip*	at pci? dev ? function ?	# SiS 900/7016 Ethernet
@@ -94,6 +95,7 @@ obio0	at pci? dev ? function ?
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 
 bmtphy*	at mii? phy ?			# Broadcom BCM5201/BCM5202 PHYs
+brgphy*	at mii? phy ?			# Broadcom BCM5400 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
