@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sunos_misc.c,v 1.14 1994/03/27 09:08:02 cgd Exp $
+ * $Id: sunos_misc.c,v 1.15 1994/04/02 08:32:56 cgd Exp $
  */
 
 /*
@@ -428,7 +428,8 @@ struct sun_mmap_args {
 	int	prot;
 	int	flags;
 	int	fd;
-	long	off;
+	long	off;		/* not off_t! */
+	off_t	qoff;		/* created here and fed to mmap() */
 };
 sun_mmap(p, uap, retval)
 	register struct proc *p;
@@ -467,6 +468,7 @@ sun_mmap(p, uap, retval)
 		uap->fd = -1;
 	}
 
+	uap->qoff = uap->off;
 	return (smmap(p, uap, retval));
 }
 
