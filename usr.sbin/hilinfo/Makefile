@@ -1,7 +1,10 @@
-#	$Id: Makefile,v 1.1 1994/04/04 21:52:21 cgd Exp $
+#	$Id: Makefile,v 1.2 1997/06/23 04:51:28 mrg Exp $
 
+.if ${MACHINE} == "hp300"
 PROG=	hilinfo
-NOMAN=
 CFLAGS+= -I${.CURDIR}/../../sys/arch/hp300
+.endif
+
+NOMAN=
 
 .include <bsd.prog.mk>
