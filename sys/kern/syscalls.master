@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.132 2003/09/26 23:08:24 matt Exp $
+	$NetBSD: syscalls.master,v 1.133 2003/09/30 20:36:10 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -521,7 +521,7 @@
 ; Syscall 246 is free for any use
 ;
 246	UNIMPL
-#if defined(P1003_1B_SEMAPHORE) || !defined(_KERNEL)
+#if defined(P1003_1B_SEMAPHORE) || (!defined(_KERNEL) && defined(_LIBC))
 247	STD		{ int sys__ksem_init(unsigned int value, semid_t *idp); }
 248	STD		{ int sys__ksem_open(const char *name, int oflag, \
 			    mode_t mode, unsigned int value, semid_t *idp); }
