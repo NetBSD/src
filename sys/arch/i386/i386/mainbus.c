@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.42 2002/10/02 05:47:09 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.43 2002/12/28 06:14:08 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.42 2002/10/02 05:47:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.43 2002/12/28 06:14:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,6 +198,7 @@ mainbus_attach(parent, self, aux)
 		    PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 		    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
 		    PCI_FLAGS_MWI_OKAY;
+		mba.mba_acpi.aa_ic = &i386_isa_chipset;
 		config_found(self, &mba.mba_acpi, mainbus_print);
 #if 0 /* XXXJRT not yet */
 		if (acpi_active) {
