@@ -1,15 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2002/03/30 06:55:18 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2002/04/12 00:13:17 lukem Exp $
 
-.include <bsd.own.mk>		# Use /etc/mk.conf.
-
-SUBDIR=	instkernel
-
-ITARGET=	${RELEASEDIR}/installation
-IINST=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE}
-
-INSTKERNOBJ!=	cd ${.CURDIR}/instkernel/instkernel && ${PRINTOBJDIR}
-
-release: check_RELEASEDIR
-	${IINST} ${INSTKERNOBJ}/netbsd.gz ${ITARGET}/instkernel/.
+SUBDIR=		instkernel
+TARGETS+=	release
 
 .include <bsd.subdir.mk>
