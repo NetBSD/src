@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,12 +35,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: hpux.h 1.18 91/02/09
- *	from: @(#)hpux.h	7.4 (Berkeley) 5/7/91
- *	$Id: hpux.h,v 1.5 1994/01/08 15:09:01 cgd Exp $
+ * from: Utah $Hdr: hpux.h 1.33 93/08/05$
+ *
+ *	from: @(#)hpux.h	8.4 (Berkeley) 2/13/94
+ *	$Id: hpux.h,v 1.6 1994/05/23 08:04:13 mycroft Exp $
  */
 
-#include "hpux_exec.h"
+#include <hp300/hpux/hpux_exec.h>
 
 /* HP-UX style UTSNAME struct used by uname syscall */
 
@@ -82,6 +83,8 @@ struct hpux_sgttyb {
 #define	HPUXTIOCSPGRP	_IOW('T', 29, int)
 #define	HPUXTIOCGPGRP	_IOR('T', 30, int)
 #define HPUXTIOCCONS	_IO('t', 104)
+#define HPUXTIOCSWINSZ	_IOW('t', 106, struct winsize)
+#define HPUXTIOCGWINSZ	_IOR('t', 107, struct winsize)
 
 /* non-blocking IO--doesn't interfere with O_NDELAY */
 #define HPUXFIOSNBIO	_IOW('f', 126, int)
@@ -98,7 +101,7 @@ struct	hpux_stat {
 	u_short	hst_uid;
 	u_short	hst_gid;
 	long	hst_rdev;
-	off_t	hst_size;
+	long	hst_size;
 	time_t	hst_atime;
 	int	hst_spare1;
 	time_t	hst_mtime;
@@ -151,7 +154,7 @@ struct hpux_user {
 	u_char	whocares3[HU_PAD3];	/* +0x0BE */
 	struct	hpux_exec hpuxu_exdata;	/* +0x93A */
 	u_char	whocares4[HU_PAD4];	/* +0x95E */
-	struct	hpuxfp {		/* +0xA66 */
+	struct	hpux_fp {		/* +0xA66 */
 		int hpfp_save[54];
 		int hpfp_ctrl[3];
 		int hpfp_reg[24];
@@ -160,12 +163,59 @@ struct hpux_user {
 };
 
 /* HP-UX compat file flags */
+#define HPUXNDELAY	00000004
 #define HPUXFCREAT	00000400
 #define	HPUXFTRUNC	00001000
 #define	HPUXFEXCL	00002000
 #define HPUXFSYNCIO	00100000
+#define HPUXNONBLOCK	00200000
 #define HPUXFREMOTE	01000000
-#define FUSECACHE	04000000
+
+/* HP-UX fcntl file locking */
+struct hpux_flock {
+	short	hl_type;
+	short	hl_whence;
+	long	hl_start;
+	long	hl_len;
+	long	hl_pid;
+};
+
+#define HPUXF_GETLK	7
+#define HPUXF_SETLK	8
+#define HPUXF_SETLKW	9
+
+#define HPUXF_RDLCK	1
+#define HPUXF_WRLCK	2
+#define HPUXF_UNLCK	3
+
+/* HP-UX only sysV shmctl() commands */
+#define SHM_LOCK	3	/* Lock segment in core */
+#define SHM_UNLOCK	4	/* Unlock segment */
+
+/* SHM stuff reflecting POSIX types */
+struct hpux_ipc_perm {
+	long	uid;	/* owner's user id */
+	long	gid;	/* owner's group id */
+	long	cuid;	/* creator's user id */
+	long	cgid;	/* creator's group id */
+	u_short	mode;	/* access modes */
+	u_short	seq;	/* slot usage sequence number */
+	long	key;	/* key */
+};
+
+struct hpux_shmid_ds {
+	struct hpux_ipc_perm shm_perm;	/* operation permission struct */
+	int		shm_segsz;	/* segment size (bytes) */
+	struct pte	*shm_ptbl;	/* ptr to associated page table */
+	long		shm_lpid;	/* pid of last shmop */
+	long		shm_cpid;	/* pid of creator */
+	u_short		shm_nattch;	/* current # attached */
+	u_short		shm_cnattch;	/* in memory # attached */
+	time_t		shm_atime;	/* last shmat time */
+	time_t		shm_dtime;	/* last shmdt time */
+	time_t		shm_ctime;	/* last change time */
+	/* actually longer */
+};
 
 /* HP-UX rtprio values */
 #define RTPRIO_MIN	0
@@ -206,3 +256,32 @@ struct hpux_sigaction {
 #define	HPUXSIG_BLOCK	0	/* block specified signal set */
 #define	HPUXSIG_UNBLOCK	1	/* unblock specified signal set */
 #define	HPUXSIG_SETMASK	2	/* set specified signal set */
+
+/* sysconf stuff */
+#define HPUX_SYSCONF_CLKTICK	2
+#define HPUX_SYSCONF_OPENMAX	4
+#define HPUX_SYSCONF_CPUTYPE	10001
+#define HPUX_SYSCONF_CPUM020	0x20C
+#define HPUX_SYSCONF_CPUM030	0x20D
+#define HPUX_SYSCONF_CPUM040	0x20E
+#define HPUX_SYSCONF_CPUPA10	0x20B
+#define HPUX_SYSCONF_CPUPA11	0x210
+
+/* mmap stuff */
+#define HPUXMAP_FIXED	0x04
+#define HPUXMAP_REPLACE	0x08
+#define HPUXMAP_ANON	0x10
+
+/* rlimit stuff */
+#define HPUXRLIMIT_NOFILE	6
+
+/*
+ * In BSD EAGAIN and EWOULDBLOCK are the same error code.
+ * However, for HP-UX we must split them out to seperate codes.
+ * The easiest way to do this was to check the return value of
+ * BSD routines which are known to return EAGAIN (but never
+ * EWOULDBLOCK) and change it to the pseudo-code OEAGAIN when
+ * we see it.  The error translation table will them map that
+ * code to the HP-UX EAGAIN value.
+ */
+#define OEAGAIN	82

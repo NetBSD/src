@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,21 +35,23 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: hpux_sig.c 1.1 90/07/09
- *	from: @(#)hpux_sig.c	7.8 (Berkeley) 4/20/91
- *	$Id: hpux_sig.c,v 1.8 1994/05/17 10:37:12 cgd Exp $
+ * from: Utah $Hdr: hpux_sig.c 1.4 92/01/20$
+ *
+ *	from: @(#)hpux_sig.c	8.2 (Berkeley) 9/23/93
+ *	$Id: hpux_sig.c,v 1.9 1994/05/23 08:04:19 mycroft Exp $
  */
 
 /*
  * Signal related HPUX compatibility routines
  */
 
-#include "param.h"
-#include "systm.h"
-#include "kernel.h"
-#include "proc.h"
-#include "signalvar.h"
-#include "hpux.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/signalvar.h>
+
+#include <hp300/hpux/hpux.h>
 
 /* indexed by HPUX signal number - 1 */
 char hpuxtobsdsigmap[NSIG] = {
@@ -81,7 +83,6 @@ struct hpux_sigvec_args {
 	struct	sigvec *nsv;
 	struct	sigvec *osv;
 };
-
 hpux_sigvec(p, uap, retval)
 	struct proc *p;
 	register struct hpux_sigvec_args *uap;
@@ -135,7 +136,6 @@ hpux_sigvec(p, uap, retval)
 struct hpux_sigblock_args {
 	int	mask;
 };
-
 hpux_sigblock(p, uap, retval)
 	register struct proc *p;
 	struct hpux_sigblock_args *uap;
@@ -152,7 +152,6 @@ hpux_sigblock(p, uap, retval)
 struct hpux_sigsetmask_args {
 	int	mask;
 };
-
 hpux_sigsetmask(p, uap, retval)
 	struct proc *p;
 	struct hpux_sigsetmask_args *uap;
@@ -169,7 +168,6 @@ hpux_sigsetmask(p, uap, retval)
 struct hpux_sigpause_args {
 	int	mask;
 };
-
 hpux_sigpause(p, uap, retval)
 	struct proc *p;
 	struct hpux_sigpause_args *uap;
@@ -185,7 +183,6 @@ struct hpux_kill_args {
 	int	pid;
 	int	signo;
 };
-
 hpux_kill(p, uap, retval)
 	struct proc *p;
 	struct hpux_kill_args *uap;
@@ -217,7 +214,6 @@ struct hpux_sigprocmask_args {
 	hpux_sigset_t	*set;
 	hpux_sigset_t	*oset;
 };
-
 hpux_sigprocmask(p, uap, retval)
 	register struct proc *p;
 	struct hpux_sigprocmask_args *uap;
@@ -263,7 +259,6 @@ hpux_sigprocmask(p, uap, retval)
 struct hpux_sigpending_args {
 	hpux_sigset_t	*set;
 };
-
 hpux_sigpending(p, uap, retval)
 	register struct proc *p;
 	struct hpux_sigpending_args *uap;
@@ -278,7 +273,6 @@ hpux_sigpending(p, uap, retval)
 struct hpux_sigsuspend_args {
 	hpux_sigset_t	*set;
 };
-
 hpux_sigsuspend(p, uap, retval)
 	register struct proc *p;
 	struct hpux_sigsuspend_args *uap;
@@ -304,7 +298,6 @@ struct hpux_sigaction_args {
 	struct	hpux_sigaction *nsa;
 	struct	hpux_sigaction *osa;
 };
-
 hpux_sigaction(p, uap, retval)
 	struct proc *p;
 	register struct hpux_sigaction_args *uap;
@@ -366,11 +359,11 @@ hpux_sigaction(p, uap, retval)
 	return (0);
 }
 
+#ifdef COMPAT_OHPUX
 struct ohpux_ssig_args {
 	int	signo;
 	sig_t	fun;
 };
-
 ohpux_ssig(p, uap, retval)
 	struct proc *p;
 	struct ohpux_ssig_args *uap;
@@ -404,6 +397,7 @@ ohpux_ssig(p, uap, retval)
 #endif
 	return (0);
 }
+#endif
 
 /* signal numbers: convert from HPUX to BSD */
 hpuxtobsdsig(sig)

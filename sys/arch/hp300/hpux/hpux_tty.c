@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,140 +35,180 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: hpux_tty.c 1.1 90/07/09
- *	from: @(#)hpux_tty.c	7.9 (Berkeley) 5/30/91
- *	$Id: hpux_tty.c,v 1.5 1994/05/04 04:09:39 mycroft Exp $
+ * from: Utah $Hdr: hpux_tty.c 1.14 93/08/05$
+ *
+ *	from: @(#)hpux_tty.c	8.3 (Berkeley) 1/12/94
+ *	$Id: hpux_tty.c,v 1.6 1994/05/23 08:04:26 mycroft Exp $
  */
 
 /*
  * stty/gtty/termio emulation stuff
  */
 
-#include "param.h"
-#include "systm.h"
-#include "filedesc.h"
-#include "ioctl.h"
-#include "tty.h"
-#include "proc.h"
-#include "file.h"
-#include "conf.h"
-#include "buf.h"
-#include "kernel.h"
+#ifndef COMPAT_43
+#define COMPAT_43
+#endif
 
-#include "hpux.h"
-#include "hpux_termio.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/filedesc.h>
+#include <sys/ioctl.h>
+#include <sys/proc.h>
+#include <sys/tty.h>
+#include <sys/file.h>
+#include <sys/conf.h>
+#include <sys/buf.h>
+#include <sys/kernel.h>
+
+#include <hp300/hpux/hpux.h>
+#include <hp300/hpux/hpux_termio.h>
 
 /*
  * Map BSD/POSIX style termios info to and from SYS5 style termio stuff.
  */
-hpux_termio(fp, com, data, p)
-	struct file *fp;
+hpux_termio(fd, com, data, p)
+	int fd, com;
 	caddr_t data;
 	struct proc *p;
 {
+	struct file *fp;
 	struct termios tios;
+	struct hpux_termios htios;
 	int line, error, (*ioctlrout)();
-	register struct hpux_termio *tiop;
+	int newi = 0;
 
+	fp = p->p_fd->fd_ofiles[fd];
 	ioctlrout = fp->f_ops->fo_ioctl;
-	tiop = (struct hpux_termio *)data;
 	switch (com) {
+	case HPUXTCGETATTR:
+		newi = 1;
+		/* fall into ... */
 	case HPUXTCGETA:
 		/*
 		 * Get BSD terminal state
 		 */
-		bzero(data, sizeof(struct hpux_termio));
 		if (error = (*ioctlrout)(fp, TIOCGETA, (caddr_t)&tios, p))
 			break;
+		bzero((char *)&htios, sizeof htios);
 		/*
 		 * Set iflag.
 		 * Same through ICRNL, no BSD equivs for IUCLC, IENQAK
 		 */
-		tiop->c_iflag = tios.c_iflag & 0x1ff;
+		htios.c_iflag = tios.c_iflag & 0x1ff;
 		if (tios.c_iflag & IXON)
-			tiop->c_iflag |= TIO_IXON;
+			htios.c_iflag |= TIO_IXON;
 		if (tios.c_iflag & IXOFF)
-			tiop->c_iflag |= TIO_IXOFF;
+			htios.c_iflag |= TIO_IXOFF;
 		if (tios.c_iflag & IXANY)
-			tiop->c_iflag |= TIO_IXANY;
+			htios.c_iflag |= TIO_IXANY;
 		/*
 		 * Set oflag.
 		 * No BSD equivs for OLCUC/OCRNL/ONOCR/ONLRET/OFILL/OFDEL
 		 * or any of the delays.
 		 */
 		if (tios.c_oflag & OPOST)
-			tiop->c_oflag |= TIO_OPOST;
+			htios.c_oflag |= TIO_OPOST;
 		if (tios.c_oflag & ONLCR)
-			tiop->c_oflag |= TIO_ONLCR;
+			htios.c_oflag |= TIO_ONLCR;
 		if (tios.c_oflag & OXTABS)
-			tiop->c_oflag |= TIO_TAB3;
+			htios.c_oflag |= TIO_TAB3;
 		/*
 		 * Set cflag.
 		 * Baud from ospeed, rest from cflag.
 		 */
-		tiop->c_cflag = bsdtohpuxbaud(tios.c_ospeed);
+		htios.c_cflag = bsdtohpuxbaud(tios.c_ospeed);
 		switch (tios.c_cflag & CSIZE) {
 		case CS5:
-			tiop->c_cflag |= TIO_CS5; break;
+			htios.c_cflag |= TIO_CS5; break;
 		case CS6:
-			tiop->c_cflag |= TIO_CS6; break;
+			htios.c_cflag |= TIO_CS6; break;
 		case CS7:
-			tiop->c_cflag |= TIO_CS7; break;
+			htios.c_cflag |= TIO_CS7; break;
 		case CS8:
-			tiop->c_cflag |= TIO_CS8; break;
+			htios.c_cflag |= TIO_CS8; break;
 		}
 		if (tios.c_cflag & CSTOPB)
-			tiop->c_cflag |= TIO_CSTOPB;
+			htios.c_cflag |= TIO_CSTOPB;
 		if (tios.c_cflag & CREAD)
-			tiop->c_cflag |= TIO_CREAD;
+			htios.c_cflag |= TIO_CREAD;
 		if (tios.c_cflag & PARENB)
-			tiop->c_cflag |= TIO_PARENB;
+			htios.c_cflag |= TIO_PARENB;
 		if (tios.c_cflag & PARODD)
-			tiop->c_cflag |= TIO_PARODD;
+			htios.c_cflag |= TIO_PARODD;
 		if (tios.c_cflag & HUPCL)
-			tiop->c_cflag |= TIO_HUPCL;
+			htios.c_cflag |= TIO_HUPCL;
 		if (tios.c_cflag & CLOCAL)
-			tiop->c_cflag |= TIO_CLOCAL;
+			htios.c_cflag |= TIO_CLOCAL;
 		/*
 		 * Set lflag.
 		 * No BSD equiv for XCASE.
 		 */
 		if (tios.c_lflag & ECHOE)
-			tiop->c_lflag |= TIO_ECHOE;
+			htios.c_lflag |= TIO_ECHOE;
 		if (tios.c_lflag & ECHOK)
-			tiop->c_lflag |= TIO_ECHOK;
+			htios.c_lflag |= TIO_ECHOK;
 		if (tios.c_lflag & ECHO)
-			tiop->c_lflag |= TIO_ECHO;
+			htios.c_lflag |= TIO_ECHO;
 		if (tios.c_lflag & ECHONL)
-			tiop->c_lflag |= TIO_ECHONL;
+			htios.c_lflag |= TIO_ECHONL;
 		if (tios.c_lflag & ISIG)
-			tiop->c_lflag |= TIO_ISIG;
+			htios.c_lflag |= TIO_ISIG;
 		if (tios.c_lflag & ICANON)
-			tiop->c_lflag |= TIO_ICANON;
+			htios.c_lflag |= TIO_ICANON;
 		if (tios.c_lflag & NOFLSH)
-			tiop->c_lflag |= TIO_NOFLSH;
+			htios.c_lflag |= TIO_NOFLSH;
 		/*
 		 * Line discipline
 		 */
-		line = 0;
-		(void) (*ioctlrout)(fp, TIOCGETD, (caddr_t)&line, p);
-		tiop->c_line = line;
-		/*
-		 * Set editing chars
-		 */
-		tiop->c_cc[HPUXVINTR] = tios.c_cc[VINTR];
-		tiop->c_cc[HPUXVQUIT] = tios.c_cc[VQUIT];
-		tiop->c_cc[HPUXVERASE] = tios.c_cc[VERASE];
-		tiop->c_cc[HPUXVKILL] = tios.c_cc[VKILL];
-		if (tiop->c_lflag & TIO_ICANON) {
-			tiop->c_cc[HPUXVEOF] = tios.c_cc[VEOF];
-			tiop->c_cc[HPUXVEOL] = tios.c_cc[VEOL];
-		} else {
-			tiop->c_cc[HPUXVMIN] = tios.c_cc[VMIN];
-			tiop->c_cc[HPUXVTIME] = tios.c_cc[VTIME];
+		if (!newi) {
+			line = 0;
+			(void) (*ioctlrout)(fp, TIOCGETD, (caddr_t)&line, p);
+			htios.c_reserved = line;
 		}
+		/*
+		 * Set editing chars.
+		 * No BSD equiv for VSWTCH.
+		 */
+		htios.c_cc[HPUXVINTR] = tios.c_cc[VINTR];
+		htios.c_cc[HPUXVQUIT] = tios.c_cc[VQUIT];
+		htios.c_cc[HPUXVERASE] = tios.c_cc[VERASE];
+		htios.c_cc[HPUXVKILL] = tios.c_cc[VKILL];
+		htios.c_cc[HPUXVEOF] = tios.c_cc[VEOF];
+		htios.c_cc[HPUXVEOL] = tios.c_cc[VEOL];
+		htios.c_cc[HPUXVEOL2] = tios.c_cc[VEOL2];
+		htios.c_cc[HPUXVSWTCH] = 0;
+#if 1
+		/*
+		 * XXX since VMIN and VTIME are not implemented,
+		 * we need to return something reasonable.
+		 * Otherwise a GETA/SETA combo would always put
+		 * the tty in non-blocking mode (since VMIN == VTIME == 0).
+		 */
+		if (fp->f_flag & FNONBLOCK) {
+			htios.c_cc[HPUXVMINS] = 0;
+			htios.c_cc[HPUXVTIMES] = 0;
+		} else {
+			htios.c_cc[HPUXVMINS] = 6;
+			htios.c_cc[HPUXVTIMES] = 1;
+		}
+#else
+		htios.c_cc[HPUXVMINS] = tios.c_cc[VMIN];
+		htios.c_cc[HPUXVTIMES] = tios.c_cc[VTIME];
+#endif
+		htios.c_cc[HPUXVSUSP] = tios.c_cc[VSUSP];
+		htios.c_cc[HPUXVSTART] = tios.c_cc[VSTART];
+		htios.c_cc[HPUXVSTOP] = tios.c_cc[VSTOP];
+		if (newi)
+			bcopy((char *)&htios, data, sizeof htios);
+		else
+			termiostotermio(&htios, (struct hpux_termio *)data);
 		break;
 
+	case HPUXTCSETATTR:
+	case HPUXTCSETATTRD:
+	case HPUXTCSETATTRF:
+		newi = 1;
+		/* fall into ... */
 	case HPUXTCSETA:
 	case HPUXTCSETAW:
 	case HPUXTCSETAF:
@@ -177,28 +217,32 @@ hpux_termio(fp, com, data, p)
 		 */
 		if (error = (*ioctlrout)(fp, TIOCGETA, (caddr_t)&tios, p))
 			break;
+		if (newi)
+			bcopy(data, (char *)&htios, sizeof htios);
+		else
+			termiototermios((struct termio *)data, &htios, &tios);
 		/*
 		 * Set iflag.
 		 * Same through ICRNL, no HP-UX equiv for IMAXBEL
 		 */
 		tios.c_iflag &= ~(IXON|IXOFF|IXANY|0x1ff);
-		tios.c_iflag |= tiop->c_iflag & 0x1ff;
-		if (tiop->c_iflag & TIO_IXON)
+		tios.c_iflag |= htios.c_iflag & 0x1ff;
+		if (htios.c_iflag & TIO_IXON)
 			tios.c_iflag |= IXON;
-		if (tiop->c_iflag & TIO_IXOFF)
+		if (htios.c_iflag & TIO_IXOFF)
 			tios.c_iflag |= IXOFF;
-		if (tiop->c_iflag & TIO_IXANY)
+		if (htios.c_iflag & TIO_IXANY)
 			tios.c_iflag |= IXANY;
 		/*
 		 * Set oflag.
 		 * No HP-UX equiv for ONOEOT
 		 */
 		tios.c_oflag &= ~(OPOST|ONLCR|OXTABS);
-		if (tiop->c_oflag & TIO_OPOST)
+		if (htios.c_oflag & TIO_OPOST)
 			tios.c_oflag |= OPOST;
-		if (tiop->c_oflag & TIO_ONLCR)
+		if (htios.c_oflag & TIO_ONLCR)
 			tios.c_oflag |= ONLCR;
-		if (tiop->c_oflag & TIO_TAB3)
+		if (htios.c_oflag & TIO_TAB3)
 			tios.c_oflag |= OXTABS;
 		/*
 		 * Set cflag.
@@ -206,7 +250,7 @@ hpux_termio(fp, com, data, p)
 		 */
 		tios.c_cflag &=
 			~(CSIZE|CSTOPB|CREAD|PARENB|PARODD|HUPCL|CLOCAL);
-		switch (tiop->c_cflag & TIO_CSIZE) {
+		switch (htios.c_cflag & TIO_CSIZE) {
 		case TIO_CS5:
 			tios.c_cflag |= CS5; break;
 		case TIO_CS6:
@@ -216,17 +260,17 @@ hpux_termio(fp, com, data, p)
 		case TIO_CS8:
 			tios.c_cflag |= CS8; break;
 		}
-		if (tiop->c_cflag & TIO_CSTOPB)
+		if (htios.c_cflag & TIO_CSTOPB)
 			tios.c_cflag |= CSTOPB;
-		if (tiop->c_cflag & TIO_CREAD)
+		if (htios.c_cflag & TIO_CREAD)
 			tios.c_cflag |= CREAD;
-		if (tiop->c_cflag & TIO_PARENB)
+		if (htios.c_cflag & TIO_PARENB)
 			tios.c_cflag |= PARENB;
-		if (tiop->c_cflag & TIO_PARODD)
+		if (htios.c_cflag & TIO_PARODD)
 			tios.c_cflag |= PARODD;
-		if (tiop->c_cflag & TIO_HUPCL)
+		if (htios.c_cflag & TIO_HUPCL)
 			tios.c_cflag |= HUPCL;
-		if (tiop->c_cflag & TIO_CLOCAL)
+		if (htios.c_cflag & TIO_CLOCAL)
 			tios.c_cflag |= CLOCAL;
 		/*
 		 * Set lflag.
@@ -234,42 +278,44 @@ hpux_termio(fp, com, data, p)
 		 * IEXTEN treated as part of ICANON
 		 */
 		tios.c_lflag &= ~(ECHOE|ECHOK|ECHO|ISIG|ICANON|IEXTEN|NOFLSH);
-		if (tiop->c_lflag & TIO_ECHOE)
+		if (htios.c_lflag & TIO_ECHOE)
 			tios.c_lflag |= ECHOE;
-		if (tiop->c_lflag & TIO_ECHOK)
+		if (htios.c_lflag & TIO_ECHOK)
 			tios.c_lflag |= ECHOK;
-		if (tiop->c_lflag & TIO_ECHO)
+		if (htios.c_lflag & TIO_ECHO)
 			tios.c_lflag |= ECHO;
-		if (tiop->c_lflag & TIO_ECHONL)
+		if (htios.c_lflag & TIO_ECHONL)
 			tios.c_lflag |= ECHONL;
-		if (tiop->c_lflag & TIO_ISIG)
+		if (htios.c_lflag & TIO_ISIG)
 			tios.c_lflag |= ISIG;
-		if (tiop->c_lflag & TIO_ICANON)
+		if (htios.c_lflag & TIO_ICANON)
 			tios.c_lflag |= (ICANON|IEXTEN);
-		if (tiop->c_lflag & TIO_NOFLSH)
+		if (htios.c_lflag & TIO_NOFLSH)
 			tios.c_lflag |= NOFLSH;
 		/*
 		 * Set editing chars.
-		 * No HP-UX equivs of VEOL2/VWERASE/VREPRINT/VSUSP/VDSUSP
-		 * VSTOP/VLNEXT/VDISCARD/VMIN/VTIME/VSTATUS/VERASE2
+		 * No HP-UX equivs of VWERASE/VREPRINT/VDSUSP/VLNEXT
+		 * /VDISCARD/VSTATUS/VERASE2
 		 */
-		tios.c_cc[VINTR] = tiop->c_cc[HPUXVINTR];
-		tios.c_cc[VQUIT] = tiop->c_cc[HPUXVQUIT];
-		tios.c_cc[VERASE] = tiop->c_cc[HPUXVERASE];
-		tios.c_cc[VKILL] = tiop->c_cc[HPUXVKILL];
-		if (tios.c_lflag & ICANON) {
-			tios.c_cc[VEOF] = tiop->c_cc[HPUXVEOF];
-			tios.c_cc[VEOL] = tiop->c_cc[HPUXVEOL];
-		} else {
-			tios.c_cc[VMIN] = tiop->c_cc[HPUXVMIN];
-			tios.c_cc[VTIME] = tiop->c_cc[HPUXVTIME];
-		}
+		tios.c_cc[VINTR] = htios.c_cc[HPUXVINTR];
+		tios.c_cc[VQUIT] = htios.c_cc[HPUXVQUIT];
+		tios.c_cc[VERASE] = htios.c_cc[HPUXVERASE];
+		tios.c_cc[VKILL] = htios.c_cc[HPUXVKILL];
+		tios.c_cc[VEOF] = htios.c_cc[HPUXVEOF];
+		tios.c_cc[VEOL] = htios.c_cc[HPUXVEOL];
+		tios.c_cc[VEOL2] = htios.c_cc[HPUXVEOL2];
+		tios.c_cc[VMIN] = htios.c_cc[HPUXVMINS];
+		tios.c_cc[VTIME] = htios.c_cc[HPUXVTIMES];
+		tios.c_cc[VSUSP] = htios.c_cc[HPUXVSUSP];
+		tios.c_cc[VSTART] = htios.c_cc[HPUXVSTART];
+		tios.c_cc[VSTOP] = htios.c_cc[HPUXVSTOP];
+
 		/*
 		 * Set the new stuff
 		 */
-		if (com == HPUXTCSETA)
+		if (com == HPUXTCSETA || com == HPUXTCSETATTR)
 			com = TIOCSETA;
-		else if (com == HPUXTCSETAW)
+		else if (com == HPUXTCSETAW || com == HPUXTCSETATTRD)
 			com = TIOCSETAW;
 		else
 			com = TIOCSETAF;
@@ -278,23 +324,44 @@ hpux_termio(fp, com, data, p)
 			/*
 			 * Set line discipline
 			 */
-			line = tiop->c_line;
-			(void) (*ioctlrout)(fp, TIOCSETD, (caddr_t)&line, p);
+			if (!newi) {
+				line = htios.c_reserved;
+				(void) (*ioctlrout)(fp, TIOCSETD,
+						    (caddr_t)&line, p);
+			}
 			/*
-			 * Set non-blocking IO if VMIN == VTIME == 0.
-			 * Should handle the other cases as well.  It also
-			 * isn't correct to just turn it off as it could be
-			 * on as the result of a fcntl operation.
+			 * Set non-blocking IO if VMIN == VTIME == 0, clear
+			 * if not.  Should handle the other cases as well.
+			 * Note it isn't correct to just turn NBIO off like
+			 * we do as it could be on as the result of a fcntl
+			 * operation.
+			 *
 			 * XXX - wouldn't need to do this at all if VMIN/VTIME
 			 * were implemented.
 			 */
-			line = (tiop->c_cc[HPUXVMIN] == 0 &&
-				tiop->c_cc[HPUXVTIME] == 0);
-			if (line)
-				fp->f_flag |= FNONBLOCK;
-			else
-				fp->f_flag &= ~FNONBLOCK;
-			(void) (*ioctlrout)(fp, FIONBIO, (caddr_t)&line, p);
+			{
+				struct hpux_fcntl_args {
+					int fdes, cmd, arg;
+				} args;
+				int flags, nbio;
+
+				nbio = (htios.c_cc[HPUXVMINS] == 0 &&
+					htios.c_cc[HPUXVTIMES] == 0);
+				if (nbio && (fp->f_flag & FNONBLOCK) == 0 ||
+				    !nbio && (fp->f_flag & FNONBLOCK)) {
+					args.fdes = fd;
+					args.cmd = F_GETFL;
+					args.arg = 0;
+					(void) hpux_fcntl(p, &args, &flags);
+					if (nbio)
+						flags |= HPUXNDELAY;
+					else
+						flags &= ~HPUXNDELAY;
+					args.cmd = F_SETFL;
+					args.arg = flags;
+					(void) hpux_fcntl(p, &args, &flags);
+				}
+			}
 		}
 		break;
 
@@ -303,6 +370,59 @@ hpux_termio(fp, com, data, p)
 		break;
 	}
 	return(error);
+}
+
+termiototermios(tio, tios, bsdtios)
+	struct hpux_termio *tio;
+	struct hpux_termios *tios;
+	struct termios *bsdtios;
+{
+	int i;
+
+	bzero((char *)tios, sizeof *tios);
+	tios->c_iflag = tio->c_iflag;
+	tios->c_oflag = tio->c_oflag;
+	tios->c_cflag = tio->c_cflag;
+	tios->c_lflag = tio->c_lflag;
+	tios->c_reserved = tio->c_line;
+	for (i = 0; i <= HPUXVSWTCH; i++)
+		tios->c_cc[i] = tio->c_cc[i];
+	if (tios->c_lflag & TIO_ICANON) {
+		tios->c_cc[HPUXVEOF] = tio->c_cc[HPUXVEOF];
+		tios->c_cc[HPUXVEOL] = tio->c_cc[HPUXVEOL];
+		tios->c_cc[HPUXVMINS] = 0;
+		tios->c_cc[HPUXVTIMES] = 0;
+	} else {
+		tios->c_cc[HPUXVEOF] = 0;
+		tios->c_cc[HPUXVEOL] = 0;
+		tios->c_cc[HPUXVMINS] = tio->c_cc[HPUXVMIN];
+		tios->c_cc[HPUXVTIMES] = tio->c_cc[HPUXVTIME];
+	}
+	tios->c_cc[HPUXVSUSP] = bsdtios->c_cc[VSUSP];
+	tios->c_cc[HPUXVSTART] = bsdtios->c_cc[VSTART];
+	tios->c_cc[HPUXVSTOP] = bsdtios->c_cc[VSTOP];
+}
+
+termiostotermio(tios, tio)
+	struct hpux_termios *tios;
+	struct hpux_termio *tio;
+{
+	int i;
+
+	tio->c_iflag = tios->c_iflag;
+	tio->c_oflag = tios->c_oflag;
+	tio->c_cflag = tios->c_cflag;
+	tio->c_lflag = tios->c_lflag;
+	tio->c_line = tios->c_reserved;
+	for (i = 0; i <= HPUXVSWTCH; i++)
+		tio->c_cc[i] = tios->c_cc[i];
+	if (tios->c_lflag & TIO_ICANON) {
+		tio->c_cc[HPUXVEOF] = tios->c_cc[HPUXVEOF];
+		tio->c_cc[HPUXVEOL] = tios->c_cc[HPUXVEOL];
+	} else {
+		tio->c_cc[HPUXVMIN] = tios->c_cc[HPUXVMINS];
+		tio->c_cc[HPUXVTIME] = tios->c_cc[HPUXVTIMES];
+	}
 }
 
 bsdtohpuxbaud(bsdspeed)
@@ -329,8 +449,8 @@ bsdtohpuxbaud(bsdspeed)
 	}
 }
 
-hpuxtobsdbaud(hpuxspeed)
-	int hpuxspeed;
+hpuxtobsdbaud(hpux_speed)
+	int hpux_speed;
 {
 	static char hpuxtobsdbaudtab[32] = {
 		B0,	B50,	B75,	B110,	B134,	B150,	B200,	B300,
@@ -339,32 +459,26 @@ hpuxtobsdbaud(hpuxspeed)
 		B0,	B0,	B0,	B0,	B0,	B0,	EXTA,	EXTB
 	};
 
-	return(hpuxtobsdbaudtab[hpuxspeed & TIO_CBAUD]);
+	return(hpuxtobsdbaudtab[hpux_speed & TIO_CBAUD]);
 }
 
-/* #ifdef COMPAT */
-struct ohpux_gtty_args {
+#ifdef COMPAT_OHPUX
+struct ohpux_sgtty_args {
 	int	fdes;
 	caddr_t	cmarg;
 };
-
 ohpux_gtty(p, uap, retval)
 	struct proc *p;
-	struct ohpux_gtty_args *uap;
+	struct ohpux_sgtty_args *uap;
 	int *retval;
 {
 
 	return (getsettty(p, uap->fdes, HPUXTIOCGETP, uap->cmarg));
 }
 
-struct ohpux_stty_args {
-	int	fdes;
-	caddr_t	cmarg;
-};
-
 ohpux_stty(p, uap, retval)
 	struct proc *p;
-	struct ohpux_stty_args *uap;
+	struct ohpux_sgtty_args *uap;
 	int *retval;
 {
 
@@ -422,4 +536,4 @@ getsettty(p, fdes, com, cmarg)
 	}
 	return (error);
 }
-/* #endif */
+#endif

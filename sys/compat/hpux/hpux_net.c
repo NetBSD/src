@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,28 +35,30 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: hpux_net.c 1.33 89/08/23
- *	from: @(#)hpux_net.c	7.7 (Berkeley) 2/13/91
- *	$Id: hpux_net.c,v 1.5 1994/05/04 04:09:36 mycroft Exp $
+ * from: Utah $Hdr: hpux_net.c 1.8 93/08/02$
+ *
+ *	from: @(#)hpux_net.c	8.2 (Berkeley) 9/9/93
+ *	$Id: hpux_net.c,v 1.6 1994/05/23 08:04:18 mycroft Exp $
  */
 
 /*
  * Network related HP-UX compatibility routines
  */
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/kernel.h"
-#include "sys/time.h"
-#include "sys/errno.h"
-#include "sys/proc.h"
-#include "sys/file.h"
-#include "sys/mbuf.h"
-#include "sys/socket.h"
-#include "sys/socketvar.h"
-#include "sys/uio.h"
-#include "sys/ktrace.h"
-#include "hpux.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/time.h>
+#include <sys/errno.h>
+#include <sys/proc.h>
+#include <sys/file.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/uio.h>
+#include <sys/ktrace.h>
+
+#include <hp300/hpux/hpux.h>
 
 #define MINBSDIPCCODE	0x3EE
 #define NUMBSDIPC	32
@@ -100,7 +102,6 @@ struct hpux_netioctl_args {
 	int	call;
 	int	*args;
 };
-
 hpux_netioctl(p, uap, retval)
 	struct proc *p;
 	struct hpux_netioctl_args *uap;
@@ -119,16 +120,41 @@ hpux_netioctl(p, uap, retval)
 #ifdef KTRACE
                 if (KTRPOINT(p, KTR_SYSCALL))
                         ktrsyscall(p->p_tracep, code + MINBSDIPCCODE,
-				   hpuxtobsdipc[code].nargs);
+				   hpuxtobsdipc[code].nargs, (int *)uap);
 #endif
 		return (error);
 	}
 #ifdef KTRACE
         if (KTRPOINT(p, KTR_SYSCALL))
                 ktrsyscall(p->p_tracep, code + MINBSDIPCCODE,
-			   hpuxtobsdipc[code].nargs);
+			   hpuxtobsdipc[code].nargs, (int *)uap);
 #endif
 	return ((*hpuxtobsdipc[code].rout)(p, uap, retval));
+}
+
+socksetsize(size, m)
+	int size;
+	struct mbuf *m;
+{
+	register int tmp;
+
+	if (size < sizeof(int)) {
+		switch(size) {
+	    	case 1:
+			tmp = (int) *mtod(m, char *);
+			break;
+	    	case 2:
+			tmp = (int) *mtod(m, short *);
+			break;
+	    	case 3:
+			tmp = (((int) *mtod(m, int *)) >> 8) & 0xffffff;
+			break;
+		}
+		*mtod(m, int *) = tmp;
+		m->m_len = sizeof(int);
+	} else {
+		m->m_len = size;
+	}
 }
 
 struct hpux_setsockopt_args {
@@ -138,7 +164,7 @@ struct hpux_setsockopt_args {
 	caddr_t	val;
 	int	valsize;
 };
-
+/* ARGSUSED */
 hpux_setsockopt(p, uap, retval)
 	struct proc *p;
 	struct hpux_setsockopt_args *uap;
@@ -167,7 +193,7 @@ hpux_setsockopt(p, uap, retval)
 			mtod(m, struct linger *)->l_linger = tmp;
 			m->m_len = sizeof(struct linger);
 		} else
-			m->m_len = uap->valsize;
+			socksetsize(uap->valsize, m);
 	} else if (uap->name == ~SO_LINGER) {
 		m = m_get(M_WAIT, MT_SOOPTS);
 		if (m) {
@@ -180,6 +206,42 @@ hpux_setsockopt(p, uap, retval)
 	    uap->name, m));
 }
 
+struct hpux_setsockopt2_args {
+	int	s;
+	int	level;
+	int	name;
+	caddr_t	val;
+	int	valsize;
+};
+/* ARGSUSED */
+hpux_setsockopt2(p, uap, retval)
+	struct proc *p;
+	register struct hpux_setsockopt2_args *uap;
+	int *retval;
+{
+	struct file *fp;
+	struct mbuf *m = NULL;
+	int error;
+
+	if (error = getsock(p->p_fd, uap->s, &fp))
+		return (error);
+	if (uap->valsize > MLEN)
+		return (EINVAL);
+	if (uap->val) {
+		m = m_get(M_WAIT, MT_SOOPTS);
+		if (m == NULL)
+			return (ENOBUFS);
+		if (error = copyin(uap->val, mtod(m, caddr_t),
+		    (u_int)uap->valsize)) {
+			(void) m_free(m);
+			return (error);
+		}
+		socksetsize(uap->valsize, m);
+	}
+	return (sosetopt((struct socket *)fp->f_data, uap->level,
+	    uap->name, m));
+}
+
 struct hpux_getsockopt_args {
 	int	s;
 	int	level;
@@ -187,7 +249,6 @@ struct hpux_getsockopt_args {
 	caddr_t	val;
 	int	*avalsize;
 };
-
 hpux_getsockopt(p, uap, retval)
 	struct proc *p;
 	struct hpux_getsockopt_args *uap;

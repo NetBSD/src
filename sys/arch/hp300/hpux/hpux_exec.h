@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: hpux_exec.h 1.1 90/07/09
- *	from: @(#)hpux_exec.h	7.2 (Berkeley) 10/24/90
- *	$Id: hpux_exec.h,v 1.3 1993/08/01 19:24:55 mycroft Exp $
+ * from: Utah $Hdr: hpux_exec.h 1.6 92/01/20$
+ *
+ *	from: @(#)hpux_exec.h	8.1 (Berkeley) 6/10/93
+ *	$Id: hpux_exec.h,v 1.4 1994/05/23 08:04:17 mycroft Exp $
  */
 
 /*
@@ -47,7 +48,7 @@ struct hpux_exec {
 	long	ha_magic;	/* magic number */
 	short	ha_version;	/* version ID */
 	short	ha_pad0;	/* doesn't matter */
-	long	ha_pad1;	/* ditto */
+	long	ha_misc;	/* misc. info */
 unsigned long	ha_text;	/* size of text segment */
 unsigned long	ha_data;	/* size of initialized data */
 unsigned long	ha_bss;		/* size of uninitialized data */
@@ -56,8 +57,6 @@ unsigned long	ha_entry;	/* entry point */
 unsigned long	ha_pad3[4];	/* doesn't matter */
 };
 
-/*
- * If the HPUX object file version number is BSDVNUM the file was built
- * with the HPUX SGS but linked with the BSD libraries.
- */
-#define BSDVNUM		0x2BAD
+#define	HPUXM_VALID	0x00000001
+#define HPUXM_STKWT	0x02000000
+#define HPUXM_DATAWT	0x04000000
