@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: krb-protos.h,v 1.1.1.1 2000/06/16 18:45:53 thorpej Exp $ */
+/* $Id: krb-protos.h,v 1.1.1.2 2000/12/29 01:43:14 assar Exp $ */
 
 #ifndef __krb_protos_h__
 #define __krb_protos_h__
@@ -328,9 +328,9 @@ krb_get_lrealm __P((
 int KRB_LIB_FUNCTION
 krb_get_nir __P((
 	void *from,
-	char *name,
-	char *instance,
-	char *realm));
+	char *name, size_t name_len,
+	char *instance, size_t instance_len,
+	char *realm, size_t realm_len));
 
 char * KRB_LIB_FUNCTION
 krb_get_phost __P((const char *alias));
@@ -785,8 +785,5 @@ tkt_string __P((void));
 int KRB_LIB_FUNCTION
 krb_add_our_ip_for_realm __P((const char *user, const char *instance,
 			      const char *realm, const char *password));
-
-int KRB_LIB_FUNCTION
-krb_get_our_ip_for_realm __P((const char *realm, struct in_addr *ip_addr));
 
 #endif /* __krb_protos_h__ */

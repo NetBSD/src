@@ -5,7 +5,7 @@
  */
 
 #include <popper.h>
-RCSID("$Id: pop_init.c,v 1.1.1.1 2000/06/16 18:46:25 thorpej Exp $");
+RCSID("$Id: pop_init.c,v 1.1.1.2 2000/12/29 01:42:46 assar Exp $");
 
 
 #if defined(KRB4) || defined(KRB5)
@@ -55,7 +55,7 @@ krb4_authenticate (POP *p, int s, u_char *buf, struct sockaddr *addr)
     if (auth != KSUCCESS) {
         pop_msg(p, POP_FAILURE, "Kerberos authentication failure: %s", 
                 krb_get_err_text(auth));
-        pop_log(p, POP_FAILURE, "%s: (%s.%s@%s) %s", p->client, 
+        pop_log(p, POP_PRIORITY, "%s: (%s.%s@%s) %s", p->client, 
                 p->kdata.pname, p->kdata.pinst, p->kdata.prealm,
 		krb_get_err_text(auth));
         exit (1);
@@ -100,14 +100,14 @@ krb5_authenticate (POP *p, int s, u_char *buf, struct sockaddr *addr)
 	char *s;
 	ret = krb5_unparse_name(p->context, ticket->server, &s);
 	if(ret) {
-	    pop_log(p, POP_FAILURE, "krb5_unparse_name: %s", 
+	    pop_log(p, POP_PRIORITY, "krb5_unparse_name: %s", 
 		    krb5_get_err_text(p->context, ret));
 	    exit(1);
 	}
 	/* does this make sense? */
-	if(strncmp(s, "pop/", 4) != 0) {
-	    pop_log(p, POP_FAILURE, 
-		    "Got ticket for service `%s'", s);
+	if(strncmp(server, "pop/", 4) != 0) {
+	    pop_log(p, POP_PRIORITY,
+		    "Got ticket for service `%s'", server);
 	    exit(1);
 	} else if(p->debug)
 	    pop_log(p, POP_DEBUG, 

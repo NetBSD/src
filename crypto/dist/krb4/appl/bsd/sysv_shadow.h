@@ -1,4 +1,4 @@
-/* $Id: sysv_shadow.h,v 1.1.1.1 2000/06/16 18:46:17 thorpej Exp $ */
+/* $Id: sysv_shadow.h,v 1.1.1.2 2000/12/29 01:42:24 assar Exp $ */
 
 #include <shadow.h>
 

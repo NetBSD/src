@@ -19,7 +19,7 @@ provided "as is" without express or implied warranty.
 
 #include "slav_locl.h"
 
-RCSID("$Id: kprop.c,v 1.1.1.1 2000/06/16 18:46:33 thorpej Exp $");
+RCSID("$Id: kprop.c,v 1.1.1.2 2000/12/29 01:44:08 assar Exp $");
 
 #include "kprop.h"
 

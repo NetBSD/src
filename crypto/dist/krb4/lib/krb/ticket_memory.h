@@ -35,7 +35,7 @@
  * Author: d93-jka@nada.kth.se - June 1996
  */
 
-/* $Id: ticket_memory.h,v 1.1.1.1 2000/06/16 18:45:56 thorpej Exp $ */
+/* $Id: ticket_memory.h,v 1.1.1.2 2000/12/29 01:43:20 assar Exp $ */
 
 #ifndef	TICKET_MEMORY_H
 #define TICKET_MEMORY_H

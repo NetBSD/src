@@ -43,7 +43,7 @@
 #endif
 #include "resolve.h"
 
-RCSID("$Id: resolve.c,v 1.1.1.1 2000/06/16 18:46:02 thorpej Exp $");
+RCSID("$Id: resolve.c,v 1.1.1.2 2000/12/29 01:43:28 assar Exp $");
 
 #if defined(HAVE_RES_SEARCH) && defined(HAVE_DN_EXPAND)
 

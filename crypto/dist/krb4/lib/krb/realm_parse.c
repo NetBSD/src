@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: realm_parse.c,v 1.1.1.1 2000/06/16 18:45:55 thorpej Exp $");
+RCSID("$Id: realm_parse.c,v 1.1.1.2 2000/12/29 01:43:18 assar Exp $");
 
 static int
 realm_parse(char *realm, int length, const char *file)

@@ -33,7 +33,7 @@
 
 #include "kafs_locl.h"
 
-RCSID("$Id: afssys.c,v 1.1.1.1 2000/06/16 18:46:05 thorpej Exp $");
+RCSID("$Id: afssys.c,v 1.1.1.2 2000/12/29 01:43:52 assar Exp $");
 
 int _kafs_debug; /* this should be done in a better way */
 
@@ -113,6 +113,9 @@ map_syscall_name_to_number (const char *str, int *res)
     if (f == NULL)
 	return -1;
     while (fgets (buf, sizeof(buf), f) != NULL) {
+	if (buf[0] == '#')
+	    continue;
+
 	if (strncmp (str, buf, str_len) == 0) {
 	    char *begptr = buf + str_len;
 	    char *endptr;
@@ -280,7 +283,7 @@ int
 k_hasafs(void)
 {
 #if !defined(NO_AFS) && defined(SIGSYS)
-    RETSIGTYPE (*saved_func)(int);
+    RETSIGTYPE (*saved_func)();
 #endif
     int saved_errno;
     char *env = getenv ("AFS_SYSCALL");

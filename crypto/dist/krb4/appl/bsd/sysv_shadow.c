@@ -2,7 +2,7 @@
 
 #include "bsd_locl.h"
 
-RCSID("$Id: sysv_shadow.c,v 1.1.1.1 2000/06/16 18:46:17 thorpej Exp $");
+RCSID("$Id: sysv_shadow.c,v 1.1.1.2 2000/12/29 01:42:24 assar Exp $");
 
 #ifdef SYSV_SHADOW
 

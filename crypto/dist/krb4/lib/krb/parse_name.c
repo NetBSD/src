@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: parse_name.c,v 1.1.1.1 2000/06/16 18:45:55 thorpej Exp $");
+RCSID("$Id: parse_name.c,v 1.1.1.2 2000/12/29 01:43:18 assar Exp $");
 
 int
 krb_parse_name(const char *fullname, krb_principal *principal)

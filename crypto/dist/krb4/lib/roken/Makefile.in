@@ -1,5 +1,5 @@
 #
-# $Id: Makefile.in,v 1.1.1.1 2000/06/16 18:45:58 thorpej Exp $
+# $Id: Makefile.in,v 1.1.1.2 2000/12/29 01:43:22 assar Exp $
 #
 
 SHELL = /bin/sh
@@ -94,6 +94,7 @@ SOURCES = \
 	snprintf.c \
 	socket.c \
 	strcasecmp.c \
+	strcollect.c \
 	strdup.c \
 	strerror.c \
 	strftime.c \
@@ -148,6 +149,7 @@ OBJECTS = \
 	simple_exec.o \
 	snprintf.o \
 	socket.o \
+	strcollect.o \
 	tm2time.o \
 	verify.o \
 	warnerr.o \

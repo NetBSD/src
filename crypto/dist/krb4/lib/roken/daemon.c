@@ -39,7 +39,7 @@ static char sccsid[] = "@(#)daemon.c	8.1 (Berkeley) 6/4/93";
 #include <config.h>
 #endif
 
-RCSID("$Id: daemon.c,v 1.1.1.1 2000/06/16 18:45:58 thorpej Exp $");
+RCSID("$Id: daemon.c,v 1.1.1.2 2000/12/29 01:43:23 assar Exp $");
 
 #ifndef HAVE_DAEMON
 

@@ -33,7 +33,7 @@
 
 #include "telnetd.h"
 
-RCSID("$Id: authenc.c,v 1.1.1.1 2000/06/16 18:46:32 thorpej Exp $");
+RCSID("$Id: authenc.c,v 1.1.1.2 2000/12/29 01:42:40 assar Exp $");
 
 #ifdef AUTHENTICATION
 

@@ -36,7 +36,7 @@
 #include <err.h>
 #include "roken.h"
 
-RCSID("$Id: buffer.c,v 1.1.1.1 2000/06/16 18:46:18 thorpej Exp $");
+RCSID("$Id: buffer.c,v 1.1.1.2 2000/12/29 01:42:52 assar Exp $");
 
 /*
  * Allocate a buffer enough to handle st->st_blksize, if

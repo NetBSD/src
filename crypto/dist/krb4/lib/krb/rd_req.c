@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: rd_req.c,v 1.1.1.1 2000/06/16 18:45:55 thorpej Exp $");
+RCSID("$Id: rd_req.c,v 1.1.1.2 2000/12/29 01:43:18 assar Exp $");
 
 static struct timeval t_local = { 0, 0 };
 
@@ -141,7 +141,7 @@ krb_rd_req(KTEXT authent,	/* The received message */
 	   char *instance,	/* Service instance */
 	   int32_t from_addr,	/* Net address of originating host */
 	   AUTH_DAT *ad,	/* Structure to be filled in */
-	   char *fn)		/* Filename to get keys from */
+	   char *a_fn)		/* Filename to get keys from */
 {
     static KTEXT_ST ticket;     /* Temp storage for ticket */
     static KTEXT tkt = &ticket;
@@ -168,6 +168,8 @@ krb_rd_req(KTEXT authent,	/* The received message */
     int pvno;
     int type;
     int little_endian;
+
+    const char *fn = a_fn;
 
     unsigned char *p;
 
@@ -262,7 +264,10 @@ krb_rd_req(KTEXT authent,	/* The received message */
     /* cast req_id->length to int? */
 #define check_ptr() if ((ptr - (char *) req_id->dat) > req_id->length) return(RD_AP_MODIFIED);
 
-    p += krb_get_nir(p, r_aname, r_inst, r_realm); /* XXX no rangecheck */
+    p += krb_get_nir(p,
+		     r_aname, sizeof(r_aname),
+		     r_inst, sizeof(r_inst),
+		     r_realm, sizeof(r_realm));
 
     p += krb_get_int(p, &ad->checksum, 4, little_endian);
 

@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE. 
  */
-/* $Id: ss.h,v 1.1.1.1 2000/06/16 18:45:46 thorpej Exp $ */
+/* $Id: ss.h,v 1.1.1.2 2000/12/29 01:43:51 assar Exp $ */
 
 /* SS compatibility for SL */
 

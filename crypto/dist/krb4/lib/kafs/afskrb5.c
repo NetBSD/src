@@ -33,7 +33,7 @@
 
 #include "kafs_locl.h"
 
-RCSID("$Id: afskrb5.c,v 1.1.1.1 2000/06/16 18:46:05 thorpej Exp $");
+RCSID("$Id: afskrb5.c,v 1.1.1.2 2000/12/29 01:43:52 assar Exp $");
 
 struct krb5_kafs_data {
     krb5_context context;

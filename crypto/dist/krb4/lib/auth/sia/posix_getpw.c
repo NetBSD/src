@@ -32,7 +32,7 @@
 
 #include "sia_locl.h"
 
-RCSID("$Id: posix_getpw.c,v 1.1.1.1 2000/06/16 18:45:48 thorpej Exp $");
+RCSID("$Id: posix_getpw.c,v 1.1.1.2 2000/12/29 01:43:54 assar Exp $");
 
 #ifndef POSIX_GETPWNAM_R
 /* 

@@ -1,5 +1,5 @@
 /*
- * $Id: klog.h,v 1.1.1.1 2000/06/16 18:45:53 thorpej Exp $
+ * $Id: klog.h,v 1.1.1.2 2000/12/29 01:43:14 assar Exp $
  *
  * Copyright 1988 by the Massachusetts Institute of Technology.
  *

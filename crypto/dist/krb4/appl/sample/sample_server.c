@@ -18,7 +18,7 @@
 
 #include "sample.h"
 
-RCSID("$Id: sample_server.c,v 1.1.1.1 2000/06/16 18:46:27 thorpej Exp $");
+RCSID("$Id: sample_server.c,v 1.1.1.2 2000/12/29 01:42:27 assar Exp $");
 
 static void
 usage (void)
@@ -108,7 +108,7 @@ main(int argc, char **argv)
 	snprintf(retbuf, sizeof(retbuf),
 		 "Kerberos error: %s\n",
 		 krb_get_err_text(status));
-	syslog(LOG_ERR, retbuf);
+	syslog(LOG_ERR, "%s", retbuf);
     } else {
 	/* Check the version string (KRB_SENDAUTH_VLEN chars) */
 	if (strncmp(version, SAMPLE_VERSION, KRB_SENDAUTH_VLEN)) {

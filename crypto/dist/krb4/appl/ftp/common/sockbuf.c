@@ -39,7 +39,7 @@
 #include <sys/socket.h>
 #endif
 
-RCSID("$Id: sockbuf.c,v 1.1.1.1 2000/06/16 18:46:18 thorpej Exp $");
+RCSID("$Id: sockbuf.c,v 1.1.1.2 2000/12/29 01:42:53 assar Exp $");
 
 void
 set_buffer_size(int fd, int read)

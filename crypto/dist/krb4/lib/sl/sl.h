@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: sl.h,v 1.1.1.1 2000/06/16 18:45:46 thorpej Exp $ */
+/* $Id: sl.h,v 1.1.1.2 2000/12/29 01:43:51 assar Exp $ */
 
 #ifndef _SL_H
 #define _SL_H

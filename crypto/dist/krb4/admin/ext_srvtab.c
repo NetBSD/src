@@ -9,7 +9,7 @@
 
 #include "adm_locl.h"
 
-RCSID("$Id: ext_srvtab.c,v 1.1.1.1 2000/06/16 18:46:05 thorpej Exp $");
+RCSID("$Id: ext_srvtab.c,v 1.1.1.2 2000/12/29 01:42:18 assar Exp $");
 
 static des_cblock master_key;
 static des_cblock session_key;

@@ -1,4 +1,4 @@
-# $Id: kadm_err.et,v 1.1.1.1 2000/06/16 18:45:37 thorpej Exp $
+# $Id: kadm_err.et,v 1.1.1.2 2000/12/29 01:43:09 assar Exp $
 #
 # Copyright 1988 by the Massachusetts Institute of Technology.
 #
@@ -11,7 +11,7 @@
 
 # KADM_SUCCESS, as all success codes should be, is zero
 
-ec KADM_RCSID,		"$Id: kadm_err.et,v 1.1.1.1 2000/06/16 18:45:37 thorpej Exp $"
+ec KADM_RCSID,		"$Id: kadm_err.et,v 1.1.1.2 2000/12/29 01:43:09 assar Exp $"
 # /* Building and unbuilding the packet errors */
 ec KADM_NO_REALM,	"Cannot fetch local realm"
 ec KADM_NO_CRED,	"Unable to fetch credentials"

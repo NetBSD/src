@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: acl.h,v 1.1.1.1 2000/06/16 18:45:37 thorpej Exp $ */
+/* $Id: acl.h,v 1.1.1.2 2000/12/29 01:43:08 assar Exp $ */
 
 #ifndef __ACL_H
 #define __ACL_H

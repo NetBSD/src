@@ -38,7 +38,7 @@ static char *copyright[] = {
 };
 
 #include "telnet_locl.h"
-RCSID("$Id: main.c,v 1.1.1.1 2000/06/16 18:46:31 thorpej Exp $");
+RCSID("$Id: main.c,v 1.1.1.2 2000/12/29 01:42:38 assar Exp $");
 
 /* These values need to be the same as defined in libtelnet/kerberos5.c */
 /* Either define them in both places, or put in some common header file. */

@@ -33,7 +33,7 @@
 
 #include "telnetd.h"
 
-RCSID("$Id: sys_term.c,v 1.1.1.1 2000/06/16 18:46:32 thorpej Exp $");
+RCSID("$Id: sys_term.c,v 1.1.1.2 2000/12/29 01:42:42 assar Exp $");
 
 #if defined(_CRAY) || (defined(__hpux) && !defined(HAVE_UTMPX_H))
 # define PARENT_DOES_UTMP
@@ -1154,7 +1154,7 @@ startslave(char *host, int autologin, char *autoname)
 	/*
 	 * Create utmp entry for child
 	 */
-	time(&wtmp.ut_time);
+	wtmp.ut_time = time(NULL);
 	wtmp.ut_type = LOGIN_PROCESS;
 	wtmp.ut_pid = pid;
 	strncpy(wtmp.ut_user,  "LOGIN", sizeof(wtmp.ut_user));
@@ -1205,26 +1205,50 @@ init_env(void)
 /*
  * scrub_env()
  *
- * Remove variables from the environment that might cause login to
- * behave in a bad manner. To avoid this, login should be staticly
- * linked.
+ * We only accept the environment variables listed below.
  */
 
-static void scrub_env(void)
+static void
+scrub_env(void)
 {
-    static char *remove[] = { "LD_", "_RLD_", "LIBPATH=", "IFS=", NULL };
+    static const char *reject[] = {
+	"TERMCAP=/",
+	NULL
+    };
+
+    static const char *accept[] = {
+	"XAUTH=", "XAUTHORITY=", "DISPLAY=",
+	"TERM=",
+	"EDITOR=",
+	"PAGER=",
+	"PRINTER=",
+	"LOGNAME=",
+	"POSIXLY_CORRECT=",
+	"TERMCAP=",
+	NULL
+    };
 
     char **cpp, **cpp2;
-    char **p;
+    const char **p;
   
     for (cpp2 = cpp = environ; *cpp; cpp++) {
-	for(p = remove; *p; p++)
+	int reject_it = 0;
+
+	for(p = reject; *p; p++)
+	    if(strncmp(*cpp, *p, strlen(*p)) == 0) {
+		reject_it = 1;
+		break;
+	    }
+	if (reject_it)
+	    continue;
+
+	for(p = accept; *p; p++)
 	    if(strncmp(*cpp, *p, strlen(*p)) == 0)
 		break;
-	if(*p == NULL)
+	if(*p != NULL)
 	    *cpp2++ = *cpp;
     }
-    *cpp2 = 0;
+    *cpp2 = NULL;
 }
 
 
@@ -1425,7 +1449,7 @@ rmut(void)
 #ifdef HAVE_STRUCT_UTMP_UT_HOST
 	    strncpy(wtmp.ut_host,  "", sizeof(wtmp.ut_host));
 #endif
-	    time(&wtmp.ut_time);
+	    wtmp.ut_time = time(NULL);
 	    write(f, &wtmp, sizeof(wtmp));
 	    close(f);
 	  }
@@ -1469,7 +1493,7 @@ rmut(void)
 #ifdef HAVE_STRUCT_UTMP_UT_HOST
 		strncpy(u->ut_host,  "", sizeof(u->ut_host));
 #endif
-		time(&u->ut_time);
+		u->ut_time = time(NULL);
 		write(f, u, sizeof(wtmp));
 		found++;
 	    }
@@ -1484,7 +1508,7 @@ rmut(void)
 #ifdef HAVE_STRUCT_UTMP_UT_HOST
 	    strncpy(wtmp.ut_host,  "", sizeof(wtmp.ut_host));
 #endif
-	    time(&wtmp.ut_time);
+	    wtmp.ut_time = time(NULL);
 	    write(f, &wtmp, sizeof(wtmp));
 	    close(f);
 	}

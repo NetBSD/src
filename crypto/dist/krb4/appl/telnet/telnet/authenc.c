@@ -33,7 +33,7 @@
 
 #include "telnet_locl.h"
 
-RCSID("$Id: authenc.c,v 1.1.1.1 2000/06/16 18:46:31 thorpej Exp $");
+RCSID("$Id: authenc.c,v 1.1.1.2 2000/12/29 01:42:36 assar Exp $");
 
 #if	defined(AUTHENTICATION) || defined(ENCRYPTION)
 int

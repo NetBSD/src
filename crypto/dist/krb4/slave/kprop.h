@@ -4,7 +4,7 @@
  * For copying and distribution information,
  * please see the file <mit-copyright.h>.
  *
- * $Id: kprop.h,v 1.1.1.1 2000/06/16 18:46:33 thorpej Exp $
+ * $Id: kprop.h,v 1.1.1.2 2000/12/29 01:44:08 assar Exp $
  *
  */
 

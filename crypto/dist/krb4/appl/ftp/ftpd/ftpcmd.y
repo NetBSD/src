@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.1.1.1 2000/06/16 18:46:19 thorpej Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.1.1.2 2000/12/29 01:42:57 assar Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -43,7 +43,7 @@
 %{
 
 #include "ftpd_locl.h"
-RCSID("$Id: ftpcmd.y,v 1.1.1.1 2000/06/16 18:46:19 thorpej Exp $");
+RCSID("$Id: ftpcmd.y,v 1.1.1.2 2000/12/29 01:42:57 assar Exp $");
 
 off_t	restart_point;
 
@@ -577,7 +577,7 @@ cmd
 		}
 	| SYST CRLF
 		{
-#if defined(unix) || defined(__unix__) || defined(__unix) || defined(_AIX) || defined(_CRAY)
+#if !defined(WIN32) && !defined(__EMX__) && !defined(__OS2__) && !defined(__CYGWIN32__)
 		    reply(215, "UNIX Type: L%d", NBBY);
 #else
 		    reply(215, "UNKNOWN Type: L%d", NBBY);
@@ -620,7 +620,9 @@ cmd
 					      "%s: not a plain file.", $3);
 				} else {
 					struct tm *t;
-					t = gmtime(&stbuf.st_mtime);
+					time_t mtime = stbuf.st_mtime;
+
+					t = gmtime(&mtime);
 					reply(213,
 					      "%04d%02d%02d%02d%02d%02d",
 					      t->tm_year + 1900,

@@ -21,7 +21,7 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-RCSID("$Id: getrealm.c,v 1.1.1.1 2000/06/16 18:45:53 thorpej Exp $");
+RCSID("$Id: getrealm.c,v 1.1.1.2 2000/12/29 01:43:13 assar Exp $");
 
 #ifndef MATCH_SUBDOMAINS
 #define MATCH_SUBDOMAINS 0

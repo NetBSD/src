@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: inet_ntop.c,v 1.1.1.1 2000/06/16 18:46:01 thorpej Exp $");
+RCSID("$Id: inet_ntop.c,v 1.1.1.2 2000/12/29 01:43:26 assar Exp $");
 #endif
 
 #include <errno.h>

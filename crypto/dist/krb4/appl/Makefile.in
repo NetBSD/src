@@ -1,4 +1,4 @@
-# $Id: Makefile.in,v 1.1.1.1 2000/06/16 18:46:12 thorpej Exp $
+# $Id: Makefile.in,v 1.1.1.2 2000/12/29 01:42:19 assar Exp $
 
 srcdir		= @srcdir@
 VPATH		= @srcdir@
@@ -8,7 +8,7 @@ SHELL		= /bin/sh
 @SET_MAKE@
 
 SUBDIRS		= sample kauth bsd movemail push afsutil \
-		  popper xnlock kx @OTP_dir@ @APPL_KIP_DIR@ ftp telnet
+		  popper xnlock kx kip @OTP_dir@ ftp telnet
 
 all:
 	for i in $(SUBDIRS); \

@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: get_default_principal.c,v 1.1.1.1 2000/06/16 18:45:52 thorpej Exp $");
+RCSID("$Id: get_default_principal.c,v 1.1.1.2 2000/12/29 01:43:13 assar Exp $");
 
 int
 krb_get_default_principal(char *name, char *instance, char *realm)
@@ -42,8 +42,7 @@ krb_get_default_principal(char *name, char *instance, char *realm)
   int ret;
   char *p;
 
-  if ((file = getenv("KRBTKFILE")) == NULL)
-      file = TKT_FILE;  
+  file = tkt_string ();
   
   ret = krb_get_tf_fullname(file, name, instance, realm);
   if(ret == KSUCCESS)

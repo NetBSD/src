@@ -33,7 +33,7 @@
 
 #include "ftp_locl.h"
 #include <krb.h>
-RCSID("$Id: kauth.c,v 1.1.1.1 2000/06/16 18:46:19 thorpej Exp $");
+RCSID("$Id: kauth.c,v 1.1.1.2 2000/12/29 01:42:55 assar Exp $");
 
 void
 kauth(int argc, char **argv)

@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: create_ciph.c,v 1.1.1.1 2000/06/16 18:45:52 thorpej Exp $");
+RCSID("$Id: create_ciph.c,v 1.1.1.2 2000/12/29 01:43:12 assar Exp $");
 
 /*
  * This routine is used by the authentication server to create

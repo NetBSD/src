@@ -5,7 +5,7 @@
  */
 
 #include <popper.h>
-RCSID("$Id: pop_dele.c,v 1.1.1.1 2000/06/16 18:46:25 thorpej Exp $");
+RCSID("$Id: pop_dele.c,v 1.1.1.2 2000/12/29 01:42:46 assar Exp $");
 
 /* 
  *  dele:   Delete a message from the POP maildrop

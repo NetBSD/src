@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: adm_locl.h,v 1.1.1.1 2000/06/16 18:46:05 thorpej Exp $ */
+/* $Id: adm_locl.h,v 1.1.1.2 2000/12/29 01:42:18 assar Exp $ */
 
 #ifndef __adm_locl_h
 #define __adm_locl_h

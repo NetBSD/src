@@ -33,7 +33,7 @@
 
 #include "kx.h"
 
-RCSID("$Id: kxd.c,v 1.1.1.1 2000/06/16 18:46:33 thorpej Exp $");
+RCSID("$Id: kxd.c,v 1.1.1.2 2000/12/29 01:42:51 assar Exp $");
 
 static pid_t wait_on_pid = -1;
 static int   done        = 0;
@@ -73,7 +73,7 @@ fatal (kx_context *kc, int fd, char *format, ...)
     p = msg;
     *p++ = ERROR;
     vsnprintf ((char *)p + 4, sizeof(msg) - 5, format, args);
-    syslog (LOG_ERR, (char *)p + 4);
+    syslog (LOG_ERR, "%s", (char *)p + 4);
     len = strlen ((char *)p + 4);
     p += KRB_PUT_INT (len, p, 4, 4);
     p += len;

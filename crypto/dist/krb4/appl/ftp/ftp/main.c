@@ -36,7 +36,7 @@
  */
 
 #include "ftp_locl.h"
-RCSID("$Id: main.c,v 1.1.1.1 2000/06/16 18:46:19 thorpej Exp $");
+RCSID("$Id: main.c,v 1.1.1.2 2000/12/29 01:42:56 assar Exp $");
 
 int
 main(int argc, char **argv)
@@ -244,8 +244,10 @@ cmdscanner(int top)
 	if (fromatty) {
 	    char *p;
 	    p = readline("ftp> ");
-	    if(p == NULL)
+	    if(p == NULL) {
+		printf("\n");
 		quit(0, 0);
+	    }
 	    strlcpy(line, p, sizeof(line));
 	    add_history(p);
 	    free(p);

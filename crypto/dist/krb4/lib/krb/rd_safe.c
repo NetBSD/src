@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: rd_safe.c,v 1.1.1.1 2000/06/16 18:45:55 thorpej Exp $");
+RCSID("$Id: rd_safe.c,v 1.1.1.2 2000/12/29 01:43:18 assar Exp $");
 
 /* application include files */
 #include "krb-archaeology.h"
@@ -60,7 +60,7 @@ void
 fixup_quad_cksum(void *start, size_t len, des_cblock *key, 
 		 void *new_checksum, void *old_checksum, int little)
 {
-    des_quad_cksum(start, new_checksum, len, 2, key);
+    des_quad_cksum((des_cblock*)start, (des_cblock*)new_checksum, len, 2, key);
     if(HOST_BYTE_ORDER){
 	if(little){
 	    memcpy(old_checksum, new_checksum, 16);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -36,7 +36,7 @@
 #include <string.h>
 #include <histedit.h>
 
-RCSID("$Id: edit_compat.c,v 1.1.1.1 2000/06/16 18:45:49 thorpej Exp $");
+RCSID("$Id: edit_compat.c,v 1.1.1.2 2000/12/29 01:43:47 assar Exp $");
 
 void
 rl_reset_terminal(char *p)
@@ -73,7 +73,8 @@ readline(const char* prompt)
     HistEvent ev;
 #endif
     int count;
-    char *ret;
+    const char *str;
+
     if(e == NULL){
 #ifdef EL_INIT_FOUR
 	e = el_init("", stdin, stdout, stderr);
@@ -91,11 +92,16 @@ readline(const char* prompt)
 	el_set(e, EL_EDITOR, "emacs"); /* XXX? */
     }
     pr = prompt ? prompt : "";
-    ret = (char*)el_gets(e, &count);
-    if (ret) {
+    str = el_gets(e, &count);
+    if (str && count > 0) {
+	char *ret = strdup (str);
+
+	if (ret == NULL)
+	    return NULL;
+
 	if (ret[strlen(ret) - 1] == '\n')
 	    ret[strlen(ret) - 1] = '\0';
-	return strdup(ret);
+	return ret;
     } 
     return NULL;
 }

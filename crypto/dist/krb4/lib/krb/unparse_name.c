@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: unparse_name.c,v 1.1.1.1 2000/06/16 18:45:56 thorpej Exp $");
+RCSID("$Id: unparse_name.c,v 1.1.1.2 2000/12/29 01:43:20 assar Exp $");
 
 static void
 quote_string(char *quote, char *from, char *to)

@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: get_ad_tkt.c,v 1.1.1.1 2000/06/16 18:45:52 thorpej Exp $");
+RCSID("$Id: get_ad_tkt.c,v 1.1.1.2 2000/12/29 01:43:12 assar Exp $");
 
 /*
  * get_ad_tkt obtains a new service ticket from Kerberos, using

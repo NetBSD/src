@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: check_time.c,v 1.1.1.1 2000/06/16 18:45:52 thorpej Exp $");
+RCSID("$Id: check_time.c,v 1.1.1.2 2000/12/29 01:43:11 assar Exp $");
 
 int
 krb_check_tm (struct tm tm)

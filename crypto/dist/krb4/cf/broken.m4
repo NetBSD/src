@@ -1,4 +1,4 @@
-dnl $Id: broken.m4,v 1.1.1.1 2000/06/16 18:46:09 thorpej Exp $
+dnl $Id: broken.m4,v 1.1.1.2 2000/12/29 01:44:09 assar Exp $
 dnl
 dnl
 dnl Same as AC _REPLACE_FUNCS, just define HAVE_func if found in normal

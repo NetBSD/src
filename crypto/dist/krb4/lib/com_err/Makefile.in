@@ -1,5 +1,5 @@
 #
-# $Id: Makefile.in,v 1.1.1.1 2000/06/16 18:45:48 thorpej Exp $
+# $Id: Makefile.in,v 1.1.1.2 2000/12/29 01:43:55 assar Exp $
 #
 
 SHELL = /bin/sh
@@ -35,7 +35,8 @@ PICFLAGS = @PICFLAGS@
  
 LIB_DEPS = @lib_deps_yes@ -lc
 build_symlink_command   = @build_symlink_command@
-install_symlink_command = @install_symlink_command@
+#install_symlink_command = @install_symlink_command@
+install_symlink_command = @true
 
 LIBNAME = $(LIBPREFIX)com_err
 #LIBEXT = @LIBEXT@ Always build archive library!

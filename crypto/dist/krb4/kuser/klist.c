@@ -22,7 +22,7 @@
 
 #include <parse_time.h>
 
-RCSID("$Id: klist.c,v 1.1.1.1 2000/06/16 18:45:32 thorpej Exp $");
+RCSID("$Id: klist.c,v 1.1.1.2 2000/12/29 01:43:08 assar Exp $");
 
 static int option_verbose = 0;
 
@@ -317,7 +317,7 @@ display_srvtab(char *file)
 	printf("%-15s %-15s %-15s %d\n",serv,inst,rlm,vno);
     }
     if (count < 0)
-	warn(file);
+	warn("%s", file);
     close(stab);
 }
 

@@ -1,5 +1,5 @@
 /*
- * $Id: stime.c,v 1.1.1.1 2000/06/16 18:45:56 thorpej Exp $
+ * $Id: stime.c,v 1.1.1.2 2000/12/29 01:43:19 assar Exp $
  *
  * Copyright 1985, 1986, 1987, 1988 by the Massachusetts Institute
  * of Technology.
@@ -10,7 +10,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: stime.c,v 1.1.1.1 2000/06/16 18:45:56 thorpej Exp $");
+RCSID("$Id: stime.c,v 1.1.1.2 2000/12/29 01:43:19 assar Exp $");
 
 /*
  * Given a pointer to a long containing the number of seconds
