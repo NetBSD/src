@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.288 2001/01/08 20:08:17 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.289 2001/01/08 21:47:38 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.285 2001/01/08 20:07:21 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.286 2001/01/08 21:47:10 thorpej Exp 
  */
 
 /*
@@ -350,6 +350,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Accton Technology",
 	    "MPX 5030/5038 Ethernet",
+	},
+	{
+	    PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_EN2242,
+	    0,
+	    "Accton Technology",
+	    "EN2242 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_ACER, PCI_PRODUCT_ACER_M1435,
