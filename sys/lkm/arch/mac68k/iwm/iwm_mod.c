@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_mod.c,v 1.4 1999/03/31 20:45:06 scottr Exp $	*/
+/*	$NetBSD: iwm_mod.c,v 1.5 2001/11/12 23:22:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -30,6 +30,10 @@
  * Sony (floppy disk) driver for Macintosh m68k, module entry.
  * This is derived from Terry Lambert's LKM examples.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iwm_mod.c,v 1.5 2001/11/12 23:22:57 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/systm.h>
