@@ -1247,6 +1247,12 @@ int can_unicast_without_arp ()
 	return 1;
 }
 
+int can_receive_unicast_unconfigured (ip)
+	struct interface_info *ip;
+{
+	return 1;
+}
+
 void maybe_setup_fallback ()
 {
 	struct interface_info *fbi;

@@ -50,7 +50,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: socket.c,v 1.1.1.7 1999/02/24 04:11:03 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: socket.c,v 1.1.1.8 1999/03/29 23:00:53 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -267,6 +267,16 @@ void fallback_discard (protocol)
 int can_unicast_without_arp ()
 {
 	return 0;
+}
+
+int can_receive_unicast_unconfigured (ip)
+	struct interface_info *ip;
+{
+#if defined (SOCKET_CAN_RECEIVE_UNICAST_UNCONFIGURED)
+	return 1;
+#else
+	return 0;
+#endif
 }
 
 /* If we have SO_BINDTODEVICE, set up a fallback interface; otherwise,

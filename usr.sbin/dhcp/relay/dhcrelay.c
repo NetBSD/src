@@ -42,12 +42,12 @@
 
 #ifndef lint
 static char ocopyright [] =
-"$Id: dhcrelay.c,v 1.1.1.9 1999/03/26 17:49:25 mellon Exp $ Copyright (c) 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcrelay.c,v 1.1.1.10 1999/03/29 23:00:56 mellon Exp $ Copyright (c) 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
 
-static void usage PROTO ((void));
+static void usage PROTO ((char *));
 
 TIME cur_time;
 TIME default_lease_time = 43200; /* 12 hours... */
@@ -76,9 +76,9 @@ struct server_list {
 static char copyright [] =
 "Copyright 1997, 1998, 1999 The Internet Software Consortium.";
 static char arr [] = "All rights reserved.";
-static char message [] = "Internet Software Consortium DHCP Relay Agent V2.0b1pl19";
-static char contrib [] = "\nPlease contribute if you find this software useful.";
-static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html\n";
+static char message [] = "Internet Software Consortium DHCP Relay Agent V2.0b1pl20";
+static char contrib [] = "Please contribute if you find this software useful.";
+static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html";
 
 int main (argc, argv, envp)
 	int argc;
@@ -89,12 +89,20 @@ int main (argc, argv, envp)
 	struct server_list *sp = (struct server_list *)0;
 	int no_daemon = 0;
 	int quiet = 0;
+	char *s;
 
+	s = strchr (argv [0], '/');
+	if (!s)
+		s = argv [0];
+	else
+		s++;
+
+	/* Initially, log errors to stderr as well as to syslogd. */
 #ifdef SYSLOG_4_2
-	openlog ("dhcrelay", LOG_NDELAY);
-	log_priority = LOG_DAEMON;
+	openlog (s, LOG_NDELAY);
+	log_priority = DHCPD_LOG_FACILITY;
 #else
-	openlog ("dhcrelay", LOG_NDELAY, LOG_DAEMON);
+	openlog (s, LOG_NDELAY, DHCPD_LOG_FACILITY);
 #endif
 
 #if !(defined (DEBUG) || defined (SYSLOG_4_2))
@@ -104,10 +112,14 @@ int main (argc, argv, envp)
 	for (i = 1; i < argc; i++) {
 		if (!strcmp (argv [i], "-p")) {
 			if (++i == argc)
-				usage ();
+				usage (s);
 			local_port = htons (atoi (argv [i]));
 			debug ("binding to user-specified port %d",
 			       ntohs (local_port));
+		} else if (!strcmp (argv [i], "-pf")) {
+			if (++i == argc)
+				usage (s);
+			path_dhcrelay_pid = argv [i];
 		} else if (!strcmp (argv [i], "-d")) {
 			no_daemon = 1;
  		} else if (!strcmp (argv [i], "-i")) {
@@ -118,7 +130,7 @@ int main (argc, argv, envp)
 				error ("Insufficient memory to %s %s",
 				       "record interface", argv [i]);
 			if (++i == argc) {
-				usage ();
+				usage (s);
 			}
 			memset (tmp, 0, sizeof *tmp);
 			strcpy (tmp -> name, argv [i]);
@@ -129,7 +141,7 @@ int main (argc, argv, envp)
 			quiet = 1;
 			quiet_interface_discovery = 1;
  		} else if (argv [i][0] == '-') {
- 		    usage ();
+ 		    usage (s);
  		} else {
 			struct hostent *he;
 			struct in_addr ia, *iap = (struct in_addr *)0;
@@ -160,8 +172,10 @@ int main (argc, argv, envp)
 		note (message);
 		note (copyright);
 		note (arr);
+		note ("");
 		note (contrib);
 		note (url);
+		note ("");
 	}
 
 	/* Default to the DHCP/BOOTP port. */
@@ -177,7 +191,7 @@ int main (argc, argv, envp)
   
 	/* We need at least one server. */
 	if (!sp) {
-		usage ();
+		usage (s);
 	}
 
 	/* Set up the server sockaddrs. */
@@ -336,10 +350,19 @@ void relay (ip, packet, length, from_port, from, hfrom)
 				 
 }
 
-static void usage ()
+static void usage (appname)
+	char *appname;
 {
-	warn ("Usage: dhcrelay [-i] [-d] [-i if0] [...-i ifN] [-p <port>]");
-	error ("       [server1 [... serverN]]");
+	note (message);
+	note (copyright);
+	note (arr);
+	note ("");
+	note (contrib);
+	note (url);
+	note ("");
+
+	warn ("Usage: %s [-i] [-d] [-i if0] [...-i ifN] [-p <port>]", appname);
+	error ("      [-pf pidfilename] [server1 [... serverN]]");
 }
 
 void cleanup ()

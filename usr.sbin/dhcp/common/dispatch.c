@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dispatch.c,v 1.1.1.10 1999/03/26 17:49:21 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dispatch.c,v 1.1.1.11 1999/03/29 23:00:51 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -74,7 +74,6 @@ void discover_interfaces (state)
 	struct ifreq ifr;
 	int i;
 	int sock;
-	int address_count = 0;
 	struct subnet *subnet;
 	struct shared_network *share;
 	struct sockaddr_in foo;
@@ -139,7 +138,10 @@ void discover_interfaces (state)
 		/* Skip loopback, point-to-point and down interfaces,
 		   except don't skip down interfaces if we're trying to
 		   get a list of configurable interfaces. */
-		if (!(ifr.ifr_flags & IFF_BROADCAST) ||
+		if ((ifr.ifr_flags & IFF_LOOPBACK) ||
+#ifdef HAVE_IFF_POINTOPOINT
+		    (ifr.ifr_flags & IFF_POINTOPOINT) ||
+#endif
 		    (!(ifr.ifr_flags & IFF_UP) &&
 		     state != DISCOVER_UNCONFIGURED))
 			continue;

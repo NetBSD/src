@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: options.c,v 1.1.1.6 1999/03/26 17:49:22 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: options.c,v 1.1.1.7 1999/03/29 23:00:52 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #define DHCP_OPTION_DATA
@@ -119,7 +119,8 @@ void parse_option_buffer (packet, buffer, length)
 		/* If we haven't seen this option before, just make
 		   space for it and copy it there. */
 		if (!packet -> options [code].data) {
-			if (!(t = (unsigned char *)malloc (len + 1)))
+			if (!(t = ((unsigned char *)
+				   dmalloc (len + 1, "parse_option_buffer"))))
 				error ("Can't allocate storage for option %s.",
 				       dhcp_options [code].name);
 			/* Copy and NUL-terminate the option (in case it's an
@@ -132,10 +133,9 @@ void parse_option_buffer (packet, buffer, length)
 			/* If it's a repeat, concatenate it to whatever
 			   we last saw.   This is really only required
 			   for clients, but what the heck... */
-			t = (unsigned char *)
-				malloc (len
-					+ packet -> options [code].len
-					+ 1);
+			t = ((unsigned char *)
+			     dmalloc (len + packet -> options [code].len + 1,
+				      "parse_option_buffer");
 			if (!t)
 				error ("Can't expand storage for option %s.",
 				       dhcp_options [code].name);
@@ -145,7 +145,8 @@ void parse_option_buffer (packet, buffer, length)
 				&s [2], len);
 			packet -> options [code].len += len;
 			t [packet -> options [code].len] = 0;
-			free (packet -> options [code].data);
+			dfree (packet -> options [code].data,
+			       "parse_option_buffer");
 			packet -> options [code].data = t;
 		}
 		s += len + 2;
@@ -627,5 +628,12 @@ void do_packet (interface, packet, len, from_port, from, hfrom)
 		dhcp (&tp);
 	else
 		bootp (&tp);
+
+	/* Free the data associated with the options. */
+	for (i = 0; i < 256; i++) {
+		if (packet -> options [i].len &&
+		    packet -> options [i].data)
+			dfree (packet -> options [i].data, "do_packet");
+	}
 }
 
