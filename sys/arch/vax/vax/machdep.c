@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.17 1995/09/19 23:18:26 thorpej Exp $  */
+/* $NetBSD: machdep.c,v 1.18 1995/10/02 12:33:33 ragge Exp $  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -61,6 +61,7 @@
 #include "sys/callout.h"
 #include "sys/device.h"
 #include "sys/exec.h"
+#include "sys/mount.h"
 #ifdef SYSVMSG
 #include "sys/msg.h"
 #endif
@@ -347,6 +348,7 @@ setstatclockrate()
 consinit()
 {
 #ifdef DDB
+	db_machine_init();
 	ddb_init();
 #endif
 }
