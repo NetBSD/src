@@ -1,4 +1,4 @@
-.\" $NetBSD: mca.4,v 1.15 2001/12/18 13:33:18 ad Exp $
+.\" $NetBSD: mca.4,v 1.16 2002/03/24 18:50:08 jdolecek Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,14 +61,14 @@ drivers, sorted by device type and driver name:
 .\"
 .Ss SCSI controllers
 .Bl -tag -width speaker -offset indent
+.It aha
+Adaptec AHA-1640
+.Tn SCSI
+interface
 .It esp
 NCR 53C90
 .Tn SCSI
 Adapter
-.It aha
-Adaptec AHA-1640
-.Tn SCSI
-interface (not tested recently)
 .El
 .\"
 .Ss Disk and tape controllers
