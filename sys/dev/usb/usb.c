@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.12 1999/01/10 19:13:16 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.13 1999/06/30 06:44:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
 #include <sys/malloc.h>
 #if defined(__NetBSD__)
 #include <sys/device.h>
+#include <sys/kthread.h>
 #elif defined(__FreeBSD__)
 #include <sys/module.h>
 #include <sys/bus.h>
@@ -61,15 +62,17 @@
 #include <sys/select.h>
 
 #include <dev/usb/usb.h>
+#include <dev/usb/usbdi.h>
+#include <dev/usb/usbdi_util.h>
 
 #if defined(__FreeBSD__)
 MALLOC_DEFINE(M_USB, "USB", "USB");
 MALLOC_DEFINE(M_USBDEV, "USBdev", "USB device");
+MALLOC_DEFINE(M_USBHC, "USBHC", "USB host controller");
 
 #include "usb_if.h"
 #endif /* defined(__FreeBSD__) */
 
-#include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_quirks.h>
 
@@ -93,6 +96,8 @@ struct usb_softc {
 	char sc_running;
 	char sc_exploring;
 	struct selinfo sc_consel;	/* waiting for connect change */
+	int shutdown;
+	struct proc *event_thread;
 };
 
 #if defined(__NetBSD__)
@@ -116,6 +121,8 @@ struct cdevsw usb_cdevsw = {
 #endif
 
 usbd_status usb_discover __P((struct usb_softc *));
+void	usb_create_event_thread __P((void *));
+void	usb_event_thread __P((void *));
 
 USB_DECLARE_DRIVER_INIT(usb, DEVMETHOD(bus_print_child, usbd_print_child));
 
@@ -149,7 +156,7 @@ USB_ATTACH(usb)
 	sc->sc_running = 1;
 	sc->sc_bus->use_polling = 1;
 	sc->sc_port.power = USB_MAX_POWER;
-	r = usbd_new_device(&sc->sc_dev, sc->sc_bus, 0, 0, 0, &sc->sc_port);
+	r = usbd_new_device(&sc->sc_dev, sc->sc_bus, 0,0,0, &sc->sc_port);
 
 	if (r == USBD_NORMAL_COMPLETION) {
 		dev = sc->sc_port.device;
@@ -168,7 +175,43 @@ USB_ATTACH(usb)
 	}
 	sc->sc_bus->use_polling = 0;
 
+	kthread_create_deferred(usb_create_event_thread, sc);
+
 	USB_ATTACH_SUCCESS_RETURN;
+}
+
+void
+usb_create_event_thread(arg)
+	void *arg;
+{
+	struct usb_softc *sc = arg;
+
+	if (kthread_create(usb_event_thread, sc, &sc->event_thread,
+			   "%s", sc->sc_dev.dv_xname)) {
+		printf("%s: unable to create event thread for\n",
+		       sc->sc_dev.dv_xname);
+		panic("usb_create_event_thread");
+	}
+}
+
+void
+usb_event_thread(arg)
+	void *arg;
+{
+	struct usb_softc *sc = arg;
+
+	while (!sc->shutdown) {
+		(void)tsleep(&sc->sc_bus->needs_explore, 
+			     PWAIT, "usbevt", hz*30);
+		DPRINTFN(2,("usb_event_thread: woke up\n"));
+		usb_discover(sc);
+	}
+	sc->event_thread = 0;
+
+	/* In case parent is waiting for us to exit. */
+	wakeup(sc);
+
+	kthread_exit(0);
 }
 
 #if defined(__NetBSD__)
@@ -226,9 +269,11 @@ usbioctl(dev, cmd, data, flag, p)
 		usbdebug = uhcidebug = ohcidebug = *(int *)data;
 		break;
 #endif
+#if 0
 	case USB_DISCOVER:
 		usb_discover(sc);
 		break;
+#endif
 	case USB_REQUEST:
 	{
 		struct usb_ctl_request *ur = (void *)data;
@@ -374,21 +419,22 @@ usb_discover(sc)
 
 	/* Explore device tree from the root */
 	/* We need mutual exclusion while traversing the device tree. */
-	s = splusb();
-	while (sc->sc_exploring)
-		tsleep(&sc->sc_exploring, PRIBIO, "usbdis", 0);
-	sc->sc_exploring = 1;
-	sc->sc_bus->needs_explore = 0;
-	splx(s);
-
-	sc->sc_bus->root_hub->hub->explore(sc->sc_bus->root_hub);
-
-	s = splusb();
-	sc->sc_exploring = 0;
-	wakeup(&sc->sc_exploring);
-	splx(s);
-	/* XXX should we start over if sc_needsexplore is set again? */
-	return (0);
+	do {
+		s = splusb();
+		while (sc->sc_exploring)
+			tsleep(&sc->sc_exploring, PRIBIO, "usbdis", 0);
+		sc->sc_exploring = 1;
+		sc->sc_bus->needs_explore = 0;
+		splx(s);
+		
+		sc->sc_bus->root_hub->hub->explore(sc->sc_bus->root_hub);
+		
+		s = splusb();
+		sc->sc_exploring = 0;
+		wakeup(&sc->sc_exploring);
+		splx(s);
+	} while (sc->sc_bus->needs_explore);
+	return (USBD_NORMAL_COMPLETION);
 }
 
 void
@@ -397,22 +443,27 @@ usb_needs_explore(bus)
 {
 	bus->needs_explore = 1;
 	selwakeup(&bus->usbctl->sc_consel);
+	wakeup(&bus->needs_explore);
 }
 
-#if defined(__FreeBSD__)
 int
-usb_detach(device_t self)
+usb_activate(self, act)
+	struct device *self;
+	enum devact act;
 {
-	struct usb_softc *sc = device_get_softc(self);
-	char *devinfo = (char *) device_get_desc(self);
-
-	if (devinfo) {
-		device_set_desc(self, NULL);
-		free(devinfo, M_USB);
-	}
-
+	panic("usb_activate\n");
 	return (0);
 }
 
+int
+usb_detach(self, flags)
+	struct device  *self;
+	int flags;
+{
+	panic("usb_detach\n");
+	return (0);
+}
+
+#if defined(__FreeBSD__)
 DRIVER_MODULE(usb, root, usb_driver, usb_devclass, 0, 0);
 #endif

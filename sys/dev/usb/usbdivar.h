@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.21 1999/06/14 17:09:58 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.22 1999/06/30 06:44:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ struct usbd_device {
 	usb_config_descriptor_t *cdesc;	/* full config descr */
 	struct usbd_quirks     *quirks;
 	struct usbd_hub	       *hub; /* only if this is a hub */
-	void		       *softc;	/* device softc if attached */
+	struct device	      **subdevs;	/* sub-devices, 0 terminated */
 };
 
 struct usbd_interface {
@@ -134,10 +134,8 @@ struct usbd_pipe {
 	SIMPLEQ_HEAD(, usbd_request) queue;
 	LIST_ENTRY(usbd_pipe)	next;
 
-	void		      (*disco) __P((void *));
-	void		       *discoarg;
-
 	usbd_request_handle     intrreqh; /* used for repeating requests */
+	char			repeat;
 
 	/* Filled by HC driver. */
 	struct usbd_methods    *methods;
@@ -192,6 +190,7 @@ usbd_status	usb_insert_transfer __P((usbd_request_handle reqh));
 void		usb_start_next __P((usbd_pipe_handle pipe));
 usbd_status	usbd_fill_iface_data __P((usbd_device_handle dev, 
 					  int i, int a));
+void		usb_free_device __P((usbd_device_handle));
 
 /* Routines from usb.c */
 int		usb_bus_count __P((void));

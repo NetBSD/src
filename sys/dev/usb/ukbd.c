@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.36 1999/06/26 03:14:25 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.37 1999/06/30 06:44:23 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
+
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
@@ -188,7 +189,6 @@ struct ukbd_softc {
 	struct ukbd_data sc_odata;
 
 	char sc_enabled;
-	char sc_disconnected;		/* device is gone */
 
 	int sc_console_keyboard;	/* we are the console keyboard */
 
@@ -226,7 +226,6 @@ const struct wskbd_consops ukbd_consops = {
 #endif
 
 void	ukbd_intr __P((usbd_request_handle, usbd_private_handle, usbd_status));
-void	ukbd_disco __P((void *));
 
 int	ukbd_enable __P((void *, int));
 void	ukbd_set_leds __P((void *, int));
@@ -282,7 +281,6 @@ USB_ATTACH(ukbd)
 	int i;
 #endif
 	
-	sc->sc_disconnected = 1;
 	sc->sc_iface = iface;
 	id = usbd_get_interface_descriptor(iface);
 	usbd_devinfo(uaa->device, 0, devinfo);
@@ -327,7 +325,6 @@ USB_ATTACH(ukbd)
 	usbd_set_idle(iface, 0, 0);
 
 	sc->sc_ep_addr = ed->bEndpointAddress;
-	sc->sc_disconnected = 0;
 
 	/*
 	 * Remember if we're the console keyboard.
@@ -380,48 +377,6 @@ USB_ATTACH(ukbd)
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
-#if defined(__FreeBSD__)
-int
-ukbd_detach(device_t self)
-{
-	struct ukbd_softc *sc = device_get_softc(self);
-	char *devinfo = (char *) device_get_desc(self);
-
-	if (sc->sc_enabled)
-		return (ENXIO);
-
-	if (devinfo) {
-		device_set_desc(self, NULL);
-		free(devinfo, M_USB);
-	}
-
-	return (0);
-}
-#endif
-
-void
-ukbd_disco(p)
-	void *p;
-{
-	struct ukbd_softc *sc = p;
-
-	DPRINTF(("ukbd_disco: sc=%p\n", sc));
-	usbd_abort_pipe(sc->sc_intrpipe);
-	sc->sc_disconnected = 1;
-
-	if (sc->sc_console_keyboard) {
-		/*
-		 * XXX Should probably disconnect our consops,
-		 * XXX and either notify some other keyboard that
-		 * XXX it can now be the console, or if there aren't
-		 * XXX any more USB keyboards, set ukbd_is_console
-		 * XXX back to 1 so that the next USB keyboard attached
-		 * XXX to the system will get it.
-		 */
-		panic("ukbd_disco: console keyboard");
-	}
-}
-
 int
 ukbd_enable(v, on)
 	void *v;
@@ -443,7 +398,6 @@ ukbd_enable(v, on)
 					sizeof(sc->sc_ndata), ukbd_intr);
 		if (r != USBD_NORMAL_COMPLETION)
 			return (EIO);
-		usbd_set_disco(sc->sc_intrpipe, ukbd_disco, sc);
 	} else {
 		/* Disable interrupts. */
 		usbd_abort_pipe(sc->sc_intrpipe);
@@ -453,6 +407,40 @@ ukbd_enable(v, on)
 	}
 
 	return (0);
+}
+
+int
+ukbd_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	return (0);
+}
+
+int
+ukbd_detach(self, flags)
+	struct device  *self;
+	int flags;
+{
+	struct ukbd_softc *sc = (struct ukbd_softc *)self;
+	int rv = 0;
+
+	DPRINTF(("ukbd_detach: sc=%p flags=%d\n", sc, flags));
+	if (sc->sc_console_keyboard) {
+		/*
+		 * XXX Should probably disconnect our consops,
+		 * XXX and either notify some other keyboard that
+		 * XXX it can now be the console, or if there aren't
+		 * XXX any more USB keyboards, set ukbd_is_console
+		 * XXX back to 1 so that the next USB keyboard attached
+		 * XXX to the system will get it.
+		 */
+		panic("ukbd_detach: console keyboard");
+	}
+	/* No need to do reference counting of ums, wskbd has all the goo. */
+	if (sc->sc_wskbddev)
+		rv = config_detach(sc->sc_wskbddev, flags);
+	return (rv);
 }
 
 void
