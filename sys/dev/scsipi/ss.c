@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.32 2001/01/01 18:28:49 augustss Exp $	*/
+/*	$NetBSD: ss.c,v 1.33 2001/01/01 18:34:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -55,6 +55,7 @@
 
 #define SSMODE(z)	( minor(z)       & 0x03)
 #define SSUNIT(z)	((minor(z) >> 4)       )
+#define SSNMINOR 16
 
 /*
  * If the mode is 3 (e.g. minor = 3,7,11,15)
@@ -194,7 +195,7 @@ ssdetach(struct device *self, int flags)
 
 	/* Nuke the vnodes for any open instances */
 	mn = SSUNIT(self->dv_unit);
-	vdevgone(cmaj, mn, mn+3, VCHR);
+	vdevgone(cmaj, mn, mn+SSNMINOR-1, VCHR);
 
 	return (0);
 }
