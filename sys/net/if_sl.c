@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.67 2001/01/11 21:15:58 thorpej Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.68 2001/01/11 22:43:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -503,6 +503,7 @@ sl_btom(sc, len)
 	}
 	MCLGET(sc->sc_mbuf, M_DONTWAIT);
 	if ((sc->sc_mbuf->m_flags & M_EXT) == 0) {
+		m_freem(sc->sc_mbuf);
 		sc->sc_mbuf = m;
 		return (NULL);
 	}
