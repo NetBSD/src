@@ -1,10 +1,11 @@
-/*	$NetBSD: ctl.c,v 1.20 1998/08/21 19:52:39 augustss Exp $	*/
+/*	$NetBSD: ctl.c,v 1.21 1998/11/25 22:17:08 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Author: Lennart Augustsson
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Lennart Augustsson (augustss@netbsd.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

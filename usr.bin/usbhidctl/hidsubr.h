@@ -1,10 +1,11 @@
-/*	$NetBSD: hidsubr.h,v 1.1 1998/07/13 11:14:04 augustss Exp $	*/
+/*	$NetBSD: hidsubr.h,v 1.2 1998/11/25 22:17:08 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Author: Lennart Augustsson
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Lennart Augustsson (augustss@netbsd.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
