@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.18 2003/01/18 08:54:22 thorpej Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.19 2003/01/23 12:41:33 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.18 2003/01/18 08:54:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.19 2003/01/23 12:41:33 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,10 +160,12 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 
 			case 'a':
 				db_printf("%10.10s %18p %18p %18p\n",
-				    p->p_comm, p, l->l_addr, p->p_vmspace);
+				    p->p_comm, p,
+				    l != NULL ? l->l_addr : 0,
+				    p->p_vmspace);
 				break;
 			case 'l':
-				do {
+				 while (l != NULL) {
 					db_printf("%c%4d %d %#7x %18p %18p %s\n",
 					    " >"[cl == l], l->l_lid,
 					    l->l_stat, l->l_flag, l, 
@@ -174,28 +176,29 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 					l = LIST_NEXT(l, l_sibling);
 					if (l)
 						db_printf("%11s","");
-				} while (l != NULL);
+				}
 				break;
 			case 'n':
 				db_printf("%8d %8d %10d %d %#7x %4d %16s %7.7s\n",
 				    pp ? pp->p_pid : -1, p->p_pgrp->pg_id,
 				    p->p_cred->p_ruid, p->p_stat, p->p_flag,
 				    p->p_nlwps, p->p_comm,
-				    (p->p_nlwps > 1) ? "*" : (
+				    (p->p_nlwps != 1) ? "*" : (
 				    (l->l_wchan && l->l_wmesg) ? 
 				    l->l_wmesg : ""));
 				break;
 
 			case 'w':
 				db_printf("%10s %8s %4d", p->p_comm,
-				    p->p_emul->e_name,l->l_priority);
+				    p->p_emul->e_name,
+				    (l != NULL) ? l->l_priority : -1);
 				calcru(p, &tv[0], &tv[1], NULL);
 				for (i = 0; i < 2; ++i) {
 					db_printf("%4ld.%1ld",
 					    (long)tv[i].tv_sec,
 					    (long)tv[i].tv_usec/100000);
 				}
-				if (p->p_nlwps <= 1) {
+				if (p->p_nlwps == 1) {
 				if (l->l_wchan && l->l_wmesg) {
 					db_printf(" %-12s", l->l_wmesg);
 					db_printsym(
