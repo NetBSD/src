@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.118 2003/02/23 08:02:08 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.119 2003/02/23 09:15:05 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3614,7 +3614,7 @@ usr.bin/progress/progress.c			1.6
 
 distrib/utils/sysinst/util.c			revert 1.81
 
-	Revert rev 1.81 out for now.
+	Revert rev 1.81 out for now from ticket 1115.
 	progess(1) and sysinst are not getting along and this needs some 
 	work before it's going to work correctly. Backing it out here will 
 	allow future integration without redoing the whole pullup 
@@ -3747,3 +3747,10 @@ sbin/fsck_ffs/setup.c				1.57
 	[fvdl, ticket #1180]
 
 Moved RC2 tag for this file.
+
+distrib/utils/sysinst/msg.mi.en			1.86.2.3->1.86.2.2 (downgrade)
+distrib/utils/sysinst/msg.mi.fr			1.43.2.2->1.43.2.1 (downgrade)
+
+	Rollback changes from ticket 1115 so the prompts look correct.
+
+Moved RC2 tags for these 2 files
