@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.27 2000/05/15 08:32:07 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.28 2000/06/12 21:10:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -457,6 +457,8 @@ wdc_ata_bio_intr(chp, xfer, irq)
 		wdc_ata_bio_done(chp, xfer);
 		return 1;
 	}
+	if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+		chp->wdc->irqack(chp);
 	
 	drv_err = wdc_ata_err(drvp, ata_bio);
 
@@ -654,6 +656,8 @@ again:
 		errstring = "recal";
 		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, delay))
 			goto timeout;
+		if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+			chp->wdc->irqack(chp);
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
 	/* fall through */
@@ -674,6 +678,8 @@ again:
 		errstring = "piomode";
 		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, delay))
 			goto timeout;
+		if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+			chp->wdc->irqack(chp);
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
 	/* fall through */
@@ -694,6 +700,8 @@ again:
 		errstring = "dmamode";
 		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, delay))
 			goto timeout;
+		if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+			chp->wdc->irqack(chp);
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
 	/* fall through */
@@ -714,6 +722,8 @@ again:
 		errstring = "geometry";
 		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, delay))
 			goto timeout;
+		if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+			chp->wdc->irqack(chp);
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
 		/* fall through */
@@ -731,6 +741,8 @@ again:
 		errstring = "setmulti";
 		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, delay))
 			goto timeout;
+		if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+			chp->wdc->irqack(chp);
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
 		/* fall through */
