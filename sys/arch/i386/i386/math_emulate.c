@@ -1,4 +1,9 @@
-/* [expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj] */
+/*
+ * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
+ *
+ *	$Id: math_emulate.c,v 1.3 1993/05/20 14:33:45 cgd Exp $
+ */
+
 /*
  * linux/kernel/math/math_emulate.c
  *
@@ -29,16 +34,6 @@
  * The other files also don't care about ST(x) etc - they just get addresses
  * to 80-bit temporary reals, and do with them as they please. I wanted to
  * hide most of the 387-specific things here.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         2       00060
- * --------------------         -----   ----------------------
- *
- * 19 Sep 92	Ishii Masahiro		Fix 0x1fd instruction
- *		kym@bingsuns.cc.binghamton.edu		Fix fscale
- * 28 Nov 92	Poul-Henning Kamp	Reduce kernel size if you have
- *					a 387 or 486 chip
  */
 
 #include "machine/cpu.h"
@@ -78,10 +73,6 @@ put_fs_long(unsigned long val, unsigned long *adr) { (void)suword(adr,val); }
 
 math_emulate(struct trapframe * info)
 {
-#if defined(i486) || defined(i387)
-	panic("math_emulate(), shouldn't happen with -Di486 or -Di387");
-}
-#else
 	unsigned short code;
 	temp_real tmp;
 	char * address;
@@ -1484,4 +1475,3 @@ void int_to_real(const temp_int * a, temp_real * b)
 			:"0" (b->a),"1" (b->b));
 	}
 }
-#endif /* defined(i486) || defined(i387) */
