@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.44 2004/11/28 06:57:14 jmc Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.45 2004/12/11 09:34:08 jmc Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -65,6 +65,12 @@
 #ifdef _NETBSD_SOURCE
 #error _NETBSD_SOURCE is *not* to be defined.
 #endif
+
+/* Need this since we can't depend on NetBSD's version to be around */
+#ifdef __UNCONST
+#undef __UNCONST
+#endif
+#define __UNCONST(a)   ((void *)(unsigned long)(const void *)(a))
 
 /* We don't include <pwd.h> here, so that "compat_pwd.h" works. */
 struct passwd;
