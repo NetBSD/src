@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.75 1999/12/13 16:30:37 itojun Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.76 1999/12/16 02:21:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.75 1999/12/13 16:30:37 itojun Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.76 1999/12/16 02:21:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -265,17 +265,19 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int addrlen, ch, on = 1, tos, keepalive;
+	int		addrlen, ch, on = 1, tos, keepalive;
+	char		thost[MAXHOSTNAMELEN+6];  /* hostname + " ftpd" */
 #ifdef KERBEROS5
-	krb5_error_code kerror;
+	krb5_error_code	kerror;
 #endif
 
 	debug = 0;
 	logging = 0;
 	sflag = 0;
 	(void)strcpy(confdir, _DEFAULT_CONFDIR);
+	hostname[0] = '\0';
 
-	while ((ch = getopt(argc, argv, "a:c:C:dlst:T:u:v46")) != -1) {
+	while ((ch = getopt(argc, argv, "a:c:C:dh:lst:T:u:v46")) != -1) {
 		switch (ch) {
 		case 'a':
 			anondir = optarg;
@@ -292,6 +294,10 @@ main(argc, argv)
 		case 'd':
 		case 'v':		/* deprecated */
 			debug = 1;
+			break;
+
+		case 'h':
+			strlcpy(hostname, optarg, sizeof(hostname));
 			break;
 
 		case 'l':
@@ -329,7 +335,9 @@ main(argc, argv)
 	 * LOG_NDELAY sets up the logging connection immediately,
 	 * necessary for anonymous ftp's that chroot and can't do it later.
 	 */
-	openlog("ftpd", LOG_PID | LOG_NDELAY, LOG_FTP);
+	snprintf(thost, sizeof(thost), "%s%sftpd", hostname,
+	    hostname[0] != '\0' ? " " : "");
+	openlog(thost, LOG_PID | LOG_NDELAY, LOG_FTP);
 	addrlen = sizeof(his_addr); /* xxx */
 	if (getpeername(0, (struct sockaddr *)&his_addr, &addrlen) < 0) {
 		syslog(LOG_ERR, "getpeername (%s): %m",argv[0]);
@@ -447,8 +455,10 @@ main(argc, argv)
 	}
 	(void)format_file(conffilename(_PATH_FTPWELCOME), 220);
 		/* reply(220,) must follow */
-	(void)gethostname(hostname, sizeof(hostname));
-	hostname[sizeof(hostname) - 1] = '\0';
+	if (hostname[0] == '\0') {
+		(void)gethostname(hostname, sizeof(hostname));
+		hostname[sizeof(hostname) - 1] = '\0';
+	}
 	reply(220, "%s FTP server (%s) ready.", hostname, version);
 
 	curclass.timeout = 300;		/* 5 minutes, as per login(1) */
@@ -609,7 +619,7 @@ checkuser(fname, name, def, nofile, retclass)
 	FILE	*fd;
 	int	 retval;
 	char	*glob, *perm, *class, *buf, *p;
-	size_t	 len;
+	size_t	 len, line;
 
 	retval = def;
 	if (retclass != NULL)
@@ -617,8 +627,9 @@ checkuser(fname, name, def, nofile, retclass)
 	if ((fd = fopen(conffilename(fname), "r")) == NULL)
 		return nofile;
 
+	line = 0;
 	for (;
-	    (buf = fparseln(fd, &len, NULL, NULL, FPARSELN_UNESCCOMM |
+	    (buf = fparseln(fd, &len, &line, NULL, FPARSELN_UNESCCOMM |
 	    		FPARSELN_UNESCCONT | FPARSELN_UNESCESC)) != NULL;
 	    free(buf), buf = NULL) {
 		glob = perm = class = NULL;
@@ -635,6 +646,15 @@ checkuser(fname, name, def, nofile, retclass)
 		NEXTWORD(p, class);
 		if (EMPTYSTR(glob))
 			continue;
+		if (!EMPTYSTR(class)) {
+			if (strcasecmp(class, "all") == 0 ||
+			    strcasecmp(class, "none") == 0) {
+				syslog(LOG_WARNING,
+		"%s line %d: illegal user-defined class `%s' - skipping entry",
+					    fname, (int)line, class);
+				continue;
+			}
+		}
 
 					/* have a host specifier */
 		if ((p = strchr(glob, '@')) != NULL) {
