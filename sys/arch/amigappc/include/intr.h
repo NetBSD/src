@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 2003/06/16 20:00:57 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.13 2003/12/09 15:47:17 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,8 +45,10 @@
 #ifndef _MACHINE_INTR_H_
 #define _MACHINE_INTR_H_
 
+#ifdef KERNEL
 #include <amiga/amiga/isr.h>
 #include <amiga/include/mtpr.h>
+#endif
 
 /* ADAM: commented out
 #define IPL_SOFTSERIAL 1
