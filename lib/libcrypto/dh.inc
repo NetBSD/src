@@ -1,8 +1,8 @@
-#	$NetBSD: dh.inc,v 1.1.1.1.2.1 2000/06/22 06:55:04 thorpej Exp $
+#	$NetBSD: dh.inc,v 1.1.1.1.2.2 2000/07/17 05:59:58 mrg Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
-#	SRCS extracted from ../../dist/openssl/crypto/dh/Makefile.ssl
+#	SRCS extracted from /home/current/src/lib/libcrypto/../../crypto/dist/openssl/crypto/dh/Makefile.ssl
 #
 
 .PATH:	${OPENSSLSRC}/crypto/dh
