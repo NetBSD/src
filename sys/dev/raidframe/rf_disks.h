@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.h,v 1.7 2000/03/27 03:01:33 oster Exp $	*/
+/*	$NetBSD: rf_disks.h,v 1.8 2000/03/27 03:25:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -97,6 +97,7 @@ int rf_ConfigureDisk(RF_Raid_t * raidPtr, char *buf, RF_RaidDisk_t * diskPtr,
 		     RF_RowCol_t row, RF_RowCol_t col);
 int rf_AutoConfigureDisks(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr,
 			  RF_AutoConfig_t *auto_config);
+int rf_CheckLabels( RF_Raid_t *, RF_Config_t *);
 int rf_add_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr);
 int rf_remove_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr);
 int rf_delete_component(RF_Raid_t *raidPtr, RF_SingleComponent_t *component);
