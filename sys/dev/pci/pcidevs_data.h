@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.345 2001/08/17 23:14:41 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.346 2001/08/18 05:00:52 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.342 2001/08/17 23:14:00 matt Exp 
+ *	NetBSD: pcidevs,v 1.343 2001/08/18 05:00:21 thorpej Exp 
  */
 
 /*
@@ -1442,6 +1442,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Avance Logic (2nd PCI Vendor ID)",
 	    "ALG2302",
+	},
+	{
+	    PCI_VENDOR_AVANCE2, PCI_PRODUCT_AVANCE2_ALS4000,
+	    0,
+	    "Avance Logic (2nd PCI Vendor ID)",
+	    "ALS4000 Audio",
 	},
 	{
 	    PCI_VENDOR_CCUBE, PCI_PRODUCT_CCUBE_CINEMASTER,

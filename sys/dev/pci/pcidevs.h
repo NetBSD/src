@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.347 2001/08/17 23:14:40 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.348 2001/08/18 05:00:51 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.342 2001/08/17 23:14:00 matt Exp 
+ *	NetBSD: pcidevs,v 1.343 2001/08/18 05:00:21 thorpej Exp 
  */
 
 /*
@@ -869,6 +869,7 @@
 #define	PCI_PRODUCT_AVANCE_AVG2302	0x2302		/* AVG2302 */
 #define	PCI_PRODUCT_AVANCE2_ALG2301	0x2301		/* ALG2301 */
 #define	PCI_PRODUCT_AVANCE2_ALG2302	0x2302		/* ALG2302 */
+#define	PCI_PRODUCT_AVANCE2_ALS4000	0x4000		/* ALS4000 Audio */
 
 /* CCUBE products */
 #define	PCI_PRODUCT_CCUBE_CINEMASTER	0x8888		/* Cinemaster C 3.0 DVD Decoder */
