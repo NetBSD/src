@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.6 1999/05/18 23:52:58 thorpej Exp $	*/
+/*	$NetBSD: be.c,v 1.7 1999/11/04 00:24:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -331,7 +331,8 @@ beattach(parent, self, aux)
 
 	if ((sc->sc_conf & BE_CONF_MII) != 0) {
 #if 1
-		mii_phy_probe(&sc->sc_dev, mii, 0xffffffff);
+		mii_phy_probe(&sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
+		    MII_OFFSET_ANY);
 #else
 		/* TEST */
 		extern int mii_print __P((void *, const char *));
