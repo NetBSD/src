@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.55 2002/09/22 07:17:23 chs Exp $	   */
+/*	$NetBSD: pmap.h,v 1.56 2002/09/22 07:53:51 chs Exp $	   */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -220,7 +220,7 @@ pmap_protect(pmap_t pmap, vaddr_t start, vaddr_t end, vm_prot_t prot)
 }
 
 static __inline void
-pmap_remove_all(void)
+pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11 2002/09/22 07:17:16 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.12 2002/09/22 07:53:46 chs Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -140,7 +140,7 @@ extern struct pv_entry	*pv_table;	/* array of entries, one per page */
 #define	pmap_update(pmap)		/* nothing (yet) */
 
 static __inline void
-pmap_remove_all(void)
+pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
 }

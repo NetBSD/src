@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.28 2002/09/22 07:17:10 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.29 2002/09/22 07:53:41 chs Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -156,7 +156,7 @@ struct pmap	kernel_pmap_store;
 #define	pmap_update(pmap)		/* nothing (yet) */
 
 static __inline void
-pmap_remove_all(void)
+pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.55 2002/09/22 07:17:09 chs Exp $ */
+/* $NetBSD: pmap.h,v 1.56 2002/09/22 07:53:40 chs Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@ void	pmap_do_tlb_shootdown(struct cpu_info *, struct trapframe *);
 #define	pmap_update(pmap)		/* nothing (yet) */
 
 static __inline void
-pmap_remove_all(void)
+pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
 }
