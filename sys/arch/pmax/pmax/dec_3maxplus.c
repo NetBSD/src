@@ -1,5 +1,5 @@
-/* $Id: dec_3maxplus.c,v 1.9.2.1 1998/10/15 00:42:44 nisimura Exp $ */
-/*	$NetBSD: dec_3maxplus.c,v 1.9.2.1 1998/10/15 00:42:44 nisimura Exp $ */
+/* $Id: dec_3maxplus.c,v 1.9.2.2 1998/10/19 19:51:17 drochner Exp $ */
+/*	$NetBSD: dec_3maxplus.c,v 1.9.2.2 1998/10/19 19:51:17 drochner Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.1 1998/10/15 00:42:44 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.2 1998/10/19 19:51:17 drochner Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>	
@@ -94,6 +94,9 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.1 1998/10/15 00:42:44 nisimur
 #include <pmax/tc/ioasicreg.h>		/* ioasic interrrupt masks */
 #include <pmax/pmax/kn03.h>		/* baseboard addresses (constants) */
 #include <pmax/pmax/dec_3max_subr.h>
+
+#include <dev/ic/z8530sc.h>
+#include <pmax/tc/zs_ioasicvar.h>	/* console */
 
 #include "wsdisplay.h"
 
@@ -228,7 +231,8 @@ dec_3maxplus_cons_init()
 
 #if NWSDISPLAY > 0
 	if (screen > 0) {
-		if (tc_fb_cnattach(crt) > 0)
+		if ((zs_ioasic_lk201_cnattach(ioasic_base, 0x00180000, 0) == 0)
+		    && (tc_fb_cnattach(crt) > 0))
 			return;
 		printf("No framebuffer device configured for slot %d\n", crt);
 		printf("Using serial console\n");
@@ -249,9 +253,6 @@ dec_3maxplus_cons_init()
 	if (zs_ioasic_cnattach(ioasic_base, 0x00180000, 1,
 	    9600, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
 		panic("can't init serial console");
-
-	cn_tab->cn_pri = CN_REMOTE;
-	cn_tab->cn_dev = makedev(zs_major, 0);
 }
 
 void
