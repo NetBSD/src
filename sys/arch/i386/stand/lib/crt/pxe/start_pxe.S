@@ -1,4 +1,4 @@
-/*	$NetBSD: start_pxe.S,v 1.1 2002/02/16 03:37:40 thorpej Exp $	*/
+/*	$NetBSD: start_pxe.S,v 1.2 2002/05/10 23:21:17 itohy Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@ start1:
 	# set up %ss and %esp
 	movl	%ax, %ss
 	data32
-	movl	$start, %esp
+	movl	$_C_LABEL(start), %esp
 
 	addr32
 	data32
