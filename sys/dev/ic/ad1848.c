@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.5 1999/02/18 17:27:39 mycroft Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.6 1999/09/06 17:07:04 rh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,6 +119,7 @@
 
 #include <dev/ic/ad1848reg.h>
 #include <dev/ic/cs4231reg.h>
+#include <dev/ic/cs4237reg.h>
 #include <dev/ic/ad1848var.h>
 #if 0
 #include <dev/isa/cs4231var.h>
@@ -240,6 +241,35 @@ ad_write(sc, reg, data)
 	/* printf("(%02x->%02x) ", reg|sc->MCE_bit, data); */
 }
 
+/*
+ * extended registers (mode 3) require an additional level of
+ * indirection through CS_XREG (I23).
+ */
+
+__inline int
+ad_xread(sc, reg)
+	struct ad1848_softc *sc;
+	int reg;
+{
+	int x;
+
+	ADWRITE(sc, AD1848_IADDR, CS_XREG | sc->MCE_bit);
+	ADWRITE(sc, AD1848_IDATA, (reg | ALT_F3_XRAE) & 0xff);
+	x = ADREAD(sc, AD1848_IDATA);
+
+	return x;
+}
+
+__inline void
+ad_xwrite(sc, reg, val)
+	struct ad1848_softc *sc;
+	int reg, val;
+{
+	ADWRITE(sc, AD1848_IADDR, CS_XREG | sc->MCE_bit);
+	ADWRITE(sc, AD1848_IDATA, (reg | ALT_F3_XRAE) & 0xff);
+	ADWRITE(sc, AD1848_IDATA, val & 0xff);
+}
+
 static void
 ad_set_MCE(sc, state)
 	struct ad1848_softc *sc;
@@ -328,7 +358,7 @@ ad1848_dump_regs(sc)
 		r = ad_read(sc, i);
 		printf("%02x ", r);
 	}
-	if (sc->mode == 2) {
+	if (sc->mode >= 2) {
 		for (i = 16; i < 32; i++) {
 			r = ad_read(sc, i);
 			printf("%02x ", r);
@@ -361,7 +391,7 @@ ad1848_attach(sc)
 			timeout--;
 	}
 	/* ...and additional CS4231 stuff too */
-	if (sc->mode == 2) {
+	if (sc->mode >= 2) {
 		ad_write(sc, SP_INTERFACE_CONFIG, 0); /* disable SINGLE_DMA */
 		for (i = 0x10; i < 0x20; i++)
 			if (ad1848_init_values[i] != 0) {
@@ -383,7 +413,7 @@ ad1848_attach(sc)
 	ad1848_set_channel_gain(sc, AD1848_DAC_CHANNEL, &vol_mid);
 	ad1848_set_channel_gain(sc, AD1848_MONITOR_CHANNEL, &vol_0);
 	ad1848_set_channel_gain(sc, AD1848_AUX1_CHANNEL, &vol_mid);	/* CD volume */
-	if (sc->mode == 2) {
+	if (sc->mode >= 2) {
 		ad1848_set_channel_gain(sc, AD1848_AUX2_CHANNEL, &vol_mid); /* CD volume */
 		ad1848_set_channel_gain(sc, AD1848_LINE_CHANNEL, &vol_mid);
 		ad1848_set_channel_gain(sc, AD1848_MONO_CHANNEL, &vol_0);
@@ -553,7 +583,7 @@ ad1848_mute_monitor(addr, mute)
 	struct ad1848_softc *sc = addr;
 
 	DPRINTF(("ad1848_mute_monitor: %smuting\n", mute ? "" : "un"));
-	if (sc->mode == 2) {
+	if (sc->mode >= 2) {
 	        ad1848_mute_channel(sc, AD1848_DAC_CHANNEL,
 				    mute ? MUTE_ALL : 0);
 		ad1848_mute_channel(sc, AD1848_MONO_CHANNEL,
@@ -957,7 +987,7 @@ ad1848_set_rec_port(sc, port)
 		inp = LINE_INPUT;
 	else if (port == DAC_IN_PORT)
 		inp = MIXED_DAC_INPUT;
-	else if (sc->mode == 2 && port == AUX1_IN_PORT)
+	else if (sc->mode >= 2 && port == AUX1_IN_PORT)
 		inp = AUX_INPUT;
 	else
 		return(EINVAL);
@@ -1065,10 +1095,10 @@ ad1848_commit_settings(addr)
 	ad_write(sc, SP_CLOCK_DATA_FORMAT, fs);
 
 	/*
-	 * If mode == 2 (CS4231), set I28 also.
+	 * If mode >= 2 (CS4231), set I28 also.
 	 * It's the capture format register.
 	 */
-	if (sc->mode == 2) {
+	if (sc->mode >= 2) {
 		/*
 		 * Gravis Ultrasound MAX SDK sources says something about
 		 * errata sheets, with the implication that these inb()s
@@ -1124,7 +1154,7 @@ ad1848_reset(sc)
 	r &= ~(CAPTURE_ENABLE | PLAYBACK_ENABLE);
 	ad_write(sc, SP_INTERFACE_CONFIG, r);
 
-	if (sc->mode == 2) {
+	if (sc->mode >= 2) {
 		ADWRITE(sc, AD1848_IADDR, CS_IRQ_STATUS);
 		ADWRITE(sc, AD1848_IDATA, 0);
 	}

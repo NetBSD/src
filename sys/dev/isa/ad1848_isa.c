@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.11 1999/03/22 14:54:01 mycroft Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.12 1999/09/06 17:07:05 rh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,6 +124,7 @@
 
 #include <dev/ic/ad1848reg.h>
 #include <dev/ic/cs4231reg.h>
+#include <dev/ic/cs4237reg.h>
 #include <dev/isa/ad1848var.h>
 #include <dev/isa/cs4231var.h>
 
@@ -330,6 +331,8 @@ ad1848_isa_probe(isc)
 				goto bad;
 			}
 
+			sc->mode = 2;
+
 			/*
 			 *  It's a CS4231, or another clone with 32 registers.
 			 *  Let's find out which by checking I25.
@@ -349,11 +352,51 @@ ad1848_isa_probe(isc)
 					break;
 				case 0x03:
 				case 0x83:
-					sc->chip_name = "CS4236/CS4236B";
+					sc->chip_name = "CS4236";
+
+					/*
+					 * Try to switch to mode3 (CS4236B or
+					 * CS4237B) by setting CMS to 3.  A
+					 * plain CS4236 will not react to
+					 * LLBM settings.
+					 */
+					ad_write(sc, SP_MISC_INFO, MODE3);
+
+					tmp1 = ad_read(sc, CS_LEFT_LINE_CONTROL);
+					ad_write(sc, CS_LEFT_LINE_CONTROL, 0xe0);
+					tmp2 = ad_read(sc, CS_LEFT_LINE_CONTROL);
+					if (tmp2 == 0xe0) {
+						/*
+						 * it's a CS4237B or another
+						 * clone supporting mode 3.
+						 * Let's determine which by
+						 * enabling extended registers
+						 * and checking X25.
+						 */
+						tmp2 = ad_xread(sc, CS_X_CHIP_VERSION);
+						switch (tmp2 & X_CHIP_VERSIONF_CID) {
+						case X_CHIP_CID_CS4236BB:
+							sc->chip_name = "CS4236BrevB";
+							break;
+						case X_CHIP_CID_CS4236B:
+							sc->chip_name = "CS4236B";
+							break;
+						case X_CHIP_CID_CS4237B:
+							sc->chip_name = "CS4237B";
+							break;
+						default:
+							sc->chip_name = "CS4236B compatible";
+							DPRINTF(("cs4236: unknown mode 3 compatible codec, version 0x%02x\n", tmp2));
+							break;
+						}
+						sc->mode = 3;
+					}
+
+					/* restore volume control information */
+					ad_write(sc, CS_LEFT_LINE_CONTROL, tmp1);
 					break;
 				}
 			}
-			sc->mode = 2;
 		}
 	}
 
@@ -492,7 +535,7 @@ ad1848_isa_trigger_input(addr, start, end, blksize, intr, arg, param)
 
 	blksize = (blksize * 8) / (param->precision * param->factor * param->channels) - 1;
 
-	if (sc->mode == 2) {
+	if (sc->mode >= 2) {
 		ad_write(sc, CS_LOWER_REC_CNT, blksize & 0xff);
 		ad_write(sc, CS_UPPER_REC_CNT, blksize >> 8);
 	} else {
