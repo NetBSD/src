@@ -1,11 +1,10 @@
-#	$NetBSD: files.pci,v 1.11 1996/02/28 01:47:06 cgd Exp $
+#	$NetBSD: files.pci,v 1.12 1996/03/04 03:29:19 cgd Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
 # defined first.
 
-# XXX should not attach to root
-device	pci at pcibus, root {[dev = -1], [function = -1]}
+device	pci at pcibus {[dev = -1], [function = -1]}
 file	dev/pci/pci.c			pci needs-flag
 file	dev/pci/pci_subr.c		pci
 
