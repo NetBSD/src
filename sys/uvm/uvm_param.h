@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.16 2003/04/09 16:34:11 thorpej Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.17 2003/04/19 21:42:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -76,17 +76,6 @@
 #endif
 #ifdef _KERNEL
 #include <machine/vmparam.h>
-#endif
-
-/*
- * This belongs in types.h, but breaks too many existing programs.
- */
-typedef int	boolean_t;
-#ifndef TRUE
-#define	TRUE	1
-#endif
-#ifndef FALSE
-#define	FALSE	0
 #endif
 
 #if defined(_KERNEL)
