@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.31 1996/04/10 20:46:05 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.32 1996/04/22 02:42:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -54,7 +54,6 @@
 #include <sys/stat.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
-#include <sys/cpu.h>
 #include <sys/conf.h>
 
 #include <dev/cons.h>
