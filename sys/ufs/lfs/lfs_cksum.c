@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_cksum.c,v 1.12 2000/03/30 12:41:13 augustss Exp $	*/
+/*	$NetBSD: lfs_cksum.c,v 1.12.4.1 2000/09/14 18:50:18 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
