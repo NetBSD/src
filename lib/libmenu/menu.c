@@ -1,4 +1,4 @@
-/*	$NetBSD: menu.c,v 1.15 2002/11/27 11:53:11 blymn Exp $	*/
+/*	$NetBSD: menu.c,v 1.16 2003/03/09 01:08:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -25,6 +25,9 @@
  *
  *
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: menu.c,v 1.16 2003/03/09 01:08:48 lukem Exp $");
 
 #include <ctype.h>
 #include <menu.h>
