@@ -1,7 +1,7 @@
-/*	$NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp $	*/
+/*	$NetBSD: locore.S,v 1.32 2005/03/02 12:00:25 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
