@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.30 2003/08/24 17:52:42 chs Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.31 2003/11/08 21:28:45 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.30 2003/08/24 17:52:42 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.31 2003/11/08 21:28:45 manu Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_syscall_debug.h"
@@ -79,6 +79,14 @@ void irix_syscall __P((void));
 void irix_syscall_intern __P((struct proc *));
 #endif
 
+/* 
+ * Fake sigcode. COMPAT_IRIX does not use it, since the 
+ * signal trampoline is provided by libc. However, some
+ * other part of the kernel will be happier if we still
+ * provide non NULL sigcode and esigcode. 
+ */
+char irix_sigcode[] = { 0 };
+
 const struct emul emul_irix = {
 	"irix",
 	"/emul/irix",
@@ -96,8 +104,8 @@ const struct emul emul_irix = {
 #endif
 	irix_sendsig,
 	trapsignal,
-	NULL,
-	NULL,
+	irix_sigcode,
+	irix_sigcode,
 	NULL,
 	setregs,
 	irix_e_proc_exec,
