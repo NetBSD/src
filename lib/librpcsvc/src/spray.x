@@ -36,11 +36,19 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)spray.x 1.2 87/09/18 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)spray.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$Id: spray.x,v 1.1 1993/10/08 05:27:01 cgd Exp $";
+%static char rcsid[] = "$Id: spray.x,v 1.2 1993/12/03 00:32:30 jtc Exp $";
 %#endif /* not lint */
 #endif
 
-const SPRAYMAX = 8845;	/* max amount can spray */
+#ifdef RPC_HDR
+%#ifndef _RPCSVC_SPRAY_H_
+%#define _RPCSVC_SPRAY_H_
+%
+#endif
+
+const SPRAYOVERHEAD = 86;		/* size of rpc packet when size=0 */
+const SPRAYMAX = 8845;			/* max amount can spray */
+
 
 /*
  * GMT since 0:00, 1 January 1970
@@ -87,3 +95,9 @@ program SPRAYPROG {
 		SPRAYPROC_CLEAR(void) = 3;
 	} = 1;
 } = 100012;
+
+
+#ifdef RPC_HDR
+%
+%#endif /* _RPCSVC_SPRAY_H_ */
+#endif
