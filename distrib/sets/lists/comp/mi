@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.169 1999/11/25 10:41:12 blymn Exp $
+# $NetBSD: mi,v 1.170 1999/12/04 10:32:18 veego Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -145,6 +145,7 @@
 ./usr/include/dev/ic/opl3sa3reg.h
 ./usr/include/dev/ic/pcdisplay.h
 ./usr/include/dev/ic/pcdisplayvar.h
+./usr/include/dev/ic/pckbcvar.h
 ./usr/include/dev/ic/pdqreg.h
 ./usr/include/dev/ic/pdqvar.h
 ./usr/include/dev/ic/rrunnerreg.h
@@ -192,7 +193,6 @@
 ./usr/include/dev/isa/mcdreg.h
 ./usr/include/dev/isa/pasreg.h
 ./usr/include/dev/isa/pcdisplayvar.h
-./usr/include/dev/isa/pckbcvar.h
 ./usr/include/dev/isa/pcppireg.h
 ./usr/include/dev/isa/pcppivar.h
 ./usr/include/dev/isa/pssreg.h
