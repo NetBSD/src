@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.h,v 1.3 2000/10/07 20:37:06 bjh21 Exp $	*/
+/*	$NetBSD: fsort.h,v 1.4 2000/10/16 21:53:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,11 +42,13 @@
 #define BUFSIZE (1 << POW)
 #define MAXNUM (BUFSIZE/10)	/* lowish guess at average record size */
 #define BUFFEND (EOF-2)
+#define BUFFSMALL (EOF-3)	/* buffer is too small to hold line */
 #define MAXFCT 1000
-#define MAXLLEN ((1 << min(POW-4, 16)) - 14)
+#define DEFLLEN ((1 << min(POW-4, 16)) - 14)
 
-extern const u_char **keylist, **l2buf;
+extern const u_char **keylist;
 extern u_char *buffer, *linebuf;
+extern size_t bufsize, linebuf_size;
 
 /* temp files in the stack have a file descriptor, a largest bin (maxb)
  * which becomes the last non-empty bin (lastb) when the actual largest

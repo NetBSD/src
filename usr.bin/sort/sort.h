@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.4 2000/10/07 22:15:29 simonb Exp $	*/
+/*	$NetBSD: sort.h,v 1.5 2000/10/16 21:53:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -81,8 +81,8 @@
 		 err(2, NULL);						\
 }
 
-/* length of record is currently limited to 2^16 - 1 */
-typedef u_short length_t;
+/* length of record is currently limited to maximum string length (size_t) */
+typedef size_t length_t;
 
 #define SALIGN(n) ((n+1) & ~1)
 
@@ -141,6 +141,6 @@ extern u_char alltable[NBINS], dtable[NBINS], itable[NBINS];
 extern u_char d_mask[NBINS];
 extern int SINGL_FLD, SEP_FLAG, UNIQUE;
 extern int REC_D;
-extern char *tmpdir;
+extern const char *tmpdir;
 
 #include "extern.h"
