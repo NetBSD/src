@@ -1,4 +1,4 @@
-/* $NetBSD: vidcaudio.c,v 1.14 1997/07/27 01:16:34 augustss Exp $ */
+/* $NetBSD: vidcaudio.c,v 1.15 1997/07/27 23:51:51 augustss Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -299,7 +299,6 @@ int    vidcaudio_set_out_port	 __P((void *, int));
 int    vidcaudio_get_out_port	 __P((void *));
 int    vidcaudio_set_in_port	 __P((void *, int));
 int    vidcaudio_get_in_port  	 __P((void *));
-int    vidcaudio_commit_settings __P((void *));
 int    vidcaudio_start_output	 __P((void *, void *, int, void (*)(), void *));
 int    vidcaudio_start_input	 __P((void *, void *, int, void (*)(), void *));
 int    vidcaudio_halt_output	 __P((void *));
@@ -308,7 +307,6 @@ int    vidcaudio_cont_output	 __P((void *));
 int    vidcaudio_cont_input	 __P((void *));
 int    vidcaudio_speaker_ctl	 __P((void *, int));
 int    vidcaudio_getdev		 __P((void *, struct audio_device *));
-int    vidcaudio_setfd	 	 __P((void *, int));
 int    vidcaudio_set_port	 __P((void *, mixer_ctrl_t *));
 int    vidcaudio_get_port	 __P((void *, mixer_ctrl_t *));
 int    vidcaudio_query_devinfo	 __P((void *, mixer_devinfo_t *));
@@ -387,14 +385,6 @@ int vidcaudio_get_in_port ( void *addr )
 {
     struct vidcaudio_softc *sc = addr;
     return sc->inport;
-}
-
-int vidcaudio_commit_settings ( void *addr )
-{
-#ifdef DEBUG
-printf ( "DEBUG: committ_settings\n" );
-#endif
-    return 0;
 }
 
 #define ROUND(s)  ( ((int)s) & (~(NBPG-1)) )
@@ -487,11 +477,6 @@ int vidcaudio_getdev ( void *addr, struct audio_device *retp )
 }
 
 
-int vidcaudio_setfd ( void *addr, int flag )
-{
-    return ENOTTY;
-}
-
 int vidcaudio_set_port ( void *addr, mixer_ctrl_t *cp )
 {
     return EINVAL;
@@ -510,7 +495,7 @@ int vidcaudio_query_devinfo ( void *addr, mixer_devinfo_t *dip )
 struct audio_hw_if vidcaudio_hw_if = {
     vidcaudio_open,
     vidcaudio_close,
-    NULL,
+    0,
     vidcaudio_query_encoding,
     vidcaudio_set_params,
     vidcaudio_round_blocksize,
@@ -518,9 +503,9 @@ struct audio_hw_if vidcaudio_hw_if = {
     vidcaudio_get_out_port,
     vidcaudio_set_in_port,
     vidcaudio_get_in_port,
-    vidcaudio_commit_settings,
-    NULL,
-    NULL,
+    0,
+    0,
+    0,
     vidcaudio_start_output,
     vidcaudio_start_input,
     vidcaudio_halt_output,
@@ -529,7 +514,7 @@ struct audio_hw_if vidcaudio_hw_if = {
     vidcaudio_cont_input,
     vidcaudio_speaker_ctl,
     vidcaudio_getdev,
-    vidcaudio_setfd,
+    0,
     vidcaudio_set_port,
     vidcaudio_get_port,
     vidcaudio_query_devinfo,

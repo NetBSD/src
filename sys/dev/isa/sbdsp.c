@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.60 1997/07/27 01:17:07 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.61 1997/07/27 23:52:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -808,13 +808,6 @@ sbdsp_round_blocksize(addr, blk)
 }
 
 int
-sbdsp_commit_settings(addr)
-	void *addr;
-{
-	return 0;
-}
-
-int
 sbdsp_open(sc, dev, flags)
 	struct sbdsp_softc *sc;
 	dev_t dev;
@@ -1506,15 +1499,6 @@ sbdsp_midi_output(sc, v)
 		++sberr.wmidi;
 }
 #endif
-
-int
-sbdsp_setfd(addr, flag)
-	void *addr;
-	int flag;
-{
-	/* Can't do full-duplex */
-	return ENOTTY;
-}
 
 void
 sbdsp_set_mixer_gain(sc, port)

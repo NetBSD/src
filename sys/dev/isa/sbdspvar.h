@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.24 1997/07/27 01:17:08 augustss Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.25 1997/07/27 23:52:02 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -172,7 +172,6 @@ int	sbdsp_get_in_port __P((void *));
 int	sbdsp_get_avail_in_ports __P((void *));
 int	sbdsp_get_avail_out_ports __P((void *));
 int	sbdsp_speaker_ctl __P((void *, int));
-int	sbdsp_commit_settings __P((void *));
 
 int	sbdsp_dma_init_input __P((void *, void *, int));
 int	sbdsp_dma_init_output __P((void *, void *, int));
@@ -195,7 +194,6 @@ int	sbdsp_rdsp __P((struct sbdsp_softc *));
 int	sbdsp_intr __P((void *));
 
 int	sbdsp_set_sr __P((struct sbdsp_softc *, u_long *, int));
-int	sbdsp_setfd __P((void *, int));
 
 void	sbdsp_mix_write __P((struct sbdsp_softc *, int, int));
 int	sbdsp_mix_read __P((struct sbdsp_softc *, int));
