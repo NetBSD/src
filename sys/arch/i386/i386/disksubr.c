@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.10 1994/10/27 04:15:18 cgd Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.11 1994/11/04 21:19:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -35,17 +35,12 @@
  *	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
  */
 
-#include "param.h"
-#include "systm.h"
-#include "buf.h"
-#include "dkbad.h"
-#include "disklabel.h"
-#include "syslog.h"
-
-/* XXX encoding of disk minor numbers, should be elsewhere... */
-#define dkunit(dev)		(minor(dev) >> 3)
-#define dkpart(dev)		(minor(dev) & 7)
-#define dkminor(unit, part)	(((unit) << 3) | (part))
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/dkbad.h>
+#include <sys/disklabel.h>
+#include <sys/syslog.h>
 
 #define	b_cylin	b_resid
 
@@ -73,12 +68,14 @@ readdisklabel(dev, strat, lp, osdep)
 {
 	struct dos_partition *dp = osdep->dosparts;
 	struct dkbad *bdp = &osdep->bad;
-	register struct buf *bp;
+	struct buf *bp;
 	struct disklabel *dlp;
 	char *msg = NULL;
-	int cyl, dospartoff, i;
+	int dospartoff, cyl, i;
 
 	/* minimal requirements for archtypal disk label */
+	if (lp->d_secsize == 0)
+		lp->d_secsize = DEV_BSIZE;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
 	lp->d_npartitions = RAW_PART + 1;
@@ -90,18 +87,14 @@ readdisklabel(dev, strat, lp, osdep)
 		lp->d_partitions[i].p_size = 0x1fffffff;
 	lp->d_partitions[i].p_offset = 0;
 
-	/* obtain buffer to probe drive with */
+	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
-	
-	/* request no partition relocation by driver on I/O operations */
 	bp->b_dev = dev;
 
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
 	cyl = LABELSECTOR / lp->d_secpercyl;
 	if (dp) {
-		struct dos_partition *ap;
-
 		/* read master boot record */
 		bp->b_blkno = DOSBBSECTOR;
 		bp->b_bcount = lp->d_secsize;
@@ -119,10 +112,8 @@ readdisklabel(dev, strat, lp, osdep)
 			    NDOSPART * sizeof(*dp));
 			for (i = 0; i < NDOSPART; i++, dp++)
 				/* is this ours? */
-				if (dp->dp_size &&
-					dp->dp_typ == DOSPTYP_386BSD
-					&& dospartoff == 0) {
-
+				if (dp->dp_size && dp->dp_typ == DOSPTYP_386BSD
+				    && dospartoff == 0) {
 					/* need sector address for SCSI/IDE,
 					   cylinder for ESDI/ST506/RLL */
 					dospartoff = dp->dp_start;
@@ -130,15 +121,16 @@ readdisklabel(dev, strat, lp, osdep)
 
 					/* update disklabel with details */
 					lp->d_partitions[0].p_size =
-						dp->dp_size;
+					    dp->dp_size;
 					lp->d_partitions[0].p_offset = 
-						dp->dp_start;
+					    dp->dp_start;
 					lp->d_ntracks = dp->dp_ehd + 1;
 					lp->d_nsectors = DPSECT(dp->dp_esect);
-					lp->d_subtype |= (lp->d_subtype & 3)
-							+ i | DSTYPE_INDOSPART;
-					lp->d_secpercyl = lp->d_ntracks *
-						lp->d_nsectors;
+					lp->d_subtype |=
+					    ((lp->d_subtype & 3) + i) |
+					    DSTYPE_INDOSPART;
+					lp->d_secpercyl =
+					    lp->d_ntracks * lp->d_nsectors;
 				}
 		}
 			
@@ -155,8 +147,9 @@ readdisklabel(dev, strat, lp, osdep)
 	if (biowait(bp)) {
 		msg = "disk label I/O error";
 		goto done;
-	} else for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)(bp->b_data + DEV_BSIZE - sizeof(*dlp));
+	}
+	for (dlp = (struct disklabel *)bp->b_data;
+	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			if (msg == NULL)
@@ -210,7 +203,7 @@ readdisklabel(dev, strat, lp, osdep)
 	}
 
 done:
-	bp->b_flags = B_INVAL | B_AGE | B_READ;
+	bp->b_flags |= B_INVAL;
 	brelse(bp);
 	return (msg);
 }
@@ -284,43 +277,35 @@ writedisklabel(dev, strat, lp, osdep)
 	struct dos_partition *dp = osdep->dosparts;
 	struct buf *bp;
 	struct disklabel *dlp;
-	int labelpart, error = 0, dospartoff, cyl, i;
+	int error, dospartoff, cyl, i;
 
-	labelpart = dkpart(dev);
-#ifdef nope
-	if (lp->d_partitions[labelpart].p_offset != 0) {
-		if (lp->d_partitions[0].p_offset != 0)
-			return (EXDEV);			/* not quite right */
-		labelpart = 0;
-	}
-#else
-		labelpart = 3;
-#endif
-
+	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
-	/* request no partition relocation by driver on I/O operations */
 	bp->b_dev = dev;
 
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
 	cyl = LABELSECTOR / lp->d_secpercyl;
 	if (dp) {
+		/* read master boot record */
 		bp->b_blkno = DOSBBSECTOR;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
 		bp->b_cylin = DOSBBSECTOR / lp->d_secpercyl;
 		(*strat)(bp);
+
 		if ((error = biowait(bp)) == 0) {
+			/* XXX how do we check veracity/bounds of this? */
 			bcopy(bp->b_data + DOSPARTOFF, dp,
 			    NDOSPART * sizeof(*dp));
 			for (i = 0; i < NDOSPART; i++, dp++)
-				if(dp->dp_size && dp->dp_typ == DOSPTYP_386BSD
-					&& dospartoff == 0) {
+				/* is this ours? */
+				if (dp->dp_size && dp->dp_typ == DOSPTYP_386BSD
+				    && dospartoff == 0) {
 					/* need sector address for SCSI/IDE,
 					   cylinder for ESDI/ST506/RLL */
 					dospartoff = dp->dp_start;
-					cyl = dp->dp_scyl |
-						((dp->dp_ssect & 0xc0) << 2);
+					cyl = DPCYL(dp->dp_scyl, dp->dp_ssect);
 				}
 		}
 			
@@ -335,27 +320,32 @@ writedisklabel(dev, strat, lp, osdep)
 	}
 #endif
 
+	/* next, dig out disk label */
 	bp->b_blkno = dospartoff + LABELSECTOR;
 	bp->b_cylin = cyl;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_READ;
+	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
+
+	/* if successful, locate disk label within block and validate */
 	if (error = biowait(bp))
 		goto done;
-	for (dlp = (struct disklabel *)(bp->b_data);
+	for (dlp = (struct disklabel *)bp->b_data;
 	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
 		    dkcksum(dlp) == 0) {
 			*dlp = *lp;
-			bp->b_flags = B_WRITE;
+			bp->b_flags = B_BUSY | B_WRITE;
 			(*strat)(bp);
 			error = biowait(bp);
 			goto done;
 		}
 	}
 	error = ESRCH;
+
 done:
+	bp->b_flags |= B_INVAL;
 	brelse(bp);
 	return (error);
 }
@@ -368,7 +358,7 @@ done:
 int
 bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
 {
-	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
+	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
 	int labelsect = lp->d_partitions[0].p_offset;
 	int maxsz = p->p_size,
 		sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
