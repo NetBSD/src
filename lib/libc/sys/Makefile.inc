@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.130 2002/10/12 17:41:20 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.131 2002/10/23 09:25:48 jdolecek Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -51,7 +51,8 @@ ASM=	accept.S access.S acct.S bind.S chdir.S chflags.S \
 	getdents.S getfh.S getfsstat.S getgroups.S getitimer.S \
 	__getlogin.S getpeername.S getpgid.S getpgrp.S \
 	getpriority.S getrlimit.S getrusage.S getsid.S getsockname.S \
-	getsockopt.S gettimeofday.S ioctl.S kill.S ktrace.S \
+	getsockopt.S gettimeofday.S ioctl.S kevent.S kill.S kqueue.S \
+	ktrace.S \
 	lchflags.S lchmod.S lchown.S __lstat13.S lfs_bmapv.S lfs_markv.S \
 	lfs_segclean.S lfs_segwait.S link.S listen.S lutimes.S \
 	madvise.S mincore.S minherit.S mkdir.S mkfifo.S mknod.S \
@@ -71,11 +72,6 @@ ASM=	accept.S access.S acct.S bind.S chdir.S chflags.S \
 	unmount.S utimes.S utrace.S vadvise.S wait4.S write.S writev.S \
 	__sysctl.S \
 	__posix_chown.S __posix_fchown.S __posix_lchown.S __posix_rename.S
-
-.if defined(WITH_KQUEUE) && exists(${DESTDIR}/usr/include/sys/event.h)
-ASM+=		kqueue.S kevent.S
-CPPFLAGS+=	-DWITH_KQUEUE
-.endif
 
 WEAKASM= sysarch.S
 
