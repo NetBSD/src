@@ -1,7 +1,7 @@
-/* $Id: iwm.s,v 1.1 1999/02/18 07:38:26 scottr Exp $ */
+/*	$NetBSD: iwm.s,v 1.2 1999/03/27 05:45:19 scottr Exp $	*/
 
 /*
- * Copyright (c) 1996-98 Hauke Fath.  All rights reserved.
+ * Copyright (c) 1996-99 Hauke Fath.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,6 +46,11 @@
  *    would be lost.
  *    The old status register content is stored on the stack.
  *
+ * o  We run at spl4 to give the NMI switch a chance. All currently 
+ *    supported machines have no interrupt sources > 4 (SSC) -- the
+ *    Q700 interrupt levels can be shifted around in A/UX mode,
+ *    but we're not there, yet.
+ *
  * o  As a special case iwmReadSectHdr() must run with interrupts disabled
  *    (it transfers data). Depending on the needs of the caller, it
  *    may be necessary to block interrupts after completion of the routine
@@ -60,7 +65,7 @@
 
 #include <m68k/asm.h>
 
-#include "iwm_regs.s"
+#include <mac68k/obio/iwmreg.h>
 
 #define USE_DELAY	0	/* "1" bombs for unknown reasons */
 
@@ -69,8 +74,8 @@
  * References to global name space
  */
 	.extern	_TimeDBRA		| in mac68k/macrom.c
-	.extern	_IWMBase		| in mac68k/machdep.c
-	.extern _VIA1Base		|
+	.extern _VIA1Base		| in mac68k/machdep.c
+	.extern	_IWMBase		| in iwm_fd.c
 	
 
 	.data
@@ -205,13 +210,8 @@ quDone:
 ENTRY(iwmReadSectHdr)
 	link	a6,#0
 	moveml	d1-d5/a0-a4,sp@-
-	movel	_IWMBase,a0
-	movel	_Via1Base,a1
-
 	movel	a6@(0x08),a4		| Get param block address
-
 	bsr	readSectHdr
-	
 	moveml	sp@+,d1-d5/a0-a4	
 	unlk	a6
 	rts
@@ -251,7 +251,7 @@ ENTRY(iwmInit)
 	tstb	a0@(q6H)
 	andb	a0@(q7L),d0		| status register
 	tstb	a0@(q6L)
-	cmpib	#0x17,d0		| all is well??
+	cmpib	#iwmMode,d0		| all is well??
 	beq	initDone
 
 	/*
@@ -270,9 +270,9 @@ initLp:
 	bclr	#5,d0			| Reset bit 5 and set Z flag
 					| according to previous state
 	bne	initLp			| Loop if drive still on
-	cmpib	#0x17,d0
+	cmpib	#iwmMode,d0
 	beq	initDone
-	moveb	#0x17,a0@(q7H)		| Init IWM
+	moveb	#iwmMode,a0@(q7H)	| Init IWM
 	tstb	a0@(q7L)
 	bra	initLp
 	
@@ -644,49 +644,55 @@ stDone:
  *		Add a branch for Verify (compare to buffer)
  *		Understand and document the checksum algorithm!
  *
+ *		XXX make "sizeof cylCache_t" a symbolic constant
+ *
  * Parameters:	fp+08	l	Address of sector data buffer (512 bytes)
  *		fp+12	l	Address of sector header struct (I/O)
+ *		fp+16	l	Address of cache buffer ptr array
  * Returns:	d0		result code
  * Local:	fp-2	w	CPU status register
  *		fp-3	b	side,
  *		fp-4	b	track,
  *		fp-5	b	sector wanted
+ *		fp-6	b	retry count
+ *		fp-7	b	sector read
  */
 ENTRY(iwmReadSector)
-	link	a6,#-6
+	link	a6,#-8
 	moveml	d1-d7/a0-a5,sp@-
 
-	movel	_IWMBase,a0
-	movel	_Via1Base,a1
+ 	movel	_Via1Base,a1
+	movel	a6@(o_hdr),a4		| Addr of sector header struct
 
-	movel	a6@(12),a4		| Addr of sector header struct
-
-	moveb	a4@(0),a6@(-3)		| Save side bit,
-	moveb	a4@(1),a6@(-4)		| track#,
-/*	moveb	a4@(2),a6@(-5)		| sector# */
+	moveb	a4@+,a6@(-3)		| Save side bit,
+	moveb	a4@+,a6@(-4)		| track#,
+	moveb	a4@,a6@(-5)		| sector#
+	moveb	#2*maxGCRSectors,a6@(-6) | Max. retry count
 
 	movew	sr,a6@(-2)		| Save CPU status register
-	oriw	#0x0700,sr		| Block all interrupts
+	oriw	#0x0600,sr		| Block all interrupts
 
+rsNextSect:	
+	movel	a6@(o_hdr),a4		| Addr of sector header struct
 	bsr	readSectHdr		| Get next available SECTOR header
 	bne	rsDone			| Return if error
 
 	/*
 	 * Is this the right track & side? If not, return with error
 	 */
-	movel	a6@(12),a4		| Sector header struct
+	movel	a6@(o_hdr),a4		| Sector header struct
 
-	moveb	a4@(0),d1		| Get actual side
+	moveb	a4@(o_side),d1		| Get actual side
 	lsrb	#3,d1			| "Normalize" side bit (to bit 0)
 	andb	#1,d1
 	moveb	a6@(-3),d2		| Get wanted side
 	eorb	d1,d2			| Compare side bits
 	bne	rsSeekErr		| Should be equal!
 
-	moveb	a6@(-4),d1		| Get wanted track#
-	cmpb	a4@(1),d1		| Compare to the read header
+	moveb	a6@(-4),d1		| Get track# we want
+	cmpb	a4@(o_track),d1		| Compare to the header we've read
 	beq	rsGetSect
-
+	
 rsSeekErr:	
 	moveq	#seekErr,d0		| Wrong track or side found
 	bra	rsDone	
@@ -694,13 +700,14 @@ rsSeekErr:
 	/*
 	 * Check for sector data lead-in 'D5 AA AD'
 	 * Registers:	
-	 *	a0 points to data register of IWM
-	 *	a2 points to 'diskTo' translation table
+	 *	a0 points to data register of IWM as set up by readSectHdr
+	 *	a2 points to 'diskTo' translation table
 	 *	a4 points to tags buffer
 	 */
 rsGetSect:
+	moveb	a4@(2),a6@(-7)		| save sector number
 	lea	a4@(3),a4		| Beginning of tag buffer
-	moveq	#50,d3			| Max. retries to seek
+	moveq	#50,d3			| Max. retries for sector lookup
 rsLeadIn:	
 	lea	dataLeadIn,a3		| Sector data lead-in
 	moveq	#0x03,d4		| is 3 bytes long
@@ -716,6 +723,7 @@ rsLI2:
 	bne	rsLeadIn		| If ne restart scan
 	subqw	#1,d4
 	bne	rsLI1
+
 	/*
 	 * We have found the lead-in. Now get the 12 tag bytes.
 	 * (We leave a3 pointing to 'dataLeadOut' for later.)
@@ -775,15 +783,27 @@ rsTagNyb4:
 	
 	subqw	#3,d4			| Update byte counter (four 6&2 encoded
 	bpl	rsTags			| disk bytes make three data bytes).
+
 	/*
 	 * Jetzt sind wir hier...
 	 * ...und Thomas D. hat noch was zu sagen...
 	 *
 	 * We begin to read in the actual sector data. 
+	 * Compare sector # to what we wanted: If it matches, read directly
+	 * to buffer, else read to track cache.
 	 */
-	movel	a6@(8),a4		| Sector data buffer
 	movew	#0x01FE,d4		| Loop counter
-
+	moveq	#0,d1			| Clear d1.L
+	moveb	a6@(-7),d1		| Get sector# we have read
+	cmpb	a6@(-5),d1		| Compare to the sector# we want
+	bne	rsToCache
+	movel	a6@(o_buf),a4		| Sector data buffer
+	bra	rsData
+rsToCache:
+	movel	a6@(o_rslots),a4	| Base address of slot array
+	lslw	#3,d1			| sizeof cylCacheSlot_t is 8 bytes
+	movel	#-1,a4@(o_valid,d1)
+	movel	a4@(o_secbuf,d1),a4	| and get its buffer ptr
 rsData:
 rsDatNyb1:
 	moveb	a0@,d3			| Get 2 bit nibbles
@@ -884,7 +904,6 @@ rsBadDBtSlp:
 	moveq	#badDBtSlp,d0		| One of the data mark bit slip 
 	bra	rsDone			| nibbles was incorrect
 
-	
 	/*
 	 * We have gotten the checksums allright, now look for the
 	 * sector data lead-out 'DE AA'
@@ -900,13 +919,36 @@ rsLdOut1:
 	bne	rsBadDBtSlp		| Fault!
 	dbra	d4,rsLdOut1
 	moveq	#0,d0			| OK.
+
+	/*
+	 * See if we got the sector we wanted. If not, and no error 
+	 * occurred, mark buffer valid. Else ignore the sector. 
+	 * Then, read on.
+	 */
 rsDone:
+	movel	a6@(o_hdr),a4		| Addr of sector header struct
+	moveb	a4@(o_sector),d1	| Get # of sector we have just read
+	cmpb	a6@(-5),d1		| Compare to the sector we want
+	beq	rsAllDone
+
+	tstb	d0			| Any error? Simply ignore data
+	beq	rsBufValid
+	lslw	#3,d1			| sizeof cylCacheSlot_t is 8 bytes
+	movel	a6@(o_rslots),a4
+	clrl	a4@(o_valid,d1)		| Mark buffer content "invalid"
+	
+rsBufValid:
+	subqb	#1,a6@(-6)		| max. retries
+	bne	rsNextSect
+					| Sector not found, but
+	tstb	d0			| don't set error code if we 
+	bne	rsAllDone		| already have one.
+	moveq	#sectNFErr,d0
+rsAllDone:
 	movew	a6@(-2),sr		| Restore interrupt mask
 	moveml	sp@+,d1-d7/a0-a5	
 	unlk	a6
-	rts
-
-	
+	rts	
 	
 	
 /*
@@ -915,40 +957,45 @@ rsDone:
  * TODO:	Poll SCC as long as interrupts are disabled (see top comment)
  *		Understand and document the checksum algorithm!
  *
- * Parameters:	fp+8	l	Address of sector data buffer (512 bytes)
- *		fp+12	l	Address of sector header struct (I/O)
+ *		XXX Use registers more efficiently
+ *
+ * Parameters:	fp+8	l	Address of sector header struct (I/O)
+ *		fp+12	l	Address of cache buffer ptr array
  * Returns:	d0		result code
  *
  * Local:	fp-2	w	CPU status register
  *		fp-3	b	side,
  *		fp-4	b	track,
  *		fp-5	b	sector wanted
+ *		fp-6	b	retry count
+ *		fp-10	b	current slot
  */
 ENTRY(iwmWriteSector)
-	link	a6,#-6
+	link	a6,#-10
 	moveml	d1-d7/a0-a5,sp@-
 
-	movel	_IWMBase,a0
-	movel	_Via1Base,a1
+ 	movel	_Via1Base,a1
+	movel	a6@(o_hdr),a4		| Addr of sector header struct
 
-	movel	a6@(12),a4		| Addr of sector header struct
-
-	moveb	a4@(0),a6@(-3)		| Save side bit,
-	moveb	a4@(1),a6@(-4)		| track#,
-	moveb	a4@(2),a6@(-5)		| sector#
+	moveb	a4@+,a6@(-3)		| Save side bit,
+	moveb	a4@+,a6@(-4)		| track#,
+	moveb	a4@,a6@(-5)		| sector#
+	moveb	#maxGCRSectors,a6@(-6)	| Max. retry count
 
 	movew	sr,a6@(-2)		| Save CPU status register
-	oriw	#0x0700,sr		| Block all interrupts
+	oriw	#0x0600,sr		| Block all interrupts
 
+wsNextSect:
+	movel	a6@(o_hdr),a4
 	bsr	readSectHdr		| Get next available sector header
-	bne	wsDone			| Return if error
+	bne	wsAllDone		| Return if error
 
 	/*
 	 * Is this the right track & side? If not, return with error
 	 */
-	movel	a6@(12),a4		| Sector header struct
+	movel	a6@(o_hdr),a4		| Sector header struct
 
-	moveb	a4@(0),d1		| Get side#
+	moveb	a4@(o_side),d1		| Get side#
 	lsrb	#3,d1			| "Normalize" side bit...
 	andb	#1,d1
 	moveb	a6@(-3),d2		| Get wanted side
@@ -956,26 +1003,39 @@ ENTRY(iwmWriteSector)
 	bne	wsSeekErr
 
 	moveb	a6@(-4),d1		| Get wanted track# 
-	cmpb	a4@(1),d1		| Compare to the read header
+	cmpb	a4@(o_track),d1		| Compare to the read header
 	beq	wsCompSect
 
 wsSeekErr:	
 	moveq	#seekErr,d0		| Wrong track or side
-	bra	wsDone	
-	
+	bra	wsAllDone		
 	
 	/*
-	 * Are we at the right sector? If not, we return with zero flag
-	 * cleared, but d0 = 0.
+	 * Look up the current sector number in the cache.
+	 * If the buffer is dirty ("valid"), write it to disk. If not, 
+	 * loop over all the slots and return if all of them are clean.
+	 *
+	 * Alternatively, we could decrement a "dirty sectors" counter here.
 	 */
 wsCompSect:	
 	moveq	#0,d1			| Clear register
+	moveb	a4@(o_sector),d1	| get the # of header read
+	lslw	#3,d1			| sizeof cylCacheSlot_t is 8 bytes
+	movel	a6@(o_wslots),a4
+	tstl	a4@(o_valid,d1)		| Sector dirty?
+	bne	wsBufDirty
 	
-	moveb	a6@(-5),d1		| Get wanted sector#
-	cmpb	a4@(2),d1		| Compare to the read header
-	bne	wsDone
-	
+	moveq	#maxGCRSectors-1,d2	| Any dirty sectors left?
+wsChkDty:
+	movew	d2,d1
+	lslw	#3,d1			| sizeof cylCacheSlot_t is 8 bytes
+	tstl	a4@(o_valid,d1)
+	bne	wsNextSect		| Sector dirty?
+	dbra	d2,wsChkDty	
 
+	bra	wsAllDone		| We are through with this track.
+
+	
 	/*
 	 * Write sync pattern and sector data lead-in 'D5 AA'. The 
 	 * missing 'AD' is made up by piping 0x0B through the nibble 
@@ -988,15 +1048,19 @@ wsCompSect:
 	 * and write subsequent bytes to q6H.	
 	 *
 	 * Registers:	
-	 *	a0	Data register of IWM
+	 *	a0	IWM base address (later: data register)
 	 *	a1	Via1Base
 	 *	a2	IWM handshake register
 	 *	a3	data (tags buffer, data buffer)
-	 *	a4	Sync pattern, 'toDisk' translation table
+	 *	a4	Sync pattern, 'toDisk' translation table
 	 */
+wsBufDirty:
 	movel	_IWMBase,a0
+	lea	a4@(0,d1),a3
+	movel	a3,a6@(-10)		| Save ptr to current slot
 	tstb	a0@(q6H)		| Enable writing to disk
-	lea	a4@(3),a3		| Point a3 to tags buffer
+	movel	a6@(o_hdr),a4		| Sector header struct
+	lea	a4@(o_Tags),a3		| Point a3 to tags buffer
 	lea	syncPattern,a4
 
 	moveb	a4@+,a0@(q7H)		| Write first sync byte
@@ -1052,8 +1116,9 @@ wsLI2:
 	 *
 	 * c) adds up three 8 bit checksums, one for each of the bytes written.
 	 */
-wsSD1:	
-	movel	a6@(8),a3		| Start of sector data buffer
+wsSD1:
+	movel	a6@(-10),a3		| Get ptr to current slot
+	movel	a3@(o_secbuf),a3	| Get start of sector data buffer
 
 wsData:
 	addxb	d2,d7
@@ -1100,6 +1165,7 @@ wsRDY04:
 	tstb	a2@			| IWM ready?
 	bpl	wsRDY04
 	moveb	a4@(0,d2),a0@		| Translate nibble and write
+
 	/*
 	 * XXX We have a classic off-by-one error here: the last access
 	 * reaches beyond the data buffer which bombs with memory
@@ -1185,6 +1251,22 @@ wsNoErr:
 	tstb	a0@(0x0200)		| q7L -- Write OFF
 
 wsDone:
+	tstb	d0			| Any error? Simply retry
+	bne	wsBufInvalid
+	
+	movel	a6@(-10),a4		| Else, get ptr to current slot 
+	clrl	a4@(o_valid)		| Mark current buffer "clean"
+	bra	wsNextSect
+	
+wsBufInvalid:
+	subqb	#1,a6@(-6)		| retries
+	bne	wsNextSect
+					| Sector not found, but
+	tstb	d0			| don't set error code if we 
+	bne	wsAllDone		| already have one.
+	moveq	#sectNFErr,d0
+	
+wsAllDone:
 	movew	a6@(-2),sr		| Restore interrupt mask
 	moveml	sp@+,d1-d7/a0-a5	
 	unlk	a6
@@ -1324,10 +1406,9 @@ driveCmd:
  *
  * TODO:	Poll SCC as long as interrupts are disabled.
  *
- * Parameters:	a0	IWMBase
- *		a1	VIABase
- *		a4	sectorHdr_t address
+ * Parameters:	a4	sectorHdr_t address
  * Returns:	d0	result code
+ * Uses:	d0-d4, a0, a2-a4
  */
 readSectHdr:	
 	moveq	#3,d4			| Read 3 chars from IWM for sync
@@ -1335,6 +1416,7 @@ readSectHdr:
 	moveq	#0,d2			| Clear scratch regs
 	moveq	#0,d1
 	moveq	#0,d0
+ 	movel	_IWMBase,a0		| IWM base address
 
 	tstb	a0@(q7L)
 	lea	a0@(q6L),a0		| IWM data register
@@ -1360,7 +1442,7 @@ shLeadIn:
 	moveq	#0x03,d4		| is 3 bytes long
 shLI1:	
 	moveb	a0@,d2			| Get next byte
-	bpl	shLI1
+	bpl	shLI1			| No char at IWM, repeat read
 	dbra	d3,shLI2
 	moveq	#noAdrMkErr,d0		| Can't find an address mark
 	bra	shDone
