@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.31 1999/01/25 01:42:57 hubertf Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.32 1999/01/26 01:34:25 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.31 1999/01/25 01:42:57 hubertf Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.32 1999/01/26 01:34:25 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,6 +94,7 @@ void	makelink __P((char *, char *));
 void	install __P((char *, char *, u_long, u_int));
 void	install_dir __P((char *));
 void	strip __P((char *));
+void	backup __P((const char *));
 void	usage __P((void));
 int	main __P((int, char *[]));
 
@@ -241,11 +242,9 @@ main(argc, argv)
 		if (to_sb.st_flags & NOCHANGEBITS)
 			(void)chflags(to_name,
 			    to_sb.st_flags & ~(NOCHANGEBITS));
-		if (dobackup) {
-			char backup[FILENAME_MAX];
-			(void)snprintf(backup, FILENAME_MAX, "%s%s", to_name, suffix);
-			(void)rename(to_name, backup);
-		} else
+		if (dobackup)
+			backup(to_name);
+		else
 			(void)unlink(to_name);
 	}
 	install(*argv, to_name, fset, iflags);
@@ -360,11 +359,9 @@ install(from_name, to_name, fset, flags)
 	if (stat(to_name, &to_sb) == 0 &&
 	    to_sb.st_flags & (NOCHANGEBITS))
 		(void)chflags(to_name, to_sb.st_flags & ~(NOCHANGEBITS));
-	if (dobackup) {
-		char backup[FILENAME_MAX];
-		(void)snprintf(backup, FILENAME_MAX, "%s%s", to_name, suffix);
-		(void)rename(to_name, backup);
-	} else
+	if (dobackup)
+		backup(to_name);
+	else
 		(void)unlink(to_name);
 
 	if (dolink) {
@@ -527,6 +524,37 @@ strip(to_name)
 		if (wait(&status) == -1 || status)
 			(void)unlink(to_name);
 	}
+}
+
+/*
+ * backup file "to_name" to to_name.suffix
+ * if suffix contains a "%", it's taken as a printf(3) pattern
+ * used for a numbered backup.
+ */
+void
+backup(to_name)
+	const char *to_name;
+{
+	char backup[FILENAME_MAX];
+	
+	if (strchr(suffix, '%')) {
+		/* Do numbered backup */
+		int cnt;
+		char suffix_expanded[FILENAME_MAX];
+		
+		cnt=0;
+		do {
+			(void)snprintf(suffix_expanded, FILENAME_MAX, suffix, cnt);
+			(void)snprintf(backup, FILENAME_MAX, "%s%s",
+				       to_name, suffix_expanded);
+			cnt++;
+		} while (access(backup, F_OK)==0); 
+	} else {
+		/* Do simple backup */
+		(void)snprintf(backup, FILENAME_MAX, "%s%s", to_name, suffix);
+	}
+	
+	(void)rename(to_name, backup);
 }
 
 /*

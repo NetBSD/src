@@ -1,4 +1,4 @@
-.\"	$NetBSD: install.1,v 1.13 1999/01/25 01:42:57 hubertf Exp $
+.\"	$NetBSD: install.1,v 1.14 1999/01/26 01:34:25 hubertf Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -103,7 +103,14 @@ Use
 .Ar suffix
 as the backup suffix if 
 .Fl b
-is given.
+is given. If
+.Ar suffix
+contains a '%' sign, a numbered backup will be performed, and the
+%-pattern will be expanded using
+.Xr sprintf 3 ,
+given an integer counter as the backup number. 
+The counter used starts from 0, and the first available name resulting
+from the expansion is used. 
 .It Fl c
 Copy the file.
 This flag turns off the default behavior of
