@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.3 2002/07/11 01:38:48 simonb Exp $	*/
+/*	$NetBSD: intr.c,v 1.4 2003/03/11 10:40:16 hannken Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -43,9 +43,20 @@
 
 #include <machine/intr.h>
 #include <machine/psl.h>
-#include <machine/dcr.h>
 
 #include <powerpc/spr.h>
+
+#ifdef PPC_IBM403
+#include <powerpc/ibm4xx/dcr403cgx.h>
+#define INTR_STATUS	DCR_EXISR
+#define INTR_ACK	DCR_EXISR
+#define INTR_ENABLE	DCR_EXIER
+#else
+#include <powerpc/ibm4xx/dcr405gp.h>
+#define INTR_STATUS	DCR_UIC0_MSR
+#define INTR_ACK	DCR_UIC0_SR
+#define INTR_ENABLE	DCR_UIC0_ER
+#endif
 
 static inline void disable_irq(int irq);
 static inline void enable_irq(int irq);
@@ -61,7 +72,6 @@ u_long imask[NIPL];
 
 static int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
 static struct intrhand *intrhand[ICU_LEN];
-
 
 
 static inline int
@@ -104,7 +114,7 @@ ext_intr(void)
 	pcpl = cpl;
 	asm volatile ("mfmsr %0" : "=r"(msr));
 
-	int_state = mfdcr(DCR_UIC0_MSR);	/* Read non-masked interrupt status */
+	int_state = mfdcr(INTR_STATUS);	/* Read non-masked interrupt status */
 	bits_to_clear = int_state;
 
 	while (int_state) {
@@ -132,7 +142,7 @@ ext_intr(void)
 			intrcnt[i]++;
 		}
 	}
-	mtdcr(DCR_UIC0_SR, bits_to_clear);	/* Acknowledge all pending interrupts */
+	mtdcr(INTR_ACK, bits_to_clear);	/* Acknowledge all pending interrupts */
 
 	asm volatile ("mtmsr %0" :: "r"(msr | PSL_EE));
 	splx(pcpl);
@@ -144,11 +154,11 @@ disable_irq(int irq)
 {
 	int mask, omask;
 
-	mask = omask = mfdcr(DCR_UIC0_ER);
+	mask = omask = mfdcr(INTR_ENABLE);
 	mask &= ~IRQ_TO_MASK(irq);
 	if (mask == omask)
 		return;
-	mtdcr(DCR_UIC0_ER, mask);
+	mtdcr(INTR_ENABLE, mask);
 #ifdef IRQ_DEBUG
 	printf("irq_disable: irq=%d, mask=%08x\n",irq,mask);
 #endif
@@ -159,11 +169,11 @@ enable_irq(int irq)
 {
 	int mask, omask;
 
-	mask = omask = mfdcr(DCR_UIC0_ER);
+	mask = omask = mfdcr(INTR_ENABLE);
 	mask |= IRQ_TO_MASK(irq);
 	if (mask == omask)
 		return;
-	mtdcr(DCR_UIC0_ER, mask);
+	mtdcr(INTR_ENABLE, mask);
 #ifdef IRQ_DEBUG
 	printf("irq_enable: irq=%d, mask=%08x\n",irq,mask);
 #endif

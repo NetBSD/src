@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.28 2003/03/04 07:48:09 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.29 2003/03/11 10:40:16 hannken Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -175,7 +175,14 @@ mftbl(void)
 {
 	uint32_t tbl;
 
-	asm volatile ("mftbl %0" : "=r"(tbl));
+	asm volatile (
+#ifdef PPC_IBM403
+"	mftblo %0	\n"
+#else
+"	mftbl %0	\n"
+#endif
+	: "=r" (tbl));
+
 	return tbl;
 }
 
@@ -186,12 +193,19 @@ mftb(void)
 	int tmp;
 
 	asm volatile (
+#ifdef PPC_IBM403
+"1:	mftbhi %0	\n"
+"	mftblo %0+1	\n"
+"	mftbhi %1	\n"
+#else
 "1:	mftbu %0	\n"
 "	mftb %0+1	\n"
 "	mftbu %1	\n"
+#endif
 "	cmplw %0,%1	\n"
-"	bne- 1b"
-	    : "=r"(tb), "=r"(tmp) :: "cr0");
+"	bne- 1b		\n"
+	: "=r" (tb), "=r"(tmp) :: "cr0");
+
 	return tb;
 }
 
@@ -276,7 +290,11 @@ extern int cpu_altivec;
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #if !defined(CACHELINESIZE)
+#ifdef PPC_IBM403
+#define	CACHELINESIZE	16
+#else
 #define	CACHELINESIZE	32
+#endif
 #endif
 #endif
 

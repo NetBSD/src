@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2002/12/09 12:16:20 scw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2003/03/11 10:40:17 hannken Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,9 +36,8 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
+#include <powerpc/ibm4xx/dcr405gp.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
-
-#include <machine/dcr.h>
 
 struct device *booted_device;
 int booted_partition;
