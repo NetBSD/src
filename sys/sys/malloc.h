@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.46 1999/07/01 08:13:00 itojun Exp $	*/
+/*	$NetBSD: malloc.h,v 1.47 1999/08/04 18:56:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -147,7 +147,8 @@
 #define	M_SECA		95	/* security associations, key management */
 #define	M_IP6OPT	96	/* IPv6 options */
 #define	M_IP6NDP	97	/* IPv6 Neighbour Discovery */
-#define	M_LAST		98	/* Must be last type + 1 */
+#define	M_NTFS		98	/* Windows NT file system structures */
+#define	M_LAST		99	/* Must be last type + 1 */
 
 #define	INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -248,7 +249,8 @@
 	"key mgmt",	/* 95 M_SECA */ \
 	"ip6_options",	/* 96 M_IP6OPT */ \
 	"NDP",		/* 97 M_IP6NDP */ \
-	NULL,		/* 98 */ \
+	"NTFS",		/* 98 M_NTFS */ \
+	NULL,		/* 99 */ \
 }
 
 struct kmemstats {
