@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.271 1999/11/06 16:23:49 mycroft Exp $
+#	$NetBSD: GENERIC,v 1.272 1999/11/10 22:39:45 hubertf Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -174,6 +174,12 @@ config		netbsd	root on ? type ?
 mainbus0 at root
 
 #apm0	at mainbus0			# Advanced power management
+
+# Tuning for power management, see apm(4) for more details.
+#options 	APM_NO_IDLE		# Don't call BIOS CPU idle function
+#options 	APM_V10_ONLY		# Use only the APM 1.0 calls
+#options 	APM_NO_POWEROFF		# Don't power off on halt(8)
+#options 	APM_NO_POWER_PRINT	# Don't print stats on the console
 
 
 # Basic Bus Support
