@@ -1,3 +1,7 @@
+/*
+ *	$Id: rtclocka_var.h,v 1.3 1994/02/11 07:02:06 chopps Exp $
+ */
+
 #ifndef _RTCLOCKA_H_
 #define _RTCLOCKA_H_
 

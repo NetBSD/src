@@ -34,6 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)scsi.c	7.5 (Berkeley) 5/4/91
+ *	$Id: scsi.c,v 1.7 1994/02/11 07:02:09 chopps Exp $
  *
  * MULTICONTROLLER support only working for multiple controllers of the 
  * same kind at the moment !! 
@@ -50,7 +51,7 @@
 #if NSCSI > 0
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/scsi.c,v 1.6 1994/02/01 11:52:27 chopps Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/scsi.c,v 1.7 1994/02/11 07:02:09 chopps Exp $";
 #endif
 
 /* need to know if any tapes have been configured */

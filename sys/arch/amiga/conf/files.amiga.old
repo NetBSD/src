@@ -1,3 +1,5 @@
+#	$Id: files.amiga.old,v 1.9 1994/02/11 07:00:48 chopps Exp $
+
 arch/amiga/amiga/amiga_init.c		standard
 arch/amiga/amiga/autoconf.c		standard
 arch/amiga/amiga/cia.c			standard

@@ -1,3 +1,7 @@
+/*
+ *	$Id: retina-mondefs.c,v 1.2 1994/02/11 07:02:03 chopps Exp $
+ */
+
 static struct MonDef monitor_defs[] = {
   /*       FQ, FLG,   MW,   MH
     HBS, HSS, HSE, HBE,  HT, VBS, VSS, VSE, VBE,  VT

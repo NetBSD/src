@@ -1,3 +1,7 @@
+/*
+ *	$Id: loadbsd.c,v 1.7 1994/02/11 07:03:01 chopps Exp $
+ */
+
 #include <sys/types.h>
 #include <a.out.h>
 #include <stdio.h>

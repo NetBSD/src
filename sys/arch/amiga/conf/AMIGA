@@ -1,3 +1,5 @@
+#	$Id: AMIGA,v 1.5 1994/02/11 07:00:37 chopps Exp $
+
 machine		"amiga"
 #cpu		"M68020"
 cpu		"M68030"

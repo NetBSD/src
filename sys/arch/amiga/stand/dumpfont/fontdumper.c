@@ -14,6 +14,7 @@
  * -ch 
  * Dated:  11/17/1993
  *
+ *	$Id: fontdumper.c,v 1.2 1994/02/11 07:02:57 chopps Exp $
  */
 
 /* Original code by Markus Wild */

@@ -36,6 +36,7 @@
  * SUCH DAMAGE.
  *
  *      @(#)stvar.h	7.1 (Berkeley) 2/5/91
+ *	$Id: stvar.h,v 1.4 1994/02/11 07:02:23 chopps Exp $
  */
 
 /*

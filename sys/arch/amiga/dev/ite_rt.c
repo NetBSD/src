@@ -1,3 +1,7 @@
+/*
+ *	$Id: ite_rt.c,v 1.5 1994/02/11 07:01:50 chopps Exp $
+ */
+
 #include "ite.h"
 #if NITE > 0
 

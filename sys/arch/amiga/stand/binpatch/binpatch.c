@@ -1,3 +1,7 @@
+/*
+ *	$Id: binpatch.c,v 1.3 1994/02/11 07:02:53 chopps Exp $
+ */
+
 #include <sys/types.h>
 #include <a.out.h>
 #include <stdio.h>

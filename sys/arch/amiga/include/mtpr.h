@@ -38,6 +38,7 @@
  * from: Utah $Hdr: mtpr.h 1.1 90/07/09$
  *
  *	@(#)mtpr.h	7.2 (Berkeley) 11/3/90
+ *	$Id: mtpr.h,v 1.4 1994/02/11 07:02:41 chopps Exp $
  */
 
 /*

@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dmareg.h
+ *	$Id: a3000dmareg.h,v 1.3 1994/02/11 07:01:29 chopps Exp $
  */
 
 /* Hardware layout of the A3000 SDMAC. This also contains the

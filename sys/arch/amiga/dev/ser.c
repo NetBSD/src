@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)ser.c	7.12 (Berkeley) 6/27/91
+ *	$Id: ser.c,v 1.9 1994/02/11 07:02:15 chopps Exp $
  */
 
 #include "ser.h"
