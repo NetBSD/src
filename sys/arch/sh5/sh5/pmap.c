@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.23 2002/10/24 13:56:45 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.24 2002/10/31 14:34:17 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -124,7 +124,7 @@
 #include <machine/cacheops.h>
 
 
-#define PMAP_DIAG
+#undef PMAP_DIAG
 #ifdef PMAP_DIAG
 #ifndef DDB
 #define pmap_debugger()	panic("")
@@ -572,7 +572,7 @@ static __inline void
 pmap_pteg_synch(ptel_t ptel, struct pvo_entry *pvo)
 {
 
-	if (PVO_ISMANAGED(pvo))
+	if (PVO_ISMANAGED(pvo) && !PVO_ISWIRED(pvo))
 		pvo->pvo_ptel |= (ptel & SH5_PTEL_RM_MASK);
 }
 
@@ -1715,14 +1715,10 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 		}
 	}
 
-	splx(s);
-
 	/*
 	 * If we aren't overwriting a mapping, try to allocate
 	 */
 	pvo = pool_get(pl, poolflags);
-
-	s = splvm();
 
 	if (pvo == NULL) {
 		if ((flags & PMAP_CANFAIL) == 0)
@@ -1913,7 +1909,7 @@ pmap_pvo_remove(struct pvo_entry *pvo, int idx)
 	 * Save the REF/CHG bits into their cache if the page is managed.
 	 */
 	pg = PHYS_TO_VM_PAGE((paddr_t)(pvo->pvo_ptel & SH5_PTEL_PPN_MASK));
-	if (pg && PVO_ISMANAGED(pvo))
+	if (pg && PVO_ISMANAGED(pvo) && !PVO_ISWIRED(pvo))
 		pmap_attr_save(pg, pvo->pvo_ptel & (SH5_PTEL_R | SH5_PTEL_M));
 
 	/*
@@ -2142,7 +2138,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (pg && (flags & PMAP_UNMANAGED) == 0)
 		pmap_attr_save(pg, ptel & (SH5_PTEL_R | SH5_PTEL_M));
 	error = pmap_pvo_enter(pm, pl, pvo_head, va, pa, ptel, flags);
-
 	splx(s);
 
 	return (error);
@@ -2343,6 +2338,8 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 		PMPRINTF(("pmap_protect: protecting VA 0x%lx, PA 0x%lx\n",
 		    va, (paddr_t)(pvo->pvo_ptel & SH5_PTEL_PPN_MASK)));
 
+		KDASSERT(!PVO_ISWIRED(pvo));
+
 		pvo->pvo_ptel &= ~clrbits;
 		pvo->pvo_vaddr &= ~PVO_WRITABLE;
 
@@ -2447,6 +2444,16 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		next_pvo = LIST_NEXT(pvo, pvo_vlink);
 
 		/*
+		 * Mappings entered using pmap_kenter_pa() can be ignored
+		 */
+		if (!PVO_ISMANAGED(pvo) || PVO_ISWIRED(pvo)) {
+			PMPRINTF((
+			    "pmap_page_protect: ignoring wired VA 0x%lx\n",
+			    PVO_VADDR(pvo)));
+			continue;
+		}
+
+		/*
 		 * Downgrading to no mapping at all, we just remove the entry.
 		 */
 		if ((prot & VM_PROT_READ) == 0) {
@@ -2548,7 +2555,8 @@ pmap_query_bit(struct vm_page *pg, ptel_t ptebit)
 		 * See if we saved the bit off.  If so cache, it and return
 		 * success.
 		 */
-		if (PVO_ISMANAGED(pvo) && pvo->pvo_ptel & ptebit) {
+		if (PVO_ISMANAGED(pvo) && !PVO_ISWIRED(pvo) &&
+		    pvo->pvo_ptel & ptebit) {
 			pmap_attr_save(pg, ptebit);
 			PMPRINTF(("yes. Cached in pvo for 0x%lx.\n",
 			    PVO_VADDR(pvo)));
@@ -2563,7 +2571,7 @@ pmap_query_bit(struct vm_page *pg, ptel_t ptebit)
 	 * to the PTEs.
 	 */
 	LIST_FOREACH(pvo, vm_page_to_pvoh(pg), pvo_vlink) {
-		if (!PVO_ISMANAGED(pvo))
+		if (!PVO_ISMANAGED(pvo) || PVO_ISWIRED(pvo))
 			continue;
 
 		if (PVO_VADDR(pvo) < SH5_KSEG0_BASE) {
@@ -2637,7 +2645,7 @@ pmap_clear_bit(struct vm_page *pg, ptel_t ptebit)
 	 * valid PTE.  If so, clear the ptebit from the valid PTE.
 	 */
 	LIST_FOREACH(pvo, vm_page_to_pvoh(pg), pvo_vlink) {
-		if (!PVO_ISMANAGED(pvo))
+		if (!PVO_ISMANAGED(pvo) || PVO_ISWIRED(pvo))
 			continue;
 
 		if (PVO_VADDR(pvo) < SH5_KSEG0_BASE) {
