@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.29 1994/02/15 07:18:46 cgd Exp $
+ *	$Id: trap.c,v 1.30 1994/03/24 21:50:35 mycroft Exp $
  */
 
 /*
@@ -473,11 +473,8 @@ syscall(frame)
 	code = frame.tf_eax;
 	p->p_regs = (int *)&frame;
 	params = (caddr_t)frame.tf_esp + sizeof(int);
+	opc = frame.tf_eip;
 
-	/*
-	 * Reconstruct pc, assuming lcall $X,y is 7 bytes, as it is always.
-	 */
-	opc = frame.tf_eip - 7;
 	if (code == 0) {			/* indir */
 		code = fuword(params);
 		params += sizeof(int);
@@ -488,8 +485,6 @@ syscall(frame)
 		callp = &sysent[code];
 	if ((i = callp->sy_narg * sizeof(int)) &&
 	    (error = copyin(params, (caddr_t)args, (u_int)i))) {
-		frame.tf_eax = error;
-		frame.tf_eflags |= PSL_C;	/* carry bit */
 #ifdef SYSCALL_DEBUG
 		scdebug_call(p, code, callp->sy_narg, args);
 #endif
@@ -497,7 +492,7 @@ syscall(frame)
 		if (KTRPOINT(p, KTR_SYSCALL))
 			ktrsyscall(p->p_tracep, code, callp->sy_narg, &args);
 #endif
-		goto done;
+		goto lose;
 	}
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, callp->sy_narg, args);
@@ -509,20 +504,28 @@ syscall(frame)
 	rval[0] = 0;
 	rval[1] = frame.tf_edx;
 	error = (*callp->sy_call)(p, args, rval);
-	if (error == ERESTART)
-		frame.tf_eip = opc;
-	else if (error != EJUSTRETURN)
-		if (error) {
-			frame.tf_eax = error;
-			frame.tf_eflags |= PSL_C;	/* carry bit */
-		} else {
-			frame.tf_eax = rval[0];
-			frame.tf_edx = rval[1];
-			frame.tf_eflags &= ~PSL_C;	/* carry bit */
-		}
-	/* else if (error == EJUSTRETURN) */
+	switch (error) {
+	case 0:
+		frame.tf_eax = rval[0];
+		frame.tf_edx = rval[1];
+		frame.tf_eflags &= ~PSL_C;	/* carry bit */
+		break;
+	case ERESTART:
+		/*
+		 * Reconstruct pc, assuming lcall $X,y is 7 bytes, as it is
+		 * always.
+		 */
+		frame.tf_eip = opc - 7;
+		break;
+	case EJUSTRETURN:
 		/* nothing to do */
-done:
+		break;
+	default:
+	lose:
+		frame.tf_eax = error;
+		frame.tf_eflags |= PSL_C;	/* carry bit */
+		break;
+	}
 	/*
 	 * Reinitialize proc pointer `p' as it may be different
 	 * if this is a child returning from fork syscall.
