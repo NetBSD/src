@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.4 1997/01/13 14:05:02 oki Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.5 1997/05/19 10:15:16 veego Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -173,7 +173,7 @@ cachectl(req, addr, len)
 			 */
 			if (!doall &&
 			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
-				pa = pmap_extract(&curproc->p_vmspace->vm_pmap,
+				pa = pmap_extract(curproc->p_vmspace->vm_map.pmap,
 						  (vm_offset_t)addr);
 				if (pa == 0)
 					doall = 1;
