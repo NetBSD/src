@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.87 1999/03/27 02:48:32 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.88 1999/03/29 05:31:24 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.87 1999/03/27 02:48:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88 1999/03/29 05:31:24 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1773,15 +1773,10 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	if (managed) {
 		struct pv_head *pvh = pa_to_pvh(pa);
 
-		/*
-		 * An obvious question here is why a page would be entered in
-		 * response to a fault, but with permissions less than those
-		 * requested.  This can happen in the case of a copy-on-write
-		 * page that's not currently mapped being accessed; the first
-		 * fault will map the original page read-only, and another
-		 * fault will be taken to do the copy and make it read-write.
-		 */
-		access_type &= prot;
+#ifdef DIAGNOSTIC
+		if (access_type & ~prot)
+			panic("pmap_enter: access_type exceeds prot");
+#endif
 		if (access_type & VM_PROT_WRITE)
 			pvh->pvh_attrs |= (PGA_REFERENCED|PGA_MODIFIED);
 		else if (access_type & VM_PROT_ALL)
