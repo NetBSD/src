@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.6 2002/08/19 09:56:01 lukem Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2004/11/12 10:37:56 he Exp $
 
 .include <bsd.own.mk>
 
 PROG=	rcmd
-SRCS=	rsh.c
+SRCS=	rsh.c getport.c
 CPPFLAGS+=-DIN_RCMD
 BINOWN=	root
 BINMODE=4555
