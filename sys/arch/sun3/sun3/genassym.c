@@ -33,7 +33,7 @@
  *
  *	from: @(#)genassym.c	8.3 (Berkeley) 1/4/94
  *	from: genassym.c,v 1.9 1994/05/23 06:14:19 mycroft
- *	$Id: genassym.c,v 1.20 1994/06/01 15:37:05 gwr Exp $
+ *	$Id: genassym.c,v 1.21 1994/09/20 16:53:40 gwr Exp $
  */
 
 #define KERNEL
@@ -46,15 +46,12 @@
 
 #include <vm/vm.h>
 
+#include <machine/cpu.h>
 #include <machine/pcb.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/control.h>
 #include <machine/mon.h>
-#include <machine/param.h>
-#include <machine/memmap.h>
-#include <machine/cpu.h>
-#include <machine/trap.h>
 
 #include "intersil7170.h"
 #include "interreg.h"
@@ -86,6 +83,8 @@ main()
 
 	/* intersil clock internals */
 	def("IREG_CLOCK_ENAB_5", IREG_CLOCK_ENAB_5);
+	def("INTERSIL_INTR_OFFSET", &intersil_addr->clk_intr_reg);
+	def1(INTERSIL_INTER_CSECONDS);
 
 	/* bus error stuff */
 	def1(BUSERR_REG);
@@ -96,9 +95,8 @@ main()
 	/* 68k isms */
 	def1(PSL_LOWIPL);
 	def1(PSL_HIGHIPL);
-	def1(PSL_IPL7);
 	def1(PSL_USER);
-	def("SPL1", PSL_S | PSL_IPL1);
+	def1(PSL_S);
 	def1(FC_CONTROL);
 	def1(FC_SUPERD);
 	def1(FC_USERD);
@@ -115,16 +113,12 @@ main()
 	def1(NBSG);
 
 	/* sun3 memory map */
-	def1(MAINMEM_MONMAP);
+	def1(MONSTART);
+	def1(PROM_BASE);
 	def1(MONSHORTSEG);
 	def1(USRSTACK);
 
 	/* kernel-isms */
-	def("INTERSIL_INTR_OFFSET",
-		   &intersil_addr->interrupt_reg);
-	def1(INTERSIL_INTER_CSECONDS);
-	def1(CLOCK_VA);
-	def1(INTERREG_VA);
 	def1(KERNBASE);
 	def1(UPAGES);
 	def("UPAGE_ADDR",      MONSHORTSEG);
@@ -134,22 +128,7 @@ main()
 	def1(EFAULT);
 	def1(ENAMETOOLONG);
 
-	/* trap types (should just include trap.h?) */
-	def1(T_BUSERR);
-	def1(T_ADDRERR);
-	def1(T_ILLINST);
-	def1(T_ZERODIV);
-	def1(T_CHKINST);
-	def1(T_TRAPVINST);
-	def1(T_PRIVINST);
-	def1(T_TRACE);
-	def1(T_MMUFLT);
-	def1(T_SSIR);
-	def1(T_FMTERR);
-	def1(T_COPERR);
-	def1(T_FPERR);
-	def1(T_ASTFLT);
-	def1(T_TRAP15);
+	/* trap types: locore.s includes trap.h */
 	
 	/*
 	 * unix structure-isms
