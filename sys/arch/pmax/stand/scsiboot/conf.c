@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.9 1999/01/30 12:30:57 simonb Exp $	*/
+/*	$NetBSD: conf.c,v 1.10 1999/02/22 07:17:44 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,9 +43,6 @@
 #include <ufs.h>
 #include <machine/dec_prom.h>
 #include <rz.h>
-#ifndef BOOT
-#include <tz.h>
-#endif
 
 const	struct callback *callv = &callvec;
 int	errno;
@@ -58,14 +55,10 @@ extern int	nodev(), noioctl();
 #define rzioctl /*(()(struct open_file*, u_long, void*))*/0
 #else
 #define	rzioctl		noioctl
-#define	tzioctl		noioctl
 #endif
 
 struct devsw devsw[] = {
 	{ "rz",	rzstrategy,	rzopen,	rzclose,	rzioctl }, /*0*/
-#ifndef BOOT
-	{ "tz",	tzstrategy,	tzopen,	tzclose,	tzioctl }, /*1*/
-#endif
 };
 
 int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
