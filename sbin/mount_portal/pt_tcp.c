@@ -36,7 +36,7 @@
  *
  *	from: Id: pt_tcp.c,v 1.1 1992/05/25 21:43:09 jsp Exp jsp
  *	from: @(#)pt_tcp.c	8.1 (Berkeley) 6/5/93
- *	$Id: pt_tcp.c,v 1.1 1994/01/12 20:02:27 cgd Exp $
+ *	$Id: pt_tcp.c,v 1.2 1994/01/13 17:43:39 mycroft Exp $
  */
 
 #include <stdio.h>
@@ -84,14 +84,12 @@ int *fdp;
 		return (EINVAL);
 	*q = '\0';
 	strcpy(host, p);
-	p = q++;
+	p = ++q;
 
 	q = strchr(p, '/');
-	if (q == 0 || q - p >= sizeof(port))
+	if (q != 0 || strlen(p) >= sizeof(port))
 		return (EINVAL);
-	*q = '\0';
 	strcpy(port, p);
-	p = q++;
 
 	hp = gethostbyname(host);
 	if (hp != 0) {
