@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.56 2002/06/24 18:48:13 eeh Exp $	*/
+/*	$NetBSD: iommu.c,v 1.57 2002/08/29 04:43:43 chs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -573,7 +573,9 @@ iommu_dvmamap_load(t, sb, map, buf, buflen, p, flags)
 			printf("seg %d dvmaddr %lx out of range %x - %x\n",
 				seg, (long)map->dm_segs[seg].ds_addr, 
 				is->is_dvmabase, is->is_dvmaend);
+#ifdef DDB
 			Debugger();
+#endif
 		}
 	}
 #endif
@@ -698,7 +700,9 @@ iommu_dvmamap_load_raw(t, sb, map, segs, nsegs, flags, size)
 	{ 
 		printf("iommu_dvmamap_load_raw(): extent_alloc(%d, %x) failed!\n",
 		    (int)sgsize, flags);
+#ifdef DDB
 		Debugger();
+#endif
 	}		
 #endif	
 	if (dvmaddr == (bus_addr_t)-1)
@@ -817,7 +821,9 @@ iommu_dvmamap_load_raw(t, sb, map, segs, nsegs, flags, size)
 			printf("seg %d dvmaddr %lx out of range %x - %x\n",
 				seg, (long)map->dm_segs[seg].ds_addr, 
 				is->is_dvmabase, is->is_dvmaend);
+#ifdef DDB
 			Debugger();
+#endif
 		}
 	}
 		}
@@ -882,7 +888,9 @@ iommu_dvmamap_load_raw(t, sb, map, segs, nsegs, flags, size)
 			printf("seg %d dvmaddr %lx out of range %x - %x\n",
 				seg, (long)map->dm_segs[seg].ds_addr, 
 				is->is_dvmabase, is->is_dvmaend);
+#ifdef DDB
 			Debugger();
+#endif
 		}
 	}
 	}
