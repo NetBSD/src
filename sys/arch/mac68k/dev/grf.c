@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.44 1997/08/03 06:25:56 scottr Exp $	*/
+/*	$NetBSD: grf.c,v 1.45 1997/08/11 22:53:30 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -71,9 +71,9 @@
 #include <vm/vm_page.h>
 #include <vm/vm_pager.h>
 
-#include "nubus.h"
-#include "itevar.h"
-#include "grfvar.h"
+#include <mac68k/dev/nubus.h>
+#include <mac68k/dev/itevar.h>
+#include <mac68k/dev/grfvar.h>
 
 #include "grf.h"
 #include "ite.h"

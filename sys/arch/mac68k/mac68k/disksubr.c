@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16 1996/10/13 03:21:36 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.17 1997/08/11 22:53:45 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -85,7 +85,7 @@
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
 
-#include "dpme.h"		/* MF the structure of a mac partition entry */
+#include <mac68k/mac68k/dpme.h>	/* MF the structure of a mac partition entry */
 
 #define	b_cylin	b_resid
 
