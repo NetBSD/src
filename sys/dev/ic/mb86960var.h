@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960var.h,v 1.32 2002/11/30 14:15:10 tsutsui Exp $	*/
+/*	$NetBSD: mb86960var.h,v 1.33 2003/02/05 12:03:54 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -136,6 +136,7 @@ struct mb86960_softc {
 	u_int32_t sc_flags;		/* controller quirks */
 #define FE_FLAGS_MB86960	0x0001	/* DLCR7 is differnt on MB86960 */
 #define FE_FLAGS_SBW_BYTE	0x0002	/* byte access mode for system bus */
+#define FE_FLAGS_SRAM_150ns	0x0004	/* The board has slow SRAM */
 
 	u_int8_t proto_dlcr4;		/* DLCR4 prototype. */
 	u_int8_t proto_dlcr5;		/* DLCR5 prototype. */
