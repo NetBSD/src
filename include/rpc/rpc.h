@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.h,v 1.11 1998/02/11 23:01:25 lukem Exp $	*/
+/*	$NetBSD: rpc.h,v 1.12 2000/01/26 13:20:26 itojun Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -98,6 +98,9 @@ extern int registerrpc __P((int, int, int, char *(*) __P((char [UDPMSGSIZE])),
 extern int callrpc __P((char *, int, int, int, xdrproc_t, char *,
     xdrproc_t , char *));
 extern int getrpcport __P((char *, int, int, int));
+
+struct sockaddr;
+extern int bindresvport_sa __P((int, struct sockaddr *));
 __END_DECLS
 
 #endif /* !_RPC_RPC_H_ */
