@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.4 1999/12/07 07:36:19 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.5 1999/12/11 00:32:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,6 +60,8 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+
+#include <machine/endian.h>
  
 #include <net/if.h>
 #include <net/if_dl.h>
