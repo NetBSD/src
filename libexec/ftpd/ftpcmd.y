@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.52 2000/07/23 14:40:48 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.53 2000/09/15 14:55:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.52 2000/07/23 14:40:48 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.53 2000/09/15 14:55:16 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -272,6 +272,7 @@ cmd
 
 	| EPRT check_login SP STRING CRLF
 		{
+#ifdef INET6
 			char *tmp = NULL;
 			char *result[3];
 			char *p, *q;
@@ -339,6 +340,9 @@ cmd
 
 			}
 			free($4);
+#else
+			reply(500, "Invalid argument, rejected.");
+#endif
 		}
 
 	| PASV check_login CRLF
@@ -1009,6 +1013,7 @@ host_long_port6
 		NUMBER COMMA NUMBER COMMA NUMBER COMMA NUMBER COMMA
 		NUMBER
 		{
+#ifdef INET6
 			char *a, *p;
 
 			data_dest.su_sin6.sin6_len =
@@ -1026,7 +1031,9 @@ host_long_port6
 				data_dest.su_sin6.sin6_scope_id =
 					his_addr.su_sin6.sin6_scope_id;
 			}
-
+#else
+			memset(&data_dest, 0, sizeof(data_dest));
+#endif
 			/* reject invalid LPRT command */
 			if ($1 != 6 || $3 != 16 || $37 != 2)
 				memset(&data_dest, 0, sizeof(data_dest));
@@ -1834,12 +1841,14 @@ port_check(const char *cmd, int family)
 			    sizeof(data_dest.su_sin.sin_addr)) != 0)
 				goto port_check_fail;
 			break;
+#ifdef INET6
 		case AF_INET6:
 			if (memcmp(&data_dest.su_sin6.sin6_addr,
 			    &his_addr.su_sin6.sin6_addr,
 			    sizeof(data_dest.su_sin6.sin6_addr)) != 0)
 				goto port_check_fail;
 			break;
+#endif
 		default:
 			goto port_check_fail;
 		}
