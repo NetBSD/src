@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.8 1999/02/26 10:49:30 chopps Exp $	*/
+/*	$NetBSD: main.c,v 1.9 1999/03/03 17:29:58 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.11 1997/10/08 07:46:48 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.8 1999/02/26 10:49:30 chopps Exp $");
+__RCSID("$NetBSD: main.c,v 1.9 1999/03/03 17:29:58 hubertf Exp $");
 #endif
 #endif
 
@@ -31,10 +31,11 @@ __RCSID("$NetBSD: main.c,v 1.8 1999/02/26 10:49:30 chopps Exp $");
  */
 
 #include <err.h>
+#include <errno.h>
 #include "lib.h"
 #include "delete.h"
 
-static char Options[] = "hvDdnfFrp:";
+static char Options[] = "hvDdnfFrOp:";
 
 char	*Prefix		= NULL;
 char    *ProgramPath	= NULL;
@@ -42,11 +43,12 @@ Boolean	NoDeInstall	= FALSE;
 Boolean	CleanDirs	= FALSE;
 Boolean File2Pkg	= FALSE;
 Boolean Recurse		= FALSE;
+Boolean OnlyDeleteFromPkgDB = FALSE;
 
 static void
 usage(void)
 {
-    fprintf(stderr, "usage: pkg_delete [-vDdnFfr] [-p prefix] pkg-name ...\n");
+    fprintf(stderr, "usage: pkg_delete [-vDdnFfrO] [-p prefix] pkg-name ...\n");
     exit(1);
 }
 
@@ -94,6 +96,10 @@ main(int argc, char **argv)
 	    Recurse = TRUE;
 	    break;
 
+	case 'O':
+	    OnlyDeleteFromPkgDB = TRUE;
+	    break;
+	  
 	case 'h':
 	case '?':
 	default:
@@ -139,7 +145,42 @@ main(int argc, char **argv)
     *pkgs = NULL;
     if (!Fake && getuid() != 0)
 	errx(1, "you must be root to delete packages");
-    if ((error = pkg_perform(start)) != 0) {
+    if (OnlyDeleteFromPkgDB) {
+	/* Only delete the given packages' files from pkgdb, do not touch
+	 * the pkg itself. Used by "make reinstall" in bsd.pkg.mk
+	 */
+	char *key, *val;
+	char **s;
+	
+	if (pkgdb_open(0)==-1) {
+	    err(1, "cannot open %s", _pkgdb_getPKGDB_FILE());
+	}
+
+	error = 0;
+	while ((key=pkgdb_iter())) {
+	    val=pkgdb_retrieve(key);
+
+	    for (s=start; *s; s++) {
+		if (strcmp(val, *s) == 0) {
+		    if (Verbose)
+			printf("Removing file %s from pkgdb\n", key);
+
+		    errno=0;
+		    if (pkgdb_remove(key)) {
+			if (errno)
+			    printf("Error removing %s from pkgdb: %s\n", key, strerror(errno));
+			else
+			    printf("Key %s not present in pkgdb?!\n", key);
+			error = 1;
+		    }
+		}
+	    }
+	}
+	pkgdb_close();
+
+	return error;
+	
+    } else if ((error = pkg_perform(start)) != 0) {
 	if (Verbose)
 	    warnx("%d package deletion(s) failed", error);
 	return error;
