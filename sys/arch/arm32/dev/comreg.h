@@ -1,4 +1,4 @@
-/*	$NetBSD: comreg.h,v 1.2 1997/01/13 00:40:59 mark Exp $	*/
+/*	$NetBSD: comreg.h,v 1.3 1997/10/14 19:00:39 mark Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -33,6 +33,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)comreg.h	7.2 (Berkeley) 5/9/91
+ *	from: comreg.h,v 1.9 1996/09/06 05:06:01 mycroft Exp
  */
 
 #include <dev/ic/ns16550reg.h>
@@ -117,7 +118,7 @@
  * and CONUNIT must be 0.
  */
 #ifndef CONADDR
-#define	CONADDR	(SERIAL0_CONTROLLER_BASE)
+#define	CONADDR	(0x3f8)
 #endif
 #ifndef CONUNIT
 #define	CONUNIT	(0)
