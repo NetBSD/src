@@ -1,4 +1,4 @@
-.\" $NetBSD: lms.4,v 1.15 2002/01/15 01:42:14 wiz Exp $
+.\" $NetBSD: lms.4,v 1.16 2003/05/15 13:13:23 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd March 12, 1997
+.Dd May 15, 2003
 .Dt LMS 4 i386
 .Os
 .Sh NAME
@@ -42,26 +42,12 @@
 .Cd lms0 at isa? port 0x23c irq 5
 .Cd lms1 at isa? port 0x238 irq 5
 .Cd wsmouse* at lms?
-.Cd olms0 at isa? port 0x23c irq 5
-.Cd olms1 at isa? port 0x238 irq 5
 .Sh DESCRIPTION
 This driver provides an interface to a Logitech-style bus mouse.
 Mouse related data are accessed by
 .Xr wsmouse 4
 devices.
-The
-.Dq olms
-versions are provided for compatibility.
-They use the
-.Xr busmouse 4
-protocol.
-.Sh FILES
-.Bl -tag -width Pa -compact
-.It Pa /dev/lms0
-first Logitech-style bus mouse
-.El
 .Sh SEE ALSO
-.Xr busmouse 4 ,
 .Xr mms 4 ,
 .Xr pms 4 ,
 .Xr wsmouse 4

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.96 2003/04/10 22:06:58 christos Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.97 2003/05/15 13:13:25 wiz Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -449,15 +449,6 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
-
-
-# Mice
-
-# ISA busmice
-#olms0	at isa? port 0x23c irq 5	# Logitech bus mouse
-#olms1	at isa? port 0x238 irq 5
-#omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
-#omms1	at isa? port 0x238 irq 5
 
 
 # Joysticks

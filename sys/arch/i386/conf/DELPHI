@@ -1,4 +1,4 @@
-#	$NetBSD: DELPHI,v 1.27 2003/04/10 22:06:57 christos Exp $
+#	$NetBSD: DELPHI,v 1.28 2003/05/15 13:13:23 wiz Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
@@ -7,7 +7,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"DELPHI-$Revision: 1.27 $"
+ident 		"DELPHI-$Revision: 1.28 $"
 
 maxusers	64		# estimated number of users
 
@@ -692,11 +692,6 @@ spkr0	at pcppi?		# PC speaker
 #mms1	at isa? port 0x238 irq 5
 #wsmouse*	at lms? mux 0
 #wsmouse*	at mms? mux 0
-# backwards compatible versions
-#olms0	at isa? port 0x23c irq 5	# Logitech bus mouse
-#olms1	at isa? port 0x238 irq 5
-#omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
-#omms1	at isa? port 0x238 irq 5
 
 
 # Joysticks

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.581 2003/05/15 06:14:14 wiz Exp $
+# $NetBSD: mi,v 1.582 2003/05/15 13:13:21 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -715,8 +715,6 @@
 ./usr/share/man/cat4/i386/mem.0			man-sys-catman
 ./usr/share/man/cat4/i386/mms.0			man-sys-catman
 ./usr/share/man/cat4/i386/npx.0			man-sys-catman
-./usr/share/man/cat4/i386/olms.0		man-sys-catman
-./usr/share/man/cat4/i386/omms.0		man-sys-catman
 ./usr/share/man/cat4/i386/pcibios.0		man-sys-catman
 ./usr/share/man/cat4/i386/pnpbios.0		man-sys-catman
 ./usr/share/man/cat4/icmp.0			man-sys-catman
@@ -2525,8 +2523,6 @@
 ./usr/share/man/man4/i386/mem.4			man-sys-man
 ./usr/share/man/man4/i386/mms.4			man-sys-man
 ./usr/share/man/man4/i386/npx.4			man-sys-man
-./usr/share/man/man4/i386/olms.4		man-sys-man
-./usr/share/man/man4/i386/omms.4		man-sys-man
 ./usr/share/man/man4/i386/pcibios.4		man-sys-man
 ./usr/share/man/man4/i386/pnpbios.4		man-sys-man
 ./usr/share/man/man4/icmp.4			man-sys-man

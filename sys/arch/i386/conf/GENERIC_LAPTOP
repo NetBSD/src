@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.73 2003/04/12 07:39:39 simonb Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.74 2003/05/15 13:13:24 wiz Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.73 $"
+#ident 		"GENERIC-$Revision: 1.74 $"
 
 maxusers	32		# estimated number of users
 
@@ -722,11 +722,6 @@ mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 mms1	at isa? port 0x238 irq 5
 wsmouse*	at lms? mux 0
 wsmouse*	at mms? mux 0
-# backwards compatible versions
-#olms0	at isa? port 0x23c irq 5	# Logitech bus mouse
-#olms1	at isa? port 0x238 irq 5
-#omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
-#omms1	at isa? port 0x238 irq 5
 
 
 # Joysticks

@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.134 2003/04/17 11:55:08 wiz Exp $
+#	$NetBSD: DEVNAMES,v 1.135 2003/05/15 13:13:26 wiz Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -813,8 +813,6 @@ ofrtc			MI
 ohci			MI		
 oldscsi			pmax		Attribute
 oldscsibus		pmax
-olms			i386
-omms			i386
 oosiop			MI
 openfirm		macppc
 openfirm		ofppc
