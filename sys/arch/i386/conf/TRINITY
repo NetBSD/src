@@ -1,4 +1,4 @@
-#	$NetBSD: TRINITY,v 1.53 1995/01/25 04:58:24 cgd Exp $
+#	$NetBSD: TRINITY,v 1.54 1995/03/05 22:32:58 mycroft Exp $
 #
 #	TRINITY -- Mycroft's 386 box
 #
@@ -40,6 +40,7 @@ options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
 options		COMPAT_SVR4	# binary compatibility with SVR4
 #options	COMPAT_IBCS2	# binary compatibility with SCO and ISC
+#options	COMPAT_LINUX	# binary compatibility with Linux
 
 options		USER_LDT	# user-settable LDT; used by WINE
 options		LKM		# loadable kernel modules
