@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_unix.c,v 1.7 1998/02/10 04:54:24 lukem Exp $	*/
+/*	$NetBSD: auth_unix.c,v 1.8 1998/02/11 11:52:53 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)auth_unix.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)auth_unix.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: auth_unix.c,v 1.7 1998/02/10 04:54:24 lukem Exp $");
+__RCSID("$NetBSD: auth_unix.c,v 1.8 1998/02/11 11:52:53 lukem Exp $");
 #endif
 #endif
 
@@ -97,7 +97,7 @@ struct audata {
 	struct opaque_auth	au_shcred;	/* shorthand cred */
 	u_int32_t		au_shfaults;	/* shorthand cache faults */
 	char			au_marshed[MAX_AUTH_BYTES];
-	size_t			au_mpos;	/* xdr pos at end of marshed */
+	u_int32_t		au_mpos;	/* xdr pos at end of marshed */
 };
 #define	AUTH_PRIVATE(auth)	((struct audata *)auth->ah_private)
 
@@ -110,7 +110,7 @@ authunix_create(machname, uid, gid, len, aup_gids)
 	const char *machname;
 	const uid_t uid;
 	const uid_t gid;
-	const size_t len;
+	const u_int32_t len;
 	const gid_t *aup_gids;
 {
 	struct authunix_parms aup;
@@ -119,7 +119,7 @@ authunix_create(machname, uid, gid, len, aup_gids)
 	XDR xdrs;
 	AUTH *auth;
 	struct audata *au;
-	size_t nlen;
+	u_int32_t nlen;
 
 	/*
 	 * Allocate and set up auth handle
@@ -188,7 +188,7 @@ authunix_create(machname, uid, gid, len, aup_gids)
 AUTH *
 authunix_create_default()
 {
-	size_t len;
+	u_int32_t len;
 	char machname[MAX_MACHINE_NAME + 1];
 	uid_t uid;
 	gid_t gid;

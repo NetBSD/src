@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_tcp.c,v 1.13 1998/02/10 04:54:55 lukem Exp $	*/
+/*	$NetBSD: svc_tcp.c,v 1.14 1998/02/11 11:52:57 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_tcp.c,v 1.13 1998/02/10 04:54:55 lukem Exp $");
+__RCSID("$NetBSD: svc_tcp.c,v 1.14 1998/02/11 11:52:57 lukem Exp $");
 #endif
 #endif
 
@@ -73,12 +73,12 @@ __weak_alias(svctcp_create,_svctcp_create);
  * Ops vector for TCP/IP based rpc service handle
  */
 
-static SVCXPRT *makefd_xprt __P((int, size_t, size_t));
+static SVCXPRT *makefd_xprt __P((int, u_int32_t, u_int32_t));
 static bool_t rendezvous_request __P((SVCXPRT *, struct rpc_msg *));
 static enum xprt_stat rendezvous_stat __P((SVCXPRT *));
 static void svctcp_destroy __P((SVCXPRT *));
-static int readtcp __P((caddr_t, caddr_t, size_t));
-static int writetcp __P((caddr_t, caddr_t, size_t));
+static int readtcp __P((caddr_t, caddr_t, u_int32_t));
+static int writetcp __P((caddr_t, caddr_t, u_int32_t));
 static enum xprt_stat svctcp_stat __P((SVCXPRT *));
 static bool_t svctcp_recv __P((SVCXPRT *, struct rpc_msg *));
 static bool_t svctcp_getargs __P((SVCXPRT *, xdrproc_t, caddr_t));
@@ -108,8 +108,8 @@ static struct xp_ops svctcp_rendezvous_op = {
 };
 
 struct tcp_rendezvous { /* kept in xprt->xp_p1 */
-	size_t sendsize;
-	size_t recvsize;
+	u_int32_t sendsize;
+	u_int32_t recvsize;
 };
 
 struct tcp_conn {  /* kept in xprt->xp_p1 */
@@ -142,8 +142,8 @@ struct tcp_conn {  /* kept in xprt->xp_p1 */
 SVCXPRT *
 svctcp_create(sock, sendsize, recvsize)
 	int sock;
-	size_t sendsize;
-	size_t recvsize;
+	u_int32_t sendsize;
+	u_int32_t recvsize;
 {
 	bool_t madesock = FALSE;
 	SVCXPRT *xprt;
@@ -201,8 +201,8 @@ svctcp_create(sock, sendsize, recvsize)
 SVCXPRT *
 svcfd_create(fd, sendsize, recvsize)
 	int fd;
-	size_t sendsize;
-	size_t recvsize;
+	u_int32_t sendsize;
+	u_int32_t recvsize;
 {
 
 	return (makefd_xprt(fd, sendsize, recvsize));
@@ -211,8 +211,8 @@ svcfd_create(fd, sendsize, recvsize)
 static SVCXPRT *
 makefd_xprt(fd, sendsize, recvsize)
 	int fd;
-	size_t sendsize;
-	size_t recvsize;
+	u_int32_t sendsize;
+	u_int32_t recvsize;
 {
 	SVCXPRT *xprt;
 	struct tcp_conn *cd;
@@ -313,7 +313,7 @@ static int
 readtcp(xprtp, buf, len)
 	caddr_t xprtp;
 	caddr_t buf;
-	size_t len;
+	u_int32_t len;
 {
 	SVCXPRT *xprt = (SVCXPRT *) xprtp;
 	int sock = xprt->xp_sock;
@@ -354,10 +354,10 @@ static int
 writetcp(xprtp, buf, len)
 	caddr_t xprtp;
 	caddr_t buf;
-	size_t len;
+	u_int32_t len;
 {
 	SVCXPRT *xprt = (SVCXPRT *) xprtp;
-	size_t i, cnt;
+	u_int32_t i, cnt;
 	char *p;
 
 	for (p = buf, i = 0, cnt = len; cnt > 0; cnt -= i, p += i) {

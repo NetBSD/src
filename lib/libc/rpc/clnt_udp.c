@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_udp.c,v 1.10 1998/02/10 04:54:32 lukem Exp $	*/
+/*	$NetBSD: clnt_udp.c,v 1.11 1998/02/11 11:52:55 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_udp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_udp.c,v 1.10 1998/02/10 04:54:32 lukem Exp $");
+__RCSID("$NetBSD: clnt_udp.c,v 1.11 1998/02/11 11:52:55 lukem Exp $");
 #endif
 #endif
 
@@ -91,19 +91,19 @@ static struct clnt_ops udp_ops = {
  * Private data kept per client handle
  */
 struct cu_data {
-	int		   cu_sock;
-	bool_t		   cu_closeit;
+	int		 cu_sock;
+	bool_t		 cu_closeit;
 	struct sockaddr_in cu_raddr;
-	int		   cu_rlen;
-	struct timeval	   cu_wait;
-	struct timeval     cu_total;
-	struct rpc_err	   cu_error;
-	XDR		   cu_outxdrs;
-	size_t		   cu_xdrpos;
-	size_t		   cu_sendsz;
-	char		   *cu_outbuf;
-	size_t		   cu_recvsz;
-	char		   cu_inbuf[1];
+	int		 cu_rlen;
+	struct timeval	 cu_wait;
+	struct timeval   cu_total;
+	struct rpc_err	 cu_error;
+	XDR		 cu_outxdrs;
+	u_int32_t	 cu_xdrpos;
+	u_int32_t	 cu_sendsz;
+	char		*cu_outbuf;
+	u_int32_t	 cu_recvsz;
+	char		 cu_inbuf[1];
 };
 
 /*
@@ -129,8 +129,8 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 	u_int32_t version;
 	struct timeval wait;
 	int *sockp;
-	size_t sendsz;
-	size_t recvsz;
+	u_int32_t sendsz;
+	u_int32_t recvsz;
 {
 	CLIENT *cl;
 	struct cu_data *cu = NULL;
@@ -347,7 +347,7 @@ send_again:
 	/*
 	 * now decode and validate the response
 	 */
-	xdrmem_create(&reply_xdrs, cu->cu_inbuf, (size_t)inlen, XDR_DECODE);
+	xdrmem_create(&reply_xdrs, cu->cu_inbuf, (u_int32_t)inlen, XDR_DECODE);
 	ok = xdr_replymsg(&reply_xdrs, &reply_msg);
 	/* XDR_DESTROY(&reply_xdrs);  save a few cycles on noop destroy */
 	if (ok) {

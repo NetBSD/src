@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.c,v 1.11 1998/02/10 04:54:43 lukem Exp $	*/
+/*	$NetBSD: pmap_rmt.c,v 1.12 1998/02/11 11:52:55 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_rmt.c,v 1.11 1998/02/10 04:54:43 lukem Exp $");
+__RCSID("$NetBSD: pmap_rmt.c,v 1.12 1998/02/11 11:52:55 lukem Exp $");
 #endif
 #endif
 
@@ -137,7 +137,7 @@ xdr_rmtcall_args(xdrs, cap)
 	XDR *xdrs;
 	struct rmtcallargs *cap;
 {
-	size_t lenposition, argposition, position;
+	u_int32_t lenposition, argposition, position;
 
 	if (xdr_u_int32_t(xdrs, &(cap->prog)) &&
 	    xdr_u_int32_t(xdrs, &(cap->vers)) &&
@@ -377,7 +377,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 		 * see if reply transaction id matches sent id.
 		 * If so, decode the results.
 		 */
-		xdrmem_create(xdrs, inbuf, (size_t)inlen, XDR_DECODE);
+		xdrmem_create(xdrs, inbuf, (u_int32_t)inlen, XDR_DECODE);
 		if (xdr_replymsg(xdrs, &msg)) {
 			if ((msg.rm_xid == xid) &&
 				(msg.rm_reply.rp_stat == MSG_ACCEPTED) &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_tcp.c,v 1.10 1998/02/10 04:54:30 lukem Exp $	*/
+/*	$NetBSD: clnt_tcp.c,v 1.11 1998/02/11 11:52:54 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_tcp.c,v 1.10 1998/02/10 04:54:30 lukem Exp $");
+__RCSID("$NetBSD: clnt_tcp.c,v 1.11 1998/02/11 11:52:54 lukem Exp $");
 #endif
 #endif
  
@@ -87,8 +87,8 @@ static bool_t clnttcp_freeres __P((CLIENT *, xdrproc_t, caddr_t));
 static void clnttcp_abort __P((CLIENT *));
 static bool_t clnttcp_control __P((CLIENT *, u_int, caddr_t));
 static void clnttcp_destroy __P((CLIENT *));
-static int readtcp __P((caddr_t, caddr_t, size_t));
-static int writetcp __P((caddr_t, caddr_t, size_t));
+static int readtcp __P((caddr_t, caddr_t, u_int32_t));
+static int writetcp __P((caddr_t, caddr_t, u_int32_t));
 
 static struct clnt_ops tcp_ops = {
 	clnttcp_call,
@@ -108,7 +108,7 @@ struct ct_data {
 	struct sockaddr_in ct_addr; 
 	struct rpc_err	ct_error;
 	char		ct_mcall[MCALL_MSG_SIZE];	/* marshalled callmsg */
-	size_t		ct_mpos;			/* pos after marshal */
+	u_int32_t	ct_mpos;			/* pos after marshal */
 	XDR		ct_xdrs;
 };
 
@@ -133,8 +133,8 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 	u_int32_t prog;
 	u_int32_t vers;
 	int *sockp;
-	size_t sendsz;
-	size_t recvsz;
+	u_int32_t sendsz;
+	u_int32_t recvsz;
 {
 	CLIENT *h;
 	struct ct_data *ct = NULL;
@@ -421,7 +421,7 @@ static int
 readtcp(ctp, buf, len)
 	caddr_t ctp;
 	caddr_t buf;
-	size_t len;
+	u_int32_t len;
 {
 	struct ct_data *ct = (struct ct_data *) ctp;
 	struct pollfd fd;
@@ -468,10 +468,10 @@ static int
 writetcp(ctp, buf, len)
 	caddr_t ctp;
 	caddr_t buf;
-	size_t len;
+	u_int32_t len;
 {
 	struct ct_data *ct = (struct ct_data *) ctp;
-	size_t i, cnt;
+	u_int32_t i, cnt;
 
 	for (i = 0, cnt = len; cnt > 0; cnt -= i, buf += i) {
 		if ((i = write(ct->ct_sock, buf, cnt)) == -1) {

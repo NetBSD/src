@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_auth_unix.c,v 1.7 1998/02/10 04:54:51 lukem Exp $	*/
+/*	$NetBSD: svc_auth_unix.c,v 1.8 1998/02/11 11:52:56 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_auth_unix.c 1.28 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_auth_unix.c	2.3 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_auth_unix.c,v 1.7 1998/02/10 04:54:51 lukem Exp $");
+__RCSID("$NetBSD: svc_auth_unix.c,v 1.8 1998/02/11 11:52:56 lukem Exp $");
 #endif
 #endif
 
@@ -74,7 +74,7 @@ _svcauth_unix(rqst, msg)
 		char area_machname[MAX_MACHINE_NAME+1];
 		int area_gids[NGRPS];
 	} *area;
-	size_t auth_len;
+	u_int32_t auth_len;
 	int str_len, gid_len;
 	int i;
 
@@ -82,7 +82,7 @@ _svcauth_unix(rqst, msg)
 	aup = &area->area_aup;
 	aup->aup_machname = area->area_machname;
 	aup->aup_gids = area->area_gids;
-	auth_len = (size_t)msg->rm_call.cb_cred.oa_length;
+	auth_len = (u_int32_t)msg->rm_call.cb_cred.oa_length;
 	xdrmem_create(&xdrs, msg->rm_call.cb_cred.oa_base, auth_len,XDR_DECODE);
 	buf = XDR_INLINE(&xdrs, auth_len);
 	if (buf != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_array.c,v 1.7 1998/02/10 04:54:58 lukem Exp $	*/
+/*	$NetBSD: xdr_array.c,v 1.8 1998/02/11 11:52:59 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_array.c 1.10 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_array.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_array.c,v 1.7 1998/02/10 04:54:58 lukem Exp $");
+__RCSID("$NetBSD: xdr_array.c,v 1.8 1998/02/11 11:52:59 lukem Exp $");
 #endif
 #endif
 
@@ -74,16 +74,16 @@ bool_t
 xdr_array(xdrs, addrp, sizep, maxsize, elsize, elproc)
 	XDR *xdrs;
 	caddr_t *addrp;		/* array pointer */
-	size_t *sizep;		/* number of elements */
-	size_t maxsize;		/* max numberof elements */
-	size_t elsize;		/* size in bytes of each element */
+	u_int32_t *sizep;	/* number of elements */
+	u_int32_t maxsize;	/* max numberof elements */
+	u_int32_t elsize;	/* size in bytes of each element */
 	xdrproc_t elproc;	/* xdr routine to handle each element */
 {
-	size_t i;
+	u_int32_t i;
 	caddr_t target = *addrp;
-	size_t c;  /* the actual element count */
+	u_int32_t c;  /* the actual element count */
 	bool_t stat = TRUE;
-	size_t nodesize;
+	u_int32_t nodesize;
 	char *p;
 
 	/* like strings, arrays are really counted arrays */
@@ -153,11 +153,11 @@ bool_t
 xdr_vector(xdrs, basep, nelem, elemsize, xdr_elem)
 	XDR *xdrs;
 	caddr_t basep;
-	size_t nelem;
-	size_t elemsize;
+	u_int32_t nelem;
+	u_int32_t elemsize;
 	xdrproc_t xdr_elem;	
 {
-	size_t i;
+	u_int32_t i;
 	char *elptr;
 
 	elptr = basep;
