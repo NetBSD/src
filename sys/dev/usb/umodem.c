@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.12 1999/09/04 22:26:12 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.13 1999/09/05 19:32:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ int	umodemdebug = 0;
 #define UMODEMIBUFSIZE 64
 
 struct umodem_softc {
-	bdevice			sc_dev;		/* base device */
+	USBBASEDEVICE		sc_dev;		/* base device */
 
 	usbd_device_handle	sc_udev;	/* USB device */
 
@@ -995,7 +995,7 @@ umodem_set_line_coding(sc, state)
 
 int
 umodem_activate(self, act)
-	bdevice *self;
+	device_ptr_t self;
 	enum devact act;
 {
 	struct umodem_softc *sc = (struct umodem_softc *)self;
@@ -1014,7 +1014,7 @@ umodem_activate(self, act)
 
 int
 umodem_detach(self, flags)
-	bdevice *self;
+	device_ptr_t self;
 	int flags;
 {
 	struct umodem_softc *sc = (struct umodem_softc *)self;
