@@ -1,9 +1,12 @@
+./usr/lkm/coda.o
+./usr/lkm/ext2fs.o
 ./usr/mdec/bootct
 ./usr/mdec/bootrd
 ./usr/mdec/bootsd
 ./usr/mdec/ctboot
 ./usr/mdec/inst.lif
 ./usr/mdec/installboot
+./usr/mdec/mkboot
 ./usr/mdec/rbootd
 ./usr/mdec/rbootd/SYS_INST
 ./usr/mdec/rbootd/SYS_UBOOT
