@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.9.2.3 2004/09/21 13:25:17 skrll Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.9.2.4 2004/10/30 06:42:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.9.2.3 2004/09/21 13:25:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.9.2.4 2004/10/30 06:42:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ irix_usema_ioctl(v)
 		caddr_t  a_data;
 		int  a_fflag;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	u_long cmd = ap->a_command;
 	caddr_t data = ap->a_data;
@@ -270,7 +270,7 @@ irix_usema_poll(v)
 	struct vop_poll_args /* {
 		struct vnode *a_vp;
 		int a_events;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	int events = ap->a_events;
 	struct vnode *vp = ap->a_vp;
@@ -300,7 +300,7 @@ irix_usema_close(v)
 		struct vnode *a_vp;
 		int  a_fflag;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct vnode *rvp;
@@ -321,7 +321,7 @@ irix_usema_close(v)
 	if (ap->a_fflag & FWRITE)
 		rvp->v_writecount--;
 	vn_lock(rvp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_CLOSE(rvp, ap->a_fflag, ap->a_cred, ap->a_p);
+	error = VOP_CLOSE(rvp, ap->a_fflag, ap->a_cred, ap->a_l);
 	vput(rvp);
 
 	if ((iur = iur_lookup_by_vn(vp)) != NULL)
@@ -344,7 +344,7 @@ irix_usema_setattr(v)
 		struct vnode    *a_vp;
 		struct vattr    *a_vap;
 		struct ucred    *a_cred;
-		struct proc     *a_p;
+		struct lwp      *a_l;
 	} */ *ap = v;
 	struct vnode *vp = (struct vnode *)(ap->a_vp->v_data);
 	int error;
@@ -364,7 +364,7 @@ irix_usema_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode    *a_vp;
-		struct proc     *a_p;
+		struct lwp      *a_l;
 	} */ *ap = v;
 
 	VOP_UNLOCK(ap->a_vp, 0);
