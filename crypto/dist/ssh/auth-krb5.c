@@ -18,7 +18,7 @@
 
 krb5_context ssh_context = NULL;
 krb5_auth_context auth_context;
-krb5_ccache mem_ccache = NULL; /* Credential cache for acquired ticket */
+krb5_ccache fwd_ccache = NULL; /* Credential cache for acquired ticket */
 
 /* Try krb5 authentication. server_user is passed for logging purposes only,
    in auth is received ticket, in client is returned principal from the
@@ -110,7 +110,7 @@ auth_krb5_tgt(char *server_user, krb5_data *tgt, krb5_principal tkt_client)
      goto fail;
   }
   
-  problem = krb5_cc_gen_new(ssh_context, &krb5_mcc_ops, &ccache);
+  problem = krb5_cc_gen_new(ssh_context, &krb5_fcc_ops, &ccache);
   if (problem) {
      goto fail;
   }
@@ -125,13 +125,13 @@ auth_krb5_tgt(char *server_user, krb5_data *tgt, krb5_principal tkt_client)
      goto fail;
   }
   
-  mem_ccache = ccache;
+  fwd_ccache = ccache;
   ccache = NULL;
   
   /*
-  problem = krb5_cc_copy_cache(ssh_context, ccache, mem_ccache);
+  problem = krb5_cc_copy_cache(ssh_context, ccache, fwd_ccache);
   if (problem) {
-     mem_ccache = NULL;
+     fwd_ccache = NULL;
      goto fail; 
   }
   
@@ -196,14 +196,14 @@ auth_krb5_password(struct passwd *pw, const char *password)
   }
   
 /*
-  problem = krb5_cc_copy_cache(ssh_context, ccache, mem_ccache);
+  problem = krb5_cc_copy_cache(ssh_context, ccache, fwd_ccache);
   if (problem) { 
      ret = 0;
-     mem_ccache = NULL;
+     fwd_ccache = NULL;
      goto out;
   }
   */
-  mem_ccache = ccache;
+  fwd_ccache = ccache;
   ccache = NULL;
   
   ret = 1;
@@ -221,8 +221,8 @@ krb5_cleanup_proc(void *ignore)
    extern krb5_principal tkt_client;
    
    debug("krb5_cleanup_proc() called");
-   if (mem_ccache)
-      krb5_cc_destroy(ssh_context, mem_ccache);
+   if (fwd_ccache)
+      krb5_cc_destroy(ssh_context, fwd_ccache);
    if (tkt_client)
       krb5_free_principal(ssh_context, tkt_client);
    if (auth_context)
