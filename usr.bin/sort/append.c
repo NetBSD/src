@@ -1,4 +1,4 @@
-/*	$NetBSD: append.c,v 1.4 2000/10/15 20:46:33 jdolecek Exp $	*/
+/*	$NetBSD: append.c,v 1.5 2000/10/16 21:37:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: append.c,v 1.4 2000/10/15 20:46:33 jdolecek Exp $");
+__RCSID("$NetBSD: append.c,v 1.5 2000/10/16 21:37:03 jdolecek Exp $");
 __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
 		ppos -= n;						\
 		radixsort(ppos, n, wts1, REC_D);			\
 		for (; ppos < cpos; ppos++) {				\
-			prec = (RECHEADER *) (*ppos - sizeof(TRECHEADER));\
+			prec = (const RECHEADER *) (*ppos - sizeof(TRECHEADER));\
 			put(prec, fp);					\
 		}							\
 	} else put(prec, fp);						\
@@ -68,14 +68,14 @@ append(keylist, nelem, depth, fp, put, ftbl)
 	int nelem;
 	int depth;
 	FILE *fp;
-	void (*put)(RECHEADER *, FILE *);
+	void (*put)(const RECHEADER *, FILE *);
 	struct field *ftbl;
 {
 	u_char *wts, *wts1;
 	int n, odepth;
 	const u_char **cpos, **ppos, **lastkey;
 	const u_char *cend, *pend, *start;
-	struct recheader *crec, *prec;
+	const struct recheader *crec, *prec;
 
 	if (*keylist == '\0' && UNIQUE)
 		return;
@@ -91,14 +91,14 @@ append(keylist, nelem, depth, fp, put, ftbl)
 	depth += sizeof(TRECHEADER);
 	if (SINGL_FLD && (UNIQUE || wts1 != wts)) {
 		ppos = keylist;
-		prec = (RECHEADER *) (*ppos - depth);
+		prec = (const RECHEADER *) (*ppos - depth);
 		if (UNIQUE)
 			put(prec, fp);
 		for (cpos = keylist+1; cpos < lastkey; cpos++) {
-			crec = (RECHEADER *) (*cpos - depth);
+			crec = (const RECHEADER *) (*cpos - depth);
 			if (crec->length  == prec->length) {
-				pend = (u_char *) &prec->offset + prec->length;
-				cend = (u_char *) &crec->offset + crec->length;
+				pend = (const u_char *) &prec->offset + prec->length;
+				cend = (const u_char *) &crec->offset + crec->length;
 				for (start = *cpos; cend >= start; cend--) {
 					if (wts[*cend] != wts[*pend])
 						break;
@@ -124,13 +124,13 @@ append(keylist, nelem, depth, fp, put, ftbl)
 		if (!UNIQUE)  { OUTPUT; }
 	} else if (UNIQUE) {
 		ppos = keylist;
-		prec = (RECHEADER *) (*ppos - depth);
+		prec = (const RECHEADER *) (*ppos - depth);
 		put(prec, fp);
 		for (cpos = keylist+1; cpos < lastkey; cpos++) {
-			crec = (RECHEADER *) (*cpos - depth);
+			crec = (const RECHEADER *) (*cpos - depth);
 			if (crec->offset == prec->offset) {
-				pend = (u_char *) &prec->offset + prec->offset;
-				cend = (u_char *) &crec->offset + crec->offset;
+				pend = (const u_char *) &prec->offset + prec->offset;
+				cend = (const u_char *) &crec->offset + crec->offset;
 				for (start = *cpos; cend >= start; cend--) {
 					if (wts[*cend] != wts[*pend])
 						break;
@@ -148,7 +148,7 @@ append(keylist, nelem, depth, fp, put, ftbl)
 			}
 		}
 	} else for (cpos = keylist; cpos < lastkey; cpos++) {
-		crec = (RECHEADER *) (*cpos - depth);
+		crec = (const RECHEADER *) (*cpos - depth);
 		put(crec, fp);
 	}
 }
