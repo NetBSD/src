@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.68 2004/01/21 07:16:07 petrov Exp $	*/
+/*	$NetBSD: psycho.c,v 1.69 2004/03/17 17:04:59 pk Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.68 2004/01/21 07:16:07 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.69 2004/03/17 17:04:59 pk Exp $");
 
 #include "opt_ddb.h"
 
@@ -202,7 +202,7 @@ psycho_match(parent, match, aux)
 	void		*aux;
 {
 	struct mainbus_attach_args *ma = aux;
-	char *model = PROM_getpropstring(ma->ma_node, "model");
+	char *model = prom_getpropstring(ma->ma_node, "model");
 	int i;
 
 	/* match on a name of "pci" and a sabre or a psycho */
@@ -211,7 +211,7 @@ psycho_match(parent, match, aux)
 			if (strcmp(model, psycho_names[i].p_name) == 0)
 				return (1);
 
-		model = PROM_getpropstring(ma->ma_node, "compatible");
+		model = prom_getpropstring(ma->ma_node, "compatible");
 		for (i=0; psycho_names[i].p_name; i++)
 			if (strcmp(model, psycho_names[i].p_name) == 0)
 				return (1);
@@ -273,7 +273,7 @@ psycho_attach(parent, self, aux)
 	u_int64_t csr;
 	int psycho_br[2], n, i;
 	bus_space_handle_t pci_ctl;
-	char *model = PROM_getpropstring(ma->ma_node, "model");
+	char *model = prom_getpropstring(ma->ma_node, "model");
 
 	printf("\n");
 
@@ -290,7 +290,7 @@ psycho_attach(parent, self, aux)
 			goto found;
 		}
 
-	model = PROM_getpropstring(ma->ma_node, "compatible");
+	model = prom_getpropstring(ma->ma_node, "compatible");
 	for (i=0; psycho_names[i].p_name; i++)
 		if (strcmp(model, psycho_names[i].p_name) == 0) {
 			sc->sc_mode = psycho_names[i].p_type;
@@ -563,7 +563,7 @@ found:
 		pp->pp_sb.sb_is = sc->sc_is;
 
 		sc->sc_is->is_sb[0] = sc->sc_is->is_sb[1] = NULL;
-		if (PROM_getproplen(sc->sc_node, "no-streaming-cache") < 0) {
+		if (prom_getproplen(sc->sc_node, "no-streaming-cache") < 0) {
 			struct strbuf_ctl *sb = &pp->pp_sb;
 			vaddr_t va = (vaddr_t)&pp->pp_flush[0x40];
 
@@ -609,7 +609,7 @@ found:
 		/* Point the strbuf_ctl at the iommu_state */
 		pp->pp_sb.sb_is = sc->sc_is;
 
-		if (PROM_getproplen(sc->sc_node, "no-streaming-cache") < 0) {
+		if (prom_getproplen(sc->sc_node, "no-streaming-cache") < 0) {
 			struct strbuf_ctl *sb = &pp->pp_sb;
 			vaddr_t va = (vaddr_t)&pp->pp_flush[0x40];
 
@@ -760,8 +760,8 @@ psycho_alloc_extent(pp, node, ss, name)
 	bsize = BUS_ADDR(pr->size_hi, pr->size_lo);
 
 	/* get available lists */
-	if (PROM_getprop(node, "available", sizeof(*pa), &num, &pa)) {
-		printf("psycho_alloc_extent: PROM_getprop failed\n");
+	if (prom_getprop(node, "available", sizeof(*pa), &num, &pa)) {
+		printf("psycho_alloc_extent: prom_getprop failed\n");
 		return NULL;
 	}
 
@@ -821,7 +821,7 @@ psycho_get_bus_range(node, brp)
 {
 	int n;
 
-	if (PROM_getprop(node, "bus-range", sizeof(*brp), &n, &brp))
+	if (prom_getprop(node, "bus-range", sizeof(*brp), &n, &brp))
 		panic("could not get psycho bus-range");
 	if (n != 2)
 		panic("broken psycho bus-range");
@@ -836,7 +836,7 @@ psycho_get_ranges(node, rp, np)
 	int *np;
 {
 
-	if (PROM_getprop(node, "ranges", sizeof(**rp), np, rp))
+	if (prom_getprop(node, "ranges", sizeof(**rp), np, rp))
 		panic("could not get psycho ranges");
 	DPRINTF(PDB_PROM, ("psycho debug: got `ranges' for node %08x: %d entries\n", node, *np));
 }
@@ -992,7 +992,7 @@ psycho_iommu_init(sc, tsbsize)
 	 * We could query the `#virtual-dma-size-cells' and
 	 * `#virtual-dma-addr-cells' and DTRT, but I'm lazy.
 	 */
-	if (!PROM_getprop(sc->sc_node, "virtual-dma", sizeof(vdma), &nitem, 
+	if (!prom_getprop(sc->sc_node, "virtual-dma", sizeof(vdma), &nitem, 
 		&vdma)) {
 		/* Damn.  Gotta use these values. */
 		iobase = vdma[0];

@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_sbus.c,v 1.20 2003/02/06 16:20:05 hannken Exp $ */
+/*	$NetBSD: dma_sbus.c,v 1.21 2004/03/17 17:04:58 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.20 2003/02/06 16:20:05 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.21 2004/03/17 17:04:58 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ dmaattach_sbus(parent, self, aux)
 	if (sbusburst == 0)
 		sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
 
-	burst = PROM_getpropint(node,"burst-sizes", -1);
+	burst = prom_getpropint(node,"burst-sizes", -1);
 	if (burst == -1)
 		/* take SBus burst sizes */
 		burst = sbusburst;
@@ -196,7 +196,7 @@ dmaattach_sbus(parent, self, aux)
 		 * the "cable-selection" property; default to TP and then
 		 * the user can change it via a "media" option to ifconfig.
 		 */
-		cabletype = PROM_getpropstring(node, "cable-selection");
+		cabletype = prom_getpropstring(node, "cable-selection");
 		csr = L64854_GCSR(sc);
 		if (strcmp(cabletype, "tpe") == 0) {
 			csr |= E_TP_AUI;

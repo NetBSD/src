@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.77 2003/08/27 15:59:53 mrg Exp $ */
+/*	$NetBSD: iommu.c,v 1.78 2004/03/17 17:04:59 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.77 2003/08/27 15:59:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.78 2004/03/17 17:04:59 pk Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -190,7 +190,7 @@ iommu_attach(parent, self, aux)
 	 * implicit iommu and attach that sbus node under it.
 	 */
 	node = ma->ma_node;
-	if (strcmp(PROM_getpropstring(node, "name"), "sbus") == 0)
+	if (strcmp(prom_getpropstring(node, "name"), "sbus") == 0)
 		js1_implicit_iommu = 1;
 	else
 		js1_implicit_iommu = 0;
@@ -217,7 +217,7 @@ iommu_attach(parent, self, aux)
 	has_iocache = sc->sc_hasiocache; /* Set global flag */
 
 	sc->sc_pagesize = js1_implicit_iommu ? PAGE_SIZE
-				: PROM_getpropint(node, "page-size", PAGE_SIZE),
+				: prom_getpropint(node, "page-size", PAGE_SIZE),
 
 	/*
 	 * Allocate memory for I/O pagetables.
@@ -320,7 +320,7 @@ iommu_attach(parent, self, aux)
 		struct iommu_attach_args ia;
 
 		bzero(&ia, sizeof ia);
-		ia.iom_name = PROM_getpropstring(node, "name");
+		ia.iom_name = prom_getpropstring(node, "name");
 
 		/* Propagate BUS & DMA tags */
 		ia.iom_bustag = ma->ma_bustag;
@@ -329,7 +329,7 @@ iommu_attach(parent, self, aux)
 		ia.iom_node = node;
 
 		ia.iom_reg = NULL;
-		PROM_getprop(node, "reg", sizeof(struct openprom_addr),
+		prom_getprop(node, "reg", sizeof(struct openprom_addr),
 			&ia.iom_nreg, &ia.iom_reg);
 
 		(void) config_found(&sc->sc_dev, (void *)&ia, iommu_print);

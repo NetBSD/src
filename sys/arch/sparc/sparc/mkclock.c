@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.10 2004/02/13 11:36:18 wiz Exp $ */
+/*	$NetBSD: mkclock.c,v 1.11 2004/03/17 17:04:59 pk Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.10 2004/02/13 11:36:18 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.11 2004/03/17 17:04:59 pk Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -217,7 +217,7 @@ clockattach(sc, node)
 	if (CPU_ISSUN4)
 		sc->sc_model = "mk48t02";	/* Hard-coded sun4 clock */
 	else if (node != 0)
-		sc->sc_model = PROM_getpropstring(node, "model");
+		sc->sc_model = prom_getpropstring(node, "model");
 	else
 		panic("clockattach: node == 0");
 

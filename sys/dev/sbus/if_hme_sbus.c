@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_sbus.c,v 1.18 2004/03/15 23:51:11 pk Exp $	*/
+/*	$NetBSD: if_hme_sbus.c,v 1.19 2004/03/17 17:04:58 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.18 2004/03/15 23:51:11 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.19 2004/03/17 17:04:58 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ hmeattach_sbus(parent, self, aux)
 	if (sbusburst == 0)
 		sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
 
-	burst = PROM_getpropint(node, "burst-sizes", -1);
+	burst = prom_getpropint(node, "burst-sizes", -1);
 	if (burst == -1)
 		/* take SBus burst sizes */
 		burst = sbusburst;

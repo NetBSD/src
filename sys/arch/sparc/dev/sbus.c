@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.59 2003/08/27 15:59:50 mrg Exp $ */
+/*	$NetBSD: sbus.c,v 1.60 2004/03/17 17:04:59 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.59 2003/08/27 15:59:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.60 2004/03/17 17:04:59 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -295,7 +295,7 @@ sbus_attach_mainbus(parent, self, aux)
 	 * Record clock frequency for synchronous SCSI.
 	 * IS THIS THE CORRECT DEFAULT??
 	 */
-	sc->sc_clockfreq = PROM_getpropint(node, "clock-frequency", 25*1000*1000);
+	sc->sc_clockfreq = prom_getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
 	sbus_sc = sc;
@@ -335,7 +335,7 @@ sbus_attach_iommu(parent, self, aux)
 	 * Record clock frequency for synchronous SCSI.
 	 * IS THIS THE CORRECT DEFAULT??
 	 */
-	sc->sc_clockfreq = PROM_getpropint(node, "clock-frequency", 25*1000*1000);
+	sc->sc_clockfreq = prom_getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
 	sbus_sc = sc;
@@ -363,7 +363,7 @@ sbus_attach_xbox(parent, self, aux)
 	 * Record clock frequency for synchronous SCSI.
 	 * IS THIS THE CORRECT DEFAULT??
 	 */
-	sc->sc_clockfreq = PROM_getpropint(node, "clock-frequency", 25*1000*1000);
+	sc->sc_clockfreq = prom_getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
 	sbus_attach_common(sc, "sbus", node, NULL);
@@ -387,7 +387,7 @@ sbus_attach_common(sc, busname, busnode, specials)
 	/*
 	 * Get the SBus burst transfer size if burst transfers are supported
 	 */
-	sc->sc_burst = PROM_getpropint(busnode, "burst-sizes", 0);
+	sc->sc_burst = prom_getpropint(busnode, "burst-sizes", 0);
 
 
 	if (CPU_ISSUN4M) {
@@ -403,7 +403,7 @@ sbus_attach_common(sc, busname, busnode, specials)
 	/*
 	 * Collect address translations from the OBP.
 	 */
-	error = PROM_getprop(busnode, "ranges", sizeof(struct rom_range),
+	error = prom_getprop(busnode, "ranges", sizeof(struct rom_range),
 			&sbt->nranges, &sbt->ranges);
 	switch (error) {
 	case 0:
@@ -440,7 +440,7 @@ sbus_attach_common(sc, busname, busnode, specials)
 	}
 
 	for (node = node0; node; node = nextsibling(node)) {
-		char *name = PROM_getpropstring(node, "name");
+		char *name = prom_getpropstring(node, "name");
 		for (ssp = specials, sp = NULL;
 		     ssp != NULL && (sp = *ssp) != NULL;
 		     ssp++)
@@ -472,7 +472,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	int n, error;
 
 	bzero(sa, sizeof(struct sbus_attach_args));
-	error = PROM_getprop(node, "name", 1, &n, &sa->sa_name);
+	error = prom_getprop(node, "name", 1, &n, &sa->sa_name);
 	if (error != 0)
 		return (error);
 	sa->sa_name[n] = '\0';
@@ -482,13 +482,13 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	sa->sa_node = node;
 	sa->sa_frequency = sc->sc_clockfreq;
 
-	error = PROM_getprop(node, "reg", sizeof(struct openprom_addr),
+	error = prom_getprop(node, "reg", sizeof(struct openprom_addr),
 			&sa->sa_nreg, &sa->sa_reg);
 	if (error != 0) {
 		char buf[32];
 		if (error != ENOENT ||
 		    !node_has_property(node, "device_type") ||
-		    strcmp(PROM_getpropstringA(node, "device_type", buf, sizeof buf),
+		    strcmp(prom_getpropstringA(node, "device_type", buf, sizeof buf),
 			   "hierarchical") != 0)
 			return (error);
 	}
@@ -504,7 +504,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	if ((error = sbus_get_intr(sc, node, &sa->sa_intr, &sa->sa_nintr)) != 0)
 		return (error);
 
-	error = PROM_getprop(node, "address", sizeof(u_int32_t),
+	error = prom_getprop(node, "address", sizeof(u_int32_t),
 			 &sa->sa_npromvaddrs, &sa->sa_promvaddrs);
 	if (error != 0 && error != ENOENT)
 		return (error);
@@ -616,7 +616,7 @@ sbus_get_intr(sc, node, ipp, np)
 	/*
 	 * The `interrupts' property contains the Sbus interrupt level.
 	 */
-	if (PROM_getprop(node, "interrupts", sizeof(int), np,
+	if (prom_getprop(node, "interrupts", sizeof(int), np,
 			 &ipl) == 0) {
 		/* Change format to an `struct openprom_intr' array */
 		struct openprom_intr *ip;
@@ -639,7 +639,7 @@ sbus_get_intr(sc, node, ipp, np)
 	 * Fall back on `intr' property.
 	 */
 	*ipp = NULL;
-	error = PROM_getprop(node, "intr", sizeof(struct openprom_intr),
+	error = prom_getprop(node, "intr", sizeof(struct openprom_intr),
 			np, ipp);
 	switch (error) {
 	case 0:

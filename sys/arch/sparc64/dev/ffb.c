@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.4 2004/03/17 13:58:14 pk Exp $	*/
+/*	$NetBSD: ffb.c,v 1.5 2004/03/17 17:04:59 pk Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.4 2004/03/17 13:58:14 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.5 2004/03/17 17:04:59 pk Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -113,7 +113,7 @@ ffb_attach(struct ffb_softc *sc)
 	printf(":");
 
 	if (sc->sc_type == FFB_CREATOR) {
-		btype = PROM_getpropint(sc->sc_node, "board_type", 0);
+		btype = prom_getpropint(sc->sc_node, "board_type", 0);
 		if ((btype & 7) == 3)
 			printf(" Creator3D");
 		else
@@ -121,7 +121,7 @@ ffb_attach(struct ffb_softc *sc)
 	} else
 		printf(" Elite3D");
 
-	model = PROM_getpropstring(sc->sc_node, "model");
+	model = prom_getpropstring(sc->sc_node, "model");
 	if (model == NULL || strlen(model) == 0)
 		model = "unknown";
 
@@ -129,8 +129,8 @@ ffb_attach(struct ffb_softc *sc)
 
 	sc->sc_depth = 24;
 	sc->sc_linebytes = 8192;
-	sc->sc_height = PROM_getpropint(sc->sc_node, "height", 0);
-	sc->sc_width = PROM_getpropint(sc->sc_node, "width", 0);
+	sc->sc_height = prom_getpropint(sc->sc_node, "height", 0);
+	sc->sc_width = prom_getpropint(sc->sc_node, "width", 0);
 
 	sc->sc_rasops.ri_depth = 32;
 	sc->sc_rasops.ri_stride = sc->sc_linebytes;

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.69 2004/03/17 14:35:53 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.70 2004/03/17 17:04:59 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.69 2004/03/17 14:35:53 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.70 2004/03/17 17:04:59 pk Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -329,7 +329,7 @@ clockattach(sc, node)
 	int node;
 {
 
-	sc->sc_model = PROM_getpropstring(node, "model");
+	sc->sc_model = prom_getpropstring(node, "model");
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_model == NULL)
@@ -402,7 +402,7 @@ clockattach_rtc(parent, self, aux)
 		return;
 	}
 
-	model = PROM_getpropstring(ea->ea_node, "model");
+	model = prom_getpropstring(ea->ea_node, "model");
 #ifdef DIAGNOSTIC
 	if (model == NULL)
 		panic("clockattach_rtc: no model property");

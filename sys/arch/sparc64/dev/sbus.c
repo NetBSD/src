@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.66 2004/03/17 15:22:57 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.67 2004/03/17 17:04:59 pk Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.66 2004/03/17 15:22:57 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.67 2004/03/17 17:04:59 pk Exp $");
 
 #include "opt_ddb.h"
 
@@ -228,7 +228,7 @@ sbus_attach(parent, self, aux)
 	 * Record clock frequency for synchronous SCSI.
 	 * IS THIS THE CORRECT DEFAULT??
 	 */
-	sc->sc_clockfreq = PROM_getpropint(node, "clock-frequency", 
+	sc->sc_clockfreq = prom_getpropint(node, "clock-frequency", 
 		25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
@@ -238,12 +238,12 @@ sbus_attach(parent, self, aux)
 	/*
 	 * Get the SBus burst transfer size if burst transfers are supported
 	 */
-	sc->sc_burst = PROM_getpropint(node, "burst-sizes", 0);
+	sc->sc_burst = prom_getpropint(node, "burst-sizes", 0);
 
 	/*
 	 * Collect address translations from the OBP.
 	 */
-	error = PROM_getprop(node, "ranges", sizeof(struct openprom_range),
+	error = prom_getprop(node, "ranges", sizeof(struct openprom_range),
 			 &sc->sc_nrange, &sc->sc_range);
 	if (error)
 		panic("%s: error getting ranges property", sc->sc_dev.dv_xname);
@@ -308,7 +308,7 @@ sbus_attach(parent, self, aux)
 	 */
 	node0 = OF_child(node);
 	for (node = node0; node; node = OF_peer(node)) {
-		char *name = PROM_getpropstring(node, "name");
+		char *name = prom_getpropstring(node, "name");
 
 		if (sbus_setup_attach_args(sc, sbt, sc->sc_dmatag,
 					   node, &sa) != 0) {
@@ -334,7 +334,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	int n;
 
 	memset(sa, 0, sizeof(struct sbus_attach_args));
-	error = PROM_getprop(node, "name", 1, &n, &sa->sa_name);
+	error = prom_getprop(node, "name", 1, &n, &sa->sa_name);
 	if (error != 0)
 		return (error);
 	sa->sa_name[n] = '\0';
@@ -344,13 +344,13 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	sa->sa_node = node;
 	sa->sa_frequency = sc->sc_clockfreq;
 
-	error = PROM_getprop(node, "reg", sizeof(struct openprom_addr),
+	error = prom_getprop(node, "reg", sizeof(struct openprom_addr),
 			 &sa->sa_nreg, &sa->sa_reg);
 	if (error != 0) {
 		char buf[32];
 		if (error != ENOENT ||
 		    !node_has_property(node, "device_type") ||
-		    strcmp(PROM_getpropstringA(node, "device_type", buf, sizeof buf),
+		    strcmp(prom_getpropstringA(node, "device_type", buf, sizeof buf),
 			   "hierarchical") != 0)
 			return (error);
 	}
@@ -367,7 +367,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	    sa->sa_slot)) != 0)
 		return (error);
 
-	error = PROM_getprop(node, "address", sizeof(u_int32_t),
+	error = prom_getprop(node, "address", sizeof(u_int32_t),
 			 &sa->sa_npromvaddrs, &sa->sa_promvaddrs);
 	if (error != 0 && error != ENOENT)
 		return (error);
@@ -548,7 +548,7 @@ sbus_get_intr(sc, node, ipp, np, slot)
 	 * The `interrupts' property contains the Sbus interrupt level.
 	 */
 	ipl = NULL;
-	if (PROM_getprop(node, "interrupts", sizeof(int), np, &ipl) == 0) {
+	if (prom_getprop(node, "interrupts", sizeof(int), np, &ipl) == 0) {
 		struct openprom_intr *ip;
 		int pri;
 
@@ -567,9 +567,9 @@ sbus_get_intr(sc, node, ipp, np, slot)
 		 * somehow. Luckily, the interrupt vector has lots of free
 		 * space and we can easily stuff the IPL in there for a while.
 		 */
-		PROM_getpropstringA(node, "device_type", buf, sizeof buf);
+		prom_getpropstringA(node, "device_type", buf, sizeof buf);
 		if (buf[0] == '\0')
-			PROM_getpropstringA(node, "name", buf, sizeof buf);
+			prom_getpropstringA(node, "name", buf, sizeof buf);
 
 		for (i = 0; intrmap[i].in_class; i++) 
 			if (strcmp(intrmap[i].in_class, buf) == 0) {

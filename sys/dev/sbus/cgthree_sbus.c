@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.13 2003/08/07 16:31:22 agc Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.14 2004/03/17 17:04:58 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.13 2003/08/07 16:31:22 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.14 2004/03/17 17:04:58 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ cgthreeattach_sbus(parent, self, args)
 	sc->sc_fbc = (struct fbcontrol *)bus_space_vaddr(sa->sa_bustag, bh);
 
 	isconsole = fb_is_console(node);
-	name = PROM_getpropstring(node, "model");
+	name = prom_getpropstring(node, "model");
 	if (name == NULL)
 		name = "cgthree";
 

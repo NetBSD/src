@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.36 2004/03/14 18:18:54 chs Exp $ */
+/*	$NetBSD: cpu.c,v 1.37 2004/03/17 17:04:59 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.36 2004/03/14 18:18:54 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37 2004/03/17 17:04:59 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,20 +224,20 @@ cpu_attach(parent, dev, aux)
 	/* tell them what we have */
 	node = ma->ma_node;
 
-	clk = PROM_getpropint(node, "clock-frequency", 0);
+	clk = prom_getpropint(node, "clock-frequency", 0);
 	if (clk == 0) {
 
 		/*
 		 * Try to find it in the OpenPROM root...
 		 */
-		clk = PROM_getpropint(findroot(), "clock-frequency", 0);
+		clk = prom_getpropint(findroot(), "clock-frequency", 0);
 	}
 	if (clk) {
 		cpu_clockrate[0] = clk; /* Tell OS what frequency we run on */
 		cpu_clockrate[1] = clk / 1000000;
 	}
 	snprintf(buf, sizeof buf, "%s @ %s MHz, version %d FPU",
-		PROM_getpropstring(node, "name"),
+		prom_getpropstring(node, "name"),
 		clockfreq(clk), fver);
 	printf(": %s\n", buf);
 	snprintf(cpu_model, sizeof cpu_model, "%s (%s)", machine_model, buf);
@@ -245,61 +245,61 @@ cpu_attach(parent, dev, aux)
 	bigcache = 0;
 
 	cacheinfo.ic_linesize = l =
-		PROM_getpropint(node, "icache-line-size", 0);
+		prom_getpropint(node, "icache-line-size", 0);
 	for (i = 0; (1 << i) < l && l; i++)
 		/* void */;
 	if ((1 << i) != l && l)
 		panic("bad icache line size %d", l);
 	cacheinfo.ic_l2linesize = i;
 	cacheinfo.ic_totalsize =
-		PROM_getpropint(node, "icache-size", 0) *
-		PROM_getpropint(node, "icache-associativity", 1);
+		prom_getpropint(node, "icache-size", 0) *
+		prom_getpropint(node, "icache-associativity", 1);
 	if (cacheinfo.ic_totalsize == 0)
 		cacheinfo.ic_totalsize = l *
-			PROM_getpropint(node, "icache-nlines", 64) *
-			PROM_getpropint(node, "icache-associativity", 1);
+			prom_getpropint(node, "icache-nlines", 64) *
+			prom_getpropint(node, "icache-associativity", 1);
 
 	cachesize = cacheinfo.ic_totalsize /
-	    PROM_getpropint(node, "icache-associativity", 1);
+	    prom_getpropint(node, "icache-associativity", 1);
 	bigcache = cachesize;
 
 	cacheinfo.dc_linesize = l =
-		PROM_getpropint(node, "dcache-line-size",0);
+		prom_getpropint(node, "dcache-line-size",0);
 	for (i = 0; (1 << i) < l && l; i++)
 		/* void */;
 	if ((1 << i) != l && l)
 		panic("bad dcache line size %d", l);
 	cacheinfo.dc_l2linesize = i;
 	cacheinfo.dc_totalsize =
-		PROM_getpropint(node, "dcache-size", 0) *
-		PROM_getpropint(node, "dcache-associativity", 1);
+		prom_getpropint(node, "dcache-size", 0) *
+		prom_getpropint(node, "dcache-associativity", 1);
 	if (cacheinfo.dc_totalsize == 0)
 		cacheinfo.dc_totalsize = l *
-			PROM_getpropint(node, "dcache-nlines", 128) *
-			PROM_getpropint(node, "dcache-associativity", 1);
+			prom_getpropint(node, "dcache-nlines", 128) *
+			prom_getpropint(node, "dcache-associativity", 1);
 
 	cachesize = cacheinfo.dc_totalsize /
-	    PROM_getpropint(node, "dcache-associativity", 1);
+	    prom_getpropint(node, "dcache-associativity", 1);
 	if (cachesize > bigcache)
 		bigcache = cachesize;
 
 	cacheinfo.ec_linesize = l =
-		PROM_getpropint(node, "ecache-line-size", 0);
+		prom_getpropint(node, "ecache-line-size", 0);
 	for (i = 0; (1 << i) < l && l; i++)
 		/* void */;
 	if ((1 << i) != l && l)
 		panic("bad ecache line size %d", l);
 	cacheinfo.ec_l2linesize = i;
 	cacheinfo.ec_totalsize = 
-		PROM_getpropint(node, "ecache-size", 0) *
-		PROM_getpropint(node, "ecache-associativity", 1);
+		prom_getpropint(node, "ecache-size", 0) *
+		prom_getpropint(node, "ecache-associativity", 1);
 	if (cacheinfo.ec_totalsize == 0)
 		cacheinfo.ec_totalsize = l *
-			PROM_getpropint(node, "ecache-nlines", 32768) *
-			PROM_getpropint(node, "ecache-associativity", 1);
+			prom_getpropint(node, "ecache-nlines", 32768) *
+			prom_getpropint(node, "ecache-associativity", 1);
 
 	cachesize = cacheinfo.ec_totalsize /
-	     PROM_getpropint(node, "ecache-associativity", 1);
+	     prom_getpropint(node, "ecache-associativity", 1);
 	if (cachesize > bigcache)
 		bigcache = cachesize;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.180 2004/02/13 11:36:17 wiz Exp $ */
+/*	$NetBSD: cpu.c,v 1.181 2004/03/17 17:04:59 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.180 2004/02/13 11:36:17 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.181 2004/03/17 17:04:59 pk Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -311,7 +311,7 @@ cpu_mainbus_attach(parent, self, aux)
 	int error, n;
 
 	node = ma->ma_node;
-	mid = (node != 0) ? PROM_getpropint(node, "mid", 0) : 0;
+	mid = (node != 0) ? prom_getpropint(node, "mid", 0) : 0;
 	cpu_attach((struct cpu_softc *)self, node, mid);
 
 	cpi = ((struct cpu_softc *)self)->sc_cpuinfo;
@@ -321,12 +321,12 @@ cpu_mainbus_attach(parent, self, aux)
 	/*
 	 * Map CPU mailbox if available
 	 */
-	if (node != 0 && (error = PROM_getprop(node, "mailbox-virtual",
+	if (node != 0 && (error = prom_getprop(node, "mailbox-virtual",
 					sizeof(*mbprop),
 					&n, &mbprop)) == 0) {
 		cpi->mailbox = mbprop->va;
 		free(mbprop, M_DEVBUF);
-	} else if (node != 0 && (error = PROM_getprop(node, "mailbox",
+	} else if (node != 0 && (error = prom_getprop(node, "mailbox",
 					sizeof(struct openprom_addr),
 					&n, &rrp)) == 0) {
 		/* XXX - map cached/uncached? If cached, deal with
@@ -352,7 +352,7 @@ cpu_mainbus_attach(parent, self, aux)
 		return;
 
 	rrp = NULL;
-	if (node == 0 || (error = PROM_getprop(node, "reg",
+	if (node == 0 || (error = prom_getprop(node, "reg",
 					sizeof(struct openprom_addr),
 					&n, &rrp)) != 0)
 		return;
@@ -1200,11 +1200,11 @@ cpumatch_sun4c(sc, mp, node)
 
 	rnode = findroot();
 	sc->mmu_npmeg = sc->mmu_nsegment =
-		PROM_getpropint(rnode, "mmu-npmg", 128);
-	sc->mmu_ncontext = PROM_getpropint(rnode, "mmu-nctx", 8);
+		prom_getpropint(rnode, "mmu-npmg", 128);
+	sc->mmu_ncontext = prom_getpropint(rnode, "mmu-nctx", 8);
 
 	/* Get clock frequency */ 
-	sc->hz = PROM_getpropint(rnode, "clock-frequency", 0);
+	sc->hz = prom_getpropint(rnode, "clock-frequency", 0);
 }
 
 void
@@ -1221,16 +1221,16 @@ getcacheinfo_sun4c(sc, node)
 
 	/* Sun4c's have only virtually-addressed caches */
 	ci->c_physical = 0; 
-	ci->c_totalsize = PROM_getpropint(node, "vac-size", 65536);
+	ci->c_totalsize = prom_getpropint(node, "vac-size", 65536);
 	/*
 	 * Note: vac-hwflush is spelled with an underscore
 	 * on the 4/75s.
 	 */
 	ci->c_hwflush =
-		PROM_getpropint(node, "vac_hwflush", 0) |
-		PROM_getpropint(node, "vac-hwflush", 0);
+		prom_getpropint(node, "vac_hwflush", 0) |
+		prom_getpropint(node, "vac-hwflush", 0);
 
-	ci->c_linesize = l = PROM_getpropint(node, "vac-linesize", 16);
+	ci->c_linesize = l = prom_getpropint(node, "vac-linesize", 16);
 	for (i = 0; (1 << i) < l; i++)
 		/* void */;
 	if ((1 << i) != l)
@@ -1246,7 +1246,7 @@ getcacheinfo_sun4c(sc, node)
 	 * chip that affects traps.  (I wish I knew more about this
 	 * mysterious buserr-type variable....)
 	 */
-	if (PROM_getpropint(node, "buserr-type", 0) == 1)
+	if (prom_getpropint(node, "buserr-type", 0) == 1)
 		sc->flags |= CPUFLG_SUN4CACHEBUG;
 }
 #endif /* SUN4C */
@@ -1284,7 +1284,7 @@ getcacheinfo_obp(sc, node)
 	 */
 	ci->c_physical = node_has_property(node, "cache-physical?");
 
-	if (PROM_getpropint(node, "ncaches", 1) == 2)
+	if (prom_getpropint(node, "ncaches", 1) == 2)
 		ci->c_split = 1;
 	else
 		ci->c_split = 0;
@@ -1296,28 +1296,28 @@ getcacheinfo_obp(sc, node)
 	    node_has_property(node, "dcache-nlines") &&
 	    ci->c_split) {
 		/* Harvard architecture: get I and D cache sizes */
-		ci->ic_nlines = PROM_getpropint(node, "icache-nlines", 0);
+		ci->ic_nlines = prom_getpropint(node, "icache-nlines", 0);
 		ci->ic_linesize = l =
-			PROM_getpropint(node, "icache-line-size", 0);
+			prom_getpropint(node, "icache-line-size", 0);
 		for (i = 0; (1 << i) < l && l; i++)
 			/* void */;
 		if ((1 << i) != l && l)
 			panic("bad icache line size %d", l);
 		ci->ic_l2linesize = i;
 		ci->ic_associativity =
-			PROM_getpropint(node, "icache-associativity", 1);
+			prom_getpropint(node, "icache-associativity", 1);
 		ci->ic_totalsize = l * ci->ic_nlines * ci->ic_associativity;
 	
-		ci->dc_nlines = PROM_getpropint(node, "dcache-nlines", 0);
+		ci->dc_nlines = prom_getpropint(node, "dcache-nlines", 0);
 		ci->dc_linesize = l =
-			PROM_getpropint(node, "dcache-line-size",0);
+			prom_getpropint(node, "dcache-line-size",0);
 		for (i = 0; (1 << i) < l && l; i++)
 			/* void */;
 		if ((1 << i) != l && l)
 			panic("bad dcache line size %d", l);
 		ci->dc_l2linesize = i;
 		ci->dc_associativity =
-			PROM_getpropint(node, "dcache-associativity", 1);
+			prom_getpropint(node, "dcache-associativity", 1);
 		ci->dc_totalsize = l * ci->dc_nlines * ci->dc_associativity;
 
 		ci->c_l2linesize = min(ci->ic_l2linesize, ci->dc_l2linesize);
@@ -1325,16 +1325,16 @@ getcacheinfo_obp(sc, node)
 		ci->c_totalsize = ci->ic_totalsize + ci->dc_totalsize;
 	} else {
 		/* unified I/D cache */
-		ci->c_nlines = PROM_getpropint(node, "cache-nlines", 128);
+		ci->c_nlines = prom_getpropint(node, "cache-nlines", 128);
 		ci->c_linesize = l = 
-			PROM_getpropint(node, "cache-line-size", 0);
+			prom_getpropint(node, "cache-line-size", 0);
 		for (i = 0; (1 << i) < l && l; i++)
 			/* void */;
 		if ((1 << i) != l && l)
 			panic("bad cache line size %d", l);
 		ci->c_l2linesize = i;
 		ci->c_associativity =
-			PROM_getpropint(node, "cache-associativity", 1);
+			prom_getpropint(node, "cache-associativity", 1);
 		ci->dc_associativity = ci->ic_associativity =
 			ci->c_associativity;
 		ci->c_totalsize = l * ci->c_nlines * ci->c_associativity;
@@ -1342,15 +1342,15 @@ getcacheinfo_obp(sc, node)
 	
 	if (node_has_property(node, "ecache-nlines")) {
 		/* we have a L2 "e"xternal cache */
-		ci->ec_nlines = PROM_getpropint(node, "ecache-nlines", 32768);
-		ci->ec_linesize = l = PROM_getpropint(node, "ecache-line-size", 0);
+		ci->ec_nlines = prom_getpropint(node, "ecache-nlines", 32768);
+		ci->ec_linesize = l = prom_getpropint(node, "ecache-line-size", 0);
 		for (i = 0; (1 << i) < l && l; i++)
 			/* void */;
 		if ((1 << i) != l && l)
 			panic("bad ecache line size %d", l);
 		ci->ec_l2linesize = i;
 		ci->ec_associativity =
-			PROM_getpropint(node, "ecache-associativity", 1);
+			prom_getpropint(node, "ecache-associativity", 1);
 		ci->ec_totalsize = l * ci->ec_nlines * ci->ec_associativity;
 	}
 	if (ci->c_totalsize == 0)
@@ -1837,15 +1837,15 @@ getcacheinfo_sun4d(sc, node)
 
 	if (node_has_property(node, "ecache-nlines")) {
 		/* we have a L2 "e"xternal cache */
-		ci->ec_nlines = PROM_getpropint(node, "ecache-nlines", 32768);
-		ci->ec_linesize = l = PROM_getpropint(node, "ecache-line-size", 0);
+		ci->ec_nlines = prom_getpropint(node, "ecache-nlines", 32768);
+		ci->ec_linesize = l = prom_getpropint(node, "ecache-line-size", 0);
 		for (i = 0; (1 << i) < l && l; i++)
 			/* void */;
 		if ((1 << i) != l && l)
 			panic("bad ecache line size %d", l);
 		ci->ec_l2linesize = i;
 		ci->ec_associativity =
-			PROM_getpropint(node, "ecache-associativity", 1);
+			prom_getpropint(node, "ecache-associativity", 1);
 		ci->ec_totalsize = l * ci->ec_nlines * ci->ec_associativity;
 	}
 }
@@ -1947,22 +1947,22 @@ getcpuinfo(sc, node)
 		i = getpsr();
 		if (node == 0 ||
 		    (cpu_impl =
-		     PROM_getpropint(node, "psr-implementation", -1)) == -1)
+		     prom_getpropint(node, "psr-implementation", -1)) == -1)
 			cpu_impl = IU_IMPL(i);
 
 		if (node == 0 ||
-		    (cpu_vers = PROM_getpropint(node, "psr-version", -1)) == -1)
+		    (cpu_vers = prom_getpropint(node, "psr-version", -1)) == -1)
 			cpu_vers = IU_VERS(i);
 
 		if (CPU_HAS_SRMMU) {
 			i = lda(SRMMU_PCR, ASI_SRMMU);
 			if (node == 0 ||
 			    (mmu_impl =
-			     PROM_getpropint(node, "implementation", -1)) == -1)
+			     prom_getpropint(node, "implementation", -1)) == -1)
 				mmu_impl = SRMMU_IMPL(i);
 
 			if (node == 0 ||
-			    (mmu_vers = PROM_getpropint(node, "version", -1)) == -1)
+			    (mmu_vers = prom_getpropint(node, "version", -1)) == -1)
 				mmu_vers = SRMMU_VERS(i);
 		} else {
 			mmu_impl = ANY;
@@ -1973,14 +1973,14 @@ getcpuinfo(sc, node)
 		 * Get CPU version/implementation from ROM. If not
 		 * available, assume same as boot CPU.
 		 */
-		cpu_impl = PROM_getpropint(node, "psr-implementation",
+		cpu_impl = prom_getpropint(node, "psr-implementation",
 					   cpuinfo.cpu_impl);
-		cpu_vers = PROM_getpropint(node, "psr-version",
+		cpu_vers = prom_getpropint(node, "psr-version",
 					   cpuinfo.cpu_vers);
 
 		/* Get MMU version/implementation from ROM always */
-		mmu_impl = PROM_getpropint(node, "implementation", -1);
-		mmu_vers = PROM_getpropint(node, "version", -1);
+		mmu_impl = prom_getpropint(node, "implementation", -1);
+		mmu_vers = prom_getpropint(node, "version", -1);
 	}
 
 	for (mp = cpu_conf; ; mp++) {
@@ -2022,12 +2022,12 @@ getcpuinfo(sc, node)
 		mp->minfo->getcacheinfo(sc, node);
 
 		if (node && sc->hz == 0 && !CPU_ISSUN4/*XXX*/) {
-			sc->hz = PROM_getpropint(node, "clock-frequency", 0);
+			sc->hz = prom_getpropint(node, "clock-frequency", 0);
 			if (sc->hz == 0) {
 				/*
 				 * Try to find it in the OpenPROM root...
 				 */     
-				sc->hz = PROM_getpropint(findroot(),
+				sc->hz = prom_getpropint(findroot(),
 						    "clock-frequency", 0);
 			}
 		}

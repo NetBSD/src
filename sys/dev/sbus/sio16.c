@@ -1,4 +1,4 @@
-/*	$NetBSD: sio16.c,v 1.11 2002/12/10 13:44:48 pk Exp $	*/
+/*	$NetBSD: sio16.c,v 1.12 2004/03/17 17:04:59 pk Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.11 2002/12/10 13:44:48 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.12 2004/03/17 17:04:59 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -191,14 +191,14 @@ sio16_attach(parent, self, aux)
 	}
 	sc->sc_ack = h;
 
-	mode = PROM_getpropstring(sa->sa_node, "mode");
+	mode = prom_getpropstring(sa->sa_node, "mode");
 	if (mode)
 		printf(", %s mode", mode);
 
 	/* get the clock frequency */
-	sc->sc_clk = PROM_getpropint(sa->sa_node, "clk", 24000);
+	sc->sc_clk = prom_getpropint(sa->sa_node, "clk", 24000);
 
-	model = PROM_getpropstring(sa->sa_node, "model");
+	model = prom_getpropstring(sa->sa_node, "model");
 	if (model == 0) {
 		printf(", no model property, bailing\n");
 		return;

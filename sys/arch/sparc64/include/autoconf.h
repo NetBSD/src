@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.18 2004/03/17 15:22:57 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.19 2004/03/17 17:04:59 pk Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@
  */
 
 #include <machine/bus.h>
+/*notyet:#include <machine/promlib.h>*/
 #include <dev/sbus/sbusvar.h>
 
 /* This is used to map device classes to IPLs */
@@ -127,16 +128,16 @@ struct mainbus_attach_args {
 /*
  * length; the others convert or make some other guarantee.
  */
-long	PROM_getproplen __P((int node, char *name));
-int	PROM_getprop __P((int, char *, size_t, int *, void *));
-char	*PROM_getpropstring __P((int node, char *name));
-int	PROM_getpropint __P((int node, char *name, int deflt));
+long	prom_getproplen __P((int node, char *name));
+int	prom_getprop __P((int, char *, size_t, int *, void *));
+char	*prom_getpropstring __P((int node, char *name));
+int	prom_getpropint __P((int node, char *name, int deflt));
 
 /* Frequently used options node */
 extern int optionsnode;
 
 	/* new interfaces: */
-char	*PROM_getpropstringA __P((int, char *, char *, size_t));
+char	*prom_getpropstringA __P((int, char *, char *, size_t));
 
 struct idprom	*prom_getidprom(void);
 void		prom_getether(int, u_char *);
