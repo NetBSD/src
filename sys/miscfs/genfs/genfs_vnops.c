@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.39 2001/10/03 14:13:08 enami Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.40 2001/11/10 13:33:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.40 2001/11/10 13:33:41 lukem Exp $");
 
 #include "opt_nfsserver.h"
 

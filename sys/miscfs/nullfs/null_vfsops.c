@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.35 2001/11/07 04:55:26 enami Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.36 2001/11/10 13:33:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -76,6 +76,9 @@
  * Null Layer
  * (See null_vnops.c for a description of what this does.)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.36 2001/11/10 13:33:42 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
