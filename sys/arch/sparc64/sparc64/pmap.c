@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.14 1998/09/09 02:49:56 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.15 1998/09/13 16:02:49 eeh Exp $	*/
 /* #define NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 
 /* #define BOOT_DEBUG */
@@ -1216,6 +1216,15 @@ pmap_pinit(pm)
 		printf("pmap_pinit: segs %p == %p\n", pm->pm_segs, (void*)page->phys_addr);
 #endif
 		ctx_alloc(pm);
+/* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
+		/* Allocate an empty page */
+		pm->syscallargs = malloc(NBPG, M_TEMP, M_WAITOK);
+		/* Make it little endian */
+		pseg_set(pmap_kernel(), pm->syscallargs, pseg_get(pmap_kernel(), pm->syscallargs)|TLB_IE, NULL);
+		/* Flush all mappings */
+		tsb[ptelookup_va(pm->syscallargs)].data.data = 0LL;
+		tlb_flush_pte(pm->syscallargs, 0);	
+/* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
 	}
 #ifdef DEBUG
 	if (pmapdebug & PDB_CREATE)
@@ -1268,6 +1277,17 @@ pmap_release(pm)
 #endif
 
 	s=splimp();
+/* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
+	if (pm->syscallargs) {
+		/* Make it big endian again */
+		pseg_set(pmap_kernel(), pm->syscallargs, pseg_get(pmap_kernel(), pm->syscallargs)&(~TLB_IE), NULL);
+		/* Flush all mappings */
+		tsb[ptelookup_va(pm->syscallargs)].data.data = 0LL;
+		tlb_flush_pte(pm->syscallargs, 0);
+		/* Give it back to the system */
+		free(pm->syscallargs, M_TEMP);
+	}
+/* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
 	for(i=0; i<STSZ; i++)
 		if((pdir = (paddr_t *)ldxa(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
 			for (k=0; k<PDSZ; k++) {

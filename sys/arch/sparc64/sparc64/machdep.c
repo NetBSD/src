@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 1998/09/13 12:24:18 mycroft Exp $ */
+/*	$NetBSD: machdep.c,v 1.15 1998/09/13 16:02:48 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -132,6 +132,7 @@
 #include <machine/pmap.h>
 #include <machine/openfirm.h>
 #include <machine/sparc64.h>
+#include <machine/ctlreg.h>
 
 #include <sparc64/sparc64/cache.h>
 #include <sparc64/sparc64/vaddrs.h>
@@ -504,8 +505,9 @@ setregs(p, pack, stack)
 	 *	%g1: address of PS_STRINGS (used by crt0)
 	 *	%tpc,%tnpc: entry point of program
 	 */
-	tstate = ((PSTATE_USER)<<TSTATE_PSTATE_SHIFT) 
-		| (tf->tf_tstate & TSTATE_CWP);
+	tstate = (ASI_PRIMARY_NO_FAULT<<TSTATE_ASI_SHIFT) |
+		((PSTATE_USER)<<TSTATE_PSTATE_SHIFT) | 
+		(tf->tf_tstate & TSTATE_CWP);
 	if ((fs = p->p_md.md_fpstate) != NULL) {
 		/*
 		 * We hold an FPU state.  If we own *the* FPU chip state
@@ -548,7 +550,7 @@ int sigpid = 0;
 struct sigframe {
 	int	sf_signo;		/* signal number */
 	int	sf_code;		/* code */
-#ifndef __LP64
+#ifndef _LP64
 	struct	sigcontext *sf_scp;	/* SunOS user addr of sigcontext */
 	int	sf_addr;		/* SunOS compat, always 0 for now */
 #endif
@@ -594,9 +596,10 @@ sendsig(catcher, sig, mask, code)
 	register struct sigacts *psp = p->p_sigacts;
 	register struct sigframe *fp;
 	register struct trapframe *tf;
-	vaddr_t addr, onstack; 
+	vaddr_t addr; 
 	struct rwindow *oldsp, *newsp, /* DEBUG */tmpwin;
 	struct sigframe sf;
+	int onstack;
 
 #if 0
 	/* Make sure our D$ is not polluted w/bad data */
@@ -638,7 +641,7 @@ sendsig(catcher, sig, mask, code)
 	 */
 	sf.sf_signo = sig;
 	sf.sf_code = code;
-#ifndef __LP64
+#ifndef _LP64
 #ifdef COMPAT_SUNOS
 	sf.sf_scp = &fp->sf_sc;
 #endif
@@ -653,12 +656,11 @@ sendsig(catcher, sig, mask, code)
 	sf.sf_sc.sc_g1 = tf->tf_global[1];
 	sf.sf_sc.sc_o0 = tf->tf_out[0];
 
-	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
-
-	/* Save signal mask. */
-	frame.sf_sc.sc_mask = *mask;
-
+	/*
+	 * Build the signal context to be used by sigreturn.
+	 */
+	sf.sf_sc.sc_onstack = onstack;
+	sf.sf_sc.sc_mask = mask->__bits[0];
 #ifdef COMPAT_13
 	/*
 	 * XXX We always have to save an old style signal mask because
@@ -668,7 +670,7 @@ sendsig(catcher, sig, mask, code)
 	 */
 	native_sigset_to_sigset13(mask, &frame.sf_sc.__sc_mask13);
 #endif
-
+	
 	/*
 	 * Put the stack in a consistent state before we whack away
 	 * at it.  Note that write_user_windows may just dump the
@@ -715,7 +717,8 @@ sendsig(catcher, sig, mask, code)
 	 * Arrange to continue execution at the code copied out in exec().
 	 * It needs the function to call in %g1, and a new stack pointer.
 	 */
-#ifdef COMPAT_SUNOS
+#ifdef _COMPAT_SUNOS
+/* XXXXXXX FIX MEEEEEEE XXXXXXX */
 	if (psp->ps_usertramp & sigmask(sig)) {
 		addr = (vaddr_t)catcher;	/* user does his own trampolining */
 	} else
@@ -739,6 +742,20 @@ sendsig(catcher, sig, mask, code)
 		if (sigdebug & SDB_DDB) Debugger();
 	}
 #endif
+ 
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+}
+
+int compat_13_sys_sigreturn __P((struct proc *, void *, register_t *));
+int
+compat_13_sys_sigreturn(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return sys___sigreturn14(p, v, retval);
 }
 
 /*
@@ -752,12 +769,12 @@ sendsig(catcher, sig, mask, code)
  */
 /* ARGSUSED */
 int
-sys_sigreturn(p, v, retval)
+sys___sigreturn14(p, v, retval)
 	register struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sys_sigreturn_args /* {
+	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext *scp;
