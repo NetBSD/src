@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.27 2003/01/10 10:55:25 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.28 2003/04/22 01:17:03 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.27 2003/01/10 10:55:25 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.28 2003/04/22 01:17:03 hubertf Exp $");
 #endif
 #endif
 
@@ -50,7 +50,7 @@ char   *PkgName = NULL;
 char   *Directory = NULL;
 char    FirstPen[FILENAME_MAX];
 add_mode_t AddMode = NORMAL;
-int	upgrade = 0;
+Boolean	Replace = FALSE;
 
 static void
 usage(void)
@@ -117,7 +117,7 @@ main(int argc, char **argv)
 			/* NOTREACHED */
 
 		case 'u':
-			upgrade = 1;
+			Replace = 1;
 			break;
 		case 'h':
 		case '?':
