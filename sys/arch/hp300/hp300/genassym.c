@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.11 1995/03/28 18:38:10 jtc Exp $	*/
+/*	$NetBSD: genassym.c,v 1.12 1995/04/12 15:27:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -101,6 +101,7 @@ main()
 {
 	/* general constants */
 	def("UPAGES", UPAGES);
+	def("USPACE", USPACE);
 	def("NBPG", NBPG);
 	def("PGSHIFT", PGSHIFT);
 	def("USRSTACK", USRSTACK);
