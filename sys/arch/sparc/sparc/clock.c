@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.83 2001/12/11 04:17:48 uwe Exp $ */
+/*	$NetBSD: clock.c,v 1.84 2001/12/11 05:54:56 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -890,7 +890,7 @@ timerattach_msiiep()
 		int t;
 
 		discard = msiiep->pcic_pclr; /* clear the limit bit */
-	        msiiep->pcic_pclr = 0; /* reset counter to 1, free run */
+		msiiep->pcic_pclr = 0; /* reset counter to 1, free run */
 		delay(100);
 		t = msiiep->pcic_pccr;
 
