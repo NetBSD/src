@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.2 1998/10/13 13:15:29 tsubai Exp $	*/
+/*	$NetBSD: aed.c,v 1.3 1998/10/18 09:31:41 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -69,7 +69,7 @@ extern int adb_polling;			/* Are we polling?  (Debugger mode) */
  * Local variables.
  */
 static struct aed_softc * aed_sc = NULL;
-static int aed_options = 0 | AED_MSEMUL;
+static int aed_options = 0; /* | AED_MSEMUL; */
 
 /* Driver definition */
 struct cfattach aed_ca = {
@@ -351,7 +351,7 @@ aed_dokeyupdown(event)
 
 /*
  * Place the event in the event queue if a requesting device is open
- * and we are not polling, otherwise, pass it up to the console driver.
+ * and we are not polling.
  */
 static void
 aed_handoff(event)
@@ -359,10 +359,6 @@ aed_handoff(event)
 {
 	if (aed_sc->sc_open && !adb_polling)
 		aed_enqevent(event);
-	else {
-		if (event->def_addr == 2)
-			kbd_intr(event);
-	}
 }
 
 /*

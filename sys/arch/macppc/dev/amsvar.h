@@ -1,4 +1,4 @@
-/*	$Id: amsvar.h,v 1.1 1998/10/13 11:21:22 tsubai Exp $	*/
+/*	$NetBSD: amsvar.h,v 1.2 1998/10/18 09:31:41 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -30,13 +30,13 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MAC68K_MSVAR_H_
-#define _MAC68K_MSVAR_H_
+#ifndef _MACPPC_AMSVAR_H_
+#define _MACPPC_AMSVAR_H_
 
 /*
  * State info, per mouse instance.
  */
-struct ms_softc {
+struct ams_softc {
 	struct	device	sc_dev;
 
 	/* ADB info */
@@ -51,6 +51,7 @@ struct ms_softc {
 	char		sc_devid[5];	/* device indentifier */
 
 	int		sc_mb;		/* current button state */
+	struct device	*sc_wsmousedev;
 };
 
 /* EMP device classes */
@@ -59,6 +60,6 @@ struct ms_softc {
 #define MSCLASS_TRACKBALL	2       
 
 void	ms_adbcomplete __P((caddr_t buffer, caddr_t data_area, int adb_command));
-void	ms_handoff __P((adb_event_t *event, struct ms_softc *));
+void	ms_handoff __P((adb_event_t *event, struct ams_softc *));
 
-#endif /* _MAC68K_MSVAR_H_ */
+#endif /* _MACPPC_AMSVAR_H_ */

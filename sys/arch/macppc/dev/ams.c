@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.1 1998/10/13 11:21:21 tsubai Exp $	*/
+/*	$NetBSD: ams.c,v 1.2 1998/10/18 09:31:41 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -39,6 +39,9 @@
 #include <sys/signalvar.h>
 #include <sys/systm.h>
 
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsmousevar.h>
+
 #include <machine/autoconf.h>
 #include <machine/keyboard.h>
 
@@ -46,13 +49,15 @@
 #include <macppc/dev/aedvar.h>
 #include <macppc/dev/amsvar.h>
 
+#include "aed.h"
+
 /*
  * Function declarations.
  */
-static int	msmatch __P((struct device *, struct cfdata *, void *));
-static void	msattach __P((struct device *, struct device *, void *));
-static void	ems_init __P((struct ms_softc *));
-static void	ms_processevent __P((adb_event_t *event, struct ms_softc *));
+static int	amsmatch __P((struct device *, struct cfdata *, void *));
+static void	amsattach __P((struct device *, struct device *, void *));
+static void	ems_init __P((struct ams_softc *));
+static void	ms_processevent __P((adb_event_t *event, struct ams_softc *));
 
 /*
  * Global variables.
@@ -67,13 +72,23 @@ static volatile int extdms_done;  /* Did ADBOp() complete? */
 
 /* Driver definition. */
 struct cfattach ams_ca = {
-	sizeof(struct ms_softc), msmatch, msattach
+	sizeof(struct ams_softc), amsmatch, amsattach
 };
 
 extern struct cfdriver ms_cd;
 
+int ams_enable __P((void *));
+int ams_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+void ams_disable __P((void *));
+
+const struct wsmouse_accessops ams_accessops = {
+	ams_enable,
+	ams_ioctl,
+	ams_disable,
+};
+
 static int
-msmatch(parent, cf, aux)
+amsmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
@@ -87,14 +102,15 @@ msmatch(parent, cf, aux)
 }
 
 static void
-msattach(parent, self, aux)
+amsattach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
 {
 	ADBSetInfoBlock adbinfo;
-	struct ms_softc *sc = (struct ms_softc *)self;
+	struct ams_softc *sc = (struct ams_softc *)self;
 	struct adb_attach_args * aa_args = (struct adb_attach_args *)aux;
 	int error;
+	struct wsmousedev_attach_args a;
 
 	sc->origaddr = aa_args->origaddr;
 	sc->adbaddr = aa_args->adbaddr;
@@ -175,7 +191,9 @@ msattach(parent, self, aux)
 		printf("ms: returned %d from SetADBInfo\n", error);
 #endif
 
-	return;
+	a.accessops = &ams_accessops;
+	a.accesscookie = sc;
+	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
 }
 
 
@@ -191,7 +209,7 @@ msattach(parent, self, aux)
  */
 void
 ems_init(sc)
-	struct ms_softc * sc;
+	struct ams_softc * sc;
 {
 	int adbaddr, count;
 	short cmd;
@@ -407,7 +425,7 @@ ms_adbcomplete(buffer, data_area, adb_command)
 	int adb_command;
 {
 	adb_event_t event;
-	struct ms_softc *msc;
+	struct ams_softc *msc;
 	int adbaddr;
 #ifdef ADB_DEBUG
 	int i;
@@ -417,7 +435,7 @@ ms_adbcomplete(buffer, data_area, adb_command)
 #endif
 
 	adbaddr = (adb_command & 0xf0) >> 4;
-	msc = (struct ms_softc *)data_area;
+	msc = (struct ams_softc *)data_area;
 
 	if ((msc->handler_id == ADBMS_EXTENDED) && (msc->sc_devid[0] == 0)) {
 		/* massage the data to look like EMP data */
@@ -463,7 +481,7 @@ ms_adbcomplete(buffer, data_area, adb_command)
 static void
 ms_processevent(event, msc)
 	adb_event_t *event;
-	struct ms_softc *msc;
+	struct ams_softc *msc;
 {
 	adb_event_t new_event;
 	int i, button_bit, max_byte, mask, buttons;
@@ -519,29 +537,12 @@ ms_processevent(event, msc)
 	new_event.u.m.dy = ((signed int) (event->bytes[0] & 0x3f)) -
 				((event->bytes[0] & 0x40) ? 64 : 0);
 
+	wsmouse_input(msc->sc_wsmousedev, new_event.u.m.buttons,
+		      new_event.u.m.dx, new_event.u.m.dy, 0);
+#if NAED > 0
 	aed_input(&new_event);
-}
-
-#if 0
-int 
-msioctl(dev, cmd, data, flag, p)
-    dev_t dev;
-    int cmd;
-    caddr_t data;
-    int flag;
-    struct proc *p;
-{
-	struct ms_softc *msc;
-
-	msc = ms_cd.cd_devs[minor(dev)];
-
-	switch (cmd) {
-	default:
-		return (EINVAL);
-	}
-	return (0);
-}
 #endif
+}
 
 void
 extdms_complete(buffer, compdata, cmd)
@@ -551,4 +552,28 @@ extdms_complete(buffer, compdata, cmd)
 	long *p = (long *)compdata;
 
 	*p= -1;
+}
+
+int
+ams_enable(v)
+	void *v;
+{
+	return 0;
+}
+
+int
+ams_ioctl(v, cmd, data, flag, p)
+	void *v;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
+{
+	return -1;
+}
+
+void
+ams_disable(v)
+	void *v;
+{
 }
