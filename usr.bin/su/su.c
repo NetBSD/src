@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.27 1998/10/14 00:56:48 wsanchez Exp $	*/
+/*	$NetBSD: su.c,v 1.28 1998/12/19 22:24:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.27 1998/10/14 00:56:48 wsanchez Exp $");
+__RCSID("$NetBSD: su.c,v 1.28 1998/12/19 22:24:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,9 @@ main(argc, argv)
 	struct passwd *pwd;
 	char *p;
 	struct group *gr;
+#ifdef BSD4_4
 	struct timeval tp;
+#endif
 	uid_t ruid;
 	int asme, ch, asthem, fastlogin, prio;
 	enum { UNSET, YES, NO } iscsh = UNSET;
@@ -293,6 +295,7 @@ badlogin:
 	}
 	*np = avshell;
 
+#ifdef BSD4_4
 	if (pwd->pw_change || pwd->pw_expire)
 		(void)gettimeofday(&tp, (struct timezone *)NULL);
 	if (pwd->pw_change) {
@@ -317,6 +320,7 @@ badlogin:
 			(void)printf("Warning: %s's account expires on %s",
 				     user, ctime(&pwd->pw_expire));
  	}
+#endif
 	if (ruid != 0)
 		syslog(LOG_NOTICE|LOG_AUTH, "%s to %s%s",
 		    username, user, ontty());
