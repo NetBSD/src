@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.11 2003/10/13 21:22:40 scw Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.12 2003/10/31 16:30:15 scw Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
 #include "bcopyinout_xscale.S"
 #else
 
-RCSID("$NetBSD: bcopyinout.S,v 1.11 2003/10/13 21:22:40 scw Exp $")	
+RCSID("$NetBSD: bcopyinout.S,v 1.12 2003/10/31 16:30:15 scw Exp $")	
 
 	.text
 	.align	0
@@ -712,3 +712,89 @@ ENTRY(kcopy)
 
 	mov	pc, lr
 #endif	/* !__XSCALE__ */
+
+#ifdef __PROG32
+/*
+ * int badaddr_read_1(const uint8_t *src, uint8_t *dest)
+ *
+ * Copies a single 8-bit value from src to dest, returning 0 on success,
+ * else EFAULT if a page fault occurred.
+ */
+ENTRY(badaddr_read_1)
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	stmfd	sp!, {r0-r1, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r2, .Lcpu_info
+	ldr	r2, [r2, r0, lsl #2]
+	ldr	r2, [r2, #CI_CURPCB]
+	ldmfd	sp!, {r0-r1, r14}
+#else
+	ldr	r2, .Lcurpcb
+	ldr	r2, [r2]
+#endif
+	ldr	ip, [r2, #PCB_ONFAULT]
+	adr	r3, 1f
+	str	r3, [r2, #PCB_ONFAULT]
+	ldrb	r3, [r0]
+	strb	r3, [r1]
+	mov	r0, #0		/* No fault */
+1:	str	ip, [r2, #PCB_ONFAULT]
+	mov	pc, lr
+
+/*
+ * int badaddr_read_2(const uint16_t *src, uint16_t *dest)
+ *
+ * Copies a single 16-bit value from src to dest, returning 0 on success,
+ * else EFAULT if a page fault occurred.
+ */
+ENTRY(badaddr_read_2)
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	stmfd	sp!, {r0-r1, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r2, .Lcpu_info
+	ldr	r2, [r2, r0, lsl #2]
+	ldr	r2, [r2, #CI_CURPCB]
+	ldmfd	sp!, {r0-r1, r14}
+#else
+	ldr	r2, .Lcurpcb
+	ldr	r2, [r2]
+#endif
+	ldr	ip, [r2, #PCB_ONFAULT]
+	adr	r3, 1f
+	str	r3, [r2, #PCB_ONFAULT]
+	ldrh	r3, [r0]
+	strh	r3, [r1]
+	mov	r0, #0		/* No fault */
+1:	str	ip, [r2, #PCB_ONFAULT]
+	mov	pc, lr
+
+/*
+ * int badaddr_read_4(const uint32_t *src, uint32_t *dest)
+ *
+ * Copies a single 32-bit value from src to dest, returning 0 on success,
+ * else EFAULT if a page fault occurred.
+ */
+ENTRY(badaddr_read_4)
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	stmfd	sp!, {r0-r1, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r2, .Lcpu_info
+	ldr	r2, [r2, r0, lsl #2]
+	ldr	r2, [r2, #CI_CURPCB]
+	ldmfd	sp!, {r0-r1, r14}
+#else
+	ldr	r2, .Lcurpcb
+	ldr	r2, [r2]
+#endif
+	ldr	ip, [r2, #PCB_ONFAULT]
+	adr	r3, 1f
+	str	r3, [r2, #PCB_ONFAULT]
+	ldr	r3, [r0]
+	str	r3, [r1]
+	mov	r0, #0		/* No fault */
+1:	str	ip, [r2, #PCB_ONFAULT]
+	mov	pc, lr
+#endif /* __PROG32 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.12 2003/10/30 08:57:24 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.13 2003/10/31 16:30:15 scw Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -57,24 +57,6 @@
 AST_ALIGNMENT_FAULT_LOCALS
 
 /*
- * General exception exit handler
- *
- * It exits straight away if not returning to USR mode.
- * This loops around delivering any pending ASTs.
- * Interrupts are disabled at suitable points to avoid ASTs
- * being posted between testing and exit to user mode.
- *
- * This function uses PULLFRAMEFROMSVCANDEXIT and
- * DO_AST_AND_RESTORE_ALIGNMENT_FAULTS thus should
- * only be called if the exception handler used PUSHFRAMEINSVC
- * followed by ENABLE_ALIGNMENT_FAULTS.
- */
-
-exception_exit:
-	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
-	PULLFRAMEFROMSVCANDEXIT
-
-/*
  * reset_entry:
  *
  *	Handler for Reset exception.
@@ -110,6 +92,10 @@ ASENTRY_NP(swi_entry)
  *	Handler for the Prefetch Abort exception.
  */
 ASENTRY_NP(prefetch_abort_entry)
+#ifdef __XSCALE__
+	nop				/* Make absolutely sure any pending */
+	nop				/* imprecise aborts have occurred. */
+#endif
         sub     lr, lr, #0x00000004     /* Adjust the lr */
 
 	PUSHFRAMEINSVC
@@ -144,6 +130,10 @@ abortprefetchmsg:
  *	Handler for the Data Abort exception.
  */
 ASENTRY_NP(data_abort_entry)
+#ifdef __XSCALE__
+	nop				/* Make absolutely sure any pending */
+	nop				/* imprecise aborts have occurred. */
+#endif
         sub     lr, lr, #0x00000008     /* Adjust the lr */
 
 	PUSHFRAMEINSVC			/* Push trap frame and switch */
@@ -191,6 +181,25 @@ ASENTRY_NP(address_exception_entry)
 Laddress_exception_msg:
 	.asciz	"Address Exception CPSR=0x%08x SPSR=0x%08x LR=0x%08x\n"
 	.balign	4
+
+/*
+ * General exception exit handler
+ * (Placed here to be within range of all the references to it)
+ *
+ * It exits straight away if not returning to USR mode.
+ * This loops around delivering any pending ASTs.
+ * Interrupts are disabled at suitable points to avoid ASTs
+ * being posted between testing and exit to user mode.
+ *
+ * This function uses PULLFRAMEFROMSVCANDEXIT and
+ * DO_AST_AND_RESTORE_ALIGNMENT_FAULTS thus should
+ * only be called if the exception handler used PUSHFRAMEINSVC
+ * followed by ENABLE_ALIGNMENT_FAULTS.
+ */
+
+exception_exit:
+	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
+	PULLFRAMEFROMSVCANDEXIT
 
 /*
  * undefined_entry:
