@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2003/07/22 12:34:40 lukem Exp $
+#	$NetBSD: Makefile,v 1.35 2004/07/02 00:05:23 sjg Exp $
 #	from: @(#)Makefile    8.3 (Berkeley) 4/2/94
 
 .include <bsd.own.mk>
@@ -7,6 +7,7 @@ PROG=	passwd
 SRCS=	local_passwd.c passwd.c pwd_gensalt.c
 
 CPPFLAGS+=-I${.CURDIR} -DLOGIN_CAP
+CPPFLAGS+= -I${.CURDIR}/../../lib/libcrypt
 
 .if (${USE_YP} != "no")
 SRCS+=	yp_passwd.c
