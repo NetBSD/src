@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.56 2000/07/05 22:25:44 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.57 2000/09/09 04:13:43 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1366,8 +1366,14 @@ lfs_writeseg(fs, sp)
 				bp->b_flags &= ~(B_ERROR | B_GATHERED);
 				if (bp->b_flags & B_CALL)
 					lfs_freebuf(bp);
-				else
-					brelse(bp);
+				else {
+					/* Still on free list, leave it there */
+					s = splbio();
+					bp->b_flags &= ~B_BUSY;
+					if (bp->b_flags & B_WANTED)
+						wakeup(bp);
+				 	splx(s);
+				}
 			} else {
 				bp->b_flags &= ~(B_ERROR | B_READ | B_DELWRI |
 						 B_LOCKED | B_GATHERED);
