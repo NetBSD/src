@@ -1,4 +1,4 @@
-/*	$NetBSD: amq_defs.h,v 1.1.1.1 2000/06/07 00:52:21 dogcow Exp $ */
+/*	$NetBSD: amq_defs.h,v 1.2 2000/06/16 02:10:13 dogcow Exp $ */
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -52,7 +52,7 @@
 #ifndef AMQ_SIZE
 # define AMQ_SIZE 16384
 #endif /* not AMQ_SIZE */
-#define AMQ_STRLEN 2048
+#define AMQ_STRLEN 10240
 #define AMQ_PROGRAM ((u_long)300019)
 #define AMQ_VERSION ((u_long)1)
 #define AMQPROC_NULL ((u_long)0)
