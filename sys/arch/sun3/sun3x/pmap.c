@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.68 2001/06/19 13:42:16 wiz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.69 2001/07/03 06:15:17 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -124,9 +124,6 @@
 
 #include <uvm/uvm.h>
 
-#define PAGER_SVA (uvm.pager_sva)
-#define PAGER_EVA (uvm.pager_eva)
-
 #include <machine/cpu.h>
 #include <machine/kcore.h>
 #include <machine/mon.h>
@@ -236,7 +233,7 @@ int pmap_debug = 0;
  * Global variables for storing the base addresses for the areas
  * labeled above.
  */
-static vm_offset_t  	kernAphys;
+static vaddr_t  	kernAphys;
 static mmu_long_dte_t	*kernAbase;
 static mmu_short_dte_t	*kernBbase;
 static mmu_short_pte_t	*kernCbase;
@@ -267,8 +264,7 @@ static TAILQ_HEAD(c_pool_head_struct, c_tmgr_struct) c_pool;
  * Flags used to mark the safety/availability of certain operations or
  * resources.
  */
-static boolean_t pv_initialized = FALSE, /* PV system has been initialized. */
-       bootstrap_alloc_enabled = FALSE; /*Safe to use pmap_bootstrap_alloc().*/
+static boolean_t bootstrap_alloc_enabled = FALSE; /*Safe to use pmap_bootstrap_alloc().*/
 int tmp_vpages_inuse;	/* Temporary virtual pages are in use */
 
 /*
@@ -276,18 +272,18 @@ int tmp_vpages_inuse;	/* Temporary virtual pages are in use */
  * used in the old pmap/vm interface (without NONCONTIG).
  */
 /* Kernel virtual address space available: */
-vm_offset_t	virtual_avail, virtual_end;
+vaddr_t	virtual_avail, virtual_end;
 /* Physical address space available: */
-vm_offset_t	avail_start, avail_end;
+paddr_t	avail_start, avail_end;
 
 /* This keep track of the end of the contiguously mapped range. */
-vm_offset_t virtual_contig_end;
+vaddr_t virtual_contig_end;
 
 /* Physical address used by pmap_next_page() */
-vm_offset_t avail_next;
+paddr_t avail_next;
 
 /* These are used by pmap_copy_page(), etc. */
-vm_offset_t tmp_vpages[2];
+vaddr_t tmp_vpages[2];
 
 /* memory pool for pmap structures */
 struct pool	pmap_pmap_pool;
@@ -369,8 +365,8 @@ unsigned int	NUM_A_TABLES, NUM_B_TABLES, NUM_C_TABLES;
 
 void *pmap_bootstrap_alloc(int);
 
-static INLINE void *      mmu_ptov __P((vm_offset_t pa));
-static INLINE vm_offset_t mmu_vtop __P((void * va));
+static INLINE void *mmu_ptov __P((paddr_t));
+static INLINE paddr_t mmu_vtop __P((void *));
 
 #if	0
 static INLINE a_tmgr_t * mmuA2tmgr __P((mmu_long_dte_t *));
@@ -378,7 +374,7 @@ static INLINE a_tmgr_t * mmuA2tmgr __P((mmu_long_dte_t *));
 static INLINE b_tmgr_t * mmuB2tmgr __P((mmu_short_dte_t *));
 static INLINE c_tmgr_t * mmuC2tmgr __P((mmu_short_pte_t *));
 
-static INLINE pv_t *pa2pv __P((vm_offset_t pa));
+static INLINE pv_t *pa2pv __P((paddr_t));
 static INLINE int   pteidx __P((mmu_short_pte_t *));
 static INLINE pmap_t current_pmap __P((void));
 
@@ -390,9 +386,9 @@ static INLINE pmap_t current_pmap __P((void));
  */
 static INLINE void *
 mmu_ptov(pa)
-	vm_offset_t pa;
+	paddr_t pa;
 {
-	register vm_offset_t va;
+	vaddr_t va;
 
 	va = (pa + KERNBASE);
 #ifdef	PMAP_DEBUG
@@ -401,13 +397,14 @@ mmu_ptov(pa)
 #endif
 	return ((void*)va);
 }
-static INLINE vm_offset_t
+
+static INLINE paddr_t
 mmu_vtop(vva)
 	void *vva;
 {
-	register vm_offset_t va;
+	vaddr_t va;
 
-	va = (vm_offset_t)vva;
+	va = (vaddr_t)vva;
 #ifdef	PMAP_DEBUG
 	if ((va < KERNBASE) || (va >= virtual_contig_end))
 		panic("mmu_ptov");
@@ -436,7 +433,7 @@ static INLINE a_tmgr_t *
 mmuA2tmgr(mmuAtbl)
 	mmu_long_dte_t *mmuAtbl;
 {
-	register int idx;
+	int idx;
 
 	/* Which table is this in? */
 	idx = (mmuAtbl - mmuAbase) / MMU_A_TBL_SIZE;
@@ -452,7 +449,7 @@ static INLINE b_tmgr_t *
 mmuB2tmgr(mmuBtbl)
 	mmu_short_dte_t *mmuBtbl;
 {
-	register int idx;
+	int idx;
 
 	/* Which table is this in? */
 	idx = (mmuBtbl - mmuBbase) / MMU_B_TBL_SIZE;
@@ -472,7 +469,7 @@ static INLINE c_tmgr_t *
 mmuC2tmgr(mmuCtbl)
 	mmu_short_pte_t *mmuCtbl;
 {
-	register int idx;
+	int idx;
 
 	/* Which table is this in? */
 	idx = (mmuCtbl - mmuCbase) / MMU_C_TBL_SIZE;
@@ -497,10 +494,10 @@ mmuC2tmgr(mmuCtbl)
  */
 static INLINE pv_t *
 pa2pv(pa)
-	vm_offset_t pa;
+	paddr_t pa;
 {
-	register struct pmap_physmem_struct *bank;
-	register int idx;
+	struct pmap_physmem_struct *bank;
+	int idx;
 
 	bank = &avail_mem[0];
 	while (pa >= bank->pmem_end)
@@ -557,18 +554,6 @@ current_pmap()
  * all function calls.                                                   *
  *************************************************************************/
 
-/** External functions
- ** - functions used within this module but written elsewhere.
- **   both of these functions are in locore.s
- ** XXX - These functions were later replaced with their more cryptic
- **       hp300 counterparts.  They may be removed now.
- **/
-#if	0	/* deprecated mmu */
-void   mmu_seturp __P((vm_offset_t));
-void   mmu_flush __P((int, vm_offset_t));
-void   mmu_flusha __P((void));
-#endif	/* 0 */
-
 /** Internal functions
  ** Most functions used only within this module are defined in
  **   pmap_pvt.h (why not here if used only here?)
@@ -601,11 +586,12 @@ void pmap_release __P((pmap_t));
  */
 void
 pmap_bootstrap(nextva)
-	vm_offset_t nextva;
+	vaddr_t nextva;
 {
 	struct physmemory *membank;
 	struct pmap_physmem_struct *pmap_membank;
-	vm_offset_t va, pa, eva;
+	vaddr_t va, eva;
+	paddr_t pa;
 	int b, c, i, j;	/* running table counts */
 	int size, resvmem;
 
@@ -687,7 +673,7 @@ pmap_bootstrap(nextva)
 	 * Note: All must be aligned on 256 byte boundaries.
 	 * Start with the level-A table (one of those).
 	 */
-	size = sizeof(mmu_long_dte_t)  * MMU_A_TBL_SIZE;
+	size = sizeof(mmu_long_dte_t) * MMU_A_TBL_SIZE;
 	kernAbase = pmap_bootstrap_alloc(size);
 	bzero(kernAbase, size);
 
@@ -730,7 +716,7 @@ pmap_bootstrap(nextva)
 	size = sizeof(mmu_short_dte_t) * MMU_B_TBL_SIZE	* NUM_B_TABLES;
 	mmuBbase = pmap_bootstrap_alloc(size);
 
-	size = sizeof(mmu_long_dte_t)  * MMU_A_TBL_SIZE * NUM_A_TABLES;
+	size = sizeof(mmu_long_dte_t) * MMU_A_TBL_SIZE * NUM_A_TABLES;
 	mmuAbase = pmap_bootstrap_alloc(size);
 
 	/*
@@ -769,8 +755,6 @@ pmap_bootstrap(nextva)
 		}
 		b += MMU_B_TBL_SIZE;
 	}
-
-	/* XXX - Doing kernel_pmap a little further down. */
 
 	pmap_alloc_usermmu();	/* Allocate user MMU tables.        */
 	pmap_alloc_usertmgr();	/* Allocate user MMU table managers.*/
@@ -841,7 +825,7 @@ pmap_bootstrap(nextva)
 	 * Only the mappings created here exist in our tables, so
 	 * remember to map anything we expect to use.
 	 */
-	va = (vm_offset_t) KERNBASE;
+	va = (vaddr_t)KERNBASE;
 	pa = 0;
 
 	/*
@@ -864,7 +848,7 @@ pmap_bootstrap(nextva)
 	 * sharing the same page.  Therefore, the last page of kernel text
 	 * has to be mapped as read/write, to accomodate the data.
 	 */
-	eva = m68k_trunc_page((vm_offset_t)etext);
+	eva = m68k_trunc_page((vaddr_t)etext);
 	for (; va < eva; va += NBPG, pa += NBPG)
 		pmap_enter_kernel(va, pa, VM_PROT_READ|VM_PROT_EXECUTE);
 
@@ -1200,8 +1184,6 @@ pmap_init_pv()
 		pvbase[i].pv_idx = PVE_EOL;	/* Indicate no mappings */
 		pvbase[i].pv_flags = 0;		/* Zero out page flags  */
 	}
-
-	pv_initialized = TRUE;
 }
 
 /* get_a_table			INTERNAL
@@ -1250,25 +1232,6 @@ get_a_table()
 		pmap->pm_a_tmgr = NULL;
 		pmap->pm_a_phys = kernAphys;
 	}
-#ifdef  NON_REENTRANT
-	/*
-	 * If the table isn't to be wired down, re-insert it at the
-	 * end of the pool.
-	 */
-	if (!wired)
-		/*
-		 * Quandary - XXX
-		 * Would it be better to let the calling function insert this
-		 * table into the queue?  By inserting it here, we are allowing
-		 * it to be stolen immediately.  The calling function is
-		 * probably not expecting to use a table that it is not
-		 * assured full control of.
-		 * Answer - In the intrest of re-entrancy, it is best to let
-		 * the calling function determine when a table is available
-		 * for use.  Therefore this code block is not used.
-		 */
-		TAILQ_INSERT_TAIL(&a_pool, tbl, at_link);
-#endif	/* NON_REENTRANT */
 	return tbl;
 }
 
@@ -1291,13 +1254,6 @@ get_b_table()
 		tbl->bt_parent->at_ecnt--;
 		free_b_table(tbl, FALSE);
 	}
-#ifdef	NON_REENTRANT
-	if (!wired)
-		/* XXX see quandary in get_b_table */
-		/* XXX start lock */
-		TAILQ_INSERT_TAIL(&b_pool, tbl, bt_link);
-		/* XXX end lock */
-#endif	/* NON_REENTRANT */
 	return tbl;
 }
 
@@ -1320,14 +1276,6 @@ get_c_table()
 		tbl->ct_parent->bt_ecnt--;
 		free_c_table(tbl, FALSE);
 	}
-#ifdef	NON_REENTRANT
-	if (!wired)
-		/* XXX See quandary in get_a_table */
-		/* XXX start lock */
-		TAILQ_INSERT_TAIL(&c_pool, tbl, c_link);
-		/* XXX end lock */
-#endif	/* NON_REENTRANT */
-
 	return tbl;
 }
 
@@ -1504,34 +1452,6 @@ free_c_table(c_tbl, relink)
 	return removed_cnt;
 }
 
-#if 0
-/* free_c_table_novalid			INTERNAL
- **
- * Frees the given C table manager without checking to see whether
- * or not it contains any valid page descriptors as it is assumed
- * that it does not.
- */
-void
-free_c_table_novalid(c_tbl)
-	c_tmgr_t *c_tbl;
-{
-	TAILQ_REMOVE(&c_pool, c_tbl, ct_link);
-	TAILQ_INSERT_HEAD(&c_pool, c_tbl, ct_link);
-	c_tbl->ct_parent->bt_dtbl[c_tbl->ct_pidx].attr.raw = MMU_DT_INVALID;
-	c_tbl->ct_parent->bt_ecnt--;
-	/*
-	 * XXX - Should call equiv. of 'free_b_table_novalid' here if
-	 * we just removed the last entry of the parent B table.
-	 * But I want to insure that this will not endanger pmap_enter()
-	 * with sudden removal of tables it is working with.
-	 *
-	 * We should probably add another field to each table, indicating
-	 * whether or not it is 'locked', ie. in the process of being
-	 * modified.
-	 */
-	c_tbl->ct_parent = NULL;
-}
-#endif
 
 /* pmap_remove_pte			INTERNAL
  **
@@ -1546,8 +1466,7 @@ pmap_remove_pte(pte)
 	mmu_short_pte_t *pte;
 {
 	u_short     pv_idx, targ_idx;
-	int         s;
-	vm_offset_t pa;
+	paddr_t     pa;
 	pv_t       *pv;
 
 	pa = MMU_PTE_PA(*pte);
@@ -1564,35 +1483,35 @@ pmap_remove_pte(pte)
 		 * removed, so that it may be modified to point to its new
 		 * neighbor.
 		 */
-		s = splvm();
+
 		pv_idx = pv->pv_idx;	/* Index of first PTE in PV list */
 		if (pv_idx == targ_idx) {
 			pv->pv_idx = pvebase[targ_idx].pve_next;
 		} else {
+
 			/*
 			 * Find the PV element pointing to the target
 			 * element.  Note: may have pv_idx==PVE_EOL
 			 */
+
 			for (;;) {
 				if (pv_idx == PVE_EOL) {
-#ifdef	PMAP_DEBUG
-					printf("pmap_remove_pte: PVE_EOL\n");
-					Debugger();
-#endif
 					goto pv_not_found;
 				}
 				if (pvebase[pv_idx].pve_next == targ_idx)
 					break;
 				pv_idx = pvebase[pv_idx].pve_next;
 			}
+
 			/*
 			 * At this point, pv_idx is the index of the PV
 			 * element just before the target element in the list.
 			 * Unlink the target.
 			 */
+
 			pvebase[pv_idx].pve_next = pvebase[targ_idx].pve_next;
-		pv_not_found:
 		}
+
 		/*
 		 * Save the mod/ref bits of the pte by simply
 		 * ORing the entire pte onto the pv_flags member
@@ -1601,10 +1520,10 @@ pmap_remove_pte(pte)
 		 * for usage information on the pv head than that
 		 * which is used on the MMU ptes.
 		 */
-		pv->pv_flags |= (u_short) pte->attr.raw;
-		splx(s);
-	}
 
+pv_not_found:
+		pv->pv_flags |= (u_short) pte->attr.raw;
+	}
 	pte->attr.raw = MMU_DT_INVALID;
 }
 
@@ -1621,7 +1540,7 @@ pmap_remove_pte(pte)
 boolean_t
 pmap_stroll(pmap, va, a_tbl, b_tbl, c_tbl, pte, a_idx, b_idx, pte_idx)
 	pmap_t pmap;
-	vm_offset_t va;
+	vaddr_t va;
 	a_tmgr_t **a_tbl;
 	b_tmgr_t **b_tbl;
 	c_tmgr_t **c_tbl;
@@ -1675,14 +1594,13 @@ pmap_stroll(pmap, va, a_tbl, b_tbl, c_tbl, pte, a_idx, b_idx, pte_idx)
 int
 pmap_enter(pmap, va, pa, prot, flags)
 	pmap_t	pmap;
-	vm_offset_t va;
-	vm_offset_t pa;
+	vaddr_t va;
+	paddr_t pa;
 	vm_prot_t prot;
 	int flags;
 {
 	boolean_t insert, managed; /* Marks the need for PV insertion.*/
 	u_short nidx;            /* PV list index                     */
-	int s;                   /* Used for splvm()/splx()           */
 	int mapflags;            /* Flags for the mapping (see NOTE1) */
 	u_int a_idx, b_idx, pte_idx; /* table indices                 */
 	a_tmgr_t *a_tbl;         /* A: long descriptor table manager  */
@@ -1695,8 +1613,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 	boolean_t wired;         /* is the mapping to be wired?       */
 	enum {NONE, NEWA, NEWB, NEWC} llevel; /* used at end   */
 
-	if (pmap == NULL)
-		return 0;
 	if (pmap == pmap_kernel()) {
 		pmap_enter_kernel(va, pa, prot);
 		return 0;
@@ -2036,10 +1952,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 		pv = pa2pv(pa);
 		nidx = pteidx(c_pte);
 
-		s = splvm();
 		pvebase[nidx].pve_next = pv->pv_idx;
 		pv->pv_idx = nidx;
-		splx(s);
 	}
 
 	/* Move any allocated tables back into the active pool. */
@@ -2076,16 +1990,16 @@ pmap_enter(pmap, va, pa, prot, flags)
  */
 void
 pmap_enter_kernel(va, pa, prot)
-	vm_offset_t va;
-	vm_offset_t pa;
+	vaddr_t va;
+	paddr_t pa;
 	vm_prot_t   prot;
 {
 	boolean_t       was_valid, insert;
 	u_short         pte_idx;
-	int             s, flags;
+	int             flags;
 	mmu_short_pte_t *pte;
 	pv_t            *pv;
-	vm_offset_t     old_pa;
+	paddr_t     old_pa;
 
 	flags = (pa & ~MMU_PAGE_MASK);
 	pa &= MMU_PAGE_MASK;
@@ -2103,7 +2017,6 @@ pmap_enter_kernel(va, pa, prot)
 	/* This array is traditionally named "Sysmap" */
 	pte = &kernCbase[pte_idx];
 
-	s = splvm();
 	if (MMU_VALID_DT(*pte)) {
 		was_valid = TRUE;
 		/*
@@ -2151,8 +2064,6 @@ pmap_enter_kernel(va, pa, prot)
 		pvebase[pte_idx].pve_next = pv->pv_idx;
 		pv->pv_idx = pte_idx;
 	}
-	splx(s);
-	
 }
 
 void
@@ -2161,7 +2072,15 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
-	pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
+	mmu_short_pte_t	*pte;
+
+	/* This array is traditionally named "Sysmap" */
+	pte = &kernCbase[(u_long)m68k_btop(va - KERNBASE)];
+
+	KASSERT(!MMU_VALID_DT(*pte));
+	pte->attr.raw = MMU_DT_INVALID | MMU_DT_PAGE | (pa & MMU_PAGE_MASK);
+	if (!(prot & VM_PROT_WRITE))
+		pte->attr.raw |= MMU_SHORT_PTE_WP;
 }
 
 void
@@ -2169,8 +2088,20 @@ pmap_kremove(va, len)
 	vaddr_t va;
 	vsize_t len;
 {
-	for (len >>= PAGE_SHIFT; len > 0; len--, va += PAGE_SIZE) {
-		pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
+	int idx, eidx;
+
+#ifdef	PMAP_DEBUG
+	if ((sva & PGOFSET) || (eva & PGOFSET))
+		panic("pmap_remove_kernel: alignment");
+#endif
+
+	idx  = m68k_btop(va - KERNBASE);
+	eidx = m68k_btop(va + len - KERNBASE);
+
+	while (idx < eidx) {
+		kernCbase[idx++].attr.raw = MMU_DT_INVALID;
+		TBIS(va);
+		va += NBPG;
 	}
 }
 
@@ -2182,11 +2113,11 @@ pmap_kremove(va, len)
  * Used for device mappings and early mapping of the kernel text/data/bss.
  * Returns the first virtual address beyond the end of the range.
  */
-vm_offset_t
+vaddr_t
 pmap_map(va, pa, endpa, prot)
-	vm_offset_t	va;
-	vm_offset_t	pa;
-	vm_offset_t	endpa;
+	vaddr_t	va;
+	paddr_t	pa;
+	paddr_t	endpa;
 	int		prot;
 {
 	int sz;
@@ -2220,7 +2151,7 @@ pmap_map(va, pa, endpa, prot)
 void
 pmap_protect(pmap, startva, endva, prot)
 	pmap_t pmap;
-	vm_offset_t startva, endva;
+	vaddr_t startva, endva;
 	vm_prot_t prot;
 {
 	boolean_t iscurpmap;
@@ -2230,8 +2161,6 @@ pmap_protect(pmap, startva, endva, prot)
 	c_tmgr_t *c_tbl;
 	mmu_short_pte_t *pte;
 
-	if (pmap == NULL)
-		return;
 	if (pmap == pmap_kernel()) {
 		pmap_protect_kernel(startva, endva, prot);
 		return;
@@ -2284,14 +2213,14 @@ pmap_protect(pmap, startva, endva, prot)
 		if (b_tbl || MMU_VALID_DT(a_tbl->at_dtbl[a_idx])) {
 		  if (b_tbl == NULL) {
 		    b_tbl = (b_tmgr_t *) a_tbl->at_dtbl[a_idx].addr.raw;
-		    b_tbl = mmu_ptov((vm_offset_t) b_tbl);
-		    b_tbl = mmuB2tmgr((mmu_short_dte_t *) b_tbl);
+		    b_tbl = mmu_ptov((vaddr_t)b_tbl);
+		    b_tbl = mmuB2tmgr((mmu_short_dte_t *)b_tbl);
 		  }
 		  if (c_tbl || MMU_VALID_DT(b_tbl->bt_dtbl[b_idx])) {
 		    if (c_tbl == NULL) {
 		      c_tbl = (c_tmgr_t *) MMU_DTE_PA(b_tbl->bt_dtbl[b_idx]);
-		      c_tbl = mmu_ptov((vm_offset_t) c_tbl);
-		      c_tbl = mmuC2tmgr((mmu_short_pte_t *) c_tbl);
+		      c_tbl = mmu_ptov((vaddr_t)c_tbl);
+		      c_tbl = mmuC2tmgr((mmu_short_pte_t *)c_tbl);
 		    }
 		    if (MMU_VALID_DT(c_tbl->ct_dtbl[c_idx])) {
 		      pte = &c_tbl->ct_dtbl[c_idx];
@@ -2340,10 +2269,10 @@ pmap_protect(pmap, startva, endva, prot)
  */
 void
 pmap_protect_kernel(startva, endva, prot)
-	vm_offset_t startva, endva;
+	vaddr_t startva, endva;
 	vm_prot_t prot;
 {
-	vm_offset_t va;
+	vaddr_t va;
 	mmu_short_pte_t *pte;
 
 	pte = &kernCbase[(unsigned long) m68k_btop(startva - KERNBASE)];
@@ -2383,7 +2312,7 @@ pmap_protect_kernel(startva, endva, prot)
 void
 pmap_unwire(pmap, va)
 	pmap_t pmap;
-	vm_offset_t va;
+	vaddr_t va;
 {
 	int a_idx, b_idx, c_idx;
 	a_tmgr_t *a_tbl;
@@ -2445,9 +2374,9 @@ pmap_unwire(pmap, va)
 void
 pmap_copy(pmap_a, pmap_b, dst, len, src)
 	pmap_t pmap_a, pmap_b;
-	vm_offset_t dst;
-	vm_size_t   len;
-	vm_offset_t src;
+	vaddr_t dst;
+	vsize_t len;
+	vaddr_t src;
 {
 	/* not implemented. */
 }
@@ -2464,29 +2393,33 @@ pmap_copy(pmap_a, pmap_b, dst, len, src)
  */
 void
 pmap_copy_page(srcpa, dstpa)
-	vm_offset_t srcpa, dstpa;
+	paddr_t srcpa, dstpa;
 {
-	vm_offset_t srcva, dstva;
+	vaddr_t srcva, dstva;
 	int s;
 
 	srcva = tmp_vpages[0];
 	dstva = tmp_vpages[1];
 
 	s = splvm();
+#ifdef DIAGNOSTIC
 	if (tmp_vpages_inuse++)
 		panic("pmap_copy_page: temporary vpages are in use.");
+#endif
 
 	/* Map pages as non-cacheable to avoid cache polution? */
-	pmap_enter_kernel(srcva, srcpa, VM_PROT_READ);
-	pmap_enter_kernel(dstva, dstpa, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_kenter_pa(srcva, srcpa, VM_PROT_READ);
+	pmap_kenter_pa(dstva, dstpa, VM_PROT_READ|VM_PROT_WRITE);
 
 	/* Hand-optimized version of bcopy(src, dst, NBPG) */
 	copypage((char *) srcva, (char *) dstva);
 
-	pmap_remove_kernel(srcva, srcva + NBPG);
-	pmap_remove_kernel(dstva, dstva + NBPG);
+	pmap_kremove(srcva, NBPG);
+	pmap_kremove(dstva, NBPG);
 
+#ifdef DIAGNOSTIC
 	--tmp_vpages_inuse;
+#endif
 	splx(s);
 }
 
@@ -2499,25 +2432,28 @@ pmap_copy_page(srcpa, dstpa)
  */
 void
 pmap_zero_page(dstpa)
-	vm_offset_t dstpa;
+	paddr_t dstpa;
 {
-	vm_offset_t dstva;
+	vaddr_t dstva;
 	int s;
 
 	dstva = tmp_vpages[1];
 	s = splvm();
+#ifdef DIAGNOSTIC
 	if (tmp_vpages_inuse++)
 		panic("pmap_zero_page: temporary vpages are in use.");
+#endif
 
 	/* The comments in pmap_copy_page() above apply here also. */
-	pmap_enter_kernel(dstva, dstpa, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_kenter_pa(dstva, dstpa, VM_PROT_READ|VM_PROT_WRITE);
 
 	/* Hand-optimized version of bzero(ptr, NBPG) */
 	zeropage((char *) dstva);
 
-	pmap_remove_kernel(dstva, dstva + NBPG);
-
+	pmap_kremove(dstva, NBPG);
+#ifdef DIAGNOSTIC
 	--tmp_vpages_inuse;
+#endif
 	splx(s);
 }
 
@@ -2582,8 +2518,6 @@ pmap_release(pmap)
 	 * be nothing to do.
 	 */
 #ifdef	PMAP_DEBUG
-	if (pmap == NULL)
-		return;
 	if (pmap == pmap_kernel())
 		panic("pmap_release: kernel pmap");
 #endif
@@ -2620,9 +2554,6 @@ void
 pmap_reference(pmap)
 	pmap_t pmap;
 {
-	if (pmap == NULL)
-		return;
-
 	pmap_lock(pmap);
 	pmap_add_ref(pmap);
 	pmap_unlock(pmap);
@@ -2638,9 +2569,6 @@ pmap_dereference(pmap)
 	pmap_t pmap;
 {
 	int rtn;
-
-	if (pmap == NULL)
-		return 0;
 
 	pmap_lock(pmap);
 	rtn = pmap_del_ref(pmap);
@@ -2659,10 +2587,6 @@ void
 pmap_destroy(pmap)
 	pmap_t pmap;
 {
-	if (pmap == NULL)
-		return;
-	if (pmap == &kernel_pmap)
-		panic("pmap_destroy: kernel_pmap!");
 	if (pmap_dereference(pmap) == 0) {
 		pmap_release(pmap);
 		pool_put(&pmap_pmap_pool, pmap);
@@ -2680,38 +2604,27 @@ pmap_is_referenced(pg)
 {
 	paddr_t   pa = VM_PAGE_TO_PHYS(pg);
 	pv_t      *pv;
-	int       idx, s;
+	int       idx;
 
-	if (!pv_initialized)
-		return FALSE;
-	/* XXX - this may be unecessary. */
-	if (!is_managed(pa))
-		return FALSE;
-
-	pv = pa2pv(pa);
 	/*
 	 * Check the flags on the pv head.  If they are set,
 	 * return immediately.  Otherwise a search must be done.
 	 */
+
+	pv = pa2pv(pa);
 	if (pv->pv_flags & PV_FLAGS_USED)
 		return TRUE;
 
-	s = splvm();
 	/*
 	 * Search through all pv elements pointing
 	 * to this page and query their reference bits
 	 */
-	for (idx = pv->pv_idx;
-		 idx != PVE_EOL;
-		 idx = pvebase[idx].pve_next) {
 
+	for (idx = pv->pv_idx; idx != PVE_EOL; idx = pvebase[idx].pve_next) {
 		if (MMU_PTE_USED(kernCbase[idx])) {
-			splx(s);
 			return TRUE;
 		}
 	}
-	splx(s);
-
 	return FALSE;
 }
 
@@ -2726,30 +2639,21 @@ pmap_is_modified(pg)
 {
 	paddr_t   pa = VM_PAGE_TO_PHYS(pg);
 	pv_t      *pv;
-	int       idx, s;
-
-	if (!pv_initialized)
-		return FALSE;
-	/* XXX - this may be unecessary. */
-	if (!is_managed(pa))
-		return FALSE;
+	int       idx;
 
 	/* see comments in pmap_is_referenced() */
 	pv = pa2pv(pa);
 	if (pv->pv_flags & PV_FLAGS_MDFY)
 		return TRUE;
 
-	s = splvm();
 	for (idx = pv->pv_idx;
 		 idx != PVE_EOL;
 		 idx = pvebase[idx].pve_next) {
 
 		if (MMU_PTE_MODIFIED(kernCbase[idx])) {
-			splx(s);
 			return TRUE;
 		}
 	}
-	splx(s);
 
 	return FALSE;
 }
@@ -2766,23 +2670,16 @@ pmap_page_protect(pg, prot)
 {
 	paddr_t   pa = VM_PAGE_TO_PHYS(pg);
 	pv_t      *pv;
-	int       idx, s;
-	vm_offset_t va;
+	int       idx;
+	vaddr_t va;
 	struct mmu_short_pte_struct *pte;
 	c_tmgr_t  *c_tbl;
 	pmap_t    pmap, curpmap;
 
-	if (!is_managed(pa))
-		return;
-	
 	curpmap = current_pmap();
 	pv = pa2pv(pa);
-	s = splvm();
 
-	for (idx = pv->pv_idx;
-		 idx != PVE_EOL;
-		 idx = pvebase[idx].pve_next) {
-
+	for (idx = pv->pv_idx; idx != PVE_EOL; idx = pvebase[idx].pve_next) {
 		pte = &kernCbase[idx];
 		switch (prot) {
 			case VM_PROT_ALL:
@@ -2796,15 +2693,7 @@ pmap_page_protect(pg, prot)
 				 * the PTE and flush ATC entries if necessary.
 				 */
 				va = pmap_get_pteinfo(idx, &pmap, &c_tbl);
-				/* XXX don't write protect pager mappings */
-				if (va >= PAGER_SVA && va < PAGER_EVA) {
-#ifdef	PMAP_DEBUG
-					/* XXX - Does this actually happen? */
-					printf("pmap_page_protect: in pager!\n");
-					Debugger();
-#endif
-				} else
-					pte->attr.raw |= MMU_SHORT_PTE_WP;
+				pte->attr.raw |= MMU_SHORT_PTE_WP;
 				if (pmap == curpmap || pmap == pmap_kernel())
 					TBIS(va);
 				break;
@@ -2850,7 +2739,6 @@ pmap_page_protect(pg, prot)
 	 */
 	if (prot == VM_PROT_NONE)
 		pv->pv_idx = PVE_EOL;
-	splx(s);
 }
 
 /* pmap_get_pteinfo		INTERNAL
@@ -2862,13 +2750,13 @@ pmap_page_protect(pg, prot)
  * Returns the pmap in the argument provided, and the virtual address
  * by return value.
  */
-vm_offset_t
+vaddr_t
 pmap_get_pteinfo(idx, pmap, tbl)
 	u_int idx;
 	pmap_t *pmap;
 	c_tmgr_t **tbl;
 {
-	vm_offset_t     va = 0;
+	vaddr_t     va = 0;
 
 	/*
 	 * Determine if the PTE is a kernel PTE or a user PTE.
@@ -2915,8 +2803,6 @@ pmap_clear_modify(pg)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	boolean_t rv;
 
-	if (!is_managed(pa))
-		return FALSE;
 	rv = pmap_is_modified(pg);
 	pmap_clear_pv(pa, PV_FLAGS_MDFY);
 	return rv;
@@ -2934,8 +2820,6 @@ pmap_clear_reference(pg)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	boolean_t rv;
 
-	if (!is_managed(pa))
-		return FALSE;
 	rv = pmap_is_referenced(pg);
 	pmap_clear_pv(pa, PV_FLAGS_USED);
 	return rv;
@@ -2956,27 +2840,22 @@ pmap_clear_reference(pg)
  */
 void
 pmap_clear_pv(pa, flag)
-	vm_offset_t pa;
+	paddr_t pa;
 	int flag;
 {
 	pv_t      *pv;
-	int       idx, s;
-	vm_offset_t     va;
+	int       idx;
+	vaddr_t   va;
 	pmap_t          pmap;
 	mmu_short_pte_t *pte;
 	c_tmgr_t        *c_tbl;
 
 	pv = pa2pv(pa);
-
-	s = splvm();
 	pv->pv_flags &= ~(flag);
-
-	for (idx = pv->pv_idx;
-		 idx != PVE_EOL;
-		 idx = pvebase[idx].pve_next) {
-
+	for (idx = pv->pv_idx; idx != PVE_EOL; idx = pvebase[idx].pve_next) {
 		pte = &kernCbase[idx];
 		pte->attr.raw &= ~(flag);
+
 		/*
 		 * The MC68030 MMU will not set the modified or
 		 * referenced bits on any MMU tables for which it has
@@ -2992,10 +2871,10 @@ pmap_clear_pv(pa, flag)
 		 * I will skip the test and always flush the address.  It
 		 * does no harm.
 		 */
+
 		va = pmap_get_pteinfo(idx, &pmap, &c_tbl);
 		TBIS(va);
 	}
-	splx(s);
 }
 
 /* pmap_extract			INTERFACE
@@ -3020,8 +2899,6 @@ pmap_extract(pmap, va, pap)
 
 	if (pmap == pmap_kernel())
 		return pmap_extract_kernel(va, pap);
-	if (pmap == NULL)
-		return FALSE;
 
 	if (pmap_stroll(pmap, va, &a_tbl, &b_tbl, &c_tbl,
 		&c_pte, &a_idx, &b_idx, &pte_idx) == FALSE)
@@ -3061,8 +2938,8 @@ pmap_extract_kernel(va, pap)
  */
 void
 pmap_remove_kernel(sva, eva)
-	vm_offset_t sva;
-	vm_offset_t eva;
+	vaddr_t sva;
+	vaddr_t eva;
 {
 	int idx, eidx;
 
@@ -3091,23 +2968,14 @@ pmap_remove_kernel(sva, eva)
 void
 pmap_remove(pmap, start, end)
 	pmap_t pmap;
-	vm_offset_t start;
-	vm_offset_t end;
+	vaddr_t start;
+	vaddr_t end;
 {
 
 	if (pmap == pmap_kernel()) {
 		pmap_remove_kernel(start, end);
 		return;
 	}
-
-	/*
-	 * XXX - Temporary(?) statement to prevent panic caused
-	 * by vm_alloc_with_pager() handing us a software map (ie NULL)
-	 * to remove because it couldn't get backing store.
-	 * (I guess.)
-	 */
-	if (pmap == NULL)
-		return;
 
 	/*
 	 * If the pmap doesn't have an A table of its own, it has no mappings
@@ -3161,12 +3029,12 @@ pmap_remove(pmap, start, end)
 boolean_t
 pmap_remove_a(a_tbl, start, end)
 	a_tmgr_t *a_tbl;
-	vm_offset_t start;
-	vm_offset_t end;
+	vaddr_t start;
+	vaddr_t end;
 {
 	boolean_t empty;
 	int idx;
-	vm_offset_t nstart, nend;
+	vaddr_t nstart, nend;
 	b_tmgr_t *b_tbl;
 	mmu_long_dte_t  *a_dte;
 	mmu_short_dte_t *b_dte;
@@ -3351,12 +3219,12 @@ pmap_remove_a(a_tbl, start, end)
 boolean_t
 pmap_remove_b(b_tbl, start, end)
 	b_tmgr_t *b_tbl;
-	vm_offset_t start;
-	vm_offset_t end;
+	vaddr_t start;
+	vaddr_t end;
 {
 	boolean_t empty;
 	int idx;
-	vm_offset_t nstart, nend, rstart;
+	vaddr_t nstart, nend, rstart;
 	c_tmgr_t *c_tbl;
 	mmu_short_dte_t  *b_dte;
 	mmu_short_pte_t  *c_dte;
@@ -3430,8 +3298,8 @@ pmap_remove_b(b_tbl, start, end)
 boolean_t
 pmap_remove_c(c_tbl, start, end)
 	c_tmgr_t *c_tbl;
-	vm_offset_t start;
-	vm_offset_t end;
+	vaddr_t start;
+	vaddr_t end;
 {
 	boolean_t empty;
 	int idx;
@@ -3475,7 +3343,7 @@ pmap_remove_c(c_tbl, start, end)
  */
 boolean_t
 is_managed(pa)
-	vm_offset_t pa;
+	paddr_t pa;
 {
 	if (pa >= avail_start && pa < avail_end)
 		return TRUE;
@@ -3543,9 +3411,9 @@ pmap_bootstrap_aalign(size)
  */
 int
 pmap_pa_exists(pa)
-	vm_offset_t pa;
+	paddr_t pa;
 {
-	register int i;
+	int i;
 
 	for (i = 0; i < SUN3X_NPHYS_RAM_SEGS; i++) {
 		if ((pa >= avail_mem[i].pmem_start) &&
@@ -3603,13 +3471,8 @@ void
 pmap_activate(p)
 	struct proc *p;
 {
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
-	int s;
-
 	if (p == curproc) {
-		s = splvm();
-		_pmap_switch(pmap);
-		splx(s);
+		_pmap_switch(p->p_vmspace->vm_map.pmap);
 	}
 }
 
@@ -3617,13 +3480,12 @@ pmap_activate(p)
  * pmap_deactivate			INTERFACE
  **
  * This is called to deactivate the specified process's address space.
- * XXX The semantics of this function are currently not well-defined.
  */
 void
 pmap_deactivate(p)
 struct proc *p;
 {
-	/* not implemented. */
+	/* Nothing to do. */
 }
 
 /*
@@ -3640,7 +3502,7 @@ pmap_kcore_hdr(sh)
 	sh->pg_frame = MMU_SHORT_PTE_BASEADDR;
 	sh->pg_valid = MMU_DT_PAGE;
 	sh->contig_end = virtual_contig_end;
-	sh->kernCbase = (u_long) kernCbase;
+	sh->kernCbase = (u_long)kernCbase;
 	for (i = 0; i < SUN3X_NPHYS_RAM_SEGS; i++) {
 		spa = avail_mem[i].pmem_start;
 		spa = m68k_trunc_page(spa);
@@ -3659,7 +3521,7 @@ pmap_kcore_hdr(sh)
  */
 void
 pmap_virtual_space(vstart, vend)
-	vm_offset_t *vstart, *vend;
+	vaddr_t *vstart, *vend;
 {
 	*vstart = virtual_avail;
 	*vend = virtual_end;
@@ -3674,7 +3536,7 @@ pmap_virtual_space(vstart, vend)
 static void
 pmap_page_upload()
 {
-	vm_offset_t	a, b;	/* memory range */
+	paddr_t	a, b;	/* memory range */
 	int i;
 
 	/* Supply the memory in segments. */
@@ -3760,7 +3622,7 @@ pmap_count(pmap, type)
 extern u_long ptest_addr __P((u_long));	/* XXX: locore.s */
 u_int
 get_pte(va)
-	vm_offset_t va;
+	vaddr_t va;
 {
 	u_long pte_pa;
 	mmu_short_pte_t *pte;
@@ -3788,7 +3650,7 @@ get_pte(va)
  */
 void
 set_pte(va, pte)
-	vm_offset_t va;
+	vaddr_t va;
 	u_int pte;
 {
 	u_long idx;
@@ -3832,21 +3694,18 @@ pmap_procwr(p, va, len)
  */
 void
 pv_list(pa, n)
-	vm_offset_t pa;
+	paddr_t pa;
 	int n;
 {
 	int  idx;
-	vm_offset_t va;
+	vaddr_t va;
 	pv_t *pv;
 	c_tmgr_t *c_tbl;
 	pmap_t pmap;
 	
 	pv = pa2pv(pa);
 	idx = pv->pv_idx;
-
-	for (;idx != PVE_EOL && n > 0;
-		 idx=pvebase[idx].pve_next, n--) {
-
+	for (; idx != PVE_EOL && n > 0; idx = pvebase[idx].pve_next, n--) {
 		va = pmap_get_pteinfo(idx, &pmap, &c_tbl);
 		printf("idx %d, pmap 0x%x, va 0x%x, c_tbl %x\n",
 			idx, (u_int) pmap, (u_int) va, (u_int) c_tbl);
