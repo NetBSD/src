@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.47 1999/04/11 15:40:58 hwr Exp $	*/
+/*	$NetBSD: inetd.c,v 1.48 1999/06/06 01:53:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.47 1999/04/11 15:40:58 hwr Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.48 1999/06/06 01:53:45 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -221,6 +221,7 @@ __RCSID("$NetBSD: inetd.c,v 1.47 1999/04/11 15:40:58 hwr Exp $");
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "pathnames.h"
 
@@ -349,7 +350,6 @@ char	       *sskip __P((char **));
 char	       *skip __P((char **));
 void		tcpmux __P((int, struct servtab *));
 void		usage __P((void));
-void		logpid __P((void));
 void		register_rpc __P((struct servtab *sep));
 void		unregister_rpc __P((struct servtab *sep));
 void		bump_nofile __P((void));
@@ -466,7 +466,7 @@ main(argc, argv, envp)
 	if (debug == 0)
 		daemon(0, 0);
 	openlog(__progname, LOG_PID | LOG_NOWAIT, LOG_DAEMON);
-	logpid();
+	pidfile(NULL);
 
 #ifdef RLIMIT_NOFILE
 	if (getrlimit(RLIMIT_NOFILE, &rlim_ofile) < 0) {
@@ -995,7 +995,6 @@ goaway(signo)
 		}
 		(void)close(sep->se_fd);
 	}
-	(void)unlink(_PATH_INETDPID);
 	exit(0);
 }
 
@@ -1637,17 +1636,6 @@ inetd_setproctitle(a, s)
 	cp += strlen(cp);
 	while (cp < LastArg)
 		*cp++ = ' ';
-}
-
-void
-logpid()
-{
-	FILE *fp;
-
-	if ((fp = fopen(_PATH_INETDPID, "w")) != NULL) {
-		fprintf(fp, "%u\n", getpid());
-		(void)fclose(fp);
-	}
 }
 
 void
