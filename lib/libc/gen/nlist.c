@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.c,v 1.12 1997/07/21 14:07:21 jtc Exp $	*/
+/*	$NetBSD: nlist.c,v 1.13 1998/07/26 14:18:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: nlist.c,v 1.12 1997/07/21 14:07:21 jtc Exp $");
+__RCSID("$NetBSD: nlist.c,v 1.13 1998/07/26 14:18:18 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,7 +61,7 @@ __weak_alias(nlist,_nlist);
 
 #include "nlist_private.h"
 
-static struct {
+static const struct {
 	int	(*fdnlist) __P((int, struct nlist *));
 } fdnlist_fmts[] = {
 #ifdef NLIST_AOUT

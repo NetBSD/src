@@ -1,4 +1,4 @@
-/*	$NetBSD: strtod.c,v 1.26 1998/02/03 18:44:21 perry Exp $	*/
+/*	$NetBSD: strtod.c,v 1.27 1998/07/26 14:13:00 mycroft Exp $	*/
 
 /****************************************************************
  *
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strtod.c,v 1.26 1998/02/03 18:44:21 perry Exp $");
+__RCSID("$NetBSD: strtod.c,v 1.27 1998/07/26 14:13:00 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
@@ -705,7 +705,7 @@ pow5mult
 {
 	Bigint *b1, *p5, *p51;
 	int i;
-	static int p05[3] = { 5, 25, 125 };
+	static const int p05[3] = { 5, 25, 125 };
 
 	if ((i = k & 3) != 0)
 		b = multadd(b, p05[i-1], 0);
