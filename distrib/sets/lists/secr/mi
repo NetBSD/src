@@ -9,7 +9,6 @@
 ./usr/bin/passwd
 ./usr/bin/telnet
 ./usr/bin/yppasswd
-./usr/include/kerberosIV
 ./usr/include/kerberosIV/adm_locl.h
 ./usr/include/kerberosIV/com_err.h
 ./usr/include/kerberosIV/des.h
