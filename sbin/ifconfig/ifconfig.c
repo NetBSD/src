@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.57 1999/07/26 19:38:36 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.58 1999/07/29 15:40:48 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.57 1999/07/26 19:38:36 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.58 1999/07/29 15:40:48 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -614,7 +614,8 @@ printalias(iname, af)
 	char inbuf[8192];
 	struct ifconf ifc;
 	struct ifreq *ifr;
-	int i;
+	int i, siz;
+	char ifrbuf[8192];
 
 	ifc.ifc_len = sizeof(inbuf);
 	ifc.ifc_buf = inbuf;
@@ -626,10 +627,16 @@ printalias(iname, af)
 	ifr = ifc.ifc_req;
 	for (i = 0; i < ifc.ifc_len; ) {
 		ifr = (struct ifreq *)((caddr_t)ifc.ifc_req + i);
-		i += sizeof(ifr->ifr_name) +
+		siz = sizeof(ifr->ifr_name) +
 			(ifr->ifr_addr.sa_len > sizeof(struct sockaddr)
 				? ifr->ifr_addr.sa_len
 				: sizeof(struct sockaddr));
+		i += siz;
+		/* avoid alignment issue */
+		if (sizeof(ifrbuf) < siz)
+			errx(1, "ifr too big");
+		memcpy(ifrbuf, ifr, siz);
+		ifr = (struct ifreq *)ifrbuf;
 		if (!strncmp(iname, ifr->ifr_name, sizeof(ifr->ifr_name))) {
 			if (ifr->ifr_addr.sa_family == af)
 				switch (af) {
@@ -651,7 +658,8 @@ printall()
 	const struct sockaddr_dl *sdl = NULL;
 	struct ifconf ifc;
 	struct ifreq ifreq, *ifr;
-	int i, idx;
+	int i, siz, idx;
+	char ifrbuf[8192];
 
 	ifc.ifc_len = sizeof(inbuf);
 	ifc.ifc_buf = inbuf;
@@ -664,10 +672,16 @@ printall()
 	ifreq.ifr_name[0] = '\0';
 	for (i = 0, idx = 0; i < ifc.ifc_len; ) {
 		ifr = (struct ifreq *)((caddr_t)ifc.ifc_req + i);
-		i += sizeof(ifr->ifr_name) +
+		siz = sizeof(ifr->ifr_name) +
 			(ifr->ifr_addr.sa_len > sizeof(struct sockaddr)
 				? ifr->ifr_addr.sa_len
 				: sizeof(struct sockaddr));
+		i += siz;
+		/* avoid alignment issue */
+		if (sizeof(ifrbuf) < siz)
+			errx(1, "ifr too big");
+		memcpy(ifrbuf, ifr, siz);
+		ifr = (struct ifreq *)ifrbuf;
 		if (ifr->ifr_addr.sa_family == AF_LINK)
 			sdl = (const struct sockaddr_dl *) &ifr->ifr_addr;
 		if (!strncmp(ifreq.ifr_name, ifr->ifr_name,
@@ -1566,7 +1580,8 @@ in6_status(force)
 	char inbuf[8192];
 	struct ifconf ifc;
 	struct ifreq *ifr;
-	int i;
+	int i, siz;
+	char ifrbuf[8192];
 
 	ifc.ifc_len = sizeof(inbuf);
 	ifc.ifc_buf = inbuf;
@@ -1578,10 +1593,16 @@ in6_status(force)
 	ifr = ifc.ifc_req;
 	for (i = 0; i < ifc.ifc_len; ) {
 		ifr = (struct ifreq *)((caddr_t)ifc.ifc_req + i);
-		i += sizeof(ifr->ifr_name) +
+		siz = sizeof(ifr->ifr_name) +
 			(ifr->ifr_addr.sa_len > sizeof(struct sockaddr)
 				? ifr->ifr_addr.sa_len
 				: sizeof(struct sockaddr));
+		i += siz;
+		/* avoid alignment issue */
+		if (sizeof(ifrbuf) < siz)
+			errx(1, "ifr too big");
+		memcpy(ifrbuf, ifr, siz);
+		ifr = (struct ifreq *)ifrbuf;
 		if (!strncmp(name, ifr->ifr_name, sizeof(ifr->ifr_name))) {
 			if (ifr->ifr_addr.sa_family == AF_INET6)
 				in6_alias((struct in6_ifreq *)ifr);
