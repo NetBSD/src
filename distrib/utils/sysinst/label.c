@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.38 2003/08/05 13:35:27 dsl Exp $	*/
+/*	$NetBSD: label.c,v 1.39 2003/08/09 21:36:27 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.38 2003/08/05 13:35:27 dsl Exp $");
+__RCSID("$NetBSD: label.c,v 1.39 2003/08/09 21:36:27 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -230,6 +230,20 @@ set_fsize(partinfo *p, int fsize)
 }
 
 static int
+edit_fs_isize(menudesc *m, void *arg)
+{
+	partinfo *p = arg;
+	char answer[12];
+
+	snprintf(answer, sizeof answer, "%u", p->pi_isize);
+	msg_prompt_win(MSG_fs_isize, -1, 18, 0, 0,
+		answer, answer, sizeof answer);
+	p->pi_isize = atol(answer);
+	return 0;
+}       
+
+
+static int
 edit_fs_preserve(menudesc *m, void *arg)
 {
 	partinfo *p = arg;
@@ -344,13 +358,15 @@ edit_ptn(menudesc *menu, void *arg)
 	    {NULL, MENU_selbsize, OPT_SUB, NULL},
 #define PTN_MENU_FSIZE		5
 	    {NULL, MENU_selfsize, OPT_SUB, NULL},
-#define PTN_MENU_NEWFS		6
+#define PTN_MENU_ISIZE		6
+	    {NULL, OPT_NOMENU, 0, edit_fs_isize},
+#define PTN_MENU_NEWFS		7
 	    {NULL, OPT_NOMENU, 0, edit_fs_preserve},
-#define PTN_MENU_MOUNT		7
+#define PTN_MENU_MOUNT		8
 	    {NULL, OPT_NOMENU, 0, edit_fs_mount},
-#define PTN_MENU_MOUNTOPT	8
+#define PTN_MENU_MOUNTOPT	9
 	    {NULL, MENU_mountoptions, OPT_SUB, NULL},
-#define PTN_MENU_MOUNTPT	9
+#define PTN_MENU_MOUNTPT	10
 	    {NULL, OPT_NOMENU, 0, edit_fs_mountpt},
 	    {MSG_askunits, MENU_sizechoice, OPT_SUB, NULL},
 	    {MSG_restore, OPT_NOMENU, 0, edit_restore},
@@ -423,15 +439,21 @@ set_ptn_label(menudesc *m, int opt, void *arg)
 		break;
 	case PTN_MENU_BSIZE:
 		if (PI_ISBSDFS(p))
-			wprintw(m->mw,
-				msg_string(MSG_bsize_fmt), p->pi_fsize * p->pi_frag);
+			wprintw(m->mw, msg_string(MSG_bsize_fmt),
+			    p->pi_fsize * p->pi_frag);
 		else
 			wprintw(m->mw, "      -");
 		break;
 	case PTN_MENU_FSIZE:
 		if (PI_ISBSDFS(p))
-			wprintw(m->mw,
-				msg_string(MSG_fsize_fmt), p->pi_fsize);
+			wprintw(m->mw, msg_string(MSG_fsize_fmt), p->pi_fsize);
+		else
+			wprintw(m->mw, "      -");
+		break;
+	case PTN_MENU_ISIZE:
+		if (PI_ISBSDFS(p))
+			wprintw(m->mw, msg_string(p->pi_isize > 0 ?
+			    MSG_isize_fmt : MSG_isize_fmt_dflt), p->pi_isize);
 		else
 			wprintw(m->mw, "      -");
 		break;
