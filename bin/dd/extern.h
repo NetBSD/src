@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 1996/02/20 19:29:07 jtc Exp $	*/
+/*	$NetBSD: extern.h,v 1.8 1997/07/20 21:58:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -57,7 +57,7 @@ void unblock_close __P((void));
 
 extern IO in, out;
 extern STAT st;
-extern void (*cfunc)();
+extern void (*cfunc) __P((void));
 extern u_long cpy_cnt;
 extern u_int cbsz;
 extern u_int ddflags;

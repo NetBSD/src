@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.6 1996/02/20 19:29:02 jtc Exp $	*/
+/*	$NetBSD: conv.c,v 1.7 1997/07/20 21:58:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,11 +37,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)conv.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: conv.c,v 1.6 1996/02/20 19:29:02 jtc Exp $";
+__RCSID("$NetBSD: conv.c,v 1.7 1997/07/20 21:58:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +67,7 @@ def()
 	u_char *inp;
 	const u_char *t;
 
-	if (t = ctab)
+	if ((t = ctab) != NULL)
 		for (inp = in.dbp - (cnt = in.dbrcnt); cnt--; ++inp)
 			*inp = t[*inp];
 
@@ -117,7 +118,8 @@ void
 block()
 {
 	static int intrunc;
-	int ch, cnt, maxlen;
+	int ch = 0;	/* pacify gcc */
+	int cnt, maxlen;
 	u_char *inp, *outp;
 	const u_char *t;
 
@@ -147,7 +149,7 @@ block()
 	 */
 	for (inp = in.dbp - in.dbcnt, outp = out.dbp; in.dbcnt;) {
 		maxlen = MIN(cbsz, in.dbcnt);
-		if (t = ctab)
+		if ((t = ctab) != NULL)
 			for (cnt = 0;
 			    cnt < maxlen && (ch = *inp++) != '\n'; ++cnt)
 				*outp++ = t[ch];
@@ -232,7 +234,7 @@ unblock()
 	const u_char *t;
 
 	/* Translation and case conversion. */
-	if (t = ctab)
+	if ((t = ctab) != NULL)
 		for (cnt = in.dbrcnt, inp = in.dbp; cnt--;)
 			*--inp = t[*inp];
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.7 1996/03/01 01:18:58 jtc Exp $	*/
+/*	$NetBSD: args.c,v 1.8 1997/07/20 21:58:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,11 +37,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: args.c,v 1.7 1996/03/01 01:18:58 jtc Exp $";
+__RCSID("$NetBSD: args.c,v 1.8 1997/07/20 21:58:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +105,7 @@ jcl(argv)
 
 	in.dbsz = out.dbsz = 512;
 
-	while (oper = *++argv) {
+	while ((oper = *++argv) != NULL) {
 		if ((arg = strchr(oper, '=')) == NULL)
 			errx(1, "unknown operand %s", oper);
 		*arg++ = '\0';
