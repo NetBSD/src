@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.49.2.1 2000/07/27 16:53:18 matt Exp $   */
+/*	$NetBSD: intvec.s,v 1.49.2.2 2000/08/14 21:11:02 ragge Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -42,6 +42,7 @@
 #include "ppp.h"
 
 #include "opt_cputype.h"
+#include "opt_emulate.h"
 
 #define ENTRY(name) \
 	.text			; \
@@ -201,7 +202,16 @@ L4:	addl2	(sp)+,sp	# remove info pushed on stack
 
 	TRAPCALL(invkstk, T_KSPNOTVAL)
 
-	TRAPCALL(privinflt, T_PRIVINFLT)
+	.align	2
+	.globl	privinflt
+privinflt:
+#ifdef INSN_EMULATE
+	jsb	unimemu	# do not return if insn emulated
+#endif
+	pushl $0
+	pushl $T_PRIVINFLT
+	jbr trap
+
 	TRAPCALL(xfcflt, T_XFCFLT);
 	TRAPCALL(resopflt, T_RESOPFLT)
 	TRAPCALL(resadflt, T_RESADFLT)
@@ -379,9 +389,7 @@ _sret:	movl	(sp)+, fp
 sbifltmsg:
 	.asciz	"SBI fault"
 
-#if VAX630  || VAX640  || VAX650  || VAX660  || VAX670  || VAX680 || \
-    VAX410  || VAX43   || VAX48   || VAX46   || VAX49   || VAX53  || \
-    VAX6200 || VAX6300 || VAX6400 || VAX6500 || VAX6600
+#if INSN_EMULATE
 /*
  * Table of emulated Microvax instructions supported by emulate.s.
  * Use noemulate to convert unimplemented ones to reserved instruction faults.
@@ -446,9 +454,7 @@ _emtable:
 	.align	2
 	.globl	emulate
 emulate:
-#if VAX630  || VAX640  || VAX650  || VAX660  || VAX670  || VAX680 || \
-    VAX410  || VAX43   || VAX48   || VAX46   || VAX49   || VAX53  || \
-    VAX6200 || VAX6300 || VAX6400 || VAX6500 || VAX6600
+#if INSN_EMULATE
 	movl	r11,32(sp)		# save register r11 in unused operand
 	movl	r10,36(sp)		# save register r10 in unused operand
 	cvtbl	(sp),r10		# get opcode
