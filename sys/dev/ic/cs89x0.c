@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.22 2001/11/26 11:14:50 yamt Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.1 2001/11/26 19:17:08 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -186,7 +186,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.22 2001/11/26 11:14:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.1 2001/11/26 19:17:08 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -224,12 +224,8 @@ __KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.22 2001/11/26 11:14:50 yamt Exp $");
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
-#include <dev/isa/isadmavar.h>
-
-#include <dev/isa/cs89x0reg.h>
-#include <dev/isa/cs89x0var.h>
+#include <dev/ic/cs89x0reg.h>
+#include <dev/ic/cs89x0var.h>
 
 #ifdef SHARK
 #include <arm32/shark/sequoia.h>
@@ -239,8 +235,6 @@ __KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.22 2001/11/26 11:14:50 yamt Exp $");
  * MACRO DEFINITIONS
  */
 #define CS_OUTPUT_LOOP_MAX 100	/* max times round notorious tx loop */
-#define DMA_STATUS_BITS 0x0007	/* bit masks for checking DMA status */
-#define DMA_STATUS_OK 0x0004
 
 /*
  * FUNCTION PROTOTYPES
@@ -249,23 +243,19 @@ void	cs_get_default_media __P((struct cs_softc *));
 int	cs_get_params __P((struct cs_softc *));
 int	cs_get_enaddr __P((struct cs_softc *));
 int	cs_reset_chip __P((struct cs_softc *));
-int	cs_init __P((struct ifnet *));
 void	cs_reset __P((void *));
 int	cs_ioctl __P((struct ifnet *, u_long, caddr_t));
 void	cs_initChip __P((struct cs_softc *));
 void	cs_buffer_event __P((struct cs_softc *, u_int16_t));
 void	cs_transmit_event __P((struct cs_softc *, u_int16_t));
 void	cs_receive_event __P((struct cs_softc *, u_int16_t));
-void	cs_ether_input __P((struct cs_softc *, struct mbuf *));
 void	cs_process_receive __P((struct cs_softc *));
 void	cs_process_rx_early __P((struct cs_softc *));
-void	cs_process_rx_dma __P((struct cs_softc *));
 void	cs_start_output __P((struct ifnet *));
 void	cs_copy_tx_frame __P((struct cs_softc *, struct mbuf *));
 void	cs_set_ladr_filt __P((struct cs_softc *, struct ethercom *));
 u_int16_t cs_hash_index __P((char *));
 void	cs_counter_event __P((struct cs_softc *, u_int16_t));
-void	cs_print_rx_errors __P((struct cs_softc *, u_int16_t));
 
 int	cs_mediachange __P((struct ifnet *));
 void	cs_mediastatus __P((struct ifnet *, struct ifmediareq *));
@@ -447,51 +437,8 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 	    chipname, sc->sc_prodrev + 'A', ether_sprintf(sc->sc_enaddr),
 	    medname);
 
-	if (sc->sc_drq == ISACF_DRQ_DEFAULT)
-		printf("%s: DMA channel unspecified, not using DMA\n",
-		    sc->sc_dev.dv_xname);
-	else if (sc->sc_drq < 5 || sc->sc_drq > 7)
-		printf("%s: invalid DMA channel, not using DMA\n",
-		    sc->sc_dev.dv_xname);
-	else {
-		bus_size_t maxsize;
-		bus_addr_t dma_addr;
-
-		maxsize = isa_dmamaxsize(sc->sc_ic, sc->sc_drq);
-		if (maxsize < CS8900_DMASIZE) {
-			printf("%s: max DMA size %lu is less than required %d\n",
-			    sc->sc_dev.dv_xname, (u_long)maxsize,
-			    CS8900_DMASIZE);
-			goto after_dma_block;
-		}
-
-		if (isa_dmamap_create(sc->sc_ic, sc->sc_drq,
-		    CS8900_DMASIZE, BUS_DMA_NOWAIT) != 0) {
-			printf("%s: unable to create ISA DMA map\n",
-			    sc->sc_dev.dv_xname);
-			goto after_dma_block;
-		}
-		if (isa_dmamem_alloc(sc->sc_ic, sc->sc_drq,
-		    CS8900_DMASIZE, &dma_addr, BUS_DMA_NOWAIT) != 0) {
-			printf("%s: unable to allocate DMA buffer\n",
-			    sc->sc_dev.dv_xname);
-			goto after_dma_block;
-		}
-		if (isa_dmamem_map(sc->sc_ic, sc->sc_drq, dma_addr,
-		    CS8900_DMASIZE, &sc->sc_dmabase,
-		       BUS_DMA_NOWAIT | BUS_DMA_COHERENT /* XXX */ ) != 0) {
-			printf("%s: unable to map DMA buffer\n",
-			    sc->sc_dev.dv_xname);
-			isa_dmamem_free(sc->sc_ic, sc->sc_drq, dma_addr,
-			    CS8900_DMASIZE);
-			goto after_dma_block;
-		}
-
-		sc->sc_dmasize = CS8900_DMASIZE;
-		sc->sc_cfgflags |= CFGFLG_DMA_MODE;
-		sc->sc_dmaaddr = dma_addr;
-	}
- after_dma_block:
+	if (sc->sc_dma_attach)
+		(*sc->sc_dma_attach)(sc);
 
 	sc->sc_sh = shutdownhook_establish(cs_reset, sc);
 	if (sc->sc_sh == NULL) {
@@ -909,40 +856,8 @@ cs_initChip(sc)
 	CS_WRITE_PACKET_PAGE(sc, PKTPG_BUF_CFG, BUF_CFG_TX_UNDR_IE |
 			  BUF_CFG_RX_DMA_IE);
 
-	if (sc->sc_cfgflags & CFGFLG_DMA_MODE) {
-		/*
-		 * First we program the DMA controller and ensure the memory
-		 * buffer is valid. If it isn't then we just go on without
-		 * DMA.
-		 */
-		if (isa_dmastart(sc->sc_ic, sc->sc_drq, sc->sc_dmabase,
-		    sc->sc_dmasize, NULL, DMAMODE_READ | DMAMODE_LOOPDEMAND,
-		    BUS_DMA_NOWAIT)) {
-			/* XXX XXX XXX */
-			panic("%s: unable to start DMA\n", sc->sc_dev.dv_xname);
-		}
-		sc->sc_dmacur = sc->sc_dmabase;
-
-		/* interrupt when a DMA'd frame is received */
-		CS_WRITE_PACKET_PAGE(sc, PKTPG_RX_CFG,
-		    RX_CFG_ALL_IE | RX_CFG_RX_DMA_ONLY);
-
-		/*
-		 * set the DMA burst bit so we don't tie up the bus for too
-		 * long.
-		 */
-		if (sc->sc_dmasize == 16384) {
-			CS_WRITE_PACKET_PAGE(sc, PKTPG_BUS_CTL,
-			    ((CS_READ_PACKET_PAGE(sc, PKTPG_BUS_CTL) &
-			     ~BUS_CTL_DMA_SIZE) | BUS_CTL_DMA_BURST));
-		} else { /* use 64K */
-			CS_WRITE_PACKET_PAGE(sc, PKTPG_BUS_CTL,
-			    CS_READ_PACKET_PAGE(sc, PKTPG_BUS_CTL) |
-			     BUS_CTL_DMA_SIZE | BUS_CTL_DMA_BURST);
-		}
-
-		CS_WRITE_PACKET_PAGE(sc, PKTPG_DMA_CHANNEL, sc->sc_drq - 5);
-	}
+	if (sc->sc_dma_chipinit)
+		(*sc->sc_dma_chipinit)(sc);
 
 	/* If memory mode is enabled */
 	if (sc->sc_cfgflags & CFGFLG_MEM_MODE) {
@@ -1436,7 +1351,11 @@ cs_buffer_event(sc, bufEvent)
 
 	if (bufEvent & BUF_EVENT_RX_DMA) {
 		/* process the receive data */
-		cs_process_rx_dma(sc);
+		if (sc->sc_dma_process_rx)
+			(*sc->sc_dma_process_rx)(sc);
+		else
+			/* should panic? */
+			printf("%s: unexpected dma event\n", sc->sc_dev.dv_xname);
 	}
 
 	if (bufEvent & BUF_EVENT_TX_UNDR) {
@@ -1715,225 +1634,6 @@ cs_process_receive(sc)
 	}
 
 	cs_ether_input(sc, m);
-}
-
-void 
-cs_process_rx_dma(sc)
-	struct cs_softc *sc;
-{
-	struct ifnet *ifp;
-	u_int16_t num_dma_frames;
-	u_int16_t pkt_length;
-	u_int16_t status;
-	u_int to_copy;
-	char *dma_mem_ptr;
-	struct mbuf *m;
-	u_char *pBuff;
-	int pad;
-
-	/* initialise the pointers */
-	ifp = &sc->sc_ethercom.ec_if;
-
-	/* Read the number of frames DMAed. */
-	num_dma_frames = CS_READ_PACKET_PAGE(sc, PKTPG_DMA_FRAME_COUNT);
-	num_dma_frames &= (u_int16_t) (0x0fff);
-
-	/*
-	 * Loop till number of DMA frames ready to read is zero. After
-	 * reading the frame out of memory we must check if any have been
-	 * received while we were processing
-	 */
-	while (num_dma_frames != 0) {
-		dma_mem_ptr = sc->sc_dmacur;
-
-		/*
-		 * process all of the dma frames in memory
-		 * 
-		 * This loop relies on the dma_mem_ptr variable being set to the
-		 * next frames start address.
-		 */
-		for (; num_dma_frames > 0; num_dma_frames--) {
-
-			/*
-			 * Get the length and status of the packet. Only the
-			 * status is guarenteed to be at dma_mem_ptr, ie need
-			 * to check for wraparound before reading the length
-			 */
-			status = *((unsigned short *) dma_mem_ptr)++;
-			if (dma_mem_ptr > (sc->sc_dmabase + sc->sc_dmasize)) {
-				dma_mem_ptr = sc->sc_dmabase;
-			}
-			pkt_length = *((unsigned short *) dma_mem_ptr)++;
-
-			/* Do some sanity checks on the length and status. */
-			if ((pkt_length > ETHER_MAX_LEN) ||
-			    ((status & DMA_STATUS_BITS) != DMA_STATUS_OK)) {
-				/*
-				 * the SCO driver kills the adapter in this
-				 * situation
-				 */
-				/*
-				 * should increment the error count and reset
-				 * the dma operation.
-				 */
-				printf("%s: cs_process_rx_dma: DMA buffer out of sync about to reset\n",
-				    sc->sc_dev.dv_xname);
-				ifp->if_ierrors++;
-
-				/* skip the rest of the DMA buffer */
-				isa_dmaabort(sc->sc_ic, sc->sc_drq);
-
-				/* now reset the chip and reinitialise */
-				cs_init(&sc->sc_ethercom.ec_if);
-				return;
-			}
-			/* Check the status of the received packet. */
-			if (status & RX_EVENT_RX_OK) {
-				/* get a new mbuf */
-				MGETHDR(m, M_DONTWAIT, MT_DATA);
-				if (m == 0) {
-					printf("%s: cs_process_rx_dma: unable to allocate mbuf\n",
-					    sc->sc_dev.dv_xname);
-					ifp->if_ierrors++;
-					/*
-					 * couldn't allocate an mbuf so
-					 * things are not good, may as well
-					 * drop all the packets I think.
-					 */
-					CS_READ_PACKET_PAGE(sc,
-					    PKTPG_DMA_FRAME_COUNT);
-
-					/* now reset DMA operation */
-					isa_dmaabort(sc->sc_ic, sc->sc_drq);
-
-					/*
-					 * now reset the chip and
-					 * reinitialise
-					 */
-					cs_init(&sc->sc_ethercom.ec_if);
-					return;
-				}
-				/*
-				 * save processing by always using a mbuf
-				 * cluster, guarenteed to fit packet
-				 */
-				MCLGET(m, M_DONTWAIT);
-				if ((m->m_flags & M_EXT) == 0) {
-					/* couldn't allocate an mbuf cluster */
-					printf("%s: cs_process_rx_dma: unable to allocate a cluster\n",
-					    sc->sc_dev.dv_xname);
-					m_freem(m);
-
-					/* skip the frame */
-					CS_READ_PACKET_PAGE(sc, PKTPG_DMA_FRAME_COUNT);
-					isa_dmaabort(sc->sc_ic, sc->sc_drq);
-
-					/*
-					 * now reset the chip and
-					 * reinitialise
-					 */
-					cs_init(&sc->sc_ethercom.ec_if);
-					return;
-				}
-				m->m_pkthdr.rcvif = ifp;
-				m->m_pkthdr.len = pkt_length;
-				m->m_len = pkt_length;
-
-				/*
-				 * align ip header on word boundary for
-				 * ipintr
-				 */
-				pad = ALIGN(sizeof(struct ether_header)) -
-				    sizeof(struct ether_header);
-				m->m_data += pad;
-
-				/*
-				 * set up the buffer pointer to point to the
-				 * data area
-				 */
-				pBuff = mtod(m, char *);
-
-				/*
-				 * Read the frame into free_pktbuf
-				 * The buffer is circular buffer, either
-				 * 16K or 64K in length.
-				 *
-				 * need to check where the end of the buffer
-				 * is and go back to the start.
-				 */
-				if ((dma_mem_ptr + pkt_length) <
-				    (sc->sc_dmabase + sc->sc_dmasize)) {
-					/*
-					 * No wrap around. Copy the frame
-					 * header
-					 */
-					memcpy(pBuff, dma_mem_ptr, pkt_length);
-					dma_mem_ptr += pkt_length;
-				} else {
-					to_copy = (u_int)
-					    ((sc->sc_dmabase + sc->sc_dmasize) -
-					    dma_mem_ptr);
-
-					/* Copy the first half of the frame. */
-					memcpy(pBuff, dma_mem_ptr, to_copy);
-					pBuff += to_copy;
-
-					/*
-		                         * Rest of the frame is to be read
-		                         * from the first byte of the DMA
-		                         * memory.
-		                         */
-					/*
-					 * Get the number of bytes leftout in
-					 * the frame.
-					 */
-					to_copy = pkt_length - to_copy;
-
-					dma_mem_ptr = sc->sc_dmabase;
-
-					/* Copy rest of the frame. */
-					memcpy(pBuff, dma_mem_ptr, to_copy);
-					dma_mem_ptr += to_copy;
-				}
-
-				cs_ether_input(sc, m);
-			}
-			/* (status & RX_OK) */ 
-			else {
-				/* the frame was not received OK */
-				/* Increment the input error count */
-				ifp->if_ierrors++;
-
-				/*
-				 * If debugging is enabled then log error
-				 * messages if we got any.
-				 */
-				if ((ifp->if_flags & IFF_DEBUG) &&
-				    status != REG_NUM_RX_EVENT)
-					cs_print_rx_errors(sc, status);
-			}
-			/*
-			 * now update the current frame pointer. the
-			 * dma_mem_ptr should point to the next packet to be
-			 * received, without the alignment considerations.
-			 * 
-			 * The cs8900 pads all frames to start at the next 32bit
-			 * aligned addres. hence we need to pad our offset
-			 * pointer.
-			 */
-			dma_mem_ptr += 3;
-			dma_mem_ptr = (char *)
-			    ((long) dma_mem_ptr & 0xfffffffc);
-			if (dma_mem_ptr < (sc->sc_dmabase + sc->sc_dmasize)) {
-				sc->sc_dmacur = dma_mem_ptr;
-			} else {
-				dma_mem_ptr = sc->sc_dmacur = sc->sc_dmabase;
-			}
-		} /* for all frames */
-		/* Read the number of frames DMAed again. */
-		num_dma_frames = CS_READ_PACKET_PAGE(sc, PKTPG_DMA_FRAME_COUNT);
-		num_dma_frames &= (u_int16_t) (0x0fff);
-	} /* while there are frames left */
 }
 
 void 
@@ -2372,7 +2072,7 @@ cs_power(why, arg)
 	switch (why) {
 	case PWR_STANDBY:
 	case PWR_SUSPEND:
-		cs_stop(ifp, 1);
+		cs_stop(ifp, 0);
 		break;
 	case PWR_RESUME:
 		if (ifp->if_flags & IFF_UP) {
