@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.65 1998/09/11 12:50:13 mycroft Exp $	*/
+/*	$NetBSD: proc.h,v 1.66 1998/09/18 18:35:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -228,11 +228,9 @@ struct	proc {
 #define	P_WAITED	0x01000	/* Debugging process has waited for child. */
 #define	P_WEXIT		0x02000	/* Working on exiting. */
 #define	P_EXEC		0x04000	/* Process called exec. */
-#define	P_FSTRACE	0x10000	/* Don't send SIGCHLD to parent on stop. */
-
-/* Should be moved to machine-dependent areas. */
 #define	P_OWEUPC	0x08000	/* Owe process an addupc() call at next ast. */
-#define	P_SSTEP		0x20000	/* Process needs single-step fixup. */
+#define	P_FSTRACE	0x10000	/* Debugger process being traced by procfs */
+#define	P_NOCLDWAIT	0x20000	/* No zombies if child dies */
 
 /*
  * MOVE TO ucred.h?
