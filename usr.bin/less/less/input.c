@@ -1,5 +1,7 @@
+/*	$NetBSD: input.c,v 1.1.1.2 1997/04/22 13:45:46 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,6 +42,7 @@
 extern int squeeze;
 extern int chopline;
 extern int sigs;
+extern int ignore_eoi;
 #if HILITE_SEARCH
 extern int hilite_search;
 extern int size_linebuf;
@@ -68,7 +71,15 @@ forw_line(curr_pos)
 	}
 #if HILITE_SEARCH
 	if (hilite_search == OPT_ONPLUS)
-		prep_hilite(curr_pos, curr_pos + 3*size_linebuf);
+		/*
+		 * If we are ignoring EOI (command F), only prepare
+		 * one line ahead, to avoid getting stuck waiting for
+		 * slow data without displaying the data we already have.
+		 * If we're not ignoring EOI, we *could* do the same, but
+		 * for efficiency we prepare several lines ahead at once.
+		 */
+		prep_hilite(curr_pos, curr_pos + 3*size_linebuf, 
+				ignore_eoi ? 1 : -1);
 #endif
 	if (ch_seek(curr_pos))
 	{
@@ -178,7 +189,7 @@ back_line(curr_pos)
 #if HILITE_SEARCH
 	if (hilite_search == OPT_ONPLUS)
 		prep_hilite((curr_pos < 3*size_linebuf) ? 
-				0 : curr_pos - 3*size_linebuf, curr_pos);
+				0 : curr_pos - 3*size_linebuf, curr_pos, -1);
 #endif
 	if (ch_seek(curr_pos-1))
 	{

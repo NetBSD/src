@@ -1,5 +1,7 @@
+/*	$NetBSD: output.c,v 1.1.1.2 1997/04/22 13:45:50 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,6 +32,9 @@
  */
 
 #include "less.h"
+#if MSDOS_COMPILER==WIN32C
+#include "windows.h"
+#endif
 
 public int errmsgs;	/* Count of messages displayed by error() */
 public int need_clr;
@@ -39,6 +44,7 @@ extern int sc_width;
 extern int so_s_width, so_e_width;
 extern int screen_trashed;
 extern int any_display;
+extern int is_tty;
 
 /*
  * Display the line which is in the line buffer.
@@ -104,7 +110,7 @@ put_line()
 	}
 }
 
-static char obuf[1024];
+static char obuf[OUTBUF_SIZE];
 static char *ob = obuf;
 
 /*
@@ -129,11 +135,37 @@ flush()
 	register int n;
 	register int fd;
 
-#if MSOFTC
-	*ob = '\0';
-	_outtext(obuf);
-	ob = obuf;
+#if MSDOS_COMPILER==WIN32C
+	if (is_tty && any_display)
+	{
+		DWORD nwritten = 0;
+		extern HANDLE con_out;
+		*ob = '\0';
+		WriteConsole(con_out, obuf, strlen(obuf), &nwritten, NULL);
+		ob = obuf;
+		return;
+	}
 #else
+#if MSDOS_COMPILER==MSOFTC
+	if (is_tty && any_display)
+	{
+		*ob = '\0';
+		_outtext(obuf);
+		ob = obuf;
+		return;
+	}
+#else
+#if MSDOS_COMPILER==BORLANDC
+	if (is_tty && any_display)
+	{
+		*ob = '\0';
+		cputs(obuf);
+		ob = obuf;
+		return;
+	}
+#endif
+#endif
+#endif
 	n = ob - obuf;
 	if (n == 0)
 		return;
@@ -141,7 +173,6 @@ flush()
 	if (write(fd, obuf, n) != n)
 		screen_trashed = 1;
 	ob = obuf;
-#endif
 }
 
 /*
@@ -158,9 +189,14 @@ putchr(c)
 		need_clr = 0;
 		clear_bot();
 	}
-#if MSOFTC
-	if (c == '\n')
+#if MSDOS_COMPILER
+	if (c == '\n' && is_tty)
 		putchr('\r');
+#else
+#ifdef _OSK
+	if (c == '\n' && is_tty)  /* In OS-9, '\n' == 0x0D */
+		putchr(0x0A);
+#endif
 #endif
 	*ob++ = c;
 	return (c);
@@ -191,7 +227,8 @@ iprintnum(num, radix)
 	int neg;
 	char buf[10];
 
-	if (neg = (num < 0))
+	neg = (num < 0);
+	if (neg)
 		num = -num;
 
 	s = buf;
@@ -254,6 +291,26 @@ iprintf(fmt, parg)
 }
 
 /*
+ * Get a RETURN.
+ * If some other non-trivial char is pressed, unget it, so it will
+ * become the next command.
+ */
+	public void
+get_return()
+{
+	int c;
+
+#if ONLY_RETURN
+	while ((c = getchr()) != '\n' && c != '\r')
+		bell();
+#else
+	c = getchr();
+	if (c != '\n' && c != '\r' && c != ' ' && c != READ_INTR)
+		ungetcc(c);
+#endif
+}
+
+/*
  * Output a message in the lower left corner of the screen
  * and wait for carriage return.
  */
@@ -262,7 +319,6 @@ error(fmt, parg)
 	char *fmt;
 	PARG *parg;
 {
-	int c;
 	int col = 0;
 	static char return_to_continue[] = "  (press RETURN)";
 
@@ -287,14 +343,7 @@ error(fmt, parg)
 	so_exit();
 	col += sizeof(return_to_continue) + so_e_width;
 
-#if ONLY_RETURN
-	while ((c = getchr()) != '\n' && c != '\r')
-		bell();
-#else
-	c = getchr();
-	if (c != '\n' && c != '\r' && c != ' ' && c != READ_INTR)
-		ungetcc(c);
-#endif
+	get_return();
 	lower_left();
 
 	if (col >= sc_width)

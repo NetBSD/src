@@ -1,5 +1,7 @@
+/*	$NetBSD: lsystem.c,v 1.1.1.2 1997/04/22 13:45:48 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +36,7 @@
 #include "less.h"
 #include "position.h"
 
-#if MSOFTC
+#if MSDOS_COMPILER
 #include <dos.h>
 #endif
 
@@ -49,13 +51,11 @@ extern IFILE curr_ifile;
  * Like plain "system()", but handles resetting terminal modes, etc.
  */
 	public void
-lsystem(cmd)
+lsystem(cmd, donemsg)
 	char *cmd;
+	char *donemsg;
 {
 	register int inp;
-#if MSOFTC || OS2
-	register int inp2;
-#endif
 	register char *shell;
 	register char *p;
 	IFILE save_ifile;
@@ -92,6 +92,7 @@ lsystem(cmd)
 	 */
 	init_signals(0);
 
+#if HAVE_DUP
 	/*
 	 * Force standard input to be the user's terminal
 	 * (the normal standard input), even if less's standard input 
@@ -101,6 +102,7 @@ lsystem(cmd)
 	close(0);
 	if (OPEN_TTYIN() < 0)
 		dup(inp);
+#endif
 
 	/*
 	 * Pass the command to the system to be executed.
@@ -110,7 +112,7 @@ lsystem(cmd)
 	 */
 #if HAVE_SHELL
 	p = NULL;
-	if ((shell = getenv("SHELL")) != NULL && *shell != '\0')
+	if ((shell = lgetenv("SHELL")) != NULL && *shell != '\0')
 	{
 		if (*cmd == '\0')
 			p = save(shell);
@@ -132,30 +134,33 @@ lsystem(cmd)
 	system(p);
 	free(p);
 #else
-#if OS2
-	if (*cmd == '\0')
-		cmd = "cmd.exe";
-#endif
 	system(cmd);
 #endif
 
+#if HAVE_DUP
 	/*
 	 * Restore standard input, reset signals, raw mode, etc.
 	 */
 	close(0);
 	dup(inp);
 	close(inp);
+#endif
 
 	init_signals(1);
 	raw_mode(1);
+	if (donemsg != NULL)
+	{
+		putstr(donemsg);
+		putstr("  (press RETURN)");
+		get_return();
+	}
 	init();
 	screen_trashed = 1;
 
 	/*
 	 * Reopen the current input file.
 	 */
-	if (edit_ifile(save_ifile))
-		quit(QUIT_ERROR);
+	reedit_ifile(save_ifile);
 
 #if defined(SIGWINCH) || defined(SIGWIND)
 	/*
@@ -177,10 +182,12 @@ lsystem(cmd)
  * The section to be piped is the section "between" the current
  * position and the position marked by the given letter.
  *
- * The "current" position means the top line displayed if the mark
- * is after the current screen, or the bottom line displayed if
- * the mark is before the current screen.
- * If the mark is on the current screen, the whole screen is displayed.
+ * If the mark is after the current screen, the section between
+ * the top line displayed and the mark is piped.
+ * If the mark is before the current screen, the section between
+ * the mark and the bottom line displayed is piped.
+ * If the mark is on the current screen, or if the mark is ".",
+ * the whole current screen is piped.
  */
 	public int
 pipe_mark(c, cmd)
@@ -205,7 +212,7 @@ pipe_mark(c, cmd)
  	if (c == '.') 
  		return (pipe_data(cmd, tpos, bpos));
  	else if (mpos <= tpos)
- 		return (pipe_data(cmd, mpos, tpos));
+ 		return (pipe_data(cmd, mpos, bpos));
  	else if (bpos == NULL_POSITION)
  		return (pipe_data(cmd, tpos, bpos));
  	else
@@ -253,7 +260,7 @@ pipe_data(cmd, spos, epos)
 	raw_mode(0);
 	init_signals(0);
 #ifdef SIGPIPE
-	SIGNAL(SIGPIPE, SIG_IGN);
+	LSIGNAL(SIGPIPE, SIG_IGN);
 #endif
 
 	c = EOI;
@@ -284,7 +291,7 @@ pipe_data(cmd, spos, epos)
 	pclose(f);
 
 #ifdef SIGPIPE
-	SIGNAL(SIGPIPE, SIG_DFL);
+	LSIGNAL(SIGPIPE, SIG_DFL);
 #endif
 	init_signals(1);
 	raw_mode(1);
@@ -298,3 +305,94 @@ pipe_data(cmd, spos, epos)
 }
 
 #endif
+
+#ifdef _OSK
+/*
+ * Popen, and Pclose, for OS-9.
+ */
+
+#define ERR      (-1)
+#define PIPEMAX  _NFILE
+#define READ     1 /* For OS-9 */
+#define WRITE    2 /* For OS-9 */
+#define STDIN    0 /* For OS-9 */
+#define STDOUT   1 /* For OS-9 */
+
+#define RESTORE  free(parameter); close(path); dup(save); close(save);
+
+static int   _pid[PIPEMAX];
+
+FILE *popen(command, type)
+	char *command, *type;
+{
+	register char *p = command;
+	char *parameter;
+	FILE *_pfp;
+	int l, path, pipe, pcnt, save;
+
+	path = (*type == 'w') ? STDIN : STDOUT;
+
+	if ((pipe = open("/pipe", READ+WRITE)) == ERR)
+		return (NULL);
+	pcnt = pipe;
+
+	if ((save = dup(path)) == ERR) 
+	{
+		close(pipe);
+		return (NULL);
+	}
+	close(path);
+
+	if (dup(pipe) == ERR) 
+	{
+		dup(save);
+		close(save);
+		close(pipe);
+		return (NULL);
+	}
+
+	while (*p != ' ' && *p)
+		p++;
+	if (*p == ' ')
+		p++;
+	l = strlen(p);
+	parameter = (char *) malloc(l+2);
+	strcpy(parameter,p);
+	strcat(parameter,"\n");
+
+	if ((_pid[pcnt] = os9fork(command,l+1,parameter,1,1,0)) == ERR) 
+	{
+		{ RESTORE }
+		close(pipe);
+		_pid[pcnt] = 0;
+		return (NULL);
+	}
+
+	{ RESTORE }
+
+	if ((_pfp = fdopen(pipe,type)) == NULL)
+	{
+		close(pipe);
+		while (((l=wait(0)) != _pid[pcnt]) && l != ERR)
+			;
+		_pid[pcnt] = 0;
+		return (NULL);
+	}
+
+	return (_pfp);
+}
+
+int pclose(stream)
+	FILE *stream;
+{
+	register int i;
+	int f, status;
+
+	f = fileno(stream);
+	fclose(stream);
+	while ((i = wait(&status)) != _pid[f] && i != ERR)
+		;
+	_pid[f] = 0;
+	return ((i == ERR) ? ERR : status);
+}
+#endif /* _OSK */
