@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997,1999 Martin Husemann <martin@duskware.de>
+ * Copyright (c) 1997-2002 Martin Husemann <martin@duskware.de>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -139,115 +139,13 @@ listall(int fd)
 
 	memset(&info, 0, sizeof info);
 	ioctl(fd, I4B_CTRL_INFO_REQ, &info);
-	num = info.ncontroller;
-	printf("There are %d controllers available:\n", num);
-	for (i = 0; i < num; i++) {
+	num = info.maxbri;
+	printf("There are %d controllers available:\n", info.ncontroller);
+	for (i = 0; i <= num; i++) {
 		info.controller = i;
-		ioctl(fd, I4B_CTRL_INFO_REQ, &info);
-		switch (info.ctrl_type) {
-			case CTRL_PASSIVE:
-				printf("controller #%d: Siemens based passive card: ", i);
-				switch (info.card_type) {
-					case CARD_TYPEP_8:
-						printf("Teles S0\n");
-						break;
-					case CARD_TYPEP_16:
-						printf("Teles S0/16\n");
-						break;
-					case CARD_TYPEP_16_3:
-						printf("Teles S0/16.3\n");
-						break;
-					case CARD_TYPEP_AVMA1:
-						printf("AVM A1\n");
-						break;
-					case CARD_TYPEP_163P:
-						printf("Teles S0/PnP\n");
-						break;
-					case CARD_TYPEP_CS0P:
-						printf("Creatix S0/P&P\n");
-						break;
-					case CARD_TYPEP_USRTA:
-						printf("USR Sportster internal TA\n");
-						break;
-					case CARD_TYPEP_DRNNGO:
-						printf("Dr. Neuhaus Niccy GO@\n");
-						break;
-					case CARD_TYPEP_SWS:
-						printf("Sedlbauer Win Speed\n");
-						break;
-					case CARD_TYPEP_DYNALINK:
-						printf("Dynalink IS64PH\n");
-						break;
-					case CARD_TYPEP_BLMASTER:
-						printf("ISDN Blaster / ISDN Master\n");
-						break;
-					case CARD_TYPEP_PCFRITZ:
-						printf("AVM PCMCIA Fritz!Card\n");
-						break;
-					case CARD_TYPEP_ELSAQS1ISA:
-						printf("ELSA QuickStep 1000pro ISA\n");
-						break;
-					case CARD_TYPEP_ELSAQS1PCI:
-						printf("ELSA QuickStep 1000pro PCI\n");
-						break;
-					case CARD_TYPEP_SIEMENSITALK:
-						printf("Siemens I-Talk\n");
-						break;
-					case CARD_TYPEP_ELSAMLIMC:
-						printf("ELSA MicroLink ISDN/MC\n");
-						break;
-					case CARD_TYPEP_ELSAMLMCALL:
-						printf("ELSA MicroLink MCall\n");
-						break;
-					case CARD_TYPEP_ITKIX1:
-						printf("ITK ix1 micro\n");
-						break;
-					case CARD_TYPEP_AVMA1PCI:
-						printf("AVM Fritz!Card PCI\n");
-						break;
-					case CARD_TYPEP_ASUSCOMIPAC:
-						printf ("Asuscom ISDNlink 128 K PnP\n");
-						break;
-					case CARD_TYPEP_WINB6692:
-						printf ("Winbond W6692 based\n");
-						break;
-					case CARD_TYPEP_16_3C:
-						printf ("Teles S0/16.3c PnP\n");
-						break;
-					case CARD_TYPEP_ACERP10:
-						printf ("Acer ISDN P10\n");
-						break;
-					case CARD_TYPEP_TELEINT_NO_1:
-						printf ("TELEINT ISDN SPEED No. 1\n");
-						break;
-					default:
-						printf("unknown card type %d\n", info.card_type);
-						break;
-				}
-				break;
-			case CTRL_DAIC:
-				printf("controller #%d: Diehl active ISDN card: ", i);
-				switch (info.card_type) {
-					case CARD_TYPEA_DAIC_S:
-						printf("S\n");
-						break;
-					case CARD_TYPEA_DAIC_SX:
-						printf("SX\n");
-						break;
-					case CARD_TYPEA_DAIC_SCOM:
-						printf("SCOM\n");
-						break;
-					case CARD_TYPEA_DAIC_QUAD:
-						printf("QUADRO\n");
-						break;
-					default:
-						printf("unknown type %d\n", info.card_type);
-						break;
-				}
-				break;
-			default:
-				printf("unknown controller type\n");
-				break;
+		if (ioctl(fd, I4B_CTRL_INFO_REQ, &info) == 0) {
+			printf("BRI %d: %s\n", i, info.devname);
+			printf("\t%s\n", info.cardname);
 		}
 	}
 }

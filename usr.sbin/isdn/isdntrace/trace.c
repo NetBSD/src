@@ -35,7 +35,7 @@
  *	trace.c - print traces of D (B) channel activity for isdn4bsd
  *	-------------------------------------------------------------
  *
- *	$Id: trace.c,v 1.2 2001/03/24 18:08:11 martin Exp $ 
+ *	$Id: trace.c,v 1.3 2002/03/24 20:37:49 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -196,8 +196,6 @@ main(int argc, char *argv[])
 
 			case 'u':
 				unit = atoi(optarg);
-				if(unit < 0 || unit >= MAX_CONTROLLERS)
-					usage();
 				break;
 
 			case 'x':
@@ -218,14 +216,10 @@ main(int argc, char *argv[])
 			
 			case 'R':
 				Rx = atoi(optarg);
-				if(Rx < 0 || Rx >= MAX_CONTROLLERS)
-					usage();
 				break;
 
 			case 'T':
 				Tx = atoi(optarg);
-				if(Tx < 0 || Tx >= MAX_CONTROLLERS)
-					usage();
 				break;
 
 			case '?':
