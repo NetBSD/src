@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.2 2000/12/22 01:31:49 itojun Exp $	*/
+/*	$NetBSD: yacc.y,v 1.3 2000/12/22 06:04:21 itojun Exp $	*/
 
 %{
 /*-
@@ -38,14 +38,14 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)yacc.y	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$FreeBSD$";
 #else
-__RCSID("$NetBSD: yacc.y,v 1.2 2000/12/22 01:31:49 itojun Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.3 2000/12/22 06:04:21 itojun Exp $");
 #endif
-#endif /* not lint */
+#endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
 #if !defined(__FreeBSD__)
