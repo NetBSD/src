@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.20 1994/11/03 23:21:30 mycroft Exp $	*/
+/*	$NetBSD: wt.c,v 1.21 1994/11/18 22:03:51 mycroft Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -129,8 +129,8 @@ struct wt_softc {
 	struct intrhand sc_ih;
 
 	enum wttype type;	/* type of controller */
-	u_short sc_iobase;	/* base i/o port */
-	unsigned chan;		/* dma channel number, 1..3 */
+	int sc_iobase;		/* base i/o port */
+	int chan;		/* dma channel number, 1..3 */
 	int flags;		/* state of tape drive */
 	unsigned dens;		/* tape density */
 	int bsize;		/* tape block size */
@@ -145,7 +145,7 @@ struct wt_softc {
 	u_short ercnt;		/* number of error blocks */
 	u_short urcnt;		/* number of underruns */
 
-	u_short DATAPORT, CMDPORT, STATPORT, CTLPORT, SDMAPORT, RDMAPORT;
+	int DATAPORT, CMDPORT, STATPORT, CTLPORT, SDMAPORT, RDMAPORT;
 	u_char BUSY, NOEXCEP, RESETMASK, RESETVAL, ONLINE, RESET, REQUEST, IEN;
 };
 
@@ -181,7 +181,7 @@ wtprobe(parent, match, aux)
 {
 	struct wt_softc *sc = match;
 	struct isa_attach_args *ia = aux;
-	u_short iobase;
+	int iobase;
 
 	sc->chan = ia->ia_drq;
 	sc->sc_iobase = iobase = ia->ia_iobase;

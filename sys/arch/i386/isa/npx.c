@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.29 1994/11/07 10:19:28 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.30 1994/11/18 22:03:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -175,7 +175,7 @@ npxprobe(parent, match, aux)
 	void *match, *aux;
 {
 	struct	isa_attach_args *ia = aux;
-	u_short	irq;
+	int	irq;
 	int	result;
 	u_long	save_eflags;
 	unsigned save_imen;

@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.40 1994/11/03 23:26:03 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.41 1994/11/18 22:03:02 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -69,7 +69,7 @@ struct com_softc {
 	struct intrhand sc_ih;
 
 	int sc_overflows;
-	u_short sc_iobase;
+	int sc_iobase;
 	u_char sc_hwflags;
 #define	COM_HW_NOIEN	0x01
 #define	COM_HW_FIFO	0x02
@@ -115,9 +115,9 @@ extern int kgdb_debug_init;
 
 #define	COMUNIT(x)	(minor(x))
 
-#define	bis(c, b)	do { const register u_short com_ad = (c); \
+#define	bis(c, b)	do { const register int com_ad = (c); \
 			     outb(com_ad, inb(com_ad) | (b)); } while(0)
-#define	bic(c, b)	do { const register u_short com_ad = (c); \
+#define	bic(c, b)	do { const register int com_ad = (c); \
 			     outb(com_ad, inb(com_ad) & ~(b)); } while(0)
 
 int
@@ -147,7 +147,7 @@ comspeed(speed)
 
 int
 comprobe1(iobase)
-	u_short iobase;
+	int iobase;
 {
 
 	/* force access to id reg */
@@ -166,7 +166,7 @@ comprobe(parent, match, aux)
 {
 	struct com_softc *sc = match;
 	struct isa_attach_args *ia = aux;
-	u_short iobase = ia->ia_iobase;
+	int iobase = ia->ia_iobase;
 
 	if (!comprobe1(iobase))
 		return 0;
@@ -184,7 +184,7 @@ comattach(parent, self, aux)
 	struct com_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
-	u_short iobase = ia->ia_iobase;
+	int iobase = ia->ia_iobase;
 	struct tty *tp;
 
 	sc->sc_iobase = iobase;
@@ -258,7 +258,7 @@ comopen(dev, flag, mode, p)
 {
 	int unit = COMUNIT(dev);
 	struct com_softc *sc;
-	u_short iobase;
+	int iobase;
 	struct tty *tp;
 	int s;
 	int error = 0;
@@ -351,7 +351,7 @@ comclose(dev, flag, mode, p)
 {
 	int unit = COMUNIT(dev);
 	struct com_softc *sc = comcd.cd_devs[unit];
-	u_short iobase = sc->sc_iobase;
+	int iobase = sc->sc_iobase;
 	struct tty *tp = com_tty[unit];
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
@@ -422,7 +422,7 @@ comioctl(dev, cmd, data, flag, p)
 {
 	int unit = COMUNIT(dev);
 	struct com_softc *sc = comcd.cd_devs[unit];
-	u_short iobase = sc->sc_iobase;
+	int iobase = sc->sc_iobase;
 	struct tty *tp = com_tty[unit];
 	int error;
 
@@ -528,7 +528,7 @@ comparam(tp, t)
 	struct termios *t;
 {
 	struct com_softc *sc = comcd.cd_devs[COMUNIT(tp->t_dev)];
-	u_short iobase = sc->sc_iobase;
+	int iobase = sc->sc_iobase;
 	int ospeed = comspeed(t->c_ospeed);
 	u_char cfcr;
 	int s;
@@ -639,7 +639,7 @@ comstart(tp)
 	struct tty *tp;
 {
 	struct com_softc *sc = comcd.cd_devs[COMUNIT(tp->t_dev)];
-	u_short iobase = sc->sc_iobase;
+	int iobase = sc->sc_iobase;
 	int s;
 
 	s = spltty();
@@ -694,7 +694,7 @@ comeint(sc, stat)
 	struct com_softc *sc;
 	int stat;
 {
-	u_short iobase = sc->sc_iobase;
+	int iobase = sc->sc_iobase;
 	int unit = sc->sc_dev.dv_unit;
 	struct tty *tp = com_tty[unit];
 	int c;
@@ -725,7 +725,7 @@ static inline void
 commint(sc)
 	struct com_softc *sc;
 {
-	u_short iobase = sc->sc_iobase;
+	int iobase = sc->sc_iobase;
 	struct tty *tp = com_tty[sc->sc_dev.dv_unit];
 	u_char msr, delta;
 
@@ -772,7 +772,7 @@ int
 comintr(sc)
 	struct com_softc *sc;
 {
-	u_short iobase = sc->sc_iobase;
+	int iobase = sc->sc_iobase;
 	struct tty *tp;
 	u_char code;
 
@@ -862,7 +862,7 @@ cominit(unit, rate)
 	int unit, rate;
 {
 	int s = splhigh();
-	u_short iobase = CONADDR;
+	int iobase = CONADDR;
 	u_char stat;
 
 	outb(iobase + com_cfcr, CFCR_DLAB);
@@ -880,7 +880,7 @@ comcngetc(dev)
 	dev_t dev;
 {
 	int s = splhigh();
-	u_short iobase = CONADDR;
+	int iobase = CONADDR;
 	u_char stat, c;
 
 	while (((stat = inb(iobase + com_lsr)) & LSR_RXRDY) == 0)
@@ -899,7 +899,7 @@ comcnputc(dev, c)
 	int c;
 {
 	int s = splhigh();
-	u_short iobase = CONADDR;
+	int iobase = CONADDR;
 	u_char stat;
 	register int timo;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.62 1994/11/04 19:17:47 mycroft Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.63 1994/11/18 22:03:10 mycroft Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -70,8 +70,8 @@ struct ed_softc {
 	u_char	vendor;		/* interface vendor */
 	u_char	type;		/* interface type code */
 
-	u_short	asic_addr;	/* ASIC I/O bus address */
-	u_short	nic_addr;	/* NIC (DS8390) I/O bus address */
+	int	asic_addr;	/* ASIC I/O bus address */
+	int	nic_addr;	/* NIC (DS8390) I/O bus address */
 
 /*
  * The following 'proto' variable is part of a work-around for 8013EBT asics
@@ -136,12 +136,12 @@ struct cfdriver edcd = {
 /* 
  * Interrupt conversion table for WD/SMC ASIC.
  */
-static u_short ed_intr[] = { 9, 3, 5, 7, 10, 11, 15, 4 };
+static int ed_intr[] = { 9, 3, 5, 7, 10, 11, 15, 4 };
 
 /*
  * Interrupt conversion table for 585/790 Combo.
  */
-static u_short ed_790_intr[] = { -1, 9, 3, 5, 7, 10, 11, 15 };
+static int ed_790_intr[] = { -1, 9, 3, 5, 7, 10, 11, 15 };
 	
 #define	ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN	1518

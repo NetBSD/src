@@ -1,4 +1,4 @@
-/*	$NetBSD: wd7000.c,v 1.18 1994/10/27 04:18:29 cgd Exp $	*/
+/*	$NetBSD: wd7000.c,v 1.19 1994/11/18 22:03:49 mycroft Exp $	*/
 
 /*
  * UNFINISHED! UNFINISHED! UNFINISHED! UNFINISHED! UNFINISHED! UNFINISHED!
@@ -153,7 +153,7 @@ struct wds_setup {
 #define WDS_NIMB	8
 #define MAXSIMUL	8
 struct wds {
-	u_short addr;
+	int addr;
 	struct wds_req wdsr[MAXSIMUL];
 	struct wds_mb ombs[WDS_NOMB], imbs[WDS_NIMB];
 } wds[NWDS];
@@ -172,7 +172,7 @@ int wdsintr(int);
 int wds_done(int, struct wds_cmd *, u_char);
 int wdsattach(struct isa_device *);
 int wds_init(struct isa_device *);
-int wds_cmd(u_short, u_char *, int);
+int wds_cmd(int, u_char *, int);
 void wds_wait(int, int, int);
 
 
@@ -284,7 +284,7 @@ wds_scsi_cmd(struct scsi_xfer *sxp)
 {
 	struct wds_req *r;
 	int unit = sxp->adapter;
-	u_short base;
+	int base;
 	u_char c, *p;
 	int i;
 
@@ -502,7 +502,7 @@ int
 wds_getvers(int unit)
 {
 	struct wds_req *r;
-	u_short base;
+	int base;
 	u_char c, *p;
 	int i;
 
@@ -617,7 +617,7 @@ int
 wds_init(struct isa_device *dev)
 {
 	struct wds_setup init;
-	u_short base;
+	int base;
 	u_char *p, c;
 	int unit, i;
 
@@ -705,7 +705,7 @@ ready:
 }
 
 int
-wds_cmd(u_short base, u_char *p, int l)
+wds_cmd(int base, u_char *p, int l)
 {
 	int i;
 	u_char c;
