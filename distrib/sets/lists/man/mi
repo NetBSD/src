@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.32 2001/12/09 18:40:08 he Exp $
+# $NetBSD: mi,v 1.253.2.33 2001/12/09 19:16:03 he Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -518,6 +518,7 @@
 ./usr/share/man/cat4/de.0
 ./usr/share/man/cat4/depca.0
 ./usr/share/man/cat4/dpt.0
+./usr/share/man/cat4/dpti.0
 ./usr/share/man/cat4/drum.0
 ./usr/share/man/cat4/dty.0
 ./usr/share/man/cat4/eap.0
@@ -1944,6 +1945,7 @@
 ./usr/share/man/man4/de.4
 ./usr/share/man/man4/depca.4
 ./usr/share/man/man4/dpt.4
+./usr/share/man/man4/dpti.4
 ./usr/share/man/man4/drum.4
 ./usr/share/man/man4/dty.4
 ./usr/share/man/man4/eap.4
