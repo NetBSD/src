@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.17 2002/02/06 19:49:17 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.18 2002/02/19 23:24:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -246,15 +246,23 @@ sys_sa_yield(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 	struct sadata *s = p->p_sa;
 
-	DPRINTFN(1,("sa_yield(pid: %d.%d)\n", p->p_pid, l->l_lid));
+	DPRINTFN(1,("sa_yield(%d.%d)\n", p->p_pid, l->l_lid));
 
 	if (s == NULL || !(p->p_flag & P_SA))
 		return (EINVAL);
 	
 	/* Don't let a process sa_yield() itself into oblivion. */
-	if ((p->p_nlwps - p->p_nzlwps) == 1)
-		sigexit(l, SIGABRT);
-
+	if ((p->p_nlwps - p->p_nzlwps) == 1) {
+		DPRINTFN(1,("sa_yield(%d.%d) going dormant\n", 
+		    p->p_pid, l->l_lid));
+		/* A signal will probably wake us up. Worst case, the upcall
+		 * happens and just causes the process to yield again.
+		 **/
+		l->l_flag &= ~L_SA;
+		tsleep((caddr_t) p, PUSER | PCATCH, "sawait", 0);
+		l->l_flag |= L_SA;
+		return (0);
+	}
 	lwp_exit(l);
 
 	return (0);
