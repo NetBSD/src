@@ -1,4 +1,4 @@
-/*	$NetBSD: acconfig.h,v 1.1.1.2 2002/02/18 09:06:56 itojun Exp $	*/
+/*	$NetBSD: acconfig.h,v 1.1.1.3 2002/05/31 09:28:27 itojun Exp $	*/
 
 /* "generated automatically" means DO NOT MAKE CHANGES TO config.h.in --
  * make them to acconfig.h and rerun autoheader */
@@ -100,3 +100,9 @@
  * in config.h but that should be OK since they're the same.
  */
 #undef const
+
+/* Define if you have the dnet_htoa function.  */
+#undef HAVE_DNET_HTOA
+
+/* Define if you have a dnet_htoa declaration in <netdnet/dnetdb.h>.  */
+#undef HAVE_NETDNET_DNETDB_H_DNET_HTOA

@@ -24,6 +24,7 @@ Additional people who have contributed patches:
 	Craig Rodrigues			<rodrigc@mediaone.net>
 	Crist J. Clark			<cjclark@alum.mit.edu>
 	Daniel Hagerty 			<hag@ai.mit.edu>
+	Darren Reed			<darrenr@reed.wattle.id.au>
 	Francisco Matias Cuenca-Acuna	<mcuenca@george.rutgers.edu>
 	Frank Volf			<volf@oasis.IAEhv.nl>
 	Gert Doering			<gert@greenie.muc.de>
@@ -40,6 +41,7 @@ Additional people who have contributed patches:
 	Jeffrey Hutzelman		<jhutz@cmu.edu>
 	Jim Hutchins			<jim@ca.sandia.gov>
 	JINMEI Tatuya			<jinmei@kame.net>
+	Jørgen Thomsen			<jth@jth.net> 
 	Juergen Schoenwaelder		<schoenw@ibr.cs.tu-bs.de>
 	Julian Cowley			<julian@lava.net>
 	Kaarthik Sivakumar		<kaarthik@torrentnet.com>
@@ -53,6 +55,7 @@ Additional people who have contributed patches:
 	Lennert Buytenhek 		<buytenh@gnu.org>
 	Love Hörnquist-Åstrand		<lha@stacken.kth.se>
 	Maciej W. Rozycki		<macro@ds2.pg.gda.pl>
+	Marc A. Lehmann			<pcg@goof.com>
 	Marko Kiiskila			<carnil@cs.tut.fi>
 	Marshall Rose			<mrose@dbc.mtview.ca.us>
 	Martin Husemann			<martin@netbsd.org>
@@ -63,6 +66,7 @@ Additional people who have contributed patches:
 	Motonori Shindo			<mshindo@mshindo.net>
 	Nathan J. Williams		<nathanw@MIT.EDU>
 	Nathaniel Couper-Noles		<Nathaniel@isi1.tccisi.com>
+	Niels Provos			<provos@openbsd.org>
 	Nickolai Zeldovich		<kolya@MIT.EDU>
 	Olaf Kirch 			<okir@caldera.de>
 	Onno van der Linden		<onno@simplex.nl>
@@ -70,13 +74,16 @@ Additional people who have contributed patches:
 	Pasvorn Boonmark		<boonmark@juniper.net>
 	Pekka Savola 			<pekkas@netcore.fi>	
 	Peter Jeremy			<peter.jeremy@alcatel.com.au>
+	Phil Wood			<cpw@lanl.gov>
 	Rafal Maszkowski		<rzm@icm.edu.pl>
 	Rick Jones			<raj@cup.hp.com>
+	Rick Watson			<watsonrick@users.sourceforge.net>
 	Roderick Schertler		<roderick@argon.org>
+	Sami Farin			<safari@iki.fi>
 	Sebastian Krahmer		<krahmer@cs.uni-potsdam.de>
 	Seth Webster			<swebster@sst.ll.mit.edu>
 	Timo Koskiahde
-	Tony Li				<tli@jnx.com>
+	Tony Li				<tli@procket.com>
 	Uns Lider			<unslider@miranda.org>
 	Wilbert de Graaf		<wilbertdg@hetnet.nl>
 
