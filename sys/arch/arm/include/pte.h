@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.3 2001/10/27 16:45:35 rearnsha Exp $	*/
+/*	$NetBSD: pte.h,v 1.4 2001/11/02 23:58:46 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -97,6 +97,7 @@ extern pt_entry_t	pte_cache_mode;
 /* Page table types and masks */
 #define L1_PAGE		0x01	/* L1 page table mapping */
 #define L1_SECTION	0x02	/* L1 section mapping */
+#define L1_FPAGE	0x03	/* L1 fine page mapping */
 #define L1_MASK		0x03	/* Mask for L1 entry type */
 #define L2_LPAGE	0x01	/* L2 large page (64KB) */
 #define L2_SPAGE	0x02	/* L2 small page (4KB) */
