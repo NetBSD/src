@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.6 2000/02/01 08:52:05 enami Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.7 2000/02/01 08:58:25 enami Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -139,7 +139,7 @@ int
 awi_pcmcia_enable(sc)
 	struct awi_softc *sc;
 {
-	struct awi_pcmcia_softc *psc = (struct awi_pcmcia_softc *) sc;
+	struct awi_pcmcia_softc *psc = (struct awi_pcmcia_softc *)sc;
 	struct pcmcia_function *pf = psc->sc_pf;
 
 	/* establish the interrupt. */
@@ -156,11 +156,11 @@ void
 awi_pcmcia_disable(sc)
 	struct awi_softc *sc;
 {
-	struct awi_pcmcia_softc *psc = (struct awi_pcmcia_softc *) sc;
+	struct awi_pcmcia_softc *psc = (struct awi_pcmcia_softc *)sc;
 	struct pcmcia_function *pf = psc->sc_pf;
 
-	pcmcia_function_disable (pf);
-	pcmcia_intr_disestablish (pf, sc->sc_ih);
+	pcmcia_function_disable(pf);
+	pcmcia_intr_disestablish(pf, sc->sc_ih);
 }
 
 int
@@ -181,7 +181,7 @@ awi_pcmcia_match(parent, match, aux)
 }
 
 int
-awi_pcmcia_find (psc, pa, cfe)
+awi_pcmcia_find(psc, pa, cfe)
 	struct awi_pcmcia_softc *psc;
 	struct pcmcia_attach_args *pa;
 	struct pcmcia_config_entry *cfe;
@@ -189,7 +189,7 @@ awi_pcmcia_find (psc, pa, cfe)
 	struct awi_softc *sc = &psc->sc_awi;
 	int fail = 0;
 	u_int8_t version[AWI_BANNER_LEN];
-	
+
 	/*
 	 * see if we can read the firmware version sanely
 	 * through the i/o ports.
@@ -198,40 +198,40 @@ awi_pcmcia_find (psc, pa, cfe)
 	if (pcmcia_io_alloc(psc->sc_pf, cfe->iospace[0].start,
 	    cfe->iospace[0].length, 0, &psc->sc_pcioh) != 0)
 		goto fail;
-	
+
 	if (pcmcia_io_map(psc->sc_pf, PCMCIA_WIDTH_AUTO, 0, psc->sc_pcioh.size,
 	    &psc->sc_pcioh, &psc->sc_io_window))
 		goto fail_io_free;
 
 	/* Enable the card. */
 	pcmcia_function_init(psc->sc_pf, cfe);
-	if (pcmcia_function_enable(psc->sc_pf)) 
+	if (pcmcia_function_enable(psc->sc_pf))
 		goto fail_io_unmap;
-		
+
 	sc->sc_chip.sc_iot = psc->sc_pcioh.iot;
 	sc->sc_chip.sc_ioh = psc->sc_pcioh.ioh;
 	am79c930_chip_init(&sc->sc_chip, 0);
 
 	DELAY(100);
 
-	awi_read_bytes (sc, AWI_BANNER, version, AWI_BANNER_LEN);
+	awi_read_bytes(sc, AWI_BANNER, version, AWI_BANNER_LEN);
 
 	if (memcmp(version, "PCnetMobile:", 12) == 0)
-		return 0;
-	
+		return (0);
+
 	fail++;
-	pcmcia_function_disable (psc->sc_pf);
-	
+	pcmcia_function_disable(psc->sc_pf);
+
  fail_io_unmap:
 	fail++;
-	pcmcia_io_unmap (psc->sc_pf, psc->sc_io_window);
-	
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+
  fail_io_free:
 	fail++;
-	pcmcia_io_free (psc->sc_pf, &psc->sc_pcioh);
+	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
  fail:
 	fail++;
-	return fail;
+	return (fail);
 }
 
 
@@ -241,7 +241,7 @@ awi_pcmcia_attach(parent, self, aux)
 	struct device  *parent, *self;
 	void           *aux;
 {
-	struct awi_pcmcia_softc *psc = (void *) self;
+	struct awi_pcmcia_softc *psc = (void *)self;
 	struct awi_softc *sc = &psc->sc_awi;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
@@ -258,17 +258,18 @@ awi_pcmcia_attach(parent, self, aux)
 	     cfe = cfe->cfe_list.sqe_next, i++) {
 		printf("%d: %d memspaces, %d iospaces\n",
 		    i, cfe->num_memspace, cfe->num_iospace);
-		printf("%d: number %d flags %x iftype %d iomask %lx irqmask %x maxtwins %x\n",
+		printf("%d: number %d flags %x iftype %d iomask %lx "
+		    "irqmask %x maxtwins %x\n",
 		    i, cfe->number, cfe->flags, cfe->iftype, cfe->iomask,
 		    cfe->irqmask, cfe->maxtwins);
-		for (j=0; j<cfe->num_memspace; j++) {
+		for (j = 0; j < cfe->num_memspace; j++) {
 			printf("%d: mem %d: len %lx card %lx host %lx\n",
 			    i, j,
 			    cfe->memspace[j].length,
 			    cfe->memspace[j].cardaddr,
 			    cfe->memspace[j].hostaddr);
 		}
-		for (j=0; j<cfe->num_iospace; j++) {
+		for (j = 0; j < cfe->num_iospace; j++) {
 			printf("%d: io %d: len %lx start %lx\n",
 			    i, j,
 			    cfe->iospace[j].length,
@@ -299,7 +300,7 @@ awi_pcmcia_attach(parent, self, aux)
 	sc->sc_enabled = 1;
 	sc->sc_state = AWI_ST_SELFTEST;
 	printf(": BayStack 650 Wireless (802.11)\n");
-	
+
 	if (pcmcia_mem_alloc(psc->sc_pf, AM79C930_MEM_SIZE, &memh) != 0) {
 		printf("%s: unable to allocate memory space; using i/o only\n",
 		    sc->sc_dev.dv_xname);
@@ -316,7 +317,7 @@ awi_pcmcia_attach(parent, self, aux)
 	}
 
 	sc->sc_chip.sc_bustype = AM79C930_BUS_PCMCIA;
-	
+
 	sc->sc_enable = awi_pcmcia_enable;
 	sc->sc_disable = awi_pcmcia_disable;
 
