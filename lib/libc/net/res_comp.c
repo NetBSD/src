@@ -1,4 +1,4 @@
-/*	$NetBSD: res_comp.c,v 1.18 2000/04/25 14:39:00 itojun Exp $	*/
+/*	$NetBSD: res_comp.c,v 1.19 2000/07/06 02:59:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_comp.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_comp.c,v 8.14 1998/05/11 04:19:47 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_comp.c,v 1.18 2000/04/25 14:39:00 itojun Exp $");
+__RCSID("$NetBSD: res_comp.c,v 1.19 2000/07/06 02:59:47 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -618,7 +618,7 @@ ns_name_unpack(msg, eom, src, dst, dstsiz)
 			}
 			checked += n + 1;
 			*dstp++ = n;
-			memcpy(dstp, srcp, n);
+			memcpy(dstp, srcp, (size_t)n);
 			dstp += n;
 			srcp += n;
 			break;
@@ -749,7 +749,7 @@ ns_name_pack(src, dst, dstsiz, dnptrs, lastdnptr)
 			errno = EMSGSIZE;
 			return (-1);
 		}
-		memcpy(dstp, srcp, n + 1);
+		memcpy(dstp, srcp, (size_t)(n + 1));
 		srcp += n + 1;
 		dstp += n + 1;
 	} while (n != 0);
