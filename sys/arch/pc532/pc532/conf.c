@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.18 1995/01/25 04:48:21 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.19 1995/02/08 17:45:09 phil Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -70,7 +70,7 @@ int	ttselect	__P((dev_t, int, struct proc *));
 	dev_decl(n,ioctl); dev_decl(n,dump); dev_decl(n,size)
 
 #define	bdev_disk_init(c,n) { \
-	dev_init(c,n,open), (dev_type_close((*))) nullop, \
+	dev_init(c,n,open), dev_init(c,n,close), \
 	dev_init(c,n,strategy), dev_init(c,n,ioctl), \
 	dev_init(c,n,dump), dev_size_init(c,n), 0 }
 
@@ -141,7 +141,7 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 
 /* open, read, write, ioctl, strategy */
 #define	cdev_disk_init(c,n) { \
-	dev_init(c,n,open), (dev_type_close((*))) nullop, rawread, rawwrite, \
+	dev_init(c,n,open), dev_init(c,n,close), rawread, rawwrite, \
 	dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	(dev_type_reset((*))) nullop, 0, seltrue, (dev_type_map((*))) enodev, \
 	dev_init(c,n,strategy) }
