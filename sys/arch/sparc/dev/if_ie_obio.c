@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.18 2001/01/22 22:28:44 bjh21 Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.19 2001/03/08 01:38:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -343,8 +343,9 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 	}
 
 	/* Load the segment */
-	if ((error = bus_dmamap_load_raw(dmatag, sc->sc_dmamap,
-				&seg, rseg, msize, BUS_DMA_NOWAIT)) != 0) {
+	if ((error = bus_dmamap_load(dmatag, sc->sc_dmamap,
+				     sc->sc_maddr, msize,
+				     BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: DMA buffer map load error %d\n",
 			sc->sc_dev.dv_xname, error);
 		bus_dmamem_unmap(dmatag, sc->sc_maddr, msize);
