@@ -1,4 +1,4 @@
-/*	$NetBSD: wwspawn.c,v 1.7 2002/06/14 01:07:01 wiz Exp $	*/
+/*	$NetBSD: wwspawn.c,v 1.8 2003/01/16 09:46:48 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwspawn.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwspawn.c,v 1.7 2002/06/14 01:07:01 wiz Exp $");
+__RCSID("$NetBSD: wwspawn.c,v 1.8 2003/01/16 09:46:48 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,15 +59,15 @@ wwspawn(struct ww *wp, char *file, char **argv)
 	int pid;
 	int ret;
 	char erred = 0;
-	sigset_t sigset, osigset;
+	sigset_t nsigset, osigset;
 
 #ifdef __GNUC__	/* XXX variable `erred ' might be clobbered by ... `vfork' */
 	(void)&erred;
 #endif
 
-	sigemptyset(&sigset);
-	sigaddset(&sigset, SIGCHLD);
-	sigprocmask(SIG_BLOCK, &sigset, &osigset);
+	sigemptyset(&nsigset);
+	sigaddset(&nsigset, SIGCHLD);
+	sigprocmask(SIG_BLOCK, &nsigset, &osigset);
 
 	switch (pid = vfork()) {
 	case -1:
