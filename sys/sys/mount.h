@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount.h	7.22 (Berkeley) 6/3/91
- *	$Id: mount.h,v 1.18 1993/12/21 05:48:50 cgd Exp $
+ *	$Id: mount.h,v 1.19 1994/01/06 12:35:38 cgd Exp $
  */
 
 #ifndef _SYS_MOUNT_H_
@@ -119,6 +119,7 @@ struct mount {
 #define	MNT_NOSUID	0x00000008	/* don't honor setuid bits on fs */
 #define	MNT_NODEV	0x00000010	/* don't interpret special files */
 #define	MNT_UNION	0x00000020	/* union with underlying filesystem */
+#define	MNT_NOCREATE	0x00000040	/* don't allow filename creation */
 
 /*
  * exported mount flags.
