@@ -1,8 +1,9 @@
-/*	$NetBSD: getgrent.c,v 1.12 1995/03/16 11:48:01 pk Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.13 1995/07/28 05:43:57 phil Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
+ * Portions Copyright (c) 1994, Jason Downs. All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$NetBSD: getgrent.c,v 1.12 1995/03/16 11:48:01 pk Exp $";
+static char rcsid[] = "$NetBSD: getgrent.c,v 1.13 1995/07/28 05:43:57 phil Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,8 +64,10 @@ static char *members[MAXGRP];
 static char line[MAXLINELENGTH];
 
 #ifdef YP
+enum _ypmode { YPMODE_NONE, YPMODE_FULL, YPMODE_NAME };
+static enum _ypmode __ypmode;
 static char	*__ypcurrent, *__ypdomain;
-static int	__ypcurrentlen, __ypmode=0;
+static int	__ypcurrentlen;
 #endif
 
 struct group *
@@ -113,7 +116,7 @@ start_gr()
 	if (_gr_fp) {
 		rewind(_gr_fp);
 #ifdef YP
-		__ypmode = 0;
+		__ypmode = YPMODE_NONE;
 		if(__ypcurrent)
 			free(__ypcurrent);
 		__ypcurrent = NULL;
@@ -146,7 +149,7 @@ endgrent()
 		(void)fclose(_gr_fp);
 		_gr_fp = NULL;
 #ifdef YP
-		__ypmode = 0;
+		__ypmode = YPMODE_NONE;
 		if(__ypcurrent)
 			free(__ypcurrent);
 		__ypcurrent = NULL;
@@ -161,57 +164,78 @@ grscan(search, gid, name)
 {
 	register char *cp, **m;
 	char *bp;
+#ifdef YP
+	char *grname = (char *)NULL;
+#endif
 
 	for (;;) {
 #ifdef YP
-		if(__ypmode) {
+		if(__ypmode != YPMODE_NONE) {
 			char *key, *data;
 			int keylen, datalen;
 			int r;
 
 			if(!__ypdomain) {
 				if(yp_get_default_domain(&__ypdomain)) {
-					__ypmode = 0;
+					__ypmode = YPMODE_NONE;
+					if(grname != (char *)NULL) {
+						free(grname);
+						grname = (char *)NULL;
+					}
 					continue;
 				}
 			}
-			if(__ypcurrent) {
-				r = yp_next(__ypdomain, "group.byname",
-					__ypcurrent, __ypcurrentlen,
-					&key, &keylen, &data, &datalen);
-				free(__ypcurrent);
-				/*printf("yp_next %d\n", r);*/
-				switch(r) {
-				case 0:
-					break;
-				default:
-					__ypcurrent = NULL;
-					__ypmode = 0;
+			switch(__ypmode) {
+			case YPMODE_FULL:
+				if(__ypcurrent) {
+					r = yp_next(__ypdomain, "group.byname",
+						__ypcurrent, __ypcurrentlen,
+						&key, &keylen, &data, &datalen);
+					free(__ypcurrent);
+					if(r != 0) {
+						__ypcurrent = NULL;
+						__ypmode = YPMODE_NONE;
+						free(data);
+						continue;
+					}
+					__ypcurrent = key;
+					__ypcurrentlen = keylen;
+					bcopy(data, line, datalen);
 					free(data);
+				} else {
+					r = yp_first(__ypdomain, "group.byname",
+						&__ypcurrent, &__ypcurrentlen,
+						&data, &datalen);
+					if(r != 0) {
+						__ypmode = YPMODE_NONE;
+						free(data);
+						continue;
+					}
+					bcopy(data, line, datalen);
+					free(data);
+				}
+				break;
+			case YPMODE_NAME:
+				if(grname != (char *)NULL) {
+					r = yp_match(__ypdomain, "group.byname",
+						grname, strlen(grname),
+						&data, &datalen);
+					__ypmode = YPMODE_NONE;
+					free(grname);
+					grname = (char *)NULL;
+					if(r != 0) {
+						free(data);
+						continue;
+					}
+					bcopy(data, line, datalen);
+					free(data);
+				} else {
+					__ypmode = YPMODE_NONE;	/* ??? */
 					continue;
 				}
-				__ypcurrent = key;
-				__ypcurrentlen = keylen;
-				bcopy(data, line, datalen);
-				free(data);
-			} else {
-				r = yp_first(__ypdomain, "group.byname",
-					&__ypcurrent, &__ypcurrentlen,
-					&data, &datalen);
-				/*printf("yp_first %d\n", r);*/
-				switch(r) {
-				case 0:
-					break;
-				default:
-					__ypmode = 0;
-					free(data);
-					continue;
-				}
-				bcopy(data, line, datalen);
-				free(data);
+				break;
 			}
 			line[datalen] = '\0';
-			/*printf("line = %s\n", line);*/
 			bp = line;
 			goto parse;
 		}
@@ -228,47 +252,26 @@ grscan(search, gid, name)
 			continue;
 		}
 #ifdef YP
-		if ((strcmp("+\n", line) == 0) ||
-		    (strncmp("+:", line, 2) == 0)) {
-			if(_yp_check(NULL)) {
-				char gidbuf[20], *data;
-				int r, datalen;
-
-				if (!search) {
-					__ypmode = 1;
+		if (line[0] == '+') {
+			switch(line[1]) {
+			case ':':
+			case '\0':
+			case '\n':
+				if(_yp_check(NULL)) {
+					__ypmode = YPMODE_FULL;
 					continue;
 				}
+				break;
+			default:
+				if(_yp_check(NULL)) {
+					register char *tptr;
 
-				if(!__ypdomain) {
-					if(_yp_check(&__ypdomain) == 0) {
-						continue;
-					}
-				}
-				if (name == NULL) {
-					sprintf(gidbuf, "%d", gid);
-					r = yp_match(__ypdomain, "group.bygid",
-						gidbuf, strlen(gidbuf),
-						&data, &datalen);
-				} else {
-					r = yp_match(__ypdomain, "group.byname",
-						name, strlen(name),
-						&data, &datalen);
-				}
-				switch(r) {
-				case 0:
-					break;
-				case YPERR_MAP:
-					/*
-					 * No "group.bygid" map on server,
-					 * try enumeration of "group.byname".
-					 */
-					if (name == NULL)
-						__ypmode = 1;
-				default:
+					__ypmode = YPMODE_NAME;
+					tptr = strsep(&bp, ":\n");
+					grname = strdup(tptr + 1);
 					continue;
 				}
-				bcopy(data, line, datalen);
-				free(data);
+				break;
 			}
 		}
 parse:
