@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.331 2004/07/12 21:00:04 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.332 2004/07/13 09:29:47 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5375,3 +5375,11 @@ lib/libc/string/strcasestr.c			1.1 (new)
 	Add strcasestr(3), case insensitive version of strstr(3).
 	Add a tiny version number to libc (1).
 	[junyoung, ticket #638]
+
+sys/arch/amd64/conf/GENERIC			1.26
+sys/arch/i386/conf/GENERIC			1.615
+sys/arch/i386/conf/INSTALL			1.240
+
+	Add re; Realtek GbE.
+	[he, ticket #641]
+
