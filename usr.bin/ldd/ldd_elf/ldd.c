@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.20 2003/08/12 09:18:38 skrll Exp $	*/
+/*	$NetBSD: ldd.c,v 1.21 2003/12/19 19:56:56 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -101,21 +101,54 @@ Search_Path *_rtld_paths;
 Library_Xform *_rtld_xforms;
 
 static void print_needed(Obj_Entry *);
-static int ldd_aout(char *, int);
+static int ldd_aout(char *, char *, char *, int);
+static void usage(void);
+
+static void
+usage(void)
+{
+	fprintf(stderr, "Usage: %s [-f <format 1>] [-f <format 2>] <filename>"
+		" ...\n", getprogname());
+	exit(1);
+}
 
 int
 main(int argc, char **argv)
 {
 	struct stat st;
+	char *fmt1 = NULL, *fmt2 = NULL;
+	int c;
 
 #ifdef DEBUG
 	debug = 1;
 #endif
+	while ((c = getopt(argc, argv, "f:")) != -1) {
+		switch (c) {
+		case 'f':
+			if (fmt1) {
+				if (fmt2)
+					errx(1, "Too many formats");
+				fmt2 = optarg;
+			} else
+				fmt1 = optarg;
+			break;
+		default:
+			usage();
+			/*NOTREACHED*/
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc <= 0) {
+		usage();
+		/*NOTREACHED*/
+	}
 	_rtld_add_paths(&_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH);
 
 	_rtld_pagesz = sysconf(_SC_PAGESIZE);
 
-	for (argc--, argv++; argc != 0; argc--, argv++) {
+	for (; argc != 0; argc--, argv++) {
 		int fd = open(*argv, O_RDONLY);
 		if (fd == -1) {
 			warn("%s", *argv);
@@ -135,7 +168,7 @@ main(int argc, char **argv)
 		_rtld_process_hints(&_rtld_paths, &_rtld_xforms, _PATH_LD_HINTS);
 		_rtld_objmain = _rtld_map_object(xstrdup(*argv), fd, &st);
 		if (_rtld_objmain == NULL) {
-			if (ldd_aout(*argv, fd) < 0)
+			if (ldd_aout(*argv, fmt1, fmt2, fd) < 0)
 				warnx("%s", error_message);
 			close(fd);
 			continue;
@@ -234,7 +267,7 @@ print_needed(Obj_Entry *obj)
 }
 
 static int
-ldd_aout(char *file, int fd)
+ldd_aout(char *file, char *fmt1, char *fmt2, int fd)
 {
 	struct exec hdr;
 	int status, rval;
@@ -251,8 +284,14 @@ ldd_aout(char *file, int fd)
 	}
 
 	setenv("LD_TRACE_LOADED_OBJECTS", "", 1);
+	if (fmt1)
+		setenv("LD_TRACE_LOADED_OBJECTS_FMT1", fmt1, 1);
+	if (fmt2)
+		setenv("LD_TRACE_LOADED_OBJECTS_FMT2", fmt2, 1);
+
 	setenv("LD_TRACE_LOADED_OBJECTS_PROGNAME", file, 1);
-	printf("%s:\n", file);
+	if (fmt1 == NULL && fmt2 == NULL)
+		printf("%s:\n", file);
 	fflush(stdout);
 
 	rval = 0;
