@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 1999/02/13 02:54:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2000/07/09 13:47:34 jdolecek Exp $
 
+S=${.CURDIR}/../../../../
 PROG=	wrtvid
 MKMAN=	no
 

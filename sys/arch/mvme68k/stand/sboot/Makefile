@@ -1,23 +1,25 @@
-#	$NetBSD: Makefile,v 1.6 2000/06/25 16:39:07 scw Exp $
+#	$NetBSD: Makefile,v 1.7 2000/07/09 13:47:34 jdolecek Exp $
 
 #
 # sboot would like a newer GNU ld because it can generate S-Records.
 # Until then, we convert.
 #
 
+S=${.CURDIR}/../../../..
+
 COMPILE.s= $(AS) $(ASFLAGS) -o $*.o
 LDFLAGS=-x -N -Ttext 0x4000 -e start
 MKMAN=	no
 SRCS=	start.s clock.c console.c etherfun.c le_poll.c libc_sa.c \
 		oc_cksum.s sboot.c
-OBJS=	${SRCS:N*.h:R:S/$/.o/g}
 CLEANFILES+= srec sboot sboot.srec
 
 BOOTS=	sboot.srec
+PROG=${BOOTS}
 
-realall: ${BOOTS}
-
-sboot.srec: sboot srec
+${PROG}: ${OBJS}
+	${MAKE} sboot
+	${MAKE} srec
 	dd ibs=32 skip=1 if=sboot | ${.OBJDIR}/srec 4 0x4000 sboot > ${.TARGET}
 
 sboot: ${OBJS}

@@ -1,19 +1,25 @@
-#	$NetBSD: Makefile,v 1.4 2000/06/25 16:39:07 scw Exp $
+#	$NetBSD: Makefile,v 1.5 2000/07/09 13:47:34 jdolecek Exp $
 #
 # DO NOT OPTMIZE bugcrt (i.e. no "-O2")
 #
-CFLAGS=-I${.CURDIR}/../../include -I${.CURDIR}/../libbug -fomit-frame-pointer
 
-OBJS=bugcrt.o
+S=      ${.CURDIR}/../../../..
+PROG= dummy
+MAN=
 
-CLEANFILES+=a.out
+CFLAGS=-I${.CURDIR}/../../include -I${.CURDIR}/../libbug -fomit-frame-pointer \
+	-I${S} -I.
+SRCS= bugcrt.c
+CLEANFILES+= bugcrt.o.tmp
 
-realall:	${OBJS}
+realall: ${OBJS}
 
 bugcrt.o: bugcrt.c
-	${CC} ${CFLAGS} -c ${.ALLSRC}
-	${LD} -x -r ${.TARGET}
-	mv a.out ${.TARGET}
+	${CC} ${CFLAGS} -c ${.ALLSRC} -o ${.TARGET}.tmp
+	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
+
+${PROG}: ${OBJS}
+	@# empty
 
 proginstall::
 
