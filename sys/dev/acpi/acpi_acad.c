@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.9 2003/10/31 20:54:18 mycroft Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.10 2003/11/03 06:03:47 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.9 2003/10/31 20:54:18 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.10 2003/11/03 06:03:47 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,11 @@ struct acpiacad_softc {
 const struct envsys_range acpiacad_range[] = {
 	{ 0, 2,		ENVSYS_INDICATOR },
 	{ 1, 0, 	-1},
+};
+
+static const char * const acad_hid[] = {
+	"ACPI0003",
+	NULL
 };
 
 #define	AACAD_F_VERBOSE		0x01	/* verbose events */
@@ -138,10 +143,7 @@ acpiacad_match(struct device *parent, struct cfdata *match, void *aux)
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return (0);
 
-	if (strcmp(aa->aa_node->ad_devinfo.HardwareId.Value, "ACPI0003") == 0)
-		return (1);
-
-	return (0);
+	return (acpi_match_hid(aa->aa_node->ad_devinfo, acad_hid));
 }
 
 /*
