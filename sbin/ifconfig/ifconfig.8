@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.24 1998/09/06 17:51:32 christos Exp $
+.\"	$NetBSD: ifconfig.8,v 1.25 1999/07/01 13:19:20 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,13 +49,13 @@
 .Op Ar parameters
 .Nm ""
 .Op Fl A
-.Op Fl m
+.Op Fl mL
 .Ar interface
 .Op Ar protocol_family
 .Nm ""
 .Fl a
 .Op Fl A
-.Op Fl m
+.Op Fl mL
 .Op Fl d
 .Op Fl u
 .Op Ar protocol_family
@@ -318,6 +318,10 @@ If the
 flag is passed before an interface name,
 .Nm
 will display all of the supported media for the specified interface.
+If the
+.Fl L
+flag is supplied, address lifetime is dislayed for IPv6 addresses,
+as time offset string.
 .Pp
 Optionally, the
 .Fl a
