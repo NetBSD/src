@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.2.4.2 2002/06/20 16:02:21 gehenna Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.2.4.3 2002/07/15 01:47:08 gehenna Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.2.4.2 2002/06/20 16:02:21 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.2.4.3 2002/07/15 01:47:08 gehenna Exp $");
 
 #include "opt_systrace.h"
 
@@ -176,6 +176,13 @@ struct pool systr_policy_pl;
 
 int systrace_debug = 0;
 struct lock systrace_lck;
+
+#ifdef __NetBSD__
+const struct cdevsw systrace_cdevsw = {
+	systraceopen, noclose, noread, nowrite, noioctl,
+	nostop, notty, nopoll, nommap,
+};
+#endif
 
 #ifdef SYSTRACE_DEBUG
 #define DPRINTF(y)	if (systrace_debug) uprintf y;
