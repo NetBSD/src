@@ -1,4 +1,4 @@
-/* $NetBSD: cia_pci.c,v 1.14 1997/09/13 05:58:07 thorpej Exp $ */
+/* $NetBSD: cia_pci.c,v 1.15 1997/09/15 22:35:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.14 1997/09/13 05:58:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.15 1997/09/15 22:35:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,8 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.14 1997/09/13 05:58:07 thorpej Exp $")
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/ciareg.h>
 #include <alpha/pci/ciavar.h>
-
-#include <machine/rpb.h>	/* XXX for eb164 CIA firmware workarounds. */
 
 void		cia_attach_hook __P((struct device *, struct device *,
 		    struct pcibus_attach_args *));
@@ -136,7 +134,7 @@ cia_conf_read(cpv, tag, offset)
 	 * the device wasn't there so we return 0xffffffff.
 	 */
 	/* clear the PCI master abort bit in CIA error register */
-	REGVAL(CIA_CSR_CIA_ERR) = 0x00000080;		/* XXX */
+	REGVAL(CIA_CSR_CIA_ERR) = CIA_ERR_RCVD_MAS_ABT;
 	alpha_mb();
 	alpha_pal_draina();	
 
@@ -168,7 +166,7 @@ cia_conf_read(cpv, tag, offset)
 
 	alpha_pal_draina();	
 	/* check CIA error register for PCI master abort */
-	if (REGVAL(CIA_CSR_CIA_ERR) & 0x00000080) {	/* XXX */
+	if (REGVAL(CIA_CSR_CIA_ERR) & CIA_ERR_RCVD_MAS_ABT) {
 		ba = 1;
 		data = 0xffffffff;
 	}
