@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.86.2.8 2001/09/21 22:36:25 nathanw Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.86.2.9 2001/09/26 19:55:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -75,6 +75,7 @@
 #define	__SYSCTL_PRIVATE
 #include <sys/sysctl.h>
 #include <sys/lock.h>
+#include <sys/namei.h>
 
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 #include <sys/ipc.h>
@@ -358,6 +359,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		}
 		if (error == 0) {
 			vfs_reinit();
+			nchreinit();
 		}
 		return (error);
 	case KERN_MAXPROC:

@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.13 2001/01/19 01:40:39 manu Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.13.2.1 2001/09/26 19:54:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -47,6 +47,8 @@
 #include <compat/linux/arch/alpha/linux_signal.h>
 #elif defined(__powerpc__)
 #include <compat/linux/arch/powerpc/linux_signal.h>
+#elif defined(__mips__)
+#include <compat/linux/arch/mips/linux_signal.h>
 #else
 #error Undefined linux_signal.h machine type.
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.46.2.5 2001/09/21 22:37:18 nathanw Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.46.2.6 2001/09/26 19:55:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -249,22 +249,24 @@ uvn_detach(uobj)
 /*
  * uvn_put: flush page data to backing store.
  *
- * => object must be locked!   we will _unlock_ it before starting I/O.
+ * => object must be locked on entry!   VOP_PUTPAGES must unlock it.
  * => flags: PGO_SYNCIO -- use sync. I/O
  * => note: caller must set PG_CLEAN and pmap_clear_modify (if needed)
  */
 
 int
-uvn_put(uobj, off, len, flags)
+uvn_put(uobj, offlo, offhi, flags)
 	struct uvm_object *uobj;
-	voff_t off;
-	voff_t len;
+	voff_t offlo;
+	voff_t offhi;
 	int flags;
 {
 	struct vnode *vp = (struct vnode *)uobj;
 	int error;
 
-	error = VOP_PUTPAGES(vp, off, len, flags);
+	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
+	error = VOP_PUTPAGES(vp, offlo, offhi, flags);
+	LOCK_ASSERT(!simple_lock_held(&vp->v_interlock));
 	return error;
 }
 

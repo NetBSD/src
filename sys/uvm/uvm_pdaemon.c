@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.29.2.4 2001/09/21 22:37:17 nathanw Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.29.2.5 2001/09/26 19:55:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -222,9 +222,6 @@ uvm_pageout(void *arg)
 		uvmexp.pdwoke++;
 		UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
 
-		/* drain pool resources */
-		pool_drain(0);
-
 		/*
 		 * now lock page queues and recompute inactive count
 		 */
@@ -268,6 +265,12 @@ uvm_pageout(void *arg)
 		 */
 
 		uvm_unlock_pageq();
+
+		/*
+		 * drain pool resources now that we're not holding any locks
+		 */
+
+		pool_drain(0);
 	}
 	/*NOTREACHED*/
 }

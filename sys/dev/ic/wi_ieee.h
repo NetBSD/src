@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.3.2.2 2001/06/21 20:03:31 nathanw Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.3.2.3 2001/09/26 19:54:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -66,7 +66,7 @@
  * Technically I don't think there's a limit to a record
  * length. The largest record is the one that contains the CIS
  * data, which is 240 words long, so 256 should be a safe
- * value.
+ * value.  But 512 is more safe?
  */
 #define WI_MAX_DATALEN	512
 
@@ -75,6 +75,13 @@ struct wi_req {
 	u_int16_t	wi_type;
 	u_int16_t	wi_val[WI_MAX_DATALEN];
 };
+
+#define WI_IOCTL_SET_SCAN		1
+#define WI_IOCTL_GET_SCAN		2
+#define WI_IOCTL_GET_SCAN_RESULTS	3
+#define WI_IOCTL_SET_TESTMODE		4
+#define WI_IOCTL_MGMT_XMIT		5
+#define WI_IOCTL_IFACE_STATS		6
 
 /*
  * Private LTV records (interpreted only by the driver). This is
@@ -178,6 +185,18 @@ struct wi_counters {
 	u_int32_t		wi_rx_WEP_cant_decrypt;
 	u_int32_t		wi_rx_msg_in_msg_frags;
 	u_int32_t		wi_rx_msg_in_bad_msg_frags;
+};
+
+/*
+ * results of last ap scan
+ */
+#define WI_SCAN_RESULTS_MAXLEN	512
+struct wi_scan_results {
+	int			truncated;	/* incomplete data in result */
+	u_int			scanning;	/* in hz units */
+	struct timeval		lastscan;	/* time scan was completed */
+	u_int16_t		len;		/* number of words */
+	u_int16_t		scan_results[WI_SCAN_RESULTS_MAXLEN];
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_types.h,v 1.6 1999/09/05 03:05:55 oster Exp $	*/
+/*	$NetBSD: rf_types.h,v 1.6.14.1 2001/09/26 19:54:59 nathanw Exp $	*/
 /*
  * rf_types.h
  */
@@ -36,9 +36,6 @@
 
 #ifndef _RF__RF_TYPES_H_
 #define _RF__RF_TYPES_H_
-
-
-#include "rf_archs.h"
 
 #include <sys/errno.h>
 #include <sys/types.h>

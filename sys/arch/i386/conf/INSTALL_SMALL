@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.64.2.3 2001/09/21 22:35:02 nathanw Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.64.2.4 2001/09/26 19:54:43 nathanw Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -255,6 +255,7 @@ com2	at isa? port 0x3e8 irq 5
 #iop*	at pci? dev ? function ?	# I/O processor
 #iopsp*	at iop? tid ?			# SCSI/FC-AL ports
 #ld*	at iop? tid ?			# block devices
+#dpti*	at iop? tid 0			# DPT/Adaptec control interface
 
 # SCSI Controllers and Devices
 

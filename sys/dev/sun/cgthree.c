@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.2 2000/08/20 20:01:45 pk Exp $ */
+/*	$NetBSD: cgthree.c,v 1.2.4.1 2001/09/26 19:55:01 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -318,7 +318,6 @@ cgthreemmap(dev, off, prot)
 	int prot;
 {
 	struct cgthree_softc *sc = cgthree_cd.cd_devs[minor(dev)];
-	bus_space_handle_t bh;
 
 #define START		(128*1024 + 128*1024)
 #define NOOVERLAY	(0x04000000)
@@ -337,11 +336,7 @@ cgthreemmap(dev, off, prot)
 	if (off >= sc->sc_fb.fb_type.fb_size)
 		return (-1);
 
-	if (bus_space_mmap(sc->sc_bustag,
-			   sc->sc_btype,
-			   sc->sc_paddr + CG3REG_MEM + off,
-			   BUS_SPACE_MAP_LINEAR, &bh))
-		return (-1);
-
-	return ((paddr_t)bh);
+	return (bus_space_mmap(sc->sc_bustag,
+		sc->sc_paddr, CG3REG_MEM + off,
+		prot, BUS_SPACE_MAP_LINEAR));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.53.2.5 2001/09/21 22:36:39 nathanw Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.53.2.6 2001/09/26 19:55:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -264,7 +264,7 @@ spec_read(v)
  	struct proc *p = uio->uio_procp;
 	struct buf *bp;
 	daddr_t bn;
-	int bsize, bscale, ssize;
+	int bsize, bscale;
 	struct partinfo dpart;
 	int n, on, majordev;
 	int (*ioctl) __P((dev_t, u_long, caddr_t, int, struct proc *));
@@ -293,7 +293,6 @@ spec_read(v)
 		if (uio->uio_offset < 0)
 			return (EINVAL);
 		bsize = BLKDEV_IOSIZE;
-		ssize = DEV_BSIZE;
 		if ((majordev = major(vp->v_rdev)) < nblkdev &&
 		    (ioctl = bdevsw[majordev].d_ioctl) != NULL &&
 		    (*ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&dpart, FREAD, p) == 0) {
@@ -301,12 +300,10 @@ spec_read(v)
 			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
 				bsize = dpart.part->p_frag *
 				    dpart.part->p_fsize;
-			if (dpart.disklab->d_secsize != 0)
-				ssize = dpart.disklab->d_secsize;
 		}
-		bscale = bsize / ssize;
+		bscale = bsize >> DEV_BSHIFT;
 		do {
-			bn = (uio->uio_offset / ssize) &~ (bscale - 1);
+			bn = (uio->uio_offset >> DEV_BSHIFT) &~ (bscale - 1);
 			on = uio->uio_offset % bsize;
 			n = min((unsigned)(bsize - on), uio->uio_resid);
 			error = bread(vp, bn, bsize, NOCRED, &bp);
@@ -345,7 +342,7 @@ spec_write(v)
 	struct proc *p = uio->uio_procp;
 	struct buf *bp;
 	daddr_t bn;
-	int bsize, bscale, ssize;
+	int bsize, bscale;
 	struct partinfo dpart;
 	int n, on, majordev;
 	int (*ioctl) __P((dev_t, u_long, caddr_t, int, struct proc *));
@@ -374,7 +371,6 @@ spec_write(v)
 		if (uio->uio_offset < 0)
 			return (EINVAL);
 		bsize = BLKDEV_IOSIZE;
-		ssize = DEV_BSIZE;
 		if ((majordev = major(vp->v_rdev)) < nblkdev &&
 		    (ioctl = bdevsw[majordev].d_ioctl) != NULL &&
 		    (*ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&dpart, FREAD, p) == 0) {
@@ -382,12 +378,10 @@ spec_write(v)
 			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
 				bsize = dpart.part->p_frag *
 				    dpart.part->p_fsize;
-			if (dpart.disklab->d_secsize != 0)
-				ssize = dpart.disklab->d_secsize;
 		}
-		bscale = bsize / ssize;
+		bscale = bsize >> DEV_BSHIFT;
 		do {
-			bn = (uio->uio_offset / ssize) &~ (bscale - 1);
+			bn = (uio->uio_offset >> DEV_BSHIFT) &~ (bscale - 1);
 			on = uio->uio_offset % bsize;
 			n = min((unsigned)(bsize - on), uio->uio_resid);
 			if (n == bsize)

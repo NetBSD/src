@@ -1,4 +1,4 @@
-/*	$NetBSD: i2o.h,v 1.2.2.4 2001/09/21 22:35:30 nathanw Exp $	*/
+/*	$NetBSD: i2o.h,v 1.2.2.5 2001/09/26 19:54:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@
 /* Macros to assist in building message headers */
 #define	I2O_MSGFLAGS(s)		(I2O_VERSION_11 | (sizeof(struct s) << 14))
 #define	I2O_MSGFUNC(t, f)	((t) | (I2O_TID_HOST << 12) | ((f) << 24))
+#define	I2O_MSGPRIV(o, f)	((f) | ((o) << 16))
 
 /* Common message function codes with no payload or an undefined payload */
 #define	I2O_UTIL_NOP			0x00

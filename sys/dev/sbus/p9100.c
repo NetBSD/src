@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.2 2001/01/07 05:41:50 mrg Exp $ */
+/*	$NetBSD: p9100.c,v 1.2.2.1 2001/09/26 19:55:00 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -173,13 +173,18 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	/* Remember cookies for p9100_mmap() */
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_ctl_btype = (bus_type_t)sa->sa_reg[0].sbr_slot;
-	sc->sc_ctl_paddr = (bus_addr_t)sa->sa_reg[0].sbr_offset;
+	sc->sc_ctl_paddr = sbus_bus_addr(sa->sa_bustag, 
+		sa->sa_reg[0].sbr_slot, sa->sa_reg[0].sbr_offset);
 	sc->sc_ctl_psize = (bus_size_t)sa->sa_reg[0].sbr_size;
+
 	sc->sc_cmd_btype = (bus_type_t)sa->sa_reg[1].sbr_slot;
-	sc->sc_cmd_paddr = (bus_addr_t)sa->sa_reg[1].sbr_offset;
+	sc->sc_cmd_paddr = sbus_bus_addr(sa->sa_bustag, 
+		sa->sa_reg[1].sbr_slot, sa->sa_reg[1].sbr_offset);
 	sc->sc_cmd_psize = (bus_size_t)sa->sa_reg[1].sbr_size;
+
 	sc->sc_fb_btype = (bus_type_t)sa->sa_reg[2].sbr_slot;
-	sc->sc_fb_paddr = (bus_addr_t)sa->sa_reg[2].sbr_offset;
+	sc->sc_fb_paddr = sbus_bus_addr(sa->sa_bustag, 
+		sa->sa_reg[2].sbr_slot, sa->sa_reg[2].sbr_offset);
 	sc->sc_fb_psize = (bus_size_t)sa->sa_reg[2].sbr_size;
 
 	fb->fb_driver = &p9100fbdriver;
@@ -474,7 +479,6 @@ paddr_t
 p9100mmap(dev_t dev, off_t off, int prot)
 {
 	struct p9100_softc *sc = pnozz_cd.cd_devs[minor(dev)];
-	bus_space_handle_t bh;
 
 	if (off & PGOFSET)
 		panic("p9100mmap");
@@ -486,40 +490,36 @@ p9100mmap(dev_t dev, off_t off, int prot)
 	 */
 	if (off >= CG3_MMAP_OFFSET && off < CG3_MMAP_OFFSET + sc->sc_fb_psize) {
 		off -= CG3_MMAP_OFFSET;
-		if (bus_space_mmap(sc->sc_bustag,
-				   sc->sc_fb_btype,
-				   sc->sc_fb_paddr + off,
-				   BUS_SPACE_MAP_LINEAR, &bh))
-			return (-1);
-		return ((paddr_t)bh);
+		return (bus_space_mmap(sc->sc_bustag,
+			sc->sc_fb_paddr,
+			off,
+			prot,
+			BUS_SPACE_MAP_LINEAR));
 	}
 
 	if (off >= sc->sc_fb_psize + sc->sc_ctl_psize + sc->sc_cmd_psize)
 		return (-1);
 
 	if (off < sc->sc_fb_psize) {
-		if (bus_space_mmap(sc->sc_bustag,
-				   sc->sc_fb_btype,
-				   sc->sc_fb_paddr + off,
-				   BUS_SPACE_MAP_LINEAR, &bh))
-			return (-1);
-		return ((paddr_t)bh);
+		return (bus_space_mmap(sc->sc_bustag,
+			sc->sc_fb_paddr,
+			off,
+			prot,
+			BUS_SPACE_MAP_LINEAR));
 	}
 	off -= sc->sc_fb_psize;
 	if (off < sc->sc_ctl_psize) {
-		if (bus_space_mmap(sc->sc_bustag,
-				   sc->sc_ctl_btype,
-				   sc->sc_ctl_paddr + off,
-				   BUS_SPACE_MAP_LINEAR, &bh))
-			return (-1);
-		return ((paddr_t)bh);
+		return (bus_space_mmap(sc->sc_bustag,
+			sc->sc_ctl_paddr,
+			off,
+			prot,
+			BUS_SPACE_MAP_LINEAR));
 	}
 	off -= sc->sc_ctl_psize;
 
-	if (bus_space_mmap(sc->sc_bustag,
-			   sc->sc_cmd_btype,
-			   sc->sc_cmd_paddr + off,
-			   BUS_SPACE_MAP_LINEAR, &bh))
-		return (-1);
-	return ((paddr_t)bh);
+	return (bus_space_mmap(sc->sc_bustag,
+		sc->sc_cmd_paddr,
+		off,
+		prot,
+		BUS_SPACE_MAP_LINEAR));
 }

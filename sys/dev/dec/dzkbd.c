@@ -1,4 +1,4 @@
-/*	$NetBSD: dzkbd.c,v 1.1.4.1 2001/09/21 22:35:28 nathanw Exp $	*/
+/*	$NetBSD: dzkbd.c,v 1.1.4.2 2001/09/26 19:54:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -297,7 +297,7 @@ dzkbd_ioctl(v, cmd, data, flag, p)
 			   (struct wskbd_bell_data *)data);
 		return 0;
 	case WSKBDIO_SETKEYCLICK:
-		lk201_set_keyclick(&sc->sc_itl->dz_ks, *(int *)data);
+		lk201_set_keyclick(&sc->sc_itl->dzi_ks, *(int *)data);
 		return 0;
 	case WSKBDIO_GETKEYCLICK:
 		/* XXX don't dig in kbd internals */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigcode.s,v 1.1.6.1 2001/06/21 19:25:30 nathanw Exp $	*/
+/*	$NetBSD: linux_sigcode.s,v 1.1.6.2 2001/09/26 19:54:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 /* LINTSTUB: Var: char linux_sigcode[1], linux_esigcode[1]; */
 NENTRY(linux_sigcode)
-	call	LINUX_SIGF_HANDLER(%esp)
+	call	*LINUX_SIGF_HANDLER(%esp)
 	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
 	pushl	%eax			# junk to fake return address
@@ -105,7 +105,7 @@ _C_LABEL(linux_esigcode):
 
 /* LINTSTUB: Var: char linux_rt_sigcode[1], linux_rt_esigcode[1]; */
 NENTRY(linux_rt_sigcode)
-	call	LINUX_SIGF_HANDLER(%esp)
+	call	*LINUX_SIGF_HANDLER(%esp)
 	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
 	pushl	%eax			# junk to fake return address

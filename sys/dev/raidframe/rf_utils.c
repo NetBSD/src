@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_utils.c,v 1.5.6.1 2001/08/24 00:10:40 nathanw Exp $	*/
+/*	$NetBSD: rf_utils.c,v 1.5.6.2 2001/09/26 19:54:59 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,6 +37,7 @@
 
 #include <sys/time.h>
 
+#include "rf_archs.h"
 #include "rf_utils.h"
 #include "rf_debugMem.h"
 #include "rf_alloclist.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.63.2.3 2001/09/21 22:36:23 nathanw Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.63.2.4 2001/09/26 19:55:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -264,6 +264,8 @@ cd9660_read(v)
 		return (0);
 	if (uio->uio_offset < 0)
 		return (EINVAL);
+	if (uio->uio_offset >= ip->i_size)
+		return 0;
 	ip->i_flag |= IN_ACCESS;
 	imp = ip->i_mnt;
 
@@ -1050,6 +1052,7 @@ const struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
 	{ &vop_update_desc, cd9660_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ &vop_putpages_desc, fifo_putpages }, 		/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc cd9660_fifoop_opv_desc =

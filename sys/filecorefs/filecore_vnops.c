@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.12.2.2 2001/09/21 22:36:22 nathanw Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.12.2.3 2001/09/26 19:55:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -160,6 +160,8 @@ filecore_read(v)
 		return (0);
 	if (uio->uio_offset < 0)
 		return (EINVAL);
+	if (uio->uio_offset >= ip->i_size)
+		return (0);
 	ip->i_flag |= IN_ACCESS;
 	fcmp = ip->i_mnt;
 

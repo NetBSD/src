@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.9.2.2 2001/08/24 00:10:29 nathanw Exp $ */
+/*	$NetBSD: if_xi.c,v 1.9.2.3 2001/09/26 19:54:57 nathanw Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -412,6 +412,15 @@ xi_pcmcia_attach(parent, self, aux)
 	}
 	psc->sc_resource |= XI_RES_IO_MAP;
 
+	xpp = xi_pcmcia_identify(parent,pa);
+	if (xpp == NULL) {
+		printf(": unrecognised model\n");
+		return;
+	}
+	sc->sc_flags = xpp->xpp_flags;
+
+	printf(": %s\n", xpp->xpp_name);
+
 	/*
 	 * Configuration as advised by DINGO documentation.
 	 * Dingo has some extra configuration registers in the CCR space.
@@ -452,15 +461,6 @@ xi_pcmcia_attach(parent, self, aux)
 		pcmcia_mem_unmap(psc->sc_pf, ccr_window);
 		pcmcia_mem_free(psc->sc_pf, &pcmh);
 	}
-
-	xpp = xi_pcmcia_identify(parent,pa);
-	if (xpp == NULL) {
-		printf(": unrecognised model\n");
-		return;
-	}
-	sc->sc_flags = xpp->xpp_flags;
-
-	printf(": %s\n", xpp->xpp_name);
 
 	/*
 	 * Get the ethernet address from FUNCE/LAN_NID tuple.

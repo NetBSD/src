@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.43.2.3 2001/09/21 22:36:54 nathanw Exp $	*/
+/*	$NetBSD: key.c,v 1.43.2.4 2001/09/26 19:55:10 nathanw Exp $	*/
 /*	$KAME: key.c,v 1.203 2001/07/28 03:12:18 itojun Exp $	*/
 
 /*
@@ -1472,6 +1472,7 @@ key_gather_mbuf(m, mhp, ndeep, nitem, va_alist)
 	return result;
 
 fail:
+	va_end(ap);
 	m_freem(result);
 	return NULL;
 }

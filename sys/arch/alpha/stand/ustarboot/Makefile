@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2000/07/21 21:25:19 jdolecek Exp $
+# $NetBSD: Makefile,v 1.5.2.1 2001/09/26 19:54:42 nathanw Exp $
 
 PROG = ustarboot
 
@@ -17,7 +17,7 @@ CLEANFILES+= ${PROG}.sym
 
 ${PROG}: ${PROG}.sym
 	@echo creating ${PROG} from ${PROG}.sym...
-	@objcopy --output-target=binary ${PROG}.sym ${PROG}
+	@${OBJCOPY} --output-target=binary ${PROG}.sym ${PROG}
 	@chmod 644 ${PROG}
 	@ls -l ${PROG}
 	@${CHECKSIZE_CMD} ${PROG}.sym ${PROG} ${UNIFIED_MAX_LOAD} \
