@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.31 2002/01/29 18:53:22 uch Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.32 2002/02/02 10:50:09 takemura Exp $	*/
 /*-
  * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -52,7 +52,6 @@
 #include <hpcmips/vr/vripif.h>
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/vrgiureg.h>
-#include <hpcmips/vr/vrgiuvar.h>
 
 #include "locators.h"
 
@@ -481,44 +480,6 @@ vrgiu_getchip(void* scx, int chipid)
 	return (&sc->sc_iochip);
 }
 
-/* 
- *  For before autoconfiguration.  
- */
-void
-__vrgiu_out(int port, int data)
-{
-	u_int16_t reg;
-	u_int32_t addr;
-	int offs;
-
-	if (!LEGAL_OUT_PORT(port))
-		panic("__vrgiu_out: illegal gpio port");
-	if (port < 16) {
-		addr = MIPS_PHYS_TO_KSEG1((VRIP_GIU_ADDR + GIUPIOD_L_REG_W));
-		offs = port;
-	} else if (port < 32) {
-		addr = MIPS_PHYS_TO_KSEG1((VRIP_GIU_ADDR + GIUPIOD_H_REG_W));
-		offs = port - 16;
-	} else if (port < 48) {
-		addr = MIPS_PHYS_TO_KSEG1((VRIP_GIU_ADDR + GIUPODAT_L_REG_W));	
-		offs = port - 32;
-	} else {
-		addr = MIPS_PHYS_TO_KSEG1((VRIP_GIU_ADDR + GIUPODAT_H_REG_W));	
-		offs = port - 48;
-		panic ("__vrgiu_out: not coded yet.");
-	}
-	DPRINTF(DEBUG_IO, ("__vrgiu_out: addr %08x bit %d\n", addr, offs));
-    
-	wbflush();
-	reg = *((volatile u_int16_t*)addr);
-	if (data) {
-		reg |= (1 << offs);
-	} else {
-		reg &= ~(1 << offs);
-	}
-	*((volatile u_int16_t*)addr) = reg;
-	wbflush();
-}
 /*
  * Interrupt staff 
  */
