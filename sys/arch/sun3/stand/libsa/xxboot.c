@@ -1,4 +1,4 @@
-/*	$NetBSD: xxboot.c,v 1.1 1998/07/01 22:51:43 gwr Exp $ */
+/*	$NetBSD: xxboot.c,v 1.2 2000/07/16 21:56:14 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -62,7 +62,8 @@ char *kernelnames[] = {
 };
 char	line[80];
 
-main()
+void
+xxboot_main(const char *boot_type)
 {
 	struct open_file	f;
 	char **npp;
@@ -70,7 +71,7 @@ main()
 	char *entry;
 	int	io, x;
 
-	printf(">> NetBSD " XX "boot [%s]\n", version);
+	printf(">> %s %s [%s]\n", bootprog_name, boot_type, bootprog_rev);
 	prom_get_boot_info();
 
 	/*
@@ -80,7 +81,7 @@ main()
 	 */
 	f.f_flags = F_RAW;
 	if (devopen(&f, 0, &file)) {
-		printf(XX "boot: devopen failed\n");
+		printf("%s: devopen failed\n", boot_type);
 		return;
 	}
 
@@ -111,7 +112,7 @@ main()
 	 */
 	for (npp = kernelnames; *npp; npp++) {
 		file = *npp;
-		printf(XX "boot: trying %s\n", file);
+		printf("%s: trying %s\n", boot_type, file);
 		if ((io = open(file, 0)) >= 0) {
 			/* The open succeeded. */
 			goto try_load;
@@ -138,14 +139,14 @@ main()
 
 	try_load:
 		/* The open succeeded.  Try loading. */
-		printf(XX "boot: loading %s\n", file);
+		printf("%s: loading %s\n", boot_type, file);
 		x = load_sun(io, (char *)LOADADDR, &entry);
 		close(io);
 		if (x == 0)
 			break;
 
 	err:
-		printf(XX "boot: %s: %s\n", file, strerror(errno));
+		printf("%s: %s: %s\n", boot_type, file, strerror(errno));
 	}
 
 	/* Do the "last close" on the underlying device. */
