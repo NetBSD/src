@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.512 2004/11/12 05:53:39 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.513 2004/11/12 05:55:59 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7922,3 +7922,8 @@ distrib/notes/common/contents			1.109
 	Add mention of the xetc set; configuration files for X which could be
 	locally modified.
 	[929, ticket #he]
+
+sys/dev/pci/ahc_pci.c				1.46-1.47
+
+	Bring back ALLOW_MEMIO change that was lost between 1.38 and 1.39.
+	[christos, ticket #930]
