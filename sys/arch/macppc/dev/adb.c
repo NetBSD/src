@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.3 1998/10/13 11:21:21 tsubai Exp $	*/
+/*	$NetBSD: adb.c,v 1.4 1998/10/18 09:52:16 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -44,6 +44,8 @@
 #include <macppc/dev/adbvar.h>
 #include <macppc/dev/akbdvar.h>
 #include <macppc/dev/viareg.h>
+
+#include "aed.h"
 
 /*
  * Function declarations.
@@ -123,11 +125,13 @@ adbattach(parent, self, aux)
 	printf(" irq %d", ca->ca_intr[0]);
 	printf(": %d targets\n", totaladbs);
 
+#if NAED > 0
 	/* ADB event device for compatibility */
 	aa_args.origaddr = 0;
 	aa_args.adbaddr = 0;
 	aa_args.handler_id = 0;
 	(void)config_found(self, &aa_args, adbprint);
+#endif
 
 	/* for each ADB device */
 	for (adbindex = 1; adbindex <= totaladbs; adbindex++) {
