@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.202 2004/08/05 17:24:00 mycroft Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.203 2004/08/05 21:53:26 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.201 2004/08/05 17:23:47 mycroft Exp 
+ *	NetBSD: pcmciadevs,v 1.202 2004/08/05 21:53:04 mycroft Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -1567,13 +1567,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Premax",
 	    "PreMax PE-200",	}
-	,
-	{
-	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_SIMPLETECH_SPECTRUM24_ALT,
-	    PCMCIA_CIS_SIMPLETECH_SPECTRUM24_ALT,
-	    0,
-	    "Simple Technology",
-	    "LA4111 Spectrum24 Wireless LAN PC Card",	}
 	,
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_SMC_2632W,
