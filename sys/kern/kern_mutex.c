@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.1.2.6 2002/03/16 20:57:42 thorpej Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.1.2.7 2002/03/22 00:15:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.2.6 2002/03/16 20:57:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.2.7 2002/03/22 00:15:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -54,6 +54,41 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.2.6 2002/03/16 20:57:42 thorpej E
 #include <sys/systm.h>
 
 #include <machine/intr.h>
+
+/*
+ * note that stdarg.h and the ansi style va_start macro is used for both
+ * ansi and traditional c complers.
+ * XXX: this requires that stdarg.h define: va_alist and va_dcl
+ */
+#include <machine/stdarg.h>
+
+#if defined(MUTEX_DEBUG)
+/* These rely on machdep code doing a tail-call to us. */
+#define	MTX_LOCKED(mtx)							\
+	(mtx)->mtx_debug.mtx_locked = __builtin_return_address(0)
+#define	MTX_UNLOCKED(mtx)						\
+	(mtx)->mtx_debug.mtx_unlocked = __builtin_return_address(0)
+#else
+#define	MTX_LOCKED(mtx)		/* nothing */
+#define	MTX_UNLOCKED(mtx)	/* nothing */
+#endif /* MUTEX_DEBUG */
+
+static void
+mutex_abort(kmutex_t *mtx, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+
+#if defined(MUTEX_DEBUG)
+	printf("last locked: 0x%lx  last unlocked: 0x%lx\n",
+	    mtx->mtx_debug.mtx_locked, mtx->mtx_debug.mtx_unlocked);
+#endif
+
+	panic("mutex_abort");
+}
 
 /*
  * mutex_init:
@@ -118,6 +153,7 @@ mutex_vector_enter(kmutex_t *mtx)
 			/* XXXJRT insert spinout detection here */ ;
 		}
 		mtx->m_oldspl = s;
+		MTX_LOCKED(mtx);
 		return;
 	}
 
@@ -141,7 +177,8 @@ mutex_vector_enter(kmutex_t *mtx)
 		}
 
 		if (p == curproc)
-			panic("mutex_vector_enter: locking against myself");
+			mutex_abort(mtx,
+			    "mutex_vector_enter: locking against myself");
 
 		/*
 		 * Check to see if the owner is running on a processor.
@@ -202,6 +239,7 @@ mutex_vector_tryenter(kmutex_t *mtx)
 	s = splraiseipl(mtx->m_minspl);
 	if (__cpu_simple_lock_try(&mtx->m_spinlock)) {
 		mtx->m_oldspl = s;
+		MTX_LOCKED(mtx);
 		return (1);
 	}
 	splx(s);
@@ -213,6 +251,9 @@ mutex_vector_tryenter(kmutex_t *mtx)
  *
  *	Support routine for mutex_exit(); handles spin mutexes
  *	or adaptive mutexes with waiters.
+ *
+ *	NOTE: If MUTEX_DEBUG is defined, we always end up here
+ *	for the exit case.
  */
 void
 mutex_vector_exit(kmutex_t *mtx)
@@ -224,6 +265,7 @@ mutex_vector_exit(kmutex_t *mtx)
 		 * Spin mutex; just release the lock and drop spl.
 		 */
 		int s = mtx->m_oldspl;
+		MTX_UNLOCKED(mtx);
 		__cpu_simple_unlock(&mtx->m_spinlock);
 		splx(s);
 		return;
@@ -231,11 +273,14 @@ mutex_vector_exit(kmutex_t *mtx)
 
 	if (MUTEX_OWNER(mtx) != curproc) {
 		if (MUTEX_OWNER(mtx) == NULL)
-			panic("mutex_vector_exit: not owned");
+			mutex_abort(mtx, "mutex_vector_exit: not owned");
 		else
-			panic("mutex_vector_exit: not owner, owner = %p, "
+			mutex_abort(mtx,
+			    "mutex_vector_exit: not owner, owner = %p, "
 			    "current = %p", MUTEX_OWNER(mtx), curproc);
 	}
+
+	MTX_UNLOCKED(mtx);
 
 	/*
 	 * Get this lock's turnstile.  This gets the interlock on
@@ -279,7 +324,7 @@ mutex_owned(kmutex_t *mtx)
 
 	/* XXX What do we want to do about spin mutexes? */
 	if (MUTEX_SPIN_P(mtx))
-		panic("mutex_owned: spin mutex");
+		mutex_abort(mtx, "mutex_owned: spin mutex");
 
 	return (MUTEX_OWNER(mtx) == curproc);
 }
