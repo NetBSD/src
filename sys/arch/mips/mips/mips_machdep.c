@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.162 2003/06/11 15:27:57 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.163 2003/06/12 14:35:56 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.162 2003/06/11 15:27:57 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.163 2003/06/12 14:35:56 simonb Exp $");
 
 #include "opt_cputype.h"
 
@@ -216,7 +216,7 @@ struct	segtab *segbase;
 
 caddr_t	msgbufaddr;
 
-#ifdef MIPS3_4100			/* VR4100 core */
+#if defined(MIPS3_4100)			/* VR4100 core */
 int	default_pg_mask = 0x00001800;
 #endif
 
@@ -442,7 +442,7 @@ static const char *cidnames[] = {
 };
 #define	ncidnames (sizeof(cidnames) / sizeof(cidnames[0]))
 
-#ifdef MIPS1
+#if defined(MIPS1)
 /*
  * MIPS-I locore function vector
  */
@@ -553,7 +553,7 @@ mips3_vector_init(void)
 }
 #endif /* !MIPS3_5900 */
 
-#ifdef MIPS3_5900	/* XXX */
+#if defined(MIPS3_5900)	/* XXX */
 /*
  * MIPS R5900 locore function vector.
  * Same as MIPS32 - all MMU registers are 32bit.
@@ -603,7 +603,7 @@ r5900_vector_init(void)
 #endif /* MIPS3_5900 */
 #endif /* MIPS3 */
 
-#ifdef MIPS32
+#if defined(MIPS32)
 /*
  * MIPS32 locore function vector
  */
@@ -674,7 +674,7 @@ mips32_vector_init(void)
 }
 #endif /* MIPS32 */
 
-#ifdef MIPS64
+#if defined(MIPS64)
 /*
  * MIPS64 locore function vector
  */
@@ -872,7 +872,7 @@ mips_vector_init(void)
 	 * Now initialize our ISA-dependent function vector.
 	 */
 	switch (cpu_arch) {
-#ifdef MIPS1
+#if defined(MIPS1)
 	case CPU_ARCH_MIPS1:
 		mips1_TBIA(mips_num_tlb_entries);
 		mips1_vector_init();
@@ -882,7 +882,7 @@ mips_vector_init(void)
 #if defined(MIPS3)
 	case CPU_ARCH_MIPS3:
 	case CPU_ARCH_MIPS4:
-#ifdef MIPS3_5900	/* XXX */
+#if defined(MIPS3_5900)	/* XXX */
 		mips3_cp0_wired_write(0);
 		mips5900_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
@@ -897,7 +897,7 @@ mips_vector_init(void)
 #endif /* MIPS3_5900 */
 		break;
 #endif
-#ifdef MIPS32
+#if defined(MIPS32)
 	case CPU_ARCH_MIPS32:
 		mips3_cp0_wired_write(0);
 		mips32_TBIA(mips_num_tlb_entries);
@@ -1024,7 +1024,7 @@ cpu_identify(void)
 	KASSERT(mips_sdcache_ways < nwaynames);
 
 	switch (cpu_arch) {
-#ifdef MIPS1
+#if defined(MIPS1)
 	case CPU_ARCH_MIPS1:
 		if (mips_picache_size)
 			printf("%s: %dKB/%dB %s Instruction cache, "
