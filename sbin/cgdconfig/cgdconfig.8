@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.6 2002/10/07 00:12:40 wiz Exp $
+.\" $NetBSD: cgdconfig.8,v 1.7 2002/10/12 21:10:31 elric Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -90,9 +90,9 @@ Specify the configuration file explicitly, rather than defaulting to
 .It Fl g
 Generate a paramsfile (to stdout).
 .It Fl i Ar ivmeth
-Specify the IV method.
+Specify the IV method (default: encblkno).
 .It Fl k Ar kgmeth
-Specify the key generation method.
+Specify the key generation method (default: pkcs5_pbkdf2).
 .It Fl o Ar outfile
 When generating a
 .Ar paramsfile ,
@@ -104,6 +104,8 @@ Read the key from stdin.
 Unconfigure all the devices listed in the cgd configuration file.
 .It Fl u
 Unconfigure a cgd.
+.It Fl V Ar vmeth
+Specify the verification method (default: none).
 .It Fl v
 Be verbose.
 May be specified multiple times.
@@ -132,6 +134,21 @@ This method is typically used to present disk devices that do not
 need to survive a reboot, such as the swap partition.
 It is also handy to facilitate overwriting the contents of
 a disk volume with meaningless data prior to use.
+.El
+.Ss Verification Method
+The verification method is how
+.Nm
+determines if the passphrase that has been entered is correct.
+If the newly configured disk fails to verify, then
+.Nm
+will ask for the passphrase again and re-configure the device.
+The following verification methods are supported:
+.Pp
+.Bl -tag -width indentxxx
+.It none
+perform no verification.
+.It disklabel
+scan for a valid disklabel.
 .El
 .Ss /etc/cgd/cgd.conf
 The file
@@ -200,6 +217,8 @@ stored on separate removable media, e.g. USB mass storage, to ensure that
 the generated key is immune to passphrase-guessing attacks.
 It is not valuable unless the parameters file is stored on removable media.
 It is base64 encoded.
+.It verify_method
+The verification method.
 .El
 .Sh FILES
 .Bl -tag -width indentxxxxxxxxxxxxxxxxxx -compact
