@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 2003/05/04 15:09:46 atatat Exp $ */
+/*	$NetBSD: main.c,v 1.10 2003/07/24 00:43:50 atatat Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.9 2003/05/04 15:09:46 atatat Exp $");
+__RCSID("$NetBSD: main.c,v 1.10 2003/07/24 00:43:50 atatat Exp $");
 #endif
 
 #include <sys/param.h>
@@ -549,9 +549,9 @@ load_name_cache(kvm_t *kd)
 	LIST_INIT(&lcache);
 
 	_KDEREF(kd, nchash_addr, &nchash, sizeof(nchash));
-	nchashtbl = malloc(sizeof(nchashtbl) * (int)nchash);
+	nchashtbl = malloc(sizeof(nchashtbl) * (int)(nchash + 1));
 	_KDEREF(kd, nchashtbl_addr, nchashtbl,
-		sizeof(nchashtbl) * (int)nchash);
+		sizeof(nchashtbl) * (int)(nchash + 1));
 
 	ncpp = &_ncpp;
 
