@@ -42,15 +42,15 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.11.2.3 2000/07/27 17:17:42 he Exp $ Copyright 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.";
+"$Id: dhcpd.c,v 1.11.2.4 2000/10/19 17:14:10 he Exp $ Copyright 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.";
 #endif
 
-static char copyright[] =
+static const char copyright[] =
 "Copyright 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.";
-static char arr [] = "All rights reserved.";
-static char message [] = "Internet Software Consortium DHCP Server";
-static char contrib [] = "Please contribute if you find this software useful.";
-static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html";
+static const char arr [] = "All rights reserved.";
+static const char message [] = "Internet Software Consortium DHCP Server";
+static const char contrib [] = "Please contribute if you find this software useful.";
+static const char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html";
 
 #include "dhcpd.h"
 #include "version.h"
