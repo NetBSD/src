@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_pci.c,v 1.8 2003/09/06 11:31:22 rearnsha Exp $	*/
+/*	$NetBSD: ifpga_pci.c,v 1.9 2003/09/06 13:01:29 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -64,7 +64,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.8 2003/09/06 11:31:22 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.9 2003/09/06 13:01:29 rearnsha Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.8 2003/09/06 11:31:22 rearnsha Exp $
 #include <evbarm/integrator/int_bus_dma.h>
 
 #include <machine/intr.h>
-#include <evbarm/ifpga/irqhandler.h>	/* XXX XXX XXX */
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
