@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.4 1998/10/15 18:01:49 bad Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.5 1998/10/30 16:56:30 matt Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -55,7 +55,11 @@
  *
  */
 
+#ifdef _STANDALONE
 #include <lib/libkern/libkern.h>
+#else
+#include <string.h>
+#endif
 #include "stand.h"
 #include "ustarfs.h"
 
