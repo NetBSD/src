@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.8 2003/01/06 18:22:00 reinoud Exp $	*/
+/*	$NetBSD: boot32.c,v 1.9 2003/01/06 22:46:36 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -93,6 +93,7 @@ u_long	*initial_page_tables;					/* pagetables to be booted from	*/
 u_long	 videomem_start, videomem_pages, display_size;		/* where the display is		*/
 
 u_long	 pv_offset, top_physdram;				/* kernel_base - phys. diff	*/
+u_long	 top_1Mb_dram;						/* the lower mapped top 1Mb	*/
 u_long	 new_L1_pages_phys;					/* physical address of L1 pages	*/
 
 u_long	 total_podram_pages, total_dram_pages, total_vram_pages;/* for bootconfig passing	*/
@@ -342,7 +343,7 @@ void get_memory_configuration(void) {
 
 	if (VRAM_pages[0] == 0) {
 		/* map bottom DRAM as video memory */
-		display_size	 = vdu_var(os_VDUVAR_TOTAL_SCREEN_SIZE) & ~(nbpp-1);
+		display_size	 = (vdu_var(os_VDUVAR_TOTAL_SCREEN_SIZE) & ~(nbpp-1));
 #if 0
 		mapped_screen_memory = 1024 * 1024;		/* max allowed on RiscPC	*/
 		videomem_pages   = (mapped_screen_memory / nbpp);
@@ -367,7 +368,8 @@ void get_memory_configuration(void) {
 	};
 
 	if (mapped_screen_memory) {
-		printf("Used 1st Mb of DRAM at 0x%s for video memory\n", sprint0(8,'0','x', videomem_start));
+		printf("Used %d kb DRAM ", (mapped_screen_memory)/1024);
+		printf("at 0x%s for video memory\n", sprint0(8,'0','x', videomem_start));
 	};
 
 	/* find top of DRAM pages */
@@ -489,7 +491,8 @@ void create_initial_page_tables(void) {
 	/* video memory is mapped 1:1 in the DRAM section or in VRAM section	*/
 
 	/* map 1Mb from top of memory to bottom 1Mb of virtual memmap		*/
-	initial_page_tables[0] = (((top_physdram - 1024*1024) >> 20) << 20) | section;
+	top_1Mb_dram = (((top_physdram - 1024*1024) >> 20) << 20);
+	initial_page_tables[0] = top_1Mb_dram | section;
 
 	/* map 16 Mb of kernel space to KERNEL_BASE i.e. marks[KERNEL_START]	*/
 	for (page = 0; page < 16; page++) {
@@ -533,7 +536,7 @@ void add_initvectors(void) {
 	u_long  vectoraddr, count;
 
 	/* the top 1Mb of the physical DRAM pages is mapped at address 0 */
-	vectoraddr = get_relocated_page(top_physdram - 1024*1024, nbpp)->logical;
+	vectoraddr = get_relocated_page(top_1Mb_dram, nbpp)->logical;
 
 	/* fill the vectors with `movs pc, lr' opcodes */
 	pos = (u_long *) vectoraddr; memset(pos, 0, nbpp);
