@@ -1,4 +1,4 @@
-/*	$NetBSD: chio.c,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
+/*	$NetBSD: chio.c,v 1.2 1997/07/20 04:44:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -32,6 +32,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__COPYRIGHT("@(#) Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.");
+__RCSID("$NetBSD: chio.c,v 1.2 1997/07/20 04:44:53 thorpej Exp $");
+#endif
+
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/chio.h> 
@@ -49,6 +55,7 @@
 
 extern	char *__progname;	/* from crt0.o */
 
+int	main __P((int, char *[]));
 static	void usage __P((void));
 static	void cleanup __P((void));
 static	int parse_element_type __P((char *));
@@ -100,10 +107,9 @@ static	char *changer_name;
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	int ch, i;
-	char *cp;
 
 	while ((ch = getopt(argc, argv, "f:")) != -1) {
 		switch (ch) {
@@ -470,7 +476,7 @@ do_status(cname, argc, argv)
 	struct changer_params data;
 	u_int8_t *statusp;
 	int i, count, chet, schet, echet;
-	char *cmdname, *description;
+	char *description;
 
 	/*
 	 * On a status command, we expect the following:
@@ -523,6 +529,11 @@ do_status(cname, argc, argv)
 			count = data.cp_ndrives;
 			description = "drive";
 			break;
+
+		default:
+			/* To appease gcc -Wuninitialized. */
+			count = 0;
+			description = NULL;
 		}
 
 		if (count == 0) {
