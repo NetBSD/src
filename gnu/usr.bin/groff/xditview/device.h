@@ -1,3 +1,4 @@
+/*	$Id: device.h,v 1.2 1993/08/02 17:45:58 mycroft Exp $ */
 
 typedef struct _DeviceFont DeviceFont;
 

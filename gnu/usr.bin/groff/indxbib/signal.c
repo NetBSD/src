@@ -17,6 +17,10 @@ You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
+#ifndef lint
+static char rcsid[] = "$Id: signal.c,v 1.2 1993/08/02 17:43:48 mycroft Exp $";
+#endif /* not lint */
+
 /* Unfortunately vendors seem to have problems writing a <signal.h>
 that is correct for C++, so we implement all signal handling in C. */
 

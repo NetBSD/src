@@ -17,6 +17,10 @@
 
    Written August 1992 by Mike Haertel. */
 
+#ifndef lint
+static char rcsid[] = "$Id: search.c,v 1.2 1993/08/02 17:41:40 mycroft Exp $";
+#endif /* not lint */
+
 #include <ctype.h>
 
 #ifdef STDC_HEADERS

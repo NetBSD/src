@@ -19,6 +19,10 @@
    along with Readline; see the file COPYING.  If not, write to the Free
    Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
+#ifndef lint
+static char rcsid[] = "$Id: funmap.c,v 1.2 1993/08/02 17:40:34 mycroft Exp $";
+#endif /* not lint */
+
 #define STATIC_MALLOC
 #ifndef STATIC_MALLOC
 extern char *xmalloc (), *xrealloc ();

@@ -19,6 +19,10 @@
    The author may be reached (Email) at the address mike@ai.mit.edu,
    or (US mail) as Mike Haertel c/o Free Software Foundation. */
 
+#ifndef lint
+static char rcsid[] = "$Id: kwset.c,v 1.2 1993/08/02 17:41:30 mycroft Exp $";
+#endif /* not lint */
+
 /* The algorithm implemented by these routines bears a startling resemblence
    to one discovered by Beate Commentz-Walter, although it is not identical.
    See "A String Matching Algorithm Fast on the Average," Technical Report,

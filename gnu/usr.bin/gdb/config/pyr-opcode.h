@@ -1,4 +1,7 @@
-/* pyramid.opcode.h -- gdb initial attempt. */
+/* pyramid.opcode.h -- gdb initial attempt.
+
+	$Id: pyr-opcode.h,v 1.2 1993/08/02 17:40:19 mycroft Exp $
+*/
 
 /* pyramid opcode table: wot to do with this
    particular opcode */

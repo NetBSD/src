@@ -1,7 +1,5 @@
 /* RCS compile-time configuration */
 
-	/* conf.h,v 1.1.1.1 1993/06/18 04:22:13 jkh Exp */
-
 /*
  * This file is generated automatically.
  * If you edit it by hand your changes may be lost.

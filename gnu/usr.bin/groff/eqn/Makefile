@@ -1,4 +1,4 @@
-# Makefile for eqn
+#	$Id: Makefile,v 1.7 1993/08/02 17:42:41 mycroft Exp $
 
 PROG=		eqn
 SRCS=		main.cc lex.cc  box.cc limit.cc list.cc over.cc text.cc\

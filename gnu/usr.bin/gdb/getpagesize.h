@@ -1,3 +1,5 @@
+/*	$Id: getpagesize.h,v 1.2 1993/08/02 17:41:03 mycroft Exp $ */
+
 #ifdef BSD
 #ifndef BSD4_1
 #define HAVE_GETPAGESIZE

@@ -15,7 +15,10 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with GDB; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. 
+
+	$Id: m-pyr.h,v 1.2 1993/08/02 17:40:04 mycroft Exp $
+*/
 
 /* The FSF prefers to define "pyramid on Pyramid 90x machines; the
    manufacturer insists on "pyr".  Define both. */

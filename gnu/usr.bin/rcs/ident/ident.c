@@ -28,65 +28,12 @@ Report problems and direct all questions to:
  *                     RCS identification operation
  */
 
-/* ident.c,v
- * Revision 1.1.1.1  1993/06/18  04:22:11  jkh
- * Updated GNU utilities
- *
- * Revision 5.3  1991/09/10  22:15:46  eggert
- * Open files with FOPEN_R, not FOPEN_R_WORK,
- * because they might be executables, not working files.
- *
- * Revision 5.2  1991/08/19  03:13:55  eggert
- * Report read errors immediately.
- *
- * Revision 5.1  1991/02/25  07:12:37  eggert
- * Don't report empty keywords.  Check for I/O errors.
- *
- * Revision 5.0  1990/08/22  08:12:37  eggert
- * Don't limit output to known keywords.
- * Remove arbitrary limits and lint.  Ansify and Posixate.
- *
- * Revision 4.5  89/05/01  15:11:54  narten
- * changed copyright header to reflect current distribution rules
- * 
- * Revision 4.4  87/10/23  17:09:57  narten
- * added exit(0) so exit return code would be non random
- * 
- * Revision 4.3  87/10/18  10:23:55  narten
- * Updating version numbers. Changes relative to 1.1 are actually relative
- * to 4.1
- * 
- * Revision 1.3  87/07/09  09:20:52  trinkle
- * Added check to make sure there is at least one arg before comparing argv[1]
- * with "-q".  This necessary on machines that don't allow dereferncing null
- * pointers (i.e. Suns).
- * 
- * Revision 1.2  87/03/27  14:21:47  jenkins
- * Port to suns
- * 
- * Revision 4.1  83/05/10  16:31:02  wft
- * Added option -q and input from reading stdin.
- * Marker matching is now done with trymatch() (independent of keywords).
- * 
- * Revision 3.4  83/02/18  17:37:49  wft
- * removed printing of new line after last file.
- *
- * Revision 3.3  82/12/04  12:48:55  wft
- * Added LOCKER.
- *
- * Revision 3.2  82/11/28  18:24:17  wft
- * removed Suffix; added ungetc to avoid skipping over trailing KDELIM.
- *
- * Revision 3.1  82/10/13  15:58:51  wft
- * fixed type of variables receiving from getc() (char-->int).
-*/
-
 #include  "rcsbase.h"
 
 static int match P((FILE*));
 static void scanfile P((FILE*,char const*,int));
 
-mainProg(identId, "ident", "ident.c,v 1.1.1.1 1993/06/18 04:22:11 jkh Exp")
+mainProg(identId, "ident", "$Id: ident.c,v 1.2 1993/08/02 17:47:04 mycroft Exp $")
 /*  Ident searches the named files for all occurrences
  *  of the pattern $keyword:...$, where the keywords are
  *  Author, Date, Header, Id, Log, RCSfile, Revision, Source, and State.

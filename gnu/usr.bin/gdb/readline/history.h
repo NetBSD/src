@@ -1,4 +1,7 @@
-/* History.h -- the names of functions that you can call in history. */
+/* History.h -- the names of functions that you can call in history.
+
+	$Id: history.h,v 1.2 1993/08/02 17:40:37 mycroft Exp $
+*/
 
 typedef struct _hist_entry {
   char *line;

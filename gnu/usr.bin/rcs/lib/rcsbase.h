@@ -1,8 +1,7 @@
-
 /*
  *                     RCS common definitions and data structures
  */
-#define RCSBASE "rcsbase.h,v 1.1.1.1 1993/06/18 04:22:13 jkh Exp"
+#define RCSBASE "$Id: rcsbase.h,v 1.2 1993/08/02 17:47:18 mycroft Exp $"
 
 /* Copyright (C) 1982, 1988, 1989 Walter Tichy
    Copyright 1990, 1991 by Paul Eggert
@@ -39,118 +38,6 @@ Report problems and direct all questions to:
  * If you need to change the comment leaders, update the table comtable[]
  * in rcsfnms.c. (This can wait until you know what a comment leader is.)
  *****************************************************************************
- */
-
-
-/* rcsbase.h,v
- * Revision 1.1.1.1  1993/06/18  04:22:13  jkh
- * Updated GNU utilities
- *
- * Revision 5.11  1991/10/07  17:32:46  eggert
- * Support piece tables even if !has_mmap.
- *
- * Revision 5.10  1991/09/24  00:28:39  eggert
- * Remove unexported functions.
- *
- * Revision 5.9  1991/08/19  03:13:55  eggert
- * Add piece tables and other tuneups, and NFS workarounds.
- *
- * Revision 5.8  1991/04/21  11:58:20  eggert
- * Add -x, RCSINIT, MS-DOS support.
- *
- * Revision 5.7  1991/02/28  19:18:50  eggert
- * Try setuid() if seteuid() doesn't work.
- *
- * Revision 5.6  1991/02/26  17:48:37  eggert
- * Support new link behavior.  Move ANSI C / Posix declarations into conf.sh.
- *
- * Revision 5.5  1990/12/04  05:18:43  eggert
- * Use -I for prompts and -q for diagnostics.
- *
- * Revision 5.4  1990/11/01  05:03:35  eggert
- * Don't assume that builtins are functions; they may be macros.
- * Permit arbitrary data in logs.
- *
- * Revision 5.3  1990/09/26  23:36:58  eggert
- * Port wait() to non-Posix ANSI C hosts.
- *
- * Revision 5.2  1990/09/04  08:02:20  eggert
- * Don't redefine NAME_MAX, PATH_MAX.
- * Improve incomplete line handling.  Standardize yes-or-no procedure.
- *
- * Revision 5.1  1990/08/29  07:13:53  eggert
- * Add -kkvl.  Fix type typos exposed by porting.  Clean old log messages too.
- *
- * Revision 5.0  1990/08/22  08:12:44  eggert
- * Adjust ANSI C / Posix support.  Add -k, -V, setuid.  Don't call access().
- * Remove compile-time limits; use malloc instead.
- * Ansify and Posixate.  Add support for ISO 8859.
- * Remove snoop and v2 support.
- *
- * Revision 4.9  89/05/01  15:17:14  narten
- * botched previous USG fix 
- * 
- * Revision 4.8  89/05/01  14:53:05  narten
- * changed #include <strings.h> -> string.h for USG systems.
- * 
- * Revision 4.7  88/11/08  15:58:45  narten
- * removed defs for functions loaded from libraries
- * 
- * Revision 4.6  88/08/09  19:12:36  eggert
- * Shrink stdio code size; remove lint; permit -Dhshsize=nn.
- * 
- * Revision 4.5  87/12/18  17:06:41  narten
- * made removed BSD ifdef, now uses V4_2BSD
- * 
- * Revision 4.4  87/10/18  10:29:49  narten
- * Updating version numbers
- * Changes relative to 1.1 are actually relative to 4.2
- * 
- * Revision 1.3  87/09/24  14:02:25  narten
- * changes for lint
- * 
- * Revision 1.2  87/03/27  14:22:02  jenkins
- * Port to suns
- * 
- * Revision 4.2  83/12/20  16:04:20  wft
- * merged 3.6.1.1 and 4.1 (SMALLOG, logsize).
- * moved setting of STRICT_LOCKING to Makefile.
- * changed DOLLAR to UNKN (conflict with KDELIM).
- * 
- * Revision 4.1  83/05/04  09:12:41  wft
- * Added markers Id and RCSfile.
- * Added Dbranch for default branches.
- * 
- * Revision 3.6.1.1  83/12/02  21:56:22  wft
- * Increased logsize, added macro SMALLOG.
- * 
- * Revision 3.6  83/01/15  16:43:28  wft
- * 4.2 prerelease
- * 
- * Revision 3.6  83/01/15  16:43:28  wft
- * Replaced dbm.h with BYTESIZ, fixed definition of rindex().
- * Added variants of NCPFN and NCPPN for bsd 4.2, selected by defining V4_2BSD.
- * Added macro DELNUMFORM to have uniform format for printing delta text nodes.
- * Added macro DELETE to mark deleted deltas.
- *
- * Revision 3.5  82/12/10  12:16:56  wft
- * Added two forms of DATEFORM, one using %02d, the other %.2d.
- *
- * Revision 3.4  82/12/04  20:01:25  wft
- * added LOCKER, Locker, and USG (redefinition of rindex).
- *
- * Revision 3.3  82/12/03  12:22:04  wft
- * Added dbm.h, stdio.h, RCSBASE, RCSSEP, RCSSUF, WORKMODE, TMPFILE3,
- * PRINTDATE, PRINTTIME, map, and ctab; removed Suffix. Redefined keyvallength
- * using NCPPN. Changed putc() to abort on write error.
- *
- * Revision 3.2  82/10/18  15:03:52  wft
- * added macro STRICT_LOCKING, removed RCSUMASK.
- * renamed JOINFILE[1,2] to JOINFIL[1,2].
- *
- * Revision 3.1  82/10/11  19:41:17  wft
- * removed NBPW, NBPC, NCPW.
- * added typdef int void to aid compiling
  */
 
 

@@ -16,8 +16,10 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
+	$Id: div.h,v 1.3 1993/08/02 17:45:34 mycroft Exp $
+*/
 class diversion {
   friend void do_divert(int append);
   friend void end_diversions();

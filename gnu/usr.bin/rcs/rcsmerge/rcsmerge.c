@@ -32,76 +32,11 @@ Report problems and direct all questions to:
 
 */
 
-
-
-/* rcsmerge.c,v
- * Revision 1.1.1.1  1993/06/18  04:22:16  jkh
- * Updated GNU utilities
- *
- * Revision 5.7  1991/11/20  17:58:09  eggert
- * Don't Iopen(f, "r+"); it's not portable.
- *
- * Revision 5.6  1991/08/19  03:13:55  eggert
- * Add -r$.  Tune.
- *
- * Revision 5.5  1991/04/21  11:58:27  eggert
- * Add -x, RCSINIT, MS-DOS support.
- *
- * Revision 5.4  1991/02/25  07:12:43  eggert
- * Merging a revision to itself is no longer an error.
- *
- * Revision 5.3  1990/11/01  05:03:50  eggert
- * Remove unneeded setid check.
- *
- * Revision 5.2  1990/09/04  08:02:28  eggert
- * Check for I/O error when reading working file.
- *
- * Revision 5.1  1990/08/29  07:14:04  eggert
- * Add -q.  Pass -L options to merge.
- *
- * Revision 5.0  1990/08/22  08:13:41  eggert
- * Propagate merge's exit status.
- * Remove compile-time limits; use malloc instead.
- * Make lock and temp files faster and safer.  Ansify and Posixate.  Add -V.
- * Don't use access().  Tune.
- *
- * Revision 4.5  89/05/01  15:13:16  narten
- * changed copyright header to reflect current distribution rules
- * 
- * Revision 4.4  88/08/09  19:13:13  eggert
- * Beware merging into a readonly file.
- * Beware merging a revision to itself (no change).
- * Use execv(), not system(); yield exit status like diff(1)'s.
- * 
- * Revision 4.3  87/10/18  10:38:02  narten
- * Updating version numbers. Changes relative to version 1.1 
- * actually relative to 4.1
- * 
- * Revision 1.3  87/09/24  14:00:31  narten
- * Sources now pass through lint (if you ignore printf/sprintf/fprintf 
- * warnings)
- * 
- * Revision 1.2  87/03/27  14:22:36  jenkins
- * Port to suns
- * 
- * Revision 4.1  83/03/28  11:14:57  wft
- * Added handling of default branch.
- * 
- * Revision 3.3  82/12/24  15:29:00  wft
- * Added call to catchsig().
- *
- * Revision 3.2  82/12/10  21:32:02  wft
- * Replaced getdelta() with gettree(); improved error messages.
- *
- * Revision 3.1  82/11/28  19:27:44  wft
- * Initial revision.
- *
- */
 #include "rcsbase.h"
 
 static char const co[] = CO;
 
-mainProg(rcsmergeId, "rcsmerge", "rcsmerge.c,v 1.1.1.1 1993/06/18 04:22:16 jkh Exp")
+mainProg(rcsmergeId, "rcsmerge", "$Id: rcsmerge.c,v 1.2 1993/08/02 17:47:59 mycroft Exp $")
 {
 	static char const cmdusage[] =
 		"\nrcsmerge usage: rcsmerge -rrev1 [-rrev2] [-p] [-Vn] file";

@@ -17,6 +17,10 @@
 
    Written July 1992 by Mike Haertel.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: grep.c,v 1.3 1993/08/02 17:41:29 mycroft Exp $";
+#endif /* not lint */
+
 #include <errno.h>
 #include <stdio.h>
 

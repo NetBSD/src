@@ -1,4 +1,4 @@
-# Makefile for groff
+#	$Id: Makefile,v 1.4 1993/08/02 17:46:08 mycroft Exp $
 
 SUBDIR=		libgroff libdriver libbib\
 		groff troff nroff tbl pic eqn grops grotty grodvi\

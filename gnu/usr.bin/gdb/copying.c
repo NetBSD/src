@@ -1,3 +1,4 @@
+/*	$Id: copying.c,v 1.2 1993/08/02 17:40:54 mycroft Exp $ */
 /* Do not modify this file; it is created automatically
    by copying.awk.  */
 extern int immediate_quit;

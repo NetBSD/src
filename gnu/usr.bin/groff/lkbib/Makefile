@@ -1,4 +1,4 @@
-# Makefile for lkbib
+#	$Id: Makefile,v 1.3 1993/08/02 17:44:09 mycroft Exp $
 
 PROG=		lkbib
 SRCS=		lkbib.cc

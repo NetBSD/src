@@ -1,4 +1,5 @@
 // -*- C++ -*-
+//	$Id: text.h,v 1.2 1993/08/02 17:44:50 mycroft Exp $
 
 enum hadjustment {
   CENTER_ADJUST,

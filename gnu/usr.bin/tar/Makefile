@@ -1,3 +1,5 @@
+#	$Id: Makefile,v 1.5 1993/08/02 17:48:36 mycroft Exp $
+
 PROG=	tar
 SRCS=	buffer.c create.c diffarch.c extract.c fnmatch.c getdate.y \
 	getoldopt.c getopt.c getopt1.c gnu.c list.c mangle.c names.c port.c \

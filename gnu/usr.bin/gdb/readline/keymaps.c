@@ -19,6 +19,10 @@
    along with Readline; see the file COPYING.  If not, write to the Free
    Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
+#ifndef lint
+static char rcsid[] = "$Id: keymaps.c,v 1.2 1993/08/02 17:40:38 mycroft Exp $";
+#endif /* not lint */
+
 #include "keymaps.h"
 #include "emacs_keymap.c"
 

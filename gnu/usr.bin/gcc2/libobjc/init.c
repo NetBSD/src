@@ -18,6 +18,10 @@ You should have received a copy of the GNU General Public License along with
    GNU CC; see the file COPYING.  If not, write to the Free Software
    Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: init.c,v 1.2 1993/08/02 17:39:05 mycroft Exp $";
+#endif /* not lint */
+
 /* As a special exception, if you link this library with files compiled with
    GCC to produce an executable, this does not cause the resulting executable
    to be covered by the GNU General Public License. This exception does not

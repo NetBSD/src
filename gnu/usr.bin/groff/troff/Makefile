@@ -1,4 +1,4 @@
-# Makefile for troff
+#	$Id: Makefile,v 1.7 1993/08/02 17:45:32 mycroft Exp $
 
 PROG=		troff
 SRCS=		env.cc node.cc input.cc div.cc symbol.cc dictionary.cc reg.cc \

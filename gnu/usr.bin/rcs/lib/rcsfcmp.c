@@ -33,68 +33,6 @@ Report problems and direct all questions to:
 
 */
 
-
-
-
-
-/* rcsfcmp.c,v
- * Revision 1.1.1.1  1993/06/18  04:22:13  jkh
- * Updated GNU utilities
- *
- * Revision 5.9  1991/10/07  17:32:46  eggert
- * Count log lines correctly.
- *
- * Revision 5.8  1991/08/19  03:13:55  eggert
- * Tune.
- *
- * Revision 5.7  1991/04/21  11:58:22  eggert
- * Fix errno bug.  Add MS-DOS support.
- *
- * Revision 5.6  1991/02/28  19:18:47  eggert
- * Open work file at most once.
- *
- * Revision 5.5  1990/11/27  09:26:05  eggert
- * Fix comment leader bug.
- *
- * Revision 5.4  1990/11/01  05:03:42  eggert
- * Permit arbitrary data in logs and comment leaders.
- *
- * Revision 5.3  1990/09/11  02:41:15  eggert
- * Don't ignore differences inside keyword strings if -ko is set.
- *
- * Revision 5.1  1990/08/29  07:13:58  eggert
- * Clean old log messages too.
- *
- * Revision 5.0  1990/08/22  08:12:49  eggert
- * Don't append "checked in with -k by " log to logs,
- * so that checking in a program with -k doesn't change it.
- * Ansify and Posixate.  Remove lint.
- *
- * Revision 4.5  89/05/01  15:12:42  narten
- * changed copyright header to reflect current distribution rules
- * 
- * Revision 4.4  88/08/09  19:12:50  eggert
- * Shrink stdio code size.
- * 
- * Revision 4.3  87/12/18  11:40:02  narten
- * lint cleanups (Guy Harris)
- * 
- * Revision 4.2  87/10/18  10:33:06  narten
- * updting version number. Changes relative to 1.1 actually relative to 
- * 4.1
- * 
- * Revision 1.2  87/03/27  14:22:19  jenkins
- * Port to suns
- * 
- * Revision 4.1  83/05/10  16:24:04  wft
- * Marker matching now uses trymatch(). Marker pattern is now
- * checked precisely.
- * 
- * Revision 3.1  82/12/04  13:21:40  wft
- * Initial revision.
- *
- */
-
 /*
 #define FCMPTEST
 */
@@ -104,7 +42,7 @@ Report problems and direct all questions to:
 
 #include  "rcsbase.h"
 
-libId(fcmpId, "rcsfcmp.c,v 1.1.1.1 1993/06/18 04:22:13 jkh Exp")
+libId(fcmpId, "$Id: rcsfcmp.c,v 1.2 1993/08/02 17:47:21 mycroft Exp $")
 
 	static int
 discardkeyval(c, f)

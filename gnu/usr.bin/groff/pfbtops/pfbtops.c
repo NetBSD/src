@@ -1,5 +1,9 @@
 /* This translates ps fonts in .pfb format to ASCII ps files. */
 
+#ifndef lint
+static char rcsid[] = "$Id: pfbtops.c,v 1.2 1993/08/02 17:44:39 mycroft Exp $";
+#endif /* not lint */
+
 #include <stdio.h>
 
 /* Binary bytes per output line. */

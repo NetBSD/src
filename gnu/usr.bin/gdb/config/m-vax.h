@@ -15,7 +15,10 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with GDB; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. 
+
+	$Id: m-vax.h,v 1.2 1993/08/02 17:40:11 mycroft Exp $
+*/
 
 /* There is one known bug with VAX support that I don't know how to
    fix:  if you do a backtrace from a signal handler, you get something
