@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.50 2003/09/25 01:35:25 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.51 2003/09/25 22:26:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.50 2003/09/25 01:35:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.51 2003/09/25 22:26:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1642,19 +1642,15 @@ int
 tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct twe_softc *twe;
-#if 0
 	struct twe_ccb *ccb;
-#endif
 	struct twe_param *param;
 	struct twe_usercommand *tu;
 	struct twe_paramcommand *tp;
 	struct twe_drivecommand *td;
 	union twe_statrequest *ts;
 	void *pdata = NULL;
-	int rv, s, error = 0;
-#if 0
+	int s, error = 0;
 	u_int8_t cmdid;
-#endif
 
 	if (securelevel >= 2)
 		return (EPERM);
@@ -1665,35 +1661,41 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	td = (struct twe_drivecommand *)data;
 	ts = (union twe_statrequest *)data;
 
-	/* Hmm, compatible with FreeBSD */
+	/* This is intended to be compatible with the FreeBSD interface. */
 	switch (cmd) {
 	case TWEIO_COMMAND:
-#if 0
-		/* XXXJRT This whole path needs to be cleaned up. */
 		if (tu->tu_size > 0) {
-			if (tu->tu_size > TWE_SECTOR_SIZE)
+			/*
+			 * XXX Handle > TWE_SECTOR_SIZE?  Let's see if
+			 * it's really necessary, first.
+			 */
+			if (tu->tu_size > TWE_SECTOR_SIZE) {
+#ifdef TWE_DEBUG
+				printf("%s: TWEIO_COMMAND: tu_size = %d\n",
+				    twe->sc_dv.dv_xname, tu->tu_size);
+#endif
 				return EINVAL;
+			}
 			pdata = malloc(tu->tu_size, M_DEVBUF, M_WAITOK);
 			error = copyin(tu->tu_data, pdata, tu->tu_size);
 			if (error != 0)
 				goto done;
-			error = twe_ccb_alloc(twe, &ccb, TWE_CCB_PARAM |
+			ccb = twe_ccb_alloc_wait(twe,
 			    TWE_CCB_DATA_IN | TWE_CCB_DATA_OUT);
-		} else {
-			error = twe_ccb_alloc(twe, &ccb, 0);
-		}
-		if (rv != 0)
-			goto done;
-		cmdid = ccb->ccb_cmdid;
-		memcpy(ccb->ccb_cmd, &tu->tu_cmd, sizeof(struct twe_cmd));
-		ccb->ccb_cmdid = cmdid;
-		if (ccb->ccb_flags & TWE_CCB_PARAM) {
+			KASSERT(ccb != NULL);
 			ccb->ccb_data = pdata;
 			ccb->ccb_datasize = TWE_SECTOR_SIZE;
 			ccb->ccb_tx.tx_handler = 0;
 			ccb->ccb_tx.tx_context = pdata;
 			ccb->ccb_tx.tx_dv = &twe->sc_dv;
+		} else {
+			ccb = twe_ccb_alloc_wait(twe, 0);
+			KASSERT(ccb != NULL);
 		}
+		cmdid = ccb->ccb_cmdid;
+		memcpy(ccb->ccb_cmd, &tu->tu_cmd, sizeof(struct twe_cmd));
+		ccb->ccb_cmd->tc_cmdid = cmdid;
+
 		/* Map the transfer. */
 		if ((error = twe_ccb_map(twe, ccb)) != 0) {
 			twe_ccb_free(twe, ccb);
@@ -1701,17 +1703,28 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		}
 
 		/* Submit the command and wait. */
+		/* XXX Should use a callback and sleep, instead. */
 		s = splbio();
-		rv = twe_ccb_poll(twe, ccb, 5);
+		if (twe_ccb_poll(twe, ccb, 5))
+			printf("%s: TWEIO_COMMAND: CCB timed out\n",
+			    twe->sc_dv.dv_xname);
 		twe_ccb_unmap(twe, ccb);
+		splx(s);
+
+		/* Copy the command back to the ioctl argument. */
+		memcpy(&tu->tu_cmd, ccb->ccb_cmd, sizeof(struct twe_cmd));
+#ifdef TWE_DEBUG
+		printf("%s: TWEIO_COMMAND: tc_opcode = 0x%02x, "
+		    "tc_status = 0x%02x\n", twe->sc_dv.dv_xname,
+		    tu->tu_cmd.tc_opcode, tu->tu_cmd.tc_status);
+#endif
+
+		s = splbio();
 		twe_ccb_free(twe, ccb);
 		splx(s);
 
 		if (tu->tu_size > 0)
 			error = copyout(pdata, tu->tu_data, tu->tu_size);
-#else
-		rv = EOPNOTSUPP;
-#endif
 		goto done;
 
 	case TWEIO_STATS:
