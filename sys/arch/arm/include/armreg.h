@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.26 2003/09/03 02:07:09 mycroft Exp $	*/
+/*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -187,6 +187,7 @@
 #define CPU_ID_ARM946ES		0x41049460 /* XXX no MMU */
 #define	CPU_ID_ARM966ES		0x41049660 /* XXX no MMU */
 #define	CPU_ID_ARM966ESR1	0x41059660 /* XXX no MMU */
+#define CPU_ID_ARM1020E		0x4115a200 /* (AKA arm10 rev 1) */
 #define CPU_ID_ARM1022ES	0x4105a220
 #define CPU_ID_SA110		0x4401a100
 #define CPU_ID_SA1100		0x4401a110
