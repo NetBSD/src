@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.7 2003/05/17 16:11:52 thorpej Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.8 2004/07/20 15:44:20 dbj Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ struct ld_softc {
 	 * The following are filled by hardware specific attachment code.
 	 */
 	int	sc_flags;		/* control flags */
-	int	sc_secperunit;		/* # sectors in total */
+	uint64_t	sc_secperunit;		/* # sectors in total */
 	int	sc_secsize;		/* sector size in bytes */
 	int	sc_maxxfer;		/* max xfer size in bytes */
 	int	sc_maxqueuecnt;		/* maximum h/w queue depth */
