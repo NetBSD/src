@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.17 2001/05/22 04:09:41 mbw Exp $
+.\"	$NetBSD: prep,v 1.18 2001/05/25 08:04:14 mbw Exp $
 .
 .Ss2 Prepare yourself
 .
@@ -109,7 +109,7 @@ and search for
 and install the most recent version for your model.
 .Pp
 .(Note
-The most recent BootROMs available (4.1.7 and 4.1.8) as of April 2001 are
+The most recent BootROMs available (4.1.7 and 4.1.8) as of May 2001 are
 known to have some problems.  Some PowerBook G4 users find they are
 unable to boot 
 .Nx
@@ -569,7 +569,7 @@ You can check your Open Firmware settings with the
 .Pa printenv
 command:
 .(disp
-.Dl 0 > Ic "printenv"
+.No 0 > Ic "printenv"
 little-endian?      false               false
 real-mode?          false               false
 auto-boot?          false               true
@@ -638,7 +638,7 @@ You can check your Open Firmware settings with the
 .Pa printenv
 command:
 .(disp
-.Dl 0 > Ic "printenv"
+.No 0 > Ic "printenv"
 -------------- Partition: common -------- Signature: 0x70 ---------------
 little-endian?      false               false
 real-mode?          false               false
@@ -985,6 +985,9 @@ systems).
 .Tn MacOS No Ns .
 .Em "Either will also prevent Open Firmware 3 machines from booting"
 .Pa ofwboot.xcf Ns .
+.Em "You will need to use the installer's" 
+.Em Dq "Re-install sets" 
+.Em "option.  More information is provided below on this process."
 .Pp
 Unfortunately, the partitioning tools for
 .Nx
