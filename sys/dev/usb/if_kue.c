@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.5 2000/02/01 22:53:14 thorpej Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.6 2000/02/02 13:21:25 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -99,6 +99,9 @@
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 
 #include <sys/device.h>
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #endif
 
@@ -695,45 +698,50 @@ USB_ATTACH(kue)
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB,
 		  sizeof(struct ether_header));
 #endif
-#if RND > 0
+#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, USBDEVNAME(sc->kue_dev),
 	    RND_TYPE_NET, 0);
 #endif
 
 #endif /* __NetBSD__ */
 	splx(s);
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->kue_udev,
+			   USBDEV(sc->kue_dev));
+
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
 USB_DETACH(kue)
 {
 	USB_DETACH_START(kue, sc);
-	struct ifnet		*ifp;
+	struct ifnet		*ifp = GET_IFP(sc);
 	int			s;
 
-	s = splusb();
+	s = splusb();		/* XXX why? */
 
-#if defined(__FreeBSD__)
-	sc = device_get_softc(dev);
-#endif
-	ifp = GET_IFP(sc);
+	if (ifp->if_flags & IFF_RUNNING)
+		kue_stop(sc);
 
-	if (ifp != NULL) {
 #if defined(__NetBSD__)
-#if NBPFILTER > 0
-		bpfdetach(ifp);
+#if NRND > 0
+	rnd_detach_source(&sc->rnd_source);
 #endif
-		ether_ifdetach(ifp);
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+	ether_ifdetach(ifp);
 #endif /* __NetBSD__ */
-		if_detach(ifp);
-	}
 
-	if (sc->kue_ep[KUE_ENDPT_TX] != NULL)
-		usbd_abort_pipe(sc->kue_ep[KUE_ENDPT_TX]);
-	if (sc->kue_ep[KUE_ENDPT_RX] != NULL)
-		usbd_abort_pipe(sc->kue_ep[KUE_ENDPT_RX]);
-	if (sc->kue_ep[KUE_ENDPT_INTR] != NULL)
-		usbd_abort_pipe(sc->kue_ep[KUE_ENDPT_INTR]);
+	if_detach(ifp);
+
+#ifdef DIAGNOSTIC
+	if (sc->kue_ep[KUE_ENDPT_TX] != NULL ||
+	    sc->kue_ep[KUE_ENDPT_RX] != NULL ||
+	    sc->kue_ep[KUE_ENDPT_INTR] != NULL)
+		printf("%s: detach has active endpoints\n",
+		       USBDEVNAME(sc->kue_dev));
+#endif
 
 	if (sc->kue_mcfilters != NULL)
 		free(sc->kue_mcfilters, M_USBDEV);
@@ -913,6 +921,9 @@ kue_rxeof(xfer, priv, status)
 	DPRINTFN(10,("%s: %s: enter status=%d\n", USBDEVNAME(sc->kue_dev),
 		     __FUNCTION__, status));
 
+	if (sc->kue_dying)
+		return;
+
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return;
 
@@ -1022,6 +1033,9 @@ kue_txeof(xfer, priv, status)
 	struct ifnet		*ifp = GET_IFP(sc);
 	int			s;
 
+	if (sc->kue_dying)
+		return;
+
 	s = splimp();
 
 	DPRINTFN(10,("%s: %s: enter status=%d\n", USBDEVNAME(sc->kue_dev),
@@ -1114,6 +1128,9 @@ kue_start(ifp)
 	struct mbuf		*m_head = NULL;
 
 	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->kue_dev),__FUNCTION__));
+
+	if (sc->kue_dying)
+		return;
 
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
@@ -1272,6 +1289,9 @@ kue_ioctl(ifp, command, data)
 
 	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->kue_dev),__FUNCTION__));
 
+	if (sc->kue_dying)
+		return (EIO);
+
 	s = splimp();
 
 	switch(command) {
@@ -1364,6 +1384,9 @@ kue_watchdog(ifp)
 	struct kue_softc	*sc = ifp->if_softc;
 
 	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->kue_dev),__FUNCTION__));
+
+	if (sc->kue_dying)
+		return;
 
 	ifp->if_oerrors++;
 	printf("%s: watchdog timeout\n", USBDEVNAME(sc->kue_dev));
