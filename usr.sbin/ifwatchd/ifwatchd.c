@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.6 2002/04/14 11:41:43 martin Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.7 2002/04/15 17:32:18 tron Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -286,8 +287,8 @@ invoke_script(sa, dest, is_up, ifindex)
 	script = is_up? up_script : down_script;
 	if (script == NULL) return;
 
-	asprintf(&cmd, "%s \"%s\" %s \"%s\" \"%s\"", script, ifname, 
-			is_up?"up":"down", addr, daddr);
+	asprintf(&cmd, "%s \"%s\" " _PATH_DEVNULL " 9600 \"%s\" \"%s\"",
+			script, ifname, addr, daddr);
 	if (cmd == NULL) {
 	    fprintf(stderr, "out of memory\n");
 	    return;
