@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.22 2002/04/29 10:15:29 tsutsui Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.23 2002/05/05 18:29:06 tsutsui Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -1892,7 +1892,6 @@ adb_read_date_time(unsigned long *time)
 		while (0 == flag)	/* wait for result */
 			;
 
-		delay(10);
 		memcpy(time, output + 1, 4);
 		return 0;
 
