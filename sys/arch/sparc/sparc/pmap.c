@@ -42,7 +42,7 @@
  *	@(#)pmap.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pmap.c,v 1.39 93/04/20 11:17:12 torek Exp 
- * $Id: pmap.c,v 1.13.2.1 1994/08/11 22:38:53 mycroft Exp $
+ * $Id: pmap.c,v 1.13.2.2 1994/10/24 04:22:06 deraadt Exp $
  */
 
 /*
@@ -2196,8 +2196,7 @@ pmap_changeprot(pm, va, prot, wired)
 				goto useless;
 			}
 			if (vactype == VAC_WRITEBACK &&
-			    (newprot & PG_W) == 0 &&
-			    (tpte & (PG_W | PG_NC)) == PG_W)
+			    (tpte & (PG_U | PG_NC)) == PG_U)
 				cache_flush_page((int)va);
 		} else {
 			setcontext(0);
