@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.77 1997/06/30 20:23:56 fvdl Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.78 1997/07/04 20:22:12 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -622,7 +622,7 @@ nfs_setattr(v)
 			 */
 			if (vp->v_mount->mnt_flag & MNT_RDONLY)
 				return (EROFS);
- 			vnode_pager_setsize(vp, (u_long)vap->va_size);
+ 			vnode_pager_setsize(vp, vap->va_size);
  			if (vap->va_size == 0)
  				error = nfs_vinvalbuf(vp, 0,
  				     ap->a_cred, ap->a_p, 1);
@@ -630,7 +630,7 @@ nfs_setattr(v)
 				error = nfs_vinvalbuf(vp, V_SAVE,
 				     ap->a_cred, ap->a_p, 1);
 			if (error) {
-				vnode_pager_setsize(vp, (u_long)np->n_size);
+				vnode_pager_setsize(vp, np->n_size);
 				return (error);
 			}
  			tsize = np->n_size;
@@ -645,7 +645,7 @@ nfs_setattr(v)
 	error = nfs_setattrrpc(vp, vap, ap->a_cred, ap->a_p);
 	if (error && vap->va_size != VNOVAL) {
 		np->n_size = np->n_vattr.va_size = tsize;
-		vnode_pager_setsize(vp, (u_long)np->n_size);
+		vnode_pager_setsize(vp, np->n_size);
 	}
 	return (error);
 }

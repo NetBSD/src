@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.14 1997/06/11 10:09:43 bouyer Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.15 1997/07/04 20:22:16 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -185,7 +185,7 @@ ffs_truncate(v)
 	if ((error = getinoquota(oip)) != 0)
 		return (error);
 #endif
-	vnode_pager_setsize(ovp, (u_long)length);
+	vnode_pager_setsize(ovp, length);
 	fs = oip->i_fs;
 	osize = oip->i_ffs_size;
 	/*
