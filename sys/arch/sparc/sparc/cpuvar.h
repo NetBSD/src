@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.37 2001/07/10 15:02:50 mrg Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.38 2001/07/10 15:11:54 mrg Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -65,26 +65,26 @@ struct cpu_info;
 struct module_info {
 	int  cpu_type;
 	enum vactype vactype;
-	void (*cpu_match)__P((struct cpu_info *, struct module_info *, int));
-	void (*getcacheinfo)__P((struct cpu_info *sc, int node));
-	void (*hotfix) __P((struct cpu_info *));
-	void (*mmu_enable)__P((void));
-	void (*cache_enable)__P((void));
+	void (*cpu_match)(struct cpu_info *, struct module_info *, int);
+	void (*getcacheinfo)(struct cpu_info *sc, int node);
+	void (*hotfix)(struct cpu_info *);
+	void (*mmu_enable)(void);
+	void (*cache_enable)(void);
 	int  ncontext;			/* max. # of contexts (that we use) */
 
-	void (*get_syncflt)__P((void));
-	int  (*get_asyncflt)__P((u_int *, u_int *));
-	void (*sp_cache_flush)__P((caddr_t, u_int));
-	void (*sp_vcache_flush_page)__P((int));
-	void (*sp_vcache_flush_segment)__P((int, int));
-	void (*sp_vcache_flush_region)__P((int));
-	void (*sp_vcache_flush_context)__P((void));
-	void (*pcache_flush_page)__P((paddr_t, int));
-	void (*pure_vcache_flush)__P((void));
-	void (*cache_flush_all)__P((void));
-	void (*memerr)__P((unsigned, u_int, u_int, struct trapframe *));
-	void (*zero_page)__P((paddr_t));
-	void (*copy_page)__P((paddr_t, paddr_t));
+	void (*get_syncflt)(void);
+	int  (*get_asyncflt)(u_int *, u_int *);
+	void (*sp_cache_flush)(caddr_t, u_int);
+	void (*sp_vcache_flush_page)(int);
+	void (*sp_vcache_flush_segment)(int, int);
+	void (*sp_vcache_flush_region)(int);
+	void (*sp_vcache_flush_context)(void);
+	void (*pcache_flush_page)(paddr_t, int);
+	void (*pure_vcache_flush)(void);
+	void (*cache_flush_all)(void);
+	void (*memerr)(unsigned, u_int, u_int, struct trapframe *);
+	void (*zero_page)(paddr_t);
+	void (*copy_page)(paddr_t, paddr_t);
 };
 
 struct xpmsg {
@@ -260,15 +260,15 @@ struct cpu_info {
 	 */
 
 	/* bootup things: access to physical memory */
-	u_int	(*read_physmem) __P((u_int addr, int space));
-	void	(*write_physmem) __P((u_int addr, u_int data));
-	void	(*cache_tablewalks) __P((void));
-	void	(*mmu_enable) __P((void));
-	void	(*hotfix) __P((struct cpu_info *));
+	u_int	(*read_physmem)(u_int addr, int space);
+	void	(*write_physmem)(u_int addr, u_int data);
+	void	(*cache_tablewalks)(void);
+	void	(*mmu_enable)(void);
+	void	(*hotfix)(struct cpu_info *);
 
 	/* locore defined: */
-	void	(*get_syncflt) __P((void));		/* Not C-callable */
-	int	(*get_asyncflt) __P((u_int *, u_int *));
+	void	(*get_syncflt)(void);		/* Not C-callable */
+	int	(*get_asyncflt)(u_int *, u_int *);
 
 	/* Synchronous Fault Status; temporary storage */
 	struct {
@@ -283,41 +283,40 @@ struct cpu_info {
 	 * uses inter-processor signals to flush the cache on
 	 * all processor modules.
 	 */
-	void	(*cache_enable) __P((void));
-	void	(*cache_flush)__P((caddr_t, u_int));
-	void	(*sp_cache_flush)__P((caddr_t, u_int));
-	void	(*vcache_flush_page)__P((int));
-	void	(*sp_vcache_flush_page)__P((int));
-	void	(*vcache_flush_segment)__P((int, int));
-	void	(*sp_vcache_flush_segment)__P((int, int));
-	void	(*vcache_flush_region)__P((int));
-	void	(*sp_vcache_flush_region)__P((int));
-	void	(*vcache_flush_context)__P((void));
-	void	(*sp_vcache_flush_context)__P((void));
+	void	(*cache_enable)(void);
+	void	(*cache_flush)(caddr_t, u_int);
+	void	(*sp_cache_flush)(caddr_t, u_int);
+	void	(*vcache_flush_page)(int);
+	void	(*sp_vcache_flush_page)(int);
+	void	(*vcache_flush_segment)(int, int);
+	void	(*sp_vcache_flush_segment)(int, int);
+	void	(*vcache_flush_region)(int);
+	void	(*sp_vcache_flush_region)(int);
+	void	(*vcache_flush_context)(void);
+	void	(*sp_vcache_flush_context)(void);
 
-	void	(*pcache_flush_page)__P((paddr_t, int));
-	void	(*pure_vcache_flush)__P((void));
-	void	(*cache_flush_all)__P((void));
+	void	(*pcache_flush_page)(paddr_t, int);
+	void	(*pure_vcache_flush)(void);
+	void	(*cache_flush_all)(void);
 
 	/* Support for hardware-assisted page clear/copy */
-	void	(*zero_page)__P((paddr_t));
-	void	(*copy_page)__P((paddr_t, paddr_t));
+	void	(*zero_page)(paddr_t);
+	void	(*copy_page)(paddr_t, paddr_t);
 
 #if 0
 	/* hardware-assisted block operation routines */
-	void		(*hwbcopy)
-				__P((const void *from, void *to, size_t len));
-	void		(*hwbzero) __P((void *buf, size_t len));
+	void		(*hwbcopy)(const void *from, void *to, size_t len);
+	void		(*hwbzero)(void *buf, size_t len);
 
 	/* routine to clear mbus-sbus buffers */
-	void		(*mbusflush) __P((void));
+	void		(*mbusflush)(void);
 #endif
 
 	/*
 	 * Memory error handler; parity errors, unhandled NMIs and other
 	 * unrecoverable faults end up here.
 	 */
-	void	(*memerr)__P((unsigned, u_int, u_int, struct trapframe *));
+	void		(*memerr)(unsigned, u_int, u_int, struct trapframe *);
 
 	/* Inter-processor message area */
 	struct xpmsg msg;
@@ -417,12 +416,13 @@ struct cpu_info {
 /*
  * Related function prototypes
  */
-void getcpuinfo __P((struct cpu_info *sc, int node));
-void mmu_install_tables __P((struct cpu_info *));
-void pmap_alloc_cpu __P((struct cpu_info *));
-void pmap_globalize_boot_cpu __P((struct cpu_info *));
+void getcpuinfo (struct cpu_info *sc, int node);
+void mmu_install_tables (struct cpu_info *);
+void pmap_alloc_cpu (struct cpu_info *);
+void pmap_globalize_boot_cpu (struct cpu_info *);
 #if defined(MULTIPROCESSOR)
-void raise_ipi_wait_and_unlock __P((struct cpu_info *));
+void raise_ipi_wait_and_unlock (struct cpu_info *);
+void cross_call (int (*)(int, int, int, int), int, int, int, int, int);
 #endif
 
 extern struct cpu_info **cpus;
