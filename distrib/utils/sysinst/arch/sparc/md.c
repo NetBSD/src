@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5 1998/11/08 02:11:24 jonathan Exp $	*/
+/*	$NetBSD: md.c,v 1.6 1998/11/08 02:55:08 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -155,7 +155,6 @@ md_copy_filesystem()
 int
 md_make_bsd_partitions()
 {
-	FILE *f;
 	int i, part;
 	int remain;
 	char isize[20];
@@ -332,7 +331,7 @@ md_make_bsd_partitions()
 	msg_prompt (MSG_packname, "mydisk", bsddiskname, DISKNAME_SIZE);
 
 	/* save label to disk for MI code to update. */
-	(void) savenewlabel(lp, 8);		/* 8 partitions in  label */
+	(void) savenewlabel(bsdlabel, 8);	/* 8 partitions in  label */
 
 
 	/* Everything looks OK. */
