@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.103 1998/09/12 15:05:48 rvb Exp $	*/
+/*	$NetBSD: conf.c,v 1.104 1998/10/10 02:00:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -229,6 +229,9 @@ cdev_decl(wskbd);
 #include "wsmouse.h"
 cdev_decl(wsmouse);
 
+#include "scsibus.h"
+cdev_decl(scsibus);
+
 #ifdef __I4B_IS_INTEGRATED
 /* open, close, ioctl */
 #define cdev_i4bctl_init(c,n) { \
@@ -356,6 +359,7 @@ struct cdevsw	cdevsw[] =
 	cdev_midi_init(NMIDI,midi),	/* 58: MIDI I/O */
 	cdev_midi_init(NSEQUENCER,sequencer),	/* 59: sequencer I/O */
 	cdev_vc_nb_init(NVCODA,vc_nb_),  /* 60: coda file system psdev */
+	cdev_scsibus_init(NSCSIBUS,scsibus) /* 61: SCSI bus */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -458,6 +462,7 @@ static int chrtoblktbl[] = {
 	/* 58 */	NODEV,
 	/* 59 */	NODEV,
 	/* 60 */	NODEV,
+	/* 61 */	NODEV,
 };
 
 /*

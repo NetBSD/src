@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.11 1997/10/16 23:41:55 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.12 1998/10/10 02:00:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -147,6 +147,9 @@ dev_decl(filedesc,open);
 #include "ipfilter.h"
 #include "rnd.h"
 
+#include "scsibus.h"
+cdev_decl(scsibus);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -184,6 +187,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 30: */
 	cdev_ipf_init(NIPFILTER,ipl),	/* 31: ip-filter device */
 	cdev_rnd_init(NRND,rnd),	/* 32: random source pseudo-device */
+	cdev_scsibus_init(NSCSIBUS,scsibus), /* 33: SCSI bus */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);

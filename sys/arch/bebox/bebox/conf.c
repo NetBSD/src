@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 1998/09/28 09:33:12 sakamoto Exp $	*/
+/*	$NetBSD: conf.c,v 1.9 1998/10/10 02:00:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -198,6 +198,9 @@ cdev_decl(wskbd);
 #include "wsmouse.h"
 cdev_decl(wsmouse);
 
+#include "scsibus.h"
+cdev_decl(scsibus);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -258,6 +261,7 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSKBD, wskbd), /* 48: keyboards */
 	cdev_mouse_init(NWSMOUSE,
 			wsmouse),       /* 49: mice */
+	cdev_scsibus_init(NSCSIBUS,scsibus), /* 50: SCSI bus */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -349,6 +353,7 @@ static int chrtoblktbl[] = {
 	/* 47 */	NODEV,
 	/* 48 */	NODEV,
 	/* 49 */	NODEV,
+	/* 50 */	NODEV,
 };
 
 /*
