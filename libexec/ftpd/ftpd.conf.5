@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.conf.5,v 1.4 1999/12/18 05:51:35 lukem Exp $
+.\"	$NetBSD: ftpd.conf.5,v 1.5 1999/12/26 09:42:18 lukem Exp $
 .\"
 .\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 16, 1999
+.Dd December 26, 1999
 .Dt FTPD.CONF 5
 .Os
 .Sh NAME
@@ -312,6 +312,9 @@ The following defaults are used:
 .Pp
 .Bd -literal -offset indent -compact
 checkportcmd  none
+classtype     chroot CHROOT
+classtype     guest  GUEST
+classtype     real   REAL
 display       none
 maxtimeout    all    7200   # 2 hours
 modify        all
@@ -321,14 +324,17 @@ passive       all
 timeout       all    900    # 15 minutes
 umask         all    027
 upload        all
-classtype     guest  GUEST
 modify        guest  off
 umask         guest  0707
 .Ed
 .Sh FILES
-.Bl -tag -width /etc/ftpd.conf -compact
+.Bl -tag -width /usr/share/examples/ftpd/ftpd.conf -compact
 .It Pa /etc/ftpd.conf
 This file.
+.It Pa /usr/share/examples/ftpd/ftpd.conf
+A sample
+.Nm
+file.
 .El
 .Sh SEE ALSO
 .Xr ftpchroot 5 ,
