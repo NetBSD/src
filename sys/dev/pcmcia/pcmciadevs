@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.71 2000/01/25 15:43:59 thorpej Exp $
+$NetBSD: pcmciadevs,v 1.72 2000/01/25 21:58:06 soren Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@ vendor RAYTHEON			0x01a6	Raytheon
 vendor BAY			0x01eb  Bay Networks
 vendor IODATA			0x01bf	I-O DATA
 vendor LASAT			0x3401	Lasat Communications A/S
+vendor LEXARMEDIA		0x4e01	Lexar Media
 vendor COMPEX			0x8a01	Compex Corporation
 vendor CONTEC			0xc001	Contec
 vendor COREGA			0xc00f	Corega K.K.
@@ -125,6 +126,9 @@ product IBM ETHERJET		0x003f IBM EtherJet Ethernet
 
 /* I-O DATA */
 product IODATA PCLATE		0x2216 I-O DATA PCLA/TE
+
+/* Lexar Media */
+product LEXARMEDIA COMPATFLASH	0x0100 Lexar Media CompactFlash
 
 /* Linksys corporation */
 product LINKSYS ECARD_1		0x0265 Linksys EthernetCard or D-Link DE-650
