@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.60 2004/06/09 01:59:20 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.61 2004/10/29 19:20:36 dsl Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.60 2004/06/09 01:59:20 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.61 2004/10/29 19:20:36 dsl Exp $");
 #endif
 #endif
 
@@ -2583,7 +2583,7 @@ fill(bp, patp)
 	char *cp;
 
 	for (cp = patp; *cp; cp++)
-		if (!isxdigit(*cp))
+		if (!isxdigit((unsigned char)*cp))
 			errx(1, "patterns must be specified as hex digits");
 	ii = sscanf(patp,
 	    "%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x",
