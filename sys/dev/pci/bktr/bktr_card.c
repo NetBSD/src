@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_card.c,v 1.3 2003/03/11 23:11:21 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_card.c,v 1.18 2004/05/12 20:42:10 wiz Exp $	*/
+/*	$NetBSD: bktr_card.c,v 1.19 2004/07/24 12:52:45 mrg Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.18 2004/05/12 20:42:10 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.19 2004/07/24 12:52:45 mrg Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -669,7 +669,8 @@ probeCard(bktr_ptr_t bktr, int verbose, int unit)
                     goto checkTuner;
                 }
 
-                if ((subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT)
+                if ((subsystem_vendor_id == PCI_VENDOR_LEADTEK)
+                 || (subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT)
                  || (subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT_2)
                  || (subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT_3)) {
                     bktr->card = cards[(card = CARD_LEADTEK)];
