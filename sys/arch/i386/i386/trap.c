@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.186 2003/09/06 22:08:15 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.187 2003/09/12 23:20:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.186 2003/09/06 22:08:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.187 2003/09/12 23:20:26 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -410,6 +410,7 @@ copyfault:
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)rcr2();
 		switch (type) {
+		case T_PROTFLT|T_USER:
 		case T_SEGNPFLT|T_USER:
 		case T_STKFLT|T_USER:
 			ksi.ksi_code = BUS_ADRERR;
@@ -422,7 +423,7 @@ copyfault:
 			ksi.ksi_code = BUS_ADRALN;
 			break;
 		default:
-			ksi.ksi_code = 0;
+			KASSERT(1);
 			break;
 		}
 		goto trapsignal;
