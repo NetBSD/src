@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kern_lkm.c,v 1.16 1994/04/14 04:05:28 cgd Exp $
+ *	$Id: kern_lkm.c,v 1.17 1994/06/08 11:28:38 mycroft Exp $
  */
 
 /*
@@ -589,7 +589,7 @@ _lkm_vfs(lkmtp, cmd)
 		/*
 		 * Call init function for this VFS...
 		 */
-	 	(*(vfssw[i]->vfs_init))(args->lkm_flags);
+	 	(*(vfssw[i]->vfs_init))();
 
 		/* done! */
 		args->lkm_offset = i;	/* slot in vfssw[] */
