@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.154.2.8 2000/10/21 18:12:35 tv Exp $
+#	$NetBSD: Makefile,v 1.154.2.9 2000/10/24 04:20:01 tv Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -286,7 +286,8 @@ iso-image_md_post: iso-image_mi
 # nothing here -- look in the machine-dependent Makefile.inc
 
 snap_pre:
-	/bin/rm -rf ${RELEASEDIR}
+	# Could be a mount point, ignore the errors
+	-/bin/rm -rf ${RELEASEDIR}
 	${INSTALL} ${INSTPRIV} -d -o root -g wheel -m 755 ${RELEASEDIR}
 .for dir in ${INSTALLATION_DIRS}
 	${INSTALL} ${INSTPRIV} -d -o root -g wheel -m 755 ${RELEASEDIR}/${dir}
