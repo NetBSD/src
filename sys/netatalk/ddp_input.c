@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.1 1997/04/02 21:31:09 christos Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.2 1997/04/02 21:47:03 christos Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -51,7 +51,6 @@ int             ddp_firewall = 0;
 extern int      ddp_cksum;
 void            ddp_input __P((struct mbuf *, struct ifnet *,
     struct elaphdr *, int));
-void atintr     __P((void));
 
 /*
  * Could probably merge these two code segments a little better...
