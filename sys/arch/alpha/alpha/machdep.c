@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.118 1998/04/28 19:14:27 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.119 1998/04/29 02:13:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.118 1998/04/28 19:14:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119 1998/04/29 02:13:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -831,6 +831,13 @@ nobootinfo:
 		case 's': /* single-user (default, supported for sanity) */
 		case 'S':
 			boothowto |= RB_SINGLE;
+			break;
+
+		case '-':
+			/*
+			 * Just ignore this.  It's not required, but it's
+			 * common for it to be passed regardless.
+			 */
 			break;
 
 		default:
