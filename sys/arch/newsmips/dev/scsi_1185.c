@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_1185.c,v 1.8 2001/11/14 18:15:30 thorpej Exp $	*/
+/*	$NetBSD: scsi_1185.c,v 1.9 2002/05/31 21:43:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -109,7 +109,7 @@
 
 #define	splscsi splsc
 
-#if defined(mips) && defined(CPU_SINGLE)
+#if defined(__mips__) && defined(CPU_SINGLE)
 #define nops(x)		{ int i; for (i = 0; i < (x); i++) ; }
 #define	DMAC_WAIT0	;
 #else
@@ -166,7 +166,7 @@ static void clean_k2dcache __P((struct sc_scb *));
 extern void sc_done __P((struct sc_scb *));
 extern paddr_t kvtophys __P((vaddr_t));
 
-#if defined(mips) && defined(CPU_SINGLE)
+#if defined(__mips__) && defined(CPU_SINGLE)
 #define dma_reset(x) {						\
 	int s = splscsi();					\
 	dmac_gsel = (x); dmac_cctl = DM_RST; dmac_cctl = 0;	\
@@ -683,7 +683,7 @@ scsi_hardreset()
 	if (dmac_map_init == 0) {
 		dmac_map_init++;
 		for (i = 0; i < NDMACMAP; i++) {
-# if defined(mips) && defined(CPU_SINGLE)
+# if defined(__mips__) && defined(CPU_SINGLE)
 			dmac_gsel = CH_SCSI;
 			dmac_ctag = (u_char)i;
 			dmac_cmap = (u_short)0;
@@ -713,7 +713,7 @@ scsi_chipreset(sc)
 
 	s = splscsi();
 
-#if defined(mips) && defined(CPU_SINGLE)
+#if defined(__mips__) && defined(CPU_SINGLE)
 	dmac_gsel = CH_SCSI;
 	dmac_cwid = 4;				/* initialize DMAC SCSI chan */
 	*(unsigned VOLATILE char *)PINTEN |= DMA_INTEN;
@@ -795,7 +795,7 @@ scsi_softreset(sc)
 			if ((cs->scb->istatus & INST_EP) == 0)
 				cs->scb->istatus = (INST_EP|INST_HE);
 			cs->scb = NULL;
-#ifdef mips
+#ifdef __mips__
 			clean_k2dcache(scb);
 #endif
 			if (cs->intr_flg == SCSI_INTEN) {
@@ -962,7 +962,7 @@ sc_discon(sc)
 		if (sc->perr_flag[cs->chan_num] > 0)
 			cs->scb->istatus |= INST_EP|INST_PRE;
 		cs->scb = NULL;
-#ifdef mips
+#ifdef __mips__
 		clean_k2dcache(scb);
 #endif
 		if (cs->intr_flg == SCSI_INTEN) {
@@ -998,7 +998,7 @@ sc_pmatch(sc)
 	if (cs == NULL)
 		return;
 
-#if defined(mips) && defined(CPU_SINGLE)
+#if defined(__mips__) && defined(CPU_SINGLE)
 	dma_reset(CH_SCSI);
 #endif
 	phase = sc_cmonr & SC_PMASK;
@@ -1552,11 +1552,11 @@ sc_dio(sc, cs)
 		}
 	}
 
-#if defined(mips) && defined(CPU_SINGLE)
+#if defined(__mips__) && defined(CPU_SINGLE)
 	SET_CMD(sc, SCMD_TR_INFO|R0_DMA|R0_TRBE);
 #endif
 
-#if defined(mips) && defined(CPU_SINGLE)
+#if defined(__mips__) && defined(CPU_SINGLE)
 	dmac_gsel = CH_SCSI;
 	dmac_ctrcl = (u_char)(cs->act_trcnt & 0xff);
 	dmac_ctrcm = (u_char)((cs->act_trcnt >> 8) & 0xff);
@@ -1574,14 +1574,14 @@ sc_dio(sc, cs)
 		for (i = cs->act_tag; i < pages; i++) {
 			if ((pfn = scb->sc_map->mp_addr[i]) == 0)
 				panic("SCSI:sc_dma() zero entry");
-#if defined(mips) && defined(CPU_SINGLE)
+#if defined(__mips__) && defined(CPU_SINGLE)
 			dmac_gsel = CH_SCSI;
 			dmac_ctag = (u_char)tag++;
 			dmac_cmap = (u_short)pfn;
 #endif
 		}
 #ifdef MAP_OVER_ACCESS
-# if defined(mips) && defined(CPU_SINGLE)
+# if defined(__mips__) && defined(CPU_SINGLE)
 		dmac_gsel = CH_SCSI;
 		dmac_ctag = (u_char)tag++;
 		dmac_cmap = (u_short)pfn;
@@ -1594,7 +1594,7 @@ sc_dio(sc, cs)
 		pfn = kvtophys((vaddr_t)cs->act_point) >> PGSHIFT;
 		pages = (cs->act_trcnt >> PGSHIFT) + 2;
 		for (i = 0; i < pages; i++) {
-#if defined(mips) && defined(CPU_SINGLE)
+#if defined(__mips__) && defined(CPU_SINGLE)
 			dmac_gsel = CH_SCSI;
 			dmac_ctag = (u_char)tag++;
 			dmac_cmap = (u_short)pfn + i;
@@ -1602,14 +1602,14 @@ sc_dio(sc, cs)
 		}
 	}
 
-#if defined(mips) && defined(CPU_SINGLE)
+#if defined(__mips__) && defined(CPU_SINGLE)
 	dmac_gsel = CH_SCSI;
 	dmac_ctag = 0;
 #endif
 
 	if (phase == DAT_IN) {
 		sc->dma_stat = SC_DMAC_RD;
-#if defined(mips) && defined(CPU_SINGLE)
+#if defined(__mips__) && defined(CPU_SINGLE)
 		/*
 		 * auto pad flag is always on
 		 */
@@ -1622,7 +1622,7 @@ sc_dio(sc, cs)
 	}
 	else if (phase == DAT_OUT) {
 		sc->dma_stat = SC_DMAC_WR;
-#if defined(mips) && defined(CPU_SINGLE)
+#if defined(__mips__) && defined(CPU_SINGLE)
 		dmac_gsel = CH_SCSI;
 		dmac_cctl = DM_APAD;
 		DMAC_WAIT;
@@ -1753,7 +1753,7 @@ adjust_transfer(sc, cs)
 		sc->pad_start = 0;
 		remain_cnt = 0;
 	} else {
-# if defined(mips) && defined(CPU_SINGLE)
+# if defined(__mips__) && defined(CPU_SINGLE)
 		remain_cnt = GET_CNT();
 		remain_cnt -= sc->pad_cnt[cs->chan_num];
 		if (sc->dma_stat == SC_DMAC_WR) {
@@ -1775,7 +1775,7 @@ adjust_transfer(sc, cs)
 		cs->act_point += sent_byte;
 }
 
-#ifdef mips
+#ifdef __mips__
 static void
 clean_k2dcache(scb)
 	struct sc_scb *scb;
