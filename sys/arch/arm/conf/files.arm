@@ -1,1 +1,5 @@
-#	$NetBSD: files.arm,v 1.1 2001/01/10 18:33:47 bjh21 Exp $
+#	$NetBSD: files.arm,v 1.2 2001/01/11 23:27:26 bjh21 Exp $
+
+file	arch/arm/arm/in_cksum_arm.c		inet
+file	netinet/in4_cksum.c			inet
+file	netns/ns_cksum.c			ns

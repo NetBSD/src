@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum_arm32.c,v 1.2 1998/08/15 03:02:33 mycroft Exp $	*/
+/*	$NetBSD: in_cksum_arm.c,v 1.1 2001/01/11 23:27:27 bjh21 Exp $	*/
 
 /*
  * ARM version:
