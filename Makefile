@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.133 2001/10/04 17:59:49 tv Exp $
+#	$NetBSD: Makefile,v 1.134 2001/10/08 23:42:21 tv Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -69,7 +69,7 @@ _J= -j${NBUILDJOBS}
 
 SUBDIR+= lib include bin libexec sbin usr.bin usr.sbin share sys
 .if make(cleandir) || make(obj)
-SUBDIR+= distrib
+SUBDIR+= distrib tools
 .ifdef MAKEOBJDIRPREFIX
 SUBDIR+= etc
 .endif
