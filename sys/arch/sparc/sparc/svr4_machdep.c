@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.44 2002/03/31 22:21:03 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.45 2002/05/31 19:49:42 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -539,7 +539,6 @@ svr4_trap(type, p)
 {
 	int n;
 	struct trapframe *tf = p->p_md.md_tf;
-	extern struct emul emul_svr4;
 
 	if (p->p_emul != &emul_svr4)
 		return 0;
