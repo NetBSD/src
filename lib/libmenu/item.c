@@ -1,4 +1,4 @@
-/*	$NetBSD: item.c,v 1.7 2001/06/13 10:45:59 wiz Exp $	*/
+/*	$NetBSD: item.c,v 1.7.2.1 2003/10/02 09:58:28 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -248,6 +248,9 @@ new_item(char *name, char *description)
 {
         ITEM *new_one;
 
+	if (name == NULL)
+		return NULL;
+
 	  /* allocate a new item structure for ourselves */
         if ((new_one = (ITEM *)malloc(sizeof(ITEM))) == NULL)
                 return NULL;
@@ -267,18 +270,26 @@ new_item(char *name, char *description)
         
         strcpy(new_one->name.string, name);
 
+	if (description == NULL)
+		new_one->description.length = 0;
+	else {
 	  /* fill in the description structure, stash the length then
 	     allocate room for description string and copy it in */
-        new_one->description.length = strlen(description);
-        if ((new_one->description.string = (char *)
-             malloc(sizeof(char) * new_one->description.length + 1)) == NULL) {
-		  /* malloc has failed - free up allocated memory and return */
-		free(new_one->name.string);
-		free(new_one);
-		return NULL;
-	}
+        	new_one->description.length = strlen(description);
+        	if ((new_one->description.string =
+		    (char *) malloc(sizeof(char) *
+		    new_one->description.length + 1)) == NULL) {
+		  	/*
+			 * malloc has failed
+			 * - free up allocated memory and return
+			 */
+			free(new_one->name.string);
+			free(new_one);
+			return NULL;
+		}
 	
-	strcpy(new_one->description.string, description);
+		strcpy(new_one->description.string, description);
+	}
 
 	return new_one;
 }
@@ -298,7 +309,8 @@ free_item(ITEM *item)
 
 	  /* no connections, so free storage starting with the strings */
 	free(item->name.string);
-	free(item->description.string);
+	if (item->description.length)
+		free(item->description.string);
 	free(item);
 	return E_OK;
 }
