@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.302 2002/07/11 15:30:03 scw Exp $
+#	$NetBSD: bsd.own.mk,v 1.303 2002/07/17 18:46:14 fredette Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -312,7 +312,6 @@ MKGCC:=	no
 # The m68000 port is incomplete.
 .if ${MACHINE_ARCH} == "m68000"
 NOPIC=		# defined
-NOPROFILE=	# defined
 .endif
 
 # The hppa port is incomplete.
