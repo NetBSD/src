@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.4 2001/05/26 19:06:09 marcus Exp $
+#	$NetBSD: MAKEDEV,v 1.5 2001/05/27 21:13:50 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -22,6 +22,13 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	@(#)MAKEDEV	5.2 (Berkeley) 6/22/90
+#
+###########################################################################
+#
+#   PLEASE RUN "cd ../share/man/man8 ; perl5 MAKEDEV2manpage.pl"
+#   AFTER CHANGING THIS FILE, AND COMMIT THE UPDATED MANPAGE!
+#
+###########################################################################
 #
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
@@ -55,8 +62,6 @@
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
-#
-# Call units:
 #
 # Special purpose devices:
 #	fd	file descriptors
