@@ -3,7 +3,7 @@
    Definitions for hashing... */
 
 /*
- * Copyright (c) 1995, 1996 The Internet Software Consortium.
+ * Copyright (c) 1996-1999 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,23 +34,38 @@
  * SUCH DAMAGE.
  *
  * This software has been written for the Internet Software Consortium
- * by Ted Lemon <mellon@fugue.com> in cooperation with Vixie
- * Enterprises.  To learn more about the Internet Software Consortium,
- * see ``http://www.vix.com/isc''.  To learn more about Vixie
- * Enterprises, see ``http://www.vix.com''.
+ * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
+ * To learn more about the Internet Software Consortium, see
+ * ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
+ * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
+ * ``http://www.nominum.com''.
  */
 
 #define DEFAULT_HASH_SIZE	97
 
+typedef int (*hash_reference) (void *, void *, const char *, int);
+typedef int (*hash_dereference) (void *, const char *, int);
+
 struct hash_bucket {
 	struct hash_bucket *next;
-	unsigned char *name;
-	int len;
-	unsigned char *value;
+	const unsigned char *name;
+	unsigned len;
+	void *value;
 };
+
+typedef int (*hash_comparator_t)(const void *, const void *, size_t);
 
 struct hash_table {
-	int hash_count;
+	unsigned hash_count;
 	struct hash_bucket *buckets [DEFAULT_HASH_SIZE];
+	hash_reference referencer;
+	hash_dereference dereferencer;
+	hash_comparator_t cmp;
+	int (*do_hash) (const unsigned char *, unsigned, unsigned);
 };
 
+struct named_hash {
+	struct named_hash *next;
+	const char *name;
+	struct hash_table *hash;
+};
