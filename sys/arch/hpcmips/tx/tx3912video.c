@@ -1,7 +1,7 @@
-/*	$NetBSD: tx3912video.c,v 1.9 2000/04/03 03:35:38 sato Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.10 2000/04/24 13:02:13 uch Exp $ */
 
 /*
- * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
+ * Copyright (c) 1999, 2000 UCHIYAMA Yasushi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -9,22 +9,23 @@
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the developer may NOT be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
 #include "opt_tx39_debug.h"
 #include "hpcfb.h"
 
@@ -34,7 +35,7 @@
 #include <sys/extent.h>
 
 #include <machine/bus.h>
-#include <machine/bootinfo.h> /* bootinfo */
+#include <machine/bootinfo.h>
 
 #include <hpcmips/tx/tx39var.h>
 #include <hpcmips/tx/tx3912videovar.h>
@@ -48,31 +49,20 @@
 #endif
 #include <machine/autoconf.h> /* XXX */
 
-#undef TX3912VIDEO_DEBUG
+#define TX3912VIDEO_DEBUG
 
-void tx3912video_framebuffer_init __P((tx_chipset_tag_t, u_int32_t, 
-				       u_int32_t));
-int  tx3912video_framebuffer_alloc __P((tx_chipset_tag_t, u_int32_t, 
-					int, int, int, u_int32_t*, 
-					u_int32_t*));
-void tx3912video_reset __P((tx_chipset_tag_t));
-void tx3912video_resolution_init __P((tx_chipset_tag_t, int, int));
-int  tx3912video_fbdepth __P((tx_chipset_tag_t, int));
+static struct tx3912video_chip {
+	tx_chipset_tag_t vc_tc;
 
-int	tx3912video_match __P((struct device*, struct cfdata*, void*));
-void	tx3912video_attach __P((struct device*, struct device*, void*));
-int	tx3912video_print __P((void*, const char*));
-
-struct tx3912video_chip {
-	u_int32_t vc_fbaddr;
-	u_int32_t vc_fbsize;
-	int	vc_fbdepth;
-	int	vc_fbwidth;
-	int	vc_fbheight;
+	paddr_t vc_fbaddr;
+	size_t vc_fbsize;
+	int vc_fbdepth;
+	int vc_fbwidth;
+	int vc_fbheight;
 
 	void (*vc_drawline) __P((int, int, int, int));
 	void (*vc_drawdot) __P((int, int));
-};
+} tx3912video_chip;
 
 struct tx3912video_softc {
 	struct device sc_dev;
@@ -80,19 +70,22 @@ struct tx3912video_softc {
 	struct tx3912video_chip *sc_chip;
 };
 
-struct fb_attach_args {
-	const char *fba_name;
-};
+void tx3912video_framebuffer_init __P((struct tx3912video_chip *));
+int  tx3912video_framebuffer_alloc __P((struct tx3912video_chip *, paddr_t,
+					paddr_t *));
+void tx3912video_reset __P((struct tx3912video_chip *));
+void tx3912video_resolution_init __P((struct tx3912video_chip *));
+
+int	tx3912video_match __P((struct device *, struct cfdata *, void *));
+void	tx3912video_attach __P((struct device *, struct device *, void *));
+int	tx3912video_print __P((void *, const char *));
 
 struct cfattach tx3912video_ca = {
 	sizeof(struct tx3912video_softc), tx3912video_match, 
 	tx3912video_attach
 };
 
-/* console */
-struct tx3912video_chip tx3912video_chip;
-
-void	tx3912video_attach_drawfunc __P((struct tx3912video_chip*));
+void	__tx3912video_attach_drawfunc __P((struct tx3912video_chip*));
 
 int
 tx3912video_match(parent, cf, aux)
@@ -100,7 +93,7 @@ tx3912video_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	return 1;
+	return (1);
 }
 
 void
@@ -109,23 +102,28 @@ tx3912video_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct txsim_attach_args *ta = aux;
-	struct tx3912video_softc *sc = (void*)self;
-	tx_chipset_tag_t tc = ta->ta_tc;
-	struct mainbus_attach_args ma; /* XXX */
-	txreg_t reg;
+	struct tx3912video_softc *sc = (void *)self;
+	struct tx3912video_chip *chip;
+	const char *depth_print[] = { 
+		[TX3912_VIDEOCTRL1_BITSEL_MONOCHROME] = "monochrome",
+		[TX3912_VIDEOCTRL1_BITSEL_2BITGREYSCALE] = "2bit greyscale",
+		[TX3912_VIDEOCTRL1_BITSEL_4BITGREYSCALE] = "4bit greyscale",
+		[TX3912_VIDEOCTRL1_BITSEL_8BITCOLOR] = "8bit color"
+	};
 
-	sc->sc_chip = &tx3912video_chip;
+	sc->sc_chip = chip = &tx3912video_chip;
 
-	printf(": ");
-	tx3912video_fbdepth(tc, 1);
-	printf(", frame buffer 0x%08x-0x%08x", sc->sc_chip->vc_fbaddr, 
-	       sc->sc_chip->vc_fbaddr + sc->sc_chip->vc_fbsize);
-	
-	printf("\n");
+	/* print video module information */
+	printf(": %s, frame buffer 0x%08x-0x%08x\n",
+	       depth_print[(ffs(chip->vc_fbdepth) - 1) & 0x3],
+	       (unsigned)chip->vc_fbaddr, 
+	       (unsigned)(chip->vc_fbaddr + chip->vc_fbsize));
 
+	/* if serial console, power off video module */
 #ifndef TX3912VIDEO_DEBUG
 	if (bootinfo->bi_cnuse & BI_CNUSE_SERIAL) {
+		tx_chipset_tag_t tc = ta->ta_tc;
+		txreg_t reg;
 		printf("%s: power off\n", sc->sc_dev.dv_xname);
 		reg = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);
 		reg &= ~(TX3912_VIDEOCTRL1_DISPON |
@@ -134,9 +132,9 @@ tx3912video_attach(parent, self, aux)
 	}
 #endif /* TX3912VIDEO_DEBUG */
 
-	/* attach debug draw routine */
-	tx3912video_attach_drawfunc(sc->sc_chip);
-
+	/* attach debug draw routine (debugging use) */
+	__tx3912video_attach_drawfunc(sc->sc_chip);
+	
 	/* Attach frame buffer device */
 #if NHPCFB > 0
 	if (!(bootinfo->bi_cnuse & BI_CNUSE_SERIAL)) {
@@ -144,9 +142,12 @@ tx3912video_attach(parent, self, aux)
 			panic("tx3912video_attach: can't init fb console");
 		}
 	}
-	ma.ma_name = "bivideo"; /* XXX */
-	config_found(self, &ma, tx3912video_print);
-#endif
+	{
+		struct mainbus_attach_args ma; /* XXX */
+		ma.ma_name = "bivideo"; /* XXX */
+		config_found(self, &ma, tx3912video_print);
+	}
+#endif /* NHPCFB > 0 */
 }
 
 int
@@ -154,32 +155,31 @@ tx3912video_print(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-	return pnp ? QUIET : UNCONF;
+	return (pnp ? QUIET : UNCONF);
 }
 
 int
-tx3912video_init(tc, fb_start, fb_width, fb_height, fb_addr, fb_size, 
-		fb_line_bytes)
-	tx_chipset_tag_t tc;
-	u_int32_t fb_start; /* Physical address */
-	int fb_width, fb_height;
-	u_int32_t *fb_addr, *fb_size;
-	int *fb_line_bytes;
+tx3912video_init(fb_start, fb_end)
+	paddr_t fb_start, *fb_end;
 {
- 	u_int32_t addr, size;
-	int fb_depth;
+	struct tx3912video_chip *chip = &tx3912video_chip;
+	tx_chipset_tag_t tc;
 	txreg_t reg;
+	int fbdepth;
+	int error;
 	
-	/* Inquire bit depth */
-	fb_depth = tx3912video_fbdepth(tc, 0);
+	chip->vc_tc = tc = tx_conf_get_tag();
+	
+	reg = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);	
+	fbdepth = 1 << (TX3912_VIDEOCTRL1_BITSEL(reg));
 
-	switch (fb_depth) {
+	switch (fbdepth) {
 	case 2:
 		bootinfo->fb_type = BIFB_D2_M2L_0;
 		break;
 	case 4:
 		/* XXX should implement rasops4.c */
-		fb_depth = 2;
+		fbdepth = 2;
 		bootinfo->fb_type = BIFB_D2_M2L_0;
 		reg = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);	
 		TX3912_VIDEOCTRL1_BITSEL_CLR(reg);
@@ -192,77 +192,82 @@ tx3912video_init(tc, fb_start, fb_width, fb_height, fb_addr, fb_size,
 		break;
 	}
 
-	tx3912video_chip.vc_fbdepth = fb_depth;
-	tx3912video_chip.vc_fbwidth = fb_width;
-	tx3912video_chip.vc_fbheight= fb_height;
+	tx3912video_chip.vc_fbdepth = fbdepth;
+	tx3912video_chip.vc_fbwidth = bootinfo->fb_width;
+	tx3912video_chip.vc_fbheight= bootinfo->fb_height;
 
-	
 	/* Allocate framebuffer area */
-	if (tx3912video_framebuffer_alloc(tc, fb_start, fb_width, fb_height,
-					 fb_depth, &addr, &size)) {
-		return 1;
-	}
+	error = tx3912video_framebuffer_alloc(chip, fb_start, fb_end);
+	if (error != 0)
+		return (1);
+
 #if notyet 
-	tx3912video_resolution_init(tc, fb_width, fb_height);
+	tx3912video_resolution_init(chip);
 #else
 	/* Use Windows CE setting. */
 #endif
 	/* Set DMA transfer address to VID module */
-	tx3912video_framebuffer_init(tc, addr, size);
+	tx3912video_framebuffer_init(chip);
 	
 	/* Syncronize framebuffer addr to frame signal */
-	tx3912video_reset(tc);
+	tx3912video_reset(chip);
 
-	*fb_line_bytes = (fb_width * fb_depth) / 8;
-	*fb_addr = addr; /* Phsical address */
-	*fb_size = size;
-
-	return 0;
+	bootinfo->fb_line_bytes = (chip->vc_fbwidth * fbdepth) / NBBY;
+	bootinfo->fb_addr = (void *)MIPS_PHYS_TO_KSEG1(chip->vc_fbaddr);
+	
+	return (0);
 }
 
  int
-tx3912video_framebuffer_alloc(tc, start, h, v, depth, fb_addr, fb_size)
-	tx_chipset_tag_t tc;
-	u_int32_t start;
-	int h, v, depth;
-	u_int32_t *fb_addr, *fb_size;
+tx3912video_framebuffer_alloc(chip, fb_start, fb_end)
+	struct tx3912video_chip *chip;
+	paddr_t fb_start, *fb_end; /* buffer allocation hint */
 {
-	struct extent_fixed ex_fixed[2];
+	struct extent_fixed ex_fixed[10];
 	struct extent *ex;
 	u_long addr, size;
-	int err;
+	int error;
 
-	/* Calcurate frame buffer size */
-	size = (h * v * depth) / 8;
-	
+	/* calcurate frame buffer size */
+	size = (chip->vc_fbwidth * chip->vc_fbheight * chip->vc_fbdepth) /
+		NBBY;
+
+	/* extent V-RAM region */
+	ex = extent_create("Frame buffer address", fb_start, *fb_end,
+			   0, (caddr_t)ex_fixed, sizeof ex_fixed,
+			   EX_NOWAIT);
+	if (ex == 0)
+		return (1);
+
 	/* Allocate V-RAM area */
-	if (!(ex = extent_create("Frame buffer address", start, 
-				 start + TX3912_FRAMEBUFFER_MAX, 
-				 0, (caddr_t)ex_fixed, sizeof ex_fixed,
- 				 EX_NOWAIT))) {
-		return 1;
-	}
-	if((err = extent_alloc_subregion(ex, start, start + size, size, 
-					 TX3912_FRAMEBUFFER_ALIGNMENT,
-					 TX3912_FRAMEBUFFER_BOUNDARY,
-					 EX_FAST|EX_NOWAIT, &addr))) {
-		return 1;
-	}
-	tx3912video_chip.vc_fbaddr = addr;
-	tx3912video_chip.vc_fbsize = size;
-	
-	*fb_addr = addr;
-	*fb_size = size;
+	error = extent_alloc_subregion(ex, fb_start, fb_start + size, size, 
+				       TX3912_FRAMEBUFFER_ALIGNMENT,
+				       TX3912_FRAMEBUFFER_BOUNDARY,
+				       EX_FAST|EX_NOWAIT, &addr);
+	extent_destroy(ex);
 
-	return 0;
+	if (error != 0) {
+		return (1);
+	}
+
+	chip->vc_fbaddr = addr;
+	chip->vc_fbsize = size;
+	
+	*fb_end = addr + size;
+
+	return (0);
 }
 
  void
-tx3912video_framebuffer_init(tc, fb_addr, fb_size)
-	tx_chipset_tag_t tc;
-	u_int32_t fb_addr, fb_size;
+tx3912video_framebuffer_init(chip)
+	struct tx3912video_chip *chip;
 {
-	u_int32_t reg, vaddr, bank, base;
+	u_int32_t fb_addr, fb_size, vaddr, bank, base;
+	txreg_t reg;
+	tx_chipset_tag_t tc = chip->vc_tc;
+
+	fb_addr = chip->vc_fbaddr;
+	fb_size = chip->vc_fbsize;
 
 	/*  XXX currently I don't set DFVAL, so force DF signal toggled on
          *  XXX each frame. */
@@ -271,7 +276,7 @@ tx3912video_framebuffer_init(tc, fb_addr, fb_size)
 	tx_conf_write(tc, TX3912_VIDEOCTRL1_REG, reg);
 
 	/* Set DMA transfer start and end address */
-
+	
 	bank = TX3912_VIDEOCTRL3_VIDBANK(fb_addr);
 	base = TX3912_VIDEOCTRL3_VIDBASEHI(fb_addr);
 	reg = TX3912_VIDEOCTRL3_VIDBANK_SET(0, bank);
@@ -292,18 +297,20 @@ tx3912video_framebuffer_init(tc, fb_addr, fb_size)
 
 	/* Clear frame buffer */
 	vaddr = MIPS_PHYS_TO_KSEG1(fb_addr);
-	bzero((void*)vaddr, fb_size);
+	memset((void*)vaddr, 0, fb_size);
 }
 
  void
-tx3912video_resolution_init(tc, h, v)
-	tx_chipset_tag_t tc;
-	int h;
-	int v;
+tx3912video_resolution_init(chip)
+	struct tx3912video_chip *chip;
 {
-	u_int32_t reg, val;
-	int split, bit8, horzval, lineval;
-
+	int h, v, split, bit8, horzval, lineval;
+	tx_chipset_tag_t tc = chip->vc_tc;
+	txreg_t reg;
+	u_int32_t val;
+	
+	h = chip->vc_fbwidth;
+	v = chip->vc_fbheight;
 	reg = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);
 	split = reg & TX3912_VIDEOCTRL1_DISPSPLIT;
 	bit8  = (TX3912_VIDEOCTRL1_BITSEL(reg) == 
@@ -332,41 +339,12 @@ tx3912video_resolution_init(tc, h, v)
 	tx_conf_write(tc, TX3912_VIDEOCTRL2_REG, reg);
 }
 
-int
-tx3912video_fbdepth(tc, verbose)
-	tx_chipset_tag_t tc;
-	int verbose;
-{
-	u_int32_t reg, val;
-
-	reg = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);	
-	val = TX3912_VIDEOCTRL1_BITSEL(reg);
-	switch (val) {
-	case TX3912_VIDEOCTRL1_BITSEL_8BITCOLOR:
-		if (verbose)
-			printf("8bit color");
-		return 8;
-	case TX3912_VIDEOCTRL1_BITSEL_4BITGREYSCALE:
-		if (verbose)
-			printf("4bit greyscale");
-		return 4;
-	case TX3912_VIDEOCTRL1_BITSEL_2BITGREYSCALE:
-		if (verbose)
-			printf("2bit greyscale");
-		return 2;
-	case TX3912_VIDEOCTRL1_BITSEL_MONOCHROME:
-		if (verbose)
-			printf("monochrome");
-		return 1;
-	}
-	return 0;
-}
-
 void
-tx3912video_reset(tc)
-	tx_chipset_tag_t tc;
+tx3912video_reset(chip)
+	struct tx3912video_chip *chip;
 {
-	u_int32_t reg;
+	tx_chipset_tag_t tc = chip->vc_tc;
+	txreg_t reg;
 	
 	reg = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);	
 
@@ -375,7 +353,7 @@ tx3912video_reset(tc)
 	tx_conf_write(tc, TX3912_VIDEOCTRL1_REG, reg);
 
 	/* Wait for end of frame */
-	delay(300 * 1000);
+	delay(30 * 1000);
 
 	/* Make sure to disable video logic */
 	reg &= ~TX3912_VIDEOCTRL1_ENVID;
@@ -538,7 +516,7 @@ DOTFUNC(4)
 DOTFUNC(8)
 
 void
-tx3912video_attach_drawfunc(vc)
+__tx3912video_attach_drawfunc(vc)
 	struct tx3912video_chip *vc;
 {
 	switch (vc->vc_fbdepth) {
