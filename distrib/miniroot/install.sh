@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.21 1999/10/07 00:07:05 sjg Exp $
+#	$NetBSD: install.sh,v 1.22 2000/04/11 08:26:34 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -246,11 +246,10 @@ case "$resp" in
 		echo $resp > /tmp/myname
 
 		echo -n "Enter DNS domain name: "
-		resp=""		# force at least one iteration
-		while [ "X${resp}" = X"" ]; do
-			getresp ""
-		done
-		FQDN=$resp
+		getresp "none"
+		if [ "X${resp}" != X"none" ]; then
+			FQDN=$resp
+		fi
 
 		configurenetwork
 
@@ -263,8 +262,11 @@ case "$resp" in
 			fi
 		fi
 
-		echo -n	"Enter IP address of primary nameserver: [none] "
-		getresp "none"
+		resp="none"
+		if [ X${FQDN} != X ]; then
+			echo -n	"Enter IP address of primary nameserver: [none] "
+			getresp "none"
+		fi
 		if [ "X${resp}" != X"none" ]; then
 			echo "domain $FQDN" > /tmp/resolv.conf
 			echo "nameserver $resp" >> /tmp/resolv.conf
