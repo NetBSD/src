@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.15 2003/10/16 22:56:29 fvdl Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.16 2003/10/21 23:22:52 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.15 2003/10/16 22:56:29 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.16 2003/10/21 23:22:52 fvdl Exp $");
 
 #include "opt_mpacpi.h"
 #include "opt_mpbios.h"
@@ -1168,8 +1168,11 @@ mpbios_pci_attach_hook(struct device *parent, struct device *self,
 		return EINVAL;
 
 	mpb = &mp_busses[pba->pba_bus];
-	if (mpb->mb_name == NULL || strcmp(mpb->mb_name, "pci"))
-		return EINVAL;
+	if (mpb->mb_name != NULL) {
+		if (strcmp(mpb->mb_name, "pci"))
+			return EINVAL;
+	} else
+		mpb->mb_name = "pci";
 
 	mpb->mb_configured = 1;
 	mpb->mb_pci_bridge_tag = pba->pba_bridgetag;
