@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.2 2001/02/07 17:05:33 itojun Exp $	*/
+/*	$NetBSD: random.c,v 1.3 2001/02/09 00:44:35 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,12 +38,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: random.c,v 1.2 2001/02/07 17:05:33 itojun Exp $");
+__RCSID("$NetBSD: random.c,v 1.3 2001/02/09 00:44:35 itojun Exp $");
 #endif
 
 /*
  * Functions for stirring in additional noise into the
  * cryptographically strong PRNG.
+ * the functions are not using "arc4" in any ways, they are placed here
+ * to make porting easy.
  */
 
 #include <sys/types.h>
@@ -91,4 +93,3 @@ arc4random(void)
 	RAND_pseudo_bytes((u_char *)&v, sizeof(v));
 	return v;
 }
-
