@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.34 1999/03/14 22:42:12 is Exp $	*/
+/*	$NetBSD: clock.c,v 1.34.8.1 2000/11/20 19:58:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -360,7 +360,7 @@ clkread()
 #include <sys/resourcevar.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <amiga/amiga/clockioctl.h>
 #include <sys/specdev.h>
 #include <sys/vnode.h>

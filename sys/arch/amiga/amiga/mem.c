@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.24 1999/03/26 23:41:27 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.24.8.1 2000/11/20 19:58:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,19 +54,15 @@
 
 #include <machine/cpu.h>
 
-#include <vm/vm.h>
-
 #include <uvm/uvm_extern.h>
+
+#define mmread  mmrw
+#define mmwrite mmrw
+cdev_decl(mm);
 
 extern int kernel_reload_write(struct uio *uio);
 extern u_int lowram;
 static caddr_t devzeropage;
-
-int mmopen __P((dev_t, int, int, struct proc *));
-int mmclose __P((dev_t, int, int, struct proc *));
-int mmrw __P((dev_t, struct uio *, int));
-int mmmmap __P((dev_t, int, int));
-
 
 /*ARGSUSED*/
 int
@@ -139,7 +135,7 @@ mmrw(dev, uio, flags)
 			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
 			    VM_PROT_WRITE;
 			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
-			    trunc_page(v), prot, TRUE, prot);
+			    trunc_page(v), prot, prot|PMAP_WIRED);
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
@@ -163,9 +159,9 @@ mmrw(dev, uio, flags)
 				if (uio->uio_rw == UIO_READ) {
 					if (devzeropage == NULL) {
 						devzeropage = (caddr_t)
-						    malloc(CLBYTES, M_TEMP,
+						    malloc(NBPG, M_TEMP,
 						    M_WAITOK);
-						bzero(devzeropage, CLBYTES);
+						bzero(devzeropage, NBPG);
 					}
 					c = min(c, NBPG - (int)v);
 					v = (vm_offset_t) devzeropage;
@@ -193,10 +189,10 @@ mmrw(dev, uio, flags)
 			}
 			if (devzeropage == NULL) {
 				devzeropage = (caddr_t)
-				    malloc(CLBYTES, M_TEMP, M_WAITOK);
-				bzero(devzeropage, CLBYTES);
+				    malloc(NBPG, M_TEMP, M_WAITOK);
+				bzero(devzeropage, NBPG);
 			}
-			c = min(iov->iov_len, CLBYTES);
+			c = min(iov->iov_len, NBPG);
 			error = uiomove(devzeropage, c, uio);
 			continue;
 
@@ -232,10 +228,11 @@ unlock:
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 
 	return (-1);

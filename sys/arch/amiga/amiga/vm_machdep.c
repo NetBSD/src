@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.50 1999/09/25 21:47:05 is Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.50.2.1 2000/11/20 19:58:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,26 +55,37 @@
 #include <machine/cpu.h>
 #include <m68k/cacheops.h>
 
-#include <vm/vm.h>
 #include <sys/user.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/pte.h>
 
 /*
- * Finish a fork operation, with process p2 nearly set up.  Copy and
- * update the kernel stack and pcb, making the child ready to run,  
- * and marking it so that it can return differently than the parent.
- * When scheduled, child p2 will start from proc_trampoline(). cpu_fork()
- * returns once for forking parent p1. 
+ * Finish a fork operation, with process p2 nearly set up.
+ * Copy and update the pcb and trap frame, making the child ready to run.
+ * 
+ * Rig the child's kernel stack so that it will start out in
+ * proc_trampoline() and call child_return() with p2 as an
+ * argument. This causes the newly-created child process to go
+ * directly to user level with an apparent return value of 0 from
+ * fork(), while the parent process returns normally.
+ *
+ * p1 is the process being forked; if p1 == &proc0, we are creating
+ * a kernel thread, and the return path and argument are specified with
+ * `func' and `arg'.
+ *
+ * If an alternate user-level stack is requested (with non-zero values
+ * in both the stack and stacksize args), set up the user stack pointer
+ * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize)
+cpu_fork(p1, p2, stack, stacksize, func, arg)
 	register struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func) __P((void *));
+	void *arg;
 {
 	register struct pcb *pcb = &p2->p_addr->u_pcb;
 	register struct trapframe *tf;
@@ -95,8 +106,7 @@ cpu_fork(p1, p2, stack, stacksize)
 	*pcb = p1->p_addr->u_pcb;
 
 	/*
-	 * Copy the trap frame, and arrange for the child to return directly
-	 * through child_return().  Note the in-line cpu_set_kpc().
+	 * Copy the trap frame.
 	 */
 	tf = (struct trapframe *)((u_int)p2->p_addr + USPACE) - 1;
 	p2->p_md.md_regs = (int *)tf;
@@ -110,35 +120,9 @@ cpu_fork(p1, p2, stack, stacksize)
 
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_pc = (u_int)proc_trampoline;
-	pcb->pcb_regs[6] = (int)child_return;	/* A2 */
-	pcb->pcb_regs[7] = (int)p2;		/* A3 */
+	pcb->pcb_regs[6] = (int)func;		/* A2 */
+	pcb->pcb_regs[7] = (int)arg;		/* A3 */
 	pcb->pcb_regs[11] = (int)sf;		/* SSP */
-}
-
-/*
- * cpu_set_kpc:
- *
- * Arrange for in-kernel execution of a process to continue at the
- * named pc, as if the code at that address were called as a function
- * with the supplied argument.
- *
- * Note that it's assumed that when the named process returns, rei()
- * should be invoked, to return to user mode.
- */
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc	*p;
-	void		(*pc) __P((void *));
-	void		*arg;
-{
-	struct pcb *pcbp;
-	struct switchframe *sf;
-
-	pcbp = &p->p_addr->u_pcb;
-	sf = (struct switchframe *)pcbp->pcb_regs[11];
-	sf->sf_pc = (u_int)proc_trampoline;
-	pcbp->pcb_regs[6] = (int)pc;		/* A2 */
-	pcbp->pcb_regs[7] = (int)arg;		/* A3 */
 }
 
 /*
@@ -161,7 +145,6 @@ cpu_exit(p)
 /*
  * Move pages from one kernel virtual address to another.
  * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of CLSIZE.
  */
 void
 pagemove(from, to, size)
@@ -172,7 +155,7 @@ pagemove(from, to, size)
 	boolean_t rv;
 
 #ifdef DEBUG
-	if (size & CLOFSET)
+	if (size & PGOFSET)
 		panic("pagemove");
 #endif
 	while (size > 0) {
@@ -186,8 +169,8 @@ pagemove(from, to, size)
 		pmap_remove(pmap_kernel(),
 			    (vaddr_t)from, (vaddr_t)from + PAGE_SIZE);
 		pmap_enter(pmap_kernel(),
-			   (vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1,
-			   VM_PROT_READ|VM_PROT_WRITE);
+			   (vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE,
+			   VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -374,7 +357,8 @@ vmapbuf(bp, len)
 	do {
 		if (pmap_extract(upmap, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
-		pmap_enter(kpmap, kva, pa, VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+		pmap_enter(kpmap, kva, pa, VM_PROT_READ|VM_PROT_WRITE,
+		    PMAP_WIRED);
 		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;
 		len -= PAGE_SIZE;

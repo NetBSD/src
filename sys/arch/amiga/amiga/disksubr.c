@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.31 1999/06/02 21:09:03 is Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.31.2.1 2000/11/20 19:58:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -79,22 +79,12 @@ struct rdbmap {
 	} tab[0];
 };
 
-#define b_cylin b_resid
-#define baddr(bp) (void *)((bp)->b_un.b_addr)
+#define baddr(bp) (void *)((bp)->b_data)
 
 u_long rdbchksum __P((void *));
 struct adostype getadostype __P((u_long));
 struct rdbmap *getrdbmap __P((dev_t, void (*)(struct buf *), struct disklabel *,
     struct cpu_disklabel *));
-
-/* XXX unknown function but needed for /sys/scsi to link */
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
-	return;
-}
 
 /*
  * Attempt to read a disk label from a device
@@ -162,7 +152,7 @@ readdisklabel(dev, strat, lp, clp)
 	 */
 	for (nextb = 0; nextb < RDB_MAXBLOCKS; nextb++) {
 		bp->b_blkno = nextb;
-		bp->b_cylin = bp->b_blkno / lp->d_secpercyl;
+		bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
 #ifdef SD_C_ADJUSTS_NR
@@ -256,7 +246,7 @@ readdisklabel(dev, strat, lp, clp)
 	cindex = 0;
 	for (nextb = rbp->partbhead; nextb != RDBNULL; nextb = pbp->next) {
 		bp->b_blkno = nextb;
-		bp->b_cylin = bp->b_blkno / lp->d_secpercyl;
+		bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
 #ifdef SD_C_ADJUSTS_NR
@@ -450,12 +440,12 @@ done:
  */
 int
 setdisklabel(olp, nlp, openmask, clp)
-	register struct disklabel *olp, *nlp;
+	struct disklabel *olp, *nlp;
 	u_long openmask;
 	struct cpu_disklabel *clp;
 {
-	register int i;
-	register struct partition *opp, *npp;
+	int i;
+	struct partition *opp, *npp;
 
 	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
 	    dkcksum(nlp) != 0)
@@ -495,7 +485,7 @@ int
 writedisklabel(dev, strat, lp, clp)
 	dev_t dev;
 	void (*strat)(struct buf *);
-	register struct disklabel *lp;
+	struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {
 	struct rdbmap *bmap;
@@ -561,7 +551,7 @@ bounds_check_with_label(bp, lp, wlabel)
 	/*
 	 * calc cylinder for disksort to order transfers with
 	 */
-	bp->b_cylin = (bp->b_blkno + pp->p_offset) / lp->d_secpercyl;
+	bp->b_cylinder = (bp->b_blkno + pp->p_offset) / lp->d_secpercyl;
 	return(1);
 }
 

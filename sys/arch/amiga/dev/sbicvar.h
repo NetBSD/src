@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.14 1998/11/19 21:44:37 thorpej Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.14.10.1 2000/11/20 19:58:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,6 +40,7 @@
 #ifndef _SBICVAR_H_
 #define _SBICVAR_H_
 #include <sys/malloc.h>
+#include <sys/callout.h>
 
 /*
  * The largest single request will be MAXPHYS bytes which will require
@@ -105,6 +106,7 @@ struct sbic_tinfo {
 struct	sbic_softc {
 	struct	device sc_dev;
 	struct	isr sc_isr;
+	struct	callout sc_timo_ch;
 	struct	target_sync {
 		u_char	state;
 		u_char	period;
@@ -112,8 +114,8 @@ struct	sbic_softc {
 	} sc_sync[8];
 	u_char	target;			/* Currently active target */
 	u_char  lun;
-	struct	scsipi_link sc_link;	/* proto for sub devices */
 	struct	scsipi_adapter sc_adapter;
+	struct	scsipi_channel sc_channel;
 	sbic_regmap_t	sc_sbic;	/* the two SBIC pointers */
 	volatile void 	*sc_cregs;	/* driver specific regs */
 
@@ -225,7 +227,8 @@ struct buf;
 struct scsipi_xfer;
 
 void sbic_minphys __P((struct buf *bp));
-int sbic_scsicmd __P((struct scsipi_xfer *));
+void sbic_scsipi_request __P((struct scsipi_channel *,
+			scsipi_adapter_req_t, void *));
 void sbicinit __P((struct sbic_softc *));
 int  sbicintr __P((struct sbic_softc *));
 #ifdef DEBUG

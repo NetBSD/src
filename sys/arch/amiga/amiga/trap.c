@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.71 1999/09/25 21:47:05 is Exp $	*/
+/*	$NetBSD: trap.c,v 1.71.2.1 2000/11/20 19:58:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,6 +43,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
 #include "opt_ktrace.h"
 #include "opt_compat_netbsd.h"
@@ -62,9 +63,7 @@
 #include <sys/ktrace.h>
 #endif
 
-#include <vm/vm.h>
 #include <sys/user.h>
-#include <vm/pmap.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -218,7 +217,7 @@ userret(p, pc, oticks)
 	int pc;
 	u_quad_t oticks;
 {
-	int sig, s;
+	int sig;
 
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
@@ -227,18 +226,9 @@ userret(p, pc, oticks)
 
 	if (want_resched) {
 		/*
-		 * Since we are curproc, clock will normally just change
-		 * our priority without moving us from one queue to another
-		 * (since the running process is not on a queue.)
-		 * If that happened after we setrunqueue ourselves but before
-		 * we switch'ed, we might not be on the queue indicated by
-		 * our priority.
+		 * We are being preempted.
 		 */
-		s = splstatclock();
-		setrunqueue(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		mi_switch();
-		splx(s);
+		preempt(NULL);
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
 	}
@@ -250,7 +240,7 @@ userret(p, pc, oticks)
 		
 		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
 	}
-	curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
 void
@@ -403,7 +393,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 	 */
 	nss = 0;
 	if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr) {
-		nss = clrnd(btoc(USRSTACK - (unsigned)va));
+		nss = btoc(USRSTACK - (unsigned)va);
 		if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
 			rv = KERN_FAILURE;
 			goto nogo;
@@ -493,7 +483,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 	 */
 	if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr) {
 		if (rv == KERN_SUCCESS) {
-			nss = clrnd(btoc(USRSTACK-(unsigned)va));
+			nss = btoc(USRSTACK-(unsigned)va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 		} else if (rv == KERN_PROTECTION_FAILURE)
@@ -901,7 +891,7 @@ syscall(code, frame)
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, argsize, args);
+		ktrsyscall(p, code, argsize, args);
 #endif
 	if (error)
 		goto bad;
@@ -947,7 +937,7 @@ syscall(code, frame)
 	userret(p, frame.f_pc, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, code, error, rval[0]);
+		ktrsysret(p, code, error, rval[0]);
 #endif
 }
 
@@ -968,7 +958,7 @@ child_return(arg)
 	userret(p, f->f_pc, p->p_sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
+		ktrsysret(p, SYS_fork, 0, 0);
 #endif
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.93 1999/10/15 21:50:34 is Exp $
+#	$NetBSD: files.amiga,v 1.93.2.1 2000/11/20 19:58:26 bouyer Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -28,6 +28,20 @@ attach  mainbus at root
 
 device	cpu
 attach	cpu at mainbus
+
+# for bus_space
+
+define	amibus_bl
+file	arch/amiga/amiga/amiga_bus_simple_4.c
+
+define	amibus_ww
+file	arch/amiga/amiga/amiga_bus_simple_2word.c
+
+define amibus_wb
+file	arch/amiga/amiga/amiga_bus_simple_1word.c
+
+define	amibus_b16
+file	arch/amiga/amiga/amiga_bus_simple_16.c	amibus_b16
 
 # zorro expansion bus.
 device	zbus {}
@@ -218,6 +232,12 @@ device	hyper: supio
 attach	hyper at zbus
 file	arch/amiga/dev/hyper.c		hyper
 
+# IOBlix
+device	iobl: supio, amibus_b16
+attach	iobl at zbus with iobl_zbus
+file	arch/amiga/dev/ioblix_zbus.c	iobl_zbus
+
+
 attach	com at supio with com_supio
 file	arch/amiga/dev/com_supio.c	com_supio
 
@@ -285,28 +305,28 @@ attach	otgsc at zbus
 file	arch/amiga/dev/otgsc.c		otgsc needs-flag
 
 # ncr 57c710 controllers
-define	siop
-file	arch/amiga/dev/siop.c		siop
+define	asiop
+file	arch/amiga/dev/siop.c		asiop
 
 # PPI Zeus
-device	zssc: scsi, siop
+device	zssc: scsi, asiop
 attach	zssc at zbus
 file	arch/amiga/dev/zssc.c		zssc needs-flag
 
 # CSA Magnum
-device	mgnsc: scsi, siop
+device	mgnsc: scsi, asiop
 attach	mgnsc at zbus
 file	arch/amiga/dev/mgnsc.c		mgnsc needs-flag
 
 # MacroSystems USA Warp Engine
-device	wesc: scsi, siop
+device	wesc: scsi, asiop
 attach	wesc at zbus
 file	arch/amiga/dev/wesc.c		wesc needs-flag
 
 # C= A4091 & A4000T
-device	afsc: scsi, siop
+device	afsc: scsi, asiop
 attach	afsc at zbus
-device	aftsc: scsi, siop
+device	aftsc: scsi, asiop
 attach	aftsc at mainbus
 file	arch/amiga/dev/afsc.c		afsc | aftsc needs-flag
 
@@ -362,7 +382,7 @@ attach	idesc at mainbus
 file	arch/amiga/dev/idesc.c		idesc needs-flag
 
 # MacroSystem DraCo internal
-device	drsc: scsi, siop
+device	drsc: scsi, asiop
 attach	drsc at mainbus
 file  arch/amiga/dev/drsc.c           drsc needs-flag
 
@@ -383,7 +403,6 @@ file	dev/cons.c			ite | ser
 file	dev/cninit.c			ite | ser
 file	arch/amiga/amiga/amiga_init.c
 file	arch/amiga/amiga/autoconf.c
-file	arch/amiga/amiga/busfuncs.c
 file	arch/amiga/amiga/cia.c
 file	arch/amiga/amiga/conf.c
 file	arch/amiga/amiga/disksubr.c
@@ -399,7 +418,25 @@ file	arch/amiga/amiga/db_memrw.c	ddb
 file	arch/amiga/dev/md_root.c		memory_disk_hooks
 file	arch/m68k/m68k/cacheops.c
 
+define	gayle
+file	arch/amiga/amiga/gayle.c		gayle
+
+file	arch/amiga/dev/gayle_pcmcia.c		pccard
+device	pccard: pcmciabus, gayle
+attach	pccard at mainbus
+
+include "dev/pcmcia/files.pcmcia"
+include "dev/mii/files.mii"
+
+include "dev/ata/files.ata"
+major	{wd = 17}
+
+# Amiga 4000/1200 IDE using MI wdc
+attach	wdc at mainbus with wdc_amiga: gayle
+file	arch/amiga/dev/wdc_amiga.c	wdc_amiga
+
 major	{md = 15}	# Memory disk (for mini-kernel)
+major	{raid = 16}	# RAIDframe
 
 # Compatibility modules
 

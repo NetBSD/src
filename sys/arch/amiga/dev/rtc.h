@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.h,v 1.6 1999/03/14 22:42:12 is Exp $	*/
+/*	$NetBSD: rtc.h,v 1.6.8.1 2000/11/20 19:58:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -91,6 +91,9 @@ struct rtclock3000 {
 
 #define A3CONTROL1_HOLD_CLOCK	0
 #define A3CONTROL1_FREE_CLOCK	9
+
+/* mode1 registers used by us */
+#define leapyear year2
 
 #define A3BBC_SET_REG 	0xe0
 #define A3BBC_WRITE_REG	0xc2

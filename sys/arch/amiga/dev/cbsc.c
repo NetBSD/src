@@ -1,4 +1,4 @@
-/*	$NetBSD: cbsc.c,v 1.10 1999/09/30 22:59:52 thorpej Exp $	*/
+/*	$NetBSD: cbsc.c,v 1.10.2.1 2000/11/20 19:58:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -68,13 +68,6 @@ int	cbscmatch	__P((struct device *, struct cfdata *, void *));
 /* Linkup to the rest of the kernel */
 struct cfattach cbsc_ca = {
 	sizeof(struct cbsc_softc), cbscmatch, cbscattach
-};
-
-struct scsipi_device cbsc_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 /*
@@ -233,7 +226,7 @@ cbscattach(parent, self, aux)
 	/*
 	 * Configure interrupts.
 	 */
-	csc->sc_isr.isr_intr = (int (*)(void *))ncr53c9x_intr;
+	csc->sc_isr.isr_intr = ncr53c9x_intr;
 	csc->sc_isr.isr_arg  = sc;
 	csc->sc_isr.isr_ipl  = 2;
 	add_isr(&csc->sc_isr);
@@ -241,9 +234,9 @@ cbscattach(parent, self, aux)
 	/*
 	 * Now try to attach all the sub-devices
 	 */
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys; 
-	ncr53c9x_attach(sc, &cbsc_dev);
+	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
+	sc->sc_adapter.adapt_minphys = minphys;
+	ncr53c9x_attach(sc);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.141 1999/09/25 21:47:04 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.141.2.1 2000/11/20 19:58:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,14 +43,11 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/map.h>
@@ -60,7 +57,6 @@
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/clist.h>
-#include <sys/callout.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
@@ -73,16 +69,11 @@
 #include <sys/syscallargs.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
-#include <net/netisr.h>
-#define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
-#include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/pmap.h>
-#include <vm/vm_map.h>
-#include <vm/vm_object.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
+#include <net/netisr.h>
+#undef PS	/* XXX netccitt/pk.h conflict with machine/reg.h? */
+
+#define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <uvm/uvm_extern.h>
 
 #include <sys/sysctl.h>
@@ -109,40 +100,6 @@
 
 #include "fd.h"
 #include "ser.h"
-#include "arp.h"
-#include "ppp.h"
-
-#include <net/netisr.h>
-#include <net/if.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#if NARP > 0
-#include <netinet/if_inarp.h>
-#endif
-#include <netinet/ip_var.h>
-#endif 
-#ifdef INET6
-# ifndef INET
-#  include <netinet/in.h>
-# endif
-#include <netinet6/ip6.h>
-#include <netinet6/ip6_var.h>
-#endif
-#ifdef NS
-#include <netns/ns_var.h>
-#endif
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/clnp.h>
-#endif
-#ifdef NETATALK
-#include <netatalk/at_extern.h>
-#endif
-#if NPPP > 0
-#include <net/ppp_defs.h>
-#include <net/if_ppp.h>
-#endif
 
 /* prototypes */
 void identifycpu __P((void));
@@ -193,6 +150,9 @@ extern	u_int lowram;
 char	*cpu_type = "m68k";
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
+
+/* Our exported CPU info; we can have only one. */
+struct cpu_info cpu_info_store;
  
 /*
  * current open serial device speed;  used by some SCSI drivers to reduce
@@ -263,8 +223,8 @@ cpu_startup()
 
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
-		    msgbufpa + i * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
-		    VM_PROT_READ|VM_PROT_WRITE);
+		    msgbufpa + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
+		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
 	/*
@@ -291,7 +251,7 @@ cpu_startup()
 	 */
 	size = MAXBSIZE * nbuf;
 	if (uvm_map(kernel_map, (vm_offset_t *)&buffers, round_page(size),
-	    NULL, UVM_UNKNOWN_OFFSET,
+	    NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 	    UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("startup: cannot allocate VM for buffers");
@@ -314,7 +274,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vm_offset_t) buffers + (i * MAXBSIZE);
-		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -348,19 +308,12 @@ cpu_startup()
 				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
 				 FALSE, NULL);
 
-	/*
-	 * Initialize callouts
-	 */
-	callfree = callout;
-	for (i = 1; i < ncallout; i++)
-		callout[i-1].c_next = &callout[i];
-
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 	
 	/*
@@ -438,7 +391,6 @@ setregs(p, pack, stack)
  * Info for CTL_HW
  */
 char cpu_model[120];
-extern char version[];
 
 #if defined(M68060)
 int m68060_pcr_init = 0x21;	/* make this patchable */
@@ -685,11 +637,11 @@ cpu_dumpconf()
 	}
 	--dumplo;	/* XXX assume header fits in one block */
 	/*
-	 * Don't dump on the first CLBYTES (why CLBYTES?)
+	 * Don't dump on the first NBPG (why NBPG?)
 	 * in case the dump device includes a disk label.
 	 */
-	if (dumplo < btodb(CLBYTES))
-		dumplo = btodb(CLBYTES);
+	if (dumplo < btodb(NBPG))
+		dumplo = btodb(NBPG);
 }
 
 /*
@@ -720,7 +672,6 @@ dumpsys()
 	cpu_kcore_hdr_t *chdr_p;
 	char	dump_hdr[dbtob(1)];	/* XXX assume hdr fits in 1 block */
 
-	msgbufenabled = 0;
 	if (dumpdev == NODEV)
 		return;
 	/*
@@ -841,13 +792,13 @@ microtime(tvp)
 
 	*tvp = time;
 	tvp->tv_usec += clkread();
-	while (tvp->tv_usec > 1000000) {
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
 	if (tvp->tv_sec == lasttime.tv_sec &&
 	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
+	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
@@ -1038,48 +989,17 @@ badbaddr(addr)
 static void
 netintr()
 {
-#ifdef INET
-#if NARP > 0
-	if (netisr & (1 << NETISR_ARP)) {
-		netisr &= ~(1 << NETISR_ARP);
-		arpintr();
-	}
-#endif
-	if (netisr & (1 << NETISR_IP)) {
-		netisr &= ~(1 << NETISR_IP);
-		ipintr();
-	}
-#endif
-#ifdef INET6
-	if (netisr & (1 << NETISR_IPV6)) {
-		netisr &= ~(1 << NETISR_IPV6);
-		ip6intr();
-	}
-#endif
-#ifdef NETATALK
-	if (netisr & (1 << NETISR_ATALK)) {
-		netisr &= ~(1 << NETISR_ATALK);
-		atintr();
-	}
-#endif
-#ifdef NS
-	if (netisr & (1 << NETISR_NS)) {
-		netisr &= ~(1 << NETISR_NS);
-		nsintr();
-	}
-#endif
-#ifdef ISO
-	if (netisr & (1 << NETISR_ISO)) {
-		netisr &= ~(1 << NETISR_ISO);
-		clnlintr();
-	}
-#endif
-#if NPPP > 0
-	if (netisr & (1 << NETISR_PPP)) {
-		netisr &= ~(1 << NETISR_PPP);
-		pppintr();
-	}
-#endif
+
+#define DONETISR(bit, fn) do {		\
+	if (netisr & (1 << bit)) {	\
+		netisr &= ~(1 << bit);	\
+		fn();			\
+	}				\
+} while (0)
+
+#include <net/netisr_dispatch.h>
+
+#undef DONETISR
 }
 
 
@@ -1598,6 +1518,7 @@ int panicbutton = 1;	/* non-zero if panic buttons are enabled */
 int crashandburn = 0;
 int candbdelay = 50;	/* give em half a second */
 void candbtimer __P((void));
+struct callout candbtimer_ch = CALLOUT_INITIALIZER;
 
 void
 candbtimer()
@@ -1633,7 +1554,8 @@ nmihand(frame)
 				      "forced crash, nosync" : "forced crash");
 			}
 			crashandburn++;
-			timeout(candbtimer, (caddr_t)0, candbdelay);
+			callout_reset(&candbtimer_ch, candbdelay,
+			    candbtimer, NULL);
 		}
 #endif
 		return;
