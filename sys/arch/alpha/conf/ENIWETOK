@@ -1,4 +1,4 @@
-# $NetBSD: ENIWETOK,v 1.6 1999/03/05 07:33:19 mycroft Exp $
+# $NetBSD: ENIWETOK,v 1.7 1999/03/06 06:12:49 mycroft Exp $
 # From: GENERIC,v 1.108 1999/01/06 23:42:27 thorpej Exp
 #
 # Mycroft's AS200.
@@ -197,7 +197,7 @@ isa*	at	sio?
 mcclock* at	isa? port 0x70
 pckbc*	at	isa?				# PC keyboard controller
 pckbd*	at	pckbc?				# PC keyboard (kbd port)
-psm*	at	pckbc?				# PS/2-style mouse (aux port)
+pms*	at	pckbc?				# PS/2-style mouse (aux port)
 pcppi*	at	isa?				# PC prog. periph. interface
 spkr0	at	pcppi?				# IBM BASIC emulation
 isabeep0 at	pcppi?				# "keyboard" beep
@@ -313,7 +313,7 @@ wsdisplay*	at	vga?
 #wsdisplay*	at	sfb?
 wsdisplay*	at	tga?
 wskbd*		at	pckbd?
-wsmouse*	at	psm?
+wsmouse*	at	pms?
 
 pseudo-device	bpfilter	16
 #pseudo-device	ccd		4
