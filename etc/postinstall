@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.48 2003/01/16 15:26:14 minoura Exp $
+# $NetBSD: postinstall,v 1.49 2003/01/21 14:28:55 abs Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -287,6 +287,23 @@ find_file_in_dirlist()
 #	items
 #	-----
 #
+
+#
+#	rc
+#
+additem postinstall "/etc/postinstall being up to date"
+do_postinstall()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_postinstall  fix|check"
+	op=$1
+	failed=0
+
+	compare_dir ${op} ${SRC_DIR}/etc ${DEST_DIR}/etc 555 \
+		postinstall
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
+}
 
 #
 #	defaults
