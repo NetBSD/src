@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.46 2003/12/06 15:16:10 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.47 2003/12/08 12:03:16 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.46 2003/12/06 15:16:10 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.47 2003/12/08 12:03:16 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.46 2003/12/06 15:16:10 manu Exp $");
 #include <sys/malloc.h>
 #include <sys/sa.h>
 #include <sys/mount.h>
+#include <sys/ktrace.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
@@ -121,7 +122,8 @@ mach_task_get_special_port(args)
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_msgh_body.msgh_descriptor_count = 1;
 	rep->rep_special_port.name = (mach_port_t)mr->mr_name;
-	rep->rep_special_port.disposition = 0x11; /* XXX why? */
+	rep->rep_special_port.disposition = MACH_MSG_TYPE_MOVE_SEND;
+	rep->rep_special_port.type = MACH_MSG_PORT_DESCRIPTOR;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
@@ -184,13 +186,13 @@ mach_ports_lookup(args)
 	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_msgh_body.msgh_descriptor_count = 1;	/* XXX why ? */
+	rep->rep_msgh_body.msgh_descriptor_count = 1;
 	rep->rep_init_port_set.address = (void *)va;
-	rep->rep_init_port_set.count = 3; /* XXX why ? */
-	rep->rep_init_port_set.copy = 2; /* XXX why ? */
-	rep->rep_init_port_set.disposition = 0x11; /* XXX why? */
-	rep->rep_init_port_set.type = 2; /* XXX why? */
-	rep->rep_init_port_set_count = 3; /* XXX why? */
+	rep->rep_init_port_set.count = 3; /* XXX should be 7? */
+	rep->rep_init_port_set.copy = MACH_MSG_ALLOCATE;
+	rep->rep_init_port_set.disposition = MACH_MSG_TYPE_MOVE_SEND;
+	rep->rep_init_port_set.type = MACH_MSG_OOL_PORTS_DESCRIPTOR;
+	rep->rep_init_port_set_count = 3;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
@@ -342,9 +344,9 @@ mach_task_threads(args)
 	rep->rep_body.msgh_descriptor_count = 1;
 	rep->rep_list.address = (void *)va;
 	rep->rep_list.count = tp->p_nlwps;
-	rep->rep_list.copy = 0x02;
-	rep->rep_list.disposition = 0x11;
-	rep->rep_list.type = 0x02;
+	rep->rep_list.copy = MACH_MSG_ALLOCATE;
+	rep->rep_list.disposition = MACH_MSG_TYPE_MOVE_SEND;
+	rep->rep_list.type = MACH_MSG_OOL_PORTS_DESCRIPTOR;
 	rep->rep_count = tp->p_nlwps;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
@@ -387,8 +389,8 @@ mach_task_get_exception_ports(args)
 		mr = mach_right_get(med->med_exc[i], l, MACH_PORT_TYPE_SEND, 0);
 
 		rep->rep_old_handler[j].name = mr->mr_name;
-		rep->rep_old_handler[j].disposition = 0x11; 
-		rep->rep_old_handler[j].type = 0;
+		rep->rep_old_handler[j].disposition = MACH_MSG_TYPE_MOVE_SEND;
+		rep->rep_old_handler[j].type = MACH_MSG_PORT_DESCRIPTOR;
 		rep->rep_masks[j] = 1 << i;
 		rep->rep_old_behaviors[j] = (int)mr->mr_port->mp_data >> 16;
 		rep->rep_old_flavors[j] = (int)mr->mr_port->mp_data & 0xffff;

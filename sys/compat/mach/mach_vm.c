@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.42 2003/12/06 19:34:21 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.43 2003/12/08 12:03:16 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.42 2003/12/06 19:34:21 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.43 2003/12/08 12:03:16 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -550,7 +550,8 @@ mach_make_memory_entry_64(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_obj_handle.name = (mach_port_t)mr->mr_name;
-	rep->rep_obj_handle.disposition = 0x11; /* XXX */
+	rep->rep_obj_handle.disposition = MACH_MSG_TYPE_MOVE_SEND;
+	rep->rep_obj_handle.type = MACH_MSG_PORT_DESCRIPTOR;
 	rep->rep_size = req->req_size;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
@@ -558,7 +559,6 @@ mach_make_memory_entry_64(args)
 	return 0;
 }
 
-int debug = 0;
 int
 mach_vm_region(args)
 	struct mach_trap_args *args;
@@ -602,12 +602,9 @@ mach_vm_region(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_body.msgh_descriptor_count = 1;
-	rep->rep_obj.address = NULL;
-	rep->rep_obj.size = 0;
-	rep->rep_obj.deallocate = 0;
-	rep->rep_obj.copy = 0; 
-	rep->rep_obj.pad1 = 0x11; 
-	rep->rep_obj.type = 0;
+	rep->rep_obj.name = 0;
+	rep->rep_obj.disposition = MACH_MSG_TYPE_MOVE_SEND;
+	rep->rep_obj.type = MACH_MSG_PORT_DESCRIPTOR;
 	rep->rep_addr = vme->start;
 	rep->rep_size = vme->end - vme->start;
 	rep->rep_count = req->req_count;
@@ -671,12 +668,9 @@ mach_vm_region_64(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_body.msgh_descriptor_count = 1;
-	rep->rep_obj.address = NULL;
-	rep->rep_obj.size = 0;
-	rep->rep_obj.deallocate = 0;
-	rep->rep_obj.copy = 0; 
-	rep->rep_obj.pad1 = 0x11; 
-	rep->rep_obj.type = 0;
+	rep->rep_obj.name = 0;
+	rep->rep_obj.disposition = MACH_MSG_TYPE_MOVE_SEND;
+	rep->rep_obj.type = MACH_MSG_PORT_DESCRIPTOR;
 	rep->rep_size = PAGE_SIZE; /* XXX Why? */
 	rep->rep_count = req->req_count;
 
@@ -842,9 +836,9 @@ mach_vm_read(args)
 	rep->rep_body.msgh_descriptor_count = 1;
 	rep->rep_data.address = (void *)va;
 	rep->rep_data.size = size;
-	rep->rep_data.deallocate = 0; /* XXX */
-	rep->rep_data.copy = 2; /* XXX */
-	rep->rep_data.type = 1; /* XXX */
+	rep->rep_data.deallocate = 0;
+	rep->rep_data.copy = MACH_MSG_ALLOCATE;
+	rep->rep_data.type = MACH_MSG_OOL_DESCRIPTOR;
 	rep->rep_count = size;
 	rep->rep_trailer.msgh_trailer_size = 8;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.h,v 1.24 2003/11/29 23:56:09 manu Exp $ */
+/*	$NetBSD: mach_vm.h,v 1.25 2003/12/08 12:03:16 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -248,7 +248,7 @@ typedef struct {
 typedef struct {
 	mach_msg_header_t rep_msgh;
 	mach_msg_body_t rep_body;
-	mach_msg_ool_descriptor_t rep_obj;
+	mach_msg_port_descriptor_t rep_obj;
 	mach_ndr_record_t rep_ndr;
 	mach_msg_type_number_t rep_addr;
 	mach_vm_size_t rep_size;
@@ -270,7 +270,7 @@ typedef struct {
 typedef struct {
 	mach_msg_header_t rep_msgh;
 	mach_msg_body_t rep_body;
-	mach_msg_ool_descriptor_t rep_obj;
+	mach_msg_port_descriptor_t rep_obj;
 	mach_ndr_record_t rep_ndr;
 	mach_vm_address_t rep_addr;
 	mach_vm_size_t rep_size;

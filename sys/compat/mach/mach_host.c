@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.24 2003/12/07 10:17:09 manu Exp $ */
+/*	$NetBSD: mach_host.c,v 1.25 2003/12/08 12:03:16 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.24 2003/12/07 10:17:09 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.25 2003/12/08 12:03:16 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -183,9 +183,10 @@ mach_host_get_clock_service(args)
 	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_body.msgh_descriptor_count = 1; /* XXX why? */
+	rep->rep_body.msgh_descriptor_count = 1;
 	rep->rep_clock_serv.name = (mach_port_t)mr->mr_name;
-	rep->rep_clock_serv.disposition = 0x11; /* XXX */
+	rep->rep_clock_serv.disposition = MACH_MSG_TYPE_MOVE_SEND;
+	rep->rep_clock_serv.type = MACH_MSG_PORT_DESCRIPTOR;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
@@ -227,9 +228,10 @@ mach_host_get_io_master(args)
 	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_body.msgh_descriptor_count = 1; /* XXX why? */
+	rep->rep_body.msgh_descriptor_count = 1;
 	rep->rep_iomaster.name = (mach_port_t)mr->mr_name;
-	rep->rep_iomaster.disposition = 0x11; /* XXX */
+	rep->rep_iomaster.disposition = MACH_MSG_TYPE_MOVE_SEND;
+	rep->rep_iomaster.type = MACH_MSG_PORT_DESCRIPTOR;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
