@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_09.c,v 1.6 2000/03/28 23:57:31 simonb Exp $	*/
+/*	$NetBSD: kern_info_09.c,v 1.7 2000/06/28 15:39:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -42,7 +42,7 @@
 #include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/unistd.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 #include <sys/mount.h>

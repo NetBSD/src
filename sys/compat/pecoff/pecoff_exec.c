@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.2 2000/06/15 15:37:05 oki Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.3 2000/06/28 15:39:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -49,8 +49,6 @@
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/stat.h>
-
-#include <vm/vm.h>
 
 #include <sys/exec_coff.h>
 #include <machine/coff_machdep.h>

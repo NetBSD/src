@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.83 2000/04/09 05:33:04 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.84 2000/06/28 15:39:35 mrg Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -95,8 +95,6 @@
 #include <compat/svr4/svr4_mman.h>
 
 #include <machine/cpu.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

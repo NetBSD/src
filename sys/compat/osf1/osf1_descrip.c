@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_descrip.c,v 1.5 1999/06/26 01:24:41 cgd Exp $ */
+/* $NetBSD: osf1_descrip.c,v 1.6 2000/06/28 15:39:33 mrg Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -78,7 +78,6 @@
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/wait.h>
-#include <vm/vm.h>
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscallargs.h>

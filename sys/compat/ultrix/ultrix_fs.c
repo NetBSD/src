@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.18 2000/03/30 11:27:21 augustss Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.19 2000/06/28 15:39:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -53,8 +53,6 @@
 #include <sys/syscallargs.h>
 #include <compat/ultrix/ultrix_syscallargs.h>
 #include <compat/common/compat_util.h>
-
-#include <vm/vm.h>
 
 #define	ULTRIX_MAXPATHLEN	1024
 
