@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.11 2002/03/16 14:34:00 jmcneill Exp $ */
+/* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -1630,15 +1630,9 @@ esa_suspend(struct esa_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int x, i, index;
+	int i, index;
 	
 	index = 0;
-
-	x = splaudio();
-	for (i = 0; i < ESA_NUM_VOICES; i++)
-		esa_halt_output(&sc->voice[i]);
-	delay(10000);
-	splx(x);
 
 	bus_space_write_2(iot, ioh, ESA_HOST_INT_CTRL, 0);
 	bus_space_write_1(iot, ioh, ESA_ASSP_CONTROL_C, 0);
