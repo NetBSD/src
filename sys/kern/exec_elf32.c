@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.28 1998/03/01 02:22:27 fvdl Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.29 1998/05/08 18:18:55 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -187,7 +187,7 @@ ELFNAME(copyargs)(pack, arginfo, stack, argp)
 	len = (a - ai) * sizeof (AuxInfo);
 	if (copyout(ai, stack, len))
 		return NULL;
-	stack += len;
+	(caddr_t)stack += len;
 
 	return stack;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.38 1998/03/01 02:22:30 fvdl Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.39 1998/05/08 18:18:59 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -169,7 +169,7 @@ uiomove(buf, n, uio)
 #endif
 			break;
 		}
-		iov->iov_base += cnt;
+		(caddr_t)iov->iov_base += cnt;
 		iov->iov_len -= cnt;
 		uio->uio_resid -= cnt;
 		uio->uio_offset += cnt;
@@ -208,10 +208,10 @@ again:
 		break;
 
 	case UIO_SYSSPACE:
-		*iov->iov_base = c;
+		*(char *)iov->iov_base = c;
 		break;
 	}
-	iov->iov_base++;
+	((caddr_t)iov->iov_base)++;
 	iov->iov_len--;
 	uio->uio_resid--;
 	uio->uio_offset++;

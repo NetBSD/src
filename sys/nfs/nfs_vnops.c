@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.90 1998/03/03 00:17:04 fvdl Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.91 1998/05/08 18:26:55 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1170,7 +1170,8 @@ nfs_writerpc(vp, uiop, cred, iomode, must_commit)
 					break;
 				} else if (rlen < len) {
 					backup = len - rlen;
-					uiop->uio_iov->iov_base -= backup;
+					(caddr_t)uiop->uio_iov->iov_base -=
+					    backup;
 					uiop->uio_iov->iov_len += backup;
 					uiop->uio_offset -= backup;
 					uiop->uio_resid += backup;
@@ -2026,7 +2027,8 @@ nfs_readdir(v)
 		 */
 		if (uio->uio_segflg != UIO_SYSSPACE || uio->uio_iovcnt != 1)
 			panic("nfs_readdir: lost in space");
-		for (nc = 0; ncookies-- && base < uio->uio_iov->iov_base; nc++){
+		for (nc = 0; ncookies-- &&
+		     base < (char *)uio->uio_iov->iov_base; nc++){
 			dp = (struct dirent *) base;
 			if (dp->d_reclen == 0)
 				break;
@@ -2036,8 +2038,10 @@ nfs_readdir(v)
 				*(cookies++) = NFS_GETCOOKIE(dp);
 			base += dp->d_reclen;
 		}
-		uio->uio_resid += (uio->uio_iov->iov_base - base);
-		uio->uio_iov->iov_len += (uio->uio_iov->iov_base - base);
+		uio->uio_resid +=
+		    ((caddr_t)uio->uio_iov->iov_base - base);
+		uio->uio_iov->iov_len +=
+		    ((caddr_t)uio->uio_iov->iov_base - base);
 		uio->uio_iov->iov_base = base;
 		*ap->a_ncookies = nc;
 	}
@@ -2161,7 +2165,7 @@ nfs_readdirrpc(vp, uiop, cred)
 			left = NFS_DIRFRAGSIZ - blksiz;
 			if (reclen > left) {
 				dp->d_reclen += left;
-				uiop->uio_iov->iov_base += left;
+				(caddr_t)uiop->uio_iov->iov_base += left;
 				uiop->uio_iov->iov_len -= left;
 				uiop->uio_resid -= left;
 				blksiz = 0;
@@ -2179,13 +2183,13 @@ nfs_readdirrpc(vp, uiop, cred)
 				if (blksiz == NFS_DIRFRAGSIZ)
 					blksiz = 0;
 				uiop->uio_resid -= DIRHDSIZ;
-				uiop->uio_iov->iov_base += DIRHDSIZ;
+				(caddr_t)uiop->uio_iov->iov_base += DIRHDSIZ;
 				uiop->uio_iov->iov_len -= DIRHDSIZ;
 				nfsm_mtouio(uiop, len);
 				cp = uiop->uio_iov->iov_base;
 				tlen -= len;
 				*cp = '\0';	/* null terminate */
-				uiop->uio_iov->iov_base += tlen;
+				(caddr_t)uiop->uio_iov->iov_base += tlen;
 				uiop->uio_iov->iov_len -= tlen;
 				uiop->uio_resid -= tlen;
 			} else
@@ -2235,7 +2239,7 @@ nfs_readdirrpc(vp, uiop, cred)
 		left = NFS_DIRFRAGSIZ - blksiz;
 		dp->d_reclen += left;
 		NFS_STASHCOOKIE(dp, uiop->uio_offset);
-		uiop->uio_iov->iov_base += left;
+		(caddr_t)uiop->uio_iov->iov_base += left;
 		uiop->uio_iov->iov_len -= left;
 		uiop->uio_resid -= left;
 	}
@@ -2345,7 +2349,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 				 * again here.
 				 */
 				dp->d_reclen += left;
-				uiop->uio_iov->iov_base += left;
+				(caddr_t)uiop->uio_iov->iov_base += left;
 				uiop->uio_iov->iov_len -= left;
 				uiop->uio_resid -= left;
 				NFS_STASHCOOKIE(dp, uiop->uio_offset);
@@ -2363,7 +2367,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 				if (blksiz == NFS_DIRFRAGSIZ)
 					blksiz = 0;
 				uiop->uio_resid -= DIRHDSIZ;
-				uiop->uio_iov->iov_base += DIRHDSIZ;
+				(caddr_t)uiop->uio_iov->iov_base += DIRHDSIZ;
 				uiop->uio_iov->iov_len -= DIRHDSIZ;
 				cnp->cn_nameptr = uiop->uio_iov->iov_base;
 				cnp->cn_namelen = len;
@@ -2371,7 +2375,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 				cp = uiop->uio_iov->iov_base;
 				tlen -= len;
 				*cp = '\0';
-				uiop->uio_iov->iov_base += tlen;
+				(caddr_t)uiop->uio_iov->iov_base += tlen;
 				uiop->uio_iov->iov_len -= tlen;
 				uiop->uio_resid -= tlen;
 			} else
@@ -2455,7 +2459,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 		left = NFS_DIRFRAGSIZ - blksiz;
 		dp->d_reclen += left;
 		NFS_STASHCOOKIE(dp, uiop->uio_offset);
-		uiop->uio_iov->iov_base += left;
+		(caddr_t)uiop->uio_iov->iov_base += left;
 		uiop->uio_iov->iov_len -= left;
 		uiop->uio_resid -= left;
 	}
