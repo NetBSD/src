@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.44 1997/06/26 16:28:37 kleink Exp $	*/
+/*	$NetBSD: vnd.c,v 1.45 1997/08/04 10:00:13 fair Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@ vndopen(dev, flags, mode, p)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndopen(%x, %x, %x, %p)\n", dev, flags, mode, p);
+		printf("vndopen(0x%x, 0x%x, 0x%x, %p)\n", dev, flags, mode, p);
 #endif
 	if (unit >= numvnd)
 		return (ENXIO);
@@ -272,7 +272,7 @@ vndclose(dev, flags, mode, p)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndclose(%x, %x, %x, %p)\n", dev, flags, mode, p);
+		printf("vndclose(0x%x, 0x%x, 0x%x, %p)\n", dev, flags, mode, p);
 #endif
 
 	if (unit >= numvnd)
@@ -429,7 +429,7 @@ vndstrategy(bp)
 			sz = resid;
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
-			printf("vndstrategy: vp %p/%p bn %x/%x sz %x\n",
+			printf("vndstrategy: vp %p/%p bn 0x%x/0x%x sz 0x%x\n",
 			    vnd->sc_vp, vp, bn, nbn, sz);
 #endif
 
@@ -513,7 +513,7 @@ vndstart(vnd)
 	vnd->sc_tab.b_actf = bp->b_actf;
 #ifdef DEBUG
 	if (vnddebug & VDB_IO)
-		printf("vndstart(%ld): bp %p vp %p blkno %x addr %p cnt %lx\n",
+		printf("vndstart(%ld): bp %p vp %p blkno 0x%x addr %p cnt 0x%lx\n",
 		    (long) (vnd-vnd_softc), bp, bp->b_vp, bp->b_blkno,
 		    bp->b_data, bp->b_bcount);
 #endif
@@ -539,7 +539,7 @@ vndiodone(bp)
 	s = splbio();
 #ifdef DEBUG
 	if (vnddebug & VDB_IO)
-		printf("vndiodone(%ld): vbp %p vp %p blkno %x addr %p cnt %lx\n",
+		printf("vndiodone(%ld): vbp %p vp %p blkno 0x%x addr %p cnt 0x%lx\n",
 		    (long) (vnd-vnd_softc), vbp, vbp->vb_buf.b_vp,
 		    vbp->vb_buf.b_blkno, vbp->vb_buf.b_data,
 		    vbp->vb_buf.b_bcount);
@@ -597,7 +597,7 @@ vndread(dev, uio, flags)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndread(%x, %p)\n", dev, uio);
+		printf("vndread(0x%x, %p)\n", dev, uio);
 #endif
 
 	if (unit >= numvnd)
@@ -622,7 +622,7 @@ vndwrite(dev, uio, flags)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndwrite(%x, %p)\n", dev, uio);
+		printf("vndwrite(0x%x, %p)\n", dev, uio);
 #endif
 
 	if (unit >= numvnd)
@@ -654,7 +654,7 @@ vndioctl(dev, cmd, data, flag, p)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndioctl(%x, %lx, %p, %x, %p): unit %d\n",
+		printf("vndioctl(0x%x, 0x%lx, %p, 0x%x, %p): unit %d\n",
 		    dev, cmd, data, flag, p, unit);
 #endif
 	error = suser(p->p_ucred, &p->p_acflag);
@@ -796,7 +796,7 @@ vndioctl(dev, cmd, data, flag, p)
 		vnd->sc_flags |= VNF_INITED;
 #ifdef DEBUG
 		if (vnddebug & VDB_INIT)
-			printf("vndioctl: SET vp %p size %lx %d/%d/%d/%d\n",
+			printf("vndioctl: SET vp %p size 0x%lx %d/%d/%d/%d\n",
 			    vnd->sc_vp, (unsigned long) vnd->sc_size,
 			    vnd->sc_geom.vng_secsize,
 			    vnd->sc_geom.vng_nsectors,
