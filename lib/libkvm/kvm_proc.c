@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.45 2001/03/24 10:02:45 jdolecek Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.46 2003/01/18 10:40:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.45 2001/03/24 10:02:45 jdolecek Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.46 2003/01/18 10:40:41 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -91,6 +91,7 @@ __RCSID("$NetBSD: kvm_proc.c,v 1.45 2001/03/24 10:02:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/user.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
 #include <sys/stat.h>
@@ -295,6 +296,8 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 	int maxcnt;
 {
 	int cnt = 0;
+	int nlwps;
+	struct kinfo_lwp *kl;
 	struct eproc eproc;
 	struct pgrp pgrp;
 	struct session sess;
@@ -381,10 +384,16 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 		eproc.e_sid = sess.s_sid;
 		if (sess.s_leader == p)
 			eproc.e_flag |= EPROC_SLEADER;
-		if (proc.p_wmesg)
-			(void)kvm_read(kd, (u_long)proc.p_wmesg,
-			    eproc.e_wmesg, WMESGLEN);
-
+		/* Fill in the old-style proc.p_wmesg by copying the wmesg
+		 * from the first avaliable LWP.
+		 */
+		kl = kvm_getlwps(kd, proc.p_pid, PTRTOINT64(eproc.e_paddr), 
+		    sizeof(struct kinfo_lwp), &nlwps);
+		if (kl) {
+			if (nlwps > 0) {
+				strcpy(eproc.e_wmesg, kl[0].l_wmesg);
+			}
+		}
 		(void)kvm_read(kd, (u_long)proc.p_vmspace, &eproc.e_vm,
 		    sizeof(eproc.e_vm));
 
@@ -467,7 +476,7 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 {
 	size_t size;
 	int mib[6], st, nprocs;
-	struct user user;
+	struct pstats pstats;
 
 	if (kd->procbase2 != NULL) {
 		free(kd->procbase2);
@@ -506,7 +515,8 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 		char *kp2c;
 		struct kinfo_proc *kp;
 		struct kinfo_proc2 kp2, *kp2p;
-		int i;
+		struct kinfo_lwp *kl;
+		int i, nlwps;
 
 		kp = kvm_getprocs(kd, op, arg, &nprocs);
 		if (kp == NULL)
@@ -516,12 +526,15 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 		kp2c = (char *)(void *)kd->procbase2;
 		kp2p = &kp2;
 		for (i = 0; i < nprocs; i++, kp++) {
+			kl = kvm_getlwps(kd, kp->kp_proc.p_pid, 
+			    PTRTOINT64(kp->kp_eproc.e_paddr),
+			    sizeof(struct kinfo_lwp), &nlwps);
+			/* We use kl[0] as the "representative" LWP */
 			memset(kp2p, 0, sizeof(kp2));
-			kp2p->p_forw = PTRTOINT64(kp->kp_proc.p_forw);
-			kp2p->p_back = PTRTOINT64(kp->kp_proc.p_back);
+			kp2p->p_forw = kl[0].l_forw;
+			kp2p->p_back = kl[0].l_back;
 			kp2p->p_paddr = PTRTOINT64(kp->kp_eproc.e_paddr);
-
-			kp2p->p_addr = PTRTOINT64(kp->kp_proc.p_addr);
+			kp2p->p_addr = kl[0].l_addr;
 			kp2p->p_fd = PTRTOINT64(kp->kp_proc.p_fd);
 			kp2p->p_cwdi = PTRTOINT64(kp->kp_proc.p_cwdi);
 			kp2p->p_stats = PTRTOINT64(kp->kp_proc.p_stats);
@@ -564,8 +577,8 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 			kp2p->p_rtime_usec = kp->kp_proc.p_estcpu;
 			kp2p->p_cpticks = kp->kp_proc.p_cpticks;
 			kp2p->p_pctcpu = kp->kp_proc.p_pctcpu;
-			kp2p->p_swtime = kp->kp_proc.p_swtime;
-			kp2p->p_slptime = kp->kp_proc.p_slptime;
+			kp2p->p_swtime = kl[0].l_swtime;
+			kp2p->p_slptime = kl[0].l_slptime;
 #if 0 /* XXX thorpej */
 			kp2p->p_schedflags = kp->kp_proc.p_schedflags;
 #else
@@ -579,7 +592,7 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 			kp2p->p_tracep = PTRTOINT64(kp->kp_proc.p_tracep);
 			kp2p->p_traceflag = kp->kp_proc.p_traceflag;
 
-			kp2p->p_holdcnt = kp->kp_proc.p_holdcnt;
+			kp2p->p_holdcnt = kl[0].l_holdcnt;
 
 			memcpy(&kp2p->p_siglist, &kp->kp_proc.p_sigctx.ps_siglist, sizeof(ki_sigset_t));
 			memcpy(&kp2p->p_sigmask, &kp->kp_proc.p_sigctx.ps_sigmask, sizeof(ki_sigset_t));
@@ -587,8 +600,8 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 			memcpy(&kp2p->p_sigcatch, &kp->kp_proc.p_sigctx.ps_sigcatch, sizeof(ki_sigset_t));
 
 			kp2p->p_stat = kp->kp_proc.p_stat;
-			kp2p->p_priority = kp->kp_proc.p_priority;
-			kp2p->p_usrpri = kp->kp_proc.p_usrpri;
+			kp2p->p_priority = kl[0].l_priority;
+			kp2p->p_usrpri = kl[0].l_usrpri;
 			kp2p->p_nice = kp->kp_proc.p_nice;
 
 			kp2p->p_xstat = kp->kp_proc.p_xstat;
@@ -599,8 +612,7 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 			    MIN(sizeof(kp2p->p_comm), sizeof(kp->kp_proc.p_comm)));
 
 			strncpy(kp2p->p_wmesg, kp->kp_eproc.e_wmesg, sizeof(kp2p->p_wmesg));
-			kp2p->p_wchan = PTRTOINT64(kp->kp_proc.p_wchan);
-
+			kp2p->p_wchan = kl[0].l_wchan;
 			strncpy(kp2p->p_login, kp->kp_eproc.e_login, sizeof(kp2p->p_login));
 
 			kp2p->p_vm_rssize = kp->kp_eproc.e_xrssize;
@@ -610,47 +622,55 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 
 			kp2p->p_eflag = (int32_t)kp->kp_eproc.e_flag;
 
-			if (P_ZOMBIE(&kp->kp_proc) || kp->kp_proc.p_addr == NULL ||
-			    KREAD(kd, (u_long)kp->kp_proc.p_addr, &user)) {
+			kp2p->p_realflag = kp->kp_proc.p_flag;
+			kp2p->p_nlwps = kp->kp_proc.p_nlwps;
+			kp2p->p_nrlwps = kp->kp_proc.p_nrlwps;
+			kp2p->p_realstat = kp->kp_proc.p_stat;
+
+			if (P_ZOMBIE(&kp->kp_proc)
+			    ||
+			    kp->kp_proc.p_stats == NULL ||
+			    KREAD(kd, (u_long)kp->kp_proc.p_stats, &pstats)
+) {
 				kp2p->p_uvalid = 0;
 			} else {
 				kp2p->p_uvalid = 1;
 
 				kp2p->p_ustart_sec = (u_int32_t)
-				    user.u_stats.p_start.tv_sec;
+				    pstats.p_start.tv_sec;
 				kp2p->p_ustart_usec = (u_int32_t)
-				    user.u_stats.p_start.tv_usec;
+				    pstats.p_start.tv_usec;
 
 				kp2p->p_uutime_sec = (u_int32_t)
-				    user.u_stats.p_ru.ru_utime.tv_sec;
+				    pstats.p_ru.ru_utime.tv_sec;
 				kp2p->p_uutime_usec = (u_int32_t)
-				    user.u_stats.p_ru.ru_utime.tv_usec;
+				    pstats.p_ru.ru_utime.tv_usec;
 				kp2p->p_ustime_sec = (u_int32_t)
-				    user.u_stats.p_ru.ru_stime.tv_sec;
+				    pstats.p_ru.ru_stime.tv_sec;
 				kp2p->p_ustime_usec = (u_int32_t)
-				    user.u_stats.p_ru.ru_stime.tv_usec;
+				    pstats.p_ru.ru_stime.tv_usec;
 
-				kp2p->p_uru_maxrss = user.u_stats.p_ru.ru_maxrss;
-				kp2p->p_uru_ixrss = user.u_stats.p_ru.ru_ixrss;
-				kp2p->p_uru_idrss = user.u_stats.p_ru.ru_idrss;
-				kp2p->p_uru_isrss = user.u_stats.p_ru.ru_isrss;
-				kp2p->p_uru_minflt = user.u_stats.p_ru.ru_minflt;
-				kp2p->p_uru_majflt = user.u_stats.p_ru.ru_majflt;
-				kp2p->p_uru_nswap = user.u_stats.p_ru.ru_nswap;
-				kp2p->p_uru_inblock = user.u_stats.p_ru.ru_inblock;
-				kp2p->p_uru_oublock = user.u_stats.p_ru.ru_oublock;
-				kp2p->p_uru_msgsnd = user.u_stats.p_ru.ru_msgsnd;
-				kp2p->p_uru_msgrcv = user.u_stats.p_ru.ru_msgrcv;
-				kp2p->p_uru_nsignals = user.u_stats.p_ru.ru_nsignals;
-				kp2p->p_uru_nvcsw = user.u_stats.p_ru.ru_nvcsw;
-				kp2p->p_uru_nivcsw = user.u_stats.p_ru.ru_nivcsw;
+				kp2p->p_uru_maxrss = pstats.p_ru.ru_maxrss;
+				kp2p->p_uru_ixrss = pstats.p_ru.ru_ixrss;
+				kp2p->p_uru_idrss = pstats.p_ru.ru_idrss;
+				kp2p->p_uru_isrss = pstats.p_ru.ru_isrss;
+				kp2p->p_uru_minflt = pstats.p_ru.ru_minflt;
+				kp2p->p_uru_majflt = pstats.p_ru.ru_majflt;
+				kp2p->p_uru_nswap = pstats.p_ru.ru_nswap;
+				kp2p->p_uru_inblock = pstats.p_ru.ru_inblock;
+				kp2p->p_uru_oublock = pstats.p_ru.ru_oublock;
+				kp2p->p_uru_msgsnd = pstats.p_ru.ru_msgsnd;
+				kp2p->p_uru_msgrcv = pstats.p_ru.ru_msgrcv;
+				kp2p->p_uru_nsignals = pstats.p_ru.ru_nsignals;
+				kp2p->p_uru_nvcsw = pstats.p_ru.ru_nvcsw;
+				kp2p->p_uru_nivcsw = pstats.p_ru.ru_nivcsw;
 
 				kp2p->p_uctime_sec = (u_int32_t)
-				    (user.u_stats.p_cru.ru_utime.tv_sec +
-				    user.u_stats.p_cru.ru_stime.tv_sec);
+				    (pstats.p_cru.ru_utime.tv_sec +
+				    pstats.p_cru.ru_stime.tv_sec);
 				kp2p->p_uctime_usec = (u_int32_t)
-				    (user.u_stats.p_cru.ru_utime.tv_usec +
-				    user.u_stats.p_cru.ru_stime.tv_usec);
+				    (pstats.p_cru.ru_utime.tv_usec +
+				    pstats.p_cru.ru_stime.tv_usec);
 			}
 
 			memcpy(kp2c, &kp2, esize);
@@ -661,6 +681,102 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 	}
 	*cnt = nprocs;
 	return (kd->procbase2);
+}
+
+struct kinfo_lwp *
+kvm_getlwps(kd, pid, paddr, esize, cnt)
+	kvm_t *kd;
+	int pid;
+	u_long paddr;
+	size_t esize;
+	int *cnt;
+{
+	size_t size;
+	int mib[5], st, nlwps;
+	struct kinfo_lwp *kl;
+
+	if (kd->lwpbase != NULL) {
+		free(kd->lwpbase);
+		/*
+		 * Clear this pointer in case this call fails.  Otherwise,
+		 * kvm_close() will free it again.
+		 */
+		kd->lwpbase = NULL;
+	}
+
+	if (ISSYSCTL(kd)) {
+		size = 0;
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_LWP;
+		mib[2] = pid;
+		mib[3] = esize;
+		mib[4] = 0;
+		st = sysctl(mib, 5, NULL, &size, NULL, 0);
+		if (st == -1) {
+			_kvm_syserr(kd, kd->program, "kvm_getlwps");
+			return NULL;
+		}
+
+		mib[4] = size / esize;
+		kd->lwpbase = (struct kinfo_lwp *)_kvm_malloc(kd, size);
+		if (kd->lwpbase == NULL)
+			return NULL;
+		st = sysctl(mib, 5, kd->lwpbase, &size, NULL, 0);
+		if (st == -1) {
+			_kvm_syserr(kd, kd->program, "kvm_getlwps");
+			return NULL;
+		}
+		nlwps = size / esize;
+	} else {
+		/* grovel through the memory image */
+		struct proc p;
+		struct lwp l;
+		u_long laddr;
+		int i;
+
+		st = kvm_read(kd, paddr, &p, sizeof(p));
+		if (st == -1) {
+			_kvm_syserr(kd, kd->program, "kvm_getlwps");
+			return NULL;
+		}
+
+		nlwps = p.p_nlwps;
+		kd->lwpbase = (struct kinfo_lwp *)_kvm_malloc(kd, 
+		    nlwps * sizeof(struct kinfo_lwp));
+		if (kd->lwpbase == NULL)
+			return NULL;
+		laddr = PTRTOINT64(p.p_lwps.lh_first);
+		for (i = 0; (i < nlwps) && (laddr != 0); i++) {
+			st = kvm_read(kd, laddr, &l, sizeof(l));
+			if (st == -1) {
+				_kvm_syserr(kd, kd->program, "kvm_getlwps");
+				return NULL;
+			}
+			kl = &kd->lwpbase[i];
+			kl->l_laddr = laddr;
+			kl->l_forw = PTRTOINT64(l.l_forw);
+			kl->l_back = PTRTOINT64(l.l_back);
+			kl->l_addr = PTRTOINT64(l.l_addr);
+			kl->l_lid = l.l_lid;
+			kl->l_flag = l.l_flag;
+			kl->l_swtime = l.l_swtime;
+			kl->l_slptime = l.l_slptime;
+			kl->l_schedflags = 0; /* XXX */
+			kl->l_holdcnt = l.l_holdcnt;
+			kl->l_priority = l.l_priority;
+			kl->l_usrpri = l.l_usrpri;
+			kl->l_stat = l.l_stat;
+			kl->l_wchan = PTRTOINT64(l.l_wchan);
+			if (l.l_wmesg)
+				(void)kvm_read(kd, (u_long)l.l_wmesg,
+				    kl->l_wmesg, WMESGLEN);
+			kl->l_cpuid = KI_NOCPU;
+			laddr = PTRTOINT64(l.l_sibling.le_next);
+		}
+	}
+
+	*cnt = nlwps;
+	return kd->lwpbase;
 }
 
 struct kinfo_proc *
