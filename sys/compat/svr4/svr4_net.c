@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.34 2003/09/13 08:15:26 jdolecek Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.35 2003/09/13 08:32:10 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.34 2003/09/13 08:15:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.35 2003/09/13 08:32:10 jdolecek Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -142,7 +142,7 @@ svr4_netopen(dev, flag, mode, p)
 
 	DPRINTF(("netopen("));
 
-	if (p->p_dupfd >= 0)
+	if (curlwp->l_dupfd >= 0)	/* XXX */
 		return ENODEV;
 
 	switch (minor(dev)) {
@@ -220,7 +220,7 @@ svr4_netopen(dev, flag, mode, p)
 
 	DPRINTF(("ok);\n"));
 
-	p->p_dupfd = fd;
+	curlwp->l_dupfd = fd;	/* XXX */
 	FILE_SET_MATURE(fp);
 	FILE_UNUSE(fp, p);
 	return ENXIO;
@@ -283,7 +283,7 @@ svr4_ptm_alloc(p)
 		case ENXIO:
 			return error;
 		case 0:
-			p->p_dupfd = fd;
+			curlwp->l_dupfd = fd;	/* XXX */
 			return ENXIO;
 		default:
 			if (ttynumbers[++n] == '\0') {
