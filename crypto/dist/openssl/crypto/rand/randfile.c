@@ -227,7 +227,7 @@ const char *RAND_file_name(char *buf, size_t size)
 	{
 	char *s=NULL;
 	int ok = 0;
-#ifdef __OpenBSD__
+#if defined(__OpenBSD__) || defined(__NetBSD__)
 	struct stat sb;
 #endif
 
@@ -261,20 +261,25 @@ const char *RAND_file_name(char *buf, size_t size)
 		  	buf[0] = '\0'; /* no file name */
 		}
 
+#if defined(__OpenBSD__) || defined(__NetBSD__)
 #ifdef __OpenBSD__
+#define FALLBACK "/dev/arandom"
+#else
+#define FALLBACK "/dev/urandom"
+#endif
 	/* given that all random loads just fail if the file can't be 
 	 * seen on a stat, we stat the file we're returning, if it
-	 * fails, use /dev/arandom instead. this allows the user to 
+	 * fails, use FALLBACK instead. this allows the user to 
 	 * use their own source for good random data, but defaults
 	 * to something hopefully decent if that isn't available. 
 	 */
 
 	if (!ok)
-		if (BUF_strlcpy(buf,"/dev/arandom",size) >= size) {
+		if (BUF_strlcpy(buf,FALLBACK,size) >= size) {
 			return(NULL);
 		}	
 	if (stat(buf,&sb) == -1)
-		if (BUF_strlcpy(buf,"/dev/arandom",size) >= size) {
+		if (BUF_strlcpy(buf,FALLBACK,size) >= size) {
 			return(NULL);
 		}	
 
