@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.43 2002/09/27 22:56:24 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.44 2002/09/28 01:25:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.43 2002/09/27 22:56:24 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.44 2002/09/28 01:25:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -237,7 +237,6 @@ cmdloop(top)
 	struct stackmark smark;
 	int inter;
 	int numeof = 0;
-	int isroot;
 
 	TRACE(("cmdloop(%d) called\n", top));
 	setstackmark(&smark);
@@ -265,8 +264,7 @@ cmdloop(top)
 		} else if (n != NULL && nflag == 0) {
 			job_warning = (job_warning == 2) ? 1 : 0;
 			numeof = 0;
-			isroot = rootshell;
-			evaltree(n, 0, &isroot);
+			evaltree(n, 0);
 		}
 		popstackmark(&smark);
 		setstackmark(&smark);
