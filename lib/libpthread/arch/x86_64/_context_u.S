@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.3 2003/11/08 21:45:59 fvdl Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.3.2.1 2004/11/12 06:33:32 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,6 +53,11 @@
 	fxsave	UC_FPREGS(%rdi)					; \
 	movl	$(_UC_USER | _UC_CPU | _UC_FPU),UC_FLAGS(%rdi)
 
+#define	lretqm(x) \
+	.byte	0x48						; \
+	.byte	0xca						; \
+	.word	x
+
 #define SETC \
 	movl	UC_FLAGS(%rdi), %eax				; \
 	btl	$_UC_USER_BIT, %eax				; \
@@ -91,28 +96,28 @@
 	movq	(UC_REGS + _REG_RDX * 8)(%rdi), %rdx		; \
 	movq	(UC_REGS + _REG_RSI * 8)(%rdi), %rsi		; \
 	movw	(UC_REGS + _REG_CS * 8)(%rdi), %ax		; \
-	movq	%rax, -8(%r11)					; \
+	movq	%rax, -128-8(%r11)				; \
 	movw	(UC_REGS + _REG_DS * 8)(%rdi), %ax		; \
-	movq	%rax, -32(%r11)					; \
+	movq	%rax, -128-32(%r11)				; \
 	movq	(UC_REGS + _REG_RIP * 8)(%rdi), %rax		; \
-	movq	%rax, -16(%r11)					; \
+	movq	%rax, -128-16(%r11)				; \
 	movq	(UC_REGS + _REG_RAX * 8)(%rdi), %rax		; \
-	movq	%rax, -24(%r11)					; \
+	movq	%rax, -128-24(%r11)				; \
 	movq	(UC_REGS + _REG_R11 * 8)(%rdi), %rax		; \
-	movq	%rax, -40(%r11)					; \
+	movq	%rax, -128-40(%r11)				; \
 	movq	(UC_REGS + _REG_RFL * 8)(%rdi), %rax		; \
-	movq	%rax, -48(%r11)					; \
+	movq	%rax, -128-48(%r11)				; \
 								; \
 	movw	(UC_REGS + _REG_SS * 8)(%rdi), %ss		; \
 	movq	(UC_REGS + _REG_RDI)(%rdi), %rdi		; \
-	leaq	-48(%r11), %rsp					; \
+	leaq	-128-48(%r11), %rsp				; \
 								; \
 	popfq							; \
 	popq	%r11						; \
 	popq	%rax						; \
 	movl	%eax,%ds					; \
 	popq	%rax						; \
-	lretq
+	lretqm(128)
 
 ENTRY(_getcontext_u)
 	GETC
