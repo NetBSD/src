@@ -1,3 +1,5 @@
+@c $Id: whatis.texi,v 1.1.1.1.2.1 2001/04/05 23:23:42 he Exp $
+
 @node What is Kerberos?, Building and Installing, Introduction, Top
 @chapter What is Kerberos?
 

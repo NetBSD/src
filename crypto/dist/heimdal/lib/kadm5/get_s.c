@@ -33,7 +33,7 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: get_s.c,v 1.1.1.1 2000/06/16 18:32:52 thorpej Exp $");
+RCSID("$Id: get_s.c,v 1.1.1.1.2.1 2001/04/05 23:23:47 he Exp $");
 
 kadm5_ret_t
 kadm5_s_get_principal(void *server_handle, 
@@ -150,7 +150,7 @@ kadm5_s_get_principal(void *server_handle,
 	    if(key->salt)
 		kd->key_data_type[1] = key->salt->type;
 	    else
-		kd->key_data_type[1] = pa_pw_salt;
+		kd->key_data_type[1] = KRB5_PADATA_PW_SALT;
 	    /* setup key */
 	    kd->key_data_length[0] = key->key.keyvalue.length;
 	    kd->key_data_contents[0] = malloc(kd->key_data_length[0]);

@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: parse.y,v 1.1.1.1 2000/06/16 18:32:39 thorpej Exp $ */
+/* $Id: parse.y,v 1.1.1.1.2.1 2001/04/05 23:23:44 he Exp $ */
 
 %{
 #ifdef HAVE_CONFIG_H
@@ -44,11 +44,10 @@
 #include "lex.h"
 #include "gen_locl.h"
 
-RCSID("$Id: parse.y,v 1.1.1.1 2000/06/16 18:32:39 thorpej Exp $");
+RCSID("$Id: parse.y,v 1.1.1.1.2.1 2001/04/05 23:23:44 he Exp $");
 
 static Type *new_type (Typetype t);
 void yyerror (char *);
-int yylex(void);
 
 static void append (Member *l, Member *r);
 
@@ -64,6 +63,7 @@ static void append (Member *l, Member *r);
 %token INTEGER SEQUENCE OF OCTET STRING GeneralizedTime GeneralString
 %token BIT APPLICATION OPTIONAL EEQUAL TBEGIN END DEFINITIONS EXTERNAL
 %token DOTDOT
+%token IMPORTS FROM
 %token <name> IDENTIFIER 
 %token <constant> CONSTANT
 
@@ -82,16 +82,24 @@ specification	:
 		| specification declaration
 		;
 
-declaration	: extern_decl
+declaration	: imports_decl
 		| type_decl
 		| constant_decl
 		;
 
-extern_decl	: IDENTIFIER EXTERNAL
+referencenames	: IDENTIFIER ',' referencenames
 		{
 			Symbol *s = addsym($1);
 			s->stype = Stype;
 		}
+		| IDENTIFIER
+		{
+			Symbol *s = addsym($1);
+			s->stype = Stype;
+		}
+		;
+
+imports_decl	: IMPORTS referencenames FROM IDENTIFIER ';'
 		;
 
 type_decl	: IDENTIFIER EEQUAL type
@@ -121,6 +129,11 @@ type		: INTEGER     { $$ = new_type(TInteger); }
 				      UINT_MAX);
 		    $$ = new_type(TUInteger);
 		}
+                | INTEGER '{' bitdecls '}'
+                {
+			$$ = new_type(TInteger);
+			$$->members = $3;
+                }
 		| OCTET STRING { $$ = new_type(TOctetString); }
 		| GeneralString { $$ = new_type(TGeneralString); }
 		| GeneralizedTime { $$ = new_type(TGeneralizedTime); }

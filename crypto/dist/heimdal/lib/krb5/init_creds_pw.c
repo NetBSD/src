@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: init_creds_pw.c,v 1.1.1.1 2000/06/16 18:32:57 thorpej Exp $");
+RCSID("$Id: init_creds_pw.c,v 1.1.1.1.2.1 2001/04/05 23:23:50 he Exp $");
 
 static int
 get_config_time (krb5_context context,
@@ -293,9 +293,12 @@ change_password (krb5_context context,
 
     krb5_get_init_creds_opt_init (&options);
     krb5_get_init_creds_opt_set_tkt_life (&options, 60);
-    krb5_get_init_creds_opt_set_preauth_list (&options,
-					      old_options->preauth_list,
-					      old_options->preauth_list_length);					      
+    krb5_get_init_creds_opt_set_forwardable (&options, FALSE);
+    krb5_get_init_creds_opt_set_proxiable (&options, FALSE);
+    if (old_options->flags & KRB5_GET_INIT_CREDS_OPT_PREAUTH_LIST)
+	krb5_get_init_creds_opt_set_preauth_list (&options,
+						  old_options->preauth_list,
+						  old_options->preauth_list_length);					      
 
     krb5_data_zero (&result_code_string);
     krb5_data_zero (&result_string);
