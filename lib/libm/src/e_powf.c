@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_powf.c,v 1.10 2002/05/26 22:01:51 wiz Exp $");
+__RCSID("$NetBSD: e_powf.c,v 1.11 2004/06/30 18:45:25 drochner Exp $");
 #endif
 
 #include "math.h"
@@ -131,7 +131,7 @@ __ieee754_powf(float x, float y)
 	    if(ix>0x3f800007) return (hy>0)? huge*huge:tiny*tiny;
 	/* now |1-x| is tiny <= 2**-20, suffice to compute
 	   log(x) by x-x^2/2+x^3/3-x^4/4 */
-	    t = x-1;		/* t has 20 trailing zeros */
+	    t = ax-one;		/* t has 20 trailing zeros */
 	    w = (t*t)*((float)0.5-t*((float)0.333333333333-t*(float)0.25));
 	    u = ivln2_h*t;	/* ivln2_h has 16 sig. bits */
 	    v = t*ivln2_l-w*ivln2;
