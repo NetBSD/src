@@ -1,4 +1,4 @@
-/*	$NetBSD: soundcard.h,v 1.1 1997/10/16 17:31:04 augustss Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.1.2.1 1997/10/29 03:44:50 mellon Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -52,8 +52,21 @@
 #define	SNDCTL_DSP_STEREO		_IOWR('P', 3, int)
 #define	SNDCTL_DSP_GETBLKSIZE		_IOWR('P', 4, int)
 #define	SNDCTL_DSP_SETFMT		_IOWR('P', 5, int)
+#define	 AFMT_QUERY			0x00000000
+#define	 AFMT_MU_LAW			0x00000001
+#define	 AFMT_A_LAW			0x00000002
+#define	 AFMT_IMA_ADPCM			0x00000004
+#define	 AFMT_U8			0x00000008
+#define	 AFMT_S16_LE			0x00000010
+#define	 AFMT_S16_BE			0x00000020
+#define	 AFMT_S8			0x00000040
+#define	 AFMT_U16_LE			0x00000080
+#define	 AFMT_U16_BE			0x00000100
+#define	 AFMT_MPEG			0x00000200
+#define SNDCTL_DSP_SAMPLESIZE		SNDCTL_DSP_SETFMT
 #define	SOUND_PCM_READ_BITS		_IOR ('P', 5, int)
 #define	SNDCTL_DSP_CHANNELS		_IOWR('P', 6, int)
+#define SOUND_PCM_WRITE_CHANNELS	SNDCTL_DSP_CHANNELS
 #define	SOUND_PCM_READ_CHANNELS		_IOR ('P', 6, int)
 #define SOUND_PCM_WRITE_FILTER		_IOWR('P', 7, int)
 #define SOUND_PCM_READ_FILTER		_IOR ('P', 7, int)
@@ -87,17 +100,41 @@
 #define	  APF_NETWORK			1
 #define   APF_CPUINTENS			2
 
-#define	AFMT_QUERY			0x00000000
-#define	AFMT_MU_LAW			0x00000001
-#define	AFMT_A_LAW			0x00000002
-#define	AFMT_IMA_ADPCM			0x00000004
-#define	AFMT_U8				0x00000008
-#define	AFMT_S16_LE			0x00000010
-#define	AFMT_S16_BE			0x00000020
-#define	AFMT_S8				0x00000040
-#define	AFMT_U16_LE			0x00000080
-#define	AFMT_U16_BE			0x00000100
-#define	AFMT_MPEG			0x00000200
+/* Need native 16 bit format which depends on byte order */
+/* XXX This isn't really a good way, but I don't want to
+ * include all of endian.h because it contains a lot
+ * junk symbols.  [augustss]
+ */
+#define _POSIX_SOURCE		/* avoid dragging in a lot of junk */
+#include <machine/endian.h>
+#if _QUAD_LOWWORD == 0
+#define  AFMT_S16_NE AFMT_S16_LE
+#else
+#define  AFMT_S16_NE AFMT_S16_BE
+#endif
+
+
+/* Aliases */
+#define SOUND_PCM_WRITE_BITS		SNDCTL_DSP_SETFMT
+#define SOUND_PCM_WRITE_RATE		SNDCTL_DSP_SPEED
+#define SOUND_PCM_POST			SNDCTL_DSP_POST
+#define SOUND_PCM_RESET			SNDCTL_DSP_RESET
+#define SOUND_PCM_SYNC			SNDCTL_DSP_SYNC
+#define SOUND_PCM_SUBDIVIDE		SNDCTL_DSP_SUBDIVIDE
+#define SOUND_PCM_SETFRAGMENT		SNDCTL_DSP_SETFRAGMENT
+#define SOUND_PCM_GETFMTS		SNDCTL_DSP_GETFMTS
+#define SOUND_PCM_SETFMT		SNDCTL_DSP_SETFMT
+#define SOUND_PCM_GETOSPACE		SNDCTL_DSP_GETOSPACE
+#define SOUND_PCM_GETISPACE		SNDCTL_DSP_GETISPACE
+#define SOUND_PCM_NONBLOCK		SNDCTL_DSP_NONBLOCK
+#define SOUND_PCM_GETCAPS		SNDCTL_DSP_GETCAPS
+#define SOUND_PCM_GETTRIGGER		SNDCTL_DSP_GETTRIGGER
+#define SOUND_PCM_SETTRIGGER		SNDCTL_DSP_SETTRIGGER
+#define SOUND_PCM_SETSYNCRO		SNDCTL_DSP_SETSYNCRO
+#define SOUND_PCM_GETIPTR		SNDCTL_DSP_GETIPTR
+#define SOUND_PCM_GETOPTR		SNDCTL_DSP_GETOPTR
+#define SOUND_PCM_MAPINBUF		SNDCTL_DSP_MAPINBUF
+#define SOUND_PCM_MAPOUTBUF		SNDCTL_DSP_MAPOUTBUF
 
 /* Mixer defines */
 #define SOUND_MIXER_FIRST		0
