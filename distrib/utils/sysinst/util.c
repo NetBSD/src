@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.40 1999/04/18 04:09:27 simonb Exp $	*/
+/*	$NetBSD: util.c,v 1.41 1999/06/20 04:17:57 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -866,7 +866,10 @@ int askyesno(int reverse)
 	int c, found;
 
 	yesnowin = subwin(stdscr, 5, 20, getmaxy(stdscr)/2 - 2, getmaxx(stdscr)/2 - 10);
-
+	if (yesnowin == NULL) {
+		fprintf(stderr, "sysinst: failed to allocate yes/no box\n");
+		exit(1);
+	}
 	box(yesnowin, '*', '*');
 	wmove(yesnowin, 2,2);
 	
