@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.2 2000/08/26 16:06:22 eeh Exp $ */
+/*	$NetBSD: cgsix.c,v 1.3 2000/08/26 20:08:22 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -658,8 +658,8 @@ cgsixioctl(dev, cmd, data, flags, p)
 			cc->cc_size = p->size;
 			count = p->size.y * 32 / NBBY;
 			bzero((caddr_t)cc->cc_bits, sizeof cc->cc_bits);
-			bcopy(p->mask, (caddr_t)cc->cc_bits[0], count);
-			bcopy(p->image, (caddr_t)cc->cc_bits[1], count);
+			copyin(p->mask, (caddr_t)cc->cc_bits[0], count);
+			copyin(p->image, (caddr_t)cc->cc_bits[1], count);
 			cg6_loadcursor(sc);
 		}
 		break;
