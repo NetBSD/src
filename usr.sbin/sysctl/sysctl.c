@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.10 1997/01/09 05:38:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $";
+static char *rcsid = "$NetBSD: sysctl.c,v 1.10 1997/01/09 05:38:55 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,6 +78,7 @@ struct ctlname vmname[] = CTL_VM_NAMES;
 struct ctlname netname[] = CTL_NET_NAMES;
 struct ctlname hwname[] = CTL_HW_NAMES;
 struct ctlname username[] = CTL_USER_NAMES;
+struct ctlname ddbname[] = CTL_DDB_NAMES;
 struct ctlname debugname[CTL_DEBUG_MAXID];
 #ifdef CTL_MACHDEP_NAMES
 struct ctlname machdepname[] = CTL_MACHDEP_NAMES;
@@ -103,6 +104,7 @@ struct list secondlevel[] = {
 	{ 0, 0 },			/* CTL_MACHDEP */
 #endif
 	{ username, USER_MAXID },	/* CTL_USER_NAMES */
+	{ ddbname, DDBCTL_MAXID },	/* CTL_DDB_NAMES */
 };
 
 int	Aflag, aflag, nflag, wflag;
@@ -326,6 +328,7 @@ parse(string, flags)
 
 	case CTL_FS:
 	case CTL_USER:
+	case CTL_DDB:
 		break;
 
 	default:
