@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.50 1998/06/11 02:45:21 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.51 1998/06/11 05:08:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50 1998/06/11 02:45:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.51 1998/06/11 05:08:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -461,7 +461,8 @@ pa_to_pvh(pa)
  * Internal routines
  */
 void	alpha_protection_init __P((void));
-void	pmap_remove_mapping __P((pmap_t, vm_offset_t, pt_entry_t *, boolean_t));
+boolean_t pmap_remove_mapping __P((pmap_t, vm_offset_t, pt_entry_t *,
+	    boolean_t));
 void	pmap_changebit __P((vm_offset_t, u_long, boolean_t));
 void	pmap_pinit __P((pmap_t));
 void	pmap_release __P((pmap_t));
@@ -639,19 +640,6 @@ do {									\
 		 * pmap becomes active on this processor, a new		\
 		 * ASN will be allocated anyway.			\
 		 */							\
-} while (0)
-
-/*
- * PMAP_SYNC_ISTREAM:
- *
- *	Synchronize the I-stream.  We assume that if we're doing this,
- *	the TLB has already been taken care of.  Thus we do not need
- *	to invalidate the ASN if the pmap is not active.
- */
-#define	PMAP_SYNC_ISTREAM(isactive, isexecute)				\
-do {									\
-	if ((isexecute) && (isactive)) 					\
-		alpha_pal_imb();					\
 } while (0)
 
 /*
@@ -1244,6 +1232,7 @@ pmap_remove(pmap, sva, eva)
 	vm_offset_t sva, eva;
 {
 	pt_entry_t *l1pte, *l2pte, *l3pte;
+	boolean_t needisync = FALSE;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
@@ -1284,9 +1273,13 @@ pmap_remove(pmap, sva, eva)
 		 */
 		l3pte = pmap_l3pte(pmap, sva, l2pte);
 		if (pmap_pte_v(l3pte))
-			pmap_remove_mapping(pmap, sva, l3pte, TRUE);
+			needisync |= pmap_remove_mapping(pmap, sva, l3pte,
+			    TRUE);
 		sva += PAGE_SIZE;
 	}
+
+	if (needisync)
+		alpha_pal_imb();
 
 	simple_unlock(&pmap->pm_slock);
 	PMAP_MAP_TO_HEAD_UNLOCK();
@@ -1313,6 +1306,7 @@ pmap_page_protect(pa, prot)
 	struct pv_head *pvh;
 	pv_entry_t pv, nextpv;
 	int s;
+	boolean_t needisync = FALSE;
 #if defined(PMAP_NEW)
 	vm_offset_t pa = VM_PAGE_TO_PHYS(pg);
 
@@ -1378,7 +1372,8 @@ pmap_page_protect(pa, prot)
 			panic("pmap_page_protect: bad mapping");
 #endif
 		if (!pmap_pte_w(pte))
-			pmap_remove_mapping(pv->pv_pmap, pv->pv_va, pte, FALSE);
+			needisync |= pmap_remove_mapping(pv->pv_pmap,
+			    pv->pv_va, pte, FALSE);
 #ifdef DEBUG
 		else {
 			if (pmapdebug & PDB_PARANOIA) {
@@ -1392,6 +1387,10 @@ pmap_page_protect(pa, prot)
 		simple_unlock(&pv->pv_pmap->pm_slock);
 	}
 	splx(s);
+
+	if (needisync)
+		alpha_pal_imb();
+
 	simple_unlock(&pvh->pvh_slock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
 }
@@ -1469,8 +1468,6 @@ pmap_protect(pmap, sva, eva, prot)
 			hadasm = (pmap_pte_asm(l3pte) != 0);
 			pmap_pte_set_prot(l3pte, bits);
 			PMAP_INVALIDATE_TLB(pmap, sva, hadasm, isactive);
-			PMAP_SYNC_ISTREAM(isactive,
-			    (prot & VM_PROT_EXECUTE) != 0);
 #ifdef PMAPSTATS
 			protect_stats.changed++;
 #endif
@@ -1485,6 +1482,9 @@ pmap_protect(pmap, sva, eva, prot)
 #endif
 		sva += PAGE_SIZE;
 	}
+
+	if (isactive && (prot & VM_PROT_EXECUTE) != 0)
+		alpha_pal_imb();
 
 	simple_unlock(&pmap->pm_slock);
 }
@@ -1515,7 +1515,8 @@ pmap_enter(pmap, va, pa, prot, wired)
 	vm_offset_t opa;
 	boolean_t tflush = TRUE;
 	boolean_t hadasm = FALSE;	/* XXX gcc -Wuninitialized */
-	boolean_t isactive = active_pmap(pmap);
+	boolean_t needisync;
+	boolean_t isactive;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1526,6 +1527,8 @@ pmap_enter(pmap, va, pa, prot, wired)
 		return;
 
 	managed = PAGE_IS_MANAGED(pa);
+	isactive = active_pmap(pmap);
+	needisync = isactive && (prot & VM_PROT_EXECUTE) != 0;
 
 	PMAP_MAP_TO_HEAD_LOCK();
 	simple_lock(&pmap->pm_slock);
@@ -1700,7 +1703,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		 */
 		pmap_physpage_addref(pte);
 	}
-	pmap_remove_mapping(pmap, va, pte, TRUE);
+	needisync |= pmap_remove_mapping(pmap, va, pte, TRUE);
 #ifdef PMAPSTATS
 	enter_stats.mchange++;
 #endif
@@ -1759,10 +1762,10 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * Invalidate the TLB entry for this VA and any appropriate
 	 * caches.
 	 */
-	if (tflush) {
+	if (tflush)
 		PMAP_INVALIDATE_TLB(pmap, va, hadasm, isactive);
-		PMAP_SYNC_ISTREAM(isactive, (prot & VM_PROT_EXECUTE) != 0);
-	}
+	if (needisync)
+		alpha_pal_imb();
 
 	simple_unlock(&pmap->pm_slock);
 	PMAP_MAP_TO_HEAD_UNLOCK();
@@ -1817,7 +1820,8 @@ pmap_kenter_pa(va, pa, prot)
 	 * caches.
 	 */
 	PMAP_INVALIDATE_TLB(pmap_kernel(), va, TRUE, TRUE);
-	PMAP_SYNC_ISTREAM(TRUE, (prot & VM_PROT_EXECUTE) != 0);
+	if (prot & VM_PROT_EXECUTE)
+		alpha_pal_imb();
 }
 
 /*
@@ -1861,6 +1865,7 @@ pmap_kremove(va, size)
 	vm_size_t size;
 {
 	pt_entry_t *pte;
+	boolean_t needisync = FALSE;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1874,8 +1879,12 @@ pmap_kremove(va, size)
 	for (; size != 0; size -= PAGE_SIZE, va += PAGE_SIZE) {
 		pte = PMAP_KERNEL_PTE(va);
 		if (pmap_pte_v(pte))
-			pmap_remove_mapping(pmap_kernel(), va, pte, TRUE);
+			needisync |= pmap_remove_mapping(pmap_kernel(), va,
+			    pte, TRUE);
 	}
+
+	if (needisync)
+		alpha_pal_imb();
 
 	simple_unlock(&pmap_kernel()->pm_slock);
 	PMAP_MAP_TO_HEAD_UNLOCK();
@@ -2508,8 +2517,11 @@ alpha_protection_init()
  *	careful to get the next PV entry while we remove this entry
  *	from beneath it.  We assume that the pmap itself is already
  *	locked; dolock applies only to the PV list.
+ *
+ *	Returns TRUE or FALSE, indicating if the I-stream needs to
+ *	be synchronized.
  */
-void
+boolean_t
 pmap_remove_mapping(pmap, va, pte, dolock)
 	pmap_t pmap;
 	vm_offset_t va;
@@ -2521,6 +2533,7 @@ pmap_remove_mapping(pmap, va, pte, dolock)
 	boolean_t onpv;
 	boolean_t hadasm;
 	boolean_t isactive;
+	boolean_t needisync;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
@@ -2534,13 +2547,14 @@ pmap_remove_mapping(pmap, va, pte, dolock)
 	if (pte == PT_ENTRY_NULL) {
 		pte = pmap_l3pte(pmap, va, NULL);
 		if (pmap_pte_v(pte) == 0)
-			return;
+			return (FALSE);
 	}
 
 	pa = pmap_pte_pa(pte);
 	onpv = (pmap_pte_pv(pte) != 0);
 	hadasm = (pmap_pte_asm(pte) != 0);
 	isactive = active_pmap(pmap);
+	needisync = isactive /* && XXX tract execute in PTE */;
 
 #ifdef PMAPSTATS
 	remove_stats.removes++;
@@ -2562,7 +2576,6 @@ pmap_remove_mapping(pmap, va, pte, dolock)
 	*pte = PG_NV;
 
 	PMAP_INVALIDATE_TLB(pmap, va, hadasm, isactive);
-	PMAP_SYNC_ISTREAM(isactive, TRUE);
 
 	/*
 	 * If we're removing a user mapping, check to see if we
@@ -2638,7 +2651,7 @@ pmap_remove_mapping(pmap, va, pte, dolock)
 	 * If the mapping wasn't enterd on the PV list, we're all done.
 	 */
 	if (onpv == FALSE)
-		return;
+		return (needisync);
 
 	/*
 	 * Otherwise remove it from the PV table
@@ -2647,6 +2660,8 @@ pmap_remove_mapping(pmap, va, pte, dolock)
 	s = splimp();		/* XXX needed w/ PMAP_NEW? */
 	pmap_pv_remove(pmap, pa, va, dolock);
 	splx(s);
+
+	return (needisync);
 }
 
 /*
@@ -2670,6 +2685,7 @@ pmap_changebit(pa, bit, setem)
 	pt_entry_t *pte, npte;
 	vm_offset_t va;
 	boolean_t hadasm, isactive;
+	boolean_t needisync = FALSE;
 	int s;
 #ifdef PMAPSTATS
 	struct chgstats *chgp;
@@ -2726,7 +2742,8 @@ pmap_changebit(pa, bit, setem)
 			isactive = active_pmap(pv->pv_pmap);
 			*pte = npte;
 			PMAP_INVALIDATE_TLB(pv->pv_pmap, va, hadasm, isactive);
-			PMAP_SYNC_ISTREAM(isactive, TRUE);
+			/* XXX track execute in PTE. */
+			needisync = isactive && TRUE;
 #ifdef PMAPSTATS
 			if (setem)
 				chgp->sethits++;
@@ -2745,6 +2762,9 @@ pmap_changebit(pa, bit, setem)
 		simple_unlock(&pv->pv_pmap->pm_slock);
 	}
 	splx(s);
+
+	if (needisync)
+		alpha_pal_imb();
 }
 
 /*
