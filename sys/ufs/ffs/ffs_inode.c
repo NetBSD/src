@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.29 1999/11/15 18:49:13 fvdl Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.30 2000/03/30 12:41:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@ ffs_update(v)
 		struct timespec *a_modify;
 		int a_waitfor;
 	} */ *ap = v;
-	register struct fs *fs;
+	struct fs *fs;
 	struct buf *bp;
 	struct inode *ip;
 	int error;
@@ -160,17 +160,17 @@ ffs_truncate(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *ovp = ap->a_vp;
-	register ufs_daddr_t lastblock;
-	register struct inode *oip;
+	struct vnode *ovp = ap->a_vp;
+	ufs_daddr_t lastblock;
+	struct inode *oip;
 	ufs_daddr_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
 	ufs_daddr_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
 	off_t length = ap->a_length;
-	register struct fs *fs;
+	struct fs *fs;
 	struct buf *bp;
 	int offset, size, level;
 	long count, nblocks, vflags, blocksreleased = 0;
-	register int i;
+	int i;
 	int aflags, error, allerror;
 	off_t osize;
 
@@ -360,7 +360,7 @@ ffs_truncate(v)
 	 * All whole direct blocks or frags.
 	 */
 	for (i = NDADDR - 1; i > lastblock; i--) {
-		register long bsize;
+		long bsize;
 
 		bn = ufs_rw32(oip->i_ffs_db[i], UFS_FSNEEDSWAP(fs));
 		if (bn == 0)
@@ -438,16 +438,16 @@ done:
  */
 static int
 ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
-	register struct inode *ip;
+	struct inode *ip;
 	ufs_daddr_t lbn, lastbn;
 	ufs_daddr_t dbn;
 	int level;
 	long *countp;
 {
-	register int i;
+	int i;
 	struct buf *bp;
-	register struct fs *fs = ip->i_fs;
-	register ufs_daddr_t *bap;
+	struct fs *fs = ip->i_fs;
+	ufs_daddr_t *bap;
 	struct vnode *vp;
 	ufs_daddr_t *copy = NULL, nb, nlbn, last;
 	long blkcount, factor;

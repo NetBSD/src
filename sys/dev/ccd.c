@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.67 2000/03/16 03:54:01 enami Exp $	*/
+/*	$NetBSD: ccd.c,v 1.68 2000/03/30 12:45:27 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -217,9 +217,9 @@ ccdinit(cs, cpaths, vpp, p)
 	struct vnode **vpp;
 	struct proc *p;
 {
-	register struct ccdcinfo *ci = NULL;
-	register size_t size;
-	register int ix;
+	struct ccdcinfo *ci = NULL;
+	size_t size;
+	int ix;
 	struct vattr va;
 	size_t minsize;
 	int maxsecsize;
@@ -376,12 +376,12 @@ ccdinit(cs, cpaths, vpp, p)
 
 static void
 ccdinterleave(cs)
-	register struct ccd_softc *cs;
+	struct ccd_softc *cs;
 {
-	register struct ccdcinfo *ci, *smallci;
-	register struct ccdiinfo *ii;
-	register daddr_t bn, lbn;
-	register int ix;
+	struct ccdcinfo *ci, *smallci;
+	struct ccdiinfo *ii;
+	daddr_t bn, lbn;
+	int ix;
 	u_long size;
 
 #ifdef DEBUG
@@ -585,11 +585,11 @@ ccdclose(dev, flags, fmt, p)
 
 void
 ccdstrategy(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
-	register int unit = ccdunit(bp->b_dev);
-	register struct ccd_softc *cs = &ccd_softc[unit];
-	register int s;
+	int unit = ccdunit(bp->b_dev);
+	struct ccd_softc *cs = &ccd_softc[unit];
+	int s;
 	int wlabel;
 	struct disklabel *lp;
 
@@ -637,10 +637,10 @@ done:
 
 static void
 ccdstart(cs, bp)
-	register struct ccd_softc *cs;
-	register struct buf *bp;
+	struct ccd_softc *cs;
+	struct buf *bp;
 {
-	register long bcount, rcount;
+	long bcount, rcount;
 	struct ccdbuf *cbp;
 	caddr_t addr;
 	daddr_t bn;
@@ -705,16 +705,16 @@ ccdstart(cs, bp)
  */
 static struct ccdbuf *
 ccdbuffer(cs, bp, bn, addr, bcount)
-	register struct ccd_softc *cs;
+	struct ccd_softc *cs;
 	struct buf *bp;
 	daddr_t bn;
 	caddr_t addr;
 	long bcount;
 {
-	register struct ccdcinfo *ci;
-	register struct ccdbuf *cbp;
-	register daddr_t cbn, cboff;
-	register u_int64_t cbc;
+	struct ccdcinfo *ci;
+	struct ccdbuf *cbp;
+	daddr_t cbn, cboff;
+	u_int64_t cbc;
 	int ccdisk;
 
 #ifdef DEBUG
@@ -732,7 +732,7 @@ ccdbuffer(cs, bp, bn, addr, bcount)
 	 * Serially concatenated
 	 */
 	if (cs->sc_ileave == 0) {
-		register daddr_t sblk;
+		daddr_t sblk;
 
 		sblk = 0;
 		for (ccdisk = 0, ci = &cs->sc_cinfo[ccdisk];
@@ -745,7 +745,7 @@ ccdbuffer(cs, bp, bn, addr, bcount)
 	 * Interleaved
 	 */
 	else {
-		register struct ccdiinfo *ii;
+		struct ccdiinfo *ii;
 		int off;
 
 		cboff = cbn % cs->sc_ileave;
@@ -806,8 +806,8 @@ ccdbuffer(cs, bp, bn, addr, bcount)
 
 static void
 ccdintr(cs, bp)
-	register struct ccd_softc *cs;
-	register struct buf *bp;
+	struct ccd_softc *cs;
+	struct buf *bp;
 {
 
 #ifdef DEBUG
@@ -1390,7 +1390,7 @@ static void
 printiinfo(ii)
 	struct ccdiinfo *ii;
 {
-	register int ix, i;
+	int ix, i;
 
 	for (ix = 0; ii->ii_ndisk; ix++, ii++) {
 		printf(" itab[%d]: #dk %d sblk %d soff %d",

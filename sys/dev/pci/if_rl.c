@@ -1,4 +1,4 @@
-/* $NetBSD: if_rl.c,v 1.9 2000/03/23 22:23:03 mycroft Exp $ */
+/* $NetBSD: if_rl.c,v 1.10 2000/03/30 12:45:34 augustss Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -221,7 +221,7 @@ static void rl_eeprom_putbyte(sc, addr)
 	struct rl_softc		*sc;
 	int			addr;
 {
-	register int		d, i;
+	int		d, i;
 
 	d = addr | RL_EECMD_READ;
 
@@ -252,7 +252,7 @@ static void rl_eeprom_getword(sc, addr, dest)
 	int			addr;
 	u_int16_t		*dest;
 {
-	register int		i;
+	int		i;
 	u_int16_t		word = 0;
 
 	/* Enter EEPROM access mode. */
@@ -331,7 +331,7 @@ static void rl_read_eeprom(sc, dest, off, cnt, swap)
 static void rl_mii_sync(sc)
 	struct rl_softc		*sc;
 {
-	register int		i;
+	int		i;
 
 	MII_SET(RL_MII_DIR|RL_MII_DATAOUT);
 
@@ -697,7 +697,7 @@ static void rl_setmulti(sc)
 static void rl_reset(sc)
 	struct rl_softc		*sc;
 {
-	register int		i;
+	int		i;
 
 	CSR_WRITE_1(sc, RL_COMMAND, RL_CMD_RESET);
 
@@ -1550,7 +1550,7 @@ rl_ether_ioctl(ifp, cmd, data)
 #ifdef NS
 		case AF_NS:
 		    {
-			 register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+			 struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			 if (ns_nullhost(*ina))
 				ina->x_host = *(union ns_host *)
@@ -1644,7 +1644,7 @@ static void rl_watchdog(ifp)
 static void rl_stop(sc)
 	struct rl_softc		*sc;
 {
-	register int		i;
+	int		i;
 	struct ifnet		*ifp;
 
 	ifp = &sc->ethercom.ec_if;

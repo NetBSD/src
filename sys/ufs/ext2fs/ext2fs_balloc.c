@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.3 1998/03/01 02:23:45 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.4 2000/03/30 12:41:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -60,15 +60,15 @@
  */
 int
 ext2fs_balloc(ip, bn, size, cred, bpp, flags)
-	register struct inode *ip;
-	register ufs_daddr_t bn;
+	struct inode *ip;
+	ufs_daddr_t bn;
 	int size;
 	struct ucred *cred;
 	struct buf **bpp;
 	int flags;
 {
-	register struct m_ext2fs *fs;
-	register ufs_daddr_t nb;
+	struct m_ext2fs *fs;
+	ufs_daddr_t nb;
 	struct buf *bp, *nbp;
 	struct vnode *vp = ITOV(ip);
 	struct indir indirs[NIADDR + 2];

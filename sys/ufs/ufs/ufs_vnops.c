@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.63 2000/03/30 02:49:11 simonb Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.64 2000/03/30 12:41:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -206,8 +206,8 @@ ufs_close(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct inode *ip = VTOI(vp);
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
 	struct timespec ts;
 
 	simple_lock(&vp->v_interlock);
@@ -229,8 +229,8 @@ ufs_access(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct inode *ip = VTOI(vp);
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
 	mode_t mode = ap->a_mode;
 #ifdef QUOTA
 	int error = 0;
@@ -283,9 +283,9 @@ ufs_getattr(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct inode *ip = VTOI(vp);
-	register struct vattr *vap = ap->a_vap;
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
+	struct vattr *vap = ap->a_vap;
 	struct timespec ts;
 
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
@@ -443,12 +443,12 @@ ufs_setattr(v)
  */
 static int
 ufs_chmod(vp, mode, cred, p)
-	register struct vnode *vp;
-	register int mode;
-	register struct ucred *cred;
+	struct vnode *vp;
+	int mode;
+	struct ucred *cred;
 	struct proc *p;
 {
-	register struct inode *ip = VTOI(vp);
+	struct inode *ip = VTOI(vp);
 	int error;
 
 	if (cred->cr_uid != ip->i_ffs_uid &&
@@ -474,18 +474,18 @@ ufs_chmod(vp, mode, cred, p)
  */
 static int
 ufs_chown(vp, uid, gid, cred, p)
-	register struct vnode *vp;
+	struct vnode *vp;
 	uid_t uid;
 	gid_t gid;
 	struct ucred *cred;
 	struct proc *p;
 {
-	register struct inode *ip = VTOI(vp);
+	struct inode *ip = VTOI(vp);
 	int error = 0;
 #ifdef QUOTA
 	uid_t ouid;
 	gid_t ogid;
-	register int i;
+	int i;
 	long change;
 #endif
 
@@ -796,7 +796,7 @@ ufs_rename(v)
 		struct componentname *a_tcnp;
 	} */ *ap = v;
 	struct vnode *tvp = ap->a_tvp;
-	register struct vnode *tdvp = ap->a_tdvp;
+	struct vnode *tdvp = ap->a_tdvp;
 	struct vnode *fvp = ap->a_fvp;
 	struct vnode *fdvp = ap->a_fdvp;
 	struct componentname *tcnp = ap->a_tcnp;
@@ -1171,10 +1171,10 @@ ufs_mkdir(v)
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
 	} */ *ap = v;
-	register struct vnode *dvp = ap->a_dvp;
-	register struct vattr *vap = ap->a_vap;
-	register struct componentname *cnp = ap->a_cnp;
-	register struct inode *ip, *dp;
+	struct vnode *dvp = ap->a_dvp;
+	struct vattr *vap = ap->a_vap;
+	struct componentname *cnp = ap->a_cnp;
+	struct inode *ip, *dp;
 	struct vnode *tvp;
 	struct buf *bp;
 	struct dirtemplate dirtemplate;
@@ -1435,8 +1435,8 @@ ufs_symlink(v)
 		struct vattr *a_vap;
 		char *a_target;
 	} */ *ap = v;
-	register struct vnode *vp, **vpp = ap->a_vpp;
-	register struct inode *ip;
+	struct vnode *vp, **vpp = ap->a_vpp;
+	struct inode *ip;
 	int len, error;
 
 	error = ufs_makeinode(IFLNK | ap->a_vap->va_mode, ap->a_dvp,
@@ -1479,7 +1479,7 @@ ufs_readdir(v)
 		off_t **a_cookies;
 		int *ncookies;
 	} */ *ap = v;
-	register struct uio *uio = ap->a_uio;
+	struct uio *uio = ap->a_uio;
 	int error;
 	size_t count, lost;
 	off_t off = uio->uio_offset;
@@ -1598,8 +1598,8 @@ ufs_readlink(v)
 		struct uio *a_uio;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct inode *ip = VTOI(vp);
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
 	int isize;
 
 	isize = ip->i_ffs_size;
@@ -1622,9 +1622,9 @@ ufs_strategy(v)
 	struct vop_strategy_args /* {
 		struct buf *a_bp;
 	} */ *ap = v;
-	register struct buf *bp = ap->a_bp;
-	register struct vnode *vp = bp->b_vp;
-	register struct inode *ip;
+	struct buf *bp = ap->a_bp;
+	struct vnode *vp = bp->b_vp;
+	struct inode *ip;
 	int error;
 
 	ip = VTOI(vp);
@@ -1662,8 +1662,8 @@ ufs_print(v)
 	struct vop_print_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct inode *ip = VTOI(vp);
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
 
 	printf("tag VT_UFS, ino %d, on dev %d, %d", ip->i_number,
 	    major(ip->i_dev), minor(ip->i_dev));
@@ -1879,7 +1879,7 @@ ufs_advlock(v)
 		struct flock *a_fl;
 		int  a_flags;
 	} */ *ap = v;
-	register struct inode *ip = VTOI(ap->a_vp);
+	struct inode *ip = VTOI(ap->a_vp);
 
 	return (lf_advlock(&ip->i_lockf, ip->i_ffs_size, ap->a_id, ap->a_op,
 	    ap->a_fl, ap->a_flags));
@@ -1956,7 +1956,7 @@ ufs_makeinode(mode, dvp, vpp, cnp)
 	struct vnode **vpp;
 	struct componentname *cnp;
 {
-	register struct inode *ip, *pdir;
+	struct inode *ip, *pdir;
 	struct direct newdir;
 	struct vnode *tvp;
 	int error;

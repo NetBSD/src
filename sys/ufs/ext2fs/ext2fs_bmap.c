@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.4 1998/03/01 02:23:45 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.5 2000/03/30 12:41:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -109,13 +109,13 @@ ext2fs_bmap(v)
 int
 ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	struct vnode *vp;
-	register ufs_daddr_t bn;
+	ufs_daddr_t bn;
 	ufs_daddr_t *bnp;
 	struct indir *ap;
 	int *nump;
 	int *runp;
 {
-	register struct inode *ip;
+	struct inode *ip;
 	struct buf *bp;
 	struct ufsmount *ump;
 	struct mount *mp;
