@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.4 1995/04/22 22:06:45 leo Exp $	*/
+/*	$NetBSD: zs.c,v 1.5 1995/05/14 15:55:51 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -193,10 +193,12 @@ void		*aux;
 	zs_loadchannelregs(&addr->zs_chan[ZS_CHAN_A], zs_init_regs);
 	zs_loadchannelregs(&addr->zs_chan[ZS_CHAN_B], zs_init_regs);
 
-	/*
-	 * enable scc related interrupts
-	 */
-	SCU->sys_mask |= SCU_SCC;
+	if(machineid & ATARI_TT) {
+		/*
+		 * enable scc related interrupts
+		 */
+		SCU->sys_mask |= SCU_SCC;
+	}
 
 	/* link into interrupt list with order (A,B) (B=A+1) */
 	cs[0].cs_next = &cs[1];
