@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.38 2000/10/12 02:24:08 enami Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.39 2000/10/12 03:29:59 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1517,14 +1517,20 @@ wi_init(ifp)
 	/* Enable desired port */
 	wi_cmd(sc, WI_CMD_ENABLE | sc->wi_portnum, 0);
 
-	if (wi_alloc_nicmem(sc, 1518 + sizeof(struct wi_frame) + 8, &id))
+	if ((error = wi_alloc_nicmem(sc,
+	    1518 + sizeof(struct wi_frame) + 8, &id)) != 0) {
 		printf("%s: tx buffer allocation failed\n",
 		    sc->sc_dev.dv_xname);
+		goto out;
+	}
 	sc->wi_tx_data_id = id;
 
-	if (wi_alloc_nicmem(sc, 1518 + sizeof(struct wi_frame) + 8, &id))
+	if ((error = wi_alloc_nicmem(sc,
+	    1518 + sizeof(struct wi_frame) + 8, &id)) != 0) {
 		printf("%s: mgmt. buffer allocation failed\n",
 		    sc->sc_dev.dv_xname);
+		goto out;
+	}
 	sc->wi_tx_mgmt_id = id;
 
 	/* Enable interrupts */
