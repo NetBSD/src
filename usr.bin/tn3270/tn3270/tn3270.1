@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)tn3270.1	4.6 (Berkeley) 7/27/91
-.\"	$Id: tn3270.1,v 1.2 1993/08/01 07:27:38 mycroft Exp $
+.\"	$Id: tn3270.1,v 1.3 1995/04/27 18:24:00 jtc Exp $
 .\"
 .Dd July 27, 1991
 .Dt TN3270 1
@@ -81,14 +81,14 @@ are as follows:
 .Bl -tag -width Fl
 .It Fl d
 Turn on socket-level tracing (for super-user only)
-.Fl n Ns Ar filename
+.It Fl n Ns Ar filename
 Specify a file to receive network trace data
 output (from commands "toggle netdata" and
 "toggle options", see
 .Xr telnet 1 ) ;
 the default is for output
 to be directed to the standard error file.
-.Fl t Ns Ar commandname
+.It Fl t Ns Ar commandname
 Specify a
 .Tn UNIX
 command to process
