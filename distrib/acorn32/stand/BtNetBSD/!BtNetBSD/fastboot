@@ -1,4 +1,4 @@
-| $NetBSD: fastboot,v 1.3 2002/11/03 12:46:29 bjh21 Exp $
+| $NetBSD: fastboot,v 1.4 2002/12/09 17:28:59 gavan Exp $
 |
 | Fast boot configuration file, edit by hand, save and run !BtNetBSD
 | Part of !BtNetBSD
@@ -11,8 +11,10 @@ If "%*0" = "" Then Run <BtNetBSD$Dir>.native.mountufs ADFS 4
 Run <BtNetBSD$Dir>.PreBoot
 
 | Select the monitor defintion file and screenmode
-Set NetBSD$MDF ADFS::4.$.AKF85
-Set NetBSD$ScreenMode "X1024 Y768 C256"
+| Uncomment one or both of these only if you intend to use a different
+| MDF or screen mode in NetBSD than is configured in RISC OS. 
+|Set NetBSD$MDF BootResources:Configure.Monitors.Acorn.AKF85
+|Set NetBSD$ScreenMode "X1024 Y768 C256"
 
 | Select Kernel, Root and Bootoptions
 | add `oldkernel' to BootOptions for booting old a.out kernels
@@ -29,9 +31,9 @@ Set NetBSD$BootOptions maxproc=64 noftp symtab
 | -----------------------
 | Set environment and try to boot NetBSD!
 |
-loadmodefile <NetBSD$MDF>
-Set Alias$SetNetBSDMode Wimpmode <NetBSD$ScreenMode>
-SetNetBSDMode
+If "<NetBSD$MDF>" <> "" Then loadmodefile <NetBSD$MDF>
+If "<NetBSD$ScreenMode>" <> "" Then Set Alias$SetNetBSDMode Wimpmode <NetBSD$ScreenMode>
+If "<NetBSD$ScreenMode>" <> "" Then SetNetBSDMode
 
 Set Alias$RunNetBSD <BtNetBSD$Dir>.BtNetBSD <NetBSD$Kernel> root=<NetBSD$Root> <NetBSD$BootOptions>
 
