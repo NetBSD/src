@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.7 1997/10/12 18:06:26 oki Exp $ */
+/*	$NetBSD: zs.c,v 1.7.2.1 1999/02/05 06:56:08 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,6 +53,7 @@
  * This driver knows far too much about chip to usage mappings.
  */
 #include "zs.h"
+#include "mouse.h"
 #if NZS > 0
 
 #include <sys/param.h>
@@ -122,9 +123,11 @@ struct cfdriver zs_cd = {
 	NULL, "zs", DV_TTY, NULL, 0
 };
 
+#if NMOUSE > 0
 #ifdef x68k
 static struct zs_chanstate *zsms;
 void zs_msmodem __P((int));
+#endif
 #endif
 
 /* Interrupt handlers. */
@@ -323,9 +326,11 @@ zsattach(parent, dev, aux)
 		 */
 		tp->t_ispeed = tp->t_ospeed = cs->cs_speed;
 		tp->t_cflag = CS8 | CSTOPB;
+#if NMOUSE > 0
 		ms_serial(tp, zsiopen, zsiclose);
 #ifdef x68k
 		zsms = cs;
+#endif
 #endif
 	} else {
 		if (tp != ctp)
@@ -1016,9 +1021,11 @@ again:
 				 * this should be done through
 				 * bstreams	XXX gag choke
 				 */
-				else if (unit == ZS_MOUSE)
+				else if (unit == ZS_MOUSE) {
+#if NMOUSE > 0
 					ms_rint(cc);
-				else
+#endif
+				} else
 					line->l_rint(cc, tp);
 				break;
 
@@ -1492,6 +1499,7 @@ zs_loadchannelregs(zc, reg)
 	ZS_WRITE(zc, 5, reg[5]);
 }
 
+#if NMOUSE > 0
 #ifdef x68k
 void
 zs_msmodem(onoff)
@@ -1504,6 +1512,7 @@ zs_msmodem(onoff)
 		mfp.udr = 0x40 | (onoff ? 0 : 1);
 	}
 }
+#endif
 #endif
 
 #ifdef KGDB
