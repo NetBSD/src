@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.65 2002/04/26 23:39:58 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.66 2002/04/27 10:31:52 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -2820,3 +2820,11 @@ distrib/macppc/floppies/ramdisk/Makefile	patch
 sys/conf/osrelease.sh				patch
 
   Backpedal to 1.5.3_RC2; too much churn on the branch.
+
+sys/arch/alpha/common/bus_dma.c			1.49
+sys/arch/alpha/common/sgmap_typedep.c		1.23 via patch
+sys/arch/alpha/include/bus.h			1.47
+sys/arch/alpha/isa/isadma_bounce.c		1.4
+
+  Fix a DMA resource leak on Alpha systems with more than 1GB of
+  RAM.
