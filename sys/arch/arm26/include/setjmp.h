@@ -1,4 +1,4 @@
-/* $NetBSD: setjmp.h,v 1.1 2000/05/09 21:56:00 bjh21 Exp $ */
+/*	$NetBSD: setjmp.h,v 1.2 2000/12/29 22:42:24 bjh21 Exp $	*/
 
 /*
  * machine/setjmp.h: machine dependent setjmp-related information.
@@ -32,6 +32,9 @@
  *	23	r13		register 13 (sp)
  *	24	r14		register 14 (lr)
  *	25	signal mask	(dependant on magic)
+ *	26	(con't)
+ *	27	(con't)
+ *	28	(con't)
  *
  * The magic number number identifies the jmp_buf and
  * how the buffer was created as well as providing

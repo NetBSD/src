@@ -1,4 +1,4 @@
-/* $NetBSD: int_types.h,v 1.2 2000/06/27 04:58:52 kleink Exp $ */
+/*	$NetBSD: int_types.h,v 1.3 2000/12/29 22:42:24 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,8 +35,8 @@
  *	from: @(#)types.h	7.5 (Berkeley) 3/9/91
  */
 
-#ifndef	_ARM26_INT_TYPES_H_
-#define	_ARM26_INT_TYPES_H_
+#ifndef	_ARM32_INT_TYPES_H_
+#define	_ARM32_INT_TYPES_H_
 
 /*
  * 7.18.1 Integer types
@@ -60,4 +60,4 @@ typedef	unsigned long long int __uint64_t;
 typedef	int		       __intptr_t;
 typedef	unsigned int	      __uintptr_t;
 
-#endif	/* !_ARM26_INT_TYPES_H_ */
+#endif	/* !_ARM32_INT_TYPES_H_ */

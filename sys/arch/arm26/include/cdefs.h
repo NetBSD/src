@@ -1,3 +1,8 @@
-/* $NetBSD: cdefs.h,v 1.1 2000/05/09 21:55:59 bjh21 Exp $ */
+/*	$NetBSD: cdefs.h,v 1.2 2000/12/29 22:42:23 bjh21 Exp $	*/
 
-/* Nothing here -- we're ordinary ELF */
+#ifndef	_MACHINE_CDEFS_H_
+#define	_MACHINE_CDEFS_H_
+
+/* No arch-specific cdefs. */
+
+#endif /* !_MACHINE_CDEFS_H_ */
