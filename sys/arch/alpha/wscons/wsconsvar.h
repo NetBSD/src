@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsvar.h,v 1.6 1997/07/17 01:28:54 jtk Exp $ */
+/* $NetBSD: wsconsvar.h,v 1.7 1997/07/17 01:33:04 jtk Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -87,7 +87,7 @@ struct wscons_attach_args {			/* attaches output device */
 };
 
 #include "locators.h"
-#define	wsconscf_console	cf_loc[WSCONSCF_CONSOLE]	/* spec'd to be console? */
+#define	wsconscf_console	cf_loc[WSCONSDEVCF_CONSOLE]	/* spec'd to be console? */
 
 /*
  * Attach the console output device.  This is called _very_ early
