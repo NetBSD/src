@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.engrave.c,v 1.4 1997/10/19 16:57:58 christos Exp $	*/
+/*	$NetBSD: hack.engrave.c,v 1.5 2001/03/25 20:44:00 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.engrave.c,v 1.4 1997/10/19 16:57:58 christos Exp $");
+__RCSID("$NetBSD: hack.engrave.c,v 1.5 2001/03/25 20:44:00 jsm Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -42,7 +42,7 @@ engr_at(x, y)
 
 int
 sengr_at(s, x, y)
-	char           *s;
+	const char     *s;
 	xchar           x, y;
 {
 	struct engr    *ep = engr_at(x, y);
@@ -126,7 +126,7 @@ read_engr_at(x, y)
 void
 make_engr_at(x, y, s)
 	int             x, y;
-	char           *s;
+	const char     *s;
 {
 	struct engr    *ep;
 

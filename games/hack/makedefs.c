@@ -1,15 +1,16 @@
-/* $NetBSD: makedefs.c,v 1.6 2000/07/31 11:35:03 simonb Exp $ */
+/* $NetBSD: makedefs.c,v 1.7 2001/03/25 20:44:04 jsm Exp $ */
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
 #ifndef lint
-static char rcsid[] =
-    "$NetBSD: makedefs.c,v 1.6 2000/07/31 11:35:03 simonb Exp $";
+static const char rcsid[] =
+    "$NetBSD: makedefs.c,v 1.7 2001/03/25 20:44:04 jsm Exp $";
 #endif				/* not lint */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -23,7 +24,7 @@ char            string[STRSZ];
 
 static void readline(void);
 static char nextchar(void);
-static int skipuntil(char *);
+static int skipuntil(const char *);
 static int getentry(void);
 static void capitalize(char *);
 static int letter(int);
@@ -43,7 +44,7 @@ main(argc, argv)
 		(void) fprintf(stderr, "usage: makedefs file\n");
 		exit(1);
 	}
-	if ((fd = open(argv[1], 0)) < 0) {
+	if ((fd = open(argv[1], O_RDONLY)) < 0) {
 		perror(argv[1]);
 		exit(1);
 	}
@@ -74,6 +75,11 @@ main(argc, argv)
 	printf("#define	LAST_GEM	(JADE+1)\n");
 	printf("#define	LAST_RING	%d\n", propct);
 	printf("#define	NROFOBJECTS	%d\n", i - 1);
+	fflush(stdout);
+	if (ferror(stdout)) {
+		perror("standard output");
+		exit(1);
+	}
 	exit(0);
 }
 
@@ -105,9 +111,10 @@ nextchar()
 
 static int
 skipuntil(s)
-	char           *s;
+	const char           *s;
 {
-	char           *sp0, *sp1;
+	const char *sp0;
+	char *sp1;
 loop:
 	while (*s != nextchar())
 		if (eof) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.mon.c,v 1.4 1997/10/19 16:58:34 christos Exp $	*/
+/*	$NetBSD: hack.mon.c,v 1.5 2001/03/25 20:44:01 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.mon.c,v 1.4 1997/10/19 16:58:34 christos Exp $");
+__RCSID("$NetBSD: hack.mon.c,v 1.5 2001/03/25 20:44:01 jsm Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -21,7 +21,7 @@ __RCSID("$NetBSD: hack.mon.c,v 1.4 1997/10/19 16:58:34 christos Exp $");
 int             warnlevel;	/* used by movemon and dochugw */
 long            lastwarntime;
 int             lastwarnlev;
-char           *warnings[] = {
+const char           *const warnings[] = {
 	"white", "pink", "red", "ruby", "purple", "black"
 };
 
@@ -93,7 +93,7 @@ next_mon:
 		warnlevel = SIZE(warnings) - 1;
 	if (warnlevel >= 0)
 		if (warnlevel > lastwarnlev || moves > lastwarntime + 5) {
-			char           *rr;
+			const char           *rr;
 			switch (Warning & (LEFT_RING | RIGHT_RING)) {
 			case LEFT_RING:
 				rr = "Your left ring glows";
@@ -118,7 +118,7 @@ next_mon:
 void
 justswld(mtmp, name)
 	struct monst   *mtmp;
-	char           *name;
+	const char           *name;
 {
 
 	mtmp->mx = u.ux;
@@ -137,7 +137,7 @@ void
 youswld(mtmp, dam, die, name)
 	struct monst   *mtmp;
 	int		dam, die;
-	char           *name;
+	const char           *name;
 {
 	if (mtmp != u.ustuck)
 		return;
@@ -178,7 +178,7 @@ int
 dochug(mtmp)
 	struct monst   *mtmp;
 {
-	struct permonst *mdat;
+	const struct permonst *mdat;
 	int tmp = 0, nearby, scared;
 
 	if (mtmp->cham && !rn2(6))
@@ -260,8 +260,7 @@ dochug(mtmp)
 }
 
 int
-m_move(mtmp, after)
-	struct monst   *mtmp;
+m_move(struct monst *mtmp, int after)
 {
 	struct monst   *mtmp2;
 	int		nx, ny, omx, omy, appr, nearer, cnt, i, j;
@@ -623,7 +622,7 @@ dist(x, y)
 
 void
 poisoned(string, pname)
-	char           *string, *pname;
+	const char           *string, *pname;
 {
 	int             i;
 
@@ -749,7 +748,7 @@ killed(mtmp)
 #define	NEW_SCORING
 #endif	/* lint */
 	int             tmp, nk, x, y;
-	struct permonst *mdat;
+	const struct permonst *mdat;
 
 	if (mtmp->cham)
 		mtmp->data = PM_CHAMELEON;
@@ -869,8 +868,7 @@ killed(mtmp)
 }
 
 void
-kludge(str, arg)
-	char           *str, *arg;
+kludge(const char *str, const char *arg)
 {
 	if (Blind) {
 		if (*str == '%')
@@ -897,7 +895,7 @@ int
 newcham(mtmp, mdat)		/* make a chameleon look like a new monster */
 /* returns 1 if the monster actually changed */
 	struct monst   *mtmp;
-	struct permonst *mdat;
+	const struct permonst *mdat;
 {
 	int mhp, hpn, hpd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.mhitu.c,v 1.4 1997/10/19 16:58:22 christos Exp $	*/
+/*	$NetBSD: hack.mhitu.c,v 1.5 2001/03/25 20:44:01 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.mhitu.c,v 1.4 1997/10/19 16:58:22 christos Exp $");
+__RCSID("$NetBSD: hack.mhitu.c,v 1.5 2001/03/25 20:44:01 jsm Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -20,7 +20,7 @@ int
 mhitu(mtmp)
 	struct monst   *mtmp;
 {
-	struct permonst *mdat = mtmp->data;
+	const struct permonst *mdat = mtmp->data;
 	int             tmp, ctmp;
 
 	nomul(0);

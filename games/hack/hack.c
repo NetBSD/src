@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.c,v 1.4 1997/10/19 16:57:37 christos Exp $	*/
+/*	$NetBSD: hack.c,v 1.5 2001/03/25 20:43:59 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.c,v 1.4 1997/10/19 16:57:37 christos Exp $");
+__RCSID("$NetBSD: hack.c,v 1.5 2001/03/25 20:43:59 jsm Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -353,7 +353,7 @@ dopickup()
 }
 
 void
-pickup(all)
+pickup(int all)
 {
 	struct gold *gold;
 	struct obj *obj, *obj2;
@@ -836,7 +836,7 @@ losestr(num)			/* may kill you; cause may be poison or */
 void
 losehp(n, knam)
 	int n;
-	char  *knam;
+	const char  *knam;
 {
 	u.uhp -= n;
 	if (u.uhp > u.uhpmax)

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.pri.c,v 1.5 1997/10/19 16:58:50 christos Exp $	*/
+/*	$NetBSD: hack.pri.c,v 1.6 2001/03/25 20:44:02 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.pri.c,v 1.5 1997/10/19 16:58:50 christos Exp $");
+__RCSID("$NetBSD: hack.pri.c,v 1.6 2001/03/25 20:44:02 jsm Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -344,7 +344,7 @@ pru()
 
 /* print a position that is visible for @ */
 void
-prl(x, y)
+prl(int x, int y)
 {
 	struct rm      *room;
 	struct monst   *mtmp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.rip.c,v 1.5 1997/10/19 16:58:53 christos Exp $	*/
+/*	$NetBSD: hack.rip.c,v 1.6 2001/03/25 20:44:02 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,13 +6,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.rip.c,v 1.5 1997/10/19 16:58:53 christos Exp $");
+__RCSID("$NetBSD: hack.rip.c,v 1.6 2001/03/25 20:44:02 jsm Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
 #include "extern.h"
 
-static char    *riptop = "\
+static const char    *riptop = "\
                        ----------\n\
                       /          \\\n\
                      /    REST    \\\n\
@@ -20,9 +20,9 @@ static char    *riptop = "\
                    /     PEACE      \\\n\
                   /                  \\";
 
-static char    *ripmid = "                  | %*s%*s |\n";
+static const char    *ripmid = "                  | %*s%*s |\n";
 
-static char    *ripbot = "\
+static const char    *ripbot = "\
                  *|     *  *  *      | *\n\
         _________)/\\\\_//(\\/(/\\)/\\//\\/|_)_______";
 
@@ -69,7 +69,7 @@ outrip()
 
 void
 center(line, text)
-	int             line;
+	int             line __attribute__((__unused__));
 	char           *text;
 {
 	int             n = strlen(text) / 2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.zap.c,v 1.4 1997/10/19 16:59:34 christos Exp $	*/
+/*	$NetBSD: hack.zap.c,v 1.5 2001/03/25 20:44:04 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,13 +6,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.zap.c,v 1.4 1997/10/19 16:59:34 christos Exp $");
+__RCSID("$NetBSD: hack.zap.c,v 1.5 2001/03/25 20:44:04 jsm Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
 #include "extern.h"
 
-char           *fl[] = {
+const char           *const fl[] = {
 	"magic missile",
 	"bolt of fire",
 	"sleep ray",
@@ -279,7 +279,7 @@ dozap()
 	return (1);
 }
 
-char           *
+const char           *
 exclam(force)
 	int             force;
 {
@@ -293,9 +293,9 @@ exclam(force)
 
 void
 hit(str, mtmp, force)
-	char           *str;
+	const char           *str;
 	struct monst   *mtmp;
-	char           *force;	/* usually either "." or "!" */
+	const char           *force;	/* usually either "." or "!" */
 {
 	if (!cansee(mtmp->mx, mtmp->my))
 		pline("The %s hits it.", str);
@@ -305,7 +305,7 @@ hit(str, mtmp, force)
 
 void
 miss(str, mtmp)
-	char           *str;
+	const char           *str;
 	struct monst   *mtmp;
 {
 	if (!cansee(mtmp->mx, mtmp->my))
@@ -374,7 +374,7 @@ bhit(ddx, ddy, range, sym, fhitm, fhito, obj)
 }
 
 struct monst   *
-boomhit(dx, dy)
+boomhit(int dx, int dy)
 {
 	int             i, ct;
 	struct monst   *mtmp;
@@ -441,7 +441,7 @@ buzz(type, sx, sy, dx, dy)
 	int             dx, dy;
 {
 	int             abstype = abs(type);
-	char           *fltxt = (type == -1) ? "blaze of fire" : fl[abstype];
+	const char     *fltxt = (type == -1) ? "blaze of fire" : fl[abstype];
 	struct rm      *lev;
 	xchar           range;
 	struct monst   *mon;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.main.c,v 1.5 2000/03/02 18:19:06 kleink Exp $	*/
+/*	$NetBSD: hack.main.c,v 1.6 2001/03/25 20:44:01 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.main.c,v 1.5 2000/03/02 18:19:06 kleink Exp $");
+__RCSID("$NetBSD: hack.main.c,v 1.6 2001/03/25 20:44:01 jsm Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -24,19 +24,19 @@ __RCSID("$NetBSD: hack.main.c,v 1.5 2000/03/02 18:19:06 kleink Exp $");
 
 int             (*afternmv)  __P((void));
 int             (*occupation)  __P((void));
-char           *occtxt;		/* defined when occupation != NULL */
+const char           *occtxt;		/* defined when occupation != NULL */
 
 int             hackpid;	/* current pid */
 int             locknum;	/* max num of players */
 #ifdef DEF_PAGER
-char           *catmore;	/* default pager */
+const char     *catmore;	/* default pager */
 #endif
 char            SAVEF[PL_NSIZ + 11] = "save/";	/* save/99999player */
 char           *hname;		/* name of the game (argv[0] of call) */
 char            obuf[BUFSIZ];	/* BUFSIZ is defined in stdio.h */
 
 int main __P((int, char *[]));
-static void chdirx __P((char *, boolean));
+static void chdirx __P((const char *, boolean));
 
 int
 main(argc, argv)
@@ -47,6 +47,12 @@ main(argc, argv)
 #ifdef CHDIR
 	char           *dir;
 #endif
+
+	/* Check for dirty tricks with closed fds 0, 1, 2 */
+	fd = open("/dev/null", O_RDONLY);
+	if (fd < 3)
+		exit(1);
+	close(fd);
 
 	hname = argv[0];
 	hackpid = getpid();
@@ -229,7 +235,7 @@ main(argc, argv)
 			}
 		if ((sfoo = getenv("GENOCIDED")) != NULL) {
 			if (*sfoo == '!') {
-				struct permonst *pm = mons;
+				const struct permonst *pm = mons;
 				char           *gp = genocided;
 
 				while (pm < mons + CMNUM + 2) {
@@ -247,7 +253,7 @@ main(argc, argv)
 	setftty();
 	(void) sprintf(SAVEF, "save/%d%s", getuid(), plname);
 	regularize(SAVEF + 5);	/* avoid . or / in name */
-	if ((fd = open(SAVEF, 0)) >= 0 &&
+	if ((fd = open(SAVEF, O_RDONLY)) >= 0 &&
 	    (uptodate(fd) || unlink(SAVEF) == 666)) {
 		(void) signal(SIGINT, done1);
 		pline("Restoring old save file...");
@@ -484,7 +490,7 @@ impossible(va_alist)
 #ifdef CHDIR
 static void
 chdirx(dir, wr)
-	char           *dir;
+	const char     *dir;
 	boolean         wr;
 {
 
@@ -516,7 +522,7 @@ chdirx(dir, wr)
 
 		if (dir == NULL)
 			dir = ".";
-		if ((fd = open(RECORD, 2)) < 0) {
+		if ((fd = open(RECORD, O_RDWR)) < 0) {
 			printf("Warning: cannot write %s/%s", dir, RECORD);
 			getret();
 		} else

@@ -1,4 +1,4 @@
-/*	$NetBSD: def.objclass.h,v 1.4 1997/10/19 16:57:12 christos Exp $	*/
+/*	$NetBSD: def.objclass.h,v 1.5 2001/03/25 20:43:58 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -8,8 +8,8 @@
 /* definition of a class of objects */
 
 struct objclass {
-	char *oc_name;		/* actual name */
-	char *oc_descr;		/* description when name unknown */
+	const char *oc_name;		/* actual name */
+	const char *oc_descr;		/* description when name unknown */
 	char *oc_uname;		/* called by user */
 	Bitfield(oc_name_known,1);
 	Bitfield(oc_merge,1);	/* merge otherwise equal objects */

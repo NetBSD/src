@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.fight.c,v 1.4 1997/10/19 16:58:00 christos Exp $	*/
+/*	$NetBSD: hack.fight.c,v 1.5 2001/03/25 20:44:00 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.fight.c,v 1.4 1997/10/19 16:58:00 christos Exp $");
+__RCSID("$NetBSD: hack.fight.c,v 1.5 2001/03/25 20:44:00 jsm Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -20,7 +20,7 @@ int
 hitmm(magr, mdef)
 	struct monst   *magr, *mdef;
 {
-	struct permonst *pa = magr->data, *pd = mdef->data;
+	const struct permonst *pa = magr->data, *pd = mdef->data;
 	int             hit;
 	schar           tmp;
 	boolean         vis;
@@ -89,7 +89,7 @@ void
 mondied(mdef)
 	struct monst   *mdef;
 {
-	struct permonst *pd = mdef->data;
+	const struct permonst *pd = mdef->data;
 	if (letter(pd->mlet) && rn2(3)) {
 		(void) mkobj_at(pd->mlet, mdef->mx, mdef->my);
 		if (cansee(mdef->mx, mdef->my)) {
@@ -136,7 +136,7 @@ fightm(mtmp)
 int
 thitu(tlev, dam, name)
 	int tlev, dam;
-	char           *name;
+	const char           *name;
 {
 	char            buf[BUFSZ];
 	setan(name, buf);
@@ -291,7 +291,7 @@ attack(mtmp)
 {
 	schar           tmp;
 	boolean         malive = TRUE;
-	struct permonst *mdat;
+	const struct permonst *mdat;
 	mdat = mtmp->data;
 
 	u_wipe_engr(3);		/* andrew@orca: prevent unlimited pick-axe

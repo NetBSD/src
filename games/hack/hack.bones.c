@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.bones.c,v 1.4 1997/10/19 16:57:34 christos Exp $	*/
+/*	$NetBSD: hack.bones.c,v 1.5 2001/03/25 20:43:59 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.bones.c,v 1.4 1997/10/19 16:57:34 christos Exp $");
+__RCSID("$NetBSD: hack.bones.c,v 1.5 2001/03/25 20:43:59 jsm Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -31,7 +31,7 @@ savebones()
 		return;		/* not so many ghosts on low levels */
 	bones[6] = '0' + (dlevel / 10);
 	bones[7] = '0' + (dlevel % 10);
-	if ((fd = open(bones, 0)) >= 0) {
+	if ((fd = open(bones, O_RDONLY)) >= 0) {
 		(void) close(fd);
 		return;
 	}
@@ -98,7 +98,7 @@ getbones()
 		return (0);	/* only once in three times do we find bones */
 	bones[6] = '0' + dlevel / 10;
 	bones[7] = '0' + dlevel % 10;
-	if ((fd = open(bones, 0)) < 0)
+	if ((fd = open(bones, O_RDONLY)) < 0)
 		return (0);
 	if ((ok = uptodate(fd)) != 0) {
 		getlev(fd, 0, dlevel);

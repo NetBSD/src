@@ -1,4 +1,4 @@
-/*	$NetBSD: def.func_tab.h,v 1.4 1997/10/19 16:56:58 christos Exp $	*/
+/*	$NetBSD: def.func_tab.h,v 1.5 2001/03/25 20:43:58 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -10,12 +10,12 @@ struct func_tab {
 	int (*f_funct) __P((void));
 };
 
-extern struct func_tab cmdlist[];
+extern const struct func_tab cmdlist[];
 
 struct ext_func_tab {
-	char *ef_txt;
+	const char *ef_txt;
 	int (*ef_funct) __P((void));
 };
 
-extern struct ext_func_tab extcmdlist[];
+extern const struct ext_func_tab extcmdlist[];
 #endif /* _DEF_FUNC_TAB_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.objnam.c,v 1.4 1997/10/19 16:58:39 christos Exp $	*/
+/*	$NetBSD: hack.objnam.c,v 1.5 2001/03/25 20:44:02 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.objnam.c,v 1.4 1997/10/19 16:58:39 christos Exp $");
+__RCSID("$NetBSD: hack.objnam.c,v 1.5 2001/03/25 20:44:02 jsm Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -46,8 +46,8 @@ typename(otyp)
 {
 	static char     buf[BUFSZ];
 	struct objclass *ocl = &objects[otyp];
-	char           *an = ocl->oc_name;
-	char           *dn = ocl->oc_descr;
+	const char     *an = ocl->oc_name;
+	const char     *dn = ocl->oc_descr;
 	char           *un = ocl->oc_uname;
 	int             nn = ocl->oc_name_known;
 	switch (ocl->oc_olet) {
@@ -98,8 +98,8 @@ xname(obj)
 	static char     bufr[BUFSZ];
 	char           *buf = &(bufr[PREFIX]);	/* leave room for "17 -3 " */
 	int             nn = objects[obj->otyp].oc_name_known;
-	char           *an = objects[obj->otyp].oc_name;
-	char           *dn = objects[obj->otyp].oc_descr;
+	const char     *an = objects[obj->otyp].oc_name;
+	const char     *dn = objects[obj->otyp].oc_descr;
 	char           *un = objects[obj->otyp].oc_uname;
 	int             pl = (obj->quan != 1);
 	if (!obj->dknown && !Blind)
@@ -308,8 +308,7 @@ doname(obj)
 
 /* used only in hack.fight.c (thitu) */
 void
-setan(str, buf)
-	char           *str, *buf;
+setan(const char *str, char *buf)
 {
 	if (strchr(vowels, *str))
 		Sprintf(buf, "an %s", str);
@@ -320,7 +319,7 @@ setan(str, buf)
 char           *
 aobjnam(otmp, verb)
 	struct obj     *otmp;
-	char           *verb;
+	const char           *verb;
 {
 	char           *bp = xname(otmp);
 	char            prefix[PREFIX];
@@ -354,8 +353,8 @@ Doname(obj)
 	return (s);
 }
 
-char           *wrp[] = {"wand", "ring", "potion", "scroll", "gem"};
-char            wrpsym[] = {WAND_SYM, RING_SYM, POTION_SYM, SCROLL_SYM, GEM_SYM};
+const char *const wrp[] = {"wand", "ring", "potion", "scroll", "gem"};
+const char wrpsym[] = {WAND_SYM, RING_SYM, POTION_SYM, SCROLL_SYM, GEM_SYM};
 
 struct obj     *
 readobjnam(bp)
@@ -533,7 +532,7 @@ srch:
 	if (let)
 		i = bases[letindex(let)];
 	while (i <= NROFOBJECTS && (!let || objects[i].oc_olet == let)) {
-		char           *zn = objects[i].oc_name;
+		const char           *zn = objects[i].oc_name;
 
 		if (!zn)
 			goto nxti;

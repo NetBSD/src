@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.h,v 1.7 2001/02/05 00:37:43 christos Exp $	*/
+/*	$NetBSD: hack.h,v 1.8 2001/03/25 20:44:00 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -105,7 +105,7 @@ struct you {
 #define Stoned		u.uprops[STONED].p_flgs
 #define PROP(x) (x-RIN_ADORNMENT)       /* convert ring to index in uprops */
 	unsigned umconf:1;
-	char *usick_cause;
+	const char *usick_cause;
 	struct prop uprops[LAST_RING+10];
 
 	unsigned uswallow:1;		/* set if swallowed by a monster */
@@ -133,13 +133,14 @@ extern boolean in_mklev;
 extern boolean level_exists[];
 extern boolean restoring;
 extern char *CD;
-extern char *catmore;
+extern const char *catmore;
 extern char *hname;
-extern char *hu_stat[]; /* in eat.c */
-extern char *nomovemsg;
-extern char *occtxt;
-extern char *save_cm,*killer;
-extern char *traps[];
+extern const char *const hu_stat[]; /* in eat.c */
+extern const char *nomovemsg;
+extern const char *occtxt;
+extern char *save_cm;
+extern const char *killer;
+extern const char *const traps[];
 extern char SAVEF[];
 extern char fut_geno[60]; /* idem */
 extern char genocided[60]; /* defined in Decl.c */
@@ -148,10 +149,10 @@ extern char mlarge[];
 extern char morc;
 extern char nul[];
 extern char plname[PL_NSIZ], pl_character[PL_CSIZ];
-extern char quitchars[];
+extern const char quitchars[];
 extern char sdir[]; /* defined in hack.c */
-extern char shtypes[]; /* = "=/)%?!["; 8 types: 7 specialized, 1 mixed */
-extern char vowels[];
+extern const char shtypes[]; /* = "=/)%?!["; 8 types: 7 specialized, 1 mixed */
+extern const char vowels[];
 extern coord bhitpos;	/* place where thrown weapon falls to the ground */
 extern int (*afternmv) __P((void));
 extern int (*occupation) __P((void));
@@ -172,11 +173,11 @@ extern struct obj *uleft, *uright, *fcobj;
 extern struct obj *uball;	/* defined if PUNISHED */
 extern struct obj *uchain;	/* defined iff PUNISHED */
 extern struct obj zeroobj;
-extern struct permonst li_dog, dog, la_dog;
-extern struct permonst pm_eel;
-extern struct permonst pm_ghost;
-extern struct permonst pm_mail_daemon;
-extern struct permonst pm_wizard;
+extern const struct permonst li_dog, dog, la_dog;
+extern const struct permonst pm_eel;
+extern const struct permonst pm_ghost;
+extern const struct permonst pm_mail_daemon;
+extern const struct permonst pm_wizard;
 #ifndef NOWORM
 extern long wgrowtime[32];
 extern struct wseg *m_atseg;

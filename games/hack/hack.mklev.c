@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.mklev.c,v 1.4 1997/10/19 16:58:24 christos Exp $	*/
+/*	$NetBSD: hack.mklev.c,v 1.5 2001/03/25 20:44:01 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.mklev.c,v 1.4 1997/10/19 16:58:24 christos Exp $");
+__RCSID("$NetBSD: hack.mklev.c,v 1.5 2001/03/25 20:44:01 jsm Exp $");
 #endif				/* not lint */
 
 #include <unistd.h>
@@ -23,15 +23,12 @@ __RCSID("$NetBSD: hack.mklev.c,v 1.4 1997/10/19 16:58:24 christos Exp $");
 #define	YLIM	3
 boolean         secret;		/* TRUE while making a vault: increase
 				 * [XY]LIM */
-struct mkroom   rooms[MAXNROFROOMS + 1];
 int             smeq[MAXNROFROOMS + 1];
-coord           doors[DOORMAX];
 int             doorindex;
 struct rm       zerorm;
 schar           nxcor;
 boolean         goldseen;
 int             nroom;
-xchar           xdnstair, xupstair, ydnstair, yupstair;
 
 /* Definitions used by makerooms() and addrs() */
 #define	MAXRS	50		/* max lth of temp rectangle table -
@@ -309,7 +306,7 @@ comp(vx, vy)
 }
 
 coord
-finddpos(xl, yl, xh, yh)
+finddpos(int xl, int yl, int xh, int yh)
 {
 	coord           ff;
 	int x, y;
