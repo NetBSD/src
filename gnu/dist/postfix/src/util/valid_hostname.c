@@ -1,3 +1,5 @@
+/*	$NetBSD: valid_hostname.c,v 1.6 2004/05/31 00:46:48 heas Exp $	*/
+
 /*++
 /* NAME
 /*	valid_hostname 3

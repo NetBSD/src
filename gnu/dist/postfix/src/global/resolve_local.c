@@ -1,3 +1,5 @@
+/*	$NetBSD: resolve_local.c,v 1.7 2004/05/31 00:46:47 heas Exp $	*/
+
 /*++
 /* NAME
 /*	resolve_local 3

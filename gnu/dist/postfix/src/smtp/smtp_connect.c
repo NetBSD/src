@@ -1,3 +1,5 @@
+/*	$NetBSD: smtp_connect.c,v 1.11 2004/05/31 00:46:48 heas Exp $	*/
+
 /*++
 /* NAME
 /*	smtp_connect 3
