@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.383 2001/12/30 12:46:10 ichiro Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.384 2002/01/01 21:47:34 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.378 2001/12/30 12:45:32 ichiro Exp 
+ *	NetBSD: pcidevs,v 1.379 2002/01/01 21:47:08 augustss Exp 
  */
 
 /*
@@ -561,6 +561,7 @@
 #define	PCI_VENDOR_NETVIN	0x4a14		/* NetVin */
 #define	PCI_VENDOR_BUSLOGIC2	0x4b10		/* Buslogic (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_MEDIAQ	0x4d51		/* MediaQ Inc. */
+#define	PCI_VENDOR_GUILLEMOT	0x5046		/* Guillemot */
 #define	PCI_VENDOR_S3	0x5333		/* S3 */
 #define	PCI_VENDOR_NETPOWER2	0x5700		/* NetPower (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_C4T	0x6374		/* c't Magazin */
@@ -1160,6 +1161,9 @@
 #define	PCI_PRODUCT_GALILEO_GT64120	0x4620		/* GT-64120 System Controller */
 #define	PCI_PRODUCT_GALILEO_GT64130	0x6320		/* GT-64130 System Controller */
 #define	PCI_PRODUCT_GALILEO_GT64260	0x6430		/* GT-64260 System Controller */
+
+/* Guillemot products */
+#define	PCI_PRODUCT_GUILLEMOT_MAXIRADIO	0x1001		/* MAXIRADIO */
 
 /* Hewlett-Packard products */
 #define	PCI_PRODUCT_HP_J2585A	0x1030		/* J2585A */
