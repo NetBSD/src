@@ -1,4 +1,4 @@
-/* $NetBSD: sbicreg.h,v 1.2 1997/01/03 23:26:22 mark Exp $ */
+/* $NetBSD: sbicreg.h,v 1.3 2001/04/21 20:47:27 rearnsha Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -306,28 +306,38 @@
 /* approximate, but we won't do SBT on selects */
 #define	sbic_isa_select(cmd)	(((cmd) > 0x5) && ((cmd) < 0xa))
 
-#define PAD(n) 	char n
 #define SBIC_MACHINE_DMA_MODE	SBIC_CTL_DMA
 
 typedef struct {
-        volatile unsigned char  sbic_asr;	/* r : Aux Status Register */
-#define sbic_address sbic_asr			/* w : desired register no */
-        PAD(pad1);
-        PAD(pad2);
-        PAD(pad3);
-        volatile unsigned char  sbic_value;	/* rw: register value */
-} sbic_padded_ind_regmap_t;
-typedef volatile sbic_padded_ind_regmap_t *sbic_regmap_p;
+	bus_space_tag_t		sc_sbiciot;
+	bus_space_handle_t	sc_sbicioh;
+} sbic_regmap, *sbic_regmap_p;
 
-#define	sbic_read_reg(regs,regno,val) do { \
-		(regs)->sbic_address = (regno);	\
-		(val) = (regs)->sbic_value;	\
-	} while (0)
+#define SBIC_ASR	0
+#define SBIC_ADDR	0
+#define SBIC_VAL	1
 
-#define	sbic_write_reg(regs,regno,val)	do { \
-		(regs)->sbic_address = (regno);	\
-		(regs)->sbic_value = (val);	\
-	} while (0)
+#define sbic_read_reg(regs,regno,val) do { \
+	bus_space_write_1((regs)->sc_sbiciot, (regs)->sc_sbicioh, SBIC_ADDR, \
+	    (regno)); \
+	bus_space_barrier((regs)->sc_sbiciot, (regs)->sc_sbicioh, SBIC_ADDR, \
+	    2, BUS_SPACE_BARRIER_WRITE | BUS_SPACE_BARRIER_READ); \
+	(val) = bus_space_read_1((regs)->sc_sbiciot, (regs)->sc_sbicioh, \
+	    SBIC_VAL); \
+	bus_space_barrier((regs)->sc_sbiciot, (regs)->sc_sbicioh, SBIC_ADDR, \
+	    2, BUS_SPACE_BARRIER_READ); \
+} while (0)
+
+#define sbic_write_reg(regs,regno,val) do { \
+	bus_space_write_1((regs)->sc_sbiciot, (regs)->sc_sbicioh, SBIC_ADDR, \
+	    (regno)); \
+	bus_space_barrier((regs)->sc_sbiciot, (regs)->sc_sbicioh, SBIC_ADDR, \
+	    2, BUS_SPACE_BARRIER_WRITE); \
+	bus_space_write_1((regs)->sc_sbiciot, (regs)->sc_sbicioh, SBIC_VAL, \
+	    (val)); \
+	bus_space_barrier((regs)->sc_sbiciot, (regs)->sc_sbicioh, SBIC_ADDR, \
+	    2, BUS_SPACE_BARRIER_WRITE); \
+} while (0)
 
 #define SET_SBIC_myid(regs,val)         sbic_write_reg(regs,SBIC_myid,val)
 #define GET_SBIC_myid(regs,val)         sbic_read_reg(regs,SBIC_myid,val)
@@ -386,26 +396,44 @@ typedef volatile sbic_padded_ind_regmap_t *sbic_regmap_p;
 
 #define SBIC_TC_PUT(regs,val) do { \
 	sbic_write_reg(regs,SBIC_count_hi,((val)>>16)); \
-	(regs)->sbic_value = (val)>>8; \
-	(regs)->sbic_value = (val); \
+	bus_space_write_1(regs->sc_sbiciot, regs->sc_sbicioh, SBIC_VAL, \
+			  (val) >> 8); \
+	bus_space_barrier((regs)->sc_sbiciot, (regs)->sc_sbicioh, SBIC_VAL, \
+	    1, BUS_SPACE_BARRIER_WRITE); \
+	bus_space_write_1(regs->sc_sbiciot, regs->sc_sbicioh, SBIC_VAL, \
+			  (val)); \
+	bus_space_barrier((regs)->sc_sbiciot, (regs)->sc_sbicioh, SBIC_ADDR, \
+	    2, BUS_SPACE_BARRIER_WRITE); \
 } while (0)
+
 #define SBIC_TC_GET(regs,val) do { \
 	sbic_read_reg(regs,SBIC_count_hi,(val)); \
-	(val) = ((val)<<8) | (regs)->sbic_value; \
-	(val) = ((val)<<8) | (regs)->sbic_value; \
+	(val) = ((val)<<8) | bus_space_read_1(regs->sc_sbiciot, \
+	    regs->sc_sbicioh, SBIC_VAL); \
+	bus_space_barrier((regs)->sc_sbiciot, (regs)->sc_sbicioh, SBIC_VAL, \
+	    1, BUS_SPACE_BARRIER_READ); \
+	(val) = ((val)<<8) | bus_space_read_1(regs->sc_sbiciot, \
+	    regs->sc_sbicioh, SBIC_VAL); \
 } while (0)
 
 #define SBIC_LOAD_COMMAND(regs,cmd,cmdsize) do { \
-	int n=(cmdsize)-1; \
-	char *ptr = (char*)(cmd); \
-	sbic_write_reg(regs,SBIC_cdb1,*ptr++); \
-	while (n-- > 0) (regs)->sbic_value = *ptr++; \
+	bus_space_write_1(regs->sc_sbiciot, regs->sc_sbicioh, SBIC_ADDR, \
+	    SBIC_cdb1); \
+	bus_space_barrier((regs)->sc_sbiciot, (regs)->sc_sbicioh, SBIC_ADDR, \
+	    2, BUS_SPACE_BARRIER_WRITE); \
+	bus_space_write_multi_1(regs->sc_sbiciot, regs->sbic_ioh, SBIC_VAL, \
+	    (char *)(cmd), cmdsize); \
+	bus_space_barrier((regs)->sc_sbiciot, (regs)->sc_sbicioh, SBIC_ADDR, \
+	    2, BUS_SPACE_BARRIER_WRITE); \
 } while (0)
 
-#define GET_SBIC_asr(regs,val)          (val) = (regs)->sbic_asr
+#define GET_SBIC_asr(regs,val) \
+	(val) = bus_space_read_1((regs)->sc_sbiciot, (regs)->sc_sbicioh, \
+	    SBIC_ASR)
 
 #define WAIT_CIP(regs) do { \
-	while ((regs)->sbic_asr & SBIC_ASR_CIP) \
+	while (bus_space_read_1(regs->sc_sbiciot, regs->sc_sbicioh, SBIC_ASR) \
+	    & SBIC_ASR_CIP) \
 		; \
 } while (0)
 
