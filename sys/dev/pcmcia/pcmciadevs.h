@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.39 1999/06/19 18:17:14 mjl Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.40 1999/06/23 10:37:10 mjl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.36 1999/06/19 18:16:07 mjl Exp 
+ *	NetBSD: pcmciadevs,v 1.37 1999/06/23 10:36:19 mjl Exp 
  */
 
 /*-
@@ -64,6 +64,7 @@
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
+vender LASAT			0x3401	Lasat Communications A/S
 #define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex Corporation */
 #define	PCMCIA_VENDOR_COREGA	0xc00f	/* Corega K.K. */
 #define	PCMCIA_VENDOR_HAGIWARASYSCOM	0xc012	/* Hagiwara SYS-COM */
@@ -97,6 +98,11 @@
 #define	PCMCIA_CIS_COMPEX_LINKPORT_ENET_B	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B	0x0100
 #define	PCMCIA_STR_COMPEX_LINKPORT_ENET_B	"Compex Linkport ENET-B Ethernet"
+
+/* Lasat Products */
+#define	PCMCIA_CIS_LASAT_CREDIT_288	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_LASAT_CREDIT_288	0x2811
+#define	PCMCIA_STR_LASAT_CREDIT_288	"Lasat Credit 288 Modem"
 
 /* Dayna Products */
 #define	PCMCIA_CIS_DAYNA_COMMUNICARD_E_1	{ NULL, NULL, NULL, NULL }
