@@ -1,5 +1,5 @@
-#	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$Id: Makefile.inc,v 1.3 1993/12/04 02:37:06 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.4 1995/02/27 17:29:31 cgd Exp $
+#	@(#)Makefile.inc	8.1 (Berkeley) 6/4/93
 
 # Quad support
 SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c fixdfdi.c \
