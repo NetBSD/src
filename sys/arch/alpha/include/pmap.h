@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.58 2003/01/17 22:11:16 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.59 2003/04/09 18:22:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -213,6 +213,11 @@ extern	pt_entry_t *VPT;		/* Virtual Page Table */
  */
 #define	PMAP_MAP_POOLPAGE(pa)		ALPHA_PHYS_TO_K0SEG((pa))
 #define	PMAP_UNMAP_POOLPAGE(va)		ALPHA_K0SEG_TO_PHYS((va))
+
+/*
+ * Other hooks for the pool allocator.
+ */
+#define	POOL_VTOPHYS(va)		ALPHA_K0SEG_TO_PHYS((va))
 
 boolean_t			pmap_pageidlezero(paddr_t);
 #define	PMAP_PAGEIDLEZERO(pa)	pmap_pageidlezero((pa))

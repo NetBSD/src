@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.41 2002/11/30 01:52:32 simonb Exp $	*/
+/*	$NetBSD: pmap.h,v 1.42 2003/04/09 18:22:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -150,6 +150,11 @@ void	pmap_prefer(vaddr_t, vaddr_t *);
  */
 #define	PMAP_MAP_POOLPAGE(pa)	MIPS_PHYS_TO_KSEG0((pa))
 #define	PMAP_UNMAP_POOLPAGE(va)	MIPS_KSEG0_TO_PHYS((va))
+
+/*
+ * Other hooks for the pool allocator.
+ */
+#define	POOL_VTOPHYS(va)	MIPS_KSEG0_TO_PHYS((va))
 
 /*
  * Select CCA to use for unmanaged pages.

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.86 2003/03/16 08:06:51 matt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.87 2003/04/09 18:22:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.86 2003/03/16 08:06:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.87 2003/04/09 18:22:13 thorpej Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -1488,8 +1488,18 @@ pool_print1(struct pool *pp, const char *modif, void (*pr)(const char *, ...))
 		    pc->pc_hits, pc->pc_misses, pc->pc_ngroups, pc->pc_nitems);
 		TAILQ_FOREACH(pcg, &pc->pc_grouplist, pcg_list) {
 			(*pr)("\t\tgroup %p: avail %d\n", pcg, pcg->pcg_avail);
-			for (i = 0; i < PCG_NOBJECTS; i++)
-				(*pr)("\t\t\t%p\n", pcg->pcg_objects[i]);
+			for (i = 0; i < PCG_NOBJECTS; i++) {
+				if (pcg->pcg_objects[i].pcgo_pa !=
+				    POOL_PADDR_INVALID) {
+					(*pr)("\t\t\t%p, 0x%llx\n",
+					    pcg->pcg_objects[i].pcgo_va,
+					    (unsigned long long)
+					    pcg->pcg_objects[i].pcgo_pa);
+				} else {
+					(*pr)("\t\t\t%p\n",
+					    pcg->pcg_objects[i].pcgo_va);
+				}
+			}
 		}
 	}
 
@@ -1618,7 +1628,7 @@ pool_cache_destroy(struct pool_cache *pc)
 }
 
 static __inline void *
-pcg_get(struct pool_cache_group *pcg)
+pcg_get(struct pool_cache_group *pcg, paddr_t *pap)
 {
 	void *object;
 	u_int idx;
@@ -1627,32 +1637,36 @@ pcg_get(struct pool_cache_group *pcg)
 	KASSERT(pcg->pcg_avail != 0);
 	idx = --pcg->pcg_avail;
 
-	KASSERT(pcg->pcg_objects[idx] != NULL);
-	object = pcg->pcg_objects[idx];
-	pcg->pcg_objects[idx] = NULL;
+	KASSERT(pcg->pcg_objects[idx].pcgo_va != NULL);
+	object = pcg->pcg_objects[idx].pcgo_va;
+	if (pap != NULL)
+		*pap = pcg->pcg_objects[idx].pcgo_pa;
+	pcg->pcg_objects[idx].pcgo_va = NULL;
 
 	return (object);
 }
 
 static __inline void
-pcg_put(struct pool_cache_group *pcg, void *object)
+pcg_put(struct pool_cache_group *pcg, void *object, paddr_t pa)
 {
 	u_int idx;
 
 	KASSERT(pcg->pcg_avail < PCG_NOBJECTS);
 	idx = pcg->pcg_avail++;
 
-	KASSERT(pcg->pcg_objects[idx] == NULL);
-	pcg->pcg_objects[idx] = object;
+	KASSERT(pcg->pcg_objects[idx].pcgo_va == NULL);
+	pcg->pcg_objects[idx].pcgo_va = object;
+	pcg->pcg_objects[idx].pcgo_pa = pa;
 }
 
 /*
- * pool_cache_get:
+ * pool_cache_get{,_paddr}:
  *
- *	Get an object from a pool cache.
+ *	Get an object from a pool cache (optionally returning
+ *	the physical address of the object).
  */
 void *
-pool_cache_get(struct pool_cache *pc, int flags)
+pool_cache_get_paddr(struct pool_cache *pc, int flags, paddr_t *pap)
 {
 	struct pool_cache_group *pcg;
 	void *object;
@@ -1687,13 +1701,20 @@ pool_cache_get(struct pool_cache *pc, int flags)
 				return (NULL);
 			}
 		}
+		if (object != NULL && pap != NULL) {
+#ifdef POOL_VTOPHYS
+			*pap = POOL_VTOPHYS(object);
+#else
+			*pap = POOL_PADDR_INVALID;
+#endif
+		}
 		return (object);
 	}
 
  have_group:
 	pc->pc_hits++;
 	pc->pc_nitems--;
-	object = pcg_get(pcg);
+	object = pcg_get(pcg, pap);
 
 	if (pcg->pcg_avail == 0)
 		pc->pc_allocfrom = NULL;
@@ -1704,12 +1725,13 @@ pool_cache_get(struct pool_cache *pc, int flags)
 }
 
 /*
- * pool_cache_put:
+ * pool_cache_put{,_paddr}:
  *
- *	Put an object back to the pool cache.
+ *	Put an object back to the pool cache (optionally caching the
+ *	physical address of the object).
  */
 void
-pool_cache_put(struct pool_cache *pc, void *object)
+pool_cache_put_paddr(struct pool_cache *pc, void *object, paddr_t pa)
 {
 	struct pool_cache_group *pcg;
 	int s;
@@ -1752,7 +1774,7 @@ pool_cache_put(struct pool_cache *pc, void *object)
 
  have_group:
 	pc->pc_nitems++;
-	pcg_put(pcg, object);
+	pcg_put(pcg, object, pa);
 
 	if (pcg->pcg_avail == PCG_NOBJECTS)
 		pc->pc_freeto = NULL;
@@ -1794,7 +1816,7 @@ pool_cache_do_invalidate(struct pool_cache *pc, int free_groups,
 		npcg = TAILQ_NEXT(pcg, pcg_list);
 		while (pcg->pcg_avail != 0) {
 			pc->pc_nitems--;
-			object = pcg_get(pcg);
+			object = pcg_get(pcg, NULL);
 			if (pcg->pcg_avail == 0 && pc->pc_allocfrom == pcg)
 				pc->pc_allocfrom = NULL;
 			if (pc->pc_dtor != NULL)
