@@ -52,6 +52,13 @@
 .Ar file1
 \&...
 .Ar fileN directory
+.Nm install
+.Fl d
+.Op Fl m Ar mode
+.Op Fl o Ar owner
+.Op Fl g Ar group
+.Ar directory
+\&...
 .Sh DESCRIPTION
 The file(s) are moved (or copied if the
 .Fl c
@@ -81,6 +88,9 @@ exec's the command
 .Xr strip  1
 to strip binaries so that install can be portable over a large
 number of systems and binary types.
+.It Fl d
+Create directories. 
+Missing parent directories are created as required.
 .El
 .Pp
 .Nm Install
