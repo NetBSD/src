@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.20 1996/02/04 02:16:42 christos Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.21 1996/02/09 19:00:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -66,8 +66,6 @@
 #ifdef KADB
 #include <machine/kdbparam.h>
 #endif
-
-#include <kern/kern_extern.h>
 
 #define TOCONS	0x01
 #define TOTTY	0x02

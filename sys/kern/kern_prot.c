@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.32 1996/02/04 02:15:57 christos Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -55,8 +55,6 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-
-#include <kern/kern_extern.h>
 
 /* ARGSUSED */
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.18 1996/02/04 02:17:57 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -58,12 +58,6 @@
 /*
  * System call interface to the socket abstraction.
  */
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_LINUX) || \
-    defined(COMPAT_HPUX) || defined(COMPAT_FREEBSD)
-#define COMPAT_OLDSOCK
-#define MSG_COMPAT	0x8000
-#endif
-
 extern	struct fileops socketops;
 
 int

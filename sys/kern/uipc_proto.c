@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_proto.c,v 1.6 1996/02/04 02:17:49 christos Exp $	*/
+/*	$NetBSD: uipc_proto.c,v 1.7 1996/02/09 19:00:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -44,8 +44,6 @@
                         
 #include <net/if.h>
 #include <net/raw_cb.h>
-#include <kern/kern_extern.h>
-
 
 /*
  * Definitions of protocols supported in the UNIX domain.

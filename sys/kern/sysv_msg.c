@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.18 1996/02/04 02:17:02 christos Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 
 /*
  * Implementation of SVID messages
@@ -28,8 +28,6 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-
-#include <kern/kern_extern.h>
 
 #define MSG_DEBUG
 #undef MSG_DEBUG_OK

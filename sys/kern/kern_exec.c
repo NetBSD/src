@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.74 1996/02/04 02:15:20 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994 Christopher G. Demetriou
@@ -50,13 +50,14 @@
 #include <sys/mman.h>
 #include <sys/signalvar.h>
 #include <sys/stat.h>
+#ifdef SYSVSHM
+#include <sys/shm.h>
+#endif
 
 #include <sys/syscallargs.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
-
-#include <kern/kern_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -202,6 +203,7 @@ bad1:
  * exec system call
  */
 /* ARGSUSED */
+int
 sys_execve(p, v, retval)
 	register struct proc *p;
 	void *v;

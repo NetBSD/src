@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.50 1996/02/04 02:18:29 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.51 1996/02/09 19:01:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,8 +59,8 @@
 #include <sys/malloc.h>
 #include <sys/domain.h>
 #include <sys/mbuf.h>
-
-#include <kern/kern_extern.h>
+#include <sys/syscallargs.h>
+#include <sys/cpu.h>
 
 #include <vm/vm.h>
 #include <sys/sysctl.h>
@@ -117,7 +117,6 @@ void vgoneall __P((struct vnode *));
 void vgone __P((struct vnode *));
 int vcount __P((struct vnode *));
 void vprint __P((char *, struct vnode *));
-int printlockedvnodes __P((void));
 int vfs_mountedon __P((struct vnode *));
 int vfs_export __P((struct mount *, struct netexport *, struct export_args *));
 struct netcred *vfs_export_lookup __P((struct mount *, struct netexport *,
@@ -130,6 +129,11 @@ static int vfs_hang_addrlist __P((struct mount *, struct netexport *,
 				  struct export_args *));
 static int vfs_free_netcred __P((struct radix_node *, void *));
 static void vfs_free_addrlist __P((struct netexport *));
+
+#ifdef DEBUG
+void printlockedvnodes __P((void));
+#endif
+
 /*
  * Initialize the vnode management data structures.
  */
@@ -1216,6 +1220,7 @@ vprint(label, vp)
  * List all of the locked vnodes in the system.
  * Called when debugging the kernel.
  */
+void
 printlockedvnodes()
 {
 	register struct mount *mp;

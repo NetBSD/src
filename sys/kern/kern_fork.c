@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.28 1996/02/04 02:15:32 christos Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -46,12 +46,17 @@
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/acct.h>
 #include <sys/ktrace.h>
+
+#include <sys/syscallargs.h>
+
+#include <vm/vm.h>
 
 int	nprocs = 1;		/* process 0 */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.17 1996/02/04 02:16:26 christos Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.18 1996/02/09 18:59:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -45,8 +45,6 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-
-#include <kern/kern_extern.h>
 
 #include <machine/cpu.h>
 

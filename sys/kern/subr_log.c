@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.9 1996/02/04 02:16:39 christos Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.10 1996/02/09 18:59:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -47,8 +47,8 @@
 #include <sys/msgbuf.h>
 #include <sys/file.h>
 #include <sys/signalvar.h>
+#include <sys/syslog.h>
 
-#include <kern/kern_extern.h>
 #include <kern/kern_conf.h>
 
 #define LOG_RDPRI	(PZERO + 1)

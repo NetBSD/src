@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.25 1996/02/04 02:17:06 christos Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
  * Implementation of SVID semaphores
@@ -17,8 +17,6 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-
-#include <kern/kern_extern.h>
 
 int	semtot = 0;
 struct	proc *semlock_holder = NULL;

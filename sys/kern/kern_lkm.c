@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.27 1996/02/04 02:15:44 christos Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.28 1996/02/09 18:59:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -52,6 +52,7 @@
 #include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/exec.h>
+#include <sys/syscallargs.h>
 
 #include <kern/kern_conf.h>
 
@@ -626,7 +627,8 @@ _lkm_vfs(lkmtp, cmd)
 		for (i = 0; i < nvfssw; i++)
 			if (vfssw[i] != (struct vfsops *)0 &&
 			    strncmp(vfssw[i]->vfs_name,
-			    args->lkm_vfsops->vfs_name, MFSNAMELEN) == 0)
+				    args->lkm_vfsops->vfs_name,
+				    MFSNAMELEN) == 0)
 				return (EEXIST);
 
 		/* pick the last available empty slot */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.13 1996/02/04 02:16:22 christos Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.14 1996/02/09 18:59:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -59,8 +59,6 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-
-#include <kern/kern_extern.h>
 
 /*
  * Locking and stats

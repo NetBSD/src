@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.53 1996/02/04 02:16:58 christos Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.54 1996/02/09 19:00:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -65,12 +65,7 @@
 
 #include <machine/reg.h>
 
-#include <kern/kern_extern.h>
-
-#ifdef notyet
-/* XXX: Fix the filesystem prototypes first */
 #include <miscfs/procfs/procfs.h>
-#endif
 
 /* Macros to clear/set/test flags. */
 #define	SET(t, f)	(t) |= (f)
