@@ -1,4 +1,4 @@
-/*	$NetBSD: itime.c,v 1.7 1998/04/01 16:13:40 kleink Exp $	*/
+/*	$NetBSD: itime.c,v 1.8 1998/04/22 08:55:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)itime.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: itime.c,v 1.7 1998/04/01 16:13:40 kleink Exp $");
+__RCSID("$NetBSD: itime.c,v 1.8 1998/04/22 08:55:18 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,7 +174,7 @@ void
 putdumptime()
 {
 	FILE *df;
-	struct dumpdates *dtwalk;
+	struct dumpdates *dtwalk, *dtfound;
 	int i;
 	int fd;
 	char *fname;
@@ -214,6 +214,7 @@ putdumptime()
 	(void) strncpy(dtwalk->dd_name, fname, sizeof (dtwalk->dd_name));
 	dtwalk->dd_level = level;
 	dtwalk->dd_ddate = iswap32(spcl.c_date);
+	dtfound = dtwalk;
 
 	ITITERATE(i, dtwalk) {
 		dumprecout(df, dtwalk);
@@ -224,7 +225,7 @@ putdumptime()
 		quit("ftruncate (%s): %s\n", dumpdates, strerror(errno));
 	(void) fclose(df);
 	msg("level %c dump on %s", level,
-		spcl.c_date == 0 ? "the epoch\n" : ctime(&dtwalk->dd_ddate));
+		spcl.c_date == 0 ? "the epoch\n" : ctime(&dtfound->dd_ddate));
 }
 
 static void
