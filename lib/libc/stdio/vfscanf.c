@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.16 1997/07/13 20:15:35 christos Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.17 1997/12/19 14:08:45 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.16 1997/07/13 20:15:35 christos Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.17 1997/12/19 14:08:45 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -667,7 +667,7 @@ literal:
 		}
 	}
 input_failure:
-	return (nassigned ? nassigned : -1);
+	return (nassigned ? nassigned : EOF);
 match_failure:
 	return (nassigned);
 }

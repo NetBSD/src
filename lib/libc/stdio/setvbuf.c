@@ -1,4 +1,4 @@
-/*	$NetBSD: setvbuf.c,v 1.9 1997/07/13 20:15:27 christos Exp $	*/
+/*	$NetBSD: setvbuf.c,v 1.10 1997/12/19 14:08:43 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setvbuf.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: setvbuf.c,v 1.9 1997/07/13 20:15:27 christos Exp $");
+__RCSID("$NetBSD: setvbuf.c,v 1.10 1997/12/19 14:08:43 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,7 +71,7 @@ setvbuf(fp, buf, mode, size)
 	 */
 	if (mode != _IONBF)
 		if ((mode != _IOFBF && mode != _IOLBF) || (int)size < 0)
-			return (EOF);
+			return (-1);
 
 	/*
 	 * Write current buffer, if any.  Discard unread input (including
@@ -111,7 +111,7 @@ setvbuf(fp, buf, mode, size)
 			 * Unable to honor user's request.  We will return
 			 * failure, but try again with file system size.
 			 */
-			ret = EOF;
+			ret = -1;
 			if (size != iosize) {
 				size = iosize;
 				buf = malloc(size);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fseek.c,v 1.10 1997/10/19 18:07:27 mycroft Exp $	*/
+/*	$NetBSD: fseek.c,v 1.11 1997/12/19 14:08:41 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fseek.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: fseek.c,v 1.10 1997/10/19 18:07:27 mycroft Exp $");
+__RCSID("$NetBSD: fseek.c,v 1.11 1997/12/19 14:08:41 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -80,7 +80,7 @@ fseek(fp, offset, whence)
 	 */
 	if ((seekfn = fp->_seek) == NULL) {
 		errno = ESPIPE;			/* historic practice */
-		return (EOF);
+		return (-1);
 	}
 
 	/*
@@ -101,7 +101,7 @@ fseek(fp, offset, whence)
 		else {
 			curoff = (*seekfn)(fp->_cookie, (fpos_t)0, SEEK_CUR);
 			if (curoff == -1L)
-				return (EOF);
+				return (-1);
 		}
 		if (fp->_flags & __SRD) {
 			curoff -= fp->_r;
@@ -123,7 +123,7 @@ fseek(fp, offset, whence)
 
 	default:
 		errno = EINVAL;
-		return (EOF);
+		return (-1);
 	}
 
 	/*
@@ -241,7 +241,7 @@ fseek(fp, offset, whence)
 dumb:
 	if (__sflush(fp) ||
 	    (*seekfn)(fp->_cookie, (fpos_t)offset, whence) == POS_ERR) {
-		return (EOF);
+		return (-1);
 	}
 	/* success: clear EOF indicator and discard ungetc() data */
 	if (HASUB(fp))

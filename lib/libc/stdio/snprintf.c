@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintf.c,v 1.6 1997/07/13 20:15:28 christos Exp $	*/
+/*	$NetBSD: snprintf.c,v 1.7 1997/12/19 14:08:43 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)snprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: snprintf.c,v 1.6 1997/07/13 20:15:28 christos Exp $");
+__RCSID("$NetBSD: snprintf.c,v 1.7 1997/12/19 14:08:43 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,7 +68,7 @@ snprintf(str, n, fmt, va_alist)
 	FILE f;
 
 	if ((int)n < 1)
-		return (EOF);
+		return (-1);
 #if __STDC__
 	va_start(ap, fmt);
 #else
