@@ -1,5 +1,5 @@
 REM > BtNetBSD
-REM $NetBSD: BtNetBSD,v 1.1 2001/10/05 22:28:01 reinoud Exp $
+REM $NetBSD: BtNetBSD,v 1.2 2001/12/16 20:54:32 reinoud Exp $
 REM
 REM Copyright (c) 2000, 2001 Reinoud Zandijk
 REM Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -37,10 +37,11 @@ REM Purpose : Trying to boot NetBSD/arm32 !!
 
 ON ERROR REPORT:PRINT " at line ";ERL: PRINT'"Press key":QQ=GET:END
 
-debug%       = 0
-emulateVRAM% = 0
-extradebug%  = 0
-startdelay%  = 5
+debug%           = 0
+emulateVRAM%     = 0
+emulateDRAMsize% = 0
+extradebug%      = 0
+startdelay%      = 5
 
 REM For Kinetic cards
 SDRAM_ADDR_START% = 512*1024*1024
@@ -948,6 +949,17 @@ DEF PROCget_memory_configuration
     loop% += 64
     PROCtwirl
   ENDWHILE
+  
+  IF emulateDRAMsize% > 0 THEN
+    REM emulate HACK
+    DRAM0% = DRAM_addr%(0)
+    DRAM_addr%() = 0
+    DRAM_pages%() = 0
+    DRAM_addr%(0) = DRAM0%
+    DRAM_pages%(0) = (emulateDRAMsize%*1024*1024)/nbpp%
+    dramblocks% = 1
+    REM END HACK
+  ENDIF
 
   REM find top of DRAM pages
   I%=8: WHILE (I%>=0) AND DRAM_addr%(I%)=0: I%-=1: ENDWHILE
