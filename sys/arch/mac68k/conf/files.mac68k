@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.53 1996/12/28 23:22:43 pk Exp $
+#	$NetBSD: files.mac68k,v 1.54 1997/01/20 00:30:56 scottr Exp $
 
 # mac68k-specific configuration info
 
@@ -10,11 +10,11 @@ maxusers 2 8 64
 device mainbus { }			# no locators (yet?)
 attach mainbus at root
 
-device	obio {}
+device	obio { }
 attach	obio at mainbus
 file	arch/mac68k/dev/obio.c		obio
 
-device	nubus {}
+device	nubus { }
 attach	nubus at mainbus
 file	arch/mac68k/dev/nubus.c		nubus
 
@@ -28,7 +28,7 @@ device	asc
 attach	asc at obio
 file	arch/mac68k/dev/asc.c		asc
 
-define grfbus {}
+define grfbus { }
 file	arch/mac68k/dev/grf_subr.c	grfbus
 
 device	intvid: grfbus
@@ -39,7 +39,7 @@ device	macvid: grfbus
 attach	macvid at nubus
 file	arch/mac68k/dev/grf_mv.c	macvid
 
-device	grf {}				# eventually, we'll attach ITEs here
+device	grf { }
 attach	grf at grfbus
 file	arch/mac68k/dev/grf.c		grf needs-flag
 
