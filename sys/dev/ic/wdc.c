@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.137 2003/10/08 10:58:12 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.138 2003/10/08 20:58:00 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.137 2003/10/08 10:58:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.138 2003/10/08 20:58:00 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -214,8 +214,8 @@ atabusmatch(parent, cf, aux)
 	if (chp == NULL)
 		return (0);
 
-	if (cf->cf_loc[WDC_BASECF_CHANNEL] != chp->channel &&
-	    cf->cf_loc[WDC_BASECF_CHANNEL] != WDC_BASECF_CHANNEL_DEFAULT)
+	if (cf->cf_loc[ATACF_CHANNEL] != chp->channel &&
+	    cf->cf_loc[ATACF_CHANNEL] != ATACF_CHANNEL_DEFAULT)
 		return (0);
 
 	return (1);

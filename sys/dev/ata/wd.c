@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.262 2003/10/08 10:58:12 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.263 2003/10/08 20:58:00 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.262 2003/10/08 10:58:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.263 2003/10/08 20:58:00 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -262,8 +262,8 @@ wdprobe(struct device *parent, struct cfdata *match, void *aux)
 	if (adev->adev_bustype->bustype_type != SCSIPI_BUSTYPE_ATA)
 		return 0;
 
-	if (match->cf_loc[ATACF_DRIVE] != ATACF_DRIVE_DEFAULT &&
-	    match->cf_loc[ATACF_DRIVE] != adev->adev_drv_data->drive)
+	if (match->cf_loc[ATA_HLCF_DRIVE] != ATA_HLCF_DRIVE_DEFAULT &&
+	    match->cf_loc[ATA_HLCF_DRIVE] != adev->adev_drv_data->drive)
 		return 0;
 	return 1;
 }

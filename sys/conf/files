@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.637 2003/10/08 10:58:12 bouyer Exp $
+#	$NetBSD: files,v 1.638 2003/10/08 20:57:59 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -195,10 +195,10 @@ include "dev/majors"
 define	audiobus	{ }
 define	midibus		{ }
 define	midisyn
-define	wdc_base        {[channel = -1]}
+define	ata	        {[channel = -1]}
 define	scsi_core
 define	scsi		{[channel = -1]}: scsi_core
-define	ata		{[drive = -1]}
+define	ata_hl		{[drive = -1]}
 define	atapi		{ }
 define	radiodev	{ }
 define	gpibdev		{[address = -1]}
@@ -718,10 +718,10 @@ file	dev/ic/rtl81x9.c		rtk
 
 # Common code for ESDI/IDE/etc. controllers
 #
-device	wdc: wdc_base
+device	wdc: ata
 
-device atabus: atapi,ata
-attach atabus at wdc_base
+device atabus: atapi,ata_hl
+attach atabus at ata
 file	dev/ic/wdc.c			atabus
 
 # CHIPS and Technologies 82C7[12][01] Universal Peripheral Controller

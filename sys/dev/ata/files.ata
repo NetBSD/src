@@ -1,4 +1,4 @@
-#	$NetBSD: files.ata,v 1.7 2003/10/08 10:58:12 bouyer Exp $
+#	$NetBSD: files.ata,v 1.8 2003/10/08 20:58:00 bouyer Exp $
 #
 # Config file and device description for machine-independent devices
 # which attach to ATA busses.  Included by ports that need it.  Ports
@@ -7,11 +7,11 @@
 
 # ATA disks
 device	wd: disk
-attach	wd at ata
+attach	wd at ata_hl
 file	dev/ata/wd.c			wd			needs-flag
 file	dev/ata/ata_wdc.c		wd & atabus
 
-file	dev/ata/ata.c			(ata | atapi) & atabus
+file	dev/ata/ata.c			(ata_hl | atapi) & atabus
 
 # ATA RAID configuration support
 defpseudo ataraid {[vendtype = -1], [unit = -1]}
