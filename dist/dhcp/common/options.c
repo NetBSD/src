@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: options.c,v 1.3 2002/06/11 14:00:01 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: options.c,v 1.4 2002/06/11 14:12:58 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #define DHCP_OPTION_DATA
@@ -453,7 +453,6 @@ int cons_options (inpacket, outpacket, lease, client_state,
 	struct data_string ds;
 	pair pp, *hash;
 	int need_endopt = 0;
-	int have_sso = 0;
 
 	memset (&ds, 0, sizeof ds);
 
@@ -774,7 +773,6 @@ int store_options (buffer, buflen, packet, lease, client_state,
 	    if (u -> options [code] &&
 		((u -> options [code] -> format [0] == 'E' && !oc) ||
 		 u -> options [code] -> format [0] == 'e')) {
-		int uix;
 		static char *s, *t;
 		struct option_cache *tmp;
 		struct data_string name;
