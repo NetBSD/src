@@ -1,8 +1,7 @@
-/*	$NetBSD: types.h,v 1.6 2003/05/25 14:02:48 tsutsui Exp $	*/
+/*	$NetBSD: types.h,v 1.7 2003/05/25 14:40:30 tsutsui Exp $	*/
 
 #include <mips/types.h>
 
-#define	__BROKEN_CONFIG_UNIT_USAGE
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
 
 /* MIPS specific options */
