@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.51 2001/05/04 19:41:26 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.52 2001/05/09 23:46:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -153,7 +153,7 @@ static void pool_print1(struct pool *, const char *,
 	void (*)(const char *, ...));
 
 /*
- * Pool log entry. An array of these is allocated in pool_create().
+ * Pool log entry. An array of these is allocated in pool_init().
  */
 struct pool_log {
 	const char	*pl_file;
@@ -341,37 +341,6 @@ pr_rmpage(struct pool *pp, struct pool_item_header *ph)
 
 		pp->pr_curpage = ph;
 	}
-}
-
-/*
- * Allocate and initialize a pool.
- */
-struct pool *
-pool_create(size_t size, u_int align, u_int ioff, int nitems,
-    const char *wchan, size_t pagesz,
-    void *(*alloc)(unsigned long, int, int),
-    void (*release)(void *, unsigned long, int),
-    int mtype)
-{
-	struct pool *pp;
-	int flags;
-
-	pp = (struct pool *)malloc(sizeof(*pp), M_POOL, M_NOWAIT);
-	if (pp == NULL)
-		return (NULL);
-
-	flags = PR_FREEHEADER;
-	pool_init(pp, size, align, ioff, flags, wchan, pagesz,
-		  alloc, release, mtype);
-
-	if (nitems != 0) {
-		if (pool_prime(pp, nitems, NULL) != 0) {
-			pool_destroy(pp);
-			return (NULL);
-		}
-	}
-
-	return (pp);
 }
 
 /*
@@ -966,63 +935,6 @@ _pool_put(struct pool *pp, void *v, const char *file, long line)
 }
 
 /*
- * Add N items to the pool.
- */
-int
-pool_prime(struct pool *pp, int n, caddr_t storage)
-{
-	caddr_t cp;
-	int error, newnitems, newpages;
-
-#ifdef DIAGNOSTIC
-	if (__predict_false(storage && !(pp->pr_roflags & PR_STATIC)))
-		panic("pool_prime: static");
-	/* !storage && static caught below */
-#endif
-
-	simple_lock(&pp->pr_slock);
-
-	newnitems = pp->pr_minitems + n;
-	newpages =
-		roundup(newnitems, pp->pr_itemsperpage) / pp->pr_itemsperpage
-		- pp->pr_minpages;
-
-	while (newpages-- > 0) {
-		if (pp->pr_roflags & PR_STATIC) {
-			cp = storage;
-			storage += pp->pr_pagesz;
-		} else {
-			simple_unlock(&pp->pr_slock);
-			cp = (*pp->pr_alloc)(pp->pr_pagesz, 0, pp->pr_mtype);
-			simple_lock(&pp->pr_slock);
-		}
-
-		if (cp == NULL) {
-			simple_unlock(&pp->pr_slock);
-			return (ENOMEM);
-		}
-
-		if ((error = pool_prime_page(pp, cp, PR_NOWAIT)) != 0) {
-			if ((pp->pr_roflags & PR_STATIC) == 0)
-				(*pp->pr_free)(cp, pp->pr_pagesz,
-				    pp->pr_mtype);
-			simple_unlock(&pp->pr_slock);
-			return (error);
-		}
-		pp->pr_npagealloc++;
-		pp->pr_minpages++;
-	}
-
-	pp->pr_minitems = newnitems;
-
-	if (pp->pr_minpages >= pp->pr_maxpages)
-		pp->pr_maxpages = pp->pr_minpages + 1;	/* XXX */
-
-	simple_unlock(&pp->pr_slock);
-	return (0);
-}
-
-/*
  * Add a page worth of items to the pool.
  *
  * Note, we must be called with the pool descriptor LOCKED.
@@ -1106,9 +1018,8 @@ pool_prime_page(struct pool *pp, caddr_t storage, int flags)
 }
 
 /*
- * Like pool_prime(), except this is used by pool_get() when nitems
- * drops below the low water mark.  This is used to catch up nitmes
- * with the low water mark.
+ * Used by pool_get() when nitems drops below the low water mark.  This
+ * is used to catch up nitmes with the low water mark.
  *
  * Note 1, we never wait for memory here, we let the caller decide what to do.
  *
