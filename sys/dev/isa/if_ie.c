@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.48 1996/04/29 20:03:20 christos Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.49 1996/04/30 22:21:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -145,7 +145,8 @@ iomem, and to make 16-pointers, we subtract sc_maddr and and with 0xffff.
 #include <vm/vm.h>
 
 #include <machine/cpu.h>
-#include <machine/pio.h>
+#include <machine/pio.h>		/* XXX convert this driver! */
+#include <machine/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -468,8 +469,10 @@ el_probe(sc, ia)
 	struct ie_softc *sc;
 	struct isa_attach_args *ia;
 {
+	bus_chipset_tag_t bc = ia->ia_bc;
+	bus_io_handle_t ioh;
 	u_char c;
-	int i;
+	int i, rval = 0;
 	u_char signature[] = "*3COM*";
 
 	sc->sc_iobase = ia->ia_iobase;
@@ -478,28 +481,39 @@ el_probe(sc, ia)
 	sc->reset_586 = el_reset_586;
 	sc->chan_attn = el_chan_attn;
 
-	/* Reset and put card in CONFIG state without changing address. */
-	elink_reset();
-	elink_idseq(ELINK_507_POLY);
-	elink_idseq(ELINK_507_POLY);
+	/*
+	 * Map the Etherlink ID port for the probe sequence.
+	 */
+	if (bus_io_map(bc, ELINK_ID_PORT, 1, &ioh)) {
+		printf("3c507 probe: can't map Etherlink ID port\n");
+		return 0;
+	}
+
+	/*
+	 * Reset and put card in CONFIG state without changing address.
+	 * XXX Indirect brokenness here!
+	 */
+	elink_reset(bc, ioh, sc->sc_dev.dv_parent->dv_unit);
+	elink_idseq(bc, ioh, ELINK_507_POLY);
+	elink_idseq(bc, ioh, ELINK_507_POLY);
 	outb(ELINK_ID_PORT, 0xff);
 
 	/* Check for 3COM signature before proceeding. */
 	outb(PORT + IE507_CTRL, inb(PORT + IE507_CTRL) & 0xfc);	/* XXX */
 	for (i = 0; i < 6; i++)
 		if (inb(PORT + i) != signature[i])
-			return 0;
+			goto out;
 
 	c = inb(PORT + IE507_MADDR);
 	if (c & 0x20) {
 		printf("%s: can't map 3C507 RAM in high memory\n",
 		    sc->sc_dev.dv_xname);
-		return 0;
+		goto out;
 	}
 
 	/* Go to RUN state. */
 	outb(ELINK_ID_PORT, 0x00);
-	elink_idseq(ELINK_507_POLY);
+	elink_idseq(bc, ioh, ELINK_507_POLY);
 	outb(ELINK_ID_PORT, 0x00);
 
 	/* Set bank 2 for version info and read BCD version byte. */
@@ -515,7 +529,7 @@ el_probe(sc, ia)
 		if (ia->ia_irq != i) {
 			printf("%s: irq mismatch; kernel configured %d != board configured %d\n",
 			    sc->sc_dev.dv_xname, ia->ia_irq, i);
-			return 0;
+			goto out;
 		}
 	} else
 		ia->ia_irq = i;
@@ -526,7 +540,7 @@ el_probe(sc, ia)
 		if (ia->ia_maddr != i) {
 			printf("%s: maddr mismatch; kernel configured %x != board configured %x\n",
 			    sc->sc_dev.dv_xname, ia->ia_maddr, i);
-			return 0;
+			goto out;
 		}
 	} else
 		ia->ia_maddr = i;
@@ -542,7 +556,7 @@ el_probe(sc, ia)
 	if (!sc->sc_msize) {
 		printf("%s: can't find shared memory\n", sc->sc_dev.dv_xname);
 		outb(PORT + IE507_CTRL, EL_CTRL_NRST);
-		return 0;
+		goto out;
 	}
 
 	if (!ia->ia_msize)
@@ -551,7 +565,7 @@ el_probe(sc, ia)
 		printf("%s: msize mismatch; kernel configured %d != board configured %d\n",
 		    sc->sc_dev.dv_xname, ia->ia_msize, sc->sc_msize);
 		outb(PORT + IE507_CTRL, EL_CTRL_NRST);
-		return 0;
+		goto out;
 	}
 
 	slel_get_address(sc);
@@ -560,7 +574,11 @@ el_probe(sc, ia)
 	outb(PORT + IE507_ICTRL, 1);
 
 	ia->ia_iosize = 16;
-	return 1;
+	rval = 1;
+
+ out:
+	bus_io_unmap(bc, ioh, 1);
+	return rval;
 }
 
 /* Taken almost exactly from Rod's if_ix.c. */
