@@ -1,4 +1,4 @@
-#	$NetBSD: gettytab,v 1.10 1997/07/31 00:38:30 perry Exp $
+#	$NetBSD: gettytab,v 1.11 1998/01/29 08:28:31 lukem Exp $
 #	from: @(#)gettytab	8.2 (Berkeley) 4/20/94
 #
 # Most of the table entries here are just copies of the old getty table,
@@ -10,7 +10,7 @@
 # entries, and in cases where getty is called with no table name
 #
 default:\
-	:ce:ck:np:im=\r\n%s/%m (%h) (%t)\r\n\r\n:sp#1200:
+	:ce:ck:np:im=\r\n%s/%m (%h) (%t)\r\n\r\n:sp#9600:
 
 #
 # Fixed speed entries
