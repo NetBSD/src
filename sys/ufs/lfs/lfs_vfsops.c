@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.28.2.8 2000/03/29 20:51:33 he Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.28.2.9 2000/05/05 13:06:52 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -355,6 +355,7 @@ lfs_mountfs(devvp, mp, p)
 
 	/* Don't free random space on error. */
 	bp = NULL;
+	abp = NULL;
 	ump = NULL;
 
 	/* Read in the superblock. */
@@ -363,24 +364,33 @@ lfs_mountfs(devvp, mp, p)
 		goto out;
 	dfs = (struct dlfs *)bp->b_data;
 
-	/*
-	 * Check the second superblock to see which is newer; then mount
-	 * using the older of the two.  This is necessary to ensure that
-	 * the filesystem is valid if it was not unmounted cleanly.
-	 */
-	error = bread(devvp, dfs->dlfs_sboffs[1], LFS_SBPAD, cred, &abp);
-	if (error)
-		goto out;
-	adfs = (struct dlfs *)abp->b_data;
-
-	if (adfs->dlfs_tstamp < dfs->dlfs_tstamp) /* XXX KS - 1s resolution? */
-		dfs = adfs;
-
 	/* Check the basics. */
 	if (dfs->dlfs_magic != LFS_MAGIC || dfs->dlfs_bsize > MAXBSIZE ||
 	    dfs->dlfs_version > LFS_VERSION ||
 	    dfs->dlfs_bsize < sizeof(struct dlfs)) {
 		error = EINVAL;		/* XXX needs translation */
+		goto out;
+	}
+
+	/*
+	 * Check the second superblock to see which is newer; then mount
+	 * using the older of the two.  This is necessary to ensure that
+	 * the filesystem is valid if it was not unmounted cleanly.
+	 */
+	if (dfs->dlfs_sboffs[1] &&
+	    dfs->dlfs_sboffs[1]-(LFS_LABELPAD/size) > LFS_SBPAD/size)
+	{
+		error = bread(devvp, dfs->dlfs_sboffs[1], LFS_SBPAD, cred, &abp);
+		if (error)
+			goto out;
+		adfs = (struct dlfs *)abp->b_data;
+
+		if (adfs->dlfs_tstamp < dfs->dlfs_tstamp) /* XXX 1s? */
+			dfs = adfs;
+	} else {
+		printf("lfs_mountfs: invalid alt superblock daddr=0x%x\n",
+			dfs->dlfs_sboffs[1]);
+		error = EINVAL;
 		goto out;
 	}
 
