@@ -1,4 +1,4 @@
-# $NetBSD: md.arc,v 1.2 2000/03/17 22:54:04 tron Exp $
+# $NetBSD: md.arc,v 1.3 2000/03/30 21:39:29 soren Exp $
 ./usr/include/arc			comp-c-include
 ./usr/include/arc/_G_config.h		comp-c-include
 ./usr/include/arc/ansi.h		comp-c-include
@@ -9,7 +9,7 @@
 ./usr/include/arc/bswap.h		comp-c-include
 ./usr/include/arc/cdefs.h		comp-c-include
 ./usr/include/arc/cpu.h			comp-c-include
-./usr/include/arc/cpuregs.h		comp-c-include
+./usr/include/arc/db_machdep.h		comp-c-include
 ./usr/include/arc/disklabel.h		comp-c-include
 ./usr/include/arc/display.h		comp-c-include
 ./usr/include/arc/ecoff_machdep.h	comp-c-include
@@ -19,6 +19,7 @@
 ./usr/include/arc/float.h		comp-c-include
 ./usr/include/arc/ieee.h		comp-c-include
 ./usr/include/arc/ieeefp.h		comp-c-include
+./usr/include/arc/intr.h		comp-c-include
 ./usr/include/arc/kcore.h		comp-c-include
 ./usr/include/arc/kdbparam.h		comp-c-include
 ./usr/include/arc/limits.h		comp-c-include
