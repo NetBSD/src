@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_field.3,v 1.1 2001/07/08 12:10:28 blymn Exp $
+.\"	$NetBSD: form_field.3,v 1.2 2002/01/15 02:50:16 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -31,7 +31,7 @@
 .\"
 .Dd January, 2001
 .Dt FORMS 3
-.Os 
+.Os
 .Sh NAME
 .Nm field_count ,
 .Nm form_fields ,
@@ -54,7 +54,7 @@
 The
 .Fn field_count
 function returns the number of fields that are attached to the given
-form, if the form argument passed is NULL then 
+form, if the form argument passed is NULL then
 .Fn field_count
 will return -1.  The function
 .Fn form_fields
@@ -70,9 +70,9 @@ attached to the form then they will be detached before the new fields
 are attached.  The new fields given must not be attached to any other
 form.  The
 .Fn move_field
-function will move the given field to the location specified by 
+function will move the given field to the location specified by
 .Fa frow
-and 
+and
 .Fa fcol .
 .Sh RETURN VALUES
 Functions returning pointers will return NULL if an error is detected.

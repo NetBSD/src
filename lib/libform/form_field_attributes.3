@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_field_attributes.3,v 1.1 2001/07/08 12:10:28 blymn Exp $
+.\"	$NetBSD: form_field_attributes.3,v 1.2 2002/01/15 02:50:16 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -31,7 +31,7 @@
 .\"
 .Dd January, 2001
 .Dt FORMS 3
-.Os 
+.Os
 .Sh NAME
 .Nm field_back ,
 .Nm field_fore ,
@@ -57,21 +57,21 @@
 .Ft int
 .Fn set_field_pad "FIELD *field, int pad"
 .Sh DESCRIPTION
-Calling the function 
+Calling the function
 .Fn field_back
 will return the character attributes that will be applied to a field
 that is not the current field, these attributes can be set by the
 .Fn set_field_back
-function.  The 
+function.  The
 .Fn field_fore
 function returns the character attributes that will be used to
 indicate that a field is the currently active one on the form, this
-attribute may be set by using the 
+attribute may be set by using the
 .Fn set_field_fore
 function.  The
 pad character for a field is the character that will be printed in all
 field locations not occupied with actual field contents.  The pad
-character can be retrieved by calling the 
+character can be retrieved by calling the
 .Fn field_pad
 function, the pad character is set by using the
 .Fn set_field_pad

@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_field_info.3,v 1.1 2001/07/08 12:10:29 blymn Exp $
+.\"	$NetBSD: form_field_info.3,v 1.2 2002/01/15 02:50:17 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -31,7 +31,7 @@
 .\"
 .Dd January, 2001
 .Dt FORMS 3
-.Os 
+.Os
 .Sh NAME
 .Nm dynamic_field_info ,
 .Nm field_info
@@ -53,7 +53,7 @@ in the storage pointed to by the drows, dcols and max parameters
 respectively.  Dynamic field information cannot be requested for the
 default field.  If the field given is not dynamic then
 .Fn dynamic_field_info
-will simply return the size of the actual field.  The 
+will simply return the size of the actual field.  The
 .Fn field_info
 will return the number or rows, columns, field starting row, field
 starting column, number of off screen rows and number of buffers in
@@ -61,7 +61,7 @@ starting column, number of off screen rows and number of buffers in
 .Fa cols ,
 .Fa frow ,
 .Fa fcol ,
-.Fa nrow 
+.Fa nrow
 and
 .Fa nbuf
 respectively.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_field_buffer.3,v 1.1 2001/07/08 12:10:28 blymn Exp $
+.\"	$NetBSD: form_field_buffer.3,v 1.2 2002/01/15 02:50:16 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -31,7 +31,7 @@
 .\"
 .Dd January, 2001
 .Dt FORMS 3
-.Os 
+.Os
 .Sh NAME
 .Nm field_buffer ,
 .Nm field_status ,
@@ -52,7 +52,7 @@
 .Ft int
 .Fn set_field_status "FIELD *field, int status"
 .Sh DESCRIPTION
-The 
+The
 .Fn field_buffer
 function returns the contents of the buffer number specified by
 .Fa buffer
@@ -61,12 +61,12 @@ number of buffers attached to the field then NULL will be returned.
 The field buffer may be set by calling
 .Fn set_field_buffer
 which will set the given buffer number to the contents of the string
-passed.  Calling 
+passed.  Calling
 .Fn field_status
 will return the status of the first buffer attached to the field.  If
 the field has been modified then the function will return TRUE
 otherwise FALSE is returned, the status of the first buffer may be
-programmatically set by calling 
+programmatically set by calling
 .Fn set_field_status .
 The maximum growth of a dynamic field can be set by calling
 .Fn set_max_field
