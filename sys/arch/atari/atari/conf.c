@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.1.1 1995/03/26 07:12:20 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 1995/04/05 06:31:33 leo Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -632,13 +632,13 @@ isdisk(dev, type)
 	switch (major(dev)) {
 	case 2:	/* fd: floppy */
 	case 4:	/* sd: scsi disk */
-	case 7:	/* cd: scsi cd-rom */
+	case 6:	/* cd: scsi cd-rom */
 		if (type == VBLK)
 			return(1);
 		break;
 	case 8:	 /* sd: scsi disk */
 	case 9:  /* cd: scsi cdrom */
-	case 18: /* fd: floppy */
+	case 16: /* fd: floppy */
 		if (type == VCHR)
 			return(1);
 		break;
@@ -652,13 +652,13 @@ static int chrtoblktab[] = {
 	/*  2 */	NODEV,		/*  3 */	3,
 	/*  4 */	NODEV,		/*  5 */	NODEV,
 	/*  6 */	NODEV,		/*  7 */	NODEV,
-	/*  8 */	4,		/*  9 */	7,
-	/* 10 */	NODEV,		/* 11 */	NODEV,
+	/*  8 */	4,		/*  9 */	6,
+	/* 10 */	5,		/* 11 */	NODEV,
 	/* 12 */	NODEV,		/* 13 */	NODEV,
 	/* 14 */	NODEV,		/* 15 */	NODEV,
-	/* 16 */	NODEV,		/* 17 */	NODEV,
-	/* 18 */	2,		/* 19 */	6,
-	/* 20 */	5,		/* 21 */	NODEV,
+	/* 16 */	2,		/* 17 */	0,
+	/* 18 */	NODEV,		/* 19 */	NODEV,
+	/* 20 */	NODEV,		/* 21 */	NODEV,
 	/* 22 */	NODEV,		/* 23 */	NODEV,
 	/* 24 */	NODEV,		/* 25 */	NODEV,
 	/* 26 */	NODEV,		/* 27 */	NODEV,
