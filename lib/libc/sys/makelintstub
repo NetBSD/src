@@ -1,5 +1,5 @@
 #!/bin/sh -
-# $NetBSD: makelintstub,v 1.8 2001/11/13 18:39:10 tv Exp $
+# $NetBSD: makelintstub,v 1.9 2002/09/14 03:14:15 thorpej Exp $
 #
 # Copyright (c) 1996, 1997 Christopher G. Demetriou
 # All rights reserved.
@@ -37,6 +37,8 @@ usage()
 {
 
 	echo "usage: $0 [-n|-p] [-o filename] object ..."
+	echo "       The CPP environment variable must be set"
+	echo "       to the path to the C preprocessor."
 	exit 1
 }
 
@@ -82,7 +84,7 @@ syscall_stub()
     	arglist="`
     	sed -e 'ta
 		:a
-		s,^/\* syscall: "'"$syscallname"'" ,,
+		s,^/\* syscall: \"'"$syscallname"'\" ,,
 	        tb
 		d
 		:b
@@ -108,35 +110,38 @@ syscall_stub()
 	# do ANSI C function header
 	echo	"#ifdef __STDC__"
 
-	echo -n	"$funcname("
+	echo "$funcname("
 	first=yes; i=1
 	for arg; do
 		if [ $first = yes ]; then
 			first=no
 		else
-			echo -n	", "
+			echo ", "
 		fi
 		case "$arg" in
-		"...") echo -n "...";;
-		*) echo -n "$arg arg$i"; i=$(($i + 1));;
+		"...") echo "...";;
+		*) echo "$arg arg$i"; i=$(($i + 1));;
 		esac
 	done
+	if [ $first = yes ]; then
+		echo "void"
+	fi
 	echo	")"
 
 	# do K&R C function header
 	echo	"#else"
 
-	echo -n	"$funcname("
+	echo "$funcname("
 	first=yes; i=1
 	for arg; do
 		if [ $first = yes ]; then
 			first=no
 		else
-			echo -n	", "
+			echo ", "
 		fi
 		case "$arg" in
-		"...") echo -n "va_alist";;
-		*) echo -n "arg$i"; i=$(($i + 1));;
+		"...") echo "va_alist";;
+		*) echo "arg$i"; i=$(($i + 1));;
 		esac
 	done
 	echo	")"
@@ -174,6 +179,10 @@ oarg=""
 syscallhdr=/usr/include/sys/syscall.h
 syscalldump=/tmp/makelintstub.$$
 
+if test "x${CPP}" = "x"; then
+	usage
+fi
+
 if test $? -ne 0; then
 	usage
 fi
@@ -200,7 +209,7 @@ fi
 trap "rm -f $syscalldump" 0 1 2 15
 
 header
-printf '#include "'"$syscallhdr"'"' | cpp -C >$syscalldump
+printf '#include "'"$syscallhdr"'"' | ${CPP} -C >$syscalldump
 for syscall; do
 	fnname=${syscall%.S}
 	if [ $pflag = YES ]; then
