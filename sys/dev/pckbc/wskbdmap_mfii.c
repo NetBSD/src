@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.14 2000/04/14 23:11:08 tsarna Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -355,6 +355,32 @@ static const keysym_t pckbd_keydesc_jp[] = {
     KC(125), KS_backslash,      KS_bar,
 };
 
+static const keysym_t pckbd_keydesc_es[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(2),   KS_1,		KS_exclam,	KS_bar,
+    KC(3),   KS_2,		KS_quotedbl,	KS_at,
+    KC(4),   KS_3,		KS_periodcentered, KS_numbersign,
+    KC(5),   KS_4,		KS_dollar,	KS_asciitilde,
+    KC(7),   KS_6,		KS_ampersand,
+    KC(8),   KS_7,		KS_slash,
+    KC(9),   KS_8,		KS_parenleft,
+    KC(10),  KS_9,		KS_parenright,
+    KC(11),  KS_0,		KS_equal,
+    KC(12),  KS_grave,		KS_question,
+    KC(13),  KS_exclamdown,	KS_questiondown,
+    KC(26),  KS_dead_grave,	KS_dead_circumflex, KS_bracketleft,
+    KC(27),  KS_plus,		KS_asterisk,	KS_bracketright,
+    KC(39),  KS_ntilde,
+    KC(40),  KS_dead_acute,	KS_dead_diaeresis, KS_braceleft,
+    KC(41),  KS_degree,		KS_ordfeminine,	KS_backslash,
+    KC(43),  KS_ccedilla,	KS_Ccedilla,	KS_braceright,
+    KC(51),  KS_comma,		KS_semicolon,
+    KC(52),  KS_period,		KS_colon,
+    KC(53),  KS_minus,		KS_underscore,
+    KC(86),  KS_less,		KS_greater,
+    KC(184), KS_Mode_switch,	KS_Multi_key,
+};
+
 static const keysym_t pckbd_keydesc_us_declk[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(1),	KS_grave,	KS_asciitilde, /* replace escape */
@@ -480,6 +506,7 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 		pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_US | KB_IOPENER | KB_SWAPCTRLCAPS,	KB_US | KB_IOPENER,
 		pckbd_keydesc_swapctrlcaps),
+	KBD_MAP(KB_ES ,			KB_US,	pckbd_keydesc_es),
 	{0, 0, 0, 0}
 };
 
