@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.4 2004/02/13 11:36:20 wiz Exp $	*/
+/*	$NetBSD: gdt.c,v 1.5 2004/06/16 17:45:03 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.4 2004/02/13 11:36:20 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.5 2004/06/16 17:45:03 fvdl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -57,9 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.4 2004/02/13 11:36:20 wiz Exp $");
 #include <uvm/uvm.h>
 
 #include <machine/gdt.h>
-
-#define	MINGDTSIZ	2048
-#define	MAXGDTSIZ	65536
 
 int gdt_size;		/* size of GDT in bytes */
 int gdt_dyncount;	/* number of dyn. allocated GDT entries in use */
