@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.107 2004/06/05 19:52:15 jdc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.108 2004/06/07 09:00:14 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1015,3 +1015,10 @@ sys/nfs/nfs_serv.c				1.89
 
 	Fix an LP64 problem for exclusive create in nfsrv_create().
 	[yamt, ticket #1706]
+
+usr.sbin/syslogd/syslogd.c			patch
+
+	Avoid crashes in syslogd(8) which could happen if it reloaded the
+	configuration at the wrong moment. Fixes PR bin/24682.
+	[he, ticket #1707]
+
