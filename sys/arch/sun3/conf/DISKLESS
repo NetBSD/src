@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.7 1995/06/09 21:53:27 gwr Exp $
+#	$NetBSD: DISKLESS,v 1.8 1995/07/07 16:01:22 gwr Exp $
 
 #
 # DISKLESS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
@@ -21,6 +21,7 @@ options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
 options		KTRACE				# system call tracing support
 #makeoptions	DEBUG="-g"			# symbols for kgdb + nm
 options		DDB
+options		SYMTAB_SPACE=98400
 
 # Filesystem options
 options 	NFSSERVER			# nfs server support
@@ -31,7 +32,7 @@ options 	FDESC		# /dev/fd/*
 options		FIFO		# FIFOs; RECOMMENDED
 options		KERNFS		# /kern
 options		NULLFS		# loopback file system
-options		PROCFS		# /proc
+#options 	PROCFS		# /proc
 #options 	UNION		# union file system
 
 # Networking options

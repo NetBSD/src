@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.21 1995/06/09 21:53:30 gwr Exp $
+#	$NetBSD: GENERIC,v 1.22 1995/07/07 16:01:25 gwr Exp $
 
 #
 # GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
@@ -22,6 +22,7 @@ options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
 options		KTRACE				# system call tracing support
 #makeoptions	DEBUG="-g"			# symbols for kgdb + nm
 options		DDB
+options		SYMTAB_SPACE=110080
 
 # Filesystem options
 options 	NFSSERVER			# nfs server support
@@ -33,8 +34,8 @@ options 	FDESC		# /dev/fd/*
 options		FIFO		# FIFOs; RECOMMENDED
 options		KERNFS		# /kern
 options		NULLFS		# loopback file system
-options		PROCFS		# /proc
-options		UNION		# union file system
+options 	PROCFS		# /proc
+options 	UNION		# union file system
 
 # Networking options
 options		INET				# IP prototol stack support
