@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.1 1995/06/03 13:16:03 pk Exp $	*/
+/*	$NetBSD: common.c,v 1.2 1995/06/04 23:29:14 pk Exp $	*/
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
  * All rights reserved.
@@ -151,8 +151,8 @@ __load_rtld(dp)
 
 void *
 dlopen(name, mode)
-char	*name;
-int	mode;
+	char	*name;
+	int	mode;
 {
 	if (ld_entry == NULL)
 		return NULL;
@@ -162,7 +162,7 @@ int	mode;
 
 int
 dlclose(fd)
-void	*fd;
+	void	*fd;
 {
 	if (ld_entry == NULL)
 		return -1;
@@ -172,8 +172,8 @@ void	*fd;
 
 void *
 dlsym(fd, name)
-void	*fd;
-char	*name;
+	void	*fd;
+	char	*name;
 {
 	if (ld_entry == NULL)
 		return NULL;
@@ -190,6 +190,18 @@ int	cmd;
 		return -1;
 
 	return (ld_entry->dlctl)(fd, cmd, arg);
+}
+
+char *
+dlerror()
+{
+	int     error;
+
+	if (ld_entry == NULL ||
+	    (*ld_entry->dlctl)(NULL, DL_GETERRNO, &error) == -1)
+		return "Service unavailable";
+
+	return (char *)strerror(error);
 }
 
 /*
