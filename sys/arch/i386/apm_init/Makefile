@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1996/08/25 23:39:14 jtk Exp $
+#	$NetBSD: Makefile,v 1.2 1996/08/30 02:32:13 jtk Exp $
 #
 # LP (Laptop Package)
 #
@@ -25,13 +25,15 @@ DIR=${APMREL}${APMDIR}
 
 .PATH: ${DIR}
 
-CC = ${APMCC}
+CC = ${APMCC} -I. -I$S/arch -I$S
 LD = ${APMLD}
 STRIP = ${APMSTRIP}
 CFLAGS += -DINITIALIZER	-I${DIR} -DKERNEL \
 	${APMCFLAGS:S@-I.@-I${KERNREL}.@g}
 
 OBJS = apm_init.o real_prot.o table.o
+
+$(OBJS): ${I386}/include/apmvar.h
 
 #.SUFFIXES: .c .S .o
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: real_prot.S,v 1.1 1996/08/25 23:39:22 jtk Exp $ */
+/*	$NetBSD: real_prot.S,v 1.2 1996/08/30 02:32:31 jtk Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1992, 1991 Carnegie Mellon University
@@ -25,7 +25,7 @@
  * the rights to redistribute these changes.
  *
  *	from: Mach, Revision 2.2  92/04/04  11:34:13  rpd
- *	$Id: real_prot.S,v 1.1 1996/08/25 23:39:22 jtk Exp $
+ *	$Id: real_prot.S,v 1.2 1996/08/30 02:32:31 jtk Exp $
  */
 
 
@@ -76,8 +76,10 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 	.file "real_prot.S"
 
+#define _LOCORE
+
 #include "real_prot.h"
-#include "apm_segments.h"
+#include <i386/include/apmvar.h>
 
 CR0_PE_ON	=	0x1
 CR0_PE_OFF	=	0xfffffffe
