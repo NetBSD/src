@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.24 1998/08/15 05:10:25 mycroft Exp $	*/
+/*	$NetBSD: pcb.h,v 1.25 1999/05/12 19:28:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -103,8 +103,6 @@ struct pcb {
 #define	pcb_gs	pcb_tss.tss_gs
 #define	pcb_ldt_sel	pcb_tss.tss_ldt
 	int	pcb_tss_sel;
-        union	descriptor *pcb_ldt;	/* per process (user) LDT */
-        int	pcb_ldt_len;		/*      number of LDT entries */
 	int	pcb_cr0;		/* saved image of CR0 */
 	struct	save87 pcb_savefpu;	/* floating point state for 287/387 */
 	struct	emcsts pcb_saveemc;	/* Cyrix EMC state */
@@ -118,9 +116,7 @@ struct pcb {
 	int	vm86_flagmask;		/* flag mask for vm86 mode */
 	void	*vm86_userp;		/* XXX performance hack */
 	u_long	pcb_iomap[NIOPORTS/32];	/* I/O bitmap */
-#if defined(PMAP_NEW)
 	struct pmap *pcb_pmap;		/* back pointer to our pmap */
-#endif
 };
 
 /*    

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.38 1998/08/15 05:10:25 mycroft Exp $	*/
+/*	$NetBSD: pmap.h,v 1.39 1999/05/12 19:28:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_pmap_new.h"
+#include "opt_user_ldt.h"
 #endif
 
 #ifdef PMAP_NEW			/* redirect */
@@ -98,6 +99,7 @@
 
 #include <machine/cpufunc.h>
 #include <machine/pte.h>
+#include <machine/segments.h>
 
 /*
  * 386 page table entry and page table directory
@@ -173,7 +175,16 @@ typedef struct pmap {
 	simple_lock_data_t	pm_lock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	long			pm_ptpages;	/* more stats: PT pages */
+
+	int			pm_flags;	/* see below */
+
+	union descriptor	*pm_ldt;	/* user-set LDT entries */
+	int			pm_ldt_len;	/* number of LDT entries */
+	int			pm_ldt_sel;	/* LDT selector */
 } *pmap_t;
+
+/* pm_flags */
+#define	PMF_USER_LDT	0x01	/* pmap has user-set LDT */
 
 /*
  * For each vm_page_t, there is a list of all currently valid virtual
@@ -251,6 +262,11 @@ pmap_phys_address(int ppn)
 }
 
 vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
+
+#if defined(USER_LDT)
+void	pmap_ldt_cleanup __P((struct proc *));
+#define	PMAP_FORK
+#endif /* USER_LDT */
 
 #endif	/* _KERNEL */
 

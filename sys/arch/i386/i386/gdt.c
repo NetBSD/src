@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.16 1999/03/24 05:51:00 mrg Exp $	*/
+/*	$NetBSD: gdt.c,v 1.17 1999/05/12 19:28:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,10 +117,12 @@ gdt_compact()
 {
 	struct proc *p;
 	struct pcb *pcb;
+	pmap_t pmap;
 	int slot = NGDT, oslot;
 
 	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		pcb = &p->p_addr->u_pcb;
+		pmap = p->p_vmspace->vm_map.pmap;
 		oslot = IDXSEL(pcb->pcb_tss_sel);
 		if (oslot >= gdt_count) {
 			while (gdt[slot].sd.sd_type != SDT_SYSNULL) {
@@ -131,7 +133,8 @@ gdt_compact()
 			gdt[oslot].gd.gd_type = SDT_SYSNULL;
 			pcb->pcb_tss_sel = GSEL(slot, SEL_KPL);
 		}
-		oslot = IDXSEL(pcb->pcb_ldt_sel);
+		simple_lock(&pmap->pm_lock);
+		oslot = IDXSEL(pmap->pm_ldt_sel);
 		if (oslot >= gdt_count) {
 			while (gdt[slot].sd.sd_type != SDT_SYSNULL) {
 				if (++slot >= gdt_count)
@@ -139,8 +142,20 @@ gdt_compact()
 			}
 			gdt[slot] = gdt[oslot];
 			gdt[oslot].gd.gd_type = SDT_SYSNULL;
-			pcb->pcb_ldt_sel = GSEL(slot, SEL_KPL);
+			pmap->pm_ldt_sel = GSEL(slot, SEL_KPL);
+
+			/* Refresh the PCB. */
+			pcb->pcb_pmap = pmap;
+			pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
+
+			/*
+			 * XXX We don't need to re-load the LDT on this
+			 * XXX processor, but if this pmap/pcb is in use
+			 * XXX on _another_ processor, we need to notify
+			 * XXX it!
+			 */
 		}
+		simple_unlock(&pmap->pm_lock);
 	}
 	for (; slot < gdt_count; slot++)
 		if (gdt[slot].gd.gd_type == SDT_SYSNULL)
@@ -290,8 +305,8 @@ tss_free(pcb)
 }
 
 void
-ldt_alloc(pcb, ldt, len)
-	struct pcb *pcb;
+ldt_alloc(pmap, ldt, len)
+	struct pmap *pmap;
 	union descriptor *ldt;
 	size_t len;
 {
@@ -299,13 +314,20 @@ ldt_alloc(pcb, ldt, len)
 
 	slot = gdt_get_slot();
 	setsegment(&gdt[slot].sd, ldt, len - 1, SDT_SYSLDT, SEL_KPL, 0, 0);
-	pcb->pcb_ldt_sel = GSEL(slot, SEL_KPL);
+	simple_lock(&pmap->pm_lock);
+	pmap->pm_ldt_sel = GSEL(slot, SEL_KPL);
+	simple_unlock(&pmap->pm_lock);
 }
 
 void
-ldt_free(pcb)
-	struct pcb *pcb;
+ldt_free(pmap)
+	struct pmap *pmap;
 {
+	int slot;
 
-	gdt_put_slot(IDXSEL(pcb->pcb_ldt_sel));
+	simple_lock(&pmap->pm_lock);
+	slot = IDXSEL(pmap->pm_ldt_sel);
+	simple_unlock(&pmap->pm_lock);
+
+	gdt_put_slot(slot);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.25 1999/05/05 05:21:13 chs Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.26 1999/05/12 19:28:29 thorpej Exp $	*/
 
 /*
  *
@@ -60,6 +60,7 @@
  */
 
 #include "opt_cputype.h"
+#include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 
@@ -78,6 +79,7 @@
 
 #include <machine/cpu.h>
 #include <machine/specialreg.h>
+#include <machine/gdt.h>
 
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
@@ -1786,6 +1788,7 @@ struct pmap *pmap;
   pmap->pm_stats.wired_count = 0;
   pmap->pm_stats.resident_count = 1;	/* count the PDP allocd below */
   pmap->pm_ptphint = NULL;
+  pmap->pm_flags = 0;
 
   /* allocate PDP */
   pmap->pm_pdir = (pd_entry_t *) uvm_km_alloc(kernel_map, NBPG);
@@ -1799,6 +1802,11 @@ struct pmap *pmap;
   memset(pmap->pm_pdir, 0, PDSLOT_PTE * sizeof(pd_entry_t));
   /* put in recursive PDE to map the PTEs */
   pmap->pm_pdir[PDSLOT_PTE] = pmap->pm_pdirpa | PG_V | PG_KW;
+
+  /* init the LDT */
+  pmap->pm_ldt = NULL;
+  pmap->pm_ldt_len = 0;
+  pmap->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 
   /*
    * we need to lock pmaps_lock to prevent nkpde from changing on
@@ -1897,6 +1905,18 @@ struct pmap *pmap;
   /* XXX: need to flush it out of other processor's APTE space? */
 
   uvm_km_free(kernel_map, (vaddr_t)pmap->pm_pdir, NBPG);
+
+#ifdef USER_LDT
+  if (pmap->pm_flags & PMF_USER_LDT) {
+    /*
+     * no need to switch the LDT; this address space is gone,
+     * nothing is using it.
+     */
+    ldt_free(pmap);
+    uvm_km_free(kernel_map, (vaddr_t)pmap->pm_ldt,
+		pmap->pm_ldt_len * sizeof(union descriptor));
+  }
+#endif
 }
 
 /*
@@ -1912,6 +1932,79 @@ struct pmap *pmap;
   pmap->pm_obj.uo_refs++;
   simple_unlock(&pmap->pm_obj.vmobjlock);
 }
+
+#if defined(PMAP_FORK)
+/*
+ * pmap_fork: perform any necessary data structure manipulation when
+ * a VM space is forked.
+ */
+
+void pmap_fork(pmap1, pmap2)
+
+struct pmap *pmap1, *pmap2;
+
+{
+  simple_lock(&pmap1->pm_obj.vmobjlock);
+  simple_lock(&pmap2->pm_obj.vmobjlock);
+
+#ifdef USER_LDT
+  /* Copy the LDT, if necessary. */
+  if (pmap1->pm_flags & PMF_USER_LDT) {
+    union descriptor *new_ldt;
+    size_t len;
+
+    len = pmap1->pm_ldt_len * sizeof(union descriptor);
+    new_ldt = (union descriptor *)uvm_km_alloc(kernel_map, len);
+    memcpy(new_ldt, pmap1->pm_ldt, len);
+    pmap2->pm_ldt = new_ldt;
+    pmap2->pm_ldt_len = pmap1->pm_ldt_len;
+    pmap2->pm_flags |= PMF_USER_LDT;
+    ldt_alloc(pmap2, new_ldt, len);
+  }
+#endif /* USER_LDT */
+
+  simple_unlock(&pmap2->pm_obj.vmobjlock);
+  simple_unlock(&pmap1->pm_obj.vmobjlock);
+}
+#endif /* PMAP_FORK */
+
+#ifdef USER_LDT
+/*
+ * pmap_ldt_cleanup: if the pmap has a local LDT, deallocate it, and
+ * restore the default.
+ */
+
+void pmap_ldt_cleanup(p)
+
+struct proc *p;
+
+{
+  struct pcb *pcb = &p->p_addr->u_pcb; 
+  pmap_t pmap = p->p_vmspace->vm_map.pmap;
+  union descriptor *old_ldt = NULL;
+  size_t len = 0;
+
+  simple_lock(&pmap->pm_obj.vmobjlock);
+
+  if (pmap->pm_flags & PMF_USER_LDT) {
+    ldt_free(pmap);
+    pmap->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
+    pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
+    if (pcb == curpcb)
+      lldt(pcb->pcb_ldt_sel);
+    old_ldt = pmap->pm_ldt;
+    len = pmap->pm_ldt_len * sizeof(union descriptor);
+    pmap->pm_ldt = NULL;
+    pmap->pm_ldt_len = 0;
+    pmap->pm_flags &= ~PMF_USER_LDT;
+  }
+
+  simple_unlock(&pmap->pm_obj.vmobjlock);
+
+  if (old_ldt != NULL)
+    uvm_km_free(kernel_map, (vaddr_t)old_ldt, len);
+}
+#endif /* USER_LDT */
 
 /*
  * pmap_activate: activate a process' pmap (fill in %cr3 info)
@@ -1930,11 +2023,13 @@ struct proc *p;
   struct pcb *pcb = &p->p_addr->u_pcb;
   struct pmap *pmap = p->p_vmspace->vm_map.pmap;
 
-  pcb->pcb_cr3 = pmap->pm_pdirpa;
   pcb->pcb_pmap = pmap;
-  if (p == curproc) {
+  pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
+  pcb->pcb_cr3 = pmap->pm_pdirpa;
+  if (p == curproc)
     lcr3(pcb->pcb_cr3);
-  }
+  if (pcb == curpcb)
+    lldt(pcb->pcb_ldt_sel);
 }
 
 /*

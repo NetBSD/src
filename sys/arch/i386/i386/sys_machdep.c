@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.47 1999/03/24 05:51:01 mrg Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.48 1999/05/12 19:28:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -178,24 +178,6 @@ vdoualarm(arg)
 #endif
 
 #ifdef USER_LDT
-/*
- * If the process has a local LDT, deallocate it, and restore the default from
- * proc0.     
- */   
-void
-i386_user_cleanup(pcb)
-	struct pcb *pcb;
-{
-
-	ldt_free(pcb);
-	pcb->pcb_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
-	if (pcb == curpcb)
-		lldt(pcb->pcb_ldt_sel);
-	uvm_km_free(kernel_map, (vaddr_t)pcb->pcb_ldt,
-	    (pcb->pcb_ldt_len * sizeof(union descriptor))); 
-	pcb->pcb_ldt = 0;
-}
-
 int
 i386_get_ldt(p, args, retval)
 	struct proc *p;
@@ -203,7 +185,7 @@ i386_get_ldt(p, args, retval)
 	register_t *retval;
 {
 	int error;
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	int nldt, num;
 	union descriptor *lp;
 	struct i386_get_ldt_args ua;
@@ -219,9 +201,13 @@ i386_get_ldt(p, args, retval)
 	if (ua.start < 0 || ua.num < 0)
 		return (EINVAL);
 
-	if (pcb->pcb_flags & PCB_USER_LDT) {
-		nldt = pcb->pcb_ldt_len;
-		lp = pcb->pcb_ldt;
+	/*
+	 * XXX LOCKING.
+	 */
+
+	if (pmap->pm_flags & PMF_USER_LDT) {
+		nldt = pmap->pm_ldt_len;
+		lp = pmap->pm_ldt;
 	} else {
 		nldt = NLDT;
 		lp = ldt;
@@ -249,6 +235,7 @@ i386_set_ldt(p, args, retval)
 {
 	int error, i, n;
 	struct pcb *pcb = &p->p_addr->u_pcb;
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	int fsslot, gsslot;
 	struct i386_set_ldt_args ua;
 	union descriptor desc;
@@ -266,34 +253,45 @@ i386_set_ldt(p, args, retval)
 	if (ua.start > 8192 || (ua.start + ua.num) > 8192)
 		return (EINVAL);
 
+	/*
+	 * XXX LOCKING
+	 */
+
 	/* allocate user ldt */
-	if (pcb->pcb_ldt == 0 || (ua.start + ua.num) > pcb->pcb_ldt_len) {
+	if (pmap->pm_ldt == 0 || (ua.start + ua.num) > pmap->pm_ldt_len) {
 		size_t old_len, new_len;
 		union descriptor *old_ldt, *new_ldt;
 
-		if (pcb->pcb_flags & PCB_USER_LDT) {
-			old_len = pcb->pcb_ldt_len * sizeof(union descriptor);
-			old_ldt = pcb->pcb_ldt;
+		if (pmap->pm_flags & PMF_USER_LDT) {
+			old_len = pmap->pm_ldt_len * sizeof(union descriptor);
+			old_ldt = pmap->pm_ldt;
 		} else {
 			old_len = NLDT * sizeof(union descriptor);
 			old_ldt = ldt;
-			pcb->pcb_ldt_len = 512;
+			pmap->pm_ldt_len = 512;
 		}
-		while ((ua.start + ua.num) > pcb->pcb_ldt_len)
-			pcb->pcb_ldt_len *= 2;
-		new_len = pcb->pcb_ldt_len * sizeof(union descriptor);
+		while ((ua.start + ua.num) > pmap->pm_ldt_len)
+			pmap->pm_ldt_len *= 2;
+		new_len = pmap->pm_ldt_len * sizeof(union descriptor);
 		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map, new_len);
 		memcpy(new_ldt, old_ldt, old_len);
 		memset((caddr_t)new_ldt + old_len, 0, new_len - old_len);
-		pcb->pcb_ldt = new_ldt;
+		pmap->pm_ldt = new_ldt;
 
-		if (pcb->pcb_flags & PCB_USER_LDT)
-			ldt_free(pcb);
+		if (pmap->pm_flags & PCB_USER_LDT)
+			ldt_free(pmap);
 		else
-			pcb->pcb_flags |= PCB_USER_LDT;
-		ldt_alloc(pcb, new_ldt, new_len);
+			pmap->pm_flags |= PCB_USER_LDT;
+		ldt_alloc(pmap, new_ldt, new_len);
+		pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
 		if (pcb == curpcb)
 			lldt(pcb->pcb_ldt_sel);
+
+		/*
+		 * XXX Need to notify other processors which may be
+		 * XXX currently using this pmap that they need to
+		 * XXX re-load the LDT.
+		 */
 
 		if (old_ldt != ldt)
 			uvm_km_free(kernel_map, (vaddr_t)old_ldt, old_len);
@@ -365,7 +363,7 @@ i386_set_ldt(p, args, retval)
 		if ((error = copyin(&ua.desc[i], &desc, sizeof(desc))) != 0)
 			goto out;
 
-		pcb->pcb_ldt[n] = desc;
+		pmap->pm_ldt[n] = desc;
 	}
 
 	*retval = ua.start;
