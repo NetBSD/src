@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl_transact.c,v 1.2 1997/10/10 16:33:01 lukem Exp $	*/
+/*	$NetBSD: ctl_transact.c,v 1.3 1997/10/20 00:37:16 lukem Exp $	*/
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.  The Berkeley software License Agreement
@@ -14,7 +14,7 @@
 #if 0
 static char sccsid[] = "@(#)ctl_transact.c	5.2 (Berkeley) 3/13/86";
 #else
-__RCSID("$NetBSD: ctl_transact.c,v 1.2 1997/10/10 16:33:01 lukem Exp $");
+__RCSID("$NetBSD: ctl_transact.c,v 1.3 1997/10/20 00:37:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,7 @@ ctl_transact(target, msg, type, rp)
 	msg.type = type;
 	daemon_addr.sin_addr = target;
 	daemon_addr.sin_port = daemon_port;
+	FD_ZERO(&ctl_mask);
 	FD_SET(ctl_sockt, &ctl_mask);
 
 	/*
