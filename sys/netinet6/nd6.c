@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.30.4.2 2001/02/26 22:59:26 he Exp $	*/
+/*	$NetBSD: nd6.c,v 1.30.4.3 2001/05/09 19:42:27 he Exp $	*/
 /*	$KAME: nd6.c,v 1.68 2000/07/02 14:48:02 itojun Exp $	*/
 
 /*
@@ -92,6 +92,12 @@ int	nd6_useloopback = 1;	/* use loopback interface for local traffic */
 int nd6_maxndopt = 10;	/* max # of ND options allowed */
 
 int nd6_maxnudhint = 0;	/* max # of subsequent upper layer hints */
+
+#ifdef ND6_DEBUG
+int nd6_debug = 1;
+#else
+int nd6_debug = 0;
+#endif
 
 /* for debugging? */
 static int nd6_inuse, nd6_allocated;
