@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.8 2002/12/24 15:54:26 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.9 2002/12/24 16:40:46 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.8 2002/12/24 15:54:26 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.9 2002/12/24 16:40:46 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -158,9 +158,7 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 		 */
 		med = (struct mach_emuldata *)p->p_emuldata;
 		mp = ((struct mach_right *)sm->msgh_remote_port)->mr_port;
-		if ((mp == med->med_host) ||
-		    (mp == med->med_kernel) ||
-		    (mp == med->med_bootstrap)) {
+		if ((mp == med->med_host) || (mp == med->med_kernel)) {
 			/* 
 			 * Look for the function that will handle it,
 			 * using the message id.
