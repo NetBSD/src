@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hpcarm,v 1.10 2001/11/26 23:54:49 thorpej Exp $
+#	$NetBSD: Makefile.hpcarm,v 1.11 2001/11/27 00:25:32 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -39,6 +39,7 @@ COPTS?=	-O2
 .ifndef S
 S!=	cd ../../../..; pwd
 .endif
+ARM=	$S/arch/arm
 HPCARM=	$S/arch/hpcarm
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo
@@ -55,6 +56,8 @@ CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -D_LOCORE
 LINKFLAGS=	-Ttext C0040000 -e start
 STRIPFLAGS=	-g
+
+GENASSYM_EXTRAS+=	${HPCARM}/hpcarm/genassym.cf
 
 %INCLUDES
 
@@ -121,8 +124,8 @@ LINKFLAGS+=	-X
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${HPCARM}/hpcarm/genassym.cf
-	cat ${HPCARM}/hpcarm/genassym.cf ${GENASSYM_EXTRAS} | \
+assym.h: $S/kern/genassym.sh ${ARM}/arm32/genassym.cf
+	cat ${ARM}/arm32/genassym.cf ${GENASSYM_EXTRAS} | \
 	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
 	    > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
