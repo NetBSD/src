@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.10 2002/03/20 18:39:45 eeh Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.11 2002/03/21 04:32:25 uwe Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ struct sbus_softc {
  */
 #define	sbus_promaddr_to_handle(tag, promaddr, hp)	\
 	do {						\
-		*hp = (void *)promaddr;			\
+		*(hp) = (bus_space_handle_t)(promaddr);	\
 	} while (0)
 
 #endif /* _SBUS_VAR_SPARC_H */
