@@ -1,4 +1,4 @@
-.\"     $NetBSD: driver.9,v 1.1 2001/07/01 04:11:13 gmcgarry Exp $
+.\"     $NetBSD: driver.9,v 1.2 2001/09/04 02:51:15 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -128,10 +128,10 @@ device-instance name
 During system bootstrap, the autoconfiguration framework searches the
 system for devices.  For each device driver, its match function
 is called
-.Po 
+.Po
 via its
 .Em cfattach
-structure 
+structure
 .Pc
 to match the driver with a device instance.  The match function is
 called with three arguments.  This first argument
@@ -173,10 +173,10 @@ Generally, only a single driver exists for a device, so the match
 function returns 1 for a positive match.
 .Pp
 The autoconfiguration framework will call the attach function
-.Po 
+.Po
 via its
 .Em cfattach
-structure 
+structure
 .Pc
 of the driver which returns the highest value from its match function.
 The attach function is called with three arguments.  The attach
@@ -187,7 +187,7 @@ is a pointer to the driver's parent device structure.  The second
 argument
 .Fa self
 is a pointer to the driver's device structure.  It is also a pointer
-to our 
+to our
 .Em softc
 structure since the device structure is its first member.  The third
 argument
@@ -243,7 +243,7 @@ argument as passed to the attach function.  The second argument
 describes the action.  Valid actions are DVACT_ACTIVATE
 .Po
 activate the device
-.Pc and DVACT_DEACTIVATE 
+.Pc and DVACT_DEACTIVATE
 .Po
 deactivate the device
 .Pc .
@@ -265,7 +265,7 @@ interrupt not for me
 1 for
 .Do
 I took care of it
-.Dc , 
+.Dc ,
 or -1 for
 .Do
 I guess it was mine, but I wasn't expecting it

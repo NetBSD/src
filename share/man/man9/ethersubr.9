@@ -1,4 +1,4 @@
-.\"	$NetBSD: ethersubr.9,v 1.11 2000/11/07 06:43:34 lukem Exp $
+.\"	$NetBSD: ethersubr.9,v 1.12 2001/09/04 02:51:15 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,9 +58,9 @@
 .Ft int
 .Fn ether_delmulti "struct ifrequest *ifr" "struct ethercom *ec"
 .Ft void
-.Fn ETHER_FIRST_MULTI "struct ether_multistep step" "struct ethercom *ec" "struct ether_multi *enm" 
+.Fn ETHER_FIRST_MULTI "struct ether_multistep step" "struct ethercom *ec" "struct ether_multi *enm"
 .Ft void
-.Fn ETHER_NEXT_MULTI  "struct ether_multistep step" "struct ether_multi *enm" 
+.Fn ETHER_NEXT_MULTI  "struct ether_multistep step" "struct ether_multi *enm"
 .Ft int
 .Fn ETHER_IS_MULTICAST "u_int8_t *addr"
 .Fd #include <net/if_fddi.h>
@@ -92,8 +92,8 @@ Note that you also need the
 stuff to support IPv4 on your hardware.
 .Bl -tag -width compact
 .It Fn ether_ifattach
-Perform the device-independent, but Ethernet-specific initialization of 
-the interface pointed to by 
+Perform the device-independent, but Ethernet-specific initialization of
+the interface pointed to by
 .Fa ifp .
 .Pp
 Among other duties, this function creates a record for the link level
@@ -157,20 +157,20 @@ can't be found in the list of multicast addresses.
 corresponding functions for FDDI devices.
 .It Fn ETHER_NEXT_MULTI
 is a macro to step through all of the ether_multi records, one at a time.
-The current position is remembered in 
-.Fa step , 
-which the caller must provide. 
+The current position is remembered in
+.Fa step ,
+which the caller must provide.
 .It Fn ETHER_FIRST_MULTI
-must be called to initialize 
+must be called to initialize
 .Fa step
 and get the first record.  Both macros return a
-.Dv NULL 
+.Dv NULL
 .Fa enm
 when there are no remaining records.
 .It Fn ETHER_IS_MULTICAST
-returns 1, if 
+returns 1, if
 .Fa addr
-points to an Ethernet/FDDI multicast (or broadcast) address. 
+points to an Ethernet/FDDI multicast (or broadcast) address.
 Implemented as a macro.
 .El
 .Sh SEE ALSO
