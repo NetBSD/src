@@ -1,7 +1,7 @@
-/*	$NetBSD: tcp_seq.h,v 1.8 1997/10/13 00:48:10 explorer Exp $	*/
+/*	$NetBSD: tcp_seq.h,v 1.9 1998/01/05 10:32:07 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1982, 1986, 1993
+ * Copyright (c) 1982, 1986, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tcp_seq.h	8.1 (Berkeley) 6/10/93
+ *	@(#)tcp_seq.h	8.3 (Berkeley) 6/21/95
  */
 
 /*
