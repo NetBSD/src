@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.79 2000/07/11 21:55:11 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.80 2000/07/14 13:15:44 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -215,7 +215,7 @@ cpu_startup()
 	 */
 	printf(version);
 	/*identifycpu();*/
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
+	format_bytes(pbuf, sizeof(pbuf), ctob((u_int64_t)physmem));
 	printf("total memory = %s\n", pbuf);
 
 	/*
