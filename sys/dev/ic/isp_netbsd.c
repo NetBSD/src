@@ -1,18 +1,17 @@
-/* $NetBSD: isp_netbsd.c,v 1.25.4.1 2000/08/28 17:45:08 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.25.4.2 2001/01/25 18:25:52 jhawk Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
  *	sys/dev/ic/isp.c
- *	sys/dev/ic/ic/isp.c
- *	sys/dev/ic/ic/isp_inline.h
- *	sys/dev/ic/ic/isp_netbsd.c
- *	sys/dev/ic/ic/isp_netbsd.h
- *	sys/dev/ic/ic/isp_target.c
- *	sys/dev/ic/ic/isp_target.h
- *	sys/dev/ic/ic/isp_tpublic.h
- *	sys/dev/ic/ic/ispmbox.h
- *	sys/dev/ic/ic/ispreg.h
- *	sys/dev/ic/ic/ispvar.h
+ *	sys/dev/ic/isp_inline.h
+ *	sys/dev/ic/isp_netbsd.c
+ *	sys/dev/ic/isp_netbsd.h
+ *	sys/dev/ic/isp_target.c
+ *	sys/dev/ic/isp_target.h
+ *	sys/dev/ic/isp_tpublic.h
+ *	sys/dev/ic/ispmbox.h
+ *	sys/dev/ic/ispreg.h
+ *	sys/dev/ic/ispvar.h
  *	sys/microcode/isp/asm_sbus.h
  *	sys/microcode/isp/asm_1040.h
  *	sys/microcode/isp/asm_1080.h
@@ -99,7 +98,6 @@ void
 isp_attach(isp)
 	struct ispsoftc *isp;
 {
-	int maxluns;
 	isp->isp_osinfo._adapter.scsipi_minphys = ispminphys;
 	isp->isp_osinfo._adapter.scsipi_ioctl = ispioctl;
 	isp->isp_osinfo._adapter.scsipi_cmd = ispcmd;
@@ -111,7 +109,6 @@ isp_attach(isp)
 	isp->isp_osinfo._link.device = &isp_dev;
 	isp->isp_osinfo._link.adapter = &isp->isp_osinfo._adapter;
 	isp->isp_osinfo._link.openings = isp->isp_maxcmds;
-	isp->isp_osinfo._link.scsipi_scsi.max_lun = maxluns;
 	/*
 	 * Until the midlayer is fixed to use REPORT LUNS, limit to 8 luns.
 	 */
@@ -315,6 +312,15 @@ ispcmd(xs)
 	}
 
 	result = isp_start(xs);
+#if	0
+{
+	static int na[16] = { 0 };
+	if (na[isp->isp_unit] < isp->isp_nactive) {
+		isp_prt(isp, ISP_LOGALL, "active hiwater %d", isp->isp_nactive);
+		na[isp->isp_unit] = isp->isp_nactive;
+	}
+}
+#endif
 	switch (result) {
 	case CMD_QUEUED:
 		result = SUCCESSFULLY_QUEUED;
@@ -490,7 +496,7 @@ isp_dog(arg)
 			XS_CMD_C_WDOG(xs);
 			callout_reset(&xs->xs_callout, hz, isp_dog, xs);
 			if (isp_getrqentry(isp, &iptr, &optr, (void **) &mp)) {
-				ISP_IUNLOCK(isp);
+				ISP_UNLOCK(isp);
 				return;
 			}
 			XS_CMD_S_GRACE(xs);
@@ -536,7 +542,7 @@ isp_command_requeue(arg)
 {
 	struct scsipi_xfer *xs = arg;
 	struct ispsoftc *isp = XS_ISP(xs);
-	ISP_ILOCK(isp);
+	ISP_LOCK(isp);
 	switch (ispcmd(xs)) {
 	case SUCCESSFULLY_QUEUED:
 		isp_prt(isp, ISP_LOGINFO,
@@ -560,7 +566,7 @@ isp_command_requeue(arg)
 		scsipi_done(xs);
 		break;
 	}
-	ISP_IUNLOCK(isp);
+	ISP_UNLOCK(isp);
 }
 
 /*
@@ -574,7 +580,7 @@ isp_internal_restart(arg)
 	struct ispsoftc *isp = arg;
 	int result, nrestarted = 0;
 
-	ISP_ILOCK(isp);
+	ISP_LOCK(isp);
 	if (isp->isp_osinfo.blocked == 0) {
 		struct scsipi_xfer *xs;
 		while ((xs = TAILQ_FIRST(&isp->isp_osinfo.waitq)) != NULL) {
@@ -597,7 +603,7 @@ isp_internal_restart(arg)
 		isp_prt(isp, ISP_LOGINFO,
 		    "isp_restart requeued %d commands", nrestarted);
 	}
-	ISP_IUNLOCK(isp);
+	ISP_UNLOCK(isp);
 }
 
 int
@@ -751,12 +757,12 @@ isp_async(isp, cmd, arg)
 		    (((u_int64_t)resp->snscb_portname[5]) << 16) |
 		    (((u_int64_t)resp->snscb_portname[6]) <<  8) |
 		    (((u_int64_t)resp->snscb_portname[7]));
+
 		isp_prt(isp, ISP_LOGINFO,
 		    "Fabric Device (Type 0x%x)@PortID 0x%x WWN 0x%08x%08x",
 		    resp->snscb_port_type, portid, ((u_int32_t)(wwn >> 32)),
 		    ((u_int32_t)(wwn & 0xffffffff)));
-		if (resp->snscb_port_type != 2)
-			break;
+
 		for (target = FC_SNS_ID+1; target < MAX_FC_TARG; target++) {
 			lp = &fcp->portdb[target];
 			if (lp->port_wwn == wwn)
