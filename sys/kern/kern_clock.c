@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.21 1994/10/09 08:31:28 mycroft Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.22 1995/03/03 01:24:03 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -101,8 +101,10 @@ int	stathz;
 int	profhz;
 int	profprocs;
 int	ticks;
-static int psdiv, pscnt;	/* prof => stat divider */
-int	psratio;		/* ratio: prof / stat */
+static int psdiv, pscnt;		/* prof => stat divider */
+int	psratio;			/* ratio: prof / stat */
+int	tickfix, tickfixinterval;	/* used if tick not really integral */
+static int tickfixcnt;			/* number of ticks since last fix */
 
 volatile struct	timeval time;
 volatile struct	timeval mono_time;
@@ -187,13 +189,23 @@ hardclock(frame)
 		statclock(frame);
 
 	/*
-	 * Increment the time-of-day.  The increment is just ``tick'' unless
-	 * we are still adjusting the clock; see adjtime().
+	 * Increment the time-of-day.  The increment is normally just
+	 * ``tick''.  If the machine is one which has a clock frequency
+	 * such that ``hz'' would not divide the second evenly into
+	 * milliseconds, a periodic adjustment must be applied.  Finally,
+	 * if we are still adjusting the time (see adjtime()),
+	 * ``tickdelta'' may also be added in.
 	 */
 	ticks++;
-	if (timedelta == 0)
-		delta = tick;
-	else {
+	delta = tick;
+	if (tickfix) {
+		tickfixcnt++;
+		if (tickfixcnt > tickfixinterval) {
+			delta += tickfix;
+			tickfixcnt = 0;
+		}
+	}
+	if (timedelta != 0) {
 		delta = tick + tickdelta;
 		timedelta -= tickdelta;
 	}
@@ -337,19 +349,24 @@ hzto(tv)
 	int s;
 
 	/*
-	 * If number of milliseconds will fit in 32 bit arithmetic,
-	 * then compute number of milliseconds to time and scale to
+	 * If number of microseconds will fit in 32 bit arithmetic,
+	 * then compute number of microseconds to time and scale to
 	 * ticks.  Otherwise just compute number of hz in time, rounding
-	 * times greater than representible to maximum value.
+	 * times greater than representible to maximum value.  (We must
+	 * compute in microseconds, because hz can be greater than 1000,
+	 * and thus tick can be less than one millisecond).
 	 *
-	 * Delta times less than 25 days can be computed ``exactly''.
-	 * Maximum value for any timeout in 10ms ticks is 250 days.
+	 * Delta times less than 14 hours can be computed ``exactly''.
+	 * (Note that if hz would yeild a non-integral number of us per
+	 * tick, i.e. tickfix is nonzero, timouts can be a tick longer
+	 * than they should be.)  Maximum value for any timeout in 10ms
+	 * ticks is 250 days.
 	 */
 	s = splhigh();
 	sec = tv->tv_sec - time.tv_sec;
-	if (sec <= 0x7fffffff / 1000 - 1000)
-		ticks = ((tv->tv_sec - time.tv_sec) * 1000 +
-			(tv->tv_usec - time.tv_usec) / 1000) / (tick / 1000);
+	if (sec <= 0x7fffffff / 1000000 - 1)
+		ticks = ((tv->tv_sec - time.tv_sec) * 1000000 +
+			(tv->tv_usec - time.tv_usec)) / tick;
 	else if (sec <= 0x7fffffff / hz)
 		ticks = sec * hz;
 	else
