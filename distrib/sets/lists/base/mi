@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.399 2003/04/13 09:54:42 jmmv Exp $
+# $NetBSD: mi,v 1.400 2003/04/14 05:21:49 salo Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1144,6 +1144,7 @@
 ./usr/share/locale/ru_RU.ISO8859-5/LC_CTYPE	base-locale-ru
 ./usr/share/locale/ru_RU.KOI8-R			base-locale-ru
 ./usr/share/locale/ru_RU.KOI8-R/LC_CTYPE	base-locale-ru
+./usr/share/locale/sk				base-locale-sk
 ./usr/share/locale/sk_SK.ISO8859-2		base-locale-sk
 ./usr/share/locale/sk_SK.ISO8859-2/LC_CTYPE	base-locale-sk
 ./usr/share/locale/sl				base-locale-sl
@@ -1530,6 +1531,8 @@
 ./usr/share/nls/no/libc.cat		base-locale-no
 ./usr/share/nls/pl			base-locale-pl
 ./usr/share/nls/pl/libc.cat		base-locale-pl
+./usr/share/nls/sk			base-locale-sk
+./usr/share/nls/sk/libc.cat		base-locale-sk
 ./usr/share/nls/sv			base-locale-sv
 ./usr/share/nls/sv/libc.cat		base-locale-sv
 ./usr/share/sushi			base-sushi-share
