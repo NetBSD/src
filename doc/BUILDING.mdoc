@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.12 2003/01/26 13:15:17 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.13 2003/01/29 22:50:10 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,11 +34,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" =====
 .\" NOTE: After changing this file, run "make build-docs" to generate the
 .\" proper plaintext versions, and check in all BUILDING.* files!
 .\"
-.Dd January 26, 2003
+.\" Toolchain prefix for commands
+.ds toolprefix nb
+.
+.Dd January 30, 2003
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -881,7 +883,7 @@ operation.
 .
 .It Sy makewrapper
 Create the
-.Sy nbmake-MACHINE
+.Sy \*[toolprefix]make-MACHINE
 wrapper.
 This operation is automatically performed for any of the other
 operations.
@@ -954,7 +956,7 @@ to
 This will also append the build idenfitier to the name of the
 .Dq make
 wrapper script so that the resulting name is of the form
-.Dq Sy nbmake-MACHINE-BUILDID .
+.Dq Sy \*[toolprefix]make-MACHINE-BUILDID .
 .
 .It Fl D Ar dest
 Set the value of
@@ -1084,7 +1086,7 @@ to
 (which is optional).
 .
 .It Fl w Ar wrapper
-Create the nbmake wrapper script (see below) in a custom location,
+Create the \*[toolprefix]make wrapper script (see below) in a custom location,
 specified by
 .Ar wrapper .
 This allows, for instance, to place the wrapper in
@@ -1096,24 +1098,24 @@ is the full name of the file, not just a directory name.
 .
 .El
 .
-.Ss The \*qnbmake-MACHINE\*q wrapper script
+.Ss The \*q\*[toolprefix]make-MACHINE\*q wrapper script
 .
 If using the
 .Sy build.sh
 script to build
 .Nx ,
 a
-.Sy nbmake-MACHINE
+.Sy \*[toolprefix]make-MACHINE
 script will be created in
 .Sy TOOLDIR/bin
 upon the first build to assist in building subtrees on a cross-compile
 host.
 .Pp
-.Sy nbmake-MACHINE
+.Sy \*[toolprefix]make-MACHINE
 can be invoked in lieu of
 .Xr make 1 ,
 and will instead call the up-to-date version of
-.Dq nbmake
+.Dq \*[toolprefix]make
 installed into
 .Sy TOOLDIR/bin
 with several key variables pre-set, including
