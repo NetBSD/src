@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.20 2003/01/15 22:08:08 bouyer Exp $ */
+/*	$NetBSD: if_ni.c,v 1.21 2003/04/01 01:58:14 thorpej Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.20 2003/01/15 22:08:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.21 2003/04/01 01:58:14 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -48,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.20 2003/01/15 22:08:08 bouyer Exp $");
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/sched.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -195,7 +197,7 @@ ni_getpgs(struct ni_softc *sc, int size, caddr_t *v, paddr_t *p)
 	bus_dma_segment_t seg;
 	int nsegs, error;
 
-	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &seg, 1,
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT)) != 0)
 		panic(" unable to allocate memory: error %d", error);
 
