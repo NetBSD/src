@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quiz.c	5.1 (Berkeley) 11/10/91";*/
-static char rcsid[] = "$Id: quiz.c,v 1.4 1993/12/22 07:23:27 cgd Exp $";
+static char rcsid[] = "$Id: quiz.c,v 1.5 1994/01/04 05:23:56 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -129,7 +129,7 @@ get_file(file)
 	 */
 	qp = &qlist;
 	qsize = 0;
-	while ((lp = fgetline(fp, &len)) != NULL) {
+	while ((lp = fgetln(fp, &len)) != NULL) {
 		if (qp->q_text && qp->q_text[strlen(qp->q_text) - 1] == '\\')
 			qp->q_text = appdstr(qp->q_text, lp);
 		else {
@@ -262,7 +262,7 @@ quiz()
 		qp->q_asked = TRUE;
 		(void)printf("%s?\n", question);
 		for (;; ++guesses) {
-			if ((answer = fgetline(stdin, &len)) == NULL) {
+			if ((answer = fgetln(stdin, &len)) == NULL) {
 				score(rights, wrongs, guesses);
 				exit(0);
 			}

@@ -43,7 +43,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)join.c	5.1 (Berkeley) 11/18/91";*/
-static char rcsid[] = "$Id: join.c,v 1.5 1993/12/22 07:24:18 cgd Exp $";
+static char rcsid[] = "$Id: join.c,v 1.6 1994/01/04 05:24:34 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -308,7 +308,7 @@ slurp(F)
 			F->pushback = -1;
 			continue;
 		}
-		if ((bp = fgetline(F->fp, &len)) == NULL)
+		if ((bp = fgetln(F->fp, &len)) == NULL)
 			return;
 		if (lp->linealloc <= len + 1) {
 			if (lp->linealloc == 0)
