@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.16 2000/03/14 08:04:06 nisimura Exp $ */
+/* $NetBSD: xcfb.c,v 1.17 2000/03/16 05:50:57 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.16 2000/03/14 08:04:06 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.17 2000/03/16 05:50:57 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,12 +252,12 @@ xcfb_getdevconfig(dense_addr, dc)
 	for (i = 0; i < dc->dc_ht * dc->dc_rowbytes; i += sizeof(u_int32_t))
 		*(u_int32_t *)(dc->dc_videobase + i) = 0;
 
+	dc->rinfo.ri_flg = RI_CENTER;
 	dc->rinfo.ri_depth = dc->dc_depth;
 	dc->rinfo.ri_bits = (void *)dc->dc_videobase;
 	dc->rinfo.ri_width = dc->dc_wid;
 	dc->rinfo.ri_height = dc->dc_ht;
 	dc->rinfo.ri_stride = dc->dc_rowbytes;
-	dc->rinfo.ri_hw = NULL;
 
 	wsfont_init();
 	/* prefer 8 pixel wide font */
