@@ -1,7 +1,8 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 23:22:57 thorpej Exp $
+# $NetBSD: Makefile,v 1.3 2000/06/17 01:20:26 thorpej Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/krb4/lib/krb
 .PATH: ${DIST}/krb4/doc
+.PATH: ${DIST}/openssl/crypto/des
 
 WARNS?=  1
 MKLINT= no
@@ -97,7 +98,8 @@ INCS=	krb.h					\
 	klog.h					\
 	krb-protos.h				\
 	krb-archaeology.h			\
-	prot.h
+	prot.h					\
+	des.h
 
 CPPFLAGS+= -I.					\
 	-I${DIST}/krb4/lib/krb			\
