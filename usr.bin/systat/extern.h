@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.15 1999/12/20 03:45:02 jwise Exp $	*/
+/*	$NetBSD: extern.h,v 1.16 1999/12/20 04:06:25 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -145,7 +145,6 @@ WINDOW	*opennetstat __P((void));
 WINDOW	*openpigs __P((void));
 WINDOW	*openswap __P((void));
 WINDOW	*opentcp __P((void));
-int	 prefix __P((char *, char *));
 void	 redraw __P((int));
 void	 showbufcache __P((void));
 void	 showicmp __P((void));
