@@ -1,4 +1,4 @@
-/*	$NetBSD: ioctl.h,v 1.16 1994/06/29 06:44:23 cgd Exp $	*/
+/*	$NetBSD: ioctl.h,v 1.17 1994/11/17 20:35:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -81,6 +81,7 @@ __END_DECLS
  * Source level -> #define USE_OLD_TTY
  * Kernel level -> options COMPAT_43 or COMPAT_SUNOS
  */
-#if defined(USE_OLD_TTY) || defined(COMPAT_43) || defined(COMPAT_SUNOS)
+#if defined(USE_OLD_TTY) || defined(COMPAT_43) || defined(COMPAT_SUNOS) || \
+    defined(COMPAT_SVR4)
 #include <sys/ioctl_compat.h>
 #endif
