@@ -27,3 +27,8 @@ make: Bad modifier `:ts\a' for LIST
 LIST:ts/a:tu="\a:tu}"
 FU_mod-ts="a/b/cool"
 FU_mod-ts:ts:T="cool" == cool?
+default FU=<v>fu</v> FOO=<v>foo</v> VAR=<v></v>
+two FU=<v>bar</v> FOO=<v>goo</v> VAR=<v></v>
+three FU=<v>bar</v> FOO=<v>goo</v> VAR=<v></v>
+four FU=<v>bar</v> FOO=<v>goo</v> VAR=<v>Internal</v>
+show FU=<v>bar</v> FOO=<v>goo</v> VAR=<v>Internal</v>
