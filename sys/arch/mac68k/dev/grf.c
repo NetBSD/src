@@ -38,7 +38,7 @@
  * from: Utah $Hdr: grf.c 1.31 91/01/21$
  *
  *	from: from: from: from: @(#)grf.c	7.8 (Berkeley) 5/7/91
- *	$Id: grf.c,v 1.3 1994/01/10 23:52:01 briggs Exp $
+ *	$Id: grf.c,v 1.4 1994/01/30 01:15:31 briggs Exp $
  */
 
 /*
@@ -52,28 +52,28 @@
 #include "grf.h"
 #if NGRF > 0
 
-#include "sys/types.h"
+#include <sys/types.h>
 #include "param.h"
 #include "proc.h"
 #include "ioctl.h"
 #include "file.h"
 #include "malloc.h"
 
-#include "sys/device.h"
+#include <sys/device.h>
 #include "nubus.h"
 #include "grfioctl.h"
 #include "grfvar.h"
 
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
-#include "vm/vm_page.h"
-#include "vm/vm_pager.h"
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
+#include <vm/vm_pager.h>
 
-#include "miscfs/specfs/specdev.h"
-#include "vnode.h"
-#include "mman.h"
+#include <miscfs/specfs/specdev.h>
+#include <vnode.h>
+#include <mman.h>
 
 #include "ite.h"
 #if NITE == 0
