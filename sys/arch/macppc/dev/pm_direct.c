@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.4 1999/06/22 11:29:11 tsubai Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.5 1999/06/22 13:12:11 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -96,8 +96,8 @@ signed char pm_send_cmd_type[] = {
 	0x00, 0x00,   -1,   -1,   -1,   -1,   -1, 0x00,
 	  -1, 0x00, 0x02, 0x01, 0x01,   -1,   -1,   -1,
 	0x00,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-	0x04, 0x14,   -1,   -1,   -1,   -1,   -1,   -1,
-	0x00, 0x00, 0x02,   -1,   -1,   -1,   -1,   -1,
+	0x04, 0x14,   -1, 0x03,   -1,   -1,   -1,   -1,
+	0x00, 0x00, 0x02, 0x02,   -1,   -1,   -1,   -1,
 	0x01, 0x01,   -1,   -1,   -1,   -1,   -1,   -1,
 	0x00, 0x00,   -1,   -1,   -1,   -1,   -1,   -1,
 	0x01, 0x00, 0x02, 0x02,   -1, 0x01, 0x03, 0x01,
@@ -133,7 +133,7 @@ signed char pm_receive_cmd_type[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	  -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x05, 0x15,   -1,   -1,   -1,   -1,   -1,   -1,
+	0x05, 0x15,   -1, 0x02,   -1,   -1,   -1,   -1,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x02, 0x02,   -1,   -1,   -1,   -1,   -1,   -1,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -1197,5 +1197,36 @@ pm_set_date_time(time)
 	p.num_data = 4;
 	p.s_buf = p.r_buf = p.data;
 	bcopy(&time, p.data, 4);
+	pmgrop(&p);
+}
+
+int
+pm_read_nvram(addr)
+	int addr;
+{
+	PMData p;
+
+	p.command = PMU_READ_NVRAM;
+	p.num_data = 2;
+	p.s_buf = p.r_buf = p.data;
+	p.data[0] = addr >> 8;
+	p.data[1] = addr;
+	pmgrop(&p);
+
+	return p.data[0];
+}
+
+void
+pm_write_nvram(addr, val)
+	int addr, val;
+{
+	PMData p;
+
+	p.command = PMU_WRITE_NVRAM;
+	p.num_data = 3;
+	p.s_buf = p.r_buf = p.data;
+	p.data[0] = addr >> 8;
+	p.data[1] = addr;
+	p.data[2] = val;
 	pmgrop(&p);
 }
