@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_lcd.c,v 1.1 2001/07/08 23:37:53 rjs Exp $	*/
+/*	$NetBSD: sa11x0_lcd.c,v 1.2 2001/07/22 09:56:39 takemura Exp $	*/
 #define SALCD_DEBUG
 
 /*
@@ -245,6 +245,7 @@ salcd_fbinit(fb)
 		case BIFB_D16_0000:
 			fb->hf_class = HPCFB_CLASS_RGBCOLOR;
 			fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
+			fb->hf_order_flags = HPCFB_REVORDER_BYTE;
 			fb->hf_pack_width = 16;
 			fb->hf_pixels_per_pack = 1;
 			fb->hf_pixel_width = 16;
