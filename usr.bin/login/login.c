@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.42 1999/01/11 20:20:54 kim Exp $       */
+/*     $NetBSD: login.c,v 1.43 1999/06/15 14:19:53 christos Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.42 1999/01/11 20:20:54 kim Exp $");
+__RCSID("$NetBSD: login.c,v 1.43 1999/06/15 14:19:53 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -101,8 +101,6 @@ int	 klogin __P((struct passwd *, char *, char *, char *));
 void	 kdestroy __P((void));
 void	 dofork __P((void));
 #endif
-
-extern void login __P((struct utmp *));
 
 #define	TTYGRPNAME	"tty"		/* name of group to own ttys */
 
