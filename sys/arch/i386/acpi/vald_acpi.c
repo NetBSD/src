@@ -1,8 +1,11 @@
-/*	$NetBSD: vald_acpi.c,v 1.1 2002/06/17 22:38:04 christos Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.2 2002/06/18 02:42:16 christos Exp $	*/
 
-/*
- * Copyright (c) 2002 Masanori Kanaoka
+/*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Masanori Kanaoka.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,19 +15,25 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -64,10 +73,17 @@
 
 /*
  * ACPI VALD Driver for Toshiba Libretto L3.
+ *	This driver is based on acpibat driver.
+ */
+
+/*
+ * Obtain information of Toshiba "GHCI" Method from next URL.
+ *           http://www.buzzard.org.uk/toshiba/docs.html
+ *           http://memebeam.org/toys/ToshibaAcpiDriver
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.1 2002/06/17 22:38:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.2 2002/06/18 02:42:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +206,7 @@ vald_acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = aa->aa_node;
 	sc->sc_timer = 5 * hz;
 
-	/* Initailize input Arg */ 
+	/* Initialize input Arg */ 
 	for (i = 0; i < GHCI_WORDS; i++) {
 		sc->sc_Arg[i].Type = ACPI_TYPE_INTEGER;
 		sc->sc_Arg[i].Integer.Value = 0;
@@ -237,7 +253,7 @@ vald_acpi_attach(struct device *parent, struct device *self, void *aux)
 	vald_acpi_event(sc);
 
 	/*
-	 * XXX poll battery in the driver for now.
+	 * XXX poll hotkey event in the driver for now.
 	 * in the future, when we have an API, let userland do this polling
 	 */
 	callout_init(&sc->sc_callout);
@@ -251,6 +267,11 @@ vald_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 }
 
+/*
+ * vald_acpi_tick:
+ *
+ *	Poll hotkey event.
+ */
 static void
 vald_acpi_tick(void *arg)
 {
@@ -259,6 +280,11 @@ vald_acpi_tick(void *arg)
 	AcpiOsQueueForExecution(OSD_PRIORITY_LO, vald_acpi_event, sc);
 }
 
+/*
+ * vald_acpi_event:
+ *
+ *	Check hotkey event and do it, if event occur.
+ */
 void
 vald_acpi_event(void *arg)
 {
@@ -306,6 +332,11 @@ vald_acpi_event(void *arg)
 	}	
 }
 
+/*
+ * vald_acpi_ghci_get:
+ *
+ *	Get value via "GHCI" Method.
+ */
 ACPI_STATUS 
 vald_acpi_ghci_get(struct vald_acpi_softc *sc, 
     UINT32 reg, UINT32 *value, UINT32 *result)
@@ -343,6 +374,11 @@ vald_acpi_ghci_get(struct vald_acpi_softc *sc,
 	return (rv);
 }
 
+/*
+ * vald_acpi_ghci_set:
+ *
+ *	Set value via "GHCI" Method.
+ */
 ACPI_STATUS 
 vald_acpi_ghci_set(struct vald_acpi_softc *sc, 
     UINT32 reg, UINT32 value, UINT32 *result)
@@ -375,7 +411,12 @@ vald_acpi_ghci_set(struct vald_acpi_softc *sc,
 	return (rv);
 }
 
-
+/*
+ * vald_acpi_libright_get_bus:
+ *
+ *	Get LCD brightness level via "_BCL" Method,
+ *	and save this handle.
+ */
 ACPI_STATUS
 vald_acpi_libright_get_bus(ACPI_HANDLE handle, UINT32 level, void *context,
     void **status)
@@ -428,7 +469,9 @@ vald_acpi_libright_get_bus(ACPI_HANDLE handle, UINT32 level, void *context,
 }
 
 /*
- * acpi_libright_get:
+ * vald_acpi_libright_get:
+ *
+ *	Search node that have "_BCL" Method.
  */
 void
 vald_acpi_libright_get(struct vald_acpi_softc *sc)
@@ -447,7 +490,11 @@ vald_acpi_libright_get(struct vald_acpi_softc *sc)
 	    vald_acpi_libright_get_bus, sc, NULL);
 }
 
-
+/*
+ * vald_acpi_libright_set:
+ *
+ *	Figure up next status and set it.
+ */
 void 
 vald_acpi_libright_set(struct vald_acpi_softc *sc, int UpDown)
 {
@@ -525,6 +572,11 @@ vald_acpi_libright_set(struct vald_acpi_softc *sc, int UpDown)
 #endif
 }
 
+/*
+ * vald_acpi_video_switch:
+ *
+ *	Get video status(LCD/CRT) and set new video status.
+ */
 void
 vald_acpi_video_switch(struct vald_acpi_softc *sc)
 {
@@ -561,6 +613,11 @@ vald_acpi_video_switch(struct vald_acpi_softc *sc)
 
 }
 
+/*
+ * vald_acpi_bcm_set:
+ *
+ *	Set LCD brightness via "_BCM" Method.
+ */
 ACPI_STATUS
 vald_acpi_bcm_set(ACPI_HANDLE handle, UINT32 bright)
 {
@@ -578,6 +635,11 @@ vald_acpi_bcm_set(ACPI_HANDLE handle, UINT32 bright)
 	return (rv);
 }
 
+/*
+ * vald_acpi_dssx_set:
+ *
+ *	Set value via "\\_SB_.VALX.DSSX" Method.
+ */
 ACPI_STATUS
 vald_acpi_dssx_set(UINT32 value)
 {
@@ -597,6 +659,11 @@ vald_acpi_dssx_set(UINT32 value)
 	return (rv);
 }
 
+/*
+ * vald_acpi_fan_switch:
+ *
+ *	Get FAN status and set new FAN status.
+ */
 void 
 vald_acpi_fan_switch(struct vald_acpi_softc *sc)
 {
@@ -613,7 +680,8 @@ vald_acpi_fan_switch(struct vald_acpi_softc *sc)
 
 #ifdef ACPI_DEBUG
 	printf("Toggle FAN on/off\n");
-	printf("\t Before toggle, FAN status %s\n", (value == GHCI_OFF ? "off" : "on"));
+	printf("\t Before toggle, FAN status %s\n", 
+	    (value == GHCI_OFF ? "off" : "on"));
 #endif
 
 	/* Toggle FAN on/off */	
