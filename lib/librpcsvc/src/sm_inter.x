@@ -37,7 +37,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)sm_inter.x 1.7 87/06/24 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)sm_inter.x	2.2 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$Id: sm_inter.x,v 1.1 1993/10/08 05:27:00 cgd Exp $";
+%static char rcsid[] = "$Id: sm_inter.x,v 1.2 1994/12/13 16:19:46 glass Exp $";
 %#endif /* not lint */
 #endif
 
@@ -61,6 +61,8 @@ program SM_PROG {
 
 		void					 SM_SIMU_CRASH(void) = 5;
 
+		void					 SM_NOTIFY(struct stat_chge) = 6;
+
 	} = 1;
 } = 100024;
 
@@ -83,11 +85,15 @@ struct mon_id {
 };
 
 
-struct mon{
+struct mon {
 	struct mon_id mon_id;
 	opaque priv[16]; 		/* private information to store at monitor for requesting process */
 };
 
+struct stat_chge {
+	string	mon_name<SM_MAXSTRLEN>;		/* name of the site that had the state change */
+	int     state;
+};
 
 /*
  * state # of status monitor monitonically increases each time
