@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.8.6.1 1996/07/20 00:22:57 jtc Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.8.6.2 1997/02/19 04:40:25 rat Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: rlogin.c,v 1.8.6.1 1996/07/20 00:22:57 jtc Exp $";
+static char rcsid[] = "$NetBSD: rlogin.c,v 1.8.6.2 1997/02/19 04:40:25 rat Exp $";
 #endif
 #endif /* not lint */
 
@@ -161,6 +161,17 @@ main(argc, argv)
 	int i, len, len2;
 	char *host, *p, *user, term[1024] = "network";
 	speed_t ospeed;
+	struct sigaction sa;
+	struct rlimit rlim;
+#ifdef KERBEROS
+	KTEXT_ST ticket;
+	char **orig_argv = argv;
+	int sock;
+	long authopts;
+	int through_once = 0;
+	char *cp = (char *) NULL;
+	extern int _kstream_des_debug_OOB;
+#endif
 
 	argoff = dflag = 0;
 	one = 1;
@@ -287,8 +298,15 @@ main(argc, argv)
 	 * discarded. Note that these routines will be ready to get
 	 * a signal by the time that they are unblocked below.
 	 */
-	(void)signal(SIGURG, copytochild);
-	(void)signal(SIGUSR1, writeroob);
+	sa.sa_handler = copytochild;
+	(void)sigaction(SIGURG, &sa, (struct sigaction *) 0);
+	sa.sa_handler = writeroob;
+	(void)sigaction(SIGUSR1, &sa, (struct sigaction *) 0);
+	
+	/* don't dump core */
+	rlim.rlim_cur = rlim.rlim_max = 0;
+	if (setrlimit(RLIMIT_CORE, &rlim) < 0)
+		warn("setrlimit");
 
 #ifdef KERBEROS
 try_connect:
