@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.79 2000/06/01 14:37:51 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.80 2000/10/12 23:11:04 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -243,11 +243,11 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p)
 		}
 	}
 #endif
-	if (vendor != NULL)
+	if (vendor != NULL && *vendor)
 		strcpy(v, vendor);
 	else
 		sprintf(v, "vendor 0x%04x", UGETW(udd->idVendor));
-	if (product != NULL)
+	if (product != NULL && *product)
 		strcpy(p, product);
 	else
 		sprintf(p, "product 0x%04x", UGETW(udd->idProduct));
