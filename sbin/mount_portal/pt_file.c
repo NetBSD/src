@@ -36,7 +36,7 @@
  *
  *	from: Id: pt_file.c,v 1.1 1992/05/25 21:43:09 jsp Exp jsp
  *	from: @(#)pt_file.c	8.1 (Berkeley) 6/5/93
- *	$Id: pt_file.c,v 1.1 1994/01/12 20:02:24 cgd Exp $
+ *	$Id: pt_file.c,v 1.2 1994/04/13 07:33:05 cgd Exp $
  */
 
 #include <stdio.h>
@@ -61,7 +61,7 @@ int *fdp;
 	int gid;
 	char pbuf[MAXPATHLEN];
 	int error;
-	int gidset[NGROUPS];
+	gid_t gidset[NGROUPS];
 	int i;
 
 	pbuf[0] = '/';
