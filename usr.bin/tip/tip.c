@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.9 1996/12/29 10:34:10 cgd Exp $	*/
+/*	$NetBSD: tip.c,v 1.10 1996/12/29 10:38:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: tip.c,v 1.9 1996/12/29 10:34:10 cgd Exp $";
+static char rcsid[] = "$NetBSD: tip.c,v 1.10 1996/12/29 10:38:20 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -574,7 +574,7 @@ setparity(defparity)
 {
 	register int i, flip, clr, set;
 	char *parity;
-	extern char evenpartab[];
+	extern unsigned char evenpartab[];
 
 	if (value(PARITY) == NOSTR)
 		value(PARITY) = defparity;
