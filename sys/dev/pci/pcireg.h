@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.29 2000/07/18 10:59:04 soda Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.30 2000/08/21 05:17:33 castor Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999
@@ -58,10 +58,22 @@ typedef u_int16_t pci_product_id_t;
 #define	PCI_PRODUCT(id) \
 	    (((id) >> PCI_PRODUCT_SHIFT) & PCI_PRODUCT_MASK)
 
+#define PCI_ID_CODE(vid,pid)					\
+	((((vid) & PCI_VENDOR_MASK) << PCI_VENDOR_SHIFT) |	\
+	 (((pid) & PCI_PRODUCT_MASK) << PCI_PRODUCT_SHIFT))	\
+
 /*
  * Command and status register.
  */
 #define	PCI_COMMAND_STATUS_REG			0x04
+#define	PCI_COMMAND_SHIFT			0
+#define	PCI_COMMAND_MASK			0xffff
+#define	PCI_STATUS_SHIFT			16
+#define	PCI_STATUS_MASK				0xffff
+
+#define PCI_COMMAND_STATUS_CODE(cmd,stat)			\
+	((((cmd) & PCI_COMMAND_MASK) >> PCI_COMMAND_SHIFT) |	\
+	 (((stat) & PCI_STATUS_MASK) >> PCI_STATUS_SHIFT))	\
 
 #define	PCI_COMMAND_IO_ENABLE			0x00000001
 #define	PCI_COMMAND_MEM_ENABLE			0x00000002
@@ -119,8 +131,8 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_REVISION(cr) \
 	    (((cr) >> PCI_REVISION_SHIFT) & PCI_REVISION_MASK)
 
-#define	PCI_CLASS_CODE(class, subclass, interface) \
-	    ((((class) & PCI_CLASS_MASK) << PCI_CLASS_SHIFT) | \
+#define	PCI_CLASS_CODE(mainclass, subclass, interface) \
+	    ((((mainclass) & PCI_CLASS_MASK) << PCI_CLASS_SHIFT) | \
 	     (((subclass) & PCI_SUBCLASS_MASK) << PCI_SUBCLASS_SHIFT) | \
 	     (((interface) & PCI_INTERFACE_MASK) << PCI_INTERFACE_SHIFT))
 
@@ -293,6 +305,13 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_CACHELINE(bhlcr) \
 	    (((bhlcr) >> PCI_CACHELINE_SHIFT) & PCI_CACHELINE_MASK)
 
+#define PCI_BHLC_CODE(bist,type,multi,latency,cacheline)		\
+	    ((((bist) & PCI_BIST_MASK) << PCI_BIST_SHIFT) |		\
+	     (((type) & PCI_HDRTYPE_MASK) << PCI_HDRTYPE_SHIFT) |	\
+	     (((multi)?0x80:0) << PCI_HDRTYPE_SHIFT) |			\
+	     (((latency) & PCI_LATTIMER_MASK) << PCI_LATTIMER_SHIFT) |	\
+	     (((cacheline) & PCI_CACHELINE_MASK) << PCI_CACHELINE_SHIFT))
+
 /*
  * Mapping registers
  */
@@ -338,6 +357,13 @@ typedef u_int8_t pci_revision_t;
 	    (PCI_MAPREG_IO_ADDR(mr) & -PCI_MAPREG_IO_ADDR(mr))
 #define	PCI_MAPREG_IO_ADDR_MASK			0xfffffffc
 
+#define PCI_MAPREG_SIZE_TO_MASK(size)					\
+	    (-(size))
+
+#define PCI_MAPREG_NUM(offset)						\
+	    (((unsigned)(offset)-PCI_MAPREG_START)/4)
+
+
 /*
  * Cardbus CIS pointer (PCI rev. 2.1)
  */
@@ -380,8 +406,20 @@ typedef u_int8_t pci_revision_t;
  */
 #define	PCI_INTERRUPT_REG		0x3c
 
+typedef u_int8_t pci_intr_latency_t;
+typedef u_int8_t pci_intr_grant_t;
 typedef u_int8_t pci_intr_pin_t;
 typedef u_int8_t pci_intr_line_t;
+
+#define	PCI_INTERRUPT_GRANT_SHIFT		24
+#define	PCI_INTERRUPT_GRANT_MASK		0xff
+#define	PCI_INTERRUPT_GRANT(icr) \
+	    (((icr) >> PCI_INTERRUPT_GRANT_SHIFT) & PCI_INTERRUPT_GRANT_MASK)
+
+#define	PCI_INTERRUPT_LATENCY_SHIFT		16
+#define	PCI_INTERRUPT_LATENCY_MASK		0xff
+#define	PCI_INTERRUPT_LATENCY(icr) \
+	    (((icr) >> PCI_INTERRUPT_LATENCY_SHIFT) & PCI_INTERRUPT_LATENCY_MASK)
 
 #define	PCI_INTERRUPT_PIN_SHIFT			8
 #define	PCI_INTERRUPT_PIN_MASK			0xff
@@ -392,6 +430,12 @@ typedef u_int8_t pci_intr_line_t;
 #define	PCI_INTERRUPT_LINE_MASK			0xff
 #define	PCI_INTERRUPT_LINE(icr) \
 	    (((icr) >> PCI_INTERRUPT_LINE_SHIFT) & PCI_INTERRUPT_LINE_MASK)
+
+#define PCI_INTERRUPT_CODE(lat,gnt,pin,line)		\
+	  ((((lat)&PCI_INTERRUPT_LATENCY_MASK)<<PCI_INTERRUPT_LATENCY_SHIFT)| \
+	   (((gnt)&PCI_INTERRUPT_GRANT_MASK)  <<PCI_INTERRUPT_GRANT_SHIFT)  | \
+	   (((pin)&PCI_INTERRUPT_PIN_MASK)    <<PCI_INTERRUPT_PIN_SHIFT)    | \
+	   (((line)&PCI_INTERRUPT_LINE_MASK)  <<PCI_INTERRUPT_LINE_SHIFT))
 
 #define	PCI_INTERRUPT_PIN_NONE			0x00
 #define	PCI_INTERRUPT_PIN_A			0x01
