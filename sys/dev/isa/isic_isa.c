@@ -1,4 +1,4 @@
-/*	$NetBSD: isic_isa.c,v 1.11 2002/04/10 23:51:08 martin Exp $	*/
+/*	$NetBSD: isic_isa.c,v 1.12 2002/04/13 10:28:36 martin Exp $	*/
 
 /*
  *   Copyright (c) 1997-1999 Martin Husemann. All rights reserved.
@@ -35,7 +35,7 @@
  *	isic_isa.c - ISA bus frontend for i4b_isic driver
  *	--------------------------------------------------
  *
- *	$Id: isic_isa.c,v 1.11 2002/04/10 23:51:08 martin Exp $ 
+ *	$Id: isic_isa.c,v 1.12 2002/04/13 10:28:36 martin Exp $ 
  *
  *      last edit-date: [Tue Jan  9 01:43:45 2001]
  *
@@ -45,7 +45,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.11 2002/04/10 23:51:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.12 2002/04/13 10:28:36 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -619,9 +619,7 @@ isicattach(int flags, struct isic_softc *sc)
 		}
 	}
 
-	/* ISAC setup */
-	
-	isic_isac_init(sc);
+        sc->sc_intr_valid = ISIC_INTR_DISABLED;
 
 	/* HSCX setup */
 

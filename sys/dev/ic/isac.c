@@ -27,14 +27,14 @@
  *	i4b_isac.c - i4b siemens isdn chipset driver ISAC handler
  *	---------------------------------------------------------
  *
- *	$Id: isac.c,v 1.11 2002/04/10 23:51:06 martin Exp $ 
+ *	$Id: isac.c,v 1.12 2002/04/13 10:28:36 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.11 2002/04/10 23:51:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.12 2002/04/13 10:28:36 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "opt_i4b.h"
@@ -551,7 +551,7 @@ isic_isac_l1_cmd(struct isic_softc *sc, int command)
 int
 isic_isac_init(struct isic_softc *sc)
 {
-	sc->sc_intr_valid = ISIC_INTR_DISABLED;
+	u_int8_t v;
 
 	ISAC_IMASK = 0xff;		/* disable all irqs */
 
@@ -652,23 +652,6 @@ isic_isac_init(struct isic_softc *sc)
 		 */
 		ISAC_WRITE(I_MODE, ISAC_MODE_MDS2|ISAC_MODE_MDS1|ISAC_MODE_RAC|ISAC_MODE_DIM0);
 	}
-
-#ifdef NOTDEF
-	/*
-	 * XXX a transmitter reset causes an ISAC tx IRQ which will not
-	 * be serviced at attach time under some circumstances leaving
-	 * the associated IRQ line on the ISA bus active. This prevents
-	 * any further interrupts to be serviced because no low -> high
-	 * transition can take place anymore. (-hm)
-	 */
-	 
-	/* command register:
-	 *	RRES - HDLC receiver reset
-	 *	XRES - transmitter reset
-	 */
-	ISAC_WRITE(I_CMDR, ISAC_CMDR_RRES|ISAC_CMDR_XRES);
-	ISACCMDRWRDELAY();
-#endif
 	
 	/* enabled interrupts:
 	 * ===================
@@ -683,10 +666,19 @@ isic_isac_init(struct isic_softc *sc)
 		     ISAC_MASK_TIN | 	/* timer irq		*/
 		     ISAC_MASK_SIN;	/* sync xfer irq	*/
 
+	ISAC_WRITE(I_MASK, ISAC_IMASK);
+
 	/*
-	 * We don't want interrupts enabled attach time, so setup the
-	 * mask, but don't write it to the chip yet 
+	 * Even if interrupts are masked, the EXI bit may get set
+	 * (but does not cause an interrupt).
+	 * Clear the extended interrupts, and reset receiver and
+	 * transmitter.
 	 */
+	v = ISAC_READ(I_ISTA);
+	if (v & ISAC_ISTA_EXI)
+		v = ISAC_READ(I_EXIR);
+	ISAC_WRITE(I_CMDR, ISAC_CMDR_RRES|ISAC_CMDR_XRES);
+	ISACCMDRWRDELAY();
 
 	return(0);
 }
