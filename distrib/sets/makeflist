@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.38 2001/11/19 20:43:33 tv Exp $
+# $NetBSD: makeflist,v 1.39 2001/11/24 02:54:50 thorpej Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -8,9 +8,11 @@
 
 # set defaults
 : ${MAKE=make}
-machine=${MACHINE:-`printf 'xxx:\n\techo ${MACHINE}' | $MAKE -s -f-`}
-arch=${MACHINE_ARCH:-`printf 'xxx:\n\techo ${MACHINE_ARCH}' | $MAKE -s -f-`}
-tc=${USE_NEW_TOOLCHAIN:-`printf '.include <bsd.own.mk>\nxxx:\n\techo ${USE_NEW_TOOLCHAIN:Dyes}' | ${MAKE} -s -f-`}
+machine=`${MAKE} print_machine`
+machine_arch=`${MAKE} print_machine_arch`
+machine_cpu=`${MAKE} print_machine_cpu`
+object_fmt=`${MAKE} print_object_fmt`
+tc=`${MAKE} print_use_new_toolchain`
 setd=`pwd`
 nlists="base comp etc games man misc text"
 xlists="xbase xcomp xcontrib xfont xserver xmisc"
@@ -26,7 +28,9 @@ while : ; do
 		lists=$xlists
 		;;
 	-a*)
-		arch=$2; shift
+		machine_arch=`MACHINE_ARCH=${2} ${MAKE} print_machine_arch`
+		machine_cpu=`MACHINE_ARCH=${2} ${MAKE} print_machine_cpu`
+		shift
 		;;
 	-m*)
 		machine=$2; shift
@@ -39,10 +43,10 @@ while : ; do
 Usage: $0 [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
 	-b		make netbsd + x11 lists
 	-x		only make x11 lists
-	-a arch		set arch (e.g, m68k, mips, powerpc)	[$arch]
-	-m machine	set machine (e.g, amiga, i386, macppc)	[$machine]
-	-s setsdir	directory to find sets	[$setd]
-	[setname ...]	sets to build 	[$lists]
+	-a arch		set arch (e.g, m68k, mipseb, mipsel, powerpc) [$arch]
+	-m machine	set machine (e.g, amiga, i386, macppc) [$machine]
+	-s setsdir	directory to find sets [$setd]
+	[setname ...]	sets to build [$lists]
 USAGE
 		exit 1
 		;;
@@ -56,30 +60,27 @@ if [ -n "$1" ]; then
 	lists="$@"
 fi
 
-# Convert mipse[lb] to mips after processing command line arguments.
-arch=`echo $arch | sed s,^mipse.,mips, | sed s,^sh3e.,sh3,`
-
-# Compute toolchain  used on target cpu.
-if [ "$arch" = "mips" -o "$machine" = "alpha" -o "$arch" = "powerpc" -o "$arch" = "sparc" -o "$arch" = "sparc64" -o "$arch" = "i386" -o "$arch" = "arm26" -o "$machine" = "hp300" -o "$machine" = "mvme68k" -o "$machine" = "news68k" -o "$machine" = "sun3" -o "$machine" = "next68k" -o "$machine" = "cesfic" -o "$machine" = "atari" ]; then
+# Determine shlib type.
+if [ "$object_fmt" = "ELF" ]; then
 	shlib=elf
+elif [ "$machine_cpu" = "sh3" ]; then
+	shlib=
 else
-	if [ "$arch" = "sh3" ]; then
-		shlib=
-	else
-		shlib=aout
-	fi
+	shlib=aout
 fi
 
 # Turn off lintlibs for some ports.
 lintlibs=
-if [ "$machine" = "sparc64" -o "$arch" = "sh3" -o "$arch" = "m68000" ]; then
+if [ "$machine" = "sparc64" -o "$machine_cpu" = "sh3" -o \
+     "$machine_arch" = "m68000" ]; then
 	lintlibs=no
 fi
 
 for setname in $lists; do
 	cat $setd/lists/$setname/mi
-	if [ "$machine" != "$cpu" -a -f $setd/lists/$setname/ad.${arch} ]; then
-		cat $setd/lists/$setname/ad.${arch}
+	if [ "$machine" != "$machine_arch" -a \
+	     -f $setd/lists/$setname/ad.${machine_cpu} ]; then
+		cat $setd/lists/$setname/ad.${machine_cpu}
 	fi
 	if [ -f $setd/lists/$setname/md.${machine} ]; then
 		cat $setd/lists/$setname/md.${machine}
