@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.15 1998/08/28 02:52:37 mark Exp $	*/
+/*	$NetBSD: ofw.c,v 1.16 1998/08/29 03:17:28 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -1193,7 +1193,7 @@ ofw_callbackhandler(args)
 	}
 }
 
-#define	KERNEL_VMDATA_PTS	8
+#define	KERNEL_VMDATA_PTS	(KERNEL_VM_SIZE >> (PDSHIFT + 2))
 #define	KERNEL_OFW_PTS		4
 #define	KERNEL_IO_PTS		4
 
@@ -1385,9 +1385,6 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
 		map_entry_nc(L2pagetable, ((KERNEL_VM_BASE + i * 0x00400000)
 		    >> (PGSHIFT-2)), proc0_pt_vmdata[i].physical);
-	for (i = 0; i < 4; i++)
-		map_entry_nc(L2pagetable, ((CURRENT_PAGEDIR_HOLE + i * 0x00400000)
-		    >> (PGSHIFT-2)), proc0_pagedir.physical + i * NBPG);
 	for (i = 0; i < KERNEL_OFW_PTS; i++)
 		map_entry_nc(L2pagetable, ((OFW_VIRT_BASE + i * 0x00400000)
 		    >> (PGSHIFT-2)), proc0_pt_ofw[i].physical);
