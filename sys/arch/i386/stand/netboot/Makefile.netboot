@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.netboot,v 1.1 2002/02/19 19:49:38 thorpej Exp $
+#	$NetBSD: Makefile.netboot,v 1.2 2002/02/19 19:55:01 thorpej Exp $
 
 .include "../Makefile.inc"
 
@@ -7,7 +7,7 @@ S=	${.CURDIR}/../../../../../
 BASE= netboot_${USE_NETIF}
 PROG= ${BASE}.rom
 NOMAN=	# defined
-NEWVERSWHAT=	"Network Boot"
+NEWVERSWHAT=	"Network Boot (${USE_NETIF})"
 STARTFILE=	${ROMSTART}
 RELOC=		0x90000
 
