@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.26 2002/10/29 01:13:01 hubertf Exp $
+$NetBSD: README,v 1.27 2002/12/09 12:29:17 scw Exp $
 
 acorn26:	Acorn ARM2- and ARM3-based machines (arm, 20000509)
 acorn32:	Acorn computers Ltd. ARM 6/7/SA based machines (arm, 20011118)
@@ -15,6 +15,7 @@ cobalt:		Cobalt Networks Microservers (mips, 20000319)
 dreamcast:	SEGA Dreamcast (sh3, 20010107)
 evbarm:		ARM-based eval boards (arm, 20010905)
 evbmips:	MIPS-based eval boards (mips, 20020307)
+evbppc:		PowerPC-based eval boards (powerpc, 20021209)
 evbsh3:		Hitachi SuperH(TM) sh3 and sh4 eval boards (sh3, 20010206)
 evbsh5:		Hitachi SuperH(TM) sh5 eval boards (sh5, 20020705)
 hp300:		Hewlett Packard 300- and 400-series machines (m68k, 19930512)
