@@ -64,7 +64,7 @@
 #include <openssl/conf.h>
 #include <openssl/buffer.h>
 #include <openssl/err.h>
-
+#include "cryptlib.h"
 #include "conf_lcl.h"
 
 static void value_free_hash(CONF_VALUE *a, LHASH *conf);
@@ -123,12 +123,12 @@ LHASH *CONF_load_bio(LHASH *h, BIO *in, long *line)
 	{
 	LHASH *ret=NULL;
 #define BUFSIZE	512
-	char btmp[16];
 	int bufnum=0,i,ii;
 	BUF_MEM *buff=NULL;
 	char *s,*p,*end;
 	int again,n;
 	long eline=0;
+	char btmp[DECIMAL_SIZE(eline)+1];
 	CONF_VALUE *v=NULL,*vv,*tv;
 	CONF_VALUE *sv=NULL;
 	char *section=NULL,*buf;

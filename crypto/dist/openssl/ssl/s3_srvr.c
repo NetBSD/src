@@ -69,6 +69,7 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include "ssl_locl.h"
+#include "cryptlib.h"
 
 static SSL_METHOD *ssl3_get_server_method(int ver);
 static int ssl3_get_client_hello(SSL *s);
@@ -860,6 +861,7 @@ static int ssl3_send_server_hello(SSL *s)
 			s->session->session_id_length=0;
 
 		sl=s->session->session_id_length;
+		die(sl <= sizeof s->session->session_id);
 		*(p++)=sl;
 		memcpy(p,s->session->session_id,sl);
 		p+=sl;
