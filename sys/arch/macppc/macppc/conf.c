@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.35 2001/09/16 07:21:32 manu Exp $	*/
+/*	$NetBSD: conf.c,v 1.36 2001/10/28 17:11:56 manu Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -332,6 +332,8 @@ static int chrtoblktbl[] = {
 	/* 57 */	NODEV,
 	/* 58 */	NODEV,
 	/* 59 */	NODEV,
+	/* 60 */	NODEV,
+	/* 61 */	NODEV,
 };
 
 /*
