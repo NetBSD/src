@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.102 2003/12/06 04:16:33 atatat Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.103 2003/12/26 11:43:24 itohy Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -832,12 +832,12 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 	static void name(void) {			\
 		printf("%s\n", desc);			\
 		__CONCAT(___,name)(); }			\
-	__link_set_add_data(sysctl_funcs, name);	\
+	__link_set_add_text(sysctl_funcs, name);	\
 	static void __CONCAT(___,name)(void)
 #else
 #define SYSCTL_SETUP(name, desc)			\
 	static void name(void);				\
-	__link_set_add_data(sysctl_funcs, name);	\
+	__link_set_add_text(sysctl_funcs, name);	\
 	static void name(void)
 #endif
 typedef void (*sysctl_setup_func)(void);
