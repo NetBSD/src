@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.21 1996/10/13 02:59:51 christos Exp $ */
+/*	$NetBSD: fb.c,v 1.22 1996/12/23 01:46:30 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -366,8 +366,10 @@ fb_setsize(fb, depth, def_width, def_height, node, bustype)
 #ifdef RASTERCONSOLE
 #include <machine/kbd.h>
 
-static int a2int __P((char *, int));
 static void fb_bell __P((int));
+
+#if !(defined(RASTERCONS_FULLSCREEN) || defined(RASTERCONS_SMALLFONT))
+static int a2int __P((char *, int));
 
 static int
 a2int(cp, deflt)
@@ -382,6 +384,7 @@ a2int(cp, deflt)
 		i = i * 10 + *cp++ - '0';
 	return (i);
 }
+#endif
 
 static void
 fb_bell(on)
