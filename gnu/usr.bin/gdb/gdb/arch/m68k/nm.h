@@ -17,11 +17,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: nm.h,v 1.3 1994/02/23 04:35:35 chopps Exp $
+	$Id: nm.h,v 1.4 1994/03/09 16:15:55 pk Exp $
 */
 #include <machine/vmparam.h>
 
 #define PTRACE_ARG3_TYPE        caddr_t
+
+#define ATTACH_DETACH
 
 /* KUSER_AREA is the address the kernel uses for struct user */
 #if ! defined (KUSER_AREA)
