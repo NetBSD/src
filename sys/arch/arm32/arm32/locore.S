@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.8 1996/03/20 18:57:58 mark Exp $ */
+/* $NetBSD: locore.S,v 1.9 1996/05/12 21:54:05 mark Exp $ */
 
 /*
  * Copyright (C) 1994 Mark Brinicombe
@@ -315,15 +315,19 @@ _initmode:
 
 	.global	_boot0
 _boot0:
-        mrs     r2, cpsr_all
+	mrs     r2, cpsr_all
 	bic	r2, r2, #(PSR_MODE)
-        orr     r2, r2, #(PSR_SVC32_MODE)
+	orr     r2, r2, #(PSR_SVC32_MODE)
 	orr	r2, r2, #(I32_bit | F32_bit)
-        msr     cpsr_all, r2
+	msr     cpsr_all, r2
 
-	mov	r0, #0
-        mcr     15, 0, r0, c1, c0, 0
- 	mov	pc, r0
+	/*
+ 	 * MMU & IDC off, 32 bit program & data space
+	 * Hurl ourselves into the ROM at 0x00000000
+	 */
+	mov	r0, #(CPU_CONTROL_32BP_ENABLE | CPU_CONTROL_32BD_ENABLE)
+	mcr     15, 0, r0, c1, c0, 0
+ 	mov	pc, #0
 
 
 /* Debug routine to print trace back information from stack */
