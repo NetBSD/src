@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_exec.c,v 1.1 2001/02/02 07:28:54 mrg Exp $	 */
+/*	$NetBSD: sunos32_exec.c,v 1.2 2001/02/05 12:48:13 mrg Exp $	 */
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -60,7 +60,7 @@ struct emul emul_sunos = {
 #else
 	NULL,
 #endif
-	sunos_sendsig,
+	sunos32_sendsig,
 	sunos_sigcode,
 	sunos_esigcode,
 	NULL,
