@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.conf.5,v 1.6 2000/01/08 11:09:56 lukem Exp $
+.\"	$NetBSD: ftpd.conf.5,v 1.7 2000/01/09 10:08:45 lukem Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 8, 2000
+.Dd January 9, 2000
 .Dt FTPD.CONF 5
 .Os
 .Sh NAME
@@ -200,7 +200,7 @@ Otherwise, each time the user enters a new directory, check if
 exists, and if so, display its contents to the user.
 Escape sequences are supported; refer to
 .Sx Display file escape sequences
-in 
+in
 .Xr ftpd 8
 for more information.
 .It Xo Sy limit Ar class
@@ -258,7 +258,7 @@ Otherwise, use
 as the message of the day file to display after login.
 Escape sequences are supported; refer to
 .Sx Display file escape sequences
-in 
+in
 .Xr ftpd 8
 for more information.
 .It Sy notify Ar class Op Ar fileglob
@@ -290,7 +290,7 @@ If
 .Ar rate
 is 0, the throttle is disabled.
 .Pp
-An optional suffix may be provided, which changes the intrepretation of 
+An optional suffix may be provided, which changes the intrepretation of
 .Ar rate
 as follows:
 .Bl -tag -width 3n -offset indent -compact
@@ -310,6 +310,25 @@ to
 .Ar rate ,
 which is parsed as per
 .Sy rateget Ar rate .
+.It Sy template Ar class Op Ar refclass
+Define
+.Ar refclass
+as the
+.Sq template
+for
+.Ar class ;
+any reference to
+.Ar refclass
+in following directives will also apply to members of
+.Ar class .
+This is useful to define a template class so that other classes which are
+to share common attributes can be easily defined without unnecessary
+duplication.
+There can be only one template defined at a time.
+If
+.Ar refclass
+is not given, disable the template for
+.Ar class .
 .It Sy timeout Ar class Ar time
 Set the inactivity timeout period.
 (the default is fifteen minutes).
@@ -354,6 +373,7 @@ classtype     chroot CHROOT
 classtype     guest  GUEST
 classtype     real   REAL
 display       none
+limit         all    -1     # unlimited connections
 maxtimeout    all    7200   # 2 hours
 modify        all
 motd          all    motd
