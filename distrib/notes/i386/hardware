@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.80 2000/10/29 14:08:07 lukem Exp $
+.\"	$NetBSD: hardware,v 1.81 2000/11/13 01:22:41 hubertf Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
@@ -59,7 +59,8 @@ Adaptec AHA-1640 cards (MCA variant of AHA-1540) [m]
 Adaptec AHA-174x
 .It
 Adaptec AIC-6260 and AIC-6360 based boards, including the Adaptec AHA-152x,
-Adaptec APA-1460 (PCMCIA), and the SoundBlaster SCSI host adapter.
+Adaptec APA-1460 (PCMCIA) and APA-1480 (CardBus), and the SoundBlaster
+SCSI host adapter.
 .(Note
 You cannot boot from these boards if they do not have a boot ROM;
 consequently only the AHA-152x and motherboards using this chip are
@@ -89,17 +90,6 @@ BusLogic 54x (Adaptec AHA-154x clones)
 BusLogic 445, 74x, 9xx  (But not the new
 .Sq FlashPoint
 series of BusLogic SCSI adapters)
-.It
-DPT SCSI RAID boards (ISA [*], EISA and PCI)
-.(bullet -compact
-SmartCache III
-.It
-SmartCache IV
-.It
-SmartRAID III
-.It
-SmartRAID IV
-.bullet)
 .It
 Qlogic ISP [12]0x0 SCSI/FibreChannel boards
 .It
@@ -371,6 +361,14 @@ AT\*&T/Lucent WaveLan IEEE (802.11) PCMCIA cards
 BayStack 650 802.11FH PCMIA cards [*] [+]
 .It
 NetWave AirSurfer PCMCIA cards [*] [+]
+.It
+Melco AIR CONNECT WLI-PCM-L11 cards [*] [+]
+.It 
+DEC/Cabletron RoamAbout 802.11 DS High Rate cards [*] [+]
+.It
+Corega Wireless LAN PCC-11 cards [*] [+]
+.It
+ELSA AirLancer MC-11 card [*] [+]
 .bullet)
 .It
 High Speed Serial
@@ -478,6 +476,16 @@ Modems using Abstract Control Model [*] [+]
 Generic support for HID devices [*] [+]
 .It
 Ethernet adapters [*] [+]
+.It
+Audio devices [*] [+]
+.It 
+driver for FTDI based serial adapters [*] [+]
+.It
+Mass storage devices such as disks, ZIP drives and digital cameras [*] [+]
+.It
+driver for the Prolific host-to-host adapter [*] [+]
+.It
+Handspring Visor driver [*] [+]
 .bullet)
 .It
 PCMCIA Controllers.
@@ -513,6 +521,17 @@ Compaq Smart Array 431, RAID LC2 [b]
 Compaq SMART 2, 2/E (EISA)
 .It
 Compaq SMART 2/E, 2/P, 2DH, 2SL (PCI) [b]
+.It
+DPT SCSI RAID boards (ISA [*], EISA and PCI)
+.(bullet -compact
+SmartCache III
+.It
+SmartCache IV
+.It
+SmartRAID III
+.It
+SmartRAID IV
+.bullet)
 .bullet)
 .bullet)
 .Pp
