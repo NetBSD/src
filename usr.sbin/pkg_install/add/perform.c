@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.63 2002/04/02 15:08:33 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.64 2002/06/09 11:56:59 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.63 2002/04/02 15:08:33 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.64 2002/06/09 11:56:59 yamt Exp $");
 #endif
 #endif
 
@@ -755,6 +755,7 @@ pkg_do(char *pkg)
 					char   *t;
 					t = strrchr(contents, '/');
 					strcpy(t + 1, s);
+					free(s);
 				} else {
 					errx(1, "Where did our dependency go?!");
 					/* this shouldn't happen... X-) */
