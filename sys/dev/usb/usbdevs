@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.335 2003/08/08 07:52:41 wulf Exp $
+$NetBSD: usbdevs,v 1.336 2003/08/11 08:13:42 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -238,6 +238,7 @@ vendor BOSTON		0x06fd	Boston Acoustics
 vendor SMC		0x0707	Standard Microsystems
 vendor PUTERCOM		0x0708	Putercom
 vendor MCT		0x0711	MCT
+vendor SONYERICSSON	0x0731  Sony Ericsson
 vendor EICON		0x0734	Eicon Networks
 vendor DIGITALSTREAM	0x074e	Digital Stream
 vendor AUREAL		0x0755	Aureal Semiconductor
@@ -1345,6 +1346,10 @@ product SONY CLIE_41_MS		0x0099	Sony Clie v4.1 Memory Stick slot
 product SONY CLIE_41		0x009a	Sony Clie v4.1
 product SONY CLIE_NX60		0x00da	Sony Clie nx60
 
+
+/* Sony Ericsson products */
+product SONYERICSSON DCU10	0x0528	USB Cable
+  
 /* STMicroelectronics products */
 product STMICRO COMMUNICATOR	0x7554	USB Communicator
 
