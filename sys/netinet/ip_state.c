@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.38 2002/05/02 17:13:30 martti Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.39 2002/06/01 07:21:11 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-2002 by Darren Reed.
@@ -96,7 +96,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.38 2002/05/02 17:13:30 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.39 2002/06/01 07:21:11 yamt Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 2.30.2.70 2002/04/27 16:06:15 darrenr Exp";
@@ -698,8 +698,11 @@ u_int flags;
 			is->is_maxsend = is->is_send;
 
 			if ((tcp->th_flags & TH_SYN) &&
-			    ((tcp->th_off << 2) >= (sizeof(*tcp) + 4)))
-				is->is_swscale = fr_tcpoptions(tcp);
+			    ((tcp->th_off << 2) >= (sizeof(*tcp) + 4))) {
+				int wscale = fr_tcpoptions(tcp);
+				if (wscale >= 0)
+					is->is_swscale = wscale;
+			}
 		}
 
 		is->is_maxdwin = 1;
