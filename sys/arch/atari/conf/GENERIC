@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.13 1996/03/27 10:31:15 leo Exp $
+#	$NetBSD: GENERIC,v 1.14 1996/05/14 10:21:48 leo Exp $
 #
 # Generic atari
 #
@@ -22,6 +22,10 @@ options		TIMEZONE=300	# Set the timezone that the kernel will use
 options		DST=1		# Set the timezone that the kernel will use
 options		HZ=64		# Set the clock-rate (48/64/96)
 
+#
+# X11R6 related options
+#
+options		UCONSOLE	# Allow xconsole to work
 
 #
 # Networking options
@@ -32,9 +36,13 @@ options		FFS		# Berkeley fast file system
 options		MFS		# Memory based filesystem
 options		PROCFS		# Process filesystem
 options		KERNFS		# Kernel parameter filesystem
+options		FDESC		# /dev/fd
 options		NULLFS		# Loopback filesystem
 options		MSDOSFS		# MSDOS filesystem
 options		CD9660		# ISO 9660 filesystem with Rock Ridge
+options		UNION		# union file system
+options		UMAPFS		# null file system (with uid & gid remapping)
+options		PORTAL		# portal file system
 
 options		FIFO		# FIFO operations on vnodes
 
