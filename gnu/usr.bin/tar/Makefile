@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.15 1997/10/25 10:12:56 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 1998/03/02 19:46:47 cgd Exp $
+
+.include <bsd.own.mk>
 
 PROG=	tar
 SRCS=	buffer.c create.c diffarch.c extract.c fnmatch.c getdate.y \
@@ -12,7 +14,7 @@ CPPFLAGS+= -DHAVE_VPRINTF=1 -DNEEDPAD -I${.CURDIR}
 CPPFLAGS+= -DDEF_AR_FILE=\"/dev/rst0\" -DDEFBLOCKING=20
 CPPFLAGS+= -DSTDC_HEADERS
 
-LDSTATIC= -static
+LDSTATIC?= -static
 LDADD+=	-lgnumalloc
 DPADD+=	${LIBGNUMALLOC}
 
