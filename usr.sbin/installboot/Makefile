@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2003/10/28 08:21:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.27 2003/11/08 16:44:35 dsl Exp $
 #
 
 .include <bsd.own.mk>
@@ -6,7 +6,7 @@
 PROG=	installboot
 SRCS=	installboot.c sum.c machines.c fstypes.c \
 	ffs.c ffs_bswap.c bbinfo.c \
-	alpha.c amiga.c i386.c macppc.c news.c next68k.c pmax.c \
+	alpha.c amiga.c hp300.c i386.c macppc.c news.c next68k.c pmax.c \
 	sparc.c sparc64.c sun68k.c vax.c x68k.c
 MAN=	installboot.8
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.22 2003/10/27 16:51:05 cl Exp $	*/
+/*	$NetBSD: installboot.h,v 1.23 2003/11/08 16:44:35 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -157,6 +157,7 @@ int		raw_findstage2(ib_params *, uint32_t *, ib_block *);
 int		alpha_setboot(ib_params *);
 int		alpha_clearboot(ib_params *);
 int		amiga_setboot(ib_params *);
+int		hp300_setboot(ib_params *);
 int		i386_setboot(ib_params *);
 int		macppc_setboot(ib_params *);
 int		macppc_clearboot(ib_params *);
