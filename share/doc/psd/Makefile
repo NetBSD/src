@@ -30,7 +30,7 @@ contents.ps: ${FILES}
 	groff -ms 00.contents > ${.TARGET}
 
 beforeinstall:
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${FILES} \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${FILES} \
 	    ${DESTDIR}${BINDIR}
 
 .include <bsd.subdir.mk>
