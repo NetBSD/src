@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.12 2003/06/12 07:32:28 scw Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.13 2003/06/12 08:30:41 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -639,7 +639,6 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	vaddr_t va;
 	bus_addr_t addr;
 	int curseg;
-	int nocache = flags & (BUS_DMA_COHERENT | BUS_DMA_NOCACHE);
 
 	size = round_page(size);
 
@@ -661,12 +660,13 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			 * If we are mapping nocache, flush the page from
 			 * cache before we map it.
 			 */
-			if (nocache)
+			if (flags & BUS_DMA_NOCACHE)
 				dcbf(addr, PAGE_SIZE,
 				    curcpu()->ci_ci.dcache_line_size);
 			pmap_kenter_pa(va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE |
-			    PMAP_WIRED | (nocache ? PMAP_NC : 0));
+			    PMAP_WIRED |
+			    ((flags & BUS_DMA_NOCACHE) ? PMAP_NC : 0));
 		}
 	}
 
