@@ -1,3 +1,5 @@
+/* $NetBSD: pipe1.c,v 1.2 2001/09/29 13:54:50 jdolecek Exp $ */
+
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdio.h>
