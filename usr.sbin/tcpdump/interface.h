@@ -1,4 +1,4 @@
-/*	$NetBSD: interface.h,v 1.9 1999/07/02 11:31:28 itojun Exp $	*/
+/*	$NetBSD: interface.h,v 1.10 1999/09/30 14:49:12 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -48,6 +48,7 @@ extern int Sflag;		/* print raw TCP sequence numbers */
 extern int tflag;		/* print packet arrival time */
 extern int vflag;		/* verbose */
 extern int xflag;		/* print packet in hex */
+extern int Xflag;		/* print packet in hex/ascii */
 
 extern int packettype;		/* as specified by -T */
 #define PT_VAT		1	/* Visual Audio Tool */
@@ -197,6 +198,11 @@ struct pcap_pkthdr;
 struct p8022Hdr;
 #endif
 
+extern void ascii_print_with_offset(const u_char *, u_int, u_int);    
+extern void ascii_print(const u_char *, u_int);    
+extern void hex_print_with_offset(const u_char *, u_int, u_int);    
+extern void hex_print(const u_char *, u_int);    
+extern void telnet_print(const u_char *, u_int);    
 extern int ether_encap_print(u_short, const u_char *, u_int, u_int);
 extern int llc_print(const u_char *, u_int, u_int, const u_char *,
 	const u_char *);
