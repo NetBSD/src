@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.7 2003/11/14 16:52:40 tsutsui Exp $	*/
+/*	$NetBSD: if_le.c,v 1.8 2005/02/20 13:59:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -123,10 +123,7 @@ struct netif_driver le_driver = {
 struct le_softc le_softc[NLE];
 
 static inline void
-lewrcsr(sc, port, val)
-	struct le_softc *sc;
-	uint16_t port;
-	uint16_t val;
+lewrcsr(struct le_softc *sc, uint16_t port, uint16_t val)
 {
 	struct lereg0 *ler0 = sc->sc_r0;
 	struct lereg1 *ler1 = sc->sc_r1;
@@ -140,9 +137,7 @@ lewrcsr(sc, port, val)
 }
 
 static inline uint16_t
-lerdcsr(sc, port)
-	struct le_softc *sc;
-	uint16_t port;
+lerdcsr(struct le_softc *sc, uint16_t port)
 {
 	struct lereg0 *ler0 = sc->sc_r0;
 	struct lereg1 *ler1 = sc->sc_r1;
@@ -158,7 +153,7 @@ lerdcsr(sc, port)
 }
 
 static void
-leinit()
+leinit(void)
 {
 	struct hp_hw *hw;
 	struct le_softc *sc;
@@ -217,9 +212,7 @@ leinit()
 }
 
 int
-le_match(nif, machdep_hint)
-	struct netif *nif;
-	void *machdep_hint;
+le_match(struct netif *nif, void *machdep_hint)
 {
 	struct le_sel *sels;
 	char *name = machdep_hint;
@@ -240,9 +233,7 @@ le_match(nif, machdep_hint)
 }
 
 int
-le_probe(nif, machdep_hint)
-	struct netif *nif;
-	void *machdep_hint;
+le_probe(struct netif *nif, void *machdep_hint)
 {
 #if 0
 	char *cp;
@@ -260,8 +251,7 @@ le_probe(nif, machdep_hint)
 
 #ifdef MEM_SUMMARY
 void
-le_mem_summary(unit)
-	int unit;
+le_mem_summary(int unit)
 {
 	struct lereg1 *ler1 = le_softc.sc_r1;
 	struct lereg2 *ler2 = le_softc.sc_r2;
@@ -318,10 +308,7 @@ le_mem_summary(unit)
 #endif
 
 void
-le_error(unit, str, stat)
-	int unit;
-	char *str;
-	uint16_t stat;
+le_error(int unit, char *str, uint16_t stat)
 {
 
 	if (stat & LE_BABL)
@@ -342,8 +329,7 @@ le_error(unit, str, stat)
 
 /* LANCE initialization block set up. */
 void
-lememinit(sc)
-	struct le_softc *sc;
+lememinit(struct le_softc *sc)
 {
 	int i;
 	u_char *mem;
@@ -403,9 +389,7 @@ lememinit(sc)
 }
 
 void
-le_reset(unit, myea)
-	int unit;
-	u_char *myea;
+le_reset(int unit, u_char *myea)
 {
 	struct le_softc *sc = &le_softc[unit];
 	u_long a;
@@ -467,10 +451,7 @@ le_reset(unit, myea)
 }
 
 int
-le_poll(desc, pkt, len)
-	struct iodesc *desc;
-	void *pkt;
-	int len;
+le_poll(struct iodesc *desc, void *pkt, int len)
 {
 	int unit = /*nif->nif_unit*/0;
 	struct le_softc *sc = &le_softc[unit];
@@ -545,10 +526,7 @@ cleanup:
 }
 
 int
-le_put(desc, pkt, len)
-	struct iodesc *desc;
-	void *pkt;
-	size_t len;
+le_put(struct iodesc *desc, void *pkt, size_t len)
 {
 	int unit = /*nif->nif_unit*/0;
 	struct le_softc *sc = &le_softc[unit];
@@ -647,11 +625,7 @@ le_put(desc, pkt, len)
 
 
 int
-le_get(desc, pkt, len, timeout)
-	struct iodesc *desc;
-	void *pkt;
-	size_t len;
-	time_t timeout;
+le_get(struct iodesc *desc, void *pkt, size_t len, time_t timeout)
 {
 	time_t t;
 	int cc;
@@ -665,9 +639,7 @@ le_get(desc, pkt, len, timeout)
 }
 
 void
-le_init(desc, machdep_hint)
-	struct iodesc *desc;
-	void *machdep_hint;
+le_init(struct iodesc *desc, void *machdep_hint)
 {
 	struct netif *nif = desc->io_netif;
 	int unit = nif->nif_unit;
@@ -685,8 +657,7 @@ le_init(desc, machdep_hint)
 }
 
 void
-le_end(nif)
-	struct netif *nif;
+le_end(struct netif *nif)
 {
 	int unit = nif->nif_unit;
 

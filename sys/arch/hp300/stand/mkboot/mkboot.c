@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.7 2004/11/28 11:14:41 jmc Exp $
+/*	$NetBSD: mkboot.c,v 1.8 2005/02/20 13:59:27 tsutsui Exp $
 
 /*
  * Copyright (c) 1990, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #ifdef notdef
 static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
 #endif
-__RCSID("$NetBSD: mkboot.c,v 1.7 2004/11/28 11:14:41 jmc Exp $");
+__RCSID("$NetBSD: mkboot.c,v 1.8 2005/02/20 13:59:27 tsutsui Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -218,9 +218,7 @@ main(int argc, char **argv)
 }
 
 int
-putfile(from, to)
-	char *from;
-	int to;
+putfile(char *from, int to)
 {
 	int fd;
 	struct stat statb;

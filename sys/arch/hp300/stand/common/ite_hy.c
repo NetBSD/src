@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_hy.c,v 1.3 2003/11/14 16:52:40 tsutsui Exp $	*/
+/*	$NetBSD: ite_hy.c,v 1.4 2005/02/20 13:59:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -99,8 +99,7 @@ void hyper_ite_fontinit(struct ite_data *);
 void hyper_windowmove(struct ite_data *, int, int, int, int, int, int, int);
 
 void
-hyper_init(ip)
-	struct ite_data *ip;
+hyper_init(struct ite_data *ip)
 {
 	struct hyboxfb *regbase = (void *)ip->regbase;
 	int width;
@@ -128,8 +127,7 @@ hyper_init(ip)
 }
 
 void
-hyper_ite_fontinit(ip)
-	struct ite_data *ip;
+hyper_ite_fontinit(struct ite_data *ip)
 {
 	u_char *fbmem, *dp;
 	int c, l, b;
@@ -157,21 +155,18 @@ hyper_ite_fontinit(ip)
 }
 
 void
-hyper_putc(ip, c, dy, dx, mode)
-	struct ite_data *ip;
-	int dy, dx;
-	int c, mode;
+hyper_putc(struct ite_data *ip, int dy, int dx, int c, int mode)
 {
+
 	hyper_windowmove(ip, charY(ip, c), charX(ip, c),
 			 dy * ip->ftheight, dx * ip->ftwidth,
 			 ip->ftheight, ip->ftwidth, RR_COPY);
 }
 
 void
-hyper_cursor(ip, flag)
-	struct ite_data *ip;
-	int flag;
+hyper_cursor(struct ite_data *ip, int flag)
 {
+
 	switch (flag) {
 	case MOVE_CURSOR:
 		erase_cursor(ip);
@@ -186,10 +181,9 @@ hyper_cursor(ip, flag)
 }
 
 void
-hyper_clear(ip, sy, sx, h, w)
-	struct ite_data *ip;
-	int sy, sx, h, w;
+hyper_clear(struct ite_data *ip, int sy, int sx, int h, int w)
 {
+
 	hyper_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
 			 sy * ip->ftheight, sx * ip->ftwidth, 
 			 h  * ip->ftheight, w  * ip->ftwidth,
@@ -197,10 +191,7 @@ hyper_clear(ip, sy, sx, h, w)
 }
 
 void
-hyper_scroll(ip, sy, sx, count, dir)
-	struct ite_data *ip;
-	int sy, count;
-	int dir, sx;
+hyper_scroll(struct ite_data *ip, int sy, int count, int dir, int sx)
 {
 	int dy = sy - count;
 	int height = ip->rows - sy;
@@ -292,9 +283,8 @@ int endtab[32] = {
 };
 
 void
-hyper_windowmove(ip, sy, sx, dy, dx, h, w, func)
-	struct ite_data *ip;
-	int sy, sx, dy, dx, h, w, func;
+hyper_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx,
+    int h, int w, int func)
 {
 	int width;		/* add to get to same position in next line */
 
