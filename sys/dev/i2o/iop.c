@@ -1,7 +1,7 @@
-/*	$NetBSD: iop.c,v 1.29 2002/11/08 05:47:35 msaitoh Exp $	*/
+/*	$NetBSD: iop.c,v 1.30 2002/11/15 13:51:29 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.29 2002/11/08 05:47:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.30 2002/11/15 13:51:29 ad Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -219,7 +219,7 @@ static inline u_int32_t	iop_inl(struct iop_softc *, int);
 static inline void	iop_outl(struct iop_softc *, int, u_int32_t);
 
 static inline u_int32_t	iop_inl_msg(struct iop_softc *, int);
-static inline void	iop_outl_rep(struct iop_softc *, int, u_int32_t);
+static inline void	iop_outl_msg(struct iop_softc *, int, u_int32_t);
 
 static void	iop_config_interrupts(struct device *);
 static void	iop_configure_devices(struct iop_softc *, int, int);
@@ -280,11 +280,11 @@ iop_inl_msg(struct iop_softc *sc, int off)
 }
 
 static inline void
-iop_outl_rep(struct iop_softc *sc, int off, u_int32_t val)
+iop_outl_msg(struct iop_softc *sc, int off, u_int32_t val)
 {
 
-	bus_space_write_4(sc->sc_rep_iot, sc->sc_rep_ioh, off, val);
-	bus_space_barrier(sc->sc_rep_iot, sc->sc_rep_ioh, off, 4,
+	bus_space_write_4(sc->sc_msg_iot, sc->sc_msg_ioh, off, val);
+	bus_space_barrier(sc->sc_msg_iot, sc->sc_msg_ioh, off, 4,
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
@@ -2130,9 +2130,9 @@ iop_post(struct iop_softc *sc, u_int32_t *mb)
 		    sc->sc_rep_size, BUS_DMASYNC_PREREAD);
 
 	/* Copy out the message frame. */
-	bus_space_write_region_4(sc->sc_rep_iot, sc->sc_rep_ioh, mfa, mb,
+	bus_space_write_region_4(sc->sc_msg_iot, sc->sc_msg_ioh, mfa, mb,
 	    mb[0] >> 16);
-	bus_space_barrier(sc->sc_rep_iot, sc->sc_rep_ioh, mfa,
+	bus_space_barrier(sc->sc_msg_iot, sc->sc_msg_ioh, mfa,
 	    (mb[0] >> 14) & ~3, BUS_SPACE_BARRIER_WRITE);
 
 	/* Post the MFA back to the IOP. */
@@ -2268,10 +2268,10 @@ iop_release_mfa(struct iop_softc *sc, u_int32_t mfa)
 {
 
 	/* Use the frame to issue a no-op. */
-	iop_outl_rep(sc, mfa, I2O_VERSION_11 | (4 << 16));
-	iop_outl_rep(sc, mfa + 4, I2O_MSGFUNC(I2O_TID_IOP, I2O_UTIL_NOP));
-	iop_outl_rep(sc, mfa + 8, 0);
-	iop_outl_rep(sc, mfa + 12, 0);
+	iop_outl_msg(sc, mfa, I2O_VERSION_11 | (4 << 16));
+	iop_outl_msg(sc, mfa + 4, I2O_MSGFUNC(I2O_TID_IOP, I2O_UTIL_NOP));
+	iop_outl_msg(sc, mfa + 8, 0);
+	iop_outl_msg(sc, mfa + 12, 0);
 
 	iop_outl(sc, IOP_REG_IFIFO, mfa);
 }
