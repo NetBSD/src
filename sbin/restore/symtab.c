@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.13 1997/09/16 13:44:15 lukem Exp $	*/
+/*	$NetBSD: symtab.c,v 1.14 2001/06/19 13:42:10 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: symtab.c,v 1.13 1997/09/16 13:44:15 lukem Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.14 2001/06/19 13:42:10 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -261,7 +261,7 @@ addentry(name, inum, type)
 	if (type & LINK) {
 		ep = lookupino(inum);
 		if (ep == NULL)
-			panic("link to non-existant name\n");
+			panic("link to non-existent name\n");
 		np->e_ino = inum;
 		np->e_links = ep->e_links;
 		ep->e_links = np;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.6 1998/06/30 00:09:36 thorpej Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.7 2001/06/19 13:42:18 wiz Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -146,7 +146,7 @@ ofisa_reg_count(phandle)
 
 	len = OF_getproplen(phandle, "reg");
 
-	/* nonexistant or obviously malformed "reg" property */
+	/* nonexistent or obviously malformed "reg" property */
 	if (len < 0 || (len % 12) != 0)
 		return (-1);
 	return (len / 12);
@@ -224,7 +224,7 @@ ofisa_intr_count(phandle)
 
 	len = OF_getproplen(phandle, "interrupts");
 
-	/* nonexistant or obviously malformed "reg" property */
+	/* nonexistent or obviously malformed "reg" property */
 	if (len < 0 || (len % 8) != 0)
 		return (-1);
 	return (len / 8);
@@ -314,7 +314,7 @@ ofisa_dma_count(phandle)
 
 	len = OF_getproplen(phandle, "dma");
 
-	/* nonexistant or obviously malformed "reg" property */
+	/* nonexistent or obviously malformed "reg" property */
 	if (len < 0 || (len % 20) != 0)
 		return (-1);
 	return (len / 20);

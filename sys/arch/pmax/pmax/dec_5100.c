@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.28 2001/04/12 19:24:06 thorpej Exp $ */
+/* $NetBSD: dec_5100.c,v 1.29 2001/06/19 13:42:16 wiz Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.28 2001/04/12 19:24:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.29 2001/06/19 13:42:16 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +223,7 @@ dec_5100_memintr()
 		return;
 
 	if (icsr & KN230_CSR_INTR_WMERR) {
-		panic("write to non-existant memory");
+		panic("write to non-existent memory");
 	}
 	else {
 		panic("stray memory error interrupt");

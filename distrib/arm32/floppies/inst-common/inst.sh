@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: inst.sh,v 1.1 1996/05/16 19:59:05 mark Exp $
+# $NetBSD: inst.sh,v 1.2 2001/06/19 13:42:08 wiz Exp $
 #
 # Copyright (c) 1995-1996 Mark Brinicombe
 # All rights reserved.
@@ -39,7 +39,7 @@
 # by people installing NetBSD.
 #
 
-VERSION=`echo '$Revision: 1.1 $' | cut '-d ' -f2`
+VERSION=`echo '$Revision: 1.2 $' | cut '-d ' -f2`
 
 Load_tape()
 {
@@ -180,7 +180,7 @@ Load_Sets()
 		echo ""
 		echo -n "1. Set distrib directory (Currently $distribdir"
 		if [ ! -d $distribdir ]; then
-			echo " - non-existant)"
+			echo " - non-existent)"
 		else
 			echo ")"
 		fi
@@ -271,7 +271,7 @@ CDROM_Sets() {
 		echo ""
 		echo -n "1. Set distrib directory (Currently $distribdir"
 		if [ ! -d $distribdir ]; then
-			echo " - non-existant)"
+			echo " - non-existent)"
 		else
 			echo ")"
 		fi
@@ -869,7 +869,7 @@ Main_Menu()
 		echo ""
 		echo -n "1. Set distrib directory (Currently $distribdir"
 		if [ ! -d $distribdir ]; then
-			echo " - non-existant)"
+			echo " - non-existent)"
 		else
 			echo ")"
 		fi

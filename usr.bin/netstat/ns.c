@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.12 2000/10/11 14:46:14 is Exp $	*/
+/*	$NetBSD: ns.c,v 1.13 2001/06/19 13:42:22 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ns.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ns.c,v 1.12 2000/10/11 14:46:14 is Exp $");
+__RCSID("$NetBSD: ns.c,v 1.13 2001/06/19 13:42:22 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -216,7 +216,7 @@ spp_stats(off, name)
 	ANYL(sppstat.spps_sndurg, "packet", " sent with URG only");
 	ANYL(sppstat.spps_sndwinup, "window update-only packet", " sent");
 	ANYL(sppstat.spps_sndctrl, "control (SYN|FIN|RST) packet", " sent");
-	ANYL(sppstat.spps_sndvoid, "request", " to send a non-existant packet");
+	ANYL(sppstat.spps_sndvoid, "request", " to send a non-existent packet");
 	ANYL(sppstat.spps_rcvtotal, "total packet", " received");
 	ANYL(sppstat.spps_rcvpack, "packet", " received in sequence");
 	ANYL(sppstat.spps_rcvbyte, "byte", " received in sequence");

@@ -1,4 +1,4 @@
-/*	$NetBSD: version.c,v 1.1.1.4 1999/04/06 05:30:39 mrg Exp $	*/
+/*	$NetBSD: version.c,v 1.2 2001/06/19 13:42:20 wiz Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
@@ -361,7 +361,7 @@ v201   7/27/94	Check for no memcpy; add casts to calloc;
 		look for regcmp in libgen.a.
 		(thanks to Kaveh Ghazi).
 v202   7/28/94	Fix bug in edit_next/edit_prev with 
-		non-existant files.
+		non-existent files.
 v203   8/2/94	Fix a variety of configuration bugs on
 		various systems. (thanks to Sakai
 		Kiyotaka, Harald Koenig, Bjorn Brox,

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.67 2001/06/02 18:09:23 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.68 2001/06/19 13:42:16 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -3248,7 +3248,7 @@ pmap_remove_a(a_tbl, start, end)
 		}
 		/*
 		 * If the DTE is invalid, the address range is already non-
-		 * existant and can simply be skipped.
+		 * existent and can simply be skipped.
 		 */
 	}
 	if (nstart < nend) {

@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.11 2001/05/14 23:45:39 bjh21 Exp $ */
+/* $NetBSD: ioc.c,v 1.12 2001/06/19 13:42:12 wiz Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: ioc.c,v 1.11 2001/05/14 23:45:39 bjh21 Exp $");
+__RCSID("$NetBSD: ioc.c,v 1.12 2001/06/19 13:42:12 wiz Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h>
@@ -85,7 +85,7 @@ ioc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	/*
-	 * This is tricky.  Accessing non-existant devices in iobus
+	 * This is tricky.  Accessing non-existent devices in iobus
 	 * space can hang the machine (MEMC datasheet section 5.3.3),
 	 * so probes would have to be very delicate.  This isn't
 	 * _much_ of a problem with the IOC, since all machines I know

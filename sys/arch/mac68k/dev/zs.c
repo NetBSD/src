@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.33 2000/06/25 20:55:33 wrstuden Exp $	*/
+/*	$NetBSD: zs.c,v 1.34 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Bill Studenmund
@@ -588,7 +588,7 @@ zs_set_speed(cs, bps)
 	 */
 	for (i=0; i < xcs->cs_clock_count; i++) {
 		if (xcs->cs_clocks[i].clk <= 0)
-			continue;	/* skip non-existant or bad clocks */
+			continue;	/* skip non-existent or bad clocks */
 		if (xcs->cs_clocks[i].flags & ZSC_BRG) {
 			/* check out BRG at /16 */
 			tc1 = BPS_TO_TCONST(xcs->cs_clocks[i].clk >> 4, bps);

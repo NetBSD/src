@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.78 2001/06/18 17:04:44 simonb Exp $
+#	$NetBSD: bsd.README,v 1.79 2001/06/19 13:42:11 wiz Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -66,7 +66,7 @@ command line:
 BUILD 		If defined, 'make install' checks that the targets in the
 		source directories are up-to-date and remakes them if they
                 are out of date, instead of blindly trying to install
-                out of date or non-existant targets.
+                out of date or non-existent targets.
 
 UPDATE 		If defined, 'make install' only installs targets that are
 		more recently modified in the source directories that their

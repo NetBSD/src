@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.45 2001/05/29 23:08:06 chs Exp $	*/
+/*	$NetBSD: sd.c,v 1.46 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -380,7 +380,7 @@ sdgetcapacity(sc, dev)
 			return (-1);
 		}
 		/*
-		 * XXX assume unformatted or non-existant media
+		 * XXX assume unformatted or non-existent media
 		 */
 		sc->sc_blks = 0;
 		sc->sc_blksize = DEV_BSIZE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.18 2001/05/02 10:32:13 scw Exp $	*/
+/*	$NetBSD: msc.c,v 1.19 2001/06/19 13:42:12 wiz Exp $	*/
 
 /*
  * Copyright (c) 1993 Zik.
@@ -251,7 +251,7 @@ mscattach(pdp, dp, auxp)
 		msc_tty[MSCTTYSLOT(MSCSLOTUL(unit, Count)) + 1] = NULL;
 	}
 
-	/* disable the non-existant eighth port */
+	/* disable the non-existent eighth port */
 	if (MSCSLOTUL(unit, NUMLINES) < MSCSLOTS)
 		mscdev[MSCSLOTUL(unit, NUMLINES)].active = 0;
 

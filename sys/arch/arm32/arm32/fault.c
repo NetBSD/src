@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.54 2001/06/02 22:48:40 bjh21 Exp $	*/
+/*	$NetBSD: fault.c,v 1.55 2001/06/19 13:42:13 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -117,7 +117,7 @@ report_abort(prefix, fault_status, fault_address, fault_pc)
  * void data_abort_handler(trapframe_t *frame)
  *
  * Abort handler called when read/write occurs at an address of
- * a non existant or restricted (access permissions) memory page.
+ * a non existent or restricted (access permissions) memory page.
  * We first need to identify the type of page fault.
  */
 
@@ -457,7 +457,7 @@ out:
  * void prefetch_abort_handler(trapframe_t *frame)
  *
  * Abort handler called when instruction execution occurs at
- * a non existant or restricted (access permissions) memory page.
+ * a non existent or restricted (access permissions) memory page.
  * If the address is invalid and we were in SVC mode then panic as
  * the kernel should never prefetch abort.
  * If the address is invalid and the page is mapped then the user process

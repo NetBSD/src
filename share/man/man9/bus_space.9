@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.17 2001/05/27 16:04:46 wiz Exp $
+.\" $NetBSD: bus_space.9,v 1.18 2001/06/19 13:42:10 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -934,7 +934,7 @@ A non-zero return value indicates that the kernel intercepted a
 hardware exception (e.g. bus error) when the peek or poke operation
 was attempted.
 Note that some busses are incapable of generating exceptions when
-non-existant hardware is accessed. In such cases, these functions
+non-existent hardware is accessed. In such cases, these functions
 will always return zero and the value of the data read by
 .Fn bus_space_peek_N
 will be unspecified.
