@@ -1,7 +1,7 @@
-/* $NetBSD: iomd_irqhandler.c,v 1.1 1996/01/31 23:16:11 mark Exp $ */
+/* $NetBSD: iomd_irqhandler.c,v 1.2 1996/03/08 20:35:08 mark Exp $ */
 
 /*
- * Copyright (c) 1994,1995 Mark Brinicombe.
+ * Copyright (c) 1994-1996 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -46,9 +46,6 @@
  * chain.
  *
  * Created      : 30/09/94
- * Last updated : 28/08/95
- *
- *    $Id: iomd_irqhandler.c,v 1.1 1996/01/31 23:16:11 mark Exp $
  */
 
 /* Note: Need to remove IRQ_FLAG_ACTIVE as it is not used */
@@ -63,8 +60,6 @@
 #include <machine/iomd.h>
 #include <machine/katelib.h>
 #include <machine/pte.h>
-
-#include "ppp.h"
 
 irqhandler_t *irqhandlers[NIRQS];
 fiqhandler_t *fiqhandlers;
@@ -136,7 +131,9 @@ irq_init()
 	actual_mask = 0x00000000;
 	spl_mask = 0x00000000;
 	soft_interrupts = 0x00000000;
-    
+
+	set_spl_masks();
+
 /* Enable IRQ's and FIQ's */
 
 	enable_interrupts(I32_bit | F32_bit); 
@@ -227,6 +224,7 @@ irq_claim(irq, handler)
 		    irq);
 
 	enable_irq(irq);
+	set_spl_masks();
     
 	return(0);
 }
@@ -299,34 +297,12 @@ irq_release(irq, handler)
 
 	if (irqhandlers[irq] == NULL)
 		disable_irq(irq);
+
+	set_spl_masks();
       
 	return(0);
 }
 
-
-/*
- * void irq_setmasks(void)
- *
- * Update the IOMD IRQ masks to reflect the currently allowable IRQ's
- */
-
-#if 0 
-void
-irq_setmasks()
-{
-/*
- * Enable the appropriate mask bits
- */
-
-	if ((GetCPSR() & I32_bit) == 0)
-		printf("Alert ! irq_setmasks called with IRQ's enabled\n");
-
-	actual_mask = current_mask & spl_mask;
-	WriteByte(IOMD_IRQMSKA, (actual_mask >> 0)  & 0xff);
-	WriteByte(IOMD_IRQMSKB, (actual_mask >> 8)  & 0xff);
-	WriteByte(IOMD_DMAMSK,  (actual_mask >> 16) & 0xff);
-}
-#endif
 
 u_int
 disable_interrupts(mask)
@@ -425,6 +401,16 @@ dosoftints()
 	register u_int softints;
     
 	softints = soft_interrupts & spl_mask;
+	if (softints & IRQMASK_SOFTCLOCK) {
+		int s;
+		
+		++cnt.v_soft;
+		++intrcnt[IRQ_SOFTCLOCK];
+		soft_interrupts &= ~IRQMASK_SOFTCLOCK;
+		s = lowerspl(SPL_SOFT);
+		softclock();
+		(void)splx(s);
+	}
 	if (softints & IRQMASK_SOFTNET) {
 		++cnt.v_soft;
 		++intrcnt[IRQ_SOFTNET];
@@ -448,6 +434,7 @@ dosoftints()
 #ifdef CCITT
 		ccittintr();
 #endif                                                         
+#include "ppp.h"
 #if NPPP > 0
 		pppintr();
 #endif
