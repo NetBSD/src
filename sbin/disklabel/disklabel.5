@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.5,v 1.7 1998/04/29 09:49:11 fair Exp $
+.\"	$NetBSD: disklabel.5,v 1.8 1999/08/13 10:23:39 bouyer Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -256,6 +256,8 @@ struct disklabel {
 #define	DTYPE_FLOPPY	10	/* floppy */
 #define DTYPE_CCD	11	/* concatenated disk device */
 #define DTYPE_VND	12	/* vnode pseudo-disk */
+#define DTYPE_ATAPI	13	/* ATAPI */
+#define DTYPE_RAID	14	/* RAIDframe */
 
 #ifdef DKTYPENAMES
 static char *dktypenames[] = {
@@ -272,6 +274,8 @@ static char *dktypenames[] = {
 	"floppy",
 	"ccd",
 	"vnd",
+	"ATAPI",
+	"RAID",
 	0
 };
 #define DKMAXTYPES	(sizeof(dktypenames) / sizeof(dktypenames[0]) - 1)
@@ -298,7 +302,9 @@ static char *dktypenames[] = {
 #define	FS_BOOT		13	/* partition contains bootstrap */
 #define	FS_ADOS		14	/* AmigaDOS fast file system */
 #define	FS_HFS		15	/* Macintosh HFS */
-#define	FS_ADFS		16	/* Acorn Disk Filing System */
+#define	FS_FILECORE	16	/* Acorn Disk Filing System */
+#define FS_EX2FS	17	/* Linux Extended 2 file system */
+#define FS_NTFS		18	/* Windows/NT file system */
 
 #ifdef	DKTYPENAMES
 static char *fstypenames[] = {
@@ -318,7 +324,9 @@ static char *fstypenames[] = {
 	"boot",
 	"ADOS",
 	"HFS",
-	"ADFS",
+	"FILECORE",
+	"Linux Ext2",
+	"NTFS",
 	0
 };
 #define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
