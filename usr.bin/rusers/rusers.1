@@ -1,4 +1,4 @@
-.\"	$NetBSD: rusers.1,v 1.6 1997/01/09 20:21:18 tls Exp $
+.\"	$NetBSD: rusers.1,v 1.7 1997/08/24 02:40:42 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rusers.1	6.7 (Berkeley) 4/23/91
-.\"	$NetBSD: rusers.1,v 1.6 1997/01/09 20:21:18 tls Exp $
+.\"	$NetBSD: rusers.1,v 1.7 1997/08/24 02:40:42 lukem Exp $
 .\"
 .Dd April 23, 1991
 .Dt RUSERS 1
@@ -62,7 +62,7 @@ Print all machines responding even if no one is currently logged in.
 .It Fl l
 Print a long format listing. This includes the user name, host name,
 tty that the user is logged in to, the date and time the user
-logged in, the amount of time since the user typed on the keyboard,
+logged in, the idle time (in minutes),
 and the remote host they logged in from (if applicable).
 .El
 .Sh DIAGNOSTICS
