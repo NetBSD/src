@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/08/08 14:04:42 itojun Exp $
+#	$NetBSD: Makefile,v 1.4 2001/12/12 00:51:01 tv Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -16,32 +16,32 @@
 #	sjg@quick.com.au
 #
 
+NOPIC=		# defined
+#NOPROFILE=	# defined
+#NOLINT=	# defined
+
 .include <bsd.own.mk>
 
 # XXX There's a bit of work to do before we can enable warnings.
-WARNS=0
+WARNS=		0
 
-LIB=	crypto_idea
-CPPFLAGS+= -Dlib${LIB} -I. -I${OPENSSLSRC}/crypto
+LIB=		crypto_idea
+CPPFLAGS+=	-Dlib${LIB} -I. -I${OPENSSLSRC}/crypto
 
 CRYPTODIST=	${.CURDIR}/../../crypto/dist
 
 .include "../../crypto/Makefile.openssl"
-.PATH: ${OPENSSLSRC}
 
-.PATH:	${OPENSSLSRC}/crypto/idea ${OPENSSLSRC}/crypto/evp
+.PATH: ${OPENSSLSRC} ${OPENSSLSRC}/crypto/idea ${OPENSSLSRC}/crypto/evp
+
 CPPFLAGS+=	-I${OPENSSLSRC}/crypto/idea
-SRCS+=i_cbc.c i_skey.c e_idea.c c_allc.c
+SRCS+=		i_cbc.c i_skey.c e_idea.c c_allc.c
 
 # XXX
 .if ${OBJECT_FMT} == "ELF"
-AFLAGS+=-DELF
+AFLAGS+=	-DELF
 .else
-AFLAGS+=-DOUT
+AFLAGS+=	-DOUT
 .endif
-
-MKPIC=no
-#MKPROFILE=no
-#MKLINT=no
 
 .include <bsd.lib.mk>

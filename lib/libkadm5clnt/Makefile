@@ -1,14 +1,15 @@
-# $NetBSD: Makefile,v 1.13 2001/10/31 16:15:01 tv Exp $
+# $NetBSD: Makefile,v 1.14 2001/12/12 00:51:03 tv Exp $
+
+NOLINT=		# defined
 
 .include <bsd.own.mk>
 
 DIST=		${.CURDIR}/../../crypto/dist
-.PATH: ${DIST}/heimdal/lib/kadm5
+.PATH:		${DIST}/heimdal/lib/kadm5
 
-WARNS?=  1
-MKLINT= no
+WARNS?=		1
 
-LIB=	kadm5clnt
+LIB=		kadm5clnt
 
 .if ${USETOOLS} != "yes"
 COMPILEETOBJ!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
@@ -42,13 +43,12 @@ SRCS	 =		\
 	client_glue.c	\
 	$(ERR_FILES)
 
-INCSDIR= /usr/include/kadm5
+INCS=		kadm5_err.h admin.h kadm5-protos.h private.h kadm5-private.h
+INCSDIR=	/usr/include/kadm5
 
-INCS=	kadm5_err.h admin.h kadm5-protos.h private.h kadm5-private.h
-
-ASN1!=	cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
-KRB5!=	cd ${.CURDIR}/../libkrb5 && ${PRINTOBJDIR}
-HDB!=	cd ${.CURDIR}/../libhdb && ${PRINTOBJDIR}
+ASN1!=		cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
+KRB5!=		cd ${.CURDIR}/../libkrb5 && ${PRINTOBJDIR}
+HDB!=		cd ${.CURDIR}/../libhdb && ${PRINTOBJDIR}
 
 CPPFLAGS+= -I.					\
 	 -I${ASN1}				\
@@ -65,9 +65,9 @@ CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/roken		\
 	 -DHAVE_CONFIG_H
 
-$(SRCS:.c=.o): kadm5_err.h
+${SRCS:.c=.o}: kadm5_err.h
 
-CLEANFILES = kadm5_err.h kadm5_err.c
+CLEANFILES=	kadm5_err.h kadm5_err.c
 
 # Prevent collision with old MIT Kerberos includes -- require manual
 # intervention of the operator.
