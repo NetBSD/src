@@ -104,7 +104,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.y	5.14 (Berkeley) 7/1/91
- *	$Id: config.y,v 1.6 1993/08/01 18:00:07 mycroft Exp $
+ *	$Id: config.y,v 1.7 1993/09/15 21:15:20 phil Exp $
  */
 
 #include "config.h"
@@ -156,6 +156,9 @@ Config_spec:
 		} else if (!strcmp($2, "i386")) {
 			machine = MACHINE_I386;
 			machinename = "i386";
+		} else if (!strcmp($2, "pc532")) {
+			machine = MACHINE_PC532;
+			machinename = "pc532";
 		} else
 			yyerror("Unknown machine type");
 	      } |
