@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2004/11/27 01:39:23 christos Exp $
+#	$NetBSD: Makefile,v 1.24 2004/11/27 14:30:46 he Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -40,7 +40,7 @@ DPADD+=		${LIBRPCSVC}
 YHEADER=	1
 CLEANFILES+=	build_version.h
 
-get_args.o: build_version.h
+get_args.o get_args.d: build_version.h
 
 build_version.h:
 	echo '#define AMU_BUILD_VERSION	1' > ${.TARGET}
