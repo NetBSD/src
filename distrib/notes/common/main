@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.253.2.7 2004/10/01 03:40:07 jmc Exp $
+.\"	$NetBSD: main,v 1.253.2.8 2004/10/01 03:52:38 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -422,7 +422,7 @@ Without the unique cooperation and coordination the net makes
 possible, it's likely that
 .Nx
 wouldn't exist.
-..
+.
 .if \n[FOR_RELEASE] \{\
 .Ss Changes Between The NetBSD 1.6 and 2.0 Releases
 .Pp
@@ -625,7 +625,6 @@ new operating systems.
 .
 At the time of writing, there are over 4500 third party packages
 available in pkgsrc.
-.It
 .bullet)
 .
 .Pp
@@ -636,6 +635,40 @@ You can look for this trend to continue.
 .Ss2 \*M specific
 .so whatis -----------------------------------------------
 .\} \" \n[FOR_RELEASE]
+.Ss Important notes about NetBSD \*V
+.Pp
+.(bullet
+As noted above, the sendmail third-party program has been upgraded
+since the last release.
+The new version of sendmail runs without requiring being
+set-user-ID to ``root''.
+.Pp
+In order to retain the functionality that a newly installed system
+can send mail ``out of the box'', the default has changed so that
+sendmail will now start by default, and listen for host-local
+connections.
+.Pp
+If this behaviour is not desired, you can either
+.(enum -compact
+explicitly set
+the sendmail variable to ``NO'' in
+.Pa /etc/rc.conf ,
+.It
+modify
+.Pa /etc/mail/submit.cf
+to point to another host,
+.It
+modify
+.Pa /etc/mailer.conf
+to point to something else than sendmail, or
+.It
+make sendmail set-user-ID to ``root'', remove
+.Pa /etc/mail/submit.cf ,
+and set the sendmail_suid variable to ``YES'' in
+.Pa /etc/rc.conf .
+.enum)
+The latter method is strongly discouraged.
+.bullet)
 .
 .Ss "The Future of NetBSD"
 .Pp
