@@ -1,4 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.5 2002/12/02 13:18:10 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2002/12/02 13:31:20 lukem Exp $
+#
+#	etc.news68k/Makefile.inc -- news68k-specific etc Makefile targets
+#
 
 KERNEL_SETS=		GENERIC GENERIC_TINY
 
