@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp_var.h,v 1.10 1998/02/10 01:26:31 perry Exp $	*/
+/*	$NetBSD: igmp_var.h,v 1.11 1999/11/19 10:41:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 Stephen Deering.
@@ -54,15 +54,15 @@
  */
 
 struct igmpstat {
-	u_long	igps_rcv_total;		/* total IGMP messages received */
-	u_long	igps_rcv_tooshort;	/* received with too few bytes */
-	u_long	igps_rcv_badsum;	/* received with bad checksum */
-	u_long	igps_rcv_queries;	/* received membership queries */
-	u_long	igps_rcv_badqueries;	/* received invalid queries */
-	u_long	igps_rcv_reports;	/* received membership reports */
-	u_long	igps_rcv_badreports;	/* received invalid reports */
-	u_long	igps_rcv_ourreports;	/* received reports for our groups */
-	u_long	igps_snd_reports;	/* sent membership reports */
+	u_quad_t igps_rcv_total;	/* total IGMP messages received */
+	u_quad_t igps_rcv_tooshort;	/* received with too few bytes */
+	u_quad_t igps_rcv_badsum;	/* received with bad checksum */
+	u_quad_t igps_rcv_queries;	/* received membership queries */
+	u_quad_t igps_rcv_badqueries;	/* received invalid queries */
+	u_quad_t igps_rcv_reports;	/* received membership reports */
+	u_quad_t igps_rcv_badreports;	/* received invalid reports */
+	u_quad_t igps_rcv_ourreports;	/* received reports for our groups */
+	u_quad_t igps_snd_reports;	/* sent membership reports */
 };
 
 #ifdef _KERNEL
