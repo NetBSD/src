@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.558 2002/10/09 20:23:56 thorpej Exp $
+#	$NetBSD: files,v 1.559 2002/10/10 21:52:28 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -168,8 +168,6 @@ define	scsi_core
 define	scsi		{[channel = -1]}: scsi_core
 define	ata		{[channel = -1], [drive = -1]}
 define	atapi		{[channel = -1]}
-define	irbus		{ }
-define	btbus		{ }
 define	radiodev	{ }
 
 # audio device attributes
@@ -186,20 +184,11 @@ attach	audio at audiobus
 device	midi
 attach	midi at midibus
 
-# IrDA physical frame level driver
-define	irdasir
-define	irframedrv
-device	irframe { } : irframedrv
-attach	irframe at irbus
+# IR device support
+include	"dev/ir/files.ir"
 
-# Consumer Ir driver
-device	cir
-attach	cir at irbus
-
-# Bluetooth host controller driver
-define	bthcidrv
-device	bthci { } : bthcidrv
-attach	bthci at btbus
+# Bluetooth device support
+include "dev/bluetooth/files.bluetooth"
 
 # raster operations attributes
 #

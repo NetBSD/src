@@ -1,0 +1,13 @@
+#	$NetBSD: files.ir,v 1.1 2002/10/10 21:52:30 thorpej Exp $
+
+define	irbus { }
+
+# IrDA physical frame level driver
+define	irdasir
+define	irframedrv
+device	irframe { }: irframedrv
+attach	irframe at irbus
+
+# Consumer Ir driver
+device	cir
+attach	cir at irbus
