@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.1 2002/03/24 22:04:05 scw Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.2 2003/05/07 10:20:23 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -78,8 +78,7 @@ menu dlgeom, title "Choisissez une option";
 
 menu editparttable, title  "Choisissez votre partition", exit;
 	display action  { msg_display (MSG_editparttable);
-			  disp_cur_part((struct mbr_partition *)&mbr[MBR_PARTOFF
-], activepart,-1);
+			  disp_cur_part(&mbr.mbr_parts[0], activepart,-1);
 			};
 	option "Edition de la partition 0",  sub menu editpart,
 		action  { editpart = 0; };
@@ -94,8 +93,7 @@ menu editparttable, title  "Choisissez votre partition", exit;
 
 menu editpart, title  "Changement";
 	display action { msg_display (MSG_editpart, editpart);
-			   disp_cur_part((struct mbr_partition *)&mbr[MBR_PARTOFF
-], activepart,editpart);
+			   disp_cur_part(&mbr.mbr_parts[0], activepart,editpart);
 			   msg_printf_add ("\n");
 			};
 	option "du type de FS", sub menu chooseid;

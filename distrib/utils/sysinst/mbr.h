@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.h,v 1.10 2003/01/10 20:00:28 christos Exp $	*/
+/*	$NetBSD: mbr.h,v 1.11 2003/05/07 10:20:18 dsl Exp $	*/
 
 /*
  * Copyright 1997, 1988 Piermont Information Systems Inc.
@@ -63,7 +63,7 @@ EXTERN int activepart;
 EXTERN int bsdpart;			/* partition in use by NetBSD */
 EXTERN int usefull;			/* on install, clobber entire disk */
 
-extern char mbr[];
+extern mbr_sector_t mbr;
 
 
 /* from mbr.c */
@@ -72,15 +72,15 @@ void	disp_cur_geom (void);
 int	check_geom (void);		/* primitive geometry sanity-check */
 
 void	disp_cur_part (struct mbr_partition *, int, int);
-int	edit_mbr (struct mbr_partition *);
+int	edit_mbr (mbr_sector_t *);
 int 	partsoverlap (struct mbr_partition *, int, int);
 
 /* from mbr.c */
  
-int     read_mbr (char *, char *, size_t);
-int     write_mbr (char *, char *, size_t, int);
-int     valid_mbr (char *);
-int	guess_biosgeom_from_mbr (char *, int *, int *, int *);
+int     read_mbr (const char *, mbr_sector_t *, size_t);
+int     write_mbr (const char *, mbr_sector_t *, size_t, int);
+int     valid_mbr (mbr_sector_t *);
+int	guess_biosgeom_from_mbr (mbr_sector_t *, int *, int *, int *);
 int	md_bios_info (char *);
 void	set_bios_geom (int, int, int);
 int	otherpart (int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 2003/01/11 19:37:49 christos Exp $ */
+/*	$NetBSD: md.c,v 1.5 2003/05/07 10:20:23 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,9 +49,9 @@
 #include "bsddisklabel.c"
 
 #ifdef __mips__
-extern char mbr[512];
+extern mbr_sector_t mbr;
 #else
-char mbr[512];
+mbr_sector_t mbr;
 #endif
 
 int
@@ -59,17 +59,16 @@ md_get_info()
 {
 	int cyl, head, sec;
 
-	read_mbr(diskdev, mbr, sizeof mbr);
+	read_mbr(diskdev, &mbr, sizeof mbr);
 
-	if (!valid_mbr(mbr)) {
-		memset(&mbr[MBR_PARTOFF], 0,
-		    NMBRPART * sizeof (struct mbr_partition));
-		*((u_int16_t *)&mbr[MBR_MAGICOFF]) = MBR_MAGIC;
+	if (!valid_mbr(&mbr)) {
+		memset(&mbr.mbr_parts, 0, sizeof mbr.mbr_parts);
+		mbr/mbr_signature = MBR_MAGIC;
 	}
 
 	msg_display(MSG_nobiosgeom, dlcyl, dlhead, dlsec);
 
-	if (guess_biosgeom_from_mbr(mbr, &cyl, &head, &sec) >= 0) {
+	if (guess_biosgeom_from_mbr(&mbr, &cyl, &head, &sec) >= 0) {
 		msg_display_add(MSG_biosguess, cyl, head, sec);
 		set_bios_geom(cyl, head, sec);
 	} else {
@@ -79,7 +78,7 @@ md_get_info()
 	bsize = bcyl * bhead * bsec;
 	bcylsize = bhead * bsec;
 
-	edit_mbr((struct mbr_partition *)&mbr[MBR_PARTOFF]);
+	edit_mbr(&mbr);
 
 	/* Compute minimum NetBSD partition sizes (in sectors). */
 	minfsdmb = STDNEEDMB * (MEG / sectorsize);
@@ -94,7 +93,7 @@ md_pre_disklabel()
 	msg_display(MSG_dofdisk);
 
 	/* write edited MBR onto disk. */
-	if (write_mbr(diskdev, mbr, sizeof mbr, 1) != 0) {
+	if (write_mbr(diskdev, &mbr, sizeof mbr, 1) != 0) {
 		msg_display(MSG_wmbrfail);
 		process_menu(MENU_ok);
 

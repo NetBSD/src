@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.35 2003/05/03 17:04:10 fvdl Exp $	*/
+/*	$NetBSD: md.h,v 1.36 2003/05/07 10:20:22 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -142,8 +142,8 @@ extern struct disklist *disklist;
 extern struct nativedisk_info *nativedisk;
 extern struct biosdisk_info *biosdisk;
 
-#define _PATH_MBR	"/usr/mdec/mbr"
-#define _PATH_BOOTSEL	"/usr/mdec/mbr_bootsel"
+#define _PATH_MBR	DEFAULT_BOOTDIR "/" DEFAULT_BOOTCODE
+#define _PATH_BOOTSEL	DEFAULT_BOOTDIR "/" DEFAULT_BOOTSELCODE
 
 extern struct mbr_bootsel *mbs;
  

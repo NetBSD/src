@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.31 2003/02/08 09:53:08 shin Exp $ */
+/*	$NetBSD: mbr.c,v 1.32 2003/05/07 10:20:18 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -181,15 +181,15 @@ ourpart(id)
  * Let user change incore Master Boot Record partitions via menu.
  */
 int
-edit_mbr(partition)
-	struct mbr_partition *partition;
+edit_mbr(mbr)
+	struct mbr_sector *mbr;
 {
 	int i, j;
 
 	/* Ask full/part */
 
 	/* XXX this sucks ("part" is used in menus, no param passing there) */
-	part = partition;
+	part = &mbr->mbr_parts[0];
 	msg_display(MSG_fullpart, diskdev);
 	process_menu(MENU_fullpart);
 
@@ -404,8 +404,9 @@ disp_cur_part(part, sel, disp)
 }
 
 int
-read_mbr(disk, buf, len)
-	char *disk, *buf;
+read_mbr(disk, mbr, len)
+	const char *disk;
+	mbr_sector_t *mbr;
 	size_t len;
 {
 	char diskpath[MAXPATHLEN];
@@ -421,13 +422,13 @@ read_mbr(disk, buf, len)
 		close(fd);
 		return -1;
 	}
-	if (read(fd, buf, len) < len) {
+	if (read(fd, mbr, len) < len) {
 		close(fd);
 		return -1;
 	}
 
-	if (valid_mbr(buf)) {
-		mbrp = (struct mbr_partition *)(void *)&buf[MBR_PARTOFF];
+	if (valid_mbr(mbr)) {
+		mbrp = &mbr->mbr_parts[0];
 		for (i = 0; i < NMBRPART; i++) {
 			if (mbrp[i].mbrp_typ != 0) {
 				mbrp[i].mbrp_start =
@@ -447,8 +448,9 @@ read_mbr(disk, buf, len)
 }
 
 int
-write_mbr(disk, buf, len, convert)
-	char *disk, *buf;
+write_mbr(disk, mbr, len, convert)
+	const char *disk;
+	mbr_sector_t *mbr;
 	size_t len;
 	int convert;
 {
@@ -467,7 +469,7 @@ write_mbr(disk, buf, len, convert)
 		return -1;
 	}
 
-	mbrp = (struct mbr_partition *)(void *)&buf[MBR_PARTOFF];
+	mbrp = &mbr->mbr_parts[0];
 	for (i = 0; i < NMBRPART; i++) {
 		if (mbrp[i].mbrp_start == 0 &&
 		    mbrp[i].mbrp_size == 0) {
@@ -493,7 +495,7 @@ write_mbr(disk, buf, len, convert)
 		}
 	}
 
-	if (write(fd, buf, len) < 0)
+	if (write(fd, mbr, len) < 0)
 		ret = -1;
 
 	(void)close(fd);
@@ -501,14 +503,11 @@ write_mbr(disk, buf, len, convert)
 }
 
 int
-valid_mbr(buf)
-	char *buf;
+valid_mbr(mbr)
+	mbr_sector_t *mbr;
 {
-	u_int16_t magic;
 
-	magic = *((u_int16_t *)(void *)&buf[MBR_MAGICOFF]);
-
-	return (le_to_native16(magic) == MBR_MAGIC);
+	return (le_to_native16(mbr->mbr_signature) == MBR_MAGIC);
 }
 
 static void
@@ -546,11 +545,11 @@ convert_mbr_chs(cyl, head, sec, cylp, headp, secp, relsecs)
  * device.
  */
 int
-guess_biosgeom_from_mbr(buf, cyl, head, sec)
-	char *buf;
+guess_biosgeom_from_mbr(mbr, cyl, head, sec)
+	mbr_sector_t *mbr;
 	int *cyl, *head, *sec;
 {
-	struct mbr_partition *parts = (struct mbr_partition *)(void *)&buf[MBR_PARTOFF];
+	struct mbr_partition *parts = &mbr->mbr_parts[0];
 	int cylinders = -1, heads = -1, sectors = -1, i, j;
 	int c1, h1, s1, c2, h2, s2;
 	long a1, a2;

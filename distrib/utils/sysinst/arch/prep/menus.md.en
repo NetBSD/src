@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.3 2002/09/09 10:53:50 grant Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.4 2003/05/07 10:20:24 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -61,8 +61,7 @@ menu wdtype, title  "Select type";
 
 menu editparttable, title  "Choose your partition", exit;
 	display action  { msg_display (MSG_editparttable);
-			  disp_cur_part((struct mbr_partition *)&mbr[MBR_PARTOFF
-], activepart,-1);
+			  disp_cur_part(&mbr.mbr_parts[0], activepart,-1);
 			};
 	option "Edit partition 0",  sub menu editpart,
 		action  { editpart = 0; };
@@ -77,8 +76,7 @@ menu editparttable, title  "Choose your partition", exit;
 
 menu editpart, title  "Select to change";
 	display action { msg_display (MSG_editpart, editpart);
-			   disp_cur_part((struct mbr_partition *)&mbr[MBR_PARTOFF
-], activepart,editpart);
+			   disp_cur_part(&mbr.mbr_parts[0], activepart,editpart);
 			   msg_display_add(MSG_newline);
 			};
 	option "Kind", sub menu chooseid;
