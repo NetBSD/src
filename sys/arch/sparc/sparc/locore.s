@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.94 1998/09/20 19:54:48 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.95 1998/09/21 10:30:41 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -193,22 +193,6 @@ _cpcb:	.word	_u0
 	.globl	_cputyp
 _cputyp:
 	.word	1
-/*
- * _cpumod is the current cpu model, used to distinguish between variants
- * in the Sun4 and Sun4M families. See /sys/arch/sparc/include/param.h for
- * possible values.
- */
-!	.globl	_cpumod
-!_cpumod:
-!	.word	1
-/*
- * _mmumod is the current mmu model, used to distinguish between the
- * various implementations of the SRMMU in the sun4m family of machines.
- * See /sys/arch/sparc/include/param.h for possible values.
- */
-!	.globl	_mmumod
-!_mmumod:
-!	.word	0
 
 #if defined(SUN4C) || defined(SUN4M)
 _cputypval:
@@ -1750,9 +1734,7 @@ memfault_sun4:
 	/* memory error = death for now XXX */
 	clr	%o3
 	clr	%o4
-	sethi	%hi(CPUINFO_VA+CPUINFO_MEMERR), %o0
-	ld	[%o0 + %lo(CPUINFO_VA+CPUINFO_MEMERR)], %o0
-	jmpl	%o0, %o7		! memerr(0, ser, sva, 0, 0)
+	call	_memerr4_4c		! memerr(0, ser, sva, 0, 0)
 	 clr	%o0
 	call	_callrom
 	 nop
@@ -1852,9 +1834,7 @@ memfault_sun4c:
 	 * If memerr() returns, return from the trap.
 	 */
 	wr	%l0, PSR_ET, %psr
-	sethi	%hi(CPUINFO_VA+CPUINFO_MEMERR), %o0
-	ld	[%o0 + %lo(CPUINFO_VA+CPUINFO_MEMERR)], %o0
-	jmpl	%o0, %o7		! memerr(0, ser, sva, aer, ava)
+	call	_memerr4_4c		! memerr(0, ser, sva, aer, ava)
 	 clr	%o0
 
 	ld	[%sp + CCFSZ + 20], %g1	! restore g1 through g7
@@ -1874,9 +1854,7 @@ memfault_sun4c:
 	 * %o1 through %o4 still hold the error reg contents.
 	 */
 1:
-	sethi	%hi(CPUINFO_VA+CPUINFO_MEMERR), %o0
-	ld	[%o0 + %lo(CPUINFO_VA+CPUINFO_MEMERR)], %o0
-	jmpl	%o0, %o7		! memerr(1, ser, sva, aer, ava)
+	call	_memerr4_4c		! memerr(1, ser, sva, aer, ava)
 	 mov	1, %o0
 
 	ld	[%sp + CCFSZ + 20], %g1	! restore g1 through g7
@@ -2590,10 +2568,8 @@ nmi_sun4c:
 
 nmi_common:
 	! and call C code
-	sethi	%hi(CPUINFO_VA+CPUINFO_MEMERR), %o0
-	ld	[%o0 + %lo(CPUINFO_VA+CPUINFO_MEMERR)], %o0
-	jmpl	%o0, %o7		! memerr(0, ser, sva, aer, ava)
-	clr	%o0
+	call	_memerr4_4c		! memerr(0, ser, sva, aer, ava)
+	 clr	%o0
 
 	mov	%l5, %g1		! restore g1 through g7
 	ldd	[%sp + CCFSZ + 0], %g2
@@ -2652,7 +2628,6 @@ nmi_sun4m:
 	mov	%g1, %l5		! save g1,g6,g7
 	mov	%g6, %l6
 	mov	%g7, %l7
-	clr	%o5
 
 	bnz,a	2f			! cond code still indicates softint
 	 nop
