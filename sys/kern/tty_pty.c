@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.70 2003/06/29 22:31:29 fvdl Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.71 2003/07/23 13:10:28 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.70 2003/06/29 22:31:29 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.71 2003/07/23 13:10:28 dsl Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -99,7 +99,7 @@ void	ptsstart __P((struct tty *));
 int	pty_maxptys __P((int, int));
 
 static struct pt_softc **ptyarralloc __P((int));
-static int check_pty __P((dev_t));
+static int check_pty(int);
 
 dev_type_open(ptcopen);
 dev_type_close(ptcclose);
@@ -149,8 +149,7 @@ ptyarralloc(nelem)
 {
 	struct pt_softc **pt;
 	nelem += 10;
-	pt = malloc(nelem * sizeof(struct pt_softc *), M_DEVBUF, M_WAITOK);
-	memset(pt, '\0', nelem * sizeof(struct pt_softc *));
+	pt = malloc(nelem * sizeof *pt, M_DEVBUF, M_WAITOK | M_ZERO);
 	return pt;
 }
 
@@ -159,21 +158,27 @@ ptyarralloc(nelem)
  * are properly allocated.
  */
 static int
-check_pty(dev)
-	dev_t dev;
+check_pty(int ptn)
 {
 	struct pt_softc *pti;
 
-	if (minor(dev) >= npty) {
-		struct pt_softc **newpt;
+	if (ptn >= npty) {
+		struct pt_softc **newpt, **oldpt;
 		int newnpty;
 
 		/* check if the requested pty can be granted */
-		if (minor(dev) >= maxptys) {
+		if (ptn >= maxptys) {
 	    limit_reached:
 			tablefull("pty", "increase kern.maxptys");
 			return (ENXIO);
 		}
+
+		/* Allocate a larger pty array */
+		for (newnpty = npty; newnpty <= ptn;)
+			newnpty *= 2;
+		if (newnpty > maxptys)
+			newnpty = maxptys;
+		newpt = ptyarralloc(newnpty);
 
 		/*
 		 * Now grab the pty array mutex - we need to ensure
@@ -183,48 +188,41 @@ check_pty(dev)
 		 */
 		simple_lock(&pt_softc_mutex);
 
-		do {
-			for(newnpty = npty; newnpty <= minor(dev);
-				newnpty *= 2);
-
-			if (newnpty > maxptys)
-				newnpty = maxptys;
-
-			simple_unlock(&pt_softc_mutex);
-			newpt = ptyarralloc(newnpty);
-			simple_lock(&pt_softc_mutex);
-
-			if (maxptys == npty) {
+		if (newnpty >= maxptys) {
+			/* limit cut away beneath us... */
+			newnpty = maxptys;
+			if (ptn >= newnpty) {
 				simple_unlock(&pt_softc_mutex);
+				free(newpt, M_DEVBUF);
 				goto limit_reached;
 			}
-		} while(newnpty > maxptys);
+		}
 
 		/*
 		 * If the pty array was not enlarged while we were waiting
 		 * for mutex, copy current contents of pt_softc[] to newly
 		 * allocated array and start using the new bigger array.
 		 */
-		if (minor(dev) >= npty) {
+		if (newnpty > npty) {
 			memcpy(newpt, pt_softc, npty*sizeof(struct pt_softc *));
-			free(pt_softc, M_DEVBUF);
-
+			oldpt = pt_softc;
 			pt_softc = newpt;
 			npty = newnpty;
 		} else {
-			/* was enlarged when waited fot lock, free new space */
-			free(newpt, M_DEVBUF);
+			/* was enlarged when waited for lock, free new space */
+			oldpt = newpt;
 		}
 
 		simple_unlock(&pt_softc_mutex);
+		free(oldpt, M_DEVBUF);
 	}
-		
+
 	/*
 	 * If the entry is not yet allocated, allocate one. The mutex is
 	 * needed so that the state of pt_softc[] array is consistant
-	 * in case it has been longened above.
+	 * in case it has been lengthened above.
 	 */
-	if (!pt_softc[minor(dev)]) {
+	if (!pt_softc[ptn]) {
 		MALLOC(pti, struct pt_softc *, sizeof(struct pt_softc),
 			M_DEVBUF, M_WAITOK);
 		memset(pti, 0, sizeof(struct pt_softc));
@@ -237,12 +235,12 @@ check_pty(dev)
 		 * Check the entry again - it might have been
 		 * added while we were waiting for mutex.
 		 */
-		if (!pt_softc[minor(dev)]) {
+		if (!pt_softc[ptn]) {
 			tty_attach(pti->pt_tty);
-			pt_softc[minor(dev)] = pti;
+			pt_softc[ptn] = pti;
 		} else {
 			ttyfree(pti->pt_tty);
-			FREE(pti, M_DEVBUF);
+			free(pti, M_DEVBUF);
 		}
 
 		simple_unlock(&pt_softc_mutex);
@@ -262,28 +260,24 @@ pty_maxptys(newmax, set)
 	if (!set)
 		return (maxptys);
 
-	/* the value cannot be set to value lower than current number of ptys */
-	if (newmax < npty)
-		return (0);
-
-	/* can proceed immediatelly if bigger than current maximum */
-	if (newmax > maxptys) {
-		maxptys = newmax;
-		return (maxptys);
-	}
-
 	/*
 	 * We have to grab the pt_softc lock, so that we would pick correct
 	 * value of npty (might be modified in check_pty()).
 	 */
 	simple_lock(&pt_softc_mutex);
 
-	if (newmax > npty)
+	/*
+	 * The value cannot be set to value lower than the highest pty
+	 * number ever allocated.
+	 */
+	if (newmax >= npty)
 		maxptys = newmax;
+	else
+		newmax = 0;
 
 	simple_unlock(&pt_softc_mutex);
 
-	return (maxptys);
+	return newmax;
 }
 
 /*
@@ -310,11 +304,12 @@ ptsopen(dev, flag, devtype, p)
 	struct pt_softc *pti;
 	struct tty *tp;
 	int error;
+	int ptn = minor(dev);
 
-	if ((error = check_pty(dev)))
+	if ((error = check_pty(ptn)))
 		return (error);
 
-	pti = pt_softc[minor(dev)];
+	pti = pt_softc[ptn];
 	tp = pti->pt_tty;
 
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
@@ -329,6 +324,7 @@ ptsopen(dev, flag, devtype, p)
 		return (EBUSY);
 	if (tp->t_oproc)			/* Ctrlr still around. */
 		SET(tp->t_state, TS_CARR_ON);
+
 	if (!ISSET(flag, O_NONBLOCK)) {
 		TTY_LOCK(tp);
 		while (!ISSET(tp->t_state, TS_CARR_ON)) {
@@ -539,16 +535,21 @@ ptcopen(dev, flag, devtype, p)
 	struct pt_softc *pti;
 	struct tty *tp;
 	int error;
+	int ptn = minor(dev);
 
-	if ((error = check_pty(dev)))
+	if ((error = check_pty(ptn)))
 		return (error);
 
-	pti = pt_softc[minor(dev)];
+	pti = pt_softc[ptn];
 	tp = pti->pt_tty;
 
-	if (tp->t_oproc)
+	TTY_LOCK(tp);
+	if (tp->t_oproc) {
+		TTY_UNLOCK(tp);
 		return (EIO);
+	}
 	tp->t_oproc = ptsstart;
+	TTY_UNLOCK(tp);
 	(void)(*tp->t_linesw->l_modem)(tp, 1);
 	CLR(tp->t_lflag, EXTPROC);
 	pti->pt_flags = 0;
@@ -569,7 +570,9 @@ ptcclose(dev, flag, devtype, p)
 
 	(void)(*tp->t_linesw->l_modem)(tp, 0);
 	CLR(tp->t_state, TS_CARR_ON);
+	TTY_LOCK(tp);
 	tp->t_oproc = 0;		/* mark closed */
+	TTY_UNLOCK(tp);
 	return (0);
 }
 
@@ -593,7 +596,7 @@ ptcread(dev, uio, flag)
 	TTY_LOCK(tp);
 	for (;;) {
 		if (ISSET(tp->t_state, TS_ISOPEN)) {
-			if (pti->pt_flags&PF_PKT && pti->pt_send) {
+			if (pti->pt_flags & PF_PKT && pti->pt_send) {
 				TTY_UNLOCK(tp);
 				error = ureadc((int)pti->pt_send, uio);
 				if (error)
@@ -613,7 +616,7 @@ ptcread(dev, uio, flag)
 				pti->pt_send = 0;
 				return (0);
 			}
-			if (pti->pt_flags&PF_UCNTL && pti->pt_ucntl) {
+			if (pti->pt_flags & PF_UCNTL && pti->pt_ucntl) {
 				TTY_UNLOCK(tp);
 				error = ureadc((int)pti->pt_ucntl, uio);
 				if (error)
@@ -992,7 +995,8 @@ ptyioctl(dev, cmd, data, flag, p)
 			CLR(tp->t_lflag, EXTPROC);
 		}
 		return(0);
-	} else
+	}
+
 	if (cdev != NULL && cdev->d_open == ptcopen)
 		switch (cmd) {
 
@@ -1059,6 +1063,7 @@ ptyioctl(dev, cmd, data, flag, p)
 			pgsignal(tp->t_pgrp, sig, 1);
 			return(0);
 		}
+
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error == EPASSTHROUGH)
 		 error = ttioctl(tp, cmd, data, flag, p);
