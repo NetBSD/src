@@ -1277,7 +1277,7 @@ ptrace_getregs(struct proc *p, unsigned int *addr)
 	int error;
 	struct trapframe *tp;
 	struct pcb *pcb;
-	struct regs regs = {0};
+	struct reg regs = {0};
 	void *ptr = (char*)p->p_addr + ((char*) p->p_regs - (char*) USRSTACK);
 
 	pcb = &p->p_addr->u_pcb;
@@ -1305,7 +1305,7 @@ ptrace_setregs(struct proc *p, unsigned int *addr)
 	int error;
 	struct trapframe *tp;
 	struct pcb *pcb;
-	struct regs regs = {0};
+	struct reg regs = {0};
 	void *ptr = (char*)p->p_addr + ((char*) p->p_regs - (char*) USRSTACK);
 
 	if (error = copyin(addr, &regs, sizeof(regs)))
