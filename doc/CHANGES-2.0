@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.147 2004/04/29 04:08:25 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.148 2004/04/29 04:09:38 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1503,3 +1503,9 @@ sys/ddb/db_command.c				1.76
 
 	Not supposed to be there
 	[atatat, ticket #207]
+
+sbin/tunefs/tunefs.8				1.34
+
+	According to newfs(8) and reality, the default minfree value is 
+	actually 5% not 10%.
+	[grant, ticket #208]
