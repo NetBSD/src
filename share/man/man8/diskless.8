@@ -1,4 +1,4 @@
-.\"	$NetBSD: diskless.8,v 1.19 1999/11/29 03:55:14 cjs Exp $
+.\"	$NetBSD: diskless.8,v 1.20 2001/04/04 11:22:27 wiz Exp $
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross, Theo de Raadt
 .\" All rights reserved.
@@ -33,9 +33,9 @@
 .Nd booting a system over the network
 .Sh DESCRIPTION
 The ability to boot a machine over the network is useful for
-.Xr diskless
+.Em diskless
 or
-.Xr dataless
+.Em dataless
 machines, or as a temporary measure while repairing or
 re-installing filesystems on a local disk.
 This file provides a general description of the interactions between
@@ -153,7 +153,7 @@ Assuming the client's hostname is to be
 .Pp
 .Bl -tag -width 2.1 -compact
 .It 1.
-Add an entry to 
+Add an entry to
 .Pa /etc/ethers
 corresponding to the client's ethernet address:
 .Bd -literal -offset indent -compact
