@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.c,v 1.9 1999/09/12 09:02:22 jsm Exp $	*/
+/*	$NetBSD: monop.c,v 1.10 2000/01/09 17:17:20 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)monop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monop.c,v 1.9 1999/09/12 09:02:22 jsm Exp $");
+__RCSID("$NetBSD: monop.c,v 1.10 2000/01/09 17:17:20 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,7 +120,7 @@ blew_it:
 	}
 	cur_p = play = (PLAY *) calloc(num_play, sizeof (PLAY));
 	if (play == NULL)
-		errx(1, "out of memory");
+		err(1, NULL);
 	for (i = 0; i < num_play; i++) {
 over:
 		printf("Player %d's name: ", i + 1);
@@ -131,7 +131,7 @@ over:
 		*sp++ = '\0';
 		name_list[i] = play[i].name = (char *)calloc(1, sp - buf);
 		if (name_list[i] == NULL)
-			errx(1, "out of memory");
+			err(1, NULL);
 		strcpy(play[i].name, buf);
 		play[i].money = 1500;
 	}
