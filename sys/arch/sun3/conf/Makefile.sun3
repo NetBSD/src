@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.74 1999/01/15 23:21:27 thorpej Exp $
+# $NetBSD: Makefile.sun3,v 1.74.4.1 1999/08/02 21:45:20 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -72,6 +72,8 @@ AFLAGS=
 LINKFLAGS=	-N -Ttext ${TEXTADDR} -e start
 STRIPFLAGS=	-d
 
+%INCLUDES
+
 ### find out what to use for libkern
 KERN_AS=	obj
 .include "$S/lib/libkern/Makefile.inc"
@@ -129,8 +131,9 @@ DEBUG?=
 .if ${DEBUG} == "-g"
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
-		mv -f $@ $@.gdb; cp -p $@.gdb $@; \
-		${STRIP} ${STRIPFLAGS} $@
+		echo mv -f $@ $@.gdb; mv -f $@ $@.gdb; \
+		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
+		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
 LINKFLAGS+=	-S
 .endif

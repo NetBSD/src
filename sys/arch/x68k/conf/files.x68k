@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.24.4.1 1999/06/21 01:04:12 thorpej Exp $
+#	$NetBSD: files.x68k,v 1.24.4.2 1999/08/02 21:49:42 thorpej Exp $
 #
 # new style config file for x68k architecture
 #
@@ -159,12 +159,12 @@ device	mha: scsi
 attach	mha at scsirom
 file	arch/x68k/dev/mha.c		mha needs-flag
 
-pseudo-device bell
+defpseudo bell
 file	arch/x68k/dev/opmbell.c		bell needs-flag
 
-pseudo-device sram
+defpseudo sram
 file	arch/x68k/dev/sram.c		sram needs-flag
-pseudo-device pow
+defpseudo pow
 file	arch/x68k/dev/pow.c		pow needs-count
 
 # memory disk
