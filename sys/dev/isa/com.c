@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.64 1996/01/14 23:44:34 christos Exp $	*/
+/*	$NetBSD: com.c,v 1.65 1996/02/10 20:23:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -61,32 +61,10 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/comreg.h>
 #include <dev/ic/ns16550reg.h>
+#ifdef COM_HAYESP
+#include <dev/ic/hayespreg.h>
+#endif
 #define	com_lcr	com_cfcr
-
-/* 
- * XXX: IO Address for ESP (jumpered on card), or configured by the ESP setup
- * program. It would be better not to hard-code this but probe for it, but
- * how?
- */
-#define ESP_PORT		0x300
-
-#define ESP_CMD1_GETTEST	0x01
-#define ESP_CMD1_GETDIPS	0x02
-#define ESP_CMD1_SETFLOWTYPE	0x0A
-#define ESP_CMD1_SETRXFLOW	0x0A
-#define ESP_CMD1_SETMODE	0x10
-
-#define ESP_CMD1		4
-#define ESP_CMD2		5
-#define ESP_STATUS1		4
-#define ESP_STATUS2		5
-
-/* For flow control */
-#define ESP_HIWMARK		768
-#define ESP_LOWMARK		512
-#define ESP_HIBYTE(w)		((char)(((short)(w) >> 8) & 0xff))
-#define ESP_LOBYTE(w)		((char)(w))
-
 
 #define	COM_IBUFSIZE	(2 * 512)
 #define	COM_IHIGHWATER	((3 * COM_IBUFSIZE) / 4)
@@ -101,10 +79,13 @@ struct com_softc {
 	int sc_errors;
 
 	int sc_iobase;
+#ifdef COM_HAYESP
+	int sc_hayespbase;
+#endif
 	u_char sc_hwflags;
 #define	COM_HW_NOIEN	0x01
 #define	COM_HW_FIFO	0x02
-#define	COM_HW_ESP	0x04
+#define	COM_HW_HAYESP	0x04
 #define	COM_HW_CONSOLE	0x40
 	u_char sc_swflags;
 #define	COM_SW_SOFTCAR	0x01
@@ -196,60 +177,57 @@ comprobe1(iobase)
 	return 1;
 }
 
-void
-comprobeESP(esp_iobase, com_iobase, sc)
-	int esp_iobase;
-	int com_iobase;
+#ifdef COM_HAYESP
+int
+comprobeHAYESP(iobase, sc)
+	int iobase;
 	struct com_softc *sc;
 {
-	char	val;
-	char	dips;
+	char	val, dips;
 	int	combaselist[] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
 
 	/*
 	 * Hayes ESP cards have two iobases.  One is for compatibility with
 	 * 16550 serial chips, and at the same ISA PC base addresses.  The
 	 * other is for ESP-specific enhanced features, and lies at a
-	 * different addressing range entirely (0x140, 0x180, or 0x280).
-	 * Hence the need for esp_iobase and com_iobase.
+	 * different addressing range entirely (0x140, 0x180, 0x280, or 0x300).
 	 */
 
 	/* Test for ESP signature */
-	if ((inb(esp_iobase) & 0xf3) == 0)
-		return;
+	if ((inb(iobase) & 0xf3) == 0)
+		return 0;
 
 	/*
 	 * ESP is present at ESP enhanced base address; unknown com port
 	 */
 
 	/* Get the dip-switch configurations */
-	outb(esp_iobase + ESP_CMD1, ESP_CMD1_GETDIPS);
-	dips = inb(esp_iobase + ESP_STATUS1);
+	outb(iobase + HAYESP_CMD1, HAYESP_GETDIPS);
+	dips = inb(iobase + HAYESP_STATUS1);
 
 	/* Determine which com port this ESP card services: bits 0,1 of  */
 	/*  dips is the port # (0-3); combaselist[val] is the com_iobase */
-	if (com_iobase == combaselist[dips & 0x03]) {
-		printf(": ESP");
-	} else {
-		/* this com port is not us */
-		return;
-	}
+	if (sc->sc_iobase != combaselist[dips & 0x03])
+		return 0;
 
+	printf(": ESP");
+
+ 	/* Check ESP Self Test bits. */
 	/* Check for ESP version 2.0: bits 4,5,6 == 010 */
-	outb(esp_iobase + ESP_CMD1, ESP_CMD1_GETTEST);
-	val = inb(esp_iobase + ESP_STATUS1);	/* Clear reg 1 */
-	val = inb(esp_iobase + ESP_STATUS2);
+	outb(iobase + HAYESP_CMD1, HAYESP_GETTEST);
+	val = inb(iobase + HAYESP_STATUS1);	/* Clear reg 1 */
+	val = inb(iobase + HAYESP_STATUS2);
 	if ((val & 0x70) < 0x20) {
 		printf("-old (%o)", val & 0x70);
 		/* we do not support the necessary features */
-		return;
+		return 0;
 	}
 
 	/* Check for ability to emulate 16550: bit 8 == 1 */
 	if ((dips & 0x80) == 0) {
 		printf(" slave");
 		/* XXX Does slave really mean no 16550 support?? */
-		return;
+		return 0;
 	}
 
 	/*
@@ -257,8 +235,11 @@ comprobeESP(esp_iobase, com_iobase, sc)
 	 * better), at the correct com port address.
 	 */
 
-	SET(sc->sc_hwflags, COM_HW_ESP);
+	SET(sc->sc_hwflags, COM_HW_HAYESP);
+	printf(", 1024k fifo\n");
+	return 1;
 }
+#endif
 
 int
 comprobe(parent, match, aux)
@@ -286,6 +267,10 @@ comattach(parent, self, aux)
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	int iobase = ia->ia_iobase;
 	struct tty *tp;
+#ifdef COM_HAYESP
+	int	hayesp_ports[] = { 0x140, 0x180, 0x280, 0x300, 0 };
+	int	*hayespp;
+#endif
 
 	sc->sc_iobase = iobase;
 	sc->sc_hwflags = ISSET(cf->cf_flags, COM_HW_NOIEN);
@@ -294,8 +279,16 @@ comattach(parent, self, aux)
 	if (sc->sc_dev.dv_unit == comconsole)
 		delay(1000);
 
-	/* look for a Hayes ESP board at ESP_PORT */
-	comprobeESP(ESP_PORT, iobase, sc);
+#ifdef COM_HAYESP
+	/* Look for a Hayes ESP board. */
+	for (hayespp = hayesp_ports; *hayespp != 0; hayespp++)
+		if (comprobeHAYESP(*hayespp, sc)) {
+			sc->sc_hayespbase = *hayespp;
+			break;
+		}
+	/* No ESP; look for other things. */
+	if (*hayespp == 0) {
+#endif
 
 	/* look for a NS 16550AF UART with FIFOs */
 	outb(iobase + com_fifo,
@@ -310,6 +303,9 @@ comattach(parent, self, aux)
 	else
 		printf(": ns8250 or ns16450, no fifo\n");
 	outb(iobase + com_fifo, 0);
+#ifdef COM_HAYESP
+	}
+#endif
 
 	/* disable interrupts */
 	outb(iobase + com_ier, 0);
@@ -405,25 +401,39 @@ comopen(dev, flag, mode, p)
 		sc->sc_ibufend = sc->sc_ibuf + COM_IBUFSIZE;
 
 		iobase = sc->sc_iobase;
+#ifdef COM_HAYESP
 		/* Setup the ESP board */
-		if (ISSET(sc->sc_hwflags, COM_HW_ESP)) {
+		if (ISSET(sc->sc_hwflags, COM_HW_HAYESP)) {
+			int hayespbase = sc->sc_hayespbase;
+
 			outb(iobase + com_fifo,
 			     FIFO_DMA_MODE|FIFO_ENABLE|
 			     FIFO_RCV_RST|FIFO_XMT_RST|FIFO_TRIGGER_8);
+
 			/* Set 16550 compatibility mode */
-			outb(ESP_PORT + ESP_CMD1, ESP_CMD1_SETMODE);
-			outb(ESP_PORT + ESP_CMD2, 0x80 | 0x04 | 0x02);
+			outb(hayespbase + HAYESP_CMD1, HAYESP_SETMODE);
+			outb(hayespbase + HAYESP_CMD2, 
+			     HAYESP_MODE_FIFO|HAYESP_MODE_RTS|
+			     HAYESP_MODE_SCALE);
+
 			/* Set RTS/CTS flow control */
-			outb(ESP_PORT + ESP_CMD1, ESP_CMD1_SETFLOWTYPE);
-			outb(ESP_PORT + ESP_CMD2, 0x04);
-			outb(ESP_PORT + ESP_CMD2, 0x10);
+			outb(hayespbase + HAYESP_CMD1, HAYESP_SETFLOWTYPE);
+			outb(hayespbase + HAYESP_CMD2, HAYESP_FLOW_RTS);
+			outb(hayespbase + HAYESP_CMD2, HAYESP_FLOW_CTS);
+
 			/* Set flow control levels */
-			outb(ESP_PORT + ESP_CMD1, ESP_CMD1_SETRXFLOW);
-			outb(ESP_PORT + ESP_CMD2, ESP_HIBYTE(ESP_HIWMARK));
-			outb(ESP_PORT + ESP_CMD2, ESP_LOBYTE(ESP_HIWMARK));
-			outb(ESP_PORT + ESP_CMD2, ESP_HIBYTE(ESP_LOWMARK));
-			outb(ESP_PORT + ESP_CMD2, ESP_LOBYTE(ESP_LOWMARK));
-		} else if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
+			outb(hayespbase + HAYESP_CMD1, HAYESP_SETRXFLOW);
+			outb(hayespbase + HAYESP_CMD2, 
+			     HAYESP_HIBYTE(HAYESP_RXHIWMARK));
+			outb(hayespbase + HAYESP_CMD2,
+			     HAYESP_LOBYTE(HAYESP_RXHIWMARK));
+			outb(hayespbase + HAYESP_CMD2,
+			     HAYESP_HIBYTE(HAYESP_RXLOWMARK));
+			outb(hayespbase + HAYESP_CMD2,
+			     HAYESP_LOBYTE(HAYESP_RXLOWMARK));
+		} else
+#endif
+		if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
 			/* Set the FIFO threshold based on the receive speed. */
 			outb(iobase + com_fifo,
 			    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
@@ -724,7 +734,7 @@ comparam(tp, t)
 	 * Set the FIFO threshold based on the receive speed, if we are
 	 * changing it.
 	 */
-	if (tp->t_ispeed != t->c_ispeed && !ISSET(sc->sc_hwflags, COM_HW_ESP)) {
+	if (tp->t_ispeed != t->c_ispeed) {
 		if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
 			outb(iobase + com_fifo,
 			    FIFO_ENABLE |
@@ -804,14 +814,17 @@ comstart(tp)
 	}
 	SET(tp->t_state, TS_BUSY);
 
-	if (ISSET(sc->sc_hwflags, COM_HW_ESP)) {
+#ifdef COM_HAYESP
+	if (ISSET(sc->sc_hwflags, COM_HW_HAYESP)) {
 		u_char buffer[1024], *cp = buffer;
 		int n = q_to_b(&tp->t_outq, cp, sizeof buffer);
 		do
 			outb(iobase + com_data, *cp++);
 		while (--n);
 	}
-	else if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
+	else
+#endif
+	if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
 		u_char buffer[16], *cp = buffer;
 		int n = q_to_b(&tp->t_outq, cp, sizeof buffer);
 		do {
