@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.78 2003/02/02 20:43:24 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.79 2003/02/25 23:32:03 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,6 +38,7 @@
 #include <sys/param.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
+#include <sys/ras.h>
 #include <sys/reboot.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
@@ -97,10 +98,13 @@ trap(struct trapframe *frame)
 	case EXC_RUNMODETRC|EXC_USER:
 		/* FALLTHROUGH */
 	case EXC_TRC|EXC_USER:
-		KERNEL_PROC_LOCK(l);
 		frame->srr1 &= ~PSL_SE;
-		trapsignal(l, SIGTRAP, EXC_TRC);
-		KERNEL_PROC_UNLOCK(l);
+		if (p->p_nras == 0 ||
+		    ras_lookup(p, (caddr_t)frame->srr0) == (caddr_t) -1) {
+			KERNEL_PROC_LOCK(l);
+			trapsignal(l, SIGTRAP, EXC_TRC);
+			KERNEL_PROC_UNLOCK(l);
+		}
 		break;
 	case EXC_DSI: {
 		struct faultbuf *fb;
@@ -344,15 +348,21 @@ trap(struct trapframe *frame)
 	case EXC_PGM|EXC_USER:
 		ci->ci_ev_pgm.ev_count++;
 		KERNEL_PROC_LOCK(l);
-		if (cpu_printfataltraps) {
-			printf("trap: pid %d.%d (%s): user PGM trap @ %#lx "
-			    "(SSR1=%#lx)\n", p->p_pid, l->l_lid, p->p_comm,
-			    frame->srr0, frame->srr1);
-		}
-		if (frame->srr1 & 0x00020000)	/* Bit 14 is set if trap */
-			trapsignal(l, SIGTRAP, EXC_PGM);
-		else
+		if (frame->srr1 & 0x00020000) {	/* Bit 14 is set if trap */
+			if (p->p_nras == 0 ||
+			    ras_lookup(p, (caddr_t)frame->srr0) == (caddr_t) -1) {
+				trapsignal(l, SIGTRAP, EXC_PGM);
+			} else {
+				/* skip the trap instruction */
+				frame->srr0 += 4;
+			}
+		} else {
+			if (cpu_printfataltraps)
+				printf("trap: pid %d.%d (%s): user PGM trap @"
+				    " %#lx (SSR1=%#lx)\n", p->p_pid, l->l_lid,
+				    p->p_comm, frame->srr0, frame->srr1);
 			trapsignal(l, SIGILL, EXC_PGM);
+		}
 		KERNEL_PROC_UNLOCK(l);
 		break;
 
