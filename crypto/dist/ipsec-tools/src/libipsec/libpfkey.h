@@ -1,4 +1,4 @@
-/* $Id: libpfkey.h,v 1.1.1.1 2005/02/12 11:11:31 manu Exp $ */
+/* $Id: libpfkey.h,v 1.2 2005/02/19 22:02:59 thorpej Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -136,7 +136,7 @@ int pfkey_check __P((caddr_t *));
 #define IPPROTO_IPCOMP IPPROTO_COMP
 #endif
 
-static inline u_int8_t
+static __inline u_int8_t
 sysdep_sa_len (const struct sockaddr *sa)
 {
 #ifdef __linux__
