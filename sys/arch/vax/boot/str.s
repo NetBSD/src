@@ -1,6 +1,6 @@
-/*	$NetBSD: vaxstand.h,v 1.5 1996/08/02 11:22:56 ragge Exp $ */
+/*	$NetBSD: str.s,v 1.1 1996/08/02 11:22:50 ragge Exp $ */
 /*
- * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
+ * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,7 +13,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *     This product includes software developed at Ludd, University of Lule}.
+ *      This product includes software developed at Ludd, University of 
+ *      Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -29,37 +30,34 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /* All bugs are subject to removal without further notice */
-		
-
-#define MAXNMBA 8 /* Massbussadapters */
-#define MAXNUBA 8 /* Unibusadapters */
-#define	MAXMBAU	8 /* Units on an mba */
-
-/* Variables used in autoconf */
-extern int nmba, nuba, nbi, nsbi, nuda;
-extern int *ubaaddr, *mbaaddr, *udaaddr, *uioaddr, *biaddr;
-extern int cpunumber;
-
-/* devsw type definitions, used in bootxx and conf */
-#define SADEV(name,strategy,open,close,ioctl) \
-        { (char *)name, \
-         (int(*)(void *, int ,daddr_t , size_t, void *, size_t *))strategy, \
-         (int(*)(struct open_file *, ...))open, \
-         (int(*)(struct open_file *))close, \
-         (int(*)(struct open_file *,u_long, void *))ioctl}
-
 /*
- * Easy-to-use definitions
+ * Small versions of the most common string functions not using any
+ * emulated instructions.
  */
-#define	min(x,y) (x < y ? x : y)
 
-/*
- * Device numbers gotten from boot prom.
- */
-#define	BDEV_MBA		0
-#define	BDEV_RK06		1
-#define	BDEV_RL02		2
-#define	BDEV_UDA		17
-#define	BDEV_TK50		18
-#define	BDEV_CONSOLE		64
+#include "../include/asm.h"
+
+ENTRY(strlen, 0);
+	movl	4(ap), r0
+1:	tstb	(r0)+
+	bneq	1b
+	decl	r0
+	subl2	4(ap), r0
+	ret
+
+ENTRY(strcmp, 0)
+	movl	4(ap), r2
+	movl	8(ap), r1
+	movl	$1, r0
+
+2:	cmpb	(r2),(r1)+
+	bneq	1f		# something differ
+	tstb	(r2)+
+	bneq	2b		# continue, strings unequal
+
+	clrl	r0		# We are done, strings equal.
+	ret
+
+1:	bgtr	3f
+	mnegl	r0, r0
+3:	ret
