@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.7 2000/01/18 00:02:29 perseant Exp $	*/
+/*	$NetBSD: lfs.c,v 1.8 2000/01/18 21:57:59 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.7 2000/01/18 00:02:29 perseant Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.8 2000/01/18 21:57:59 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -242,8 +242,11 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 		if (!(fsize = partp->p_frag))
 			fsize = DFL_LFSFRAG;
 	if (!(ssize = seg_size))
-		if (!(ssize = (partp->p_fsize * partp->p_frag) << partp->p_sgs))
+		if (partp->p_sgs == 0 ||
+		    !(ssize = (partp->p_fsize * partp->p_frag) << partp->p_sgs))
+		{
 			ssize = DFL_LFSSEG;
+		}
 
 	/* Sanity check: fsize<=bsize<ssize */
 	if (fsize > bsize) {
