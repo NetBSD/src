@@ -1,4 +1,4 @@
-/*	$NetBSD: dmovervar.h,v 1.3 2002/08/04 02:17:06 thorpej Exp $	*/
+/*	$NetBSD: dmovervar.h,v 1.4 2003/06/12 17:20:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -152,19 +152,19 @@ struct dmover_request {
 	__volatile int dreq_flags; /* flags; see below */
 	int	dreq_error;	   /* valid if DMOVER_REQ_ERROR is set */
 
+	/*
+	 * General purpose immediate value.  Can be used as an
+	 * input, output, or both, depending on the function.
+	 */
+	uint8_t	dreq_immediate[8];
+
 	/* Output buffer. */
 	dmover_buffer_type dreq_outbuf_type;
 	dmover_buffer dreq_outbuf;
 
 	/* Input buffer. */
 	dmover_buffer_type dreq_inbuf_type;
-	union {
-		uint8_t _immediate[8];
-		dmover_buffer *_inbuf;
-	} _dreq_inbuf_un;
-
-#define	dreq_immediate		_dreq_inbuf_un._immediate
-#define	dreq_inbuf		_dreq_inbuf_un._inbuf
+	dmover_buffer dreq_inbuf;
 };
 
 /* dreq_flags */
