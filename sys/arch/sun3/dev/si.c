@@ -31,7 +31,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: si.c,v 1.4 1994/05/28 15:40:25 gwr Exp $
+ * $Id: si.c,v 1.5 1994/05/28 15:43:49 gwr Exp $
  */
 
 /* #define DEBUG 1 */
@@ -237,7 +237,7 @@ ncr5380_minphys(struct buf *bp)
 }
 #undef MIN_PHYS
 
-static int									/* si_attach+0x190 */
+static int
 ncr5380_scsi_cmd(struct scsi_xfer *xs)
 {
 	int flags, s, r;
