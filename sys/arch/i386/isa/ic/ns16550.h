@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ns16550.h	7.1 (Berkeley) 5/9/91
- *	$Id: ns16550.h,v 1.2 1993/05/22 08:02:01 cgd Exp $
+ *	$Id: ns16550.h,v 1.3 1993/06/30 04:04:24 andrew Exp $
  */
 
 /*
@@ -49,3 +49,4 @@
 #define	com_mcr		4	/* modem control register (R/W) */
 #define	com_lsr		5	/* line status register (R/W) */
 #define	com_msr		6	/* modem status register (R/W) */
+#define com_scratch	7	/* scratch register (R/W) */
