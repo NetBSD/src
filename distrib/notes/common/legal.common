@@ -1,6 +1,6 @@
-.\"	$NetBSD: legal.common,v 1.18 2001/02/07 08:29:53 reinoud Exp $
+.\"	$NetBSD: legal.common,v 1.19 2001/04/07 14:41:52 jhawk Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -48,245 +48,146 @@ the following checks:
 .
 This product includes software developed by the University of
 California, Berkeley and its contributors.
-.Pp
 This product includes software developed by The NetBSD Foundation, Inc.
-.Pp
 This product includes software developed by the NetBSD Foundation, Inc.
 and its contributors.
-.Pp
 This product includes software developed by the Computer
 Systems Engineering Group at Lawrence Berkeley Laboratory.
-.Pp
 This product includes software developed by Adam Glass
 and Charles Hannum.
-.Pp
 This product includes software developed by Adam Glass
 and Charles M. Hannum.
-.Pp
 This product includes software developed by Adam Glass.
-.Pp
 This product includes software developed by Alistair G. Crooks.
-.Pp
 This product includes software developed by Amancio Hasty and
 Roger Hardiman.
-.Pp
 This product includes software developed by Berkeley Software
 Design, Inc.
-.Pp
 This product includes software developed by Bill Paul.
-.Pp
 This product includes software developed by Charles D. Cranor
 and Washington University.
-.Pp
 This product includes software developed by Charles D. Cranor.
-.Pp
 This product includes software developed by Charles Hannum,
 by the University of Vermont and State Agricultural College
 and Garrett A. Wollman, by William F. Jolitz, and by the
 University of California, Berkeley, Lawrence Berkeley Laboratory,
 and its contributors.
-.Pp
 This product includes software developed by Charles Hannum.
-.Pp
 This product includes software developed by Charles M. Hannum.
-.Pp
 This product includes software developed by Chris Provenzano.
-.Pp
 This product includes software developed by Christian E. Hopps.
-.Pp
 This product includes software developed by Christopher G. Demetriou
 for the NetBSD Project.
-.Pp
 This product includes software developed by Christopher G. Demetriou.
-.Pp
 This product includes software developed by Christos Zoulas.
-.Pp
 This product includes software developed by David Jones and Gordon Ross.
-.Pp
 This product includes software developed by Dean Huxley.
-.Pp
 This product includes software developed by Eric S. Hvozda.
-.Pp
 This product includes software developed by Ezra Story.
-.Pp
 This product includes software developed by Gardner Buchanan.
-.Pp
 This product includes software developed by Gordon Ross.
-.Pp
 This product includes software developed by Gordon W. Ross
 and Leo Weppelman.
-.Pp
 This product includes software developed by Gordon W. Ross.
-.Pp
 This product includes software developed by Hauke Fath.
-.Pp
 This product includes software developed by HAYAKAWA Koichi.
-.Pp
 This product includes software developed by
 Hellmuth Michaelis and Joerg Wunsch.
-.Pp
 This product includes software developed by Herb Peyerl.
-.Pp
 This product includes software developed by Holger Veit and Brian Moore
 for use with "386BSD" and similar operating systems.
-.Pp
 This product includes software developed by Hubert Feyrer for
 the NetBSD Project.
-.Pp
 This product includes software developed by Iain Hibbert.
-.Pp
 This product includes software developed by Ian W. Dall.
-.Pp
 This product includes software developed by Ignatios Souvatzis
 for the NetBSD Project.
-.Pp
 This product includes software developed by Jason R. Thorpe
 for And Communications, http://www.and.com/.
-.Pp
 This product includes software developed by Joachim Koenig-Baltes.
-.Pp
 This product includes software developed by Jochen Pohl
 for The NetBSD Project.
-.Pp
 This product includes software developed by John Polstra.
-.Pp
 This product includes software developed by Jonathan Stone
 and Jason R. Thorpe for the NetBSD Project.
-.Pp
 This product includes software developed by Jonathan Stone
 for the NetBSD Project.
-.Pp
 This product includes software developed by Jonathan Stone.
-.Pp
 This product includes software developed by Julian Highfield.
-.Pp
 This product includes software developed by Kenneth Stailey.
-.Pp
 This product includes software developed by Leo Weppelman.
-.Pp
 This product includes software developed by Lloyd Parkes.
-.Pp
 This product includes software developed by Manuel Bouyer.
-.Pp
 This product includes software developed by Marc Horowitz.
-.Pp
 This product includes software developed by Mark Brinicombe.
-.Pp
 This product includes software developed by Mark Tinguely and Jim Lowe.
-.Pp
 This product includes software developed by Markus Wild.
-.Pp
 This product includes software developed by Martin Husemann
 and Wolfgang Solfrank.
-.Pp
 This product includes software developed by Mats O Jansson
 and Charles D. Cranor.
-.Pp
 This product includes software developed by Mats O Jansson.
-.Pp
 This product includes software developed by Matthias Pfaller.
-.Pp
 This product includes software developed by Michael L. Hitch.
-.Pp
 This product includes software developed by Niels Provos.
-.Pp
 This product includes software developed by Paul Kranenburg.
-.Pp
 This product includes software developed by Paul Mackerras.
-.Pp
 This product includes software developed by Peter Galbavy.
-.Pp
 This product includes software developed by Philip A. Nelson.
-.Pp
 This product includes software developed by Rodney W. Grimes.
-.Pp
 This product includes software developed by Roland C. Dowdeswell.
-.Pp
 This product includes software developed by Rolf Grossmann.
-.Pp
 This product includes software developed by Scott Bartram.
-.Pp
 This product includes software developed by SigmaSoft, Th. Lockert.
-.Pp
 This product includes software developed by Tatoku Ogaito
 for the NetBSD Project.
-.Pp
 This product includes software developed by Terrence R. Lambert.
-.Pp
 This product includes software developed by Theo de Raadt
 and John Brezak.
-.Pp
 This product includes software developed by Theo de Raadt.
-.Pp
 This product includes software developed by Tohru Nishimura
 for the NetBSD Project.
-.Pp
 This product includes software developed by TooLs GmbH.
-.Pp
 This product includes software developed by Winning Strategies, Inc.
-.Pp
 This product includes software developed by Zembu Labs, Inc.
-.Pp
 This product includes software developed by the Center for
 Software Science at the University of Utah.
-.Pp
 This product includes software developed by the Computer
 Systems Laboratory at the University of Utah.
-.Pp
 This product includes software developed by the University of Calgary
 Department of Computer Science and its contributors.
-.Pp
 This product includes software developed by the University of Vermont
 and State Agricultural College and Garrett A. Wollman.
-.Pp
 This product includes software developed for the FreeBSD project.
-.Pp
 This product includes software developed for the Internet
 Software Consortium by Ted Lemon.
-.Pp
 This product includes software developed for the NetBSD Project
 by Frank van der Linden.
-.Pp
 This product includes software developed for the NetBSD Project
 by Jason R. Thorpe.
-.Pp
 This product includes software developed for the NetBSD Project
 by John M. Vinopal.
-.Pp
 This product includes software developed for the NetBSD Project
 by Matthias Drochner.
-.Pp
 This product includes software developed for the NetBSD Project
 by Matthieu Herrb.
-.Pp
 This product includes software developed for the NetBSD Project
 by Perry E. Metzger.
-.Pp
 This product includes software developed for the NetBSD Project
 by Piermont Information Systems Inc.
-.Pp
 This product includes software developed for the NetBSD Project
 by Ted Lemon.
-.Pp
 This product includes software developed by LAN Media Corporation
 and its contributors.
-.Pp
 This product includes software developed by Michael Graff for
 the NetBSD Project.
-.Pp
 This product includes software developed by Niklas Hallqvist,
 C Stone and Job de Haas.
-.Pp
 This product includes software developed by Eric Young (eay@mincom.oz.au).
-.Pp
 This product includes software developed by the OpenSSL Project
 for use in the OpenSSL Toolkit (http://www.openssl.org/).
-.Pp
 This product includes software developed by the University of Oregon.
-.Pp
 This product includes software developed by the University of Southern
 California and/or Information Sciences Institute.
-.Pp
 This product includes software developed by Internet Initiative Japan Inc.
-.Pp
 This product includes software developed by Reinoud Zandijk.
