@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.4 2004/03/19 15:21:42 pk Exp $	*/
+/*	$NetBSD: cons.h,v 1.5 2004/03/21 15:07:00 pk Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -45,8 +45,6 @@ struct pconssoftc {
 
 #define	OFBURSTLEN	128	/* max number of bytes to write in one chunk */
 
-/* These are shared with the consinit OBP console */
-extern int stdin, stdout;
 void pcons_cnpollc __P((dev_t dev, int on));
 
 struct consdev;
