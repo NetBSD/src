@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.47 2004/04/29 16:10:54 jrf Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.48 2004/05/12 02:07:37 jrf Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.47 2004/04/29 16:10:54 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.48 2004/05/12 02:07:37 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -327,7 +327,7 @@ fifo_ioctl(void *v)
 	struct vop_ioctl_args /* {
 		struct vnode	*a_vp;
 		u_long		a_command;
-		caddr_t		a_data;
+		void		*a_data;
 		int		a_fflag;
 		struct ucred	*a_cred;
 		struct proc	*a_p;
@@ -338,13 +338,13 @@ fifo_ioctl(void *v)
 	if (ap->a_command == FIONBIO)
 		return (0);
 	if (ap->a_fflag & FREAD) {
-		filetmp.f_data = (caddr_t)ap->a_vp->v_fifoinfo->fi_readsock;
+		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_readsock;
 		error = soo_ioctl(&filetmp, ap->a_command, ap->a_data, ap->a_p);
 		if (error)
 			return (error);
 	}
 	if (ap->a_fflag & FWRITE) {
-		filetmp.f_data = (caddr_t)ap->a_vp->v_fifoinfo->fi_writesock;
+		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_writesock;
 		error = soo_ioctl(&filetmp, ap->a_command, ap->a_data, ap->a_p);
 		if (error)
 			return (error);
@@ -366,12 +366,12 @@ fifo_poll(void *v)
 
 	revents = 0;
 	if (ap->a_events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
-		filetmp.f_data = (caddr_t)ap->a_vp->v_fifoinfo->fi_readsock;
+		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_readsock;
 		if (filetmp.f_data)
 			revents |= soo_poll(&filetmp, ap->a_events, ap->a_p);
 	}
 	if (ap->a_events & (POLLOUT | POLLWRNORM | POLLWRBAND)) {
-		filetmp.f_data = (caddr_t)ap->a_vp->v_fifoinfo->fi_writesock;
+		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_writesock;
 		if (filetmp.f_data)
 			revents |= soo_poll(&filetmp, ap->a_events, ap->a_p);
 	}

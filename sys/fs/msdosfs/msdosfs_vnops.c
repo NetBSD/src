@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.10 2004/05/04 13:26:58 jrf Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.11 2004/05/12 02:07:38 jrf Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.10 2004/05/04 13:26:58 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.11 2004/05/12 02:07:38 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1798,7 +1798,7 @@ msdosfs_advlock(v)
 {
 	struct vop_advlock_args /* {
 		struct vnode *a_vp;
-		caddr_t a_id;
+		void *a_id;
 		int a_op;
 		struct flock *a_fl;
 		int a_flags;
