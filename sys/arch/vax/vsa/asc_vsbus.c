@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.8 2000/04/17 16:30:40 ragge Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.9 2000/04/17 20:36:23 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,9 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_vax46.h"
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.8 2000/04/17 16:30:40 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.9 2000/04/17 20:36:23 ragge Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.8 2000/04/17 16:30:40 ragge Exp $");
 #include <machine/rpb.h>
 #include <machine/scb.h>
 #include <machine/vsbus.h>
+#include <machine/clock.h>	/* for SCSI ctlr ID# XXX */
 
 struct asc_vsbus_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* Must be first */
@@ -204,7 +207,17 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	error = bus_dmamap_create(asc->sc_dmat, ASC_MAXXFERSIZE, 1, 
 	    ASC_MAXXFERSIZE, 0, BUS_DMA_NOWAIT, &asc->sc_dmamap);
 
-	sc->sc_id = 6;	/* XXX need to get this from VMB */
+	switch (vax_boardtype) {
+#if defined(VAX46)
+	case VAX_BTYP_46:
+		sc->sc_id = (clk_page[0xbc/2] >> clk_tweak) & 7;
+		break;
+#endif
+	default:
+		sc->sc_id = 6;	/* XXX need to get this from VMB */
+		break;
+	}
+printf("SCSIid: %d ", sc->sc_id);
 	sc->sc_freq = ASC_FREQUENCY;
 
 	/* gimme Mhz */
