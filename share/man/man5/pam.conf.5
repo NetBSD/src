@@ -1,4 +1,4 @@
-.\"	$NetBSD: pam.conf.5,v 1.2 2005/03/07 02:44:33 christos Exp $
+.\"	$NetBSD: pam.conf.5,v 1.3 2005/03/07 03:11:01 thorpej Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -181,7 +181,7 @@ the
 file, allows Kerberos 5 password authentication, and requires standard
 .Ux
 password authentication if Kerberos 5 failed:
-.Bd -literal
+.Bd -literal -offset indent
 auth	sufficient	pam_self.so
 auth	required	pam_nologin.so
 auth	sufficient	pam_krb5.so
