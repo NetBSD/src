@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.7 1998/06/08 04:27:52 scottr Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.8 1998/08/09 03:16:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -147,7 +147,7 @@ ufs_quotactl(mp, cmds, uid, arg, p)
 		break;
 
 	case Q_GETQUOTA:
-		error =getquota(mp, uid, type, arg);
+		error = getquota(mp, uid, type, arg);
 		break;
 
 	case Q_SYNC:
