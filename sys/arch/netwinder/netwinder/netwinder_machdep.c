@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.39 2002/10/09 00:33:39 thorpej Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.40 2002/10/12 11:53:43 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -883,7 +883,7 @@ consinit(void)
 
 #if NISA > 0
 	/* Initialise the ISA subsystem early ... */
-	isa_netwinder_init(DC21285_PCI_IO_VBASE, DC21285_PCI_ISA_MEM_VBASE);
+	isa_footbridge_init(DC21285_PCI_IO_VBASE, DC21285_PCI_ISA_MEM_VBASE);
 #endif
 
 	footbridge_pci_bs_tag_init();
