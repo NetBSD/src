@@ -26,7 +26,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: pppstats.c,v 1.3 1993/11/10 01:35:21 paulus Exp $";
+static char rcsid[] = "$Id: pppstats.c,v 1.4 1993/11/28 23:36:46 paulus Exp $";
 #endif
 
 #include <sys/param.h>
@@ -34,9 +34,7 @@ static char rcsid[] = "$Id: pppstats.c,v 1.3 1993/11/10 01:35:21 paulus Exp $";
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/file.h>
-#ifndef KVMLIB
 #include <machine/pte.h>
-#endif
 #ifdef sun
 #include <kvm.h>
 #endif
@@ -45,6 +43,10 @@ static char rcsid[] = "$Id: pppstats.c,v 1.3 1993/11/10 01:35:21 paulus Exp $";
 #include <nlist.h>
 #include <stdio.h>
 #include <signal.h>
+#ifndef sun
+#include <paths.h>
+#endif
+
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -74,12 +76,6 @@ struct nlist nl[] = {
 };
 #endif
 
-#ifndef KVMLIB
-struct	pte *Sysmap;
-int	kmem;
-extern	off_t lseek();
-#endif
-
 #ifdef sun
 kvm_t	*kd;
 #endif
@@ -87,25 +83,16 @@ kvm_t	*kd;
 #ifdef sun
 char	*system = "/vmunix";
 #else
-#ifdef __NetBSD__
-char	*system = "/netbsd";
-#else
-char	*system = "/386bsd";
-#endif
+char	*system = _PATH_UNIX;
 #endif
 
-#ifndef KVMLIB
-char	*kmemf = "/dev/kmem";
-#else
 char	*kmemf;
-#endif
 int	kflag;
 int	vflag;
 unsigned interval = 5;
 int	unit;
 
 extern	char *malloc();
-
 
 main(argc, argv)
 	int argc;
@@ -145,31 +132,6 @@ main(argc, argv)
 			kflag++;
 		}
 	}
-#ifndef KVMLIB
-	if (nlist(system, nl) < 0 || nl[0].n_type == 0) {
-		fprintf(stderr, "%s: no namelist\n", system);
-		exit(1);
-	}
-	kmem = open(kmemf, O_RDONLY);
-	if (kmem < 0) {
-		perror(kmemf);
-		exit(1);
-	}
-	if (kflag) {
-		off_t off;
-
-		Sysmap = (struct pte *)
-		   malloc((u_int)(nl[N_SYSSIZE].n_value * sizeof(struct pte)));
-		if (!Sysmap) {
-			fputs("netstat: can't get memory for Sysmap.\n", stderr);
-			exit(1);
-		}
-		off = nl[N_SYSMAP].n_value & ~KERNBASE;
-		(void)lseek(kmem, off, L_SET);
-		(void)read(kmem, (char *)Sysmap,
-		    (int)(nl[N_SYSSIZE].n_value * sizeof(struct pte)));
-	}
-#else
 #ifdef sun
 	/* SunOS */
 	if ((kd = kvm_open(system, kmemf, (char *)0, O_RDONLY, NULL)) == NULL) {
@@ -192,28 +154,9 @@ main(argc, argv)
 	  fprintf(stderr, "pppstats: can't find symbols in nlist\n");
 	  exit(1);
 	}
-#endif
 	intpr();
 	exit(0);
 }
-
-#ifndef KVMLIB
-/*
- * Seek into the kernel for a value.
- */
-off_t
-klseek(fd, base, off)
-	int fd, off;
-	off_t base;
-{
-	if (kflag) {
-		/* get kernel pte */
-		base &= ~KERNBASE;
-                base = ctob(Sysmap[btop(base)].pg_pfnum) + (base & PGOFSET);
-	}
-	return (lseek(fd, base, off));
-}
-#endif
 
 usage()
 {
@@ -256,13 +199,6 @@ intpr()
 	bzero((char *)osc, sizeof(STRUCT));
 
 	while (1) {
-#ifndef KVMLIB
-		if (klseek(kmem, (off_t)nl[N_SOFTC].n_value, 0) < 0)
-			if(errno != EINTR)
-				perror("kmem seek");
-		if (read(kmem, (char *)sc, sizeof(STRUCT)) <= 0)
-			perror("kmem read");
-#else
 #ifdef sun
 		if (kvm_read(kd, nl[N_SOFTC].n_value,
 #else
@@ -271,7 +207,6 @@ intpr()
 			     sc, sizeof(STRUCT)) !=
 		    sizeof(STRUCT))
 		  perror("kvm_read");
-#endif
 
 		(void)signal(SIGALRM, catchalarm);
 		signalled = 0;
