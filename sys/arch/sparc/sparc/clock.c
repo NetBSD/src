@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.36 1996/03/31 23:07:59 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.37 1996/04/04 23:55:47 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -211,12 +211,19 @@ oclockmatch(parent, vcf, aux)
 {
 	register struct confargs *ca = aux;
 
-	if (CPU_ISSUN4) {
-		if (cpumod == SUN4_100 || cpumod == SUN4_200)
-			return (strcmp(oclock_cd.cd_name, ca->ca_ra.ra_name) == 0);
+	/* Only these sun4s have oclock */
+	if (!CPU_ISSUN4 || (cpumod != SUN4_100 && cpumod != SUN4_200))
 		return (0);
-	}
-	return (0); /* only sun4 has oclock */
+
+	/* Check configuration name */
+	if (strcmp(oclock_cd.cd_name, ca->ca_ra.ra_name) != 0)
+		return (0);
+
+	/* Make sure there is something there */
+	if (probeget(ca->ca_ra.ra_vaddr, 1) == -1)
+		return (0);
+
+	return (1);
 }
 
 /* ARGSUSED */
@@ -257,23 +264,28 @@ eeprom_match(parent, vcf, aux)
 	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 
-	if (CPU_ISSUN4) {
-		if (cf->cf_unit != 0)
-			return (0);
+	if (!CPU_ISSUN4)
+		return (0);
 
-		if (cpumod == SUN4_100 || cpumod == SUN4_200) {
-			if (strcmp(eeprom_cd.cd_name, ca->ca_ra.ra_name))
-				return (0);
-			/*
-			 * Make sure there's something there...
-			 * This is especially important if we want to
-			 * use the same kernel on a 4/100 as a 4/200.
-			 */
-			if (probeget(ca->ca_ra.ra_vaddr, 1) != -1)
-				return (1);
-		}
-	}
-	return (0);
+	if (cf->cf_unit != 0)
+		return (0);
+
+	if (cpumod != SUN4_100 && cpumod != SUN4_200)
+		return (0);
+
+	if (strcmp(eeprom_cd.cd_name, ca->ca_ra.ra_name) != 0)
+		return (0);
+
+	/*
+	 * Make sure there's something there...
+	 * This is especially important if we want to
+	 * use the same kernel on a 4/100 as a 4/200.
+	 */
+	if (probeget(ca->ca_ra.ra_vaddr, 1) == -1)
+		return (0);
+
+	/* Passed all tests */
+	return (1);
 }
 
 static void
@@ -305,11 +317,20 @@ clockmatch(parent, vcf, aux)
 	register struct confargs *ca = aux;
 
 	if (CPU_ISSUN4) {
-		if (cpumod == SUN4_300 || cpumod == SUN4_400)
-			return (strcmp(clock_cd.cd_name,
-				       ca->ca_ra.ra_name) == 0);
-		return (0);
+		/* Only these sun4s have "clock" (others have "oclock") */
+		if (cpumod != SUN4_300 && cpumod != SUN4_400)
+			return (0);
+
+		if (strcmp(clock_cd.cd_name, ca->ca_ra.ra_name) != 0)
+			return (0);
+
+		/* Make sure there is something there */
+		if (probeget(ca->ca_ra.ra_vaddr, 1) == -1)
+			return (0);
+
+		return (1);
 	}
+
 	return (strcmp("eeprom", ca->ca_ra.ra_name) == 0);
 }
 
@@ -397,9 +418,17 @@ timermatch(parent, vcf, aux)
 	register struct confargs *ca = aux;
 
 	if (CPU_ISSUN4) {
-		if (cpumod == SUN4_300 || cpumod == SUN4_400)
-			return (strcmp("timer", ca->ca_ra.ra_name) == 0);
-		return (0);
+		if (cpumod != SUN4_300 && cpumod != SUN4_400)
+			return (0);
+
+		if (strcmp("timer", ca->ca_ra.ra_name) != 0)
+			return (0);
+
+		/* Make sure there is something there */
+		if (probeget(ca->ca_ra.ra_vaddr, 4) == -1)
+			return (0);
+
+		return (1);
 	}
 
 	if (CPU_ISSUN4C) {
