@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.49 1998/03/01 07:15:39 ross Exp $	*/
+/*	$NetBSD: ccd.c,v 1.50 1998/07/09 20:56:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -783,6 +783,7 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp)
 	register struct ccdcinfo *ci, *ci2 = NULL;
 	register struct ccdbuf *cbp;
 	register daddr_t cbn, cboff;
+	register u_int64_t cbc;
 	int ccdisk;
 
 #ifdef DEBUG
@@ -858,11 +859,10 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp)
 	cbp->cb_buf.b_data = addr;
 	cbp->cb_buf.b_vp = ci->ci_vp;
 	if (cs->sc_ileave == 0)
-		cbp->cb_buf.b_bcount = dbtob(ci->ci_size - cbn);
+		cbc = dbtob((u_int64_t)(ci->ci_size - cbn));
 	else
-		cbp->cb_buf.b_bcount = dbtob(cs->sc_ileave - cboff);
-	if (cbp->cb_buf.b_bcount > bcount)
-		cbp->cb_buf.b_bcount = bcount;
+		cbc = dbtob((u_int64_t)(cs->sc_ileave - cboff));
+	cbp->cb_buf.b_bcount = cbc < bcount ? cbc : bcount;
 
 	/*
 	 * context for ccdiodone
