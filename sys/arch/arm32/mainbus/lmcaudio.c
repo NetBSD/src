@@ -1,4 +1,4 @@
-/* $NetBSD: lmcaudio.c,v 1.7 1997/05/09 22:16:27 augustss Exp $ */
+/* $NetBSD: lmcaudio.c,v 1.8 1997/07/15 07:46:07 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -362,7 +362,7 @@ lmcaudio_set_params(addr, mode, p, q)
 	int mode;
 	struct audio_params *p, *q;
 {
-	if (p->encoding != AUDIO_ENCODING_LINEAR_LE ||
+	if (p->encoding != AUDIO_ENCODING_SLINEAR_LE ||
 	    p->precision != 16 ||
 	    p->channels != 2)
 		return EINVAL;
@@ -383,7 +383,7 @@ lmcaudio_query_encoding(addr, fp)
 	switch (fp->index) {
 	case 0:
 		strcpy (fp->name, AudioElinear_le);
-		fp->encoding = AUDIO_ENCODING_LINEAR_LE;
+		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
 		break;
