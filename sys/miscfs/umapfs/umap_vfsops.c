@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.21 1999/03/12 18:16:44 bouyer Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.22 1999/03/19 21:46:26 perseant Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,6 +89,9 @@ umapfs_mount(mp, path, data, ndp, p)
 	struct umap_mount *amp;
 	size_t size;
 	int error;
+#ifdef UMAPFS_DIAGNOSTIC
+	int i;
+#endif
 
 	/* only for root */
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
@@ -158,10 +161,10 @@ umapfs_mount(mp, path, data, ndp, p)
 	if (error)
 		return (error);
 
-#ifdef UMAP_DIAGNOSTIC
+#ifdef UMAPFS_DIAGNOSTIC
 	printf("umap_mount:nentries %d\n",args.nentries);
 	for (i = 0; i < args.nentries; i++)
-		printf("   %d maps to %d\n", amp->info_mapdata[i][0],
+		printf("   %ld maps to %ld\n", amp->info_mapdata[i][0],
 	 	    amp->info_mapdata[i][1]);
 #endif
 
@@ -170,10 +173,10 @@ umapfs_mount(mp, path, data, ndp, p)
 	if (error)
 		return (error);
 
-#ifdef UMAP_DIAGNOSTIC
+#ifdef UMAPFS_DIAGNOSTIC
 	printf("umap_mount:gnentries %d\n",args.gnentries);
 	for (i = 0; i < args.gnentries; i++)
-		printf("\tgroup %d maps to %d\n", 
+		printf("\tgroup %ld maps to %ld\n", 
 		    amp->info_gmapdata[i][0],
 	 	    amp->info_gmapdata[i][1]);
 #endif
