@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.45 1998/07/26 11:18:19 mycroft Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.46 1998/07/26 11:22:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -243,7 +243,7 @@ static const char *const dktypenames[] = {
 #define	FS_EX2FS	17		/* Linux Extended 2 file system */
 
 #ifdef	DKTYPENAMES
-static char *fstypenames[] = {
+static const char *const fstypenames[] = {
 	"unused",
 	"swap",
 	"Version 6",
