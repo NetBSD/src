@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 1998/09/27 17:22:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.35 1998/12/16 00:48:22 perry Exp $
 #
 #  NetBSD Makefile
 #
@@ -34,8 +34,8 @@ SRCS=	alias.c arpadate.c clock.c collect.c conf.c convtime.c daemon.c \
 	savemail.c srvrsmtp.c stab.c stats.c sysexits.c trace.c udb.c \
 	usersmtp.c util.c version.c
 MAN=	aliases.5 mailq.1 newaliases.1 sendmail.8
-LINKS=	/usr/sbin/sendmail /usr/bin/newaliases \
-	/usr/sbin/sendmail /usr/bin/mailq
+SYMLINKS=	/usr/sbin/sendmail /usr/bin/newaliases \
+		/usr/sbin/sendmail /usr/bin/mailq
 BINDIR=	/usr/sbin
 BINOWN=	root
 BINGRP=	kmem
