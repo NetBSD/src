@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.151 2003/10/21 22:55:47 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.152 2003/10/31 03:32:20 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.151 2003/10/21 22:55:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.152 2003/10/31 03:32:20 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -1756,13 +1756,12 @@ sysctl_dolwp(int *name, u_int namelen, void *vwhere, size_t *sizep)
 	struct proc *p;
 	struct lwp *l;
 	char *where, *dp;
-	int type, pid, elem_size, elem_count;
+	int pid, elem_size, elem_count;
 	int buflen, needed, error;
 
 	dp = where = vwhere;
 	buflen = where != NULL ? *sizep : 0;
 	error = needed = 0;
-	type = name[0];
 
 	if (namelen != 4)
 		return (EINVAL);

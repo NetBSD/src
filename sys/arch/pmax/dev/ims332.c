@@ -1,4 +1,4 @@
-/*	$NetBSD: ims332.c,v 1.15 2003/08/07 16:29:09 agc Exp $	*/
+/*	$NetBSD: ims332.c,v 1.16 2003/10/31 03:32:19 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ims332.c,v 1.15 2003/08/07 16:29:09 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ims332.c,v 1.16 2003/10/31 03:32:19 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,12 +283,9 @@ int
 ims332_video_off(fi)
 	struct fbinfo *fi;
 {
-	u_char *cmap_bits;
 
 	if (fi -> fi_blanked)
 		return 0;
-
-	cmap_bits = (u_char *)fi -> fi_cmap_bits;
 
 	ims332_write_register (fi, IMS332_REG_LUT_BASE, 0);
 
