@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.59 2000/10/04 08:59:16 toshii Exp $	*/
+/*	$NetBSD: socket.h,v 1.60 2001/05/05 12:47:58 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -189,7 +189,7 @@ struct	linger {
  * addresses.
  */
 struct sockaddr {
-	u_char		sa_len;		/* total length */
+	uint8_t		sa_len;		/* total length */
 	sa_family_t	sa_family;	/* address family */
 	char		sa_data[14];	/* actually longer; address value */
 };
@@ -211,13 +211,13 @@ struct sockproto {
  */
 #define _SS_MAXSIZE	128
 #define _SS_ALIGNSIZE	(sizeof(int64_t))
-#define _SS_PAD1SIZE	(_SS_ALIGNSIZE - sizeof(u_char) * 2)
-#define _SS_PAD2SIZE	(_SS_MAXSIZE - sizeof(u_char) * 2 - \
+#define _SS_PAD1SIZE	(_SS_ALIGNSIZE - 2)
+#define _SS_PAD2SIZE	(_SS_MAXSIZE - 2 - \
 				_SS_PAD1SIZE - _SS_ALIGNSIZE)
 
 #if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 500
 struct sockaddr_storage {
-	u_char		ss_len;		/* address length */
+	uint8_t		ss_len;		/* address length */
 	sa_family_t	ss_family;	/* address family */
 	char		__ss_pad1[_SS_PAD1SIZE];
 	int64_t      __ss_align;/* force desired structure storage alignment */
@@ -455,8 +455,8 @@ struct cmsghdr {
  * 4.3 compat sockaddr, move to compat file later
  */
 struct osockaddr {
-	u_short	sa_family;		/* address family */
-	char	sa_data[14];		/* up to 14 bytes of direct address */
+	uint16_t	sa_family;	/* address family */
+	char		sa_data[14];	/* up to 14 bytes of direct address */
 };
 
 /*
