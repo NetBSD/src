@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 1999/03/03 12:26:07 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 1999/09/12 16:08:14 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -42,11 +42,15 @@
 #elif defined(__i386__) || defined(__sparc__)
 # define	NLIST_ELF32
 # define	NLIST_AOUT
+#elif defined(__sh3__)
+# define	NLIST_COFF
+# define	NLIST_ELF32
 #else
 # define	NLIST_AOUT
 /* #define	NLIST_ECOFF */
 /* #define	NLIST_ELF32 */
 /* #define	NLIST_ELF64 */
+/* #define	NLIST_COFF */
 #endif
 
 #ifdef NLIST_AOUT
@@ -64,4 +68,8 @@ int	findoff_elf32 __P((const char *, size_t, u_long, size_t *));
 #ifdef NLIST_ELF64
 int	check_elf64 __P((const char *, size_t));
 int	findoff_elf64 __P((const char *, size_t, u_long, size_t *));
+#endif
+#ifdef NLIST_COFF
+int	check_coff __P((const char *, size_t));
+int	findoff_coff __P((const char *, size_t, u_long, size_t *));
 #endif

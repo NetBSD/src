@@ -1,4 +1,4 @@
-/*	$NetBSD: mdsetimage.c,v 1.7 1998/08/27 18:03:44 ross Exp $	*/
+/*	$NetBSD: mdsetimage.c,v 1.8 1999/09/12 16:08:14 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mdsetimage.c,v 1.7 1998/08/27 18:03:44 ross Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.8 1999/09/12 16:08:14 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -197,6 +197,9 @@ struct {
 #endif
 #ifdef NLIST_ELF64
 	{	"ELF64",	check_elf64,	findoff_elf64,	},
+#endif
+#ifdef NLIST_COFF
+	{	"COFF",		check_coff,	findoff_coff,	},
 #endif
 };
 

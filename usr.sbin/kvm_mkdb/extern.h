@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.9 1999/01/29 22:23:36 thorpej Exp $	*/
+/*	$NetBSD: extern.h,v 1.10 1999/09/12 16:08:15 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -50,6 +50,9 @@
 #  define	NLIST_AOUT
 #  define	NLIST_ELF32
 #  define	NLIST_ELF64
+#elif defined(__sh3__)
+#  define	NLIST_COFF
+#  define	NLIST_ELF32
 #else 
 #  define	NLIST_AOUT
 /* #define	NLIST_ECOFF */
@@ -63,6 +66,9 @@ int	testdb __P((void));
 
 #ifdef NLIST_AOUT
 int	create_knlist_aout __P((const char *, DB *));
+#endif
+#ifdef NLIST_COFF
+int	create_knlist_coff __P((const char *, DB *));
 #endif
 #ifdef NLIST_ECOFF
 int	create_knlist_ecoff __P((const char *, DB *));
