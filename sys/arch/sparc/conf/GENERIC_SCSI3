@@ -1,7 +1,9 @@
-# 	$NetBSD: GENERIC_SCSI3,v 1.6 1995/03/02 20:48:20 pk Exp $
+# 	$NetBSD: GENERIC_SCSI3,v 1.7 1995/06/02 17:53:55 pk Exp $
 
 machine		sparc
 options		"SUN4", "SUN4C"
+#options	MMU_3L
+#options	DDB,DEBUG,DIAGNOSTIC
 
 # obsolete timezone spec
 options		TIMEZONE=0, DST=0
@@ -45,6 +47,7 @@ options		LKM
 
 # Options for SPARCstation hardware
 options		COMPAT_SUNOS		# compatibility with SunOS binaries
+options		COMPAT_SVR4		# compatibility with SVR4 binaries
 
 config		netbsd	swap generic
 
@@ -114,10 +117,10 @@ scsibus* at esp?
 # Map scsi-id 3 to  sd0; no questions asked. Map the remaining drives
 # in the default order. This is because SunOS's rom swaps scsi-id 3 to
 # sd0, and scsi-id 0 to sd3.
-sd0	at scsibus? target 3 drive ?
-sd*	at scsibus? target ? drive ?
-st*	at scsibus? target ? drive ?
-cd*	at scsibus? target ? drive ?
+sd0	at scsibus? target 3 lun ?
+sd*	at scsibus? target ? lun ?
+st*	at scsibus? target ? lun ?
+cd*	at scsibus? target ? lun ?
 
 fdc0	at mainbus0
 fd*	at fdc0

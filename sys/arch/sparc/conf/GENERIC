@@ -1,7 +1,9 @@
-# 	$NetBSD: GENERIC,v 1.6 1995/03/02 20:48:17 pk Exp $
+# 	$NetBSD: GENERIC,v 1.7 1995/06/02 17:53:51 pk Exp $
 
 machine		sparc
 options		"SUN4", "SUN4C"
+#options	MMU_3L
+#options	DDB,DEBUG,DIAGNOSTIC
 
 # obsolete timezone spec
 options		TIMEZONE=0, DST=0
@@ -45,6 +47,7 @@ options		LKM
 
 # Options for SPARCstation hardware
 options		COMPAT_SUNOS		# compatibility with SunOS binaries
+options		COMPAT_SVR4		# compatibility with SVR4 binaries
 
 config		netbsd	swap generic
 
@@ -111,9 +114,9 @@ cgsix* at sbus? slot ? offset ?
 
 scsibus* at esp?
 
-sd*	at scsibus? target ? drive ?
-st*	at scsibus? target ? drive ?
-cd*	at scsibus? target ? drive ?
+sd*	at scsibus? target ? lun ?
+st*	at scsibus? target ? lun ?
+cd*	at scsibus? target ? lun ?
 
 fdc0	at mainbus0
 fd*	at fdc0
