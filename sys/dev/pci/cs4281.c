@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.6 2001/10/03 00:04:52 augustss Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.7 2001/11/13 07:48:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -41,6 +41,9 @@
  *   2: ...
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.7 2001/11/13 07:48:41 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.42 2001/08/20 12:00:53 wiz Exp $ */
+/* $NetBSD: if_ti.c,v 1.43 2001/11/13 07:48:45 lukem Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -79,6 +79,9 @@
  *   convincing me to write this driver.
  * - Andrew Gallatin for providing FreeBSD/Alpha support.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.43 2001/11/13 07:48:45 lukem Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"

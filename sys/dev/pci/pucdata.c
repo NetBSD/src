@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.20 2001/08/06 22:25:36 soren Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.21 2001/11/13 07:48:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -34,6 +34,9 @@
  * PCI "universal" communications card driver configuration data (used to
  * match/attach the cards).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.21 2001/11/13 07:48:48 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

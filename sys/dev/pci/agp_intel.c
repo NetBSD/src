@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.3 2001/09/15 00:25:00 thorpej Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.4 2001/11/13 07:48:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -27,6 +27,9 @@
  *
  *	$FreeBSD: src/sys/pci/agp_intel.c,v 1.4 2001/07/05 21:28:47 jhb Exp $
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.4 2001/11/13 07:48:40 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

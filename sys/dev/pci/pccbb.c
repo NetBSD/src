@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.70 2001/11/02 03:32:33 haya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.71 2001/11/13 07:48:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.71 2001/11/13 07:48:46 lukem Exp $");
 
 /*
 #define CBB_DEBUG

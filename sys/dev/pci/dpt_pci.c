@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_pci.c,v 1.8 2001/04/25 17:53:36 bouyer Exp $	*/
+/*	$NetBSD: dpt_pci.c,v 1.9 2001/11/13 07:48:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
@@ -30,6 +30,9 @@
 /*
  * PCI front-end for DPT EATA SCSI driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.9 2001/11/13 07:48:41 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

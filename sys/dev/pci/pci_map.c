@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.9 2000/11/29 18:22:17 thorpej Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.10 2001/11/13 07:48:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * PCI device mapping.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.10 2001/11/13 07:48:47 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

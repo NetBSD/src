@@ -1,4 +1,4 @@
-/* $NetBSD: tga_conf.c,v 1.4 2000/04/02 18:59:32 nathanw Exp $ */
+/* $NetBSD: tga_conf.c,v 1.5 2001/11/13 07:48:49 lukem Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tga_conf.c,v 1.5 2001/11/13 07:48:49 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

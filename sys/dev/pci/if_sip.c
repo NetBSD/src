@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.42 2001/07/23 17:26:50 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.43 2001/11/13 07:48:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,6 +80,9 @@
  *
  *	- Reduce the interrupt load.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.43 2001/11/13 07:48:44 lukem Exp $");
 
 #include "bpfilter.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.4 2001/09/02 13:17:54 enami Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.5 2001/11/13 07:48:44 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -63,6 +63,9 @@
  *	  The core could also be used for the ILACC (Am79900) 32-bit
  *	  Ethernet chip (XXX only if we use an ILACC-compatible SWSTYLE).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.5 2001/11/13 07:48:44 lukem Exp $");
 
 #include "bpfilter.h"
 

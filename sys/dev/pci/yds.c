@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.7 2001/10/03 00:04:52 augustss Exp $	*/
+/*	$NetBSD: yds.c,v 1.8 2001/11/13 07:48:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -37,6 +37,9 @@
  * - Digital in/out (SPDIF) support
  * - Effect??
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.8 2001/11/13 07:48:49 lukem Exp $");
 
 #include "mpu.h"
 

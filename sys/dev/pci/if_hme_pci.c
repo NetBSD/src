@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.8 2001/10/18 06:29:55 thorpej Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.9 2001/11/13 07:48:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -31,6 +31,9 @@
 /*
  * PCI front-end device driver for the HME ethernet device.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.9 2001/11/13 07:48:43 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

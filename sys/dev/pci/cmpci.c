@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.10 2001/11/04 06:57:40 itohy Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.11 2001/11/13 07:48:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  *   - Joystick support.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.11 2001/11/13 07:48:41 lukem Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x

@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.13 2001/10/03 00:04:51 augustss Exp $	*/
+/*	$NetBSD: auvia.c,v 1.14 2001/11/13 07:48:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -45,6 +45,9 @@
  * ftp://ftp.alsa-project.org/pub/manuals/general/ac97r21.pdf
  * ftp://ftp.alsa-project.org/pub/manuals/ad/AD1881_0.pdf (example AC'97 codec)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.14 2001/11/13 07:48:41 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

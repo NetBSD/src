@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_pci.c,v 1.8 2000/12/28 22:59:11 sommerfeld Exp $	*/
+/*	$NetBSD: adv_pci.c,v 1.9 2001/11/13 07:48:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
@@ -61,6 +61,9 @@
  *     1. This board has been sold by SIIG as the Fast SCSI Pro PCI.
  *     2. This board has been sold by Iomega as a Jaz Jet PCI adapter.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: adv_pci.c,v 1.9 2001/11/13 07:48:40 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.133 2001/10/26 10:38:12 augustss Exp $	*/
+/*	$NetBSD: pciide.c,v 1.134 2001/11/13 07:48:48 lukem Exp $	*/
 
 
 /*
@@ -75,6 +75,9 @@
  * 5/16/94" from the PCI SIG.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.134 2001/11/13 07:48:48 lukem Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG

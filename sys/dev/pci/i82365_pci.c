@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.11 2000/02/24 03:42:44 itohy Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.12 2001/11/13 07:48:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -32,6 +32,9 @@
 /*
  * XXX this driver frontend is *very* i386 dependent and should be relocated
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.12 2001/11/13 07:48:42 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.19 1999/11/04 19:04:04 thorpej Exp $	*/
+/*	$NetBSD: ppb.c,v 1.20 2001/11/13 07:48:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.20 2001/11/13 07:48:48 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

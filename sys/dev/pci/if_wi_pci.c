@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.1 2001/10/13 15:01:07 ichiro Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.2 2001/11/13 07:48:45 lukem Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  * PCI bus front-end for the Intersil PCI WaveLan.
  * Works with Prism2.5 Mini-PCI wavelan.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.2 2001/11/13 07:48:45 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

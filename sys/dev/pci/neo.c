@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.10 2001/10/03 00:04:52 augustss Exp $	*/
+/*	$NetBSD: neo.c,v 1.11 2001/11/13 07:48:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -30,6 +30,9 @@
  * FreeBSD: src/sys/dev/sound/pci/neomagic.c,v 1.8 2000/03/20 15:30:50 cg Exp
  * OpenBSD: neo.c,v 1.4 2000/07/19 09:04:37 csapuntz Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.11 2001/11/13 07:48:46 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

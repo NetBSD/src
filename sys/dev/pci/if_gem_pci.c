@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.7 2001/10/18 15:09:15 thorpej Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.8 2001/11/13 07:48:43 lukem Exp $ */
 
 /*
  * 
@@ -32,6 +32,9 @@
 /*
  * PCI bindings for Sun GEM ethernet controllers.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.8 2001/11/13 07:48:43 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 

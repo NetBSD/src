@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.11 2001/03/02 06:56:11 thorpej Exp $	*/
+/*	$NetBSD: puc.c,v 1.12 2001/11/13 07:48:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -51,6 +51,9 @@
  * communications/parallel/??? might be attached via direct
  * 'com' and 'lpt' attachments to pci.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.12 2001/11/13 07:48:48 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
