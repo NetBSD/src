@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.20 1997/05/15 04:49:32 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.21 1997/05/15 07:24:37 mellon Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -122,6 +122,8 @@
 
 #include <machine/conf.h>
 
+#include "rasterconsole.h"
+
 extern void ttrstrt	__P((void *));
 
 #ifdef alpha
@@ -134,8 +136,10 @@ extern void ttrstrt	__P((void *));
  * support from the tty drivers. This is ugly and broken and won't
  * compile on Alphas. 
  */
-#ifdef pmax
+#if defined (pmax)
+#if NRASTERCONSOLE > 0
 #define HAVE_RCONS
+#endif
 extern int pending_remcons;
 #endif
 
@@ -512,10 +516,12 @@ sccattach(parent, self, aux)
 	 * For a remote console, wait a while for previous output to
 	 * complete.
 	 */
-#ifdef HAVE_RCONS
+#ifdef pmax
 	if (CONSOLE_ON_UNIT(unit) && (cn_tab->cn_pri == CN_REMOTE))
 		DELAY(10000);
-#else
+#endif
+
+#ifdef alpha
 	if ((cputype == ST_DEC_3000_500 && sc->sc_dv.dv_unit == 1) ||
 	    (cputype == ST_DEC_3000_300 && sc->sc_dv.dv_unit == 0))
 		DELAY(10000);
@@ -559,8 +565,10 @@ sccattach(parent, self, aux)
 		 * on kn03, maybe kmin?
 		 * And what about maxine?
 		 */
-		if (cn_tab->cn_dev == unit && cputype != DS_MAXINE)
+		if (cn_tab->cn_dev == unit && cputype != DS_MAXINE) {
+			printf ("\n");
 			return;
+		}
 
 		/*
 		 * If we are using the PROM serial-console routines
@@ -578,7 +586,7 @@ sccattach(parent, self, aux)
 
 		printf(" (In sccattach: cn_dev = 0x%x)", cn_tab->cn_dev);
 	 	printf(" (Unit = %d)", unit);
-		printf(": console");
+		printf(": console\n");
 		pending_remcons = 0;
 		/*
 		 * XXX We should support configurations where the PROM
