@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.22 1998/03/27 06:10:54 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.23 1998/04/13 02:36:24 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -89,6 +89,9 @@ static int adb_rptdelay = 20;	/* ticks before auto-repeat */
 static int adb_rptinterval = 6;	/* ticks between auto-repeat */
 static int adb_repeating = -1;	/* key that is auto-repeating */
 static adb_event_t adb_rptevent;/* event to auto-repeat */
+
+/* Mouse button state */
+static int adb_ms_buttons = 0;
 
 /* Driver definition.  -- This should probably be a bus...  */
 struct cfattach adb_ca = {
@@ -214,8 +217,6 @@ adb_dokeyupdown(event)
 	}
 	adb_handoff(event);
 }
-
-static  adb_ms_buttons = 0;
 
 void 
 adb_keymaybemouse(event)
