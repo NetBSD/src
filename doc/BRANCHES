@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.28 2005/02/27 02:41:51 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.29 2005/02/27 09:36:41 tsutsui Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -676,13 +676,13 @@ Notes:		http://mail-index.NetBSD.org/tech-kern/2004/12/25/0005.html
 			alpha, i386 (yamt@)
 			pc532 (simonb@)
 			alpha, i386, mac68k, macppc, pmax, shark,
-			sparc, sparc64 (chs@)
+			    sparc, sparc64 (chs@)
+			news68k (tsutsui@)
 
 		known to have the same problem as trunk:
 			vax (chs@, stuck while running kvm_mkdb)
 
 		known to have a problem:
-			news68k (chs@, hang immediately after loading kernel)
 			hp300 (chs@, hang immediately after loading kernel)
 
 		buildable:
