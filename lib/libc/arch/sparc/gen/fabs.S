@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: fabs.s,v 1.4 91/10/07 23:59:05 torek Exp
- * $Id: fabs.S,v 1.1 1993/10/07 00:21:30 cgd Exp $
+ * $Id: fabs.S,v 1.2 1996/11/16 20:53:18 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -44,7 +44,7 @@
 
 /* fabs - floating absolute value */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 ENTRY(fabs)
 	std	%o0, [%sp + 32]		! return value => %f0:f1
