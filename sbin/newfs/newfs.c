@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.71 2003/10/09 16:23:29 dbj Exp $	*/
+/*	$NetBSD: newfs.c,v 1.72 2003/10/10 03:23:28 grog Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.71 2003/10/09 16:23:29 dbj Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.72 2003/10/10 03:23:28 grog Exp $");
 #endif
 #endif /* not lint */
 
@@ -222,7 +222,7 @@ main(int argc, char *argv[])
 	struct disklabel mfsfakelabel;
 	struct partition oldpartition;
 	struct statfs *mp;
-	int ch, fsi, fso, len, maxpartitions, n, Fflag, Iflag, Zflag;
+	int ch, fsi, fso, len, maxpartitions, n, Fflag, Iflag, Zflag, Vflag;
 	char *cp, *endp, *s1, *s2, *special;
 	const char *opstring;
 	long long llsize;
@@ -241,6 +241,7 @@ main(int argc, char *argv[])
 	cp = NULL;
 	fsi = fso = -1;
 	Fflag = Iflag = Zflag = 0;
+	Vflag = 0;
 	if (strstr(getprogname(), "mfs")) {
 		mfs = 1;
 		mfsmode = 01777; /* default mode for a /tmp-type directory */
@@ -254,8 +255,8 @@ main(int argc, char *argv[])
 		errx(1, "insane maxpartitions value %d", maxpartitions);
 
 	opstring = mfs ?
-	    "NT:a:b:c:d:e:f:g:h:i:m:n:o:p:s:u:" :
-	    "B:FINO:S:T:Za:b:c:d:e:f:g:h:i:l:m:n:o:p:r:s:u:v:";
+	    "NT:Va:b:c:d:e:f:g:h:i:m:n:o:p:s:u:" :
+	    "B:FINO:VS:T:Za:b:c:d:e:f:g:h:i:l:m:n:o:p:r:s:u:v:";
 	while ((ch = getopt(argc, argv, opstring)) != -1)
 		switch (ch) {
 		case 'B':
@@ -291,6 +292,9 @@ main(int argc, char *argv[])
 			disktype = optarg;
 			break;
 #endif
+		case 'V':
+			Vflag = 1;
+			break;
 		case 'Z':
 			Zflag = 1;
 			break;
@@ -535,15 +539,16 @@ main(int argc, char *argv[])
 			}
 		}
 		cp = strchr(argv[0], '\0') - 1;
-		if (cp == 0 || ((*cp < 'a' || *cp > ('a' + maxpartitions - 1))
-		    && !isdigit(*cp)))
+		if (*cp == 0 || ((*cp < 'a' || *cp > ('a' + maxpartitions - 1))
+		    && !isdigit(*cp)
+		    && !Vflag))
 			errx(1, "can't figure out file system partition");
 #ifdef COMPAT
 		if (disktype == NULL)
 			disktype = argv[1];
 #endif
 		lp = getdisklabel(special, fsi);
-		if (isdigit(*cp))
+		if (Vflag || isdigit(*cp))
 			pp = &lp->d_partitions[0];
 		else
 			pp = &lp->d_partitions[*cp - 'a'];
@@ -876,6 +881,7 @@ struct help_strings {
 #ifdef COMPAT
 	{ NEWFS,	"-T disktype\tdisk type" },
 #endif
+	{ BOTH,		"-V\t\tignore partition for Vinum" },
 	{ NEWFS,	"-Z \t\tpre-zero the image file (with -F)" },
 	{ BOTH,		"-a maxcontig\tmaximum contiguous blocks" },
 	{ BOTH,		"-b bsize\tblock size" },
