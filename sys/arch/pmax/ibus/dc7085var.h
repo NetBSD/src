@@ -1,4 +1,4 @@
-/*	$NetBSD: dc7085var.h,v 1.1.2.1 1998/10/23 11:56:26 nisimura Exp $ */
+/*	$NetBSD: dc7085var.h,v 1.1.2.2 1998/10/26 10:52:50 nisimura Exp $ */
 
 /*
  * Copyright (c) 1996, 1998 Tohru Nishimura.  All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou
+ *      This product includes software developed by Tohru Nishimura.
  *	for the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
@@ -57,8 +57,8 @@ struct dc7085reg {
 
 #define	LKLINE  0
 #define	VSLINE  1
-#define	PRTLINE 2
-#define	COMLINE 3
+#define	COMLINE 2
+#define	PRTLINE 3
 
 struct dc_softc {
 	struct device sc_dv;
