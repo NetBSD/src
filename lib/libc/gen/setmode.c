@@ -1,4 +1,4 @@
-/*	$NetBSD: setmode.c,v 1.23 1999/09/20 04:39:05 lukem Exp $	*/
+/*	$NetBSD: setmode.c,v 1.24 2000/01/20 02:53:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: setmode.c,v 1.23 1999/09/20 04:39:05 lukem Exp $");
+__RCSID("$NetBSD: setmode.c,v 1.24 2000/01/20 02:53:46 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -184,7 +184,7 @@ setmode(p)
 	const char *p;
 {
 	int perm, who;
-	char op;
+	char op, *ep;
 	BITCMD *set, *saveset, *endset;
 	sigset_t sigset, sigoset;
 	mode_t mask;
@@ -218,16 +218,11 @@ setmode(p)
 	 * or illegal bits.
 	 */
 	if (isdigit((unsigned char)*p)) {
-		perm = (mode_t)strtol(p, NULL, 8);
-		if (perm & ~(STANDARD_BITS|S_ISTXT)) {
+		perm = (mode_t)strtol(p, &ep, 8);
+		if (*ep || perm & ~(STANDARD_BITS|S_ISTXT)) {
 			free(saveset);
 			return (NULL);
 		}
-		while (*++p)
-			if (*p < '0' || *p > '7') {
-				free(saveset);
-				return (NULL);
-			}
 		ADDCMD('=', (STANDARD_BITS|S_ISTXT), perm, mask);
 		set->cmd = 0;
 		return (saveset);
