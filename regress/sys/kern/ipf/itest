@@ -1,4 +1,7 @@
 #!/bin/sh
+#
+# $NetBSD: itest,v 1.2 2002/05/13 06:34:14 martti Exp $
+#
 if [ -f /usr/ucb/touch ] ; then
 	TOUCH=/usr/ucb/touch
 else
@@ -11,9 +14,11 @@ else
 	fi
 fi
 echo "$1...";
+TESTDIR=$2
+[ -z "$2" ] && TESTDIR=${PWD}
 /bin/cp /dev/null results/$1
-../ipf -nvf regress/$1 2>/dev/null > results/$1
-cmp expected/$1 results/$1
+ipf -nvf ${TESTDIR}/regress/$1 2>/dev/null > results/$1
+cmp ${TESTDIR}/expected/$1 results/$1
 status=$?
 if [ $status = 0 ] ; then
 	$TOUCH $1
