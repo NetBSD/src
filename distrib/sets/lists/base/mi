@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.510 2004/11/18 15:34:23 wiz Exp $
+# $NetBSD: mi,v 1.511 2004/11/23 07:37:43 lukem Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -434,6 +434,7 @@
 ./usr/bin/gcpp					base-util-bin
 ./usr/bin/gencat				base-locale-bin
 ./usr/bin/getconf				base-util-bin
+./usr/bin/getent				base-util-bin
 ./usr/bin/getopt				base-util-bin
 ./usr/bin/grep					base-util-bin
 ./usr/bin/groups				base-util-bin
