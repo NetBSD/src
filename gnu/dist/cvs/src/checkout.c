@@ -180,7 +180,7 @@ checkout (argc, argv)
 	    case 'p':
 		pipeout = 1;
 		run_module_prog = 0;	/* don't run module prog when piping */
-		noexec = 1;		/* so no locks will be created */
+		noexec = nolock = 1;	/* so no locks will be created */
 		break;
 	    case 'c':
 		cat = 1;

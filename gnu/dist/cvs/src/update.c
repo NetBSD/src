@@ -1366,11 +1366,18 @@ VERS: ", 0);
 		    xchmod (finfo->file, 1);
 		else
 		{
+		    mode_t oumask, writeaccess;
+
 		    /* We know that we are the server here, so
                        although xchmod checks umask, we don't bother.  */
-		    mode |= (((mode & S_IRUSR) ? S_IWUSR : 0)
+		    /* Not bothering with the umask makes the files
+		       mode 0777 on old clients, though. -chb */
+		    oumask = umask(0);
+		    (void) umask(oumask);
+		    writeaccess = (((mode & S_IRUSR) ? S_IWUSR : 0)
 			     | ((mode & S_IRGRP) ? S_IWGRP : 0)
 			     | ((mode & S_IROTH) ? S_IWOTH : 0));
+		    mode |= (~oumask) & writeaccess;
 		}
 	    }
 
