@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.26 1999/04/10 01:21:38 cgd Exp $ */
+/* $NetBSD: tcasic.c,v 1.27 1999/08/07 12:58:29 drochner Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.26 1999/04/10 01:21:38 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.27 1999/08/07 12:58:29 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,21 +189,21 @@ tc_fb_cnattach(tcaddr)
 	char tcname[TC_ROM_LLEN];
 
 	if (tc_badaddr(tcaddr) || (tc_checkslot(tcaddr, tcname) == 0)) {
-		return 0;
+		return EINVAL;
 	}
 
 #if NSFB > 0
 	if (strncmp("PMAGB-BA", tcname, TC_ROM_LLEN) == 0) {
 		sfb_cnattach(tcaddr);
-		return 1;
+		return 0;
 	}
 #endif
 #if NCFB > 0
 	if (strncmp("PMAG-BA ", tcname, TC_ROM_LLEN) == 0) {
 		cfb_cnattach(tcaddr);
-		return 1;
+		return 0;
 	}
 #endif
-	return 0;
+	return ENXIO;
 }
 #endif /* if NWSDISPLAY > 0 */
