@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.4 1997/07/05 05:38:19 darrenr Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.5 1997/09/21 18:03:21 veego Exp $	*/
 
 /*
  * Simple FTP transparent proxy for in-kernel use.  For use with the NAT
@@ -113,7 +113,7 @@ nat_t *nat;
 	dlen = m->b_wptr - m->b_rptr - off;
 	blen = m->b_datap->db_lim - m->b_datap->db_base;
 	bzero(portbuf, sizeof(portbuf));
-	copyout_mblk(m, off, portbuf, MIN(sizeof(portbuf), dlen));
+	copyout_mblk(m, off, MIN(sizeof(portbuf), dlen), portbuf);
 #else
 	struct mbuf *m = *(struct mbuf **)fin->fin_mp;
 
@@ -183,7 +183,7 @@ nat_t *nat;
 	for (m1 = m; m1->b_cont; m1 = m1->b_cont)
 		;
 	m1->b_wptr += inc;
-	copyin_mblk(m, off, newbuf, strlen(newbuf));
+	copyin_mblk(m, off, strlen(newbuf), newbuf);
 #else
 	if (inc && dlen)
 		if ((inc < 0) || (blen >= dlen)) {

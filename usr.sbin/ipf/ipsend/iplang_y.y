@@ -1,4 +1,4 @@
-/*	$NetBSD: iplang_y.y,v 1.1.1.1 1997/09/21 16:49:16 veego Exp $	*/
+/*	$NetBSD: iplang_y.y,v 1.2 1997/09/21 18:02:08 veego Exp $	*/
 
 %{
 /*
@@ -31,6 +31,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
+#include <netinet/ip_var.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <net/if.h>
@@ -40,7 +41,7 @@
 #include <arpa/inet.h>
 #include <resolv.h>
 #include <ctype.h>
-#include <netinet/ip_compat.h>
+#include "ipsend.h"
 #include <netinet/ip_fil.h>
 #include "ipf.h"
 #include "iplang.h"
@@ -53,6 +54,7 @@ extern	int	state, state, lineNum, token;
 extern	int	yylineno;
 extern	char	yytext[];
 extern	FILE	*yyin;
+int	yylex	__P((void));
 /*#define	YYDEBUG 1*/
 int	yydebug = 0;
 
@@ -142,6 +144,7 @@ void	set_icmpttime __P((int));
 void	set_icmpmtu __P((int));
 void	set_redir __P((int, char **));
 void	new_ipv4opt __P((void));
+void	set_icmppprob __P((int));
 void	add_ipopt __P((int, void *));
 void	end_ipopt __P((void));
 void	set_secclass __P((char **));
@@ -790,7 +793,6 @@ void set_datafile(arg)
 char **arg;
 {
 	struct stat sb;
-	u_char *t = canip->ah_data;
 	char *file = *arg;
 	int fd, len;
 
@@ -890,7 +892,7 @@ char **arg;
 void set_ipv4hl(arg)
 char **arg;
 {
-	int offset, newhl, inc;
+	int newhl, inc;
 
 	newhl = strtol(*arg, NULL, 0);
 	inc = (newhl - ip->ip_hl) << 2;
@@ -953,7 +955,6 @@ char **arg;
 
 void new_tcpheader()
 {
-	int offset, inc;
 
 	if ((ip->ip_p) && (ip->ip_p != IPPROTO_TCP)) {
 		fprintf(stderr, "protocol %d specified with TCP!\n", ip->ip_p);
@@ -1072,7 +1073,6 @@ char **arg;
 	static	int	flagv[] = { TH_ACK, TH_SYN, TH_URG, TH_RST, TH_PUSH,
 				    TH_FIN } ;
 	char *s, *t;
-	int nf = 0;
 
 	for (s = *arg; *s; s++)
 		if (!(t = strchr(flags, *s))) {
@@ -1577,8 +1577,8 @@ void *ptr;
 {
 	struct ipopt_names *io;
 	struct statetoopt *sto;
-	char *op, numbuf[16], *arg, **param = ptr;
-	int inc, optlen, hlen, *inptr;
+	char numbuf[16], *arg, **param = ptr;
+	int inc, hlen;
 
 	if (state == IL_IPO_RR || state == IL_IPO_SATID) {
 		if (param)

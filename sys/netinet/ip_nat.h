@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.9 1997/07/06 05:29:20 thorpej Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.10 1997/09/21 18:03:25 veego Exp $	*/
 
 /*
  * (C)opyright 1995-1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * Id: ip_nat.h,v 2.0.2.16 1997/06/22 07:05:54 darrenr Exp
+ * Id: ip_nat.h,v 2.0.2.18 1997/09/10 11:15:36 darrenr Exp 
  */
 
 #ifndef	__IP_NAT_H__
@@ -134,7 +134,6 @@ typedef	struct	natstat	{
 
 
 typedef	struct	natlog {
-	struct	timeval	nl_tv;
 	struct	in_addr	nl_origip;
 	struct	in_addr	nl_outip;
 	struct	in_addr	nl_inip;
@@ -153,6 +152,7 @@ typedef	struct	natlog {
 #define	NL_EXPIRE	0xffff
 
 
+extern	void	ip_natsync __P((void *));
 extern	u_long	fr_defnatage;
 extern	nat_t	*nat_table[2][NAT_SIZE];
 #ifdef	__NetBSD__

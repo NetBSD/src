@@ -1,13 +1,11 @@
-/*	$NetBSD: sock.c,v 1.4 1997/05/28 03:08:40 thorpej Exp $	*/
+/*	$NetBSD: sock.c,v 1.5 1997/09/21 18:02:26 veego Exp $	*/
 
 /*
- * sock.c (C) 1995 Darren Reed
+ * sock.c (C) 1995-1997 Darren Reed
  *
- * The author provides this program as-is, with no gaurantee for its
- * suitability for any specific purpose.  The author takes no responsibility
- * for the misuse/abuse of this program and provides it for the sole purpose
- * of testing packet filter policies.  This file maybe distributed freely
- * providing it is not modified and that this notice remains in tact.
+ * Redistribution and use in source and binary forms are permitted
+ * provided that this notice is preserved and due credit is given
+ * to the original author and the contributors.
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)sock.c	1.2 1/11/96 (C)1995 Darren Reed";
@@ -91,7 +89,7 @@ void	*pos;
 int	n;
 {
 	static	int	kfd = -1;
-	off_t offset = (u_long)pos;
+	off_t	offset = (u_long)pos;
 
 	if (kfd == -1)
 		kfd = open(KMEM, O_RDONLY);

@@ -1,11 +1,11 @@
-/*	$NetBSD: sbpf.c,v 1.3 1997/05/27 23:10:52 thorpej Exp $	*/
+/*	$NetBSD: sbpf.c,v 1.4 1997/09/21 18:02:16 veego Exp $	*/
 
 /*
- * (C)opyright October 1995 Darren Reed. (from tcplog)
+ * (C)opyright 1995-1997 Darren Reed. (from tcplog)
  *
- *   This software may be freely distributed as long as it is not altered
- * in any way and that this messagge always accompanies it.
- *
+ * Redistribution and use in source and binary forms are permitted
+ * provided that this notice is preserved and due credit is given
+ * to the original author and the contributors.
  */
 #include <stdio.h>
 #include <netdb.h>
@@ -33,11 +33,7 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
-#if defined(__NetBSD__)
-#include <netinet/if_inarp.h>
-#else
 #include <netinet/if_ether.h>
-#endif
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
