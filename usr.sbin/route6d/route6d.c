@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.50 2003/10/31 00:31:53 itojun Exp $	*/
+/*	$NetBSD: route6d.c,v 1.51 2003/10/31 10:09:55 hannken Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.50 2003/10/31 00:31:53 itojun Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.51 2003/10/31 10:09:55 hannken Exp $");
 #endif
 
 #include <stdio.h>
@@ -1094,7 +1094,7 @@ riprecv(void)
 		return;
 
 	tracet(1, "Recv(%s): from %s.%d info(%d)\n",
-	    ifcp->ifc_name, inet6_n2p(&nh), ntohs(fsock.sin6_port), nn);
+	    ifcp->ifc_name, inet6_n2p(&nh), ntohs(fsock.sin6_port), (int)nn);
 
 	t = time(NULL);
 	t_half_lifetime = t - (RIP_LIFETIME/2);
