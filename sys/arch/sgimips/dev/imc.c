@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.16 2004/01/18 13:11:18 sekiya Exp $	*/
+/*	$NetBSD: imc.c,v 1.17 2004/04/03 11:33:29 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.16 2004/01/18 13:11:18 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.17 2004/04/03 11:33:29 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -58,7 +58,7 @@ static int	imc_match(struct device *, struct cfdata *, void *);
 static void	imc_attach(struct device *, struct device *, void *);
 static int	imc_print(void *, const char *);
 void		imc_bus_reset(void);
-void		imc_bus_error(void);
+void		imc_bus_error(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 void		imc_watchdog_reset(void);
 void		imc_watchdog_disable(void);
 void		imc_watchdog_enable(void);
@@ -132,8 +132,10 @@ imc_attach(parent, self, aux)
 	printf("\n");
 
 	/* Clear CPU/GIO error status registers to clear any leftover bits. */
-	bus_space_write_4(isc.iot, isc.ioh, IMC_CPU_ERRSTAT, 0);
-	bus_space_write_4(isc.iot, isc.ioh, IMC_GIO_ERRSTAT, 0);
+	imc_bus_reset();
+
+	/* Hook the bus error handler into the ISR */
+	platform.intr4 = imc_bus_error;
 
 	/*
 	 * Enable parity reporting on GIO/main memory transactions.
@@ -249,7 +251,7 @@ imc_bus_reset(void)
 }
 
 void
-imc_bus_error(void)
+imc_bus_error(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
 	printf("bus error: cpu_stat %08x addr %08x, gio_stat %08x addr %08x\n",
 			bus_space_read_4(isc.iot, isc.ioh, IMC_CPU_ERRSTAT),
