@@ -1,4 +1,4 @@
-#	$NetBSD: std.mvme68k,v 1.8 2000/06/22 20:27:54 fvdl Exp $
+#	$NetBSD: std.mvme68k,v 1.9 2000/11/30 22:31:27 scw Exp $
 #
 # Options/devices that all mvme68ks should have
 #
@@ -6,4 +6,5 @@
 machine mvme68k m68k
 
 options 	EXEC_AOUT	# support for exec'ing a.out
+options 	EXEC_ELF32	# support for exec'ing Elf
 options 	EXEC_SCRIPT	# support for #! scripts
