@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_acorn.h,v 1.1 2001/11/25 16:22:47 thorpej Exp $	*/
+/*	$NetBSD: disklabel_acorn.h,v 1.2 2001/11/25 19:04:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -35,8 +35,6 @@
  * SUCH DAMAGE.
  */
 
-#define NRISCBSD_PARTITIONS MAXPARTITIONS
-
 #define PARTITION_TYPE_UNUSED  0
 #define PARTITION_TYPE_ADFS    1
 #define PARTITION_TYPE_RISCIX  2
@@ -62,13 +60,6 @@ struct riscix_partition_table {
 	uint32_t	pad0;
 	uint32_t	pad1;
 	struct riscix_partition partitions[NRISCIX_PARTITIONS];
-};
-
-struct riscbsd_partition {
-	uint32_t	rp_start;
-	uint32_t	rp_length;
-	uint32_t	rp_type;
-	int8_t		rp_name[16];
 };
 
 struct filecore_bootblock {
