@@ -32,12 +32,14 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	from: @(#)abs.s	5.2 (Berkeley) 12/17/90
+ *	$Id: abs.S,v 1.2 1993/10/08 00:01:04 jtc Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
-	/*.asciz "from: @(#)abs.s	5.2 (Berkeley) 12/17/90"*/
-	.asciz "$Id: abs.S,v 1.1 1993/10/07 00:19:17 cgd Exp $"
+	.asciz "$Id: abs.S,v 1.2 1993/10/08 00:01:04 jtc Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
