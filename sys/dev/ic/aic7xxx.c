@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.47 2000/05/14 18:22:13 dante Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.48 2000/05/19 04:34:41 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -372,7 +372,7 @@ ahc_swap_hscb(struct hardware_scb *hscb)
 	hscb->data = htole32(hscb->data);
 	hscb->datalen = htole32(hscb->datalen);
 	/*
-	 * No need to swap cmdpointer; it's either NULL or set to
+	 * No need to swap cmdpointer; it's either 0 or set to
 	 * cmdstore_busaddr, which is already swapped.
 	 */
 }
@@ -4016,7 +4016,7 @@ get_scb:
 		hscb->control |= DISCENB;
 
 	if (xs->xs_control & XS_CTL_RESET) {
-		hscb->cmdpointer = NULL;
+		hscb->cmdpointer = 0;
 		scb->flags |= SCB_DEVICE_RESET;
 		hscb->control |= MK_MESSAGE;
 		return ahc_execute_scb(scb, NULL, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.24 2000/04/27 15:26:47 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.25 2000/05/19 04:34:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -536,7 +536,7 @@ uaudio_mixer_add_ctl(sc, mc)
 	struct uaudio_softc *sc;
 	struct mixerctl *mc;
 {
-	if (sc->sc_nctls == NULL)
+	if (sc->sc_nctls == 0)
 		sc->sc_ctls = malloc(sizeof *mc, M_USBDEV, M_NOWAIT);
 	else
 		sc->sc_ctls = realloc(sc->sc_ctls, 
@@ -1029,7 +1029,7 @@ uaudio_add_alt(sc, ai)
 	struct uaudio_softc *sc;
 	struct as_info *ai;
 {
-	if (sc->sc_nalts == NULL)
+	if (sc->sc_nalts == 0)
 		sc->sc_alts = malloc(sizeof *ai, M_USBDEV, M_NOWAIT);
 	else
 		sc->sc_alts = realloc(sc->sc_alts,
