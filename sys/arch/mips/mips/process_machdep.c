@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.17 2000/05/29 11:19:46 nisimura Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.18 2000/05/29 11:46:52 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.17 2000/05/29 11:19:46 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.18 2000/05/29 11:46:52 nisimura Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -68,15 +68,11 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.17 2000/05/29 11:19:46 nisimur
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/vnode.h>
 #include <sys/ptrace.h>
+#include <mips/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
-#include <machine/psl.h>
-#include <machine/reg.h>
 
 int
 process_read_regs(p, regs)
@@ -84,7 +80,7 @@ process_read_regs(p, regs)
 	struct reg *regs;
 {
 	memcpy(regs, p->p_md.md_regs, sizeof(struct reg));
-	return (0);
+	return 0;
 }
 
 int
@@ -96,7 +92,7 @@ process_write_regs(p, regs)
 	/*
 	 * XXX: is it safe to let users set system CP0 status reg?
 	 */
-	return (0);
+	return 0;
 }
 
 int
@@ -131,7 +127,7 @@ process_sstep(p, sstep)
 	/* XXX what are the correct semantics: sstep once, or forevermore? */
 	if (sstep)
 		mips_singlestep(p);
-	return (0);
+	return 0;
 }
 
 int
@@ -140,5 +136,5 @@ process_set_pc(p, addr)
 	caddr_t addr;
 {
 	((struct frame *)p->p_md.md_regs)->f_regs[PC] = (int)addr;
-	return (0);
+	return 0;
 }
