@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.17 1999/01/03 23:55:01 augustss Exp $
+$NetBSD: usbdevs,v 1.18 1999/01/07 01:51:12 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@ vendor CATC		0x0423	CATC
 vendor NANAO		0x0440	Nanao
 vendor UNIXTAR		0x0451  Unixtar
 vendor GENIUS		0x0458	Genius
+vendor MICROSOFT	0x045e	Microsoft
 vendor KENSINGTON	0x0461	Kensington
 vendor CHERRY		0x046a	Cherry
 /* Behavior Technology Corporation */
@@ -96,6 +97,9 @@ product UNIXTAR UTUSB41		0x1446	UT-USB41 hub
 /* Genius products */
 product GENIUS NICHE		0x0001	Niche mouse
 product GENIUS FLIGHT2000	0x1004	Flight 2000 joystick
+
+/* Microsoft products */
+product MICROSOFT INTELLIMOUSE	0x0009	IntelliMouse
 
 /* Kensington products */
 product KENSINGTON MOUSEINABOX	0x4d02	Mouse-in-a-Box
