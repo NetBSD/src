@@ -18,7 +18,7 @@ along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: extract.c,v 1.6 1995/04/23 08:36:41 cgd Exp $";
+static char rcsid[] = "$NetBSD: extract.c,v 1.7 1997/02/07 03:58:45 mikel Exp $";
 #endif /* not lint */
 
 /*
@@ -557,7 +557,7 @@ extract_archive ()
 	  if (chmod (skipcrud + current_file_name,
 		     notumask & (int) hstat.st_mode) < 0)
 	    {
-	      msg_perror ("cannot change mode of file %s to %ld",
+	      msg_perror ("cannot change mode of file %s to 0%o",
 			  skipcrud + current_file_name,
 			  notumask & (int) hstat.st_mode);
 	    }
@@ -762,7 +762,7 @@ extract_archive ()
 	      if (chmod (skipcrud + current_file_name,
 			 notumask & (int) hstat.st_mode) < 0)
 		{
-		  msg_perror ("cannot change mode of file %s to %ld",
+		  msg_perror ("cannot change mode of file %s to 0%o",
 			      skipcrud + current_file_name,
 			      notumask & (int) hstat.st_mode);
 		}
@@ -940,7 +940,7 @@ restore_saved_dir_info ()
 	  if (chmod (saved_dir_info_head->path,
 		     notumask & saved_dir_info_head->mode) < 0)
 	    {
-	      msg_perror ("cannot change mode of file %s to %ld",
+	      msg_perror ("cannot change mode of file %s to 0%o",
 			  saved_dir_info_head->path,
 			  notumask & saved_dir_info_head->mode);
 	    }
