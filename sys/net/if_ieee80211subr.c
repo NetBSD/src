@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.3.2.2 2001/09/21 22:36:45 nathanw Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.3.2.3 2001/09/25 16:20:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,6 +52,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <machine/endian.h>
@@ -435,8 +436,7 @@ ieee80211_decap(struct ifnet *ifp, struct mbuf *m)
 		m_freem(m);
 		return NULL;
 	}
-	if (ALIGN(mtod(m, caddr_t) + sizeof(*eh)) !=
-	    (u_int)(mtod(m, caddr_t) + sizeof(*eh))) {
+	if (!ALIGNED_POINTER(mtod(m, caddr_t) + sizeof(*eh), u_int32_t)) {
 		struct mbuf *n, *n0, **np;
 		caddr_t newdata;
 		int off;
@@ -591,8 +591,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (nwkey->i_key[i].i_keydat == NULL)
 				continue;
 			/* do not show any keys to non-root user */
-			if ((error = suser(curproc->p_ucred,
-			    &curproc->p_acflag)) != 0)
+			if ((error = suser(curproc->l_proc->p_ucred,
+			    &curproc->l_proc->p_acflag)) != 0)
 				break;
 			nwkey->i_key[i].i_keylen = ic->ic_nw_keys[i].wk_len;
 			if ((error = copyout(ic->ic_nw_keys[i].wk_key,
@@ -627,7 +627,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ieee80211_cfgget(ifp, cmd, data);
 		break;
 	case SIOCSIFGENERIC:
-		error = suser(curproc->p_ucred, &curproc->p_acflag);
+		error = suser(curproc->l_proc->p_ucred, 
+		    &curproc->l_proc->p_acflag);
 		if (error)
 			break;
 		error = ieee80211_cfgset(ifp, cmd, data);
@@ -1906,7 +1907,8 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case WI_RID_DEFLT_CRYPT_KEYS:
 		keys = (struct wi_ltv_keys *)&wreq;
 		/* do not show keys to non-root user */
-		error = suser(curproc->p_ucred, &curproc->p_acflag);
+		error = suser(curproc->l_proc->p_ucred, 
+		    &curproc->l_proc->p_acflag);
 		if (error) {
 			memset(keys, 0, sizeof(*keys));
 			error = 0;
