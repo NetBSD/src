@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.h,v 1.5 2000/01/10 03:03:54 matt Exp $	*/
+/*	$NetBSD: ibcs2_machdep.h,v 1.6 2000/06/21 05:45:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 
 #define COFF_MAGIC_I386	0x14c
 #define	COFF_BADMAG(ex)	(ex->f_magic != COFF_MAGIC_I386)
+#define	COFF_LDPGSZ	4096
 
 #ifdef _KERNEL
 struct exec_package;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.h,v 1.7 2000/06/04 16:24:02 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_exec.h,v 1.8 2000/06/21 05:45:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -48,8 +48,6 @@
 #define COFF_ZMAGIC	0413	/* text and data segs are aligned for
 				   direct paging */
 #define COFF_SMAGIC	0443	/* shared lib */
-
-#define COFF_LDPGSZ 4096
 
 #define COFF_SEGMENT_ALIGNMENT(fp, ap)	4
 
