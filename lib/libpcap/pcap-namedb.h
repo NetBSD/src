@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-namedb.h,v 1.2 1995/03/06 11:38:48 mycroft Exp $	*/
+/*	$NetBSD: pcap-namedb.h,v 1.2.6.1 1996/06/05 18:04:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -56,7 +56,7 @@ struct	pcap_etherent *pcap_next_etherent(FILE *);
 u_char *pcap_ether_hostton(const char*);
 u_char *pcap_ether_aton(const char *);
 
-u_long	**pcap_nametoaddr(const char *);
+u_int32_t **pcap_nametoaddr(const char *);
 u_long	pcap_nametonetaddr(const char *);
 
 int	pcap_nametoport(const char *, int *, int *);

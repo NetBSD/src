@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.2 1995/03/06 11:38:29 mycroft Exp $	*/
+/*	$NetBSD: inet.c,v 1.2.6.1 1996/06/05 18:04:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -151,7 +151,7 @@ pcap_lookupdev(errbuf)
 int
 pcap_lookupnet(device, netp, maskp, errbuf)
 	register char *device;
-	register u_long *netp, *maskp;
+	register u_int32_t *netp, *maskp;
 	register char *errbuf;
 {
 	register int fd;
