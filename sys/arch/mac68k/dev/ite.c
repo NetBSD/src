@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.15 1995/07/09 15:36:41 briggs Exp $	*/
+/*	$NetBSD: ite.c,v 1.16 1995/07/17 01:24:34 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -123,6 +123,10 @@ extern int adb_polling;
 /* Misc */
 void    itestart();
 static void ite_putchar(char ch);
+
+/* VT100 tab stops & scroll region */
+static char tab_stops[255];
+static int  scrreg_top, scrreg_bottom;
 
 /*
  * Bitmap handling functions
@@ -313,13 +317,12 @@ scrollup(void)
 {
 	unsigned long *from, *to;
 	int     i, linelongs, tocopy, copying;
-
 	linelongs = videorowbytes * CHARHEIGHT / 4;
 
-	to = (unsigned long *) videoaddr;
+	to = (unsigned long *) videoaddr + ((scrreg_top-1) * linelongs);
 	from = to + linelongs;
 
-	tocopy = (scrrows - 1) * linelongs;
+	tocopy = (scrreg_bottom - scrreg_top) * linelongs;
 	while (tocopy > 0) {
 		copying = (tocopy > 16383) ? 16383 : tocopy;
 		bcopy(from, to, copying * 4);
@@ -328,7 +331,7 @@ scrollup(void)
 		tocopy -= copying;
 	}
 	to = (unsigned long *) videoaddr;
-	bzero(to + (scrrows - 1) * linelongs, linelongs * sizeof(long));
+	bzero(to + (scrreg_bottom - 1) * linelongs, linelongs * sizeof(long));
 }
 
 static void 
@@ -336,13 +339,12 @@ scrolldown(void)
 {
 	unsigned long *from, *to;
 	int     i, linelongs;
-
 	linelongs = videorowbytes * CHARHEIGHT / 4;
 
-	to = (unsigned long *) videoaddr + linelongs * scrrows;
+	to = (unsigned long *) videoaddr + linelongs * (scrreg_bottom);
 	from = to - linelongs;
 
-	for (i = (scrrows - 1) * linelongs; i > 0; i--) {
+	for (i = (scrreg_bottom - scrreg_top) * linelongs; i > 0; i--) {
 		*--to = *--from;
 	}
 	for (i = linelongs; i > 0; i--) {
@@ -406,12 +408,30 @@ clear_line(int which)
 		writechar(' ', i, y, ATTR_NONE);
 	}
 }
+static void
+reset_tabs(void)
+{
+	int i;
+
+	for (i = 0; i<= scrcols; i++) {
+		tab_stops[i] = ((i % 8) == 0);
+	}
+}
+
+static void
+vt100_reset(void)
+{
+	reset_tabs;
+	scrreg_top    = 1;
+	scrreg_bottom = scrrows;
+	attr = ATTR_NONE;
+}
 
 static void 
 putc_normal(char ch)
 {
 	switch (ch) {
-		case '\a':	/* Beep			 */
+	case '\a':		/* Beep			 */
 		asc_ringbell();
 		break;
 	case 127:		/* Delete		 */
@@ -426,13 +446,13 @@ putc_normal(char ch)
 	case '\t':		/* Tab			 */
 		do {
 			ite_putchar(' ');
-		} while (x % 8 != 0);
+		} while (tab_stops[x] = 0);
 		break;
 	case '\n':		/* Line feed		 */
-		y++;
-		if (y >= scrrows) {
+		if (y == scrreg_bottom - 1) {
 			scrollup();
-			y = scrrows - 1;
+		} else {
+			y++;
 		}
 		break;
 	case '\r':		/* Carriage return	 */
@@ -447,10 +467,10 @@ putc_normal(char ch)
 		if (ch >= ' ') {
 			if (hanging_cursor) {
 				x = 0;
-				y++;
-				if (y >= scrrows) {
+				if (y == scrreg_bottom - 1) {
 					scrollup();
-					y = scrrows - 1;
+				} else {
+					y++;
 				}
 				hanging_cursor = 0;
 			}
@@ -460,7 +480,7 @@ putc_normal(char ch)
 			} else {
 				x++;
 			}
-			if (x >= scrcols) {
+			if (x >= scrcols) {	/* can we ever get here? */
 				x = 0;
 				y++;
 			}
@@ -479,17 +499,24 @@ putc_esc(char ch)
 		vt100state = ESsquare;
 		break;
 	case 'D':		/* Line feed		 */
-		y++;
+		if (y == scrreg_bottom - 1) {
+			scrollup();
+		} else {
+			y++;
+		}
 		break;
 	case 'H':		/* Set tab stop		 */
-		/* Not supported */
+		tab_stops[x] = 1;
 		break;
 	case 'M':		/* Cursor up		 */
-		if (y == 0) {
+		if (y == scrreg_top - 1) {
 			scrolldown();
 		} else {
 			y--;
 		}
+		break;
+	case '>':
+		vt100_reset();
 		break;
 	case '7':		/* Save cursor		 */
 		savex = x;
@@ -513,10 +540,26 @@ putc_gotpars(char ch)
 	vt100state = ESnormal;
 	switch (ch) {
 	case 'A':		/* Up			 */
-		y-= par[0] ? par[0] : 1;
+		i = par[0];
+		do {
+			if (y == scrreg_top - 1) {
+				scrolldown();
+			} else {
+				y--;
+			};
+			i--;
+		} while (i > 0);
 		break;
 	case 'B':		/* Down			 */
-		y+= par[0] ? par[0] : 1;
+		i = par[0];
+		do {
+			if (y == scrreg_bottom - 1) {
+				scrollup();
+			} else {
+				y++;
+			};
+			i--;
+		} while (i > 0);
 		break;
 	case 'C':		/* Right		 */
 		x+= par[0] ? par[0] : 1;
@@ -536,7 +579,9 @@ putc_gotpars(char ch)
 		clear_line(par[0]);
 		break;
 	case 'g':		/* Clear tab stops	 */
-		/* Not supported */
+		if (numpars >= 1 && par[0] == 3) {
+			reset_tabs();
+		}
 		break;
 	case 'm':		/* Set attribute	 */
 		for (i = 0; i < numpars; i++) {
@@ -557,7 +602,17 @@ putc_gotpars(char ch)
 		}
 		break;
 	case 'r':		/* Set scroll region	 */
-		/* Not supported */
+		/* ensure top < bottom, and both within limits */
+		if ((numpars > 0) && (par[0] < scrrows)) {
+			scrreg_top = par[0];
+		} else {
+			scrreg_top = 1;
+		}
+		if ((numpars > 1) && (par[1] <= scrrows) && (par[1] > par[0])) {
+			scrreg_bottom = par[1];
+		} else {
+			scrreg_bottom = scrrows;
+		}
 		break;
 	}
 }
@@ -945,6 +1000,8 @@ itecninit(struct consdev * cp)
 	height = (videosize >> 16) & 0xffff;
 	scrrows = height / CHARHEIGHT;
 	scrcols = width / CHARWIDTH;
+
+	vt100_reset();
 
 	switch (videobitdepth) {
 	default:
