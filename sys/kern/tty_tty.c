@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.16 2000/03/30 09:27:14 augustss Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.16.8.1 2001/09/08 03:29:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -154,4 +154,17 @@ cttypoll(dev, events, p)
 	if (ttyvp == NULL)
 		return (seltrue(dev, events, p));
 	return (VOP_POLL(ttyvp, events, p));
+}
+
+int
+cttykqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+	struct proc *p = curproc;	/* XXXLUKEM (thorpej) */
+	struct vnode *ttyvp = cttyvp(p);
+
+	if (ttyvp == NULL)
+		return (1);
+	return (VOP_KQFILTER(ttyvp, kn));
 }
