@@ -1,4 +1,4 @@
-/*	$NetBSD: db_break.c,v 1.12 2000/03/30 11:31:26 augustss Exp $	*/
+/*	$NetBSD: db_break.c,v 1.13 2000/05/25 19:57:36 jhawk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -217,7 +217,7 @@ db_list_breakpoints()
 	    db_printf("%s%p %5d    ",
 		      db_map_current(bkpt->map) ? "*" : " ",
 		      bkpt->map, bkpt->init_count);
-	    db_printsym(bkpt->address, DB_STGY_PROC);
+	    db_printsym(bkpt->address, DB_STGY_PROC, db_printf);
 	    db_printf("\n");
 	}
 }
