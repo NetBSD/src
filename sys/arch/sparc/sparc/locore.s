@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.148.4.18 2003/01/03 16:55:26 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.148.4.19 2003/01/03 19:29:57 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4282,7 +4282,7 @@ _C_LABEL(cpu_hatch):
 	clr	%l4
 	sethi	%hi(cpcb), %l6
 	b	idle_enter
-	 sethi	%hi(curproc), %l7
+	 sethi	%hi(curlwp), %l7
 #else /* ALT_SWITCH_CODE */
 	!set	_C_LABEL(proc0), %g3		! p = proc0
 	sethi	%hi(_C_LABEL(sched_whichqs)), %g2
@@ -4589,12 +4589,18 @@ ENTRY(write_user_windows)
 /*
  * switchexit is called only from cpu_exit() before the current process
  * has freed its vmspace and kernel stack; we must schedule them to be
- * freed.  (curproc is already NULL.)
+ * freed.  (curlwp is already NULL.)
  *
  * We lay the process to rest by changing to the `idle' kernel stack,
  * and note that the `last loaded process' is nonexistent.
  */
+ENTRY(switchlwpexit)
+!!Hmm, switchexit() might as well have passed us the `exit2' function to call.
+	set	_C_LABEL(lwp_exit2), %g1
+	b,a	switchexit0
 ENTRY(switchexit)
+	set	_C_LABEL(exit2), %g1
+switchexit0:
 	mov	%o0, %g2		! save proc for exit2() call
 
 	/*
@@ -4628,7 +4634,8 @@ ENTRY(switchexit)
 	SET_SP_REDZONE(%l6, %l5)
 #endif
 	wr	%g0, PSR_S|PSR_ET, %psr	! and then enable traps
-	call	_C_LABEL(exit2)		! exit2(p)
+	 nop
+	call	%g1			! {lwp}exit2(p)
 	 mov	%g2, %o0
 
 	/*
@@ -4641,7 +4648,7 @@ ENTRY(switchexit)
 	 *	%l2 = %hi(whichqs)
 	 *	%l4 = lastproc
 	 *	%l6 = %hi(cpcb)
-	 *	%l7 = %hi(curproc)
+	 *	%l7 = %hi(curlwp)
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 */
@@ -4653,9 +4660,9 @@ ENTRY(switchexit)
 	sethi	%hi(_C_LABEL(sched_whichqs)), %l2
 	clr	%l4			! lastproc = NULL;
 	sethi	%hi(cpcb), %l6
-	sethi	%hi(curproc), %l7
+	sethi	%hi(curlwp), %l7
 	b	idle_enter
-	 st	%g0, [%l7 + %lo(curproc)]	! curproc = NULL;
+	 st	%g0, [%l7 + %lo(curlwp)]	! curlwp = NULL;
 
 /*
  * When no processes are on the runq, switch
@@ -4743,7 +4750,7 @@ ENTRY(cpu_switchto)
 	 *	%l4(%g4) = lastproc
 	 *	%l5 = tmp 0
 	 *	%l6 = %hi(cpcb)
-	 *	%l7 = %hi(curproc)
+	 *	%l7 = %hi(curlwp)
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 *	%o2 = tmp 3
@@ -4757,10 +4764,10 @@ ENTRY(cpu_switchto)
 	ld	[%l6 + %lo(cpcb)], %o0
 	std	%i6, [%o0 + PCB_SP]		! cpcb->pcb_<sp,pc> = <fp,pc>;
 	rd	%psr, %l1			! oldpsr = %psr;
-	sethi	%hi(curproc), %l7
+	sethi	%hi(curlwp), %l7
 	st	%l1, [%o0 + PCB_PSR]		! cpcb->pcb_psr = oldpsr;
 	andn	%l1, PSR_PIL, %l1		! oldpsr &= ~PSR_PIL;
-	st	%g0, [%l7 + %lo(curproc)]	! curproc = NULL;
+	st	%g0, [%l7 + %lo(curlwp)]	! curlwp = NULL;
 	/*
 	 * Save the old process: write back all windows (excluding
 	 * the current one).  XXX crude; knows nwindows <= 8
@@ -4808,7 +4815,7 @@ wb1:	SAVE; SAVE; SAVE; SAVE; SAVE; SAVE;	/* 6 of each: */
 	sethi	%hi(_C_LABEL(sched_whichqs)), %l2
 	mov	%g4, %l4		! restore lastproc
 	sethi	%hi(cpcb), %l6
-	sethi	%hi(curproc), %l7
+	sethi	%hi(curlwp), %l7
 
 Lsw_scan:
 	nop; nop; nop				! paranoia
@@ -4873,7 +4880,7 @@ Lsw_load:
 	 *	%l4 = lastproc
 	 *	%l5 =
 	 *	%l6 = %hi(cpcb)
-	 *	%l7 = %hi(curproc)
+	 *	%l7 = %hi(curlwp)
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 *	%o2 = tmp 3
@@ -4881,12 +4888,12 @@ Lsw_load:
 	 */
 
 	/* firewalls */
-	ld	[%l3 + P_WCHAN], %o0	! if (p->p_wchan)
+	ld	[%l3 + L_WCHAN], %o0	! if (p->p_wchan)
 	tst	%o0
 	bne	Lsw_panic_wchan		!	panic("switch wchan");
 	 EMPTY
-	ldsb	[%l3 + P_STAT], %o0	! if (p->p_stat != SRUN)
-	cmp	%o0, SRUN
+	ld	[%l3 + L_STAT], %o0	! if (p->p_stat != LSRUN)
+	cmp	%o0, LSRUN
 	bne	Lsw_panic_srun		!	panic("switch SRUN");
 	 EMPTY
 
@@ -4894,14 +4901,14 @@ Lsw_load:
 	 * Committed to running process p.
 	 * It may be the same as the one we were running before.
 	 */
-	mov	SONPROC, %o0			! p->p_stat = SONPROC;
-	stb	%o0, [%l3 + P_STAT]
+	mov	LSONPROC, %o0			! p->p_stat = LSONPROC;
+	st	%o0, [%l3 + L_STAT]
 
 	/* p->p_cpu initialized in fork1() for single-processor */
 #if defined(MULTIPROCESSOR)
 	sethi	%hi(_CISELFP), %o0		! p->p_cpu = cpuinfo.ci_self;
 	ld	[%o0 + %lo(_CISELFP)], %o0
-	st	%o0, [%l3 + P_CPU]
+	st	%o0, [%l3 + L_CPU]
 #endif
 
 	sethi	%hi(_C_LABEL(want_resched)), %o0	! want_resched = 0;
@@ -4910,9 +4917,9 @@ Lsw_load:
 	call	_C_LABEL(sched_unlock_idle)
 #endif
 	st	%g0, [%o0 + %lo(_C_LABEL(want_resched))]! delay slot
-	ld	[%l3 + P_ADDR], %g5		! newpcb = p->p_addr;
+	ld	[%l3 + L_ADDR], %g5		! newpcb = p->p_addr;
 	st	%g0, [%l3 + 4]			! p->p_back = NULL;
-	st	%l3, [%l7 + %lo(curproc)]	! curproc = p;
+	st	%l3, [%l7 + %lo(curlwp)]	! curlwp = p;
 
 	/*
 	 * Load the new process.  To load, we must change stacks and
@@ -4981,7 +4988,8 @@ Lsw_load:
 	 EMPTY
 
 	INCR(_C_LABEL(nswitchdiff))	! clobbers %o0,%o1
-	ld	[%g3 + P_VMSPACE], %o3	! vm = p->p_vmspace;
+	ld	[%g3 + L_PROC], %o2	! p = l->l_proc;
+	ld	[%o2 + P_VMSPACE], %o3	! vm = p->p_vmspace;
 	ld	[%o3 + VM_PMAP], %o3	! pm = vm->vm_map.vm_pmap;
 	ld	[%o3 + PMAP_CTX], %o0	! if (pm->pm_ctx != NULL)
 	tst	%o0
@@ -5438,7 +5446,7 @@ cpu_switch0:
 	tst	%o0
 	bne	Lsw_panic_wchan		!	panic("switch wchan");
 	 EMPTY
-	ld	[%g3 + L_STAT], %o0	! if (p->p_stat != SRUN)
+	ld	[%g3 + L_STAT], %o0	! if (p->p_stat != LSRUN)
 	cmp	%o0, LSRUN
 	bne	Lsw_panic_srun		!	panic("switch SRUN");
 	 EMPTY
