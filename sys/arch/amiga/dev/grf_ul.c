@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.15 1996/04/21 21:11:24 veego Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.16 1996/05/01 09:59:29 veego Exp $	*/
 #define UL_DEBUG
 
 /*
@@ -463,8 +463,8 @@ grfulmatch(pdp, match, auxp)
 	struct device *pdp;
 	void *match, *auxp;
 {
-	struct cfdata *cfp = match;
 #ifdef ULOWELLCONSOLE
+	struct cfdata *cfp = match;
 	static int ulconunit = -1;
 #endif
 	struct zbus_args *zap;
