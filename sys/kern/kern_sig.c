@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.198 2004/09/28 08:59:20 jdolecek Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.199 2004/10/01 16:30:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.198 2004/09/28 08:59:20 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.199 2004/10/01 16:30:55 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -812,7 +812,7 @@ killpg1(struct proc *cp, ksiginfo_t *ksi, int pgid, int all)
 		 * broadcast 
 		 */
 		proclist_lock_read();
-		LIST_FOREACH(p, &allproc, p_list) {
+		PROCLIST_FOREACH(p, &allproc) {
 			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM || 
 			    p == cp || !CANSIGNAL(cp, pc, p, signum))
 				continue;
