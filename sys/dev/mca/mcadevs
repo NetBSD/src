@@ -1,4 +1,4 @@
-$NetBSD: mcadevs,v 1.2 2001/03/17 00:15:33 jdolecek Exp $
+$NetBSD: mcadevs,v 1.3 2001/03/19 22:20:05 jdolecek Exp $
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@ $NetBSD: mcadevs,v 1.2 2001/03/17 00:15:33 jdolecek Exp $
  * [6] http://www.ncr.com/support/pc/pcdesc/library/adfs.shtml
  * [7] http://www.apricot.co.uk/ftp/bbs/area40/deal.lst (Apricot Insight BBS)
  * [8] QBMCA.DAT
+ * [9] ftp://ftp.computone.com/pub/Products/legacy/ALC/opt_205.exe
  */
 
 /*
@@ -130,10 +131,13 @@ product 0x613D "Rabbit RB75 Remote Comms. Processor"			[6]
 product 0x613F "SONIC Model 50"						[6]
 product 0x6157 "Novell Remote III Adapter"				[7]
 product 0x616A "NewPort WNIC Adapter"					[7]
+product 0x616E "Computone PS6"						[9]
 product 0x617E "Computone PS8 8-port Adapter"				[6]
 product 0x61BF "Intel SatisFAXtion Adapter"				[6]
 product 0x61C8 "WD/SMC 8013EP/A Ethernet Adapter"			[1]
 product 0x61C9 "WD/SMC 8013WP/A Ethernet Adapter"			[1]
+product 0x61F2 "Computone IntelliPort-II MC-8"				[9]
+product 0x61F3 "Computone IntelliPort-IIEX MC-CEX"			[9]
 product 0x61FD "Computone PSCC Cluster Controller"			[6]
 product 0x6201 "Quadport PS/Q I/O Adapter"				[6]
 product 0x6203 "Quadport PS/Q I/O Adapter"				[6]
@@ -144,14 +148,14 @@ product 0x6222 "NCI 4700 PCI/MC"					[6]
 product 0x6262 "Proteon p1800 ProNET-10 Network Adapter"		[6]
 product 0x6263 "Arco AC-1070 IDE Adapter"				[6]
 product 0x626B "Apricot AdLOC Security Card"				[7]
-product 0x627C "3Com 3C529 Ethernet Adapter"				[6]
-product 0x627D "3Com 3C529-TP Ethernet Adapter"				[6]
+product 0x627C 3C529 "3Com 3C529 Ethernet Adapter"			[6]
+product 0x627D 3C529_TP "3Com 3C529-TP Ethernet Adapter"		[6]
 product 0x628B "Intel EtherExpress 16/MC Adapter"			[1]
 product 0x62B6 "Arco AC-1079 SLIM Drive Adapter"			[6]
-product 0x62DB "3Com 3C529 Ethernet Adapter (test mode)"		[2]
+product 0x62DB 3C529_TM "3Com 3C529 Ethernet Adapter (test mode)"	[2]
 product 0x62F0 "Plexus AIP2 Card"					[6]
-product 0x62F6 "3Com 3C529 Ethernet Adapter (10base2/T)"		[2]
-product 0x62F7 "3Com 3C529 Ethernet Adapter (10baseT)"			[2]
+product 0x62F6 3C529_2T "3Com 3C529 Ethernet Adapter (10base2/T)"	[2]
+product 0x62F7 3C529_T "3Com 3C529 Ethernet Adapter (10baseT)"		[2]
 product 0x6361 "Arnet Smartport/2 Communications Adapter"		[6]
 product 0x63B3 "CH GameCard III-Automatic/MCA Adapter"			[5]
 product 0x63CA "HP 27246 Ethernet Adapter"				[1]
@@ -347,7 +351,7 @@ product 0xE04F "IBM 3119 Adapter/A"					[5]
 product 0xE1FF "IBM 3270 Connection Version B"				[3]
 product 0xE7FF "IBM 3270 Connection Version A"				[3]
 product 0xE9FF "IBM Expansion Unit Model 002"				[5]
-product 0xEDFF "IBM Internal Modem"					[3]
+product 0xEDFF IBM_MOD "IBM Internal Modem"				[3]
 product 0xEEBB "Miracom OEM Modem"					[7]
 product 0xEEE7 "IBM Serial Port 2"					[6]
 product 0xEEFF "IBM Dual Async Adapter"					[3]
