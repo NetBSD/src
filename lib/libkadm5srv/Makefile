@@ -1,6 +1,8 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 22:46:46 thorpej Exp $
+# $NetBSD: Makefile,v 1.2.2.1 2000/08/02 17:17:19 msaitoh Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/kadm5
+
+.include <bsd.own.mk>
 
 WARNS?=  1
 MKLINT= no
@@ -61,6 +63,10 @@ CPPFLAGS+= -I.					\
 	 -I${.CURDIR}/../libroken		\
 	 -I${DIST}/heimdal/lib/roken		\
 	 -DHAVE_CONFIG_H
+
+.if defined(NOPIC)
+CPPFLAGS+=-DNO_DLOPEN
+.endif
 
 $(SRCS:.c=.o): kadm5_err.h
 
