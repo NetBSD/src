@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.26 1999/04/24 08:10:36 simonb Exp $	*/
+/*	$NetBSD: pmap.h,v 1.27 1999/05/18 01:36:51 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -85,8 +85,8 @@ typedef struct pmap {
 	int			pm_count;	/* pmap reference count */
 	simple_lock_data_t	pm_lock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
-	int			pm_tlbpid;	/* address space tag */
-	u_int			pm_tlbgen;	/* TLB PID generation number */
+	unsigned		pm_asid;	/* TLB address space tag */
+	unsigned		pm_asidgen;	/* its generation number */
 	struct segtab		*pm_segtab;	/* pointers to pages of PTEs */
 } *pmap_t;
 
@@ -98,7 +98,7 @@ typedef struct pmap {
 typedef struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
-	vaddr_t	pv_va;		/* virtual address for mapping */
+	vaddr_t	pv_va;			/* virtual address for mapping */
 	int		pv_flags;	/* some flags for the mapping */
 } *pv_entry_t;
 
@@ -109,11 +109,11 @@ typedef struct pv_entry {
 
 #ifdef	_KERNEL
 
-char *pmap_attributes;		/* reference and modify bits */
-struct pmap kernel_pmap_store;
+extern char *pmap_attributes;		/* reference and modify bits */
+extern struct pmap kernel_pmap_store;
 
-#define	pmap_wired_count(pmap) 	((pmap)->pm_stats.wired_count)
 #define pmap_kernel()		(&kernel_pmap_store)
+#define	pmap_wired_count(pmap) 	((pmap)->pm_stats.wired_count)
 #define pmap_resident_count(pmap) ((pmap)->pm_stats.resident_count)
 
 /*
