@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.eng,v 1.2.2.3 1997/11/02 20:49:42 mellon Exp $	*/
+/*	$NetBSD: menus.md.eng,v 1.2.2.4 1997/11/13 05:53:41 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,7 +38,7 @@
 
 /* pc532 machine dependent menus, english */
 
-menu editfsparts, y=15, exit;
+menu editfsparts, y=13, exit;
 	display action  {
 			ask_sizemult();
 			msg_display(MSG_fspart, multname);
