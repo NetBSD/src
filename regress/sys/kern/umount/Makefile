@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2003/04/15 06:19:59 erh Exp $
+# $NetBSD: Makefile,v 1.2 2003/10/26 07:25:35 lukem Exp $
 #
 #  This test creates and mounts a temporary filesystem.  Then it
 #  forcibly unmounts it while in the mount point and checks that
@@ -43,7 +43,7 @@ run_script:
 		false ;\
 	fi
 	@cd "${TMPMP}" && umount -f "${BVND}${MPART}" && \
-	 sh ${.CURDIR}/check_umount.sh
+	 ${HOST_SH} ${.CURDIR}/check_umount.sh
 	@if [ ! -e "${TMPMP}/under_the_mount" ]; then \
 		echo "Original mount point dissapeared!" ;\
 		false ;\

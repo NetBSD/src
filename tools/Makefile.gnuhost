@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gnuhost,v 1.23 2003/10/21 10:01:22 lukem Exp $
+#	$NetBSD: Makefile.gnuhost,v 1.24 2003/10/26 07:25:38 lukem Exp $
 #
 # Rules used when building a GNU host package.  Expects MODULE to be set.
 #
@@ -77,7 +77,7 @@ INSTALL_TARGET?=install
 
 .configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile
 	@mkdir build 2>/dev/null || true
-	@(cd build && ${CONFIGURE_ENV} sh ${GNUHOSTDIST}/configure ${CONFIGURE_ARGS})
+	@(cd build && ${CONFIGURE_ENV} ${HOST_SH} ${GNUHOSTDIST}/configure ${CONFIGURE_ARGS})
 	@touch $@
 
 # The .build_done timestamp is only updated if a file actually changes

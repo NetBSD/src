@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.4 2001/12/12 01:49:49 tv Exp $
+#	$NetBSD: Makefile.buildboot,v 1.5 2003/10/26 07:25:36 lukem Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -42,7 +42,7 @@ LIBSA=		${SALIB}
 
 .PHONY: vers.c
 vers.c: version
-	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version "pc532" ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "pc532" ${NEWVERSWHAT}
 
 ${PROG}.sym: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${LD} -Ttext ${RELOC} -z -e start -o ${PROG}.sym \

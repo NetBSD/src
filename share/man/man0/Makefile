@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.9 (Berkeley) 7/1/91
-#	$NetBSD: Makefile,v 1.11 2003/02/14 15:20:17 grant Exp $
+#	$NetBSD: Makefile,v 1.12 2003/10/26 07:25:35 lukem Exp $
 
 NOOBJ=		# defined
 
@@ -27,7 +27,7 @@ OPTIMIZE_PDF?=	\
 			-e '/^level0 restore/d' 		
 
 man:
-	sh mkman
+	${HOST_SH} mkman
 
 man.ps:
 	for i in ${SECTIONS} ; 					\
