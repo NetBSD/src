@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.33 2000/07/13 17:39:03 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.34 2000/07/14 07:21:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -81,6 +81,7 @@
 #include <sys/proc.h>
 #include <sys/acct.h>
 #include <sys/exec.h>
+#define	__SYSCTL_PRIVATE
 #include <sys/sysctl.h>
 
 #include <net/if.h>
@@ -4084,7 +4085,7 @@ netbsd32___sysctl(p, v, retval)
 		syscallarg(netbsd32_voidp) new;
 		syscallarg(netbsd32_size_t) newlen;
 	} */ *uap = v;
-	int error, dolock = 1;
+	int error;
 	netbsd32_size_t savelen = 0;
 	size_t oldlen = 0;
 	sysctlfn *fn;
@@ -4112,8 +4113,6 @@ netbsd32___sysctl(p, v, retval)
 	switch (name[0]) {
 	case CTL_KERN:
 		fn = kern_sysctl;
-		if (name[2] != KERN_VNODE)	/* XXX */
-			dolock = 0;
 		break;
 	case CTL_HW:
 		fn = hw_sysctl;
@@ -4140,40 +4139,29 @@ netbsd32___sysctl(p, v, retval)
 		fn = ddb_sysctl;
 		break;
 #endif
+	case CTL_PROC:
+		fn = proc_sysctl;
+		break;
 	default:
 		return (EOPNOTSUPP);
 	}
 
+	/*
+	 * XXX Hey, we wire `old', but what about `new'?
+	 */
+
 	if (SCARG(uap, oldlenp) &&
-	    (error = copyin((caddr_t)(u_long)SCARG(uap, oldlenp), &savelen, sizeof(savelen))))
+	    (error = copyin((caddr_t)(u_long)SCARG(uap, oldlenp), &savelen,
+	     sizeof(savelen))))
 		return (error);
 	if (SCARG(uap, old) != NULL) {
-		if (!uvm_useracc((caddr_t)(u_long)SCARG(uap, old), savelen, B_WRITE))
+		error = lockmgr(&sysctl_memlock, LK_EXCLUSIVE, NULL);
+		if (error)
+			return (error);
+		if (uvm_vslock(p, (void *)(u_long)SCARG(uap, old), savelen,
+		    VM_PROT_READ|VM_PROT_WRITE) != KERN_SUCCESS) {
+			(void) lockmgr(&sysctl_memlock, LK_RELEASE, NULL);
 			return (EFAULT);
-#if 0 /* XXXXXXXX */
-		while (memlock.sl_lock) {
-			memlock.sl_want = 1;
-			(void) tsleep(&memlock, PRIBIO+1, "memlock", 0);
-			memlock.sl_locked++;
-		}
-		memlock.sl_lock = 1;
-#endif /* XXXXXXXX */
-		if (dolock) {
-			/*
-			 * XXX Um, this is kind of evil.  What should
-			 * XXX we be passing here?
-			 */
-			if (uvm_vslock(p, (void *)(u_long)SCARG(uap, old), savelen,
-			    VM_PROT_NONE) != KERN_SUCCESS) {
-#if 0 /* XXXXXXXX */
-				memlock.sl_lock = 0;
-				if (memlock.sl_want) {
-					memlock.sl_want = 0;
-					wakeup((caddr_t)&memlock);
-				}
-#endif /* XXXXXXXX */
-				return (EFAULT);
-			}
 		}
 		oldlen = savelen;
 	}
@@ -4181,21 +4169,15 @@ netbsd32___sysctl(p, v, retval)
 		      (void *)(u_long)SCARG(uap, old), &oldlen, 
 		      (void *)(u_long)SCARG(uap, new), SCARG(uap, newlen), p);
 	if (SCARG(uap, old) != NULL) {
-		if (dolock)
-			uvm_vsunlock(p, (void *)(u_long)SCARG(uap, old), savelen);
-#if 0 /* XXXXXXXXXXX */
-		memlock.sl_lock = 0;
-		if (memlock.sl_want) {
-			memlock.sl_want = 0;
-			wakeup((caddr_t)&memlock);
-		}
-#endif /* XXXXXXXXX */
+		uvm_vsunlock(p, (void *)(u_long)SCARG(uap, old), savelen);
+		(void) lockmgr(&sysctl_memlock, LK_RELEASE, NULL);
 	}
 	savelen = oldlen;
 	if (error)
 		return (error);
 	if (SCARG(uap, oldlenp))
-		error = copyout(&savelen, (caddr_t)(u_long)SCARG(uap, oldlenp), sizeof(savelen));
+		error = copyout(&savelen,
+		    (caddr_t)(u_long)SCARG(uap, oldlenp), sizeof(savelen));
 	return (error);
 }
 
