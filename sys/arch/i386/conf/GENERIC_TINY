@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.9 1999/08/29 16:59:19 thorpej Exp $
+#	$NetBSD: GENERIC_TINY,v 1.10 1999/09/27 23:59:50 ad Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, PCMCIA or SCSI.
@@ -241,6 +241,7 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 
 # PCI SCSI controllers
 #ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
+#dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 #bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 #isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 #ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
@@ -276,6 +277,7 @@ scsibus* at aha?
 #scsibus* at ahc?
 scsibus* at aic?
 scsibus* at bha?
+#scsibus* at dpt?
 #scsibus* at isp?
 #scsibus* at ncr?
 scsibus* at sea?

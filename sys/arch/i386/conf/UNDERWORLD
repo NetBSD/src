@@ -1,4 +1,4 @@
-#	$NetBSD: UNDERWORLD,v 1.6 1999/09/19 21:50:06 ad Exp $
+#	$NetBSD: UNDERWORLD,v 1.7 1999/09/27 23:59:51 ad Exp $
 #
 #	UNDERWORLD - Convenient config for our ol' Pentium boxes (abs)
 #
@@ -296,6 +296,7 @@ adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 adw*	at pci? dev ? function ?	# AdvanSys 9xxUW SCSI
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
+#dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
@@ -336,6 +337,7 @@ scsibus* at adw?
 scsibus* at ahc?
 #@ scsibus* at aic?
 scsibus* at bha?
+#scsibus* at dpt?
 scsibus* at isp?
 #@ scsibus* at nca?
 scsibus* at ncr?
