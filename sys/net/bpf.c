@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.93 2004/04/14 21:34:26 darrenr Exp $	*/
+/*	$NetBSD: bpf.c,v 1.94 2004/04/15 14:56:57 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.93 2004/04/14 21:34:26 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.94 2004/04/15 14:56:57 darrenr Exp $");
 
 #include "bpfilter.h"
 
@@ -618,6 +618,7 @@ reset_d(d)
 	d->bd_hlen = 0;
 	d->bd_rcount = 0;
 	d->bd_dcount = 0;
+	d->bd_ccount = 0;
 }
 
 #ifdef BPF_KERN_FILTER
@@ -855,6 +856,16 @@ bpfioctl(dev, cmd, addr, flag, p)
 	case BIOCGSTATS:
 		{
 			struct bpf_stat *bs = (struct bpf_stat *)addr;
+
+			bs->bs_recv = d->bd_rcount;
+			bs->bs_drop = d->bd_dcount;
+			bs->bs_capt = d->bd_ccount;
+			break;
+		}
+
+	case BIOCGSTATSOLD:
+		{
+			struct bpf_stat_old *bs = (struct bpf_stat_old *)addr;
 
 			bs->bs_recv = d->bd_rcount;
 			bs->bs_drop = d->bd_dcount;
@@ -1274,6 +1285,8 @@ catchpacket(d, pkt, pktlen, snaplen, cpfn)
 	struct bpf_hdr *hp;
 	int totlen, curlen;
 	int hdrlen = d->bd_bif->bif_hdrlen;
+
+	++d->bd_ccount;
 	/*
 	 * Figure out how many bytes to move.  If the packet is
 	 * greater or equal to the snapshot length, transfer that
