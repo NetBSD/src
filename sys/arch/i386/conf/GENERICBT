@@ -1,7 +1,7 @@
 #
 # GENERICBT -- Generic machine w/bt driver -- distribution floppy
 #
-#	$Id: GENERICBT,v 1.12 1994/07/04 20:22:46 cgd Exp $
+#	$Id: GENERICBT,v 1.12.2.1 1994/07/16 22:21:52 cgd Exp $
 #
 
 machine		"i386"
@@ -17,7 +17,7 @@ options		INET,"CD9660",NFSCLIENT
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options		XSERVER,UCONSOLE
-#options	MSDOSFS
+options		MSDOSFS
 options		KERNFS
 options		SCSI
 options		"MATH_EMULATE"
