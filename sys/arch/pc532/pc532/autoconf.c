@@ -35,7 +35,7 @@
  *
  *	@(#)autoconf.c	7.1 (Berkeley) 5/9/91
  *
- *	$Id: autoconf.c,v 1.1.1.1 1993/09/09 23:53:47 phil Exp $
+ *	$Id: autoconf.c,v 1.2 1993/10/27 06:31:06 phil Exp $
  */
 
 /*
@@ -96,7 +96,7 @@ swapconf()
 	{
 		unsigned d = major(swp->sw_dev);
 
-		if (d > nblkdev) break;
+		if (d >= nblkdev) break;
 		if (bdevsw[d].d_psize) {
 			nblks = (*bdevsw[d].d_psize)(swp->sw_dev);
 			if (nblks > 0 &&
@@ -139,7 +139,7 @@ static	char devname[][2] = {
 setroot()
 {
 #if 1
-#ifdef RD_SIZE
+#ifdef RAMD_SIZE
 	rootdev = makedev(3, 0x0);  /* Ram disk is root! */
 	boothowto |= RB_SINGLE;
 #else
