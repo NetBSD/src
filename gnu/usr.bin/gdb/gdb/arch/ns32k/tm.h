@@ -17,9 +17,10 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: tm.h,v 1.1 1994/04/28 17:11:33 phil Exp $
+	$Id: tm.h,v 1.2 1995/07/28 08:03:29 phil Exp $
 */
 
+#define FETCH_INFERIOR_REGISTERS
 /* Override number of expected traps from sysv. */
 #define START_INFERIOR_TRAPS_EXPECTED 2
 

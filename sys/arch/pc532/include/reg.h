@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.8 1994/10/26 08:24:41 cgd Exp $	*/
+/*	$NetBSD: reg.h,v 1.9 1995/07/28 08:03:29 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,6 +86,19 @@ struct reg {
 	unsigned int 	r_fp;
 	unsigned int 	r_pc;
 	unsigned int 	r_psr;
+};
+
+struct fpreg {
+	double	r_f0;
+	double	r_f1;
+	double	r_f2;
+	double	r_f3;
+	double	r_f4;
+	double	r_f5;
+	double	r_f6;
+	double	r_f7;
+
+	unsigned int 	r_fpsr;
 };
 
 
