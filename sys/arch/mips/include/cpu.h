@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.57.2.8 2002/06/24 22:05:41 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.57.2.9 2002/07/02 21:45:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -325,7 +325,7 @@ struct clockframe {
 do {									\
 	want_resched = 1;						\
 	if (curproc != NULL)						\
-		aston(curproc);					\
+		aston(curproc);						\
 } while (/*CONSTCOND*/0)
 
 /*
