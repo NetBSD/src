@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.18 2000/01/18 08:02:30 perseant Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.18.4.1 2000/06/21 05:11:13 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.18 2000/01/18 08:02:30 perseant Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.18.4.1 2000/06/21 05:11:13 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -591,13 +591,14 @@ clean_segment(fsp, slp)
 	double util;
 	caddr_t seg_buf;
 	daddr_t seg_addr;
-	int num_blocks, maxblocks, clean_blocks, i, j;
+	int num_blocks, maxblocks, clean_blocks, i, j, error;
 	int seg_isempty=0;
         unsigned long *lp;
 
 	lfsp = &fsp->fi_lfs;
 	sp = SEGUSE_ENTRY(lfsp, fsp->fi_segusep, id);
 	seg_addr = sntoda(lfsp,id);
+	error = 0;
 
         syslog(LOG_DEBUG, "cleaning segment %d: contains %lu bytes", id,
                    (unsigned long)sp->su_nbytes);
@@ -615,10 +616,11 @@ clean_segment(fsp, slp)
 		return (-1);
 	}
 	/* get a list of blocks that are contained by the segment */
-	if (lfs_segmapv(fsp, id, seg_buf, &block_array, &num_blocks) < 0) {
-		syslog(LOG_WARNING,"clean_segment: lfs_segmapv failed for segment %d",id);
-		++cleaner_stats.segs_error;
-		return (-1);
+	if ((error = lfs_segmapv(fsp, id, seg_buf, &block_array,
+                                 &num_blocks)) < 0) {
+		syslog(LOG_WARNING,
+		       "clean_segment: lfs_segmapv failed for segment %d", id);
+		goto out;
 	}
 	cleaner_stats.blocks_read += fsp->fi_lfs.lfs_ssize;
 
@@ -626,11 +628,10 @@ clean_segment(fsp, slp)
             syslog(LOG_DEBUG, "lfs_segmapv returned %d blocks", num_blocks);
 
 	/* get the current disk address of blocks contained by the segment */
-	if (lfs_bmapv(&fsp->fi_statfsp->f_fsid, block_array, num_blocks) < 0) {
+	if ((error = lfs_bmapv(&fsp->fi_statfsp->f_fsid, block_array,
+			       num_blocks)) < 0) {
 		perror("clean_segment: lfs_bmapv failed");
-		++cleaner_stats.segs_error;
-		free(block_array); /* XXX KS */
-		return -1;
+		goto out;
 	}
 
 	/* Now toss any blocks not in the current segment */
@@ -725,21 +726,23 @@ clean_segment(fsp, slp)
 
 	for (bp = block_array; num_blocks > 0; bp += clean_blocks) {
 		clean_blocks = maxblocks < num_blocks ? maxblocks : num_blocks;
-		if (lfs_markv(&fsp->fi_statfsp->f_fsid,
-		    bp, clean_blocks) < 0) {
+		if ((error = lfs_markv(&fsp->fi_statfsp->f_fsid,
+				       bp, clean_blocks)) < 0) {
 			syslog(LOG_WARNING,"clean_segment: lfs_markv failed: %m");
-			++cleaner_stats.segs_error;
-			free(block_array); /* XXX KS */
-			return (-1);
+			goto out;
 		}
 		num_blocks -= clean_blocks;
 	}
 		
-	free(block_array);
+    out:
+	if (block_array)
+		free(block_array);
+	if (error)
+		++cleaner_stats.segs_error;
 	munmap_segment(fsp, seg_buf, do_mmap);
 	if (stat_report && cleaner_stats.segs_cleaned % stat_report == 0)
 		sig_report(SIGUSR1);
-	return (0);
+	return (error);
 }
 
 
