@@ -1,4 +1,4 @@
-.\"	$NetBSD: getNAME.8,v 1.2 1997/11/02 00:23:36 lukem Exp $
+.\"	$NetBSD: getNAME.8,v 1.3 1997/12/04 06:41:42 mikel Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -39,9 +39,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-program looks inside manual sources to find the name and of the manual.
+utility looks inside manual page sources to find the name of the page.
 It can be used to create a table of contents, report the style of manual,
-or to create an introduction manual.  By default,
+or to create an introductory manual page.  By default,
 .Nm
 returns data for use in an
 .Xr apropos 1
@@ -73,17 +73,17 @@ new mandoc
 .Pq Dq NEW ,
 or some unknown
 .Pq Dq UNKNOWN
-format exists.
+macros are in use.
 .El
 .Sh HISTORY
 The
 .Nm
-command first appeared
+command first appeared in
 .Bx 2.0
 .Sh BUGS
 It would be nice if
 .Nm
-could deal with preformatted manuals.
+could deal with compressed and/or preformatted manual pages.
 .Sh SEE ALSO
 .Xr man 1 ,
 .Xr catman 8 ,
