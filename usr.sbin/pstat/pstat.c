@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.54 2000/11/02 21:40:37 tron Exp $	*/
+/*	$NetBSD: pstat.c,v 1.55 2000/12/13 05:34:55 enami Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.54 2000/11/02 21:40:37 tron Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.55 2000/12/13 05:34:55 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -556,15 +556,24 @@ nfs_print(vp)
 
 	KGETRET(np->n_vattr, &va, sizeof(va), "vnode attr");
 	(void)printf(" %6ld %5s", (long)va.va_fileid, flagbuf);
-	type = va.va_mode & S_IFMT;
-	if (S_ISCHR(va.va_mode) || S_ISBLK(va.va_mode))
+	switch (va.va_type) {
+	case VCHR:
+		type = S_IFCHR;
+		goto device;
+		
+	case VBLK:
+		type = S_IFBLK;
+	device:
 		if (usenumflag || ((name = devname(va.va_rdev, type)) == NULL))
 			(void)printf("   %2d,%-2d",
 			    major(va.va_rdev), minor(va.va_rdev));
 		else
 			(void)printf(" %7s", name);
-	else
+		break;
+	default:
 		(void)printf(" %7qd", (long long)np->n_size);
+		break;
+	}
 	return (0);
 }
 
