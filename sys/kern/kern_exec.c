@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.101 1999/04/27 05:28:44 cgd Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.102 1999/08/09 02:42:20 ross Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -415,6 +415,7 @@ sys_execve(p, v, retval)
 			goto exec_abort;
 	}
 
+	stopprofclock(p);	/* stop profiling */
 	fdcloseexec(p);		/* handle close on exec */
 	execsigs(p);		/* reset catched signals */
 	p->p_ctxlink = NULL;	/* reset ucontext link */
