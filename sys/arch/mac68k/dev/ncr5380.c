@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.7 1995/09/16 15:06:55 briggs Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.8 1995/09/18 13:52:43 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -411,7 +411,6 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 	return (SUCCESSFULLY_QUEUED);
 }
 
-#define MIN_PHYS	65536	/*BARF!!!!*/
 static void
 ncr5380_minphys(struct buf *bp)
 {
