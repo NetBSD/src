@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)route.c	7.22 (Berkeley) 6/27/91
- *	$Id: route.c,v 1.8 1994/03/23 05:05:03 cgd Exp $
+ *	$Id: route.c,v 1.9 1994/05/11 09:26:49 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -68,6 +68,7 @@ static int rtinits_done = 0;
 struct radix_node_head *ns_rnhead, *in_rnhead;
 struct radix_node *rn_match(), *rn_delete(), *rn_addroute();
 
+void
 rtinitheads()
 {
 	if (rtinits_done == 0 &&
@@ -81,6 +82,7 @@ rtinitheads()
 /*
  * Packet routing routines.
  */
+void
 rtalloc(ro)
 	register struct route *ro;
 {
@@ -129,6 +131,7 @@ rtalloc1(dst, report)
 	return (newrt);
 }
 
+void
 rtfree(rt)
 	register struct rtentry *rt;
 {
@@ -153,6 +156,7 @@ rtfree(rt)
  * N.B.: must be called at splnet
  *
  */
+int
 rtredirect(dst, gateway, netmask, flags, src, rtp)
 	struct sockaddr *dst, *gateway, *netmask, *src;
 	int flags;
@@ -236,8 +240,9 @@ out:
 }
 
 /*
-* Routing table ioctl interface.
-*/
+ * Routing table ioctl interface.
+ */
+int
 rtioctl(req, data, p)
 	int req;
 	caddr_t data;
@@ -353,6 +358,7 @@ struct sockaddr	*dst, *gateway;
 
 #define ROUNDUP(a) (a>0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 
+int
 rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 	int req, flags;
 	struct sockaddr *dst, *gateway, *netmask;
@@ -447,8 +453,9 @@ bad:
 	return (error);
 }
 
+void
 rt_maskedcopy(src, dst, netmask)
-struct sockaddr *src, *dst, *netmask;
+	struct sockaddr *src, *dst, *netmask;
 {
 	register u_char *cp1 = (u_char *)src;
 	register u_char *cp2 = (u_char *)dst;
@@ -469,6 +476,7 @@ struct sockaddr *src, *dst, *netmask;
  * Set up a routing table entry, normally
  * for an interface.
  */
+int
 rtinit(ifa, cmd, flags)
 	register struct ifaddr *ifa;
 	int cmd, flags;
