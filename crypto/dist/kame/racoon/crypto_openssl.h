@@ -1,4 +1,4 @@
-/*	$KAME: crypto_openssl.h,v 1.25 2002/04/25 09:48:32 sakane Exp $	*/
+/*	$KAME: crypto_openssl.h,v 1.28 2003/06/29 04:46:14 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,15 +31,18 @@
 
 #ifdef HAVE_SIGNING_C
 /* X509 Certificate */
-#define GENT_OTHERNAME	0
-#define GENT_EMAIL	1
-#define GENT_DNS	2
-#define GENT_X400	3
-#define GENT_DIRNAME	4
-#define GENT_EDIPARTY	5
-#define GENT_URI	6
-#define GENT_IPADD	7
-#define GENT_RID	8
+
+#include <openssl/x509v3.h>
+
+#define GENT_OTHERNAME	GEN_OTHERNAME
+#define GENT_EMAIL	GEN_EMAIL
+#define GENT_DNS	GEN_DNS
+#define GENT_X400	GEN_X400
+#define GENT_DIRNAME	GEN_DIRNAME
+#define GENT_EDIPARTY	GEN_EDIPARTY
+#define GENT_URI	GEN_URI
+#define GENT_IPADD	GEN_IPADD
+#define GENT_RID	GEN_RID
 
 extern vchar_t *eay_str2asn1dn __P((char *, int));
 extern int eay_cmp_asn1dn __P((vchar_t *, vchar_t *));
@@ -114,6 +117,7 @@ extern int eay_kpdk_hashlen __P((void));
 extern int eay_twofish_keylen __P((int));
 
 /* hash */
+#if defined(WITH_SHA2)
 /* HMAC SHA2 */
 extern vchar_t *eay_hmacsha2_512_one __P((vchar_t *, vchar_t *));
 extern caddr_t eay_hmacsha2_512_init __P((vchar_t *));
@@ -127,6 +131,7 @@ extern vchar_t *eay_hmacsha2_256_one __P((vchar_t *, vchar_t *));
 extern caddr_t eay_hmacsha2_256_init __P((vchar_t *));
 extern void eay_hmacsha2_256_update __P((caddr_t, vchar_t *));
 extern vchar_t *eay_hmacsha2_256_final __P((caddr_t));
+#endif
 /* HMAC SHA1 */
 extern vchar_t *eay_hmacsha1_one __P((vchar_t *, vchar_t *));
 extern caddr_t eay_hmacsha1_init __P((vchar_t *));
@@ -138,23 +143,29 @@ extern caddr_t eay_hmacmd5_init __P((vchar_t *));
 extern void eay_hmacmd5_update __P((caddr_t, vchar_t *));
 extern vchar_t *eay_hmacmd5_final __P((caddr_t));
 
+#if defined(WITH_SHA2)
 /* SHA2 functions */
 extern caddr_t eay_sha2_512_init __P((void));
 extern void eay_sha2_512_update __P((caddr_t, vchar_t *));
 extern vchar_t *eay_sha2_512_final __P((caddr_t));
 extern vchar_t *eay_sha2_512_one __P((vchar_t *));
+#endif
 extern int eay_sha2_512_hashlen __P((void));
 
+#if defined(WITH_SHA2)
 extern caddr_t eay_sha2_384_init __P((void));
 extern void eay_sha2_384_update __P((caddr_t, vchar_t *));
 extern vchar_t *eay_sha2_384_final __P((caddr_t));
 extern vchar_t *eay_sha2_384_one __P((vchar_t *));
+#endif
 extern int eay_sha2_384_hashlen __P((void));
 
+#if defined(WITH_SHA2)
 extern caddr_t eay_sha2_256_init __P((void));
 extern void eay_sha2_256_update __P((caddr_t, vchar_t *));
 extern vchar_t *eay_sha2_256_final __P((caddr_t));
 extern vchar_t *eay_sha2_256_one __P((vchar_t *));
+#endif
 extern int eay_sha2_256_hashlen __P((void));
 
 /* SHA functions */
