@@ -1,11 +1,10 @@
-/*	$NetBSD: procfs_machdep.c,v 1.1 2001/05/28 16:22:15 thorpej Exp $	*/
+/* $NetBSD: procfs_machdep.c,v 1.1 2002/03/13 02:55:26 simonb Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <miscfs/procfs/procfs.h>
-
 
 /*
  * Linux-style /proc/cpuinfo.

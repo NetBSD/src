@@ -1,4 +1,4 @@
-#	$NetBSD: files.mipsco,v 1.7 2001/03/30 23:47:58 wdk Exp $
+#	$NetBSD: files.mipsco,v 1.8 2002/03/13 02:55:12 simonb Exp $
 
 #  MIPS Computer Corp -specific configuration info
 
@@ -53,7 +53,6 @@ file arch/mipsco/mipsco/autoconf.c
 file arch/mipsco/mipsco/conf.c
 file arch/mipsco/mipsco/machdep.c
 file arch/mipsco/mipsco/interrupt.c
-file arch/mipsco/mipsco/procfs_machdep.c	procfs
 file arch/mipsco/mipsco/mips_3x30.c
 file arch/mipsco/mipsco/disksubr.c
 file arch/mipsco/mipsco/mainbus.c
