@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.22 2000/03/23 07:01:33 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.23 2000/03/23 08:20:06 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ struct channel_queue {  /* per channel queue (may be shared) */
 };
 
 struct channel_softc { /* Per channel data */
-	/* Out timeout callout */
+	/* Our timeout callout */
 	struct callout ch_callout;
 	/* Our location */
 	int channel;
