@@ -27,7 +27,7 @@
  *	i4b daemon - config file processing
  *	-----------------------------------
  *
- *	$Id: rc_config.c,v 1.2 2001/01/07 09:00:49 martin Exp $ 
+ *	$Id: rc_config.c,v 1.3 2001/04/09 21:18:00 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -42,18 +42,6 @@
 
 #include <sys/callout.h>
 #include <sys/ioctl.h>
-
-#include <net/if.h>
-#ifdef __NetBSD__
-#include <net/if_sppp.h>
-#else
-#if __FreeBSD__ == 3
-#include <sys/param.h>
-#include <sys/mbuf.h>
-#endif
-#include <net/if_var.h>
-#include <machine/i4b_isppp.h>
-#endif
 
 #include "isdnd.h"
 #include "y.tab.h"
