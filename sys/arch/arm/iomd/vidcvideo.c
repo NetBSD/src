@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.6 2002/03/23 02:00:26 reinoud Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.7 2002/03/23 17:10:13 reinoud Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.6 2002/03/23 02:00:26 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.7 2002/03/23 17:10:13 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -597,7 +597,7 @@ vidcvideointr(arg)
 		};
 
 		if (sc->sc_dc->dc_depth == 8) {
-			/* XXX dunno what to do in less than 8bpp */
+			/* dunno what to do in more than 8bpp */
 			/* palettes only make sense in 8bpp and less modes on VIDC */
 			vidcvideo_write(VIDC_PALREG, 0x00000000);
 			for (index = 0; index < CMAP_SIZE; index++) {
