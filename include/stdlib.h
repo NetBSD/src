@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdlib.h	5.13 (Berkeley) 6/4/91
- *	$Id: stdlib.h,v 1.14 1994/04/14 03:13:54 cgd Exp $
+ *	$Id: stdlib.h,v 1.15 1994/05/07 00:20:42 jtc Exp $
  */
 
 #ifndef _STDLIB_H_
@@ -136,6 +136,7 @@ extern	 char *optarg;			/* getopt(3) external variables */
 extern	 int opterr;
 extern	 int optind;
 extern	 int optopt;
+extern	 int optreset;
 int	 getsubopt __P((char **, char * const *, char **));
 extern	 char *suboptarg;		/* getsubopt(3) external variable */
 
