@@ -1,4 +1,4 @@
-/*	$NetBSD: type_enum.c,v 1.4 2001/01/23 01:57:01 blymn Exp $	*/
+/*	$NetBSD: type_enum.c,v 1.5 2001/01/30 06:44:43 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -131,14 +131,14 @@ match_enum(char **choices, unsigned num_choices, bool ignore_case,
 	unsigned i, start, enum_start, blen, elen, trailing;
 	bool cur_match;
 
-	start = skip_blanks(this, 0);
+	start = _formi_skip_blanks(this, 0);
 	blen = strlen(&this[start]);
 
 #ifdef DEBUG
 	fprintf(dbg, "match_enum: start %d, blen %d\n", start, blen);
 #endif
 	for (i = 0; i < num_choices; i++) {
-		enum_start = skip_blanks(choices[i], 0);
+		enum_start = _formi_skip_blanks(choices[i], 0);
 		elen = strlen(&choices[i][enum_start]);
 #ifdef DEBUG
 		fprintf(dbg, "match_enum: checking choice \'%s\'\n",
@@ -187,7 +187,7 @@ match_enum(char **choices, unsigned num_choices, bool ignore_case,
 		   * better match....
 		   */
 		if (!no_blanks && cur_match) {
-			trailing = skip_blanks(this, start + blen);
+			trailing = _formi_skip_blanks(this, start + blen);
 			if (this[trailing] == '\0') {
 #ifdef DEBUG
 				fprintf(dbg,
