@@ -1,4 +1,4 @@
-/*	$NetBSD: com_multi.c,v 1.17 2003/08/07 16:31:05 agc Exp $	*/
+/*	$NetBSD: com_multi.c,v 1.18 2004/09/14 17:38:30 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.17 2003/08/07 16:31:05 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.18 2004/09/14 17:38:30 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,8 @@ __KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.17 2003/08/07 16:31:05 agc Exp $");
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/com_multi.h>
+
+#include "locators.h"
 
 int com_multi_probe __P((struct device *, struct cfdata *, void *));
 void com_multi_attach __P((struct device *, struct device *, void *));
