@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.183 1999/09/17 19:59:35 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.184 1999/10/07 22:15:22 sato Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.183 1999/09/17 19:59:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184 1999/10/07 22:15:22 sato Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1160,7 +1160,7 @@ haltsys:
 #endif
 
 	/* Finally, powerdown/halt/reboot the system. */
-	if ((howto && RB_POWERDOWN) == RB_POWERDOWN &&
+	if ((howto & RB_POWERDOWN) == RB_POWERDOWN &&
 	    platform.powerdown != NULL) {
 		(*platform.powerdown)();
 		printf("WARNING: powerdown failed!\n");
