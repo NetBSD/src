@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_4.S,v 1.1 1999/01/15 13:31:31 bouyer Exp $	*/
+/*	$NetBSD: byte_swap_4.S,v 1.2 1999/01/18 01:24:55 castor Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,15 +40,15 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)htonl.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: byte_swap_4.S,v 1.1 1999/01/15 13:31:31 bouyer Exp $")
+	ASMSTR("$NetBSD: byte_swap_4.S,v 1.2 1999/01/18 01:24:55 castor Exp $")
 #endif /* LIBC_SCCS and not lint */
 #ifdef ABICALLS
 	.abicalls
 #endif
 
-ALEAF(bswap32)				# a0 = 0x11223344, return 0x44332211
+NLEAF(bswap32)				# a0 = 0x11223344, return 0x44332211
 #ifdef MIPSEL
-NLEAF(htonl)				# a0 = 0x11223344, return 0x44332211
+ALEAF(htonl)				# a0 = 0x11223344, return 0x44332211
 ALEAF(ntohl)
 #endif
 	srl	v1, a0, 24		# v1 = 0x00000011
