@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.37 1998/08/21 09:39:04 bouyer Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.38 1999/02/12 15:04:01 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.37 1998/08/21 09:39:04 bouyer Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.38 1999/02/12 15:04:01 kleink Exp $");
 #endif
 
 #include <sys/param.h>
@@ -43,10 +43,10 @@ __RCSID("$NetBSD: ypbind.c,v 1.37 1998/08/21 09:39:04 bouyer Exp $");
 #include <sys/signal.h>
 #include <sys/socket.h>
 #include <sys/file.h>
-#include <sys/fcntl.h>
 #include <sys/uio.h>
 #include <sys/syslog.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
