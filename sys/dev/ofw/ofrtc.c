@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrtc.c,v 1.5 1998/01/12 09:33:34 thorpej Exp $	*/
+/*	$NetBSD: ofrtc.c,v 1.6 1998/02/24 05:44:39 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -42,46 +42,49 @@ struct ofrtc_softc {
 	int sc_ihandle;
 };
 
-static int ofrtcprobe __P((struct device *, struct cfdata *, void *));
-static void ofrtcattach __P((struct device *, struct device *, void *));
+static int ofrtc_match __P((struct device *, struct cfdata *, void *));
+static void ofrtc_attach __P((struct device *, struct device *, void *));
 
 struct cfattach ofrtc_ca = {
-	sizeof(struct ofrtc_softc), ofrtcprobe, ofrtcattach
+	sizeof(struct ofrtc_softc), ofrtc_match, ofrtc_attach
 };
 
 extern struct cfdriver ofrtc_cd;
 
 static int
-ofrtcprobe(parent, match, aux)
+ofrtc_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
 {
-	struct ofprobe *ofp = aux;
+	struct ofbus_attach_args *oba = aux;
 	char type[8];
 	int l;
 	
-	if ((l = OF_getprop(ofp->phandle, "device_type", type, sizeof type - 1)) < 0)
-		return 0;
-	if (l >= sizeof type)
+	if (strcmp(oba->oba_busname, "ofw"))
+		return (0);
+	if ((l = OF_getprop(oba->oba_phandle, "device_type", type,
+	    sizeof type - 1)) < 0 ||
+	    l >= sizeof type)
 		return 0;
 	
 	return !strcmp(type, "rtc");
 }
 
 static void
-ofrtcattach(parent, self, aux)
+ofrtc_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
 	struct ofrtc_softc *of = (void *)self;
-	struct ofprobe *ofp = aux;
+	struct ofbus_attach_args *oba = aux;
 	char name[32];
 	int l;
 	
-	of->sc_phandle = ofp->phandle;
+	of->sc_phandle = oba->oba_phandle;
 	of->sc_ihandle = 0;
-	if ((l = OF_getprop(of->sc_phandle, "name", name, sizeof name - 1)) < 0)
+	if ((l = OF_getprop(of->sc_phandle, "name", name,
+	    sizeof name - 1)) < 0)
 		panic("Device without name?");
 	if (l >= sizeof name)
 		l = sizeof name - 1;
@@ -90,7 +93,7 @@ ofrtcattach(parent, self, aux)
 }
 
 int
-ofrtcopen(dev, flags, fmt)
+ofrtc_open(dev, flags, fmt)
 	dev_t dev;
 	int flags;
 	int fmt;
@@ -105,9 +108,9 @@ ofrtcopen(dev, flags, fmt)
 	if (!(of = ofrtc_cd.cd_devs[unit]))
 		return ENXIO;
 	if (!of->sc_ihandle) {
-		if ((l = OF_package_to_path(of->sc_phandle, path, sizeof path - 1)) < 0)
-			return ENXIO;
-		if (l >= sizeof path)
+		if ((l = OF_package_to_path(of->sc_phandle, path,
+		    sizeof path - 1)) < 0 ||
+		    l >= sizeof path)
 			return ENXIO;
 		path[l] = 0;
 		
@@ -125,7 +128,7 @@ ofrtcopen(dev, flags, fmt)
 }
 
 int
-ofrtcclose(dev, flags, fmt)
+ofrtc_close(dev, flags, fmt)
 	dev_t dev;
 	int flags;
 	int fmt;
@@ -153,7 +156,7 @@ twodigits(bp)
 }
 
 int
-ofrtcread(dev, uio, flag)
+ofrtc_read(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 	int flag;
@@ -188,7 +191,7 @@ ofrtcread(dev, uio, flag)
 }
 
 int
-ofrtcwrite(dev, uio, flag)
+ofrtc_write(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 	int flag;
