@@ -52,6 +52,7 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <string.h>
 #include <sys/disklabel.h>

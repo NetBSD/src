@@ -47,6 +47,9 @@
 
 /* $Locker:  $
  * $Log: rf_configure.c,v $
+ * Revision 1.3  1999/01/12 22:58:10  mjacob
+ * recover from errno.h changes
+ *
  * Revision 1.2  1998/11/23 00:18:40  mrg
  * fix compile errors on the alpha.
  *
@@ -139,6 +142,7 @@
 
 
 #include <stdio.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "rf_raid.h"
