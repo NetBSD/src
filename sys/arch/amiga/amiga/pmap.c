@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.69 1999/07/08 18:05:23 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.70 1999/08/03 21:50:18 is Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -561,7 +561,7 @@ pmap_init()
 	if (addr == 0)
 		panic("pmap_init: can't allocate data structures");
 	Segtabzero = (u_int *) addr;
-	(void) pmap_extract(pmap_kernel(), addr, (paddr_t *)&Segtabzero);
+	(void) pmap_extract(pmap_kernel(), addr, (paddr_t *)&Segtabzeropa);
 	addr += AMIGA_STSIZE;
 
 	pv_table = (pv_entry_t) addr;
