@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2002/04/01 12:16:13 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2002/04/03 06:38:26 lukem Exp $
 
 IMAGESIZE=	32m
 MAKEFS_FLAGS=	-f 15
@@ -13,6 +13,5 @@ IMAGEDEPENDS+=	${ARCHDIR}/dot.profile ${ARCHDIR}/termcap.rcons \
 		${KERNOBJDIR}/GENERIC/netbsd.ecoff \
 		${KERNOBJDIR}/INSTALL/nfsnetbsd.ecoff
 
-# XXXIMAGE: installboot needs to be MI and work on image files
 image_md_post:
-	${DESTDIR}/usr/mdec/installboot ${IMAGE} ${DESTDIR}/usr/mdec/bootxx_ffs
+	${INSTALLBOOT} -m ${MACHINE} ${IMAGE} ${DESTDIR}/usr/mdec/bootxx_ffs
