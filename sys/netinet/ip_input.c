@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.152 2002/06/09 16:33:40 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.153 2002/06/13 16:25:54 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.152 2002/06/09 16:33:40 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.153 2002/06/13 16:25:54 itojun Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -168,7 +168,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.152 2002/06/09 16:33:40 itojun Exp $"
 #define	IPALLOWSRCRT	1	/* allow source-routed packets */
 #endif
 #ifndef IPMTUDISC
-#define IPMTUDISC	0
+#define IPMTUDISC	1
 #endif
 #ifndef IPMTUDISCTIMEOUT
 #define IPMTUDISCTIMEOUT (10 * 60)	/* as per RFC 1191 */
