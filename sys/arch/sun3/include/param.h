@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.53.18.1 2002/06/01 22:45:33 tv Exp $	*/
+/*	$NetBSD: param.h,v 1.53.18.2 2003/09/09 21:22:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -87,6 +87,9 @@
 extern void _delay __P((unsigned));
 #define delay(us)	_delay((us)<<8)
 #define	DELAY(n)	delay(n)
+
+#undef	MAXPHYS
+#define	MAXPHYS		(32 * 1024)	/* max raw I/O transfer size */
 
 #endif	/* _KERNEL && !_LOCORE */
 #endif	/* !_MACHINE_PARAM_H_ */
