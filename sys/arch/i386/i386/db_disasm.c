@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.25 2000/12/05 10:45:09 jdolecek Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.26 2000/12/06 03:20:35 chs Exp $	*/
 
 /* 
  * Mach Operating System
@@ -1096,21 +1096,14 @@ db_disasm(loc, altfmt)
 	/*
 	 * Don't try to disassemble the location if the mapping is invalid.
 	 * If we do, we'll fault, and end up debugging the debugger!
+	 * in a LARGEPAGES kernel, "pte" is really the pde and "pde" is
+	 * really the entry for the pdp itself.
 	 */
 	if ((vaddr_t)loc >= VM_MIN_KERNEL_ADDRESS)
 		pte = kvtopte((vaddr_t)loc);
 	else
 		pte = vtopte((vaddr_t)loc);
-
-	/*
-	 * pte is normally in user address space, but may also be in kernel
-	 * address space for LARGEPAGES kernel.
-	 */
-	if ((vaddr_t)pte >= VM_MIN_KERNEL_ADDRESS)
-		pde = kvtopte((vaddr_t)pte);
-	else
-		pde = vtopte((vaddr_t)pte);
-
+	pde = vtopte((vaddr_t)pte);
 	if ((*pde & PG_V) == 0 || (*pte & PG_V) == 0) {
 		db_printf("invalid address\n");
 		return (loc);
