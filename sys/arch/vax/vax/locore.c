@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.4 1995/03/30 21:25:22 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.5 1995/05/03 19:20:14 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -99,9 +99,6 @@ to_kmem:
 	Sysmap=(u_int *)ROUND_PAGE(mfpr(PR_KSP));
 
 	/* Be sure some important internal registers have safe values */
-asm("	movw	$0xfff,_arithflt
-	movw	$0xfff,_syscall
-");
         ((struct pcb *)proc0paddr)->P0LR = 0;
         ((struct pcb *)proc0paddr)->P0BR = 0;
         ((struct pcb *)proc0paddr)->P1LR = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.8 1995/04/12 15:34:56 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.9 1995/05/03 19:20:12 ragge Exp $   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -61,7 +61,7 @@
 _kernbase:
 	INTVEC(stray00, ISTACK)	# Unused., 0
 	INTVEC(mcheck, ISTACK)		# Machine Check., 4
-	INTVEC(invkstk, ISTACK)	# Kernel Stack Invalid., 8
+	INTVEC(stray08, ISTACK)	# Kernel Stack Invalid., 8
 	INTVEC(stray0C, ISTACK)	# Power Failed., C
 	INTVEC(privinflt, KSTACK)	# Privileged/Reserved Instruction.
 	INTVEC(stray14, ISTACK)	# Customer Reserved Instruction, 14
@@ -163,8 +163,7 @@ mcheck:	.globl	mcheck
 	rei
 
 	.align 2
-invkstk: chmk $8	# skould always halt.
-/*	STRAY(0, 08) */
+	STRAY(0, 08)
 	STRAY(0, 0C)
 
 	TRAPCALL(privinflt, T_PRIVINFLT)
@@ -213,14 +212,14 @@ ptelen:	movl	$T_PTELEN, (sp)		# PTE must expand (or send segv)
 	.globl	syscall
 syscall:
 	pushl	$T_SYSCALL
-	pushr	$0x3f
+	pushr	$0xfff
 	pushl	ap
 	pushl	fp
 	pushl	sp		# pointer to syscall frame; defined in trap.h
 	calls	$1,_syscall
 	movl	(sp)+,fp
 	movl	(sp)+,ap
-	popr	$0x3f
+	popr	$0xfff
 	addl2	$8,sp
 	mtpr	$0x1f,$PR_IPL	# Be sure we can REI
 	rei
@@ -290,14 +289,14 @@ hardclock:	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
 	FASTINTR(consrint, gencnrint)
 	FASTINTR(constint, gencntint)
 
-trap:	pushr	$0x3f
+trap:	pushr	$0xfff
 	pushl	ap
 	pushl	fp
 	pushl	sp
 	calls	$1,_arithflt
 	movl	(sp)+,fp
 	movl	(sp)+,ap
-        popr	$0x3f
+        popr	$0xfff
 	addl2	$8,sp
 	mtpr	$0x1f,$PR_IPL	# Be sure we can REI
 	rei
@@ -385,4 +384,12 @@ noemulate:
 	addl2	$48,sp			# adjust stack for
 #endif
 	.word	0xffff			# "reserved instruction fault"
+
+        .globl  _intrnames, _eintrnames, _intrcnt, _eintrcnt
+_intrnames:
+        .long   0
+_eintrnames:
+_intrcnt:
+        .long   0
+_eintrcnt:
 
