@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_open.c,v 1.15 2002/04/16 19:00:45 groo Exp $	*/
+/*	$NetBSD: bt_open.c,v 1.16 2002/11/11 01:17:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_open.c	8.10 (Berkeley) 8/17/94";
 #else
-__RCSID("$NetBSD: bt_open.c,v 1.15 2002/04/16 19:00:45 groo Exp $");
+__RCSID("$NetBSD: bt_open.c,v 1.16 2002/11/11 01:17:20 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -397,7 +397,8 @@ static int
 tmp()
 {
 	sigset_t set, oset;
-	int fd, len;
+	size_t len;
+	int fd;
 	char *envtmp;
 	char path[PATH_MAX];
 
