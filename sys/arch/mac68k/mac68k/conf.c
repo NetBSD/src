@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.49.2.6 1999/11/09 01:44:18 scottr Exp $	*/
+/*	$NetBSD: conf.c,v 1.49.2.7 1999/11/15 23:31:20 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -99,11 +99,11 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
-#define NADB 1 /* #include "adb.h" */
 #include "aed.h"
 #include "asc.h"
 #include "bpfilter.h"
 #include "ch.h"
+#include "grf.h"
 #include "ipfilter.h"
 #include "pty.h"
 #include "rnd.h"
@@ -127,6 +127,7 @@ cdev_decl(ch);
 cdev_decl(cn);
 cdev_decl(ctty);
 cdev_decl(fd);
+cdev_decl(grf);
 cdev_decl(ipl);
 cdev_decl(kbd);
 cdev_decl(log);
@@ -173,7 +174,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 7 */
 	cdev_notdef(),			/* 8 */
 	cdev_notdef(),			/* 9 */
-	cdev_notdef(),			/* 10: (formerly grf frame buffer) */
+	cdev_fb_init(NGRF,grf),		/* 10: grf (frame buffer) emulation */
 	cdev_notdef(),			/* 11: (formerly ite console) */
 	cdev_tty_init(NZSTTY,zs),	/* 12: 2 mac serial ports -- BG*/
 	cdev_disk_init(NSD,sd),		/* 13: SCSI disk */
