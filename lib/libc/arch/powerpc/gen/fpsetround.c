@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetround.c,v 1.4 2004/04/02 22:55:19 matt Exp $	*/
+/*	$NetBSD: fpsetround.c,v 1.5 2004/04/04 19:28:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -53,12 +53,13 @@ __weak_alias(fpsetround,_fpsetround)
 fp_rnd
 fpsetround(fp_rnd rnd_dir)
 {
-	u_int64_t fpscr;
+	uint64_t fpscr;
 	fp_rnd old;
 
 	__asm__ __volatile("mffs %0" : "=f"(fpscr));
-	old = ((fp_rnd)fpscr & ROUNDBITS);
-	fpscr = (fpscr & ~ROUNDBITS) | (rnd_dir & ROUNDBITS);
+	old = (uint32_t)fpscr & ROUNDBITS;
+	fpscr &= ~ROUNDBITS;
+	fpscr |= rnd_dir & ROUNDBITS;
 	__asm__ __volatile("mtfsf 0xff,%0" :: "f"(fpscr));
 	return (old);
 }
