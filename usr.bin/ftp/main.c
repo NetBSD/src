@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 1996/12/06 02:06:52 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.15 1996/12/29 04:05:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.14 1996/12/06 02:06:52 lukem Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.15 1996/12/29 04:05:32 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,6 +92,11 @@ main(argc, argv)
 	passivemode = 0;
 	preserve = 1;
 	mark = HASHBYTES;
+
+	cp = strrchr(argv[0], '/');
+	cp = (cp == NULL) ? argv[0] : cp + 1;
+	if (strcmp(cp, "pftp") == 0)
+		passivemode = 1;
 
 	while ((ch = getopt(argc, argv, "adginpP:tv")) != EOF) {
 		switch (ch) {
@@ -586,7 +591,7 @@ auto_fetch(argc, argv)
 	/*
 	 * Loop through as long as there's files to fetch.
 	 */
-	while (argc > 0 && strchr(argv[0], ':') != NULL) {
+	for ( ; argc > 0 && strchr(argv[0], ':') != NULL ; --argc, argv++) {
 		host = dir = file = portnum = NULL;
 
 		/*
@@ -673,8 +678,6 @@ auto_fetch(argc, argv)
 
 		disconnect(0, NULL);
 		free(host);
-
-		--argc, ++argv;
 	}
 
 	return (rval);
