@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.331 2001/04/18 05:59:40 jdolecek Exp $
+#	$NetBSD: mi,v 1.332 2001/04/18 08:35:07 kleink Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1325,6 +1325,7 @@
 ./usr/share/man/cat2/fchflags.0		comp-c-catman
 ./usr/share/man/cat2/fchmod.0		comp-c-catman
 ./usr/share/man/cat2/fchown.0		comp-c-catman
+./usr/share/man/cat2/fchroot.0		comp-c-catman
 ./usr/share/man/cat2/fcntl.0		comp-c-catman
 ./usr/share/man/cat2/fdatasync.0	comp-c-catman
 ./usr/share/man/cat2/fhopen.0		comp-c-catman
@@ -3264,6 +3265,7 @@
 ./usr/share/man/man2/fchflags.2		comp-c-man
 ./usr/share/man/man2/fchmod.2		comp-c-man
 ./usr/share/man/man2/fchown.2		comp-c-man
+./usr/share/man/man2/fchroot.2		comp-c-man
 ./usr/share/man/man2/fcntl.2		comp-c-man
 ./usr/share/man/man2/fdatasync.2		comp-c-man
 ./usr/share/man/man2/fhopen.2		comp-c-man
