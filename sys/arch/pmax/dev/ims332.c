@@ -1,4 +1,4 @@
-/*	$NetBSD: ims332.c,v 1.5 1997/06/16 02:18:47 jonathan Exp $	*/
+/*	$NetBSD: ims332.c,v 1.6 1997/06/16 09:53:14 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1995
@@ -298,7 +298,6 @@ ims332PosCursor(fi, x, y)
 	struct fbinfo *fi;
 	int x, y;
 {
-#ifdef MELLON
 	if (y < 0)
 	  y = 0;
 	else if (y > fi -> fi_type.fb_width - fi -> fi_cursor.width - 1)
@@ -307,12 +306,6 @@ ims332PosCursor(fi, x, y)
 	  x = 0;
 	else if (x > fi -> fi_type.fb_height - fi -> fi_cursor.height - 1)
 	  x = fi -> fi_type.fb_height - fi -> fi_cursor.height - 1;
-#else
- 	if (y < fbu->scrInfo.min_cur_y || y > fbu->scrInfo.max_cur_y)
-		y = fbu->scrInfo.max_cur_y;
-	if (x < fbu->scrInfo.min_cur_x || x > fbu->scrInfo.max_cur_x)
-		x = fbu->scrInfo.max_cur_x;
-#endif
 
 	fi -> fi_cursor.x = x;
 	fi -> fi_cursor.y = y;
