@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.19 1999/04/28 05:09:47 cgd Exp $
+	$NetBSD: syscalls.master,v 1.20 1999/04/29 02:10:07 cgd Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -82,7 +82,7 @@
 30	UNIMPL		accept
 31	UNIMPL		getpeername
 32	UNIMPL		getsockname
-33	NOARGS		{ int sys_access(const char *path, int flags); }
+33	STD		{ int osf1_sys_access(const char *path, int flags); }
 34	UNIMPL		chflags
 35	UNIMPL		fchflags
 36	NOARGS		{ int sys_sync(void); }
@@ -131,7 +131,8 @@
 			    int prot, int flags, int fd, off_t pos); }
 72	UNIMPL		ovadvise
 73	NOARGS		{ int sys_munmap(caddr_t addr, size_t len); }
-74	UNIMPL		mprotect
+74	STD		{ int osf1_sys_mprotect(void *addr, size_t len, \
+			    int prot); }
 75	STD		{ int osf1_sys_madvise(void *addr, size_t len, \
 			    int behav); }
 76	UNIMPL		old vhangup
@@ -223,7 +224,8 @@
 			    const struct osf1_timeval *tptr); }
 139	OBSOL		4.2 sigreturn
 140	UNIMPL		adjtime
-141	UNIMPL		old getpeername
+141	NOARGS		{ int compat_43_sys_getpeername(int fdes, \
+			    caddr_t asa, int *alen); }
 142	NOARGS		{ int32_t compat_43_sys_gethostid(void); }
 143	NOARGS		{ int compat_43_sys_sethostid(int32_t hostid); }
 144	STD		{ int osf1_sys_getrlimit(u_int which, \
@@ -234,7 +236,8 @@
 147	NOARGS		{ int sys_setsid(void); }
 148	UNIMPL		quotactl
 149	NOARGS		{ int compat_43_sys_quota(void); }
-150	UNIMPL		old getsockname
+150	NOARGS		{ int compat_43_sys_getsockname(int fdec, \
+			    caddr_t asa, int *alen); }
 151	UNIMPL		pread
 152	UNIMPL		pwrite
 153	UNIMPL		pid_block
