@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.33 1997/10/17 09:35:17 jonathan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.33.2.1 1998/02/08 07:09:54 mellon Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33 1997/10/17 09:35:17 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33.2.1 1998/02/08 07:09:54 mellon Exp $");
 
 /*
  *	Manages physical address maps.
@@ -374,7 +374,8 @@ pmap_pinit(pmap)
 		do {
 			mem = vm_page_alloc1();
 			if (mem == NULL) {
-				VM_WAIT;	/* XXX What else can we do */
+				vm_wait("pmap_pinit");
+						/* XXX What else can we do */
 			}			/* XXX Deadlock situations? */
 		} while (mem == NULL);
 
@@ -1044,7 +1045,8 @@ pmap_enter(pmap, va, pa, prot, wired)
 		do {
 			mem = vm_page_alloc1();
 			if (mem == NULL) {
-				VM_WAIT;	/* XXX What else can we do */
+				vm_wait("pmap_enter");
+						/* XXX What else can we do */
 			}			/* XXX Deadlock situations? */
 		} while (mem == NULL);
 
