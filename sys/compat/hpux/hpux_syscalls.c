@@ -32,7 +32,11 @@ char *hpux_syscallnames[] = {
 	"setuid",			/* 23 = setuid */
 	"getuid",			/* 24 = getuid */
 	"stime_6x",			/* 25 = stime_6x */
+#if 0
 	"ptrace",			/* 26 = ptrace */
+#else
+	"#26 (unimplemented ptrace)",		/* 26 = unimplemented ptrace */
+#endif
 	"alarm_6x",			/* 27 = alarm_6x */
 	"fstat_6x",			/* 28 = fstat_6x */
 	"pause_6x",			/* 29 = pause_6x */
