@@ -1,4 +1,4 @@
-/*	$NetBSD: init_field.c,v 1.3 1995/04/22 10:08:52 cgd Exp $	*/
+/*	$NetBSD: init_field.c,v 1.4 1997/05/23 23:40:16 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)init_field.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: init_field.c,v 1.3 1995/04/22 10:08:52 cgd Exp $";
+static char rcsid[] = "$NetBSD: init_field.c,v 1.4 1997/05/23 23:40:16 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,6 @@ init_field()
 
 	Dead = FALSE;
 	Waiting = FALSE;
-	flushok(stdscr, TRUE);
 	Score = 0;
 
 	erase();
