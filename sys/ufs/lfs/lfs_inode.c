@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.62 2003/01/24 21:55:27 fvdl Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.63 2003/01/25 16:40:29 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.62 2003/01/24 21:55:27 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.63 2003/01/25 16:40:29 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -234,7 +234,8 @@ lfs_truncate(void *v)
 	daddr_t lastblock;
 	struct inode *oip;
 	daddr_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
-	daddr_t newblks[NDADDR + NIADDR];
+	/* XXX ondisk32 */
+	int32_t newblks[NDADDR + NIADDR];
 	off_t length = ap->a_length;
 	struct lfs *fs;
 	struct buf *bp;

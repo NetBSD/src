@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.53 2003/01/24 21:55:22 fvdl Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.54 2003/01/25 16:40:29 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.53 2003/01/24 21:55:22 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.54 2003/01/25 16:40:29 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -175,7 +175,8 @@ ffs_truncate(v)
 	daddr_t lastblock;
 	struct inode *oip;
 	daddr_t bn, lastiblock[NIADDR], indir_lbn[NIADDR];
-	daddr_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
+	/* XXX ondisk32 */
+	int32_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
 	off_t length = ap->a_length;
 	struct fs *fs;
 	int offset, size, level;
