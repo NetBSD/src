@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.65 1996/05/18 15:58:07 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66 1996/05/18 23:30:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -135,58 +135,12 @@ int	conforced;		/* console has been forced */
 
 /*
  * Note that the value of delay_divisor is roughly
- * 2048 / cpuspeed (where cpuspeed is in MHz).
- *
- * XXX At the moment, delay_divisor is based on cpuspeed,
- * XXX which is set according to CPU model.  Eventually,
- * XXX we should calibrate delay_divisor, and calculate
- * XXX the actual CPU speed.
+ * 2048 / cpuspeed (where cpuspeed is in MHz) on 68020
+ * and 68030 systems.  See clock.c for the delay
+ * calibration algorithm.
  */
-int	cpuspeed = 0;		/* relative cpu speed -- can be patched */
-int	delay_divisor = 40;	/* default to 50MHz CPU */
-
-void	hp300_calibrate_delay __P((void));
-
-/*
- * Calibrate delay_divisor.  Right now, this is just based on CPU
- * speeds of known models.
- */
-void
-hp300_calibrate_delay()
-{
-
-	/*
-	 * XXX The 16MHz CPUs are actually 16.67 ... should we round
-	 * XXX these up to 17?
-	 */
-
-	if (cpuspeed == 0) {
-		switch (machineid) {
-		case HP_320:
-		case HP_330:
-		case HP_340:
-			cpuspeed = 16;
-			break;
-		case HP_350:
-		case HP_360:
-		case HP_380:
-			cpuspeed = 25;
-			break;
-		case HP_370:
-		case HP_433:
-			cpuspeed = 33;
-			break;
-		case HP_375:
-			cpuspeed = 50;
-			break;
-		default:	/* assume the fastest */
-			cpuspeed = 50;
-			break;
-		}
-	}
-
-	delay_divisor = 2048 / cpuspeed;
-}
+int	cpuspeed;		/* relative cpu speed; XXX skewed on 68040 */
+int	delay_divisor;		/* delay constant */
 
 /*
  * Console initialization: called early on from main,
@@ -617,7 +571,7 @@ identifycpu()
 	}
 	strcat(cpu_model, ")");
 	printf("%s\n", cpu_model);
-	printf("delay constant for %dMHz cpu: %d\n", cpuspeed, delay_divisor);
+	printf("delay constant for this cpu: %d\n", delay_divisor);
 	/*
 	 * Now that we have told the user what they have,
 	 * let them know if that machine type isn't configured.
