@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.206 2000/02/09 14:22:14 drochner Exp $
+# $NetBSD: mi,v 1.207 2000/02/11 09:30:31 fair Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -379,6 +379,7 @@
 ./usr/share/man/cat4/cue.0
 ./usr/share/man/cat4/cy.0
 ./usr/share/man/cat4/ddb.0
+./usr/share/man/cat4/de.0
 ./usr/share/man/cat4/dpt.0
 ./usr/share/man/cat4/drum.0
 ./usr/share/man/cat4/eap.0
@@ -1320,6 +1321,7 @@
 ./usr/share/man/man4/cue.4
 ./usr/share/man/man4/cy.4
 ./usr/share/man/man4/ddb.4
+./usr/share/man/man4/de.4
 ./usr/share/man/man4/dpt.4
 ./usr/share/man/man4/drum.4
 ./usr/share/man/man4/eap.4
