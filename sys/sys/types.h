@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.31 1997/11/05 21:32:02 cgd Exp $	*/
+/*	$NetBSD: types.h,v 1.32 1997/11/23 20:39:08 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -65,6 +65,8 @@ typedef	u_int64_t	u_quad_t;	/* quads */
 typedef	int64_t		quad_t;
 typedef	quad_t *	qaddr_t;
 
+typedef	int64_t		blkcnt_t;	/* fs block count */
+typedef	u_int32_t	blksize_t;	/* fs optimal block size */
 typedef	char *		caddr_t;	/* core address */
 typedef	int32_t		daddr_t;	/* disk address */
 typedef	u_int32_t	dev_t;		/* device number */
@@ -105,33 +107,43 @@ __END_DECLS
 #endif
 
 #ifdef	_BSD_CLOCK_T_
-typedef	_BSD_CLOCK_T_	clock_t;
+typedef	_BSD_CLOCK_T_		clock_t;
 #undef	_BSD_CLOCK_T_
 #endif
 
 #ifdef	_BSD_SIZE_T_
-typedef	_BSD_SIZE_T_	size_t;
+typedef	_BSD_SIZE_T_		size_t;
 #undef	_BSD_SIZE_T_
 #endif
 
 #ifdef	_BSD_SSIZE_T_
-typedef	_BSD_SSIZE_T_	ssize_t;
+typedef	_BSD_SSIZE_T_		ssize_t;
 #undef	_BSD_SSIZE_T_
 #endif
 
 #ifdef	_BSD_TIME_T_
-typedef	_BSD_TIME_T_	time_t;
+typedef	_BSD_TIME_T_		time_t;
 #undef	_BSD_TIME_T_
 #endif
 
 #ifdef	_BSD_CLOCKID_T_
-typedef	_BSD_CLOCKID_T_	clockid_t;
+typedef	_BSD_CLOCKID_T_		clockid_t;
 #undef	_BSD_CLOCKID_T_
 #endif
 
 #ifdef	_BSD_TIMER_T_
-typedef	_BSD_TIMER_T_	timer_t;
+typedef	_BSD_TIMER_T_		timer_t;
 #undef	_BSD_TIMER_T_
+#endif
+
+#ifdef	_BSD_SUSECONDS_T_
+typedef	_BSD_SUSECONDS_T_	suseconds_t;
+#undef	_BSD_SUSECONDS_T_
+#endif
+
+#ifdef	_BSD_USECONDS_T_
+typedef	_BSD_USECONDS_T_	useconds_t;
+#undef	_BSD_USECONDS_T_
 #endif
 
 #if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
