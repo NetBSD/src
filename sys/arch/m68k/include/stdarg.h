@@ -31,9 +31,8 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdarg.h	7.2 (Berkeley) 5/4/91
- *	$Id: stdarg.h,v 1.3 1994/01/28 04:41:26 mycroft Exp $
+ *	$Id: stdarg.h,v 1.4 1994/04/10 02:22:15 chopps Exp $
  */
-
 #ifndef _M68K_STDARG_H_
 #define _M68K_STDARG_H_
 
