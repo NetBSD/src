@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.15 2003/05/30 18:14:13 kristerw Exp $	*/
+/*	$NetBSD: patch.c,v 1.16 2003/05/30 22:33:58 kristerw Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: patch.c,v 1.15 2003/05/30 18:14:13 kristerw Exp $");
+__RCSID("$NetBSD: patch.c,v 1.16 2003/05/30 22:33:58 kristerw Exp $");
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -440,8 +440,6 @@ get_some_switches(void)
     char *s;
 
     rejname[0] = '\0';
-    Argc_last = Argc;
-    Argv_last = Argv;
     if (!Argc)
 	return;
     for (Argc--,Argv++; Argc; Argc--,Argv++) {
@@ -843,7 +841,7 @@ dump_line(LINENUM line)
     char R_newline = '\n';
 
     /* Note: string is not null terminated. */
-    for (s=ifetch(line, 0); putc(*s, ofp) != R_newline; s++) ;
+    for (s=ifetch(line); putc(*s, ofp) != R_newline; s++) ;
 }
 
 /* Does the patch pattern match at line base+offset? */
@@ -857,12 +855,12 @@ patch_match(LINENUM base, LINENUM offset, LINENUM fuzz)
 
     for (iline=base+offset+fuzz; pline <= pat_lines; pline++,iline++) {
 	if (canonicalize) {
-	    if (!similar(ifetch(iline, (offset >= 0)),
+	    if (!similar(ifetch(iline),
 			 pfetch(pline),
 			 pch_line_len(pline) ))
 		return FALSE;
 	}
-	else if (strnNE(ifetch(iline, (offset >= 0)),
+	else if (strnNE(ifetch(iline),
 		   pfetch(pline),
 		   pch_line_len(pline) ))
 	    return FALSE;

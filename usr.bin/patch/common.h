@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.13 2003/05/30 18:14:13 kristerw Exp $	*/
+/*	$NetBSD: common.h,v 1.14 2003/05/30 22:33:58 kristerw Exp $	*/
 
 #define DEBUGGING
 
@@ -40,7 +40,6 @@
 #define MAXHUNKSIZE 100000		/* is this enough lines? */
 #define INITHUNKMAX 125			/* initial dynamic allocation size */
 #define MAXLINELEN 10240
-#define BUFFERSIZE 1024
 
 #define SCCSPREFIX "s."
 #define GET "get -e %s"
@@ -57,8 +56,6 @@
 
 #define Nulline 0
 
-#define Ctl(ch) ((ch) & 037)
-
 #define strNE(s1,s2) (strcmp(s1, s2))
 #define strEQ(s1,s2) (!strcmp(s1, s2))
 #define strnNE(s1,s2,l) (strncmp(s1, s2, l))
@@ -73,8 +70,6 @@ typedef int LINENUM;			/* must be signed */
 
 EXT int Argc;				/* guess */
 EXT char **Argv;
-EXT int Argc_last;			/* for restarting plan_b */
-EXT char **Argv_last;
 
 EXT struct stat filestat;		/* file statistics area */
 EXT mode_t filemode INIT(0644);
@@ -84,8 +79,6 @@ EXT FILE *ofp INIT(NULL);		/* output file pointer */
 EXT FILE *rejfp INIT(NULL);		/* reject file pointer */
 
 EXT int myuid;				/* cache getuid return value */
-
-EXT bool using_plan_a INIT(TRUE);	/* try to keep everything in memory */
 
 #define MAXFILEC 2
 EXT int filec INIT(0);			/* how many file arguments? */
