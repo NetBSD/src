@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_smbfs.8,v 1.5 2003/03/31 17:22:31 jdolecek Exp $
+.\" $NetBSD: mount_smbfs.8,v 1.6 2003/04/01 11:24:47 jdolecek Exp $
 .\" from: Id: mount_smbfs.8,v 1.10 2002/04/16 02:47:41 bp Exp
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -88,9 +88,9 @@ tries to use an environment variable
 to determine it.
 .It Fl M Ar crights : Ns Ar srights
 Assign access rights to the newly created connection.
-See
-.Xr nsmb 8
-for theory.
+.\" See
+.\" .Xr nsmb 8
+.\" for theory.
 .It Fl N
 Do not ask for a password.
 At run time,
@@ -106,9 +106,9 @@ prompts for it.
 .Ns Ar sowner : Ns Ar sgroup
 .Xc
 Assign owner/group attributes to the newly created connection.
-See
-.Xr nsmb 8
-for theory.
+.\" See
+.\" .Xr nsmb 8
+.\" for theory.
 .It Fl R Ar retrycount
 How many retries should be done before the SMB requester decides to drop
 the connection.
