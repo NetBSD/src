@@ -49,9 +49,6 @@ Boston, MA 02111-1307, USA.  */
   || !strcmp (STR, "iwithprefix") || !strcmp (STR, "iwithprefixbefore") \
   || !strcmp (STR, "isystem"))
 
-/* Print subsidiary information on the compiler version in use.  */
-#define TARGET_VERSION
-
 /* Run-time compilation parameters selecting different hardware subsets.  */
 
 /* Which processor to schedule for. The cpu attribute defines a list that
@@ -493,14 +490,14 @@ extern void override_options ();
    a bug in DEC's assembler. */
 
 #define LOOP_ALIGN(LABEL) \
-  (optimize > 0 && write_symbols != SDB_DEBUG ? 4 : 0)
+  (!optimize_size && optimize > 0 && write_symbols != SDB_DEBUG ? 4 : 0)
 
 /* This is how to align an instruction for optimal branching.  On
    Alpha we'll get better performance by aligning on an octaword
    boundary.  */
 
 #define LABEL_ALIGN_AFTER_BARRIER(FILE)	\
-  (optimize > 0 && write_symbols != SDB_DEBUG ? 4 : 0)
+  (!optimize_size && optimize > 0 && write_symbols != SDB_DEBUG ? 4 : 0)
 
 /* No data type wants to be aligned rounder than this.  */
 #define BIGGEST_ALIGNMENT 64
