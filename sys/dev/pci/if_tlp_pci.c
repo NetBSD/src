@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.39.2.3 2000/07/15 22:48:01 tron Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.39.2.4 2000/07/16 20:29:08 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -482,19 +482,23 @@ tlp_pci_attach(parent, self, aux)
 	}
 
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		reg = pci_conf_read(pc, pa->pa_tag, pmreg + 4) & 0x3;
-		if (reg == 3) {
+		reg = pci_conf_read(pc, pa->pa_tag, pmreg + 4);
+		switch (reg & PCI_PMCSR_STATE_MASK) {
+		case PCI_PMCSR_STATE_D1:
+		case PCI_PMCSR_STATE_D2:
+			printf(": waking up from power state D%d\n%s",
+			    reg & PCI_PMCSR_STATE_MASK, sc->sc_dev.dv_xname);
+			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
+			break;
+		case PCI_PMCSR_STATE_D3:
 			/*
 			 * The card has lost all configuration data in
 			 * this state, so punt.
 			 */
-			printf(": unable to wake up from power state D3\n");
-			return;
-		}
-		if (reg != 0) {
-			printf(": waking up from power state D%d\n%s",
-			    reg, sc->sc_dev.dv_xname);
+			printf(": unable to wake up from power state D3, "
+			       "reboot required.\n");
 			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
+			return;
 		}
 	}
 
