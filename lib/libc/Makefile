@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.119 2004/09/13 21:44:54 thorpej Exp $
+#	$NetBSD: Makefile,v 1.120 2005/01/10 02:32:46 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -32,6 +32,7 @@ CPPFLAGS+=	-DHESIOD
 .if (${USE_INET6} != "no")
 CPPFLAGS+=	-DINET6
 .endif
+
 CPPFLAGS+=	-DNLS
 
 .if (${USE_YP} != "no")
