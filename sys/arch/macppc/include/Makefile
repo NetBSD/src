@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2001/04/15 17:13:12 kleink Exp $
+#	$NetBSD: Makefile,v 1.13 2001/05/03 13:11:24 soren Exp $
 
 KDIR=	/sys/arch/macppc/include
 INCSDIR= /usr/include/macppc
@@ -15,7 +15,7 @@ INCS=	adbsys.h ansi.h aout_machdep.h asm.h autoconf.h \
 	intr.h ipkdb.h \
 	kcore.h keyboard.h \
 	limits.h lock.h \
-	machine_type.h math.h \
+	math.h \
 	param.h pcb.h pio.h pmap.h powerpc.h proc.h profile.h psl.h \
 	pte.h ptrace.h \
 	reg.h reloc.h \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/04/16 13:45:31 briggs Exp $
+#	$NetBSD: Makefile,v 1.8 2001/05/03 13:11:26 soren Exp $
 
 KDIR=	/sys/arch/sandpoint/include
 INCSDIR= /usr/include/sandpoint
@@ -14,7 +14,7 @@ INCS=   ansi.h aout_machdep.h asm.h \
 	intr.h ipkdb.h \
 	kcore.h kgdb.h \
 	limits.h lock.h \
-	machine_type.h math.h \
+	math.h \
 	param.h pcb.h pio.h pmap.h powerpc.h proc.h profile.h psl.h pte.h \
 	ptrace.h \
 	reg.h reloc.h \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/04/15 17:13:16 kleink Exp $
+#	$NetBSD: Makefile,v 1.9 2001/05/03 13:11:25 soren Exp $
 
 KDIR=	/sys/arch/prep/include
 INCSDIR= /usr/include/prep
@@ -14,7 +14,7 @@ INCS=   ansi.h aout_machdep.h asm.h \
 	intr.h ipkdb.h \
 	kcore.h kgdb.h \
 	limits.h lock.h \
-	machine_type.h math.h mouse.h \
+	math.h mouse.h \
 	param.h pcb.h pccons.h pio.h pmap.h powerpc.h proc.h profile.h \
 	psl.h pte.h ptrace.h \
 	reg.h reloc.h \

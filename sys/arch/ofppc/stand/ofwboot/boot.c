@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.8 2001/01/17 15:37:06 ws Exp $	*/
+/*	$NetBSD: boot.c,v 1.9 2001/05/03 13:11:25 soren Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -90,7 +90,6 @@
 #include <lib/libkern/libkern.h>
 
 #include <machine/cpu.h>
-#include <machine/machine_type.h>
 
 #include "ofdev.h"
 #include "openfirm.h"
@@ -151,7 +150,7 @@ chain(entry, args, esym)
 	void *esym;
 {
 	extern char end[];
-	int l, machine_tag;
+	int l;
 
 	freeall();
 
@@ -162,13 +161,6 @@ chain(entry, args, esym)
 	l = strlen(args) + 1;
 	bcopy(&esym, args + l, sizeof(esym));
 	l += sizeof(esym);
-
-	/*
-	 * Tell the kernel we're an OpenFirmware system.
-	 */
-	machine_tag = POWERPC_MACHINE_OPENFIRMWARE;
-	bcopy(&machine_tag, args + l, sizeof(machine_tag));
-	l += sizeof(machine_tag);
 
 	OF_chain((void *)RELOC, end - (char *)RELOC, entry, args, l);
 	panic("chain");
