@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.4 2000/06/11 23:33:37 matt Exp $	*/
+/* 	$NetBSD: intr.h,v 1.5 2000/07/01 06:43:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -73,7 +73,7 @@
 ({								\
 	register int val;					\
 	__asm __volatile ("mfpr $0x12,%0;mtpr %1,$0x12"		\
-				: "&=g" (val)			\
+				: "=&g" (val)			\
 				: "g" (reg));			\
 	val;							\
 })
@@ -89,7 +89,7 @@
 ({								\
 	register int val;					\
 	__asm __volatile ("mfpr $0x12,%0"			\
-				: "&=g" (val)			\
+				: "=&g" (val)			\
 				: );				\
 	if ((reg) > val) {					\
 		_splset(reg);					\
