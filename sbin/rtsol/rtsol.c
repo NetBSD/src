@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsol.c,v 1.2 1999/07/04 02:43:39 itojun Exp $	*/
+/*	$NetBSD: rtsol.c,v 1.3 1999/07/29 09:57:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -64,7 +64,7 @@ int sendit __P((int, char *, int, struct sockaddr_in6 *, int));
 int interface_down __P((char *));
 int interface_up __P((char *));
 static int getifflag6 __P((char *, int *));
-static int getdadcount __P((void));
+static int getinet6sysctl __P((int));
 
 static int trick = 1;
 static int verbose = 0;
@@ -88,6 +88,9 @@ main(argc, argv)
 	fd_set fdset;
 	struct timeval timeout;
 	int rtsol_retry = MAX_RTR_SOLICITATIONS;
+	long rdelay;
+
+	srandom((unsigned)time(NULL));
 	
 	while ((opt = getopt(argc, argv, "nv")) != EOF) {
 		switch (opt) {
@@ -114,6 +117,9 @@ main(argc, argv)
 		errx(1, "invalid interface %s", argv[0]);
 		/*NOTREACHED*/
 	}
+
+	if (!getinet6sysctl(IPV6CTL_ACCEPT_RTADV))
+		warnx("kernel is configured not to accept RAs");
 
 	if (trick) {
 		/*
@@ -172,8 +178,15 @@ main(argc, argv)
 	vmsg((stderr, "sending RS for %d time%s:\n",
 		rtsol_retry, (1 < rtsol_retry) ? "s" : ""));
 
+	rdelay = random() % ((long)MAX_RTR_SOLICITATION_DELAY * 1000);
+	vmsg((stderr, "sleep %ldmsec before sending the first one\n", rdelay));
+	if (rdelay / 1000 > 0)
+		sleep(rdelay / 1000);
+	usleep(rdelay % 1000);
+
 retry:
-	vmsg((stderr, "%d \r", rtsol_retry));
+	vmsg((stderr, "%d, interval=%dsec\r", rtsol_retry,
+		RTR_SOLICITATION_INTERVAL));
 
 	i = sendit(s, (char *)outpack, cc, &to, index);
 	if (i < 0) {
@@ -185,13 +198,13 @@ retry:
 	}
 	FD_ZERO(&fdset);
 	FD_SET(s, &fdset);
-	timeout.tv_sec = 1;
+	timeout.tv_sec = RTR_SOLICITATION_INTERVAL;
 	timeout.tv_usec = 0;
 	if (select(s + 1, &fdset, NULL, NULL, &timeout) < 1) {
 		if (0 < --rtsol_retry)
 			goto retry;
 	} else {
-		vmsg((stderr, "got a RA packet\n"));
+		vmsg((stderr, "\ngot a RA packet\n"));
 	}
 
 	close(s);
@@ -303,7 +316,7 @@ interface_up(name)
 	}
 	close(s);
 
-	retry = getdadcount();
+	retry = getinet6sysctl(IPV6CTL_DAD_COUNT);
 	if (retry < 0) {
 		retry = 10;
 		vmsg((stderr, "invalid dad count; setting retry to %d\n",
@@ -454,12 +467,14 @@ getifflag6(name, flag6)
 }
 
 static int
-getdadcount()
+getinet6sysctl(code)
+	int code;
 {
-	int mib[] = { CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_DAD_COUNT };
+	int mib[] = { CTL_NET, PF_INET6, IPPROTO_IPV6, 0 };
 	int value;
 	size_t size;
 
+	mib[3] = code;
 	size = sizeof(value);
 	if (sysctl(mib, sizeof(mib)/sizeof(mib[0]), &value, &size, NULL, 0) < 0)
 		return -1;
