@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.21.2.2.2.1 1999/06/21 01:24:03 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.21.2.2.2.2 1999/07/04 01:37:45 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -841,8 +841,16 @@ _pool_put(pp, v, file, line)
 	 * Return to item list.
 	 */
 #ifdef DIAGNOSTIC
-	/* XXX Should fill the item. */
 	pi->pi_magic = PI_MAGIC;
+#endif
+#ifdef DEBUG
+	{
+		int i, *ip = v;
+
+		for (i = 0; i < pp->pr_size / 4; i++) {
+			*ip++ = PI_MAGIC;
+		}
+	}
 #endif
 	TAILQ_INSERT_HEAD(&ph->ph_itemlist, pi, pi_list);
 	ph->ph_nmissing--;
