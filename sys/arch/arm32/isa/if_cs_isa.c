@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.20 1998/07/21 22:58:31 thorpej Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.21 1998/07/21 23:09:25 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -379,7 +379,7 @@ cs_isa_attach(parent, self, aux)
 	struct cs_softc *sc = (struct cs_softc *) self;
 	struct isa_attach_args *ia = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	const char *chipname;
+	const char *str;
 	u_int16_t reg;
 
 	sc->sc_ic = ia->ia_ic;
@@ -402,19 +402,19 @@ cs_isa_attach(parent, self, aux)
 
 	switch (reg & PROD_ID_MASK) {
 	case PROD_ID_CS8900:
-		chipname = "CS8900";
+		str = "CS8900";
 		break;
 	case PROD_ID_CS8920:
-		chipname = "CS8920";
+		str = "CS8920";
 		break;
 	case PROD_ID_CS8920M:
-		chipname = "CS8920M";
+		str = "CS8920M";
 		break;
 	default:
 		panic("cs_isa_attach: impossible");
 	}
 
-	printf(": %s, rev. %c\n", chipname, ((reg & PROD_REV_MASK) >> 8) + 'A');
+	printf(": %s, rev. %c\n", str, ((reg & PROD_REV_MASK) >> 8) + 'A');
 
 	/*
 	 * XXX We only support the memory-mapped mode of operation right
@@ -523,9 +523,21 @@ cs_isa_attach(parent, self, aux)
 	}
 #endif /* OFW */
 
-	/* XXX Print default media. */
-	printf("%s: address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(sc->sc_enaddr));
+	switch (IFM_SUBTYPE(sc->sc_media.ifm_cur->ifm_media)) {
+	case IFM_10_2:
+		str = "BNC";
+		break;
+	case IFM_10_5:
+		str = "AUI";
+		break;
+	case IFM_10_T:
+		str = "UTP";
+		break;
+	default:
+		panic("cs_isa_attach: impossible");
+	}
+	printf("%s: address %s, default media %s\n", sc->sc_dev.dv_xname,
+	    ether_sprintf(sc->sc_enaddr), str);
 
 	if (sc->sc_drq == ISACF_DRQ_DEFAULT)
 		printf("%s: DMA channel unspecified, not using DMA\n",
