@@ -1,3 +1,5 @@
+/*	$NetBSD: homedir.c,v 1.1.1.4 2001/05/13 17:50:30 veego Exp $	*/
+
 /*
  * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: homedir.c,v 1.1.1.3 2001/05/13 17:34:38 veego Exp $
+ * Id: homedir.c,v 1.5.2.1 2001/01/10 03:23:36 ezk Exp
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>

@@ -1,3 +1,5 @@
+/*	$NetBSD: info_nisplus.c,v 1.1.1.4 2001/05/13 17:50:14 veego Exp $	*/
+
 /*
  * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: info_nisplus.c,v 1.1.1.3 2001/05/13 17:34:14 veego Exp $
+ * Id: info_nisplus.c,v 1.3.2.2 2001/04/14 21:08:21 ezk Exp
  *
  */
 

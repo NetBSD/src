@@ -1,3 +1,5 @@
+/*	$NetBSD: am_compat.h,v 1.1.1.4 2001/05/13 17:50:31 veego Exp $	*/
+
 /*
  * am_compat.h:
  *

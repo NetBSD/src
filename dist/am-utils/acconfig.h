@@ -1,3 +1,5 @@
+/*	$NetBSD: acconfig.h,v 1.1.1.3 2001/05/13 17:49:57 veego Exp $	*/
+
 /*
  * Start of am-utils-6.x config.h file.
  * Erez Zadok <ezk@cs.columbia.edu>
