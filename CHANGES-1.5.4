@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.129 2004/04/07 22:08:03 jmc Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.130 2004/04/07 22:20:10 jmc Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2490,3 +2490,9 @@ sys/netinet6/ip6_forward.c			1.38
 
 	Do not deref state.ro if it is NULL.
 	[itojun, ticket #96]
+
+usr.bin/tftp/main.c				1.15-1.19
+
+	Pullup to trunk version w. fixes for 'blksize' option and 
+	timeout/tsize options.
+	[itojun, ticket #98]
