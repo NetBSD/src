@@ -1,6 +1,5 @@
-#	@(#)Makefile	5.6 (Berkeley) 5/11/90
-#
-#	$Header: /cvsroot/src/sbin/routed/query/Attic/Makefile,v 1.3 1993/03/23 00:30:54 cgd Exp $
+#	from: @(#)Makefile	5.6 (Berkeley) 5/11/90
+#	$Id: Makefile,v 1.4 1993/08/01 00:57:22 mycroft Exp $
 
 PROG=	query
 NOMAN=	noman
