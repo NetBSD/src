@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.18 2003/01/23 14:57:40 gehenna Exp $	*/
+/*	$NetBSD: files.c,v 1.19 2003/01/23 15:01:54 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -339,10 +339,6 @@ fixdevsw(void)
 	fixdevmtab = ht_new();
 
 	TAILQ_FOREACH(dm, &alldevms, dm_next) {
-		if (dm->dm_opts != NULL &&
-		    !expr_eval(dm->dm_opts, fixsel, NULL))
-			continue;
-
 		res = ht_lookup(fixdevmtab, intern(dm->dm_name));
 		if (res != NULL) {
 			if (res->dm_cmajor != dm->dm_cmajor ||
@@ -371,6 +367,10 @@ fixdevsw(void)
 				      dm->dm_bmajor);
 			}
 		}
+
+		if (dm->dm_opts != NULL &&
+		    !expr_eval(dm->dm_opts, fixsel, NULL))
+			continue;
 
 		if (ht_lookup(cdevmtab, intern(dm->dm_name)) != NULL) {
 			xerror(dm->dm_srcfile, dm->dm_srcline,
