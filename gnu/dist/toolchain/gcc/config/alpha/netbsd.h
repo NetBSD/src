@@ -47,6 +47,30 @@ Boston, MA 02111-1307, USA.  */
 
 #undef ASM_FINAL_SPEC
 
+#undef CC1_SPEC
+#define CC1_SPEC  "%{G*}"
+
+#undef ASM_SPEC
+#define ASM_SPEC  "%{G*} %{relax:-relax} %{gdwarf*:-no-mdebug}"
+
+/* Provide a LINK_SPEC appropriate for a NetBSD/alpha ELF target.  Only
+   the linker emulation and -O options are Alpha-specific.  The rest are
+   common to all ELF targets, except for the name of the start function. */
+
+#undef LINK_SPEC
+#define LINK_SPEC \
+ "-m elf64alpha \
+  %{O*:-O3} %{!O*:-O1} \
+  %{assert*} %{R*} \
+  %{shared:-shared} \
+  %{!shared: \
+    -dc -dp \
+    %{!nostdlib:%{!r*:%{!e*:-e __start}}} \
+    %{!static: \
+      %{rdynamic:-export-dynamic} \
+      %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.elf_so}} \
+    %{static:-static}}"
+
 /* Names to predefine in the preprocessor for this target machine.
    XXX NetBSD, by convention, shouldn't do __alpha, but lots of applications
    expect it because that's what OSF/1 does. */
@@ -83,43 +107,6 @@ Boston, MA 02111-1307, USA.  */
 #define bsd4_4
 #undef HAS_INIT_SECTION
 
-/* Provide an ASM_SPEC appropriate for a NetBSD/alpha target.  This differs
-   from the generic NetBSD ASM_SPEC in that no special handling of PIC is
-   necessary on the Alpha. */
-
-#undef ASM_SPEC
-#define ASM_SPEC " %| \
-  %{mcpu=ev4:-mev4} \
-  %{mcpu=21064:-m21064} \
-  %{mcpu=ev5:-mev5} \
-  %{mcpu=21164:-m21164} \
-  %{mcpu=ev56:-mev56} \
-  %{mcpu=21164a:-m21164a} \
-  %{mcpu=pca56:-mpca56} \
-  %{mcpu=21164pc|mcpu=21164PC:-m21164pc} \
-  %{mcpu=ev6:-mev6} \
-  %{mcpu=21264:-m21264} \
-  %{mcpu=ev67:-mev6} \
-  %{mcpu=21264a:-m21264}"
-
-/* Provide a LINK_SPEC appropriate for a NetBSD/alpha ELF target.  Only
-   the linker emulation and -O options are Alpha-specific.  The rest are
-   common to all ELF targets, except for the name of the start function. */
-
-#undef LINK_SPEC
-#define LINK_SPEC \
- "-m elf64alpha \
-  %{O*:-O3} %{!O*:-O1} \
-  %{assert*} %{R*} \
-  %{shared:-shared} \
-  %{!shared: \
-    -dc -dp \
-    %{!nostdlib:%{!r*:%{!e*:-e __start}}} \
-    %{!static: \
-      %{rdynamic:-export-dynamic} \
-      %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.elf_so}} \
-    %{static:-static}}"
-
 #undef DEFAULT_VTABLE_THUNKS
 #define DEFAULT_VTABLE_THUNKS 1
 
@@ -127,12 +114,21 @@ Boston, MA 02111-1307, USA.  */
 
 #undef ASM_FILE_START
 #define ASM_FILE_START(FILE)					\
-{								\
-  alpha_write_verstamp (FILE);					\
-  output_file_directive (FILE, main_input_filename);		\
-  fprintf (FILE, "\t.version\t\"01.01\"\n");			\
+do {								\
+  if (write_symbols != DWARF2_DEBUG)				\
+    {								\
+      alpha_write_verstamp (FILE);				\
+      output_file_directive (FILE, main_input_filename);	\
+    }								\
   fprintf (FILE, "\t.set noat\n");				\
-}
+  fprintf (FILE, "\t.set noreorder\n");				\
+  if (TARGET_BWX | TARGET_MAX | TARGET_FIX | TARGET_CIX)	\
+    {								\
+      fprintf (FILE, "\t.arch %s\n",				\
+	       (alpha_cpu == PROCESSOR_EV6 ? "ev6"		\
+		: TARGET_MAX ? "pca56" : "ev56"));		\
+    }								\
+} while (0)
 
 #define ASM_OUTPUT_SOURCE_LINE(STREAM, LINE)				\
   alpha_output_lineno (STREAM, LINE)
@@ -155,8 +151,9 @@ extern void output_file_directive ();
 #else
 #define ASM_FILE_END(FILE)					\
 do {				 				\
-     fprintf ((FILE), "\t%s\t\"GCC: (GNU) %s\"\n",		\
-	      IDENT_ASM_OP, version_string);			\
+     if (!flag_no_ident)					\
+        fprintf ((FILE), "\t%s\t\"GCC: (GNU) %s\"\n",		\
+	         IDENT_ASM_OP, version_string);			\
    } while (0)
 #endif
 
@@ -227,21 +224,45 @@ do {									\
    the linker seems to want the alignment of data objects
    to depend on their types.  We do exactly that here.  */
 
-#define LOCAL_ASM_OP	".local"
-
 #undef ASM_OUTPUT_ALIGNED_LOCAL
 #define ASM_OUTPUT_ALIGNED_LOCAL(FILE, NAME, SIZE, ALIGN)		\
 do {									\
-  fprintf ((FILE), "\t%s\t", LOCAL_ASM_OP);				\
-  assemble_name ((FILE), (NAME));					\
-  fprintf ((FILE), "\n");						\
-  ASM_OUTPUT_ALIGNED_COMMON (FILE, NAME, SIZE, ALIGN);			\
+  if ((SIZE) <= g_switch_value)						\
+    sbss_section();							\
+  else									\
+    bss_section();							\
+  fprintf (FILE, "\t%s\t ", TYPE_ASM_OP);				\
+  assemble_name (FILE, NAME);						\
+  putc (',', FILE);							\
+  fprintf (FILE, TYPE_OPERAND_FMT, "object");				\
+  putc ('\n', FILE);							\
+  if (!flag_inhibit_size_directive)					\
+    {									\
+      fprintf (FILE, "\t%s\t ", SIZE_ASM_OP);				\
+      assemble_name (FILE, NAME);					\
+      fprintf (FILE, ",%d\n", (SIZE));					\
+    }									\
+  ASM_OUTPUT_ALIGN ((FILE), exact_log2((ALIGN) / BITS_PER_UNIT));	\
+  ASM_OUTPUT_LABEL(FILE, NAME);						\
+  ASM_OUTPUT_SKIP((FILE), (SIZE));					\
 } while (0)
 
 /* This is the pseudo-op used to generate a 64-bit word of data with a
    specific value in some section.  */
 
 #define INT_ASM_OP		".quad"
+
+/* Biggest alignment supported by the object file format of this
+   machine.  Use this macro to limit the alignment which can be
+   specified using the `__attribute__ ((aligned (N)))' construct.  If
+   not defined, the default value is `BIGGEST_ALIGNMENT'.
+
+   This value is really 2^63.  Since gcc figures the alignment in bits,
+   we could only potentially get to 2^60 on suitible hosts.  Due to other
+   considerations in varasm, we must restrict this to what fits in an int.  */
+
+#define MAX_OFILE_ALIGNMENT \
+  (1 << (HOST_BITS_PER_INT < 64 ? HOST_BITS_PER_INT - 2 : 62))
 
 /* This is the pseudo-op used to generate a contiguous sequence of byte
    values from a double-quoted string WITHOUT HAVING A TERMINATING NUL
@@ -280,6 +301,11 @@ do {									\
 #define CTORS_SECTION_ASM_OP	".section\t.ctors,\"aw\""
 #define DTORS_SECTION_ASM_OP	".section\t.dtors,\"aw\""
 
+/* Handle the small data sections.  */
+#define BSS_SECTION_ASM_OP	".section\t.bss"
+#define SBSS_SECTION_ASM_OP	".section\t.sbss,\"aw\""
+#define SDATA_SECTION_ASM_OP	".section\t.sdata,\"aw\""
+
 /* On svr4, we *do* have support for the .init and .fini sections, and we
    can put stuff in there to be executed before and after `main'.  We let
    crtstuff.c and other files know this by defining the following symbols.
@@ -295,7 +321,7 @@ do {									\
    includes this file.  */
 
 #undef EXTRA_SECTIONS
-#define EXTRA_SECTIONS in_const, in_ctors, in_dtors
+#define EXTRA_SECTIONS in_const, in_ctors, in_dtors, in_sbss, in_sdata
 
 /* A default list of extra section function definitions.  For targets
    that use additional sections (e.g. .tdesc) you should override this
@@ -304,8 +330,10 @@ do {									\
 #undef EXTRA_SECTION_FUNCTIONS
 #define EXTRA_SECTION_FUNCTIONS						\
   CONST_SECTION_FUNCTION						\
-  CTORS_SECTION_FUNCTION						\
-  DTORS_SECTION_FUNCTION
+  SECTION_FUNCTION_TEMPLATE(ctors_section, in_ctors, CTORS_SECTION_ASM_OP) \
+  SECTION_FUNCTION_TEMPLATE(dtors_section, in_dtors, DTORS_SECTION_ASM_OP) \
+  SECTION_FUNCTION_TEMPLATE(sbss_section, in_sbss, SBSS_SECTION_ASM_OP) \
+  SECTION_FUNCTION_TEMPLATE(sdata_section, in_sdata, SDATA_SECTION_ASM_OP)
 
 #undef READONLY_DATA_SECTION
 #define READONLY_DATA_SECTION() const_section ()
@@ -325,27 +353,16 @@ const_section ()							\
     }									\
 }
 
-#define CTORS_SECTION_FUNCTION						\
-void									\
-ctors_section ()							\
+#define SECTION_FUNCTION_TEMPLATE(FN, ENUM, OP)				\
+void FN ()								\
 {									\
-  if (in_section != in_ctors)						\
+  if (in_section != ENUM)						\
     {									\
-      fprintf (asm_out_file, "%s\n", CTORS_SECTION_ASM_OP);		\
-      in_section = in_ctors;						\
+      fprintf (asm_out_file, "%s\n", OP);				\
+      in_section = ENUM;						\
     }									\
 }
 
-#define DTORS_SECTION_FUNCTION						\
-void									\
-dtors_section ()							\
-{									\
-  if (in_section != in_dtors)						\
-    {									\
-      fprintf (asm_out_file, "%s\n", DTORS_SECTION_ASM_OP);		\
-      in_section = in_dtors;						\
-    }									\
-}
 
 /* Switch into a generic section.
    This is currently only used to support section attributes.
@@ -399,7 +416,13 @@ dtors_section ()							\
 	  || !DECL_INITIAL (DECL)					\
 	  || (DECL_INITIAL (DECL) != error_mark_node			\
 	      && !TREE_CONSTANT (DECL_INITIAL (DECL))))			\
-	data_section ();						\
+        {								\
+          int size = int_size_in_bytes (TREE_TYPE (DECL));		\
+	  if (size >= 0 && size <= g_switch_value)			\
+	    sdata_section ();						\
+	  else								\
+	    data_section ();						\
+	}								\
       else								\
 	const_section ();						\
     }									\
@@ -476,11 +499,15 @@ dtors_section ()							\
 
 #define STRING_ASM_OP	".string"
 
-/*
- * We always use gas here, so we don't worry about ECOFF assembler problems.
- */
+/* GAS is the only Alpha/ELF assembler.  */
 #undef TARGET_GAS
 #define TARGET_GAS	(1)
 
 #undef PREFERRED_DEBUGGING_TYPE
 #define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
+
+/* Undo the auto-alignment stuff from alpha.h.  ELF has unaligned data
+   pseudos natively.  */
+#undef UNALIGNED_SHORT_ASM_OP
+#undef UNALIGNED_INT_ASM_OP
+#undef UNALIGNED_DOUBLE_INT_ASM_OP
