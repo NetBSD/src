@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321.c,v 1.11 2003/01/23 03:56:45 briggs Exp $	*/
+/*	$NetBSD: i80321.c,v 1.12 2003/02/06 03:16:48 briggs Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -75,12 +75,12 @@ static const struct iopxs_device {
 	{ "iopdma",	VERDE_DMA_BASE0,	VERDE_DMA_CHSIZE },
 	{ "iopdma",	VERDE_DMA_BASE1,	VERDE_DMA_CHSIZE },
 	{ "iopssp",	VERDE_SSP_BASE,		VERDE_SSP_SIZE },
+	{ "iopmu",	VERDE_MU_BASE,		VERDE_MU_SIZE },
 	{ "iopwdog",	0,			0 },
 	{ NULL,		0,			0 }
 };
 
 static void i80321_pci_dma_init(struct i80321_softc *);
-static void i80321_local_dma_init(struct i80321_softc *);
 
 /*
  * i80321_attach:
@@ -120,6 +120,13 @@ i80321_attach(struct i80321_softc *sc)
 		    PCI_MAPREG_START, sc->sc_iwin[0].iwin_base_lo);
 		bus_space_write_4(sc->sc_st, sc->sc_atu_sh,
 		    PCI_MAPREG_START + 0x04, sc->sc_iwin[0].iwin_base_hi);
+	} else {
+		sc->sc_iwin[0].iwin_base_lo = bus_space_read_4(sc->sc_st,
+		    sc->sc_atu_sh, PCI_MAPREG_START);
+		sc->sc_iwin[0].iwin_base_hi = bus_space_read_4(sc->sc_st,
+		    sc->sc_atu_sh, PCI_MAPREG_START + 0x04);
+		sc->sc_iwin[0].iwin_base_lo =
+		    PCI_MAPREG_MEM_ADDR(sc->sc_iwin[0].iwin_base_lo);
 	}
 
 	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, ATU_IALR1,
@@ -130,6 +137,13 @@ i80321_attach(struct i80321_softc *sc)
 		    PCI_MAPREG_START + 0x08, sc->sc_iwin[1].iwin_base_lo);
 		bus_space_write_4(sc->sc_st, sc->sc_atu_sh,
 		    PCI_MAPREG_START + 0x0c, sc->sc_iwin[1].iwin_base_hi);
+	} else {
+		sc->sc_iwin[1].iwin_base_lo = bus_space_read_4(sc->sc_st,
+		    sc->sc_atu_sh, PCI_MAPREG_START + 0x08);
+		sc->sc_iwin[1].iwin_base_hi = bus_space_read_4(sc->sc_st,
+		    sc->sc_atu_sh, PCI_MAPREG_START + 0x0c);
+		sc->sc_iwin[1].iwin_base_lo =
+		    PCI_MAPREG_MEM_ADDR(sc->sc_iwin[1].iwin_base_lo);
 	}
 
 	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, ATU_IALR2,
@@ -141,6 +155,13 @@ i80321_attach(struct i80321_softc *sc)
 		    PCI_MAPREG_START + 0x10, sc->sc_iwin[2].iwin_base_lo);
 		bus_space_write_4(sc->sc_st, sc->sc_atu_sh,
 		    PCI_MAPREG_START + 0x14, sc->sc_iwin[2].iwin_base_hi);
+	} else {
+		sc->sc_iwin[2].iwin_base_lo = bus_space_read_4(sc->sc_st,
+		    sc->sc_atu_sh, PCI_MAPREG_START + 0x10);
+		sc->sc_iwin[2].iwin_base_hi = bus_space_read_4(sc->sc_st,
+		    sc->sc_atu_sh, PCI_MAPREG_START + 0x14);
+		sc->sc_iwin[2].iwin_base_lo =
+		    PCI_MAPREG_MEM_ADDR(sc->sc_iwin[2].iwin_base_lo);
 	}
 
 	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, ATU_IALR3,
@@ -152,6 +173,13 @@ i80321_attach(struct i80321_softc *sc)
 		    ATU_IABAR3, sc->sc_iwin[3].iwin_base_lo);
 		bus_space_write_4(sc->sc_st, sc->sc_atu_sh,
 		    ATU_IAUBAR3, sc->sc_iwin[3].iwin_base_hi);
+	} else {
+		sc->sc_iwin[3].iwin_base_lo = bus_space_read_4(sc->sc_st,
+		    sc->sc_atu_sh, ATU_IABAR3);
+		sc->sc_iwin[3].iwin_base_hi = bus_space_read_4(sc->sc_st,
+		    sc->sc_atu_sh, ATU_IAUBAR3);
+		sc->sc_iwin[3].iwin_base_lo =
+		    PCI_MAPREG_MEM_ADDR(sc->sc_iwin[3].iwin_base_lo);
 	}
 
 	/*
@@ -171,6 +199,10 @@ i80321_attach(struct i80321_softc *sc)
 	bus_space_write_4(sc->sc_st, sc->sc_atu_sh,
 	    ATU_OIOWTVR, sc->sc_ioout_xlate);
 
+	if (!sc->sc_is_host) {
+		sc->sc_owin[0].owin_xlate_lo = sc->sc_iwin[1].iwin_base_lo;
+		sc->sc_owin[0].owin_xlate_hi = sc->sc_iwin[1].iwin_base_hi;
+	}
 	bus_space_write_4(sc->sc_st, sc->sc_atu_sh,
 	    ATU_OMWTVR0, sc->sc_owin[0].owin_xlate_lo);
 	bus_space_write_4(sc->sc_st, sc->sc_atu_sh,
@@ -290,9 +322,9 @@ i80321_pci_dma_init(struct i80321_softc *sc)
 	bus_dma_tag_t dmat = &sc->sc_pci_dmat;
 	struct arm32_dma_range *dr = &sc->sc_pci_dma_range;
 
-	dr->dr_sysbase = sc->sc_iwin[3].iwin_xlate;
-	dr->dr_busbase = PCI_MAPREG_MEM_ADDR(sc->sc_iwin[3].iwin_base_lo);
-	dr->dr_len = sc->sc_iwin[3].iwin_size;
+	dr->dr_sysbase = sc->sc_iwin[2].iwin_xlate;
+	dr->dr_busbase = PCI_MAPREG_MEM_ADDR(sc->sc_iwin[2].iwin_base_lo);
+	dr->dr_len = sc->sc_iwin[2].iwin_size;
 
 	dmat->_ranges = dr;
 	dmat->_nranges = 1;
@@ -319,7 +351,7 @@ i80321_pci_dma_init(struct i80321_softc *sc)
  *
  *	Initialize the local DMA tag.
  */
-static void
+void
 i80321_local_dma_init(struct i80321_softc *sc)
 {
 	bus_dma_tag_t dmat = &sc->sc_local_dmat;
