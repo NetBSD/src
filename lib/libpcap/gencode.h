@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.h,v 1.6 1999/07/02 10:05:22 itojun Exp $	*/
+/*	$NetBSD: gencode.h,v 1.7 1999/07/02 16:03:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -87,7 +87,7 @@ struct slist {
 	struct slist *next;
 };
 
-/* 
+/*
  * A bit vector to represent definition sets.  We assume TOT_REGISTERS
  * is smaller than 8*sizeof(atomset).
  */

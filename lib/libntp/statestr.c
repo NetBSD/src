@@ -1,4 +1,4 @@
-/*	$NetBSD: statestr.c,v 1.4 1998/08/12 14:11:50 christos Exp $	*/
+/*	$NetBSD: statestr.c,v 1.5 1999/07/02 15:58:36 simonb Exp $	*/
 
 /*
  * pretty printing of status information
@@ -179,7 +179,7 @@ statustoa(type, st)
 		(void)strcat(cb, ", ");
 		(void)strcat(cb, getcode(CTL_SYS_EVENT(st), sys_codes));
 		break;
-	
+
 	case TYPE_PEER:
 		/*
 		 * Handcraft the bits
@@ -215,7 +215,7 @@ statustoa(type, st)
 			    peer_codes));
 		}
 		break;
-	
+
 	case TYPE_CLOCK:
 		(void)strcpy(cb, getcode(((st)>>8) & 0xff, clock_codes));
 		(void)strcat(cb, ", last_");

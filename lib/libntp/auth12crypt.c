@@ -1,4 +1,4 @@
-/*	$NetBSD: auth12crypt.c,v 1.3 1998/03/06 18:17:13 christos Exp $	*/
+/*	$NetBSD: auth12crypt.c,v 1.4 1999/07/02 15:58:35 simonb Exp $	*/
 
 /*
  * auth12crypt.c - routines to support two stage NTP encryption
@@ -13,7 +13,7 @@
  *	an 8 byte chunk of data which is encrypted in pass 2
  *	NOCRYPT_OCTETS worth of unencrypted data, followed by:
  *	BLOCK_OCTETS worth of ciphered checksum.
- */ 
+ */
 #define	NOCRYPT_OCTETS	4
 #define	BLOCK_OCTETS	8
 
