@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.45 2002/01/12 02:42:58 yamt Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.46 2002/05/26 14:45:43 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.45 2002/01/12 02:42:58 yamt Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.46 2002/05/26 14:45:43 itojun Exp $");
 #endif
 #endif
 
@@ -212,6 +212,7 @@ __RCSID("$NetBSD: traceroute.c,v 1.45 2002/01/12 02:42:58 yamt Exp $");
 #endif
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/sysctl.h>
 
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
@@ -398,6 +399,11 @@ main(int argc, char **argv)
 	register u_short off = 0;
 	struct ifaddrlist *al, *al2;
 	char errbuf[132];
+	int mib[4] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_DEFTTL };
+	size_t size = sizeof(max_ttl);
+
+	(void) sysctl(mib, sizeof(mib)/sizeof(mib[0]), &max_ttl, &size,
+	    NULL, 0);
 
 	if ((cp = strrchr(argv[0], '/')) != NULL)
 		prog = cp + 1;
