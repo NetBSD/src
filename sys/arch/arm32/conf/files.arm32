@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.34 1998/01/13 02:09:58 thorpej Exp $
+#	$NetBSD: files.arm32,v 1.35 1998/01/14 23:56:23 cgd Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -24,7 +24,6 @@ attach	pioc at mainbus
 file	arch/arm32/mainbus/pioc.c		pioc
 
 # Standard NetBSD wd driver
-define ata {drive=-1}
 device  wdc class dull: atapi, ata
 device  wd class disk: disk
 attach  wd at ata

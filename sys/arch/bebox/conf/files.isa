@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.6 1998/01/12 18:18:03 thorpej Exp $
+#	$NetBSD: files.isa,v 1.7 1998/01/14 23:56:24 cgd Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -117,7 +117,6 @@ attach	scd at isa
 file	dev/isa/scd.c			scd needs-flag
 
 # ISA "wd" (ESDI/IDE/etc.) controllers
-define ata {drive=-1}
 device	wdc class dull: atapi, isadma, ata
 attach	wdc at isa
 device	wd class dull: disk
