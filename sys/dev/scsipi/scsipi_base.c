@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.34 2000/04/03 03:37:34 enami Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.35 2000/05/23 10:16:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -104,7 +104,8 @@ scsipi_get_xs(sc_link, flags)
 		flags |= XS_CTL_NOSLEEP | XS_CTL_POLL;
 
 	s = splbio();
-	while (sc_link->active >= sc_link->openings) {
+	while ((sc_link->active >= sc_link->openings) &&
+	    ((flags & XS_CTL_URGENT) == 0)) {
 		SC_DEBUG(sc_link, SDEV_DB3, ("sleeping\n"));
 		if ((flags & XS_CTL_NOSLEEP) != 0) {
 			splx(s);
