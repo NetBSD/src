@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.S,v 1.10 2002/01/22 22:44:44 aymeric Exp $	*/
+/*	$NetBSD: sigreturn.S,v 1.11 2002/05/30 05:14:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)sigreturn.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: sigreturn.S,v 1.10 2002/01/22 22:44:44 aymeric Exp $")
+	RCSID("$NetBSD: sigreturn.S,v 1.11 2002/05/30 05:14:11 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,10 +52,17 @@
  */
 #ifdef GPROF
 #undef ENTRY
+#ifdef __STDC__
+#define	ENTRY(x) \
+	.globl _C_LABEL(x); .even; _C_LABEL(x):; moveml #0xC0C0,%sp@-; .data; \
+	PROF ## x:; .long 0; .text; lea PROF ## x,%a0; jbsr MCOUNT_ENTRY; \
+	moveml %sp@+,#0x0303
+#else
 #define	ENTRY(x) \
 	.globl _C_LABEL(x); .even; _C_LABEL(x):; moveml #0xC0C0,%sp@-; .data; \
 	PROF/**/x:; .long 0; .text; lea PROF/**/x,%a0; jbsr MCOUNT_ENTRY; \
 	moveml %sp@+,#0x0303
+#endif /* __STDC__ */
 #endif /* GPROF */
 
 WARN_REFERENCES(sigreturn, \
