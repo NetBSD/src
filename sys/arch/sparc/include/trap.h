@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.13 2003/08/07 16:29:41 agc Exp $ */
+/*	$NetBSD: trap.h,v 1.14 2003/10/15 07:49:41 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,12 +82,14 @@
 #define	T_L14INT	0x1e	/* (14) level 14 interrupt */
 #define	T_L15INT	0x1f	/* (13) level 15 interrupt */
 /*			0x20	   unused */
-/*	through		0x23	   unused */
+#define	T_TEXTERROR	0x21	/* (3) address fault during instr fetch */
+/*			0x22	   unused */
+/*			0x23	   unused */
 #define	T_CPDISABLED	0x24	/* (5) coprocessor instr while disabled */
 #define	T_UNIMPLFLUSH	0x25	/* Unimplemented FLUSH */
 /*	through		0x27	   unused */
-#define	T_CPEXCEPTION	0x28	/* (9) coprocessor exception */
-/*			0x29	   unused */
+#define	T_CPEXCEPTION	0x28	/* (11) coprocessor exception */
+#define	T_DATAERROR	0x29	/* (12) address error during data fetch */
 #define T_IDIV0		0x2a	/* divide by zero (from hw [su]div instr) */
 #define T_STOREBUFFAULT	0x2b	/* SuperSPARC: Store buffer copy-back fault */
 /*			0x2c	   unused */
