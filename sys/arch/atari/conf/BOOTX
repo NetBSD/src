@@ -1,12 +1,12 @@
 #
-# $NetBSD: BOOTX,v 1.38 2002/04/12 22:37:21 leo Exp $
+# $NetBSD: BOOTX,v 1.39 2002/04/16 22:44:27 bjh21 Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.5 2001/11/20 11:29:41 lukem Exp $
-#		NetBSD: GENERIC.in,v 1.17 2002/04/12 22:34:13 leo Exp $
+#		NetBSD: GENERIC.in,v 1.18 2002/04/16 22:42:55 bjh21 Exp $
 
 #This configuration file is for a generic ATARI-Falcon
 
@@ -95,7 +95,7 @@ config		netbsd root on ? type ?
 
 pseudo-device	sl			# Slip
 pseudo-device	ppp			# ppp
-pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop			# Loopback network
 pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
