@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.22 2000/05/26 15:13:43 dante Exp $	 */
+/* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -446,22 +446,7 @@ adw_init(sc)
 	} else {
 		AdwResetChip(sc->sc_iot, sc->sc_ioh);
 
-		switch(sc->chip_type) {
-		case ADW_CHIP_ASC3550:
-			warn_code = AdwInitFrom3550EEP(sc);
-			break;
-
-		case ADW_CHIP_ASC38C0800:
-			warn_code = AdwInitFrom38C0800EEP(sc);
-			break;
-
-		case ADW_CHIP_ASC38C1600:
-			warn_code = AdwInitFrom38C1600EEP(sc);
-			break;
-
-		default:
-			return -1;
-		}
+		warn_code = AdwInitFromEEPROM(sc);
 
 		if (warn_code & ADW_WARN_EEPROM_CHKSUM)
 			printf("%s: Bad checksum found. "
@@ -531,24 +516,7 @@ adw_attach(sc)
 	/*
 	 * Initialize the adapter
 	 */
-	switch(sc->chip_type) {
-	case ADW_CHIP_ASC3550:
-		error = AdwInitAsc3550Driver(sc);
-		break;
-
-	case ADW_CHIP_ASC38C0800:
-		error = AdwInitAsc38C0800Driver(sc);
-		break;
-
-	case ADW_CHIP_ASC38C1600:
-		error = AdwInitAsc38C1600Driver(sc);
-		break;
-
-	default:
-		return;
-	}
-
-	switch (error) {
+	switch (AdwInitDriver(sc)) {
 	case ADW_IERR_BIST_PRE_TEST:
 		panic("%s: BIST pre-test error",
 		      sc->sc_dev.dv_xname);

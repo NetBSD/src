@@ -1,4 +1,4 @@
-/*      $NetBSD: adwmcode.h,v 1.4 2000/05/26 15:13:45 dante Exp $        */
+/*      $NetBSD: adwmcode.h,v 1.5 2000/05/27 18:24:51 dante Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -132,7 +132,7 @@ struct adw_mcode {
 					 * 0100b (0x4)  40 Mhz (LVD/Ultra2)
 					 * 0101b (0x5)  80 Mhz (LVD2/Ultra3)
 					 * 0110b (0x6)  Undefined
-					 * .
+					 * ...
 					 * 1111b (0xF)  Undefined
 					 */
 #define ADW_MC_CHIP_TYPE		0x009A
@@ -203,7 +203,7 @@ struct adw_mcode {
 
 /******************************************************************************/
 
-int AdwInitCarriers __P((bus_dmamap_t, ADW_CARRIER *, ADW_CARRIER **));
+ADW_CARRIER *AdwInitCarriers __P((bus_dmamap_t, ADW_CARRIER *));
 
 extern const struct adw_mcode adw_asc3550_mcode_data;
 extern const struct adw_mcode adw_asc38C0800_mcode_data;
