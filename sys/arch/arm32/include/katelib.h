@@ -1,7 +1,7 @@
-/* $NetBSD: katelib.h,v 1.8 1996/06/12 19:50:14 mark Exp $ */
+/* $NetBSD: katelib.h,v 1.9 1996/10/15 00:44:58 mark Exp $ */
 
 /*
- * Copyright (c) 1994,1995 Mark Brinicombe.
+ * Copyright (c) 1994-1996 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -63,9 +63,10 @@ u_int GetCPSR		__P((void));
 
 /* In coproc15.S */
 
-void tlbflush		__P((void));
-void tlbpurge		__P((u_int));
-void idcflush		__P((void));
+void tlb_flush		__P((void));
+void cache_clean	__P((void));
+void sync_caches	__P((void));
+void sync_icache	__P((void));
 void cpu_control	__P((u_int));
 void cpu_domains	__P((u_int));
 void setttb		__P((u_int));
@@ -78,6 +79,11 @@ u_int cpu_faultaddress	__P((void));
 
 void set_stackptr	__P((u_int, u_int));
 u_int get_stackptr	__P((u_int));
+
+/* In locore.S */
+
+void atomic_set_bit	__P((u_int *address, u_int setmask));
+void atomic_clear_bit	__P((u_int *address, u_int clearmask));
 
 /* In blockio.S */
 
@@ -127,7 +133,7 @@ void outsl	__P((u_int io, void *src, u_int size));
 /* Prototypes that are wandering the streets */
 
 #ifdef _ARM32_FRAME_H_
-void postmortem		__P((trapframe_t */*frame*/));
+void postmortem		__P((trapframe_t *frame));
 #endif
 u_int traceback		__P(());
 u_int simpletraceback	__P(());
@@ -139,9 +145,8 @@ void bootsync		__P((void));
 void boot0		__P((void))
     __attribute__((__noreturn__));
 
-char *strstr	__P((char */*s1*/, char */*s2*/));
+char *strstr	__P((char *s1, char *s2));
 void userret	__P((register struct proc *p, int pc, u_quad_t oticks));
-void memset	__P((void *address, int byte, int count));
 #endif
 
 /* End of katelib.h */
