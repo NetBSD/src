@@ -32,6 +32,10 @@ clean cleandir:
 
 depend install: 
 
+distribution:
+	install -c -o root -g wheel -m 444 tcpproto.cf \
+	    ${DESTDIR}/etc/sendmail.cf
+
 # this is overkill, but....
 M4FILES=\
 	../domain/Berkeley.m4 \
