@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.51 1996/10/13 01:37:56 christos Exp $	*/
+/*	$NetBSD: mcd.c,v 1.52 1996/11/05 07:17:25 mikel Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -807,9 +807,11 @@ mcdprobe(parent, match, aux)
 		sc->readcmd = MCD_CMDREADDOUBLESPEED;
 		break;
 	default:
+#ifdef MCDDEBUG
 		printf("%s: unrecognized drive version %c%02x; will try to use it anyway\n",
 		    sc->sc_dev.dv_xname,
 		    mbx.res.data.continfo.code, mbx.res.data.continfo.version);
+#endif
 		sc->type = 0;
 		break;
 	}
