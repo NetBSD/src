@@ -1,4 +1,4 @@
-/*	$NetBSD: bsdstart.s,v 1.6 2001/09/08 11:22:26 thomas Exp $	*/
+/*	$NetBSD: bsdstart.s,v 1.7 2001/10/10 14:19:50 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -37,9 +37,16 @@
  * bsd_startup(struct kparamb *)
  */
 
+#ifndef TOSTOOLS
 #include <machine/asm.h>
+#endif
 
+#ifdef TOSTOOLS
+	.globl _bsd_startup
+_bsd_startup:
+#else
 ENTRY_NOPROFILE(bsd_startup)
+#endif
 	movw	#0x2700,%sr
 
 	| the BSD kernel wants values into the following registers:
@@ -55,7 +62,7 @@ ENTRY_NOPROFILE(bsd_startup)
 
 	movl	%sp@(4),%a3		| a3 points to parameter block
 #ifdef	TOSTOOLS
-	lea	_ASM_LABEL(bsd_startup),%sp	| make sure we have a good stack ***
+	lea	_bsd_startup,%sp	| make sure we have a good stack ***
 #endif
 	movl	%a3@,%a0		| loaded kernel
 	movl	%a3@(8),%d0		| kernel entry point
