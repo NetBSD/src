@@ -1,4 +1,4 @@
-/* $NetBSD: selection.c,v 1.2 2002/07/04 20:50:29 christos Exp $ */
+/* $NetBSD: selection.c,v 1.3 2002/12/25 19:04:27 jmmv Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: selection.c,v 1.2 2002/07/04 20:50:29 christos Exp $");
+__RCSID("$NetBSD: selection.c,v 1.3 2002/12/25 19:04:27 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -116,7 +116,7 @@ row_length(struct mouse *m, size_t row)
 		if (ioctl(m->tty_fd, WSDISPLAYIO_GETWSCHAR, &ch) == -1)
 			warn("ioctl(WSDISPLAYIO_GETWSCHAR) failed");
 		ch.col--;
-	} while (isspace((unsigned char)ch.letter));
+	} while (isspace((unsigned char)ch.letter) && ch.col >= 0);
 	return ch.col + 2;
 }
 
