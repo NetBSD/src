@@ -102,7 +102,7 @@ int	 setenv __P((const char *, const char *, int));
 #endif /* not ANSI */
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
-#if defined(alloca) && (alloca == __builtin_alloca) 
+#if defined(alloca) && (alloca == __builtin_alloca) && (__GNUC__ < 2)
 void  *alloca __P((int));     /* built-in for gcc */ 
 #else 
 void  *alloca __P((size_t)); 
