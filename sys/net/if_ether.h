@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.37 2005/02/20 15:29:03 jdolecek Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.38 2005/02/20 15:41:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -242,6 +242,8 @@ struct ether_multistep {
 	ETHER_NEXT_MULTI((step), (enm)); \
 }
 
+#ifdef _KERNEL
+
 /*
  * Ethernet 802.1Q VLAN structures.
  */
@@ -272,8 +274,6 @@ struct ether_multistep {
 
 /* test if any VLAN is configured for this interface */
 #define VLAN_ATTACHED(ec)	(&(ec)->ec_nvlans > 0)
-
-#ifdef _KERNEL
 
 void	ether_ifattach(struct ifnet *, const u_int8_t *);
 void	ether_ifdetach(struct ifnet *);
