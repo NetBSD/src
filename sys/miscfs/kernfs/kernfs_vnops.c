@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.65 1999/08/03 20:19:19 wrstuden Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.66 1999/08/24 23:29:09 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -626,6 +626,10 @@ kernfs_readdir(v)
 
 	error = 0;
 	i = uio->uio_offset;
+
+	if (i >= nkern_targets)
+		return 0;
+	  
 	memset((caddr_t)&d, 0, UIO_MX);
 	d.d_reclen = UIO_MX;
 
