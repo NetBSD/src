@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.29 1996/05/02 20:49:20 scottr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.30 1996/05/09 21:26:08 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -106,7 +106,7 @@ cpu_set_kpc(p, pc)
 	void (*pc) __P((struct proc *));
 {
 
-	p->p_addr->u_pcb.pcb_regs[6] = pc;	/* A2 */
+	p->p_addr->u_pcb.pcb_regs[6] = (int) pc;	/* A2 */
 }
 
 /*
@@ -203,7 +203,7 @@ cpu_coredump(p, vp, cred, chdr)
 void
 pagemove(from, to, size)
 	register caddr_t from, to;
-	int size;
+	size_t size;
 {
 	register vm_offset_t pa;
 
