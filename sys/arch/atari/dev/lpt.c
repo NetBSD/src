@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.2 1996/04/18 08:52:07 leo Exp $ */
+/*	$NetBSD: lpt.c,v 1.3 1996/05/14 10:25:01 leo Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -222,8 +222,6 @@ lptopen(dev, flag, mode, p)
 	}
 
 	lprintf("%s: opened\n", sc->sc_dev.dv_xname);
-printf("ierb: %x, imrb:%x aer: %x, iprb: %x\n", MFP->mf_ierb,MFP->mf_imrb,
-			MFP->mf_aer, MFP->mf_iprb);
 	return 0;
 }
 
