@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.117 2003/10/18 23:44:46 matt Exp $
+#	$NetBSD: Makefile,v 1.118 2003/11/27 10:52:02 mrg Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -19,11 +19,8 @@ SUBDIR+=	gawk
 SUBDIR+=	gettext
 
 .if ${MKGDB} != "no"
-.if ${HAVE_GDB53} == "no"
-SUBDIR+=	sim .WAIT gdb
-.else
+#SUBDIR+=	sim .WAIT
 SUBDIR+=	gdb53
-.endif
 .endif
 
 .if ${MKGCCCMDS} != "no"
