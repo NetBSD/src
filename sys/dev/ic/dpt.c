@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.7 1999/10/01 12:20:12 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.8 1999/10/04 23:57:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.7 1999/10/01 12:20:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8 1999/10/04 23:57:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ dpt_intr(xxx_sc)
 	int more;
 
 	sc = xxx_sc;
-	sp = sc->sc_sp;
+	sp = sc->sc_statpack;
 	more = 0;
 
 #ifdef DEBUG
@@ -293,11 +293,12 @@ dpt_init(sc, intrstr)
 		return;
 	}
 
-	sc->sc_sp = (struct eata_sp *)((caddr_t)sc->sc_ccbs + sc->sc_spoff);
+	sc->sc_statpack = (struct eata_sp *)((caddr_t)sc->sc_ccbs +
+	    sc->sc_spoff);
 	sc->sc_sppa = sc->sc_dmamap_ccb->dm_segs[0].ds_addr + sc->sc_spoff;
 	sc->sc_scr = (caddr_t)sc->sc_ccbs + sc->sc_scroff;
 	sc->sc_scrpa = sc->sc_dmamap_ccb->dm_segs[0].ds_addr + sc->sc_scroff;
-	sc->sc_sp->sp_ccbid = -1;
+	sc->sc_statpack->sp_ccbid = -1;
 
 	/* Initialize the CCBs */
 	TAILQ_INIT(&sc->sc_free_ccb);
