@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.10 1998/10/07 14:57:30 christos Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.11 1998/10/07 15:00:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.10 1998/10/07 14:57:30 christos Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.11 1998/10/07 15:00:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,11 +57,14 @@ __RCSID("$NetBSD: cleanerd.c,v 1.10 1998/10/07 14:57:30 christos Exp $");
 #include <time.h>
 #include <unistd.h>
 
+#include <syslog.h>
+
 #include "clean.h"
 char *special = "cleanerd";
 int do_small = 0;
 int do_mmap = 0;
 int stat_report = 0;
+int debug = 0;
 struct cleaner_stats {
 	double	util_tot;
 	double	util_sos;
@@ -142,12 +145,10 @@ cost_benefit(fsp, su)
 		 *
 		 * priority = ((seg_size - live) * age) / (seg_size + live)
 		 */
-#ifdef VERBOSE
 		if (live < 0 || live > seg_size(lfsp)) {
-			err(0, "Bad segusage count: %d", live);
+                        syslog(LOG_NOTICE,"bad segusage count: %d", live);
 			live = 0;
 		}
-#endif
 		return (lblkno(lfsp, seg_size(lfsp) - live) * age)
 			/ lblkno(lfsp, seg_size(lfsp) + live);
 	}
@@ -163,11 +164,11 @@ main(argc, argv)
 	struct timeval timeout;		/* sleep timeout */
 	fsid_t fsid;
 	long clean_opts;		/* cleaning options */
-	int nodaemon, segs_per_clean;
+	int segs_per_clean;
 	int opt, cmd_err;
 	char *fs_name;			/* name of filesystem to clean */
 
-	cmd_err = nodaemon = 0;
+	cmd_err = debug = 0;
 	clean_opts = 0;
 	segs_per_clean = 1;
 	while ((opt = getopt(argc, argv, "bdmn:r:s")) != -1) {
@@ -180,7 +181,7 @@ main(argc, argv)
 				clean_opts |= CLEAN_BYTES;
 				break;
 			case 'd':	/* Debug mode. */
-				nodaemon = 1;
+				debug++;
 				break;
 			case 'm':
 				do_mmap = 1;
@@ -201,7 +202,7 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 	if (cmd_err || (argc != 1))
-		err(1, "usage: lfs_cleanerd [-smd] fs_name");
+		err(1, "usage: lfs_cleanerd [-bdms] [-n nsegs] [-r report_freq] fs_name");
 
 	fs_name = argv[0];
 
@@ -213,9 +214,15 @@ main(argc, argv)
 		err(1, "lfs_cleanerd: filesystem %s isn't an LFS!", fs_name);
 	}
 
-	if (!nodaemon)	/* should we become a daemon, chdir to / & close fd's */
+        /* should we become a daemon, chdir to / & close fd's */
+	if (debug == 0) {
 		if (daemon(0, 0) == -1)
 			err(1, "lfs_cleanerd: couldn't become a daemon!");
+                openlog("lfs_cleanerd", LOG_NDELAY|LOG_PID, LOG_DAEMON);
+        } else {
+                openlog("lfs_cleanerd", LOG_NDELAY|LOG_PID|LOG_PERROR,
+                        LOG_DAEMON);
+        }
 
 	timeout.tv_sec = 5*60; /* five minutes */
 	timeout.tv_usec = 0;
@@ -233,14 +240,12 @@ main(argc, argv)
 		if (clean_loop(fsp, segs_per_clean, clean_opts))
 			continue;
 
-#ifdef VERBOSE
-		(void)printf("Cleaner going to sleep.\n");
-#endif
+                if(debug > 1)
+                    syslog(LOG_DEBUG,"Cleaner going to sleep.\n");
 		if (lfs_segwait(&fsid, &timeout) < 0)
-			err(0, "lfs_segwait: returned error\n");	
-#ifdef VERBOSE
-		(void)printf("Cleaner waking up.\n");
-#endif
+			syslog(LOG_WARNING,"lfs_segwait returned error\n");
+                if(debug > 1)
+                    syslog(LOG_DEBUG,"Cleaner waking up.\n");
 	}
 }
 
@@ -268,18 +273,22 @@ clean_loop(fsp, nsegs, options)
 	 * space is less than BUSY_LIM % of possible clean space.
 	 */
 	now = time((time_t *)NULL);
-#ifdef VERBOSE
-	printf("db_per_seg = %lu max_free_segs = %lu, bfree = %u avail = %d ",
+
+        if(debug > 1) {
+            syslog(LOG_DEBUG, "db_per_seg = %lu max_free_segs = %lu, bfree = %u avail = %d ",
 	    db_per_seg, max_free_segs, fsp->fi_lfs.lfs_bfree,
 	    fsp->fi_lfs.lfs_avail);
-	printf("clean = %d\n", fsp->fi_cip->clean);
-#endif
+            syslog(LOG_DEBUG, "clean = %d\n", fsp->fi_cip->clean);
+        }
+
 	if ((fsp->fi_lfs.lfs_bfree - fsp->fi_lfs.lfs_avail > db_per_seg &&
 	    fsp->fi_lfs.lfs_avail < db_per_seg) ||
 	    (fsp->fi_cip->clean < max_free_segs &&
 	    (fsp->fi_cip->clean <= MIN_SEGS(&fsp->fi_lfs) ||
-	    fsp->fi_cip->clean < max_free_segs * BUSY_LIM))) {
-		printf("Cleaner Running  at %s (%d of %lu segments available)\n",
+                  fsp->fi_cip->clean < max_free_segs * BUSY_LIM)))
+            {
+                if(debug)
+                    syslog(LOG_DEBUG, "Cleaner Running  at %s (%d of %lu segments available)\n",
 		    ctime(&now), fsp->fi_cip->clean, max_free_segs);
 		clean_fs(fsp, cost_benefit, nsegs, options);
 		return (1);
@@ -296,12 +305,14 @@ clean_loop(fsp, nsegs, options)
 		if (loadavg[ONE_MIN] == 0.0 && loadavg[FIVE_MIN] &&
 		    fsp->fi_cip->clean < max_free_segs * IDLE_LIM) {
 		        clean_fs(fsp, cost_benefit, nsegs, options);
-			printf("Cleaner Running  at %s (system idle)\n",
+                        if(debug)
+                            syslog(LOG_DEBUG, "Cleaner Running  at %s (system idle)\n",
 			    ctime(&now));
 			return (1);
 		}
 	} 
-	printf("Cleaner Not Running at %s\n", ctime(&now));
+        if(debug)
+            syslog(LOG_DEBUG, "Cleaner Not Running at %s", ctime(&now));
 	return (0);
 }
 
@@ -319,15 +330,15 @@ clean_fs(fsp, cost_func, nsegs, options)
 
 	if ((segs =
 	    malloc(fsp->fi_lfs.lfs_nseg * sizeof(struct seglist))) == NULL) {
-		err(0, "malloc failed");
+		syslog(LOG_WARNING,"malloc failed: %m");
 		return;
 	}
 	i = choose_segments(fsp, segs, cost_func);
-#ifdef VERBOSE
-	printf("clean_fs: found %d segments to clean in file system %s\n",
+
+        if(debug > 1)
+            syslog(LOG_DEBUG, "clean_fs: found %d segments to clean in file system %s\n",
 		i, fsp->fi_statfsp->f_mntonname);
-	fflush(stdout);
-#endif
+
 	if (i) {
 		/* Check which cleaning algorithm to use. */
 		if (options & CLEAN_BYTES) {
@@ -341,7 +352,8 @@ clean_fs(fsp, cost_func, nsegs, options)
 				else if (lfs_segclean(&fsp->fi_statfsp->f_fsid,
 				    sp->sl_id) < 0)
 					perror("lfs_segclean failed");
-				printf("Cleaned segment %d (%d bytes)\n",
+                                if(debug)
+                                    syslog(LOG_DEBUG, "Cleaned segment %d (%d bytes)\n",
 				    sp->sl_id, sp->sl_bytes);
 				cleaned_bytes += sp->sl_bytes;
 			}
@@ -352,7 +364,8 @@ clean_fs(fsp, cost_func, nsegs, options)
 				else if (lfs_segclean(&fsp->fi_statfsp->f_fsid,
 				    sp->sl_id) < 0)
 					perror("lfs_segclean failed");
-				printf("Completed cleaning segment %d\n", sp->sl_id);
+				if(debug)
+                                    syslog(LOG_DEBUG,"Completed cleaning segment %d\n", sp->sl_id);
 			}
 	}
 	free(segs);
@@ -390,9 +403,8 @@ choose_segments(fsp, seglist, cost_func)
 
 	lfsp = &fsp->fi_lfs;
 
-#ifdef VERBOSE
-	(void)printf("Entering choose_segments\n");
-#endif
+        if(debug > 1)
+            syslog(LOG_DEBUG,"Entering choose_segments\n");
 	dump_super(lfsp);
 	dump_cleaner_info(fsp->fi_cip);
 
@@ -402,9 +414,8 @@ choose_segments(fsp, seglist, cost_func)
 		if (!(sup->su_flags & SEGUSE_DIRTY) ||
 		    sup->su_flags & SEGUSE_ACTIVE)
 			continue;
-#ifdef VERBOSE
-		(void)printf("\tchoosing segment %d\n", i);
-#endif
+                if(debug > 1)
+                    syslog(LOG_DEBUG, "\tchoosing segment %d\n", i);
 		sp->sl_cost = (*cost_func)(fsp, sup);
 		sp->sl_id = i;
 		sp->sl_bytes = sup->su_nbytes;
@@ -412,9 +423,10 @@ choose_segments(fsp, seglist, cost_func)
 	}
 	nsegs = sp - seglist;
 	qsort(seglist, nsegs, sizeof(struct seglist), cost_compare);
-#ifdef VERBOSE
-	(void)printf("Returning %d segments\n", nsegs);
-#endif
+
+        if(debug > 1)
+            syslog(LOG_DEBUG,"Returning %d segments\n", nsegs);
+
 	return (nsegs);
 }
 
@@ -424,22 +436,22 @@ clean_segment(fsp, id)
 	FS_INFO *fsp;	/* file system information */
 	int id;		/* segment number */
 {
-	BLOCK_INFO *block_array, *bp;
+	BLOCK_INFO *block_array, *bp, *_bip;
 	SEGUSE *sp;
 	struct lfs *lfsp;
 	struct tossstruct t;
 	double util;
 	caddr_t seg_buf;
-	int num_blocks, maxblocks, clean_blocks;
+	int num_blocks, maxblocks, clean_blocks, i;
+        unsigned long *lp;
 
 	lfsp = &fsp->fi_lfs;
 	sp = SEGUSE_ENTRY(lfsp, fsp->fi_segusep, id);
 
-#ifdef VERBOSE
-	(void)printf("cleaning segment %d: contains %lu bytes\n", id,
+        if(debug > 1)
+            syslog(LOG_DEBUG, "cleaning segment %d: contains %lu bytes\n", id,
 	    (unsigned long)sp->su_nbytes);
-	fflush(stdout);
-#endif
+
 	/* XXX could add debugging to verify that segment is really empty */
 	if (sp->su_nbytes == sp->su_nsums * LFS_SUMMARY_SIZE) {
 		++cleaner_stats.segs_empty;
@@ -448,22 +460,20 @@ clean_segment(fsp, id)
 
 	/* map the segment into a buffer */
 	if (mmap_segment(fsp, id, &seg_buf, do_mmap) < 0) {
-		err(0, "mmap_segment failed");
+		syslog(LOG_WARNING,"clean_segment: mmap_segment failed: %m");
 		++cleaner_stats.segs_error;
 		return (-1);
 	}
 	/* get a list of blocks that are contained by the segment */
 	if (lfs_segmapv(fsp, id, seg_buf, &block_array, &num_blocks) < 0) {
-		err(0, "clean_segment: lfs_segmapv failed");
+		syslog(LOG_WARNING,"clean_segment: lfs_segmapv failed");
 		++cleaner_stats.segs_error;
 		return (-1);
 	}
 	cleaner_stats.blocks_read += fsp->fi_lfs.lfs_ssize;
 
-#ifdef VERBOSE
-	(void)printf("lfs_segmapv returned %d blocks\n", num_blocks);
-	fflush(stdout);
-#endif
+        if(debug > 1)
+            syslog(LOG_DEBUG, "lfs_segmapv returned %d blocks\n", num_blocks);
 
 	/* get the current disk address of blocks contained by the segment */
 	if (lfs_bmapv(&fsp->fi_statfsp->f_fsid, block_array, num_blocks) < 0) {
@@ -481,22 +491,16 @@ clean_segment(fsp, id)
 	if (num_blocks && bi_tossold(&t, block_array + num_blocks - 1, NULL))
 		--num_blocks;
 
-#ifdef VERBOSE
-	{
-		BLOCK_INFO *_bip;
-		u_long *lp;
-		int i;
-
-		(void)printf("after bmapv still have %d blocks\n", num_blocks);
-		fflush(stdout);
+        if(debug > 1) {
+            syslog(LOG_DEBUG, "after bmapv still have %d blocks\n", num_blocks);
 		if (num_blocks)
-			printf("BLOCK INFOS\n");
+                syslog(LOG_DEBUG, "BLOCK INFOS\n");
 		for (_bip = block_array, i=0; i < num_blocks; ++_bip, ++i) {
 			PRINT_BINFO(_bip);
 			lp = (u_long *)_bip->bi_bp;
 		}
 	}
-#endif
+
 	++cleaner_stats.segs_cleaned;
 	cleaner_stats.blocks_written += num_blocks;
 	util = ((double)num_blocks / fsp->fi_lfs.lfs_ssize);
@@ -511,7 +515,7 @@ clean_segment(fsp, id)
 		clean_blocks = maxblocks < num_blocks ? maxblocks : num_blocks;
 		if (lfs_markv(&fsp->fi_statfsp->f_fsid,
 		    bp, clean_blocks) < 0) {
-			err(0, "clean_segment: lfs_markv failed");
+			syslog(LOG_WARNING,"clean_segment: lfs_markv failed: %m");
 			++cleaner_stats.segs_error;
 			return (-1);
 		}
@@ -546,16 +550,16 @@ sig_report(sig)
 {
 	double avg = 0.0;
 
-	printf("lfs_cleanerd:\t%s%d\n\t\t%s%d\n\t\t%s%d\n\t\t%s%d\n\t\t%s%d\n",
+	syslog(LOG_DEBUG, "lfs_cleanerd:\t%s%d\n\t\t%s%d\n\t\t%s%d\n\t\t%s%d\n\t\t%s%d\n",
 		"blocks_read    ", cleaner_stats.blocks_read,
 		"blocks_written ", cleaner_stats.blocks_written,
 		"segs_cleaned   ", cleaner_stats.segs_cleaned,
 		"segs_empty     ", cleaner_stats.segs_empty,
 		"seg_error      ", cleaner_stats.segs_error);
-	printf("\t\t%s%5.2f\n\t\t%s%5.2f\n",
+	syslog(LOG_DEBUG, "\t\t%s%5.2f\n\t\t%s%5.2f\n",
 		"util_tot       ", cleaner_stats.util_tot,
 		"util_sos       ", cleaner_stats.util_sos);
-	printf("\t\tavg util: %4.2f std dev: %9.6f\n",
+	syslog(LOG_DEBUG, "\t\tavg util: %4.2f std dev: %9.6f\n",
 		avg = cleaner_stats.util_tot / cleaner_stats.segs_cleaned,
 		cleaner_stats.util_sos / cleaner_stats.segs_cleaned - avg * avg);
 
