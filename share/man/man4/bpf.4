@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.17 2002/02/13 08:17:31 ross Exp $
+.\"	$NetBSD: bpf.4,v 1.18 2002/08/20 15:43:34 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -98,13 +98,17 @@ The
 command codes below are defined in \*[Lt]net/bpf.h\*[Gt].  All commands require
 these includes:
 .Bd -literal -offset indent
-.Fd #include \*[Lt]sys/types.h\*[Gt]
-.Fd #include \*[Lt]sys/time.h\*[Gt]
-.Fd #include \*[Lt]sys/ioctl.h\*[Gt]
-.Fd #include \*[Lt]net/bpf.h\*[Gt]
+#include \*[Lt]sys/types.h\*[Gt]
+#include \*[Lt]sys/time.h\*[Gt]
+#include \*[Lt]sys/ioctl.h\*[Gt]
+#include \*[Lt]net/bpf.h\*[Gt]
 .Ed
 .Pp
-Additionally, BIOCGETIF and BIOCSETIF require
+Additionally,
+.Dv BIOCGETIF
+and
+.Dv BIOCSETIF
+require
 .Pa \*[Lt]net/if.h\*[Gt] .
 .Pp
 The (third) argument to the
@@ -412,25 +416,25 @@ These instructions copy a value into the accumulator.  The type of the
 source operand is specified by an
 .Dq addressing mode
 and can be a constant
-.No ( Ns Sy BBPF_IMM Ns ) ,
+.Sy ( BBPF_IMM ) ,
 packet data at a fixed offset
-.No ( Ns Sy BPF_ABS Ns ) ,
+.Sy ( BPF_ABS ) ,
 packet data at a variable offset
-.No ( Ns Sy BPF_IND Ns ) ,
+.Sy ( BPF_IND ) ,
 the packet length
-.No ( Ns Sy BPF_LEN Ns ) ,
+.Sy ( BPF_LEN ) ,
 or a word in the scratch memory store
-.No ( Ns Sy BPF_MEM Ns ) .
+.Sy ( BPF_MEM ) .
 For
 .Sy BPF_IND
 and
 .Sy BPF_ABS ,
 the data size must be specified as a word
-.No ( Ns Sy BPF_W Ns ) ,
+.Sy ( BPF_W ) ,
 halfword
-.No ( Ns Sy BPF_H Ns ) ,
+.Sy ( BPF_H ) ,
 or byte
-.No ( Ns Sy BPF_B Ns ) .
+.Sy ( BPF_B ) .
 The semantics of all the recognized BPF_LD instructions follow.
 .Bl -column "BPF_LD+BPF_W+BPF_ABS" "A \*[Lt]- P[k:4]" -width indent -offset indent
 .It Sy BPF_LD+BPF_W+BPF_ABS Ta A \*[Lt]- P[k:4]
@@ -471,9 +475,9 @@ This instruction stores the index register in the scratch memory store.
 The alu instructions perform operations between the accumulator and
 index register or constant, and store the result back in the accumulator.
 For binary operations, a source mode is required
-.No ( Ns Sy BPF_K
+.Sy ( BPF_K
 or
-.Sy BPF_X Ns ) .
+.Sy BPF_X ) .
 .Bl -column "BPF_ALU+BPF_ADD+BPF_K" "A \*[Lt]- A + k" -width indent -offset indent
 .It Sy BPF_ALU+BPF_ADD+BPF_K Ta A \*[Lt]- A + k
 .It Li Sy BPF_ALU+BPF_SUB+BPF_K Ta A \*[Lt]- A - k
@@ -496,14 +500,14 @@ or
 .It Sy BPF_JMP
 The jump instructions alter flow of control.  Conditional jumps
 compare the accumulator against a constant
-.No ( Ns Sy BPF_K Ns )
+.Sy ( BPF_K )
 or the index register
-.No ( Ns Sy BPF_X Ns ) .
+.Sy ( BPF_X ) .
 If the result is true (or non-zero),
 the true branch is taken, otherwise the false branch is taken.
 Jump offsets are encoded in 8 bits so the longest jump is 256 instructions.
 However, the jump always
-.No ( Ns Sy BPF_JA Ns )
+.Sy ( BPF_JA )
 opcode uses the 32 bit
 .Va k
 field as the offset, allowing arbitrarily distant destinations.
@@ -524,9 +528,9 @@ The return instructions terminate the filter program and specify the amount
 of packet to accept (i.e., they return the truncation amount).  A return
 value of zero indicates that the packet should be ignored.
 The return value is either a constant
-.No ( Ns Sy BPF_K Ns )
+.Sy ( BPF_K )
 or the accumulator
-.No ( Ns Sy BPF_A Ns ) .
+.Sy ( BPF_A ) .
 .Bl -column "BPF_RET+BPF_A" "accept A bytes" -width indent -offset indent
 .It Sy BPF_RET+BPF_A Ta accept A bytes
 .It Li Sy BPF_RET+BPF_K Ta accept k bytes
@@ -544,12 +548,14 @@ that copy the index register to the accumulator or vice versa.
 .Pp
 The BPF interface provides the following macros to facilitate
 array initializers:
-.Bd -literal -offset indent
-.Sy BPF_STMT Ns (opcode, operand)
-.Sy BPF_JUMP Ns (opcode, operand, true_offset, false_offset)
+.Bd -unfilled -offset indent
+.Sy BPF_STMT No (opcode, operand)
+.Sy BPF_JUMP No (opcode, operand, true_offset, false_offset)
 .Ed
 .Sh FILES
-/dev/bpf0, /dev/bpf1, ...
+.Pa /dev/bpf0 ,
+.Pa /dev/bpf1 ,
+.Pa ...
 .Sh EXAMPLES
 The following filter is taken from the Reverse ARP Daemon.  It accepts
 only Reverse ARP requests.
