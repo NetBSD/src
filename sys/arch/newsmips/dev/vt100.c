@@ -1,3 +1,5 @@
+/*	$NetBSD: vt100.c,v 1.3 1998/06/01 19:31:05 tsubai Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -98,7 +100,7 @@ int auto_dimmer();
 
 #if CPU_SINGLE
 extern int hz;
-extern kbd_profun_init();
+extern int kbd_profun_init();
 #endif
 
 extern void esc_store_csr __P((SCREEN *));
