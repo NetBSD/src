@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_errno.h,v 1.5 1998/10/23 03:53:18 erh Exp $	*/
+/*	$NetBSD: linux_errno.h,v 1.6 1998/10/24 19:03:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #elif defined(__alpha__)
 #include <compat/linux/arch/alpha/linux_errno.h>
 #else
-#error Undefined linux_errno.h machine type.
+#include <compat/linux/arch/i386/linux_errno.h> /* XXX:Allow kdump to compile */
 #endif
 
 extern int native_to_linux_errno[];
