@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.39 2003/04/06 19:41:03 perry Exp $
+# $NetBSD: maketars,v 1.40 2003/04/07 17:22:19 perry Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -171,7 +171,7 @@ for setname in $lists; do
 
 	if [ -n "$installdir" ]; then
 		( cd $dest ; \
-		    ${PAX} -O -L -rwpe -d -N${etcdir} ${metalog:+-M} \
+		    ${PAX} -O -rwpe -d -N${etcdir} ${metalog:+-M} \
 		    $installdir < ${SDIR}/plist.$setname )
 	else
 		( cd $dest ; \
