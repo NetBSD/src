@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.101 1997/12/12 12:49:40 drochner Exp $	*/
+/*	$NetBSD: tty.c,v 1.102 1998/02/12 20:39:44 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1238,7 +1238,7 @@ ttypend(tp)
 	register struct tty *tp;
 {
 	struct clist tq;
-	register c;
+	register int c;
 
 	CLR(tp->t_lflag, PENDIN);
 	SET(tp->t_state, TS_TYPEN);
