@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.22 1997/01/30 09:52:27 tls Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.23 1997/03/27 07:30:25 mikel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -627,7 +627,7 @@ ufs_link(v)
 #endif
 	if (vp->v_type == VDIR) {
 		VOP_ABORTOP(dvp, cnp);
-		error = EISDIR;
+		error = EPERM;
 		goto out2;
 	}
 	if (dvp->v_mount != vp->v_mount) {
