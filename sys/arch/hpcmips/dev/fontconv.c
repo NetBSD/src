@@ -1,3 +1,5 @@
+/*	$NetBSD: fontconv.c,v 1.2 2000/01/05 18:49:13 ad Exp $	*/
+
 #include <stdio.h>
 
 
@@ -91,6 +93,8 @@ fc_rasops(int ac, char* av[])
 	fprintf(ofp, "    %d,\t\t\t\t/* width */\n", width);
 	fprintf(ofp, "    %d,\t\t\t\t/* height */\n", height);
 	fprintf(ofp, "    %d,\t\t\t\t/* stride */\n", width_in_bytes);
+	fprintf(ofp, "    WSDISPLAY_FONTENC_L2R,\t/* bit order */\n");
+	fprintf(ofp, "    WSDISPLAY_FONTENC_L2R,\t/* byte order */\n");
 	fprintf(ofp, "    %s%dx%d_data\t\t/* data */\n",
 		fontname, width, height);
 	fprintf(ofp, "};\n");
