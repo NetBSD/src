@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.41 1996/09/07 22:26:50 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.42 1996/09/11 00:44:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,7 +67,25 @@
 
 #ifdef COMPAT_HPUX
 #include <compat/hpux/hpux.h>
+extern struct emul emul_hpux;
 #endif
+
+#ifdef COMPAT_SUNOS
+#include <compat/sunos/sunos_syscall.h>
+extern struct emul emul_sunos;
+#endif
+
+int	writeback __P((struct frame *fp, int docachepush));
+void	trap __P((int type, u_int code, u_int v, struct frame frame));
+void	syscall __P((register_t code, struct frame frame));
+
+#ifdef DEBUG
+void	dumpssw __P((u_short));
+void	dumpwb __P((int, u_short, u_int, u_int));
+#endif
+
+static inline void userret __P((struct proc *p, struct frame *fp,
+	    u_quad_t oticks, u_int faultaddr, int fromtrap));
 
 char	*trap_type[] = {
 	"Bus error",
@@ -91,11 +109,12 @@ int	trap_types = sizeof trap_type / sizeof trap_type[0];
  * Size of various exception stack frames (minus the standard 8 bytes)
  */
 short	exframesize[] = {
-	FMT0SIZE,	/* type 0 - normal (68020/030/040) */
+	FMT0SIZE,	/* type 0 - normal (68020/030/040/060) */
 	FMT1SIZE,	/* type 1 - throwaway (68020/030/040) */
-	FMT2SIZE,	/* type 2 - normal 6-word (68020/030/040) */
-	FMT3SIZE,	/* type 3 - FP post-instruction (68040) */
-	-1, -1, -1,	/* type 4-6 - undefined */
+	FMT2SIZE,	/* type 2 - normal 6-word (68020/030/040/060) */
+	FMT3SIZE,	/* type 3 - FP post-instruction (68040/060) */
+	FMT4SIZE,	/* type 4 - access error/fp disabled (68060) */
+	-1, -1,		/* type 5-6 - undefined */
 	FMT7SIZE,	/* type 7 - access error (68040) */
 	58,		/* type 8 - bus fault (68010) */
 	FMT9SIZE,	/* type 9 - coprocessor mid-instruction (68020/030) */
@@ -104,17 +123,36 @@ short	exframesize[] = {
 	-1, -1, -1, -1	/* type C-F - undefined */
 };
 
-#ifdef M68040
-#define KDFAULT(c)	(mmutype == MMU_68040 ? \
-			    ((c) & SSW4_TMMASK) == SSW4_TMKD : \
-			    ((c) & (SSW_DF|FC_SUPERD)) == (SSW_DF|FC_SUPERD))
-#define WRFAULT(c) 	(mmutype == MMU_68040 ? \
-			    ((c) & SSW4_RW) == 0 : \
-			    ((c) & (SSW_DF|SSW_RW)) == SSW_DF)
+#ifdef M68060
+#define	KDFAULT_060(c)	(cputype == CPU_68060 && ((c) & FSLW_TM_SV))
+#define	WRFAULT_060(c)	(cputype == CPU_68060 && ((c) & FSLW_RW_W))
 #else
-#define KDFAULT(c)	(((c) & (SSW_DF|SSW_FCMASK)) == (SSW_DF|FC_SUPERD))
-#define WRFAULT(c)	(((c) & (SSW_DF|SSW_RW)) == SSW_DF)
+#define	KDFAULT_060(c)	0
+#define	WRFAULT_060(c)	0
 #endif
+
+#ifdef M68040
+#define	KDFAULT_040(c)	(cputype == CPU_68040 && \
+			 ((c) & SSW4_TMMASK) == SSW4_TMKD)
+#define	WRFAULT_040(c)	(cputype == CPU_68040 && \
+			 ((c) & SSW4_RW) == 0)
+#else
+#define	KDFAULT_040(c)	0
+#define	WRFAULT_040(c)	0
+#endif
+
+#if defined(M68030) || defined(M68020)
+#define	KDFAULT_OTH(c)	(cputype <= CPU_68030 && \
+			 ((c) & (SSW_DF|SSW_FCMASK)) == (SSW_DF|FC_SUPERD))
+#define	WRFAULT_OTH(c)	(cputype <= CPU_68030 && \
+			 ((c) & (SSW_DF|SSW_RW)) == SSW_DF)
+#else
+#define	KDFAULT_OTH(c)	0
+#define	WRFAULT_OTH(c)	0
+#endif
+
+#define	KDFAULT(c)	(KDFAULT_060(c) || KDFAULT_040(c) || KDFAULT_OTH(c))
+#define	WRFAULT(c)	(WRFAULT_060(c) || WRFAULT_040(c) || WRFAULT_OTH(c))
 
 #ifdef DEBUG
 int mmudebug = 0;
@@ -183,7 +221,7 @@ again:
 	 * we just return to the user without sucessfully completing
 	 * the writebacks.  Maybe we should just drop the sucker?
 	 */
-	if (mmutype == MMU_68040 && fp->f_format == FMT7) {
+	if (cputype == CPU_68040 && fp->f_format == FMT7) {
 		if (beenhere) {
 #ifdef DEBUG
 			if (mmudebug & MDB_WBFAILED)
@@ -209,6 +247,7 @@ again:
  * System calls are broken out for efficiency.
  */
 /*ARGSUSED*/
+void
 trap(type, code, v, frame)
 	int type;
 	unsigned code;
@@ -223,9 +262,6 @@ trap(type, code, v, frame)
 	register int i;
 	u_int ucode;
 	u_quad_t sticks;
-#ifdef COMPAT_HPUX
-	extern struct emul emul_hpux;
-#endif
 
 	cnt.v_trap++;
 	p = curproc;
@@ -414,6 +450,16 @@ copyfault:
 
 	case T_TRACE|T_USER:	/* user trace trap */
 	case T_TRAP15|T_USER:	/* SUN user trace trap */
+#ifdef COMPAT_SUNOS
+		/*
+		 * XXX This comment/code is not consistent XXX
+		 * SunOS seems to use Trap #2 for some obscure 
+		 * fpu operations.  So far, just ignore it, but
+		 * DONT trap on it.. 
+		 */
+		if (p->p_emul == &emul_sunos)
+			goto out;
+#endif
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
 		break;
@@ -547,7 +593,7 @@ copyfault:
 		if (rv == KERN_SUCCESS) {
 			if (type == T_MMUFLT) {
 #ifdef M68040
-				if (mmutype == MMU_68040)
+				if (cputype == CPU_68040)
 					(void) writeback(&frame, 1);
 #endif
 				return;
@@ -593,6 +639,7 @@ char wberrstr[] =
     "WARNING: pid %d(%s) writeback [%s] failed, pc=%x fa=%x wba=%x wbd=%x\n";
 #endif
 
+int
 writeback(fp, docachepush)
 	struct frame *fp;
 	int docachepush;
@@ -824,6 +871,7 @@ writeback(fp, docachepush)
 }
 
 #ifdef DEBUG
+void
 dumpssw(ssw)
 	register u_short ssw;
 {
@@ -850,6 +898,7 @@ dumpssw(ssw)
 	       f7tm[ssw & SSW4_TMMASK]);
 }
 
+void
 dumpwb(num, s, a, d)
 	int num;
 	u_short s;
@@ -875,6 +924,7 @@ dumpwb(num, s, a, d)
 /*
  * Process a system call.
  */
+void
 syscall(code, frame)
 	register_t code;
 	struct frame frame;
@@ -886,9 +936,6 @@ syscall(code, frame)
 	size_t argsize;
 	register_t args[8], rval[2];
 	u_quad_t sticks;
-#ifdef COMPAT_SUNOS
-	extern struct emul emul_sunos;
-#endif
 
 	cnt.v_syscall++;
 	if (!USERMODE(frame.f_sr))
