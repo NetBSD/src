@@ -1,7 +1,7 @@
 /*
  * Keyboard definitions
  *
- *	$Id: kbdreg.h,v 1.3 1993/10/17 14:04:15 mycroft Exp $
+ *	$Id: kbdreg.h,v 1.4 1994/03/02 04:38:28 mycroft Exp $
  */
 
 #include <i386/isa/ic/i8042.h>
@@ -13,6 +13,7 @@
 #define	KBC_DISABLE	0xF5	/* as per KBC_SETDEFAULT, but also disable key scanning */
 #define	KBC_ENABLE	0xF4	/* enable key scanning */
 #define	KBC_TYPEMATIC	0xF3	/* set typematic rate and delay */
+#define	KBC_SETTABLE	0xF0	/* set scancode translation table */
 #define	KBC_MODEIND	0xED	/* set mode indicators (i.e. LEDs) */
 #define	KBC_ECHO	0xEE	/* request an echo from the keyboard */
 
