@@ -1,5 +1,4 @@
-/*	$NetBSD: extern.h,v 1.2 1996/12/28 04:30:03 tls Exp $
-*/
+/*	$NetBSD: extern.h,v 1.3 1997/01/05 05:21:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -39,4 +38,3 @@
 int	krb_passwd __P((void));
 int	local_passwd __P((char *));
 int	yp_passwd __P((char *));
-
