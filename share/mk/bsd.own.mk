@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.53 1997/10/11 07:14:57 mycroft Exp $
+#	$NetBSD: bsd.own.mk,v 1.54 1997/10/11 07:26:53 mycroft Exp $
 
 .if defined(MAKECONF) && exists(${MAKECONF})
 .include "${MAKECONF}"
@@ -92,6 +92,3 @@ beforeinstall:	.NOTMAIN
 realinstall:	.NOTMAIN
 afterinstall:	.NOTMAIN
 .endif
-
-# Make sure all of the standard targets are defined, even if they do nothing.
-${TARGETS}:
