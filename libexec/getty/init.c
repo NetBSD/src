@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)init.c	5.6 (Berkeley) 3/27/91";*/
-static char rcsid[] = "$Id: init.c,v 1.4 1994/04/16 05:15:53 cgd Exp $";
+static char rcsid[] = "$Id: init.c,v 1.5 1994/04/28 22:12:29 pk Exp $";
 #endif /* not lint */
 
 /*
@@ -41,13 +41,11 @@ static char rcsid[] = "$Id: init.c,v 1.4 1994/04/16 05:15:53 cgd Exp $";
  *
  * Melbourne getty.
  */
-#include <sgtty.h>
+#include <termios.h>
 #include "gettytab.h"
 #include "pathnames.h"
 
-extern	struct sgttyb tmode;
-extern	struct tchars tc;
-extern	struct ltchars ltc;
+extern	struct termios tmode;
 extern	char hostname[];
 
 struct	gettystrs gettystrs[] = {
@@ -55,26 +53,26 @@ struct	gettystrs gettystrs[] = {
 	{ "cl" },			/* screen clear characters */
 	{ "im" },			/* initial message */
 	{ "lm", "login: " },		/* login message */
-	{ "er", &tmode.sg_erase },	/* erase character */
-	{ "kl", &tmode.sg_kill },	/* kill character */
-	{ "et", &tc.t_eofc },		/* eof chatacter (eot) */
+	{ "er", &tmode.c_cc[VERASE] },	/* erase character */
+	{ "kl", &tmode.c_cc[VKILL] },	/* kill character */
+	{ "et", &tmode.c_cc[VEOF] },	/* eof chatacter (eot) */
 	{ "pc", "" },			/* pad character */
 	{ "tt" },			/* terminal type */
 	{ "ev" },			/* enviroment */
 	{ "lo", _PATH_LOGIN },		/* login program */
 	{ "hn", hostname },		/* host name */
 	{ "he" },			/* host name edit */
-	{ "in", &tc.t_intrc },		/* interrupt char */
-	{ "qu", &tc.t_quitc },		/* quit char */
-	{ "xn", &tc.t_startc },		/* XON (start) char */
-	{ "xf", &tc.t_stopc },		/* XOFF (stop) char */
-	{ "bk", &tc.t_brkc },		/* brk char (alt \n) */
-	{ "su", &ltc.t_suspc },		/* suspend char */
-	{ "ds", &ltc.t_dsuspc },	/* delayed suspend */
-	{ "rp", &ltc.t_rprntc },	/* reprint char */
-	{ "fl", &ltc.t_flushc },	/* flush output */
-	{ "we", &ltc.t_werasc },	/* word erase */
-	{ "ln", &ltc.t_lnextc },	/* literal next */
+	{ "in", &tmode.c_cc[VINTR] },	/* interrupt char */
+	{ "qu", &tmode.c_cc[VQUIT] },	/* quit char */
+	{ "xn", &tmode.c_cc[VSTART] },	/* XON (start) char */
+	{ "xf", &tmode.c_cc[VSTOP] },	/* XOFF (stop) char */
+	{ "bk", &tmode.c_cc[VEOL] },	/* brk char (alt \n) */
+	{ "su", &tmode.c_cc[VSUSP] },	/* suspend char */
+	{ "ds", &tmode.c_cc[VDSUSP] },	/* delayed suspend */
+	{ "rp", &tmode.c_cc[VREPRINT] },/* reprint char */
+	{ "fl", &tmode.c_cc[VDISCARD] },/* flush output */
+	{ "we", &tmode.c_cc[VWERASE] },	/* word erase */
+	{ "ln", &tmode.c_cc[VLNEXT] },	/* literal next */
 	{ 0 }
 };
 
@@ -92,6 +90,18 @@ struct	gettynums gettynums[] = {
 	{ "f1" },			/* input flags */
 	{ "f2" },			/* user mode flags */
 	{ "pf" },			/* delay before flush at 1st prompt */
+	{ "c0" },			/* output c_flags */
+	{ "c1" },			/* input c_flags */
+	{ "c2" },			/* user mode c_flags */
+	{ "i0" },			/* output i_flags */
+	{ "i1" },			/* input i_flags */
+	{ "i2" },			/* user mode i_flags */
+	{ "l0" },			/* output l_flags */
+	{ "l1" },			/* input l_flags */
+	{ "l2" },			/* user mode l_flags */
+	{ "o0" },			/* output o_flags */
+	{ "o1" },			/* input o_flags */
+	{ "o2" },			/* user mode o_flags */
 	{ 0 }
 };
 
