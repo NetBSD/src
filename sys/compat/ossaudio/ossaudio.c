@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.18 1997/08/11 01:52:47 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.19 1997/08/11 01:54:52 augustss Exp $	*/
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -362,6 +362,8 @@ oss_ioctl_audio(p, uap, retval)
 	case OSS_SNDCTL_DSP_NONBLOCK:
 		idat = 1;
 		error = ioctlf(fp, FIONBIO, (caddr_t)&idat, p);
+		if (error)
+			return error;
 		break;
 	case OSS_SNDCTL_DSP_GETCAPS:
 		error = ioctlf(fp, AUDIO_GETPROPS, (caddr_t)&idata, p);
