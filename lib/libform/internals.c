@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.9 2001/02/03 12:38:47 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.10 2001/02/06 00:02:25 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -854,6 +854,7 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 		field->buffers[0].length, strlen(field->buffers[0].string),
 		field->buffers[0].allocated);
 	fprintf(dbg, "add_char enter: %s\n", field->buffers[0].string);
+	fprintf(dbg, "add_char enter: buf0_status=%d\n", field->buf0_status);
 #endif
 	if (((field->opts & O_BLANK) == O_BLANK) &&
 	    (field->buf0_status == FALSE)) {
@@ -871,6 +872,14 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 
 	if ((field->overlay == 0)
 	    || ((field->overlay == 1) && (pos >= field->buffers[0].length))) {
+		  /* first check if the field can have more chars...*/
+		if ((((field->opts & O_STATIC) == O_STATIC) &&
+		     (field->buffers[0].length >= field->cols)) ||
+		    (((field->opts & O_STATIC) != O_STATIC) &&
+		     ((field->max > 0) &&
+		      (field->buffers[0].length >= field->max))))
+			return E_REQUEST_DENIED;
+		
 		if (field->buffers[0].length + 1
 		    >= field->buffers[0].allocated) {
 			new_size = field->buffers[0].allocated + 64
@@ -929,10 +938,11 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 		field->buffers[0].length, strlen(field->buffers[0].string),
 		field->buffers[0].allocated);
 	fprintf(dbg,"add_char exit: %s\n", field->buffers[0].string);
+	fprintf(dbg, "add_char exit: buf0_status=%d\n", field->buf0_status);
 	fprintf(dbg, "add_char exit: status = %s\n",
 		(status == E_OK)? "OK" : "FAILED");
 #endif
-	return (status == E_OK);
+	return status;
 }
 
 /*
@@ -1236,8 +1246,9 @@ _formi_manipulate_field(FORM *form, int c)
 		break;
 	
 	case REQ_NEW_LINE:
-		_formi_add_char(cur, cur->start_char + cur->cursor_xpos, '\n');
-		cur->row_count++;
+		if (_formi_add_char(cur, cur->start_char + cur->cursor_xpos,
+				    '\n') == E_OK)
+			cur->row_count++;
 		break;
 		
 	case REQ_INS_CHAR:
@@ -1247,8 +1258,8 @@ _formi_manipulate_field(FORM *form, int c)
 		
 	case REQ_INS_LINE:
 		start = _formi_find_bol(cur->buffers[0].string, cur->start_char);
-		_formi_add_char(cur, start, '\n');
-		cur->row_count++;
+		if (_formi_add_char(cur, start, '\n') == E_OK)
+			cur->row_count++;
 		break;
 		
 	case REQ_DEL_CHAR:
@@ -1472,7 +1483,7 @@ _formi_validate_field(FORM *form)
 
 	cur = form->fields[form->cur_field];
 	
-	if (((cur->opts & O_PASSOK) == O_PASSOK) && (cur->buf0_status = 0))
+	if (((cur->opts & O_PASSOK) == O_PASSOK) && (cur->buf0_status == 0))
 		return E_OK;
 
 	bp = cur->buffers[0].string;
