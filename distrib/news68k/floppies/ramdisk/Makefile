@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2001/01/31 20:58:31 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.12 2001/03/19 22:27:59 tsutsui Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -56,7 +56,8 @@ HACKSRC=${TOP}/../../utils/libhack
 .include "${HACKSRC}/Makefile.inc"
 
 # turn off small gethostby* temporarily
-HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.o
+HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o localeconv.o \
+	perror.o strerror.o strsignal.o setlocale.o utmp.o yplib.o
 
 release:
 
