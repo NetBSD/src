@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.11 2001/08/14 07:02:13 tv Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.12 2001/09/13 23:23:26 thorpej Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -43,6 +43,7 @@ LIBNTP?=	/usr/lib/libntp.a
 LIBOBJC?=	/usr/lib/libobjc.a
 LIBPC?=		/usr/lib/libpc.a
 LIBPCAP?=	/usr/lib/libpcap.a
+LIBPCI?=	/usr/lib/libpci.a
 LIBPLOT?=	/usr/lib/libplot.a
 LIBPOSIX?=	/usr/lib/libposix.a
 LIBRESOLV?=	/usr/lib/libresolv.a
