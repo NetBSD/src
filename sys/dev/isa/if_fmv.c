@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv.c,v 1.29 2002/09/28 18:55:19 tsutsui Exp $	*/
+/*	$NetBSD: if_fmv.c,v 1.30 2002/09/29 17:15:59 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fmv.c,v 1.29 2002/09/28 18:55:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fmv.c,v 1.30 2002/09/29 17:15:59 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -375,7 +375,7 @@ fmv_attach(parent, self, aux)
 	/*
 	 * Do generic MB86960 attach.
 	 */
-	mb86960_attach(sc, MB86960_TYPE_86960, myea);
+	mb86960_attach(sc, MB86960_TYPE_86965, myea);
 
 	/* Is this really needs to be done here? XXX */
 	/* Turn the "master interrupt control" flag of ASIC on. */
