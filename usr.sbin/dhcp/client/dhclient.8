@@ -60,6 +60,13 @@ dhclient - Dynamic Host Configuration Protocol (DHCP) Client
 server
 ]
 [
+.B -g
+relay
+]
+[
+.B -n
+]
+[
 .B -w
 ]
 [
@@ -160,6 +167,12 @@ be specified with the
 .B -s
 flag, followed by the IP address or domain name of the destination.
 .PP
+For testing purposes, the giaddr field of all packets that the client
+sends can be set using the
+.B -g
+flag, followed by the IP address to send.   This is only useful for testing,
+and should not be expected to work in any consistent or useful way.
+.PP
 The DHCP client will normally run in the foreground until it has
 configured an interface, and then will revert to running in the
 background.   To run force dhclient to always run as a foreground
@@ -226,10 +239,17 @@ broadcast interface may be added after system startup.   The
 .B -w
 flag can be used to cause the client not to exit when it doesn't find
 any such interfaces.   The
-.B dhcpccp (8)
+.B omshell (8)
 program can then be used to notify the client when a network interface
-has been added or removed, so that the client can configure an IP
+has been added or removed, so that the client can attempt to configure an IP
 address on that interface.
+.PP
+The DHCP client can be directed not to attempt to configure any interfaces
+using the
+.B -n
+flag.   This is most likely to be useful in combination with the
+.B -w
+flag.
 .SH CONFIGURATION
 The syntax of the dhclient.conf(5) file is discussed seperately.
 .SH FILES
