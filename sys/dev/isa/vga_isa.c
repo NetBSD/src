@@ -1,4 +1,4 @@
-/* $NetBSD: vga_isa.c,v 1.2 1998/05/28 16:48:41 drochner Exp $ */
+/* $NetBSD: vga_isa.c,v 1.3 1998/06/12 18:45:48 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -65,27 +65,24 @@ vga_isa_match(parent, match, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-	int rv;
 
 	/* If values are hardwired to something that they can't be, punt. */
-	if (ia->ia_iobase != IOBASEUNK || /* ia->ia_iosize != 0 || XXX isa.c */
-	    (ia->ia_maddr != MADDRUNK && ia->ia_maddr != 0xb8000) ||
-	    (ia->ia_msize != 0 && ia->ia_msize != 0x8000) ||
+	if ((ia->ia_iobase != IOBASEUNK && ia->ia_iobase != 0x3b0) ||
+	    /* ia->ia_iosize != 0 || XXX isa.c */
+	    (ia->ia_maddr != MADDRUNK && ia->ia_maddr != 0xa0000) ||
+	    (ia->ia_msize != 0 && ia->ia_msize != 0x20000) ||
 	    ia->ia_irq != IRQUNK || ia->ia_drq != DRQUNK)
 		return (0);
 
-	if (vga_is_console(ia->ia_iot, WSDISPLAY_TYPE_ISAVGA))
-		rv = 2; /* more than generic pcdisplay */
-	else
-		rv = vga_common_probe(ia->ia_iot, ia->ia_memt);
+	if (!vga_is_console(ia->ia_iot, WSDISPLAY_TYPE_ISAVGA) &&
+	    !vga_common_probe(ia->ia_iot, ia->ia_memt))
+		return (0);
 
-	if (rv) {
-		ia->ia_iobase = 0x3b0;
-		ia->ia_iosize = 0x30;
-		ia->ia_maddr = 0xb8000;
-		ia->ia_msize = 0x8000;
-	}
-	return (rv);
+	ia->ia_iobase = 0x3b0;	/* XXX mono 0x3b0 color 0x3c0 */
+	ia->ia_iosize = 0x30;	/* XXX 0x20 */
+	ia->ia_maddr = 0xa0000;
+	ia->ia_msize = 0x20000;
+	return (2);	/* more than generic pcdisplay */
 }
 
 void
