@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.2 1995/02/16 03:08:10 cgd Exp $	*/
+/*	$NetBSD: types.h,v 1.3 1995/06/26 05:13:37 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -66,5 +66,7 @@ typedef	long			  int64_t;
 typedef	unsigned long		u_int64_t;
 
 typedef int64_t			register_t;
+
+#define	__BDEVSW_DUMP_OLD_TYPE
 
 #endif	/* _MACHTYPES_H_ */

@@ -1,8 +1,10 @@
-/*	$NetBSD: types.h,v 1.1.1.1 1995/03/26 07:12:06 leo Exp $	*/
+/*	$NetBSD: types.h,v 1.2 1995/06/26 05:13:42 cgd Exp $	*/
 
 #ifndef _MACHINE_TYPES_H_
 #define _MACHINE_TYPES_H_
 
 #include <m68k/types.h>
+
+#define	__BDEVSW_DUMP_OLD_TYPE
 
 #endif

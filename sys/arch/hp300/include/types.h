@@ -1,4 +1,10 @@
-/*	$NetBSD: types.h,v 1.4 1994/10/26 07:26:48 cgd Exp $	*/
+/*	$NetBSD: types.h,v 1.5 1995/06/26 05:13:46 cgd Exp $	*/
 
-/* Just use the common m68k definition */
+#ifndef _MACHINE_TYPES_H_
+#define _MACHINE_TYPES_H_
+
 #include <m68k/types.h>
+
+#define	__BDEVSW_DUMP_OLD_TYPE
+
+#endif
