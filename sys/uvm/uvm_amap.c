@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.16 1998/10/18 23:49:59 chs Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.17 1998/11/04 07:07:22 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -219,8 +219,7 @@ amap_alloc(sz, padsz, waitf)
 /*
  * amap_free: free an amap
  *
- * => there should not be any valid references to the amap, so locking
- *	of the amap being freed is not an issue (doesn't matter).
+ * => amap must be locked.
  * => the amap is "gone" after we are done with it.
  */
 void
@@ -241,6 +240,7 @@ amap_free(amap)
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE)
 		FREE(amap->am_ppref, M_UVMAMAP);
 #endif
+	simple_unlock(&amap->am_l);
 	pool_put(&uvm_amap_pool, amap);
 
 	UVMHIST_LOG(maphist,"<- done, freed amap = 0x%x", amap, 0, 0, 0);
@@ -489,6 +489,7 @@ amap_wipeout(amap)
 	UVMHIST_LOG(maphist,"(amap=0x%x)", amap, 0,0,0);
 
 	for (lcv = 0 ; lcv < amap->am_nused ; lcv++) {
+		int refs;
 
 		slot = amap->am_slots[lcv];
 		anon = amap->am_anon[slot];
@@ -501,15 +502,14 @@ amap_wipeout(amap)
 		UVMHIST_LOG(maphist,"  processing anon 0x%x, ref=%d", anon, 
 		    anon->an_ref, 0, 0);
 
-		if (--anon->an_ref != 0) {
-			simple_unlock(&anon->an_lock);
-			continue;
+		refs = --anon->an_ref;
+		simple_unlock(&anon->an_lock);
+		if (refs == 0) {
+			/*
+			 * we had the last reference to a vm_anon. free it.
+			 */
+			uvm_anfree(anon);
 		}
-
-		/*
-		 * we have last reference to a vm_anon.   free the vm_anon.
-		 */
-		uvm_anfree(anon);
 	}
 
 	/*
@@ -994,6 +994,7 @@ amap_wiperange(amap, slotoff, slots)
 	 */
 
 	for (; lcv < stop; lcv++) {
+		int refs;
 
 		/*
 		 * verify the anon is ok.
@@ -1026,15 +1027,15 @@ amap_wiperange(amap, slotoff, slots)
 		 * drop anon reference count
 		 */
 		simple_lock(&anon->an_lock);
-		if (--anon->an_ref != 0) {
-			simple_unlock(&anon->an_lock);
-			continue;
+		refs = --anon->an_ref;
+		simple_unlock(&anon->an_lock);
+		if (refs == 0) {
+			/*
+			 * we just eliminated the last reference to an anon.
+			 * free it.
+			 */
+			uvm_anfree(anon);
 		}
-
-		/*
-		 * we just eliminated the last reference to an anon.   free it.
-		 */
-		uvm_anfree(anon);
 	}
 }
 
@@ -1102,6 +1103,7 @@ uvm_anon_add(pages)
 	uvmexp.nanon += pages;
 	uvmexp.nfreeanon += pages;
 	for (lcv = 0; lcv < pages; lcv++) {
+		simple_lock_init(&anon->an_lock);
 		anon[lcv].u.an_nxt = uvm.afree;
 		uvm.afree = &anon[lcv];
 	}
@@ -1124,7 +1126,6 @@ uvm_analloc()
 		a->an_ref = 1;
 		a->an_swslot = 0;
 		a->u.an_page = NULL;		/* so we can free quickly */
-		simple_lock_init(&a->an_lock);
 	}
 	simple_unlock(&uvm.afreelock);
 	return(a);
@@ -1135,8 +1136,7 @@ uvm_analloc()
  *
  * => caller must remove anon from its amap before calling (if it was in
  *	an amap).
- * => if anon was in use, then it must be locked by the caller and the
- *	caller must have dropped the reference count to zero.
+ * => anon must be unlocked and have a zero reference count.
  * => we may lock the pageq's.
  */
 void
@@ -1180,7 +1180,8 @@ uvm_anfree(anon)
 			uvm_lock_pageq();
 #ifdef DIAGNOSTIC
 			if (pg->loan_count < 1)
-		panic("uvm_anfree: obj owned page with no loan count");
+				panic("uvm_anfree: obj owned page "
+				      "with no loan count");
 #endif
 			pg->loan_count--;
 			pg->uanon = NULL;

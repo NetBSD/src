@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.15 1998/10/18 23:49:59 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.16 1998/11/04 07:07:22 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -453,6 +453,7 @@ int uvmfault_anonget(ufi, amap, anon)
 			if (pg->flags & PG_RELEASED) {
 				pmap_page_protect(PMAP_PGARG(pg),
 				    VM_PROT_NONE); /* to be safe */
+				simple_unlock(&anon->an_lock);
 				uvm_anfree(anon);	/* frees page for us */
 				if (locked)
 				  uvmfault_unlockall(ufi, amap, NULL, NULL);
@@ -713,9 +714,9 @@ ReFault:
 
 	/* locked: maps(read) */
 	UVMHIST_LOG(maphist, "  narrow=%d, back=%d, forw=%d, startva=0x%x",
-	narrow, nback, nforw, startva);
+		    narrow, nback, nforw, startva);
 	UVMHIST_LOG(maphist, "  entry=0x%x, amap=0x%x, obj=0x%x", ufi.entry,
-	amap, uobj, 0);
+		    amap, uobj, 0);
 
 	/*
 	 * if we've got an amap, lock it and extract current anons.

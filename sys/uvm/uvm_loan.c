@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.11 1998/10/18 23:50:00 chs Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.12 1998/11/04 07:07:22 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -696,17 +696,16 @@ uvm_unloananon(aloans, nanons)
 	struct vm_anon *anon;
 
 	while (nanons-- > 0) {
+		int refs;
 
 		anon = *aloans++;
 		simple_lock(&anon->an_lock);
+		refs = --anon->an_ref;
+		simple_unlock(&anon->an_lock);
 
-		if (anon->an_ref > 1) {
-			anon->an_ref--;		/* drop reference */
-			simple_unlock(&anon->an_lock);
-		} else {
+		if (refs == 0) {
 			uvm_anfree(anon);	/* last reference: kill anon */
 		}
-
 	}
 }
 
