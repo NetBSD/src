@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdvar.h,v 1.16 1999/01/12 00:21:47 thorpej Exp $	*/
+/*	$NetBSD: ccdvar.h,v 1.17 1999/01/21 00:35:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -164,7 +164,6 @@ struct ccdbuf;
  * A concatenated disk is described after initialization by this structure.
  */
 struct ccd_softc {
-	int		 sc_unit;		/* logical unit number */
 	int		 sc_flags;		/* flags */
 	size_t		 sc_size;		/* size of ccd */
 	int		 sc_ileave;		/* interleave */
