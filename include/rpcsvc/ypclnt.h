@@ -1,3 +1,5 @@
+/*	$NetBSD: ypclnt.h,v 1.6 1994/10/26 00:57:11 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
  * All rights reserved.
@@ -27,8 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: ypclnt.h,v 1.5 1994/05/25 09:54:19 deraadt Exp $
  */
 
 #ifndef _YPCLNT_H_

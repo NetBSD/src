@@ -1,3 +1,5 @@
+/*	$NetBSD: locale.h,v 1.6 1994/10/26 00:56:02 cgd Exp $	*/
+
 /*
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)locale.h	5.2 (Berkeley) 2/24/91
- *	$Id: locale.h,v 1.5 1994/09/29 05:00:37 jtc Exp $
+ *	@(#)locale.h	5.2 (Berkeley) 2/24/91
  */
 
 #ifndef _LOCALE_H_

@@ -1,3 +1,5 @@
+/*	$NetBSD: unistd.h,v 1.22 1994/10/26 00:56:38 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)unistd.h	5.13 (Berkeley) 6/17/91
- *	$Id: unistd.h,v 1.21 1994/10/19 03:45:20 cgd Exp $
+ *	@(#)unistd.h	5.13 (Berkeley) 6/17/91
  */
 
 #ifndef _UNISTD_H_

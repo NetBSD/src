@@ -1,3 +1,5 @@
+/*	$NetBSD: sysexits.h,v 1.4 1994/10/26 00:56:33 cgd Exp $	*/
+
 /*
  * Copyright (c) 1987 Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)sysexits.h	4.8 (Berkeley) 4/3/91
- *	$Id: sysexits.h,v 1.3 1993/08/01 18:45:12 mycroft Exp $
+ *	@(#)sysexits.h	4.8 (Berkeley) 4/3/91
  */
 
 #ifndef	_SYSEXITS_H_

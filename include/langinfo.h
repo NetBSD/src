@@ -1,3 +1,5 @@
+/*	$NetBSD: langinfo.h,v 1.2 1994/10/26 00:55:59 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Winning Strategies, Inc.
  * All rights reserved.

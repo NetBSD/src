@@ -1,3 +1,5 @@
+/*	$NetBSD: pmap_rmt.h,v 1.4 1994/10/26 00:57:01 cgd Exp $	*/
+
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -27,8 +29,7 @@
  * Mountain View, California  94043
  *
  *	from: @(#)pmap_rmt.h 1.2 88/02/08 SMI 
- *	from: @(#)pmap_rmt.h	2.1 88/07/29 4.0 RPCSRC
- *	$Id: pmap_rmt.h,v 1.3 1993/08/01 18:45:59 mycroft Exp $
+ *	@(#)pmap_rmt.h	2.1 88/07/29 4.0 RPCSRC
  */
 
 /*
