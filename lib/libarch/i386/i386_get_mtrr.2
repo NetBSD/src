@@ -1,4 +1,4 @@
-.\"     $NetBSD: i386_get_mtrr.2,v 1.7 2002/10/01 15:58:39 wiz Exp $
+.\"     $NetBSD: i386_get_mtrr.2,v 1.8 2002/10/01 16:02:41 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -82,7 +82,9 @@ no more than
 structures will be copied out, and the integer value pointed to by
 .Fa n
 will be updated to reflect the actual number of valid structures retrieved.
-A NULL argument to
+A
+.Dv NULL
+argument to
 .Fa mtrrp
 will result in just the number of MTRRs available being returned
 in the integer pointed to by
@@ -144,7 +146,7 @@ To clear/reset MTRRs, use a
 .Em flags
 field without MTRR_VALID set.
 .Sh RETURN VALUES
-Upon successful completion zero is returned, otherwise -1 is returned
+Upon successful completion zero is returned, otherwise \-1 is returned
 on failure, and the global variable
 .Va errno
 is set to indicate the error.
