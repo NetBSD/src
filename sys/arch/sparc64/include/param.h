@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.18 2000/06/12 23:32:46 eeh Exp $ */
+/*	$NetBSD: param.h,v 1.19 2000/06/13 05:04:05 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -141,7 +141,7 @@ extern int nbpg, pgofset, pgshift;
  * Here's the location of the interrupt stack and CPU structure.
  */
 #define	INTSTACK	(KERNEND)
-#define	EINTSTACK	(INTSTACK+USPACE
+#define	EINTSTACK	(INTSTACK+USPACE)
 
 /*
  * Constants related to network buffer management.
