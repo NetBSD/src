@@ -1,4 +1,4 @@
-.\"	$NetBSD: audioplay.1,v 1.3.2.1 1999/04/13 07:19:12 mrg Exp $
+.\"	$NetBSD: audioplay.1,v 1.3.2.2 1999/10/22 09:34:38 he Exp $
 .\"
 .\" Copyright (c) 1998-1999 Matthew R. Green
 .\" All rights reserved.
@@ -118,6 +118,13 @@ when combined with the
 option, sets the sample rate to it's argument.  This value must be a
 valid value for the audio device or an error will be returned.
 .El
+.Sh ENVIRONMENT
+.Bl -tag -width AUDIOCTLDEVICE
+.It AUDIOCTLDEVICE
+the audio control device to be used.
+.It AUDIODEVICE
+the audio device to be used.
+.El
 .Sh NOTES
 .Nm
 can be used to play Sun/NeXT audio files, and also RIFF WAVE audio files.
@@ -150,6 +157,7 @@ program was written by Matthew R. Green <mrg@eterna.com.au>.
 .Xr aria 4 ,
 .Xr audio 4 ,
 .Xr eap 4 ,
+.Xr eso 4 ,
 .Xr ess 4 ,
 .Xr gus 4 ,
 .Xr guspnp 4 ,
