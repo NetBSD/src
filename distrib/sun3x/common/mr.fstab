@@ -1,0 +1,3 @@
+/kern  /kern kernfs ro 0 0
+/kern/rootdev / ffs rw 1 1
+/kern/rootdev none swap sw 0 0
