@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.11 2004/06/04 07:42:33 sekiya Exp $	*/
+/*	$NetBSD: pmap.c,v 1.12 2004/06/15 11:28:04 fvdl Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.11 2004/06/04 07:42:33 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12 2004/06/15 11:28:04 fvdl Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -847,6 +847,31 @@ pmap_kenter_pa(va, pa, prot)
 		pmap_update_pg(va);
 #endif
 	}
+}
+
+/*
+ * Change protection for a virtual address. Local for a CPU only, don't
+ * care about TLB shootdowns.
+ */
+void
+pmap_changeprot_local(vaddr_t va, vm_prot_t prot)
+{
+	pt_entry_t *pte, opte;
+
+	if (va < VM_MIN_KERNEL_ADDRESS)
+		pte = vtopte(va);
+	else
+		pte = kvtopte(va);
+
+	opte = *pte;
+
+	if ((prot & VM_PROT_WRITE) != 0)
+		*pte |= PG_RW;
+	else
+		*pte &= ~PG_RW;
+
+	if (opte != *pte)
+		invlpg(va);
 }
 
 /*
