@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.c,v 1.5 1998/11/25 22:17:08 augustss Exp $	*/
+/*	$NetBSD: usbhid.c,v 1.6 1998/12/03 20:46:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include <ctype.h>
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
+#include <errno.h>
 
 #include "hidsubr.h"
 
@@ -94,7 +95,8 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "Usage: %s [-a] -f device [-l] [-n] [-r] [-t tablefile] [-v] [name ...]\n", __progname);
+	fprintf(stderr, "Usage: %s -f device [-l] [-n] [-r] [-t tablefile] [-v] name ...\n", __progname);
+	fprintf(stderr, "       %s -f device [-l] [-n] [-r] [-t tablefile] [-v] -a\n", __progname);
 	exit(1);
 }
 
@@ -230,8 +232,12 @@ dumpdata(int f, u_char *buf, int len, int loop)
 	dlen = hid_report_size(buf, len, hid_input);
 	dbuf = malloc(dlen);
 	if (!loop)
-		if (ioctl(f, USB_SET_IMMED, &one) < 0)
-			err(1, "USB_SET_IMMED");
+		if (ioctl(f, USB_SET_IMMED, &one) < 0) {
+			if (errno == EOPNOTSUPP)
+				warnx("device does not support immediate mode, only changes reported.");
+			else
+				err(1, "USB_SET_IMMED");
+		}
 	do {
 		r = read(f, dbuf, dlen);
 		if (r != dlen) {
@@ -309,6 +315,9 @@ main(int argc, char **argv)
 		usage();
 	names = argv;
 	nnames = argc;
+
+	if (nnames == 0 && !all)
+		usage();
 
 	if (dev[0] != '/') {
 		if (isdigit(dev[0]))
