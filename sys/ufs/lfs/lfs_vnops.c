@@ -1,5 +1,40 @@
-/*	$NetBSD: lfs_vnops.c,v 1.21 1999/03/05 21:09:50 mycroft Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.22 1999/03/10 00:20:00 perseant Exp $	*/
 
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Konrad E. Schroder <perseant@hhhh.org>.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the NetBSD
+ *      Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 1986, 1989, 1991, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -71,9 +106,15 @@ int (**lfs_vnodeop_p) __P((void *));
 struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, ufs_lookup },		/* lookup */
+#ifndef LFS_USEDIROP
 	{ &vop_create_desc, ufs_create },		/* create */
 	{ &vop_whiteout_desc, ufs_whiteout },		/* whiteout */
 	{ &vop_mknod_desc, ufs_mknod },			/* mknod */
+#else
+	{ &vop_create_desc, lfs_create },		/* create */
+	{ &vop_whiteout_desc, lfs_whiteout },		/* whiteout */
+	{ &vop_mknod_desc, lfs_mknod },			/* mknod */
+#endif
 	{ &vop_open_desc, ufs_open },			/* open */
 	{ &vop_close_desc, lfs_close },			/* close */
 	{ &vop_access_desc, ufs_access },		/* access */
@@ -88,12 +129,21 @@ struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_mmap_desc, ufs_mmap },			/* mmap */
 	{ &vop_fsync_desc, lfs_fsync },			/* fsync */
 	{ &vop_seek_desc, ufs_seek },			/* seek */
+#ifndef LFS_USEDIROP
 	{ &vop_remove_desc, ufs_remove },		/* remove */
 	{ &vop_link_desc, ufs_link },			/* link */
 	{ &vop_rename_desc, ufs_rename },		/* rename */
 	{ &vop_mkdir_desc, ufs_mkdir },			/* mkdir */
 	{ &vop_rmdir_desc, ufs_rmdir },			/* rmdir */
 	{ &vop_symlink_desc, ufs_symlink },		/* symlink */
+#else
+	{ &vop_remove_desc, lfs_remove },		/* remove */
+	{ &vop_link_desc, lfs_link },			/* link */
+	{ &vop_rename_desc, lfs_rename },		/* rename */
+	{ &vop_mkdir_desc, lfs_mkdir },			/* mkdir */
+	{ &vop_rmdir_desc, lfs_rmdir },			/* rmdir */
+	{ &vop_symlink_desc, lfs_symlink },		/* symlink */
+#endif
 	{ &vop_readdir_desc, ufs_readdir },		/* readdir */
 	{ &vop_readlink_desc, ufs_readlink },		/* readlink */
 	{ &vop_abortop_desc, ufs_abortop },		/* abortop */
@@ -233,37 +283,56 @@ lfs_fsync(v)
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
 		struct ucred *a_cred;
-		int a_waitfor;
+		int a_flags;
 		struct proc *a_p;
 	} */ *ap = v;
-
+	
 	return (VOP_UPDATE(ap->a_vp, NULL, NULL,
-	    (ap->a_flags & FSYNC_WAIT) != 0 ? LFS_SYNC : 0));	/* XXX */
+			   (ap->a_flags & FSYNC_WAIT) != 0 ? LFS_SYNC : 0)); /* XXX */
 }
 
+#ifdef LFS_USEDIROP
 /*
  * These macros are used to bracket UFS directory ops, so that we can
  * identify all the pages touched during directory ops which need to
  * be ordered and flushed atomically, so that they may be recovered.
  */
+/*
+ * XXX KS - Because we have to mark nodes VDIROP in order to prevent
+ * the cache from reclaiming them while a dirop is in progress, we must
+ * also manage the number of nodes so marked (otherwise we can run out).
+ * We do this by setting lfs_dirvcount to the number of marked vnodes; it
+ * is decremented during segment write, when VDIROP is taken off.
+ */
 #define	SET_DIROP(fs) {							\
-	if ((fs)->lfs_writer)						\
-		tsleep(&(fs)->lfs_dirops, PRIBIO + 1, "lfs_dirop", 0);	\
+	while ((fs)->lfs_writer || (fs)->lfs_dirvcount>LFS_MAXDIROP) {	\
+		if((fs)->lfs_writer)					\
+			tsleep(&(fs)->lfs_dirops, PRIBIO + 1, "lfs_dirop", 0);\
+		if((fs)->lfs_dirvcount > LFS_MAXDIROP) {		\
+			printf("(dirvcount=%d)\n",(fs)->lfs_dirvcount); \
+			tsleep(&(fs)->lfs_dirvcount, PRIBIO + 1, "lfs_maxdirop", 0);\
+		}							\
+	}								\
 	++(fs)->lfs_dirops;						\
 	(fs)->lfs_doifile = 1;						\
 }
 
 #define	SET_ENDOP(fs) {							\
 	--(fs)->lfs_dirops;						\
-	if (!(fs)->lfs_dirops)						\
+	if (!(fs)->lfs_dirops) {					\
 		wakeup(&(fs)->lfs_writer);				\
+		if ((fs)->lfs_dirvcount > LFS_MAXDIROP)			\
+			lfs_flush((fs),0);				\
+	}								\
 }
 
-#define	MARK_VNODE(dvp)	(dvp)->v_flag |= VDIROP
-
-/*
- * XXXX most of these aren't used? - fvdl 02/98
- */
+#define	MARK_VNODE(dvp)  do {                                           \
+        if(!((dvp)->v_flag & VDIROP)) {					\
+                lfs_vref(dvp);						\
+		++VTOI((dvp))->i_lfs->lfs_dirvcount;			\
+	}								\
+        (dvp)->v_flag |= VDIROP;					\
+} while(0)
 
 int
 lfs_symlink(v)
@@ -289,12 +358,12 @@ int
 lfs_mknod(v)
 	void *v;
 {
-	struct vop_mknod_args /* {
+	struct vop_mknod_args	/* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
-	} */ *ap = v;
+		} */ *ap = v;
 	int ret;
 
 	SET_DIROP(VTOI(ap->a_dvp)->i_lfs);
@@ -308,7 +377,7 @@ int
 lfs_create(v)
 	void *v;
 {
-	struct vop_create_args /* {
+	struct vop_create_args	/* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -324,10 +393,28 @@ lfs_create(v)
 }
 
 int
+lfs_whiteout(v)
+	void *v;
+{
+	struct vop_whiteout_args /* {
+		struct vnode *a_dvp;
+		struct componentname *a_cnp;
+		int a_flags;
+	} */ *ap = v;
+	int ret;
+
+	SET_DIROP(VTOI(ap->a_dvp)->i_lfs);
+	MARK_VNODE(ap->a_dvp);
+	ret = ufs_whiteout(ap);
+	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs);
+	return (ret);
+}
+
+int
 lfs_mkdir(v)
 	void *v;
 {
-	struct vop_mkdir_args /* {
+	struct vop_mkdir_args	/* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -346,7 +433,7 @@ int
 lfs_remove(v)
 	void *v;
 {
-	struct vop_remove_args /* {
+	struct vop_remove_args	/* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -365,7 +452,7 @@ int
 lfs_rmdir(v)
 	void *v;
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_args	/* {
 		struct vnodeop_desc *a_desc;
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
@@ -385,7 +472,7 @@ int
 lfs_link(v)
 	void *v;
 {
-	struct vop_link_args /* {
+	struct vop_link_args	/* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -398,12 +485,12 @@ lfs_link(v)
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs);
 	return (ret);
 }
-  
+
 int
 lfs_rename(v)
 	void *v;
 {
-	struct vop_rename_args  /* {
+	struct vop_rename_args	/* {
 		struct vnode *a_fdvp;
 		struct vnode *a_fvp;
 		struct componentname *a_fcnp;
@@ -412,7 +499,7 @@ lfs_rename(v)
 		struct componentname *a_tcnp;
 	} */ *ap = v;
 	int ret;
-
+	
 	SET_DIROP(VTOI(ap->a_fdvp)->i_lfs);
 	MARK_VNODE(ap->a_fdvp);
 	MARK_VNODE(ap->a_tdvp);
@@ -420,6 +507,8 @@ lfs_rename(v)
 	SET_ENDOP(VTOI(ap->a_fdvp)->i_lfs);
 	return (ret);
 }
+#endif /* LFS_USEDIROP */
+
 /* XXX hack to avoid calling ITIMES in getattr */
 int
 lfs_getattr(v)
@@ -465,6 +554,7 @@ lfs_getattr(v)
 	vap->va_filerev = ip->i_modrev;
 	return (0);
 }
+
 /*
  * Close called
  *
@@ -492,7 +582,7 @@ lfs_close(v)
 	if (vp->v_usecount > 1) {
 		mod = ip->i_flag & IN_MODIFIED;
 		TIMEVAL_TO_TIMESPEC(&time, &ts);
-		FFS_ITIMES(ip, &ts, &ts, &ts);
+		LFS_ITIMES(ip, &ts, &ts, &ts);
 		if (!mod && ip->i_flag & IN_MODIFIED)
 			ip->i_lfs->lfs_uinodes++;
 	}
