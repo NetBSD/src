@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.4 2000/02/06 13:13:20 msaitoh Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.5 2000/04/25 12:17:07 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -184,19 +184,13 @@ sh3_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16*NCARGS, TRUE, FALSE, NULL);
+				   16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, TRUE, FALSE, NULL);
-
-	/*
-	 * Finally, allocate mbuf cluster submap.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_MBUF_SIZE, FALSE, FALSE, NULL);
+				   VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
