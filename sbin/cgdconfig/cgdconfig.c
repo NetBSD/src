@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.3 2002/10/12 21:02:18 elric Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.4 2002/10/28 05:46:01 elric Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 2002\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.3 2002/10/12 21:02:18 elric Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.4 2002/10/28 05:46:01 elric Exp $");
 #endif
 
 #include <errno.h>
@@ -576,7 +576,7 @@ generate(struct params *p, int argc, char **argv, const char *outfile)
 	if (ret)
 		return ret;
 
-	if (!p->keygen_method != KEYGEN_RANDOMKEY) {
+	if (p->keygen_method != KEYGEN_RANDOMKEY) {
 		tmp = getrandbits(DEFAULT_SALTLEN);
 		params_setkeygen_salt(p, tmp, DEFAULT_SALTLEN);
 		free(tmp);
