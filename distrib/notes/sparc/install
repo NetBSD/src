@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.45 2002/01/03 07:56:42 pk Exp $
+.\"	$NetBSD: install,v 1.46 2002/04/29 23:36:02 mbw Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -86,8 +86,10 @@ on your partition of choice.  On
 .Nx
 or SunOS the commands are:
 .Pp
-.Dl # Ic "gunzip miniroot.fs.gz"
-.Dl # Ic "dd if=miniroot.fs of=/dev/rsd0b bs=4k conv=sync"
+.(disp
+.No # Ic "gunzip miniroot.fs.gz"
+.No # Ic "dd if=miniroot.fs of=/dev/rsd0b bs=4k conv=sync"
+.disp)
 .Pp
 Here,
 .Li /dev/rsd0b
@@ -99,18 +101,26 @@ partition, but you will not need to reboot into single-user mode to write it.
 .Pp
 After transferring the filesystem to disk, bring the system down by:
 .Pp
-.Dl # Ic halt
+.(disp
+.No # Ic halt
+.disp)
 .Pp
 Then boot the installer by typing the appropriate
 command at the PROM prompt (this example is for the swap partition):
 .Pp
 .(tag OpenBoot\ PROM\ 2 -offset indent -compact
 .It sunmon
-.Li \*> Ic "b sd(,,1)netbsd -s"
+.(disp
+.No \*> Ic "b sd(,,1)netbsd -s"
+.disp)
 .It OpenBoot PROM 1
-.Li ok Ic "boot sd(,,1)netbsd -s"
+.(disp
+.No ok Ic "boot sd(,,1)netbsd -s"
+.disp)
 .It OpenBoot PROM 2
-.Li ok Ic "boot disk:b netbsd -s"
+.(disp
+.No ok Ic "boot disk:b netbsd -s"
+.disp)
 .tag)
 .Pp
 The monitor boot command will load the
@@ -148,11 +158,17 @@ Boot the installer by typing the appropriate command at the PROM prompt:
 .Pp
 .(tag OpenBoot\ PROM\ 2 -offset indent -compact
 .It sunmon
-.Li \*> Ic b "sd(,30,)"
+.(disp
+.No \*> Ic b "sd(,30,)"
+.disp)
 .It OpenBoot PROM 1
-.Li ok Ic "boot sd(,30,)"
+.(disp
+.No ok Ic "boot sd(,30,)"
+.disp)
 .It OpenBoot PROM 2
-.Li ok Ic "boot cdrom"
+.(disp
+.No ok Ic "boot cdrom"
+.disp)
 .tag)
 .Pp
 After the initial probe messages you'll be asked to start the
@@ -173,7 +189,9 @@ floppy disks and format them either using the
 .Xr fdformat 8
 command or a PC.
 .Pp
-.Dl # Ic "fdformat"
+.(disp
+.No # Ic "fdformat"
+.disp)
 .Pp
 Be sure that the `fdformat' command completes successfully before proceeding;
 on
@@ -198,14 +216,18 @@ machine using
 (available in the NetBSD/i386 distribution).
 Insert the first floppy and run the following commands:
 .Pp
-.Dl # Ic "gunzip disk1.gz"
-.Dl # Ic "dd if=disk1 of=/dev/rfd0a bs=36k"
-.Dl # Ic "eject floppy"
+.(disp
+.No # Ic "gunzip disk1.gz"
+.No # Ic "dd if=disk1 of=/dev/rfd0a bs=36k"
+.No # Ic "eject floppy"
+.disp)
 .Pp
 Insert the second floppy and run the following commands:
 .Pp
-.Dl # Ic "dd if=disk2 of=/dev/rfd0a bs=36k conv=sync"
-.Dl # Ic "eject floppy"
+.(disp
+.No # Ic "dd if=disk2 of=/dev/rfd0a bs=36k conv=sync"
+.No # Ic "eject floppy"
+.disp)
 .Pp
 Note that disk2 may be a symlink to .tgz file; do not uncompress it,
 just follow the instructions above, verbatim.
@@ -219,11 +241,17 @@ From the OpenBoot prompt, boot the floppy with the following command:
 .Pp
 .(tag OpenBoot\ PROM\ 2\ (alternate) -offset indent -compact
 .It OpenBoot PROM 1
-.Li ok Ic "boot fd(,,1)"
+.(disp
+.No ok Ic "boot fd(,,1)"
+.disp)
 .It OpenBoot PROM 1 (alternate)
-.Li ok Ic "boot /fd"
+.(disp
+.No ok Ic "boot /fd"
+.disp)
 .It OpenBoot PROM 2
-.Li ok Ic "boot floppy"
+.(disp
+.No ok Ic "boot floppy"
+.disp)
 .tag)
 .Pp
 After the initial probe messages you'll be asked to insert the floppy
@@ -239,8 +267,10 @@ key (sometimes called the
 key, found on the left side of your keyboard) and the
 .Key a
 key, which will halt your system and give you a PROM prompt.
-.Dl ok Ic "eject"
-.Dl ok Ic "go"
+.(disp
+.No ok Ic "eject"
+.No ok Ic "go"
+.disp)
 .Pp
 Now, insert the floppy labeled
 .Li disk2 .
@@ -277,6 +307,23 @@ address 130.115.144.11, will make an TFTP request for
 This file is a symbolic link to the second-stage
 boot program, which should be located in a place where the TFTP daemon
 can find it (remember, many TFTP daemons run in a chroot'ed environment).
+.Pp
+You can use
+.Xr bc 1
+to help calculate the filename:
+.(disp
+.No $ Ic bc
+.Ic obase=16
+.Ic 192
+C0
+.Ic 168
+A8
+.Ic 1
+1
+.Ic 10
+A
+.Ic quit
+.disp)
 .Pp
 The boot program to use is
 .Pa installation/netboot/boot.net
@@ -331,26 +378,34 @@ although you may choose to use a different path.  Create an
 .Pa /etc/ethers
 file with the following line:
 .Pp
-.Dl "CC:CC:CC:CC:CC:CC     client"
+.(disp
+CC:CC:CC:CC:CC:CC     client
+.disp)
 .Pp
 Add your client to the server's
 .Pa /etc/hosts
 file:
 .Pp
-.Dl "192.168.1.10 client"
+.(disp
+192.168.1.10 client
+.disp)
 .Pp
 If
 .Ic rarpd
 is currently running, restart it (kill -HUP), otherwise start
 .Ic rarpd :
 .Pp
-.Dl # Ic "/usr/sbin/rarpd -a"
+.(disp
+.No # Ic "/usr/sbin/rarpd -a"
+.disp)
 .Pp
 Next, create
 .Pa /etc/bootparams
 with the following line:
 .Pp
-.Dl "client root=server:/export/client/root"
+.(disp
+client root=server:/export/client/root
+.disp)
 .Pp
 If
 .Ic rpc.bootparamd
@@ -359,7 +414,9 @@ is currently running, restart it
 otherwise start
 .Ic rpc.bootparamd :
 .Pp
-.Dl # Ic "/usr/sbin/rpc.bootparamd"
+.(disp
+.No # Ic "/usr/sbin/rpc.bootparamd"
+.disp)
 .Pp
 Now, make sure the bootloader in
 .Pa /tftpboot
@@ -370,9 +427,11 @@ and is named appropriately for your client
 .Pa C0A8010A.SUN4C ) ,
 E.g.:
 .Pp
-.Dl # Ic "cp boot.net /tftpboot"
-.Dl # Ic "cd /tftpboot"
-.Dl # Ic "ln -s boot.net C0A8010A.SUN4C"
+.(disp
+.No # Ic "cp boot.net /tftpboot"
+.No # Ic "cd /tftpboot"
+.No # Ic "ln -s boot.net C0A8010A.SUN4C"
+.disp)
 .Pp
 Now, you should edit
 .Pa /etc/inetd.conf
@@ -386,13 +445,17 @@ process to enable tftp if this line was previously commented out.
 The next step is to set up NFS exports.  Create the directory you are
 exporting for the netboot client:
 .Pp
-.Dl # Ic "mkdir -p /export/client/root"
+.(disp
+.No # Ic "mkdir -p /export/client/root"
+.disp)
 .Pp
 Put the following line in
 .Pa /etc/exports
 to enable NFS sharing:
 .Pp
-.Dl "/export/client/root -maproot=root client.test.net"
+.(disp
+.No "/export/client/root -maproot=root client.test.net"
+.disp)
 .Pp
 If your server is currently running NFS services, you only need to
 .Ic "kill -HUP"
@@ -400,8 +463,10 @@ the
 .Ic mountd
 process.  Otherwise, you need to run:
 .Pp
-.Dl # Ic "/usr/sbin/mountd"
-.Dl # Ic "/usr/sbin/nfsd -tun 4"
+.(disp
+.No # Ic "/usr/sbin/mountd"
+.No # Ic "/usr/sbin/nfsd -tun 4"
+.disp)
 .Pp
 Now, you need to place the files your netboot client will need.
 As noted above in the section
@@ -411,30 +476,43 @@ distribution filesets.
 However, the easiest way is to put the distribution
 files into the exported directory for your client on the server.
 .Pp
-.Dl # Ic "mv *.tgz /export/client/root"
+.(disp
+.No # Ic "mv *.tgz /export/client/root"
+.disp)
 .Pp
 Your client will need a kernel to boot (use
 .Pa binary/kernel/netbsd.GENERIC.gz ) .
 .Pp
-.Dl # Ic "gunzip netbsd.GENERIC.gz"
-.Dl # Ic "mv netbsd.GENERIC /export/client/root/netbsd"
+.(disp
+.No # Ic "gunzip netbsd.GENERIC.gz"
+.No # Ic "mv netbsd.GENERIC /export/client/root/netbsd"
+.disp)
 .Pp
 Your client will need installation tools (use
 .Pa installation/netboot/rootfs.tgz ) .
 .Pp
-.Dl # Ic "gunzip \*< rootfs.tgz | (cd /export/client/root && tar -xpf -)"
+.(disp
+.No # Ic "gunzip \*< rootfs.tgz | (cd /export/client/root && tar -xpf -)"
+.disp)
 .Pp
 Now, netboot your Sparc from the server by entering the appropriate
-.Ic boot command at the monitor prompt.
+.Ic boot
+command at the monitor prompt.
 Depending on the PROM version in your machine, this command takes one
 of the following forms:
 .(tag OpenBoot\ PROM\ 2 -offset indent -compact
 .It sunmon
-.Li \*> Ic "b le()netbsd"
+.(disp
+.No \*> Ic "b le()netbsd"
+.disp)
 .It OpenBoot PROM 1
-.Li ok Ic "b le()netbsd"
+.(disp
+.No ok Ic "b le()netbsd"
+.disp)
 .It OpenBoot PROM 2
-.Li ok Ic "boot net netbsd"
+.(disp
+.No ok Ic "boot net netbsd"
+.disp)
 .tag)
 .Pp
 After the initial probe messages you'll be asked to start the
@@ -452,17 +530,21 @@ and transfer them to a tape.  Make sure you use the
 .Sq no rewind scsi tape
 device.  Run the following commands:
 .Pp
-.Dl # Ic "gunzip tapefile1.gz"
-.Dl # Ic "mt -f /dev/nrst0 rew"
-.Dl # Ic "dd if=tapefile1 of=/dev/nrst0 bs=4k"
-.Dl # Ic "dd if=tapefile2 of=/dev/nrst0 bs=4k"
+.(disp
+.No # Ic "gunzip tapefile1.gz"
+.No # Ic "mt -f /dev/nrst0 rew"
+.No # Ic "dd if=tapefile1 of=/dev/nrst0 bs=4k"
+.No # Ic "dd if=tapefile2 of=/dev/nrst0 bs=4k"
+.disp)
 .Pp
 Now you can transfer the
 .Nx \*V.
 distribution sets from
 .Pq Pa binary/sets
 to the tape by using a series of additional
-.Dl # Ic "dd if=\*<aset\*>.tgz of=/dev/nrst0 bs=4k"
+.(disp
+.No # Ic "dd if=\*<aset\*>.tgz of=/dev/nrst0 bs=4k"
+.disp)
 commands.  See also the section
 .Sx Getting the NetBSD System on to Useful Media.
 Be sure to mark the location of these files on the tape; you'll need them
@@ -473,11 +555,17 @@ Boot the installer by typing the appropriate command at the PROM prompt:
 .Pp
 .(tag OpenBoot\ PROM\ 2\ (alternate) -offset indent -compact
 .It sunmon
-.Li \*> Ic "b st()"
+.(disp
+.No \*> Ic "b st()"
+.disp)
 .It OpenBoot PROM 1
-.Li ok Ic "boot st()"
+.(disp
+.No ok Ic "boot st()"
+.disp)
 .It OpenBoot PROM 2
-.Li ok Ic "boot tape"
+.(disp
+.No ok Ic "boot tape"
+.disp)
 .tag)
 .Pp
 After the initial probe messages you'll be asked to confirm the tape
@@ -559,7 +647,9 @@ then try multiuser after that. If you boot single-user the
 .Nx
 incantation to make the root filesystem writable is
 .Pp
-.Dl # Ic "mount -u /dev/sd0a /"
+.(disp
+.No # Ic "mount -u /dev/sd0a /"
+.disp)
 .Pp
 Your PROM might have been setup to instruct the boot program to load
 a file called
@@ -570,11 +660,14 @@ instead using the following commands:
 .Pp
 .(tag OpenBoot\ PROM\ 2 -offset indent -compact
 .It OpenBoot PROM 1
-.Li ok Ic setenv boot-from sd(0,0,0)netbsd
+.(disp
+.No ok Ic setenv boot-from sd(0,0,0)netbsd
+.disp)
 .It OpenBoot PROM 2
-.Li ok Ic setenv boot-file netbsd
-.br
-.Li ok Ic setenv boot-device disk:a
+.(disp
+.No ok Ic setenv boot-file netbsd
+.No ok Ic setenv boot-device disk:a
+.disp)
 .tag)
 .Pp
 .Em Congratulations ,
