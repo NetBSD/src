@@ -37,7 +37,7 @@
  *	@(#)SYS.h	8.1 (Berkeley) 6/4/93
  *
  *	from: Header: SYS.h,v 1.2 92/07/03 18:57:00 torek Exp
- *	$Id: SYS.h,v 1.5 1996/10/24 13:00:32 jtc Exp $
+ *	$Id: SYS.h,v 1.6 1996/11/09 19:11:17 pk Exp $
  */
 
 #include <machine/asm.h>
@@ -94,7 +94,7 @@
  * XXX - This should be optimized.
  */
 #define SYSCALL_NOERROR(x) \
-	SYSCALL(x)
+	ENTRY(x); mov _CAT(SYS_,x),%g1; t ST_SYSCALL
 
 /*
  * RSYSCALL_NOERROR is like RSYSCALL, except it's used for syscalls 
@@ -103,6 +103,7 @@
  * XXX - This should be optimized.
  */
 #define RSYSCALL_NOERROR(x) \
-	RSYSCALL(x)
+	ENTRY(x); mov (_CAT(SYS_,x))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
+	t ST_SYSCALL
 
 	.globl	cerror
