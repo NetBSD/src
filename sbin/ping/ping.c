@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.28 1997/03/24 03:34:26 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.29 1997/04/02 09:22:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: ping.c,v 1.28 1997/03/24 03:34:26 christos Exp $";
+static char rcsid[] = "$NetBSD: ping.c,v 1.29 1997/04/02 09:22:01 augustss Exp $";
 #endif
 
 #include <stdio.h>
@@ -1603,9 +1603,9 @@ gethost(const char *name, struct sockaddr_in *sa, char *realname)
     if (inet_aton(name, &sa->sin_addr) != 0) {
 	    if (realname == NULL)
 		return;
-	    hp = gethostbyaddr((char *) &sa->sin_addr, sizeof(sa->sin_addr), 
-		AF_INET);
-	    if (hp == NULL)
+            if ((pingflags & F_NUMERIC)
+                || !(hp = gethostbyaddr((char *) &sa->sin_addr, 
+                                        sizeof(sa->sin_addr), AF_INET)))
 		(void) strncpy(realname, name, MAXHOSTNAMELEN);
 	    else
 		(void) strncpy(realname, hp->h_name, MAXHOSTNAMELEN);
