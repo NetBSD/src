@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.9 1999/07/02 15:53:55 simonb Exp $	*/
+/*	$NetBSD: crt0.c,v 1.10 2001/02/18 23:03:34 simonb Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -32,6 +32,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #include <stdlib.h>
 
 #include "common.h"
@@ -41,8 +42,8 @@
 	__syscall(SYS_mmap, (addr), (len), (prot), (flags),	\
 	(fd), 0, (off_t)(off))
 
-extern	void		start __P((void)) asm("start");
-	void		__start __P((int, char *[], char *[]));
+extern	void		start(void) asm("start");
+	void		__start(int, char *[], char *[]);
 
 __asm("
 	.text
@@ -61,22 +62,18 @@ start:
 	add	r2, r1, r0, lsl #2
 	add	r2, r2, #0x0004
 
-	b	___start
-
+	b	" ___STRING(_C_LABEL(__start)) "
 	.align	0
 Lps_strings:
-	.word	___ps_strings
+	.word	" ___STRING(_C_LABEL(__ps_strings)) "
 ");
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.9 1999/07/02 15:53:55 simonb Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.10 2001/02/18 23:03:34 simonb Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 void
-__start(argc, argv, envp)
-	int argc;
-	char *argv[];
-	char *envp[];
+__start(int argc, char **argv, char **envp)
 {
 	char *ap;
 
