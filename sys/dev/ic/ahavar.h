@@ -1,4 +1,41 @@
-/*	$NetBSD: ahavar.h,v 1.6 1997/11/04 05:58:24 thorpej Exp $	*/
+/*	$NetBSD: ahavar.h,v 1.7 1998/02/09 10:53:13 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -56,20 +93,27 @@ struct aha_mbx {
 	struct aha_mbx_in *tmbi;	/* Target Mail Box in */
 };
 
+struct aha_control {
+	struct aha_mbx ac_mbx;		/* all our mailboxes */
+	struct aha_ccb ac_ccbs[AHA_CCB_MAX]; /* all our control blocks */
+};
+
 struct aha_softc {
 	struct device sc_dev;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	bus_dma_tag_t sc_dmat;
-	bus_dmamap_t sc_dmamap_mbox;	/* maps the mailbox */
+	bus_dmamap_t sc_dmamap_control;	/* maps the control structures */
 	void *sc_ih;
 
-	struct aha_mbx *sc_mbx;		/* all our mailboxes */
-#define	wmbx	(sc->sc_mbx)
+	struct aha_control *sc_control;	/* control structures */
+
+#define	wmbx	(&sc->sc_control->ac_mbx)
+
 	struct aha_ccb *sc_ccbhash[CCB_HASH_SIZE];
 	TAILQ_HEAD(, aha_ccb) sc_free_ccb, sc_waiting_ccb;
-	int sc_numccbs, sc_mbofull;
+	int sc_mbofull;
 	struct scsipi_link sc_link;	/* prototype for devs */
 
 	LIST_HEAD(, scsipi_xfer) sc_queue;
@@ -78,6 +122,24 @@ struct aha_softc {
 	char sc_model[18],
 	     sc_firmware[4];
 };
+
+/*
+ * Offset of a Mail Box In from the beginning of the control DMA mapping.
+ */
+#define	AHA_MBI_OFF(m)	(offsetof(struct aha_control, ac_mbx.mbi[0]) +	\
+			    (((u_long)(m)) - ((u_long)&wmbx->mbi[0])))
+
+/*
+ * Offset of a Mail Box Out from the beginning of the control DMA mapping.
+ */
+#define	AHA_MBO_OFF(m)	(offsetof(struct aha_control, ac_mbx.mbo[0]) +	\
+			    (((u_long)(m)) - ((u_long)&wmbx->mbo[0])))
+
+/*
+ * Offset of a CCB from the beginning of the control DMA mapping.
+ */
+#define	AHA_CCB_OFF(c)	(offsetof(struct aha_control, ac_ccbs[0]) +	\
+		    (((u_long)(c)) - ((u_long)&sc->sc_control->ac_ccbs[0])))
 
 struct aha_probe_data {
 	int sc_irq, sc_drq;
