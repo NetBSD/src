@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.12 1993/10/11 01:44:57 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.13 1993/10/12 23:27:04 mycroft Exp $
  */
 
 
@@ -148,7 +148,6 @@ start:	movw	$0x1234,0x472	# warm boot
 	 * note: (%esp) is return address of boot
 	 * ( if we want to hold onto /boot, it's physical %esp up to _end)
 	 */
-
 	movl	4(%esp),%eax
 	movl	%eax,_boothowto-KERNBASE
 	movl	8(%esp),%eax
@@ -200,7 +199,7 @@ start:	movw	$0x1234,0x472	# warm boot
 /*
  * Virtual address space of kernel:
  *
-!  *	text | data | bss | [syms] | page dir | proc0 kernel stack | usr stk map | Sysmap
+ *	text | data | bss | [syms] | page dir | proc0 kernel stack | usr stk map | Sysmap
  *			           0               1       2       3             4
  */
 
@@ -208,9 +207,10 @@ start:	movw	$0x1234,0x472	# warm boot
 	movl	$(_end-KERNBASE),%ecx
 #if	defined(DDB) && !defined(SYMTAB_SPACE)
 /* save the symbols (if loaded) */
-	cmpl	$0,_esym-KERNBASE
-	je	1f
-	movl	_esym-KERNBASE,%ecx
+	movl	_esym-KERNBASE,%eax
+	testl	%eax,%eax
+	jz	1f
+	movl	%eax,%ecx
 	subl	$(KERNBASE),%ecx
 #endif
 1:	movl	%ecx,%edi	# edi= end || esym
@@ -253,11 +253,11 @@ start:	movw	$0x1234,0x472	# warm boot
 /* map I/O memory map */
 
 	movl	$(IOM_SIZE>>PGSHIFT),%ecx	# for this many pte s,
-	movl	$(IOM_BEGIN|PG_V|PG_UW),%eax	# having these bits set,(perhaps URW?) XXX
+	movl	$(IOM_BEGIN|PG_V|PG_UW),%eax	# having these bits set
 	movl	%ebx,_atdevphys-KERNBASE	# remember phys addr of ptes
 	fillkpt
 
- /* map proc 0's kernel stack into user page table page */
+/* map proc 0's kernel stack into user page table page */
 
 	movl	$(UPAGES),%ecx		# for this many pte s,
 	lea	(1*NBPG)(%esi),%eax	# physical address in proc 0
@@ -274,23 +274,23 @@ start:	movw	$0x1234,0x472	# warm boot
  */
 	/* install a pde for temporary double map of bottom of VA */
 	lea	(4*NBPG)(%esi),%eax	# physical address of kernel page table
-	orl     $(PG_V|PG_UW),%eax	# pde entry is valid XXX 06 Aug 92
+	orl     $(PG_V|PG_UW),%eax	# pde entry is valid
 	movl	%eax,(%esi)		# which is where temp maps!
 
 	/* kernel pde's */
-	movl	$(SYSPDRSIZE),%ecx	# for this many pde s,
-	lea	SYSPDROFF*4(%esi),%ebx	# offset of pde for kernel
+	movl	$(SYSPDRSIZE),%ecx		# for this many pde s,
+	lea	(SYSPDROFF*4)(%esi),%ebx	# offset of pde for kernel
 	fillkpt
 
 	/* install a pde recursively mapping page directory as a page table! */
-	movl	%esi,%eax		# phys address of ptd in proc 0
-	orl	$(PG_V|PG_UW),%eax	# pde entry is valid XXX 06 Aug 92
-	movl	%eax,PDRPDROFF*4(%esi)	# which is where PTmap maps!
+	movl	%esi,%eax			# phys address of ptd in proc 0
+	orl	$(PG_V|PG_UW),%eax		# pde entry is valid
+	movl	%eax,(PDRPDROFF*4)(%esi)	# which is where PTmap maps!
 
 	/* install a pde to map kernel stack for proc 0 */
 	lea	(3*NBPG)(%esi),%eax	# physical address of pt in proc 0
 	orl	$(PG_V|PG_KW),%eax	# pde entry is valid
-	movl	%eax,PPDROFF*4(%esi)	# which is where kernel stack maps!
+	movl	%eax,(PPDROFF*4)(%esi)	# which is where kernel stack maps!
 
 	/* copy and convert stuff from old gdt and idt for debugger */
 
@@ -349,7 +349,7 @@ start:	movw	$0x1234,0x472	# warm boot
 
 begin: /* now running relocated at KERNBASE where the system is linked to run */
 
-	/* XXX this is nasty */
+	/* this is ugly */
 	movl	_atdevphys,%edx		# get pte PA
 	subl	_KPTphys,%edx		# remove base of ptes; have phys offset
 	shll	$(PGSHIFT-2),%edx	# corresponding to virt offset
@@ -595,11 +595,9 @@ ENTRY(bcopyx)
 	/*
 	 * (ov)bcopy (src,dst,cnt)
 	 *  ws@tools.de     (Wolfgang Solfrank, TooLs GmbH) +49-228-985800
-	 *  Changed by bde to not bother returning %eax = 0.
 	 */
-
 ENTRY(ovbcopy)
-ENTRY(bcopy)
+ALTENTRY(bcopy)
 	pushl	%esi
 	pushl	%edi
 	movl	12(%esp),%esi
@@ -1285,6 +1283,7 @@ ENTRY(longjmp)
 	xorl	%eax,%eax		# return (1);
 	incl	%eax
 	ret
+
 /*
  * The following primitives manipulate the run queues.
  * _whichqs tells which of the 32 queues _qs
@@ -1294,7 +1293,6 @@ ENTRY(longjmp)
  * actually to shrink the 0-127 range of priorities into the 32 available
  * queues.
  */
-
 	.globl	_whichqs,_qs,_cnt,_panic
 
 /*
@@ -1364,16 +1362,16 @@ ENTRY(remrq)
 Idle:
 sti_for_idle:
 	sti
+
 	ALIGN_TEXT
 idle:
-	pushl	$0			# process pending interrupts
-	call	_splx
+	call	_splnone		# process pending interrupts
 	cmpl	$0,_whichqs
 	jne	sw1
 	hlt				# wait for interrupt
 	jmp	idle
 
-	SUPERALIGN_TEXT	/* so profiling doesn't lump Idle with swtch().. */
+	ALIGN_TEXT
 badsw:
 	pushl	$1f
 	call	_panic
@@ -1383,6 +1381,7 @@ badsw:
 /*
  * Swtch()
  */
+	SUPERALIGN_TEXT	/* so profiling doesn't lump Idle with cpu_swtch */
 ENTRY(cpu_swtch)
 
 	/* switch to new process. first, save context as needed */
@@ -1423,7 +1422,7 @@ ENTRY(cpu_swtch)
 
 	movl	_cpl,%eax		# splhigh()
 	movl	$-1,_cpl
-	movw	%eax,PCB_IML(%ecx)	# save ipl
+	movl	%eax,PCB_IML(%ecx)	# save ipl
 
 	/* save is done, now choose a new process or idle */
 sw1:
@@ -1431,11 +1430,10 @@ sw1:
 	movl	_whichqs,%edi
 2:
 	bsfl	%edi,%eax		# find a full q
-	je	sti_for_idle		# if none, idle
+	jz	sti_for_idle		# if none, idle
 	# XXX update whichqs?
-swfnd:
 	btrl	%eax,%edi		# clear q full status
-	jnb	2b		# if it was clear, look for another
+	jnb	2b			# if it was clear, look for another
 	movl	%eax,%ebx		# save which one we are using
 
 	shll	$3,%eax
@@ -1493,7 +1491,7 @@ swfnd:
 
 #ifdef	USER_LDT
 	cmpl	$0, PCB_USERLDT(%edx)
-	jne	1f
+	jnz	1f
 	movl	__default_ldt,%eax
 	cmpl	_currentldt,%eax
 	je	2f
@@ -1507,10 +1505,9 @@ swfnd:
 #endif
 	sti				# splx() doesn't do an sti/cli
 
-	movw    PCB_IML(%edx),%eax
-	pushl   %eax
+	pushl   PCB_IML(%edx)
 	call    _splx			# restore the process's ipl
-	addl	$4, %esp
+	addl	$4,%esp
 
 	movl	%edx,%eax		# return (p);
 	ret
@@ -1544,8 +1541,8 @@ ENTRY(swtch_to_inactive)
  */
 ENTRY(savectx)
 	movl	4(%esp),%ecx
-	movw	_cpl,%eax
-	movw	%eax,PCB_IML(%ecx)
+	movl	_cpl,%eax
+	movl	%eax,PCB_IML(%ecx)
 	movl	(%esp),%eax	
 	movl	%eax,PCB_EIP(%ecx)
 	movl	%ebx,PCB_EBX(%ecx)
@@ -1567,9 +1564,9 @@ ENTRY(savectx)
 	 * have to handle h/w bugs for reloading.  We used to lose the
 	 * parent's npx state for forks by forgetting to reload.
 	 */
-	mov	_npxproc,%eax
+	movl	_npxproc,%eax
 	testl	%eax,%eax
-  	je	1f
+  	jz	1f
 
 	pushl	%ecx
 	movl	P_ADDR(%eax),%eax
@@ -1614,70 +1611,13 @@ ENTRY(savectx)
 	xorl	%eax,%eax		# return 0
 	ret
 
-/*
- * addupc(int pc, struct uprof *up, int ticks):
- * update profiling information for the user process.
- */
-
-ENTRY(addupc)
-	pushl %ebp
-	movl %esp,%ebp
-	movl 12(%ebp),%edx		/* up */
-	movl 8(%ebp),%eax		/* pc */
-
-	subl PR_OFF(%edx),%eax		/* pc -= up->pr_off */
-	jl L1				/* if (pc < 0) return */
-
-	shrl $1,%eax			/* praddr = pc >> 1 */
-	imull PR_SCALE(%edx),%eax	/* praddr *= up->pr_scale */
-	shrl $15,%eax			/* praddr = praddr << 15 */
-	andl $-2,%eax			/* praddr &= ~1 */
-
-	cmpl PR_SIZE(%edx),%eax		/* if (praddr > up->pr_size) return */
-	ja L1
-
-/*	addl %eax,%eax			 * praddr -> word offset */
-	addl PR_BASE(%edx),%eax		/* praddr += up-> pr_base */
-	movl 16(%ebp),%ecx		/* ticks */
-
-	movl _curpcb,%edx
-	movl $proffault,PCB_ONFAULT(%edx)
-	addl %ecx,(%eax)		/* storage location += ticks */
-	movl $0,PCB_ONFAULT(%edx)
-L1:
-	leave
-	ret
-
-	ALIGN_TEXT
-proffault:
-	/* if we get a fault, then kill profiling all together */
-	movl $0,PCB_ONFAULT(%edx)	/* squish the fault handler */
- 	movl 12(%ebp),%ecx
-	movl $0,PR_SCALE(%ecx)		/* up->pr_scale = 0 */
-	leave
-	ret
-
- # To be done:
-ENTRY(astoff)
-	ret
-
 	.data
 	ALIGN_DATA
 	.globl	_cyloffset, _curpcb
 _cyloffset:	.long	0
 	.globl	_proc0paddr
 _proc0paddr:	.long	0
-LF:	.asciz "swtch %x"
-	ALIGN_DATA
-
-#if 0
-#define	PANIC(msg)	xorl %eax,%eax; movl %eax,_waittime; pushl 1f; \
-			call _panic; MSG(msg)
-#define	PRINTF(n,msg)	pushal ; nop ; pushl 1f; call _printf; MSG(msg) ; \
-			 popl %eax ; popal
-#define	MSG(msg)	.data; 1: .asciz msg; ALIGN_DATA; .text
-#endif /* 0 */
-
+	
 /*
  * Trap and fault vector routines
  *
@@ -1749,11 +1689,11 @@ IDTVEC(fpu)
 	movl	%ax,%ds
 	movl	%ax,%es
 	pushl	_cpl
-	pushl	$0		/* dummy unit to finish building intr frame */
 	incl	_cnt+V_TRAP
 	movl	%esp,%eax	/* pointer to frame */
 	pushl	%eax
 	call	_npxintr
+	addl	$4,%esp
 	jmp	doreti
 #else
 	pushl $0; TRAP(T_ARITHTRAP)
@@ -1807,7 +1747,6 @@ calltrap:
 	 */
 	movl	$(T_ASTFLT),TF_TRAPNO(%esp)	/* new trap type (err code not used) */
 	pushl	_cpl
-	pushl	$0				/* dummy unit */
 	jmp	doreti
 
 #ifdef KGDB
@@ -1854,7 +1793,6 @@ IDTVEC(syscall)
 	 */
 	movl	$(T_ASTFLT),TF_TRAPNO(%esp)	# new trap type (err code not used)
 	pushl	_cpl
-	pushl	$0
 	jmp	doreti
 
 #include "i386/isa/vector.s"
