@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.138 1999/01/06 13:51:09 lukem Exp $	*/
+/*	$NetBSD: init_main.c,v 1.139 1999/01/16 21:06:44 chuck Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -204,9 +204,7 @@ main()
 #else
 	vm_mem_init();
 	kmeminit();
-#if defined(MACHINE_NEW_NONCONTIG)
 	vm_page_physrehash();
-#endif
 #endif /* UVM */
 
 	/*
