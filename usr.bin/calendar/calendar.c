@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)calendar.c	4.11 (Berkeley) 10/12/90";*/
-static char rcsid[] = "$Id: calendar.c,v 1.5 1994/12/30 21:57:09 cgd Exp $";
+static char rcsid[] = "$Id: calendar.c,v 1.6 1995/03/26 03:59:07 hpeyerl Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -66,6 +66,7 @@ main(argc, argv)
 {
 	extern int optind;
 	int ch;
+	char *caldir;
 
 	while ((ch = getopt(argc, argv, "-a")) != EOF)
 		switch(ch) {
@@ -97,7 +98,10 @@ main(argc, argv)
 				cal();
 			(void)seteuid(0);
 		}
-	else
+	else if ((caldir = getenv("CALENDAR_DIR")) != NULL) {
+			if(!chdir(caldir))
+				cal();
+	} else
 		cal();
 	exit(0);
 }
@@ -189,9 +193,7 @@ isnow(endp)
 	if (flags&F_ISDAY || v1 > 12) {
 		/* found a day */
 		day = v1;
-		/* if no recognizable month, assume just a day alone */
-		if (!(month = getfield(endp, &endp, &flags)))
-			month = tp->tm_mon + 1;
+		month = tp->tm_mon + 1;
 	} else if (flags&F_ISMONTH) {
 		month = v1;
 		/* if no recognizable day, assume the first */
