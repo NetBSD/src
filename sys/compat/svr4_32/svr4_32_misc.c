@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.14 2003/01/19 16:47:14 thorpej Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.15 2003/01/28 21:57:46 atatat Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.14 2003/01/19 16:47:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.15 2003/01/28 21:57:46 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -546,11 +546,6 @@ svr4_32_sys_mmap(l, v, retval)
 	SCARG(&mm, addr) = (void *)(u_long)SCARG(uap, addr);
 	SCARG(&mm, pos) = SCARG(uap, pos);
 
-	rp = (void *)(u_long) round_page((u_int32_t)(u_long)p->p_vmspace->vm_daddr + MAXDSIZ);
-	if ((SCARG(&mm, flags) & MAP_FIXED) == 0 &&
-	    SCARG(&mm, addr) != 0 && SCARG(&mm, addr) < rp)
-		SCARG(&mm, addr) = rp;
-
 	error = sys_mmap(l, &mm, (register_t *)&rp);
 	if ((u_long)rp > (u_long)UINT_MAX) {
 		printf("svr4_32_mmap: retval out of range: %p", rp);
@@ -589,11 +584,6 @@ svr4_32_sys_mmap64(l, v, retval)
 	SCARG(&mm, fd) = SCARG(uap, fd);
 	SCARG(&mm, addr) = (void *)(u_long)SCARG(uap, addr);
 	SCARG(&mm, pos) = SCARG(uap, pos);
-
-	rp = (void *) round_page((vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ);
-	if ((SCARG(&mm, flags) & MAP_FIXED) == 0 &&
-	    SCARG(&mm, addr) != 0 && SCARG(&mm, addr) < rp)
-		SCARG(&mm, addr) = rp;
 
 	error = sys_mmap(l, &mm, (register_t *)&rp);
 	if ((u_long)rp > (u_long)UINT_MAX) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.15 2003/01/18 08:38:15 thorpej Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.16 2003/01/28 21:57:45 atatat Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.15 2003/01/18 08:38:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.16 2003/01/28 21:57:45 atatat Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -839,9 +839,6 @@ sunos32_sys_mmap(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct sys_mmap_args ua;
-	struct filedesc *fdp;
-	struct file *fp;
-	struct vnode *vp;
 	void *rt;
 	int error;
 
@@ -861,23 +858,6 @@ sunos32_sys_mmap(l, v, retval)
 	SUNOS32TO64_UAP(fd);
 	SCARG(&ua, pad) = 0;
 	SUNOS32TOX_UAP(pos, off_t);
-
-	if ((SCARG(&ua, flags) & MAP_FIXED) == 0 &&
-	    SCARG(&ua, addr) != 0 &&
-	    SCARG(&ua, addr) < (void *)round_page((vaddr_t)p->p_vmspace->vm_daddr+MAXDSIZ))
-		SCARG(&ua, addr) = (void *)round_page((vaddr_t)p->p_vmspace->vm_daddr+MAXDSIZ);
-
-	/*
-	 * Special case: if fd refers to /dev/zero, map as MAP_ANON.  (XXX)
-	 */
-	fdp = p->p_fd;
-	if ((fp = fd_getfile(fdp, SCARG(&ua, fd))) != NULL &&		/*XXX*/
-	    fp->f_type == DTYPE_VNODE &&				/*XXX*/
-	    (vp = (struct vnode *)fp->f_data)->v_type == VCHR &&	/*XXX*/
-	    vp->v_rdev == zerodev) {					/*XXX*/
-		SCARG(&ua, flags) |= MAP_ANON;
-		SCARG(&ua, fd) = -1;
-	}
 
 	error = sys_mmap(l, &ua, (register_t *)&rt);
 	if ((long)rt > (long)UINT_MAX)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.81 2003/01/18 08:49:22 thorpej Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.82 2003/01/28 21:57:47 atatat Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.81 2003/01/18 08:49:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.82 2003/01/28 21:57:47 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -348,28 +348,10 @@ ultrix_sys_mmap(l, v, retval)
 
 	SCARG(&ouap, flags) = SCARG(uap, flags) & ~SUN__MAP_NEW;
 	SCARG(&ouap, addr) = SCARG(uap, addr);
-
-	if ((SCARG(&ouap, flags) & MAP_FIXED) == 0 &&
-	    SCARG(&ouap, addr) != 0 &&
-	    SCARG(&ouap, addr) < (void *)round_page((vaddr_t)p->p_vmspace->vm_daddr+MAXDSIZ))
-		SCARG(&ouap, addr) = (void *)round_page((vaddr_t)p->p_vmspace->vm_daddr+MAXDSIZ);
-
 	SCARG(&ouap, len) = SCARG(uap, len);
 	SCARG(&ouap, prot) = SCARG(uap, prot);
 	SCARG(&ouap, fd) = SCARG(uap, fd);
 	SCARG(&ouap, pos) = SCARG(uap, pos);
-
-	/*
-	 * Special case: if fd refers to /dev/zero, map as MAP_ANON.  (XXX)
-	 */
-	fdp = p->p_fd;
-	if ((fp = fd_getfile(fdp, SCARG(&ouap, fd))) != NULL &&		/*XXX*/
-	    fp->f_type == DTYPE_VNODE &&				/*XXX*/
-	    (vp = (struct vnode *)fp->f_data)->v_type == VCHR &&	/*XXX*/
-	    vp->v_rdev == zerodev) {					/*XXX*/
-		SCARG(&ouap, flags) |= MAP_ANON;
-		SCARG(&ouap, fd) = -1;
-	}
 
 	return (sys_mmap(l, &ouap, retval));
 }

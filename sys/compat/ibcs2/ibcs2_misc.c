@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.61 2003/01/20 01:35:11 simonb Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.62 2003/01/28 21:57:42 atatat Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.61 2003/01/20 01:35:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.62 2003/01/28 21:57:42 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1532,11 +1532,6 @@ ibcs2_sys_mmap(l, v, retval)
 	SCARG(&mm, fd) = SCARG(uap, fd);
 	SCARG(&mm, addr) = SCARG(uap, addr);
 	SCARG(&mm, pos) = SCARG(uap, off);
-
-	rp = (void *) round_page((vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ);
-	if ((SCARG(&mm, flags) & MAP_FIXED) == 0 &&
-	    SCARG(&mm, addr) != 0 && SCARG(&mm, addr) < rp)
-		SCARG(&mm, addr) = rp;
 
 	return sys_mmap(l, &mm, retval);
 }
