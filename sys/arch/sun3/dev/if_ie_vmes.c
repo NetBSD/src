@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_subr.c,v 1.7 1995/09/26 04:02:04 gwr Exp $	*/
+/*	$NetBSD: if_ie_vmes.c,v 1.1 1996/03/26 14:38:34 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -53,7 +53,6 @@
 #include <machine/cpu.h>
 #include <machine/dvma.h>
 #include <machine/isr.h>
-#include <machine/obio.h>
 #include <machine/idprom.h>
 #include <machine/vmparam.h>
 
@@ -61,9 +60,6 @@
 #include "if_ie.h"
 #include "if_ie_subr.h"
 
-static void ie_obreset __P((struct ie_softc *));
-static void ie_obattend __P((struct ie_softc *));
-static void ie_obrun __P((struct ie_softc *));
 static void ie_vmereset __P((struct ie_softc *));
 static void ie_vmeattend __P((struct ie_softc *));
 static void ie_vmerun __P((struct ie_softc *));
@@ -74,155 +70,129 @@ static void ie_vmerun __P((struct ie_softc *));
  */
 static void wcopy(), wzero();
 
-int
-ie_md_match(parent, vcf, args)
+/*
+ * New-style autoconfig attachment
+ */
+
+static int  ie_vmes_match __P((struct device *, void *, void *));
+static void ie_vmes_attach __P((struct device *, struct device *, void *));
+
+struct cfattach ie_vmes_ca = {
+	sizeof(struct ie_softc), ie_vmes_match, ie_vmes_attach
+};
+
+
+static int
+ie_vmes_match(parent, vcf, args)
 	struct device *parent;
 	void *vcf, *args;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
 	int x, sz;
 
-	switch (ca->ca_bustype) {
-
-	case BUS_OBIO:
-		if (ca->ca_paddr == -1)
-			ca->ca_paddr = OBIO_INTEL_ETHER;
-		sz = 1;
-		break;
-
-	case BUS_VME16:
-		/* No default VME address. */
-		if (ca->ca_paddr == -1)
-			return(0);
-		sz = 2;
-		break;
-
-	default:
+#ifdef	DIAGNOSTIC
+	if (ca->ca_bustype != BUS_VME16) {
+		printf("ie_vmes_match: bustype %d?\n", ca->ca_bustype);
 		return (0);
 	}
+#endif
+
+	/* No default VME address. */
+	if (ca->ca_paddr == -1)
+		return(0);
 
 	/* Default interrupt level. */
 	if (ca->ca_intpri == -1)
 		ca->ca_intpri = 3;
 
-	x = bus_peek(ca->ca_bustype, ca->ca_paddr, sz);
+	x = bus_peek(ca->ca_bustype, ca->ca_paddr, 2);
 	return (x != -1);
 }
 
+/*
+ * *note*: we don't detect the difference between a VME3E and
+ * a multibus/vme card.   if you want to use a 3E you'll have
+ * to fix this.
+ */
 void
-ie_md_attach(parent, self, args)
+ie_vmes_attach(parent, self, args)
 	struct device *parent;
 	struct device *self;
 	void *args;
 {
 	struct ie_softc *sc = (void *) self;
 	struct confargs *ca = args;
-	caddr_t mem, reg;
+	volatile struct ievme *iev;
+	u_long  rampaddr;
+	int     lcv, off;
+
+	sc->hard_type = IE_VME;
+	sc->reset_586 = ie_vmereset;
+	sc->chan_attn = ie_vmeattend;
+	sc->run_586 = ie_vmerun;
+	sc->sc_bcopy = wcopy;
+	sc->sc_bzero = wzero;
 
 	/*
-	 * *note*: we don't detect the difference between a VME3E and
-	 * a multibus/vme card.   if you want to use a 3E you'll have
-	 * to fix this.
+	 * There is 64K of memory on the VME board.
+	 * (determined by hardware - NOT configurable!)
 	 */
+	sc->sc_msize = 0x10000; /* MEMSIZE 64K */
 
-	switch (ca->ca_bustype) {
-	case BUS_OBIO:
-		sc->hard_type = IE_OBIO;
-		sc->reset_586 = ie_obreset;
-		sc->chan_attn = ie_obattend;
-		sc->run_586 = ie_obrun;
-		sc->sc_bcopy = bcopy;
-		sc->sc_bzero = bzero;
-		sc->sc_iobase = (caddr_t)DVMA_OBIO_SLAVE_BASE;
-		sc->sc_msize = MEMSIZE;
-
-		/* Map in the control register. */
-		reg = obio_alloc(ca->ca_paddr, OBIO_INTEL_ETHER_SIZE);
-		if (reg == NULL)
-			panic(": not enough obio space\n");
-		sc->sc_reg = reg;
-
-		/* Allocate "shared" memory (DVMA space). */
-		mem = dvma_malloc(sc->sc_msize);
-		if (mem == NULL)
-			panic(": not enough dvma space");
-		sc->sc_maddr = mem;
-
-		/* This is a FIXED address, in a page left by the PROM. */
-		sc->scp = (volatile struct ie_sys_conf_ptr *)
-		    (sc->sc_iobase + IE_SCP_ADDR);
-
-		/* Install interrupt handler. */
-		isr_add_autovect(ie_intr, (void *)sc, ca->ca_intpri);
-
-		break;
-
-	case BUS_VME16: {
-		volatile struct ievme *iev;
-		u_long  rampaddr;
-		int     lcv;
-
-		sc->hard_type = IE_VME;
-		sc->reset_586 = ie_vmereset;
-		sc->chan_attn = ie_vmeattend;
-		sc->run_586 = ie_vmerun;
-		sc->sc_bcopy = wcopy;
-		sc->sc_bzero = wzero;
-		sc->sc_msize = MEMSIZE;
-		sc->sc_reg = bus_mapin(ca->ca_bustype, ca->ca_paddr,
-							   sizeof(struct ievme));
-
-		iev = (volatile struct ievme *) sc->sc_reg;
-		/* top 12 bits */
-		rampaddr = ca->ca_paddr & 0xfff00000;
-		/* 4 more */
-		rampaddr |= ((iev->status & IEVME_HADDR) << 16);
-		sc->sc_maddr = bus_mapin(ca->ca_bustype, rampaddr, sc->sc_msize);
-		sc->sc_iobase = sc->sc_maddr;
-		iev->pectrl = iev->pectrl | IEVME_PARACK; /* clear to start */
-
-		sc->scp = (volatile struct ie_sys_conf_ptr *)
-		    (sc->sc_iobase + (IE_SCP_ADDR & (IEVME_PAGESIZE - 1)));
-
-		/*
-		 * set up mappings, direct map except for last page
-		 * which is mapped at zero and at high address (for
-		 * scp), zero ram
-		 */
-
-		for (lcv = 0; lcv < IEVME_MAPSZ - 1; lcv++)
-			iev->pgmap[lcv] = IEVME_SBORDR | IEVME_OBMEM | lcv;
-		iev->pgmap[IEVME_MAPSZ - 1] = IEVME_SBORDR | IEVME_OBMEM | 0;
-		(sc->sc_bzero)(sc->sc_maddr, sc->sc_msize);
-
-		isr_add_vectored(ie_intr, (void *)sc,
-						 ca->ca_intpri,
-						 ca->ca_intvec);
-		break;
-	}
-
-	default:
-		printf("unknown\n");
-		return;
-	}
+	/* Map in the board control regs. */
+	sc->sc_reg = bus_mapin(ca->ca_bustype, ca->ca_paddr,
+						   sizeof(struct ievme));
+	iev = (volatile struct ievme *) sc->sc_reg;
 
 	/*
-	 * set up pointers to data structures and buffer area.
+	 * Find and map in the board memory.
 	 */
-	sc->iscp = (volatile struct ie_int_sys_conf_ptr *)
-	    sc->sc_maddr;
-	sc->scb = (volatile struct ie_sys_ctl_block *)
-	    sc->sc_maddr + sizeof(struct ie_int_sys_conf_ptr);
+	/* top 12 bits */
+	rampaddr = ca->ca_paddr & 0xfff00000;
+	/* 4 more */
+	rampaddr |= ((iev->status & IEVME_HADDR) << 16);
+	sc->sc_maddr = bus_mapin(ca->ca_bustype, rampaddr, sc->sc_msize);
 
 	/*
-	 * rest of first page is unused, rest of ram
-	 * for buffers
+	 * On this hardware, the i82586 address is just
+	 * masked to 16 bits, so sc_iobase == sc_maddr
 	 */
-	sc->buf_area = sc->sc_maddr + IEVME_PAGESIZE;
-	sc->buf_area_sz = sc->sc_msize - IEVME_PAGESIZE;
+	sc->sc_iobase = sc->sc_maddr;
 
-	idprom_etheraddr(sc->sc_addr); /* ethernet addr */
+	/*
+	 * Set up on-board mapping registers for linear map.
+	 */
+	iev->pectrl |= IEVME_PARACK; /* clear to start */
+	for (lcv = 0; lcv < IEVME_MAPSZ; lcv++)
+		iev->pgmap[lcv] = IEVME_SBORDR | IEVME_OBMEM | lcv;
+	(sc->sc_bzero)(sc->sc_maddr, sc->sc_msize);
+
+	/*
+	 * Set the System Configuration Pointer (SCP).
+	 * Its location is system-dependent because the
+	 * i82586 reads it from a fixed physical address.
+	 * On this hardware, the i82586 address is just
+	 * masked down to 16 bits, so the SCP is found
+	 * at the end of the RAM on the VME board.
+	 */
+	off = IE_SCP_ADDR & 0xFFFF;
+	sc->scp = (volatile void *) (sc->sc_maddr + off);
+
+	/*
+	 * The rest of ram is used for buffers, etc.
+	 */
+	sc->buf_area = sc->sc_maddr;
+	sc->buf_area_sz = off;
+
+	/* Set the ethernet address. */
+	idprom_etheraddr(sc->sc_addr);
+
+	/* Do machine-independent parts of attach. */
+	ie_attach(sc);
+
+	/* Install interrupt handler. */
+	isr_add_vectored(ie_intr, (void *)sc,
+		ca->ca_intpri, ca->ca_intvec);
 }
 
 
@@ -256,37 +226,6 @@ ie_vmerun(sc)
 	volatile struct ievme *iev = (struct ievme *) sc->sc_reg;
 
 	iev->status |= (IEVME_ONAIR | IEVME_IENAB | IEVME_PEINT);
-}
-
-/*
- * onboard ie support
- */
-void
-ie_obreset(sc)
-	struct ie_softc *sc;
-{
-	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
-	ieo->obctrl = 0;
-	delay(100);			/* XXX could be shorter? */
-	ieo->obctrl = IEOB_NORSET;
-}
-void
-ie_obattend(sc)
-	struct ie_softc *sc;
-{
-	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
-
-	ieo->obctrl |= IEOB_ATTEN;	/* flag! */
-	ieo->obctrl &= ~IEOB_ATTEN;	/* down. */
-}
-
-void
-ie_obrun(sc)
-	struct ie_softc *sc;
-{
-	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
-
-	ieo->obctrl |= (IEOB_ONAIR|IEOB_IENAB|IEOB_NORSET);
 }
 
 /*
