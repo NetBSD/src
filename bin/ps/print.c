@@ -411,8 +411,8 @@ wchan(k, ve)
 			(void)printf("%-*.*s", v->width, v->width, 
 				      KI_EPROC(k)->e_wmesg);
 		else
-			(void)printf("%-*x", v->width,
-			    (int)KI_PROC(k)->p_wchan &~ KERNBASE);
+			(void)printf("%-*lx", v->width,
+			    (long)KI_PROC(k)->p_wchan &~ KERNBASE);
 	} else
 		(void)printf("%-*s", v->width, "-");
 }
