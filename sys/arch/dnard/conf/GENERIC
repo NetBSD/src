@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.5 2001/11/20 12:56:24 lukem Exp $
+#	$NetBSD: GENERIC,v 1.6 2001/12/11 06:00:16 briggs Exp $
 
 include	"arch/dnard/conf/std.dnard"
 
-#ident		"GENERIC-$Revision: 1.5 $"
+#ident		"GENERIC-$Revision: 1.6 $"
 
 # estimated number of users
 maxusers	32
@@ -168,8 +168,8 @@ cd*		at atapibus? drive?
 sd*		at atapibus? drive?
 
 # WSCONS @ OFW
-ofb*		at ofbus?
-wsdisplay*	at ofb?
+vga*		at ofbus?
+wsdisplay*	at vga?
 
 pckbc*		at ofisa?
 pckbd*		at pckbc?

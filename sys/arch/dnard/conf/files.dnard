@@ -1,4 +1,4 @@
-#	$NetBSD: files.dnard,v 1.17 2001/11/28 10:21:13 lukem Exp $
+#	$NetBSD: files.dnard,v 1.18 2001/12/11 06:00:16 briggs Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -41,6 +41,10 @@ file	arch/dnard/ofw/ofw.c
 file	arch/dnard/ofw/openfirm.c
 file	arch/dnard/ofw/oftodclock.c
 
+# OFW console initialization
+file	arch/arm32/ofw/consinit.c		ofw
+file	dev/cninit.c				ofw
+
 attach	cpu at ofbus with cpu_ofbus
 file	arch/dnard/ofw/cpu_ofbus.c		cpu_ofbus
 
@@ -55,6 +59,7 @@ file	arch/arm32/isa/joy.c			joy needs-flag
 include "dev/ofisa/files.ofisa"
 file	arch/dnard/ofw/ofisa_machdep.c		ofisa
 file	arch/dnard/ofw/com_ofisa_machdep.c	com_ofisa
+file	arch/arm32/ofw/com_ofisa_consolehack.c	com_ofisa	# XXX
 file	arch/dnard/ofw/if_cs_ofisa_machdep.c	cs_ofisa
 file	arch/dnard/ofw/lpt_ofisa_machdep.c	lpt_ofisa
 file	arch/dnard/ofw/wdc_ofisa_machdep.c	wdc_ofisa
@@ -136,5 +141,6 @@ attach	scr at ofisascr
 
 # Include WSCONS stuff
 include "dev/wscons/files.wscons"
+include	"dev/wsfont/files.wsfont"
 include "dev/rasops/files.rasops"
 include "dev/pckbc/files.pckbc"
