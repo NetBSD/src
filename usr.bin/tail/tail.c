@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tail.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tail.c,v 1.9 2002/06/14 00:47:41 wiz Exp $");
+__RCSID("$NetBSD: tail.c,v 1.10 2003/07/14 09:30:52 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -231,7 +231,7 @@ obsolete(char *argv[])
 		} else if (ap[1] == '-')
 			return;
 
-		switch(*++ap) {
+		switch (*++ap) {
 		/* Old-style option. */
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
