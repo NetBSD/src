@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.3 1999/04/12 06:02:25 ross Exp $	*/
+/*	$NetBSD: display.c,v 1.4 2000/11/02 15:28:51 christos Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -824,7 +824,7 @@ new_message(va_alist)
 #endif
 
     /* first, format the message */
-    (void) vsprintf(next_msg, msgfmt, ap);
+    (void) vsnprintf(next_msg, sizeof(next_msg), msgfmt, ap);
 
     va_end(ap);
 
