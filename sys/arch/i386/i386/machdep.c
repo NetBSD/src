@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.391 2000/06/29 08:44:51 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.392 2000/07/08 17:09:02 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -275,7 +275,7 @@ cpu_startup()
 
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
-	printf(version);
+	printf("%s", version);
 	identifycpu();
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
