@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.51 1997/10/17 09:34:43 jonathan Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.51.2.1 1999/02/04 06:55:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmax_trap.c,v 1.51 1997/10/17 09:34:43 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmax_trap.c,v 1.51.2.1 1999/02/04 06:55:58 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmax_trap.c,v 1.51 1997/10/17 09:34:43 jonathan Exp 
 #include <pmax/pmax/asic.h>
 #include <pmax/pmax/turbochannel.h>
 
-#include <pmax/stand/dec_prom.h>
+#include <pmax/stand/libsa/dec_prom.h>
 
 #include <sys/socket.h>
 #include <sys/mbuf.h>
