@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.3 1999/11/23 23:52:57 fvdl Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.4 1999/11/24 23:13:15 fvdl Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -4450,27 +4450,36 @@ getdirtybuf(bpp, waitfor)
 	int waitfor;
 {
 	struct buf *bp;
+	int s;
 
+	s = splbio();
 	for (;;) {
-		if ((bp = *bpp) == NULL)
+		if ((bp = *bpp) == NULL) {
+			splx(s);
 			return (0);
+		}
 		if ((bp->b_flags & B_BUSY) == 0)
 			break;
-		if (waitfor != MNT_WAIT)
+		if (waitfor != MNT_WAIT) {
+			splx(s);
 			return (0);
+		}
 		bp->b_flags |= B_WANTED;
 		FREE_LOCK_INTERLOCKED(&lk);
 		sleep((caddr_t)bp, PRIBIO + 1);
 		ACQUIRE_LOCK_INTERLOCKED(&lk);
 	}
-	if ((bp->b_flags & B_DELWRI) == 0)
+	if ((bp->b_flags & B_DELWRI) == 0) {
+		splx(s);
 		return (0);
-#if 0
-	bremfree(bp);
+	}
+#if 1
 	bp->b_flags |= B_BUSY;
+	bremfree(bp);
 #else
 	bp->b_flags |= B_BUSY | B_VFLUSH;
 #endif
+	splx(s);
 	return (1);
 }
 
