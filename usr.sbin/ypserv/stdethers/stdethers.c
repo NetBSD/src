@@ -1,4 +1,4 @@
-/*	$NetBSD: stdethers.c,v 1.13 2001/02/19 23:22:52 cgd Exp $	*/
+/*	$NetBSD: stdethers.c,v 1.14 2002/07/06 00:56:32 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stdethers.c,v 1.13 2001/02/19 23:22:52 cgd Exp $");
+__RCSID("$NetBSD: stdethers.c,v 1.14 2002/07/06 00:56:32 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -52,14 +52,12 @@ __RCSID("$NetBSD: stdethers.c,v 1.13 2001/02/19 23:22:52 cgd Exp $");
 
 #include "protos.h"
 
-int	main __P((int, char *[]));
-void	usage __P((void));
+int	main(int, char *[]);
+void	usage(void);
 
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct ether_addr eth_addr;
 	FILE	*data_file;
@@ -99,7 +97,7 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
 
 	fprintf(stderr, "usage: %s [file]\n", getprogname());
