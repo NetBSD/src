@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mdprologue.S,v 1.5 1994/06/13 05:28:43 chopps Exp $
+ *	$Id: mdprologue.S,v 1.6 1994/08/03 15:57:54 chopps Exp $
  */
 
 /*
@@ -57,7 +57,8 @@ _rtl:
 
 	.globl	_binder_entry
 _binder_entry:
-	movl	sp@+,a0			| grab return address (within PLT)
+	movml	a0-a1/d0-d1,sp@-	| preserve scratch registers
+	movl	sp@(16),a0		| grab return address (within PLT)
 	moveq	#0,d0
 	movw	a0@,d0			| get function index
 	movel	d0,sp@-
@@ -65,9 +66,10 @@ _binder_entry:
 	movel	a0,sp@-
 	jbsr	_binder,a1		| relocate function address
 	addql	#8,sp
-	movel	d0,sp@-			| push function address on stack
+	movel	d0,sp@(16)		| put function address on stack
 |	movel	#0x80000004,d0		| CC_EXTPURGE | CC_IPURGE
 |	trap	#12			| cachectl
+	movml	sp@+,a0-a1/d0-d1	| restore scratch registers
 	rts				| jump into function (via address on stack)
 
 	.globl	__cachectl
