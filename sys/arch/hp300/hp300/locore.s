@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.76 1997/08/18 17:52:48 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.77 1997/08/21 18:12:34 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -677,9 +677,11 @@ Lbe10a:
 	jeq	Lmightnotbemerr		| no -> wp check
 	btst	#7,d1			| is it MMU table berr?
 	jne	Lisberr1		| yes, needs not be fast.
+#endif /* M68K_MMU_MOTOROLA */
 Lismerr:
 	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
+#if defined(M68K_MMU_MOTOROLA)
 Lmightnotbemerr:
 	btst	#3,d1			| write protect bit set?
 	jeq	Lisberr1		| no: must be bus error
