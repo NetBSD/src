@@ -10,8 +10,8 @@
  * efforts not to heavily edit their file, just ifdef parts out. -- glass
  */
 
-#ifndef MON_H
-#define MON_H
+#ifndef _SUN3_MON_H
+#define _SUN3_MON_H
 /*
  * machMon.h --
  *
@@ -333,4 +333,4 @@ extern  void    Mach_MonTrap _ARGS_((Address address_to_trap_to));
 #define MONEND    0x0FF00000
 
 #endif /* _MACHMON */
-#endif /* MON_H */     
+#endif /* SUN3_MON_H */     

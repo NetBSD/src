@@ -9,8 +9,10 @@
 struct context_state {
     queue_chain_t  context_link;    
     int            context_num;
-    pmap_t         context_upmap;
+    struct pmap   *context_upmap;
 };
+
+typedef struct context_state *context_t;
 
 struct pmap {
     int		                pm_refcount;	/* pmap reference count */
