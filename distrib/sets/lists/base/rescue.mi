@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.4 2004/01/11 10:24:59 lukem Exp $
+# $NetBSD: rescue.mi,v 1.5 2004/03/21 18:07:45 jdolecek Exp $
 ./rescue/[					base-rescue-root
 ./rescue/atactl					base-rescue-root
 ./rescue/badsect				base-rescue-root
@@ -76,6 +76,7 @@
 ./rescue/mount_overlay				base-rescue-root
 ./rescue/mount_portal				base-rescue-root
 ./rescue/mount_procfs				base-rescue-root
+./rescue/mount_smbfs				base-rescue-root
 ./rescue/mount_ufs				base-rescue-root
 ./rescue/mount_umap				base-rescue-root
 ./rescue/mount_union				base-rescue-root
