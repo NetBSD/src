@@ -1,0 +1,19 @@
+# $NetBSD: md.arm26,v 1.1 2001/07/28 12:08:13 bjh21 Exp $
+./usr/lkm/adosfs.o		base-adosfs-lkm
+./usr/lkm/cd9660.o		base-sys-lkm
+./usr/lkm/coda.o		base-coda-lkm
+./usr/lkm/ext2fs.o		base-ext2fs-lkm
+./usr/lkm/fdesc.o		base-miscfs-lkm
+./usr/lkm/filecorefs.o		base-filecorefs-lkm
+./usr/lkm/if_ipl.o		base-ipf-lkm
+./usr/lkm/lfs.o			base-sys-lkm
+./usr/lkm/kernfs.o		base-sys-lkm
+./usr/lkm/mfs.o			base-sys-lkm
+./usr/lkm/msdosfs.o		base-sys-lkm
+./usr/lkm/ntfs.o		base-ntfs-lkm
+./usr/lkm/nullfs.o		base-miscfs-lkm
+./usr/lkm/overlay.o		base-miscfs-lkm
+./usr/lkm/portal.o		base-miscfs-lkm
+./usr/lkm/procfs.o		base-sys-lkm
+./usr/lkm/umapfs.o		base-miscfs-lkm
+./usr/mdec/boot26		base-sysutil-bin
