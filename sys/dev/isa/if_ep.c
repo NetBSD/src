@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.29 1994/04/13 06:09:00 deraadt Exp $
+ *	$Id: if_ep.c,v 1.30 1994/04/15 10:51:28 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -104,6 +104,8 @@ static void epread __P((struct ep_softc *));
 static void epmbuffill __P((struct ep_softc *));
 static void epmbufempty __P((struct ep_softc *));
 static void epstop __P((struct ep_softc *));
+static void epsetfilter __P((struct ep_softc *sc));
+static void epsetlink __P((struct ep_softc *sc));
 
 static u_short epreadeeprom __P((int id_port, int offset));
 static int epbusyeeprom __P((struct ep_softc *));
@@ -316,7 +318,8 @@ epattach(parent, self, aux)
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = epcd.cd_name;
 	ifp->if_mtu = ETHERMTU;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS |
+	    IFF_MULTICAST;
 	ifp->if_output = ether_output;
 	ifp->if_start = epstart;
 	ifp->if_ioctl = epioctl;
@@ -395,8 +398,40 @@ epinit(sc)
 	outw(BASE + EP_COMMAND, SET_INTR_MASK | S_CARD_FAILURE | S_RX_COMPLETE |
 	    S_TX_COMPLETE | S_TX_AVAIL);
 
-	outw(BASE + EP_COMMAND, SET_RX_FILTER | FIL_INDIVIDUAL |
-	    FIL_GROUP | FIL_BRDCST);
+	epsetfilter(sc);
+	epsetlink(sc);
+
+	outw(BASE + EP_COMMAND, RX_ENABLE);
+	outw(BASE + EP_COMMAND, TX_ENABLE);
+
+	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;	/* just in case */
+	sc->tx_start_thresh = 20;	/* probably a good starting point. */
+	/* Store up a bunch of mbuf's for use later. (MAX_MBS). */
+	epmbuffill(sc);
+
+	epstart(ifp);
+	splx(s);
+}
+
+static void
+epsetfilter(sc)
+	register struct ep_softc *sc;
+{
+	register struct ifnet *ifp = &sc->ep_ac.ac_if;
+
+	GO_WINDOW(1);		/* Window 1 is operating window */
+	outw(BASE + EP_COMMAND, SET_RX_FILTER |
+	    FIL_INDIVIDUAL | FIL_BRDCST |
+	    ((ifp->if_flags & IFF_MULTICAST) ? FIL_MULTICAST : 0 ) |
+	    ((ifp->if_flags & IFF_PROMISC) ? FIL_PROMISC : 0 ));
+}
+
+static void
+epsetlink(sc)
+	register struct ep_softc *sc;
+{
+	register struct ifnet *ifp = &sc->ep_ac.ac_if;
 
 	/*
 	 * you can `ifconfig (link0|-link0) ep0' to get the following
@@ -422,24 +457,6 @@ epinit(sc)
 			GO_WINDOW(1);
 		}
 	}
-
-	outw(BASE + EP_COMMAND, RX_ENABLE);
-	outw(BASE + EP_COMMAND, TX_ENABLE);
-
-	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;	/* just in case */
-	sc->tx_start_thresh = 20;	/* probably a good starting point. */
-	/*
-	 * Store up a bunch of mbuf's for use later. (MAX_MBS). First we
-	 * free up any that we had in case we're being called from intr or
-	 * somewhere else.
-	 */
-	sc->last_mb = 0;
-	sc->next_mb = 0;
-	epmbuffill(sc);
-
-	epstart(ifp);
-	splx(s);
 }
 
 static const char padmap[] = {0, 3, 2, 1};
@@ -869,14 +886,24 @@ epioctl(ifp, cmd, data)
 		}
 		break;
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 && ifp->if_flags & IFF_RUNNING) {
+		if ((ifp->if_flags & IFF_UP) == 0 &&
+		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			ifp->if_flags &= ~IFF_RUNNING;
 			epstop(sc);
 			epmbufempty(sc);
 			break;
-		}
-		if (ifp->if_flags & IFF_UP && (ifp->if_flags & IFF_RUNNING) == 0)
+		} else if ((ifp->if_flags & IFF_UP) != 0 &&
+		    (ifp->if_flags & IFF_RUNNING) == 0) {
 			epinit(sc);
+		} else {
+			/*
+			 * deal with flags changes:
+			 * IFF_MULTICAST, IFF_PROMISC,
+			 * IFF_LINK0, IFF_LINK1,
+			 */
+			epsetfilter(sc);
+			epsetlink(sc);
+		}
 		break;
 #ifdef notdef
 	case SIOCGHWADDR:
@@ -1018,5 +1045,6 @@ epmbufempty(sc)
 		}
 	}
 	sc->last_mb = sc->next_mb = 0;
+	untimeout(epmbuffill, sc);
 	splx(s);
 }
