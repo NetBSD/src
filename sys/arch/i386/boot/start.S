@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.11 1995/01/18 17:28:13 mycroft Exp $	*/
+/*	$NetBSD: start.S,v 1.12 1995/01/18 17:34:18 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -327,8 +327,6 @@ ENTRY(boot2)
 	FIXUP(BOOT_DS_INDEX)
 
 	/* fix up GDT pointer */
-	data32
-	movl	%eax, %ecx
 	data32
 	addl	$_C_LABEL(Gdt), %eax
 	addr32
