@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.31 1998/08/21 13:42:52 ragge Exp $    */
+/*      $NetBSD: param.h,v 1.32 1998/08/25 17:35:23 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -84,12 +84,8 @@
 #define	CLSIZELOG2    3
 #define	CLSIZE	      8
 
-/* NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE */
-#define	SSIZE	4		/* initial stack size/NBPG */
-#define	SINCR	4		/* increment of stack/NBPG */
-
-#define	UPAGES	16		/* pages of u-area */
-#define USPACE  (NBPG*UPAGES)
+#define	UPAGES	1		/* pages of u-area */
+#define USPACE  (CLBYTES*UPAGES)
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	CLBYTES		/* default message buffer size */
@@ -108,7 +104,7 @@
 #endif	/* MSIZE */
 
 #ifndef	MCLSHIFT
-#define	MCLSHIFT	10		/* convert bytes to m_buf clusters */
+#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
 #endif	/* MCLSHIFT */
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of an m_buf cluster */
 #define	MCLOFSET	(MCLBYTES - 1)	/* offset within an m_buf cluster */
@@ -187,8 +183,6 @@
 #define	spl5()		splx(0x15)
 #define	spl6()		splx(0x16)
 #define	spl7()		splx(0x17)
-
-/* #define	ovbcopy(x,y,z)	bcopy(x,y,z) */
 
 #if !defined(VAX410) && !defined(VAX43)
 #define vmapbuf(p,q)
