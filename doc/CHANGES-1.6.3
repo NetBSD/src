@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.28 2004/03/15 05:22:46 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.29 2004/03/15 05:25:37 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -163,3 +163,9 @@ sys/kern/vfs_getcwd.c			1.22
 	Rewind the 'bp' advanced backward by cache_revlookup() if 
 	getcwd_getcache() finally returns cache miss.
 	[enami, ticket #1616]
+
+sys/kern/vfs_cache.c			hand patch
+sys/kern/vfs_getcwd.c			hand patch
+
+	Fix LP64 bugs triggered by overflow.
+	[enami, ticket #1617]
