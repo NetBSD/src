@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2003/08/07 09:37:38 agc Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2005/02/15 12:56:20 jsm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)machdep.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: machdep.c,v 1.12 2003/08/07 09:37:38 agc Exp $");
+__RCSID("$NetBSD: machdep.c,v 1.13 2005/02/15 12:56:20 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -485,7 +485,7 @@ md_shell(shell)
 	int w;
 
 	if (!fork()) {
-		execl(shell, shell, 0);
+		execl(shell, shell, (char *) 0);
 	}
 	wait(&w);
 }
