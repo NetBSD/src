@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.19 1997/01/11 05:16:46 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.20 1997/06/26 05:56:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -598,11 +598,16 @@ panic("sbappendaddr");
 	}
 	if (space > sbspace(sb))
 		return (0);
-	if (asa->sa_len > MLEN)
-		return (0);
 	MGET(m, M_DONTWAIT, MT_SONAME);
 	if (m == 0)
 		return (0);
+	if (asa->sa_len > MLEN) {
+		MEXTMALLOC(m, asa->sa_len, M_NOWAIT);
+		if ((m->m_flags & M_EXT) == 0) {
+			m_free(m);
+			return (0);
+		}
+	}
 	m->m_len = asa->sa_len;
 	bcopy((caddr_t)asa, mtod(m, caddr_t), asa->sa_len);
 	if (n)
