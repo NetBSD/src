@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.161 2001/04/24 04:30:51 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.162 2001/05/27 20:22:57 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1593,3 +1593,31 @@ cpu_exec_aout_makecmds(p, epp)
 #endif
 	return(error);
 }
+
+#ifdef LKM
+
+int _spllkm6(void);
+int _spllkm7(void);
+
+#ifdef LEV6_DEFER
+int _spllkm6() {
+	return spl4();
+};
+
+int _spllkm7() {
+	return spl4();
+};
+
+#else
+
+int _spllkm6() {
+	return spl6();
+};
+
+int _spllkm7() {
+	return spl7();
+}; 
+
+#endif
+
+#endif
