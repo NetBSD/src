@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.55 2001/02/06 17:01:53 eeh Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.56 2001/02/07 15:22:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -91,6 +91,7 @@
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
+#include <compat/netbsd32/netbsd32_conv.h>
 
 #include <machine/frame.h>
 
@@ -101,33 +102,6 @@
 /* this is provided by kern/kern_exec.c */
 extern int exec_maxhdrsz;
 extern struct lock exec_lock;
-
-static __inline void netbsd32_from_timeval __P((struct timeval *, struct netbsd32_timeval *));
-static __inline void netbsd32_to_timeval __P((struct netbsd32_timeval *, struct timeval *));
-static __inline void netbsd32_from_itimerval __P((struct itimerval *, struct netbsd32_itimerval *));
-static __inline void netbsd32_to_itimerval __P((struct netbsd32_itimerval *, struct itimerval *));
-static __inline void netbsd32_to_timespec __P((struct netbsd32_timespec *, struct timespec *));
-static __inline void netbsd32_from_timespec __P((struct timespec *, struct netbsd32_timespec *));
-static __inline void netbsd32_from_rusage __P((struct rusage *, struct netbsd32_rusage *));
-static __inline void netbsd32_to_rusage __P((struct netbsd32_rusage *, struct rusage *));
-static __inline int netbsd32_to_iovecin __P((struct netbsd32_iovec *, struct iovec *, int));
-static __inline void netbsd32_to_msghdr __P((struct netbsd32_msghdr *, struct msghdr *));
-static __inline void netbsd32_from_msghdr __P((struct netbsd32_msghdr *, struct msghdr *));
-static __inline void netbsd32_from_statfs __P((struct statfs *, struct netbsd32_statfs *));
-static __inline void netbsd32_from_timex __P((struct timex *, struct netbsd32_timex *));
-static __inline void netbsd32_to_timex __P((struct netbsd32_timex *, struct timex *));
-static __inline void netbsd32_from___stat13 __P((struct stat *, struct netbsd32_stat *));
-static __inline void netbsd32_to_ipc_perm __P((struct netbsd32_ipc_perm *, struct ipc_perm *));
-static __inline void netbsd32_from_ipc_perm __P((struct ipc_perm *, struct netbsd32_ipc_perm *));
-static __inline void netbsd32_to_msg __P((struct netbsd32_msg *, struct msg *));
-static __inline void netbsd32_from_msg __P((struct msg *, struct netbsd32_msg *));
-static __inline void netbsd32_to_msqid_ds __P((struct netbsd32_msqid_ds *, struct msqid_ds *));
-static __inline void netbsd32_from_msqid_ds __P((struct msqid_ds *, struct netbsd32_msqid_ds *));
-static __inline void netbsd32_to_shmid_ds __P((struct netbsd32_shmid_ds *, struct shmid_ds *));
-static __inline void netbsd32_from_shmid_ds __P((struct shmid_ds *, struct netbsd32_shmid_ds *));
-static __inline void netbsd32_to_semid_ds __P((struct  netbsd32_semid_ds *, struct  semid_ds *));
-static __inline void netbsd32_from_semid_ds __P((struct  semid_ds *, struct  netbsd32_semid_ds *));
-static __inline void netbsd32_from_loadavg __P((struct netbsd32_loadavg *, struct loadavg *));
 
 
 /* note that the netbsd32_msghdr's iov really points to a struct iovec, not a netbsd32_iovec. */
@@ -177,450 +151,6 @@ const struct emul emul_netbsd32 = {
 	syscall,
 #endif
 };
-
-/* converters for structures that we need */
-static __inline void
-netbsd32_from_timeval(tv, tv32)
-	struct timeval *tv;
-	struct netbsd32_timeval *tv32;
-{
-
-	tv32->tv_sec = (netbsd32_long)tv->tv_sec;
-	tv32->tv_usec = (netbsd32_long)tv->tv_usec;
-}
-
-static __inline void
-netbsd32_to_timeval(tv32, tv)
-	struct netbsd32_timeval *tv32;
-	struct timeval *tv;
-{
-
-	tv->tv_sec = (long)tv32->tv_sec;
-	tv->tv_usec = (long)tv32->tv_usec;
-}
-
-static __inline void
-netbsd32_from_itimerval(itv, itv32)
-	struct itimerval *itv;
-	struct netbsd32_itimerval *itv32;
-{
-
-	netbsd32_from_timeval(&itv->it_interval, 
-			     &itv32->it_interval);
-	netbsd32_from_timeval(&itv->it_value, 
-			     &itv32->it_value);
-}
-
-static __inline void
-netbsd32_to_itimerval(itv32, itv)
-	struct netbsd32_itimerval *itv32;
-	struct itimerval *itv;
-{
-
-	netbsd32_to_timeval(&itv32->it_interval, &itv->it_interval);
-	netbsd32_to_timeval(&itv32->it_value, &itv->it_value);
-}
-
-static __inline void
-netbsd32_to_timespec(s32p, p)
-	struct netbsd32_timespec *s32p;
-	struct timespec *p;
-{
-
-	p->tv_sec = (time_t)s32p->tv_sec;
-	p->tv_nsec = (long)s32p->tv_nsec;
-}
-
-static __inline void
-netbsd32_from_timespec(p, s32p)
-	struct timespec *p;
-	struct netbsd32_timespec *s32p;
-{
-
-	s32p->tv_sec = (netbsd32_time_t)p->tv_sec;
-	s32p->tv_nsec = (netbsd32_long)p->tv_nsec;
-}
-
-static __inline void
-netbsd32_from_rusage(rup, ru32p)
-	struct rusage *rup;
-	struct netbsd32_rusage *ru32p;
-{
-
-	netbsd32_from_timeval(&rup->ru_utime, &ru32p->ru_utime);
-	netbsd32_from_timeval(&rup->ru_stime, &ru32p->ru_stime);
-#define C(var)	ru32p->var = (netbsd32_long)rup->var
-	C(ru_maxrss);
-	C(ru_ixrss);
-	C(ru_idrss);
-	C(ru_isrss);
-	C(ru_minflt);
-	C(ru_majflt);
-	C(ru_nswap);
-	C(ru_inblock);
-	C(ru_oublock);
-	C(ru_msgsnd);
-	C(ru_msgrcv);
-	C(ru_nsignals);
-	C(ru_nvcsw);
-	C(ru_nivcsw);
-#undef C
-}
-
-static __inline void
-netbsd32_to_rusage(ru32p, rup)
-	struct netbsd32_rusage *ru32p;
-	struct rusage *rup;
-{
-
-	netbsd32_to_timeval(&ru32p->ru_utime, &rup->ru_utime);
-	netbsd32_to_timeval(&ru32p->ru_stime, &rup->ru_stime);
-#define C(var)	rup->var = (long)ru32p->var
-	C(ru_maxrss);
-	C(ru_ixrss);
-	C(ru_idrss);
-	C(ru_isrss);
-	C(ru_minflt);
-	C(ru_majflt);
-	C(ru_nswap);
-	C(ru_inblock);
-	C(ru_oublock);
-	C(ru_msgsnd);
-	C(ru_msgrcv);
-	C(ru_nsignals);
-	C(ru_nvcsw);
-	C(ru_nivcsw);
-#undef C
-}
-
-static __inline int
-netbsd32_to_iovecin(iov32p, iovp, len)
-	struct netbsd32_iovec *iov32p;
-	struct iovec *iovp;
-	int len;
-{
-	int i, error=0;
-	u_int32_t iov_base;
-	u_int32_t iov_len;
-	/* 
-	 * We could allocate an iov32p, do a copyin, and translate
-	 * each field and then free it all up, or we could copyin
-	 * each field separately.  I'm doing the latter to reduce
-	 * the number of MALLOC()s.
-	 */
-	for (i = 0; i < len; i++, iovp++, iov32p++) {
-		if ((error = copyin((caddr_t)&iov32p->iov_base, &iov_base, sizeof(iov_base))))
-		    return (error);
-		if ((error = copyin((caddr_t)&iov32p->iov_len, &iov_len, sizeof(iov_len))))
-		    return (error);
-		iovp->iov_base = (void *)(u_long)iov_base;
-		iovp->iov_len = (size_t)iov_len;
-	}
-	return error;
-}
-
-/* msg_iov must be done separately */
-static __inline void
-netbsd32_to_msghdr(mhp32, mhp)
-	struct netbsd32_msghdr *mhp32;
-	struct msghdr *mhp;
-{
-
-	mhp->msg_name = (caddr_t)(u_long)mhp32->msg_name;
-	mhp->msg_namelen = mhp32->msg_namelen;
-	mhp->msg_iovlen = (size_t)mhp32->msg_iovlen;
-	mhp->msg_control = (caddr_t)(u_long)mhp32->msg_control;
-	mhp->msg_controllen = mhp32->msg_controllen;
-	mhp->msg_flags = mhp32->msg_flags;
-}
-
-/* msg_iov must be done separately */
-static __inline void
-netbsd32_from_msghdr(mhp32, mhp)
-	struct netbsd32_msghdr *mhp32;
-	struct msghdr *mhp;
-{
-
-	mhp32->msg_name = mhp32->msg_name;
-	mhp32->msg_namelen = mhp32->msg_namelen;
-	mhp32->msg_iovlen = mhp32->msg_iovlen;
-	mhp32->msg_control = mhp32->msg_control;
-	mhp32->msg_controllen = mhp->msg_controllen;
-	mhp32->msg_flags = mhp->msg_flags;
-}
-
-static __inline void
-netbsd32_from_statfs(sbp, sb32p)
-	struct statfs *sbp;
-	struct netbsd32_statfs *sb32p;
-{
-	sb32p->f_type = sbp->f_type;
-	sb32p->f_flags = sbp->f_flags;
-	sb32p->f_bsize = (netbsd32_long)sbp->f_bsize;
-	sb32p->f_iosize = (netbsd32_long)sbp->f_iosize;
-	sb32p->f_blocks = (netbsd32_long)sbp->f_blocks;
-	sb32p->f_bfree = (netbsd32_long)sbp->f_bfree;
-	sb32p->f_bavail = (netbsd32_long)sbp->f_bavail;
-	sb32p->f_files = (netbsd32_long)sbp->f_files;
-	sb32p->f_ffree = (netbsd32_long)sbp->f_ffree;
-	sb32p->f_fsid = sbp->f_fsid;
-	sb32p->f_owner = sbp->f_owner;
-	sb32p->f_spare[0] = 0;
-	sb32p->f_spare[1] = 0;
-	sb32p->f_spare[2] = 0;
-	sb32p->f_spare[3] = 0;
-#if 1
-	/* May as well do the whole batch in one go */
-	memcpy(sb32p->f_fstypename, sbp->f_fstypename, MFSNAMELEN+MNAMELEN+MNAMELEN);
-#else
-	/* If we want to be careful */
-	memcpy(sb32p->f_fstypename, sbp->f_fstypename, MFSNAMELEN);
-	memcpy(sb32p->f_mntonname, sbp->f_mntonname, MNAMELEN);
-	memcpy(sb32p->f_mntfromname, sbp->f_mntfromname, MNAMELEN);
-#endif
-}
-
-static __inline void
-netbsd32_from_timex(txp, tx32p)
-	struct timex *txp;
-	struct netbsd32_timex *tx32p;
-{
-
-	tx32p->modes = txp->modes;
-	tx32p->offset = (netbsd32_long)txp->offset;
-	tx32p->freq = (netbsd32_long)txp->freq;
-	tx32p->maxerror = (netbsd32_long)txp->maxerror;
-	tx32p->esterror = (netbsd32_long)txp->esterror;
-	tx32p->status = txp->status;
-	tx32p->constant = (netbsd32_long)txp->constant;
-	tx32p->precision = (netbsd32_long)txp->precision;
-	tx32p->tolerance = (netbsd32_long)txp->tolerance;
-	tx32p->ppsfreq = (netbsd32_long)txp->ppsfreq;
-	tx32p->jitter = (netbsd32_long)txp->jitter;
-	tx32p->shift = txp->shift;
-	tx32p->stabil = (netbsd32_long)txp->stabil;
-	tx32p->jitcnt = (netbsd32_long)txp->jitcnt;
-	tx32p->calcnt = (netbsd32_long)txp->calcnt;
-	tx32p->errcnt = (netbsd32_long)txp->errcnt;
-	tx32p->stbcnt = (netbsd32_long)txp->stbcnt;
-}
-
-static __inline void
-netbsd32_to_timex(tx32p, txp)
-	struct netbsd32_timex *tx32p;
-	struct timex *txp;
-{
-
-	txp->modes = tx32p->modes;
-	txp->offset = (long)tx32p->offset;
-	txp->freq = (long)tx32p->freq;
-	txp->maxerror = (long)tx32p->maxerror;
-	txp->esterror = (long)tx32p->esterror;
-	txp->status = tx32p->status;
-	txp->constant = (long)tx32p->constant;
-	txp->precision = (long)tx32p->precision;
-	txp->tolerance = (long)tx32p->tolerance;
-	txp->ppsfreq = (long)tx32p->ppsfreq;
-	txp->jitter = (long)tx32p->jitter;
-	txp->shift = tx32p->shift;
-	txp->stabil = (long)tx32p->stabil;
-	txp->jitcnt = (long)tx32p->jitcnt;
-	txp->calcnt = (long)tx32p->calcnt;
-	txp->errcnt = (long)tx32p->errcnt;
-	txp->stbcnt = (long)tx32p->stbcnt;
-}
-
-static __inline void
-netbsd32_from___stat13(sbp, sb32p)
-	struct stat *sbp;
-	struct netbsd32_stat *sb32p;
-{
-	sb32p->st_dev = sbp->st_dev;
-	sb32p->st_ino = sbp->st_ino;
-	sb32p->st_mode = sbp->st_mode;
-	sb32p->st_nlink = sbp->st_nlink;
-	sb32p->st_uid = sbp->st_uid;
-	sb32p->st_gid = sbp->st_gid;
-	sb32p->st_rdev = sbp->st_rdev;
-	if (sbp->st_size < (quad_t)1 << 32)
-		sb32p->st_size = sbp->st_size;
-	else
-		sb32p->st_size = -2;
-	sb32p->st_atimespec.tv_sec = (netbsd32_time_t)sbp->st_atimespec.tv_sec;
-	sb32p->st_atimespec.tv_nsec = (netbsd32_long)sbp->st_atimespec.tv_nsec;
-	sb32p->st_mtimespec.tv_sec = (netbsd32_time_t)sbp->st_mtimespec.tv_sec;
-	sb32p->st_mtimespec.tv_nsec = (netbsd32_long)sbp->st_mtimespec.tv_nsec;
-	sb32p->st_ctimespec.tv_sec = (netbsd32_time_t)sbp->st_ctimespec.tv_sec;
-	sb32p->st_ctimespec.tv_nsec = (netbsd32_long)sbp->st_ctimespec.tv_nsec;
-	sb32p->st_blksize = sbp->st_blksize;
-	sb32p->st_blocks = sbp->st_blocks;
-	sb32p->st_flags = sbp->st_flags;
-	sb32p->st_gen = sbp->st_gen;
-}
-
-static __inline void
-netbsd32_to_ipc_perm(ip32p, ipp)
-	struct netbsd32_ipc_perm *ip32p;
-	struct ipc_perm *ipp;
-{
-
-	ipp->cuid = ip32p->cuid;
-	ipp->cgid = ip32p->cgid;
-	ipp->uid = ip32p->uid;
-	ipp->gid = ip32p->gid;
-	ipp->mode = ip32p->mode;
-	ipp->_seq = ip32p->_seq;
-	ipp->_key = (key_t)ip32p->_key;
-}
-
-static __inline void
-netbsd32_from_ipc_perm(ipp, ip32p)
-	struct ipc_perm *ipp;
-	struct netbsd32_ipc_perm *ip32p;
-{
-
-	ip32p->cuid = ipp->cuid;
-	ip32p->cgid = ipp->cgid;
-	ip32p->uid = ipp->uid;
-	ip32p->gid = ipp->gid;
-	ip32p->mode = ipp->mode;
-	ip32p->_seq = ipp->_seq;
-	ip32p->_key = (netbsd32_key_t)ipp->_key;
-}
-
-static __inline void
-netbsd32_to_msg(m32p, mp)
-	struct netbsd32_msg *m32p;
-	struct msg *mp;
-{
-
-	mp->msg_next = (struct msg *)(u_long)m32p->msg_next;
-	mp->msg_type = (long)m32p->msg_type;
-	mp->msg_ts = m32p->msg_ts;
-	mp->msg_spot = m32p->msg_spot;
-}
-
-static __inline void
-netbsd32_from_msg(mp, m32p)
-	struct msg *mp;
-	struct netbsd32_msg *m32p;
-{
-
-	m32p->msg_next = (netbsd32_msgp_t)(u_long)mp->msg_next;
-	m32p->msg_type = (netbsd32_long)mp->msg_type;
-	m32p->msg_ts = mp->msg_ts;
-	m32p->msg_spot = mp->msg_spot;
-}
-
-static __inline void
-netbsd32_to_msqid_ds(ds32p, dsp)
-	struct netbsd32_msqid_ds *ds32p;
-	struct msqid_ds *dsp;
-{
-
-	netbsd32_to_ipc_perm(&ds32p->msg_perm, &dsp->msg_perm);
-	netbsd32_to_msg((struct netbsd32_msg *)(u_long)ds32p->_msg_first, dsp->_msg_first);
-	netbsd32_to_msg((struct netbsd32_msg *)(u_long)ds32p->_msg_last, dsp->_msg_last);
-	dsp->_msg_cbytes = (u_long)ds32p->_msg_cbytes;
-	dsp->msg_qnum = (u_long)ds32p->msg_qnum;
-	dsp->msg_qbytes = (u_long)ds32p->msg_qbytes;
-	dsp->msg_lspid = ds32p->msg_lspid;
-	dsp->msg_lrpid = ds32p->msg_lrpid;
-	dsp->msg_rtime = (time_t)ds32p->msg_rtime;
-	dsp->msg_stime = (time_t)ds32p->msg_stime;
-	dsp->msg_ctime = (time_t)ds32p->msg_ctime;
-}
-
-static __inline void
-netbsd32_from_msqid_ds(dsp, ds32p)
-	struct msqid_ds *dsp;
-	struct netbsd32_msqid_ds *ds32p;
-{
-
-	netbsd32_from_ipc_perm(&dsp->msg_perm, &ds32p->msg_perm);
-	netbsd32_from_msg(dsp->_msg_first, (struct netbsd32_msg *)(u_long)ds32p->_msg_first);
-	netbsd32_from_msg(dsp->_msg_last, (struct netbsd32_msg *)(u_long)ds32p->_msg_last);
-	ds32p->_msg_cbytes = (netbsd32_u_long)dsp->_msg_cbytes;
-	ds32p->msg_qnum = (netbsd32_u_long)dsp->msg_qnum;
-	ds32p->msg_qbytes = (netbsd32_u_long)dsp->msg_qbytes;
-	ds32p->msg_lspid = dsp->msg_lspid;
-	ds32p->msg_lrpid = dsp->msg_lrpid;
-	ds32p->msg_rtime = dsp->msg_rtime;
-	ds32p->msg_stime = dsp->msg_stime;
-	ds32p->msg_ctime = dsp->msg_ctime;
-}
-
-static __inline void
-netbsd32_to_shmid_ds(ds32p, dsp)
-	struct netbsd32_shmid_ds *ds32p;
-	struct shmid_ds *dsp;
-{
-
-	netbsd32_to_ipc_perm(&ds32p->shm_perm, &dsp->shm_perm);
-	dsp->shm_segsz = ds32p->shm_segsz;
-	dsp->shm_lpid = ds32p->shm_lpid;
-	dsp->shm_cpid = ds32p->shm_cpid;
-	dsp->shm_nattch = ds32p->shm_nattch;
-	dsp->shm_atime = (long)ds32p->shm_atime;
-	dsp->shm_dtime = (long)ds32p->shm_dtime;
-	dsp->shm_ctime = (long)ds32p->shm_ctime;
-	dsp->_shm_internal = (void *)(u_long)ds32p->_shm_internal;
-}
-
-static __inline void
-netbsd32_from_shmid_ds(dsp, ds32p)
-	struct shmid_ds *dsp;
-	struct netbsd32_shmid_ds *ds32p;
-{
-
-	netbsd32_from_ipc_perm(&dsp->shm_perm, &ds32p->shm_perm);
-	ds32p->shm_segsz = dsp->shm_segsz;
-	ds32p->shm_lpid = dsp->shm_lpid;
-	ds32p->shm_cpid = dsp->shm_cpid;
-	ds32p->shm_nattch = dsp->shm_nattch;
-	ds32p->shm_atime = (netbsd32_long)dsp->shm_atime;
-	ds32p->shm_dtime = (netbsd32_long)dsp->shm_dtime;
-	ds32p->shm_ctime = (netbsd32_long)dsp->shm_ctime;
-	ds32p->_shm_internal = (netbsd32_voidp)(u_long)dsp->_shm_internal;
-}
-
-static __inline void
-netbsd32_to_semid_ds(s32dsp, dsp)
-	struct  netbsd32_semid_ds *s32dsp;
-	struct  semid_ds *dsp;
-{
-
-	netbsd32_from_ipc_perm(&dsp->sem_perm, &s32dsp->sem_perm);
-	dsp->_sem_base = (struct __sem *)(u_long)s32dsp->_sem_base;
-	dsp->sem_nsems = s32dsp->sem_nsems;
-	dsp->sem_otime = s32dsp->sem_otime;
-	dsp->sem_ctime = s32dsp->sem_ctime;
-}
-
-static __inline void
-netbsd32_from_semid_ds(dsp, s32dsp)
-	struct  semid_ds *dsp;
-	struct  netbsd32_semid_ds *s32dsp;
-{
-
-	netbsd32_to_ipc_perm(&s32dsp->sem_perm, &dsp->sem_perm);
-	s32dsp->_sem_base = (netbsd32_semp_t)(u_long)dsp->_sem_base;
-	s32dsp->sem_nsems = dsp->sem_nsems;
-	s32dsp->sem_otime = dsp->sem_otime;
-	s32dsp->sem_ctime = dsp->sem_ctime;
-}
-
-static __inline void
-netbsd32_from_loadavg(av32, av)
-	struct netbsd32_loadavg *av32;
-	struct loadavg *av;
-{
-
-	av32->ldavg[0] = av->ldavg[0];
-	av32->ldavg[1] = av->ldavg[1];
-	av32->ldavg[2] = av->ldavg[2];
-	av32->fscale = (netbsd32_long)av->fscale;
-}
 
 /*
  * below are all the standard NetBSD system calls, in the 32bit
@@ -720,6 +250,7 @@ netbsd32_open(p, v, retval)
 	return (sys_open(p, &ua, retval));
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_wait4(q, v, retval)
 	struct proc *q;
@@ -988,6 +519,7 @@ netbsd32_break(p, v, retval)
 	return (sys_obreak(p, &ua, retval));
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_getfsstat(p, v, retval)
 	struct proc *p;
@@ -1128,6 +660,7 @@ netbsd32_ptrace(p, v, retval)
 	return (sys_ptrace(p, &ua, retval));
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_recvmsg(p, v, retval)
 	struct proc *p;
@@ -1178,6 +711,7 @@ done:
 	return (error);
 }
 
+/* XXX MOVE ME XXX */
 int
 recvit32(p, s, mp, iov, namelenp, retsize)
 	struct proc *p;
@@ -1340,7 +874,7 @@ recvit32(p, s, mp, iov, namelenp, retsize)
 	return (error);
 }
 
-
+/* XXX MOVE ME XXX */
 int
 netbsd32_sendmsg(p, v, retval)
 	struct proc *p;
@@ -1388,6 +922,7 @@ done:
 	return (error);
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_recvfrom(p, v, retval)
 	struct proc *p;
@@ -1425,6 +960,7 @@ netbsd32_recvfrom(p, v, retval)
 		       (caddr_t)(u_long)SCARG(uap, fromlenaddr), retval));
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_sendto(p, v, retval)
 	struct proc *p;
@@ -1685,6 +1221,7 @@ netbsd32_utrace(p, v, retval)
 	return (sys_utrace(p, &ua, retval));
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_sigaction(p, v, retval)
 	struct proc *p;
@@ -1834,6 +1371,7 @@ netbsd32_readlink(p, v, retval)
 	return (sys_readlink(p, &ua, retval));
 }
 
+/* XXX MOVE ME XXX */
 /* 
  * Need to completly reimplement this syscall due to argument copying.
  */
@@ -1861,6 +1399,7 @@ netbsd32_execve(p, v, retval)
 	return netbsd32_execve2(p, &ua, retval);
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_execve2(p, uap, retval)
 	struct proc *p;
@@ -2399,6 +1938,7 @@ netbsd32_mincore(p, v, retval)
 	return (sys_mincore(p, &ua, retval));
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_getgroups(p, v, retval)
 	struct proc *p;
@@ -2465,6 +2005,7 @@ netbsd32_setpgid(p, v, retval)
 	return (sys_setpgid(p, &ua, retval));
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_setitimer(p, v, retval)
 	struct proc *p;
@@ -2517,6 +2058,7 @@ netbsd32_setitimer(p, v, retval)
 	return (0);
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_getitimer(p, v, retval)
 	struct proc *p;
@@ -2593,6 +2135,7 @@ netbsd32_dup2(p, v, retval)
 	return (sys_dup2(p, &ua, retval));
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_select(p, v, retval)
 	struct proc *p;
@@ -2854,6 +2397,7 @@ netbsd32_listen(p, v, retval)
 	return (sys_listen(p, &ua, retval));
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_gettimeofday(p, v, retval)
 	struct proc *p;
@@ -2888,6 +2432,7 @@ netbsd32_gettimeofday(p, v, retval)
 	return (error);
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_settimeofday(p, v, retval)
 	struct proc *p;
@@ -2993,6 +2538,7 @@ netbsd32_setregid(p, v, retval)
 	return (sys_setregid(p, &ua, retval));
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_getrusage(p, v, retval)
 	struct proc *p;
@@ -3047,6 +2593,7 @@ netbsd32_getsockopt(p, v, retval)
 	return (sys_getsockopt(p, &ua, retval));
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_readv(p, v, retval)
 	struct proc *p;
@@ -3071,6 +2618,7 @@ netbsd32_readv(p, v, retval)
 			      SCARG(uap, iovcnt), &fp->f_offset, FOF_UPDATE_OFFSET, retval));
 }
 
+/* XXX MOVE ME XXX */
 /* Damn thing copies in the iovec! */
 int
 dofilereadv32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
@@ -3159,7 +2707,7 @@ done:
 	return (error);
 }
 
-
+/* XXX MOVE ME XXX */
 int
 netbsd32_writev(p, v, retval)
 	struct proc *p;
@@ -3184,6 +2732,7 @@ netbsd32_writev(p, v, retval)
 			       SCARG(uap, iovcnt), &fp->f_offset, FOF_UPDATE_OFFSET, retval));
 }
 
+/* XXX MOVE ME XXX */
 int
 dofilewritev32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	struct proc *p;
@@ -3399,6 +2948,7 @@ netbsd32_rmdir(p, v, retval)
 	return (sys_rmdir(p, &ua, retval));
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_utimes(p, v, retval)
 	struct proc *p;
@@ -3422,6 +2972,7 @@ netbsd32_utimes(p, v, retval)
 	return (error);
 }
 
+/* XXX MOVE ME XXX */
 /*
  * Common routine to set access and modification times given a vnode.
  */
@@ -3459,6 +3010,7 @@ change_utimes32(vp, tptr, p)
 	return (error);
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_adjtime(p, v, retval)
 	struct proc *p;
@@ -3563,6 +3115,7 @@ netbsd32_nfssvc(p, v, retval)
 }
 #endif
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_statfs(p, v, retval)
 	struct proc *p;
@@ -3592,6 +3145,7 @@ netbsd32_statfs(p, v, retval)
 	return (copyout(&s32, (caddr_t)(u_long)SCARG(uap, buf), sizeof(s32)));
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_fstatfs(p, v, retval)
 	struct proc *p;
@@ -3715,6 +3269,8 @@ netbsd32_pwrite(p, v, retval)
 	return (error);
 }
 
+/* XXX MOVE ME XXX */
+/* XXX MOVE ME NTP START XXX */
 #ifdef NTP
 int
 netbsd32_ntp_gettime(p, v, retval)
@@ -3939,6 +3495,7 @@ netbsd32_ntp_adjtime(p, v, retval)
 	return (ENOSYS);
 }
 #endif
+/* XXX MOVE ME NTP END XXX */
 
 int
 netbsd32_setgid(p, v, retval)
@@ -4201,6 +3758,7 @@ netbsd32_ftruncate(p, v, retval)
 	return (sys_ftruncate(p, &ua, retval));
 }
 
+/* XXX MOVE ME XXX */
 int uvm_sysctl32(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 int kern_sysctl32(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 
@@ -4236,6 +3794,7 @@ uvm_sysctl32(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* NOTREACHED */
 }
 
+/* XXX MOVE ME XXX */
 /*
  * kern_sysctl32: sysctl hook into KERN system, handling special 32-bit
  * sensitive calls.
@@ -4281,6 +3840,7 @@ kern_sysctl32(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* NOTREACHED */
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32___sysctl(p, v, retval)
 	struct proc *p;
@@ -4459,6 +4019,7 @@ netbsd32_undelete(p, v, retval)
 	return (sys_undelete(p, &ua, retval));
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_futimes(p, v, retval)
 	struct proc *p;
@@ -4533,6 +4094,8 @@ netbsd32_poll(p, v, retval)
 	return (sys_poll(p, &ua, retval));
 }
 
+/* XXX MOVE ME XXX */
+/* XXX MOVE ME IPC START */
 #if defined(SYSVSEM)
 /*
  * XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -4987,7 +4550,9 @@ netbsd32_shmget(p, v, retval)
 #endif
 }
 #endif /* SYSVSHM */
+/* XXX MOVE ME IPC END */
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_clock_gettime(p, v, retval)
 	struct proc *p;
@@ -5014,6 +4579,7 @@ netbsd32_clock_gettime(p, v, retval)
 	return copyout(&ts32, (caddr_t)(u_long)SCARG(uap, tp), sizeof(ts32));
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_clock_settime(p, v, retval)
 	struct proc *p;
@@ -5048,6 +4614,7 @@ netbsd32_clock_settime(p, v, retval)
 	return 0;
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_clock_getres(p, v, retval)
 	struct proc *p;
@@ -5078,6 +4645,7 @@ netbsd32_clock_getres(p, v, retval)
 	return error;
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_nanosleep(p, v, retval)
 	struct proc *p;
@@ -5194,6 +4762,7 @@ netbsd32_swapctl(p, v, retval)
 	return (sys_swapctl(p, &ua, retval));
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_getdents(p, v, retval)
 	struct proc *p;
@@ -5322,6 +4891,7 @@ netbsd32___msync13(p, v, retval)
 	return (sys___msync13(p, &ua, retval));
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32___stat13(p, v, retval)
 	struct proc *p;
@@ -5355,6 +4925,7 @@ netbsd32___stat13(p, v, retval)
 	return (error);
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32___fstat13(p, v, retval)
 	struct proc *p;
@@ -5396,6 +4967,7 @@ netbsd32___fstat13(p, v, retval)
 	return (error);
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32___lstat13(p, v, retval)
 	struct proc *p;
@@ -5429,6 +5001,7 @@ netbsd32___lstat13(p, v, retval)
 	return (error);
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32___sigaltstack14(p, v, retval)
 	struct proc *p;
@@ -5571,6 +5144,7 @@ netbsd32_fktrace(p, v, retval)
 }
 #endif /* KTRACE */
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_preadv(p, v, retval)
 	struct proc *p;
@@ -5613,6 +5187,7 @@ netbsd32_preadv(p, v, retval)
 	    &offset, 0, retval));
 }
 
+/* XXX MOVE ME XXX */
 int
 netbsd32_pwritev(p, v, retval)
 	struct proc *p;
@@ -5655,6 +5230,7 @@ netbsd32_pwritev(p, v, retval)
 	    &offset, 0, retval));
 }
 
+/* XXX MOVE ME XXX */
 /* ARGSUSED */
 int
 netbsd32___sigaction14(p, v, retval)
@@ -5741,7 +5317,7 @@ int netbsd32___sigsuspend14(p, v, retval)
 	return (sys___sigsuspend14(p, &ua, retval));
 };
 
-
+/* XXX MOVE ME XXX */
 /*
  * Find pathname of process's current directory.
  *
