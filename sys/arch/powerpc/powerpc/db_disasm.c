@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.4 2001/05/06 14:25:09 simonb Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.5 2001/05/06 15:30:13 simonb Exp $	*/
 /*	$OpenBSD: db_disasm.c,v 1.2 1996/12/28 06:21:48 rahnds Exp $	*/
 
 #include <sys/param.h>
@@ -125,13 +125,13 @@ const struct opcode opcodes[] = {
 	{ "b",		0xfc000000, 0x48000000, Op_LI | Op_AA | Op_LK },
 
 	{ "rlwimi",	0xfc000000, 0x50000000, Op_S | Op_A | Op_SH | Op_MB | Op_ME | Op_Rc },
-	{ "rlwinmi",	0xfc000000, 0x54000000, Op_S | Op_A | Op_SH | Op_MB | Op_ME | Op_Rc },
-	{ "rlwnmi",	0xfc000000, 0x5C000000, Op_S | Op_A | Op_SH | Op_MB | Op_ME | Op_Rc },
+	{ "rlwinm",	0xfc000000, 0x54000000, Op_S | Op_A | Op_SH | Op_MB | Op_ME | Op_Rc },
+	{ "rlwnm",	0xfc000000, 0x5c000000, Op_S | Op_A | Op_SH | Op_MB | Op_ME | Op_Rc },
 
 	{ "ori",	0xfc000000, 0x60000000, Op_S | Op_A | Op_UIMM },
 	{ "oris",	0xfc000000, 0x64000000, Op_S | Op_A | Op_UIMM },
 	{ "xori",	0xfc000000, 0x68000000, Op_S | Op_A | Op_UIMM },
-	{ "xoris",	0xfc000000, 0x6C000000, Op_S | Op_A | Op_UIMM },
+	{ "xoris",	0xfc000000, 0x6c000000, Op_S | Op_A | Op_UIMM },
 
 	{ "andi.",	0xfc000000, 0x70000000, Op_S | Op_A | Op_UIMM },
 	{ "andis.",	0xfc000000, 0x74000000, Op_S | Op_A | Op_UIMM },
@@ -209,7 +209,7 @@ const struct opcode opcodes_1f[] = {
 	{ "mfcr",	0xfc0007fe, 0x7c000026, Op_D },
 	{ "lwarx",	0xfc0007fe, 0x7c000028, Op_D | Op_A | Op_B },
 	{ "ldx",	0xfc0007fe, 0x7c00002a, Op_D | Op_A | Op_B },
-	{ "lwzx",	0xfc0007fe, 0x7c00002c, Op_D | Op_A | Op_B },
+	{ "lwzx",	0xfc0007fe, 0x7c00002e, Op_D | Op_A | Op_B },
 	{ "slw",	0xfc0007fe, 0x7c000030, Op_D | Op_A | Op_B | Op_Rc },
 	{ "cntlzw",	0xfc0007fe, 0x7c000034, Op_D | Op_A | Op_Rc },
 	{ "sld",	0xfc0007fe, 0x7c000036, Op_D | Op_A | Op_B | Op_Rc },
@@ -223,7 +223,7 @@ const struct opcode opcodes_1f[] = {
 	{ "andc",	0xfc0007fe, 0x7c000078, Op_S | Op_A | Op_B | Op_Rc },
 	{ "td",		0xfc0007fe, 0x7c000088, Op_TO | Op_A | Op_B },
 	{ "mulhd",	0xfc0007fe, 0x7c000092, Op_D | Op_A | Op_B | Op_Rc },
-	{ "mulhw",	0xfc0007fe, 0x7c000093, Op_D | Op_A | Op_B | Op_Rc },
+	{ "mulhw",	0xfc0007fe, 0x7c000096, Op_D | Op_A | Op_B | Op_Rc },
 	{ "mfmsr",	0xfc0007fe, 0x7c0000a6, Op_D },
 	{ "ldarx",	0xfc0007fe, 0x7c0000a8, Op_D | Op_A | Op_B },
 	{ "dcbf",	0xfc0007fe, 0x7c0000ac, Op_A | Op_B },
@@ -254,22 +254,22 @@ const struct opcode opcodes_1f[] = {
 	{ "stbux",	0xfc0007fe, 0x7c0001ee, Op_S | Op_A | Op_B },
 	{ "add",	0xfc0007fe, 0x7c000214, Op_D | Op_A | Op_B | Op_OE | Op_Rc },
 	{ "dcbt",	0xfc0007fe, 0x7c00022c, Op_A | Op_B },
-	{ "lhzx",	0xfc0007ff, 0x7c00022f, Op_D | Op_A | Op_B },
+	{ "lhzx",	0xfc0007ff, 0x7c00022e, Op_D | Op_A | Op_B },
 	{ "eqv",	0xfc0007fe, 0x7c000238, Op_S | Op_A | Op_B | Op_Rc },
 	{ "tlbie",	0xfc0007fe, 0x7c000264, Op_B },
 	{ "eciwx",	0xfc0007fe, 0x7c00026c, Op_D | Op_A | Op_B },
 	{ "lhzux",	0xfc0007fe, 0x7c00026e, Op_D | Op_A | Op_B },
 	{ "xor",	0xfc0007fe, 0x7c000278, Op_S | Op_A | Op_B | Op_Rc },
 	{ "mfspr",	0xfc0007fe, 0x7c0002a6, Op_D | Op_spr },
-	{ "lhax",	0xfc0007fe, 0x7c0002aa, Op_D | Op_A | Op_B },
+	{ "lwax",	0xfc0007fe, 0x7c0002aa, Op_D | Op_A | Op_B },
 	{ "lhax",	0xfc0007fe, 0x7c0002ae, Op_D | Op_A | Op_B },
 	{ "tlbia",	0xfc0007fe, 0x7c0002e4, 0 },
 	{ "mftb",	0xfc0007fe, 0x7c0002e6, Op_D | Op_tbr },
-	{ "lwaux",	0xfc0007fe, 0x7c0002e6, Op_D | Op_A | Op_B },
+	{ "lwaux",	0xfc0007fe, 0x7c0002ea, Op_D | Op_A | Op_B },
 	{ "lhaux",	0xfc0007fe, 0x7c0002ee, Op_D | Op_A | Op_B },
 	{ "sthx",	0xfc0007fe, 0x7c00032e, Op_S | Op_A | Op_B },
 	{ "orc",	0xfc0007fe, 0x7c000338, Op_S | Op_A | Op_B | Op_Rc },
-	{ "econwx",	0xfc0007fe, 0x7c00036c, Op_S | Op_A | Op_B | Op_Rc },
+	{ "ecowx",	0xfc0007fe, 0x7c00036c, Op_S | Op_A | Op_B | Op_Rc },
 	{ "slbie",	0xfc0007fc, 0x7c000364, Op_B },
 	{ "sthux",	0xfc0007fe, 0x7c00036e, Op_S | Op_A | Op_B },
 	{ "or",		0xfc0007fe, 0x7c000378, Op_S | Op_A | Op_B | Op_Rc },
@@ -280,7 +280,6 @@ const struct opcode opcodes_1f[] = {
 	{ "nand",	0xfc0007fe, 0x7c0003b8, Op_S | Op_A | Op_B | Op_Rc },
 	{ "divd",	0xfc0007fe, 0x7c0003d2, Op_S | Op_A | Op_B | Op_OE | Op_Rc },
 	{ "divw",	0xfc0007fe, 0x7c0003d6, Op_S | Op_A | Op_B | Op_OE | Op_Rc },
-	{ "slbia",	0xfc0007fe, 0x7c0003d4, Op_S | Op_A | Op_B | Op_OE | Op_Rc },
 	{ "slbia",	0xfc0007fe, 0x7c0003e4, Op_S | Op_A | Op_B | Op_OE | Op_Rc },
 	{ "mcrxr",	0xfc0007fe, 0x7c000400, Op_crfD },
 	{ "lswx",	0xfc0007fe, 0x7c00042a, Op_D | Op_A | Op_B },
@@ -291,10 +290,10 @@ const struct opcode opcodes_1f[] = {
 	{ "tlbsync",	0xfc0007fe, 0x7c00046c, 0 },
 	{ "lfsux",	0xfc0007fe, 0x7c00046e, Op_D | Op_A | Op_B },
 	{ "mfsr",	0xfc0007fe, 0x7c0004a6, Op_D | Op_SR },
-	{ "iswi",	0xfc0007fe, 0x7c0004aa, Op_D | Op_A | Op_NB },
+	{ "lswi",	0xfc0007fe, 0x7c0004aa, Op_D | Op_A | Op_NB },
 	{ "sync",	0xfc0007fe, 0x7c0004ac, 0 },
 	{ "lfdx",	0xfc0007fe, 0x7c0004ae, Op_D | Op_A | Op_B },
-	{ "lfdux",	0xfc0007fe, 0x7c0004ec, Op_D | Op_A | Op_B },
+	{ "lfdux",	0xfc0007fe, 0x7c0004ee, Op_D | Op_A | Op_B },
 	{ "mfsrin",	0xfc0007fe, 0x7c000526, Op_D | Op_B },
 	{ "stswx",	0xfc0007fe, 0x7c00052a, Op_S | Op_A | Op_B },
 	{ "stwbrx",	0xfc0007fe, 0x7c00052c, Op_S | Op_A | Op_B },
@@ -308,7 +307,7 @@ const struct opcode opcodes_1f[] = {
 	{ "sraw",	0xfc0007fe, 0x7c000630, Op_S | Op_A | Op_B },
 	{ "srad",	0xfc0007fe, 0x7c000634, Op_S | Op_A | Op_B | Op_Rc},
 	{ "srawi",	0xfc0007fe, 0x7c000670, Op_S | Op_A | Op_B | Op_Rc},
-/* ? */	{ "sradix",	0xfc0007fc, 0x7c000674, Op_S | Op_A | Op_sh },
+	{ "sradi",	0xfc0007fc, 0x7c000674, Op_S | Op_A | Op_sh },
 	{ "eieio",	0xfc0007fe, 0x7c0006ac, 0 },
 	{ "sthbrx",	0xfc0007fe, 0x7c00072c, Op_S | Op_A | Op_B },
 	{ "extsh",	0xfc0007fe, 0x7c000734, Op_S | Op_A | Op_B | Op_Rc },
@@ -330,7 +329,7 @@ const struct opcode opcodes_3a[] = {
 };
 /* 3b * 4 = ec */
 const struct opcode opcodes_3b[] = {
-	{ "fdisvs",	0xfc00003e, 0xec000024, Op_D | Op_A | Op_B | Op_Rc },
+	{ "fdivs",	0xfc00003e, 0xec000024, Op_D | Op_A | Op_B | Op_Rc },
 	{ "fsubs",	0xfc00003e, 0xec000028, Op_D | Op_A | Op_B | Op_Rc },
 
 	{ "fadds",	0xfc00003e, 0xec00002a, Op_D | Op_A | Op_B | Op_Rc },
@@ -354,7 +353,7 @@ const struct opcode opcodes_3e[] = {
 const struct opcode opcodes_3f[] = {
 	{ "fcmpu",	0xfc0007fe, 0xfc000000, Op_crfD | Op_A | Op_B },
 	{ "frsp",	0xfc0007fe, 0xfc000018, Op_D | Op_B | Op_Rc },
-/* ? */	{ "fctiw",	0xfc0007fe, 0xfc00001c, Op_D | Op_B | Op_Rc },
+	{ "fctiw",	0xfc0007fe, 0xfc00001c, Op_D | Op_B | Op_Rc },
 	{ "fctiwz",	0xfc0007fe, 0xfc00001e, Op_D | Op_B | Op_Rc },
 
 	{ "fdiv",	0xfc00003e, 0xfc000024, Op_D | Op_A | Op_B | Op_Rc },
