@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.5 2003/09/30 06:39:09 lukem Exp $
+$NetBSD: TODO,v 1.6 2003/12/22 10:53:26 rtr Exp $
 
 finish Xserver, especially:
 	hw/xfree86
@@ -8,7 +8,6 @@ clean up XTODO issues
 
 move all host tools to tools/?  these are:
 	./lib/Xt/makestrs
-	./lib/lbxutil/mkg3states
 	./lib/OSmesa/gen_matypes
 
 consider symlinking various dirs in lib/X11 -> /etc/X11, and only
