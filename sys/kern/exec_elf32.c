@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.92 2003/06/29 22:31:16 fvdl Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.93 2003/08/06 01:02:27 manu Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.92 2003/06/29 22:31:16 fvdl Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.93 2003/08/06 01:02:27 manu Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -88,7 +88,6 @@ __KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.92 2003/06/29 22:31:16 fvdl Exp $")
 
 extern const struct emul emul_netbsd;
 
-int	ELFNAME(check_header)(Elf_Ehdr *, int);
 int	ELFNAME(load_file)(struct proc *, struct exec_package *, char *,
 	    struct exec_vmcmd_set *, u_long *, struct elf_args *, Elf_Addr *);
 void	ELFNAME(load_psection)(struct exec_vmcmd_set *, struct vnode *,
