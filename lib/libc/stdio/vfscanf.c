@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.26 2000/01/21 23:12:33 wrstuden Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.27 2000/03/08 19:33:47 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.26 2000/01/21 23:12:33 wrstuden Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.27 2000/03/08 19:33:47 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,10 +73,11 @@ __RCSID("$NetBSD: vfscanf.c,v 1.26 2000/01/21 23:12:33 wrstuden Exp $");
 #define	LONG		0x01	/* l: long or double */
 #define	LONGDBL		0x02	/* L: long double; unimplemented */
 #define	SHORT		0x04	/* h: short */
-#define QUAD		0x08	/* q: quad */
-#define	SUPPRESS	0x10	/* suppress assignment */
-#define	POINTER		0x20	/* weird %p pointer (`fake hex') */
-#define	NOSKIP		0x40	/* do not skip blanks */
+#define	QUAD		0x08	/* q: quad */
+#define	LONGLONG	0x10	/* ll: long long */
+#define	SUPPRESS	0x20	/* suppress assignment */
+#define	POINTER		0x40	/* weird %p pointer (`fake hex') */
+#define	NOSKIP		0x80	/* do not skip blanks */
 
 /*
  * The following are used in numeric conversions only:
@@ -98,7 +99,7 @@ __RCSID("$NetBSD: vfscanf.c,v 1.26 2000/01/21 23:12:33 wrstuden Exp $");
 #define	CT_CHAR		0	/* %c conversion */
 #define	CT_CCL		1	/* %[...] conversion */
 #define	CT_STRING	2	/* %s conversion */
-#define	CT_INT		3	/* integer, i.e., strtoq or strtouq */
+#define	CT_INT		3	/* integer, i.e., strtoll or strtoull */
 #define	CT_FLOAT	4	/* floating, i.e., strtod */
 
 #define u_char unsigned char
@@ -124,9 +125,10 @@ __svfscanf(fp, fmt0, ap)
 	char *p0;	/* saves original value of p when necessary */
 	int nassigned;		/* number of fields assigned */
 	int nread;		/* number of characters consumed from fp */
-	int base;		/* base argument to strtoq/strtouq */
-	u_quad_t (*ccfn) __P((const char *, char **, int));
-				/* conversion function (strtoq/strtouq) */
+	int base;		/* base argument to strtoll/strtoull */
+	/* LONGLONG */
+	unsigned long long int (*ccfn) __P((const char *, char **, int));
+				/* conversion function (strtoll/strtoull) */
 	char ccltab[256];	/* character class table for %[...] */
 	char buf[BUF];		/* buffer for numeric conversions */
 
@@ -187,7 +189,7 @@ literal:
 		case 'l':
 			if (*fmt == 'l') {
 				fmt++;
-				flags |= QUAD;
+				flags |= LONGLONG;
 			} else {
 				flags |= LONG;
 			}
@@ -213,13 +215,15 @@ literal:
 			/* FALLTHROUGH */
 		case 'd':
 			c = CT_INT;
-			ccfn = (u_quad_t (*) __P((const char *, char **, int)))strtoq;
+			/* LONGLONG */
+			ccfn = (unsigned long long int (*) __P((const char *, char **, int)))strtoll;
 			base = 10;
 			break;
 
 		case 'i':
 			c = CT_INT;
-			ccfn = (u_quad_t (*) __P((const char *, char **, int)))strtoq;
+			/* LONGLONG */
+			ccfn = (unsigned long long int (*) __P((const char *, char **, int)))strtoll;
 			base = 0;
 			break;
 
@@ -228,13 +232,13 @@ literal:
 			/* FALLTHROUGH */
 		case 'o':
 			c = CT_INT;
-			ccfn = strtouq;
+			ccfn = strtoull;
 			base = 8;
 			break;
 
 		case 'u':
 			c = CT_INT;
-			ccfn = strtouq;
+			ccfn = strtoull;
 			base = 10;
 			break;
 
@@ -242,7 +246,7 @@ literal:
 		case 'x':
 			flags |= PFXOK;	/* enable 0x prefixing */
 			c = CT_INT;
-			ccfn = strtouq;
+			ccfn = strtoull;
 			base = 16;
 			break;
 
@@ -274,7 +278,7 @@ literal:
 		case 'p':	/* pointer format is like hex */
 			flags |= POINTER | PFXOK;
 			c = CT_INT;
-			ccfn = strtouq;
+			ccfn = strtoull;
 			base = 16;
 			break;
 
@@ -300,7 +304,8 @@ literal:
 			if (isupper(c))
 				flags |= LONG;
 			c = CT_INT;
-			ccfn = (u_quad_t (*) __P((const char *, char **, int)))strtoq;
+			/* LONGLONG */
+			ccfn = (unsigned long long int (*) __P((const char *, char **, int)))strtoll;
 			base = 10;
 			break;
 		}
@@ -442,7 +447,7 @@ literal:
 			continue;
 
 		case CT_INT:
-			/* scan an integer as if by strtoq/strtouq */
+			/* scan an integer as if by strtoll/strtoull */
 #ifdef hardway
 			if (width == 0 || width > sizeof(buf) - 1)
 				width = sizeof(buf) - 1;
@@ -560,15 +565,19 @@ literal:
 				(void) ungetc(c, fp);
 			}
 			if ((flags & SUPPRESS) == 0) {
-				u_quad_t res;
+				/* LONGLONG */
+				unsigned long long int res;
 
 				*p = 0;
 				res = (*ccfn)(buf, (char **)NULL, base);
 				if (flags & POINTER)
 					*va_arg(ap, void **) =
 					    (void *)(long)res;
+				else if (flags & LONGLONG)
+					/* LONGLONG */
+					*va_arg(ap, long long int *) = res;
 				else if (flags & QUAD)
-					*va_arg(ap, quad_t *) = res;
+					*va_arg(ap, quad_t *) = (quad_t)res;
 				else if (flags & LONG)
 					*va_arg(ap, long *) = (long)res;
 				else if (flags & SHORT)
