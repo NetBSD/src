@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.1 1998/09/01 19:47:39 itohy Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.2 1998/12/14 15:22:04 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998 ITOH, Yasufumi
@@ -78,13 +78,13 @@
 #define B_X68K_SCSI_IF_UN(val)	B_CONTROLLER(val)
 
 #define B_X68K_SCSI_ID(val)	B_UNIT(val)
-#define B_X68K_SCSI_LUN(val)	(((val) >> B_PARTITIONSHIFT + 4) & 07)
+#define B_X68K_SCSI_LUN(val)	(((val) >> (B_PARTITIONSHIFT + 4)) & 07)
 
 #define B_X68K_SCSI_PART(val)	(((val) >> B_PARTITIONSHIFT) & 017)
 
 #if 0
 /* this bit is reserved for future extension */
-#define B_X68K_SCSI_EXT(val)	(((val) >> B_PARTITIONSHIFT + 7) & 01)
+#define B_X68K_SCSI_EXT(val)	(((val) >> (B_PARTITIONSHIFT + 7)) & 01)
 #endif
 
 
