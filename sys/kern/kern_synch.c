@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.122 2003/01/18 10:06:30 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.123 2003/01/21 00:02:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.122 2003/01/18 10:06:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.123 2003/01/21 00:02:07 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -383,7 +383,7 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
     __volatile struct simplelock *interlock)
 {
 	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
+	struct proc *p = l ? l->l_proc : NULL;
 	struct slpque *qp;
 	int sig, s;
 	int catch = priority & PCATCH;
