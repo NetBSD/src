@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.26 1997/06/12 17:14:58 mrg Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.27 1997/07/06 12:43:43 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -51,6 +51,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
+#include <sys/lock.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -62,6 +63,8 @@
 
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
+
+extern struct lock ufs_hashlock;
 
 int ffs_sbupdate __P((struct ufsmount *, int));
 
@@ -781,12 +784,16 @@ ffs_vget(mp, ino, vpp)
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
-	if ((*vpp = ufs_ihashget(dev, ino)) != NULL)
+	lockmgr(&ufs_hashlock, LK_EXCLUSIVE, 0, curproc);
+	if ((*vpp = ufs_ihashget(dev, ino)) != NULL) {
+		lockmgr(&ufs_hashlock, LK_RELEASE, 0, curproc);
 		return (0);
+	}
 
 	/* Allocate a new vnode/inode. */
 	if ((error = getnewvnode(VT_UFS, mp, ffs_vnodeop_p, &vp)) != 0) {
 		*vpp = NULL;
+		lockmgr(&ufs_hashlock, LK_RELEASE, 0, curproc);
 		return (error);
 	}
 	type = ump->um_devvp->v_tag == VT_MFS ? M_MFSNODE : M_FFSNODE; /* XXX */
@@ -812,6 +819,7 @@ ffs_vget(mp, ino, vpp)
 	 * disk portion of this inode to be read.
 	 */
 	ufs_ihashins(ip);
+	lockmgr(&ufs_hashlock, LK_RELEASE, 0, curproc);
 
 	/* Read in the disk contents for the inode, copy into the inode. */
 	error = bread(ump->um_devvp, fsbtodb(fs, ino_to_fsba(fs, ino)),
