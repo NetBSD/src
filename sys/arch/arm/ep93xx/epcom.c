@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.1 2004/12/22 19:10:25 joff Exp $ */
+/*	$NetBSD: epcom.c,v 1.2 2004/12/29 06:31:32 joff Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.1 2004/12/22 19:10:25 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.2 2004/12/29 06:31:32 joff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -308,15 +308,7 @@ epcomparam(tp, t)
 	tp->t_ispeed = 0;
 	tp->t_ospeed = t->c_ospeed;
 	tp->t_cflag = t->c_cflag;
-
-	if (!sc->sc_heldchange) {
-		if (sc->sc_tx_busy) {
-			sc->sc_heldtbc = sc->sc_tbc;
-			sc->sc_tbc = 0;
-			sc->sc_heldchange = 1;
-		} else
-			epcom_set(sc);
-	}
+	epcom_set(sc);
 
 	splx(s);
 
@@ -412,13 +404,13 @@ epcomstart(tp)
 	SET(tp->t_state, TS_BUSY);
 	sc->sc_tx_busy = 1;
 
+	/* Output the first chunk of the contiguous buffer. */
+	epcom_filltx(sc);
+
 	if (!ISSET(sc->sc_ctrl, Ctrl_TIE)) {
 		SET(sc->sc_ctrl, Ctrl_TIE);
 		epcom_set(sc);
 	}
-
-	/* Output the first chunk of the contiguous buffer. */
-	epcom_filltx(sc);
 
 out:
 	splx(s);
@@ -432,14 +424,7 @@ epcom_break(struct epcom_softc *sc, int onoff)
 		SET(sc->sc_lcrhi, LinCtrlHigh_BRK);
 	else
 		CLR(sc->sc_lcrhi, LinCtrlHigh_BRK);
-	if (!sc->sc_heldchange) {
-		if (sc->sc_tx_busy) {
-			sc->sc_heldtbc = sc->sc_tbc;
-			sc->sc_tbc = 0;
-			sc->sc_heldchange = 1;
-		} else
-			epcom_set(sc);
-	}
+	epcom_set(sc);
 }
 
 static void
@@ -765,7 +750,6 @@ epcomstop(tp, flag)
 	if (ISSET(tp->t_state, TS_BUSY)) {
 		/* Stop transmitting at the next chunk. */
 		sc->sc_tbc = 0;
-		sc->sc_heldtbc = 0;
 		if (!ISSET(tp->t_state, TS_TTSTOP))
 			SET(tp->t_state, TS_FLUSH);
 	}
@@ -1187,31 +1171,19 @@ epcomintr(void* arg)
 	 * transmitted as well. Schedule tx done event if no data left
 	 * and tty was marked busy.
 	 */
-	if (ISSET(flagr, Flag_TXFE)) {
-		/*
-		 * If we've delayed a parameter change, do it now, and restart
-		 * output.
-		 */
-		if (sc->sc_heldchange) {
-			epcom_set(sc);
-			sc->sc_heldchange = 0;
-			sc->sc_tbc = sc->sc_heldtbc;
-			sc->sc_heldtbc = 0;
-		}
 
+	if (!ISSET(flagr, Flag_TXFF) && sc->sc_tbc > 0) {
 		/* Output the next chunk of the contiguous buffer, if any. */
-		if (sc->sc_tbc > 0) {
-			epcom_filltx(sc);
-		} else {
-			/* Disable transmit completion interrupts if necessary. */
-			if (ISSET(sc->sc_ctrl, Ctrl_TIE)) {
-				CLR(sc->sc_ctrl, Ctrl_TIE);
-				epcom_set(sc);
-			}
-			if (sc->sc_tx_busy) {
-				sc->sc_tx_busy = 0;
-				sc->sc_tx_done = 1;
-			}
+		epcom_filltx(sc);
+	} else {
+		/* Disable transmit completion interrupts if necessary. */
+		if (ISSET(sc->sc_ctrl, Ctrl_TIE)) {
+			CLR(sc->sc_ctrl, Ctrl_TIE);
+			epcom_set(sc);
+		}
+		if (sc->sc_tx_busy) {
+			sc->sc_tx_busy = 0;
+			sc->sc_tx_done = 1;
 		}
 	}
 
