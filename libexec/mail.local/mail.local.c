@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.local.c,v 1.20 2002/05/26 00:02:08 wiz Exp $	*/
+/*	$NetBSD: mail.local.c,v 1.21 2002/11/16 15:41:17 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mail.local.c	8.22 (Berkeley) 6/21/95";
 #else
-__RCSID("$NetBSD: mail.local.c,v 1.20 2002/05/26 00:02:08 wiz Exp $");
+__RCSID("$NetBSD: mail.local.c,v 1.21 2002/11/16 15:41:17 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,6 +140,8 @@ store(from)
 	char *tn, line[2048];
 
 	tn = strdup(_PATH_LOCTMP);
+	if (!tn)
+		err(FATAL, "not enough core");
 	if ((fd = mkstemp(tn)) == -1 || !(fp = fdopen(fd, "w+")))
 		err(FATAL, "unable to open temporary file");
 	(void)unlink(tn);
