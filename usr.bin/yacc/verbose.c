@@ -1,4 +1,4 @@
-/*	$NetBSD: verbose.c,v 1.5 1997/07/25 16:46:39 perry Exp $	*/
+/*	$NetBSD: verbose.c,v 1.6 2001/02/04 17:45:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)verbose.c	5.3 (Berkeley) 1/20/91";
 #else
-__RCSID("$NetBSD: verbose.c,v 1.5 1997/07/25 16:46:39 perry Exp $");
+__RCSID("$NetBSD: verbose.c,v 1.6 2001/02/04 17:45:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,6 @@ __RCSID("$NetBSD: verbose.c,v 1.5 1997/07/25 16:46:39 perry Exp $");
 
 static short *null_rules;
 
-void verbose __P((void));
 void log_unused __P((void));
 void log_conflicts __P((void));
 void print_state __P((int));
