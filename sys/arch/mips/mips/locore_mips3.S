@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.13 1999/11/30 11:53:24 shin Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.14 1999/12/22 05:54:18 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1145,7 +1145,15 @@ LEAF_NOPROFILE(mips3_TLBMissException)
 	lw	k1, _C_LABEL(Sysmapsize)	# index within range?
 	srl	k0, k0, PGSHIFT
 	sltu	k1, k0, k1
+#ifdef newsmips
+	/* news5000 has ROM work area at 0xfff00000. */
+	bne	k1, zero, 1f
+	nop
+	j	checkromwork
+1:
+#else
 	beq	k1, zero, outofworld	# No. Failing beyond. . .
+#endif
 	lw	k1, _C_LABEL(Sysmap)
 	srl	k0, k0, 1
 	sll	k0, k0, 3			# compute offset from index
@@ -1980,28 +1988,26 @@ XLEAF(mips3_VCEI)	/* XXXX */
 	and	k0, -16
 	sw	k0, vce_savek0			# save virtual address
 	cache	1, 0(k0)			# writeback primary line
-	lw	k1, _C_LABEL(mips_L1DCacheSize)
-	addiu	k1, -1
-	and	k0, k0, k1			# mask to cache index
+	nop
+	nop
+	cache	7, 0(k0)			# read L2Cache tag
+	and	k0, PGOFSET
+	mfc0	k1, MIPS_COP_0_TAG_LO
+	and	k1, 0x00000380			# VIndex[9..7]
+	sll	k1, k1, 5			# [14..12] <---
+	or	k0, k0, k1
 	or	k0, 0x80000000			# physical K0SEG address
-	xor	k0, 0x1000			# other page of cache
-	cache	1, 0(k0)
-	xor	k0, 0x10			# other half of cache line
-	cache	1, 0(k0)
-	xor	k0, 0x1000			# other half in same page
-	cache	1, 0(k0)
-	sltiu	k1, k1, 0x3fff
-	bnez	k1, 1f				# not R4400
-	xor	k0, 0x2000			# clear out same cache lines
-	cache	1, 0(k0)			#   in the other half of the
-	xor	k0, 0x1000			#   R4400 primary cache
-	cache	1, 0(k0)
-	xor	k0, 0x10
-	cache	1, 0(k0)
-	xor	k0, 0x1000
-	cache	1, 0(k0)
- # end R4400
+	lw	k1, _C_LABEL(mips_L2CacheLSize)
+	beq	k1, zero, 2f			# XXX needed?
+	subu	k1, zero, k1
+	and	k0, k0, k1			# align to L2CacheLSize
 1:
+	cache	1, 0(k0)			# flush 32 bytes
+	cache	1, 16(k0)
+	addiu	k1, 32
+	bltz	k1, 1b
+	addiu	k0, 32
+2:
 	lw	k0, vce_savek0			# get original address
 	cache	31, 0(k0)
 	nop
