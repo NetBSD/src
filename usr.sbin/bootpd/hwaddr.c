@@ -127,11 +127,14 @@ setarp(s, ia, ha, len)
 	 * Oh well, SIOCSARP is not defined.  Just run arp(8).
 	 * XXX - Gag!
 	 */
-	char buf[256];
 	int status;
+	char buf[256];
+	char *a;
+	extern char *inet_ntoa();
 
-	sprintf(buf, "arp -s %s %s temp",
-			inet_ntoa(*ia), haddrtoa(ha, len));
+	a = inet_ntoa(*ia);
+	sprintf(buf, "arp -d %s; arp -s %s %s temp",
+		a, a, haddrtoa(ha, len));
 	if (debug > 2)
 		report(LOG_INFO, buf);
 	status = system(buf);
