@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.25 1999/07/01 11:18:20 drochner Exp $ */
+/* $NetBSD: wskbd.c,v 1.26 1999/07/06 07:42:23 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.25 1999/07/01 11:18:20 drochner Exp $";
+    "$NetBSD: wskbd.c,v 1.26 1999/07/06 07:42:23 augustss Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -205,6 +205,7 @@ int	wskbd_do_ioctl __P((struct wskbd_softc *, u_long, caddr_t,
 
 struct cfattach wskbd_ca = {
 	sizeof (struct wskbd_softc), wskbd_match, wskbd_attach,
+	wskbd_detach, wskbd_activate
 };
 
 extern struct cfdriver wskbd_cd;
