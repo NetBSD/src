@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.91 2000/06/06 17:19:59 soren Exp $
+$NetBSD: pcmciadevs,v 1.92 2000/06/09 13:05:03 onoe Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@ vendor DAYNA			0x0194	Dayna Corporation
 vendor RAYTHEON			0x01a6	Raytheon
 vendor BAY			0x01eb  Bay Networks
 vendor IODATA			0x01bf	I-O DATA
+vendor FARALLON			0x0200  Farallon Communications
 vendor NOKIA			0x023d	Nokia Communications
 vendor LASAT			0x3401	Lasat Communications A/S
 vendor LEXARMEDIA		0x4e01	Lexar Media
@@ -138,6 +139,9 @@ product INTEL EEPRO100		0x010a Intel EtherExpress PRO/100
 
 /* I-O DATA */
 product IODATA PCLATE		0x2216 I-O DATA PCLA/TE
+
+/* Farallon */
+product FARALLON SKYLINE	0x0a01 SkyLINE Wireless
 
 /* Lexar Media */
 product LEXARMEDIA COMPATFLASH	0x0100 Lexar Media CompactFlash

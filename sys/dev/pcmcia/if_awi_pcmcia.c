@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.15 2000/06/09 05:31:19 onoe Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.16 2000/06/09 13:05:02 onoe Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -146,6 +146,9 @@ static struct awi_pcmcia_product {
 
 	{ PCMCIA_VENDOR_NOKIA,		PCMCIA_PRODUCT_NOKIA_C020_WLAN,
 	  PCMCIA_CIS_NOKIA_C020_WLAN,	PCMCIA_STR_NOKIA_C020_WLAN },
+
+	{ PCMCIA_VENDOR_FARALLON,	PCMCIA_PRODUCT_FARALLON_SKYLINE,
+	  PCMCIA_CIS_FARALLON_SKYLINE,	PCMCIA_STR_FARALLON_SKYLINE },
 
 	{ 0,				0,
 	  { NULL, NULL, NULL, NULL },	NULL },
