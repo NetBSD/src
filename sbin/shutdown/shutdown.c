@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.38 2000/12/20 00:31:41 cgd Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.39 2002/10/18 20:35:36 atatat Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.38 2000/12/20 00:31:41 cgd Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.39 2002/10/18 20:35:36 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,6 +95,7 @@ static int dofast, dohalt, doreboot, killflg, mbuflen, nofork, nosync, dodump;
 static int dopowerdown;
 static const char *whom;
 static char mbuf[BUFSIZ];
+char *bootstr;
 
 void badtime __P((void));
 void die_you_gravy_sucking_pig_dog __P((void));
@@ -122,8 +123,11 @@ main(argc, argv)
 	if (geteuid())
 		errx(1, "NOT super-user");
 #endif
-	while ((ch = getopt(argc, argv, "Ddfhknpr")) != -1)
+	while ((ch = getopt(argc, argv, "b:Ddfhknpr")) != -1)
 		switch (ch) {
+		case 'b':
+			bootstr = optarg;
+			break;
 		case 'd':
 			dodump = 1;
 			break;
@@ -375,6 +379,8 @@ die_you_gravy_sucking_pig_dog()
 		if (dopowerdown)
 			*arg++ = "-p";
 		*arg++ = "-l";
+		if (bootstr)
+			*arg++ = bootstr;
 		*arg++ = 0;
 #ifndef DEBUG
 		execve(path, args, (char **)0);
