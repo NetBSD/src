@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.12 1998/03/31 08:16:28 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -1060,6 +1060,17 @@ db_disasm(loc, altfmt)
 	int	imm2;
 	int	len;
 	struct i_addr	address;
+	pt_entry_t *pte;
+
+	/*
+	 * Don't try to disassemble the location if the mapping is invalid.
+	 * If we do, we'll fault, and end up debugging the debugger!
+	 */
+	pte = vtopte((vm_offset_t)loc);
+	if ((*pte & PG_V) == 0) {
+		db_printf("invalid address\n");
+		return (loc);
+	}
 
 	get_value_inc(inst, loc, 1, FALSE);
 	short_addr = FALSE;
