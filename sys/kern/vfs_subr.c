@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.189 2003/02/25 23:01:40 jdolecek Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.190 2003/02/25 23:35:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.189 2003/02/25 23:01:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.190 2003/02/25 23:35:03 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1852,8 +1852,17 @@ loop:
 /*
  * Print out a description of a vnode.
  */
-static const char * const typename[] =
-   { "VNON", "VREG", "VDIR", "VBLK", "VCHR", "VLNK", "VSOCK", "VFIFO", "VBAD" };
+const char * const vnode_types[] = {
+	"VNON",
+	"VREG",
+	"VDIR",
+	"VBLK",
+	"VCHR",
+	"VLNK",
+	"VSOCK",
+	"VFIFO",
+	"VBAD"
+};
 
 void
 vprint(label, vp)
@@ -1865,8 +1874,8 @@ vprint(label, vp)
 	if (label != NULL)
 		printf("%s: ", label);
 	printf("tag %d type %s, usecount %d, writecount %ld, refcount %ld,",
-	    vp->v_tag, typename[vp->v_type], vp->v_usecount, vp->v_writecount,
-	    vp->v_holdcnt);
+	    vp->v_tag, vnode_types[vp->v_type],
+	    vp->v_usecount, vp->v_writecount, vp->v_holdcnt);
 	buf[0] = '\0';
 	if (vp->v_flag & VROOT)
 		strcat(buf, "|VROOT");
@@ -2794,18 +2803,6 @@ const char vnode_flagbits[] =
 	"\20\1ROOT\2TEXT\3SYSTEM\4ISTTY\5EXECMAP"
 	"\11XLOCK\12XWANT\13BWAIT\14ALIASED"
 	"\15DIROP\16LAYER\17ONWORKLIST\20DIRTY";
-
-const char * const vnode_types[] = {
-	"VNON",
-	"VREG",
-	"VDIR",
-	"VBLK",
-	"VCHR",
-	"VLNK",
-	"VSOCK",
-	"VFIFO",
-	"VBAD",
-};
 
 const char * const vnode_tags[] = {
 	"VT_NON",
