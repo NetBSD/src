@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2001/06/02 18:09:22 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2001/06/27 03:16:02 fredette Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -170,7 +170,7 @@
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
-#define _SUN2_BUS_DMA_PRIVATE
+#define _SUN68K_BUS_DMA_PRIVATE
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -182,9 +182,14 @@
 #include <ddb/db_extern.h>
 #endif
 
+#include <dev/vme/vmereg.h>
+#include <dev/vme/vmevar.h>
+
 #include <sun2/sun2/control.h>
 #include <sun2/sun2/enable.h>
 #include <sun2/sun2/machdep.h>
+
+#include <sun68k/sun68k/vme_sun68k.h>
 
 /* Defined in locore.s */
 extern char kernel_text[];
@@ -215,12 +220,6 @@ int	safepri = PSL_LOWIPL;
 u_short	enable_reg_soft = ENABLE_REG_SOFT_UNDEF;
 
 /*
- * Generic soft interrupt support.
- */
-struct softintr_head soft_level_heads[(_IPL_SOFT_LEVEL_MAX - _IPL_SOFT_LEVEL_MIN) + 1];
-void *softnet_cookie;
-
-/*
  * Our no-fault fault handler.
  */
 label_t *nofault;
@@ -229,10 +228,6 @@ label_t *nofault;
  * dvmamap is used to manage DVMA memory.
  */
 static struct extent *dvmamap;
-
-/* These are defined in pmap.c */
-extern vm_offset_t tmp_vpages[];
-extern int tmp_vpages_inuse;
 
 /* Our private scratch page for dumping the MMU. */
 static vm_offset_t dumppage;
@@ -842,7 +837,6 @@ initcpu()
 /* straptrap() in trap.c */
 
 /* from hp300: badaddr() */
-/* peek_byte(), peek_word() moved to bus_subr.c */
 
 /* XXX: parityenable() ? */
 /* regdump() moved to regdump.c */
@@ -887,318 +881,6 @@ void isr_soft_clear(level)
 
 	bit = 1 << level;
 	enable_reg_and(~bit);
-}
-
-/*
- * Generic soft interrupt support.
- */
-
-/*
- * The soft interrupt handler.
- */
-static int
-softintr_handler(void *arg)
-{
-	struct softintr_head *shd = arg;
-	struct softintr_handler *sh;
-
-	/* Clear the interrupt. */
-	isr_soft_clear(shd->shd_ipl);
-	uvmexp.softs++;
-
-	/* Dispatch any pending handlers. */
-	for(sh = LIST_FIRST(&shd->shd_intrs); sh != NULL; sh = LIST_NEXT(sh, sh_link)) {
-		if (sh->sh_pending) {
-			(*sh->sh_func)(sh->sh_arg);
-			sh->sh_pending = 0;
-		}
-	}
-
-	return (1);
-}
-
-/*
- * This initializes soft interrupts.
- */
-void
-softintr_init(void)
-{
-	int ipl;
-	struct softintr_head *shd;
-
-	for(ipl = _IPL_SOFT_LEVEL_MIN; ipl <= _IPL_SOFT_LEVEL_MAX; ipl++) {
-		shd = &soft_level_heads[ipl - _IPL_SOFT_LEVEL_MIN];
-		shd->shd_ipl = ipl;
-		LIST_INIT(&shd->shd_intrs);
-		isr_add_autovect(softintr_handler, shd, ipl);
-	}
-
-	softnet_cookie = softintr_establish(IPL_SOFTNET, (void (*) __P((void *))) netintr, NULL);
-}
-
-void *
-softintr_establish(int ipl, void (*func)(void *), void *arg)
-{
-	struct softintr_handler *sh;
-	struct softintr_head *shd;
-
-	if (ipl < _IPL_SOFT_LEVEL_MIN || ipl > _IPL_SOFT_LEVEL_MAX)
-		panic("softintr_establish: unsupported soft IPL");
-
-	shd = &soft_level_heads[ipl - _IPL_SOFT_LEVEL_MIN];
-
-	sh = malloc(sizeof(*sh), M_SOFTINTR, M_NOWAIT);
-	if (sh == NULL)
-		return NULL;
-
-	LIST_INSERT_HEAD(&shd->shd_intrs, sh, sh_link);
-	sh->sh_head = shd;
-	sh->sh_pending = 0;
-	sh->sh_func = func;
-	sh->sh_arg = arg;
-
-	return sh;
-}
-
-void
-softintr_disestablish(void *arg)
-{
-	struct softintr_handler *sh = arg;
-	LIST_REMOVE(sh, sh_link);
-	free(sh, M_SOFTINTR);
-}
-
-/*
- * Common function for DMA map creation.  May be called by bus-specific
- * DMA map creation functions.
- */
-int
-_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
-{
-	struct sun2_bus_dmamap *map;
-	void *mapstore;
-	size_t mapsize;
-
-	/*
-	 * Allocate and initialize the DMA map.  The end of the map
-	 * is a variable-sized array of segments, so we allocate enough
-	 * room for them in one shot.
-	 *
-	 * Note we don't preserve the WAITOK or NOWAIT flags.  Preservation
-	 * of ALLOCNOW notifies others that we've reserved these resources,
-	 * and they are not to be freed.
-	 *
-	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
-	 * the (nsegments - 1).
-	 */
-	mapsize = sizeof(struct sun2_bus_dmamap) +
-	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
-	if ((mapstore = malloc(mapsize, M_DMAMAP,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
-		return (ENOMEM);
-
-	bzero(mapstore, mapsize);
-	map = (struct sun2_bus_dmamap *)mapstore;
-	map->_dm_size = size;
-	map->_dm_segcnt = nsegments;
-	map->_dm_maxsegsz = maxsegsz;
-	map->_dm_boundary = boundary;
-	map->_dm_align = PAGE_SIZE;
-	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
-	map->dm_mapsize = 0;		/* no valid mappings */
-	map->dm_nsegs = 0;
-
-	*dmamp = map;
-	return (0);
-}
-
-/*
- * Common function for DMA map destruction.  May be called by bus-specific
- * DMA map destruction functions.
- */
-void
-_bus_dmamap_destroy(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-{
-
-	/*
-	 * If the handle contains a valid mapping, unload it.
-	 */
-	if (map->dm_mapsize != 0)
-		bus_dmamap_unload(t, map);
-
-	free(map, M_DMAMAP);
-}
-
-/*
- * Common function for DMA-safe memory allocation.  May be called
- * by bus-specific DMA memory allocation functions.
- */
-int
-_bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
-	bus_dma_tag_t t;
-	bus_size_t size, alignment, boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
-{
-	vaddr_t low, high;
-	struct pglist *mlist;
-	int error;
-
-	/* Always round the size. */
-	size = round_page(size);
-	low = avail_start;
-	high = avail_end;
-
-	if ((mlist = malloc(sizeof(*mlist), M_DEVBUF,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
-		return (ENOMEM);
-
-	/*
-	 * Allocate physical pages from the VM system.
-	 */
-	TAILQ_INIT(mlist);
-	error = uvm_pglistalloc(size, low, high, 0, 0,
-				mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
-	if (error)
-		return (error);
-
-	/*
-	 * Simply keep a pointer around to the linked list, so
-	 * bus_dmamap_free() can return it.
-	 *
-	 * NOBODY SHOULD TOUCH THE pageq FIELDS WHILE THESE PAGES
-	 * ARE IN OUR CUSTODY.
-	 */
-	segs[0]._ds_mlist = mlist;
-
-	/*
-	 * We now have physical pages, but no DVMA addresses yet. These
-	 * will be allocated in bus_dmamap_load*() routines. Hence we
-	 * save any alignment and boundary requirements in this dma
-	 * segment.
-	 */
-	segs[0].ds_addr = 0;
-	segs[0].ds_len = 0;
-	segs[0]._ds_va = 0;
-	*rsegs = 1;
-	return (0);
-}
-
-/*
- * Common function for freeing DMA-safe memory.  May be called by
- * bus-specific DMA memory free functions.
- */
-void
-_bus_dmamem_free(t, segs, nsegs)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-{
-
-	if (nsegs != 1)
-		panic("bus_dmamem_free: nsegs = %d", nsegs);
-
-	/*
-	 * Return the list of physical pages back to the VM system.
-	 */
-	uvm_pglistfree(segs[0]._ds_mlist);
-	free(segs[0]._ds_mlist, M_DEVBUF);
-}
-
-/*
- * Common function for mapping DMA-safe memory.  May be called by
- * bus-specific DMA memory map functions.
- */
-int
-_bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	size_t size;
-	caddr_t *kvap;
-	int flags;
-{
-	struct vm_page *m;
-	vaddr_t va;
-	struct pglist *mlist;
-
-	if (nsegs != 1)
-		panic("_bus_dmamem_map: nsegs = %d", nsegs);
-
-	size = round_page(size);
-
-	va = uvm_km_valloc(kernel_map, size);
-	if (va == 0)
-		return (ENOMEM);
-
-	segs[0]._ds_va = va;
-	*kvap = (caddr_t)va;
-
-	mlist = segs[0]._ds_mlist;
-	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
-		paddr_t pa;
-
-		if (size == 0)
-			panic("_bus_dmamem_map: size botch");
-
-		pa = VM_PAGE_TO_PHYS(m);
-		pmap_enter(pmap_kernel(), va, pa | PMAP_NC,
-			   VM_PROT_READ | VM_PROT_WRITE,
-			   VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
-
-		va += PAGE_SIZE;
-		size -= PAGE_SIZE;
-	}
-	pmap_update();
-
-	return (0);
-}
-
-/*
- * Common function for unmapping DMA-safe memory.  May be called by
- * bus-specific DMA memory unmapping functions.
- */
-void
-_bus_dmamem_unmap(t, kva, size)
-	bus_dma_tag_t t;
-	caddr_t kva;
-	size_t size;
-{
-
-#ifdef DIAGNOSTIC
-	if ((u_long)kva & PAGE_MASK)
-		panic("_bus_dmamem_unmap");
-#endif
-
-	size = round_page(size);
-	uvm_unmap(kernel_map, (vaddr_t)kva, (vaddr_t)kva + size);
-}
-
-/*
- * Common functin for mmap(2)'ing DMA-safe memory.  May be called by
- * bus-specific DMA mmap(2)'ing functions.
- */
-paddr_t
-_bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	off_t off;
-	int prot, flags;
-{
-
-	panic("_bus_dmamem_mmap: not implemented");
 }
 
 /*
@@ -1281,73 +963,6 @@ _bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 	map->dm_mapsize = size;
 
 	return (0);
-}
-
-/*
- * Utility to allocate an aligned kernel virtual address range
- */
-vaddr_t
-_bus_dma_valloc_skewed(size, boundary, align, skew)
-	size_t size;
-	u_long boundary;
-	u_long align;
-	u_long skew;
-{
-	size_t oversize;
-	vaddr_t va, sva;
-
-	/*
-	 * Find a region of kernel virtual addresses that is aligned
-	 * to the given address modulo the requested alignment, i.e.
-	 *
-	 *	(va - skew) == 0 mod align
-	 *
-	 * The following conditions apply to the arguments:
-	 *
-	 *	- `size' must be a multiple of the VM page size
-	 *	- `align' must be a power of two
-	 *	   and greater than or equal to the VM page size
-	 *	- `skew' must be smaller than `align'
-	 *	- `size' must be smaller than `boundary'
-	 */
-
-#ifdef DIAGNOSTIC
-	if ((size & PAGE_MASK) != 0)
-		panic("_bus_dma_valloc_skewed: invalid size %lx", (unsigned long) size);
-	if ((align & PAGE_MASK) != 0)
-		panic("_bus_dma_valloc_skewed: invalid alignment %lx", align);
-	if (align < skew)
-		panic("_bus_dma_valloc_skewed: align %lx < skew %lx",
-			align, skew);
-#endif
-
-	/* XXX - Implement this! */
-	if (boundary)
-		panic("_bus_dma_valloc_skewed: not implemented");
-
-	/*
-	 * First, find a region large enough to contain any aligned chunk
-	 */
-	oversize = size + align - PAGE_SIZE;
-	sva = uvm_km_valloc(kernel_map, oversize);
-	if (sva == 0)
-		return (ENOMEM);
-
-	/*
-	 * Compute start of aligned region
-	 */
-	va = sva;
-	va += (skew + align - va) & (align - 1);
-
-	/*
-	 * Return excess virtual addresses
-	 */
-	if (va != sva)
-		(void)uvm_unmap(kernel_map, sva, va);
-	if (va + size != sva + oversize)
-		(void)uvm_unmap(kernel_map, va + size, sva + oversize);
-
-	return (va);
 }
 
 /*
@@ -1454,48 +1069,6 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 }
 
 /*
- * Like _bus_dmamap_load(), but for mbufs.
- */
-int
-_bus_dmamap_load_mbuf(t, map, m, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct mbuf *m;
-	int flags;
-{
-
-	panic("_bus_dmamap_load: not implemented");
-}
-
-/*
- * Like _bus_dmamap_load(), but for uios.
- */
-int
-_bus_dmamap_load_uio(t, map, uio, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct uio *uio;
-	int flags;
-{
-
-	panic("_bus_dmamap_load_uio: not implemented");
-}
-
-/*
- * Common function for DMA map synchronization.  May be called
- * by bus-specific DMA map synchronization functions.
- */
-void
-_bus_dmamap_sync(t, map, offset, len, ops)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_addr_t offset;
-	bus_size_t len;
-	int ops;
-{
-}
-
-/*
  * unload a DMA map.
  */
 void
@@ -1563,338 +1136,36 @@ _bus_dmamap_unload(t, map)
 	map->dm_nsegs = 0;
 }
 
-struct sun2_bus_dma_tag mainbus_dma_tag = {
-	NULL,
-	_bus_dmamap_create,
-	_bus_dmamap_destroy,
-	_bus_dmamap_load,
-	_bus_dmamap_load_mbuf,
-	_bus_dmamap_load_uio,
-	_bus_dmamap_load_raw,
-	_bus_dmamap_unload,
-	_bus_dmamap_sync,
-
-	_bus_dmamem_alloc,
-	_bus_dmamem_free,
-	_bus_dmamem_map,
-	_bus_dmamem_unmap,
-	_bus_dmamem_mmap
-};
-
-
 /*
- * Base bus space handlers.
- */
-static int	sun2_bus_map __P(( bus_space_tag_t, bus_type_t, bus_addr_t,
-				    bus_size_t, int, vaddr_t,
-				    bus_space_handle_t *));
-static int	sun2_bus_unmap __P((bus_space_tag_t, bus_space_handle_t,
-				     bus_size_t));
-static int	sun2_bus_subregion __P((bus_space_tag_t, bus_space_handle_t,
-					 bus_size_t, bus_size_t,
-					 bus_space_handle_t *));
-static int	sun2_bus_mmap __P((bus_space_tag_t, bus_type_t,
-				    bus_addr_t, int, bus_space_handle_t *));
-static void	*sun2_mainbus_intr_establish __P((bus_space_tag_t, int, int,
-						   int, int (*) __P((void *)),
-						   void *));
-static void     sun2_bus_barrier __P(( bus_space_tag_t, bus_space_handle_t,
-					bus_size_t, bus_size_t, int));
-
-
-/*
- * If we can find a mapping that was established by the PROM, use it.
+ * Translate a VME address and address modifier
+ * into a CPU physical address and page type.
  */
 int
-sun2_find_prom_map(pa, iospace, len, hp)
-	bus_addr_t	pa;
-	bus_type_t	iospace;
-	int		len;
-	bus_space_handle_t *hp;
+vmebus_translate(mod, addr, btp, bap)
+	vme_am_t	mod;
+	vme_addr_t	addr;
+	bus_type_t	*btp;
+	bus_addr_t	*bap;
 {
-	u_long	pf;
-	int	pgtype;
-	u_long	va, eva;
-	int	sme;
-	u_long	pte;
-	int	saved_ctx;
+	bus_addr_t base;
 
-	/*
-	 * The mapping must fit entirely within one page.
-	 */
-	if ((((u_long)pa & PGOFSET) + len) > NBPG)
-		return (EINVAL);
-
-	pf = PA_PGNUM(pa);
-	pgtype = iospace << PG_MOD_SHIFT;
-	saved_ctx = get_context();
-	set_context(0);
-
-	/*
-	 * Walk the PROM address space, looking for a page with the
-	 * mapping we want.
-	 */
-	for (va = SUN2_MONSTART; va < SUN2_MONEND; ) {
-
-		/*
-		 * Make sure this segment is mapped.
-		 */
-		sme = get_segmap(va);
-		if (sme == SEGINV) {
-			va += NBSG;
-			continue;			/* next segment */
-		}
-
-		/*
-		 * Walk the pages of this segment.
-		 */
-		for(eva = va + NBSG; va < eva; va += NBPG) {
-			pte = get_pte(va);
-
-			if ((pte & (PG_VALID | PG_TYPE)) ==
-				(PG_VALID | pgtype) &&
-			    PG_PFNUM(pte) == pf)
-			{
-				/* 
-				 * Found the PROM mapping.
-				 * note: preserve page offset
-				 */
-				*hp = (bus_space_handle_t)(va | ((u_long)pa & PGOFSET));
-				set_context(saved_ctx);
-				return (0);
-			}
-		}
-	}
-	set_context(saved_ctx);
-	return (ENOENT);
-}
-
-int
-sun2_bus_map(t, iospace, addr, size, flags, vaddr, hp)
-	bus_space_tag_t t;
-	bus_type_t	iospace;
-	bus_addr_t	addr;
-	bus_size_t	size;
-	vaddr_t		vaddr;
-	bus_space_handle_t *hp;
-{
-	bus_size_t	offset;
-	vaddr_t v;
-	int pte;
-	int saved_ctx;
-
-	/*
-	 * If we suspect there might be one, try to find
-	 * and use a PROM mapping.
-	 */
-	if ((flags & _SUN2_BUS_MAP_USE_PROM) != 0 &&
-	     sun2_find_prom_map(addr, iospace, size, hp) == 0)
-		return (0);
-
-	/*
-	 * Adjust the user's request to be page-aligned.
-	 */
-	offset = addr & PGOFSET;
-	addr -= offset;
-	size += offset;
-	size = m68k_round_page(size);
-	if (size == 0) {
-		printf("sun2_bus_map: zero size\n");
-		return (EINVAL);
-	}
-
-	/* Get some kernel virtual address space. */
-	if (vaddr)
-		v = vaddr;
-	else
-		v = uvm_km_valloc_wait(kernel_map, size);
-	if (v == 0)
-		panic("sun2_bus_map: no memory");
-
-	/* note: preserve page offset */
-	*hp = (bus_space_handle_t)(v | offset);
-
-	/*
-	 * Map the device.  If we think that this is a probe,
-	 * make and set the PTE by hand, otherwise use the pmap.
-	 */
-	if (v == tmp_vpages[1]) {
-		pte = PA_PGNUM(addr);
-		pte |= (iospace << PG_MOD_SHIFT);
-		pte |= (PG_VALID | PG_WRITE | PG_SYSTEM | PG_NC);
-		saved_ctx = get_context();
-		set_context(0);
-		set_pte(v, pte);
-		set_context(saved_ctx);
-	} else {
-		addr |= iospace | PMAP_NC;
-		pmap_map(v, addr, addr + size, VM_PROT_ALL);
-	}
-
-	return (0);
-}
-
-int
-sun2_bus_unmap(t, bh, size)
-	bus_space_tag_t t;
-	bus_size_t	size;
-	bus_space_handle_t bh;
-{
-	bus_size_t	offset;
-	vaddr_t va = (vaddr_t)bh;
-
-	/*
-	 * Adjust the user's request to be page-aligned.
-	 */
-	offset = va & PGOFSET;
-	va -= offset;
-	size += offset;
-	size = m68k_round_page(size);
-	if (size == 0) {
-		printf("sun2_bus_unmap: zero size\n");
-		return (EINVAL);
-	}
-
-	/*
-	 * If any part of the request is in the PROM's address space,
-	 * don't unmap it.
-	 */
-#ifdef	DIAGNOSTIC
-	if ((va >= SUN2_MONSTART && va < SUN2_MONEND) !=
-	    ((va + size) >= SUN2_MONSTART && (va + size) < SUN2_MONEND))
-		panic("sun2_bus_unmap: bad PROM mapping\n");
-#endif
-	if (va >= SUN2_MONSTART && va < SUN2_MONEND)
-		return (0);
-
-	uvm_km_free_wakeup(kernel_map, va, size);
-	return (0);
-}
-
-int
-sun2_bus_subregion(tag, handle, offset, size, nhandlep)
-	bus_space_tag_t		tag;
-	bus_space_handle_t	handle;
-	bus_size_t		offset;
-	bus_size_t		size;
-	bus_space_handle_t	*nhandlep;
-{
-	*nhandlep = handle + offset;
-	return (0);
-}
-
-int
-sun2_bus_mmap(t, iospace, paddr, flags, hp)
-	bus_space_tag_t t;
-	bus_type_t	iospace;
-	bus_addr_t	paddr;
-	int		flags;
-	bus_space_handle_t *hp;
-{
-	*hp = (bus_space_handle_t)(paddr | iospace | PMAP_NC);
-	return (0);
-}
-
-/*
- * Establish a temporary bus mapping for device probing.
- */
-int
-bus_space_probe(tag, btype, paddr, size, offset, flags, callback, arg)
-	bus_space_tag_t tag;
-	bus_type_t	btype;
-	bus_addr_t	paddr;
-	bus_size_t	size;
-	size_t		offset;
-	int		flags;
-	int		(*callback) __P((void *, void *));
-	void		*arg;
-{
-	bus_space_handle_t bh;
-	caddr_t tmp;
-	int rv;
-	int result;
-	int saved_ctx;
-
-	/*
-	 * Map the device into a temporary page.
-	 */
-	if ((((u_long)paddr & PGOFSET) + size) > NBPG)
-		panic("bus_space_probe: probe too large");
-	if (tmp_vpages_inuse)
-		panic("bus_space_probe: tmp_vpages_inuse");
-	tmp_vpages_inuse++;
-	if (bus_space_map2(tag, btype, paddr, size, flags, tmp_vpages[1], &bh) != 0)
-		return (0);
-
-	/*
-	 * Probe the device.
-	 */
-	tmp = (caddr_t)bh;
-	switch (size) {
-	case 1:
-		rv = peek_byte(tmp + offset);
+	switch(mod) {
+#define _DS (VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA)
+	
+	case (VME_AM_A16|_DS):
+		base = 0x00ff0000;
 		break;
-	case 2:
-		rv = peek_word(tmp + offset);
+
+	case (VME_AM_A24|_DS):
+		base = 0;
 		break;
-	case 4:
-		rv = peek_long(tmp + offset);
-		break;
+
 	default:
-		printf("bus_space_probe: invalid size=%d\n", (int) size);
-		rv = -1;
+		return (ENOENT);
+#undef _DS
 	}
 
-	/*
-	 * Optionally call the user back on success.
-	 */
-	result = (rv != -1);
-	if (result && callback != NULL)
-		result = (*callback)(tmp, arg);
-
-	/*
-	 * Unmap the temporary page.
-	 */
-	saved_ctx = get_context();
-	set_context(0);
-	set_pte(tmp_vpages[1], PG_INVAL);
-	set_context(saved_ctx);
-	--tmp_vpages_inuse;
-
-	return (result);
+	*bap = base | addr;
+	*btp = (*bap & 0x800000 ? PMAP_VME8 : PMAP_VME0);
+	return (0);
 }
-
-void *
-sun2_mainbus_intr_establish(t, pil, level, flags, handler, arg)
-	bus_space_tag_t t;
-	int	pil;
-	int	level;
-	int	flags;
-	int	(*handler)__P((void *));
-	void	*arg;
-{
-	isr_add_autovect(handler, arg, pil);
-	return (NULL);
-}
-
-void sun2_bus_barrier (t, h, offset, size, flags)
-	bus_space_tag_t	t;
-	bus_space_handle_t h;
-	bus_size_t	offset;
-	bus_size_t	size;
-	int		flags;
-{
-	/* No default barrier action defined */
-	return;
-}
-
-struct sun2_bus_space_tag mainbus_space_tag = {
-	NULL,				/* cookie */
-	NULL,				/* parent bus tag */
-	sun2_bus_map,			/* bus_space_map */
-	sun2_bus_unmap,			/* bus_space_unmap */
-	sun2_bus_subregion,		/* bus_space_subregion */
-	sun2_bus_barrier,		/* bus_space_barrier */
-	sun2_bus_mmap,			/* bus_space_mmap */
-	sun2_mainbus_intr_establish	/* bus_intr_establish */
-};
