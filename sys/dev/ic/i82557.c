@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.27 2000/05/19 16:00:30 jhawk Exp $	*/
+/*	$NetBSD: i82557.c,v 1.28 2000/05/24 06:04:12 soren Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -497,7 +497,7 @@ fxp_get_info(sc, enaddr)
 	sc->sc_eeprom_size = 0;
 	fxp_autosize_eeprom(sc);
 	if(sc->sc_eeprom_size == 0) {
-	    printf("%s: failed to detect EEPROM size", sc->sc_dev.dv_xname);
+	    printf("%s: failed to detect EEPROM size\n", sc->sc_dev.dv_xname);
 	    sc->sc_eeprom_size = 6; /* XXX panic here? */
 	}
 #ifdef DEBUG
