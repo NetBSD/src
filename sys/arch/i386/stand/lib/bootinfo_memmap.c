@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_memmap.c,v 1.1 1999/03/08 21:44:48 drochner Exp $	*/
+/*	$NetBSD: bootinfo_memmap.c,v 1.2 2001/07/07 22:57:57 perry Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -58,7 +58,7 @@ bi_getmemmap()
 	i = 0;
 	for (n = 0; n < nranges; n++) {
 		getmementry(&i, buf);
-		bcopy(buf, &bimm->entry[n], sizeof(struct bi_memmap_entry));
+		memcpy(&bimm->entry[n], buf, sizeof(struct bi_memmap_entry));
 	}
 	bimm->num = nranges;
 
