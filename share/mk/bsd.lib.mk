@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.221 2003/06/27 17:27:11 drochner Exp $
+#	$NetBSD: bsd.lib.mk,v 1.222 2003/07/18 04:04:03 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -100,14 +100,14 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}
 
 FPICFLAGS ?= -fPIC
 CPICFLAGS ?= -fPIC -DPIC
-CPPPICFLAGS?= -DPIC 
+CPPPICFLAGS?= -DPIC
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
 APICFLAGS ?=
 
 .elif (${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64") && \
        ${OBJECT_FMT} == "ELF"
 
-# If you use -fPIC you need to define BIGPIC to turn on 32-bit 
+# If you use -fPIC you need to define BIGPIC to turn on 32-bit
 # relocations in asm code
 FPICFLAGS ?= -fPIC
 CPICFLAGS ?= -fPIC -DPIC
@@ -119,7 +119,7 @@ APICFLAGS ?= -KPIC
 
 FPICFLAGS ?= -fPIC
 CPICFLAGS?= -fPIC -DPIC
-CPPPICFLAGS?= -DPIC 
+CPPPICFLAGS?= -DPIC
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
 APICFLAGS?= -k
 # XXX libraries often need the millicode functions in libgcc.a,
@@ -133,7 +133,7 @@ SHLIB_SOVERSION=${SHLIB_FULLVERSION}
 SHLIB_SHFLAGS=
 FPICFLAGS ?= -fPIC
 CPICFLAGS?= -fPIC -DPIC
-CPPPICFLAGS?= -DPIC 
+CPPPICFLAGS?= -DPIC
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
 APICFLAGS?= -k
 
@@ -349,7 +349,7 @@ _LIBS+=llib-l${LIB}.ln
 	|| ${MKLINKLIB} != "no"
 ALLOBJS=${OBJS} ${POBJS} ${SOBJS}
 .else
-ALLOBJS=${POBJS} ${SOBJS} 
+ALLOBJS=${POBJS} ${SOBJS}
 .endif
 .if ${MKLINT} != "no" && ${MKLINKLIB} != "no" && !empty(LOBJS)
 ALLOBJS+=${LOBJS}
