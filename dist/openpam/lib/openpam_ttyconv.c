@@ -55,7 +55,7 @@ int openpam_ttyconv_timeout = 0;
 static void
 timeout(int sig)
 {
-
+	/*LINTED unused*/
 	(void)sig;
 }
 
@@ -64,17 +64,17 @@ prompt(const char *msg)
 {
 	char buf[PAM_MAX_RESP_SIZE];
 	struct sigaction action, saved_action;
-	sigset_t saved_sigset, sigset;
+	sigset_t saved_sigs, sigs;
 	unsigned int saved_alarm;
-	int eof, error, fd, timed_out;
+	int eof, error, fd;
 	size_t len;
 	char *retval;
 	char ch;
 
-	sigemptyset(&sigset);
-	sigaddset(&sigset, SIGINT);
-	sigaddset(&sigset, SIGTSTP);
-	sigprocmask(SIG_SETMASK, &sigset, &saved_sigset);
+	sigemptyset(&sigs);
+	sigaddset(&sigs, SIGINT);
+	sigaddset(&sigs, SIGTSTP);
+	sigprocmask(SIG_SETMASK, &sigs, &saved_sigs);
 	action.sa_handler = &timeout;
 	action.sa_flags = 0;
 	sigemptyset(&action.sa_mask);
@@ -86,9 +86,9 @@ prompt(const char *msg)
 #endif
 	fd = fileno(stdin);
 	buf[0] = '\0';
-	timed_out = 0;
-	eof = error = timed_out = 0;
-	saved_alarm = alarm(openpam_ttyconv_timeout);
+	eof = error = 0;
+	if (openpam_ttyconv_timeout >= 0)
+		saved_alarm = alarm((unsigned int)openpam_ttyconv_timeout);
 	ch = '\0';
 	for (len = 0; ch != '\n' && !eof && !error; ++len) {
 		switch (read(fd, &ch, 1)) {
@@ -108,8 +108,9 @@ prompt(const char *msg)
 	}
 	alarm(0);
 	sigaction(SIGALRM, &saved_action, NULL);
-	sigprocmask(SIG_SETMASK, &saved_sigset, NULL);
-	alarm(saved_alarm);
+	sigprocmask(SIG_SETMASK, &saved_sigs, NULL);
+	if (openpam_ttyconv_timeout >= 0)
+		alarm(saved_alarm);
 	if (error == EINTR)
 		fputs(" timeout!", stderr);
 	if (error || eof) {
@@ -170,10 +171,11 @@ openpam_ttyconv(int n,
 	int i;
 
 	ENTER();
+	/*LINTED unused*/
 	(void)data;
 	if (n <= 0 || n > PAM_MAX_NUM_MSG)
 		RETURNC(PAM_CONV_ERR);
-	if ((aresp = calloc(n, sizeof *aresp)) == NULL)
+	if ((aresp = calloc((size_t)n, sizeof *aresp)) == NULL)
 		RETURNC(PAM_BUF_ERR);
 	for (i = 0; i < n; ++i) {
 		aresp[i].resp_retcode = 0;
