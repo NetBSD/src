@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.4 1998/11/19 15:38:23 mrg Exp $	*/
+/*	$NetBSD: ofb.c,v 1.5 1998/12/22 19:38:35 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -137,6 +137,7 @@ ofbattach(parent, self, aux)
 	struct wsemuldisplaydev_attach_args a;
 	int console;
 	struct ofb_devconfig *dc;
+	char devinfo[256];
 
 	console = ofb_is_console();
 
@@ -148,7 +149,7 @@ ofbattach(parent, self, aux)
 
 		dc = malloc(sizeof(struct ofb_devconfig), M_DEVBUF, M_WAITOK);
 		bzero(dc, sizeof(struct ofb_devconfig));
-		node = pcidev_to_ofdev(pa);
+		node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
 		if (node == 0) {
 			printf(": ofdev not found\n");
 			return;
@@ -164,7 +165,9 @@ ofbattach(parent, self, aux)
 	dc->dc_raster.pixels = mapiodev(dc->dc_paddr,
 				dc->dc_linebytes * dc->dc_height);
 
-	printf(": %d x %d, %dbpp\n",
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	printf(": %s\n", devinfo);
+	printf("%s: %d x %d, %dbpp\n", self->dv_xname,
 	    dc->dc_raster.width, dc->dc_raster.height, dc->dc_raster.depth);
 
 	a.console = console;
