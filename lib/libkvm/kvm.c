@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.52 1997/08/12 16:28:32 gwr Exp $	*/
+/*	$NetBSD: kvm.c,v 1.53 1997/08/15 02:21:56 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -37,11 +37,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$NetBSD: kvm.c,v 1.52 1997/08/12 16:28:32 gwr Exp $";
+__RCSID("$NetBSD: kvm.c,v 1.53 1997/08/15 02:21:56 mikel Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.18 1997/08/12 16:30:15 gwr Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.19 1997/08/15 02:22:02 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -38,11 +38,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$NetBSD: kvm_proc.c,v 1.18 1997/08/12 16:30:15 gwr Exp $";
+__RCSID("$NetBSD: kvm_proc.c,v 1.19 1997/08/15 02:22:02 mikel Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
