@@ -1,4 +1,4 @@
-/*	$NetBSD: blockio.S,v 1.8 1998/12/12 17:28:05 mycroft Exp $	*/
+/*	$NetBSD: blockio.S,v 1.9 1999/10/26 06:53:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -175,7 +175,7 @@ ENTRY(insw16)
 	tst	r2, #0x00000007
 	tsteq	r1, #0x00000003
 
-	bne	_insw
+	bne	_C_LABEL(insw)
 
 /* Word aligned insw */
 
@@ -233,7 +233,7 @@ ENTRY(outsw16)
 	tst	r2, #0x00000007
 	tsteq	r1, #0x00000003
 
-	bne	_outsw
+	bne	_C_LABEL(outsw)
 
 /* Word aligned outsw */
 
@@ -301,7 +301,7 @@ ENTRY(inswm8)
 
 	tst	r1, #0x00000003
 
-	bne	_insw
+	bne	_C_LABEL(insw)
 
 /* Word aligned insw */
 
@@ -397,7 +397,7 @@ ENTRY(outswm8)
 
 	tst	r1, #0x00000003
 
-	bne	_outsw
+	bne	_C_LABEL(outsw)
 
 /* Word aligned outsw */
 
