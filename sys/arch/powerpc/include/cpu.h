@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2 1997/04/16 22:54:21 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3 1997/11/05 04:19:04 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -84,8 +84,8 @@ extern struct machvec machine_interface;
 extern void delay __P((unsigned));
 #define	DELAY(n)		delay(n)
 
-extern volatile int want_resched;
-extern volatile int astpending;
+extern __volatile int want_resched;
+extern __volatile int astpending;
 
 #define	need_resched()		(want_resched = 1, astpending = 1)
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, astpending = 1)
@@ -102,15 +102,15 @@ syncicache(from, len)
 	void *p = from;
 	
 	do {
-		asm volatile ("dcbst 0,%0" :: "r"(p));
+		__asm__ __volatile ("dcbst 0,%0" :: "r"(p));
 		p += CACHELINESIZE;
 	} while ((l -= CACHELINESIZE) > 0);
-	asm volatile ("sync");
+	__asm__ __volatile ("sync");
 	do {
-		asm volatile ("icbi 0,%0" :: "r"(from));
+		__asm__ __volatile ("icbi 0,%0" :: "r"(from));
 		from += CACHELINESIZE;
 	} while ((len -= CACHELINESIZE) > 0);
-	asm volatile ("isync");
+	__asm__ __volatile ("isync");
 }
 
 extern char *bootpath;
