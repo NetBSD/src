@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.2 1996/03/06 22:46:37 mark Exp $ */
+/* $NetBSD: db_disasm.c,v 1.3 1996/04/26 20:25:55 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -51,6 +51,7 @@
 #include <sys/param.h>
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
+#include <ddb/db_output.h>
 
 /*
  * General instruction format
@@ -254,7 +255,7 @@ db_disasm(loc, altfmt)
 	u_int insn;
 	int matchp;
 	int branch;
-	char* f_ptr, *cp;
+	char* f_ptr;
 	int fmt;
 
 	fmt = 0;
@@ -383,7 +384,7 @@ db_disasm(loc, altfmt)
 				db_printf(", %d", (insn >> 5) & 0x07);
 			break;
 		default:
-			db_printf("[%02x:c](unknown)", *f_ptr, *f_ptr);
+			db_printf("[%02x:%c](unknown)", *f_ptr, *f_ptr);
 			break;
 		}
 		++fmt;
@@ -464,25 +465,25 @@ db_insn_ldrstr(insn, loc)
 	u_int insn;
 	u_int loc;
 {
-	if (((insn >> 16) & 0x0f) == 15 && (insn & (1 << 21)) == 0
-	    && (insn & (1 << 24)) != 0 && (insn & (1 << 25) == 0)) {
+	if ((((insn >> 16) & 0x0f) == 15) && ((insn & (1 << 21)) == 0)
+	    && ((insn & (1 << 24)) != 0) && ((insn & (1 << 25)) == 0)) {
 		if (insn & 0x00800000)
 			loc += (insn & 0xffff);
 		else
 			loc -= (insn & 0xffff);
 		db_printsym((db_addr_t)(loc - 8), DB_STGY_ANY);
  	} else {
-		printf("[r%d", (insn >> 16) & 0x0f);
-		printf("%s, ", (insn & (1 << 24)) ? "" : "]");
+		db_printf("[r%d", (insn >> 16) & 0x0f);
+		db_printf("%s, ", (insn & (1 << 24)) ? "" : "]");
 
 		if (!(insn & 0x00800000))
-			printf("-");
+			db_printf("-");
 		if (insn & (1 << 25))
 			db_register_shift(insn);
 		else
-			printf("#0x%04x", insn & 0xfff);
+			db_printf("#0x%04x", insn & 0xfff);
 		if (insn & (1 << 24))
-			printf("]");
+			db_printf("]");
 	}
 }
 
