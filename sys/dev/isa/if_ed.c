@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.98 1996/05/07 01:55:13 thorpej Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.99 1996/05/08 22:09:18 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -254,7 +254,7 @@ ed_find_WD80x3(sc, cf, ia)
 	bus_mem_handle_t memh;
 	u_int memsize;
 	u_char iptr, isa16bit, sum;
-	int i, rv, mapped_mem = 0;
+	int i, rv, memfail, mapped_mem = 0;
 	int asicbase, nicbase;
 
 	bc = ia->ia_bc;
@@ -593,25 +593,47 @@ ed_find_WD80x3(sc, cf, ia)
 	(void) bus_io_read_1(bc, delayioh, 0);
 
 	/* Now zero memory and verify that it is clear. */
-	for (i = 0; i < memsize; ++i)
-		bus_mem_write_1(bc, memh, sc->mem_start + i, 0);
+	if (isa16bit) {
+		for (i = 0; i < memsize; i += 2)
+			bus_mem_write_2(bc, memh, sc->mem_start + i, 0);
+	} else {
+		for (i = 0; i < memsize; ++i)
+			bus_mem_write_1(bc, memh, sc->mem_start + i, 0);
+	}
 
-	for (i = 0; i < memsize; ++i)
-		if (bus_mem_read_1(bc, memh, sc->mem_start + i)) {
-			printf("%s: failed to clear shared memory at %x - check configuration\n",
-			    sc->sc_dev.dv_xname,
-			    (ia->ia_maddr + sc->mem_start + i));
-
-			/* Disable 16 bit access to shared memory. */
-			bus_io_write_1(bc, ioh, asicbase + ED_WD_MSR,
-			    sc->wd_msr_proto);
-			if (isa16bit)
-				bus_io_write_1(bc, ioh, asicbase + ED_WD_LAAR,
-				    sc->wd_laar_proto);
-			(void) bus_io_read_1(bc, delayioh, 0);
-			(void) bus_io_read_1(bc, delayioh, 0);
-			goto out;
+	memfail = 0;
+	if (isa16bit) {
+		for (i = 0; i < memsize; i += 2) {
+			if (bus_mem_read_2(bc, memh, sc->mem_start + i)) {
+				memfail = 1;
+				break;
+			}
 		}
+	} else {
+		for (i = 0; i < memsize; ++i) {
+			if (bus_mem_read_1(bc, memh, sc->mem_start + i)) {
+				memfail = 1;
+				break;
+			}
+		}
+	}
+
+	if (memfail) {
+		printf("%s: failed to clear shared memory at %x - "
+		    "check configuration\n",
+		    sc->sc_dev.dv_xname,
+		    (ia->ia_maddr + sc->mem_start + i));
+
+		/* Disable 16 bit access to shared memory. */
+		bus_io_write_1(bc, ioh, asicbase + ED_WD_MSR,
+		    sc->wd_msr_proto);
+		if (isa16bit)
+			bus_io_write_1(bc, ioh, asicbase + ED_WD_LAAR,
+			    sc->wd_laar_proto);
+		(void) bus_io_read_1(bc, delayioh, 0);
+		(void) bus_io_read_1(bc, delayioh, 0);
+		goto out;
+	}
 
 	/*
 	 * Disable 16bit access to shared memory - we leave it disabled
@@ -667,8 +689,8 @@ ed_find_3Com(sc, cf, ia)
 	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
 	bus_mem_handle_t memh;
-	int i;
-	u_int memsize;
+	int i, rv, mapped_mem = 0;
+	u_int memsize, memfail;
 	u_char isa16bit, x;
 	int ptr, asicbase, nicbase;
 
@@ -677,7 +699,6 @@ ed_find_3Com(sc, cf, ia)
 	 * to it.
 	 */
 	memsize = 8192;
-
 
 	bc = ia->ia_bc;
 
@@ -898,17 +919,39 @@ ed_find_3Com(sc, cf, ia)
 	bus_io_write_1(bc, ioh, asicbase + ED_3COM_VPTR1, 0xff);
 	bus_io_write_1(bc, ioh, asicbase + ED_3COM_VPTR0, 0x00);
 
-	/* Zero memory and verify that it is clear. */
-	for (i = 0; i < memsize; ++i)
-		bus_mem_write_1(bc, memh, sc->mem_start + i, 0);
+	/* Now zero memory and verify that it is clear. */
+	if (isa16bit) {
+		for (i = 0; i < memsize; i += 2)
+			bus_mem_write_2(bc, memh, sc->mem_start + i, 0);
+	} else {
+		for (i = 0; i < memsize; ++i)
+			bus_mem_write_1(bc, memh, sc->mem_start + i, 0);
+	}
 
-	for (i = 0; i < memsize; ++i)
-		if (bus_mem_read_1(bc, memh, sc->mem_start + i)) {
-			printf("%s: failed to clear shared memory at %x - check configuration\n",
-			    sc->sc_dev.dv_xname,
-			    (ia->ia_maddr + sc->mem_start + i));
-			goto out;
+	memfail = 0;
+	if (isa16bit) {
+		for (i = 0; i < memsize; i += 2) {
+			if (bus_mem_read_2(bc, memh, sc->mem_start + i)) {
+				memfail = 1;
+				break;
+			}
 		}
+	} else {
+		for (i = 0; i < memsize; ++i) {
+			if (bus_mem_read_1(bc, memh, sc->mem_start + i)) {
+				memfail = 1;
+				break;
+			}
+		}
+	}
+
+	if (memfail) {
+		printf("%s: failed to clear shared memory at %x - "
+		    "check configuration\n",
+		    sc->sc_dev.dv_xname,
+		    (ia->ia_maddr + sc->mem_start + i));
+		goto out;
+	}
 
 	ia->ia_msize = memsize;
 	ia->ia_iosize = ED_3COM_IO_PORTS;
@@ -2505,35 +2548,59 @@ ed_getmcaf(ac, af)
 }
 
 void
-ed_shared_writemem(sc, buf, card, len)
+ed_shared_writemem(sc, from, card, len)
 	struct ed_softc *sc;
-	caddr_t buf;
+	caddr_t from;
 	int card, len;
 {
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_mem_handle_t memh = sc->sc_memh;
-	u_int8_t *ptr = (u_int8_t *)buf;
-	int i;
 
-	/* XXX should have bus_mem_copyout_{1,2,4,8}() */
-
-	for (i = 0; i < len; ++i)
-		bus_mem_write_1(bc, memh, card + i, ptr[i]);
+	/*
+	 * For 16-bit cards, 16-bit memory access has already
+	 * been set up.  Note that some cards are really picky
+	 * about enforcing 16-bit access to memory, so we
+	 * have to be careful.
+	 */
+	if (sc->isa16bit) {
+		while (len > 1) {
+			bus_mem_write_2(bc, memh, card,
+			    *((u_int16_t *)from));
+			from += 2;
+			card += 2;
+			len -= 2;
+		}
+		if (len == 1)
+			bus_mem_write_2(bc, memh, card, (u_int16_t)(*from));
+	} else {
+		while (len--)
+			bus_mem_write_1(bc, memh, card++, *from++);
+	}
 }
 
 void
-ed_shared_readmem(sc, card, buf, len)
+ed_shared_readmem(sc, card, to, len)
 	struct ed_softc *sc;
-	caddr_t buf;
+	caddr_t to;
 	int card, len;
 {
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_mem_handle_t memh = sc->sc_memh;
-	u_int8_t *ptr = (u_int8_t *)buf;
-	int i;
 
-	/* XXX should have bus_mem_copyin_{1,2,4,8}() */
-
-	for (i = 0; i < len; ++i)
-		ptr[i] = bus_mem_read_1(bc, memh, card + i);
+	/*
+	 * See comment above re. 16-bit cards.
+	 */
+	if (sc->isa16bit) {
+		while (len > 1) {
+			*((u_int16_t *)to) = bus_mem_read_2(bc, memh, card);
+			to += 2;
+			card += 2;
+			len -= 2;
+		}
+		if (len == 1)
+			*to = bus_mem_read_2(bc, memh, card) & 0xff;
+	} else {
+		while (len--)
+			*to++ = bus_mem_read_1(bc, memh, card++);
+	}
 }
