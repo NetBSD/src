@@ -1,4 +1,4 @@
-/*	$NetBSD: dhureg.h,v 1.4 1999/05/28 20:17:29 ragge Exp $	*/
+/*	$NetBSD: dhureg.h,v 1.5 2003/04/06 15:45:12 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  *
@@ -65,8 +65,10 @@ typedef struct DHUregs dhuregs;
 #define	DHU_UBA_CSR_HI	1
 #define	DHU_UBA_RBUF	2
 #define	DHU_UBA_TXCHAR	2
+#define	DHU_UBA_RXTIME	DHU_UBA_TXCHAR	/* on a real dhu only */
 #define	DHU_UBA_LPR	4
 #define	DHU_UBA_STAT	6
+#define	DHU_UBA_FIFO	DHU_UBA_STAT	/* on a real dhu only */
 #define	DHU_UBA_LNCTRL	8
 #define	DHU_UBA_TBUFAD1	10
 #define	DHU_UBA_TBUFAD2	12
@@ -133,6 +135,7 @@ typedef struct DHUregs dhuregs;
 #define DHU_STAT_RI		0020000
 #define DHU_STAT_DCD		0010000
 #define DHU_STAT_CTS		0004000
+#define	DHU_STAT_MDL		0001000
 #define DHU_STAT_DHU		0000400
 
 /* LNCTRL bits */
