@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.18 2002/10/23 09:11:42 jdolecek Exp $ */
+/*	$NetBSD: mem.c,v 1.19 2003/04/02 02:34:13 thorpej Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/mem.c
@@ -125,10 +125,10 @@ mmrw(dev, uio, flags)
 			    trunc_page(v), prot, prot|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
-			c = min(uio->uio_resid, (int)(NBPG - o));
+			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
-			    (vaddr_t)vmmap + NBPG);
+			    (vaddr_t)vmmap + PAGE_SIZE);
 			pmap_update(pmap_kernel());
 			continue;
 
@@ -162,7 +162,7 @@ mmrw(dev, uio, flags)
 				extern caddr_t Segtabzero;
 				devzeropage = Segtabzero;
 			}
-			c = min(iov->iov_len, NBPG);
+			c = min(iov->iov_len, PAGE_SIZE);
 			error = uiomove(devzeropage, c, uio);
 			continue;
 
