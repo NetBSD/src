@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
+/*	$NetBSD: rcp.c,v 1.10 1996/02/01 00:02:24 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $";
+static char rcsid[] = "$NetBSD: rcp.c,v 1.10 1996/02/01 00:02:24 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -435,7 +435,7 @@ syserr:			run_err("%s: %s", name, strerror(errno));
 			 * versions expecting microseconds.
 			 */
 			(void)snprintf(buf, sizeof(buf), "T%ld 0 %ld 0\n",
-			    stb.st_mtimespec.ts_sec, stb.st_atimespec.ts_sec);
+			    stb.st_mtimespec.tv_sec, stb.st_atimespec.tv_sec);
 			(void)write(rem, buf, strlen(buf));
 			if (response() < 0)
 				goto next;
@@ -499,7 +499,7 @@ rsource(name, statp)
 		last++;
 	if (pflag) {
 		(void)snprintf(path, sizeof(path), "T%ld 0 %ld 0\n",
-		    statp->st_mtimespec.ts_sec, statp->st_atimespec.ts_sec);
+		    statp->st_mtimespec.tv_sec, statp->st_atimespec.tv_sec);
 		(void)write(rem, path, strlen(path));
 		if (response() < 0) {
 			closedir(dirp);
