@@ -1,4 +1,4 @@
-/*	$NetBSD: apmd.c,v 1.6 1997/07/30 22:54:08 jtc Exp $	*/
+/*	$NetBSD: apmd.c,v 1.7 1997/10/17 04:57:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -68,11 +68,6 @@ const char sockfile[] = _PATH_APM_SOCKET;
 static int debug = 0;
 
 extern char *__progname;
-extern char *optarg;
-extern int optind;
-extern int optopt;
-extern int opterr;
-extern int optreset;
 
 void usage (void);
 int power_status (int fd, int force, struct apm_power_info *pinfo);
@@ -296,7 +291,7 @@ resume(int ctl_fd)
     do_etc_file(_PATH_APM_ETC_RESUME);
 }
 
-void
+int
 main(int argc, char *argv[])
 {
     const char *fname = apmdev;
