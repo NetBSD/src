@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.1.2.6 2001/08/08 16:31:22 nathanw Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.1.2.7 2001/12/30 02:24:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,11 +40,20 @@
 #define _LIB_PTHREAD_TYPES_H
 
 #include <machine/lock.h>
-#include "pthread_queue.h"
 
-typedef __cpu_simple_lock_t	pt_spin_t;
+typedef __cpu_simple_lock_t	pthread_spin_t;
 
-PTQ_HEAD(pt_queue_t, pthread_st);
+
+/*
+ * Copied from PTQ_HEAD in pthread_queue.h
+ */
+#define _PTQ_HEAD(name, type)	       				\
+struct name {								\
+	struct type *ptqh_first;/* first element */			\
+	struct type **ptqh_last;/* addr of last next element */		\
+}
+
+_PTQ_HEAD(pthread_queue_t, pthread_st);
 
 struct	pthread_st;
 struct	pthread_attr_st;
@@ -78,12 +87,12 @@ struct	pthread_mutex_st {
 	 * Open research question: Would it help threaded applications if
 	 * preempted-lock-continuation were applied to mutexes?
 	 */
-	pt_spin_t	ptm_lock; 
+	pthread_spin_t	ptm_lock; 
 
 	/* Protects the owner and blocked queue */
-	pt_spin_t	ptm_interlock;
+	pthread_spin_t	ptm_interlock;
 	pthread_t	ptm_owner;
-	struct pt_queue_t	ptm_blocked;
+	struct pthread_queue_t	ptm_blocked;
 };
 
 #define	_PT_MUTEX_MAGIC	0x33330003
@@ -93,7 +102,7 @@ struct	pthread_mutex_st {
 				    __SIMPLELOCK_UNLOCKED,		\
 				    __SIMPLELOCK_UNLOCKED,		\
 				    NULL,				\
-				    PTQ_HEAD_INITIALIZER		\
+				    {NULL, NULL}			\
 				  }
 	
 
@@ -109,8 +118,8 @@ struct	pthread_cond_st {
 	unsigned int	ptc_magic;
 
 	/* Protects the queue of waiters */
-	pt_spin_t	ptc_lock;
-	struct pt_queue_t	ptc_waiters;
+	pthread_spin_t	ptc_lock;
+	struct pthread_queue_t	ptc_waiters;
 
 	pthread_mutex_t	*ptc_mutex;	/* Current mutex */
 };
@@ -120,7 +129,7 @@ struct	pthread_cond_st {
 
 #define PTHREAD_COND_INITIALIZER { _PT_COND_MAGIC,			\
 				   __SIMPLELOCK_UNLOCKED,		\
-				   PTQ_HEAD_INITIALIZER,		\
+				   {NULL, NULL},			\
 				   NULL					\
 				 }
 
