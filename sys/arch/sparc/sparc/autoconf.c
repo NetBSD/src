@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.38 1995/10/09 22:34:03 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.38.2.1 1995/10/18 21:46:39 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,6 +84,10 @@ int	mmu_3l;		/* SUN4_400 models have a 3-level MMU */
 
 extern	struct promvec *promvec;
 
+#ifdef KGDB
+extern	int kgdb_debug_panic;
+#endif
+
 static	int rootnode;
 int	findroot __P((void));
 void	setroot __P((void));
@@ -164,9 +168,6 @@ void
 bootstrap()
 {
 	int nregion, nsegment, ncontext, node;
-#ifdef KGDB
-	extern int kgdb_debug_panic;
-#endif
 
 #if defined(SUN4)
 	extern void oldmon_w_cmd();
