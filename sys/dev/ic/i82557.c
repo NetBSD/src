@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.7 1999/08/04 05:21:18 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.8 1999/08/05 01:35:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -545,12 +545,15 @@ fxp_start(ifp)
 	int error, lasttx, nexttx, opending, seg;
 
 	/*
-	 * If we need multicast setup, bail out now.
+	 * If we want a re-init, bail out now.
 	 */
-	if (sc->sc_flags & FXPF_NEEDMCSETUP) {
+	if (sc->sc_flags & FXPF_WANTINIT) {
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
+
+	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+		return;
 
 	/*
 	 * Remember the previous txpending and the current lasttx.
@@ -722,7 +725,7 @@ fxp_intr(arg)
 	bus_dmamap_t rxmap;
 	struct fxp_rfa *rfa;
 	struct ether_header *eh;
-	int i, oflags, claimed = 0;
+	int i, claimed = 0;
 	u_int16_t len;
 	u_int8_t statack;
 
@@ -873,23 +876,10 @@ fxp_intr(arg)
 				ifp->if_timer = 0;
 
 				/*
-				 * If we need a multicast filter setup,
-				 * do that now.
+				 * If we want a re-init, do that now.
 				 */
-				if (sc->sc_flags & FXPF_NEEDMCSETUP) {
-					oflags = ifp->if_flags;
-					fxp_mc_setup(sc);
-
-					/*
-					 * If IFF_ALLMULTI state changed,
-					 * we need to reinitialize the chip,
-					 * because this is handled by the
-					 * config block.
-					 */
-					if (((ifp->if_flags ^ oflags) &
-					    IFF_ALLMULTI) != 0)
-						(void) fxp_init(sc);
-				}
+				if (sc->sc_flags & FXPF_WANTINIT)
+					(void) fxp_init(sc);
 			}
 
 			/*
@@ -924,11 +914,9 @@ fxp_tick(arg)
 	struct fxp_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct fxp_stats *sp = &sc->sc_control_data->fcd_stats;
-	int oflags, s;
+	int s;
 
 	s = splnet();
-
-	oflags = ifp->if_flags;
 
 	ifp->if_opackets += sp->tx_good;
 	ifp->if_collisions += sp->tx_total_collisions;
@@ -956,16 +944,18 @@ fxp_tick(arg)
 	/*
 	 * If we haven't received any packets in FXP_MAC_RX_IDLE seconds,
 	 * then assume the receiver has locked up and attempt to clear
-	 * the condition by reprogramming the multicast filter. This is
-	 * a work-around for a bug in the 82557 where the receiver locks
-	 * up if it gets certain types of garbage in the syncronization
-	 * bits prior to the packet header. This bug is supposed to only
-	 * occur in 10Mbps mode, but has been seen to occur in 100Mbps
-	 * mode as well (perhaps due to a 10/100 speed transition).
+	 * the condition by reprogramming the multicast filter (actually,
+	 * resetting the interface). This is a work-around for a bug in
+	 * the 82557 where the receiver locks up if it gets certain types
+	 * of garbage in the syncronization bits prior to the packet header.
+	 * This bug is supposed to only occur in 10Mbps mode, but has been
+	 * seen to occur in 100Mbps mode as well (perhaps due to a 10/100
+	 * speed transition).
 	 */
 	if (sc->sc_rxidle > FXP_MAX_RX_IDLE) {
-		sc->sc_rxidle = 0;
-		fxp_mc_setup(sc);
+		(void) fxp_init(sc);
+		splx(s);
+		return;
 	}
 	/*
 	 * If there is no pending command, start another stats
@@ -997,19 +987,6 @@ fxp_tick(arg)
 	if (sc->sc_flags & FXPF_MII) {
 		/* Tick the MII clock. */
 		mii_tick(&sc->sc_mii);
-	}
-
-	/*
-	 * If IFF_ALLMULTI state changed, we need to reinitialize the chip,
-	 * because this is handled by the config block.
-	 *
-	 * NOTE: This shouldn't ever really happen here.
-	 */
-	if (((ifp->if_flags ^ oflags) & IFF_ALLMULTI) != 0) {
-		if (ifp->if_flags & IFF_DEBUG)
-			printf("%s: fxp_tick: allmulti state changed\n",
-			    sc->sc_dev.dv_xname);
-		(void) fxp_init(sc);
 	}
 
 	splx(s);
@@ -1274,6 +1251,7 @@ fxp_init(sc)
 			goto out;
 		}
 	}
+	sc->sc_rxidle = 0;
 
 	/*
 	 * Give the transmit ring to the chip.  We do this by pointing
@@ -1482,7 +1460,7 @@ fxp_ioctl(ifp, command, data)
 	struct fxp_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	int s, oflags, error = 0;
+	int s, error = 0;
 
 	s = splnet();
 
@@ -1562,18 +1540,11 @@ fxp_ioctl(ifp, command, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			oflags = ifp->if_flags;
-			fxp_mc_setup(sc);
-
-			/*
-			 * If IFF_ALLMULTI state changed, we need to
-			 * reinitialize the chip, because this is
-			 * handled by the config block.
-			 */
-			if (((ifp->if_flags ^ oflags) & IFF_ALLMULTI) != 0)
-				error = fxp_init(sc);
-			else
+			if (sc->sc_txpending) {
+				sc->sc_flags |= FXPF_WANTINIT;
 				error = 0;
+			} else
+				error = fxp_init(sc);
 		}
 		break;
 
@@ -1607,15 +1578,10 @@ fxp_mc_setup(sc)
 	struct ether_multistep step;
 	int nmcasts;
 
-	/*
-	 * If there are transmissions pending, wait until they're
-	 * complete.  fxp_intr() will call us when they've drained.
-	 */
-	if (sc->sc_txpending) {
-		sc->sc_flags |= FXPF_NEEDMCSETUP;
-		return;
-	}
-	sc->sc_flags &= ~FXPF_NEEDMCSETUP;
+#ifdef DIAGNOSTIC
+	if (sc->sc_txpending)
+		panic("fxp_mc_setup: pending transmissions");
+#endif
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
@@ -1652,7 +1618,7 @@ fxp_mc_setup(sc)
 	}
 
 	mcsp->cb_status = 0;
-	mcsp->cb_command = FXP_CB_COMMAND_MCAS | FXP_CB_COMMAND_S;
+	mcsp->cb_command = FXP_CB_COMMAND_MCAS | FXP_CB_COMMAND_EL;
 	mcsp->link_addr = FXP_CDTXADDR(sc, FXP_NEXTTX(sc->sc_txlast));
 	mcsp->mc_cnt = nmcasts * ETHER_ADDR_LEN;
 
