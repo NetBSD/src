@@ -1,3 +1,5 @@
+/*	$NetBSD: isinf.c,v 1.3 1997/07/13 18:38:28 christos Exp $	*/
+
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -31,12 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "from: @(#)isinf.c	5.1 (Berkeley) 3/18/91";*/
-static char rcsid[] = "$Id: isinf.c,v 1.2 1996/02/05 04:30:51 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)isinf.c	5.1 (Berkeley) 3/18/91";
+#else
+__RCSID("$NetBSD: isinf.c,v 1.3 1997/07/13 18:38:28 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
+#include <math.h>
 
 int
 isnan(d)
