@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.585 2003/10/23 16:02:09 fvdl Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.586 2003/10/25 16:22:25 chs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.589 2003/10/23 15:54:13 fvdl Exp 
+ *	NetBSD: pcidevs,v 1.590 2003/10/25 16:21:31 chs Exp 
  */
 
 /*
@@ -1190,6 +1190,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "American Megatrends",
 	    "MegaRAID 3",
+	},
+	{
+	    PCI_VENDOR_ANALOG, PCI_PRODUCT_ANALOG_SAFENET,
+	    0,
+	    "Analog Devices",
+	    "SafeNet Crypto Accelerator ADSP-2141",
 	},
 	{
 	    PCI_VENDOR_ANTARES, PCI_PRODUCT_ANTARES_TC9021,
@@ -3368,6 +3374,48 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Ensoniq",
 	    "CT5880",
+	},
+	{
+	    PCI_VENDOR_EQUINOX, PCI_PRODUCT_EQUINOX_SST64P,
+	    0,
+	    "Equinox Systems",
+	    "SST-64P adapter",
+	},
+	{
+	    PCI_VENDOR_EQUINOX, PCI_PRODUCT_EQUINOX_SST128P,
+	    0,
+	    "Equinox Systems",
+	    "SST-128P adapter",
+	},
+	{
+	    PCI_VENDOR_EQUINOX, PCI_PRODUCT_EQUINOX_SST16P_1,
+	    0,
+	    "Equinox Systems",
+	    "SST-16P adapter",
+	},
+	{
+	    PCI_VENDOR_EQUINOX, PCI_PRODUCT_EQUINOX_SST16P_2,
+	    0,
+	    "Equinox Systems",
+	    "SST-16P adapter",
+	},
+	{
+	    PCI_VENDOR_EQUINOX, PCI_PRODUCT_EQUINOX_SST16P_3,
+	    0,
+	    "Equinox Systems",
+	    "SST-16P adapter",
+	},
+	{
+	    PCI_VENDOR_EQUINOX, PCI_PRODUCT_EQUINOX_SST4P,
+	    0,
+	    "Equinox Systems",
+	    "SST-4P adapter",
+	},
+	{
+	    PCI_VENDOR_EQUINOX, PCI_PRODUCT_EQUINOX_SST8P,
+	    0,
+	    "Equinox Systems",
+	    "SST-8P adapter",
 	},
 	{
 	    PCI_VENDOR_ESSENTIAL, PCI_PRODUCT_ESSENTIAL_RR_HIPPI,
@@ -5960,6 +6008,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "NetVin",
 	    "5000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_NETBOOST, PCI_PRODUCT_NETBOOST_POLICY,
+	    0,
+	    "NetBoost",
+	    "Policy Accelerator",
 	},
 	{
 	    PCI_VENDOR_NEWBRIDGE, PCI_PRODUCT_NEWBRIDGE_CA91CX42,
@@ -12784,6 +12838,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_ANALOG, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Analog Devices",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_SEGA, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "SEGA Enterprises",
@@ -13075,6 +13135,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_3WARE, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "3ware",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_NETBOOST, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "NetBoost",
 	    NULL,
 	},
 	{

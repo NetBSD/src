@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.587 2003/10/23 16:02:09 fvdl Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.588 2003/10/25 16:22:25 chs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.589 2003/10/23 15:54:13 fvdl Exp 
+ *	NetBSD: pcidevs,v 1.590 2003/10/25 16:21:31 chs Exp 
  */
 
 /*
@@ -488,6 +488,7 @@
 #define	PCI_VENDOR_MKC	0x11cc		/* Michels & Kleberhoff Computer */
 #define	PCI_VENDOR_HAL	0x11cd		/* HAL Computer Systems */
 #define	PCI_VENDOR_AURAVISION	0x11d1		/* Auravision */
+#define	PCI_VENDOR_ANALOG	0x11d4		/* Analog Devices */
 #define	PCI_VENDOR_SEGA	0x11db		/* SEGA Enterprises */
 #define	PCI_VENDOR_ZORAN	0x11de		/* Zoran Corporation */
 #define	PCI_VENDOR_COMPEX	0x11f6		/* Compex */
@@ -537,6 +538,7 @@
 #define	PCI_VENDOR_COLOGNECHIP	0x1397		/* Cologne Chip Designs */
 #define	PCI_VENDOR_HIFN	0x13a3		/* Hifn */
 #define	PCI_VENDOR_3WARE	0x13c1		/* 3ware */
+#define	PCI_VENDOR_NETBOOST	0x13dc		/* NetBoost */
 #define	PCI_VENDOR_SUNDANCETI	0x13f0		/* Sundance Technology */
 #define	PCI_VENDOR_CMEDIA	0x13f6		/* C-Media Electronics, Inc. */
 #define	PCI_VENDOR_LAVA	0x1407		/* Lava Semiconductor Manufacturing, Inc. */
@@ -838,6 +840,9 @@
 #define	PCI_PRODUCT_AMI_MEGARAID	0x9010		/* MegaRAID */
 #define	PCI_PRODUCT_AMI_MEGARAID2	0x9060		/* MegaRAID 2 */
 #define	PCI_PRODUCT_AMI_MEGARAID3	0x1960		/* MegaRAID 3 */
+
+/* Analog Devices, Inc. products */
+#define	PCI_PRODUCT_ANALOG_SAFENET	0x2f44		/* SafeNet Crypto Accelerator ADSP-2141 */
 
 /* Antares Microsystems, Inc. products */
 #define	PCI_PRODUCT_ANTARES_TC9021	0x1021		/* Antares Gigabit Ethernet */
@@ -1316,6 +1321,15 @@
 #define	PCI_PRODUCT_ENSONIQ_AUDIOPCI	0x5000		/* AudioPCI */
 #define	PCI_PRODUCT_ENSONIQ_AUDIOPCI97	0x1371		/* AudioPCI 97 */
 #define	PCI_PRODUCT_ENSONIQ_CT5880	0x5880		/* CT5880 */
+
+/* Equinox Systems product */
+#define	PCI_PRODUCT_EQUINOX_SST64P	0x0808		/* SST-64P adapter */
+#define	PCI_PRODUCT_EQUINOX_SST128P	0x1010		/* SST-128P adapter */
+#define	PCI_PRODUCT_EQUINOX_SST16P_1	0x80c0		/* SST-16P adapter */
+#define	PCI_PRODUCT_EQUINOX_SST16P_2	0x80c4		/* SST-16P adapter */
+#define	PCI_PRODUCT_EQUINOX_SST16P_3	0x80c8		/* SST-16P adapter */
+#define	PCI_PRODUCT_EQUINOX_SST4P	0x8888		/* SST-4P adapter */
+#define	PCI_PRODUCT_EQUINOX_SST8P	0x9090		/* SST-8P adapter */
 
 /* Essential Communications products */
 #define	PCI_PRODUCT_ESSENTIAL_RR_HIPPI	0x0001		/* RoadRunner HIPPI Interface */
@@ -1848,6 +1862,9 @@
 
 /* NetVin products - XXX better descriptions */
 #define	PCI_PRODUCT_NETVIN_5000	0x5000		/* 5000 Ethernet */
+
+/* NetBoost (now Intel) products */
+#define	PCI_PRODUCT_NETBOOST_POLICY	0x0000		/* Policy Accelerator */
 
 /* Newbridge / Tundra products */
 #define	PCI_PRODUCT_NEWBRIDGE_CA91CX42	0x0000		/* Universe VME bridge */
