@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.5 2001/04/09 13:59:44 reinoud Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.6 2001/04/12 00:42:50 reinoud Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.5 2001/04/09 13:59:44 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.6 2001/04/12 00:42:50 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,7 +254,7 @@ vidcvideo_getdevconfig(dense_addr, dc)
 	/* initialize colormap and cursor resource */
 	vidcvideo_colourmap_and_cursor_init(dc);
 
-	dc->rinfo.ri_flg    = RI_CENTER;
+	dc->rinfo.ri_flg    = 0; /* RI_CENTER; */
 	dc->rinfo.ri_depth  = dc->dc_depth;
 	dc->rinfo.ri_bits   = (void *) dc->dc_videobase;
 	dc->rinfo.ri_width  = dc->dc_wid;
