@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.8 1994/12/28 19:45:41 mycroft Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.9 1995/01/03 01:42:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -382,6 +382,6 @@ pci_map_int(tag, ih)
 	printf("pci_map_int: pin %c mapped to line %d\n", '@' + pin, line);
 #endif
 
-	intr_establish(line, ih);
+	intr_establish(line, IST_LEVEL, ih);
 	return 0;
 }
