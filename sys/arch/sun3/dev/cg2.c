@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2.c,v 1.1 1995/04/07 02:31:45 gwr Exp $	*/
+/*	$NetBSD: cg2.c,v 1.2 1995/04/08 04:40:27 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,7 +64,6 @@
 #include <machine/fbio.h>
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
-#include <machine/eeprom.h>
 #include <machine/cg2reg.h>
 
 #include "fbvar.h"
@@ -80,8 +79,7 @@
 #define	CTLREGS_SIZE		 0x10600
 
 #define	CG2_MAPPED_OFFSET	(PLANEMAP_SIZE + PIXELMAP_SIZE)
-#define	CG2_MAPPED_SIZE 	(ROWOPMAP_SIZE /* XXX + CTLREGS_SIZE */)
-#define	CG2_MAPPED_LIMIT	(CTLREGS_OFF + CTLREGS_SIZE)
+#define	CG2_MAPPED_SIZE 	(CTLREGS_OFF + CTLREGS_SIZE)
 
 /* per-display variables */
 struct cg2_softc {
@@ -126,7 +124,6 @@ cg2match(parent, vcf, args)
 	void *vcf, *args;
 {
 	struct confargs *ca = args;
-	struct cg2fb *crp;
 	int x;
 
 	if (ca->ca_paddr == -1)
@@ -135,16 +132,12 @@ cg2match(parent, vcf, args)
 	if (ca->ca_bustype != BUS_VME16)
 		return (0);
 
-	/* Look at the value in the ID register. */
-	crp = (struct cg2fb *) (ca->ca_paddr + CTLREGS_OFF);
-
-	/* The peek returns -1 on bus error. */
-	x = bus_peek(ca->ca_bustype, &crp->id.reg, 2);
+	x = bus_peek(ca->ca_bustype, ca->ca_paddr + CTLREGS_OFF, 1);
 	if (x == -1)
 		return (0);
 
 	/* XXX */
-	printf("cg2: id=0x%x\n", x);
+	/* printf("cg2: id=0x%x\n", x); */
 
 	return (1);
 }
@@ -246,7 +239,7 @@ cg2map(dev, off, prot)
 	if (off & PGOFSET)
 		panic("cg2map");
 
-	if ((unsigned)off >= CG2_MAPPED_LIMIT)
+	if ((unsigned)off >= CG2_MAPPED_SIZE)
 		return (-1);
 
 	/*
