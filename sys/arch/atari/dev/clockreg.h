@@ -1,4 +1,4 @@
-/*	$NetBSD: clockreg.h,v 1.4 1996/01/06 20:11:07 leo Exp $	*/
+/*	$NetBSD: clockreg.h,v 1.5 2001/04/24 06:27:58 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -32,6 +32,8 @@
 
 #ifndef _CLOCKREG_H
 #define _CLOCKREG_H
+#include "opt_mbtype.h"
+
 /*
  * Atari TT hardware:
  * Motorola MC146818A RealTimeClock
@@ -43,8 +45,13 @@ struct rtc {
 	volatile u_char	rtc_dat[4];
 };
 
+#ifdef _ATARIHW_
 #define rtc_regno	rtc_dat[1]	/* register nr. select		*/
 #define rtc_data	rtc_dat[3]	/* data register		*/
+#elif _MILANHW_
+#define rtc_regno	rtc_dat[0]	/* register nr. select		*/
+#define rtc_data	rtc_dat[1]	/* data register		*/
+#endif
 
 /*
  * Pull in general mc146818 definitions
