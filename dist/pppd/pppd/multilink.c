@@ -1,4 +1,4 @@
-/*	$NetBSD: multilink.c,v 1.1.1.1 2005/02/20 10:28:49 cube Exp $	*/
+/*	$NetBSD: multilink.c,v 1.2 2005/02/20 10:47:17 cube Exp $	*/
 
 /*
  * multilink.c - support routines for multilink.
@@ -195,7 +195,7 @@ mp_join_bundle()
 	 * Check if the bundle ID is already in the database.
 	 */
 	unit = -1;
-	lock_db();
+	tdb_writelock(pppdb);
 	key.dptr = bundle_id;
 	key.dsize = p - bundle_id;
 	pid = tdb_fetch(pppdb, key);
@@ -223,7 +223,7 @@ mp_join_bundle()
 			set_ifunit(0);
 			script_setenv("BUNDLE", bundle_id + 7, 0);
 			make_bundle_links(1);
-			unlock_db();
+			tdb_writeunlock(pppdb);
 			info("Link attached to %s", ifname);
 			return 1;
 		}
@@ -236,7 +236,7 @@ mp_join_bundle()
 	netif_set_mtu(0, mtu);
 	script_setenv("BUNDLE", bundle_id + 7, 1);
 	make_bundle_links(0);
-	unlock_db();
+	tdb_writeunlock(pppdb);
 	info("New bundle %s created", ifname);
 	multilink_master = 1;
 	return 0;
@@ -244,9 +244,9 @@ mp_join_bundle()
 
 void mp_exit_bundle()
 {
-	lock_db();
+	tdb_writelock(pppdb);
 	remove_bundle_link();
-	unlock_db();
+	tdb_writeunlock(pppdb);
 }
 
 static void sendhup(char *str)
@@ -273,13 +273,13 @@ void mp_bundle_terminated()
 		script_unsetenv("IFNAME");
 	}
 
-	lock_db();
+	tdb_writelock(pppdb);
 	destroy_bundle();
 	iterate_bundle_links(sendhup);
 	key.dptr = blinks_id;
 	key.dsize = strlen(blinks_id);
 	tdb_delete(pppdb, key);
-	unlock_db();
+	tdb_writeunlock(pppdb);
 	
 new_phase(PHASE_DEAD);
 }
@@ -572,7 +572,7 @@ str_to_epdisc(ep, str)
 		if (*str == 0)
 			break;
 		if (p <= str)
-			for (p = str; isxdigit(*p); ++p)
+			for (p = str; isxdigit((unsigned char)*p); ++p)
 				;
 		i = p - str;
 		if (i == 0)

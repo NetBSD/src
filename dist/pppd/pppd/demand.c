@@ -1,4 +1,4 @@
-/*	$NetBSD: demand.c,v 1.1.1.1 2005/02/20 10:28:42 cube Exp $	*/
+/*	$NetBSD: demand.c,v 1.2 2005/02/20 10:47:17 cube Exp $	*/
 
 /*
  * demand.c - Support routines for demand-dialling.
@@ -35,7 +35,7 @@
 #if 0
 #define RCSID	"Id: demand.c,v 1.19 2004/11/04 10:02:26 paulus Exp"
 #else
-__RCSID("$NetBSD: demand.c,v 1.1.1.1 2005/02/20 10:28:42 cube Exp $");
+__RCSID("$NetBSD: demand.c,v 1.2 2005/02/20 10:47:17 cube Exp $");
 #endif
 #endif
 
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: demand.c,v 1.1.1.1 2005/02/20 10:28:42 cube Exp $");
 #include <sys/stat.h>
 #include <sys/socket.h>
 #ifdef PPP_FILTER
-#include <pcap-bpf.h>
+#include <pcap.h>
 #endif
 
 #include "pppd.h"
@@ -111,7 +111,8 @@ demand_conf()
 	    fatal("Couldn't set up demand-dialled PPP interface: %m");
 
 #ifdef PPP_FILTER
-    set_filters(&pass_filter, &active_filter);
+    set_filters(&pass_filter_in, &pass_filter_out,
+		&active_filter_in, &active_filter_out);
 #endif
 
     /*
@@ -352,11 +353,11 @@ active_packet(p, len)
 	return 0;
     proto = PPP_PROTOCOL(p);
 #ifdef PPP_FILTER
-    if (pass_filter.bf_len != 0
-	&& bpf_filter(pass_filter.bf_insns, p, len, len) == 0)
+    if (pass_filter_out.bf_len != 0
+	&& bpf_filter(pass_filter_out.bf_insns, p, len, len) == 0)
 	return 0;
-    if (active_filter.bf_len != 0
-	&& bpf_filter(active_filter.bf_insns, p, len, len) == 0)
+    if (active_filter_out.bf_len != 0
+	&& bpf_filter(active_filter_out.bf_insns, p, len, len) == 0)
 	return 0;
 #endif
     for (i = 0; (protp = protocols[i]) != NULL; ++i) {
