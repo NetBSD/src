@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.20 2000/04/30 14:18:52 pk Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.21 2000/05/01 14:05:53 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -96,6 +96,8 @@
 #define ASI_IDCACHELFR	0x12	/* [4m] flush i&d cache line (reg) */
 #define ASI_IDCACHELFC	0x13	/* [4m] flush i&d cache line (ctxt) */
 #define ASI_IDCACHELFU	0x14	/* [4m] flush i&d cache line (user) */
+#define ASI_BLOCKCOPY	0x17	/* [4m] hypersparc: hardware block copy */
+#define ASI_BLOCKFILL	0x1f	/* [4m] hypersparc: hardware block fill */
 #define ASI_BYPASS	0x20	/* [4m] sun ref mmu bypass,
 				        ie. direct phys access */
 #define ASI_HICACHECLR	0x31	/* [4m] hypersparc only: I-cache flash clear */
