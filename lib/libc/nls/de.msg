@@ -157,6 +157,14 @@ $ ENOSYS
 78 Funktion nicht implementiert
 $ EFTYPE
 79 Ungültiger Dateityp oder Dateiformat
+$ EAUTH
+80 Authentikationsfehler
+$ ENEEDAUTH
+81 Authentikator benötigt
+$ EIDRM
+82 Identifizierung entfernt
+$ ENOMSG
+83 Keine Nachricht vom gewünschten Typ
 $set 2
 $ SIGHUP
 1 Verbindungsende
