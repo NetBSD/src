@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.50 2003/02/25 00:22:20 simonb Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.51 2003/04/23 00:55:22 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.50 2003/02/25 00:22:20 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.51 2003/04/23 00:55:22 tls Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -362,7 +362,7 @@ uvmpd_scan_inactive(pglst)
 	struct vm_page *p, *nextpg = NULL; /* Quell compiler warning */
 	struct uvm_object *uobj;
 	struct vm_anon *anon;
-	struct vm_page *swpps[MAXBSIZE >> PAGE_SHIFT];
+	struct vm_page *swpps[round_page(MAXPHYS) >> PAGE_SHIFT];
 	struct simplelock *slock;
 	int swnpages, swcpages;
 	int swslot;
@@ -621,7 +621,9 @@ uvmpd_scan_inactive(pglst)
 			 */
 
 			if (swslot == 0) {
-				swnpages = MAXBSIZE >> PAGE_SHIFT;
+				/* Even with strange MAXPHYS, the shift
+				   implicitly rounds down to a page. */
+				swnpages = MAXPHYS >> PAGE_SHIFT;
 				swslot = uvm_swap_alloc(&swnpages, TRUE);
 				if (swslot == 0) {
 					simple_unlock(slock);

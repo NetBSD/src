@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.4 2003/04/16 23:17:30 thorpej Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.5 2003/04/23 00:55:19 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -246,8 +246,8 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 		req->sense_pbuf = (pptr - MPT_SENSE_SIZE);
 		req->sense_vbuf = (vptr - MPT_SENSE_SIZE);
 
-		error = bus_dmamap_create(mpt->sc_dmat, MAXBSIZE,
-		    MPT_SGL_MAX, MAXBSIZE, 0, 0, &req->dmap);
+		error = bus_dmamap_create(mpt->sc_dmat, MAXPHYS,
+		    MPT_SGL_MAX, MAXPHYS, 0, 0, &req->dmap);
 		if (error) {
 			aprint_error("%s: unable to create req %d DMA map, "
 			    "error = %d\n", mpt->sc_dev.dv_xname, i, error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.102 2003/04/21 22:00:42 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.103 2003/04/23 00:55:17 tls Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.102 2003/04/21 22:00:42 fvdl Exp $
+ * $Id: aic7xxx.c,v 1.103 2003/04/23 00:55:17 tls Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -4359,7 +4359,7 @@ ahc_alloc_scbs(struct ahc_softc *ahc)
 		next_scb->flags = SCB_FREE;
 
 		error = bus_dmamap_create(ahc->parent_dmat, 
-					  AHC_MAXTRANSFER_SIZE, AHC_NSEG, MAXBSIZE, 0,
+					  AHC_MAXTRANSFER_SIZE, AHC_NSEG, MAXPHYS, 0,
 					  BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
 					  &next_scb->dmamap);
 		if (error != 0)
