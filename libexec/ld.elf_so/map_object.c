@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.26 2003/02/06 12:38:17 fvdl Exp $	 */
+/*	$NetBSD: map_object.c,v 1.27 2003/03/06 07:34:56 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -66,7 +66,9 @@ _rtld_map_object(path, fd, sb)
 	int		 nsegs;
 	caddr_t		 mapbase = MAP_FAILED;
 	size_t		 mapsize;
+	int		 mapflags;
 	Elf_Off		 base_offset;
+	Elf_Addr	 base_alignment;
 	Elf_Addr	 base_vaddr;
 	Elf_Addr	 base_vlimit;
 	Elf_Addr	 text_vlimit;
@@ -188,6 +190,9 @@ _rtld_map_object(path, fd, sb)
 	 * and unmap the gaps left by padding to alignment.
 	 */
 
+#ifdef MAP_ALIGNED
+	base_alignment = segs[0]->p_align;
+#endif
 	base_offset = round_down(segs[0]->p_offset);
 	base_vaddr = round_down(segs[0]->p_vaddr);
 	base_vlimit = round_up(segs[1]->p_vaddr + segs[1]->p_memsz);
@@ -208,14 +213,27 @@ _rtld_map_object(path, fd, sb)
 	munmap(ehdr, _rtld_pagesz);
 	ehdr = MAP_FAILED;
 
+	/*
+	 * Calculate log2 of the base section alignment.
+	 */
+	mapflags = 0;
+#ifdef MAP_ALIGNED
+	if (base_alignment > _rtld_pagesz) {
+		unsigned int log2 = 0;
+		for (; base_alignment > 1; base_alignment >>= 1)
+			log2++;
+		mapflags = MAP_ALIGNED(log2);
+	}
+#endif
+
 #ifdef RTLD_LOADER
 	base_addr = obj->isdynamic ? NULL : (caddr_t)base_vaddr;
 #else
 	base_addr = NULL;
 #endif
 	mapsize = base_vlimit - base_vaddr;
-	mapbase = mmap(base_addr, mapsize, text_flags, MAP_FILE | MAP_PRIVATE,
-	    fd, base_offset);
+	mapbase = mmap(base_addr, mapsize, text_flags,
+	    mapflags | MAP_FILE | MAP_PRIVATE, fd, base_offset);
 	if (mapbase == MAP_FAILED) {
 		_rtld_error("mmap of entire address space failed: %s",
 		    xstrerror(errno));
