@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.114 1999/05/30 00:21:08 nathanw Exp $	*/
+/*	$NetBSD: audio.c,v 1.115 1999/06/07 19:24:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1251,7 +1251,7 @@ audio_write(dev, uio, ioflag)
 	struct audio_softc *sc = audio_cd.cd_devs[unit];
 	struct audio_ringbuffer *cb = &sc->sc_pr;
 	u_char *inp, *einp;
-	int error, s, n, cc, used;
+	int saveerror, error, s, n, cc, used;
 
 	DPRINTFN(2,("audio_write: sc=%p(unit=%d) count=%lu used=%d(hi=%d)\n", 
 		    sc, unit, (unsigned long)uio->uio_resid, sc->sc_pr.used, 
@@ -1386,8 +1386,14 @@ audio_write(dev, uio, ioflag)
 			cc = 0;
 		cb->needfill = 0;
 		cb->copying = 0;
-		if (!sc->sc_pbus && !cb->pause)
-			error = audiostartp(sc); /* XXX clobbers error */
+		if (!sc->sc_pbus && !cb->pause) {
+			saveerror = error;
+			error = audiostartp(sc);
+			if (saveerror != 0) {
+				/* Report the first error that occured. */
+				error = saveerror;
+			}
+		}
 		splx(s);
 		if (cc != 0) {
 			DPRINTFN(1, ("audio_write: fill %d\n", cc));
