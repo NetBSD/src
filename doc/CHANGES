@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.422 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.423 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -213,3 +213,4 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		non-alphanumeric login names. [jdolecek 20050205]
 	groupadd(8): Add the -r option, used to specify a gid range in which
 		groups can be created. [jmmv 20050205]
+	ipf(8): updated to version 4.1.5. [martti 20050208]
