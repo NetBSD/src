@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pioc.c,v 1.2 1997/10/16 18:37:38 mark Exp $	*/
+/*	$NetBSD: com_pioc.c,v 1.3 1998/02/02 23:05:50 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -191,29 +191,6 @@ com_pioc_cleanup(arg)
 
 	if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_fifo, 0);
-}
-
-/*
- * XXX - temporary
- *
- * Temporary measure to implement splserial and softserial handling.
- * These are new with the new serial driver and require mods to the
- * interrupt code so for initial testing of the new driver
- * emulate them.
- */
-
-void 	comsoft		__P((void *));
-
-int splserial(s)
-	int s;
-{
-	return(spltty());
-}
-
-void
-setsoftserial()
-{
-	timeout(comsoft, NULL, 1);
 }
 
 /* End of com_pioc.c */
