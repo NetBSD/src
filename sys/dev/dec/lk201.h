@@ -1,4 +1,4 @@
-/*	$NetBSD: lk201.h,v 1.3 1998/03/22 09:27:07 jonathan Exp $	*/
+/*	$NetBSD: lk201.h,v 1.4 1998/10/22 00:50:00 briggs Exp $	*/
 
 
 /*
@@ -84,8 +84,12 @@
 #define LK_DEFAULTS	0xd3		/* reset mode settings          */
 #define LK_AR_ENABLE	0xe3		/* global auto repeat enable	*/
 #define LK_CL_ENABLE	0x1b		/* keyclick enable		*/
+#define LK_CL_DISABLE	0x99		/* keyclick disable		*/
+#define LK_CCL_ENABLE	0xbb		/* enable keyclick for CTRL	*/
+#define LK_CCL_DISABLE	0xb9		/* disable keyclick for CTRL	*/
 #define LK_KBD_ENABLE	0x8b		/* keyboard enable		*/
-#define LK_BELL_ENABLE	0x23		/* the bell			*/
+#define LK_BELL_ENABLE	0x23		/* enable the bell		*/
+#define LK_BELL_DISABLE	0xa1		/* disable the bell		*/
 #define LK_LED_ENABLE	0x13		/* light led			*/
 #define LK_LED_DISABLE	0x11		/* turn off led			*/
 #define LK_RING_BELL	0xa7		/* ring keyboard bell		*/
@@ -93,6 +97,10 @@
 #define LED_2		0x82
 #define LED_3		0x84
 #define LED_4		0x88
+#define LED_WAIT	0x81
+#define LED_COMP	0x82
+#define LED_LOCK	0x84
+#define LED_HOLD	0x88
 #define LED_ALL		0x8f
 #define LK_HELP		0x7c		/* help key			*/
 #define LK_DO		0x7d		/* do key			*/
