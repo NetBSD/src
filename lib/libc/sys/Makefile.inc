@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.115 2001/09/08 00:55:00 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.116 2001/09/16 07:41:57 manu Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -20,9 +20,9 @@ DPSRCS+= Lint_Ovfork.c Lint___clone.c Lint___vfork14.c Lint_brk.c Lint_clone.c \
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
-SRCS+=	ftruncate.c getdirentries.c lseek.c mmap.c msync.c \
-	pread.c preadv.c pwrite.c pwritev.c semctl.c \
-	sigaltstack.c stat.c swapon.c truncate.c
+SRCS+=	adjtime.c clock_settime.c ftruncate.c getdirentries.c lseek.c mmap.c \
+	msync.c ntp_adjtime.c pread.c preadv.c pwrite.c pwritev.c semctl.c \
+	settimeofday.c sigaltstack.c stat.c swapon.c truncate.c
 
 # glue to syscalls that may pass structs or unions, which cannot be
 # handled portably and easily by the syscall interface. The glue
@@ -39,9 +39,9 @@ SRCS+=	timer_create.c timer_delete.c timer_gettime.c timer_settime.c \
 SRCS+=	_brk.c _fork.c _pipe.c _sbrk.c
 
 # modules with default implementations on all architectures:
-ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
+ASM=	accept.o access.o acct.o bind.o chdir.o chflags.o \
 	chmod.o chown.o chroot.o clock_getres.o clock_gettime.o \
-	clock_settime.o close.o connect.o dup.o dup2.o execve.o \
+	close.o connect.o dup.o dup2.o execve.o \
 	fchdir.o fchflags.o fchmod.o fchown.o fchroot.o fcntl.o \
 	fdatasync.o fhopen.o fhstat.o fhstatfs.o \
 	fktrace.o flock.o fpathconf.o __fstat13.o fstatfs.o \
@@ -55,13 +55,13 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
 	madvise.o mincore.o minherit.o mkdir.o mkfifo.o mknod.o \
 	mlock.o mlockall.o mount.o mprotect.o __msgctl13.o msgget.o msgrcv.o \
 	msgsnd.o __msync13.o munlock.o munlockall.o munmap.o nanosleep.o \
-	nfssvc.o ntp_adjtime.o ntp_gettime.o open.o pathconf.o \
+	nfssvc.o ntp_gettime.o open.o pathconf.o \
 	poll.o profil.o quotactl.o read.o \
 	readlink.o readv.o reboot.o recvfrom.o recvmsg.o rename.o revoke.o \
 	rmdir.o select.o semconfig.o semget.o semop.o ____semctl13.o sendmsg.o \
 	sendto.o setegid.o seteuid.o setgid.o setgroups.o setitimer.o \
 	setpgid.o setpriority.o setregid.o setreuid.o setrlimit.o \
-	setsid.o setsockopt.o settimeofday.o setuid.o \
+	setsid.o setsockopt.o setuid.o \
 	__shmctl13.o shmdt.o shmget.o shutdown.o __sigaction14.o \
 	__sigaltstack14.o __sigpending14.o __sigprocmask14.o __sigsuspend14.o \
 	socket.o socketpair.o __stat13.o statfs.o \
