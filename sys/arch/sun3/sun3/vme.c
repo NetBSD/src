@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.6 1996/11/20 18:57:02 gwr Exp $	*/
+/*	$NetBSD: vme.c,v 1.7 1996/12/17 21:10:56 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,8 +43,8 @@
 #include <machine/autoconf.h>
 /* #include <machine/vme.h> */
 
-static int  vmes_match __P((struct device *, void *, void *));
-static int  vmel_match __P((struct device *, void *, void *));
+static int  vmes_match __P((struct device *, struct cfdata *, void *));
+static int  vmel_match __P((struct device *, struct cfdata *, void *));
 
 static void vme_attach __P((struct device *, struct device *, void *));
 
@@ -69,9 +69,10 @@ struct cfdriver vmel_cd = {
 extern int cpu_has_vme;
 
 static int
-vmes_match(parent, vcf, aux)
+vmes_match(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct confargs *ca = aux;
 
@@ -81,9 +82,10 @@ vmes_match(parent, vcf, aux)
 }
 
 static int
-vmel_match(parent, vcf, aux)
+vmel_match(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct confargs *ca = aux;
 

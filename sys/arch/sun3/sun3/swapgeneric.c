@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.18 1996/11/20 18:57:39 gwr Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.19 1996/12/17 21:11:41 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,8 +50,17 @@
 #include <sys/systm.h>
 #include <sys/reboot.h>
 
+#include <dev/cons.h>
+
 #include <machine/mon.h>
-  
+#include "machdep.h"
+
+static int net_mkunit __P((int ctlr, int unit));
+static int sd_mkunit  __P((int ctlr, int unit));
+static int xx_mkunit  __P((int ctlr, int unit));
+static struct genconf * gc_lookup __P((char *));
+
+
 /*
  * This will be called if the config file fails to include:
  *  	option GENERIC
@@ -59,27 +68,28 @@
  *      option FFS
  */
 static int
-no_mountroot()
+no_mountroot __P((void))
 {
 	printf("swapgeneric: configuration error!\n");
 	boot(RB_HALT, NULL);
+	return (ENXIO);
 }
 
 #ifdef	FFS
-extern int ffs_mountroot();
+extern int ffs_mountroot __P((void));
 #else	/* FFS */
 #define ffs_mountroot no_mountroot
 #endif	/* FFS */
 
 #ifdef	NFSCLIENT
-extern char	*nfsbootdevname;	/* nfs_boot.c */
-extern int nfs_mountroot(); 	/* nfs_vfsops.c */
+extern char	*nfsbootdevname;          /* nfs_boot.c */
+extern int nfs_mountroot __P((void)); /* nfs_vfsops.c */
 #else	/* NFSCLIENT */
 static char	*nfsbootdevname;
 #define nfs_mountroot no_mountroot
 #endif	/* NFSCLIENT */
 
-int (*mountroot)() = no_mountroot;
+int (*mountroot) __P((void)) = no_mountroot;
 
 dev_t	rootdev = NODEV;
 dev_t	dumpdev = NODEV;
@@ -95,14 +105,16 @@ char boot_ifname[NAMESZ];
 /*
  * Functions to convert PROM ctlr/unit into our unit numbers
  */
-static int net_mkunit(ctlr, unit)
+static int
+net_mkunit(ctlr, unit)
 	int ctlr, unit;
 {
 	/* XXX - Not sure which is set. */
 	return (ctlr + unit);
 }
 
-static int sd_mkunit(ctlr, unit)
+static int
+sd_mkunit(ctlr, unit)
 	int ctlr, unit;
 {
 	int target, lun;
@@ -113,7 +125,8 @@ static int sd_mkunit(ctlr, unit)
 	return (target * 2 + lun);
 }
 
-static int xx_mkunit(ctlr, unit)
+static int
+xx_mkunit(ctlr, unit)
 	int ctlr, unit;
 {
 	return (ctlr * 2 + unit);
@@ -126,14 +139,14 @@ static int xx_mkunit(ctlr, unit)
 static struct genconf {
 	char gc_name[4];
 	int  gc_major;
-	int  (*gc_mkunit)();
+	int  (*gc_mkunit) __P((int, int));
 } genconf[] = {
-	{ "ie", -1, net_mkunit },
-	{ "le", -1, net_mkunit },
-	{ "sd",	7,  sd_mkunit },
-	{ "xy",	3,  xx_mkunit },
-	{ "xd",	10, xx_mkunit },
-	{ 0 },
+	{ {"ie"}, -1, net_mkunit },
+	{ {"le"}, -1, net_mkunit },
+	{ {"sd"},  7, sd_mkunit },
+	{ {"xy"},  3, xx_mkunit },
+	{ {"xd"}, 10, xx_mkunit },
+	{ {0}, 0, 0 },
 };
 
 static struct genconf *
@@ -152,7 +165,8 @@ gc_lookup(name)
 	return NULL;
 }
 
-static void gc_print_all()
+static void
+gc_print_all __P((void))
 {
 	struct genconf *gc;
 
@@ -166,7 +180,7 @@ static void gc_print_all()
 	}
 	printf("\n");
 }
-	
+
 
 struct devspec {
 	int  major;
@@ -175,11 +189,20 @@ struct devspec {
 	char name[4];
 };
 
+static int ds_parse __P((struct devspec *, char *));
+static int ds_tostr __P((struct devspec *, char *));
+static void ds_from_boot __P((struct devspec *));
+static void ds_query __P((struct devspec *, char *));
+static dev_t ds_todev __P((struct devspec *));
+static void gets __P((char *cp));
+
+
 /*
  * Set devspec from a string like: "sd0a"
  * Return length of recognized part.
  */
-static int ds_parse(ds, str)
+static int
+ds_parse(ds, str)
 	struct devspec *ds;
 	char *str;
 {
@@ -223,11 +246,11 @@ static int ds_parse(ds, str)
  * Format a devspec into a string like: "sd0a"
  * Returns length of string.
  */
-static int ds_tostr(ds, str)
+static int
+ds_tostr(ds, str)
 	struct devspec *ds;
 	char *str;
 {
-	struct genconf *gc;
 	int unit, part;
 	char *p;
 
@@ -259,7 +282,8 @@ static int ds_tostr(ds, str)
  * Set the devspec to the device we booted from.
  * (Just converts PROM boot parameters.)
  */
-static void ds_from_boot(ds)
+static void
+ds_from_boot(ds)
 	struct devspec *ds;
 {
 	MachMonBootParam *bpp;
@@ -291,14 +315,13 @@ static void ds_from_boot(ds)
  * Fill in the devspec by asking the operator.
  * The ds passed may hold a default value.
  */
-static void ds_query(ds, what)
+static void
+ds_query(ds, what)
 	struct devspec *ds;
 	char *what;
 {
-	struct genconf *gc;
-	char *p;
-	int len, minor;
 	char buf[64];
+	int len;
 
 	for (;;) {
 		len = ds_tostr(ds, buf);
@@ -317,7 +340,8 @@ static void ds_query(ds, what)
 	}
 }
 
-static dev_t ds_todev(ds)
+static dev_t
+ds_todev(ds)
 	struct devspec *ds;
 {
 	int minor;
@@ -331,11 +355,9 @@ static dev_t ds_todev(ds)
  * Choose the root and swap device, either by asking,
  * (if RB_ASKNAME) or from the PROM boot parameters.
  */
+void
 swapgeneric()
 {
-	struct genconf *gc;
-	dev_t root, swap, dump;
-	int minor;
 	struct devspec ds;
 	char buf[NAMESZ];
 
@@ -391,6 +413,7 @@ swapgeneric()
 }
 
 /* XXX - Isn't this in some common file? */
+static void
 gets(cp)
 	char *cp;
 {

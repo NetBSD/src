@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.14 1996/09/26 18:10:21 gwr Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.15 1996/12/17 21:11:21 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -80,7 +80,7 @@ static int disklabel_bsd_to_sun(struct disklabel *, char *);
 char *
 readdisklabel(dev, strat, lp, clp)
 	dev_t dev;
-	void (*strat)();
+	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {
@@ -142,6 +142,7 @@ readdisklabel(dev, strat, lp, clp)
  * Check new disk label for sensibility
  * before setting it.
  */
+int
 setdisklabel(olp, nlp, openmask, clp)
 	struct disklabel *olp, *nlp;
 	u_long openmask;
@@ -188,9 +189,10 @@ setdisklabel(olp, nlp, openmask, clp)
  * Write disk label back to device after modification.
  * Current label is already in clp->cd_block[]
  */
+int
 writedisklabel(dev, strat, lp, clp)
 	dev_t dev;
-	void (*strat)();
+	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {
@@ -446,6 +448,7 @@ disklabel_bsd_to_sun(lp, cp)
 	return(0);
 }
 
+#if 0
 /*
  * Search the bad sector table looking for the specified sector.
  * Return index if found.
@@ -469,3 +472,4 @@ isbad(bt, cyl, trk, sec)
 	}
 	return (-1);
 }
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: si_vme.c,v 1.7 1996/11/20 18:57:01 gwr Exp $	*/
+/*	$NetBSD: si_vme.c,v 1.8 1996/12/17 21:10:55 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -95,8 +95,6 @@
 #include <scsi/scsiconf.h>
 
 #include <machine/autoconf.h>
-#include <machine/isr.h>
-#include <machine/obio.h>
 #include <machine/dvma.h>
 
 #define DEBUG XXX
@@ -119,7 +117,7 @@ void si_vme_intr_off __P((struct ncr5380_softc *));
  * New-style autoconfig attachment
  */
 
-static int	si_vmes_match __P((struct device *, void *, void *));
+static int	si_vmes_match __P((struct device *, struct cfdata *, void *));
 static void	si_vmes_attach __P((struct device *, struct device *, void *));
 
 struct cfattach si_vmes_ca = {
@@ -131,11 +129,11 @@ int si_vme_options = 3;
 
 
 static int
-si_vmes_match(parent, vcf, args)
+si_vmes_match(parent, cf, args)
 	struct device	*parent;
-	void		*vcf, *args;
+	struct cfdata *cf;
+	void *args;
 {
-	struct cfdata	*cf = vcf;
 	struct confargs *ca = args;
 	int probe_addr;
 
@@ -306,7 +304,7 @@ si_vme_dma_setup(ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_setup: dh=0x%x, pa=0x%x, xlen=%d\n",
+		printf("si_dma_setup: dh=%p, pa=0x%x, xlen=0x%x\n",
 			   dh, data_pa, xlen);
 	}
 #endif
@@ -354,7 +352,6 @@ si_vme_dma_start(ncr_sc)
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct si_dma_handle *dh = sr->sr_dma_hand;
 	volatile struct si_regs *si = sc->sc_regs;
-	long data_pa;
 	int s, xlen;
 
 	xlen = sc->sc_reqlen;

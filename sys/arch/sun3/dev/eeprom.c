@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.12 1996/11/20 18:56:49 gwr Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.13 1996/12/17 21:10:40 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@
 #include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 
 #include <machine/autoconf.h>
 #include <machine/obio.h>
@@ -67,7 +68,7 @@ static int ee_update(caddr_t buf, int off, int cnt);
 static char *eeprom_va;
 static int ee_busy, ee_want;
 
-static int  eeprom_match __P((struct device *, void *vcf, void *args));
+static int  eeprom_match __P((struct device *, struct cfdata *, void *));
 static void eeprom_attach __P((struct device *, struct device *, void *));
 
 struct cfattach eeprom_ca = {
@@ -86,13 +87,12 @@ void eeprom_init()
 }
 
 static int
-eeprom_match(parent, vcf, args)
+eeprom_match(parent, cf, args)
     struct device *parent;
-    void *vcf, *args;
+	struct cfdata *cf;
+    void *args;
 {
-    struct cfdata *cf = vcf;
 	struct confargs *ca = args;
-	int pa;
 
 	/* This driver only supports one unit. */
 	if (cf->cf_unit != 0)
@@ -114,13 +114,14 @@ eeprom_attach(parent, self, args)
 	struct device *self;
 	void *args;
 {
-	struct confargs *ca = args;
 
 	printf("\n");
 }
 
 
-static int ee_take()	/* Take the lock. */
+/* Take the lock. */
+static int
+ee_take __P((void))
 {
 	int error = 0;
 	while (ee_busy) {
@@ -135,7 +136,9 @@ static int ee_take()	/* Take the lock. */
 	return error;
 }
 
-static void ee_give()	/* Give the lock. */
+/* Give the lock. */
+static void
+ee_give __P((void))
 {
 	ee_busy = 0;
 	if (ee_want) {
@@ -144,7 +147,11 @@ static void ee_give()	/* Give the lock. */
 	}
 }
 
-int eeprom_uio(struct uio *uio)
+/*
+ * XXX - Just keep a soft copy of the eeprom?
+ */
+int
+eeprom_uio(struct uio *uio)
 {
 	int error;
 	int off;	/* NOT off_t */
@@ -195,7 +202,8 @@ int eeprom_uio(struct uio *uio)
 /*
  * Update the EEPROM from the passed buf.
  */
-static int ee_update(char *buf, int off, int cnt)
+static int
+ee_update(char *buf, int off, int cnt)
 {
 	volatile char *ep;
 	char *bp;

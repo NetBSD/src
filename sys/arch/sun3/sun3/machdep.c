@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.78 1996/12/17 21:11:33 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -78,34 +78,33 @@
 #include <sys/shm.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/reg.h>
-#include <machine/psl.h>
-#include <machine/pte.h>
-#include <machine/mon.h> 
-#include <machine/isr.h>
-#include <machine/kcore.h>
-
-#include <dev/cons.h>
-
 #include <vm/vm.h>
 #include <vm/vm_map.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
-#include <net/netisr.h>
+#include <dev/cons.h>
 
-#include "cache.h"
+#include <machine/cpu.h>
+#include <machine/reg.h>
+#include <machine/psl.h>
+#include <machine/pte.h>
+#include <machine/mon.h>
+#include <machine/dvma.h>
+#include <machine/kcore.h>
+#include <machine/db_machdep.h>
+
+#include "machdep.h"
 
 extern char *cpu_string;
 extern char version[];
 extern short exframesize[];
-extern vm_offset_t vmmap;	/* XXX - poor name.  See mem.c */
-extern int cold;
 
-int physmem;
-int fpu_type;
+int	physmem;
+int	fpu_type;
 int	msgbufmapped;
+
+vm_offset_t vmmap;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -127,9 +126,10 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
-long *nofault;
+label_t *nofault;
 
-void identifycpu();
+static void identifycpu __P((void));
+static void initcpu __P((void));
 
 /*
  * Console initialization: called early on from main,
@@ -138,7 +138,6 @@ void identifycpu();
  */
 void consinit()
 {
-	extern void cninit();
 	cninit();
 
 #ifdef KGDB
@@ -170,6 +169,7 @@ void consinit()
  */
 #define	valloc(name, type, num) \
 	v = (caddr_t)(((name) = (type *)v) + (num))
+static caddr_t allocsys __P((caddr_t));
 static caddr_t
 allocsys(v)
 	register caddr_t v;
@@ -236,7 +236,7 @@ cpu_startup()
 {
 	caddr_t v;
 	int sz, i;
-	vm_size_t size;	
+	vm_size_t size;
 	int base, residual;
 	vm_offset_t minaddr, maxaddr;
 
@@ -414,6 +414,7 @@ identifycpu()
 /*
  * machine dependent system variables.
  */
+int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
@@ -423,6 +424,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
+	int error;
 	dev_t consdev;
 
 	/* all sysctl names at this level are terminal */
@@ -435,12 +437,24 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			consdev = cn_tab->cn_dev;
 		else
 			consdev = NODEV;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-		    sizeof consdev));
+		error = sysctl_rdstruct(oldp, oldlenp, newp,
+		    &consdev, sizeof consdev);
+		break;
+
+#if 0	/* XXX - Not yet... */
+	case CPU_ROOT_DEVICE:
+		error = sysctl_rdstring(oldp, oldlenp, newp, root_device);
+		break;
+
+	case CPU_BOOTED_KERNEL:
+		error = sysctl_rdstring(oldp, oldlenp, newp, booted_kernel);
+		break;
+#endif
+
 	default:
-		return (EOPNOTSUPP);
+		error = EOPNOTSUPP;
 	}
-	/* NOTREACHED */
+	return (error);
 }
 
 #define SS_RTEFRAME	1
@@ -510,7 +524,7 @@ sendsig(catcher, sig, mask, code)
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sigframe *)(frame->f_regs[SP] - fsize);
-	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
+	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
 		(void)grow(p, (unsigned)fp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
@@ -536,7 +550,7 @@ sendsig(catcher, sig, mask, code)
 		return;
 	}
 	kfp = (struct sigframe *)malloc((u_long)fsize, M_TEMP, M_WAITOK);
-	/* 
+	/*
 	 * Build the argument list for the signal handler.
 	 */
 	kfp->sf_signum = sig;
@@ -722,7 +736,7 @@ sys_sigreturn(p, v, retval)
 	 */
 	if (flags & SS_RTEFRAME) {
 		register int sz;
-		
+
 		/* grab frame type and validate */
 		sz = tstate.ss_frame.f_format;
 		if (sz > 15 || (sz = exframesize[sz]) < 0)
@@ -763,10 +777,9 @@ sys_sigreturn(p, v, retval)
  * XXX - Put waittime checks in there too?
  */
 int waittime = -1;	/* XXX - Who else looks at this? -gwr */
-static void reboot_sync()
+static void
+reboot_sync __P((void))
 {
-	struct buf *bp;
-	int iter, nbusy;
 
 	/* Check waittime here to localize its use to this function. */
 	if (waittime >= 0)
@@ -777,6 +790,7 @@ static void reboot_sync()
 
 /*
  * Common part of the BSD and SunOS reboot system calls.
+ * XXX - Should be named: cpu_reboot maybe? -gwr
  */
 __dead void
 boot(howto, user_boot_string)
@@ -876,7 +890,7 @@ dumpconf()
 {
 	int nblks;	/* size of dump area */
 	int maj;
-	int (*getsize)();
+	int (*getsize)__P((dev_t));
 
 	if (dumpdev == NODEV)
 		return;
@@ -915,6 +929,7 @@ extern vm_offset_t avail_start;
  *   pagemap (2*NBPG)
  *   physical memory...
  */
+void
 dumpsys()
 {
 	struct bdevsw *dsw;
@@ -973,14 +988,14 @@ dumpsys()
 	blkno += btodb(NBPG);
 
 	/* translation RAM (page zero) */
-	pmap_get_pagemap(vaddr, 0);
+	pmap_get_pagemap((int*)vaddr, 0);
 	error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
 	if (error)
 		goto fail;
 	blkno += btodb(NBPG);
 
 	/* translation RAM (page one) */
-	pmap_get_pagemap(vaddr, NBPG);
+	pmap_get_pagemap((int*)vaddr, NBPG);
 	error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
 	if (error)
 		goto fail;
@@ -1035,6 +1050,7 @@ fail:
 	printf(" dump error=%d\n", error);
 }
 
+static void
 initcpu()
 {
 	/* XXX: Enable RAM parity/ECC checking? */
@@ -1047,57 +1063,32 @@ initcpu()
 #endif
 }
 
+/* called from locore.s */
+void straytrap __P((struct trapframe));
+void
 straytrap(frame)
-	struct frame frame;
+	struct trapframe frame;
 {
-	printf("unexpected trap; vector offset 0x%x from 0x%x\n",
-		frame.f_vector, frame.f_pc);
+	printf("unexpected trap; vector=0x%x at pc=0x%x\n",
+		frame.tf_vector, frame.tf_pc);
 #ifdef	DDB
-	kdb_trap(-1, &frame);
+	/* XXX - Yuck!  Make DDB use "struct trapframe" instead! */
+	kdb_trap(-1, (struct mc68020_saved_state *) &frame);
 #endif
 }
 
 /* from hp300: badaddr() */
-int
-peek_word(addr)
-	register caddr_t addr;
-{
-	label_t		faultbuf;
-	register int x;
-
-	nofault = (long*)&faultbuf;
-	if (setjmp(&faultbuf)) {
-		nofault = NULL;
-		return(-1);
-	}
-	x = *(volatile u_short *)addr;
-	nofault = NULL;
-	return(x);
-}
-
-/* from hp300: badbaddr() */
-int
-peek_byte(addr)
-	register caddr_t addr;
-{
-	label_t 	faultbuf;
-	register int x;
-
-	nofault = (long*)&faultbuf;
-	if (setjmp(&faultbuf)) {
-		nofault = NULL;
-		return(-1);
-	}
-	x = *(volatile u_char *)addr;
-	nofault = NULL;
-	return(x);
-}
+/* peek_byte(), peek_word() moved to autoconf.c */
 
 /* XXX: parityenable() ? */
+
+static void dumpmem __P((int *, int, int));
+static char *hexstr __P((int, int));
 
 /*
  * Print a register and stack dump.
  */
+void
 regdump(fp, sbytes)
 	struct frame *fp; /* must not be register */
 	int sbytes;
@@ -1105,7 +1096,6 @@ regdump(fp, sbytes)
 	static int doingdump = 0;
 	register int i;
 	int s;
-	extern char *hexstr();
 
 	if (doingdump)
 		return;
@@ -1141,12 +1131,12 @@ regdump(fp, sbytes)
 
 #define KSADDR	((int *)((u_int)curproc->p_addr + USPACE - NBPG))
 
+static void
 dumpmem(ptr, sz, ustack)
 	register int *ptr;
 	int sz, ustack;
 {
 	register int i, val;
-	extern char *hexstr();
 
 	for (i = 0; i < sz; i++) {
 		if ((i & 7) == 0)
@@ -1167,7 +1157,7 @@ dumpmem(ptr, sz, ustack)
 	printf("\n");
 }
 
-char *
+static char *
 hexstr(val, len)
 	register int val;
 	int len;
@@ -1190,10 +1180,11 @@ hexstr(val, len)
 /*
  * cpu_exec_aout_makecmds():
  *	cpu-dependent a.out format hook for execve().
- * 
+ *
  * Determine if the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.
  */
+int
 cpu_exec_aout_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;

@@ -1,4 +1,4 @@
-/* $NetBSD: xy.c,v 1.11 1996/10/13 03:47:40 christos Exp $ */
+/* $NetBSD: xy.c,v 1.12 1996/12/17 21:10:59 gwr Exp $ */
 
 /*
  *
@@ -36,7 +36,7 @@
  * x y . c   x y l o g i c s   4 5 0 / 4 5 1   s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xy.c,v 1.11 1996/10/13 03:47:40 christos Exp $
+ * id: $NetBSD: xy.c,v 1.12 1996/12/17 21:10:59 gwr Exp $
  * started: 14-Sep-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -176,9 +176,9 @@ int	xysize __P((dev_t));
 void	xystrategy __P((struct buf *));
 
 /* autoconf */
-int	xycmatch __P((struct device *, void *, void *));
+int	xycmatch __P((struct device *, struct cfdata *, void *));
 void	xycattach __P((struct device *, struct device *, void *));
-int	xymatch __P((struct device *, void *, void *));
+int	xymatch __P((struct device *, struct cfdata *, void *));
 void	xyattach __P((struct device *, struct device *, void *));
 
 static	void xydummystrat __P((struct buf *));
@@ -292,11 +292,11 @@ xygetdisklabel(xy, b)
  * soft reset to detect the xyc.
  */
 
-int xycmatch(parent, match, aux)
+int xycmatch(parent, cf, aux)
 	struct device *parent;
-	void   *match, *aux;
+	struct cfdata *cf;
+	void   *aux;
 {
-	struct cfdata *cf = match;
 	struct confargs *ca = aux;
 	int x;
 
@@ -445,13 +445,13 @@ xycattach(parent, self, aux)
  * call xyattach!).
  */
 int 
-xymatch(parent, match, aux)
+xymatch(parent, cf, aux)
 	struct device *parent;
-	void   *match, *aux;
+	struct cfdata *cf;
+	void   *aux;
 
 {
 	struct xyc_softc *xyc = (void *) parent;
-	struct cfdata *cf = match;
 	struct xyc_attach_args *xa = aux;
 
 	/* looking for autoconf wildcard or exact match */

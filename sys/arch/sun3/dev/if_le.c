@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.33 1996/11/20 18:56:52 gwr Exp $	*/
+/*	$NetBSD: if_le.c,v 1.34 1996/12/17 21:10:48 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -55,7 +55,6 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/dvma.h>
-#include <machine/isr.h>
 #include <machine/obio.h>
 #include <machine/idprom.h>
 
@@ -81,7 +80,7 @@ struct	le_softc {
 	struct	lereg1 *sc_r1;		/* LANCE registers */
 };
 
-static int	le_match __P((struct device *, void *, void *));
+static int	le_match __P((struct device *, struct cfdata *, void *));
 static void	le_attach __P((struct device *, struct device *, void *));
 
 struct cfattach le_ca = {
@@ -116,11 +115,11 @@ lerdcsr(sc, port)
 } 
 
 int
-le_match(parent, vcf, aux)
+le_match(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 
 	/* Make sure there is something there... */
@@ -141,7 +140,6 @@ le_attach(parent, self, aux)
 {
 	struct le_softc *lesc = (struct le_softc *)self;
 	struct am7990_softc *sc = &lesc->sc_am7990;
-	struct cfdata *cf = self->dv_cfdata;
 	struct confargs *ca = aux;
 
 	lesc->sc_r1 = (struct lereg1 *)
