@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: crt0.c,v 1.5 1994/01/29 02:34:21 mycroft Exp $
+ *	$Id: crt0.c,v 1.6 1994/03/28 02:15:17 cgd Exp $
  */
 
 
@@ -53,7 +53,6 @@ int _callmain();
 #include <sys/mman.h>
 #ifdef sun
 #define MAP_COPY	MAP_PRIVATE
-#define MAP_FILE	0
 #define MAP_ANON	0
 #endif
 #include <link.h>
@@ -224,7 +223,7 @@ __do_dynamic_link ()
 	/* Map in ld.so */
 	crt.crt_ba = mmap(0, hdr.a_text,
 			PROT_READ|PROT_EXEC,
-			MAP_FILE|MAP_COPY,
+			MAP_COPY,
 			crt.crt_ldfd, N_TXTOFF(hdr));
 	if (crt.crt_ba == -1) {
 		_FATAL("Cannot map ld.so\n");
@@ -244,7 +243,7 @@ __do_dynamic_link ()
 	/* Map in data segment of ld.so writable */
 	if (mmap(crt.crt_ba+N_DATADDR(hdr), hdr.a_data,
 			PROT_READ|PROT_EXEC|PROT_WRITE,
-			MAP_FIXED|MAP_FILE|MAP_COPY,
+			MAP_FIXED|MAP_COPY,
 			crt.crt_ldfd, N_DATOFF(hdr)) == -1) {
 		_FATAL("Cannot map ld.so\n");
 	}
