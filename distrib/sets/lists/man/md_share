@@ -168,6 +168,7 @@
 ./usr/share/man/cat4/sun3/leds.0
 ./usr/share/man/cat4/sun3/mem.0
 ./usr/share/man/cat4/sun3/ms.0
+./usr/share/man/cat4/tcom.0
 ./usr/share/man/cat4/vax/acc.0
 ./usr/share/man/cat4/vax/ad.0
 ./usr/share/man/cat4/vax/autoconf.0
@@ -465,6 +466,7 @@
 ./usr/share/man/man4/sun3/leds.4
 ./usr/share/man/man4/sun3/mem.4
 ./usr/share/man/man4/sun3/ms.4
+./usr/share/man/man4/tcom.4
 ./usr/share/man/man4/vax/acc.4
 ./usr/share/man/man4/vax/ad.4
 ./usr/share/man/man4/vax/autoconf.4
