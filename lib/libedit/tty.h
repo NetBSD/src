@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.4 1997/04/11 21:38:02 christos Exp $	*/
+/*	$NetBSD: tty.h,v 1.5 1998/05/20 01:04:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -444,18 +444,18 @@
 #define QU_IO	2	/* used only for quoted chars	*/
 #define NN_IO	3	/* The number of entries	*/
 
-#define M_INP	0
-#define M_OUT	1
-#define M_CTL	2
-#define M_LIN	3
-#define M_CHAR	4
-#define M_NN	5
+#define MD_INP	0
+#define MD_OUT	1
+#define MD_CTL	2
+#define MD_LIN	3
+#define MD_CHAR	4
+#define MD_NN	5
 
 typedef struct { 
     char *t_name;
     u_int t_setmask;
     u_int t_clrmask;
-} ttyperm_t[NN_IO][M_NN];
+} ttyperm_t[NN_IO][MD_NN];
 
 typedef unsigned char ttychar_t[NN_IO][C_NCC];
 

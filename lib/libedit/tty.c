@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.7 1998/03/30 01:30:14 mrg Exp $	*/
+/*	$NetBSD: tty.c,v 1.8 1998/05/20 01:04:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.7 1998/03/30 01:30:14 mrg Exp $");
+__RCSID("$NetBSD: tty.c,v 1.8 1998/05/20 01:04:56 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -161,288 +161,288 @@ private ttymap_t tty_map[] = {
 
 private ttymodes_t ttymodes[] = {
 # ifdef	IGNBRK
-    { "ignbrk",	IGNBRK,	M_INP },
+    { "ignbrk",	IGNBRK,	MD_INP },
 # endif /* IGNBRK */
 # ifdef	BRKINT
-    { "brkint",	BRKINT,	M_INP },
+    { "brkint",	BRKINT,	MD_INP },
 # endif /* BRKINT */
 # ifdef	IGNPAR
-    { "ignpar",	IGNPAR,	M_INP },
+    { "ignpar",	IGNPAR,	MD_INP },
 # endif /* IGNPAR */
 # ifdef	PARMRK
-    { "parmrk",	PARMRK,	M_INP },
+    { "parmrk",	PARMRK,	MD_INP },
 # endif /* PARMRK */
 # ifdef	INPCK
-    { "inpck",	INPCK,	M_INP },
+    { "inpck",	INPCK,	MD_INP },
 # endif /* INPCK */
 # ifdef	ISTRIP
-    { "istrip",	ISTRIP,	M_INP },
+    { "istrip",	ISTRIP,	MD_INP },
 # endif /* ISTRIP */
 # ifdef	INLCR
-    { "inlcr",	INLCR,	M_INP },
+    { "inlcr",	INLCR,	MD_INP },
 # endif /* INLCR */
 # ifdef	IGNCR
-    { "igncr",	IGNCR,	M_INP },
+    { "igncr",	IGNCR,	MD_INP },
 # endif /* IGNCR */
 # ifdef	ICRNL
-    { "icrnl",	ICRNL,	M_INP },
+    { "icrnl",	ICRNL,	MD_INP },
 # endif /* ICRNL */
 # ifdef	IUCLC
-    { "iuclc",	IUCLC,	M_INP },
+    { "iuclc",	IUCLC,	MD_INP },
 # endif /* IUCLC */
 # ifdef	IXON
-    { "ixon",	IXON,	M_INP },
+    { "ixon",	IXON,	MD_INP },
 # endif /* IXON */
 # ifdef	IXANY
-    { "ixany",	IXANY,	M_INP },
+    { "ixany",	IXANY,	MD_INP },
 # endif /* IXANY */
 # ifdef	IXOFF
-    { "ixoff",	IXOFF,	M_INP },
+    { "ixoff",	IXOFF,	MD_INP },
 # endif /* IXOFF */
 # ifdef  IMAXBEL
-    { "imaxbel",IMAXBEL,M_INP },
+    { "imaxbel",IMAXBEL,MD_INP },
 # endif /* IMAXBEL */
 
 # ifdef	OPOST
-    { "opost",	OPOST,	M_OUT },
+    { "opost",	OPOST,	MD_OUT },
 # endif /* OPOST */
 # ifdef	OLCUC
-    { "olcuc",	OLCUC,	M_OUT },
+    { "olcuc",	OLCUC,	MD_OUT },
 # endif /* OLCUC */
 # ifdef	ONLCR
-    { "onlcr",	ONLCR,	M_OUT },
+    { "onlcr",	ONLCR,	MD_OUT },
 # endif /* ONLCR */
 # ifdef	OCRNL
-    { "ocrnl",	OCRNL,	M_OUT },
+    { "ocrnl",	OCRNL,	MD_OUT },
 # endif /* OCRNL */
 # ifdef	ONOCR
-    { "onocr",	ONOCR,	M_OUT },
+    { "onocr",	ONOCR,	MD_OUT },
 # endif /* ONOCR */
 # ifdef ONOEOT
-    { "onoeot",	ONOEOT,	M_OUT },
+    { "onoeot",	ONOEOT,	MD_OUT },
 # endif /* ONOEOT */
 # ifdef	ONLRET
-    { "onlret",	ONLRET,	M_OUT },
+    { "onlret",	ONLRET,	MD_OUT },
 # endif /* ONLRET */
 # ifdef	OFILL
-    { "ofill",	OFILL,	M_OUT },
+    { "ofill",	OFILL,	MD_OUT },
 # endif /* OFILL */
 # ifdef	OFDEL
-    { "ofdel",	OFDEL,	M_OUT },
+    { "ofdel",	OFDEL,	MD_OUT },
 # endif /* OFDEL */
 # ifdef	NLDLY
-    { "nldly",	NLDLY,	M_OUT },
+    { "nldly",	NLDLY,	MD_OUT },
 # endif /* NLDLY */
 # ifdef	CRDLY
-    { "crdly",	CRDLY,	M_OUT },
+    { "crdly",	CRDLY,	MD_OUT },
 # endif /* CRDLY */
 # ifdef	TABDLY
-    { "tabdly",	TABDLY,	M_OUT },
+    { "tabdly",	TABDLY,	MD_OUT },
 # endif /* TABDLY */
 # ifdef	XTABS
-    { "xtabs",	XTABS,	M_OUT },
+    { "xtabs",	XTABS,	MD_OUT },
 # endif /* XTABS */
 # ifdef	BSDLY
-    { "bsdly",	BSDLY,	M_OUT },
+    { "bsdly",	BSDLY,	MD_OUT },
 # endif /* BSDLY */
 # ifdef	VTDLY
-    { "vtdly",	VTDLY,	M_OUT },
+    { "vtdly",	VTDLY,	MD_OUT },
 # endif /* VTDLY */
 # ifdef	FFDLY
-    { "ffdly",	FFDLY,	M_OUT },
+    { "ffdly",	FFDLY,	MD_OUT },
 # endif /* FFDLY */
 # ifdef	PAGEOUT
-    { "pageout",PAGEOUT,M_OUT },
+    { "pageout",PAGEOUT,MD_OUT },
 # endif /* PAGEOUT */
 # ifdef	WRAP
-    { "wrap",	WRAP,	M_OUT },
+    { "wrap",	WRAP,	MD_OUT },
 # endif /* WRAP */
 
 # ifdef	CIGNORE
-    { "cignore",CIGNORE,M_CTL },
+    { "cignore",CIGNORE,MD_CTL },
 # endif /* CBAUD */
 # ifdef	CBAUD
-    { "cbaud",	CBAUD,	M_CTL },
+    { "cbaud",	CBAUD,	MD_CTL },
 # endif /* CBAUD */
 # ifdef	CSTOPB
-    { "cstopb",	CSTOPB,	M_CTL },
+    { "cstopb",	CSTOPB,	MD_CTL },
 # endif /* CSTOPB */
 # ifdef	CREAD
-    { "cread",	CREAD,	M_CTL },
+    { "cread",	CREAD,	MD_CTL },
 # endif /* CREAD */
 # ifdef	PARENB
-    { "parenb",	PARENB,	M_CTL },
+    { "parenb",	PARENB,	MD_CTL },
 # endif /* PARENB */
 # ifdef	PARODD
-    { "parodd",	PARODD,	M_CTL },
+    { "parodd",	PARODD,	MD_CTL },
 # endif /* PARODD */
 # ifdef	HUPCL
-    { "hupcl",	HUPCL,	M_CTL },
+    { "hupcl",	HUPCL,	MD_CTL },
 # endif /* HUPCL */
 # ifdef	CLOCAL
-    { "clocal",	CLOCAL,	M_CTL },
+    { "clocal",	CLOCAL,	MD_CTL },
 # endif /* CLOCAL */
 # ifdef	LOBLK
-    { "loblk",	LOBLK,	M_CTL },
+    { "loblk",	LOBLK,	MD_CTL },
 # endif /* LOBLK */
 # ifdef	CIBAUD
-    { "cibaud",	CIBAUD,	M_CTL },
+    { "cibaud",	CIBAUD,	MD_CTL },
 # endif /* CIBAUD */
 # ifdef CRTSCTS
 #  ifdef CCTS_OFLOW
-    { "ccts_oflow",CCTS_OFLOW,M_CTL },
+    { "ccts_oflow",CCTS_OFLOW,MD_CTL },
 #  else
-    { "crtscts",CRTSCTS,M_CTL },
+    { "crtscts",CRTSCTS,MD_CTL },
 #  endif /* CCTS_OFLOW */
 # endif /* CRTSCTS */
 # ifdef CRTS_IFLOW
-    { "crts_iflow",CRTS_IFLOW,M_CTL },
+    { "crts_iflow",CRTS_IFLOW,MD_CTL },
 # endif /* CRTS_IFLOW */
 # ifdef CDTRCTS
-    { "cdtrcts",CDTRCTS,M_CTL },
+    { "cdtrcts",CDTRCTS,MD_CTL },
 # endif /* CDTRCTS */
 # ifdef MDMBUF
-    { "mdmbuf",	MDMBUF,	M_CTL },
+    { "mdmbuf",	MDMBUF,	MD_CTL },
 # endif /* MDMBUF */
 # ifdef RCV1EN
-    { "rcv1en",	RCV1EN,	M_CTL },
+    { "rcv1en",	RCV1EN,	MD_CTL },
 # endif /* RCV1EN */
 # ifdef XMT1EN
-    { "xmt1en",	XMT1EN,	M_CTL },
+    { "xmt1en",	XMT1EN,	MD_CTL },
 # endif /* XMT1EN */
 
 # ifdef	ISIG
-    { "isig",	ISIG,	M_LIN },
+    { "isig",	ISIG,	MD_LIN },
 # endif /* ISIG */
 # ifdef	ICANON
-    { "icanon",	ICANON,	M_LIN },
+    { "icanon",	ICANON,	MD_LIN },
 # endif /* ICANON */
 # ifdef	XCASE
-    { "xcase",	XCASE,	M_LIN },
+    { "xcase",	XCASE,	MD_LIN },
 # endif /* XCASE */
 # ifdef	ECHO
-    { "echo",	ECHO,	M_LIN },
+    { "echo",	ECHO,	MD_LIN },
 # endif /* ECHO */
 # ifdef	ECHOE
-    { "echoe",	ECHOE,	M_LIN },
+    { "echoe",	ECHOE,	MD_LIN },
 # endif /* ECHOE */
 # ifdef	ECHOK
-    { "echok",	ECHOK,	M_LIN },
+    { "echok",	ECHOK,	MD_LIN },
 # endif /* ECHOK */
 # ifdef	ECHONL
-    { "echonl",	ECHONL,	M_LIN },
+    { "echonl",	ECHONL,	MD_LIN },
 # endif /* ECHONL */
 # ifdef	NOFLSH
-    { "noflsh",	NOFLSH,	M_LIN },
+    { "noflsh",	NOFLSH,	MD_LIN },
 # endif /* NOFLSH */
 # ifdef	TOSTOP
-    { "tostop",	TOSTOP,	M_LIN },
+    { "tostop",	TOSTOP,	MD_LIN },
 # endif /* TOSTOP */
 # ifdef	ECHOCTL
-    { "echoctl",ECHOCTL,M_LIN },
+    { "echoctl",ECHOCTL,MD_LIN },
 # endif /* ECHOCTL */
 # ifdef	ECHOPRT
-    { "echoprt",ECHOPRT,M_LIN },
+    { "echoprt",ECHOPRT,MD_LIN },
 # endif /* ECHOPRT */
 # ifdef	ECHOKE
-    { "echoke",	ECHOKE,	M_LIN },
+    { "echoke",	ECHOKE,	MD_LIN },
 # endif /* ECHOKE */
 # ifdef	DEFECHO
-    { "defecho",DEFECHO,M_LIN },
+    { "defecho",DEFECHO,MD_LIN },
 # endif /* DEFECHO */
 # ifdef	FLUSHO
-    { "flusho",	FLUSHO,	M_LIN },
+    { "flusho",	FLUSHO,	MD_LIN },
 # endif /* FLUSHO */
 # ifdef	PENDIN
-    { "pendin",	PENDIN,	M_LIN },
+    { "pendin",	PENDIN,	MD_LIN },
 # endif /* PENDIN */
 # ifdef	IEXTEN
-    { "iexten",	IEXTEN,	M_LIN },
+    { "iexten",	IEXTEN,	MD_LIN },
 # endif /* IEXTEN */
 # ifdef	NOKERNINFO
-    { "nokerninfo",NOKERNINFO,M_LIN },
+    { "nokerninfo",NOKERNINFO,MD_LIN },
 # endif /* NOKERNINFO */
 # ifdef	ALTWERASE
-    { "altwerase",ALTWERASE,M_LIN },
+    { "altwerase",ALTWERASE,MD_LIN },
 # endif /* ALTWERASE */
 # ifdef	EXTPROC
-    { "extproc",EXTPROC, M_LIN },
+    { "extproc",EXTPROC, MD_LIN },
 # endif /* EXTPROC */
 
 # if defined(VINTR) 
-    { "intr",		C_SH(C_INTR), 	M_CHAR },
+    { "intr",		C_SH(C_INTR), 	MD_CHAR },
 # endif /* VINTR */
 # if defined(VQUIT)
-    { "quit",		C_SH(C_QUIT), 	M_CHAR },
+    { "quit",		C_SH(C_QUIT), 	MD_CHAR },
 # endif /* VQUIT */
 # if defined(VERASE)
-    { "erase",		C_SH(C_ERASE), 	M_CHAR },
+    { "erase",		C_SH(C_ERASE), 	MD_CHAR },
 # endif /* VERASE */
 # if defined(VKILL)
-    { "kill",		C_SH(C_KILL), 	M_CHAR },
+    { "kill",		C_SH(C_KILL), 	MD_CHAR },
 # endif /* VKILL */
 # if defined(VEOF)
-    { "eof",		C_SH(C_EOF), 	M_CHAR },
+    { "eof",		C_SH(C_EOF), 	MD_CHAR },
 # endif /* VEOF */
 # if defined(VEOL)
-    { "eol",		C_SH(C_EOL), 	M_CHAR },
+    { "eol",		C_SH(C_EOL), 	MD_CHAR },
 # endif /* VEOL */
 # if defined(VEOL2)
-    { "eol2",		C_SH(C_EOL2), 	M_CHAR },
+    { "eol2",		C_SH(C_EOL2), 	MD_CHAR },
 # endif  /* VEOL2 */
 # if defined(VSWTCH)
-    { "swtch",		C_SH(C_SWTCH), 	M_CHAR },
+    { "swtch",		C_SH(C_SWTCH), 	MD_CHAR },
 # endif /* VSWTCH */
 # if defined(VDSWTCH)
-    { "dswtch",		C_SH(C_DSWTCH),	M_CHAR },
+    { "dswtch",		C_SH(C_DSWTCH),	MD_CHAR },
 # endif /* VDSWTCH */
 # if defined(VERASE2)
-    { "erase2",		C_SH(C_ERASE2),	M_CHAR },
+    { "erase2",		C_SH(C_ERASE2),	MD_CHAR },
 # endif /* VERASE2 */
 # if defined(VSTART)
-    { "start",		C_SH(C_START), 	M_CHAR },
+    { "start",		C_SH(C_START), 	MD_CHAR },
 # endif /* VSTART */
 # if defined(VSTOP)
-    { "stop",		C_SH(C_STOP), 	M_CHAR },
+    { "stop",		C_SH(C_STOP), 	MD_CHAR },
 # endif /* VSTOP */
 # if defined(VWERASE)
-    { "werase",		C_SH(C_WERASE),	M_CHAR },
+    { "werase",		C_SH(C_WERASE),	MD_CHAR },
 # endif /* VWERASE */
 # if defined(VSUSP)
-    { "susp",		C_SH(C_SUSP), 	M_CHAR },
+    { "susp",		C_SH(C_SUSP), 	MD_CHAR },
 # endif /* VSUSP */
 # if defined(VDSUSP)
-    { "dsusp",		C_SH(C_DSUSP), 	M_CHAR },
+    { "dsusp",		C_SH(C_DSUSP), 	MD_CHAR },
 # endif /* VDSUSP */
 # if defined(VREPRINT)
-    { "reprint",	C_SH(C_REPRINT),M_CHAR },
+    { "reprint",	C_SH(C_REPRINT),MD_CHAR },
 # endif /* VREPRINT */
 # if defined(VDISCARD)
-    { "discard",	C_SH(C_DISCARD),M_CHAR },
+    { "discard",	C_SH(C_DISCARD),MD_CHAR },
 # endif /* VDISCARD */
 # if defined(VLNEXT)
-    { "lnext",		C_SH(C_LNEXT), 	M_CHAR },
+    { "lnext",		C_SH(C_LNEXT), 	MD_CHAR },
 # endif /* VLNEXT */
 # if defined(VSTATUS)
-    { "status",		C_SH(C_STATUS),	M_CHAR },
+    { "status",		C_SH(C_STATUS),	MD_CHAR },
 # endif /* VSTATUS */
 # if defined(VPAGE)
-    { "page",		C_SH(C_PAGE), 	M_CHAR },
+    { "page",		C_SH(C_PAGE), 	MD_CHAR },
 # endif /* VPAGE */
 # if defined(VPGOFF)
-    { "pgoff",		C_SH(C_PGOFF), 	M_CHAR },
+    { "pgoff",		C_SH(C_PGOFF), 	MD_CHAR },
 # endif /* VPGOFF */
 # if defined(VKILL2) 
-    { "kill2",		C_SH(C_KILL2), 	M_CHAR },
+    { "kill2",		C_SH(C_KILL2), 	MD_CHAR },
 # endif /* VKILL2 */
 # if defined(VBRK)
-    { "brk",		C_SH(C_BRK), 	M_CHAR },
+    { "brk",		C_SH(C_BRK), 	MD_CHAR },
 # endif /* VBRK */
 # if defined(VMIN)
-    { "min",		C_SH(C_MIN), 	M_CHAR },
+    { "min",		C_SH(C_MIN), 	MD_CHAR },
 # endif /* VMIN */
 # if defined(VTIME)
-    { "time",		C_SH(C_TIME), 	M_CHAR },
+    { "time",		C_SH(C_TIME), 	MD_CHAR },
 # endif /* VTIME */
     { NULL, 0, -1 },
 };
@@ -485,17 +485,17 @@ tty_setup(el)
     el->el_tty.t_tabs  = tty__gettabs(&el->el_tty.t_ex);
     el->el_tty.t_eight = tty__geteightbit(&el->el_tty.t_ex);
 
-    el->el_tty.t_ex.c_iflag &= ~el->el_tty.t_t[EX_IO][M_INP].t_clrmask;
-    el->el_tty.t_ex.c_iflag |=  el->el_tty.t_t[EX_IO][M_INP].t_setmask;
+    el->el_tty.t_ex.c_iflag &= ~el->el_tty.t_t[EX_IO][MD_INP].t_clrmask;
+    el->el_tty.t_ex.c_iflag |=  el->el_tty.t_t[EX_IO][MD_INP].t_setmask;
 
-    el->el_tty.t_ex.c_oflag &= ~el->el_tty.t_t[EX_IO][M_OUT].t_clrmask;
-    el->el_tty.t_ex.c_oflag |=  el->el_tty.t_t[EX_IO][M_OUT].t_setmask;
+    el->el_tty.t_ex.c_oflag &= ~el->el_tty.t_t[EX_IO][MD_OUT].t_clrmask;
+    el->el_tty.t_ex.c_oflag |=  el->el_tty.t_t[EX_IO][MD_OUT].t_setmask;
 
-    el->el_tty.t_ex.c_cflag &= ~el->el_tty.t_t[EX_IO][M_CTL].t_clrmask;
-    el->el_tty.t_ex.c_cflag |=  el->el_tty.t_t[EX_IO][M_CTL].t_setmask;
+    el->el_tty.t_ex.c_cflag &= ~el->el_tty.t_t[EX_IO][MD_CTL].t_clrmask;
+    el->el_tty.t_ex.c_cflag |=  el->el_tty.t_t[EX_IO][MD_CTL].t_setmask;
 
-    el->el_tty.t_ex.c_lflag &= ~el->el_tty.t_t[EX_IO][M_LIN].t_clrmask;
-    el->el_tty.t_ex.c_lflag |=  el->el_tty.t_t[EX_IO][M_LIN].t_setmask;
+    el->el_tty.t_ex.c_lflag &= ~el->el_tty.t_t[EX_IO][MD_LIN].t_clrmask;
+    el->el_tty.t_ex.c_lflag |=  el->el_tty.t_t[EX_IO][MD_LIN].t_setmask;
 
     /*
      * Reset the tty chars to reasonable defaults
@@ -527,17 +527,17 @@ tty_setup(el)
     else
         tty__setchar(&el->el_tty.t_ex, el->el_tty.t_c[EX_IO]);
 
-    el->el_tty.t_ed.c_iflag &= ~el->el_tty.t_t[ED_IO][M_INP].t_clrmask;
-    el->el_tty.t_ed.c_iflag |=  el->el_tty.t_t[ED_IO][M_INP].t_setmask;
+    el->el_tty.t_ed.c_iflag &= ~el->el_tty.t_t[ED_IO][MD_INP].t_clrmask;
+    el->el_tty.t_ed.c_iflag |=  el->el_tty.t_t[ED_IO][MD_INP].t_setmask;
 
-    el->el_tty.t_ed.c_oflag &= ~el->el_tty.t_t[ED_IO][M_OUT].t_clrmask;
-    el->el_tty.t_ed.c_oflag |=  el->el_tty.t_t[ED_IO][M_OUT].t_setmask;
+    el->el_tty.t_ed.c_oflag &= ~el->el_tty.t_t[ED_IO][MD_OUT].t_clrmask;
+    el->el_tty.t_ed.c_oflag |=  el->el_tty.t_t[ED_IO][MD_OUT].t_setmask;
 
-    el->el_tty.t_ed.c_cflag &= ~el->el_tty.t_t[ED_IO][M_CTL].t_clrmask;
-    el->el_tty.t_ed.c_cflag |=  el->el_tty.t_t[ED_IO][M_CTL].t_setmask;
+    el->el_tty.t_ed.c_cflag &= ~el->el_tty.t_t[ED_IO][MD_CTL].t_clrmask;
+    el->el_tty.t_ed.c_cflag |=  el->el_tty.t_t[ED_IO][MD_CTL].t_setmask;
 
-    el->el_tty.t_ed.c_lflag &= ~el->el_tty.t_t[ED_IO][M_LIN].t_clrmask;
-    el->el_tty.t_ed.c_lflag |=  el->el_tty.t_t[ED_IO][M_LIN].t_setmask;
+    el->el_tty.t_ed.c_lflag &= ~el->el_tty.t_t[ED_IO][MD_LIN].t_clrmask;
+    el->el_tty.t_ed.c_lflag |=  el->el_tty.t_t[ED_IO][MD_LIN].t_setmask;
 
     tty__setchar(&el->el_tty.t_ed, el->el_tty.t_c[ED_IO]);
     return 0;
@@ -830,45 +830,45 @@ tty_rawmode(el)
     if (tty__cooked_mode(&el->el_tty.t_ts)) {
 	if (el->el_tty.t_ts.c_cflag != el->el_tty.t_ex.c_cflag) { 
 	    el->el_tty.t_ex.c_cflag  = el->el_tty.t_ts.c_cflag;
-	    el->el_tty.t_ex.c_cflag &= ~el->el_tty.t_t[EX_IO][M_CTL].t_clrmask;
-	    el->el_tty.t_ex.c_cflag |=  el->el_tty.t_t[EX_IO][M_CTL].t_setmask;
+	    el->el_tty.t_ex.c_cflag &= ~el->el_tty.t_t[EX_IO][MD_CTL].t_clrmask;
+	    el->el_tty.t_ex.c_cflag |=  el->el_tty.t_t[EX_IO][MD_CTL].t_setmask;
 
 	    el->el_tty.t_ed.c_cflag  = el->el_tty.t_ts.c_cflag;
-	    el->el_tty.t_ed.c_cflag &= ~el->el_tty.t_t[ED_IO][M_CTL].t_clrmask;
-	    el->el_tty.t_ed.c_cflag |=  el->el_tty.t_t[ED_IO][M_CTL].t_setmask;
+	    el->el_tty.t_ed.c_cflag &= ~el->el_tty.t_t[ED_IO][MD_CTL].t_clrmask;
+	    el->el_tty.t_ed.c_cflag |=  el->el_tty.t_t[ED_IO][MD_CTL].t_setmask;
 	}
 
 	if ((el->el_tty.t_ts.c_lflag != el->el_tty.t_ex.c_lflag) &&
 	    (el->el_tty.t_ts.c_lflag != el->el_tty.t_ed.c_lflag)) {
 	    el->el_tty.t_ex.c_lflag = el->el_tty.t_ts.c_lflag;
-	    el->el_tty.t_ex.c_lflag &= ~el->el_tty.t_t[EX_IO][M_LIN].t_clrmask;
-	    el->el_tty.t_ex.c_lflag |=  el->el_tty.t_t[EX_IO][M_LIN].t_setmask;
+	    el->el_tty.t_ex.c_lflag &= ~el->el_tty.t_t[EX_IO][MD_LIN].t_clrmask;
+	    el->el_tty.t_ex.c_lflag |=  el->el_tty.t_t[EX_IO][MD_LIN].t_setmask;
 
 	    el->el_tty.t_ed.c_lflag = el->el_tty.t_ts.c_lflag;
-	    el->el_tty.t_ed.c_lflag &= ~el->el_tty.t_t[ED_IO][M_LIN].t_clrmask;
-	    el->el_tty.t_ed.c_lflag |=  el->el_tty.t_t[ED_IO][M_LIN].t_setmask;
+	    el->el_tty.t_ed.c_lflag &= ~el->el_tty.t_t[ED_IO][MD_LIN].t_clrmask;
+	    el->el_tty.t_ed.c_lflag |=  el->el_tty.t_t[ED_IO][MD_LIN].t_setmask;
 	}
 
 	if ((el->el_tty.t_ts.c_iflag != el->el_tty.t_ex.c_iflag) &&
 	    (el->el_tty.t_ts.c_iflag != el->el_tty.t_ed.c_iflag)) {
 	    el->el_tty.t_ex.c_iflag = el->el_tty.t_ts.c_iflag;
-	    el->el_tty.t_ex.c_iflag &= ~el->el_tty.t_t[EX_IO][M_INP].t_clrmask;
-	    el->el_tty.t_ex.c_iflag |=  el->el_tty.t_t[EX_IO][M_INP].t_setmask;
+	    el->el_tty.t_ex.c_iflag &= ~el->el_tty.t_t[EX_IO][MD_INP].t_clrmask;
+	    el->el_tty.t_ex.c_iflag |=  el->el_tty.t_t[EX_IO][MD_INP].t_setmask;
 
 	    el->el_tty.t_ed.c_iflag = el->el_tty.t_ts.c_iflag;
-	    el->el_tty.t_ed.c_iflag &= ~el->el_tty.t_t[ED_IO][M_INP].t_clrmask;
-	    el->el_tty.t_ed.c_iflag |=  el->el_tty.t_t[ED_IO][M_INP].t_setmask;
+	    el->el_tty.t_ed.c_iflag &= ~el->el_tty.t_t[ED_IO][MD_INP].t_clrmask;
+	    el->el_tty.t_ed.c_iflag |=  el->el_tty.t_t[ED_IO][MD_INP].t_setmask;
 	}
 
 	if ((el->el_tty.t_ts.c_oflag != el->el_tty.t_ex.c_oflag) &&
 	    (el->el_tty.t_ts.c_oflag != el->el_tty.t_ed.c_oflag)) {
 	    el->el_tty.t_ex.c_oflag = el->el_tty.t_ts.c_oflag;
-	    el->el_tty.t_ex.c_oflag &= ~el->el_tty.t_t[EX_IO][M_OUT].t_clrmask;
-	    el->el_tty.t_ex.c_oflag |=  el->el_tty.t_t[EX_IO][M_OUT].t_setmask;
+	    el->el_tty.t_ex.c_oflag &= ~el->el_tty.t_t[EX_IO][MD_OUT].t_clrmask;
+	    el->el_tty.t_ex.c_oflag |=  el->el_tty.t_t[EX_IO][MD_OUT].t_setmask;
 
 	    el->el_tty.t_ed.c_oflag = el->el_tty.t_ts.c_oflag;
-	    el->el_tty.t_ed.c_oflag &= ~el->el_tty.t_t[ED_IO][M_OUT].t_clrmask;
-	    el->el_tty.t_ed.c_oflag |=  el->el_tty.t_t[ED_IO][M_OUT].t_setmask;
+	    el->el_tty.t_ed.c_oflag &= ~el->el_tty.t_t[ED_IO][MD_OUT].t_clrmask;
+	    el->el_tty.t_ed.c_oflag |=  el->el_tty.t_t[ED_IO][MD_OUT].t_setmask;
 	}
 
 	if (tty__gettabs(&el->el_tty.t_ex) == 0) 
@@ -895,20 +895,20 @@ tty_rawmode(el)
 		 * that have been modified just now.
 		 */
 		for (i = 0; i < C_NCC; i++) {
-		    if (!((el->el_tty.t_t[ED_IO][M_CHAR].t_setmask & C_SH(i)))
+		    if (!((el->el_tty.t_t[ED_IO][MD_CHAR].t_setmask & C_SH(i)))
 		      && (el->el_tty.t_c[TS_IO][i] != el->el_tty.t_c[EX_IO][i]))
 			el->el_tty.t_c[ED_IO][i] = el->el_tty.t_c[TS_IO][i];
-		    if (el->el_tty.t_t[ED_IO][M_CHAR].t_clrmask & C_SH(i))
+		    if (el->el_tty.t_t[ED_IO][MD_CHAR].t_clrmask & C_SH(i))
 			el->el_tty.t_c[ED_IO][i] = el->el_tty.t_vdisable;
 		}
 		tty_bind_char(el, 0);
 		tty__setchar(&el->el_tty.t_ed, el->el_tty.t_c[ED_IO]);
 
 		for (i = 0; i < C_NCC; i++) {
-		    if (!((el->el_tty.t_t[EX_IO][M_CHAR].t_setmask & C_SH(i)))
+		    if (!((el->el_tty.t_t[EX_IO][MD_CHAR].t_setmask & C_SH(i)))
 		      && (el->el_tty.t_c[TS_IO][i] != el->el_tty.t_c[EX_IO][i]))
 			el->el_tty.t_c[EX_IO][i] = el->el_tty.t_c[TS_IO][i];
-		    if (el->el_tty.t_t[EX_IO][M_CHAR].t_clrmask & C_SH(i))
+		    if (el->el_tty.t_t[EX_IO][MD_CHAR].t_clrmask & C_SH(i))
 			el->el_tty.t_c[EX_IO][i] = el->el_tty.t_vdisable;
 		}
 		tty__setchar(&el->el_tty.t_ex, el->el_tty.t_c[EX_IO]);
@@ -962,17 +962,17 @@ tty_quotemode(el)
 
     el->el_tty.t_qu = el->el_tty.t_ed;
 
-    el->el_tty.t_qu.c_iflag &= ~el->el_tty.t_t[QU_IO][M_INP].t_clrmask;
-    el->el_tty.t_qu.c_iflag |=  el->el_tty.t_t[QU_IO][M_INP].t_setmask;
+    el->el_tty.t_qu.c_iflag &= ~el->el_tty.t_t[QU_IO][MD_INP].t_clrmask;
+    el->el_tty.t_qu.c_iflag |=  el->el_tty.t_t[QU_IO][MD_INP].t_setmask;
 
-    el->el_tty.t_qu.c_oflag &= ~el->el_tty.t_t[QU_IO][M_OUT].t_clrmask;
-    el->el_tty.t_qu.c_oflag |=  el->el_tty.t_t[QU_IO][M_OUT].t_setmask;
+    el->el_tty.t_qu.c_oflag &= ~el->el_tty.t_t[QU_IO][MD_OUT].t_clrmask;
+    el->el_tty.t_qu.c_oflag |=  el->el_tty.t_t[QU_IO][MD_OUT].t_setmask;
 
-    el->el_tty.t_qu.c_cflag &= ~el->el_tty.t_t[QU_IO][M_CTL].t_clrmask;
-    el->el_tty.t_qu.c_cflag |=  el->el_tty.t_t[QU_IO][M_CTL].t_setmask;
+    el->el_tty.t_qu.c_cflag &= ~el->el_tty.t_t[QU_IO][MD_CTL].t_clrmask;
+    el->el_tty.t_qu.c_cflag |=  el->el_tty.t_t[QU_IO][MD_CTL].t_setmask;
 
-    el->el_tty.t_qu.c_lflag &= ~el->el_tty.t_t[QU_IO][M_LIN].t_clrmask;
-    el->el_tty.t_qu.c_lflag |=  el->el_tty.t_t[QU_IO][M_LIN].t_setmask;
+    el->el_tty.t_qu.c_lflag &= ~el->el_tty.t_t[QU_IO][MD_LIN].t_clrmask;
+    el->el_tty.t_qu.c_lflag |=  el->el_tty.t_t[QU_IO][MD_LIN].t_setmask;
 
     if (tty_setty(el, &el->el_tty.t_qu) == -1) {
 #ifdef DEBUG_TTY
@@ -1140,7 +1140,7 @@ tty_printchar(el, s)
 
     for (i = 0; i < C_NCC; i++) {
 	for (m = el->el_tty.t_t; m->m_name; m++) 
-	    if (m->m_type == M_CHAR && C_SH(i) == m->m_value)
+	    if (m->m_type == MD_CHAR && C_SH(i) == m->m_value)
 		break;
 	if (m->m_name)
 	    (void) fprintf(el->el_errfile, "%s ^%c ", m->m_name, s[i] + 'A'-1);
