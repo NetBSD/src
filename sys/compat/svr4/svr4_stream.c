@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.31 1998/11/26 18:58:50 christos Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.32 1998/11/27 18:32:09 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1552,6 +1552,7 @@ svr4_sys_putmsg(p, v, retval)
 #endif
 	                DPRINTF(("putmsg: Invalid inet length %ld\n", sc.len));
 	                return EINVAL;
+>>>>>>> 1.31
 		}
 		netaddr_to_sockaddr_in(&sain, &sc);
 		skp = &sain;
@@ -1918,7 +1919,7 @@ svr4_sys_getmsg(p, v, retval)
 	default:
 		st->s_cmd = sc.cmd;
 #ifdef notyet
-		if (st->s_cmd == 0) {
+		if (st->s_cmd == SVR4_TI_CONNECT_REQUEST) {
 		        struct sys_read_args ra;
 
 			/* More wierdness:  Again, I can't find documentation
