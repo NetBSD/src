@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.26 1998/04/07 10:16:04 fair Exp $	*/
+/*	$NetBSD: jobs.c,v 1.27 1998/05/20 00:31:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.26 1998/04/07 10:16:04 fair Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.27 1998/05/20 00:31:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -298,9 +298,11 @@ showjobs(change)
 		procno = jp->nprocs;
 		for (ps = jp->ps ; ; ps++) {	/* for each process */
 			if (ps == jp->ps)
-				fmtstr(s, 64, "[%d] %d ", jobno, ps->pid);
+				fmtstr(s, 64, "[%d] %ld ", jobno, 
+				    (long)ps->pid);
 			else
-				fmtstr(s, 64, "    %d ", ps->pid);
+				fmtstr(s, 64, "    %ld ", 
+				    (long)ps->pid);
 			out1str(s);
 			col = strlen(s);
 			s[0] = '\0';
@@ -427,7 +429,7 @@ jobidcmd(argc, argv)
 
 	jp = getjob(argv[1]);
 	for (i = 0 ; i < jp->nprocs ; ) {
-		out1fmt("%d", jp->ps[i].pid);
+		out1fmt("%ld", (long)jp->ps[i].pid);
 		out1c(++i < jp->nprocs? ' ' : '\n');
 	}
 	return 0;
