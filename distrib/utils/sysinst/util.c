@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.134 2005/02/26 17:36:32 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.135 2005/02/26 17:40:50 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -796,7 +796,7 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 	/* Clean up dist dir (use absolute path name) */
 	if (clean_dist_dir) {
 		msg_display(MSG_delete_dist_files, dist_dir);
-		process_menu(MENU_yesno, NULL);
+		process_menu(MENU_yesno, deconst(MSG_Delete));
 		if (yesno) {
 			for (list = dist_list; list->desc != NULL; list++) {
 				if (list->name == NULL)
