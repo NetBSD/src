@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.419 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.420 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -206,3 +206,6 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 	auich(4): Add support for nForce2 Ultra 400.  [jdolecek 20050127]
 	kernel: Add ffs file system snapshots. See fssconfig(8).
 		[hannken 20050131]
+	kernel: Add RFC-3378 EtherIP support.  This feature allows adding
+		gif(4) interfaces to bridge(4) interfaces.  See brconfig(8).
+		[kim 20050131]
