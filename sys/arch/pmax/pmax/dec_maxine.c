@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.33 2000/05/28 06:16:00 gmcgarry Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.34 2000/06/06 00:08:26 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.33 2000/05/28 06:16:00 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.34 2000/06/06 00:08:26 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.33 2000/05/28 06:16:00 gmcgarry Exp
 void		dec_maxine_init __P((void));		/* XXX */
 static void	dec_maxine_bus_reset __P((void));
 static void	dec_maxine_cons_init __P((void));
-static int	dec_maxine_intr __P((unsigned, unsigned, unsigned, unsigned));
+static void	dec_maxine_intr __P((unsigned, unsigned, unsigned, unsigned));
 static void	dec_maxine_intr_establish __P((struct device *, void *,
 		    int, int (*)(void *), void *));
 
@@ -282,7 +282,7 @@ dec_maxine_intr_establish(dev, cookie, level, handler, arg)
 	}							\
     } while (0)
 
-static int
+static void
 dec_maxine_intr(status, cause, pc, ipending)
 	unsigned ipending;
 	unsigned pc;
@@ -370,7 +370,7 @@ dec_maxine_intr(status, cause, pc, ipending)
 	if (ipending & MIPS_INT_MASK_2)
 		kn02ba_errintr();
 
-	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
+	_splset(MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
 static void
