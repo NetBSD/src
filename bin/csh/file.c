@@ -1,4 +1,4 @@
-/* $NetBSD: file.c,v 1.19 2002/05/25 23:29:16 wiz Exp $ */
+/* $NetBSD: file.c,v 1.20 2002/08/12 02:37:26 itojun Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)file.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: file.c,v 1.19 2002/05/25 23:29:16 wiz Exp $");
+__RCSID("$NetBSD: file.c,v 1.20 2002/08/12 02:37:26 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -532,7 +532,7 @@ again:				/* search for matches */
 		break;
 	    }
 	    if (items == NULL)
-		items = (Char **)xcalloc(sizeof(items[0]), MAXITEMS);
+		items = (Char **)xcalloc(MAXITEMS, sizeof(items[0]));
 	    items[numitems] = (Char *)xmalloc((size_t) (Strlen(entry) + 1) *
 	        sizeof(Char));
 	    copyn(items[numitems], entry, MAXNAMLEN);
