@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.11 1994/12/27 18:36:21 mycroft Exp $	*/
+/*	$NetBSD: denode.h,v 1.12 1995/01/04 06:03:11 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -198,10 +198,10 @@ struct denode {
 #define	VTODE(vp)	((struct denode *)(vp)->v_data)
 #define	DETOV(de)	((de)->de_vnode)
 
-#define	DE_TIMES(dep, t) \
+#define	DE_TIMES(dep) \
 	if (dep->de_flag & DE_UPDATE) { \
 		(dep)->de_flag |= DE_MODIFIED; \
-		unix2dostime(t, &dep->de_Date, &dep->de_Time); \
+		unix2dostime(NULL, &dep->de_Date, &dep->de_Time); \
 		(dep)->de_flag &= ~DE_UPDATE; \
 	}
 
