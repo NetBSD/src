@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.18 2000/11/15 19:30:10 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.19 2002/06/18 07:56:14 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -162,6 +162,12 @@ void	isa_mem_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 	_isa_free((a), (p))
 #define	isa_mappage(m, o, p)						\
 	_isa_mappage((m), (o), (p))
+
+/*
+ * for ACPI code
+ */
+
+void	isa_reinit_irq(void);
 
 /*
  * ALL OF THE FOLLOWING ARE MACHINE-DEPENDENT, AND SHOULD NOT BE USED
