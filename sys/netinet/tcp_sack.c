@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.7 2005/03/07 10:27:39 yamt Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.8 2005/03/08 11:27:14 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.7 2005/03/07 10:27:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.8 2005/03/08 11:27:14 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -377,9 +377,11 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 			tmp->start = tp->rcv_lastsack;
 			tmp->end = sack->left;
 			tmp->rxmit = tmp->start;
-			tp->rcv_lastsack = sack->right;
 			TAILQ_INSERT_TAIL(&tp->snd_holes, tmp, sackhole_q);
 			cur = tmp;
+		}
+		if (SEQ_LT(tp->rcv_lastsack, sack->right)) {
+			tp->rcv_lastsack = sack->right;
 		}
 	}
 }
