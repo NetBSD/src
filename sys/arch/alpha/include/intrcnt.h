@@ -1,4 +1,4 @@
-/* $NetBSD: intrcnt.h,v 1.9 1998/01/29 22:26:24 ross Exp $ */
+/* $NetBSD: intrcnt.h,v 1.10 1998/03/02 07:47:52 ross Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -121,8 +121,8 @@
 		ASCIZ "eb164 irq 21";					\
 		ASCIZ "eb164 irq 22";					\
 		ASCIZ "eb164 irq 23";					\
-		ASCIZ "xbar dma out"; 					\
-		ASCIZ "xbar dma in";					\
+		ASCIZ "xbar dma"; 					\
+		ASCIZ "a12 unused";					\
 		ASCIZ "a12  pci";					\
 /* 0x60 */	ASCIZ "a12  pci serr";					\
 		ASCIZ "xbar MCE";					\
