@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.36 1999/12/07 23:08:00 soren Exp $
+.\" $NetBSD: main,v 1.37 1999/12/08 03:57:30 lukem Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -306,7 +306,8 @@ exists.
 .
 .Ss "Sources of NetBSD"
 .
-.so ../common/mirrors -----------------------------------------------
+Refer to
+.Lk http://www.netbsd.org/Sites/net.html .
 .br_ne 10P
 .
 .Ss "NetBSD \*V Release Contents
@@ -531,29 +532,31 @@ may wish to bear the
 following problems and compatibility issues in mind when upgrading to
 .Nx \*V
 .(Note
-Only issues effecting an upgrade from NetBSD 1.3 or NetBSD 1.3.x
+Only issues effecting an upgrade from NetBSD 1.4 or NetBSD 1.4.x
 are decribed here.
 .Note)
 .Pp
 .Bl -bullet
 .It
-"machine" directory/link in "/usr/include"
+.Xr named 8
+leaks version information
 .
-.Bl -tag -width 3n
-.It Description
-Some architectures may fail to install the
-.Ic comp
-set because the
-.Dl /usr/include/machine
-directory changed to a symbolic link in NetBSD 1.4.
-.It Fix
-If this happens, you can use the command
-.D1 # Ic rm -r /usr/include/machine
-to remove the old directory and it contents and reinstall the
-.Ic comp
-set.
-.El
-.
+.Pp
+Previous releases of
+.Nx
+disabled a feature of
+.Xr named 8
+where the version number of the server could be determined by remote clients.
+This feature has not been disabled in
+.Nx 1.5 ,
+because there is a
+.Xr named.conf 5
+option to change the version string: 
+.Bd -literal -offset indent
+	option {
+		version "newstring";
+	};
+.Ed
 .El
 .
 .Pp
