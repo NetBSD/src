@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.3 1995/04/10 08:53:46 mycroft Exp $	*/
+/*	$NetBSD: ite.c,v 1.4 1995/04/22 22:06:43 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,12 +68,6 @@
 #include <atari/dev/viewioctl.h>
 #include <atari/dev/viewvar.h>
 #include <atari/dev/kbdmap.h>
-
-/*
- * XXX go ask sys/kern/tty.c:ttselect()
- */
-#include "grf.h"		/* Get definition of NGRF */	
-struct tty *ite_tty[NGRF];
 
 #define ITEUNIT(dev)	(minor(dev))
 
@@ -312,7 +306,7 @@ itecnputc(dev, c)
 
 /* 
  * iteinit() is the standard entry point for initialization of
- * an ite device, it is also called from ite_cninit().
+ * an ite device, it is also called from itecninit().
  *
  */
 void
@@ -355,7 +349,7 @@ iteopen(dev, mode, devtype, p)
 	ip = getitesp(dev);
 
 	if (ip->tp == NULL)
-		tp = ite_tty[unit] = ip->tp = ttymalloc();
+		tp = ip->tp = ttymalloc();
 	else
 		tp = ip->tp;
 	if ((tp->t_state & (TS_ISOPEN | TS_XCLUDE)) == (TS_ISOPEN | TS_XCLUDE)
@@ -444,6 +438,13 @@ itestop(tp, flag)
 	int flag;
 {
 
+}
+
+struct tty *
+itetty(dev)
+	dev_t	dev;
+{
+	return(getitesp(dev)->tp);
 }
 
 int
