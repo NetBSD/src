@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.44 1996/01/07 02:07:07 mycroft Exp $	*/
+/*	$NetBSD: icu.s,v 1.45 1996/01/07 03:59:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -64,7 +64,6 @@ _splx:
  *   esi - address to resume loop at
  *   edi - scratch for Xsoftnet
  */
-ENTRY(spllower)
 IDTVEC(spllower)
 	pushl	%ebx
 	pushl	%esi
