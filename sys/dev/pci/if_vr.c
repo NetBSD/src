@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.53 2001/11/13 07:48:45 lukem Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.53.10.1 2003/01/27 05:02:43 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.53 2001/11/13 07:48:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.53.10.1 2003/01/27 05:02:43 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -939,8 +939,11 @@ vr_start(ifp)
 		 * Load the DMA map.  If this fails, the packet didn't
 		 * fit in one DMA segment, and we need to copy.  Note,
 		 * the packet must also be aligned.
+		 * if the packet is too small, copy it too, so we're sure
+		 * so have enouth room for the pad buffer.
 		 */
 		if ((mtod(m0, uintptr_t) & 3) != 0 ||
+		    m0->m_pkthdr.len < VR_MIN_FRAMELEN ||
 		    bus_dmamap_load_mbuf(sc->vr_dmat, ds->ds_dmamap, m0,
 		     BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -960,6 +963,15 @@ vr_start(ifp)
 			}
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
+			/*
+			 * The Rhine doesn't auto-pad, so we have to do this
+			 * ourselves.
+			 */
+			if (m0->m_pkthdr.len < VR_MIN_FRAMELEN) {
+				memset(mtod(m, caddr_t) + m0->m_pkthdr.len,
+				    0, VR_MIN_FRAMELEN - m0->m_pkthdr.len);
+				m->m_pkthdr.len = m->m_len = VR_MIN_FRAMELEN;
+			}
 			error = bus_dmamap_load_mbuf(sc->vr_dmat,
 			    ds->ds_dmamap, m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
@@ -994,12 +1006,10 @@ vr_start(ifp)
 #endif
 
 		/*
-		 * Fill in the transmit descriptor.  The Rhine
-		 * doesn't auto-pad, so we have to do this ourselves.
+		 * Fill in the transmit descriptor.
 		 */
 		d->vr_data = htole32(ds->ds_dmamap->dm_segs[0].ds_addr);
-		d->vr_ctl = htole32(m0->m_pkthdr.len < VR_MIN_FRAMELEN ?
-		    VR_MIN_FRAMELEN : m0->m_pkthdr.len);
+		d->vr_ctl = htole32(m0->m_pkthdr.len);
 		d->vr_ctl |=
 		    htole32(VR_TXCTL_TLINK|VR_TXCTL_FIRSTFRAG|
 		    VR_TXCTL_LASTFRAG);
