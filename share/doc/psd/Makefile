@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2003/07/10 10:34:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2004/01/11 16:11:52 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 5/23/94
 
 .include <bsd.own.mk>
@@ -14,7 +14,7 @@
 # 11.adb 15.yacc 16.lex
 
 BINDIR=	/usr/share/doc/psd
-.if ${MKSHARE} != "no"
+.if ${MKDOC} != "no"
 FILES=	00.contents Makefile Title
 .endif
 SUBDIR=	05.sysman 20.ipctut 21.ipc
