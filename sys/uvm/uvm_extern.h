@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.35 1999/12/30 16:09:47 eeh Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.36 2000/01/11 06:57:49 chs Exp $	*/
 
 /*
  *
@@ -277,7 +277,9 @@ typedef int vm_fault_t;
 /* uvm_aobj.c */
 struct uvm_object	*uao_create __P((vsize_t, int));
 void			uao_detach __P((struct uvm_object *));
+void			uao_detach_locked __P((struct uvm_object *));
 void			uao_reference __P((struct uvm_object *));
+void			uao_reference_locked __P((struct uvm_object *));
 
 /* uvm_fault.c */
 int			uvm_fault __P((vm_map_t, vaddr_t, 

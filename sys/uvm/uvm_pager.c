@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.24 1999/11/13 00:24:38 thorpej Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.25 2000/01/11 06:57:50 chs Exp $	*/
 
 /*
  *
@@ -443,7 +443,7 @@ uvm_pager_put(uobj, pg, ppsp_ptr, npages, flags, start, stop)
 	struct vm_page *pg, ***ppsp_ptr;/* IN, IN/OUT */
 	int *npages;			/* IN/OUT */
 	int flags;			/* IN */
-	vaddr_t start, stop;	/* IN, IN */
+	vaddr_t start, stop;		/* IN, IN */
 {
 	int result;
 	daddr_t swblk;
@@ -469,8 +469,8 @@ uvm_pager_put(uobj, pg, ppsp_ptr, npages, flags, start, stop)
 		} else {
 			ppsp[0] = pg;
 			*npages = 1;
-		 }
-					  
+		}
+
 		swblk = 0;		/* XXX: keep gcc happy */
 
 	} else {
@@ -531,7 +531,7 @@ ReTry:
 				simple_lock(&uobj->vmobjlock);
 			if (*npages > 1 || pg == NULL)
 				uvm_pager_dropcluster(uobj, pg, ppsp, npages,
-				    PGO_PDFREECLUST, 0);
+				    PGO_PDFREECLUST);
 			/* if (uobj): object still locked, as per
 			 * return-state item #3 */
 		}
@@ -539,17 +539,67 @@ ReTry:
 	}
 
 	/*
-	 * a pager error occured.    if we have clustered, we drop the 
-	 * cluster and try again.
+	 * a pager error occured.
+	 * for transient errors, drop to a cluster of 1 page ("pg")
+	 * and try again.  for hard errors, don't bother retrying.
 	 */
 
 	if (*npages > 1 || pg == NULL) {
-		if (uobj)
+		if (uobj) {
 			simple_lock(&uobj->vmobjlock);
-		uvm_pager_dropcluster(uobj, pg, ppsp, npages, PGO_REALLOCSWAP,
-		    swblk);
-		if (pg != NULL)
-			goto ReTry;
+		}
+		uvm_pager_dropcluster(uobj, pg, ppsp, npages, PGO_REALLOCSWAP);
+
+		/*
+		 * for failed swap-backed pageouts with a "pg",
+		 * we need to reset pg's swslot to either:
+		 * "swblk" (for transient errors, so we can retry),
+		 * or 0 (for hard errors).
+		 */
+
+		if (uobj == NULL && pg != NULL) {
+			int nswblk = (result == VM_PAGER_AGAIN) ? swblk : 0;
+			if (pg->pqflags & PQ_ANON) {
+				simple_lock(&pg->uanon->an_lock);
+				pg->uanon->an_swslot = nswblk;
+				simple_unlock(&pg->uanon->an_lock);
+			} else {
+				simple_lock(&pg->uobject->vmobjlock);
+				uao_set_swslot(pg->uobject,
+					       pg->offset >> PAGE_SHIFT,
+					       nswblk);
+				simple_unlock(&pg->uobject->vmobjlock);
+			}
+		}
+		if (result == VM_PAGER_AGAIN) {
+
+			/*
+			 * for transient failures, free all the swslots that
+			 * we're not going to retry with.
+			 */
+
+			if (uobj == NULL) {
+				if (pg) {
+					uvm_swap_free(swblk + 1, *npages - 1);
+				} else {
+					uvm_swap_free(swblk, *npages);
+				}
+			}
+			if (pg) {
+				ppsp[0] = pg;
+				*npages = 1;
+				goto ReTry;
+			}
+		} else if (uobj == NULL) {
+
+			/*
+			 * for hard errors on swap-backed pageouts,
+			 * mark the swslots as bad.  note that we do not
+			 * free swslots that we mark bad.
+			 */
+
+			uvm_swap_markbad(swblk, *npages);
+		}
 	}
 
 	/*
@@ -583,33 +633,15 @@ ReTry:
  */
 
 void
-uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags, swblk)
+uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags)
 	struct uvm_object *uobj;	/* IN */
 	struct vm_page *pg, **ppsp;	/* IN, IN/OUT */
 	int *npages;			/* IN/OUT */
 	int flags;
-	int swblk;			/* valid if
-					   (uobj == NULL && PGO_REALLOCSWAP) */
 {
 	int lcv;
 	boolean_t obj_is_alive; 
 	struct uvm_object *saved_uobj;
-
-	/*
-	 * if we need to reallocate swap space for the cluster we are dropping
-	 * (true if swap-backed and PGO_REALLOCSWAP) then free the old
-	 * allocation now.   save a block for "pg" if it is non-NULL.
-	 *
-	 * note that we will zap the object's pointer to swap in the "for" loop
-	 * below...
-	 */
-
-	if (uobj == NULL && (flags & PGO_REALLOCSWAP)) {
-		if (pg)
-			uvm_swap_free(swblk + 1, *npages - 1);
-		else
-			uvm_swap_free(swblk, *npages);
-	}
 
 	/*
 	 * drop all pages but "pg"
@@ -717,35 +749,6 @@ uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags, swblk)
 				simple_unlock(&ppsp[lcv]->uanon->an_lock);
 			else
 				simple_unlock(&ppsp[lcv]->uobject->vmobjlock);
-		}
-
-	}
-
-	/*
-	 * drop to a cluster of 1 page ("pg") if requested
-	 */
-
-	if (pg && (flags & PGO_PDFREECLUST) == 0) {
-		/*
-		 * if we are not a successful pageout, we make a 1 page cluster.
-		 */
-		ppsp[0] = pg;
-		*npages = 1;
-
-		/*
-		 * assign new swap block to new cluster, if anon backed
-		 */
-		if (uobj == NULL && (flags & PGO_REALLOCSWAP)) {
-			if (pg->pqflags & PQ_ANON) {
-				simple_lock(&pg->uanon->an_lock);
-				pg->uanon->an_swslot = swblk;	/* reassign */
-				simple_unlock(&pg->uanon->an_lock);
-			} else {
-				simple_lock(&pg->uobject->vmobjlock);
-				uao_set_swslot(pg->uobject,
-				    pg->offset >> PAGE_SHIFT, swblk);
-				simple_unlock(&pg->uobject->vmobjlock);
-			}
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.10 1999/06/21 17:25:12 thorpej Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.11 2000/01/11 06:57:50 chs Exp $	*/
 
 /*
  *
@@ -134,7 +134,7 @@ struct uvm_pagerops {
 
 void		uvm_pager_dropcluster __P((struct uvm_object *, 
 					struct vm_page *, struct vm_page **, 
-					int *, int, int));
+					int *, int));
 void		uvm_pager_init __P((void));
 int		uvm_pager_put __P((struct uvm_object *, struct vm_page *, 
 				   struct vm_page ***, int *, int, 

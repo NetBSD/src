@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.12 1999/03/26 17:34:16 chs Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.13 2000/01/11 06:57:50 chs Exp $	 */
 
 /*
  *
@@ -242,8 +242,9 @@ uvm_dump()
 	    uvmexp.pdbusy, uvmexp.pdfreed, uvmexp.pdreact, uvmexp.pddeact);
 	printf("    pageouts=%d, pending=%d, nswget=%d\n", uvmexp.pdpageouts,
 	    uvmexp.pdpending, uvmexp.nswget);
-	printf("    nswapdev=%d, nanon=%d, nfreeanon=%d\n", uvmexp.nswapdev,
-	    uvmexp.nanon, uvmexp.nfreeanon);
+	printf("    nswapdev=%d, nanon=%d, nanonneeded=%d nfreeanon=%d\n",
+	    uvmexp.nswapdev, uvmexp.nanon, uvmexp.nanonneeded,
+	    uvmexp.nfreeanon);
 	printf("    swpages=%d, swpginuse=%d, swpgonly=%d paging=%d\n",
 	    uvmexp.swpages, uvmexp.swpginuse, uvmexp.swpgonly, uvmexp.paging);
 
