@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.4 2001/03/10 13:34:34 toshii Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.5 2001/03/12 03:27:18 toshii Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -1338,9 +1338,12 @@ sacomintr(arg)
 		COM_UNLOCK(sc);
 		return (0);
 	}
+	if (ISSET(sr0, SR0_EIF))
+		/* XXX silently discard error bits */
+		bus_space_read_4(iot, ioh, SACOM_DR);
 	if (ISSET(sr0, SR0_RBB))
 		bus_space_write_4(iot, ioh, SACOM_SR0, SR0_RBB);
-	if (ISSET(sr1, SR0_REB)) {
+	if (ISSET(sr0, SR0_REB)) {
 		bus_space_write_4(iot, ioh, SACOM_SR0, SR0_REB);
 #if defined(DDB) || defined(KGDB)
 #ifndef DDB_BREAK_CHAR
