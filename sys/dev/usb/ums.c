@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.21 1999/01/10 19:13:15 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.22 1999/01/12 22:06:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -271,7 +271,7 @@ USB_ATTACH(ums)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	/* try to guess the Z activator: first check Z, then WHEEL */
+	/* Try to guess the Z activator: first check Z, then WHEEL. */
 	if (hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Z),
 		       hid_input, &sc->sc_loc_z, &flags) ||
 	    hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_WHEEL),
@@ -291,11 +291,13 @@ USB_ATTACH(ums)
 	sc->nbuttons = i - 1;
 	sc->sc_loc_btn = malloc(sizeof(struct hid_location)*sc->nbuttons, 
 				M_USBDEV, M_NOWAIT);
-	if (!sc->sc_loc_btn)
+	if (!sc->sc_loc_btn) {
+		printf("%s: no memory\n", USBDEVNAME(sc->sc_dev));
 		USB_ATTACH_ERROR_RETURN;
+	}
 
 	printf("%s: %d buttons%s\n", USBDEVNAME(sc->sc_dev),
-	       sc->nbuttons, (sc->flags & UMS_Z? " and Z dir." : ""));
+	       sc->nbuttons, sc->flags & UMS_Z ? " and Z dir." : "");
 
 	for (i = 1; i <= sc->nbuttons; i++)
 		hid_locate(desc, size, HID_USAGE2(HUP_BUTTON, i),
@@ -304,6 +306,7 @@ USB_ATTACH(ums)
 	sc->sc_isize = hid_report_size(desc, size, hid_input, &sc->sc_iid);
 	sc->sc_ibuf = malloc(sc->sc_isize, M_USB, M_NOWAIT);
 	if (!sc->sc_ibuf) {
+		printf("%s: no memory\n", USBDEVNAME(sc->sc_dev));
 		free(sc->sc_loc_btn, M_USB);
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -441,14 +444,14 @@ ums_intr(reqh, addr, status)
 			buttons |= (1 << UMS_BUT(i));
 
 #if defined(__NetBSD__)
-	if (dx || dy || buttons != sc->sc_buttons) {
+	if (dx || dy || dz || buttons != sc->sc_buttons) {
 		DPRINTFN(10, ("ums_intr: x:%d y:%d z:%d buttons:0x%x\n",
 			dx, dy, dz, buttons));
 		sc->sc_buttons = buttons;
 		if (sc->sc_wsmousedev)
 			wsmouse_input(sc->sc_wsmousedev, buttons, dx, dy, dz);
 #elif defined(__FreeBSD__)
-	if (dx || dy || buttons != sc->status.button) {
+	if (dx || dy || dz || buttons != sc->status.button) {
 		DPRINTFN(10, ("ums_intr: x:%d y:%d z:%d buttons:0x%x\n",
 			dx, dy, dz, buttons));
 
@@ -686,7 +689,7 @@ ums_poll(dev_t dev, int events, struct proc *p)
 
 	return revents;
 }
-	
+
 int
 ums_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
