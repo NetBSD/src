@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.32 2002/10/13 00:34:16 mrg Exp $	*/
+/*	$NetBSD: extern.h,v 1.33 2002/10/15 16:16:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -56,6 +56,7 @@ extern time_t starttime;
 extern int force_one_volume;
 extern char *chdname;
 extern int forcelocal;
+extern int secure;
 
 int ar_open(const char *);
 void ar_close(void);

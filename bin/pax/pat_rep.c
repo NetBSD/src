@@ -1,4 +1,4 @@
-/*	$NetBSD: pat_rep.c,v 1.14 2002/10/12 15:39:30 christos Exp $	*/
+/*	$NetBSD: pat_rep.c,v 1.15 2002/10/15 16:16:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pat_rep.c,v 1.14 2002/10/12 15:39:30 christos Exp $");
+__RCSID("$NetBSD: pat_rep.c,v 1.15 2002/10/15 16:16:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,6 +82,7 @@ static int tty_rename(ARCHD *);
 static int fix_path(char *, int *, char *, int);
 static int fn_match(char *, char *, char **);
 static char * range_match(char *, int);
+static int checkdotdot(const char *);
 #ifdef NET2_REGEX
 static int resub(regexp *, char *, char *, char *);
 #else
@@ -670,6 +671,19 @@ mod_name(ARCHD *arcn)
 		}
 	}
 
+	if (secure) {
+		if (checkdotdot(arcn->name)) {
+			tty_warn(0, "Ignoring file containing `..' (%s)",
+				arcn->name);
+			return 1;
+		}
+		if (checkdotdot(arcn->ln_name)) {
+			tty_warn(0, "Ignoring link containing `..' (%s)",
+				arcn->ln_name);
+			return 1;
+		}
+	}
+
 	/*
 	 * IMPORTANT: We have a problem. what do we do with symlinks?
 	 * Modifying a hard link name makes sense, as we know the file it
@@ -1039,6 +1053,35 @@ rep_name(char *name, size_t namelen, int *nlen, int prnt)
 		*nlen = strlcpy(name, nname, namelen);
 	}
 	return(0);
+}
+
+
+/*
+ * checkdotdot()
+ *	Return true if a component of the name contains a reference to ".."
+ */
+static int
+checkdotdot(const char *name)
+{
+	const char *p;
+	/* 1. "..{[/],}" */
+	if (name[0] == '.' && name[1] == '.' &&
+	    (name[2] == '/' || name[2] == '\0'))
+		return 1;
+
+	/* 2. "*[/]..[/]*" */
+	if (strstr(name, "/../") != NULL)
+		return 1;
+
+	/* 3. "*[/].." */
+	for (p = name; *p; p++)
+		continue;
+	if (p - name < 3)
+		return 0;
+	if (p[-1] == '.' && p[-2] == '.' && p[-3] == '/')
+		return 1;
+
+	return 0;
 }
 
 #ifdef NET2_REGEX
