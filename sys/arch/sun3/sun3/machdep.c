@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.105 1997/10/30 01:02:53 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.106 1997/11/25 22:38:41 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -95,10 +95,8 @@
 #include <machine/dvma.h>
 #include <machine/kcore.h>
 #include <machine/db_machdep.h>
+#include <machine/idprom.h>
 #include <machine/machdep.h>
-
-extern char *cpu_string;
-extern char version[];
 
 /* Defined in locore.s */
 extern char kernel_text[];
@@ -109,10 +107,7 @@ int	physmem;
 int	fputype;
 caddr_t	msgbufaddr;
 
-/* Our private scratch page for dumping the MMU. */
-static vm_offset_t dumppage;
-
-/* Virtual page frame for /dev/mem (see map.c) */
+/* Virtual page frame for /dev/mem (see mem.c) */
 vm_offset_t vmmap;
 
 /*
@@ -135,6 +130,9 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
+
+/* Our private scratch page for dumping the MMU. */
+static vm_offset_t dumppage;
 
 static void identifycpu __P((void));
 static void initcpu __P((void));
@@ -445,11 +443,12 @@ char	cpu_model[120];
 void
 identifycpu()
 {
+	extern char *cpu_string;	/* XXX */
 
-    /* Other stuff? (VAC, mc6888x version, etc.) */
+	/* Other stuff? (VAC, mc6888x version, etc.) */
 	sprintf(cpu_model, "Sun 3/%s", cpu_string);
 
-	printf("Model: %s (hostid 0x%x)\n", cpu_model, (int) hostid);
+	printf("Model: %s (hostid %x)\n", cpu_model, (int) hostid);
 }
 
 /*
@@ -616,7 +615,8 @@ long	dumplo = 0; 		/* blocks */
 void
 cpu_dumpconf()
 {
-	int nblks;	/* size of dump area */
+	int devblks;	/* size of dump device in blocks */
+	int dumpblks;	/* size of dump image in blocks */
 	int maj;
 	int (*getsize)__P((dev_t));
 
@@ -629,20 +629,26 @@ cpu_dumpconf()
 	getsize = bdevsw[maj].d_psize;
 	if (getsize == NULL)
 		return;
-	nblks = (*getsize)(dumpdev);
-	if (nblks <= ctod(1))
+	devblks = (*getsize)(dumpdev);
+	if (devblks <= ctod(1))
 		return;
+	devblks &= ~(ctod(1)-1);
+
+	/*
+	 * Note: savecore expects dumpsize to be the
+	 * number of pages AFTER the dump header.
+	 */
+	dumpsize = physmem;
 
 	/* Position dump image near end of space, page aligned. */
-	dumpsize = physmem + DUMP_EXTRA;	/* pages */
-	dumplo = nblks - ctod(dumpsize);
-	dumplo &= ~(ctod(1)-1);
+	dumpblks = ctod(physmem + DUMP_EXTRA);
+	dumplo = devblks - dumpblks;
 
 	/* If it does not fit, truncate it by moving dumplo. */
 	/* Note: Must force signed comparison. */
 	if (dumplo < ((long)ctod(1))) {
 		dumplo = ctod(1);
-		dumpsize = dtoc(nblks - dumplo);
+		dumpsize = dtoc(devblks - dumplo) - DUMP_EXTRA;
 	}
 }
 
@@ -698,10 +704,10 @@ dumpsys()
 		   (int) dumpdev, (int) dumplo);
 
 	/*
-	 * Write the dump header, including MMU state.
+	 * Prepare the dump header, including MMU state.
 	 */
 	blkno = dumplo;
-	todo = dumpsize - DUMP_EXTRA;	/* pages */
+	todo = dumpsize;	/* pages */
 	vaddr = (char*)dumppage;
 	bzero(vaddr, NBPG);
 
