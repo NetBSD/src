@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 2001/10/29 19:04:25 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.3 2002/09/18 01:43:07 chs Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -97,6 +97,8 @@
 
 struct clockframe;
 
+extern int imask[];
+
 struct machvec {
 	int (*mvec_splraise)(int);
 	int (*mvec_spllower)(int);
@@ -112,33 +114,30 @@ extern struct machvec machine_interface;
 #define	_splraise(x)	((*machine_interface.mvec_splraise)(x))
 #define	_spllower(x)	((*machine_interface.mvec_spllower)(x))
 #define	splx(x)		((*machine_interface.mvec_splx)(x))
-
 #define	setsoftintr(x)	((*machine_interface.mvec_setsoft)(x))
-
 #define	clock_return(x, y) ((*machine_interface.mvec_clock_return)(x, y))
-
 #define	intr_establish(irq, lvl, ist, func, arg)			\
 	((*machine_interface.mvec_intr_establish)((irq), (lvl), (ist),	\
 	    (func), (arg)))
 #define	intr_disestablish(cookie)					\
 	((*machine_interface.mvec_intr_disestablish)((cookie)))
 
-#define	splhigh()	_splraise(IPL_HIGH)
-#define	splsoft()	_splraise(IPL_SOFT)
-#define	splsoftclock()	_splraise(IPL_SOFTCLOCK)
-#define	splsoftnet()	_splraise(IPL_SOFTNET)
-#define	splbio()	_splraise(IPL_BIO)
-#define	splnet()	_splraise(IPL_NET)
-#define	spltty()	_splraise(IPL_TTY)
-#define	splvm()		_splraise(IPL_IMP)
-#define	splaudio()	_splraise(IPL_AUDIO)
-#define	splclock()	_splraise(IPL_CLOCK)
-#define	splserial()	_splraise(IPL_SERIAL)
+#define	splhigh()	_splraise(imask[IPL_HIGH])
+#define	splsoft()	_splraise(imask[IPL_SOFT])
+#define	splsoftclock()	_splraise(imask[IPL_SOFTCLOCK])
+#define	splsoftnet()	_splraise(imask[IPL_SOFTNET])
+#define	splbio()	_splraise(imask[IPL_BIO])
+#define	splnet()	_splraise(imask[IPL_NET])
+#define	spltty()	_splraise(imask[IPL_TTY])
+#define	splvm()		_splraise(imask[IPL_IMP])
+#define	splaudio()	_splraise(imask[IPL_AUDIO])
+#define	splclock()	_splraise(imask[IPL_CLOCK])
+#define	splserial()	_splraise(imask[IPL_SERIAL])
 
 #define	splstatclock()	splclock()
 
-#define	spl0()		_spllower(IPL_NONE)
-#define	spllowersoftclock() _spllower(IPL_SOFTCLOCK)
+#define	spl0()		_spllower(imask[IPL_NONE])
+#define	spllowersoftclock() _spllower(imask[IPL_SOFTCLOCK])
 
 #define	splsched()	splhigh()
 #define	spllock()	splhigh()
