@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.42 1999/04/25 07:54:01 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.43 1999/04/26 04:01:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.42 1999/04/25 07:54:01 lukem Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.43 1999/04/26 04:01:32 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -463,6 +463,7 @@ _dns_getpw(rv, cb_data, ap)
 	int		  r;
 
 	search = va_arg(ap, int);
+ nextdnsbynum:
 	switch (search) {
 	case _PW_KEYBYNUM:
 		if (_pw_hesnum == -1)
@@ -504,9 +505,11 @@ _dns_getpw(rv, cb_data, ap)
 	strncpy(line, hp[0], sizeof(line));	/* only check first elem */
 	line[sizeof(line) - 1] = '\0';
 	hesiod_free_list(context, hp);
-	if (__pwparse(&_pw_passwd, line))
+	if (__pwparse(&_pw_passwd, line)) {
+		if (search == _PW_KEYBYNUM)
+			goto nextdnsbynum;	/* skip dogdy entries */
 		r = NS_UNAVAIL;
-	else
+	} else
 		r = NS_SUCCESS;
  cleanup_dns_getpw:
 	hesiod_end(context);
