@@ -1,4 +1,7 @@
-#	$NetBSD: bsd.own.mk,v 1.63 1998/04/03 09:56:00 agc Exp $
+#	$NetBSD: bsd.own.mk,v 1.64 1998/04/13 12:03:07 lukem Exp $
+
+.if !defined(_BSD_OWN_MK_)
+_BSD_OWN_MK_=1
 
 .if defined(MAKECONF) && exists(${MAKECONF})
 .include "${MAKECONF}"
@@ -123,3 +126,5 @@ realinstall:	.NOTMAIN beforeinstall
 afterinstall:	.NOTMAIN subdir-install realinstall
 .endif
 .endif
+
+.endif		# _BSD_OWN_MK_
