@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.41 1998/03/02 00:22:54 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.42 1998/03/02 00:49:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.41 1998/03/02 00:22:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.42 1998/03/02 00:49:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,12 +229,12 @@ int pmapdebug = PDB_PARANOIA;
 /*
  * Get STEs and PTEs for user/kernel address space
  */
-#define	pmap_ste(m, v)	 (&((m)->pm_stab[vatoste((vm_offset_t)(v))]))
+#define	pmap_ste(m, v)	 (&((m)->pm_stab[l2pte_index((vm_offset_t)(v))]))
 #define pmap_ste_v(m, v) (*pmap_ste(m, v) & PG_V)
 
 #define pmap_pte(m, v)							\
-	(&((m)->pm_ptab[NPTEPG * vatoste((vm_offset_t)(v)) +		\
-	    vatopte((vm_offset_t)(v))]))
+	(&((m)->pm_ptab[NPTEPG * l2pte_index((vm_offset_t)(v)) +	\
+	    l3pte_index((vm_offset_t)(v))]))
 #define pmap_pte_pa(pte)	(PG_PFNUM(*(pte)) << PGSHIFT)
 #define pmap_pte_prot(pte)	(*(pte) & PG_PROT)
 #define pmap_pte_w(pte)		(*(pte) & PG_WIRED)
@@ -500,7 +500,7 @@ pmap_bootstrap(ptaddr)
 		pte = (ALPHA_K0SEG_TO_PHYS(((vm_offset_t)Sysptmap) +
 		    (i*PAGE_SIZE)) >> PGSHIFT) << PG_SHIFT;
 		pte |= PG_V | PG_ASM | PG_KRE | PG_KWE | PG_WIRED;
-		Lev1map[kvtol1pte(VM_MIN_KERNEL_ADDRESS +
+		Lev1map[l1pte_index(VM_MIN_KERNEL_ADDRESS +
 		    (i*PAGE_SIZE*NPTEPG*NPTEPG))] = pte;
 	}
 
@@ -508,7 +508,7 @@ pmap_bootstrap(ptaddr)
 	pte = (ALPHA_K0SEG_TO_PHYS((vm_offset_t)Lev1map) >> PGSHIFT)
 	    << PG_SHIFT;
 	pte |= PG_V | PG_KRE | PG_KWE; /* NOTE NO ASM */
-	Lev1map[kvtol1pte(VPTBASE)] = pte;
+	Lev1map[l1pte_index(VPTBASE)] = pte;
 	
 	/*
 	 * Set up level 2 page table.
@@ -518,7 +518,7 @@ pmap_bootstrap(ptaddr)
 		pte = (ALPHA_K0SEG_TO_PHYS(((vm_offset_t)Sysmap) +
 		    (i*PAGE_SIZE)) >> PGSHIFT) << PG_SHIFT;
 		pte |= PG_V | PG_ASM | PG_KRE | PG_KWE | PG_WIRED;
-		Sysptmap[vatoste(VM_MIN_KERNEL_ADDRESS+
+		Sysptmap[l2pte_index(VM_MIN_KERNEL_ADDRESS+
 		    (i*PAGE_SIZE*NPTEPG))] = pte;
 	}
 
@@ -1158,7 +1158,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		 * pre-allocated and mapped in.  Therefore, the
 		 * level 1 and level 2 PTEs must already be valid.
 		 */
-		if (pmap_pte_v(&pmap->pm_lev1map[kvtol1pte(va)]) == 0)
+		if (pmap_pte_v(&pmap->pm_lev1map[l1pte_index(va)]) == 0)
 			panic("pmap_enter: kernel level 1 PTE not valid");
 		if (pmap_ste_v(pmap, va) == 0)
 			panic("pmap_enter: kernel level 2 PTE not valid");
@@ -1935,8 +1935,8 @@ pmap_remove_mapping(pmap, va, pte, flags)
 						 ALPHA_STSIZE);
 #endif
 				ptpmap->pm_stab = Segtabzero;
-				ptpmap->pm_lev1map[kvtol1pte(VM_MIN_ADDRESS)] =
-				    Segtabzeropte;
+				ptpmap->pm_lev1map[l1pte_index(VM_MIN_ADDRESS)]
+				    = Segtabzeropte;
 			}
 #ifdef DEBUG
 			else if (ptpmap->pm_sref < 0)
@@ -2092,13 +2092,13 @@ pmap_enter_ptpage(pmap, va)
 		pmap->pm_stab = (pt_entry_t *)
 			kmem_alloc(st_map, ALPHA_STSIZE);
 #endif
-		pmap->pm_lev1map[kvtol1pte(VM_MIN_ADDRESS)] =
+		pmap->pm_lev1map[l1pte_index(VM_MIN_ADDRESS)] =
 		    *kvtopte(pmap->pm_stab);
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB))
 			printf("enter: pmap %p stab %p(%lx)\n",
 			       pmap, pmap->pm_stab,
-			       pmap->pm_lev1map[kvtol1pte(VM_MIN_ADDRESS)]);
+			       pmap->pm_lev1map[l1pte_index(VM_MIN_ADDRESS)]);
 #endif
 	}
 
@@ -2736,15 +2736,15 @@ pmap_create_lev1map(pmap)
 	 * Initialize the new level 1 table by copying the
 	 * kernel mappings into it.
 	 */
-	for (i = kvtol1pte(VM_MIN_KERNEL_ADDRESS);
-	     i <= kvtol1pte(VM_MAX_KERNEL_ADDRESS); i++)
+	for (i = l1pte_index(VM_MIN_KERNEL_ADDRESS);
+	     i <= l1pte_index(VM_MAX_KERNEL_ADDRESS); i++)
 		pmap->pm_lev1map[i] = Lev1map[i];
 
 	/*
 	 * Now, map the new virtual page table.  NOTE: NO ASM!
 	 */
 	pte = ((ptpa >> PGSHIFT) << PG_SHIFT) | PG_V | PG_KRE | PG_KWE;
-	pmap->pm_lev1map[kvtol1pte(VPTBASE)] = pte;
+	pmap->pm_lev1map[l1pte_index(VPTBASE)] = pte;
 
 	/*
 	 * Point to the initial segment table.
@@ -2753,7 +2753,7 @@ pmap_create_lev1map(pmap)
 	if (pmap->pm_stab != Segtabzero)
 		panic("pmap_create_lev1map: not Segtabzero");
 #endif
-	pmap->pm_lev1map[kvtol1pte(VM_MIN_ADDRESS)] = Segtabzeropte;
+	pmap->pm_lev1map[l1pte_index(VM_MIN_ADDRESS)] = Segtabzeropte;
 
 	/*
 	 * The page table base has changed; if the pmap was active,
