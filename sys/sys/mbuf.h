@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.74 2003/02/26 06:31:21 matt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.75 2003/02/26 07:49:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -322,6 +322,7 @@ do {									\
 #define	MCLAIM(m, mowner) 		do { } while (/* CONSTCOND */ 0)
 #define	MOWNER_ATTACH(mo)		do { } while (/* CONSTCOND */ 0)
 #define	MOWNER_DETACH(mo)		do { } while (/* CONSTCOND */ 0)
+#define	m_claim(m, mo)			do { } while (/* CONSTCOND */ 0)
 #endif
 
 
