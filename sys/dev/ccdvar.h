@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdvar.h,v 1.5 1995/08/17 16:31:32 thorpej Exp $	*/
+/*	$NetBSD: ccdvar.h,v 1.6 1995/08/23 01:08:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -196,7 +196,7 @@ struct ccd_softc {
 /*
  * Before you can use a unit, it must be configured with CCDIOCSET.
  * The configuration persists across opens and closes of the device;
- * a CCDIOCCLR must be used to reset a configuration.  An attempt ro
+ * a CCDIOCCLR must be used to reset a configuration.  An attempt to
  * CCDIOCSET an already active unit will return EBUSY.  Attempts to
  * CCDIOCCLR an inactive unit will return ENXIO.
  */
