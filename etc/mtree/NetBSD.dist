@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.95 1999/12/29 04:16:21 hubertf Exp $
+#	$NetBSD: NetBSD.dist,v 1.96 2000/02/07 17:48:52 bouyer Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1229,6 +1229,11 @@ cat2
 # ./usr/share/man/cat3
 cat3
 
+# ./usr/share/man/cat3/atari
+atari
+# ./usr/share/man/cat3/atari
+..
+
 # ./usr/share/man/cat3/i386
 i386
 # ./usr/share/man/cat3/i386
@@ -1534,6 +1539,11 @@ man2
 
 # ./usr/share/man/man3
 man3
+
+# ./usr/share/man/man3/atari
+atari
+# ./usr/share/man/man3/atari
+..
 
 # ./usr/share/man/man3/i386
 i386
