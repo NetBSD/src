@@ -30,3 +30,8 @@
 .include "txt_db.inc"
 .include "x509.inc"
 .include "x509v3.inc"
+.if !defined(USELESS_CRYPTO)
+.include "rsa.inc"
+.include "rc5.inc"
+.include "idea.inc"
+.endif
