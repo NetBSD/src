@@ -1,3 +1,5 @@
+/*	$NetBSD: ctype_.c,v 1.12 1995/02/25 15:39:28 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -37,8 +39,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 /*static char *sccsid = "from: @(#)ctype_.c	5.6 (Berkeley) 6/1/90";*/
-static char *rcsid = "$Id: ctype_.c,v 1.11 1994/05/17 04:13:48 cgd Exp $";
+#else
+static char rcsid[] = "$NetBSD: ctype_.c,v 1.12 1995/02/25 15:39:28 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>

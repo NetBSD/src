@@ -1,3 +1,5 @@
+/*	$NetBSD: ctime.c,v 1.10 1995/02/25 15:39:22 cgd Exp $	*/
+
 /*
  * Copyright (c) 1987, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)ctime.c	8.2 (Berkeley) 3/20/94";
 #else
-static char rcsid[] = "$NetBSD: ctime.c,v 1.9 1995/02/25 14:09:35 cgd Exp $";
+static char rcsid[] = "$NetBSD: ctime.c,v 1.10 1995/02/25 15:39:22 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 

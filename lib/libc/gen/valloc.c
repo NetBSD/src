@@ -1,6 +1,8 @@
+/*	$NetBSD: valloc.c,v 1.5 1995/02/25 15:40:04 cgd Exp $	*/
+
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)valloc.c	5.5 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: valloc.c,v 1.4 1994/10/19 03:14:12 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)valloc.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: valloc.c,v 1.5 1995/02/25 15:40:04 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
