@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.72 2000/03/27 05:30:41 nisimura Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.73 2000/03/28 00:52:57 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.72 2000/03/27 05:30:41 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.73 2000/03/28 00:52:57 simonb Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -895,12 +895,6 @@ sys___sigreturn14(p, v, retval)
  */
 extern phys_ram_seg_t mem_clusters[];
 extern int mem_cluster_cnt;
-
-/*
- * These are imported from pmap.c
- */
-extern pt_entry_t *Sysmap;
-extern u_int Sysmapsize;
 
 /*
  * These variables are needed by /sbin/savecore.
