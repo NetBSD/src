@@ -257,6 +257,7 @@ genrange(s)
 	}
 	s->cnt = stopval - s->lastch + 1;
 	s->state = RANGE;
+	++s->str;
 	--s->lastch;
 	return (1);
 }
