@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdump.c,v 1.2 1995/03/06 19:11:47 mycroft Exp $	*/
+/*	$NetBSD: tcpdump.c,v 1.3 1995/04/24 13:27:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -380,7 +380,7 @@ default_print(register const u_char *bp, register int length)
 	register u_int i;
 	register int nshorts;
 
-	if ((int)bp & 1) {
+	if ((long)bp & 1) {
 		default_print_unaligned(bp, length);
 		return;
 	}

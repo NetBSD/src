@@ -1,4 +1,4 @@
-/*	$NetBSD: print-nfs.c,v 1.3 1995/03/06 19:11:20 mycroft Exp $	*/
+/*	$NetBSD: print-nfs.c,v 1.4 1995/04/24 13:27:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -647,7 +647,7 @@ parseattrstat(const u_int32 *dp, int verbose)
 	if (dp == NULL)
 		return (0);
 
-	return ((int)parsefattr(dp, verbose));
+	return ((long)parsefattr(dp, verbose));
 }
 
 static int
