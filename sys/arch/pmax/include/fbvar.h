@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.3 1999/04/13 03:14:03 ad Exp $ */
+/*	$NetBSD: fbvar.h,v 1.4 1999/06/21 19:21:10 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -45,9 +45,8 @@
  *	@(#)fbvar.h	8.1 (Berkeley) 6/11/93
  */
 
-
 /* XXX */
-#include <sys/select.h>		/* should be included in sparc/rcons/xxx.c  */
+#include <sys/select.h>
 
 /* Hardware cursor information... */
 struct hw_cursor {
@@ -58,6 +57,17 @@ struct hw_cursor {
 	caddr_t cmap;			/* Cursor colormap... */
 	int	cmap_size;		/* Size of cursor colormap... */
 };
+
+#ifdef notyet
+/*
+ * This will shortly become the preferred way to hook-up framebuffers,
+ * ridding us of the ungainly hack that 'struct fbinfo' currently presents.
+ */
+struct fbsoftc {
+	struct	device sc_dv;
+	struct	fbinfo *sc_fi;
+};
+#endif
 
 struct fbinfo {
 	struct device	fi_dv;		/* autoconfig device struct */
@@ -88,75 +98,15 @@ struct fbinfo {
  * following in order to participate.
  */
 struct fbdriver {
-	/* device unblank function (force kernel output to display) */
 	int	(*fbd_unblank) __P((struct fbinfo *));
-	/* device blank function. */
 	int	(*fbd_blank) __P((struct fbinfo *));
-	/* Get and put color maps. */
 	void	(*fbd_initcmap) __P ((struct fbinfo *));
 	int	(*fbd_getcmap) __P ((struct fbinfo *, caddr_t, int, int));
 	int	(*fbd_putcmap) __P ((struct fbinfo *, caddr_t, int, int));
 	void	(*fbd_poscursor) __P ((struct fbinfo *fi, int x, int y));
 	void	(*fbd_loadcursor) __P ((struct fbinfo *fi, u_short *cursor));
 	void	(*fbd_cursorcolor) __P ((struct fbinfo *fi, u_int *color));
-#ifdef notyet
-	void	(*fbd_wrrop)();		/* `write region' rasterop */
-	void	(*fbd_cprop)();		/* `copy region' rasterop */
-	void	(*fbd_clrop)();		/* `clear region' rasterop */
-#endif
 };
-
-struct fbdevice {
-	struct fbinfo *fb_devinfo;	/* Frame buffer device info */
-#define		fb_major fb_devinfo -> fi_major
-#define		fb_type   fb_devinfo -> fi_type
-#define		fb_pixels fb_devinfo -> fi_pixels
-#define		fb_linebytes fb_devinfo -> fi_linebytes
-#define		fb_driver fb_devinfo -> fi_driver
-
-	/* Raster console emulator state */
-	u_int	fb_bits;		/* see defines below */
-	int	fb_ringing;		/* bell currently ringing */
-	int	fb_belldepth;		/* audible bell depth */
-	int	fb_scroll;		/* stupid sun scroll mode */
-
-	int	fb_p0;			/* escape sequence parameter 0 */
-	int	fb_p1;			/* escape sequence parameter 1 */
-
-	int	*fb_row;		/* emulator row */
-	int	*fb_col;		/* emulator column */
-
-	int	fb_maxrow;		/* emulator height of screen */
-	int	fb_maxcol;		/* emulator width of screen */
-
-	int	fb_emuwidth;		/* emulator screen width  */
-	int	fb_emuheight;		/* emulator screen height */
-
-	int	fb_xorigin;		/* x origin for first column */
-	int	fb_yorigin;		/* y origin for first row */
-
-	struct	raster *fb_sp;		/* frame buffer raster */
-	struct	raster *fb_cursor;	/* optional cursor */
-	int	fb_ras_blank;		/* current screen blank raster op */
-
-	struct	raster_font *fb_font;	/* font and related info */
-	int	fb_font_ascent;		/* distance from font to char origin */
-};
-
-#ifndef FB_INESC
-#define FB_INESC	0x001		/* processing an escape sequence */
-#define FB_STANDOUT	0x002		/* standout mode */
-#ifdef notyet
-# define FB_BOLD	0x?		/* boldface mode */
-#endif
-#define FB_INVERT	0x008		/* white on black mode */
-#define FB_VISBELL	0x010		/* visual bell */
-#define FB_CURSOR	0x020		/* cursor is visible */
-#define FB_P0_DEFAULT	0x100		/* param 0 is defaulted */
-#define FB_P1_DEFAULT	0x200		/* param 1 is defaulted */
-#define FB_P0		0x400		/* working on param 0 */
-#define FB_P1		0x800		/* working on param 1 */
-#endif /* !FB_INSEC */
 
 #define kbd_docmd(cmd, val)	0	/* For now, do nothing. */
 #define romgetcursoraddr(xp, yp)	0
