@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.8 2003/03/05 23:55:58 fvdl Exp $
+# $NetBSD: GENERIC,v 1.9 2003/03/08 00:08:46 fvdl Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,11 +22,9 @@ include	"arch/x86_64/conf/std.x86_64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.8 $"
+#ident 		"GENERIC-$Revision: 1.9 $"
 
 maxusers	32		# estimated number of users
-
-options 	MTRR		# memory-type range register syscall support
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
