@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_hp.c,v 1.7 1993/05/22 08:01:18 cgd Exp $
+ *	$Id: if_hp.c,v 1.8 1993/07/01 00:24:09 mycroft Exp $
  */
 
 /*
@@ -86,6 +86,7 @@
 #include "net/bpfdesc.h"
 #endif
 
+#include "machine/cpufunc.h"
 #include "i386/isa/isa_device.h"
 #include "i386/isa/if_nereg.h"
 #include "i386/isa/icu.h"
@@ -160,12 +161,7 @@ hpprobe (dvp)
   hpc = (ns->ns_port = dvp->id_iobase + 0x10);
   s = splimp ();
 
-  {
-    u_short x = dvp->id_irq;
-    ns->hp_irq = 0;
-    while (x >>= 1)
-      ++ns->hp_irq;
-  }
+  ns->hp_irq = ffs(dvp->id_irq) - 1;
 
   /* Extract board address */
   for (i = 0; i < 6; i++)
@@ -174,8 +170,10 @@ hpprobe (dvp)
 
   if (ns->ns_addr[0] != 0x08 ||
       ns->ns_addr[1] != 0x00 ||
-      ns->ns_addr[2] != 0x09)
+      ns->ns_addr[2] != 0x09) {
+    splx (s);
     return 0;
+  }
 
   /* Word Transfers, Burst Mode Select, Fifo at 8 bytes */
   /* On this board, WTS means 32-bit transfers, which is still
@@ -198,8 +196,10 @@ hpprobe (dvp)
   DELAY (1000);
 
   /* Check cmd reg and fail if not right */
-  if ((i = inb (hpc + ds_cmd)) != (DSCM_NODMA | DSCM_PG0 | DSCM_STOP))
+  if ((i = inb (hpc + ds_cmd)) != (DSCM_NODMA | DSCM_PG0 | DSCM_STOP)) {
+    splx (s);
     return (0);
+  }
 #endif
 
   outb (hpc + hp_option, 0);
