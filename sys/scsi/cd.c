@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: cd.c,v 1.28 1994/06/16 01:11:40 mycroft Exp $
+ *      $Id: cd.c,v 1.29 1994/06/16 15:57:39 chopps Exp $
  */
 
 /*
@@ -455,8 +455,12 @@ cdstart(unit)
 		 * reads and writes until all files have been closed and
 		 * re-openned
 		 */
-		if (!(sc_link->flags & SDEV_MEDIA_LOADED))
-			goto bad;
+		if (!(sc_link->flags & SDEV_MEDIA_LOADED)) {
+			bp->b_error = EIO;
+			bp->b_flags |= B_ERROR;
+			biodone(bp);
+			continue;
+		}
 
 		/*
 		 * We have a buf, now we should make a command 
@@ -493,13 +497,8 @@ cdstart(unit)
 		    sizeof(cmd), (u_char *) bp->b_data, bp->b_bcount,
 		    CDRETRIES, 30000, bp, SCSI_NOSLEEP |
 		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT))
-		    != SUCCESSFULLY_QUEUED) {
-bad:
+		    != SUCCESSFULLY_QUEUED)
 			printf("%s: not queued", cd->sc_dev.dv_xname);
-			bp->b_error = EIO;
-			bp->b_flags |= B_ERROR;
-			biodone(bp);
-		}
 	}
 }
 

@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: sd.c,v 1.31 1994/06/16 01:11:47 mycroft Exp $
+ *      $Id: sd.c,v 1.32 1994/06/16 15:57:44 chopps Exp $
  */
 
 /* 
@@ -479,7 +479,10 @@ sdstart(unit)
 		 */
 		if (!(sc_link->flags & SDEV_MEDIA_LOADED)) {
 			sd->flags &= ~SDHAVELABEL;
-			goto bad;
+			bp->b_error = EIO;
+			bp->b_flags |= B_ERROR;
+			biodone(bp);
+			continue;
 		}
 
 		/*
@@ -516,13 +519,8 @@ sdstart(unit)
 		    sizeof(cmd), (u_char *) bp->b_data, bp->b_bcount,
 		    SDRETRIES, 10000, bp, SCSI_NOSLEEP |
 		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT))
-		    != SUCCESSFULLY_QUEUED) {
-bad:
+		    != SUCCESSFULLY_QUEUED)
 			printf("%s: not queued", sd->sc_dev.dv_xname);
-			bp->b_error = EIO;
-			bp->b_flags |= B_ERROR;
-			biodone(bp);
-		}
 	}
 }
 
