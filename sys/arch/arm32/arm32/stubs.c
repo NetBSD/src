@@ -1,4 +1,4 @@
-/* $NetBSD: stubs.c,v 1.14 1997/01/05 18:57:05 mark Exp $ */
+/* $NetBSD: stubs.c,v 1.15 1997/01/31 01:46:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -132,11 +132,11 @@ do_mountroot()
  * CDROM driver we are using
  */
 
-#ifdef NFSCLIENT
+#ifdef NFS
 	/* Test for the fake nfs device */
 	if (major(rootdev) == 1)
 		return(nfs_mountroot());
-#endif	/* NFSCLIENT */
+#endif	/* NFS */
 #ifdef CD9660
 	if (major(rootdev) == 20 || major(rootdev) == 26) {
 		error = cd9660_mountroot();
