@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.79 2002/06/16 00:13:15 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.80 2002/07/06 01:30:13 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.79 2002/06/16 00:13:15 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.80 2002/07/06 01:30:13 perseant Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -719,9 +719,12 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 {
 	struct buf *bp;
 	struct finfo *fip;
+	struct inode *ip;
 	IFILE *ifp;
+	int i, frag;
 	
-	
+	ip = VTOI(vp);
+
 	if (sp->seg_bytes_left < fs->lfs_bsize ||
 	    sp->sum_bytes_left < sizeof(struct finfo))
 		(void) lfs_writeseg(fs, sp);
@@ -734,7 +737,7 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 	
 	fip = sp->fip;
 	fip->fi_nblocks = 0;
-	fip->fi_ino = VTOI(vp)->i_number;
+	fip->fi_ino = ip->i_number;
 	LFS_IENTRY(ifp, fs, fip->fi_ino, bp);
 	fip->fi_version = ifp->if_version;
 	brelse(bp);
@@ -748,7 +751,7 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 		 * The same is true of the Ifile since checkpoints assume
 		 * that all valid Ifile blocks are written.
 		 */
-	   	if (IS_FLUSHING(fs,vp) || VTOI(vp)->i_number == LFS_IFILE_INUM)
+	   	if (IS_FLUSHING(fs,vp) || vp == fs->lfs_ivnode)
 			lfs_gather(fs, sp, vp, lfs_match_data);
 	} else
 		lfs_gather(fs, sp, vp, lfs_match_data);
@@ -761,11 +764,27 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 	 * We have to write them anyway, though, under two conditions: (1) the
 	 * vnode is being flushed (for reuse by vinvalbuf); or (2) we are
 	 * checkpointing.
+	 *
+	 * BUT if we are cleaning, we might have indirect blocks that refer to
+	 * new blocks not being written yet, in addition to fragments being
+	 * moved out of a cleaned segment.  If that is the case, don't
+	 * write the indirect blocks, or the finfo will have a small block
+	 * in the middle of it!
+	 * XXX in this case isn't the inode size wrong too?
 	 */
-	if (lfs_writeindir
-	   || IS_FLUSHING(fs,vp)
-	   || (sp->seg_flags & SEGM_CKP))
-	{
+	frag = 0;
+	if (sp->seg_flags & SEGM_CLEAN) {
+		for (i = 0; i < NDADDR; i++)
+			if (ip->i_lfs_fragsize[i] > 0 &&
+			    ip->i_lfs_fragsize[i] < fs->lfs_bsize)
+				++frag;
+	}
+#ifdef DIAGNOSTIC
+	if (frag > 1)
+		panic("lfs_writefile: more than one fragment!");
+#endif
+	if (IS_FLUSHING(fs, vp) ||
+	    (frag == 0 && (lfs_writeindir || (sp->seg_flags & SEGM_CKP)))) {
 		lfs_gather(fs, sp, vp, lfs_match_indir);
 		lfs_gather(fs, sp, vp, lfs_match_dindir);
 		lfs_gather(fs, sp, vp, lfs_match_tindir);
@@ -844,6 +863,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	 */
 	if (ip->i_number == LFS_IFILE_INUM && sp->idp) {
 		*(sp->idp) = ip->i_din.ffs_din;
+		ip->i_lfs_osize = ip->i_ffs_size;
 		return 0;
 	}
 
@@ -857,9 +877,10 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 
 	/*
 	 * If we are cleaning, ensure that we don't write UNWRITTEN disk
-	 * addresses to disk.
+	 * addresses to disk; possibly revert the inode size.
 	 */
 	if (ip->i_lfs_effnblks != ip->i_ffs_blocks) {
+		cdp->di_size = ip->i_lfs_osize;
 #ifdef DEBUG_LFS
 		printf("lfs_writeinode: cleansing ino %d (%d != %d)\n",
 		       ip->i_number, ip->i_lfs_effnblks, ip->i_ffs_blocks);
@@ -873,6 +894,9 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 				*daddrp = 0;
 			}
 		}
+	} else {
+		/* If all blocks are goig to disk, update the "size on disk" */
+		ip->i_lfs_osize = ip->i_ffs_size;
 	}
 	
 	if (ip->i_flag & IN_CLEANING)
@@ -929,27 +953,30 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	}
 	
 	/*
+	 * The inode's last address should not be in the current partial
+	 * segment, except under exceptional circumstances (lfs_writevnodes
+	 * had to start over, and in the meantime more blocks were written
+	 * to a vnode).  Both inodes will be accounted to this segment
+	 * in lfs_writeseg so we need to subtract the earlier version
+	 * here anyway.  The segment count can temporarily dip below
+	 * zero here; keep track of how many duplicates we have in 
+	 * "dupino" so we don't panic below.
+	 */
+	if (daddr >= fs->lfs_lastpseg && daddr <= dbtofsb(fs, bp->b_blkno)) {
+		++sp->ndupino;
+		printf("lfs_writeinode: last inode addr in current pseg "
+		       "(ino %d daddr 0x%x) ndupino=%d\n", ino, daddr,
+			sp->ndupino);
+	}
+	/*
 	 * Account the inode: it no longer belongs to its former segment,
 	 * though it will not belong to the new segment until that segment
 	 * is actually written.
 	 */
-#ifdef DEBUG
-	/*
-	 * The inode's last address should not be in the current partial
-	 * segment, except under exceptional circumstances (lfs_writevnodes
-	 * had to start over, and in the meantime more blocks were written
-	 * to a vnode).  Although the previous inode won't be accounted in
-	 * su_nbytes until lfs_writeseg, this shouldn't be a problem as we
-	 * have more data blocks in the current partial segment.
-	 */
-	if (daddr >= fs->lfs_lastpseg && daddr <= dbtofsb(fs, bp->b_blkno))
-		printf("lfs_writeinode: last inode addr in current pseg "
-		       "(ino %d daddr 0x%x)\n", ino, daddr);
-#endif
 	if (daddr != LFS_UNUSED_DADDR) {
 		LFS_SEGENTRY(sup, fs, dtosn(fs, daddr), bp);
 #ifdef DIAGNOSTIC
-		if (sup->su_nbytes < DINODE_SIZE) {
+		if (sup->su_nbytes < DINODE_SIZE * (1 + sp->ndupino)) {
 			printf("lfs_writeinode: negative bytes "
 			       "(segment %d short by %d)\n",
 			       dtosn(fs, daddr),
@@ -1110,7 +1137,7 @@ void
 lfs_updatemeta(struct segment *sp)
 {
 	SEGUSE *sup;
-	struct buf *bp;
+	struct buf *bp, *sbp;
 	struct lfs *fs;
 	struct vnode *vp;
 	struct indir a[NIADDR + 2], *ap;
@@ -1118,7 +1145,7 @@ lfs_updatemeta(struct segment *sp)
 	ufs_daddr_t daddr, lbn, off;
 	daddr_t ooff;
 	int error, i, nblocks, num;
-	int bb;
+	int bb, osize, obb;
 	
 	vp = sp->vp;
 	nblocks = &sp->fip->fi_blocks[sp->fip->fi_nblocks] - sp->start_lbp;
@@ -1142,6 +1169,11 @@ lfs_updatemeta(struct segment *sp)
 	 * If there are indirect blocks present, they sort last.  An
 	 * indirect block will be lfs_bsize and its presence indicates
 	 * that you cannot have fragments.
+	 *
+	 * XXX This last is a lie.  A cleaned fragment can coexist with
+	 * XXX a later indirect block.  This will continue to be
+	 * XXX true until lfs_markv is fixed to do everything with
+	 * XXX fake blocks (including fake inodes and fake indirect blocks).
 	 */
 	sp->fip->fi_lastlength = sp->start_bpp[nblocks - 1]->b_bcount;
 	
@@ -1152,19 +1184,27 @@ lfs_updatemeta(struct segment *sp)
 	fs = sp->fs;
 	for (i = nblocks; i--; ++sp->start_bpp) {
 		lbn = *sp->start_lbp++;
+		sbp = *sp->start_bpp;
 
-		(*sp->start_bpp)->b_blkno = fsbtodb(fs, fs->lfs_offset);
+		sbp->b_blkno = fsbtodb(fs, fs->lfs_offset);
 		off = fs->lfs_offset;
-		if ((*sp->start_bpp)->b_blkno == (*sp->start_bpp)->b_lblkno) {
+		if (sbp->b_blkno == sbp->b_lblkno) {
 			printf("lfs_updatemeta: ino %d blk %d"
 			       " has same lbn and daddr\n",
 			       VTOI(vp)->i_number, off);
 		}
-#ifdef DIAGNOSTIC
-		if ((*sp->start_bpp)->b_bcount < fs->lfs_bsize && i != 0)
+
+		/*
+		 * If we write a frag in the wrong place, the cleaner won't
+		 * be able to correctly identify its size later, and the
+		 * segment will be uncleanable.  (Even worse, it will assume
+		 * that the indirect block that actually ends the list
+		 * is of a smaller size!)
+		 */
+		if (sbp->b_bcount < fs->lfs_bsize && i != 0)
 			panic("lfs_updatemeta: fragment is not last block\n");
-#endif
-		bb = fragstofsb(fs, numfrags(fs, (*sp->start_bpp)->b_bcount));
+
+		bb = fragstofsb(fs, numfrags(fs, sbp->b_bcount));
 		fs->lfs_offset += bb;
 		error = ufs_bmaparray(vp, lbn, &daddr, a, &num, NULL);
 		if (daddr > 0)
@@ -1184,6 +1224,11 @@ lfs_updatemeta(struct segment *sp)
 #endif
 			if (ooff == UNWRITTEN)
 				ip->i_ffs_blocks += bb;
+			else {
+				/* possible fragment truncation or extension */
+				obb = btofsb(fs, ip->i_lfs_fragsize[lbn]);
+				ip->i_ffs_blocks += (bb - obb);
+			}
 			ip->i_ffs_db[lbn] = off;
 			break;
 		case 1:
@@ -1222,38 +1267,49 @@ lfs_updatemeta(struct segment *sp)
 		if (daddr >= fs->lfs_lastpseg && daddr <= off) {
 			printf("lfs_updatemeta: ino %d, lbn %d, addr = %x "
 			       "in same pseg\n", VTOI(sp->vp)->i_number,
-			       (*sp->start_bpp)->b_lblkno, daddr);
+			       sbp->b_lblkno, daddr);
 		}
 #endif
-		/* Update segment usage information. */
+		/*
+		 * Update segment usage information, based on old size
+		 * and location.
+		 */
 		if (daddr > 0) {
+			if (lbn >= 0 && lbn < NDADDR)
+				osize = ip->i_lfs_fragsize[lbn];
+			else
+				osize = fs->lfs_bsize;
 			LFS_SEGENTRY(sup, fs, dtosn(fs, daddr), bp);
 #ifdef DIAGNOSTIC
-			if (sup->su_nbytes < (*sp->start_bpp)->b_bcount) {
-				/* XXX -- Change to a panic. */
+			if (sup->su_nbytes < osize + DINODE_SIZE * sp->ndupino) {
 				printf("lfs_updatemeta: negative bytes "
-				       "(segment %d short by %ld)\n",
+				       "(segment %d short by %d)\n",
 				       dtosn(fs, daddr),
-				       (*sp->start_bpp)->b_bcount -
-				       sup->su_nbytes);
+				       osize - sup->su_nbytes);
 				printf("lfs_updatemeta: ino %d, lbn %d, "
 				       "addr = 0x%x\n", VTOI(sp->vp)->i_number,
-				       (*sp->start_bpp)->b_lblkno, daddr);
+				       lbn, daddr);
 				panic("lfs_updatemeta: negative bytes");
-				sup->su_nbytes = (*sp->start_bpp)->b_bcount;
+				sup->su_nbytes = osize + DINODE_SIZE * sp->ndupino;
 			}
 #endif
 #ifdef DEBUG_SU_NBYTES
 			printf("seg %d -= %ld for ino %d lbn %d db 0x%x\n",
-			       dtosn(fs, daddr), (*sp->start_bpp)->b_bcount,
-			       VTOI(sp->vp)->i_number,
-			       (*sp->start_bpp)->b_lblkno, daddr);
+			       dtosn(fs, daddr), osize, VTOI(sp->vp)->i_number,
+			       lbn, daddr);
 #endif
-			sup->su_nbytes -= (*sp->start_bpp)->b_bcount;
+			sup->su_nbytes -= osize;
 			if (!(bp->b_flags & B_GATHERED))
 				fs->lfs_flags |= LFS_IFDIRTY;
 			error = LFS_BWRITE_LOG(bp); /* Ifile */
 		}
+		/*
+		 * Now that this block has a new address, and its old
+		 * segment no longer owns it, we can forget about its
+		 * old size.
+		 */
+		if (lbn >= 0 && lbn < NDADDR)
+			ip->i_lfs_fragsize[lbn] = sbp->b_bcount;
 	}
 }
 
@@ -1312,6 +1368,7 @@ lfs_initseg(struct lfs *fs)
 	sp->ibp = NULL;
 	sp->idp = NULL;
 	sp->ninodes = 0;
+	sp->ndupino = 0;
 
 	/* Get a new buffer for SEGSUM and enter it into the buffer list. */
 	sp->cbpp = sp->bpp;

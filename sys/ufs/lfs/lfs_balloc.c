@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.32 2002/05/14 20:03:53 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.33 2002/07/06 01:30:12 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.32 2002/05/14 20:03:53 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.33 2002/07/06 01:30:12 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -342,9 +342,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, ufs_daddr_t lbn, struct b
 	long bb;
 	int error;
 	extern long locked_queue_bytes;
-	struct buf *ibp;
 	size_t obufsize;
-	SEGUSE *sup;
 
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
@@ -356,8 +354,11 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, ufs_daddr_t lbn, struct b
 	 * accounting information while a segment is being written.
 	 */
     top:
+#ifdef LFS_MALLOC_SEGLOCK
 	lfs_seglock(fs, SEGM_PROT);
-
+#else
+	lockmgr(&fs->lfs_fraglock, LK_SHARED, 0);
+#endif
 	if (!ISSPACE(fs, bb, cred)) {
 		error = ENOSPC;
 		goto out;
@@ -378,31 +379,24 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, ufs_daddr_t lbn, struct b
 	 * holding a block busy or while holding the seglock.  In that case,
 	 * release both and start over after waiting.
 	 */
+
 	if ((*bpp)->b_flags & B_DELWRI) {
 		if (!lfs_fits(fs, bb)) {
 			brelse(*bpp);
 #ifdef QUOTA
 			chkdq(ip, -bb, cred, 0);
 #endif
+#ifdef LFS_FRAGSIZE_SEGLOCK
 			lfs_segunlock(fs);
+#else
+			lockmgr(&fs->lfs_fraglock, LK_RELEASE, 0);
+#endif
 			lfs_availwait(fs, bb);
 			goto top;
 		}
 		fs->lfs_avail -= bb;
 	}
 
-	/*
- 	 * Fix the allocation for this fragment so that it looks like the
-         * source segment contained a block of the new size.  This overcounts;
-	 * but the overcount only lasts until the block in question
-	 * is written, so the on-disk live bytes count is always correct.
-	 */
-	if ((*bpp)->b_blkno > 0) {
-		LFS_SEGENTRY(sup, fs, dtosn(fs, dbtofsb(fs, (*bpp)->b_blkno)), ibp);
-		sup->su_nbytes += (nsize - osize);
-		LFS_BWRITE_LOG(ibp);
-		ip->i_ffs_blocks += bb;
-	}
 	fs->lfs_bfree -= bb;
 	ip->i_lfs_effnblks += bb;
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -421,6 +415,10 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, ufs_daddr_t lbn, struct b
 	bzero((char *)((*bpp)->b_data) + osize, (u_int)(nsize - osize));
 
     out:
+#ifdef LFS_FRAGSIZE_SEGLOCK
 	lfs_segunlock(fs);
+#else
+	lockmgr(&fs->lfs_fraglock, LK_RELEASE, 0);
+#endif
 	return (error);
 }

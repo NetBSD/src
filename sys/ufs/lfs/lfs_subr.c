@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.26 2002/06/16 00:13:15 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.27 2002/07/06 01:30:13 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.26 2002/06/16 00:13:15 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.27 2002/07/06 01:30:13 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,6 +132,11 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 {
 	struct segment *sp;
 	
+	/*
+	 * SEGM_PROT specifies a shared lock, which can be held by multiple
+	 * processes simultaneously.  It is not possible to upgrade from a
+	 * SEGM_PROT lock to a normal seglock.
+	 */
 	if (fs->lfs_seglock) {
 		if (fs->lfs_lockpid == curproc->p_pid) {
 			++fs->lfs_seglock;
@@ -145,6 +150,9 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 	fs->lfs_seglock = 1;
 	fs->lfs_lockpid = curproc->p_pid;
 	
+	/* Drain fragment size changes out */
+	lockmgr(&fs->lfs_fraglock, LK_EXCLUSIVE, 0);
+
 	sp = fs->lfs_sp = malloc(sizeof(struct segment), M_SEGMENT, M_WAITOK);
 	sp->bpp = malloc(((fs->lfs_sumsize - SEGSUM_SIZE(fs)) /
 			  sizeof(ufs_daddr_t) + 1) * sizeof(struct buf *),
@@ -319,6 +327,8 @@ lfs_segunlock(struct lfs *fs)
 			fs->lfs_lockpid = 0;
 			wakeup(&fs->lfs_seglock);
 		}
+		/* Reenable fragment size changes */
+		lockmgr(&fs->lfs_fraglock, LK_RELEASE, 0);
 	} else if (fs->lfs_seglock == 0) {
 		panic ("Seglock not held");
 	} else {

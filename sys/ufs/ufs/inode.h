@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.28 2002/06/16 00:13:17 perseant Exp $	*/
+/*	$NetBSD: inode.h,v 1.29 2002/07/06 01:30:16 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -56,7 +56,9 @@ struct ext2fs_inode_ext {
 };
 
 struct lfs_inode_ext {
+	off_t	  lfs_osize;		/* size of file on disk */
 	u_int32_t lfs_effnblocks;  /* number of blocks when i/o completes */
+	size_t    lfs_fragsize[NDADDR]; /* size of on-disk direct blocks */
 };
 
 /*
@@ -112,6 +114,8 @@ struct inode {
 #define	i_e2fs_last_lblk	inode_ext.e2fs.ext2fs_last_lblk
 #define	i_e2fs_last_blk		inode_ext.e2fs.ext2fs_last_blk
 #define i_lfs_effnblks		inode_ext.lfs.lfs_effnblocks
+#define i_lfs_fragsize		inode_ext.lfs.lfs_fragsize
+#define i_lfs_osize		inode_ext.lfs.lfs_osize
 	/*
 	 * The on-disk dinode itself.
 	 */
