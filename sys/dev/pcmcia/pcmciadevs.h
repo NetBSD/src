@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.13 1998/08/15 21:37:24 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.14 1998/08/17 23:12:15 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.12 1998/08/15 21:36:25 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp 
  */
 
 /*
@@ -76,6 +76,9 @@
 #define	PCMCIA_CIS_3COM_3C589	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3C589	0x0589
 #define	PCMCIA_STR_3COM_3C589	"3Com 3c589 10Mbps Ethernet"
+#define	PCMCIA_CIS_3COM_3C574	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_3COM_3C574	0x0574
+#define	PCMCIA_STR_3COM_3C574	"3Com 3c574-TX 10/100Mbps Ethernet"
 
 /* Dayna Products */
 #define	PCMCIA_CIS_DAYNA_COMMUNICARD_E	{ NULL, NULL, NULL, NULL }
