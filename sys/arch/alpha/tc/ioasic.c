@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.30 2000/05/28 06:07:31 gmcgarry Exp $ */
+/* $NetBSD: ioasic.c,v 1.31 2000/05/29 02:16:57 matt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.30 2000/05/28 06:07:31 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.31 2000/05/29 02:16:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -315,7 +315,7 @@ ioasic_intr(val)
 
 		/* XXX DUPLICATION OF INTERRUPT BIT INFORMATION... */
 #define	CHECKINTR(slot, bits)						\
-		if (sir & bits) {					\
+		if (sir & (bits)) {					\
 			ifound = 1;					\
 			INCRINTRCNT(slot);				\
 			(*ioasicintrs[slot].iai_func)			\
