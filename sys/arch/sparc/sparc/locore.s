@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.156 2002/06/10 01:58:52 uwe Exp $	*/
+/*	$NetBSD: locore.s,v 1.157 2002/06/11 11:37:01 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2612,7 +2612,7 @@ nmi_sun4:
 	 */
 	sethi	%hi(INTRREG_VA), %o0
 	ldub	[%o0 + %lo(INTRREG_VA)], %o1
-	andn	%o0, IE_ALLIE, %o1
+	andn	%o1, IE_ALLIE, %o1
 	stb	%o1, [%o0 + %lo(INTRREG_VA)]
 	wr	%l0, PSR_ET, %psr	! okay, turn traps on again
 
@@ -2638,7 +2638,7 @@ nmi_sun4c:
 	 */
 	sethi	%hi(INTRREG_VA), %o0
 	ldub	[%o0 + %lo(INTRREG_VA)], %o1
-	andn	%o0, IE_ALLIE, %o1
+	andn	%o1, IE_ALLIE, %o1
 	stb	%o1, [%o0 + %lo(INTRREG_VA)]
 	wr	%l0, PSR_ET, %psr	! okay, turn traps on again
 
