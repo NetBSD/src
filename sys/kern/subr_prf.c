@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.90 2003/02/10 00:35:16 atatat Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.91 2003/02/17 22:21:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.90 2003/02/10 00:35:16 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.91 2003/02/17 22:21:52 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -188,13 +188,7 @@ twiddle(void)
  */
 
 void
-#ifdef __STDC__
 panic(const char *fmt, ...)
-#else
-panic(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	int bootopt;
 	va_list ap;
@@ -263,14 +257,7 @@ panic(fmt, va_alist)
  */
 
 void
-#ifdef __STDC__
 log(int level, const char *fmt, ...)
-#else
-log(level, fmt, va_alist)
-	int level;
-	char *fmt;
-	va_dcl
-#endif
 {
 	int s;
 	va_list ap;
@@ -353,13 +340,7 @@ klogpri(level)
  */
 
 void
-#ifdef __STDC__
 addlog(const char *fmt, ...)
-#else
-addlog(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	int s;
 	va_list ap;
@@ -402,7 +383,8 @@ putchar(c, flags, tp)
 		tp = constty;
 		flags |= TOTTY;
 	}
-	if ((flags & TOTTY) && tp && tputchar(c, tp) < 0 &&
+	if ((flags & TOTTY) && tp &&
+	    tputchar(c, flags, tp) < 0 &&
 	    (flags & TOCONS) && tp == constty)
 		constty = NULL;
 	if ((flags & TOLOG) &&
@@ -448,13 +430,7 @@ putchar(c, flags, tp)
  */
 
 void
-#ifdef __STDC__
 uprintf(const char *fmt, ...)
-#else
-uprintf(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	struct proc *p = curproc;
 	va_list ap;
@@ -514,14 +490,7 @@ tprintf_close(sess)
  * => also sends message to /dev/klog
  */
 void
-#ifdef __STDC__
 tprintf(tpr_t tpr, const char *fmt, ...)
-#else
-tprintf(tpr, fmt, va_alist)
-	tpr_t tpr;
-	char *fmt;
-	va_dcl
-#endif
 {
 	struct session *sess = (struct session *)tpr;
 	struct tty *tp = NULL;
@@ -554,14 +523,7 @@ tprintf(tpr, fmt, va_alist)
  *    use tprintf]
  */
 void
-#ifdef __STDC__
 ttyprintf(struct tty *tp, const char *fmt, ...)
-#else
-ttyprintf(tp, fmt, va_alist)
-	struct tty *tp;
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
@@ -578,13 +540,7 @@ ttyprintf(tp, fmt, va_alist)
  */
 
 void
-#ifdef __STDC__
 db_printf(const char *fmt, ...)
-#else
-db_printf(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
@@ -618,13 +574,7 @@ db_vprintf(fmt, ap)
  * to the log.
  */
 void
-#ifdef __STDC__
 aprint_normal(const char *fmt, ...)
-#else
-aprint_normal(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 	int s, flags = TOLOG;
@@ -669,13 +619,7 @@ aprint_get_error_count(void)
 }
 
 void
-#ifdef __STDC__
 aprint_error(const char *fmt, ...)
-#else
-aprint_error(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 	int s, flags = TOLOG;
@@ -703,13 +647,7 @@ aprint_error(fmt, va_alist)
  * to the log.
  */
 void
-#ifdef __STDC__
 aprint_naive(const char *fmt, ...)
-#else
-aprint_naive(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 	int s;
@@ -730,13 +668,7 @@ aprint_naive(fmt, va_alist)
  * goes to the log.
  */
 void
-#ifdef __STDC__
 aprint_verbose(const char *fmt, ...)
-#else
-aprint_verbose(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 	int s, flags = TOLOG;
@@ -760,13 +692,7 @@ aprint_verbose(fmt, va_alist)
  * aprint_debug: Send to console and log only if AB_DEBUG.
  */
 void
-#ifdef __STDC__
 aprint_debug(const char *fmt, ...)
-#else
-aprint_debug(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 	int s;
@@ -787,13 +713,7 @@ aprint_debug(fmt, va_alist)
  */
 
 void
-#ifdef __STDC__
 printf_nolog(const char *fmt, ...)
-#else
-printf_nolog(fmt, va_alist)
-	char *fmt;
-	va_dcl;
-#endif
 {
 	va_list ap;
 	int s;
@@ -815,13 +735,7 @@ printf_nolog(fmt, va_alist)
  * printf: print a message to the console and the log
  */
 void
-#ifdef __STDC__
 printf(const char *fmt, ...)
-#else
-printf(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 	int s;
@@ -864,14 +778,7 @@ vprintf(fmt, ap)
  * sprintf: print a message to a buffer
  */
 int
-#ifdef __STDC__
 sprintf(char *buf, const char *fmt, ...)
-#else
-sprintf(buf, fmt, va_alist)
-        char *buf;
-        const char *cfmt;
-        va_dcl
-#endif
 {
 	int retval;
 	va_list ap;
@@ -904,15 +811,7 @@ vsprintf(buf, fmt, ap)
  * snprintf: print a message to a buffer
  */
 int
-#ifdef __STDC__
 snprintf(char *buf, size_t size, const char *fmt, ...)
-#else
-snprintf(buf, size, fmt, va_alist)
-        char *buf;
-        size_t size;
-        const char *cfmt;
-        va_dcl
-#endif
 {
 	int retval;
 	va_list ap;
