@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.97 2003/05/24 15:35:07 taca Exp $
+#	$NetBSD: 3RDPARTY,v 1.98 2003/05/25 21:53:49 pooka Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -236,8 +236,8 @@ FP numbers.  Added ULong type (but Gay says he'll adopt that change
 for the next release).
 
 Package:	file
-Version:	4.00
-Current Vers:	4.01
+Version:	4.03
+Current Vers:	4.03
 Maintainer:	Christos Zoulas <christos@zoulas.com>
 Archive Site:	ftp://ftp.astron.com/pub/file/
 Mailing List:	file@mx.gw.com
