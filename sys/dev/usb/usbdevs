@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.146 2001/01/30 15:04:23 augustss Exp $
+$NetBSD: usbdevs,v 1.147 2001/02/11 05:49:20 ichiro Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -219,6 +219,7 @@ vendor BUG		0x07c8	B.U.G., Inc.
 vendor ALLIEDTELESYN	0x07c9	Allied Telesyn International
 vendor AVERMEDIA	0x07ca	AVerMedia Technologies, Inc.
 vendor SIIG		0x07cc	SIIG
+vendor CASIO		0x07cf	CASIO
 vendor APTIO		0x07d2	Aptio Products, Inc.
 vendor ARASAN		0x07da	Arasan Chip Systems
 vendor ALLIEDCABLE	0x07e6	Allied Cable Corp.
@@ -383,6 +384,9 @@ product CATC NETMATE		0x000a	Netmate ethernet adapter
 product CATC NETMATE2		0x000c	Netmate2 ethernet adapter
 product CATC CHIEF		0x000d	USB Chief Bus & Protocol Analyzer
 product CATC ANDROMEDA		0x1237	Andromeda hub
+
+/* CASIO products */
+product	CASIO NAMELAND		0x4001	CASIO Nameland EZ-USB
 
 /* Cherry products */
 product CHERRY MY3000KBD	0x0001	My3000 keyboard
