@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.7 2002/08/31 09:11:56 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.8 2002/08/31 09:25:24 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -854,10 +854,10 @@ Lsh5_event_interrupt:
 	 * This provides a handy way to regain control if the CPU should
 	 * decide to spin at a high ipl.
 	 */
-	pta/l	Lsh5_event_nmi, tr0
+	pta/u	Lsh5_event_nmi, tr0
 	ld.q	r15, SFO(SF_INTEVT, SZ_INTRFRAME), r0 /* Fetch INTEVT */
 	movi	0x1c0, r1		/* The NMI event code */
-	beq/l	r0, r1, tr0		/* Jump if NMI */
+	beq/u	r0, r1, tr0		/* Jump if NMI */
 #endif
 
 	/* sh5_intr_dispatch(struct intrframe *f); */
