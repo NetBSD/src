@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.11 1995/01/27 05:44:29 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.12 1995/02/01 09:32:45 mycroft Exp $	*/
 
 /**************************************************************************
 **
@@ -139,12 +139,6 @@
 */
 
 #define MAX_SIZE  ((MAX_SCATTER-1) * NBPG)
-
-/*
-**    Write disk status information to dkstat ?
-*/
-
-/* #define DK */
 
 /*==========================================================
 **
@@ -163,9 +157,6 @@
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/kernel.h>
-#ifdef DK
-#include <sys/dkstat.h>
-#endif /* DK */
 #include <vm/vm.h>
 #endif /* KERNEL */
 
@@ -1213,7 +1204,7 @@ void	ncr_attach	(pcici_t tag, int unit);
 
 
 static char ident[] =
-	"\n$Id: ncr.c,v 1.11 1995/01/27 05:44:29 cgd Exp $\n";
+	"\n$Id: ncr.c,v 1.12 1995/02/01 09:32:45 mycroft Exp $\n";
 
 u_long	ncr_version = NCR_VERSION
 	+ (u_long) sizeof (struct ncb)
@@ -3323,7 +3314,7 @@ void ncr_attach (pcici_t config_id, int unit)
 		ncr_name (np));
 	DELAY (1000000);
 #endif
-	printf ("%s scanning for targets 0..%d ($Revision: 1.11 $)\n",
+	printf ("%s scanning for targets 0..%d ($Revision: 1.12 $)\n",
 		ncr_name (np), MAX_TARGET-1);
 
 	/*
@@ -3945,7 +3936,7 @@ void ncr_complete (ncb_p np, ccb_p cp)
 	**	Sanity check
 	*/
 
-	if (!cp || !cp->magic || !cp->xfer) return;
+	if (!cp || (cp->magic!=CCB_MAGIC) || !cp->xfer) return;
 	cp->magic = 1;
 	cp->tlimit= 0;
 
@@ -4146,12 +4137,6 @@ void ncr_complete (ncb_p np, ccb_p cp)
 			if (lp->reqlink != lp->actlink)
 				ncr_openings (np, lp, xp);
 		};
-
-#ifdef DK
-		dk_xfer[DK] ++;
-		dk_wds [DK] += xp->datalen/64;
-		dk_wpms[DK] =  1000000;
-#endif /* DK */
 
 		tp->bytes     += xp->datalen;
 		tp->transfers ++;
@@ -4698,6 +4683,10 @@ void ncr_timeout (ncb_p np)
 	ccb_p cp;
 
 	if (np->lasttime != thistime) {
+		/*
+		**	block ncr interupts
+		*/
+		int oldspl = splbio();
 		np->lasttime = thistime;
 
 		ncr_usercmd (np);
@@ -4795,12 +4784,9 @@ void ncr_timeout (ncb_p np)
 			/*
 			**	wakeup this ccb.
 			*/
-			{
-				int oldspl = splbio();
-				ncr_complete (np, cp);
-				splx (oldspl);
-			};
+			ncr_complete (np, cp);
 		};
+		splx (oldspl);
 	}
 
 	timeout (TIMEOUT ncr_timeout, (caddr_t) np, step ? step : 1);
@@ -5409,10 +5395,11 @@ void ncr_int_sir (ncb_p np)
 		**	a target reselected us.
 		**-------------------------------------------
 		*/
-		PRINT_ADDR(cp->xfer);
-		if (DEBUG_FLAGS & DEBUG_RESTART)
+		if (DEBUG_FLAGS & DEBUG_RESTART) {
+			PRINT_ADDR(cp->xfer);
 			printf ("in getcc reselect by t%d.\n",
 				INB(nc_ssid)&7);
+		}
 
 		/*
 		**	Mark this job
