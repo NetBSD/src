@@ -30,15 +30,14 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)acosh.3	5.2 (Berkeley) 5/6/91
-.\"	$Id: acosh.3,v 1.5 1995/03/04 01:36:32 jtc Exp $
+.\"	$Id: acosh.3,v 1.6 1995/04/14 18:39:55 jtc Exp $
 .\"
 .Dd May 6, 1991
 .Dt ACOSH 3
 .Os BSD 4.3
 .Sh NAME
-.Nm acosh ,
-.Nm acoshf 
-.Nd inverse hyperbolic cosine functions
+.Nm acosh
+.Nd inverse hyperbolic cosine function
 .Sh SYNOPSIS
 .Fd #include <math.h>
 .Ft double
@@ -54,32 +53,16 @@ functions compute the inverse hyperbolic cosine
 of the real
 argument
 .Ar x .
-For a discussion of error due to roundoff, see
-.Xr math 3 .
 .Sh RETURN VALUES
-The
-.Fn acosh
-function
-returns the inverse hyperbolic cosine of
-.Ar x .
-On the
-.Tn VAX
-and
-.Tn Tahoe ,
-if the argument is less than one
-.Fn acosh
-sets the global variable
-.Va errno
-to
-.Er EDOM
-and
-causes a reserved operand fault.
+Exceptional cases are handled by
+.Xr matherr 3 .
 .Sh SEE ALSO
 .Xr asinh 3 ,
 .Xr atanh 3 ,
 .Xr exp 3 ,
 .Xr infnan 3 ,
-.Xr math 3
+.Xr math 3 ,
+.Xr matherr 3
 .Sh HISTORY
 The
 .Fn acosh
