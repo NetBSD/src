@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.12 2004/04/11 06:48:25 kochi Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.13 2004/04/11 08:36:19 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.12 2004/04/11 06:48:25 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.13 2004/04/11 08:36:19 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,8 +166,8 @@ pckbc_acpi_attach(struct device *parent,
 	printf(": %s port\n", pckbc_slot_names[psc->sc_slot]);
 
 	/* parse resources */
-	rv = acpi_resource_parse(&sc->sc_dv, aa->aa_node, &res,
-	    &acpi_resource_parse_ops_default);
+	rv = acpi_resource_parse(&sc->sc_dv, aa->aa_node->ad_handle, "_CRS",
+	    &res, &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))
 		return;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.25 2004/04/11 06:48:25 kochi Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.26 2004/04/11 08:36:19 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.25 2004/04/11 06:48:25 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.26 2004/04/11 08:36:19 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -494,8 +494,8 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Parse our resources. */
 	ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES, "parsing EC resources\n"));
-	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node, &sc->sc_res,
-	    &acpi_resource_parse_ops_default);
+	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node->ad_handle, "_CRS",
+	    &sc->sc_res, &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))
 		return;
 
