@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.144 2001/12/28 01:32:41 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.145 2002/01/01 00:27:06 thorpej Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -126,18 +126,27 @@ _PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBDIR}:${DESTDIR}/usr/lib \
 		-L${DESTDIR}${SHLIBDIR}
 .endif
 
+.if defined(PROG_CXX)
+_CCLINK=	${CXX}
+.if defined(HAVE_GCC3)
+_SUPCXX=	-lstdc++ -lm
+.endif
+.else
+_CCLINK=	${CC}
+.endif
+
 .if defined(DESTDIR)
 
 ${PROG}: ${LIBCRT0} ${DPSRCS} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
 .if !commands(${PROG})
-	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib ${_PROGLDOPTS} ${LIBCRT0} ${LIBCRTBEGIN} ${OBJS} ${LDADD} -L${DESTDIR}/usr/lib -lgcc -lc -lgcc ${LIBCRTEND}
+	${_CCLINK} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib ${_PROGLDOPTS} ${LIBCRT0} ${LIBCRTBEGIN} ${OBJS} ${LDADD} -L${DESTDIR}/usr/lib ${_SUPCXX} -lgcc -lc -lgcc ${LIBCRTEND}
 .endif
 
 .else
 
 ${PROG}: ${LIBCRT0} ${DPSRCS} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
 .if !commands(${PROG})
-	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${_PROGLDOPTS} ${OBJS} ${LDADD}
+	${_CCLINK} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${_PROGLDOPTS} ${OBJS} ${LDADD}
 .endif
 
 .endif	# defined(DESTDIR)
