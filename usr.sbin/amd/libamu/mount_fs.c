@@ -1,7 +1,7 @@
-/*	$NetBSD: mount_fs.c,v 1.1.1.5 1998/08/08 22:05:23 christos Exp $	*/
+/*	$NetBSD: mount_fs.c,v 1.1.1.6 1999/02/01 18:45:43 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -19,7 +19,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: mount_fs.c,v 5.2.2.2 1992/05/31 16:35:45 jsp Exp 
+ * Id: mount_fs.c,v 1.3 1999/01/13 23:31:21 ezk Exp 
  *
  */
 
@@ -111,6 +111,7 @@ struct opt_tab mnt_flags[] =
 };
 
 
+/* compute generic mount flags */
 int
 compute_mount_flags(mntent_t *mntp)
 {
@@ -143,6 +144,20 @@ compute_mount_flags(mntent_t *mntp)
   for (opt = mnt_flags; opt->opt; opt++) {
     flags |= hasmntopt(mntp, opt->opt) ? opt->flag : 0;
   }
+
+  return flags;
+}
+
+
+/* compute generic mount flags for automounter mounts */
+int
+compute_automounter_mount_flags(mntent_t *mntp)
+{
+  int flags = 0;
+
+#ifdef MNT2_GEN_OPT_IGNORE
+  flags |= MNT2_GEN_OPT_IGNORE;
+#endif /* not MNT2_GEN_OPT_IGNORE */
 
   return flags;
 }
@@ -317,7 +332,7 @@ again:
 /*
  * Fill in the many possible fields and flags of struct nfs_args.
  *
- * nap:		pre-allocted structure to fill in.
+ * nap:		pre-allocated structure to fill in.
  * mntp:	mount entry structure (includes options)
  * genflags:	generic mount flags already determined
  * nfsncp:	(TLI only) netconfig entry for this NFS mount
@@ -814,7 +829,7 @@ print_nfs_args(const nfs_args_t *nap, u_long nfs_version)
   nbp = nap->syncaddr;
   plog(XLOG_DEBUG, "NA->syncaddr {netbuf} 0x%x", (int) nbp);
   kncp = nap->knconf;
-  plog(XLOG_DEBUG, "NA->knconf->semantics %lu", kncp->knc_semantics);
+  plog(XLOG_DEBUG, "NA->knconf->semantics %lu", (unsigned long) kncp->knc_semantics);
   plog(XLOG_DEBUG, "NA->knconf->protofmly \"%s\"", kncp->knc_protofmly);
   plog(XLOG_DEBUG, "NA->knconf->proto \"%s\"", kncp->knc_proto);
   plog(XLOG_DEBUG, "NA->knconf->rdev %lu", kncp->knc_rdev);
@@ -822,7 +837,7 @@ print_nfs_args(const nfs_args_t *nap, u_long nfs_version)
 #else /* not HAVE_TRANSPORT_TYPE_TLI */
   sap = (struct sockaddr_in *) &nap->addr;
   plog(XLOG_DEBUG, "NA->addr {sockaddr_in} (len=%d) = \"%s\"",
-       sizeof(struct sockaddr_in),
+       (int) sizeof(struct sockaddr_in),
        get_hex_string(sizeof(struct sockaddr_in), (const char *)sap));
 #ifdef HAVE_FIELD_STRUCT_SOCKADDR_SA_LEN_off
   plog(XLOG_DEBUG, "NA->addr.sin_len = \"%d\"", sap->sin_len);

@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_auto.c,v 1.1.1.1 1998/08/08 22:05:27 christos Exp $	*/
+/*	$NetBSD: amfs_auto.c,v 1.1.1.2 1999/02/01 18:45:57 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -19,7 +19,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: amfs_auto.c,v 1.1 1997-1998/06/30 19:22:30 ezk Exp ezk 
+ * Id: amfs_auto.c,v 1.3 1999/01/13 23:30:57 ezk Exp 
  *
  */
 
@@ -479,7 +479,7 @@ try_mount(voidp mvp)
  break
  fi
  if no error on this mount then
- this_error = initialise mount point
+ this_error = initialize mount point
  fi
  if no error on this mount and mount is delayed then
  this_error = -1
@@ -498,7 +498,7 @@ try_mount(voidp mvp)
  this_error = mount in foreground
  fi
  fi
- if an error occured on this mount then
+ if an error occurred on this mount then
  update stats
  save error in mount point
  fi
@@ -611,8 +611,8 @@ amfs_auto_bgmount(struct continuation * cp, int mpe)
 	 * Don't try logging the string from mf, since it may be bad!
 	 */
 	if (cp->fs_opts.opt_fs != mf->mf_fo->opt_fs)
-	  plog(XLOG_ERROR, "use %s instead of 0x%x",
-	       cp->fs_opts.opt_fs, mf->mf_fo->opt_fs);
+	  plog(XLOG_ERROR, "use %s instead of 0x%lx",
+	       cp->fs_opts.opt_fs, (unsigned long) mf->mf_fo->opt_fs);
 
 	mp->am_link = str3cat((char *) 0,
 			      cp->fs_opts.opt_fs, "/", link_dir);
@@ -659,7 +659,7 @@ amfs_auto_bgmount(struct continuation * cp, int mpe)
     /*
      * Will usually need to play around with the mount nodes
      * file attribute structure.  This must be done here.
-     * Try and get things initialised, even if the fileserver
+     * Try and get things initialized, even if the fileserver
      * is not known to be up.  In the common case this will
      * progress things faster.
      */
@@ -697,7 +697,7 @@ amfs_auto_bgmount(struct continuation * cp, int mpe)
       int i = atoi(mf->mf_fo->opt_delay);
       if (i > 0 && clocktime() < (cp->start + i)) {
 #ifdef DEBUG
-	dlog("Mount of %s delayed by %ds", mf->mf_mount, i - clocktime() + cp->start);
+	dlog("Mount of %s delayed by %lds", mf->mf_mount, (long) (i - clocktime() + cp->start));
 #endif /* DEBUG */
 	this_error = -1;
       }
@@ -989,12 +989,12 @@ amfs_auto_lookuppn(am_node *mp, char *fname, int *error_return, int op)
   }
 
   /*
-   * If an error occured then return it.
+   * If an error occurred then return it.
    */
   if (error) {
 #ifdef DEBUG
     errno = error;		/* XXX */
-    dlog("Returning error: %m", error);
+    dlog("Returning error: %m");
 #endif /* DEBUG */
     XFREE(fname);
     ereturn(error);
@@ -1130,6 +1130,7 @@ amfs_auto_lookuppn(am_node *mp, char *fname, int *error_return, int op)
 	  memset((char *) &ap, 0, sizeof(am_opts));
 	  pt = ops_match(&ap, *sp, "", mp->am_path, "/defaults",
 			 mp->am_parent->am_mnt->mf_info);
+	  free_opts(&ap);	/* don't leak */
 	  if (pt == &amfs_error_ops) {
 	    plog(XLOG_MAP, "failed to match defaults for \"%s\"", *sp);
 	  } else {
@@ -1512,7 +1513,7 @@ amfs_auto_readdir_browsable(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsen
     if (te_next) {
       nfsentry *te_saved = te_next->ne_nextentry;
       te_next->ne_nextentry = NULL; /* terminate "te" chain */
-      te_next = te_saved;	/* save rest of "te" for next interation */
+      te_next = te_saved;	/* save rest of "te" for next iteration */
       dp->dl_eof = FALSE;	/* tell readdir there's more */
     } else {
       dp->dl_eof = TRUE;	/* tell readdir that's it */
@@ -1566,7 +1567,7 @@ amfs_auto_readdir_browsable(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsen
   if (te_next) {
     nfsentry *te_saved = te_next->ne_nextentry;
     te_next->ne_nextentry = NULL; /* terminate "te" chain */
-    te_next = te_saved;		/* save rest of "te" for next interation */
+    te_next = te_saved;		/* save rest of "te" for next iteration */
     dp->dl_eof = FALSE;		/* tell readdir there's more */
   }
   ep = te;			/* send next chunk of "te" chain */

@@ -1,4 +1,4 @@
-$NetBSD: version.texi,v 1.1.1.4 1998/08/08 22:05:42 christos Exp $
-@set UPDATED 22 April 1998
-@set EDITION 6.0a16
-@set VERSION 6.0a16
+$NetBSD: version.texi,v 1.1.1.5 1999/02/01 18:47:09 christos Exp $
+@set UPDATED 13 January 1999
+@set EDITION 6.0.1s3
+@set VERSION 6.0.1s3

@@ -1,4 +1,4 @@
-$NetBSD: AUTHORS,v 1.1.1.5 1998/08/08 22:05:22 christos Exp $
+$NetBSD: AUTHORS,v 1.1.1.6 1999/02/01 18:45:37 christos Exp $
 # -*- text -*-
 PRIMARY AUTHORS AND MAJOR CONTRIBUTORS TO AM_UTILS:
 
@@ -30,6 +30,8 @@ files.
 
 January 27, 1998: support pid files in the amd.conf file.  Provide base name
 for hesiod zone files.  Always use /etc/amd.conf if exists.
+
+August 8, 1998: add detection support for NFS V.3 for NetBSD 1.3F.
 
 * Hannes Reinecke <hare@MathI.UNI-Heidelberg.DE>
 
@@ -90,6 +92,9 @@ options.  Minor type wrt "ro" option in libamu/mount_fs.c.  Added more
 fillers of mnttab options, for acdirmax, acdirmin, acregmax, acregmin, noac,
 grpid, nosuid, and actimo.
 
+August 15, 1998: fix memory leak in processing of /defaults, and avoid
+accessing uninitialized memory in osf1.
+
 * Roman Hodek <Roman.Hodek@informatik.uni-erlangen.de>
 
 July 23, 1997: Got lots of patches from the Debian Linux folks, who fixed
@@ -107,6 +112,12 @@ configure/compile time.
 February 24, 1998: lots of patches for ultrix 4.3 port.
 
 February 28, 1998: lots of documentation fixes!
+
+January 8, 1999: texi fixes, and more Ultrix 4.3 fixes, among others.
+
+January 11, 1999: hesiod_isup function.  Fix format errors in dlog/plog.
+Remove obsolete or unnecessary files/macros.  Don't report disabled file
+systems.  More misc fixes.
 
 * Jason Thorpe <thorpej@nas.nasa.gov>
 
@@ -150,6 +161,8 @@ November 5, 1997: NFS v.3 support for AIX 4.2.1, which does *not* include
 headers for this.  Bill had to guess at the right structures, field names,
 sizes, alignment, etc.
 
+January 15, 1999: small ldap bug fixes.
+
 * Stefan Vogel <vogel@physik-rzu.unizh.ch>
 
 November 14, 1997: typo in the subscription instructions to amd-dev.
@@ -172,6 +185,9 @@ January 12, 1998: minor bug in output of amd -H.
 January 13, 1998: use case insensitive comparisons for variables that need
 it (such as all hostname related ones, and more).
 
+July 20, 1998: don't leak memory in the private version of yp_all (when
+vendor yp_all is bad).
+
 * Fred Korz <korz@smarts.com>
 
 January 30, 1998: minor typo fixed to tftp example in am-utils.texi.
@@ -187,5 +203,24 @@ allow startup script to redirect it.  Set a temporary secure umask(0022)
 before writing log file and restore it afterwards.
 
 * Matthew Crosby <mcrosby@ms.com>
+
 April 20, 1998: allow arbitrary number of interfaces in wire listing.
 
+* David O'Brien <obrien@NUXI.com>
+
+September 4, 1998: bug fix to avoid overrunning hostname buffer, and minor
+amd.conf man page typo correction.
+
+* Danny Rathjens <dkr@cs.fiu.edu>
+
+October 29, 1998: swap arguments to kill(2) in amd.c.
+
+* Mike Mitchell <mcm@unx.sas.com>
+
+November 3, 1998: amd/nfs_subr.c (nfsproc_lookup_2_svc): try to avoid a race
+condition between unmounting and re-mounting an entry, by increasing the ttl
+of a looked up entry before unmounting it.
+
+* Douglas K. Rand" <rand@aero.und.edu>
+
+December 3, 1998: case insensitive host name match for nfsl.

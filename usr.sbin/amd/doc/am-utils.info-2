@@ -1,10 +1,47 @@
-$NetBSD: am-utils.info-2,v 1.1.1.3 1998/08/08 22:05:40 christos Exp $
+$NetBSD: am-utils.info-2,v 1.1.1.4 1999/02/01 18:47:02 christos Exp $
 This is Info file am-utils.info, produced by Makeinfo version 1.68 from
 the input file am-utils.texi.
 
 START-INFO-DIR-ENTRY
 * Am-utils: (am-utils).          The Amd automounter suite of utilities
 END-INFO-DIR-ENTRY
+
+
+File: am-utils.info,  Node: host Selector Variable,  Next: hostd Selector Variable,  Prev: domain Selector Variable,  Up: Selectors
+
+host Selector Variable
+......................
+
+   The local hostname as determined by gethostname(2).  If no domain
+name was specified on the command line and the hostname contains a
+period `.' then the string before the period is used as the host name,
+and the string after the period is assigned to `${domain}'.  For
+example, if the hostname is `styx.doc.ic.ac.uk' then `host' would be
+`styx' and `domain' would be `doc.ic.ac.uk'.  `hostd' would be
+`styx.doc.ic.ac.uk'.
+
+
+File: am-utils.info,  Node: hostd Selector Variable,  Next: karch Selector Variable,  Prev: host Selector Variable,  Up: Selectors
+
+hostd Selector Variable
+.......................
+
+   This resolves to the `${host}' and `${domain}' concatenated with a
+`.' inserted between them if required.  If `${domain}' is an empty
+string then `${host}' and `${hostd}' will be identical.
+
+
+File: am-utils.info,  Node: karch Selector Variable,  Next: os Selector Variable,  Prev: hostd Selector Variable,  Up: Selectors
+
+karch Selector Variable
+.......................
+
+   This is provided as a hook for the kernel architecture.  This is
+used on SunOS 4 and SunOS 5, for example, to distinguish between
+different `/usr/kvm' volumes.  `${karch}' defaults to the "machine"
+value gotten from uname(2).  If the uname(2) system call is not
+available, the value of `${karch}' defaults to that of `${arch}'.
+Finally, a different value can be set with the `-k' command line option.
 
 
 File: am-utils.info,  Node: os Selector Variable,  Next: osver Selector Variable,  Prev: karch Selector Variable,  Up: Selectors
@@ -201,7 +238,7 @@ addopts Option
 
    This option adds additional options to default options normally
 specified in the `/defaults' entry or the defaults of the key entry
-being processed (*Note opts Option::).  Normally when you specify
+being processed (*note opts Option::.).  Normally when you specify
 `opts' in both the `/defaults' and the map entry, the latter overrides
 the former completely.  But with `addopts' it will append the options
 and override any conflicting ones.
@@ -781,7 +818,7 @@ File: am-utils.info,  Node: -v Option,  Next: -w Option,  Prev: -t Option,  Up: 
    Print version information on standard error and then exit.  The
 output is of the form:
 
-     Copyright (c) 1997-1998 Erez Zadok
+     Copyright (c) 1997-1999 Erez Zadok
      Copyright (c) 1990 Jan-Simon Pendry
      Copyright (c) 1990 Imperial College of Science, Technology & Medicine
      Copyright (c) 1990 The Regents of the University of California.
@@ -1368,60 +1405,6 @@ Null Filesystem (`nullfs')
 
    The "nullfs" (`type:=nullfs') filesystem is available from 4.4BSD,
 and is very similar to the loopback filesystem, "lofs".
-
-   XXX: THIS FILESYSTEM IS NOT IMPLEMENTED YET!
-
-
-File: am-utils.info,  Node: Floppy Filesystem,  Next: Translucent Filesystem,  Prev: Null Filesystem,  Up: Filesystem Types
-
-Floppy Filesystem (`pcfs')
-==========================
-
-   The "pcfs" (`type:=pcfs') filesystem mounts a floppy previously
-formatted for the MS-DOS format.
-
-The following option must be specified:
-
-`dev'
-     the block special device to be mounted.
-
-   A pcfs entry might be:
-
-     pcfs      os==sunos4;type:=pcfs;dev:=/dev/fd0 \
-               os==sunos5;type:=pcfs;dev:=/dev/diskette
-
-
-File: am-utils.info,  Node: Translucent Filesystem,  Next: Shared Memory+Swap Filesystem,  Prev: Floppy Filesystem,  Up: Filesystem Types
-
-Translucent Filesystem (`tfs')
-==============================
-
-   The "tfs" (`type:=tfs') filesystem is an older version of the 4.4BSD
-"unionfs".
-
-   XXX: THIS FILESYSTEM IS NOT IMPLEMENTED YET!
-
-
-File: am-utils.info,  Node: Shared Memory+Swap Filesystem,  Next: User ID Mapping Filesystem,  Prev: Translucent Filesystem,  Up: Filesystem Types
-
-Shared Memory+Swap Filesystem (`tmpfs')
-=======================================
-
-   The "tmpfs" (`type:=tmpfs') filesystem shares memory between a the
-swap device and the rest of the system.  It is generally used to
-provide a fast access `/tmp' directory, one that uses memory that is
-otherwise unused.  This filesystem is available in SunOS 4.x and 5.x.
-
-   XXX: THIS FILESYSTEM IS NOT IMPLEMENTED YET!
-
-
-File: am-utils.info,  Node: User ID Mapping Filesystem,  Next: Program Filesystem,  Prev: Shared Memory+Swap Filesystem,  Up: Filesystem Types
-
-User ID Mapping Filesystem (`umapfs')
-=====================================
-
-   The "umapfs" (`type:=umapfs') filesystem maps User IDs of file
-ownership, and is available from 4.4BSD.
 
    XXX: THIS FILESYSTEM IS NOT IMPLEMENTED YET!
 

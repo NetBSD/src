@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_program.c,v 1.1.1.1 1998/08/08 22:05:27 christos Exp $	*/
+/*	$NetBSD: amfs_program.c,v 1.1.1.2 1999/02/01 18:46:03 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -19,7 +19,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: amfs_program.c,v 5.2.2.1 1992/02/09 15:08:56 jsp beta 
+ * Id: amfs_program.c,v 1.3 1999/01/13 23:30:58 ezk Exp 
  *
  */
 
@@ -147,7 +147,7 @@ amfs_program_exec(char *info)
     char **cp = xivec;
     plog(XLOG_DEBUG, "executing (un)mount command...");
     while (*cp) {
-      plog(XLOG_DEBUG, "arg[%d] = '%s'", cp - xivec, *cp);
+      plog(XLOG_DEBUG, "arg[%ld] = '%s'", (long) (cp - xivec), *cp);
       cp++;
     }
   }

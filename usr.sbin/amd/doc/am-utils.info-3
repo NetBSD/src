@@ -1,10 +1,64 @@
-$NetBSD: am-utils.info-3,v 1.1.1.3 1998/08/08 22:05:40 christos Exp $
+$NetBSD: am-utils.info-3,v 1.1.1.4 1999/02/01 18:47:02 christos Exp $
 This is Info file am-utils.info, produced by Makeinfo version 1.68 from
 the input file am-utils.texi.
 
 START-INFO-DIR-ENTRY
 * Am-utils: (am-utils).          The Amd automounter suite of utilities
 END-INFO-DIR-ENTRY
+
+
+File: am-utils.info,  Node: Floppy Filesystem,  Next: Translucent Filesystem,  Prev: Null Filesystem,  Up: Filesystem Types
+
+Floppy Filesystem (`pcfs')
+==========================
+
+   The "pcfs" (`type:=pcfs') filesystem mounts a floppy previously
+formatted for the MS-DOS format.
+
+The following option must be specified:
+
+`dev'
+     the block special device to be mounted.
+
+   A pcfs entry might be:
+
+     pcfs      os==sunos4;type:=pcfs;dev:=/dev/fd0 \
+               os==sunos5;type:=pcfs;dev:=/dev/diskette
+
+
+File: am-utils.info,  Node: Translucent Filesystem,  Next: Shared Memory+Swap Filesystem,  Prev: Floppy Filesystem,  Up: Filesystem Types
+
+Translucent Filesystem (`tfs')
+==============================
+
+   The "tfs" (`type:=tfs') filesystem is an older version of the 4.4BSD
+"unionfs".
+
+   XXX: THIS FILESYSTEM IS NOT IMPLEMENTED YET!
+
+
+File: am-utils.info,  Node: Shared Memory+Swap Filesystem,  Next: User ID Mapping Filesystem,  Prev: Translucent Filesystem,  Up: Filesystem Types
+
+Shared Memory+Swap Filesystem (`tmpfs')
+=======================================
+
+   The "tmpfs" (`type:=tmpfs') filesystem shares memory between a the
+swap device and the rest of the system.  It is generally used to
+provide a fast access `/tmp' directory, one that uses memory that is
+otherwise unused.  This filesystem is available in SunOS 4.x and 5.x.
+
+   XXX: THIS FILESYSTEM IS NOT IMPLEMENTED YET!
+
+
+File: am-utils.info,  Node: User ID Mapping Filesystem,  Next: Program Filesystem,  Prev: Shared Memory+Swap Filesystem,  Up: Filesystem Types
+
+User ID Mapping Filesystem (`umapfs')
+=====================================
+
+   The "umapfs" (`type:=umapfs') filesystem maps User IDs of file
+ownership, and is available from 4.4BSD.
+
+   XXX: THIS FILESYSTEM IS NOT IMPLEMENTED YET!
 
 
 File: am-utils.info,  Node: Program Filesystem,  Next: Symbolic Link Filesystem,  Prev: User ID Mapping Filesystem,  Up: Filesystem Types
@@ -34,8 +88,8 @@ is required in an argument.  There is no way to escape or change the
 quote character.
 
    To run the program `rvdmount' with a host name and filesystem as
-arguments would be specified by `mount:="/etc/rvdmount rvdmount fserver
-${path}"'.
+arguments would be specified by
+`fs:=${autodir}${path};mount:="/etc/rvdmount rvdmount fserver ${fs}"'.
 
    The first element in the array is taken as the pathname of the
 program to execute.  The other members of the array form the argument
@@ -230,7 +284,7 @@ Direct Automount Filesystem (`direct')
 automount filesystem.  Instead of appearing to be a directory of mount
 points, it appears as a symbolic link to a mounted filesystem.  The
 mount is done at the time the link is accessed.  *Note Automount
-Filesystem:: for a list of required options.
+Filesystem::, for a list of required options.
 
    Direct automount points are created by specifying the `direct'
 filesystem type on the command line:
@@ -1313,41 +1367,4 @@ Amq `-h' option
 server is used since that is the only place in the cluster where Amd
 will be running.  To query Amd on another host the `-h' option should
 be used.
-
-
-File: am-utils.info,  Node: Amq -m option,  Next: Amq -M-option,  Prev: Amq -l option,  Up: Controlling Amd
-
-Amq `-m' option
----------------
-
-   The `-m' option displays similar information about mounted
-filesystems, rather than automount points.  The output includes the
-following information:
-
-   * the mount information,
-
-   * the mount point,
-
-   * the filesystem type,
-
-   * the number of references to this filesystem,
-
-   * the server hostname,
-
-   * the state of the file server,
-
-   * any error which has occurred.
-
-   For example:
-
-     "root"           truth:(pid602)     root   1 localhost is up
-     hesiod.home      /home              toplvl 1 localhost is up
-     hesiod.vol       /vol               toplvl 1 localhost is up
-     hesiod.homes     /homes             toplvl 1 localhost is up
-     amy:/home/amy    /a/amy/home/amy    nfs    5 amy is up
-     swan:/home/swan  /a/swan/home/swan  nfs    0 swan is up (Permission denied)
-     ex:/home/ex      /a/ex/home/ex      nfs    0 ex is down
-
-   When the reference count is zero the filesystem is not mounted but
-the mount point and server information is still being maintained by Amd.
 

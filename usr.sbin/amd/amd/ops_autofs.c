@@ -1,7 +1,7 @@
-/*	$NetBSD: ops_autofs.c,v 1.1.1.1 1998/08/08 22:05:31 christos Exp $	*/
+/*	$NetBSD: ops_autofs.c,v 1.1.1.2 1999/02/01 18:46:18 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -19,7 +19,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: ops_autofs.c,v 5.2.2.3 1992/08/02 10:42:21 jsp Exp 
+ * Id: ops_autofs.c,v 1.4 1999/01/13 23:31:00 ezk Exp 
  *
  */
 
@@ -55,7 +55,7 @@
 #include <amd.h>
 
 /*
- * CLUDGE: wrap whole file in HAVE_FS_AUTOFS, becasue
+ * KLUDGE: wrap whole file in HAVE_FS_AUTOFS, because
  * not all systems with an automounter file system are supported
  * by am-utils yet...
  */
@@ -78,7 +78,7 @@ static int mount_autofs(char *dir, char *opts);
 static int autofs_mount_1_svc(struct mntrequest *mr, struct mntres *result, struct authunix_parms *cred);
 static int autofs_unmount_1_svc(struct umntrequest *ur, struct umntres *result, struct authunix_parms *cred);
 
-/* externam declarations */
+/* external declarations */
 extern bool_t xdr_mntrequest(XDR *, mntrequest *);
 extern bool_t xdr_mntres(XDR *, mntres *);
 extern bool_t xdr_umntrequest(XDR *, umntrequest *);
@@ -286,8 +286,9 @@ mount_autofs(char *dir, char *opts)
   /*
    * Make a ``hostname'' string for the kernel
    */
-  sprintf(fs_hostname, "pid%ld@%s:%s", foreground ? mypid : getppid(),
-	  hostname, dir);
+  sprintf(fs_hostname, "pid%ld@%s:%s",
+	  (long) (foreground ? am_mypid : getppid()),
+	  am_get_hostname(), dir);
 
   /*
    * Most kernels have a name length restriction.
@@ -357,7 +358,7 @@ autofs_program_1(struct svc_req *rqstp, SVCXPRT *transp)
 		   (SVC_IN_ARG_TYPE) &argument)) {
     plog(XLOG_ERROR,
 	 "AUTOFS xdr decode failed for %d %d %d",
-	 rqstp->rq_prog, rqstp->rq_vers, rqstp->rq_proc);
+	 (int) rqstp->rq_prog, (int) rqstp->rq_vers, (int) rqstp->rq_proc);
     svcerr_decode(transp);
     return;
   }
@@ -434,11 +435,13 @@ autofs_unmount_1_svc(struct umntrequest *ur, struct umntres *result, struct auth
   int err = 0;
 
 #ifdef HAVE_FIELD_UMNTREQUEST_RDEVID
-  plog(XLOG_INFO, "XXX: autofs_unmount_1_svc: %d:%u:%lu:0x%x",
-       ur->isdirect, ur->devid, ur->rdevid, ur->next);
+  plog(XLOG_INFO, "XXX: autofs_unmount_1_svc: %d:%lu:%lu:0x%lx",
+       ur->isdirect, (unsigned long) ur->devid, (unsigned long) ur->rdevid,
+       (unsigned long) ur->next);
 #else /* HAVE_FIELD_UMNTREQUEST_RDEVID */
-  plog(XLOG_INFO, "XXX: autofs_unmount_1_svc: %d:%u:0x%x",
-       ur->isdirect, ur->devid, ur->next);
+  plog(XLOG_INFO, "XXX: autofs_unmount_1_svc: %d:%lu:0x%lx",
+       ur->isdirect, (unsigned long) ur->devid,
+       (unsigned long) ur->next);
 #endif /* HAVE_FIELD_UMNTREQUEST_RDEVID */
 
   err = EINVAL;			/* XXX: not implemented yet */
@@ -483,7 +486,7 @@ out:
  break
  fi
  if no error on this mount then
- this_error = initialise mount point
+ this_error = initialize mount point
  fi
  if no error on this mount and mount is delayed then
  this_error = -1
@@ -502,7 +505,7 @@ out:
  this_error = mount in foreground
  fi
  fi
- if an error occured on this mount then
+ if an error occurred on this mount then
  update stats
  save error in mount point
  fi
@@ -615,8 +618,8 @@ autofs_bgmount(struct continuation * cp, int mpe)
 	 * Don't try logging the string from mf, since it may be bad!
 	 */
 	if (cp->fs_opts.opt_fs != mf->mf_fo->opt_fs)
-	  plog(XLOG_ERROR, "use %s instead of 0x%x",
-	       cp->fs_opts.opt_fs, mf->mf_fo->opt_fs);
+	  plog(XLOG_ERROR, "use %s instead of 0x%lx",
+	       cp->fs_opts.opt_fs, (unsigned long) mf->mf_fo->opt_fs);
 
 	mp->am_link = str3cat((char *) 0,
 			      cp->fs_opts.opt_fs, "/", link_dir);
@@ -663,7 +666,7 @@ autofs_bgmount(struct continuation * cp, int mpe)
     /*
      * Will usually need to play around with the mount nodes
      * file attribute structure.  This must be done here.
-     * Try and get things initialised, even if the fileserver
+     * Try and get things initialized, even if the fileserver
      * is not known to be up.  In the common case this will
      * progress things faster.
      */
@@ -701,7 +704,7 @@ autofs_bgmount(struct continuation * cp, int mpe)
       int i = atoi(mf->mf_fo->opt_delay);
       if (i > 0 && clocktime() < (cp->start + i)) {
 #ifdef DEBUG
-	dlog("Mount of %s delayed by %ds", mf->mf_mount, i - clocktime() + cp->start);
+	dlog("Mount of %s delayed by %lds", mf->mf_mount, i - clocktime() + cp->start);
 #endif /* DEBUG */
 	this_error = -1;
       }
@@ -713,7 +716,7 @@ autofs_bgmount(struct continuation * cp, int mpe)
       cp->retry = TRUE;
     }
 
-    if (!this_error)
+    if (!this_error) {
       if (p->fs_flags & FS_MBACKGROUND) {
 	mf->mf_flags |= MFF_MOUNTING;	/* XXX */
 #ifdef DEBUG
@@ -739,6 +742,7 @@ autofs_bgmount(struct continuation * cp, int mpe)
 	  cp->retry = TRUE;
 	}
       }
+    }
 
     if (this_error >= 0) {
       if (this_error > 0) {
@@ -861,7 +865,7 @@ autofs_lookuppn(am_node *mp, char *fname, int *error_return, int op)
   char *auto_opts;		/* Automount options */
   int error = 0;		/* Error so far */
   char path_name[MAXPATHLEN];	/* General path name buffer */
-  char apath[MAXPATHLEN];	/* authofs path (added space) */
+  char apath[MAXPATHLEN];	/* autofs path (added space) */
   char *pfname;			/* Path for database lookup */
   struct continuation *cp;	/* Continuation structure if need to mount */
   int in_progress = 0;		/* # of (un)mount in progress */
@@ -879,10 +883,11 @@ autofs_lookuppn(am_node *mp, char *fname, int *error_return, int op)
    */
   if (amd_state == Finishing) {
 #ifdef DEBUG
-    if ((mf = mp->am_mnt) == 0 || mf->mf_ops == &amfs_direct_ops)
+    if ((mf = mp->am_mnt) == 0 || mf->mf_ops == &amfs_direct_ops) {
       dlog("%s mount ignored - going down", fname);
-    else
+    } else {
       dlog("%s/%s mount ignored - going down", mp->am_path, fname);
+    }
 #endif /* DEBUG */
     ereturn(ENOENT);
   }
@@ -992,12 +997,12 @@ autofs_lookuppn(am_node *mp, char *fname, int *error_return, int op)
   }
 
   /*
-   * If an error occured then return it.
+   * If an error occurred then return it.
    */
   if (error) {
 #ifdef DEBUG
     errno = error;		/* XXX */
-    dlog("Returning error: %m", error);
+    dlog("Returning error: %m");
 #endif /* DEBUG */
     XFREE(fname);
     ereturn(error);
@@ -1133,6 +1138,7 @@ autofs_lookuppn(am_node *mp, char *fname, int *error_return, int op)
 	  memset((char *) &ap, 0, sizeof(am_opts));
 	  pt = ops_match(&ap, *sp, "", mp->am_path, "/defaults",
 			 mp->am_parent->am_mnt->mf_info);
+	  free_opts(&ap);	/* don't leak */
 	  if (pt == &amfs_error_ops) {
 	    plog(XLOG_MAP, "failed to match defaults for \"%s\"", *sp);
 	  } else {
