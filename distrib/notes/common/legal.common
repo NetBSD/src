@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.32 2003/09/04 15:26:35 tsutsui Exp $
+.\"	$NetBSD: legal.common,v 1.33 2003/12/10 16:40:52 jdolecek Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -211,10 +211,7 @@ for the NetBSD Project.
 .It
 This product includes software developed by Terrence R. Lambert.
 .It
-This product includes software developed by Theo de Raadt
-and John Brezak.
-.It
-This product includes software developed by Theo de Raadt.
+This product includes software developed by John Brezak.
 .It
 This product includes software developed by Tohru Nishimura
 for the NetBSD Project.
