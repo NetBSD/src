@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.18 1996/12/09 23:50:57 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.19 1997/01/11 05:16:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -781,4 +781,29 @@ sbdroprecord(sb)
 			MFREE(m, mn);
 		} while ((m = mn) != NULL);
 	}
+}
+
+/*
+ * Create a "control" mbuf containing the specified data
+ * with the specified type for presentation on a socket buffer.
+ */
+struct mbuf *
+sbcreatecontrol(p, size, type, level)
+	caddr_t p;
+	register int size;
+	int type, level;
+{
+	register struct cmsghdr *cp;
+	struct mbuf *m;
+
+	if ((m = m_get(M_DONTWAIT, MT_CONTROL)) == NULL)
+		return ((struct mbuf *) NULL);
+	cp = mtod(m, struct cmsghdr *);
+	bcopy(p, CMSG_DATA(cp), size);
+	size += sizeof(*cp);
+	m->m_len = size;
+	cp->cmsg_len = size;
+	cp->cmsg_level = level;
+	cp->cmsg_type = type;
+	return (m);
 }
