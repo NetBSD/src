@@ -1,4 +1,4 @@
-.\"	$NetBSD: 4.t,v 1.4 1998/01/09 06:55:23 perry Exp $
+.\"	$NetBSD: 4.t,v 1.5 1998/01/10 00:11:36 perry Exp $
 .\"
 .\" Copyright (c) 1980, 1986, 1988 The Regents of the University of California.
 .\" All rights reserved.
@@ -479,9 +479,6 @@ l l.
 /usr/bin/mail	UCB mail program, described in \fImail\fP\|(1)
 /usr/sbin/sendmail	mail routing program
 /var/spool/mail	mail spooling directory
-/var/spool/secretmail	secure mail directory
-/usr/bin/xsend	secure mail sender
-/usr/bin/xget	secure mail receiver
 /etc/aliases	mail forwarding information
 /usr/bin/newaliases	command to rebuild binary forwarding database
 /usr/bin/biff	mail notification enabler
@@ -514,9 +511,6 @@ is notified, which in turn notifies users who have issued a
 Mail queued in the directory
 .Pn /var/spool/mail
 is normally readable only by the recipient.
-To send mail that is secure against perusal
-(except by a code-breaker) you should use the secret mail facility,
-which encrypts the mail.
 .PP
 To set up the mail facility you should read the instructions in the
 file READ_ME in the directory

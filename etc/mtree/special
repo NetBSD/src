@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.17 1998/01/03 06:00:34 perry Exp $
+#	$NetBSD: special,v 1.18 1998/01/10 00:06:25 perry Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -153,8 +153,6 @@ news		type=dir mode=0755 uname=root gname=wheel ignore optional
 ..	#var/spool/news
 output		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#var/spool/output
-secretmail	type=dir mode=0755 uname=root gname=wheel ignore
-..	#var/spool/secretmail
 uucp		type=dir mode=0755 uname=uucp gname=daemon ignore optional
 ..	#var/spool/uucp
 uucppublic	type=dir mode=1777 uname=uucp gname=daemon ignore optional
