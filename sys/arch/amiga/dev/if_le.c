@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.10 1995/02/12 19:19:13 chopps Exp $	*/
+/*	$NetBSD: if_le.c,v 1.11 1995/04/11 18:51:55 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -131,8 +131,10 @@ int	lestd[] = { 0, 0x4000, 0x8000 };
 /* console error messages */
 int	ledebug = 0;
 
-int	leintr(), lestart(), leioctl(), ether_output();
-void	leinit();
+int leioctl __P((struct ifnet *, u_long, caddr_t));
+int leintr __P((struct le_softc *));
+void lestart __P((struct ifnet *));
+void leinit __P((int));
 
 struct	mbuf *leget();
 extern	struct ifnet loif;
@@ -384,6 +386,7 @@ leinit(unit)
  * off of the interface queue, and copy it to the interface
  * before starting the output.
  */
+void
 lestart(ifp)
 	struct ifnet *ifp;
 {
@@ -394,7 +397,7 @@ lestart(ifp)
 	int len;
 
 	if ((le->sc_if.if_flags & IFF_RUNNING) == 0)
-		return (0);
+		return;
 
 	bix = le->sc_tmd;
 	tmd = &le->sc_r2->ler2_tmd[bix];
@@ -430,10 +433,9 @@ lestart(ifp)
 	}
 
 	le->sc_tmd = bix;
-
-	return (0);
 }
 
+int
 leintr(le)
 	struct le_softc *le;
 {
@@ -809,6 +811,7 @@ leget(lebuf, totlen, off0, ifp)
 /*
  * Process an ioctl request.
  */
+int
 leioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
 	u_long cmd;
