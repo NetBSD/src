@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: crt0.c,v 1.8 1993/11/04 10:51:41 pk Exp $
+ *	$Id: crt0.c,v 1.9 1993/11/21 13:35:42 pk Exp $
  */
 
 
@@ -62,10 +62,6 @@ extern struct link_dynamic _DYNAMIC;
 static void	__do_dynamic_link ();
 static char	*_getenv();
 static int	_strncmp();
-
-#ifdef sparc
-static		__call();
-#endif
 
 #ifdef sun
 #define LDSO	"/usr/lib/ld.so"
@@ -114,68 +110,6 @@ char			*__progname = empty;
 	_exit(1);
 
 
-#ifdef sparc
-asm ("	.global start");
-asm ("	.text");
-asm ("	start:");
-
-/* Set up `argc', `argv', and `envp' into local registers (from GNU Emacs). */
-asm ("	mov	0, %fp");
-asm ("	ld	[%sp + 64], %l0");	/* argc */
-asm ("	add	%sp, 68, %l1");		/* argv */
-asm ("	sll	%l0, 2,	%l2");		/**/
-asm ("	add	%l2, 4,	%l2");		/* envp = argv + (argc << 2) + 4 */
-asm ("	add	%l1, %l2, %l2");	/**/
-asm ("	sethi	%hi(_environ), %l3");
-asm ("	st	%l2, [%l3+%lo(_environ)]");	/* *environ = l2 */
-
-/* Finish diddling with stack. */
-asm ("	andn	%sp, 7,	%sp");
-asm ("	sub	%sp, 24, %sp");
-
-#ifdef DYNAMIC
-/* Resolve symbols in dynamic libraries */
-asm ("	call	___do_dynamic_link");
-asm ("	nop");
-#endif
-
-/* From here, all symbols should have been resolved, so we can use libc */
-#ifdef MCRT0
-asm ("	call	___do_mcrt");
-asm ("	nop");
-#endif
-
-/* Stay Sun compatible (currently (SunOS 4.1.2) does nothing on sun4) */
-asm ("	call	start_float");
-asm ("	nop");
-
-/* Move `argc', `argv', and `envp' from locals to parameters for `main'.  */
-asm ("	mov	%l0,%o0");
-asm ("	mov	%l1,%o1");
-asm ("__callmain:");		/* Defined for the benefit of debuggers */
-asm ("	call	_main");
-asm ("	mov	%l2,%o2");
-
-asm ("	call	_exit");
-asm ("	nop");
-
-#ifdef MCRT0
-static void
-__do_mcrt ()
-{
-	extern unsigned char eprol, etext;
-	extern void _mcleanup();
-
-	on_exit(_mcleanup, 0);
-	monstartup(&eprol, &etext);
-	return;
-}
-#endif
-
-#endif /* sparc */
-
-
-#ifdef i386
 start()
 {
 	struct kframe {
@@ -226,9 +160,6 @@ asm("eprol:");
 	atexit(_mcleanup);
 	monstartup(&eprol, &etext);
 #endif MCRT0
-#if 0
-	errno = 0;
-#endif
 	if (argv[0])
 		if ((__progname = _strrchr(argv[0], '/')) == NULL)
 			__progname = argv[0];
@@ -237,7 +168,6 @@ asm("eprol:");
 asm ("__callmain:");		/* Defined for the benefit of debuggers */
 	exit(main(kfp->kargc, argv, environ));
 }
-#endif /* i386 */
 
 #ifdef DYNAMIC
 static void
@@ -268,23 +198,8 @@ __do_dynamic_link ()
 		_FATAL("Bad magic: ld.so\n");
 	}
 
-#ifdef sun
-	/* Get bucket of zeroes */
-	crt.crt_dzfd = open("/dev/zero", 0, 0);
-	if (crt.crt_dzfd == -1) {
-		_FATAL("No /dev/zero\n");
-	}
-#endif
-#ifdef BSD
 	/* We use MAP_ANON */
 	crt.crt_dzfd = -1;
-#endif
-
-#if defined(sun) && defined(DUPZFD)
-	if ((dupzfd = dup(crt.crt_dzfd)) < 0) {
-		_FATAL("Cannot dup /dev/zero\n");
-	}
-#endif
 
 	/* Map in ld.so */
 	crt.crt_ba = mmap(0, hdr.a_text+hdr.a_data+hdr.a_bss,
@@ -326,48 +241,11 @@ __do_dynamic_link ()
 	crt.crt_ep = environ;
 	crt.crt_bp = (caddr_t)_callmain;
 
-#if defined(sparc) && defined(SUN_COMPAT)
-	/* Call Sun's ld.so entry point: version 1, offset crt */
-	__call(CRT_VERSION_SUN, &crt, crt.crt_ba + sizeof hdr);
-#else
 	entry = (void (*)())(crt.crt_ba + sizeof hdr);
-#ifdef SUN_COMPAT
-	(*entry)(CRT_VERSION_SUN, &crt);
-#else
 	(*entry)(CRT_VERSION_BSD, &crt);
-#endif
-#endif
 
-#if defined(sun) && defined(DUPZFD)
-	if (dup2(dupzfd, crt.crt_dzfd) < 0) {
-		_FATAL("Cannot dup2 /dev/zero\n");
-	}
-	(void)close(dupzfd);
-#endif
 	return;
 }
-
-#ifdef sparc
-static
-__call()
-{
-	/*
-	 * adjust the C generated pointer to the crt struct to the
-	 * likings of ld.so, which is an offset relative to its %fp
-	 */
-#if 0
-	asm("___call:");
-	asm("call	%o2");
-	asm("sub	%o1, %sp, %o1");	/* adjust parameter */
-#else Hmmm...
-	asm("mov	%i0, %o0");
-	asm("mov	%i1, %o1");
-	asm("call	%i2");
-	asm("sub	%o1, %sp, %o1");
-	/*NOTREACHED, control is transferred directly to our caller */
-#endif
-}
-#endif
 
 /*
  * Support routines
@@ -407,19 +285,6 @@ _getenv(name)
 	return (char *)0;
 }
 
-#ifdef sparc
-	/* System call entry */
-	asm("___syscall:");
-	asm("clr	%g1");
-	asm("ta		%g0");
-	asm("bgeu	Lsyscallx");		/* good result ? */
-	asm("nop");
-	asm("mov	-0x1, %o0");		/* Note: no `errno' */
-	asm("Lsyscallx:");
-	asm("jmp	%o7 + 0x8");
-	asm("nop");
-#endif /* sparc */
-#ifdef i386
 	asm("	___syscall:");
 	asm("		popl %ecx");
 	asm("		popl %eax");
@@ -433,7 +298,6 @@ _getenv(name)
 	asm("	1:");
 	asm("		movl	$-1,%eax");
 	asm("		ret");
-#endif /* i386 */
 
 #endif /* DYNAMIC */
 
