@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.100 2003/10/06 03:45:40 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.101 2003/12/08 17:51:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.100 2003/10/06 03:45:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.101 2003/12/08 17:51:53 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -401,7 +401,6 @@ linux_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_handler = catcher;
 	frame.sf_sig = native_to_linux_signo[sig];
 
-/*###404 [cc] warning: passing arg 3 of `linux_save_sigcontext' discards qualifiers from pointer target type%%%*/
 	linux_save_sigcontext(l, tf, mask, &frame.sf_sc);
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
