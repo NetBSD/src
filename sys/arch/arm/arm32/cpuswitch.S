@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.4 2001/11/19 20:38:58 chris Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.5 2001/11/29 17:14:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -290,12 +290,17 @@ ENTRY(cpu_switch)
 	/* Lower the spl level to spl0 and get the current spl level. */
 	mov	r7, r1
 
+#ifdef __NEWINTR
+	mov	r0, #(IPL_NONE)
+	bl	_C_LABEL(_spllower)
+#else /* ! __NEWINTR */
 #ifdef spl0
 	mov	r0, #(_SPL_0)
 	bl	_C_LABEL(splx)
 #else
 	bl	_C_LABEL(spl0)
-#endif
+#endif /* spl0 */
+#endif /* __NEWINTR */
 
 	/* Push the old spl level onto the stack */
 	str	r0, [sp, #-0x0004]!
@@ -321,28 +326,6 @@ sw1:
 	/* rem: r1 = old proc */
 	/* rem: r3 = whichqs */
 	/* rem: interrupts are disabled */
-
-	/*
-	 * Paranoid debug time ....
-	 * Is this overkill ? If we are not in SVC mode then things are
-	 * very sick and will probably have already died.
-	 */
-#if 0
-	mrs	r4, cpsr_all
-	and	r4, r4, #(PSR_MODE)
-	teq	r4, #(PSR_SVC32_MODE)
-	beq	switchmodeok
-
-	add	r0, pc, #switchpanic - . - 8
-	mrs	r1, cpsr_all
-	bl	_C_LABEL(panic)
-
-switchpanic:
-	.asciz	"Yikes! In cpu_switch() but not in SVC mode (%08x)\n"
-	.align	0
-
-switchmodeok:
-#endif
 
 	/*
 	 * We have found an active queue. Currently we do not know which queue
@@ -652,9 +635,6 @@ Lse_context_switched:
 
         ldr     r1, Lproc0
 	b	switch_search
-
-Lcurrent_spl_level:
-	.word	_C_LABEL(current_spl_level)
 
 ENTRY(savectx)
 	/*
