@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.25 1999/02/25 19:51:22 is Exp $	*/
+/*	$NetBSD: pmap.h,v 1.26 1999/02/25 21:54:53 is Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -138,6 +138,7 @@ struct pmap	kernel_pmap_store;
 
 vm_offset_t	pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
 void		pmap_procwr __P((struct proc *, vm_offset_t, u_long));
+#define		PMAP_NEED_PROCWR
 
 #endif	/* _KERNEL */
 
