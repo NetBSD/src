@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.6 1994/10/26 07:25:58 cgd Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.7 1994/11/06 21:49:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -52,7 +52,7 @@ dev_t	dumpdev = NODEV;
 int	nswap;
 struct	swdevt swdevt[] = {
 	{ -1,	1,	0 },
-	{ 0,	0,	0 },
+	{ NODEV,	0,	0 },
 };
 int	dmmin, dmmax, dmtext;
 
