@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_var.h,v 1.7 1996/02/13 22:04:34 christos Exp $	*/
+/*	$NetBSD: hd_var.h,v 1.8 1997/06/24 02:26:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -113,7 +113,7 @@ int	hd_n2;			/* frame retransmission limit */
 
 
 /* hd_debug.c */
-void hd_trace __P((struct hdcb *, int , struct Hdlc_frame *));
+void hd_trace __P((struct hdcb *, int , struct mbuf *));
 int hd_dumptrace __P((struct hdcb *));
 
 /* hd_input.c */

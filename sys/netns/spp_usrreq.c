@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.16 1997/03/29 17:01:38 christos Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.17 1997/06/24 02:26:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -268,7 +268,7 @@ spp_input(m, va_alist)
 	m->m_pkthdr.len -= sizeof (struct idp);
 	m->m_data += sizeof (struct idp);
 
-	if (spp_reass(cb, si)) {
+	if (spp_reass(cb, si, m)) {
 		(void) m_freem(m);
 	}
 	if (cb->s_force || (cb->s_flags & (SF_ACKNOW|SF_WIN|SF_RXT)))
@@ -282,7 +282,7 @@ dropwithreset:
 	si->si_seq = ntohs(si->si_seq);
 	si->si_ack = ntohs(si->si_ack);
 	si->si_alo = ntohs(si->si_alo);
-	ns_error(dtom(si), NS_ERR_NOSOCK, 0);
+	ns_error(m, NS_ERR_NOSOCK, 0);
 	if (cb->s_nspcb->nsp_socket->so_options & SO_DEBUG || traceallspps)
 		spp_trace(SA_DROP, (u_char)ostate, cb, &spp_savesi, 0);
 	return;
@@ -303,11 +303,12 @@ int spprexmtthresh = 3;
  * packets up, and suppresses duplicates.
  */
 int
-spp_reass(cb, si)
+spp_reass(cb, si, m0)
 register struct sppcb *cb;
 register struct spidp *si;
+register struct mbuf *m0;
 {
-	register struct spidp_q *q;
+	register struct spidp_q *p, *q, *si_q;
 	register struct mbuf *m;
 	register struct socket *so = cb->s_nspcb->nsp_socket;
 	char packetp = cb->s_flags & SF_HI;
@@ -460,18 +461,18 @@ update_window:
 			sppstat.spps_rcvpackafterwin++;
 		if (si->si_cc & SP_OB) {
 			if (SSEQ_GT(si->si_seq, cb->s_alo + 60)) {
-				ns_error(dtom(si), NS_ERR_FULLUP, 0);
+				ns_error(m0, NS_ERR_FULLUP, 0);
 				return (0);
 			} /* else queue this packet; */
 		} else {
 			/*register struct socket *so = cb->s_nspcb->nsp_socket;
 			if (so->so_state && SS_NOFDREF) {
-				ns_error(dtom(si), NS_ERR_NOSOCK, 0);
+				ns_error(m0, NS_ERR_NOSOCK, 0);
 				(void)spp_close(cb);
 			} else
 				       would crash system*/
 			spp_istat.notyet++;
-			ns_error(dtom(si), NS_ERR_FULLUP, 0);
+			ns_error(m0, NS_ERR_FULLUP, 0);
 			return (0);
 		}
 	}
@@ -496,17 +497,31 @@ update_window:
 	 * Loop through all packets queued up to insert in
 	 * appropriate sequence.
 	 */
-	for (q = cb->s_q.si_next; q!=&cb->s_q; q = q->si_next) {
-		if (si->si_seq == SI(q)->si_seq) {
+	for (p = NULL, q = cb->s_q.lh_first; q != NULL;
+	    p = q, q = q->si_q.le_next) {
+		if (si->si_seq == q->si_spidp->si_seq) {
 			sppstat.spps_rcvduppack++;
 			return (1);
 		}
-		if (SSEQ_LT(si->si_seq, SI(q)->si_seq)) {
+		if (SSEQ_LT(si->si_seq, q->si_spidp->si_seq)) {
 			sppstat.spps_rcvoopack++;
 			break;
 		}
 	}
-	insque(si, q->si_prev);
+
+	MALLOC(si_q, struct spidp_q *, sizeof (struct spidp_q),
+	    M_IPQ/* XXX M_SPIDPQ */, M_NOWAIT);
+	if (si_q == NULL) {
+		sppstat.spps_rcvshort ++;	/* XXX rcvmemdrop... */
+		return (1);
+	}
+	si_q->si_spidp = si;
+	si_q->si_m = m0;
+	if (p == NULL) {
+		LIST_INSERT_HEAD(&cb->s_q, si_q, si_q);
+	} else {
+		LIST_INSERT_AFTER(p, si_q, si_q);
+	}
 	/*
 	 * If this packet is urgent, inform process
 	 */
@@ -522,19 +537,20 @@ present:
 	 * number, and present all acknowledged data to user;
 	 * If in packet interface mode, show packet headers.
 	 */
-	for (q = cb->s_q.si_next; q!=&cb->s_q; q = q->si_next) {
-		  if (SI(q)->si_seq == cb->s_ack) {
+	for (q = cb->s_q.lh_first; q != NULL; q = p) {
+		  if (q->si_spidp->si_seq == cb->s_ack) {
 			cb->s_ack++;
-			m = dtom(q);
-			if (SI(q)->si_cc & SP_OB) {
+			m = q->si_m;
+			if (q->si_spidp->si_cc & SP_OB) {
 				cb->s_oobflags &= ~SF_IOOB;
 				if (so->so_rcv.sb_cc)
 					so->so_oobmark = so->so_rcv.sb_cc;
 				else
 					so->so_state |= SS_RCVATMARK;
 			}
-			q = q->si_prev;
-			remque(q->si_next);
+			p = q->si_q.le_next;
+			LIST_REMOVE(q, si_q);
+			FREE(q, M_IPQ /* XXX, M_SPIDPQ */);
 			wakeup = 1;
 			sppstat.spps_rcvpack++;
 #ifdef SF_NEWCALL
@@ -743,7 +759,7 @@ spp_output(m0, va_alist)
 {
 	register struct sppcb *cb = NULL;
 	struct socket *so;
-	register struct mbuf *m;
+	register struct mbuf *m = NULL;
 	register struct spidp *si = (struct spidp *) 0;
 	register struct sockbuf *sb;
 	int len = 0, win, rcv_win;
@@ -1026,7 +1042,11 @@ send:
 		 * must make a copy of this packet for
 		 * idp_output to monkey with
 		 */
+#if 0
 		m = m_copy(dtom(si), 0, (int)M_COPYALL);
+#else
+		m = m_copy(m, 0, (int)M_COPYALL);
+#endif
 		if (m == NULL) {
 			return (ENOBUFS);
 		}
@@ -1360,7 +1380,7 @@ spp_usrreq(so, req, m, nam, control, p)
 		cb->s_state = TCPS_LISTEN;
 		cb->s_smax = -1;
 		cb->s_swl1 = -1;
-		cb->s_q.si_next = cb->s_q.si_prev = &cb->s_q;
+		LIST_INIT(&cb->s_q);
 		cb->s_nspcb = nsp;
 		cb->s_mtu = 576 - sizeof (struct spidp);
 		cb->s_cwnd = sbspace(&so->so_snd) * CUNIT / cb->s_mtu;
@@ -1583,16 +1603,16 @@ struct sppcb *
 spp_close(cb)
 	register struct sppcb *cb;
 {
-	register struct spidp_q *s;
+	register struct spidp_q *s, *n;
 	struct nspcb *nsp = cb->s_nspcb;
 	struct socket *so = nsp->nsp_socket;
 	register struct mbuf *m;
 
-	s = cb->s_q.si_next;
-	while (s != &(cb->s_q)) {
-		s = s->si_next;
-		m = dtom(s->si_prev);
-		remque(s->si_prev);
+	for (s = cb->s_q.lh_first; s != NULL; s = n) {
+		n = s->si_q.le_next;
+		m = s->si_m;
+		LIST_REMOVE(s, si_q);
+		FREE(s, M_IPQ /* XXX M_SPIDPQ */);
 		m_freem(m);
 	}
 	free(cb->s_idp, M_PCB);

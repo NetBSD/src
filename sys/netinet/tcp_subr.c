@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.25 1996/12/10 18:20:23 mycroft Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.26 1997/06/24 02:26:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -97,15 +97,13 @@ tcp_template(tp)
 	struct tcpcb *tp;
 {
 	register struct inpcb *inp = tp->t_inpcb;
-	register struct mbuf *m;
 	register struct tcpiphdr *n;
 
 	if ((n = tp->t_template) == 0) {
-		m = m_get(M_DONTWAIT, MT_HEADER);
-		if (m == NULL)
+		MALLOC(n, struct tcpiphdr *, sizeof (struct tcpiphdr),
+		    M_MBUF, M_NOWAIT);
+		if (n == NULL)
 			return (0);
-		m->m_len = sizeof (struct tcpiphdr);
-		n = mtod(m, struct tcpiphdr *);
 	}
 	bzero(n->ti_x1, sizeof n->ti_x1);
 	n->ti_pr = IPPROTO_TCP;
@@ -352,7 +350,7 @@ tcp_close(tp)
 		FREE(qe, M_IPQ);
 	}
 	if (tp->t_template)
-		(void) m_free(dtom(tp->t_template));
+		FREE(tp->t_template, M_MBUF);
 	free(tp, M_PCB);
 	inp->inp_ppcb = 0;
 	soisdisconnected(so);

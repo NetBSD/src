@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_subr.c,v 1.8 1996/10/13 02:10:05 christos Exp $	*/
+/*	$NetBSD: hd_subr.c,v 1.9 1997/06/24 02:26:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -321,7 +321,7 @@ hd_writeinternal(hdp, frametype, pf)
 	} else
 		uframe->pf = pf;
 
-	hd_trace(hdp, TX, frame);
+	hd_trace(hdp, TX, buf);
 	buf->m_pkthdr.len = buf->m_len;
 	(*hdp->hd_output) (buf, hdp, NULL);
 }

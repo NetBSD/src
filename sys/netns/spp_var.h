@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_var.h,v 1.7 1996/05/22 13:56:28 mycroft Exp $	*/
+/*	$NetBSD: spp_var.h,v 1.8 1997/06/24 02:26:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -39,7 +39,7 @@
  * Sp control block, one per connection
  */
 struct sppcb {
-	struct	spidp_q	s_q;		/* queue for out-of-order receipt */
+	struct	siqhead	s_q;		/* queue for out-of-order receipt */
 	struct	nspcb	*s_nspcb;	/* backpointer to internet pcb */
 	u_char	s_state;
 	u_char	s_flags;
@@ -202,7 +202,7 @@ void spp_trace __P((int, u_int, struct sppcb *, struct spidp *, int));
 /* spp_usrreq.c */
 void spp_init __P((void));
 void spp_input __P((struct mbuf *, ...));
-int spp_reass __P((struct sppcb *, struct spidp *));
+int spp_reass __P((struct sppcb *, struct spidp *, struct mbuf *));
 void *spp_ctlinput __P((int, struct sockaddr *, void *));
 void spp_quench __P((struct nspcb *));
 int spp_fixmtu __P((struct nspcb *));
