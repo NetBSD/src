@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.22 2004/07/24 18:42:51 thorpej Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.23 2004/08/02 00:19:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.22 2004/07/24 18:42:51 thorpej Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.23 2004/08/02 00:19:34 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -78,6 +78,7 @@ __RCSID("$NetBSD: nsdispatch.c,v 1.22 2004/07/24 18:42:51 thorpej Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/queue.h>
 
 #include <assert.h>
 #ifdef __ELF__
@@ -129,7 +130,19 @@ static	void			*_nsbuiltin = &_nsbuiltin;
  * when we read or re-read nsswitch.conf.
  */
 static 	rwlock_t		_nslock = RWLOCK_INITIALIZER;
-#endif
+
+/*
+ * List of threads currently in nsdispatch().  We use this to detect
+ * recursive calls and avoid reloading configuration in such cases,
+ * which could cause deadlock.
+ */
+struct _ns_drec {
+	LIST_ENTRY(_ns_drec)	list;
+	thr_t			thr;
+};
+static LIST_HEAD(, _ns_drec) _ns_drec = LIST_HEAD_INITIALIZER(&_ns_drec);
+static mutex_t _ns_drec_lock = MUTEX_INITIALIZER;
+#endif /* _REENTRANT */
 
 
 /*
@@ -477,20 +490,14 @@ _nsconfigure(void)
 
 	/*
 	 * Ok, we've decided we need to update the nsswitch configuration
-	 * structures.  Update the timestamp, acquire a write-lock on
-	 * _nslock, and then release _nsconflock.  This means that we don't
-	 * need to acquire _nsconflock again to update the timetamp, and
-	 * prevents another thread from updating the configuration before
-	 * we're finished, even if they decide that they need to.
-	 *
-	 * Acquiring the locks in this fashion is safe: Only here are
-	 * both _nslock and _nsconflock both taken, and nsdispatch()
-	 * should never be called recursively.
+	 * structures.  Acquire a write-lock on _nslock while continuing
+	 * to hold _nsconflock.  Acquiring a write-lock blocks while
+	 * waiting for other threads already holding a read-lock to clear.
+	 * We hold _nsconflock for the duration, and update the time stamp
+	 * at the end of the update operation, at which time we release
+	 * both locks.
 	 */
-
-	_nsconfmod = statbuf.st_mtime;
 	rwlock_wrlock(&_nslock);
-	mutex_unlock(&_nsconflock);
 
 	_nsyyin = fopen(_PATH_NS_CONF, "r");
 	if (_nsyyin == NULL) {
@@ -500,8 +507,7 @@ _nsconfigure(void)
 		 * updated _nsconfmod, if the file reappears, the
 		 * mtime will change.
 		 */
-		rwlock_unlock(&_nslock);
-		return (0);
+		goto out;
 	}
 
 	_NSVECT_FREE(_nsmap, &_nsmapsize, sizeof(*_nsmap),
@@ -515,8 +521,12 @@ _nsconfigure(void)
 	(void) fclose(_nsyyin);
 	if (_nsmapsize != 0)
 		qsort(_nsmap, _nsmapsize, sizeof(*_nsmap), _nsdbtcmp);
-	rwlock_unlock(&_nslock);
 
+	_nsconfmod = statbuf.st_mtime;
+
+ out:
+	rwlock_unlock(&_nslock);
+	mutex_unlock(&_nsconflock);
 	return (0);
 }
 
@@ -560,6 +570,10 @@ int
 nsdispatch(void *retval, const ns_dtab disp_tab[], const char *database,
 	    const char *method, const ns_src defaults[], ...)
 {
+	static int	 _nsdispatching;
+#ifdef _REENTRANT
+	struct _ns_drec	 drec, *ldrec;
+#endif
 	va_list		 ap;
 	int		 i, result;
 	ns_dbt		 key;
@@ -574,8 +588,44 @@ nsdispatch(void *retval, const ns_dtab disp_tab[], const char *database,
 	if (database == NULL || method == NULL)
 		return (NS_UNAVAIL);
 
-	if (_nsconfigure())
+	/*
+	 * In both the threaded and non-threaded cases, avoid reloading
+	 * the configuration if the current thread is already running
+	 * nsdispatch() (i.e. recursive call).
+	 *
+	 * In the non-threaded case, this avoids changing the data structures
+	 * while we're using them.
+	 *
+	 * In the threaded case, this avoids trying to take a write lock
+	 * while the current thread holds a read lock (which would result
+	 * in deadlock).
+	 */
+#ifdef _REENTRANT
+	if (__isthreaded) {
+		drec.thr = thr_self();
+		mutex_lock(&_ns_drec_lock);
+		LIST_FOREACH(ldrec, &_ns_drec, list) {
+			if (ldrec->thr == drec.thr)
+				break;
+		}
+		LIST_INSERT_HEAD(&_ns_drec, &drec, list);
+		mutex_unlock(&_ns_drec_lock);
+		if (ldrec == NULL && _nsconfigure()) {
+			mutex_lock(&_ns_drec_lock);
+			LIST_REMOVE(&drec, list);
+			mutex_unlock(&_ns_drec_lock);
+			return (NS_UNAVAIL);
+		}
+	} else {
+		if (_nsdispatching == 0 && _nsconfigure())
+			return (NS_UNAVAIL);
+		_nsdispatching = 1;
+	}
+#else
+	if (_nsdispatching == 0 && _nsconfigure())
 		return (NS_UNAVAIL);
+	_nsdispatching = 1;
+#endif /* _REENTRANT */
 
 	rwlock_rdlock(&_nslock);
 
@@ -606,6 +656,17 @@ nsdispatch(void *retval, const ns_dtab disp_tab[], const char *database,
 	}
 
 	rwlock_unlock(&_nslock);
+
+#ifdef _REENTRANT
+	if (__isthreaded) {
+		mutex_lock(&_ns_drec_lock);
+		LIST_REMOVE(&drec, list);
+		mutex_unlock(&_ns_drec_lock);
+	} else
+		_nsdispatching = 0;
+#else
+	_nsdispatching = 0;
+#endif /* _REENTRANT */
 
 	return (result ? result : NS_NOTFOUND);
 }
