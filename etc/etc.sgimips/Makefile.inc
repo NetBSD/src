@@ -1,18 +1,22 @@
-#	$NetBSD: Makefile.inc,v 1.5 2002/05/13 01:27:01 soren Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2002/05/21 20:56:19 rafal Exp $
 #
 #	etc.sgimips/Makefile.inc -- sgimips-specific etc Makefile targets
 #
 
 KERNEL_SETS=		GENERIC GENERIC_INDY
+KERNEL_SUFFIXES=	ecoff
 
-BUILD_KERNELS=		RAMDISK
+#EXTRA_KERNELS=		NETBOOT
 
-INSTALLATION_DIRS+=	installation/netboot
+BUILD_KERNELS=		RAMDISK RAMDISK_INDY
 
-snap_md_post:
+INSTALLATION_DIRS+=	installation/netboot \
+			installation/diskimage
+
+snap_md_post: 
 .ifndef UPDATE
 	cd ${.CURDIR}/../distrib && ${MAKE} cleandir
 .endif
 	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
-	cd ${.CURDIR}/../distrib/prep && ${MAKE} release
+	cd ${.CURDIR}/../distrib/sgimips && ${MAKE} release
 	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
