@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.16 1999/02/04 22:25:22 bad Exp $	*/
+/*	$NetBSD: lfs.c,v 1.17 1999/02/04 22:47:48 bad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.16 1999/02/04 22:25:22 bad Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.17 1999/02/04 22:47:48 bad Exp $");
 #endif
 #endif /* not lint */
 
@@ -348,7 +348,8 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	    lp->d_secsize;
 
 	for (segp = segtable + 1, i = 1; i < lfsp->lfs_nseg; i++, segp++) {
-		if ((i % sb_interval) == 0) {
+		if (((i % sb_interval) == 0) &&
+		    ((i / sb_interval) < LFS_MAXNUMSB)) {
 			segp->su_flags = SEGUSE_SUPERBLOCK;
 			lfsp->lfs_bfree -= (LFS_SBPAD / lp->d_secsize);
 		} else
@@ -489,9 +490,9 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	*dp++ = ((u_long *)ipagep)[0];
 	put(fd, off, ipagep, lfsp->lfs_bsize);
 
-	/* Write Supberblock */
-	lfsp->lfs_cksum = lfs_sb_cksum(&(lfsp->lfs_dlfs));
+	/* Write Superblock */
 	lfsp->lfs_offset = (off + lfsp->lfs_bsize) / lp->d_secsize;
+	lfsp->lfs_cksum = lfs_sb_cksum(&(lfsp->lfs_dlfs));
 	put(fd, (off_t)LFS_LABELPAD, &(lfsp->lfs_dlfs), sizeof(struct dlfs));
 
 	/* 
@@ -591,7 +592,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 		seg_seek = (off_t)seg_addr * lp->d_secsize;
 
 		if (seg_addr == lfsp->lfs_sboffs[j]) {
-			if (j < (LFS_MAXNUMSB - 2))
+			if (j < LFS_MAXNUMSB)
 				j++;
 			put(fd, seg_seek, &(lfsp->lfs_dlfs), sizeof(struct dlfs));
 			seg_seek += LFS_SBPAD;
