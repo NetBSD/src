@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ipf2netbsd,v 1.6 2002/03/14 08:07:06 martti Exp $
+#	$NetBSD: ipf2netbsd,v 1.7 2002/04/01 15:56:51 jdolecek Exp $
 #
 # Copyright (c) 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -72,13 +72,8 @@ cd $r
 rm -f ip_h323_pxy.c
 
 pax -rvw . $dbase
-pax -rvw fil.c ip_auth.c ip_auth.h ip_compat.h ip_fil.c ip_fil.h ip_frag.c ip_frag.h ip_ftp_pxy.c ip_ipsec_pxy.c ip_log.c ip_nat.c ip_nat.h ip_netbios_pxy.c ip_proxy.c ip_proxy.h ip_raudio_pxy.c ip_rcmd_pxy.c ip_state.c ip_state.h ipl.h $dsys
+pax -rvw fil.c ip_auth.c ip_auth.h ip_compat.h ip_fil.c ip_fil.h ip_frag.c ip_frag.h ip_ftp_pxy.c ip_ipsec_pxy.c ip_log.c ip_nat.c ip_nat.h ip_netbios_pxy.c ip_proxy.c ip_proxy.h ip_h323_pxy.c ip_raudio_pxy.c ip_rcmd_pxy.c ip_state.c ip_state.h ipl.h $dsys
 pax -rvw mln_ipl.c $dlkm
-cd $dbase/man
-# The ipnat(1) manpage belongs into section 8
-if [ -f ipnat.1 -a ! -f ipnat.8 ]; then
-	mv ipnat.1 ipnat.8
-fi
 
 ### Remove the $'s around the Id:
 find $dest -type f -print | while read f; do
