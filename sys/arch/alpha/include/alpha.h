@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.1 1998/11/19 01:57:56 ross Exp $ */
+/* $NetBSD: alpha.h,v 1.2 1999/02/23 03:20:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -86,7 +86,6 @@ struct mchkinfo {
 };
 
 extern int cold;
-extern struct proc *fpcurproc;
 struct mchkinfo *cpu_mchkinfo __P((void));
 
 void	XentArith __P((u_int64_t, u_int64_t, u_int64_t));	/* MAGIC */
@@ -128,11 +127,10 @@ void	trap_init __P((void));
 void	enable_nsio_ide __P((bus_space_tag_t));
 
 /* Multiprocessor glue; cpu.c */
-struct cpu_softc;
+struct cpu_info;
 int	cpu_iccb_send __P((long, const char *));
 void	cpu_iccb_receive __P((void));
-void	cpu_hatch __P((struct cpu_softc *));
-void	cpu_run_spinup_queue __P((void));
+void	cpu_hatch __P((struct cpu_info *));
 void	cpu_halt_secondary __P((unsigned long));
 void	cpu_spinup_trampoline __P((void));			/* MAGIC */
 void	cpu_pause __P((unsigned long));

@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.31 1998/11/19 02:29:49 ross Exp $ */
+/* $NetBSD: prom.c,v 1.32 1999/02/23 03:20:03 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.31 1998/11/19 02:29:49 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.32 1999/02/23 03:20:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.31 1998/11/19 02:29:49 ross Exp $");
 #include <machine/alpha.h>
 #define	ENABLEPROM
 #include <machine/prom.h>
+
+#include <alpha/alpha/cpuvar.h>
 
 #include <dev/cons.h>
 
@@ -61,7 +63,6 @@ static pt_entry_t *
 rom_lev1map()
 {
 	struct alpha_pcb *apcb;
-	extern u_long curpcb;
 	extern pt_entry_t *kernel_lev1map;
 
 	/*

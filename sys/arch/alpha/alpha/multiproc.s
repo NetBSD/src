@@ -1,4 +1,4 @@
-/* $NetBSD: multiproc.s,v 1.2 1998/09/28 21:48:50 thorpej Exp $ */
+/* $NetBSD: multiproc.s,v 1.3 1999/02/23 03:20:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.2 1998/09/28 21:48:50 thorpej Exp $")
+__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.3 1999/02/23 03:20:03 thorpej Exp $")
 
 /*
  * Multiprocessor glue code.
@@ -53,7 +53,7 @@ inc5:	.stabs	__FILE__,132,0,0,inc5; .loc	1 __LINE__
  * make the function call look right, and call cpu_hatch() to finish
  * starting up the processor.
  *
- * We are provided an argument in $27 (pv) (which will be our cpu_softc).
+ * We are provided an argument in $27 (pv) (which will be our cpu_info).
  */
 NESTED_NOPROFILE(cpu_spinup_trampoline,0,0,ra,0,0)
 	mov	pv, s0			/* squirrel away argument */

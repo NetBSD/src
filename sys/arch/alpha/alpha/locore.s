@@ -1,4 +1,41 @@
-/* $NetBSD: locore.s,v 1.56 1998/11/26 20:26:52 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.57 1999/02/23 03:20:02 thorpej Exp $ */
+
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -39,7 +76,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.56 1998/11/26 20:26:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.57 1999/02/23 03:20:02 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -48,18 +85,63 @@ __KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.56 1998/11/26 20:26:52 thorpej Exp $");
 
 .stabs	__FILE__,132,0,0,kernel_text
 
+#if defined(MULTIPROCESSOR)
+IMPORT(cpu_info, SIZEOF_CPU_INFO * ALPHA_MAXPROCS)
+
 /*
- * The physical address of the current HWPCB.
+ * Get pointer to our cpu_info structure.  Clobbers v0, t0, t8...t11.
  */
-BSS(curpcb, 8)
+#define	GET_CPUINFO(reg)						\
+	/* Get our processor ID. */					\
+	call_pal PAL_OSF1_whami					;	\
+									\
+	/* Compute offset of our cpu_info. */				\
+	ldiq	reg, SIZEOF_CPU_INFO				;	\
+	mulq	reg, v0, v0					;	\
+									\
+	/* Get the address of cpu_info, and add the offset. */		\
+	lda	reg, cpu_info					;	\
+	addq	reg, v0, reg
+
+
+#define	GET_CURPROC(reg)						\
+	GET_CPUINFO(reg)					;	\
+	addq	reg, CPU_INFO_CURPROC, reg
+
+#define	GET_FPCURPROC(reg)						\
+	GET_CPUINFO(reg)					;	\
+	addq	reg, CPU_INFO_FPCURPROC, reg
+
+#define	GET_CURPCB(reg)							\
+	GET_CPUINFO(reg)					;	\
+	addq	reg, CPU_INFO_CURPCB, reg
+
+#define	GET_IDLE_THREAD(reg)						\
+	GET_CPUINFO(reg)					;	\
+	addq	reg, CPU_INFO_IDLE_THREAD, reg			;	\
+	ldq	reg, 0(reg)
+#else
+IMPORT(curproc, 8)
+IMPORT(fpcurproc, 8)
+IMPORT(curpcb, 8)
+
+#define	GET_CURPROC(reg)	lda reg, curproc
+
+#define	GET_FPCURPROC(reg)	lda reg, fpcurproc
+
+#define	GET_CURPCB(reg)		lda reg, curpcb
+
+#define	GET_IDLE_THREAD(reg)	lda reg, proc0
+#endif
 
 /*
  * Perform actions necessary to switch to a new context.  The
- * hwpcb should be in a0.
+ * hwpcb should be in a0.  Clobbers v0, t0.
  */
 #define	SWITCH_CONTEXT							\
 	/* Make a note of the context we're running on. */		\
-	stq	a0, curpcb					;	\
+	GET_CURPCB(t0)						;	\
+	stq	a0, 0(t0)					;	\
 									\
 	/* Swap in the new context. */					\
 	call_pal PAL_OSF1_swpctx
@@ -122,10 +204,10 @@ Lstart1: LDGP(pv)
 	call_pal PAL_OSF1_wrvptptr	/* clobbers a0, t0, t8-t11 */
 
 	/*
-	 * Switch to proc0's PCB, which is at U_PCB off of proc0paddr.
+	 * Switch to proc0's PCB.
 	 */
-	lda	t0,proc0			/* get phys addr of pcb */
-	ldq	a0,P_MD_PCBPADDR(t0)
+	lda	a0, proc0
+	ldq	a0, P_MD_PCBPADDR(a0)		/* phys addr of PCB */
 	SWITCH_CONTEXT
 
 	/*
@@ -323,12 +405,17 @@ Lchkast:
 	CALL(ast)
 
 Lsetfpenable:
-	/* enable FPU based on whether the current proc is fpcurproc */
-	ldq	t0, curproc
-	ldq	t1, fpcurproc
-	cmpeq	t0, t1, t0
+	/*
+	 * enable FPU based on whether the current proc is fpcurproc.
+	 * Note: GET_*() clobbers v0, t0, t8...t11.
+	 */
+	GET_CURPROC(t1)
+	ldq	t1, 0(t1)
+	GET_FPCURPROC(t2)
+	ldq	t2, 0(t2)
+	cmpeq	t1, t2, t1
 	mov	zero, a0
-	cmovne	t0, 1, a0
+	cmovne	t1, 1, a0
 	call_pal PAL_OSF1_wrfen
 
 Lrestoreregs:
@@ -685,7 +772,9 @@ IMPORT(kernel_lev1map, 8)
 LEAF(idle, 0)
 	br	pv, Lidle1
 Lidle1:	LDGP(pv)
-	stq	zero, curproc			/* curproc <- NULL for stats */
+	/* Note: GET_CURPROC() clobbers v0, t0, t8...t11. */
+	GET_CURPROC(t1)
+	stq	zero, 0(t1)			/* curproc <- NULL for stats */
 	mov	zero, a0			/* enable all interrupts */
 	call_pal PAL_OSF1_swpipl
 Lidle2:
@@ -702,8 +791,12 @@ Lidle2:
  */
 LEAF(cpu_switch, 0)
 	LDGP(pv)
-	/* do an inline savectx(), to save old context */
-	ldq	a0, curproc
+	/*
+	 * do an inline savectx(), to save old context
+	 * Note: GET_CURPROC() clobbers v0, t0, t8...t11.
+	 */
+	GET_CURPROC(a0)
+	ldq	a0, 0(a0)
 	ldq	a1, P_ADDR(a0)
 	/* NOTE: ksp is stored by the swpctx */
 	stq	s0, U_PCB_CONTEXT+(0 * 8)(a1)	/* store s0 - s6 */
@@ -817,8 +910,11 @@ Lcs7:
 	 * globals.  We must do this even if switching to ourselves
 	 * because we might have re-entered cpu_switch() from idle(),
 	 * in which case curproc would be NULL.
+	 *
+	 * Note: GET_CURPROC() clobbers v0, t0, t8...t11.
 	 */
-	stq	s2, curproc			/* curproc = p */
+	GET_CURPROC(t1)
+	stq	s2, 0(t1)			/* curproc = p */
 	stq	zero, want_resched		/* we've rescheduled */
 
 	/*
@@ -863,9 +959,9 @@ LEAF(switch_trampoline, 0)
 
 /*
  * switch_exit(struct proc *p)
- * Make a the named process exit.  Partially switch to proc0 (we don't
- * update curproc or restore registers), and jump into the middle of
- * cpu_switch to switch into a few process.  The process reaper will
+ * Make a the named process exit.  Partially switch to our idle thread
+ * (we don't update curproc or restore registers), and jump into the middle
+ * of cpu_switch to switch into a few process.  The process reaper will
  * free the dead process's VM resources.  MUST BE CALLED AT SPLHIGH.
  */
 LEAF(switch_exit, 1)
@@ -874,18 +970,13 @@ LEAF(switch_exit, 1)
 	/* save the exiting proc pointer */
 	mov	a0, s2
 
-	/* Switch to proc0. */
-	lda	t4, proc0			/* t4 = &proc0 */
-	ldq	t5, P_MD_PCBPADDR(t4)		/* t5 = p->p_md.md_pcbpaddr */
-
-	/*
-	 * Do the actual context swap.
-	 */
-	mov	t5, a0
+	/* Switch to our idle thread. */
+	GET_IDLE_THREAD(a0)			/* clobbers v0, t0, t8-t11 */
+	ldq	a0, P_MD_PCBPADDR(a0)		/* phys addr of PCB */
 	SWITCH_CONTEXT
 
 	/*
-	 * Now running as proc0, except for the value of 'curproc' and
+	 * Now running as idle thread, except for the value of 'curproc' and
 	 * the saved regs.
 	 */
 
@@ -947,50 +1038,58 @@ Lcopystr4:
 	RET
 	END(copystr)
 
-NESTED(copyinstr, 4, 16, ra, 0, 0)
+NESTED(copyinstr, 4, 16, ra, IM_RA|IM_S0, 0)
 	LDGP(pv)
 	lda	sp, -16(sp)			/* set up stack frame	     */
 	stq	ra, (16-8)(sp)			/* save ra		     */
+	stq	s0, (16-16)(sp)			/* save s0		     */
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that src addr   */
 	cmpult	a0, t0, t1			/* is in user space.	     */
 	beq	t1, copyerr			/* if it's not, error out.   */
+	/* Note: GET_CURPROC() clobbers v0, t0, t8...t11. */
+	GET_CURPROC(s0)
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(s0)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	v0, U_PCB_ONFAULT(at_reg)
 	.set at
 	CALL(copystr)				/* do the copy.		     */
 	.set noat
-	ldq	at_reg, curproc			/* kill the fault handler.   */
+	ldq	at_reg, 0(s0)			/* kill the fault handler.   */
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	ldq	ra, (16-8)(sp)			/* restore ra.		     */
+	ldq	s0, (16-16)(sp)			/* restore s0.		     */
 	lda	sp, 16(sp)			/* kill stack frame.	     */
 	RET					/* v0 left over from copystr */
 	END(copyinstr)
 
-NESTED(copyoutstr, 4, 16, ra, 0, 0)
+NESTED(copyoutstr, 4, 16, ra, IM_RA|IM_S0, 0)
 	LDGP(pv)
 	lda	sp, -16(sp)			/* set up stack frame	     */
 	stq	ra, (16-8)(sp)			/* save ra		     */
+	stq	s0, (16-16)(sp)			/* save s0		     */
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that dest addr  */
 	cmpult	a1, t0, t1			/* is in user space.	     */
 	beq	t1, copyerr			/* if it's not, error out.   */
+	/* Note: GET_CURPROC() clobbers v0, t0, t8...t11. */
+	GET_CURPROC(s0)
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(s0)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	v0, U_PCB_ONFAULT(at_reg)
 	.set at
 	CALL(copystr)				/* do the copy.		     */
 	.set noat
-	ldq	at_reg, curproc			/* kill the fault handler.   */
+	ldq	at_reg, 0(s0)			/* kill the fault handler.   */
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	ldq	ra, (16-8)(sp)			/* restore ra.		     */
+	ldq	s0, (16-16)(sp)			/* restore s0.		     */
 	lda	sp, 16(sp)			/* kill stack frame.	     */
 	RET					/* v0 left over from copystr */
 	END(copyoutstr)
@@ -1240,27 +1339,31 @@ bcopy_ov_short:
  * called by uiomove(), which may be in the path of servicing a non-fatal
  * page fault.
  */
-NESTED(kcopy, 3, 16, ra, 0, 0)
+NESTED(kcopy, 3, 32, ra, IM_RA|IM_S0|IM_S1, 0)
 	LDGP(pv)
-	lda	sp, -16(sp)			/* set up stack frame	     */
-	stq	ra, (16-16)(sp)			/* save ra		     */
-	stq	s0, (16-8)(sp)			/* save s0		     */
+	lda	sp, -32(sp)			/* set up stack frame	     */
+	stq	ra, (32-8)(sp)			/* save ra		     */
+	stq	s0, (32-16)(sp)			/* save s0		     */
+	stq	s1, (32-24)(sp)			/* save s1		     */
+	/* Note: GET_CURPROC() clobbers v0, t0, t8...t11. */
+	GET_CURPROC(s1)
 	lda	v0, kcopyerr			/* set up fault handler.     */
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(s1)
 	ldq	at_reg, P_ADDR(at_reg)
 	ldq	s0, U_PCB_ONFAULT(at_reg)	/* save old handler.	     */
 	stq	v0, U_PCB_ONFAULT(at_reg)
 	.set at
 	CALL(bcopy)				/* do the copy.		     */
 	.set noat
-	ldq	at_reg, curproc			/* restore the old handler.  */
+	ldq	at_reg, 0(s1)			/* restore the old handler.  */
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	s0, U_PCB_ONFAULT(at_reg)
 	.set at
-	ldq	ra, (16-16)(sp)			/* restore ra.		     */
-	ldq	s0, (16-8)(sp)			/* restore s0.		     */
-	lda	sp, 16(sp)			/* kill stack frame.	     */
+	ldq	ra, (32-8)(sp)			/* restore ra.		     */
+	ldq	s0, (32-16)(sp)			/* restore s0.		     */
+	ldq	s1, (32-24)(sp)			/* restore s1.		     */
+	lda	sp, 32(sp)			/* kill stack frame.	     */
 	mov	zero, v0			/* return 0. */
 	RET
 	END(kcopy)
@@ -1268,63 +1371,72 @@ NESTED(kcopy, 3, 16, ra, 0, 0)
 LEAF(kcopyerr, 0)
 	LDGP(pv)
 	.set noat
-	ldq	at_reg, curproc			/* restore the old handler.  */
+	ldq	at_reg, 0(s1)			/* restore the old handler.  */
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	s0, U_PCB_ONFAULT(at_reg)
 	.set at
-	ldq	ra, (16-16)(sp)			/* restore ra.		     */
-	ldq	s0, (16-8)(sp)			/* restore s0.		     */
-	lda	sp, 16(sp)			/* kill stack frame.	     */
+	ldq	ra, (32-8)(sp)			/* restore ra.		     */
+	ldq	s0, (32-16)(sp)			/* restore s0.		     */
+	ldq	s1, (32-24)(sp)			/* restore s1.		     */
+	lda	sp, 32(sp)			/* kill stack frame.	     */
 	ldiq	v0, EFAULT			/* return EFAULT.	     */
 	RET
 END(kcopyerr)
 #endif /* UVM */
 
-NESTED(copyin, 3, 16, ra, 0, 0)
+NESTED(copyin, 3, 16, ra, IM_RA|IM_S0, 0)
 	LDGP(pv)
 	lda	sp, -16(sp)			/* set up stack frame	     */
 	stq	ra, (16-8)(sp)			/* save ra		     */
+	stq	s0, (16-16)(sp)			/* save s0		     */
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that src addr   */
 	cmpult	a0, t0, t1			/* is in user space.	     */
 	beq	t1, copyerr			/* if it's not, error out.   */
+	/* Note: GET_CURPROC() clobbers v0, t0, t8...t11. */
+	GET_CURPROC(s0)
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(s0)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	v0, U_PCB_ONFAULT(at_reg)
 	.set at
 	CALL(bcopy)				/* do the copy.		     */
 	.set noat
-	ldq	at_reg, curproc			/* kill the fault handler.   */
+	ldq	at_reg, 0(s0)			/* kill the fault handler.   */
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	ldq	ra, (16-8)(sp)			/* restore ra.		     */
+	ldq	s0, (16-16)(sp)			/* restore s0.		     */
 	lda	sp, 16(sp)			/* kill stack frame.	     */
 	mov	zero, v0			/* return 0. */
 	RET
 	END(copyin)
 
-NESTED(copyout, 3, 16, ra, 0, 0)
+NESTED(copyout, 3, 16, ra, IM_RA|IM_S0, 0)
 	LDGP(pv)
 	lda	sp, -16(sp)			/* set up stack frame	     */
 	stq	ra, (16-8)(sp)			/* save ra		     */
+	stq	s0, (16-16)(sp)			/* save s0		     */
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that dest addr  */
 	cmpult	a1, t0, t1			/* is in user space.	     */
 	beq	t1, copyerr			/* if it's not, error out.   */
+	/* Note: GET_CURPROC() clobbers v0, t0, t8...t11. */
+	GET_CURPROC(s0)
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(s0)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	v0, U_PCB_ONFAULT(at_reg)
 	.set at
 	CALL(bcopy)				/* do the copy.		     */
 	.set noat
-	ldq	at_reg, curproc			/* kill the fault handler.   */
+	ldq	at_reg, 0(s0)			/* kill the fault handler.   */
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	ldq	ra, (16-8)(sp)			/* restore ra.		     */
+	ldq	s0, (16-16)(sp)			/* restore s0.		     */
 	lda	sp, 16(sp)			/* kill stack frame.	     */
 	mov	zero, v0			/* return 0. */
 	RET
@@ -1333,6 +1445,7 @@ NESTED(copyout, 3, 16, ra, 0, 0)
 LEAF(copyerr, 0)
 	LDGP(pv)
 	ldq	ra, (16-8)(sp)			/* restore ra.		     */
+	ldq	s0, (16-16)(sp)			/* restore s0.		     */
 	lda	sp, 16(sp)			/* kill stack frame.	     */
 	ldiq	v0, EFAULT			/* return EFAULT.	     */
 	RET
@@ -1353,16 +1466,18 @@ XLEAF(fuiword, 1)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
+	/* Note: GET_CURPROC() clobbers v0, t0, t8...t11. */
+	GET_CURPROC(t1)
 	lda	t0, fswberr
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(t1)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	ldq	v0, 0(a0)
 	zap	v0, 0xf0, v0
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(t1)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
@@ -1375,15 +1490,17 @@ XLEAF(fuisword, 1)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
+	/* Note: GET_CURPROC() clobbers v0, t0, t8...t11. */
+	GET_CURPROC(t1)
 	lda	t0, fswberr
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(t1)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	/* XXX FETCH IT */
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(t1)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
@@ -1396,15 +1513,17 @@ XLEAF(fuibyte, 1)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
+	/* Note: GET_CURPROC() clobbers v0, t0, t8...t11. */
+	GET_CURPROC(t1)
 	lda	t0, fswberr
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(t1)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	/* XXX FETCH IT */
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(t1)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
@@ -1417,15 +1536,17 @@ LEAF(suword, 2)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
+	/* Note: GET_CURPROC() clobbers v0, t0, t8...t11. */
+	GET_CURPROC(t1)
 	lda	t0, fswberr
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(t1)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
-	stq	a1, 0(a0)			/* do the wtore. */
+	stq	a1, 0(a0)			/* do the store. */
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(t1)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
@@ -1439,15 +1560,17 @@ LEAF(suiword, 2)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
+	/* Note: GET_CURPROC() clobbers v0, t0, t8...t11. */
+	GET_CURPROC(t1)
 	lda	t0, fswberr
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(t1)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	/* XXX STORE IT */
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(t1)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
@@ -1461,15 +1584,17 @@ LEAF(susword, 2)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
+	/* Note: GET_CURPROC() clobbers v0, t0, t8...t11. */
+	GET_CURPROC(t1)
 	lda	t0, fswberr
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(t1)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	/* XXX STORE IT */
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(t1)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
@@ -1482,15 +1607,17 @@ LEAF(suisword, 2)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
+	/* Note: GET_CURPROC() clobbers v0, t0, t8...t11. */
+	GET_CURPROC(t1)
 	lda	t0, fswberr
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(t1)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	/* XXX STORE IT */
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(t1)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
@@ -1505,9 +1632,11 @@ LEAF(subyte, 2)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
+	/* Note: GET_CURPROC() clobbers v0, t0, t8...t11. */
+	GET_CURPROC(t1)
 	lda	t0, fswberr
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(t1)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
@@ -1518,7 +1647,7 @@ LEAF(subyte, 2)
 	or	t0, a1, a1			/* put the result together */
 	stq_u	a1, 0(a0)			/* and store it. */
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(t1)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
@@ -1531,9 +1660,11 @@ LEAF(suibyte, 2)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
+	/* Note: GET_CURPROC() clobbers v0, t0, t8...t11. */
+	GET_CURPROC(t1)
 	lda	t0, fswberr
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(t1)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
@@ -1544,7 +1675,7 @@ LEAF(suibyte, 2)
 	or	t0, a1, a1			/* put the result together */
 	stq_u	a1, 0(a0)			/* and store it. */
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(t1)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
@@ -1573,16 +1704,18 @@ LEAF(fuswintr, 2)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswintrberr			/* if it's not, error out. */
+	/* Note: GET_CURPROC() clobbers v0, t0, t8...t11. */
+	GET_CURPROC(t1)
 	lda	t0, fswintrberr
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(t1)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	stq	a0, U_PCB_ACCESSADDR(at_reg)
 	.set at
 	/* XXX FETCH IT */
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(t1)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
@@ -1594,16 +1727,18 @@ LEAF(suswintr, 2)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswintrberr			/* if it's not, error out. */
+	/* Note: GET_CURPROC() clobbers v0, t0, t8...t11. */
+	GET_CURPROC(t1)
 	lda	t0, fswintrberr
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(t1)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	stq	a0, U_PCB_ACCESSADDR(at_reg)
 	.set at
 	/* XXX STORE IT */
 	.set noat
-	ldq	at_reg, curproc
+	ldq	at_reg, 0(t1)
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
