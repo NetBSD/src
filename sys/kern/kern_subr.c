@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.103 2003/08/07 16:31:49 agc Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.104 2003/09/10 10:55:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.103 2003/08/07 16:31:49 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.104 2003/09/10 10:55:50 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -164,7 +164,7 @@ uiomove(buf, n, uio)
 		switch (uio->uio_segflg) {
 
 		case UIO_USERSPACE:
-			if (curlwp->l_cpu->ci_schedstate.spc_flags &
+			if (curcpu()->ci_schedstate.spc_flags &
 			    SPCF_SHOULDYIELD)
 				preempt(1);
 			if (__predict_true(p == curproc)) {
