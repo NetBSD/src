@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.2,v 1.1.2.18 2005/03/23 07:41:02 jmc Exp $
+#	$NetBSD: CHANGES-2.0.2,v 1.1.2.19 2005/03/23 19:56:52 jmc Exp $
 
 A complete list of changes from the NetBSD 2.0.1 release to the NetBSD 2.0.2
 release.
@@ -200,3 +200,10 @@ sys/arch/evbppc/conf/Makefile.walnut.inc	1.3
 	[jmc, ticket #1350]
 
 NOTE: Moved 2.0.2 tags on last 3 and CHANGES-2.0.2 file so evbpcc could build
+
+distrib/evbppc/md-kernel/Makefile		1.2
+
+	Can't depend on shell scripts being executable from CVS. Preface
+	mkimg.sh with ${HOST_SH}
+
+NOTE: Moved 2.0.2 tags on last 1 and CHANGES-2.0.2 file so evbpcc could build
