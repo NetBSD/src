@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.110 1998/01/06 08:06:47 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.111 1998/01/06 21:18:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -160,11 +160,9 @@ void
 main(framep)
 	void *framep;				/* XXX should go away */
 {
-	register struct proc *p;
-	register struct pdevinit *pdev;
-	register int i;
-	int s, error;
-	register_t rval[2];
+	struct proc *p, *p2;
+	struct pdevinit *pdev;
+	int i, s, error;
 	extern struct pdevinit pdevinit[];
 	extern void roundrobin __P((void *));
 	extern void schedcpu __P((void *));
@@ -339,7 +337,10 @@ main(framep)
 	mountlist.cqh_first->mnt_flag |= MNT_ROOTFS;
 	mountlist.cqh_first->mnt_op->vfs_refcount++;
 
-	/* Get the vnode for '/'.  Set filedesc0.fd_fd.fd_cdir to reference it. */
+	/*
+	 * Get the vnode for '/'.  Set filedesc0.fd_fd.fd_cdir to
+	 * reference it.
+	 */
 	if (VFS_ROOT(mountlist.cqh_first, &rootvnode))
 		panic("cannot find root vnode");
 	filedesc0.fd_fd.fd_cdir = rootvnode;
@@ -360,14 +361,14 @@ main(framep)
 	siginit(p);
 
 	/* Create process 1 (init(8)). */
-	if (sys_fork(p, NULL, rval))
+	if (fork1(p, 0, NULL, &p2))
 		panic("fork init");
-	cpu_set_kpc(pfind(1), start_init);
+	cpu_set_kpc(p2, start_init);
 
 	/* Create process 2 (the pageout daemon). */
-	if (sys_fork(p, NULL, rval))
+	if (fork1(p, 0, NULL, &p2))
 		panic("fork pager");
-	cpu_set_kpc(pfind(2), start_pagedaemon);
+	cpu_set_kpc(p2, start_pagedaemon);
 
 	/* The scheduler is an infinite loop. */
 	scheduler();
