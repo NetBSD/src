@@ -1,4 +1,4 @@
-.\"	$NetBSD: forms.3,v 1.13 2004/04/21 02:46:34 kim Exp $
+.\"	$NetBSD: forms.3,v 1.14 2004/04/21 11:45:42 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -72,126 +72,119 @@ objects to be defined such that any new form or field automatically inherits
 the value as default.
 Setting the default value will not affect any field or
 form that has already been created but will be applied to subsequent objects.
-To set the default attribute or option the set routine is passed a NULL
+To set the default attribute or option the set routine is passed a
+.Dv NULL
 pointer in the field or form parameter when calling the set routine.
 The current default value can be retrieved by calling the get routine with a
-NULL pointer for the field or form parameter.
+.Dv NULL
+pointer for the field or form parameter.
 .Pp
-.ta 21
-.nf
-.ft 3
-Form Routine Name	Manual Page Name
-.sp 0.5
-current_field		form_page(3)
-data_ahead		form_data(3)
-data_behind		form_data(3)
-dup_field		form_field_new(3)
-dynamic_field_info	form_field_info(3)
-field_arg		form_field_validation(3)
-field_back		form_field_attributes(3)
-field_buffer		form_field_buffer(3)
-field_count		form_field(3)
-field_fore		form_field_attributes(3)
-field_index		form_page(3)
-field_info		form_field_info(3)
-field_init		form_hook(3)
-field_just		form_field_just(3)
-field_opts		form_field_opts(3)
-field_opts_off		form_field_opts(3)
-field_opts_on		form_field_opts(3)
-field_pad		form_field_attributes(3)
-field_status		form_field_buffer(3)
-field_term		form_hook(3)
-field_type		form_field_validation(3)
-field_userptr		form_field_userptr(3)
-form_driver		form_driver(3)
-form_fields		form_field(3)
-form_init		form_hook(3)
-form_max_page		form_page(3)
-form_opts		form_opts(3)
-form_opts_off		form_opts(3)
-form_opts_on		form_opts(3)
-form_page		form_page(3)
-form_sub		form_win(3)
-form_term		form_hook(3)
-form_userptr		form_userptr(3)
-form_win		form_win(3)
-free_field		form_field_new(3)
-free_fieldtype		form_fieldtype(3)
-free_form		form_new(3)
-link_field		form_field_new(3)
-link_fieldtype		form_fieldtype(3)
-move_field		form_field(3)
-new_field		form_field_new(3)
-new_fieldtype		form_fieldtype(3)
-new_form		form_new(3)
-new_page		form_new_page(3)
-pos_form_cursor		form_cursor(3)
-post_form		form_post(3)
-scale_form		form_win(3)
-set_current_field	form_page(3)
-set_field_back		form_field_attributes(3)
-set_field_buffer	form_field_buffer(3)
-set_field_fore		form_field_attributes(3)
-set_field_init		form_hook(3)
-set_field_just		form_field_just(3)
-set_field_opts		form_field_opts(3)
-set_field_pad		form_field_attributes(3)
-set_field_printf	form_field_buffer(3)
-set_field_status	form_field_buffer(3)
-set_field_term		form_hook(3)
-set_field_type		form_field_validation(3)
-set_field_userptr	form_field_userptr(3)
-set_fieldtype_arg	form_fieldtype(3)
-set_fieldtype_choice	form_fieldtype(3)
-set_form_fields		form_field(3)
-set_form_init		form_hook(3)
-set_form_opts		form_opts(3)
-set_form_page		form_page(3)
-set_form_sub		form_win(3)
-set_form_term		form_hook(3)
-set_form_userptr	form_userptr(3)
-set_form_win		form_win(3)
-set_max_field		form_field_buffer(3)
-set_new_page		form_new_page(3)
-unpost_form		form_post(3)
-.fi
-.ft 1
-.br
-.ne 8
+.Bl -column set_fieldtype_choiceXX
+.It Sy "Form Routine Name" Ta Sy "Manual Page Name"
+.It current_field Ta Xr form_page 3
+.It data_ahead Ta Xr form_data 3
+.It data_behind Ta Xr form_data 3
+.It dup_field Ta Xr form_field_new 3
+.It dynamic_field_info Ta Xr form_field_info 3
+.It field_arg Ta Xr form_field_validation 3
+.It field_back Ta Xr form_field_attributes 3
+.It field_buffer Ta Xr form_field_buffer 3
+.It field_count Ta Xr form_field 3
+.It field_fore Ta Xr form_field_attributes 3
+.It field_index Ta Xr form_page 3
+.It field_info Ta Xr form_field_info 3
+.It field_init Ta Xr form_hook 3
+.It field_just Ta Xr form_field_just 3
+.It field_opts Ta Xr form_field_opts 3
+.It field_opts_off Ta Xr form_field_opts 3
+.It field_opts_on Ta Xr form_field_opts 3
+.It field_pad Ta Xr form_field_attributes 3
+.It field_status Ta Xr form_field_buffer 3
+.It field_term Ta Xr form_hook 3
+.It field_type Ta Xr form_field_validation 3
+.It field_userptr Ta Xr form_field_userptr 3
+.It form_driver Ta Xr form_driver 3
+.It form_fields Ta Xr form_field 3
+.It form_init Ta Xr form_hook 3
+.It form_max_page Ta Xr form_page 3
+.It form_opts Ta Xr form_opts 3
+.It form_opts_off Ta Xr form_opts 3
+.It form_opts_on Ta Xr form_opts 3
+.It form_page Ta Xr form_page 3
+.It form_sub Ta Xr form_win 3
+.It form_term Ta Xr form_hook 3
+.It form_userptr Ta Xr form_userptr 3
+.It form_win Ta Xr form_win 3
+.It free_field Ta Xr form_field_new 3
+.It free_fieldtype Ta Xr form_fieldtype 3
+.It free_form Ta Xr form_new 3
+.It link_field Ta Xr form_field_new 3
+.It link_fieldtype Ta Xr form_fieldtype 3
+.It move_field Ta Xr form_field 3
+.It new_field Ta Xr form_field_new 3
+.It new_fieldtype Ta Xr form_fieldtype 3
+.It new_form Ta Xr form_new 3
+.It new_page Ta Xr form_new_page 3
+.It pos_form_cursor Ta Xr form_cursor 3
+.It post_form Ta Xr form_post 3
+.It scale_form Ta Xr form_win 3
+.It set_current_field Ta Xr form_page 3
+.It set_field_back Ta Xr form_field_attributes 3
+.It set_field_buffer Ta Xr form_field_buffer 3
+.It set_field_fore Ta Xr form_field_attributes 3
+.It set_field_init Ta Xr form_hook 3
+.It set_field_just Ta Xr form_field_just 3
+.It set_field_opts Ta Xr form_field_opts 3
+.It set_field_pad Ta Xr form_field_attributes 3
+.It set_field_printf Ta Xr form_field_buffer 3
+.It set_field_status Ta Xr form_field_buffer 3
+.It set_field_term Ta Xr form_hook 3
+.It set_field_type Ta Xr form_field_validation 3
+.It set_field_userptr Ta Xr form_field_userptr 3
+.It set_fieldtype_arg Ta Xr form_fieldtype 3
+.It set_fieldtype_choice Ta Xr form_fieldtype 3
+.It set_form_fields Ta Xr form_field 3
+.It set_form_init Ta Xr form_hook 3
+.It set_form_opts Ta Xr form_opts 3
+.It set_form_page Ta Xr form_page 3
+.It set_form_sub Ta Xr form_win 3
+.It set_form_term Ta Xr form_hook 3
+.It set_form_userptr Ta Xr form_userptr 3
+.It set_form_win Ta Xr form_win 3
+.It set_max_field Ta Xr form_field_buffer 3
+.It set_new_page Ta Xr form_new_page 3
+.It unpost_form Ta Xr form_post 3
+.El
 .Sh RETURN VALUES
-Any function returning a string pointer will return NULL if an error occurs.
+Any function returning a string pointer will return
+.Dv NULL
+if an error occurs.
 Functions returning an integer will return one of the following:
-.Pp
-.ta 21
-.nf
-E_OK			The function was successful
-E_SYSTEM_ERROR		There was a system error during the call.
-E_BAD_ARGUMENT		One or more of the arguments passed to the function
-			was incorrect.
-E_POSTED		The form is already posted.
-E_CONNECTED		An field was already connected to a form.
-E_BAD_STATE		The function was called from within an initialization
-			or termination routine.
-E_NO_ROOM		The form does not fit within the subwindow.
-E_NOT_POSTED		The form is not posted
-E_UNKNOWN_COMMAND	The form driver does not recognize the request
-			passed to it.
-E_NOT_SELECTABLE	The field could not be selected.
-E_NOT_CONNECTED		The field is not connected to a form.
-E_REQUEST_DENIED	The form driver could not process the request.
-E_INVALID_FIELD		The field is invalid.
-E_CURRENT		The field is the active one on the form.
-.fi
-.ft 1
-.br
-.ne 8
+.Bl -column set_fieldtype_choiceXX
+.It Dv E_OK Ta No The function was successful.
+.It Dv E_SYSTEM_ERROR Ta No There was a system error during the call.
+.It Dv E_BAD_ARGUMENT Ta No One or more of the arguments passed to \
+the function was incorrect.
+.It Dv E_POSTED Ta No The form is already posted.
+.It Dv E_CONNECTED Ta No A field was already connected to a form.
+.It Dv E_BAD_STATE Ta No The function was called from within an \
+initialization or termination routine.
+.It Dv E_NO_ROOM Ta No The form does not fit within the subwindow.
+.It Dv E_NOT_POSTED Ta No The form is not posted.
+.It Dv E_UNKNOWN_COMMAND Ta No The form driver does not recognize the \
+request passed to it.
+.It Dv E_NOT_SELECTABLE Ta No The field could not be selected.
+.It Dv E_NOT_CONNECTED Ta No The field is not connected to a form.
+.It Dv E_REQUEST_DENIED Ta No The form driver could not process the request.
+.It Dv E_INVALID_FIELD Ta No The field is invalid.
+.It Dv E_CURRENT Ta No The field is the active one on the form.
+.El
 .Sh SEE ALSO
 .Xr curses 3 ,
 .Xr menus 3
 .Sh NOTES
 This implementation of the forms library does depart in behavior
-subtly from the original AT \*[Am] T implementation.
+subtly from the original AT\*[Am]T implementation.
 Some of the more notable departures are:
 .Pp
 .Bl -tag -width "The TAB character" -compact
@@ -232,6 +225,7 @@ field buffer and also will allow TAB to be inserted into a field
 buffer via the form driver and correctly calculates the cursor
 position allowing for expansion of the TAB character.
 .It set_field_printf
-This function is a NetBSD extension and must not be used in portable
-code.
+This function is a
+.Nx
+extension and must not be used in portable code.
 .El
