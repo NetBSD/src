@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.9 1998/02/12 03:52:12 lukem Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.10 1998/12/19 21:27:40 christos Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
@@ -6,7 +6,7 @@
 static char sccsid[] = "from: @(#)rpcinfo.c 1.22 87/08/12 SMI";
 static char sccsid[] = "from: @(#)rpcinfo.c	2.2 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpcinfo.c,v 1.9 1998/02/12 03:52:12 lukem Exp $");
+__RCSID("$NetBSD: rpcinfo.c,v 1.10 1998/12/19 21:27:40 christos Exp $");
 #endif
 #endif
 
@@ -518,7 +518,7 @@ pmapdump(argc, argv)
 		exit(1);
 	}
 	if (clnt_call(client, PMAPPROC_DUMP, xdr_void, NULL,
-	    xdr_pmaplist, &head, minutetimeout) != RPC_SUCCESS) {
+	    xdr_pmaplist, (caddr_t)&head, minutetimeout) != RPC_SUCCESS) {
 		fprintf(stderr, "rpcinfo: can't contact portmapper: ");
 		clnt_perror(client, "rpcinfo");
 		exit(1);
@@ -582,7 +582,7 @@ brdcst(argc, argv)
 	prognum = getprognum(argv[0]);
 	vers = getvers(argv[1]);
 	rpc_stat = clnt_broadcast(prognum, vers, NULLPROC, xdr_void,
-	    (char *)NULL, xdr_void, (char *)NULL, reply_proc);
+	    (char *)NULL, xdr_void, (char *)NULL, (resultproc_t)reply_proc);
 	if ((rpc_stat != RPC_SUCCESS) && (rpc_stat != RPC_TIMEDOUT)) {
 		fprintf(stderr, "rpcinfo: broadcast failed: %s\n",
 		    clnt_sperrno(rpc_stat));
@@ -627,7 +627,7 @@ getprognum(arg)
 	struct rpcent *rpc;
 	u_long prognum;
 
-	if (isalpha(*arg)) {
+	if (isalpha((unsigned char)*arg)) {
 		rpc = getrpcbyname(arg);
 		if (rpc == NULL) {
 			fprintf(stderr, "rpcinfo: %s is unknown service\n",
