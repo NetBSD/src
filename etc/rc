@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.91 1997/09/08 02:34:44 mikel Exp $
+#	$NetBSD: rc,v 1.92 1997/09/12 09:53:08 drochner Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -104,7 +104,9 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 
-mount /usr >/dev/null 2>&1
+if [ ! -d /usr/bin ]; then
+	mount /usr >/dev/null 2>&1
+fi
 mount /var >/dev/null 2>&1
 
 # "Critical" file systems are now mounted.  Go ahead and swap
