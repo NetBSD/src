@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $Id: aic7xxx.c,v 1.6 1996/05/16 03:59:03 mycroft Exp $
+ *      $Id: aic7xxx.c,v 1.7 1996/05/16 05:20:23 mycroft Exp $
  */
 /*
  * TODO:
@@ -424,10 +424,10 @@ ahc_construct(ahc, bc, ioh, type, flags)
 	}
 	bzero(ahc, sizeof(struct ahc_data));
 #endif
-	STAILQ_INIT(&ahc->free_scbs);
-	STAILQ_INIT(&ahc->page_scbs);
-	STAILQ_INIT(&ahc->waiting_scbs);
-	STAILQ_INIT(&ahc->assigned_scbs);
+	SIMPLEQ_INIT(&ahc->free_scbs);
+	SIMPLEQ_INIT(&ahc->page_scbs);
+	SIMPLEQ_INIT(&ahc->waiting_scbs);
+	SIMPLEQ_INIT(&ahc->assigned_scbs);
 #if defined(__FreeBSD__)
 	ahc->unit = unit;
 	ahc->baseport = iobase;
@@ -760,7 +760,7 @@ ahc_run_waiting_queues(ahc)
 	struct scb* scb;
 	u_char cur_scb;
 
-	if(!(ahc->assigned_scbs.stqh_first || ahc->waiting_scbs.stqh_first))
+	if(!(ahc->assigned_scbs.sqh_first || ahc->waiting_scbs.sqh_first))
 		return;
 
 	PAUSE_SEQUENCER(ahc);
@@ -770,8 +770,8 @@ ahc_run_waiting_queues(ahc)
 	 * First handle SCBs that are waiting but have been
 	 * assigned a slot.
 	 */
-	while((scb = ahc->assigned_scbs.stqh_first) != NULL) {
-		STAILQ_REMOVE_HEAD(&ahc->assigned_scbs, links);
+	while((scb = ahc->assigned_scbs.sqh_first) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&ahc->assigned_scbs, scb, links);
 		AHC_OUTB(ahc, SCBPTR, scb->position);
 		ahc_send_scb(ahc, scb);
 
@@ -786,7 +786,7 @@ ahc_run_waiting_queues(ahc)
 		SC_DEBUG(scb->xs->sc_link, SDEV_DB3, ("cmd_sent\n"));
 	}
 	/* Now deal with SCBs that require paging */
-	if((scb = ahc->waiting_scbs.stqh_first) != NULL) {
+	if((scb = ahc->waiting_scbs.sqh_first) != NULL) {
 		u_char disc_scb = AHC_INB(ahc, DISCONNECTED_SCBH);
 		u_char active = AHC_INB(ahc, FLAGS) & (SELECTED|IDENTIFY_SEEN);
 		int count = 0;
@@ -823,7 +823,8 @@ ahc_run_waiting_queues(ahc)
 				u_char out_scbi;
 				struct scb* out_scbp;
 
-				STAILQ_REMOVE_HEAD(&ahc->waiting_scbs, links);
+				SIMPLEQ_REMOVE_HEAD(&ahc->waiting_scbs, scb,
+				    links);
 
 				/*
 				 * Find the in-core SCB for the one
@@ -853,7 +854,7 @@ ahc_run_waiting_queues(ahc)
 			}
 			else
 				break;
-		} while((scb = ahc->waiting_scbs.stqh_first) != NULL);
+		} while((scb = ahc->waiting_scbs.sqh_first) != NULL);
 
 		if(count) {
 			/* 
@@ -1008,27 +1009,25 @@ ahc_intr(arg)
 				 * one on the disconnected SCB list, or
 				 * as a last resort a queued SCB.
 				 */
-				if(ahc->free_scbs.stqh_first) {
-					outscb = ahc->free_scbs.stqh_first; 
-					STAILQ_REMOVE_HEAD(&ahc->free_scbs,
-							   links);
+				if((outscb = ahc->free_scbs.sqh_first) != NULL) {
+					SIMPLEQ_REMOVE_HEAD(&ahc->free_scbs,
+					    outscb, links);
 					scb->position = outscb->position;
 					outscb->position = SCB_LIST_NULL;
-					STAILQ_INSERT_HEAD(&ahc->page_scbs,
-							   outscb, links);
+					SIMPLEQ_INSERT_HEAD(&ahc->page_scbs,
+					    outscb, links);
 					AHC_OUTB(ahc, SCBPTR, scb->position);
 					ahc_send_scb(ahc, scb);
 					scb->flags &= ~SCB_PAGED_OUT;
 					goto pagein_done;
 				}
-				if(ahc->assigned_scbs.stqh_first) {
-					outscb = ahc->assigned_scbs.stqh_first; 
-					STAILQ_REMOVE_HEAD(&ahc->assigned_scbs,
-							   links);
+				if((outscb = ahc->assigned_scbs.sqh_first) != NULL) {
+					SIMPLEQ_REMOVE_HEAD(&ahc->assigned_scbs,
+					    outscb, links);
 					scb->position = outscb->position;
 					outscb->position = SCB_LIST_NULL;
-					STAILQ_INSERT_HEAD(&ahc->waiting_scbs,
-							   outscb, links);
+					SIMPLEQ_INSERT_HEAD(&ahc->waiting_scbs,
+					    outscb, links);
 					outscb->flags = SCB_WAITINGQ;
 					AHC_OUTB(ahc, SCBPTR, scb->position);
 					ahc_send_scb(ahc, scb);
@@ -1115,7 +1114,7 @@ ahc_intr(arg)
 					untimeout(ahc_timeout, (caddr_t)outscb);
 					scb->position = outscb->position;
 					outscb->position = SCB_LIST_NULL;
-					STAILQ_INSERT_HEAD(&ahc->waiting_scbs,
+					SIMPLEQ_INSERT_HEAD(&ahc->waiting_scbs,
 							   outscb, links);
 					outscb->flags = SCB_WAITINGQ;
 					ahc_send_scb(ahc, scb);
@@ -1481,7 +1480,7 @@ pagein_done:
 				sc_print_addr(xs->sc_link);
 				printf("Queue Full\n");
 				scb->flags = SCB_ASSIGNEDQ;
-				STAILQ_INSERT_TAIL(&ahc->assigned_scbs,
+				SIMPLEQ_INSERT_TAIL(&ahc->assigned_scbs,
 						   scb, links);
 				break;
 #elif defined(__NetBSD__)
@@ -2408,7 +2407,7 @@ ahc_scsi_cmd(xs)
 	}
 	else {
 		scb->flags = SCB_WAITINGQ;
-		STAILQ_INSERT_TAIL(&ahc->waiting_scbs, scb, links);
+		SIMPLEQ_INSERT_TAIL(&ahc->waiting_scbs, scb, links);
 		ahc_run_waiting_queues(ahc);
 	}
 	if (!(flags & SCSI_NOMASK)) {
@@ -2449,8 +2448,8 @@ ahc_free_scb(ahc, scb, flags)
 
 	scb->flags = SCB_FREE;
 	if(scb->position == SCB_LIST_NULL) {
-		STAILQ_INSERT_HEAD(&ahc->page_scbs, scb, links);
-		if(!scb->links.stqe_next && !ahc->free_scbs.stqh_first)
+		SIMPLEQ_INSERT_HEAD(&ahc->page_scbs, scb, links);
+		if(!scb->links.sqe_next && !ahc->free_scbs.sqh_first)
 			/*
 			 * If there were no SCBs availible, wake anybody waiting
 			 * for one to come free.
@@ -2464,10 +2463,10 @@ ahc_free_scb(ahc, scb, flags)
 	 * completes for a particular interrupt are completed
 	 * or when we start another command.
 	 */
-	else if((wscb = ahc->waiting_scbs.stqh_first) != NULL) {
+	else if((wscb = ahc->waiting_scbs.sqh_first) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&ahc->waiting_scbs, wscb, links);
 		wscb->position = scb->position;
-		STAILQ_REMOVE_HEAD(&ahc->waiting_scbs, links);
-		STAILQ_INSERT_HEAD(&ahc->assigned_scbs, wscb, links);
+		SIMPLEQ_INSERT_HEAD(&ahc->assigned_scbs, wscb, links);
 		wscb->flags = SCB_ASSIGNEDQ;
 
 		/* 
@@ -2476,8 +2475,8 @@ ahc_free_scb(ahc, scb, flags)
 		 * queue.
 		 */
 		scb->position = SCB_LIST_NULL;
-		STAILQ_INSERT_HEAD(&ahc->page_scbs, scb, links);
-		if(!scb->links.stqe_next && !ahc->free_scbs.stqh_first)
+		SIMPLEQ_INSERT_HEAD(&ahc->page_scbs, scb, links);
+		if(!scb->links.sqe_next && !ahc->free_scbs.sqh_first)
 			/*
 			 * If there were no SCBs availible, wake anybody waiting
 			 * for one to come free.
@@ -2485,11 +2484,11 @@ ahc_free_scb(ahc, scb, flags)
 			wakeup((caddr_t)&ahc->free_scbs);
 	}
 	else {
-		STAILQ_INSERT_HEAD(&ahc->free_scbs, scb, links);
+		SIMPLEQ_INSERT_HEAD(&ahc->free_scbs, scb, links);
 #ifdef AHC_DEBUG
 		ahc->activescbs--;
 #endif
-		if(!scb->links.stqe_next && !ahc->page_scbs.stqh_first)
+		if(!scb->links.sqe_next && !ahc->page_scbs.sqh_first)
 			/*
 			 * If there were no SCBs availible, wake anybody waiting
 			 * for one to come free.
@@ -2519,11 +2518,11 @@ ahc_get_scb(ahc, flags)
 	 * but only if we can't allocate a new one.
 	 */
 	while (1) {
-		if((scbp = ahc->free_scbs.stqh_first)) {
-			STAILQ_REMOVE_HEAD(&ahc->free_scbs, links);
+		if((scbp = ahc->free_scbs.sqh_first)) {
+			SIMPLEQ_REMOVE_HEAD(&ahc->free_scbs, scbp, links);
 		}
-		else if((scbp = ahc->page_scbs.stqh_first)) {
-			STAILQ_REMOVE_HEAD(&ahc->page_scbs, links);
+		else if((scbp = ahc->page_scbs.sqh_first)) {
+			SIMPLEQ_REMOVE_HEAD(&ahc->page_scbs, scbp, links);
 		}
 		else if (ahc->numscbs < ahc->maxscbs) {
 			scbp = (struct scb *) malloc(sizeof(struct scb),
