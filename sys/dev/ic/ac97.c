@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.29 2002/10/08 12:33:34 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.30 2002/10/08 21:40:04 pooka Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.29 2002/10/08 12:33:34 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.30 2002/10/08 21:40:04 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -327,7 +327,7 @@ static const struct ac97_codecid {
 	{ AC97_CODEC_ID('T', 'R', 'A', 3),	"TriTech TR28023",	},
 	{ AC97_CODEC_ID('T', 'R', 'A', 6),	"TriTech TR28026",	},
 	{ AC97_CODEC_ID('T', 'R', 'A', 8),	"TriTech TR28028",	},
-	{ AC97_CODEC_ID('T', 'R', 'A', 35),	"TriTech unknown",	},
+	{ AC97_CODEC_ID('T', 'R', 'A', 35),	"TriTech TR28602",	},
 	{ AC97_CODEC_ID('W', 'M', 'L', 0),	"Wolfson WM9704",	},
 	{ AC97_CODEC_ID('W', 'M', 'L', 3),	"Wolfson WM9707",	},
 	{ AC97_CODEC_ID('Y', 'M', 'H', 0),	"Yamaha YMF743-S",	},
