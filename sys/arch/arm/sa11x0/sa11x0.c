@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.2 2001/07/30 16:20:06 rjs Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.3 2001/07/30 16:23:09 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -70,12 +70,6 @@
 #include <arm/sa11x0/sa11x0_dmacreg.h>
 #include <arm/sa11x0/sa11x0_ppcreg.h>
 #include <arm/sa11x0/sa11x0_gpioreg.h>
-
-#ifdef hpcarm
-#include <hpc/hpc/config_hook.h>
-#include <hpc/hpc/platid.h>
-#include <hpc/include/platid_mask.h>
-#endif
 
 #include "locators.h"
 
