@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.42 2002/03/24 22:14:29 bjh21 Exp $
+.\"	$NetBSD: contents,v 1.43 2002/03/29 21:17:33 bjh21 Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -336,10 +336,10 @@ system to run and be minimally functional. It
 includes shared library support, and excludes
 everything described below.
 .br
+.if r_acorn26 .Em 20.2 MB gzipped, ? MB uncompressed
 .if r_alpha .Em 22.7 MB gzipped, 59.8 MB uncompressed
 .if r_amiga .Em 15.6 MB gzipped, 41.4 MB uncompressed
 .if r_arc .Em 19.5 MB gzipped, 61.4 MB uncompressed
-.if r_acorn26 .Em ? MB gzipped, ? MB uncompressed
 .if r_arm32 .Em 19.2 MB gzipped, 47.4 MB uncompressed
 .if r_atari .Em 15.3 MB gzipped, 40.7 MB uncompressed
 .if r_hp300 .Em 15.7 MB gzipped, 41.5 MB uncompressed
@@ -370,10 +370,10 @@ set). This set also includes the manual pages for
 all of the utilities it contains, as well as the
 system call and library manual pages.
 .br
+.if r_acorn26 .Em 16.0 MB gzipped, ? MB uncompressed
 .if r_alpha .Em 18.1 MB gzipped, 81.2 MB uncompressed
 .if r_amiga .Em 11.8 MB gzipped, 39.5 MB uncompressed
 .if r_arc .Em 13.9 MB gzipped, 59.3 MB uncompressed
-.if r_acorn26 .Em ? MB gzipped, ? MB uncompressed
 .if r_arm32 .Em 13.8 MB gzipped, 45.4 MB uncompressed
 .if r_atari .Em 11.6 MB gzipped, 38.9 MB uncompressed
 .if r_hp300 .Em 11.8 MB gzipped, 39.5 MB uncompressed
@@ -411,7 +411,7 @@ This set includes the games and their manual pages.
 .br
 .\" Shareable within MACHINE_ARCH
 .if r_alpha .Em 3.1 MB gzipped, 7.6 MB uncompressed
-.if r_arm .Em ? MB gzipped, ? MB uncompressed
+.if r_arm .Em 2.9 MB gzipped, ? MB uncompressed
 .if r_arm32 .Em 3.0 MB gzipped, 7.5 MB uncompressed
 .if r_i386 .Em 2.9 MB gzipped, 7.0 MB uncompressed
 .if r_m68k .Em 2.9 MB gzipped, 6.8 MB uncompressed
@@ -434,6 +434,7 @@ kernel, named
 .No You Em must
 install this distribution set.
 .br
+.if r_acorn26 .Em 1.0 MB gzipped, ? MB uncompressed
 .if r_alpha .Em 2.1 MB gzipped, 5.0 MB uncompressed
 .if r_amiga .Em 1.1 MB gzipped, 2.4 MB uncompressed
 .if r_arc .Em 1.5 MB gzipped, 3.7 MB uncompressed
@@ -479,7 +480,7 @@ all related programs, and their manual pages.
 .br
 .\" Shareable within MACHINE_ARCH
 .if r_alpha .Em 1.4 MB gzipped, 5.1 MB uncompressed
-.if r_arm .Em ? MB gzipped, ? MB uncompressed
+.if r_arm .Em 1.5 MB gzipped, ? MB uncompressed
 .if r_arm32 .Em 1.4 MB gzipped, 4.8 MB uncompressed
 .if r_i386 .Em 1.2 MB gzipped, 4.2 MB uncompressed
 .if r_m68k .Em 1.5 MB gzipped, 5.0 MB uncompressed
