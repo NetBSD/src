@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.31 2000/05/21 04:03:35 soren Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.32 2000/05/23 04:21:39 soren Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -576,9 +576,6 @@
 
 /*
  * Patch codes to hide CPU design differences between MIPS1 and MIPS3.
- *
- * XXX INT_MASK and HARD_INT_MASK are here only because we dont
- * support the mips3 on-chip timer which is tied to INT_5.
  */
 
 #if !defined(MIPS3) && defined(MIPS1)

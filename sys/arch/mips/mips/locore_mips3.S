@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.29 2000/05/21 03:23:16 soren Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.30 2000/05/23 04:21:40 soren Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1447,18 +1447,6 @@ LEAF(mips3_TLBRead)
 	sw	t5, 12(a1)
 END(mips3_TLBRead)
 
-
-/*----------------------------------------------------------------------------
- *
- *	R4000 cache flushing code.
- *
- *----------------------------------------------------------------------------
- */
-
-/*
- * XXX  need to handle two-way caches for r4600 and mips ISA-IV.
- */
-
 /*----------------------------------------------------------------------------
  *
  * mips3_FlushCache --
@@ -2002,7 +1990,7 @@ END(mips5200_InvalidateDCache)
  * mips3_VCED --
  *
  *	Handle virtual coherency exceptions.
- *	Called directly from the mips3 execption-table  code.
+ *	Called directly from the mips3 execption-table code.
  *	only k0, k1 are avaiable on entry
  *
  * Results:
@@ -2516,7 +2504,7 @@ END(mips3_write_count)
  * each time the COUNT register increments past the COMPARE register.
  *
  * (The mips interrupt mask defintions currently leaves this interrupt
- * unconditionally  masked out on mips3 CPUs.)
+ * unconditionally masked out on mips3 CPUs.)
  */
 LEAF(mips3_read_compare)
 	mfc0	v0,  MIPS_COP_0_COMPARE
@@ -2607,7 +2595,7 @@ END(mips3_FetchDcache)
 
 /*
  * The variables below are used to communicate the cache handling
- * to  higher-level software.
+ * to higher-level software.
  */
 	.sdata
 
@@ -2615,11 +2603,8 @@ END(mips3_FetchDcache)
 _C_LABEL(mips3_L1TwoWayCache):
 	.word	0
 
-	.globl	_C_LABEL(mips3_cacheflush_bug)
-_C_LABEL(mips3_cacheflush_bug):
-	.word	0
-
 	.data
+
 	.globl _C_LABEL(mips3_locoresw)
 _C_LABEL(mips3_locoresw):
 	.word _C_LABEL(mips3_cpu_switch_resume)

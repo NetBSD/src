@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.20 2000/03/03 02:33:21 castor Exp $	*/
+/*	$NetBSD: mem.c,v 1.21 2000/05/23 04:21:40 soren Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -114,6 +114,9 @@ mmrw(dev, uio, flags)
 		case 0:
 			v = uio->uio_offset;
 			c = iov->iov_len;
+			/*
+			 * XXX Broken; assumes contiguous physical memory.
+			 */
 			if (v + c > ctob(physmem))
 				return (EFAULT);
 			v += MIPS_KSEG0_START;

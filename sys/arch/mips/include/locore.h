@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.32 2000/05/21 03:23:15 soren Exp $	*/
+/*	$NetBSD: locore.h,v 1.33 2000/05/23 04:21:40 soren Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -23,15 +23,11 @@
  *	MachFlushCache
  *	MachFlushDCache
  *	MachFlushICache
- *	MachForceCacheUpdate
  *	wbflush
  *	proc_trampoline()
  *	cpu_switch_resume()
  *
- * We currently provide support for:
- *
- *	r2000 and r3000 (mips ISA-I)
- *	r4000 and r4400 in 32-bit mode (mips ISA-III?)
+ * We currently provide support for MIPS I and MIPS III.
  */
 
 #ifndef _MIPS_LOCORE_H
@@ -54,7 +50,6 @@ void mips1_ConfigCache  __P((void));
 void mips1_FlushCache  __P((void));
 void mips1_FlushDCache  __P((vaddr_t addr, vsize_t len));
 void mips1_FlushICache  __P((vaddr_t addr, vsize_t len));
-void mips1_ForceCacheUpdate __P((void));
 
 void mips1_SetPID   __P((int pid));
 void mips1_TBIA __P((int));
@@ -71,7 +66,6 @@ void mips3_ConfigCache __P((void));
 void mips3_FlushCache  __P((void));
 void mips3_FlushDCache __P((vaddr_t addr, vaddr_t len));
 void mips3_FlushICache __P((vaddr_t addr, vaddr_t len));
-void mips3_ForceCacheUpdate __P((void));
 void mips3_HitFlushDCache __P((vaddr_t, int));
 
 void mips3_SetPID  __P((int pid));
@@ -115,7 +109,6 @@ typedef struct  {
 	void (*flushCache)  __P((void));
 	void (*flushDCache) __P((vaddr_t addr, vsize_t len));
 	void (*flushICache) __P((vaddr_t addr, vsize_t len));
-	void (*forceCacheUpdate)  __P((void));
 	void (*setTLBpid)  __P((int pid));
 	void (*TBIAP)	__P((int));
 	void (*TBIS)	__P((vaddr_t));
@@ -160,7 +153,6 @@ extern long *mips_locoresw[];
 #define MachHitFlushDCache	mips3_HitFlushDCache
 #define MachFlushICache		mips3_FlushICache
 #endif
-#define MachForceCacheUpdate	mips3_ForceCacheUpdate
 #define MachSetPID		mips3_SetPID
 #define MIPS_TBIAP()		mips3_TBIAP(mips_num_tlb_entries)
 #define MIPS_TBIS		mips3_TBIS
@@ -174,7 +166,6 @@ extern long *mips_locoresw[];
 #define MachFlushCache		mips1_FlushCache
 #define MachFlushDCache		mips1_FlushDCache
 #define MachFlushICache		mips1_FlushICache
-#define MachForceCacheUpdate	mips1_ForceCacheUpdate
 #define MachSetPID		mips1_SetPID
 #define MIPS_TBIAP()		mips1_TBIAP(mips_num_tlb_entries)
 #define MIPS_TBIS		mips1_TBIS
@@ -190,7 +181,6 @@ extern long *mips_locoresw[];
 #define MachFlushCache		(*(mips_locore_jumpvec.flushCache))
 #define MachFlushDCache		(*(mips_locore_jumpvec.flushDCache))
 #define MachFlushICache		(*(mips_locore_jumpvec.flushICache))
-#define MachForceCacheUpdate	(*(mips_locore_jumpvec.forceCacheUpdate))
 #define MachSetPID		(*(mips_locore_jumpvec.setTLBpid))
 #define MIPS_TBIAP()		(*(mips_locore_jumpvec.TBIAP))(mips_num_tlb_entries)
 #define MIPS_TBIS		(*(mips_locore_jumpvec.TBIS))
