@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.12 1997/05/10 20:46:46 leo Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.13 1997/05/11 07:58:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -140,10 +140,6 @@ static int swap_on __P((struct proc *, struct swapdev *));
 static int swap_off __P((struct proc *, struct swapdev *));
 #endif
 static struct swapdev *swap_getdevfromaddr __P((daddr_t));
-#if _unused_
-static daddr_t swap_vtop_addr __P((daddr_t));
-static daddr_t swap_ptov_addr __P((struct swapdev *, daddr_t));
-#endif
 static void swap_addmap __P((struct swapdev *, int));
 
 int
@@ -387,7 +383,7 @@ swap_on(p, sdp)
 	}
 #endif
 
-#ifdef SWAPDEBUG	/* this wants only to block devices */
+#ifdef SWAPDEBUG	/* this wants only for block devices */
 	if (vmswapdebug & VMSDB_INFO)
 		printf("swap_on: dev = %d, major(dev) = %d\n", dev, major(dev));
 #endif /* SWAPDEBUG */
@@ -439,6 +435,7 @@ swap_on(p, sdp)
 
 	name = malloc(12, M_VMSWAP, M_WAITOK);
 	sprintf(name, "swap0x%04x", count++);
+	/* XXX make this based on ram as well. */
 	storagesize = EXTENT_FIXED_STORAGE_SIZE(maxproc * 2);
 	storage = malloc(storagesize, M_VMSWAP, M_WAITOK);
 	sdp->swd_ex = extent_create(name, addr, addr + size, M_VMSWAP,
@@ -536,7 +533,6 @@ swap_alloc(size)
 	 * in turn while doing this search ?
 	 */
 
-	/* XXX THIS IS BUSTED XXX */
 	for (spp = swap_priority.lh_first; spp != NULL;
 	     spp = spp->spi_swappri.le_next) {
 		for (sdp = spp->spi_swapdev.cqh_first;
@@ -551,6 +547,8 @@ swap_alloc(size)
 				 * XXX
 				 * do something smart to note this partition
 				 * as being full, yadda yadda yadda...
+				 *
+				 * perhaps check swd_nblks == swd_inuse ?
 				 */
 				continue;
 			}
@@ -611,28 +609,6 @@ swap_getdevfromaddr(addr)
 				return sdp;
 	return NULL;
 }
-
-#if _unused_
-/* XXX make this a macro or an inline? */
-static daddr_t
-swap_ptov_addr(sdp, addr)
-	struct swapdev *sdp;
-	daddr_t addr;
-{
-
-	return (addr + sdp->swd_mapoffset);
-}
-
-/* XXX make this a macro or an inline? */
-static daddr_t
-swap_vtop_addr(addr)
-	daddr_t addr;
-{
-	struct swapdev *sdp = swap_getdevfromaddr(addr);
-
-	return (addr - sdp->swd_mapoffset);
-}
-#endif
 
 void
 swap_addmap(sdp, size)
@@ -740,7 +716,6 @@ swapinit()
 	 */
 	size = VM_MAX_ADDRESS - VM_MIN_ADDRESS;
 	addr = VM_MIN_ADDRESS;
-	/* XXX make this based on ram as well. */
 	if (addr == 0)
 		addr = 0x1000;	/* So we can't have 0 as a valid address */
 #ifdef SWAPDEBUG
