@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.19 1998/07/08 00:15:59 mark Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.20 1998/08/17 21:16:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -278,7 +278,7 @@ lmcaudio_attach(parent, self, aux)
 
 	lmcaudio_beep_generate();
 
-	audio_attach_mi(&lmcaudio_hw_if, 0, sc, &sc->device);
+	audio_attach_mi(&lmcaudio_hw_if, sc, &sc->device);
 }
 
 int nauzero = 0;

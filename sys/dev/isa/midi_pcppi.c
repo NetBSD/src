@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_pcppi.c,v 1.2 1998/08/12 21:36:21 augustss Exp $	*/
+/*	$NetBSD: midi_pcppi.c,v 1.3 1998/08/17 21:16:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@
 #include <dev/isa/pcppivar.h>
 
 #include <dev/audio_if.h>
+#include <dev/midi_if.h>
 #include <dev/midivar.h>
 #include <dev/midisynvar.h>
 
@@ -116,7 +117,8 @@ midi_pcppi_attach(parent, self, aux)
 
 	midi_pcppi_attached++;
 
-	midisyn_attach(&sc->sc_mididev, ms, parent);
+	midisyn_attach(&sc->sc_mididev, ms);
+	midi_attach(&sc->sc_mididev, parent);
 }
 
 void
@@ -126,7 +128,7 @@ midi_pcppi_on(ms, chan, note, vel)
 {
 	pcppi_tag_t t = ms->data;
 
-	/*printf("ON  %p %d\n", t, note >> 16);*/
+	/*printf("ON  %p %d\n", t, MIDISYN_FREQ_TO_HZ(note));*/
 	pcppi_bell(t, MIDISYN_FREQ_TO_HZ(note), MAX_DURATION * hz, 0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: midivar.h,v 1.4 1998/08/17 21:16:12 augustss Exp $	*/
+/*	$NetBSD: midi_if.h,v 1.1 1998/08/17 21:16:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,57 +35,33 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYS_DEV_MIDIVAR_H_
-#define _SYS_DEV_MIDIVAR_H_
+#ifndef _SYS_DEV_MIDI_IF_H_
+#define _SYS_DEV_MIDI_IF_H_
 
-#define MIDI_BUFSIZE 1024
-
-#include "sequencer.h"
-
-struct midi_buffer {
-	u_char	*inp;
-	u_char	*outp;
-	u_char	*end;
-	int	used;
-	int	usedhigh;
-	u_char	start[MIDI_BUFSIZE];
-};
-
-#define MIDI_MAX_WRITE 32	/* max bytes written with busy wait */
-#define MIDI_WAIT 10000		/* microseconds to wait after busy wait */
-
-struct midi_softc {
-	struct	device dev;
-	void	*hw_hdl;	/* Hardware driver handle */
-	struct	midi_hw_if *hw_if; /* Hardware interface */
-	struct	device *sc_dev;	/* Hardware device struct */
-	int	isopen;		/* Open indicator */
-	int	flags;		/* Open flags */
-	struct	midi_buffer outbuf;
-	struct	midi_buffer inbuf;
+struct midi_info {
+	char	*name;		/* Name of MIDI hardware */
 	int	props;
-	int	rchan, wchan;
-	int	pbus;
-	struct	selinfo wsel;	/* write selector */
-	struct	selinfo rsel;	/* read selector */
-	struct	proc *async;	/* process who wants audio SIGIO */
+};
+#define MIDI_PROP_OUT_INTR  1
+#define MIDI_PROP_CAN_INPUT 2
 
-	/* MIDI input state machine */
-	int	in_state;
-#define MIDI_IN_START 0
-#define MIDI_IN_DATA 1
-#define MIDI_IN_SYSEX 2
-	u_char	in_msg[3];
-	u_char	in_status;
-	u_int	in_left;
-	u_int	in_pos;
+struct midi_softc;
 
-#if NSEQUENCER > 0
-	/* Synthesizer emulation stuff */
-	int	seqopen;
-#endif
+struct midi_hw_if {
+	int	(*open)__P((void *, int, 	/* open hardware */
+			    void (*)__P((void *, int)), /* input callback */
+			    void (*)__P((void *)), /* output callback */
+			    void *));
+	void	(*close)__P((void *));		/* close hardware */
+	int	(*output)__P((void *, int));	/* output a byte */
+	void	(*getinfo)__P((void *, struct midi_info *));
+	int	(*ioctl)__P((void *, u_long, caddr_t, int, struct proc *));
 };
 
-#define MIDIUNIT(d) ((d) & 0xff)
+void	midi_attach __P((struct midi_softc *, struct device *));
+void	midi_attach_mi __P((struct midi_hw_if *, void *, struct device *));
 
-#endif /* _SYS_DEV_MIDIVAR_H_ */
+int	midi_unit_count __P((void));
+void	midi_getinfo __P((dev_t, struct midi_info *));
+
+#endif /* _SYS_DEV_MIDI_IF_H_ */

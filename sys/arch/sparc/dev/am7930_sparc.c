@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930_sparc.c,v 1.39 1998/06/24 11:09:24 jonathan Exp $	*/
+/*	$NetBSD: am7930_sparc.c,v 1.40 1998/08/17 21:16:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -251,7 +251,7 @@ am7930_sparc_attach(sc, pri)
 
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
-	audio_attach_mi(&sa_hw_if, 0, sc, &sc->sc_dev);
+	audio_attach_mi(&sa_hw_if, sc, &sc->sc_dev);
 }
 
 
