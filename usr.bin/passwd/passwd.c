@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.23 2003/08/07 11:15:27 agc Exp $	*/
+/*	$NetBSD: passwd.c,v 1.24 2005/02/22 01:08:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "from: @(#)passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: passwd.c,v 1.23 2003/08/07 11:15:27 agc Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.24 2005/02/22 01:08:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,6 +84,11 @@ static struct pw_module_s {
 	    yp_init, yp_arg, yp_arg_end, yp_end, yp_chpw, 0, 0 },
 	{ "yppasswd", "", "[-y]",
 	    yp_init, yp_arg, yp_arg_end, yp_end, yp_chpw, 0, 0 },
+#endif
+#ifdef USE_PAM
+	/* PAM */
+	{ NULL, "pd:s:", "[-p] [-d ypdomain] [-s ypserver]",
+	    pwpam_init, pwpam_arg, pwpam_arg_end, pwpam_end, pwpam_chpw, 0, 0 },
 #endif
 	/* local */
 	{ NULL, "l", "[-l]",
