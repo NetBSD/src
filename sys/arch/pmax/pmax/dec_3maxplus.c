@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.4 1998/03/26 06:32:37 thorpej Exp $	*/
+/*	$NetBSD: dec_3maxplus.c,v 1.5 1998/03/26 12:46:34 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.4 1998/03/26 06:32:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.5 1998/03/26 12:46:34 jonathan Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -98,8 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.4 1998/03/26 06:32:37 thorpej Exp
 #include <pmax/pmax/asic.h>
 #include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/pmaxtype.h> 
-#include <pmax/pmax/trap.h>		/* mboard-specific interrupt fns */
-
 #include <pmax/pmax/machdep.h>		/* XXXjrs replace with vectors */
 
 #include <pmax/pmax/kn03.h>
@@ -525,4 +523,3 @@ dec_3maxplus_errintr()
 		printf("\n");
 	printf("panic(\"Mem error interrupt\");\n");
 }
-
