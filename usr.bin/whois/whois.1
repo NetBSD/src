@@ -1,4 +1,4 @@
-.\"	$NetBSD: whois.1,v 1.10 1999/05/18 22:36:36 tron Exp $
+.\"	$NetBSD: whois.1,v 1.11 1999/09/03 13:51:28 itojun Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd TCP/IP Internet directory service, RIPE version
 .Sh SYNOPSIS
 .Nm ""
-.Op Fl aFSrR
+.Op Fl 46aFSrR
 .Op Fl h Ar host
 .Op Fl p Ar port
 .Op Fl i Ar attributes
@@ -133,6 +133,12 @@ requests the server to send a verbose template for an object with type "type".
 .B \-T types
 types is a comma separated list of object types.
 requests the server to only send back objects that match one of the "types".
+By default, whois connect to whois server both IPv6 and IPv4. If you want
+to connect IPv4 only, you use
+.B \-4
+option, and if you want to connect IPv6 only, you use
+.B \-6
+option.
 .TP 8
 .Lp
 .Sh EXAMPLES
@@ -205,9 +211,22 @@ For questions refer
 to <ncc@ripe.net>. For more information about the RIPE database please also
 refer to <ncc@ripe.net>.
 .Lp
+.Sh IPv6 supported
+This whois support the IPv6
+.Pq IP version 6
+whois connections.
+This whois is get the all of host's Information from nameserver, and
+connect order is
+.Pq if exists
+IPv6 addresses of server at first and IPv4 address is later.
+.Lp
 .Sh BUGS
 Most of the extra flags are ONLY supported by the RIPE whois server,
 or copies of the same version of the software. Usage of these flags
 may cause errors on other whois servers.
+.Nm
+depends on
+.Xr getaddrinfo 3
+functions and search order depends on the function.
 .\".Sh SEE ALSO
 .\"RFC 812:  NICNAME/WHOIS
