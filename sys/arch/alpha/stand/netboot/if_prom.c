@@ -1,6 +1,7 @@
-/*	$NetBSD: if_prom.c,v 1.5 1997/01/16 01:21:39 cgd Exp $	*/
+/*	$NetBSD: if_prom.c,v 1.6 1997/01/18 00:34:01 cgd Exp $	*/
 
 /*
+ * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
  *
@@ -41,6 +42,8 @@
 #include "include/prom.h"
 #include <lib/libkern/libkern.h>
 
+#include "../bbinfo.h"
+
 int prom_probe();
 int prom_match();
 void prom_init();
@@ -57,6 +60,16 @@ struct netif_dif prom_ifs[] = {
 
 struct netif_stats prom_stats[NENTS(prom_ifs)];
 
+struct netbbinfo netbbinfo = {
+	0xfeedbabedeadbeef,			/* magic number */
+	0,					/* set */
+	0, 0, 0, 0, 0, 0,			/* ether address */
+	0,					/* force */
+	{ 0, },					/* pad2 */
+	0,					/* cksum */
+	0xfeedbeefdeadbabe,			/* magic number */
+};
+
 struct netif_driver prom_netif_driver = {
 	"prom",			/* netif_bname */
 	prom_match,		/* netif_match */
@@ -69,7 +82,7 @@ struct netif_driver prom_netif_driver = {
 	NENTS(prom_ifs)		/* netif_nifs */
 };
 
-int netfd;
+int netfd, broken_firmware;
 
 int
 prom_match(nif, machdep_hint)
@@ -117,11 +130,17 @@ prom_get(desc, pkt, len, timeout)
 	t = getsecs();
 	cc = 0;
 	while (((getsecs() - t) < timeout) && !cc) {
-		ret.bits = prom_read(netfd, sizeof hate, hate, 0);
+		if (broken_firmware)
+			ret.bits = prom_read(netfd, 0, hate, 0);
+		else
+			ret.bits = prom_read(netfd, sizeof hate, hate, 0);
 		if (ret.u.status == 0)
-			cc += ret.u.retval;
+			cc = ret.u.retval;
 	}
-	cc = len;
+	if (broken_firmware)
+		cc = min(cc, len);
+	else
+		cc = len;
 	bcopy(hate, pkt, cc);
 
 	return cc;
@@ -136,8 +155,28 @@ prom_init(desc, machdep_hint)
 {
 	prom_return_t ret;
 	char devname[64];
-	int devlen, i;
+	int devlen, i, netbbinfovalid;
 	char *enet_addr;
+	u_int64_t *qp, csum;
+
+	broken_firmware = 0;
+
+	csum = 0;
+	for (i = 0, qp = (u_int64_t *)&netbbinfo;
+	    i < (sizeof netbbinfo / sizeof (u_int64_t)); i++, qp++)
+		csum += *qp;
+	netbbinfovalid = (csum == 0);
+	if (netbbinfovalid)
+		netbbinfovalid = netbbinfo.set;
+
+#if 0
+	printf("netbbinfo ");
+	if (!netbbinfovalid)
+		printf("invalid\n");
+	else
+		printf("valid: force = %d, ea = %s\n", netbbinfo.force,
+		    ether_sprintf(netbbinfo.ether_addr));
+#endif
 
 	ret.bits = prom_getenv(PROM_E_BOOTED_DEV, devname, sizeof(devname));
 	devlen = ret.u.retval;
@@ -147,7 +186,7 @@ prom_init(desc, machdep_hint)
 	for (i = 0; i < 8; i++) {
 		enet_addr = strchr(enet_addr, ' ');
 		if (enet_addr == NULL) {
-			printf("Boot device name does not contain ethernet address.\n");
+			printf("\nBoot device name does not contain ethernet address.\n");
 			goto punt;
 		}
 		enet_addr++;
@@ -165,7 +204,7 @@ prom_init(desc, machdep_hint)
 			enet_addr++;
 
 			if (hv == -1 || lv == -1) {
-				printf("Bogus ethernet address.\n");
+				printf("\nBoot device name contains bogus ethernet address.\n");
 				goto punt;
 			}
 
@@ -174,20 +213,36 @@ prom_init(desc, machdep_hint)
 #undef dval
 	}
 
+	if (netbbinfovalid && netbbinfo.force) {
+		printf("\nUsing hard-coded ethernet address (forced).\n\n");
+		bcopy(netbbinfo.ether_addr, desc->myea, sizeof desc->myea);
+	}
+
+gotit:
 	printf("boot: ethernet address: %s\n", ether_sprintf(desc->myea));
 
 	ret.bits = prom_open(devname, devlen + 1);
 	if (ret.u.status) {
 		printf("prom_init: open failed: %d\n", ret.u.status);
-		goto punt;
+		goto reallypunt;
 	}
 	netfd = ret.u.retval;
 	return;
 
 punt:
+	broken_firmware = 1;
+        if (netbbinfovalid) {
+                printf("Using hard-coded ethernet address.\n\n");
+                bcopy(netbbinfo.ether_addr, desc->myea, sizeof desc->myea);
+                goto gotit;
+        }
+
+reallypunt:
 	printf("Boot device name was: \"%s\"\n", devname);
 	printf("\n");
-	printf("Your firmware may be too old to network-boot NetBSD/Alpha.\n");
+	printf("Your firmware may be too old to network-boot NetBSD/Alpha,\n");
+	printf("or you might have to hard-code an ethernet address into\n");
+	printf("your network boot block with setnetbootinfo(8).\n");
 	halt();
 }
 
