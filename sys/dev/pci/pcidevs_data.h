@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.85 1998/09/06 17:27:40 veego Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.86 1998/09/18 04:30:52 mark Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.79 1998/09/06 17:26:03 veego Exp 
+ *	NetBSD: pcidevs,v 1.80 1998/09/18 04:30:10 mark Exp 
  */
 
 /*
@@ -958,6 +958,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "RoadRunner Gig-E Interface",
 	},
 	{
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_SOLO1,
+	    0,
+	    "ESS Technology Inc",
+	    "SOLO-1 AudioDrive",
+	},
+	{
 	    PCI_VENDOR_2MICRO, PCI_PRODUCT_2MICRO_OZ6832,
 	    0,
 	    "2 Micro Inc",
@@ -980,6 +986,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "FORE Systems",
 	    "ATM PCA-200e",
+	},
+	{
+	    PCI_VENDOR_FUJITSU4, PCI_PRODUCT_FUJITSU4_LTMODEM,
+	    0,
+	    "Fujitsu Limited (4th PCI Vendor ID)",
+	    "K56flex DSVD LTMODEM",
 	},
 	{
 	    PCI_VENDOR_FUTUREDOMAIN, PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30,
@@ -1876,6 +1888,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PCI1131",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1250,
+	    0,
+	    "Texas Instruments",
+	    "PCI1250",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2030,
 	    0,
 	    "Texas Instruments",
@@ -1910,6 +1928,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Trident Microsystems",
 	    "TGUI 9360",
+	},
+	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBER_9397,
+	    0,
+	    "Trident Microsystems",
+	    "CYBER 9397",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9420,
@@ -4888,6 +4912,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_FUJITSU4, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Fujitsu Limited (4th PCI Vendor ID)",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_NEC2, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "NEC (2nd PCI Vendor ID)",
@@ -5023,6 +5053,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_AURORA, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Aurora Technologies",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ESSTECH, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "ESS Technology Inc",
 	    NULL,
 	},
 	{

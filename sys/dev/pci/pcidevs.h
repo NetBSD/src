@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.86 1998/09/06 17:27:40 veego Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.87 1998/09/18 04:30:52 mark Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.79 1998/09/06 17:26:03 veego Exp 
+ *	NetBSD: pcidevs,v 1.80 1998/09/18 04:30:10 mark Exp 
  */
 
 /*
@@ -473,6 +473,7 @@
 #define	PCI_VENDOR_NETPERIPH	0x11bc		/* Network Peripherals */
 #define	PCI_VENDOR_PINNACLE	0x11bd		/* Pinnacle Systems */
 #define	PCI_VENDOR_IMI	0x11be		/* International Microcircuts */
+#define	PCI_VENDOR_FUJITSU4	0x11c1		/* Fujitsu Limited (4th PCI Vendor ID) */
 #define	PCI_VENDOR_NEC2	0x11c3		/* NEC (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_DOCTECH	0x11c4		/* Document Technologies */
 #define	PCI_VENDOR_SHIVA	0x11c5		/* Shiva */
@@ -496,6 +497,7 @@
 #define	PCI_VENDOR_STALLION	0x124d		/* Stallion Technologies */
 #define	PCI_VENDOR_LINEARSYS	0x1254		/* Linear Systems */
 #define	PCI_VENDOR_AURORA	0x125c		/* Aurora Technologies */
+#define	PCI_VENDOR_ESSTECH	0x125d		/* ESS Technology Inc */
 #define	PCI_VENDOR_ENSONIQ	0x1274		/* Ensoniq */
 #define	PCI_VENDOR_NETAPP	0x1275		/* Network Appliance */
 #define	PCI_VENDOR_ROCKWELL	0x127a		/* Rockwell Semiconductor Systems */
@@ -757,6 +759,9 @@
 #define	PCI_PRODUCT_ESSENTIAL_RR_HIPPI	0x0001		/* RoadRunner HIPPI Interface */
 #define	PCI_PRODUCT_ESSENTIAL_RR_GIGE	0x0005		/* RoadRunner Gig-E Interface */
 
+/* ESS Technology Inc products */
+#define	PCI_PRODUCT_ESSTECH_SOLO1	0x1969		/* SOLO-1 AudioDrive */
+
 /* 2 Micro Inc */
 #define	PCI_PRODUCT_2MICRO_OZ6832	0x6832		/* OZ6832 CardBus Controller */
 
@@ -766,6 +771,9 @@
 /* FORE products */
 #define	PCI_PRODUCT_FORE_PCA200	0x0210		/* ATM PCA-200 */
 #define	PCI_PRODUCT_FORE_PCA200E	0x0300		/* ATM PCA-200e */
+
+/* Fujtsu products */
+#define	PCI_PRODUCT_FUJITSU4_LTMODEM	0x0440		/* K56flex DSVD LTMODEM */
 
 /* Future Domain products */
 #define	PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30	0x0000		/* TMC-18C30 (36C70) */
@@ -999,6 +1007,7 @@
 #define	PCI_PRODUCT_TI_TLAN	0x0500		/* TLAN */
 #define	PCI_PRODUCT_TI_PCI1130	0xac12		/* PCI1130 */
 #define	PCI_PRODUCT_TI_PCI1131	0xac15		/* PCI1131 */
+#define	PCI_PRODUCT_TI_PCI1250	0xac16		/* PCI1250 */
 #define	PCI_PRODUCT_TI_PCI2030	0xac20		/* PCI2030 */
   
 /* Toshiba products */
@@ -1009,6 +1018,7 @@
 #define	PCI_PRODUCT_TRIDENT_TGUI_9320	0x9320		/* TGUI 9320 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9350	0x9350		/* TGUI 9350 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9360	0x9360		/* TGUI 9360 */
+#define	PCI_PRODUCT_TRIDENT_CYBER_9397	0x9397		/* CYBER 9397 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9420	0x9420		/* TGUI 9420 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9440	0x9440		/* TGUI 9440 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9660	0x9660		/* TGUI 9660 */
