@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.55 1996/03/16 05:33:28 cgd Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.56 1996/03/17 00:26:12 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -559,7 +559,6 @@ btprobe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct bt_softc *sc = match;
 	register struct isa_attach_args *ia = aux;
 
 #ifdef NEWCONFIG
@@ -568,8 +567,7 @@ btprobe(parent, match, aux)
 #endif
 
 	/*
-	 * Try initialise a unit at this location
-	 * sets up dma and bus speed, loads sc->sc_irq
+	 * See if there is a unit at this location.
 	 */
 	if (bt_find(ia, NULL) != 0)
 		return 0;
