@@ -1,4 +1,4 @@
-/*	$NetBSD: isinf.c,v 1.1 1998/09/11 04:56:27 eeh Exp $	*/
+/*	$NetBSD: isinf.c,v 1.2 1998/10/13 14:43:38 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,13 +44,18 @@
 #if 0
 static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: isinf.c,v 1.1 1998/09/11 04:56:27 eeh Exp $");
+__RCSID("$NetBSD: isinf.c,v 1.2 1998/10/13 14:43:38 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <math.h>
 #include <sys/types.h>
 #include <machine/ieee.h>
+
+#ifdef __weak_alias
+__weak_alias(isinf,_isinf);
+#endif
 
 int
 isinf(d)
