@@ -90,7 +90,7 @@ int	compat_43_recv();
 int	bind();
 int	sunos_setsockopt();
 int	listen();
-int	sigvec();
+int	compat_43_sigvec();
 int	compat_43_sigblock();
 int	compat_43_sigsetmask();
 int	sigsuspend();
@@ -460,8 +460,8 @@ struct sysent sunos_sysent[] = {
 	    listen },				/* 106 = listen */
 	{ 0, 0,
 	    nosys },				/* 107 = unimplemented vtimes */
-	{ 3, s(struct sigvec_args),
-	    sigvec },				/* 108 = sigvec */
+	{ 3, s(struct compat_43_sigvec_args),
+	    compat_43_sigvec },			/* 108 = compat_43_sigvec */
 	{ 1, s(struct compat_43_sigblock_args),
 	    compat_43_sigblock },		/* 109 = compat_43_sigblock */
 	{ 1, s(struct compat_43_sigsetmask_args),
