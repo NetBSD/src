@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)ptrace.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: ptrace.S,v 1.4 2000/06/28 19:20:18 matt Exp $"
+	.asciz "$NetBSD: ptrace.S,v 1.5 2000/06/30 23:46:36 matt Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -49,4 +49,4 @@ ENTRY(ptrace, 0)
 	jcs	err
 	ret
 err:
-	jmp	CERROR
+	jmp	CERROR+2
