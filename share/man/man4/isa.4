@@ -1,4 +1,4 @@
-.\"	$NetBSD: isa.4,v 1.4 1997/04/09 05:13:44 mikel Exp $
+.\"	$NetBSD: isa.4,v 1.5 1997/10/20 21:47:31 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -67,15 +67,14 @@ SCSI controllers including Adaptec AIC-6260, Adaptec AIC-6360, Adaptec
 152x, and SoundBlaster
 SCSI boards, as well as others based on Adaptec AIC-6x60 chips.
 .It bha
-Buslogic BT-445, BT-74x, and BT-9[45][68] SCSI boards.
+Buslogic BT-445 SCSI boards.
 .It mcd
 Mitsumi CD-ROM drives.
 .It sea
 Seagate/Future Domain SCSI cards.  ST01/02, Future Domain TMC-885, and
 Future Domain TMC-950.
 .It uha
-Ultrastor ISA and EISA SCSI adapter cards.  Ultrastor 14f, Ultrastor 34f,
-and Ultrastor 24f.
+Ultrastor 14f ISA SCSI adapter cards.
 .It wd
 Standard ISA Western Digital type hard drives.  MFM, RLL, ESDI, and IDE.
 .It wds
@@ -101,14 +100,13 @@ RT four-port serial cards.
 .Ss Network interfaces
 .Bl -tag -width speaker -offset indent -compact
 .It ed
-Western Digital/SMC 80x3 and Ultra, 3Com 3c503, and Novell NE1000 and 2000
-Ethernet interfaces.
+Western Digital/SMC 80x3 and Ultra, and 3Com 3c503 Ethernet interfaces.
 .It eg
-3Com 3c505 Ethernet board.
+3Com 3c505 Ethernet interface.
 .It el
 3Com 3c501 Ethernet interface.
 .It ep
-3Com 3c509 Etherlink-III Ethernet interface.
+3Com 3c509 Etherlink III family Ethernet interface.
 .It fe
 Ethernet interfaces based on the Fujitsu MB86960A/MB86965A chipset,
 including Fujitsu FMV-181, FMV-182, Allied Telesis AT1700 series,
@@ -119,11 +117,12 @@ and RE2000 series.
 Ethernet interfaces based on Intel 82586 Ethernet chip,
 including AT&T Starlan-10, AT&T EN100, AT&T Starlan Fibre, and 3Com 3c507.
 .It iy
-Ethernet interfaces based on the Intel EtherExpress Pro/10 chip.
-(Does not support PRO/100).
+Intel i82595-based Ethernet interfaces, including the EtherExpress Pro/10.
 .It le
 Ethernet interfaces based on the AMD LANCE chip,
 including BICC Isolan, Novell NE2100, and Digital DEPCA.
+.It ne
+Novel NE2000 and compatible Ethernet interfaces.
 .El
 .Ss Sound cards
 .Bl -tag -width speaker -offset indent -compact
@@ -141,12 +140,10 @@ Windows Sound System-compatible sound cards based on the AD1848 and
 compatible chips.
 .El
 .Pp
-Note that some ISA devices also have newer ISA Plug-and-Play
-or PCI variants.  These are listed in 
-.Xr isapnp 4
-and
-.Xr pci 4 ,
-respectively.  The manual pages for each individual driver also list
+Note that some ISA devices also have newer ISA Plug-and-Play variants.
+These are listed in 
+.Xr isapnp 4 .
+The manual pages for each individual driver also list
 the supported variants on other buses.
 .Sh SEE ALSO
 .Xr aha 4 ,
@@ -165,6 +162,7 @@ the supported variants on other buses.
 .Xr le 4 ,
 .Xr lpt 4 ,
 .Xr mcd 4 ,
+.Xr ne 4 ,
 .Xr pas 4 ,
 .Xr pss 4 ,
 .Xr rtfps 4 ,
