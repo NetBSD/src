@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.10 2000/07/04 06:23:49 matthias Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.11 2001/01/18 10:55:30 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -53,12 +53,12 @@ struct ns532_frame;
 static void	db_nextframe __P((struct ns532_frame **, db_addr_t *,
     int *, int, void (*)(const char *, ...)));
 static int	db_numargs __P((struct ns532_frame *));
-static int	db_spec_regs __P((struct db_variable *, db_expr_t *, int));
+static int	db_spec_regs __P((const struct db_variable *, db_expr_t *, int));
 
 /*
  * Machine register set.
  */
-struct db_variable db_regs[] = {
+const struct db_variable db_regs[] = {
 	{ "r0", 	(long *)&ddb_regs.tf_regs.r_r0, FCN_NULL },
 	{ "r1", 	(long *)&ddb_regs.tf_regs.r_r1, FCN_NULL },
 	{ "r2", 	(long *)&ddb_regs.tf_regs.r_r2, FCN_NULL },
@@ -88,7 +88,7 @@ struct db_variable db_regs[] = {
 	{ "bpc",	(long *) 0, db_spec_regs },
 	{ "cfg",	(long *) 0, db_spec_regs },
 };
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]) - 1;
+const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]) - 1;
 
 /*
  * Stack trace.
@@ -384,7 +384,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 
 static int
 db_spec_regs(vp, valp, what)
-	struct db_variable *vp;
+	const struct db_variable *vp;
 	db_expr_t *valp;
 	int what;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.5 2001/01/07 17:01:53 bjh21 Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.6 2001/01/18 10:55:30 jdolecek Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -53,15 +53,15 @@
 #include <ddb/db_extern.h>
 #include <dev/cons.h>
 
-int db_access_und_sp __P((struct db_variable *, db_expr_t *, int));
-int db_access_abt_sp __P((struct db_variable *, db_expr_t *, int));
-int db_access_irq_sp __P((struct db_variable *, db_expr_t *, int));
+int db_access_und_sp __P((const struct db_variable *, db_expr_t *, int));
+int db_access_abt_sp __P((const struct db_variable *, db_expr_t *, int));
+int db_access_irq_sp __P((const struct db_variable *, db_expr_t *, int));
 u_int db_fetch_reg __P((int, db_regs_t *));
 
 static int db_validate_address __P((vm_offset_t));
 static void db_write_text __P((unsigned char *,	int ch));
 
-struct db_variable db_regs[] = {
+const struct db_variable db_regs[] = {
 	{ "r0", (long *)&DDB_TF->tf_r0, FCN_NULL },
 	{ "r1", (long *)&DDB_TF->tf_r1, FCN_NULL },
 	{ "r2", (long *)&DDB_TF->tf_r2, FCN_NULL },
@@ -80,7 +80,7 @@ struct db_variable db_regs[] = {
 	{ "r15", (long *)&DDB_TF->tf_r15, FCN_NULL },
 };
 
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 extern label_t	*db_recover;
 
