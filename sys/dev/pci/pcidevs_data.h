@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.466 2002/08/10 16:30:46 toshii Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.467 2002/08/16 15:08:08 heinz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.464 2002/08/10 16:26:14 toshii Exp 
+ *	NetBSD: pcidevs,v 1.465 2002/08/16 15:03:02 heinz Exp 
  */
 
 /*
@@ -4640,6 +4640,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Lucent Technologies",
 	    "USB Host Controller",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_FW322_323,
+	    0,
+	    "Lucent Technologies",
+	    "FW322/323 IEEE 1394 OHCI Controller",
 	},
 	{
 	    PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98713,
