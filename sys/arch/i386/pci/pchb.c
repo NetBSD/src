@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.45 2003/08/26 17:33:22 tron Exp $	*/
+/*	$NetBSD: pchb.c,v 1.46 2003/08/28 10:58:37 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.45 2003/08/26 17:33:22 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.46 2003/08/28 10:58:37 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -332,7 +332,7 @@ pchb_print(void *aux, const char *pnp)
 {
 	struct pcibus_attach_args *pba = aux;
 
-	if (pnp)
+	if (pnp != NULL)
 		aprint_normal("%s at %s", pba->pba_busname, pnp);
 	aprint_normal(" bus %d", pba->pba_bus);
 	return (UNCONF);
@@ -342,7 +342,8 @@ int
 agp_print(void *aux, const char *pnp)
 {
 	struct agpbus_attach_args *apa = aux;
-	if (pnp)
+
+	if (pnp != NULL)
 		aprint_normal("%s at %s", apa->apa_busname, pnp);
 	return (UNCONF);
 }
