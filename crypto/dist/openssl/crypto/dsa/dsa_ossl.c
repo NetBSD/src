@@ -91,7 +91,7 @@ dsa_finish,
 NULL
 };
 
-DSA_METHOD *DSA_OpenSSL(void)
+const DSA_METHOD *DSA_OpenSSL(void)
 {
 	return &openssl_dsa_meth;
 }
@@ -105,13 +105,15 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	int i,reason=ERR_R_BN_LIB;
 	DSA_SIG *ret=NULL;
 
+	BN_init(&m);
+	BN_init(&xr);
+
 	if (!dsa->p || !dsa->q || !dsa->g)
 		{
 		reason=DSA_R_MISSING_PARAMETERS;
 		goto err;
 		}
-	BN_init(&m);
-	BN_init(&xr);
+
 	s=BN_new();
 	if (s == NULL) goto err;
 
@@ -177,6 +179,9 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 		DSAerr(DSA_F_DSA_SIGN_SETUP,DSA_R_MISSING_PARAMETERS);
 		return 0;
 		}
+
+	BN_init(&k);
+
 	if (ctx_in == NULL)
 		{
 		if ((ctx=BN_CTX_new()) == NULL) goto err;
@@ -184,7 +189,6 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	else
 		ctx=ctx_in;
 
-	BN_init(&k);
 	if ((r=BN_new()) == NULL) goto err;
 	kinv=NULL;
 
@@ -234,11 +238,17 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 	BIGNUM u1,u2,t1;
 	BN_MONT_CTX *mont=NULL;
 	int ret = -1;
+	if (!dsa->p || !dsa->q || !dsa->g)
+		{
+		DSAerr(DSA_F_DSA_DO_VERIFY,DSA_R_MISSING_PARAMETERS);
+		return -1;
+		}
 
-	if ((ctx=BN_CTX_new()) == NULL) goto err;
 	BN_init(&u1);
 	BN_init(&u2);
 	BN_init(&t1);
+
+	if ((ctx=BN_CTX_new()) == NULL) goto err;
 
 	if (BN_is_zero(sig->r) || sig->r->neg || BN_ucmp(sig->r, dsa->q) >= 0)
 		{

@@ -32,9 +32,10 @@
  */
 
 #include "kadmin_locl.h"
+#include <openssl/ui.h>
 
 __RCSID("$Heimdal: ank.c,v 1.25 2002/12/03 14:11:24 joda Exp $"
-        "$NetBSD: ank.c,v 1.1.1.6 2003/05/15 20:28:45 lha Exp $");
+        "$NetBSD: ank.c,v 1.2 2003/07/24 14:16:54 itojun Exp $");
 
 /*
  * fetch the default principal corresponding to `princ'
@@ -130,7 +131,7 @@ add_one_principal (const char *name,
 	krb5_unparse_name(context, princ_ent, &princ_name);
 	asprintf (&prompt, "%s's Password: ", princ_name);
 	free (princ_name);
-	ret = des_read_pw_string (pwbuf, sizeof(pwbuf), prompt, 1);
+	ret = UI_UTIL_read_pw_string(pwbuf, sizeof(pwbuf), prompt, 1);
 	free (prompt);
 	if (ret)
 	    goto out;

@@ -1,8 +1,8 @@
-# $NetBSD: shl.elf,v 1.79 2003/07/23 22:44:27 itojun Exp $
+# $NetBSD: shl.elf,v 1.80 2003/07/24 14:17:48 itojun Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so.12		base-sys-shlib
 ./lib/libcrypt.so.0		base-sys-shlib
-./lib/libcrypto.so.1		base-crypto-shlib
+./lib/libcrypto.so.2		base-crypto-shlib
 ./lib/libedit.so.2		base-sys-shlib
 ./lib/libevent.so.0		base-sys-shlib
 ./lib/libipsec.so.2		base-net-shlib
@@ -37,7 +37,7 @@
 ./usr/lib/libcdk.so.1		base-sys-shlib
 ./usr/lib/libcom_err.so.4	base-krb5-shlib
 ./usr/lib/libcrypt.so.0		base-sys-shlib
-./usr/lib/libcrypto.so.1	base-crypto-shlib
+./usr/lib/libcrypto.so.2	base-crypto-shlib
 ./usr/lib/libcurses.so.5	base-sys-shlib
 ./usr/lib/libdes.so.7		base-crypto-shlib
 ./usr/lib/libedit.so.2		base-sys-shlib
@@ -53,7 +53,7 @@
 ./usr/lib/libkadm5srv.so.8	base-krb5-shlib
 ./usr/lib/libkafs.so.5		base-krb5-shlib
 ./usr/lib/libkdb.so.5		base-krb4-shlib
-./usr/lib/libkrb.so.5		base-krb4-shlib
+./usr/lib/libkrb.so.6		base-krb4-shlib
 ./usr/lib/libkrb5.so.18		base-krb5-shlib
 ./usr/lib/libkstream.so.2	base-krb4-shlib
 ./usr/lib/libkvm.so.5		base-sys-shlib
@@ -72,7 +72,7 @@
 ./usr/lib/libskey.so.1		base-sys-shlib
 ./usr/lib/libsl.so.2		base-krb5-shlib
 ./usr/lib/libss.so.4		base-krb5-shlib
-./usr/lib/libssl.so.2		base-crypto-shlib
+./usr/lib/libssl.so.3		base-crypto-shlib
 ./usr/lib/libtermcap.so.0	base-sys-shlib
 ./usr/lib/libtermlib.so.0	base-sys-shlib
 ./usr/lib/libusbhid.so.1	base-sys-shlib
