@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.176 2004/10/10 09:53:23 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.177 2004/10/10 09:53:59 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.176 2004/10/10 09:53:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.177 2004/10/10 09:53:59 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -132,8 +132,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.176 2004/10/10 09:53:23 yamt Exp $");
  *  - pv_page/pv_page_info: pv_entry's are allocated out of pv_page's.
  *      if we run out of pv_entry's we allocate a new pv_page and free
  *      its pv_entrys.
- * - pmap_remove_record: a list of virtual addresses whose mappings
- *	have been changed.   used for TLB flushing.
  */
 
 /*
