@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.28.2.1 2003/07/13 09:45:22 jlam Exp $	*/
+/*	$NetBSD: main.c,v 1.28.2.2 2003/07/31 17:34:45 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.28.2.1 2003/07/13 09:45:22 jlam Exp $");
+__RCSID("$NetBSD: main.c,v 1.28.2.2 2003/07/31 17:34:45 jlam Exp $");
 #endif
 
 /*
@@ -433,7 +433,7 @@ main(int argc, char *argv[])
 		int saved_wd;
 
 		argv++;		/* argv[0] */
-		argv++;		/* "check" */
+		argv++;		/* "lsall" */
 
 		/* preserve cwd */
 		saved_wd=open(".", O_RDONLY);
@@ -471,7 +471,7 @@ main(int argc, char *argv[])
 		int saved_wd;
 
 		argv++;		/* argv[0] */
-		argv++;		/* "check" */
+		argv++;		/* "lsbest" */
 
 		/* preserve cwd */
 		saved_wd=open(".", O_RDONLY);
