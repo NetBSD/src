@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: class.c,v 1.1.1.5 2001/04/02 21:57:15 mellon Exp $ Copyright (c) 1998-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: class.c,v 1.1.1.6 2001/04/06 17:00:29 mellon Exp $ Copyright (c) 1998-2000 The Internet Software Consortium.  All rights reserved.\n";
 
 #endif /* not lint */
 
@@ -163,6 +163,7 @@ int check_collection (packet, lease, collection)
 					data_string_forget (&data, MDL);
 					continue;
 				}
+				/* XXX Write out the spawned class? */
 #if defined (DEBUG_CLASS_MATCHING)
 				log_info ("spawning subclass %s.",
 				      print_hex_1 (data.len, data.data, 60));

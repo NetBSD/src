@@ -62,21 +62,27 @@ if [ "$sysname" = "" ]; then
       release=`uname -r`
       minor=`echo $release |sed -e 's/.*[0-9]*\.\([0-9][0-9]*\).*$/\1/'`
       major=`echo $release |sed -e 's/\([0-9][0-9]*\)\..*$/\1/'`
+      IFS=":"
+      for foo in $PATH; do
+        if [ x$gcc_path = x ] && [ -x $foo/gcc ]; then
+	  gcc_path=$foo/gcc
+        fi
+      done
+      IFS=" "
+
       case $major in
         4) 
-	  set `which gcc`
-	  if [ $# != 1 ]; then
+	  if [ x$gcc_path = x ]; then
 	    echo SunOS 4 build will not work without the GNU C Compiler.
 	    exit 1
 	  fi
 	  sysname=sunos4;;
         5)
-	  set `which gcc`
-	  if [ $# = 1 ]; then
-	    sysname=sunos5-gcc
+	  if [ x$gcc_path = x ]; then
+	    sysname=sunos5-cc
 	    sysname_print=sunos5
 	  else
-	    sysname=sunos5-cc
+	    sysname=sunos5-gcc
 	    sysname_print=sunos5
 	  fi;;
       esac;;
@@ -92,21 +98,35 @@ if [ "$sysname" = "" ]; then
     FreeBSD)
       sysname=freebsd;;
     hpux)
-      set `which gcc`
-	if [ $# = 1 ]; then
-	  sysname=hpux-gcc
+      IFS=":"
+      for foo in $PATH; do
+        if [ x$gcc_path = x ] && [ -x $foo/gcc ]; then
+	  gcc_path=$foo/gcc
+        fi
+      done
+      IFS=" "
+
+      if [ x$gcc_path = x ]; then
+	  sysname=hpux-cc
 	  sysname_print=hpux
 	else
-	  sysname=hpux-cc
+	  sysname=hpux-gcc
 	  sysname_print=hpux
 	fi;;
     HP-UX)
-      set `which gcc`
-	if [ $# = 1 ]; then
-	  sysname=hpux-gcc
+      IFS=":"
+      for foo in $PATH; do
+        if [ x$gcc_path = x ] && [ -x $foo/gcc ]; then
+	  gcc_path=$foo/gcc
+        fi
+      done
+      IFS=" "
+
+      if [ x$gcc_path = x ]; then
+	  sysname=hpux-cc
 	  sysname_print=hpux
 	else
-	  sysname=hpux-cc
+	  sysname=hpux-gcc
 	  sysname_print=hpux
 	fi;;
     QNX)

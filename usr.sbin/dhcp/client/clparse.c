@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: clparse.c,v 1.1.1.14 2001/04/02 21:56:48 mellon Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: clparse.c,v 1.1.1.15 2001/04/06 17:00:02 mellon Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -408,6 +408,7 @@ void parse_client_statement (cfile, ip, config)
 		return;
 
 	      case OMAPI:
+		token = next_token (&val, (unsigned *)0, cfile);
 		token = next_token (&val, (unsigned *)0, cfile);
 		if (token != PORT) {
 			parse_warn (cfile,
