@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.105 2003/06/29 22:32:12 fvdl Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.106 2003/08/03 18:20:53 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.105 2003/06/29 22:32:12 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.106 2003/08/03 18:20:53 pk Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -634,13 +634,8 @@ nfs_write(v)
 		extending = ((uio->uio_offset & PAGE_MASK) == 0 &&
 		    (bytelen & PAGE_MASK) == 0 &&
 		    uio->uio_offset >= vp->v_size);
-		if (extending) {
-			win = ubc_alloc(&vp->v_uobj, uio->uio_offset, &bytelen,
-			    UBC_WRITE | UBC_FAULTBUSY);
-		} else {
-			win = ubc_alloc(&vp->v_uobj, uio->uio_offset, &bytelen,
-			    UBC_WRITE);
-		}
+		win = ubc_alloc(&vp->v_uobj, uio->uio_offset, &bytelen,
+			    UBC_WRITE | (extending ? UBC_FAULTBUSY : 0));
 		error = uiomove(win, bytelen, uio);
 		ubc_release(win, 0);
 		if (error) {
