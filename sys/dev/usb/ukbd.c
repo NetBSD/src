@@ -1,4 +1,4 @@
-/*	$NetBSD: ukbd.c,v 1.4 1998/07/29 20:50:11 augustss Exp $	*/
+/*	$NetBSD: ukbd.c,v 1.5 1998/08/01 17:46:22 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ struct ukbd_data {
 };
 
 #define PRESS 0
-#define RELEASE 0x80
+#define RELEASE 0x100
 
 #define NMOD 6
 static struct {
@@ -111,23 +111,44 @@ static struct {
 	{ MOD_SHIFT_L,   42 },
 	{ MOD_SHIFT_R,   54 },
 	{ MOD_ALT_L,     56 },
-	{ MOD_ALT_R,     56 },
+	{ MOD_ALT_R,    184 },
 };
 
-#define XX 0
-/* Translate USB keycodes to US keyboard scancodes. */
-/* XXX very incomplete */
-static char ukbd_trtab[256] = {
-	   0,   0,   0,   0,  30,  48,  46,  32,
-	  18,  33,  34,  35,  23,  36,  37,  38,
-	  50,  49,  24,  25,  16,  19,  31,  20,
-	  22,  47,  17,  45,  21,  44,   2,   3,
-	   4,   5,   6,   7,   8,   9,  10,  11,
-	  28,   1,  14,  15,  57,  12,  13,  26,
-	  27,  43,  XX,  39,  40,  41,  51,  52,
-	  53,  58,  59,  60,  61,  62,  63,  64,
-	  65,  66,  67,  68,  87,  88,  XX,  70,
-	  XX,  XX,  XX,  XX,  XX,
+#define NN 0			/* no translation */
+/* Translate USB keycodes to US keyboard AT scancodes. */
+static u_int8_t ukbd_trtab[256] = {
+	   0,   0,   0,   0,  30,  48,  46,  32, /* 00 - 07 */
+	  18,  33,  34,  35,  23,  36,  37,  38, /* 08 - 0F */
+	  50,  49,  24,  25,  16,  19,  31,  20, /* 10 - 17 */
+	  22,  47,  17,  45,  21,  44,   2,   3, /* 18 - 1F */
+	   4,   5,   6,   7,   8,   9,  10,  11, /* 20 - 27 */
+	  28,   1,  14,  15,  57,  12,  13,  26, /* 28 - 2F */
+	  27,  43,  NN,  39,  40,  41,  51,  52, /* 30 - 37 */
+	  53,  58,  59,  60,  61,  62,  63,  64, /* 38 - 3F */
+	  65,  66,  67,  68,  87,  88, 170,  70, /* 40 - 47 */
+	 127, 210, 199, 201, 211, 207, 209, 205, /* 48 - 4F */
+	 203, 208, 200,  69, 181,  55,  74,  78, /* 50 - 57 */
+	 156,  79,  80,  81,  75,  76,  77,  71, /* 58 - 5F */
+          72,  73,  82,  83,  NN,  NN,  NN,  NN, /* 60 - 67 */
+          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 68 - 6F */
+          NN,  NN,  NN,  NN,  NN,  NN, 221,  NN, /* 70 - 77 */
+          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 78 - 7F */
+          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 80 - 87 */
+          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 88 - 8F */
+          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 90 - 97 */
+          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 98 - 9F */
+          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* A0 - A7 */
+          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* A8 - AF */
+          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* B0 - B7 */
+          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* B8 - BF */
+          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* C0 - C7 */
+          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* C8 - CF */
+          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* D0 - D7 */
+          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* D8 - DF */
+          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* E0 - E7 */
+          NN,  NN,  NN, 219,  NN,  NN,  NN, 220, /* E8 - EF */
+          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* F0 - F7 */
+          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* F8 - FF */
 };
 
 #define KEY_ERROR 0x01
@@ -246,6 +267,7 @@ bLength=%d bDescriptorType=%d bEndpointAddress=%d-%s bmAttributes=%d wMaxPacketS
 			return;
 		}
 	}
+	usbd_set_idle(iface, 0, 0);
 
 	sc->sc_ep_addr = ed->bEndpointAddress;
 	sc->sc_disconnected = 0;
@@ -295,7 +317,7 @@ ukbd_intr(reqh, addr, status)
 	struct ukbd_softc *sc = addr;
 	struct ukbd_data *ud = &sc->sc_ndata;
 	int mod, omod;
-	char ibuf[NMOD+2*NKEYCODE];	/* chars events */
+	int ibuf[NMOD+2*NKEYCODE];	/* chars events */
 	int nkeys, i, j;
 	int key, c;
 #define ADDKEY(c) ibuf[nkeys++] = (c)
@@ -350,6 +372,8 @@ ukbd_intr(reqh, addr, status)
 				if (key == sc->sc_odata.keycode[j])
 					goto pfound;
 			c = ukbd_trtab[key];
+			DPRINTFN(2,("ukbd_intr: press key=0x%02x -> 0x%02x\n",
+				    key, c));
 			if (c)
 				ADDKEY(c | PRESS);
 		pfound:
@@ -366,8 +390,8 @@ ukbd_intr(reqh, addr, status)
 	for (i = 0; i < nkeys; i++) {
 		c = ibuf[i];
 		wskbd_input(sc->sc_wskbddev, 
-			    c&0x80 ? WSCONS_EVENT_KEY_UP:WSCONS_EVENT_KEY_DOWN,
-			    c & 0x7f);
+		    c & RELEASE ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN,
+		    c & 0xff);
 	}
 }
 
