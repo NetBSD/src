@@ -1,0 +1,10 @@
+#	$NetBSD: sup.au.netbsd.org,v 1.1.2.2 1997/11/13 02:31:38 thorpej Exp $
+#
+# Example supfile for sup.au.netbsd.org.
+#
+
+current release=allsrc host=sup.au.netbsd.org hostbase=/ftp/pub \
+base=/usr prefix=/usr backup use-rel-suffix compress
+
+current release=doc host=sup.au.netbsd.org hostbase=/ftp/pub \
+base=/usr prefix=/usr backup use-rel-suffix compress
