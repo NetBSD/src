@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)state.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: state.c,v 1.5 1994/02/25 03:20:54 cgd Exp $";
+static char *rcsid = "$Id: state.c,v 1.6 1995/10/18 05:44:26 ghudson Exp $";
 #endif /* not lint */
 
 #include "telnetd.h"
@@ -1388,10 +1388,14 @@ suboption()
 		case NEW_ENV_VAR:
 		case ENV_USERVAR:
 			*cp = '\0';
-			if (valp)
-				(void)setenv(varp, valp, 1);
-			else
-				unsetenv(varp);
+			if (strcmp(varp, "LD_LIBRARY_PATH") != 0 &&
+			    strcmp(varp, "LD_PRELOAD") != 0 &&
+			    strcmp(varp, "IFS") != 0) {
+				if (valp)
+					(void)setenv(varp, valp, 1);
+				else
+					unsetenv(varp);
+			}
 			cp = varp = (char *)subpointer;
 			valp = 0;
 			break;
