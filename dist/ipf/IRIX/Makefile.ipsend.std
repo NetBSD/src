@@ -1,0 +1,82 @@
+OBJS=ipsend.o ip.o ipsopt.o y.tab.o lex.yy.o
+IPFTO=ipft_ef.o ipft_hx.o ipft_pc.o ipft_sn.o ipft_td.o ipft_tx.o
+ROBJS=ipresend.o ip.o resend.o $(IPFTO) inet_addr.o opt.o
+TOBJS=iptest.o iptests.o ip.o
+UNIXOBJS=sirix.o arp.o
+LIBS=
+
+CC=cc
+CFLAGS=-g -I$(TOP)
+CCARGS=$(DEBUG) $(CFLAGS) -D_STANDALONE
+
+all build irix : ipsend ipresend iptest
+
+.c.o:
+	$(CC) $(CCARGS) -c $< -o $@
+
+y.tab.o: $(TOP)/iplang/iplang_y.y
+	(cd $(TOP)/iplang; $(MAKE) 'CFLAGS=$(CCARGS)' 'DESTDIR=../IRIX/$(CPUDIR)' )
+
+lex.yy.o: $(TOP)/iplang/iplang_l.l
+	(cd $(TOP)/iplang; $(MAKE) 'DESTDIR=../IRIX/$(CPUDIR)' )
+
+ipsend: $(OBJS) $(UNIXOBJS)
+	$(CC) $(DEBUG) $(OBJS) $(UNIXOBJS) -o $@ $(LIBS) -ll
+
+ipresend: $(ROBJS) $(UNIXOBJS)
+	$(CC) $(DEBUG) $(ROBJS) $(UNIXOBJS) -o $@ $(LIBS)
+
+iptest: $(TOBJS) $(UNIXOBJS)
+	$(CC) $(DEBUG) $(TOBJS) $(UNIXOBJS) -o $@ $(LIBS)
+
+clean:
+	rm -rf *.o core a.out ipsend ipresend iptest
+
+ipsend.o: $(TOP)/ipsend/ipsend.c
+	$(CC) $(CCARGS) -c $(TOP)/ipsend/ipsend.c -o $@
+
+ipsopt.o: $(TOP)/ipsend/ipsopt.c
+	$(CC) $(CCARGS) -c $(TOP)/ipsend/ipsopt.c -o $@
+
+ipresend.o: $(TOP)/ipsend/ipresend.c
+	$(CC) $(CCARGS) -c $(TOP)/ipsend/ipresend.c -o $@
+
+ip.o: $(TOP)/ipsend/ip.c
+	$(CC) $(CCARGS) -c $(TOP)/ipsend/ip.c -o $@
+
+resend.o: $(TOP)/ipsend/resend.c
+	$(CC) $(CCARGS) -c $(TOP)/ipsend/resend.c -o $@
+
+ipft_sn.o: $(TOP)/ipft_sn.c $(TOP)/ipt.h $(TOP)/ipf.h $(TOP)/ip_fil.h \
+	   $(TOP)/snoop.h
+	$(CC) $(CCARGS) -c $(TOP)/ipft_sn.c -o $@
+
+ipft_ef.o: $(TOP)/ipft_ef.c $(TOP)/ipf.h $(TOP)/ip_fil.h $(TOP)/ipt.h
+	$(CC) $(CCARGS) -c $(TOP)/ipft_ef.c -o $@
+
+ipft_td.o: $(TOP)/ipft_td.c $(TOP)/ipf.h $(TOP)/ip_fil.h $(TOP)/ipt.h
+	$(CC) $(CCARGS) -c $(TOP)/ipft_td.c -o $@
+
+ipft_pc.o: $(TOP)/ipft_pc.c $(TOP)/ipf.h $(TOP)/ip_fil.h $(TOP)/ipt.h
+	$(CC) $(CCARGS) -c $(TOP)/ipft_pc.c -o $@
+
+ipft_tx.o: $(TOP)/ipft_tx.c $(TOP)/ipf.h $(TOP)/ip_fil.h $(TOP)/ipt.h
+	$(CC) $(CCARGS) -c $(TOP)/ipft_tx.c -o $@
+
+ipft_hx.o: $(TOP)/ipft_hx.c $(TOP)/ipf.h $(TOP)/ip_fil.h $(TOP)/ipt.h
+	$(CC) $(CCARGS) -c $(TOP)/ipft_hx.c -o $@
+
+iptest.o: $(TOP)/ipsend/iptest.c
+	$(CC) $(CCARGS) -c $(TOP)/ipsend/iptest.c -o $@
+
+iptests.o: $(TOP)/ipsend/iptests.c
+	$(CC) $(CCARGS) -c $(TOP)/ipsend/iptests.c -o $@
+
+sock.o: $(TOP)/ipsend/sock.c
+	$(CC) $(CCARGS) -c $(TOP)/ipsend/sock.c -o $@
+
+arp.o: $(TOP)/ipsend/arp.c
+	$(CC) $(CCARGS) -c $(TOP)/ipsend/arp.c -o $@
+
+sirix.o: $(TOP)/ipsend/sirix.c
+	$(CC) $(CCARGS) -c $(TOP)/ipsend/sirix.c -o $@
