@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.27 2000/05/27 04:52:34 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.28 2000/05/30 20:54:26 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -28,6 +28,7 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_ddb.h"
 #include "opt_ktrace.h"
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -88,6 +89,10 @@
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 #include <machine/frame.h>
+
+#if defined(DDB)
+#include <ddb/ddbvar.h>
+#endif
 
 static __inline void netbsd32_from_timeval __P((struct timeval *, struct netbsd32_timeval *));
 static __inline void netbsd32_to_timeval __P((struct netbsd32_timeval *, struct timeval *));
