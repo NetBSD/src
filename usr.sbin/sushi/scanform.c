@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.10 2001/01/24 09:30:30 garbled Exp $       */
+/*      $NetBSD: scanform.c,v 1.11 2001/01/31 09:35:42 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ form_status(FORM *form)
 	    "PGUP/PGDN to change page, UP/DOWN switch field, ENTER=Do."));
 	wstandend(stdscr);
 	sprintf(buf, "%s (%d/%d)", catgets(catalog, 4, 8, "Form Page:"),
-	    form_page(form)+1, form->max_page);
+	    form_page(form)+1, form->max_page); /* XXX */
 	mvwaddstr(stdscr, ws.ws_row-3, 60, buf);
 	wrefresh(stdscr);
 }
@@ -136,11 +136,11 @@ form_appenditem(struct cqForm *cqf, char *desc, int type, char *data, int req)
         if ((fte = malloc(sizeof(FTREE_ENTRY))) == NULL ||
                 ((fte->desc = strdup(desc)) == NULL) ||
                 ((fte->type = type) == NULL) ||
-		((fte->data = strdup(data)) == NULL) ||
-		((fte->list = malloc(sizeof(char *)*2)) == NULL))
+		((fte->data = strdup(data)) == NULL))
                         bailout("malloc: %s", strerror(errno));
 	fte->required = req;
 	fte->elen = 0;
+	fte->origdata = fte->data;
 
 	CIRCLEQ_INIT(&fte->cqSubFormHead);
 	CIRCLEQ_INSERT_TAIL(cqf, fte, cqFormEntries);
@@ -201,6 +201,11 @@ scan_formindex(struct cqForm *cqf, char *row)
 		type = DATAT_INTEGER;
 	else if (strcmp(x, "req-integer") == 0) {
 		type = DATAT_INTEGER;
+		req = 1;
+	} else if (strcmp(x, "iscript") == 0)
+		type = DATAT_ISCRIPT;
+	else if (strcmp(x, "req-iscript") == 0) {
+		type = DATAT_ISCRIPT;
 		req = 1;
 	} else
 		bailout("%s: %s",
@@ -387,7 +392,7 @@ my_driver(FORM * form, int c, char *path)
 	FIELD *curfield;
 	char **list;
 	int i, j, y, n, dcols, drows, dmax;
-	char *tmp, *p;
+	char *tmp, *otmp, *p;
 	char *choices[] = {" ", "+"};
 	char buf[1024];
 
@@ -471,14 +476,15 @@ my_driver(FORM * form, int c, char *path)
 		if (field_buffer(curfield, 1) == NULL || 
 		    field_buffer(curfield, 0) == NULL)
 			return(FALSE);
-		tmp = strdup(field_buffer(curfield, 1));
+		otmp = tmp = strdup(field_buffer(curfield, 1));
 		stripWhiteSpace(vBOTH, tmp);
 		if (*tmp == 'm') {
 			slist = newCDKSelection(cdkscreen, RIGHT, CENTER,
 			    RIGHT, 10, y+2,
 			    catgets(catalog, 4, 1, "Select choices"),
 			    list, i, choices, 2, A_REVERSE ,TRUE, FALSE);
-			tmp = strdup(field_buffer(curfield, 0));
+			free(otmp);
+			otmp = tmp = strdup(field_buffer(curfield, 0));
 			stripWhiteSpace(vBOTH, tmp);
 			if (*tmp != '\0')
 				for (p = tmp; p != NULL; p = strsep(&tmp, ","))
@@ -498,6 +504,7 @@ my_driver(FORM * form, int c, char *path)
 						sprintf(buf, "%s,", buf);
 					sprintf(buf, "%s%s", buf, list[y]);
 				}
+			free(otmp);
 			tmp = buf;
 			set_field_buffer(curfield, 0, tmp);
 			destroyCDKSelection(slist);
@@ -509,6 +516,7 @@ my_driver(FORM * form, int c, char *path)
 			if (i != -1)
 				set_field_buffer(curfield, 0, list[i]);
 			destroyCDKScroll(plist);
+			free(otmp);
 		}
 		return(FALSE);
 		/* NOTREACHED */
@@ -524,7 +532,7 @@ my_driver(FORM * form, int c, char *path)
 		/* NOTREACHED */
 		break;
 	case BAIL:
-		return(TRUE);
+		return(3); /* TRUE, so handle_preform can free F */
 		/* NOTREACHED */
 		break;
 	case FASTBAIL:
@@ -543,14 +551,19 @@ LABEL(FIELD_RECORD *x)
 	FIELD *f = new_field(1, (int)(strlen(x->v)+2), x->frow, x->fcol, 0, 0);
 
 	if (f) {
-		tmp = malloc(sizeof(char *) * (strlen(x->v)+2));
-		*tmp = '\0';
+		x->v = realloc(x->v, sizeof(char *) * (strlen(x->v)+2));
+		tmp = malloc(sizeof(char *) * strlen(x->v));
+		if (x->v == NULL || tmp == NULL)
+			bailout("malloc: %s", strerror(errno));
+
 		if (x->required == 1)
-			tmp = strcat(tmp, "* ");
+			(void)strcpy(tmp, "* ");
 		else
-			tmp = strcat(tmp, "  ");
-		tmp = strcat(tmp, x->v);
-		set_field_buffer(f, 0, tmp);
+			(void)strcpy(tmp, "  ");
+		(void)strcat(tmp, x->v);
+		(void)strcpy(x->v, tmp);
+		set_field_buffer(f, 0, x->v);
+		free(tmp);
 		field_opts_off(f, O_ACTIVE);
 		if (x->newpage == 1)
 			set_new_page(f, TRUE);
@@ -600,14 +613,20 @@ INTEGER(FIELD_RECORD *x)
 {				/* create an INTEGER field */
 	FIELD *f = new_field(x->rows, x->cols, x->frow, x->fcol, 0, 0);
 	int pre, min, max;
-	char *p, *q;
+	char *p, *q, *n;
 
-	p = strdup(x->v);
+	p = x->v;
 	q = strsep(&p, ",");
 	pre = atoi(q);
 	q = strsep(&p, ",");
 	min = atoi(q);
-	max = atoi(p);
+	n = strdup(p);
+	q = strsep(&p, ",");
+	if (p == NULL)
+		max = atoi(n);
+	else
+		max = atoi(q);
+
 	if (f) {
 		set_field_back(f, A_UNDERLINE);
 		set_field_type(f, TYPE_INTEGER, pre, min, max);
@@ -617,6 +636,8 @@ INTEGER(FIELD_RECORD *x)
 			field_opts_off(f, O_NULLOK);
 		if (x->bigfield)
 			field_opts_off(f, O_STATIC);
+		if (p != NULL)
+			set_field_buffer(f, 0, p);
 	}
 	return f;
 }
@@ -673,7 +694,6 @@ ENUM(FIELD_RECORD *x)
 	return f;
 }
 
-static FIELD   *fields[MAX_FIELD + 1];
 FIELD_RECORD *F;
 
 static int
@@ -682,7 +702,7 @@ process_preform(FORM *form, char *path)
 	char file[PATH_MAX];
 	struct stat sb;
 	char *p;
-	int lcnt, i;
+	int lcnt, i, j;
 	FIELD **f;
 	char **args;
 
@@ -720,8 +740,20 @@ process_preform(FORM *form, char *path)
 		}
 	args[i] = NULL;
 
+	for (i=0; F[i].type != NULL; i++) {
+		free(F[i].v);
+		if (F[i].list != NULL) {
+			for (j=0; F[i].list[j] != NULL; j++)
+				free(F[i].list[j]);
+			free(F[i].list);
+		}
+	}
+	free(F);
+
 	i = handle_form(path, file, args);
 
+	for (j=0; args[j] != NULL; j++)
+		free(args[j]);
 	free(args);
 	return(i);
 }
@@ -734,7 +766,7 @@ process_form(FORM *form, char *path)
 	struct stat sb;
 	char *exec, *t, *p;
 	size_t len;
-	int lcnt, i;
+	int lcnt, i, j;
 	FIELD **f;
 	char **args;
 
@@ -816,15 +848,23 @@ process_form(FORM *form, char *path)
 
 	i = run_prog(1, args);
 
+	for (j=0; args[j] != NULL; j++)
+		free(args[j]);
 	free(args);
+
 	return(i);
 }
 
 static FIELD  **
 make_fields(void)
 {				/* create the fields */
-	FIELD **f = fields;
+	FIELD **f, **fields;
 	int i;
+
+	f = malloc(sizeof(FIELD *) * (MAX_FIELD+1));
+	if (f == NULL)
+		bailout("malloc: %s", strerror(errno));
+	fields = f;
 
 	for (i = 0; i < MAX_FIELD && F[i].type; ++i, ++f)
 		*f = (F[i].type)(&F[i]);
@@ -840,15 +880,13 @@ static int
 tstring(int max, char *string)
 {
 	char hold[10];
-	char *str;
 	int cur;
 
 	if (max == 0)
 		return(0);
 	for (cur=0; cur <= max; cur++) {
 		sprintf(hold, "@@@%d@@@", cur);
-		str = strdup(hold);
-		if (strcmp(str, string) == 0)
+		if (strcmp(hold, string) == 0)
 			return(cur);
 	}
 	return(0);
@@ -858,7 +896,7 @@ static int
 strlen_data(FTREE_ENTRY *ftp)
 {
 	int i, j;
-	char *p, *q;
+	char *p, *q, *o;
 
 	i = 0;
 	switch(ftp->type) {
@@ -890,9 +928,12 @@ strlen_data(FTREE_ENTRY *ftp)
 		/* NOTREACHED */
 		break;
 	case DATAT_INTEGER:
-		p = strdup(ftp->data);
+	case DATAT_ISCRIPT:
+		o = p = strdup(ftp->data);
 		q = strsep(&p, ",");
-		return(atoi(q));
+		i = atoi(q);
+		free(o);
+		return(i);
 		/* NOTREACHED */
 		break;
 	default:
@@ -954,40 +995,47 @@ gen_func(FTREE_ENTRY *ftp, int max, char **args)
 static void
 gen_script(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 {
-	char *p, *q, *comm, *test;
+	char *p, *q, *qo, *po, *comm, *test;
 	FILE *file;
 	char buf[PATH_MAX+30];
 	size_t len;
 	int i, cur;
 
-	q = strdup(ftp->data);
-	comm = malloc(sizeof(char) * strlen(q));
+	qo = q = strdup(ftp->data);
+	comm = malloc(sizeof(char) * strlen(q) + 2);
 	if (comm == NULL)
 		bailout("malloc: %s", strerror(errno));
-	comm = strsep(&q, ",");
+	p = strsep(&q, ",");
+	(void)strcpy(comm, p);
+	po = NULL;
 	if (q != NULL)
-		for (p=strdup(q); p != NULL && q != NULL; p = strsep(&q, ",")) {
-			comm = strcat(comm, " ");
+		for (po=p=strdup(q); p != NULL; p = strsep(&q, ",")) {
+			(void)strcat(comm, " ");
 			for (test=p; *test != '\0'; test++)
 				if (*test == ',') {
 					*test = '\0';
+					test++;
+					q = test;
 					break;
 				}
 			cur = tstring(max, p);
 			if (cur) {
 				comm = realloc(comm, sizeof(char) *
-				    (strlen(comm) + strlen(args[cur-1]) + 1));
+				    (strlen(comm) + strlen(args[cur-1]) + 2));
 				if (comm == NULL)
 					bailout("malloc: %s", strerror(errno));
-				comm = strcat(comm, args[cur-1]);
+				(void)strcat(comm, args[cur-1]);
 			} else {
 				comm = realloc(comm, sizeof(char) *
-				    (strlen(comm) + strlen(p) + 1));
+				    (strlen(comm) + strlen(p) + 2));
 				if (comm == NULL)
 					bailout("malloc: %s", strerror(errno));
-				comm = strcat(comm, p);
+				(void)strcat(comm, p);
 			}
 		}
+	free(qo);
+	if (po)
+		free(po);
 
 	sprintf(buf, "%s/%s", dir, comm);
 
@@ -1012,45 +1060,55 @@ gen_script(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 		ftp->list[0] = "";
 		ftp->list[1] = NULL;
 	}
+	free(comm);
 }
 
 static char *
 gen_escript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 {
-	char *p, *q, *test, *comm;
+	char *p, *q, *qo, *po, *test, *comm;
 	FILE *file;
 	char buf[PATH_MAX+30];
 	size_t len;
 	int cur;
 
-	q = strdup(ftp->data);
-	comm = malloc(sizeof(char) * strlen(q));
+	qo = q = strdup(ftp->data);
+
+	comm = malloc(sizeof(char) * strlen(q) + 2);
 	if (comm == NULL)
 		bailout("malloc: %s", strerror(errno));
-	comm = strsep(&q, ",");
+	p = strsep(&q, ",");
+	(void)strcpy(comm, p);
+	po = NULL;
 	if (q != NULL)
-		for (p=strdup(q); p != NULL && q != NULL; p = strsep(&q, ",")) {
-			comm = strcat(comm, " ");
+		for (po=p=strdup(q); p != NULL; p = strsep(&q, ",")) {
+			(void)strcat(comm, " ");
 			for (test=p; *test != '\0'; test++)
 				if (*test == ',') {
 					*test = '\0';
+					test++;
+					q = test;
 					break;
 				}
 			cur = tstring(max, p);
 			if (cur) {
 				comm = realloc(comm, sizeof(char) *
-				    (strlen(comm) + strlen(args[cur-1]) + 1));
+				    (strlen(comm) + strlen(args[cur-1]) + 2));
 				if (comm == NULL)
 					bailout("malloc: %s", strerror(errno));
-				comm = strcat(comm, args[cur-1]);
+				(void)strcat(comm, args[cur-1]);
 			} else {
 				comm = realloc(comm, sizeof(char) *
-				    (strlen(comm) + strlen(p) + 1));
+				    (strlen(comm) + strlen(p) + 2));
 				if (comm == NULL)
 					bailout("malloc: %s", strerror(errno));
-				comm = strcat(comm, p);
+				(void)strcat(comm, p);
 			}
 		}
+
+	free(qo);
+	if (po)
+		free(po);
 
 	sprintf(buf, "%s/%s", dir, comm);
 
@@ -1066,6 +1124,118 @@ gen_escript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 		bailout("fgetln: %s", strerror(errno));
 
 	pclose(file);
+	free(comm);
+	return(q);
+}
+
+static char *
+gen_integer(FTREE_ENTRY *ftp, int max, char **args)
+{
+	char *q, *qo, *tmp;
+	char buf[PATH_MAX+30];	
+	int pre, min, maxi, cur;
+
+	qo = q = strdup(ftp->data);
+	tmp = strsep(&q, ",");
+	cur = tstring(max, tmp);
+	if (cur)
+		pre = atoi(args[cur-1]);
+	else
+		pre = atoi(tmp);
+	tmp = strsep(&q, ",");
+	cur = tstring(max, tmp);
+	if (cur)
+		min = atoi(args[cur-1]);
+	else
+		min = atoi(tmp);
+	tmp = strsep(&q, ",");
+	cur = tstring(max, tmp);
+	if (cur)
+		maxi = atoi(args[cur-1]);
+	else
+		maxi = atoi(tmp);
+	if (q == NULL)
+		snprintf(buf, sizeof(buf), "%d,%d,%d", pre, min, maxi);
+	else
+		snprintf(buf, sizeof(buf), "%d,%d,%d,%s", pre, min, maxi, q);
+	q = strdup(buf);
+	free(qo);
+
+	return(q);
+}
+
+static char *
+gen_iscript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
+{
+	char *p, *q, *qo, *po, *test, *comm, *tmp;
+	FILE *file;
+	char buf[PATH_MAX+30];
+	size_t len;
+	int cur, min, maxi, pre;
+
+	qo = q = strdup(ftp->data);
+	tmp = strsep(&q, ",");
+	pre = atoi(tmp);
+	tmp = strsep(&q, ",");
+	min = atoi(tmp);
+	tmp = strsep(&q, ",");
+	maxi = atoi(tmp);
+
+	comm = malloc(sizeof(char) * strlen(q) + 2);
+	if (comm == NULL)
+		bailout("malloc: %s", strerror(errno));
+	tmp = strsep(&q, ",");
+	(void)strcpy(comm, tmp);
+	po = NULL;
+	if (q != NULL)
+		for (po=p=strdup(q); p != NULL; p = strsep(&q, ",")) {
+			(void)strcat(comm, " ");
+			for (test=p; *test != '\0'; test++)
+				if (*test == ',') {
+					*test = '\0';
+					test++;
+					q = test;
+					break;
+				}
+			cur = tstring(max, p);
+			if (cur) {
+				comm = realloc(comm, sizeof(char) *
+				    (strlen(comm) + strlen(args[cur-1]) + 2));
+				if (comm == NULL)
+					bailout("malloc: %s", strerror(errno));
+				(void)strcat(comm, args[cur-1]);
+			} else {
+				comm = realloc(comm, sizeof(char) *
+				    (strlen(comm) + strlen(p) + 2));
+				if (comm == NULL)
+					bailout("malloc: %s", strerror(errno));
+				(void)strcat(comm, p);
+			}
+		}
+	free(qo);
+	if (po)
+		free(po);
+
+	sprintf(buf, "%s/%s", dir, comm);
+
+	file = popen(buf, "r");
+	if (file == NULL)
+		bailout("popen: %s", strerror(errno));
+
+	p = fgetln(file, &len);
+	if (p != NULL) {
+		q = strdup(p);
+		q[len -1] = '\0';
+	} else
+		bailout("fgetln: %s", strerror(errno));
+
+	pclose(file);
+	snprintf(buf, sizeof(buf), "%d,%d,%d,%s", pre, min, maxi, q);
+	free(q);
+	q = strdup(buf);
+
+	free(comm);
+
 	return(q);
 }
 
@@ -1095,10 +1265,12 @@ form_generate(struct cqForm *cqf, char *basedir, char **args)
 		F[i].fcol = 0;
 		F[i].v = strdup(ftp->desc);
 		F[i].required = ftp->required;
+		F[i].list = (char **)NULL;
 		i++;
 
 		if (ftp->type != DATAT_BLANK) {
 			F[i].required = ftp->required;
+			F[i].list = (char **)NULL;
 			switch(ftp->type) {
 			case DATAT_ENTRY:
 				F[i].type = STRING;
@@ -1166,12 +1338,12 @@ form_generate(struct cqForm *cqf, char *basedir, char **args)
 				break;
 			case DATAT_INTEGER:
 				F[i].type = INTEGER;
-				cur = tstring(max, ftp->data);
-				if (cur)
-					F[i].v = strdup(args[cur-1]);
-				else
-					F[i].v = strdup(ftp->data);
+				F[i].v = gen_integer(ftp, max, args);
 				break;
+			case DATAT_ISCRIPT:
+				F[i].type = INTEGER;
+				F[i].v = gen_iscript(ftp, basedir, max, args);
+				break;					
 			case DATAT_ESCRIPT:
 				F[i].type = STRING;
 				p = strsep(&ftp->data, ",");
@@ -1217,7 +1389,8 @@ handle_form(char *basedir, char *path, char **args)
 	FORM *menuform;
 	FIELD **f;
 	int done = FALSE;
-	int c;
+	int c, i, j;
+	FTREE_ENTRY *ftp;
 
 	CIRCLEQ_INIT(&cqFormHead);
 	cqFormHeadp = &cqFormHead;
@@ -1274,14 +1447,29 @@ handle_form(char *basedir, char *path, char **args)
 	}
 	f = form_fields(menuform);
 	unpost_form(menuform);
-	free_form(menuform);
 	while (*f)
 		free_field(*f++);
+	free_form(menuform);
+	for (i=0; F[i].type != NULL; i++) {
+		free(F[i].v);
+		if (F[i].list != NULL) {
+			for (j=0; F[i].list[j] != NULL; j++)
+				free(F[i].list[j]);
+			free(F[i].list);
+		}
+	}
+	free(F);
+	ftp = CIRCLEQ_FIRST(&cqFormHead);
+	for (; !CIRCLEQ_EMPTY(&cqFormHead); ftp = CIRCLEQ_FIRST(&cqFormHead)) {
+		CIRCLEQ_REMOVE(&cqFormHead, ftp, cqFormEntries);
+		free(ftp->desc);
+		free(ftp->origdata);
+		free(ftp);
+	}
 	delwin(formwin);
 	delwin(boxwin);
 	wclear(stdscr);
 	wrefresh(stdscr);
-	free(F);
 	if (done == 2)
 		return(1);
 
@@ -1297,8 +1485,9 @@ handle_preform(char *basedir, char *path)
 	FORM *menuform;
 	FIELD **f;
 	int done = FALSE;
-	int c;
+	int c, i, j;
 	char *args[2];
+	FTREE_ENTRY *ftp;
 
 	CIRCLEQ_INIT(&cqFormHead);
 	cqFormHeadp = &cqFormHead;
@@ -1352,14 +1541,31 @@ handle_preform(char *basedir, char *path)
 	}
 	f = form_fields(menuform);
 	unpost_form(menuform);
-	free_form(menuform);
 	while (*f)
 		free_field(*f++);
+	free_form(menuform);
+	if (done == 3) {
+		for (i=0; F[i].type != NULL; i++) {
+			free(F[i].v);
+			if (F[i].list != NULL) {
+				for (j=0; F[i].list[j] != NULL; j++)
+					free(F[i].list[j]);
+				free(F[i].list);
+			}
+		}
+		free(F);
+	}
+	ftp = CIRCLEQ_FIRST(&cqFormHead);
+	for (; !CIRCLEQ_EMPTY(&cqFormHead); ftp = CIRCLEQ_FIRST(&cqFormHead)) {
+		CIRCLEQ_REMOVE(&cqFormHead, ftp, cqFormEntries);
+		free(ftp->desc);
+		free(ftp->origdata);
+		free(ftp);
+	}
 	delwin(formwin);
 	delwin(boxwin);
 	wclear(stdscr);
 	wrefresh(stdscr);
-	free(F);
 	if (done == 2)
 		return(1);
 
