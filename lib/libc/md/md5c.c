@@ -1,4 +1,4 @@
-/*	$NetBSD: md5c.c,v 1.7 1998/11/13 15:48:29 christos Exp $	*/
+/*	$NetBSD: md5c.c,v 1.8 1999/02/04 05:10:36 explorer Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD5 Message-Digest
@@ -31,9 +31,10 @@
 
 #if !defined(_KERNEL)
 #include "namespace.h"
-#endif
-
 #include <sys/types.h>
+#else
+#include <sys/param.h>
+#endif
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/systm.h>
@@ -43,7 +44,16 @@
 #include <md5.h>
 #endif /* _KERNEL || _STANDALONE */
 
+/*
+ * XXX Kludge until there is resolution regarding mem*() functions
+ * XXX in the kernel.
+ */
+#if defined(_KERNEL) || defined(_STANDALONE)
+#define	memcpy(s, d, l)		bcopy((d), (s), (l))
+#define	ZEROIZE(d, l)		bzero((d), (l))
+#else
 #define	ZEROIZE(d, l)		memset((d), 0, (l))
+#endif /* _KERNEL || _STANDALONE */
 
 typedef unsigned char *POINTER;
 typedef u_int16_t UINT2;
@@ -207,7 +217,8 @@ MD5Update(context, input, inputLen)
 
 	/* Transform as many times as possible. */
 	if (inputLen >= partLen) {
-		memcpy(&context->buffer[idx], input, partLen);
+		memcpy((POINTER)&context->buffer[idx],
+		    (POINTER)input, partLen);
 		MD5Transform(context->state, context->buffer);
 
 		for (i = partLen; i + 63 < inputLen; i += 64)
@@ -218,7 +229,8 @@ MD5Update(context, input, inputLen)
 		i = 0;
 
 	/* Buffer remaining input */
-	memcpy(&context->buffer[idx], &input[i], inputLen - i);
+	memcpy((POINTER)&context->buffer[idx], (POINTER)&input[i],
+	    inputLen - i);
 }
 
 /*
@@ -248,7 +260,7 @@ MD5Final(digest, context)
 	Encode(digest, context->state, 16);
 
 	/* Zeroize sensitive information. */
-	ZEROIZE(context, sizeof(*context));
+	ZEROIZE((POINTER)context, sizeof(*context));
 }
 
 /*
@@ -341,5 +353,5 @@ MD5Transform(state, block)
 	state[3] += d;
 
 	/* Zeroize sensitive information. */
-	ZEROIZE(x, sizeof (x));
+	ZEROIZE((POINTER)x, sizeof (x));
 }
