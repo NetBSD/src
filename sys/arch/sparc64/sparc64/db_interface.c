@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.48 2000/12/04 20:40:07 fvdl Exp $ */
+/*	$NetBSD: db_interface.c,v 1.49 2000/12/07 01:03:17 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -363,6 +363,7 @@ db_pload_cmd(addr, have_addr, count, modif)
 	char *modif;
 {
 	static paddr_t oldaddr = -1;
+	int asi = ASI_PHYS_CACHED;
 
 	if (!have_addr) {
 		addr = oldaddr;
@@ -372,13 +373,19 @@ db_pload_cmd(addr, have_addr, count, modif)
 		return;
 	}
 	addr &= ~0x7; /* align */
+	{
+		register char c, *cp = modif;
+		while ((c = *cp++) != 0)
+			if (c == 'u')
+				asi = ASI_AIUS;
+	}
 	while (count--) {
 		if (db_print_position() == 0) {
 			/* Always print the address. */
 			db_printf("%16.16lx:\t", addr);
 		}
 		oldaddr=addr;
-		db_printf("%8.8lx\n", (long)ldxa(addr, ASI_PHYS_CACHED));
+		db_printf("%8.8lx\n", (long)ldxa(addr, asi));
 		addr += 8;
 		if (db_print_position() != 0)
 			db_end_line();
@@ -607,6 +614,7 @@ db_proc_cmd(addr, have_addr, count, modif)
 	db_printf("profile timer: %ld sec %ld usec\n",
 		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_sec,
 		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_usec);
+	db_printf("pcb: %p\n", &p->p_addr->u_pcb);
 	return;
 }
 
@@ -648,9 +656,8 @@ db_dump_pcb(addr, have_addr, count, modif)
 	if (have_addr) 
 		pcb = (struct pcb*) addr;
 
-	db_printf("pcb@%p sp:%llx pc:%llx cwp:%d pil:%d nsaved:%x onfault:%p\nlastcall:%s\nfull windows:\n",
-		  pcb, (unsigned long long)pcb->pcb_sp,
-		  (unsigned long long)pcb->pcb_pc, pcb->pcb_cwp,
+	db_printf("pcb@%p sp:%p pc:%p cwp:%d pil:%d nsaved:%x onfault:%p\nlastcall:%s\nfull windows:\n",
+		  pcb, pcb->pcb_sp, pcb->pcb_pc, pcb->pcb_cwp,
 		  pcb->pcb_pil, pcb->pcb_nsaved, (void *)pcb->pcb_onfault,
 		  (pcb->lastcall)?pcb->lastcall:"Null");
 	
@@ -851,10 +858,13 @@ db_uvmhistdump(addr, have_addr, count, modif)
 	uvmhist_dump(uvm_histories.lh_first);
 }
 
+extern void db_esp(db_expr_t, int, db_expr_t, char*);
+
 struct db_command sparc_db_command_table[] = {
 	{ "ctx",	db_ctx_cmd,	0,	0 },
 	{ "dtlb",	db_dump_dtlb,	0,	0 },
 	{ "dtsb",	db_dump_dtsb,	0,	0 },
+	{ "esp",	db_esp,		0,	0 },
 	{ "kmap",	db_pmap_kernel,	0,	0 },
 	{ "lock",	db_lock,	0,	0 },
 	{ "pcb",	db_dump_pcb,	0,	0 },
