@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_parse.y,v 1.9 2003/06/27 03:40:44 itojun Exp $	*/
+/*	$NetBSD: policy_parse.y,v 1.10 2003/07/22 03:32:58 itojun Exp $	*/
 /*	$KAME: policy_parse.y,v 1.14 2003/06/27 03:39:20 itojun Exp $	*/
 
 /*
@@ -90,7 +90,6 @@ extern int yyparse __P((void));
 extern int yylex __P((void));
 
 extern char *__libyytext;	/*XXX*/
-
 
 %}
 
@@ -308,7 +307,8 @@ init_x_policy()
 	p->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
 	p->sadb_x_policy_type = p_type;
 	p->sadb_x_policy_dir = p_dir;
-	p->sadb_x_policy_reserved = 0;
+	p->sadb_x_policy_id = 0;
+
 	offset = tlen;
 
 	__ipsec_errcode = EIPSEC_NO_ERROR;
