@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.88 2000/06/09 06:07:02 soda Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.89 2000/06/15 23:39:14 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.88 2000/06/09 06:07:02 soda Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.89 2000/06/15 23:39:14 cgd Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -421,7 +421,7 @@ mips_vector_init()
 #endif /* MIPS3 */
 
 	default:
-		printf("CPU type (%d) not supported\n", cpu_id.cpu.cp_imp);
+		printf("CPU type (0x%x) not supported\n", cpu_id.cpuprid);
 		cpu_reboot(RB_HALT, NULL);
 	}
 
@@ -544,9 +544,9 @@ cpu_identify()
 		fpuname = "built-in FPU";
 
 	if (cpuname != NULL)
-		printf(cpuname);
+		printf("%s (0x%x)", cpuname, cpu_id.cpuprid);
 	else
-		printf("unknown CPU type (0x%x)", cpu_id.cpu.cp_imp);
+		printf("unknown CPU type (0x%x)", cpu_id.cpuprid);
 	printf(" Rev. %d.%d", cpu_id.cpu.cp_majrev, cpu_id.cpu.cp_minrev);
 
 	if (fpuname != NULL)
