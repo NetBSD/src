@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.36 1996/10/20 21:59:36 thorpej Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.37 1997/03/08 23:46:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$NetBSD: disklabel.c,v 1.36 1996/10/20 21:59:36 thorpej Exp $";
+static char rcsid[] = "$NetBSD: disklabel.c,v 1.37 1997/03/08 23:46:10 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,7 @@ static char rcsid[] = "$NetBSD: disklabel.c,v 1.36 1996/10/20 21:59:36 thorpej E
 #include <stdlib.h>
 #include <unistd.h>
 #include "pathnames.h"
+#include "extern.h"
 
 /*
  * Disklabel: read and write disklabels.
@@ -103,7 +104,7 @@ static char	tmpfil[] = _PATH_TMP;
 
 static char	namebuf[BBSIZE], *np = namebuf;
 static struct	disklabel lab;
-static char	bootarea[BBSIZE];
+char	bootarea[BBSIZE];
 
 
 #if NUMBOOT > 0
@@ -117,7 +118,7 @@ static char	boot1[MAXPATHLEN];
 #endif
 
 static enum	{
-	UNSPEC, EDIT, READ, RESTORE, SETWRITEABLE, WRITE, WRITEBOOT
+	UNSPEC, EDIT, READ, RESTORE, SETWRITEABLE, WRITE, WRITEBOOT, INTERACT
 } op = UNSPEC;
 
 static int	rflag;
@@ -126,9 +127,9 @@ static int	Cflag;
 
 #ifdef DEBUG
 static int	debug;
-#define OPTIONS	"BCNRWb:ders:tw"
+#define OPTIONS	"BCNRWb:deirs:tw"
 #else
-#define OPTIONS	"BCNRWb:ers:tw"
+#define OPTIONS	"BCNRWb:eirs:tw"
 #endif
 
 #ifdef __i386__
@@ -141,20 +142,16 @@ extern u_short dkcksum __P((struct disklabel *));
 
 static void makedisktab __P((FILE *, struct disklabel *));
 static void makelabel __P((char *, char *, struct disklabel *));
-static int writelabel __P((int, char *, struct disklabel *));
 static void l_perror __P((char *));
 static struct disklabel *readlabel __P((int));
 static struct disklabel *makebootarea __P((char *, struct disklabel *, int));
-static void display __P((FILE *, struct disklabel *));
 static int edit __P((struct disklabel *, int));
 static int editit __P((void));
 static char *skip __P((char *));
 static char *word __P((char *));
 static int getasciilabel __P((FILE *, struct disklabel *));
-static int checklabel __P((struct disklabel *));
 static void setbootflag __P((struct disklabel *));
 static void usage __P((void));
-
 
 int
 main(argc, argv)
@@ -204,6 +201,11 @@ main(argc, argv)
 			if (op != UNSPEC)
 				usage();
 			op = EDIT;
+			break;
+		case 'i':
+			if (op != UNSPEC)
+				usage();
+			op = INTERACT;
 			break;
 		case 't':
 			++tflag;
@@ -280,6 +282,20 @@ main(argc, argv)
 			usage();
 		lp = readlabel(f);
 		error = edit(lp, f);
+		break;
+
+	case INTERACT:
+		if (argc != 1)
+			usage();
+		lp = readlabel(f);
+		/*
+		 * XXX: Fill some default values so checklabel does not fail
+		 */
+		if (lp->d_bbsize == 0)
+			lp->d_bbsize = BBSIZE;
+		if (lp->d_sbsize == 0)
+			lp->d_sbsize = SBSIZE;
+		interact(lp, f);
 		break;
 
 	case READ:
@@ -393,7 +409,7 @@ makelabel(type, name, lp)
 		(void)strncpy(lp->d_packname, name, sizeof(lp->d_packname));
 }
 
-static int
+int
 writelabel(f, boot, lp)
 	int f;
 	char *boot;
@@ -874,7 +890,7 @@ makedisktab(f, lp)
 	(void) fflush(f);
 }
 
-static void
+void
 display(f, lp)
 	FILE *f;
 	struct disklabel *lp;
@@ -1416,7 +1432,7 @@ getasciilabel(f, lp)
  * Check disklabel for errors and fill in
  * derived fields according to supplied values.
  */
-static int
+int
 checklabel(lp)
 	struct disklabel *lp;
 {
@@ -1584,6 +1600,8 @@ usage()
 	    "(to write label)" },
 	{ "%s -e [-r] disk",
 	    "(to edit label)" },
+	{ "%s -i [-r] disk",
+	    "(to create a label interactively)" },
 	{ "%s -R [-r] disk protofile",
 	    "(to restore label)" },
 #endif
