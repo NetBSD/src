@@ -33,7 +33,7 @@
  *	@(#)externs.h	8.3 (Berkeley) 5/30/95
  */
 
-/* $Id: externs.h,v 1.1.1.3 2001/02/11 13:51:14 assar Exp $ */
+/* $Id: externs.h,v 1.1.1.4 2001/06/19 22:07:41 assar Exp $ */
 
 #ifndef	BSD
 # define BSD 43
@@ -223,7 +223,7 @@ int 	EncryptStatus (void);
 #endif
 
 #ifdef SIGINFO
-void ayt_status(int);
+RETSIGTYPE ayt_status(int);
 #endif
 int tn(int argc, char **argv);
 void command(int top, char *tbuf, int cnt);
@@ -428,3 +428,8 @@ extern Ring
     ttyoring,
     ttyiring;
 
+extern int resettermname;
+extern int linemode;
+#ifdef KLUDGELINEMODE
+extern int kludgelinemode;
+#endif
