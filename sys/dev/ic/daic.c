@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.14 2003/04/06 18:20:12 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.15 2003/10/07 19:02:36 martin Exp $");
 
 /*
  * daic.c: MI driver for Diehl active ISDN cards (S, SX, SXn, SCOM, QUADRO)
@@ -700,8 +700,8 @@ daic_register_port(struct daic_softc *sc, int port)
 	else
 		strcpy(devname, sc->sc_dev.dv_xname);
 	sprintf(cardname, "EICON.Diehl %s", cardtypename(sc->sc_cardtype));
-	l3drv = isdn_attach_bri(
-	    devname, cardname, &sc->sc_port[port], &daic_l3_functions);
+	l3drv = isdn_attach_isdnif(
+	    devname, cardname, &sc->sc_port[port], &daic_l3_functions, 2);
 	sc->sc_port[port].du_l3 = l3drv;
 
 	/* initialize linktabs for this port */
@@ -714,7 +714,7 @@ daic_register_port(struct daic_softc *sc, int port)
 	}
 	TAILQ_INIT(&sc->sc_outcalls[port]);
 
-	isdn_bri_ready(l3drv->bri);
+	isdn_isdnif_ready(l3drv->isdnif);
 }
 
 /*---------------------------------------------------------------------------*
