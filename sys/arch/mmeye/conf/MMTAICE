@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAICE,v 1.23 2003/10/18 08:30:14 lukem Exp $
+#	$NetBSD: MMTAICE,v 1.23.2.1 2004/07/15 20:22:46 he Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -68,6 +68,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
