@@ -1,4 +1,4 @@
-/*	$NetBSD: print-hsrp.c,v 1.1.1.1 2002/02/18 09:08:03 itojun Exp $	*/
+/*	$NetBSD: print-hsrp.c,v 1.2 2002/04/09 02:53:20 thorpej Exp $	*/
 
 /*
  * Copyright (C) 2001 Julian Cowley
@@ -31,9 +31,14 @@
 
 /* Cisco Hot Standby Router Protocol (HSRP). */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-hsrp.c,v 1.2 2001/10/08 16:12:37 fenner Exp";
+#else
+__RCSID("$NetBSD: print-hsrp.c,v 1.2 2002/04/09 02:53:20 thorpej Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H
