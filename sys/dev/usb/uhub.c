@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.7 1998/12/02 17:20:20 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.8 1998/12/08 15:48:18 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@
 #define DPRINTF(x)	if (usbdebug) printf x
 #define DPRINTFN(n,x)	if (usbdebug>(n)) printf x
 extern int	usbdebug;
+extern char 	*usbd_error_strs[];
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -132,10 +133,10 @@ uhub_attach(parent, self, aux)
 	usbd_devinfo(dev, 1, devinfo);
 	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfo);
 
-	r = usbd_set_config_no(dev, 0, 1);
+	r = usbd_set_config_index(dev, 0, 1);
 	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: configuration failed, error=%d\n",
-		       sc->sc_dev.dv_xname, r);
+		printf("%s: configuration failed, error=%d(%s)\n",
+		       sc->sc_dev.dv_xname, r, usbd_error_strs[r]);
 		return;
 	}
 
@@ -155,8 +156,8 @@ uhub_attach(parent, self, aux)
 	/* XXX not correct for hubs with >7 ports */
 	r = usbd_do_request(dev, &req, &hubdesc);
 	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: getting hub descriptor failed, error=%d\n",
-		       sc->sc_dev.dv_xname, r);
+		printf("%s: getting hub descriptor failed, error=%d(%s)\n",
+		       sc->sc_dev.dv_xname, r, usbd_error_strs[r]);
 		return;
 	}
 
@@ -234,6 +235,11 @@ uhub_init_port(port, uport, dev)
 		 port, pstatus, UGETW(uport->status.wPortChange)));
 	if ((pstatus & UPS_PORT_POWER) == 0) {
 		/* Port lacks power, turn it on */
+#if 0
+		/* First let the device go through a good power cycle, */
+		usbd_delay_ms(dev->bus, USB_POWER_DOWN_TIME);
+#endif
+		/* then turn the power on. */
 		r = usbd_set_port_feature(dev, port, UHF_PORT_POWER);
 		if (r != USBD_NORMAL_COMPLETION)
 			return (r);
@@ -280,8 +286,8 @@ uhub_explore(parent, dev)
 		up = &dev->hub->ports[port-1];
 		r = usbd_get_port_status(dev, port, &up->status);
 		if (r != USBD_NORMAL_COMPLETION) {
-			DPRINTF(("uhub_explore: get port status failed, error=%d\n",
-				 r));
+			DPRINTF(("uhub_explore: get port status failed, error=%d(%s)\n",
+				 r, usbd_error_strs[r]));
 			continue;
 		}
 		status = UGETW(up->status.wPortStatus);
@@ -333,7 +339,7 @@ uhub_explore(parent, dev)
 				    port, up);
 		/* XXX retry a few times? */
 		if (r != USBD_NORMAL_COMPLETION) {
-			DPRINTFN(-1,("uhub_explore: usb_new_device failed, error=%d\n", r));
+			DPRINTFN(-1,("uhub_explore: usb_new_device failed, error=%d(%s)\n", r, usbd_error_strs[r]));
 			/* Avoid addressing problems by disabling. */
 			/* usbd_reset_port(dev, port, &up->status); */
 /* XXX
@@ -347,7 +353,7 @@ uhub_explore(parent, dev)
 				 * address, and since we cannot leave
 				 * at 0 we have to disable the port
 				 * instead. */
-				printf("%s: device problem, disable port %d\n",
+				printf("%s: device problem, disabling port %d\n",
 				       parent->dv_xname, port);
 				usbd_clear_port_feature(dev, port, 
 							UHF_PORT_ENABLE);
