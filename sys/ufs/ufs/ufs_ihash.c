@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ihash.c,v 1.3 1996/02/09 22:36:04 christos Exp $	*/
+/*	$NetBSD: ufs_ihash.c,v 1.4 1997/07/06 12:43:44 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -40,6 +40,7 @@
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/lock.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -52,13 +53,15 @@ struct inode **ihashtbl;
 u_long	ihash;		/* size of hash table - 1 */
 #define	INOHASH(device, inum)	(((device) + (inum)) & ihash)
 
+struct lock ufs_hashlock;
+
 /*
  * Initialize inode hash table.
  */
 void
 ufs_ihashinit()
 {
-
+	lockinit(&ufs_hashlock, PINOD, "ffs_hashlock", 0, 0);
 	ihashtbl = hashinit(desiredvnodes, M_UFSMNT, &ihash);
 }
 
