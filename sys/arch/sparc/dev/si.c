@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.59 2000/06/15 14:42:32 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.60 2000/06/18 19:19:53 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -178,7 +178,6 @@ struct si_softc {
 	struct ncr5380_softc	ncr_sc;
 	bus_space_tag_t	sc_bustag;		/* bus tags */
 	bus_dma_tag_t	sc_dmatag;
-	volatile struct si_regs	*sc_regs;
 	int		sc_adapter_type;
 #define BOARD_ID_SI	0
 #define BOARD_ID_SW	1
@@ -243,6 +242,16 @@ void si_obio_dma_stop __P((struct ncr5380_softc *));
 
 void si_obio_intr_on __P((struct ncr5380_softc *));
 void si_obio_intr_off __P((struct ncr5380_softc *));
+
+/* Shorthand bus space access */
+#define SIREG_READ(sc, index) \
+	bus_space_read_2((sc)->sc_regt, (sc)->sc_regh, index)
+#define SIREG_WRITE(sc, index, v) \
+	bus_space_write_2((sc)->sc_regt, (sc)->sc_regh, index, v)
+#define SWREG_READ(sc, index) \
+	bus_space_read_4((sc)->sc_regt, (sc)->sc_regh, index)
+#define SWREG_WRITE(sc, index, v) \
+	bus_space_write_4((sc)->sc_regt, (sc)->sc_regh, index, v)
 
 
 /* The Sun SCSI-3 VME controller. */
@@ -331,11 +340,12 @@ si_attach(parent, self, aux)
 
 	mod = 0x3d; /* VME_AM_A24 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA */
 
-	if (vme_space_map(ct, va->r[0].offset, sizeof(struct si_regs),
+	if (vme_space_map(ct, va->r[0].offset, SIREG_BANK_SZ,
 			  mod, VME_D8, 0, &bt, &bh, &resc) != 0)
 		panic("%s: vme_space_map", ncr_sc->sc_dev.dv_xname);
 
-	sc->sc_regs = (struct si_regs *)bh; /* XXX */
+	ncr_sc->sc_regt = bt;
+	ncr_sc->sc_regh = bh;
 
 	sc->sc_options = si_options;
 	sc->sc_adapter_type = BOARD_ID_SI;
@@ -381,13 +391,15 @@ sw_attach(parent, self, aux)
 	/* Map the controller registers. */
 	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
 			 0,
-			 sizeof(struct si_regs),
+			 SWREG_BANK_SZ,
 			 BUS_SPACE_MAP_LINEAR,
 			 0, &bh) != 0) {
 		printf("%s: cannot map registers\n", self->dv_xname);
 		return;
 	}
-	sc->sc_regs = (struct si_regs *)bh;
+
+	ncr_sc->sc_regt = oba->oba_bustag;
+	ncr_sc->sc_regh = bh;
 
 	sc->sc_options = sw_options;
 	sc->sc_adapter_type = BOARD_ID_SW;
@@ -423,7 +435,6 @@ si_attach_common(parent, sc)
 	struct si_softc *sc;
 {
 	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *)sc;
-	volatile struct si_regs *regs;
 	char bits[64];
 	int i;
 
@@ -435,19 +446,19 @@ si_attach_common(parent, sc)
 		sc->sc_options =
 		    (ncr_sc->sc_dev.dv_cfdata->cf_flags & SI_OPTIONS_MASK);
 
-	regs = sc->sc_regs;
-
 	/*
 	 * Initialize fields used by the MI code
 	 */
-	ncr_sc->sci_r0 = &regs->sci.sci_r0;
-	ncr_sc->sci_r1 = &regs->sci.sci_r1;
-	ncr_sc->sci_r2 = &regs->sci.sci_r2;
-	ncr_sc->sci_r3 = &regs->sci.sci_r3;
-	ncr_sc->sci_r4 = &regs->sci.sci_r4;
-	ncr_sc->sci_r5 = &regs->sci.sci_r5;
-	ncr_sc->sci_r6 = &regs->sci.sci_r6;
-	ncr_sc->sci_r7 = &regs->sci.sci_r7;
+
+	/* NCR5380 register bank offsets */
+	ncr_sc->sci_r0 = 0;
+	ncr_sc->sci_r1 = 1;
+	ncr_sc->sci_r2 = 2;
+	ncr_sc->sci_r3 = 3;
+	ncr_sc->sci_r4 = 4;
+	ncr_sc->sci_r5 = 5;
+	ncr_sc->sci_r6 = 6;
+	ncr_sc->sci_r7 = 7;
 
 	ncr_sc->sc_rev = NCR_VARIANT_NCR5380;
 
@@ -499,8 +510,6 @@ si_attach_common(parent, sc)
 			    bits, sizeof(bits)));
 	}
 #ifdef	DEBUG
-	if (si_debug)
-		printf("si: Set TheSoftC=%p TheRegs=%p\n", sc, regs);
 	ncr_sc->sc_link.flags |= si_link_flags;
 #endif
 
@@ -536,7 +545,7 @@ static int
 si_intr(void *arg)
 {
 	struct si_softc *sc = arg;
-	volatile struct si_regs *si = sc->sc_regs;
+	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *)arg;
 	int dma_error, claimed;
 	u_short csr;
 
@@ -545,9 +554,10 @@ si_intr(void *arg)
 
 	/* SBC interrupt? DMA interrupt? */
 	if (sc->sc_adapter_type == BOARD_ID_SW)
-		csr = si->sw_csr;
+		csr = SWREG_READ(ncr_sc, SWREG_CSR);
 	else
-		csr = si->si_csr;
+		csr = SIREG_READ(ncr_sc, SIREG_CSR);
+
 	NCR_TRACE("si_intr: csr=0x%x\n", csr);
 
 	if (csr & SI_CSR_DMA_CONFLICT) {
@@ -585,7 +595,6 @@ static void
 si_reset_adapter(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
-	volatile struct si_regs *si = sc->sc_regs;
 
 #ifdef	DEBUG
 	if (si_debug) {
@@ -599,17 +608,19 @@ si_reset_adapter(struct ncr5380_softc *ncr_sc)
 	 *
 	 * The reset bits in the CSR are active low.
 	 */
-	si->si_csr = 0;
+	SIREG_WRITE(ncr_sc, SIREG_CSR, 0);
 	delay(10);
-	si->si_csr = SI_CSR_FIFO_RES | SI_CSR_SCSI_RES | SI_CSR_INTR_EN;
+	SIREG_WRITE(ncr_sc, SIREG_CSR,
+			SI_CSR_FIFO_RES | SI_CSR_SCSI_RES | SI_CSR_INTR_EN);
 	delay(10);
-	si->fifo_count = 0;
-	si->dma_addrh = 0;
-	si->dma_addrl = 0;
-	si->dma_counth = 0;
-	si->dma_countl = 0;
-	si->si_iv_am = sc->sc_adapter_iv_am;
-	si->fifo_cnt_hi = 0;
+
+	SIREG_WRITE(ncr_sc, SIREG_FIFO_CNT, 0);
+	SIREG_WRITE(ncr_sc, SIREG_DMA_ADDRH, 0);
+	SIREG_WRITE(ncr_sc, SIREG_DMA_ADDRL, 0);
+	SIREG_WRITE(ncr_sc, SIREG_DMA_CNTH, 0);
+	SIREG_WRITE(ncr_sc, SIREG_DMA_CNTL, 0);
+	SIREG_WRITE(ncr_sc, SIREG_IV_AM, sc->sc_adapter_iv_am);
+	SIREG_WRITE(ncr_sc, SIREG_FIFO_CNTH, 0);
 
 	SCI_CLR_INTR(ncr_sc);
 }
@@ -617,8 +628,6 @@ si_reset_adapter(struct ncr5380_softc *ncr_sc)
 static void
 sw_reset_adapter(struct ncr5380_softc *ncr_sc)
 {
-	struct si_softc *sc = (struct si_softc *)ncr_sc;
-	volatile struct si_regs *si = sc->sc_regs;
 
 #ifdef	DEBUG
 	if (si_debug) {
@@ -629,13 +638,14 @@ sw_reset_adapter(struct ncr5380_softc *ncr_sc)
 	/*
 	 * The reset bits in the CSR are active low.
 	 */
-	si->sw_csr = 0;
+	SWREG_WRITE(ncr_sc, SWREG_CSR, 0);
 	delay(10);
-	si->sw_csr = SI_CSR_SCSI_RES;
-	si->dma_addr = 0;
-	si->dma_count = 0;
+	SWREG_WRITE(ncr_sc, SWREG_CSR, SI_CSR_SCSI_RES);
+
+	SWREG_WRITE(ncr_sc, SWREG_DMA_ADDR, 0);
+	SWREG_WRITE(ncr_sc, SWREG_DMA_CNT, 0);
 	delay(10);
-	si->sw_csr |= SI_CSR_INTR_EN;
+	SWREG_WRITE(ncr_sc, SWREG_CSR, SI_CSR_SCSI_RES | SI_CSR_INTR_EN);
 
 	SCI_CLR_INTR(ncr_sc);
 }
@@ -771,7 +781,6 @@ si_dma_poll(ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
-	volatile struct si_regs *si = sc->sc_regs;
 	int tmo, csr_mask, csr;
 
 	/* Make sure DMA started successfully. */
@@ -784,9 +793,9 @@ si_dma_poll(ncr_sc)
 	tmo = 50000;	/* X100 = 5 sec. */
 	for (;;) {
 		if (sc->sc_adapter_type == BOARD_ID_SW)
-			csr = si->sw_csr;
+			csr = SWREG_READ(ncr_sc, SWREG_CSR);
 		else
-			csr = si->si_csr;
+			csr = SIREG_READ(ncr_sc, SIREG_CSR);
 		if (csr & csr_mask)
 			break;
 		if (--tmo <= 0) {
@@ -823,11 +832,12 @@ void
 si_vme_intr_on(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
-	struct si_softc *sc = (struct si_softc *)ncr_sc;
-	volatile struct si_regs *si = sc->sc_regs;
+	u_int16_t csr;
 
 	si_vme_dma_setup(ncr_sc);
-	si->si_csr |= SI_CSR_DMA_EN;
+	csr = SIREG_READ(ncr_sc, SIREG_CSR);
+	csr |= SI_CSR_DMA_EN;
+	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
 }
 
 /*
@@ -838,10 +848,11 @@ void
 si_vme_intr_off(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
-	struct si_softc *sc = (struct si_softc *)ncr_sc;
-	volatile struct si_regs *si = sc->sc_regs;
+	u_int16_t csr;
 
-	si->si_csr &= ~SI_CSR_DMA_EN;
+	csr = SIREG_READ(ncr_sc, SIREG_CSR);
+	csr &= ~SI_CSR_DMA_EN;
+	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
 }
 
 /*
@@ -860,27 +871,32 @@ void
 si_vme_dma_setup(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
-	struct si_softc *sc = (struct si_softc *)ncr_sc;
-	volatile struct si_regs *si = sc->sc_regs;
+	u_int16_t csr;
+
+	csr = SIREG_READ(ncr_sc, SIREG_CSR);
 
 	/* Reset the FIFO */
-	si->si_csr &= ~SI_CSR_FIFO_RES;		/* active low */
-	si->si_csr |= SI_CSR_FIFO_RES;
+	csr &= ~SI_CSR_FIFO_RES;		/* active low */
+	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
+	csr |= SI_CSR_FIFO_RES;
+	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
 
 	/* Set direction (assume recv here) */
-	si->si_csr &= ~SI_CSR_SEND;
+	csr &= ~SI_CSR_SEND;
+	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
 	/* Assume worst alignment */
-	si->si_csr |= SI_CSR_BPCON;
+	csr |= SI_CSR_BPCON;
+	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
 
-	si->dma_addrh = 0;
-	si->dma_addrl = 0;
+	SIREG_WRITE(ncr_sc, SIREG_DMA_ADDRH, 0);
+	SIREG_WRITE(ncr_sc, SIREG_DMA_ADDRL, 0);
 
-	si->dma_counth = 0;
-	si->dma_countl = 0;
+	SIREG_WRITE(ncr_sc, SIREG_DMA_CNTH, 0);
+	SIREG_WRITE(ncr_sc, SIREG_DMA_CNTL, 0);
 
 	/* Clear FIFO counter. (also hits dma_count) */
-	si->fifo_cnt_hi = 0;
-	si->fifo_count = 0;
+	SIREG_WRITE(ncr_sc, SIREG_FIFO_CNTH, 0);
+	SIREG_WRITE(ncr_sc, SIREG_FIFO_CNT, 0);
 }
 
 
@@ -891,9 +907,10 @@ si_vme_dma_start(ncr_sc)
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct si_dma_handle *dh = sr->sr_dma_hand;
-	volatile struct si_regs *si = sc->sc_regs;
 	u_long data_pa;
 	int xlen;
+	u_int mode;
+	u_int16_t csr;
 
 	/*
 	 * Get the DVMA mapping for this segment.
@@ -916,32 +933,37 @@ si_vme_dma_start(ncr_sc)
 	 * Set up the DMA controller.
 	 * Note that (dh->dh_len < sc_datalen)
 	 */
-	si->si_csr &= ~SI_CSR_FIFO_RES;		/* active low */
-	si->si_csr |= SI_CSR_FIFO_RES;
+	csr = SIREG_READ(ncr_sc, SIREG_CSR);
+	csr &= ~SI_CSR_FIFO_RES;		/* active low */
+	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
+	csr |= SI_CSR_FIFO_RES;
+	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
 
 	/* Set direction (send/recv) */
 	if (dh->dh_flags & SIDH_OUT) {
-		si->si_csr |= SI_CSR_SEND;
+		csr |= SI_CSR_SEND;
 	} else {
-		si->si_csr &= ~SI_CSR_SEND;
+		csr &= ~SI_CSR_SEND;
 	}
+	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
 
 	if (data_pa & 2) {
-		si->si_csr |= SI_CSR_BPCON;
+		csr |= SI_CSR_BPCON;
 	} else {
-		si->si_csr &= ~SI_CSR_BPCON;
+		csr &= ~SI_CSR_BPCON;
 	}
+	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
 
-	si->dma_addrh = (u_short)(data_pa >> 16);
-	si->dma_addrl = (u_short)(data_pa & 0xFFFF);
+	SIREG_WRITE(ncr_sc, SIREG_DMA_ADDRH, (u_int16_t)(data_pa >> 16));
+	SIREG_WRITE(ncr_sc, SIREG_DMA_ADDRL, (u_int16_t)(data_pa & 0xFFFF));
 
-	si->dma_counth = (u_short)(xlen >> 16);
-	si->dma_countl = (u_short)(xlen & 0xFFFF);
+	SIREG_WRITE(ncr_sc, SIREG_DMA_CNTH, (u_int16_t)(xlen >> 16));
+	SIREG_WRITE(ncr_sc, SIREG_DMA_CNTL, (u_int16_t)(xlen & 0xFFFF));
 
 #if 1
 	/* Set it anyway, even though dma_count hits it? */
-	si->fifo_cnt_hi = (u_short)(xlen >> 16);
-	si->fifo_count  = (u_short)(xlen & 0xFFFF);
+	SIREG_WRITE(ncr_sc, SIREG_FIFO_CNTH, (u_int16_t)(xlen >> 16));
+	SIREG_WRITE(ncr_sc, SIREG_FIFO_CNT, (u_int16_t)(xlen & 0xFFFF));
 #endif
 
 	/*
@@ -949,21 +971,30 @@ si_vme_dma_start(ncr_sc)
 	 * Put the SBIC into DMA mode, and start the transfer.
 	 */
 	if (dh->dh_flags & SIDH_OUT) {
-		*ncr_sc->sci_tcmd = PHASE_DATA_OUT;
+		NCR5380_WRITE(ncr_sc, sci_tcmd, PHASE_DATA_OUT);
 		SCI_CLR_INTR(ncr_sc);
-		*ncr_sc->sci_icmd = SCI_ICMD_DATA;
-		*ncr_sc->sci_mode |= (SCI_MODE_DMA | SCI_MODE_DMA_IE);
-		*ncr_sc->sci_dma_send = 0;	/* start it */
+		NCR5380_WRITE(ncr_sc, sci_icmd, SCI_ICMD_DATA);
+
+		mode = NCR5380_READ(ncr_sc, sci_mode);
+		mode |= (SCI_MODE_DMA | SCI_MODE_DMA_IE);
+		NCR5380_WRITE(ncr_sc, sci_mode, mode);
+
+		NCR5380_WRITE(ncr_sc, sci_dma_send, 0); /* start it */
 	} else {
-		*ncr_sc->sci_tcmd = PHASE_DATA_IN;
+		NCR5380_WRITE(ncr_sc, sci_tcmd, PHASE_DATA_IN);
 		SCI_CLR_INTR(ncr_sc);
-		*ncr_sc->sci_icmd = 0;
-		*ncr_sc->sci_mode |= (SCI_MODE_DMA | SCI_MODE_DMA_IE);
-		*ncr_sc->sci_irecv = 0;		/* start it */
+		NCR5380_WRITE(ncr_sc, sci_icmd, 0);
+
+		mode = NCR5380_READ(ncr_sc, sci_mode);
+		mode |= (SCI_MODE_DMA | SCI_MODE_DMA_IE);
+		NCR5380_WRITE(ncr_sc, sci_mode, mode);
+
+		NCR5380_WRITE(ncr_sc, sci_irecv, 0); /* start it */
 	}
 
 	/* Let'er rip! */
-	si->si_csr |= SI_CSR_DMA_EN;
+	csr |= SI_CSR_DMA_EN;
+	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
 
 	ncr_sc->sc_state |= NCR_DOINGDMA;
 
@@ -992,8 +1023,9 @@ si_vme_dma_stop(ncr_sc)
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct si_dma_handle *dh = sr->sr_dma_hand;
-	volatile struct si_regs *si = sc->sc_regs;
 	int resid, ntrans;
+	u_int16_t csr;
+	u_int mode;
 
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
 #ifdef	DEBUG
@@ -1003,11 +1035,14 @@ si_vme_dma_stop(ncr_sc)
 	}
 	ncr_sc->sc_state &= ~NCR_DOINGDMA;
 
-	/* First, halt the DMA engine. */
-	si->si_csr &= ~SI_CSR_DMA_EN;	/* VME only */
+	csr = SIREG_READ(ncr_sc, SIREG_CSR);
 
-	if (si->si_csr & (SI_CSR_DMA_CONFLICT | SI_CSR_DMA_BUS_ERR)) {
-		printf("si: DMA error, csr=0x%x, reset\n", si->si_csr);
+	/* First, halt the DMA engine. */
+	csr &= ~SI_CSR_DMA_EN;	/* VME only */
+	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
+
+	if (csr & (SI_CSR_DMA_CONFLICT | SI_CSR_DMA_BUS_ERR)) {
+		printf("si: DMA error, csr=0x%x, reset\n", csr);
 		sr->sr_xs->error = XS_DRIVER_STUFFUP;
 		ncr_sc->sc_state |= NCR_ABORTING;
 		si_reset_adapter(ncr_sc);
@@ -1030,7 +1065,7 @@ si_vme_dma_stop(ncr_sc)
 	 * (Thanks to Matt Jacob)
 	 */
 
-	resid = si->fifo_count & 0xFFFF;
+	resid = SIREG_READ(ncr_sc, SIREG_FIFO_CNT) & 0xFFFF;
 	if (dh->dh_flags & SIDH_OUT)
 		if ((resid > 0) && (resid < sc->sc_xlen))
 			resid++;
@@ -1065,46 +1100,52 @@ si_vme_dma_stop(ncr_sc)
 	 * "Left-over bytes" (yuck!)
 	 */
 	if (((dh->dh_flags & SIDH_OUT) == 0) &&
-		((si->si_csr & SI_CSR_LOB) != 0))
+		((csr & SI_CSR_LOB) != 0))
 	{
 		char *cp = ncr_sc->sc_dataptr;
+		u_int16_t bprh, bprl;
 #ifdef DEBUG
 		printf("si: Got Left-over bytes!\n");
 #endif
-		if (si->si_csr & SI_CSR_BPCON) {
+		bprh = SIREG_READ(ncr_sc, SIREG_BPRH);
+		bprl = SIREG_READ(ncr_sc, SIREG_BPRL);
+
+		if (csr & SI_CSR_BPCON) {
 			/* have SI_CSR_BPCON */
-			cp[-1] = (si->si_bprl & 0xff00) >> 8;
+			cp[-1] = (bprl & 0xff00) >> 8;
 		} else {
-			switch (si->si_csr & SI_CSR_LOB) {
+			switch (csr & SI_CSR_LOB) {
 			case SI_CSR_LOB_THREE:
-				cp[-3] = (si->si_bprh & 0xff00) >> 8;
-				cp[-2] = (si->si_bprh & 0x00ff);
-				cp[-1] = (si->si_bprl & 0xff00) >> 8;
+				cp[-3] = (bprh & 0xff00) >> 8;
+				cp[-2] = (bprh & 0x00ff);
+				cp[-1] = (bprl & 0xff00) >> 8;
 				break;
 			case SI_CSR_LOB_TWO:
-				cp[-2] = (si->si_bprh & 0xff00) >> 8;
-				cp[-1] = (si->si_bprh & 0x00ff);
+				cp[-2] = (bprh & 0xff00) >> 8;
+				cp[-1] = (bprh & 0x00ff);
 				break;
 			case SI_CSR_LOB_ONE:
-				cp[-1] = (si->si_bprh & 0xff00) >> 8;
+				cp[-1] = (bprh & 0xff00) >> 8;
 				break;
 			}
 		}
 	}
 
 out:
-	si->dma_addrh = 0;
-	si->dma_addrl = 0;
+	SIREG_WRITE(ncr_sc, SIREG_DMA_ADDRH, 0);
+	SIREG_WRITE(ncr_sc, SIREG_DMA_ADDRL, 0);
 
-	si->dma_counth = 0;
-	si->dma_countl = 0;
+	SIREG_WRITE(ncr_sc, SIREG_DMA_CNTH, 0);
+	SIREG_WRITE(ncr_sc, SIREG_DMA_CNTL, 0);
 
-	si->fifo_cnt_hi = 0;
-	si->fifo_count  = 0;
+	SIREG_WRITE(ncr_sc, SIREG_FIFO_CNTH, 0);
+	SIREG_WRITE(ncr_sc, SIREG_FIFO_CNT, 0);
 
+	mode = NCR5380_READ(ncr_sc, sci_mode);
 	/* Put SBIC back in PIO mode. */
-	*ncr_sc->sci_mode &= ~(SCI_MODE_DMA | SCI_MODE_DMA_IE);
-	*ncr_sc->sci_icmd = 0;
+	mode &= ~(SCI_MODE_DMA | SCI_MODE_DMA_IE);
+	NCR5380_WRITE(ncr_sc, sci_mode, mode);
+	NCR5380_WRITE(ncr_sc, sci_icmd, 0);
 }
 
 
@@ -1126,11 +1167,12 @@ void
 si_obio_intr_on(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
-	struct si_softc *sc = (struct si_softc *)ncr_sc;
-	volatile struct si_regs *si = sc->sc_regs;
+	u_int32_t csr;
 
 	si_obio_dma_setup(ncr_sc);
-	si->sw_csr |= SI_CSR_DMA_EN;
+	csr = SWREG_READ(ncr_sc, SWREG_CSR);
+	csr |= SI_CSR_DMA_EN;
+	SWREG_WRITE(ncr_sc, SWREG_CSR, csr);
 }
 
 /*
@@ -1143,10 +1185,11 @@ void
 si_obio_intr_off(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
-	struct si_softc *sc = (struct si_softc *)ncr_sc;
-	volatile struct si_regs *si = sc->sc_regs;
+	u_int32_t csr;
 
-	si->sw_csr &= ~SI_CSR_DMA_EN;
+	csr = SWREG_READ(ncr_sc, SWREG_CSR);
+	csr &= ~SI_CSR_DMA_EN;
+	SWREG_WRITE(ncr_sc, SWREG_CSR, csr);
 }
 
 
@@ -1163,16 +1206,17 @@ void
 si_obio_dma_setup(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
-	struct si_softc *sc = (struct si_softc *)ncr_sc;
-	volatile struct si_regs *si = sc->sc_regs;
+	u_int32_t csr;
 
 	/* No FIFO to reset on "sw". */
 
 	/* Set direction (assume recv here) */
-	si->sw_csr &= ~SI_CSR_SEND;
+	csr = SWREG_READ(ncr_sc, SWREG_CSR);
+	csr &= ~SI_CSR_SEND;
+	SWREG_WRITE(ncr_sc, SWREG_CSR, csr);
 
-	si->dma_addr = 0;
-	si->dma_count = 0;
+	SWREG_WRITE(ncr_sc, SWREG_DMA_ADDR, 0);
+	SWREG_WRITE(ncr_sc, SWREG_DMA_CNT, 0);
 }
 
 
@@ -1183,9 +1227,10 @@ si_obio_dma_start(ncr_sc)
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct si_dma_handle *dh = sr->sr_dma_hand;
-	volatile struct si_regs *si = sc->sc_regs;
 	u_long data_pa;
 	int xlen, adj, adjlen;
+	u_int mode;
+	u_int32_t csr;
 
 	/*
 	 * Get the DVMA mapping for this segment.
@@ -1210,11 +1255,13 @@ si_obio_dma_start(ncr_sc)
 	 */
 
 	/* Set direction (send/recv) */
+	csr = SWREG_READ(ncr_sc, SWREG_CSR);
 	if (dh->dh_flags & SIDH_OUT) {
-		si->sw_csr |= SI_CSR_SEND;
+		csr |= SI_CSR_SEND;
 	} else {
-		si->sw_csr &= ~SI_CSR_SEND;
+		csr &= ~SI_CSR_SEND;
 	}
+	SWREG_WRITE(ncr_sc, SWREG_CSR, csr);
 
 	/*
 	 * The "sw" needs longword aligned transfers.  We
@@ -1233,15 +1280,15 @@ si_obio_dma_start(ncr_sc)
 
 	/* We have to frob the address on the "sw". */
 	dh->dh_startingpa = (data_pa | 0xF00000);
-	si->dma_addr = (int)(dh->dh_startingpa + adj);
-	si->dma_count = (xlen - adj);
+	SWREG_WRITE(ncr_sc, SWREG_DMA_ADDR, (u_int)(dh->dh_startingpa + adj));
+	SWREG_WRITE(ncr_sc, SWREG_DMA_CNT, xlen - adj);
 
 	/*
 	 * Acknowledge the phase change.  (After DMA setup!)
 	 * Put the SBIC into DMA mode, and start the transfer.
 	 */
 	if (dh->dh_flags & SIDH_OUT) {
-		*ncr_sc->sci_tcmd = PHASE_DATA_OUT;
+		NCR5380_WRITE(ncr_sc, sci_tcmd, PHASE_DATA_OUT);
 		if (adj) {
 			adjlen = ncr5380_pio_out(ncr_sc, PHASE_DATA_OUT,
 			    adj, dh->dh_addr);
@@ -1250,11 +1297,13 @@ si_obio_dma_start(ncr_sc)
 				    ncr_sc->sc_dev.dv_xname, adjlen, adj);
 		}
 		SCI_CLR_INTR(ncr_sc);
-		*ncr_sc->sci_icmd = SCI_ICMD_DATA;
-		*ncr_sc->sci_mode |= (SCI_MODE_DMA | SCI_MODE_DMA_IE);
-		*ncr_sc->sci_dma_send = 0;	/* start it */
+		NCR5380_WRITE(ncr_sc, sci_icmd, SCI_ICMD_DATA);
+		mode = NCR5380_READ(ncr_sc, sci_mode);
+		mode |= (SCI_MODE_DMA | SCI_MODE_DMA_IE);
+		NCR5380_WRITE(ncr_sc, sci_mode, mode);
+		NCR5380_WRITE(ncr_sc, sci_dma_send, 0); 	/* start it */
 	} else {
-		*ncr_sc->sci_tcmd = PHASE_DATA_IN;
+		NCR5380_WRITE(ncr_sc, sci_tcmd, PHASE_DATA_IN);
 		if (adj) {
 			adjlen = ncr5380_pio_in(ncr_sc, PHASE_DATA_IN,
 			    adj, dh->dh_addr);
@@ -1263,13 +1312,16 @@ si_obio_dma_start(ncr_sc)
 				    ncr_sc->sc_dev.dv_xname, adjlen, adj);
 		}
 		SCI_CLR_INTR(ncr_sc);
-		*ncr_sc->sci_icmd = 0;
-		*ncr_sc->sci_mode |= (SCI_MODE_DMA | SCI_MODE_DMA_IE);
-		*ncr_sc->sci_irecv = 0;		/* start it */
+		NCR5380_WRITE(ncr_sc, sci_icmd, 0);
+		mode = NCR5380_READ(ncr_sc, sci_mode);
+		mode |= (SCI_MODE_DMA | SCI_MODE_DMA_IE);
+		NCR5380_WRITE(ncr_sc, sci_mode, mode);
+		NCR5380_WRITE(ncr_sc, sci_irecv, 0); 	/* start it */
 	}
 
 	/* Let'er rip! */
-	si->sw_csr |= SI_CSR_DMA_EN;
+	csr |= SI_CSR_DMA_EN;
+	SWREG_WRITE(ncr_sc, SWREG_CSR, csr);
 
 	ncr_sc->sc_state |= NCR_DOINGDMA;
 
@@ -1308,11 +1360,11 @@ void
 si_obio_dma_stop(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
-	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct si_dma_handle *dh = sr->sr_dma_hand;
-	volatile struct si_regs *si = sc->sc_regs;
-	int ntrans = 0, Dma_addr;
+	int ntrans = 0, dma_addr;
+	u_int mode;
+	u_int32_t csr;
 
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
 #ifdef	DEBUG
@@ -1323,7 +1375,9 @@ si_obio_dma_stop(ncr_sc)
 	ncr_sc->sc_state &= ~NCR_DOINGDMA;
 
 	/* First, halt the DMA engine. */
-	si->sw_csr &= ~SI_CSR_DMA_EN;
+	csr = SWREG_READ(ncr_sc, SWREG_CSR);
+	csr &= ~SI_CSR_DMA_EN;
+	SWREG_WRITE(ncr_sc, SWREG_CSR, csr);
 
 	/*
 	 * XXX HARDWARE BUG!
@@ -1338,11 +1392,11 @@ si_obio_dma_stop(ncr_sc)
 	 * in the VME controller.)
 	 */
 #if 0
-	if (si->sw_csr & (SI_CSR_DMA_CONFLICT | SI_CSR_DMA_BUS_ERR)) {
+	if (csr & (SI_CSR_DMA_CONFLICT | SI_CSR_DMA_BUS_ERR)) {
 #else
-	if (si->sw_csr & (SI_CSR_DMA_CONFLICT)) {
+	if (csr & (SI_CSR_DMA_CONFLICT)) {
 #endif
-		printf("sw: DMA error, csr=0x%x, reset\n", si->sw_csr);
+		printf("sw: DMA error, csr=0x%x, reset\n", csr);
 		sr->sr_xs->error = XS_DRIVER_STUFFUP;
 		ncr_sc->sc_state |= NCR_ABORTING;
 		si_reset_adapter(ncr_sc);
@@ -1360,8 +1414,8 @@ si_obio_dma_stop(ncr_sc)
 	 * and subtract it from the ending PA left in the dma_addr
 	 * register.
 	 */
-	Dma_addr = si->dma_addr;
-	ntrans = (Dma_addr - dh->dh_startingpa);
+	dma_addr = SWREG_READ(ncr_sc, SWREG_DMA_ADDR);
+	ntrans = (dma_addr - dh->dh_startingpa);
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
@@ -1390,27 +1444,30 @@ si_obio_dma_stop(ncr_sc)
 	 */
 	if ((dh->dh_flags & SIDH_OUT) == 0) {
 		char *cp = ncr_sc->sc_dataptr;
+		u_int32_t bpr;
 
-		switch (Dma_addr & 3) {
+		bpr = SWREG_READ(ncr_sc, SWREG_BPR);
+
+		switch (dma_addr & 3) {
 		case 3:
-			cp[0] = (si->sw_bpr & 0xff000000) >> 24;
-			cp[1] = (si->sw_bpr & 0x00ff0000) >> 16;
-			cp[2] = (si->sw_bpr & 0x0000ff00) >> 8;
+			cp[0] = (bpr & 0xff000000) >> 24;
+			cp[1] = (bpr & 0x00ff0000) >> 16;
+			cp[2] = (bpr & 0x0000ff00) >> 8;
 #ifdef COUNT_SW_LEFTOVERS
 			++sw_3_leftover;
 #endif
 			break;
 
 		case 2:
-			cp[0] = (si->sw_bpr & 0xff000000) >> 24;
-			cp[1] = (si->sw_bpr & 0x00ff0000) >> 16;
+			cp[0] = (bpr & 0xff000000) >> 24;
+			cp[1] = (bpr & 0x00ff0000) >> 16;
 #ifdef COUNT_SW_LEFTOVERS
 			++sw_2_leftover;
 #endif
 			break;
 
 		case 1:
-			cp[0] = (si->sw_bpr & 0xff000000) >> 24;
+			cp[0] = (bpr & 0xff000000) >> 24;
 #ifdef COUNT_SW_LEFTOVERS
 			++sw_1_leftover;
 #endif
@@ -1425,12 +1482,14 @@ si_obio_dma_stop(ncr_sc)
 	}
 
  out:
-	si->dma_addr = 0;
-	si->dma_count = 0;
+	SWREG_WRITE(ncr_sc, SWREG_DMA_ADDR, 0);
+	SWREG_WRITE(ncr_sc, SWREG_DMA_CNT, 0);
 
 	/* Put SBIC back in PIO mode. */
-	*ncr_sc->sci_mode &= ~(SCI_MODE_DMA | SCI_MODE_DMA_IE);
-	*ncr_sc->sci_icmd = 0;
+	mode = NCR5380_READ(ncr_sc, sci_mode);
+	mode &= ~(SCI_MODE_DMA | SCI_MODE_DMA_IE);
+	NCR5380_WRITE(ncr_sc, sci_mode, mode);
+	NCR5380_WRITE(ncr_sc, sci_icmd, 0);
 
 #ifdef DEBUG
 	if (si_debug & 2) {
