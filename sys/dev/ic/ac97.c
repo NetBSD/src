@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.27 2002/10/06 16:33:35 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.28 2002/10/08 09:19:44 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.27 2002/10/06 16:33:35 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.28 2002/10/08 09:19:44 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,6 +259,7 @@ const struct ac97_source_info {
  */
 
 struct ac97_softc {
+	/* ac97_codec_if must be at the first of ac97_softc. */
 	struct ac97_codec_if codec_if;
 
 	struct ac97_host_if *host_if;
@@ -267,7 +268,10 @@ struct ac97_softc {
 	int num_source_info;
 
 	enum ac97_host_flags host_flags;
-
+	unsigned int ac97_clock; /* usually 48000 */
+#define AC97_STANDARD_CLOCK	48000U
+	u_int16_t caps;		/* -> AC97_REG_RESET */
+	u_int16_t ext_id;	/* -> AC97_REG_EXT_AUDIO_ID */
 	u_int16_t shadow_reg[128];
 };
 
@@ -277,13 +281,19 @@ int ac97_query_devinfo __P((struct ac97_codec_if *self, mixer_devinfo_t *));
 int ac97_get_portnum_by_name __P((struct ac97_codec_if *, char *, char *,
 				  char *));
 void ac97_restore_shadow __P((struct ac97_codec_if *self));
+int ac97_set_rate(struct ac97_codec_if *codec_if, int target, u_long *rate);
+void ac97_set_clock(struct ac97_codec_if *codec_if, unsigned int clock);
+u_int16_t ac97_get_extcaps(struct ac97_codec_if *codec_if);
 
 struct ac97_codec_if_vtbl ac97civ = {
-	ac97_mixer_get_port, 
+	ac97_mixer_get_port,
 	ac97_mixer_set_port,
 	ac97_query_devinfo,
 	ac97_get_portnum_by_name,
 	ac97_restore_shadow,
+	ac97_get_extcaps,
+	ac97_set_rate,
+	ac97_set_clock,
 };
 
 static const struct ac97_codecid {
@@ -320,6 +330,8 @@ static const struct ac97_codecid {
 	{ AC97_CODEC_ID('T', 'R', 'A', 35),	"TriTech unknown",	},
 	{ AC97_CODEC_ID('W', 'M', 'L', 0),	"Wolfson WM9704",	},
 	{ AC97_CODEC_ID('W', 'M', 'L', 3),	"Wolfson WM9707",	},
+	{ AC97_CODEC_ID('Y', 'M', 'H', 0),	"Yamaha YMF743-S",	},
+	{ AC97_CODEC_ID('Y', 'M', 'H', 3),	"Yamaha YMF753-S",	},
 	{ 0x45838308,				"ESS Technology ES1921", },
 	{ 0x83847600,				"SigmaTel STAC9700",	},
 	{ 0x83847604,				"SigmaTel STAC9701/3/4/5", },
@@ -564,18 +576,19 @@ ac97_setup_source_info(as)
 	}
 }
 
-int 
+int
 ac97_attach(host_if)
 	struct ac97_host_if *host_if;
 {
 	struct ac97_softc *as;
 	struct device *sc_dev = (struct device *)host_if->arg;
 	int error, i, j;
-	u_int16_t id1, id2, caps;
 	u_int32_t id;
+	u_int16_t id1, id2;
+	u_int16_t extstat, rate;
 	mixer_ctrl_t ctl;
 	const char *delim;
-	
+
 	as = malloc(sizeof(struct ac97_softc), M_DEVBUF, M_WAITOK|M_ZERO);
 
 	if (as == NULL)
@@ -600,7 +613,7 @@ ac97_attach(host_if)
 	ac97_setup_defaults(as);
 	ac97_read(as, AC97_REG_VENDOR_ID1, &id1);
 	ac97_read(as, AC97_REG_VENDOR_ID2, &id2);
-	ac97_read(as, AC97_REG_RESET, &caps);
+	ac97_read(as, AC97_REG_RESET, &as->caps);
 
 	id = (id1 << 16) | id2;
 
@@ -627,49 +640,73 @@ ac97_attach(host_if)
 	}
 	printf(" codec; ");
 	for (i = j = 0; i < 10; i++) {
-		if (caps & (1 << i)) {
+		if (as->caps & (1 << i)) {
 			printf("%s%s", j? ", " : "", ac97feature[i]);
 			j++;
 		}
 	}
-	printf("%s%s\n", j? ", " : "", ac97enhancement[(caps >> 10) & 0x1f]);
+	printf("%s%s\n", j ? ", " : "",
+	       ac97enhancement[(as->caps >> 10) & 0x1f]);
 
-	ac97_read(as, AC97_REG_EXT_AUDIO_ID, &caps);
-	if (caps & (AC97_EXT_AUDIO_VRA | AC97_EXT_AUDIO_DRA
-		    | AC97_EXT_AUDIO_SPDIF | AC97_EXT_AUDIO_VRM
-		    | AC97_EXT_AUDIO_CDAC | AC97_EXT_AUDIO_SDAC
-		    | AC97_EXT_AUDIO_LDAC)) {
+	as->ac97_clock = AC97_STANDARD_CLOCK;
+	ac97_read(as, AC97_REG_EXT_AUDIO_ID, &as->ext_id);
+	if (as->ext_id & (AC97_EXT_AUDIO_VRA | AC97_EXT_AUDIO_DRA
+			  | AC97_EXT_AUDIO_SPDIF | AC97_EXT_AUDIO_VRM
+			  | AC97_EXT_AUDIO_CDAC | AC97_EXT_AUDIO_SDAC
+			  | AC97_EXT_AUDIO_LDAC)) {
 		printf("%s:", sc_dev->dv_xname);
 		delim = "";
 
-		if (caps & AC97_EXT_AUDIO_VRA) {
+		if (as->ext_id & AC97_EXT_AUDIO_VRA) {
 			printf("%s variable rate audio", delim);
 			delim = ",";
 		}
-		if (caps & AC97_EXT_AUDIO_DRA) {
+		if (as->ext_id & AC97_EXT_AUDIO_DRA) {
 			printf("%s double rate output", delim);
 			delim = ",";
 		}
-		if (caps & AC97_EXT_AUDIO_SPDIF) {
+		if (as->ext_id & AC97_EXT_AUDIO_SPDIF) {
 			printf("%s S/PDIF", delim);
 			delim = ",";
 		}
-		if (caps & AC97_EXT_AUDIO_VRM) {
+		if (as->ext_id & AC97_EXT_AUDIO_VRM) {
 			printf("%s variable rate dedicated mic", delim);
 			delim = ",";
 		}
-		if (caps & AC97_EXT_AUDIO_CDAC) {
+		if (as->ext_id & AC97_EXT_AUDIO_CDAC) {
 			printf("%s center DAC", delim);
 			delim = ",";
 		}
-		if (caps & AC97_EXT_AUDIO_SDAC) {
+		if (as->ext_id & AC97_EXT_AUDIO_SDAC) {
 			printf("%s surround DAC", delim);
 			delim = ",";
 		}
-		if (caps & AC97_EXT_AUDIO_LDAC) {
+		if (as->ext_id & AC97_EXT_AUDIO_LDAC) {
 			printf("%s LFE DAC", delim);
 		}
 		printf("\n");
+
+		/* If VRA and/or VRM capablities, enable them. */
+		if (as->ext_id & (AC97_EXT_AUDIO_VRA | AC97_EXT_AUDIO_VRM)) {
+			ac97_read(as, AC97_REG_EXT_AUDIO_CTRL, &extstat);
+			if (as->ext_id & AC97_EXT_AUDIO_VRA) {
+				extstat |= AC97_EXT_AUDIO_VRA;
+			}
+			if (as->ext_id & AC97_EXT_AUDIO_VRM) {
+				extstat |= AC97_EXT_AUDIO_VRM;
+			}
+			ac97_write(as, AC97_REG_EXT_AUDIO_CTRL, extstat);
+
+			/* so it claims to do variable rate, let's make sure */
+			ac97_write(as, AC97_REG_PCM_FRONT_DAC_RATE, 44100);
+			ac97_read(as, AC97_REG_PCM_FRONT_DAC_RATE, &rate);
+			if (rate != 44100) {
+				/* We can't believe ext_id */
+				as->ext_id = 0;
+				printf("%s: Ignore these capabilities.\n",
+				       sc_dev->dv_xname);
+			}
+		}
 	}
 
 	ac97_setup_source_info(as);
@@ -919,3 +956,109 @@ ac97_mixer_get_port(codec_if, cp)
 	return (0);
 }
 
+
+int
+ac97_set_rate(struct ac97_codec_if *codec_if, int target, u_long *rate)
+{
+	struct ac97_softc *as;
+	u_long value;
+	u_int16_t ext_stat;
+	u_int16_t actual;
+	u_int16_t power;
+	u_int16_t power_bit;
+
+	as = (struct ac97_softc *)codec_if;
+	value = *rate * AC97_STANDARD_CLOCK / as->ac97_clock;
+	ext_stat = 0;
+	/*
+	 * PCM_FRONT_DAC_RATE/PCM_SURR_DAC_RATE/PCM_LFE_DAC_RATE
+	 *	Check VRA, DRA
+	 * PCM_LR_ADC_RATE
+	 *	Check VRA
+	 * PCM_MIC_ADC_RATE
+	 *	Check VRM
+	 */
+	switch (target) {
+	case AC97_REG_PCM_FRONT_DAC_RATE:
+	case AC97_REG_PCM_SURR_DAC_RATE:
+	case AC97_REG_PCM_LFE_DAC_RATE:
+		power_bit = AC97_POWER_OUT;
+		if (!(as->ext_id & AC97_EXT_AUDIO_VRA)) {
+			*rate = AC97_SINGLE_RATE;
+			return 0;
+		}
+		if (as->ext_id & AC97_EXT_AUDIO_DRA) {
+			ac97_read(as, AC97_REG_EXT_AUDIO_CTRL, &ext_stat);
+			if (value > 0x1ffff) {
+				return EINVAL;
+			} else if (value > 0xffff) {
+				/* Enable DRA */
+				ext_stat |= AC97_EXT_AUDIO_DRA;
+				ac97_write(as, AC97_REG_EXT_AUDIO_CTRL, ext_stat);
+				value /= 2;
+			} else {
+				/* Disable DRA */
+				ext_stat &= ~AC97_EXT_AUDIO_DRA;
+				ac97_write(as, AC97_REG_EXT_AUDIO_CTRL, ext_stat);
+			}
+		} else {
+			if (value > 0xffff)
+				return EINVAL;
+		}
+		break;
+	case AC97_REG_PCM_LR_ADC_RATE:
+		power_bit = AC97_POWER_IN;
+		if (!(as->ext_id & AC97_EXT_AUDIO_VRA)) {
+			*rate = AC97_SINGLE_RATE;
+			return 0;
+		}
+		if (value > 0xffff)
+			return EINVAL;
+		break;
+	case AC97_REG_PCM_MIC_ADC_RATE:
+		power_bit = AC97_POWER_IN;
+		if (!(as->ext_id & AC97_EXT_AUDIO_VRM)) {
+			*rate = AC97_SINGLE_RATE;
+			return 0;
+		}
+		if (value > 0xffff)
+			return EINVAL;
+		break;
+	default:
+		printf("%s: Unknown register: 0x%x\n", __func__, target);
+		return EINVAL;
+	}
+
+	ac97_read(as, AC97_REG_POWER, &power);
+	ac97_write(as, AC97_REG_POWER, power | power_bit);
+
+	ac97_write(as, target, (u_int16_t)value);
+	ac97_read(as, target, &actual);
+	actual = (u_int32_t)actual * as->ac97_clock / AC97_STANDARD_CLOCK;
+
+	ac97_write(as, AC97_REG_POWER, power);
+	if (ext_stat & AC97_EXT_AUDIO_DRA) {
+		*rate = actual * 2;
+	} else {
+		*rate = actual;
+	}
+	return 0;
+}
+
+void
+ac97_set_clock(struct ac97_codec_if *codec_if, unsigned int clock)
+{
+	struct ac97_softc *as;
+
+	as = (struct ac97_softc *)codec_if;
+	as->ac97_clock = clock;
+}
+
+u_int16_t
+ac97_get_extcaps(struct ac97_codec_if *codec_if)
+{
+	struct ac97_softc *as;
+
+	as = (struct ac97_softc *)codec_if;
+	return as->ext_id;
+}
