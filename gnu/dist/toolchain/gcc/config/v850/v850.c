@@ -1,5 +1,5 @@
 /* Subroutines for insn-output.c for NEC V850 series
-   Copyright (C) 1996, 1997, 1998, 1999 Free Software Foundation, Inc.
+   Copyright (C) 1996, 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
    Contributed by Jeff Law (law@cygnus.com).
 
 This file is part of GNU CC.
@@ -1864,10 +1864,8 @@ Saved %d bytes via epilogue function (%d vs. %d) in function %s\n",
       else
 	init_stack_free = actual_fsize;
 
-      /* Deallocate the rest of the stack if it is > 32K or if extra stack
-	 was allocated for an interrupt handler that makes a call.  */
-      if (actual_fsize > init_stack_free
-	  || (interrupt_handler && actual_fsize))
+      /* Deallocate the rest of the stack if it is > 32K.  */
+      if (actual_fsize > init_stack_free)
 	{
 	  int diff;
 
