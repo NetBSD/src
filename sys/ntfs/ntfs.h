@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.6 1999/08/16 08:11:34 jdolecek Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.7 1999/09/11 15:55:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -242,10 +242,10 @@ struct bootfile {
 
 #define	NTFS_SYSNODESNUM	0x0B
 struct ntfsmount {
-	struct mount   *ntm_mountp;
+	struct mount   *ntm_mountp;	/* filesystem vfs structure */
 	struct bootfile ntm_bootfile;
-	dev_t           ntm_dev;
-	struct vnode   *ntm_devvp;
+	dev_t           ntm_dev;	/* device mounted */
+	struct vnode   *ntm_devvp;	/* block device mounted vnode */
 	struct vnode   *ntm_sysvn[NTFS_SYSNODESNUM];
 	u_int32_t       ntm_bpmftrec;
 	uid_t           ntm_uid;
@@ -255,6 +255,7 @@ struct ntfsmount {
 	cn_t		ntm_cfree;
 	struct ntvattrdef *ntm_ad;
 	int		ntm_adnum;
+	struct netexport ntm_export;	/* export information */
 };
 
 #define ntm_mftcn	ntm_bootfile.bf_mftcn
