@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.78 2000/06/10 18:44:44 sommerfeld Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.78.2.1 2000/08/11 23:07:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -765,15 +765,10 @@ mi_switch(struct proc *p)
 
 	spc = &p->p_cpu->ci_schedstate;
 
-#ifdef DEBUG
-	if (p->p_simple_locks) {
-		printf("p->p_simple_locks %d\n", p->p_simple_locks);
 #ifdef LOCKDEBUG
-		simple_lock_dump();
+	simple_lock_switchcheck();
 #endif
-		panic("sleep: holding simple lock");
-	}
-#endif
+
 	/*
 	 * Compute the amount of time during which the current
 	 * process was running, and add that to its total so far.
