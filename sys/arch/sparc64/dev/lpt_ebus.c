@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ebus.c,v 1.6 2000/07/09 20:57:50 pk Exp $	*/
+/*	$NetBSD: lpt_ebus.c,v 1.7 2001/10/22 07:06:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -40,7 +40,7 @@
 
 #include <machine/bus.h>
 
-#include <sparc64/dev/ebusreg.h>
+#include <dev/ebus/ebusreg.h>
 #include <sparc64/dev/ebusvar.h>
 
 #include <dev/ic/lptvar.h>
