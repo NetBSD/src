@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.12 1996/02/04 02:17:32 christos Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.13 1996/02/09 19:00:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -43,7 +43,6 @@
 #endif
 #include <sys/malloc.h>
 
-#include <kern/kern_extern.h>
 /*
  * At compile time, choose:
  * There are two ways the TTY_QUOTE bit can be stored. If QBITS is

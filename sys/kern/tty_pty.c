@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.31 1996/02/04 02:17:28 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.32 1996/02/09 19:00:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -645,7 +645,7 @@ ptyioctl(dev, cmd, data, flag, p)
 			ttyflush(tp, FREAD|FWRITE);
 			return (0);
 
-#if defined(COMPAT_43) || defined(COMPAT_FREEBSD)
+#ifdef COMPAT_OLDTTY
 		case TIOCSETP:		
 		case TIOCSETN:
 #endif
@@ -689,11 +689,9 @@ ptyioctl(dev, cmd, data, flag, p)
 		case TIOCSETA:
 		case TIOCSETAW:
 		case TIOCSETAF:
-#if defined(COMPAT_43) || defined(COMPAT_FREEBSD)
+#ifdef COMPAT_OLDTTY
 		case TIOCSETP:
 		case TIOCSETN:
-#endif
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_FREEBSD)
 		case TIOCSETC:
 		case TIOCSLTC:
 		case TIOCLBIS:

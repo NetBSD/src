@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.22 1996/02/04 02:16:53 christos Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.23 1996/02/09 19:00:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -58,8 +58,6 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-
-#include <kern/kern_extern.h>
 
 int selscan __P((struct proc *, fd_set *, fd_set *, int, register_t *));
 int seltrue __P((dev_t, int, struct proc *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.40 1996/02/04 02:18:03 christos Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.41 1996/02/09 19:00:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -58,8 +58,7 @@
 #include <sys/malloc.h>
 #include <sys/resourcevar.h>
 #include <sys/conf.h>
-
-#include <kern/kern_extern.h>
+#include <sys/cpu.h>
 
 /* Macros to clear/set/test flags. */
 #define	SET(t, f)	(t) |= (f)

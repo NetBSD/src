@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.67 1996/02/09 15:39:12 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.68 1996/02/09 19:01:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,8 +58,6 @@
 
 #include <vm/vm.h>
 #include <sys/sysctl.h>
-
-#include <kern/kern_extern.h>
 
 static int change_dir __P((struct nameidata *, struct proc *));
 

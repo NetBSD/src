@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.37 1996/02/09 01:19:21 mycroft Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.38 1996/02/09 18:59:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -61,6 +61,13 @@
 #include <sys/acct.h>
 #include <sys/filedesc.h>
 #include <sys/signalvar.h>
+#ifdef SYSVSHM
+#include <sys/shm.h>
+#endif
+#ifdef SYSVSEM
+#include <sys/sem.h>
+#endif
+#include <sys/cpu.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -69,8 +76,6 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
-
-#include <kern/kern_extern.h>
 
 /*
  * exit --

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.16 1996/02/04 02:18:25 christos Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -55,8 +55,6 @@
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-
-#include <kern/kern_extern.h>
 
 /*
  * Convert a pathname into a pointer to a locked inode.
