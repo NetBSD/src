@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)termcap.5	6.11 (Berkeley) 3/6/93
-.\"	$Id: termcap.5,v 1.6 1994/08/06 05:44:20 jtc Exp $
+.\"	$Id: termcap.5,v 1.7 1995/06/05 23:52:17 jtc Exp $
 .\"
 .Dd March 6, 1993
 .Dt TERMCAP 5
@@ -1833,7 +1833,7 @@ in this file is used only if the kernel does not have any information.
 .Xr \&Vi
 allows only 256 characters for string capabilities, and the routines
 in
-.Xr termlib 3
+.Xr termcap 3
 do not check for overflow of this buffer.
 The total length of a single entry (excluding only escaped newlines)
 may not exceed 1024.
