@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.113 2002/08/07 04:52:53 briggs Exp $
+	$NetBSD: syscalls.master,v 1.114 2002/08/28 07:16:39 gmcgarry Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -655,3 +655,4 @@
 			    void *tramp, int vers); }
 341	STD		{ int sys_pmc_get_info(int ctr, int op, void *args); }
 342	STD		{ int sys_pmc_control(int ctr, int op, void *args); }
+343	STD		{ int sys_rasctl(caddr_t addr, size_t len, int op); }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.154 2002/08/26 21:07:39 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.155 2002/08/28 07:16:35 gmcgarry Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.154 2002/08/26 21:07:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.155 2002/08/28 07:16:35 gmcgarry Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.154 2002/08/26 21:07:39 christos Exp
 #include <sys/resourcevar.h>
 #include <sys/wait.h>
 #include <sys/mman.h>
+#include <sys/ras.h>
 #include <sys/signalvar.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
@@ -648,6 +649,13 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		p->p_flag &= ~P_SUGID;
 	p->p_cred->p_svuid = p->p_ucred->cr_uid;
 	p->p_cred->p_svgid = p->p_ucred->cr_gid;
+
+#if defined(__HAVE_RAS)
+	/*
+	 * Remove all RASs from the address space.
+	 */
+	ras_purgeall(p);
+#endif
 
 	doexechooks(p);
 
