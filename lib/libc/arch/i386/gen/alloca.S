@@ -1,4 +1,4 @@
-/*	$NetBSD: alloca.S,v 1.5 1997/07/16 14:37:14 christos Exp $	*/
+/*	$NetBSD: alloca.S,v 1.6 2001/06/28 05:25:04 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,10 +40,10 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: alloca.S,v 1.5 1997/07/16 14:37:14 christos Exp $")
+	RCSID("$NetBSD: alloca.S,v 1.6 2001/06/28 05:25:04 atatat Exp $")
 #endif
 
-/* like alloc, but automatic automatic free in return */
+/* like alloc, but automatic free in return */
 
 ENTRY(alloca)
 	popl	%edx		/*  pop return addr */
