@@ -1,7 +1,0 @@
-#	$Id: Makefile.icm3216,v 1.1 1993/12/19 08:42:08 davidb Exp $
-
-SRCS+=		tc-ns32k.c atof-ns32k.c
-
-CFLAGS+=	-DNS32032 -DNS32081
-
-gas_target=	ns32k
