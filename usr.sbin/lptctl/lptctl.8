@@ -1,4 +1,4 @@
-.\"	$NetBSD: lptctl.8,v 1.3 2004/01/23 19:51:26 wiz Exp $
+.\"	$NetBSD: lptctl.8,v 1.4 2004/01/23 19:56:07 wiz Exp $
 .\"
 .\" Copyright notice
 .\"
@@ -19,17 +19,18 @@
 .Oc
 .Sh DESCRIPTION
 .Nm
-is used to manipulate lpt devices so that a user can change how a printer that
-is attached to a parallel port works.
-If no command-argument pairs are specified, the status of the device is printed to
-standard output using the following format:
+is used to manipulate lpt devices so that a user can change how a
+printer that is attached to a parallel port works.
+If no command-argument pairs are specified, the status of the device
+is printed to standard output using the following format:
 .Pp
 dma=[on|off] mode=[standard|nibble|ps2|fast|ecp|epp] ieee=[yes|no]
 .Pp
 The status information is also output after commands are carried out.
 .Sh DEVICE COMMANDS
-Multiple command-argument pairs can be specified up to a maximum of the total number
-of distinct commands possible. Available commands are:
+Multiple command-argument pairs can be specified up to a maximum
+of the total number of distinct commands possible.
+Available commands are:
 .Bl -item
 .It
 .Cm dma
@@ -41,19 +42,21 @@ Enables or disables DMA.
 .Ar standard | nibble | ps2 | fast | ecp
 .Ar | epp
 .Pp
-Sets port to use a mode of operation: standard centronics mode (standard),
-nibble mode, bidirectional mode (ps2), fast centronics mode (fast), enhanced
-capabilities port mode (ecp), or enhanced parallel port mode (epp).
+Sets port to use a mode of operation: standard centronics mode
+(standard), nibble mode, bidirectional mode (ps2), fast centronics
+mode (fast), enhanced capabilities port mode (ecp), or enhanced
+parallel port mode (epp).
 .It
 .Cm ieee
 .Ar yes | no
 .Pp
-Enables or disables the use of IEEE 1284 negotiations during mode changes and
-channel direction changes.
+Enables or disables the use of
+.Tn IEEE 1284
+negotiations during mode changes and channel direction changes.
 .El
 .Sh EXIT STATUS
 .Nm
-returns 0 on success, >0  on failure.
+returns 0 on success, \*[Gt]0 on failure.
 .Sh FILES
 .Bl -item
 .It
@@ -70,8 +73,12 @@ returns 0 on success, >0  on failure.
 .Sh HISTORY
 A similar utility called
 .Nm lptcontrol
-exists in FreeBSD to control the lpt device. While similar in concept,
-the implementations are independent.
+exists in
+.Fx
+to control the
+.Xr lpt 4
+device.
+While similar in concept, the implementations are independent.
 .Nm
 was added in
 .Nx 2.0 .
@@ -85,8 +92,9 @@ opens the printer device and causes device initialization if
 .Pa /dev/lpa?
 or
 .Pa /dev/lpt?
-are used. Therefore, a printer must be connected and functioning
-to use this utility or you will have to create a lpt device with an
-appropriate minor number (see
+are used.
+Therefore, a printer must be connected and functioning to use this
+utility or you will have to create a lpt device with an appropriate
+minor number (see
 .Xr lpt 4
 for more details).
