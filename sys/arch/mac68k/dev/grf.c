@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.26 1995/07/06 00:28:32 briggs Exp $	*/
+/*	$NetBSD: grf.c,v 1.27 1995/07/06 04:17:15 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -374,7 +374,7 @@ grfmap(dev, addrp, p)
 	len = mac68k_round_page(gp->curr_mode.fbsize + gp->curr_mode.fboff);
 	flags = MAP_SHARED | MAP_FIXED;
 
-	*addrp = mac68k_trunc_page(
+	*addrp = (caddr_t) mac68k_trunc_page(
 			NUBUS_VIRT_TO_PHYS((u_int) gp->curr_mode.fbbase));
 
 	vn.v_type = VCHR;	/* XXX */
