@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.62 2002/04/11 22:44:18 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.63 2002/04/17 12:26:06 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -2696,3 +2696,57 @@ distrib/notes/common/main			1.167
 distrib/notes/common/postinstall		patch
 
   Modify PKG_PATH in example so it is suitable for 1.5.3.
+
+lib/libc/gen/getpwent.c				1.49
+
+  Return an error if we try to look up a user name that is too long,
+  rather than trying to truncate.  Fixes non-exploitable core dump
+  problem inside DB.
+
+lib/libc/db/btree/bt_open.c			1.15 via patch
+
+  Do not respect TMPDIR when setuid or setgid.
+
+lib/libc/gen/fstab.c				1.24
+lib/libc/gen/getcwd.c				1.25
+lib/libc/gen/getpwent.c				1.50
+
+  Replace an instance of erroneous usage of strncpy() with strlcpy().
+
+lib/libc/gen/getcap.c				1.35
+
+  Detect if line length exceeds buffer size.
+
+lib/libc/net/hesiod.c				1.14
+
+  Cast arguments to isspace() to u_char.
+
+lib/libc/net/hesiod.c				1.16
+
+  Replace strcpy() with strlcpy() and bounds check.
+
+lib/libc/net/hesiod.c				1.17
+
+  Minor style adjustments, and do proper end of string detection
+  in read_config_file().
+
+lib/libc/net/rcmd.c				1.46
+
+  Replace two instances of strn* functions with strl* functions.
+
+lib/libc/net/res_debug.c			1.31
+
+  Replace an instance of strncpy() with strlcpy().
+
+lib/libc/rpc/getnetpath.c			1.6 via patch
+
+  Make sure we do not look before the beginning of the string.
+
+lib/libc/time/localtime.c			1.30
+lib/libc/time/zdump.c				1.12
+
+  Replace strncpy() with strlcpy().
+
+share/man/man4/ifmedia.4			1.7
+
+  Correct a minor typo.  Fixes PR#16383.
