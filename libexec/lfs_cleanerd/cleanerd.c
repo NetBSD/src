@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.22 2000/09/09 04:49:56 perseant Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.23 2000/11/03 17:52:55 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.22 2000/09/09 04:49:56 perseant Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.23 2000/11/03 17:52:55 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -544,6 +544,10 @@ clean_fs(fsp, cost_func, nsegs, options)
 					       sp->sl_id);
 			}
 		}
+		if (sbp->buf)
+			free(sbp->buf);
+		if (sbp->segs)
+			free(sbp->segs);
 		free(sbp);
 	}
 	free(segs);
@@ -660,6 +664,7 @@ add_segment(fsp, slp, sbp)
 	sp = SEGUSE_ENTRY(lfsp, fsp->fi_segusep, id);
 	seg_addr = sntoda(lfsp,id);
 	error = 0;
+	tba = NULL;
 
         syslog(LOG_DEBUG, "adding segment %d: contains %lu bytes", id,
                    (unsigned long)sp->su_nbytes);
@@ -787,10 +792,13 @@ add_segment(fsp, slp, sbp)
 	memcpy(sbp->ba + sbp->nb, tba, num_blocks * sizeof(BLOCK_INFO));
 	sbp->nb += num_blocks;
 
+	free(tba);
 	return (0);
 
     out:
 	--sbp->nsegs;
+	if (tba)
+		free(tba);
 	if (sbp->ba)
 		free(sbp->ba);
 	if (error) {
