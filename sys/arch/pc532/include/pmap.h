@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.22 1998/09/02 19:17:22 matthias Exp $	*/
+/*	$NetBSD: pmap.h,v 1.23 1999/03/01 14:27:59 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Copyright (c) 1991 Regents of the University of California.
  * All rights reserved.
  *
@@ -105,7 +105,7 @@
  */
 
 /*
- * PG_AVAIL usage ... 
+ * PG_AVAIL usage ...
  */
 
 #define PG_W         PG_AVAIL1       /* "wired" mapping */
@@ -116,8 +116,8 @@
  */
 #define	PTDPTDI		0x3df		/* ptd entry that points to ptd! */
 #define	KPTDI		0x3e0		/* start of kernel virtual pde's */
-#define	NKPDE_BASE	4		/* min. # of kernel PDEs */ 
-#define	NKPDE_MAX	30		/* max. # of kernel PDEs */ 
+#define	NKPDE_BASE	4		/* min. # of kernel PDEs */
+#define	NKPDE_MAX	30		/* max. # of kernel PDEs */
 #define	NKPDE_SCALE	1		/* # of kernel PDEs to add per meg. */
 #define	APTDPTDI	0x3fe		/* start of alternate page directory */
 
@@ -146,12 +146,12 @@ void pmap_changebit __P((paddr_t, int, int));
  */
 #define	vtopte(va)	(PTmap + ns532_btop(va))
 #define	kvtopte(va)	vtopte(va)
-#define	ptetov(pt)	(ns532_ptob(pt - PTmap)) 
+#define	ptetov(pt)	(ns532_ptob(pt - PTmap))
 #define	vtophys(va) \
 	((*vtopte(va) & PG_FRAME) | ((unsigned)(va) & ~PG_FRAME))
 
 #define	avtopte(va)	(APTmap + ns532_btop(va))
-#define	ptetoav(pt)	(ns532_ptob(pt - APTmap)) 
+#define	ptetoav(pt)	(ns532_ptob(pt - APTmap))
 #define	avtophys(va) \
 	((*avtopte(va) & PG_FRAME) | ((unsigned)(va) & ~PG_FRAME))
 
@@ -250,6 +250,13 @@ pmap_phys_address(int ppn)
 }
 
 vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
+
+static __inline void
+pmap_procwr(struct proc *p, vaddr_t va, u_long len)
+{
+	cinv(ia, 0);
+}
+#define PMAP_NEED_PROCWR
 
 #endif	/* _KERNEL */
 
