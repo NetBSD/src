@@ -29,26 +29,16 @@ boot program, which should be located in a place where the TFTP daemon
 can find it (remember, many TFTP daemons run in a chroot'ed environment).
 You can find the boot program in `/usr/mdec/boot' in the NetBSD/sparc
 distribution. Unfortunately, it is necessary to install this file
-differently for sun4 and sun4c clients: the sun4 version needs to have its
-`a.out' header stripped off (otherwise the machine will crash), while the
-sun4c version must retain it (otherwise the PROM will complain).
+differently for sun4 and sun4c/sun4m clients: the sun4 version needs to
+have its `a.out' header stripped off (otherwise the machine will crash),
+while the sun4c/sun4m version must retain it (otherwise the PROM will
+complain).
 
-Here's an example to illustrate this whole mess:
+Luckily, there is a script in /usr/mdec to do all this for you.  You only
+need to do this:
 
     server# cd /<client-root-dir>/usr/mdec
-    if client is a sun4:
-	server# set SKIP=1
-	server# set KARCH=SUN4
-    else
-	server# set SKIP=0
-	server# set KARCH=SUN4C
-    server# dd if=boot of=/tftpboot/boot.sparc.netbsd.$KARCH skip=$SKIP bs=32
-    server# cd /tftpboot
-    server# ln -s boot.sparc.netbsd.$KARCH 8273900B.$KARCH
-
-Note: some versions of Openboot ROMs (sun4c) seem to require that the
-boot program size is nicely rounded. Therefore it may be necessary to
-strip(8) off the symbol table.
+    server# ./binstall net /<client-root-dir>
 
 
 As noted above in the section `Preparing your System for NetBSD Installation',
@@ -258,13 +248,13 @@ least the following pieces:
     gtar (GNU tar) SunOS binary
     the "install.sh" script
     a "/boot" file from a SunOS machine that matches your machine type
-	(e.g. sun or sun4c)
+	(e.g. sun4 for sun4 server, sun4c and sun4m for these)
     a kernel, most likely "/netbsd"
 
 All these pieces, except "/boot", are supplied in the NetBSD/sparc
 distribution.
 
-You need to format and partition the disk using SunOS (since
+You can format and partition the disk using SunOS (since
 NetBSD/sparc uses SunOS disk labels.)  Give yourself adequate
 partition sizes.  Here is an example layout:
 
