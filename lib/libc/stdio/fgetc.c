@@ -36,11 +36,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)fgetc.c	5.3 (Berkeley) 1/20/91";*/
-static char *rcsid = "$Id: fgetc.c,v 1.3 1993/08/26 00:46:40 jtc Exp $";
+static char *rcsid = "$Id: fgetc.c,v 1.4 1993/12/31 19:14:01 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 
+int
 fgetc(fp)
 	FILE *fp;
 {

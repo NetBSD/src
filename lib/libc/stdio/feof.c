@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)feof.c	5.1 (Berkeley) 1/20/91";*/
-static char *rcsid = "$Id: feof.c,v 1.3 1993/08/26 00:46:36 jtc Exp $";
+static char *rcsid = "$Id: feof.c,v 1.4 1993/12/31 19:13:51 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -46,6 +46,7 @@ static char *rcsid = "$Id: feof.c,v 1.3 1993/08/26 00:46:36 jtc Exp $";
  */
 #undef feof
 
+int
 feof(fp)
 	FILE *fp;
 {

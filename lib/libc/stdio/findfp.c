@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)findfp.c	5.10 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: findfp.c,v 1.3 1993/08/26 00:46:46 jtc Exp $";
+static char *rcsid = "$Id: findfp.c,v 1.4 1993/12/31 19:14:12 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <unistd.h>
@@ -127,6 +127,7 @@ found:
  * XXX.  Force immediate allocation of internal memory.  Not used by stdio,
  * but documented historically for certain applications.  Bad applications.
  */
+void
 f_prealloc()
 {
 	int n = getdtablesize() - NSTATIC + 20;		/* 20 for slop */
