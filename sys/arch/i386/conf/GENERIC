@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.168 1998/07/27 23:55:23 perry Exp $
+#	$NetBSD: GENERIC,v 1.169 1998/07/29 12:36:47 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -441,6 +441,7 @@ eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 # ISA Plug-and-Play audio devices
 guspnp*	at isapnp?			# Gravis Ultra Sound PnP audio
 sb*	at isapnp?			# SoundBlaster-compatible audio
+wss*	at isapnp?			# Windows Sound System
 ym*	at isapnp?			# Yamaha OPL3-SA3 audio
 
 # ISA audio devices
