@@ -1,14 +1,4 @@
-/*
- * $Header: /cvsroot/src/include/rmt.h,v 1.1 1996/08/09 03:56:56 jtc Exp $
- *
- * $Log: rmt.h,v $
- * Revision 1.1  1996/08/09 03:56:56  jtc
- * Remote mag tape library from volume 18 of comp.sources.unix.
- *
- * Revision 1.1  86/10/09  16:17:20  root
- * Initial revision
- * 
- */
+/*	$NetBSD: rmt.h,v 1.2 1996/08/09 03:59:40 jtc Exp $	*/
 
 /*
  *	rmt.h
@@ -24,9 +14,9 @@
  *	-- Fred Fish (w/some changes by Arnold Robbins)
  */
 
+#ifndef _RMT_H_
+#define _RMT_H_
 
-#ifndef access		/* avoid multiple redefinition */
-#ifndef lint		/* in this case what lint doesn't know won't hurt it */
 #define access rmtaccess
 #define close rmtclose
 #define creat rmtcreat
@@ -42,6 +32,4 @@
 #define stat rmtstat
 #define write rmtwrite
 
-extern long rmtlseek ();	/* all the rest are int's */
-#endif
-#endif
+#endif /* _RMT_H_ */
