@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.12 1998/09/16 21:30:58 is Exp $	*/
+/*	$NetBSD: com_supio.c,v 1.13 1999/06/22 21:12:00 is Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@ com_supio_attach(parent, self, aux)
 	 */
 	iobase = csc->sc_iobase = supa->supio_iobase;
 	iot = csc->sc_iot = supa->supio_iot;
-	printf(" port 0x%x ipl %d", iobase, supa->supio_ipl);
+	printf(" port 0x%04x ipl %d", iobase, supa->supio_ipl);
 
 	if (bus_space_map(iot, iobase, COM_NPORTS, 0, &csc->sc_ioh))
 		panic("comattach: io mapping failed");
