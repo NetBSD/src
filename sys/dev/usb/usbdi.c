@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.43 1999/09/15 21:08:59 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.44 1999/10/12 11:54:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -698,22 +698,43 @@ usbd_ar_pipe(pipe)
 	return (USBD_NORMAL_COMPLETION);
 }
 
+static int usbd_nbuses = 0;
+
 void
 usbd_init()
 {
-	static int usbd_global_init_done = 0;
 #if defined(__FreeBSD__)
+	static int usbd_global_init_done = 0;
 	dev_t dev;
-#endif
 	
 	if (!usbd_global_init_done) {
 		usbd_global_init_done = 1;
-		SIMPLEQ_INIT(&usbd_free_requests);
-
-#if defined(__FreeBSD__)
 		dev = makedev(USB_CDEV_MAJOR, 0);
 		cdevsw_add(&dev, &usb_cdevsw, NULL);
+
+	}
 #endif
+
+	if (usbd_nbuses == 0)
+		SIMPLEQ_INIT(&usbd_free_requests);
+	usbd_nbuses++;
+}
+
+void
+usbd_finish()
+{
+	usbd_request_handle reqh;
+
+	usbd_nbuses--;
+	if (usbd_nbuses == 0) {
+		/* Last controller is gone, free all requests. */
+		for (;;) {
+			reqh = SIMPLEQ_FIRST(&usbd_free_requests);
+			if (reqh == NULL)
+				break;
+			SIMPLEQ_REMOVE_HEAD(&usbd_free_requests, reqh, next);
+			free(reqh, M_USB);
+		}			
 	}
 }
 

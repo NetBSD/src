@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.34 1999/09/16 21:53:58 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.35 1999/10/12 11:54:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -477,12 +477,23 @@ struct usb_device_info {
 };
 
 struct usb_ctl_report {
-	int report;
+	int	report;
 	u_char	data[1024];	/* filled data size will vary */
 };
 
 struct usb_device_stats {
 	u_long	requests[4];	/* indexed by transfer type UE_* */
+};
+
+typedef struct { u_int32_t cookie; } usb_event_cookie_t;
+/* Events that can be read from /dev/usb */
+struct usb_event {
+	int			ue_type;
+#define USB_EVENT_ATTACH 1
+#define USB_EVENT_DETACH 2
+	struct usb_device_info	ue_device;
+	struct timespec		ue_time;
+	usb_event_cookie_t	ue_cookie;
 };
 
 /* USB controller */
