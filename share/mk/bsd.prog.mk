@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.88 1997/10/11 08:16:28 mycroft Exp $
+#	$NetBSD: bsd.prog.mk,v 1.88.2.1 1997/11/04 21:54:58 thorpej Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -46,6 +46,7 @@ LIBL?=		${DESTDIR}/usr/lib/libl.a
 LIBM?=		${DESTDIR}/usr/lib/libm.a
 LIBMP?=		${DESTDIR}/usr/lib/libmp.a
 LIBNTP?=	${DESTDIR}/usr/lib/libntp.a
+LIBOBJC?=	${DESTDIR}/usr/lib/libobjc.a
 LIBPC?=		${DESTDIR}/usr/lib/libpc.a
 LIBPCAP?=	${DESTDIR}/usr/lib/libpcap.a
 LIBPLOT?=	${DESTDIR}/usr/lib/libplot.a
@@ -183,7 +184,7 @@ scriptsinstall::
 
 lint: ${LOBJS}
 .if defined(LOBJS) && !empty(LOBJS)
-	@${LINT} ${LINTFLAGS} ${LDFLAGS:M-L*} ${LOBJS} ${LDADD}
+	${LINT} ${LINTFLAGS} ${LDFLAGS:M-L*} ${LOBJS} ${LDADD}
 .endif
 
 .include <bsd.man.mk>
