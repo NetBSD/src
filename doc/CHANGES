@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.407 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.408 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -172,7 +172,7 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		Rather, do it only on a full restore.  [fredb 20050108]
 	tap(4): virtual Ethernet device [cube 20050108]
 	shark: Switch to wscons. [tsutsui 20050109]
-	/rescue: Add: cgdconfig chroot less more ping6 rtsol scp slogin ssh vi
+	/rescue: Add: cgdconfig chroot less more scp slogin ssh vi
 		[lukem 20050110]
 	audio(9): Add capability of audio software filter pipeline.
 		[kent 20050111]
