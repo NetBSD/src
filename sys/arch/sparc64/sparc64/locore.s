@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.87 2000/07/24 15:57:07 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.88 2000/07/24 16:08:18 mycroft Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -8523,7 +8523,7 @@ ENTRY(pmap_zero_page)
 	brz,pn	%l3, 1f					! Make sure we have an fpstate
 	 mov	%l3, %o0
 	call	_C_LABEL(savefpstate)			! Save the old fpstate
-	 set	EINTSTACK-STKB, %l4				! Are we on intr stack?
+	 set	EINTSTACK-STKB, %l4			! Are we on intr stack?
 	cmp	%sp, %l4
 	bgu,pt	%xcc, 1f
 	 set	INTSTACK-STKB, %l4
@@ -8822,7 +8822,7 @@ ENTRY(pmap_copy_page)
 	brz,pn	%l3, 1f					! Make sure we have an fpstate
 	 mov	%l3, %o0
 	call	_C_LABEL(savefpstate)			! Save the old fpstate
-	 set	EINTSTACK-STKB, %l4				! Are we on intr stack?
+	 set	EINTSTACK-STKB, %l4			! Are we on intr stack?
 	cmp	%sp, %l4
 	bgu,pt	%xcc, 1f
 	 set	INTSTACK-STKB, %l4
