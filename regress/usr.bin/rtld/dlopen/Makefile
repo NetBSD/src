@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2002/09/18 05:41:57 lukem Exp $
+# $NetBSD: Makefile,v 1.7 2003/02/01 18:44:06 kleink Exp $
 
 NOMAN=  	# defined
 
@@ -11,8 +11,8 @@ CLEANFILES+=	dlopen.out
 #LDADD+=	-export-dynamic
 
 regress:
-	if [ -f ${TESTLIBDIR}/testlib.so ]; then \
-		./${PROG} ${TESTLIBDIR}/testlib.so >dlopen.out; \
+	if [ -f ${TESTLIBDIR}/libtest.so ]; then \
+		./${PROG} ${TESTLIBDIR}/libtest.so >dlopen.out; \
 		tail +4 ${.CURDIR}/dlopen.exp | diff - dlopen.out; \
 	fi
 
