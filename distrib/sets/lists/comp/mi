@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.643 2003/12/05 04:55:42 simonb Exp $
+#	$NetBSD: mi,v 1.644 2003/12/05 13:49:16 lukem Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -3456,6 +3456,11 @@
 ./usr/share/man/cat3/tmpfile.0	comp-c-catman
 ./usr/share/man/cat3/tmpnam.0	comp-c-catman
 ./usr/share/man/cat3/toascii.0	comp-c-catman
+./usr/share/man/cat3/tok_end.0	comp-c-catman
+./usr/share/man/cat3/tok_init.0	comp-c-catman
+./usr/share/man/cat3/tok_line.0	comp-c-catman
+./usr/share/man/cat3/tok_reset.0	comp-c-catman
+./usr/share/man/cat3/tok_str.0	comp-c-catman
 ./usr/share/man/cat3/tolower.0	comp-c-catman
 ./usr/share/man/cat3/touchline.0		comp-c-catman
 ./usr/share/man/cat3/touchoverlap.0		comp-c-catman
@@ -6919,6 +6924,11 @@
 ./usr/share/man/man3/tmpfile.3		comp-c-man
 ./usr/share/man/man3/tmpnam.3		comp-c-man
 ./usr/share/man/man3/toascii.3		comp-c-man
+./usr/share/man/man3/tok_end.3	comp-c-catman
+./usr/share/man/man3/tok_init.3	comp-c-catman
+./usr/share/man/man3/tok_line.3	comp-c-catman
+./usr/share/man/man3/tok_reset.3	comp-c-catman
+./usr/share/man/man3/tok_str.3	comp-c-catman
 ./usr/share/man/man3/tolower.3		comp-c-man
 ./usr/share/man/man3/touchline.3		comp-c-man
 ./usr/share/man/man3/touchoverlap.3		comp-c-man
