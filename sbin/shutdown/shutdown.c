@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)shutdown.c	5.16 (Berkeley) 2/3/91";*/
-static char rcsid[] = "$Id: shutdown.c,v 1.4 1993/08/01 18:24:03 mycroft Exp $";
+static char rcsid[] = "$Id: shutdown.c,v 1.5 1994/02/16 02:56:04 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -81,6 +81,8 @@ struct interval {
 static time_t offset, shuttime;
 static int dofast, dohalt, doreboot, killflg, mbuflen;
 static char *nosync, *whom, mbuf[BUFSIZ];
+
+int warn __P((int));
 
 main(argc, argv)
 	int argc;
@@ -227,12 +229,12 @@ loop()
 		 */
 		if (sltime = offset - tp->timeleft) {
 			if (sltime > tp->timetowait / 5)
-				warn();
+				warn(offset);
 			(void)sleep(sltime);
 		}
 	}
 	for (;; ++tp) {
-		warn();
+		warn(tp->timeleft);
 		if (!logged && tp->timeleft <= NOLOG_TIME) {
 			logged = 1;
 			nolog();
@@ -246,7 +248,8 @@ loop()
 
 static jmp_buf alarmbuf;
 
-warn()
+warn(timeleft)
+	int timeleft;
 {
 	static int first;
 	static char hostname[MAXHOSTNAMELEN + 1];
@@ -267,15 +270,15 @@ warn()
 
 	(void)fprintf(pf,
 	    "\007*** %sSystem shutdown message from %s@%s ***\007\n",
-	    tp->timeleft ? "": "FINAL ", whom, hostname);
+	    timeleft ? "": "FINAL ", whom, hostname);
 
-	if (tp->timeleft > 10*60)
+	if (timeleft > 10*60)
 		(void)fprintf(pf, "System going down at %5.5s\n\n",
 		    ctime(&shuttime) + 11);
-	else if (tp->timeleft > 59)
+	else if (timeleft > 59)
 		(void)fprintf(pf, "System going down in %d minute%s\n\n",
-		    tp->timeleft / 60, (tp->timeleft > 60) ? "s" : "");
-	else if (tp->timeleft)
+		    timeleft / 60, (timeleft > 60) ? "s" : "");
+	else if (timeleft)
 		(void)fprintf(pf, "System going down in 30 seconds\n\n");
 	else
 		(void)fprintf(pf, "System going down IMMEDIATELY\n\n");
