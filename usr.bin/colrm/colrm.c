@@ -1,4 +1,4 @@
-/*	$NetBSD: colrm.c,v 1.4 1995/09/02 05:51:37 jtc Exp $	*/
+/*	$NetBSD: colrm.c,v 1.5 1997/10/18 13:00:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)colrm.c	8.2 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$NetBSD: colrm.c,v 1.4 1995/09/02 05:51:37 jtc Exp $";
+__RCSID("$NetBSD: colrm.c,v 1.5 1997/10/18 13:00:20 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,19 +58,20 @@ static char rcsid[] = "$NetBSD: colrm.c,v 1.4 1995/09/02 05:51:37 jtc Exp $";
 
 #define	TAB	8
 
-void check __P((FILE *));
-void usage __P((void));
+void	check __P((FILE *));
+int	main __P((int, char **));
+void	usage __P((void));
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register u_long column, start, stop;
-	register int ch;
+	u_long column, start, stop;
+	int ch;
 	char *p;
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
 		case '?':
 		default:
@@ -120,7 +121,7 @@ main(argc, argv)
 			break;
 		}
 
-		if ((!start || column < start || stop && column > stop) &&
+		if ((!start || column < start || (stop && column > stop)) &&
 		    putchar(ch) == EOF)
 			check(stdout);
 	}
