@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.40 2001/02/07 08:59:48 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.41 2001/02/10 04:14:27 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.107 2000/10/06 04:58:30 itojun Exp $	*/
 
 /*
@@ -195,9 +195,9 @@ in6_ifloop_request(int cmd, struct ifaddr *ifa)
 	/*
 	 * Make sure rt_ifa be equal to IFA, the second argument of the
 	 * function.
-	 * We need this because when we refer rt_ifa->ia6_flags in ip6_input,
-	 * we assume that the rt_ifa points to the address instead of the
-	 * loopback address.
+	 * We need this because when we refer to rt_ifa->ia6_flags in
+	 * ip6_input, we assume that the rt_ifa points to the address instead
+	 * of the loopback address.
 	 */
 	if (cmd == RTM_ADD && nrt && ifa != nrt->rt_ifa) {
 		IFAFREE(nrt->rt_ifa);
@@ -418,11 +418,11 @@ in6_control(so, cmd, data, ifp, p)
 
 	case SIOCDIFADDR_IN6:
 		/*
-		 * for IPv4, we look for existing in6_ifaddr here to allow
+		 * for IPv4, we look for existing in_ifaddr here to allow
 		 * "ifconfig if0 delete" to remove first IPv4 address on the
 		 * interface.  For IPv6, as the spec allow multiple interface
 		 * address from the day one, we consider "remove the first one"
-		 * semantics to be not preferrable.
+		 * semantics to be not preferable.
 		 */
 		if (ia == NULL)
 			return(EADDRNOTAVAIL);
@@ -538,6 +538,10 @@ in6_control(so, cmd, data, ifp, p)
 	case SIOCGIFDSTADDR_IN6:
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
 			return(EINVAL);
+		/*
+		 * XXX: should we check if ifa_dstaddr is NULL and return
+		 * an error?
+		 */
 		ifr->ifr_dstaddr = ia->ia_dstaddr;
 		break;
 
@@ -929,7 +933,7 @@ in6_purgeif(ifp)
 
 /*
  * SIOC[GAD]LIFADDR.
- *	SIOCGLIFADDR: get first address. (???)
+ *	SIOCGLIFADDR: get first address. (?)
  *	SIOCGLIFADDR with IFLR_PREFIX:
  *		get first address that matches the specified prefix.
  *	SIOCALIFADDR: add the specified address.
@@ -1177,8 +1181,8 @@ in6_lifaddr_ioctl(so, cmd, data, ifp, p)
  */
 void
 in6_ifscrub(ifp, ia)
-	register struct ifnet *ifp;
-	register struct in6_ifaddr *ia;
+	struct ifnet *ifp;
+	struct in6_ifaddr *ia;
 {
 	if ((ia->ia_flags & IFA_ROUTE) == 0)
 		return;
@@ -1340,7 +1344,7 @@ in6_restoremkludge(ia, ifp)
 		if (mk->mk_ifp == ifp) {
 			struct in6_multi *in6m, *next;
 
-			for (in6m = mk->mk_head.lh_first; in6m; in6m = next){
+			for (in6m = mk->mk_head.lh_first; in6m; in6m = next) {
 				next = in6m->in6m_entry.le_next;
 				in6m->in6m_ia = ia;
 				IFAREF(&ia->ia_ifa);
@@ -1380,8 +1384,8 @@ in6_purgemkludge(ifp)
  */
 struct	in6_multi *
 in6_addmulti(maddr6, ifp, errorp)
-	register struct in6_addr *maddr6;
-	register struct ifnet *ifp;
+	struct in6_addr *maddr6;
+	struct ifnet *ifp;
 	int *errorp;
 {
 	struct	in6_ifaddr *ia;
@@ -1422,7 +1426,7 @@ in6_addmulti(maddr6, ifp, errorp)
 			return(NULL);
 		}
 		in6m->in6m_ia = ia;
-		IFAREF(&ia->ia_ifa);	/* gain a reference */
+		IFAREF(&ia->ia_ifa); /* gain a reference */
 		LIST_INSERT_HEAD(&ia->ia6_multiaddrs, in6m, in6m_entry);
 
 		/*
@@ -1475,8 +1479,9 @@ in6_delmulti(in6m)
 		 * Unlink from list.
 		 */
 		LIST_REMOVE(in6m, in6m_entry);
-		if (in6m->in6m_ia)
+		if (in6m->in6m_ia) {
 			IFAFREE(&in6m->in6m_ia->ia_ifa); /* release reference */
+		}
 
 		/*
 		 * Notify the network driver to update its multicast
@@ -1501,7 +1506,7 @@ in6ifa_ifpforlinklocal(ifp, ignoreflags)
 	struct ifnet *ifp;
 	int ignoreflags;
 {
-	register struct ifaddr *ifa;
+	struct ifaddr *ifa;
 
 	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
 	{
@@ -1529,7 +1534,7 @@ in6ifa_ifpwithaddr(ifp, addr)
 	struct ifnet *ifp;
 	struct in6_addr *addr;
 {
-	register struct ifaddr *ifa;
+	struct ifaddr *ifa;
 
 	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
 	{
@@ -1551,13 +1556,13 @@ static char digits[] = "0123456789abcdef";
 static int ip6round = 0;
 char *
 ip6_sprintf(addr)
-register struct in6_addr *addr;
+	struct in6_addr *addr;
 {
 	static char ip6buf[8][48];
-	register int i;
-	register char *cp;
-	register u_short *a = (u_short *)addr;
-	register u_char *d;
+	int i;
+	char *cp;
+	u_short *a = (u_short *)addr;
+	u_char *d;
 	int dcolon = 0;
 
 	ip6round = (ip6round + 1) & 7;
@@ -1701,7 +1706,6 @@ in6_addr2scopeid(ifp, addr)
  * return length of part which dst and src are equal
  * hard coding...
  */
-
 int
 in6_matchlen(src, dst)
 struct in6_addr *src, *dst;
@@ -1777,8 +1781,8 @@ in6_prefixlen2mask(maskp, len)
  */
 struct in6_ifaddr *
 in6_ifawithscope(oifp, dst)
-	register struct ifnet *oifp;
-	register struct in6_addr *dst;
+	struct ifnet *oifp;
+	struct in6_addr *dst;
 {
 	int dst_scope =	in6_addrscope(dst), src_scope, best_scope = 0;
 	int blen = -1;
@@ -2025,11 +2029,10 @@ in6_ifawithscope(oifp, dst)
  * return the best address out of the same scope. if no address was
  * found, return the first valid address from designated IF.
  */
-
 struct in6_ifaddr *
 in6_ifawithifp(ifp, dst)
-	register struct ifnet *ifp;
-	register struct in6_addr *dst;
+	struct ifnet *ifp;
+	struct in6_addr *dst;
 {
 	int dst_scope =	in6_addrscope(dst), blen = -1, tlen;
 	struct ifaddr *ifa;

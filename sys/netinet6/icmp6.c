@@ -175,7 +175,7 @@ icmp6_errcount(stat, type, code)
 	struct icmp6errstat *stat;
 	int type, code;
 {
-	switch(type) {
+	switch (type) {
 	case ICMP6_DST_UNREACH:
 		switch (code) {
 		case ICMP6_DST_UNREACH_NOROUTE:
@@ -199,7 +199,7 @@ icmp6_errcount(stat, type, code)
 		stat->icp6errs_packet_too_big++;
 		return;
 	case ICMP6_TIME_EXCEEDED:
-		switch(code) {
+		switch (code) {
 		case ICMP6_TIME_EXCEED_TRANSIT:
 			stat->icp6errs_time_exceed_transit++;
 			return;
@@ -209,7 +209,7 @@ icmp6_errcount(stat, type, code)
 		}
 		break;
 	case ICMP6_PARAM_PROB:
-		switch(code) {
+		switch (code) {
 		case ICMP6_PARAMPROB_HEADER:
 			stat->icp6errs_paramprob_header++;
 			return;
@@ -879,7 +879,7 @@ icmp6_input(mp, offp, proto)
 		while (1) { /* XXX: should avoid inf. loop explicitly? */
 			struct ip6_ext *eh;
 
-			switch(nxt) {
+			switch (nxt) {
 			case IPPROTO_HOPOPTS:
 			case IPPROTO_DSTOPTS:
 			case IPPROTO_AH:
@@ -1595,7 +1595,7 @@ ni6_addrs(ni6, m, ifpp, subj)
 	int niflags = ni6->ni_flags;
 
 	if ((niflags & NI_NODEADDR_FLAG_ALL) == 0) {
-		switch(ni6->ni_code) {
+		switch (ni6->ni_code) {
 		case ICMP6_NI_SUBJ_IPV6:
 			if (subj == NULL) /* must be impossible... */
 				return(0);
@@ -1636,7 +1636,7 @@ ni6_addrs(ni6, m, ifpp, subj)
 			 */
 
 			/* What do we have to do about ::1? */
-			switch(in6_addrscope(&ifa6->ia_addr.sin6_addr)) {
+			switch (in6_addrscope(&ifa6->ia_addr.sin6_addr)) {
 			case IPV6_ADDR_SCOPE_LINKLOCAL:
 				if ((niflags & NI_NODEADDR_FLAG_LINKLOCAL) == 0)
 					continue;
@@ -1722,7 +1722,7 @@ ni6_store_addrs(ni6, nni6, ifp0, resid)
 				continue; /* we now collect deprecated addrs */
 
 			/* What do we have to do about ::1? */
-			switch(in6_addrscope(&ifa6->ia_addr.sin6_addr)) {
+			switch (in6_addrscope(&ifa6->ia_addr.sin6_addr)) {
 			case IPV6_ADDR_SCOPE_LINKLOCAL:
 				if ((niflags & NI_NODEADDR_FLAG_LINKLOCAL) == 0)
 					continue;
@@ -2649,64 +2649,73 @@ icmp6_ctloutput(op, so, level, optname, mp)
 	int level, optname;
 	struct mbuf **mp;
 {
-	register struct in6pcb *in6p = sotoin6pcb(so);
-	register struct mbuf *m = *mp;
 	int error = 0;
+	int optlen;
+	struct in6pcb *in6p = sotoin6pcb(so);
+	struct mbuf *m = *mp;
+
+	optlen = m ? m->m_len : 0;
 
 	if (level != IPPROTO_ICMPV6) {
-		error = EINVAL;
 		if (op == PRCO_SETOPT && m)
 			(void)m_free(m);
-	} else switch(op) {
-	 case PRCO_SETOPT:
-		 switch (optname) {
-		  case ICMP6_FILTER:
-		  {
-			  struct icmp6_filter *p;
+		return EINVAL;
+	}
 
-			  p = mtod(m, struct icmp6_filter *);
-			  if (!p || !in6p->in6p_icmp6filt) {
-				  error = EINVAL;
-				  break;
-			  }
-			  bcopy(p, in6p->in6p_icmp6filt,
+	switch (op) {
+	case PRCO_SETOPT:
+		switch (optname) {
+		case ICMP6_FILTER:
+		    {
+			struct icmp6_filter *p;
+
+			if (optlen != sizeof(*p)) {
+				error = EMSGSIZE;
+				break;
+			}
+			p = mtod(m, struct icmp6_filter *);
+			if (!p || !in6p->in6p_icmp6filt) {
+				error = EINVAL;
+				break;
+			}
+			bcopy(p, in6p->in6p_icmp6filt,
 				sizeof(struct icmp6_filter));
-			  error = 0;
-			  break;
-		  }
+			error = 0;
+			break;
+		    }
 
-		  default:
-			  error = ENOPROTOOPT;
-			  break;
-		 }
-		 if (m)
-			 (void)m_free(m);
-		 break;
+		default:
+			error = ENOPROTOOPT;
+			break;
+		}
+		if (m)
+			(void)m_freem(m);
+		break;
 
-	 case PRCO_GETOPT:
-		 switch (optname) {
-		  case ICMP6_FILTER:
-		  {
-			  struct icmp6_filter *p;
+	case PRCO_GETOPT:
+		switch (optname) {
+		case ICMP6_FILTER:
+		    {
+			struct icmp6_filter *p;
 
-			  if (!in6p->in6p_icmp6filt) {
-				  error = EINVAL;
-				  break;
-			  }
-			  *mp = m = m_get(M_WAIT, MT_SOOPTS);
-			  m->m_len = sizeof(struct icmp6_filter);
-			  p = mtod(m, struct icmp6_filter *);
-			  bcopy(in6p->in6p_icmp6filt, p,
+			if (!in6p->in6p_icmp6filt) {
+				error = EINVAL;
+				break;
+			}
+			*mp = m = m_get(M_WAIT, MT_SOOPTS);
+			m->m_len = sizeof(struct icmp6_filter);
+			p = mtod(m, struct icmp6_filter *);
+			bcopy(in6p->in6p_icmp6filt, p,
 				sizeof(struct icmp6_filter));
-			  error = 0;
-			  break;
-		  }
+			error = 0;
+			break;
+		    }
 
-		  default:
-			  error = ENOPROTOOPT;
-			  break;
-		 }
-		 break;
+		default:
+			error = ENOPROTOOPT;
+			break;
+		}
+		break;
 	}
 
 	return(error);

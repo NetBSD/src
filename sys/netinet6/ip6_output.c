@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.30 2001/02/06 01:27:29 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.31 2001/02/10 04:14:28 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.152 2001/02/02 15:36:33 jinmei Exp $	*/
 
 /*
@@ -412,7 +412,7 @@ skip_ipsec2:;
 		struct ip6_rthdr0 *rh0;
 
 		finaldst = ip6->ip6_dst;
-		switch(rh->ip6r_type) {
+		switch (rh->ip6r_type) {
 		case IPV6_RTHDR_TYPE_0:
 			 rh0 = (struct ip6_rthdr0 *)rh;
 			 ip6->ip6_dst = rh0->ip6r0_addr[0];
@@ -808,8 +808,7 @@ skip_ipsec2:;
 	 * (RFC 2460, section 4.)
 	 */
 	if (exthdrs.ip6e_hbh) {
-		struct ip6_hbh *hbh = mtod(exthdrs.ip6e_hbh,
-					   struct ip6_hbh *);
+		struct ip6_hbh *hbh = mtod(exthdrs.ip6e_hbh, struct ip6_hbh *);
 		u_int32_t dummy1; /* XXX unused */
 		u_int32_t dummy2; /* XXX unused */
 
@@ -1235,9 +1234,9 @@ ip6_ctloutput(op, so, level, optname, mp)
 	int level, optname;
 	struct mbuf **mp;
 {
-	register struct in6pcb *in6p = sotoin6pcb(so);
-	register struct mbuf *m = *mp;
-	register int optval = 0;
+	struct in6pcb *in6p = sotoin6pcb(so);
+	struct mbuf *m = *mp;
+	int optval = 0;
 	int error = 0;
 	struct proc *p = curproc;	/* XXX */
 
@@ -1568,10 +1567,10 @@ ip6_ctloutput(op, so, level, optname, mp)
 static int
 ip6_pcbopts(pktopt, m, so)
 	struct ip6_pktopts **pktopt;
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct socket *so;
 {
-	register struct ip6_pktopts *opt = *pktopt;
+	struct ip6_pktopts *opt = *pktopt;
 	int error = 0;
 	struct proc *p = curproc;	/* XXX */
 	int priv = 0;
@@ -1718,7 +1717,8 @@ ip6_setmoptions(optname, im6op, m)
 			 * all multicast addresses. Only super user is allowed
 			 * to do this.
 			 */
-			if (suser(p->p_ucred, &p->p_acflag)) {
+			if (suser(p->p_ucred, &p->p_acflag))
+			{
 				error = EACCES;
 				break;
 			}
@@ -1824,7 +1824,8 @@ ip6_setmoptions(optname, im6op, m)
 		}
 		mreq = mtod(m, struct ipv6_mreq *);
 		if (IN6_IS_ADDR_UNSPECIFIED(&mreq->ipv6mr_multiaddr)) {
-			if (suser(p->p_ucred, &p->p_acflag)) {
+			if (suser(p->p_ucred, &p->p_acflag))
+			{
 				error = EACCES;
 				break;
 			}
@@ -1900,8 +1901,8 @@ ip6_setmoptions(optname, im6op, m)
 static int
 ip6_getmoptions(optname, im6o, mp)
 	int optname;
-	register struct ip6_moptions *im6o;
-	register struct mbuf **mp;
+	struct ip6_moptions *im6o;
+	struct mbuf **mp;
 {
 	u_int *hlim, *loop, *ifindex;
 
@@ -1946,7 +1947,7 @@ ip6_getmoptions(optname, im6o, mp)
  */
 void
 ip6_freemoptions(im6o)
-	register struct ip6_moptions *im6o;
+	struct ip6_moptions *im6o;
 {
 	struct in6_multi_mship *imm;
 
@@ -1971,7 +1972,7 @@ ip6_setpktoptions(control, opt, priv)
 	struct ip6_pktopts *opt;
 	int priv;
 {
-	register struct cmsghdr *cm = 0;
+	struct cmsghdr *cm = 0;
 
 	if (control == 0 || opt == 0)
 		return(EINVAL);
@@ -1996,7 +1997,7 @@ ip6_setpktoptions(control, opt, priv)
 		if (cm->cmsg_level != IPPROTO_IPV6)
 			continue;
 
-		switch(cm->cmsg_type) {
+		switch (cm->cmsg_type) {
 		case IPV6_PKTINFO:
 			if (cm->cmsg_len != CMSG_LEN(sizeof(struct in6_pktinfo)))
 				return(EINVAL);
@@ -2054,7 +2055,7 @@ ip6_setpktoptions(control, opt, priv)
 		case IPV6_NEXTHOP:
 			if (!priv)
 				return(EPERM);
-			
+
 			if (cm->cmsg_len < sizeof(u_char) ||
 			    /* check if cmsg_len is large enough for sa_len */
 			    cm->cmsg_len < CMSG_LEN(*CMSG_DATA(cm)))
@@ -2108,7 +2109,7 @@ ip6_setpktoptions(control, opt, priv)
 			if (cm->cmsg_len !=
 			    CMSG_LEN((opt->ip6po_rthdr->ip6r_len + 1) << 3))
 				return(EINVAL);
-			switch(opt->ip6po_rthdr->ip6r_type) {
+			switch (opt->ip6po_rthdr->ip6r_type) {
 			case IPV6_RTHDR_TYPE_0:
 				if (opt->ip6po_rthdr->ip6r_segleft == 0)
 					return(EINVAL);
@@ -2135,8 +2136,8 @@ ip6_setpktoptions(control, opt, priv)
 void
 ip6_mloopback(ifp, m, dst)
 	struct ifnet *ifp;
-	register struct mbuf *m;
-	register struct sockaddr_in6 *dst;
+	struct mbuf *m;
+	struct sockaddr_in6 *dst;
 {
 	struct mbuf *copym;
 	struct ip6_hdr *ip6;

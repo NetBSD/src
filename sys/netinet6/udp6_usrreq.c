@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.38 2001/02/08 16:48:02 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.39 2001/02/10 04:14:29 itojun Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.62 2000/10/19 01:11:05 itojun Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ udp6_init()
 static int
 in6_mcmatch(in6p, ia6, ifp)
 	struct in6pcb *in6p;
-	register struct in6_addr *ia6;
+	struct in6_addr *ia6;
 	struct ifnet *ifp;
 {
 	struct ip6_moptions *im6o = in6p->in6p_moptions;
@@ -153,9 +153,9 @@ udp6_input(mp, offp, proto)
 	int *offp, proto;
 {
 	struct mbuf *m = *mp;
-	register struct ip6_hdr *ip6;
-	register struct udphdr *uh;
-	register struct in6pcb *in6p;
+	struct ip6_hdr *ip6;
+	struct udphdr *uh;
+	struct in6pcb *in6p;
 	struct	mbuf *opts = 0;
 	int off = *offp;
 	u_int32_t plen, ulen;
@@ -453,7 +453,7 @@ bad:
  */
 static	void
 udp6_notify(in6p, errno)
-	register struct in6pcb *in6p;
+	struct in6pcb *in6p;
 	int errno;
 {
 	in6p->in6p_socket->so_error = errno;
@@ -467,10 +467,10 @@ udp6_ctlinput(cmd, sa, d)
 	struct sockaddr *sa;
 	void *d;
 {
-	register struct udphdr *uhp;
+	struct udphdr *uhp;
 	struct udphdr uh;
 	struct sockaddr_in6 sa6;
-	register struct ip6_hdr *ip6;
+	struct ip6_hdr *ip6;
 	struct mbuf *m;
 	int off;
 	struct in6_addr s;

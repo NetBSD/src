@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6protosw.h,v 1.8 2000/11/11 00:52:40 thorpej Exp $	*/
+/*	$NetBSD: ip6protosw.h,v 1.9 2001/02/10 04:14:29 itojun Exp $	*/
 /*	$KAME: ip6protosw.h,v 1.14 2000/10/18 18:15:53 itojun Exp $	*/
 
 /*
@@ -142,6 +142,6 @@ struct ip6protosw {
 			__P((int *, u_int, void *, size_t *, void *, size_t));
 };
 
-extern	struct	ip6protosw	inet6sw[];
+extern struct ip6protosw inet6sw[];
 
 #endif /* !_NETINET6_IP6PROTOSW_H_ */

@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_var.h,v 1.17 2001/02/08 14:56:16 itojun Exp $	*/
-/*	$KAME: in6_var.h,v 1.52 2001/02/06 09:16:54 itojun Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.18 2001/02/10 04:14:27 itojun Exp $	*/
+/*	$KAME: in6_var.h,v 1.53 2001/02/10 02:44:27 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -481,7 +481,7 @@ struct	in6_multi {
 	LIST_ENTRY(in6_multi) in6m_entry; /* list glue */
 	struct	in6_addr in6m_addr;	/* IP6 multicast address */
 	struct	ifnet *in6m_ifp;	/* back pointer to ifnet */
-	struct	in6_ifaddr *in6m_ia;    /* back pointer to in6_ifaddr */ 
+	struct	in6_ifaddr *in6m_ia;	/* back pointer to in6_ifaddr */
 	u_int	in6m_refcount;		/* # membership claims by sockets */
 	u_int	in6m_state;		/* state of the membership */
 	u_int	in6m_timer;		/* MLD6 listener report timer */
@@ -509,7 +509,7 @@ struct	in6_multistep {
 /* struct ifnet *ifp; */					\
 /* struct in6_multi *in6m; */					\
 do {								\
-	register struct in6_ifaddr *ia;				\
+	struct in6_ifaddr *ia;					\
 								\
 	IFP_TO_IA6((ifp), ia);					\
 	if (ia == NULL)						\
