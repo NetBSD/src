@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.286 1999/12/31 00:14:56 simonb Exp $
+#	$NetBSD: GENERIC,v 1.287 2000/01/04 06:58:54 chopps Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -475,6 +475,7 @@ fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
@@ -525,6 +526,7 @@ lc0	at isa? port 0x320 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
 #depca0	at isa? port 0x300 iomem 0xc8000 iosiz 0x8000 irq 5	# DEPCA
 #le*	at depca?
 nele0	at isa? port 0x320 irq 9 drq 7		# NE2100
+#ntwoc0	at isa? port 0x300 irq 5 iomem 0xc8000 flags 1	# Riscom/N2 sync serial
 le*	at nele?
 bicc0	at isa? port 0x320 irq 10 drq 7		# BICC IsoLan
 le*	at bicc?
