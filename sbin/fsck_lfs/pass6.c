@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.2 2003/03/29 00:09:43 perseant Exp $	 */
+/* $NetBSD: pass6.c,v 1.3 2003/04/02 10:39:28 fvdl Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -104,21 +104,21 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ufs_daddr_t ndaddr, int size)
 	bb = fragstofsb(fs, numfrags(fs, size));
 	switch (num) {
 	case 0:
-		ooff = ip->i_ffs_db[lbn];
+		ooff = ip->i_ffs1_db[lbn];
 		if (ooff <= 0)
-			ip->i_ffs_blocks += bb;
+			ip->i_ffs1_blocks += bb;
 		else {
 			/* possible fragment truncation or extension */
 			obb = btofsb(fs, ip->i_lfs_fragsize[lbn]);
-			ip->i_ffs_blocks += (bb - obb);
+			ip->i_ffs1_blocks += (bb - obb);
 		}
-		ip->i_ffs_db[lbn] = ndaddr;
+		ip->i_ffs1_db[lbn] = ndaddr;
 		break;
 	case 1:
-		ooff = ip->i_ffs_ib[a[0].in_off];
+		ooff = ip->i_ffs1_ib[a[0].in_off];
 		if (ooff <= 0)
-			ip->i_ffs_blocks += bb;
-		ip->i_ffs_ib[a[0].in_off] = ndaddr;
+			ip->i_ffs1_blocks += bb;
+		ip->i_ffs1_ib[a[0].in_off] = ndaddr;
 		break;
 	default:
 		ap = &a[num - 1];
@@ -128,7 +128,7 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ufs_daddr_t ndaddr, int size)
 
 		ooff = ((ufs_daddr_t *) bp->b_data)[ap->in_off];
 		if (ooff <= 0)
-			ip->i_ffs_blocks += bb;
+			ip->i_ffs1_blocks += bb;
 		((ufs_daddr_t *) bp->b_data)[ap->in_off] = ndaddr;
 		(void) VOP_BWRITE(bp);
 	}
@@ -206,9 +206,9 @@ remove_ino(struct uvnode *vp, ino_t ino)
 
 	if (daddr > 0) {
 		LFS_SEGENTRY(sup, fs, dtosn(fs, ifp->if_daddr), sbp);
-		sup->su_nbytes -= DINODE_SIZE;
+		sup->su_nbytes -= DINODE1_SIZE;
 		VOP_BWRITE(sbp);
-		seg_table[dtosn(fs, ifp->if_daddr)].su_nbytes -= DINODE_SIZE;
+		seg_table[dtosn(fs, ifp->if_daddr)].su_nbytes -= DINODE1_SIZE;
 	}
 
 	/* Do on-disk accounting */
@@ -236,7 +236,7 @@ pass6harvest(ufs_daddr_t daddr, FINFO *fip)
 
 	vp = vget(fs, fip->fi_ino);
 	if (vp && vp != fs->lfs_ivnode &&
-	    VTOI(vp)->i_ffs_gen == fip->fi_version) {
+	    VTOI(vp)->i_ffs1_gen == fip->fi_version) {
 		for (i = 0; i < fip->fi_nblocks; i++) {
 			size = (i == fip->fi_nblocks - 1 ?
 				fip->fi_lastlength : fs->lfs_bsize);
@@ -308,10 +308,10 @@ extend_ifile(void)
 
 	vp = fs->lfs_ivnode;
 	ip = VTOI(vp);
-	blkno = lblkno(fs, ip->i_ffs_size);
+	blkno = lblkno(fs, ip->i_ffs1_size);
 
 	bp = getblk(vp, blkno, fs->lfs_bsize);	/* XXX VOP_BALLOC() */
-	ip->i_ffs_size += fs->lfs_bsize;
+	ip->i_ffs1_size += fs->lfs_bsize;
 	
 	i = (blkno - fs->lfs_segtabsz - fs->lfs_cleansz) *
 		fs->lfs_ifpb;
@@ -368,15 +368,15 @@ readdress_inode(ino_t thisino, ufs_daddr_t daddr)
 
 	sn = dtosn(fs, odaddr);
 	LFS_SEGENTRY(sup, fs, sn, bp);
-	sup->su_nbytes -= DINODE_SIZE;
+	sup->su_nbytes -= DINODE1_SIZE;
 	VOP_BWRITE(bp);
-	seg_table[sn].su_nbytes -= DINODE_SIZE;
+	seg_table[sn].su_nbytes -= DINODE1_SIZE;
 
 	sn = dtosn(fs, daddr);
 	LFS_SEGENTRY(sup, fs, sn, bp);
-	sup->su_nbytes += DINODE_SIZE;
+	sup->su_nbytes += DINODE1_SIZE;
 	VOP_BWRITE(bp);
-	seg_table[sn].su_nbytes += DINODE_SIZE;
+	seg_table[sn].su_nbytes += DINODE1_SIZE;
 }
 
 /*
@@ -396,7 +396,7 @@ alloc_inode(ino_t thisino, ufs_daddr_t daddr)
 	ifp->if_daddr = daddr;
 	VOP_BWRITE(bp);
 
-	while (thisino > (lblkno(fs, VTOI(fs->lfs_ivnode)->i_ffs_size) -
+	while (thisino > (lblkno(fs, VTOI(fs->lfs_ivnode)->i_ffs1_size) -
 			  fs->lfs_segtabsz - fs->lfs_cleansz + 1) *
 	       fs->lfs_ifpb) {
 		extend_ifile();
@@ -425,9 +425,9 @@ alloc_inode(ino_t thisino, ufs_daddr_t daddr)
 	
 	/* Account for new location */
 	LFS_SEGENTRY(sup, fs, dtosn(fs, daddr), bp);
-	sup->su_nbytes += DINODE_SIZE;
+	sup->su_nbytes += DINODE1_SIZE;
 	VOP_BWRITE(bp);
-	seg_table[dtosn(fs, daddr)].su_nbytes += DINODE_SIZE;
+	seg_table[dtosn(fs, daddr)].su_nbytes += DINODE1_SIZE;
 }
 
 /*
@@ -456,7 +456,7 @@ pass6(void)
 	SEGUSE *sup;
 	SEGSUM *sp;
 	struct ubuf *bp, *ibp, *sbp, *cbp;
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 	struct inodesc idesc;
 	int i, j, bc;
 	ufs_daddr_t hassuper;
@@ -542,8 +542,8 @@ pass6(void)
 			bread(devvp, fsbtodb(fs, ibdaddr), fs->lfs_ibsize,
 			      NOCRED, &ibp);
 			j = 0;
-			for (dp = (struct dinode *)ibp->b_data;
-			     dp < (struct dinode *)ibp->b_data + INOPB(fs);
+			for (dp = (struct ufs1_dinode *)ibp->b_data;
+			     dp < (struct ufs1_dinode *)ibp->b_data + INOPB(fs);
 			     ++dp) {
 				if (dp->di_u.inumber == 0 ||
 				    dp->di_u.inumber == fs->lfs_ifile)
@@ -585,7 +585,7 @@ pass6(void)
 				 *     allocated inode.  Delete old file
 				 *     and proceed as in (2).
 				 */
-				if (vp && VTOI(vp)->i_ffs_gen < dp->di_gen) {
+				if (vp && VTOI(vp)->i_ffs1_gen < dp->di_gen) {
 					remove_ino(vp, dp->di_u.inumber);
 					inums[j++] = dp->di_u.inumber;
 					continue;
@@ -597,7 +597,7 @@ pass6(void)
 				 *     only.  We'll pick up any new
 				 *     blocks when we do the block pass.
 				 */
-				if (vp && VTOI(vp)->i_ffs_gen == dp->di_gen) {
+				if (vp && VTOI(vp)->i_ffs1_gen == dp->di_gen) {
 					readdress_inode(dp->di_u.inumber, ibdaddr);
 
 					/* Update with new info */

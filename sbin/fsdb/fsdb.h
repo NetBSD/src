@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.h,v 1.7 2001/02/04 21:29:32 christos Exp $	*/
+/*	$NetBSD: fsdb.h,v 1.8 2003/04/02 10:39:29 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -53,12 +53,12 @@ struct cmdtable {
 	unsigned int maxargc;
 	int (*handler) __P((int argc, char *argv[]));
 };
-extern struct dinode *curinode;
+extern union dinode *curinode;
 extern ino_t curinum;
 
 char **crack __P((char *, int *));
 int argcount __P((struct cmdtable *, int, char *[]));
-void printstat __P((const char *, ino_t, struct dinode *));
+void printstat __P((const char *, ino_t, union dinode *));
 int checkactive __P((void));
 int checkactivedir __P((void));
 int printactive __P((void));

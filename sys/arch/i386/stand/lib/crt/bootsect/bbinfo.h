@@ -1,4 +1,4 @@
-/*	$NetBSD: bbinfo.h,v 1.4 2003/02/02 21:08:55 dsl Exp $	*/
+/*	$NetBSD: bbinfo.h,v 1.5 2003/04/02 10:39:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -38,7 +38,7 @@
 
 #ifndef __ASSEMBLER__
 
-struct fraglist {
+struct ofraglist {
   int magic;
   int loadsz; /* blocks loaded by primary boot */
   int numentries, maxentries;
@@ -47,9 +47,20 @@ struct fraglist {
   } entries[1];
 };
 
+struct fraglist {
+  int magic;
+  int loadsz; /* blocks loaded by primary boot */
+  int numentries, maxentries;
+  struct {
+    int64_t offset;
+    int num;
+  } entries[1];
+};
+
 #endif
 
-#define FRAGLISTVERSION 0
+#define FRAGLISTVERSION 1
+#define OFRAGLISTMAGIC (0xb00deda5 + 0)
 #define FRAGLISTMAGIC (0xb00deda5 + FRAGLISTVERSION)
 
 /* only used by bootsect code (not by installboot) */

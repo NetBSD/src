@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.15 2003/03/31 19:57:00 perseant Exp $ */
+/* $NetBSD: setup.c,v 1.16 2003/04/02 10:39:28 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -276,10 +276,10 @@ setup(const char *dev)
 			sbdirty();
 		}
 	}
-	if (fs->lfs_maxsymlinklen != MAXSYMLINKLEN) {
+	if (fs->lfs_maxsymlinklen != MAXSYMLINKLEN_UFS1) {
 		pwarn("INCORRECT MAXSYMLINKLEN=%d IN SUPERBLOCK",
 		    fs->lfs_maxsymlinklen);
-		fs->lfs_maxsymlinklen = MAXSYMLINKLEN;
+		fs->lfs_maxsymlinklen = MAXSYMLINKLEN_UFS1;
 		if (preen)
 			printf(" (FIXED)\n");
 		if (preen || reply("FIX") == 1) {
@@ -295,11 +295,11 @@ setup(const char *dev)
 	 * XXX dirty while we do the rest.
 	 */
 	ivp = fs->lfs_ivnode;
-	maxino = ((VTOI(ivp)->i_ffs_size - (fs->lfs_cleansz + fs->lfs_segtabsz)
+	maxino = ((VTOI(ivp)->i_ffs1_size - (fs->lfs_cleansz + fs->lfs_segtabsz)
 		* fs->lfs_bsize) / fs->lfs_bsize) * fs->lfs_ifpb;
 	if (debug)
 		printf("maxino    = %d\n", maxino);
-	for (i = 0; i < VTOI(ivp)->i_ffs_size; i += fs->lfs_bsize) {
+	for (i = 0; i < VTOI(ivp)->i_ffs1_size; i += fs->lfs_bsize) {
 		bread(ivp, i >> fs->lfs_bshift, fs->lfs_bsize, NOCRED, &bp);
 		/* XXX check B_ERROR */
 		brelse(bp);
@@ -323,7 +323,7 @@ setup(const char *dev)
 
 	/* Initialize Ifile entry */
 	din_table[fs->lfs_ifile] = fs->lfs_idaddr;
-	seg_table[dtosn(fs, fs->lfs_idaddr)].su_nbytes += DINODE_SIZE;
+	seg_table[dtosn(fs, fs->lfs_idaddr)].su_nbytes += DINODE1_SIZE;
 
 #ifndef VERBOSE_BLOCKMAP
 	bmapsize = roundup(howmany(maxfsblock, NBBY), sizeof(int16_t));

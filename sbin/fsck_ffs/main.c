@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.44 2003/01/28 05:17:12 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.45 2003/04/02 10:39:26 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.44 2003/01/28 05:17:12 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.45 2003/04/02 10:39:26 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,8 +173,15 @@ main(argc, argv)
 		(void)signal(SIGQUIT, catchquit);
 	signal(SIGINFO, infohandler);
 
-	while (argc-- > 0)
-		(void)checkfilesys(blockcheck(*argv++), 0, 0L, 0);
+	while (argc-- > 0) {
+		const char *path = blockcheck(*argv);
+
+		if (path == NULL)
+			pfatal("Can't check %s\n", *argv);
+		else
+			(void)checkfilesys(blockcheck(*argv), 0, 0L, 0);
+		argv++;
+	}
 
 	if (returntosingle)
 		ret = 2;
@@ -211,6 +218,7 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	daddr_t n_ffree, n_bfree;
 	struct dups *dp;
 	struct zlncnt *zlnp;
+	int cylno;
 #ifdef LITE2BORKEN
 	int flags;
 #endif
@@ -325,9 +333,7 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	muldup = (struct dups *)0;
 	inocleanup();
 	if (fsmodified) {
-		time_t t;
-		(void)time(&t);
-		sblock->fs_time = t;
+		sblock->fs_time = time(NULL);
 		sbdirty();
 	}
 	if (rerun)
@@ -351,9 +357,12 @@ checkfilesys(filesys, mntpt, auxdata, child)
 #else
 	ckfini();
 #endif
-	free(blockmap);
-	free(statemap);
-	free((char *)lncntp);
+	for (cylno = 0; cylno < sblock->fs_ncg; cylno++)
+		if (inostathead[cylno].il_stat != NULL)
+			free(inostathead[cylno].il_stat);
+	free(inostathead);
+	inostathead = NULL;
+
 	if (!fsmodified)
 		return (0);
 	if (!preen)

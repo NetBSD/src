@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.13 2001/11/08 02:39:17 lukem Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.14 2003/04/02 10:39:45 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.13 2001/11/08 02:39:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.14 2003/04/02 10:39:45 fvdl Exp $");
 
 #include "opt_quota.h"
 
@@ -213,7 +213,7 @@ ufs_fhtovp(mp, ufhp, vpp)
 		return (error);
 	}
 	ip = VTOI(nvp);
-	if (ip->i_ffs_mode == 0 || ip->i_ffs_gen != ufhp->ufid_gen) {
+	if (ip->i_mode == 0 || ip->i_gen != ufhp->ufid_gen) {
 		vput(nvp);
 		*vpp = NULLVP;
 		return (ESTALE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.39 2003/03/15 06:58:50 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.40 2003/04/02 10:39:40 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.39 2003/03/15 06:58:50 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.40 2003/04/02 10:39:40 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -166,7 +166,7 @@ lfs_balloc(void *v)
 		*bpp = NULL;
 	
 	/* Check for block beyond end of file and fragment extension needed. */
-	lastblock = lblkno(fs, ip->i_ffs_size);
+	lastblock = lblkno(fs, ip->i_size);
 	if (lastblock < NDADDR && lastblock < lbn) {
 		osize = blksize(fs, ip, lastblock);
 		if (osize < fs->lfs_bsize && osize > 0) {
@@ -175,8 +175,9 @@ lfs_balloc(void *v)
 						    (bpp ? &bp : NULL),
 						    ap->a_cred)))
 				return (error);
-			ip->i_ffs_size = (lastblock + 1) * fs->lfs_bsize;
-			uvm_vnp_setsize(vp, ip->i_ffs_size);
+			ip->i_ffs1_size = ip->i_size =
+			    (lastblock + 1) * fs->lfs_bsize;
+			uvm_vnp_setsize(vp, ip->i_size);
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			if (bpp)
 				(void) VOP_BWRITE(bp);
@@ -191,10 +192,10 @@ lfs_balloc(void *v)
 	 * size or it already exists and contains some fragments and
 	 * may need to extend it.
 	 */
-	if (lbn < NDADDR && lblkno(fs, ip->i_ffs_size) <= lbn) {
+	if (lbn < NDADDR && lblkno(fs, ip->i_size) <= lbn) {
 		osize = blksize(fs, ip, lbn);
 		nsize = fragroundup(fs, offset + iosize);
-		if (lblktosize(fs, lbn) >= ip->i_ffs_size) {
+		if (lblktosize(fs, lbn) >= ip->i_size) {
 			/* Brand new block or fragment */
 			frags = numfrags(fs, nsize);
 			bb = fragstofsb(fs, frags);
@@ -206,7 +207,7 @@ lfs_balloc(void *v)
 			}
 			ip->i_lfs_effnblks += bb;
 			ip->i_lfs->lfs_bfree -= bb;
-			ip->i_ffs_db[lbn] = UNWRITTEN;
+			ip->i_ffs1_db[lbn] = UNWRITTEN;
 		} else {
 			if (nsize <= osize) {
 				/* No need to extend */
@@ -251,15 +252,15 @@ lfs_balloc(void *v)
 	}
 
 	if (daddr == UNASSIGNED) {
-		if (num > 0 && ip->i_ffs_ib[indirs[0].in_off] == 0) {
-			ip->i_ffs_ib[indirs[0].in_off] = UNWRITTEN;
+		if (num > 0 && ip->i_ffs1_ib[indirs[0].in_off] == 0) {
+			ip->i_ffs1_ib[indirs[0].in_off] = UNWRITTEN;
 		}
 
 		/*
 		 * Create new indirect blocks if necessary
 		 */
 		if (num > 1)
-			idaddr = ip->i_ffs_ib[indirs[0].in_off];
+			idaddr = ip->i_ffs1_ib[indirs[0].in_off];
 		for (i = 1; i < num; ++i) {
 			ibp = getblk(vp, indirs[i].in_lbn, fs->lfs_bsize, 0,0);
 			if (!indirs[i].in_exists) {
@@ -315,10 +316,10 @@ lfs_balloc(void *v)
 		
 		switch (num) {
 		    case 0:
-			ip->i_ffs_db[lbn] = UNWRITTEN;
+			ip->i_ffs1_db[lbn] = UNWRITTEN;
 			break;
 		    case 1:
-			ip->i_ffs_ib[indirs[0].in_off] = UNWRITTEN;
+			ip->i_ffs1_ib[indirs[0].in_off] = UNWRITTEN;
 			break;
 		    default:
 			idp = &indirs[num - 1];
