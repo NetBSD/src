@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.9 1997/10/20 15:05:05 explorer Exp $	*/
+/*	$NetBSD: rnd.c,v 1.10 1997/10/20 18:43:48 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -88,21 +88,18 @@ int     rnd_debug = 0;
 #define RND_ENTROPY_THRESHOLD	64
 
 typedef struct _rnd_event_t {
-	rndsource_t *source;
-	u_int32_t    val;
-	u_int32_t    timestamp;
+	rndsource_t    *source;
+	u_int32_t	val;
+	u_int32_t	timestamp;
 } rnd_event_t;
 
-typedef struct _rnd_eventq_t {
-	int    head;
-	int    tail;
-	rnd_event_t  events[RND_EVENTQSIZE];
-} rnd_eventq_t;
-
 /*
- * the event queue
+ * the event queue.  Fields are altered at an interrupt level.
  */
-static rnd_eventq_t rnd_events;
+volatile int		rnd_head;
+volatile int		rnd_tail;
+volatile int		rnd_timeout_pending;
+volatile rnd_event_t	rnd_events[RND_EVENTQSIZE];
 
 /*
  * our select/poll queue
@@ -110,18 +107,16 @@ static rnd_eventq_t rnd_events;
 struct selinfo rnd_selq;
 
 /*
- * Set when there are readers blocking on data from us, we have a timeout
- * scheduled, etc.
+ * Set when there are readers blocking on data from us
  */
 #define RND_READWAITING 0x00000001
-#define RND_TIMEOUTPEND 0x00000002
-u_int32_t  rnd_status;
+volatile u_int32_t  rnd_status;
 
 /*
  * our random pool.  This is defined here rather than using the general
  * purpose one defined in rndpool.c
  */
-static rndpool_t   rnd_pool;
+rndpool_t   rnd_pool;
 
 /*
  * This is used for devices that pass a NULL source pointer into the
@@ -189,7 +184,7 @@ rnd_wakeup_readers()
 			DPRINTF(RND_DEBUG_SNOOZE,
 				("waking up pending readers.\n"));
 			rnd_status &= ~RND_READWAITING;
-			wakeup(&rnd_status);
+			wakeup(&rnd_selq);
 		}
 		selwakeup(&rnd_selq);
 	}
@@ -361,7 +356,7 @@ rndread(dev, uio, ioflag)
 			}
 
 			rnd_status |= RND_READWAITING;
-			ret = tsleep(&rnd_status, PRIBIO|PCATCH,
+			ret = tsleep(&rnd_selq, PRIBIO|PCATCH,
 				     "rndread", 0);
 
 			if (ret)
@@ -679,8 +674,8 @@ rnd_init(void)
 
 	LIST_INIT(&rnd_sources);
 
-	rnd_events.head = 0;
-	rnd_events.tail = 0;
+	rnd_head = 0;
+	rnd_tail = 0;
 
 	rndpool_init(&rnd_pool);
 
@@ -726,7 +721,7 @@ rnd_detach_source(rs)
 	rndsource_element_t *rs;
 {
 	int	     elem;
-	rnd_event_t *ev;
+	volatile rnd_event_t *ev;
 	int          s;
 
 	s = splhigh();
@@ -736,10 +731,10 @@ rnd_detach_source(rs)
 	/*
 	 * If there are events queued up, "remove" them from the event queue
 	 */
-	elem = rnd_events.tail;
+	elem = rnd_tail;
 
-	while (elem != rnd_events.head) {
-		ev = &rnd_events.events[elem];
+	while (elem != rnd_head) {
+		ev = &rnd_events[elem];
 		if (ev->source == &rs->data)
 			ev->source = &rnd_source_no_collect;
 		elem = (elem + 1) & (RND_EVENTQSIZE - 1);
@@ -759,17 +754,22 @@ rnd_add_uint32(rs, val)
 	u_int32_t val;
 {
 	rndsource_t    *rst;
-	rnd_event_t    *ev;
+	volatile rnd_event_t    *ev;
 	int		s;
 	int		nexthead;
 
 	s = splhigh();
 
 	/*
-	 * check for full ring
+	 * check for full ring.  If the queue is full and we have not
+	 * already scheduled a timeout, do so here.
 	 */
-	nexthead = (rnd_events.head + 1) & (RND_EVENTQSIZE - 1);
-	if (nexthead == rnd_events.tail) {
+	nexthead = (rnd_head + 1) & (RND_EVENTQSIZE - 1);
+	if (nexthead == rnd_tail) {
+		if (rnd_timeout_pending == 0) {
+			rnd_timeout_pending = 1;
+			timeout(rnd_timeout, NULL, 1);
+		}
 		splx(s);
 		return;
 	}
@@ -796,20 +796,16 @@ rnd_add_uint32(rs, val)
 	 * timeout to process it.  Since we are at splhigh, this is
 	 * an atomic operation...
 	 */
-	ev = &rnd_events.events[rnd_events.head];
+	ev = &rnd_events[rnd_head];
 	ev->source = rst;
 	ev->val = val;
 	ev->timestamp = rnd_timestamp();
-	rnd_events.head = nexthead;
+	rnd_head = nexthead;
 
-#if 0
-	if ((rnd_status & RND_TIMEOUTPEND) == 0) {
-		rnd_status |= RND_TIMEOUTPEND;
-#endif
+	if (rnd_timeout_pending == 0) {
+		rnd_timeout_pending = 1;
 		timeout(rnd_timeout, NULL, 1);
-#if 0
 	}
-#endif
 
 	splx(s);
 }
@@ -823,29 +819,21 @@ rnd_timeout(arg)
 	void *arg;
 {
 	u_int32_t	entropy;
-	rnd_event_t    *ev;
-	int		s;
+	volatile rnd_event_t    *ev;
 
-	/*
-	 * make certain nothing else can tweak our magic flag while we
-	 * are doing so.  This might allow multiple timeouts to be
-	 * queued, but there should be at most one other.
-	 */
-	s = splhigh();
-	rnd_status &= ~RND_TIMEOUTPEND;
-	splx(s);
+	rnd_timeout_pending = 0;
 
 	/*
 	 * check for empty queue
 	 */
-	if (rnd_events.head == rnd_events.tail)
+	if (rnd_head == rnd_tail)
 		return;
 
 	/*
 	 * Run through the event queue, processing events.
 	 */
-	while (rnd_events.head != rnd_events.tail) {
-		ev = &rnd_events.events[rnd_events.tail];
+	while (rnd_head != rnd_tail) {
+		ev = &rnd_events[rnd_tail];
 
 		/*
 		 * We repeat this check here, since it is possible the source
@@ -869,7 +857,7 @@ rnd_timeout(arg)
 			rndpool_add_uint32(&rnd_pool, ev->timestamp, entropy);
 			ev->source->total += entropy;
 		}
-		rnd_events.tail = (rnd_events.tail + 1) & (RND_EVENTQSIZE - 1);
+		rnd_tail = (rnd_tail + 1) & (RND_EVENTQSIZE - 1);
 	}
 
 	/*
