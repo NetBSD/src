@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.54 2002/10/23 09:11:08 jdolecek Exp $	*/
+/*	$NetBSD: rd.c,v 1.55 2002/11/01 11:31:52 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.54 2002/10/23 09:11:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.55 2002/11/01 11:31:52 mrg Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -911,7 +911,8 @@ rdintr(arg)
 		return;
 	}
 #endif
-	disk_unbusy(&rs->sc_dkdev, (bp->b_bcount - bp->b_resid));
+	disk_unbusy(&rs->sc_dkdev, (bp->b_bcount - bp->b_resid),
+	    (bp->b_flags & B_READ));
 
 	if (rs->sc_flags & RDF_SEEK) {
 		rs->sc_flags &= ~RDF_SEEK;

@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.42 2002/10/23 09:12:29 jdolecek Exp $	*/
+/*	$NetBSD: xy.c,v 1.43 2002/11/01 11:31:54 mrg Exp $	*/
 
 /*
  *
@@ -1659,8 +1659,8 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
 				            iorq->buf->b_bcount);
 			    (void)BUFQ_GET(&iorq->xy->xyq);
 			    disk_unbusy(&iorq->xy->sc_dk,
-					        (iorq->buf->b_bcount -
-					         iorq->buf->b_resid));
+				(iorq->buf->b_bcount - iorq->buf->b_resid),
+				(iorq->buf->b_flags & B_READ));
 			    biodone(iorq->buf);
 			    iorq->mode = XY_SUB_FREE;
 			    break;
@@ -1837,7 +1837,8 @@ xyc_remove_iorq(xycsc)
 					    iorq->buf->b_bcount);
 			(void)BUFQ_GET(&iorq->xy->xyq);
 			disk_unbusy(&iorq->xy->sc_dk,
-			    (bp->b_bcount - bp->b_resid));
+			    (bp->b_bcount - bp->b_resid),
+			    (bp->b_flags & B_READ));
 			iorq->mode = XY_SUB_FREE;
 			biodone(bp);
 			break;

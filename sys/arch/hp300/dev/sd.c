@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.56 2002/10/23 09:11:09 jdolecek Exp $	*/
+/*	$NetBSD: sd.c,v 1.57 2002/11/01 11:31:53 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.56 2002/10/23 09:11:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.57 2002/11/01 11:31:53 mrg Exp $");
 
 #include "rnd.h"
 #include "opt_useleds.h"
@@ -993,7 +993,8 @@ sdintr(arg, stat)
 		return;
 	}
 
-	disk_unbusy(&sc->sc_dkdev, (bp->b_bcount - bp->b_resid));
+	disk_unbusy(&sc->sc_dkdev, (bp->b_bcount - bp->b_resid),
+	    (bp->b_flags & B_READ));
 
 	if (stat) {
 #ifdef DEBUG

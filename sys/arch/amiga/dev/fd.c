@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.55 2002/10/23 09:10:31 jdolecek Exp $ */
+/*	$NetBSD: fd.c,v 1.56 2002/11/01 11:31:51 mrg Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.55 2002/10/23 09:10:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.56 2002/11/01 11:31:51 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1577,7 +1577,8 @@ fddone(struct fd_softc *sc)
 	 */
 	(void)BUFQ_GET(&sc->bufq);
 
-	disk_unbusy(&sc->dkdev, (bp->b_bcount - bp->b_resid));
+	disk_unbusy(&sc->dkdev, (bp->b_bcount - bp->b_resid),
+	    (bp->b_flags & B_READ));
 
 	biodone(bp);
 nobuf:

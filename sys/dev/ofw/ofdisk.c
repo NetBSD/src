@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.24 2002/10/23 09:13:29 jdolecek Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.25 2002/11/01 11:31:58 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.24 2002/10/23 09:13:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.25 2002/11/01 11:31:58 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -276,7 +276,8 @@ ofdisk_strategy(struct buf *bp)
 	} else
 		bp->b_resid = bp->b_bcount - read;
 
-	disk_unbusy(&of->sc_dk, bp->b_bcount - bp->b_resid);
+	disk_unbusy(&of->sc_dk, bp->b_bcount - bp->b_resid,
+	    (bp->b_flags & B_READ));
 
 done:
 	biodone(bp);

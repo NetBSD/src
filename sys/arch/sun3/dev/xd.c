@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.40 2002/10/23 09:12:27 jdolecek Exp $	*/
+/*	$NetBSD: xd.c,v 1.41 2002/11/01 11:31:54 mrg Exp $	*/
 
 /*
  *
@@ -1725,7 +1725,8 @@ xdc_reset(xdcsc, quiet, blastmode, error, xdsc)
 				dvma_mapout(iorq->dbufbase,
 				            iorq->buf->b_bcount);
 			    disk_unbusy(&iorq->xd->sc_dk,
-					(iorq->buf->b_bcount - iorq->buf->b_resid));
+					(iorq->buf->b_bcount - iorq->buf->b_resid),
+					(iorq->buf->b_flags & B_READ));
 			    biodone(iorq->buf);
 			    XDC_FREE(xdcsc, lcv);	/* add to free list */
 			    break;
@@ -1930,7 +1931,8 @@ xdc_remove_iorq(xdcsc)
 			dvma_mapout(iorq->dbufbase,
 					    iorq->buf->b_bcount);
 			disk_unbusy(&iorq->xd->sc_dk,
-			    (bp->b_bcount - bp->b_resid));
+			    (bp->b_bcount - bp->b_resid),
+			    (bp->b_flags & B_READ));
 			XDC_FREE(xdcsc, rqno);
 			biodone(bp);
 			break;

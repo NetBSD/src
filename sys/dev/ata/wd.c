@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.231 2002/10/23 09:13:07 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.232 2002/11/01 11:31:56 mrg Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.231 2002/10/23 09:13:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.232 2002/11/01 11:31:56 mrg Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -655,7 +655,8 @@ noerror:	if ((wd->sc_wdc_bio.flags & ATA_CORR) || wd->retries > 0)
 		bp->b_error = EIO;
 		break;
 	}
-	disk_unbusy(&wd->sc_dk, (bp->b_bcount - bp->b_resid));
+	disk_unbusy(&wd->sc_dk, (bp->b_bcount - bp->b_resid),
+	    (bp->b_flags & B_READ));
 #if NRND > 0
 	rnd_add_uint32(&wd->rnd_source, bp->b_blkno);
 #endif

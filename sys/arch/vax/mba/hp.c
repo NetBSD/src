@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.30 2002/10/23 09:12:33 jdolecek Exp $ */
+/*	$NetBSD: hp.c,v 1.31 2002/11/01 11:31:55 mrg Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -401,7 +401,8 @@ hper2:
 		    sc->sc_dev.dv_xname, mbasr);
 
 	BUFQ_PEEK(&md->md_q)->b_resid = 0;
-	disk_unbusy(&sc->sc_disk, BUFQ_PEEK(&md->md_q)->b_bcount);
+	disk_unbusy(&sc->sc_disk, BUFQ_PEEK(&md->md_q)->b_bcount,
+	    (bp->b_flags & B_READ));
 	return XFER_FINISH;
 }
 

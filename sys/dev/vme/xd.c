@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.46 2002/10/23 09:14:04 jdolecek Exp $	*/
+/*	$NetBSD: xd.c,v 1.47 2002/11/01 11:32:00 mrg Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.46 2002/10/23 09:14:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.47 2002/11/01 11:32:00 mrg Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -1936,7 +1936,8 @@ xdc_reset(xdcsc, quiet, blastmode, error, xdsc)
 
 			    disk_unbusy(&xdcsc->reqs[lcv].xd->sc_dk,
 				(xdcsc->reqs[lcv].buf->b_bcount -
-				xdcsc->reqs[lcv].buf->b_resid));
+				xdcsc->reqs[lcv].buf->b_resid),
+				(iorq->buf->b_flags & B_READ));
 			    biodone(iorq->buf);
 			    XDC_FREE(xdcsc, lcv);	/* add to free list */
 			    break;
@@ -2145,7 +2146,8 @@ xdc_remove_iorq(xdcsc)
 			bus_dmamap_unload(xdcsc->dmatag, iorq->dmamap);
 
 			disk_unbusy(&iorq->xd->sc_dk,
-			    (bp->b_bcount - bp->b_resid));
+			    (bp->b_bcount - bp->b_resid),
+			    (bp->b_flags & B_READ));
 			XDC_FREE(xdcsc, rqno);
 			biodone(bp);
 			break;
