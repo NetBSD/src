@@ -1,7 +1,7 @@
-.\"	$NetBSD: hardware,v 1.18 2000/10/29 14:08:06 lukem Exp $
+.\"	$NetBSD: hardware,v 1.19 2002/05/27 12:39:57 leo Exp $
 .
 .Nx*M
-\*V runs on a TT030, Falcon and Hades. An FPU is not required.
+\*V runs on a TT030, Falcon, Hades and MilanI. An FPU is not required.
 The minimum amount of RAM required is 4 MB. On the Hades, only the Tseng PCI
 VGA cards (ET4000/ET6000/ET6100) are supported in the \*V release. When
 an unsupported video card is present, you can use
@@ -82,11 +82,13 @@ Crazy Dots VME et4000 graphics adapter
 Riebl (and possibly PAM) ethernet cards on the VME bus.
 .bullet)
 .It
-PCI-bus devices (Hades only)
+PCI-bus devices (Hades and Milan only)
 .(bullet -compact
 ET4000/ET6000/ET6100-PCI (VGA console)
 .It
 ESS Technology Inc. Solo-1 Soundcard
+.It
+3Com 3c59x Network card
 .bullet)
 .It
 ISA-bus devices (Hades only)
