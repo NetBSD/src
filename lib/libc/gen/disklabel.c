@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.21 1998/08/10 02:43:08 perry Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.22 1998/11/12 15:51:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -38,13 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.21 1998/08/10 02:43:08 perry Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.22 1998/11/12 15:51:44 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/param.h>
 #define DKTYPENAMES
+#define FSTYPENAMES
 #include <sys/disklabel.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
@@ -79,8 +80,9 @@ getdiskbyname(name)
 	char	p, max, psize[3], pbsize[3],
 		pfsize[3], poffset[3], ptype[3];
 	u_int32_t *dx;
+	long f;
 
-	if (cgetent(&buf, db_array, (char *) name) < 0)
+	if (cgetent(&buf, db_array, name) < 0)
 		return NULL;
 
 	memset(&disk, 0, sizeof(disk));
@@ -107,9 +109,9 @@ getdiskbyname(name)
 		dp->d_flags |= D_BADSECT;
 
 #define getnumdflt(field, dname, dflt) \
-        { long f; (field) = (cgetnum(buf, dname, &f) == -1) ? (dflt) : f; }
+    (field) = (u_int32_t) ((cgetnum(buf, dname, &f) == -1) ? (dflt) : f)
 #define	getnum(field, dname) \
-	{ long f; cgetnum(buf, dname, &f); field = f; }
+	if (cgetnum(buf, dname, &f) != -1) field = (u_int32_t)f
 
 	getnumdflt(dp->d_secsize, "se", DEV_BSIZE);
 	getnum(dp->d_ntracks, "nt");
@@ -138,22 +140,23 @@ getdiskbyname(name)
 	max = 'a' - 1;
 	pp = &dp->d_partitions[0];
 	for (p = 'a'; p < 'a' + MAXPARTITIONS; p++, pp++) {
-		long f;
+		long ff;
 
 		psize[1] = pbsize[1] = pfsize[1] = poffset[1] = ptype[1] = p;
-		if (cgetnum(buf, psize, &f) == -1)
+		if (cgetnum(buf, psize, &ff) == -1)
 			pp->p_size = 0;
 		else {
-			pp->p_size = f;
+			pp->p_size = (u_int32_t)ff;
 			getnum(pp->p_offset, poffset);
 			getnumdflt(pp->p_fsize, pfsize, 0);
 			if (pp->p_fsize) {
 				long bsize;
 
-				if (cgetnum(buf, pbsize, &bsize) == 0)
-					pp->p_frag = bsize / pp->p_fsize;
-				else
+				if (cgetnum(buf, pbsize, &bsize) == -1)
 					pp->p_frag = 8;
+				else
+					pp->p_frag =
+					    (u_int8_t)(bsize / pp->p_fsize);
 			}
 			getnumdflt(pp->p_fstype, ptype, 0);
 			if (pp->p_fstype == 0 && cgetstr(buf, ptype, &cq) > 0)
