@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile.evbmips.inc,v 1.1 2002/03/07 14:43:57 simonb Exp $
+#	$NetBSD: Makefile.evbmips.inc,v 1.1.24.1 2005/02/06 07:45:24 jmc Exp $
+
+CPPFLAGS+=	-I$S/dist/ipf
 
 SYSTEM_LD_TAIL_EXTRA=; \
 	echo "${DBSYM} $@ || true"; \

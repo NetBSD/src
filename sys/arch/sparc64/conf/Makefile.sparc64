@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.54 2004/03/22 00:43:37 martin Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.54.4.1 2005/02/06 07:45:26 jmc Exp $
 
 #=========================================================================
 #
@@ -148,3 +148,8 @@ machdep.o mem.o openprom.o pmap.o vm_machdep.o: Makefile
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) IPF source directory
+##
+CPPFLAGS+=	-I$S/dist/ipf

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.84 2002/11/26 18:51:14 thorpej Exp $
+#	$NetBSD: Makefile.hp300,v 1.84.10.1 2005/02/06 07:45:24 jmc Exp $
 
 # Makefile for NetBSD
 #
@@ -89,3 +89,8 @@ dma.o hpux_machdep.o locore.o machdep.o pmap.o pmap_boostrap.o sys_machdep.o tra
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) IPF source directory
+##
+CPPFLAGS+=	-I$S/dist/ipf

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.playstation2.inc,v 1.2 2002/01/02 12:49:43 uch Exp $
+#	$NetBSD: Makefile.playstation2.inc,v 1.2.24.1 2005/02/06 07:45:25 jmc Exp $
 
 EETOOLDIR	=	/usr/pkg/cross-ps2
 TARGET	=	mipsEEel-netbsd
@@ -14,7 +14,8 @@ NM	=	${EETOOLDIR}/bin/${TARGET}-nm
 SIZE	=	${EETOOLDIR}/bin/${TARGET}-size
 STRIP	=	${EETOOLDIR}/bin/${TARGET}-strip
 
-CFLAGS+= -mcpu=r5900 -mips1 -fno-pic \
+CFLAGS+=	-mcpu=r5900 -mips1 -fno-pic \
 		-D__NetBSD__ -Ulinux -U__linux__ -U__linux
-AFLAGS+= -mcpu=r5900 -mips1 -fno-pic \
+AFLAGS+=	-mcpu=r5900 -mips1 -fno-pic \
 		-D__NetBSD__ -Ulinux -U__linux__ -U__linux
+CPPFLAGS+=	-I$S/dist/ipf

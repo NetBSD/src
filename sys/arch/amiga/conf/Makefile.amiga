@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.101 2002/11/26 18:51:12 thorpej Exp $
+#	$NetBSD: Makefile.amiga,v 1.101.10.1 2005/02/06 07:45:23 jmc Exp $
 
 # Makefile for NetBSD
 #
@@ -101,3 +101,8 @@ a2kbbc.o: Makefile
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) IPF source directory
+##
+CPPFLAGS+=	-I$S/dist/ipf

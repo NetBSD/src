@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.133.2.2 2004/07/15 19:26:49 he Exp $
+#	$NetBSD: Makefile.i386,v 1.133.2.2.2.1 2005/02/06 07:45:25 jmc Exp $
 
 # Makefile for NetBSD
 #
@@ -120,3 +120,8 @@ athhal-elf.o: athhal-elf-o.uue
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) IPF source directory
+##
+CPPFLAGS+=	-I$S/dist/ipf

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.1.2.2 2004/06/22 07:53:35 tron Exp $
+#	$NetBSD: Makefile.xen,v 1.1.2.2.2.1 2005/02/06 07:45:26 jmc Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -115,3 +115,8 @@ clock.o: config_time.h
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) IPF source directory
+##
+CPPFLAGS+=	-I$S/dist/ipf

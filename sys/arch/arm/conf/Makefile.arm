@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.20 2003/10/30 12:30:39 skrll Exp $
+#	$NetBSD: Makefile.arm,v 1.20.4.1 2005/02/06 07:45:24 jmc Exp $
 
 # Makefile for NetBSD
 #
@@ -99,3 +99,8 @@ COPTS.uipc_socket.c+=	-fno-strict-aliasing
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) IPF source directory
+##
+CPPFLAGS+=	-I$S/dist/ipf

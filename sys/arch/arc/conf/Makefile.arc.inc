@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile.arc.inc,v 1.11.2.1 2004/09/01 18:20:16 tron Exp $
+#	$NetBSD: Makefile.arc.inc,v 1.11.2.1.2.1 2005/02/06 07:45:24 jmc Exp $
 
 CFLAGS+=	-mips2
 AFLAGS+=	-mips2
+CFLAGS+=	-I$S/dist/ipf
 
 LINKFORMAT=	-N
 

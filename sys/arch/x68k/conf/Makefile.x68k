@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.57 2002/11/26 18:51:18 thorpej Exp $
+#	$NetBSD: Makefile.x68k,v 1.57.10.1 2005/02/06 07:45:26 jmc Exp $
 #
 # Makefile for NetBSD
 #
@@ -103,3 +103,8 @@ intio.o vm_machdep.o: Makefile
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) IPF source directory
+##
+CPPFLAGS+=	-I$S/dist/ipf

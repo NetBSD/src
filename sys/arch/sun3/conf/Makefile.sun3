@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.96 2002/11/26 18:51:17 thorpej Exp $
+# $NetBSD: Makefile.sun3,v 1.96.10.1 2005/02/06 07:45:26 jmc Exp $
 
 # Makefile for NetBSD
 #
@@ -101,3 +101,8 @@ stub.o: Makefile
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) IPF source directory
+##
+CPPFLAGS+=	-I$S/dist/ipf
