@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: crt0.c,v 1.10 1994/07/26 19:53:46 pk Exp $
+ *	$Id: crt0.c,v 1.11 1995/06/02 21:30:59 pk Exp $
  */
 
 
@@ -35,13 +35,22 @@
 static char sccsid[] = "%W% (Erasmus) %G%";
 #endif /* LIBC_SCCS and not lint */
 
-extern void exit();
-int _callmain();
-
 #include <sys/param.h>
+#include <stdlib.h>
+
+int			_callmain __P((void));
+static char		*_strrchr __P((char *, char));
+
+extern	unsigned char	etext;
+extern	unsigned char	eprol asm ("eprol");
+extern void		start __P((void)) asm("start");
+
+char			**environ;
+int			errno;
+static char		empty[1];
+char			*__progname = empty;
 
 #ifdef DYNAMIC
-#include <sys/types.h>
 #include <sys/syscall.h>
 #include <a.out.h>
 #ifndef N_GETMAGIC
@@ -57,15 +66,19 @@ int _callmain();
 #endif
 #include <link.h>
 
-extern struct _dynamic _DYNAMIC;
+extern struct _dynamic	_DYNAMIC;
 static struct ld_entry	*ld_entry;
-static void	__do_dynamic_link ();
-static void	__set_progname ();
-static char	*_getenv();
-static int	_strncmp();
+static void		__do_dynamic_link __P((void));
+static void		__set_progname __P((int, char **));
+extern int		__syscall __P((int, ...));
+extern int		__syscall2 __P((int, ...));
+#ifdef DEBUG
+static char		*_getenv __P((char *));
+static int		_strncmp __P((char *, char *, int));
+#endif
 
 #if defined(sun) && defined(sparc)
-static		__call();
+static			__call();
 #endif
 
 #ifdef sun
@@ -76,21 +89,6 @@ static		__call();
 #endif
 
 #endif /* DYNAMIC */
-
-static char		*_strrchr();
-
-char			**environ;
-
-#ifdef BSD
-extern	unsigned char	etext;
-extern	unsigned char	eprol asm ("eprol");
-extern			start() asm("start");
-extern			mcount() asm ("mcount");
-
-int			errno;
-static char		empty[1];
-char			*__progname = empty;
-#endif
 
 /*
  * We need these system calls, but can't use library stubs
@@ -192,10 +190,11 @@ static void
 __do_mcrt ()
 {
 	extern unsigned char eprol, etext;
-	extern void _mcleanup();
+	extern void monstartup __P((u_long, u_long));
+	extern void _mcleanup __P((void));
 
 	atexit(_mcleanup);
-	monstartup(&eprol, &etext);
+	monstartup((u_long)&eprol, (u_long)&etext);
 	return;
 }
 #endif
@@ -219,8 +218,10 @@ __do_dynamic_link ()
 	struct crt_ldso	crt;
 	struct exec	hdr;
 	char		*ldso;
+	int		(*entry) __P((int, struct crt_ldso *));
+#if defined(sun) && defined(DUPZFD)
 	int		dupzfd;
-	int		(*entry)();
+#endif
 
 	/* ld(1) convention: if DYNAMIC = 0 then statically linked */
 	if (&_DYNAMIC == (struct _dynamic *)0)
@@ -308,7 +309,8 @@ __do_dynamic_link ()
 	/* Call Sun's ld.so entry point: version 1, offset crt */
 	__call(CRT_VERSION_SUN, &crt, crt.crt_ba + sizeof hdr);
 #else
-	entry = (int (*)())(crt.crt_ba + sizeof hdr);
+	entry = (int (*) __P((int, struct crt_ldso *)))
+		(crt.crt_ba + sizeof hdr);
 	if ((*entry)(CRT_VERSION_BSD_3, &crt) == -1) {
 		_FATAL("ld.so failed\n");
 	}
@@ -397,10 +399,11 @@ int	cmd;
  * Support routines
  */
 
+#ifdef DEBUG
 static int
 _strncmp(s1, s2, n)
 	register char *s1, *s2;
-	register n;
+	register int n;
 {
 
 	if (n == 0)
@@ -430,6 +433,7 @@ _getenv(name)
 			}
 	return (char *)0;
 }
+#endif
 
 #endif /* DYNAMIC */
 
