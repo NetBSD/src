@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.55 1997/09/10 19:11:23 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -458,21 +458,21 @@ cpumatch_sun4(sc, mp, node)
 		sc->classlvl = 100;
 		sc->mmu_ncontext = 8;
 		sc->mmu_nsegment = 256;
-/*XXX*/		sc->hz = 0;
+/*XXX*/		sc->hz = 14280000;
 		break;
 	case ID_SUN4_200:
 		sc->cpu_type = CPUTYP_4_200;
 		sc->classlvl = 200;
 		sc->mmu_nsegment = 512;
 		sc->mmu_ncontext = 16;
-/*XXX*/		sc->hz = 0;
+/*XXX*/		sc->hz = 16670000;
 		break;
 	case ID_SUN4_300:
 		sc->cpu_type = CPUTYP_4_300;
 		sc->classlvl = 300;
 		sc->mmu_nsegment = 256;
 		sc->mmu_ncontext = 16;
-/*XXX*/		sc->hz = 0;
+/*XXX*/		sc->hz = 25000000;
 		break;
 	case ID_SUN4_400:
 		sc->cpu_type = CPUTYP_4_400;
@@ -480,7 +480,7 @@ cpumatch_sun4(sc, mp, node)
 		sc->mmu_nsegment = 1024;
 		sc->mmu_ncontext = 64;
 		sc->mmu_nregion = 256;
-/*XXX*/		sc->hz = 0;
+/*XXX*/		sc->hz = 33000000;
 		sc->sun4_mmu3l = 1;
 		break;
 	}
@@ -574,7 +574,7 @@ sun4_hotfix(sc)
 {
 	if ((sc->flags & CPUFLG_SUN4CACHEBUG) != 0) {
 		kvm_uncache((caddr_t)trapbase, 1);
-		printf("cache chip bug; trap page uncached ");
+		printf(": cache chip bug; trap page uncached");
 	}
 
 }
