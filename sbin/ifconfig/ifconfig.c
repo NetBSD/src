@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.93 2000/12/12 20:27:42 onoe Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.94 2001/01/08 14:06:12 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.93 2000/12/12 20:27:42 onoe Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.94 2001/01/08 14:06:12 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -696,7 +696,7 @@ printall()
 #ifdef HAVE_IFADDRS_H
 	struct ifaddrs *ifap, *ifa;
 	struct ifreq ifr;
-	const struct sockaddr_dl *sdl;
+	const struct sockaddr_dl *sdl = NULL;
 	int idx;
 	char *p;
 
