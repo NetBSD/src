@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.10 1995/05/08 17:28:51 brezak Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.11 1995/05/08 22:02:19 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sbdsp.c,v 1.10 1995/05/08 17:28:51 brezak Exp $
  */
 /*
  * SoundBlaster Pro code provided by John Kohl, based on lots of
