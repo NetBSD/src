@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_open.c,v 1.13 1998/12/09 12:42:46 christos Exp $	*/
+/*	$NetBSD: bt_open.c,v 1.13.10.1 2002/04/17 11:22:49 he Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_open.c	8.10 (Berkeley) 8/17/94";
 #else
-__RCSID("$NetBSD: bt_open.c,v 1.13 1998/12/09 12:42:46 christos Exp $");
+__RCSID("$NetBSD: bt_open.c,v 1.13.10.1 2002/04/17 11:22:49 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -398,14 +398,20 @@ static int
 tmp()
 {
 	sigset_t set, oset;
-	int fd;
+	int fd, len;
 	char *envtmp;
 	char path[MAXPATHLEN];
 
-	envtmp = getenv("TMPDIR");
-	(void)snprintf(path,
-	    sizeof(path), "%s/bt.XXXXXX", envtmp ? envtmp : _PATH_TMP);
+	if (issetugid())
+		envtmp = NULL;
+	else
+		envtmp = getenv("TMPDIR");
 
+	len = snprintf(path,
+	    sizeof(path), "%s/bt.XXXXXX", envtmp ? envtmp : _PATH_TMP);
+	if (len >= sizeof(path))
+		return -1;
+	
 	(void)sigfillset(&set);
 	(void)sigprocmask(SIG_BLOCK, &set, &oset);
 	if ((fd = mkstemp(path)) != -1)
