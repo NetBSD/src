@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.50 2000/03/25 00:10:19 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.51 2000/03/25 07:13:05 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -181,7 +181,9 @@ struct usbd_xfer {
 	usbd_callback		callback;
 	__volatile char		done;
 #ifdef DIAGNOSTIC
-	char			isfree;
+	u_int32_t		busy_free;
+#define XFER_FREE 0x46524545
+#define XFER_BUSY 0x42555357
 #endif
 
 	/* For control pipe */
