@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.8 2003/11/17 01:52:14 manu Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.9 2003/11/20 07:12:34 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.8 2003/11/17 01:52:14 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.9 2003/11/20 07:12:34 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.8 2003/11/17 01:52:14 manu Exp $
 #include <compat/mach/mach_port.h>
 #include <compat/mach/mach_notify.h>
 
+#include <compat/darwin/darwin_exec.h>
 #include <compat/darwin/darwin_signal.h>
 #include <compat/darwin/darwin_syscallargs.h>
 
@@ -129,9 +130,24 @@ darwin_trapsignal(l, ksi)
 	struct lwp *l;
 	const struct ksiginfo *ksi;
 {
+	struct darwin_emuldata *ded;
+	int code[2];
+
+	/* 
+	 * Send signals as software exception if the process requested that
+	 * XXX this skips various checks (signal masks...)
+	 */
+	ded = (struct darwin_emuldata *)l->l_proc->p_emuldata;
+	if (ded->ded_flags & DARWIN_DED_SIGEXC) {
+		code[0] = MACH_SOFT_SIGNAL;
+		code[1] = ksi->ksi_signo;
+		mach_exception(l, MACH_EXC_SOFTWARE, code);
+		return;
+	}
+
 	/* 
 	 * If mach_trapsignal1 returns 0, the exception was intercepted at
-	 * the Mach level, n signal is to be sent. if it returns an error,
+	 * the Mach level, no signal is to be sent. if it returns an error,
 	 * we call native trapsignal to fire a UNIX signal.
 	 */
 	if (mach_trapsignal1(l, ksi) != 0)

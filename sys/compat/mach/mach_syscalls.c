@@ -1,4 +1,4 @@
-/* $NetBSD: mach_syscalls.c,v 1.11 2003/01/18 23:38:36 thorpej Exp $ */
+/* $NetBSD: mach_syscalls.c,v 1.12 2003/11/20 07:12:34 manu Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_syscalls.c,v 1.11 2003/01/18 23:38:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscalls.c,v 1.12 2003/11/20 07:12:34 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)

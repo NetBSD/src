@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscall.h,v 1.33 2003/09/06 11:50:25 manu Exp $ */
+/* $NetBSD: darwin_syscall.h,v 1.34 2003/11/20 07:12:34 manu Exp $ */
 
 /*
  * System call numbers.
@@ -49,9 +49,15 @@
 /* syscall: "setuid" ret: "int" args: "uid_t" */
 #define	DARWIN_SYS_setuid	23
 
+#ifdef COMPAT_43
 /* syscall: "getuid" ret: "uid_t" args: */
 #define	DARWIN_SYS_getuid	24
 
+#else
+/* syscall: "getuid" ret: "uid_t" args: */
+#define	DARWIN_SYS_getuid	24
+
+#endif
 /* syscall: "geteuid" ret: "uid_t" args: */
 #define	DARWIN_SYS_geteuid	25
 
@@ -100,16 +106,25 @@
 /* syscall: "profil" ret: "int" args: "caddr_t" "size_t" "u_long" "u_int" */
 #define	DARWIN_SYS_profil	44
 
+#if defined(KTRACE) || !defined(_KERNEL)
 /* syscall: "ktrace" ret: "int" args: "const char *" "int" "int" "int" */
 #define	DARWIN_SYS_ktrace	45
 
+#else
 				/* 45 is excluded ktrace */
+#endif
 /* syscall: "sigaction" ret: "int" args: "int" "struct darwin___sigaction *" "struct sigaction13 *" */
 #define	DARWIN_SYS_sigaction	46
 
+#ifdef COMPAT_43
 /* syscall: "getgid" ret: "gid_t" args: */
 #define	DARWIN_SYS_getgid	47
 
+#else
+/* syscall: "getgid" ret: "gid_t" args: */
+#define	DARWIN_SYS_getgid	47
+
+#endif
 /* syscall: "sigprocmask13" ret: "int" args: "int" "int" */
 #define	DARWIN_SYS_sigprocmask13	48
 
@@ -337,10 +352,13 @@
 /* syscall: "ogetsockname" ret: "int" args: "int" "caddr_t" "int *" */
 #define	DARWIN_SYS_ogetsockname	150
 
+#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
 /* syscall: "nfssvc" ret: "int" args: "int" "void *" */
 #define	DARWIN_SYS_nfssvc	155
 
+#else
 				/* 155 is excluded nfssvc */
+#endif
 /* syscall: "ogetdirentries" ret: "int" args: "int" "char *" "u_int" "long *" */
 #define	DARWIN_SYS_ogetdirentries	156
 
@@ -350,7 +368,10 @@
 /* syscall: "fstatfs" ret: "int" args: "int" "struct darwin_statfs *" */
 #define	DARWIN_SYS_fstatfs	158
 
+#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
+#else
 				/* 161 is excluded getfh */
+#endif
 /* syscall: "ogetdomainname" ret: "int" args: "char *" "int" */
 #define	DARWIN_SYS_ogetdomainname	162
 

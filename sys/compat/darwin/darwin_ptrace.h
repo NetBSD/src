@@ -1,7 +1,7 @@
-/*	$NetBSD: darwin_exec.h,v 1.9 2003/11/20 07:12:34 manu Exp $ */
+/*	$NetBSD: darwin_ptrace.h,v 1.1 2003/11/20 07:12:34 manu Exp $ */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,28 +36,26 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_DARWIN_EXEC_H_
-#define	_DARWIN_EXEC_H_
+#ifndef	_DARWIN_PTRACE_H_
+#define	_DARWIN_PTRACE_H_
 
-#include <compat/mach/mach_exec.h>
+#define DARWIN_PT_TRACE_ME	0
+#define DARWIN_PT_READ_I	1
+#define DARWIN_PT_READ_D	2
+#define DARWIN_PT_READ_U	3
+#define DARWIN_PT_WRITE_I	4
+#define DARWIN_PT_WRITE_D	5
+#define DARWIN_PT_WRITE_U	6
+#define DARWIN_PT_CONTINUE	7
+#define DARWIN_PT_KILL		8
+#define DARWIN_PT_STEP		9
+#define DARWIN_PT_ATTACH	10
+#define DARWIN_PT_DETACH	11
+#define DARWIN_PT_SIGEXC	12
+#define DARWIN_PT_THUPDATE	13
+#define DARWIN_PT_ATTACHEXC	14
 
-/* 
- * Because it can be used by Mach emulation code as well as Darwin emulation
- * code, this structure must begin with a struct mach_emuldata. 
- */
-struct darwin_emuldata {
-	struct mach_emuldata ded_mach_emuldata;
-	pid_t ded_fakepid;
-	dev_t ded_wsdev;	/* display to restore on exit */
-	int *ded_hidsystem_finished;	/* iohidsystem thread finished flag */
-	int ded_flags;		/* flags, see below */
-};
+#define DARWIN_PT_FORCEQUOTA	30
+#define DARWIN_PT_DENY_ATTACH	31
 
-#define DARWIN_DED_SIGEXC	1	/* Mach exceptions instead of signals */
-
-int exec_darwin_copyargs(struct proc *, struct exec_package *, 
-    struct ps_strings *, char **, void *);
-int exec_darwin_probe(char **);
-extern const struct emul emul_darwin;
-
-#endif /* !_DARWIN_EXEC_H_ */
+#endif /* _DARWIN_PTRACE_H_ */

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.17 2003/09/06 11:50:02 manu Exp $
+	$NetBSD: syscalls.master,v 1.18 2003/11/20 07:12:35 manu Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -104,8 +104,8 @@
 24	NOARGS		{ uid_t sys_getuid(void); }
 #endif
 25	NOARGS		{ uid_t sys_geteuid(void); }
-26	NOARGS		{ int sys_ptrace(int req, pid_t pid, caddr_t addr, \
-			    int data); }
+26	STD		{ int darwin_sys_ptrace(int req, pid_t pid, \
+			    caddr_t addr, int data); }
 27	NOARGS		{ ssize_t sys_recvmsg(int s, struct msghdr *msg, \
 			    int flags); }
 28	NOARGS		{ ssize_t sys_sendmsg(int s, \

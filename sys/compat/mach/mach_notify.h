@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_notify.h,v 1.5 2003/11/18 01:40:18 manu Exp $ */
+/*	$NetBSD: mach_notify.h,v 1.6 2003/11/20 07:12:34 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -107,12 +107,13 @@ void mach_notify_port_dead_name(struct lwp *, struct mach_right *);
 #define MACH_EXC_MASK_MACH_SYSCALL	(1 << MACH_EXC_MACH_SYSCALL)
 #define MACH_EXC_MASK_RPC_ALERT		(1 << MACH_EXC_RPC_ALERT)
 
-/* exceptions codes */
+/* exceptions codes. Values < 0x10000 may be machine dependent */
 #define MACH_BUS_ADRALN		1
 #define MACH_SEGV_MAPERR	2
 #define MACH_TRAP_BRKPT		1
 #define MACH_ILL_ILLOPC		2
 #define MACH_ILL_PRVOPC		3
+#define MACH_SOFT_SIGNAL	0x10003
 
 /* Exception behaviors and associated messages Id */
 
@@ -190,8 +191,7 @@ typedef struct {
 
 void mach_trapsignal(struct lwp *, const struct ksiginfo *);
 int mach_trapsignal1(struct lwp *, const struct ksiginfo *);
-int mach_exception(struct lwp *, const struct ksiginfo *, 
-    struct mach_port *, int, struct mach_right *, struct mach_right *);
+int mach_exception(struct lwp *, int, int *);
 
 #endif /* _MACH_NOTIFICATION_H_ */
 

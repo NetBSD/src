@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.36 2003/11/18 01:40:18 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.37 2003/11/20 07:12:34 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.36 2003/11/18 01:40:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.37 2003/11/20 07:12:34 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -436,8 +436,8 @@ mach_task_set_exception_ports(args)
 		med->med_exc[MACH_EXC_RPC_ALERT] = mp;
 
 #ifdef DEBUG_MACH
-	if (req->req_mask & (MACH_EXC_ARITHMETIC | MACH_EXC_EMULATION |
-	    MACH_EXC_MASK_SOFTWARE | MACH_EXC_MASK_SYSCALL |
+	if (req->req_mask & (MACH_EXC_ARITHMETIC | 
+	    MACH_EXC_EMULATION | MACH_EXC_MASK_SYSCALL | 
 	    MACH_EXC_MASK_MACH_SYSCALL | MACH_EXC_RPC_ALERT)) 
 		printf("mach_set_exception_ports: some exceptions are "
 		    "not supported (mask %x)\n", req->req_mask);

@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_sysent.c,v 1.34 2003/09/06 11:50:26 manu Exp $ */
+/* $NetBSD: darwin_sysent.c,v 1.35 2003/11/20 07:12:34 manu Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.34 2003/09/06 11:50:26 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.35 2003/11/20 07:12:34 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -90,8 +90,8 @@ struct sysent darwin_sysent[] = {
 #endif
 	{ 0, 0, 0,
 	    sys_geteuid },			/* 25 = geteuid */
-	{ 4, s(struct sys_ptrace_args), 0,
-	    sys_ptrace },			/* 26 = ptrace */
+	{ 4, s(struct darwin_sys_ptrace_args), 0,
+	    darwin_sys_ptrace },		/* 26 = ptrace */
 	{ 3, s(struct sys_recvmsg_args), 0,
 	    sys_recvmsg },			/* 27 = recvmsg */
 	{ 3, s(struct sys_sendmsg_args), 0,
