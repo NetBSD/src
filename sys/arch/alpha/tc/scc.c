@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.39 1998/03/02 07:44:18 ross Exp $ */
+/* $NetBSD: scc.c,v 1.40 1998/03/21 23:36:19 mjacob Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.39 1998/03/02 07:44:18 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.40 1998/03/21 23:36:19 mjacob Exp $");
 
 #include "scc.h"
 #if NSCC > 0
@@ -617,8 +617,7 @@ sccopen(dev, flag, mode, p)
 	tp->t_oproc = sccstart;
 	tp->t_param = sccparam;
 	tp->t_dev = dev;
-	if ((tp->t_state & TS_ISOPEN) == 0) {
-		tp->t_state |= TS_WOPEN;
+	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
 #ifndef PORTSELECTOR
 		if (tp->t_ispeed == 0) {
@@ -641,9 +640,11 @@ sccopen(dev, flag, mode, p)
 	s = spltty();
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	    !(tp->t_state & TS_CARR_ON)) {
-		tp->t_state |= TS_WOPEN;
-		if ((error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
-		    ttopen, 0)) != 0)
+		tp->t_wopen++;
+		error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
+		    ttopen, 0);
+		tp->t_wopen--;
+		if (error != 0)
 			break;
 	}
 	splx(s);
@@ -670,7 +671,7 @@ sccclose(dev, flag, mode, p)
 		ttyoutput(0, tp);
 	}
 	(*linesw[tp->t_line].l_close)(tp, flag);
-	if ((tp->t_cflag & HUPCL) || (tp->t_state & TS_WOPEN) ||
+	if ((tp->t_cflag & HUPCL) || tp->t_wopen ||
 	    !(tp->t_state & TS_ISOPEN))
 		(void) sccmctl(dev, 0, DMSET);
 	return (ttyclose(tp));
@@ -1086,7 +1087,7 @@ sccintr(xxxsc)
 		if (!(tp->t_state & TS_ISOPEN)) {
 			wakeup((caddr_t)&tp->t_rawq);
 #ifdef PORTSELECTOR
-			if (!(tp->t_state & TS_WOPEN))
+			if (tp->t_wopen == 0)
 #endif
 				continue;
 		}
