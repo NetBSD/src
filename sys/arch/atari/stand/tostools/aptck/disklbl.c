@@ -1,4 +1,4 @@
-/*	$NetBSD: disklbl.c,v 1.2 1996/01/20 13:54:46 leo Exp $	*/
+/*	$NetBSD: disklbl.c,v 1.3 1996/02/09 20:52:06 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -50,7 +50,8 @@ readdisklabel(dd)
 {
 	int	e;
 
-	printf("Device     : %s (%s) [%s]\n", dd->sname, dd->fname, dd->product);
+	printf("Device     : %s (%s) [%s]\n", dd->sname, dd->fname,
+							 dd->product);
 	printf("Medium size: %lu sectors\n", (u_long)dd->msize);
 	printf("Sector size: %lu bytes\n\n", (u_long)dd->bsize);
 
@@ -96,15 +97,22 @@ bsd_label(dd, offset)
 	nsec = (BBMINSIZE + (dd->bsize - 1)) / dd->bsize;
 	bblk = disk_read(dd, offset, nsec);
 	if (bblk) {
-		u_short	*end, *p;
+		u_int	*end, *p;
 		
-		end = (u_short *)&bblk[BBMINSIZE - sizeof(struct disklabel)];
-		rv = 1;
-		for (p = (u_short *)bblk; p < end; ++p) {
-			struct disklabel *dl = (struct disklabel *)p;
-			if (dl->d_magic == DISKMAGIC && dl->d_magic2 == DISKMAGIC
-		    	    && dl->d_npartitions <= MAXPARTITIONS && !dkcksum(dl)) {
-		    		dd->lblofs = (u_char *)p - bblk;
+		end = (u_int *)&bblk[BBMINSIZE - sizeof(struct disklabel)];
+		rv  = 1;
+		for (p = (u_int *)bblk; p < end; ++p) {
+			struct disklabel *dl = (struct disklabel *)&p[1];
+			if (  (  (p[0] == NBDAMAGIC && offset == 0)
+			      || (p[0] == AHDIMAGIC && offset != 0)
+			      || (u_char *)dl - bblk == 7168
+			      )
+			   && dl->d_npartitions <= MAXPARTITIONS
+			   && dl->d_magic2 == DISKMAGIC
+			   && dl->d_magic  == DISKMAGIC
+			   && dkcksum(dl)  == 0
+			   )	{
+		    		dd->lblofs = (u_char *)dl - bblk;
 		    		dd->bblock = offset;
 				rv = 0;
 				break;
@@ -257,23 +265,28 @@ ahdi_display(dd)
 		for (j = 0; j < dd->nroots; ++j) {
 			u_int	aux = dd->roots[j];
 			if (aux >= p1->start && aux <= p1->end) {
-				printf("FATAL: auxilary root at %u\n", aux); rv = 1;
+				printf("FATAL: auxilary root at %u\n", aux);
+				rv = 1;
 			}
 		}
 		for (j = i; j--;) {
-			part_t	*p2 = &dd->parts[j];
-			if (p1->start >= p2->start && p1->start <= p2->end) {
-				printf("FATAL: clash with %u/%u\n", p2->rsec, p2->rent); rv = 1;
-			}
-			if (p2->start >= p1->start && p2->start <= p1->end) {
-				printf("FATAL: clash with %u/%u\n", p2->rsec, p2->rent); rv = 1;
-			}
+		    part_t	*p2 = &dd->parts[j];
+		    if (p1->start >= p2->start && p1->start <= p2->end) {
+			printf("FATAL: clash with %u/%u\n", p2->rsec, p2->rent);
+			rv = 1;
+		    }
+		    if (p2->start >= p1->start && p2->start <= p1->end) {
+			printf("FATAL: clash with %u/%u\n", p2->rsec, p2->rent);
+			rv = 1;
+		    }
 		}
 		if (p1->start >= dd->bslst && p1->start <= dd->bslend) {
-			printf("FATAL: partition overlaps with bad sector list\n"); rv = 1;
+		    printf("FATAL: partition overlaps with bad sector list\n");
+		    rv = 1;
 		}
 		if (dd->bslst >= p1->start && dd->bslst <= p1->end) {
-			printf("FATAL: partition overlaps with bad sector list\n"); rv = 1;
+		    printf("FATAL: partition overlaps with bad sector list\n");
+		    rv = 1;
 		}
 	}
 
@@ -320,7 +333,8 @@ ahdi_getparts(dd, rsec, esec)
 			u_int	i = ++dd->nroots;
 			dd->roots = xrealloc(dd->roots, i * sizeof *dd->roots);
 			dd->roots[--i] = offs;
-			rv = ahdi_getparts(dd, offs, esec == AHDI_BBLOCK ? offs : esec);
+			rv = ahdi_getparts(dd, offs,
+					esec == AHDI_BBLOCK ? offs : esec);
 			if (rv)
 				goto done;
 		} else {
