@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_peer.c,v 1.4 1998/08/12 14:11:53 christos Exp $	*/
+/*	$NetBSD: ntp_peer.c,v 1.4.2.1 1999/10/10 23:20:40 cgd Exp $	*/
 
 /*
  * ntp_peer.c - management of data maintained for peer associations
@@ -548,8 +548,8 @@ newpeer(srcadr, dstadr, hmode, version, minpoll, maxpoll, ttl, key)
 	peer->event_timer.peer = peer;
 	peer->event_timer.event_handler = transmit;
 
+	init_peer_starttime += (1 << EVENT_TIMEOUT);
 	if (initializing) {
-		init_peer_starttime += (1 << EVENT_TIMEOUT);
 		if (init_peer_starttime >= (u_long)(1 << peer->minpoll))
 			init_peer_starttime = (1 << EVENT_TIMEOUT);
 		peer->event_timer.event_time = init_peer_starttime;
@@ -559,6 +559,10 @@ newpeer(srcadr, dstadr, hmode, version, minpoll, maxpoll, ttl, key)
 		 */
 		peer->event_timer.event_time
 		    = (1 << (peer->minpoll - 1)) + current_time;
+		if (peer->event_timer.event_time < init_peer_starttime) {
+			peer->event_timer.event_time = init_peer_starttime;
+		}
+		init_peer_starttime = peer->event_timer.event_time;
 	}
 	TIMER_ENQUEUE(timerqueue, &peer->event_timer);
 #ifdef REFCLOCK
