@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.20 1999/02/26 23:44:46 wrstuden Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.21 1999/03/12 18:16:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,6 +89,10 @@ umapfs_mount(mp, path, data, ndp, p)
 	struct umap_mount *amp;
 	size_t size;
 	int error;
+
+	/* only for root */
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		return error;
 
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("umapfs_mount(mp = %p)\n", mp);
