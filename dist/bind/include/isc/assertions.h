@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.h,v 1.1.1.1.8.1 2001/01/28 15:52:20 he Exp $	*/
+/*	$NetBSD: assertions.h,v 1.1.1.1.8.2 2002/07/01 17:14:45 he Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: assertions.h,v 8.3 2000/07/17 07:53:59 vixie Exp
+ * Id: assertions.h,v 8.4 2001/05/29 05:47:07 marka Exp
  */
 
 #ifndef ASSERTIONS_H
@@ -28,12 +28,12 @@ typedef enum {
 	assert_require, assert_ensure, assert_insist, assert_invariant
 } assertion_type;
 
-typedef void (*assertion_failure_callback)(char *, int, assertion_type, char *,
-					   int);
+typedef void (*assertion_failure_callback)(const char *, int, assertion_type,
+					   const char *, int);
 
 extern assertion_failure_callback __assertion_failed;
 void set_assertion_failure_callback(assertion_failure_callback f);
-char *assertion_type_to_text(assertion_type type);
+const char *assertion_type_to_text(assertion_type type);
 
 #ifdef CHECK_ALL
 #define CHECK_REQUIRE		1

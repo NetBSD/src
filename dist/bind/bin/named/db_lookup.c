@@ -1,8 +1,8 @@
-/*	$NetBSD: db_lookup.c,v 1.1.1.1.8.1 2001/01/28 15:52:18 he Exp $	*/
+/*	$NetBSD: db_lookup.c,v 1.1.1.1.8.2 2002/07/01 17:14:35 he Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)db_lookup.c	4.18 (Berkeley) 3/21/91";
-static const char rcsid[] = "Id: db_lookup.c,v 8.26 2000/04/21 06:54:03 vixie Exp";
+static const char rcsid[] = "Id: db_lookup.c,v 8.27 2001/06/18 14:42:55 marka Exp";
 #endif /* not lint */
 
 /*
@@ -260,7 +260,7 @@ match(struct databuf *dp, int class, int type) {
 		return (0);
 	if (dp->d_type != type && dp->d_type != T_SIG && type != T_ANY)
 		return (0);
-	if (type != T_SIG && dp->d_type == T_SIG && SIG_COVERS(dp) != type)
+	if (type != T_SIG && dp->d_type == T_SIG && (int)SIG_COVERS(dp) != type)
 		return (0);
 	return (1);
 }
