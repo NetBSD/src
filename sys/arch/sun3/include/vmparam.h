@@ -65,7 +65,7 @@
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vm_offset_t)0)
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)0xFFF00000)
+#define VM_MAXUSER_ADDRESS	((vm_offset_t)0x0E000000)
 #define VM_MAX_ADDRESS		((vm_offset_t)0xFFF00000)
 #define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0x0E004000)
 #define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0xFFFFF000)
