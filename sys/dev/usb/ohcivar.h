@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.34 2004/12/21 16:41:24 fvdl Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.35 2005/01/11 07:45:34 imp Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -135,9 +135,9 @@ typedef struct ohci_softc {
 	struct timeval sc_overrun_ntc;
 
 	usb_callout_t sc_tmo_rhsc;
-
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	device_ptr_t sc_child;
-
+#endif
 	char sc_dying;
 #ifdef __NetBSD__
 	struct usb_dma_reserve sc_dma_reserve;
