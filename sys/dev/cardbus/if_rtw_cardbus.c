@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.1 2004/09/26 02:33:36 dyoung Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.2 2004/10/09 07:09:40 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.1 2004/09/26 02:33:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.2 2004/10/09 07:09:40 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -281,8 +281,8 @@ rtw_cardbus_attach(parent, self, aux)
 	if (Cardbus_mapreg_map(ct, RTW_PCI_MMBA,
 	    CARDBUS_MAPREG_TYPE_MEM, 0, &regs->r_bt, &regs->r_bh, &adr,
 	    &csc->sc_mapsize) == 0) {
-		printf("%s: %s mapped %u bytes mem space\n",
-		    sc->sc_dev.dv_xname, __func__, csc->sc_mapsize);
+		printf("%s: %s mapped %lu bytes mem space\n",
+		    sc->sc_dev.dv_xname, __func__, (long)csc->sc_mapsize);
 #if rbus
 #else
 		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
@@ -294,8 +294,8 @@ rtw_cardbus_attach(parent, self, aux)
 	} else if (Cardbus_mapreg_map(ct, RTW_PCI_IOBA,
 	    CARDBUS_MAPREG_TYPE_IO, 0, &regs->r_bt, &regs->r_bh, &adr,
 	    &csc->sc_mapsize) == 0) {
-		printf("%s: %s mapped %d bytes I/O space\n",
-		    sc->sc_dev.dv_xname, __func__, csc->sc_mapsize);
+		printf("%s: %s mapped %lu bytes I/O space\n",
+		    sc->sc_dev.dv_xname, __func__, (long)csc->sc_mapsize);
 #if rbus
 #else
 		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr+csc->sc_mapsize);
