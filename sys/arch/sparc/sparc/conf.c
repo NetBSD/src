@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.28 1995/04/21 15:50:06 pk Exp $ */
+/*	$NetBSD: conf.c,v 1.29 1995/04/25 20:08:13 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -154,8 +154,8 @@ cdev_decl(cgthree);
 cdev_decl(cd);
 #include "cgsix.h"
 cdev_decl(cgsix);
-#include "bsdaudio.h"
-cdev_decl(oudio);
+#include "audio.h"
+cdev_decl(audio);
 cdev_decl(openprom);
 #include "bpfilter.h"
 cdev_decl(bpf);
@@ -242,7 +242,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 66 */
 	cdev_fb_init(NCGSIX,cgsix),	/* 67: /dev/cgsix */
 	cdev_notdef(),			/* 68 */
-	cdev_gen_init(NBSDAUDIO,oudio),	/* 69: /dev/audio */
+	cdev_gen_init(NAUDIO,audio),	/* 69: /dev/audio */
 	cdev_openprom_init(1,openprom),	/* 70: /dev/openprom */
 	cdev_notdef(),			/* 71 */
 	cdev_notdef(),			/* 72 */
