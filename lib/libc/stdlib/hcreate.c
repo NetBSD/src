@@ -1,4 +1,4 @@
-/* $NetBSD: hcreate.c,v 1.2 2001/02/19 21:26:04 ross Exp $ */
+/* $NetBSD: hcreate.c,v 1.3 2001/02/21 16:31:01 lukem Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher G. Demetriou
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: hcreate.c,v 1.2 2001/02/19 21:26:04 ross Exp $");
+__RCSID("$NetBSD: hcreate.c,v 1.3 2001/02/21 16:31:01 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(lint)
@@ -166,9 +166,8 @@ hsearch(ENTRY item, ACTION action)
 	size_t len;
 
 	_DIAGASSERT(htable != NULL);
-	_DIAGASSERT(item != NULL);
-	_DIAGASSERT(item->key != NULL);
-	_DIAGASSERT(action == ENTER || ACTION == FIND);
+	_DIAGASSERT(item.key != NULL);
+	_DIAGASSERT(action == ENTER || action == FIND);
 
 	len = strlen(item.key);
 	hashval = (*__default_hash)(item.key, len);
