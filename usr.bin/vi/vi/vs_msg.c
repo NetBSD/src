@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_msg.c,v 1.4 2001/03/31 11:37:52 aymeric Exp $	*/
+/*	$NetBSD: vs_msg.c,v 1.5 2001/05/04 14:45:08 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -181,7 +181,7 @@ vs_update(sp, m1, m2)
 	 */
 	if (F_ISSET(sp, SC_SCR_EXWROTE)) {
 		(void)ex_printf(sp,
-		    "%s\n", m1 == NULL? "" : m1, m2 == NULL ? "" : m2);
+		    "%s%s\n", m1 == NULL? "" : m1, m2 == NULL ? "" : m2);
 		(void)ex_fflush(sp);
 	}
 
