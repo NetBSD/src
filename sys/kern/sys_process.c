@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.90 2004/05/26 16:28:05 christos Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.91 2004/06/22 02:06:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.90 2004/05/26 16:28:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.91 2004/06/22 02:06:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -702,9 +702,6 @@ process_domem(curp, p, uio)
 #ifdef PMAP_NEED_PROCWR
 	vaddr_t	addr;
 #endif
-
-	if (uio->uio_offset < 0)
-		return EINVAL;
 
 	len = uio->uio_resid;
 
