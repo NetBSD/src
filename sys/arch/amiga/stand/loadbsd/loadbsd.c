@@ -1,5 +1,5 @@
 /*
- *	$Id: loadbsd.c,v 1.8 1994/03/20 10:05:11 chopps Exp $
+ *	$Id: loadbsd.c,v 1.9 1994/03/28 06:16:54 chopps Exp $
  */
 
 #include <sys/types.h>
@@ -64,6 +64,18 @@ struct GfxBase *GfxBase;
  */
 #define KERNEL_PARAMETER_VERSION	2
 
+/*
+ *	Version history:
+ *	1.x	Kernel parameter passing version check
+ *	2.0	Added symbol table end address and symbol table support
+ *	2.1	03/23/94 - round up end of fastram segment
+ *		check fastram segment size for minimum of 2M
+ *		use largest segment of highest priority if -p option
+ *		print out fastram size in KB if not a multiple of MB
+ *	2.2	03/24/94 - zero out all unused registers
+ *		started version history comment
+ */
+
 struct MEM_LIST {
 	u_long	num_mem;
 	struct MEM_SEG {
@@ -89,7 +101,7 @@ void get_mem_config (void **fastmem_start, u_long *fastmem_size, u_long *chipmem
 void Usage (char *program_name);
 void Version (void);
 
-static const char _version[] = "$VER: LoadBSD 2.0 (12.3.94)";
+static const char _version[] = "$VER: LoadBSD 2.2 (24.3.94)";
 
 int 
 main (int argc, char *argv[])
@@ -226,8 +238,11 @@ main (int argc, char *argv[])
 			      boothowto |= RB_ASKNAME;
 			    }
 			  
-			  printf ("Using %dM FASTMEM at 0x%x, %dM CHIPMEM\n",
-				  fastmem_size>>20, fastmem_start, chipmem_size>>20);
+			  printf ("Using %d%c FASTMEM at 0x%x, %dM CHIPMEM\n",
+				(fastmem_size & 0xfffff) ? fastmem_size>>10 :
+				fastmem_size>>20,
+				(fastmem_size & 0xfffff) ? 'K' : 'M',
+				  fastmem_start, chipmem_size>>20);
 			  kern_vers = (u_short *) (kernel + e.a_entry - 2);
 			  if (*kern_vers > KERNEL_PARAMETER_VERSION &&
 			      *kern_vers != 0x4e73)
@@ -304,6 +319,7 @@ get_mem_config (void **fastmem_start, u_long *fastmem_size, u_long *chipmem_size
   u_int seg_size;
   u_int seg_start;
   u_int seg_end;
+  char mem_pri = -128;
   
   *fastmem_size = 0;
   *chipmem_size = 0;
@@ -340,6 +356,7 @@ get_mem_config (void **fastmem_start, u_long *fastmem_size, u_long *chipmem_size
 	{
 	  /* some heuristics.. */
 	  seg_start &= -__LDPGSZ;
+	  seg_end = (seg_end + __LDPGSZ - 1) & -__LDPGSZ;
 	  /* get the mem back stolen by incore kickstart on A3000 with
 	     V36 bootrom. */
 	  if (seg_end == 0x07f80000)
@@ -353,12 +370,19 @@ get_mem_config (void **fastmem_start, u_long *fastmem_size, u_long *chipmem_size
 	  seg_size = seg_end - seg_start;
 	  mem_list.mem_seg[num_mem].mem_start = seg_start;
 	  mem_list.mem_seg[num_mem].mem_size = seg_size;
+	  /*
+	   *  If this segment is smaller than 2M,
+	   *  don't use it to load the kernel
+	   */
+	  if (seg_size < 2 * 1024 * 1024)
+	    continue;
 /* if p_opt is set, select memory by priority instead of size */
 	  if ((!p_opt && seg_size > *fastmem_size) ||
-            (p_opt && *fastmem_size == 0))
+            (p_opt && mem_pri <= mh->mh_Node.ln_Pri && seg_size > *fastmem_size))
 	    {
 	      *fastmem_size = seg_size;
 	      *fastmem_start = (void *)seg_start;
+	      mem_pri = mh->mh_Node.ln_Pri;
 	    }
 	}
     }
@@ -394,7 +418,7 @@ start_super:
 
 	movel	a3@(4),a1		| loaded kernel
 	movel	a3@(8),d2		| length of loaded kernel
-	movel	a3@(12),a2		| entry point
+	movel	a3@(12),sp@-		| entry point [save on stack for rts]
 	movel	a3@(16),a0		| fastmem-start
 	movel	a3@(20),d0		| fastmem-size
 	movel	a3@(24),d1		| chipmem-size
@@ -443,7 +467,16 @@ L0:
 	bcc	L0
 
 
-	jmp	a2@
+	moveq	#0,d2			| zero out unused registers
+	moveq	#0,d3			| (might make future compatibility
+	moveq	#0,d4			|  a little easier, since all registers
+	moveq	#0,d6			|  would have known contents)
+	movel	d6,a1
+	movel	d6,a2
+	movel	d6,a3
+	movel	d6,a5
+	movel	d6,a6
+	rts				| return to kernel entry point
 
 
 | A do-nothing MMU root pointer (includes the following long as well)
