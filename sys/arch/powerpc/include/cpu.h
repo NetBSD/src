@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.35 2003/08/12 05:06:53 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.36 2003/08/18 22:10:33 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -255,7 +255,7 @@ mfpvr(void)
 }
 
 #define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
-#define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
+#define	CLKF_BASEPRI(frame)	((frame)->pri == IPL_NONE)
 #define	CLKF_PC(frame)		((frame)->srr0)
 #define	CLKF_INTR(frame)	((frame)->depth > 0)
 
