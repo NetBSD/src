@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.114 2001/01/23 19:24:19 tv Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.115 2001/01/28 07:15:07 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.115 2001/01/23 19:24:00 tv Exp 
+ *	NetBSD: pcmciadevs,v 1.116 2001/01/28 07:14:47 ichiro Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -139,6 +139,9 @@
 #define	PCMCIA_CIS_COMPAQ2_CPQ_10_100	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_COMPAQ2_CPQ_10_100	0x010a
 #define	PCMCIA_STR_COMPAQ2_CPQ_10_100	"Compaq Netelligent 10/100 Ethernet"
+#define	PCMCIA_CIS_COMPAQ_NC5004	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_COMPAQ_NC5004	0x0002
+#define	PCMCIA_STR_COMPAQ_NC5004	"Compaq Agency NC5004 Wireless Card"
 
 /* Compex Products */
 #define	PCMCIA_CIS_COMPEX_LINKPORT_ENET_B	{ NULL, NULL, NULL, NULL }
