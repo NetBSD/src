@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.134 2003/09/05 18:17:00 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.135 2003/09/05 19:16:20 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1457,4 +1457,14 @@ usr.sbin/ypbind/ypbind.c			1.48
 	width needs to be updated before each loop, because svc_maxfd may have
 	changed.
 	[bouyer, ticket #1449]
+
+libexec/ld.elf_so/rtld.c			1.54 (via patch)
+libexec/ld.elf_so/rtld.h			1.40
+libexec/ld.elf_so/symbol.c			1.16 (via patch)
+
+	Remove all of the `mark' code. This is responsible for the `undefined
+	PLT symbol' errors, probably because the increment gets interrupted
+	occasionally by a signal. In general, _rtld_bind() should not modify
+	ANY internal state.
+	[dmcmahill, ticket #1395]
 
