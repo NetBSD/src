@@ -1,4 +1,4 @@
-/*	$NetBSD: xlint.c,v 1.11 1999/04/29 12:40:39 christos Exp $	*/
+/*	$NetBSD: xlint.c,v 1.12 1999/05/03 15:23:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xlint.c,v 1.11 1999/04/29 12:40:39 christos Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.12 1999/05/03 15:23:27 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -282,11 +282,15 @@ appdef(lstp, def)
 static void
 usage()
 {
-	(void)printf("lint [-abceghprvxzHF] [-s|-t] [-i|-nu] [-Dname[=def]] [-Uname]\n");
-	(void)printf("     [-Idirectory] [-Ldirectory] [-llibrary] [-ooutputfile] file ...\n");
-	(void)printf("\n");
-	(void)printf("lint [-abceghprvzHF] [-s|-t] -Clibrary [-Dname[=def]]\n");
-	(void)printf("     [-Idirectory] [-Uname] file ...\n");
+	extern char *__progname;
+	(void)fprintf(stderr,
+    "Usage: %s [-abceghprvxzHF] [-s|-t] [-i|-nu] [-Dname[=def]] [-Uname]\n",
+	    __progname);
+	(void)fprintf(stderr, 
+    "\t[-Idirectory] [-Ldirectory] [-llibrary] [-ooutputfile] file ...\n\n");
+	(void)fprintf(stderr,
+    "%s [-abceghprvzHF] [-s|-t] -Clibrary [-Dname[=def]]\n", __progname);
+	(void)fprintf(stderr, "\t[-Idirectory] [-Uname] file ...\n");
 	terminate(-1);
 }
 
@@ -330,8 +334,12 @@ main(argc, argv)
 	appcstrg(&cflags, "-E");
 	appcstrg(&cflags, "-x");
 	appcstrg(&cflags, "c");
+#if 0
 	appcstrg(&cflags, "-D__attribute__(x)=");
 	appcstrg(&cflags, "-D__extension__(x)=/*NOSTRICT*/0");
+#else
+	appcstrg(&cflags, "-U__GNUC__");
+#endif
 	appcstrg(&cflags, "-Wp,-$");
 	appcstrg(&cflags, "-Wp,-CC");
 	appcstrg(&cflags, "-Wcomment");
