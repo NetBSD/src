@@ -1,4 +1,4 @@
-/*	$NetBSD: intersil7170.h,v 1.2 1996/03/31 23:45:28 pk Exp $	*/
+/*	$NetBSD: intersil7170.h,v 1.3 1996/05/02 18:17:40 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -40,21 +40,21 @@
  */
 
 struct date_time {		       /* from p. 7 of 10 */
-	unsigned char dt_csec;
-	unsigned char dt_hour;
-	unsigned char dt_min;
-	unsigned char dt_sec;
-	unsigned char dt_month;
-	unsigned char dt_day;
-	unsigned char dt_year;
-	unsigned char dt_dow;
+	volatile unsigned char dt_csec;
+	volatile unsigned char dt_hour;
+	volatile unsigned char dt_min;
+	volatile unsigned char dt_sec;
+	volatile unsigned char dt_month;
+	volatile unsigned char dt_day;
+	volatile unsigned char dt_year;
+	volatile unsigned char dt_dow;
 };
 
 struct intersil7170 {
 	struct date_time counters;
-	struct date_time clk_ram;	/* should be ok as both are word aligned */
-	unsigned char clk_intr_reg;
-	unsigned char clk_cmd_reg;
+	struct date_time clk_ram;  /* should be ok as both are word aligned */
+	volatile unsigned char clk_intr_reg;
+	volatile unsigned char clk_cmd_reg;
 };
 
 /*  bit assignments for command register, p. 6 of 10, write-only */
