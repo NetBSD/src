@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.27 2003/01/23 17:35:18 christos Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.28 2003/05/20 18:16:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -49,7 +49,7 @@
 #define	PT_DETACH	10	/* detach from running process */
 #define	PT_IO		11	/* do I/O to/from the stopped process */
 #define	PT_DUMPCORE	12	/* make the child generate a core dump */
-
+#define	PT_LWPINFO	13	/* get info about the LWP */
 #define	PT_FIRSTMACH	32	/* for machine-specific requests */
 #include <machine/ptrace.h>	/* machine-specific requests, if any */
 
@@ -68,6 +68,18 @@ struct ptrace_io_desc {
 #define	PIOD_WRITE_D	2	/* write to D spcae */
 #define	PIOD_READ_I	3	/* read from I space */
 #define	PIOD_WRITE_I	4	/* write to I space */
+
+/*
+ * Argument structure for PT_LWPINFO.
+ */
+struct ptrace_lwpinfo {
+	lwpid_t	pl_lwpid;	/* LWP described */
+	int	pl_event;	/* Event that stopped the LWP */
+	/* Add fields at the end */
+};
+
+#define PL_EVENT_NONE	0
+#define PL_EVENT_SIGNAL	1
 
 #ifdef _KERNEL
 
