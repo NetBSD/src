@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.82 2002/09/26 22:26:26 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.83 2002/10/03 01:09:21 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -405,8 +405,10 @@ _rtld(sp, relocbase)
 	if (_rtld_load_needed_objects(_rtld_objmain, RTLD_GLOBAL) == -1)
 		_rtld_die();
 
-	for (obj = _rtld_objlist;  obj != NULL;  obj = obj->next)
+	for (obj = _rtld_objlist; obj != NULL; obj = obj->next) {
+		obj->main = 1;
 		_rtld_objlist_add(&_rtld_list_main, obj);
+	}
 
 	dbg(("relocating objects"));
 	if (_rtld_relocate_objects(_rtld_objmain, bind_now) == -1)
@@ -498,7 +500,8 @@ _rtld_init_dag1(root, obj)
 	const Needed_Entry *needed;
 
 	_rtld_objlist_add(&obj->dldags, root);
-	_rtld_objlist_add(&root->dagmembers, obj);
+	if (!obj->main)
+		_rtld_objlist_add(&root->dagmembers, obj);
 	for (needed = obj->needed; needed != NULL; needed = needed->next)
 		if (needed->obj != NULL)
 			_rtld_init_dag1(root, needed->obj);
