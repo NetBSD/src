@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.13 2001/11/29 23:20:58 thorpej Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.14 2002/06/29 17:00:18 scottr Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -82,6 +82,7 @@ menu editparttable, title  "Choose your partition", exit, y=15;
 	option "Split selected partition", action {
 		int i, j, k, size, free_size;
 		char buf[40];
+		EBZB *bzb;
 
 		j = map.mblk[map.selected];
 		msg_display(MSG_split_part, map.blk[j].pmPartBlkCnt);
@@ -96,6 +97,9 @@ menu editparttable, title  "Choose your partition", exit, y=15;
 			strcpy (map.blk[j].pmPartType, "Apple_Scratch");
 			map.blk[j].pmPartBlkCnt = size;
 			map.blk[j].pmDataCnt = size;
+			bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
+			bzb->magic = 0;
+			bzb->mount_point[0] = '\0';
 			strcpy (map.blk[k].pmPartType, "Apple_Free");
 			map.blk[k].pmPyPartStart += size;
 			if ((map.blk[k].pmPyPartStart + free_size) > dlsize)
@@ -104,7 +108,11 @@ menu editparttable, title  "Choose your partition", exit, y=15;
 			else
 			    map.blk[k].pmPartBlkCnt = free_size;
 			map.blk[k].pmDataCnt = map.blk[k].pmPartBlkCnt;
-			map.in_use_cnt += 1;
+			bzb = (EBZB *)&map.blk[k].pmBootArgs[0];
+			bzb->magic = 0;
+			bzb->mount_point[0] = '\0';
+			map.in_use_cnt += 1;	/* Count new part as usable */
+			sortmerge();
 		    } else {
 			msg_display (MSG_diskfull);
 			process_menu (MENU_okabort);
@@ -143,18 +151,20 @@ menu editparttable, title  "Choose your partition", exit, y=15;
                 };
 
 
-menu okabort, title "What do you want to do?";
-	option "OK", exit, action { yesno = 1; };
+menu ok2, title "Abort?", y=17;
+       option "OK", exit, action { };
+
+menu okabort, title "What do you want to do?", y=17;
+	option "Continue", exit, action { yesno = 1; };
 	option "Abort install", exit, action { yesno = 0; };
 
 menu chooseid, title  "Partition Type?";
 	option "NetBSD Root", exit, action {
 		int i, j;
-		char fstyp[16], use[16], name[64];
 		EBZB *bzb;
 
 		j = map.mblk[map.selected];
-		reset_part_flags(j);
+		reset_part_flags(&map.blk[j]);
 		bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
 		bzb->magic = BZB_MAGIC;
 		strcpy (map.blk[j].pmPartType, "Apple_Unix_SVR2");
@@ -169,7 +179,7 @@ menu chooseid, title  "Partition Type?";
 		 */
 		for (i=0,map.root_cnt=0;i<map.usable_cnt;i++) {
 		    j = map.mblk[i];
-		    if (part_type(j, fstyp, use, name) == TYP_BSD) {
+		    if (whichType(&map.blk[j]) == ROOT_PART) {
 			bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
 			if (bzb->type == BZB_TYPEFS && bzb->flags.root) {
 			   if (map.root_cnt++ == 0) 
@@ -184,7 +194,7 @@ menu chooseid, title  "Partition Type?";
 		EBZB *bzb;
 
 		j = map.mblk[map.selected];
-		reset_part_flags(j);
+		reset_part_flags(&map.blk[j]);
 		bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
 		bzb->magic = BZB_MAGIC;
 		strcpy (map.blk[j].pmPartType, "Apple_Unix_SVR2");
@@ -194,13 +204,13 @@ menu chooseid, title  "Partition Type?";
 		EBZB *bzb;
 
 		j = map.mblk[map.selected];
-		reset_part_flags(j);
+		reset_part_flags(&map.blk[j]);
 		bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
 		bzb->magic = BZB_MAGIC;
 		strcpy (map.blk[j].pmPartType, "Apple_Unix_SVR2");
 		bzb->type = BZB_TYPEFS;
 		bzb->flags.usr = 1;
-		if (!map.usr_cnt)
+		if (map.usr_cnt++ == 0)
 		    strcpy (bzb->mount_point, "/usr");
 		};
 	option "NetBSD Root&Usr", exit, action {
@@ -208,17 +218,17 @@ menu chooseid, title  "Partition Type?";
 		EBZB *bzb;
 
 		j = map.mblk[map.selected];
-		reset_part_flags(j);
+		reset_part_flags(&map.blk[j]);
 		bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
 		bzb->magic = BZB_MAGIC;
 		strcpy (map.blk[j].pmPartType, "Apple_Unix_SVR2");
 		bzb->type = BZB_TYPEFS;
 		bzb->flags.root = 1;
 		bzb->flags.usr = 1;
-		if (!map.root_cnt)
+		if (map.root_cnt++ == 0)
 		    strcpy (bzb->mount_point, "/");
 		else {
-                    if (!map.usr_cnt)
+                    if (map.usr_cnt++ == 0)
 		        strcpy (bzb->mount_point, "/usr");
 		} };
 	option "MacOS HFS", exit, action {
@@ -226,8 +236,9 @@ menu chooseid, title  "Partition Type?";
 		EBZB *bzb;
 
 		j = map.mblk[map.selected];
-		reset_part_flags(j);
+		reset_part_flags(&map.blk[j]);
 		bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
+		bzb->magic = 0;
 		bzb->mount_point[0] = '\0';
 		strcpy (map.blk[j].pmPartType, "Apple_HFS"); };
 	option "Scratch", exit, action {
@@ -235,8 +246,9 @@ menu chooseid, title  "Partition Type?";
 		EBZB *bzb;
 
 		j = map.mblk[map.selected];
-		reset_part_flags(j);
+		reset_part_flags(&map.blk[j]);
 		bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
+		bzb->magic = 0;
 		bzb->mount_point[0] = '\0';
 		strcpy (map.blk[j].pmPartType, "Apple_Scratch"); };
 	option "Free", exit, action {
@@ -244,8 +256,9 @@ menu chooseid, title  "Partition Type?";
 		EBZB *bzb;
 
 		j = map.mblk[map.selected];
-		reset_part_flags(j);
+		reset_part_flags(&map.blk[j]);
 		bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
+		bzb->magic = 0;
 		bzb->mount_point[0] = '\0';
 		strcpy (map.blk[j].pmPartType, "Apple_Free"); };
 
