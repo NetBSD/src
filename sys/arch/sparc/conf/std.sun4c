@@ -1,4 +1,6 @@
 #
+sbus0	at mainbus0
+
 audio0	at mainbus0
 auxreg0	at mainbus0
 clock0	at mainbus0
@@ -9,11 +11,13 @@ zs0	at mainbus0
 zs1	at mainbus0
 
 # FSBE/S or sun4m
+espdma0	at sbus0 slot ? offset ?
 espdma*	at sbus0 slot ? offset ?
 esp0	at espdma? slot ? offset ?
 esp*	at espdma? slot ? offset ?
 
 # old sun4c SCSI
+dma0	at sbus0 slot ? offset ?
 dma*	at sbus0 slot ? offset ?
 esp0	at sbus0 slot ? offset ?
 esp*	at sbus0 slot ? offset ?
