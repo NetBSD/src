@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.8 1997/03/13 15:58:51 gwr Exp $ */
+/*	$NetBSD: promdev.c,v 1.9 1997/06/10 19:27:10 veego Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -105,7 +105,7 @@ prom_iopen(si)
 		/* try page-aligned address... */
 		size = dip->d_dmabytes + NBPG;
 		addr = (int) dvma_alloc(size);
-		addr = _round_page(addr);
+		addr = m68k_round_page(addr);
 		si->si_dmaaddr = (char*) addr;
 #ifdef	DEBUG_PROM
 		if (debug)
