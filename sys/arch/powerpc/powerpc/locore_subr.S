@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.1 2001/02/25 20:21:53 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.2 2001/02/28 20:44:41 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -240,6 +240,7 @@ ENTRY(cpu_switch)
 	lis	4,_C_LABEL(curproc)@ha
 	stw	31,_C_LABEL(curproc)@l(4)
 #endif
+	lwz	4,P_ADDR(31)
 
 	mfmsr	3
 	ori	3,3,PSL_EE@l		/* Now we can interrupt again */
@@ -268,7 +269,6 @@ switch_exited:
 	mtmsr	3
 
 	/* indicate new pcb */
-	lwz	4,P_ADDR(31)
 #if defined(MULTIPROCESSOR)
 	GET_CPUINFO(6)
 	stw	4,CI_CURPCB(6)
