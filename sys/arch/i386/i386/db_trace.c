@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.21 1997/03/11 16:38:23 sommerfe Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.22 1998/08/13 21:36:02 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -63,7 +63,7 @@ struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 /*
  * Stack trace.
  */
-#define	INKERNEL(va)	(((vm_offset_t)(va)) >= VM_MIN_KERNEL_ADDRESS)
+#define	INKERNEL(va)	(((vaddr_t)(va)) >= VM_MIN_KERNEL_ADDRESS)
 
 struct i386_frame {
 	struct i386_frame	*f_frame;

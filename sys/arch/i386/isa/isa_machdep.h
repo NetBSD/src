@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.11 1998/06/09 01:06:34 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.12 1998/08/13 21:36:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -263,7 +263,7 @@ struct intrhand {
 #define	DMA_BOUNCE      8		/* one buffer per channel */
 #endif
 
-extern vm_offset_t isaphysmem;
+extern vaddr_t isaphysmem;
 
 
 /*
