@@ -1,17 +1,16 @@
-# $NetBSD: md.macppc,v 1.24 2003/09/24 05:00:16 matt Exp $
+# $NetBSD: md.macppc,v 1.25 2003/10/20 16:18:03 matt Exp $
 ./usr/include/macppc	comp-c-include
 ./usr/include/macppc/adbsys.h	comp-c-include
 ./usr/include/macppc/ansi.h	comp-c-include
 ./usr/include/macppc/aout_machdep.h	comp-c-include
 ./usr/include/macppc/apmvar.h		comp-c-include
 ./usr/include/macppc/asm.h	comp-c-include
+./usr/include/macppc/atomic.h	comp-c-include
 ./usr/include/macppc/autoconf.h	comp-c-include
-./usr/include/macppc/bat.h	comp-c-include
 ./usr/include/macppc/bswap.h	comp-c-include
 ./usr/include/macppc/bus.h	comp-c-include
 ./usr/include/macppc/cdefs.h	comp-c-include
 ./usr/include/macppc/cpu.h	comp-c-include
-./usr/include/macppc/db_machdep.h	comp-c-include
 ./usr/include/macppc/disklabel.h	comp-c-include
 ./usr/include/macppc/elf_machdep.h	comp-c-include
 ./usr/include/macppc/endian.h	comp-c-include
@@ -28,7 +27,6 @@
 ./usr/include/macppc/int_mwgwtypes.h	comp-c-include
 ./usr/include/macppc/int_types.h	comp-c-include
 ./usr/include/macppc/intr.h	comp-c-include
-./usr/include/macppc/ipkdb.h	comp-c-include
 ./usr/include/macppc/kcore.h	comp-c-include
 ./usr/include/macppc/keyboard.h	comp-c-include
 ./usr/include/macppc/limits.h	comp-c-include
@@ -37,10 +35,8 @@
 ./usr/include/macppc/mcontext.h	comp-c-include
 ./usr/include/macppc/param.h	comp-c-include
 ./usr/include/macppc/pcb.h	comp-c-include
-./usr/include/macppc/pio.h	comp-c-include
 ./usr/include/macppc/pmap.h	comp-c-include
 ./usr/include/macppc/pmc.h	comp-c-include
-./usr/include/macppc/powerpc.h	comp-c-include
 ./usr/include/macppc/proc.h	comp-c-include
 ./usr/include/macppc/profile.h	comp-c-include
 ./usr/include/macppc/psl.h	comp-c-include
@@ -55,5 +51,4 @@
 ./usr/include/macppc/types.h	comp-c-include
 ./usr/include/macppc/varargs.h	comp-c-include
 ./usr/include/macppc/vmparam.h	comp-c-include
-./usr/include/macppc/z8530var.h	comp-c-include
 ./usr/include/ieeefp.h		comp-c-include
