@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.11 1997/12/31 05:47:15 thorpej Exp $	*/
+/*	$NetBSD: passwd.c,v 1.12 1998/06/08 03:12:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.11 1997/12/31 05:47:15 thorpej Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.12 1998/06/08 03:12:45 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -46,16 +46,16 @@ __RCSID("$NetBSD: passwd.c,v 1.11 1997/12/31 05:47:15 thorpej Exp $");
 
 #include <ctype.h>
 #include <err.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <pwd.h>
 #include <errno.h>
-#include <paths.h>
-#include <signal.h>
+#include <fcntl.h>
 #include <limits.h>
+#include <paths.h>
+#include <pwd.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <util.h>
 
 static void	pw_cont __P((int sig));
@@ -329,87 +329,6 @@ err:		pw_error(NULL, 1, 1);
 	(void)fclose(to);
 }
 
-int
-pw_scan(bp, pw, flags)
-	char *bp;
-	struct passwd *pw;
-	int *flags;
-{
-	unsigned long id;
-	int root;
-	char *p, *sh, *ep;
-
-	if (flags != (int *)NULL)
-		*flags = 0;
-
-	if (!(pw->pw_name = strsep(&bp, ":")))		/* login */
-		goto fmt;
-	root = !strcmp(pw->pw_name, "root");
-
-	if (!(pw->pw_passwd = strsep(&bp, ":")))	/* passwd */
-		goto fmt;
-
-	if (!(p = strsep(&bp, ":")))			/* uid */
-		goto fmt;
-	id = strtoul(p, &ep, 10);
-	if (root && id) {
-		warnx("root uid should be 0");
-		return (0);
-	}
-	if (id > UID_MAX || *ep != '\0') {
-		warnx("invalid uid '%s'", p);
-		return (0);
-	}
-	pw->pw_uid = (uid_t)id;
-	if ((*p == '\0') && (flags != (int *)NULL))
-		*flags |= _PASSWORD_NOUID;
-
-	if (!(p = strsep(&bp, ":")))			/* gid */
-		goto fmt;
-	id = strtoul(p, &ep, 10);
-	if (id > GID_MAX || *ep != '\0') {
-		warnx("invalid gid '%s'", p);
-		return (0);
-	}
-	pw->pw_gid = (gid_t)id;
-	if ((*p == '\0') && (flags != (int *)NULL))
-		*flags |= _PASSWORD_NOGID;
-
-	pw->pw_class = strsep(&bp, ":");		/* class */
-	if (!(p = strsep(&bp, ":")))			/* change */
-		goto fmt;
-	pw->pw_change = atol(p);
-	if ((*p == '\0') && (flags != (int *)NULL))
-		*flags |= _PASSWORD_NOCHG;
-	if (!(p = strsep(&bp, ":")))			/* expire */
-		goto fmt;
-	pw->pw_expire = atol(p);
-	if ((*p == '\0') && (flags != (int *)NULL))
-		*flags |= _PASSWORD_NOEXP;
-	pw->pw_gecos = strsep(&bp, ":");		/* gecos */
-	pw->pw_dir = strsep(&bp, ":");			/* directory */
-	if (!(pw->pw_shell = strsep(&bp, ":")))		/* shell */
-		goto fmt;
-
-	p = pw->pw_shell;
-	if (root && *p)					/* empty == /bin/sh */
-		for (setusershell();;) {
-			if (!(sh = getusershell())) {
-				warnx("warning, unknown root shell");
-				break;
-			}
-			if (!strcmp(p, sh))
-				break;	
-		}
-
-	if ((p = strsep(&bp, ":"))) {			/* too many */
-fmt:		warnx("corrupted entry");
-		return (0);
-	}
-
-	return (1);
-}
-
 void
 pw_error(name, err, eval)
 	const char *name;
@@ -422,4 +341,3 @@ pw_error(name, err, eval)
 	pw_abort();
 	exit(eval);
 }
-
