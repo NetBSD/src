@@ -1,10 +1,10 @@
-.\"	$NetBSD: ca.4,v 1.4 2000/07/05 15:45:34 msaitoh Exp $
+.\"	$NetBSD: twe.4,v 1.1 2000/10/19 14:55:51 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Andy Doran.
+.\" by Andrew Doran.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -34,50 +34,54 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 9, 2000
-.Dt CA 4
+.Dd October 17, 2000
+.Dt TWE 4
 .Os
 .Sh NAME
-.Nm ca
-.Nd Compaq array disk driver
+.Nm twe
+.Nd
+.Tn 3ware Escalade RAID controller driver
 .Sh SYNOPSIS
-.Cd ca* at cac? unit ?
+.Cd "twe* at pci? dev ? function ?"
+.Cd options TWE_MAX_QUEUECNT=n
+.Cd options TWE_MAX_PI_QUEUECNT=n
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for disk arrays attached to Compaq array controllers
-(supported by the
-.Nm cac
-driver).
-.Sh FILES
-.Bl -tag -width /dev/rcaXXXXX -compact
-.It Pa /dev/ca Ns Ar u Ns Ar p
-block mode disk unit
-.Ar u ,
-partition
-.Ar p
-.It Pa /dev/rca Ns Ar u Ns Ar p
-raw mode disk unit
-.Ar u ,
-partition
-.Ar p
-.Sm off
+driver provides support for the
+.Tn 3ware Escalade
+family of RAID controllers.
+Attached disk arrays are supported by the
+.Nm lsu
+driver.
+.Pp
+The following kernel configuration options are available:
+.Bl -ohang
+.It Cd options TWE_MAX_QUEUECNT=n
+Set the maximum queued command count to
+.Ar n
+commands.
+The default value is 128.
+The maximum value that the underlying hardware can support is 256.
+.It Cd options TWE_MAX_PI_QUEUECNT=n
+Set the maximum per-initiator (per disk array) queued command count to
+.Ar n
+commands.
+The default value is 32.
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
-.Xr cac 4
+.Xr lsu 4
 .Sh AUTHOR
 The
 .Nm
-driver was written by Andy Doran 
-.Aq ad@netbsd.org ,
-based upon the
-.Nm sd
-driver, which is the work of others.
+driver was written by
+by Andrew Doran
+.Aq ad@netbsd.org .
+Some parts of the driver are derived from code written by Micheal Smith
+.Aq msmith@freebsd.org .
 .Sh HISTORY
 The
-.Nm ca
+.Nm twe
 driver first appeared in
-.Nx 1.5 .
-.Sh BUGS
-Array state is not verified upon startup.
+.Nx 1.6 .
