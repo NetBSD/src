@@ -1,4 +1,4 @@
-/*	$NetBSD: env.c,v 1.10 1998/10/12 22:15:47 aidan Exp $	*/
+/*	$NetBSD: env.c,v 1.11 1999/03/22 22:18:45 aidan Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: env.c,v 2.7 1994/01/26 02:25:50 vixie Exp";
 #else
-__RCSID("$NetBSD: env.c,v 1.10 1998/10/12 22:15:47 aidan Exp $");
+__RCSID("$NetBSD: env.c,v 1.11 1999/03/22 22:18:45 aidan Exp $");
 #endif
 #endif
 
@@ -122,8 +122,8 @@ load_env(envstr, f)
 {
 	long	filepos;
 	int	fileline, len;
-	char	*name, *val, *s;
-	char	*space = NULL;
+	char	*name, *name_end, *val, *equal;
+	char	*s;
 
 	filepos = ftell(f);
 	fileline = LineNumber;
@@ -133,8 +133,8 @@ load_env(envstr, f)
 
 	Debug(DPARS, ("load_env, read <%s>\n", envstr))
 
-	s = strchr(envstr, '=');
-	if (s && (*envstr != '"' || *envstr == '\'')) {
+	equal = strchr(envstr, '=');
+	if (equal) {
 		/*
 		 * decide if this is an environment variable or not by
 		 * checking for spaces in the middle of the variable name.
@@ -142,49 +142,37 @@ load_env(envstr, f)
 		 * <min> <hour> <day> <month> <weekday> command flag=value)
 		 */
 		/* space before var name */
-		for (space = envstr; space < s && isspace(*space); space++)
+		for (name = envstr; name < equal && isspace(*name); name++)
 			;
+
 		/* var name */
-		for ( ; space < s && !isspace(*space); space++)
-			;
+		if (*name == '"' || *name == '\'') {
+			s = strchr(name + 1, *name);
+			name++;
+			if (!s || s > equal) {
+				Debug(DPARS, ("load_env, didn't get valid string"));
+				fseek(f, filepos, 0);
+				Set_LineNum(fileline);
+				return (FALSE);
+			}
+			name_end = s++;
+		} else {
+			for (s = name ; s < equal && !isspace(*s); s++)
+				;
+			name_end = s;
+			if (s < equal)
+				s++;
+		}
+
 		/* space after var name */
-		for ( ; space < s && isspace(*space); space++)
+		for ( ; s < equal && isspace(*s); s++)
 			;
 		/*
-		 * space should equal s..  otherwise, this is not an
+		 * "s" should equal "equal"..  otherwise, this is not an
 		 * environment set command.
 		 */
-	} else if (s && (*envstr == '"' || *envstr == '\'')) {
-		/*
-		 * allow quoting the environment variable name to contain
-		 * spaces.  The close quote will have to exist before the
-		 * '=' character.
-		 */
-		space = strchr(envstr+1, *envstr);
-		if (!space || space > s) {
-			Debug(DPARS, ("load_env, didn't get valid string"));
-			fseek(f, filepos, 0);
-			Set_LineNum(fileline);
-			return (FALSE);
-		}
-		space++;
-		while (space < s && isspace(*space))
-			space++;
 	}
-	if (s != NULL && s != envstr && *space == '=') {
-		/* XXX:
-		 * The manpage says spaces around the '=' are ignored, but
-		 * there's no code here to ignore them.
-		 */
-		*s++ = '\0';
-		val = s;
-		if (*envstr == '"' || *envstr == '\'') {
-			space = strchr(envstr+1, *envstr);
-			*space = 0;
-			name = strdup(envstr+1);
-		} else
-			name = strdup(envstr);
-	} else {
+	if (equal == NULL || name == name_end || s != equal) {
 		Debug(DPARS, ("load_env, didn't get valid string"));
 		fseek(f, filepos, 0);
 		Set_LineNum(fileline);
@@ -194,6 +182,9 @@ load_env(envstr, f)
 	/*
 	 * process value string
 	 */
+	val = equal + 1;
+	while (*val && isspace(*val))
+		val++;
 	if (*val) {
 		len = strdtb(val);
 		if (len >= 2 && (val[0] == '\'' || val[0] == '"') &&
@@ -203,9 +194,9 @@ load_env(envstr, f)
 		}
 	}
 
+	*name_end = '\0';
 	(void) snprintf(envstr, MAX_ENVSTR, "%s=%s", name, val);
 	Debug(DPARS, ("load_env, <%s> <%s> -> <%s>\n", name, val, envstr))
-	free(name);
 	return (TRUE);
 }
 
