@@ -1,4 +1,4 @@
-/*	$NetBSD: api_exch.c,v 1.4 1998/03/04 13:16:04 christos Exp $	*/
+/*	$NetBSD: api_exch.c,v 1.5 1998/07/26 22:38:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)api_exch.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: api_exch.c,v 1.4 1998/03/04 13:16:04 christos Exp $");
+__RCSID("$NetBSD: api_exch.c,v 1.5 1998/07/26 22:38:15 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -350,7 +350,7 @@ api_exch_outtype(type, length, location)
 int
     type,
     length;
-char
+const char
     *location;
 {
     int netleng = length;

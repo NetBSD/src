@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.9 1998/07/06 07:01:33 mrg Exp $	*/
+/*	$NetBSD: system.c,v 1.10 1998/07/26 22:38:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)system.c	4.5 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: system.c,v 1.9 1998/07/06 07:01:33 mrg Exp $");
+__RCSID("$NetBSD: system.c,v 1.10 1998/07/26 22:38:15 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -282,7 +282,7 @@ doassociate()
 
 	/* Is this the correct password? */
 	if (strlen(pwent->pw_name)) {
-	    char *ptr;
+	    const char *ptr;
 	    int i;
 
 	    ptr = pwent->pw_name;
