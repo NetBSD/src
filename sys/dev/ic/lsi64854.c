@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.6 1999/04/16 13:35:41 pk Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.7 1999/04/20 20:21:04 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -279,7 +279,6 @@ lsi64854_setup(sc, addr, len, datain, dmasize)
 
 	/* Program the DMA address */
 	if (sc->sc_dmasize) {
-		int s = splbio();
 		sc->sc_dvmaaddr = *sc->sc_dmaaddr;
 		if (bus_dmamap_load(sc->sc_dmatag, sc->sc_dmamap,
 				*sc->sc_dmaaddr, sc->sc_dmasize,
@@ -287,7 +286,6 @@ lsi64854_setup(sc, addr, len, datain, dmasize)
 				BUS_DMA_NOWAIT))
 			panic("%s: cannot allocate DVMA address",
 			      sc->sc_dev.dv_xname);
-		splx(s);
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap,
 				(bus_addr_t)sc->sc_dvmaaddr, sc->sc_dmasize,
 				datain
@@ -516,7 +514,6 @@ lsi64854_setup_pp(sc, addr, len, datain, dmasize)
 
 	/* Program the DMA address */
 	if (sc->sc_dmasize) {
-		int s = splserial();	/* XXX - what shall we choose? */
 		sc->sc_dvmaaddr = *sc->sc_dmaaddr;
 		if (bus_dmamap_load(sc->sc_dmatag, sc->sc_dmamap,
 				*sc->sc_dmaaddr, sc->sc_dmasize,
@@ -524,7 +521,6 @@ lsi64854_setup_pp(sc, addr, len, datain, dmasize)
 				BUS_DMA_NOWAIT))
 			panic("%s: cannot allocate DVMA address",
 			      sc->sc_dev.dv_xname);
-		splx(s);
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap,
 				(bus_addr_t)sc->sc_dvmaaddr, sc->sc_dmasize,
 				datain
