@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.11 1993/06/14 19:29:30 mycroft Exp $
+ *	$Id: icu.s,v 1.12 1993/06/14 19:35:59 mycroft Exp $
  */
 
 /*
@@ -193,7 +193,7 @@ none_to_unpend:
 	DONET(NETISR_NS, _nsintr, 8)
 #endif
 #ifdef ISO
-	DONET(NETISR_ISO, _isointr, 25)
+	DONET(NETISR_ISO, _clnlintr, 25)
 #endif
 	FASTSPL($0)
 test_ASTs:
@@ -274,7 +274,7 @@ in_spl0:
 	DONET(NETISR_NS, _nsintr, 27)
 #endif
 #ifdef ISO
-	DONET(NETISR_ISO, _isointr, 28)
+	DONET(NETISR_ISO, _clnlintr, 28)
 #endif
 over_net_stuff_for_spl0:
 	movl	$0,_cpl	# set new priority
