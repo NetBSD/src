@@ -1,10 +1,10 @@
-/*	$NetBSD: tcdevs.h,v 1.18 2000/12/17 13:56:19 ad Exp $	*/
+/*	$NetBSD: tcdevs.h,v 1.19 2003/10/04 16:17:16 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.17 2000/12/17 13:56:05 ad Exp 
+ *	NetBSD: tcdevs,v 1.18 2003/10/04 16:15:00 tsutsui Exp 
  */
 
 /*
@@ -83,6 +83,12 @@
 #define	TC_DEVICE_PMAG_FB	"pxg"
 #define	TC_DESCRIPTION_PMAG_FB	"3D Graphics (PXG HE+3DA)"
 
+#define	TC_DEVICE_PMAG_JA	"tfb"
+#define	TC_DESCRIPTION_PMAG_JA	"24-plane True Color Frame Buffer (TX)"
+
+#define	TC_DEVICE_PMAGB_BA	"sfb"
+#define	TC_DESCRIPTION_PMAGB_BA	"Smart Frame Buffer"
+
 #define	TC_DEVICE_PMAGB_FA	"pxg"
 #define	TC_DESCRIPTION_PMAGB_FA	"3D Graphics (PXG HE+3DA)"
 
@@ -91,12 +97,6 @@
 
 #define	TC_DEVICE_PMAG_DV	"xcfb"
 #define	TC_DESCRIPTION_PMAG_DV	"Maxine Color Frame Buffer"
-
-#define	TC_DEVICE_PMAG_JA	"???"
-#define	TC_DESCRIPTION_PMAG_JA	"24-plane True Color Frame Buffer (TX)"
-
-#define	TC_DEVICE_PMAGB_BA	"sfb"
-#define	TC_DESCRIPTION_PMAGB_BA	"Smart Frame Buffer"
 
 #define	TC_DEVICE_PMAGD	"sfbp"
 #define	TC_DESCRIPTION_PMAGD	"Smart Frame Buffer Plus, unknown bpp"
