@@ -1,4 +1,4 @@
-/*	$NetBSD: shuffle.c,v 1.1 1998/09/23 21:05:59 perry Exp $	*/
+/*	$NetBSD: shuffle.c,v 1.2 1998/09/23 21:45:44 perry Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shuffle.c,v 1.1 1998/09/23 21:05:59 perry Exp $");
+__RCSID("$NetBSD: shuffle.c,v 1.2 1998/09/23 21:45:44 perry Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -43,6 +43,16 @@ __RCSID("$NetBSD: shuffle.c,v 1.1 1998/09/23 21:05:59 perry Exp $");
 #include <unistd.h>
 #include <sys/time.h>
 
+void enomem(void);
+void *emalloc(size_t len);
+void *ecalloc(size_t nmemb, size_t size);
+char *estrdup(const char *str);
+void *erealloc(void *ptr, size_t size);
+
+int *get_shuffle(int t);
+void usage(void);
+void swallow_input(FILE *input);
+
 char **global_inputbuf;
 int global_inputlen;
 
@@ -51,7 +61,7 @@ int global_inputlen;
  *	die when out of memory.
  */
 void
-enomem()
+enomem(void)
 {
 	errx(2, "Cannot allocate memory.");
 }
@@ -61,8 +71,7 @@ enomem()
  *	malloc, but die on error.
  */
 void *
-emalloc(len)
-	size_t len;
+emalloc(size_t len)
 {
 	void *p;
 
@@ -105,9 +114,7 @@ estrdup(const char *str)
  *	realloc, but die on error.
  */
 void *
-erealloc(ptr, size)
-	void *ptr;
-	size_t size;
+erealloc(void *ptr, size_t size)
 {
 	if ((ptr = realloc(ptr, size)) == NULL)
 		enomem();
@@ -189,6 +196,8 @@ main(int argc, char *argv[])
 	struct timeval tv;
 
 	cflag = nflag = pflag = 0;
+	p = t = 0;
+	
 	while ((ch = getopt(argc, argv, "cn:p:")) != -1) {
 		switch(ch) {
 		case 'c':
