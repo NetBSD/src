@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.2 2000/03/17 00:10:24 mycroft Exp $	*/
+/*	$NetBSD: endian.h,v 1.3 2000/03/17 11:47:43 soren Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -38,8 +38,6 @@
 #ifndef _SYS_ENDIAN_H_
 #define _SYS_ENDIAN_H_
 
-#include <machine/endian_machdep.h>
-
 /*
  * Definitions for byte order, according to byte significance from low
  * address to high.
@@ -47,6 +45,8 @@
 #define	_LITTLE_ENDIAN	1234	/* LSB first: i386, vax */
 #define	_BIG_ENDIAN	4321	/* MSB first: 68000, ibm, net */
 #define	_PDP_ENDIAN	3412	/* LSB first in word, MSW first in long */
+
+#include <machine/endian_machdep.h>
 
 /*
  * Define the order of 32-bit words in 64-bit words.
