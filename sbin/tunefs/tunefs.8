@@ -1,4 +1,4 @@
-.\"	$NetBSD: tunefs.8,v 1.23 2001/08/19 09:39:24 lukem Exp $
+.\"	$NetBSD: tunefs.8,v 1.24 2001/09/03 15:04:39 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)tunefs.8	8.3 (Berkeley) 5/3/95
 .\"
-.Dd August 19, 2001
+.Dd September 3, 2001
 .Dt TUNEFS 8
 .Os
 .Sh NAME
@@ -45,12 +45,12 @@
 .Op Fl a Ar maxcontig
 .Op Fl d Ar rotdelay
 .Op Fl e Ar maxbpg
+.Op Fl k Ar trackskew
 .Op Fl m Ar minfree
 .Bk -words
 .\" .Op Fl n Ar soft_dependency_enabling
 .Op Fl o Ar optimize_preference
 .Ek
-.Op Fl t Ar trackskew
 .Ar special | Ar filesys
 .Sh DESCRIPTION
 .Nm
@@ -111,6 +111,10 @@ more frequently than if they were allowed to allocate all the blocks
 in a cylinder group before seeking elsewhere.
 For file systems with exclusively large files,
 this parameter should be set higher.
+.It Fl k Ar trackskew
+This specifies the skew in sectors from one track to the next in a cylinder.
+The default value is zero, indicating that each track in a cylinder begins at
+the same rotational position.
 .It Fl m Ar minfree
 This value specifies the percentage of space held back
 from normal users; the minimum free space threshold.
@@ -121,21 +125,23 @@ threshold.
 Note that if the value is raised above the current usage level,
 users will be unable to allocate files until enough files have
 been deleted to get under the higher threshold.
-.\" .It Fl n Ar soft_dependency_enabling
-.\" The soft dependency code allows most file system I/O to be done
-.\" asynchronously by reordering dependant writes to ensure that the
-.\" on-disk metadata is self-consistent even when updates are deferred. 
-.\" Additionally, metadata updates are aggregated, reducing the total 
-.\" number of writes performed.
-.\" Use of this facility does not require any changes to the file system,
-.\" so it can be enabled or disabled any time that the file system is unmounted.
-.\" This experimental facility is turned off by default.
-.\" It is turned on by using
-.\" .Fl n
-.\" enable;
-.\" it is turned off by using
-.\" .Fl n
-.\" disable.
+.ig
+.It Fl n Ar soft_dependency_enabling
+The soft dependency code allows most file system I/O to be done
+asynchronously by reordering dependant writes to ensure that the
+on-disk metadata is self-consistent even when updates are deferred. 
+Additionally, metadata updates are aggregated, reducing the total 
+number of writes performed.
+Use of this facility does not require any changes to the file system,
+so it can be enabled or disabled any time that the file system is unmounted.
+This experimental facility is turned off by default.
+It is turned on by using
+.Fl n
+enable;
+it is turned off by using
+.Fl n
+disable.
+..
 .It Fl o Ar optimize_preference
 The file system can either try to minimize the time spent
 allocating blocks, or it can attempt to minimize the space
@@ -152,10 +158,6 @@ can be specified as either
 .Li space
 or
 .Li time .
-.It Fl t Ar trackskew
-This specifies the skew in sectors from one track to the next in a cylinder.
-The default value is zero, indicating that each track in a cylinder begins at
-the same rotational position.
 .El
 .Sh SEE ALSO
 .Xr fs 5 ,
