@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.50 1995/08/13 09:05:59 mycroft Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.51 1995/09/19 21:45:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -74,16 +74,17 @@
  * Process debugging system call.
  */
 int
-ptrace(p, uap, retval)
+ptrace(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct ptrace_args /* {
 		syscallarg(int) req;
 		syscallarg(pid_t) pid;
 		syscallarg(caddr_t) addr;
 		syscallarg(int) data;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct proc *t;				/* target process */
 	struct uio uio;
 	struct iovec iov;

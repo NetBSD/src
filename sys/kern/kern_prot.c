@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.28 1995/06/24 20:34:00 christos Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.29 1995/09/19 21:45:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -147,14 +147,15 @@ getegid(p, uap, retval)
 	return (0);
 }
 
-getgroups(p, uap, retval)
+getgroups(p, v, retval)
 	struct proc *p;
-	register struct	getgroups_args /* {
-		syscallarg(u_int) gidsetsize;
-		syscallarg(gid_t *) gidset;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	register struct getgroups_args /* {
+		syscallarg(u_int) gidsetsize;
+		syscallarg(gid_t *) gidset;
+	} */ *uap = v;
 	register struct pcred *pc = p->p_cred;
 	register u_int ngrp;
 	int error;
@@ -203,14 +204,15 @@ setsid(p, uap, retval)
  * pid must not be session leader (EPERM)
  */
 /* ARGSUSED */
-setpgid(curp, uap, retval)
+setpgid(curp, v, retval)
 	struct proc *curp;
+	void *v;
+	register_t *retval;
+{
 	register struct setpgid_args /* {
 		syscallarg(int) pid;
 		syscallarg(int) pgid;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct proc *targp;		/* target process */
 	register struct pgrp *pgrp;		/* target pgrp */
 
@@ -240,13 +242,14 @@ setpgid(curp, uap, retval)
 }
 
 /* ARGSUSED */
-setuid(p, uap, retval)
+setuid(p, v, retval)
 	struct proc *p;
-	struct setuid_args /* {
-		syscallarg(uid_t) uid;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct setuid_args /* {
+		syscallarg(uid_t) uid;
+	} */ *uap = v;
 	register struct pcred *pc = p->p_cred;
 	register uid_t uid;
 	int error;
@@ -275,13 +278,14 @@ setuid(p, uap, retval)
 }
 
 /* ARGSUSED */
-seteuid(p, uap, retval)
+seteuid(p, v, retval)
 	struct proc *p;
-	struct seteuid_args /* {
-		syscallarg(uid_t) euid;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct seteuid_args /* {
+		syscallarg(uid_t) euid;
+	} */ *uap = v;
 	register struct pcred *pc = p->p_cred;
 	register uid_t euid;
 	int error;
@@ -305,13 +309,14 @@ seteuid(p, uap, retval)
 }
 
 /* ARGSUSED */
-setgid(p, uap, retval)
+setgid(p, v, retval)
 	struct proc *p;
-	struct setgid_args /* {
-		syscallarg(gid_t) gid;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct setgid_args /* {
+		syscallarg(gid_t) gid;
+	} */ *uap = v;
 	register struct pcred *pc = p->p_cred;
 	register gid_t gid;
 	int error;
@@ -332,13 +337,14 @@ setgid(p, uap, retval)
 }
 
 /* ARGSUSED */
-setegid(p, uap, retval)
+setegid(p, v, retval)
 	struct proc *p;
-	struct setegid_args /* {
-		syscallarg(gid_t) egid;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct setegid_args /* {
+		syscallarg(gid_t) egid;
+	} */ *uap = v;
 	register struct pcred *pc = p->p_cred;
 	register gid_t egid;
 	int error;
@@ -358,14 +364,15 @@ setegid(p, uap, retval)
 }
 
 /* ARGSUSED */
-setgroups(p, uap, retval)
+setgroups(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct setgroups_args /* {
 		syscallarg(u_int) gidsetsize;
 		syscallarg(gid_t *) gidset;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct pcred *pc = p->p_cred;
 	register u_int ngrp;
 	int error;
@@ -486,14 +493,15 @@ crdup(cr)
  * Get login name, if available.
  */
 /* ARGSUSED */
-getlogin(p, uap, retval)
+getlogin(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct getlogin_args /* {
 		syscallarg(char *) namebuf;
 		syscallarg(u_int) namelen;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 
 	if (SCARG(uap, namelen) > sizeof (p->p_pgrp->pg_session->s_login))
 		SCARG(uap, namelen) = sizeof (p->p_pgrp->pg_session->s_login);
@@ -505,13 +513,14 @@ getlogin(p, uap, retval)
  * Set login name.
  */
 /* ARGSUSED */
-setlogin(p, uap, retval)
+setlogin(p, v, retval)
 	struct proc *p;
-	struct setlogin_args /* {
-		syscallarg(char *) namebuf;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct setlogin_args /* {
+		syscallarg(char *) namebuf;
+	} */ *uap = v;
 	int error;
 
 	if (error = suser(p->p_ucred, &p->p_acflag))

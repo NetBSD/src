@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.55 1995/06/24 20:34:31 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.56 1995/09/19 21:45:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -69,16 +69,17 @@ static int change_dir __P((struct nameidata *ndp, struct proc *p));
  * Mount a file system.
  */
 /* ARGSUSED */
-mount(p, uap, retval)
+mount(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct mount_args /* {
 		syscallarg(char *) type;
 		syscallarg(char *) path;
 		syscallarg(int) flags;
 		syscallarg(caddr_t) data;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct vnode *vp;
 	register struct mount *mp;
 	int error, flag;
@@ -304,14 +305,15 @@ checkdirs(olddp)
  * not special file (as before).
  */
 /* ARGSUSED */
-unmount(p, uap, retval)
+unmount(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct unmount_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) flags;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct vnode *vp;
 	struct mount *mp;
 	int error;
@@ -449,16 +451,17 @@ sync(p, uap, retval)
  * Change filesystem quotas.
  */
 /* ARGSUSED */
-quotactl(p, uap, retval)
+quotactl(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct quotactl_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) cmd;
 		syscallarg(int) uid;
 		syscallarg(caddr_t) arg;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct mount *mp;
 	int error;
 	struct nameidata nd;
@@ -476,14 +479,15 @@ quotactl(p, uap, retval)
  * Get filesystem statistics.
  */
 /* ARGSUSED */
-statfs(p, uap, retval)
+statfs(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct statfs_args /* {
 		syscallarg(char *) path;
 		syscallarg(struct statfs *) buf;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct mount *mp;
 	register struct statfs *sp;
 	int error;
@@ -505,14 +509,15 @@ statfs(p, uap, retval)
  * Get filesystem statistics.
  */
 /* ARGSUSED */
-fstatfs(p, uap, retval)
+fstatfs(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct fstatfs_args /* {
 		syscallarg(int) fd;
 		syscallarg(struct statfs *) buf;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct file *fp;
 	struct mount *mp;
 	register struct statfs *sp;
@@ -531,15 +536,16 @@ fstatfs(p, uap, retval)
 /*
  * Get statistics on all filesystems.
  */
-getfsstat(p, uap, retval)
+getfsstat(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct getfsstat_args /* {
 		syscallarg(struct statfs *) buf;
 		syscallarg(long) bufsize;
 		syscallarg(int) flags;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct mount *mp, *nmp;
 	register struct statfs *sp;
 	caddr_t sfsp;
@@ -579,13 +585,14 @@ getfsstat(p, uap, retval)
  * Change current working directory to a given file descriptor.
  */
 /* ARGSUSED */
-fchdir(p, uap, retval)
+fchdir(p, v, retval)
 	struct proc *p;
-	struct fchdir_args /* {
-		syscallarg(int) fd;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct fchdir_args /* {
+		syscallarg(int) fd;
+	} */ *uap = v;
 	register struct filedesc *fdp = p->p_fd;
 	struct vnode *vp, *tdp;
 	struct mount *mp;
@@ -626,13 +633,14 @@ fchdir(p, uap, retval)
  * Change current working directory (``.'').
  */
 /* ARGSUSED */
-chdir(p, uap, retval)
+chdir(p, v, retval)
 	struct proc *p;
-	struct chdir_args /* {
-		syscallarg(char *) path;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct chdir_args /* {
+		syscallarg(char *) path;
+	} */ *uap = v;
 	register struct filedesc *fdp = p->p_fd;
 	int error;
 	struct nameidata nd;
@@ -650,13 +658,14 @@ chdir(p, uap, retval)
  * Change notion of root (``/'') directory.
  */
 /* ARGSUSED */
-chroot(p, uap, retval)
+chroot(p, v, retval)
 	struct proc *p;
-	struct chroot_args /* {
-		syscallarg(char *) path;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct chroot_args /* {
+		syscallarg(char *) path;
+	} */ *uap = v;
 	register struct filedesc *fdp = p->p_fd;
 	int error;
 	struct nameidata nd;
@@ -701,15 +710,16 @@ change_dir(ndp, p)
  * Check permissions, allocate an open file structure,
  * and call the device open routine if any.
  */
-open(p, uap, retval)
+open(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct open_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) flags;
 		syscallarg(int) mode;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
 	register struct vnode *vp;
@@ -777,15 +787,16 @@ open(p, uap, retval)
  * Create a special file.
  */
 /* ARGSUSED */
-mknod(p, uap, retval)
+mknod(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct mknod_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) mode;
 		syscallarg(int) dev;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct vnode *vp;
 	struct vattr vattr;
 	int error;
@@ -851,14 +862,15 @@ mknod(p, uap, retval)
  * Create a named pipe.
  */
 /* ARGSUSED */
-mkfifo(p, uap, retval)
+mkfifo(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct mkfifo_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) mode;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct vattr vattr;
 	int error;
 	struct nameidata nd;
@@ -890,14 +902,15 @@ mkfifo(p, uap, retval)
  * Make a hard file link.
  */
 /* ARGSUSED */
-link(p, uap, retval)
+link(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct link_args /* {
 		syscallarg(char *) path;
 		syscallarg(char *) link;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct vnode *vp;
 	struct nameidata nd;
 	int error;
@@ -938,14 +951,15 @@ link(p, uap, retval)
  * Make a symbolic link.
  */
 /* ARGSUSED */
-symlink(p, uap, retval)
+symlink(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct symlink_args /* {
 		syscallarg(char *) path;
 		syscallarg(char *) link;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct vattr vattr;
 	char *path;
 	int error;
@@ -980,13 +994,14 @@ out:
  * Delete a whiteout from the filesystem.
  */
 /* ARGSUSED */
-undelete(p, uap, retval)
+undelete(p, v, retval)
 	struct proc *p;
-	register struct undelete_args /* {
-		syscallarg(char *) path;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	register struct undelete_args /* {
+		syscallarg(char *) path;
+	} */ *uap = v;
 	int error;
 	struct nameidata nd;
 
@@ -1018,13 +1033,14 @@ undelete(p, uap, retval)
  * Delete a name from the filesystem.
  */
 /* ARGSUSED */
-unlink(p, uap, retval)
+unlink(p, v, retval)
 	struct proc *p;
-	struct unlink_args /* {
-		syscallarg(char *) path;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct unlink_args /* {
+		syscallarg(char *) path;
+	} */ *uap = v;
 	register struct vnode *vp;
 	int error;
 	struct nameidata nd;
@@ -1065,16 +1081,17 @@ unlink(p, uap, retval)
 /*
  * Reposition read/write file offset.
  */
-lseek(p, uap, retval)
+lseek(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct lseek_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) pad;
 		syscallarg(off_t) offset;
 		syscallarg(int) whence;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct ucred *cred = p->p_ucred;
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
@@ -1109,14 +1126,15 @@ lseek(p, uap, retval)
 /*
  * Check access permissions.
  */
-access(p, uap, retval)
+access(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct access_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) flags;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct ucred *cred = p->p_ucred;
 	register struct vnode *vp;
 	int error, flags, t_gid, t_uid;
@@ -1155,14 +1173,15 @@ out1:
  * Get file status; this version follows links.
  */
 /* ARGSUSED */
-stat(p, uap, retval)
+stat(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct stat_args /* {
 		syscallarg(char *) path;
 		syscallarg(struct stat *) ub;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct stat sb;
 	int error;
 	struct nameidata nd;
@@ -1183,14 +1202,15 @@ stat(p, uap, retval)
  * Get file status; this version does not follow links.
  */
 /* ARGSUSED */
-lstat(p, uap, retval)
+lstat(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct lstat_args /* {
 		syscallarg(char *) path;
 		syscallarg(struct stat *) ub;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	int error;
 	struct vnode *vp, *dvp;
 	struct stat sb, sb1;
@@ -1240,14 +1260,15 @@ lstat(p, uap, retval)
  * Get configurable pathname variables.
  */
 /* ARGSUSED */
-pathconf(p, uap, retval)
+pathconf(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct pathconf_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) name;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	int error;
 	struct nameidata nd;
 
@@ -1264,15 +1285,16 @@ pathconf(p, uap, retval)
  * Return target name of a symbolic link.
  */
 /* ARGSUSED */
-readlink(p, uap, retval)
+readlink(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct readlink_args /* {
 		syscallarg(char *) path;
 		syscallarg(char *) buf;
 		syscallarg(int) count;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct vnode *vp;
 	struct iovec aiov;
 	struct uio auio;
@@ -1307,14 +1329,15 @@ readlink(p, uap, retval)
  * Change flags of a file given a path name.
  */
 /* ARGSUSED */
-chflags(p, uap, retval)
+chflags(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct chflags_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) flags;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct vnode *vp;
 	struct vattr vattr;
 	int error;
@@ -1341,14 +1364,15 @@ chflags(p, uap, retval)
  * Change flags of a file given a file descriptor.
  */
 /* ARGSUSED */
-fchflags(p, uap, retval)
+fchflags(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct fchflags_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) flags;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct vattr vattr;
 	struct vnode *vp;
 	struct file *fp;
@@ -1374,14 +1398,15 @@ fchflags(p, uap, retval)
  * Change mode of a file given path name.
  */
 /* ARGSUSED */
-chmod(p, uap, retval)
+chmod(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct chmod_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) mode;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct vnode *vp;
 	struct vattr vattr;
 	int error;
@@ -1408,14 +1433,15 @@ chmod(p, uap, retval)
  * Change mode of a file given a file descriptor.
  */
 /* ARGSUSED */
-fchmod(p, uap, retval)
+fchmod(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct fchmod_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) mode;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct vattr vattr;
 	struct vnode *vp;
 	struct file *fp;
@@ -1441,15 +1467,16 @@ fchmod(p, uap, retval)
  * Set ownership given a path name.
  */
 /* ARGSUSED */
-chown(p, uap, retval)
+chown(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct chown_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) uid;
 		syscallarg(int) gid;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct vnode *vp;
 	struct vattr vattr;
 	int error;
@@ -1477,15 +1504,16 @@ chown(p, uap, retval)
  * Set ownership given a file descriptor.
  */
 /* ARGSUSED */
-fchown(p, uap, retval)
+fchown(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct fchown_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) uid;
 		syscallarg(int) gid;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct vattr vattr;
 	struct vnode *vp;
 	struct file *fp;
@@ -1512,14 +1540,15 @@ fchown(p, uap, retval)
  * Set the access and modification times of a file.
  */
 /* ARGSUSED */
-utimes(p, uap, retval)
+utimes(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct utimes_args /* {
 		syscallarg(char *) path;
 		syscallarg(struct timeval *) tptr;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct vnode *vp;
 	struct timeval tv[2];
 	struct vattr vattr;
@@ -1557,15 +1586,16 @@ utimes(p, uap, retval)
  * Truncate a file given its path name.
  */
 /* ARGSUSED */
-truncate(p, uap, retval)
+truncate(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct truncate_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) pad;
 		syscallarg(off_t) length;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct vnode *vp;
 	struct vattr vattr;
 	int error;
@@ -1593,15 +1623,16 @@ truncate(p, uap, retval)
  * Truncate a file given a file descriptor.
  */
 /* ARGSUSED */
-ftruncate(p, uap, retval)
+ftruncate(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct ftruncate_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) pad;
 		syscallarg(off_t) length;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct vattr vattr;
 	struct vnode *vp;
 	struct file *fp;
@@ -1629,13 +1660,14 @@ ftruncate(p, uap, retval)
  * Sync an open file.
  */
 /* ARGSUSED */
-fsync(p, uap, retval)
+fsync(p, v, retval)
 	struct proc *p;
-	struct fsync_args /* {
-		syscallarg(int) fd;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct fsync_args /* {
+		syscallarg(int) fd;
+	} */ *uap = v;
 	register struct vnode *vp;
 	struct file *fp;
 	int error;
@@ -1654,14 +1686,15 @@ fsync(p, uap, retval)
  * or both not be directories.  If target is a directory, it must be empty.
  */
 /* ARGSUSED */
-rename(p, uap, retval)
+rename(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct rename_args /* {
 		syscallarg(char *) from;
 		syscallarg(char *) to;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct vnode *tvp, *fvp, *tdvp;
 	struct nameidata fromnd, tond;
 	int error;
@@ -1738,14 +1771,15 @@ out1:
  * Make a directory file.
  */
 /* ARGSUSED */
-mkdir(p, uap, retval)
+mkdir(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct mkdir_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) mode;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct vnode *vp;
 	struct vattr vattr;
 	int error;
@@ -1778,13 +1812,14 @@ mkdir(p, uap, retval)
  * Remove a directory file.
  */
 /* ARGSUSED */
-rmdir(p, uap, retval)
+rmdir(p, v, retval)
 	struct proc *p;
-	struct rmdir_args /* {
-		syscallarg(char *) path;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct rmdir_args /* {
+		syscallarg(char *) path;
+	} */ *uap = v;
 	register struct vnode *vp;
 	int error;
 	struct nameidata nd;
@@ -1829,16 +1864,17 @@ out:
 /*
  * Read a block of directory entries in a file system independent format.
  */
-getdirentries(p, uap, retval)
+getdirentries(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct getdirentries_args /* {
 		syscallarg(int) fd;
 		syscallarg(char *) buf;
 		syscallarg(u_int) count;
 		syscallarg(long *) basep;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct vnode *vp;
 	struct file *fp;
 	struct uio auio;
@@ -1934,14 +1970,15 @@ unionread:
 /*
  * Set the mode mask for creation of filesystem nodes.
  */
-mode_t				/* XXX */
-umask(p, uap, retval)
+int
+umask(p, v, retval)
 	struct proc *p;
-	struct umask_args /* {
-		syscallarg(int) newmask;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct umask_args /* {
+		syscallarg(int) newmask;
+	} */ *uap = v;
 	register struct filedesc *fdp;
 
 	fdp = p->p_fd;
@@ -1955,13 +1992,14 @@ umask(p, uap, retval)
  * away from vnode.
  */
 /* ARGSUSED */
-revoke(p, uap, retval)
+revoke(p, v, retval)
 	struct proc *p;
-	register struct revoke_args /* {
-		syscallarg(char *) path;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	register struct revoke_args /* {
+		syscallarg(char *) path;
+	} */ *uap = v;
 	register struct vnode *vp;
 	struct vattr vattr;
 	int error;

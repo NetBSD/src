@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.19 1995/03/21 13:33:34 mycroft Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.20 1995/09/19 21:45:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -62,15 +62,16 @@
  * Read system call.
  */
 /* ARGSUSED */
-read(p, uap, retval)
+read(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct read_args /* {
 		syscallarg(int) fd;
 		syscallarg(char *) buf;
 		syscallarg(u_int) nbyte;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct file *fp;
 	register struct filedesc *fdp = p->p_fd;
 	struct uio auio;
@@ -119,15 +120,16 @@ read(p, uap, retval)
 /*
  * Scatter read system call.
  */
-readv(p, uap, retval)
+readv(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct readv_args /* {
 		syscallarg(int) fd;
 		syscallarg(struct iovec *) iovp;
 		syscallarg(u_int) iovcnt;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct file *fp;
 	register struct filedesc *fdp = p->p_fd;
 	struct uio auio;
@@ -208,15 +210,16 @@ done:
 /*
  * Write system call
  */
-write(p, uap, retval)
+write(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct write_args /* {
 		syscallarg(int) fd;
 		syscallarg(char *) buf;
 		syscallarg(u_int) nbyte;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct file *fp;
 	register struct filedesc *fdp = p->p_fd;
 	struct uio auio;
@@ -268,15 +271,16 @@ write(p, uap, retval)
 /*
  * Gather write system call
  */
-writev(p, uap, retval)
+writev(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct writev_args /* {
 		syscallarg(int) fd;
 		syscallarg(struct iovec *) iovp;
 		syscallarg(u_int) iovcnt;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct file *fp;
 	register struct filedesc *fdp = p->p_fd;
 	struct uio auio;
@@ -361,15 +365,16 @@ done:
  * Ioctl system call
  */
 /* ARGSUSED */
-ioctl(p, uap, retval)
+ioctl(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct file *fp;
 	register struct filedesc *fdp;
 	register u_long com;
@@ -498,17 +503,18 @@ int	selwait, nselcoll;
 /*
  * Select system call.
  */
-select(p, uap, retval)
+select(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct select_args /* {
 		syscallarg(u_int) nd;
 		syscallarg(fd_set *) in;
 		syscallarg(fd_set *) ou;
 		syscallarg(fd_set *) ex;
 		syscallarg(struct timeval *) tv;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	fd_set ibits[3], obits[3];
 	struct timeval atv;
 	int s, ncoll, error = 0, timo;
