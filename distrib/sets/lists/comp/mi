@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.752 2005/01/03 06:00:13 lukem Exp $
+#	$NetBSD: mi,v 1.753 2005/01/06 15:30:27 lukem Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3107,6 +3107,7 @@
 ./usr/share/man/cat3/getgrnam.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getgrnam_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getgrouplist.0		comp-c-catman		.cat
+./usr/share/man/cat3/getgroupmembership.0	comp-c-catman		.cat
 ./usr/share/man/cat3/gethostbyaddr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/gethostbyname.0		comp-c-catman		.cat
 ./usr/share/man/cat3/gethostbyname2.0		comp-c-catman		.cat
@@ -6942,6 +6943,7 @@
 ./usr/share/man/man3/getgrnam.3			comp-c-man		.man
 ./usr/share/man/man3/getgrnam_r.3		comp-c-man		.man
 ./usr/share/man/man3/getgrouplist.3		comp-c-man		.man
+./usr/share/man/man3/getgroupmembership.3	comp-c-man		.man
 ./usr/share/man/man3/gethostbyaddr.3		comp-c-man		.man
 ./usr/share/man/man3/gethostbyname.3		comp-c-man		.man
 ./usr/share/man/man3/gethostbyname2.3		comp-c-man		.man
