@@ -1,4 +1,4 @@
-.\"	$NetBSD: wiconfig.8,v 1.27 2003/04/16 12:43:43 wiz Exp $
+.\"	$NetBSD: wiconfig.8,v 1.28 2004/08/25 18:29:28 wrstuden Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -42,6 +42,9 @@
 .Nm wiconfig
 .Ar interface
 .Op Fl \&Do
+.Bk -words
+.Op Fl A Ar 1|2
+.Ek
 .Bk -words
 .Op Fl a Ar access point density
 .Ek
@@ -119,6 +122,14 @@ The
 .Ar max data length
 can be any number from 256 to 2346.
 The default is 2304.
+.It Fl A Ar 1|2
+Set the authentication type for a specified interface.
+Permitted values are
+.Ar 1
+(Open System Authentication) or
+.Ar 2
+(Shared Key Authentication).
+The default is 1.
 .It Fl M Ar 0|1
 Enable or disable
 .Qq microwave oven robustness
