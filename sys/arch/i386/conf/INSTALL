@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.114 1999/03/27 11:42:13 kleink Exp $
+#	$NetBSD: INSTALL,v 1.115 1999/04/09 18:17:35 bad Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -397,6 +397,7 @@ fea*	at eisa? slot ?			# DEC DEFEA FDDI
 # ISA Plug-and-Play network interfaces
 ep*	at isapnp?			# 3Com 3c509 Ethernet
 ne*	at isapnp?			# NE2000-compatible Ethernet
+tr*	at isapnp?			# IBM/3COM TROPIC Token-Ring
 
 # PCMCIA network interfaces
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
@@ -426,6 +427,9 @@ lc0	at isa? port 0x320 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
 ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
 ne1	at isa? port 0x300 irq 10
 sm0	at isa? port 0x300 irq 10		# SMC91C9x Ethernet
+tr0	at isa? port 0xa20 iomem 0xd8000 irq ?  # IBM TROPIC based Token-Ring
+tr1	at isa? port 0xa24 iomem 0xd0000 irq ?  # IBM TROPIC based Token-Ring
+tr*	at isa? port ? irq ?			# 3COM TROPIC based Token-Ring
 we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
