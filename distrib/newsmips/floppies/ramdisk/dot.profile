@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.4 2001/02/01 06:08:00 tsutsui Exp $
+# $NetBSD: dot.profile,v 1.5 2002/03/16 15:54:09 tsutsui Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -64,8 +64,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 			_forceloop="done"
 		fi
 	done
-
-	/bin/sh		# XXX for now
 
 	# Installing or upgrading?
 	_forceloop=""
