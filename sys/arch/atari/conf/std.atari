@@ -1,4 +1,4 @@
-#	$NetBSD: std.atari,v 1.18 2000/06/22 20:27:51 fvdl Exp $
+#	$NetBSD: std.atari,v 1.19 2000/09/28 06:19:06 leo Exp $
 #
 # standard atari information
 #
@@ -12,7 +12,6 @@ mainbus0	at root
 clock0		at mainbus0		# system clock
 kbd0		at mainbus0		# standard keyboard
 fdc0		at mainbus0		# floppy controller
-grfbus0		at mainbus0		# bitmapped display's
 ncrscsi0	at mainbus0		# SCSI driver
 scsibus0	at ncrscsi0		# SCSI bus
 
