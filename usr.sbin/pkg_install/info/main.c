@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.4.2.1 1997/11/13 14:37:03 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.4.2.2 1997/11/18 01:25:41 mellon Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.4.2.1 1997/11/13 14:37:03 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.4.2.2 1997/11/18 01:25:41 mellon Exp $");
 #endif
 #endif
 
@@ -36,8 +36,8 @@ __RCSID("$NetBSD: main.c,v 1.4.2.1 1997/11/13 14:37:03 hubertf Exp $");
 
 static char Options[] = "acdDe:fikrRpLqImvhl:";
 
-int	Flags		= SHOW_INDEX;
-Boolean AllInstalled	= TRUE;
+int	Flags		= 0;
+Boolean AllInstalled	= FALSE;
 Boolean Quiet		= FALSE;
 char *InfoPrefix	= "";
 char PlayPen[FILENAME_MAX];
@@ -138,6 +138,12 @@ main(int argc, char **argv)
 
     argc -= optind;
     argv += optind;
+
+    if (argc == 0 && !Flags) {
+	/* No argument or flags specified - assume -Ia */
+	Flags = SHOW_INDEX;
+	AllInstalled = TRUE;
+    }
 
     /* Set some reasonable defaults */
     if (!Flags)
