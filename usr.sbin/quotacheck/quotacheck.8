@@ -1,4 +1,4 @@
-.\"	$NetBSD: quotacheck.8,v 1.9 2002/01/19 11:45:00 wiz Exp $
+.\"	$NetBSD: quotacheck.8,v 1.9.2.1 2003/01/26 09:05:52 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -135,6 +135,18 @@ Thus, the filesystems
 checked should be quiescent while
 .Nm
 is running.
+.Pp    
+If
+.Nm     
+receives a
+.Dv SIGINFO
+signal 
+(see the
+.Sy status
+argument for
+.Xr stty 1 ) ,
+a line will be written to the standard error output indicating
+the name of the device currently being checked and progress information.
 .Sh FILES
 .Bl -tag -width quota.group -compact
 .It Pa quota.user
