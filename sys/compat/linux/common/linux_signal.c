@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.35 2002/03/19 20:52:00 christos Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.36 2002/03/22 17:14:19 christos Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.35 2002/03/19 20:52:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.36 2002/03/22 17:14:19 christos Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -85,6 +85,12 @@ __KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.35 2002/03/19 20:52:00 christos E
 					& (1 << ((n) - 1) % LINUX__NSIG_BPW))
 #define	linux_sigaddset(s, n)	((s)->sig[((n) - 1) / LINUX__NSIG_BPW]	\
 					|= (1 << ((n) - 1) % LINUX__NSIG_BPW))
+
+#ifdef DEBUG_LINUX
+#define DPRINTF(a)	uprintf a
+#else
+#define DPRINTF(a)
+#endif
 
 #ifndef LINUX_SIGINFO
 #define LINUX_SIGINFO	0
@@ -276,12 +282,9 @@ linux_to_native_sigflags(lsf)
 		bsf |= SA_NODEFER;
 	if ((lsf & LINUX_SA_SIGINFO) != 0)
 		bsf |= SA_SIGINFO;
-#ifdef DEBUG_LINUX
 	if ((lsf & ~LINUX_SA_ALLBITS) != 0)
-		uprintf(
-		    "linux_old_to_native_sigflags: %lx extra bits ignored\n",
-		    lsf);
-#endif
+		DPRINTF(("linux_old_to_native_sigflags: "
+		    "%lx extra bits ignored\n", lsf));
 	return bsf;
 }
 
@@ -301,10 +304,9 @@ linux_old_to_native_sigaction(bsa, lsa)
 /*
  * XXX: On the alpha sa_restorer is elsewhere.
  */
-#ifdef DEBUG_LINUX
 	if (lsa->sa_restorer != NULL)
-		uprintf("linux_old_to_native_sigaction: sa_restorer ignored\n");
-#endif
+		DPRINTF(("linux_old_to_native_sigaction: "
+		    "sa_restorer ignored\n"));
 #endif
 }
 
@@ -331,10 +333,8 @@ linux_to_native_sigaction(bsa, lsa)
 	linux_to_native_sigset(&bsa->sa_mask, &lsa->sa_mask);
 	bsa->sa_flags = linux_to_native_sigflags(lsa->sa_flags);
 #ifndef __alpha__
-#ifdef DEBUG_LINUX
 	if (lsa->sa_restorer != 0)
-		uprintf("linux_to_native_sigaction: sa_restorer ignored\n");
-#endif
+		DPRINTF(("linux_to_native_sigaction: sa_restorer ignored\n"));
 #endif
 }
 

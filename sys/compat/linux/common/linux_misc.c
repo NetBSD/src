@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.103 2002/03/22 15:21:28 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.104 2002/03/22 17:14:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.103 2002/03/22 15:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.104 2002/03/22 17:14:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,6 +159,12 @@ const static struct mnttypes {
 	{ MOUNT_SMBFS,		LINUX_SMB_SUPER_MAGIC		}
 };
 #define FSTYPESSIZE (sizeof(fstypes) / sizeof(fstypes[0]))
+
+#ifdef DEBUG_LINUX
+#define DPRINTF(a)	uprintf a
+#else
+#define DPRINTF(a)
+#endif
 
 /* Local linux_misc.c functions: */
 static void bsd_to_linux_statfs __P((struct statfs *, struct linux_statfs *));
@@ -297,10 +303,8 @@ bsd_to_linux_statfs(bsp, lsp)
 			break;
 
 	if (i == FSTYPESSIZE) {
-#ifdef DIAGNOSTIC
-		printf("unhandled fstype in linux emulation: %s\n",
-		    bsp->f_fstypename);
-#endif
+		DPRINTF(("unhandled fstype in linux emulation: %s\n",
+		    bsp->f_fstypename));
 		lsp->l_ftype = LINUX_DEFAULT_SUPER_MAGIC;
 	} else {
 		lsp->l_ftype = fstypes[i].linux;
