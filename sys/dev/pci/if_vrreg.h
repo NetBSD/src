@@ -1,4 +1,4 @@
-/*	$Id: if_vrreg.h,v 1.3 1999/01/22 05:34:36 sakamoto Exp $	*/
+/*	$NetBSD: if_vrreg.h,v 1.4 1999/01/26 06:31:28 sakamoto Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
