@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.6 1995/02/21 06:56:06 mycroft Exp $	*/
+/*	$NetBSD: exec.c,v 1.7 1995/02/21 07:14:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -47,7 +47,7 @@ static char *ssym, *esym;
 
 extern u_int opendev;
 
-int
+void
 exec(path, loadaddr, howto)
 	char *path;
 	char *loadaddr;
@@ -61,19 +61,17 @@ exec(path, loadaddr, howto)
 	int i;
 	register char *addr;
 
-	if (machdep_exec(path, loadaddr, howto) < 0)
-		return (-1);
-	
 	io = open(path, 0);
 	if (io < 0)
-		return (-1);
+		return;
 
 #ifndef INSECURE
 	(void) fstat(io, &sb);
 	if (sb.st_uid || (sb.st_mode & 2)) {
 		printf("non-secure file, will not load\n");
 		close(io);
-		return (-1);
+		errno = EPERM;
+		return;
 	}
 #endif
 
@@ -82,7 +80,7 @@ exec(path, loadaddr, howto)
 	    N_BADMAG(x)) {
 		printf("exec: %s: Bad format\n", path);
 		errno = ENOEXEC;
-		return (-1);
+		return;
 	}
 
         /* Text */
@@ -157,11 +155,11 @@ exec(path, loadaddr, howto)
 	/* exec failed */
 	printf("%s: Cannot exec\n", path);
 	errno = ENOEXEC;
-	return (-1);
+	return;
 
 shread:
 	close(io);
 	printf("%s: Short read\n", path);
 	errno = EIO;
-	return (-1);
+	return;
 }
