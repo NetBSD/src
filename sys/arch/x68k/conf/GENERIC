@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.36 1999/07/29 10:37:25 augustss Exp $
+#	$NetBSD: GENERIC,v 1.37 1999/11/15 19:10:59 fvdl Exp $
 
 #
 #	GENERIC
@@ -152,6 +152,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
+#options 	SOFTDEP         # FFS soft updates support.
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
