@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.638 2004/07/29 12:12:08 cube Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.639 2004/08/02 17:58:51 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.637 2004/07/29 12:11:31 cube Exp 
+ *	NetBSD: pcidevs,v 1.638 2004/08/02 17:58:29 mycroft Exp 
  */
 
 /*
@@ -552,6 +552,7 @@
 #define	PCI_VENDOR_CMEDIA	0x13f6		/* C-Media Electronics, Inc. */
 #define	PCI_VENDOR_LAVA	0x1407		/* Lava Semiconductor Manufacturing, Inc. */
 #define	PCI_VENDOR_ETIMEDIA	0x1409		/* eTIMedia Technology Co. Ltd. */
+#define	PCI_VENDOR_MICROSOFT	0x1414		/* Microsoft Corporation */
 #define	PCI_VENDOR_OXFORDSEMI	0x1415		/* Oxford Semiconductor Ltd. */
 #define	PCI_VENDOR_TAMARACK	0x143d		/* Tamarack Microelectronics, Inc. */
 #define	PCI_VENDOR_SAMSUNGELEC3	0x144d		/* Samsung Electronics Co. Ltd. (3rd vendor ID) */
@@ -1902,6 +1903,8 @@
 /* MediaQ, Inc. products */
 #define	PCI_PRODUCT_MEDIAQ_MQ200	0x0200		/* MQ200 */
 
+/* Microsoft Corporation products */
+#define	PCI_PRODUCT_MICROSOFT_MN120	0x0001		/* MN-120 10/100 Ethernet Notebook Adapter */
 /* Middle Digital, Inc. products */
 #define	PCI_PRODUCT_MIDDLE_DIGITAL_WEASEL_VGA	0x9050		/* Weasel Virtual VGA */
 #define	PCI_PRODUCT_MIDDLE_DIGITAL_WEASEL_SERIAL	0x9051		/* Weasel Serial Port */
