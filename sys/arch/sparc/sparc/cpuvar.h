@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.43 2002/12/19 11:20:30 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.44 2002/12/19 16:31:38 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ struct module_info {
 
 struct xpmsg {
 	struct simplelock	lock;
-	int tag;
+	__volatile int tag;
 #define	XPMSG_SAVEFPU			1
 #define	XPMSG_PAUSECPU			2
 #define	XPMSG_RESUMECPU			3
@@ -105,7 +105,7 @@ struct xpmsg {
 #define	XPMSG_VCACHE_FLUSH_CONTEXT	23
 #define	XPMSG_VCACHE_FLUSH_RANGE	24
 
-	union {
+	__volatile union {
 		struct xpmsg_func {
 			int	(*func)(int, int, int, int);
 			int	arg0;
@@ -221,13 +221,13 @@ struct cpu_info {
 	char		fpu_namebuf[32];/* Buffer for FPU name, if necessary */
 
 	/* various flags to workaround anomalies in chips */
-	volatile int	flags;		/* see CPUFLG_xxx, below */
+	__volatile int	flags;		/* see CPUFLG_xxx, below */
 
 	/* Per processor counter register (sun4m only) */
-	volatile struct counter_4m	*counterreg_4m;
+	__volatile struct counter_4m	*counterreg_4m;
 
 	/* Per processor interrupt mask register (sun4m only) */
-	volatile struct icr_pi		*intreg_4m;
+	__volatile struct icr_pi	*intreg_4m;
 #define raise_ipi(cpi)	do {				\
 	(cpi)->intreg_4m->pi_set = PINTR_SINTRLEV(15);	\
 } while (0)
@@ -241,7 +241,7 @@ struct cpu_info {
 	struct	proc	*ci_curproc;		/* CPU owner */
 	struct	proc 	*fpproc;		/* FPU owner */
 	/* XXX */
-	volatile void	*ci_ddb_regs;		/* DDB regs */
+	__volatile void	*ci_ddb_regs;		/* DDB regs */
 
 	/*
 	 * Idle PCB and Interrupt stack;
@@ -319,7 +319,7 @@ struct cpu_info {
 	void		(*memerr)(unsigned, u_int, u_int, struct trapframe *);
 
 	/* Inter-processor message area */
-	volatile struct xpmsg msg;
+	struct xpmsg msg;
 
 #if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
 	u_long ci_spin_locks;		/* # of spin locks held */
