@@ -1,13 +1,7 @@
-#	$NetBSD: Makefile,v 1.9 2003/04/19 20:57:35 christos Exp $
+# $NetBSD: Makefile,v 1.10 2004/01/31 21:47:17 christos Exp $
 
+WARNS=3
 PROG=	identd
-MAN=	identd.8 
-
-CPPFLAGS+= -DINCLUDE_EXTENSIONS -DSTRONG_LOG -DALLOW_FORMAT
-.ifdef DEFAULT_LIE_USER
-CPPFLAGS+= -DDEFAULT_LIE_USER=\"${DEFAULT_LIE_USER}\"
-.endif
-
-SRCS=	netbsd.c version.c proxy.c config.c parse.c identd.c 
+MAN=	identd.8
 
 .include <bsd.prog.mk>
