@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_cksum.c,v 1.2 1994/06/29 06:41:35 cgd Exp $	*/
+/*	$NetBSD: ns_cksum.c,v 1.3 1995/03/08 02:14:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1992, 1993
@@ -53,14 +53,14 @@ ns_cksum(m, len)
 	register struct mbuf *m;
 	register int len;
 {
-	register u_short *w;
+	register u_int16_t *w;
 	register int sum = 0;
 	register int mlen = 0;
 	register int sum2;
 
 	union {
-		u_short s[2];
-		long	l;
+		u_int16_t s[2];
+		int32_t l;
 	} l_util;
 
 	for (;m && len; m = m->m_next) {
@@ -70,7 +70,7 @@ ns_cksum(m, len)
 		 * Each trip around loop adds in
 		 * word from one mbuf segment.
 		 */
-		w = mtod(m, u_short *);
+		w = mtod(m, u_int16_t *);
 		if (mlen == -1) {
 			/*
 			 * There is a byte left from the last segment;
@@ -82,7 +82,7 @@ ns_cksum(m, len)
 			sum  += *(u_char *)w << 8;
 #endif
 			sum += sum;
-			w = (u_short *)(1 + (char *)w);
+			w = (u_int16_t *)(1 + (char *)w);
 			mlen = m->m_len - 1;
 			len--;
 			FOLD(sum);
@@ -98,7 +98,7 @@ ns_cksum(m, len)
 		 * into the high (by normal carry-chaining)
 		 * so long as we fold back before 16 carries have occured.
 		 */
-		if (1 & (int) w)
+		if (1 & (long) w)
 			goto uuuuglyy;
 #ifndef TINY
 /* -DTINY reduces the size from 1250 to 550, but slows it down by 22% */

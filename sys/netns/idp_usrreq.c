@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_usrreq.c,v 1.5 1994/06/29 06:41:29 cgd Exp $	*/
+/*	$NetBSD: idp_usrreq.c,v 1.6 1995/03/08 02:14:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -380,7 +380,7 @@ idp_usrreq(so, req, m, nam, control)
 	int error = 0;
 
 	if (req == PRU_CONTROL)
-                return (ns_control(so, (int)m, (caddr_t)nam,
+                return (ns_control(so, (long)m, (caddr_t)nam,
 			(struct ifnet *)control));
 	if (control && control->m_len) {
 		error = EINVAL;

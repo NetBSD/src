@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.7 1995/02/01 09:10:38 mycroft Exp $	*/
+/*	$NetBSD: ns.c,v 1.8 1995/03/08 02:14:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -61,7 +61,7 @@ extern struct sockaddr_ns ns_netmask, ns_hostmask;
 /* ARGSUSED */
 ns_control(so, cmd, data, ifp)
 	struct socket *so;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	register struct ifnet *ifp;
 {
