@@ -1,4 +1,4 @@
-/* $NetBSD: sunlabel.c,v 1.9 2003/01/27 01:29:06 uwe Exp $ */
+/* $NetBSD: sunlabel.c,v 1.10 2003/02/05 22:47:38 augustss Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sunlabel.c,v 1.9 2003/01/27 01:29:06 uwe Exp $");
+#if defined(__RCSID) && !defined(lint)
+__RCSID("$NetBSD: sunlabel.c,v 1.10 2003/02/05 22:47:38 augustss Exp $");
+#endif
 
 #include <stdio.h>
 #include <errno.h>
@@ -45,18 +47,19 @@ __RCSID("$NetBSD: sunlabel.c,v 1.9 2003/01/27 01:29:06 uwe Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include <termcap.h>
+#include <string.h>
 #include <strings.h>
 #include <inttypes.h>
 #include <err.h>
 
 #include <sys/file.h>
 #include <sys/ioctl.h>
-#include <sys/disklabel.h>
 
 /* If neither S_COMMAND nor NO_S_COMMAND is defined, guess. */
 #if !defined(S_COMMAND) && !defined(NO_S_COMMAND)
 #define S_COMMAND
 #include <util.h>
+#include <sys/disklabel.h>
 #endif
 
 /*
