@@ -1,4 +1,4 @@
-/*	$NetBSD: dmareg.h,v 1.7 1996/03/31 22:32:46 pk Exp $ */
+/*	$NetBSD: dmareg.h,v 1.8 1996/04/22 02:34:58 abrown Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -48,9 +48,13 @@ struct dma_regs {
 #define  D_DSBL_CSR_DRN		0x00010000	/* disable fifo drain on csr */
 #define  D_DSBL_SCSI_DRN	0x00020000	/* disable fifo drain on reg */
 #define  D_BURST_SIZE		0x000c0000	/* sbus read/write burst size */
+#define   D_BURST_0		0x00080000	/*   no bursts (SCSI-only) */
+#define   D_BURST_16		0x00040000	/*   16-byte bursts */
+#define   D_BURST_32    	0x00000000	/*   32-byte bursts */
 #define  D_DIAG			0x00100000	/* disable fifo drain on addr */
 #define  D_TWO_CYCLE		0x00200000	/* 2 clocks per transfer */
 #define  D_FASTER		0x00400000	/* 3 clocks per transfer */
+#define	 DE_AUI_TP		0x00400000	/* 1 for TP, 0 for AUI */
 #define  D_TCI_DIS		0x00800000	/* disable intr on D_TC */
 #define  D_EN_NEXT		0x01000000	/* enable auto next address */
 #define  D_DMA_ON		0x02000000	/* enable dma from scsi */
@@ -74,3 +78,14 @@ struct dma_regs {
 #define en_bar		test
 
 };
+
+/*
+ * PROM-reported DMA burst sizes for the SBus
+ */
+#define SBUS_BURST_1	0x1
+#define SBUS_BURST_2	0x2
+#define SBUS_BURST_4	0x4
+#define SBUS_BURST_8	0x8
+#define SBUS_BURST_16	0x10
+#define SBUS_BURST_32	0x20
+#define SBUS_BURST_64	0x40

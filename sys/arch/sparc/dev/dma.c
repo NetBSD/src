@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.24 1996/04/01 17:31:38 christos Exp $ */
+/*	$NetBSD: dma.c,v 1.25 1996/04/22 02:34:53 abrown Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -162,6 +162,57 @@ dmaattach(parent, self, aux)
 		 */
 		if (sc->sc_esp)
 			sc->sc_esp->sc_dma = sc;
+	}
+
+	/*
+	 * If we're a ledma, check to see what cable type is currently 
+	 * active and set the appropriate bit in the ledma csr so that
+	 * it gets used. If we didn't netboot, the PROM won't have the
+	 * "cable-selection" property; default to TP and then the user
+	 * can change it via a "link0" option to ifconfig.
+	 */
+	if (strcmp(ca->ca_ra.ra_name, "ledma") == 0) {
+		char *cabletype = getpropstring(ca->ca_ra.ra_node,
+						"cable-selection");
+		if (strcmp(cabletype, "tpe") == 0) {
+			sc->sc_regs->csr |= DE_AUI_TP;
+		} else if (strcmp(cabletype, "aui") == 0) {
+			sc->sc_regs->csr &= ~DE_AUI_TP;
+		} else {
+			/* assume TP if nothing there */
+			sc->sc_regs->csr |= DE_AUI_TP;
+		}
+		delay(20000);	/* manual says we need 20ms delay */
+	}
+	
+	/*
+	 * Get transfer burst size from PROM and plug it into the controller
+	 * registers. This is needed on the Sun4m; do others need it too?
+	 * XXX
+	 */
+	if (CPU_ISSUN4M) {
+		sc->sc_burst = getpropint(ca->ca_ra.ra_node,"burst-sizes", -1);
+		if (sc->sc_burst == -1) {
+			/* check parent SBus for burst sizes */
+			if (((struct sbus_softc *)parent)->sc_burst == 0)
+				sc->sc_burst = SBUS_BURST_32 - 1; /* 1->16 */
+			else
+				sc->sc_burst = 
+					((struct sbus_softc *)parent)->sc_burst;
+		}
+		sc->sc_regs->csr &= ~D_BURST_SIZE; /* must clear first */
+		if (sc->sc_burst & SBUS_BURST_32) {
+			sc->sc_regs->csr |= D_BURST_32;
+		} else if (sc->sc_burst & SBUS_BURST_16) {
+			sc->sc_regs->csr |= D_BURST_16;
+		} else if (strcmp(ca->ca_ra.ra_name,"espdma") == 0) {
+			/* only espdma supports non-burst */
+			sc->sc_regs->csr |= D_BURST_0;
+#ifdef DIAGNOSTIC
+		} else {
+			printf(" <unknown burst size 0x%x>", sc->sc_burst);
+#endif
+		}
 	}
 
 	printf(": rev ");
