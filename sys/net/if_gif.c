@@ -1,5 +1,5 @@
-/*	$NetBSD: if_gif.c,v 1.15 2000/10/02 03:55:44 itojun Exp $	*/
-/*	$KAME: if_gif.c,v 1.29 2000/10/01 12:37:17 itojun Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.16 2000/10/07 04:18:04 itojun Exp $	*/
+/*	$KAME: if_gif.c,v 1.34 2000/10/07 03:58:53 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -497,6 +497,12 @@ gif_ioctl(ifp, cmd, data)
 				&(((struct in_aliasreq *)data)->ifra_addr);
 			dst = (struct sockaddr *)
 				&(((struct in_aliasreq *)data)->ifra_dstaddr);
+			if (src->sa_len != sizeof(struct sockaddr_in) ||
+			    dst->sa_len != sizeof(struct sockaddr_in))
+				return EINVAL;
+			if (src->sa_family != AF_INET ||
+			    dst->sa_family != AF_INET)
+				return EAFNOSUPPORT;
 			break;
 #endif
 #ifdef INET6
@@ -505,6 +511,12 @@ gif_ioctl(ifp, cmd, data)
 				&(((struct in6_aliasreq *)data)->ifra_addr);
 			dst = (struct sockaddr *)
 				&(((struct in6_aliasreq *)data)->ifra_dstaddr);
+			if (src->sa_len != sizeof(struct sockaddr_in6) ||
+			    dst->sa_len != sizeof(struct sockaddr_in6))
+				return EINVAL;
+			if (src->sa_family != AF_INET6 ||
+			    dst->sa_family != AF_INET6)
+				return EAFNOSUPPORT;
 			break;
 #endif
 		}
@@ -607,25 +619,27 @@ gif_ioctl(ifp, cmd, data)
 			goto bad;
 		}
 		src = sc->gif_psrc;
-		switch (sc->gif_psrc->sa_family) {
+		switch (cmd) {
 #ifdef INET
-		case AF_INET:
+		case SIOCGIFPSRCADDR:
 			dst = &ifr->ifr_addr;
-			size = sizeof(struct sockaddr_in);
+			size = sizeof(ifr->ifr_addr);
 			break;
 #endif /* INET */
 #ifdef INET6
-		case AF_INET6:
+		case SIOCGIFPSRCADDR_IN6:
 			dst = (struct sockaddr *)
 				&(((struct in6_ifreq *)data)->ifr_addr);
-			size = sizeof(struct sockaddr_in6);
+			size = sizeof(((struct in6_ifreq *)data)->ifr_addr);
 			break;
 #endif /* INET6 */
 		default:
 			error = EADDRNOTAVAIL;
 			goto bad;
 		}
-		bcopy((caddr_t)src, (caddr_t)dst, size);
+		if (src->sa_len > size)
+			return EINVAL;
+		bcopy((caddr_t)src, (caddr_t)dst, src->sa_len);
 		break;
 			
 	case SIOCGIFPDSTADDR:
@@ -637,25 +651,27 @@ gif_ioctl(ifp, cmd, data)
 			goto bad;
 		}
 		src = sc->gif_pdst;
-		switch (sc->gif_pdst->sa_family) {
+		switch (cmd) {
 #ifdef INET
-		case AF_INET:
+		case SIOCGIFPDSTADDR:
 			dst = &ifr->ifr_addr;
-			size = sizeof(struct sockaddr_in);
+			size = sizeof(ifr->ifr_addr);
 			break;
 #endif /* INET */
 #ifdef INET6
-		case AF_INET6:
+		case SIOCGIFPDSTADDR_IN6:
 			dst = (struct sockaddr *)
 				&(((struct in6_ifreq *)data)->ifr_addr);
-			size = sizeof(struct sockaddr_in6);
+			size = sizeof(((struct in6_ifreq *)data)->ifr_addr);
 			break;
 #endif /* INET6 */
 		default:
 			error = EADDRNOTAVAIL;
 			goto bad;
 		}
-		bcopy((caddr_t)src, (caddr_t)dst, size);
+		if (src->sa_len > size)
+			return EINVAL;
+		bcopy((caddr_t)src, (caddr_t)dst, src->sa_len);
 		break;
 
 	case SIOCSIFFLAGS:
