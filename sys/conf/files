@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.231 1998/08/12 00:45:37 thorpej Exp $
+#	$NetBSD: files,v 1.232 1998/08/12 18:14:01 augustss Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -98,6 +98,7 @@ devclass tty
 # generic attributes
 define	audio { }
 define	midibus { }
+define	midisyn
 define	scsi {[channel = -1]}
 define	ata {[drive = -1]}
 define	atapi { }
@@ -369,6 +370,7 @@ file dev/audio.c			audio			needs-flag
 file dev/ccd.c				ccd			needs-flag
 file dev/md.c				md			needs-count
 file dev/midi.c				midi			needs-flag
+file dev/midisyn.c			midisyn
 file dev/mulaw.c			mulaw
 file dev/sequencer.c			sequencer		needs-flag
 file dev/vnd.c				vnd			needs-flag
