@@ -1209,8 +1209,11 @@ bc_sqrt (num, scale)
 
   /* Calculate the initial guess. */
   if (cmp_res < 0)
-    /* The number is between 0 and 1.  Guess should start at 1. */
-    guess = copy_num (_one_);
+    {
+      /* The number is between 0 and 1.  Guess should start at 1. */
+      guess = copy_num (_one_);
+      cscale = (*num)->n_scale;
+    }
   else
     {
       /* The number is greater than 1.  Guess should start at 10^(exp/2). */
@@ -1221,11 +1224,11 @@ bc_sqrt (num, scale)
       guess1->n_scale = 0;
       bc_raise (guess, guess1, &guess, 0);
       free_num (&guess1);
+      cscale = 3;
     }
 
   /* Find the square root using Newton's algorithm. */
   done = FALSE;
-  cscale = 3;
   while (!done)
     {
       free_num (&guess1);
