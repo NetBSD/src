@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.eng,v 1.1.1.1 1997/09/26 23:02:55 phil Exp $	*/
+/*	$NetBSD: msg.md.eng,v 1.2 1997/10/17 21:11:02 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -117,9 +117,18 @@ active partition.   The partition table currently looks like:
 }
 
 message reeditpart
-{You have specified overlaping DOS partitions or do not have exactly
-one NetBSD partition.  You will need to re-edit the DOS partition table.
+{There are overlaping MBR partitions or do not have exactly one NetBSD 
+partition. You should re-edit the MBR partition table.
+
+Do you want to re-edit it?
 }
+
+message nobsdpart
+{There is no NetBSD partition in the MBR partition table.}
+
+message multbsdpart
+{There are multiple NetBSD partitions in the MBR partition table.
+Partition %d will be the one used.}
 
 message dofdisk
 {Setting up the DOS partition table ...

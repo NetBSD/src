@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.3 1997/10/07 04:01:31 phil Exp $	*/
+/*	$NetBSD: install.c,v 1.4 1997/10/17 21:10:39 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -60,7 +60,10 @@ void do_install(void)
 	if (find_disks () < 0)
 		return;
 
-	md_get_info ();
+	if (!md_get_info ()) {
+		msg_display (MSG_abort);
+		return;
+	}
 
 	md_make_bsd_partitions ();
 

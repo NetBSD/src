@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.4 1997/10/07 04:01:34 phil Exp $	*/
+/*	$NetBSD: util.c,v 1.5 1997/10/17 21:10:48 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,10 +40,13 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#include <sys/stat.h>
 #include <curses.h>
 #include "defs.h"
+#include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
 
@@ -140,10 +143,11 @@ extract_dist (void)
 
 void run_makedev (void)
 {
-	endwin();
-	(void)printf (msg_string(MSG_makedev));
+	msg_display (MSG_makedev);
+	sleep (1);
 #ifndef DEBUG
 	if (chdir("/mnt/dev")) {
+		endwin();
 		(void)fprintf(stderr, msg_string(MSG_realdir), "/mnt");
 		exit(1);
 	}
@@ -151,7 +155,86 @@ void run_makedev (void)
 	printf ("chdir (%s)\n", "/mnt/dev");
 #endif
 	run_prog ("/bin/sh MAKEDEV all");
-	getchar();
-	puts(CL);
-	wrefresh(stdscr);
+}
+
+
+/* Load files from floppy. */
+int get_via_floppy (void)
+{
+	char realdir[STRSIZE];
+	char distname[STRSIZE];
+	char fddev[STRSIZE] = "/dev/fd0a";
+	char dirname[STRSIZE];
+	char fname[STRSIZE];
+	char fullname[STRSIZE];
+	char **list;
+	char **last;
+	char post[4];
+	int  mounted = 0;
+	struct stat sb;
+
+	msg_prompt (MSG_distdir, dist_dir, dist_dir, STRSIZE,
+		    "unloading from floppy");
+	if (*dist_dir == '/')
+		snprintf (realdir, STRSIZE, "/mnt%s", dist_dir);
+	else
+		snprintf (realdir, STRSIZE, "/mnt/%s", dist_dir);
+	strcpy (dist_dir, realdir);
+	run_prog ("/bin/mkdir %s", realdir);
+	clean_dist_dir = 1;
+#ifndef DEBUG
+	if (chdir(realdir)) {
+		endwin();
+		(void)fprintf(stderr, msg_string(MSG_realdir), realdir);
+		exit(1);
+	}
+#else
+	printf ("chdir (%s)\n", realdir);
+#endif
+
+	msg_prompt_add (MSG_fddev, fddev, fddev, STRSIZE);
+
+	list = dist_list;
+	last = fd_last;
+	while (*last) {
+		strcpy (post, ".aa");
+		snprintf (dirname, STRSIZE, *list, rels, "/" );
+		snprintf (distname, STRSIZE, *list, rels, dist_postfix);
+		msg_display (MSG_fdload, dirname);
+		process_menu (MENU_yesno);
+		while (yesno && strcmp(post,*last) <= 0) {
+			snprintf (fname, STRSIZE, *list, rels, post);
+			snprintf (fullname, STRSIZE, "/mnt2/%s%s", dirname,
+				  fname);
+			while (!mounted || stat(fullname, &sb)) {
+				if (mounted)
+					run_prog ("/sbin/umount /mnt2");
+				msg_display (MSG_fdmount, dirname, fname);
+				process_menu (MENU_ok);
+				while (!run_prog("/sbin/mount -t %s %s /mnt2",
+						 fdtype, fddev)) {
+					msg_display (MSG_fdremount, dirname,
+						     fname);
+					process_menu (MENU_fdremount);
+					if (!yesno)
+						return 0;
+				}
+				mounted = 1;
+			}
+			run_prog ("/bin/cat /mnt2/%s >> %s", fullname,
+				  distname);
+			if (post[1] < 'z')
+				post[1]++;
+			else
+				post[1]='a', post[2]++;
+		}
+		run_prog ("/sbin/umount /mnt2");
+		mounted = 0;
+		list++;
+		last++;
+	}
+#ifndef DEBUG
+	chdir("/");
+#endif
+	return 1;
 }
