@@ -189,8 +189,7 @@
 
 #ifdef KERNEL
 #ifndef LOCORE
-int	cpuspeed;
-#define	DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
+#define	DELAY(n)	delay(n)
 #endif
 
 #else
