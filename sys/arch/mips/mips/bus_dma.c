@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.7 2003/06/28 14:20:59 darrenr Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.8 2003/06/29 11:35:15 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.7 2003/06/28 14:20:59 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8 2003/06/29 11:35:15 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 	free(map, M_DMAMAP);
 }
 
-extern paddr_t kvtophys(vaddr_t);	/* XXX */
+paddr_t kvtophys(vaddr_t);	/* XXX */
 
 /*
  * Utility function to load a linear buffer.  lastaddrp holds state

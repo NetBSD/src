@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.47 2003/05/24 14:37:31 kristerw Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.48 2003/06/29 11:35:15 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -69,9 +69,9 @@ static void	kdbpoke_2(vaddr_t addr, short newval);
 static void	kdbpoke_1(vaddr_t addr, char newval);
 static short	kdbpeek_2(vaddr_t addr);
 static char	kdbpeek_1(vaddr_t addr);
-extern vaddr_t	MachEmulateBranch(struct frame *, vaddr_t, unsigned, int);
+vaddr_t	MachEmulateBranch(struct frame *, vaddr_t, unsigned, int);	/* XXX */
 
-extern paddr_t kvtophys(vaddr_t);
+paddr_t kvtophys(vaddr_t);	/* XXX */
 
 #ifdef DDB_TRACE
 int
