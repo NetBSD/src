@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.17 2002/06/11 06:06:19 itojun Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.18 2003/02/17 18:00:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -116,6 +116,10 @@ u_char sample[] = {
 #define MARK_TRACK "MTrk"
 #define MARK_LEN 4
 
+#define	RMID_SIG "RIFF"
+#define	RMID_MIDI_ID "RMID"
+#define	RMID_DATA_ID "data"
+
 #define SIZE_LEN 4
 #define HEADER_LEN 6
 
@@ -123,6 +127,7 @@ u_char sample[] = {
 #define GET16(p) (((p)[0] << 8) | (p)[1])
 #define GET24(p) (((p)[0] << 16) | ((p)[1] << 8) | (p)[2])
 #define GET32(p) (((p)[0] << 24) | ((p)[1] << 16) | ((p)[2] << 8) | (p)[3])
+#define GET32_LE(p) (((p)[3] << 24) | ((p)[2] << 16) | ((p)[1] << 8) | (p)[0])
 
 void
 usage(void)
@@ -290,10 +295,56 @@ playdata(u_char *buf, u_int tot, char *name)
 	if (verbose)
 		printf("Playing %s (%d bytes) ... \n", name, tot);
 
+	if (tot < MARK_LEN + 4) {
+		warnx("Not a MIDI file, too short");
+		return;
+	}
+
+	if (memcmp(buf, RMID_SIG, MARK_LEN) == 0) {
+		u_char *eod;
+		/* Detected a RMID file, let's just check if it's
+		 * a MIDI file */
+		if (GET32_LE(buf + MARK_LEN) != tot - 8) {
+			warnx("Not a RMID file, bad header");
+			return;
+		}
+
+		buf += MARK_LEN + 4;
+		if (memcmp(buf, RMID_MIDI_ID, MARK_LEN) != 0) {
+			warnx("Not a RMID file, bad ID");
+			return;
+		}
+
+		/* Now look for the 'data' chunk, which contains
+		 * MIDI data */
+		buf += MARK_LEN;
+
+		/* Test against end-8 since we must have at least 8 bytes
+		 * left to read */
+		while(buf < end-8 && memcmp(buf, RMID_DATA_ID, MARK_LEN))
+			buf += GET32_LE(buf+4) + 8; /* MARK_LEN + 4 */
+
+		if (buf >= end-8) {
+			warnx("Not a valid RMID file, no data chunk");
+			return;
+		}
+
+		buf += MARK_LEN; /* "data" */
+		eod = buf + 4 + GET32_LE(buf);
+		if (eod >= end) {
+			warnx("Not a valid RMID file, bad data chunk size");
+			return;
+		}
+
+		end = eod;
+		buf += 4;
+	}
+
 	if (memcmp(buf, MARK_HEADER, MARK_LEN) != 0) {
 		warnx("Not a MIDI file, missing header");
 		return;
 	}
+
 	if (GET32(buf + MARK_LEN) != HEADER_LEN) {
 		warnx("Not a MIDI file, bad header");
 		return;
