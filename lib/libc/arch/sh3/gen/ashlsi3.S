@@ -1,4 +1,4 @@
-/*	$NetBSD: ashlsi3.S,v 1.2 2001/02/14 11:32:44 msaitoh Exp $	*/
+/*	$NetBSD: ashlsi3.S,v 1.3 2003/09/22 02:08:07 uwe Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -28,7 +28,7 @@
 
 #include <machine/asm.h>
 
-ENTRY(__ashlsi3)
+NENTRY(__ashlsi3)
 	shld	r5, r4
 	rts
-	mov	r4, r0
+	 mov	r4, r0
