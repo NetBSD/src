@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.82 2002/08/16 04:15:11 lukem Exp $
+.\"	$NetBSD: contents,v 1.83 2002/08/22 02:27:06 rafal Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1529,7 +1529,7 @@ The following are included in the
 directory:
 .
 .(tag netbsd-INDY_INSTALL.symbols.gz
-.It Pa netbsd.ecoff-GENERIC_INDY.hz
+.It Pa netbsd.ecoff-GENERIC_INDY.gz
 An ECOFF
 version of the 
 .Li GENERIC_INDY
