@@ -1,0 +1,12 @@
+@cwd /
+./usr/share/locale/no
+./usr/share/locale/no/LC_MESSAGES
+./usr/share/locale/no/LC_MESSAGES/grep.mo
+./usr/share/locale/no@nynorsk
+./usr/share/locale/no@nynorsk/LC_MESSAGES
+./usr/share/locale/no_NO.ISO8859-1
+./usr/share/locale/no_NO.ISO8859-1/LC_CTYPE
+./usr/share/locale/no_NO.ISO8859-15
+./usr/share/locale/no_NO.ISO8859-15/LC_CTYPE
+./usr/share/nls/no
+./usr/share/nls/no/libc.cat

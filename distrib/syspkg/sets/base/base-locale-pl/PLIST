@@ -1,0 +1,8 @@
+@cwd /
+./usr/share/locale/pl
+./usr/share/locale/pl/LC_MESSAGES
+./usr/share/locale/pl/LC_MESSAGES/grep.mo
+./usr/share/locale/pl_PL.ISO8859-2
+./usr/share/locale/pl_PL.ISO8859-2/LC_CTYPE
+./usr/share/nls/pl
+./usr/share/nls/pl/libc.cat

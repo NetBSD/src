@@ -1,0 +1,6 @@
+@cwd /
+./usr/bin/pawd
+./usr/sbin/amd
+./usr/sbin/amq
+./usr/sbin/hlfsd
+./usr/sbin/mk-amd-map

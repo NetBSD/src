@@ -1,0 +1,2 @@
+SETNAME=text
+PREFIX=/
