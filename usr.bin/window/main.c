@@ -1,6 +1,8 @@
+/*	$NetBSD: main.c,v 1.4 1995/09/28 10:34:27 tls Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Edward Wang at The University of California, Berkeley.
@@ -35,8 +37,17 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)main.c	3.42 (Berkeley) 8/12/90";*/
-static char rcsid[] = "$Id: main.c,v 1.3 1994/12/24 17:07:47 cgd Exp $";
+char copyright[] =
+"@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
+#endif /* not lint */
+
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/2/94";
+#else
+static char rcsid[] = "$NetBSD: main.c,v 1.4 1995/09/28 10:34:27 tls Exp $";
+#endif
 #endif /* not lint */
 
 #include "defs.h"
@@ -185,7 +196,7 @@ char **argv;
 	mloop();
 
 bad:
-	wwend();
+	wwend(1);
 	return 0;
 }
 

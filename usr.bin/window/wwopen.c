@@ -1,6 +1,8 @@
+/*	$NetBSD: wwopen.c,v 1.4 1995/09/28 10:35:42 tls Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Edward Wang at The University of California, Berkeley.
@@ -35,13 +37,17 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)wwopen.c	3.29 (Berkeley) 6/6/90";*/
-static char rcsid[] = "$Id: wwopen.c,v 1.3 1994/12/30 02:46:06 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)wwopen.c	8.2 (Berkeley) 4/28/95";
+#else
+static char rcsid[] = "$NetBSD: wwopen.c,v 1.4 1995/09/28 10:35:42 tls Exp $";
+#endif
 #endif /* not lint */
 
 #include "ww.h"
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <fcntl.h>
 
 struct ww *
 wwopen(flags, nrow, ncol, row, col, nline)
@@ -104,6 +110,8 @@ wwopen(flags, nrow, ncol, row, col, nline)
 			wwerrno = WWE_SYS;
 			goto bad;
 		}
+		(void) fcntl(d[0], F_SETFD, 1);
+		(void) fcntl(d[1], F_SETFD, 1);
 		w->ww_pty = d[0];
 		w->ww_socket = d[1];
 	}
