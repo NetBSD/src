@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.47 1999/11/06 20:28:37 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.48 1999/12/30 16:39:53 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -60,7 +60,8 @@
 #undef MMUDEBUG			/* Check use of MMU regs during MMU faults */
 #define VECTORED_INTERRUPTS	/* Use interrupt vectors */
 #define PMAP_FPSTATE		/* Allow nesting of VIS pmap copy/zero */
-#undef PMAP_PHYS_PAGE		/* Don't use block ld/st for pmap copy/zero */
+#define NEW_FPSTATE
+#define PMAP_PHYS_PAGE		/* Don't use block ld/st for pmap copy/zero */
 #define DCACHE_BUG		/* Clear D$ line before loads from ASI_PHYS */
 #define NO_TSB			/* Don't use TSB */
 #undef TICK_IS_TIME		/* Keep %tick synchronized with time */
@@ -118,6 +119,8 @@
  * support 32-and 64-bit compilers.
  */
 #ifdef _LP64
+/* reg that points to base of data/text segment */
+#define	BASEREG	%g4
 /* first constants for storage allocation */
 #define PTRSZ	8
 #define PTRSHFT	3
@@ -130,6 +133,7 @@
 /* Now something to calculate the stack bias */
 #define STKB	BIAS
 #else
+#define	BASEREG	%g0
 #define PTRSZ	4
 #define PTRSHFT	2
 #define POINTER	.word
@@ -706,10 +710,10 @@ _C_LABEL(trapbase):
 #ifdef NOT_DEBUG
 	!! 
 	!! Check the sp redzone
-	!! 
-	sethi	KERNBASE, t1	
-	cmp	%sp, t1
-	blu,pt	%xcc, 7f
+	!!
+	rdpr	%wstate, t1	! User stack?
+	cmp	t1, WSTATE_KERN
+	bne,pt	%icc, 7f
 	 sethi	%hi(_C_LABEL(redzone)), t1
 	ldx	[t1 + %lo(_C_LABEL(redzone))], t2
 	cmp	%sp, t2			! if sp >= t2, not in red zone
@@ -977,10 +981,10 @@ ktextfault:
 #ifdef NOT_DEBUG
 	!! 
 	!! Check the sp redzone
-	!! 
-	sethi	KERNBASE, t1	
-	cmp	%sp, t1
-	blu,pt	%xcc, 7f
+	!!
+	rdpr	%wstate, t1
+	cmp	t1, WSTATE_KERN
+	bne,pt	icc, 7f
 	 sethi	%hi(_C_LABEL(redzone)), t1
 	ldx	[t1 + %lo(_C_LABEL(redzone))], t2
 	cmp	%sp, t2			! if sp >= t2, not in red zone
@@ -2962,9 +2966,9 @@ instr_miss:
 	brnz,pt	%g6, Lutext_miss			! If user context continue miss
 	sethi	%hi(KERNBASE), %g5			! Don't need %lo
 	set	0x0400000, %g6				! 4MB
+	add	%g5, 16, %g7
 	sub	%g3, %g5, %g5
 	cmp	%g5, %g6
-	set	KERNBASE+16, %g7
 	mov	6, %g6		! debug
 	stb	%g6, [%g7+0x20]	! debug
 	tlu	%xcc, 1; nop
@@ -4946,26 +4950,6 @@ dostart:
 
 #if 0
 	/*
-	 * Step 5: save prom configuration so we can panic properly.
-	 */	
-	set	TSB, %o0
-	ldxa	[%o0] ASI_IMMU, %o1		! Get ITSB pointer
-	set	romitsbp, %o2
-	stx	%o1, [%o2]			! save it
-	ldxa	[%o0] ASI_DMMU, %o1		! Get DTSB pointer
-	set	romdtsbp, %o2
-	stx	%o1, [%o2]			! save it
-	
-	set	romtrapbase, %o0
-	rdpr	%tba, %o1			! Save ROM trapbase
-	stx	%o1, [%o0]
-	set	romwstate, %o0
-	rdpr	%wstate, %o1			! Save ROM wstate
-	stx	%o1, [%o0]	
-#endif
-
-#if 0
-	/*
 	 * Disable the DCACHE entirely for debug.
 	 */
 	ldxa	[%g0] ASI_MCCR, %o1
@@ -5264,35 +5248,6 @@ dostart:
 	.proc 1
 	FTYPE(openfirmware)
 _C_LABEL(openfirmware):
-#if 0
-	set	panicstr, %o1			! Check if we're panicing
-	ld	[%o1], %o1
-	brz,pt	%o1, 0f				! if not, continue
-
-	 rdpr	%pstate, %o4			! Else, restore prom state
-	flushw					! flushw may be dangerous at this time
-	or	%o4, PSTATE_IE, %o5		! Disable interrupts
-	wrpr	%o5, 0, %pstate
-	
-	set	romitsbp, %o2			
-	ldx	[%o2], %o1			! Restore TSB pointers
-	set	TSB, %o3
-	stxa	%o1, [%o3] ASI_IMMU
-	membar	#Sync
-	set	romdtsbp, %o2
-	ldx	[%o2], %o1
-	stxa	%o1, [%o3] ASI_DMMU
-	membar	#Sync
-	
-	set	romtrapbase, %o3		! Restore trapbase
-	ldx	[%o3], %o1
-	wrpr	%o1, 0, %tba
-	set	romwstate, %o3			! Restore wstate
-	ldx	[%o3], %o1
-	wrpr	%o1, 0, %wstate
-	wrpr	%o4, 0, %pstate			! Restore interrupt state
-0:	
-#endif
 	andcc	%sp, 1, %g0
 	bz,pt	%icc, 1f
 	 sethi	%hi(romp), %l7
@@ -5813,7 +5768,7 @@ _C_LABEL(sigcode):
 	mov	%l7, %g7
 
 #ifdef _LP64
-	restore	%g0, netbsd32_SYS_netbsd32_sigreturn, %g1	! get registers back & set syscall #
+	restore	%g0, netbsd32_SYS_netbsd32___sigreturn14, %g1	! get registers back & set syscall #
 	add	%sp, 64 + 16, %o0	! compute scp
 	t	ST_SYSCALL		! sigreturn(scp)
 	! sigreturn does not return unless it fails
@@ -6699,24 +6654,6 @@ Lcopyfault:
 	 mov	EFAULT, %o0
 
 
-#if 0
-/*
- * Write all user windows presently in the CPU back to the user's stack.
- */
-ENTRY(write_all_windows)
-#if 0
-ALTENTRY(write_user_windows)
-	save	%sp, -CC64FSZ, %sp
-	flushw
-	ret
-	 restore
-#else
-ENTRY(write_user_windows)
-	retl
-	 flushw
-#endif
-#endif
-	
 /*
  * Masterpaddr is the p->p_addr of the last process on the processor.
  * XXX masterpaddr is almost the same as cpcb
@@ -7893,6 +7830,7 @@ ENTRY(pmap_zero_page)
 	 or	%o2, 0x020, %o3			! Nucleus flush page
 	
 #ifdef PMAP_FPSTATE
+#ifndef NEW_FPSTATE
 	!!
 	!! This code will allow us to save the fpstate around this
 	!! routine and nest FP use in the kernel
@@ -7907,6 +7845,71 @@ ENTRY(pmap_zero_page)
 	mov	%i2, %o2
 	mov	%i3, %o3
 	wr	%g0, FPRS_FEF, %fprs
+#else
+/*
+ * New version, new scheme:
+ *
+ * Here we use VIS instructions to do a block clear of a page.
+ * But before we can do that we need to save and enable the FPU.
+ * The last owner of the FPU registers is fpproc, and 
+ * fpproc->p_md.md_fpstate is the current fpstate.  If that's not
+ * null, call savefpstate() with it to store our current fp state.
+ *
+ * Next, allocate an aligned fpstate on the stack.  We will properly
+ * nest calls on a particular stack so this should not be a problem. 
+ *
+ * Now we grab either curproc (or if we're on the interrupt stack
+ * proc0).  We stash its existing fpstate in a local register and
+ * put our new fpstate in curproc->p_md.md_fpstate.  We point
+ * fpproc at curproc (or proc0) and enable the FPU.
+ *
+ * If we are ever preempted, our FPU state will be saved in our
+ * fpstate.  Then, when we're resumed and we take an FPDISABLED
+ * trap, the trap handler will be able to fish our FPU state out
+ * of curproc (or proc0).
+ *
+ * On exiting this routine we undo the damage: restore the original
+ * pointer to curproc->p_md.md_fpstate, clear our fpproc, and disable
+ * the MMU.
+ *
+ */
+	!!
+	!! This code will allow us to save the fpstate around this
+	!! routine and nest FP use in the kernel
+	!! 
+	save	%sp, -(CC64FSZ+FS_SIZE+BLOCK_SIZE), %sp	! Allocate an fpstate
+	sethi	%hi(_C_LABEL(fpproc)), %l1
+	LDPTR	[%l1 + %lo(_C_LABEL(fpproc))], %l2	! Load fpproc
+	add	%sp, (CC64FSZ+STKB+BLOCK_SIZE-1), %l0	! Calculate pointer to fpstate
+	brz,pt	%l2, 1f					! fpproc == NULL?
+	 andn	%l0, BLOCK_ALIGN, %l0			! And make it block aligned
+	LDPTR	[%l2 + P_FPSTATE], %l3
+	brz,pn	%l3, 1f					! Make sure we have an fpstate
+	 mov	%l3, %o0
+	call	_C_LABEL(savefpstate)			! Save the old fpstate
+	 set	_C_LABEL(eintstack), %l4		! Are we on intr stack?
+	cmp	%sp, %l4
+	bgu,pt	%xcc, 1f
+	 set	_C_LABEL(intstack), %l4
+	cmp	%sp, %l4
+	blu	%xcc, 1f
+0:	
+	 sethi	%hi(_C_LABEL(proc0)), %l4		! Yes, use proc0
+	ba,pt	%xcc, 2f
+	 or	%l4, %lo(_C_LABEL(proc0)), %l5
+1:
+	sethi	%hi(_C_LABEL(curproc)), %l4		! Use curproc
+	LDPTR	[%l4 + %lo(_C_LABEL(curproc))], %l5
+	brz,pn	%l5, 0b					! If curproc is NULL need to use proc0
+2:	
+	mov	%i0, %o0
+	mov	%i2, %o2
+	LDPTR	[%l5 + P_FPSTATE], %l6			! Save old fpstate
+	mov	%i3, %o3
+	STPTR	%l0, [%l5 + P_FPSTATE]			! Insert new fpstate
+	STPTR	%l5, [%l1 + %lo(_C_LABEL(fpproc))]	! Set new fpproc
+	wr	%g0, FPRS_FEF, %fprs			! Enable FPU
+#endif
 #else
 	!!
 	!! Don't use FP regs if the kernel's already using them
@@ -8001,6 +8004,7 @@ ENTRY(pmap_zero_page)
 	wrpr	%g1, 0, %pil			! splx(s)
 	
 #ifdef PMAP_FPSTATE
+#ifndef NEW_FPSTATE
 	btst	FPRS_DU|FPRS_DL, %l1		! Anything to restore?
 	bz,pt	%icc, 1f
 	 nop
@@ -8011,6 +8015,21 @@ ENTRY(pmap_zero_page)
 	 wr	%l1, 0, %fprs
 	ret
 	 restore
+#else
+#ifdef DEBUG
+	LDPTR	[%l1 + %lo(_C_LABEL(fpproc))], %l7
+	cmp	%l7, %l5
+	tnz	1		! fpproc has changed!
+	LDPTR	[%l5 + P_FPSTATE], %l7
+	cmp	%l7, %l0
+	tnz	1		! fpstate has changed!	
+#endif
+	STPTR	%g0, [%l1 + %lo(_C_LABEL(fpproc))]	! Clear fpproc
+	STPTR	%l6, [%l5 + P_FPSTATE]			! Restore old fpstate
+	wr	%g0, 0, %fprs				! Disable FPU
+	ret
+	 restore
+#endif
 #else
 	retl					! Any other mappings have inconsistent D$
 	 wr	%g0, 0, %fprs			! Turn off FPU and mark as clean
@@ -8107,6 +8126,7 @@ ENTRY(pmap_copy_page)
 	 or	%o2, 0x020, %o3			! Nucleus flush page
 	
 #ifdef PMAP_FPSTATE
+#ifndef NEW_FPSTATE
 	!!
 	!! This code will allow us to save the fpstate around this
 	!! routine and nest FP use in the kernel
@@ -8122,6 +8142,71 @@ ENTRY(pmap_copy_page)
 	mov	%i2, %o2
 	mov	%i3, %o3
 	wr	%g0, FPRS_FEF, %fprs
+#else
+/*
+ * New version, new scheme:
+ *
+ * Here we use VIS instructions to do a block clear of a page.
+ * But before we can do that we need to save and enable the FPU.
+ * The last owner of the FPU registers is fpproc, and 
+ * fpproc->p_md.md_fpstate is the current fpstate.  If that's not
+ * null, call savefpstate() with it to store our current fp state.
+ *
+ * Next, allocate an aligned fpstate on the stack.  We will properly
+ * nest calls on a particular stack so this should not be a problem. 
+ *
+ * Now we grab either curproc (or if we're on the interrupt stack
+ * proc0).  We stash its existing fpstate in a local register and
+ * put our new fpstate in curproc->p_md.md_fpstate.  We point
+ * fpproc at curproc (or proc0) and enable the FPU.
+ *
+ * If we are ever preempted, our FPU state will be saved in our
+ * fpstate.  Then, when we're resumed and we take an FPDISABLED
+ * trap, the trap handler will be able to fish our FPU state out
+ * of curproc (or proc0).
+ *
+ * On exiting this routine we undo the damage: restore the original
+ * pointer to curproc->p_md.md_fpstate, clear our fpproc, and disable
+ * the MMU.
+ *
+ */
+	!!
+	!! This code will allow us to save the fpstate around this
+	!! routine and nest FP use in the kernel
+	!! 
+	save	%sp, -(CC64FSZ+FS_SIZE+BLOCK_SIZE), %sp	! Allocate an fpstate
+	sethi	%hi(_C_LABEL(fpproc)), %l1
+	LDPTR	[%l1 + %lo(_C_LABEL(fpproc))], %l2	! Load fpproc
+	add	%sp, (CC64FSZ+STKB+BLOCK_SIZE-1), %l0	! Calculate pointer to fpstate
+	brz,pt	%l2, 1f					! fpproc == NULL?
+	 andn	%l0, BLOCK_ALIGN, %l0			! And make it block aligned
+	LDPTR	[%l2 + P_FPSTATE], %l3
+	brz,pn	%l3, 1f					! Make sure we have an fpstate
+	 mov	%l3, %o0
+	call	_C_LABEL(savefpstate)			! Save the old fpstate
+	 set	_C_LABEL(eintstack), %l4		! Are we on intr stack?
+	cmp	%sp, %l4
+	bgu,pt	%xcc, 1f
+	 set	_C_LABEL(intstack), %l4
+	cmp	%sp, %l4
+	blu	%xcc, 1f
+0:	
+	 sethi	%hi(_C_LABEL(proc0)), %l4		! Yes, use proc0
+	ba,pt	%xcc, 2f
+	 or	%l4, %lo(_C_LABEL(proc0)), %l5
+1:
+	sethi	%hi(_C_LABEL(curproc)), %l4		! No, use curproc
+	LDPTR	[%l4 + %lo(_C_LABEL(curproc))], %l5
+	brz,pn	%l5, 0b					! If curproc is NULL need to use proc0
+2:	
+	mov	%i0, %o0
+	mov	%i2, %o2
+	LDPTR	[%l5 + P_FPSTATE], %l6			! Save old fpstate
+	mov	%i3, %o3
+	STPTR	%l0, [%l5 + P_FPSTATE]			! Insert new fpstate
+	STPTR	%l5, [%l1 + %lo(_C_LABEL(fpproc))]	! Set new fpproc
+	wr	%g0, FPRS_FEF, %fprs			! Enable FPU
+#endif
 #else
 	!!
 	!! Don't use FP regs if the kernel's already using them
@@ -8262,6 +8347,7 @@ ENTRY(pmap_copy_page)
 	wrpr	%g1, 0, %pil			! splx(s)
 	
 #ifdef PMAP_FPSTATE
+#ifndef NEW_FPSTATE
 	btst	FPRS_DU|FPRS_DL, %l1		! Anything to restore?
 	bz,pt	%icc, 1f
 	 nop
@@ -8272,6 +8358,21 @@ ENTRY(pmap_copy_page)
 	 wr	%l1, 0, %fprs
 	ret
 	 restore
+#else
+#ifdef DEBUG
+	LDPTR	[%l1 + %lo(_C_LABEL(fpproc))], %l7
+	cmp	%l7, %l5
+	tnz	1		! fpproc has changed!
+	LDPTR	[%l5 + P_FPSTATE], %l7
+	cmp	%l7, %l0
+	tnz	1		! fpstate has changed!	
+#endif
+	STPTR	%g0, [%l1 + %lo(_C_LABEL(fpproc))]	! Clear fpproc
+	STPTR	%l6, [%l5 + P_FPSTATE]			! Save old fpstate
+	wr	%g0, 0, %fprs				! Disable FPU
+	ret
+	 restore
+#endif
 #else
 	ba	_C_LABEL(blast_vcache)
 	 wr	%g0, 0, %fprs			! Turn off FPU and mark as clean
@@ -8625,13 +8726,13 @@ ENTRY(qzero)
 	retl
 	nop
 
+#if 1
 /*
  * kernel bcopy/memcpy
  * Assumes regions do not overlap; has no useful return value.
  *
  * Must not use %g7 (see copyin/copyout above).
  */
-#if 0
 ENTRY(memcpy) /* dest, src, size */
 	/*
 	 * Swap args for bcopy.  Gcc generates calls to memcpy for
@@ -8825,7 +8926,295 @@ Lbcopy_done:
 	retl
 	 stb	%o4,[%o1]
 
+#if 1
+/*
+ * XXXXXXXXXXXXXXXXXXXX
+ * We need to make sure that this doesn't use floating point
+ * before our trap handlers are installed or we could panic
+ * XXXXXXXXXXXXXXXXXXXX
+ */
+/*
+ * memset(addr, c, len)
+ *
+ * Duplicate the pattern so it fills 64-bits, then swap around the
+ * arguments and call bzero.
+ */
+ENTRY(memset)
+	and	%o1, 0x0ff, %o3
+	mov	%o2, %o1
+	sllx	%o3, 8, %o2
+	or	%o2, %o3, %o2
+	mov	%o0, %o4		! Save original pointer
+	sllx	%o2, 16, %o3
+	or	%o2, %o3, %o2
+	sllx	%o2, 32, %o3
+	ba,pt	%icc, Lbzero_internal
+	 or	%o2, %o3, %o2
+/*
+ * bzero(addr, len)
+ *
+ * We want to use VIS instructions if we're clearing out more than
+ * 256 bytes, but to do that we need to properly save and restore the
+ * FP registers.  Unfortunately the code to do that in the kernel needs
+ * to keep track of the current owner of the FPU, hence the different
+ * code.
+ *
+ */
+ENTRY(bzero)
+	! %o0 = addr, %o1 = len
+	clr	%o2			! Initialize our pattern
+Lbzero_internal:
+	brz,pn	%o1, Lbzero_done	! No bytes to copy??
+!	 cmp	%o1, 8			! Less than 8 bytes to go?
+!	ble,a,pn	%icc, Lbzero_small	! Do it byte at a time.
+!	 deccc	8, %o1			! pre-decrement
+	
+	 btst	7, %o0			! 64-bit aligned?  Optimization
+	bz,pt	%xcc, 2f
+	 btst	3, %o0			! 32-bit aligned?
+	bz,pt	%xcc, 1f
+	 btst	1, %o0			! 16-bit aligned?
+	bz,pt	%xcc, 0f
+	 btst	3, %o0
+	
+	!! unaligned -- store 1 byte
+	stb	%o2, [%o0]
+	dec	1, %o1			! Record storing 1 byte
+	inc	%o0
+	cmp	%o1, 2
+	bl,a,pn	%icc, 7f		! 1 or 0 left
+	 dec	8, %o1			! Fixup count -8
+0:
+	btst	3, %o0
+	bz,pt	%xcc, 1f
+	 btst	7, %o0			! 64-bit aligned?
 
+	!! 16-bit aligned -- store half word
+	sth	%o2, [%o0]
+	dec	2, %o1			! Prepare to store 2 bytes
+	inc	2, %o0
+	cmp	%o1, 4
+	bl,a,pn	%icc, 5f		! Less than 4 left
+	 dec	8, %o1			! Fixup count -8
+1:
+	btst	7, %o0			! 64-bit aligned?
+	bz,pt	%xcc, 2f
+	 nop
+	!! 32-bit aligned -- store word
+	stw	%o2, [%o0]
+	dec	4, %o1
+	inc	4, %o0	
+	cmp	%o1, 8
+	bl,a,pn	%icc, Lbzero_cleanup	! Less than 8 left
+	 dec	8, %o1			! Fixup count -8
+2:
+	!! Now we're 64-bit aligned
+	cmp	%o1, 256		! Use block clear if len > 256
+	bge,pt	%xcc, Lbzero_block	! use block store insns
+	 deccc	8, %o1
+Lbzero_longs:
+	bl,pn	%xcc, Lbzero_cleanup	! Less than 8 bytes left
+	 nop
+3:	
+	stx	%o2, [%o0]		! Do 1 longword at a time
+	deccc	8, %o1
+	bge,pt	%xcc, 3b
+	 inc	8, %o0
+
+	/*
+	 * Len is in [-8..-1] where -8 => done, -7 => 1 byte to zero,
+	 * -6 => two bytes, etc.  Mop up this remainder, if any.
+	 */
+Lbzero_cleanup:	
+	btst	4, %o1
+	bz,pt	%xcc, 6f		! if (len & 4) {
+	 btst	2, %o1
+	stw	%o2, [%o0]		!	*(int *)addr = 0;
+	inc	4, %o0			!	addr += 4;
+5:	
+	btst	2, %o1
+6:
+	bz,pt	%xcc, 8f		! if (len & 2) {
+	 btst	1, %o1
+	sth	%o2, [%o0]		!	*(short *)addr = 0;
+	inc	2, %o0			!	addr += 2;
+7:	
+	btst	1, %o1
+8:	
+	bnz,a	%icc, Lbzero_done	! if (len & 1)
+	 stb	%o2, [%o0]		!	*addr = 0;
+Lbzero_done:
+	retl
+	 mov	%o4, %o0		! Restore ponter for memset (ugh)
+
+	/*
+	 * Len is in [-8..-1] where -8 => done, -7 => 1 byte to zero,
+	 * -6 => two bytes, etc. but we're potentially unaligned.
+	 * Do byte stores since it's easiest.
+	 */
+Lbzero_small:
+	inccc	8, %o1
+	bz,pn	%icc, Lbzero_done
+1:	
+	 deccc	%o1
+	stb	%o2, [%o0]
+	bge,pt	%icc, 1b
+	 inc	%o0
+	ba,a,pt	%icc, Lbzero_done
+	 nop				! XXX spitfire bug?
+	
+Lbzero_block:
+	!! Make sure our trap table is installed
+	rdpr	%tba, %o3
+	set	_C_LABEL(trapbase), %o5
+	sub	%o3, %o5, %o3
+	brnz,pn	%o3, Lbzero_longs	! No, then don't use block load/store
+	 nop
+/*
+ * Kernel:
+ *
+ * Here we use VIS instructions to do a block clear of a page.
+ * But before we can do that we need to save and enable the FPU.
+ * The last owner of the FPU registers is fpproc, and 
+ * fpproc->p_md.md_fpstate is the current fpstate.  If that's not
+ * null, call savefpstate() with it to store our current fp state.
+ *
+ * Next, allocate an aligned fpstate on the stack.  We will properly
+ * nest calls on a particular stack so this should not be a problem. 
+ *
+ * Now we grab either curproc (or if we're on the interrupt stack
+ * proc0).  We stash its existing fpstate in a local register and
+ * put our new fpstate in curproc->p_md.md_fpstate.  We point
+ * fpproc at curproc (or proc0) and enable the FPU.
+ *
+ * If we are ever preempted, our FPU state will be saved in our
+ * fpstate.  Then, when we're resumed and we take an FPDISABLED
+ * trap, the trap handler will be able to fish our FPU state out
+ * of curproc (or proc0).
+ *
+ * On exiting this routine we undo the damage: restore the original
+ * pointer to curproc->p_md.md_fpstate, clear our fpproc, and disable
+ * the MMU.
+ *
+ */
+	
+	!!
+	!! This code will allow us to save the fpstate around this
+	!! routine and nest FP use in the kernel
+	!! 
+	save	%sp, -(CC64FSZ+FS_SIZE+BLOCK_SIZE), %sp	! Allocate an fpstate
+	sethi	%hi(_C_LABEL(fpproc)), %l1
+	LDPTR	[%l1 + %lo(_C_LABEL(fpproc))], %l2	! Load fpproc
+	btst	1, %sp
+	add	%sp, (CC64FSZ+BLOCK_SIZE-1), %l0	! Calculate pointer to fpstate
+	add	%l0, BIAS, %l3
+	movnz	%xcc, %l3, %l0
+	brz,pt	%l2, 1f					! fpproc == NULL?
+	 andn	%l0, BLOCK_ALIGN, %l0			! And make it block aligned
+	LDPTR	[%l2 + P_FPSTATE], %l3
+	brz,pn	%l3, 1f					! Make sure we have an fpstate
+	 mov	%l3, %o0
+	call	_C_LABEL(savefpstate)			! Save the old fpstate
+	 set	_C_LABEL(eintstack), %l4		! Are we on intr stack?
+	cmp	%sp, %l4
+	bgu,pt	%xcc, 1f
+	 set	_C_LABEL(intstack), %l4
+	cmp	%sp, %l4
+	blu	%xcc, 1f
+0:	
+	 sethi	%hi(_C_LABEL(proc0)), %l4		! Yes, use proc0
+	ba,pt	%xcc, 2f
+	 or	%l4, %lo(_C_LABEL(proc0)), %l5
+1:
+	sethi	%hi(_C_LABEL(curproc)), %l4		! Use curproc
+	LDPTR	[%l4 + %lo(_C_LABEL(curproc))], %l5
+	brz,pn	%l5, 0b					! If curproc is NULL need to use proc0
+2:	
+	mov	%i0, %o0
+	mov	%i2, %o2
+	LDPTR	[%l5 + P_FPSTATE], %l6			! Save old fpstate
+	mov	%i3, %o3
+	STPTR	%l0, [%l5 + P_FPSTATE]			! Insert new fpstate
+	STPTR	%l5, [%l1 + %lo(_C_LABEL(fpproc))]	! Set new fpproc
+	wr	%g0, FPRS_FEF, %fprs			! Enable FPU
+
+	!! We are now 8-byte aligned.  We need to become 64-byte aligned.
+	btst	63, %i0
+	bz,pt	%xcc, 2f
+	 nop
+1:	
+	stx	%i2, [%i0]
+	inc	8, %i0
+	btst	63, %i0
+	bnz,pt	%xcc, 1b
+	 dec	8, %i1
+
+2:
+	brz,pt	%i2, 4f					! Do we have a pattern to load?
+	 fzero	%f0					! Set up FPU
+
+	btst	1, %fp
+	bnz,pt	%icc, 3f				! 64-bit stack?
+	 nop
+	stw	%i2, [%fp + 0x28]			! Flush this puppy to RAM
+	membar	#StoreLoad
+	ld	[%fp + 0x28], %f0
+	ba,pt	%icc, 4f
+	 fmovsa	%icc, %f0, %f1
+3:	
+	stx	%i2, [%fp + BIAS + 0x50]		! Flush this puppy to RAM
+	membar	#StoreLoad
+	ldd	[%fp + BIAS + 0x50], %f0
+4:	
+	fmovda	%icc, %f0, %f2				! Duplicate the pattern
+	fmovda	%icc, %f0, %f4
+	fmovda	%icc, %f0, %f6
+	fmovda	%icc, %f0, %f8
+	fmovda	%icc, %f0, %f10
+	fmovda	%icc, %f0, %f12
+	fmovda	%icc, %f0, %f14
+	fmovda	%icc, %f0, %f16				! And second bank
+	fmovda	%icc, %f0, %f18
+	fmovda	%icc, %f0, %f20
+	fmovda	%icc, %f0, %f22
+	fmovda	%icc, %f0, %f24
+	fmovda	%icc, %f0, %f26
+	fmovda	%icc, %f0, %f28
+	fmovda	%icc, %f0, %f30
+	
+	!! Remember: we were 8 bytes too far
+	dec	56, %i1			! Go one iteration too far
+5:
+	stda	%f0, [%i0] ASI_BLK_COMMIT_P		! Store 64 bytes
+	deccc	64, %i1
+	ble,pn	%xcc, 6f
+	 inc	64, %i0
+
+	stda	%f0, [%i0] ASI_BLK_COMMIT_P		! Store 64 bytes
+	deccc	64, %i1
+	bg,pn	%xcc, 5b
+	 inc	64, %i0
+6:
+/*
+ * We've saved our possible fpstate, now disable the fpu
+ * and continue with life.
+ */
+#ifdef DEBUG
+	LDPTR	[%l1 + %lo(_C_LABEL(fpproc))], %l7
+	cmp	%l7, %l5
+	tnz	1		! fpproc has changed!
+	LDPTR	[%l5 + P_FPSTATE], %l7
+	cmp	%l7, %l0
+	tnz	1		! fpstate has changed!	
+#endif
+	STPTR	%g0, [%l1 + %lo(_C_LABEL(fpproc))]	! Clear fpproc
+	STPTR	%l6, [%l5 + P_FPSTATE]			! Restore old fpstate
+	wr	%g0, 0, %fprs				! Disable FPU
+	addcc	%i1, 56, %i1	! Restore the count
+	ba,pt	%xcc, Lbzero_longs	! Finish up the remainder
+	 restore	
+#endif
+	
 /*
  * kcopy() is exactly like bcopy except that it set pcb_onfault such that
  * when a fault occurs, it is able to return -1 to indicate this to the
@@ -9301,6 +9690,9 @@ special_fp_store:
 	 * So we still have to check the blasted QNE bit.
 	 * With any luck it will usually not be set.
 	 */
+	rd	%gsr, %o4		! Save %gsr
+	st	%o4, [%o0 + FS_GSR]
+	
 	ldx	[%o0 + FS_FSR], %o4	! if (f->fs_fsr & QNE)
 	btst	%o2, %o4
 	add	%o0, FS_REGS, %o2
@@ -9412,10 +9804,12 @@ savefpcont:
 ENTRY(loadfpstate)
 	flushw			! Make sure we don't have stack probs & lose hibits of %o
 	rdpr	%pstate, %o1		! enable FP before we begin
+	ld	[%o0 + FS_GSR], %o3	! Restore %gsr
 	set	PSTATE_PEF, %o2
 	wr	%g0, FPRS_FEF, %fprs
 	or	%o1, %o2, %o1
 	wrpr	%o1, 0, %pstate
+	wr	%o3, %g0, %gsr
 	ldx	[%o0 + FS_FSR], %fsr	! setfsr(f->fs_fsr);
 	add	%o0, FS_REGS, %o3
 	btst	BLOCK_ALIGN, %o3
@@ -9484,95 +9878,7 @@ ENTRY(ienab_bis)
 ENTRY(ienab_bic)
 	retl
 	 wr	%o0, 0, CLEAR_SOFTINT	! CLEAR_SOFTINT
-#if 0
-#ifndef POPC
-/*
- * ffs(), using table lookup.
- * The process switch code shares the table, so we just put the
- * whole thing here.
- */
-_C_LABEL(__ffstab):
-	.byte	-24,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1 /* 00-0f */
-	.byte	5,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* 10-1f */
-	.byte	6,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* 20-2f */
-	.byte	5,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* 30-3f */
-	.byte	7,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* 40-4f */
-	.byte	5,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* 50-5f */
-	.byte	6,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* 60-6f */
-	.byte	5,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* 70-7f */
-	.byte	8,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* 80-8f */
-	.byte	5,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* 10-9f */
-	.byte	6,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* a0-af */
-	.byte	5,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* b0-bf */
-	.byte	7,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* c0-cf */
-	.byte	5,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* d0-df */
-	.byte	6,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* e0-ef */
-	.byte	5,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* f0-ff */
 
-/*
- * We use a table lookup on each byte.
- *
- * In each section below, %o1 is the current byte (0, 1, 2, or 3).
- * The last byte is handled specially: for the first three,
- * if that byte is nonzero, we return the table value
- * (plus 0, 8, or 16 for the byte number), but for the last
- * one, we just return the table value plus 24.  This means
- * that ffstab[0] must be -24 so that ffs(0) will return 0.
- */
-ENTRY(ffs)
-	set	_C_LABEL(__ffstab), %o2
-	andcc	%o0, 0xff, %o1	! get low byte
-	bz,a	1f		! try again if 0
-	srl	%o0, 8, %o0	! delay slot, get ready for next byte
-
-	retl			! return ffstab[%o1]
-	ldsb	[%o2 + %o1], %o0
-
-1:
-	andcc	%o0, 0xff, %o1	! byte 1 like byte 0...
-	bz,a	2f
-	srl	%o0, 8, %o0	! (use delay to prepare for byte 2)
-
-	ldsb	[%o2 + %o1], %o0
-	retl			! return ffstab[%o1] + 8
-	add	%o0, 8, %o0
-
-2:
-	andcc	%o0, 0xff, %o1
-	bz,a	3f
-	srl	%o0, 8, %o0	! (prepare for byte 3)
-
-	ldsb	[%o2 + %o1], %o0
-	retl			! return ffstab[%o1] + 16
-	add	%o0, 16, %o0
-
-3:				! just return ffstab[%o0] + 24
-	ldsb	[%o2 + %o0], %o0
-	retl
-	add	%o0, 24, %o0
-#else
-	/*
-	 * We have a popcount instruction:	 use it.
-	 * only uses %o0, %o1, %o2
-	 *
-	 * Here's the pseudo-code from the v9 spec:
-	 *
-	 * int ffs(unsigned zz) {
-	 *	return popc( zz ^ ( ~ (-zz)));
-	 * }
-	 *
-	 * XXXX sptifires don't implement popc.
-	 */
-ENTRY(ffs)
-	neg	%o0, %o1				! %o1 = -zz
-	xnor	%o0, %o1, %o2				! %o2 = zz ^ ~ -zz
-	popc	%o2, %o1
-	movrz	%o0, %g0, %o1				! result of ffs(0) should be zero
-	retl
-	 mov	%o1, %o0
-
-	
-#endif
 /*
  * Here is a very good random number generator.  This implementation is
  * based on _Two Fast Implementations of the `Minimal Standard' Random
@@ -9627,7 +9933,7 @@ ENTRY(random)
 	and	%o1, %o0, %o0
 	retl
 	 st	%o0, [%o5 + %lo(randseed)]
-#endif
+
 /*
  * void microtime(struct timeval *tv)
  *
@@ -9758,7 +10064,7 @@ microtick:
 	sub	%o1, %o2, %o1					! %o1 has the remainder
 	
 	retl
-	 STPTR	%o1, [%o0+PTRSZ]					! Save time_t low word
+	 STPTR	%o1, [%o0+PTRSZ]				! Save time_t low word
 #endif
 
 /*
