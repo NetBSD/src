@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.11 1998/10/28 00:15:54 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.12 1998/10/31 00:27:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #include <dev/ic/ne2000reg.h>
 #include <dev/ic/ne2000var.h>
 
-#include <dev/pci/if_ne_pcireg.h>
+#include <dev/ic/rtl80x9reg.h>
 
 struct ne_pci_softc {
 	struct ne2000_softc sc_ne2000;		/* real "ne2000" softc */
@@ -318,12 +318,12 @@ ne_pci_rtl8029_mediastatus(sc, ifmr)
 	/* Set NIC to page 3 registers. */
 	NIC_PUT(sc->sc_regt, sc->sc_regh, ED_P0_CR, cr_proto | ED_CR_PAGE_3);
 
-	if (NIC_GET(sc->sc_regt, sc->sc_regh, NEPCI_RTL3_CONFIG0) &
+	if (NIC_GET(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG0) &
 	    RTL3_CONFIG0_BNC)
 		ifmr->ifm_active = IFM_ETHER|IFM_10_2;
 	else {
 		ifmr->ifm_active = IFM_ETHER|IFM_10_T;
-		if (NIC_GET(sc->sc_regt, sc->sc_regh, NEPCI_RTL3_CONFIG3) &
+		if (NIC_GET(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG3) &
 		    RTL3_CONFIG3_FUDUP)
 			ifmr->ifm_active |= IFM_FDX;
 	}
@@ -346,7 +346,7 @@ ne_pci_rtl8029_init_card(sc)
 	NIC_PUT(sc->sc_regt, sc->sc_regh, ED_P0_CR, cr_proto | ED_CR_PAGE_3);
 
 	/* First, set basic media type. */
-	reg = NIC_GET(sc->sc_regt, sc->sc_regh, NEPCI_RTL3_CONFIG2);
+	reg = NIC_GET(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG2);
 	reg &= ~(RTL3_CONFIG2_PL1|RTL3_CONFIG2_PL0);
 	switch (IFM_SUBTYPE(ifm->ifm_cur->ifm_media)) {
 	case IFM_AUTO:
@@ -361,15 +361,15 @@ ne_pci_rtl8029_init_card(sc)
 		reg |= RTL3_CONFIG2_PL1|RTL3_CONFIG2_PL0;
 		break;
 	}
-	NIC_PUT(sc->sc_regt, sc->sc_regh, NEPCI_RTL3_CONFIG2, reg);
+	NIC_PUT(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG2, reg);
 
 	/* Now, set duplex mode. */
-	reg = NIC_GET(sc->sc_regt, sc->sc_regh, NEPCI_RTL3_CONFIG3);
+	reg = NIC_GET(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG3);
 	if (ifm->ifm_cur->ifm_media & IFM_FDX)
 		reg |= RTL3_CONFIG3_FUDUP;
 	else
 		reg &= ~RTL3_CONFIG3_FUDUP;
-	NIC_PUT(sc->sc_regt, sc->sc_regh, NEPCI_RTL3_CONFIG3, reg);
+	NIC_PUT(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG3, reg);
 
 	/* Set NIC to page 0 registers. */
 	NIC_PUT(sc->sc_regt, sc->sc_regh, ED_P0_CR, cr_proto | ED_CR_PAGE_0);
