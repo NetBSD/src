@@ -1,4 +1,4 @@
-/* $NetBSD: lmcaudio.c,v 1.6 1997/05/07 18:51:31 augustss Exp $ */
+/* $NetBSD: lmcaudio.c,v 1.7 1997/05/09 22:16:27 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -329,17 +329,14 @@ lmcaudio_drain(addr)
  | Interface to the generic audio driver                                     |
  * ************************************************************************* */
 
-int    lmcaudio_query_encoding  __P((void *, struct audio_encoding *));
-int    lmcaudio_set_out_params  __P((void *, struct audio_params *));
-int    lmcaudio_set_in_params   __P((void *, struct audio_params *));
-int    lmcaudio_round_blocksize __P((void *, int));
+int    lmcaudio_query_encoding   __P((void *, struct audio_encoding *));
+int    lmcaudio_set_params       __P((void *, int, struct audio_params *, struct audio_params *));
+int    lmcaudio_round_blocksize  __P((void *, int));
 int    lmcaudio_set_out_port	 __P((void *, int));
 int    lmcaudio_get_out_port	 __P((void *));
 int    lmcaudio_set_in_port	 __P((void *, int));
 int    lmcaudio_get_in_port  	 __P((void *));
-int    lmcaudio_commit_settings __P((void *));
-void   lmcaudio_sw_encode	 __P((void *, int, u_char *, int));
-void   lmcaudio_sw_decode	 __P((void *, int, u_char *, int));
+int    lmcaudio_commit_settings  __P((void *));
 int    lmcaudio_start_output	 __P((void *, void *, int, void (*)(), void *));
 int    lmcaudio_start_input	 __P((void *, void *, int, void (*)(), void *));
 int    lmcaudio_halt_output	 __P((void *));
@@ -360,31 +357,21 @@ struct audio_device lmcaudio_device = {
 };
 
 int
-lmcaudio_set_in_params(addr, p)
+lmcaudio_set_params(addr, mode, p, q)
 	void *addr;
-	struct audio_params *p;
+	int mode;
+	struct audio_params *p, *q;
 {
-	struct vidcaudio_softc *sc = addr;
-
 	if (p->encoding != AUDIO_ENCODING_LINEAR_LE ||
 	    p->precision != 16 ||
 	    p->channels != 2)
 		return EINVAL;
-	return 0;
-}
 
-int
-lmcaudio_set_out_params(addr, p)
-	void *addr;
-	struct audio_params *p;
-{
-	struct vidcaudio_softc *sc = addr;
-
-	if (p->encoding != AUDIO_ENCODING_LINEAR_LE ||
-	    p->precision != 16 ||
-	    p->channels != 2)
-		return EINVAL;
-	lmcaudio_rate(p->sample_rate);
+	/* Update setting for the other mode. */
+	q->sample_rate = p->sample_rate;
+	q->encoding = p->encoding;
+	q->channels = p->channels;
+	q->precision = p->precision;
 	return 0;
 }
 
@@ -464,31 +451,6 @@ lmcaudio_commit_settings(addr)
 printf ( "DEBUG: committ_settings\n" );
 #endif
 	return(0);
-}
-
-void
-lmcaudio_sw_encode(addr, e, p, cc)
-	void *addr;
-	int e;
-	u_char *p;
-	int cc;
-{
-#ifdef DEBUG
-	printf ( "DEBUG: sw_encode\n" );    
-#endif
-	return;
-}
-
-void
-lmcaudio_sw_decode(addr, e, p, cc)
-	void *addr;
-	int e;
-	u_char *p;
-	int cc;
-{
-#ifdef DEBUG
-	printf ( "DEBUG: sw_decode\n" );    
-#endif
 }
 
 #define ROUND(s)  ( ((int)s) & (~(NBPG-1)) )
@@ -644,16 +606,13 @@ struct audio_hw_if lmcaudio_hw_if = {
 	lmcaudio_close,
 	lmcaudio_drain,
 	lmcaudio_query_encoding,
-	lmcaudio_set_out_params,
-	lmcaudio_set_in_params,
+	lmcaudio_set_params,
 	lmcaudio_round_blocksize,
 	lmcaudio_set_out_port,
 	lmcaudio_get_out_port,
 	lmcaudio_set_in_port,
 	lmcaudio_get_in_port,
 	lmcaudio_commit_settings,
-	lmcaudio_sw_encode,
-	lmcaudio_sw_decode,
 	lmcaudio_start_output,
 	lmcaudio_start_input,
 	lmcaudio_halt_output,

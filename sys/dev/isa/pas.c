@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.25 1997/04/29 21:01:37 augustss Exp $	*/
+/*	$NetBSD: pas.c,v 1.26 1997/05/09 22:16:38 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -53,7 +53,6 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/mulaw.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -106,16 +105,13 @@ struct audio_hw_if pas_hw_if = {
 	sbdsp_close,
 	NULL,
 	sbdsp_query_encoding,
-	sbdsp_set_out_params,
-	sbdsp_set_in_params,
+	sbdsp_set_params,
 	sbdsp_round_blocksize,
 	sbdsp_set_out_port,
 	sbdsp_get_out_port,
 	sbdsp_set_in_port,
 	sbdsp_get_in_port,
 	sbdsp_commit_settings,
-	mulaw_expand,
-	mulaw_compress,
 	sbdsp_dma_output,
 	sbdsp_dma_input,
 	sbdsp_haltdma,

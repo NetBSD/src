@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.24 1997/05/07 18:51:43 augustss Exp $	*/
+/*	$NetBSD: gus.c,v 1.25 1997/05/09 22:16:37 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -357,10 +357,8 @@ int	gus_set_in_gain __P((caddr_t, u_int, u_char));
 int	gus_get_in_gain __P((caddr_t));
 int	gus_set_out_gain __P((caddr_t, u_int, u_char));
 int	gus_get_out_gain __P((caddr_t));
-int 	gus_set_in_params __P((void *, struct audio_params *));
-int 	gus_set_out_params __P((void *, struct audio_params *));
-int 	gusmax_set_in_params __P((void *, struct audio_params *));
-int 	gusmax_set_out_params __P((void *, struct audio_params *));
+int 	gus_set_params __P((void *, int, struct audio_params *, struct audio_params *));
+int 	gusmax_set_params __P((void *, int, struct audio_params *, struct audio_params *));
 int	gus_round_blocksize __P((void *, int));
 int	gus_set_out_port __P((void *, int));
 int	gus_get_out_port __P((void *));
@@ -391,8 +389,9 @@ int	gus_getdev __P((void *, struct audio_device *));
 int	gus_set_io_params __P((struct gus_softc *, struct audio_params *));
 
 STATIC void	gus_deinterleave __P((struct gus_softc *, void *, int));
-STATIC void	gus_expand __P((void *, int, u_char *, int));
-STATIC void	gusmax_expand __P((void *, int, u_char *, int));
+STATIC void	gus_expand __P((void *, u_char *, int));
+STATIC void	gusmax_expand __P((void *, u_char *, int));
+STATIC void	gus_compress __P((void *, u_char *, int));
 
 STATIC int	gus_mic_ctl __P((void *, int));
 STATIC int	gus_linein_ctl __P((void *, int));
@@ -605,8 +604,7 @@ struct audio_hw_if gus_hw_if = {
 
 	gus_query_encoding,
 
-	gus_set_out_params,
-	gus_set_in_params,
+	gus_set_params,
 
 	gus_round_blocksize,
 
@@ -616,9 +614,6 @@ struct audio_hw_if gus_hw_if = {
 	gus_get_in_port,
 
 	gus_commit_settings,
-
-	gus_expand,
-	mulaw_compress,
 
 	gus_dma_output,
 	gus_dma_input,
@@ -998,32 +993,41 @@ gusopen(dev, flags)
 }
 
 STATIC void
-gusmax_expand(hdl, encoding, buf, count)
+gusmax_expand(hdl, buf, count)
 	void *hdl;
-	int encoding;
 	u_char *buf;
 	int count;
 {
 	register struct ad1848_softc *ac = hdl;
 
-	gus_expand(ac->parent, encoding, buf, count);
+	gus_expand(ac->parent, buf, count);
 }
 
 STATIC void
-gus_expand(hdl, encoding, buf, count)
+gus_expand(hdl, buf, count)
 	void *hdl;
-	int encoding;
 	u_char *buf;
 	int count;
 {
 	struct gus_softc *sc = hdl;
 
-	mulaw_expand(NULL, encoding, buf, count);
+	if (sc->sc_encoding == AUDIO_ENCODING_ULAW)
+		mulaw_to_ulinear8(buf, count);
 	/*
 	 * If we need stereo deinterleaving, do it now.
 	 */
 	if (sc->sc_channels == 2)
 		gus_deinterleave(sc, (void *)buf, count);
+}
+
+STATIC void
+gus_compress(hdl, buf, count)
+	void *hdl;
+	u_char *buf;
+	int count;
+{
+	
+	ulinear8_to_mulaw(buf, count);
 }
 
 STATIC void
@@ -2099,39 +2103,28 @@ gus_set_volume(sc, voice, volume)
  */
 
 int
-gusmax_set_in_params(addr, p)
+gusmax_set_params(addr, mode, p, q)
 	void *addr;
-	struct audio_params *p;
+	int mode;
+	struct audio_params *p, *q;
 {
 	register struct ad1848_softc *ac = addr;
 	register struct gus_softc *sc = ac->parent;
 	int error;
 
-	error = ad1848_set_in_params(ac, p);
+	error = ad1848_set_params(ac, mode, p, q);
 	if (error)
 		return error;
-	return gus_set_in_params(sc, p);
+	error = gus_set_params(sc, mode, p, q);
+	p->sw_code = mode == AUMODE_RECORD ? gus_compress : gusmax_expand;
+	return error;
 }
 
 int
-gusmax_set_out_params(addr, p)
+gus_set_params(addr, mode, p, q)
 	void *addr;
-	struct audio_params *p;
-{
-	register struct ad1848_softc *ac = addr;
-	register struct gus_softc *sc = ac->parent;
-	int error;
-
-	error = ad1848_set_in_params(ac, p);
-	if (error)
-		return error;
-	return gus_set_in_params(sc, p);
-}
-
-int
-gus_set_in_params(addr, p)
-	void *addr;
-	struct audio_params *p;
+	int mode;
+	struct audio_params *p, *q;
 {
 	register struct gus_softc *sc = addr;
 	int error;
@@ -2139,28 +2132,19 @@ gus_set_in_params(addr, p)
 	error = gus_set_io_params(sc, p);
 	if (error)
 		return error;
-	sc->sc_irate = p->sample_rate;
-	return 0;
-}
+	if (p->sample_rate > gus_max_frequency[sc->sc_voices - GUS_MIN_VOICES])
+		p->sample_rate = gus_max_frequency[sc->sc_voices - GUS_MIN_VOICES];
+	if (mode == AUMODE_RECORD)
+		sc->sc_irate = p->sample_rate;
+	else
+		sc->sc_orate = p->sample_rate;
 
-int
-gus_set_out_params(addr, p)
-	void *addr;
-	struct audio_params *p;
-{
-	register struct gus_softc *sc = addr;
-	int rate = p->sample_rate;
-	int error;
-	
-	error = gus_set_io_params(sc, p);
-	if (error)
-		return error;
+	p->sw_code = mode == AUMODE_RECORD ? gus_compress : gus_expand;
 
-	if (rate > gus_max_frequency[sc->sc_voices - GUS_MIN_VOICES])
-		rate = gus_max_frequency[sc->sc_voices - GUS_MIN_VOICES];
-
-	p->sample_rate = sc->sc_orate = rate;
-
+	/* Update setting for the other mode. */
+	q->encoding = p->encoding;
+	q->channels = p->channels;
+	q->precision = p->precision;
 	return 0;
 }
 
@@ -2803,8 +2787,7 @@ gus_init_cs4231(sc)
 
 			ad1848_query_encoding, /* query encoding */
 
-			gusmax_set_out_params,
-			gusmax_set_in_params,
+			gusmax_set_params,
 
 			gusmax_round_blocksize,
 
@@ -2814,9 +2797,6 @@ gus_init_cs4231(sc)
 			gusmax_get_in_port,
 
 			gusmax_commit_settings,
-
-			gusmax_expand,	/* XXX use codec */
-			mulaw_compress,
 
 			gusmax_dma_output,
 			gusmax_dma_input,
