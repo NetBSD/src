@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.70 2003/12/04 19:38:24 atatat Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.71 2004/02/11 10:47:28 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.70 2003/12/04 19:38:24 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.71 2004/02/11 10:47:28 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -541,8 +541,8 @@ ip6_input(m)
 	 */
 #if defined(NFAITH) && 0 < NFAITH
 	if (ip6_keepfaith) {
-		if (ip6_forward_rt.ro_rt && ip6_forward_rt.ro_rt->rt_ifp
-		 && ip6_forward_rt.ro_rt->rt_ifp->if_type == IFT_FAITH) {
+		if (ip6_forward_rt.ro_rt && ip6_forward_rt.ro_rt->rt_ifp &&
+		    ip6_forward_rt.ro_rt->rt_ifp->if_type == IFT_FAITH) {
 			/* XXX do we need more sanity checks? */
 			ours = 1;
 			deliverifp = ip6_forward_rt.ro_rt->rt_ifp; /* faith */
