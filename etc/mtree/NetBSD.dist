@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.257 2004/01/14 12:52:30 minoura Exp $
+#	$NetBSD: NetBSD.dist,v 1.258 2004/01/30 03:02:41 lukem Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1022,6 +1022,27 @@
 ./usr/share/wscons/fonts
 ./usr/share/wscons/keymaps
 ./usr/share/zoneinfo
+./usr/share/zoneinfo/Africa
+./usr/share/zoneinfo/America
+./usr/share/zoneinfo/America/Indiana
+./usr/share/zoneinfo/America/Kentucky
+./usr/share/zoneinfo/America/North_Dakota
+./usr/share/zoneinfo/Antarctica
+./usr/share/zoneinfo/Arctic
+./usr/share/zoneinfo/Asia
+./usr/share/zoneinfo/Atlantic
+./usr/share/zoneinfo/Australia
+./usr/share/zoneinfo/Brazil
+./usr/share/zoneinfo/Canada
+./usr/share/zoneinfo/Chile
+./usr/share/zoneinfo/Etc
+./usr/share/zoneinfo/Europe
+./usr/share/zoneinfo/Indian
+./usr/share/zoneinfo/Mexico
+./usr/share/zoneinfo/Mideast
+./usr/share/zoneinfo/Pacific
+./usr/share/zoneinfo/SystemV
+./usr/share/zoneinfo/US
 ./var
 ./var/account
 ./var/at
