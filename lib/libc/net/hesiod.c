@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.c,v 1.17 2002/04/16 19:12:40 groo Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.18 2002/08/16 11:48:25 itojun Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -52,7 +52,7 @@ __IDSTRING(rcsid_hesiod_p_h,
     "#Id: hesiod_p.h,v 1.1 1996/12/08 21:39:37 ghudson Exp #");
 __IDSTRING(rcsid_hescompat_c,
     "#Id: hescompat.c,v 1.1.2.1 1996/12/16 08:37:45 ghudson Exp #");
-__RCSID("$NetBSD: hesiod.c,v 1.17 2002/04/16 19:12:40 groo Exp $");
+__RCSID("$NetBSD: hesiod.c,v 1.18 2002/08/16 11:48:25 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -116,10 +116,10 @@ hesiod_init(context)
 	ctx = malloc(sizeof(struct hesiod_p));
 	if (ctx) {
 		*context = ctx;
-			/*
-			 * don't permit overrides from environment
-			 * for set.id programs
-			 */
+		/*
+		 * don't permit overrides from environment
+		 * for set.id programs
+		 */
 		if (issetugid())
 			configname = NULL;
 		else
@@ -203,10 +203,10 @@ hesiod_to_bind(void *context, const char *name, const char *type)
                 return NULL;
         }
 
-		/*
-		 * Find the right right hand side to use, possibly
-		 * truncating bindname.
-		 */
+	/*
+	 * Find the right right hand side to use, possibly
+	 * truncating bindname.
+	 */
 	p = strchr(bindname, '@');
 	if (p) {
 		*p++ = 0;
@@ -224,7 +224,7 @@ hesiod_to_bind(void *context, const char *name, const char *type)
 	} else
 		rhs = ctx->rhs;
 
-		/* See if we have enough room. */
+	/* See if we have enough room. */
 	len = strlen(bindname) + 1 + strlen(type);
 	if (ctx->lhs)
 		len += strlen(ctx->lhs) + ((ctx->lhs[0] != '.') ? 1 : 0);
@@ -235,10 +235,10 @@ hesiod_to_bind(void *context, const char *name, const char *type)
 		errno = EMSGSIZE;
 		return NULL;
 	}
-		/* Put together the rest of the domain. */
+	/* Put together the rest of the domain. */
 	strcat(bindname, ".");
 	strcat(bindname, type);
-		/* Only append lhs if it isn't empty. */
+	/* Only append lhs if it isn't empty. */
 	if (ctx->lhs && ctx->lhs[0] != '\0' ) {
 		if (ctx->lhs[0] != '.')
 			strcat(bindname, ".");
@@ -248,11 +248,11 @@ hesiod_to_bind(void *context, const char *name, const char *type)
 		strcat(bindname, ".");
 	strcat(bindname, rhs);
 
-		/* rhs_list is no longer needed, since we're done with rhs. */
+	/* rhs_list is no longer needed, since we're done with rhs. */
 	if (rhs_list)
 		hesiod_free_list(context, rhs_list);
 
-		/* Make a copy of the result and return it to the caller. */
+	/* Make a copy of the result and return it to the caller. */
 	ret = strdup(bindname);
 	if (ret == NULL)
 		errno = ENOMEM;
@@ -325,11 +325,11 @@ read_config_file(ctx, filename)
 	_DIAGASSERT(ctx != NULL);
 	_DIAGASSERT(filename != NULL);
 
-		/* Set default query classes. */
+	/* Set default query classes. */
 	ctx->classes[0] = C_IN;
 	ctx->classes[1] = C_HS;
 
-		/* Try to open the configuration file. */
+	/* Try to open the configuration file. */
 	fp = fopen(filename, "r");
 	if (!fp) {
 		/* Use compiled in default domain names. */
@@ -429,11 +429,11 @@ get_txt_records(qclass, name)
 
 	_DIAGASSERT(name != NULL);
 
-		/* Make sure the resolver is initialized. */
+	/* Make sure the resolver is initialized. */
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
 		return NULL;
 
-		/* Construct the query. */
+	/* Construct the query. */
 	n = res_mkquery(QUERY, name, qclass, T_TXT, NULL, 0,
 	    NULL, qbuf, PACKETSZ);
 	if (n < 0) {
@@ -441,23 +441,23 @@ get_txt_records(qclass, name)
 		return NULL;
 	}
 
-		/* Send the query. */
+	/* Send the query. */
 	n = res_send(qbuf, n, abuf, MAX_HESRESP);
 	if (n < 0) {
 		errno = ECONNREFUSED;
 		return NULL;
 	}
-		/* Parse the header of the result. */
+	/* Parse the header of the result. */
 	hp = (HEADER *) (void *) abuf;
 	ancount = ntohs(hp->ancount);
 	qdcount = ntohs(hp->qdcount);
 	p = abuf + sizeof(HEADER);
 	eom = abuf + n;
 
-		/*
-		 * Skip questions, trying to get to the answer section
-		 * which follows.
-		 */
+	/*
+	 * Skip questions, trying to get to the answer section
+	 * which follows.
+	 */
 	for (i = 0; i < qdcount; i++) {
 		skip = dn_skipname(p, eom);
 		if (skip < 0 || p + skip + QFIXEDSZ > eom) {
@@ -467,13 +467,13 @@ get_txt_records(qclass, name)
 		p += skip + QFIXEDSZ;
 	}
 
-		/* Allocate space for the text record answers. */
+	/* Allocate space for the text record answers. */
 	list = malloc((ancount + 1) * sizeof(char *));
 	if (!list) {
 		errno = ENOMEM;
 		return NULL;
 	}
-		/* Parse the answers. */
+	/* Parse the answers. */
 	j = 0;
 	for (i = 0; i < ancount; i++) {
 		/* Parse the header of this answer. */
@@ -520,10 +520,10 @@ get_txt_records(qclass, name)
 		*dst = 0;
 	}
 
-		/*
-		 * If we didn't terminate the loop normally, something
-		 * went wrong.
-		 */
+	/*
+	 * If we didn't terminate the loop normally, something
+	 * went wrong.
+	 */
 	if (i < ancount) {
 		for (i = 0; i < j; i++)
 			free(list[i]);
@@ -539,9 +539,9 @@ get_txt_records(qclass, name)
 	return list;
 }
 
-		/*
-		 *	COMPATIBILITY FUNCTIONS
-		 */
+/*
+ * COMPATIBILITY FUNCTIONS
+ */
 
 static int	  inited = 0;
 static void	 *context;
