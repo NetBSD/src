@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.37 2003/05/04 22:01:58 fvdl Exp $
+#	$NetBSD: genassym.cf,v 1.38 2003/07/03 21:25:45 christos Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -225,7 +225,7 @@ ifdef COMPAT_LINUX
 define	LINUX_SIGF_HANDLER	offsetof(struct linux_sigframe, sf_handler)
 define	LINUX_SIGF_SC		offsetof(struct linux_sigframe, sf_sc)
 define	LINUX_RT_SIGF_HANDLER	offsetof(struct linux_rt_sigframe, sf_handler)
-define	LINUX_RT_SIGF_SC	offsetof(struct linux_rt_sigframe, sf_sc)
+define	LINUX_RT_SIGF_UC	offsetof(struct linux_rt_sigframe, sf_uc)
 endif
 
 ifdef COMPAT_FREEBSD
