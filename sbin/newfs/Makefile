@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.24 2002/09/28 20:11:07 dbj Exp $
+#	$NetBSD: Makefile,v 1.25 2003/03/22 15:34:44 tron Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
 
 .include <bsd.own.mk>
 
 PROG=	newfs
-SRCS=	dkcksum.c getmntopts.c newfs.c mkfs.c ffs_bswap.c ffs_appleufs.c
+SRCS=	dkcksum.c newfs.c mkfs.c ffs_bswap.c ffs_appleufs.c
 MAN=	newfs.8 mount_mfs.8
 
 WARNS=	2
