@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41 1999/04/17 21:16:46 ws Exp $	*/
+/*	$NetBSD: machdep.c,v 1.42 1999/04/29 05:15:30 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -138,6 +138,10 @@ void install_extint __P((void (*)(void)));
 
 int cold = 1;
 
+#ifdef DDB
+void *startsym, *endsym;
+#endif
+
 void
 initppc(startkernel, endkernel, args)
 	u_int startkernel, endkernel;
@@ -152,7 +156,6 @@ initppc(startkernel, endkernel, args)
 	extern tlbdsmiss, tlbdsmsize;
 #ifdef DDB
 	extern ddblow, ddbsize;
-	extern void *startsym, *endsym;
 #endif
 #if NIPKDB > 0
 	extern ipkdblow, ipkdbsize;
@@ -291,6 +294,13 @@ initppc(startkernel, endkernel, args)
 	/*
 	 * Parse arg string.
 	 */
+#ifdef DDB
+	bcopy(args + strlen(args) + 1, &startsym, sizeof(startsym));
+	bcopy(args + strlen(args) + 5, &endsym, sizeof(endsym));
+	if (startsym == NULL || endsym == NULL)
+		startsym = endsym = NULL;
+#endif
+
 	bootpath = args;
 	while (*++args && *args != ' ');
 	if (*args) {
@@ -311,7 +321,7 @@ initppc(startkernel, endkernel, args)
 	}
 
 #ifdef DDB
-	/* ddb_init((int)(endsym - startsym), startsym, endsym); */
+	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 #endif
 #if NIPKDB > 0
 	/*
