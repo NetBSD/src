@@ -192,10 +192,10 @@
 #define	V_SCD_WDOG_FREQ             1000000
 
 #define	S_SCD_WDOG_INIT             0
-#define	M_SCD_WDOG_INIT             _SB_MAKEMASK(13,S_SCD_WDOG_INIT)
+#define	M_SCD_WDOG_INIT             _SB_MAKEMASK(23,S_SCD_WDOG_INIT)
 
 #define	S_SCD_WDOG_CNT              0
-#define	M_SCD_WDOG_CNT              _SB_MAKEMASK(13,S_SCD_WDOG_CNT)
+#define	M_SCD_WDOG_CNT              _SB_MAKEMASK(23,S_SCD_WDOG_CNT)
 
 #define	M_SCD_WDOG_ENABLE           _SB_MAKEMASK1(0)
 
