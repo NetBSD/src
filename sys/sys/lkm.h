@@ -1,4 +1,4 @@
-/*	$NetBSD: lkm.h,v 1.8 1994/07/24 03:03:42 mycroft Exp $	*/
+/*	$NetBSD: lkm.h,v 1.9 1994/10/07 14:20:11 mycroft Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module
@@ -169,16 +169,6 @@ union lkm_generic {
 	struct lkm_strmod	*lkm_strmod;
 	struct lkm_exec		*lkm_exec;
 	struct lkm_misc		*lkm_misc;
-};
-
-union lkm_all {
-	struct lkm_any		lkm_any;
-	struct lkm_syscall	lkm_syscall;
-	struct lkm_vfs		lkm_vfs;
-	struct lkm_dev		lkm_dev;
-	struct lkm_strmod	lkm_strmod;
-	struct lkm_exec		lkm_exec;
-	struct lkm_misc		lkm_misc;
 };
 
 /*
