@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.19 2003/04/03 22:18:26 fvdl Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.20 2003/09/18 00:06:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,8 +70,6 @@
 #define	SD_IO_TIMEOUT	(60 * 1000)
 #endif
 
-struct sd_ops;
-
 struct sd_softc {
 	struct device sc_dev;
 	struct disk sc_dk;
@@ -100,7 +98,6 @@ struct sd_softc {
 	struct bufq_state buf_queue;
 	u_int8_t type;
 	char name[16]; /* product name, for default disklabel */
-	const struct sd_ops *sc_ops;	/* our bus-dependent ops vector */
 
 	void *sc_sdhook;		/* our shutdown hook */
 
@@ -109,20 +106,8 @@ struct sd_softc {
 #endif
 };
 
-struct sd_ops {
-	int	(*sdo_get_parms) __P((struct sd_softc *, struct disk_parms *,
-		    int));
-	int	(*sdo_flush) __P((struct sd_softc *, int));
-	int	(*sdo_getcache) __P((struct sd_softc *, int *));
-	int	(*sdo_setcache) __P((struct sd_softc *, int));
-};
 #define	SDGP_RESULT_OK		0	/* paramters obtained */
 #define	SDGP_RESULT_OFFLINE	1	/* no media, or otherwise losing */
 #define	SDGP_RESULT_UNFORMATTED	2	/* unformatted media (max params) */
-
-void sdattach __P((struct device *, struct sd_softc *, struct scsipi_periph *,
-    const struct sd_ops *));
-int sdactivate __P((struct device *, enum devact));
-int sddetach __P((struct device *, int));
 
 #endif /* _DEV_SCSIPI_SDVAR_H_ */

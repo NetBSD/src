@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.196 2003/09/13 15:49:04 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.197 2003/09/18 00:06:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.196 2003/09/13 15:49:04 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.197 2003/09/18 00:06:32 mycroft Exp $");
 
 #include "rnd.h"
 
@@ -1520,7 +1520,7 @@ cdgetdefaultlabel(cd, lp)
 	 * We could probe the mode pages to figure out what kind of disc it is.
 	 * Is this worthwhile?
 	 */
-	strncpy(lp->d_typename, "generic CD/DVD", 16);
+	strncpy(lp->d_typename, "mydisc", 16);
 	strncpy(lp->d_packname, "fictitious", 16);
 	lp->d_secperunit = cd->params.disksize;
 	lp->d_rpm = 300;
