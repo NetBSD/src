@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.12 1996/01/11 21:55:57 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.13 1996/01/15 00:06:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -189,3 +189,7 @@ int		sd_crazymap __P((int));
 
 /* Parse a disk string into a dev_t, return device struct pointer */
 struct	device *parsedisk __P((char *, int, int, dev_t *));
+
+/* Establish a mountroot_hook, for benefit of floppy drive, mostly. */
+void	mountroot_hook_establish __P((void (*func) __P((struct device *)),
+		struct device *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.41 1996/01/11 21:54:03 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.42 1996/01/15 00:06:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,6 +56,8 @@
 #include <sys/reboot.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
+#include <sys/malloc.h>
+#include <sys/queue.h>
 
 #include <net/if.h>
 
@@ -98,6 +100,18 @@ struct	bootpath bootpath[8];
 static	void bootpath_build __P((void));
 static	void bootpath_fake __P((struct bootpath *, char *));
 static	void bootpath_print __P((struct bootpath *));
+
+/*
+ * The mountroot_hook is provided as a mechanism for devices to perform
+ * a special function if they're the root device, such as the floppy
+ * drive ejecting the current disk and prompting for a filesystem floppy.
+ */
+struct mountroot_hook {
+	LIST_ENTRY(mountroot_hook) mr_link;
+	struct	device *mr_device;
+	void	(*mr_func) __P((struct device *));
+};
+LIST_HEAD(, mountroot_hook) mrh_list;
 
 /*
  * Most configuration on the SPARC is done by matching OPENPROM Forth
@@ -646,6 +660,9 @@ configure()
 	register int node = 0;
 	register char *cp;
 	void sync_crash();
+
+	/* Initialize the mountroot_hook list. */
+	LIST_INIT(&mrh_list);
 
 	/* build the bootpath */
 	bootpath_build();
@@ -1458,6 +1475,24 @@ parsedisk(str, len, defpart, devp)
 	return (dv);
 }
 
+void
+mountroot_hook_establish(func, dev)
+	void (*func) __P((struct device *));
+	struct device *dev;
+{
+	struct mountroot_hook *mrhp;
+
+	mrhp = (struct mountroot_hook *)malloc(sizeof(struct mountroot_hook),
+	    M_DEVBUF, M_NOWAIT);
+	if (mrhp == NULL)
+		panic("no memory for mountroot_hook");
+
+	bzero(mrhp, sizeof(struct mountroot_hook));
+	mrhp->mr_device = dev;
+	mrhp->mr_func = func;
+	LIST_INSERT_HEAD(&mrh_list, mrhp, mr_link);
+}
+
 /*
  * Attempt to find the device from which we were booted.
  * If we can do so, and not instructed not to do so,
@@ -1477,6 +1512,7 @@ setroot()
 	char buf[128];
 	extern int (*mountroot)();
 	dev_t temp;
+	struct mountroot_hook *mrhp;
 #if defined(NFSCLIENT)
 	extern char *nfsbootdevname;
 	extern int nfs_mountroot();
@@ -1611,6 +1647,16 @@ gotswap:
 		printf("can't figure root, hope your kernel is right\n");
 		return;
 	}
+
+	/*
+	 * Find mountroot hook and execute.
+	 */
+	for (mrhp = mrh_list.lh_first; mrhp != NULL;
+	    mrhp = mrhp->mr_link.le_next)
+		if (mrhp->mr_device == bootdv) {
+			(*mrhp->mr_func)(bootdv);
+			break;
+		}
 
 	/*
 	 * XXX: What is this doing?
