@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.28 2004/07/05 11:50:07 cube Exp $	 */
+/*	$NetBSD: load.c,v 1.29 2004/10/22 05:39:56 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -37,6 +37,11 @@
  *
  * John Polstra <jdp@polstra.com>.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: load.c,v 1.29 2004/10/22 05:39:56 skrll Exp $");
+#endif /* not lint */
 
 #include <err.h>
 #include <errno.h>

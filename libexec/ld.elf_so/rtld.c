@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.106 2004/07/18 17:26:19 thorpej Exp $	 */
+/*	$NetBSD: rtld.c,v 1.107 2004/10/22 05:39:57 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -37,6 +37,11 @@
  *
  * John Polstra <jdp@polstra.com>.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: rtld.c,v 1.107 2004/10/22 05:39:57 skrll Exp $");
+#endif /* not lint */
 
 #include <err.h>
 #include <errno.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: xprintf.c,v 1.16 2004/02/15 02:59:04 enami Exp $	 */
+/*	$NetBSD: xprintf.c,v 1.17 2004/10/22 05:39:57 skrll Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -28,6 +28,10 @@
  */
 
 #include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: xprintf.c,v 1.17 2004/10/22 05:39:57 skrll Exp $");
+#endif /* not lint */
+
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>

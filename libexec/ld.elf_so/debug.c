@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.5 2003/09/22 14:37:57 enami Exp $	*/
+/*	$NetBSD: debug.c,v 1.6 2004/10/22 05:39:56 skrll Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -36,6 +36,10 @@
  */
 
 #include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: debug.c,v 1.6 2004/10/22 05:39:56 skrll Exp $");
+#endif /* not lint */
+
 #include <stdarg.h>
 
 #include "debug.h"

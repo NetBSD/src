@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.18 2003/08/12 09:18:50 skrll Exp $	 */
+/*	$NetBSD: search.c,v 1.19 2004/10/22 05:39:57 skrll Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -35,6 +35,11 @@
  *
  * John Polstra <jdp@polstra.com>.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: search.c,v 1.19 2004/10/22 05:39:57 skrll Exp $");
+#endif /* not lint */
 
 #include <err.h>
 #include <errno.h>

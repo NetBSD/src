@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.4 2003/07/24 10:12:26 skrll Exp $	 */
+/*	$NetBSD: xmalloc.c,v 1.5 2004/10/22 05:39:57 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -32,6 +32,10 @@
  */
 
 #include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: xmalloc.c,v 1.5 2004/10/22 05:39:57 skrll Exp $");
+#endif /* not lint */
+
 #include "rtldenv.h"
 #include <stddef.h>
 #include <errno.h>
