@@ -1,4 +1,4 @@
-/*	$NetBSD: wwunframe.c,v 1.5 1997/11/21 08:37:58 lukem Exp $	*/
+/*	$NetBSD: wwunframe.c,v 1.6 2002/06/14 01:07:02 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,15 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)wwunframe.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwunframe.c,v 1.5 1997/11/21 08:37:58 lukem Exp $");
+__RCSID("$NetBSD: wwunframe.c,v 1.6 2002/06/14 01:07:02 wiz Exp $");
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 
 void
-wwunframe(w)
-	struct ww *w;
+wwunframe(struct ww *w)
 {
 	int i;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wwsize.c,v 1.6 1997/11/21 08:37:49 lukem Exp $	*/
+/*	$NetBSD: wwsize.c,v 1.7 2002/06/14 01:07:01 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwsize.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwsize.c,v 1.6 1997/11/21 08:37:49 lukem Exp $");
+__RCSID("$NetBSD: wwsize.c,v 1.7 2002/06/14 01:07:01 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,9 +52,7 @@ __RCSID("$NetBSD: wwsize.c,v 1.6 1997/11/21 08:37:49 lukem Exp $");
  * Resize a window.  Should be unattached.
  */
 int
-wwsize(w, nrow, ncol)
-	struct ww *w;
-	int nrow, ncol;
+wwsize(struct ww *w, int nrow, int ncol)
 {
 	int i, j;
 	int nline = 0;

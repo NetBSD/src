@@ -1,4 +1,4 @@
-/*	$NetBSD: wwscroll.c,v 1.5 2000/07/03 02:51:41 matt Exp $	*/
+/*	$NetBSD: wwscroll.c,v 1.6 2002/06/14 01:07:01 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwscroll.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwscroll.c,v 1.5 2000/07/03 02:51:41 matt Exp $");
+__RCSID("$NetBSD: wwscroll.c,v 1.6 2002/06/14 01:07:01 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,9 +52,7 @@ __RCSID("$NetBSD: wwscroll.c,v 1.5 2000/07/03 02:51:41 matt Exp $");
 #include "xx.h"
 
 void
-wwscroll(w, n)
-	struct ww *w;
-	int n;
+wwscroll(struct ww *w, int n)
 {
 	int dir;
 	int top;
@@ -89,10 +87,7 @@ wwscroll(w, n)
  * And don't redraw 'leaveit' lines.
  */
 int
-wwscroll1(w, row1, row2, dir, leaveit)
-	struct ww *w;
-	int row1, row2, dir;
-	int leaveit;
+wwscroll1(struct ww *w, int row1, int row2, int dir, int leaveit)
 {
 	int i;
 	int row1x, row2x;
