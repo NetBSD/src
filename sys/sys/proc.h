@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.31 1994/08/15 22:02:20 mycroft Exp $	*/
+/*	$NetBSD: proc.h,v 1.32 1994/08/30 03:07:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -45,6 +45,7 @@
 
 #include <machine/proc.h>		/* Machine-dependent proc substruct. */
 #include <sys/select.h>			/* For struct selinfo. */
+#include <sys/queue.h>
 
 /*
  * One structure allocated per session.
@@ -61,8 +62,8 @@ struct	session {
  * One structure allocated per process group.
  */
 struct	pgrp {
-	struct	pgrp *pg_hforw;		/* Forward link in hash bucket. */
-	struct	proc *pg_mem;		/* Pointer to pgrp members. */
+	LIST_ENTRY(pgrp) pg_hash;	/* Hash chain. */
+	LIST_HEAD(, proc) pg_members;	/* Pointer to pgrp members. */
 	struct	session *pg_session;	/* Pointer to session. */
 	pid_t	pg_id;			/* Pgrp id. */
 	int	pg_jobc;	/* # procs qualifying pgrp for job control */
@@ -82,8 +83,7 @@ struct	pgrp {
 struct	proc {
 	struct	proc *p_forw;		/* Doubly-linked run/sleep queue. */
 	struct	proc *p_back;
-	struct	proc *p_next;		/* Linked list of active procs */
-	struct	proc **p_prev;		/*    and zombies. */
+	LIST_ENTRY(proc) p_list;	/* List of all processes. */
 
 	/* substructures: */
 	struct	pcred *p_cred;		/* Process owner's identity. */
@@ -97,20 +97,20 @@ struct	proc {
 #define	p_rlimit	p_limit->pl_rlimit
 
 	int	p_flag;			/* P_* flags. */
+	u_char	p_emul;			/* Operating system being emulated. */
 	char	p_stat;			/* S* process status. */
-	char	p_pad1[3];
+	char	p_pad1[2];
 
 	pid_t	p_pid;			/* Process identifier. */
-	struct	proc *p_hash;	 /* Hashed based on p_pid for kill+exit+... */
-	struct	proc *p_pgrpnxt; /* Pointer to next process in process group. */
-	struct	proc *p_pptr;	 /* Pointer to process structure of parent. */
-	struct	proc *p_osptr;	 /* Pointer to older sibling processes. */
+	LIST_ENTRY(proc) p_hash;	/* Hash chain. */
+	LIST_ENTRY(proc) p_pglist;	/* List of processes in pgrp. */
+	struct	proc *p_pptr;	 	/* Pointer to parent process. */
+	LIST_ENTRY(proc) p_sibling;	/* List of sibling processes. */
+	LIST_HEAD(, proc) p_children;	/* Pointer to list of children. */
 
 /* The following fields are all zeroed upon creation in fork. */
-#define	p_startzero	p_ysptr
+#define	p_startzero	p_oppid
 
-	struct	proc *p_ysptr;	 /* Pointer to younger siblings. */
-	struct	proc *p_cptr;	 /* Pointer to youngest living child. */
 	pid_t	p_oppid;	 /* Save parent pid during ptrace. XXX */
 	int	p_dupfd;	 /* Sideways return value from fdopen. XXX */
 
@@ -138,7 +138,7 @@ struct	proc {
 
 	int	p_holdcnt;		/* If non-zero, don't swap. */
 
-	long	p_spare[4];		/* pad to 256, avoid shifting eproc. */
+	long	p_spare[2];		/* pad to 256, avoid shifting eproc. */
 
 /* End area that is zeroed on creation. */
 #define	p_endzero	p_startcopy
@@ -154,7 +154,6 @@ struct	proc {
 	u_char	p_usrpri;	/* User-priority based on p_cpu and p_nice. */
 	char	p_nice;		/* Process "nice" value. */
 	char	p_comm[MAXCOMLEN+1];
-	u_char	p_emul;		/* Operating system being emulated. */
 
 	struct 	pgrp *p_pgrp;	/* Pointer to process group. */
 
@@ -238,7 +237,6 @@ struct	pcred {
  */
 #define	PID_MAX		30000
 #define	NO_PID		30001
-#define	PIDHASH(pid)	((pid) & pidhashmask)
 
 #define SESS_LEADER(p)	((p)->p_session->s_leader == (p))
 #define	SESSHOLD(s)	((s)->s_count++)
@@ -247,15 +245,21 @@ struct	pcred {
 		FREE(s, M_SESSION);					\
 }
 
-extern struct proc *pidhash[];		/* In param.c. */
-extern struct pgrp *pgrphash[];		/* In param.c. */
+#define	PIDHASH(pid)	(&pidhashtbl[(pid) & pidhash])
+extern LIST_HEAD(pidhashhead, proc) *pidhashtbl;
+extern u_long pidhash;
+
+#define	PGRPHASH(pgid)	(&pgrphashtbl[(pgid) & pgrphash])
+extern LIST_HEAD(pgrphashhead, pgrp) *pgrphashtbl;
+extern u_long pgrphash;
+
 extern struct proc *curproc;		/* Current running proc. */
 extern struct proc proc0;		/* Process slot for swapper. */
 extern int nprocs, maxproc;		/* Current and max number of procs. */
-extern int pidhashmask;			/* In param.c. */
 
-volatile struct proc *allproc;		/* List of active procs. */
-struct proc *zombproc;			/* List of zombie procs. */
+LIST_HEAD(proclist, proc);
+extern struct proclist allproc;		/* List of all processes. */
+extern struct proclist zombproc;	/* List of zombie processes. */
 struct proc *initproc, *pageproc;	/* Process slots for init, pager. */
 
 #define	NQS	32			/* 32 run queues. */

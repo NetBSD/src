@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.40 1994/08/23 22:09:22 deraadt Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.41 1994/08/30 03:07:17 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -339,7 +339,7 @@ loop:
 #endif
 	pp = NULL;
 	ppri = INT_MIN;
-	for (p = (struct proc *)allproc; p != NULL; p = p->p_next) {
+	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		if (p->p_stat == SRUN && (p->p_flag & P_INMEM) == 0) {
 			pri = p->p_swtime + p->p_slptime - p->p_nice * 8;
 			if (pri > ppri) {
@@ -436,7 +436,7 @@ swapout_threads()
 #endif
 	outp = outp2 = NULL;
 	outpri = outpri2 = 0;
-	for (p = (struct proc *)allproc; p != NULL; p = p->p_next) {
+	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		if (!swappable(p))
 			continue;
 		switch (p->p_stat) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_meter.c,v 1.15 1994/06/29 06:48:11 cgd Exp $	*/
+/*	$NetBSD: vm_meter.c,v 1.16 1994/08/30 03:07:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -80,7 +80,7 @@ loadav(avg)
 	register int i, nrun;
 	register struct proc *p;
 
-	for (nrun = 0, p = (struct proc *)allproc; p != NULL; p = p->p_next) {
+	for (nrun = 0, p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		switch (p->p_stat) {
 		case SSLEEP:
 			if (p->p_priority > PZERO || p->p_slptime != 0)
@@ -156,7 +156,7 @@ vmtotal(totalp)
 	/*
 	 * Calculate process statistics.
 	 */
-	for (p = (struct proc *)allproc; p != NULL; p = p->p_next) {
+	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		if (p->p_flag & P_SYSTEM)
 			continue;
 		switch (p->p_stat) {
