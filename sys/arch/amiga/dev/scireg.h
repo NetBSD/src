@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)scireg.h	7.3 (Berkeley) 2/5/91
- *	$Id: scireg.h,v 1.1 1994/02/28 06:06:24 chopps Exp $
+ *	$Id: scireg.h,v 1.2 1994/05/29 04:50:23 chopps Exp $
  */
 
 /*
@@ -42,6 +42,7 @@
  *
  */
 
+#if 0	/* for reference */
 typedef struct {
 	unsigned char pad0[1];
 	volatile unsigned char sci_data;	/* r:  Current data */
@@ -72,6 +73,7 @@ typedef struct {
 	volatile unsigned char sci_iack;	/* r:  Interrupt Acknowledge  */
 #define	sci_irecv sci_iack			/* w:  Start dma receive, initiator */
 } sci_regmap_t;
+#endif
 
 /*
  * Initiator command register

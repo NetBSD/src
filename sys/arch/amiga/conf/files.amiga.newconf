@@ -1,5 +1,5 @@
 #
-#	$Id: files.amiga.newconf,v 1.7 1994/05/29 01:44:37 chopps Exp $
+#	$Id: files.amiga.newconf,v 1.8 1994/05/29 04:50:04 chopps Exp $
 #
 
 maxusers 2 8 64
@@ -116,7 +116,7 @@ file	arch/amiga/dev/wesc.c		wesc needs-flag
 
 # ncr 5380 controllers
 define	sci
-file	arch/amiga/dev/ncrd.c		sci
+file	arch/amiga/dev/sci.c		sci
 
 # Supra Wordsync II
 device	wstsc at ztwobus: scsi, sci
