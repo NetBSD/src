@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.48 1997/05/03 08:00:02 pk Exp $	*/
+/*	$NetBSD: rtld.c,v 1.49 1997/06/26 20:52:06 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -94,6 +94,7 @@ struct somap_private {
 #define RTLD_MAIN	1	/* Marks the main program */
 #define RTLD_RTLD	2	/* Marks the run-time linker */
 #define RTLD_DL		4	/* A dlopen'ed object */
+	size_t		spd_size;
 
 #ifdef SUN_COMPAT
 	long		spd_offset;	/* Correction for Sun main programs */
@@ -188,9 +189,11 @@ static struct ld_entry	ld_entry = {
        long		binder __P((jmpslot_t *));
 static int		load_subs __P((struct so_map *));
 static struct so_map	*map_object __P((struct sod *, struct so_map *));
+static void		unmap_object __P((struct so_map *));
 static struct so_map	*alloc_link_map __P((	char *, struct sod *,
 						struct so_map *, caddr_t,
-						struct _dynamic *));
+						size_t, struct _dynamic *));
+static void		free_link_map __P((struct so_map *));
 static inline void	check_text_reloc __P((	struct relocation_info *,
 						struct so_map *,
 						caddr_t));
@@ -337,12 +340,12 @@ rtld(version, crtp, dp)
 	 * for `main' and `rtld'.
 	 */
 	smp = alloc_link_map(main_progname, (struct sod *)0, (struct so_map *)0,
-					(caddr_t)0, crtp->crt_dp);
+					(caddr_t)0, 0, crtp->crt_dp);
 	LM_PRIVATE(smp)->spd_refcount++;
 	LM_PRIVATE(smp)->spd_flags |= RTLD_MAIN;
 
 	smp = alloc_link_map(us, (struct sod *)0, (struct so_map *)0,
-					(caddr_t)crtp->crt_ba, dp);
+					(caddr_t)crtp->crt_ba, 0, dp);
 	LM_PRIVATE(smp)->spd_refcount++;
 	LM_PRIVATE(smp)->spd_flags |= RTLD_RTLD;
 
@@ -430,7 +433,7 @@ load_subs(smp)
 						sodp->sod_major,
 						sodp->sod_minor);
 				}
-				newmap = alloc_link_map(NULL, sodp, smp, 0, 0);
+				newmap = alloc_link_map(NULL, sodp, smp, 0, 0, 0);
 			}
 			LM_PRIVATE(newmap)->spd_refcount++;
 			next = sodp->sod_next;
@@ -529,11 +532,12 @@ ld_trace(smp)
  * result of the presence of link object LOP in the link map PARENT.
  */
 static struct so_map *
-alloc_link_map(path, sodp, parent, addr, dp)
+alloc_link_map(path, sodp, parent, addr, size, dp)
 	char		*path;
 	struct sod	*sodp;
 	struct so_map	*parent;
 	caddr_t		addr;
+	size_t		size;
 	struct _dynamic	*dp;
 {
 	struct so_map		*smp;
@@ -558,12 +562,29 @@ alloc_link_map(path, sodp, parent, addr, dp)
 	smpp->spd_refcount = 0;
 	smpp->spd_flags = 0;
 	smpp->spd_parent = parent;
+	smpp->spd_size = size;
 
 #ifdef SUN_COMPAT
 	smpp->spd_offset =
 		(addr==0 && dp && dp->d_version==LD_VERSION_SUN) ? PAGSIZ : 0;
 #endif
 	return smp;
+}
+
+/*
+ * Free the link map for an object being unmapped.  The link map
+ * has already been removed from the link map list, so it can't be used
+ * after it's been unmapped.
+ */
+static void
+free_link_map(smp)
+	struct so_map	*smp;
+{
+
+	free(smp->som_spd);
+	if (smp->som_path != NULL)
+		free(smp);
+	free(smp);
 }
 
 /*
@@ -650,6 +671,9 @@ again:
 		(void)close(fd);
 		return NULL;
 	}
+#if DEBUG
+	xprintf("map1: 0x%x for 0x%x\n", addr, hdr.a_text + hdr.a_data + hdr.a_bss);
+#endif
 
 	if (mprotect(addr + hdr.a_text, hdr.a_data,
 	    PROT_READ|PROT_WRITE|PROT_EXEC) != 0) {
@@ -673,7 +697,41 @@ again:
 	/* Fixup __DYNAMIC structure */
 	(long)dp->d_un.d_sdt += (long)addr;
 
-	return alloc_link_map(path, sodp, smp, addr, dp);
+	return alloc_link_map(path, sodp, smp, addr,
+	    hdr.a_text + hdr.a_data + hdr.a_bss, dp);
+}
+
+/*
+ * Unmap a mapped object.
+ */
+static void
+unmap_object(smp)
+	struct so_map	*smp;
+{
+	struct so_map *p, **pp;
+
+	/* remove from link map list */
+	pp = &link_map_head;
+	while ((p = *pp) != NULL) {
+		if (p == smp)
+			break;
+		pp = &p->som_next;
+	}
+	if (p == NULL) {
+		warnx("warning: link map entry for %s not on link map list!",
+		    smp->som_path);
+		return;
+	}
+
+	*pp = smp->som_next;			/* make list skip it */
+	if (link_map_tail == &smp->som_next)	/* and readjust tail pointer */
+		link_map_tail = pp;
+
+	/* unmap from address space */
+	(void)munmap(smp->som_addr, LM_PRIVATE(smp)->spd_size);
+
+	/* free the link map structure. */
+	free_link_map(smp);
 }
 
 void
@@ -1537,11 +1595,12 @@ xprintf("dlclose(%s): refcount = %d\n", smp->som_path, LM_PRIVATE(smp)->spd_refc
 	/* Dismantle shared object map and descriptor */
 	call_map(smp, "__fini");
 #if 0
+	unload_subs(smp);		/* XXX should unload implied objects */
+#endif
 	unmap_object(smp);
-	free(smp->som_sod->sod_name);
+	free((char *)smp->som_sod->sod_name);
 	free(smp->som_sod);
 	free(smp);
-#endif
 
 	return 0;
 }
