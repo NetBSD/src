@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlvar.h,v 1.8 2000/09/19 01:15:28 fvdl Exp $	*/
+/*	$NetBSD: elinkxlvar.h,v 1.9 2000/10/11 16:57:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ u_int16_t exreadeeprom __P((bus_space_tag_t, bus_space_handle_t, int));
 void	ex_config __P((struct ex_softc *));
 
 int	ex_intr __P((void *));
-void	ex_stop __P((struct ex_softc *));
+void	ex_stop __P((struct ifnet *, int));
 void	ex_watchdog __P((struct ifnet *));
 int	ex_ioctl __P((struct ifnet *ifp, u_long, caddr_t));
 int	ex_activate __P((struct device *, enum devact));
