@@ -1,4 +1,4 @@
-.\"	$NetBSD: diskless.8,v 1.25 2003/05/22 06:45:55 fair Exp $
+.\"	$NetBSD: diskless.8,v 1.26 2003/05/22 07:06:53 wiz Exp $
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross, Theo de Raadt
 .\" All rights reserved.
@@ -109,8 +109,7 @@ The protocols used to boot
 .Nx
 can be completely different than the ones that
 .Nx
-uses operationally, i.e.
-you can netboot the system using
+uses operationally, i.e. you can netboot the system using
 .Tn \&HP
 .Tn RMP
 and the
@@ -432,7 +431,7 @@ to reply to queries from the clients.
 There must be one entry per client system.
 .Pp
 A client system's
-.Tn Ethenet
+.Tn Ethernet
 .Tn MAC
 address is often printed on the system case, or on a chip on its
 motherboard, or on the
@@ -442,7 +441,7 @@ If not,
 the network with
 .Xr tcpdump 8
 when the client is powered-on should reveal its
-.Tn Ethenet
+.Tn Ethernet
 .Tn MAC
 address.
 .Pp
@@ -460,7 +459,7 @@ file, or in the master file for your
 zone.
 For
 .Pa /etc/hosts
-the entry should looke like:
+the entry should look like:
 .Pp
 .Bd -literal -offset indent -compact
 192.197.96.12           myclient
@@ -595,7 +594,7 @@ these systems' firmware does not append the architecture name
 The name used is architecture dependent, it simply has to match
 what the booting client's system firmware wishes to it to be.
 .Pp
-If the client's system fimrware fails to fetch the expected file,
+If the client's system firmware fails to fetch the expected file,
 .Xr tcpdump 8
 can be used to discover which filename the client is being requested.
 Also, examination of
@@ -661,7 +660,6 @@ addresses in the
 .Tn DNS
 or
 .Pa /etc/hosts .
-.Pp
 .Ss Diskless Client File Systems
 Build the swap file for
 .Sy myclient
@@ -826,18 +824,18 @@ location of boot programs offered by
 .Xr tftpd 8
 .El
 .Sh SEE ALSO
-.Xr boot 8 ,
 .Xr bootparams 5 ,
-.Xr dhcpd 8 ,
 .Xr dhcpd.conf 5 ,
 .Xr ethers 5 ,
 .Xr exports 5 ,
 .Xr fstab 5 ,
 .Xr hosts 5 ,
+.Xr networks 5 ,
+.Xr boot 8 ,
+.Xr dhcpd 8 ,
 .Xr mopd 8 ,
 .Xr mountd 8 ,
-.Xr networks 5 ,
-.Xr nfsiod 8 ,
+.Xr nfsd 8 ,
 .Xr rarpd 8 ,
 .Xr rbootd 8 ,
 .Xr reboot 8 ,
