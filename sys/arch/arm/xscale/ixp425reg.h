@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425reg.h,v 1.16 2003/12/08 14:41:11 scw Exp $ */
+/*	$NetBSD: ixp425reg.h,v 1.17 2003/12/08 16:14:16 scw Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -74,8 +74,10 @@
  *           PCI Data (memory space)
  * F800 0000 ---------------------------
  *
- * F001 3000 ---------------------------
+ * F020 1000 ---------------------------
  *           SDRAM Controller
+ * F020 0000 ---------------------------
+ *
  * F001 2000 ---------------------------
  *           PCI Configuration and Status Registers
  * F001 1000 ---------------------------
@@ -445,8 +447,7 @@
  * SDRAM Configuration Register
  */
 #define	IXP425_MCU_HWBASE	0xcc000000UL
-#define IXP425_MCU_VBASE	(IXP425_PCI_VBASE + IXP425_PCI_SIZE)
-						/* 0xf0012000 */
+#define IXP425_MCU_VBASE	0xf0200000UL
 #define	IXP425_MCU_SIZE		0x1000		/* Actually only 256 bytes */
 #define	MCU_SDR_CONFIG		0x00
 #define  MCU_SDR_CONFIG_MCONF(x) ((x) & 0x7)
