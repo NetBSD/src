@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.10 2003/10/27 04:30:32 simonb Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.11 2004/03/30 00:04:37 simonb Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.10 2003/10/27 04:30:32 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.11 2004/03/30 00:04:37 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -273,7 +273,8 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 	union instr instr = *insn;
 	int *a;
 	vaddr_t addr;
-	int ra, rb, rc, rt, type, mask, fsr, cx, bf, setcr, cond;
+	int ra, rb, rc, rt, type, mask, fsr, cx, bf, setcr;
+	unsigned int cond;
 	struct fpreg *fs;
 
 	/* Setup work. */
