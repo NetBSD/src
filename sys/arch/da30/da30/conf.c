@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.2 1994/06/18 12:09:45 paulus Exp $
+ *	$Id: conf.c,v 1.3 1994/08/25 06:17:28 paulus Exp $
  */
 
 #include <sys/param.h>
@@ -89,8 +89,7 @@ bdev_decl(no);	/* dummy declarations */
 #include "sd.h"
 #include "wd.h"
 #include "id.h"
-/*#include "vn.h"*/
-#define NVN 0
+#include "vn.h"
 
 bdev_decl(sd);
 bdev_decl(wd);
