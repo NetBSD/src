@@ -1,4 +1,4 @@
-/*	$NetBSD: whois.c,v 1.6 1997/10/19 14:46:19 mrg Exp $	*/
+/*	$NetBSD: whois.c,v 1.7 1997/10/20 03:23:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,13 +43,14 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: whois.c,v 1.6 1997/10/19 14:46:19 mrg Exp $");
+__RCSID("$NetBSD: whois.c,v 1.7 1997/10/20 03:23:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <err.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -77,7 +78,7 @@ main(argc, argv)
 	char *host;
 
 	host = NICHOST;
-	while ((ch = getopt(argc, argv, "h:")) != EOF)
+	while ((ch = getopt(argc, argv, "h:")) != -1)
 		switch((char)ch) {
 		case 'h':
 			host = optarg;
@@ -93,41 +94,27 @@ main(argc, argv)
 		usage();
 
 	hp = gethostbyname(host);
-	if (hp == NULL) {
-		(void)fprintf(stderr, "whois: %s: ", host);
-		herror((char *)NULL);
-		exit(1);
-	}
+	if (hp == NULL)
+		errx(1, "%s: %s", host, hstrerror(h_errno));
 	host = hp->h_name;
 	s = socket(hp->h_addrtype, SOCK_STREAM, 0);
-	if (s < 0) {
-		perror("whois: socket");
-		exit(1);
-	}
-	bzero((caddr_t)&sin, sizeof (sin));
+	if (s < 0)
+		err(1, "socket");
+	memset((caddr_t)&sin, 0, sizeof (sin));
 	sin.sin_family = hp->h_addrtype;
-	if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
-		perror("whois: bind");
-		exit(1);
-	}
-	bcopy(hp->h_addr, (char *)&sin.sin_addr, hp->h_length);
+	if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) < 0)
+		err(1, "bind");
+	memmove((char *)&sin.sin_addr, hp->h_addr, hp->h_length);
 	sp = getservbyname("whois", "tcp");
-	if (sp == NULL) {
-		(void)fprintf(stderr, "whois: whois/tcp: unknown service\n");
-		exit(1);
-	}
+	if (sp == NULL)
+		errx(1, "whois/tcp: unknown service");
 	sin.sin_port = sp->s_port;
-	if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
-		perror("whois: connect");
-		exit(1);
-	}
+	if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0)
+		err(1, "connect");
 	sfi = fdopen(s, "r");
 	sfo = fdopen(s, "w");
-	if (sfi == NULL || sfo == NULL) {
-		perror("whois: fdopen");
-		(void)close(s);
-		exit(1);
-	}
+	if (sfi == NULL || sfo == NULL)
+		err(1, "fdopen");
 	while (argc-- > 1)
 		(void)fprintf(sfo, "%s ", *argv++);
 	(void)fprintf(sfo, "%s\r\n", *argv);
