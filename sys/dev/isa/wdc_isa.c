@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.20 2001/03/11 05:10:58 takemura Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.21 2001/06/07 06:33:48 leo Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,6 +58,8 @@
 /* options passed via the 'flags' config keyword */
 #define WDC_OPTIONS_32			0x01 /* try to use 32bit data I/O */
 #define WDC_OPTIONS_SINGLE_DRIVE	0x02 /* Don't probe second drive */
+#define WDC_OPTIONS_ATA_NOSTREAM	0x04
+#define WDC_OPTIONS_ATAPI_NOSTREAM	0x08
 
 struct wdc_isa_softc {
 	struct	wdc_softc sc_wdcdev;
@@ -157,6 +159,11 @@ wdc_isa_attach(parent, self, aux)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
 	if (sc->sc_wdcdev.sc_dev.dv_cfdata->cf_flags & WDC_OPTIONS_SINGLE_DRIVE)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_SINGLE_DRIVE;
+	if (sc->sc_wdcdev.sc_dev.dv_cfdata->cf_flags & WDC_OPTIONS_ATA_NOSTREAM)
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_ATA_NOSTREAM;
+	if (sc->sc_wdcdev.sc_dev.dv_cfdata->cf_flags
+						& WDC_OPTIONS_ATAPI_NOSTREAM)
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_ATAPI_NOSTREAM;
 	sc->sc_wdcdev.PIO_cap = 0;
 	sc->wdc_chanptr = &sc->wdc_channel;
 	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
