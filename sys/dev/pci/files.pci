@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.87 2000/04/20 05:25:20 nathanw Exp $
+#	$NetBSD: files.pci,v 1.88 2000/04/21 17:57:00 bouyer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -89,6 +89,11 @@ file	dev/pci/if_le_pci.c		le_pci
 device	ncr: scsi
 attach	ncr at pci
 file	dev/pci/ncr.c			ncr
+
+# Symbios 53c8xx SCSI chips
+# device declaration in sys/conf/files
+attach	siop at pci with siop_pci
+file	dev/pci/siop_pci.c	siop_pci
 
 # PCI IDE controllers
 device	pciide {[channel = -1]}: wdc_base, ata, atapi
