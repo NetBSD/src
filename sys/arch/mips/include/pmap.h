@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.12 1997/06/09 11:46:16 jonathan Exp $	*/
+/*	$NetBSD: pmap.h,v 1.13 1997/06/16 07:47:43 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -88,13 +88,16 @@ typedef struct pmap {
 	struct segtab		*pm_segtab;	/* pointers to pages of PTEs */
 } *pmap_t;
 
+
 /*
  * Defines for pmap_attributes[phys_mach_page];
  */
 #define PMAP_ATTR_MOD	0x01	/* page has been modified */
 #define PMAP_ATTR_REF	0x02	/* page has been referenced */
 
+
 #ifdef	_KERNEL
+
 char *pmap_attributes;		/* reference and modify bits */
 struct pmap kernel_pmap_store;
 
@@ -102,10 +105,28 @@ struct pmap kernel_pmap_store;
 #define pmap_kernel()		(&kernel_pmap_store)
 
 /*
+ *	Bootstrap the system enough to run with virtual memory.
+ *	firstaddr is the first unused kseg0 address (not page aligned).
+ */
+void	pmap_bootstrap __P((vm_offset_t firstaddr));
+
+
+/*
+ * pmap_prefer()  helps reduce virtual-coherency exceptions in
+ * the virtually-indexed cache on mips3 CPUs.
+ */
+#ifdef MIPS3
+#define PMAP_PREFER(pa, va)             pmap_prefer((pa), (va))
+void	pmap_prefer __P((vm_offset_t, vm_offset_t *));
+#endif /* MIPS3 */
+
+
+/*
  * Kernel cache operations for the user-space API 
  */
 int mips_user_cacheflush __P((struct proc *p, vm_offset_t va, int nbytes, int whichcache));
 int mips_user_cachectl   __P((struct proc *p, vm_offset_t va, int nbytes, int ctl));
+
 #endif	/* _KERNEL */
 
 #endif	/* _PMAP_MACHINE_ */
