@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 1996/05/05 12:17:18 oki Exp $
+#	$NetBSD: Makefile,v 1.2 1997/06/22 07:09:09 mrg Exp $
 
 PROG=tvctrl
+NOMAN=yes
 
 .include <bsd.prog.mk>

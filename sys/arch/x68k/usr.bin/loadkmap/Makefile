@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1996/05/05 12:17:18 oki Exp $
+#	$NetBSD: Makefile,v 1.2 1997/06/22 07:09:04 mrg Exp $
 # Makefile for loadkmap
 
 all: loadkmap ascii_kmap jis_kmap
@@ -15,6 +15,7 @@ jis_kmap: jis_kmap.c
 	dd bs=1 skip=32 if=${.TARGET}.aout of=${.TARGET}
 	rm ${.TARGET}.aout
 
+NOMAN=	yes
 PROG = loadkmap
 
 .include <bsd.prog.mk>
