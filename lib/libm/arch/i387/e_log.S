@@ -5,7 +5,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$Id: e_log.S,v 1.3 1995/04/28 22:43:40 jtc Exp $")
+RCSID("$NetBSD: e_log.S,v 1.4 1995/05/08 23:48:39 jtc Exp $")
 
 ENTRY(__ieee754_log)
 	fldln2

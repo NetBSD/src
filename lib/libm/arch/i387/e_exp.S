@@ -5,7 +5,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$Id: e_exp.S,v 1.3 1995/04/28 22:43:38 jtc Exp $")
+RCSID("$NetBSD: e_exp.S,v 1.4 1995/05/08 23:47:04 jtc Exp $")
 
 /* e^x = 2^(x * log2(e)) */
 ENTRY(__ieee754_exp)
