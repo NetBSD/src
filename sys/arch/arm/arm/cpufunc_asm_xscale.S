@@ -1,10 +1,10 @@
-/*	$NetBSD: cpufunc_asm_xscale.S,v 1.9 2002/01/24 06:18:12 thorpej Exp $	*/
+/*	$NetBSD: cpufunc_asm_xscale.S,v 1.10 2002/01/24 06:21:27 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2001 Wasabi Systems, Inc.
+ * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
- * Written by Jason R. Thorpe for Wasabi Systems, Inc.
+ * Written by Allen Briggs and Jason R. Thorpe for Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
