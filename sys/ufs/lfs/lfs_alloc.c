@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.20 1999/04/16 00:41:58 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.21 1999/04/16 16:23:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -360,7 +360,8 @@ lfs_vfree(v)
 		sup->su_nbytes -= DINODE_SIZE;
 		(void) VOP_BWRITE(bp);
 	}
-	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
+	if(!already_locked)
+		lockmgr(&ufs_hashlock, LK_RELEASE, 0);
 	
 	/* Set superblock modified bit and decrement file count. */
 	fs->lfs_fmod = 1;
