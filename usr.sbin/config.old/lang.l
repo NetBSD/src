@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)lang.l	5.8 (Berkeley) 4/19/91
- *	$Id: lang.l,v 1.9 1994/02/18 06:10:44 mycroft Exp $
+ *	$Id: lang.l,v 1.10 1994/05/21 08:34:04 cgd Exp $
  */
 
 #include <ctype.h>
@@ -85,7 +85,6 @@ struct kt {
         { "manufacturer", MANUFACTURER },
 #endif
 	{ "master",	MASTER },
-	{ "maxfdescs",	MAXFDESCS },
 	{ "maxusers",	MAXUSERS },
 	{ "minor",	MINOR },
 #if MACHINE_I386
