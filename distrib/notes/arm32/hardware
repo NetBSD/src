@@ -1,8 +1,8 @@
-.\"	$NetBSD: hardware,v 1.3 1999/01/13 07:30:03 ross Exp $	
+.\"	$NetBSD: hardware,v 1.4 1999/03/26 09:10:48 mark Exp $	
 
-NetBSD/arm32 \*V runs on several systems with
+NetBSD/arm32 \*V runs on a number of systems with
 .Tn ARM6
-or above processors,
+or later processors,
 with or without FPU coprocessor. The minimal configuration is said to
 require 8M of RAM and 50M of disk space, though we do not know of anyone
 running with a system quite this minimal today. To install the entire
@@ -20,8 +20,8 @@ Supported devices include (but is not limited to):
 	IDE controllers:
 		Acorn motherboard IDE.
 		Simtec IDE controller.
-		RapIDE IDE controller.
-		ICS IDE controller.
+		RapIDE Issue 2 IDE controller.
+		ICS V5 & V6 IDE controller.
 
 	SCSI host adapters:
 		Cumana SCSI 2.
@@ -45,6 +45,7 @@ Supported devices include (but is not limited to):
 		I-cubed EtherH.
 		ANT EtherM.
 
+	Most SCSI disk drives.
 	Most SCSI tape drives.
 	CD-ROM drives:
 		Most SCSI CD-ROM drives.
@@ -70,19 +71,83 @@ Supported devices include (but is not limited to):
 
 	Motherboards:
 		Acorn RiscPC.
-		Acorn A7000 (experimental).
-		Acorn A7000+ (experimental).
-		VLSI RC7500 (experimental).
+		Acorn A7000.
+		Acorn A7000+.
+		VLSI RC7500.
+		Digital DNARD.
+		Intel EBSA285.
+		Chalice CATS.
 
 	Other devices:
 		RiscPC keyboard.
 		A7000 keyboard.
 		RiscPC realtime clock.
 		VLSI RC7500 motherboard devices.
+
+	Digital DNARD devices
+		IDE
+		keyboard
+		mouse
+		ethernet
+		smartcard
+		audio
+		joystick
+
+	Chalice CATS devices
+		ALI M1543 southbridge inc PS/2 keyboard & mouse, ide, serial
+		parallel, USB and ISA bus
+		RTC
+
+	Intel EBSA285 & Chalice CATS PCI devices
+		PCI - PCI bridges
+			DC21150
+			DC21152
+			DC21153
+			DC21154
+			Hint HB1
+		Digital DC21x4x-based PCI Ethernet adapters, including:
+			Cogent EM1X0, EM960 (a.k.a. Adaptec ANA-69XX)
+			Cogent EM964 [b]
+			Cogent EM4XX [b]
+			Compex Readylink PCI
+			DANPEX EN-9400P3
+			Digital Celebris GL, GLST on-board ethernet
+			Digital (DEC) PCI Ethernet/Fast Ethernet adapters (all)
+			JCIS Condor JC1260
+			Linksys PCI Fast Ethernet
+			SMC EtherPower 10, 10/100 (PCI only!)
+			SMC EtherPower
+			SVEC PN0455
+			SVEC FD1000-TP
+			Znyx ZX34X
+		Qlogic ISP [12]0x0 SCSI/FibreChannel boards
+		Adaptec AHA-2x4x[U][W] cards using the AIC-7770, AIC-7850,
+			AIC-7860, AIC-7870, or AIC-7880 chip.
+		NE2000 PCI ethernet adapters
+		Universal Serial Bus:
+			UHCI host controllers
+			OHCI host controllers
+			Hubs
+			Keyboards using the boot protocol
+			Mice
+			Printers
+			Generic support for HID devices
+
+		Video cards
+			Diamond Stealth 3D 2000 Pro
+			ATI Charger 4MB
+			STB Velocity 128
+			Cirrus Logic 5446
+			IGS 2010
+			IGS 5000
+			S3 based interfaces
 .Ed
 .Pp
 Drivers for hardware marked with "[*]" are NOT present in installation
 kernels. 
+.Pp
+Other PCI device may be supported by Intel EBSA285 & Chalice CATS but
+have not been tested.
 .Pp
 Support for some devices is limited to particular kernels. eg there is no
 SA110 support in A7000 kernels.
