@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdoc.samples.7,v 1.19 1999/01/12 02:20:33 ross Exp $
+.\"	$NetBSD: mdoc.samples.7,v 1.20 1999/03/31 00:05:38 ross Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2194,11 +2194,11 @@ More work needs to be done with the keep macros, a
 .Fl line
 option needs to be added.)
 .Ss Examples and Displays
-There are five types of displays, a quickie one line indented display
+There are six types of displays, a quickie one line indented display
 .Ql \&.D1 ,
 a quickie one line literal display
 .Ql \&.Dl ,
-and a block literal, block filled and block ragged which use
+and block literal, block filled, block unfilled, and block ragged which use
 the
 .Ql \&.Bd
 begin-display
@@ -2257,7 +2257,9 @@ may have an offset specifier for indentation:
 .Pp
 .Bl -tag -width "file file_name  " -compact
 .It Fl ragged
-Display a block of text as typed,
+Fill, but do not adjust the right margin.
+.It Fl unfilled
+Do not fill: display a block of text as typed, the
 right (and left) margin edges are left ragged.
 .It Fl filled
 Display a filled (formatted) block.
