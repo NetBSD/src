@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.8 2000/09/24 17:03:28 jdolecek Exp $
+.\"	$NetBSD: boot.8,v 1.9 2001/06/05 12:52:56 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .\"	@(#)boot_hp300.8	8.2 (Berkeley) 4/19/94
 .\"
 .Dd June 21, 1996
-.Dt boot 8 atari
+.Dt BOOT 8 atari
 .Os
 .Sh NAME
 .Nm boot
@@ -104,7 +104,7 @@ In interactive mode, the command line looks like:
 Each component of the command can be omitted in which case the defaults
 indicated will be used.
 .Bl -tag -width boot-options
-.It OS-type:
+.It OS-type :
 .Bl -tag -compact -width ".netbsd (default)"
 .It .netbsd (the default)
 .It .linux
@@ -119,7 +119,7 @@ the selected type. Due to limitations of the BIOS however, the search for
 bootblocks is continued rather than restarted.
 .It boot-path
 This gives you the opportunity to boot another kernel, say:
-.Pa /netbsd.old.
+.Pa /netbsd.old .
 The default is
 .Pa /netbsd
 .It boot-options
@@ -149,7 +149,7 @@ from GEM, you have to use the
 program that is supplied on the kernel-floppy. The loadbsd command line
 specification is:
 .Bd -ragged -offset indent
-.Nm loadbsd 
+.Nm loadbsd
 .Op Fl abdhqstvwDV
 .Op Fl S Ar amount
 .Op Fl T Ar amount
@@ -169,13 +169,13 @@ Print a help screen that tries to explain the same options as mentioned
 here.
 .It Fl o Ar outputfile
 Write all output to the file
-.Ar outputfile.
+.Ar outputfile .
 .It Fl q
 Boot in quiet mode.
 .It Fl s
 Tell
 .Nx
-only to use ST compatible RAM. 
+only to use ST compatible RAM.
 .It Fl t
 Test loading of the kernel but don't start
 .Nx .
