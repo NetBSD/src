@@ -35,7 +35,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)mount_portal.8	8.2 (Berkeley) 12/16/93
-.\"	$Id: mount_portal.8,v 1.1 1994/01/12 20:01:38 cgd Exp $
+.\"	$Id: mount_portal.8,v 1.2 1994/01/24 19:26:13 jtc Exp $
 .\"
 .Dd December 16, 1993
 .Dt MOUNT_PORTAL 8
@@ -45,7 +45,7 @@
 .Nd mount the portal daemon
 .Sh SYNOPSIS
 .Nm mount_portal
-.Op Fl F fsoptions
+.Op Fl F Ar fsoptions
 .Pa /etc/portal.conf
 .Pa mount_point
 .Sh DESCRIPTION
@@ -55,7 +55,6 @@ command attaches an instance of the portal daemon
 to the global filesystem namespace.
 The conventional mount point is
 .Pa /p .
-.PA /dev .
 This command is normally executed by
 .Xr mount 8
 at boot time.
