@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.37 2001/07/05 21:27:31 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.38 2001/07/07 16:40:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1851,7 +1851,7 @@ static void ti_attach(parent, self, aux)
 	/* Set up ifnet structure */
 	ifp = &sc->ethercom.ec_if;
 	ifp->if_softc = sc;
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = ti_ioctl;
 	ifp->if_start = ti_start;
@@ -2791,7 +2791,7 @@ ti_ether_ioctl(ifp, cmd, data)
 				ina->x_host = *(union ns_host *)
 				    LLADDR(ifp->if_sadl);
 			 else
-				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
+				memcpy(LLADDR(ifp->if_sadl), ina->x_host.c_host,
 				    ifp->if_addrlen);
 			 break;
 		    }
