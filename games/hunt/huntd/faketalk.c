@@ -1,4 +1,4 @@
-/*	$NetBSD: faketalk.c,v 1.6 2001/02/05 00:42:14 christos Exp $	*/
+/*	$NetBSD: faketalk.c,v 1.7 2002/09/20 20:54:16 mycroft Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -11,10 +11,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: faketalk.c,v 1.6 2001/02/05 00:42:14 christos Exp $");
+__RCSID("$NetBSD: faketalk.c,v 1.7 2002/09/20 20:54:16 mycroft Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
+#include "hunt.h"
 
 #if	defined(TALK_43) || defined(TALK_42)
 
@@ -26,7 +27,6 @@ __RCSID("$NetBSD: faketalk.c,v 1.6 2001/02/05 00:42:14 christos Exp $");
 # include	<stdio.h>
 # include	<string.h>
 # include	<unistd.h>
-# include	"hunt.h"
 # include	"talk_ctl.h"
 
 # define	TRUE		1
@@ -222,6 +222,7 @@ do_announce(s)
 		p_error("send delete remote");
 }
 #else
+void
 faketalk()
 {
 	return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl_transact.c,v 1.4 2001/06/12 15:17:12 wiz Exp $	*/
+/*	$NetBSD: ctl_transact.c,v 1.5 2002/09/20 20:54:16 mycroft Exp $	*/
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.  The Berkeley software License Agreement
@@ -14,7 +14,7 @@
 #if 0
 static char sccsid[] = "@(#)ctl_transact.c	5.2 (Berkeley) 3/13/86";
 #else
-__RCSID("$NetBSD: ctl_transact.c,v 1.4 2001/06/12 15:17:12 wiz Exp $");
+__RCSID("$NetBSD: ctl_transact.c,v 1.5 2002/09/20 20:54:16 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -38,24 +38,21 @@ ctl_transact(target, msg, type, rp)
 	int type;
 	CTL_RESPONSE *rp;
 {
-	fd_set read_mask, ctl_mask;
+	struct pollfd set[1];
 	int nready, cc, retries;
-	struct timeval wait;
 
 	nready = 0;
 	msg.type = type;
 	daemon_addr.sin_addr = target;
 	daemon_addr.sin_port = daemon_port;
-	FD_ZERO(&ctl_mask);
-	FD_SET(ctl_sockt, &ctl_mask);
+	set[0].fd = ctl_sockt;
+	set[0].events = POLLIN;
 
 	/*
 	 * Keep sending the message until a response of
 	 * the proper type is obtained.
 	 */
 	do {
-		wait.tv_sec = CTL_WAIT;
-		wait.tv_usec = 0;
 		/* resend message until a response is obtained */
 		for (retries = MAX_RETRY; retries > 0; retries -= 1) {
 			cc = sendto(ctl_sockt, (char *)&msg, sizeof (msg), 0,
@@ -65,8 +62,7 @@ ctl_transact(target, msg, type, rp)
 					continue;
 				p_error("Error on write to talk daemon");
 			}
-			read_mask = ctl_mask;
-			nready = select(32, &read_mask, 0, 0, &wait);
+			nready = poll(set, 1, CTL_WAIT * 1000);
 			if (nready < 0) {
 				if (errno == EINTR)
 					continue;
@@ -89,10 +85,8 @@ ctl_transact(target, msg, type, rp)
 					continue;
 				p_error("Error on read from talk daemon");
 			}
-			read_mask = ctl_mask;
 			/* an immediate poll */
-			timerclear(&wait);
-			nready = select(32, &read_mask, 0, 0, &wait);
+			nready = poll(set, 1, 0);
 		} while (nready > 0 && (
 #ifdef	TALK_43
 		    rp->vers != TALK_VERSION ||

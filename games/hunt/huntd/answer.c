@@ -1,4 +1,4 @@
-/*	$NetBSD: answer.c,v 1.3 1997/10/10 16:32:50 lukem Exp $	*/
+/*	$NetBSD: answer.c,v 1.4 2002/09/20 20:54:16 mycroft Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: answer.c,v 1.3 1997/10/10 16:32:50 lukem Exp $");
+__RCSID("$NetBSD: answer.c,v 1.4 2002/09/20 20:54:16 mycroft Exp $");
 #endif /* not lint */
 
 # include	<ctype.h>
@@ -37,6 +37,7 @@ answer()
 	char			*cp1, *cp2;
 	int			flags;
 	long			version;
+	int			i;
 
 # ifdef INTERNET
 	socklen = sizeof sockstruct;
@@ -123,9 +124,10 @@ answer()
 # endif
 # ifdef MONITOR
 	if (mode == C_MONITOR)
-		if (End_monitor < &Monitor[MAXMON])
+		if (End_monitor < &Monitor[MAXMON]) {
 			pp = End_monitor++;
-		else {
+			i = pp - Monitor + MAXPL + 3;
+		} else {
 			socklen = 0;
 			(void) write(newsock, (char *) &socklen,
 				sizeof socklen);
@@ -134,9 +136,10 @@ answer()
 		}
 	else
 # endif
-		if (End_player < &Player[MAXPL])
+		if (End_player < &Player[MAXPL]) {
 			pp = End_player++;
-		else {
+			i = pp - Player + 3;
+		} else {
 			socklen = 0;
 			(void) write(newsock, (char *) &socklen,
 				sizeof socklen);
@@ -152,9 +155,8 @@ answer()
 	pp->p_output = fdopen(newsock, "w");
 	pp->p_death[0] = '\0';
 	pp->p_fd = newsock;
-	FD_SET(pp->p_fd, &Fds_mask);
-	if (pp->p_fd >= Num_fds)
-		Num_fds = pp->p_fd + 1;
+	fdset[i].fd = newsock;
+	fdset[i].events = POLLIN;
 
 	pp->p_y = 0;
 	pp->p_x = 0;
