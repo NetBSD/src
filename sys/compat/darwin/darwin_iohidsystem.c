@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.21 2003/11/01 18:41:25 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.22 2003/11/02 00:44:19 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.21 2003/11/01 18:41:25 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.22 2003/11/02 00:44:19 manu Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -670,6 +670,7 @@ darwin_wscons_to_iohidsystem(wsevt, hidevt)
 
 	case WSCONS_EVENT_KEY_DOWN:
 		hidevt->die_type = DARWIN_NX_KEYDOWN;
+		hidevt->die_data.key.charset = wsevt->value;
 		hidevt->die_data.key.charcode = wsevt->value;
 		hidevt->die_data.key.orig_charcode = wsevt->value;
 		hidevt->die_data.key.keycode = wsevt->value; /* Translate */
@@ -678,6 +679,7 @@ darwin_wscons_to_iohidsystem(wsevt, hidevt)
 
 	case WSCONS_EVENT_KEY_UP:
 		hidevt->die_type = DARWIN_NX_KEYUP;
+		hidevt->die_data.key.charset = wsevt->value;
 		hidevt->die_data.key.charcode = wsevt->value;
 		hidevt->die_data.key.orig_charcode = wsevt->value;
 		hidevt->die_data.key.keycode = wsevt->value; /* Translate */
