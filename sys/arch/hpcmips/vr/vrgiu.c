@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.15 2000/09/25 09:03:33 sato Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.16 2000/10/03 03:16:16 sato Exp $	*/
 /*-
  * Copyright (c) 1999
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -44,6 +44,7 @@
 
 #include <mips/cpuregs.h>
 #include <machine/bus.h>
+#include <machine/config_hook.h>
 
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/vripvar.h>
@@ -78,6 +79,12 @@ int	vrgiu_debug = VRGIUDEBUG_CONF;
 #define VDUMP_IOSETTING(flag, sc) \
 			if (bootverbose) vrgiu_dump_iosetting(sc);
 #endif
+
+#ifdef VRGIU_INTR_NOLED
+int vrgiu_intr_led = 0;
+#else /* VRGIU_INTR_NOLED */
+int vrgiu_intr_led = 1;
+#endif /* VRGIU_INTR_NOLED */
 
 #define	LEGAL_INTR_PORT(x)	((x) >= 0 && (x) < MAX_GPIO_INOUT)
 #define	LEGAL_OUT_PORT(x)	((x) >= 0 && (x) < MAX_GPIO_OUT)
@@ -627,5 +634,9 @@ vrgiu_intr(arg)
 		}
 	}
 
+	if (vrgiu_intr_led)
+		config_hook_call(CONFIG_HOOK_POWERCONTROL,
+				 CONFIG_HOOK_POWERCONTROL_LED,
+				PWCTL_LED_FLASH);
 	return 0;
 }
