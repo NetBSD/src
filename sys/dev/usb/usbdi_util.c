@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.10 1999/01/01 15:25:57 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.11 1999/01/03 01:00:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -478,22 +478,23 @@ usbd_bulk_transfer(reqh, pipe, flags, buf, size, lbl)
 	usbd_private_handle priv;
 	void *buffer;
 	usbd_status r;
-	int s;
+	int s, error;
 
 	r = usbd_setup_request(reqh, pipe, 0, buf, *size,
 			       flags, USBD_NO_TIMEOUT, usbd_bulk_transfer_cb);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
 	DPRINTFN(1, ("usbd_bulk_transfer: transfer %d bytes\n", *size));
-	s = splusb();
+	s = splusb();		/* don't want callback until tsleep() */
 	r = usbd_transfer(reqh);
 	if (r != USBD_IN_PROGRESS) {
 		splx(s);
 		return (r);
 	}
-	if (tsleep((caddr_t)reqh, PZERO | PCATCH, lbl, 0)) {
+	error = tsleep((caddr_t)reqh, PZERO | PCATCH, lbl, 0);
+	splx(s);
+	if (error) {
 		usbd_abort_pipe(pipe);
-		splx(s);
 		return (USBD_INTERRUPTED);
 	}
 	usbd_get_request_status(reqh, &priv, &buffer, size, &r);

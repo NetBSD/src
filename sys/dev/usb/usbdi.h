@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.14 1999/01/01 15:25:57 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.15 1999/01/03 01:00:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -219,7 +219,7 @@ usbd_status usbd_do_request_async
 	__P((usbd_device_handle pipe, usb_device_request_t *req, void *data));
 usbd_status usbd_do_request_flags
 	__P((usbd_device_handle pipe, usb_device_request_t *req, 
-	     void *data, u_int16_t flags));
+	     void *data, u_int16_t flags, int *));
 usb_interface_descriptor_t *usbd_get_interface_descriptor
 	__P((usbd_interface_handle iface));
 usb_config_descriptor_t *usbd_get_config_descriptor
