@@ -1,7 +1,7 @@
-/*	$NetBSD: bha_eisa.c,v 1.9 1997/08/27 11:24:43 bouyer Exp $	*/
+/*	$NetBSD: bha_eisa.c,v 1.9.4.1 1998/01/29 09:59:08 mellon Exp $	*/
 
 /*
- * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1994, 1996, 1997, 1998 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -47,9 +47,10 @@
 #include <dev/ic/bhareg.h>
 #include <dev/ic/bhavar.h>
 
-#define	BHA_EISA_SLOT_OFFSET	0xc00
-#define	BHA_EISA_IOSIZE		0x100
+#define	BHA_EISA_IOCONF	0xc8c
+#define	BHA_ISA_IOSIZE	4
 
+int	bha_eisa_address __P((bus_space_tag_t, bus_space_handle_t, int *));
 #ifdef  __BROKEN_INDIRECT_CONFIG
 int	bha_eisa_match __P((struct device *, void *, void *));
 #else
@@ -60,6 +61,41 @@ void	bha_eisa_attach __P((struct device *, struct device *, void *));
 struct cfattach bha_eisa_ca = {
 	sizeof(struct bha_softc), bha_eisa_match, bha_eisa_attach
 };
+
+int
+bha_eisa_address(iot, ioh, portp)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	int *portp;
+{
+	int port;
+
+	switch (bus_space_read_1(iot, ioh, BHA_EISA_IOCONF) & 0x07) {
+	case 0x00:
+		port = 0x330;
+		break;
+	case 0x01:
+		port = 0x334;
+		break;
+	case 0x02:
+		port = 0x230;
+		break;
+	case 0x03:
+		port = 0x234;
+		break;
+	case 0x04:
+		port = 0x130;
+		break;
+	case 0x05:
+		port = 0x134;
+		break;
+	default:
+		return (1);
+	}
+
+	*portp = port;
+	return (0);
+}
 
 /*
  * Check the slots looking for a board we recognise
@@ -78,7 +114,8 @@ bha_eisa_match(parent, match, aux)
 {
 	struct eisa_attach_args *ea = aux;
 	bus_space_tag_t iot = ea->ea_iot;
-	bus_space_handle_t ioh;
+	bus_space_handle_t ioh, ioh2;
+	int port;
 	int rv;
 
 	/* must match one of our known ID strings */
@@ -86,13 +123,20 @@ bha_eisa_match(parent, match, aux)
 	    strcmp(ea->ea_idstring, "BUS4202"))
 		return (0);
 
-	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
-	    BHA_EISA_SLOT_OFFSET, BHA_EISA_IOSIZE, 0, &ioh))
+	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE, 0,
+	    &ioh))
 		return (0);
 
-	rv = bha_find(iot, ioh, NULL);
+	if (bha_eisa_address(iot, ioh, &port) ||
+	    bus_space_map(iot, port, BHA_ISA_IOSIZE, 0, &ioh2)) {
+		bus_space_unmap(iot, ioh, EISA_SLOT_SIZE);
+		return (0);
+	}
 
-	bus_space_unmap(iot, ioh, BHA_EISA_IOSIZE);
+	rv = bha_find(iot, ioh2, NULL);
+
+	bus_space_unmap(iot, ioh2, BHA_ISA_IOSIZE);
+	bus_space_unmap(iot, ioh, EISA_SLOT_SIZE);
 
 	return (rv);
 }
@@ -108,7 +152,8 @@ bha_eisa_attach(parent, self, aux)
 	struct eisa_attach_args *ea = aux;
 	struct bha_softc *sc = (void *)self;
 	bus_space_tag_t iot = ea->ea_iot;
-	bus_space_handle_t ioh;
+	bus_space_handle_t ioh, ioh2;
+	int port;
 	struct bha_probe_data bpd;
 	eisa_chipset_tag_t ec = ea->ea_ec;
 	eisa_intr_handle_t ih;
@@ -122,14 +167,18 @@ bha_eisa_attach(parent, self, aux)
 		model = "unknown model!";
 	printf(": %s\n", model);
 
-	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
-	    BHA_EISA_SLOT_OFFSET, BHA_EISA_IOSIZE, 0, &ioh))
-		panic("bha_eisa_attach: could not map I/O addresses");
+	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE, 0,
+	    &ioh))
+		panic("bha_eisa_attach: could not map EISA slot");
+
+	if (bha_eisa_address(iot, ioh, &port) ||
+	    bus_space_map(iot, port, BHA_ISA_IOSIZE, 0, &ioh2))
+		panic("bha_eisa_attach: could not map ISA address");
 
 	sc->sc_iot = iot;
-	sc->sc_ioh = ioh;
+	sc->sc_ioh = ioh2;
 	sc->sc_dmat = ea->ea_dmat;
-	if (!bha_find(iot, ioh, &bpd))
+	if (!bha_find(iot, ioh2, &bpd))
 		panic("bha_eisa_attach: bha_find failed");
 
 	sc->sc_dmaflags = 0;
