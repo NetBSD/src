@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.79 2003/05/06 18:07:57 fvdl Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.80 2003/08/02 07:08:02 manu Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.79 2003/05/06 18:07:57 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.80 2003/08/02 07:08:02 manu Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -362,7 +362,7 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 			    "word %ld of object %p size %ld previous type %s "
 			    "(invalid addr %p)\n",
 			    (long)((int32_t *)&kbp->kb_next - (int32_t *)kbp),
-			    va, size, savedtype, kbp->kb_next);
+			    va, size, "foo", kbp->kb_next);
 #ifdef MALLOCLOG
 			hitmlog(va);
 #endif
@@ -391,7 +391,7 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 		    "word %ld of object %p size %ld previous type %s "
 		    "(0x%x != 0x%x)\n",
 		    (long)(lp - (uint32_t *)va), va, size,
-		    savedtype, *lp, WEIRD_ADDR);
+		    "bar", *lp, WEIRD_ADDR);
 #ifdef MALLOCLOG
 		hitmlog(va);
 #endif
@@ -419,7 +419,7 @@ out:
 out:
 #endif
 #ifdef MALLOCLOG
-	domlog(va, size, type, 1, file, line);
+	domlog(va, size, ksp, 1, file, line);
 #endif
 	simple_unlock(&malloc_slock);
 	splx(s);
@@ -433,7 +433,7 @@ out:
  */
 #ifdef MALLOCLOG
 void
-_free(void *addr, struct malloc_type *type, const char *file, long line)
+_free(void *addr, struct malloc_type *ksp, const char *file, long line)
 #else
 void
 free(void *addr, struct malloc_type *ksp)
@@ -472,7 +472,7 @@ free(void *addr, struct malloc_type *ksp)
 	s = splvm();
 	simple_lock(&malloc_slock);
 #ifdef MALLOCLOG
-	domlog(addr, 0, type, 2, file, line);
+	domlog(addr, 0, ksp, 2, file, line);
 #endif
 #ifdef DIAGNOSTIC
 	/*
