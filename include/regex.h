@@ -1,4 +1,4 @@
-/*	$NetBSD: regex.h,v 1.4 1994/10/26 00:56:14 cgd Exp $	*/
+/*	$NetBSD: regex.h,v 1.5 1996/06/10 18:55:04 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1992 Henry Spencer.
@@ -43,6 +43,7 @@
 #define	_REGEX_H_
 
 #include <sys/cdefs.h>
+#include <sys/types.h>
 
 /* types */
 typedef off_t regoff_t;
