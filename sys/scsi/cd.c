@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.97 1996/12/05 01:06:39 cgd Exp $	*/
+/*	$NetBSD: cd.c,v 1.98 1997/02/21 23:03:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -538,6 +538,7 @@ cdstart(v)
 		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
 			bp->b_error = EIO;
 			bp->b_flags |= B_ERROR;
+			bp->b_resid = bp->b_bcount;
 			biodone(bp);
 			continue;
 		}
