@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_stdenc.c,v 1.1 2003/06/25 09:51:40 tshiozak Exp $	*/
+/*	$NetBSD: citrus_stdenc.c,v 1.2 2003/07/10 08:50:44 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_stdenc.c,v 1.1 2003/06/25 09:51:40 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_stdenc.c,v 1.2 2003/07/10 08:50:44 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -64,7 +64,7 @@ _citrus_stdenc_open(struct _citrus_stdenc * __restrict * __restrict rce,
 
 	_DIAGASSERT(encname != NULL);
 	_DIAGASSERT(!lenvar || variable!=NULL);
-	_DIAGASSERT(rcc != NULL);
+	_DIAGASSERT(rce != NULL);
 
 	if (!strcmp(encname, _CITRUS_DEFAULT_STDENC_NAME)) {
 		*rce = &_citrus_stdenc_default;
@@ -141,7 +141,7 @@ void
 _citrus_stdenc_close(struct _citrus_stdenc *ce)
 {
 
-	_DIAGASSERT(ci != NULL);
+	_DIAGASSERT(ce != NULL);
 
 	if (ce == &_citrus_stdenc_default)
 		return;

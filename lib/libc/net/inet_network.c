@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_network.c,v 1.17 2003/05/05 21:35:42 bjh21 Exp $	*/
+/*	$NetBSD: inet_network.c,v 1.18 2003/07/10 08:50:45 tshiozak Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_network.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_network.c,v 1.17 2003/05/05 21:35:42 bjh21 Exp $");
+__RCSID("$NetBSD: inet_network.c,v 1.18 2003/07/10 08:50:45 tshiozak Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,9 @@ __RCSID("$NetBSD: inet_network.c,v 1.17 2003/05/05 21:35:42 bjh21 Exp $");
 
 #include <assert.h>
 #include <ctype.h>
+#ifdef _DIAGNOSTIC
+#include <stddef.h>	/* for NULL */
+#endif
 
 #ifdef __weak_alias
 __weak_alias(inet_network,_inet_network)
