@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.5 1996/05/20 00:40:10 chuck Exp $	*/
+/*	$NetBSD: genassym.c,v 1.6 1996/09/12 06:05:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -93,6 +93,48 @@ flush()
 
 main()
 {
+	/* CPU options */
+#ifdef M68020
+	def("M68020", 1);
+#endif
+#ifdef M68030
+	def("M68030", 1);
+#endif
+#ifdef M68040
+	def("M68040", 1);
+#endif
+#ifdef M68060
+	def("M68060", 1);
+#endif
+
+	/* MMU options */
+	def("M68K_MMU_MOTOROLA", 1);
+
+	/* values for mmutype */
+	def("MMU_68060", MMU_68060);
+	def("MMU_68040", MMU_68040);
+	def("MMU_68030", MMU_68030);
+	def("MMU_68851", MMU_68851);
+
+	/* values for cputype */
+	def("CPU_68020", CPU_68020);
+	def("CPU_68030", CPU_68030);
+	def("CPU_68040", CPU_68040);
+	def("CPU_68060", CPU_68060);
+
+	/* values for machineid */
+	def("MVME_147", MVME_147);
+	def("MVME_162", MVME_162);
+	def("MVME_166", MVME_166);
+	def("MVME_167", MVME_167);
+	def("MVME_172", MVME_172);
+	def("MVME_177", MVME_177);
+
+	/* values for ectype */
+	def("EC_PHYS", EC_PHYS);
+	def("EC_NONE", EC_NONE);
+	def("EC_VIRT", EC_VIRT);
+
 	/* general constants */
 	def("UPAGES", UPAGES);
 	def("USPACE", USPACE);
@@ -102,7 +144,13 @@ main()
 
 	/* boot stuff */
 	def("RB_SBOOT", RB_SBOOT);
+
+	/* Bug stuff */
 	def("MVMEPROM_EXIT", MVMEPROM_EXIT);
+	def("MVMEPROM_GETBRDID", MVMEPROM_GETBRDID);
+	def("MVMEPROM_OUTSTRCRLF", MVMEPROM_OUTSTRCRLF);
+	def("MVMEPROM_BRDID_SIZE", sizeof(struct mvmeprom_brdid));
+	off("MVMEPROM_BRDID_MODEL_OFFSET", struct mvmeprom_brdid, model);
 
 	/* proc fields and values */
 	off("P_FORW", struct proc, p_forw);
