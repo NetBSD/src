@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.189 1996/02/12 21:11:20 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.190 1996/02/18 22:44:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1099,16 +1099,6 @@ init386(first_avail)
 	splhigh();
 	enable_intr();
 
-#ifdef DDB
-	ddb_init();
-	if (boothowto & RB_KDB)
-		Debugger();
-#endif
-#ifdef KGDB
-	if (boothowto & RB_KDB)
-		kgdb_connect(0);
-#endif
-
 	/*
 	 * Use BIOS values stored in RTC CMOS RAM, since probing
 	 * breaks certain 386 AT relics.
@@ -1149,6 +1139,16 @@ init386(first_avail)
 
 	/* call pmap initialization to make new kernel address space */
 	pmap_bootstrap((vm_offset_t)atdevbase + IOM_SIZE);
+
+#ifdef DDB
+	ddb_init();
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif
+#ifdef KGDB
+	if (boothowto & RB_KDB)
+		kgdb_connect(0);
+#endif
 }
 
 struct queue {
