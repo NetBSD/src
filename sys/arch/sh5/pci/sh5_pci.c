@@ -1,4 +1,4 @@
-/*	$NetBSD: sh5_pci.c,v 1.3 2002/09/28 13:08:24 scw Exp $	*/
+/*	$NetBSD: sh5_pci.c,v 1.4 2002/10/01 19:24:47 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -106,9 +106,8 @@ static int	sh5pcimatch(struct device *, struct cfdata *, void *);
 static void	sh5pciattach(struct device *, struct device *, void *);
 static int	sh5pciprint(void *, const char *);
 
-const struct cfattach sh5pci_ca = {
-	sizeof(struct sh5pci_softc), sh5pcimatch, sh5pciattach
-};
+CFATTACH_DECL(sh5pci, sizeof(struct sh5pci_softc),
+    sh5pcimatch, sh5pciattach, NULL, NULL)
 extern struct cfdriver sh5pci_cd;
 
 static int	sh5pci_dmamap_create(void *, bus_size_t, int, bus_size_t,
