@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.2 1996/08/09 03:39:00 jtc Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.3 1996/08/09 04:17:36 jtc Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -334,16 +334,12 @@ int mode;
 		(void) setgid (getgid ());
 		if (*login)
 		{
-			execl("/usr/ucb/rsh", "rsh", system, "-l", login,
-				"/etc/rmt", (char *) 0);
-			execl("/usr/bin/remsh", "remsh", system, "-l", login,
+			execl("/usr/bin/rsh", "rsh", system, "-l", login,
 				"/etc/rmt", (char *) 0);
 		}
 		else
 		{
-			execl("/usr/ucb/rsh", "rsh", system,
-				"/etc/rmt", (char *) 0);
-			execl("/usr/bin/remsh", "remsh", system,
+			execl("/usr/bin/rsh", "rsh", system,
 				"/etc/rmt", (char *) 0);
 		}
 
