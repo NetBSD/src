@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)parser.c	5.3 (Berkeley) 4/12/91";*/
-static char rcsid[] = "$Id: parser.c,v 1.9 1993/09/06 00:44:46 mycroft Exp $";
+static char rcsid[] = "$Id: parser.c,v 1.10 1993/09/09 01:21:43 cgd Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -352,10 +352,11 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 			n2->narg.backquote = NULL;
 			n2->narg.next = NULL;
 			n1->nfor.args = n2;
-			/* A newline or semicolon is optional here. Anything
-			   else gets pushed back so we can read it again.  */
-			if (lasttoken != TNL && lasttoken != TSEMI)
-				tokpushback++;
+			/* Many shells accept an optional semicolon here, but
+			   POSIX says we should not, so we don't.  An optional
+			   newline is OK here, but that is handled by the
+			   checkkwd = 2 assignment below.  */
+			tokpushback++;
 		}
 		checkkwd = 2;
 		if ((t = readtoken()) == TDO)
@@ -431,6 +432,8 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 	/* Handle an empty command like other simple commands.  */
 	case TSEMI:
 	case TNL:
+	/* Handle EOF like other simple commands, too.  */
+	case TEOF:
 	case TWORD:
 		tokpushback++;
 		return simplecmd(rpp, redir);
