@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.5 2000/06/16 16:53:20 thorpej Exp $
+#	$NetBSD: Makefile,v 1.6 2005/01/12 14:48:33 xtraeme Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
+WARNS=	3
 PROG=	bdes
 
 LDADD+=	-lcrypt
