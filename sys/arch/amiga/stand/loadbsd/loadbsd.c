@@ -1,10 +1,11 @@
 /*
- *	$Id: loadbsd.c,v 1.7 1994/02/11 07:03:01 chopps Exp $
+ *	$Id: loadbsd.c,v 1.8 1994/03/20 10:05:11 chopps Exp $
  */
 
 #include <sys/types.h>
 #include <a.out.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include <exec/types.h>
 #include <exec/execbase.h>
@@ -42,6 +43,7 @@ OPTIONS
 \t-t  This is a *test* option.  It prints out the memory
 \t    list information being passed to the kernel and also
 \t    exits without actually starting NetBSD.
+\t-S  Include kernel symbol table.
 \t-V  Version of loadbsd program.
 HISTORY
       This version supports Kernel version 720 +
@@ -57,8 +59,10 @@ struct GfxBase *GfxBase;
 
 /*
  * Kernel parameter passing version
+ *	1:	first version of loadbsd
+ *	2:	needs esym location passed in a4
  */
-#define KERNEL_PARAMETER_VERSION	1
+#define KERNEL_PARAMETER_VERSION	2
 
 struct MEM_LIST {
 	u_long	num_mem;
@@ -76,6 +80,7 @@ int b_opt;
 int p_opt;
 int t_opt;
 int m_opt;
+int S_opt;
 
 extern char *optarg;
 extern int optind;
@@ -84,7 +89,7 @@ void get_mem_config (void **fastmem_start, u_long *fastmem_size, u_long *chipmem
 void Usage (char *program_name);
 void Version (void);
 
-static const char _version[] = "$VER: LoadBSD 1.744 (28.1.94)";
+static const char _version[] = "$VER: LoadBSD 2.0 (12.3.94)";
 
 int 
 main (int argc, char *argv[])
@@ -102,6 +107,7 @@ main (int argc, char *argv[])
               if (e.a_magic == NMAGIC)
                 {
                   u_char *kernel;
+                  int kernel_size;
 		  int text_size;
 		  struct ConfigDev *cd;
 		  int num_cd;
@@ -109,6 +115,8 @@ main (int argc, char *argv[])
 		  u_long fastmem_size, chipmem_size;
 		  int i;
 		  u_short *kern_vers;
+		  char *esym;
+		  int string_size;
 		  
 		  GfxBase = (struct GfxBase *) OpenLibrary ("graphics.library", 0);
 		  if (! GfxBase)	/* not supposed to fail... */
@@ -117,7 +125,7 @@ main (int argc, char *argv[])
 		  if (! ExpansionBase)	/* not supposed to fail... */
 		    abort();
 		  optind = 2;
-		  while ((i = getopt (argc, argv, "kabptVm:")) != EOF)
+		  while ((i = getopt (argc, argv, "kabptVm:S")) != EOF)
 		    switch (i) {
 		    case 'k':
 		      k_opt = 1;
@@ -140,6 +148,9 @@ main (int argc, char *argv[])
                     case 'V':
                       Version();
                       break;
+                    case 'S':
+                      S_opt = 1;
+                      break;
                     default:
                       Usage(argv[0]);
                       fprintf(stderr,"Unrecognized option \n");
@@ -150,9 +161,29 @@ main (int argc, char *argv[])
 		  get_mem_config (&fastmem_start, &fastmem_size, &chipmem_size);
 
 		  text_size = (e.a_text + __LDPGSZ - 1) & (-__LDPGSZ);
-		  kernel = (u_char *) malloc (text_size + e.a_data + e.a_bss 
-				              + num_cd*sizeof(*cd) + 4
-					      + mem_list.num_mem*sizeof(struct MEM_SEG) + 4);
+		  esym = NULL;
+		  kernel_size = text_size + e.a_data + e.a_bss
+		      + num_cd*sizeof(*cd) + 4
+		      + mem_list.num_mem*sizeof(struct MEM_SEG) + 4;
+		  /*
+		   * get symbol table size & string size
+		   * (should check kernel version to see if it will handle it)
+		   */
+		  if (S_opt && e.a_syms) {
+		    S_opt = 0;			/* prepare for failure */
+		    if (lseek(fd, e.a_text + e.a_data + e.a_syms, SEEK_CUR) > 0) {
+		      if (read (fd, &string_size, 4) == 4) {
+			if (lseek(fd, sizeof(e), SEEK_SET) < 0) {
+		      	  printf ("Error repositioning to text\n");
+		      	  exit(0);		/* Give up! */
+			}
+			kernel_size += e.a_syms + 4 + string_size;
+			S_opt = 1;		/* sucess!  Keep -S option */
+		      }
+		    }
+		  } 
+
+		  kernel = (u_char *) malloc (kernel_size);
 
 		  if (t_opt)
 		    for (i = 0; i < mem_list.num_mem; ++i) {
@@ -171,7 +202,7 @@ main (int argc, char *argv[])
 			  int *knum_cd;
 			  struct ConfigDev *kcd;
 			  int mem_ix;
-			  
+
 			  if (k_opt)
 			    {
 			      fastmem_start += 4*1024*1024;
@@ -204,13 +235,24 @@ main (int argc, char *argv[])
 			      printf ("This kernel requires a newer version of loadbsd: %d\n", *kern_vers);
 			      exit (0);
 			    }
-			  if (t_opt)		/* if test option */
-			    exit (0);		/*   don't start kernel */
 			  /* give them a chance to read the information... */
 			  sleep(2);
 
 			  bzero (kernel + text_size + e.a_data, e.a_bss);
+			  /*
+			   * If symbols wanted (and kernel can handle them),
+			   * load symbol table & strings and set esym to end.
+			   */
 			  knum_cd = (int *) (kernel + text_size + e.a_data + e.a_bss);
+			  if (*kern_vers != 0x4e73 && *kern_vers > 1 && S_opt && e.a_syms) {
+			    *knum_cd++ = e.a_syms;
+			    read(fd, (char *)knum_cd, e.a_syms);
+			    knum_cd = (int *)((char *)knum_cd + e.a_syms);
+			    read(fd, (char *)knum_cd, string_size);
+			    knum_cd = (int*)((char *)knum_cd + string_size);
+			    esym = (char *) (text_size + e.a_data + e.a_bss
+			      + e.a_syms + 4 + string_size);
+			  }
 			  *knum_cd = num_cd;
 			  for (kcd = (struct ConfigDev *) (knum_cd+1);
 			       cd = FindConfigDev (cd, -1, -1);
@@ -220,14 +262,14 @@ main (int argc, char *argv[])
 			  kmem_list->num_mem = mem_list.num_mem;
 			  for (mem_ix = 0; mem_ix < mem_list.num_mem; mem_ix++)
 			  	kmem_list->mem_seg[mem_ix] = mem_list.mem_seg[mem_ix];
-			  /* AGA startup - probably needs more */
+			  if (t_opt)		/* if test option */
+			    exit (0);		/*   don't start kernel */
+			  /* AGA startup - may need more */
 			  LoadView (NULL);
-			  startit (kernel, 
-				   text_size + e.a_data + e.a_bss + num_cd*sizeof(*cd) + 4
-				     + mem_list.num_mem*sizeof(struct MEM_SEG) + 4,
+			  startit (kernel, kernel_size,
 				   e.a_entry, fastmem_start,
 				   fastmem_size, chipmem_size,
-				   boothowto );
+				   boothowto, esym );
 			}
 		      else
 			fprintf (stderr, "Executable corrupt!\n");
@@ -348,6 +390,7 @@ start_super:
 	| d1:  chipmem-size
 	| d5:  AttnFlags (cpuid)
 	| d7:  boothowto
+	| a4:  esym location
 
 	movel	a3@(4),a1		| loaded kernel
 	movel	a3@(8),d2		| length of loaded kernel
@@ -358,20 +401,21 @@ start_super:
 	movel	#0,d5
 	movew	(ABSEXECBASE)@(0x128),d5 | SysBase->AttnFlags
 	movel	a3@(28),d7		| boothowto
-	subl	a4,a4			| target, load to 0
+	movel	a3@(32),a4		| esym
+	subl	a5,a5			| target, load to 0
 
 	btst	#3,(ABSEXECBASE)@(0x129) | AFB_68040,SysBase->AttnFlags
 	beq	not040
 
 | Turn off 68040 MMU
 
-	.word 0x4e7b,0xc003		| movec a4,tc
-	.word 0x4e7b,0xc806		| movec a4,urp
-	.word 0x4e7b,0xc807		| movec a4,srp
-	.word 0x4e7b,0xc004		| movec a4,itt0
-	.word 0x4e7b,0xc005		| movec a4,itt1
-	.word 0x4e7b,0xc006		| movec a4,dtt0
-	.word 0x4e7b,0xc007		| movec a4,dtt1
+	.word 0x4e7b,0xd003		| movec a5,tc
+	.word 0x4e7b,0xd806		| movec a5,urp
+	.word 0x4e7b,0xd807		| movec a5,srp
+	.word 0x4e7b,0xd004		| movec a5,itt0
+	.word 0x4e7b,0xd005		| movec a5,itt1
+	.word 0x4e7b,0xd006		| movec a5,dtt0
+	.word 0x4e7b,0xd007		| movec a5,dtt1
 	bra	nott
 
 not040:
@@ -394,7 +438,7 @@ nott:
 	movew	#(1<<9),0xdff096	| disable DMA
 
 L0:
-	moveb	a1@+,a4@+
+	moveb	a1@+,a5@+
 	subl	#1,d2
 	bcc	L0
 
