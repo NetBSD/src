@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.46 2001/02/19 23:22:50 cgd Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.46.2.1 2003/09/05 18:15:42 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.46 2001/02/19 23:22:50 cgd Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.46.2.1 2003/09/05 18:15:42 tron Exp $");
 #endif
 
 #include <sys/param.h>
@@ -600,14 +600,13 @@ main(argc, argv)
 
 	checkwork();
 
-	width = svc_maxfd;
-	if (rpcsock > width)
-		width = rpcsock;
-	if (pingsock > width)
-		width = pingsock;
-	width++;
-
 	for (;;) {
+		width = svc_maxfd;
+		if (rpcsock > width)
+			width = rpcsock;
+		if (pingsock > width)
+			width = pingsock;
+		width++;
 		fdsr = svc_fdset;
 		FD_SET(rpcsock, &fdsr);
 		FD_SET(pingsock, &fdsr);
