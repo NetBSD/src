@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.60 2001/06/05 11:25:11 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.61 2001/06/12 11:24:50 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -162,10 +162,11 @@ _start(struct rpb *prpb)
 #if VAX48 || VAXANY
 	case VAX_BTYP_48:
 		dep_call = &ka48_calls;
-		if (vax_confdata & 0x80)
-			strcat(cpu_model, "3100/m{30,40}");
-		else
-			strcat(cpu_model, "4000 VLC");
+		switch (vax_siedata & 3) {
+		case 1: strcpy(cpu_model, "MicroVAX 3100/m{30,40}"); break;
+		case 2: strcpy(cpu_model, "VAXstation 4000 VLC"); break;
+		default: strcpy(cpu_model, "unknown SOC"); break;
+		}
 		break;
 #endif
 #if VAX49 || VAXANY
