@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.2 1996/04/25 23:47:06 scottr Exp $	*/
+/*	$NetBSD: sbc.c,v 1.3 1996/04/30 17:07:17 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott Reynolds
@@ -94,13 +94,22 @@
 #define	SBC_DMA_DRQ_OFFSET	0x06000
 #define	SBC_DMA_NODRQ_OFFSET	0x12000
 
-#ifdef	SBC_DEBUG
-#define	SBC_DB_INTR	0x01
-#define	SBC_DB_DMA	0x02
-#define	SBC_DB_BREAK	0x04
+#ifdef SBC_DEBUG
+# define	SBC_DB_INTR	0x01
+# define	SBC_DB_DMA	0x02
+# define	SBC_DB_REG	0x04
+# define	SBC_DB_BREAK	0x08
 
-int	sbc_debug = 0 /* SBC_DB_INTR | SBC_DB_DMA */;
-int	sbc_link_flags = 0 /* | SDEV_DB2 */;
+	int	sbc_debug = 0 /* | SBC_DB_INTR | SBC_DB_DMA */;
+	int	sbc_link_flags = 0 /* | SDEV_DB2 */;
+
+# ifndef DDB
+#  define	Debugger()	printf("Debug: sbc.c:%d\n", __LINE__)
+# endif
+# define	SBC_BREAK \
+		do { if (sbc_debug & SBC_DB_BREAK) Debugger(); } while (0)
+#else
+# define	SBC_BREAK
 #endif
 
 /*
@@ -108,9 +117,8 @@ int	sbc_link_flags = 0 /* | SDEV_DB2 */;
  */
 struct sbc_pdma_handle {
 	int	dh_flags;	/* flags */
-#define	SBC_DH_BUSY	0x01	/* This DH is in use */
-#define	SBC_DH_OUT	0x02	/* PDMA does data out (write) */
-#define	SBC_DH_XFER	0x04	/* PDMA transfer not completed */
+#define	SBC_DH_BUSY	0x01	/* This handle is in use */
+#define	SBC_DH_OUT	0x02	/* PDMA data out (write) */
 	u_char	*dh_addr;	/* data buffer */
 	int	dh_len;		/* length of data buffer */
 };
@@ -154,6 +162,9 @@ static	int	sbc_ready __P((struct ncr5380_softc *));
 static	int	sbc_wait_dreq __P((struct ncr5380_softc *));
 static	int	sbc_pdma_in __P((struct ncr5380_softc *, int, int, u_char *));
 static	int	sbc_pdma_out __P((struct ncr5380_softc *, int, int, u_char *));
+#ifdef SBC_DEBUG
+static	void	decode_5380_intr __P((struct ncr5380_softc *));
+#endif
 
 	void	sbc_intr_enable __P((struct ncr5380_softc *));
 	void	sbc_intr_disable __P((struct ncr5380_softc *));
@@ -446,31 +457,78 @@ void
 sbc_irq_intr(p)
 	void *p;
 {
+	static int handling_sbc_intr = 0;
 	register struct ncr5380_softc *ncr_sc = p;
 	register int claimed = 0;
 
 	/* How we ever arrive here without IRQ set is a mystery... */
 	if (*ncr_sc->sci_csr & SCI_CSR_INT) {
+		/*
+		 * For some reason, the hardware sometimes generates a
+		 * spurious selection interrupt.  I don't know why this
+		 * happens, but the following hack works around it.  --sar
+		 */
+		if (handling_sbc_intr)
+			return;
+		handling_sbc_intr++;
+
+#ifdef SBC_DEBUG
+		if (sbc_debug & SBC_DB_INTR)
+			decode_5380_intr(ncr_sc);
+#endif
 		claimed = ncr5380_intr(ncr_sc);
 		if (!claimed) {
 			if (((*ncr_sc->sci_csr & ~SCI_CSR_PHASE_MATCH) == SCI_CSR_INT)
-			    && ((*ncr_sc->sci_bus_csr & ~SCI_BUS_RST) == 0)) {
+			    && ((*ncr_sc->sci_bus_csr & ~SCI_BUS_RST) == 0))
 				SCI_CLR_INTR(ncr_sc);	/* RST interrupt */
-			}
 #ifdef SBC_DEBUG
 			else {
 				printf("%s: spurious intr\n",
 				    ncr_sc->sc_dev.dv_xname);
-# ifdef DDB
-				if (sbc_debug & SBC_DB_BREAK)
-					Debugger();
-# endif
+				SBC_BREAK;
 			}
 #endif
 		}
+
+		/* We can handle another interrupt from the SBC now. */
+		handling_sbc_intr = 0;
 	}
 }
 
+#ifdef SBC_DEBUG
+void
+decode_5380_intr(ncr_sc)
+	struct ncr5380_softc *ncr_sc;
+{
+	register u_char csr = *ncr_sc->sci_csr;
+	register u_char bus_csr = *ncr_sc->sci_bus_csr;
+
+	if (((csr & ~(SCI_CSR_PHASE_MATCH | SCI_CSR_ATN)) == SCI_CSR_INT) &&
+	    ((bus_csr & ~(SCI_BUS_MSG | SCI_BUS_CD | SCI_BUS_IO | SCI_BUS_DBP)) == SCI_BUS_SEL)) {
+		if (csr & SCI_BUS_IO)
+			printf("%s: reselect\n", ncr_sc->sc_dev.dv_xname);
+		else
+			printf("%s: select\n", ncr_sc->sc_dev.dv_xname);
+	} else if (((csr & ~SCI_CSR_ACK) == (SCI_CSR_DONE | SCI_CSR_INT)) &&
+	    ((bus_csr & (SCI_BUS_RST | SCI_BUS_BSY | SCI_BUS_SEL)) == SCI_BUS_BSY))
+		printf("%s: dma eop\n", ncr_sc->sc_dev.dv_xname);
+	else if (((csr & ~SCI_CSR_PHASE_MATCH) == SCI_CSR_INT) &&
+	    ((bus_csr & ~SCI_BUS_RST) == 0))
+		printf("%s: bus reset\n", ncr_sc->sc_dev.dv_xname);
+	else if (((csr & ~(SCI_CSR_DREQ | SCI_CSR_ATN | SCI_CSR_ACK)) == (SCI_CSR_PERR | SCI_CSR_INT | SCI_CSR_PHASE_MATCH)) &&
+	    ((bus_csr & (SCI_BUS_RST | SCI_BUS_BSY | SCI_BUS_SEL)) == SCI_BUS_BSY))
+		printf("%s: parity error\n", ncr_sc->sc_dev.dv_xname);
+	else if (((csr & ~SCI_CSR_ATN) == SCI_CSR_INT) &&
+	    ((bus_csr & (SCI_BUS_RST | SCI_BUS_BSY | SCI_BUS_REQ | SCI_BUS_SEL)) == (SCI_BUS_BSY | SCI_BUS_REQ)))
+		printf("%s: phase mismatch\n", ncr_sc->sc_dev.dv_xname);
+	else if (((csr & ~SCI_CSR_PHASE_MATCH) == (SCI_CSR_INT | SCI_CSR_DISC)) &&
+	    (bus_csr == 0))
+		printf("%s: disconnect\n", ncr_sc->sc_dev.dv_xname);
+	else
+		printf("%s: unknown intr: csr=%x, bus_csr=%x\n",
+		    ncr_sc->sc_dev.dv_xname, csr, bus_csr);
+}
+#endif
 
 /***
  * The following code implements polled PDMA.
@@ -701,12 +759,8 @@ sbc_drq_intr(p)
 	/*
 	 * If we're not ready to xfer data, or have no more, just return.
 	 */
-	if ((*ncr_sc->sci_csr & SCI_CSR_DREQ) == 0)
+	if ((*ncr_sc->sci_csr & SCI_CSR_DREQ) == 0 || dh->dh_len == 0)
 		return;
-	if (dh->dh_len == 0) {
-		dh->dh_flags &= ~SBC_DH_XFER;
-		return;
-	}
 
 #ifdef SBC_DEBUG
 	if (sbc_debug & SBC_DB_INTR)
@@ -739,9 +793,8 @@ sbc_drq_intr(p)
 
 		dh->dh_addr += count;
 		dh->dh_len -= count;
-		if (dh->dh_len == 0)
-			dh->dh_flags &= ~SBC_DH_XFER;
 		mac68k_buserr_addr = 0;
+
 		return;
 	}
 
@@ -824,8 +877,6 @@ sbc_drq_intr(p)
 
 					dh->dh_addr += (dcount - count);
 					dh->dh_len -= (dcount - count);
-					if (dh->dh_len == 0)
-						dh->dh_flags &= ~SBC_DH_XFER;
 					return;
 				}
 				R4; R4; R4; R4; R4; R4; R4; R4;
@@ -867,9 +918,6 @@ sbc_drq_intr(p)
 	 * so we no longer short-circuit bus errors.
 	 */
 	nofault = (int *) 0;
-
-	if (dh->dh_len == 0)
-		dh->dh_flags &= ~SBC_DH_XFER;
 }
 
 void
@@ -953,30 +1001,18 @@ sbc_dma_poll(ncr_sc)
 {
 	struct sbc_softc *sc = (struct sbc_softc *) ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
-	struct sbc_pdma_handle *dh = sr->sr_dma_hand;
-	volatile struct sbc_regs *sbc = sc->sc_regs;
-	register int s;
-	register int timo;
 
-	timo = 50000;	/* X100 = 5 sec. */
-	for (;;) {
-		if ((dh->dh_flags & SBC_DH_XFER) == 0)
-			break;
-		if (--timo <= 0) {
-			printf("%s: PDMA didn't complete (while polling)\n",
-			    ncr_sc->sc_dev.dv_xname);
-			sr->sr_flags |= SR_OVERDUE;
-			break;
-		}
-		delay(100);
-	}
-
+	/*
+	 * We shouldn't arrive here; if SR_IMMED is set, then
+	 * dma_alloc() should have refused to allocate a handle
+	 * for the transfer.  This forces the polled PDMA code
+	 * to handle the request...
+	 */
 #ifdef	SBC_DEBUG
 	if (sbc_debug & SBC_DB_DMA)
-		printf("%s: poll done, csr=0x%x, bus_csr=0x%x\n",
-		    ncr_sc->sc_dev.dv_xname, *ncr_sc->sci_csr,
-		    *ncr_sc->sci_bus_csr);
+		printf("%s: lost DRQ interrupt?\n", ncr_sc->sc_dev.dv_xname);
 #endif
+	sr->sr_flags |= SR_OVERDUE;
 }
 
 void
@@ -992,6 +1028,9 @@ sbc_dma_start(ncr_sc)
 {
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct sbc_pdma_handle *dh = sr->sr_dma_hand;
+	int s;
+
+	s = splbio();
 
 	/*
 	 * Match bus phase, set DMA mode, and assert data bus (for
@@ -1010,14 +1049,9 @@ sbc_dma_start(ncr_sc)
 		*ncr_sc->sci_icmd = 0;
 		*ncr_sc->sci_irecv = 0;
 	}
-
-	/*
-	 * Set the SBC_DH_XFER flag so that sbc_dma_poll() will wait
-	 * even if the SCSI DRQ service routine hasn't been serviced yet.
-	 */
-	dh->dh_flags |= SBC_DH_XFER;
-
 	ncr_sc->sc_state |= NCR_DOINGDMA;
+
+	splx(s);
 
 #ifdef	SBC_DEBUG
 	if (sbc_debug & SBC_DB_DMA)
@@ -1052,7 +1086,7 @@ sbc_dma_stop(ncr_sc)
 	}
 	ncr_sc->sc_state &= ~NCR_DOINGDMA;
 
-	if (!(ncr_sc->sc_state & NCR_ABORTING)) {
+	if ((ncr_sc->sc_state & NCR_ABORTING) == 0) {
 		ntrans = ncr_sc->sc_datalen - dh->dh_len;
 
 #ifdef SBC_DEBUG
@@ -1077,8 +1111,8 @@ sbc_dma_stop(ncr_sc)
 	*ncr_sc->sci_icmd = 0;
 
 #ifdef SBC_DEBUG
-	if (sbc_debug & SBC_DB_DMA)
-		printf("%s: exit dma_stop, csr=0x%x, bus_csr=0x%x\n",
+	if (sbc_debug & SBC_DB_REG)
+		printf("%s: dma_stop: csr=0x%x, bus_csr=0x%x\n",
 		    ncr_sc->sc_dev.dv_xname, *ncr_sc->sci_csr,
 		    *ncr_sc->sci_bus_csr);
 #endif
