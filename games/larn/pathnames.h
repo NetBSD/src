@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pathnames.h	5.1 (Berkeley) 5/2/90
- *	$Id: pathnames.h,v 1.2 1993/08/01 18:54:15 mycroft Exp $
+ *	$Id: pathnames.h,v 1.3 1994/09/18 00:21:38 mycroft Exp $
  */
 
 #define	_PATH_LOG		"/var/games/larn/llog12.0"
@@ -39,4 +39,4 @@
 #define	_PATH_HELP		"/usr/share/games/larn/larn.help"
 #define	_PATH_LEVELS		"/usr/share/games/larn/larnmaze"
 #define	_PATH_FORTS		"/usr/share/games/larn/lfortune"
-#define	_PATH_PLAYERIDS		"/usr/share/games/larn/playerids"
+#define	_PATH_PLAYERIDS		"/var/games/larn/playerids"
