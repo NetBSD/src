@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.1.2.8 1998/09/20 17:08:02 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.1.2.9 1998/10/02 17:58:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -189,6 +189,7 @@ wdc_atapi_send_cmd(sc_xfer)
 	struct wdc_softc *wdc = (void*)sc_link->adapter_softc;
 	struct wdc_xfer *xfer;
 	int flags = sc_xfer->flags;
+	int channel = sc_xfer->sc_link->scsipi_atapi.channel;
 	int s, ret;
 
 	WDCDEBUG_PRINT(("wdc_atapi_send_cmd\n"), DEBUG_FUNCS);
@@ -207,7 +208,7 @@ wdc_atapi_send_cmd(sc_xfer)
 	xfer->c_start = wdc_atapi_start;
 	xfer->c_intr = wdc_atapi_intr;
 	s = splbio();
-	wdc_exec_xfer(&wdc->channels[xfer->channel], xfer);
+	wdc_exec_xfer(&wdc->channels[channel], xfer);
 #ifdef DIAGNOSTIC
 	if ((sc_xfer->flags & SCSI_POLL) != 0 &&
 	    (sc_xfer->flags & ITSDONE) == 0)
@@ -569,8 +570,9 @@ again:
 			sc_xfer->error = XS_DRIVER_STUFFUP;
 		}
 	}
-	WDCDEBUG_PRINT(("wdc_atapi_intr: wdc_atapi_done() (end), sense 0x%x\n",
-	    sc_xfer->sense.atapi_sense), DEBUG_INTR);
+	WDCDEBUG_PRINT(("wdc_atapi_intr: wdc_atapi_done() (end), error 0x%x "
+	    "sense 0x%x\n", sc_xfer->error, sc_xfer->sense.atapi_sense),
+	    DEBUG_INTR);
 	wdc_atapi_done(chp, xfer);
 	return (1);
 }
