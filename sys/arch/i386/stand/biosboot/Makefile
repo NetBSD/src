@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 1999/09/10 16:38:46 drochner Exp $
+#	$NetBSD: Makefile,v 1.25 2000/01/20 16:51:01 christos Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -8,7 +8,7 @@ MKMAN=	no
 NEWVERSWHAT=	"BIOS Boot"
 
 .if (${BASE} != "biosboot")
-.PATH: ${.CURDIR}/../biosboot/
+.PATH.c: ${.CURDIR}/../biosboot/
 .endif
 
 SRCS= main.c devopen.c conf.c exec.c
