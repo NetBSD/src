@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.417 2004/05/12 13:49:01 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.418 2004/05/12 16:56:43 cl Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -10,6 +10,20 @@ MAKECONF?=	/etc/mk.conf
 # CPU model, derived from MACHINE_ARCH
 #
 MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/sh3e[bl]/sh3/:C/sh5e[bl]/sh5/:S/m68000/m68k/:S/armeb/arm/}
+
+#
+# Subdirectory used below ${RELEASEDIR} when building a release
+#
+RELEASEMACHINEDIR?=	${MACHINE}
+
+#
+# Subdirectory or path component used for the following paths:
+#   distrib/${RELEASEMACHINE}
+#   distrib/notes/${RELEASEMACHINE}
+#   etc/etc.${RELEASEMACHINE}
+# Used when building a release.
+#
+RELEASEMACHINE?=	${MACHINE}
 
 #
 # NEED_OWN_INSTALL_TARGET is set to "no" by pkgsrc/mk/bsd.pkg.mk to
