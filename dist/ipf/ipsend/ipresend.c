@@ -1,4 +1,4 @@
-/*	$NetBSD: ipresend.c,v 1.2 2002/01/24 08:21:39 martti Exp $	*/
+/*	$NetBSD: ipresend.c,v 1.3 2002/03/14 12:32:40 martti Exp $	*/
 
 /*
  * ipresend.c (C) 1995-1998 Darren Reed
@@ -10,12 +10,16 @@
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <netdb.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -32,7 +36,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipresend.c,v 2.1.4.2 2001/07/15 22:00:13 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipresend.c,v 2.1.4.3 2002/02/22 15:32:57 darrenr Exp";
 #endif
 
 

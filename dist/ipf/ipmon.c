@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.7 2002/01/24 08:21:34 martti Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.8 2002/03/14 12:32:38 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
@@ -9,6 +9,9 @@
 #define SOLARIS (defined(__SVR4) || defined(__svr4__)) && defined(sun)
 #endif
 
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -48,7 +51,6 @@
 #include <arpa/nameser.h>
 #include <resolv.h>
 
-#include <sys/uio.h>
 #ifndef linux
 # include <sys/protosw.h>
 # include <netinet/ip_var.h>
@@ -68,7 +70,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipmon.c,v 2.12.2.22 2002/01/15 14:36:51 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipmon.c,v 2.12.2.32 2002/03/13 03:30:18 darrenr Exp";
 #endif
 
 
@@ -400,7 +402,7 @@ static void init_tabs()
 		setprotoent(1);
 		while ((p = getprotoent()) != NULL)
 			if (p->p_proto >= 0 && p->p_proto <= 255 &&
-			    p->p_name != NULL)
+			    p->p_name != NULL && protocols[p->p_proto] == NULL)
 				protocols[p->p_proto] = strdup(p->p_name);
 		endprotoent();
 	}
@@ -604,6 +606,10 @@ int	len;
 	int	i, j, k;
 	u_char	*s = buf, *t = (u_char *)line;
 
+	if (len == 0 || buf == 0)
+		return;
+	*line = '\0';
+
 	for (i = len, j = 0; i; i--, j++, s++) {
 		if (j && !(j & 0xf)) {
 			*t++ = '\n';
@@ -619,7 +625,7 @@ int	len;
 		t += 2;
 		if (!((j + 1) & 0xf)) {
 			s -= 15;
-			sprintf((char *)t, "	");
+			sprintf((char *)t, "        ");
 			t += 8;
 			for (k = 16; k; k--, s++)
 				*t++ = (isprint(*s) ? *s : '.');
@@ -663,7 +669,7 @@ int	blen;
 	int	res, i, len;
 	char	*proto;
 
-	nl = (struct natlog *)((char *)ipl + sizeof(*ipl));
+	nl = (struct natlog *)((char *)ipl + IPLOG_SIZE);
 	res = (opts & OPT_RESOLVE) ? 1 : 0;
 	tm = localtime((time_t *)&ipl->ipl_sec);
 	len = sizeof(line);
@@ -737,7 +743,7 @@ int	blen;
 	struct	tm	*tm;
 	int	res, i, len;
 
-	sl = (struct ipslog *)((char *)ipl + sizeof(*ipl));
+	sl = (struct ipslog *)((char *)ipl + IPLOG_SIZE);
 	res = (opts & OPT_RESOLVE) ? 1 : 0;
 	tm = localtime((time_t *)&ipl->ipl_sec);
 	len = sizeof(line);
@@ -887,7 +893,7 @@ int	blen;
 #endif
 
 	ipl = (iplog_t *)buf;
-	ipf = (ipflog_t *)((char *)buf + sizeof(*ipl));
+	ipf = (ipflog_t *)((char *)buf + IPLOG_SIZE);
 	ip = (ip_t *)((char *)ipf + sizeof(*ipf));
 	v = ip->ip_v;
 	res = (opts & OPT_RESOLVE) ? 1 : 0;
@@ -920,13 +926,15 @@ int	blen;
 	{
 	char	ifname[sizeof(ipf->fl_ifname) + 1];
 
-	strncpy(ifname, ipf->fl_ifname, sizeof(ipf->fl_ifname));
+	strncpy(ifname, (char *)ipf->fl_ifname, sizeof(ipf->fl_ifname));
 	ifname[sizeof(ipf->fl_ifname)] = '\0';
 	(void) sprintf(t, "%s", ifname);
 	t += strlen(t);
 # if SOLARIS
-	if (isalpha(*(t - 1)))
-		*t++ = '0' + ipf->fl_unit;
+	if (isalpha(*(t - 1))) {
+		sprintf(t, "%d", ipf->fl_unit);
+		t += strlen(t);
+	}
 # endif
 	}
 #else
@@ -938,7 +946,15 @@ int	blen;
 	(void) sprintf(t, "%*.*s%u", len, len, ipf->fl_ifname, ipf->fl_unit);
 	t += strlen(t);
 #endif
-	(void) sprintf(t, " @%u:%u ", ipf->fl_group, ipf->fl_rule + 1);
+	if (ipf->fl_group == 0xffffffff)
+		strcat(t, " @-1:");
+	else
+		(void) sprintf(t, " @%u:", ipf->fl_group);
+	t += strlen(t);
+	if (ipf->fl_rule == 0xffffffff)
+		strcat(t, "-1 ");
+	else
+		(void) sprintf(t, "%u ", ipf->fl_rule + 1);
 	t += strlen(t);
 
  	if (ipf->fl_flags & FF_SHORT) {
@@ -997,17 +1013,18 @@ int	blen;
 
 	if ((p == IPPROTO_TCP || p == IPPROTO_UDP) && !off) {
 		tp = (tcphdr_t *)((char *)ip + hl);
-		if (!(ipf->fl_flags & (FI_SHORT << 16))) {
+		if (!(ipf->fl_flags & FF_SHORT)) {
 			(void) sprintf(t, "%s,%s -> ", hostname(res, v, s),
 				portname(res, proto, (u_int)tp->th_sport));
 			t += strlen(t);
-			(void) sprintf(t, "%s,%s PR %s len %hu %hu ",
+			(void) sprintf(t, "%s,%s PR %s len %hu %hu",
 				hostname(res, v, d),
 				portname(res, proto, (u_int)tp->th_dport),
 				proto, hl, plen);
 			t += strlen(t);
 
 			if (p == IPPROTO_TCP) {
+				*t++ = ' ';
 				*t++ = '-';
 				for (i = 0; tcpfl[i].value; i++)
 					if (tp->th_flags & tcpfl[i].value)
@@ -1122,9 +1139,9 @@ int	blen;
 		t += strlen(t);
 	}
 
-	if (ipf->fl_flags & FR_INQUE)
+	if (ipf->fl_dir == 0)
 		strcpy(t, " IN");
-	else if (ipf->fl_flags & FR_OUTQUE)
+	else if (ipf->fl_dir == 1)
 		strcpy(t, " OUT");
 	t += strlen(t);
 printipflog:
@@ -1242,7 +1259,7 @@ char *argv[];
 	int	fd[3], doread, n, i;
 	int	tr, nr, regular[3], c;
 	int	fdt[3], devices = 0, make_daemon = 0;
-	char	buf[512], *iplfile[3], *s;
+	char	buf[IPLLOGSIZE], *iplfile[3], *s;
 	extern	int	optind;
 	extern	char	*optarg;
 
