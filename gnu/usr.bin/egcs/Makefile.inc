@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 1999/01/11 10:59:25 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.16 1999/01/31 21:45:08 christos Exp $
 
 .if !defined(GCC_MAKEFILE_INC)
 GCC_MAKEFILE_INC=1
@@ -28,7 +28,7 @@ CPPFLAGS+=	-I${.CURDIR}/../arch \
 		-I${DIST}/config \
 		-DIN_GCC -DNETBSD_NATIVE
 
-.if (${OBJECT_FMT} == "ELF") && (${MACHINE_ARCH} == "i386")
+.if (${OBJECT_FMT} == "ELF")
 CPPFLAGS+=-DDEFAULT_ELF
 .endif
 
