@@ -1,4 +1,4 @@
-/* $NetBSD: fpe.c,v 1.1 1996/01/31 23:21:09 mark Exp $ */
+/* $NetBSD: fpe.c,v 1.2 1996/03/18 19:58:09 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -43,9 +43,6 @@
  * Currently calculations are only performed to single precision
  *
  * Created      : 11/02/95
- * Last updated : 28/08/95
- *
- *    $Id: fpe.c,v 1.1 1996/01/31 23:21:09 mark Exp $
  */
 
 /* FPE Compile options

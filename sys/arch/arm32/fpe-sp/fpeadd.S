@@ -1,4 +1,4 @@
-/* $NetBSD: fpeadd.S,v 1.1 1996/01/31 23:21:11 mark Exp $ */
+/* $NetBSD: fpeadd.S,v 1.2 1996/03/18 19:58:12 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -39,9 +39,6 @@
  * FP addition
  *
  * Created      : 11/02/95
- * Last updated : 28/08/95
- *
- *    $Id: fpeadd.S,v 1.1 1996/01/31 23:21:11 mark Exp $
  */
 
 /* std. registers

@@ -1,4 +1,4 @@
-/* $NetBSD: fpesub.S,v 1.1 1996/01/31 23:21:19 mark Exp $ */
+/* $NetBSD: fpesub.S,v 1.2 1996/03/18 19:58:18 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -39,9 +39,6 @@
  * FP subtract
  *
  * Created      : 11/02/95
- * Last updated : 28/08/95
- *
- *    $Id: fpesub.S,v 1.1 1996/01/31 23:21:19 mark Exp $
  */
 
 .global _nc_fp_sub
