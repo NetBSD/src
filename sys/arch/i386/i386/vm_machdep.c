@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *	$Id: vm_machdep.c,v 1.7.2.4 1993/10/15 13:11:31 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.7.2.5 1993/10/26 12:00:00 mycroft Exp $
  */
 
 /*
@@ -72,7 +72,6 @@ cpu_fork(p1, p2)
 {
 	register struct user *up = p2->p_addr;
 	int foo, offset, addr, i;
-	extern char kstack[];
 	extern int mvesp();
 
 	/*
@@ -87,19 +86,19 @@ cpu_fork(p1, p2)
 	 * replacing the bcopy and savectx.
 	 */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
-	offset = mvesp() - (int)kstack;
-	bcopy((caddr_t)kstack + offset, (caddr_t)p2->p_addr + offset,
+	offset = mvesp() - (int)USRSTACK;
+	bcopy((caddr_t)USRSTACK + offset, (caddr_t)p2->p_addr + offset,
 	    (unsigned) ctob(UPAGES) - offset);
 	p2->p_regs = p1->p_regs;
 
 	/*
-	 * Wire top of address space of child to it's kstack.
+	 * Wire top of address space of child to it's USRSTACK.
 	 * First, fault in a page of pte's to map it.
 	 */
-        addr = trunc_page((u_int)vtopte(kstack));
+        addr = trunc_page((u_int)vtopte(USRSTACK));
 	vm_map_pageable(&p2->p_vmspace->vm_map, addr, addr+NBPG, FALSE);
 	for (i=0; i < UPAGES; i++)
-		pmap_enter(&p2->p_vmspace->vm_pmap, kstack+i*NBPG,
+		pmap_enter(&p2->p_vmspace->vm_pmap, USRSTACK+i*NBPG,
 			pmap_extract(kernel_pmap, ((int)p2->p_addr)+i*NBPG),
 			VM_PROT_READ | VM_PROT_WRITE,	/* must be writable for
 							 * i486 WP support;
