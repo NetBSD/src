@@ -1,4 +1,4 @@
-.\"	$NetBSD: uuencode.5,v 1.5 1999/03/22 18:16:45 garbled Exp $
+.\"	$NetBSD: uuencode.5,v 1.6 2001/12/08 19:21:02 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -130,20 +130,20 @@ it possible to convey how many bytes are garbage.
 The trailer line consists of
 .Dq end
 on a line by itself.
-.Sh BUGS
-The interpretation of the
-.Nm
-format relies on properties of the
-.Tn ASCII
-character set and may not work correctly on non-ASCII systems.
 .Sh SEE ALSO
-.Xr uuencode 1 ,
-.Xr uudecode 1 ,
-.Xr uucp 1 ,
 .Xr mail 1 ,
+.Xr uucp 1 ,
+.Xr uudecode 1 ,
+.Xr uuencode 1 ,
 .Xr ascii 7
 .Sh HISTORY
 The
 .Nm
 file format appeared in
 .Bx 4.0 .
+.Sh BUGS
+The interpretation of the
+.Nm
+format relies on properties of the
+.Tn ASCII
+character set and may not work correctly on non-ASCII systems.
