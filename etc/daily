@@ -1,11 +1,10 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.26 1998/06/28 21:37:59 nathanw Exp $
+#	$NetBSD: daily,v 1.27 1998/07/16 05:21:56 mycroft Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
-PATH=/bin:/usr/bin:/sbin:/usr/sbin
-export PATH
+export PATH=/bin:/usr/bin:/sbin:/usr/sbin
 host=`hostname`
 echo "Subject: $host daily run output"
 
@@ -19,7 +18,7 @@ else
 fi
 
 if [ -z "$MAILTO" -o "$USER" != "root" ]; then
-  MAILTO=root
+	MAILTO=root
 fi
 
 if [ -s /etc/daily.conf ]; then
