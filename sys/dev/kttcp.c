@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.4.4.3 2002/09/17 21:19:19 nathanw Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.4.4.4 2002/10/06 02:02:00 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -77,6 +77,7 @@
 #include <sys/socketvar.h>
 #include <sys/socket.h>
 #include <sys/mbuf.h>
+#include <sys/sa.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
