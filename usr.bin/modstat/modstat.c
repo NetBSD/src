@@ -1,4 +1,4 @@
-/*	$NetBSD: modstat.c,v 1.16 2000/12/10 11:52:09 jdolecek Exp $	*/
+/*	$NetBSD: modstat.c,v 1.17 2002/09/13 17:16:00 tron Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modstat.c,v 1.16 2000/12/10 11:52:09 jdolecek Exp $");
+__RCSID("$NetBSD: modstat.c,v 1.17 2002/09/13 17:16:00 tron Exp $");
 #endif
 
 #include <sys/param.h>
@@ -88,6 +88,8 @@ dostat(devfd, modnum, modname)
 	char *modname;
 {
 	struct lmc_stat	sbuf;
+	long offset;
+	char offset_string[32];
 
 	if (modname != NULL)
 		strncpy(sbuf.name, modname, sizeof sbuf.name);
@@ -110,10 +112,17 @@ dostat(devfd, modnum, modname)
 	/*
 	 * Decode this stat buffer...
 	 */
-	printf("%-7s %3d %3ld %0*lx %04lx %0*lx %3ld %s\n",
+	offset = (long)sbuf.offset;
+	if (offset < 0)
+		(void) strlcpy(offset_string, "-", sizeof (offset_string));
+	else
+		(void) snprintf(offset_string, sizeof (offset_string), "%3ld",
+		    offset);
+
+	printf("%-7s %3d %3s %0*lx %04lx %0*lx %3ld %s\n",
 	    (sbuf.type < tn_nentries) ? type_names[sbuf.type] : "(UNKNOWN)", 
 	    sbuf.id,		/* module id */
-	    (long)sbuf.offset,	/* offset into modtype struct */
+	    offset_string,	/* offset into modtype struct */
 	    POINTERSIZE,
 	    (long)sbuf.area,	/* address module loaded at */
 	    (long)sbuf.size,	/* size in pages(K) */
