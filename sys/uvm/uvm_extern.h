@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.9 1998/03/09 00:58:56 mrg Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.10 1998/03/27 01:47:06 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -140,6 +140,7 @@ struct uio;
 struct uvm_object;
 struct vm_anon;
 struct vmspace;
+struct pmap;
 struct vnode;
 
 /*
@@ -318,7 +319,10 @@ void			uvm_page_print __P((struct vm_page *, boolean_t));
 void			uvm_page_printit __P((struct vm_page *, boolean_t,
 				void (*) __P((const char *, ...))));
 #endif
-struct vmspace		*uvmspace_alloc __P((vm_offset_t, vm_offset_t, int));
+struct vmspace		*uvmspace_alloc __P((vm_offset_t, vm_offset_t,
+				boolean_t));
+void			uvmspace_init __P((struct vmspace *, struct pmap *,
+				vm_offset_t, vm_offset_t, boolean_t));
 void			uvmspace_exec __P((struct proc *));
 struct vmspace		*uvmspace_fork __P((struct vmspace *));
 void			uvmspace_free __P((struct vmspace *));

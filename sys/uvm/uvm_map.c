@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.14 1998/03/19 19:26:50 chuck Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.15 1998/03/27 01:47:06 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -2346,16 +2346,42 @@ uvmspace_alloc(min, max, pageable)
 	UVMHIST_FUNC("uvmspace_alloc"); UVMHIST_CALLED(maphist);
 
 	MALLOC(vm, struct vmspace *, sizeof(struct vmspace), M_VMMAP, M_WAITOK);
-	bzero(vm, sizeof(*vm));
-	uvm_map_setup(&vm->vm_map, min, max, pageable);
-#if defined(PMAP_NEW)
-	vm->vm_map.pmap = pmap_create();
-#else
-	vm->vm_map.pmap = pmap_create(0);
-#endif
-	vm->vm_refcnt = 1;
+	uvmspace_init(vm, NULL, min, max, pageable);
 	UVMHIST_LOG(maphist,"<- done (vm=0x%x)", vm,0,0,0);
 	return (vm);
+}
+
+/*
+ * uvmspace_init: initialize a vmspace structure.
+ *
+ * - XXX: no locking on this structure
+ * - refcnt set to 1, rest must me init'd by caller
+ */
+void
+uvmspace_init(vm, pmap, min, max, pageable)
+	struct vmspace *vm;
+	struct pmap *pmap;
+	vm_offset_t min, max;
+	boolean_t pageable;
+{
+	UVMHIST_FUNC("uvmspace_init"); UVMHIST_CALLED(maphist);
+
+	bzero(vm, sizeof(*vm));
+
+	uvm_map_setup(&vm->vm_map, min, max, pageable);
+
+	if (pmap)
+		pmap_reference(pmap);
+	else
+#if defined(PMAP_NEW)
+		pmap = pmap_create();
+#else
+		pmap = pmap_create(0);
+#endif
+	vm->vm_map.pmap = pmap;
+
+	vm->vm_refcnt = 1;
+	UVMHIST_LOG(maphist,"<- done",0,0,0,0);
 }
 
 /*
