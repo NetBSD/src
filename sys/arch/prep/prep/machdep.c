@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2001/06/20 14:35:26 nonaka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 2001/06/20 15:25:02 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -559,11 +559,14 @@ cpu_startup()
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 VM_PHYS_SIZE, 0, FALSE, NULL);
 
+#ifndef PMAP_MAP_POOLPAGE
 	/*
-	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
-	 * are allocated via the pool allocator, and we use direct-mapped
-	 * pool pages.
+	 * We need to allocate an mbuf cluster submap if the pool
+	 * allocater isn't using direct-mapped pool pages.
 	 */
+	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				 nmbcluters & mclsize, 0, FALSE, NULL);
+#endif
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
