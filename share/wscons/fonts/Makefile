@@ -1,11 +1,8 @@
-# $NetBSD: Makefile,v 1.1.2.2 2000/08/09 07:30:29 drochner Exp $
+# $NetBSD: Makefile,v 1.1.2.3 2000/11/09 21:30:26 tv Exp $
 
 FONTS	= 	vt220l.814 vt220h.814 vt220l.808 vt220h.808 \
 		vt220l.816 vt220h.816 vt220l.810 vt220h.810
 
-LIBMODE	=	644
-LIBOWN	=	bin
-LIBGRP	=	bin
 CLEANFILES= 	${FONTS}
 FONTDIR=	/usr/share/wscons/fonts
 
@@ -13,7 +10,8 @@ all: $(FONTS)
 
 install: ${FONTS}
 	for i in ${FONTS}; do \
-		${INSTALL} -c -m ${LIBMODE} -o ${LIBOWN} -g ${LIBGRP} \
+		${INSTALL} ${RENAME} ${COPY} ${PRESERVE} ${INSTPRIV} \
+			-o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
 			${.OBJDIR}/$$i ${DESTDIR}${FONTDIR}; \
 	done
 
