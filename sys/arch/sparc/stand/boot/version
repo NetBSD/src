@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.9 1999/01/15 00:48:03 mrg Exp $
+$NetBSD: version,v 1.10 1999/04/28 15:22:25 christos Exp $
 
 # The newvers.sh looks for the line below.  We use this method
 # rather than $3 of the dollar-NetBSD-dollar line above so that
@@ -12,3 +12,4 @@ Version: 1.8
 1.6:	reorganization of boot program sources.
 1.7:	add libz, and re-reorganize sources into their correct subdirectories.
 1.8:	add support for automatically finding kernels other than /netbsd.
+1.9:	add ELF support
