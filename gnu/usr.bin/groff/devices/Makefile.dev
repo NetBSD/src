@@ -1,11 +1,11 @@
 #	from: @(#)Makefile.dev	6.2 (Berkeley) 3/16/91
-#	$Id: Makefile.dev,v 1.17 1997/03/27 09:52:03 mycroft Exp $
+#	$Id: Makefile.dev,v 1.18 1997/05/09 04:53:38 mycroft Exp $
 
 # Client Makefiles define DEVICE and FONTFILES and provide rules for
 #	individual font files
 
 DEVICES_=no_libraries
-.include "../../Makefile.cfg"
+.include "../Makefile.cfg"
 
 # XXX -- this depends on ../include/defs.h
 FONTDIR=	/usr/share/groff_font
