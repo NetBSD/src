@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.11 1995/08/14 01:27:53 mycroft Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.12 1995/08/14 02:58:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -87,10 +87,10 @@ bsd_to_linux_wstat(status)
 {
 	if (WIFSIGNALED(*status))
 		*status = (*status & ~0177) |
-		    bsd_to_linux_sig(WTERMSIG(*status));
+		    bsd_to_linux_sig[WTERMSIG(*status)];
 	else if (WIFSTOPPED(*status))
 		*status = (*status & ~0xff00) |
-		    (bsd_to_linux_sig(WSTOPSIG(*status)) << 8);
+		    (bsd_to_linux_sig[WSTOPSIG(*status)] << 8);
 }
 
 /*
