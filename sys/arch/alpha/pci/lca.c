@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.18 1997/04/07 23:40:35 cgd Exp $ */
+/* $NetBSD: lca.c,v 1.19 1997/04/10 23:12:19 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.18 1997/04/07 23:40:35 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.19 1997/04/10 23:12:19 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,6 +226,7 @@ lcaattach(parent, self, aux)
 	pba.pba_memt = lcp->lc_memt;
 	pba.pba_pc = &lcp->lc_pc;
 	pba.pba_bus = 0;
+	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	config_found(self, &pba, lcaprint);
 }
 
