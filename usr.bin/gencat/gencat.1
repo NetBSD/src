@@ -1,4 +1,4 @@
-.\" $NetBSD: gencat.1,v 1.4 2001/06/05 11:46:20 wiz Exp $
+.\" $NetBSD: gencat.1,v 1.5 2002/02/03 09:31:36 fair Exp $
 .\"
 .\" Written by Kee Hinckley <nazgul@somewhere.com>
 .\"
@@ -7,7 +7,7 @@
 .Dt GENCAT 1
 .Sh NAME
 .Nm gencat
-.Nd generates an NLS message catalog file
+.Nd generates a Native Language Support (NLS) message catalog file
 .Sh SYNOPSIS
 .Nm
 .Op Fl \&?
@@ -22,8 +22,10 @@ be displayed using the
 .Xr catgets 3
 library call.
 From these files it generates a message catalog which
-is loaded dynamically by the NLS library at run time.
+is loaded dynamically by the Native Language Support (NLS) library at run time.
+.Pp
 The message description files are text files in the format described below.
+.Pp
 The message catalog file is a binary file.
 If it already exists, it will be truncated when
 .Nm
