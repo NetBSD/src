@@ -1,4 +1,4 @@
-/*	$NetBSD: addchnstr.c,v 1.1 2003/05/21 21:19:52 jdc Exp $	*/
+/*	$NetBSD: addchnstr.c,v 1.2 2003/05/22 16:09:09 wiz Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: addchnstr.c,v 1.1 2003/05/21 21:19:52 jdc Exp $");
+__RCSID("$NetBSD: addchnstr.c,v 1.2 2003/05/22 16:09:09 wiz Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -135,11 +135,11 @@ mvwaddchnstr(WINDOW *win, int y, int x, const chtype *chstr, int n)
 int
 waddchnstr(WINDOW *win, const chtype *chstr, int n)
 {
-	size_t  i, len;
+	size_t  len;
 	const chtype *chp;
 	attr_t	attr;
 	char	*ocp, *cp, *start;
-	int ret;
+	int i, ret;
 
 #ifdef DEBUG
 	__CTRACE("waddchnstr: win = %p, chstr = %p, n = %d\n", win, chstr, n);
@@ -175,7 +175,7 @@ waddchnstr(WINDOW *win, const chtype *chstr, int n)
 		}
 	}
 	*cp = '\0';
-	ret = __waddbytes(win, start, (int) i, attr);
+	ret = __waddbytes(win, start, i, attr);
 	free(ocp);
 	return ret;
 }
