@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.35.8.1 2000/11/20 18:09:46 bouyer Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.35.8.2 2001/02/11 19:16:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -107,8 +107,13 @@ kernfs_get_rrootdev()
 		return;
 	for (cmaj = 0; cmaj < nchrdev; cmaj++) {
 		rrootdev = makedev(cmaj, minor(rootdev));
-		if (chrtoblk(rrootdev) == rootdev)
+		if (chrtoblk(rrootdev) == rootdev) {
+#ifdef KERNFS_DIAGNOSTIC
+	printf("kernfs_mount: rootdev = %u.%u; rrootdev = %u.%u\n",
+	    major(rootdev), minor(rootdev), major(rrootdev), minor(rrootdev));
+#endif
 			return;
+		}
 	}
 	rrootdev = NODEV;
 	printf("kernfs_get_rrootdev: no raw root device\n");
@@ -361,9 +366,9 @@ kernfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	return (EOPNOTSUPP);
 }
 
-extern struct vnodeopv_desc kernfs_vnodeop_opv_desc;
+extern const struct vnodeopv_desc kernfs_vnodeop_opv_desc;
 
-struct vnodeopv_desc *kernfs_vnodeopv_descs[] = {
+const struct vnodeopv_desc * const kernfs_vnodeopv_descs[] = {
 	&kernfs_vnodeop_opv_desc,
 	NULL,
 };

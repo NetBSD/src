@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.3.2.5 2001/01/18 09:23:51 bouyer Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.3.2.6 2001/02/11 19:17:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -649,7 +649,7 @@ ieee1394_ifattach(struct ifnet *ifp, const struct ieee1394_hwaddr *hwaddr)
 		ifp->if_baudrate = IF_Mbps(100);
 
 	if_alloc_sadl(ifp);
-	memcpy(LLADDR(sdl), hwaddr, ifp->if_addrlen);
+	memcpy(LLADDR(ifp->if_sadl), hwaddr, ifp->if_addrlen);
 
 	ifp->if_broadcastaddr = malloc(ifp->if_addrlen, M_DEVBUF, M_WAITOK);
 	baddr = (struct ieee1394_hwaddr *)ifp->if_broadcastaddr;
@@ -666,8 +666,6 @@ ieee1394_ifattach(struct ifnet *ifp, const struct ieee1394_hwaddr *hwaddr)
 void
 ieee1394_ifdetach(struct ifnet *ifp)
 {
-	struct sockaddr_dl *sdl = ifp->if_sadl;
-
 	ieee1394_drain(ifp);
 #if NBPFILTER > 0
 	bpfdetach(ifp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.3.2.5 2001/01/18 09:23:31 bouyer Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.3.2.6 2001/02/11 19:16:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -130,7 +130,7 @@ struct wi_pcmcia_product {
 	int		pp_prism2;	/* prism2 chipset */
 };
 
-static struct wi_pcmcia_product *wi_lookup __P((struct pcmcia_attach_args *pa));
+static const struct wi_pcmcia_product *wi_lookup __P((struct pcmcia_attach_args *pa));
 static int wi_match		__P((struct device *, struct cfdata *, void *));
 static void wi_attach		__P((struct device *, struct device *, void *));
 static int wi_detach		__P((struct device *, int));
@@ -184,7 +184,7 @@ struct cfattach wi_ca = {
 	sizeof(struct wi_softc), wi_match, wi_attach, wi_detach, wi_activate
 };
 
-static struct wi_pcmcia_product wi_pcmcia_products[] = {
+static const struct wi_pcmcia_product wi_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_LUCENT,
 	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
 	  PCMCIA_CIS_LUCENT_WAVELAN_IEEE,
@@ -201,6 +201,12 @@ static struct wi_pcmcia_product wi_pcmcia_products[] = {
 	  PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCC_11,
 	  PCMCIA_CIS_COREGA_WIRELESS_LAN_PCC_11,
 	  PCMCIA_STR_COREGA_WIRELESS_LAN_PCC_11,
+	  1 },
+
+	{ PCMCIA_VENDOR_COREGA,
+	  PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCCA_11,
+	  PCMCIA_CIS_COREGA_WIRELESS_LAN_PCCA_11,
+	  PCMCIA_STR_COREGA_WIRELESS_LAN_PCCA_11,
 	  1 },
 
 	{ PCMCIA_VENDOR_INTERSIL,
@@ -233,6 +239,36 @@ static struct wi_pcmcia_product wi_pcmcia_products[] = {
 	  PCMCIA_STR_ELSA_XI300_IEEE,
 	  1 },
 
+	{ PCMCIA_VENDOR_COMPAQ,
+	  PCMCIA_PRODUCT_COMPAQ_NC5004,
+	  PCMCIA_CIS_COMPAQ_NC5004,
+	  PCMCIA_STR_COMPAQ_NC5004,
+	  1 },
+
+	{ PCMCIA_VENDOR_CONTEC,
+	  PCMCIA_PRODUCT_CONTEC_FX_DS110_PCC,
+	  PCMCIA_CIS_CONTEC_FX_DS110_PCC,
+	  PCMCIA_STR_CONTEC_FX_DS110_PCC,
+	  1 },
+
+	{ PCMCIA_VENDOR_TDK,
+	  PCMCIA_PRODUCT_TDK_LAK_CD011WL,
+	  PCMCIA_CIS_TDK_LAK_CD011WL,
+	  PCMCIA_STR_TDK_LAK_CD011WL,
+	  1 },
+
+	{ PCMCIA_VENDOR_LUCENT,
+	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
+	  PCMCIA_CIS_NEC_CMZ_RT_WP,
+	  PCMCIA_STR_NEC_CMZ_RT_WP,
+	  1 },
+
+	{ PCMCIA_VENDOR_LUCENT,
+	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
+	  PCMCIA_CIS_NTT_ME_WLAN,
+	  PCMCIA_STR_NTT_ME_WLAN,
+	  1 },
+
 	{ 0,
 	  0,
 	  { NULL, NULL, NULL, NULL },
@@ -240,11 +276,11 @@ static struct wi_pcmcia_product wi_pcmcia_products[] = {
 	  0 }
 };
 
-static struct wi_pcmcia_product *
+static const struct wi_pcmcia_product *
 wi_lookup(pa)
 	struct pcmcia_attach_args *pa;
 {
-	struct wi_pcmcia_product *pp;
+	const struct wi_pcmcia_product *pp;
 
 	/*
 	 * match by CIS information first
@@ -334,7 +370,7 @@ wi_attach(parent, self, aux)
 	struct wi_softc *sc = (void *) self;
 	struct pcmcia_attach_args *pa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	struct wi_pcmcia_product *pp;
+	const struct wi_pcmcia_product *pp;
 	struct wi_ltv_macaddr	mac;
 	struct wi_ltv_gen	gen;
 	char devinfo[256];

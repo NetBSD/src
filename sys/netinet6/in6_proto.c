@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.8.2.1 2000/11/20 18:10:50 bouyer Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.8.2.2 2001/02/11 19:17:24 bouyer Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ struct ip6protosw inet6sw[] = {
   0,		0,		0,		0,
 },
 { SOCK_RAW,	&inet6domain,	IPPROTO_ICMPV6,	PR_ATOMIC | PR_ADDR,
-  icmp6_input,	rip6_output,	0,		rip6_ctloutput,
+  icmp6_input,	rip6_output,	rip6_ctlinput,	rip6_ctloutput,
   rip6_usrreq,
   icmp6_init,	icmp6_fasttimo,	0,		0,
   icmp6_sysctl,
@@ -243,7 +243,7 @@ struct ip6protosw in6_gif_protosw =
 #endif /*NGIF*/
 
 struct domain inet6domain =
-    { AF_INET6, "internet6", 0, 0, 0, 
+    { AF_INET6, "internet6", 0, 0, 0,
       (struct protosw *)inet6sw,
       (struct protosw *)&inet6sw[sizeof(inet6sw)/sizeof(inet6sw[0])], 0,
       rn_inithead,

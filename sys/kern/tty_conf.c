@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.24.8.3 2000/12/08 09:13:57 bouyer Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.24.8.4 2001/02/11 19:16:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -110,7 +110,7 @@ struct  linesw ntty_disc =
 #endif
 #if NTB > 0
 struct  linesw table_disc =
-	{ "table", 3, tbopen, tbclose, tbread, ttyerrio, tbtioctl,
+	{ "tablet", 3, tbopen, tbclose, tbread, ttyerrio, tbtioctl,
 	  tbinput, ttstart, nullmodem };		/* 3- TABLDISC */
 #endif
 #if NSL > 0

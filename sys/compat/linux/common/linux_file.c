@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.27.8.3 2001/01/05 17:35:26 bouyer Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.27.8.4 2001/02/11 19:14:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -495,7 +495,10 @@ linux_stat1(p, v, retval, dolstat)
 
 	sg = stackgap_init(p->p_emul);
 	st = stackgap_alloc(&sg, sizeof (struct stat));
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	if (dolstat)
+		CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
+	else
+		CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&sa, ub) = st;
 	SCARG(&sa, path) = SCARG(uap, path);
@@ -704,7 +707,7 @@ linux_sys_lchown16(p, v, retval)
 	struct sys___posix_lchown_args bla;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
 
 	SCARG(&bla, path) = SCARG(uap, path);
 	SCARG(&bla, uid) = ((linux_uid_t)SCARG(uap, uid) == (linux_uid_t)-1) ?
@@ -714,7 +717,8 @@ linux_sys_lchown16(p, v, retval)
 
 	return sys___posix_lchown(p, &bla, retval);
 }
-
+#endif /* __i386__ || __m68k__ */
+#if defined (__i386__) || defined (__m68k__) || defined (__powerpc__)
 int
 linux_sys_chown(p, v, retval)
 	struct proc *p;
@@ -746,11 +750,11 @@ linux_sys_lchown(p, v, retval)
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
 
 	return sys___posix_lchown(p, uap, retval);
 }
-#endif /* __i386__ || __m68k__ */
+#endif /* __i386__ || __m68k__ || __powerpc__ */
 
 int
 linux_sys_rename(p, v, retval)
@@ -852,7 +856,7 @@ linux_sys_readlink(p, v, retval)
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, name));
+	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, name));
 
 	return sys_readlink(p, uap, retval);
 }
@@ -910,9 +914,6 @@ linux_sys_pread(p, v, retval)
 		syscallarg(linux_off_t) offset;
 	} */ *uap = v;
 	struct sys_pread_args pra;
-	caddr_t sg;
-
-	sg = stackgap_init(p->p_emul);
 
 	SCARG(&pra, fd) = SCARG(uap, fd);
 	SCARG(&pra, buf) = SCARG(uap, buf);
@@ -938,9 +939,6 @@ linux_sys_pwrite(p, v, retval)
 		syscallarg(linux_off_t) offset;
 	} */ *uap = v;
 	struct sys_pwrite_args pra;
-	caddr_t sg;
-
-	sg = stackgap_init(p->p_emul);
 
 	SCARG(&pra, fd) = SCARG(uap, fd);
 	SCARG(&pra, buf) = SCARG(uap, buf);

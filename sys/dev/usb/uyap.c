@@ -1,4 +1,4 @@
-/*	$NetBSD: uyap.c,v 1.2.2.2 2001/01/05 17:36:35 bouyer Exp $	*/
+/*	$NetBSD: uyap.c,v 1.2.2.3 2001/02/11 19:16:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,10 +49,10 @@
 
 #include <dev/usb/ezload.h>
 
-struct ezdata uyap_firmware[] = {
+const struct ezdata uyap_firmware[] = {
 #include "dev/usb/uyap_firmware.h"
 };
-struct ezdata *uyap_firmwares[] = { uyap_firmware, NULL };
+const struct ezdata *uyap_firmwares[] = { uyap_firmware, NULL };
 
 struct uyap_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.30.8.2 2000/11/22 16:00:05 bouyer Exp $	*/
+/*	$NetBSD: zs.c,v 1.30.8.3 2001/02/11 19:09:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -706,7 +706,7 @@ again:
 	unit   = cs->cs_unit;	/* set up to handle interrupts	*/
 	zc     = cs->cs_zc;
 	tp     = cs->cs_ttyp;
-	line   = &linesw[tp->t_line];
+	line   = tp->t_linesw;
 	/*
 	 * Compute the number of interrupts in the receive ring.
 	 * If the count is overlarge, we lost some events, and

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.37.2.5 2001/01/05 17:36:36 bouyer Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.37.2.6 2001/02/11 19:16:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -86,8 +86,12 @@ int ELF64NAME2(netbsd,probe)(struct proc *, struct exec_package *,
 #include <compat/sunos/sunos_exec.h>
 #endif
 
-#ifdef COMPAT_SVR4
+#if defined(COMPAT_SVR4) || defined(COMPAT_SVR4_32)
 #include <compat/svr4/svr4_exec.h>
+#endif
+
+#ifdef COMPAT_SVR4_32
+#include <compat/svr4_32/svr4_32_exec.h>
 #endif
 
 #ifdef COMPAT_IBCS2
@@ -114,6 +118,9 @@ int ELF64NAME2(netbsd,probe)(struct proc *, struct exec_package *,
 
 #ifdef COMPAT_NETBSD32
 #include <compat/netbsd32/netbsd32_exec.h>
+#ifdef COMPAT_SUNOS
+#include <compat/sunos32/sunos32_exec.h>
+#endif
 #endif
 
 #ifdef COMPAT_VAX1K
@@ -218,6 +225,13 @@ const struct execsw execsw_builtin[] = {
 	  LINUX_ELF_AUX_ARGSIZ,
 	  LINUX_COPYARGS_FUNCTION, setregs },	/* Linux 32bit ELF bins */
 #endif
+#ifdef COMPAT_SVR4_32
+	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,
+	  { elf_probe_func: ELF32NAME2(svr4_32,probe) },
+	  &emul_svr4_32, EXECSW_PRIO_ANY,
+	  SVR4_32_AUX_ARGSIZ,
+	  svr4_32_copyargs, svr4_32_setregs },	/* SVR4 32bit ELF bins (not 64bit safe) */
+#endif
 #ifdef COMPAT_SVR4
 	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,
 	  { elf_probe_func: ELF32NAME2(svr4,probe) },
@@ -257,9 +271,15 @@ const struct execsw execsw_builtin[] = {
 	  elf64_copyargs, setregs }, /* NetBSD 64bit ELF bins */
 #endif /* EXEC_ELF64 */
 #ifdef COMPAT_SUNOS
+#ifdef COMPAT_NETBSD32
+	{ SUNOS32_AOUT_HDR_SIZE, exec_sunos32_aout_makecmds, { NULL },
+	  &emul_sunos, EXECSW_PRIO_ANY,
+	  0, netbsd32_copyargs, netbsd32_setregs }, /* SunOS a.out, 64-bit kernel */
+#else
 	{ SUNOS_AOUT_HDR_SIZE, exec_sunos_aout_makecmds, { NULL },
 	  &emul_sunos, EXECSW_PRIO_ANY,
 	  0, copyargs, setregs }, /* SunOS a.out */
+#endif
 #endif
 #if defined(COMPAT_LINUX) && defined(EXEC_AOUT)
 	{ LINUX_AOUT_HDR_SIZE, exec_linux_aout_makecmds, { NULL },

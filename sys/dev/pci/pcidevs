@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.159.2.5 2001/01/18 09:23:27 bouyer Exp $
+$NetBSD: pcidevs,v 1.159.2.6 2001/02/11 19:16:00 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -483,6 +483,7 @@ vendor SPECIALIX	0x11cb	Specialix Research
 vendor MKC		0x11cc	Michels & Kleberhoff Computer
 vendor HAL		0x11cd 	HAL Computer Systems
 vendor AURAVISION	0x11d1 	Auravision
+vendor SEGA		0x11db	SEGA Enterprises
 vendor ZORAN		0x11de	Zoran Corporation
 vendor COMPEX		0x11f6	Compex
 vendor PMCSIERRA	0x11f8	PMC-Sierra
@@ -646,6 +647,7 @@ product ALI M3309	0x3309	M3309 MPEG Decoder
 product ALI M4803	0x5215	M4803
 product ALI M5229	0x5229	M5229 UDMA IDE Controller
 product ALI M5237	0x5237	M5237 USB Host Controller
+product ALI M5243	0x5243	M5243 PCI-AGP Bridge
 product ALI M7101	0x7101	M7101 Power Management Controller
 
 /* Adaptec products */
@@ -837,6 +839,11 @@ product CCUBE CINEMASTER	0x8888	Cinemaster C 3.0 DVD Decoder
 /* AVM products */
 product AVM FRITZ_CARD		0x0a00	Fritz! Card ISDN Interface
 
+/* Stallion products */
+product STALLION EC8_32		0x0000	EC8/32
+product STALLION EC8_64		0x0002	EC8/64
+product STALLION EASYIO		0x0003	EasyIO
+
 /* Bit3 products */
 product BIT3 PCIVME617		0x0001	PCI-VME Interface Mod. 617
 product BIT3 PCIVME618		0x0010	PCI-VME Interface Mod. 618
@@ -933,6 +940,7 @@ product COMPAQ IntNF3P		0xae35	Integrated NetFlex 3/P
 product COMPAQ DPNet100TX	0xae40	Dual Port Netelligent 10/100 TX
 product COMPAQ IntPL100TX	0xae43	ProLiant Integrated Netelligent 10/100 TX
 product COMPAQ DP4000		0xb011	Deskpro 4000 5233MMX
+product COMPAQ M700		0xb112	Armada M700
 product COMPAQ NF3P_BNC		0xf150	NetFlex 3/P w/ BNC
 product COMPAQ NF3P		0xf130	NetFlex 3/P
 
@@ -1112,7 +1120,9 @@ product INTEL 82426EX		0x0486	82426EX PCI-to-ISA Bridge (PCIB)
 product INTEL PCMC		0x04a3	82434LX/NX PCI, Cache and Memory Controller (PCMC)
 product INTEL 80960RM		0x0962	i960 RM PCI-PCI
 product INTEL 80960RN		0x0964	i960 RN PCI-PCI
-product INTEL 82452		0x1000	Pro/1000
+product INTEL 82452		0x1000	PRO/1000 Gigabit Ethernet (i82452)
+product INTEL LIVENGOOD		0x1001	PRO/1000 Gigabit Ethernet (LIVENGOOD)
+product INTEL 82452_SC		0x1003	PRO/1000 Gigabit Ethernet (i82452-SC)
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
 product INTEL 82815_DC100_AGP	0x1101	82815 AGP
 product INTEL 82815_DC100_GRAPH	0x1102	82815 Graphics
@@ -1296,6 +1306,7 @@ product MATROX G100_AGP		0x1001	MGA G100 AGP
 /* Motorola products */
 product MOT MPC105	0x0001	MPC105 \"Eagle\" Host Bridge
 product MOT MPC106	0x0002	MPC106 \"Grackle\" Host Bridge
+product MOT MPC8240	0x0003	MPC8240 \"Kahlua\" Host Bridge
 
 /* Mylex products */
 product MYLEX RAID_V2	0x0001	DAC960 RAID (v2 interface)
@@ -1501,6 +1512,9 @@ product	S3 SONICVIBES	0xca00	SonicVibes
 /* Samsung Semiconductor products */
 product SAMSUNGSEMI	KS8920	0x8920	KS8920 10/100 Ethernet
 
+/* SEGA Enterprises products */
+product	SEGA	BROADBAND	0x1234	Broadband Adapter
+
 /* ServerWorks products */
 product	SERVERWORKS ROSB4	0x0200	ROSB4 SouthBridge
 product SERVERWORKS XX5	0x0005	PCIHB5
@@ -1628,6 +1642,7 @@ product TOSHIBA R4X00		0x0009	R4x00 Host-PCI Bridge
 product TOSHIBA TC35856F	0x0020	TC35856F ATM (\"Meteor\")
 
 /* Toshiba products */
+product TOSHIBA2 PROTEGE	0x0001  Protege Notebook
 product TOSHIBA2 HOST		0x0601  Host Bridge/Controller
 product TOSHIBA2 ISA		0x0602  ISA Bridge
 product TOSHIBA2 ToPIC95	0x0603	ToPIC95 CardBus-PCI Bridge
@@ -1687,6 +1702,7 @@ product UMC UM8891N	0xe891	UM8891N
 product ULSI US201	0x0201	US201
 
 /* US Robotics products */
+product USR 3C2884A	0x1007	56K Voice Internal PCI Modem (WinModem)
 product USR 3CP5609	0x1008	3CP5609 PCI 16550 Modem
 
 /* V3 Semiconductor products */

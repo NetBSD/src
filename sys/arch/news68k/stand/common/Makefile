@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.6.2 2000/11/20 20:16:19 bouyer Exp $
+#	$NetBSD: Makefile,v 1.2.6.3 2001/02/11 19:11:22 bouyer Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -6,7 +6,7 @@ MKMAN= no
 
 CFLAGS= -Os -Wall
 
-CPPFLAGS+= -D_STANDALONE -DBOOT_DEBUG
+CPPFLAGS+= -D_STANDALONE
 CPPFLAGS+= -nostdinc -I${.OBJDIR} -I${S} -I.
 AFLAGS= -D_LOCORE
 

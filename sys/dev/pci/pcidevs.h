@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.166.2.5 2001/01/18 09:23:28 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.166.2.6 2001/02/11 19:16:01 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.290 2001/01/15 23:29:04 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.298 2001/02/04 18:16:20 briggs Exp 
  */
 
 /*
@@ -490,6 +490,7 @@
 #define	PCI_VENDOR_MKC	0x11cc		/* Michels & Kleberhoff Computer */
 #define	PCI_VENDOR_HAL	0x11cd		/* HAL Computer Systems */
 #define	PCI_VENDOR_AURAVISION	0x11d1		/* Auravision */
+#define	PCI_VENDOR_SEGA	0x11db		/* SEGA Enterprises */
 #define	PCI_VENDOR_ZORAN	0x11de		/* Zoran Corporation */
 #define	PCI_VENDOR_COMPEX	0x11f6		/* Compex */
 #define	PCI_VENDOR_PMCSIERRA	0x11f8		/* PMC-Sierra */
@@ -653,6 +654,7 @@
 #define	PCI_PRODUCT_ALI_M4803	0x5215		/* M4803 */
 #define	PCI_PRODUCT_ALI_M5229	0x5229		/* M5229 UDMA IDE Controller */
 #define	PCI_PRODUCT_ALI_M5237	0x5237		/* M5237 USB Host Controller */
+#define	PCI_PRODUCT_ALI_M5243	0x5243		/* M5243 PCI-AGP Bridge */
 #define	PCI_PRODUCT_ALI_M7101	0x7101		/* M7101 Power Management Controller */
 
 /* Adaptec products */
@@ -844,6 +846,11 @@
 /* AVM products */
 #define	PCI_PRODUCT_AVM_FRITZ_CARD	0x0a00		/* Fritz! Card ISDN Interface */
 
+/* Stallion products */
+#define	PCI_PRODUCT_STALLION_EC8_32	0x0000		/* EC8/32 */
+#define	PCI_PRODUCT_STALLION_EC8_64	0x0002		/* EC8/64 */
+#define	PCI_PRODUCT_STALLION_EASYIO	0x0003		/* EasyIO */
+
 /* Bit3 products */
 #define	PCI_PRODUCT_BIT3_PCIVME617	0x0001		/* PCI-VME Interface Mod. 617 */
 #define	PCI_PRODUCT_BIT3_PCIVME618	0x0010		/* PCI-VME Interface Mod. 618 */
@@ -940,6 +947,7 @@
 #define	PCI_PRODUCT_COMPAQ_DPNet100TX	0xae40		/* Dual Port Netelligent 10/100 TX */
 #define	PCI_PRODUCT_COMPAQ_IntPL100TX	0xae43		/* ProLiant Integrated Netelligent 10/100 TX */
 #define	PCI_PRODUCT_COMPAQ_DP4000	0xb011		/* Deskpro 4000 5233MMX */
+#define	PCI_PRODUCT_COMPAQ_M700	0xb112		/* Armada M700 */
 #define	PCI_PRODUCT_COMPAQ_NF3P_BNC	0xf150		/* NetFlex 3/P w/ BNC */
 #define	PCI_PRODUCT_COMPAQ_NF3P	0xf130		/* NetFlex 3/P */
 
@@ -1119,7 +1127,9 @@
 #define	PCI_PRODUCT_INTEL_PCMC	0x04a3		/* 82434LX/NX PCI, Cache and Memory Controller (PCMC) */
 #define	PCI_PRODUCT_INTEL_80960RM	0x0962		/* i960 RM PCI-PCI */
 #define	PCI_PRODUCT_INTEL_80960RN	0x0964		/* i960 RN PCI-PCI */
-#define	PCI_PRODUCT_INTEL_82452	0x1000		/* Pro/1000 */
+#define	PCI_PRODUCT_INTEL_82452	0x1000		/* PRO/1000 Gigabit Ethernet (i82452) */
+#define	PCI_PRODUCT_INTEL_LIVENGOOD	0x1001		/* PRO/1000 Gigabit Ethernet (LIVENGOOD) */
+#define	PCI_PRODUCT_INTEL_82452_SC	0x1003		/* PRO/1000 Gigabit Ethernet (i82452-SC) */
 #define	PCI_PRODUCT_INTEL_82815_DC100_HUB	0x1100		/* 82815 Hub */
 #define	PCI_PRODUCT_INTEL_82815_DC100_AGP	0x1101		/* 82815 AGP */
 #define	PCI_PRODUCT_INTEL_82815_DC100_GRAPH	0x1102		/* 82815 Graphics */
@@ -1303,6 +1313,7 @@
 /* Motorola products */
 #define	PCI_PRODUCT_MOT_MPC105	0x0001		/* MPC105 \"Eagle\" Host Bridge */
 #define	PCI_PRODUCT_MOT_MPC106	0x0002		/* MPC106 \"Grackle\" Host Bridge */
+#define	PCI_PRODUCT_MOT_MPC8240	0x0003		/* MPC8240 \"Kahlua\" Host Bridge */
 
 /* Mylex products */
 #define	PCI_PRODUCT_MYLEX_RAID_V2	0x0001		/* DAC960 RAID (v2 interface) */
@@ -1508,6 +1519,9 @@
 /* Samsung Semiconductor products */
 #define	PCI_PRODUCT_SAMSUNGSEMI_KS8920	0x8920		/* KS8920 10/100 Ethernet */
 
+/* SEGA Enterprises products */
+#define	PCI_PRODUCT_SEGA_BROADBAND	0x1234		/* Broadband Adapter */
+
 /* ServerWorks products */
 #define	PCI_PRODUCT_SERVERWORKS_ROSB4	0x0200		/* ROSB4 SouthBridge */
 #define	PCI_PRODUCT_SERVERWORKS_XX5	0x0005		/* PCIHB5 */
@@ -1635,6 +1649,7 @@
 #define	PCI_PRODUCT_TOSHIBA_TC35856F	0x0020		/* TC35856F ATM (\"Meteor\") */
 
 /* Toshiba products */
+#define	PCI_PRODUCT_TOSHIBA2_PROTEGE	0x0001		/* Protege Notebook */
 #define	PCI_PRODUCT_TOSHIBA2_HOST	0x0601		/* Host Bridge/Controller */
 #define	PCI_PRODUCT_TOSHIBA2_ISA	0x0602		/* ISA Bridge */
 #define	PCI_PRODUCT_TOSHIBA2_ToPIC95	0x0603		/* ToPIC95 CardBus-PCI Bridge */
@@ -1694,6 +1709,7 @@
 #define	PCI_PRODUCT_ULSI_US201	0x0201		/* US201 */
 
 /* US Robotics products */
+#define	PCI_PRODUCT_USR_3C2884A	0x1007		/* 56K Voice Internal PCI Modem (WinModem) */
 #define	PCI_PRODUCT_USR_3CP5609	0x1008		/* 3CP5609 PCI 16550 Modem */
 
 /* V3 Semiconductor products */

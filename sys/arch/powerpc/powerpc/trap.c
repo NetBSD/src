@@ -1,8 +1,9 @@
-/*	$NetBSD: trap.c,v 1.22.2.4 2001/01/05 17:34:57 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.22.2.5 2001/02/11 19:11:37 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
+ * Copyright (C) 2001 Emmanuel Dreyfus
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,6 +35,7 @@
 #include "opt_altivec.h"
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
+#include "opt_compat_linux.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -45,7 +47,11 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <dev/cons.h>
+
 #include <machine/cpu.h>
+#include <machine/db_machdep.h>
+#include <machine/fpu.h>
 #include <machine/frame.h>
 #include <machine/pcb.h>
 #include <machine/pmap.h>
@@ -62,9 +68,20 @@ volatile int astpending;
 volatile int want_resched;
 #endif
 
+#ifdef COMPAT_LINUX
+extern struct emul emul_linux;
+#endif
+
 void *syscall = NULL;	/* XXX dummy symbol for emul_netbsd */
 
 static int fix_unaligned __P((struct proc *p, struct trapframe *frame));
+static inline void setusr __P((int));
+
+void trap __P((struct trapframe *));	/* Called from locore / trap_subr */
+int setfault __P((faultbuf));	/* defined in locore.S */
+/* Why are these not defined in a header? */
+int badaddr __P((void *, size_t));
+int badaddr_read __P((void *, size_t, int *));
 
 void
 trap(frame)
@@ -110,7 +127,7 @@ trap(frame)
 			KERNEL_UNLOCK();
 			if (rv == KERN_SUCCESS)
 				return;
-			if (fb = p->p_addr->u_pcb.pcb_onfault) {
+			if ((fb = p->p_addr->u_pcb.pcb_onfault) != NULL) {
 				frame->srr0 = (*fb)[0];
 				frame->fixreg[1] = (*fb)[1];
 				frame->fixreg[2] = (*fb)[2];
@@ -236,7 +253,19 @@ trap(frame)
 syscall_bad:
 				if (p->p_emul->e_errno)
 					error = p->p_emul->e_errno[error];
+#ifdef COMPAT_LINUX
+				if (p->p_emul == &emul_linux) {
+					/*
+					 * Linux uses negative errno in kernel, but positive
+					 * errno in userland. 
+					 */
+					frame->fixreg[FIRSTARG] = -error;
+				}
+				else
+					frame->fixreg[FIRSTARG] = error;
+#else
 				frame->fixreg[FIRSTARG] = error;
+#endif
 				frame->cr |= 0x10000000;
 				break;
 			}
@@ -302,7 +331,7 @@ syscall_bad:
 		{
 			faultbuf *fb;
 
-			if (fb = p->p_addr->u_pcb.pcb_onfault) {
+			if ((fb = p->p_addr->u_pcb.pcb_onfault) != NULL) {
 				frame->srr0 = (*fb)[0];
 				frame->fixreg[1] = (*fb)[1];
 				frame->fixreg[2] = (*fb)[2];
@@ -332,7 +361,7 @@ brain_damage:
 	{
 		int sig;
 
-		while (sig = CURSIG(p))
+		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.9.2.3 2001/01/05 17:34:10 bouyer Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.9.2.4 2001/02/11 19:09:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -152,7 +152,7 @@ pci_intr_map(pa, ihp)
 	pci_intr_handle_t *ihp;
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
-	pcitag_t intrtag = pc->pa_intrtag;
+	pcitag_t intrtag = pa->pa_intrtag;
 	int pin = pa->pa_intrpin;
 	int line = pa->pa_intrline;
 	int bus, dev, func;

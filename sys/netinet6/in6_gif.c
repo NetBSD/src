@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_gif.c,v 1.7.2.1 2000/11/20 18:10:47 bouyer Exp $	*/
-/*	$KAME: in6_gif.c,v 1.34 2000/04/19 04:51:58 itojun Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.7.2.2 2001/02/11 19:17:22 bouyer Exp $	*/
+/*	$KAME: in6_gif.c,v 1.43 2001/01/22 07:27:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -34,9 +34,7 @@
  * in6_gif.c
  */
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,13 +42,9 @@
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/errno.h>
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 #include <sys/ioctl.h>
-#endif
-
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#include <sys/malloc.h>
-#endif
+#include <sys/queue.h>
+#include <sys/syslog.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -336,7 +330,8 @@ gif_encapcheck6(m, off, proto, arg)
 	/* martian filters on outer source - done in ip6_input */
 
 	/* ingress filters on outer source */
-	if ((m->m_flags & M_PKTHDR) != 0 && m->m_pkthdr.rcvif) {
+	if ((sc->gif_if.if_flags & IFF_LINK2) == 0 &&
+	    (m->m_flags & M_PKTHDR) != 0 && m->m_pkthdr.rcvif) {
 		struct sockaddr_in6 sin6;
 		struct rtentry *rt;
 
@@ -345,15 +340,15 @@ gif_encapcheck6(m, off, proto, arg)
 		sin6.sin6_len = sizeof(struct sockaddr_in6);
 		sin6.sin6_addr = ip6.ip6_src;
 		/* XXX scopeid */
-#ifdef __FreeBSD__
-		rt = rtalloc1((struct sockaddr *)&sin6, 0, 0UL);
-#else
 		rt = rtalloc1((struct sockaddr *)&sin6, 0);
+		if (!rt || rt->rt_ifp != m->m_pkthdr.rcvif) {
+#if 0
+			log(LOG_WARNING, "%s: packet from %s dropped "
+			    "due to ingress filter\n", if_name(&sc->gif_if),
+			    ip6_sprintf(&sin6.sin6_addr));
 #endif
-		if (!rt)
-			return 0;
-		if (rt->rt_ifp != m->m_pkthdr.rcvif) {
-			rtfree(rt);
+			if (rt)
+				rtfree(rt);
 			return 0;
 		}
 		rtfree(rt);

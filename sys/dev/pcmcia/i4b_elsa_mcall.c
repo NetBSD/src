@@ -33,7 +33,7 @@
  *	ELSA MicroLink MC/all card specific routines
  *	--------------------------------------------
  *
- *	$Id: i4b_elsa_mcall.c,v 1.1.1.1.2.2 2001/01/05 17:36:21 bouyer Exp $
+ *	$Id: i4b_elsa_mcall.c,v 1.1.1.1.2.3 2001/02/11 19:16:10 bouyer Exp $
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -180,9 +180,7 @@ elsa_mcall_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
 /*
  * XXX - one time only! Some of this has to go into an enable
  * function, with apropriate counterpart in disable, so a card
- * could be removed an inserted again. But never mind for now,
- * this won't work anyway for several reasons (both in NetBSD
- * and in I4B).
+ * could be removed an inserted again.
  */
 int
 isic_attach_elsamcall(struct pcmcia_l1_softc *psc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa)

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5.22.1 2000/12/13 15:50:24 bouyer Exp $
+# $NetBSD: Makefile,v 1.5.22.2 2001/02/11 19:16:54 bouyer Exp $
 
 # XXX for now, only Linux on i386 was actually tested, others might
 # need further work; compile stuff on everything, but only install
@@ -25,7 +25,7 @@ SUBDIR+=	aout freebsd ibcs2 linux svr4
 SUBDIR+=	aoutm68k linux sunos svr4
 .endif
 
-.if (${MACHINE_ARCH} == "mipsle" || ${MACHINE_ARCH} == "mipsbe")
+.if (${MACHINE_ARCH} == "mipsel")
 SUBDIR+=	ultrix
 .endif
 
@@ -34,7 +34,8 @@ SUBDIR+=	aout sunos svr4
 .endif
 
 .if (${MACHINE_ARCH} == "sparc64")
-SUBDIR+=	netbsd32 sunos svr4
+SUBDIR+=	netbsd32 sunos32
+#SUBDIR+=	svr4_32
 .endif
 
 .if (${MACHINE_ARCH} == "vax")

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.43.14.1 2000/11/20 20:27:57 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.43.14.2 2001/02/11 19:12:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -99,7 +99,7 @@ clock_match(parent, cf, args)
 	struct confargs *ca = args;
 
 	/* This driver only supports one unit. */
-	if (cf->cf_unit != 0)
+	if (intersil_va)
 		return (0);
 
 	/* Make sure there is something there... */

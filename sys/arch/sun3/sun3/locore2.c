@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.74.14.1 2000/11/20 20:28:01 bouyer Exp $	*/
+/*	$NetBSD: locore2.c,v 1.74.14.2 2001/02/11 19:12:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,10 +76,9 @@ int cache_size;
  * XXX: m68k common code needs these...
  * ... but this port does not need to deal with anything except
  * an mc68020, so these two variables are always ignored.
- * XXX: Need to do something about <m68k/include/cpu.h>
  */
-int cputype = 0;	/* CPU_68020 */
-int mmutype = 2;	/* MMU_SUN */
+int cputype = CPU_68020;
+int mmutype = MMU_SUN;
 
 /*
  * Now our own stuff.

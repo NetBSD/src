@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.66.2.1 2000/11/20 19:58:18 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.66.2.2 2001/02/11 19:08:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -275,6 +275,7 @@ mbattach(pdp, dp, auxp)
 		config_found(dp, "kbd", simple_devprint);
 		config_found(dp, "ms", simple_devprint);
 		config_found(dp, "grfcc", simple_devprint);
+		config_found(dp, "amidisplaycc", simple_devprint);
 		config_found(dp, "fdc", simple_devprint);
 	}
 	if (is_a4000() || is_a1200()) {

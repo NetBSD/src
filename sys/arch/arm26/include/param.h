@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.3.2.6 2001/01/05 17:34:02 bouyer Exp $	*/
+/*	$NetBSD: param.h,v 1.3.2.7 2001/02/11 19:08:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -44,6 +44,7 @@
 #define	MACHINE		"arm26"
 #define	_MACHINE_ARCH	arm26
 #define	MACHINE_ARCH	"arm26"
+#define MID_MACHINE	MID_ARM6 /* XXX */
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value

@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.17.2.2 2000/12/08 09:30:53 bouyer Exp $ */
+/*	$NetBSD: smg.c,v 1.17.2.3 2001/02/11 19:13:13 bouyer Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -205,7 +205,7 @@ smg_match(struct device *parent, struct cfdata *match, void *aux)
 	volatile short *cfgtst;
 	short tmp, tmp2;
 
-	if (vax_boardtype == VAX_BTYP_49)
+	if (vax_boardtype == VAX_BTYP_49 || vax_boardtype == VAX_BTYP_53)
 		return 0;
 
 	curcmd = (short *)va->va_addr;

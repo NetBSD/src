@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.46.2.2 2001/01/05 17:36:32 bouyer Exp $        */
+/*      $NetBSD: ukbd.c,v 1.46.2.3 2001/02/11 19:16:26 bouyer Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -389,10 +389,10 @@ USB_ATTACH(ukbd)
 	usbd_delay_ms(uaa->device, 400);
 	ukbd_set_leds(sc, 0);
 
-	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
-
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
+
+	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
 
 	USB_ATTACH_SUCCESS_RETURN;
 }

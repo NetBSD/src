@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.4.6.2 2000/11/20 20:02:26 bouyer Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.4.6.3 2001/02/11 19:08:53 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -29,9 +29,12 @@
  */
 
 #include <sys/param.h>
+
+__RCSID("$NetBSD: db_trace.c,v 1.4.6.3 2001/02/11 19:08:53 bouyer Exp $");
+
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <machine/armreg.h>
+#include <arm/armreg.h>
 #include <machine/db_machdep.h>
 
 #include <ddb/db_access.h>
@@ -53,13 +56,13 @@
  *          return fp value         [fp, #-12]
  *          [saved v7 value]
  *          [saved v6 value]
- *          [saved v5 value}
+ *          [saved v5 value]
  *          [saved v4 value]
  *          [saved v3 value]
  *          [saved v2 value]
  *          [saved v1 value]
  *          [saved a4 value]
- *          [saved a3 value}
+ *          [saved a3 value]
  *          [saved a2 value]
  *          [saved a1 value]
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.114.2.6 2000/12/08 09:12:42 bouyer Exp $ */
+/*	$NetBSD: st.c,v 1.114.2.7 2001/02/11 19:16:19 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ struct st_quirk_inquiry_pattern {
 	struct quirkdata quirkdata;
 };
 
-struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
+const struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 	{{T_SEQUENTIAL, T_REMOV,
 	 "        ", "                ", "    "}, {0, 0, {
 		{ST_Q_FORCE_BLKSIZE, 512, 0},		/* minor 0-3 */

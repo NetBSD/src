@@ -1,4 +1,4 @@
-/* $NetBSD: ioeb.c,v 1.2.2.4 2000/12/13 15:49:19 bouyer Exp $ */
+/* $NetBSD: ioeb.c,v 1.2.2.5 2001/02/11 19:08:59 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -30,7 +30,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: ioeb.c,v 1.2.2.4 2000/12/13 15:49:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioeb.c,v 1.2.2.5 2001/02/11 19:08:59 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -53,6 +53,8 @@ static void ioeb_attach(struct device *, struct device *, void *);
 struct cfattach ioeb_ca = {
 	sizeof(struct ioeb_softc), ioeb_match, ioeb_attach
 };
+
+struct device *the_ioeb;
 
 /* IOEB is only four bits wide */
 #define ioeb_read(t, h, o) (bus_space_read_1(t, h, o) & 0xf)
@@ -77,15 +79,17 @@ ioeb_attach(struct device *parent, struct device *self, void *aux)
 	struct ioeb_softc *sc = (void *)self;
 	struct ioc_attach_args *ioc = aux;
 
+	if (the_ioeb == NULL)
+		the_ioeb = self;
 	sc->sc_iot = ioc->ioc_fast_t;
 	sc->sc_ioh = ioc->ioc_fast_h;
 	printf("\n");
 }
 
 void
-ioeb_irq_clear(struct device *self, int mask)
+ioeb_irq_clear(int mask)
 {
-	struct ioeb_softc *sc = (void *)self;
+	struct ioeb_softc *sc = (void *)the_ioeb;
 
 	/* The IOEB only controls interrupt 0 */
 	if (mask & IOEB_IRQ_CLEARABLE_MASK)

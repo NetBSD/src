@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.15.2.1 2000/11/20 18:12:07 bouyer Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.15.2.2 2001/02/11 19:17:51 bouyer Exp $	*/
 
 /*
  *
@@ -134,6 +134,7 @@ LIST_HEAD(uvm_history_head, uvm_history);
 /* and these are the bit values of each history */
 #define	UVMHIST_MAPHIST		0x00000001	/* maphist */
 #define	UVMHIST_PDHIST		0x00000002	/* pdhist */
+#define	UVMHIST_UBCHIST		0x00000004	/* ubchist */
 
 #ifdef _KERNEL
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sony8x16.h,v 1.1.2.2 2000/11/22 16:05:12 bouyer Exp $	*/
+/*	$NetBSD: sony8x16.h,v 1.1.2.3 2001/02/11 19:16:38 bouyer Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -46,8 +46,8 @@ extern u_char sony8x16_data[];
 struct wsdisplay_font sony8x16 = {
 	"sony8x16",			/* typeface name */
 	' ',				/* firstchar */
-	'~' - ' ' + 1,			/* numchars */
-	WSDISPLAY_FONTENC_ISO,		/* encoding */
+	0xff - ' ' + 1,			/* numchars */
+	WSDISPLAY_FONTENC_SONY,		/* encoding */
 	8,				/* width */
 	16,				/* height */
 	1,				/* stride */
@@ -2346,7 +2346,6 @@ static u_char sony8x16_data[] = {
 	0x00,	/* ........ */
 	0x00,	/* ........ */
 
-#if 0
 	/* 0x7F */
 	0x00,	/* ........ */
 	0x00,	/* ........ */
@@ -4668,5 +4667,4 @@ static u_char sony8x16_data[] = {
 	0x10,	/* ...*.... */
 	0x20,	/* ..*..... */
 	0x00,	/* ........ */
-#endif
 };

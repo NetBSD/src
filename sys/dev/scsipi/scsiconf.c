@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.130.2.8 2000/12/08 09:12:41 bouyer Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.130.2.9 2001/02/11 19:16:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -412,7 +412,7 @@ scsibusprint(aux, pnp)
 	return (UNCONF);
 }
 
-struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
+const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "CHINON  ", "CD-ROM CDS-431  ", ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,

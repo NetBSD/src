@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.9.14.1 2000/11/20 20:33:38 bouyer Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.9.14.2 2001/02/11 19:13:11 bouyer Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -220,7 +220,7 @@ hdcmatch(struct device *parent, struct cfdata *cf, void *aux)
 	u = 8; /* !!! - GCC */
 
 	if (vax_boardtype == VAX_BTYP_49 || vax_boardtype == VAX_BTYP_46
-	    || vax_boardtype == VAX_BTYP_48)
+	    || vax_boardtype == VAX_BTYP_48 || vax_boardtype == VAX_BTYP_53)
 		return 0;
 
 	hdc_csr[4] = DKC_CMD_RESET; /* reset chip */

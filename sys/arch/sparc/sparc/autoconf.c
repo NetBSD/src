@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.125.2.2 2000/11/20 20:25:41 bouyer Exp $ */
+/*	$NetBSD: autoconf.c,v 1.125.2.3 2001/02/11 19:12:19 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -216,7 +216,6 @@ bootstrap()
 
 	/* Moved zs_kgdb_init() to dev/zs.c:consinit(). */
 #ifdef DDB
-	db_machine_init();
 	if ((bi_sym = lookup_bootinfo(BTINFO_SYMTAB)) != NULL) {
 	   	bi_sym->ssym += KERNBASE; 
 	   	bi_sym->esym += KERNBASE; 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.73.2.2 2001/01/18 09:22:08 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.73.2.3 2001/02/11 19:08:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -381,6 +381,9 @@ pmap_bootstrap(firstaddr, loadaddr)
 	 * for loading the kernel into.
 	 */
 
+	uvmexp.pagesize = NBPG;
+	uvm_setpagesize();
+
 	/*
 	 * May want to check if first segment is Zorro-II?
 	 */
@@ -704,9 +707,6 @@ pmap_init()
 		DCIS();
 	}
 #endif
-
-	uvmexp.pagesize = NBPG;
-	uvm_setpagesize();
 }
 
 struct pv_entry *

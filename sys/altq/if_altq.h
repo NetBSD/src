@@ -1,5 +1,5 @@
-/*	$NetBSD: if_altq.h,v 1.5.2.2 2001/01/05 17:39:38 bouyer Exp $	*/
-/*	$KAME: if_altq.h,v 1.5 2000/12/14 08:12:47 thorpej Exp $	*/
+/*	$NetBSD: if_altq.h,v 1.5.2.3 2001/02/11 19:08:30 bouyer Exp $	*/
+/*	$KAME: if_altq.h,v 1.6 2001/01/29 19:59:09 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997-2000
@@ -52,10 +52,10 @@ struct	ifaltq {
 	void	*altq_disc;		/* for discipline-specific use */
 	struct	ifnet *altq_ifp;	/* back pointer to interface */
 
-	int	(*altq_enqueue) __P((struct ifaltq *ifq, struct mbuf *m,
+	int	(*altq_enqueue) __P((struct ifaltq *, struct mbuf *,
 				     struct altq_pktattr *));
-	struct	mbuf *(*altq_dequeue) __P((struct ifaltq *ifq, int remove));
-	int	(*altq_request) __P((struct ifaltq *ifq, int req, void *arg));
+	struct	mbuf *(*altq_dequeue) __P((struct ifaltq *, int));
+	int	(*altq_request) __P((struct ifaltq *, int, void *));
 
 	/* classifier fields */
 	void	*altq_clfier;		/* classifier-specific use */

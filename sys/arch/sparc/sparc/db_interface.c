@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.30.2.2 2000/11/22 16:01:40 bouyer Exp $ */
+/*	$NetBSD: db_interface.c,v 1.30.2.3 2001/02/11 19:12:22 bouyer Exp $ */
 
 /*
  * Mach Operating System
@@ -50,6 +50,7 @@
 #include <ddb/db_variables.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_output.h>
+#include <ddb/db_interface.h>
 #endif
 
 #include <machine/instr.h>
@@ -113,7 +114,7 @@ cpu_Debugger()
 
 static int nil;
 
-struct db_variable db_regs[] = {
+const struct db_variable db_regs[] = {
 	{ "psr", (long *)&DDB_TF->tf_psr, FCN_NULL, },
 	{ "pc", (long *)&DDB_TF->tf_pc, FCN_NULL, },
 	{ "npc", (long *)&DDB_TF->tf_npc, FCN_NULL, },
@@ -152,7 +153,7 @@ struct db_variable db_regs[] = {
 	{ "i6", (long *)&DDB_FR->fr_arg[6], FCN_NULL, },
 	{ "i7", (long *)&DDB_FR->fr_arg[7], FCN_NULL, },
 };
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 extern label_t	*db_recover;
 
@@ -237,16 +238,10 @@ db_prom_cmd(addr, have_addr, count, modif)
 	prom_abort();
 }
 
-struct db_command sparc_db_command_table[] = {
+const struct db_command db_machine_command_table[] = {
 	{ "prom",	db_prom_cmd,	0,	0 },
 	{ (char *)0, }
 };
-
-void
-db_machine_init()
-{
-	db_machine_commands_install(sparc_db_command_table);
-}
 #endif /* DDB */
 
 

@@ -1,10 +1,10 @@
-#	$NetBSD: files.pci,v 1.65.2.5 2001/01/18 09:23:25 bouyer Exp $
+#	$NetBSD: files.pci,v 1.65.2.6 2001/02/11 19:15:55 bouyer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
 # defined first.
 
-defopt	opt_pci.h	PCIVERBOSE PCI_CONFIG_DUMP
+defopt	opt_pci.h	PCIVERBOSE PCI_CONFIG_DUMP PCI_NETBSD_CONFIGURE
 
 defopt	opt_bktr.h	BKTR_OVERRIDE_CARD BKTR_OVERRIDE_TUNER BKTR_OVERRIDE_DBX
 			BKTR_OVERRIDE_MSP BKTR_SYSTEM_DEFAULT
@@ -20,6 +20,7 @@ file	dev/pci/pci.c			pci needs-flag
 file	dev/pci/pci_map.c		pci
 file	dev/pci/pci_quirks.c		pci
 file	dev/pci/pci_subr.c		pci
+file	dev/pci/pciconf.c		pci_netbsd_configure
 
 # Cypress 82c693 hyperCache(tm) Stand-Alone PCI Peripheral Controller
 # with USB.  This is a combo chip:
@@ -46,14 +47,16 @@ device	twe {unit = -1}
 attach	twe at pci
 file	dev/pci/twe.c			twe
 
-defopt	opt_twe.h	TWE_MAX_QUEUECNT TWE_MAX_PU_QUEUECNT
-
 attach	ld at twe with ld_twe
 file	dev/pci/ld_twe.c		ld_twe
 
 # Compaq RAID controllers
 attach	cac at pci with cac_pci
 file	dev/pci/cac_pci.c		cac_pci
+
+# Mylex RAID controllers
+attach	mlx at pci with mlx_pci
+file	dev/pci/mlx_pci.c		mlx_pci
 
 # DPT EATA SCSI controllers
 attach	dpt at pci with dpt_pci
@@ -213,6 +216,14 @@ file dev/pci/bktr/bktr_tuner.c		bktr
 device clcs: audio, auconv, mulaw, ac97, midibus
 attach  clcs at pci
 file dev/pci/cs4280.c			clcs
+
+# Cirrus Logic CrystalClear PCI Audio CS4281
+device clct: audio, auconv, mulaw, ac97
+attach  clct at pci
+file dev/pci/cs4281.c			clct
+
+# Shared code for Cirrus Logic CrystalClear PCI Audio CS4280 and CS4281
+file dev/pci/cs428x.c                  clcs | clct
 
 # Forte Media FM801
 device  fms { }: audio, auconv, mulaw, ac97, midibus

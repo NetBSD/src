@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.67.14.4 2000/12/13 15:50:40 bouyer Exp $	*/
+/*	$NetBSD: exec.h,v 1.67.14.5 2001/02/11 19:17:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -217,9 +217,9 @@ void	new_vmcmd __P((struct exec_vmcmd_set *evsp,
 		    u_long len, u_long addr, struct vnode *vp, u_long offset,
 		    u_int prot, int flags));
 #define	NEW_VMCMD(evsp,proc,len,addr,vp,offset,prot) \
-	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,0);
+	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,0)
 #define	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,flags) \
-	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,flags);
+	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,flags)
 #else	/* DEBUG */
 #define	NEW_VMCMD(evsp,proc,len,addr,vp,offset,prot) \
 	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,0)

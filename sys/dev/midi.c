@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.12.2.3 2001/01/18 09:23:15 bouyer Exp $	*/
+/*	$NetBSD: midi.c,v 1.12.2.4 2001/02/11 19:15:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -543,51 +543,58 @@ midi_start_output(sc, intr)
 	int intr;
 {
 	struct midi_buffer *mb = &sc->outbuf;
-	u_char *outp;
+	u_char out;
 	int error;
 	int s;
-	int i, mmax;
+	int i;
 
 	error = 0;
-	mmax = sc->props & MIDI_PROP_OUT_INTR ? 1 : MIDI_MAX_WRITE;
 
 	if (sc->dying)
 		return EIO;
 
-	s = splaudio();
 	if (sc->pbus && !intr) {
 		DPRINTFN(4, ("midi_start_output: busy\n"));
-		splx(s);
 		return 0;
 	}
-	sc->pbus = 1;
-	for (i = 0; i < mmax && mb->used > 0 && !error; i++) {
-		outp = mb->outp;
+	sc->pbus = (mb->used > 0)?1:0;
+	for (i = 0; i < MIDI_MAX_WRITE && mb->used > 0 &&
+		   (!error || error==EINPROGRESS); i++) {
+		s = splaudio();
+		out = *mb->outp;
+		mb->outp++;
+		if (mb->outp >= mb->end)
+			mb->outp = mb->start;
+		mb->used--;
 		splx(s);
-		DPRINTFN(4, ("midi_start_output: %p i=%d, data=0x%02x\n", 
-			     sc, i, *outp));
 #ifdef MIDI_SAVE
-		midisave.buf[midicnt] = *outp;
+		midisave.buf[midicnt] = out;
 		midicnt = (midicnt + 1) % MIDI_SAVE_SIZE;
 #endif
-		error = sc->hw_if->output(sc->hw_hdl, *outp++);
-		if (outp >= mb->end)
-			outp = mb->start;
-		s = splaudio();
-		mb->outp = outp;
-		mb->used--;
+		DPRINTFN(4, ("midi_start_output: %p i=%d, data=0x%02x\n", 
+			     sc, i, out));
+		error = sc->hw_if->output(sc->hw_hdl, out);
+		if ((sc->props & MIDI_PROP_OUT_INTR) && error!=EINPROGRESS)
+			/* If ointr is enabled, midi_start_output()
+			 * normally writes only one byte,
+			 * except hw_if->output() returns EINPROGRESS.
+			 */
+			break;
 	}
 	midi_wakeup(&sc->wchan);
 	selwakeup(&sc->wsel);
 	if (sc->async)
 		psignal(sc->async, SIGIO);
-	if (mb->used > 0) {
-		if (!(sc->props & MIDI_PROP_OUT_INTR))
+	if (!(sc->props & MIDI_PROP_OUT_INTR) || error==EINPROGRESS) {
+		if (mb->used > 0)
 			callout_reset(&sc->sc_callout, midi_wait,
-			    midi_timeout, sc);
-	} else
-		sc->pbus = 0;
-	splx(s);
+				      midi_timeout, sc);
+		else
+			sc->pbus = 0;
+	}
+	if ((sc->props & MIDI_PROP_OUT_INTR) && error==EINPROGRESS)
+		error = 0;
+
 	return error;
 }
 

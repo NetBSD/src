@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.50.2.3 2001/01/18 09:23:43 bouyer Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.50.2.4 2001/02/11 19:16:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -93,6 +93,9 @@
 #include <sys/sched.h>
 
 #include <machine/cpu.h>
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+#include <machine/intr.h>
+#endif
 
 #ifdef GPROF
 #include <sys/gmon.h>

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.264.2.7 2001/01/18 09:22:33 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.264.2.8 2001/02/11 19:10:50 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.264.2.7 $"
+#ident 		"GENERIC-$Revision: 1.264.2.8 $"
 
 maxusers	32		# estimated number of users
 
@@ -75,6 +75,7 @@ options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_12	# NetBSD 1.2,
 options 	COMPAT_13	# NetBSD 1.3,
 options 	COMPAT_14	# NetBSD 1.4,
+options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_43	# and 4.3BSD
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
@@ -470,10 +471,12 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 # RAID controllers and devices
 cac*	at eisa?			# Compaq EISA array controllers
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
+mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
-ld*	at cac? unit ?			# Compaq array disk devices
-ld*	at twe? unit ?			# 3ware array disk devices
 
+ld*	at cac? unit ?			# logical disk devices
+ld*	at twe? unit ?
+ld*	at mlx? unit ?
 
 # IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.
@@ -690,6 +693,9 @@ scsibus* at umass? channel ?
 # USB audio
 uaudio*	at uhub? port ? configuration ?
 
+# USB MIDI
+umidi* at uhub? port ? configuration ?
+
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
@@ -700,8 +706,11 @@ upl*	at uhub? port ?
 
 # Serial adapters
 # FTDI FT8U100AX serial adapter
-#uftdi*	at uhub? port ?
-#ucom*	at uftdi? portno ?
+uftdi*	at uhub? port ?
+ucom*	at uftdi? portno ?
+
+uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
+ucom*	at uplcom? portno ? 
 
 # Diamond Multimedia Rio 500
 urio*	at uhub? port ?
@@ -730,6 +739,7 @@ ugen*	at uhub? port ?
 auich*	at pci? dev ? function ?	# Intel ICH integrated AC'97 Audio
 auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
 clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
+clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 esm*	at pci? dev ? function ?	# ESS Maestro-1/2/2e PCI Audio Accelerator
@@ -773,6 +783,7 @@ opl*	at ym?
 audio*	at auich?
 audio*	at auvia?
 audio*	at clcs?
+audio*	at clct?
 audio*	at cmpci?
 audio*	at eap?
 audio*	at esm?
@@ -799,12 +810,14 @@ mpu*	at ym?
 
 # MIDI support
 midi*	at clcs?		# Cirrus Logic CS4280 MIDI port
+#midi*	at clct?		# Cirrus Logic CS4281 MIDI port
 #midi*	at cms?			# Creative Music System
 midi*	at eap?			# 137[01] MIDI port
 midi*	at mpu?			# MPU 401
 midi*	at opl?			# OPL FM synth
 midi*	at pcppi?		# MIDI interface to the PC speaker
 midi*	at sb?			# SB1 MIDI port
+midi*   at umidi?               # USB MIDI
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
@@ -834,6 +847,8 @@ wsmouse*	at mms? mux 0
 
 
 # Joysticks
+
+#joy*		at pnpbios? index ?	# Game port
 
 # ISA Plug-and-Play joysticks
 joy*	at isapnp?			# Game ports (usually on audio cards)

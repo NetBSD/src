@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.6.2.3 2000/12/08 09:28:46 bouyer Exp $
+# 	$NetBSD: NEWS1200,v 1.6.2.4 2001/02/11 19:11:13 bouyer Exp $
 
 #	news1200 config file
 #
@@ -108,8 +108,11 @@ clock0	at hb0 addr 0xe1420000 ipl 6
 le0	at hb0 addr 0xe1a40000 ipl 4
 
 # keyboard/mouse; not yet
-#kb0	at hb0 addr 0xe1240000 ipl 5
-#ms0	at hb0 addr 0xe1280000 ipl 5
+kb0	at hb0 addr 0xe1240000 ipl 5
+ms0	at hb0 addr 0xe1280000 ipl 5
+
+wskbd*	at kb?
+wsmouse* at ms?
 
 # onboard z8530 SCC
 zsc0	at hb0 addr 0xe1780000 ipl 5 vect 64 flags 0x1

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.20.8.1 2000/11/20 20:28:02 bouyer Exp $	*/
+/*	$NetBSD: machdep.h,v 1.20.8.2 2001/02/11 19:12:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -63,9 +63,6 @@ struct reg;
 struct trapframe;
 struct uio;
 
-extern int cold;
-extern int fputype;
-
 extern label_t *nofault;
 
 extern vm_offset_t vmmap;	/* XXX - See mem.c */
@@ -74,8 +71,6 @@ extern vm_offset_t vmmap;	/* XXX - See mem.c */
 void	DCIA __P((void));
 void	DCIU __P((void));
 void	ICIA __P((void));
-
-int 	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
 
 void	child_return __P((void *));
 
@@ -90,9 +85,6 @@ void	enable_init __P((void));
 void	enable_video __P((int));
 
 int 	fpu_emulate __P((struct trapframe *, struct fpframe *));
-
-int 	getdfc __P((void));
-int 	getsfc __P((void));
 
 /* Backward compatibility... */
 #define getsr	_getsr

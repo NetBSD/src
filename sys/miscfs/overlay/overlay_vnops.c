@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vnops.c,v 1.2.6.2 2000/11/20 18:09:48 bouyer Exp $	*/
+/*	$NetBSD: overlay_vnops.c,v 1.2.6.3 2001/02/11 19:17:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -71,7 +71,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: overlay_vnops.c,v 1.2.6.2 2000/11/20 18:09:48 bouyer Exp $
+ *	$Id: overlay_vnops.c,v 1.2.6.3 2001/02/11 19:17:00 bouyer Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -147,7 +147,7 @@
  * Global vfs data structures
  */
 int (**overlay_vnodeop_p) __P((void *));
-struct vnodeopv_entry_desc overlay_vnodeop_entries[] = {
+const struct vnodeopv_entry_desc overlay_vnodeop_entries[] = {
 	{ &vop_default_desc,  layer_bypass },
 
 	{ &vop_lookup_desc,   layer_lookup },
@@ -170,5 +170,5 @@ struct vnodeopv_entry_desc overlay_vnodeop_entries[] = {
 
 	{ (struct vnodeop_desc*)NULL, (int(*)__P((void *)))NULL }
 };
-struct vnodeopv_desc overlay_vnodeop_opv_desc =
+const struct vnodeopv_desc overlay_vnodeop_opv_desc =
 	{ &overlay_vnodeop_p, overlay_vnodeop_entries };

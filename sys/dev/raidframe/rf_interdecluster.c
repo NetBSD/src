@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_interdecluster.c,v 1.3.8.1 2000/11/20 11:42:54 bouyer Exp $	*/
+/*	$NetBSD: rf_interdecluster.c,v 1.3.8.2 2001/02/11 19:16:15 bouyer Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,6 +32,9 @@
  *
  ************************************************************/
 
+#include "rf_archs.h"
+
+#if RF_INCLUDE_INTERDECLUSTER > 0
 
 #include "rf_types.h"
 #include "rf_raid.h"
@@ -276,3 +279,4 @@ rf_RAIDIDagSelect(
 	} else
 		*createFunc = (RF_VoidFuncPtr) rf_CreateRaidOneWriteDAG;
 }
+#endif /* RF_INCLUDE_INTERDECLUSTER > 0 */

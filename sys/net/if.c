@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.52.2.4 2001/01/18 09:23:48 bouyer Exp $	*/
+/*	$NetBSD: if.c,v 1.52.2.5 2001/02/11 19:17:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -263,6 +263,14 @@ if_alloc_sadl(struct ifnet *ifp)
 	int namelen, masklen;
 	struct sockaddr_dl *sdl;
 	struct ifaddr *ifa;
+
+	/*
+	 * If the interface already has a link name, release it
+	 * now.  This is useful for interfaces that can change
+	 * link types, and thus switch link names often.
+	 */
+	if (ifp->if_sadl != NULL)
+		if_free_sadl(ifp);
 
 	namelen = strlen(ifp->if_xname);
 	masklen = offsetof(struct sockaddr_dl, sdl_data[0]) + namelen;

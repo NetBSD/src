@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.5.6.2 2000/11/20 11:40:53 bouyer Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.5.6.3 2001/02/11 19:15:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -303,7 +303,11 @@
  * all received packets.
  */
 
+#ifdef dreamcast
+#define	RTK_RX_BUF_SZ		RTK_RXBUF_16
+#else
 #define RTK_RX_BUF_SZ		RTK_RXBUF_64
+#endif
 #define RTK_RXBUFLEN		(1 << ((RTK_RX_BUF_SZ >> 11) + 13))
 #define RTK_TX_LIST_CNT		4
 #define RTK_TX_EARLYTHRESH	((256 / 32) << 16)

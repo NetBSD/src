@@ -1,4 +1,4 @@
-/*	$NetBSD: twereg.h,v 1.4.2.3 2000/11/22 16:04:23 bouyer Exp $	*/
+/*	$NetBSD: twereg.h,v 1.4.2.4 2001/02/11 19:16:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -145,9 +145,6 @@
 #define	TWE_UNIT_INFORMATION_TABLE_BASE	0x300
 #define	TWE_IOCTL			0x80
 #define	TWE_SECTOR_SIZE			512
-
-/* Maximum transfer size.  XXX This is an arbitrarily chosen value. */ 
-#define	TWE_MAX_XFER			(TWE_SG_SIZE * PAGE_SIZE)
 
 /* Scatter/gather block. */
 struct twe_sgb {

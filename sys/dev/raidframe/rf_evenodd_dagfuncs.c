@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.3.2.1 2000/11/20 11:42:54 bouyer Exp $	*/
+/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.3.2.2 2001/02/11 19:16:15 bouyer Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -29,6 +29,10 @@
 /*
  * Code for RAID-EVENODD  architecture.
  */
+
+#include "rf_archs.h"
+
+#if RF_INCLUDE_EVENODD > 0
 
 #include "rf_types.h"
 #include "rf_raid.h"
@@ -967,3 +971,4 @@ rf_EOWriteDoubleRecoveryFunc(node)
 	rf_GenericWakeupFunc(node, 0);
 	return (0);
 }
+#endif				/* RF_INCLUDE_EVENODD > 0 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.44.2.2 2000/11/22 16:05:46 bouyer Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.44.2.3 2001/02/11 19:17:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@ const char	devcls[] = "devcls";
  */
 
 int (**spec_vnodeop_p) __P((void *));
-struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
+const struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, spec_lookup },		/* lookup */
 	{ &vop_create_desc, spec_create },		/* create */
@@ -121,7 +121,7 @@ struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_bwrite_desc, spec_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
-struct vnodeopv_desc spec_vnodeop_opv_desc =
+const struct vnodeopv_desc spec_vnodeop_opv_desc =
 	{ &spec_vnodeop_p, spec_vnodeop_entries };
 
 /*

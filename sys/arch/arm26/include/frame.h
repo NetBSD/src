@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.1.6.3 2001/01/18 09:22:15 bouyer Exp $	*/
+/*	$NetBSD: frame.h,v 1.1.6.4 2001/02/11 19:08:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 Ben Harris.
@@ -42,11 +42,11 @@
 #ifndef _ARM26_FRAME_H_
 #define _ARM26_FRAME_H_
 
+#include <arm/frame.h>
+
 #ifndef _LOCORE
 
-#include <sys/signal.h>
-
-#include <machine/armreg.h>
+#include <arm/armreg.h>
 
 /*
  * System stack frames.
@@ -95,37 +95,6 @@ typedef struct irqframe {
 /* Non-trivial to check because we handle interrupts in SVC mode. */
 #define CLKF_INTR(frame)	0	/* FIXME */
 
-typedef struct trapframe {
-	register_t tf_r0;
-	register_t tf_r1;
-	register_t tf_r2;
-	register_t tf_r3;
-	register_t tf_r4;
-	register_t tf_r5;
-	register_t tf_r6;
-	register_t tf_r7;
-	register_t tf_r8;
-	register_t tf_r9;
-	register_t tf_r10;
-	register_t tf_r11;
-	register_t tf_r12;
-	register_t tf_r13;
-	register_t tf_r14;
-	register_t tf_r15;
-} trapframe_t;
-
-/*
- * Signal frame
- */
-
-struct sigframe {
-	int    	sf_signum;
-	int	sf_code;
-	struct	sigcontext *sf_scp;
-	sig_t	sf_handler;
-	struct	sigcontext sf_sc;
-};
-
 /*
  * Switch frame
  */
@@ -152,20 +121,6 @@ struct fpframe {
 	register_t	ff_regs[8*3];
 };
  
-/*
- * Stack frame. Used during stack traces (db_trace.c)
- */
-struct frame {
-	register_t	fr_fp;
-	register_t	fr_sp;
-	register_t	fr_lr;
-	register_t	fr_r15;
-};
-
-#ifdef _KERNEL
-void validate_trapframe __P((trapframe_t *, int));
-#endif /* _KERNEL */
-
 #endif _LOCORE
 
 #endif /* _ARM26_FRAME_H_ */

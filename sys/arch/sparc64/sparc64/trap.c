@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.30.2.4 2001/01/05 17:35:11 bouyer Exp $ */
+/*	$NetBSD: trap.c,v 1.30.2.5 2001/02/11 19:12:42 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -86,6 +86,9 @@
 #endif
 #ifdef COMPAT_SVR4
 #include <machine/svr4_machdep.h>
+#endif
+#ifdef COMPAT_SVR4_32
+#include <machine/svr4_32_machdep.h>
 #endif
 
 #include <sparc/fpu/fpu_extern.h>
@@ -641,7 +644,7 @@ dopanic:
 			}
 			/* NOTREACHED */
 		}
-#if defined(COMPAT_SVR4) || defined(SUN4M)
+#if defined(COMPAT_SVR4) || defined(COMPAT_SVR4_32)
 badtrap:
 #endif
 		/* the following message is gratuitous */
@@ -651,7 +654,7 @@ badtrap:
 		trapsignal(p, SIGILL, type);
 		break;
 
-#ifdef COMPAT_SVR4
+#if defined(COMPAT_SVR4) || defined(COMPAT_SVR4_32)
 	case T_SVR4_GETCC:
 	case T_SVR4_SETCC:
 	case T_SVR4_GETPSR:
@@ -659,9 +662,15 @@ badtrap:
 	case T_SVR4_GETHRTIME:
 	case T_SVR4_GETHRVTIME:
 	case T_SVR4_GETHRESTIME:
-		if (!svr4_trap(type, p))
-			goto badtrap;
-		break;
+#if defined(COMPAT_SVR4_32)
+		if (svr4_32_trap(type, p))
+			break;
+#endif
+#if defined(COMPAT_SVR4)
+		if (svr4_trap(type, p))
+			break;
+#endif
+		goto badtrap;
 #endif
 
 	case T_AST:
@@ -673,8 +682,9 @@ badtrap:
 		/* This is not an MMU issue!!!! */
 		printf("trap: textfault at %lx!! sending SIGILL due to trap %d: %s\n", 
 		       pc, type, type < N_TRAP_TYPES ? trap_type[type] : T);
-#ifdef DDB
-		Debugger();
+#if defined(DDB) && defined(DEBUG)
+		if (trapdebug & TDB_STOPSIG)
+			Debugger();
 #endif
 		trapsignal(p, SIGILL, 0);	/* XXX code?? */
 		break;
@@ -930,15 +940,16 @@ rwindow_save(p)
 			struct rwindow32 rwstack;
 
 			/* 32-bit window */
-			for (j=0; j<8; j++) { 
+			for (j = 0; j < 8; j++) { 
 				rwstack.rw_local[j] = (int)rw[i].rw_local[j];
 				rwstack.rw_in[j] = (int)rw[i].rw_in[j];
 			}
-			if (copyout(&rwstack, (caddr_t)(u_long)rwdest, sizeof(rwstack))) {
+			/* Must truncate rwdest */
+			if (copyout(&rwstack, (caddr_t)(u_long)(u_int)rwdest, sizeof(rwstack))) {
 #ifdef DEBUG
 				if (rwindow_debug&RW_ERR)
-					printf("rwindow_save: 32-bit pcb copyout to %p failed\n", 
-					       (void *)(long)rwdest);
+					printf("rwindow_save: 32-bit pcb copyout to %p (%p) failed\n", 
+					       (void *)(u_long)(u_int)rwdest, (void *)(u_long)rwdest);
 #endif
 				return (-1);
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.26.2.5 2001/01/18 09:24:07 bouyer Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.26.2.6 2001/02/11 19:17:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -342,6 +342,7 @@ uvn_releasepg(pg, nextpgp)
 /*
  * uvn_flush: flush pages out of a uvm object.
  *
+ * => "stop == 0" means flush all pages at or after "start".
  * => object should be locked by caller.   we may _unlock_ the object
  *	if (and only if) we need to clean a page (PGO_CLEANIT), or
  *	if PGO_SYNCIO is set and there are pages busy.
@@ -425,6 +426,9 @@ uvn_flush(uobj, start, stop, flags)
 	 * get init vals and determine how we are going to traverse object
 	 */
 
+	if (stop == 0) {
+		stop = trunc_page(LLONG_MAX);
+	}
 	curoff = 0;
 	need_iosync = FALSE;
 	retval = TRUE;
@@ -435,13 +439,6 @@ uvn_flush(uobj, start, stop, flags)
 	} else {
 		start = trunc_page(start);
 		stop = round_page(stop);
-#ifdef DEBUG
-		if (stop > round_page(uvn->u_size)) {
-			printf("uvn_flush: oor vp %p start 0x%x stop 0x%x "
-			       "size 0x%x\n", uvn, (int)start, (int)stop,
-			       (int)round_page(uvn->u_size));
-		}
-#endif
 		all = FALSE;
 		by_list = (uobj->uo_npages <= 
 		    ((stop - start) >> PAGE_SHIFT) * UVN_HASH_PENALTY);
@@ -540,7 +537,8 @@ uvn_flush(uobj, start, stop, flags)
 			 */
 			if ((pp->flags & PG_CLEAN) != 0 && 
 			    (flags & PGO_FREE) != 0 &&
-			    (pp->pqflags & PQ_ACTIVE) != 0)
+			    /* XXX ACTIVE|INACTIVE test unnecessary? */
+			    (pp->pqflags & (PQ_ACTIVE|PQ_INACTIVE)) != 0)
 				pmap_page_protect(pp, VM_PROT_NONE);
 			if ((pp->flags & PG_CLEAN) != 0 &&
 			    pmap_is_modified(pp))
@@ -564,7 +562,7 @@ uvn_flush(uobj, start, stop, flags)
 				if ((pp->pqflags & PQ_INACTIVE) == 0 &&
 				    (pp->flags & PG_BUSY) == 0 &&
 				    pp->wire_count == 0) {
-					pmap_page_protect(pp, VM_PROT_NONE);
+					pmap_clear_reference(pp);
 					uvm_pagedeactivate(pp);
 				}
 
@@ -756,7 +754,7 @@ ReTry:
 				if ((pp->pqflags & PQ_INACTIVE) == 0 &&
 				    (pp->flags & PG_BUSY) == 0 &&
 				    pp->wire_count == 0) {
-					pmap_page_protect(ptmp, VM_PROT_NONE);
+					pmap_clear_reference(ptmp);
 					uvm_pagedeactivate(ptmp);
 				}
 			} else if (flags & PGO_FREE) {
@@ -1033,7 +1031,7 @@ uvm_vnp_setsize(vp, newsize)
 	 */
 
 	if (uvn->u_size > newsize && uvn->u_size != VSIZENOTSET) {
-		(void) uvn_flush(&uvn->u_obj, newsize, uvn->u_size, PGO_FREE);
+		(void) uvn_flush(&uvn->u_obj, newsize, 0, PGO_FREE);
 	}
 	uvn->u_size = newsize;
 	simple_unlock(&uvn->u_obj.vmobjlock);

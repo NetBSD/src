@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.117.2.2 2001/01/05 17:35:31 bouyer Exp $	*/
+/*	$NetBSD: audio.c,v 1.117.2.3 2001/02/11 19:15:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1003,10 +1003,11 @@ audio_open(dev, sc, flags, ifmt, p)
 	ai.play.channels      = sc->sc_pparams.channels;
 	ai.play.precision     = sc->sc_pparams.precision;
 	ai.mode		      = mode;
-	sc->sc_pr.blksize = sc->sc_rr.blksize = 0; /* force recalculation */
 	error = audiosetinfo(sc, &ai);
 	if (error)
 		goto bad;
+	/* audio_close() decreases sc_pr.usedlow, recalculate here */
+	audio_calcwater(sc);
 
 	DPRINTF(("audio_open: done sc_mode = 0x%x\n", sc->sc_mode));
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.9.2.3 2000/12/08 09:08:32 bouyer Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.9.2.4 2001/02/11 19:14:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -40,6 +40,8 @@
 
 #include <sys/systm.h>
 #include <sys/mount.h>
+#include <sys/stat.h>
+#include <sys/syscallargs.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
@@ -167,6 +169,11 @@ struct	netbsd32_rusage {
 typedef u_int32_t netbsd32_orlimitp_t;
 
 typedef u_int32_t netbsd32_rlimitp_t;
+
+struct netbsd32_loadavg {
+	fixpt_t	ldavg[3];
+	netbsd32_long	fscale;
+};
 
 /* from <sys/ipc.h> */
 typedef u_int32_t netbsd32_ipc_permp_t;
@@ -526,5 +533,8 @@ typedef struct firm_event32 {
  * random other stuff
  */
 #include <compat/common/compat_util.h>
+
+void netbsd32_from_stat43 __P((struct stat43 *, struct netbsd32_stat43 *));
+int netbsd32_execve2(struct proc *, struct sys_execve_args *, register_t *);
  
 #endif /* _COMPAT_NETBSD32_NETBSD32_H_ */

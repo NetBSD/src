@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.42.2.1 2000/11/20 18:10:22 bouyer Exp $	*/
+/*	$NetBSD: in.h,v 1.42.2.2 2001/02/11 19:17:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -82,6 +82,7 @@ typedef __sa_family_t	sa_family_t;
 #define	IPPROTO_ENCAP		98		/* encapsulation header */
 #define	IPPROTO_PIM		103		/* Protocol indep. multicast */
 #define	IPPROTO_IPCOMP		108		/* IP Payload Comp. Protocol */
+#define	IPPROTO_VRRP		112		/* VRRP RFC 2338 */
 
 #define	IPPROTO_RAW		255		/* raw IP packet */
 #define	IPPROTO_MAX		256

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.18.2.2 2000/11/20 18:11:24 bouyer Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.18.2.3 2001/02/11 19:17:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -643,7 +643,7 @@ ntfs_unmount(
 	dprintf(("ntfs_unmount: vflushing...\n"));
 	error = vflush(mp,NULLVP,flags | SKIPSYSTEM);
 	if (error) {
-		printf("ntfs_unmount: vflush failed: %d\n",error);
+		dprintf(("ntfs_unmount: vflush failed: %d\n",error));
 		return (error);
 	}
 
@@ -658,8 +658,10 @@ ntfs_unmount(
 
 	/* vflush system vnodes */
 	error = vflush(mp,NULLVP,flags);
-	if (error)
+	if (error) {
+		/* XXX should this be panic() ? */
 		printf("ntfs_unmount: vflush failed(sysnodes): %d\n",error);
+	}
 
 	/* Check if the type of device node isn't VBAD before
 	 * touching v_specinfo.  If the device vnode is revoked, the
@@ -1015,9 +1017,9 @@ static struct vfsops ntfs_vfsops = {
 };
 VFS_SET(ntfs_vfsops, ntfs, 0);
 #elif defined(__NetBSD__)
-extern struct vnodeopv_desc ntfs_vnodeop_opv_desc;
+extern const struct vnodeopv_desc ntfs_vnodeop_opv_desc;
 
-struct vnodeopv_desc *ntfs_vnodeopv_descs[] = {
+const struct vnodeopv_desc * const ntfs_vnodeopv_descs[] = {
 	&ntfs_vnodeop_opv_desc,
 	NULL,
 };

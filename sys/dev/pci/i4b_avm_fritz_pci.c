@@ -35,7 +35,7 @@
  *	Fritz!Card PCI specific routines for isic driver
  *	------------------------------------------------
  *
- *	$Id: i4b_avm_fritz_pci.c,v 1.1.1.1.2.3 2001/01/18 09:23:25 bouyer Exp $
+ *	$Id: i4b_avm_fritz_pci.c,v 1.1.1.1.2.4 2001/02/11 19:15:55 bouyer Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
@@ -1439,7 +1439,7 @@ avma1pp_bchannel_setup(int unit, int h_chan, int bprot, int activate)
 #endif
 	l1_bchan_state_t *chan = &sc->sc_chan[h_chan];
 
-	int s = SPLI4B();
+	int s = splnet();
 	
 	if(activate == 0)
 	{
@@ -1509,7 +1509,7 @@ avma1pp_bchannel_start(int unit, int h_chan)
 	int s;
 	int activity = -1;
 
-	s = SPLI4B();				/* enter critical section */
+	s = splnet();				/* enter critical section */
 	if(chan->state & HSCX_TX_ACTIVE)	/* already running ? */
 	{
 		splx(s);
@@ -1662,7 +1662,7 @@ avma1pp_bchannel_stat(int unit, int h_chan, bchan_statistics_t *bsp)
 	l1_bchan_state_t *chan = &sc->sc_chan[h_chan];
 	int s;
 
-	s = SPLI4B();
+	s = splnet();
 	
 	bsp->outbytes = chan->txcount;
 	bsp->inbytes = chan->rxcount;

@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.35.2.1 2000/11/20 18:09:48 bouyer Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.35.2.2 2001/02/11 19:17:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -115,7 +115,7 @@ int	portal_pathconf	__P((void *));
 #define	portal_bwrite	genfs_eopnotsupp
 
 int (**portal_vnodeop_p) __P((void *));
-struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
+const struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, portal_lookup },		/* lookup */
 	{ &vop_create_desc, portal_create },		/* create */
@@ -161,7 +161,7 @@ struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
 	{ &vop_bwrite_desc, portal_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
-struct vnodeopv_desc portal_vnodeop_opv_desc =
+const struct vnodeopv_desc portal_vnodeop_opv_desc =
 	{ &portal_vnodeop_p, portal_vnodeop_entries };
 
 static void

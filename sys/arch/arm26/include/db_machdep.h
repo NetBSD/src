@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.2.2.4 2000/12/13 15:49:19 bouyer Exp $ */
+/* $NetBSD: db_machdep.h,v 1.2.2.5 2001/02/11 19:08:56 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -36,7 +36,7 @@
  */
 
 #include <uvm/uvm_extern.h>
-#include <machine/armreg.h>
+#include <arm/armreg.h>
 #include <machine/frame.h>
 
 typedef	vm_offset_t	db_addr_t;	/* address - unsigned */

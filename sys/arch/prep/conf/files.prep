@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.7.2.5 2001/01/18 09:22:57 bouyer Exp $
+#	$NetBSD: files.prep,v 1.7.2.6 2001/02/11 19:11:38 bouyer Exp $
 #
 # prep-specific configuration info
 #
@@ -17,6 +17,18 @@ file	arch/prep/prep/machdep.c
 file	arch/prep/prep/procfs_machdep.c		procfs
 file	dev/clock_subr.c
 file	dev/cons.c
+
+#
+# Compatibility modules
+#
+
+# OSS audio driver compatibility
+include "compat/ossaudio/files.ossaudio"
+
+# Linux binary compatibility (COMPAT_LINUX)
+include "compat/linux/files.linux"
+include "compat/linux/arch/powerpc/files.linux_powerpc"
+file arch/powerpc/powerpc/linux_sigcode.S        compat_linux
 
 #
 # Machine-independent I2O drivers
@@ -153,13 +165,6 @@ include	"dev/mii/files.mii"
 
 # USB drivers
 include "dev/usb/files.usb"
-
-# Linux binary compatibility (COMPAT_LINUX)
-#include "compat/linux/files.linux"
-#include "compat/linux/arch/powerpc/files.linux_powerpc"
-
-# OSS audio driver compatibility
-include "compat/ossaudio/files.ossaudio"
 
 # PCMCIA drivers/support
 defopt	PCIC_ISA_ALLOC_IOBASE

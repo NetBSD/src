@@ -1,4 +1,4 @@
-/* $NetBSD: ascvar.h,v 1.1.6.2 2000/11/20 20:02:53 bouyer Exp $ */
+/* $NetBSD: ascvar.h,v 1.1.6.3 2001/02/11 19:09:00 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -43,6 +43,7 @@ struct	asc_softc {
 
 	int			sc_podule_number;
 	struct irq_handler	*sc_ih;
+	struct evcnt		sc_intrcnt;
 
 	vu_int			sc_pagereg;
 	vu_int			sc_intstat;

@@ -1,4 +1,4 @@
-/*	$NetBSD: esm.c,v 1.3.2.2 2001/01/18 09:23:25 bouyer Exp $	*/
+/*	$NetBSD: esm.c,v 1.3.2.3 2001/02/11 19:15:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
@@ -199,11 +199,17 @@ static const struct esm_quirks esm_quirks[] = {
 	/* COMPAL 38W2 OEM Notebook, e.g. Dell INSPIRON 5000e */
 	{ PCI_VENDOR_COMPAL, PCI_PRODUCT_COMPAL_38W2, ESM_QUIRKF_SWAPPEDCH },
 
+	/* COMPAQ Armada M700 Notebook */
+	{ PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_M700, ESM_QUIRKF_SWAPPEDCH },
+
 	/* NEC Versa Pro LX VA26D */
 	{ PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VA26D, ESM_QUIRKF_GPIO },
 
 	/* NEC Versa LX */
-	{ PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VERSALX, ESM_QUIRKF_GPIO }
+	{ PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VERSALX, ESM_QUIRKF_GPIO },
+
+	/* Toshiba Protege */
+	{ PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_PROTEGE, ESM_QUIRKF_SWAPPEDCH }
 };
 
 enum esm_quirk_flags
@@ -1382,6 +1388,7 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 	if (esm_get_quirks(ess->subid) & ESM_QUIRKF_SWAPPEDCH) {
 		ess->codec_flags |= AC97_HOST_SWAPPED_CHANNELS;
 	}
+	ess->codec_flags |= AC97_HOST_DONT_READ;
 
 	/* initialize AC97 host interface */
 	ess->host_if.arg = self;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45.2.4 2001/01/05 17:33:53 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45.2.5 2001/02/11 19:08:50 bouyer Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -637,10 +637,6 @@ mach_init(argc, argv, envv)
 #endif
 
 #ifdef DDB
-	/*
-	 * Initialize machine-dependent DDB commands, in case of early panic.
-	 */
-	db_machine_init();
 #if 0 /* XXX */
 	/* init symbols if present */
 	if (esym)

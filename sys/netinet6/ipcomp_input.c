@@ -1,5 +1,5 @@
-/*	$NetBSD: ipcomp_input.c,v 1.5.2.1 2000/11/20 18:10:55 bouyer Exp $	*/
-/*	$KAME: ipcomp_input.c,v 1.19 2000/10/01 12:37:20 itojun Exp $	*/
+/*	$NetBSD: ipcomp_input.c,v 1.5.2.2 2001/02/11 19:17:26 bouyer Exp $	*/
+/*	$KAME: ipcomp_input.c,v 1.22 2001/01/23 08:59:37 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -209,6 +209,10 @@ ipcomp4_input(m, va_alist)
 
 	if (sav) {
 		key_sa_recordxfer(sav, m);
+		if (ipsec_addhist(m, IPPROTO_IPCOMP, (u_int32_t)cpi) != 0) {
+			ipsecstat.in_nomem++;
+			goto fail;
+		}
 		key_freesav(sav);
 		sav = NULL;
 	}
@@ -320,6 +324,10 @@ ipcomp6_input(mp, offp, proto)
 
 	if (sav) {
 		key_sa_recordxfer(sav, m);
+		if (ipsec_addhist(m, IPPROTO_IPCOMP, (u_int32_t)cpi) != 0) {
+			ipsec6stat.in_nomem++;
+			goto fail;
+		}
 		key_freesav(sav);
 		sav = NULL;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.46.2.1 2000/11/20 18:10:34 bouyer Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.46.2.2 2001/02/11 19:17:17 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -279,7 +279,10 @@ rip_output(m, va_alist)
 		ipstat.ips_rawout++;
 	}
 #ifdef IPSEC
-	ipsec_setsocket(m, inp->inp_socket);
+	if (ipsec_setsocket(m, inp->inp_socket) != 0) {
+		m_freem(m);
+		return ENOBUFS;
+	}
 #endif /*IPSEC*/
 	return (ip_output(m, opts, &inp->inp_route, flags, inp->inp_moptions, &inp->inp_errormtu));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.152.2.2 2001/01/18 09:23:02 bouyer Exp $ */
+/*	$NetBSD: pmap.c,v 1.152.2.3 2001/02/11 19:12:26 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -3518,8 +3518,8 @@ pmap_alloc_cpu(sc)
 	 * address) in the CPU's slot in the kernel pmap region table
 	 * pointer table.
 	 */
-	pmap_kernel()->pm_reg_ptps[sc->cpu_no] = regtable;
-	pmap_kernel()->pm_reg_ptps_pa[sc->cpu_no] = (paddr_t)regtable_pa;
+	pmap_kernel()->pm_reg_ptps[sc->ci_cpuid] = regtable;
+	pmap_kernel()->pm_reg_ptps_pa[sc->ci_cpuid] = (paddr_t)regtable_pa;
 
 	vr = VA_VREG(CPUINFO_VA);
 	vs = VA_VSEG(CPUINFO_VA);

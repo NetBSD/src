@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.8.2.1 2000/11/20 20:13:33 bouyer Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.8.2.2 2001/02/11 19:11:06 bouyer Exp $	*/
 
 /*
  * Mach Operating System
@@ -81,13 +81,13 @@ void stacktrace_subr __P((int a0, int a1, int a2, int a3,
 void db_mips_stack_trace __P((int count, vaddr_t stackp,
 			      vaddr_t the_pc, vaddr_t the_ra, int flags,
 			      vaddr_t kstackp));
-int db_mips_variable_func __P((struct db_variable *vp, db_expr_t *valuep,
+int db_mips_variable_func __P((const struct db_variable *vp, db_expr_t *valuep,
 			       int db_var_fun));
 
 #define DB_SETF_REGS db_mips_variable_func
 #define DBREGS_REG()
 
-struct db_variable db_regs[] = {
+const struct db_variable db_regs[] = {
 	{ "at",	(long *)&ddb_regs.f_regs[AST],  DB_SETF_REGS },
 	{ "v0",	(long *)&ddb_regs.f_regs[V0],  DB_SETF_REGS },
 	{ "v1",	(long *)&ddb_regs.f_regs[V1],  DB_SETF_REGS },
@@ -126,7 +126,7 @@ struct db_variable db_regs[] = {
 	{ "cs",	(long *)&ddb_regs.f_regs[CAUSE],  DB_SETF_REGS },
 	{ "pc",	(long *)&ddb_regs.f_regs[PC],  DB_SETF_REGS },
 };
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 void
 db_stack_trace_print(addr, have_addr, count, modif, pr)
@@ -251,7 +251,7 @@ db_mips_stack_trace(count, stackp, the_pc, the_ra, flags, kstackp)
 
 
 int
-db_mips_variable_func (struct db_variable *vp,
+db_mips_variable_func (const struct db_variable *vp,
 	db_expr_t *valuep,
 	int db_var_fcn)
 {

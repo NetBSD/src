@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.31.2.2 2000/12/13 15:50:18 bouyer Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.31.2.3 2001/02/11 19:16:34 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -170,13 +170,30 @@ void usbd_add_dev_event(int, usbd_device_handle);
 void usbd_add_drv_event(int, usbd_device_handle, device_ptr_t);
 
 void usbd_devinfo(usbd_device_handle, int, char *);
-struct usbd_quirks *usbd_get_quirks(usbd_device_handle);
+const struct usbd_quirks *usbd_get_quirks(usbd_device_handle);
 usb_endpoint_descriptor_t *usbd_get_endpoint_descriptor
 			(usbd_interface_handle iface, u_int8_t address);
 
 usbd_status usbd_reload_device_desc(usbd_device_handle);
 
 int usbd_ratecheck(struct timeval *last);
+
+/*
+ * The usb_task structs form a queue of things to run in the USB event
+ * thread.  Normally this is just device discovery when a connect/disconnect
+ * has been detected.  But it may also be used by drivers that need to
+ * perform (short) tasks that must have a process context.
+ */
+struct usb_task {
+	TAILQ_ENTRY(usb_task) next;
+	void (*fun)(void *);
+	void *arg;
+	char onqueue;
+};
+
+void usb_add_task(usbd_device_handle dev, struct usb_task *task);
+void usb_rem_task(usbd_device_handle dev, struct usb_task *task);
+#define usb_init_task(t, f, a) ((t)->fun = (f), (t)->arg = (a), (t)->onqueue = 0)
 
 /* NetBSD attachment information */
 
@@ -241,14 +258,11 @@ struct usb_attach_arg {
 int usbd_driver_load(module_t mod, int what, void *arg);
 #endif
 
-/*
- * XXX
- * splusb MUST be the lowest level interrupt so that within USB callbacks
- * the level can be raised the appropriate level.
- * XXX Should probably use a softsplusb.
- */
-/* XXX */
+/* XXX Perhaps USB should have its own levels? */
+#ifdef USB_USE_SOFTINTR
+#define splusb splsoftnet
+#else
 #define splusb splbio
+#endif
 #define splhardusb splbio
 #define IPL_USB IPL_BIO
-/* XXX */

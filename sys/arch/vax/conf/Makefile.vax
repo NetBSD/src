@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.49.2.2 2001/01/05 17:35:13 bouyer Exp $
+#	$NetBSD: Makefile.vax,v 1.49.2.3 2001/02/11 19:12:56 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -175,6 +175,10 @@ depend: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${VAX}/vax/intvec.s ${VAX}/vax/subr.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
+	  ${CPPFLAGS} < ${VAX}/vax/genassym.cf
+	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
+	@rm -f assym.dep
 
 dependall: depend all
 

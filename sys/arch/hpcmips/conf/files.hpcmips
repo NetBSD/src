@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.1.1.1.2.2 2001/01/18 09:22:30 bouyer Exp $
+#	$NetBSD: files.hpcmips,v 1.1.1.1.2.3 2001/02/11 19:10:26 bouyer Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -47,20 +47,20 @@ file	arch/mips/mips/fp.S		softfloat
 file	arch/hpcmips/hpcmips/autoconf.c
 file	arch/hpcmips/hpcmips/conf.c
 file	arch/hpcmips/hpcmips/machdep.c
-file	arch/hpcmips/hpcmips/platid.c
-file	arch/hpcmips/hpcmips/platid_mask.c
-file	arch/hpcmips/hpcmips/platid_name.c
 file	arch/hpcmips/hpcmips/mainbus.c
 file	arch/hpcmips/hpcmips/bus_space.c
 file	arch/hpcmips/hpcmips/bus_dma.c
 file	arch/hpcmips/hpcmips/disksubr.c	disk
-file	arch/hpcmips/hpcmips/config_hook.c
 file	arch/hpcmips/hpcmips/procfs_machdep.c	procfs
+
+#
+# H/PC Platform common files.
+#
+include "arch/hpc/conf/files.hpc"
+include "dev/hpc/files.bicons"
 
 # Console autoconfiguration code: selects between a framebuffers
 file	dev/cons.c
-file	arch/hpcmips/dev/bicons.c
-file	arch/hpcmips/dev/bifont.c
 
 # Raster operations
 include "dev/rasops/files.rasops"
@@ -76,7 +76,7 @@ defopt	PCKBD_LAYOUT
 
 #	Simple framebuffer interface for wsdisplay
 define	hpcfbif {}
-device	hpcfb: wsemuldisplaydev, rasops1, rasops2, rasops8, rasops15, rasops16
+device	hpcfb: wsemuldisplaydev, rasops1, rasops2, rasops4, rasops8, rasops15, rasops16
 attach	hpcfb at hpcfbif
 file	arch/hpcmips/dev/hpcfb.c	hpcfb needs-flag
 
@@ -109,12 +109,6 @@ file	arch/hpcmips/dev/hpcapm.c	hpcapm
 # ISA bus support
 #
 include "dev/isa/files.isa"
-
-#
-# pseudo devices
-#
-defpseudo	biconsdev
-file	arch/hpcmips/dev/biconsdev.c	biconsdev	needs-count
 
 #
 #  Vr41x1 integrated peripherals
@@ -398,7 +392,7 @@ attach com at vrip with com_vrip
 file	arch/hpcmips/vr/com_vrip.c			com_vrip
 
 # Memory Disk for boot tape
-file arch/hpcmips/dev/md_root.c		memory_disk_hooks
+file dev/md_root.c				memory_disk_hooks
 major	{md = 6}
 
 include "dev/usb/files.usb"

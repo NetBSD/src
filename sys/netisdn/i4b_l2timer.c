@@ -27,7 +27,7 @@
  *	i4b_l2timer.c - layer 2 timer handling
  *	--------------------------------------
  *
- *	$Id: i4b_l2timer.c,v 1.1.1.1.2.2 2001/01/08 14:57:51 bouyer Exp $ 
+ *	$Id: i4b_l2timer.c,v 1.1.1.1.2.3 2001/02/11 19:17:31 bouyer Exp $ 
  *
  * $FreeBSD$
  *
@@ -101,14 +101,14 @@ i4b_T200_start(l2_softc_t *l2sc)
 void
 i4b_T200_stop(l2_softc_t *l2sc)
 {
-	CRIT_VAR;
-	CRIT_BEG;
+	int s;
+	s = splnet();
 	if(l2sc->T200 != TIMER_IDLE)
 	{
 		STOP_TIMER(l2sc->T200_callout, i4b_T200_timeout, l2sc);
 		l2sc->T200 = TIMER_IDLE;
 	}
-	CRIT_END;
+	splx(s);
 	NDBGL2(L2_T_MSG, "unit %d", l2sc->unit);
 }
 
@@ -118,8 +118,8 @@ i4b_T200_stop(l2_softc_t *l2sc)
 void
 i4b_T200_restart(l2_softc_t *l2sc)
 {
-	CRIT_VAR;
-	CRIT_BEG;
+	int s;
+	s = splnet();
 	if(l2sc->T200 != TIMER_IDLE)
 	{
 		STOP_TIMER(l2sc->T200_callout, i4b_T200_timeout, l2sc);
@@ -130,7 +130,7 @@ i4b_T200_restart(l2_softc_t *l2sc)
 	}
 
 	START_TIMER(l2sc->T200_callout, i4b_T200_timeout, l2sc, T200DEF);
-	CRIT_END;
+	splx(s);
 	NDBGL2(L2_T_MSG, "unit %d", l2sc->unit);
 }
 
@@ -170,14 +170,14 @@ i4b_T202_start(l2_softc_t *l2sc)
 void
 i4b_T202_stop(l2_softc_t *l2sc)
 {
-	CRIT_VAR;
-	CRIT_BEG;
+	int s;
+	s = splnet();
 	if(l2sc->T202 != TIMER_IDLE)
 	{
 		STOP_TIMER(l2sc->T202_callout, i4b_T202_timeout, l2sc);
 		l2sc->T202 = TIMER_IDLE;
 	}
-	CRIT_END;
+	splx(s);
 	NDBGL2(L2_T_MSG, "unit %d", l2sc->unit);
 }
 
@@ -217,14 +217,14 @@ void
 i4b_T203_stop(l2_softc_t *l2sc)
 {
 #if I4B_T203_ACTIVE
-	CRIT_VAR;
-	CRIT_BEG;
+	int s;
+	s = splnet();
 	if(l2sc->T203 != TIMER_IDLE)
 	{
 		STOP_TIMER(l2sc->T203_callout, i4b_T203_timeout, l2sc);
 		l2sc->T203 = TIMER_IDLE;
 	}
-	CRIT_END;
+	splx(s);
 	NDBGL2(L2_T_MSG, "unit %d", l2sc->unit);
 #endif
 }
@@ -236,8 +236,8 @@ void
 i4b_T203_restart(l2_softc_t *l2sc)
 {
 #if I4B_T203_ACTIVE
-	CRIT_VAR;
-	CRIT_BEG;
+	int s;
+	s = splnet();
 
 	if(l2sc->T203 != TIMER_IDLE)
 	{
@@ -249,7 +249,7 @@ i4b_T203_restart(l2_softc_t *l2sc)
 	}
 
 	START_TIMER(l2sc->T203_callout, i4b_T203_timerout, l2sc, T203DEF);	
-	CRIT_END;
+	splx(s);
 	NDBGL2(L2_T_MSG, "unit %d", l2sc->unit);
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.85.8.3 2001/01/05 17:35:12 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.85.8.4 2001/02/11 19:12:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -72,9 +72,6 @@
 
 #include <sun3/sun3/fc.h>
 #include <sun3/sun3/machdep.h>
-
-/* XXX - Later, get this from <m68k/m68k.h> */
-void	regdump __P((struct trapframe *, int));
 
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sunos_syscall.h>

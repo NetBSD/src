@@ -1,9 +1,10 @@
-/*	$NetBSD: frag6.c,v 1.6.2.1 2000/11/20 18:10:44 bouyer Exp $	*/
+/*	$NetBSD: frag6.c,v 1.6.2.2 2001/02/11 19:17:20 bouyer Exp $	*/
+/*	$KAME: frag6.c,v 1.28 2000/12/12 10:54:06 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -72,7 +73,7 @@ struct	ip6q ip6q;	/* ip6 reassemble queue */
 
 #ifndef offsetof		/* XXX */
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))
-#endif 
+#endif
 
 /*
  * Initialise reassembly queue and fragment identifier.
@@ -103,7 +104,7 @@ frag6_init()
  *	the Fragmentable Part of the original packet.
  *		-> next header field is same for all fragments
  *
- * reassembly rule (p21): 
+ * reassembly rule (p21):
  *	The Next Header field of the last header of the Unfragmentable
  *	Part is obtained from the Next Header field of the first
  *	fragment's Fragment header.
@@ -186,7 +187,7 @@ frag6_input(mp, offp, proto)
 
 	/*
 	 * check whether fragment packet's fragment length is
-	 * multiple of 8 octets. 
+	 * multiple of 8 octets.
 	 * sizeof(struct ip6_frag) == 8
 	 * sizeof(struct ip6_hdr) = 40
 	 */
@@ -205,6 +206,8 @@ frag6_input(mp, offp, proto)
 	/* offset now points to data portion */
 	offset += sizeof(struct ip6_frag);
 
+	frag6_doing_reass = 1;
+
 	for (q6 = ip6q.ip6q_next; q6 != &ip6q; q6 = q6->ip6q_next)
 		if (ip6f->ip6f_ident == q6->ip6q_ident &&
 		    IN6_ARE_ADDR_EQUAL(&ip6->ip6_src, &q6->ip6q_src) &&
@@ -220,7 +223,7 @@ frag6_input(mp, offp, proto)
 
 		/*
 		 * Enforce upper bound on number of fragmented packets
-		 * for which we attempt reassembly; 
+		 * for which we attempt reassembly;
 		 * If maxfrag is 0, never accept fragments.
 		 * If maxfrag is -1, accept all fragments without limitation.
 		 */
@@ -273,6 +276,7 @@ frag6_input(mp, offp, proto)
 			icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
 				    offset - sizeof(struct ip6_frag) +
 					offsetof(struct ip6_frag, ip6f_offlg));
+			frag6_doing_reass = 0;
 			return(IPPROTO_DONE);
 		}
 	}
@@ -280,6 +284,7 @@ frag6_input(mp, offp, proto)
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
 			    offset - sizeof(struct ip6_frag) +
 				offsetof(struct ip6_frag, ip6f_offlg));
+		frag6_doing_reass = 0;
 		return(IPPROTO_DONE);
 	}
 	/*
@@ -524,6 +529,7 @@ insert:
 	in6_ifstat_inc(dstifp, ifs6_reass_fail);
 	ip6stat.ip6s_fragdropped++;
 	m_freem(m);
+	frag6_doing_reass = 0;
 	return IPPROTO_DONE;
 }
 
@@ -594,7 +600,7 @@ frag6_deq(af6)
 	af6->ip6af_down->ip6af_up = af6->ip6af_up;
 }
 
-void 
+void
 frag6_insque(new, old)
 	struct ip6q *new, *old;
 {
@@ -613,7 +619,7 @@ frag6_remque(p6)
 }
 
 /*
- * IP timer processing;
+ * IPv6 reassembling timer processing;
  * if a timer expires on a reassembly
  * queue, discard it.
  */

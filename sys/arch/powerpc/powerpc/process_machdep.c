@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.2.2.1 2000/11/20 20:31:17 bouyer Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.2.2.2 2001/02/11 19:11:37 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,6 +37,7 @@
 #include <sys/systm.h>
 #include <sys/ptrace.h>
 
+#include <machine/fpu.h>
 #include <machine/pcb.h>
 #include <machine/reg.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_file.c,v 1.9.14.1 2000/12/08 09:08:11 bouyer Exp $	*/
+/*	$NetBSD: freebsd_file.c,v 1.9.14.2 2001/02/11 19:13:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -56,13 +56,13 @@
 
 #define	ARRAY_LENGTH(array)	(sizeof(array)/sizeof(array[0]))
 
-static char * convert_from_freebsd_mount_type __P((int));
+static const char * convert_from_freebsd_mount_type __P((int));
 
-static char *
+static const char *
 convert_from_freebsd_mount_type(type)
 	int type;
 {
-	static char *netbsd_mount_type[] = {
+	static const char * const netbsd_mount_type[] = {
 		NULL,     /*  0 = MOUNT_NONE */
 		"ffs",	  /*  1 = "Fast" Filesystem */
 		"nfs",	  /*  2 = Network Filesystem */
@@ -103,7 +103,8 @@ freebsd_sys_mount(p, v, retval)
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
 	int error;
-	char *type, *s;
+	const char *type;
+	char *s;
 	caddr_t sg = stackgap_init(p->p_emul);
 	struct sys_mount_args bma;
 
@@ -274,7 +275,7 @@ freebsd_sys_lchown(p, v, retval)
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
 	return sys_lchown(p, uap, retval);
 }
 
@@ -403,7 +404,7 @@ freebsd_sys_readlink(p, v, retval)
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
 	return sys_readlink(p, uap, retval);
 }
 

@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.2.6.2 2000/11/20 20:16:17 bouyer Exp $
+|	$NetBSD: vectors.s,v 1.2.6.3 2001/02/11 19:11:20 bouyer Exp $
 
 | Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 | Copyright (c) 1988 University of Utah
@@ -82,7 +82,7 @@ GLOBAL(vectab)
 	VECTOR(lev2intr)	/* 26: level 2 interrupt autovector */
 	VECTOR(lev3intr)	/* 27: level 3 interrupt autovector */
 	VECTOR(lev4intr)	/* 28: level 4 interrupt autovector */
-	VECTOR(lev5intr)	/* 29: level 5 interrupt autovector */
+	VECTOR(intrhand_autovec)/* 29: level 5 interrupt autovector */
 	VECTOR(intrhand_autovec)/* 30: level 6 interrupt autovector */
 	VECTOR(intrhand_autovec)/* 31: level 7 interrupt autovector */
 	VECTOR(trap0)		/* 32: syscalls */

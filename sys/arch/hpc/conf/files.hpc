@@ -1,0 +1,6 @@
+#	$NetBSD: files.hpc,v 1.2.2.2 2001/02/11 19:09:23 bouyer Exp $
+
+file	arch/hpc/hpc/config_hook.c
+file	arch/hpc/hpc/platid.c
+file	arch/hpc/hpc/platid_mask.c
+file	arch/hpc/hpc/platid_name.c

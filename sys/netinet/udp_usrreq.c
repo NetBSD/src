@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.52.2.2 2000/12/08 09:18:43 bouyer Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.52.2.3 2001/02/11 19:17:19 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1256,7 +1256,10 @@ udp_output(m, va_alist)
 	udpstat.udps_opackets++;
 
 #ifdef IPSEC
-	ipsec_setsocket(m, inp->inp_socket);
+	if (ipsec_setsocket(m, inp->inp_socket) != 0) {
+		error = ENOBUFS;
+		goto release;
+	}
 #endif /*IPSEC*/
 
 	return (ip_output(m, inp->inp_options, &inp->inp_route,

@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.1.2.2 2000/12/08 09:14:45 bouyer Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.1.2.3 2001/02/11 19:16:56 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -60,13 +60,17 @@ static int lfs_unload __P((struct lkm_table *, int));
 #define LFS_SYSENT_CNT		4
 const struct lfs_sysent lfs_sysents[LFS_SYSENT_CNT] = {
 	{ SYS_lfs_bmapv,
-		{ 3, sizeof(struct sys_lfs_bmapv_args), sys_lfs_bmapv } },
+		{ 3, sizeof(struct sys_lfs_bmapv_args), 0,
+			sys_lfs_bmapv } },
 	{ SYS_lfs_markv,
-		{ 3, sizeof(struct sys_lfs_markv_args), sys_lfs_markv } },
+		{ 3, sizeof(struct sys_lfs_markv_args), 0,
+			sys_lfs_markv } },
 	{ SYS_lfs_segclean,
-		{ 2, sizeof(struct sys_lfs_segclean_args), sys_lfs_segclean } },
+		{ 2, sizeof(struct sys_lfs_segclean_args), 0,
+			sys_lfs_segclean } },
 	{ SYS_lfs_segwait,
-		{ 2, sizeof(struct sys_lfs_segwait_args), sys_lfs_segwait } },
+		{ 2, sizeof(struct sys_lfs_segwait_args), 0,
+			sys_lfs_segwait } },
 };
 
 /*

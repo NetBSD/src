@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.48.2.3 2000/12/13 15:49:32 bouyer Exp $	*/
+/*	$NetBSD: nubus.h,v 1.48.2.4 2001/02/11 19:11:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -69,9 +69,11 @@
 #define    NUBUS_DRHW_VIMAGE	0x026E	/* Interware Co., Ltd. Vimage */
 #define    NUBUS_DRHW_CB364	0x026F	/* RasterOps ColorBoard 364 */
 #define    NUBUS_DRHW_LVIEW	0x0278	/* Sigma Designs L-View */
+#define    NUBUS_DRHW_RDCGX	0x027C	/* Radius DirectColor/GX */
 #define	   NUBUS_DRHW_RPC8	0x0291	/* Radius PrecisionColor 8 */
 #define	   NUBUS_DRHW_LAPIS	0x0292	/* SE/30 Lapis ProColorServer 8 PDS */
 #define	   NUBUS_DRHW_ROPS24LXI	0x02A0	/* RasterOps 8/24 XLi */
+#define	   NUBUS_DRHW_ROPSPPGT	0x02A5	/* RasterOps PaintBoard Prism GT 1.0 */
 #define    NUBUS_DRHW_FUTURASX	0x02AE	/* E-Machines Futura-SX */
 #define    NUBUS_DRHW_ROPS24XLTV 0x02B7	/* RasterOps 24XlTV */
 #define    NUBUS_DRHW_THUNDER24	0x02CB	/* SuperMac Thunder/24 */

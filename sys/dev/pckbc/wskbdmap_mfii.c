@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.10.2.2 2001/01/05 17:36:21 bouyer Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.10.2.3 2001/02/11 19:16:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@ static const keysym_t pckbd_keydesc_us[] = {
     KC(208),			KS_Down,
     KC(209),			KS_Next,
     KC(210),			KS_Insert,
-    KC(211),			KS_KP_Delete,
+    KC(211),			KS_Delete,
     KC(219),			KS_Meta_L,
     KC(220),			KS_Meta_R,
     KC(221),			KS_Menu,

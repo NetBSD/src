@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.41.2.3 2000/12/08 09:08:19 bouyer Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.41.2.4 2001/02/11 19:13:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -1458,7 +1458,7 @@ ibcs2_sys_readlink(p, v, retval)
 	} */ *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
 	return sys_readlink(p, uap, retval);
 }
 

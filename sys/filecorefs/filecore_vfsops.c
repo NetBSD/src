@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.8.2.3 2000/12/08 09:13:04 bouyer Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.8.2.4 2001/02/11 19:16:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -59,9 +59,9 @@
 #include <filecorefs/filecore_node.h>
 #include <filecorefs/filecore_mount.h>
 
-extern struct vnodeopv_desc filecore_vnodeop_opv_desc;
+extern const struct vnodeopv_desc filecore_vnodeop_opv_desc;
 
-struct vnodeopv_desc *filecore_vnodeopv_descs[] = {
+const struct vnodeopv_desc * const filecore_vnodeopv_descs[] = {
 	&filecore_vnodeop_opv_desc,
 	NULL,
 };

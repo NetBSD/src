@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.6.6.3 2001/01/18 09:22:49 bouyer Exp $
+#	$NetBSD: Makefile,v 1.6.6.4 2001/02/11 19:11:21 bouyer Exp $
+
+.include <bsd.own.mk>
 
 COMMON= ${.CURDIR}/../common
 COMMONOBJ!=	cd ${COMMON} && ${PRINTOBJDIR}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.29.8.2 2000/12/08 09:20:10 bouyer Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.29.8.3 2001/02/11 19:17:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -79,8 +79,8 @@ static int ffs_checkblk __P((struct inode *, ufs_daddr_t, long size));
 int ffs_log_changeopt = 0;
 
 /* in ffs_tables.c */
-extern int inside[], around[];
-extern u_char *fragtbl[];
+extern const int inside[], around[];
+extern const u_char * const fragtbl[];
 
 /*
  * Allocate a block in the file system.
@@ -120,8 +120,8 @@ ffs_alloc(ip, lbn, bpref, size, cred, bnp)
 	if (ITOV(ip)->v_type == VREG && lbn > 0) {
 		struct vm_page *pg;
 		struct uvm_object *uobj = &ITOV(ip)->v_uvm.u_obj;
-		voff_t off = trunc_page(lblktosize(fs, lbn));
-		voff_t endoff = round_page(lblktosize(fs, lbn) + size);
+		voff_t off = trunc_page(lblktosize(fs, (voff_t)lbn));
+		voff_t endoff = round_page(lblktosize(fs, (voff_t)lbn) + size);
 
 		simple_lock(&uobj->vmobjlock);
 		while (off < endoff) {

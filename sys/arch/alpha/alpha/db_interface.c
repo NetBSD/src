@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.8.2.2 2000/12/08 09:23:21 bouyer Exp $ */
+/* $NetBSD: db_interface.c,v 1.8.2.3 2001/02/11 19:08:32 bouyer Exp $ */
 
 /* 
  * Mach Operating System
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.8.2.2 2000/12/08 09:23:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.8.2.3 2001/02/11 19:08:32 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -94,18 +94,18 @@ db_regs_t *ddb_regp;
 void	db_mach_cpu __P((db_expr_t, int, db_expr_t, char *));
 #endif
 
-struct db_command db_machine_cmds[] = {
+const struct db_command db_machine_command_table[] = {
 #if defined(MULTIPROCESSOR)
 	{ "cpu",	db_mach_cpu,	0,	0 },
 #endif
 	{ (char *)0, },
 };
 
-int	db_alpha_regop __P((struct db_variable *, db_expr_t *, int));
+static int db_alpha_regop __P((const struct db_variable *, db_expr_t *, int));
 
 #define	dbreg(xx)	((long *)(xx))
 
-struct db_variable db_regs[] = {
+const struct db_variable db_regs[] = {
 	{	"v0",	dbreg(FRAME_V0),	db_alpha_regop	},
 	{	"t0",	dbreg(FRAME_T0),	db_alpha_regop	},
 	{	"t1",	dbreg(FRAME_T1),	db_alpha_regop	},
@@ -142,10 +142,10 @@ struct db_variable db_regs[] = {
 	{	"ai",	dbreg(FRAME_T11),	db_alpha_regop	},
 	{	"pv",	dbreg(FRAME_T12),	db_alpha_regop	},
 };
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
-int
-db_alpha_regop(struct db_variable *vp, db_expr_t *val, int opcode)
+static int
+db_alpha_regop(const struct db_variable *vp, db_expr_t *val, int opcode)
 {
 
 	switch (opcode) {
@@ -255,17 +255,6 @@ cpu_Debugger()
 {
 
 	__asm __volatile("call_pal 0x81");		/* bugchk */
-}
-
-/*
- * This is called before ddb_init() to install the
- * machine-specific command table.  (see machdep.c)
- */
-void
-db_machine_init()
-{
-
-	db_machine_commands_install(db_machine_cmds);
 }
 
 /*

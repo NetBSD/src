@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlvar.h,v 1.3.2.1 2000/11/20 11:40:33 bouyer Exp $	*/
+/*	$NetBSD: elinkxlvar.h,v 1.3.2.2 2001/02/11 19:15:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -123,11 +123,14 @@ struct ex_softc {
 	/* power management hooks */
 	int (*enable) __P((struct ex_softc *));
 	void (*disable) __P((struct ex_softc *));
+	void (*power) __P((struct ex_softc *, int));
 	int enabled;
+
 	/* interrupt acknowledge hook */
 	void (*intr_ack) __P((struct ex_softc *));
 
 	void *sc_sdhook;
+	void *sc_powerhook;
 
 	bus_dma_segment_t sc_useg, sc_dseg;
 	int sc_urseg, sc_drseg;

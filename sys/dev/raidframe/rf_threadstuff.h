@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.h,v 1.5.2.1 2000/11/20 11:43:00 bouyer Exp $	*/
+/*	$NetBSD: rf_threadstuff.h,v 1.5.2.2 2001/02/11 19:16:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -91,7 +91,7 @@ typedef void *RF_ThreadArg_t;
 #define RF_SIGNAL_COND(_c_)            wakeup_one(&(_c_))
 #define RF_BROADCAST_COND(_c_)         wakeup(&(_c_))
 #define	RF_CREATE_THREAD(_handle_, _func_, _arg_, _name_) \
-	kthread_create1((void (*) __P((void *)))(_func_), (void *)(_arg_), \
+	kthread_create1((void (*)(void *))(_func_), (void *)(_arg_), \
 	    (struct proc **)&(_handle_), _name_)
 
 struct RF_ThreadGroup_s {

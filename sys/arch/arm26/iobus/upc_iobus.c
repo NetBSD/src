@@ -1,4 +1,4 @@
-/* $NetBSD: upc_iobus.c,v 1.2.2.3 2001/01/18 09:22:17 bouyer Exp $ */
+/* $NetBSD: upc_iobus.c,v 1.2.2.4 2001/02/11 19:08:58 bouyer Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: upc_iobus.c,v 1.2.2.3 2001/01/18 09:22:17 bouyer Exp $");
+__RCSID("$NetBSD: upc_iobus.c,v 1.2.2.4 2001/02/11 19:08:58 bouyer Exp $");
 
 #include <sys/device.h>
 
@@ -46,20 +46,26 @@ __RCSID("$NetBSD: upc_iobus.c,v 1.2.2.3 2001/01/18 09:22:17 bouyer Exp $");
 
 #include "ioeb.h"
 
+#if NIOEB > 0
+#include <arch/arm26/ioc/ioebvar.h>
+#endif
+
 static int upc_iobus_match(struct device *, struct cfdata *, void *);
 static void upc_iobus_attach(struct device *, struct device *, void *);
 
 struct upc_iobus_softc {
 	struct upc_softc	sc_upc;
+	struct evcnt		sc_intrcnt4;
+	struct evcnt		sc_intrcntw;
+	struct evcnt		sc_intrcntf;
+	struct evcnt		sc_intrcntp;
 };
 
 struct cfattach upc_iobus_ca = {
 	sizeof(struct upc_iobus_softc), upc_iobus_match, upc_iobus_attach
 };
 
-#if NIOEB > 0
-extern struct cfdriver ioeb_cd;
-#endif
+static struct device *the_upc_iobus;
 
 static int
 upc_iobus_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -68,15 +74,13 @@ upc_iobus_match(struct device *parent, struct cfdata *cf, void *aux)
 	/*
 	 * As is traditional, probing for iobus devices is impossible
 	 * (The machine hangs if there's nothing there).  In this case,
-	 * assume that if there's an ioeb0, we've got a upc0 too.
+	 * assume that if there's an IOEB, we've got a UPC too.
 	 */
 #if NIOEB > 0
-	if (ioeb_cd.cd_ndevs > 0 && ioeb_cd.cd_devs[0] != NULL &&
-	    cf->cf_unit == 0)
+	if (the_ioeb != NULL && the_upc_iobus == NULL)
 		return 1;
-	else
 #endif
-		return 0;
+	return 0;
 }
 
 static void
@@ -91,13 +95,33 @@ upc_iobus_attach(struct device *parent, struct device *self, void *aux)
 		      &upc->sc_ioh);
 	upc_attach(upc);
 
-	irq_establish(IOC_IRQ_IL2, upc->sc_irq4.uih_level,
-	    upc->sc_irq4.uih_func, upc->sc_irq4.uih_arg, "upc(irq4)");
-	irq_establish(IOC_IRQ_IL3, upc->sc_wintr.uih_level,
-	    upc->sc_wintr.uih_func, upc->sc_wintr.uih_arg, "upc(wintr)");
-	irq_establish(IOC_IRQ_IL4, upc->sc_fintr.uih_level,
-	    upc->sc_fintr.uih_func, upc->sc_fintr.uih_arg, "upc(fintr)");
-	irq_establish(IOC_IRQ_IL6, upc->sc_pintr.uih_level,
-	    upc->sc_pintr.uih_func, upc->sc_pintr.uih_arg, "upc(pintr)");
+	if (upc->sc_irq4.uih_func != NULL) {
+		evcnt_attach_dynamic(&sc->sc_intrcnt4, EVCNT_TYPE_INTR, NULL,
+		    self->dv_xname, "irq4");
+		irq_establish(IOC_IRQ_IL2, upc->sc_irq4.uih_level,
+		    upc->sc_irq4.uih_func, upc->sc_irq4.uih_arg,
+		    &sc->sc_intrcnt4);
+	}
+	if (upc->sc_wintr.uih_func != NULL) {
+		evcnt_attach_dynamic(&sc->sc_intrcntw, EVCNT_TYPE_INTR, NULL,
+		    self->dv_xname, "wdc intr");
+		irq_establish(IOC_IRQ_IL3, upc->sc_wintr.uih_level,
+		    upc->sc_wintr.uih_func, upc->sc_wintr.uih_arg,
+		    &sc->sc_intrcntw);
+	}
+	if (upc->sc_fintr.uih_func != NULL) {
+		evcnt_attach_dynamic(&sc->sc_intrcntf, EVCNT_TYPE_INTR, NULL,
+		    self->dv_xname, "fdc intr");
+		irq_establish(IOC_IRQ_IL4, upc->sc_fintr.uih_level,
+		    upc->sc_fintr.uih_func, upc->sc_fintr.uih_arg,
+		    &sc->sc_intrcntf);
+	}
+	if (upc->sc_pintr.uih_func != NULL) {
+		evcnt_attach_dynamic(&sc->sc_intrcntp, EVCNT_TYPE_INTR, NULL,
+		    self->dv_xname, "lpt intr");
+		irq_establish(IOC_IRQ_IL6, upc->sc_pintr.uih_level,
+		    upc->sc_pintr.uih_func, upc->sc_pintr.uih_arg,
+		    &sc->sc_intrcntp);
+	}
 	/* IRQ3 on the 82C71x is not connected */
 }

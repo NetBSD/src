@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.55.2.2 2000/12/13 15:49:32 bouyer Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.55.2.3 2001/02/11 19:11:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -65,6 +65,7 @@ static void	grfmv_intr_formac __P((void *vsc));
 static void	grfmv_intr_vimage __P((void *vsc));
 static void	grfmv_intr_gvimage __P((void *vsc));
 static void	grfmv_intr_radius_gsc __P((void *vsc));
+static void	grfmv_intr_radius_gx __P((void *vsc));
 
 static int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
 static int	grfmv_match __P((struct device *, struct cfdata *, void *));
@@ -281,6 +282,9 @@ bad:
 	case NUBUS_DRHW_RADGSC:
 		add_nubus_intr(na->slot, grfmv_intr_radius_gsc, sc);
 		break;
+	case NUBUS_DRHW_RDCGX:
+		add_nubus_intr(na->slot, grfmv_intr_radius_gx, sc);
+		break;
 	case NUBUS_DRHW_FIILX:
 	case NUBUS_DRHW_FIISXDSP:
 	case NUBUS_DRHW_FUTURASX:
@@ -310,6 +314,11 @@ bad:
 	case NUBUS_DRHW_ROPS24MXTV:
 		sc->cli_offset = 0xfb0010;
 		sc->cli_value = 0x00;
+		add_nubus_intr(na->slot, grfmv_intr_generic_write4, sc);
+		break;
+	case NUBUS_DRHW_ROPSPPGT:
+		sc->cli_offset = 0xf50010;
+		sc->cli_value = 0x02;
 		add_nubus_intr(na->slot, grfmv_intr_generic_write4, sc);
 		break;
 	case NUBUS_DRHW_VIMAGE:
@@ -712,3 +721,16 @@ grfmv_intr_radius_gsc(vsc)
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0xfb802, 0xff);
 }
 
+/*
+ * Routine to clear interrupts for the Radius GS/C
+ */
+/*ARGSUSED*/
+static void
+grfmv_intr_radius_gx(vsc)
+	void	*vsc;
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+
+	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x600000, 0x00);
+	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x600000, 0x20);
+}

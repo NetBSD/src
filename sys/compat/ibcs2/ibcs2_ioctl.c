@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.17.8.1 2000/11/20 18:08:14 bouyer Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.17.8.2 2001/02/11 19:13:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -92,7 +92,7 @@ static struct speedtab sptab[] = {
 	{ -1, -1 }
 };
 
-static u_long s2btab[] = { 
+static const u_long s2btab[] = { 
 	0,
 	50,
 	75,

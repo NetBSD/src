@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.20.2.2 2001/01/18 09:23:42 bouyer Exp $ */
+/* $NetBSD: wsconsio.h,v 1.20.2.3 2001/02/11 19:16:36 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -224,6 +224,7 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_VAX_MONO	21	/* DEC VS2K/VS3100 mono */
 #define		WSDISPLAY_TYPE_SB_P9100	22	/* Tadpole SPARCbook P9100 */
 #define		WSDISPLAY_TYPE_EGA	23	/* (generic) EGA */
+#define		WSDISPLAY_TYPE_DCPVR	24	/* Dreamcast PowerVR */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
@@ -303,6 +304,7 @@ struct wsdisplay_font {
 #define WSDISPLAY_FONTENC_IBM 1
 #define WSDISPLAY_FONTENC_PCVT 2
 #define WSDISPLAY_FONTENC_ISO7 3 /* greek */
+#define WSDISPLAY_FONTENC_SONY 4
 	int fontwidth, fontheight, stride;
 	int bitorder, byteorder;
 #define	WSDISPLAY_FONTORDER_KNOWN 0		/* i.e, no need to convert */

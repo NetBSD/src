@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.21.2.9 2001/01/22 17:58:14 bouyer Exp $	*/
+/*	$NetBSD: umass.c,v 1.21.2.10 2001/02/11 19:16:26 bouyer Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -145,6 +145,8 @@
 #include <dev/scsipi/scsipi_disk.h>
 #include <dev/scsipi/scsi_disk.h>
 #include <dev/scsipi/scsi_changer.h>
+
+#define SHORT_INQUIRY_LENGTH    36 /* XXX */
 
 #include <dev/ata/atavar.h>	/* XXX */
 #include <sys/disk.h>		/* XXX */
@@ -335,6 +337,10 @@ struct umass_softc {
 	 * Shuttle E-USB
 	 */
 #	define NO_START_STOP		0x04
+	/* Don't ask for full inquiry data (255 bytes).
+	 * Yano ATAPI-USB
+	 */
+#       define FORCE_SHORT_INQUIRY      0x08
 
 	unsigned int		proto;
 #	define PROTO_UNKNOWN	0x0000		/* unknown protocol */
@@ -703,6 +709,19 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 		return (UMATCH_VENDOR_PRODUCT);
 	}
 
+	if (UGETW(dd->idVendor) == USB_VENDOR_YANO
+	    && UGETW(dd->idProduct) == USB_PRODUCT_YANO_U640MO) {
+		sc->proto = PROTO_ATAPI | PROTO_CBI_I;
+		sc->quirks |= FORCE_SHORT_INQUIRY;
+		return (UMATCH_VENDOR_PRODUCT);
+	}
+
+	if (UGETW(dd->idVendor) == USB_VENDOR_SONY
+	    && UGETW(dd->idProduct) == USB_PRODUCT_SONY_MSC) {
+		printf("XXX Sony MSC\n");
+		sc->quirks |= FORCE_SHORT_INQUIRY;
+	}
+
 	if (vendor == USB_VENDOR_YEDATA &&
 	    product == USB_PRODUCT_YEDATA_FLASHBUSTERU) {
 
@@ -856,6 +875,17 @@ USB_ATTACH(umass)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
+	if (sc->drive == INSYSTEM_USBCABLE) {
+		err = usbd_set_interface(sc->iface, 1);
+		if (err) {
+			DPRINTF(UDMASS_USB, ("%s: could not switch to "
+					     "Alt Interface %d\n",
+					     USBDEVNAME(sc->sc_dev), 1));
+			umass_disco(sc);
+			USB_ATTACH_ERROR_RETURN;
+                }
+        }
+
 	/*
 	 * The timeout is based on the maximum expected transfer size
 	 * divided by the expected transfer speed.
@@ -910,17 +940,6 @@ USB_ATTACH(umass)
 	}
 	printf("%s: using %s over %s\n", USBDEVNAME(sc->sc_dev), sSubclass, 
 	       sProto);
-
-	if (sc->drive == INSYSTEM_USBCABLE) {
-		err = usbd_set_interface(0, 1);
-		if (err) {
-			DPRINTF(UDMASS_USB, ("%s: could not switch to "
-					     "Alt Interface %d\n",
-					     USBDEVNAME(sc->sc_dev), 1));
-			umass_disco(sc);
-			USB_ATTACH_ERROR_RETURN;
-                }
-        }
 
 	/*
 	 * In addition to the Control endpoint the following endpoints
@@ -1153,6 +1172,8 @@ USB_ATTACH(umass)
 		sc->sc_channel.chan_nluns = sc->maxlun + 1;
 		sc->sc_channel.chan_id = UMASS_SCSIID_HOST;
 		sc->sc_channel.type = BUS_SCSI;
+		usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
 		sc->sc_child = config_found(&sc->sc_dev, &sc->sc_channel, scsipiprint);
 		break;
 
@@ -1167,6 +1188,8 @@ USB_ATTACH(umass)
 		sc->aa.sc_aa.aa_openings = 1;
 		sc->aa.sc_aa.aa_drv_data = &sc->aa.sc_aa_drive;
 		sc->aa.sc_aa.aa_bus_private = &sc->sc_atapi_adapter;
+		usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
 		sc->sc_child = config_found(&sc->sc_dev, &sc->aa, scsipiprint);
 		break;
 #endif
@@ -1184,9 +1207,6 @@ USB_ATTACH(umass)
 		USB_ATTACH_SUCCESS_RETURN;
 	}
 #endif
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
 
 	DPRINTF(UDMASS_GEN, ("%s: Attach finished\n", USBDEVNAME(sc->sc_dev)));
 
@@ -3176,6 +3196,7 @@ umass_scsipi_request(struct scsipi_channel *chan,
 		}
 #endif
 
+		/* XXX should use transform */
 		if (xs->cmd->opcode == SCSI_MODE_SENSE &&
 		    (periph->periph_quirks & PQUIRK_NOMODESENSE)) {
 			/*printf("%s: SCSI_MODE_SENSE\n", USBDEVNAME(sc->sc_dev));*/
@@ -3188,6 +3209,17 @@ umass_scsipi_request(struct scsipi_channel *chan,
 			/*printf("%s: START_STOP\n", USBDEVNAME(sc->sc_dev));*/
 			xs->error = XS_NOERROR;
 			goto done;
+		}
+
+		if (xs->cmd->opcode == INQUIRY &&
+		    (sc->quirks & FORCE_SHORT_INQUIRY)) {
+			/*
+			 * some drives wedge when asked for full inquiry
+			 * information.
+			 */
+			memcpy(&trcmd, cmd, sizeof trcmd);
+			trcmd.bytes[4] = SHORT_INQUIRY_LENGTH;
+			cmd = &trcmd;
 		}
 
 		dir = DIR_NONE;
@@ -3218,7 +3250,6 @@ umass_scsipi_request(struct scsipi_channel *chan,
 				goto done;
 			}
 			cmd = &trcmd;
-
 		}
 
 		if (xs->xs_control & XS_CTL_POLL) {
@@ -3452,8 +3483,8 @@ umass_ufi_transform(struct umass_softc *sc, struct scsipi_generic *cmd,
 		 */
 		DPRINTF(UDMASS_UFI, ("%s: Converted TEST_UNIT_READY "
 			"to START_UNIT\n", USBDEVNAME(sc->sc_dev)));
-		cmd->opcode = START_STOP;
-		cmd->bytes[3] = SSS_START;
+		rcmd->opcode = START_STOP;
+		rcmd->bytes[3] = SSS_START;
 		return 1;
 	} 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.43.2.3 2001/01/05 17:35:14 bouyer Exp $	*/
+/*	$NetBSD: conf.c,v 1.43.2.4 2001/02/11 19:13:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -155,6 +155,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
  */
 #include <dev/cons.h>
 
+#include "smg.h"
 #include "wskbd.h"
 #if NSMG > 0
 #if NWSKBD > 0
@@ -177,7 +178,6 @@ cons_decl(qd);
 cons_decl(smg);
 #include "qv.h"
 #include "qd.h"
-#include "smg.h"
 
 struct	consdev constab[]={
 #if VAX8600 || VAX8200 || VAX780 || VAX750 || VAX650 || VAX630 || VAX660 || \

@@ -1,10 +1,10 @@
-# $NetBSD: ALPHA,v 1.107.2.5 2001/01/18 09:22:06 bouyer Exp $
+# $NetBSD: ALPHA,v 1.107.2.6 2001/02/11 19:08:35 bouyer Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.107.2.5 $"
+ident		"ALPHA-$Revision: 1.107.2.6 $"
 
 maxusers 32
 
@@ -31,6 +31,7 @@ options 	API_UP1000	# EV6:		Alpha Processor, Inc. UP1000
 
 # Standard system options
 options 	KTRACE			# System call tracing support
+options 	NTP			# kernel PLL for NTP
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# Cheap kernel consistency checks
@@ -251,6 +252,7 @@ isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 #ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
+mlx*	at	pci? dev ? function ?		# Mylex DAC960 / DEC SWXCR (untested)
 ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
 ohci*	at	pci? dev ? function ?		# USB Open Host Controller
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
@@ -418,6 +420,7 @@ fd*	at	fdc? drive ?
 
 # Hardware RAID devices
 ld*	at	cac? unit ?
+ld*	at	mlx? unit ?
 
 # USB bus support
 usb*	at uhci?

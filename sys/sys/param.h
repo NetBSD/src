@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.73.2.5 2001/01/05 17:36:59 bouyer Exp $	*/
+/*	$NetBSD: param.h,v 1.73.2.6 2001/02/11 19:17:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  *
  */
 
-#define __NetBSD_Version__  105170000	/* NetBSD 1.5Q */
+#define __NetBSD_Version__  105180000	/* NetBSD 1.5R */
 
 /*
  * Historical NetBSD #define
@@ -215,10 +215,8 @@
 #define powerof2(x)	((((x)-1)&(x))==0)
 
 /* Macros for min/max. */
-#ifndef _KERNEL
 #define	MIN(a,b) (((a)<(b))?(a):(b))
 #define	MAX(a,b) (((a)>(b))?(a):(b))
-#endif
 
 /*
  * Constants for setting the parameters of the kernel memory allocator.

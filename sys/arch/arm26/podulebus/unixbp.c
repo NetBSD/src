@@ -1,4 +1,4 @@
-/* $NetBSD: unixbp.c,v 1.1.6.5 2001/01/18 09:22:18 bouyer Exp $ */
+/* $NetBSD: unixbp.c,v 1.1.6.6 2001/02/11 19:09:01 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: unixbp.c,v 1.1.6.5 2001/01/18 09:22:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: unixbp.c,v 1.1.6.6 2001/02/11 19:09:01 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ struct cfattach unixbp_ca = {
 	sizeof(struct unixbp_softc), unixbp_match, unixbp_attach
 };
 
-struct unixbp_softc *unixbp0 = NULL; /* For speed of access */
+struct device *the_unixbp;
 
 static int
 unixbp_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -79,10 +79,10 @@ unixbp_attach(struct device *parent, struct device *self, void *aux)
 	struct ioc_attach_args *ioc = aux;
 	struct unixbp_softc *sc = (void *)self;
 
+	if (the_unixbp == NULL)
+		the_unixbp = self;
 	sc->sc_iot = ioc->ioc_fast_t;
 	sc->sc_ioh = ioc->ioc_fast_h;
-	if (self->dv_unit == 0)
-		unixbp0 = sc;
 
 	printf("\n");
 }
@@ -90,19 +90,20 @@ unixbp_attach(struct device *parent, struct device *self, void *aux)
 int
 unixbp_irq_status_full()
 {
+	struct unixbp_softc *sc = (void *)the_unixbp;
 
-	if (unixbp0 == NULL)
+	if (sc == NULL)
 		return 0;
-	return bus_space_read_1(unixbp0->sc_iot, unixbp0->sc_ioh,
-	    UNIXBP_REG_REQUEST) & 0xf;
+	return bus_space_read_1(sc->sc_iot, sc->sc_ioh, UNIXBP_REG_REQUEST)
+	    & 0xf;
 }
 
 void
 unixbp_irq_setmask(int mask)
 {
+	struct unixbp_softc *sc = (void *)the_unixbp;
 
-	if (unixbp0 == NULL)
+	if (sc == NULL)
 		return;
-	bus_space_write_1(unixbp0->sc_iot, unixbp0->sc_ioh, UNIXBP_REG_MASK,
-	    mask & 0xf);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, UNIXBP_REG_MASK, mask & 0xf);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.38.2.3 2000/11/22 15:59:34 bouyer Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.38.2.4 2001/02/11 19:08:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -826,9 +826,9 @@ adosfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * vfs generic function call table
  */
 
-extern struct vnodeopv_desc adosfs_vnodeop_opv_desc; 
+extern const struct vnodeopv_desc adosfs_vnodeop_opv_desc; 
 
-struct vnodeopv_desc *adosfs_vnodeopv_descs[] = {
+const struct vnodeopv_desc *adosfs_vnodeopv_descs[] = {
 	&adosfs_vnodeop_opv_desc,
 	NULL,
 };

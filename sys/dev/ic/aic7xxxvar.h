@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.19.10.2 2000/11/20 11:40:20 bouyer Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.19.10.3 2001/02/11 19:15:27 bouyer Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -37,14 +37,6 @@
 
 #ifndef _AIC7XXX_H_
 #define _AIC7XXX_H_
-
-#ifndef MAX
-#define MAX(a,b) (((a) > (b)) ? (a) : (b))
-#endif
-
-#ifndef MIN
-#define MIN(a,b) (((a) < (b)) ? (a) : (b))
-#endif
 
 #ifndef FALSE
 #define FALSE 0
@@ -116,7 +108,7 @@ typedef enum {
 	AHC_BUS_MASK	= 0x0F00
 } ahc_chip;
 
-extern char *ahc_chip_names[];
+extern const char * const ahc_chip_names[];
 
 typedef enum {
 	AHC_FENONE	= 0x0000,

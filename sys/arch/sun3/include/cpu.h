@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.23.2.1 2000/11/20 20:27:54 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.23.2.2 2001/02/11 19:12:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -50,6 +50,8 @@
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_lockdebug.h"
 #endif
+
+#include <m68k/m68k.h>
 
 #ifdef _KERNEL
 
@@ -151,6 +153,8 @@ union sun3sir {
 #define	setsoftint(x)	isr_soft_request(x)
 #define setsoftnet()	(sun3sir.sir_which[SIR_NET] = 1, setsoftint(1))
 #define setsoftclock()	(sun3sir.sir_which[SIR_CLOCK] = 1, setsoftint(1))
+
+int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
 
 #endif	/* _KERNEL */
 

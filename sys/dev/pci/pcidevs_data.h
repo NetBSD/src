@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.164.2.5 2001/01/18 09:23:29 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.164.2.6 2001/02/11 19:16:03 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.290 2001/01/15 23:29:04 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.298 2001/02/04 18:16:20 briggs Exp 
  */
 
 /*
@@ -38,7 +38,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct pci_knowndev pci_knowndevs[] = {
+const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C985,
 	    0,
@@ -428,6 +428,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Acer Labs",
 	    "M5237 USB Host Controller",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5243,
+	    0,
+	    "Acer Labs",
+	    "M5243 PCI-AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M7101,
@@ -1324,6 +1330,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Fritz! Card ISDN Interface",
 	},
 	{
+	    PCI_VENDOR_STALLION, PCI_PRODUCT_STALLION_EC8_32,
+	    0,
+	    "Stallion Technologies",
+	    "EC8/32",
+	},
+	{
+	    PCI_VENDOR_STALLION, PCI_PRODUCT_STALLION_EC8_64,
+	    0,
+	    "Stallion Technologies",
+	    "EC8/64",
+	},
+	{
+	    PCI_VENDOR_STALLION, PCI_PRODUCT_STALLION_EASYIO,
+	    0,
+	    "Stallion Technologies",
+	    "EasyIO",
+	},
+	{
 	    PCI_VENDOR_BIT3, PCI_PRODUCT_BIT3_PCIVME617,
 	    0,
 	    "Bit3 Computer Corp.",
@@ -1730,6 +1754,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Compaq",
 	    "Deskpro 4000 5233MMX",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_M700,
+	    0,
+	    "Compaq",
+	    "Armada M700",
 	},
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_NF3P_BNC,
@@ -2383,7 +2413,19 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82452,
 	    0,
 	    "Intel",
-	    "Pro/1000",
+	    "PRO/1000 Gigabit Ethernet (i82452)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LIVENGOOD,
+	    0,
+	    "Intel",
+	    "PRO/1000 Gigabit Ethernet (LIVENGOOD)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82452_SC,
+	    0,
+	    "Intel",
+	    "PRO/1000 Gigabit Ethernet (i82452-SC)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
@@ -3328,6 +3370,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "MPC106 \"Grackle\" Host Bridge",
 	},
 	{
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC8240,
+	    0,
+	    "Motorola",
+	    "MPC8240 \"Kahlua\" Host Bridge",
+	},
+	{
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V2,
 	    0,
 	    "Mylex",
@@ -4180,6 +4228,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "KS8920 10/100 Ethernet",
 	},
 	{
+	    PCI_VENDOR_SEGA, PCI_PRODUCT_SEGA_BROADBAND,
+	    0,
+	    "SEGA Enterprises",
+	    "Broadband Adapter",
+	},
+	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_ROSB4,
 	    0,
 	    "ServerWorks",
@@ -4720,6 +4774,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "TC35856F ATM (\"Meteor\")",
 	},
 	{
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_PROTEGE,
+	    0,
+	    "Toshiba",
+	    "Protege Notebook",
+	},
+	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_HOST,
 	    0,
 	    "Toshiba",
@@ -4982,6 +5042,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ULSI Systems",
 	    "US201",
+	},
+	{
+	    PCI_VENDOR_USR, PCI_PRODUCT_USR_3C2884A,
+	    0,
+	    "US Robotics (3Com)",
+	    "56K Voice Internal PCI Modem (WinModem)",
 	},
 	{
 	    PCI_VENDOR_USR, PCI_PRODUCT_USR_3CP5609,
@@ -8281,6 +8347,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_AURAVISION, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Auravision",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_SEGA, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "SEGA Enterprises",
 	    NULL,
 	},
 	{

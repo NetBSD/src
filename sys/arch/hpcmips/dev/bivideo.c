@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.12.2.4 2001/01/05 17:34:17 bouyer Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.12.2.5 2001/02/11 19:10:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -37,7 +37,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: bivideo.c,v 1.12.2.4 2001/01/05 17:34:17 bouyer Exp $";
+    "$Id: bivideo.c,v 1.12.2.5 2001/02/11 19:10:27 bouyer Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,9 +143,13 @@ bivideoattach(parent, self, aux)
 	}
 	attach_flag = 1;
 
-	bivideo_init(&sc->sc_fbconf);
+	printf(": ");
+	if (bivideo_init(&sc->sc_fbconf) != 0) {
+		/* just return so that hpcfb will not be attached */
+		return;
+	}
 
-	printf(": pseudo video controller");
+	printf("pseudo video controller");
 	if (console_flag) {
 		printf(", console");
 	}
@@ -239,6 +243,21 @@ bivideo_init(fb)
 		fb->hf_u.hf_gray.hf_flags = 0;	/* reserved for future use */
 		break;
 
+	case BIFB_D4_M2L_F:
+	case BIFB_D4_M2L_Fx2:
+		fb->hf_access_flags |= HPCFB_ACCESS_REVERSE;
+		/* fall through */
+	case BIFB_D4_M2L_0:
+	case BIFB_D4_M2L_0x2:
+		fb->hf_class = HPCFB_CLASS_GRAYSCALE;
+		fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
+		fb->hf_pack_width = 8;
+		fb->hf_pixels_per_pack = 2;
+		fb->hf_pixel_width = 4;
+		fb->hf_class_data_length = sizeof(struct hf_gray_tag);
+		fb->hf_u.hf_gray.hf_flags = 0;	/* reserved for future use */
+		break;
+
 		/*
 		 * indexed color
 		 */
@@ -285,7 +304,7 @@ bivideo_init(fb)
 		break;
 
 	default:
-		printf("unknown type (=%d).\n", bootinfo->fb_type);
+		printf("unsupported type %d.\n", bootinfo->fb_type);
 		return (-1);
 		break;
 	}

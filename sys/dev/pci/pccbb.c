@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.3.2.7 2001/01/18 09:23:26 bouyer Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.3.2.8 2001/02/11 19:15:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -49,10 +49,11 @@
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
-#include <sys/reboot.h>
+#include <sys/reboot.h>		/* for bootverbose */
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -89,6 +90,24 @@ struct cfdriver cbb_cd = {
 #define DPRINTF(x)
 #define STATIC static
 #endif
+
+/*
+ * DELAY_MS() is a wait millisecond.  It shall use instead of delay()
+ * if you want to wait more than 1 ms.
+ */
+#define DELAY_MS(time, param)						\
+    do {								\
+	if (cold == 0) {						\
+	    int tick = (hz*(time))/1000;				\
+									\
+	    if (tick <= 1) {						\
+		tick = 2;						\
+	    }								\
+	    tsleep((void *)(param), PCATCH, "pccbb", tick);		\
+	} else {							\
+	    delay((time)*1000);						\
+	}								\
+    } while (0)
 
 int pcicbbmatch __P((struct device *, struct cfdata *, void *));
 void pccbbattach __P((struct device *, struct device *, void *));
@@ -1284,7 +1303,11 @@ pccbb_power(ct, command)
 	 * XXX delay 300 ms: though the standard defines that the Vcc set-up
 	 * time is 20 ms, some PC-Card bridge requires longer duration.
 	 */
+#if 0	/* XXX called on interrupt context */
+	DELAY_MS(300, sc);
+#else
 	delay(300 * 1000);
+#endif
 
 	return 1;		       /* power changed correctly */
 }
@@ -1396,19 +1419,19 @@ cb_reset(sc)
 	 * Some machines request longer duration.
 	 */
 	int reset_duration =
-	    (sc->sc_chipset == CB_RX5C47X ? 400 * 1000 : 40 * 1000);
+	    (sc->sc_chipset == CB_RX5C47X ? 400 : 40);
 	u_int32_t bcr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR);
 
 	/* Reset bit Assert (bit 6 at 0x3E) */
 	bcr |= CB_BCR_RESET_ENABLE;
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR, bcr);
-	delay(reset_duration);
+	DELAY_MS(reset_duration, sc);
 
 	if (CBB_CARDEXIST & sc->sc_flags) {	/* A card exists.  Reset it! */
 		/* Reset bit Deassert (bit 6 at 0x3E) */
 		bcr &= ~CB_BCR_RESET_ENABLE;
 		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR, bcr);
-		delay(reset_duration);
+		DELAY_MS(reset_duration, sc);
 	}
 	/* No card found on the slot. Keep Reset. */
 	return 1;
@@ -1904,11 +1927,38 @@ pccbb_pcmcia_io_alloc(pch, start, size, align, pcihp)
 	int flags = 0;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+	bus_addr_t mask;
 #if rbus
 	rbus_tag_t rb;
 #endif
 	if (align == 0) {
 		align = size;	       /* XXX: funny??? */
+	}
+
+	if (start != 0) {
+		/* XXX: assume all card decode lower 10 bits by its hardware */
+		mask = 0x3ff;
+	} else {
+		/*
+		 * calculate mask:
+		 *  1. get the most significant bit of size (call it msb).
+		 *  2. compare msb with the value of size.
+		 *  3. if size is larger, shift msb left once.
+		 *  4. obtain mask value to decrement msb.
+		 */
+		bus_size_t size_tmp = size;
+		int shifts = 0;
+
+		mask = 1;
+		while (size_tmp) {
+			++shifts;
+			size_tmp >>= 1;
+		}
+		mask = (1 << shifts);
+		if (mask < size) {
+			mask <<= 1;
+		}
+		--mask;
 	}
 
 	/* 
@@ -1919,8 +1969,7 @@ pccbb_pcmcia_io_alloc(pch, start, size, align, pcihp)
 
 #if rbus
 	rb = ((struct pccbb_softc *)(ph->ph_parent))->sc_rbus_iot;
-	/* XXX: I assume all card decode lower 10 bits by its hardware */
-	if (rbus_space_alloc(rb, start, size, 0x3ff, align, 0, &ioaddr, &ioh)) {
+	if (rbus_space_alloc(rb, start, size, mask, align, 0, &ioaddr, &ioh)) {
 		return 1;
 	}
 #else
@@ -2186,13 +2235,13 @@ pccbb_pcmcia_wait_ready(ph)
 	DPRINTF(("pccbb_pcmcia_wait_ready: status 0x%02x\n",
 	    Pcic_read(ph, PCIC_IF_STATUS)));
 
-	for (i = 0; i < 10000; i++) {
+	for (i = 0; i < 2000; i++) {
 		if (Pcic_read(ph, PCIC_IF_STATUS) & PCIC_IF_STATUS_READY) {
 			return;
 		}
-		delay(500);
+		DELAY_MS(2, ph->ph_parent);
 #ifdef CBB_DEBUG
-		if ((i > 5000) && (i % 100 == 99))
+		if ((i > 1000) && (i % 25 == 24))
 			printf(".");
 #endif
 	}
@@ -2267,11 +2316,14 @@ pccbb_pcmcia_socket_enable(pch)
 	pccbb_power(sc, voltage);
 
 	/* 
-	 * hold RESET at least 10us.
+	 * hold RESET at least 20 ms: the spec says only 10 us is
+	 * enough, but TI1130 requires at least 20 ms.
 	 */
-	delay(10);
-	delay(2 * 1000);	       /* XXX: TI1130 requires it. */
-	delay(20 * 1000);	       /* XXX: TI1130 requires it. */
+#if 0	/* XXX called on interrupt context */
+	DELAY_MS(20, sc);
+#else
+	delay(20 * 1000);
+#endif
 
 	/* clear the reset flag */
 
@@ -2280,7 +2332,11 @@ pccbb_pcmcia_socket_enable(pch)
 
 	/* wait 20ms as per pc card standard (r2.01) section 4.3.6 */
 
-	delay(20000);
+#if 0	/* XXX called on interrupt context */
+	DELAY_MS(20, sc);
+#else
+	delay(20 * 1000);
+#endif
 
 	/* wait for the chip to finish initializing */
 
@@ -2348,7 +2404,11 @@ pccbb_pcmcia_socket_disable(pch)
 	/* 
 	 * wait 300ms until power fails (Tpf).
 	 */
+#if 0	/* XXX called on interrupt context */
+	DELAY_MS(300, sc);
+#else
 	delay(300 * 1000);
+#endif
 }
 
 /*

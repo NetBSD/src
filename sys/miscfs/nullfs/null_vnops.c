@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vnops.c,v 1.16.2.1 2000/11/20 18:09:47 bouyer Exp $	*/
+/*	$NetBSD: null_vnops.c,v 1.16.2.2 2001/02/11 19:17:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -71,7 +71,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: null_vnops.c,v 1.16.2.1 2000/11/20 18:09:47 bouyer Exp $
+ *	$Id: null_vnops.c,v 1.16.2.2 2001/02/11 19:17:00 bouyer Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -224,7 +224,7 @@
  * Global vfs data structures
  */
 int (**null_vnodeop_p) __P((void *));
-struct vnodeopv_entry_desc null_vnodeop_entries[] = {
+const struct vnodeopv_entry_desc null_vnodeop_entries[] = {
 	{ &vop_default_desc,  layer_bypass },
 
 	{ &vop_lookup_desc,   layer_lookup },
@@ -247,5 +247,5 @@ struct vnodeopv_entry_desc null_vnodeop_entries[] = {
 
 	{ (struct vnodeop_desc*)NULL, (int(*)__P((void *)))NULL }
 };
-struct vnodeopv_desc null_vnodeop_opv_desc =
+const struct vnodeopv_desc null_vnodeop_opv_desc =
 	{ &null_vnodeop_p, null_vnodeop_entries };

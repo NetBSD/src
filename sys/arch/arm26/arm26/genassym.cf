@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.1.6.3 2001/01/18 09:22:14 bouyer Exp $
+# $NetBSD: genassym.cf,v 1.1.6.4 2001/02/11 19:08:53 bouyer Exp $
 #
 # Copyright (c) 1999 Ben Harris
 # All rights reserved.
@@ -37,6 +37,8 @@ define	U_PCB		offsetof(struct user, u_pcb)
 define	PCB_ONFAULT	offsetof(struct pcb, pcb_onfault)
 define	P_ADDR		offsetof(struct proc, p_addr)
 
+define	TF_SPSR		offsetof(struct trapframe, tf_spsr)
+define	TF_R0		offsetof(struct trapframe, tf_r0)
 define	TF_R15		offsetof(struct trapframe, tf_r15)
 define	TF_SIZE		sizeof(struct trapframe)
 

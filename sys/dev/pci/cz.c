@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.11.2.4 2001/01/05 17:36:02 bouyer Exp $	*/
+/*	$NetBSD: cz.c,v 1.11.2.5 2001/02/11 19:15:53 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -853,22 +853,12 @@ cz_wait_pci_doorbell(struct cz_softc *cz, const char *wstring)
  * Cyclades-Z TTY code starts here...
  *****************************************************************************/
 
-#define	CZTTYCHAN_MASK		0x0003f
-#define	CZTTYBOARD_MASK		(0x7ffff & ~CZTTYCHAN_MASK)
-#define	CZTTYBOARD_SHIFT	6
 #define CZTTYDIALOUT_MASK	0x80000
 
-#define	CZTTY_CHAN(dev)		(minor((dev)) & CZTTYCHAN_MASK)
-#define	CZTTY_BOARD(dev)	((minor((dev)) & CZTTYBOARD_MASK) >>	\
-				 CZTTYBOARD_SHIFT)
 #define	CZTTY_DIALOUT(dev)	(minor((dev)) & CZTTYDIALOUT_MASK)
 #define	CZTTY_CZ(sc)		((sc)->sc_parent)
 
-#define	CZ_SOFTC(dev)							\
-	((struct cz_softc *)(CZTTY_BOARD(dev) < cz_cd.cd_ndevs ?	\
-	  cz_cd.cd_devs[CZTTY_BOARD(dev)] : NULL))
-
-#define	CZTTY_SOFTC(dev) cztty_getttysoftc(dev)
+#define	CZTTY_SOFTC(dev)	cztty_getttysoftc(dev)
 
 struct cztty_softc *
 cztty_getttysoftc(dev_t dev)
@@ -878,7 +868,9 @@ cztty_getttysoftc(dev_t dev)
 
 	for (i = 0, j = 0; i < cz_cd.cd_ndevs; i++) {
 		k = j;
-		cz = cz_cd.cd_devs[i];
+		cz = device_lookup(&cz_cd, i);
+		if (cz == NULL)
+			continue;
 		if (cz->cz_ports == NULL)
 			continue;
 		j += cz->cz_nchannels;
@@ -886,9 +878,9 @@ cztty_getttysoftc(dev_t dev)
 			break;
 	}
 
-	if (i >= cz_cd.cd_ndevs) {
+	if (i >= cz_cd.cd_ndevs)
 		return (NULL);
-	} else
+	else
 		return (&cz->cz_ports[u - k]);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.39.2.4 2000/12/08 09:20:15 bouyer Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.39.2.5 2001/02/11 19:17:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -106,11 +106,11 @@
 
 int lfs_mountfs __P((struct vnode *, struct mount *, struct proc *));
 
-extern struct vnodeopv_desc lfs_vnodeop_opv_desc;
-extern struct vnodeopv_desc lfs_specop_opv_desc;
-extern struct vnodeopv_desc lfs_fifoop_opv_desc;
+extern const struct vnodeopv_desc lfs_vnodeop_opv_desc;
+extern const struct vnodeopv_desc lfs_specop_opv_desc;
+extern const struct vnodeopv_desc lfs_fifoop_opv_desc;
 
-struct vnodeopv_desc *lfs_vnodeopv_descs[] = {
+const struct vnodeopv_desc * const lfs_vnodeopv_descs[] = {
 	&lfs_vnodeop_opv_desc,
 	&lfs_specop_opv_desc,
 	&lfs_fifoop_opv_desc,
@@ -204,6 +204,7 @@ lfs_mountroot()
 	simple_unlock(&mountlist_slock);
 	(void)lfs_statfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
+	inittodr(VFSTOUFS(mp)->um_lfs->lfs_tstamp);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16.2.1 2000/11/20 20:31:10 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16.2.2 2001/02/11 19:11:35 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -77,6 +77,7 @@ void pmap_bootstrap __P((u_int kernelstart, u_int kernelend));
 boolean_t pmap_extract __P((struct pmap *, vaddr_t, paddr_t *));
 boolean_t ptemodify __P((struct vm_page *, u_int, u_int));
 int ptebits __P((struct vm_page *, int));
+void pmap_real_memory __P((paddr_t *, psize_t *));
 
 #define PMAP_NEED_PROCWR
 void pmap_procwr __P((struct proc *, vaddr_t, size_t));

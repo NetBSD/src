@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.1.2.2 2000/11/20 20:02:33 bouyer Exp $ */
+/* $NetBSD: process_machdep.c,v 1.1.2.3 2001/02/11 19:08:54 bouyer Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -32,14 +32,14 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: process_machdep.c,v 1.1.2.2 2000/11/20 20:02:33 bouyer Exp $");
+__RCSID("$NetBSD: process_machdep.c,v 1.1.2.3 2001/02/11 19:08:54 bouyer Exp $");
 
 #include <sys/errno.h>
 #include <sys/proc.h>
 #include <sys/ptrace.h>
 #include <sys/user.h>
 
-#include <machine/armreg.h>
+#include <arm/armreg.h>
 #include <machine/frame.h>
 #include <machine/pcb.h>
 #include <machine/reg.h>
@@ -78,10 +78,10 @@ process_read_regs(struct proc *p, struct reg *regs)
 	regs->r[10] = tf->tf_r10;
 	regs->r[11] = tf->tf_r11;
 	regs->r[12] = tf->tf_r12;
-	regs->r[13] = tf->tf_r13;
-	regs->r_sp  = tf->tf_r13; /* XXX */
+	regs->r_sp  = tf->tf_r13;
 	regs->r_lr  = tf->tf_r14;
-	regs->r_pc  = tf->tf_r15; /* XXX name? */
+	regs->r_pc  = tf->tf_r15;
+	regs->r_cpsr = tf->tf_spsr; /* Always 0 */
 	return 0;
 }
 
@@ -107,7 +107,7 @@ process_write_regs(struct proc *p, struct reg *regs)
 	tf->tf_r10 = regs->r[10];
 	tf->tf_r11 = regs->r[11];
 	tf->tf_r12 = regs->r[12];
-	tf->tf_r13 = regs->r[13];
+	tf->tf_r13 = regs->r_sp;
 	tf->tf_r14 = regs->r_lr;
 	tf->tf_r15 = regs->r_pc;
 	return 0;

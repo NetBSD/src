@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.12.8.1 2000/11/22 16:02:44 bouyer Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.12.8.2 2001/02/11 19:14:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@
 #include <compat/linux/arch/m68k/linux_exec.h>
 #elif defined(__alpha__)
 #include <compat/linux/arch/alpha/linux_exec.h>
+#elif defined(__powerpc__)
+#include <compat/linux/arch/powerpc/linux_exec.h>
 #else
 #error Undefined linux_exec.h machine type.
 #endif
@@ -73,6 +75,17 @@
      : (LINUX__N_SEGMENT_ROUND (LINUX__N_TXTENDADDR(x,m))))
 
 #define LINUX_N_BSSADDR(x,m) (LINUX_N_DATADDR(x,m) + (x).a_data)
+
+/* 
+ * From Linux's include/linux/elf.h
+  */
+  #define LINUX_AT_UID    11 /* real uid */
+  #define LINUX_AT_EUID   12 /* effective uid */
+  #define LINUX_AT_GID    13 /* real gid */
+  #define LINUX_AT_EGID   14 /* effective gid */ 
+  #define LINUX_AT_PLATFORM 15  /* string identifying CPU for optimizations */
+  #define LINUX_AT_HWCAP  16    /* arch dependent hints at CPU capabilities */
+  #define LINUX_AT_CLKTCK 17 /* frequency at which times() increments */
 
 #ifdef _KERNEL
 __BEGIN_DECLS

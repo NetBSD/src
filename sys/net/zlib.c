@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.8.8.1 2000/11/20 18:10:12 bouyer Exp $	*/
+/*	$NetBSD: zlib.c,v 1.8.8.2 2001/02/11 19:17:10 bouyer Exp $	*/
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -11,7 +11,7 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: zlib.c,v 1.8.8.1 2000/11/20 18:10:12 bouyer Exp $
+ * $Id: zlib.c,v 1.8.8.2 2001/02/11 19:17:10 bouyer Exp $
  */
 
 /* 
@@ -90,7 +90,7 @@ typedef unsigned short ush;
 typedef ush FAR ushf;
 typedef unsigned long  ulg;
 
-extern const char *z_errmsg[10]; /* indexed by 2-zlib_error */
+extern const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 /* (size given to avoid silly warnings with Visual C++) */
 
 #define ERR_MSG(err) z_errmsg[Z_NEED_DICT-(err)]
@@ -591,7 +591,7 @@ void _tr_stored_type_only OF((deflate_state *));
 
 /* #include "deflate.h" */
 
-char deflate_copyright[] = " deflate 1.0.4 Copyright 1995-1996 Jean-loup Gailly ";
+const char deflate_copyright[] = " deflate 1.0.4 Copyright 1995-1996 Jean-loup Gailly ";
 /*
   If you use the zlib library in a product, an acknowledgment is welcome
   in the documentation of your product. If for some reason you cannot
@@ -662,7 +662,7 @@ typedef struct config_s {
    compress_func func;
 } config;
 
-local config configuration_table[10] = {
+const local config configuration_table[10] = {
 /*      good lazy nice chain */
 /* 0 */ {0,    0,  0,    0, deflate_stored},  /* store only */
 /* 1 */ {4,    4,  8,    4, deflate_fast}, /* maximum speed, no lazy matches */
@@ -1890,16 +1890,16 @@ local block_state deflate_slow(s, flush)
 #define REPZ_11_138  18
 /* repeat a zero length 11-138 times  (7 bits of repeat count) */
 
-local int extra_lbits[LENGTH_CODES] /* extra bits for each length code */
+local const int extra_lbits[LENGTH_CODES] /* extra bits for each length code */
    = {0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0};
 
-local int extra_dbits[D_CODES] /* extra bits for each distance code */
+local const int extra_dbits[D_CODES] /* extra bits for each distance code */
    = {0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13};
 
-local int extra_blbits[BL_CODES]/* extra bits for each bit length code */
+local const int extra_blbits[BL_CODES]/* extra bits for each bit length code */
    = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,7};
 
-local uch bl_order[BL_CODES]
+local const uch bl_order[BL_CODES]
    = {16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15};
 /* The lengths of the bit length codes are sent in order of decreasing
  * probability, to avoid transmitting the lengths for unused bit length codes.
@@ -1943,7 +1943,7 @@ local int base_dist[D_CODES];
 
 struct static_tree_desc_s {
     ct_data *static_tree;        /* static tree or NULL */
-    intf    *extra_bits;         /* extra bits for each code or NULL */
+    const intf    *extra_bits;         /* extra bits for each code or NULL */
     int     extra_base;          /* base index for extra_bits */
     int     elems;               /* max number of elements in the tree */
     int     max_length;          /* max bit length for the codes */
@@ -2054,10 +2054,6 @@ local void send_bits(s, value, length)
   }\
 }
 #endif /* DEBUG_ZLIB */
-
-
-#define MAX(a,b) (a >= b ? a : b)
-/* the arguments must not have side effects */
 
 /* ===========================================================================
  * Initialize the various 'constant' tables. In a multi-threaded environment,
@@ -2250,7 +2246,7 @@ local void gen_bitlen(s, desc)
     ct_data *tree  = desc->dyn_tree;
     int max_code   = desc->max_code;
     ct_data *stree = desc->stat_desc->static_tree;
-    intf *extra    = desc->stat_desc->extra_bits;
+    const intf *extra    = desc->stat_desc->extra_bits;
     int base       = desc->stat_desc->extra_base;
     int max_length = desc->stat_desc->max_length;
     int h;              /* heap index */
@@ -3604,7 +3600,7 @@ struct inflate_blocks_state {
 #define LOAD {LOADIN LOADOUT}
 
 /* masks for lower bits (size given to avoid silly warnings with Visual C++) */
-extern uInt inflate_mask[17];
+extern const uInt inflate_mask[17];
 
 /* copy as much as possible from the sliding window to the output area */
 extern int inflate_flush OF((
@@ -4854,7 +4850,7 @@ struct inflate_codes_state {int dummy;}; /* for buggy compilers */
 #endif
 
 /* And'ing with mask[n] masks the lower n bits */
-uInt inflate_mask[17] = {
+uInt const inflate_mask[17] = {
     0x0000,
     0x0001, 0x0003, 0x0007, 0x000f, 0x001f, 0x003f, 0x007f, 0x00ff,
     0x01ff, 0x03ff, 0x07ff, 0x0fff, 0x1fff, 0x3fff, 0x7fff, 0xffff
@@ -5128,7 +5124,7 @@ struct internal_state      {int dummy;}; /* for buggy compilers */
 extern void exit OF((int));
 #endif
 
-const char *z_errmsg[10] = {
+const char * const z_errmsg[10] = {
 "need dictionary",     /* Z_NEED_DICT       2  */
 "stream end",          /* Z_STREAM_END      1  */
 "",                    /* Z_OK              0  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.52.2.3 2001/01/18 09:23:39 bouyer Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.52.2.4 2001/02/11 19:16:30 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ struct usb_knowndev {
 #include <dev/usb/usbdevs_data.h>
 #endif /* USBVERBOSE */
 
-Static const char *usbd_error_strs[] = {
+Static const char * const usbd_error_strs[] = {
 	"NORMAL_COMPLETION",
 	"IN_PROGRESS",
 	"PENDING_REQUESTS",
@@ -210,15 +210,19 @@ usbd_get_string(usbd_device_handle dev, int si, char *buf)
 }
 
 static void
-usbd_trim_trailings_spaces(char *p)
+usbd_trim_spaces(char *p)
 {
-	char *q;
+	char *q, *e;
 
 	if (p == NULL)
 		return;
-	q = p + strlen(p);
-	while (--q >= p && *q == ' ')
-		*q = 0;
+	q = e = p;
+	while (*q == ' ')	/* skip leading spaces */
+		q++;
+	while ((*p = *q++))	/* copy string */
+		if (*p++ != ' ') /* remember last non-space */
+			e = p;
+	*e = 0;			/* kill trailing spaces */
 }
 
 void
@@ -227,7 +231,7 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev)
 	usb_device_descriptor_t *udd = &dev->ddesc;
 	char *vendor = 0, *product = 0;
 #ifdef USBVERBOSE
-	struct usb_knowndev *kdp;
+	const struct usb_knowndev *kdp;
 #endif
 
 	if (dev == NULL) {
@@ -237,9 +241,9 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev)
 
 	if (usedev) {
 		vendor = usbd_get_string(dev, udd->iManufacturer, v);
-		usbd_trim_trailings_spaces(vendor);
+		usbd_trim_spaces(vendor);
 		product = usbd_get_string(dev, udd->iProduct, p);
-		usbd_trim_trailings_spaces(product);
+		usbd_trim_spaces(product);
 	} else {
 		vendor = NULL;
 		product = NULL;

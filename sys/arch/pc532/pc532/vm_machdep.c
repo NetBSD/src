@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.37.2.1 2000/11/20 20:19:24 bouyer Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.37.2.2 2001/02/11 19:11:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -276,8 +276,8 @@ pagemove(from, to, size)
 
 	if (size % NBPG)
 		panic("pagemove");
-	fpte = kvtopte(from);
-	tpte = kvtopte(to);
+	fpte = kvtopte((vaddr_t)from);
+	tpte = kvtopte((vaddr_t)to);
 
 	if (size <= NBPG * 16) {
 		while (size > 0) {

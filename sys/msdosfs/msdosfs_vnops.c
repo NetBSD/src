@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.87.2.2 2000/12/08 09:22:09 bouyer Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.87.2.3 2001/02/11 19:17:07 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -1867,7 +1867,7 @@ msdosfs_pathconf(v)
 
 /* Global vfs data structures for msdosfs */
 int (**msdosfs_vnodeop_p) __P((void *));
-struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
+const struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, msdosfs_lookup },		/* lookup */
 	{ &vop_create_desc, msdosfs_create },		/* create */
@@ -1914,5 +1914,5 @@ struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_size_desc, genfs_size },			/* size */
 	{ NULL, NULL }
 };
-struct vnodeopv_desc msdosfs_vnodeop_opv_desc =
+const struct vnodeopv_desc msdosfs_vnodeop_opv_desc =
 	{ &msdosfs_vnodeop_p, msdosfs_vnodeop_entries };

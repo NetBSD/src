@@ -27,7 +27,7 @@
  *	i4b_global.h - i4b global include file
  *	--------------------------------------
  *
- *	$Id: i4b_global.h,v 1.1.1.1.2.2 2001/01/08 14:57:42 bouyer Exp $
+ *	$Id: i4b_global.h,v 1.1.1.1.2.3 2001/02/11 19:17:31 bouyer Exp $
  *
  * $FreeBSD$
  *
@@ -120,16 +120,6 @@
 
 #define TIMER_IDLE	1		/* a timer is running	*/
 #define TIMER_ACTIVE	2		/* a timer is idle	*/
-
-/* i4b's spl */
-
-#define	SPLI4B()	splimp()	/* spl for i4b		*/
-
-/* critial code region handling macros */
-
-#define CRIT_VAR	int _svd_spl_	/* declare variable	*/
-#define CRIT_BEG	_svd_spl_ = SPLI4B()	/* save spl	*/
-#define CRIT_END	splx(_svd_spl_)	/* restore spl		*/
 
 /* definitions for the STATUS indications L1 -> L2 -> L3 */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.67.2.1 2000/11/20 18:09:46 bouyer Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.67.2.2 2001/02/11 19:16:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -147,7 +147,7 @@ int	kernfs_xread __P((struct kern_target *, int, char **, int));
 int	kernfs_xwrite __P((struct kern_target *, char *, int));
 
 int (**kernfs_vnodeop_p) __P((void *));
-struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
+const struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, kernfs_lookup },		/* lookup */
 	{ &vop_create_desc, kernfs_create },		/* create */
@@ -193,7 +193,7 @@ struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_bwrite_desc, kernfs_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
-struct vnodeopv_desc kernfs_vnodeop_opv_desc =
+const struct vnodeopv_desc kernfs_vnodeop_opv_desc =
 	{ &kernfs_vnodeop_p, kernfs_vnodeop_entries };
 
 int
@@ -645,7 +645,7 @@ kernfs_readdir(v)
 	for (kt = &kern_targets[i];
 	     uio->uio_resid >= UIO_MX && i < nkern_targets; kt++, i++) {
 #ifdef KERNFS_DIAGNOSTIC
-		printf("kernfs_readdir: i = %d\n", i);
+		printf("kernfs_readdir: i = %d\n", (int)i);
 #endif
 
 		if (kt->kt_tag == KTT_DEVICE) {

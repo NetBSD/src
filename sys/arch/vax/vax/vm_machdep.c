@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.54.2.1 2000/11/20 20:33:35 bouyer Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.54.2.2 2001/02/11 19:13:09 bouyer Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -293,14 +293,15 @@ vmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
-#if VAX46 || VAX48 || VAX49
+#if VAX46 || VAX48 || VAX49 || VAX53
 	vaddr_t faddr, taddr, off;
 	paddr_t pa;
 	struct proc *p;
 
 	if (vax_boardtype != VAX_BTYP_46
 	    && vax_boardtype != VAX_BTYP_48
-	    && vax_boardtype != VAX_BTYP_49)
+	    && vax_boardtype != VAX_BTYP_49
+	    && vax_boardtype != VAX_BTYP_53)
 		return;
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
@@ -331,12 +332,13 @@ vunmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
-#if VAX46 || VAX48 || VAX49
+#if VAX46 || VAX48 || VAX49 || VAX53
 	vaddr_t addr, off;
 
 	if (vax_boardtype != VAX_BTYP_46
 	    && vax_boardtype != VAX_BTYP_48
-	    && vax_boardtype != VAX_BTYP_49)
+	    && vax_boardtype != VAX_BTYP_49
+	    && vax_boardtype != VAX_BTYP_53)
 		return;
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5.2.3 2001/01/18 09:22:28 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5.2.4 2001/02/11 19:09:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -949,7 +949,7 @@ shpcmcia_mem_add_mapping(bpa, size, type, bshp)
 
 	for (; pa < endpa; pa += NBPG, va += NBPG) {
 		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
+		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 
 		pte = kvtopte(va);
 		*pte &= ~PG_N;
@@ -987,7 +987,8 @@ shpcmcia_memio_unmap(t, bsh, size)
 		panic("sh3_pcmcia_memio_unmap: overflow");
 #endif
 
-	bpa = pmap_extract(pmap_kernel(), va) + (bsh & PGOFSET);
+	pmap_extract(pmap_kernel(), va, &bpa);
+	bpa += bsh & PGOFFSET;
 
 	/*
 	 * Free the kernel virtual mapping.

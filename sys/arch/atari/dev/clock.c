@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.20.2.1 2000/11/20 20:05:25 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.20.2.2 2001/02/11 19:09:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -434,7 +434,7 @@ gettod()
 		return(0);
 	if (range_test(clkregs[MC_MONTH], 1, 12))
 		return(0);
-	if(clkregs[MC_YEAR] > (2000 - GEMSTARTOFTIME))
+	if(clkregs[MC_YEAR] > 99)
 		return(0);
 
 	dt.dt_year = clkregs[MC_YEAR] + GEMSTARTOFTIME;

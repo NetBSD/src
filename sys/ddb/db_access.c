@@ -1,4 +1,4 @@
-/*	$NetBSD: db_access.c,v 1.13.2.1 2000/11/20 18:08:46 bouyer Exp $	*/
+/*	$NetBSD: db_access.c,v 1.13.2.2 2001/02/11 19:15:11 bouyer Exp $	*/
 
 /* 
  * Mach Operating System
@@ -42,7 +42,7 @@
  * boundaries.
  */
 
-int db_extend[] = {	/* table for sign-extending */
+const int db_extend[] = {	/* table for sign-extending */
 	0,
 	0xFFFFFF80,
 	0xFFFF8000,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.3.2.3 2001/01/05 17:35:33 bouyer Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.3.2.4 2001/02/11 19:15:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -336,7 +336,7 @@ ld_iop_detach(struct device *self, int flags)
 
 	sc = (struct ld_iop_softc *)self;
 
-	if ((rv = lddrain(&sc->sc_ld, flags)) != 0)
+	if ((rv = ldbegindetach(&sc->sc_ld, flags)) != 0)
 		return (rv);
 
 	iop = (struct iop_softc *)self->dv_parent;
@@ -349,7 +349,7 @@ ld_iop_detach(struct device *self, int flags)
 		iop_util_abort(iop, &sc->sc_ii, 0, 0,
 		    I2O_UTIL_ABORT_WILD | I2O_UTIL_ABORT_CLEAN);
 
-	lddetach(&sc->sc_ld);
+	ldenddetach(&sc->sc_ld);
 
 	/* Un-claim the target, and un-register us as an initiator. */
 	if ((sc->sc_ld.sc_flags & LDF_ENABLED) != 0) {

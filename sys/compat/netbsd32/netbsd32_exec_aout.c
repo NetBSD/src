@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_aout.c,v 1.1.2.3 2001/01/05 17:35:28 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_exec_aout.c,v 1.1.2.4 2001/02/11 19:14:12 bouyer Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -54,12 +54,6 @@
 int netbsd32_copyinargs __P((struct exec_package *, struct ps_strings *, 
 			     void *, size_t, const void *, const void *));
 
-static int netbsd32_exec_aout_prep_zmagic __P((struct proc *,
-					       struct exec_package *));
-static int netbsd32_exec_aout_prep_nmagic __P((struct proc *,
-					       struct exec_package *));
-static int netbsd32_exec_aout_prep_omagic __P((struct proc *,
-					       struct exec_package *));
 int netbsd32_exec_aout_setup_stack __P((struct proc *p,
 					struct exec_package *epp));
 
@@ -197,12 +191,12 @@ netbsd32_exec_aout_prep_nmagic(p, epp)
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, execp->a_text,
-	    epp->ep_taddr, epp->ep_vp, sizeof(struct exec),
+	    epp->ep_taddr, epp->ep_vp, sizeof(struct netbsd32_exec),
 	    VM_PROT_READ|VM_PROT_EXECUTE);
 
 	/* set up command for data segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, execp->a_data,
-	    epp->ep_daddr, epp->ep_vp, execp->a_text + sizeof(struct exec),
+	    epp->ep_daddr, epp->ep_vp, execp->a_text + sizeof(struct netbsd32_exec),
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
@@ -237,7 +231,7 @@ netbsd32_exec_aout_prep_omagic(p, epp)
 	/* set up command for text and data segments */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn,
 	    execp->a_text + execp->a_data, epp->ep_taddr, epp->ep_vp,
-	    sizeof(struct exec), VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+	    sizeof(struct netbsd32_exec), VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
 	baddr = roundup(epp->ep_daddr + execp->a_data, NBPG);

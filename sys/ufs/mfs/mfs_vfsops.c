@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.21.2.1 2000/11/20 18:11:52 bouyer Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.21.2.2 2001/02/11 19:17:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -72,9 +72,9 @@ extern int (**mfs_vnodeop_p) __P((void *));
  * mfs vfs operations.
  */
 
-extern struct vnodeopv_desc mfs_vnodeop_opv_desc;  
+extern const struct vnodeopv_desc mfs_vnodeop_opv_desc;  
 
-struct vnodeopv_desc *mfs_vnodeopv_descs[] = {
+const struct vnodeopv_desc * const mfs_vnodeopv_descs[] = {
 	&mfs_vnodeop_opv_desc,
 	NULL,
 };

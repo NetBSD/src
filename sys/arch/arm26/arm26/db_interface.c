@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.3.2.4 2001/01/18 09:22:13 bouyer Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.3.2.5 2001/02/11 19:08:52 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -53,15 +53,15 @@
 #include <ddb/db_extern.h>
 #include <dev/cons.h>
 
-int db_access_und_sp __P((struct db_variable *, db_expr_t *, int));
-int db_access_abt_sp __P((struct db_variable *, db_expr_t *, int));
-int db_access_irq_sp __P((struct db_variable *, db_expr_t *, int));
+int db_access_und_sp __P((const struct db_variable *, db_expr_t *, int));
+int db_access_abt_sp __P((const struct db_variable *, db_expr_t *, int));
+int db_access_irq_sp __P((const struct db_variable *, db_expr_t *, int));
 u_int db_fetch_reg __P((int, db_regs_t *));
 
 static int db_validate_address __P((vm_offset_t));
 static void db_write_text __P((unsigned char *,	int ch));
 
-struct db_variable db_regs[] = {
+const struct db_variable db_regs[] = {
 	{ "r0", (long *)&DDB_TF->tf_r0, FCN_NULL },
 	{ "r1", (long *)&DDB_TF->tf_r1, FCN_NULL },
 	{ "r2", (long *)&DDB_TF->tf_r2, FCN_NULL },
@@ -80,7 +80,7 @@ struct db_variable db_regs[] = {
 	{ "r15", (long *)&DDB_TF->tf_r15, FCN_NULL },
 };
 
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 extern label_t	*db_recover;
 
@@ -208,7 +208,7 @@ void db_show_frame_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char
 void db_bus_write_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 void db_irqstat_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 
-struct db_command arm26_db_command_table[] = {
+const struct db_command db_machine_command_table[] = {
 	{ "bsw",	db_bus_write_cmd,	CS_MORE, NULL },
 	{ "frame",	db_show_frame_cmd,	0, NULL },
 	{ "irqstat",	db_irqstat_cmd,		0, NULL },
@@ -237,13 +237,6 @@ db_trapper(addr, inst, frame, fault_code)
 
 extern u_int esym;
 extern u_int end;
-
-void
-db_machine_init()
-{
-
-	db_machine_commands_install(arm26_db_command_table);
-}
 
 u_int
 db_fetch_reg(reg, db_regs)

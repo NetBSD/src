@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.2.2.4 2001/01/18 09:23:26 bouyer Exp $ */
+/* $NetBSD: if_ti.c,v 1.2.2.5 2001/02/11 19:15:56 bouyer Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -135,7 +135,7 @@
  * Various supported device vendors/types and their names.
  */
 
-static struct ti_type ti_devs[] = {
+static const struct ti_type ti_devs[] = {
 	{ PCI_VENDOR_ALTEON,	PCI_PRODUCT_ALTEON_ACENIC,
 		"Alteon AceNIC 1000baseSX Gigabit Ethernet" },
 	{ PCI_VENDOR_ALTEON,	PCI_PRODUCT_ALTEON_ACENIC_COPPER,
@@ -151,7 +151,7 @@ static struct ti_type ti_devs[] = {
 	{ 0, 0, NULL }
 };
 
-static struct ti_type *ti_type_match __P((struct pci_attach_args *));
+static const struct ti_type *ti_type_match __P((struct pci_attach_args *));
 static int ti_probe	__P((struct device *, struct cfdata *, void *));
 static void ti_attach	__P((struct device *, struct device *, void *));
 static void ti_shutdown __P((void *));
@@ -1189,40 +1189,62 @@ static void ti_setmulti(sc)
 
 	ifp = &sc->ethercom.ec_if;
 
-	if (ifp->if_flags & IFF_ALLMULTI) {
-		TI_DO_CMD(TI_CMD_SET_ALLMULTI, TI_CMD_CODE_ALLMULTI_ENB, 0);
-		return;
-	} else {
-		TI_DO_CMD(TI_CMD_SET_ALLMULTI, TI_CMD_CODE_ALLMULTI_DIS, 0);
-	}
-
 	/* Disable interrupts. */
 	intrs = CSR_READ_4(sc, TI_MB_HOSTINTR);
 	CSR_WRITE_4(sc, TI_MB_HOSTINTR, 1);
 
 	/* First, zot all the existing filters. */
-	while (SIMPLEQ_FIRST(&sc->ti_mc_listhead) != NULL) {
-		mc = SIMPLEQ_FIRST(&sc->ti_mc_listhead);
+	while ((mc = SIMPLEQ_FIRST(&sc->ti_mc_listhead)) != NULL) {
 		ti_del_mcast(sc, &mc->mc_addr);
 		SIMPLEQ_REMOVE_HEAD(&sc->ti_mc_listhead, mc, mc_entries);
 		free(mc, M_DEVBUF);
 	}
 
-	/* Now program new ones. */
+	/*
+	 * Remember all multicast addresses so that we can delete them
+	 * later.  Punt if there is a range of addresses or memory shortage.
+	 */
 	ETHER_FIRST_MULTI(step, &sc->ethercom, enm);
 	while (enm != NULL) {
-		mc = malloc(sizeof(struct ti_mc_entry), M_DEVBUF, M_NOWAIT);
-		bcopy(enm->enm_addrlo,
-		    (char *)&mc->mc_addr, ETHER_ADDR_LEN);
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+		    ETHER_ADDR_LEN) != 0)
+			goto allmulti;
+		if ((mc = malloc(sizeof(struct ti_mc_entry), M_DEVBUF,
+		    M_NOWAIT)) == NULL)
+			goto allmulti;
+		memcpy(&mc->mc_addr, enm->enm_addrlo, ETHER_ADDR_LEN);
 		SIMPLEQ_INSERT_HEAD(&sc->ti_mc_listhead, mc, mc_entries);
-		ti_add_mcast(sc, &mc->mc_addr);
 		ETHER_NEXT_MULTI(step, enm);
 	}
+
+	/* Accept only programmed multicast addresses */
+	ifp->if_flags &= ~IFF_ALLMULTI;
+	TI_DO_CMD(TI_CMD_SET_ALLMULTI, TI_CMD_CODE_ALLMULTI_DIS, 0);
+
+	/* Now program new ones. */
+	for (mc = SIMPLEQ_FIRST(&sc->ti_mc_listhead); mc != NULL;
+	    mc = SIMPLEQ_NEXT(mc, mc_entries))
+		ti_add_mcast(sc, &mc->mc_addr);
 
 	/* Re-enable interrupts. */
 	CSR_WRITE_4(sc, TI_MB_HOSTINTR, intrs);
 
 	return;
+
+allmulti:
+	/* No need to keep individual multicast addresses */
+	while ((mc = SIMPLEQ_FIRST(&sc->ti_mc_listhead)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&sc->ti_mc_listhead, mc,
+		    mc_entries);
+		free(mc, M_DEVBUF);
+	}
+
+	/* Accept all multicast addresses */
+	ifp->if_flags |= IFF_ALLMULTI;
+	TI_DO_CMD(TI_CMD_SET_ALLMULTI, TI_CMD_CODE_ALLMULTI_ENB, 0);
+
+	/* Re-enable interrupts. */
+	CSR_WRITE_4(sc, TI_MB_HOSTINTR, intrs);
 }
 
 /*
@@ -1570,10 +1592,11 @@ static int ti_gibinit(sc)
 /*
  * look for id in the device list, returning the first match
  */
-static struct ti_type * ti_type_match(pa)
+static const struct ti_type *
+ti_type_match(pa)
 	struct pci_attach_args *pa;
 {
-	struct ti_type          *t;
+	const struct ti_type          *t;
 
 	t = ti_devs;
 	while(t->ti_name != NULL) {
@@ -1597,7 +1620,7 @@ static int ti_probe(parent, match, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
-	struct ti_type		*t;
+	const struct ti_type		*t;
 
 	t = ti_type_match(pa);
 
@@ -1618,7 +1641,7 @@ static void ti_attach(parent, self, aux)
 	const char *intrstr = NULL;
 	bus_dma_segment_t dmaseg;
 	int error, dmanseg, nolinear;
-	struct ti_type		*t;
+	const struct ti_type		*t;
 
 	t = ti_type_match(pa);
 	if (t == NULL) {
@@ -1759,6 +1782,8 @@ static void ti_attach(parent, self, aux)
 		printf("%s: jumbo buffer allocation failed\n", self->dv_xname);
 		goto fail2;
 	}
+
+	SIMPLEQ_INIT(&sc->ti_mc_listhead);
 
 	/*
 	 * We really need a better way to tell a 1000baseTX card
@@ -2599,12 +2624,12 @@ static int ti_ioctl(ifp, command, data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		if (command == SIOCADDMULTI)
-			ether_addmulti(ifr, &sc->ethercom);
-		else
-			ether_delmulti(ifr, &sc->ethercom);
-		if (ifp->if_flags & IFF_RUNNING) {
-			ti_setmulti(sc);
+		error = (command == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->ethercom) :
+		    ether_delmulti(ifr, &sc->ethercom);
+		if (error == ENETRESET) {
+			if (ifp->if_flags & IFF_RUNNING)
+				ti_setmulti(sc);
 			error = 0;
 		}
 		break;
