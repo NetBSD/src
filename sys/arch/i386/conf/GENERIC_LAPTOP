@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.8.2.12 2002/04/27 20:24:44 sommerfeld Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.8.2.13 2002/05/03 19:12:55 sommerfeld Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.8.2.12 $"
+#ident 		"GENERIC-$Revision: 1.8.2.13 $"
 
 maxusers	32		# estimated number of users
 
@@ -195,8 +195,8 @@ config		netbsd	root on ? type ?
 
 mainbus0 at root
 
-cpu* at mainbus? apid ?
-#ioapic* at mainbus? apid ?
+cpu0 at mainbus0
+#ioapic* at mainbus?
 
 apm0	at mainbus0			# Advanced power management
 

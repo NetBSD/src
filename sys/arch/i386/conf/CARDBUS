@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.28.2.11 2002/04/27 20:24:43 sommerfeld Exp $
+#	$NetBSD: CARDBUS,v 1.28.2.12 2002/05/03 19:12:54 sommerfeld Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -10,7 +10,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"CARDBUS-$Revision: 1.28.2.11 $"
+#ident		"CARDBUS-$Revision: 1.28.2.12 $"
 
 maxusers	32		# estimated number of users
 
@@ -204,7 +204,7 @@ config		netbsd	root on ? type ?
 #
 
 mainbus0 at root
-
+cpu0	at mainbus0
 #apm0	at mainbus0			# Advanced power management
 
 # Tuning for power management, see apm(4) for more details.

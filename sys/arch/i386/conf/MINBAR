@@ -1,4 +1,4 @@
-#	$NetBSD: MINBAR,v 1.20.2.9 2002/04/27 20:24:45 sommerfeld Exp $
+#	$NetBSD: MINBAR,v 1.20.2.10 2002/05/03 19:12:56 sommerfeld Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	MINBAR -- offshore CVS server
@@ -158,7 +158,7 @@ config		netbsd	root on ? type ?
 #
 
 mainbus0 at root
-
+cpu0	at mainbus0
 #apm0	at mainbus0			# Advanced power management
 
 
