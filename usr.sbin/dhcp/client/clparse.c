@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: clparse.c,v 1.5 2000/06/12 18:57:43 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: clparse.c,v 1.6 2000/06/24 06:50:01 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -96,6 +96,7 @@ isc_result_t read_client_conf ()
 	top_level_config.bootp_policy = P_ACCEPT;
 	top_level_config.script_name = "/etc/dhclient-script";
 	top_level_config.requested_options = default_requested_options;
+	top_level_config.omapi_port = -1;
 
 	group_allocate (&top_level_config.on_receipt, MDL);
 	if (!top_level_config.on_receipt)
@@ -223,6 +224,7 @@ void parse_client_statement (cfile, ip, config)
 	struct data_string key_id;
 	enum policy policy;
 	int known;
+	int tmp;
 
 	switch (peek_token (&val, cfile)) {
 	      case KEY:
@@ -422,6 +424,31 @@ void parse_client_statement (cfile, ip, config)
 		parse_lease_time (cfile, &config -> select_interval);
 		return;
 
+	      case OMAPI:
+		token = next_token (&val, cfile);
+		if (token != PORT) {
+			parse_warn (cfile,
+				    "unexpected omapi subtype: %s", val);
+			skip_to_semi (cfile);
+			return;
+		}
+		token = next_token (&val, cfile);
+		if (token != NUMBER) {
+			parse_warn (cfile, "invalid port number: `%s'", val);
+			skip_to_semi (cfile);
+			return;
+		}
+		tmp = atoi (val);
+		if (tmp < 0 || tmp > 65535)
+			parse_warn (cfile, "invalid omapi port %d.", tmp);
+		else if (config != &top_level_config)
+			parse_warn (cfile,
+				    "omapi port only works at top level.");
+		else
+			config -> omapi_port = tmp;
+		parse_semi (cfile);
+		return;
+		
 	      case REBOOT:
 		token = next_token (&val, cfile);
 		parse_lease_time (cfile, &config -> reboot_timeout);

@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhcp.c,v 1.13 2000/06/10 18:17:21 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcp.c,v 1.14 2000/06/24 06:50:03 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -1634,7 +1634,9 @@ void ack_lease (packet, lease, offer, when, msg, ms_nulltp)
 			    lease -> pool -> failover_peer;
 
 			/* If the lease time we arrived at exceeds what
-			   the peer has, first update the peer. */
+			   the peer has, we can only issue a lease of
+			   peer -> mclt, but we can tell the peer we
+			   want something longer in the future. */
 			/* XXX This may result in updates that only push
 			   XXX the peer's expiry time for this lease up
 			   XXX by a few seconds - think about this again
@@ -1645,7 +1647,8 @@ void ack_lease (packet, lease, offer, when, msg, ms_nulltp)
 				   to update tstp, there's already an update
 				   queued.   May want to revisit this.  */
 				if (cur_time + lease_time > lease -> tstp)
-					lt -> tstp = cur_time + lease_time;
+					lt -> tstp = (cur_time + lease_time +
+						      peer -> mclt / 2);
 
 				/* Now choose a lease time that is either
 				   MCLT, for a lease that's never before been
@@ -1660,7 +1663,16 @@ void ack_lease (packet, lease, offer, when, msg, ms_nulltp)
 				else
 					lease_time = (lease -> tsfp  - cur_time
 						      + peer -> mclt);
+			} else {
+				if (cur_time + lease_time > lease -> tsfp &&
+				    lease_time > peer -> mclt / 2)
+					lt -> tstp = (cur_time + lease_time +
+						      peer -> mclt / 2);
+				else
+					lt -> tstp = (cur_time + lease_time +
+						      lease_time / 2);
 			}
+
 			lt -> cltt = cur_time;
 		}
 #endif /* FAILOVER_PROTOCOL */
@@ -1668,7 +1680,7 @@ void ack_lease (packet, lease, offer, when, msg, ms_nulltp)
 		/* If the lease duration causes the time value to wrap,
 		   use the maximum expiry time. */
 		if (cur_time + lease_time < cur_time)
-			state -> offered_expiry = MAX_TIME;
+			state -> offered_expiry = MAX_TIME - 1;
 		else
 			state -> offered_expiry = cur_time + lease_time;
 		if (when)
