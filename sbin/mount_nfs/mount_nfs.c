@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.14 1996/10/27 21:18:04 christos Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.15 1997/03/23 20:59:58 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.14 1996/10/27 21:18:04 christos Exp $";
+static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.15 1997/03/23 20:59:58 fvdl Exp $";
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.14 1996/10/27 21:18:04 christos 
 #define ALTF_NFSV3	0x20
 #define ALTF_RDIRPLUS	0x40
 #define	ALTF_MNTUDP	0x80
-#define ALTF_RESVPORT	0x100
+#define ALTF_NORESPORT	0x100
 #define ALTF_SEQPACKET	0x200
 #define ALTF_NQNFS	0x400
 #define ALTF_SOFT	0x800
@@ -121,7 +121,7 @@ const struct mntopt mopts[] = {
 	{ "nfsv3", 0, ALTF_NFSV3, 1 },
 	{ "rdirplus", 0, ALTF_RDIRPLUS, 1 },
 	{ "mntudp", 0, ALTF_MNTUDP, 1 },
-	{ "resvport", 0, ALTF_RESVPORT, 1 },
+	{ "noresport", 0, ALTF_NORESPORT, 1 },
 #ifdef ISO
 	{ "seqpacket", 0, ALTF_SEQPACKET, 1 },
 #endif
@@ -140,7 +140,7 @@ struct nfs_args nfsdefargs = {
 	0,
 	(u_char *)0,
 	0,
-	NFSMNT_NFSV3|NFSMNT_NOCONN,
+	NFSMNT_NFSV3|NFSMNT_NOCONN|NFSMNT_RESVPORT,
 	NFS_WSIZE,
 	NFS_RSIZE,
 	NFS_READDIRSIZE,
@@ -335,8 +335,8 @@ main(argc, argv)
 				nfsargsp->flags |= NFSMNT_RDIRPLUS;
 			if(altflags & ALTF_MNTUDP)
 				mnttcp_ok = 0;
-			if(altflags & ALTF_RESVPORT)
-				nfsargsp->flags |= NFSMNT_RESVPORT;
+			if(altflags & ALTF_NORESPORT)
+				nfsargsp->flags &= ~NFSMNT_RESVPORT;
 #ifdef ISO
 			if(altflags & ALTF_SEQPACKET)
 				nfsargsp->sotype = SOCK_SEQPACKET;
@@ -358,11 +358,9 @@ main(argc, argv)
 		case 'P':
 			nfsargsp->flags |= NFSMNT_RESVPORT;
 			break;
-#ifdef ISO
 		case 'p':
-			nfsargsp->sotype = SOCK_SEQPACKET;
+			nfsargsp->flags &= ~NFSMNT_RESVPORT;
 			break;
-#endif
 		case 'q':
 			if (force2)
 				errx(1,"nqnfs only available with v3");
@@ -382,6 +380,11 @@ main(argc, argv)
 			nfsargsp->rsize = num;
 			nfsargsp->flags |= NFSMNT_RSIZE;
 			break;
+#ifdef ISO
+		case 'S':
+			nfsargsp->sotype = SOCK_SEQPACKET;
+			break;
+#endif
 		case 's':
 			nfsargsp->flags |= NFSMNT_SOFT;
 			break;
@@ -668,29 +671,30 @@ tryagain:
 				nfhret.vers = mntvers;
 				clnt_stat = clnt_call(clp, RPCMNT_MOUNT,
 				    xdr_dir, spec, xdr_fh, &nfhret, try);
-				if (clnt_stat != RPC_SUCCESS) {
-					if (clnt_stat == RPC_PROGVERSMISMATCH) {
-						if (nfsvers == NFS_VER3 &&
-						    !force3) {
-							retrycnt = orgcnt;
-							nfsvers = NFS_VER2;
-							mntvers = RPCMNT_VER1;
-							nfsargsp->flags &=
-								~NFSMNT_NFSV3;
-							goto tryagain;
-						} else {
-							errx(1, "%s",
-							    clnt_sperror(clp,
-								"MNT RPC"));
-						}
+				switch (clnt_stat) {
+				case RPC_PROGVERSMISMATCH:
+					if (nfsvers == NFS_VER3 && !force3) {
+						retrycnt = orgcnt;
+						nfsvers = NFS_VER2;
+						mntvers = RPCMNT_VER1;
+						nfsargsp->flags &=
+							~NFSMNT_NFSV3;
+						goto tryagain;
+					} else {
+						errx(1, "%s", clnt_sperror(clp,
+							"MNT RPC"));
 					}
-					if ((opflags & ISBGRND) == 0)
-						warnx("%s", clnt_sperror(clp,
-						    "bad MNT RPC"));
-				} else {
+				case RPC_SUCCESS:
 					auth_destroy(clp->cl_auth);
 					clnt_destroy(clp);
 					retrycnt = 0;
+					break;
+				default:
+					/* XXX should give up on some errors */
+					if ((opflags & ISBGRND) == 0)
+						warnx("%s", clnt_sperror(clp,
+						    "bad MNT RPC"));
+					break;
 				}
 			}
 		}
