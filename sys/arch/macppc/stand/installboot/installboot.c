@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.2 1998/06/26 12:29:29 tsubai Exp $ */
+/*	$NetBSD: installboot.c,v 1.3 1998/07/17 18:48:37 tsubai Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -49,6 +49,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "dpme.h"
 
 int	verbose, nowrite;
 char	*boot, *proto, *dev;
@@ -157,6 +159,9 @@ main(argc, argv)
 
 	if ((devfd = open(dev, O_RDWR, 0)) < 0)
 		err(1, "open: %s", dev);
+
+	if (writeapplepartmap(devfd) < 0)
+		err(1, "write apm: %s", dev);
 
 	if (lseek(devfd, BOOTSECTOR_OFFSET, SEEK_SET) != BOOTSECTOR_OFFSET)
 		err(1, "lseek bootstrap");
@@ -417,5 +422,65 @@ int	devfd;
 
 	if (ndb)
 		errx(1, "%s: Too many blocks", boot);
+	return 0;
+}
+
+int
+writeapplepartmap(fd)
+	int fd;
+{
+	struct drvr_map dm;
+	struct partmapentry pme;
+
+	/* block 0 */
+	if (lseek(fd, 0, SEEK_SET) != 0)
+		return -1;
+	if (read(fd, &dm, 512) != 512)		/* read existing disklabel */
+		return -1;
+	if (lseek(fd, 0, SEEK_SET) != 0)
+		return -1;
+
+	dm.sbSig = DRIVER_MAP_MAGIC;
+	dm.sbBlockSize = 512;
+	dm.sbBlkCount = 0;
+
+	if (write(fd, &dm, 512) != 512)
+		return -1;
+
+	/* block 1: Apple Partition Map */
+	bzero(&pme, sizeof(pme));
+	pme.pmSig = DPME_MAGIC;
+	pme.pmMapBlkCnt = 2;
+	pme.pmPyPartStart = 1;
+	pme.pmPartBlkCnt = pme.pmDataCnt = 2;
+	strcpy(pme.pmPartName, "Apple");
+	strcpy(pme.pmPartType, "Apple_partition_map");
+	
+	pme.pmPartStatus = 0x37;
+
+	if (lseek(fd, 512, SEEK_SET) != 512)
+		return -1;
+	if (write(fd, &pme, 512) != 512)
+		return -1;
+
+	/* block 2: NetBSD partition */
+	bzero(&pme, sizeof(pme));
+	pme.pmSig = DPME_MAGIC;
+	pme.pmMapBlkCnt = 2;
+	pme.pmPyPartStart = 4;
+	pme.pmPartBlkCnt = pme.pmDataCnt = 0x7fffffff;
+	strcpy(pme.pmPartName, "NetBSD");
+	strcpy(pme.pmPartType, "NetBSD/macppc");
+	pme.pmPartStatus = 0x3b;
+	pme.pmBootSize = 0x400;
+	pme.pmBootLoad = 0x4000;
+	pme.pmBootEntry = 0x4000;
+	strcpy(pme.pmProcessor, "PowerPC");
+
+	if (lseek(fd, 1024, SEEK_SET) != 1024)
+		return -1;
+	if (write(fd, &pme, 512) != 512)
+		return -1;
+
 	return 0;
 }
