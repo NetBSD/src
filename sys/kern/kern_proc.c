@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.70 2004/01/04 11:33:31 jdolecek Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.71 2004/02/06 06:59:33 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.70 2004/01/04 11:33:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.71 2004/02/06 06:59:33 pk Exp $");
 
 #include "opt_kstack.h"
 
@@ -877,7 +877,7 @@ pg_delete(pid_t pg_id)
 	struct pgrp *pgrp;
 	struct tty *ttyp;
 	struct session *ss;
-	int s;
+	int s, is_pgrp_leader;
 
 	s = proclist_lock_write();
 	pgrp = pid_table[pg_id & pid_tbl_mask].pt_pgrp;
@@ -887,22 +887,29 @@ pg_delete(pid_t pg_id)
 		return;
 	}
 
-	/* Remove reference (if any) from tty to this process group */
-	ttyp = pgrp->pg_session->s_ttyp;
-	if (ttyp != NULL && ttyp->t_pgrp == pgrp)
-		ttyp->t_pgrp = NULL;
-
 	ss = pgrp->pg_session;
 
-	if (ss->s_sid == pgrp->pg_id) {
-		proclist_unlock_write(s);
-		SESSRELE(ss);
-		/* pgrp freed by sessdelete() if last reference */
-		return;
+	/* Remove reference (if any) from tty to this process group */
+	ttyp = ss->s_ttyp;
+	if (ttyp != NULL && ttyp->t_pgrp == pgrp) {
+		ttyp->t_pgrp = NULL;
+#ifdef DIAGNOSTIC
+		if (ttyp->t_session != ss)
+			panic("pg_delete: wrong session on terminal");
+#endif
 	}
 
+	/*
+	 * The leading process group in a session is freed
+	 * by sessdelete() if last reference.
+	 */
+	is_pgrp_leader = (ss->s_sid == pgrp->pg_id);
 	proclist_unlock_write(s);
 	SESSRELE(ss);
+
+	if (is_pgrp_leader)
+		return;
+
 	pg_free(pg_id);
 }
 
