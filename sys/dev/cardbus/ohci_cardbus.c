@@ -1,11 +1,11 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.6 2000/04/25 09:20:54 augustss Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.7 2000/04/27 15:26:44 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
