@@ -1,4 +1,4 @@
-/*	$NetBSD: sun_boot.h,v 1.2 2002/04/24 15:29:45 bjh21 Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.1 2002/05/06 05:27:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
