@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.19 1998/08/10 15:32:18 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.20 1998/08/11 12:16:22 matthias Exp $	*/
 
 /*
  * Copyright 1997
@@ -1139,8 +1139,8 @@ ess_trigger_output(addr, start, end, blksize, intr, arg, param)
 	}
 	if (sc->sc_out.active)
 		panic("ess_trigger_output: already running");
-	sc->sc_out.active = 1;
 #endif
+	sc->sc_out.active = 1;
 
 	sc->sc_out.intr = intr;
 	sc->sc_out.arg = arg;
@@ -1219,8 +1219,8 @@ ess_trigger_input(addr, start, end, blksize, intr, arg, param)
 	}
 	if (sc->sc_in.active)
 		panic("ess_trigger_input: already running");
-	sc->sc_in.active = 1;
 #endif
+	sc->sc_in.active = 1;
 
 	sc->sc_in.intr = intr;
 	sc->sc_in.arg = arg;

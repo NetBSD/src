@@ -32,7 +32,7 @@
  */
 
 /*
-** @(#) $RCSfile: essvar.h,v $ $Revision: 1.8 $ (SHARK) $Date: 1998/08/10 20:24:26 $
+** @(#) $RCSfile: essvar.h,v $ $Revision: 1.9 $ (SHARK) $Date: 1998/08/11 12:16:22 $
 **
 **++
 **
@@ -100,10 +100,8 @@ struct ess_audio_channel
 	void	(*intr)__P((void*));	/* ISR for DMA complete */
 	void	*arg;			/* arg for intr() */
 
-#ifdef DIAGNOSTIC
 	/* Status information */
 	int	active;			/* boolean: channel in use? */
-#endif
 };
 
 struct ess_softc
