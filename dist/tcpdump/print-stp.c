@@ -1,4 +1,4 @@
-/*	$NetBSD: print-stp.c,v 1.2 2001/06/25 20:00:01 itojun Exp $	*/
+/*	$NetBSD: print-stp.c,v 1.3 2002/05/31 09:45:46 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 Lennert Buytenhek
@@ -15,9 +15,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-stp.c,v 1.6 2000/09/29 04:58:50 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-stp.c,v 1.7 2002/05/29 09:59:12 guy Exp";
 #else
-__RCSID("$NetBSD: print-stp.c,v 1.2 2001/06/25 20:00:01 itojun Exp $");
+__RCSID("$NetBSD: print-stp.c,v 1.3 2002/05/31 09:45:46 itojun Exp $");
 #endif
 #endif
 
@@ -103,7 +103,7 @@ stp_print(const u_char *p, u_int length)
 		break;
 
 	default:
-		printf("unknown type %i\n", p[6]);
+		printf("unknown type %i", p[6]);
 		break;
 	}
 

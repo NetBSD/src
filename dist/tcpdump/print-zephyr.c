@@ -1,4 +1,4 @@
-/*	$NetBSD: print-zephyr.c,v 1.2 2002/04/09 02:53:20 thorpej Exp $	*/
+/*	$NetBSD: print-zephyr.c,v 1.3 2002/05/31 09:45:46 itojun Exp $	*/
 
 /*
  * Decode and print Zephyr packets.
@@ -24,9 +24,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-zephyr.c,v 1.2 2001/09/11 02:37:12 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-zephyr.c,v 1.4 2002/04/27 23:39:25 guy Exp";
 #else
-__RCSID("$NetBSD: print-zephyr.c,v 1.2 2002/04/09 02:53:20 thorpej Exp $");
+__RCSID("$NetBSD: print-zephyr.c,v 1.3 2002/05/31 09:45:46 itojun Exp $");
 #endif
 #endif
 
@@ -63,7 +63,7 @@ struct z_packet {
     /* Other fields follow here.. */
 };
 
-enum {
+enum z_packet_type {
     Z_PACKET_UNSAFE = 0,
     Z_PACKET_UNACKED,
     Z_PACKET_ACKED,
@@ -73,7 +73,7 @@ enum {
     Z_PACKET_SERVNAK,
     Z_PACKET_CLIENTACK,
     Z_PACKET_STAT
-} z_packet_type;
+};
 
 static struct tok z_types[] = {
     { Z_PACKET_UNSAFE,		"unsafe" },
@@ -129,7 +129,7 @@ str_to_lower(char *string)
 
     string = z_buf;
     while (*string) {
-	*string = tolower(*string);
+	*string = tolower((unsigned char)(*string));
 	string++;
     }
 

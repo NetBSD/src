@@ -1,4 +1,4 @@
-/*	$NetBSD: print-pim.c,v 1.3 2002/02/18 09:37:08 itojun Exp $	*/
+/*	$NetBSD: print-pim.c,v 1.4 2002/05/31 09:45:46 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-pim.c,v 1.29 2001/07/04 21:36:15 fenner Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-pim.c,v 1.30 2002/05/07 18:28:38 fenner Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-pim.c,v 1.3 2002/02/18 09:37:08 itojun Exp $");
+__RCSID("$NetBSD: print-pim.c,v 1.4 2002/05/31 09:45:46 itojun Exp $");
 #endif
 #endif
 
@@ -591,7 +591,20 @@ pimv2_print(register const u_char *bp, register u_int len)
 				(void)printf(")");
 				break;
 
+			case 18:	/* Old DR-Priority */
+				if (olen == 4)
+					(void)printf(" (OLD-DR-Priority: %d)", 
+							EXTRACT_32BITS(&bp[4]));
+				else
+					goto unknown;
+				break;
+
+
 			case 19:	/* DR-Priority */
+				if (olen == 0) {
+					(void)printf(" (OLD-bidir-capable)");
+					break;
+				}
 				(void)printf(" (DR-Priority: ");
 				if (olen != 4) {
 					(void)printf("!olen=%d!)", olen);
@@ -621,6 +634,7 @@ pimv2_print(register const u_char *bp, register u_int len)
 				break;
 
 			default:
+			unknown:
 				if (vflag)
 					(void)printf(" [Hello option %d]", otype);
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: interface.h,v 1.3 2002/02/18 09:37:05 itojun Exp $	*/
+/*	$NetBSD: interface.h,v 1.4 2002/05/31 09:45:44 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988-2002
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: /tcpdump/master/tcpdump/interface.h,v 1.178 2002/01/21 11:39:58 mcr Exp (LBL)
+ * @(#) Header: /tcpdump/master/tcpdump/interface.h,v 1.184 2002/05/29 10:32:01 guy Exp (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -81,10 +81,8 @@ extern int uflag;		/* Print undecoded NFS handles */
 extern int vflag;		/* verbose */
 extern int xflag;		/* print packet in hex */
 extern int Xflag;		/* print packet in hex/ascii */
-
+extern int Aflag;		/* print packet only in ascii observing TAB, LF, CR and SPACE as graphical chars */
 extern char *espsecret;
-extern struct esp_algorithm *espsecret_xform;   /* cache of decoded alg. */
-extern char                 *espsecret_key;
 
 extern int packettype;		/* as specified by -T */
 #define PT_VAT		1	/* Visual Audio Tool */
@@ -206,12 +204,17 @@ extern void default_print(const u_char *, u_int);
 extern void default_print_unaligned(const u_char *, u_int);
 extern void dvmrp_print(const u_char *, u_int);
 extern void egp_print(const u_char *, u_int, const u_char *);
+extern void pflog_if_print(u_char *, const struct pcap_pkthdr *,
+        const u_char *);
 extern void arcnet_if_print(u_char *, const struct pcap_pkthdr *,
 	const u_char *);
+extern void ether_print(const u_char *, u_int, u_int);
 extern void ether_if_print(u_char *, const struct pcap_pkthdr *,
 	const u_char *);
+extern u_int token_print(const u_char *, u_int, u_int);
 extern void token_if_print(u_char *, const struct pcap_pkthdr *,
 	const u_char *);
+extern void fddi_print(const u_char *, u_int, u_int);
 extern void fddi_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
 extern void ieee802_11_if_print(u_char *, const struct pcap_pkthdr *,
 	const u_char *);
@@ -239,8 +242,8 @@ extern void pimv1_print(const u_char *, u_int);
 extern void cisco_autorp_print(const u_char *, u_int);
 extern void mobile_print(const u_char *, u_int);
 extern void pim_print(const u_char *, u_int);
-extern void pppoe_print(const u_char *, u_int);
-extern void ppp_print(register const u_char *, u_int);
+extern u_int pppoe_print(const u_char *, u_int);
+extern u_int ppp_print(register const u_char *, u_int);
 extern void ppp_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
 extern void ppp_hdlc_if_print(u_char *, const struct pcap_pkthdr *,
 	const u_char *);
