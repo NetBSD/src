@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.124 1997/11/02 09:15:41 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.125 1997/11/02 09:24:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -1004,8 +1004,6 @@ comparam(tp, t)
 		sc->sc_mcr_dtr = MCR_DTR;
 		sc->sc_mcr_rts = MCR_RTS;
 		sc->sc_msr_cts = MSR_CTS;
-		sc->sc_r_hiwat = RXHIWAT;
-		sc->sc_r_lowat = RXLOWAT;
 		sc->sc_efr = EFR_AUTORTS | EFR_AUTOCTS;
 	} else if (ISSET(t->c_cflag, MDMBUF)) {
 		/*
@@ -1015,8 +1013,6 @@ comparam(tp, t)
 		sc->sc_mcr_dtr = 0;
 		sc->sc_mcr_rts = MCR_DTR;
 		sc->sc_msr_cts = MSR_DCD;
-		sc->sc_r_hiwat = RXHIWAT;
-		sc->sc_r_lowat = RXLOWAT;
 		sc->sc_efr = 0;
 	} else {
 		/*
@@ -1027,8 +1023,6 @@ comparam(tp, t)
 		sc->sc_mcr_dtr = MCR_DTR | MCR_RTS;
 		sc->sc_mcr_rts = 0;
 		sc->sc_msr_cts = 0;
-		sc->sc_r_hiwat = 0;
-		sc->sc_r_lowat = 0;
 		sc->sc_efr = 0;
 		if (ISSET(sc->sc_mcr, MCR_DTR))
 			SET(sc->sc_mcr, MCR_RTS);
@@ -1080,6 +1074,9 @@ comparam(tp, t)
 	}
 
 	if (!ISSET(t->c_cflag, CHWFLOW)) {
+		/* Disable the high water mark. */
+		sc->sc_r_hiwat = 0;
+		sc->sc_r_lowat = 0;
 		if (ISSET(sc->sc_rx_flags, RX_TTY_OVERFLOWED)) {
 			CLR(sc->sc_rx_flags, RX_TTY_OVERFLOWED);
 			com_schedrx(sc);
@@ -1088,6 +1085,9 @@ comparam(tp, t)
 			CLR(sc->sc_rx_flags, RX_TTY_BLOCKED|RX_IBUF_BLOCKED);
 			com_hwiflow(sc);
 		}
+	} else {
+		sc->sc_r_hiwat = RXHIWAT;
+		sc->sc_r_lowat = RXLOWAT;
 	}
 
 	splx(s);
