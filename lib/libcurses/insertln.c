@@ -1,4 +1,4 @@
-/*	$NetBSD: insertln.c,v 1.8 1997/07/22 07:36:49 mikel Exp $	*/
+/*	$NetBSD: insertln.c,v 1.9 1998/02/03 19:12:27 perry Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)insertln.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: insertln.c,v 1.8 1997/07/22 07:36:49 mikel Exp $");
+__RCSID("$NetBSD: insertln.c,v 1.9 1998/02/03 19:12:27 perry Exp $");
 #endif
 #endif	/* not lint */
 
@@ -52,11 +52,11 @@ __RCSID("$NetBSD: insertln.c,v 1.8 1997/07/22 07:36:49 mikel Exp $");
  */
 int
 winsertln(win)
-	register WINDOW *win;
+	WINDOW *win;
 {
 
-	register int y, i;
-	register __LINE *temp;
+	int y, i;
+	__LINE *temp;
 
 #ifdef DEBUG
 	__CTRACE("insertln: (%0.2o)\n", win);

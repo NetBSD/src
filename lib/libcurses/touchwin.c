@@ -1,4 +1,4 @@
-/*	$NetBSD: touchwin.c,v 1.7 1997/07/22 07:37:07 mikel Exp $	*/
+/*	$NetBSD: touchwin.c,v 1.8 1998/02/03 19:12:36 perry Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)touchwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: touchwin.c,v 1.7 1997/07/22 07:37:07 mikel Exp $");
+__RCSID("$NetBSD: touchwin.c,v 1.8 1998/02/03 19:12:36 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: touchwin.c,v 1.7 1997/07/22 07:37:07 mikel Exp $");
 int
 touchline(win, y, sx, ex)
 	WINDOW *win;
-	register int y, sx, ex;
+	int y, sx, ex;
 {
 	return (__touchline(win, y, sx, ex, 1));
 }
@@ -63,9 +63,9 @@ touchline(win, y, sx, ex)
  */
 int
 touchwin(win)
-	register WINDOW *win;
+	WINDOW *win;
 {
-	register int y, maxy;
+	int y, maxy;
 
 #ifdef DEBUG
 	__CTRACE("touchwin: (%0.2o)\n", win);
@@ -79,9 +79,9 @@ touchwin(win)
 
 int
 __touchwin(win)
-	register WINDOW *win;
+	WINDOW *win;
 {
-	register int y, maxy;
+	int y, maxy;
 
 #ifdef DEBUG
 	__CTRACE("touchwin: (%0.2o)\n", win);
@@ -94,8 +94,8 @@ __touchwin(win)
 
 int
 __touchline(win, y, sx, ex, force)
-	register WINDOW *win;
-	register int y, sx, ex;
+	WINDOW *win;
+	int y, sx, ex;
 	int force;
 {
 #ifdef DEBUG

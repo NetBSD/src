@@ -1,4 +1,4 @@
-/*	$NetBSD: initscr.c,v 1.8 1997/09/12 21:08:23 phil Exp $	*/
+/*	$NetBSD: initscr.c,v 1.9 1998/02/03 19:12:26 perry Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)initscr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: initscr.c,v 1.8 1997/09/12 21:08:23 phil Exp $");
+__RCSID("$NetBSD: initscr.c,v 1.9 1998/02/03 19:12:26 perry Exp $");
 #endif
 #endif	/* not lint */
 
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: initscr.c,v 1.8 1997/09/12 21:08:23 phil Exp $");
 WINDOW *
 initscr()
 {
-	register char *sp;
+	char *sp;
 
 #ifdef DEBUG
 	__CTRACE("initscr\n");

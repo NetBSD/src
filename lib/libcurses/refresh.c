@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.9 1997/09/12 21:08:24 phil Exp $	*/
+/*	$NetBSD: refresh.c,v 1.10 1998/02/03 19:12:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.9 1997/09/12 21:08:24 phil Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.10 1998/02/03 19:12:32 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,11 +61,11 @@ static void	scrolln __P((WINDOW *, int, int, int, int, int));
  */
 int
 wrefresh(win)
-	register WINDOW *win;
+	WINDOW *win;
 {
-	register __LINE *wlp;
-	register int retval;
-	register short wy;
+	__LINE *wlp;
+	int retval;
+	short wy;
 	int dnum;
 
 	/* Check if we need to restart ... */
@@ -227,7 +227,7 @@ wrefresh(win)
  */
 static int
 makech(win, wy)
-	register WINDOW *win;
+	WINDOW *win;
 	int wy;
 {
 	static __LDATA blank = {' ', 0};
@@ -461,8 +461,8 @@ quickch(win)
 {
 #define THRESH		(int) win->maxy / 4
 
-	register __LINE *clp, *tmp1, *tmp2;
-	register int bsize, curs, curw, starts, startw, i, j;
+	__LINE *clp, *tmp1, *tmp2;
+	int bsize, curs, curw, starts, startw, i, j;
 	int n, target, cur_period, bot, top, sc_region;
 	__LDATA buf[1024];
 	u_int blank_hash;

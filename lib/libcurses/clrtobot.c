@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtobot.c,v 1.8 1997/07/22 07:36:27 mikel Exp $	*/
+/*	$NetBSD: clrtobot.c,v 1.9 1998/02/03 19:12:18 perry Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtobot.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtobot.c,v 1.8 1997/07/22 07:36:27 mikel Exp $");
+__RCSID("$NetBSD: clrtobot.c,v 1.9 1998/02/03 19:12:18 perry Exp $");
 #endif
 #endif	/* not lint */
 
@@ -50,10 +50,10 @@ __RCSID("$NetBSD: clrtobot.c,v 1.8 1997/07/22 07:36:27 mikel Exp $");
  */
 int
 wclrtobot(win)
-	register WINDOW *win;
+	WINDOW *win;
 {
-	register int minx, startx, starty, y;
-	register __LDATA *sp, *end, *maxx;
+	int minx, startx, starty, y;
+	__LDATA *sp, *end, *maxx;
 
 #ifdef __GNUC__
 	maxx = NULL;		/* XXX gcc -Wuninitialized */

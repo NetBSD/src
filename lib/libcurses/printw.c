@@ -1,4 +1,4 @@
-/*	$NetBSD: printw.c,v 1.9 1997/07/22 07:36:56 mikel Exp $	*/
+/*	$NetBSD: printw.c,v 1.10 1998/02/03 19:12:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)printw.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: printw.c,v 1.9 1997/07/22 07:36:56 mikel Exp $");
+__RCSID("$NetBSD: printw.c,v 1.10 1998/02/03 19:12:32 perry Exp $");
 #endif
 #endif	/* not lint */
 
@@ -119,10 +119,10 @@ wprintw(win, fmt, va_alist)
  */
 int
 #ifdef __STDC__
-mvprintw(register int y, register int x, const char *fmt, ...)
+mvprintw(int y, int x, const char *fmt, ...)
 #else
 mvprintw(y, x, fmt, va_alist)
-	register int y, x;
+	int y, x;
 	char *fmt;
 	va_dcl
 #endif
@@ -144,12 +144,12 @@ mvprintw(y, x, fmt, va_alist)
 
 int
 #ifdef __STDC__
-mvwprintw(register WINDOW * win, register int y, register int x,
+mvwprintw(WINDOW * win, int y, int x,
     const char *fmt, ...)
 #else
 mvwprintw(win, y, x, fmt, va_alist)
-	register WINDOW *win;
-	register int y, x;
+	WINDOW *win;
+	int y, x;
 	char *fmt;
 	va_dcl
 #endif
@@ -176,11 +176,11 @@ mvwprintw(win, y, x, fmt, va_alist)
 static int
 __winwrite(cookie, buf, n)
 	void *cookie;
-	register const char *buf;
+	const char *buf;
 	int n;
 {
-	register WINDOW *win;
-	register int c;
+	WINDOW *win;
+	int c;
 
 	for (c = n, win = cookie; --c >= 0;)
 		if (waddch(win, *buf++) == ERR)

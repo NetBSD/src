@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc.c,v 1.15 1997/10/10 13:11:50 mrg Exp $	*/
+/*	$NetBSD: kvm_sparc.c,v 1.16 1998/02/03 19:12:44 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sparc.c,v 1.15 1997/10/10 13:11:50 mrg Exp $");
+__RCSID("$NetBSD: kvm_sparc.c,v 1.16 1998/02/03 19:12:44 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -155,7 +155,7 @@ _kvm_kvatop44c(kd, va, pa)
 	u_long va;
 	u_long *pa;
 {
-	register int vr, vs, pte;
+	int vr, vs, pte;
 	cpu_kcore_hdr_t *cpup = kd->cpu_data;
 	struct segmap *sp, *segmaps;
 	int *ptes;
@@ -188,7 +188,7 @@ _kvm_kvatop44c(kd, va, pa)
 		goto err;
 	pte = ptes[sp->sg_pmeg * nptesg + VA_VPG(va)];
 	if ((pte & PG_V) != 0) {
-		register long p, off = VA_OFF(va);
+		long p, off = VA_OFF(va);
 
 		p = (pte & PG_PFNUM) << pgshift;
 		*pa = p + off;
@@ -206,7 +206,7 @@ _kvm_kvatop4m(kd, va, pa)
 	u_long *pa;
 {
 	cpu_kcore_hdr_t *cpup = kd->cpu_data;
-	register int vr, vs;
+	int vr, vs;
 	int pte;
 	off_t foff;
 	struct segmap *sp, *segmaps;
@@ -246,7 +246,7 @@ _kvm_kvatop4m(kd, va, pa)
 	}
 
 	if ((pte & SRMMU_TETYPE) == SRMMU_TEPTE) {
-		register long p, off = VA_OFF(va);
+		long p, off = VA_OFF(va);
 
 		p = (pte & SRMMU_PPNMASK) << SRMMU_PPNPASHIFT;
 		*pa = p + off;
