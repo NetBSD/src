@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.16 2003/12/30 23:40:20 oster Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.17 2003/12/31 00:00:06 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.16 2003/12/30 23:40:20 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.17 2003/12/31 00:00:06 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -475,7 +475,7 @@ rf_RegularXorFunc(RF_DagNode_t *node)
 		for (i = 0; i < node->numParams - 1; i += 2)
 			if (node->params[i + 1].p != node->results[0]) {
 				retcode = rf_XorIntoBuffer(raidPtr, (RF_PhysDiskAddr_t *) node->params[i].p,
-				    (char *) node->params[i + 1].p, (char *) node->results[0], node->dagHdr->bp);
+							   (char *) node->params[i + 1].p, (char *) node->results[0]);
 			}
 		RF_ETIMER_STOP(timer);
 		RF_ETIMER_EVAL(timer);
@@ -500,8 +500,7 @@ rf_SimpleXorFunc(RF_DagNode_t *node)
 		for (i = 0; i < node->numParams - 1; i += 2)
 			if (node->params[i + 1].p != node->results[0]) {
 				retcode = rf_bxor((char *) node->params[i + 1].p, (char *) node->results[0],
-				    rf_RaidAddressToByte(raidPtr, ((RF_PhysDiskAddr_t *) node->params[i].p)->numSector),
-				    (struct buf *) node->dagHdr->bp);
+				    rf_RaidAddressToByte(raidPtr, ((RF_PhysDiskAddr_t *) node->params[i].p)->numSector));
 			}
 		RF_ETIMER_STOP(timer);
 		RF_ETIMER_EVAL(timer);
@@ -539,7 +538,7 @@ rf_RecoveryXorFunc(RF_DagNode_t *node)
 				srcbuf = (char *) node->params[i + 1].p;
 				suoffset = rf_StripeUnitOffset(layoutPtr, pda->startSector);
 				destbuf = ((char *) node->results[0]) + rf_RaidAddressToByte(raidPtr, suoffset - failedSUOffset);
-				retcode = rf_bxor(srcbuf, destbuf, rf_RaidAddressToByte(raidPtr, pda->numSector), node->dagHdr->bp);
+				retcode = rf_bxor(srcbuf, destbuf, rf_RaidAddressToByte(raidPtr, pda->numSector));
 			}
 		RF_ETIMER_STOP(timer);
 		RF_ETIMER_EVAL(timer);
@@ -564,7 +563,7 @@ rf_RecoveryXorFunc(RF_DagNode_t *node)
 
 int 
 rf_XorIntoBuffer(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda,
-		 char *srcbuf, char *targbuf, void *bp)
+		 char *srcbuf, char *targbuf)
 {
 	char   *targptr;
 	int     sectPerSU = raidPtr->Layout.sectorsPerStripeUnit;
@@ -575,7 +574,7 @@ rf_XorIntoBuffer(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda,
 
 	targptr = targbuf + rf_RaidAddressToByte(raidPtr, SUOffset);
 	length = rf_RaidAddressToByte(raidPtr, pda->numSector);
-	retcode = rf_bxor(srcbuf, targptr, length, bp);
+	retcode = rf_bxor(srcbuf, targptr, length);
 	return (retcode);
 }
 /* it really should be the case that the buffer pointers (returned by
@@ -584,7 +583,7 @@ rf_XorIntoBuffer(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda,
  * a multiple of the sector size, so there should be no problem with
  * leftover bytes at the end.  */
 int 
-rf_bxor(char *src, char *dest, int len, void *bp)
+rf_bxor(char *src, char *dest, int len)
 {
 	unsigned mask = sizeof(long) - 1, retcode = 0;
 
@@ -592,7 +591,7 @@ rf_bxor(char *src, char *dest, int len, void *bp)
 	    !(((unsigned long) dest) & mask) && !(len & mask)) {
 		retcode = rf_longword_bxor((unsigned long *) src, 
 					   (unsigned long *) dest, 
-					   len >> RF_LONGSHIFT, bp);
+					   len >> RF_LONGSHIFT);
 	} else {
 		RF_ASSERT(0);
 	}
@@ -609,7 +608,7 @@ rf_bxor(char *src, char *dest, int len, void *bp)
  * len - is in longwords 
  */
 int 
-rf_longword_bxor(unsigned long *src, unsigned long *dest, int len, void *bp)
+rf_longword_bxor(unsigned long *src, unsigned long *dest, int len)
 {
 	unsigned long *end = src + len;
 	unsigned long d0, d1, d2, d3, s0, s1, s2, s3;	/* temps */
