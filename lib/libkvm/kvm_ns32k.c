@@ -37,7 +37,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: kvm_ns32k.c,v 1.1 1994/05/20 23:31:06 phil Exp $";
+static char *rcsid = "$Id: kvm_ns32k.c,v 1.2 1995/01/09 08:59:30 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -139,53 +139,6 @@ _kvm_kvatop(kd, va, pa)
 	}
 	vm = kd->vmst;
 	offset = va & PGOFSET;
-
-invalid:
-	_kvm_err(kd, 0, "invalid address (%x)", va);
-	return (0);
-}
-
-/*
- * Translate a user virtual address to a physical address.
- */
-int
-_kvm_uvatop(kd, p, va, pa)
-	kvm_t *kd;
-	const struct proc *p;
-	u_long va;
-	u_long *pa;
-{
-	struct vmspace vms;
-	struct pde pde, *pdeloc;
-	struct pte pte, *pteloc;
-	u_long kva, offset;
-
-	if (va >= KERNBASE)
-		goto invalid;
-
-	/* XXX - should be passed a `kinfo_proc *' here */
-	if (kvm_read(kd, (u_long)p->p_vmspace, (char *)&vms, sizeof(vms)) !=
-	    sizeof(vms))
-		goto invalid;
-
-	pdeloc = (struct pde *)vms.vm_pmap.pm_pdir + (va >> PDSHIFT);
-	if (kvm_read(kd, (u_long)pdeloc, (char *)&pde, sizeof(pde)) !=
-	    sizeof(pde))
-		goto invalid;
-	if (pde.pd_v == 0)
-		goto invalid;
-
-	pteloc = (struct pte *)ptob(pde.pd_pfnum) + btop(va & PT_MASK);
-	if (lseek(kd->pmfd, (off_t)(u_long)pteloc, 0) != (off_t)(u_long)pteloc)
-		goto invalid;
-	if (read(kd->pmfd, (char *)&pte, sizeof(pte)) != sizeof(pte))
-		goto invalid;
-	if (pte.pg_v == 0)
-		goto invalid;
-
-	offset = va & PGOFSET;
-	*pa = (u_long)ptob(pte.pg_pfnum) + offset;
-	return (NBPG - offset);
 
 invalid:
 	_kvm_err(kd, 0, "invalid address (%x)", va);
