@@ -1,4 +1,4 @@
-/*	$NetBSD: getpar.c,v 1.7 1999/07/21 13:19:10 hubertf Exp $	*/
+/*	$NetBSD: getpar.c,v 1.7.8.1 2002/10/18 14:14:23 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getpar.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: getpar.c,v 1.7 1999/07/21 13:19:10 hubertf Exp $");
+__RCSID("$NetBSD: getpar.c,v 1.7.8.1 2002/10/18 14:14:23 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,7 +144,7 @@ const struct cvntab *getcodpar(s, tab)
 		if (f)
 			cgetc(0);		/* throw out the newline */
 		scanf("%*[ \t;]");
-		if ((c = scanf("%[^ \t;\n]", input)) < 0)
+		if ((c = scanf("%99[^ \t;\n]", input)) < 0)
 			exit(1);
 		if (c == 0)
 			continue;
