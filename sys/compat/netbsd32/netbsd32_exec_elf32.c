@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.15 2002/12/01 11:02:11 agc Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.16 2003/04/01 01:52:39 thorpej Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.15 2002/12/01 11:02:11 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.16 2003/04/01 01:52:39 thorpej Exp $");
 
 #define	ELFSIZE		32
 
@@ -133,7 +133,7 @@ netbsd32_elf32_copyargs(struct proc *p, struct exec_package *pack,
 		a++;
 
 		a->a_type = AT_PAGESZ;
-		a->a_v = NBPG;
+		a->a_v = PAGE_SIZE;
 		a++;
 
 		a->a_type = AT_BASE;

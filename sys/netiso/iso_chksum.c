@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_chksum.c,v 1.16 2001/11/13 01:10:49 lukem Exp $	*/
+/*	$NetBSD: iso_chksum.c,v 1.17 2003/04/01 01:43:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -79,7 +79,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: iso_chksum.c,v 1.16 2001/11/13 01:10:49 lukem Exp $");
+__KERNEL_RCSID(1, "$NetBSD: iso_chksum.c,v 1.17 2003/04/01 01:43:29 thorpej Exp $");
 
 #include "opt_iso.h"
 
@@ -88,6 +88,9 @@ __KERNEL_RCSID(1, "$NetBSD: iso_chksum.c,v 1.16 2001/11/13 01:10:49 lukem Exp $"
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <net/if.h>
 #include <netiso/argo_debug.h>
 #include <netiso/iso.h>
@@ -210,7 +213,7 @@ iso_gen_csum(m, n, l)
 #endif
 
 	while (i < l) {
-		len = min(m->m_len, NBPG);
+		len = min(m->m_len, PAGE_SIZE);
 		/* RAH: don't cksum more than l bytes */
 		len = min(len, l - i);
 
