@@ -404,9 +404,9 @@ rcv_mailfile(sp, ep, issync, cp_path)
 	    VI_FHEADER, t,			/* Non-standard. */
 	    VI_PHEADER, cp_path,		/* Non-standard. */
 	    "Reply-To: root",
-	    "From: root (Nvi recovery program)",
+	    "From: root (Vi recovery program)",
 	    "To: ", pw->pw_name,
-	    "Subject: Nvi saved the file ", p,
+	    "Subject: Vi saved the file ", p,
 	    "Precedence: bulk");		/* For vacation(1). */
 	if (len > sizeof(buf) - 1)
 		goto lerr;
@@ -418,8 +418,8 @@ rcv_mailfile(sp, ep, issync, cp_path)
 	    " was editing a file named ", t, " on the machine ",
 	    host, ", when it was saved for recovery. ",
 	    "You can recover most, if not all, of the changes ",
-	    "to this file using the -r option to nex or nvi:\n\n",
-	    "\tnvi -r ", t);
+	    "to this file using the -r option to ex or vi:\n\n",
+	    "\tvi -r ", t);
 	if (len > sizeof(buf) - 1) {
 lerr:		msgq(sp, M_ERR, "recovery file buffer overrun");
 		goto err;
