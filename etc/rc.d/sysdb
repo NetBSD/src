@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sysdb,v 1.5 2000/09/19 13:04:39 lukem Exp $
+# $NetBSD: sysdb,v 1.6 2000/10/09 05:02:14 nisimura Exp $
 #
 
 # PROVIDE: sysdb
@@ -19,12 +19,8 @@ sysdb_start()
 	#	will run work when we boot /netbsd.new, etc.
 	#
 	echo "Building databases..."
-	sysctl machdep 2>/dev/null | grep -q booted_kernel
-	if [ $? -eq 0 ] ; then
-		kvm_mkdb `sysctl -n machdep.booted_kernel` || kvm_mkdb /netbsd
-	else
-		kvm_mkdb /netbsd
-	fi
+	booted_kernel=`sysctl machdep.booted_kernel 2>/dev/null`
+	kvm_mkdb ${booted_kernel:-/netbsd}
 	dev_mkdb
 
 	#	Re-create /var/run/utmp, which is deleted by mountcritlocal
