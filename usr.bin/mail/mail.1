@@ -1,4 +1,4 @@
-.\"	$NetBSD: mail.1,v 1.10 1997/10/19 05:03:34 lukem Exp $
+.\"	$NetBSD: mail.1,v 1.11 1997/11/07 07:57:21 mikel Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,8 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)mail.1	8.8 (Berkeley) 4/28/95
-.\"	$NetBSD: mail.1,v 1.10 1997/10/19 05:03:34 lukem Exp $
+.\"	@(#)mail.1	8.8 (Berkeley) 4/28/95
 .\"
 .Dd April 28, 1995
 .Dt MAIL 1
@@ -152,22 +151,22 @@ simple numbers.
 .Ss Disposing of mail.
 After examining a message you can
 .Ic delete
-.Ql Ic d )
+.Pq Ql Ic d
 the message or
 .Ic reply
-.Ql Ic r )
+.Pq Ql Ic r
 to it.
 Deletion causes the
 .Nm
 program to forget about the message.
 This is not irreversible; the message can be
 .Ic undeleted
-.Ql Ic u )
+.Pq Ql Ic u
 by giving its number, or the
 .Nm
 session can be aborted by giving the
 .Ic exit
-.Ql Ic x )
+.Pq Ql Ic x
 command.
 Deleted messages will, however, usually disappear never to be seen again.
 .Pp
@@ -225,7 +224,7 @@ You can end a
 .Nm
 session with the
 .Ic quit
-.Ql Ic q )
+.Pq Ql Ic q
 command.
 Messages which have been examined go to your
 .Ar mbox
@@ -504,7 +503,7 @@ option set.
 .Pq Ic \mo
 Takes a message list and invokes the pager on that list.
 .It Ic next
-.Pq Ic n
+.Pf ( Ic n ,
 like
 .Ic \&+
 or
@@ -552,14 +551,14 @@ A synonym for
 .Ic reply  .
 .It Ic retain
 Add the list of header fields named to the
-.Ar retained list
-Only the header fields in the retain list
+.Ar retained list .
+Only the header fields in the retained list
 are shown on your terminal when you print a message.
 All other header fields are suppressed.
 The
-.Ic Type
+.Ic type
 and
-.Ic Print
+.Ic print
 commands can be used to print a message in its entirety.
 If
 .Ic retain
@@ -652,7 +651,7 @@ being deleted.
 .It Ic unread
 .Pq Ic U
 Takes a message list and marks each message as
-.Ic not
+.Em not
 having been read.
 .It Ic unset
 Takes a list of option names and discards their remembered values;
@@ -666,9 +665,9 @@ Takes a message list and invokes the display editor on each message.
 Similar to
 .Ic save  ,
 except that
-.Ic only
+.Em only
 the message body
-.Pq Ar without
+.Pf ( Em without
 the header) is saved.
 Extremely useful for such tasks as sending and receiving source
 program text over the message system.
@@ -812,7 +811,7 @@ Causes messages saved in
 to be appended to the end rather than prepended.
 This should always be set (perhaps in
 .Pa /etc/mail.rc ) .
-.It Ar ask, asksub
+.It Ar ask , Ar asksub
 Causes
 .Nm
 to prompt you for the subject of each message you send.
@@ -1046,7 +1045,7 @@ System initialization file.
 .Xr sendmail 8
 and
 .Rs
-.%T "The Mail Reference Manual" .
+.%T "The Mail Reference Manual"
 .Re
 .Sh HISTORY
 A
@@ -1072,4 +1071,4 @@ The name of the
 .Ic alternates
 list is incorrect English (it should be
 .Dq alternatives ) ,
-but is retained for compatability.
+but is retained for compatibility.
