@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.11 1996/08/28 18:59:15 cgd Exp $	*/
+/*	$NetBSD: esp.c,v 1.12 1996/09/09 18:10:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -16,7 +16,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Peter Galbavy
- * 4. The name of the author may not be used to endorse or promote products 
+ * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -75,6 +75,7 @@ int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
 
 /*static*/ void	espattach	__P((struct device *, struct device *, void *));
 /*static*/ int	espmatch	__P((struct device *, void *, void *));
+/*static*/ u_int	esp_adapter_info __P((struct esp_softc *));
 /*static*/ void	espreadregs	__P((struct esp_softc *));
 /*static*/ void	espselect	__P((struct esp_softc *,
 				     u_char, u_char, u_char *, u_char));
@@ -90,14 +91,16 @@ int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
 /*static*/ int	espintr		__P((struct esp_softc *));
 /*static*/ void	esp_timeout	__P((void *arg));
 /*static*/ void	esp_abort	__P((struct esp_softc *, struct ecb *));
+int esp_stp2cpb __P((struct esp_softc *, int));
+int esp_cpb2stp __P((struct esp_softc *, int));
 
 /* Linkup to the rest of the kernel */
 struct cfattach esp_ca = {
-	sizeof(struct esp_softc), espmatch, espattach,
+	sizeof(struct esp_softc), espmatch, espattach
 };
 
 struct cfdriver esp_cd = {
-	NULL, "esp", DV_DULL,
+	NULL, "esp", DV_DULL
 };
 
 struct scsi_adapter esp_switch = {
@@ -155,7 +158,7 @@ espattach(parent, self, aux)
 	struct esp_softc *sc = (void *)self;
 #ifdef SPARC_DRIVER
 	struct bootpath *bp;
-	int dmachild = strncmp(parent->dv_xname, "espdma", 6) == 0;
+	int dmachild = strncmp(parent->dv_xname, "dma", 3) == 0;
 #endif
 
 #ifdef SPARC_DRIVER
@@ -241,6 +244,8 @@ espattach(parent, self, aux)
 		 */
 		if (sc->sc_dma)
 			sc->sc_dma->sc_esp = sc;
+		else
+			panic("espattach: no dma found");
 	}
 #else
 	sc->sc_dma->sc_esp = sc;		/* XXX */
@@ -261,7 +266,7 @@ espattach(parent, self, aux)
 		printf(": ESP100");
 		sc->sc_rev = ESP100;
 	} else {
-		sc->sc_cfg2 = ESPCFG2_SCSI2 | ESPCFG2_FE;
+		sc->sc_cfg2 = ESPCFG2_SCSI2;
 		ESP_WRITE_REG(sc, ESP_CFG2, sc->sc_cfg2);
 		sc->sc_cfg3 = 0;
 		ESP_WRITE_REG(sc, ESP_CFG3, sc->sc_cfg3);
@@ -271,6 +276,8 @@ espattach(parent, self, aux)
 			printf(": ESP100A");
 			sc->sc_rev = ESP100A;
 		} else {
+			/* ESPCFG2_FE enables > 64K transfers */
+			sc->sc_cfg2 |= ESPCFG2_FE;
 			sc->sc_cfg3 = 0;
 			ESP_WRITE_REG(sc, ESP_CFG3, sc->sc_cfg3);
 			printf(": ESP200");
@@ -303,14 +310,19 @@ espattach(parent, self, aux)
 	 */
 	switch (sc->sc_rev) {
 	case ESP100:
+		sc->sc_maxxfer = 64 * 1024;
 		sc->sc_minsync = 0;	/* No synch on old chip? */
 		break;
 	case ESP100A:
+		sc->sc_maxxfer = 64 * 1024;
 		sc->sc_minsync = esp_cpb2stp(sc, 5); /* Min clocks/byte is 5 */
 		break;
 	case ESP200:
+		sc->sc_maxxfer = 16 * 1024 * 1024;
 		/* XXX - do actually set FAST* bits */
 	}
+#else
+	sc->sc_maxxfer = 64 * 1024;
 #endif
 
 	sc->sc_ccf = FREQTOCCF(sc->sc_freq);
@@ -411,7 +423,7 @@ espattach(parent, self, aux)
  * After reset, registers are loaded with the defaults from the attach
  * routine above.
  */
-void 
+void
 esp_reset(sc)
 	struct esp_softc *sc;
 {
@@ -498,11 +510,12 @@ esp_init(sc, doreset)
 	} else {
 		sc->sc_flags |= ESP_ABORTING;
 		sc->sc_state = ESP_IDLE;
-		if (sc->sc_nexus != NULL) {
-			sc->sc_nexus->xs->error = XS_TIMEOUT;
-			esp_done(sc->sc_nexus);
+		ecb = sc->sc_nexus;
+		if (ecb != NULL) {
+			ecb->xs->error = XS_TIMEOUT;
+			esp_done(ecb);
+			sc->sc_nexus = NULL;
 		}
-		sc->sc_nexus = NULL;
 		while ((ecb = sc->nexus_list.tqh_first) != NULL) {
 			ecb->xs->error = XS_TIMEOUT;
 			esp_done(ecb);
@@ -517,9 +530,13 @@ esp_init(sc, doreset)
 	sc->sc_phase = sc->sc_prevphase = INVALID_PHASE;
 	for (r = 0; r < 8; r++) {
 		struct esp_tinfo *tp = &sc->sc_tinfo[r];
+/* XXX - config flags per target: low bits: no reselect; high bits: no synch */
+		int fl = sc->sc_dev.dv_cfdata->cf_flags;
 
-		tp->flags = (sc->sc_minsync ? T_NEGOTIATE : 0) |
-				T_NEED_TO_RESET | (tp->flags & T_XXX);
+		tp->flags = ((sc->sc_minsync && !(fl & (1<<(r+8))))
+				? T_NEGOTIATE : 0) |
+				((fl & (1<<r)) ? T_RSELECTOFF : 0) |
+				T_NEED_TO_RESET;
 		tp->period = sc->sc_minsync;
 		tp->offset = 0;
 	}
@@ -530,7 +547,7 @@ esp_init(sc, doreset)
 		ESPCMD(sc, ESPCMD_RSTSCSI);
 		return;
 	}
-	
+
 	sc->sc_state = ESP_IDLE;
 	esp_sched(sc);
 	return;
@@ -575,8 +592,10 @@ espreadregs(sc)
 /*
  * Convert Synchronous Transfer Period to chip register Clock Per Byte value.
  */
+int
 esp_stp2cpb(sc, period)
 	struct esp_softc *sc;
+	int period;
 {
 	int v;
 	v = (sc->sc_freq * period) / 250;
@@ -589,6 +608,7 @@ esp_stp2cpb(sc, period)
 /*
  * Convert chip register Clock Per Byte value to Synchronous Transfer Period.
  */
+int
 esp_cpb2stp(sc, cpb)
 	struct esp_softc *sc;
 	int cpb;
@@ -618,6 +638,8 @@ espselect(sc, target, lun, cmd, clen)
 	/* new state ESP_SELECTING */
 	sc->sc_state = ESP_SELECTING;
 
+	ESPCMD(sc, ESPCMD_FLUSH);
+
 	/*
 	 * The docs say the target register is never reset, and I
 	 * can't think of a better place to set it
@@ -635,7 +657,8 @@ espselect(sc, target, lun, cmd, clen)
 	 * Who am I. This is where we tell the target that we are
 	 * happy for it to disconnect etc.
 	 */
-	ESP_WRITE_REG(sc, ESP_FIFO, MSG_IDENTIFY(lun, 1));
+	ESP_WRITE_REG(sc, ESP_FIFO,
+		MSG_IDENTIFY(lun, (ti->flags & T_RSELECTOFF)?0:1));
 
 	if (ti->flags & T_NEGOTIATE) {
 		/* Arbitrate, select and stop after IDENTIFY message */
@@ -660,7 +683,7 @@ espselect(sc, target, lun, cmd, clen)
  * This function is called by the higher level SCSI-driver to queue/run
  * SCSI-commands.
  */
-int 
+int
 esp_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -668,9 +691,9 @@ esp_scsi_cmd(xs)
 	struct esp_softc *sc = sc_link->adapter_softc;
 	struct ecb 	*ecb;
 	int s, flags;
-	
+
 	ESP_TRACE(("[esp_scsi_cmd] "));
-	ESP_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen, 
+	ESP_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
 	    sc_link->target));
 
 	flags = xs->flags;
@@ -683,7 +706,7 @@ esp_scsi_cmd(xs)
 		ECB_SETQ(ecb, ECB_QNONE);
 	}
 	splx(s);
-		
+
 	if (ecb == NULL) {
 		ESP_MISC(("TRY_AGAIN_LATER"));
 		return TRY_AGAIN_LATER;
@@ -696,7 +719,7 @@ esp_scsi_cmd(xs)
 	ecb->daddr = xs->data;
 	ecb->dleft = xs->datalen;
 	ecb->stat = 0;
-	
+
 	s = splbio();
 	TAILQ_INSERT_TAIL(&sc->ready_list, ecb, chain);
 	ECB_SETQ(ecb, ECB_QREADY);
@@ -714,7 +737,6 @@ esp_scsi_cmd(xs)
 
 	ESP_MISC(("SUCCESSFULLY_QUEUED"));
 	return SUCCESSFULLY_QUEUED;
-
 }
 
 /*
@@ -773,7 +795,7 @@ esp_sched(sc)
 	struct scsi_link *sc_link;
 	struct ecb *ecb;
 	int t;
-	
+
 	ESP_TRACE(("[esp_sched] "));
 	if (sc->sc_state != ESP_IDLE)
 		panic("esp_sched: not IDLE (state=%d)", sc->sc_state);
@@ -830,10 +852,10 @@ esp_done(ecb)
 	untimeout(esp_timeout, ecb);
 
 	/*
-	 * Now, if we've come here with no error code, i.e. we've kept the 
+	 * Now, if we've come here with no error code, i.e. we've kept the
 	 * initial XS_NOERROR, and the status code signals that we should
-	 * check sense, we'll need to set up a request sense cmd block and 
-	 * push the command back into the ready queue *before* any other 
+	 * check sense, we'll need to set up a request sense cmd block and
+	 * push the command back into the ready queue *before* any other
 	 * commands for this target/lunit, else we lose the sense info.
 	 * We don't support chk sense conditions for the request sense cmd.
 	 */
@@ -858,6 +880,10 @@ esp_done(ecb)
 			ecb->dleft = sizeof(struct scsi_sense_data);
 			ecb->flags |= ECB_CHKSENSE;
 /*XXX - must take off queue here */
+			if (ecb != sc->sc_nexus) {
+				panic("%s: esp_sched: floating ecb %p",
+					sc->sc_dev.dv_xname, ecb);
+			}
 			TAILQ_INSERT_HEAD(&sc->ready_list, ecb, chain);
 			ECB_SETQ(ecb, ECB_QREADY);
 			ti->lubusy &= ~(1<<sc_link->lun);
@@ -881,8 +907,6 @@ esp_done(ecb)
 		printf("err=0x%02x ",xs->error);
 		if (xs->error == XS_SENSE) {
 			printf("sense=%2x; ", xs->sense.error_code);
-			if (xs->sense.error_code == 0x70)
-				printf("extcode: %x; ", xs->sense.flags);
 		}
 	}
 	if ((xs->resid || xs->error > XS_SENSE) && esp_debug & ESP_SHOWMISC) {
@@ -901,6 +925,7 @@ esp_done(ecb)
 		if (ecb != sc->sc_nexus) {
 			panic("%s: floating ecb", sc->sc_dev.dv_xname);
 		}
+		sc->sc_nexus = NULL;
 		sc->sc_state = ESP_IDLE;
 		ti->lubusy &= ~(1<<sc_link->lun);
 		esp_sched(sc);
@@ -913,8 +938,12 @@ esp_done(ecb)
 		ti->lubusy &= ~(1<<sc_link->lun);
 		break;
 	case ECB_QFREE:
-		panic("%s: busy ecb on free list", sc->sc_dev.dv_xname);
+		panic("%s: dequeue: busy ecb on free list",
+			sc->sc_dev.dv_xname);
 		break;
+	default:
+		panic("%s: dequeue: unknown queue %d",
+			sc->sc_dev.dv_xname, ecb->flags & ECB_QBITS);
 	}
 
 	/* Put it on the free list, and clear flags. */
@@ -957,7 +986,7 @@ esp_msgin(sc)
 	register struct esp_softc *sc;
 {
 	register int v;
-	
+
 	ESP_TRACE(("[esp_msgin(curmsglen:%d)] ", sc->sc_imlen));
 
 	if ((ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF) == 0) {
@@ -1012,7 +1041,7 @@ esp_msgin(sc)
 		sc->sc_flags |= ESP_DROP_MSGI;
 	} else {
 		sc->sc_imlen++;
-		/* 
+		/*
 		 * This testing is suboptimal, but most
 		 * messages will be of the one byte variety, so
 		 * it should not effect performance
@@ -1060,11 +1089,8 @@ gotit:
 			if (esp_debug & ESP_SHOWMSGS)
 				printf("%s: our msg rejected by target\n",
 				    sc->sc_dev.dv_xname);
-#if 0 /* XXX - must remember last message */
-printf("<<target%d: MSG_MESSAGE_REJECT>>", ecb->xs->sc_link->target);
-ti->period = ti->offset = 0;
-sc->sc_flags &= ~ESP_SYNCHNEGO;
-ti->flags &= ~T_NEGOTIATE;
+#if 1 /* XXX - must remember last message */
+sc_print_addr(ecb->xs->sc_link); printf("MSG_MESSAGE_REJECT>>");
 #endif
 			if (sc->sc_flags & ESP_SYNCHNEGO) {
 				ti->period = ti->offset = 0;
@@ -1083,7 +1109,9 @@ ti->flags &= ~T_NEGOTIATE;
 			ti->dconns++;
 			sc->sc_flags |= ESP_DISCON;
 			sc->sc_flags |= ESP_BUSFREE_OK;
-			break;
+			if ((ecb->xs->sc_link->quirks & SDEV_AUTOSAVE) == 0)
+				break;
+			/*FALLTHROUGH*/
 		case MSG_SAVEDATAPOINTER:
 			ESP_MSGS(("save datapointer "));
 			ecb->dleft = sc->sc_dleft;
@@ -1101,7 +1129,9 @@ ti->flags &= ~T_NEGOTIATE;
 			sc->sc_dleft = ecb->dleft;
 			break;
 		case MSG_PARITY_ERROR:
-printf("<<esp:target%d: MSG_PARITY_ERROR>>", ecb->xs->sc_link->target);
+			printf("%s:target%d: MSG_PARITY_ERROR\n",
+				sc->sc_dev.dv_xname,
+				ecb->xs->sc_link->target);
 			break;
 		case MSG_EXTENDED:
 			ESP_MSGS(("extended(%x) ", sc->sc_imess[2]));
@@ -1109,13 +1139,6 @@ printf("<<esp:target%d: MSG_PARITY_ERROR>>", ecb->xs->sc_link->target);
 			case MSG_EXT_SDTR:
 				ESP_MSGS(("SDTR period %d, offset %d ",
 					sc->sc_imess[3], sc->sc_imess[4]));
-	/*XXX*/if (ti->flags & T_XXX) {
-		printf("%s:%d: rejecting SDTR\n",
-			"esp", ecb->xs->sc_link->target);
-		sc->sc_flags &= ~ESP_SYNCHNEGO;
-		esp_sched_msgout(SEND_REJECT);
-		break;
-	}
 				ti->period = sc->sc_imess[3];
 				ti->offset = sc->sc_imess[4];
 				if (sc->sc_minsync == 0) {
@@ -1138,34 +1161,40 @@ printf("<<esp:target%d: MSG_PARITY_ERROR>>", ecb->xs->sc_link->target);
 					int p;
 					p =  esp_stp2cpb(sc, ti->period);
 					ti->period = esp_cpb2stp(sc, p);
+#ifdef ESP_DEBUG
+					sc_print_addr(ecb->xs->sc_link);
+#endif
 					if ((sc->sc_flags&ESP_SYNCHNEGO) == 0) {
 						/* Target initiated negotiation */
-						sc->sc_flags |= ESP_SYNCHNEGO;
 						if (ti->flags & T_SYNCMODE) {
-							sc_print_addr(ecb->xs->sc_link);
+						    ti->flags &= ~T_SYNCMODE;
 #ifdef ESP_DEBUG
-							printf("%s:%d: dropping out of sync mode\n");
+						    printf("renegotiated ");
 #endif
 						}
-						ti->flags &= ~T_SYNCMODE;
-						ESP_WRITE_REG(sc,
-						    ESP_SYNCOFF, 0);
+						ESP_WRITE_REG(sc, ESP_SYNCOFF,
+							      0);
+						ESP_WRITE_REG(sc, ESP_SYNCTP,
+							      0);
+						/* Clamp to our maxima */
+						if (ti->period < sc->sc_minsync)
+							ti->period = sc->sc_minsync;
+						if (ti->offset > 15)
+							ti->offset = 15;
 						esp_sched_msgout(SEND_SDTR);
 					} else {
 						/* we are sync */
 						sc->sc_flags &= ~ESP_SYNCHNEGO;
-						ESP_WRITE_REG(sc,
-						    ESP_SYNCOFF, ti->offset);
-						ESP_WRITE_REG(sc,
-						    ESP_SYNCTP, p);
+						ESP_WRITE_REG(sc, ESP_SYNCOFF,
+							      ti->offset);
+						ESP_WRITE_REG(sc, ESP_SYNCTP,
+							      p);
 						ti->flags |= T_SYNCMODE;
-						sc_print_addr(ecb->xs->sc_link);
-#ifdef ESP_DEBUG
-						printf("max sync "
-						       "rate %d.%02dMb/s\n",
-						        r, s);
-#endif
 					}
+#ifdef ESP_DEBUG
+					printf("max sync rate %d.%02dMb/s\n",
+						r, s);
+#endif
 				}
 				ti->flags &= ~T_NEGOTIATE;
 				break;
@@ -1185,7 +1214,7 @@ printf("%s: unimplemented message: %d\n", sc->sc_dev.dv_xname, sc->sc_imess[0]);
 			break;
 		}
 	} else if (sc->sc_state == ESP_RESELECTED) {
-		struct scsi_link *sc_link;
+		struct scsi_link *sc_link = NULL;
 		struct ecb *ecb;
 		struct esp_tinfo *ti;
 		u_char lunit;
@@ -1196,7 +1225,7 @@ printf("%s: unimplemented message: %d\n", sc->sc_dev.dv_xname, sc->sc_imess[0]);
 			 * Search wait queue for disconnected cmd
 			 * The list should be short, so I haven't bothered with
 			 * any more sophisticated structures than a simple
-			 * singly linked list. 
+			 * singly linked list.
 			 */
 			lunit = sc->sc_imess[0] & 0x07;
 			for (ecb = sc->nexus_list.tqh_first; ecb;
@@ -1226,9 +1255,15 @@ printf("%s: unimplemented message: %d\n", sc->sc_dev.dv_xname, sc->sc_imess[0]);
 				sc->sc_dleft = ecb->dleft;
 				sc->sc_tinfo[sc_link->target].lubusy
 					|= (1<<sc_link->lun);
-				ESP_WRITE_REG(sc, ESP_SYNCOFF, ti->offset);
-				ESP_WRITE_REG(sc, ESP_SYNCTP,
-				    esp_stp2cpb(sc, ti->period));
+				if (ti->flags & T_SYNCMODE) {
+					ESP_WRITE_REG(sc, ESP_SYNCOFF,
+						ti->offset);
+					ESP_WRITE_REG(sc, ESP_SYNCTP,
+						esp_stp2cpb(sc, ti->period));
+				} else {
+					ESP_WRITE_REG(sc, ESP_SYNCOFF, 0);
+					ESP_WRITE_REG(sc, ESP_SYNCTP, 0);
+				}
 				ESP_MISC(("... found ecb"));
 				sc->sc_state = ESP_HASNEXUS;
 			}
@@ -1261,6 +1296,7 @@ esp_msgout(sc)
 {
 	struct esp_tinfo *ti;
 	struct ecb *ecb;
+	size_t size;
 
 	ESP_TRACE(("[esp_msgout(priq:%x, prevphase:%x)]", sc->sc_msgpriq, sc->sc_prevphase));
 
@@ -1271,7 +1307,6 @@ esp_msgout(sc)
 		switch (sc->sc_msgout) {
 		case SEND_SDTR:
 			ecb = sc->sc_nexus;
-			sc->sc_flags |= ESP_SYNCHNEGO;
 			ti = &sc->sc_tinfo[ecb->xs->sc_link->target];
 			sc->sc_omess[0] = MSG_EXTENDED;
 			sc->sc_omess[1] = 3;
@@ -1317,7 +1352,18 @@ esp_msgout(sc)
 
 #if 1
 	/* (re)send the message */
-	DMA_START(sc->sc_dma, &sc->sc_omp, &sc->sc_omlen, 0);
+	size = min(sc->sc_omlen, sc->sc_maxxfer);
+	DMA_SETUP(sc->sc_dma, &sc->sc_omp, &sc->sc_omlen, 0, &size);
+	/* Program the SCSI counter */
+	ESP_WRITE_REG(sc, ESP_TCL, size);
+	ESP_WRITE_REG(sc, ESP_TCM, size >> 8);
+	if (sc->sc_cfg2 & ESPCFG2_FE) {
+		ESP_WRITE_REG(sc, ESP_TCH, size >> 16);
+	}
+	/* load the count in */
+	ESPCMD(sc, ESPCMD_NOP|ESPCMD_DMA);
+	ESPCMD(sc, (size==0?ESPCMD_TRPAD:ESPCMD_TRANS)|ESPCMD_DMA);
+	DMA_GO(sc->sc_dma);
 #else
 	{	int i;
 		ESPCMD(sc, ESPCMD_FLUSH);
@@ -1340,7 +1386,7 @@ printf("<<XXXmsgoutdoneXXX>>");
  *
  * Most of this needs verifying.
  */
-int 
+int
 espintr(sc)
 	register struct esp_softc *sc;
 {
@@ -1348,9 +1394,10 @@ espintr(sc)
 	register struct scsi_link *sc_link;
 	struct esp_tinfo *ti;
 	int loop;
+	size_t size;
 
 	ESP_TRACE(("[espintr]"));
-	
+
 	/*
 	 * I have made some (maybe seriously flawed) assumptions here,
 	 * but basic testing (uncomment the printf() below), show that
@@ -1370,7 +1417,7 @@ espintr(sc)
 	 * This is a heuristic. It is 2 when at 20Mhz, 2 at 25Mhz and 1
 	 * at 40Mhz. This needs testing.
 	 */
-	for (loop = 0; ; loop++, DELAY(50/sc->sc_freq)) {
+	for (loop = 0; 1;loop++, DELAY(50/sc->sc_freq)) {
 		/* a feeling of deja-vu */
 		if (!DMA_ISINTR(sc->sc_dma))
 			return (loop != 0);
@@ -1469,14 +1516,30 @@ espintr(sc)
 		 * again in case there is no more DMA queued, but a phase
 		 * change is expected.
 		 */
-		if (sc->sc_dma->sc_active && DMA_INTR(sc->sc_dma)) {
+		if (DMA_ISACTIVE(sc->sc_dma)) {
+			DMA_INTR(sc->sc_dma);
 			/* If DMA active here, then go back to work... */
-			if (sc->sc_dma->sc_active)
+			if (DMA_ISACTIVE(sc->sc_dma))
 				return 1;
-			if (!(sc->sc_espstat & ESPSTAT_TC))
-				printf("%s: !TC\n", sc->sc_dev.dv_xname);
-			continue;
+
+			if (sc->sc_dleft == 0 &&
+			    (sc->sc_espstat & ESPSTAT_TC) == 0)
+				printf("%s: !TC [intr %x, stat %x, step %d]"
+				       " prevphase %x, resid %x\n",
+					sc->sc_dev.dv_xname,
+					sc->sc_espintr,
+					sc->sc_espstat,
+					sc->sc_espstep,
+					sc->sc_prevphase,
+					ecb?ecb->dleft:-1);
 		}
+
+#if 0	/* Unreliable on some ESP revisions? */
+		if ((sc->sc_espstat & ESPSTAT_INT) == 0) {
+			printf("%s: spurious interrupt\n", sc->sc_dev.dv_xname);
+			return 1;
+		}
+#endif
 
 		/*
 		 * check for less serious errors
@@ -1486,12 +1549,13 @@ espintr(sc)
 				sc->sc_dev.dv_xname);
 			if (sc->sc_prevphase == MESSAGE_IN_PHASE)
 				esp_sched_msgout(SEND_PARITY_ERROR);
-			else 
+			else
 				esp_sched_msgout(SEND_INIT_DET_ERR);
 		}
 
 		if (sc->sc_espintr & ESPINTR_DIS) {
-			ESP_MISC(("<DISC [intr %x, stat %x, step %d]>", sc->sc_espintr, sc->sc_espstat, sc->sc_espstep));
+			ESP_MISC(("<DISC [intr %x, stat %x, step %d]>",
+				sc->sc_espintr,sc->sc_espstat,sc->sc_espstep));
 			if (ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF) {
 				ESPCMD(sc, ESPCMD_FLUSH);
 				DELAY(1);
@@ -1503,20 +1567,37 @@ espintr(sc)
 			ESPCMD(sc, ESPCMD_ENSEL);
 			if (sc->sc_state != ESP_IDLE) {
 				if ((sc->sc_flags & ESP_SYNCHNEGO)) {
-					printf("%s: sync nego not completed!\n",
-						sc->sc_dev.dv_xname);
+#ifdef ESP_DEBUG
+					if (ecb)
+						sc_print_addr(ecb->xs->sc_link);
+					printf("sync nego not completed!\n");
+#endif
+					sc->sc_flags &= ~ESP_SYNCHNEGO;
+					sc->sc_tinfo[ecb->xs->sc_link->target].offset = 0;
+					sc->sc_tinfo[ecb->xs->sc_link->target].flags &= ~T_NEGOTIATE;
 				}
 			/*XXX*/sc->sc_msgpriq = sc->sc_msgout = 0;
 
 				/* it may be OK to disconnect */
-				if (!(sc->sc_flags & ESP_BUSFREE_OK))
+				if (!(sc->sc_flags & ESP_BUSFREE_OK)) {
+					if (sc->sc_state == ESP_HASNEXUS) {
+						sc_print_addr(ecb->xs->sc_link);
+						printf("disconnect without"
+							"warning\n");
+					}
 					ecb->xs->error = XS_TIMEOUT;
-				else if (sc->sc_flags & ESP_DISCON) {
+				} else if (sc->sc_flags & ESP_DISCON) {
 					TAILQ_INSERT_HEAD(&sc->nexus_list, ecb, chain);
 					ECB_SETQ(ecb, ECB_QNEXUS);
 					sc->sc_nexus = NULL;
 					sc->sc_flags &= ~ESP_DISCON;
 					sc->sc_state = ESP_IDLE;
+#if ESP_DEBUG
+if ((esp_debug & 0x10000) && ecb->dleft == 0) {
+	printf("%s: silly disconnect (ecb %p [stat %x])\n",
+		sc->sc_dev.dv_xname, ecb, ecb->stat);
+}
+#endif
 					esp_sched(sc);
 					return 1;
 				}
@@ -1524,13 +1605,22 @@ espintr(sc)
 				esp_done(ecb);
 				return 1;
 			}
-			printf("DISCONNECT in IDLE state!\n");
+			printf("%s: DISCONNECT in IDLE state!\n",
+				sc->sc_dev.dv_xname);
 		}
 
 		/* did a message go out OK ? This must be broken */
 		if (sc->sc_prevphase == MESSAGE_OUT_PHASE &&
 		    sc->sc_phase != MESSAGE_OUT_PHASE) {
 			/* we have sent it */
+			if (sc->sc_msgout == SEND_SDTR &&
+			    (sc->sc_flags & ESP_SYNCHNEGO) == 0) {
+				/* We've just accepted new sync parameters */
+				sc->sc_tinfo[ecb->xs->sc_link->target].flags |=
+					T_SYNCMODE;
+if (ecb) sc_print_addr(ecb->xs->sc_link);else printf("NO nexus: ");
+printf("target put in SYNC mode\n");
+			}
 			sc->sc_msgpriq &= ~sc->sc_msgout;
 			sc->sc_msgout = 0;
 		}
@@ -1591,13 +1681,18 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 					 * Things are seriously fucked up.
 					 * Pull the brakes, i.e. reset
 					 */
-					printf("%s: target didn't identify\n", 
+					printf("%s: target didn't identify\n",
 						sc->sc_dev.dv_xname);
 					esp_init(sc, 1);
 					return 1;
 				}
 				if ((ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF) != 2) {
-printf("<RESELECT: %d bytes in FIFO>", ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF);
+					printf("%s: RESELECT: %d bytes in FIFO!\n",
+						sc->sc_dev.dv_xname,
+						ESP_READ_REG(sc, ESP_FFLAG) &
+						ESPFIFO_FF);
+					esp_init(sc, 1);
+					return 1;
 				}
 				sc->sc_selid = ESP_READ_REG(sc, ESP_FIFO);
 				sc->sc_selid &= ~(1<<sc->sc_id);
@@ -1645,6 +1740,7 @@ printf("<RESELECT: %d bytes in FIFO>", ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF)
 					ti->period = sc->sc_minsync;
 					ti->offset = 15;
 					sc->sc_msgpriq = SEND_SDTR;
+					sc->sc_flags |= ESP_SYNCHNEGO;
 					break;
 				case 3:
 					/*
@@ -1669,6 +1765,7 @@ printf("<RESELECT: %d bytes in FIFO>", ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF)
 						ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF,
 						sc->sc_espintr, sc->sc_espstat,
 						sc->sc_espstep);
+					ESPCMD(sc, ESPCMD_FLUSH);
 					sc->sc_flags |= ESP_ABORTING;
 					esp_sched_msgout(SEND_ABORT);
 					return 1;
@@ -1816,31 +1913,39 @@ printf("<RESELECT: %d bytes in FIFO>", ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF)
 		case DATA_OUT_PHASE:
 			ESP_PHASE(("DATA_OUT_PHASE [%d] ",  sc->sc_dleft));
 			ESPCMD(sc, ESPCMD_FLUSH);
-			DMA_START(sc->sc_dma, &sc->sc_dp, &sc->sc_dleft, 0);
+			size = min(sc->sc_dleft, sc->sc_maxxfer);
+			DMA_SETUP(sc->sc_dma, &sc->sc_dp, &sc->sc_dleft,
+				  0, &size);
 			sc->sc_prevphase = DATA_OUT_PHASE;
-			return 1;
+			goto setup_xfer;
 		case DATA_IN_PHASE:
 			ESP_PHASE(("DATA_IN_PHASE "));
 			if (sc->sc_rev == ESP100)
 				ESPCMD(sc, ESPCMD_FLUSH);
-#if 0 /* Why is the fifo sometimes full after re-connect? */
-			if (ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF) {
-				static int xxx;
-				if (xxx <= 3) {
-					printf("%s: lost %d bytes from FIFO ",
-						sc->sc_dev.dv_xname,
-						ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF);
-					printf(" previous phase %x\n",
-						sc->sc_prevphase);
-					if (xxx == 3)
-						printf("(stopped logging)");
-					++xxx;
-				}
-			}
-#endif
-			DMA_DRAIN(sc->sc_dma);
-			DMA_START(sc->sc_dma, &sc->sc_dp, &sc->sc_dleft, 1);
+			size = min(sc->sc_dleft, sc->sc_maxxfer);
+			DMA_SETUP(sc->sc_dma, &sc->sc_dp, &sc->sc_dleft,
+				  1, &size);
 			sc->sc_prevphase = DATA_IN_PHASE;
+		setup_xfer:
+			/* Program the SCSI counter */
+			ESP_WRITE_REG(sc, ESP_TCL, size);
+			ESP_WRITE_REG(sc, ESP_TCM, size >> 8);
+			if (sc->sc_cfg2 & ESPCFG2_FE) {
+				ESP_WRITE_REG(sc, ESP_TCH, size >> 16);
+			}
+			/* load the count in */
+			ESPCMD(sc, ESPCMD_NOP|ESPCMD_DMA);
+
+			/*
+			 * Note that if `size' is 0, we've already transceived
+			 * all the bytes we want but we're still in DATA PHASE.
+			 * Apparently, the device needs padding. Also, a
+			 * transfer size of 0 means "maximum" to the chip
+			 * DMA logic.
+			 */
+			ESPCMD(sc,
+			       (size==0?ESPCMD_TRPAD:ESPCMD_TRANS)|ESPCMD_DMA);
+			DMA_GO(sc->sc_dma);
 			return 1;
 		case STATUS_PHASE:
 			ESP_PHASE(("STATUS_PHASE "));
@@ -1869,7 +1974,6 @@ esp_abort(sc, ecb)
 	struct ecb *ecb;
 {
 	if (ecb == sc->sc_nexus) {
-/*XXX*/sc->sc_tinfo[ecb->xs->sc_link->target].flags |= T_XXX;
 		if (sc->sc_state == ESP_HASNEXUS) {
 			sc->sc_flags |= ESP_ABORTING;
 			esp_sched_msgout(SEND_ABORT);
@@ -1892,32 +1996,26 @@ esp_timeout(arg)
 	sc = xs->sc_link->adapter_softc;
 	sc_print_addr(xs->sc_link);
 again:
-	printf("timed out (ecb 0x%x (flags 0x%x, dleft %x), state %d, phase %d, msgpriq %x, msgout %x)",
-		ecb, ecb->flags, ecb->dleft, sc->sc_state, sc->sc_phase,
-		sc->sc_msgpriq, sc->sc_msgout);
+	printf("%s: timed out [ecb %p (flags 0x%x, dleft %x, stat %x)], "
+	       "<state %d, nexus %p, phase(c %x, p %x), resid %x, msg(q %x,o %x) %s>",
+		sc->sc_dev.dv_xname,
+		ecb, ecb->flags, ecb->dleft, ecb->stat,
+		sc->sc_state, sc->sc_nexus, sc->sc_phase, sc->sc_prevphase,
+		sc->sc_dleft, sc->sc_msgpriq, sc->sc_msgout,
+		DMA_ISACTIVE(sc->sc_dma) ? "DMA active" : "");
+#if ESP_DEBUG > 0
+	printf("TRACE: %s.", ecb->trace);
+#endif
 
-	if (ecb->flags == ECB_QFREE) {
-		printf("note: ecb already on free list\n");
-		splx(s);
-		return;
-	}
 	if (ecb->flags & ECB_ABORTED) {
 		/* abort timed out */
 		printf(" AGAIN\n");
-		xs->retries = 0;
 		esp_init(sc, 1);
 	} else {
 		/* abort the operation that has timed out */
 		printf("\n");
 		xs->error = XS_TIMEOUT;
 		ecb->flags |= ECB_ABORTED;
-#if 0
-if (sc->sc_dma->sc_active) {
-	int x = esp_debug; esp_debug=0x3ff;
-	DMA_INTR(sc->sc_dma);
-	esp_debug = x;
-}
-#endif
 		esp_abort(sc, ecb);
 		/* 2 secs for the abort */
 		if ((xs->flags & SCSI_POLL) == 0)
