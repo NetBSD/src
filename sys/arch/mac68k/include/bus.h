@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.10 1998/08/16 05:36:17 scottr Exp $	*/
+/*	$NetBSD: bus.h,v 1.11 1999/01/06 03:06:45 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -193,7 +193,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 		subql	#1,d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
+		    "r" ((h) + (o)), "g" (a), "g" ((size_t)(c))	:	\
 		    "a0","a1","d0");					\
 } while (0)
 
@@ -207,7 +207,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 		subql	#1,d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
+		    "r" ((h) + (o)), "g" (a), "g" ((size_t)(c))	:	\
 		    "a0","a1","d0");					\
 } while (0)
 
@@ -221,7 +221,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 		subql	#1,d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
+		    "r" ((h) + (o)), "g" (a), "g" ((size_t)(c))	:	\
 		    "a0","a1","d0");					\
 } while (0)
 
@@ -249,7 +249,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 		subql	#1,d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
+		    "r" ((h) + (o)), "g" (a), "g" ((size_t)(c))	:	\
 		    "a0","a1","d0");					\
 } while (0)
 
@@ -263,7 +263,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 		subql	#1,d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
+		    "r" ((h) + (o)), "g" (a), "g" ((size_t)(c))	:	\
 		    "a0","a1","d0");					\
 } while (0)
 
@@ -277,7 +277,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 		subql	#1,d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
+		    "r" ((h) + (o)), "g" (a), "g" ((size_t)(c))	:	\
 		    "a0","a1","d0");					\
 } while (0)
 
@@ -326,7 +326,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 		subql	#1,d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
+		    "r" ((h) + (o)), "g" (a), "g" ((size_t)(c))	:	\
 		    "a0","a1","d0");					\
 } while (0)
 
@@ -340,7 +340,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 		subql	#1,d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
+		    "r" ((h) + (o)), "g" (a), "g" ((size_t)(c))	:	\
 		    "a0","a1","d0");					\
 } while (0)
 
@@ -354,7 +354,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 		subql	#1,d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
+		    "r" ((h) + (o)), "g" (a), "g" ((size_t)(c))	:	\
 		    "a0","a1","d0");					\
 } while (0)
 
@@ -382,7 +382,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 		subql	#1,d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
+		    "r" ((h) + (o)), "g" (a), "g" ((size_t)(c))	:	\
 		    "a0","a1","d0");					\
 } while (0)
 
@@ -396,7 +396,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 		subql	#1,d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
+		    "r" ((h) + (o)), "g" (a), "g" ((size_t)(c))	:	\
 		    "a0","a1","d0");					\
 } while (0)
 
@@ -410,7 +410,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 		subql	#1,d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
+		    "r" ((h) + (o)), "g" (a), "g" ((size_t)(c))	:	\
 		    "a0","a1","d0");					\
 } while (0)
 
@@ -438,7 +438,8 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 		subql	#1,d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (val), "g" (c)		:	\
+		    "r" ((h)+(o)), "g" ((u_long)val),			\
+					 "g" ((size_t)(c))	:	\
 		    "a0","d0","d1");					\
 } while (0)
 
@@ -452,7 +453,8 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 		subql	#1,d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (val), "g" (c)		:	\
+		    "r" ((h)+(o)), "g" ((u_long)val),			\
+					 "g" ((size_t)(c))	:	\
 		    "a0","d0","d1");					\
 } while (0)
 
@@ -466,7 +468,8 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 		subql	#1,d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (val), "g" (c)		:	\
+		    "r" ((h)+(o)), "g" ((u_long)val),			\
+					 "g" ((size_t)(c))	:	\
 		    "a0","d0","d1");					\
 } while (0)
 
@@ -494,7 +497,8 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 		subql	#1,d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (val), "g" (c)		:	\
+		    "r" ((h)+(o)), "g" ((u_long)val),			\
+					"g" ((size_t)(c))	:	\
 		    "a0","d0","d1");					\
 } while (0)
 
@@ -508,7 +512,8 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 		subql	#1,d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (val), "g" (c)		:	\
+		    "r" ((h)+(o)), "g" ((u_long)val),			\
+					"g" ((size_t)(c))	:	\
 		    "a0","d0","d1");					\
 } while (0)
 
@@ -522,7 +527,8 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 		subql	#1,d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (val), "g" (c)		:	\
+		    "r" ((h)+(o)), "g" ((u_long)val),			\
+					"g" ((size_t)(c))	:	\
 		    "a0","d0","d1");					\
 } while (0)
 
