@@ -1,5 +1,5 @@
 # Zip Code : Location
-#	$NetBSD: zipcodes,v 1.5 1997/03/26 06:31:01 mikel Exp $
+#	$NetBSD: zipcodes,v 1.6 2003/05/11 01:55:18 wiz Exp $
 #	@(#)zipcodes	8.1 (Berkeley) 6/8/93
 00401:Pleasantville, NY
 00501:Holtsville, NY
@@ -8214,6 +8214,8 @@
 20090:Washington, DC
 20097:Washington, DC
 20098:Washington, DC
+20120:Centreville, VA
+20121:Centreville, VA
 20201:Washington, DC
 20202:Washington, DC
 20203:Washington, DC
@@ -8995,7 +8997,7 @@
 22012:Bluemont, VA
 22013:Bristow, VA
 22014:Broad Run, VA
-22015:Springfield, VA
+22015:Burke, VA
 22016:Calverton, VA
 22017:Casanova, VA
 22018:Catharpin, VA
