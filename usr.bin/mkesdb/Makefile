@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/08/01 17:04:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2003/10/27 00:14:59 lukem Exp $
 
 .ifndef HOSTPROG
 .include <bsd.own.mk>
@@ -13,7 +13,7 @@ SRCS=		yacc.y lex.l \
 		citrus_lookup_factory.c
 CPPFLAGS+=	-I. -I${.CURDIR} -I${NETBSDSRCDIR}/lib/libc \
 		-I${NETBSDSRCDIR}/lib/libc/citrus \
-		-DHOSTPROG
+		-DHOSTPROG -DLIBC_SCCS
 YHEADER=	1
 MKMAN=		no
 
