@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.4 2003/10/28 04:00:51 jmc Exp $	*/
+/*	$NetBSD: yacc.y,v 1.5 2004/01/05 19:20:10 itojun Exp $	*/
 
 %{
 /*-
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: yacc.y,v 1.4 2003/10/28 04:00:51 jmc Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.5 2004/01/05 19:20:10 itojun Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -265,9 +265,9 @@ alloc_table(void)
 	u_int32_t val;
 
 	table_size =
-	    (src_zone.row_end-src_zone.row_begin+1)*
-	    (src_zone.col_end-src_zone.col_begin+1);
-	table = malloc(table_size*dst_unit_bits/8);
+	    (src_zone.row_end-src_zone.row_begin + 1) *
+	    (src_zone.col_end-src_zone.col_begin + 1);
+	table = malloc(table_size*dst_unit_bits / 8);
 	if (!table) {
 		perror("malloc");
 		exit(1);
@@ -283,7 +283,7 @@ alloc_table(void)
 	default:
 		_DIAGASSERT(0);
 	}
-	for (i=0; i<table_size; i++)
+	for (i = 0; i < table_size; i++)
 		(*putfunc)(table, i, val);
 }
 
@@ -455,21 +455,21 @@ set_src_zone(const zone_t *zone)
 	}
 
 	/* sanity check */
-	if (zone->col_bits<1 || zone->col_bits>32) {
+	if (zone->col_bits < 1 || zone->col_bits > 32) {
 		goto bad;
 	}
 
-	if (zone->col_bits!=32)
-		colmask = (1 << zone->col_bits)-1;
+	if (zone->col_bits != 32)
+		colmask = (1 << zone->col_bits )- 1;
 	else
 		colmask = ~0;
 	rowmask = ~colmask;
 	if (zone->col_begin > zone->col_end ||
 	    zone->row_begin > zone->row_end ||
-	    (zone->col_begin & rowmask)!=0 ||
-	    (zone->col_end & rowmask)!=0 ||
-	    ((zone->row_begin << zone->col_bits) & colmask)!=0 ||
-	    ((zone->row_end << zone->col_bits) & colmask)!=0) {
+	    (zone->col_begin & rowmask) != 0 ||
+	    (zone->col_end & rowmask) != 0 ||
+	    ((zone->row_begin << zone->col_bits) & colmask) != 0 ||
+	    ((zone->row_end << zone->col_bits) & colmask) != 0) {
 bad:
 		yyerror("Illegal argument for SRC_ZONE");
 	}
@@ -589,10 +589,10 @@ store(const linear_zone_t *lz, u_int32_t dst, int inc)
 	if (src_zone.col_bits != 32)
 		row = lz->begin >> src_zone.col_bits;
 	col = lz->begin & colmask;
-	ofs =
-	    (row-src_zone.row_begin)*(src_zone.col_end-src_zone.col_begin+1) +
+	ofs = (row-src_zone.row_begin) *
+	    (src_zone.col_end-src_zone.col_begin + 1) +
 	    (col-src_zone.col_begin);
-	for (i=lz->end-lz->begin+1; i>0; i--) {
+	for (i = lz->end - lz->begin + 1; i > 0; i--) {
 		(*putfunc)(table, ofs++, dst);
 		if (inc)
 			dst++;
