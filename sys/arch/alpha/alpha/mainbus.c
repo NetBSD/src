@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3 1995/06/28 02:45:10 cgd Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4 1995/08/03 01:01:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -84,6 +84,7 @@ mbattach(parent, self, aux)
 	struct pcs *pcsp;
 	int i, cpuattachcnt;
 	extern int cputype, ncpus;
+	extern char *cpu_iobus;
 
 	printf("\n");
 
@@ -117,41 +118,18 @@ mbattach(parent, self, aux)
 		printf("WARNING: %d cpus in machine, %d attached\n",
 			ncpus, cpuattachcnt);
 
-#if defined(DEC_3000_500) || defined(DEC_3000_300)
-	if (cputype == ST_DEC_3000_500 || cputype == ST_DEC_3000_300) {
-		/* we have a TurboChannel bus! */
-		nca.ca_name = "tc";
+	if (cpu_iobus != NULL) {
+		nca.ca_name = cpu_iobus;
 		nca.ca_slot = 0;
 		nca.ca_offset = 0;
 		nca.ca_bus = &sc->sc_bus;
 		config_found(self, &nca, mbprint);
 	}
-#endif
-#if defined(DEC_2000_300)
-	if (cputype == ST_DEC_2000_300) {
-		/* we have an EISA bus! */
-		nca.ca_name = "eisa";
-		/*
-		 * XXX XXX NO, WE HAVE An "ibus", with EISA and the
-		 * combo chip attached.  "engineers."
-		 */
-		nca.ca_slot = 0;
-		nca.ca_offset = 0;
-		nca.ca_bus = &sc->sc_bus;
-		config_found(self, &nca, mbprint);
-	}
-#endif
-#if defined(DEC_2100_A50)
-	if (cputype == ST_DEC_2100_A50) {
-		/* we have an APECS chip, to which a PCI bus is attached! */
-		nca.ca_name = "apecs";
-		nca.ca_slot = 0;
-		nca.ca_offset = 0;
-		nca.ca_bus = &sc->sc_bus;
-		config_found(self, &nca, mbprint);
-	}
-#endif
 
+	/*
+	 * XXX: note that the following should be at various places in
+	 * machdep.c.
+	 */
 	/* WEIRD: Note that the "LCA" CPU attches the PCI bus directly... */
 }
 
