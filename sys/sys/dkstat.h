@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstat.h,v 1.9 1996/07/12 22:00:42 thorpej Exp $	*/
+/*	$NetBSD: dkstat.h,v 1.10 1998/02/10 00:25:28 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,6 +40,9 @@
  *	@(#)dkstat.h	8.2 (Berkeley) 1/21/94
  */
 
+#ifndef _SYS_DKSTAT_H_
+#define _SYS_DKSTAT_H_
+
 #define	CP_USER		0
 #define	CP_NICE		1
 #define	CP_SYS		2
@@ -56,3 +59,5 @@ long tk_nin;
 long tk_nout;
 long tk_rawcc;
 #endif
+
+#endif /* _SYS_DKSTAT_H_ */

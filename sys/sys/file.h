@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.12 1996/09/07 12:41:32 mycroft Exp $	*/
+/*	$NetBSD: file.h,v 1.13 1998/02/10 00:25:30 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)file.h	8.2 (Berkeley) 8/20/94
  */
+
+#ifndef _SYS_FILE_H_
+#define _SYS_FILE_H_
 
 #include <sys/fcntl.h>
 #include <sys/unistd.h>
@@ -78,3 +81,5 @@ extern int maxfiles;			/* kernel limit on number of open files */
 extern int nfiles;			/* actual number of open files */
 
 #endif /* _KERNEL */
+
+#endif /* _SYS_FILE_H_ */

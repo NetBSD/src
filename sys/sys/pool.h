@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.1 1997/12/15 11:14:57 pk Exp $	*/
+/*	$NetBSD: pool.h,v 1.2 1998/02/10 00:25:41 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _SYS_POOL_H_
+#define _SYS_POOL_H_
+
 typedef struct pool {
 	struct pool_item	*pr_freelist;	/* Free items in pool */
 	int			pr_size;	/* Size of item */
@@ -55,3 +58,5 @@ void		pool_destroy __P((pool_handle_t));
 void	 	*pool_get __P((pool_handle_t, int));
 void	 	pool_put __P((pool_handle_t, void *));
 int	 	pool_prime __P((pool_handle_t, int));
+
+#endif /* _SYS_POOL_H_ */
