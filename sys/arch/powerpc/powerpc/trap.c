@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.29 2000/11/22 14:00:46 tsubai Exp $	*/
+/*	$NetBSD: trap.c,v 1.30 2000/11/24 21:49:06 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -295,7 +295,8 @@ syscall_bad:
 brain_damage:
 		printf("trap type %x at %x\n", type, frame->srr0);
 #ifdef DDB
-		Debugger();			 /* XXX temporarily */
+		if (kdb_trap(type, frame))
+			return;
 #endif
 #ifdef TRAP_PANICWAIT
 		printf("Press a key to panic.\n");
