@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.246 1997/08/24 09:38:19 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.247 1997/08/25 21:17:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -2357,10 +2357,14 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 {
 	vm_offset_t va;
 	bus_addr_t addr;
-	int curseg;
+	int curseg, s;
 
 	size = round_page(size);
+
+	s = splimp();
 	va = kmem_alloc_pageable(kmem_map, size);
+	splx(s);
+
 	if (va == 0)
 		return (ENOMEM);
 
@@ -2396,6 +2400,7 @@ _bus_dmamem_unmap(t, kva, size)
 	caddr_t kva;
 	size_t size;
 {
+	int s;
 
 #ifdef DIAGNOSTIC
 	if ((u_long)kva & PGOFSET)
@@ -2403,7 +2408,9 @@ _bus_dmamem_unmap(t, kva, size)
 #endif
 
 	size = round_page(size);
+	s = splimp();
 	kmem_free(kmem_map, (vm_offset_t)kva, size);
+	splx(s);
 }
 
 /*
