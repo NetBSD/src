@@ -121,7 +121,6 @@ file miscfs/fdesc/fdesc_vfsops.c	 fdesc
 file miscfs/fdesc/fdesc_vnops.c		 fdesc
 file miscfs/kernfs/kernfs_vfsops.c	 kernfs
 file miscfs/kernfs/kernfs_vnops.c	 kernfs
-file net/af.c
 file net/bpf.c		 	bpfilter needs-count
 file net/bpf_filter.c	 	bpfilter 
 file net/if.c
