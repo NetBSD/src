@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.39.2.2 1999/04/26 16:03:50 perry Exp $
+# 	$NetBSD: GENERIC,v 1.39.2.3 2000/06/03 14:45:42 he Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
@@ -62,7 +62,7 @@ file-system 	NULLFS		# loopback file system
 file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
-file-system 	UNION
+#file-system 	UNION
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	QUOTA		# UFS quotas
