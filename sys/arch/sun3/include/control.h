@@ -1,4 +1,4 @@
-/*	$NetBSD: control.h,v 1.12 1995/02/11 20:59:37 gwr Exp $	*/
+/*	$NetBSD: control.h,v 1.13 1995/10/10 21:29:02 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -92,4 +92,5 @@ void set_pte __P((vm_offset_t, vm_offset_t));
      
 unsigned char get_segmap __P((vm_offset_t));
 void set_segmap __P((vm_offset_t va, unsigned char));
+void set_segmap_allctx __P((vm_offset_t va, unsigned char));
 
