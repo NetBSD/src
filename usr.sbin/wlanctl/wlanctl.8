@@ -1,4 +1,4 @@
-.\" $NetBSD: wlanctl.8,v 1.1 2004/07/16 03:13:51 dyoung Exp $
+.\" $NetBSD: wlanctl.8,v 1.2 2004/07/16 14:53:13 wiz Exp $
 .\" Copyright (c) 2004 David Young.  All rights reserved.
 .\"
 .\" This code was written by David Young.
@@ -36,7 +36,8 @@
 .Nd examine IEEE 802.11 client/peer table
 .Sh SYNOPSIS
 .Nm wlanctl
-.Ar interface ...
+.Ar interface
+.Op Ar ...
 .Nm
 .Fl a
 .Sh DESCRIPTION
@@ -46,8 +47,8 @@ utility to print node tables from IEEE 802.11 interfaces.
 Use the
 .Fl a
 flag to print the nodes for all interfaces, or list one or more
-802.11 interfaces to select their tables for examination.  For
-example, to examine the node tables for atw0, use:
+802.11 interfaces to select their tables for examination.
+For example, to examine the node tables for atw0, use:
 .Pp
 .Bd -literal -offset indent -compact
 wlanctl atw0
@@ -58,28 +59,28 @@ may print this node table, for example:
 .Pp
 .Bd -literal -offset indent -compact
 atw0: mac 00:02:6f:20:f6:2e bss 02:02:6f:20:f6:2e
-	node flags 0001<bss>
-	ess <netbsd>
-	chan 11 freq 2462MHz flags 00a0<cck,2.4GHz>
-	capabilities 0022<ibss,short preamble>
+	node flags 0001\*[Lt]bss\*[Gt]
+	ess \*[Lt]netbsd\*[Gt]
+	chan 11 freq 2462MHz flags 00a0\*[Lt]cck,2.4GHz\*[Gt]
+	capabilities 0022\*[Lt]ibss,short preamble\*[Gt]
 	beacon-interval 100 TU tsft 18425852102545544165 us
 	rates [1.0] 2.0 5.5 11.0
 	assoc-id 0 assoc-failed 0 inactivity 0s
 	rssi 161 txseq 10 rxseq 1420
 atw0: mac 00:02:2d:2e:3c:f4 bss 02:02:6f:20:f6:2e
 	node flags 0000
-	ess <netbsd>
-	chan 11 freq 2462MHz flags 00a0<cck,2.4GHz>
-	capabilities 0002<ibss>
+	ess \*[Lt]netbsd\*[Gt]
+	chan 11 freq 2462MHz flags 00a0\*[Lt]cck,2.4GHz\*[Gt]
+	capabilities 0002\*[Lt]ibss\*[Gt]
 	beacon-interval 100 TU tsft 18425852105450086784 us
 	rates [1.0] 2.0 5.5 11.0
 	assoc-id 0 assoc-failed 0 inactivity 0s
 	rssi 159 txseq 2 rxseq 551
 atw0: mac 00:02:6f:20:f6:2e bss 02:02:6f:20:f6:2e
 	node flags 0000
-	ess <netbsd>
-	chan 11 freq 2462MHz flags 00a0<cck,2.4GHz>
-	capabilities 0022<ibss,short preamble>
+	ess \*[Lt]netbsd\*[Gt]
+	chan 11 freq 2462MHz flags 00a0\*[Lt]cck,2.4GHz\*[Gt]
+	capabilities 0022\*[Lt]ibss,short preamble\*[Gt]
 	beacon-interval 100 TU tsft 18425852102558548069 us
 	rates [1.0] 2.0 5.5 6.0 9.0 11.0 12.0 18.0 24.0 36.0 48.0 54.0
 	assoc-id 0 assoc-failed 0 inactivity 145s
@@ -87,9 +88,8 @@ atw0: mac 00:02:6f:20:f6:2e bss 02:02:6f:20:f6:2e
 .Ed
 .Pp
 This example is taken from a network consisting of three stations
-running in ad hoc mode.  The key for interpreting the node print-outs
-follows:
-
+running in ad hoc mode.
+The key for interpreting the node print-outs follows:
 .Bl -tag -width "do_not_adapt" -compact
 .It Fa mac
 In the example node table, the first network node has MAC number
@@ -98,9 +98,13 @@ In the example node table, the first network node has MAC number
 The first node belongs to the 802.11 network identified
 by Basic Service Set Identifier (BSSID) 02:02:6f:20:f6:2e.
 .It Fa "node flags"
-Only one node flag, ``bss'', is presently defined. 
+Only one node flag,
+.Dq bss ,
+is presently defined.
 The first node is distinguished from the rest by its node flags:
-flag ``bss'' indicates that the node represents the 802.11 network
+flag
+.Dq bss
+indicates that the node represents the 802.11 network
 that the interface has joined or created.
 The MAC number for the node is the same as the MAC number for the
 interface.
@@ -108,15 +112,27 @@ interface.
 the name of the (Extended) Service Set
 we have joined.
 This is the same as the network name set by
-.Xr ifconfig
-with the ``ssid'' option.
+.Xr ifconfig 8
+with the
+.Dq ssid
+option.
 .It Fa chan
 .Nm
 prints the channel number, the center frequency in megahertz, and
 the channel flags.
-The channel flags indicate the frequency band (``2.4GHz'' or
-``5GHz''), modulation (``cck'', ``gfsk'', ``ofdm'', ``turbo'', and
-``dynamic cck-ofdm''), and operation constraints (``passive scan'').
+The channel flags indicate the frequency band (
+.Po Dq 2.4GHz
+or
+.Dq 5GHz Pc ,
+modulation
+.Po Dq cck ,
+.Dq gfsk ,
+.Dq ofdm ,
+.Dq turbo ,
+and
+.Dq dynamic cck-ofdm Pc ,
+and operation constraints
+.Pq Dq passive scan .
 Common combinations of band and modulation are these:
 .Bl -column 2.4GHz "dynamic cck-ofdm" "1-2Mb/s frequency-hopping 802.11"
 .It Sy Band	Modulation	Description
@@ -141,14 +157,17 @@ understands these capability flags:
 .It privacy	WEP encryption
 .It short preamble	reduce 802.11b overhead
 .It pbcc	22Mbps ``802.11b+''
-.It channel agility	change channel for licensed services 
+.It channel agility	change channel for licensed services
 .It short slot-time	TBD
 .It rsn	TBD Real Soon Now
 .It dsss-ofdm	TBD
 .El
 .It Fa beacon-interval
-In the example, beacons are sent once every 100 Time Units.  A Time
-Unit (TU) is 1024 microseconds (a ``kilo-microsecond'' or ``kus'').
+In the example, beacons are sent once every 100 Time Units.
+A Time Unit (TU) is 1024 microseconds (a
+.Dq kilo-microsecond
+or
+.Dq kus ) .
 Thus 100 TU is about one tenth of a second.
 .It Fa tsft
 802.11 stations keep a Time Synchronization Function Timer (TSFT)
@@ -159,13 +178,14 @@ point.
 Power-saving stations wake and sleep at intervals measured by the
 TSF Timer.
 The TSF Timer has a role in the coalescence of 802.11 ad hoc networks
-(``IBSS merges'').
+.Pq Dq IBSS merges .
 .It Fa rates
 802.11 stations indicate the bit-rates they support, in units of
 100kb/s in 802.11 Beacons, Probe Responses, and Association Requests.
 .Nm
 prints a station's supported bit-rates in 1Mb/s units.
-A station's basic rates are flagged by an asterisk (``*'').
+A station's basic rates are flagged by an asterisk
+.Pq Sq * .
 The last bit-rate at which a packet was sent to the station is
 enclosed by square brackets.
 .It Fa assoc-id
@@ -174,11 +194,13 @@ an Association Identifier which is used to indicate traffic for
 power-saving stations.
 .It Fa assoc-failed
 The number of times the station tried and failed to associate
-with its access point.  Only 
+with its access point.
+Only
 .It Fa inactivity
 Seconds elapsed since a packet was last received from the station.
 When this value reaches net.link.ieee80211.maxinact, the station
-is eligible to be purged from the node table.  See
+is eligible to be purged from the node table.
+See
 .Xr sysctl 8 .
 .It Fa rssi
 Unitless Received Signal Strength Indication (RSSI).
@@ -186,15 +208,15 @@ Higher numbers indicate stronger signals.
 Zero is the lowest possible RSSI.
 On a hostap- or adhoc-mode interface, the node with
 .Fa "node flag"
-``bss'' set 
-uses
+.Dq bss
+set uses
 .Fa rssi
 to indicate the signal strength for the last packet received from
 a station that does not belong to the network.
 On an infrastructure-mode station, the node with
 .Fa "node flag"
-``bss'' set 
-indicates the strength of packets from the access point.
+.Dq bss
+set indicates the strength of packets from the access point.
 .It Fa txseq
 The next 802.11 packet sent to this station will carry this transmit
 sequence number.
@@ -206,9 +228,9 @@ sequence number.
 .El
 .Sh SEE ALSO
 .Xr sysctl 8
-.Sh AUTHOR
-.An David Young Aq dyoung@NetBSD.org
 .Sh HISTORY
 .Nm
 first appeared in
-.Nx 2.0 .
+.Nx 3.0 .
+.Sh AUTHORS
+.An David Young Aq dyoung@NetBSD.org
