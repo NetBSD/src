@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.1.1.1 2001/10/26 06:21:43 lukem Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.2 2001/10/28 13:14:06 lukem Exp $	*/
 /* From NetBSD: ffs_balloc.c,v 1.25 2001/08/08 08:36:36 lukem Exp */
 
 /*
@@ -35,6 +35,11 @@
  *
  *	@(#)ffs_balloc.c	8.8 (Berkeley) 6/16/95
  */
+
+#include <sys/cdefs.h>
+#ifndef __lint
+__RCSID("$NetBSD: ffs_balloc.c,v 1.2 2001/10/28 13:14:06 lukem Exp $");
+#endif	/* !__lint */
 
 #include <sys/param.h>
 #include <sys/time.h>

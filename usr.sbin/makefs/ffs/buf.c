@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.1.1.1 2001/10/26 06:20:18 lukem Exp $	*/
+/*	$NetBSD: buf.c,v 1.2 2001/10/28 13:14:06 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -34,6 +34,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef __lint
+__RCSID("$NetBSD: buf.c,v 1.2 2001/10/28 13:14:06 lukem Exp $");
+#endif	/* !__lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
