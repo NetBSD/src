@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.1 2004/09/26 02:29:15 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.2 2004/12/12 06:37:59 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -84,7 +84,8 @@ enum rtw_rfchipid {
 #define RTW_F_DFLANTB		0x00000004	/* B antenna is default */
 #define RTW_F_ANTDIV		0x00000010	/* h/w antenna diversity */
 #define RTW_F_9356SROM		0x00000020	/* 93c56 SROM */
-#define RTW_F_SLEEP		0x00000040	/* chip is enabled */
+#define RTW_F_SLEEP		0x00000040	/* chip is asleep */
+#define RTW_F_INVALID		0x00000080	/* chip is absent */
 	/* all PHY flags */
 #define RTW_F_ALLPHY		(RTW_F_DIGPHY|RTW_F_DFLANTB|RTW_F_ANTDIV)
 
@@ -341,6 +342,10 @@ struct rtw_sa2400 {
 
 typedef void (*rtw_pwrstate_t)(struct rtw_regs *, enum rtw_pwrstate, int);
 
+enum rtw_access {RTW_ACCESS_NONE = 0,
+		 RTW_ACCESS_CONFIG = 1,
+		 RTW_ACCESS_ANAPARM = 2};
+
 struct rtw_softc {
 	struct device		sc_dev;
 	struct ieee80211com	sc_ic;
@@ -414,6 +419,7 @@ struct rtw_softc {
 		struct rtw_tx_radiotap_header	tap;
 		u_int8_t			pad[64];
 	} sc_txtapu;
+	enum rtw_access		sc_access;
 };
 
 #define	sc_if		sc_ic.ic_if
@@ -423,7 +429,8 @@ struct rtw_softc {
 void rtw_txdac_enable(struct rtw_regs *, int);
 void rtw_anaparm_enable(struct rtw_regs *, int);
 void rtw_config0123_enable(struct rtw_regs *, int);
-void rtw_continuous_tx_enable(struct rtw_regs *, int);
+void rtw_continuous_tx_enable(struct rtw_softc *, int);
+void rtw_set_access(struct rtw_softc *, enum rtw_access);
 
 void rtw_attach(struct rtw_softc *);
 int rtw_detach(struct rtw_softc *);

@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphy.c,v 1.1 2004/09/26 02:29:15 dyoung Exp $ */
+/* $NetBSD: rtwphy.c,v 1.2 2004/12/12 06:37:59 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.1 2004/09/26 02:29:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.2 2004/12/12 06:37:59 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,11 +218,7 @@ rtw_sa2400_pwrstate(struct rtw_rf *rf, enum rtw_pwrstate power)
 	struct rtw_sa2400 *sa = (struct rtw_sa2400 *)rf;
 	struct rtw_rfbus *bus = &sa->sa_bus;
 	u_int32_t opmode;
-	opmode = SA2400_OPMODE_XO;
-	opmode |= SA2400_OPMODE_RXLV;
-	opmode |= SA2400_OPMODE_CLK;
-	opmode |= SA2400_OPMODE_I0P3;
-	opmode |= LSHIFT(3, SA2400_OPMODE_FILTTUNE_MASK);
+	opmode = SA2400_OPMODE_DEFAULTS;
 	switch (power) {
 	case RTW_ON:
 		opmode |= SA2400_OPMODE_MODE_TXRX;
@@ -263,11 +259,7 @@ rtw_sa2400_vcocal_start(struct rtw_sa2400 *sa, int start)
 {
 	u_int32_t opmode;
 
-	opmode = SA2400_OPMODE_XO;
-	opmode |= SA2400_OPMODE_RXLV;
-	opmode |= SA2400_OPMODE_CLK;
-	opmode |= SA2400_OPMODE_I0P3;
-	opmode |= LSHIFT(3, SA2400_OPMODE_FILTTUNE_MASK);
+	opmode = SA2400_OPMODE_DEFAULTS;
 	if (start)
 		opmode |= SA2400_OPMODE_MODE_VCOCALIB;
 	else
@@ -297,12 +289,7 @@ rtw_sa2400_filter_calibration(struct rtw_sa2400 *sa)
 {
 	u_int32_t opmode;
 
-	opmode = SA2400_OPMODE_XO;
-	opmode |= SA2400_OPMODE_RXLV;
-	opmode |= SA2400_OPMODE_CLK;
-	opmode |= SA2400_OPMODE_I0P3;
-	opmode |= LSHIFT(3, SA2400_OPMODE_FILTTUNE_MASK);
-	opmode |= SA2400_OPMODE_MODE_FCALIB;
+	opmode = SA2400_OPMODE_DEFAULTS | SA2400_OPMODE_MODE_FCALIB;
 	if (sa->sa_digphy)
 		opmode |= SA2400_OPMODE_DIGIN;
 
@@ -319,12 +306,7 @@ rtw_sa2400_dc_calibration(struct rtw_sa2400 *sa)
 
 	(*rf->rf_continuous_tx_cb)(rf->rf_continuous_tx_arg, 1);
 
-	dccal = SA2400_OPMODE_XO;
-	dccal |= SA2400_OPMODE_RXLV;
-	dccal |= SA2400_OPMODE_CLK;
-	dccal |= SA2400_OPMODE_I0P3;
-	dccal |= LSHIFT(3, SA2400_OPMODE_FILTTUNE_MASK);
-	dccal |= SA2400_OPMODE_MODE_TXRX;
+	dccal = SA2400_OPMODE_DEFAULTS | SA2400_OPMODE_MODE_TXRX;
 
 	rc = rtw_rfbus_write(&sa->sa_bus, RTW_RFCHIPID_PHILIPS, SA2400_OPMODE,
 	    dccal);
@@ -373,6 +355,28 @@ rtw_sa2400_destroy(struct rtw_rf *rf)
 }
 
 static int
+rtw_sa2400_calibrate(struct rtw_rf *rf, u_int freq)
+{
+	struct rtw_sa2400 *sa = (struct rtw_sa2400 *)rf;
+	int i, rc;
+
+	/* XXX reference driver calibrates VCO twice. Is it a bug? */
+	for (i = 0; i < 2; i++) {
+		if ((rc = rtw_sa2400_vco_calibration(sa)) != 0)
+			return rc;
+	}
+	/* VCO calibration erases synthesizer registers, so re-tune */
+	if ((rc = rtw_sa2400_tune(rf, freq)) != 0)
+		return rc;
+	if ((rc = rtw_sa2400_filter_calibration(sa)) != 0)
+		return rc;
+	/* analog PHY needs DC calibration */
+	if (!sa->sa_digphy)
+		return rtw_sa2400_dc_calibration(sa);
+	return 0;
+}
+
+static int
 rtw_sa2400_init(struct rtw_rf *rf, u_int freq, u_int8_t opaque_txpower,
     enum rtw_pwrstate power)
 {
@@ -390,22 +394,15 @@ rtw_sa2400_init(struct rtw_rf *rf, u_int freq, u_int8_t opaque_txpower,
 	if ((rc = rtw_sa2400_pwrstate(rf, RTW_SLEEP)) != 0)
 		return rc;
 
+	if ((rc = rtw_sa2400_tune(rf, freq)) != 0)
+		return rc;
 	if ((rc = rtw_sa2400_agc_init(sa)) != 0)
 		return rc;
 	if ((rc = rtw_sa2400_manrx_init(sa)) != 0)
 		return rc;
+	if ((rc = rtw_sa2400_calibrate(rf, freq)) != 0)
+		return rc;
 
-	/* XXX reference driver calibrates VCO twice. Is it a bug? */
-	if ((rc = rtw_sa2400_vco_calibration(sa)) != 0)
-		return rc;
-	/* VCO calibration erases synthesizer registers */
-	if ((rc = rtw_sa2400_tune(rf, freq)) != 0)
-		return rc;
-	if ((rc = rtw_sa2400_filter_calibration(sa)) != 0)
-		return rc;
-	/* analog PHY needs DC calibration */
-	if (!sa->sa_digphy && (rc = rtw_sa2400_dc_calibration(sa)) != 0)
-		return rc;
 	/* enter Tx/Rx mode */
 	return rtw_sa2400_pwrstate(rf, power);
 }
