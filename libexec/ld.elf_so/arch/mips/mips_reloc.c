@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.9 2002/09/05 20:08:17 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.10 2002/09/05 21:21:10 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -49,7 +49,7 @@ _rtld_bind_mips(a0, a1, a2, a3)
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
 
-	def = _rtld_find_symdef(ELF_R_INFO(a0, 0), obj, &defobj, true);
+	def = _rtld_find_symdef(a0, obj, &defobj, true);
 	if (def) {
 		u[obj->local_gotno + a0 - obj->gotsym] = (Elf_Addr)
 		    (def->st_value + defobj->relocbase);
@@ -82,8 +82,8 @@ _rtld_setup_pltgot(obj)
 				obj->symtabno - obj->gotsym - i - 1, 
 				sym, sym->st_name + obj->strtab, *got));
 
-		def = _rtld_find_symdef(ELF_R_INFO(obj->symtabno - i - 1, 0),
-		    obj, &defobj, true);
+		def = _rtld_find_symdef(obj->symtabno - i - 1, obj, &defobj,
+		    true);
 		if (def == NULL)
 			_rtld_error(
 	    "%s: Undefined PLT symbol \"%s\" (section type = %ld, symnum = %ld)",
@@ -143,8 +143,10 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 		Elf_Addr        *where;
 		const Elf_Sym   *def;
 		const Obj_Entry *defobj;
+		unsigned long	 symnum;
 
 		where = (Elf_Addr *)(obj->relocbase + rel->r_offset);
+		symnum = ELF_R_SYM(rel->r_info);
 
 		switch (ELF_R_TYPE(rel->r_info)) {
 		case R_TYPE(NONE):
@@ -152,7 +154,7 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 
 		case R_TYPE(REL32):
 			/* 32-bit PC-relative reference */
-			def = obj->symtab + ELF_R_SYM(rel->r_info);
+			def = obj->symtab + symnum;
 
 			if (ELF_ST_BIND(def->st_info) == STB_LOCAL &&
 			  (ELF_ST_TYPE(def->st_info) == STT_SECTION ||
@@ -188,8 +190,8 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 				    (void *)*where, obj->path));
 			} else {
 				/* XXX maybe do something re: bootstrapping? */
-				def = _rtld_find_symdef(rel->r_info, obj,
-				    &defobj, false);
+				def = _rtld_find_symdef(symnum, obj, &defobj,
+				    false);
 				if (def == NULL)
 					return -1;
 				*where += (Elf_Addr)(defobj->relocbase +
@@ -201,14 +203,11 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 			break;
 
 		default:
-			def = _rtld_find_symdef(rel->r_info, obj, &defobj,
-			    true);
 			rdbg(dodebug, ("sym = %lu, type = %lu, offset = %p, "
 			    "contents = %p, symbol = %s",
-			    (u_long)ELF_R_SYM(rel->r_info),
-			    (u_long)ELF_R_TYPE(rel->r_info),
+			    symnum, (u_long)ELF_R_TYPE(rel->r_info),
 			    (void *)rel->r_offset, (void *)*where,
-			    def ? defobj->strtab + def->st_name : "??"));
+			    obj->strtab + obj->symtab[symnum].st_name));
 			_rtld_error("%s: Unsupported relocation type %ld "
 			    "in non-PLT relocations\n",
 			    obj->path, (u_long) ELF_R_TYPE(rel->r_info));
