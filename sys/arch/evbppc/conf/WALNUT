@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.5 2003/09/25 18:57:55 matt Exp $
+#	$NetBSD: WALNUT,v 1.6 2003/10/06 16:04:15 scw Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -221,8 +221,8 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 pbus*	at plb?				# off-chip Peripheral BUS
 
-dsrtc0	at pbus? addr ?			# RTC
-todclock0 at dsrtc?			# time-of-day device via rtc device
+ds1743rtc0	at pbus? addr ?			# RTC
+todclock0 at ds1743rtc?			# time-of-day device via rtc device
 
 #pckbc0	at pbus?
 #pckbd*	at pckbc?

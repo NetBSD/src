@@ -1,4 +1,4 @@
-#	$NetBSD: files.walnut,v 1.3 2003/07/25 11:44:18 scw Exp $
+#	$NetBSD: files.walnut,v 1.4 2003/10/06 16:04:15 scw Exp $
 #
 # walnut-specific configuration info
 
@@ -50,9 +50,9 @@ device	todclock
 attach	todclock at todservice
 file	arch/evbppc/walnut/dev/todclock.c	todclock	needs-count
 
-device	dsrtc: todservice
-attach	dsrtc at pbus
-file	arch/evbppc/walnut/dev/ds1743.c		dsrtc
+device	ds1743rtc: todservice
+attach	ds1743rtc at pbus
+file	arch/evbppc/walnut/dev/ds1743.c		ds1743rtc
 
 include "dev/pckbc/files.pckbc"
 attach	pckbc at pbus with pckbc_pbus
