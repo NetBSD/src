@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.37.4.5 2000/10/17 19:50:27 tv Exp $	*/
+/*	$NetBSD: file.c,v 1.37.4.6 2000/12/15 04:07:35 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.37.4.5 2000/10/17 19:50:27 tv Exp $");
+__RCSID("$NetBSD: file.c,v 1.37.4.6 2000/12/15 04:07:35 he Exp $");
 #endif
 #endif
 
@@ -230,11 +230,10 @@ fileURLFilename(char *fname, char *where, int max)
 }
 
 /*
- * Try and fetch a file by URL, returning the directory name for where
- * it's unpacked, if successful.
+ * Wrapper routine for fileGetURL to iterate over several "sfx"s
  */
-char   *
-fileGetURL(char *base, char *spec)
+static char   *
+fileGet1URL(char *base, char *spec, char *sfx)
 {
 	char    host[MAXHOSTNAMELEN], file[FILENAME_MAX];
 	char   *cp, *rp;
@@ -264,14 +263,14 @@ fileGetURL(char *base, char *spec)
 				*(cp + 1) = '\0';
 				strcat(cp, "All/");
 				strcat(cp, spec);
-				strcat(cp, ".tgz");
+				strcat(cp, sfx);
 			} else
 				return NULL;
 		} else {
 			/* Otherwise, we've been given an environment variable hinting at the right location from sysinstall */
 			strcpy(fname, hint);
 			strcat(fname, spec);
-			strcat(fname, ".tgz");
+			strcat(fname, sfx);
 		}
 	} else
 		strcpy(fname, spec);
@@ -306,6 +305,22 @@ fileGetURL(char *base, char *spec)
 		printf("Error on unpackURL('%s', '%s')\n", fname, pen);
 		return NULL;
 	}
+	return rp;
+}
+
+/*
+ * Try and fetch a file by URL, returning the directory name for where
+ * it's unpacked, if successful.
+ */
+char   *
+fileGetURL(char *base, char *spec)
+{
+	char *rp;
+	rp = fileGet1URL(base, spec, ".tbz");
+	if (rp == NULL) {
+		rp = fileGet1URL(base, spec, ".tgz");
+	}
+
 	return rp;
 }
 
@@ -349,7 +364,7 @@ fileFindByPath(char *base, char *fname)
 			*(cp + 1) = '\0';
 			strcat(cp, "All/");
 			strcat(cp, fname);
-			strcat(cp, ".tgz");
+			strcat(cp, ".t[bg]z");
 
 			if (ispkgpattern(tmp)) {
 				if (IS_URL(tmp)) {
@@ -411,12 +426,12 @@ fileFindByPath(char *base, char *fname)
 		if (Verbose)
 			printf("trying PKG_PATH %s\n", cp2?cp2:cp);
 
-		if (strstr(fname, ".tgz")) {
-			/* There's already a ".tgz" present, probably typed on the command line */
+		if (strstr(fname, ".tgz") || strstr(fname, ".tbz") || strstr(fname, ".t[bg]z")) {
+			/* There's already a ".t[bg]z" present, probably typed on the command line */
 			(void) snprintf(tmp, sizeof(tmp), "%s/%s", cp2 ? cp2 : cp, fname);
 		} else {
-			/* Try this component, and tack on a ".tgz" */
-		(void) snprintf(tmp, sizeof(tmp), "%s/%s.tgz", cp2 ? cp2 : cp, fname);
+			/* Try this component, and tack on a ".t[bg]z" */
+			(void) snprintf(tmp, sizeof(tmp), "%s/%s.t[bg]z", cp2 ? cp2 : cp, fname);
 		}
 		if (IS_URL(tmp)) {
 			char url[FILENAME_MAX];
@@ -436,15 +451,19 @@ fileFindByPath(char *base, char *fname)
 			}
 
 			/* Second chance - maybe just a package name was given, without
-			 * a version number. Remove the ".tgz" we tacked on above, and
+			 * a version number. Remove the ".t*z" we tacked on above, and
 			 * re-add it with a "-[0-9]*" before. Then see if this matches
 			 * something. See also perform.c.
 			 */
 			{
 				char *s;
-				s=strstr(tmp, ".tgz");
-				*s = '\0';
-				snprintf(url, FILENAME_MAX, "%s-[0-9]*.tgz", tmp);
+
+				if ((s = strstr(tmp, ".tgz")) ||
+				    (s = strstr(tmp, ".tgz")) ||
+				    (s = strstr(tmp, ".t[bg]z"))) {
+					*s = '\0';
+				}
+				snprintf(url, FILENAME_MAX, "%s-[0-9]*.t[bg]z", tmp);
 				rc = expandURL(tmp, url);
 				if (rc >= 0) {
 					if (Verbose)
