@@ -1,4 +1,4 @@
-/*	$NetBSD: __strsignal.c,v 1.21 2002/03/20 01:43:55 christos Exp $	*/
+/*	$NetBSD: __strsignal.c,v 1.22 2002/11/11 01:12:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: __strsignal.c,v 1.21 2002/03/20 01:43:55 christos Exp $");
+__RCSID("$NetBSD: __strsignal.c,v 1.22 2002/11/11 01:12:04 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -77,7 +77,7 @@ __strsignal(num, buf, buflen)
 	_DIAGASSERT(buf != NULL);
 
 	signum = num;				/* convert to unsigned */
-	if (signum < sys_nsig) {
+	if (signum < (unsigned int) sys_nsig) {
 #ifdef NLS
 		(void)strncpy(buf, catgets(catd, 2, (int)signum,
 		    sys_siglist[signum]), NL_TEXTMAX); 

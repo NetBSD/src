@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.7 2000/07/07 08:03:38 itohy Exp $	*/
+/*	$NetBSD: base64.c,v 1.8 2002/11/11 01:15:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: base64.c,v 1.7 2000/07/07 08:03:38 itohy Exp $");
+__RCSID("$NetBSD: base64.c,v 1.8 2002/11/11 01:15:17 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -145,7 +145,7 @@ b64_ntop(src, srclength, target, targsize)
 	size_t datalength = 0;
 	u_char input[3];
 	u_char output[4];
-	int i;
+	size_t i;
 
 	_DIAGASSERT(src != NULL);
 	_DIAGASSERT(target != NULL);
@@ -219,7 +219,8 @@ b64_pton(src, target, targsize)
 	u_char *target;
 	size_t targsize;
 {
-	int tarindex, state, ch;
+	size_t tarindex;
+	int state, ch;
 	char *pos;
 
 	_DIAGASSERT(src != NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.4 2002/07/02 17:10:19 itojun Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.5 2002/11/11 01:13:07 thorpej Exp $	*/
 /*	$OpenBSD: arc4random.c,v 1.6 2001/06/05 05:05:38 pvalchev Exp $	*/
 
 /*
@@ -105,7 +105,8 @@ arc4_stir(as)
 	}
 #ifdef KERN_URND
 	else {
-		int i, mib[2];
+		int mib[2];
+		u_int i;
 		size_t len;
 
 		/* Device could not be opened, we might be chrooted, take
@@ -114,7 +115,7 @@ arc4_stir(as)
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_URND;
 
-		for (i = 0; i < sizeof(rdat.rnd) / sizeof(u_int); i ++) {
+		for (i = 0; i < sizeof(rdat.rnd) / sizeof(u_int); i++) {
 			len = sizeof(u_int);
 			if (sysctl(mib, 2, &rdat.rnd[i], &len, NULL, 0) == -1)
 				break;
