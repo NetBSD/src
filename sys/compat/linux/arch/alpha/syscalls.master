@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.19.4.1 2001/03/30 21:33:21 he Exp $
+	$NetBSD: syscalls.master,v 1.19.4.2 2001/05/01 08:54:42 he Exp $
 ;
 ; XXX XAX lib/libc/sys/reboot.2 needs updating
 ;
@@ -82,7 +82,7 @@
 #include <compat/linux/linux_syscallargs.h>
 
 
-0	NOARGS		{ int sys_nosys(void); } syscall
+0	NOARGS		{ int linux_sys_nosys(void); } syscall
 1	NOARGS		{ int sys_exit(int rval); }
 2	NOARGS		{ int sys_fork(void); }
 3	NOARGS		{ int sys_read(int fd, void *buf, size_t nbyte); }
