@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10 1995/03/26 20:39:07 jtc Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11 1996/02/05 01:53:50 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -89,7 +89,10 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 #ifdef _KERNEL
 __BEGIN_DECLS
 void		*pmap_bootstrap_alloc __P((int));
+#if 0
+/* Does not belong here! */
 void		 pmap_bootstrap( /* machine dependent */ );
+#endif
 void		 pmap_change_wiring __P((pmap_t, vm_offset_t, boolean_t));
 void		 pmap_clear_modify __P((vm_offset_t pa));
 void		 pmap_clear_reference __P((vm_offset_t pa));
@@ -124,12 +127,11 @@ void		 pmap_update __P((void));
 void		 pmap_zero_page __P((vm_offset_t));
 
 #ifdef MACHINE_NONCONTIG
-u_int		 pmap_free_pages __P(());
-void		 pmap_init __P(());
-boolean_t	 pmap_next_page __P(());
-void		 pmap_startup __P(());
-vm_offset_t	 pmap_steal_memory __P(());
-void		 pmap_virtual_space __P(());
+u_int		 pmap_free_pages __P((void));
+boolean_t	 pmap_next_page __P((vm_offset_t *));
+void		 pmap_startup __P((vm_offset_t *, vm_offset_t *));
+vm_offset_t	 pmap_steal_memory __P((vm_size_t));
+void		 pmap_virtual_space __P((vm_offset_t *, vm_offset_t *));
 #endif
 __END_DECLS
 #endif
