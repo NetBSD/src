@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.16 2000/06/09 09:57:29 bouyer Exp $	*/
+/*	$NetBSD: statd.c,v 1.17 2000/06/09 14:02:13 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.16 2000/06/09 09:57:29 bouyer Exp $");
+__RCSID("$NetBSD: statd.c,v 1.17 2000/06/09 14:02:13 fvdl Exp $");
 #endif
 
 /* main() function for status monitor daemon.  Some of the code in this	*/
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: statd.c,v 1.16 2000/06/09 09:57:29 bouyer Exp $");
 #include <unistd.h>
 #include <util.h>
 #include <db.h>
+#include <netconfig.h>
 
 #include <rpc/rpc.h>
 
@@ -96,7 +97,6 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	SVCXPRT *transp;
 	int ch;
 
 	while ((ch = getopt(argc, argv, "d")) != (-1)) {
@@ -111,26 +111,17 @@ main(argc, argv)
 			/* NOTREACHED */
 		}
 	}
-	(void)pmap_unset(SM_PROG, SM_VERS);
+	(void)rpcb_unset(SM_PROG, SM_VERS, NULL);
 
-	transp = svcudp_create(RPC_ANYSOCK);
-	if (transp == NULL) {
+	if (!svc_create(sm_prog_1, SM_PROG, SM_VERS, "udp")) {
 		errx(1, "cannot create udp service.");
 		/* NOTREACHED */
 	}
-	if (!svc_register(transp, SM_PROG, SM_VERS, sm_prog_1, IPPROTO_UDP)) {
-		errx(1, "unable to register (SM_PROG, SM_VERS, udp).");
+	if (!svc_create(sm_prog_1, SM_PROG, SM_VERS, "tcp")) {
+		errx(1, "cannot create udp service.");
 		/* NOTREACHED */
 	}
-	transp = svctcp_create(RPC_ANYSOCK, 0, 0);
-	if (transp == NULL) {
-		errx(1, "cannot create tcp service.");
-		/* NOTREACHED */
-	}
-	if (!svc_register(transp, SM_PROG, SM_VERS, sm_prog_1, IPPROTO_TCP)) {
-		errx(1, "unable to register (SM_PROG, SM_VERS, tcp).");
-		/* NOTREACHED */
-	}
+
 	init_file("/var/db/statd.status");
 
 	/*

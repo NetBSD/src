@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.1 2000/06/07 14:34:40 bouyer Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.2 2000/06/09 14:00:53 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -166,7 +166,7 @@ getlock(lckarg, rqstp, flags)
 		    lckarg->alock.fh.n_len, (int)sizeof(fhandle_t));
 	}
 	memcpy(&newfl->filehandle, lckarg->alock.fh.n_bytes, sizeof(fhandle_t));
-	newfl->addr = (struct sockaddr *)svc_getcaller(rqstp->rq_xprt);
+	newfl->addr = (struct sockaddr *)svc_getrpccaller(rqstp->rq_xprt)->buf;
 	newfl->client.exclusive = lckarg->exclusive;
 	newfl->client.svid = lckarg->alock.svid;
 	newfl->client.oh.n_bytes = malloc(lckarg->alock.oh.n_len);
@@ -524,7 +524,7 @@ send_granted(fl, opcode)
 	static struct nlm_res retval;
 	static struct nlm4_res retval4;
 
-	cli = get_client((struct sockaddr_in *)fl->addr,
+	cli = get_client(fl->addr,
 	    (fl->flags & LOCK_V4) ? NLM_VERS4 : NLM_VERS);
 	if (cli == NULL) {
 		syslog(LOG_NOTICE, "failed to get CLIENT for %s",

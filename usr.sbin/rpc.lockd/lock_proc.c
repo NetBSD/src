@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_proc.c,v 1.4 2000/06/07 14:34:40 bouyer Exp $	*/
+/*	$NetBSD: lock_proc.c,v 1.5 2000/06/09 14:00:52 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lock_proc.c,v 1.4 2000/06/07 14:34:40 bouyer Exp $");
+__RCSID("$NetBSD: lock_proc.c,v 1.5 2000/06/09 14:00:52 fvdl Exp $");
 #endif
 
 #include <sys/param.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: lock_proc.c,v 1.4 2000/06/07 14:34:40 bouyer Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <syslog.h>
+#include <netconfig.h>
 
 #include <rpc/rpc.h>
 #include <rpcsvc/sm_inter.h>
@@ -61,6 +62,7 @@ __RCSID("$NetBSD: lock_proc.c,v 1.4 2000/06/07 14:34:40 bouyer Exp $");
 #define	CLIENT_CACHE_LIFETIME	120	/* In seconds */
 
 static void	log_from_addr __P((char *, struct svc_req *));
+static int	addrcmp __P((struct sockaddr *, struct sockaddr *));
 
 /* log_from_addr ----------------------------------------------------------- */
 /*
@@ -74,17 +76,13 @@ log_from_addr(fun_name, req)
 	char *fun_name;
 	struct svc_req *req;
 {
-	struct sockaddr_in *addr;
-	struct hostent *host;
-	char hostname_buf[40];
+	struct sockaddr *addr;
+	char hostname_buf[NI_MAXHOST];
 
-	addr = svc_getcaller(req->rq_xprt);
-	host = gethostbyaddr((char *)&(addr->sin_addr), addr->sin_len, AF_INET);
-	if (host) {
-		strncpy(hostname_buf, host->h_name, sizeof(hostname_buf));
-		hostname_buf[sizeof(hostname_buf) - 1] = '\0';
-	} else		/* No hostname available - print raw address */
-		strcpy(hostname_buf, inet_ntoa(addr->sin_addr));
+	addr = svc_getrpccaller(req->rq_xprt)->buf;
+	if (getnameinfo(addr , addr->sa_len, hostname_buf, sizeof hostname_buf,
+	    NULL, 0, 0) != 0)
+		return;
 
 	syslog(LOG_DEBUG, "%s from %s", fun_name, hostname_buf);
 }
@@ -120,17 +118,49 @@ log_from_addr(fun_name, req)
  */
 static CLIENT *clnt_cache_ptr[CLIENT_CACHE_SIZE];
 static long clnt_cache_time[CLIENT_CACHE_SIZE];	/* time entry created */
-static struct in_addr clnt_cache_addr[CLIENT_CACHE_SIZE];
+static struct sockaddr_storage clnt_cache_addr[CLIENT_CACHE_SIZE];
 static int clnt_cache_next_to_use = 0;
+
+static int
+addrcmp(sa1, sa2)
+	struct sockaddr *sa1;
+	struct sockaddr *sa2;
+{
+	int len;
+	void *p1, *p2;
+
+	if (sa1->sa_family != sa2->sa_family)
+		return -1;
+
+	switch (sa1->sa_family) {
+	case AF_INET:
+		p1 = &((struct sockaddr_in *)sa1)->sin_addr;
+		p2 = &((struct sockaddr_in *)sa2)->sin_addr;
+		len = 4;
+		break;
+	case AF_INET6:
+		p1 = &((struct sockaddr_in6 *)sa1)->sin6_addr;
+		p2 = &((struct sockaddr_in6 *)sa2)->sin6_addr;
+		len = 16;
+		break;
+	default:
+		return -1;
+	}
+
+	return memcmp(p1, p2, len);
+}
 
 CLIENT *
 get_client(host_addr, vers)
-	struct sockaddr_in *host_addr;
-	u_long vers;
+	struct sockaddr *host_addr;
+	rpcvers_t vers;
 {
 	CLIENT *client;
 	struct timeval retry_time, time_now;
-	int i, sock_no;
+	int i;
+	char *netid;
+	struct netconfig *nconf;
+	char host[NI_MAXHOST];
 
 	gettimeofday(&time_now, NULL);
 
@@ -150,8 +180,8 @@ get_client(host_addr, vers)
 			clnt_cache_ptr[i] = NULL;
 			client = NULL;
 		}
-		if (client && !memcmp(&clnt_cache_addr[i],
-		    &host_addr->sin_addr, sizeof(struct in_addr))) {
+		if (client && !addrcmp((struct sockaddr *)&clnt_cache_addr[i],
+		    host_addr)) {
 			/* Found it! */
 			if (debug_level > 3)
 				syslog(LOG_DEBUG, "Found CLIENT* in cache");
@@ -165,28 +195,47 @@ get_client(host_addr, vers)
 		clnt_cache_ptr[clnt_cache_next_to_use] = NULL;
 	}
 
-	/* Create the new client handle */
-	sock_no = RPC_ANYSOCK;
-	retry_time.tv_sec = 5;
-	retry_time.tv_usec = 0;
-	host_addr->sin_port = 0; /* Force consultation with portmapper */
+	/*
+	 * Need a host string for clnt_tp_create. Use NI_NUMERICHOST
+	 * to avoid DNS lookups.
+	 */
+	if (getnameinfo(host_addr, host_addr->sa_len, host, sizeof host,
+	    NULL, 0, NI_NUMERICHOST) != 0) {
+		syslog(LOG_ERR, "unable to get name string for caller");
+		return NULL;
+	}
+
 #if 1
-	client = clntudp_create(host_addr, NLM_PROG, vers,
-	    retry_time, &sock_no);
+	if (host_addr->sa_family == AF_INET6)
+		netid = "udp6";
+	else
+		netid = "udp";
 #else 
-	client = clnttcp_create(host_addr, NLM_PROG, vers,
-	    &sock_no, 0, 0);
+	if (host_addr->sa_family == AF_INET6)
+		netid = "tcp6";
+	else
+		netid = "tcp";
 #endif
+	nconf = getnetconfigent(netid);
+	if (nconf == NULL) {
+		syslog(LOG_ERR, "could not get netconfig info for '%s': "
+				"no /etc/netconfig file?", netid);
+		return NULL;
+	}
+
+	client = clnt_tp_create(host, NLM_PROG, vers, nconf);
+	freenetconfigent(nconf);
+
 	if (!client) {
 		syslog(LOG_ERR, clnt_spcreateerror("clntudp_create"));
-		syslog(LOG_ERR, "Unable to return result to %s",
-		    inet_ntoa(host_addr->sin_addr));
+		syslog(LOG_ERR, "Unable to return result to %s", host);
 		return NULL;
 	}
 
 	/* Success - update the cache entry */
 	clnt_cache_ptr[clnt_cache_next_to_use] = client;
-	clnt_cache_addr[clnt_cache_next_to_use] = host_addr->sin_addr;
+	memcpy(&clnt_cache_addr[clnt_cache_next_to_use], host_addr,
+	    host_addr->sa_len);
 	clnt_cache_time[clnt_cache_next_to_use] = time_now.tv_sec;
 	if (++clnt_cache_next_to_use > CLIENT_CACHE_SIZE)
 		clnt_cache_next_to_use = 0;
@@ -201,8 +250,7 @@ get_client(host_addr, vers)
 	clnt_control(client, CLSET_TIMEOUT, (char *)&retry_time);
 
 	if (debug_level > 3)
-		syslog(LOG_DEBUG, "Created CLIENT* for %s",
-		    inet_ntoa(host_addr->sin_addr));
+		syslog(LOG_DEBUG, "Created CLIENT* for %s", host);
 	return client;
 }
 
@@ -226,7 +274,7 @@ transmit_result(opcode, result, addr)
 	struct timeval timeo;
 	int success;
 
-	if ((cli = get_client((struct sockaddr_in *)addr, NLM_VERS)) != NULL) {
+	if ((cli = get_client(addr, NLM_VERS)) != NULL) {
 		timeo.tv_sec = 0; /* No timeout - not expecting response */
 		timeo.tv_usec = 0;
 
@@ -257,7 +305,7 @@ transmit4_result(opcode, result, addr)
 	struct timeval timeo;
 	int success;
 
-	if ((cli = get_client((struct sockaddr_in *)addr, NLM_VERS4)) != NULL) {
+	if ((cli = get_client(addr, NLM_VERS4)) != NULL) {
 		timeo.tv_sec = 0; /* No timeout - not expecting response */
 		timeo.tv_usec = 0;
 
@@ -357,7 +405,7 @@ nlm_test_msg_1_svc(arg, rqstp)
 {
 	nlm_testres res;
 	static char dummy;
-	struct sockaddr_in *addr;
+	struct sockaddr *addr;
 	CLIENT *cli;
 	int success;
 	struct timeval timeo;
@@ -386,7 +434,7 @@ nlm_test_msg_1_svc(arg, rqstp)
 	 * nlm_test has different result type to the other operations, so
 	 * can't use transmit_result() in this case
 	 */
-	addr = svc_getcaller(rqstp->rq_xprt);
+	addr = svc_getrpccaller(rqstp->rq_xprt)->buf;
 	if ((cli = get_client(addr, NLM_VERS)) != NULL) {
 		timeo.tv_sec = 0; /* No timeout - not expecting response */
 		timeo.tv_usec = 0;
@@ -832,7 +880,7 @@ nlm4_test_msg_4_svc(arg, rqstp)
 {
 	nlm4_testres res;
 	static char dummy;
-	struct sockaddr_in *addr;
+	struct sockaddr *addr;
 	CLIENT *cli;
 	int success;
 	struct timeval timeo;
@@ -856,7 +904,7 @@ nlm4_test_msg_4_svc(arg, rqstp)
 	 * nlm_test has different result type to the other operations, so
 	 * can't use transmit4_result() in this case
 	 */
-	addr = svc_getcaller(rqstp->rq_xprt);
+	addr = svc_getrpccaller(rqstp->rq_xprt)->buf;
 	if ((cli = get_client(addr, NLM_VERS4)) != NULL) {
 		timeo.tv_sec = 0; /* No timeout - not expecting response */
 		timeo.tv_usec = 0;
@@ -1049,7 +1097,7 @@ nlm4_granted_msg_4_svc(arg, rqstp)
 	res.cookie = arg->cookie;
 	res.stat.stat = nlm4_granted;
 	transmit4_result(NLM4_GRANTED_RES, &res,
-	    (struct sockaddr *)svc_getcaller(rqstp->rq_xprt));
+	    (struct sockaddr *)svc_getrpccaller(rqstp->rq_xprt)->buf);
 	return (NULL);
 }
 
