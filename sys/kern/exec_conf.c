@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.60 2001/11/12 15:25:02 lukem Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.61 2001/11/26 21:43:01 manu Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,12 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.60 2001/11/12 15:25:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.61 2001/11/26 21:43:01 manu Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
 #include "opt_compat_linux.h"
 #include "opt_compat_ibcs2.h"
+#include "opt_compat_irix.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_hpux.h"
 #include "opt_compat_m68k4k.h"
@@ -126,6 +127,10 @@ int ELF64NAME2(netbsd,probe)(struct proc *, struct exec_package *,
 
 #ifdef COMPAT_MACH
 #include <compat/mach/mach_exec.h>
+#endif
+
+#ifdef COMPAT_IRIX
+#include <compat/irix/irix_exec.h>
 #endif
 
 #ifdef COMPAT_NETBSD32
@@ -243,6 +248,13 @@ const struct execsw execsw_builtin[] = {
 	  &emul_mach, EXECSW_PRIO_ANY,
 	  MAXPATHLEN + 1,
 	  exec_mach_copyargs, NULL },	/* Mach 32bit MACH-O bins */
+#endif
+#ifdef COMPAT_IRIX
+	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,
+	  { ELF32NAME2(irix,probe) },
+	  &emul_irix, EXECSW_PRIO_ANY,
+	  IRIX_AUX_ARGSIZ,
+	  irix_elf32_copyargs, NULL }, /* IRIX 6.5 ELF n32 bins */
 #endif
 #ifdef COMPAT_SVR4_32
 	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,
