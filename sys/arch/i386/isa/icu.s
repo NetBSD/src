@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.17 1993/07/11 06:09:48 cgd Exp $
+ *	$Id: icu.s,v 1.18 1993/07/11 14:03:53 mycroft Exp $
  */
 
 /*
@@ -253,7 +253,7 @@ test_resched:
 	GENSPL(bio, _biomask, 12)
 	GENSPL(clock, $HIGHMASK, 13)	/* splclock == splhigh ex for count */
 	GENSPL(high, $HIGHMASK, 14)
-	GENSPL(imp, _netmask, 15)	/* splimp == splnet except for count */
+	GENSPL(imp, _impmask, 15)
 	GENSPL(net, _netmask, 16)
 	GENSPL(softclock, $SOFTCLOCKMASK, 17)
 	GENSPL(tty, _ttymask, 18)
