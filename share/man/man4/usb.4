@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.23 2000/01/16 11:07:40 augustss Exp $
+.\" $NetBSD: usb.4,v 1.24 2000/03/30 17:53:56 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -139,6 +139,8 @@ driver for mass storage devices, such as disks.
 driver for communication devices that use the Abstract Control Model.
 .It ums
 mouse driver
+.It uvisor
+Handspring Visor driver
 .El
 
 .Sh INTRODUCTION TO USB
@@ -378,6 +380,7 @@ specifications can be found at
 .Xr ulpt 4 ,
 .Xr umass 4 ,
 .Xr ums 4 ,
+.Xr uvisor 4 ,
 .Xr usb 3 ,
 .Xr usbdevs 8
 .Sh HISTORY
