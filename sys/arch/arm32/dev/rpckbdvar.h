@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbdvar.h,v 1.1 2001/03/20 18:20:54 reinoud Exp $	*/
+/*	$NetBSD: rpckbdvar.h,v 1.2 2001/05/03 23:05:48 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,9 +66,8 @@ struct rpckbd_softc {
 	int sc_ledstate;
 
 	struct device *sc_wskbddev;
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-	int rawkbd
-#endif
+
+	int rawkbd;
 };
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd.c,v 1.2 2001/04/02 12:34:34 reinoud Exp $	*/
+/*	$NetBSD: rpckbd.c,v 1.3 2001/05/03 23:05:48 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,6 +56,9 @@
 #include <machine/bus.h>
 #include <machine/conf.h>
 
+#include "opt_pckbd_layout.h"
+#include "opt_wsdisplay_compat.h"
+
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
@@ -64,8 +67,6 @@
 #include <arm32/dev/rpckbdvar.h>
 #include <arm32/dev/wskbdmap_mfii.h>
 #include <dev/cons.h>
-
-#include "opt_pckbd_layout.h"
 
 #include "beep.h"
 
@@ -170,7 +171,7 @@ int
 rpckbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct rpckbd_softc *sc = (struct rpckbd_softc *)v;
-	int res;
+	int res, new_ledstate;;
 
 	switch (cmd) {
 	    case WSKBDIO_GTYPE:
@@ -178,7 +179,13 @@ rpckbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return 0;
 	    case WSKBDIO_SETLEDS: {
 		/* same as rpckbd_set_leds */
-		sc->sc_ledstate = rpckbd_led_encode(*(int *)data);
+
+		/* check if we're allready in this state */
+		new_ledstate = rpckbd_led_encode(*(int *)data);
+		if (new_ledstate == sc->sc_ledstate)
+			return (0);
+
+		sc->sc_ledstate = new_ledstate;
 		res = kbdcmd(sc, KBC_SETLEDS, 0);
 		res = kbdcmd(sc, sc->sc_ledstate, 0);
 		if (res == KBR_ACK)
@@ -318,9 +325,16 @@ void
 rpckbd_set_leds(void *context, int leds)    
 {
 	struct rpckbd_softc *sc = (struct rpckbd_softc *) context;
-	int res;
+	int res, new_ledstate;
 
-	sc->sc_ledstate = rpckbd_led_encode(leds);
+
+	/* check if we're allready in this state */
+	new_ledstate = rpckbd_led_encode(leds);
+	if (new_ledstate == sc->sc_ledstate)
+		return;
+
+	/* set state */
+	sc->sc_ledstate = new_ledstate;;
         kbdcmd(sc, KBC_SETLEDS, 0);
         res = kbdcmd(sc, sc->sc_ledstate, 0);
 
@@ -342,7 +356,7 @@ rpckbd_intr(void *context)
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	if (sc->rawkbd) {
-		wskbd_rawinput(sc->sc_wskbddev, &data, 1);
+		wskbd_rawinput(sc->sc_wskbddev, (u_char *) &data, 1);
 		return (1);	/* claim interrupt */
 	}
 #endif
