@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/11/17 05:18:20 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2004/01/10 16:28:29 rtr Exp $
 
 .include "../Makefile.serverlib"
 
@@ -11,6 +11,7 @@ LIB=		os
 SRCS=		WaitFor.c access.c connection.c io.c oscolor.c osinit.c \
 		utils.c auth.c mitauth.c secauth.c xdmauth.c xdmcp.c \
 		decompress.c transport.c lbxio.c
+
 
 XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
@@ -28,6 +29,12 @@ CPPFLAGS+=	-DXSERV_t -DTRANS_SERVER \
 		-DHASXDMAUTH \
 		${X11FLAGS.OS_DEFINES} \
 		-DUSE_RGB_TXT
+
+.include "../Makefile.common"
+
+.if ${XSERVER_XFREE86} == "no"
+CPPFLAGS+=	-UDDXTIME
+.endif
 
 CPPFLAGS.WaitFor.c=	${X11FLAGS.EXTENSION}
 CPPFLAGS.access.c=	-DXDMCP -DBSD44SOCKETS -DHAS_GETIFADDRS

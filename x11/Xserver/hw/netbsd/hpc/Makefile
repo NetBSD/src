@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2004/01/03 02:05:49 takemura Exp $
+#	$NetBSD: Makefile,v 1.2 2004/01/10 16:28:29 rtr Exp $
 
 .include "../../../Makefile.serverlib"
 
@@ -9,7 +9,7 @@ LIB=	hpc
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/hpc
 SRCS=	hpc.h xf86Keymap.h atKeynames.h \
 	hpcFB.c hpcIo.c hpcKeymap.c hpcScreen.c \
-	hpcInit.c hpcKbd.c hpcMouse.c hpcColormap.c hpcInEx.c GetTime.c
+	hpcInit.c hpcKbd.c hpcMouse.c hpcColormap.c hpcInEx.c
 
 XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 

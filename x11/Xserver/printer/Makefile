@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/11/17 05:18:20 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2004/01/10 16:28:29 rtr Exp $
 
 .include "../Makefile.serverlib"
 
@@ -35,6 +35,13 @@ BUILDOBJS=		ddxInit.o dpmsstubs.o miinitext.o
 BUILDCPPFLAGS=		-DPRINT_ONLY_SERVER \
 			${X11FLAGS.OS_DEFINES} \
 			${X11FLAGS.EXTENSION}
+
+.include "../Makefile.common"
+
+.if ${XSERVER_XFREE86} == "no"
+BUILDCPPFLAGS+=		-UDDXTIME
+.endif
+
 CPPFLAGS.ddxInit.c=	${BUILDCPPFLAGS}
 CPPFLAGS.dpmsstubs.c=	${BUILDCPPFLAGS} -DXPRINT
 CPPFLAGS.miinitext.c=	${BUILDCPPFLAGS} -DXPRINT -UGLXEXT
