@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.35 1994/07/16 02:26:05 chopps Exp $
+ *	$Id: machdep.c,v 1.36 1994/07/16 19:45:32 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -1383,11 +1383,14 @@ intrhand(sr)
 		}
 		if (ireq & INTF_SOFTINT) {
 			/*
-			 * first call installed callbacks, 
-			 * then clear the softint-bit
+			 * first clear the softint-bit
+			 * then call installed callbacks, 
+			 * this order is dicated by the nature of 
+			 * software interrupts.  The other order
+			 * allows software interrupts to be missed
 			 */
-			call_sicallbacks();
 			custom.intreq = INTF_SOFTINT;
+			call_sicallbacks();
 		}
 		break;
 
