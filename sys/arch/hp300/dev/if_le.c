@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.51 2002/10/02 05:15:52 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.52 2002/10/20 05:54:29 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,41 +75,27 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.51 2002/10/02 05:15:52 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.52 2002/10/20 05:54:29 gmcgarry Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h>
-#include <sys/syslog.h>
-#include <sys/socket.h>
 #include <sys/device.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
-
-#include <machine/autoconf.h>
-#include <machine/cpu.h>
-#include <machine/intr.h>
-
 #include <dev/ic/lancereg.h>
 #include <dev/ic/lancevar.h>
-#include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
 #include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diodevs.h>
 #include <hp300/dev/if_lereg.h>
-#include <hp300/dev/if_levar.h>
 
 #include "opt_useleds.h"
 
@@ -117,13 +103,23 @@ __KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.51 2002/10/02 05:15:52 thorpej Exp $");
 #include <hp300/hp300/leds.h>
 #endif
 
-int	lematch __P((struct device *, struct cfdata *, void *));
-void	leattach __P((struct device *, struct device *, void *));
+struct  le_softc {
+	struct  am7990_softc sc_am7990; /* glue to MI code */
+ 
+	bus_space_tag_t sc_bst; 
+ 
+	bus_space_handle_t sc_bsh0;	/* DIO registers */
+	bus_space_handle_t sc_bsh1;	/* LANCE registers */
+	bus_space_handle_t sc_bsh2;	/* buffer area */
+};    
+
+int	lematch(struct device *, struct cfdata *, void *);
+void	leattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(le, sizeof(struct le_softc),
     lematch, leattach, NULL, NULL);
 
-int	leintr __P((void *));
+int	leintr(void *);
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -137,20 +133,18 @@ int	leintr __P((void *));
 #define hide		static
 #endif
 
-hide void le_copytobuf __P((struct lance_softc *, void *, int, int));
-hide void le_copyfrombuf __P((struct lance_softc *, void *, int, int));
-hide void le_zerobuf __P((struct lance_softc *, int, int));
+hide void le_copytobuf(struct lance_softc *, void *, int, int);
+hide void le_copyfrombuf(struct lance_softc *, void *, int, int);
+hide void le_zerobuf(struct lance_softc *, int, int);
 
 /* offsets for:	   ID,   REGS,    MEM,  NVRAM */
 int	lestd[] = { 0, 0x4000, 0x8000, 0xC008 };
 
-hide void lewrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
-hide u_int16_t lerdcsr __P((struct lance_softc *, u_int16_t));  
+hide void lewrcsr(struct lance_softc *, u_int16_t, u_int16_t);
+hide u_int16_t lerdcsr(struct lance_softc *, u_int16_t);  
 
 hide void
-lewrcsr(sc, port, val)
-	struct lance_softc *sc;
-	u_int16_t port, val;
+lewrcsr(struct lance_softc *sc, u_int16_t port, u_int16_t val)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 	bus_space_tag_t bst = lesc->sc_bst;
@@ -166,9 +160,7 @@ lewrcsr(sc, port, val)
 }
 
 hide u_int16_t
-lerdcsr(sc, port)
-	struct lance_softc *sc;
-	u_int16_t port;
+lerdcsr(struct lance_softc *sc, u_int16_t port)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 	bus_space_tag_t bst = lesc->sc_bst;
@@ -187,10 +179,7 @@ lerdcsr(sc, port)
 }
 
 int
-lematch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+lematch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct dio_attach_args *da = aux;
 
@@ -205,9 +194,7 @@ lematch(parent, match, aux)
  * to accept packets.
  */
 void
-leattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+leattach(struct device *parent, struct device *self, void *aux)
 {
 	struct dio_attach_args *da = aux;
 	struct le_softc *lesc = (struct le_softc *)self;
@@ -282,8 +269,7 @@ leattach(parent, self, aux)
 }
 
 int
-leintr(arg)
-	void *arg;
+leintr(void *arg)
 {
 	struct lance_softc *sc = arg;
 #ifdef USELEDS
@@ -305,10 +291,7 @@ leintr(arg)
 }
 
 hide void
-le_copytobuf(sc, from, boff, len)
-	struct lance_softc *sc;
-	void *from;
-	int boff, len;
+le_copytobuf(struct lance_softc *sc, void *from, int boff, int len)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 
@@ -316,10 +299,7 @@ le_copytobuf(sc, from, boff, len)
 }
 
 hide void
-le_copyfrombuf(sc, to, boff, len)
-	struct lance_softc *sc;
-	void *to;
-	int boff, len;
+le_copyfrombuf(struct lance_softc *sc, void *to, int boff, int len)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 
@@ -327,9 +307,7 @@ le_copyfrombuf(sc, to, boff, len)
 }
 
 hide void
-le_zerobuf(sc, boff, len)
-	struct lance_softc *sc;
-	int boff, len;
+le_zerobuf(struct lance_softc *sc, int boff, int len)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 
