@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.5 1995/02/21 06:33:22 mycroft Exp $	*/
+/*	$NetBSD: exec.c,v 1.6 1995/02/21 06:56:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -36,6 +36,9 @@
 #include <string.h>
 #include <sys/param.h>
 #include <sys/reboot.h>
+#ifndef INSECURE
+#include <sys/stat.h>
+#endif
 #include <a.out.h>
 
 #include "stand.h"
@@ -51,23 +54,35 @@ exec(path, loadaddr, howto)
 	int howto;
 {
 	register int io;
+#ifndef INSECURE
+	struct stat sb;
+#endif
 	struct exec x;
 	int i;
 	register char *addr;
 
 	if (machdep_exec(path, loadaddr, howto) < 0)
-		return(0);
+		return (-1);
 	
 	io = open(path, 0);
 	if (io < 0)
-		return(io);
-	
+		return (-1);
+
+#ifndef INSECURE
+	(void) fstat(io, &sb);
+	if (sb.st_uid || (sb.st_mode & 2)) {
+		printf("non-secure file, will not load\n");
+		close(io);
+		return (-1);
+	}
+#endif
+
 	i = read(io, (char *)&x, sizeof(x));
 	if (i != sizeof(x) ||
 	    N_BADMAG(x)) {
 		printf("exec: %s: Bad format\n", path);
 		errno = ENOEXEC;
-		return(-1);
+		return (-1);
 	}
 
         /* Text */
@@ -118,8 +133,7 @@ exec(path, loadaddr, howto)
 	}
 
 	/* and that many bytes of (debug symbols?) */
-
-	printf("+%d] ", i);
+	printf("+%d]", i);
 
 #define	round_to_size(x) \
 	(((int)(x) + sizeof(int) - 1) & ~(sizeof(int) - 1))
@@ -127,10 +141,10 @@ exec(path, loadaddr, howto)
 #undef round_to_size
 
 	/* and note the end address of all this	*/
-	printf("total=0x%x ", (u_int)addr);
+	printf(" total=0x%x", (u_int)addr);
 
 	x.a_entry += (int)loadaddr;
-	printf(" start 0x%x\n", x.a_entry);
+	printf(" start=0x%x\n", x.a_entry);
 
 #ifdef EXEC_DEBUG
         printf("ssym=0x%x esym=0x%x\n", ssym, esym);
@@ -141,13 +155,13 @@ exec(path, loadaddr, howto)
 	machdep_start((char *)x.a_entry, howto, loadaddr, ssym, esym);
 
 	/* exec failed */
-	printf("exec: %s: Cannot exec\n", path);
+	printf("%s: Cannot exec\n", path);
 	errno = ENOEXEC;
-	return(-1);
+	return (-1);
 
 shread:
 	close(io);
-	printf("exec: %s: Short read\n", path);
+	printf("%s: Short read\n", path);
 	errno = EIO;
-	return(-1);
+	return (-1);
 }
