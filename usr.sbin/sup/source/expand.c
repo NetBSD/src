@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.11 1998/10/14 08:42:21 kim Exp $	*/
+/*	$NetBSD: expand.c,v 1.12 1998/11/02 04:00:24 kim Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -104,7 +104,7 @@ static int execbrc __P((char *, char *));
 static int match __P((char *, char *));
 static int amatch __P((char *, char *));
 static void addone __P((char *, char *));
-static int addpath __P((char));
+static int addpath __P((int));
 static int gethdir __P((char *, int));
 
 int expand(spec, buffer, bufsize)
