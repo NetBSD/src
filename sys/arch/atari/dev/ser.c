@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.15 2002/03/17 19:40:35 atatat Exp $	*/
+/*	$NetBSD: ser.c,v 1.15.6.1 2002/05/30 21:25:19 tv Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -1403,7 +1403,7 @@ serspeed(speed)
 	}
 	return (-1);
 
-#undef	divrnd(n, q)
+#undef	divrnd
 }
 
 /*
