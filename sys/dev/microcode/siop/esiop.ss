@@ -1,4 +1,4 @@
-;	$NetBSD: esiop.ss,v 1.3 2002/04/22 15:55:09 bouyer Exp $
+;	$NetBSD: esiop.ss,v 1.4 2002/04/22 20:45:27 bouyer Exp $
 
 ;
 ; Copyright (c) 2002 Manuel Bouyer.
@@ -86,7 +86,6 @@ ABSOLUTE o_cmd_id	= 4;
 ; SCRATCHE1: last status
 
 ENTRY reselect;
-ENTRY ring_reset;
 ENTRY cmdr0;
 ENTRY cmdr1;
 ENTRY cmdr2;
@@ -128,16 +127,16 @@ led_on2:
 	MOVE SCRATCHC0 | f_c_target to SCRATCHC0; save target
 	CLEAR CARRY;
 	MOVE SCRATCHC1 SHL SFBR;
-	MOVE SFBR SHL DSA0; target * 4
+	MOVE SFBR SHL DSA0; target * 4 in dsa
 	MOVE 0x0 to DSA1;
 	MOVE 0x0 to DSA2;
 	MOVE 0x0 to DSA3;
 ; load DSA for the target table
 load_targtable:
-	MOVE DSA0 + 0x00 to DSA0;
+	MOVE DSA0 + 0x00 to DSA0; host will patch 0x0 with base of table
 	MOVE DSA1 + 0x00 to DSA1 with carry;
 	MOVE DSA2 + 0x00 to DSA2 with carry;
-	MOVE DSA3 + 0x00 to DSA3 with carry;
+	MOVE DSA3 + 0x00 to DSA3 with carry; now dsa -> basetable + target * 4
 	LOAD DSA0, 4, FROM 0; now load DSA for this target
 	SELECT FROM target_id, REL(nextisn);
 nextisn:
@@ -146,7 +145,7 @@ nextisn:
 	MOVE SCRATCHC0 | f_c_lun to SCRATCHC0; save LUN
 	CLEAR ACK and CARRY;
 	MOVE SCRATCHC2 SHL SFBR; 
-	MOVE SFBR SHL SFBR; target * 4
+	MOVE SFBR SHL SFBR; lun * 4
 	MOVE DSA0 + SFBR TO DSA0;
 	MOVE DSA1 + 0x0 TO DSA1 with carry;
 	MOVE DSA2 + 0x0 TO DSA2 with carry;
@@ -158,19 +157,22 @@ nextisn:
 	INT int_msgin, IF NOT 0x20; not a simple tag message, let host handle it
 	MOVE 1, abs_msgin2, WHEN MSG_IN; get tag
 	CLEAR ACK;
+	MOVE SFBR to SCRATCHA2;
 	MOVE SFBR to SCRATCHC3;
 	MOVE SCRATCHC0 | f_c_tag to SCRATCHC0; save TAG
 	MOVE 0x0 to SCRATCHA3;
 	CLEAR CARRY;
-	MOVE SCRATCHC3 SHL SFBR;
+	MOVE SCRATCHA2 SHL SCRATCHA2;
 	MOVE SCRATCHA3 SHL SCRATCHA3;
-	MOVE SFBR SHL SCRATCHA2;
-	MOVE SCRATCHA3 SHL SCRATCHA3; TAG * 4 to SCRACHA(2,3)
-	CLEAR CARRY;
+	MOVE SCRATCHA2 SHL SCRATCHA2;
+	MOVE SCRATCHA3 SHL SCRATCHA3; TAG * 4 to SCRATCHA(2,3)
 	MOVE SCRATCHA2 TO SFBR;
 	MOVE DSA0 + SFBR TO DSA0;
+	MOVE DSA1 + 0x00 TO DSA1 with CARRY;
+	MOVE DSA2 + 0x00 TO DSA2 with CARRY;
+	MOVE DSA3 + 0x00 TO DSA3 with CARRY;
 	MOVE SCRATCHA3 TO SFBR;
-	MOVE DSA1 + SFBR TO DSA1 with CARRY;
+	MOVE DSA1 + SFBR TO DSA1;
 	MOVE DSA2 + 0x00 TO DSA2 with CARRY;
 	MOVE DSA3 + 0x00 TO DSA3 with CARRY; SCRACHA(2,3) + DSA to DSA
 	LOAD DSA0, 4, from 0; load DSA for this tag
@@ -197,19 +199,20 @@ script_sched:
 	JUMP REL(ignore_cmd), IF NOT 0x0;
 ; this slot is busy, attempt to exec command
 	SELECT ATN FROM o_cmd_id, REL(reselect);
-; select either succeeded or timed out. In either case update ring pointer.
+; select either succeeded or timed out.
 ; if timed out the STO interrupt will be posted at the first SCSI bus access
-; waiting for a valid phase.
+; waiting for a valid phase, so we have to do it now. If not a MSG_OUT phase,
+; this is an error anyway (we selected with ATN)
+	INT int_err, WHEN NOT MSG_OUT;
 ignore_cmd:
-	MOVE SCRATCHE0 + 1 to SFBR;
-	MOVE SFBR to SCRATCHE0;
-	JUMP REL(ring_reset), IF ncmd_slots;
+	MOVE SCRATCHE0 + 1 to SCRATCHE0;
 	MOVE SCRATCHD0 + 8 to SCRATCHD0; sizeof (esiop_cmd_slot)
 	MOVE SCRATCHD1 + 0 to SCRATCHD1 WITH CARRY;
 	MOVE SCRATCHD2 + 0 to SCRATCHD2 WITH CARRY;
 	MOVE SCRATCHD3 + 0 to SCRATCHD3 WITH CARRY;
-	JUMP REL(handle_cmd);
-ring_reset:
+	MOVE SCRATCHE0 TO SFBR;
+	JUMP REL(handle_cmd), IF  NOT ncmd_slots;
+; reset pointers to beggining of area
 cmdr0:
 	MOVE 0xff to SCRATCHD0; correct value will be patched by driver
 cmdr1:
@@ -234,6 +237,15 @@ led_on1:
 	MOVE 0x00 TO SCRATCHA1;
 	MOVE 0xff TO SCRATCHE1;
 	LOAD SCRATCHC0, 4, FROM tlq_offset;
+;we can now send our identify message
+send_msgout: ; entry point for msgout after a msgin or status phase
+	SET ATN;
+	CLEAR ACK;
+msgout: 
+        MOVE FROM t_msg_out, WHEN MSG_OUT;
+	CLEAR ATN;  
+	JUMP REL(waitphase);
+
 msgin_ack:
 	CLEAR ACK;
 waitphase:
@@ -245,14 +257,6 @@ waitphase:
 	JUMP REL(status), WHEN STATUS;
 	INT int_err;
 
-; entry point for msgout after a msgin or status phase
-send_msgout: 
-	SET ATN;
-	CLEAR ACK;
-msgout: 
-        MOVE FROM t_msg_out, WHEN MSG_OUT;
-	CLEAR ATN;  
-	JUMP REL(waitphase);
 
 handle_sdp:
 	CLEAR ACK;
@@ -357,8 +361,8 @@ get_extmsgdata:
 	MOVE FROM t_ext_msg_data, WHEN MSG_IN;
 	INT int_extmsgdata; 
 
-PROC siop_led_on:
+PROC esiop_led_on:
 	MOVE GPREG & 0xfe TO GPREG;
 
-PROC siop_led_off:
+PROC esiop_led_off:
 	MOVE GPREG | 0x01 TO GPREG;
