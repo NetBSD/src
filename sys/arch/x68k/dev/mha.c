@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.11.4.3 1999/03/14 08:12:18 minoura Exp $	*/
+/*	$NetBSD: mha.c,v 1.11.4.4 1999/03/14 16:50:59 minoura Exp $	*/
 
 /*
  * Copyright (c) 1996 Masaru Oki, Takumi Nakamura and Masanobu Saitoh.  All rights reserved.
@@ -324,6 +324,11 @@ mhaattach(parent, self, aux)
 	intio_intr_establish (ia->ia_intr, "mha", mhaintr, sc);
 
 	mha_init(sc);	/* Init chip and driver */
+
+	printf("\n%s: Resetting SCSI bus... ", self->dv_xname);
+	mha_scsi_reset(sc);	/* XXX: some devices need this. */
+	printf("done\n");
+
 	sc->sc_phase  = BUSFREE_PHASE;
 
 	/*
@@ -381,8 +386,6 @@ mhaattach(parent, self, aux)
 
 	tmpsc = NULL;
 
-	printf("\n");
-
 	config_found(self, &sc->sc_link, scsiprint);
 }
 
@@ -419,7 +422,8 @@ mha_scsi_reset(sc)	/* FINISH? */
 {
 
 	CMR = CMD_SCSI_RESET;	/* SCSI RESET */
-	WAIT;
+	while (!(SSR&SS_IREQUEST))
+	  delay(10);
 }
 
 /*
@@ -475,9 +479,6 @@ mha_init(sc)
 	}
 
 	sc->sc_state = SPC_IDLE;
-#if 0
-	mha_reset(sc);
-#endif
 }
 
 void

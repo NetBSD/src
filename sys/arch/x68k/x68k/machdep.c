@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45.4.3 1999/01/31 05:40:38 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45.4.4 1999/03/14 16:51:02 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,7 @@
  *	@(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
 
+#include "opt_bufcache.h"
 #include "opt_ddb.h"
 #include "opt_inet.h"
 #include "opt_atalk.h"

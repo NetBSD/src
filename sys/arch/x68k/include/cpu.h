@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.13 1998/12/13 15:04:01 minoura Exp $	*/
+/*	$NetBSD: cpu.h,v 1.13.2.1 1999/03/14 16:51:00 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -180,7 +180,7 @@ void	ICPP __P((vaddr_t));
 #endif
 
 /* sys_machdep.c functions */
-int	cachectl __P((int, caddr_t, int));
+int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
 int	dma_cachectl __P((caddr_t, int));
 
 /* vm_machdep.c functions */

@@ -20,7 +20,7 @@
  *	% cc -N -static -Wl,-T,10203040 -o aout2 *.o
  *	% aout2hux -o foo.x aout1 0 aout2 10203040
  *
- *	$NetBSD: aout2hux.c,v 1.1 1998/09/01 19:51:08 itohy Exp $
+ *	$NetBSD: aout2hux.c,v 1.1.6.1 1999/03/14 16:51:00 minoura Exp $
  */
 
 #include <sys/types.h>
@@ -144,7 +144,7 @@ open_aout(fn, hdr)
 	}
 
 	if ((i = AOUT_GET_MAGIC(hdr)) != AOUT_OMAGIC && i != AOUT_NMAGIC) {
-		fprintf(stderr, "%s: not a OMAGIC or NMAGIC a.out\n", fn);
+		fprintf(stderr, "%s: not an OMAGIC or NMAGIC a.out\n", fn);
 		goto out;
 	}
 

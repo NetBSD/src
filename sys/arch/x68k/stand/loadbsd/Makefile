@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/11/20 10:59:22 itohy Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 1999/03/14 16:51:01 minoura Exp $
 
 BASE=	loadbsd
 PROG=	${BASE}.x	# Human68k ".x" executable
@@ -6,7 +6,7 @@ STRIPFLAG=		# not an a.out
 BINMODE=444		# not to be run on NetBSD
 SRCS=	start.S loadbsd.c xprintf.c trampoline.S
 
-NOMAN=	noman
+MKMAN=	no
 BINDIR=		/usr/mdec
 
 .PATH:	${.CURDIR}/../common
