@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two.c,v 1.2 2003/07/14 15:47:21 lukem Exp $	*/
+/*	$NetBSD: vme_two.c,v 1.3 2003/11/26 14:27:15 scw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_two.c,v 1.2 2003/07/14 15:47:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_two.c,v 1.3 2003/11/26 14:27:15 scw Exp $");
 
 #include "vmetwo.h"
 
@@ -235,8 +235,11 @@ vmetwo_master_range(sc, range, vr)
 	reg = vme2_lcsr_read(sc, VME2LCSR_MASTER_ADDRESS(range));
 	start = (reg & VME2_MAST_ADDRESS_START_MASK);
 	start <<= VME2_MAST_ADDRESS_START_SHIFT;
+	vr->vr_locstart = start & ~vr->vr_mask;
 	end = (reg & VME2_MAST_ADDRESS_END_MASK);
 	end <<= VME2_MAST_ADDRESS_END_SHIFT;
+	end |= 0xffffu;
+	end += 1;
 
 	/*
 	 * Local->VMEbus map '4' has optional translation bits, so
@@ -244,8 +247,6 @@ vmetwo_master_range(sc, range, vr)
 	 */
 	if (range == 3 && (reg = vme2_lcsr_read(sc, VME2LCSR_MAST4_TRANS))!=0) {
 		uint32_t addr, sel, len = end - start;
-
-		vr->vr_locstart = start;
 
 		reg = vme2_lcsr_read(sc, VME2LCSR_MAST4_TRANS);
 		reg &= VME2_MAST4_TRANS_SELECT_MASK;
@@ -258,8 +259,7 @@ vmetwo_master_range(sc, range, vr)
 		start = (addr & sel) | (start & (~sel));
 		end = start + len;
 		vr->vr_mask &= len - 1;
-	} else
-		vr->vr_locstart = 0;
+	}
 
 	/* XXX Deal with overlap of onboard RAM address space */
 	/* XXX Then again, 167-Bug warns about this at setup time ... */
@@ -267,8 +267,8 @@ vmetwo_master_range(sc, range, vr)
 	/*
 	 * Fixup the addresses this range corresponds to
 	 */
-	vr->vr_vmestart = start;
-	vr->vr_vmeend = end - 1;
+	vr->vr_vmestart = start & vr->vr_mask;
+	vr->vr_vmeend = (end - 1) & vr->vr_mask;
 }
 
 void
