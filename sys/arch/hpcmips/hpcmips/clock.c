@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.6 2000/02/10 02:06:16 sato Exp $ */
+/* $NetBSD: clock.c,v 1.7 2000/04/24 12:58:32 uch Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2000/02/10 02:06:16 sato Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2000/04/24 12:58:32 uch Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -54,33 +54,11 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2000/02/10 02:06:16 sato Exp $");
 #include <sys/sched.h>
 
 #include <dev/clock_subr.h>
-
 #include <machine/clock_machdep.h>
-
-#ifdef alpha
-#include <machine/autoconf.h>
-#include <machine/cpuconf.h>
-#endif /* alpha */
-
 #include <dev/dec/clockvar.h>
 
-#ifdef alpha
-#include "opt_clock_compat_osf1.h"
-#endif /* alpha */
-
 #define MINYEAR 2000 /* "today" */
-#ifdef CLOCK_COMPAT_OSF1
-/*
- * According to OSF/1's /usr/sys/include/arch/alpha/clock.h,
- * the console adjusts the RTC years 13..19 to 93..99 and
- * 20..40 to 00..20. (historical reasons?)
- * DEC Unix uses an offset to the year to stay outside
- * the dangerous area for the next couple of years.
- */
-#define UNIX_YEAR_OFFSET 52 /* 41=>1993, 12=>2064 */
-#else
 #define UNIX_YEAR_OFFSET 0
-#endif
 
 struct device *clockdev;
 const struct clockfns *clockfns;
@@ -140,22 +118,6 @@ cpu_initclocks()
 		tickfixinterval = hz >> (ftp - 1);
         }
 #endif /* !TX39XX */
-#ifdef alpha
-	/*
-	 * Establish the clock interrupt; it's a special case.
-	 *
-	 * We establish the clock interrupt this late because if
-	 * we do it at clock attach time, we may have never been at
-	 * spl0() since taking over the system.  Some versions of
-	 * PALcode save a clock interrupt, which would get delivered
-	 * when we spl0() in autoconf.c.  If established the clock
-	 * interrupt handler earlier, that interrupt would go to
-	 * hardclock, which would then fall over because p->p_stats
-	 * isn't set at that time.
-	 */
-	platform.clockintr = (void (*) __P((void *))) hardclock;
-	schedhz = 16;
-#endif /* alpha */
 	/*
 	 * Get the clock started.
 	 */
