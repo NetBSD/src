@@ -1,4 +1,4 @@
-/*	$NetBSD: print-udp.c,v 1.13 1999/12/10 05:45:08 itojun Exp $	*/
+/*	$NetBSD: print-udp.c,v 1.14 2000/08/01 17:35:18 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-udp.c,v 1.60 97/07/27 21:58:48 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-udp.c,v 1.13 1999/12/10 05:45:08 itojun Exp $");
+__RCSID("$NetBSD: print-udp.c,v 1.14 2000/08/01 17:35:18 itojun Exp $");
 #endif
 #endif
 
@@ -318,7 +318,7 @@ static int udp_cksum(register const struct ip *ip,
 	/* pseudo-header.. */
 	phu.ph.len = htons(tlen);
 	phu.ph.mbz = 0;
-	phu.ph.proto = ip->ip_p;
+	phu.ph.proto = IPPROTO_UDP;
 	memcpy(&phu.ph.src, &ip->ip_src.s_addr, sizeof(u_int32_t));
 	memcpy(&phu.ph.dst, &ip->ip_dst.s_addr, sizeof(u_int32_t));
 
@@ -341,6 +341,53 @@ static int udp_cksum(register const struct ip *ip,
 	return (sum);
 }
 
+#ifdef INET6
+static int udp6_cksum(const struct ip6_hdr *ip6, const struct udphdr *up,
+	int len)
+{
+	int i, tlen;
+	register const u_int16_t *sp;
+	u_int32_t sum;
+	union {
+		struct {
+			struct in6_addr ph_src;
+			struct in6_addr ph_dst;
+			u_int32_t	ph_len;
+			u_int8_t	ph_zero[3];
+			u_int8_t	ph_nxt;
+		} ph;
+		u_int16_t pa[20];
+	} phu;
+
+	tlen = ntohs(ip6->ip6_plen) + sizeof(struct ip6_hdr) -
+	    ((const char *)up - (const char*)ip6);
+
+	/* pseudo-header */
+	memset(&phu, 0, sizeof(phu));
+	phu.ph.ph_src = ip6->ip6_src;
+	phu.ph.ph_dst = ip6->ip6_dst;
+	phu.ph.ph_len = htonl(tlen);
+	phu.ph.ph_nxt = IPPROTO_UDP;
+
+	sum = 0;
+	for (i = 0; i < sizeof(phu.pa) / sizeof(phu.pa[0]); i++)
+		sum += phu.pa[i];
+
+	sp = (const u_int16_t *)up;
+
+	for (i = 0; i < (tlen & ~1); i += 2)
+		sum += *sp++;
+
+	if (tlen & 1)
+		sum += htons((*(const char *)sp) << 8);
+
+	while (sum > 0xffff)
+		sum = (sum & 0xffff) + (sum >> 16);
+	sum = ~sum & 0xffff;
+
+	return (sum);
+}
+#endif
 
 
 /* XXX probably should use getservbyname() and cache answers */
@@ -532,6 +579,19 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 				(void)printf(" [udp sum ok]");
 		}
 	}
+#ifdef INET6
+	if (ip->ip_v == 6 && ip6->ip6_plen && vflag) {
+		int sum = up->uh_sum;
+		/* for IPv6, UDP checksum is mandatory */
+		if (TTEST2(cp[0], length)) {
+			sum = udp6_cksum(ip6, up, length);
+			if (sum != 0)
+				(void)printf(" [bad udp cksum %x!]", sum);
+			else
+				(void)printf(" [udp sum ok]");
+		}
+	}
+#endif
 
 	if (!qflag) {
 #define ISPORT(p) (dport == (p) || sport == (p))
