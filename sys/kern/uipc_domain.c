@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.32 2000/06/27 17:41:43 mrg Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.33 2000/10/02 04:27:21 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -113,8 +113,10 @@ domaininit()
 #ifdef IPSEC
 	ADDDOMAIN(key);
 #endif
+#ifdef INET
 #if NARP > 0
 	ADDDOMAIN(arp);
+#endif
 #endif
 	ADDDOMAIN(route);
 #endif /* ! lint */
