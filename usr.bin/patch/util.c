@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.14 2003/05/29 00:59:24 kristerw Exp $	*/
+/*	$NetBSD: util.c,v 1.15 2003/05/30 18:14:13 kristerw Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.14 2003/05/29 00:59:24 kristerw Exp $");
+__RCSID("$NetBSD: util.c,v 1.15 2003/05/30 18:14:13 kristerw Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -182,6 +182,19 @@ xmalloc(size_t size)
 }
 
 /*
+ * realloc with result test.
+ */
+void *
+xrealloc(void *ptr, size_t size)
+{
+	void *p;
+
+	if ((p = realloc(ptr, size)) == NULL)
+		fatal("out of memory\n");
+	return p;
+}
+
+/*
  * strdup with result test.
  */
 char *
@@ -192,33 +205,6 @@ xstrdup(const char *s)
 	if ((p = strdup(s)) == NULL)
 		fatal("out of memory\n");
 	return p;
-}
-
-/*
- * Allocate a unique area for a string.
- */
-char *
-savestr(char *s)
-{
-	char *rv;
-	char *t;
-
-	if (!s)
-		s = "Oops";
-	t = s;
-	while (*t++)
-		;
-	rv = malloc(t - s);
-	if (rv == NULL) {
-		if (using_plan_a)
-			out_of_mem = TRUE;
-		else
-			fatal("out of memory\n");
-	} else {
-		t = rv;
-		while ((*t++ = *s++) != '\0');
-	}
-	return rv;
 }
 
 /*

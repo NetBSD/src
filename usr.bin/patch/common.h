@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.12 2003/05/29 00:59:23 kristerw Exp $	*/
+/*	$NetBSD: common.h,v 1.13 2003/05/30 18:14:13 kristerw Exp $	*/
 
 #define DEBUGGING
 
@@ -86,7 +86,6 @@ EXT FILE *rejfp INIT(NULL);		/* reject file pointer */
 EXT int myuid;				/* cache getuid return value */
 
 EXT bool using_plan_a INIT(TRUE);	/* try to keep everything in memory */
-EXT bool out_of_mem INIT(FALSE);	/* ran out of memory in plan a */
 
 #define MAXFILEC 2
 EXT int filec INIT(0);			/* how many file arguments? */
