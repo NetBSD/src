@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.24 2004/03/29 21:43:28 christos Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.25 2004/04/25 05:54:38 atatat Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.24 2004/03/29 21:43:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.25 2004/04/25 05:54:38 atatat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -80,7 +80,7 @@ static int darwin_sysctl_procargs(SYSCTLFN_PROTO);
 static struct sysctlnode darwin_sysctl_root = {
 	.sysctl_flags = SYSCTL_VERSION|CTLFLAG_ROOT|CTLTYPE_NODE,
 	.sysctl_num = 0,
-	.sysctl_size = sizeof(struct sysctlnode),
+	sysc_init_field(_sysctl_size, sizeof(struct sysctlnode)),
 	.sysctl_name = "(darwin_root)",
 };
 
