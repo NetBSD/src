@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.32 2001/02/04 00:35:20 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.33 2001/05/07 14:51:46 kleink Exp $	*/
 /*	$KAME: ping6.c,v 1.121 2001/02/01 16:43:01 itojun Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.32 2001/02/04 00:35:20 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.33 2001/05/07 14:51:46 kleink Exp $");
 #endif
 #endif
 
@@ -330,7 +330,7 @@ main(argc, argv)
 #endif /*IPSEC_POLICY_IPSEC*/
 #endif
 	while ((ch = getopt(argc, argv,
-	    "a:b:c:dfHh:I:i:l:nNp:qRS:s:tvwW" ADDOPTS)) != EOF) {
+	    "a:b:c:dfHh:I:i:l:nNp:qRS:s:tvwW" ADDOPTS)) != -1) {
 #undef ADDOPTS
 		switch (ch) {
 		case 'a':
