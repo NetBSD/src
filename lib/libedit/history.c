@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.21 2002/10/27 20:24:28 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.22 2003/01/21 18:40:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.21 2002/10/27 20:24:28 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.22 2003/01/21 18:40:24 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -80,6 +80,7 @@ struct history {
 	history_efun_t h_enter;	/* Add an element		 */
 	history_efun_t h_add;	/* Append to an element		 */
 };
+
 #define	HNEXT(h, ev)		(*(h)->h_next)((h)->h_ref, ev)
 #define	HFIRST(h, ev)		(*(h)->h_first)((h)->h_ref, ev)
 #define	HPREV(h, ev)		(*(h)->h_prev)((h)->h_ref, ev)
@@ -103,6 +104,8 @@ typedef struct {
 
 private int history_setsize(History *, HistEvent *, int);
 private int history_getsize(History *, HistEvent *);
+private int history_setunique(History *, HistEvent *, int);
+private int history_getunique(History *, HistEvent *);
 private int history_set_fun(History *, History *);
 private int history_load(History *, const char *);
 private int history_save(History *, const char *);
@@ -121,15 +124,17 @@ typedef struct hentry_t {
 	HistEvent ev;		/* What we return		 */
 	struct hentry_t *next;	/* Next entry			 */
 	struct hentry_t *prev;	/* Previous entry		 */
-}        hentry_t;
+} hentry_t;
 
 typedef struct history_t {
-	hentry_t list;		/* Fake list header element	 */
-	hentry_t *cursor;	/* Current element in the list	 */
-	int max;		/* Maximum number of events	 */
-	int cur;		/* Current number of events	 */
+	hentry_t list;		/* Fake list header element	*/
+	hentry_t *cursor;	/* Current element in the list	*/
+	int max;		/* Maximum number of events	*/
+	int cur;		/* Current number of events	*/
 	int eventid;		/* For generation of unique event id	 */
-}         history_t;
+	int flags;		/* History flags		*/
+#define H_UNIQUE	1	/* Store only unique elements	*/
+} history_t;
 
 private int history_def_first(ptr_t, HistEvent *);
 private int history_def_last(ptr_t, HistEvent *);
@@ -144,8 +149,14 @@ private void history_def_clear(ptr_t, HistEvent *);
 private int history_def_insert(history_t *, HistEvent *, const char *);
 private void history_def_delete(history_t *, HistEvent *, hentry_t *);
 
-#define	history_def_setsize(p, num)(void) (((history_t *) p)->max = (num))
-#define	history_def_getsize(p)  (((history_t *) p)->cur)
+#define	history_def_setsize(p, num)(void) (((history_t *)p)->max = (num))
+#define	history_def_getsize(p)  (((history_t *)p)->cur)
+#define	history_def_getunique(p) (((((history_t *)p)->flags) & H_UNIQUE) != 0)
+#define	history_def_setunique(p, uni) \
+    if (uni) \
+	(((history_t *)p)->flags) |= H_UNIQUE; \
+    else \
+	(((history_t *)p)->flags) &= ~H_UNIQUE
 
 #define	he_strerror(code)	he_errlist[code]
 #define	he_seterrev(evp, code)	{\
@@ -413,6 +424,10 @@ history_def_enter(ptr_t p, HistEvent *ev, const char *str)
 {
 	history_t *h = (history_t *) p;
 
+	if ((h->flags & H_UNIQUE) != 0 && h->list.next != &h->list &&
+	    strcmp(h->list.next->ev.str, str) == 0)
+	    return (0); 
+
 	if (history_def_insert(h, ev, str) == -1)
 		return (-1);	/* error, keep error message */
 
@@ -423,7 +438,7 @@ history_def_enter(ptr_t p, HistEvent *ev, const char *str)
 	while (h->cur > h->max && h->cur > 0)
 		history_def_delete(h, ev, h->list.prev);
 
-	return (0);
+	return (1);
 }
 
 
@@ -447,6 +462,7 @@ history_def_init(ptr_t *p, HistEvent *ev, int n)
 	h->list.ev.str = NULL;
 	h->list.ev.num = 0;
 	h->cursor = &h->list;
+	h->flags = 0;
 	*p = (ptr_t) h;
 	return 0;
 }
@@ -541,18 +557,46 @@ history_setsize(History *h, HistEvent *ev, int num)
 private int
 history_getsize(History *h, HistEvent *ev)
 {
-	int retval = 0;
+	if (h->h_next != history_def_next) {
+		he_seterrev(ev, _HE_NOT_ALLOWED);
+		return (-1);
+	}
+	ev->num = history_def_getsize(h->h_ref);
+	if (ev->num < -1) {
+		he_seterrev(ev, _HE_SIZE_NEGATIVE);
+		return (-1);
+	}
+	return (0);
+}
+
+
+/* history_setunique():
+ *	Set if adjacent equal events should not be entered in history.
+ */
+private int
+history_setunique(History *h, HistEvent *ev, int uni)
+{
 
 	if (h->h_next != history_def_next) {
 		he_seterrev(ev, _HE_NOT_ALLOWED);
 		return (-1);
 	}
-	retval = history_def_getsize(h->h_ref);
-	if (retval < -1) {
-		he_seterrev(ev, _HE_SIZE_NEGATIVE);
+	history_def_setunique(h->h_ref, uni);
+	return (0);
+}
+
+
+/* history_getunique():
+ *	Get if adjacent equal events should not be entered in history.
+ */
+private int
+history_getunique(History *h, HistEvent *ev)
+{
+	if (h->h_next != history_def_next) {
+		he_seterrev(ev, _HE_NOT_ALLOWED);
 		return (-1);
 	}
-	ev->num = retval;
+	ev->num = history_def_getunique(h->h_ref);
 	return (0);
 }
 
@@ -797,6 +841,14 @@ history(History *h, HistEvent *ev, int fun, ...)
 
 	case H_SETSIZE:
 		retval = history_setsize(h, ev, va_arg(va, int));
+		break;
+
+	case H_GETUNIQUE:
+		retval = history_getunique(h, ev);
+		break;
+
+	case H_SETUNIQUE:
+		retval = history_setunique(h, ev, va_arg(va, int));
 		break;
 
 	case H_ADD:
