@@ -1,4 +1,4 @@
-/*	$NetBSD: if_inarp.h,v 1.25.2.2 1997/02/18 13:27:46 is Exp $	*/
+/*	$NetBSD: if_inarp.h,v 1.25.2.3 1997/03/06 20:27:36 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -60,25 +60,16 @@ struct sockaddr_inarp {
 #define	RTF_USETRAILERS	RTF_PROTO1	/* use trailers */
 #define	RTF_ANNOUNCE	RTF_PROTO2	/* announce new arp entry */
 
-#ifdef	_KERNEL
-struct	ifqueue arpintrq;
-
-void	arpwhohas __P((struct ifnet *, struct in_addr *));
-void	arpintr __P((void));
-int	arpresolve __P((struct ifnet *,
-	    struct rtentry *, struct mbuf *, struct sockaddr *, u_char *));
-void	arp_ifinit __P((struct ifnet *, struct ifaddr *));
-void	arp_rtrequest __P((int, struct rtentry *, struct sockaddr *));
-
-#endif /* _KERNEL */
-
 #ifdef _KERNEL
+struct	ifqueue arpintrq;
+void arp_ifinit __P((struct ifnet *, struct ifaddr *));
 void arp_rtrequest __P((int, struct rtentry *, struct sockaddr *));
 int arpresolve __P((struct ifnet *, struct rtentry *, struct mbuf *,
 		    struct sockaddr *, u_char *));
 void arpintr __P((void));
 int arpioctl __P((u_long, caddr_t));
-void arp_ifinit __P((struct ifnet *, struct ifaddr *));
+void arpwhohas __P((struct ifnet *, struct in_addr *));
+
 void revarpinput __P((struct mbuf *));
 void in_revarpinput __P((struct mbuf *));
 void revarprequest __P((struct ifnet *));
