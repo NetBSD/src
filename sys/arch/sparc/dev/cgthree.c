@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.44 2000/04/14 19:36:43 pk Exp $ */
+/*	$NetBSD: cgthree.c,v 1.45 2000/04/16 21:01:43 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -355,21 +355,22 @@ cgthreeattach(sc, name, isconsole)
 	printf(": %s, %d x %d", name,
 		fb->fb_type.fb_width, fb->fb_type.fb_height);
 
-
 	/* Transfer video magic to board, if it's not running */
-	if ((sc->sc_fbc->fbc_ctrl & FBC_TIMING) == 0) {
+	if ((fbc->fbc_ctrl & FBC_TIMING) == 0) {
+		int sense = (fbc->fbc_status & FBS_MSENSE);
+		/* Search table for video timings fitting this monitor */
 		for (i = 0; i < sizeof(cg3_videoctrl)/sizeof(cg3_videoctrl[0]);
 		     i++) {
-			if ((fbc->fbc_status & FBS_MSENSE) ==
-			     cg3_videoctrl[i].sense) {
-				int j;
-				printf(" setting video ctrl");
-				for (j = 0; j < 12; j++)
-					fbc->fbc_vcontrol[j] =
-						cg3_videoctrl[i].vctrl[j];
-				fbc->fbc_ctrl |= FBC_TIMING;
-				break;
-			}
+			int j;
+			if (sense != cg3_videoctrl[i].sense)
+				continue;
+
+			printf(" setting video ctrl");
+			for (j = 0; j < 12; j++)
+				fbc->fbc_vcontrol[j] =
+					cg3_videoctrl[i].vctrl[j];
+			fbc->fbc_ctrl |= FBC_TIMING;
+			break;
 		}
 	}
 
