@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.17 1998/02/12 03:36:42 lukem Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.18 1999/03/24 22:01:38 nathanw Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootparamd.c,v 1.17 1998/02/12 03:36:42 lukem Exp $");
+__RCSID("$NetBSD: bootparamd.c,v 1.18 1999/03/24 22:01:38 nathanw Exp $");
 #endif
 
 #include <sys/types.h>
@@ -140,8 +140,7 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 {
 	static bp_whoami_res res;
 	struct hostent *he;
-	struct in_addr inaddr;
-	long    haddr;
+	struct in_addr haddr;
 
 	if (debug)
 		warnx("whoami got question for %d.%d.%d.%d",
@@ -164,8 +163,7 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 		strncpy(askname, he->h_name, sizeof(askname));
 		askname[sizeof(askname)-1] = 0;
 	} else {
-		inaddr.s_addr = haddr;
-		strncpy(askname, inet_ntoa(inaddr), sizeof(askname));
+		strncpy(askname, inet_ntoa(haddr), sizeof(askname));
 		askname[sizeof(askname)-1] = 0;
 	}
 
