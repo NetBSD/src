@@ -1,7 +1,7 @@
-/*	$NetBSD: nsphyter.c,v 1.9 2001/05/31 16:02:29 thorpej Exp $	*/
+/*	$NetBSD: nsphyter.c,v 1.10 2001/05/31 20:30:21 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -69,6 +69,9 @@
 /*
  * driver for National Semiconductor's DP83843 `PHYTER' ethernet 10/100 PHY
  * Data Sheet available from www.national.com
+ *
+ * We also support the DP83815 MacPHYER internal PHY since, for our
+ * purposes, they are compatible.
  */
 
 #include <sys/param.h>
@@ -115,6 +118,10 @@ nsphytermatch(parent, match, aux)
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxNATSEMI_DP83843)
 		return (10);
 
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxNATSEMI &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxNATSEMI_DP83815)
+		return (10);
+
 	return (0);
 }
 
@@ -126,9 +133,21 @@ nsphyterattach(parent, self, aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	const char *model;
 
-	printf(": %s, rev. %d\n", MII_STR_xxNATSEMI_DP83843,
-	    MII_REV(ma->mii_id2));
+	switch (MII_MODEL(ma->mii_id2)) {
+	case MII_MODEL_xxNATSEMI_DP83843:
+		model = MII_STR_xxNATSEMI_DP83843;
+		break;
+	case MII_MODEL_xxNATSEMI_DP83815:
+		model = MII_STR_xxNATSEMI_DP83815;
+		break;
+	default:
+		printf("\n");
+		panic("nsphyterattach: impossible");
+	}
+
+	printf(": %s, rev. %d\n", model, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
