@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.8 1997/01/30 22:11:47 tls Exp $
+.\"	$NetBSD: options.4,v 1.9 1997/01/31 06:30:54 thorpej Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -229,11 +229,11 @@ for details.
 .El
 .Ss File Systems
 .Bl -ohang
-.It Cd options FFS
+.It Cd file-system FFS
 Includes code implementing the Berkeley Fast File System
 .Em ( FFS ) .
 Most machines need this if they are not running diskless.
-.It Cd options LFS
+.It Cd file-system LFS
 Include the log structured file system
 .Em ( LFS ) .
 See
@@ -241,7 +241,7 @@ See
 and
 .Xr newlfs 8
 for details.
-.It Cd options MFS
+.It Cd file-system MFS
 Include the memory file system
 .Em ( MFS ) .
 This file system stores files in swappable memory, and produces
@@ -251,28 +251,25 @@ for
 and similar file systems. See
 .Xr mount_mfs 8
 for details.
-.It Cd options NFSCLIENT
-.It Cd options NFSSERVER
-Include code implementing the client and server sides of the
+.It Cd file-system NFS
+Include the client side of the
 .Em NFS
-(Network File System) remote file sharing protocol,
-respectively. Although the bulk of the code implementing
+(Network File System) remote file sharing protocol.
+Although the bulk of the code implementing
 .Em NFS
 is kernel based, several user level daemons are needed for it to
 work. See 
-.Xr mount_nfs 8 ,
-.Xr mountd 8 ,
-.Xr nfsd 8 , 
+.Xr mount_nfs 8
 and
 .Xr nfsiod 8
 for details.
-.It Cd options CD9660
+.It Cd file-system CD9660
 Includes code for the ISO 9660 + Rock Ridge file system, which is the
 standard file system on many CD-ROMs. Useful mostly if you have a CD
 drive. See
 .Xr mount_cd9660 8
 for details.
-.It Cd options MSDOSFS
+.It Cd file-system MSDOSFS
 Includes the
 .Tn MS-DOS
 FAT file system, which is reportedly still used
@@ -286,7 +283,7 @@ file names. see
 and
 .Xr fsck_msdos 8
 for details.
-.It Cd options FDESC
+.It Cd file-system FDESC
 Includes code for a file system, conventionally mounted on
 .Pa /dev/fd ,
 which permits access to the per-process file descriptor space via
@@ -309,7 +306,7 @@ and on
 .Pa /dev/stdout ,
 and
 .Pa /dev/stderr .
-.It Cd options KERNFS
+.It Cd file-system KERNFS
 Includes code which permits the mounting of a special file system
 (normally mounted on
 .Pa /kern )
@@ -318,13 +315,13 @@ may be found.
 See
 .Xr mount_kernfs 8
 for details.
-.It Cd options NULLFS
+.It Cd file-system NULLFS
 Includes code for a loopback file system. This permits portions of the file
 hierarchy to be re-mounted in other places. The code really exists to
 provide an example of a stackable file system layer. See
 .Xr mount_null 8
 for details.
-.It Cd options PORTAL
+.It Cd file-system PORTAL
 Includes the (experimental) portal filesystem. This permits
 interesting tricks like opening TCP sockets by opening files in the
 file system. The portal file system is conventionally mounted on
@@ -332,7 +329,7 @@ file system. The portal file system is conventionally mounted on
 and is partially implemented by a special daemon. See
 .Xr mount_portal 8
 for details.
-.It Cd options PROCFS
+.It Cd file-system PROCFS
 Includes code for a special file system (conventionally mounted on
 .Pa /proc )
 in which the process space becomes visible in the file system. Among
@@ -342,14 +339,14 @@ visible as files, and signals may be sent to processes by writing to
 files in the procfs namespace. See
 .Xr mount_procfs 8
 for details.
-.It Cd options UMAPFS
+.It Cd file-system UMAPFS
 Includes a loopback file system in which user and group ids may be
 remapped -- this can be useful when mounting alien file systems with
 different uids and gids than the local system.
 See
 .Xr mount_umap 8
 for details.
-.It Cd options UNION
+.It Cd file-system UNION
 Includes code for the union file system, which permits directories to
 be mounted on top of each other in such a way that both file systems
 remain visible -- this permits tricks like allowing writing (and the
@@ -361,6 +358,18 @@ for details.
 .El
 .Ss File System Options
 .Bl -ohang
+.It Cd options NFSSERVER
+Include the server side of the
+.Em NFS
+(Network File System) remote file sharing protocol.
+Although the bulk of the code implementing
+.Em NFS
+is kernel based, several user level daemons are needed for it to
+work. See 
+.Xr mountd 8
+and
+.Xr nfsd 8 
+for details.
 .It Cd options QUOTA
 Enables kernel support for file system quotas. See
 .Xr quotaon 8 ,
@@ -397,21 +406,6 @@ the namei cache.
 .El
 .Ss Miscellaneous Options
 .Bl -ohang
-.It Cd options GENERIC
-Indicates, on some ports, that code permitting booting and mounting
-root on any file system should be included.  This option also allows
-the 
-.Dq swap generic
-configuration file option to find the location of the swap file at
-boot time rather than having a compiled in default.  Largely obsolete
-though still in use on some architectures.  Most ports now include the
-necessary code regardless of this option.  On a port that still cares
-about
-.Em options GENERIC ,
-it should be omitted ONLY in very special cases, such as
-a
-.Em RAMDISK
-installation kernel.
 .It Cd options LKM
 Enable loadable kernel modules. See
 .Xr lkm 4
