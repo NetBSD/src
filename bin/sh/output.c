@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.14 1995/05/11 21:29:50 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.15 1995/09/14 16:19:06 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: output.c,v 1.14 1995/05/11 21:29:50 christos Exp $";
+static char rcsid[] = "$NetBSD: output.c,v 1.15 1995/09/14 16:19:06 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ static char rcsid[] = "$NetBSD: output.c,v 1.14 1995/05/11 21:29:50 christos Exp
  *	Our output routines may be smaller than the stdio routines.
  */
 
+#include <sys/types.h>        /* quad_t */
 #include <sys/ioctl.h>
 
 #include <stdio.h>	/* defines BUFSIZ */
@@ -341,7 +342,7 @@ fmtstr(va_alist)
  * Formatted output.  This routine handles a subset of the printf formats:
  * - Formats supported: d, u, o, X, s, and c.
  * - The x format is also accepted but is treated like X.
- * - The l modifier is accepted.
+ * - The l and q modifiers are accepted.
  * - The - and # flags are accepted; # only works with the o format.
  * - Width and precision may be specified with any format except c.
  * - An * may be given for the width or precision.
@@ -372,10 +373,11 @@ doformat(dest, f, ap)
 	int width;
 	int prec;
 	int islong;
+	int isquad;
 	char *p;
 	int sign;
-	long l;
-	unsigned long num;
+	quad_t l;
+	u_quad_t num;
 	unsigned base;
 	int len;
 	int size;
@@ -391,6 +393,7 @@ doformat(dest, f, ap)
 		width = 0;
 		prec = -1;
 		islong = 0;
+		isquad = 0;
 		for (;;) {
 			if (*f == '-')
 				flushleft++;
@@ -422,10 +425,15 @@ doformat(dest, f, ap)
 		if (*f == 'l') {
 			islong++;
 			f++;
+		} else if (*f == 'q') {
+			isquad++;
+			f++;
 		}
 		switch (*f) {
 		case 'd':
-			if (islong)
+			if (isquad)
+				l = va_arg(ap, quad_t);
+			else if (islong)
 				l = va_arg(ap, long);
 			else
 				l = va_arg(ap, int);
@@ -449,7 +457,9 @@ doformat(dest, f, ap)
 			base = 16;
 uns_number:	  /* an unsigned number */
 			sign = 0;
-			if (islong)
+			if (isquad)
+				num = va_arg(ap, u_quad_t);
+			else if (islong)
 				num = va_arg(ap, unsigned long);
 			else
 				num = va_arg(ap, unsigned int);
