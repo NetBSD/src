@@ -3780,13 +3780,14 @@ connect_to_pserver (tofdp, fromfdp, verify_only, do_gssapi)
 #endif
     int port_number;
     char no_passwd = 0;   /* gets set if no password found */
-    struct addrinfo hints, *res, *res0;
+    struct addrinfo hints, *res, *res0 = NULL;
     char pbuf[10];
     int e;
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_CANONNAME;
     port_number = auth_server_port_number ();
     snprintf(pbuf, sizeof(pbuf), "%d", port_number);
     e = getaddrinfo(CVSroot_hostname, pbuf, &hints, &res0);
@@ -3817,8 +3818,11 @@ connect_to_pserver (tofdp, fromfdp, verify_only, do_gssapi)
     if (do_gssapi)
     {
 #ifdef HAVE_GSSAPI
-	if (! connect_to_gserver (sock, res0->ai_canonname))
+	if (! connect_to_gserver (sock,
+	    res0->ai_canonname ? res0->ai_canonname : CVSroot_hostname))
+	{
 	    goto rejected;
+	}
 #else
 	error (1, 0, "This client does not support GSSAPI authentication");
 #endif
@@ -3946,6 +3950,8 @@ connect_to_pserver (tofdp, fromfdp, verify_only, do_gssapi)
 	if (shutdown (sock, 2) < 0)
 	    error (0, 0, "shutdown() failed, server %s: %s", CVSroot_hostname,
 		   SOCK_STRERROR (SOCK_ERRNO));
+	if (res0)
+	    freeaddrinfo(res0);
 	return;
     }
     else
@@ -3966,6 +3972,8 @@ connect_to_pserver (tofdp, fromfdp, verify_only, do_gssapi)
 #endif /* NO_SOCKET_TO_FD */
     }
 
+    if (res0)
+	freeaddrinfo(res0);
     return;
 
   rejected:
