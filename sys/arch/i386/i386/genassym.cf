@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.36 2003/04/02 07:35:58 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.37 2003/05/04 22:01:58 fvdl Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -128,6 +128,7 @@ include <machine/cpu.h>
 endif
 
 if NIOAPIC > 0
+include <machine/i82093reg.h>
 include <machine/i82093var.h>
 endif
 
