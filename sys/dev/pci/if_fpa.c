@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.16.4.1 1997/02/07 18:05:28 is Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.16.4.2 1997/02/20 16:41:10 is Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -211,8 +211,6 @@ pdq_pci_attach(
 	free((void *) sc, M_DEVBUF);
 	return;
     }
-    bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes,
-	LLADDR(ifp->if_sadl), 6);
     pdqs_pci[unit] = sc;
     pdq_ifattach(sc, pdq_pci_ifwatchdog);
     pci_map_int(config_id, pdq_pci_ifintr, (void*) sc, &net_imask);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.5.6.1 1997/02/07 18:01:30 is Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.5.6.2 1997/02/20 16:41:08 is Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -301,12 +301,11 @@ pdq_ifioctl(
 		case AF_NS: {
 		    struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
 		    if (ns_nullhost(*ina)) {
-			ina->x_host = *(union ns_host *)(sc->sc_ac.ac_enaddr);
+			ina->x_host = *(union ns_host *)LLADDR(ifp->if_sadl);
 		    } else {
 			ifp->if_flags &= ~IFF_RUNNING;
 			bcopy((caddr_t)ina->x_host.c_host,
-			      (caddr_t)sc->sc_ac.ac_enaddr,
-			      sizeof sc->sc_ac.ac_enaddr);
+			      LLADDR(ifp->if_sadl), ifp->if_data.ifi_addrlen);
 		    }
 
 		    pdq_ifinit(sc);
@@ -379,7 +378,7 @@ pdq_ifattach(
     ifp->if_start = pdq_ifstart;
   
     if_attach(ifp);
-    fddi_ifattach(ifp);
+    fddi_ifattach(ifp, (caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes);
 #if NBPFILTER > 0
     PDQ_BPFATTACH(sc, DLT_FDDI, sizeof(struct fddi_header));
 #endif
