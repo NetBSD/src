@@ -1,4 +1,4 @@
-  Commands flagged with an asterisk (``*'') may be preceeded by a number.
+  Commands flagged with an asterisk (``*'') may be preceded by a number.
   Commands of the form ``^X'' are control characters, i.e. control-X.
 
   h              Display this help.

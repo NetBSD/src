@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.53 2001/07/24 05:06:40 matt Exp $	*/
+/*	$NetBSD: job.c,v 1.54 2001/08/20 12:00:55 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.53 2001/07/24 05:06:40 matt Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.54 2001/08/20 12:00:55 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.53 2001/07/24 05:06:40 matt Exp $");
+__RCSID("$NetBSD: job.c,v 1.54 2001/08/20 12:00:55 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2203,7 +2203,7 @@ end_loop:
 	     * Need to send the output to the screen. Null terminate it
 	     * first, overwriting the newline character if there was one.
 	     * So long as the line isn't one we should filter (according
-	     * to the shell description), we print the line, preceeded
+	     * to the shell description), we print the line, preceded
 	     * by a target banner if this target isn't the same as the
 	     * one for which we last printed something.
 	     * The rest of the data in the buffer are then shifted down

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.45 2001/08/09 08:16:42 lukem Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.46 2001/08/20 12:00:54 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -382,7 +382,7 @@ nospace:
  * logical blocks to be made contiguous is given. The allocator attempts
  * to find a range of sequential blocks starting as close as possible to
  * an fs_rotdelay offset from the end of the allocation for the logical
- * block immediately preceeding the current range. If successful, the
+ * block immediately preceding the current range. If successful, the
  * physical block numbers in the buffer pointers and in the inode are
  * changed to reflect the new allocation. If unsuccessful, the allocation
  * is left unchanged. The success in doing the reallocation is returned.

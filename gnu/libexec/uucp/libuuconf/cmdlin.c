@@ -26,7 +26,7 @@
 #include "uucnfi.h"
 
 #if USE_RCS_ID
-const char _uuconf_cmdlin_rcsid[] = "$Id: cmdlin.c,v 1.3 1995/08/24 05:20:57 jtc Exp $";
+const char _uuconf_cmdlin_rcsid[] = "$Id: cmdlin.c,v 1.4 2001/08/20 12:00:48 wiz Exp $";
 #endif
 
 #include <errno.h>
@@ -58,7 +58,7 @@ uuconf_cmd_line (pglobal, zline, qtab, pinfo, pfiunknown, iflags, pblock)
 
   if ((iflags & UUCONF_CMDTABFLAG_NOCOMMENTS) == 0)
     {
-      /* Any # not preceeded by a backslash starts a comment.  */
+      /* Any # not preceded by a backslash starts a comment.  */
       z = zline;
       while ((z = strchr (z, '#')) != NULL)
 	{

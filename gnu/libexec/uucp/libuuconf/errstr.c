@@ -26,7 +26,7 @@
 #include "uucnfi.h"
 
 #if USE_RCS_ID
-const char _uuconf_errstr_rcsid[] = "$Id: errstr.c,v 1.3 1995/08/24 05:21:06 jtc Exp $";
+const char _uuconf_errstr_rcsid[] = "$Id: errstr.c,v 1.4 2001/08/20 12:00:48 wiz Exp $";
 #endif
 
 static char *zeprint_num P((char *zbuf, size_t cbuf, int ival));
@@ -63,7 +63,7 @@ uuconf_error_string (pglobal, ierr, zbuf, cbuf)
      there is no linenumber, the trailing colon is not output.  If
      there is no filename, the linenumber is not output, and neither
      is the space before message.  If there is no errno, the
-     preceeding colon and space are not output.  */
+     preceding colon and space are not output.  */
 
   /* Get the filename to put in the error message, if any.  */
   if ((ierr & UUCONF_ERROR_FILENAME) == 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.33 2001/06/12 23:36:18 sjg Exp $	*/
+/*	$NetBSD: suff.c,v 1.34 2001/08/20 12:00:55 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: suff.c,v 1.33 2001/06/12 23:36:18 sjg Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.34 2001/08/20 12:00:55 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.33 2001/06/12 23:36:18 sjg Exp $");
+__RCSID("$NetBSD: suff.c,v 1.34 2001/08/20 12:00:55 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -991,7 +991,7 @@ Suff_GetPath (sname)
  *	The searchPath field of all the suffixes is extended by the
  *	directories in dirSearchPath. If paths were specified for the
  *	".h" suffix, the directories are stuffed into a global variable
- *	called ".INCLUDES" with each directory preceeded by a -I. The same
+ *	called ".INCLUDES" with each directory preceded by a -I. The same
  *	is done for the ".a" suffix, except the variable is called
  *	".LIBS" and the flag is -L.
  *-----------------------------------------------------------------------

@@ -2892,7 +2892,7 @@ numbers, boolean values or simple strings with no embedded spaces.
 
 The @kbd{#} character is used for comments.  Everything from a @kbd{#}
 to the end of the line is ignored unless the @kbd{#} is preceded by a
-@kbd{\} (backslash); if the @kbd{#} is preceeded by a @kbd{\}, the
+@kbd{\} (backslash); if the @kbd{#} is preceded by a @kbd{\}, the
 @kbd{\} is removed but the @kbd{#} remains in the line.  This can be
 useful for a phone number containing a @kbd{#}.  To enter the sequence
 @samp{\#}, use @samp{\\#}.  
@@ -5649,8 +5649,8 @@ Keywords: UUCP, protocol, FAQ
 Approved: news-answers-request@@MIT.Edu
 
 Archive-name: uucp-internals
-Version: $Revision: 1.2 $
-Last-modified: $Date: 2000/03/13 20:41:50 $
+Version: $Revision: 1.3 $
+Last-modified: $Date: 2001/08/20 12:00:48 $
 @end format
 @end ifset
 
@@ -7099,7 +7099,7 @@ in the last packet to be null, but I have not confirmed this.
 
 When a UUCP package sends a file, it will send a sequence of data
 packets.  The end of the file is signalled by a short data packet
-containing zero valid bytes (it will normally be preceeded by a short
+containing zero valid bytes (it will normally be preceded by a short
 data packet containing the last few bytes in the file).
 
 Note that the sequence numbers cover the entire communication session,

@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_subr.c,v 1.12 2000/03/30 13:53:34 augustss Exp $	*/
+/*	$NetBSD: llc_subr.c,v 1.13 2001/08/20 12:00:53 wiz Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -369,7 +369,7 @@ llc_seq2slot(linkp, seqn)
  * (32/64 bits, whatever is needed) that would suit her needs [I quite like
  * that idea, perhaps I'll get around to it].
  *
- * [Preceeding each state handler function is the description as taken from
+ * [Preceding each state handler function is the description as taken from
  * ISO 8802-2, section 7.9.2.1]
  */
 

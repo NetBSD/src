@@ -1,4 +1,4 @@
-.\"	$NetBSD: tutorial.ms,v 1.4 1999/11/19 22:29:25 kristerw Exp $
+.\"	$NetBSD: tutorial.ms,v 1.5 2001/08/20 12:00:55 wiz Exp $
 .\" Copyright (c) 1988, 1989 by Adam de Boor
 .\" Copyright (c) 1989 by Berkeley Softworks
 .\" Copyright (c) 1988, 1989, 1993
@@ -598,7 +598,7 @@ likely freeze if you execute something that produces thousands of
 bytes of output (8 Kb is the limit on many UNIX systems).
 .LP
 The value of a variable may be retrieved by enclosing the variable
-name in parentheses or curly braces and preceeding the whole thing
+name in parentheses or curly braces and preceding the whole thing
 with a dollar sign.
 .LP
 For example, to set the variable CFLAGS to the string
@@ -1529,7 +1529,7 @@ using the
 .Ix 0 ref !=
 .Ix 0 ref variable assignment shell-output
 operator.  Variables may be expanded (their value inserted) by enclosing
-their name in parentheses or curly braces, prceeded by a dollar sign.
+their name in parentheses or curly braces, preceded by a dollar sign.
 A dollar sign may be escaped with another dollar sign. Variables are
 not expanded if PMake doesn't know about them. There are seven local
 variables:
@@ -2611,7 +2611,7 @@ the string must match starting at the beginning of the word. If
 ends with a
 .CW $ ,
 the string must match to the end of the word (these two may be
-combined to force an exact match). If a backslash preceeds these two
+combined to force an exact match). If a backslash precedes these two
 characters, however, they lose their special meaning. Variable
 expansion also occurs in the normal fashion inside both the
 .I search-string
@@ -2636,7 +2636,7 @@ character is replaced by the
 unless it is preceded by a backslash.
 You are allowed to use any character except
 colon or exclamation point to separate the two strings. This so-called
-delimiter character may be placed in either string by preceeding it
+delimiter character may be placed in either string by preceding it
 with a backslash.
 .IP T
 .Ix 0 def :T
