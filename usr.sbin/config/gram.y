@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.4 1996/03/17 02:08:25 thorpej Exp $	*/
+/*	$NetBSD: gram.y,v 1.5 1996/03/17 05:19:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -359,7 +359,6 @@ device_instance:
 attachment:
 	ROOT				= { $$ = NULL; } |
 	WORD '?'			= { $$ = wildref($1); } |
-	WORD '*'			= { $$ = starref($1); } |
 	WORD				= { $$ = $1; };
 
 locators:
