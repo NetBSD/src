@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2003/10/21 10:01:20 lukem Exp $
+#	$NetBSD: Makefile,v 1.37 2004/01/30 04:30:51 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -50,7 +50,6 @@ DATA=		$(YDATA) $(NDATA) $(SDATA) leapseconds # yearistype.sh
 USNO=		usno1988 usno1989
 
 TZBUILDDIR=	${.OBJDIR}/builddir
-TZBUILDSPEC=	${.OBJDIR}/builddir.spec
 
 .PHONY:	posix_only
 posix_only: ${TDATA}
@@ -93,26 +92,21 @@ afterinstall: ${DATA} ${REDO}
 	mkdir -p ${TZBUILDDIR}
 	cd ${.CURDIR} && \
 	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR} -p ${POSIXRULES}
-	cd ${TZBUILDDIR} && \
-	(   find . -type d | xargs -n 1 printf \
-		"%s type=dir mode=0755 uname=${BINOWN} gname=${BINGRP}\n" ; \
-	    find . -type f | xargs -n 1 printf \
-		"%s type=file mode=0444 uname=${BINOWN} gname=${BINGRP}\n" ; \
-	) > ${TZBUILDSPEC}
-	${_MKMSG_INSTALL} ${DESTDIR}${TZDIR}
-	cd ${TZBUILDDIR} && \
-	  ${TOOL_PAX} -O -rw ${TOOL_PAX.unpriv} -M -N ${NETBSDSRCDIR}/etc \
-	  ${DESTDIR}${TZDIR} < ${TZBUILDSPEC}
-.if ${MKUNPRIVED} != "no"
-	sed -e "s|^\.|./${TZDIR}|g" -e "s|//|/|g" < ${TZBUILDSPEC} | \
-	    ${METALOG.add}
-.endif
-
+	cd ${TZBUILDDIR} && find . -type f -print | sort \
+	| while read tzfile; do \
+		destfile=${DESTDIR}${TZDIR}/$${tzfile#./}; \
+		cmp -s $$tzfile $$destfile > /dev/null 2>&1 && continue; \
+		${_MKSHMSG_INSTALL} $$destfile; \
+		${_MKSHECHO} ${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} \
+		    -m ${BINMODE} $$tzfile $$destfile ; \
+		${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} \
+		    -m ${BINMODE} $$tzfile $$destfile ; \
+	done
 .else	# ${MKSHARE} == "no"
 afterinstall:
 .endif	# ${MKSHARE} == "no"
 
 clean:
-	rm -rf ${TZBUILDDIR} ${TZBUILDSPEC}
+	rm -rf ${TZBUILDDIR}
 
 .include <bsd.prog.mk>
