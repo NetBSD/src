@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.164 1995/06/28 04:30:46 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.165 1995/07/02 16:10:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -377,26 +377,24 @@ identifycpu()
 #if !defined(I386_CPU) && !defined(I486_CPU) && !defined(I586_CPU)
 #error No CPU classes configured.
 #endif
-#if !defined(I586_CPU)
+#ifndef I586_CPU
 	case CPUCLASS_586:
-#endif
-#if defined(I486_CPU) && (!defined(I586_CPU))
+#ifdef I486_CPU
 		printf("NOTICE: lowering CPU class to i486\n");
 		cpu_class = CPUCLASS_486;
 		break;
 #endif
-#if !defined(I486_CPU)
-	case CPUCLASS_486:
 #endif
-#if defined(I386_CPU) && (!defined(I586_CPU) || !defined(I486_CPU))
+#ifndef I486_CPU
+	case CPUCLASS_486:
+#ifdef I386_CPU
 		printf("NOTICE: lowering CPU class to i386\n");
 		cpu_class = CPUCLASS_386;
 		break;
 #endif
-#if !defined(I386_CPU)
-	case CPUCLASS_386:
 #endif
-#if !defined(I586_CPU) || !defined(I486_CPU) || !defined(I386_CPU)
+#ifndef I386_CPU
+	case CPUCLASS_386:
 		panic("CPU class not configured");
 #endif
 	default:
