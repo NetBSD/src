@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.54.2.3 2001/11/18 00:07:48 gmcgarry Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.54.2.4 2001/12/03 05:05:53 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.54.2.3 2001/11/18 00:07:48 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.54.2.4 2001/12/03 05:05:53 gmcgarry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -1187,25 +1187,27 @@ hpux_sys_alarm_6x(l, v, retval)
 	struct proc *p = l->l_proc;
 	int s = splhigh();
 
-	callout_stop(&p->p_realit_ch);
-	timerclear(&p->p_realtimer.it_interval);
+	callout_stop(&p->p_timers[ITIMER_REAL]->pt_ch);
+	timerclear(&p->p_timers[ITIMER_REAL]->pt_time.it_interval);
 	*retval = 0;
-	if (timerisset(&p->p_realtimer.it_value) &&
-	    timercmp(&p->p_realtimer.it_value, &time, >))
-		*retval = p->p_realtimer.it_value.tv_sec - time.tv_sec;
+	if (timerisset(&p->p_timers[ITIMER_REAL]->pt_time.it_value) &&
+	    timercmp(&p->p_timers[ITIMER_REAL]->pt_time.it_value, &time, >))
+		*retval = p->p_timers[ITIMER_REAL]->pt_time.it_value.tv_sec
+		    - time.tv_sec;
 	if (SCARG(uap, deltat) == 0) {
-		timerclear(&p->p_realtimer.it_value);
+		timerclear(&p->p_timers[ITIMER_REAL]->pt_time.it_value);
 		splx(s);
 		return (0);
 	}
-	p->p_realtimer.it_value = time;
-	p->p_realtimer.it_value.tv_sec += SCARG(uap, deltat);
+	p->p_timers[ITIMER_REAL]->pt_time.it_value = time;
+	p->p_timers[ITIMER_REAL]->pt_time.it_value.tv_sec += SCARG(uap, deltat);
 	/*
 	 * We don't need to check the hzto() return value, here.
 	 * callout_reset() does it for us.
 	 */
-	callout_reset(&p->p_realit_ch, hzto(&p->p_realtimer.it_value),
-	    realitexpire, p);
+	callout_reset(&p->p_timers[ITIMER_REAL]->pt_ch,
+	    hzto(&p->p_timers[ITIMER_REAL]->pt_time.it_value),
+	    realtimerexpire, p->p_timers[ITIMER_REAL]);
 	splx(s);
 	return (0);
 }
