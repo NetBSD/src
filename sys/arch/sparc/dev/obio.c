@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.65 2004/06/27 18:24:47 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.66 2004/12/14 02:32:03 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.65 2004/06/27 18:24:47 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.66 2004/12/14 02:32:03 chs Exp $");
+
+#include "locators.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +83,8 @@ static	void obioattach __P((struct device *, struct device *, void *));
 CFATTACH_DECL(obio, sizeof(union obio_softc),
     obiomatch, obioattach, NULL, NULL);
 
+static int obio_attached;
+
 /*
  * This `obio4_busattachargs' data structure only exists to pass down
  * to obiosearch() the name of a device that must be configured early.
@@ -120,6 +124,9 @@ obiomatch(parent, cf, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
+	if (obio_attached)
+		return 0;
+
 	return (strcmp(cf->cf_name, ma->ma_name) == 0);
 }
 
@@ -130,13 +137,8 @@ obioattach(parent, self, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	/*
-	 * There is only one obio bus
-	 */
-	if (self->dv_unit > 0) {
-		printf(" unsupported\n");
-		return;
-	}
+	obio_attached = 1;
+
 	printf("\n");
 
 	if (CPU_ISSUN4) {
@@ -257,6 +259,7 @@ obiosearch(parent, cf, aux)
 	struct obio4_busattachargs *oap = aux;
 	union obio_attach_args uoba;
 	struct obio4_attach_args *oba = &uoba.uoba_oba4;
+	int addr;
 
 	/* Check whether we're looking for a specifically named device */
 	if (oap->name != NULL && strcmp(oap->name, cf->cf_name) != 0)
@@ -266,7 +269,8 @@ obiosearch(parent, cf, aux)
 	 * Avoid sun4m entries which don't have valid PAs.
 	 * no point in even probing them. 
 	 */
-	if (cf->cf_loc[0] == -1)
+	addr = cf->cf_loc[OBIOCF_ADDR];
+	if (addr == -1)
 		return (0);
 
 	/*
@@ -276,16 +280,16 @@ obiosearch(parent, cf, aux)
 	 * XXX: We also assume that 4/[23]00 obio addresses
 	 * must be 0xZYYYYYYY, where (Z != 0)
 	 */
-	if (cpuinfo.cpu_type == CPUTYP_4_100 && (cf->cf_loc[0] & 0xf0000000))
+	if (cpuinfo.cpu_type == CPUTYP_4_100 && (addr & 0xf0000000))
 		return (0);
-	if (cpuinfo.cpu_type != CPUTYP_4_100 && !(cf->cf_loc[0] & 0xf0000000))
+	if (cpuinfo.cpu_type != CPUTYP_4_100 && !(addr & 0xf0000000))
 		return (0);
 
 	uoba.uoba_isobio4 = 1;
 	oba->oba_bustag = &obio_space_tag;
 	oba->oba_dmatag = oap->ma->ma_dmatag;
-	oba->oba_paddr = BUS_ADDR(PMAP_OBIO, cf->cf_loc[0]);
-	oba->oba_pri = cf->cf_loc[1];
+	oba->oba_paddr = BUS_ADDR(PMAP_OBIO, addr);
+	oba->oba_pri = cf->cf_loc[OBIOCF_LEVEL];
 
 	if (config_match(parent, cf, &uoba) == 0)
 		return (0);
