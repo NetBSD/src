@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.52 1999/10/09 19:15:24 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.53 1999/10/10 21:02:53 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -647,3 +647,60 @@ gnu/dist/bfd/targets.c				1.10
 usr.bin/rwho/rwho.c				1.12
 
   Use full hostnames when sorting rwho database entries.  Fixes PR#8401.
+
+usr.bin/id/id.c					1.15
+
+  Fix inconsistent format between `id' and `id userid'.
+
+bin/sh/jobs.c					1.32
+
+  Allow the tty interrupt character (e.g. ^C) to interrupt loops run
+  in an interactive shell again.
+
+distrib/sets/lists/base/mi			1.129
+distrib/sets/lists/misc/mi			1.22
+etc/mtree/NetBSD.dist				1.92
+usr.sbin/dhcp/server/Makefile			1.5
+
+  Install an example dhcpd.conf into /usr/share/examples/dhcp
+  to provide an example of how to setup a dhcp server.
+
+sys/arch/i386/conf/GENERIC			1.262, 1.264 via patch
+distrib/notes/i386/hardware			1.56
+
+  Remove "nca* at isa?" from i386 GENERIC kernel.  Its probe function
+  gives false positives and steps on other hardware.  Fixes PR#8361.
+
+usr.sbin/quot/quot.c				1.15-1.16
+
+  Fix integer overflows with file systems >=2GB.
+
+sys/nfs/nfs_nqlease.c				1.30
+
+  Fix an odd corner case if you use nfsv3 and nqnfs at the same time:
+  v3 changes the error-case behavior of the nfsm_reply macro, but the
+  caller keeps going and in this case you end up calling vput(NULL).
+
+sys/net/route.c					1.28
+
+  Avoid duplicate free() calls if a route's gateway points to itself,
+  by marking a route down (~RTF_UP) _after_ calling RTFREE on its
+  gateway.  Partial fix for PR#4561 and PR#4827 (the looped route can
+  still occur, but it won't cause a panic).
+
+sys/net/pfil.c					1.9
+
+  Fix panic()s in pfil_list_remove() when running "ipf -D" a second
+  time with a DIAGNOSTIC kernel.
+
+sys/coda/coda_subr.c				1.7
+sys/coda/coda_vnops.c				1.13
+sys/kern/vfs_subr.c				1.111-1.112
+sys/sys/vnode.h					1.65
+sys/ufs/lfs/lfs_segment.c			1.31
+sys/ufs/mfs/mfs_vnops.c				1.18
+usr.sbin/pstat/pstat.c				1.46
+
+  Fix potential overflow of v_usecount and v_writecount (and panics
+  resulting from this) by widening them to `long'.  Mostly affects
+  systems where maxvnodes>=32768.
