@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.33 2001/06/30 15:39:51 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.34 2001/06/30 16:34:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1579,6 +1579,13 @@ static int ti_gibinit(sc)
 	TI_HOSTADDR(sc->ti_rdata->ti_info.ti_tx_considx_ptr) =
 	    TI_CDTXCONSADDR(sc);
 
+	/*
+	 * We're done frobbing the General Information Block.  Sync
+	 * it.  Note we take care of the first stats sync here, as
+	 * well.
+	 */
+	TI_CDGIBSYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
 	/* Set up tuneables */
 	if (ifp->if_mtu > (ETHERMTU + ETHER_HDR_LEN + ETHER_CRC_LEN) ||
 	    (sc->ethercom.ec_capenable & ETHERCAP_VLAN_MTU))
@@ -2236,6 +2243,8 @@ static void ti_stats_update(sc)
 
 	ifp = &sc->ethercom.ec_if;
 
+	TI_CDSTATSSYNC(sc, BUS_DMASYNC_POSTREAD);
+
 	ifp->if_collisions +=
 	   (sc->ti_rdata->ti_info.ti_stats.dot3StatsSingleCollisionFrames +
 	   sc->ti_rdata->ti_info.ti_stats.dot3StatsMultipleCollisionFrames +
@@ -2243,7 +2252,7 @@ static void ti_stats_update(sc)
 	   sc->ti_rdata->ti_info.ti_stats.dot3StatsLateCollisions) -
 	   ifp->if_collisions;
 
-	return;
+	TI_CDSTATSSYNC(sc, BUS_DMASYNC_PREREAD);
 }
 
 /*
