@@ -1,4 +1,4 @@
-/* $NetBSD: vga_ofbus.c,v 1.5 2003/07/15 03:36:02 lukem Exp $ */
+/* $NetBSD: vga_ofbus.c,v 1.6 2005/01/09 15:29:27 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_ofbus.c,v 1.5 2003/07/15 03:36:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_ofbus.c,v 1.6 2005/01/09 15:29:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,9 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: vga_ofbus.c,v 1.5 2003/07/15 03:36:02 lukem Exp $");
 #include <dev/wscons/wsdisplayvar.h>
 
 #include <dev/ofw/openfirm.h>
-#if 0
-#include <dnard/ofw/vga_ofisavar.h>
-#endif
+
+#include <shark/ofw/vga_ofbusvar.h>
 
 struct vga_ofbus_softc {
 	struct vga_softc sc_vga;
@@ -91,13 +90,40 @@ vga_ofbus_attach(struct device *parent, struct device *self, void *aux)
 	osc->sc_phandle = oba->oba_phandle;
 
 	vga_common_attach(sc, &isa_io_bs_tag, &isa_mem_bs_tag,
-	    WSDISPLAY_TYPE_ISAVGA, NULL);
+	    WSDISPLAY_TYPE_ISAVGA, 0, NULL);
 }
 
 int
-vga_ofbus_cnattach(int phandle, bus_space_tag_t iot, bus_space_tag_t memt)
+vga_ofbus_cnattach(bus_space_tag_t iot, bus_space_tag_t memt)
 {
-	if (OF_call_method("text-mode3", phandle, 0, 0) != 0) {
+	int chosen_phandle;
+	int stdout_ihandle, stdout_phandle;
+	char buf[128];
+
+	stdout_phandle = 0;
+
+	/*
+	 * Find out whether the firmware's chosen stdout is
+	 * a display.  If so, use the existing ihandle so the firmware
+	 * doesn't become Unhappy.  If not, just open it.
+	 */
+	if ((chosen_phandle = OF_finddevice("/chosen")) == -1 ||
+	    OF_getprop(chosen_phandle, "stdout", &stdout_ihandle, 
+	    sizeof(stdout_ihandle)) != sizeof(stdout_ihandle)) {
+		return 0;
+	}
+	stdout_ihandle = of_decode_int((unsigned char *)&stdout_ihandle);
+	if ((stdout_phandle = OF_instance_to_package(stdout_ihandle)) == -1 ||
+	    OF_getprop(stdout_phandle, "device_type", buf, sizeof(buf)) <= 0) {
+		return 0;
+	}
+
+	if (strcmp(buf, "display") != 0) {
+		/* The display is not stdout device. */
+		return 0;
+	}
+		
+	if (OF_call_method("text-mode3", stdout_ihandle, 0, 0) != 0) {
 		printf("vga_ofbus_match: text-mode3 method invocation on VGA "
 		       "screen device failed\n");
 	}
