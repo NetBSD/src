@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.42 1999/01/31 02:29:00 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.43 1999/02/07 13:14:07 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.42 1999/01/31 02:29:00 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.43 1999/02/07 13:14:07 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -499,8 +499,7 @@ globulize(cpp)
 
 	flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_TILDE;
 	memset(&gl, 0, sizeof(gl));
-	if (glob(*cpp, flags, NULL, &gl) ||
-	    gl.gl_pathc == 0) {
+	if (glob(*cpp, flags, NULL, &gl) || gl.gl_pathc == 0) {
 		warnx("%s: not found", *cpp);
 		globfree(&gl);
 		return (0);
@@ -1186,6 +1185,35 @@ resetsockbufsize()
 		sndbuf_size = 0;
 	if (rcvbuf_manual == 0)
 		rcvbuf_size = 0;
+}
+
+void
+ftpvis(dst, dstlen, src, srclen)
+	char		*dst;
+	size_t		 dstlen;
+	const char	*src;
+	size_t		 srclen;
+{
+	int	di, si;
+
+	for (di = si = 0;
+	    src[si] != '\0' && di < dstlen && si < srclen;
+	    di++, si++) {
+		switch (src[si]) {
+		case '\\':
+		case ' ':
+		case '\t':
+		case '\r':
+		case '"':
+			dst[di++] = '\\';
+			if (di >= dstlen)
+				break;
+			/* FALLTHROUGH */
+		default:
+			dst[di] = src[si];
+		}
+	}
+	dst[di] = '\0';
 }
 
 /*
