@@ -1,4 +1,4 @@
-.\" $NetBSD: uhid.4,v 1.16 2004/01/05 11:00:00 augustss Exp $
+.\" $NetBSD: uhid.4,v 1.17 2004/05/08 11:46:51 jdolecek Exp $
 .\"
 .\" Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 12, 1998
+.Dd May 8, 2004
 .Dt UHID 4
 .Os
 .Sh NAME
@@ -62,8 +62,8 @@ the device can be found.  The report descriptor is delivered
 without any processing.
 .Bd -literal
 struct usb_ctl_report_desc {
-    int     size;
-    u_char  data[1024];	/* filled data size will vary */
+    int     ucrd_size;
+    u_char  ucrd_data[1024];	/* filled data size will vary */
 };
 .Ed
 .It Dv USB_SET_IMMED (int)
@@ -87,8 +87,8 @@ or
 This call may fail if the device does not support this feature.
 .Bd -literal
 struct usb_ctl_report {
-	int report;
-	u_char	data[1024];	/* used data size will vary */
+	int     ucr_report;
+	u_char	ucr_data[1024];	/* used data size will vary */
 };
 .Ed
 .It Dv USB_SET_REPORT (struct usb_ctl_report)
@@ -100,6 +100,19 @@ field indicates which report is to be set.  It should be
 or
 .Dv UHID_FEATURE_REPORT .
 This call may fail if the device does not support this feature.
+.It Dv USB_GET_DEVICEINFO (struct usb_device_info)
+Get an information summary for the device.  This call will not
+issue any USB transactions.
+.It Dv USB_GET_STRING_DESC (struct usb_string_desc)
+Get a string descriptor for the given language id and
+string index.
+.Bd -literal
+struct usb_string_desc {
+	int	usd_string_index;
+	int	usd_language_id;
+	usb_string_descriptor_t usd_desc;
+};
+.Ed
 .El
 .Pp
 Use
@@ -126,3 +139,9 @@ The
 driver
 appeared in
 .Nx 1.4 .
+Support for
+.Dv USB_GET_DEVICEINFO
+and
+.Dv USB_GET_STRING_DESC
+ioctls appeared in
+.Nx 2.0 .
