@@ -36,11 +36,10 @@ HP380
 	Support for "current" hp380/425 (and 433) machines: 25 (33) mhz 68040
 	with MMU/FPU.  Compiles in support for 68040.
 
-HPFPLIB
-	Compiles in support to link with HP-UX's version of Motorola's 68040
-	FP emulation library (hp300/hpux_float.o).  Kernel will build and run
-	without this option, but many binaries will core dump.  Should not be
-	defined unless HP380 is.
+FPSP
+	Compiles in support to link with Motorola's 68040 FP emulation
+	library.  Kernel will build and run without this option, but many
+	binaries will core dump.  Should not be defined unless HP380 is.
 
 
 USELEDS
