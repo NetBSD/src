@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.81 2004/04/25 17:15:27 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.82 2004/04/25 18:40:37 dbj Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -84,7 +84,7 @@ struct disk_desc {
 static int foundffs(struct data *, size_t);
 static int mount_root(void);
 static int fsck_preen(const char *, int, const char *);
-static void fixsb(const char *, int);
+static void fixsb(const char *, const char *, char);
 
 #ifndef DISK_NAMES
 #define DISK_NAMES "wd", "sd", "ld"
@@ -525,7 +525,7 @@ fsck_preen(const char *disk, int ptn, const char *fsname)
 	if (access(prog, X_OK) != 0)
 		return 0;
 	if (!strcmp(fsname,"ffs"))
-		fixsb(disk, ptn);
+		fixsb(prog, disk, ptn);
 	error = run_program(0, "%s -p -q /dev/r%s%c", prog, disk, ptn);
 	free(prog);
 	if (error != 0) {
@@ -536,39 +536,34 @@ fsck_preen(const char *disk, int ptn, const char *fsname)
 	return error;
 }
 
-/*
- * The import of FFSv2 was rather botched and many 1.6 'current' kernels
- * modified the superblock into a state part way between the 'old' format
- * and what an 'updated' superblock would have to look like.
- * This code attempts to detect, fix and reverse the error.
- * 1.6.1, 1.6.2 and the 2.0 release contain 'good' kernels...
- * This performs the same function as the etc/rc.d/fixsb script.
- * see NetBSD pr install/25138 for details.
- * (There are also problems with filesystems with 64k block size, which
- * fsck should fix itself.)
+/* This performs the same function as the etc/rc.d/fixsb script
+ * which attempts to correct problems with ffs1 filesystems
+ * which may have been introduced by booting a netbsd-current kernel
+ * from between April of 2003 and January 2004. For more information
+ * This script was developed as a response to NetBSD pr install/25138
+ * Additional prs regarding the original issue include:
+ *  bin/17910 kern/21283 kern/21404 port-macppc/23925 port-macppc/23926
  */
-
 static void
-fixsb(const char *disk, int ptn)
+fixsb(const char *prog, const char *disk, char ptn)
 {
 	int fd;
-	char diskpath[MAXPATHLEN];
-	static char prog[] = "/sbin/fsck_ffs";
 	int rval;
-	uint64_t sblk[SBLOCKSIZE/sizeof(uint64_t)];
-	struct fs *fs = (struct fs *)sblk;
-	char *part;
+	union {
+		struct fs fs;
+		char buf[SBLOCKSIZE];
+	} sblk;
+	struct fs *fs = &sblk.fs;
 
-	asprintf(&part, "%s%c", disk, ptn + 'a');
-	fd = opendisk(part, O_RDONLY, diskpath, sizeof(diskpath), 0);
-	free(part);
+	snprintf(sblk.buf, sizeof(sblk.buf), "/dev/r%s%c", disk, ptn);
+	fd = open(sblk.buf, O_RDONLY);
 	if (fd == -1)
 		return;
 
 	/* Read ffsv1 main superblock */
-	rval = pread(fd, sblk, sizeof sblk, SBLOCK_UFS1);
+	rval = pread(fd, sblk.buf, sizeof sblk.buf, SBLOCK_UFS1);
 	close(fd);
-	if (rval != sizeof sblk)
+	if (rval != sizeof sblk.buf)
 		return;
 
 	if (fs->fs_magic != FS_UFS1_MAGIC &&
@@ -587,10 +582,11 @@ fixsb(const char *disk, int ptn)
 	 * We specify -b16 in order to stop fsck bleating that the
 	 * sb doesn't match the first alternate.
 	 */
-	if (run_program(0, "%s -p -q -b 16 -c 4 %s", prog, diskpath) != 0)
-		return;
+	run_program(RUN_DISPLAY | RUN_PROGRESS,
+	    "%s -p -b 16 -c 4 /dev/%s%c", prog, disk, ptn);
 	/* Then downgrade to fslevel 3 */
-	run_program(0, "%s -p -q -c 3 %s", prog, diskpath);
+	run_program(RUN_DISPLAY | RUN_PROGRESS,
+	    "%s -p -c 3 /dev/r%s%c", prog, disk, ptn);
 }
 
 /*
