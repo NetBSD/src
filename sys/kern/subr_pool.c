@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.6 1998/08/01 23:44:21 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.7 1998/08/02 04:34:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -226,13 +226,8 @@ pr_rmpage(pp, ph)
 {
 
 	/*
-	 * Unlink a page from the pool and release it.
+	 * If the page was idle, decrement the idle page count.
 	 */
-	TAILQ_REMOVE(&pp->pr_pagelist, ph, ph_pagelist);
-	(*pp->pr_free)(ph->ph_page, pp->pr_pagesz, pp->pr_mtype);
-	pp->pr_npages--;
-	pp->pr_npagefree++;
-
 	if (ph->ph_nmissing == 0) {
 #ifdef DIAGNOSTIC
 		if (pp->pr_nidle == 0)
@@ -240,6 +235,14 @@ pr_rmpage(pp, ph)
 #endif
 		pp->pr_nidle--;
 	}
+
+	/*
+	 * Unlink a page from the pool and release it.
+	 */
+	TAILQ_REMOVE(&pp->pr_pagelist, ph, ph_pagelist);
+	(*pp->pr_free)(ph->ph_page, pp->pr_pagesz, pp->pr_mtype);
+	pp->pr_npages--;
+	pp->pr_npagefree++;
 
 	if ((pp->pr_flags & PR_PHINPAGE) == 0) {
 		LIST_REMOVE(ph, ph_hashlist);
