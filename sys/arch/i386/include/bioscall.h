@@ -1,4 +1,4 @@
-/*	$NetBSD: bioscall.h,v 1.3 1998/08/31 23:52:40 jtk Exp $ */
+/*	$NetBSD: bioscall.h,v 1.4 1998/10/01 02:00:37 jtk Exp $ */
 /*
  *  Copyright (c) 1997 John T. Kohl
  *  All rights reserved.
@@ -76,5 +76,6 @@ struct bioscallregs {
 #define FLAGS_HI r_flags.halfword.hw_hi
 #define EFLAGS r_flags.longword
 
+void bioscall __P((int /* function*/ , struct bioscallregs * /* regs */));
 #endif
 #endif /* __I386_BIOSCALL_H__ */
