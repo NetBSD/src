@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.22 1998/09/28 17:13:54 matt Exp $	*/
+/*	$NetBSD: pdq.c,v 1.23 1998/09/28 18:01:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -916,10 +916,6 @@ pdq_queue_transmit_data(
 	dbp->pdqdb_transmits[producer] = tx->tx_hdrdesc;
 	PDQ_OS_DESC_PRESYNC(pdq, &dbp->pdqdb_transmits[producer], sizeof(pdq_txdesc_t));
 	PDQ_ADVANCE(producer, 1, PDQ_RING_MASK(dbp->pdqdb_transmits));
-    } else {
-	PDQ_OS_DATABUF_PTR(pdu)[0] = PDQ_FDDI_PH0;
-	PDQ_OS_DATABUF_PTR(pdu)[1] = PDQ_FDDI_PH1;
-	PDQ_OS_DATABUF_PTR(pdu)[2] = PDQ_FDDI_PH2;
     }
 
 #if defined(PDQ_BUS_DMA)
