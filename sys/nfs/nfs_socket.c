@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.89 2003/06/23 11:02:19 martin Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.90 2003/06/25 14:37:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.89 2003/06/23 11:02:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.90 2003/06/25 14:37:50 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2204,18 +2204,28 @@ nfsrv_wakenfsd(slp)
 
 	if ((slp->ns_flag & SLP_VALID) == 0)
 		return;
-	TAILQ_FOREACH(nd, &nfsd_head, nfsd_chain) {
-		if (nd->nfsd_flag & NFSD_WAITING) {
-			nd->nfsd_flag &= ~NFSD_WAITING;
-			if (nd->nfsd_slp)
-				panic("nfsd wakeup");
-			slp->ns_sref++;
-			nd->nfsd_slp = slp;
-			wakeup((caddr_t)nd);
-			return;
-		}
+	simple_lock(&nfsd_slock);
+	if (slp->ns_flag & SLP_DOREC) {
+		simple_unlock(&nfsd_slock);
+		return;
+	}
+	nd = SLIST_FIRST(&nfsd_idle_head);
+	if (nd) {
+		SLIST_REMOVE_HEAD(&nfsd_idle_head, nfsd_idle);
+		simple_unlock(&nfsd_slock);
+
+		KASSERT(nd->nfsd_flag & NFSD_WAITING);
+		nd->nfsd_flag &= ~NFSD_WAITING;
+		if (nd->nfsd_slp)
+			panic("nfsd wakeup");
+		slp->ns_sref++;
+		nd->nfsd_slp = slp;
+		wakeup(nd);
+		return;
 	}
 	slp->ns_flag |= SLP_DOREC;
 	nfsd_head_flag |= NFSD_CHECKSLP;
+	TAILQ_INSERT_TAIL(&nfssvc_sockpending, slp, ns_pending);
+	simple_unlock(&nfsd_slock);
 }
 #endif /* NFSSERVER */
