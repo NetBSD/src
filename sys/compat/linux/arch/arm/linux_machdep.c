@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.5 2002/02/17 22:00:09 bjh21 Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.6 2002/02/17 23:05:08 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.5 2002/02/17 22:00:09 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.6 2002/02/17 23:05:08 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,8 +151,8 @@ linux_sendsig(catcher, sig, mask, code)
 	/* Linux doesn't save the onstack flag in sigframe */
 
 	/* Save signal mask. */
-	native_to_linux_old_extra_sigset(mask, &frame.sf_sc.sc_mask,
-	    frame.sf_extramask);
+	native_to_linux_old_extra_sigset(&frame.sf_sc.sc_mask,
+	    frame.sf_extramask, mask);
 
 	/* Other state (mostly faked) */
 	/*
@@ -270,8 +270,8 @@ linux_sys_sigreturn(p, v, retval)
 	p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
-	linux_old_extra_to_native_sigset(&frame.sf_sc.sc_mask,
-	    frame.sf_extramask, &mask);
+	linux_old_extra_to_native_sigset(&mask, &frame.sf_sc.sc_mask,
+	    frame.sf_extramask);
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
 	return (EJUSTRETURN);
