@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.h,v 1.4 1997/07/17 01:48:40 jtk Exp $ */
+/* $NetBSD: mainbus.h,v 1.5 1997/10/14 21:25:02 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -34,7 +34,7 @@
  *
  * RiscBSD kernel project
  *
- * mainbus.c
+ * mainbus.h
  *
  * mainbus configuration
  *
@@ -48,17 +48,12 @@
  */
 
 struct mainbus_attach_args {
-	u_int	mb_iobase;		/* base i/o address */
-	int	mb_iosize;		/* span of ports used */
-	int	mb_irq;			/* interrupt request */
-	int	mb_drq;			/* DMA request */
-	void	*mb_aux;		/* driver specific */
+	u_int		mb_iobase;	/* base i/o address */
+	int		mb_iosize;	/* span of ports used */
+	int		mb_irq;		/* interrupt request */
+	int		mb_drq;		/* DMA request */
+	void		*mb_aux;	/* driver specific */
 	bus_space_tag_t	mb_iot;		/* bus space tag */
 };
 
-#define DRQUNK MAINBUSCF_DACK_DEFAULT
-#define IRQUNK MAINBUSCF_IRQ_DEFAULT
-
 /* End of mainbus.h */
-
-
