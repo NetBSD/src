@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.15 1998/09/05 14:18:04 christos Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.16 1998/09/10 19:57:20 kenh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.14 1998/09/05 14:17:38 christos Exp 
+ *	NetBSD: pcmciadevs,v 1.15 1998/09/10 19:55:30 kenh Exp 
  */
 
 /*-
@@ -87,6 +87,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Dayna CommuniCard E"	},
 	},
 	{
+	    PCMCIA_VENDOR_DIGITAL, PCMCIA_PRODUCT_DIGITAL_MOBILE_MEDIA_CDROM,
+	    PCMCIA_CIS_DIGITAL_MOBILE_MEDIA_CDROM,
+	    0,
+	    "Digital Equipment Corporation",
+	    "Digital Mobile Media CD-ROM"	},
+	},
+	{
 	    PCMCIA_VENDOR_MOTOROLA, PCMCIA_PRODUCT_MOTOROLA_POWER144,
 	    PCMCIA_CIS_MOTOROLA_POWER144,
 	    0,
@@ -162,6 +169,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "US Robotics Corporation",
 	    "US Robotics WorldPort 14.4 Modem"	},
+	},
+	{
+	    PCMCIA_VENDOR_SANDISK, PCMCIA_PRODUCT_SANDISK_SDCFB,
+	    PCMCIA_CIS_SANDISK_SDCFB,
+	    0,
+	    "Sandisk Corporation",
+	    "Sandisk CompactFlash Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_SIMPLETECH, PCMCIA_PRODUCT_SIMPLETECH_COMMUNICATOR288,
@@ -276,6 +290,20 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "DEC DEPCM-BA"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_TEAC_IDECARDII,
+	    PCMCIA_CIS_TEAC_IDECARDII,
+	    0,
+	    "TEAC",
+	    "TEAC IDE Card/II"	},
+	},
+	{
+	    PCMCIA_VENDOR_SANDISK, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Sandisk Corporation",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_NEWMEDIA, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -381,6 +409,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_HAGIWARASYSCOM, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Hagiwara SYS-COM",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_PREMAX, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -427,6 +462,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Digital Equipment Corporation",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_TEAC, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "TEAC",
 	    NULL,
 	},
 	{ 0, 0, { NULL, NULL, NULL, NULL }, 0, NULL, NULL, }
