@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.46 2002/10/25 21:49:41 martin Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.47 2002/11/25 20:49:55 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -456,14 +456,14 @@
  * keysym groups
  */
 
-#define KS_GROUP_Mod		0xf100
-#define KS_GROUP_Keypad		0xf200
-#define KS_GROUP_Function	0xf300
-#define KS_GROUP_Command	0xf400
-#define KS_GROUP_Internal	0xf500
-#define KS_GROUP_Dead		0xf801		/* not encoded in keysym */
-#define KS_GROUP_Ascii		0xf802		/* not encoded in keysym */
-#define KS_GROUP_Keycode	0xf803		/* not encoded in keysym */
+#define KS_GROUP_Mod		0xf100U
+#define KS_GROUP_Keypad		0xf200U
+#define KS_GROUP_Function	0xf300U
+#define KS_GROUP_Command	0xf400U
+#define KS_GROUP_Internal	0xf500U
+#define KS_GROUP_Dead		0xf801U		/* not encoded in keysym */
+#define KS_GROUP_Ascii		0xf802U		/* not encoded in keysym */
+#define KS_GROUP_Keycode	0xf803U		/* not encoded in keysym */
 
 #define KS_NUMKEYCODES	0x1000
 #define KS_KEYCODE(v)	((v) | 0xe000)
