@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.c,v 1.6 2000/06/28 15:39:26 mrg Exp $	*/
+/*	$NetBSD: freebsd_exec.c,v 1.7 2000/11/13 21:32:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -54,7 +54,7 @@
 #include <compat/freebsd/freebsd_syscall.h>
 
 extern struct sysent freebsd_sysent[];
-extern char *freebsd_syscallnames[];
+extern const char * const freebsd_syscallnames[];
 
 #ifdef EXEC_AOUT
 struct emul emul_freebsd_aout = {

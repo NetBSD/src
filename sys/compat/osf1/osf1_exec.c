@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.10 1999/05/28 04:39:14 cgd Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.11 2000/11/13 21:32:18 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -69,7 +69,7 @@ static int osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp);
 #define	MAX_AUX_ENTRIES		4	/* max we'll ever push (right now) */
 
 extern struct sysent osf1_sysent[];
-extern char *osf1_syscallnames[];
+extern const char * const osf1_syscallnames[];
 extern void cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
 					u_long));
 extern char osf1_sigcode[], osf1_esigcode[];

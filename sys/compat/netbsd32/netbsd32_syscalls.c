@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscalls.c,v 1.16 2000/08/18 19:35:21 cgd Exp $ */
+/* $NetBSD: netbsd32_syscalls.c,v 1.17 2000/11/13 21:32:18 jdolecek Exp $ */
 
 /*
  * System call names.
@@ -25,7 +25,7 @@
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #endif /* _KERNEL && ! _LKM */
 
-char *netbsd32_syscallnames[] = {
+const char * const netbsd32_syscallnames[] = {
 	"syscall",			/* 0 = syscall */
 	"netbsd32_exit",			/* 1 = netbsd32_exit */
 	"fork",			/* 2 = fork */

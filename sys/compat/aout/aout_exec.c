@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_exec.c,v 1.2 2000/06/06 19:04:16 soren Exp $	*/
+/*	$NetBSD: aout_exec.c,v 1.3 2000/11/13 21:32:16 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 const char aout_emul_path[] = "/emul/aout";
 extern struct sysent aout_sysent[];
 #ifdef SYSCALL_DEBUG
-extern char *aout_syscallnames[];
+extern const char * const aout_syscallnames[];
 #endif
 extern char sigcode[], esigcode[];
 

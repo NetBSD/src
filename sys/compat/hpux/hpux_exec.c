@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.16 2000/06/28 15:39:27 mrg Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.17 2000/11/13 21:32:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 const char hpux_emul_path[] = "/emul/hpux";
 extern char sigcode[], esigcode[];
 extern struct sysent hpux_sysent[];
-extern char *hpux_syscallnames[];
+extern const char * const hpux_syscallnames[];
 extern int native_to_hpux_errno[];
 
 static	int exec_hpux_prep_nmagic __P((struct proc *, struct exec_package *));

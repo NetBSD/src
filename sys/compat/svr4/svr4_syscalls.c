@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_syscalls.c,v 1.61 2000/08/18 19:35:24 cgd Exp $ */
+/* $NetBSD: svr4_syscalls.c,v 1.62 2000/11/13 21:32:19 jdolecek Exp $ */
 
 /*
  * System call names.
@@ -27,7 +27,7 @@
 #include <compat/svr4/svr4_acl.h>
 #endif /* _KERNEL && ! _LKM */
 
-char *svr4_syscallnames[] = {
+const char * const svr4_syscallnames[] = {
 	"syscall",			/* 0 = syscall */
 	"exit",			/* 1 = exit */
 	"fork",			/* 2 = fork */

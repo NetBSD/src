@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.106 2000/11/07 12:41:53 jdolecek Exp $	*/
+/*	$NetBSD: proc.h,v 1.107 2000/11/13 21:32:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -92,7 +92,7 @@ struct	emul {
 	int	e_nosys;		/* Offset of the nosys() syscall */
 	int	e_nsysent;		/* Number of system call entries */
 	struct sysent *e_sysent;	/* System call array */
-	char	**e_syscallnames;	/* System call name array */
+	const char * const *e_syscallnames;	/* System call name array */
 	int	e_arglen;		/* Extra argument size in words */
 					/* Copy arguments on the new stack */
 	void	*(*e_copyargs) __P((struct exec_package *, struct ps_strings *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.55 2000/11/08 05:47:56 chs Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.56 2000/11/13 21:32:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ static int ELFNAME2(netbsd,probe)(struct proc *, struct exec_package *,
 
 extern char sigcode[], esigcode[];
 #ifdef SYSCALL_DEBUG
-extern char *syscallnames[];
+extern const char * const syscallnames[];
 #endif
 
 struct emul ELFNAMEEND(emul_netbsd) = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.20 2000/06/28 15:39:34 mrg Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.21 2000/11/13 21:32:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -66,7 +66,7 @@ int sunos_exec_aout_prep_omagic __P((struct proc *, struct exec_package *));
 extern int nsunos_sysent;
 extern struct sysent sunos_sysent[];
 #ifdef SYSCALL_DEBUG
-extern char *sunos_syscallnames[];
+extern const char * const sunos_syscallnames[];
 #endif
 extern char sunos_sigcode[], sunos_esigcode[];
 const char sunos_emul_path[] = "/emul/sunos";
