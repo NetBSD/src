@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.45 2002/01/31 22:44:05 tv Exp $	*/
+/*	$NetBSD: spec.c,v 1.46 2002/02/05 12:15:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.45 2002/01/31 22:44:05 tv Exp $");
+__RCSID("$NetBSD: spec.c,v 1.46 2002/02/05 12:15:14 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -502,8 +502,6 @@ unset(char *t, NODE *ip)
 	while ((p = strsep(&t, " \t")) != NULL) {
 		if (*p == '\0')
 			continue;
-		if (strcmp(p, "all") == 0)
-			mtree_err("invalid keyword `all'");
 		ip->flags &= ~parsekey(p, NULL);
 	}
 }
