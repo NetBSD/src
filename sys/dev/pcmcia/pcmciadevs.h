@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.153 2001/12/18 11:23:49 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.154 2001/12/23 09:11:05 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.153 2001/12/18 11:23:24 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.154 2001/12/23 09:10:39 ichiro Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -801,7 +801,7 @@
 #define	PCMCIA_CIS_ZOOM_AIR_4000	{ "Zoom", "Air-4000", NULL, NULL }
 #define	PCMCIA_PRODUCT_ZOOM_AIR_4000	-1
 #define	PCMCIA_STR_ZOOM_AIR_4000	"Zoom Air-4000"
-#define	PCMCIA_CIS_FUJITSU_FMV_J181	{ "PCMCIA", "MBH10302", NULL, NULL }
+#define	PCMCIA_CIS_FUJITSU_FMV_J181	{ "PCMCIA MBH10302", "01", NULL, NULL }
 #define	PCMCIA_PRODUCT_FUJITSU_FMV_J181	-1
 #define	PCMCIA_STR_FUJITSU_FMV_J181	"FUJITSU FMV-J181 PCMCIA Card"
 #define	PCMCIA_CIS_FUJITSU_FMV_J182	{ "FUJITSU", "LAN Card(FMV-J182)", "Ver.01", NULL }
