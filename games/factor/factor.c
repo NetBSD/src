@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)factor.c	4.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: factor.c,v 1.3 1993/12/08 07:27:50 mycroft Exp $";
+static char rcsid[] = "$Id: factor.c,v 1.4 1994/03/03 03:07:24 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -65,6 +65,7 @@ static char rcsid[] = "$Id: factor.c,v 1.3 1993/12/08 07:27:50 mycroft Exp $";
  */
 
 #include <stdio.h>
+#include <limits.h>
 #include <ctype.h>
 #include "primes.h"
 
