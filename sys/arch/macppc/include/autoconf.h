@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.5 2002/07/05 18:45:17 matt Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.6 2004/03/24 19:42:04 matt Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -82,10 +82,12 @@ int akbd_cnattach __P((void));
 int ofb_is_console __P((void));
 int ofb_cnattach __P((void));
 
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 /* these are in dev/zs.c */
 int zssoft __P((void *));
 
 /* these are in ../../dev/ic/com.c */
 void comsoft __P((void));
+#endif
 
 #endif /* _MACHINE_AUTOCONF_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.129 2003/10/20 00:12:10 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.130 2004/03/24 19:44:20 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.129 2003/10/20 00:12:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.130 2004/03/24 19:44:20 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -302,6 +302,7 @@ dumpsys()
 	printf("dumpsys: TBD\n");
 }
 
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 #include "zsc.h"
 #include "com.h"
 /*
@@ -317,6 +318,7 @@ softserial()
 	comsoft();
 #endif
 }
+#endif
 
 #if 0
 /*
