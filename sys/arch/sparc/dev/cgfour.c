@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.14 1997/10/05 18:24:33 thorpej Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.15 1998/01/12 20:23:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -140,9 +140,7 @@ struct cfattach cgfour_ca = {
 	sizeof(struct cgfour_softc), cgfourmatch, cgfourattach
 };
 
-struct cfdriver cgfour_cd = {
-	NULL, "cgfour", DV_DULL
-};
+extern struct cfdriver cgfour_cd;
 
 #if defined(SUN4)
 /* frame buffer generic driver */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.23 1997/11/05 00:02:51 gwr Exp $ */
+/*	$NetBSD: if_ie.c,v 1.24 1998/01/12 20:32:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -217,10 +217,6 @@ static inline int ie_packet_len __P((struct ie_softc *));
 static inline struct mbuf * ieget __P((struct ie_softc *sc,
 		struct ether_header *ehp, int *to_bpf));
 
-
-struct cfdriver ie_cd = {
-	NULL, "ie", DV_IFNET
-};
 
 /*
  * Here are a few useful functions.  We could have done these as macros,

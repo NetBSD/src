@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.51 1997/10/05 18:24:37 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.52 1998/01/12 20:23:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -164,6 +164,8 @@ void	lemediastatus __P((struct am7990_softc *, struct ifmediareq *));
 struct cfattach le_ca = {
 	sizeof(struct le_softc), lematch, leattach
 };
+
+extern struct cfdriver le_cd;
 
 hide void lewrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
 hide u_int16_t lerdcsr __P((struct am7990_softc *, u_int16_t));
