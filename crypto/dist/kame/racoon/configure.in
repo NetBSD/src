@@ -142,11 +142,11 @@ else
 	AC_MSG_RESULT(no)
 fi
 
-AC_MSG_CHECKING(if __FUNCTION__ is available)
+AC_MSG_CHECKING(if __func__ is available)
 AC_TRY_COMPILE(dnl
 [#include <stdio.h>
-], [char *x = __FUNCTION__;],
-	[AC_DEFINE(HAVE_FUNCTION_MACRO)
+], [char *x = __func__;],
+	[AC_DEFINE(HAVE_FUNC_MACRO)
 	AC_MSG_RESULT(yes)],
 	[AC_MSG_RESULT(no)])
 
@@ -448,11 +448,16 @@ fi
 if test "x$krb5_libs" = "x"; then
 	case $host_os in
 	netbsd*)	krb5_libs="-lgssapi -lkrb5 -lcom_err -lroken -lasn1";;
+	freebsd*)	krb5_libs="-lgssapi -lkrb5 -lcom_err -lroken -lasn1 -lcrypt";;
 	esac
 fi
 if test "$enable_gssapi" = "yes"; then
-	LIBS="$LIBS $krb5_libs"
-	CPPFLAGS="-I$krb5_incdir $CPPFLAGS"
+	case $host_os in
+	netbsd*)
+		LIBS="$LIBS $krb5_libs"
+		CPPFLAGS="-I$krb5_incdir $CPPFLAGS"
+		;;
+	esac
 fi
 dnl for some reason, past version of freebsd port requires us to set -I for
 dnl BOTH openssl/cast.h and cast.h.  who should I blame (or am I mistaken?)
@@ -682,6 +687,9 @@ AC_SUBST(sysconfdir_x)
 
 dnl Checks for getifaddrs
 AC_CHECK_FUNCS(getifaddrs)
+
+dnl Checks for arc4random
+AC_REPLACE_FUNCS(arc4random)
 
 dnl defines package version
 AC_MSG_CHECKING(if --with-pkgversion option is specified)

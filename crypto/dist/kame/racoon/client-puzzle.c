@@ -5,6 +5,9 @@
 #include <stdlib.h>
 
 #include "vmbuf.h"
+#ifndef HAVE_ARC4RANDOM
+#include "arc4random.h"
+#endif
 
 vchar_t *mdx __P((const vchar_t *, int));
 void plusone __P((u_char *, int));
@@ -56,10 +59,9 @@ main(ac, av)
 	if (data == NULL)
 		return -1;
 
-	srandom(time(NULL));
 	for (i = 0; i < n; i++) {
 		for (j = 0; j < datalen; j++)
-			data->v[j] = (char)random();
+			data->v[j] = arc4random() & 0xff;
 
 		res = mdx((const vchar_t *)data, k);
 		if (res == NULL)
