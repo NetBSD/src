@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.41 2001/11/05 23:31:02 christos Exp $	*/
+/*	$NetBSD: termcap.c,v 1.42 2001/12/02 06:38:51 blymn Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,10 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.41 2001/11/05 23:31:02 christos Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.42 2001/12/02 06:38:51 blymn Exp $");
 #endif
 #endif /* not lint */
-
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -503,7 +502,7 @@ void
 t_freent(info)
 	struct tinfo *info;
 {
-	struct tbuf *tb;
+	struct tbuf *tb, *wb;
 	_DIAGASSERT(info != NULL);
 	free(info->info);
 	if (info->up != NULL)
@@ -511,9 +510,10 @@ t_freent(info)
 	if (info->bc != NULL)
 		free(info->bc);
 	for (tb = info->tbuf; tb;) {
-		tb = info->tbuf->next;
-		free(info->tbuf->data);
-		free(info->tbuf);
+		wb = tb;
+		tb = tb->next;
+		free(wb->data);
+		free(wb);
 	}
 	free(info);
 }
