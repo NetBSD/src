@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.1 1998/02/18 13:48:31 tsubai Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.2 1998/06/08 21:27:10 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,12 +66,6 @@
 	.set	noreorder
 
 LEAF(to_monitor)
-#ifdef RB_PWOFF
-	andi	a0, RB_PWOFF
-	beq	a0, zero, 1f
-	nop
-1:
-#endif
 	li	v0, MIPS_SR_BOOT_EXC_VEC	# no interrupt and
 	mtc0	v0, MIPS_COP_0_STATUS_REG	# boot strap exception vector
 	nop
@@ -104,11 +98,9 @@ _C_LABEL(intrnames):
 	.asciiz	"memory"
 	.asciiz	"clock"
 	.asciiz	"fpu"
-	.asciiz	"tcslot0"
-	.asciiz	"tcslot1"
-	.asciiz	"tcslot2"
-	.asciiz "dtop"
-	.asciiz "isdn"
+	.asciiz	"slot1"
+	.asciiz	"slot2"
+	.asciiz	"slot3"
 	.asciiz	"floppy"
 	.asciiz	"stray"
 	.asciiz	"nmi"
@@ -116,7 +108,7 @@ _C_LABEL(intrnames):
 _C_LABEL(eintrnames):
 	.align	2
 _C_LABEL(intrcnt):
-	.word	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0
+	.word	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0
 _C_LABEL(eintrcnt):
 	.word	0	# This shouldn't be needed but with 4.4bsd's as, the eintrcnt
 			#  label ends end up in a different section otherwise.
