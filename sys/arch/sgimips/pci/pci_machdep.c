@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.13 2004/01/18 00:50:08 sekiya Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.14 2004/09/06 07:24:06 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.13 2004/01/18 00:50:08 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.14 2004/09/06 07:24:06 sekiya Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -213,7 +213,7 @@ pci_intr_establish(pc, ih, level, func, arg)
 	void *arg;
 {
 
-	return (void *)(*platform.intr_establish)(ih, 0, func, arg);
+	return (void *)(pc->intr_establish)(ih, 0, func, arg);
 }
 
 void
@@ -222,5 +222,5 @@ pci_intr_disestablish(pc, cookie)
 	void *cookie;
 {
 
-	panic("pci_intr_disestablish: not implemented");
+	(pc->intr_disestablish)(cookie);
 }
