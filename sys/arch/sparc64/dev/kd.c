@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.14 2000/11/02 00:21:03 eeh Exp $	*/
+/*	$NetBSD: kd.c,v 1.15 2000/11/09 00:02:54 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -512,6 +512,7 @@ cons_attach_input(cc, cn)
 	cc->cc_upstream = kd_cons_input;
 
 	/* Attach lower level. */
+	cn_hw->cn_dev = cn->cn_dev;
 	cn_hw->cn_pollc = cn->cn_pollc;
 	cn_hw->cn_getc = cn->cn_getc;
 
