@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.29 2000/06/01 14:29:01 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.30 2000/09/03 19:15:45 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -276,7 +276,7 @@ USB_ATTACH(umodem)
 	uca.ibufsize = UMODEMIBUFSIZE;
 	uca.obufsize = UMODEMOBUFSIZE;
 	uca.ibufsizepad = UMODEMIBUFSIZE;
-	uca.obufsizepad = UMODEMOBUFSIZE;
+	uca.opkthdrlen = 0;
 	uca.device = sc->sc_udev;
 	uca.iface = sc->sc_data_iface;
 	uca.methods = &umodem_methods;
