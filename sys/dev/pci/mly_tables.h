@@ -1,4 +1,4 @@
-/*	$NetBSD: mly_tables.h,v 1.2 2003/03/31 03:26:34 perry Exp $	*/
+/*	$NetBSD: mly_tables.h,v 1.3 2003/03/31 03:35:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ static const struct mly_code_lookup mly_table_event[] = {
 	{ "p  automatic rebuild started",			0x0005 },
 	{ "p  manual rebuild started",				0x0006 },
 	{ "pr rebuild completed",				0x0007 },
-	{ "pr rebuild canceled",				0x0008 },
+	{ "pr rebuild cancelled",				0x0008 },
 	{ "pr rebuild failed for unknown reasons",		0x0009 },
 	{ "pr rebuild failed due to new physical device",	0x000a },
 	{ "pr rebuild failed due to logical drive failure",	0x000b },
@@ -143,7 +143,7 @@ static const struct mly_code_lookup mly_table_event[] = {
 	{ "p  initialization started",				0x001d },
 	{ "pr initialization completed",			0x001e },
 	{ "pr initialization failed",				0x001f },
-	{ "pr initialization canceled",				0x0020 },
+	{ "pr initialization cancelled",			0x0020 },
 	{ "P  write recovery failed",				0x0021 },
 	{ "p  scsi bus reset failed",				0x0022 },
 	{ "p  double check condition",				0x0023 },
@@ -169,7 +169,7 @@ static const struct mly_code_lookup mly_table_event[] = {
 	 */
 	{ "m  consistency check started",			0x0080 },
 	{ "mr consistency check completed",			0x0081 },
-	{ "mr consistency check canceled",			0x0082 },
+	{ "mr consistency check cancelled",			0x0082 },
 	{ "mr consistency check completed with errors",		0x0083 },
 	{ "mr consistency check failed (logical drive failure)",0x0084 },
 	{ "mr consistency check failed (physical device failure)",0x0085 },
@@ -179,13 +179,13 @@ static const struct mly_code_lookup mly_table_event[] = {
 	{ "m  automatic rebuild started",			0x0089 },
 	{ "m  manual rebuild started",				0x008a },
 	{ "mr rebuild completed",				0x008b },
-	{ "mr rebuild canceled",				0x008c },
+	{ "mr rebuild cancelled",				0x008c },
 	{ "mr rebuild failed for unknown reasons",		0x008d },
 	{ "mr rebuild failed due to new physical device",	0x008e },
 	{ "mr rebuild failed due to logical drive failure",	0x008f },
 	{ "l  initialization started",				0x0090 },
 	{ "lr initialization completed",			0x0091 },
-	{ "lr initialization canceled",				0x0092 },
+	{ "lr initialization cancelled",			0x0092 },
 	{ "lr initialization failed",				0x0093 },
 	{ "lr found",						0x0094 },
 	{ "lr gone",						0x0095 },
