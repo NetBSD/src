@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.133 2001/07/31 17:01:35 christos Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.134 2001/08/07 13:57:41 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.133 2001/07/31 17:01:15 christos Exp 
+ *	NetBSD: pcmciadevs,v 1.134 2001/08/07 13:57:24 christos Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -774,6 +774,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "BUFFALO AirStation 11Mbps WLAN"	},
 	},
 	{
+	    PCMCIA_VENDOR_ZONET, PCMCIA_PRODUCT_ZONET_ZEN,
+	    PCMCIA_CIS_ZONET_ZEN,
+	    0,
+	    "Zonet Technology Inc.",
+	    "Zonet Zen 10/10"	},
+	},
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MEGAHERTZ_XJ2288,
 	    PCMCIA_CIS_MEGAHERTZ_XJ2288,
 	    0,
@@ -1359,6 +1366,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Melco Corporation",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_ZONET, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Zonet Technology Inc.",
 	    NULL,
 	},
 	{
