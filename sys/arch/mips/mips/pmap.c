@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41.2.2 1998/10/20 09:29:25 drochner Exp $	*/
+/*	$NetBSD: pmap.c,v 1.41.2.3 1998/11/15 16:20:49 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41.2.2 1998/10/20 09:29:25 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41.2.3 1998/11/15 16:20:49 drochner Exp $");
 
 /*
  *	Manages physical address maps.
@@ -185,9 +185,6 @@ vm_offset_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
 
 int		mipspagesperpage;	/* PAGE_SIZE / NBPG */
 
-#ifdef ATTR
-char		*pmap_attributes;	/* reference and modify bits */
-#endif
 struct pv_entry	*pv_table;
 int		 pv_table_npages;
 
@@ -210,15 +207,13 @@ boolean_t	pmap_initialized = FALSE;
 	&vm_physmem[bank_].pmseg.pvent[pg_];				\
 })
 
-#ifdef ATTR
 #define	pa_to_attribute(pa)						\
 ({									\
 	int bank_, pg_;							\
 									\
 	bank_ = vm_physseg_find(atop((pa)), &pg_);			\
-	&vm_physmem[bank_].pmseg.attrs[pg_]; 				\
+	&vm_physmem[bank_].pmseg.pvent[pg_].pv_flags; 				\
 })
-#endif
 
 /* Forward function declarations */
 int	pmap_remove_pv __P((pmap_t pmap, vm_offset_t va, vm_offset_t pa));
@@ -267,16 +262,13 @@ pmap_bootstrap()
 	valloc(Sysmap, pt_entry_t, Sysmapsize);
 
 	/*
-	 * Allocate memory for page attributes and pv_table heads.
+	 * Allocate memory for pv_table heads.
 	 * This will allocate more entries than we really need.
 	 * We could do this in pmap_init when we know the actual
 	 * phys_start and phys_end but its better to use kseg0 addresses
 	 * rather than kernel virtual addresses mapped through the TLB.
 	 */
 	pv_table_npages = physmem;
-#ifdef ATTR
-	valloc(pmap_attributes, char, pv_table_npages);
-#endif
 	valloc(pv_table, struct pv_entry, pv_table_npages);
 
 	/*
@@ -409,9 +401,6 @@ pmap_init()
 	vm_size_t	s;
 	int		bank;
 	pv_entry_t	pv;
-#ifdef ATTR
-	char		*attr;
-#endif
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_INIT))
@@ -419,24 +408,15 @@ pmap_init()
 #endif
 
 	/*
-	 * Memory for the pv entry heads and page attributes has
+	 * Memory for the pv entry heads has
 	 * already been allocated.  Initialize the physical memory
 	 * segments.
 	 */
 	pv = pv_table;
-#ifdef ATTR
-	attr = pmap_attributes;
-#endif
 	for (bank = 0; bank < vm_nphysseg; bank++) {
 		s = vm_physmem[bank].end - vm_physmem[bank].start;
 		vm_physmem[bank].pmseg.pvent = pv;
-#ifdef ATTR
-		vm_physmem[bank].pmseg.attrs = attr;
-#endif
 		pv += s;
-#ifdef ATTR
-		attr += s;
-#endif
 	}
 
 	/*
@@ -747,9 +727,9 @@ pmap_remove(pmap, sva, eva)
 					MachFlushDCache(sva, PAGE_SIZE);
 #endif /* mips3 */
 			}
-#ifdef ATTR
-			*pa_to_attribute(pfn_to_vad(entry)) = 0;
-#endif
+			if (PAGE_IS_MANAGED(pfn_to_vad(entry)))
+				*pa_to_attribute(pfn_to_vad(entry)) &=
+				    ~PV_MODIFIED;
 
 
 			if (CPUISMIPS3)
@@ -803,9 +783,9 @@ pmap_remove(pmap, sva, eva)
 					MachFlushDCache(sva, PAGE_SIZE);
 #endif /* mips3 */
 			}
-#ifdef ATTR
-			*pa_to_attribute(pfn_to_vad(entry)) = 0;
-#endif
+			if (PAGE_IS_MANAGED(pfn_to_vad(entry)))
+				*pa_to_attribute(pfn_to_vad(entry)) &=
+				    ~PV_MODIFIED;
 			pte->pt_entry = mips_pg_nv_bit();
 			/*
 			 * Flush the TLB for the given address.
@@ -1132,14 +1112,10 @@ pmap_enter(pmap, va, pa, prot, wired)
 				 * just record page as dirty.
 				 */
 				npte = mips_pg_rwpage_bit();
-				mem->flags &= ~PG_CLEAN;
+				pmap_set_modified(pa);
 			} else
-#ifdef ATTR
-				if ((*pa_to_attribute(pa) & PMAP_ATTR_MOD) ||
-				    !(mem->flags & PG_CLEAN))
-#else
-				if (!(mem->flags & PG_CLEAN))
-#endif
+				if ((*pa_to_attribute(pa) & PV_MODIFIED) ||
+/*??*/				    !(mem->flags & PG_CLEAN))
 					npte = mips_pg_rwpage_bit();
 			else
 					npte = mips_pg_cwpage_bit();
@@ -1683,9 +1659,8 @@ pmap_clear_modify(pa)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_clear_modify(%lx)\n", pa);
 #endif
-#ifdef ATTR
-	*pa_to_attribute(pa) &= ~PMAP_ATTR_MOD;
-#endif
+	if (PAGE_IS_MANAGED(pa))
+		*pa_to_attribute(pa) &= ~PV_MODIFIED;
 }
 
 /*
@@ -1702,7 +1677,7 @@ pmap_clear_reference(pa)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_clear_reference(%lx)\n", pa);
 #endif
-#ifdef ATTR
+#ifdef PMAP_REFERENCE
 	*pa_to_attribute(pa) &= ~PMAP_ATTR_REF;
 #endif
 }
@@ -1717,7 +1692,7 @@ boolean_t
 pmap_is_referenced(pa)
 	vm_offset_t pa;
 {
-#ifdef ATTR
+#ifdef PMAP_REFERENCE
 	return (*pa_to_attribute(pa) & PMAP_ATTR_REF);
 #else
 	return (FALSE);
@@ -1734,10 +1709,29 @@ boolean_t
 pmap_is_modified(pa)
 	vm_offset_t pa;
 {
-#ifdef ATTR
-	return (*pa_to_attribute(pa)  & PMAP_ATTR_MOD);
-#else
+	if (PAGE_IS_MANAGED(pa))
+		return (*pa_to_attribute(pa)  & PV_MODIFIED);
+#ifdef DEBUG
+	else
+		printf("pmap_is_modified: pa %lx\n", pa);
+#endif
 	return (FALSE);
+}
+
+/*
+ *	pmap_set_modified:
+ *
+ *	Sets the page modified reference bit for the specified page.
+ */
+void
+pmap_set_modified(pa)
+	vm_offset_t pa;
+{
+	if (PAGE_IS_MANAGED(pa))
+		*pa_to_attribute(pa) |= PV_MODIFIED;
+#ifdef DEBUG
+	else
+		printf("pmap_set_modified: pa %lx\n", pa);
 #endif
 }
 
@@ -1834,7 +1828,7 @@ pmap_enter_pv(pmap, va, pa, npte)
 		enter_stats.firstpv++;
 #endif
 		pv->pv_va = va;
-		pv->pv_flags = 0;
+		pv->pv_flags &= ~PV_UNCACHED;
 		pv->pv_pmap = pmap;
 		pv->pv_next = NULL;
 	} else {
