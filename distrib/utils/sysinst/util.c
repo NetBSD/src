@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.14 1997/11/05 07:28:40 jonathan Exp $	*/
+/*	$NetBSD: util.c,v 1.15 1997/11/05 07:48:52 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -307,10 +307,13 @@ extract_dist (void)
 
 	list = dist_list;
 	while (list->name) {
-		(void)snprintf (distname, STRSIZE, list->name, rels,
-				dist_postfix);
-		(void)snprintf (fname, STRSIZE, "%s/%s", extdir, distname);
-		extract_file (fname);
+		if (list->getit) {
+			(void)snprintf (distname, STRSIZE, list->name, rels,
+					dist_postfix);
+			(void)snprintf (fname, STRSIZE, "%s/%s", extdir,
+					distname);
+			extract_file (fname);
+		}
 		list++;
 	}
 }
