@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.3 1996/05/16 15:57:16 abrown Exp $ */
+/*	$NetBSD: iommu.c,v 1.4 1996/05/21 07:25:07 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -114,6 +114,7 @@ iommu_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
+#if defined(SUN4M)
 	register struct iommu_softc *sc = (struct iommu_softc *)self;
 	struct confargs oca, *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
@@ -253,6 +254,7 @@ iommu_attach(parent, self, aux)
 		oca.ca_bustype = BUS_MAIN; /* ??? */
 		(void) config_found(&sc->sc_dev, (void *)&oca, iommu_print);
 	}
+#endif
 }
 
 void
