@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)Ovfork.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: Ovfork.S,v 1.2 1997/02/04 18:38:17 ragge Exp $"
+	.asciz "$NetBSD: Ovfork.S,v 1.3 1998/12/02 19:29:57 thorpej Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 /*
@@ -42,6 +42,9 @@
  */
 
 #include "SYS.h"
+
+WARN_REFERENCES(vfork, \
+    "warning: reference to compatibility vfork(); include <unistd.h> for correct reference")
 
 /*
  * pid = vfork();

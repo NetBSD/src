@@ -1,4 +1,4 @@
-/*	$NetBSD: Ovfork.S,v 1.5 1996/09/17 01:32:39 jonathan Exp $	*/
+/*	$NetBSD: Ovfork.S,v 1.6 1998/12/02 19:29:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,12 +40,15 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)Ovfork.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: Ovfork.S,v 1.5 1996/09/17 01:32:39 jonathan Exp $")
+	ASMSTR("$NetBSD: Ovfork.S,v 1.6 1998/12/02 19:29:57 thorpej Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ABICALLS
 	.abicalls
 #endif
+
+WARN_REFERENCES(vfork, \
+    "warning: reference to compatibility vfork(); include <unistd.h> for correct reference")
 
 /*
  * pid = vfork();

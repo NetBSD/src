@@ -1,4 +1,4 @@
-/*	$NetBSD: Ovfork.S,v 1.2 1997/07/16 14:37:53 christos Exp $	*/
+/*	$NetBSD: Ovfork.S,v 1.3 1998/12/02 19:29:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)Ovfork.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: Ovfork.S,v 1.2 1997/07/16 14:37:53 christos Exp $")
+	RCSID("$NetBSD: Ovfork.S,v 1.3 1998/12/02 19:29:57 thorpej Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
@@ -56,6 +56,9 @@
  */
 
 #include "SYS.h"
+
+WARN_REFERENCES(vfork, \
+    "warning: reference to compatibility vfork(); include <unistd.h> for correct reference")
 
 SYSCALL(vfork)
 	dec	%o1		! from 1 to 0 in child, 0 to -1 in parent
