@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.101 2003/04/09 02:09:55 christos Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.102 2003/07/26 10:41:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.101 2003/04/09 02:09:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.102 2003/07/26 10:41:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -419,6 +419,11 @@ static const struct ne2000dev {
       PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_LP_ETHER_CF,
       PCMCIA_CIS_SOCKET_LP_ETHER_CF,
       0, -1, { 0x00, 0xc0, 0x1b } },
+
+    { PCMCIA_STR_SOCKET_LP_ETH_10_100_CF,
+      PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_LP_ETH_10_100_CF,
+      PCMCIA_CIS_SOCKET_LP_ETH_10_100_CF,
+      0, -1, { 0x00, 0xe0, 0x98 }, NE2000DVF_DL10019 },
 
     { PCMCIA_STR_SOCKET_LP_ETHER,
       PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_LP_ETHER,
