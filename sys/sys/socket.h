@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.19 1997/02/11 17:47:44 is Exp $	*/
+/*	$NetBSD: socket.h,v 1.20 1997/03/15 17:08:28 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -179,6 +179,8 @@ struct sockproto {
 #define	PF_IPX		AF_IPX		/* same format as AF_NS */
 #define PF_RTIP		pseudo_AF_FTIP	/* same format as AF_INET */
 #define PF_PIP		pseudo_AF_PIP
+#define PF_ISDN		AF_ISDN		/* same as E164 */
+#define PF_E164		AF_E164
 #define PF_NATM		AF_NATM
 #define PF_ARP		AF_ARP
 
@@ -221,7 +223,9 @@ struct sockproto {
 	{ "ipx", CTLTYPE_NODE }, \
 	{ "sip", CTLTYPE_NODE }, \
 	{ "pip", CTLTYPE_NODE }, \
+	{ "isdn", CTLTYPE_NODE }, \
 	{ "natm", CTLTYPE_NODE }, \
+	{ "arp", CTLTYPE_NODE }, \
 }
 
 /*
