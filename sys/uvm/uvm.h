@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.36 2004/01/29 12:06:02 yamt Exp $	*/
+/*	$NetBSD: uvm.h,v 1.37 2004/02/10 01:30:49 matt Exp $	*/
 
 /*
  *
@@ -110,6 +110,8 @@ struct uvm {
 	struct vm_anon *afree;		/* anon free list */
 	struct simplelock afreelock; 	/* lock on anon free list */
 
+	/* static kernel map entry pool */
+	struct vm_map_entry *kentry_free;	/* free page pool */
 	struct simplelock kentry_lock;
 
 	/* aio_done is locked by uvm.pagedaemon_lock and splbio! */
