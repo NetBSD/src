@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs.h,v 1.78 2000/02/09 13:33:22 enami Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.79 2000/02/27 11:14:43 uch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -363,6 +363,7 @@
 #define	PCMCIA_VENDOR_EPSON	-1	/* Seiko Epson Corporation */
 #define	PCMCIA_VENDOR_EXP	-1	/* EXP Computer Inc */
 #define	PCMCIA_VENDOR_ICOM	-1	/* ICOM Inc */
+#define	PCMCIA_VENDOR_BILLIONTON	-1	/* Billionton Systems Inc. */
 
 #define	PCMCIA_CIS_MEGAHERTZ_XJ2288	{ "MEGAHERTZ", "MODEM XJ2288", NULL, NULL }
 #define	PCMCIA_PRODUCT_MEGAHERTZ_XJ2288	-1
@@ -450,3 +451,6 @@
 #define	PCMCIA_CIS_XIRCOM_CFE_10	{ "Xircom", "CompactCard Ethernet", "CFE-10", "1.00" }
 #define	PCMCIA_PRODUCT_XIRCOM_CFE_10	-1
 #define	PCMCIA_STR_XIRCOM_CFE_10	"Xircom CompactCard CFE-10"
+#define	PCMCIA_CIS_BILLIONTON_LNT10TN	{ "PCMCIA", "LNT-10TN", NULL, NULL }
+#define	PCMCIA_PRODUCT_BILLIONTON_LNT10TN	-1
+#define	PCMCIA_STR_BILLIONTON_LNT10TN	"Billionton Systems Inc. LNT-10TN NE2000 Compatible Card"
