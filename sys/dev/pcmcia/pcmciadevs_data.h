@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.80 2000/03/13 20:31:23 cgd Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.81 2000/03/16 16:49:00 onoe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.81 2000/03/13 20:30:24 cgd Exp 
+ *	NetBSD: pcmciadevs,v 1.82 2000/03/16 16:38:41 onoe Exp 
  */
 
 /*-
@@ -507,6 +507,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "BayStack 650 Wireless LAN"	},
 	},
 	{
+	    PCMCIA_VENDOR_BAY, PCMCIA_PRODUCT_BAY_SURFER_PRO,
+	    PCMCIA_CIS_BAY_SURFER_PRO,
+	    0,
+	    "Bay Networks",
+	    "AirSurfer Pro Wireless LAN"	},
+	},
+	{
 	    PCMCIA_VENDOR_BAY, PCMCIA_PRODUCT_BAY_STACK_660,
 	    PCMCIA_CIS_BAY_STACK_660,
 	    0,
@@ -682,11 +689,11 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "EXP IDE/ATAPI DVD Card"	},
 	},
 	{
-	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MELCO_WLI_PCM,
-	    PCMCIA_CIS_MELCO_WLI_PCM,
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_AMD_AM79C930,
+	    PCMCIA_CIS_AMD_AM79C930,
 	    0,
-	    "Melco Corporation",
-	    "Melco WLI-PCM"	},
+	    "AMD",
+	    "AMD Am79C930"	},
 	},
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_ICOM_SL200,
@@ -1043,6 +1050,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Billionton Systems Inc.",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_AMD, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "AMD",
 	    NULL,
 	},
 	{ 0, 0, { NULL, NULL, NULL, NULL }, 0, NULL, NULL, }
