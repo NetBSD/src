@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 1997/06/13 13:24:10 drochner Exp $	 */
+/*	$NetBSD: main.c,v 1.4 1997/07/26 01:50:52 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -49,7 +49,8 @@ extern int getopt __P((int, char **, const char *));
 int             errno;
 static char    *consdev;
 
-extern char     version[];
+extern	char bootprog_name[], bootprog_rev[], bootprog_date[],
+	bootprog_maker[];
 
 #define MAXDEVNAME 16
 
@@ -331,11 +332,11 @@ bootmenu()
 static void
 print_banner(void)
 {
-	printf("\n"
-	       ">> NetBSD BOOT: %d/%d k [%s]\n",
-	       getbasemem(),
-	       getextmem(),
-	       version);
+
+	printf("\n");
+	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
+	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
+	printf(">> Memory: %d/%d k\n", getbasemem(), getextmem());
 }
 
 void 

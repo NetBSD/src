@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.5 1997/06/13 17:49:23 drochner Exp $
+#	$NetBSD: Makefile,v 1.6 1997/07/26 01:50:50 thorpej Exp $
 
 S=	${.CURDIR}/../../../../
 
 PROG= dosboot
 NOMAN=
+NEWVERSWHAT=	"DOS Boot"
 
-SRCS= main.c devopen.c version.c
+SRCS= main.c devopen.c
 
 CLEANFILES+= ${DOSSTART} ${PROG}.sym ${PROG}.com ${PROG}.list
 
