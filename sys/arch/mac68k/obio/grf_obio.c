@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.4 1995/07/04 18:55:23 briggs Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.5 1995/07/06 17:13:48 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -52,13 +52,15 @@ extern int	grfiv_probe __P((struct grf_softc *sc, nubus_slot *ignore));
 extern int	grfiv_init __P((struct grf_softc *sc));
 extern int	grfiv_mode __P((struct grf_softc *sc, int cmd, void *arg));
 
+extern u_int32_t	mac68k_vidlog;
+extern u_int32_t	mac68k_vidphys;
+
 extern int
 grfiv_probe(sc, slotinfo)
 	struct grf_softc *sc;
 	nubus_slot *slotinfo;
 {
 	extern u_long		int_video_start;
-	extern u_int32_t	mac68k_vidlog;
 
 	if (int_video_start == 0 && mac68k_vidlog == 0) {
 		return 0;
@@ -93,7 +95,7 @@ grfiv_init(sc)
 	gm->hres = 80;		/* XXX Hack */
 	gm->vres = 80;		/* XXX Hack */
 	gm->fbsize = gm->width * gm->height;
-	gm->fbbase = (caddr_t) 0;
+	gm->fbbase = (caddr_t) mac68k_vidlog;
 	gm->fboff = 0;
 
 	return 1;
@@ -117,4 +119,16 @@ grfiv_mode(sc, cmd, arg)
 		break;
 	}
 	return EINVAL;
+}
+
+extern caddr_t
+grfiv_phys(gp, addr)
+	struct grf_softc *gp;
+	vm_offset_t addr;
+{
+	/*
+	 * If we're using IIsi or similar, this will be 0.
+	 * If we're using IIvx or similar, this will be correct.
+	 */
+	return (caddr_t) mac68k_vidphys;
 }

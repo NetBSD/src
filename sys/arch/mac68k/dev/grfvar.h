@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.7 1995/04/29 20:23:43 briggs Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.8 1995/07/06 17:13:51 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -75,6 +75,7 @@ struct grfdev {
 	int	(*gd_init) ();	/* boot time initialization */
 	int	(*gd_mode) ();	/* mode-change on/off/mode function */
 	char	*gd_desc;	/* text description */
+	caddr_t	(*gd_phys) ();	/* map virtual addr to physical addr */
 };
 
 /* requests to mode routine */
