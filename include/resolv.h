@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.15 1998/07/27 09:09:26 mycroft Exp $	*/
+/*	$NetBSD: resolv.h,v 1.16 1999/01/16 07:52:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1987, 1989, 1993
@@ -91,7 +91,6 @@
 #define	MAXDFLSRCH		3	/* # default domain levels to try */
 #define	MAXDNSRCH		6	/* max # domains in search path */
 #define	LOCALDOMAINPARTS	2	/* min levels in name that is "local" */
-#define	MAXDNSLUS		4	/* max # of host lookup types */
 
 #define	RES_TIMEOUT		5	/* min. seconds between retries */
 #define	MAXRESOLVSORT		10	/* number of net to sort on */
@@ -116,7 +115,6 @@ struct __res_state {
 		struct in_addr	addr;
 		u_int32_t	mask;
 	} sort_list[MAXRESOLVSORT];
-	char	lookups[MAXDNSLUS];
 };
 
 /*
