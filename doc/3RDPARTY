@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.146 2003/10/06 16:56:52 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.147 2003/10/10 02:13:32 grog Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -785,3 +785,17 @@ The Makefile is completely new (*BSD style, of course).  Lastly,
 the file gzio.c was changed to allow -DNO_DEFLATE to eliminate
 all references to deflate.c and friends, which permits building
 a really small zcat implementation.  (src/distrib/utils/zcat)
+
+Package:      Vinum
+Version:      2003-10-10
+Current:      2003-10-10
+Maintainer:   grog
+URL:          http://www.vinumvm.org/
+Archive Site: none 
+Mailing List: vinum-devel@auug.org.au
+CVS location: none
+Responsible:  grog
+Notes:
+        Based on a NetBSD-specific version generated on the fly.  This
+        should remain effectively identical to the NetBSD branch
+        except during testing.
