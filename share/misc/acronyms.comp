@@ -1,8 +1,9 @@
-$NetBSD: acronyms.comp,v 1.21 2003/10/14 01:18:08 mycroft Exp $
+$NetBSD: acronyms.comp,v 1.22 2003/10/14 01:20:53 mycroft Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
 AGP	accelerated graphics port
+ANSI	American National Standards Institute
 API	application programming interface
 APIC	advanced programmable interrupt controller
 AT	advanced technology
@@ -65,11 +66,13 @@ IANA	internet assigned number authority
 ICB	internet citizen's band
 ICMP	internet control message protocol
 IDE	integrated drive electronics
+IEC	International Electrotechnical Commission
 IEEE	institute [of] electrical [and] electronics engineers
 IESG	internet engineering steering group
 IETF	internet engineering task force
 IKE	internet key exchange
 IMAP	internet mail access protocol
+INCITS	InterNational Committee on Information Technology Standards
 IO	input/output
 IOCTL	input/output control
 IP	internet protocol
@@ -80,6 +83,7 @@ IRQ	interrupt request
 IRTF	internet research task force
 ISA	industry standard architecture
 ISDN	integrated services digital network
+ISO	International Standards Organization
 ISOC	internet society
 ISP	internet service provider
 JPEG	joint photographic experts group
@@ -126,6 +130,7 @@ RPM	revolutions per minute
 RTF	rich text format
 S/PDIF	sony/phillips digital interface
 SAM	serial access memory
+SASI	Shugart Associates system interface (predecessor to SCSI)
 SATA	serial advanced technology attachment
 SCSI	small computer system interface
 SDRAM	synchronous dynamic random access memory
