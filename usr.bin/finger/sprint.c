@@ -1,4 +1,4 @@
-/*	$NetBSD: sprint.c,v 1.8 1997/10/19 08:13:46 mrg Exp $	*/
+/*	$NetBSD: sprint.c,v 1.9 1998/09/09 17:22:31 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sprint.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sprint.c,v 1.8 1997/10/19 08:13:46 mrg Exp $");
+__RCSID("$NetBSD: sprint.c,v 1.9 1998/09/09 17:22:31 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,13 +128,12 @@ sflag_print()
 				(void)printf("    *  ");
 			p = ctime(&w->loginat);
 			if (now - w->loginat < SECSPERDAY * (DAYSPERWEEK - 1))
-				(void)printf("   %.3s", p);
+				(void)printf("%.3s %-8.5s", p, p + 11);
+			else if (now - w->loginat
+			      < SECSPERDAY * DAYSPERNYEAR / 2)
+				(void)printf("%.6s %-5.5s", p + 4, p + 11);
 			else
-				(void)printf("%.6s", p + 4);
-			if (now - w->loginat >= SECSPERDAY * DAYSPERNYEAR / 2)
-				(void)printf(" %.4s ", p + 20);
-			else
-				(void)printf(" %.5s", p + 11);
+				(void)printf("%.6s %-5.4s", p + 4, p + 20);
 office:
 			if (gflag)
 				goto no_gecos;
