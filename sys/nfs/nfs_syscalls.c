@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.41.2.2 2000/12/14 23:37:12 he Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.41.2.3 2002/02/09 19:20:51 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -278,7 +278,7 @@ sys_nfssvc(p, v, retval)
 					m_freem(nuidp->nu_nam);
 			        }
 				nuidp->nu_flag = 0;
-				nuidp->nu_cr = nsd->nsd_cr;
+				crcvt(&nuidp->nu_cr, &nsd->nsd_cr);
 				if (nuidp->nu_cr.cr_ngroups > NGROUPS)
 				    nuidp->nu_cr.cr_ngroups = NGROUPS;
 				nuidp->nu_cr.cr_ref = 1;
