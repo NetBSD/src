@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.2 2003/08/07 16:29:21 agc Exp $	*/
+/*	$NetBSD: com.c,v 1.3 2003/10/06 00:04:55 he Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -92,6 +92,6 @@ comspeed(speed)
 		return (-1);
 	return (x);
 
-#undef	divrnd(n, q)
+#undef	divrnd
 }
 #endif /* CONS_SERIAL */
