@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.27 2003/08/02 14:12:51 drochner Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.28 2003/08/26 15:12:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.27 2003/08/02 14:12:51 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.28 2003/08/26 15:12:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,8 +279,8 @@ uvm_pglistalloc_contig(num, low, high, alignment, boundary, rlist)
 			if (num == 0) {
 #ifdef PGALLOC_VERBOSE
 				printf("pgalloc: %lx-%lx\n",
-				       TAILQ_FIRST(rlist)->phys_addr,
-				       TAILQ_LAST(rlist, pglist)->phys_addr);
+				       VM_PAGE_TO_PHYS(TAILQ_FIRST(rlist)),
+				       VM_PAGE_TO_PHYS(TAILQ_LAST(rlist)));
 #endif
 				error = 0;
 				goto out;
@@ -408,8 +408,8 @@ out:
 #ifdef PGALLOC_VERBOSE
 	if (!error)
 		printf("pgalloc: %lx..%lx\n",
-		       TAILQ_FIRST(rlist)->phys_addr,
-		       TAILQ_LAST(rlist, pglist)->phys_addr);
+		       VM_PAGE_TO_PHYS(TAILQ_FIRST(rlist)),
+		       VM_PAGE_TO_PHYS(TAILQ_LAST(rlist, pglist)));
 #endif
 	return (error);
 }
