@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.en,v 1.63 2003/01/22 05:59:07 jhawk Exp $	*/
+/*	$NetBSD: menus.mi.en,v 1.64 2003/04/06 16:12:37 jmmv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -329,10 +329,12 @@ menu nfsbadmount, title "What do you want to do?";
 
 menu fdremount, title "What do you want to do?";
 	option "Try again", exit, action { yesno = 1; };
+	option "Set finished", exit, action { yesno = 2; };
 	option "Abort install", exit, action { yesno = 0; };
 
 menu fdok, title "Hit enter to continue";
 	option "OK", exit, action { yesno = 1; };
+	option "Set finished", exit, action { yesno = 2; };
 	option "Abort install", exit, action { yesno = 0; };
 
 menu crypttype, title "Password cipher", y=16;
