@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isa.c,v 1.20 2002/10/02 03:10:47 thorpej Exp $	*/
+/*	$NetBSD: i82365_isa.c,v 1.21 2004/08/11 00:18:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isa.c,v 1.20 2002/10/02 03:10:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isa.c,v 1.21 2004/08/11 00:18:19 mycroft Exp $");
 
 #define	PCICISADEBUG
 
@@ -83,6 +83,7 @@ static struct pcmcia_chip_functions pcic_isa_functions = {
 
 	pcic_chip_socket_enable,
 	pcic_chip_socket_disable,
+	pcic_chip_socket_settype,
 };
 
 int

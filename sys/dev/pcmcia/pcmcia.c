@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.59 2004/08/10 23:34:06 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.60 2004/08/11 00:18:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.59 2004/08/10 23:34:06 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.60 2004/08/11 00:18:20 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -161,8 +161,6 @@ pcmcia_card_attach(dev)
 	pcmcia_read_cis(sc);
 	pcmcia_check_cis_quirks(sc);
 
-	pcmcia_socket_disable(dev);
-
 	/*
 	 * bail now if the card has no functions, or if there was an error in
 	 * the cis.
@@ -209,6 +207,7 @@ pcmcia_card_attach(dev)
 	}
 
 done:
+	pcmcia_socket_disable(dev);
 	return (attached ? 0 : 1);
 }
 
@@ -389,12 +388,13 @@ pcmcia_product_lookup(pa, tab, nent, ent_size, matchfn)
         return (0);
 }
 
-int 
-pcmcia_card_gettype(dev)
+void
+pcmcia_socket_settype(dev)
 	struct device  *dev;
 {
-	struct pcmcia_softc *sc = (struct pcmcia_softc *)dev;
+	struct pcmcia_softc *sc = (void *)dev;
 	struct pcmcia_function *pf;
+	int type;
 
 	/*
 	 * set the iftype to memory if this card has no functions (not yet
@@ -405,9 +405,10 @@ pcmcia_card_gettype(dev)
 	if (pf == NULL ||
 	    (SIMPLEQ_NEXT(pf, pf_list) == NULL &&
 	    (pf->cfe == NULL || pf->cfe->iftype == PCMCIA_IFTYPE_MEMORY)))
-		return (PCMCIA_IFTYPE_MEMORY);
+		type = PCMCIA_IFTYPE_MEMORY;
 	else
-		return (PCMCIA_IFTYPE_IO);
+		type = PCMCIA_IFTYPE_IO;
+	pcmcia_chip_socket_settype(sc->pct, sc->pch, type);
 }
 
 /*
@@ -468,6 +469,7 @@ pcmcia_function_enable(pf)
 	 * necessary.
 	 */
 	pcmcia_socket_enable(&sc->dev);
+	pcmcia_socket_settype(&sc->dev);
 
 	if (pf->pf_flags & PFF_ENABLED) {
 		/*
