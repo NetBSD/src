@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)unistd.h	5.13 (Berkeley) 6/17/91
- *	$Id: unistd.h,v 1.16 1994/03/29 02:44:37 jtc Exp $
+ *	$Id: unistd.h,v 1.17 1994/03/29 02:53:54 jtc Exp $
  */
 
 #ifndef _UNISTD_H_
@@ -116,7 +116,7 @@ void	 endusershell __P((void));
 int	 exect __P((const char *, char * const *, char * const *));
 int	 fchdir __P((int));
 int	 fchflags __P((int, long));
-int	 fchown __P((int, int, int));
+int	 fchown __P((int, uid_t, gid_t));
 int	 fsync __P((int));
 int	 ftruncate __P((int, off_t));
 int	 getdomainname __P((char *, int));
