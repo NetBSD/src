@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.158 2003/11/29 16:17:31 he Exp $ */
+/*	$NetBSD: wdc.c,v 1.159 2003/12/14 05:35:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.158 2003/11/29 16:17:31 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.159 2003/12/14 05:35:06 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -99,7 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.158 2003/11/29 16:17:31 he Exp $");
 #endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
 #include <dev/ata/atavar.h>
-#include <dev/ata/wdvar.h>
 #include <dev/ata/atareg.h>
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
