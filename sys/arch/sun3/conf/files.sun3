@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.25 1996/10/08 18:03:00 jtc Exp $
+#	$NetBSD: files.sun3,v 1.26 1996/10/29 19:58:14 gwr Exp $
 
 #
 # sun3-specific configuration info
@@ -136,8 +136,6 @@ file arch/sun3/dev/cg2.c		cgtwo needs-flag
 device cgfour: sunfb
 attach cgfour at obmem
 file arch/sun3/dev/cg4.c		cgfour needs-flag
-
-file	arch/sun3/dev/bt_subr.c 	cgfour
 
 #
 # VME
