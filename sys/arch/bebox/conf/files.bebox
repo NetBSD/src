@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.20 2000/04/23 16:47:47 thorpej Exp $
+#	$NetBSD: files.bebox,v 1.20.4.1 2001/10/25 17:54:25 he Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -41,6 +41,11 @@ major   {md = 17}
 # RAIDframe
 #
 major	{raid = 18}
+
+#
+# Machine-independent I2O drivers.
+#
+include "dev/i2o/files.i2o"
 
 #
 # System bus types
