@@ -1,4 +1,4 @@
-/*	$NetBSD: gzboot.c,v 1.1 2002/02/23 05:41:14 thorpej Exp $	*/
+/*	$NetBSD: gzboot.c,v 1.2 2002/02/23 17:25:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -171,7 +171,7 @@ readbuf(struct state *s, void *buf, size_t len)
 	if (len > (s->srcsize - s->srcoff))
 		len = s->srcsize - s->srcoff;
 
-	if ((s->spinny & 255) == 0)
+	if ((s->spinny++ & 7) == 0)
 		twiddle();
 	memcpy(buf, s->srcbuf + s->srcoff, len);
 	s->srcoff += len;
