@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.5 1999/11/15 06:08:02 haya Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.6 2000/01/24 18:34:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -163,6 +163,7 @@ cardslotattach(parent, self, aux)
 
   if (csc != NULL || psc != NULL) {
 #if __NetBSD_Version__ > 104060000
+    config_pending_incr();
     kthread_create(create_slot_manager, (void *)sc);
 #else
     kthread_create_deferred(create_slot_manager, (void *)sc);
@@ -329,7 +330,7 @@ cardslot_event_thread(arg)
 {
   struct cardslot_softc *sc = arg;
   struct cardslot_event *ce;
-  int s;
+  int s, first = 1;
   static int antonym_ev[4] = {
     CARDSLOT_EVENT_REMOVAL_16, CARDSLOT_EVENT_INSERTION_16,
     CARDSLOT_EVENT_REMOVAL_CB, CARDSLOT_EVENT_INSERTION_CB
@@ -339,6 +340,10 @@ cardslot_event_thread(arg)
     s = spltty();
     if ((ce = SIMPLEQ_FIRST(&sc->sc_events)) == NULL) {
       splx(s);
+      if (first) {
+        first = 0;
+        config_pending_decr();
+      }
       (void) tsleep(&sc->sc_events, PWAIT, "cardslotev", 0);
       continue;
     }
