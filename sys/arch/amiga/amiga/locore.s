@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.24 1994/06/02 08:32:06 chopps Exp $
+ *	$Id: locore.s,v 1.25 1994/06/03 00:30:29 chopps Exp $
  *
  * Original (hp300) Author: unknown, maybe Mike Hibler?
  * Amiga author: Markus Wild
@@ -1597,6 +1597,7 @@ Ltbiau040:
  * Invalidate instruction cache
  */
 ENTRY(ICIA)
+ENTRY(ICPA)
 #if defined(M68030) || defined(M68020)
 #if defined(M68040)
 	tstl	_cpu040
@@ -1608,7 +1609,6 @@ ENTRY(ICIA)
 Licia040:
 #endif
 #if defined(M68040)
-ENTRY(ICPA)
 	.word	0xf498		| cinva ic
 	rts
 #endif

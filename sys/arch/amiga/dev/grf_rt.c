@@ -1,5 +1,5 @@
 /*
- *	$Id: grf_rt.c,v 1.11 1994/05/08 05:53:07 chopps Exp $
+ *	$Id: grf_rt.c,v 1.12 1994/06/03 00:30:50 chopps Exp $
  */
 
 #include "grf.h"
@@ -752,7 +752,6 @@ struct cfdriver grfrtcd = {
  */
 static struct cfdata *cfdata;
 
-
 /*
  * we make sure to only init things once.  this is somewhat
  * tricky regarding the console.
@@ -763,7 +762,9 @@ grfrtmatch(pdp, cfp, auxp)
 	struct cfdata *cfp;
 	void *auxp;
 {
+#ifdef RETINACONSOLE
 	static int rtconunit = -1;
+#endif
 	struct ztwobus_args *zap;
 
 	zap = auxp;
@@ -771,8 +772,11 @@ grfrtmatch(pdp, cfp, auxp)
 	/*
 	 * allow only one retina console
 	 */
-	if (amiga_realconfig == 0 && rtconunit != -1)
-		return(0);
+	if (amiga_realconfig == 0)
+#ifdef RETINACONSOLE
+		if (rtconunit != -1)
+#endif
+			return(0);
 	/*
 	 * check that this is a retina board.
 	 */
