@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.144 2003/10/22 23:59:00 briggs Exp $ */
+/*	$NetBSD: wdc.c,v 1.145 2003/10/25 08:30:46 christos Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.144 2003/10/22 23:59:00 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.145 2003/10/25 08:30:46 christos Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -315,7 +315,7 @@ atabusconfig(atabus_sc)
 	int ctrl_flags, i, error, need_delref = 0;
 	struct ataparams params;
 	struct atabus_initq *atabus_initq = NULL;
-	u_int8_t st0, st1;
+	u_int8_t st0 = 0, st1 = 0;
 
 	if ((error = wdc_addref(chp)) != 0) {
 		aprint_error("%s: unable to enable controller\n",
