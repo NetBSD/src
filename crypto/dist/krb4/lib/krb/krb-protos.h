@@ -31,7 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: krb-protos.h,v 1.3 2001/09/17 12:21:42 assar Exp $ */
+/* $KTH-KRB: krb-protos.h,v 1.33 2001/08/26 01:46:51 assar Exp $
+   $NetBSD: krb-protos.h,v 1.4 2002/09/12 12:33:14 joda Exp $ */
 
 #ifndef __krb_protos_h__
 #define __krb_protos_h__

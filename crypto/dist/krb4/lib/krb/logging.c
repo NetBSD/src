@@ -34,7 +34,8 @@
 #include "krb_locl.h"
 #include <klog.h>
 
-RCSID("$Id: logging.c,v 1.4 2001/09/17 12:21:42 assar Exp $");
+__RCSID("$KTH-KRB: logging.c,v 1.20 2000/12/29 01:44:19 assar Exp $"
+      "$NetBSD: logging.c,v 1.5 2002/09/12 12:33:15 joda Exp $");
 
 struct krb_log_facility {
     char filename[MaxPathLen]; 

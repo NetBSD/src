@@ -42,7 +42,8 @@
 
 #include "bsd_locl.h"
 
-RCSID("$Id: rlogind.c,v 1.3 2001/09/17 12:21:41 assar Exp $");
+__RCSID("$KTH-KRB: rlogind.c,v 1.118 2002/09/09 15:19:11 joda Exp $"
+      "$NetBSD: rlogind.c,v 1.4 2002/09/12 12:33:11 joda Exp $");
 
 extern int __check_rhosts_file;
 

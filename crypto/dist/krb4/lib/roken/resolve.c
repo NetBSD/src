@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -45,9 +45,11 @@
 
 #include <assert.h>
 
-RCSID("$Id: resolve.c,v 1.2 2002/01/08 03:27:59 simonb Exp $");
+__RCSID("$KTH-KRB: resolve.c,v 1.36 2002/09/09 21:39:19 joda Exp $"
+      "$NetBSD: resolve.c,v 1.3 2002/09/12 12:33:16 joda Exp $");
 
-#if defined(HAVE_RES_SEARCH) && defined(HAVE_DN_EXPAND)
+#undef HAVE_RES_NSEARCH
+#if (defined(HAVE_RES_SEARCH) || defined(HAVE_RES_NSEARCH)) && defined(HAVE_DN_EXPAND)
 
 #define DECL(X) {#X, T_##X}
 
@@ -110,13 +112,16 @@ dns_free_data(struct dns_reply *r)
     free (r);
 }
 
-static struct dns_reply*
-parse_reply(unsigned char *data, int len)
+#ifndef TEST_RESOLVE
+static
+#endif
+struct dns_reply*
+parse_reply(const unsigned char *data, size_t len)
 {
-    unsigned char *p;
+    const unsigned char *p;
     char host[128];
     int status;
-    
+    const unsigned char *end_data = data + len;
     struct dns_reply *r;
     struct resource_record **rr;
     
@@ -133,7 +138,7 @@ parse_reply(unsigned char *data, int len)
     memcpy(&r->h, p, 12); /* XXX this will probably be mostly garbage */
     p += 12;
 #endif
-    status = dn_expand(data, data + len, p, host, sizeof(host));
+    status = dn_expand(data, end_data, p, host, sizeof(host));
     if(status < 0){
 	dns_free_data(r);
 	return NULL;
@@ -143,16 +148,24 @@ parse_reply(unsigned char *data, int len)
 	dns_free_data(r);
 	return NULL;
     }
+    if (p + status + 4 > end_data) {
+	dns_free_data(r);
+	return NULL;
+    }
     p += status;
     r->q.type = (p[0] << 8 | p[1]);
     p += 2;
     r->q.class = (p[0] << 8 | p[1]);
     p += 2;
     rr = &r->head;
-    while(p < data + len){
+    while(p < end_data){
 	int type, class, ttl, size;
-	status = dn_expand(data, data + len, p, host, sizeof(host));
+	status = dn_expand(data, end_data, p, host, sizeof(host));
 	if(status < 0){
+	    dns_free_data(r);
+	    return NULL;
+	}
+	if (p + status + 10 > end_data) {
 	    dns_free_data(r);
 	    return NULL;
 	}
@@ -165,6 +178,12 @@ parse_reply(unsigned char *data, int len)
 	p += 4;
 	size = (p[0] << 8) | p[1];
 	p += 2;
+
+	if (p + size > end_data) {
+	    dns_free_data(r);
+	    return NULL;
+	}
+
 	*rr = (struct resource_record*)calloc(1, 
 					      sizeof(struct resource_record));
 	if(*rr == NULL) {
@@ -184,7 +203,7 @@ parse_reply(unsigned char *data, int len)
 	case T_NS:
 	case T_CNAME:
 	case T_PTR:
-	    status = dn_expand(data, data + len, p, host, sizeof(host));
+	    status = dn_expand(data, end_data, p, host, sizeof(host));
 	    if(status < 0){
 		dns_free_data(r);
 		return NULL;
@@ -197,11 +216,16 @@ parse_reply(unsigned char *data, int len)
 	    break;
 	case T_MX:
 	case T_AFSDB:{
-	    status = dn_expand(data, data + len, p + 2, host, sizeof(host));
+	    status = dn_expand(data, end_data, p + 2, host, sizeof(host));
 	    if(status < 0){
 		dns_free_data(r);
 		return NULL;
 	    }
+	    if (status + 2 > size) {
+		dns_free_data(r);
+		return NULL;
+	    }
+
 	    (*rr)->u.mx = (struct mx_record*)malloc(sizeof(struct mx_record) + 
 						    strlen(host));
 	    if((*rr)->u.mx == NULL) {
@@ -213,11 +237,16 @@ parse_reply(unsigned char *data, int len)
 	    break;
 	}
 	case T_SRV:{
-	    status = dn_expand(data, data + len, p + 6, host, sizeof(host));
+	    status = dn_expand(data, end_data, p + 6, host, sizeof(host));
 	    if(status < 0){
 		dns_free_data(r);
 		return NULL;
 	    }
+	    if (status + 6 > size) {
+		dns_free_data(r);
+		return NULL;
+	    }
+
 	    (*rr)->u.srv = 
 		(struct srv_record*)malloc(sizeof(struct srv_record) + 
 					   strlen(host));
@@ -244,6 +273,11 @@ parse_reply(unsigned char *data, int len)
 	case T_KEY : {
 	    size_t key_len;
 
+	    if (size < 4) {
+		dns_free_data (r);
+		return NULL;
+	    }
+
 	    key_len = size - 4;
 	    (*rr)->u.key = malloc (sizeof(*(*rr)->u.key) + key_len - 1);
 	    if ((*rr)->u.key == NULL) {
@@ -261,11 +295,16 @@ parse_reply(unsigned char *data, int len)
 	case T_SIG : {
 	    size_t sig_len;
 
-	    status = dn_expand (data, data + len, p + 18, host, sizeof(host));
+	    status = dn_expand (data, end_data, p + 18, host, sizeof(host));
 	    if (status < 0) {
 		dns_free_data (r);
 		return NULL;
 	    }
+	    if (status + 18 > size) {
+		dns_free_data(r);
+		return NULL;
+	    }
+
 	    sig_len = len - 18 - status;
 	    (*rr)->u.sig = malloc(sizeof(*(*rr)->u.sig)
 				  + strlen(host) + sig_len);
@@ -292,6 +331,11 @@ parse_reply(unsigned char *data, int len)
 
 	case T_CERT : {
 	    size_t cert_len;
+
+	    if (size < 5) {
+		dns_free_data(r);
+		return NULL;
+	    }
 
 	    cert_len = size - 5;
 	    (*rr)->u.cert = malloc (sizeof(*(*rr)->u.cert) + cert_len - 1);
@@ -327,24 +371,46 @@ dns_lookup_int(const char *domain, int rr_class, int rr_type)
 {
     unsigned char reply[1024];
     int len;
-    struct dns_reply *r = NULL;
+#ifdef HAVE_RES_NSEARCH
+    struct __res_state stat;
+    memset(&stat, 0, sizeof(stat));
+    if(res_ninit(&stat))
+	return NULL; /* is this the best we can do? */
+#elif defined(HAVE__RES)
     u_long old_options = 0;
+#endif
     
     if (_resolve_debug) {
+#ifdef HAVE_RES_NSEARCH
+	stat.options |= RES_DEBUG;
+#elif defined(HAVE__RES)
         old_options = _res.options;
 	_res.options |= RES_DEBUG;
+#endif
 	fprintf(stderr, "dns_lookup(%s, %d, %s)\n", domain,
 		rr_class, dns_type_to_string(rr_type));
     }
+#ifdef HAVE_RES_NSEARCH
+    len = res_nsearch(&stat, domain, rr_class, rr_type, reply, sizeof(reply));
+#else
     len = res_search(domain, rr_class, rr_type, reply, sizeof(reply));
+#endif
     if (_resolve_debug) {
+#if defined(HAVE__RES) && !defined(HAVE_RES_NSEARCH)
         _res.options = old_options;
+#endif
 	fprintf(stderr, "dns_lookup(%s, %d, %s) --> %d\n",
 		domain, rr_class, dns_type_to_string(rr_type), len);
     }
-    if (len >= 0)
-	r = parse_reply(reply, len);
-    return r;
+#ifdef HAVE_RES_NSEARCH
+    res_nclose(&stat);
+#endif    
+    if(len < 0) {
+	return NULL;
+    } else {
+	len = min(len, sizeof(reply));
+	return parse_reply(reply, len);
+    }
 }
 
 struct dns_reply *
@@ -415,7 +481,7 @@ dns_srv_order(struct dns_reply *r)
     qsort(srvs, num_srv, sizeof(*srvs), compare_srv);
 
 #if defined(HAVE_INITSTATE) && defined(HAVE_SETSTATE)
-    oldstate = initstate(time(NULL), (char *) state, sizeof(state));
+    oldstate = initstate(time(NULL), (char*)state, sizeof(state));
 #endif
 
     headp = &r->head;
@@ -454,7 +520,7 @@ dns_srv_order(struct dns_reply *r)
 	    headp = &(*tt)->next;
 	    sum -= (*tt)->u.srv->weight;
 	    *tt = NULL;
-	    while(*ss == NULL)
+	    while(ss < ee && *ss == NULL)
 		ss++;
 	}
     }
@@ -482,7 +548,6 @@ dns_free_data(struct dns_reply *r)
 void
 dns_srv_order(struct dns_reply *r)
 {
-    return 0;
 }
 
 #endif

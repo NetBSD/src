@@ -29,7 +29,8 @@ or implied warranty.
 
 #include "kadm_locl.h"
 
-RCSID("$Id: kadm_cli_wrap.c,v 1.3 2001/09/17 12:21:41 assar Exp $");
+__RCSID("$KTH-KRB: kadm_cli_wrap.c,v 1.31 2002/08/15 11:31:37 joda Exp $"
+      "$NetBSD: kadm_cli_wrap.c,v 1.4 2002/09/12 12:33:13 joda Exp $");
 
 static Kadm_Client client_parm;
 
@@ -146,14 +147,14 @@ kadm_cli_keyd(des_cblock (*s_k), /* session key */
 	/* want .sname and .sinst here.... */
 	if ((stat = krb_get_cred(client_parm.sname, client_parm.sinst,
 				 client_parm.krbrlm, &cred)))
-		return stat + krb_err_base;
+	    return stat + ERROR_TABLE_BASE_krb;
 	memcpy(s_k, cred.session, sizeof(des_cblock));
 	memset(cred.session, 0, sizeof(des_cblock));
 #ifdef NOENCRYPTION
 	memset(s_s, 0, sizeof(des_key_schedule));
 #else
 	if ((stat = des_key_sched(s_k,s_s)))
-		return stat+krb_err_base;
+		return stat+ERROR_TABLE_BASE_krb;
 #endif
 	return KADM_SUCCESS;
 }				       /* This code "works" */
@@ -291,7 +292,7 @@ kadm_cli_send(u_char *st_dat,	/* the actual data */
 
 	if (retdat) {
 	    /* authenticator? */
-	    RET_N_FREE(retdat + krb_err_base);
+	    RET_N_FREE(retdat + ERROR_TABLE_BASE_krb);
 	}
 
 	tmp_ptr = realloc(act_st,
@@ -332,7 +333,7 @@ kadm_cli_send(u_char *st_dat,	/* the actual data */
 			     &sess_key, &client_parm.admin_addr,
 			     &client_parm.my_addr, &mdat);
 	if (retdat)
-	    RET_N_FREE2(retdat+krb_err_base);
+	    RET_N_FREE2(retdat+ERROR_TABLE_BASE_krb);
 	if (mdat.app_length < KADM_VERSIZE + 4)
 	    /* too short! */
 	    RET_N_FREE2(KADM_BAD_VER);

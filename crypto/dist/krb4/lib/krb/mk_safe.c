@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,8 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: mk_safe.c,v 1.2 2001/02/04 18:04:03 christos Exp $");
+__RCSID("$KTH-KRB: mk_safe.c,v 1.27 2002/09/09 15:55:28 joda Exp $"
+      "$NetBSD: mk_safe.c,v 1.3 2002/09/12 12:33:15 joda Exp $");
 
 /* application include files */
 #include "krb-archaeology.h"

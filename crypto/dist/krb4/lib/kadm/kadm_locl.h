@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: kadm_locl.h,v 1.3 2001/09/17 12:21:42 assar Exp $ */
+/* $KTH-KRB: kadm_locl.h,v 1.14 2002/09/09 15:26:17 joda Exp $
+   $NetBSD: kadm_locl.h,v 1.4 2002/09/12 12:33:13 joda Exp $ */
 
 #include "config.h"
 #include "protos.h"

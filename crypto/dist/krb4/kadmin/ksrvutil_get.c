@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -34,7 +34,8 @@
 #include "kadm_locl.h"
 #include "ksrvutil.h"
 
-RCSID("$Id: ksrvutil_get.c,v 1.2 2002/07/20 08:36:22 grant Exp $");
+__RCSID("$KTH-KRB: ksrvutil_get.c,v 1.46 2002/08/15 11:32:33 joda Exp $"
+      "$NetBSD: ksrvutil_get.c,v 1.3 2002/09/12 12:33:12 joda Exp $");
 
 #define BAD_PW 1
 #define GOOD_PW 0
@@ -103,7 +104,7 @@ get_admin_password(char *myname, char *myinst, char *myrealm)
     printf("Incorrect admin password.\n");
     goto bad;
   default:
-    com_err("kadmin", status+krb_err_base,
+    com_err("kadmin", status+ERROR_TABLE_BASE_krb,
 	    "while getting password tickets");
     goto bad;
   }

@@ -33,7 +33,8 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: encrypt_ktext.c,v 1.3 2001/09/17 12:21:42 assar Exp $");
+__RCSID("$KTH-KRB: encrypt_ktext.c,v 1.8 2001/09/16 22:41:58 assar Exp $"
+      "$NetBSD: encrypt_ktext.c,v 1.4 2002/09/12 12:33:14 joda Exp $");
 
 void
 encrypt_ktext(KTEXT cip, des_cblock *key, int encrypt)

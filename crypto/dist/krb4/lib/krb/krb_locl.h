@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: krb_locl.h,v 1.3 2001/09/17 12:21:42 assar Exp $ */
+/* $KTH-KRB: krb_locl.h,v 1.54 2002/09/09 18:42:38 joda Exp $
+   $NetBSD: krb_locl.h,v 1.4 2002/09/12 12:33:15 joda Exp $ */
 
 #ifndef __krb_locl_h
 #define __krb_locl_h
@@ -162,5 +163,12 @@ fixup_quad_cksum __P((
 	void *new_checksum,
 	void *old_checksum,
 	int little));
+
+#ifdef DES_QUAD_CKSUM_BROKEN
+int
+_krb_des_quad_cksum(void *input, void *output, size_t length, 
+		    int out_count, des_cblock *seed);
+#define des_quad_cksum _krb_des_quad_cksum
+#endif
 
 #endif /*  __krb_locl_h */

@@ -33,7 +33,8 @@
 
 #include "kip.h"
 
-RCSID("$Id: kipd.c,v 1.3 2001/09/17 12:21:41 assar Exp $");
+__RCSID("$KTH-KRB: kipd.c,v 1.23 2002/09/09 15:57:23 joda Exp $"
+      "$NetBSD: kipd.c,v 1.4 2002/09/12 12:33:11 joda Exp $");
 
 static int
 recv_conn (int sock, des_cblock *key, des_key_schedule schedule,
