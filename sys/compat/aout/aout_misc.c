@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_misc.c,v 1.1 1999/02/11 09:41:34 christos Exp $	*/
+/*	$NetBSD: aout_misc.c,v 1.2 1999/02/28 18:46:13 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -188,10 +188,16 @@ aout_sys_mount(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+/*
+ * Don't try to translate the mount point,
+ * to avoid e.g. mounting the /usr filesystem on /emul/aout/usr.
+ */
+#if 0
 	struct aout_sys_mount_args *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	AOUT_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+#endif
 
 	return sys_mount(p, v, retval);
 }
