@@ -1,0 +1,5 @@
+#	$NetBSD: fstab.wd,v 1.1 2002/04/13 00:07:25 toshii Exp $
+/dev/wd0a	/	ffs	rw		1 1
+/dev/wd0b	none	swap	sw		0 0
+kernfs		/kern	kernfs	rw		0 0
+procfs		/proc	procfs	rw		0 0
