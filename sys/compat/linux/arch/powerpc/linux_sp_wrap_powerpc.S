@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sp_wrap_powerpc.S,v 1.1 2001/01/19 01:36:51 manu Exp $ */
+/* $NetBSD: linux_sp_wrap_powerpc.S,v 1.2 2001/01/19 12:49:22 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,8 +68,6 @@ _C_LABEL(linux_sp_wrap_start):
 	mtlr		12
 	lwz		12, _C_LABEL(linux_sp_wrap_entry)-1b(11)
 	mtctr		12
-	bctr
-	mtctr		11
 	bctr
 _C_LABEL(linux_sp_wrap_entry):	
 .long		0				/* orginal prog entry point. setup by kernel */
