@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.137.2.1 2003/07/02 15:26:39 darrenr Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.137.2.2 2003/07/02 21:48:14 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.137.2.1 2003/07/02 15:26:39 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.137.2.2 2003/07/02 21:48:14 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -1018,7 +1018,7 @@ emul_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 			continue;
 
 		return ((*e->e_sysctl)(name + 1, namelen - 1, oldp, oldlenp,
-		    newp, newlen, p));
+		    newp, newlen, l));
 	}
 
 	return (EOPNOTSUPP);

@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.42.2.1 2003/07/02 15:26:51 darrenr Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.42.2.2 2003/07/02 21:48:15 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.42.2.1 2003/07/02 15:26:51 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.42.2.2 2003/07/02 21:48:15 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,7 +210,7 @@ nullfs_mount(mp, path, data, ndp, l)
 	nmp->nullm_rootvp = vp;
 
 	error = set_statfs_info(path, UIO_USERSPACE, args.la.target,
-	    UIO_USERSPACE, mp, p);
+	    UIO_USERSPACE, mp, l);
 #ifdef NULLFS_DIAGNOSTIC
 	printf("nullfs_mount: lower %s, alias at %s\n",
 	    mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);

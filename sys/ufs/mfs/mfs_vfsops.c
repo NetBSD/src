@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.51.2.1 2003/07/02 15:27:26 darrenr Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.51.2.2 2003/07/02 21:48:16 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.51.2.1 2003/07/02 15:27:26 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.51.2.2 2003/07/02 21:48:16 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -327,7 +327,7 @@ mfs_mount(mp, path, data, ndp, l)
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
 	error = set_statfs_info(path, UIO_USERSPACE, args.fspec,
-	    UIO_USERSPACE, mp, p);
+	    UIO_USERSPACE, mp, l);
 	(void)memcpy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname,
 	    sizeof(mp->mnt_stat.f_mntonname));
 	return error;
