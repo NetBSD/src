@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.13 2003/04/18 11:08:28 scw Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.14 2003/05/02 23:22:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -83,6 +83,16 @@
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
 #ifndef ARM32_NEW_VM_LAYOUT
+#ifdef ARM32_PMAP_NEW
+/*
+ * Mach derived constants
+ */
+#define	VM_MIN_ADDRESS		((vaddr_t) 0x00001000)
+#define	VM_MAXUSER_ADDRESS	((vaddr_t) KERNEL_BASE)
+#define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
+#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_TEXT_BASE)
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffff)
+#else /* ! ARM32_PMAP_NEW */
 /*
  * Linear page table space: number of PTEs required to map the 4G address
  * space * size of each PTE.
@@ -102,6 +112,7 @@
 					    sizeof(pt_entry_t)))
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_TEXT_BASE)
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffff)
+#endif /* ARM32_PMAP_NEW */
 
 #else /* ARM32_NEW_VM_LAYOUT */
 

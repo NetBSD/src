@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.50 2003/04/26 19:35:03 chris Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.51 2003/05/02 23:22:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -56,7 +56,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.50 2003/04/26 19:35:03 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.51 2003/05/02 23:22:33 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -432,7 +432,9 @@ initarm(void *cookie)
 	u_int l1pagetable;
 	struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
 	pv_addr_t kernel_l1pt;
+#ifndef ARM32_PMAP_NEW
 	pv_addr_t kernel_ptpt;
+#endif
 
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions
@@ -633,8 +635,10 @@ initarm(void *cookie)
 	 */
 	alloc_pages(systempage.pv_pa, 1);
 
+#ifndef ARM32_PMAP_NEW
 	/* Allocate a page for the page table to map kernel page tables */
 	valloc_pages(kernel_ptpt, L2_TABLE_SIZE / PAGE_SIZE);
+#endif
 
 	/* Allocate stacks for all modes */
 	valloc_pages(irqstack, IRQ_STACK_SIZE);
@@ -692,7 +696,9 @@ initarm(void *cookie)
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
 		pmap_link_l2pt(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
 		    &kernel_pt_table[KERNEL_PT_VMDATA + loop]);
+#ifndef ARM32_PMAP_NEW
 	pmap_link_l2pt(l1pagetable, PTE_BASE, &kernel_ptpt);
+#endif
 	pmap_link_l2pt(l1pagetable, VMEM_VBASE,
 	    &kernel_pt_table[KERNEL_PT_VMEM]);
 
@@ -765,13 +771,10 @@ initarm(void *cookie)
 	}
 #endif
 
-	/* Map the page table that maps the kernel pages */
 #ifndef ARM32_PMAP_NEW
+	/* Map the page table that maps the kernel pages */
 	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-#else
-	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 #endif
 
 	/* Now we fill in the L2 pagetable for the VRAM */
@@ -790,7 +793,7 @@ initarm(void *cookie)
 	    videomemory.vidm_pbase, videomemory.vidm_size,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
-
+#ifndef ARM32_PMAP_NEW
 	/*
 	 * Map entries in the page table used to map PTE's
 	 * Basically every kernel page table gets mapped here
@@ -799,23 +802,11 @@ initarm(void *cookie)
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (KERNEL_BASE >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_KERNEL].pv_pa,
-#ifndef ARM32_PMAP_NEW
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE
-#else
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE
-#endif
-			      );	    
-#ifndef ARM32_PMAP_NEW
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);	    
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
 	    kernel_ptpt.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-#else
-	pmap_map_entry(l1pagetable,
-	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
-	    kernel_ptpt.pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
-#endif	
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (VMEM_VBASE >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_VMEM].pv_pa, VM_PROT_READ|VM_PROT_WRITE,
@@ -831,6 +822,7 @@ initarm(void *cookie)
 		    kernel_pt_table[KERNEL_PT_VMDATA + loop].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	}
+#endif
 
 	/* Map the vector page. */
 	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,

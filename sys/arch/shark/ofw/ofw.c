@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.24 2003/04/18 11:11:52 scw Exp $	*/
+/*	$NetBSD: ofw.c,v 1.25 2003/05/02 23:22:36 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -209,7 +209,11 @@ static ofw_handle_t ofw_client_services_handle;
 
 
 static void ofw_callbackhandler __P((void *));
+#ifndef ARM32_PMAP_NEW
 static void ofw_construct_proc0_addrspace __P((pv_addr_t *, pv_addr_t *));
+#else
+static void ofw_construct_proc0_addrspace __P((pv_addr_t *));
+#endif
 static void ofw_getphysmeminfo __P((void));
 static void ofw_getvirttranslations __P((void));
 static void *ofw_malloc(vm_size_t size);
@@ -755,11 +759,17 @@ void
 ofw_configmem(void)
 {
 	pv_addr_t proc0_ttbbase;
+#ifndef ARM32_PMAP_NEW
 	pv_addr_t proc0_ptpt;
+#endif
 	int i;
 
 	/* Set-up proc0 address space. */
+#ifndef ARM32_PMAP_NEW
 	ofw_construct_proc0_addrspace(&proc0_ttbbase, &proc0_ptpt);
+#else
+	ofw_construct_proc0_addrspace(&proc0_ttbbase);
+#endif
 
 	/*
 	 * Get a dump of OFW's picture of physical memory.
@@ -1288,9 +1298,11 @@ ofw_callbackhandler(v)
 }
 
 static void
-ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
-	pv_addr_t *proc0_ttbbase;
-	pv_addr_t *proc0_ptpt;
+#ifndef ARM32_PMAP_NEW
+ofw_construct_proc0_addrspace(pv_addr_t *proc0_ttbbase, pv_addr_t *proc0_ptpt)
+#else
+ofw_construct_proc0_addrspace(pv_addr_t *proc0_ttbbase)
+#endif
 {
 	int i, oft;
 #ifndef ARM32_PMAP_NEW
@@ -1304,7 +1316,6 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	pv_addr_t msgbuf;
 #else
 	static pv_addr_t proc0_pagedir;
-	static pv_addr_t proc0_pt_pte;
 	static pv_addr_t proc0_pt_sys;
 	static pv_addr_t proc0_pt_kernel[KERNEL_IMG_PTS];
 	static pv_addr_t proc0_pt_vmdata[KERNEL_VMDATA_PTS];
@@ -1343,7 +1354,9 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	/* Allocate/initialize space for the proc0, NetBSD-managed */
 	/* page tables that we will be switching to soon. */
 	ofw_claimpages(&virt_freeptr, &proc0_pagedir, L1_TABLE_SIZE);
+#ifndef ARM32_PMAP_NEW
 	ofw_claimpages(&virt_freeptr, &proc0_pt_pte, L2_TABLE_SIZE);
+#endif
 	ofw_claimpages(&virt_freeptr, &proc0_pt_sys, L2_TABLE_SIZE);
 	for (i = 0; i < KERNEL_IMG_PTS; i++)
 		ofw_claimpages(&virt_freeptr, &proc0_pt_kernel[i], L2_TABLE_SIZE);
@@ -1373,8 +1386,9 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	for (i = 0; i < KERNEL_IMG_PTS; i++)
 		pmap_link_l2pt(L1pagetable, KERNEL_BASE + i * 0x00400000,
 		    &proc0_pt_kernel[i]);
-	pmap_link_l2pt(L1pagetable, PTE_BASE,
-	    &proc0_pt_pte);
+#ifndef ARM32_PMAP_NEW
+	pmap_link_l2pt(L1pagetable, PTE_BASE, &proc0_pt_pte);
+#endif
 	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
 		pmap_link_l2pt(L1pagetable, KERNEL_VM_BASE + i * 0x00400000,
 		    &proc0_pt_vmdata[i]);
@@ -1458,6 +1472,7 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	 * we don't want aliases to physical addresses that the kernel
 	 * has-mapped/will-map elsewhere.
 	 */
+#ifndef ARM32_PMAP_NEW
 	ofw_discardmappings(proc0_pt_kernel[KERNEL_IMG_PTS - 1].pv_va,
 	    proc0_pt_sys.pv_va, L2_TABLE_SIZE);
 	for (i = 0; i < KERNEL_IMG_PTS; i++)
@@ -1472,31 +1487,24 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	for (i = 0; i < KERNEL_IO_PTS; i++)
 		ofw_discardmappings(proc0_pt_kernel[KERNEL_IMG_PTS - 1].pv_va,
 		    proc0_pt_io[i].pv_va, L2_TABLE_SIZE);
+#endif
 	ofw_discardmappings(proc0_pt_kernel[KERNEL_IMG_PTS - 1].pv_va,
 	    msgbuf.pv_va, MSGBUFSIZE);
 
+#ifndef ARM32_PMAP_NEW
 	/*
 	 * We did not throw away the proc0_pt_pte and proc0_pagedir
 	 * mappings as well still want them. However we don't want them
 	 * cached ...
 	 * Really these should be uncached when allocated.
 	 */
-#ifndef ARM32_PMAP_NEW
 	pmap_map_entry(L1pagetable, proc0_pt_pte.pv_va,
 	    proc0_pt_pte.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-#else
-	pmap_map_entry(L1pagetable, proc0_pt_pte.pv_va,
-	    proc0_pt_pte.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-#endif
 	for (i = 0; i < (L1_TABLE_SIZE / PAGE_SIZE); ++i)
 		pmap_map_entry(L1pagetable,
 		    proc0_pagedir.pv_va + PAGE_SIZE * i,
 		    proc0_pagedir.pv_pa + PAGE_SIZE * i,
-#ifndef ARM32_PMAP_NEW
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-#else
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
-#endif
 
 	/*
 	 * Construct the proc0 L2 pagetables that map page tables.
@@ -1512,17 +1520,10 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 		    PTE_BASE + ((KERNEL_BASE + i * 0x00400000) >> (PGSHIFT-2)),
 		    proc0_pt_kernel[i].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-#ifndef ARM32_PMAP_NEW
 	pmap_map_entry(L1pagetable,
 	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
 	    proc0_pt_pte.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-#else
-	pmap_map_entry(L1pagetable,
-	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
-	    proc0_pt_pte.pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
-#endif
 	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
 		pmap_map_entry(L1pagetable,
 		    PTE_BASE + ((KERNEL_VM_BASE + i * 0x00400000)
@@ -1538,6 +1539,7 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 		    PTE_BASE + ((IO_VIRT_BASE + i * 0x00400000)
 		    >> (PGSHIFT-2)), proc0_pt_io[i].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+#endif
 
 	/* update the top of the kernel VM */
 	pmap_curmaxkvaddr =
@@ -1566,33 +1568,11 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 		}
 	}
 
-#ifdef ARM32_PMAP_NEW
-	/*
-	 * This is not a pretty sight, but it works.
-	 */
-	proc0_pt_sys.pv_va = PTE_BASE + (0x00000000 >> (PGSHIFT-2));
-	proc0_pt_pte.pv_va = PTE_BASE + (PTE_BASE >> (PGSHIFT-2));
-	for (i = 0; i < KERNEL_IMG_PTS; i++) {
-		proc0_pt_kernel[i].pv_va = PTE_BASE +
-		    ((KERNEL_BASE + i * 0x00400000) >> (PGSHIFT-2));
-	}
-	for (i = 0; i < KERNEL_VMDATA_PTS; i++) {
-		proc0_pt_vmdata[i].pv_va = PTE_BASE +
-		    ((KERNEL_VM_BASE + i * 0x00400000) >> (PGSHIFT-2));
-	}
-	for (i = 0; i < KERNEL_OFW_PTS; i++) {
-		proc0_pt_ofw[i].pv_va = PTE_BASE +
-		    ((OFW_VIRT_BASE + i * 0x00400000) >> (PGSHIFT-2));
-	}
-	for (i = 0; i < KERNEL_IO_PTS; i++) {
-		proc0_pt_io[i].pv_va = PTE_BASE +
-		    ((IO_VIRT_BASE + i * 0x00400000) >> (PGSHIFT-2));
-	}
-#endif
-
 	/* OUT parameters are the new ttbbase and the pt which maps pts. */
 	*proc0_ttbbase = proc0_pagedir;
+#ifndef ARM32_PMAP_NEW
 	*proc0_ptpt = proc0_pt_pte;
+#endif
 }
 
 
