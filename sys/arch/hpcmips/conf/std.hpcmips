@@ -1,7 +1,8 @@
-#	$NetBSD: std.hpcmips,v 1.16 2002/12/09 22:54:13 simonb Exp $
+#	$NetBSD: std.hpcmips,v 1.17 2003/08/30 22:44:39 chs Exp $
 # standard, required hpcmips info
 
 machine hpcmips mips
+makeoptions	MACHINE_ARCH="mipsel"
 
 options 	NOFPU			# No FPU
 options 	SOFTFLOAT		# emulate FPU insn

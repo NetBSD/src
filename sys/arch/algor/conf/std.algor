@@ -1,6 +1,7 @@
-#	$NetBSD: std.algor,v 1.5 2002/12/09 22:54:09 simonb Exp $
+#	$NetBSD: std.algor,v 1.6 2003/08/30 22:44:38 chs Exp $
 
 machine algor mips
+makeoptions	MACHINE_ARCH="mipsel"
 
 # Standard exec-package options
 options 	EXEC_ELF32	# 32-bit ELF support (native format)
