@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.106 2000/03/09 22:01:26 itojun Exp $	*/
+/*	$NetBSD: fetch.c,v 1.107 2000/03/09 22:07:59 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.106 2000/03/09 22:01:26 itojun Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.107 2000/03/09 22:07:59 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -426,7 +426,8 @@ cleanup_parse_url:
 
 	if (debug)
 		fprintf(ttyout,
-		    "parse_url: user `%s' pass `%s' host %s:%s(%d) path `%s'\n",
+		    "parse_url: user `%s' pass `%s' host %s port %s(%d) "
+		    "path `%s'\n",
 		    *user ? *user : "<null>", *pass ? *pass : "<null>",
 		    *host ? *host : "<null>", *port ? *port : "<null>",
 		    *portnum ? *portnum : -1, *path ? *path : "<null>");
@@ -1465,7 +1466,8 @@ fetch_ftp(url)
 	}
 	if (debug)
 		fprintf(ttyout,
-    "fetch_ftp: user `%s' pass `%s' host %s:%s path `%s' dir `%s' file `%s'\n",
+		    "fetch_ftp: user `%s' pass `%s' host %s port %s "
+		    "path `%s' dir `%s' file `%s'\n",
 		    user ? user : "<null>", pass ? pass : "<null>",
 		    host ? host : "<null>", port ? port : "<null>",
 		    path ? path : "<null>",
