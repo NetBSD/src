@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.1.1.1 1995/03/26 07:12:11 leo Exp $	*/
+/*	$NetBSD: fd.c,v 1.2 1995/04/10 08:56:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -386,7 +386,7 @@ struct proc	*proc;
 #endif
 }
 
-Fdclose(dev, flags, devtype, proc)
+fdclose(dev, flags, devtype, proc)
 dev_t		dev;
 int		flags, devtype;
 struct proc	*proc;
