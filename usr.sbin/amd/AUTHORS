@@ -1,0 +1,67 @@
+# -*- text -*-
+PRIMARY AUTHORS AND MAJOR CONTRIBUTORS TO AM_UTILS:
+
+Original authors of amd were the Berkeley team and especially Jan-Simon
+Pendry.  Since then many people have contributed patches.
+
+This file lists the ones who contributed major code changes, and I thank
+them all.  This is of course not to diminish the smaller contributes of the
+many others.  Thank you all.
+
+* Erez Zadok <ezk@cs.columbia.edu>
+
+The most significant changes were made by Erez Zadok in terms of bug fixes,
+ports, and new features added.  Erez Zadok is the current maintainer of
+am-utils, as of January 1997.
+
+There is a mailing list dedicated to developers of am-utils.  To subscribe
+to it, send mail to majordomo@majordomo.cs.columbia.edu, with the body of
+the message having the single line "subscribe amd-dev".
+
+* Randall S. Winchester <rsw@glue.umd.edu>
+
+May 7, 1997: contributed a special version of upl102 that included NFS V.3
+support.  Some of the code was contributed by Christos Zoulas
+<christos@deshaw.com>.  I (Erez) ported these changes to am-utils.
+
+* Hannes Reinecke <hare@MathI.UNI-Heidelberg.DE>
+
+Back in 1995, contributed code for linux.  A new parser for file system
+specific options that only exist under linux.
+
+* Leif Johansson <leifj@matematik.su.se>
+
+June 22, 1997: minor patch to ensure that systems without an RE library work.
+
+June 23, 1997: mount options should be properly comma limited.
+
+July 10, 1997: info_ldap.c and prototype changes to all map _init and _mtime
+functions.  Contributed scripts/amd2ldif.pl.
+
+* Andreas Stolcke <stolcke@speech.sri.com>
+
+June 22, 1997: patches to ensure that proto= and vers= options work
+properly in mount tables and can be overridden.  Later on, more code
+contribued to optimize the best combination of proto/vers.
+
+July 4, 1997: patches to get NFS V.3 working under irix5.
+
+* Danny Braniss <danny@cs.huji.ac.il>
+
+July, 6 1997: contributed patches to hesiod on bsdi3.
+
+* Tom Schmidt <tschmidt@micron.com>
+
+July 10, 1997: Recommdation to include libgdbm if libc has no dbm_open.
+Patches for netgrp(host) command.  Mods to aux/config.guess to recognize
+sun3.
+
+* Daniel S. Riley  <dsr@mail.lns.cornell.edu>
+
+July 11, 1997: fixes to DU-4.0 to support string POSIX.1 signals, and struct
+sockaddr with sa_len field.
+
+July 13, 1997: Move amd.conf parsing to before switch_option() on log/debug
+options.  Minor type wrt "ro" option in libamu/mount_fs.c.  Added more
+fillers of mnttab options, for acdirmax, acdirmin, acregmax, acregmin, noac,
+grpid, nosuid, and actimo.
