@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.9 1999/12/07 02:40:28 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.10 1999/12/12 20:52:37 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -42,6 +42,7 @@
 #include "rf_engine.h"
 #include "rf_map.h"
 #include "rf_etimer.h"
+#include "rf_kintf.h"
 
 /* prototypes for some of the available states.
 
@@ -207,10 +208,11 @@ rf_State_LastState(RF_RaidAccessDesc_t * desc)
 	
 	RF_LOCK_MUTEX(((RF_Raid_t *) desc->raidPtr)->mutex);
 	((RF_Raid_t *) desc->raidPtr)->openings++;
-	wakeup(&(((RF_Raid_t *) desc->raidPtr)->openings));
 	RF_UNLOCK_MUTEX(((RF_Raid_t *) desc->raidPtr)->mutex);
-	
-	
+
+	/* wake up any pending IO */
+	raidstart(((RF_Raid_t *) desc->raidPtr));
+		
 	/* printf("Calling biodone on 0x%x\n",desc->bp); */
 	biodone(desc->bp);	/* access came through ioctl */
 
