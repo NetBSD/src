@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.15 1999/03/31 00:44:49 fvdl Exp $	*/
+/*	$NetBSD: md.c,v 1.15.2.1 1999/04/19 15:19:28 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -268,37 +268,42 @@ int	md_get_info (void)
 	return 1;
 }
 
-void	md_pre_disklabel (void)
+int	md_pre_disklabel (void)
 {
+	return 0;
 }
 
-void	md_post_disklabel (void)
+int	md_post_disklabel (void)
 {
+	return 0;
 }
 
-void	md_post_newfs (void)
+int	md_post_newfs (void)
 {
 #if 0
 	/* XXX boot blocks ... */
 	printf(msg_string(MSG_dobootblks), diskdev);
-	run_prog(0, 1, "/sbin/disklabel -B %s /dev/r%sc",
+	run_prog(0, 1, NULL, "/sbin/disklabel -B %s /dev/r%sc",
 	    "-b /usr/mdec/rzboot -s /usr/mdec/bootrz", diskdev);
 #endif
+	return 0;
 }
 
-void	md_copy_filesystem (void)
+int	md_copy_filesystem (void)
 {
 	if (target_already_root()) {
-		return;
+		return 0;
 	}
 
 	/* Copy the instbin(s) to the disk */
 	printf("%s", msg_string(MSG_dotar));
-	run_prog(0, 1, "pax -X -r -w -pe / /mnt");
+	if (run_prog(0, 1, NULL, "pax -X -r -w -pe / /mnt") != 0)
+		return 1;
 
 	/* Copy next-stage install profile into target /.profile. */
-	cp_to_target("/tmp/.hdprofile", "/.profile");
-	cp_to_target("/usr/share/misc/termcap", "/.termcap");
+	if (cp_to_target("/tmp/.hdprofile", "/.profile") != 0)
+		return 1;
+	return cp_to_target("/usr/share/misc/termcap", "/.termcap");
 }
 
 int md_make_bsd_partitions (void)
@@ -383,7 +388,7 @@ int md_make_bsd_partitions (void)
 		i = NUMSEC(layoutkind * 2 * (rammb < 32 ? 32 : rammb),
 		    MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC(i/(MEG/sectorsize)+1, MEG/sectorsize,
-		    dlcylsize) - partstart - swapadj;
+		    dlcylsize) - partstart;
 		bsdlabel[B].pi_offset = partstart;
 		bsdlabel[B].pi_size = partsize;
 		partstart += partsize;
@@ -424,11 +429,11 @@ int md_make_bsd_partitions (void)
 		i = NUMSEC(4 * (rammb < 32 ? 32 : rammb),
 		    MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC(i/(MEG/sectorsize)+1, MEG/sectorsize,
-		    dlcylsize) - partstart - swapadj;
+		    dlcylsize) - partstart;
 		snprintf(isize, 20, "%d", partsize/sizemult);
 		msg_prompt_add(MSG_askfsswap, isize, isize, 20,
 		    remain/sizemult, multname);
-		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize) - swapadj;
+		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
 		bsdlabel[B].pi_offset = partstart;
 		bsdlabel[B].pi_size = partsize;
 		partstart += partsize;
@@ -515,9 +520,9 @@ md_cleanup_install(void)
 	if (scripting)
 		(void)fprintf(script, "%s\n", sedcmd);
 	do_system(sedcmd);
-	run_prog(1, 0, "mv -f %s %s", realto, realfrom);
-	run_prog(0, 0, "rm -f %s", target_expand("/sysinst"));
-	run_prog(0, 0, "rm -f %s", target_expand("/.termcap"));
-	run_prog(0, 0, "rm -f %s", target_expand("/.profile"));
+	run_prog(1, 0, NULL, "mv -f %s %s", realto, realfrom);
+	run_prog(0, 0, NULL, "rm -f %s", target_expand("/sysinst"));
+	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.termcap"));
+	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.profile"));
 #endif
 }

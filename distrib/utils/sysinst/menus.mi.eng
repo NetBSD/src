@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.eng,v 1.24 1999/03/31 00:44:48 fvdl Exp $	*/
+/*	$NetBSD: menus.mi.eng,v 1.24.2.1 1999/04/19 15:19:27 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,14 +69,14 @@ menu netbsd, x=15, title "  NetBSD-@@VERSION@@ Install System";
 	option "Re-install sets or install additional sets",
 		action { do_reinstall_sets(); };
 	option "Reboot the computer", exit,
-		action { run_prog(0, 0, "/sbin/reboot"); };
+		action { run_prog(0, 0, NULL, "/sbin/reboot"); };
 	option "Utility menu", sub menu utility;
 	option "Exit Install System", exit;
 
 menu utility, title " NetBSD-@@VERSION@@ Utility", exit;
 	option "Run /bin/sh",
 		action (endwin) { system("/bin/sh"); };
-/*	option "test", action { run_prog(0, 1, "/bin/pwd"); }; */
+/*	option "test", action { run_prog(0, 1, NULL, "/bin/pwd"); }; */
 	option "Configure network",
 		action {
 			extern int network_up;
@@ -87,7 +87,7 @@ menu utility, title " NetBSD-@@VERSION@@ Utility", exit;
 /*	option "Partition a disk"; XXX add later.  */
 	option "Logging functions", action { do_logging(); };
 	option "Halt the system", exit,
-		action { run_prog(0, 0, "/sbin/halt"); };
+		action { run_prog(0, 0, NULL, "/sbin/halt"); };
 
 menu yesno, title "  yes or no?  ";
 	option "Yes", exit, action  {yesno = 1;};
@@ -134,17 +134,11 @@ menu edfspart, title "  Change what? ", exit, y=15;
 	};
 	option "FS kind", sub menu  selfskind;
 	option "Offset/size", action  
-		{	char buf[40]; int start, size;
-			msg_prompt_add (MSG_offset, NULL, buf, 40);
-			start = NUMSEC(atoi(buf),sizemult,dlcylsize);
-			msg_prompt_add (MSG_size, NULL, buf, 40);
-			size = NUMSEC(atoi(buf),sizemult,dlcylsize);
+		{	int start, size;
+			msg_display_add(MSG_defaultunit, multname);
+			start = getpartoff(MSG_offset, 0);
+			size = getpartsize(MSG_size, start, 0);
 			if (size == -1)
-				size = dlsize - start;
-			if (editpart == 1 && 
-			    bsdlabel[editpart].pi_fstype == FS_SWAP)
-				size -= swapadj;
-			if (start + size > dlsize)
 				size = dlsize - start;
 			bsdlabel[editpart].pi_offset = start;
 			bsdlabel[editpart].pi_size = size;

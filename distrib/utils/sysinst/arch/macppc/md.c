@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6 1999/03/31 00:44:50 fvdl Exp $	*/
+/*	$NetBSD: md.c,v 1.6.2.1 1999/04/19 15:19:30 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -109,19 +109,19 @@ md_get_info()
 /*
  * hook called before writing new disklabel.
  */
-void
+int
 md_pre_disklabel()
 {
-
+	return 0;
 }
 
 /*
  * hook called after writing disklabel to new target disk.
  */
-void
-md_post_disklabel()
+int
+md_post_disklabel(void)
 {
-
+	return 0;
 }
 
 /*
@@ -141,17 +141,18 @@ md_post_newfs()
 	printf (msg_string(MSG_dobootblks), diskdev);
 	cp_to_target("/usr/mdec/ofwboot", "/boot");
 	sync();
-	run_prog(0, 1, "/usr/mdec/installboot %s %s /dev/r%sa",
+	run_prog(0, 1, NULL, "/usr/mdec/installboot %s %s /dev/r%sa",
 	    bootfile,  "/usr/mdec/bootxx", diskdev);
+	return 0;
 }
 
 /*
  * some ports use this to copy the MD filesystem, we do not.
  */
-void
+int
 md_copy_filesystem()
 {
-
+	return 0;
 }
 
 int
@@ -225,7 +226,7 @@ md_make_bsd_partitions()
 		i = NUMSEC(layoutkind * 2 * (rammb < 32 ? 32 : rammb),
 			   MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-			   dlcylsize) - partstart - swapadj;
+			   dlcylsize) - partstart;
 		bsdlabel[B].pi_offset = partstart;
 		bsdlabel[B].pi_size = partsize;
 		partstart += partsize;
@@ -264,11 +265,11 @@ md_make_bsd_partitions()
 		i = NUMSEC(2 * (rammb < 32 ? 32 : rammb),
 			   MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-			   dlcylsize) - partstart - swapadj;
+			   dlcylsize) - partstart;
 		snprintf (isize, 20, "%d", partsize/sizemult);
 		msg_prompt_add (MSG_askfsswap, isize, isize, 20,
 			    remain/sizemult, multname);
-		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize) - swapadj;
+		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
 		bsdlabel[B].pi_offset = partstart;
 		bsdlabel[B].pi_size = partsize;
 		partstart += partsize;

@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.11 1999/03/22 09:02:47 ross Exp $	*/
+/*	$NetBSD: run.c,v 1.11.2.1 1999/04/19 15:19:28 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -410,7 +410,7 @@ launch_subwin(actionwin, args, win, display)
  */
 
 int
-run_prog(int fatal, int display, char *cmd, ...)
+run_prog(int fatal, int display, char *errmsg, char *cmd, ...)
 {
 	va_list ap;
 	struct winsize win;
@@ -437,9 +437,12 @@ run_prog(int fatal, int display, char *cmd, ...)
 		win.ws_col = 80;
 
 	if (display) {
+		wclear(stdscr); /* XXX shouldn't be needed */
+		wrefresh(stdscr);
 		statuswin = subwin(stdscr, win.ws_row, win.ws_col, 0, 0);
 		boxwin = subwin(statuswin, win.ws_row - 3, win.ws_col, 3, 0);
-		actionwin = subwin(statuswin, win.ws_row - 5, win.ws_col - 3, 4, 1);
+		actionwin = subwin(statuswin, win.ws_row - 5, win.ws_col - 3,
+		   4, 1);
 		scrollok(actionwin, TRUE);
 
 		win.ws_col -= 3;
@@ -480,9 +483,11 @@ run_prog(int fatal, int display, char *cmd, ...)
 			waddstr(statuswin, "Finished");
 		wstandend(statuswin);
 		wmove(statuswin, 2, 5);
-		waddstr(statuswin, "Press any key to continue");
+		if (ret != 0)
+			waddstr(statuswin, "Press any key to continue");
 		wrefresh(statuswin);
-		(void)getchar();
+		if (ret != 0)
+			(void)getchar();
 
 		/* clean things up */
 		wclear(actionwin);
@@ -499,8 +504,11 @@ run_prog(int fatal, int display, char *cmd, ...)
 		ret = launch_subwin(NULL, args, win, 0);
 	}
 	va_end(ap);
-	if (fatal)
+	if (fatal && ret != 0)
 		exit(ret);
-	else
-		return(ret);
+	if (ret && errmsg) {
+		msg_printf(errmsg, command);
+		process_menu(MENU_ok);
+	}
+	return(ret);
 }

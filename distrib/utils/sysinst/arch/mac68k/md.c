@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 1999/03/26 08:52:44 ender Exp $ */
+/*	$NetBSD: md.c,v 1.2.2.1 1999/04/19 15:19:29 perry Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -614,7 +614,7 @@ md_get_info()
 	/*
 	 * Setup the disktype so /etc/disktab gets proper info
 	 */
-	if (strncmp (disk->name, "sd", 2) == 0) {
+	if (strncmp (disk->dd_name, "sd", 2) == 0) {
 	    disktype = "SCSI";
 	    doessf = "sf:";
 	}
@@ -624,7 +624,7 @@ md_get_info()
 	return edit_diskmap();
 }
 
-void
+int
 md_pre_disklabel()
 {
     int fd;
@@ -685,32 +685,37 @@ md_pre_disklabel()
      * Well, if we get here the dirty deed has been done.
      */
     close (fd);
+    return 0;
 }
 
-void
+int
 md_post_disklabel(void)
 {
+	return 0;
 }
 
-void
+int
 md_post_newfs(void)
 {
+	return 0;
 }
 
-void
+int
 md_copy_filesystem(void)
 {
 	if (target_already_root()) {
-		return;
+		return 1;
 	}
 
 	/* Copy the instbin(s) to the disk */
 	msg_display(MSG_dotar);
-	run_prog (0, 0, "pax -X -r -w -pe / /mnt");
+	if (run_prog (0, 0, NULL, "pax -X -r -w -pe / /mnt") != 0)
+		return 1;
 
 	/* Copy next-stage install profile into target /.profile. */
-	cp_to_target ("/tmp/.hdprofile", "/.profile");
-	cp_to_target ("/usr/share/misc/termcap", "/.termcap");
+	if (cp_to_target ("/tmp/.hdprofile", "/.profile") != 0)
+		return 1;
+	return cp_to_target ("/usr/share/misc/termcap", "/.termcap");
 }
 
 
@@ -749,11 +754,11 @@ md_make_bsd_partitions(void)
 	 *  start by setting everything to unused.
 	 */
 	for (i=0;i<MAXPARTITIONS;i++) {
-	    bsdlabel[i][D_SIZE] = 0;
-	    bsdlabel[i][D_OFFSET] = 0;
-	    bsdlabel[i][D_FSTYPE] = T_UNUSED;
-	    bsdlabel[i][D_BSIZE] = 0;
-	    bsdlabel[i][D_FSIZE] = 0;
+	    bsdlabel[i].pi_size = 0;
+	    bsdlabel[i].pi_offset = 0;
+	    bsdlabel[i].pi_fstype = FS_UNUSED;
+	    bsdlabel[i].pi_bsize = 0;
+	    bsdlabel[i].pi_fsize = 0;
 	    fsmount[i][0] = '\0';
 	}
 	/*
@@ -767,17 +772,17 @@ md_make_bsd_partitions(void)
 		pl = bzb->flags.part - 'a';
 		switch (part_type(j, fstyp, use, name)) {
 		    case TYP_HFS:
-			bsdlabel[pl][D_FSTYPE] = T_MSDOS;  /* really MacOS */
+			bsdlabel[pl].pi_fstype = FS_HFS; 
 			strcpy (fsmount[pl], bzb->mount_point);
 			break;
 		    case TYP_BSD:
 			switch (bzb->type) {
 			    case BZB_TYPEFS:
-				bsdlabel[pl][D_FSTYPE] = T_42BSD;
+				bsdlabel[pl].pi_fstype = FS_BSDFFS;
 				strcpy (fsmount[pl], bzb->mount_point);
 				break;
 			    case BZB_TYPESWAP:
-				bsdlabel[pl][D_FSTYPE] = T_SWAP;
+				bsdlabel[pl].pi_fstype = FS_SWAP;
 				break;
 			    default:
 				break;
@@ -786,12 +791,12 @@ md_make_bsd_partitions(void)
 		    default:
 			break;
 		}
-	        if (bsdlabel[pl][D_FSTYPE] != T_UNUSED) {
-		    bsdlabel[pl][D_SIZE] = map.blk[j].pmPartBlkCnt;
-		    bsdlabel[pl][D_OFFSET] = map.blk[j].pmPyPartStart;
-		    if (bsdlabel[pl][D_FSTYPE] != T_SWAP) {
-		        bsdlabel[pl][D_BSIZE] = 8192;
-		        bsdlabel[pl][D_FSIZE] = 1024;
+	        if (bsdlabel[pl].pi_fstype != FS_UNUSED) {
+		    bsdlabel[pl].pi_size = map.blk[j].pmPartBlkCnt;
+		    bsdlabel[pl].pi_offset = map.blk[j].pmPyPartStart;
+		    if (bsdlabel[pl].pi_fstype != FS_SWAP) {
+		        bsdlabel[pl].pi_bsize = 8192;
+		        bsdlabel[pl].pi_fsize = 1024;
 		    }
 		}
 	    }
@@ -801,7 +806,7 @@ md_make_bsd_partitions(void)
 	strcpy (bsddiskname, diskdev);
 
 	/* Create the disktab.preinstall */
-	run_prog (0, 0, "cp /etc/disktab.preinstall /etc/disktab");
+	run_prog (0, 0, NULL, "cp /etc/disktab.preinstall /etc/disktab");
 #ifdef DEBUG
 	f = fopen ("/tmp/disktab", "a");
 #else
@@ -818,20 +823,20 @@ md_make_bsd_partitions(void)
 	(void)fprintf (f, "\t:sc#%d:su#%d:\\\n", dlhead*dlsec, dlsize);
 	(void)fprintf (f, "\t:se#%d:%s\\\n", bsize, doessf);
 	for (i=0; i<8; i++) {
-		if (bsdlabel[i][D_FSTYPE] == T_MSDOS)
+		if (bsdlabel[i].pi_fstype == FS_HFS)
 		    (void)fprintf (f, "\t:p%c#%d:o%c#%d:t%c=macos:",
-			       'a'+i, bsdlabel[i][D_SIZE],
-			       'a'+i, bsdlabel[i][D_OFFSET],
+			       'a'+i, bsdlabel[i].pi_size,
+			       'a'+i, bsdlabel[i].pi_offset,
 			       'a'+i);
 		else
 		    (void)fprintf (f, "\t:p%c#%d:o%c#%d:t%c=%s:",
-			       'a'+i, bsdlabel[i][D_SIZE],
-			       'a'+i, bsdlabel[i][D_OFFSET],
-			       'a'+i, fstype[bsdlabel[i][D_FSTYPE]]);
-		if (bsdlabel[i][D_FSTYPE] == T_42BSD)
+			       'a'+i, bsdlabel[i].pi_size,
+			       'a'+i, bsdlabel[i].pi_offset,
+			       'a'+i, fstypenames[bsdlabel[i].pi_fstype]);
+		if (bsdlabel[i].pi_fstype == FS_BSDFFS)
 			(void)fprintf (f, "b%c#%d:f%c#%d",
-				       'a'+i, bsdlabel[i][D_BSIZE],
-				       'a'+i, bsdlabel[i][D_FSIZE]);
+				       'a'+i, bsdlabel[i].pi_bsize,
+				       'a'+i, bsdlabel[i].pi_fsize);
 		if (i < 7)
 			(void)fprintf (f, "\\\n");
 		else
@@ -875,9 +880,9 @@ md_cleanup_install(void)
 		(void)fprintf(script, "%s\n", sedcmd);
 	do_system(sedcmd);
 
-	run_prog(1, 0, "mv -f %s %s", realto, realfrom);
-	run_prog(0, 0, "rm -f %s", target_expand("/sysinst"));
-	run_prog(0, 0, "rm -f %s", target_expand("/.termcap"));
-	run_prog(0, 0, "rm -f %s", target_expand("/.profile"));
+	run_prog(1, 0, NULL, "mv -f %s %s", realto, realfrom);
+	run_prog(0, 0, NULL, "rm -f %s", target_expand("/sysinst"));
+	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.termcap"));
+	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.profile"));
 }
 

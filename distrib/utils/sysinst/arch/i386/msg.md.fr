@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.5.2.1 1999/04/08 15:16:38 bouyer Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.5.2.2 1999/04/19 15:19:29 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,7 +42,6 @@ message fullpart
 {Nous allons maintenant installer NetBSD sur votre disque %s. Vous devez
 choisir si vous voulez installer NetBSD sur la totalité du disque ou seulement
 sur une partie de celui-ci.
-
 Une installation sur une partie du disque crée une partition, ou `slice', pour
 NetBSD dans le secteur de démarage (Master Boot Record, alias MBR) de votre
 disque. Une installation sur la totalité du disque est `dangereusement
@@ -128,8 +127,8 @@ actuellement active. La table des partitions est :
 
 message reeditpart
 {Il y a des partitions BIOS qui se recouvrent ou bien vous n'avez pas
-exactement une partition NetBSD. Vous devez éditer de nouveau la table des
-partitions.
+exactement une partition NetBSD. Vous devez éditer de nouveau la table
+des partitions.
 
 Voulez vous la rééditer ?
 }
@@ -154,16 +153,23 @@ message dobootblks
 {Installation des block de démarrage sur %s ...
 }
 
-message askfsroot
+message askfsroot1
 {Je vais vous demander la taille et le point de montage de quelque partitions.
 
-Et tout d'abord la partition racine. Il vous reste %d %s de libre sur votre 
-disque. Taille de la partition racine ? }
+Et tout d'abord la partition racine. Il vous reste %d %s de libre sur
+votre disque.
+}
+message askfsroot2
+{Taille de la partition racine ? }
 
-message askfsswap
+message askfsswap1
 {
-Et maintenant la taille de swap. Il vous reste %d %s de libre sur votre disque.
-Taille du swap ? }
+Et maintenant la taille de swap. Il vous reste %d %s de libre sur
+votre disque.
+}
+
+message askfsswap2
+{Taille du swap ? }
 
 message otherparts
 {Il vous reste de l'espace libre non alloué sur votre disque. SVP donnez la
@@ -171,9 +177,12 @@ taille et le point de " montage " des partitions suivantes.
 
 }
 
-message askfspart
-{La partition suivante est /dev/%s%c . Il vous reste %d %s de libre sur votre 
-disque.  Taille de la partition ? }
+message askfspart1
+{La partition suivante est /dev/%s%c . Il vous reste %d %s de libre sur
+votre disque.
+}
+message askfspart2
+{Taille de la partition ? }
 
 message cyl1024
 { Le label (liste des partitions) que vous avez entré a une partition racine
@@ -193,3 +202,6 @@ message biosmultmatch
 
 message pickdisk
 {Choisissez un disque: }
+
+message wmbrfail
+{L'écriture du MBR a échouée. Je ne peux pas continuer.}

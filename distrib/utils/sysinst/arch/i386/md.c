@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.21 1999/03/31 00:44:49 fvdl Exp $ */
+/*	$NetBSD: md.c,v 1.21.2.1 1999/04/19 15:19:29 perry Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -119,48 +119,63 @@ md_read_bootcode(path, buf, len)
 	return (cc + MBR_MAGICOFF);
 }
 
-void
+int
 md_pre_disklabel()
 {
-	printf("%s", msg_string (MSG_dofdisk));
+	msg_display(MSG_dofdisk);
 
 	/* write edited MBR onto disk. */
-	write_mbr(diskdev, mbr, sizeof mbr);
+	if (write_mbr(diskdev, mbr, sizeof mbr) != 0) {
+		msg_display(MSG_wmbrfail);
+		process_menu(MENU_ok);
+		return 1;
+	}
+	return 0;
 }
 
-void
+int
 md_post_disklabel(void)
 {
 	/* Sector forwarding / badblocks ... */
 	if (*doessf) {
-		printf("%s", msg_string(MSG_dobad144));
-		run_prog(0, 1, "/usr/sbin/bad144 %s 0", diskdev);
+		msg_display(MSG_dobad144);
+		return run_prog(0, 1, NULL, "/usr/sbin/bad144 %s 0", diskdev);
 	}
+	return 0;
 }
 
-void
+int
 md_post_newfs(void)
 {
 	/* boot blocks ... */
-	printf(msg_string(MSG_dobootblks), diskdev);
-	run_prog(0, 1, "/usr/mdec/installboot -v /usr/mdec/biosboot.sym "
-		  "/dev/r%sa", diskdev);
+	msg_display(MSG_dobootblks, diskdev);
+	return run_prog(0, 1, NULL,
+	    "/usr/mdec/installboot -v /usr/mdec/biosboot.sym /dev/r%sa",
+	    diskdev);
 }
 
-void
+int
 md_copy_filesystem(void)
 {
 	if (target_already_root()) {
-		return;
+		return 0;
 	}
 
 	/* Copy the instbin(s) to the disk */
-	printf("%s", msg_string(MSG_dotar));
-	run_prog(0, 0, "pax -X -r -w -pe / /mnt");
+	msg_display(MSG_dotar);
+	if (run_prog(0, 0, NULL, "pax -X -r -w -pe / /mnt") != 0)
+		goto err;
 
 	/* Copy next-stage install profile into target /.profile. */
-	cp_to_target("/tmp/.hdprofile", "/.profile");
-	cp_to_target("/usr/share/misc/termcap", "/.termcap");
+	if (cp_to_target("/tmp/.hdprofile", "/.profile") != 0)
+		goto err;
+	if (cp_to_target("/usr/share/misc/termcap", "/.termcap") != 0)
+		goto err;
+	return 0;
+err:
+	msg_display(MSG_dotarfail);
+	process_menu(MENU_ok);
+	return 1;
 }
 
 
@@ -173,7 +188,6 @@ md_make_bsd_partitions(void)
 	int part;
 	int maxpart = getmaxpartitions();
 	int remain;
-	char isize[20];
 
 editlab:
 	/* Ask for layout type -- standard or special */
@@ -216,6 +230,15 @@ editlab:
 	case 2: /* standard X: a root, b swap (big), c/d "unused", e /usr */
 		partstart = ptstart;
 
+		/* check that we have enouth space */
+		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize);
+		i += NUMSEC(layoutkind * 2 * (rammb < 16 ? 16 : rammb),
+			   MEG/sectorsize, dlcylsize);
+		if ( i > fsptsize) {
+			msg_display(MSG_disktoosmall);
+			process_menu(MENU_ok);
+			goto custom;
+		}
 		/* Root */
 		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
@@ -231,7 +254,7 @@ editlab:
 		i = NUMSEC(layoutkind * 2 * (rammb < 16 ? 16 : rammb),
 			   MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-			   dlcylsize) - partstart - swapadj;
+			   dlcylsize) - partstart;
 		bsdlabel[B].pi_offset = partstart;
 		bsdlabel[B].pi_size = partsize;
 		partstart += partsize;
@@ -244,11 +267,11 @@ editlab:
 		bsdlabel[E].pi_bsize = 8192;
 		bsdlabel[E].pi_fsize = 1024;
 		strcpy (fsmount[E], "/usr");
-
 		break;
 
 	case 3: /* custom: ask user for all sizes */
-		ask_sizemult();
+custom:		ask_sizemult();
+		msg_display(MSG_defaultunit, multname);
 		partstart = ptstart;
 		remain = fsptsize;
 
@@ -256,10 +279,10 @@ editlab:
 		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
 				   dlcylsize) - partstart;
-		snprintf (isize, 20, "%d", partsize/sizemult);
-		msg_prompt (MSG_askfsroot, isize, isize, 20,
-			    remain/sizemult, multname);
-		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
+		if (partsize > remain)
+			partsize = remain;
+		msg_display_add(MSG_askfsroot1, remain/sizemult, multname);
+		partsize = getpartsize(MSG_askfsroot2, partstart, partsize);
 		bsdlabel[A].pi_offset = partstart;
 		bsdlabel[A].pi_size = partsize;
 		bsdlabel[A].pi_bsize = 8192;
@@ -272,11 +295,11 @@ editlab:
 		i = NUMSEC( 2 * (rammb < 16 ? 16 : rammb),
 			   MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-			   dlcylsize) - partstart - swapadj;
-		snprintf(isize, 20, "%d", partsize/sizemult);
-		msg_prompt_add(MSG_askfsswap, isize, isize, 20,
-			    remain/sizemult, multname);
-		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize) - swapadj;
+			   dlcylsize) - partstart;
+		if (partsize > remain)
+			partsize = remain;
+		msg_display(MSG_askfsswap1, remain/sizemult, multname);
+		partsize = getpartsize(MSG_askfsswap2, partstart, partsize);
 		bsdlabel[B].pi_offset = partstart;
 		bsdlabel[B].pi_size = partsize;
 		partstart += partsize;
@@ -287,12 +310,10 @@ editlab:
 		if (remain > 0)
 			msg_display (MSG_otherparts);
 		while (remain > 0 && part <= H) {
-			partsize = remain;
-			snprintf (isize, 20, "%d", partsize/sizemult);
-			msg_prompt_add (MSG_askfspart, isize, isize, 20,
-					diskdev, partname[part],
-					remain/sizemult, multname);
-			partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
+			msg_display_add(MSG_askfspart1, diskdev,
+			    partname[part], remain/sizemult, multname);
+			partsize = getpartsize(MSG_askfspart2, partstart,
+			    remain);
 			if (partsize > 0) {
 				if (remain - partsize < sizemult)
 					partsize = remain;
@@ -344,7 +365,7 @@ editlab:
 	msg_prompt (MSG_packname, "mydisk", bsddiskname, DISKNAME_SIZE);
 
 	/* Create the disktab.preinstall */
-	run_prog (0, 0, "cp /etc/disktab.preinstall /etc/disktab");
+	run_prog (0, 0, NULL, "cp /etc/disktab.preinstall /etc/disktab");
 #ifdef DEBUG
 	f = fopen ("/tmp/disktab", "a");
 #else
@@ -411,10 +432,10 @@ md_cleanup_install(void)
 		(void)fprintf(script, "%s\n", sedcmd);
 	do_system(sedcmd);
 
-	run_prog(1, 0, "mv -f %s %s", realto, realfrom);
-	run_prog(0, 0, "rm -f %s", target_expand("/sysinst"));
-	run_prog(0, 0, "rm -f %s", target_expand("/.termcap"));
-	run_prog(0, 0, "rm -f %s", target_expand("/.profile"));
+	run_prog(1, 0, NULL, "mv -f %s %s", realto, realfrom);
+	run_prog(0, 0, NULL, "rm -f %s", target_expand("/sysinst"));
+	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.termcap"));
+	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.profile"));
 }
 
 int
@@ -444,7 +465,7 @@ md_bios_info(dev)
 			break;
 		}
 	}
-	if (nip == NULL) {
+	if (nip == NULL || nip->ni_nmatches == 0) {
 nogeom:
 		msg_display(MSG_nobiosgeom, dlcyl, dlhead, dlsec);
 		if (guess_biosgeom_from_mbr(mbr, &cyl, &head, &sec) >= 0) {
