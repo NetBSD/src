@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.185 1996/01/08 20:12:20 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.186 1996/01/30 23:15:01 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -905,6 +905,7 @@ dumpsys()
  * /sys/i386/i386/microtime.s is used.  The other code only works
  * for HZ=100.
  */
+void
 microtime(tvp)
 	register struct timeval *tvp;
 {
