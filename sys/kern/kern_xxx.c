@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.45 2000/11/21 00:37:56 jdolecek Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.46 2001/10/29 07:02:30 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -42,7 +42,6 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>

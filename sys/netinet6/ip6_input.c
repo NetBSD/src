@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.45 2001/10/24 06:36:38 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.46 2001/10/29 07:02:35 simonb Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -82,6 +82,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -1389,9 +1390,6 @@ u_char	inet6ctlerrmap[PRC_NCMDS] = {
 	0,		0,		0,		0,
 	ENOPROTOOPT
 };
-
-#include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
 
 int
 ip6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)

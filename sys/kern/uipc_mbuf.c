@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.54 2001/09/15 20:36:37 chs Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.55 2001/10/29 07:02:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -85,11 +85,12 @@
 #include <sys/protosw.h>
 #include <sys/pool.h>
 #include <sys/socket.h>
+#include <sys/sysctl.h>
+
 #include <net/if.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <sys/sysctl.h>
 
 struct	pool mbpool;		/* mbuf pool */
 struct	pool mclpool;		/* mbuf cluster pool */
