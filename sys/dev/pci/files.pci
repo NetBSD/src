@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.174 2002/06/02 02:44:27 enami Exp $
+#	$NetBSD: files.pci,v 1.175 2002/06/23 20:36:26 fvdl Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -463,6 +463,11 @@ attach	skge at skgec
 device	wm: ether, ifnet, arp, mii, mii_bitbang
 attach	wm at pci
 file	dev/pci/if_wm.c			wm
+
+# Broadcom 570x Gigabit Ethernet
+device	bge: ether, ifnet, arp, mii, mii_bitbang
+attach	bge at pci
+file	dev/pci/if_bge.c		bge
 
 # Realtek 8129/8139 Ethernet controllers
 attach	rtk at pci with rtk_pci
