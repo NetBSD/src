@@ -1,11 +1,11 @@
-/*	$NetBSD: crtbegin.c,v 1.10 1998/09/05 13:25:06 pk Exp $	*/
+/*	$NetBSD: crtbegin.c,v 1.11 2001/05/11 22:44:15 ross Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Paul Kranenburg.
+ * by Paul Kranenburg and Ross Harvey.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -57,14 +57,32 @@
 #include <stdlib.h>
 
 #include "sysident.h"
+#include "dot_init.h"
 
-static void (*__CTOR_LIST__[1]) __P((void))
+static void (*__CTOR_LIST__[1])(void)
     __attribute__((section(".ctors"))) = { (void *)-1 };	/* XXX */
-static void (*__DTOR_LIST__[1]) __P((void))
+static void (*__DTOR_LIST__[1])(void)
     __attribute__((section(".dtors"))) = { (void *)-1 };	/* XXX */
 
-static void	__dtors __P((void));
-static void	__ctors __P((void));
+static void __dtors(void);
+static void __ctors(void);
+
+INIT_FALLTHRU_DECL;
+FINI_FALLTHRU_DECL;
+
+extern void _init(void)   __attribute__((section(".init")));
+extern void _fini(void)   __attribute__((section(".fini")));
+static void __ctors(void) __attribute__((section(".init")));
+static void __dtors(void) __attribute__((section(".fini")));
+
+static void
+__ctors()
+{
+	void (**p)(void) = __CTOR_LIST__ + 1;
+
+	while (*p)
+		(**p++)();
+}
 
 static void
 __dtors()
@@ -82,42 +100,32 @@ __dtors()
 		(**p--)();
 }
 
-static void
-__ctors()
-{
-	void (**p)(void) = __CTOR_LIST__ + 1;
-
-	while (*p)
-		(**p++)();
-}
-
-extern void _init(void) __attribute__((section(".init")));
-
 void
 _init()
 {
 	static int initialized = 0;
-	static void (*volatile call__ctors)(void) = __ctors;
 	/*
 	 * Call global constructors.
 	 * Arrange to call global destructors at exit.
 	 */
-	/* prevent function pointer constant propagation */
+	INIT_FALLTHRU();
 	if (!initialized) {
 		initialized = 1;
-		(*call__ctors)();
+		__ctors();
 	}
 }
-
-extern void _fini(void) __attribute__((section(".fini")));
 
 void
 _fini()
 {
-	static void (* volatile call__dtors)(void) = __dtors;
 	/*
 	 * Call global destructors.
 	 */
 	/* prevent function pointer constant propagation */
-	(*call__dtors)();
+	__dtors();
+	FINI_FALLTHRU();
 }
+
+MD_INIT_SECTION_PROLOGUE;
+
+MD_FINI_SECTION_PROLOGUE;
