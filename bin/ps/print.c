@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.63 2001/01/15 16:16:51 hubertf Exp $	*/
+/*	$NetBSD: print.c,v 1.64 2001/01/15 17:57:14 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.63 2001/01/15 16:16:51 hubertf Exp $");
+__RCSID("$NetBSD: print.c,v 1.64 2001/01/15 17:57:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -156,7 +156,8 @@ printheader()
 }
 
 /* 
- * See if it looks like its a special system process or kernel thread
+ * Return 1 if the the command name in the argument vector does
+ * not match the command name.
  */
 static int
 titlecmp(name, argv)
@@ -167,19 +168,23 @@ titlecmp(name, argv)
 	int namelen;
 
 
+	/* no argument vector == no match; system processes/threads do that */
 	if (argv == 0 || argv[0] == 0)
 		return (1);
 
 	title = cmdpart(argv[0]);
 
+	/* the basename matches */
 	if (!strcmp(name, title))
 		return (0);
 
+	/* handle login shells, by skipping the leading - */
 	if (title[0] == '-' && !strcmp(name, title+1))
 		return (0);
 
 	namelen = strlen(name);
 
+	/* handle daemons that report activity as daemonname: activity */
 	if (argv[1] == 0 &&
 	    !strncmp(name, title, namelen) &&
 	    title[namelen + 0] == ':' &&
@@ -306,9 +311,10 @@ command(ki, ve, mode)
 					fmt_putc(' ', &left);
 				}
 			}
-			/* 
-			 * Special system process / kernel threads are
-			 * shown within parentheses.
+			/*
+			 * append the real command name within
+			 * parentheses, if the command name does
+			 * not match the one in the argument vector
 			 */
 			if (titlecmp(name, argv)) {
 				fmt_putc('(', &left);
