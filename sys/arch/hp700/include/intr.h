@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2002/06/06 19:48:08 fredette Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2002/08/14 16:18:13 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2002 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ do {									\
 void	*softintr_establish __P((int, void (*)(void *), void *));
 void	softintr_disestablish __P((void *));
 void	softintr_bootstrap __P((void));
-int	softintr_init __P((int));
+void	softintr_init __P((void));
 int	softintr_dispatch __P((void *));
 
 #define	softintr_schedule(arg)						\
