@@ -1,4 +1,4 @@
-/* $NetBSD: rm.c,v 1.38 2003/09/14 19:20:25 jschauma Exp $ */
+/* $NetBSD: rm.c,v 1.39 2004/01/04 16:04:18 jschauma Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.38 2003/09/14 19:20:25 jschauma Exp $");
+__RCSID("$NetBSD: rm.c,v 1.39 2004/01/04 16:04:18 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,6 @@ __RCSID("$NetBSD: rm.c,v 1.38 2003/09/14 19:20:25 jschauma Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <vis.h>
 
 int dflag, eval, fflag, iflag, Pflag, stdin_ok, vflag, Wflag;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: ln.c,v 1.26 2003/09/14 19:20:21 jschauma Exp $ */
+/* $NetBSD: ln.c,v 1.27 2004/01/04 16:04:18 jschauma Exp $ */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-__RCSID("$NetBSD: ln.c,v 1.26 2003/09/14 19:20:21 jschauma Exp $");
+__RCSID("$NetBSD: ln.c,v 1.27 2004/01/04 16:04:18 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,13 +52,11 @@ __RCSID("$NetBSD: ln.c,v 1.26 2003/09/14 19:20:21 jschauma Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <vis.h>
 
 int	fflag;				/* Unlink existing files. */
 int	hflag;				/* Check new name for symlink first. */
 int	sflag;				/* Symbolic, not hard, link. */
 int	vflag;                          /* Verbose output */
-int	stdout_ok;			/* stdout connected to a terminal */
 
 					/* System link call. */
 int (*linkf)(const char *, const char *);
@@ -89,8 +87,8 @@ main(int argc, char *argv[])
 			sflag = 1;
 			break;
 		case 'v':               
-		vflag = 1;      
-		break;   
+			vflag = 1;
+			break;
 		case '?':
 		default:
 			usage();
@@ -119,8 +117,6 @@ main(int argc, char *argv[])
 		exit(linkit(argv[0], argv[1], 0));
 		/* NOTREACHED */
 	}
-
-	stdout_ok = isatty(STDOUT_FILENO);
 
 					/* ln target1 target2 directory */
 	sourcedir = argv[argc - 1];
