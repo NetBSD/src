@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c24x0_clk.c,v 1.2 2003/08/04 12:41:44 bsh Exp $ */
+/*	$NetBSD: s3c24x0_clk.c,v 1.3 2003/08/27 03:57:05 bsh Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c24x0_clk.c,v 1.2 2003/08/04 12:41:44 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c24x0_clk.c,v 1.3 2003/08/27 03:57:05 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ microtime(struct timeval *tvp)
 	    bus_space_read_4(sc->sc_sx.sc_iot, sc->sc_sx.sc_intctl_ioh,
 		INTCTL_SRCPND);
 	count = bus_space_read_2(sc->sc_sx.sc_iot, sc->sc_timer_ioh,
-	    TIMER_TO(4));
+	    TIMER_TCNTO(4));
 	
 	for (;;){
 
@@ -106,7 +106,7 @@ microtime(struct timeval *tvp)
 		 */
 		int_pend0 = int_pend1;
 		count = bus_space_read_2(sc->sc_sx.sc_iot, sc->sc_timer_ioh,
-		    TIMER_TO(4));
+		    TIMER_TCNTO(4));
 	}
 
 	if( __predict_false(count > timer4_reload_value) ){
@@ -175,7 +175,7 @@ read_timer(struct s3c24x0_softc *sc)
 
 	do {
 		count = bus_space_read_2(sc->sc_sx.sc_iot, sc->sc_timer_ioh,
-		    TIMER_TO(4));
+		    TIMER_TCNTO(4));
 	} while ( __predict_false(count > timer4_reload_value) );
 
 	return count;
@@ -300,13 +300,13 @@ cpu_initclocks(void)
 	timer4_reload_value = TIMER_FREQUENCY(pclk) / hz / prescaler;
 	timer4_mseccount = TIMER_FREQUENCY(pclk)/timer4_prescaler/1000 ;
 
-	bus_space_write_4(iot, ioh, TIMER_TB(4),
+	bus_space_write_4(iot, ioh, TIMER_TCNTB(4),
 	    ((prescaler - 1) << 16) | (timer4_reload_value - 1));
 
 	printf("clock: hz=%d stathz = %d PCLK=%d prescaler=%d tc=%ld\n",
 	    hz, stathz, pclk, prescaler, tc);
 
-	bus_space_write_4(iot, ioh, TIMER_TB(3),
+	bus_space_write_4(iot, ioh, TIMER_TCNTB(3),
 	    ((prescaler - 1) << 16) | (time_constant(stathz) - 1));
 
 	s3c24x0_intr_establish(S3C24X0_INT_TIMER4, IPL_CLOCK, 
