@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.14 1996/11/13 06:41:21 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.15 1996/11/13 06:46:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -1158,6 +1158,7 @@ void
 fdcretry(fdc)
 	struct fdc_softc *fdc;
 {
+	char bits[64];
 	struct fd_softc *fd;
 	struct buf *bp;
 
