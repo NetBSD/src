@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char cu_rcsid[] = "$Id: cu.c,v 1.7 2001/10/26 14:44:13 briggs Exp $";
+const char cu_rcsid[] = "$Id: cu.c,v 1.8 2003/01/21 22:47:20 is Exp $";
 #endif
 
 #include "cu.h"
@@ -622,7 +622,7 @@ main (argc, argv)
 		ucuabort ();
 
 	      if (! fconn_lock (&sconn, FALSE))
-		ulog (LOG_FATAL, "%s: Line in use", zline);
+		ulog (LOG_FATAL, "%s: Failed to use line", zline);
 
 	      qCuconn = &sconn;
 
