@@ -22,14 +22,10 @@
 # any improvements or extensions that they make and grant Carnegie Mellon
 # the rights to redistribute these changes.
 #
-#	$Id: Makefile,v 1.10 1993/10/18 14:41:31 pk Exp $
+#	$Id: Makefile,v 1.11 1994/01/26 03:18:18 cgd Exp $
 #
 
-wd0:
-	dd if=boot of=biosboot count=1
-	dd if=boot of=bootbios skip=1
-	disklabel -r -w wd0 nec5655 newboot biosboot bootbios
-	rm biosboot bootbios
+all: biosboot bootbios
 
 NOPROG=	noprog
 NOMAN=	noman
@@ -88,14 +84,6 @@ ${DESTDIR}/usr/mdec/fdboot:	${DESTDIR}/usr/mdec/sdboot
 sd:	${DESTDIR}/usr/mdec/bootsd ${DESTDIR}/usr/mdec/sdboot
 wd:	${DESTDIR}/usr/mdec/bootwd ${DESTDIR}/usr/mdec/wdboot
 fd:	${DESTDIR}/usr/mdec/bootfd ${DESTDIR}/usr/mdec/fdboot
-
-all: biosboot bootbios
-
-fd0:
-	dd if=boot of=biosboot count=1
-	dd if=boot of=bootbios skip=1
-	disklabel -r -w fd0 floppy bootflpy biosboot bootbios
-	rm biosboot bootbios
 
 install: wd sd fd
 
