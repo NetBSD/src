@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.39 2000/11/29 22:09:05 jdolecek Exp $
+#	$NetBSD: makesyscalls.sh,v 1.40 2000/12/09 05:27:08 mycroft Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -51,9 +51,10 @@ esac
 #	sysarghdr	the syscall argument struct definitions
 #	compatopts	those syscall types that are for 'compat' syscalls
 #	switchname	the name for the 'struct sysent' we define
-#	namesname	the name for the 'char *[]' we define
+#	namesname	the name for the 'const char *[]' we define
 #	constprefix	the prefix for the system call constants
 #	registertype	the type for register_t
+#	nsysent		the size of the sysent table
 #
 # NOTE THAT THIS makesyscalls.sh DOES NOT SUPPORT 'LIBCOMPAT'.
 
@@ -124,6 +125,7 @@ BEGIN {
 	if (!registertype) {
 	    registertype = \"register_t\"
 	}
+	nsysent = \"$nsysent\"
 
 	sysdcl = \"$sysdcl\"
 	syscompat_pref = \"$syscompat_pref\"
@@ -177,7 +179,7 @@ NR == 1 {
 	printf "#if defined(_KERNEL) && !defined(_LKM)\n" > sysnames
 
 	printf "#endif /* _KERNEL && ! _LKM */\n\n" > sysnamesbottom
-	printf "const char * const %s[] = {\n",namesname > sysnamesbottom
+	printf "const char *%s[] = {\n",namesname > sysnamesbottom
 
 	printf " * created from%s\n */\n\n", $0 > sysnumhdr
 
@@ -205,53 +207,46 @@ NR == 1 {
 NF == 0 || $1 ~ /^;/ {
 	next
 }
+$0 ~ /^%%$/ {
+	intable = 1
+	next
+}
 $1 ~ /^#[ 	]*include/ {
 	print > sysdcl
 	print > sysnames
 	next
 }
-$1 ~ /^#[ 	]*if/ {
-	print > sysent
-	print > sysprotos
-	print > sysnamesbottom
-	savesyscall[++savedepth] = syscall
+$1 ~ /^#/ && !intable {
+	print > sysdcl
+	print > sysnames
 	next
 }
-$1 ~ /^#[ 	]*else/ {
-	print > sysent
-	print > sysprotos
-	print > sysnamesbottom
-	if (savedepth <= 0) {
-		printf "%s: line %d: unbalenced #else\n", \
-		    infile, NR
-		exit 1
+$1 ~ /^#/ && intable {
+	if ($1 ~ /^#[ 	]*if/) {
+		savedepth++
+		savesyscall[savedepth] = syscall
 	}
-	syscall = savesyscall[savedepth]
-	next
-}
-$1 ~ /^#/ {
-	if ($1 ~ /^#[       ]*endif/) {
+	if ($1 ~ /^#[ 	]*else/) {
 		if (savedepth <= 0) {
-			printf "%s: line %d: unbalanced #endif\n", \
-			    infile, NR
+			printf("%s: line %d: unbalanced #else\n", \
+			    infile, NR)
 			exit 1
 		}
-		savedepth--;
+		syscall = savesyscall[savedepth]
+	}
+	if ($1 ~ /^#[       ]*endif/) {
+		if (savedepth <= 0) {
+			printf("%s: line %d: unbalanced #endif\n", \
+			    infile, NR)
+			exit 1
+		}
+		savedepth--
 	}
 	print > sysent
 	print > sysprotos
 	print > sysnamesbottom
 	next
 }
-$1 ~ /^if/ {
-	print "#"$0 > sysdcl
-	next
-}
-$1 ~ /^endif/ {
-	print "#"$0 > sysdcl
-	next
-}
-	
 syscall != $1 {
 	printf "%s: line %d: syscall number out of sync at %d\n", \
 	   infile, NR, syscall
@@ -493,13 +488,27 @@ $2 == "OBSOL" || $2 == "UNIMPL" || $2 == "EXCL" {
 			next
 		}
 	}
-	printf "%s: line %d: unrecognized keyword %s\n", infile, NR, $2
+	printf("%s: line %d: unrecognized keyword %s\n", infile, NR, $2)
 	exit 1
 }
 END {
+	maxsyscall = syscall
+	if (nsysent) {
+		if (syscall > nsysent) {
+			printf("%s: line %d: too many syscalls\n", infile, NR)
+			exit 1
+		}
+		while (syscall < nsysent) {
+			printf("\t{ 0, 0,\n\t    sys_nosys },\t\t\t/* %d = unimplemented */\n", \
+			    syscall) > sysent
+			syscall++
+		}
+	}
 	printf("};\n\n") > sysent
 	printf("};\n") > sysnamesbottom
-	printf("#define\t%sMAXSYSCALL\t%d\n", constprefix, syscall) > sysnumhdr
+	printf("#define\t%sMAXSYSCALL\t%d\n", constprefix, maxsyscall) > sysnumhdr
+	if (nsysent)
+		printf("#define\t%sNSYSENT\t%d\n", constprefix, nsysent) > sysnumhdr
 } '
 
 cat $sysprotos >> $sysarghdr
