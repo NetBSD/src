@@ -126,21 +126,21 @@ static int get_addr0 __P((const char *, int, struct addrinfo **,
 static int str_isnumber __P((const char *));
 	
 static char *ai_errlist[] = {
-	"success.",
-	"address family for hostname not supported.",	/* EAI_ADDRFAMILY */
-	"temporary failure in name resolution.",	/* EAI_AGAIN      */
-	"invalid value for ai_flags.",		       	/* EAI_BADFLAGS   */
-	"non-recoverable failure in name resolution.", 	/* EAI_FAIL       */
-	"ai_family not supported.",			/* EAI_FAMILY     */
-	"memory allocation failure.", 			/* EAI_MEMORY     */
-	"no address associated with hostname.", 	/* EAI_NODATA     */
-	"hostname nor servname provided, or not known.",/* EAI_NONAME     */
-	"servname not supported for ai_socktype.",	/* EAI_SERVICE    */
-	"ai_socktype not supported.", 			/* EAI_SOCKTYPE   */
-	"system error returned in errno.", 		/* EAI_SYSTEM     */
-	"invalid value for hints.",			/* EAI_BADHINTS	  */
-	"resolved protocol is unknown.",		/* EAI_PROTOCOL   */
-	"unknown error.", 				/* EAI_MAX        */
+	"success",
+	"address family for hostname not supported",	/* EAI_ADDRFAMILY */
+	"temporary failure in name resolution",		/* EAI_AGAIN      */
+	"invalid value for ai_flags",		       	/* EAI_BADFLAGS   */
+	"non-recoverable failure in name resolution", 	/* EAI_FAIL       */
+	"ai_family not supported",			/* EAI_FAMILY     */
+	"memory allocation failure", 			/* EAI_MEMORY     */
+	"no address associated with hostname", 		/* EAI_NODATA     */
+	"hostname nor servname provided, or not known",/* EAI_NONAME     */
+	"servname not supported for ai_socktype",	/* EAI_SERVICE    */
+	"ai_socktype not supported", 			/* EAI_SOCKTYPE   */
+	"system error returned in errno", 		/* EAI_SYSTEM     */
+	"invalid value for hints",			/* EAI_BADHINTS	  */
+	"resolved protocol is unknown",			/* EAI_PROTOCOL   */
+	"unknown error", 				/* EAI_MAX        */
 };
 
 #define GET_CANONNAME(ai, str) \
