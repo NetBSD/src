@@ -1,4 +1,4 @@
-/*	$NetBSD: sivar.h,v 1.5 1997/02/26 22:26:00 gwr Exp $	*/
+/*	$NetBSD: sivar.h,v 1.6 1997/10/17 03:33:47 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ struct si_dma_handle {
 #define	SIDH_OUT	2		/* DMA does data out (write) */
 	u_char *	dh_addr;	/* KVA of start of buffer */
 	int 		dh_maplen;	/* Length of KVA mapping. */
-	long		dh_dvma;	/* VA of buffer in DVMA space */
+	void *		dh_dvma;	/* VA of buffer in DVMA space */
 };
 
 /*
@@ -94,8 +94,6 @@ extern int si_debug;
 
 void si_attach __P((struct si_softc *));
 int  si_intr __P((void *));
-
-void si_reset_adapter __P((struct ncr5380_softc *));
 
 void si_dma_alloc __P((struct ncr5380_softc *));
 void si_dma_free __P((struct ncr5380_softc *));
