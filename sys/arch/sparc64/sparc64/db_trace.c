@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.24 2002/05/14 02:34:15 eeh Exp $ */
+/*	$NetBSD: db_trace.c,v 1.25 2002/05/16 20:27:09 eeh Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -377,13 +377,13 @@ db_dump_trap(addr, have_addr, count, modif)
 		  (unsigned long long)tf->tf_out[1],
 		  (unsigned long long)tf->tf_out[2],
 		  (unsigned long long)tf->tf_out[3]);
-#ifdef DEBUG
-	db_printf("%016llx %016llx %016llx %016llx\nlocals:\n",
+	db_printf("%016llx %016llx %016llx %016llx\n",
 		  (unsigned long long)tf->tf_out[4],
 		  (unsigned long long)tf->tf_out[5],
 		  (unsigned long long)tf->tf_out[6],
 		  (unsigned long long)tf->tf_out[7]);
-	db_printf("%016llx %016llx %016llx %016llx\n",
+#ifdef DEBUG
+	db_printf("locals:\n%016llx %016llx %016llx %016llx\n",
 		  (unsigned long long)tf->tf_local[0],
 		  (unsigned long long)tf->tf_local[1],
 		  (unsigned long long)tf->tf_local[2],
