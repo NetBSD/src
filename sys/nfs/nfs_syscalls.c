@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.72 2004/03/17 10:37:02 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.73 2004/03/17 10:42:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.72 2004/03/17 10:37:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.73 2004/03/17 10:42:37 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -825,6 +825,8 @@ done:
  * The trick here is to increment the sref at the start, so that the nfsds
  * will stop using it and clear ns_flag at the end so that it will not be
  * reassigned during cleanup.
+ *
+ * called at splsoftnet.
  */
 void
 nfsrv_zapsock(slp)
@@ -836,7 +838,12 @@ nfsrv_zapsock(slp)
 	struct file *fp;
 	int s;
 
+	simple_lock(&nfsd_slock);
+	if (slp->ns_flag & SLP_DOREC) {
+		TAILQ_REMOVE(&nfssvc_sockpending, slp, ns_pending);
+	}
 	slp->ns_flag &= ~SLP_ALLFLAGS;
+	simple_unlock(&nfsd_slock);
 	fp = slp->ns_fp;
 	if (fp) {
 		simple_lock(&fp->f_slock);
