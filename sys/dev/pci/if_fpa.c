@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.11 1996/05/20 15:53:02 thorpej Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.12 1996/06/17 18:29:18 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -372,7 +372,7 @@ pdq_pci_match(
     if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_DEC_DEFPA)
 	return 0;
 
-    return 0;
+    return 1;
 }
 
 static void
