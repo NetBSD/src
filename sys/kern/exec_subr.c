@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.12 1998/02/10 14:09:20 mrg Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.13 1998/02/23 18:53:22 chuck Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -225,7 +225,7 @@ vmcmd_map_readvn(p, cmd)
 	cmd->ev_addr = trunc_page(cmd->ev_addr); /* required by uvm_map */
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, 
 			round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 
-			UVM_MAPFLAG(cmd->ev_prot, UVM_PROT_ALL, UVM_INH_COPY,
+			UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
 			UVM_ADV_NORMAL,
 			UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
 
@@ -243,7 +243,20 @@ vmcmd_map_readvn(p, cmd)
 		return error;
 
 #if defined(UVM)
-	return(KERN_SUCCESS);
+	if (cmd->ev_prot != (VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE)) {
+		/*
+		 * we had to map in the area at PROT_ALL so that vn_rdwr()
+		 * could write to it.   however, the caller seems to want
+		 * it mapped read-only, so now we are going to have to call
+		 * uvm_map_protect() to fix up the protection.  ICK.
+		 */
+		return(uvm_map_protect(&p->p_vmspace->vm_map, 
+				trunc_page(cmd->ev_addr),
+				round_page(cmd->ev_addr + cmd->ev_len),
+				cmd->ev_prot, FALSE));
+	} else {
+		return(KERN_SUCCESS);
+	}
 #else
 	return vm_map_protect(&p->p_vmspace->vm_map, trunc_page(cmd->ev_addr),
 	    round_page(cmd->ev_addr + cmd->ev_len), cmd->ev_prot, FALSE);
