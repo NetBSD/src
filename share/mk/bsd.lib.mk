@@ -1,5 +1,5 @@
 #	from: @(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
-#	$Id: bsd.lib.mk,v 1.33 1993/10/24 00:05:31 pk Exp $
+#	$Id: bsd.lib.mk,v 1.34 1993/10/27 00:58:31 pk Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -139,7 +139,7 @@ realinstall:
 .endif
 .if !defined(NOPIC) && exists (${.CURDIR}/shlib_version)
 	. ${.CURDIR}/shlib_version; \
-	$(LD) -Bforcearchive -o lib${LIB}.so.$$major.$$minor lib${LIB}_pic.a
+	$(LD) -Bshareable -Bforcearchive -o lib${LIB}.so.$$major.$$minor lib${LIB}_pic.a
 	. ${.CURDIR}/shlib_version; \
 	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    lib${LIB}.so.$$major.$$minor ${DESTDIR}${LIBDIR}
