@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.6 2000/12/03 01:54:48 minoura Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.7 2002/08/12 02:22:54 grant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -107,15 +107,17 @@ Voulez-vous exclure le dernier cylindre ?
 
 /* the %s's will expand into three character strings */
 message part_header
-{   Début(%3s) Taille(%3s) Fin(%3s)   Type
-   ---------- ----------- ---------- ----
+{   Total disksize %d %s.
+
+   Début(%3s) Fin(%3s)   Taille(%3s) Type
+   ---------- ---------- ----------- ----
 }
 
 message part_row_start_unused
 {%-1d:                                  }
 
 message part_row_start_used
-{%-1d: %-10d %-11d %-10d}
+{%-1d: %-10d %-10d %-11d}
 
 message part_row_end
 { %s\n}

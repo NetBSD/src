@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.1 2002/05/30 16:13:09 eeh Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.2 2002/08/12 02:22:57 grant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -88,9 +88,9 @@ Do you wish to exclude the last cylinder?
 
 /* the %s's will expand into three character strings */
 message part_header
-{   Total disksize %d sectors
+{   Total disksize %d %s.
 
-   Start(%3s) Size(%3s)  End(%3s)   Kind
+   Start(%3s) End(%3s)   Size(%3s)  Kind
    ---------- ---------- ---------- ----
 }
 

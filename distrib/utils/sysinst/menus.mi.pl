@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.pl,v 1.10 2002/08/02 04:08:47 grant Exp $	*/
+/*	$NetBSD: menus.mi.pl,v 1.11 2002/08/12 02:22:52 grant Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.mi.en,v 1.49 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -157,7 +157,7 @@ menu edfspart, title "Co zmienic?", exit, y=14;
 	option "Przesuniecie/rozmiar", action  
 		{	int start, size;
 			msg_display_add(MSG_defaultunit, multname);
-			start = getpartoff(MSG_offset, 0);
+			start = getpartoff(MSG_start, 0);
 			size = getpartsize(MSG_size, start, 0);
 			if (size == -1)
 				size = dlsize - start;
