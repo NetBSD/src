@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_le.c	7.6 (Berkeley) 5/8/91
- *	$Id: if_le.c,v 1.4 1994/01/30 18:42:47 mycroft Exp $
+ *	$Id: if_le.c,v 1.5 1994/02/05 05:06:54 mycroft Exp $
  */
 
 #include "le.h"
@@ -41,49 +41,45 @@
 
 /*
  * AMD 7990 LANCE
- *
- * This driver will generate and accept tailer encapsulated packets even
- * though it buys us nothing.  The motivation was to avoid incompatibilities
- * with VAXen, SUNs, and others that handle and benefit from them.
- * This reasoning is dubious.
  */
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/mbuf.h"
-#include "sys/buf.h"
-#include "sys/protosw.h"
-#include "sys/socket.h"
-#include "sys/syslog.h"
-#include "sys/ioctl.h"
-#include "sys/errno.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/mbuf.h>
+#include <sys/buf.h>
+#include <sys/socket.h>
+#include <sys/syslog.h>
+#include <sys/ioctl.h>
+#include <sys/malloc.h>
+#include <sys/errno.h>
 
-#include "net/if.h"
-#include "net/netisr.h"
-#include "net/route.h"
+#include <net/if.h>
+#include <net/netisr.h>
+#include <net/route.h>
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#include <net/bpfdesc.h>
+#endif
 
 #ifdef INET
-#include "netinet/in.h"
-#include "netinet/in_systm.h"
-#include "netinet/in_var.h"
-#include "netinet/ip.h"
-#include "netinet/if_ether.h"
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
+#include <netinet/if_ether.h>
 #endif
 
 #ifdef NS
-#include "netns/ns.h"
-#include "netns/ns_if.h"
+#include <netns/ns.h>
+#include <netns/ns_if.h>
 #endif
 
-#include "../include/cpu.h"
-#include "../hp300/isr.h"
-#include "../include/mtpr.h"
-#include "device.h"
-#include "if_lereg.h"
+#include <machine/cpu.h>
+#include <hp300/hp300/isr.h>
+#include <machine/mtpr.h>
 
-#if NBPFILTER > 0
-#include "../net/bpf.h"
-#include "../net/bpfdesc.h"
-#endif
+#include <hp300/dev/device.h>
+#include <hp300/dev/if_lereg.h>
 
 /* offsets for:	   ID,   REGS,    MEM,  NVRAM */
 int	lestd[] = { 0, 0x4000, 0x8000, 0xC008 };
@@ -151,14 +147,14 @@ leattach(hd)
 	register struct lereg0 *ler0;
 	register struct lereg2 *ler2;
 	struct lereg2 *lemem = 0;
-	struct le_softc *le = &le_softc[hd->hp_unit];
-	struct ifnet *ifp = &le->sc_if;
+	struct le_softc *sc = &le_softc[hd->hp_unit];
+	struct ifnet *ifp = &sc->sc_if;
 	char *cp;
 	int i;
 
-	ler0 = le->sc_r0 = (struct lereg0 *)(lestd[0] + (int)hd->hp_addr);
-	le->sc_r1 = (struct lereg1 *)(lestd[1] + (int)hd->hp_addr);
-	ler2 = le->sc_r2 = (struct lereg2 *)(lestd[2] + (int)hd->hp_addr);
+	ler0 = sc->sc_r0 = (struct lereg0 *)(lestd[0] + (int)hd->hp_addr);
+	sc->sc_r1 = (struct lereg1 *)(lestd[1] + (int)hd->hp_addr);
+	ler2 = sc->sc_r2 = (struct lereg2 *)(lestd[2] + (int)hd->hp_addr);
 	if (ler0->ler0_id != LEID)
 		return(0);
 	le_isr[hd->hp_unit].isr_intr = leintr;
@@ -171,27 +167,25 @@ leattach(hd)
 	 * Read the ethernet address off the board, one nibble at a time.
 	 */
 	cp = (char *)(lestd[3] + (int)hd->hp_addr);
-	for (i = 0; i < sizeof(le->sc_addr); i++) {
-		le->sc_addr[i] = (*++cp & 0xF) << 4;
+	for (i = 0; i < sizeof(sc->sc_addr); i++) {
+		sc->sc_addr[i] = (*++cp & 0xF) << 4;
 		cp++;
-		le->sc_addr[i] |= *++cp & 0xF;
+		sc->sc_addr[i] |= *++cp & 0xF;
 		cp++;
 	}
 	printf("le%d: hardware address %s\n", hd->hp_unit,
-		ether_sprintf(le->sc_addr));
+		ether_sprintf(sc->sc_addr));
 
 	/*
 	 * Setup for transmit/receive
 	 */
 	ler2->ler2_mode = LE_MODE;
-	ler2->ler2_padr[0] = le->sc_addr[1];
-	ler2->ler2_padr[1] = le->sc_addr[0];
-	ler2->ler2_padr[2] = le->sc_addr[3];
-	ler2->ler2_padr[3] = le->sc_addr[2];
-	ler2->ler2_padr[4] = le->sc_addr[5];
-	ler2->ler2_padr[5] = le->sc_addr[4];
-	ler2->ler2_ladrf0 = 0;
-	ler2->ler2_ladrf1 = 0;
+	ler2->ler2_padr[0] = sc->sc_addr[1];
+	ler2->ler2_padr[1] = sc->sc_addr[0];
+	ler2->ler2_padr[2] = sc->sc_addr[3];
+	ler2->ler2_padr[3] = sc->sc_addr[2];
+	ler2->ler2_padr[4] = sc->sc_addr[5];
+	ler2->ler2_padr[5] = sc->sc_addr[4];
 	ler2->ler2_rlen = LE_RLEN;
 	ler2->ler2_rdra = (int)lemem->ler2_rmd;
 	ler2->ler2_tlen = LE_TLEN;
@@ -202,13 +196,13 @@ leattach(hd)
 	ifp->if_unit = hd->hp_unit;
 	ifp->if_name = "le";
 	ifp->if_mtu = ETHERMTU;
-	ifp->if_init = leinit;
 	ifp->if_ioctl = leioctl;
 	ifp->if_output = ether_output;
 	ifp->if_start = lestart;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST |
+			IFF_NOTRAILERS;
 #if NBPFILTER > 0
-	bpfattach(&le->sc_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+	bpfattach(&sc->sc_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 	if_attach(ifp);
 	return (1);
@@ -234,50 +228,128 @@ ledrinit(ler2)
 	}
 }
 
-lereset(unit)
-	register int unit;
+/*
+ * Set up the logical address filter
+ */
+void
+lesetladrf(sc)
+	struct le_softc *sc;
 {
-	register struct le_softc *le = &le_softc[unit];
-	register struct lereg0 *ler0 = le->sc_r0;
-	register struct lereg1 *ler1 = le->sc_r1;
-	register struct lereg2 *lemem = 0;
-	register int timo = 100000;
-	register int stat;
+	struct lereg2 *ler2 = sc->sc_r2;
+	struct ifnet *ifp = &sc->sc_if;
+	struct ether_multi *enm;
+	register u_char *cp, c;
+	register u_long crc;
+	register int i, len;
+	struct ether_multistep step;
 
-#ifdef lint
-	stat = unit;
-#endif
+	/*
+	 * Set up multicast address filter by passing all multicast
+	 * addresses through a crc generator, and then using the high
+	 * order 6 bits as a index into the 64 bit logical address
+	 * filter. The high order two bits select the word, while the
+	 * rest of the bits select the bit within the word.
+	 */
+
+	ler2->ler2_ladrf[0] = 0;
+	ler2->ler2_ladrf[1] = 0;
+	ifp->if_flags &= ~IFF_ALLMULTI;
+	ETHER_FIRST_MULTI(step, &sc->sc_ac, enm);
+	while (enm != NULL) {
+		if (bcmp((caddr_t)&enm->enm_addrlo,
+		    (caddr_t)&enm->enm_addrhi, sizeof(enm->enm_addrlo)) != 0) {
+			/*
+			 * We must listen to a range of multicast
+			 * addresses. For now, just accept all
+			 * multicasts, rather than trying to set only
+			 * those filter bits needed to match the range.
+			 * (At this time, the only use of address
+			 * ranges is for IP multicast routing, for
+			 * which the range is big enough to require all
+			 * bits set.)
+			 */
+			ler2->ler2_ladrf[0] = 0xffffffff;
+			ler2->ler2_ladrf[1] = 0xffffffff;
+			ifp->if_flags |= IFF_ALLMULTI;
+			return;
+		}
+
+		/*
+		 * One would think, given the AM7990 document's polynomial
+		 * of 0x04c11db6, that this should be 0x6db88320 (the bit
+		 * reversal of the AMD value), but that is not right.  See
+		 * the BASIC listing: bit 0 (our bit 31) must then be set.
+		 */
+		cp = (unsigned char *)&enm->enm_addrlo;
+		crc = 0xffffffff;
+		for (len = 6; --len >= 0;) {
+			c = *cp++;
+			for (i = 8; --i >= 0;) {
+				if ((c & 0x01) ^ (crc & 0x01)) {
+					crc >>= 1;
+					crc = crc ^ 0xedb88320;
+				} else
+					crc >>= 1;
+				c >>= 1;
+			}
+		}
+		/* Just want the 6 most significant bits. */
+		crc = crc >> 26;
+
+		/* Turn on the corresponding bit in the filter. */
+		ler2->ler2_ladrf[crc >> 5] |= 1 << (crc & 0x1f);
+
+		ETHER_NEXT_MULTI(step, enm);
+	}
+}
+
+lereset(sc)
+	register struct le_softc *sc;
+{
+	register struct lereg0 *ler0 = sc->sc_r0;
+	register struct lereg1 *ler1 = sc->sc_r1;
+	register struct lereg2 *ler2 = sc->sc_r2;
+	struct lereg2 *lemem = 0;
+	register int timo, stat;
+
 #if NBPFILTER > 0
-	if (le->sc_if.if_flags & IFF_PROMISC)
+	if (sc->sc_if.if_flags & IFF_PROMISC)
 		/* set the promiscuous bit */
-		le->sc_r2->ler2_mode = LE_MODE|0x8000;
+		ler2->ler2_mode = LE_MODE|0x8000;
 	else
-		le->sc_r2->ler2_mode = LE_MODE;
 #endif
+		ler2->ler2_mode = LE_MODE;
 	LERDWR(ler0, LE_CSR0, ler1->ler1_rap);
 	LERDWR(ler0, LE_STOP, ler1->ler1_rdp);
-	ledrinit(le->sc_r2);
-	le->sc_rmd = 0;
+
+	lesetladrf(sc);
+	ledrinit(ler2);
+	sc->sc_rmd = 0;
+
 	LERDWR(ler0, LE_CSR1, ler1->ler1_rap);
 	LERDWR(ler0, (int)&lemem->ler2_mode, ler1->ler1_rdp);
 	LERDWR(ler0, LE_CSR2, ler1->ler1_rap);
 	LERDWR(ler0, 0, ler1->ler1_rdp);
-	LERDWR(ler0, LE_CSR0, ler1->ler1_rap);
-	LERDWR(ler0, LE_INIT, ler1->ler1_rdp);
-	do {
-		if (--timo == 0) {
-			printf("le%d: init timeout, stat = 0x%x\n",
-			       unit, stat);
-			break;
-		}
-		LERDWR(ler0, ler1->ler1_rdp, stat);
-	} while ((stat & LE_IDON) == 0);
-	LERDWR(ler0, LE_STOP, ler1->ler1_rdp);
 	LERDWR(ler0, LE_CSR3, ler1->ler1_rap);
 	LERDWR(ler0, LE_BSWP, ler1->ler1_rdp);
 	LERDWR(ler0, LE_CSR0, ler1->ler1_rap);
+	LERDWR(ler0, LE_INIT, ler1->ler1_rdp);
+	timo = 100000;
+	do {
+		if (--timo == 0) {
+			printf("le%d: init timeout, stat=0x%x\n",
+			    sc->sc_if.if_unit, stat);
+			break;
+		}
+		LERDWR(ler0, ler1->ler1_rdp, stat);
+	} while ((stat & (LE_IDON | LE_ERR)) == 0);
+	if (stat & LE_ERR)
+		printf("le%d: init failed, stat=0x%x\n",
+		    sc->sc_if.if_unit, stat);
+	else
+		LERDWR(ler0, LE_IDON, ler1->ler1_rdp);
 	LERDWR(ler0, LE_STRT | LE_INEA, ler1->ler1_rdp);
-	le->sc_if.if_flags &= ~IFF_OACTIVE;
+	sc->sc_if.if_flags &= ~IFF_OACTIVE;
 }
 
 /*
@@ -286,8 +358,8 @@ lereset(unit)
 leinit(unit)
 	int unit;
 {
-	struct le_softc *le = &le_softc[unit];
-	register struct ifnet *ifp = &le->sc_if;
+	struct le_softc *sc = &le_softc[unit];
+	register struct ifnet *ifp = &sc->sc_if;
 	int s;
 
 	/* not yet, if address still unknown */
@@ -296,8 +368,8 @@ leinit(unit)
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		s = splimp();
 		ifp->if_flags |= IFF_RUNNING;
-		lereset(unit);
-	        (void) lestart(ifp);
+		lereset(sc);
+		(void) lestart(ifp);
 		splx(s);
 	}
 }
@@ -310,82 +382,83 @@ leinit(unit)
 lestart(ifp)
 	struct ifnet *ifp;
 {
-	register struct le_softc *le = &le_softc[ifp->if_unit];
+	register struct le_softc *sc = &le_softc[ifp->if_unit];
 	register struct letmd *tmd;
 	register struct mbuf *m;
 	int len;
 
-	if ((le->sc_if.if_flags & IFF_RUNNING) == 0)
+	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0)
 		return (0);
-	IF_DEQUEUE(&le->sc_if.if_snd, m);
+	IF_DEQUEUE(&sc->sc_if.if_snd, m);
 	if (m == 0)
 		return (0);
-	len = leput(le->sc_r2->ler2_tbuf[0], m);
+	len = leput(sc->sc_r2->ler2_tbuf[0], m);
 #if NBPFILTER > 0
 	/*
 	 * If bpf is listening on this interface, let it
 	 * see the packet before we commit it to the wire.
 	 */
-	if (le->sc_bpf)
-                bpf_tap(le->sc_bpf, le->sc_r2->ler2_tbuf[0], len);
+	if (sc->sc_bpf)
+		bpf_tap(sc->sc_bpf, sc->sc_r2->ler2_tbuf[0], len);
 #endif
-	tmd = le->sc_r2->ler2_tmd;
+	tmd = sc->sc_r2->ler2_tmd;
 	tmd->tmd3 = 0;
 	tmd->tmd2 = -len;
 	tmd->tmd1 = LE_OWN | LE_STP | LE_ENP;
-	le->sc_if.if_flags |= IFF_OACTIVE;
+	sc->sc_if.if_flags |= IFF_OACTIVE;
 	return (0);
 }
 
 leintr(unit)
 	register int unit;
 {
-	register struct le_softc *le = &le_softc[unit];
-	register struct lereg0 *ler0 = le->sc_r0;
+	register struct le_softc *sc = &le_softc[unit];
+	register struct lereg0 *ler0 = sc->sc_r0;
 	register struct lereg1 *ler1;
 	register int stat;
 
 	if ((ler0->ler0_status & LE_IR) == 0)
 		return(0);
 	if (ler0->ler0_status & LE_JAB) {
-		le->sc_jab++;
-		lereset(unit);
+		sc->sc_jab++;
+		lereset(sc);
 		return(1);
 	}
-	ler1 = le->sc_r1;
+
+	ler1 = sc->sc_r1;
 	LERDWR(ler0, ler1->ler1_rdp, stat);
 	if (stat & LE_SERR) {
-		leerror(unit, stat);
+		leerror(sc, stat);
 		if (stat & LE_MERR) {
-			le->sc_merr++;
-			lereset(unit);
+			sc->sc_merr++;
+			lereset(sc);
 			return(1);
 		}
 		if (stat & LE_BABL)
-			le->sc_babl++;
+			sc->sc_babl++;
 		if (stat & LE_CERR)
-			le->sc_cerr++;
+			sc->sc_cerr++;
 		if (stat & LE_MISS)
-			le->sc_miss++;
+			sc->sc_miss++;
 		LERDWR(ler0, LE_BABL|LE_CERR|LE_MISS|LE_INEA, ler1->ler1_rdp);
 	}
 	if ((stat & LE_RXON) == 0) {
-		le->sc_rxoff++;
-		lereset(unit);
+		sc->sc_rxoff++;
+		lereset(sc);
 		return(1);
 	}
 	if ((stat & LE_TXON) == 0) {
-		le->sc_txoff++;
-		lereset(unit);
+		sc->sc_txoff++;
+		lereset(sc);
 		return(1);
 	}
 	if (stat & LE_RINT) {
 		/* interrupt is cleared in lerint */
-		lerint(unit);
+		lerint(sc);
 	}
 	if (stat & LE_TINT) {
 		LERDWR(ler0, LE_TINT|LE_INEA, ler1->ler1_rdp);
-		lexint(unit);
+		lexint(sc);
 	}
 	return(1);
 }
@@ -394,49 +467,47 @@ leintr(unit)
  * Ethernet interface transmitter interrupt.
  * Start another output if more data to send.
  */
-lexint(unit)
-	register int unit;
+lexint(sc)
+	register struct le_softc *sc;
 {
-	register struct le_softc *le = &le_softc[unit];
-	register struct letmd *tmd = le->sc_r2->ler2_tmd;
+	register struct letmd *tmd = sc->sc_r2->ler2_tmd;
 
-	if ((le->sc_if.if_flags & IFF_OACTIVE) == 0) {
-		le->sc_xint++;
+	if ((sc->sc_if.if_flags & IFF_OACTIVE) == 0) {
+		sc->sc_xint++;
 		return;
 	}
 	if (tmd->tmd1 & LE_OWN) {
-		le->sc_xown++;
+		sc->sc_xown++;
 		return;
 	}
 	if (tmd->tmd1 & LE_ERR) {
 err:
-		lexerror(unit);
-		le->sc_if.if_oerrors++;
+		lexerror(sc);
+		sc->sc_if.if_oerrors++;
 		if (tmd->tmd3 & (LE_TBUFF|LE_UFLO)) {
-			le->sc_uflo++;
-			lereset(unit);
-		}
-		else if (tmd->tmd3 & LE_LCOL)
-			le->sc_if.if_collisions++;
+			sc->sc_uflo++;
+			lereset(sc);
+		} else if (tmd->tmd3 & LE_LCOL)
+			sc->sc_if.if_collisions++;
 		else if (tmd->tmd3 & LE_RTRY)
-			le->sc_if.if_collisions += 16;
+			sc->sc_if.if_collisions += 16;
 	}
 	else if (tmd->tmd3 & LE_TBUFF)
 		/* XXX documentation says BUFF not included in ERR */
 		goto err;
 	else if (tmd->tmd1 & LE_ONE)
-		le->sc_if.if_collisions++;
+		sc->sc_if.if_collisions++;
 	else if (tmd->tmd1 & LE_MORE)
 		/* what is the real number? */
-		le->sc_if.if_collisions += 2;
+		sc->sc_if.if_collisions += 2;
 	else
-		le->sc_if.if_opackets++;
-	le->sc_if.if_flags &= ~IFF_OACTIVE;
-	(void) lestart(&le->sc_if);
+		sc->sc_if.if_opackets++;
+	sc->sc_if.if_flags &= ~IFF_OACTIVE;
+	(void) lestart(&sc->sc_if);
 }
 
 #define	LENEXTRMP \
-	if (++bix == LERBUF) bix = 0, rmd = le->sc_r2->ler2_rmd; else ++rmd
+	if (++bix == LERBUF) bix = 0, rmd = sc->sc_r2->ler2_rmd; else ++rmd
 
 /*
  * Ethernet interface receiver interrupt.
@@ -444,19 +515,25 @@ err:
  * Decapsulate packet based on type and pass to type specific
  * higher-level input routine.
  */
-lerint(unit)
-	int unit;
+lerint(sc)
+	register struct le_softc *sc;
 {
-	register struct le_softc *le = &le_softc[unit];
-	register int bix = le->sc_rmd;
-	register struct lermd *rmd = &le->sc_r2->ler2_rmd[bix];
+	register int bix = sc->sc_rmd;
+	register struct lermd *rmd = &sc->sc_r2->ler2_rmd[bix];
 
 	/*
 	 * Out of sync with hardware, should never happen?
 	 */
 	if (rmd->rmd1 & LE_OWN) {
-		LERDWR(le->sc_r0, LE_RINT|LE_INEA, le->sc_r1->ler1_rdp);
-		return;
+		do {
+			LENEXTRMP;
+		} while ((rmd->rmd1 & LE_OWN) && bix != sc->sc_rmd);
+		if (bix == sc->sc_rmd) {
+			printf("le%d: rint with no buffer\n",
+			    sc->sc_if.if_unit);
+			LERDWR(sc->sc_r0, LE_RINT|LE_INEA, sc->sc_r1->ler1_rdp);
+			return;
+		}
 	}
 
 	/*
@@ -466,119 +543,93 @@ lerint(unit)
 		int len = rmd->rmd3;
 
 		/* Clear interrupt to avoid race condition */
-		LERDWR(le->sc_r0, LE_RINT|LE_INEA, le->sc_r1->ler1_rdp);
+		LERDWR(sc->sc_r0, LE_RINT|LE_INEA, sc->sc_r1->ler1_rdp);
 
 		if (rmd->rmd1 & LE_ERR) {
-			le->sc_rmd = bix;
-			lererror(unit, "bad packet");
-			le->sc_if.if_ierrors++;
+			sc->sc_rmd = bix;
+			lererror(sc, "bad packet");
+			sc->sc_if.if_ierrors++;
 		} else if ((rmd->rmd1 & (LE_STP|LE_ENP)) != (LE_STP|LE_ENP)) {
 			/*
 			 * Find the end of the packet so we can see how long
 			 * it was.  We still throw it away.
 			 */
 			do {
-				LERDWR(le->sc_r0, LE_RINT|LE_INEA,
-				       le->sc_r1->ler1_rdp);
+				LERDWR(sc->sc_r0, LE_RINT|LE_INEA,
+				       sc->sc_r1->ler1_rdp);
 				rmd->rmd3 = 0;
 				rmd->rmd1 = LE_OWN;
 				LENEXTRMP;
 			} while (!(rmd->rmd1 & (LE_OWN|LE_ERR|LE_STP|LE_ENP)));
-			le->sc_rmd = bix;
-			lererror(unit, "chained buffer");
-			le->sc_rxlen++;
+			sc->sc_rmd = bix;
+			lererror(sc, "chained buffer");
+			sc->sc_rxlen++;
 			/*
 			 * If search terminated without successful completion
 			 * we reset the hardware (conservative).
 			 */
 			if ((rmd->rmd1 & (LE_OWN|LE_ERR|LE_STP|LE_ENP)) !=
 			    LE_ENP) {
-				lereset(unit);
+				lereset(sc);
 				return;
 			}
 		} else
-			leread(unit, le->sc_r2->ler2_rbuf[bix], len);
+			leread(sc, sc->sc_r2->ler2_rbuf[bix], len);
 		rmd->rmd3 = 0;
 		rmd->rmd1 = LE_OWN;
 		LENEXTRMP;
 	}
-	le->sc_rmd = bix;
+	sc->sc_rmd = bix;
 }
 
-leread(unit, buf, len)
-	int unit;
+leread(sc, buf, len)
+	register struct le_softc *sc;
 	char *buf;
 	int len;
 {
-	register struct le_softc *le = &le_softc[unit];
 	register struct ether_header *et;
+	register struct ifnet *ifp = &sc->sc_if;
     	struct mbuf *m;
-	int off, resid;
-	u_short etype;
 
-	le->sc_if.if_ipackets++;
+	ifp->if_ipackets++;
 	et = (struct ether_header *)buf;
 	/* adjust input length to account for header and CRC */
-	len = len - sizeof(struct ether_header) - 4;
-
-#define	ledataaddr(et, off, type)	((type)(((caddr_t)((et)+1)+(off))))
-	etype = ntohs(et->ether_type);
-	if (etype >= ETHERTYPE_TRAIL &&
-	    etype < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
-		off = (etype - ETHERTYPE_TRAIL) * 512;
-		if (off >= ETHERMTU)
-			return;		/* sanity */
-		et->ether_type = *ledataaddr(et, off, u_short *);
-		resid = ntohs(*(ledataaddr(et, off+2, u_short *)));
-		if (off + resid > len)
-			return;		/* sanity */
-		len = off + resid;
-	} else
-		off = 0;
+	len -= sizeof(struct ether_header) + 4;
 
 	if (len <= 0) {
 		if (ledebug)
 			log(LOG_WARNING,
 			    "le%d: ierror(runt packet): from %s: len=%d\n",
-			    unit, ether_sprintf(et->ether_shost), len);
-		le->sc_runt++;
-		le->sc_if.if_ierrors++;
+			    sc->sc_if.if_unit, ether_sprintf(et->ether_shost),
+			    len);
+		sc->sc_runt++;
+		ifp->if_ierrors++;
 		return;
 	}
+
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a bpf filter listening on this interface.
-	 * If so, hand off the raw packet to bpf, which must deal with
-	 * trailers in its own way.
+	 * If so, hand off the raw packet to bpf, then discard things
+	 * not destined for us (but be sure to keep broadcast/multicast).
 	 */
-	if (le->sc_bpf) {
-		bpf_tap(le->sc_bpf, buf, len + sizeof(struct ether_header));
-
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no bpf listeners.  And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 *
-		 * XXX This test does not support multicasts.
-		 */
-		if ((le->sc_if.if_flags & IFF_PROMISC)
-		    && bcmp(et->ether_dhost, le->sc_addr, 
-			    sizeof(et->ether_dhost)) != 0
-		    && bcmp(et->ether_dhost, etherbroadcastaddr, 
+	if (sc->sc_bpf) {
+		bpf_tap(sc->sc_bpf, buf, len + sizeof(struct ether_header));
+		if ((ifp->if_flags & IFF_PROMISC) &&
+		    (et->ether_dhost[0] & 1) == 0 &&
+		    bcmp(et->ether_dhost, sc->sc_addr,
+			    sizeof(et->ether_dhost)) != 0 &&
+		    bcmp(et->ether_dhost, etherbroadcastaddr,
 			    sizeof(et->ether_dhost)) != 0)
 			return;
 	}
 #endif
-	/*
-	 * Pull packet off interface.  Off is nonzero if packet
-	 * has trailing header; leget will then force this header
-	 * information to be at the front, but we still have to drop
-	 * the type and length which are at the front of any trailer data.
-	 */
-	m = leget(buf, len, off, &le->sc_if);
+
+	m = leget(buf, len, 0, ifp);
 	if (m == 0)
 		return;
-	ether_input(&le->sc_if, et, m);
+
+	ether_input(ifp, et, m);
 }
 
 /*
@@ -684,14 +735,15 @@ leioctl(ifp, cmd, data)
 	int cmd;
 	caddr_t data;
 {
-	register struct ifaddr *ifa = (struct ifaddr *)data;
-	struct le_softc *le = &le_softc[ifp->if_unit];
-	struct lereg1 *ler1 = le->sc_r1;
+	register struct ifaddr *ifa;
+	struct le_softc *sc = &le_softc[ifp->if_unit];
+	struct lereg1 *ler1;
 	int s = splimp(), error = 0;
 
 	switch (cmd) {
 
 	case SIOCSIFADDR:
+		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
@@ -708,7 +760,7 @@ leioctl(ifp, cmd, data)
 			register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
 
 			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)(le->sc_addr);
+				ina->x_host = *(union ns_host *)(sc->sc_addr);
 			else {
 				/* 
 				 * The manual says we can't change the address 
@@ -717,7 +769,7 @@ leioctl(ifp, cmd, data)
 				 */
 				ifp->if_flags &= ~IFF_RUNNING; 
 				bcopy((caddr_t)ina->x_host.c_host,
-				    (caddr_t)le->sc_addr, sizeof(le->sc_addr));
+				    (caddr_t)sc->sc_addr, sizeof(sc->sc_addr));
 			}
 			leinit(ifp->if_unit); /* does le_setaddr() */
 			break;
@@ -730,9 +782,10 @@ leioctl(ifp, cmd, data)
 		break;
 
 	case SIOCSIFFLAGS:
+		ler1 = sc->sc_r1;
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    ifp->if_flags & IFF_RUNNING) {
-			LERDWR(le->sc_r0, LE_STOP, ler1->ler1_rdp);
+			LERDWR(sc->sc_r0, LE_STOP, ler1->ler1_rdp);
 			ifp->if_flags &= ~IFF_RUNNING;
 		} else if (ifp->if_flags & IFF_UP &&
 		    (ifp->if_flags & IFF_RUNNING) == 0)
@@ -741,11 +794,28 @@ leioctl(ifp, cmd, data)
 		 * If the state of the promiscuous bit changes, the interface
 		 * must be reset to effect the change.
 		 */
-		if (((ifp->if_flags ^ le->sc_iflags) & IFF_PROMISC) &&
+		if (((ifp->if_flags ^ sc->sc_iflags) & IFF_PROMISC) &&
 		    (ifp->if_flags & IFF_RUNNING)) {
-			le->sc_iflags = ifp->if_flags;
-			lereset(ifp->if_unit);
+			sc->sc_iflags = ifp->if_flags;
+			lereset(sc);
 			lestart(ifp);
+		}
+		break;
+
+	case SIOCADDMULTI:
+		error = ether_addmulti((struct ifreq *)data, &sc->sc_ac);
+		goto update_multicast;
+
+	case SIOCDELMULTI:
+		error = ether_delmulti((struct ifreq *)data, &sc->sc_ac);
+	update_multicast:
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed; set the hardware
+			 * filter accordingly.
+			 */
+			lereset(sc);
+			error = 0;
 		}
 		break;
 
@@ -756,8 +826,8 @@ leioctl(ifp, cmd, data)
 	return (error);
 }
 
-leerror(unit, stat)
-	int unit;
+leerror(sc, stat)
+	register struct le_softc *sc;
 	int stat;
 {
 	if (!ledebug)
@@ -767,54 +837,49 @@ leerror(unit, stat)
 	 * Not all transceivers implement heartbeat
 	 * so we only log CERR once.
 	 */
-	if ((stat & LE_CERR) && le_softc[unit].sc_cerr)
+	if ((stat & LE_CERR) && sc->sc_cerr)
 		return;
 	log(LOG_WARNING,
-	    "le%d: error: stat=%b\n", unit,
-	    stat,
+	    "le%d: error: stat=%b\n", sc->sc_if.if_unit, stat,
 	    "\20\20ERR\17BABL\16CERR\15MISS\14MERR\13RINT\12TINT\11IDON\10INTR\07INEA\06RXON\05TXON\04TDMD\03STOP\02STRT\01INIT");
 }
 
-lererror(unit, msg)
-	int unit;
+lererror(sc, msg)
+	register struct le_softc *sc;
 	char *msg;
 {
-	register struct le_softc *le = &le_softc[unit];
 	register struct lermd *rmd;
 	int len;
 
 	if (!ledebug)
 		return;
 
-	rmd = &le->sc_r2->ler2_rmd[le->sc_rmd];
+	rmd = &sc->sc_r2->ler2_rmd[sc->sc_rmd];
 	len = rmd->rmd3;
 	log(LOG_WARNING,
 	    "le%d: ierror(%s): from %s: buf=%d, len=%d, rmd1=%b\n",
-	    unit, msg,
-	    len > 11 ? ether_sprintf(&le->sc_r2->ler2_rbuf[le->sc_rmd][6]) : "unknown",
-	    le->sc_rmd, len,
-	    rmd->rmd1,
+	    sc->sc_if.if_unit, msg,
+	    len > 11 ? ether_sprintf(&sc->sc_r2->ler2_rbuf[sc->sc_rmd][6]) : "unknown",
+	    sc->sc_rmd, len, rmd->rmd1,
 	    "\20\20OWN\17ERR\16FRAM\15OFLO\14CRC\13RBUF\12STP\11ENP");
 }
 
-lexerror(unit)
-	int unit;
+lexerror(sc)
+	register struct le_softc *sc;
 {
-	register struct le_softc *le = &le_softc[unit];
 	register struct letmd *tmd;
-	int len;
+	register int len;
 
 	if (!ledebug)
 		return;
 
-	tmd = le->sc_r2->ler2_tmd;
+	tmd = sc->sc_r2->ler2_tmd;
 	len = -tmd->tmd2;
 	log(LOG_WARNING,
 	    "le%d: oerror: to %s: buf=%d, len=%d, tmd1=%b, tmd3=%b\n",
-	    unit,
-	    len > 5 ? ether_sprintf(&le->sc_r2->ler2_tbuf[0][0]) : "unknown",
-	    0, len,
-	    tmd->tmd1,
+	    sc->sc_if.if_unit,
+	    len > 5 ? ether_sprintf(&sc->sc_r2->ler2_tbuf[0][0]) : "unknown",
+	    0, len, tmd->tmd1,
 	    "\20\20OWN\17ERR\16RES\15MORE\14ONE\13DEF\12STP\11ENP",
 	    tmd->tmd3,
 	    "\20\20BUFF\17UFLO\16RES\15LCOL\14LCAR\13RTRY");
