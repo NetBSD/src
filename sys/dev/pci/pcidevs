@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.482 2002/11/07 20:49:57 thorpej Exp $
+$NetBSD: pcidevs,v 1.483 2002/11/08 05:42:38 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1179,6 +1179,8 @@ product DLINK DL4000		0x4000	DL-4000 Gigabit Ethernet
 product DPT SC_RAID	0xa400	SmartCache/SmartRAID (EATA)
 product	DPT I960_PPB	0xa500	PCI-PCI Bridge
 product DPT RAID_I2O	0xa501	SmartRAID (I2O)
+product DPT RAID_2000S	0xa501	Zero channel SmartRAID(I2O)
+product DPT RAID_2005S	0xa511	Zero channel SmartRAID(I2O) SO-DIMM
 product DPT MEMCTLR	0x1012	Memory Controller
 
 /* Dolphin products */
