@@ -1,4 +1,4 @@
-/* $NetBSD: lptvar.h,v 1.4 2004/01/28 17:35:58 jdolecek Exp $ */
+/* $NetBSD: lptvar.h,v 1.5 2004/02/03 18:48:39 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -59,11 +59,7 @@
 struct lpt_softc {
 	struct ppbus_device_softc ppbus_dev;
 
-#define LPT_OK 1
-#define LPT_NOK 0
-	u_int8_t sc_dev_ok;
-
-	short sc_state;
+	int sc_state;
 /* bits for state */
 #define OPEN            (unsigned)(1<<0)  /* device is open */
 #define ASLP            (unsigned)(1<<1)  /* awaiting draining of printer */
@@ -85,22 +81,10 @@ struct lpt_softc {
 #define	LPT_NOPRIME	0x40	/* don't prime on open */
 #define	LPT_NOINTR	0x80	/* do not use interrupt */
 
-	char * sc_inbuf;
-	char * sc_outbuf;
+	char *sc_inbuf;
+	char *sc_outbuf;
 	bus_addr_t sc_in_baddr;
 	bus_addr_t sc_out_baddr;
-	size_t sc_xfercnt;
-	/* char sc_primed;
-	char * sc_cp;*/
-	u_short sc_irq;		/* IRQ status of port */
-#define LP_HAS_IRQ      0x01    /* we have an irq available */
-#define LP_USE_IRQ      0x02    /* we are using our irq */
-#define LP_ENABLE_IRQ   0x04    /* enable IRQ on open */
-#define LP_ENABLE_EXT   0x10    /* we shall use advanced mode when possible */
-	u_char sc_backoff;	/* time to call lptout() again */
-
-	struct resource * intr_resource; /* interrupt resource */
-	void * intr_cookie;              /* interrupt registration cookie */
 };
 
 #define MAX_SLEEP       (hz*5)  /* Timeout while waiting for device ready */
