@@ -34,7 +34,7 @@
 #include "kafs_locl.h"
 
 __RCSID("$Heimdal: afskrb.c,v 1.17 2003/04/14 08:32:11 lha Exp $"
-        "$NetBSD: afskrb.c,v 1.1.1.4 2003/05/15 20:28:50 lha Exp $");
+        "$NetBSD: afskrb.c,v 1.2 2003/07/23 20:48:34 itojun Exp $");
 
 #ifdef KRB4
 
@@ -169,6 +169,50 @@ kafs_settoken(const char *cell, uid_t uid, CREDENTIALS *c)
     ret = kafs_settoken_rxkad(cell, &kt.ct, kt.ticket, kt.ticket_len);
     free(kt.ticket);
     return ret;
+}
+
+#else /* KRB4 */
+
+#define KAFS_KRBET_KDC_SERVICE_EXP 39525378
+
+int
+krb_afslog_uid_home(const char *cell, const char *realm_hint, uid_t uid,
+		    const char *homedir)
+{
+    return KAFS_KRBET_KDC_SERVICE_EXP;
+}
+
+int
+krb_afslog_uid(const char *cell, const char *realm_hint, uid_t uid)
+{
+    return KAFS_KRBET_KDC_SERVICE_EXP;
+}
+
+int
+krb_afslog_home(const char *cell, const char *realm_hint, const char *homedir)
+{
+    return KAFS_KRBET_KDC_SERVICE_EXP;
+}
+
+int
+krb_afslog(const char *cell, const char *realm_hint)
+{
+    return KAFS_KRBET_KDC_SERVICE_EXP;
+}
+
+int
+krb_realm_of_cell(const char *cell, char **realm)
+{
+    *realm = NULL;
+    return KAFS_KRBET_KDC_SERVICE_EXP;
+}
+
+int kafs_settoken (const char*, uid_t, struct credentials *);
+
+int
+kafs_settoken(const char *cell, uid_t uid, struct credentials *c)
+{
+    return KAFS_KRBET_KDC_SERVICE_EXP;
 }
 
 #endif /* KRB4 */
