@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/09/19 08:13:25 martti Exp $
+#	$NetBSD: Makefile,v 1.5 2003/06/26 16:58:57 drochner Exp $
 #
 # (C)opyright 1993-1996 by Darren Reed.
 #
@@ -70,4 +70,4 @@ clean:
 	/bin/rm -f in1 in2 in3 in4
 	/bin/rm -f l1
 	/bin/rm -f ipv6.1 ipv6.2
-	/bin/rm -f results/*
+	/bin/rm -rf results
