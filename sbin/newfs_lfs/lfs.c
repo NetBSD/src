@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.3 1999/03/30 19:04:50 perseant Exp $	*/
+/*	$NetBSD: lfs.c,v 1.4 1999/06/24 16:45:14 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.3 1999/03/30 19:04:50 perseant Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.4 1999/06/24 16:45:14 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -209,7 +209,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	daddr_t	seg_addr;	/* Address of current segment */
 	char *ipagep;		/* Pointer to the page we use to write stuff */
 	char *sump;		/* Used to copy stuff into segment buffer */
-	u_long *block_array;	/* Array of logical block nos to put in sum */
+	ufs_daddr_t *block_array; /* Array of logical block nos to put in sum */
 	u_long blocks_used;	/* Number of blocks in first segment */
 	u_long *dp;		/* Used to computed checksum on data */
 	u_long *datasump;	/* Used to computed checksum on data */
@@ -548,7 +548,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	 * address.
 	 */
 	sum_size = 3*sizeof(FINFO) + sizeof(SEGSUM) + 2*sizeof(daddr_t) +
-	    (lfsp->lfs_cleansz + lfsp->lfs_segtabsz) * sizeof(u_long);
+	    (lfsp->lfs_cleansz + lfsp->lfs_segtabsz) * sizeof(ufs_daddr_t);
 #define	SUMERR \
 "Multiple summary blocks in segment 1 not yet implemented\nsummary is %d bytes."
 	if (sum_size > LFS_SUMMARY_SIZE)
@@ -578,10 +578,10 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	file_info.fi_lastlength = lfsp->lfs_bsize;
 	file_info.fi_ino = LFS_IFILE_INUM;
 
-	memmove(sump, &file_info, sizeof(FINFO) - sizeof(u_long));
-	sump += sizeof(FINFO) - sizeof(u_long);
-	memmove(sump, block_array, sizeof(u_long) * file_info.fi_nblocks);
-	sump += sizeof(u_long) * file_info.fi_nblocks;
+	memmove(sump, &file_info, sizeof(FINFO) - sizeof(ufs_daddr_t));
+	sump += sizeof(FINFO) - sizeof(ufs_daddr_t);
+	memmove(sump, block_array, sizeof(ufs_daddr_t) * file_info.fi_nblocks);
+	sump += sizeof(ufs_daddr_t) * file_info.fi_nblocks;
 
 	/* Now, add the root directory */
 	file_info.fi_nblocks = 1;
