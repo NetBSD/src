@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.14 2002/10/02 03:31:59 thorpej Exp $ */
+/* $NetBSD: podulebus.c,v 1.15 2003/01/01 00:25:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.14 2002/10/02 03:31:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.15 2003/01/01 00:25:02 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -111,11 +111,12 @@ podulebusprint(aux, name)
 	struct podule_attach_args *pa = aux;
 
 	if (name)
-		printf("podule at %s", name);
+		aprint_normal("podule at %s", name);
 	if (pa->pa_podule->slottype == SLOT_POD)
-		printf(" slot %d", pa->pa_podule_number);
+		aprint_normal(" slot %d", pa->pa_podule_number);
 	else if (pa->pa_podule->slottype == SLOT_NET)
-		printf(" [ netslot %d ]", pa->pa_podule_number - MAX_PODULES);
+		aprint_normal(" [ netslot %d ]",
+		    pa->pa_podule_number - MAX_PODULES);
 #ifdef DIAGNOSTIC
 	else
 		panic("Invalid slot type");

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.56 2002/11/01 11:31:51 mrg Exp $ */
+/*	$NetBSD: fd.c,v 1.57 2003/01/01 00:28:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.56 2002/11/01 11:31:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.57 2003/01/01 00:28:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,7 +365,7 @@ fdcprint(void *auxp, const char *pnp)
 
 	fcp = auxp;
 	if (pnp)
-		printf("fd%d at %s unit %d:", fcp->unit, pnp,
+		aprint_normal("fd%d at %s unit %d:", fcp->unit, pnp,
 			fcp->type->driveid);
 	return(UNCONF);
 }

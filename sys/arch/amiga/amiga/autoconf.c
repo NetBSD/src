@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.86 2002/10/04 01:50:54 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.87 2003/01/01 00:28:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.86 2002/10/04 01:50:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.87 2003/01/01 00:28:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,7 +313,7 @@ mbprint(auxp, pnp)
 	const char *pnp;
 {
 	if (pnp)
-		printf("%s at %s", (char *)auxp, pnp);
+		aprint_normal("%s at %s", (char *)auxp, pnp);
 	return(UNCONF);
 }
 
