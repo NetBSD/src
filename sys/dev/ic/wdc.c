@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.196 2004/08/12 21:05:09 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.197 2004/08/12 21:10:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.196 2004/08/12 21:05:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.197 2004/08/12 21:10:18 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -424,7 +424,7 @@ atabusconfig(struct atabus_softc *atabus_sc)
 		chp->ata_drives[i] = config_found(&atabus_sc->sc_dev,
 		    &adev, ataprint);
 		if (chp->ata_drives[i] != NULL)
-			wdc_probe_caps(&chp->ch_drive[i]);
+			ata_probe_caps(&chp->ch_drive[i]);
 		else
 			chp->ch_drive[i].drive_flags &=
 			    ~(DRIVE_ATA | DRIVE_OLD);
@@ -1424,233 +1424,6 @@ wdctimeout(void *arg)
 	} else
 		__wdcerror(chp, "missing untimeout");
 	splx(s);
-}
-
-/*
- * Probe drive's capabilities, for use by the controller later
- * Assumes drvp points to an existing drive. 
- * XXX this should be a controller-indep function
- */
-void
-wdc_probe_caps(struct ata_drive_datas *drvp)
-{
-	struct ataparams params, params2;
-	struct wdc_channel *chp = drvp->chnl_softc;
-	struct wdc_softc *wdc = chp->ch_wdc;
-	struct device *drv_dev = drvp->drv_softc;
-	int i, printed;
-	char *sep = "";
-	int cf_flags;
-
-	if (ata_get_params(drvp, AT_WAIT, &params) != CMD_OK) {
-		/* IDENTIFY failed. Can't tell more about the device */
-		return;
-	}
-	if ((wdc->cap & (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) ==
-	    (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) {
-		/*
-		 * Controller claims 16 and 32 bit transfers.
-		 * Re-do an IDENTIFY with 32-bit transfers,
-		 * and compare results.
-		 */
-		drvp->drive_flags |= DRIVE_CAP32;
-		ata_get_params(drvp, AT_WAIT, &params2);
-		if (memcmp(&params, &params2, sizeof(struct ataparams)) != 0) {
-			/* Not good. fall back to 16bits */
-			drvp->drive_flags &= ~DRIVE_CAP32;
-		} else {
-			aprint_normal("%s: 32-bit data port\n",
-			    drv_dev->dv_xname);
-		}
-	}
-#if 0 /* Some ultra-DMA drives claims to only support ATA-3. sigh */
-	if (params.atap_ata_major > 0x01 && 
-	    params.atap_ata_major != 0xffff) {
-		for (i = 14; i > 0; i--) {
-			if (params.atap_ata_major & (1 << i)) {
-				aprint_normal("%s: ATA version %d\n",
-				    drv_dev->dv_xname, i);
-				drvp->ata_vers = i;
-				break;
-			}
-		}
-	}
-#endif
-
-	/* An ATAPI device is at last PIO mode 3 */
-	if (drvp->drive_flags & DRIVE_ATAPI)
-		drvp->PIO_mode = 3;
-
-	/*
-	 * It's not in the specs, but it seems that some drive 
-	 * returns 0xffff in atap_extensions when this field is invalid
-	 */
-	if (params.atap_extensions != 0xffff &&
-	    (params.atap_extensions & WDC_EXT_MODES)) {
-		printed = 0;
-		/*
-		 * XXX some drives report something wrong here (they claim to
-		 * support PIO mode 8 !). As mode is coded on 3 bits in
-		 * SET FEATURE, limit it to 7 (so limit i to 4).
-		 * If higher mode than 7 is found, abort.
-		 */
-		for (i = 7; i >= 0; i--) {
-			if ((params.atap_piomode_supp & (1 << i)) == 0)
-				continue;
-			if (i > 4)
-				return;
-			/*
-			 * See if mode is accepted.
-			 * If the controller can't set its PIO mode,
-			 * assume the defaults are good, so don't try
-			 * to set it
-			 */
-			if ((wdc->cap & WDC_CAPABILITY_MODE) != 0)
-				/*
-				 * It's OK to pool here, it's fast enouth
-				 * to not bother waiting for interrupt
-				 */
-				if (ata_set_mode(drvp, 0x08 | (i + 3),
-				   AT_WAIT) != CMD_OK)
-					continue;
-			if (!printed) { 
-				aprint_normal("%s: drive supports PIO mode %d",
-				    drv_dev->dv_xname, i + 3);
-				sep = ",";
-				printed = 1;
-			}
-			/*
-			 * If controller's driver can't set its PIO mode,
-			 * get the highter one for the drive.
-			 */
-			if ((wdc->cap & WDC_CAPABILITY_MODE) == 0 ||
-			    wdc->PIO_cap >= i + 3) {
-				drvp->PIO_mode = i + 3;
-				drvp->PIO_cap = i + 3;
-				break;
-			}
-		}
-		if (!printed) {
-			/* 
-			 * We didn't find a valid PIO mode.
-			 * Assume the values returned for DMA are buggy too
-			 */
-			return;
-		}
-		drvp->drive_flags |= DRIVE_MODE;
-		printed = 0;
-		for (i = 7; i >= 0; i--) {
-			if ((params.atap_dmamode_supp & (1 << i)) == 0)
-				continue;
-			if ((wdc->cap & WDC_CAPABILITY_DMA) &&
-			    (wdc->cap & WDC_CAPABILITY_MODE))
-				if (ata_set_mode(drvp, 0x20 | i, AT_WAIT)
-				    != CMD_OK)
-					continue;
-			if (!printed) {
-				aprint_normal("%s DMA mode %d", sep, i);
-				sep = ",";
-				printed = 1;
-			}
-			if (wdc->cap & WDC_CAPABILITY_DMA) {
-				if ((wdc->cap & WDC_CAPABILITY_MODE) &&
-				    wdc->DMA_cap < i)
-					continue;
-				drvp->DMA_mode = i;
-				drvp->DMA_cap = i;
-				drvp->drive_flags |= DRIVE_DMA;
-			}
-			break;
-		}
-		if (params.atap_extensions & WDC_EXT_UDMA_MODES) {
-			printed = 0;
-			for (i = 7; i >= 0; i--) {
-				if ((params.atap_udmamode_supp & (1 << i))
-				    == 0)
-					continue;
-				if ((wdc->cap & WDC_CAPABILITY_MODE) &&
-				    (wdc->cap & WDC_CAPABILITY_UDMA))
-					if (ata_set_mode(drvp, 0x40 | i,
-					    AT_WAIT) != CMD_OK)
-						continue;
-				if (!printed) {
-					aprint_normal("%s Ultra-DMA mode %d",
-					    sep, i);
-					if (i == 2)
-						aprint_normal(" (Ultra/33)");
-					else if (i == 4)
-						aprint_normal(" (Ultra/66)");
-					else if (i == 5)
-						aprint_normal(" (Ultra/100)");
-					else if (i == 6)
-						aprint_normal(" (Ultra/133)");
-					sep = ",";
-					printed = 1;
-				}
-				if (wdc->cap & WDC_CAPABILITY_UDMA) {
-					if ((wdc->cap & WDC_CAPABILITY_MODE) &&
-					    wdc->UDMA_cap < i)
-						continue;
-					drvp->UDMA_mode = i;
-					drvp->UDMA_cap = i;
-					drvp->drive_flags |= DRIVE_UDMA;
-				}
-				break;
-			}
-		}
-		aprint_normal("\n");
-	}
-
-	drvp->drive_flags &= ~DRIVE_NOSTREAM;
-	if (drvp->drive_flags & DRIVE_ATAPI) {
-		if (wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM)	
-			drvp->drive_flags |= DRIVE_NOSTREAM;
-	} else {
-		if (wdc->cap & WDC_CAPABILITY_ATA_NOSTREAM)	
-			drvp->drive_flags |= DRIVE_NOSTREAM;
-	}
-
-	/* Try to guess ATA version here, if it didn't get reported */
-	if (drvp->ata_vers == 0) {
-		if (drvp->drive_flags & DRIVE_UDMA)
-			drvp->ata_vers = 4; /* should be at last ATA-4 */
-		else if (drvp->PIO_cap > 2)
-			drvp->ata_vers = 2; /* should be at last ATA-2 */
-	}
-	cf_flags = drv_dev->dv_cfdata->cf_flags;
-	if (cf_flags & ATA_CONFIG_PIO_SET) {
-		drvp->PIO_mode =
-		    (cf_flags & ATA_CONFIG_PIO_MODES) >> ATA_CONFIG_PIO_OFF;
-		drvp->drive_flags |= DRIVE_MODE;
-	}
-	if ((wdc->cap & WDC_CAPABILITY_DMA) == 0) {
-		/* don't care about DMA modes */
-		return;
-	}
-	if (cf_flags & ATA_CONFIG_DMA_SET) {
-		if ((cf_flags & ATA_CONFIG_DMA_MODES) ==
-		    ATA_CONFIG_DMA_DISABLE) {
-			drvp->drive_flags &= ~DRIVE_DMA;
-		} else {
-			drvp->DMA_mode = (cf_flags & ATA_CONFIG_DMA_MODES) >>
-			    ATA_CONFIG_DMA_OFF;
-			drvp->drive_flags |= DRIVE_DMA | DRIVE_MODE;
-		}
-	}
-	if ((wdc->cap & WDC_CAPABILITY_UDMA) == 0) {
-		/* don't care about UDMA modes */
-		return;
-	}
-	if (cf_flags & ATA_CONFIG_UDMA_SET) {
-		if ((cf_flags & ATA_CONFIG_UDMA_MODES) ==
-		    ATA_CONFIG_UDMA_DISABLE) {
-			drvp->drive_flags &= ~DRIVE_UDMA;
-		} else {
-			drvp->UDMA_mode = (cf_flags & ATA_CONFIG_UDMA_MODES) >>
-			    ATA_CONFIG_UDMA_OFF;
-			drvp->drive_flags |= DRIVE_UDMA | DRIVE_MODE;
-		}
-	}
 }
 
 int
