@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.1.2.14 2002/10/27 23:35:30 thorpej Exp $	*/
+/*	$NetBSD: pthread.h,v 1.1.2.15 2002/10/28 00:06:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -122,6 +122,21 @@ int	pthread_spin_destroy(pthread_spinlock_t *lock);
 int	pthread_spin_lock(pthread_spinlock_t *lock);
 int	pthread_spin_trylock(pthread_spinlock_t *lock);
 int	pthread_spin_unlock(pthread_spinlock_t *lock);
+
+int	pthread_rwlock_init(pthread_rwlock_t *rwlock,
+	    const pthread_rwlockattr_t *attr);
+int	pthread_rwlock_destroy(pthread_rwlock_t *rwlock);
+int	pthread_rwlock_rdlock(pthread_rwlock_t *rwlock);
+int	pthread_rwlock_tryrdlock(pthread_rwlock_t *rwlock);
+int	pthread_rwlock_wrlock(pthread_rwlock_t *rwlock);
+int	pthread_rwlock_trywrlock(pthread_rwlock_t *rwlock);
+int	pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock,
+	    const struct timespec *abs_timeout);
+int	pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
+	    const struct timespec *abs_timeout);
+int	pthread_rwlock_unlock(pthread_rwlock_t *rwlock);
+int	pthread_rwlockattr_init(pthread_rwlockattr_t *attr);
+int	pthread_rwlockattr_destroy(pthread_rwlockattr_t *attr);
 
 int 	*pthread__errno(void);
 __END_DECLS

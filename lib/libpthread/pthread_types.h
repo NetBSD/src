@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.1.2.8 2002/03/01 01:23:14 nathanw Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.1.2.9 2002/10/28 00:06:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,6 +64,8 @@ struct	pthread_mutexattr_st;
 struct	pthread_cond_st;
 struct	pthread_condattr_st;
 struct	pthread_spin_st;
+struct	pthread_rwlock_st;
+struct	pthread_rwlockattr_st;
 
 typedef struct pthread_st *pthread_t;
 typedef struct pthread_attr_st pthread_attr_t;
@@ -73,6 +75,8 @@ typedef struct pthread_cond_st pthread_cond_t;
 typedef struct pthread_condattr_st pthread_condattr_t;
 typedef struct pthread_once_st pthread_once_t;
 typedef struct pthread_spinlock_st pthread_spinlock_t;
+typedef struct pthread_rwlock_st pthread_rwlock_t;
+typedef struct pthread_rwlockattr_st pthread_rwlockattr_t;
 typedef int pthread_key_t;
 
 struct	pthread_attr_st {
@@ -166,5 +170,36 @@ struct	pthread_spinlock_st {
 				       __SIMPLELOCK_UNLOCKED,		\
 				       0				\
 				     }
+
+struct	pthread_rwlock_st {
+	unsigned int	ptr_magic;
+
+	/* Protects data below */
+	pthread_spin_t	ptr_interlock;
+
+	struct pthread_queue_t	ptr_rblocked;
+	struct pthread_queue_t	ptr_wblocked;
+	unsigned int	ptr_nreaders;
+	pthread_t	ptr_writer;
+};
+
+#define	_PT_RWLOCK_MAGIC	0x99990009
+#define	_PT_RWLOCK_DEAD		0xDEAD0009
+
+#define PTHREAD_RWLOCK_INITIALIZER { _PT_RWLOCK_MAGIC,			\
+				     __SIMPLELOCK_UNLOCKED,		\
+				     {NULL, NULL},			\
+				     {NULL, NULL},			\
+				     0,					\
+				     NULL				\
+				   }
+
+struct	pthread_rwlockattr_st {
+	unsigned int	ptra_magic;
+};
+
+#define _PT_RWLOCKATTR_MAGIC	0x99990909
+#define _PT_RWLOCKATTR_DEAD	0xDEAD0909
+
 
 #endif	/* _LIB_PTHREAD_TYPES_H */
