@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "target.h"
 #include "inferior.h"
 #include "call-cmds.h"
+#include "gdbcore.h"
 
 #include "getopt.h"
 
@@ -188,6 +189,7 @@ main (argc, argv)
 	{"w", no_argument, &use_windows, 1},
 	{"windows", no_argument, &use_windows, 1},
 	{"statistics", no_argument, 0, 13},
+	{"write", no_argument, &write_files, 1},
 /* Allow machine descriptions to add more options... */
 #ifdef ADDITIONAL_OPTIONS
 	ADDITIONAL_OPTIONS
@@ -377,6 +379,7 @@ Options:\n\
   --mapped           Use mapped symbol files if supported on this system.\n\
   --readnow          Fully read symbol files on first access.\n\
   --nw		     Do not use a window interface.\n\
+  --write            Set writing into executable and core files.\n\
 ", gdb_stdout);
 #ifdef ADDITIONAL_OPTION_HELP
       fputs_unfiltered (ADDITIONAL_OPTION_HELP, gdb_stdout);
