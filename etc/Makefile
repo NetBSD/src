@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.51 1995/11/01 13:52:40 pk Exp $
+#	$NetBSD: Makefile,v 1.51.4.1 1996/06/05 21:57:30 cgd Exp $
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
 
 TZDIR=		/usr/share/zoneinfo
@@ -28,7 +28,7 @@ PCS=	pcs750.bin
 WCS1=	wcs fppwcs poc poc1 poc2 fppoc
 WCS2=	fpevent fppwcs fppwcs_dual hdcwcs load_diags start_fpp wcs wcs_dual
 
-all clean cleandir depend etc install lint:
+all clean cleandir depend etc includes install lint:
 
 .ifndef DESTDIR
 distribution distrib-dirs snapshot:
@@ -36,6 +36,7 @@ distribution distrib-dirs snapshot:
 	@false
 .else
 distribution: distrib-dirs
+	(cd ..; ${MAKE} includes)
 	(cd ..; ${MAKE} install)
 	install -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 ${BIN2} ${DESTDIR}/etc
