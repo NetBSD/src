@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.9 2003/07/30 11:11:55 dsl Exp $	*/
+/*	$NetBSD: resize.c,v 1.10 2004/03/16 07:49:01 jdc Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.9 2003/07/30 11:11:55 dsl Exp $");
+__RCSID("$NetBSD: resize.c,v 1.10 2004/03/16 07:49:01 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -104,7 +104,7 @@ wresize(WINDOW *win, int req_nlines, int req_ncols)
 int
 resizeterm(int nlines, int ncols)
 {
-	WINDOW *win;
+	WINDOW *win = NULL;	/* XXX gcc -Wuninitialized */
 	struct __winlist *list;
 	int newlines, newcols;
 
