@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";*/
-static char rcsid[] = "$Id: portmap.c,v 1.4 1993/12/05 13:58:43 deraadt Exp $";
+static char rcsid[] = "$Id: portmap.c,v 1.5 1994/06/29 06:24:39 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -95,9 +95,10 @@ static char sccsid[] = "@(#)portmap.c 1.32 87/08/06 Copyr 1984 Sun Micro";
 #include <sys/signal.h>
 #include <sys/resource.h>
 
-void reg_service();
-void reap();
-static void callit();
+void reg_service __P((struct svc_req *, SVCXPRT *));
+void reap	__P(());
+static void callit __P((struct svc_req *, SVCXPRT *));
+
 struct pmaplist *pmaplist;
 int debugging = 0;
 extern int errno;
@@ -233,7 +234,7 @@ reg_service(rqstp, xprt)
 	caddr_t t;
 	
 	if (debugging)
-		(void) fprintf(stderr, "server: about do a switch\n");
+		(void) fprintf(stderr, "server: about to do a switch\n");
 	switch (rqstp->rq_proc) {
 
 	case PMAPPROC_NULL:
@@ -491,7 +492,7 @@ callit(rqstp, xprt)
 	struct pmaplist *pml;
 	u_short port;
 	struct sockaddr_in me;
-	int pid, so = -1;
+	int pid, so = -1, dontblock = 1;
 	CLIENT *client;
 	struct authunix_parms *au = (struct authunix_parms *)rqstp->rq_clntcred;
 	struct timeval timeout;
@@ -510,7 +511,7 @@ callit(rqstp, xprt)
 	 * Child exits upon completion.
 	 */
 	if ((pid = fork()) != 0) {
-		if (pid < 0)
+		if (pid == -1)
 			syslog(LOG_ERR, "CALLIT (prog %lu): fork: %m",
 			    a.rmt_prog);
 		return;
@@ -518,11 +519,19 @@ callit(rqstp, xprt)
 	port = pml->pml_map.pm_port;
 	get_myaddress(&me);
 	me.sin_port = htons(port);
+
+	/* Avoid implicit binding to reserved port by clntudp_create() */
+	so = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (so == -1)
+		exit(1);
+	if (ioctl(so, FIONBIO, &dontblock) == -1)
+		exit(1);
+
 	client = clntudp_create(&me, a.rmt_prog, a.rmt_vers, timeout, &so);
 	if (client != (CLIENT *)NULL) {
 		if (rqstp->rq_cred.oa_flavor == AUTH_UNIX) {
 			client->cl_auth = authunix_create(au->aup_machname,
-			   au->aup_uid, au->aup_gid, au->aup_len, au->aup_gids);
+			    au->aup_uid, au->aup_gid, au->aup_len, au->aup_gids);
 		}
 		a.rmt_port = (u_long)port;
 		if (clnt_call(client, a.rmt_proc, xdr_opaque_parms, &a,
@@ -539,5 +548,9 @@ callit(rqstp, xprt)
 void
 reap()
 {
-	while (wait3((int *)NULL, WNOHANG, (struct rusage *)NULL) > 0);
+	int save_errno = errno;
+
+	while (wait3(NULL, WNOHANG, NULL) != -1)
+		;
+	errno = save_errno;
 }
