@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.h,v 1.3 1994/11/20 20:53:09 deraadt Exp $ */
+/*	$NetBSD: idprom.h,v 1.4 1995/02/01 12:37:45 pk Exp $ */
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -40,7 +40,7 @@
  */
 struct idprom {
 	u_char	id_format;		/* format identifier (= 1) */
-	u_char	id_machine;		/* machine type (see cpu.h) */
+	u_char	id_machine;		/* machine type (see param.h) */
 	u_char	id_ether[6];		/* ethernet address */
 	long	id_date;		/* date of manufacture */
 	u_char	id_hostid[3];		/* ``host id'' bytes */
@@ -49,7 +49,3 @@ struct idprom {
 };
 
 #define IDPROM_VERSION 1
-#define SUN4_100	0x22
-#define SUN4_200	0x21
-#define SUN4_300	0x23
-#define SUN4_400	0x24

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.5 1994/11/23 07:02:19 deraadt Exp $ */
+/*	$NetBSD: sbus.c,v 1.6 1995/02/01 12:37:28 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -110,6 +110,7 @@ sbus_attach(parent, self, aux)
 	struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 	register int base, node, slot;
+	register int i;
 	register char *name;
 	struct confargs oca;
 
@@ -151,6 +152,12 @@ sbus_attach(parent, self, aux)
 			oca.ca_slot = slot = oca.ca_ra.ra_iospace;
 			oca.ca_offset = base;
 			oca.ca_ra.ra_paddr = (void *)SBUS_ADDR(slot, base);
+			/* Fix any remaining register banks */
+			for (i = 1; i < oca.ca_ra.ra_nreg; i++) {
+				base = (int)oca.ca_ra.ra_reg[i].rr_paddr;
+				oca.ca_ra.ra_reg[i].rr_paddr =
+					(void *)SBUS_ADDR(slot, base);
+			}
 		}
 		oca.ca_bustype = BUS_SBUS;
 		(void) config_found(&sc->sc_dev, (void *)&oca, sbus_print);

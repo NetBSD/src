@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.7 1994/11/25 23:12:44 deraadt Exp $ */
+/*	$NetBSD: dma.c,v 1.8 1995/02/01 12:37:21 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -97,6 +97,9 @@ dmamatch(parent, vcf, aux)
 		return (0);
 	if (ca->ca_bustype == BUS_SBUS)
 		return (1);
+	if (cputyp == CPU_SUN4 && ca->ca_bustype == BUS_OBIO &&
+	    cpumod == SUN4_100) 
+		return 0; /* see 4/110 comment in cpu.c */
 	ra->ra_len = NBPG;
 	return (probeget(ra->ra_vaddr, 1) != -1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.10 1994/11/25 23:10:47 deraadt Exp $	*/
+/*	$NetBSD: obio.c,v 1.11 1995/02/01 12:37:26 pk Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -136,6 +136,7 @@ busattach(parent, self, args, bustype)
 				oca.ca_ra.ra_iospace = -1;
 				oca.ca_ra.ra_paddr = (void *)cf->cf_loc[0];
 				oca.ca_ra.ra_len = 0;
+				oca.ca_ra.ra_nreg = 1;
 				tmp = NULL;
 				if (oca.ca_ra.ra_paddr)
 					tmp = bus_tmp(oca.ca_ra.ra_paddr,
