@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.3 2001/06/07 02:38:59 toshii Exp $	*/
+/*	$NetBSD: softintr.c,v 1.4 2001/06/20 02:21:58 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,13 +46,13 @@
 #include <machine/irqhandler.h>
 
 extern int ipl_to_spl(int);
-int softintr_free(void *);
+void softintr_free(void *);
 
 struct softintr_handler {
 	struct softintr_handler *sh_vlink;	/* vertical link */
 	struct softintr_handler *sh_hlink;	/* horizontal link */
 
-	int (*sh_fun)(void *);
+	void (*sh_fun)(void *);
 	void *sh_arg;
 	int sh_level;
 
@@ -63,7 +63,7 @@ struct softintr_handler *softintrs;
 struct softintr_handler *softintr_pending;
 
 void *
-softintr_establish(int level, int (*fun)(void *), void *arg)
+softintr_establish(int level, void (*fun)(void *), void *arg)
 {
 	struct softintr_handler *sh;
 
@@ -96,12 +96,11 @@ softintr_disestablish(void *cookie)
 	}
 }
 
-int
+void
 softintr_free(void *arg)
 {
 
 	free(arg, M_DEVBUF);
-	return 0;
 }
 
 void
@@ -138,7 +137,6 @@ softintr_schedule(void *cookie)
 	if ((*p)->sh_level == sh->sh_level) {
 		sh->sh_hlink = *p;
 		sh->sh_vlink = (*p)->sh_vlink;
-		(*p)->sh_vlink = NULL;
 		goto set_and_exit;
 	}
 

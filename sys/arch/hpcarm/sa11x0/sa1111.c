@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.6 2001/05/22 17:54:50 toshii Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.7 2001/06/20 02:21:58 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -239,7 +239,8 @@ sacc_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 		panic("sacc_intr_establish: type must be unique\n");
 
 	/* install intr handler */
-	ih->ih_soft = softintr_establish(level, ih_fun, ih_arg);
+	ih->ih_soft = softintr_establish(level, (void (*)(void *))ih_fun,
+					 ih_arg);
 	ih->ih_irq = irq;
 	ih->ih_next = NULL;
 
