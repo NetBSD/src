@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.8 1999/05/07 16:19:28 drochner Exp $	 */
+/*	$NetBSD: dev_net.c,v 1.9 2000/07/30 06:11:38 simonb Exp $	 */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -108,7 +108,7 @@ net_open(struct open_file *f, ...)
 	    int             num, i;
 	    /* XXX (some) tftp servers don't like leading "/" */
 	    for (num = 0; bootfile[num] == '/'; num++);
-	    for (i = 0; bootfile[i] = bootfile[i + num]; i++);
+	    for (i = 0; (bootfile[i] = bootfile[i + num]) != 0; i++);
 #endif
 
 	    printf("boot: client IP address: %s\n",
