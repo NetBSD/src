@@ -1,4 +1,4 @@
-/*	$NetBSD: sun68k.c,v 1.7 2002/04/30 14:24:33 lukem Exp $ */
+/*	$NetBSD: sun68k.c,v 1.8 2002/05/06 01:49:48 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sun68k.c,v 1.7 2002/04/30 14:24:33 lukem Exp $");
+__RCSID("$NetBSD: sun68k.c,v 1.8 2002/05/06 01:49:48 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -131,7 +131,7 @@ sun68k_setboot(ib_params *params)
 	assert(SUN68K_BBINFO_MAGICSIZE == 32);
 
 	if (params->stage2 == NULL) {
-		warnx("You must provide a secondary bootstrap");
+		warnx("You must provide the name of the secondary bootstrap");
 		return (0);
 	}
 
@@ -163,7 +163,7 @@ sun68k_setboot(ib_params *params)
 	 * is *not* an ELF executable.
 	 */
 	if (memcmp(bb + 1, "ELF", strlen("ELF")) == 0) {
-		warn("`%s' is an ELF executable; need raw binary", 
+		warnx("`%s' is an ELF executable; need raw binary", 
 		    params->stage1);
 		goto done;
 	}
@@ -176,11 +176,16 @@ sun68k_setboot(ib_params *params)
 			break;
 	}
 	if (bbi >= sizeof(bb)) {
-		warn("`%s' does not have a bbinfo structure\n", 
+		warnx("`%s' does not have a bbinfo structure\n", 
 		    params->stage1);
 		goto done;
 	}
 	maxblk = be32toh(bbinfop->bbi_block_count);
+	if (maxblk == 0 || maxblk > (sizeof(bb) / sizeof(uint32_t))) {
+		warnx("bbinfo structure in `%s' has preposterous size `%u'",
+		    params->stage1, maxblk);
+		goto done;
+	}
 
 	/* Allocate space for our block list. */
 	blocks = malloc(sizeof(*blocks) * maxblk);
