@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.75.2.2 2004/06/24 17:26:13 jmc Exp $
+#	$NetBSD: INSTALL,v 1.75.2.3 2004/07/15 20:19:04 he Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -24,6 +24,7 @@ options 	MEMORY_DISK_ROOT_SIZE=4096	# 2 Megabytes
 
 options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Compatibility options
