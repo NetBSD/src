@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.73 1997/01/31 01:44:13 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.74 1997/01/31 23:18:58 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -870,6 +870,7 @@ start:
 
 	| save the passed parameters. "prepass" them on the stack for
 	| later catch by _start_c
+	movl	d6,sp@-			| pass boot partition offset
 	movl	a2,sp@-			| pass sync inhibit flags
 	movl	d3,sp@-			| pass AGA mode
 	movl	a4,sp@-			| pass address of _esym
@@ -2269,6 +2270,7 @@ Lreload1:
 	movel	sp@(32),d4		| eclockfreq
 	movel	sp@(36),d3		| AGA mode
 	movel	sp@(40),a2		| sync inhibit flags
+	movel	sp@(44),d6		| boot partition offset
 
 	movel	sp@(12),a6		| find entrypoint (a6)
 
@@ -2297,7 +2299,6 @@ Lreload040:
 Lreload2:
 
 	moveq	#0,d2			| clear unused registers
-	moveq	#0,d6
 	subl	a1,a1
 	subl	a3,a3
 	subl	a5,a5
