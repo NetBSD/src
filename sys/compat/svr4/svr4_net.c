@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.16 1998/09/05 14:50:27 christos Exp $	 */
+/*	$NetBSD: svr4_net.c,v 1.17 1998/12/18 16:55:39 drochner Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -66,6 +66,8 @@
 /*
  * Emulate /dev/{udp,tcp,...}
  */
+
+#define COMPAT_SVR4 1
 
 #include <sys/param.h>
 #include <sys/kernel.h>
