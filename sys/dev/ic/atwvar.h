@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.2 2003/10/13 08:22:19 dyoung Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.3 2003/11/16 09:02:42 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -150,6 +150,33 @@ enum atw_rftype { ATW_RFTYPE_INTERSIL = 0, ATW_RFTYPE_RFMD  = 1,
 enum atw_bbptype { ATW_BBPTYPE_INTERSIL = 0, ATW_BBPTYPE_RFMD  = 1,
        ATW_BBPTYPE_MARVEL = 2 };
 
+/* Radio capture format for ADMtek. */
+
+#define ATW_RX_RADIOTAP_PRESENT	\
+	((1 << IEEE80211_RADIOTAP_FLAGS) | (1 << IEEE80211_RADIOTAP_RATE) | \
+	 (1 << IEEE80211_RADIOTAP_CHANNEL) | \
+	 (1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL))
+
+struct atw_rx_radiotap_header {
+	struct ieee80211_radiotap_header	ar_ihdr;
+	u_int8_t				ar_flags;
+	u_int8_t				ar_rate;
+	u_int16_t				ar_chan_freq;
+	u_int16_t				ar_chan_flags;
+	int8_t					ar_antsignal;
+} __attribute__((__packed__));
+
+#define ATW_TX_RADIOTAP_PRESENT	((1 << IEEE80211_RADIOTAP_FLAGS) | \
+				 (1 << IEEE80211_RADIOTAP_RATE) | \
+				 (1 << IEEE80211_RADIOTAP_CHANNEL))
+
+struct atw_tx_radiotap_header {
+	struct ieee80211_radiotap_header	at_ihdr;
+	u_int8_t				at_flags;
+	u_int8_t				at_rate;
+	u_int16_t				at_chan_freq;
+	u_int16_t				at_chan_flags;
+} __attribute__((__packed__));
 struct atw_softc {
 	struct device		sc_dev;
 	struct ieee80211com	sc_ic;
@@ -252,7 +279,18 @@ struct atw_softc {
 
 	struct timeval	sc_last_beacon;
 	struct callout	sc_scan_ch;
+	union {
+		struct atw_rx_radiotap_header	tap;
+		u_int8_t			pad[64];
+	} sc_rxtapu;
+	union {
+		struct atw_tx_radiotap_header	tap;
+		u_int8_t			pad[64];
+	} sc_txtapu;
 };
+
+#define sc_rxtap	sc_rxtapu.tap
+#define sc_txtap	sc_txtapu.tap
 
 #define	sc_if			sc_ic.ic_if
 

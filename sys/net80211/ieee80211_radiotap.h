@@ -1,5 +1,5 @@
 /* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.1 2003/09/05 22:19:32 sam Exp $ */
-/*	$NetBSD: ieee80211_radiotap.h,v 1.2 2003/09/14 01:14:55 dyoung Exp $	*/
+/* $NetBSD: ieee80211_radiotap.h,v 1.3 2003/11/16 09:02:42 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
@@ -55,13 +55,13 @@ struct ieee80211_radiotap_header {
 	u_int8_t	it_version;	/* Version 0. Only increases
 					 * for drastic changes,
 					 * introduction of compatible
-					 * new LTVs does not count.
+					 * new fields does not count.
 					 */
 	u_int8_t	it_pad;
 	u_int16_t       it_len;         /* length of the whole
 					 * header in bytes, including
 					 * it_version, it_pad,
-					 * it_len, and LTVs.
+					 * it_len, and data fields.
 					 */
 	u_int32_t       it_present;     /* A bitmap telling which
 					 * fields are present. Set bit 31
@@ -70,30 +70,36 @@ struct ieee80211_radiotap_header {
 					 * Additional extensions are made
 					 * by setting bit 31.
 					 */
-};
+} __attribute__((__packed__));
 
 /* Name                                 Data type       Units
  * ----                                 ---------       -----
  *
- * IEEE80211_RADIOTAP_CHANNEL           u_int8_t	MHz
+ * IEEE80211_RADIOTAP_TSFT              u_int64_t       microseconds
  *
- *      Tx/Rx channel number (for DSSS/OFDM/PBCC PHY)
+ *      Value in microseconds of the MAC's 64-bit 802.11 Time
+ *      Synchronization Function timer when the first bit of the
+ *      MPDU arrived at the MAC. For received frames, only.
+ *
+ * IEEE80211_RADIOTAP_CHANNEL           2 x u_int16_t   MHz, bitmap
+ *
+ *      Tx/Rx frequency in MHz, followed by flags (see below).
  *
  * IEEE80211_RADIOTAP_FHSS              u_int16_t       see below
  *
  *      For frequency-hopping radios, the hop set (first byte)
  *      and pattern (second byte).
  *
- * IEEE80211_RADIOTAP_RATE              u_int8_t	.5Mb/s
+ * IEEE80211_RADIOTAP_RATE              u_int16_t       500kb/s
  *
- *      IEEE Tx/Rx data rate cookie (including basic rate flag)
+ *      Tx/Rx data rate
  *
- * IEEE80211_RADIOTAP_DB_ANTSIGNAL      int16_t         decibel (dB)
- *              
+ * IEEE80211_RADIOTAP_DB_ANTSIGNAL      int8_t          decibel (dB)
+ *
  *      RF signal power at the antenna, measured from a fixed,
  *      arbitrary reference point.
  *
- * IEEE80211_RADIOTAP_DB_ANTNOISE       int16_t         decibel (dB)
+ * IEEE80211_RADIOTAP_DB_ANTNOISE       int8_t          decibel (dB)
  *
  *      RF noise power at the antenna in decibels from an arbitrary,
  *      fixed reference point.
@@ -124,33 +130,18 @@ struct ieee80211_radiotap_header {
  *      reference). This is the absolute power level measured at
  *      the antenna port.
  *
- * IEEE80211_RADIOTAP_TSFT              u_int64_t       microseconds
- *
- *      Value in microseconds of the MAC's 64-bit 802.11 Time
- *      Synchronization Function timer when the first bit of the
- *      MPDU arrived at the MAC. For received frames, only.
- *      Little-endian byte order.
- *
- * IEEE80211_RADIOTAP_FLAGS             u_int16_t       bitmap
+ * IEEE80211_RADIOTAP_FLAGS             u_int8_t        bitmap
  *
  *      Properties of transmitted and received frames. See flags
  *      defined below.
  *
- * IEEE80211_RADIOTAP_TIME              u_int32_t       microseconds
- *
- *      For radios that provide it: packet arrival time in
- *      microseconds. Prism hardware will provide this, but it is
- *      not known whether it marks the first or the last bit of
- *      the frame. Nor is it known where that bit has arrived
- *      (antenna, modem, MAC?) when the time is measured.
- *
- * IEEE80211_RADIOTAP_ANTENNA           u_int16_t       antenna index
+ * IEEE80211_RADIOTAP_ANTENNA           u_int8_t        antenna index
  *
  *      Unitless indication of the Rx/Tx antenna for this packet.
  *      The first antenna is antenna 0.
  */
 enum ieee80211_radiotap_type {
-	IEEE80211_RADIOTAP_PAD = 0,
+	IEEE80211_RADIOTAP_TSFT = 0,
 	IEEE80211_RADIOTAP_FLAGS = 1,
 	IEEE80211_RADIOTAP_RATE = 2,
 	IEEE80211_RADIOTAP_CHANNEL = 3,
@@ -162,23 +153,21 @@ enum ieee80211_radiotap_type {
 	IEEE80211_RADIOTAP_DB_TX_ATTENUATION = 9,
 	IEEE80211_RADIOTAP_DBM_TX_POWER = 10,
 	IEEE80211_RADIOTAP_ANTENNA = 11,
-	IEEE80211_RADIOTAP_TSFT = 12,
-	IEEE80211_RADIOTAP_EXT = 31,
-	IEEE80211_RADIOTAP_TIME = 32
+	IEEE80211_RADIOTAP_EXT = 31
 };
 
 /* For IEEE80211_RADIOTAP_FLAGS */
-#define	IEEE80211_RADIOTAP_F_CFP	0x0001  /* sent/received
+#define	IEEE80211_RADIOTAP_F_CFP	0x01	/* sent/received
 						 * during CFP
 						 */
-#define	IEEE80211_RADIOTAP_F_SHORTPRE	0x0002  /* sent/received
+#define	IEEE80211_RADIOTAP_F_SHORTPRE	0x02	/* sent/received
 						 * with short
 						 * preamble
 						 */
-#define	IEEE80211_RADIOTAP_F_WEP	0x0004  /* sent/received
+#define	IEEE80211_RADIOTAP_F_WEP	0x04	/* sent/received
 						 * with WEP encryption
 						 */
-#define	IEEE80211_RADIOTAP_F_FRAG	0x0008  /* sent/received
+#define	IEEE80211_RADIOTAP_F_FRAG	0x08	/* sent/received
 						 * with fragmentation
 						 */
 
