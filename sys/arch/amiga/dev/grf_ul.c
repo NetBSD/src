@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.18 1996/06/03 18:55:16 is Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.19 1996/07/08 13:28:41 is Exp $	*/
 #define UL_DEBUG
 
 /*
@@ -15,8 +15,9 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Lutz Vieweg.
- * 4. The name of the author may not be used to endorse or promote products
+ *      This product includes software developed by Ignatios Souvatzis for
+ *      the NetBSD project.
+ * 4. The name of the authors may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
