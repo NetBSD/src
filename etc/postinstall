@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.10 2002/05/07 02:11:07 lukem Exp $
+# $NetBSD: postinstall,v 1.11 2002/05/14 05:26:13 itojun Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -392,7 +392,7 @@ do_ssh()
 additem wscons "wscons configuration file update"
 do_wscons()
 {
-	[ -n "$1" ] || err 2 "USAGE: do_ssh  fix|check"
+	[ -n "$1" ] || err 2 "USAGE: do_wscons  fix|check"
 	op=$1
 
 	[ -f ${DEST_DIR}/etc/wscons.conf ] || return 0
