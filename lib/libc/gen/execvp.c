@@ -1,4 +1,4 @@
-/*	$NetBSD: execvp.c,v 1.2 1997/04/24 18:55:51 kleink Exp $	*/
+/*	$NetBSD: execvp.c,v 1.3 1997/07/13 18:57:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: execvp.c,v 1.2 1997/04/24 18:55:51 kleink Exp $";
+__RCSID("$NetBSD: execvp.c,v 1.3 1997/07/13 18:57:04 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,6 +67,7 @@ execvp(name, argv)
 	/* "" is not a valid filename; check this before traversing PATH. */
 	if (name[0] == '\0') {
 		errno = ENOENT;
+		path = NULL;
 		goto done;
 	}
 	/* If it's an absolute or relative path name, it's easy. */
@@ -81,7 +83,7 @@ execvp(name, argv)
 		path = _PATH_DEFPATH;
 	cur = path = strdup(path);
 
-	while (p = strsep(&cur, ":")) {
+	while ((p = strsep(&cur, ":")) != NULL) {
 		/*
 		 * It's a SHELL path -- double, leading and trailing colons
 		 * mean the current directory.
