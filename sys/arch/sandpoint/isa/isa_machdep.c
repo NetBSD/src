@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.2 2001/02/08 18:29:05 briggs Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.3 2001/02/08 20:27:25 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -304,16 +304,24 @@ isa_intr_disestablish(ic, arg)
 	splx(cpl);
 }
 
-#define SUPERIO_CONF_IDX	0x15C
-#define SUPERIO_CONF_DATA	0x15D
-#define SUPERIO_CONF_LDN	0x07
-#define SUPERIO_CONF_ACTIVATE	0x30
+#define SUPERIO_CONF_IDX		0x15C
+#define SUPERIO_CONF_DATA		0x15D
+#define SUPERIO_CONF_LDN		0x07
+#define SUPERIO_CONF_ACTIVATE		0x30
+#define SUPERIO_CONF_CFG1_ATDRIVE	0x04
 void
 isa_attach_hook(parent, self, iba)
 	struct device *parent, *self;
 	struct isabus_attach_args *iba;
 {
-	int	ldn;
+	u_int8_t cfg;
+	int ldn;
+
+	/* Set PS/2 drive mode */
+	isa_outb(SUPERIO_CONF_IDX, 0x21);
+	cfg = isa_inb(SUPERIO_CONF_DATA);
+	cfg &= ~SUPERIO_CONF_CFG1_ATDRIVE;
+	isa_outb(SUPERIO_CONF_DATA, cfg);
 
 	/* Enable the 9 Super I/O devices. */
 	for (ldn=0; ldn <= 8; ldn++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 2001/02/08 18:33:07 briggs Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 2001/02/08 20:27:25 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -232,7 +232,6 @@ cdev_decl(satlink);
 
 #include "rnd.h"
 
-#if 0
 #include "wsdisplay.h"
 cdev_decl(wsdisplay);
 #include "wskbd.h"
@@ -241,7 +240,6 @@ cdev_decl(wskbd);
 cdev_decl(wsmouse);
 #include "wsmux.h"
 cdev_decl(wsmux);
-#endif
 
 #include "scsibus.h"
 cdev_decl(scsibus);
@@ -300,13 +298,14 @@ struct cdevsw	cdevsw[] =
 	cdev_satlink_init(NSATLINK,satlink), /* 45: planetconnect satlink */
 	cdev_rnd_init(NRND,rnd),	/* 46: random source pseudo-device */
 
-	cdev_notdef(),			/* 47 */
-	cdev_notdef(),			/* 48 */
-	cdev_notdef(),			/* 49 */
-
+	cdev_wsdisplay_init(NWSDISPLAY,
+			    wsdisplay),	/* 47: frame buffers, etc. */
+	cdev_mouse_init(NWSKBD, wskbd),	/* 48: ws keyboards */
+	cdev_mouse_init(NWSMOUSE,
+			wsmouse),	/* 49: ws mice */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 50: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 51: RAIDframe disk driver */
-	cdev_notdef(),			/* 52 */
+	cdev_mouse_init(NWSMUX, wsmux),	/* 52: ws multiplexor */
 	cdev_i4b_init(NI4B, i4b),		/* 53: i4b main device */
 	cdev_i4bctl_init(NI4BCTL, i4bctl),	/* 54: i4b control device */
 	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 55: i4b raw b-channel access */
