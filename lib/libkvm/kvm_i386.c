@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_i386.c,v 1.12 1998/02/18 01:13:08 thorpej Exp $	*/
+/*	$NetBSD: kvm_i386.c,v 1.13 1998/06/30 20:29:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_i386.c,v 1.12 1998/02/18 01:13:08 thorpej Exp $");
+__RCSID("$NetBSD: kvm_i386.c,v 1.13 1998/06/30 20:29:39 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -121,8 +121,8 @@ _kvm_kvatop(kd, va, pa)
 	 * Find and read the page directory entry.
 	 */
 	pde_pa = cpu_kh->ptdpaddr + (pdei(va) * sizeof(pd_entry_t));
-	if (lseek(kd->pmfd, _kvm_pa2off(kd, pde_pa), SEEK_SET) == -1 ||
-	    read(kd->pmfd, (char *)&pde, sizeof(pde)) != sizeof(pde)) {
+	if (pread(kd->pmfd, &pde, sizeof(pde), _kvm_pa2off(kd, pde_pa)) !=
+	    sizeof(pde)) {
 		_kvm_syserr(kd, 0, "could not read PDE");
 		goto lose;
 	}
@@ -135,8 +135,8 @@ _kvm_kvatop(kd, va, pa)
 		goto lose;
 	}
 	pte_pa = (pde & PG_FRAME) + (ptei(va) * sizeof(pt_entry_t));
-	if (lseek(kd->pmfd, _kvm_pa2off(kd, pte_pa), SEEK_SET) == -1 ||
-	    read(kd->pmfd, (char *)&pte, sizeof(pte)) != sizeof(pte)) {
+	if (pread(kd->pmfd, &pte, sizeof(pte), _kvm_pa2off(kd, pte_pa)) !=
+	    sizeof(pte)) {
 		_kvm_syserr(kd, 0, "could not read PTE");
 		goto lose;
 	}
