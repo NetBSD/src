@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.4 2001/06/21 18:03:37 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.5 2001/06/23 03:16:12 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -65,6 +65,8 @@ struct pte {
 #define	PTE_SW		0x00000001	/* Super. Write-Only (U: RO, S: RW) */
 #define	PTE_BW		0x00000002	/* Supervisor        (U: RW, S: RW) */
 #define	PTE_BR		0x00000003	/* Both Read Only    (U: RO, S: RO) */
+#define	PTE_RW		PTE_BW
+#define	PTE_RO		PTE_BR
 
 #ifndef	_LOCORE
 typedef	struct pte pte_t;
