@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.33 2003/11/13 03:09:29 chs Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.34 2003/11/13 13:40:39 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.33 2003/11/13 03:09:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.34 2003/11/13 13:40:39 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.33 2003/11/13 03:09:29 chs Exp $");
 #include <compat/mach/mach_vm.h> 
 #include <compat/mach/mach_errno.h> 
 #include <compat/mach/mach_port.h> 
+#include <compat/mach/mach_services.h> 
 #include <compat/mach/mach_syscallargs.h>
 
 int
@@ -250,6 +251,11 @@ mach_vm_deallocate(args)
 	return 0;
 }
 
+/*
+ * XXX This server message Id clashes with bootstrap_look_up
+ * Is there a wway to resolve this easily?
+ */
+#if 0
 int
 mach_vm_wire(args)
 	struct mach_trap_args *args;
@@ -304,6 +310,7 @@ mach_vm_wire(args)
 	*msglen = sizeof(*rep);
 	return 0;
 }
+#endif
 
 int
 mach_vm_protect(args)
@@ -527,6 +534,10 @@ mach_vm_region(args)
 	struct mach_vm_region_basic_info *rbi;
 	struct vm_map_entry *vme;
 	
+	/* Sanity check req_count */
+	if (req->req_count > 9)
+		return mach_msg_error(args, EINVAL);
+
 	/* 
 	 * MACH_VM_REGION_BASIC_INFO is the only 
 	 * supported flavor in Darwin.
@@ -585,6 +596,10 @@ mach_vm_region_64(args)
 	struct lwp *l = args->l;
 	struct mach_vm_region_basic_info_64 *rbi;
 	struct vm_map_entry *vme;
+
+	/* Sanity check req_count */
+	if (req->req_count > 10)
+		return mach_msg_error(args, EINVAL);
 	
 	/* 
 	 * MACH_VM_REGION_BASIC_INFO is the only 

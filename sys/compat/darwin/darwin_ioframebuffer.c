@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.23 2003/11/01 18:41:25 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.24 2003/11/13 13:40:39 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.23 2003/11/01 18:41:25 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.24 2003/11/13 13:40:39 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -139,10 +139,6 @@ darwin_ioframebuffer_connect_method_scalari_scalaro(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_outcount = 0;
-
-	/* Sanity check req->req_incount */
-	if (MACH_REQMSG_OVERFLOW(args, req->req_in[req->req_incount]))
-		return mach_msg_error(args, EINVAL);
 
 	maxoutcount = req->req_in[req->req_incount];
 
@@ -313,10 +309,6 @@ darwin_ioframebuffer_connect_method_scalari_structo(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_outcount = 0;
-
-	/* Sanity check req->req_incount */
-	if (MACH_REQMSG_OVERFLOW(args, req->req_in[req->req_incount]))
-		return mach_msg_error(args, EINVAL);
 
 	maxoutcount = req->req_in[req->req_incount];
 
@@ -623,13 +615,8 @@ darwin_ioframebuffer_connect_method_scalari_structi(args)
 	printf("darwin_ioframebuffer_connect_method_scalari_structi()\n");
 #endif
 	scalar_len = req->req_incount; 
-	if (MACH_REQMSG_OVERFLOW(args, req->req_in[scalar_len]))
-		return mach_msg_error(args, EINVAL);
 	struct_len = req->req_in[scalar_len];
-
 	struct_data = (char *)&req->req_in[scalar_len + 1];	
-	if (MACH_REQMSG_OVERFLOW(args, struct_data[struct_len - 1]))
-		return mach_msg_error(args, EINVAL);
 
 	switch (req->req_selector) {
 	case DARWIN_IOFBSETCOLORCONVERTTABLE: {
