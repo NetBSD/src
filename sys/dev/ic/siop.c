@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.26 2000/07/24 15:15:00 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.27 2000/07/27 21:28:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -1363,9 +1363,9 @@ siop_start(sc)
 					if ((siop_cmd->xs->xs_control &
 					    XS_CTL_POLL) == 0) {
 						/* start exire timer */
-						timeout =
+						timeout = (u_int64_t)
 						    siop_cmd->xs->timeout *
-						    hz / 1000;
+						    (u_int64_t)hz / 1000;
 						if (timeout == 0)
 							timeout = 1;
 						callout_reset(
