@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.138 1995/02/02 19:42:18 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.139 1995/02/03 10:16:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -120,7 +120,6 @@ vm_map_t buffer_map;
 extern	vm_offset_t avail_start, avail_end;
 static	vm_offset_t hole_start, hole_end;
 static	vm_offset_t avail_next;
-static	vm_size_t avail_remaining;
 
 int	_udatasel, _ucodesel, _gsel_tss;
 
@@ -1150,18 +1149,10 @@ init386(first_avail)
 	/* we load right after the I/O hole; adjust hole_end to compensate */
 	hole_end = round_page((vm_offset_t)first_avail);
 	avail_next = avail_start;
-	avail_remaining = i386_btop((avail_end - avail_start) -
-				    (hole_end - hole_start));
 
-	if (avail_remaining < i386_btop(2 * 1024 * 1024)) {
+	if (physmem < btoc(2 * 1024 * 1024)) {
 		printf("warning: too little memory available; running in degraded mode\n"
 		    "press a key to confirm\n\n");
-		/*
-		 * People with less than 2 Meg have to press a key; this way
-		 * we see the messages and can tell them why they blow up later.
-		 * If they get working well enough to recompile, they can remove
-		 * this; otherwise, it's a toy and they have to lump it.
-		 */
 		cngetc();
 	}
 
@@ -1361,11 +1352,15 @@ cpu_exec_aout_prep_oldzmagic(p, epp)
 }
 #endif /* COMPAT_NOMID */
 
-unsigned int
+u_int
 pmap_free_pages()
 {
 
-	return avail_remaining;
+	if (avail_next <= hole_start)
+		return ((hole_start - avail_next) / NBPG +
+			(avail_end - hole_end) / NBPG);
+	else
+		return ((avail_end - avail_next) / NBPG);
 }
 
 int
@@ -1373,16 +1368,14 @@ pmap_next_page(addrp)
 	vm_offset_t *addrp;
 {
 
-	if (avail_next == avail_end)
+	if (avail_next + NBPG > avail_end)
 		return FALSE;
 
-	/* skip the hole */
-	if (avail_next == hole_start)
+	if (avail_next + NBPG > hole_start && avail_next < hole_end)
 		avail_next = hole_end;
 
 	*addrp = avail_next;
 	avail_next += NBPG;
-	avail_remaining--;
 	return TRUE;
 }
 
