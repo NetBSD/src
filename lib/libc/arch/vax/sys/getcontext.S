@@ -1,4 +1,4 @@
-/*	$NetBSD: getcontext.S,v 1.2 2003/01/20 00:18:06 matt Exp $	*/
+/*	$NetBSD: getcontext.S,v 1.3 2003/01/23 23:56:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,10 +38,14 @@
 
 #include "SYS.h"
 
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(getcontext, _getcontext)
+#endif
+
 /*
  * Can't use R4 or R5 since those needed by the phread_switch code.
  */
-ENTRY(getcontext, 0)
+ENTRY(_getcontext, 0)
 	clrl	%r0			/* assume success */
 	chmk	$SYS_getcontext		/* getcontext(oucp) */
 	jcc	1f
