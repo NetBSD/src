@@ -364,6 +364,7 @@
 ./usr/share/man/cat4/cltp.0
 ./usr/share/man/cat4/cy.0
 ./usr/share/man/cat4/ddb.0
+./usr/share/man/cat4/dpt.0
 ./usr/share/man/cat4/drum.0
 ./usr/share/man/cat4/eap.0
 ./usr/share/man/cat4/ec.0
@@ -1490,6 +1491,7 @@
 ./usr/share/man/man4/cltp.4
 ./usr/share/man/man4/cy.4
 ./usr/share/man/man4/ddb.4
+./usr/share/man/man4/dpt.4
 ./usr/share/man/man4/drum.4
 ./usr/share/man/man4/eap.4
 ./usr/share/man/man4/ec.4
