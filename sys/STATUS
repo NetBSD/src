@@ -30,7 +30,7 @@ wds			compiles
 
 Port			Status of		comments
 			GENERIC kernel
-alpha
+alpha			compiles		asc untested
 
 amiga			not yet
 
