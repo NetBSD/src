@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 1997/09/29 16:57:51 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.29 1998/05/02 14:19:15 christos Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -22,9 +22,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: main.c,v 1.42 1997/07/14 03:53:25 paulus Exp ";
+static char rcsid[] = "Id: main.c,v 1.47 1998/03/30 06:25:34 paulus Exp ";
 #else
-__RCSID("$NetBSD: main.c,v 1.28 1997/09/29 16:57:51 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.29 1998/05/02 14:19:15 christos Exp $");
 #endif
 #endif
 
@@ -47,7 +47,6 @@ __RCSID("$NetBSD: main.c,v 1.28 1997/09/29 16:57:51 christos Exp $");
 #include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-#include <net/if.h>
 
 #include "pppd.h"
 #include "magic.h"
@@ -76,7 +75,7 @@ extern char *strerror();
 #endif
 
 /* interface vars */
-char ifname[IFNAMSIZ];		/* Interface name */
+char ifname[32];		/* Interface name */
 int ifunit;			/* Interface unit number */
 
 char *progname;			/* Name of this program */
@@ -93,11 +92,14 @@ int baud_rate;			/* Actual bits/second for serial device */
 int hungup;			/* terminal has been hung up */
 int privileged;			/* we're running as real uid root */
 int need_holdoff;		/* need holdoff period before restarting */
+int detached;			/* have detached from terminal */
 
 int phase;			/* where the link is at */
 int kill_link;
 int open_ccp_flag;
-int redirect_stderr;		/* Connector's stderr should go to file */
+
+char **script_env;		/* Env. variable values for scripts */
+int s_env_nalloc;		/* # words avail at script_env */
 
 u_char outpacket_buf[PPP_MRU+PPP_HDRLEN]; /* buffer for outgoing packet */
 u_char inpacket_buf[PPP_MRU+PPP_HDRLEN]; /* buffer for incoming packet */
@@ -110,6 +112,7 @@ char *no_ppp_msg = "Sorry - this system lacks PPP kernel support\n";
 
 /* Prototypes for procedures local to this file. */
 
+static void create_pidfile __P((void));
 static void cleanup __P((void));
 static void close_tty __P((void));
 static void get_input __P((void));
@@ -170,19 +173,21 @@ main(argc, argv)
 {
     int i, fdflags;
     struct sigaction sa;
-    FILE *pidfile;
     char *p;
     struct passwd *pw;
     struct timeval timo;
     sigset_t mask;
     struct protent *protp;
     struct stat statbuf;
+    char numbuf[16];
 
     phase = PHASE_INITIALIZE;
     p = ttyname(0);
     if (p)
 	strcpy(devnam, p);
     strcpy(default_devnam, devnam);
+
+    script_env = NULL;
 
     /* Initialize syslog facilities */
 #ifdef ULTRIX
@@ -200,6 +205,8 @@ main(argc, argv)
 
     uid = getuid();
     privileged = uid == 0;
+    sprintf(numbuf, "%d", uid);
+    script_setenv("UID", numbuf);
 
     /*
      * Initialize to the standard option set, then parse, in order,
@@ -208,7 +215,7 @@ main(argc, argv)
      */
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
         (*protp->init)(0);
-  
+
     progname = *argv;
 
     if (!options_from_file(_PATH_SYSOPTIONS, !privileged, 0, 1)
@@ -246,13 +253,18 @@ main(argc, argv)
 	exit(1);
     }
 
+    script_setenv("DEVICE", devnam);
+    sprintf(numbuf, "%d", baud_rate);
+    script_setenv("SPEED", numbuf);
+
     /*
      * If the user has specified the default device name explicitly,
      * pretend they hadn't.
      */
     if (!default_device && strcmp(devnam, default_devnam) == 0)
 	default_device = 1;
-    redirect_stderr = !nodetach || default_device;
+    if (default_device)
+	nodetach = 1;
 
     /*
      * Initialize system-dependent stuff and magic number package.
@@ -266,10 +278,8 @@ main(argc, argv)
      * Detach ourselves from the terminal, if required,
      * and identify who is running us.
      */
-    if (!default_device && !nodetach && daemon(0, 0) < 0) {
-	perror("Couldn't detach from controlling terminal");
-	exit(1);
-    }
+    if (nodetach == 0)
+	detach();
     pid = getpid();
     p = getlogin();
     if (p == NULL) {
@@ -368,16 +378,9 @@ main(argc, argv)
 
 	syslog(LOG_INFO, "Using interface ppp%d", ifunit);
 	(void) sprintf(ifname, "ppp%d", ifunit);
+	script_setenv("IFNAME", ifname);
 
-	/* write pid to file */
-	(void) sprintf(pidfilename, "%s%s.pid", _PATH_VARRUN, ifname);
-	if ((pidfile = fopen(pidfilename, "w")) != NULL) {
-	    fprintf(pidfile, "%d\n", pid);
-	    (void) fclose(pidfile);
-	} else {
-	    syslog(LOG_ERR, "Failed to create pid file %s: %m", pidfilename);
-	    pidfilename[0] = 0;
-	}
+	create_pidfile();	/* write pid to file */
 
 	/*
 	 * Configure the interface and mark it up, etc.
@@ -460,7 +463,15 @@ main(argc, argv)
 	if (connector && connector[0]) {
 	    MAINDEBUG((LOG_INFO, "Connecting with <%s>", connector));
 
-	    /* set line speed, flow control, etc.; set CLOCAL for now */
+	    /*
+	     * Set line speed, flow control, etc.
+	     * On most systems we set CLOCAL for now so that we can talk
+	     * to the modem before carrier comes up.  But this has the
+	     * side effect that we might miss it if CD drops before we
+	     * get to clear CLOCAL below.  On systems where we can talk
+	     * successfully to the modem with CLOCAL clear and CD down,
+	     * we can clear CLOCAL at this point.
+	     */
 	    set_up_tty(ttyfd, 1);
 
 	    /* drop dtr to hang up in case modem is off hook */
@@ -475,6 +486,7 @@ main(argc, argv)
 		setdtr(ttyfd, FALSE);
 		goto fail;
 	    }
+
 
 	    syslog(LOG_INFO, "Serial connection established.");
 	    sleep(1);		/* give it time to set up its terminal */
@@ -507,17 +519,9 @@ main(argc, argv)
 	    
 	    syslog(LOG_INFO, "Using interface ppp%d", ifunit);
 	    (void) sprintf(ifname, "ppp%d", ifunit);
-	    
-	    /* write pid to file */
-	    (void) sprintf(pidfilename, "%s%s.pid", _PATH_VARRUN, ifname);
-	    if ((pidfile = fopen(pidfilename, "w")) != NULL) {
-		fprintf(pidfile, "%d\n", pid);
-		(void) fclose(pidfile);
-	    } else {
-		syslog(LOG_ERR, "Failed to create pid file %s: %m",
-		       pidfilename);
-		pidfilename[0] = 0;
-	    }
+	    script_setenv("IFNAME", ifname);
+
+	    create_pidfile();	/* write pid to file */
 	}
 
 	/*
@@ -607,6 +611,43 @@ main(argc, argv)
 
     die(0);
     return 0;
+}
+
+/*
+ * detach - detach us from the controlling terminal.
+ */
+void
+detach()
+{
+    if (detached)
+	return;
+    if (daemon(0, 0) < 0) {
+	perror("Couldn't detach from controlling terminal");
+	die(1);
+    }
+    detached = 1;
+    pid = getpid();
+    /* update pid file if it has been written already */
+    if (pidfilename[0])
+	create_pidfile();
+}
+
+/*
+ * Create a file containing our process ID.
+ */
+static void
+create_pidfile()
+{
+    FILE *pidfile;
+
+    (void) sprintf(pidfilename, "%s%s.pid", _PATH_VARRUN, ifname);
+    if ((pidfile = fopen(pidfilename, "w")) != NULL) {
+	fprintf(pidfile, "%d\n", pid);
+	(void) fclose(pidfile);
+    } else {
+	syslog(LOG_ERR, "Failed to create pid file %s: %m", pidfilename);
+	pidfilename[0] = 0;
+    }
 }
 
 /*
@@ -1053,9 +1094,9 @@ device_script(program, in, out)
 		close(out);
 	    }
 	}
-	if (redirect_stderr) {
+	if (nodetach == 0) {
 	    close(2);
-	    errfd = open(_PATH_CONNERRS, O_WRONLY | O_APPEND | O_CREAT, 0644);
+	    errfd = open(_PATH_CONNERRS, O_WRONLY | O_APPEND | O_CREAT, 0600);
 	    if (errfd >= 0 && errfd != 2) {
 		dup2(errfd, 2);
 		close(errfd);
@@ -1094,7 +1135,6 @@ run_program(prog, args, must_exist)
     int must_exist;
 {
     int pid;
-    char *nullenv[1];
 
     pid = fork();
     if (pid == -1) {
@@ -1139,8 +1179,7 @@ run_program(prog, args, must_exist)
 	/* SysV recommends a second fork at this point. */
 
 	/* run the program; give it a null environment */
-	nullenv[0] = NULL;
-	execve(prog, args, nullenv);
+	execve(prog, args, script_env);
 	if (must_exist || errno != ENOENT)
 	    syslog(LOG_WARNING, "Can't execute %s: %m", prog);
 	_exit(-1);
@@ -1564,4 +1603,79 @@ vfmtmsg(buf, buflen, fmt, args)
     }
     *buf = 0;
     return buf - buf0;
+}
+
+/*
+ * script_setenv - set an environment variable value to be used
+ * for scripts that we run (e.g. ip-up, auth-up, etc.)
+ */
+void
+script_setenv(var, value)
+    char *var, *value;
+{
+    int vl = strlen(var);
+    int i;
+    char *p, *newstring;
+
+    newstring = (char *) malloc(vl + strlen(value) + 2);
+    if (newstring == 0)
+	return;
+    strcpy(newstring, var);
+    newstring[vl] = '=';
+    strcpy(newstring+vl+1, value);
+
+    /* check if this variable is already set */
+    if (script_env != 0) {
+	for (i = 0; (p = script_env[i]) != 0; ++i) {
+	    if (strncmp(p, var, vl) == 0 && p[vl] == '=') {
+		free(p);
+		script_env[i] = newstring;
+		return;
+	    }
+	}
+    } else {
+	i = 0;
+	script_env = (char **) malloc(16 * sizeof(char *));
+	if (script_env == 0)
+	    return;
+	s_env_nalloc = 16;
+    }
+
+    /* reallocate script_env with more space if needed */
+    if (i + 1 >= s_env_nalloc) {
+	int new_n = i + 17;
+	char **newenv = (char **) realloc((void *)script_env,
+					  new_n * sizeof(char *));
+	if (newenv == 0)
+	    return;
+	script_env = newenv;
+	s_env_nalloc = new_n;
+    }
+
+    script_env[i] = newstring;
+    script_env[i+1] = 0;
+}
+
+/*
+ * script_unsetenv - remove a variable from the environment
+ * for scripts.
+ */
+void
+script_unsetenv(var)
+    char *var;
+{
+    int vl = strlen(var);
+    int i;
+    char *p;
+
+    if (script_env == 0)
+	return;
+    for (i = 0; (p = script_env[i]) != 0; ++i) {
+	if (strncmp(p, var, vl) == 0 && p[vl] == '=') {
+	    free(p);
+	    while ((script_env[i] = script_env[i+1]) != 0)
+		++i;
+	    break;
+	}
+    }
 }

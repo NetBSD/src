@@ -1,4 +1,4 @@
-/*	$NetBSD: chap_ms.c,v 1.5 1997/11/19 11:59:59 christos Exp $	*/
+/*	$NetBSD: chap_ms.c,v 1.6 1998/05/02 14:19:14 christos Exp $	*/
 
 /*
  * chap_ms.c - Microsoft MS-CHAP compatible implementation.
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: chap_ms.c,v 1.4 1997/05/22 06:46:19 paulus Exp ";
+static char rcsid[] = "Id: chap_ms.c,v 1.8 1998/04/01 00:15:43 paulus Exp ";
 #else
-__RCSID("$NetBSD: chap_ms.c,v 1.5 1997/11/19 11:59:59 christos Exp $");
+__RCSID("$NetBSD: chap_ms.c,v 1.6 1998/05/02 14:19:14 christos Exp $");
 #endif
 #endif
 
@@ -51,6 +51,9 @@ __RCSID("$NetBSD: chap_ms.c,v 1.5 1997/11/19 11:59:59 christos Exp $");
 #include <sys/time.h>
 #include <syslog.h>
 #include <unistd.h>
+#ifdef HAVE_CRYPT_H
+#include <crypt.h>
+#endif
 
 #include "pppd.h"
 #include "chap.h"
@@ -260,9 +263,8 @@ ChapMS_NT(rchallenge, rchallenge_len, secret, secret_len, response)
 {
     int			i;
     MD4_CTX		md4Context;
-    u_short		hash[MD4_SIGNATURE_SIZE/sizeof(u_short)];
+    u_char		hash[MD4_SIGNATURE_SIZE];
     u_char		unicodePassword[MAX_NT_PASSWORD * 2];
-    static int		low_byte_first = -1;
 
     /* Initialize the Unicode version of the secret (== password). */
     /* This implicitly supports 8-bit ISO8859/1 characters. */
@@ -273,16 +275,9 @@ ChapMS_NT(rchallenge, rchallenge_len, secret, secret_len, response)
     MD4Init(&md4Context);
     MD4Update(&md4Context, unicodePassword, secret_len * 2 * 8);	/* Unicode is 2 bytes/char, *8 for bit count */
 
-    MD4Final((u_char *) hash, &md4Context); 	/* Tell MD4 we're done */
+    MD4Final(hash, &md4Context); 	/* Tell MD4 we're done */
 
-    if (low_byte_first == -1)
-	low_byte_first = (htons((unsigned short int)1) != 1);
-    if (low_byte_first == 0) {
-	for (i = 0; i < MD4_SIGNATURE_SIZE; i += sizeof(u_short))
-		hash[i] = htons(hash[i]);
-    }
-
-    ChallengeResponse(rchallenge, (u_char *)hash, response->NTResp);
+    ChallengeResponse(rchallenge, hash, response->NTResp);
 }
 
 #ifdef MSLANMAN
