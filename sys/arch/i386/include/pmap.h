@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.18 1995/04/10 12:42:05 mycroft Exp $	*/
+/*	$NetBSD: pmap.h,v 1.19 1995/05/11 16:53:06 jtc Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -152,7 +152,7 @@ struct pv_page {
 	struct pv_entry pvp_pv[NPVPPG];
 };
 
-#ifdef	KERNEL
+#ifdef	_KERNEL
 extern struct pmap	kernel_pmap_store;
 struct pv_entry		*pv_table;	/* array of entries, one per page */
 

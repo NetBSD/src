@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.5 1995/03/30 20:55:41 ragge Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.6 1995/05/11 16:53:17 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -218,7 +218,7 @@ struct ubinfo {
 #endif
 
 #ifndef LOCORE
-#ifdef KERNEL
+#ifdef _KERNEL
 #define	ubago(ui)	ubaqueue(ui, 0)
 
 /*
@@ -262,5 +262,5 @@ extern	int (*eUNIvec)();			/* end of unibus vec */
  */
 extern	Xua0int(), Xua1int(), Xua2int(), Xua3int();
 #endif VAX780
-#endif KERNEL
+#endif /* _KERNEL */
 #endif !LOCORE

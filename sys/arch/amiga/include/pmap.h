@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.12 1995/04/10 12:41:44 mycroft Exp $	*/
+/*	$NetBSD: pmap.h,v 1.13 1995/05/11 16:52:54 jtc Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -90,7 +90,7 @@ typedef struct pv_entry {
 #define	PV_CI		0x01	/* all entries must be cache inhibited */
 #define PV_PTPAGE	0x02	/* entry maps a page table page */
 
-#ifdef	KERNEL
+#ifdef	_KERNEL
 pv_entry_t	pv_table;	/* array of entries, one per page */
 u_int		*Sysmap;
 char		*vmmap;		/* map for mem, dumps, etc. */
@@ -104,6 +104,6 @@ struct pmap	kernel_pmap_store;
 #define pa_to_pvh(pa)		(&pv_table[pa_index(pa)])
 #define	pmap_kernel()		(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
-#endif	KERNEL
+#endif	/* _KERNEL */
 
 #endif	/* !_MACHINE_PMAP_H_ */
