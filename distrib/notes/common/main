@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.67 2000/07/28 22:15:19 bernie Exp $
+.\" $NetBSD: main,v 1.68 2000/07/28 22:26:50 federico Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -920,6 +920,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Joel Lindholm Ta Mt joel@NetBSD.ORG
 .It Ta Mike Long Ta Mt mikel@NetBSD.ORG
 .It Ta Warner Losh Ta Mt imp@NetBSD.ORG
+.It Ta Federico Lupi Ta Mt federico@NetBSD.ORG
 .It Ta Brett Lymn Ta Mt blymn@NetBSD.ORG
 .It Ta Paul Mackerras Ta Mt paulus@NetBSD.ORG
 .It Ta David Maxwell Ta Mt david@NetBSD.ORG
