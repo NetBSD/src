@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.127 2003/03/21 08:43:55 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.128 2003/03/21 09:27:41 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3822,4 +3822,17 @@ lib/libc/rpc/xdr_mem.c				1.16
 	Fix buffer overflow in Sun RPC implementation.
 
 	[david, ticket #1224]
+
+include/heimdal/version.h			1.13 (via patch)
+crypto/dist/heimdal/kdc/524.c			1.8
+crypto/dist/heimdal/kdc/config.c		1.9 (via patch)
+crypto/dist/heimdal/kdc/connect.c		1.9
+crypto/dist/heimdal/kdc/kdc.8			1.10 (via patch)
+crypto/dist/heimdal/kdc/kdc_locl.h		1.8 (via patch)
+crypto/dist/heimdal/kdc/kerberos4.c		1.2 (via patch)
+
+	Fix Kerberos 4 procotocol problem mentioned in
+	[MIT krb5 Security Advisory 2003-004]/[heimdal-0.5.2 release notes]
+	by disable support for it.
+	[lha, ticket #1225]
 
