@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.720 2004/08/19 09:54:06 drochner Exp $
+# $NetBSD: mi,v 1.721 2004/08/23 13:55:15 lukem Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -888,6 +888,7 @@
 ./usr/share/man/cat4/ipnat.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ippp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ipsec.0			man-sys-catman		.cat
+./usr/share/man/cat4/ipw.0			man-sys-catman		.cat
 ./usr/share/man/cat4/irda.0			man-sys-catman		.cat
 ./usr/share/man/cat4/irframe.0			man-sys-catman		.cat
 ./usr/share/man/cat4/irframetty.0		man-sys-catman		.cat
@@ -1752,6 +1753,7 @@
 ./usr/share/man/cat8/ipnat.0			man-ipf-catman		.cat
 ./usr/share/man/cat8/ippool.0			man-ipf-catman		.cat
 ./usr/share/man/cat8/ipppctl.0			man-isdn-catman		.cat
+./usr/share/man/cat8/ipwctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/irda.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/irdaattach.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/isdnd.0			man-isdn-catman		.cat
@@ -3014,6 +3016,7 @@
 ./usr/share/man/man4/ipnat.4			man-sys-man		.man
 ./usr/share/man/man4/ippp.4			man-sys-man		.man
 ./usr/share/man/man4/ipsec.4			man-sys-man		.man
+./usr/share/man/man4/ipw.4			man-sys-man		.man
 ./usr/share/man/man4/irda.4			man-sys-man		.man
 ./usr/share/man/man4/irframe.4			man-sys-man		.man
 ./usr/share/man/man4/irframetty.4		man-sys-man		.man
@@ -3879,6 +3882,7 @@
 ./usr/share/man/man8/ipnat.8			man-ipf-man		.man
 ./usr/share/man/man8/ippool.8			man-ipf-man		.man
 ./usr/share/man/man8/ipppctl.8			man-isdn-man		.man
+./usr/share/man/man8/ipwctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/irda.8			man-sysutil-man		.man
 ./usr/share/man/man8/irdaattach.8		man-sysutil-man		.man
 ./usr/share/man/man8/isdnd.8			man-isdn-man		.man
