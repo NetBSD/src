@@ -1,5 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.11 1998/07/08 00:47:53 mjacob Exp $ */
-
+/* $NetBSD: tlsb.c,v 1.12 1998/07/08 01:03:41 mjacob Exp $ */
 /*
  * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
@@ -40,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.11 1998/07/08 00:47:53 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.12 1998/07/08 01:03:41 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +72,15 @@ static int	tlsbprint __P((void *, const char *));
 static int	tlsbsubmatch __P((struct device *, struct cfdata *, void *));
 static char	*tlsb_node_type_str __P((u_int32_t));
 
-/* There can be only one, and we'll overload it with a bitmap of found nodes */
+/*
+ * There can be only one TurboLaser, and we'll overload it
+ * with a bitmap of found turbo laser nodes. Note that
+ * these are just the actual hard TL node IDS that we
+ * discover here, not the virtual IDs that get assigned
+ * to CPUs. During TLSB specific error handling we
+ * only need to know which actual TLSB slots have boards
+ * in them (irrespective of how many CPUs they have).
+ */
 int	tlsb_found;
 
 static int
