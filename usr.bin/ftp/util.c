@@ -1,4 +1,41 @@
-/*	$NetBSD: util.c,v 1.26 1998/07/06 06:50:49 mrg Exp $	*/
+/*	$NetBSD: util.c,v 1.27 1998/07/10 04:39:04 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -35,12 +72,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.26 1998/07/06 06:50:49 mrg Exp $");
+__RCSID("$NetBSD: util.c,v 1.27 1998/07/10 04:39:04 thorpej Exp $");
 #endif /* not lint */
 
 /*
  * FTP User Program -- Misc support routines
  */
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <arpa/ftp.h>
@@ -903,3 +942,111 @@ controlediting()
 	}
 }
 #endif /* !SMALL */
+
+/*
+ * Parse the specified socket buffer size.
+ */
+int
+getsockbufsize(arg)
+	const char *arg;
+{
+	char *cp;
+	int val;
+
+	if (!isdigit(arg[0]))
+		return (-1);
+
+	val = strtol(arg, &cp, 10);
+	if (cp != NULL) {
+		if (cp[1] != '\0')
+			 return (-1);
+		if (cp[0] == 'k')
+			val *= 1024;
+		if (cp[0] == 'm')
+			val *= 1024 * 1024;
+	}
+
+	if (val < 0)
+		return (-1);
+
+	return (val);
+}
+
+/*
+ * Set up socket buffer sizes before a connection is made.
+ */
+void
+setupsockbufsize(sock)
+	int sock;
+{
+	static int sndbuf_default, rcvbuf_default;
+	int len, size;
+
+	/*
+	 * Get the default socket buffer sizes if we don't already
+	 * have them.  It doesn't matter which socket we do this
+	 * to, because on the first call no socket buffer sizes
+	 * will have been modified, so we are guaranteed to get
+	 * the system defaults.
+	 */
+	if (sndbuf_default == 0) {
+		len = sizeof(sndbuf_default);
+		if (getsockopt(sock, SOL_SOCKET, SO_SNDBUF, &sndbuf_default,
+		    &len) < 0)
+			err(1, "unable to get default sndbuf size");
+		len = sizeof(rcvbuf_default);
+		if (getsockopt(sock, SOL_SOCKET, SO_RCVBUF, &rcvbuf_default,
+		    &len) < 0)
+			err(1, "unable to get default rcvbuf size");
+
+	}
+
+	size = sndbuf_size ? sndbuf_size : sndbuf_default;
+	if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &size, sizeof(size)) < 0)
+		warn("unable to set sndbuf size %d", size);
+
+	size = rcvbuf_size ? rcvbuf_size : rcvbuf_default;
+	if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &size, sizeof(size)) < 0)
+		warn("unable to set rcvbuf size %d", size);
+}
+
+/*
+ * If the socket buffer sizes were not set manually (i.e. came from a
+ * configuration file), reset them so the right thing will happen on
+ * subsequent connections.
+ */
+void
+resetsockbufsize()
+{
+
+	if (sndbuf_manual == 0)
+		sndbuf_size = 0;
+	if (rcvbuf_manual == 0)
+		rcvbuf_size = 0;
+}
+
+/*
+ * Internal version of connect(2); sets socket buffer sizes first.
+ */
+int
+xconnect(sock, name, namelen)
+	int sock;
+	const struct sockaddr *name;
+	int namelen;
+{
+
+	setupsockbufsize(sock);
+	return (connect(sock, name, namelen));
+}
+
+/*
+ * Internal version of listen(2); sets socket buffer sizes first.
+ */
+int
+xlisten(sock, backlog)
+	int sock, backlog;
+{
+
+	setupsockbufsize(sock);
+	return (listen(sock, backlog));
+}

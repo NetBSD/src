@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.35 1998/06/04 08:28:36 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.36 1998/07/10 04:39:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.35 1998/06/04 08:28:36 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.36 1998/07/10 04:39:04 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,7 +118,7 @@ hookup(host, port)
 		return (0);
 	}
 	hisctladdr.sin_port = port;
-	while (connect(s, (struct sockaddr *)&hisctladdr,
+	while (xconnect(s, (struct sockaddr *)&hisctladdr,
 			sizeof(hisctladdr)) < 0) {
 		if (errno == EINTR)
 			continue;
@@ -1151,7 +1151,7 @@ reinit:
 		p[0] = p0 & 0xff;
 		p[1] = p1 & 0xff;
 
-		while (connect(data, (struct sockaddr *)&data_addr,
+		while (xconnect(data, (struct sockaddr *)&data_addr,
 			    sizeof(data_addr)) < 0) {
 			if (errno == EINTR)
 				continue;
@@ -1199,7 +1199,7 @@ noport:
 		warn("getsockname");
 		goto bad;
 	}
-	if (listen(data, 1) < 0)
+	if (xlisten(data, 1) < 0)
 		warn("listen");
 	if (sendport) {
 		a = (char *)&data_addr.sin_addr;
