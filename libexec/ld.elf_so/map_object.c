@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.21 2002/09/27 19:48:24 mycroft Exp $	 */
+/*	$NetBSD: map_object.c,v 1.22 2002/10/04 18:50:43 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -63,19 +63,18 @@ _rtld_map_object(path, fd, sb)
 	Elf_Phdr	*phlimit;
 	Elf_Phdr	*segs[2];
 	int		 nsegs;
-	Elf_Phdr	*phdyn;
-	Elf_Phdr	*phphdr;
-	Elf_Phdr	*phinterp;
-	caddr_t		 mapbase;
+	caddr_t		 mapbase = MAP_FAILED;
 	size_t		 mapsize;
 	Elf_Off		 base_offset;
 	Elf_Addr	 base_vaddr;
 	Elf_Addr	 base_vlimit;
 	Elf_Addr	 text_vlimit;
+	int		 text_flags;
 	caddr_t		 base_addr;
 	Elf_Off		 data_offset;
 	Elf_Addr	 data_vaddr;
 	Elf_Addr	 data_vlimit;
+	int		 data_flags;
 	caddr_t		 data_addr;
 	caddr_t		 gap_addr;
 	size_t		 gap_size;
@@ -85,11 +84,18 @@ _rtld_map_object(path, fd, sb)
 	size_t		 nclear;
 #endif
 
+	obj = _rtld_obj_new();
+	obj->path = path;
+	if (sb != NULL) {
+		obj->dev = sb->st_dev;
+		obj->ino = sb->st_ino;
+	}
+
 	ehdr = mmap(NULL, _rtld_pagesz, PROT_READ, MAP_FILE | MAP_SHARED, fd,
 	    (off_t)0);
 	if (ehdr == MAP_FAILED) {
 		_rtld_error("%s: read error: %s", path, xstrerror(errno));
-		return NULL;
+		goto bad;
 	}
 	/* Make sure the file is valid */
 	if (memcmp(ELFMAG, ehdr->e_ident, SELFMAG) != 0 ||
@@ -133,11 +139,10 @@ _rtld_map_object(path, fd, sb)
 	phdr = (Elf_Phdr *) ((caddr_t)ehdr + ehdr->e_phoff);
 	phlimit = phdr + ehdr->e_phnum;
 	nsegs = 0;
-	phdyn = phphdr = phinterp = NULL;
 	while (phdr < phlimit) {
 		switch (phdr->p_type) {
 		case PT_INTERP:
-			phinterp = phdr;
+			obj->interp = (void *)phdr->p_vaddr;
 			break;
 
 		case PT_LOAD:
@@ -146,18 +151,15 @@ _rtld_map_object(path, fd, sb)
 			++nsegs;
 			break;
 
-		case PT_PHDR:
-			phphdr = phdr;
-			break;
-
 		case PT_DYNAMIC:
-			phdyn = phdr;
+			obj->dynamic = (void *)phdr->p_vaddr;
 			break;
 		}
 
 		++phdr;
 	}
-	if (phdyn == NULL) {
+	obj->entry = (void *)ehdr->e_entry;
+	if (!obj->dynamic) {
 		_rtld_error("%s: not dynamically linked", path);
 		goto bad;
 	}
@@ -183,58 +185,62 @@ _rtld_map_object(path, fd, sb)
 	base_vaddr = round_down(segs[0]->p_vaddr);
 	base_vlimit = round_up(segs[1]->p_vaddr + segs[1]->p_memsz);
 	text_vlimit = round_up(segs[0]->p_vaddr + segs[0]->p_memsz);
-	mapsize = base_vlimit - base_vaddr;
+	text_flags = protflags(segs[0]->p_flags);
+	data_offset = round_down(segs[1]->p_offset);
+	data_vaddr = round_down(segs[1]->p_vaddr);
+	data_vlimit = round_up(segs[1]->p_vaddr + segs[1]->p_filesz);
+	data_flags = protflags(segs[1]->p_flags);
+	clear_vaddr = segs[1]->p_vaddr + segs[1]->p_filesz;
+
+	obj->textsize = text_vlimit - base_vaddr;
+	obj->vaddrbase = base_vaddr;
+	obj->isdynamic = ehdr->e_type == ET_DYN;
+
+	munmap(ehdr, _rtld_pagesz);
+	ehdr = MAP_FAILED;
 
 #ifdef RTLD_LOADER
-	base_addr = ehdr->e_type == ET_EXEC ? (caddr_t) base_vaddr : NULL;
+	base_addr = obj->isdynamic ? NULL : (caddr_t)base_vaddr;
 #else
 	base_addr = NULL;
 #endif
-
-	mapbase = mmap(base_addr, mapsize, protflags(segs[0]->p_flags),
-		       MAP_FILE | MAP_PRIVATE, fd, base_offset);
+	mapsize = base_vlimit - base_vaddr;
+	mapbase = mmap(base_addr, mapsize, text_flags, MAP_FILE | MAP_PRIVATE,
+	    fd, base_offset);
 	if (mapbase == MAP_FAILED) {
 		_rtld_error("mmap of entire address space failed: %s",
 		    xstrerror(errno));
 		goto bad;
 	}
 
-	base_addr = mapbase;
-
 	/* Overlay the data segment onto the proper region. */
-	data_offset = round_down(segs[1]->p_offset);
-	data_vaddr = round_down(segs[1]->p_vaddr);
-	data_vlimit = round_up(segs[1]->p_vaddr + segs[1]->p_filesz);
 	data_addr = mapbase + (data_vaddr - base_vaddr);
-	if (mmap(data_addr, data_vlimit - data_vaddr,
-		 protflags(segs[1]->p_flags),
-		 MAP_FILE | MAP_PRIVATE | MAP_FIXED, fd, data_offset)
-	    == MAP_FAILED) {
+	if (mmap(data_addr, data_vlimit - data_vaddr, data_flags,
+	    MAP_FILE | MAP_PRIVATE | MAP_FIXED, fd, data_offset) ==
+	    MAP_FAILED) {
 		_rtld_error("mmap of data failed: %s", xstrerror(errno));
-		goto bad2;
+		goto bad;
 	}
 
 	/* Overlay the bss segment onto the proper region. */
 	if (mmap(mapbase + data_vlimit - base_vaddr, base_vlimit - data_vlimit,
-		 protflags(segs[1]->p_flags),
-		 MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0)
-	    == MAP_FAILED) {
+	    data_flags, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0) ==
+	    MAP_FAILED) {
 		_rtld_error("mmap of bss failed: %s", xstrerror(errno));
-		goto bad2;
+		goto bad;
 	}
 
 	/* Unmap the gap between the text and data. */
-	gap_addr = base_addr + round_up(text_vlimit - base_vaddr);
+	gap_addr = mapbase + round_up(text_vlimit - base_vaddr);
 	gap_size = data_addr - gap_addr;
 	if (gap_size != 0 && mprotect(gap_addr, gap_size, PROT_NONE) == -1) {
 		_rtld_error("mprotect of text -> data gap failed: %s",
 		    xstrerror(errno));
-		goto bad2;
+		goto bad;
 	}
 
 #ifdef RTLD_LOADER
 	/* Clear any BSS in the last page of the data segment. */
-	clear_vaddr = segs[1]->p_vaddr + segs[1]->p_filesz;
 	clear_addr = mapbase + (clear_vaddr - base_vaddr);
 	if ((nclear = data_vlimit - clear_vaddr) > 0)
 		memset(clear_addr, 0, nclear);
@@ -242,37 +248,25 @@ _rtld_map_object(path, fd, sb)
 	/* Non-file portion of BSS mapped above. */
 #endif
 
-	obj = _rtld_obj_new();
-	obj->path = path;
-	if (sb != NULL) {
-		obj->dev = sb->st_dev;
-		obj->ino = sb->st_ino;
-	}
 	obj->mapbase = mapbase;
 	obj->mapsize = mapsize;
-	obj->textsize = round_up(segs[0]->p_vaddr + segs[0]->p_memsz) -
-	    base_vaddr;
-	obj->vaddrbase = base_vaddr;
 	obj->relocbase = mapbase - base_vaddr;
-	obj->dynamic = (Elf_Dyn *)(obj->relocbase + phdyn->p_vaddr);
-	if (ehdr->e_entry != 0)
-		obj->entry = (caddr_t)(obj->relocbase + ehdr->e_entry);
-	if (phphdr != NULL) {
-		obj->phdr = (const Elf_Phdr *)
-		    (obj->relocbase + phphdr->p_vaddr);
-		obj->phsize = phphdr->p_memsz;
-	}
-	if (phinterp != NULL)
-		obj->interp = (const char *) (obj->relocbase + phinterp->p_vaddr);
-	obj->isdynamic = ehdr->e_type == ET_DYN;
 
-	munmap(ehdr, _rtld_pagesz);
+	if (obj->dynamic)
+		obj->dynamic = (void *)(obj->relocbase + (Elf_Addr)obj->dynamic);
+	if (obj->entry)
+		obj->entry = (void *)(obj->relocbase + (Elf_Addr)obj->entry);
+	if (obj->interp)
+		obj->interp = (void *)(obj->relocbase + (Elf_Addr)obj->interp);
+
 	return obj;
 
-bad2:
-	munmap(mapbase, mapsize);
 bad:
-	munmap(ehdr, _rtld_pagesz);
+	if (ehdr != MAP_FAILED)
+		munmap(ehdr, _rtld_pagesz);
+	if (mapbase != MAP_FAILED)
+		munmap(mapbase, mapsize);
+	_rtld_obj_free(obj);
 	return NULL;
 }
 
