@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.26 2001/04/09 12:46:47 wiz Exp $
+.\" $NetBSD: pkg_add.1,v 1.27 2001/04/10 01:39:44 itojun Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -397,6 +397,37 @@ Where to register packages instead of
 Staging directory for installing packages, defaults to /tmp.
 Set to directory with lots of free disk if you run out of
 space when installing a binary package.
+.Sh EXAMPLES
+In all cases,
+.Nm
+will try to install binary packages listed in dependencies list.
+.Pp
+You can specify a compiled binary package explicitly on the command line.
+.Bd -literal
+# pkg_add /usr/pkgsrc/packages/All/tcsh-6.10.00.tgz
+.Ed
+.Pp
+If you omit the version number,
+.Nm
+will install the latest version available.
+With
+.Fl v ,
+.Nm
+emits more messages to terminal.
+.Bd -literal
+# pkg_add -v /usr/pkgsrc/packages/All/unzip
+.Ed
+.Pp
+You can grab a compiled binary package from remote location, by specifying
+an URL.
+The URL can be put into an environment variable,
+.Ev PKG_PATH .
+.Bd -literal
+# pkg_add -v ftp://ftp.netbsd.org/pub/NetBSD/packages/1.5/i386/All/mozilla-0.8.1.tgz
+
+# export PKG_PATH=ftp://ftp.netbsd.org/pub/NetBSD/packages/1.5/i386/All
+# pkg_add -v mozilla
+.Ed
 .Sh SEE ALSO
 .Xr pkg_admin 1 ,
 .Xr pkg_create 1 ,
