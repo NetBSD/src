@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.44.4.1 2000/07/03 02:27:20 sommerfeld Exp $
+#	$NetBSD: security,v 1.44.4.2 2001/12/09 17:44:18 he Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -620,7 +620,7 @@ fi
 # the mtree(8) manual page.
 #
 if checkyesno check_mtree; then
-	mtree -e -p / -f /etc/mtree/special > $OUTPUT
+	mtree -e -l -p / -f /etc/mtree/special > $OUTPUT
 	if [ -s $OUTPUT ]; then
 		printf "\nChecking special files and directories.\n"
 		cat $OUTPUT
