@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.137 2001/05/06 11:31:08 hannken Exp $ */
+/*	$NetBSD: st.c,v 1.138 2001/05/14 20:35:29 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1596,9 +1596,8 @@ st_mode_sense(st, flags)
 {
 	u_int scsipi_sense_len;
 	int error;
-	struct scsi_mode_sense cmd;
 	struct scsipi_sense {
-		struct scsi_mode_header header;
+		struct scsipi_mode_header header;
 		struct scsi_blk_desc blk_desc;
 		u_char sense_data[MAX_PAGE_0_SIZE];
 	} scsipi_sense;
@@ -1608,21 +1607,14 @@ st_mode_sense(st, flags)
 
 	/*
 	 * Set up a mode sense
+	 * We don't need the results. Just print them for our interest's sake,
+	 * if asked, or if we need it as a template for the mode select store
+	 * it away.
 	 */
-	bzero(&cmd, sizeof(cmd));
-	cmd.opcode = SCSI_MODE_SENSE;
-	cmd.length = scsipi_sense_len;
+	error = scsipi_mode_sense(st->sc_periph, 0, SMS_PAGE_CTRL_CURRENT,
+	    &scsipi_sense.header, scsipi_sense_len, flags | XS_CTL_DATA_ONSTACK,
+	    ST_RETRIES, ST_CTL_TIME);
 
-	/*
-	 * do the command, but we don't need the results
-	 * just print them for our interest's sake, if asked,
-	 * or if we need it as a template for the mode select
-	 * store it away.
-	 */
-	error = scsipi_command(periph, (struct scsipi_generic *)&cmd,
-	    sizeof(cmd), (u_char *)&scsipi_sense, scsipi_sense_len,
-	    ST_RETRIES, ST_CTL_TIME, NULL,
-	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
 	if (error)
 		return (error);
 
@@ -1657,9 +1649,8 @@ st_mode_select(st, flags)
 	int flags;
 {
 	u_int scsi_select_len;
-	struct scsi_mode_select cmd;
 	struct scsi_select {
-		struct scsi_mode_header header;
+		struct scsipi_mode_header header;
 		struct scsi_blk_desc blk_desc;
 		u_char sense_data[MAX_PAGE_0_SIZE];
 	} scsi_select;
@@ -1682,10 +1673,6 @@ st_mode_select(st, flags)
 	/*
 	 * Set up for a mode select
 	 */
-	bzero(&cmd, sizeof(cmd));
-	cmd.opcode = SCSI_MODE_SELECT;
-	cmd.length = scsi_select_len;
-
 	bzero(&scsi_select, scsi_select_len);
 	scsi_select.header.blk_desc_len = sizeof(struct scsi_blk_desc);
 	scsi_select.header.dev_spec &= ~SMH_DSP_BUFF_MODE;
@@ -1702,10 +1689,9 @@ st_mode_select(st, flags)
 	/*
 	 * do the command
 	 */
-	return (scsipi_command(periph, (struct scsipi_generic *)&cmd,
-	    sizeof(cmd), (u_char *)&scsi_select, scsi_select_len,
-	    ST_RETRIES, ST_CTL_TIME, NULL,
-	    flags | XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK));
+	return scsipi_mode_select(periph, 0, &scsi_select.header,
+	    scsi_select_len, flags | XS_CTL_DATA_ONSTACK,
+	    ST_RETRIES, ST_CTL_TIME);
 }
 
 int
@@ -1714,10 +1700,9 @@ st_cmprss(st, onoff)
 	int onoff;
 {
 	u_int scsi_dlen;
-	struct scsi_mode_select mcmd;
-	struct scsi_mode_sense scmd;
+	int byte2, page;
 	struct scsi_select {
-		struct scsi_mode_header header;
+		struct scsipi_mode_header header;
 		struct scsi_blk_desc blk_desc;
 		u_char pdata[max(sizeof(struct scsi_tape_dev_conf_page),
 		    sizeof(struct scsi_tape_dev_compression_page))];
@@ -1728,41 +1713,33 @@ st_cmprss(st, onoff)
 	int error, ison, flags;
 
 	scsi_dlen = sizeof(scsi_pdata);
-	bzero(&scsi_pdata, scsi_dlen);
 
 	/*
-	 * Set up for a mode sense.
 	 * Do DATA COMPRESSION page first.
 	 */
-	bzero(&scmd, sizeof(scmd));
-	scmd.opcode = SCSI_MODE_SENSE;
-	scmd.page = SMS_PAGE_CTRL_CURRENT | 0xf;
-	scmd.length = scsi_dlen;
-
-	flags = XS_CTL_SILENT;
+	page = SMS_PAGE_CTRL_CURRENT | 0xf;
+	byte2 = 0;
 
 	/*
 	 * Do the MODE SENSE command...
 	 */
 again:
 	bzero(&scsi_pdata, scsi_dlen);
-	error = scsipi_command(periph,
-	    (struct scsipi_generic *)&scmd, sizeof(scmd),
-	    (u_char *)&scsi_pdata, scsi_dlen,
-	    ST_RETRIES, ST_CTL_TIME, NULL,
-	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
+	error = scsipi_mode_sense(periph, byte2, page,
+	    &scsi_pdata.header, scsi_dlen, flags | XS_CTL_DATA_ONSTACK,
+	    ST_RETRIES, ST_CTL_TIME);
 
 	if (error) {
-		if (scmd.byte2 != SMS_DBD) {
-			scmd.byte2 = SMS_DBD;
+		if (byte2 != SMS_DBD) {
+			byte2 = SMS_DBD;
 			goto again;
 		}
 		/*
 		 * Try a different page?
 		 */
-		if (scmd.page == (SMS_PAGE_CTRL_CURRENT | 0xf)) {
-			scmd.page = SMS_PAGE_CTRL_CURRENT | 0x10;
-			scmd.byte2 = 0;
+		if (page == (SMS_PAGE_CTRL_CURRENT | 0xf)) {
+			page = SMS_PAGE_CTRL_CURRENT | 0x10;
+			byte2 = 0;
 			goto again;
 		}
 		return (error);
@@ -1773,7 +1750,7 @@ again:
 	else
 		ptr = (struct scsi_tape_dev_conf_page *) &scsi_pdata.blk_desc;
 
-	if ((scmd.page & SMS_PAGE_CODE) == 0xf) {
+	if ((page & SMS_PAGE_CODE) == 0xf) {
 		cptr = (struct scsi_tape_dev_compression_page *) ptr;
 		ison = (cptr->dce_dcc & DCP_DCE) != 0;
 		if (onoff)
@@ -1819,10 +1796,6 @@ again:
 	else
 		scsi_pdata.header.dev_spec = 0;
 
-	bzero(&mcmd, sizeof(mcmd));
-	mcmd.opcode = SCSI_MODE_SELECT;
-	mcmd.byte2 = SMS_PF;
-	mcmd.length = scsi_dlen;
 	if (scsi_pdata.header.blk_desc_len) {
 		scsi_pdata.blk_desc.density = 0;
 		scsi_pdata.blk_desc.nblocks[0] = 0;
@@ -1833,17 +1806,14 @@ again:
 	/*
 	 * Do the command
 	 */
-	error = scsipi_command(periph,
-	    (struct scsipi_generic *)&mcmd, sizeof(mcmd),
-	    (u_char *)&scsi_pdata, scsi_dlen,
-	    ST_RETRIES, ST_CTL_TIME, NULL,
-	    flags | XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK);
+	error = scsipi_mode_select(periph, SMS_PF, &scsi_pdata.header,
+	    scsi_dlen, flags | XS_CTL_DATA_ONSTACK, ST_RETRIES, ST_CTL_TIME);
 
-	if (error && (scmd.page & SMS_PAGE_CODE) == 0xf) {
+	if (error && (page & SMS_PAGE_CODE) == 0xf) {
 		/*
 		 * Try DEVICE CONFIGURATION page.
 		 */
-		scmd.page = SMS_PAGE_CTRL_CURRENT | 0x10;
+		page = SMS_PAGE_CTRL_CURRENT | 0x10;
 		goto again;
 	}
 	return (error);

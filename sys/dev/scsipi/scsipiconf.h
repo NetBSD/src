@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.50 2001/05/02 09:47:45 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.51 2001/05/14 20:35:28 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -605,6 +605,14 @@ int	scsipi_test_unit_ready __P((struct scsipi_periph *, int));
 int	scsipi_prevent __P((struct scsipi_periph *, int, int));
 int	scsipi_inquire __P((struct scsipi_periph *,
 	    struct scsipi_inquiry_data *, int));
+int	scsipi_mode_select __P((struct scsipi_periph *, int,
+	    struct scsipi_mode_header *, int, int, int, int));
+int	scsipi_mode_select_big __P((struct scsipi_periph *, int,
+	    struct scsipi_mode_header_big *, int, int, int, int));
+int	scsipi_mode_sense __P((struct scsipi_periph *, int, int,
+	    struct scsipi_mode_header *, int, int, int, int));
+int	scsipi_mode_sense_big __P((struct scsipi_periph *, int, int,
+	    struct scsipi_mode_header_big *, int, int, int, int));
 int	scsipi_start __P((struct scsipi_periph *, int, int));
 void	scsipi_done __P((struct scsipi_xfer *));
 void	scsipi_user_done __P((struct scsipi_xfer *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: umassbus.h,v 1.2 2001/04/25 17:53:43 bouyer Exp $	*/
+/*	$NetBSD: umassbus.h,v 1.3 2001/05/14 20:35:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,6 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-#include <dev/scsipi/atapi_all.h>
 #include <dev/scsipi/atapiconf.h>
 
 #include <dev/scsipi/scsipi_disk.h>

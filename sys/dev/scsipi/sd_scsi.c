@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.16 2001/04/25 17:53:41 bouyer Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.17 2001/05/14 20:35:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ struct scsipi_inquiry_pattern sd_scsibus_patterns[] = {
 };
 
 struct sd_scsibus_mode_sense_data {
-	struct scsi_mode_header header;
+	struct scsipi_mode_header header;
 	struct scsi_blk_desc blk_desc;
 	union scsi_disk_pages pages;
 };
@@ -160,11 +160,6 @@ sd_scsibus_mode_sense(sd, scsipi_sense, page, flags)
 	struct sd_scsibus_mode_sense_data *scsipi_sense;
 	int page, flags;
 {
-	struct scsi_mode_sense sense_cmd;
-	struct scsi_mode_sense_big sensebig_cmd;
-	struct scsipi_generic *cmd;
-	int len;
-
 	/*
 	 * Make sure the sense buffer is clean before we do
 	 * the mode sense, so that checks for bogus values of
@@ -173,29 +168,18 @@ sd_scsibus_mode_sense(sd, scsipi_sense, page, flags)
 	bzero(scsipi_sense, sizeof(*scsipi_sense));
 
 	if (sd->sc_periph->periph_quirks & PQUIRK_ONLYBIG) {
-		memset(&sensebig_cmd, 0, sizeof(sensebig_cmd));
-		sensebig_cmd.opcode = SCSI_MODE_SENSE_BIG;
-		sensebig_cmd.page = page;
-		_lto2b(0x20, sensebig_cmd.length);
-		cmd = (struct scsipi_generic *)&sensebig_cmd;
-		len = sizeof(sensebig_cmd); 
+		return scsipi_mode_sense_big(sd->sc_periph, 0, page,
+		   (struct scsipi_mode_header_big*)&scsipi_sense->header,
+		    sizeof(*scsipi_sense),
+		    flags | XS_CTL_SILENT | XS_CTL_DATA_ONSTACK,
+		    SDRETRIES, 6000);
 	} else {
-		memset(&sense_cmd, 0, sizeof(sense_cmd));
-		sense_cmd.opcode = SCSI_MODE_SENSE;
-		sense_cmd.page = page;
-		sense_cmd.length = 0x20;
-		cmd = (struct scsipi_generic *)&sense_cmd;
-		len = sizeof(sense_cmd); 
+		return scsipi_mode_sense(sd->sc_periph, 0, page,
+		    &scsipi_sense->header, sizeof(*scsipi_sense),
+		    flags | XS_CTL_SILENT | XS_CTL_DATA_ONSTACK,
+		    SDRETRIES, 6000);
 	}
 
-	/*
-	 * If the command worked, use the results to fill out
-	 * the parameter structure
-	 */
-	return (scsipi_command(sd->sc_periph,
-	    cmd, len, (u_char *)scsipi_sense, sizeof(*scsipi_sense),
-	    SDRETRIES, 6000, NULL,
-	    flags | XS_CTL_DATA_IN | XS_CTL_SILENT | XS_CTL_DATA_ONSTACK));
 }
 
 static int
@@ -204,7 +188,6 @@ sd_scsibus_get_optparms(sd, dp, flags)
 	struct disk_parms *dp;
 	int flags;
 {
-	struct scsi_mode_sense scsipi_cmd;
 	struct sd_scsibus_mode_sense_data scsipi_sense;
 	u_long sectors;
 	int error;
@@ -219,16 +202,11 @@ sd_scsibus_get_optparms(sd, dp, flags)
 	 * However, there are stupid optical devices which does NOT
 	 * support the page 6. Ghaa....
 	 */
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = SCSI_MODE_SENSE;
-	scsipi_cmd.page = 0x3f;	/* all pages */
-	scsipi_cmd.length = sizeof(struct scsi_mode_header) +
-	    sizeof(struct scsi_blk_desc);
+	error = scsipi_mode_sense(sd->sc_periph, 0, 0x3f, &scsipi_sense.header,
+	    sizeof(struct scsipi_mode_header) + sizeof(struct scsi_blk_desc),
+	    flags | XS_CTL_DATA_ONSTACK, SDRETRIES, 6000);
 
-	if ((error = scsipi_command(sd->sc_periph,  
-	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),  
-	    (u_char *)&scsipi_sense, sizeof(scsipi_sense), SDRETRIES,
-	    6000, NULL, flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK)) != 0)
+	if (error != 0)
 		return (SDGP_RESULT_OFFLINE);		/* XXX? */
 
 	dp->blksize = _3btol(scsipi_sense.blk_desc.blklen);

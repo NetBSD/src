@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_base.c,v 1.15 2001/04/25 17:53:38 bouyer Exp $	*/
+/*	$NetBSD: atapi_base.c,v 1.16 2001/05/14 20:35:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -49,7 +49,6 @@
 #include <sys/proc.h>
 
 #include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/atapi_all.h>
 #include <dev/scsipi/scsipiconf.h>
 #include <dev/scsipi/atapiconf.h>
 #include <dev/scsipi/scsipi_base.h>
@@ -244,50 +243,5 @@ atapi_scsipi_cmd(periph, scsipi_cmd, cmdlen, data, datalen,
 
 	if ((error = scsipi_execute_xs(xs)) == EJUSTRETURN)
 		return (0);
-	return (error);
-}
-
-int
-atapi_mode_select(periph, data, len, flags, retries, timeout)
-	struct scsipi_periph *periph;
-	struct atapi_mode_header *data;
-	int len, flags, retries, timeout;
-{
-	struct atapi_mode_select scsipi_cmd;
-	int error;
-
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = ATAPI_MODE_SELECT;
-	scsipi_cmd.byte2 = AMS_PF;
-	_lto2b(len, scsipi_cmd.length);
-
-	/* length is reserved when doing mode select; zero it */
-	_lto2l(0, data->length);
-
-	error = scsipi_command(periph, (struct scsipi_generic *)&scsipi_cmd,
-	    sizeof(scsipi_cmd), (void *)data, len, retries, timeout, NULL,
-	    flags | XS_CTL_DATA_OUT);
-	SC_DEBUG(periph, SCSIPI_DB2, ("atapi_mode_select: error=%d\n", error));
-	return (error);
-}
-
-int
-atapi_mode_sense(periph, page, data, len, flags, retries, timeout)
-	struct scsipi_periph *periph;
-	int page, len, flags, retries, timeout;
-	struct atapi_mode_header *data;
-{
-	struct atapi_mode_sense scsipi_cmd;
-	int error;
-
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = ATAPI_MODE_SENSE;
-	scsipi_cmd.page = page;
-	_lto2b(len, scsipi_cmd.length);
-
-	error = scsipi_command(periph, (struct scsipi_generic *)&scsipi_cmd,
-	    sizeof(scsipi_cmd), (void *)data, len, retries, timeout, NULL,
-	    flags | XS_CTL_DATA_IN);
-	SC_DEBUG(periph, SCSIPI_DB2, ("atapi_mode_sense: error=%d\n", error));
 	return (error);
 }
