@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: named-bootconf.sh,v 1.2 1998/10/05 21:06:23 tron Exp $
+# $NetBSD: named-bootconf.sh,v 1.3 1998/10/05 21:37:18 tron Exp $
 #
 # Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -87,6 +87,18 @@ do
   if [ "$ARGS" != "" ]
   then
    (cd ${DIRECTORY-.}; cat $ARGS) | $0
+  fi
+  ;;
+ limit )
+  set - X $ARGS
+  shift
+  if [ $# -eq 2 ]
+  then
+   case $1 in
+    datasize | files | transfers-in | transfers-per-ns )
+    echo "	$1 $2;" >>$OPTIONFILE
+    ;;
+   esac
   fi
   ;;
  options )
