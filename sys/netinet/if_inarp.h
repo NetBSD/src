@@ -1,4 +1,4 @@
-/*	$NetBSD: if_inarp.h,v 1.29 1999/08/05 04:04:29 sommerfeld Exp $	*/
+/*	$NetBSD: if_inarp.h,v 1.30 2000/03/30 02:32:57 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -64,7 +64,7 @@ struct sockaddr_inarp {
 #define	RTF_ANNOUNCE	RTF_PROTO2	/* announce new arp entry */
 
 #ifdef _KERNEL
-struct	ifqueue arpintrq;
+extern struct ifqueue arpintrq;
 void arp_ifinit __P((struct ifnet *, struct ifaddr *));
 void arp_rtrequest __P((int, struct rtentry *, struct sockaddr *));
 int arpresolve __P((struct ifnet *, struct rtentry *, struct mbuf *,
