@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.20 1993/10/28 15:35:03 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.21 1993/10/28 17:02:30 mycroft Exp $
  */
 
 #ifdef DIAGNOSTIC
@@ -74,7 +74,6 @@
 
 enum fdc_state {
 	DEVIDLE = 0,
-	FINDWORK,
 	MOTORWAIT,
 	DOSEEK,
 	SEEKWAIT,
@@ -705,7 +704,6 @@ fdcstate(fdc)
 	timeout((timeout_t)fd_motor_off, (caddr_t)fd, 4 * hz);
 	switch (fdc->sc_state) {
 	    case DEVIDLE:
-	    case FINDWORK:			/* we have found new work */
 		fdc->sc_retry = 0;
 		fdc->sc_afd = fd;
 		fd->sc_skip = 0;
@@ -827,7 +825,7 @@ fdcstate(fdc)
 			dp->b_actf = bp->av_forw;
 			biodone(bp);
 			fdc->sc_afd = NULL;
-			fdc->sc_state = FINDWORK;
+			fdc->sc_state = DEVIDLE;
 		}
 		return 1;			/* will return immediately */
 
@@ -853,7 +851,7 @@ fdcstate(fdc)
 		out_fdc(iobase, NE7CMD_RECAL);	/* recalibrate function */
 		out_fdc(iobase, fd->sc_drive);
 		fdc->sc_state = RECALWAIT;
-		timeout((timeout_t)fd_timeout, (caddr_t)fdc, 10 * hz);
+		timeout((timeout_t)fd_timeout, (caddr_t)fdc, 5 * hz);
 		return 0;			/* will return later */
 
 	    case RECALWAIT:
@@ -935,7 +933,7 @@ fdcretry(fdc)
 		dp->b_actf = bp->av_forw;
 		fdc->sc_afd->sc_skip = 0;
 		biodone(bp);
-		fdc->sc_state = FINDWORK;
+		fdc->sc_state = DEVIDLE;
 		fdc->sc_afd = NULL;
 		fdc->sc_retry = 0;
 		return 1;
