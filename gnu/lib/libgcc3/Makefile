@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2003/07/26 14:55:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2003/07/27 14:41:44 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -34,6 +34,11 @@ ${LIB2FUNCS}: ${.CURDIR}/Makefile
 
 ${LIB2DIVMOD}: ${.CURDIR}/Makefile
 	printf '#define L${.PREFIX}\n#include <libgcc2.c>\n' >${.TARGET}
+
+# XXX
+.if ${MACHINE_ARCH} == "m68000"
+CPICFLAGS:=
+.endif
 
 ${G_LIB2ADDEH:=.o}:
 	${COMPILE.c} ${CPICFLAGS} -fexceptions -o ${.TARGET} ${.IMPSRC}
