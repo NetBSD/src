@@ -1,4 +1,4 @@
-.\"	$NetBSD: bah.4,v 1.1 1995/03/01 11:42:41 chopps Exp $
+.\"	$NetBSD: bah.4,v 1.2 1995/06/06 23:41:37 cgd Exp $
 .\"
 .\" Copyright (c) 1995 Ignatios Souvatzis
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\"
 
 .\" The following requests are required for all man pages.
-.Dd February 5, 1995
+.Dd May 31, 1995
 .Os NetBSD 1.0
 .Dt BAH 4 amiga
 .Sh NAME
@@ -59,7 +59,22 @@ to dynamically map between Internet and Ethernet addresses on the local
 network. Instead, it uses the least significant 8 bits of the IP address
 as hardware address, as described in
 .Xr RFC 1051
+and
+.Xr RFC 1201
 as one option.
+.Pp
+With the IFF_LINK0 flag cleared, IP encoding is done according to the
+deprecated, but popular among Amiga users, RFC 1051 encoding (that
+is, with simple header, packet type 240), and the MTU is 507.
+.Pp 
+With the IFF_LINK0 flag set, IP encoding is done according to RFC 1201 (that 
+is, with Packet Header Definition Standard header and packet type 212). The MTU
+is normally 1500.
+.Pp
+When switching between the two modes, do a 
+.Cd ifconfig interfacename down up
+to switch the mtu.
+.Pp
 .Sh HARDWARE
 The
 .Nm
@@ -78,8 +93,11 @@ Ameristar's arcnet card, manufacturer\ 1053, product\ 9
 .Xr RFC1051 
 ,
 .Xr RFC1201
+.br
+ARCnet Packet Header Definition Standard, Novell Inc., 1989
 .Sh STANDARDS
-RFC 1051 without ARP, using direct mapping of lower 8 IP address bits instead.
+RFC 1051 / RFC1201 without ARP, using direct mapping of lower 8 IP
+address bits instead.
 .Sh HISTORY
 The
 .Tn Amiga
