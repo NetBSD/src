@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.8 2002/06/14 00:30:57 wiz Exp $	*/
+/*	$NetBSD: terminal.c,v 1.9 2003/03/15 04:48:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)terminal.c	8.2 (Berkeley) 2/16/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.8 2002/06/14 00:30:57 wiz Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.9 2003/03/15 04:48:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,6 +116,7 @@ init_terminal()
  *		Send as much data as possible to the terminal.
  *
  *		Return value:
+ *			-2: Permanent error writing to FD.
  *			-1: No useful work done, data waiting to go out.
  *			 0: No data was waiting, so nothing was done.
  *			 1: All waiting data was written out.
@@ -156,8 +157,12 @@ ttyflush(drop)
 	}
 	ring_consumed(&ttyoring, n);
     }
-    if (n < 0)
-	return -1;
+    if (n < 0) {
+	if (errno == EAGAIN)
+	    return -1;
+	else
+	    return -2;
+    }
     if (n == n0) {
 	if (n0)
 	    return -1;
