@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $NetBSD: misc.c,v 1.12 2003/07/14 11:36:49 itojun Exp $ */
+/* $NetBSD: misc.c,v 1.13 2004/10/30 20:37:35 dsl Exp $ */
 
 #include "flexdef.h"
 
@@ -101,7 +101,7 @@ register char *str;
 	{
 	while ( *str )
 		{
-		if ( ! isascii( (Char) *str ) || ! islower( *str ) )
+		if ( ! isascii( (Char) *str ) || ! islower( (Char)*str ) )
 			return 0;
 		++str;
 		}
@@ -117,7 +117,7 @@ register char *str;
 	{
 	while ( *str )
 		{
-		if ( ! isascii( (Char) *str ) || ! isupper( *str ) )
+		if ( ! isascii( (Char) *str ) || ! isupper( (Char)*str ) )
 			return 0;
 		++str;
 		}
@@ -582,7 +582,7 @@ Char array[];
 			int sptr = 2;
 
 			while ( isascii( array[sptr] ) &&
-				isxdigit( (char) array[sptr] ) )
+				isxdigit( (Char) array[sptr] ) )
 				/* Don't increment inside loop control
 				 * because if isdigit() is a macro it might
 				 * expand into multiple increments ...
