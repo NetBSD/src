@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.45 1996/06/01 06:10:34 scottr Exp $	*/
+/*	$NetBSD: via.c,v 1.46 1996/06/07 10:41:30 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -169,6 +169,20 @@ VIA_initialize()
 		via2itab[1] = rbv_nubus_intr;
 		add_nubus_intr(0, slot_ignore, NULL);
 	}
+}
+
+/*
+ * Set the state of the modem serial port's clock source.
+ */
+void
+via_set_modem(onoff)
+	int	onoff;
+{
+	via_reg(VIA1, vDirA) |= DA10_vSync;
+	if (onoff)
+		via_reg(VIA1, vBufA) |= DA10_vSync;
+	else
+		via_reg(VIA1, vBufA) &= ~DA10_vSync;
 }
 
 void
