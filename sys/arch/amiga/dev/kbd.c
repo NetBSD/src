@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.22 1996/05/16 20:18:01 is Exp $	*/
+/*	$NetBSD: kbd.c,v 1.23 1996/09/14 14:55:08 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -151,7 +151,6 @@ kbdenable()
 			ciaa.icr = CIA_ICR_IR_SC | CIA_ICR_SP;
 						/* SP interrupt enable */
 			ciaa.cra &= ~(1<<6);	/* serial line == input */
-			printf("ok.\n");
 			break;
 		case 1:
 		case 2:
@@ -174,7 +173,6 @@ kbdenable()
 			while (draco_ioct->io_status & DRSTAT_KBDRECV) {
 				c = draco_ioct->io_kbddata;
 				draco_ioct->io_kbdrst = 0;
-				printf(".");
 				DELAY(2000);
 			}
 
