@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.53 2002/09/19 15:05:45 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.54 2002/09/19 18:54:18 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1512,3 +1512,8 @@ libexec/talkd/process.c				1.8 via patch
 libexec/talkd/talkd.c				1.13-1.14 via patch
 
   Fix buffer overrun.
+
+lib/libkvm/kvm.c				1.72-1.75,1.77
+
+  Set the close-on-exec bit on all file descriptors we open. Inspired by a
+  FreeBSD security advisory.
