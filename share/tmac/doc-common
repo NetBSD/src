@@ -179,9 +179,17 @@
 .\" .	if "\\$3"IMP"	.ds vT NetBSD Implementation Notes
 .\" .	if "\\$3"HOW"	.ds vT NetBSD How Pocket Manual
 .	if "\\$3"LOCAL" .ds vT NetBSD Local Manual
-.	if "\\$3"tahoe" .as vT \ (Tahoe Architecture)
-.	if "\\$3"vax" .as vT \ (VAX Architecture)
+.	if "\\$3"amiga" .as vT \ (AMIGA Architecture)
+.	if "\\$3"da30"  .as vT \ (DA30 Architecture)
 .	if "\\$3"hp300" .as vT \ (HP300 Architecture)
+.	if "\\$3"i386"  .as vT \ (I386 Architecture)
+.	if "\\$3"mac68k" .as vT \ (MAC68K Architecture)
+.	if "\\$3"pc532" .as vT \ (PC532 Architecture)
+.	if "\\$3"pmax"  .as vT \ (PMAX  Architecture)
+.	if "\\$3"sparc" .as vT \ (SPARC Architecture)
+.	if "\\$3"sun3"  .as vT \ (SUN3 Architecture)
+.	if "\\$3"tahoe" .as vT \ (TAHOE Architecture)
+.	if "\\$3"vax"   .as vT \ (VAX Architecture)
 .	if "\\*(vT"LOCAL" .ds vT \\$3
 .\}
 ..
