@@ -352,11 +352,12 @@ parse_config (cvsroot)
 	}
 	else if (strcmp (line, "tag") == 0) {
 	    RCS_citag = xstrdup(p);
-	    if (RCS_citag == NULL) {
-		error (0, 0, "%s: no memory for local tag '%s'",
-		       infopath, p);
-		goto error_return;
-	    }
+	}
+	else if (strcmp (line, "AdminGroup") == 0) {
+	    CVS_admin_group = xstrdup(p);
+	}
+	else if (strcmp (line, "AdminOptions") == 0) {
+	    CVS_admin_options = xstrdup(p);
 	}
 	else if (strcmp (line, "PreservePermissions") == 0)
 	{

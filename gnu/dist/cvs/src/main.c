@@ -51,6 +51,8 @@ int top_level_admin = 0;
 
 mode_t cvsumask = UMASK_DFLT;
 char *RCS_citag = NULL;
+char *CVS_admin_group = NULL;
+char *CVS_admin_options = NULL;
 const char *cvsDir = "CVS";
 
 char *CurDir;
