@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: misc.c,v 1.6 1993/08/02 17:50:27 mycroft Exp $";
+static char rcsid[] = "$Id: misc.c,v 1.7 1993/09/17 03:46:51 cgd Exp $";
 #endif /* not lint */
 
 
@@ -42,7 +42,6 @@ char *
 savestr(str)
 	char	*str;
 {
-	extern	int	strlen();
 	extern	char	*malloc(), *strcpy();
 	/**/	char	*temp;
 
@@ -284,7 +283,7 @@ be_different()
 	 *  do an IOCTL to void tty association
 	 */
 
-	extern int	getpid(), setpgrp(), open(), ioctl(), close();
+	extern int	getpid(), setpgrp(), close();
 	auto int	fd;
 
 	(void) setpgrp(0, getpid());

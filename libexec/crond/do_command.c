@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: do_command.c,v 1.6 1993/08/02 17:50:23 mycroft Exp $";
+static char rcsid[] = "$Id: do_command.c,v 1.7 1993/09/17 03:46:48 cgd Exp $";
 #endif
 
 
@@ -32,14 +32,15 @@ static char rcsid[] = "$Id: do_command.c,v 1.6 1993/08/02 17:50:23 mycroft Exp $
 # include <sys/universe.h>
 #endif
 
+static void child_process();
 
 void
 do_command(cmd, u)
 	char	*cmd;
 	user	*u;
 {
-	extern int	fork(), _exit();
-	extern void	child_process(), log_it();
+	extern int	fork();
+	extern void	log_it();
 	extern char	*env_get(), arpadate();
 
 	Debug(DPROC, ("[%d] do_command(%s, (%s,%d,%d))\n",
@@ -394,7 +395,7 @@ child_process(cmd, u)
 			if (mailto)
 			{
 				extern FILE	*popen();
-				extern char	*sprintf(), *print_cmd();
+				extern char	*print_cmd();
 				register char	**env;
 				auto char	mailcmd[MAX_COMMAND];
 				auto char	hostname[MAXHOSTNAMELEN];
@@ -499,7 +500,7 @@ child_process(cmd, u)
 
 		Debug(DPROC, ("[%d] waiting for grandchild #%d to finish\n",
 			getpid(), children))
-		pid = wait(&waiter);
+		pid = wait((int *)&waiter);
 		if (pid < OK) {
 			Debug(DPROC, ("[%d] no more grandchildren--mail written?\n",
 				getpid()))
