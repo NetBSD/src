@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.14 1997/10/20 22:05:25 thorpej Exp $	*/
+/*	$NetBSD: mman.h,v 1.14.2.1 1997/10/22 06:24:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -95,14 +95,16 @@ __BEGIN_DECLS
 void   *mmap __P((void *, size_t, int, int, int, off_t));
 int	munmap __P((void *, size_t));
 int	mprotect __P((void *, size_t, int));
+#ifdef __LIBC12_SOURCE__
 int	msync __P((void *, size_t));
 int	__msync13 __P((void *, size_t, int));
+#else
+int	msync __P((void *, size_t, int))	__RENAME("__msync13");
+#endif
 int	mlock __P((void *, size_t));
 int	munlock __P((void *, size_t));
 int	madvise __P((void *, size_t, int));
 __END_DECLS
-
-#define msync(p,s,f)	__msync13(p,s,f)
 
 #endif /* !_KERNEL */
 
