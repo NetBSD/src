@@ -98,6 +98,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "AIC-7850",
 	},
 	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7855,
+	    0,
+	    "Adaptec",
+	    "AIC-7855",
+	},
+	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7860,
+	    0,
+	    "Adaptec",
+	    "AIC-7860",
+	},
+	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2940AU,
+	    0,
+	    "Adaptec",
+	    "AHA-2940A Ultra",
+	},
+	{
 	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7870,
 	    0,
 	    "Adaptec",
