@@ -1,4 +1,4 @@
-/*	$NetBSD: revnetgroup.c,v 1.11 2002/11/30 03:10:59 lukem Exp $ */
+/*	$NetBSD: revnetgroup.c,v 1.12 2003/10/21 03:00:41 fvdl Exp $ */
 
 /*
  * Copyright (c) 1995
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: revnetgroup.c,v 1.11 2002/11/30 03:10:59 lukem Exp $");
+__RCSID("$NetBSD: revnetgroup.c,v 1.12 2003/10/21 03:00:41 fvdl Exp $");
 #endif
 
 #include <ctype.h>
@@ -154,9 +154,9 @@ main(int argc, char *argv[])
 	 */
 	for (i = 0; i < TABLESIZE; i++) {
 		gcur = gtable[i];
-		while(gcur) {
+		while (gcur) {
 			rng_setnetgrent(gcur->key);
-			while(rng_getnetgrent(&host, &user, &domain) != NULL) {
+			while (rng_getnetgrent(&host, &user, &domain) != 0) {
 				if (hosts) {
 					if (!(host && !strcmp(host,"-"))) {
 						mstore(mtable,
@@ -183,11 +183,11 @@ main(int argc, char *argv[])
 	/* Spew out the results. */
 	for (i = 0; i < TABLESIZE; i++) {
 		mcur = mtable[i];
-		while(mcur) {
+		while (mcur) {
 			struct grouplist *tmp;
 			printf ("%s.%s\t", mcur->key, mcur->domain);
 			tmp = mcur->groups;
-			while(tmp) {
+			while (tmp) {
 				printf ("%s", tmp->groupname);
 				tmp = tmp->next;
 				if (tmp)
