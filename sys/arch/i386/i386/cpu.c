@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.24 2001/09/22 23:01:04 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.25 2001/12/29 23:30:59 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ struct cfattach cpu_ca = {
  * CPU, on uniprocessors).  The CPU info list is initialized to
  * point at it.
  */
-struct cpu_info cpu_info_primary;
+struct cpu_info cpu_info_primary = { 0, &cpu_info_primary };
 struct cpu_info *cpu_info_list = &cpu_info_primary;
 
 #ifdef MULTIPROCESSOR
@@ -151,7 +151,7 @@ static void	cpu_copy_trampoline __P((void));
 void
 cpu_init_first()
 {
-	int cpunum = cpu_number();
+	int cpunum = lapic_cpu_number();
 
 	if (cpunum != 0) {
 		cpu_info[0] = NULL;
@@ -240,14 +240,15 @@ cpu_attach(parent, self, aux)
 	} else {
 		ci = &cpu_info_primary;
 #if defined(MULTIPROCESSOR)
-		if (cpunum != cpu_number()) {
+		if (cpunum != lapic_cpu_number()) {
 			panic("%s: running cpu is at apic %d"
 			    " instead of at expected %d\n",
-			    sc->sc_dev.dv_xname, cpu_number(), cpunum);
+			    sc->sc_dev.dv_xname, lapic_cpu_number(), cpunum);
 		}
 #endif
 	}
 
+	ci->ci_self = ci;
 	sc->sc_info = ci;
 
 	ci->ci_dev = self;
@@ -318,6 +319,7 @@ cpu_attach(parent, self, aux)
 		printf("apid %d (application processor)\n", caa->cpu_number);
 
 #if defined(MULTIPROCESSOR)
+		gdt_alloc_cpu(ci);
 		cpu_start_secondary(ci);
 		if (ci->ci_flags & CPUF_PRESENT) {
 			identifycpu(ci);
@@ -415,7 +417,7 @@ cpu_init(ci)
 
 #ifdef MULTIPROCESSOR
 	ci->ci_flags |= CPUF_RUNNING;
-	cpus_running |= 1 << cpu_number();
+	cpus_running |= 1 << ci->ci_cpuid;
 #endif
 }
 
@@ -515,8 +517,6 @@ cpu_boot_secondary(ci)
 	}
 }
 
-
-
 /*
  * The CPU ends up here when its ready to run
  * This is called from code in mptramp.s; at this point, we are running
@@ -553,9 +553,9 @@ cpu_hatch(void *v)
 
 	lcr0(ci->ci_idle_pcb->pcb_cr0);
 	lapic_set_lvt();
+	gdt_init_cpu(ci);
 	npxinit(ci);
 	cpu_init_idt();
-	gdt_init_cpu();
 
 	lldt(GSEL(GLDT_SEL, SEL_KPL));
 
@@ -563,7 +563,8 @@ cpu_hatch(void *v)
 
 	s = splhigh();
 	enable_intr();
-	printf("%s: CPU %d running\n",ci->ci_dev->dv_xname, cpu_number());
+
+	printf("%s: CPU %ld running\n",ci->ci_dev->dv_xname, ci->ci_cpuid);
 #if defined(I586_CPU) || defined(I686_CPU)
 	if (ci->ci_feature_flags & CPUID_TSC)
 		tsc_microset(ci);

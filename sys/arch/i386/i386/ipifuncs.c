@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.1.2.11 2001/09/22 23:01:04 sommerfeld Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.1.2.12 2001/12/29 23:31:01 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,10 @@
 #include <machine/atomic.h>
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
+#include <machine/i82489reg.h>
+#include <machine/i82489var.h>
 #include <machine/mtrr.h>
+#include <machine/gdt.h>
 
 #include <ddb/db_output.h>
 
@@ -91,6 +94,7 @@ void (*ipifunc[I386_NIPI])(struct cpu_info *) =
 	i386_ipi_synch_fpu,
 	pmap_do_tlb_shootdown,
 	i386_reload_mtrr,
+	gdt_reload_cpu,
 };
 
 void

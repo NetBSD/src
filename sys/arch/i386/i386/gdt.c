@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.22.2.5 2001/12/29 21:09:06 sommerfeld Exp $	*/
+/*	$NetBSD: gdt.c,v 1.22.2.6 2001/12/29 23:31:00 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.22.2.5 2001/12/29 21:09:06 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.22.2.6 2001/12/29 23:31:00 sommerfeld Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,9 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.22.2.5 2001/12/29 21:09:06 sommerfeld Exp 
 
 #include <machine/gdt.h>
 
-#define	MINGDTSIZ	512
-#define	MAXGDTSIZ	8192
-
 int gdt_size;		/* total number of GDT entries */
 int gdt_count;		/* number of GDT entries in use */
 int gdt_next;		/* next available slot for sweeping */
@@ -61,10 +58,14 @@ struct lock gdt_lock_store;
 
 static __inline void gdt_lock __P((void));
 static __inline void gdt_unlock __P((void));
+#if 0
 void gdt_compact __P((void));
+#endif
 void gdt_init __P((void));
 void gdt_grow __P((void));
+#if 0
 void gdt_shrink __P((void));
+#endif
 int gdt_get_slot __P((void));
 void gdt_put_slot __P((int));
 
@@ -91,6 +92,20 @@ gdt_unlock()
 	(void) lockmgr(&gdt_lock_store, LK_RELEASE, NULL);
 }
 
+void
+setgdt(int sel, void *base, size_t limit,
+    int type, int dpl, int def32, int gran)
+{
+	struct segment_descriptor *sd = &gdt[sel].sd;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	
+	setsegment(sd, base, limit, type, dpl, def32, gran);
+	for (CPU_INFO_FOREACH(cii, ci))
+		ci->ci_gdt[sel].sd = *sd;
+}
+
+#if 0
 /*
  * Compact the GDT as follows:
  * 0) We partition the GDT into two areas, one of the slots before gdt_count,
@@ -135,7 +150,7 @@ gdt_compact()
 			pmap->pm_ldt_sel = GSEL(slot, SEL_KPL);
 			/*
 			 * XXXSMP: if the pmap is in use on other
-			 * processors, they need to reload thier
+			 * processors, they need to reload their
 			 * LDT!
 			 */
 		}
@@ -151,6 +166,7 @@ gdt_compact()
 	gdt_free = GNULL_SEL;
 	proclist_unlock_read();
 }
+#endif
 
 /*
  * Initialize the GDT.
@@ -160,6 +176,7 @@ gdt_init()
 {
 	size_t max_len, min_len;
 	union descriptor *old_gdt;
+	struct cpu_info *ci = curcpu();
 	struct vm_page *pg;
 	vaddr_t va;
 
@@ -184,23 +201,56 @@ gdt_init()
 		    VM_PROT_READ | VM_PROT_WRITE);
 	}
 	memcpy(gdt, old_gdt, NGDT * sizeof(gdt[0]));
-
-	gdt_init_cpu();
+	ci->ci_gdt = gdt;
+	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci, sizeof(struct cpu_info)-1,
+	    SDT_MEMRWA, SEL_KPL, 1, 1);
+	gdt_init_cpu(ci);
 }
+
+void
+gdt_alloc_cpu(struct cpu_info *ci)
+{
+	int max_len = MAXGDTSIZ * sizeof(gdt[0]);
+	int min_len = MINGDTSIZ * sizeof(gdt[0]);
+
+	ci->ci_gdt = (union descriptor *)uvm_km_valloc(kernel_map, max_len);
+	uvm_map_pageable(kernel_map, (vaddr_t)ci->ci_gdt,
+	    (vaddr_t)ci->ci_gdt + min_len, FALSE, FALSE);
+	memcpy(ci->ci_gdt, gdt, min_len);
+	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci, sizeof(struct cpu_info)-1,
+	    SDT_MEMRWA, SEL_KPL, 1, 1);
+}
+
 
 /*
  * Load appropriate gdt descriptor.
  */
 
-void gdt_init_cpu()
+void
+gdt_init_cpu(struct cpu_info *ci)
 {
 	struct region_descriptor region;
 	size_t max_len;
 	
 	max_len = MAXGDTSIZ * sizeof(gdt[0]);
-	setregion(&region, gdt, max_len - 1);
+	setregion(&region, ci->ci_gdt, max_len - 1);
 	lgdt(&region);
 }
+
+#ifdef MULTIPROCESSOR
+
+void
+gdt_reload_cpu(struct cpu_info *ci)
+{
+	struct region_descriptor region;
+	size_t max_len;
+	
+	max_len = MAXGDTSIZ * sizeof(gdt[0]);
+	setregion(&region, ci->ci_gdt, max_len - 1);
+	lgdt(&region);
+}
+#endif
+
 
 /*
  * Grow or shrink the GDT.
@@ -209,6 +259,8 @@ void
 gdt_grow()
 {
 	size_t old_len, new_len;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
 	struct vm_page *pg;
 	vaddr_t va;
 
@@ -216,17 +268,21 @@ gdt_grow()
 	gdt_size <<= 1;
 	new_len = old_len << 1;
 
-	for (va = (vaddr_t)gdt + old_len; va < (vaddr_t)gdt + new_len;
-	    va += PAGE_SIZE) {
-		while ((pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO)) ==
-		       NULL) {
-			uvm_wait("gdt_grow");
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		for (va = (vaddr_t)(ci->ci_gdt) + old_len;
+		     va < (vaddr_t)(ci->ci_gdt) + new_len;
+		     va += PAGE_SIZE) {
+			while ((pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO)) ==
+			    NULL) {
+				uvm_wait("gdt_grow");
+			}
+			pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
+			    VM_PROT_READ | VM_PROT_WRITE);
 		}
-		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-		    VM_PROT_READ | VM_PROT_WRITE);
 	}
 }
 
+#if 0
 void
 gdt_shrink()
 {
@@ -249,7 +305,7 @@ gdt_shrink()
 		uvm_pagefree(pg);
 	}
 }
-
+#endif
 /*
  * Allocate a GDT slot as follows:
  * 1) If there are entries on the free list, use those.
@@ -288,14 +344,14 @@ gdt_get_slot()
  * Deallocate a GDT slot, putting it on the free list.
  */
 void
-gdt_put_slot(slot)
-	int slot;
+gdt_put_slot(int slot)
 {
 
 	gdt_lock();
 	gdt_count--;
 
 	gdt[slot].gd.gd_type = SDT_SYSNULL;
+#if 0
 	/* 
 	 * shrink the GDT if we're using less than 1/4 of it.
 	 * Shrinking at that point means we'll still have room for
@@ -306,51 +362,48 @@ gdt_put_slot(slot)
 		gdt_compact();
 		gdt_shrink();
 	} else {
+#endif
 		gdt[slot].gd.gd_selector = gdt_free;
 		gdt_free = slot;
+#if 0
 	}
+#endif
 
 	gdt_unlock();
 }
 
 int
-tss_alloc(pcb)
-	struct pcb *pcb;
+tss_alloc(struct pcb *pcb)
 {
 	int slot;
 
 	slot = gdt_get_slot();
-	setsegment(&gdt[slot].sd, &pcb->pcb_tss, sizeof(struct pcb) - 1,
+	setgdt(slot, &pcb->pcb_tss, sizeof(struct pcb) - 1,
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);
 	return GSEL(slot, SEL_KPL);
 }
 
 void
-tss_free(sel)
-	int sel;
+tss_free(int sel)
 {
 
 	gdt_put_slot(IDXSEL(sel));
 }
 
 void
-ldt_alloc(pmap, ldt, len)
-	struct pmap *pmap;
-	union descriptor *ldt;
-	size_t len;
+ldt_alloc(struct pmap *pmap, union descriptor *ldt, size_t len)
 {
 	int slot;
 
 	slot = gdt_get_slot();
-	setsegment(&gdt[slot].sd, ldt, len - 1, SDT_SYSLDT, SEL_KPL, 0, 0);
+	setgdt(slot, ldt, len - 1, SDT_SYSLDT, SEL_KPL, 0, 0);
 	simple_lock(&pmap->pm_lock);
 	pmap->pm_ldt_sel = GSEL(slot, SEL_KPL);
 	simple_unlock(&pmap->pm_lock);
 }
 
 void
-ldt_free(pmap)
-	struct pmap *pmap;
+ldt_free(struct pmap *pmap)
 {
 	int slot;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.30 2001/12/29 21:09:06 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.31 2001/12/29 23:31:02 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.376.2.30 2001/12/29 21:09:06 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.376.2.31 2001/12/29 23:31:02 sommerfeld Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -243,6 +243,7 @@ int	cpu_dumpsize __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
 void	dumpsys __P((void));
 void	init386 __P((paddr_t));
+void	initgdt __P((union descriptor *));
 
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 void	add_mem_cluster	__P((u_int64_t, u_int64_t, u_int32_t));
@@ -550,7 +551,7 @@ i386_proc0_tss_ldt_init()
 	struct pcb *pcb;
 	int x;
 
-	curpcb = pcb = &proc0.p_addr->u_pcb;
+	cpu_info_primary.ci_curpcb = pcb = &proc0.p_addr->u_pcb;
 
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	pcb->pcb_tss.tss_esp0 = (int)proc0.p_addr + USPACE - 16;
@@ -2672,9 +2673,37 @@ add_mem_cluster(seg_start, seg_end, type)
 #endif /* !defined(REALBASEMEM) && !defined(REALEXTMEM) */
 
 void
+initgdt(union descriptor *tgdt)
+{
+	struct region_descriptor region;
+	gdt = tgdt;
+	memset(gdt, 0, NGDT*sizeof(*gdt));
+	/* make gdt gates and memory segments */
+	setsegment(&gdt[GCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 1, 1);
+	setsegment(&gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 1, 1);
+	setsegment(&gdt[GUCODE_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
+	    SDT_MEMERA, SEL_UPL, 1, 1);
+	setsegment(&gdt[GUDATA_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
+	    SDT_MEMRWA, SEL_UPL, 1, 1);
+#if NBIOSCALL > 0
+	/* bios trampoline GDT entries */
+	setsegment(&gdt[GBIOSCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 0,
+	    0);
+	setsegment(&gdt[GBIOSDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 0,
+	    0);
+#endif
+	setsegment(&gdt[GCPU_SEL].sd, &cpu_info_primary,
+	    sizeof(struct cpu_info)-1, SDT_MEMRWA, SEL_KPL, 1, 1);
+
+	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
+	lgdt(&region);
+}
+
+void
 init386(first_avail)
 	vaddr_t first_avail;
 {
+	union descriptor *tgdt;
 	extern void consinit __P((void));
 	extern struct extent *iomem_ex;
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
@@ -2693,17 +2722,14 @@ init386(first_avail)
 	cpu_feature = cpu_info_primary.ci_feature_flags;
 
 	proc0.p_addr = proc0paddr;
-	curpcb = &proc0.p_addr->u_pcb;
+	cpu_info_primary.ci_curpcb = &proc0.p_addr->u_pcb;
 
 	i386_bus_space_init();
-
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
-
 	/*
 	 * Initailize PAGE_SIZE-dependent variables.
 	 */
 	uvm_setpagesize();
-
 	/*
 	 * A quick sanity check.
 	 */
@@ -2743,7 +2769,6 @@ init386(first_avail)
 	avail_start = PAGE_SIZE;
 #endif
 #endif
-
 	/*
 	 * Call pmap initialization to make new kernel address space.
 	 * We must do this before loading pages into the VM system.
@@ -2815,7 +2840,6 @@ init386(first_avail)
 		}
 	}
 #endif /* ! REALBASEMEM && ! REALEXTMEM */
-
 	/*
 	 * If the loop above didn't find any valid segment, fall back to
 	 * former code.
@@ -2871,7 +2895,6 @@ init386(first_avail)
 
 		avail_end = IOM_END + trunc_page(KBTOB(biosextmem));
 	}
-
 	/*
 	 * If we have 16M of RAM or less, just put it all on
 	 * the default free list.  Otherwise, put the first
@@ -3032,7 +3055,6 @@ init386(first_avail)
 			printf("WARNING: %ld bytes not available for msgbuf "
 			    "in last cluster (%ld used)\n", reqsz, sz);
 	}
-
 #if NBIOSCALL > 0 || defined(MULTIPROCESSOR)
 	/* install page 2 (reserved above) as PT page for first 4M */
 	pmap_enter(pmap_kernel(), (vaddr_t)vtopte(0), 2*PAGE_SIZE,
@@ -3061,8 +3083,10 @@ init386(first_avail)
 
 	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr,
 	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
-	idt = (union descriptor *)idt_vaddr;
+	pmap_update(pmap_kernel());
+	memset((void *)idt_vaddr, 0, PAGE_SIZE);
 
+	idt = (union descriptor *)idt_vaddr;
 #ifdef I586_CPU
 	pmap_enter(pmap_kernel(), pentium_idt_vaddr, idt_paddr,
 	    VM_PROT_READ, PMAP_WIRED|VM_PROT_READ);
@@ -3070,31 +3094,14 @@ init386(first_avail)
 #endif
 	pmap_update(pmap_kernel());
 
+	tgdt = gdt;
 	gdt = idt + NIDT;
 	ldt = gdt + NGDT;
 
+	memcpy(gdt, tgdt, NGDT*sizeof(*gdt));
 
-	/* make gdt gates and memory segments */
-	setsegment(&gdt[GCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 1, 1);
-	setsegment(&gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 1, 1);
 	setsegment(&gdt[GLDT_SEL].sd, ldt, NLDT * sizeof(ldt[0]) - 1,
 	    SDT_SYSLDT, SEL_KPL, 0, 0);
-	setsegment(&gdt[GUCODE_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
-	    SDT_MEMERA, SEL_UPL, 1, 1);
-	setsegment(&gdt[GUDATA_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
-	    SDT_MEMRWA, SEL_UPL, 1, 1);
-#if NBIOSCALL > 0
-	/* bios trampoline GDT entries */
-	setsegment(&gdt[GBIOSCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 0,
-	    0);
-	setsegment(&gdt[GBIOSDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 0,
-	    0);
-#endif
-#ifdef GMACHCALLS_SEL
-	setgate(&gdt[GMACHCALLS_SEL].gd, &IDTVEC(mach_trap), 1,
-	    SDT_SYS386CGT, SEL_UPL);
-#endif
-
 	/* make ldt gates and memory segments */
 	setgate(&ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1,
 	    SDT_SYS386CGT, SEL_UPL);
@@ -3126,7 +3133,6 @@ init386(first_avail)
 	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
 #endif
 	lidt(&region);
-
 
 #ifdef DDB
 	{
@@ -3162,6 +3168,8 @@ init386(first_avail)
 		kgdb_connect(1);
 	}
 #endif
+	printf("curcpu: %p; cpu_info_primary: %p\n",
+	    curcpu(), &cpu_info_primary);
 
 #if NMCA > 0
 	/* check for MCA bus, needed to be done before ISA stuff - if
@@ -3386,6 +3394,7 @@ idt_vec_free (vec)
 	unsetgate(&idt[vec].gd);
 }
 
+#if 0
 extern void xxx_lapic_time(void);
 
 void
@@ -3401,4 +3410,4 @@ xxx_lapic_time(void)
 	after=rdtsc();
 	printf("1000000 lapic_tpr reads: %llx\n", after-before);
 }
-
+#endif

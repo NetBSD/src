@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.30.2.3 2001/07/19 08:57:30 sommerfeld Exp $	*/
+/*	$NetBSD: segments.h,v 1.30.2.4 2001/12/29 23:31:08 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997
@@ -138,6 +138,7 @@ void setgate __P((struct gate_descriptor *, void *, int, int, int));
 void setregion __P((struct region_descriptor *, void *, size_t));
 void setsegment __P((struct segment_descriptor *, void *, size_t, int, int,
     int, int));
+void setgdt __P((int, void *, size_t, int, int, int, int));
 void unsetgate __P((struct gate_descriptor *));
 void cpu_init_idt __P((void));
 
@@ -241,7 +242,8 @@ void idt_vec_free __P((int));
 #define GPNPBIOSDATA_SEL 12
 #define GPNPBIOSSCRATCH_SEL 13
 #define GPNPBIOSTRAMP_SEL 14
-#define	NGDT		15
+#define GCPU_SEL	15	/* per-CPU segment */
+#define	NGDT		16
 
 /*
  * Entries in the Local Descriptor Table (LDT)

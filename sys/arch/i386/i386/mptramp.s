@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.s,v 1.1.2.8 2001/09/24 00:37:39 sommerfeld Exp $	*/
+/*	$NetBSD: mptramp.s,v 1.1.2.9 2001/12/29 23:31:04 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@
 #include <machine/segments.h>
 #include <machine/mpbiosvar.h>
 #include <machine/i82489reg.h>
+#include <machine/gdt.h>
 
 #define GDTE(a,b)               .byte   0xff,0xff,0x0,0x0,0x0,a,b,0x0
 #define _RELOC(x)       ((x) - KERNBASE)
@@ -149,7 +150,8 @@ _C_LABEL(cpu_spinup_trampoline):
 	.code32
 	
 _TRMP_LABEL(mp_startup)
-	movl    $ (MP_TRAMPOLINE+NBPG-4),%esp       # bootstrap stack end location
+	movl    $ (MP_TRAMPOLINE+NBPG-16),%esp       # bootstrap stack end,
+						     # with scratch space..
 	
 #ifdef MPDEBUG
 	leal    RELOC(cpu_trace),%edi       
@@ -169,14 +171,27 @@ _TRMP_LABEL(mp_startup)
                                         # enable paging & NPX emulation
         orl     $(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_EM|CR0_MP|CR0_WP),%eax
         movl    %eax,%cr0               # and let's page NOW!
+
 #ifdef MPDEBUG
-	leal    _C_LABEL(cpu_trace),%edi       # bootstrap stack end location
+	leal    _C_LABEL(cpu_trace),%edi
 #endif
-	HALT(0x7)
-	movw    $((NGDT*8) - 1), ngdt_table	# prepare segment descriptor
-	movl    _C_LABEL(gdt), %eax		# for real gdt
-	movl    %eax, ngdt_table+2
-	lgdt	ngdt_table
+	HALT(0x6)
+
+# ok, we're now running with paging enabled and sharing page tables with cpu0.
+# figure out which processor we really are, what stack we should be on, etc.
+
+	movzbl	_C_LABEL(local_apic)+LAPIC_ID+3,%ecx
+	leal	0(,%ecx,4),%ecx
+	movl	_C_LABEL(cpu_info)(%ecx),%ecx
+	
+	HALTT(0x7, %ecx)
+
+# %ecx points at our cpu_info structure..
+
+	movw    $((MAXGDTSIZ*8) - 1), 6(%esp)	# prepare segment descriptor
+	movl    CPU_INFO_GDT(%ecx), %eax	# for our real gdt
+	movl    %eax, 8(%esp)
+	lgdt	6(%esp)
 	HALT(0x8)	
 	jmp	1f
 	nop
@@ -198,56 +213,33 @@ _TRMP_LABEL(gdt_table)
 	 GDTE(0x93,0xcf)         # Kernel data
 _TRMP_LABEL(gdt_desc)	
 	.word   0x17             # limit 3 entries
-	.long   gdt_table              # where is is gdt
-_TRMP_LABEL(ngdt_table)   
-	.long  0		# filled in after paging in enabled
-	.long  0
-	.align 4,0x0
+	.long   gdt_table        # base of gdt
+	
 _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
 mp_cont:
 	HALT(0x15)
 
-# ok, we're now running with paging enabled and sharing page tables with cpu0.
-# figure out which processor we really are, what stack we should be on, etc.
-
-	movzbl	_C_LABEL(local_apic)+LAPIC_ID+3,%ecx
-	leal	0(,%ecx,4),%ecx
-	movl	_C_LABEL(cpu_info)(%ecx),%ecx
-	
-	HALTT(0x18, %ecx)
-
-# %ecx points at our cpu_info structure..
-
 	movl	CPU_INFO_IDLE_PCB(%ecx),%esi
-#	movl	P_ADDR(%edx),%esi
 	
-	HALTT(0x19, %esi)
-# %ecx points at our CPU_INFO.	
 # %esi now points at our PCB.
+		
+	HALTT(0x19, %esi)
 	
 	movl	PCB_ESP(%esi),%esp
 	movl	PCB_EBP(%esi),%ebp
 	
-	/* Load TSS info. */
-	movl	_C_LABEL(gdt),%eax
-#	movl	PCB_TSS_SEL(%esi),%edx
 	HALT(0x20)	
 	/* Switch address space. */
 	movl	PCB_CR3(%esi),%eax
 	HALTT(0x22, %eax)		
 	movl	%eax,%cr3
-	HALT(0x24)
-	
-#	/* Switch TSS. */
-#	andl	$~0x0200,4-SEL_KPL(%eax,%edx,1)
-#	ltr	%dx
-	
 	HALT(0x25)
-	/* Restore segment registers. */
+	/* load segment registers. */
+	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax
+	HALTT(0x26,%eax)	
+	movl	%eax,%fs		
 	xorl	%eax,%eax
-	HALTT(0x26,%eax)
-	movl	%eax,%fs
-	HALTT(0x27,%eax)	
+	HALTT(0x27,%eax)		
 	movl	%eax,%gs
 	movl    PCB_CR0(%esi),%eax
 	HALTT(0x28,%eax)		

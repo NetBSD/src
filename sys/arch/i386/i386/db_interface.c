@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.30.2.7 2001/12/29 21:09:06 sommerfeld Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.30.2.8 2001/12/29 23:30:59 sommerfeld Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.30.2.7 2001/12/29 21:09:06 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.30.2.8 2001/12/29 23:30:59 sommerfeld Exp $");
 
 #include "opt_ddb.h"
 
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.30.2.7 2001/12/29 21:09:06 sommer
 #include <machine/db_machdep.h>
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
+#include <machine/i82489reg.h>
+#include <machine/i82489var.h>
 #include <machine/atomic.h>
 
 #include <ddb/db_sym.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.28 2001/12/29 21:09:09 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.29 2001/12/29 23:31:06 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,14 +48,8 @@
 /*
  * Definitions unique to i386 cpu support.
  */
-#include <machine/psl.h>
 #include <machine/frame.h>
 #include <machine/segments.h>
-
-#ifdef MULTIPROCESSOR
-#include <machine/i82489reg.h>
-#include <machine/i82489var.h>
-#endif
 
 #include <sys/device.h>
 #include <sys/lock.h>			/* will also get LOCKDEBUG */
@@ -86,6 +80,7 @@ struct i386_cache_info {
 
 struct cpu_info {
 	struct device *ci_dev;		/* pointer to our device */
+	struct cpu_info *ci_self;	/* self-pointer */
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 	struct cpu_info *ci_next;	/* next cpu */
 
@@ -105,11 +100,11 @@ struct cpu_info {
 	 */
 	struct proc *ci_fpcurproc;	/* current owner of the FPU */
 	int	ci_fpsaving;		/* save in progress */
-	
+
 	struct pcb *ci_curpcb;		/* VA of current HW PCB */
 	struct pcb *ci_idle_pcb;	/* VA of current PCB */
 	int ci_idle_tss_sel;		/* TSS selector of idle PCB */
-	
+
 	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
 	u_int32_t ci_flags;		/* flags; see below */
 	u_int32_t ci_ipis;		/* interprocessor interrupts pending */
@@ -119,11 +114,11 @@ struct cpu_info {
 	u_int32_t	ci_signature;	 /* X86 cpuid type */
 	u_int32_t	ci_feature_flags;/* X86 CPUID feature bits */
 	u_int32_t	ci_cpu_class;	 /* CPU class */
-	u_int32_t	ci_brand_id;	 /* Intel brand id */	
+	u_int32_t	ci_brand_id;	 /* Intel brand id */
 	u_int32_t	ci_vendor[4];	 /* vendor string */
 	u_int32_t	ci_cpu_serial[3]; /* PIII serial number */
 	u_int64_t	ci_tsc_freq;	 /* cpu cycles/second */
-	
+
 	struct cpu_functions *ci_func;  /* start/stop functions */
 	void (*cpu_setup) __P((struct cpu_info *));
  					/* proc-dependant init */
@@ -143,6 +138,8 @@ struct cpu_info {
 	int64_t ci_tsc_tsc;
 	int64_t ci_tsc_ms_delta;
 	int64_t ci_tsc_denom;
+
+	union descriptor *ci_gdt;
 };
 
 /*
@@ -150,7 +147,7 @@ struct cpu_info {
  * roles (mostly relating to hardclock handling); we distinguish
  * betwen the processor which booted us, and the processor currently
  * holding the "primary" role just to give us the flexibility later to
- * change primaries should we be sufficiently twisted.  
+ * change primaries should we be sufficiently twisted.
  */
 
 #define	CPUF_BSP	0x0001		/* CPU is the original BSP */
@@ -185,12 +182,13 @@ extern struct cpu_info *cpu_info_list;
 #define CPU_STOP(_ci)	        ((_ci)->ci_func->stop(_ci))
 #define CPU_START_CLEANUP(_ci)	((_ci)->ci_func->cleanup(_ci))
 
-#define cpu_number() 		(i82489_readreg(LAPIC_ID)>>LAPIC_ID_SHIFT)
-#define curcpu()		(cpu_info[cpu_number()])
+#define curcpu()		({struct cpu_info *ci; 			\
+				  asm volatile("movl %%fs:4,%0" : "=r" (ci)); \
+				  ci;})
+#define cpu_number() 		(curcpu()->ci_cpuid)
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 
-#define	curpcb			curcpu()->ci_curpcb
 #if 0
 #define i386_ipisend(ci)	(((ci) != curcpu()) ? i386_send_ipi((ci),0) : 0)
 #else
@@ -214,8 +212,6 @@ extern void need_resched __P((struct cpu_info *));
 
 #define	I386_MAXPROCS		1
 
-volatile u_int32_t astpending;
-
 #ifdef _KERNEL
 extern struct cpu_info cpu_info_primary;
 
@@ -238,10 +234,13 @@ do {									\
 	__ci->ci_want_resched = 1;					\
 	aston(__ci);							\
 } while (0)
-	
-#define aston(ci)		(astpending = 1)
+
+#define aston(ci)		(curcpu()->ci_astpending = 1)
 
 #endif
+
+#define	curpcb			curcpu()->ci_curpcb
+#define	curproc			curcpu()->ci_curproc
 
 #define	cpu_swapin(p)		/* nothing */
 
@@ -409,7 +408,9 @@ void i386_bus_space_mallocok __P((void));
 
 #endif /* _KERNEL */
 
-/* 
+#include <machine/psl.h>
+
+/*
  * CTL_MACHDEP definitions.
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */

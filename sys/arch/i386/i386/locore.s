@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.28 2001/09/22 23:01:05 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.29 2001/12/29 23:31:01 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -125,70 +125,34 @@
 #include <machine/asm.h>
 
 #define CPL _C_LABEL(lapic_tpr)
+#define _CONCAT(a,b) a/**/b
 
 #if defined(MULTIPROCESSOR)
-
-#include <machine/i82489reg.h>
-
-#define GET_CPUINFO(reg)			  \
-	movzbl	_C_LABEL(lapic_id)+3,reg	; \
-	movl	_C_LABEL(cpu_info)(,reg,4),reg
-
-#define GET_CURPROC(reg, treg)			\
-	GET_CPUINFO(treg)		;	\
-	movl	CPU_INFO_CURPROC(treg),reg
-
-#define PUSH_CURPROC(treg)			\
-	GET_CPUINFO(treg)		;	\
-	pushl	CPU_INFO_CURPROC(treg)
+#define CPUVAR(off) %fs:_CONCAT(CPU_INFO_,off)
+#else
+#define CPUVAR(off) _C_LABEL(cpu_info_primary)+_CONCAT(CPU_INFO_,off)
+#endif
 	
-#define CLEAR_CURPROC(treg)			\
-	GET_CPUINFO(treg)		;	\
-	movl	$0,CPU_INFO_CURPROC(treg)
+#if defined(MULTIPROCESSOR)
 	
 #define SET_CURPROC(proc,cpu)				\
-	GET_CPUINFO(cpu)			;	\
-	movl	proc,CPU_INFO_CURPROC(cpu)	;	\
+	movl	CPUVAR(SELF),cpu		; 	\
+	movl	proc,CPUVAR(CURPROC)	;	\
 	movl	cpu,P_CPU(proc)
 	
-#define GET_CURPCB(reg)				\
-	GET_CPUINFO(reg)		;	\
-	movl	CPU_INFO_CURPCB(reg),reg
-
-#define SET_CURPCB(reg,treg)				\
-	GET_CPUINFO(treg)		;	\
-	movl	reg,CPU_INFO_CURPCB(treg)
-
-#define	CLEAR_RESCHED(treg)				\
-	GET_CPUINFO(treg)		;		\
-	xorl	%eax,%eax		;		\
-	movl	%eax,CPU_INFO_RESCHED(treg)
-
-#define CHECK_ASTPENDING(treg)				\
-	GET_CPUINFO(treg)				;\
-	cmpl $0,CPU_INFO_ASTPENDING(treg)
-		
-#define CLEAR_ASTPENDING(cireg)				\
-	movl $0,CPU_INFO_ASTPENDING(cireg)
-
 #else
 
-#define GET_CURPROC(reg,treg)		movl	_C_LABEL(curproc),reg
-#define CLEAR_CURPROC(treg)		movl	$0,_C_LABEL(curproc)
-#define SET_CURPROC(reg,treg)		movl	reg,_C_LABEL(curproc)
-#define PUSH_CURPROC(treg)		pushl	_C_LABEL(curproc)
+#define SET_CURPROC(proc,tcpu)		movl	proc,CPUVAR(CURPROC)
 
-#define GET_CURPCB(reg)			movl	_C_LABEL(curpcb),reg	
-#define SET_CURPCB(reg,treg)		movl	reg,_C_LABEL(curpcb)
-
-#define CHECK_ASTPENDING(treg)		cmpb	$0,_C_LABEL(astpending)	
-#define CLEAR_ASTPENDING(treg)		movb	$0,_C_LABEL(astpending)
-	
-#define CLEAR_RESCHED(treg)				 \
-	xorl	%eax,%eax				;\
-	movl	%eax,_C_LABEL(cpu_info_primary)+CPU_INFO_RESCHED		; 
-	
 #endif
+
+#define GET_CURPCB(reg)			movl	CPUVAR(CURPCB),reg	
+#define SET_CURPCB(reg)			movl	reg,CPUVAR(CURPCB)
+
+#define CHECK_ASTPENDING()		cmpl $0,CPUVAR(ASTPENDING)
+#define CLEAR_ASTPENDING()		movl $0,CPUVAR(ASTPENDING)
+	
+#define CLEAR_RESCHED(reg)		movl	reg,CPUVAR(RESCHED)
 
 /* XXX temporary kluge; these should not be here */
 /* Get definitions for IOM_BEGIN, IOM_END, and IOM_SIZE */
@@ -232,12 +196,13 @@
 	pushl	%edi		; \
 	pushl	%ds		; \
 	pushl	%es		; \
-	movw	%ax,%ds		; \
-	movw	%ax,%es		; \
+	movl	%eax,%ds	; \
+	movl	%eax,%es	; \
 	pushl	%fs		; \
 	pushl	%gs		; \
-	movw	%ax,%fs		; \
-	movw	%ax,%gs		; \
+	movl	%eax,%gs	; \
+	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax	; \
+	movl	%eax,%fs		
 
 #define	INTRFASTEXIT \
 	popl	%gs		; \
@@ -255,6 +220,10 @@
 	iret
 
 
+#ifdef MULTIPROCESSOR
+#include <machine/i82489reg.h>
+#endif
+	
 /*
  * PTmap is recursive pagemap at top of virtual address space.
  * Within PTmap, the page directory can be found (third indirection).
@@ -291,9 +260,6 @@
 	.globl	_C_LABEL(proc0paddr),_C_LABEL(PTDpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
 	.globl	_C_LABEL(gdt)
-#ifndef MULTIPROCESSOR
-	.globl	_C_LABEL(curpcb)
-#endif
 #ifdef I586_CPU
 	.globl	_C_LABEL(idt)
 #endif
@@ -758,13 +724,19 @@ begin:
 	movl	%esi,PCB_CR3(%eax)	# pcb->pcb_cr3
 	xorl	%ebp,%ebp               # mark end of frames
 
+	subl	$NGDT*8, %esp		# space for temporary gdt
+	pushl	%esp
+	call	_C_LABEL(initgdt)
+	addl	$4,%esp
+		
 	movl	_C_LABEL(nkpde),%eax
 	shll	$PGSHIFT,%eax
 	addl	$TABLESIZE,%eax
 	addl	%esi,%eax		# skip past stack and page tables
+
 	pushl	%eax
 	call	_C_LABEL(init386)	# wire 386 chip for unix operation
-	addl	$4,%esp
+	addl	$4+NGDT*8,%esp		# pop temporary gdt
 
 #ifdef SAFARI_FIFO_HACK
 	movb	$5,%al
@@ -1700,9 +1672,12 @@ NENTRY(lgdt)
 	nop
 1:	/* Reload "stale" selectors. */
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movw	%ax,%ds
-	movw	%ax,%es
-	movw	%ax,%ss
+	movl	%eax,%ds
+	movl	%eax,%es
+	movl	%eax,%gs	
+	movl	%eax,%ss
+	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax
+	movl	%eax,%fs
 	/* Reload code selector by doing intersegment return. */
 	popl	%eax
 	pushl	$GSEL(GCODE_SEL, SEL_KPL)
@@ -1854,7 +1829,7 @@ ENTRY(cpu_switch)
 	pushl	%esi
 	pushl	%edi
 
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	cmpl	$IPL_HIGH,CPL
 	je	1f
 	pushl	2f
@@ -1863,9 +1838,9 @@ ENTRY(cpu_switch)
 2:	.asciz	"not splhigh() in cpu_switch!"
 
 1:	
-#endif /* DIAGNOSTIC */
+#endif /* DEBUG */
 	
-	GET_CURPROC(%esi,%ecx)
+	movl	CPUVAR(CURPROC),%esi
 
 	/*
 	 * Clear curproc so that we don't accumulate system time while idle.
@@ -1874,7 +1849,7 @@ ENTRY(cpu_switch)
 	 * below and changes the priority.  (See corresponding comment in
 	 * userret()).
 	 */
-	CLEAR_CURPROC(%ecx)
+	movl	$0,CPUVAR(CURPROC)
 	/*
 	 * First phase: find new process.
 	 *
@@ -1918,12 +1893,10 @@ ENTRY(cpu_switch)
 	movl	P_ADDR(%ebx),%esi
 	movl	P_MD_TSS_SEL(%ebx),%edx
 #else
-	GET_CPUINFO(%ebx)
-	movl	CPU_INFO_IDLE_PCB(%ebx),%esi
-	movl	CPU_INFO_IDLE_TSS_SEL(%ebx),%edx
+	movl	%fs:CPU_INFO_IDLE_PCB,%esi
+	movl	%fs:CPU_INFO_IDLE_TSS_SEL,%edx
 #endif
-	/* In case we fault... */
-	CLEAR_CURPROC(%ecx)
+	movl	$0,CPUVAR(CURPROC)		/* In case we fault... */
 
 	/* Restore the idle context (avoid interrupts) */
 	cli
@@ -1938,7 +1911,11 @@ ENTRY(cpu_switch)
 	movl	%ecx,%cr3
 
 	/* Switch TSS. Reset "task busy" flag before loading. */
+#ifdef MULTIPROCESSOR
+	movl	%fs:CPU_INFO_GDT,%eax
+#else
 	movl	_C_LABEL(gdt),%eax
+#endif
 	andl	$~0x0200,4-SEL_KPL(%eax,%edx,1)
 	ltr	%dx
 
@@ -1949,7 +1926,7 @@ ENTRY(cpu_switch)
 	movl	%ecx,%cr0
 
 	/* Record new pcb. */
-	SET_CURPCB(%esi, %ecx)
+	SET_CURPCB(%esi)
 
 	xorl	%esi,%esi
 	sti
@@ -1980,7 +1957,7 @@ idle_start:
 	cmpl	$0,_C_LABEL(sched_whichqs)
 	jz	idle_loop
 idle_exit:	
-	movl	$IPL_HIGH,CPL
+	movl	$IPL_HIGH,CPL		# splhigh
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)	
 	call	_C_LABEL(sched_lock_idle)
 #endif
@@ -2012,7 +1989,8 @@ switch_dequeue:
 	movl	%ecx,_C_LABEL(sched_whichqs) # update q status
 
 3:	/* We just did it. */
-	CLEAR_RESCHED(%ecx)
+	xorl	%eax,%eax
+	CLEAR_RESCHED(%eax)
 
 #ifdef	DIAGNOSTIC
 	cmpl	%eax,P_WCHAN(%edi)	# Waiting for something?
@@ -2083,8 +2061,12 @@ switch_exited:
 	jnz	switch_restored
 #endif
 
+#ifdef MULTIPROCESSOR
+	movl	%fs:CPU_INFO_GDT,%eax
+#else	
 	/* Load TSS info. */
 	movl	_C_LABEL(gdt),%eax
+#endif
 	movl	P_MD_TSS_SEL(%edi),%edx
 
 	/* Switch TSS. Reset "task busy" flag before loading. */
@@ -2103,9 +2085,8 @@ switch_restored:
 	 * If our floating point registers are on a different cpu,
 	 * clear CR0_TS so we'll trap rather than reuse bogus state.
 	 */
-	GET_CPUINFO(%eax)
 	movl	PCB_FPCPU(%esi),%ebx
-	cmpl	%eax,%ebx
+	cmpl	%fs:CPU_INFO_SELF,%ebx
 	jz	1f
 	orl	$CR0_TS,%ecx
 1:	
@@ -2114,9 +2095,9 @@ switch_restored:
 
 	/* Record new pcb. */
 #ifndef MULTIPROCESSOR
-	SET_CURPCB(%esi, %ecx)
+	SET_CURPCB(%esi)
 #else
-	movl	%esi,CPU_INFO_CURPCB(%eax)
+	movl	%esi,%fs:CPU_INFO_CURPCB
 #endif
 
 	/* Interrupts are okay again. */
@@ -2206,7 +2187,7 @@ ENTRY(cpu_switch)
 	pushl	%edi
 	pushl	CPL
 
-	GET_CURPROC(%esi,%ecx)
+	movl	CPUVAR(CURPROC),%esi
 
 	/*
 	 * Clear curproc so that we don't accumulate system time while idle.
@@ -2215,7 +2196,7 @@ ENTRY(cpu_switch)
 	 * below and changes the priority.  (See corresponding comment in
 	 * userret()).
 	 */
-	CLEAR_CURPROC(%ecx)
+	movl	$0,CPUVAR(CURPROC)
 
 #if defined(LOCKDEBUG)
 	/* Release the sched_lock before processing interrupts. */
@@ -2359,7 +2340,12 @@ switch_exited:
 	addl	$4,%esp
 
 	/* Load TSS info. */
+#ifdef MULTIPROCESSOR
+	movl	%fs:CPU_INFO_GDT,%eax
+#else	
+	/* Load TSS info. */
 	movl	_C_LABEL(gdt),%eax
+#endif
 	movl	P_MD_TSS_SEL(%edi),%edx
 
 	/* Switch TSS. Reset "task busy" flag before loading */
@@ -2385,7 +2371,7 @@ switch_restored:
 	movl	%ecx,%cr0
 
 	/* Record new pcb. */
-	SET_CURPCB(%esi, %ecx)
+	SET_CURPCB(%esi)
 
 	/* Interrupts are okay again. */
 	sti
@@ -2424,12 +2410,11 @@ ENTRY(switch_exit)
 	movl	P_ADDR(%ebx),%esi
 	movl	P_MD_TSS_SEL(%ebx),%edx
 #else
-	GET_CPUINFO(%ebx)
-	movl	CPU_INFO_IDLE_PCB(%ebx),%esi
-	movl	CPU_INFO_IDLE_TSS_SEL(%ebx),%edx
+	movl	%fs:CPU_INFO_IDLE_PCB,%esi
+	movl	%fs:CPU_INFO_IDLE_TSS_SEL,%edx
 #endif
 	/* In case we fault... */
-	CLEAR_CURPROC(%ecx)
+	movl	$0,CPUVAR(CURPROC)
 
 	/* Restore the idle context. */
 	cli
@@ -2439,7 +2424,12 @@ ENTRY(switch_exit)
 	movl	PCB_EBP(%esi),%ebp
 
 	/* Load TSS info. */
+#ifdef MULTIPROCESSOR
+	movl	%fs:CPU_INFO_GDT,%eax
+#else	
+	/* Load TSS info. */
 	movl	_C_LABEL(gdt),%eax
+#endif
 
 	/* Switch address space. */
 	movl	PCB_CR3(%esi),%ecx
@@ -2456,7 +2446,7 @@ ENTRY(switch_exit)
 	movl	%ecx,%cr0
 
 	/* Record new pcb. */
-	SET_CURPCB(%esi, %ecx)
+	SET_CURPCB(%esi)
 
 	/* Interrupts are okay again. */
 	sti
@@ -2470,7 +2460,7 @@ ENTRY(switch_exit)
 
 	/* Jump into cpu_switch() with the right state. */
 	xorl	%esi,%esi
-	CLEAR_CURPROC(%ecx)
+	movl	%esi,CPUVAR(CURPROC)
 	jmp	idle_start
 
 /*
@@ -2542,12 +2532,7 @@ IDTVEC(trap07)
 	pushl	$0			# dummy error code
 	pushl	$T_DNA
 	INTRENTRY
-#ifdef MULTIPROCESSOR
-	GET_CPUINFO(%eax)
-	pushl	%eax
-#else
-	pushl	$_C_LABEL(cpu_info_primary)		
-#endif
+	pushl	CPUVAR(SELF)
 	call	*_C_LABEL(npxdna_func)
 	addl	$4,%esp
 	testl	%eax,%eax
@@ -2691,7 +2676,7 @@ calltrap:
 	call	_C_LABEL(trap)
 2:	/* Check for ASTs on exit to user mode. */
 	cli
-	CHECK_ASTPENDING(%ecx)
+	CHECK_ASTPENDING()
 	je	1f
 	testb	$SEL_RPL,TF_CS(%esp)
 #ifdef VM86
@@ -2699,7 +2684,7 @@ calltrap:
 	testl	$PSL_VM,TF_EFLAGS(%esp)
 #endif
 	jz	1f
-5:	CLEAR_ASTPENDING(%ecx)
+5:	CLEAR_ASTPENDING()
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
 	call	_C_LABEL(trap)
@@ -2842,15 +2827,15 @@ syscall1:
 #endif
 1:	
 #endif /* DIAGNOSTIC */
-	GET_CURPROC(%edx, %eax)
+	movl	CPUVAR(CURPROC),%edx
 	movl	%esp,P_MD_REGS(%edx)	# save pointer to frame
 	call	*P_MD_SYSCALL(%edx)	# get pointer to syscall() function
 2:	/* Check for ASTs on exit to user mode. */
 	cli
-	CHECK_ASTPENDING(%ecx)
+	CHECK_ASTPENDING()
 	je	1f
 	/* Always returning to user mode here. */
-	CLEAR_ASTPENDING(%ecx)
+	CLEAR_ASTPENDING()
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	call	_C_LABEL(trap)
