@@ -1,4 +1,4 @@
-/*	$NetBSD: apecs_lca_bus_mem.c,v 1.6 1996/11/13 21:13:24 cgd Exp $	*/
+/*	$NetBSD: apecs_bus_io.c,v 1.1 1996/11/25 03:42:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -38,31 +38,26 @@
 
 #include <alpha/pci/apecsreg.h>
 #include <alpha/pci/apecsvar.h>
-#include <alpha/pci/lcareg.h>
-#include <alpha/pci/lcavar.h>
 
-#if (APECS_PCI_SPARSE != LCA_PCI_SPARSE) || (APECS_PCI_DENSE != LCA_PCI_DENSE)
-#error Memory addresses do not match up?
-#endif
+#define	CHIP		apecs
 
-#define	CHIP	apecs_lca
+#define	CHIP_EX_MALLOC_SAFE(v)	(((struct apecs_config *)(v))->ac_mallocsafe)
+#define	CHIP_IO_EXTENT(v)	(((struct apecs_config *)(v))->ac_io_ex)
 
-/* Dense region 1 */
-#define	CHIP_D_MEM_W1_START(v)	0x00000000UL
-#define	CHIP_D_MEM_W1_END(v)	0xffffffffUL
-#define	CHIP_D_MEM_W1_BASE(v)	APECS_PCI_DENSE
-#define	CHIP_D_MEM_W1_MASK(v)	0xffffffffUL
+/* IO region 1 */
+#define	CHIP_IO_W1_BUS_START(v)	0x00000000UL
+#define	CHIP_IO_W1_BUS_END(v)	0x0003ffffUL
+#define	CHIP_IO_W1_SYS_START(v)	APECS_PCI_SIO
+#define	CHIP_IO_W1_SYS_END(v)	(APECS_PCI_SIO + (0x00040000UL << 5) - 1)
 
-/* Sparse region 1 */
-#define	CHIP_S_MEM_W1_START(v)	0x00000000UL
-#define	CHIP_S_MEM_W1_END(v)	0x00ffffffUL
-#define	CHIP_S_MEM_W1_BASE(v)	APECS_PCI_SPARSE
-#define	CHIP_S_MEM_W1_MASK(v)	0x07ffffffUL
+/* IO region 2 */
+#define	CHIP_IO_W2_BUS_START(v)						\
+    ((((struct apecs_config *)(v))->ac_haxr2 & EPIC_HAXR2_EADDR) +	\
+      0x00040000UL)
+#define	CHIP_IO_W2_BUS_END(v)						\
+    ((((struct apecs_config *)(v))->ac_haxr2 & EPIC_HAXR2_EADDR) +	\
+      0x00ffffffUL)
+#define	CHIP_IO_W2_SYS_START(v)	(APECS_PCI_SIO + (0x00040000UL << 5))
+#define	CHIP_IO_W2_SYS_END(v)	(APECS_PCI_SIO + (0x01000000UL << 5) - 1)
 
-/* Sparse region 2 */
-#define	CHIP_S_MEM_W2_START(v)	0x01000000UL		/* XXX from HAXR1 */
-#define	CHIP_S_MEM_W2_END(v)	0xfeffffffUL		/* XXX from HAXR1 */
-#define	CHIP_S_MEM_W2_BASE(v)	APECS_PCI_SPARSE
-#define	CHIP_S_MEM_W2_MASK(v)	0x07ffffffUL
-
-#include "pcs_bus_mem_common.c"
+#include "pcs_bus_io_common.c"

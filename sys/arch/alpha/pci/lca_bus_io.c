@@ -1,4 +1,4 @@
-/*	$NetBSD: apecs_lca_bus_io.c,v 1.5 1996/11/13 21:13:24 cgd Exp $	*/
+/*	$NetBSD: lca_bus_io.c,v 1.1 1996/11/25 03:42:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -36,27 +36,18 @@
 
 #include <machine/bus.h>
 
-#include <alpha/pci/apecsreg.h>
-#include <alpha/pci/apecsvar.h>
 #include <alpha/pci/lcareg.h>
 #include <alpha/pci/lcavar.h>
 
-#if (APECS_PCI_SIO != LCA_PCI_SIO)
-#error Sparse I/O addresses do not match up?
-#endif
+#define	CHIP		lca
 
-#define	CHIP		apecs_lca
+#define	CHIP_EX_MALLOC_SAFE(v)	(((struct lca_config *)(v))->lc_mallocsafe)
+#define	CHIP_IO_EXTENT(v)	(((struct lca_config *)(v))->lc_io_ex)
 
 /* IO region 1 */
-#define	CHIP_IO_W1_START(v)	0x00000000UL
-#define	CHIP_IO_W1_END(v)	0x0003ffffUL
-#define	CHIP_IO_W1_BASE(v)	APECS_PCI_SIO
-#define	CHIP_IO_W1_MASK(v)	0x00ffffffUL
-
-/* IO region 2 */
-#define	CHIP_IO_W2_START(v)	0x00040000UL		/* XXX from HAXR2 */
-#define	CHIP_IO_W2_END(v)	0xfffbffffUL            /* XXX from HAXR2 */
-#define	CHIP_IO_W2_BASE(v)	APECS_PCI_SIO
-#define	CHIP_IO_W2_MASK(v)	0x00ffffffUL
+#define	CHIP_IO_W1_BUS_START(v)	0x00000000UL
+#define	CHIP_IO_W1_BUS_END(v)	0x00ffffffUL
+#define	CHIP_IO_W1_SYS_START(v)	LCA_PCI_SIO
+#define	CHIP_IO_W1_SYS_END(v)	(LCA_PCI_SIO + ((0x00ffffffUL + 1) << 5) - 1)
 
 #include "pcs_bus_io_common.c"
