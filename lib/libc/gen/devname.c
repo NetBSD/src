@@ -1,4 +1,4 @@
-/*	$NetBSD: devname.c,v 1.12 2004/11/11 03:22:30 christos Exp $	*/
+/*	$NetBSD: devname.c,v 1.13 2004/11/11 04:03:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)devname.c	8.2 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: devname.c,v 1.12 2004/11/11 03:22:30 christos Exp $");
+__RCSID("$NetBSD: devname.c,v 1.13 2004/11/11 04:03:23 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -112,10 +112,13 @@ static mode_t getptsmajor(void);
 static mode_t
 getptsmajor(void)
 {
-	DIR *dirp = opendir(_PATH_DEV_PTS);
+	DIR *dirp;
 	struct dirent *dp;
 	struct stat st;
 	char buf[MAXPATHLEN];
+
+	if ((dirp = opendir(_PATH_DEV_PTS)) == NULL)
+		return (mode_t)~0;
 
 	while ((dp = readdir(dirp)) != NULL) {
 		if (dp->d_name[0] == '.')
