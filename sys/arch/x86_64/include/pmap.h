@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.8 2003/01/26 00:05:37 fvdl Exp $	*/
+/*	$NetBSD: pmap.h,v 1.9 2003/02/23 02:44:44 fvdl Exp $	*/
 
 /*
  *
@@ -402,7 +402,7 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 
 extern paddr_t ptp_masks[];
 extern int ptp_shifts[];
-extern unsigned long nkptp[], nbpd[], nkptpmax[];
+extern long nkptp[], nbpd[], nkptpmax[];
 extern pd_entry_t *pdes[];
 
 /*
