@@ -1,4 +1,4 @@
-#	$NetBSD: files.isapnp,v 1.35 2004/01/28 19:31:07 jdolecek Exp $
+#	$NetBSD: files.isapnp,v 1.36 2004/01/31 13:59:20 jdolecek Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.
@@ -114,5 +114,5 @@ attach	joy at isapnp with joy_isapnp
 file	dev/isapnp/joy_isapnp.c		joy_isapnp
 
 # AT-style Parallel Port
-attach	atppc at isapnp with atppc_isapnp
+attach	atppc at isapnp with atppc_isapnp: isapnp
 file	dev/isapnp/atppc_isapnp.c	atppc_isapnp
