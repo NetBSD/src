@@ -1,4 +1,4 @@
-/*	$NetBSD: cal.c,v 1.10 1998/07/28 19:26:09 mycroft Exp $	*/
+/*	$NetBSD: cal.c,v 1.11 1998/11/06 22:52:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cal.c,v 1.10 1998/07/28 19:26:09 mycroft Exp $");
+__RCSID("$NetBSD: cal.c,v 1.11 1998/11/06 22:52:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -407,7 +407,7 @@ trim_trailing_spaces(s)
 
 	for (p = s; *p; ++p)
 		continue;
-	while (p > s && isspace(*--p))
+	while (p > s && isspace((unsigned char)*--p))
 		continue;
 	if (p > s)
 		++p;

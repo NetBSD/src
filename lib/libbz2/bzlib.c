@@ -1,4 +1,4 @@
-/*	$NetBSD: bzlib.c,v 1.2 1998/09/14 03:08:17 ross Exp $	*/
+/*	$NetBSD: bzlib.c,v 1.3 1998/11/06 22:49:30 christos Exp $	*/
 
 /*-------------------------------------------------------------*/
 /*--- Library top-level functions.                          ---*/
@@ -1325,9 +1325,9 @@ BZFILE * bzopen_or_bzdopen
       case 's':
          smallMode = 1;break;
       default:
-         if(isdigit(*mode)){
+         if(isdigit((unsigned char)*mode)){
             blockSize100k = 0;
-            while(isdigit(*mode)){
+            while(isdigit((unsigned char)*mode)){
                blockSize100k = blockSize100k*10 + *mode-'0';
                mode++;
             }
