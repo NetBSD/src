@@ -1,4 +1,4 @@
-/*	$NetBSD: file_http.cpp,v 1.6 2002/02/04 17:32:02 uch Exp $	*/
+/*	$NetBSD: file_http.cpp,v 1.7 2002/03/02 22:01:57 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -40,11 +40,11 @@
 #include <file_http.h>
 #include <console.h>
 
-#if _WIN32_WCE < 210
-#define tolower(c)	((c) - 'A' + 'a')
+// for WCE210 or earlier
+_CRTIMP int __cdecl tolower(int);
 #define wcsicmp		_wcsicmp
-#endif
-
+static int WCE210_WSAStartup(WORD, LPWSADATA);
+static int WCE210_WSACleanup(void);
 static int __stricmp(const char *, const char *);
 
 HttpFile::HttpFile(Console *&cons)
@@ -66,20 +66,53 @@ HttpFile::HttpFile(Console *&cons)
 #endif
 	      ")\r\n\r\n")
 {
+
 	_server_name[0] = '\0';
-	_debug = TRUE;
+	_debug = 1;
 	_memory_cache = TRUE;
 	//    _memory_cache = FALSE; // not recomended.
 	_buffer = 0;
 	_reset_state();
 	DPRINTF((TEXT("FileManager: HTTP\n")));
+	
+	if (WinCEVersion.dwMajorVersion > 3 ||
+	    (WinCEVersion.dwMajorVersion > 2) &&
+	    (WinCEVersion.dwMinorVersion >= 11)) {
+		_wsa_startup = WSAStartup;
+		_wsa_cleanup = WSACleanup;
+	} else {
+		_wsa_startup = WCE210_WSAStartup;
+		_wsa_cleanup = WCE210_WSACleanup;
+	}
+}
+
+int
+WCE210_WSAStartup(WORD ver, LPWSADATA data)
+{
+
+	data->wVersion		= ver;
+	data->wHighVersion	= ver;
+	data->szDescription[0]	= '\0';
+	data->szSystemStatus[0]	= '\0';
+	data->iMaxSockets	= 10;
+	data->iMaxUdpDg		= 0;
+	data->lpVendorInfo	= NULL;
+
+	return (0);
+}
+
+int
+WCE210_WSACleanup()
+{
+
+	return (0);
 }
 
 HttpFile::~HttpFile(void)
 {
 	if (_buffer)
 		free(_buffer);
-	WSACleanup();
+	_wsa_cleanup();
 }
 
 void
@@ -102,6 +135,7 @@ HttpFile::setRoot(TCHAR *server)
 
 	// parse server name and its port #
 	TCHAR sep[] = TEXT(":/");
+
 	TCHAR *token = wcstok(server, sep);
 	for (int i = 0; i < 3 && token; i++, token = wcstok(0, sep)) {
 		switch(i) {
@@ -121,7 +155,8 @@ HttpFile::setRoot(TCHAR *server)
 		}
 	}
 
-	ret = WSAStartup(MAKEWORD(1, 1), &_winsock);
+	WORD version = MAKEWORD(1, 1);
+	ret = _wsa_startup(version, &_winsock);
 	if (ret != 0) {
 		DPRINTF((TEXT("WinSock initialize failed.\n")));
 		return FALSE;
@@ -293,9 +328,10 @@ HttpFile::_parse_header(size_t &header_size)
 		char *token = strtok(__buf, sep);
 		while (token) {
 			if (__stricmp(token, "content-length") == 0) {
+				DPRINTFN(1, (TEXT("*token: %S\n"), token));
 				token = strtok(0, sep);
 				sz = atoi(token);
-				DPRINTFN(1, (TEXT("content-length=%d\n"), sz));
+				DPRINTFN(1, (TEXT("*content-length=%d\n"), sz));
 			} else
 				token = strtok(0, sep);
 		}
@@ -339,15 +375,11 @@ HttpFile::_set_request(void)
 static int
 __stricmp(const char *s1, const char *s2)
 {
-	const unsigned char *us1 = 
-	    reinterpret_cast <const unsigned char *>(s1);
-	const unsigned char *us2 = 
-	    reinterpret_cast <const unsigned char *>(s2);
-  
-	while (tolower(*us1) == tolower(*us2++))
-		if (*us1++ == '\0')
-			return 0;
-	return tolower(*us1) - tolower(*--us2);
+
+	while (tolower(*s1) == tolower(*s2++))
+		if (*s1++ == '\0')
+			return (0);
+	return (tolower(*s1) - tolower(*--s2));
 }
 
 Socket::Socket(struct sockaddr_in &sock)
