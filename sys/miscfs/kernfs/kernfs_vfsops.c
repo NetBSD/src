@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.28 1996/10/13 02:21:30 christos Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.29 1996/12/22 10:10:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,8 +59,8 @@ dev_t rrootdev = NODEV;
 
 void	kernfs_init __P((void));
 void	kernfs_get_rrootdev __P((void));
-int	kernfs_mount __P((struct mount *, char *, caddr_t, struct nameidata *,
-			  struct proc *));
+int	kernfs_mount __P((struct mount *, const char *, void *,
+	    struct nameidata *, struct proc *));
 int	kernfs_start __P((struct mount *, int, struct proc *));
 int	kernfs_unmount __P((struct mount *, int, struct proc *));
 int	kernfs_root __P((struct mount *, struct vnode **));
@@ -108,8 +108,8 @@ kernfs_get_rrootdev()
 int
 kernfs_mount(mp, path, data, ndp, p)
 	struct mount *mp;
-	char *path;
-	caddr_t data;
+	const char *path;
+	void *data;
 	struct nameidata *ndp;
 	struct proc *p;
 {

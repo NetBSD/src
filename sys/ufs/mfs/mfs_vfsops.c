@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.11 1996/12/22 10:10:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -178,8 +178,8 @@ mfs_initminiroot(base)
 int
 mfs_mount(mp, path, data, ndp, p)
 	register struct mount *mp;
-	char *path;
-	caddr_t data;
+	const char *path;
+	void *data;
 	struct nameidata *ndp;
 	struct proc *p;
 {
