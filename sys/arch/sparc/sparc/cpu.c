@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.111 2001/02/28 14:45:23 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.112 2001/03/02 17:00:13 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -336,6 +336,7 @@ static	int cpu_instance;
 	cpi->ci_cpuid = cpu_instance++;
 	cpi->mid = mid;
 	cpi->node = node;
+	simple_lock_init(&cpi->msg.lock);
 
 	if (ncpu > 1)
 		printf(": mid %d", mid);
@@ -487,7 +488,6 @@ mp_pause_cpus()
 		struct cpu_info *cpi = cpus[n];
 		if (cpi == NULL || cpuinfo.mid == cpi->mid)
 			continue;
-
 		simple_lock(&cpi->msg.lock);
 		cpi->msg.tag = XPMSG_PAUSECPU;
 		raise_ipi(cpi);
