@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/lib/libnetboot/Attic/boot_nfs.c,v 1.1 1993/10/13 05:41:37 cgd Exp $
+ * $Header: /cvsroot/src/sys/lib/libnetboot/Attic/boot_nfs.c,v 1.2 1993/10/13 16:33:58 cgd Exp $
  */
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -69,7 +69,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /cvsroot/src/sys/lib/libnetboot/Attic/boot_nfs.c,v 1.1 1993/10/13 05:41:37 cgd Exp $ (LBL)
+ * @(#) $Header: /cvsroot/src/sys/lib/libnetboot/Attic/boot_nfs.c,v 1.2 1993/10/13 16:33:58 cgd Exp $ (LBL)
  */
 
 #include <sys/param.h>
@@ -88,25 +88,6 @@
 #include "bootbootp.h"
 #include "bootp.h"
 #include "netif.h"
-
-/* Globals */
-u_char	bcea[6] = BA;			/* broadcast ethernet address */
-char	rootpath[FNAME_SIZE];		/* root mount path */
-char	swappath[FNAME_SIZE];		/* swap mount path */
-char	ifname[IFNAME_SIZE];		/* name of interface (e.g. "le0") */
-n_long	rootip;				/* root ip address */
-n_long	swapip;				/* swap ip address */
-n_long	gateip;				/* swap ip address */
-n_long	smask;				/* subnet mask */
-n_long	nmask;				/* net mask */
-n_long	mask;				/* subnet or net mask */
-time_t	bot;				/* beginning of time in seconds */
-
-#ifdef DEBUG
-int debug = 1;
-#else
-int debug = 0;
-#endif
 
 static	u_char rootfh[NFS_FHSIZE];
 static	u_char swapfh[NFS_FHSIZE];
