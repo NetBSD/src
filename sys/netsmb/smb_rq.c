@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.16 2003/03/24 07:51:04 jdolecek Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.17 2003/03/30 11:58:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.16 2003/03/24 07:51:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.17 2003/03/30 11:58:17 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +92,7 @@ smb_rq_init(struct smb_rq *rqp, struct smb_connobj *layer, u_char cmd,
 	struct smb_cred *scred)
 {
 	int error;
+	struct timeval timo;
 
 	bzero(rqp, sizeof(*rqp));
 	smb_sl_init(&rqp->sr_slock, "srslock");
@@ -108,6 +109,8 @@ smb_rq_init(struct smb_rq *rqp, struct smb_connobj *layer, u_char cmd,
 	}
 	rqp->sr_cred = scred;
 	rqp->sr_mid = smb_vc_nextmid(rqp->sr_vc);
+	SMB_TRAN_GETPARAM(rqp->sr_vc, SMBTP_TIMEOUT, &timo);
+	rqp->sr_timo = timo.tv_sec * hz;
 	return smb_rq_new(rqp, cmd);
 }
 
