@@ -562,9 +562,15 @@ register char **ccp;
 	
 	c[0] = mklower(ccp[0][0]);
 #ifdef REGISTER_PREFIX
-	if (c[0] != REGISTER_PREFIX) {
+	if (c[0] == REGISTER_PREFIX) {
+		/* Advance pointer: skip prefix. */
+		ccp[0]++;
+	}
+#ifndef REGISTER_PREFIX_OPTIONAL
+	else {
 		return(FAIL);
 	} /* need prefix */
+#endif
 #endif
 	
 	for (p = c, q = ccp[0]; p < c + MAX_REG_NAME_LEN; ++p, ++q)
@@ -788,9 +794,6 @@ register char **ccp;
 		break;
 	}
 	if (n) {
-#ifdef REGISTER_PREFIX
-		n++;
-#endif
 		if (isalnum(ccp[0][n]) || ccp[0][n] == '_')
 		    ret=FAIL;
 		else
