@@ -42,7 +42,7 @@
  *	@(#)pmap.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pmap.c,v 1.39 93/04/20 11:17:12 torek Exp 
- * $Id: pmap.c,v 1.17 1994/08/09 19:55:09 deraadt Exp $
+ * $Id: pmap.c,v 1.18 1994/08/20 09:16:11 deraadt Exp $
  */
 
 /*
@@ -291,19 +291,24 @@ vm_offset_t	virtual_end;	/* last free virtual page number */
 
 /*
  * pseudo-functions for mnemonic value
-#ifdef notyet
  * NB: setsegmap should be stba for 4c, but stha works and makes the
  * code right for the Sun-4 as well.
-#endif
  */
 #define	getcontext()		lduba(AC_CONTEXT, ASI_CONTROL)
 #define	setcontext(c)		stba(AC_CONTEXT, ASI_CONTROL, c)
-#ifdef notyet
+#if defined(SUN4) && !defined(SUN4C)
 #define	getsegmap(va)		lduha(va, ASI_SEGMAP)
 #define	setsegmap(va, pmeg)	stha(va, ASI_SEGMAP, pmeg)
-#else
+#endif
+#if !defined(SUN4) && defined(SUN4C)
 #define	getsegmap(va)		lduba(va, ASI_SEGMAP)
 #define	setsegmap(va, pmeg)	stba(va, ASI_SEGMAP, pmeg)
+#endif
+#if defined(SUN4) && defined(SUN4C)
+#define	getsegmap(va)		(cputyp == CPU_SUN4C ? lduba(va, ASI_SEGMAP) \
+				    : lduha(va, ASI_SEGMAP))
+#define	setsegmap(va, pmeg)	(cputyp == CPU_SUN4C ? stba(va, ASI_SEGMAP, pmeg) \
+				    : stha(va, ASI_SEGMAP, pmeg))
 #endif
 
 #define	getpte(va)		lda(va, ASI_PTE)
@@ -311,7 +316,7 @@ vm_offset_t	virtual_end;	/* last free virtual page number */
 
 /*----------------------------------------------------------------*/
 
-#ifdef	SUN4C
+#if defined(SUN4C)
 /*
  * Translations from dense (contiguous) pseudo physical addresses
  * (fed to the VM code, to keep it happy) to sparse (real, hardware)
@@ -339,7 +344,12 @@ vm_offset_t	virtual_end;	/* last free virtual page number */
 #define NPGBANK	16			/* 2^4 pages per bank (64K / bank) */
 #define	BSHIFT	4			/* log2(NPGBANK) */
 #define BOFFSET	(NPGBANK - 1)
-#define BTSIZE 	(MAXMEM / NBPG / NPGBANK)
+/*
+ * One would expect this to use NBPG instead of 4096. But That is no
+ * longer a constant. As an added benefit it allows Sun4 machines to
+ * have 2x as much physical memory.
+ */
+#define BTSIZE 	(MAXMEM / (1 << SUN4CM_PGSHIFT) / NPGBANK)
 
 int	pmap_dtos[BTSIZE];		/* dense to sparse */
 int	pmap_stod[BTSIZE];		/* sparse to dense */
@@ -450,8 +460,7 @@ init_translations()
 	return (pages);
 }
 
-#else /* SUN4C */
-
+#else /* SUN4 machine only! */
 /*
  * Pages are physically contiguous, and hardware PFN == software PFN.
  *
@@ -459,8 +468,7 @@ init_translations()
  */
 #define	HWTOSW(pg)	(pg)
 #define	SWTOHW(pg)	(pg)
-
-#endif /* SUN4C */
+#endif
 
 /* update pv_flags given a valid pte */
 #define	MR(pte) (((pte) >> PG_M_SHIFT) & (PV_MOD | PV_REF))
@@ -966,7 +974,7 @@ if(pm==NULL)panic("pv_changepte 1");
 				/* XXX per-cpu va? */
 				setcontext(0);
 				setsegmap(0, pmeg);
-				va = VA_VPG(va) * NBPG;
+				va = VA_VPG(va) << PGSHIFT;
 				tpte = getpte(va);
 			}
 			if (tpte & PG_V)
@@ -1033,7 +1041,7 @@ pv_syncflags(pv0)
 			/* XXX per-cpu va? */
 			setcontext(0);
 			setsegmap(0, pmeg);
-			va = VA_VPG(va) * NBPG;
+			va = VA_VPG(va) << PGSHIFT;
 			tpte = getpte(va);
 		}
 		if (tpte & (PG_M|PG_U) && tpte & PG_V) {
@@ -1197,6 +1205,10 @@ pv_flushcache(pv)
  * At last, pmap code.
  */
 
+#if defined(SUN4) && defined(SUN4C)
+int nptesg;
+#endif
+
 /*
  * Bootstrap the system enough to run with VM enabled.
  *
@@ -1223,6 +1235,15 @@ pmap_bootstrap(nmmu, nctx)
 	kernel_pmap = (pmap_t)&kernel_pmap_store;
 
 	ncontext = nctx;
+
+#if defined(SUN4) && defined(SUN4C)
+	/* In this case NPTESG is not a #define */
+	nptesg = (NBPSG >> pgshift);
+
+	printf("nbpg %d pgshift %d pgofset %d nptesg %d\n", 
+	    nbpg, pgshift, pgofset, nptesg);
+#endif
+
 
 	/*
 	 * Last segment is the `invalid' one (one PMEG of pte's with !pg_v).
@@ -1364,7 +1385,7 @@ pmap_bootstrap(nmmu, nctx)
 		 * Unmap the pages, if any, that are not part of
 		 * the final segment.
 		 */
-		for (p += n * NBPG; j < NPTESG; j++, p += NBPG)
+		for (p += n << PGSHIFT; j < NPTESG; j++, p += NBPG)
 			setpte(p, 0);
 		break;
 	}
@@ -1657,7 +1678,9 @@ pmap_remove(pm, va, endva)
 	setcontext(ctx);
 }
 
+#if !(defined(SUN4) && defined(SUN4C))
 #define perftest
+#endif
 #ifdef perftest
 /* counters, one per possible length */
 int	rmk_vlen[NPTESG+1];	/* virtual length per rmk() call */
@@ -1862,7 +1885,7 @@ pmap_rmu(pm, va, endva, vseg, nleft, pmeg)
 		setcontext(0);
 		/* XXX use per-cpu pteva? */
 		setsegmap(0, pmeg);
-		pteva = VA_VPG(va) * NBPG;
+		pteva = VA_VPG(va) << PGSHIFT;
 		perpage = 0;
 #ifdef perftest
 		npg = 0;
@@ -2007,7 +2030,7 @@ pmap_page_protect(pa, prot)
 			setcontext(0);
 			/* XXX use per-cpu pteva? */
 			setsegmap(0, pmeg);
-			pteva = VA_VPG(va) * NBPG;
+			pteva = VA_VPG(va) << PGSHIFT;
 			doflush = 0;
 		}
 		if (nleft) {
@@ -2135,7 +2158,7 @@ if (nva == 0) panic("pmap_protect: last segment");	/* cannot happen */
 				setcontext(0);
 				/* XXX use per-cpu pteva? */
 				setsegmap(0, pmeg);
-				pteva = VA_VPG(va) * NBPG;
+				pteva = VA_VPG(va) << PGSHIFT;
 				for (; va < nva; pteva += NBPG, va += NBPG)
 					setpte(pteva, getpte(pteva) & ~PG_W);
 			}
@@ -2203,7 +2226,7 @@ pmap_changeprot(pm, va, prot, wired)
 			setcontext(0);
 			/* XXX use per-cpu va? */
 			setsegmap(0, pmeg);
-			va = VA_VPG(va) * NBPG;
+			va = VA_VPG(va) << PGSHIFT;
 			tpte = getpte(va);
 			if ((tpte & PG_PROT) == newprot) {
 				setcontext(ctx);
@@ -2444,7 +2467,7 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 				setcontext(0);
 				/* XXX use per-cpu pteva? */
 				setsegmap(0, pmeg);
-				tpte = getpte(VA_VPG(va) * NBPG);
+				tpte = getpte(VA_VPG(va) << PGSHIFT);
 			}
 		}
 		if (tpte & PG_V) {
@@ -2505,7 +2528,7 @@ curproc->p_comm, curproc->p_pid, va);*/
 			setcontext(0);
 			/* XXX use per-cpu pteva? */
 			setsegmap(0, pmeg);
-			va = VA_VPG(va) * NBPG;
+			va = VA_VPG(va) << PGSHIFT;
 		}
 		setpte(va, pteproto);
 	}
@@ -2556,7 +2579,7 @@ pmap_extract(pm, va)
 			tpte = getpte(va);
 		} else {
 			setcontext(0);
-			tpte = getpte(VA_VPG(va) * NBPG);
+			tpte = getpte(VA_VPG(va) << PGSHIFT);
 		}
 		setcontext(ctx);
 	} else {
