@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.1 2004/12/23 04:35:01 joff Exp $
+#	$NetBSD: TS7200,v 1.2 2004/12/24 10:53:34 joff Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -67,8 +67,8 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
-#options 	NFS_BOOT_BOOTP
-#options 	NFS_BOOT_DHCP
+options 	NFS_BOOT_BOOTP
+options 	NFS_BOOT_DHCP
 #options 	NFS_BOOT_BOOTPARAM
 
 # Compatibility options
@@ -137,11 +137,10 @@ options 	SYMTAB_SPACE=320000
 ##options 	PMAP_INCLUDE_PTE_SYNC
 ##options 	LOCKDEBUG
 
-#config		netbsd		root on ? type ?
 config		netbsd		root on ? type ?
-#config		netbsd-wm0	root on wm0 type nfs
-#config		netbsd-wd0	root on wd0 type ffs
-#config		netbsd-sd0	root on sd0 type ffs
+config		netbsd-epe0	root on epe0 type nfs
+config		netbsd-wd0	root on wd0 type ffs
+config		netbsd-sd0	root on sd0 type ffs
 
 # The main bus device
 mainbus0	at root
