@@ -37,8 +37,10 @@
  *
  *	from: Utah Hdr: frame.h 1.1 90/07/09
  *	from: @(#)frame.h	7.2 (Berkeley) 11/2/90
- *	$Id: frame.h,v 1.4 1994/01/26 21:35:37 mw Exp $
+ *	$Id: frame.h,v 1.5 1994/04/10 02:22:11 chopps Exp $
  */
+#ifndef _M68K_FRAME_H_
+#define _M68K_FRAME_H_
 
 struct frame {
 	int	f_regs[16];
@@ -235,3 +237,5 @@ struct fpframe {
 #define fpf_res1	FPF_u1.FPF_nonnull.FPF_res1
 #define fpf_idle	FPF_u2.FPF_idle
 #define fpf_busy	FPF_u2.FPF_busy
+
+#endif /* !_M68K_FRAME_H_ */

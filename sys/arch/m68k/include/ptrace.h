@@ -27,8 +27,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ptrace.h,v 1.4 1994/01/30 17:33:55 mycroft Exp $
+ *	$Id: ptrace.h,v 1.5 1994/04/10 02:22:13 chopps Exp $
  */
+#ifndef _M68K_PTRACE_H_
+#define _M68K_PTRACE_H_
 
 /*
  * m68k-dependent ptrace definitions
@@ -40,3 +42,5 @@
 #define	PT_GETFPREGS	(PT_FIRSTMACH + 3)
 #define	PT_SETFPREGS	(PT_FIRSTMACH + 4)
 #endif
+
+#endif /* !_M68K_PTRACE_H_ */

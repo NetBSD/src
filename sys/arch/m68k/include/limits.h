@@ -31,8 +31,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)limits.h	7.2 (Berkeley) 6/28/90
- *	$Id: limits.h,v 1.5 1993/12/07 20:44:28 mycroft Exp $
+ *	$Id: limits.h,v 1.6 1994/04/10 02:22:12 chopps Exp $
  */
+#ifndef _M68K_LIMITS_H_
+#define _M68K_LIMITS_H_
 
 #define	CHAR_BIT	8		/* number of bits in a char */
 #define	MB_LEN_MAX	1		/* no multibyte characters */
@@ -61,3 +63,5 @@
 #define	QUAD_MAX	0x7fffffffffffffffLL		/* max signed quad */
 #define	QUAD_MIN	(-0x7fffffffffffffffLL-1)	/* min signed quad */
 #endif
+
+#endif /* !_M68K_LIMITS_H_ */
