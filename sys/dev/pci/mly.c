@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.4 2001/07/30 23:49:51 ad Exp $	*/
+/*	$NetBSD: mly.c,v 1.5 2001/07/31 02:07:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -1277,6 +1277,7 @@ mly_thread(void *cookie)
 
 		/* Re-scan up to 1 device. */
 		s = splbio();
+		done = 0;
 		for (bus = 0; bus < mly->mly_nchans && !done; bus++) {
 			for (target = 0; target < MLY_MAX_TARGETS; target++) {
 				/* Perform device rescan? */
