@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.9 2003/01/01 02:10:08 thorpej Exp $	*/
+/*	$NetBSD: mace.c,v 1.10 2003/01/03 09:09:21 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -48,6 +48,7 @@
 
 #include <sgimips/dev/macereg.h>
 #include <sgimips/dev/macevar.h>
+#include <sgimips/dev/crimereg.h>
 
 #include "locators.h"
 
@@ -91,13 +92,13 @@ mace_attach(parent, self, aux)
 	 * Enable all "ISA" interrupts.
 	 */
 #if 0
-	printf("mace0: isa sts %llx\n", *(volatile u_int64_t *)0xbf310010);
-	printf("mace0: isa msk %llx\n", *(volatile u_int64_t *)0xbf310018);
+	aprint_debug("mace0: isa sts %llx\n", *(volatile u_int64_t *)0xbf310010);
+	aprint_debug("mace0: isa msk %llx\n", *(volatile u_int64_t *)0xbf310018);
 	*(volatile u_int64_t *)0xbf310018 = 0xffffffff;
 #endif
-	printf("%s: isa sts %llx\n", self->dv_xname,
+	aprint_debug("%s: isa sts %llx\n", self->dv_xname,
 	    *(volatile u_int64_t *)0xbf310010);
-	printf("%s: isa msk %llx\n", self->dv_xname,
+	aprint_debug("%s: isa msk %llx\n", self->dv_xname,
 	    *(volatile u_int64_t *)0xbf310018);
 
 	config_search(mace_search, self, NULL);
@@ -156,6 +157,13 @@ mace_search(parent, cf, aux)
 	return 0;
 }
 
+#define MACE_NINTR 8	/* XXX */
+
+struct {
+	int	(*func)(void *);
+	void	*arg;
+} maceintrtab[MACE_NINTR];
+
 void *
 mace_intr_establish(intr, level, func, arg)
 	int intr;
@@ -163,7 +171,38 @@ mace_intr_establish(intr, level, func, arg)
 	int (*func)(void *);
 	void *arg;
 {
-	/* XXX */
+        u_int64_t mask;
 
-	return 0;
+        if (level < 0 || level >= 8)
+                panic("invalid interrupt level");
+
+        if (maceintrtab[level].func != NULL)
+                return (void *)-1; /* panic("cannot share mace interrupts"); */
+
+        maceintrtab[level].func = func;
+        maceintrtab[level].arg = arg;
+        mask = *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_INTMASK);
+        mask |= (1 << level);
+        *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_INTMASK) = mask;
+	aprint_debug("mace: established interrupt at ipl %i (level %d)\n", intr, level);
+	aprint_debug("mace: CRM_MASK now %llx\n", *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_INTMASK));
+	return (void *)-1;
 }
+
+void 
+mace_intr(int irqs)
+{
+	int i;
+ 
+	/* printf("mace_intr: irqs %x\n", irqs); */
+ 
+	for (i = 0; i < MACE_NINTR; i++) {
+		if (irqs & (1 << i)) {
+			if (maceintrtab[i].func != NULL)
+		  		(maceintrtab[i].func)(maceintrtab[i].arg);
+			else
+				printf("Unexpected mace interrupt %d\n", i);
+        	}
+	}
+}
+
