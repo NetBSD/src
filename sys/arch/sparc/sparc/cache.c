@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.15 1997/03/12 15:44:28 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.16 1997/03/20 21:44:21 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -592,33 +592,35 @@ ms1_cache_flush(base, len)
 }
 
 void
-noop_vcache_flush_context ()
-{
-	return;
-}
-void
-noop_vcache_flush_region (vreg)
-	int vreg;
-{
-	return;
-}
-void
-noop_vcache_flush_segment (vseg, vreg)
-	int vseg, vreg;
-{
-	return;
-}
-void
-noop_vcache_flush_page (va)
+viking_pcache_flush_line(va, pa)
 	int va;
+	int pa;
 {
-	return;
+	/*
+	 * Flush cache line corresponding to virtual address `va'
+	 * which is mapped at physical address `pa'.
+	 */
+
+	/* NOT YET IMPLEMENTED */
+#if 0
+	int i = CACHEINFO.c_dassociativity;
+	int v = X + (pa & PG_OFSET);
+	while (i--) {
+		volatile int x = *v;
+		v += NBPG;
+	}
+#endif
 }
 
 void
-noop_cache_flush (addr, len)
-	caddr_t addr;
-	u_int len;
+cypress_pcache_flush_line(va, pa)
+	int va;
+	int pa;
 {
-	return;
+	/*
+	 * Flush cache line corresponding to virtual address `va'
+	 * which is mapped at physical address `pa'.
+	 */
+
+	/* NOT YET IMPLEMENTED */
 }
