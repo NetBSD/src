@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.34 2004/11/24 21:59:32 jmc Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.35 2004/11/26 21:51:50 he Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -1249,33 +1249,33 @@ struct pmax_boot_block {
  */
 
 struct sgi_boot_devparms {
-	u_int8_t	dp_skew;
-	u_int8_t	dp_gap1;
-	u_int8_t	dp_gap2;
-	u_int8_t	dp_spares_cyl;
-	u_int16_t	dp_cyls;
-	u_int16_t	dp_shd0;
-	u_int16_t	dp_trks0;
-	u_int8_t	dp_ctq_depth;
-	u_int8_t	dp_cylshi;
-	u_int16_t	dp_unused;
-	u_int16_t	dp_secs;
-	u_int16_t	dp_secbytes;
-	u_int16_t	dp_interleave;
-	u_int32_t	dp_flags;
-	u_int32_t	dp_datarate;
-	u_int32_t	dp_nretries;
-	u_int32_t	dp_mspw;
-	u_int16_t	dp_xgap1;
-	u_int16_t	dp_xsync;
-	u_int16_t	dp_xrdly;
-	u_int16_t	dp_xgap2;
-	u_int16_t	dp_xrgate;
-	u_int16_t	dp_xwcont;
+	uint8_t		dp_skew;
+	uint8_t		dp_gap1;
+	uint8_t		dp_gap2;
+	uint8_t		dp_spares_cyl;
+	uint16_t	dp_cyls;
+	uint16_t	dp_shd0;
+	uint16_t	dp_trks0;
+	uint8_t		dp_ctq_depth;
+	uint8_t		dp_cylshi;
+	uint16_t	dp_unused;
+	uint16_t	dp_secs;
+	uint16_t	dp_secbytes;
+	uint16_t	dp_interleave;
+	uint32_t	dp_flags;
+	uint32_t	dp_datarate;
+	uint32_t	dp_nretries;
+	uint32_t	dp_mspw;
+	uint16_t	dp_xgap1;
+	uint16_t	dp_xsync;
+	uint16_t	dp_xrdly;
+	uint16_t	dp_xgap2;
+	uint16_t	dp_xrgate;
+	uint16_t	dp_xwcont;
 } __packed;
 
 struct sgi_boot_block {
-	u_int32_t	magic;
+	uint32_t	magic;
 	int16_t		root;
 	int16_t		swap;
 	char		bootfile[16];
