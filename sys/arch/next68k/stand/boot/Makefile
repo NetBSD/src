@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2002/09/11 01:46:36 mycroft Exp $
+#	$NetBSD: Makefile,v 1.16 2002/09/11 02:17:14 mycroft Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -20,8 +20,6 @@ SAMISCMAKEFLAGS= SA_USE_LOADFILE=yes # SA_USE_CREAD=yes
 
 RELOC=	4380000
 
-DEFS+=		-DDISABLE_NEXT_BMAP_CHIP
-DEFS+=		-g
 # XXX make defs arch-indep.
 INCLUDES+=	-I${.OBJDIR} -I${S}/arch -I${S} -I${S}/lib/libsa 
 DEFS+=		-D_STANDALONE -DMC68040 -DSUPPORT_BOOTP -DSUPPORT_DHCP  -DDEBUG -DSD_DEBUG -DSCSI_DEBUG # -DEN_DEBUG   -DNETIF_DEBUG  
