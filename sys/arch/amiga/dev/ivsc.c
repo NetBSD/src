@@ -1,4 +1,4 @@
-/*	$NetBSD: ivsc.c,v 1.26 1998/12/05 19:43:36 mjacob Exp $	*/
+/*	$NetBSD: ivsc.c,v 1.27 1999/01/10 13:17:01 tron Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -119,7 +119,7 @@ ivscattach(pdp, dp, auxp)
 	zap = auxp;
 	
 	sc = (struct sci_softc *)dp;
-	rp = zap->va + 0x40;
+	rp = (u_char *)zap->va + 0x40;
 	sc->sci_data = rp;
 	sc->sci_odata = rp;
 	sc->sci_icmd = rp + 2;
