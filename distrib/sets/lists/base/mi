@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.278 2001/09/03 18:42:49 jdolecek Exp $
+# $NetBSD: mi,v 1.279 2001/09/14 07:05:51 enami Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -685,6 +685,7 @@
 ./usr/sbin/ntptrace		base-ntp-bin
 ./usr/sbin/omshell		base-dhcpd-bin
 ./usr/sbin/pac			base-sysutil-bin
+./usr/sbin/pcictl		base-sysutil-bin
 ./usr/sbin/pkg_add		base-pkgutil-bin
 ./usr/sbin/pkg_admin		base-pkgutil-bin
 ./usr/sbin/pkg_create		base-pkgutil-bin
