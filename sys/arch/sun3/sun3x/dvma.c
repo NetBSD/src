@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.17 2000/11/03 04:52:28 tsutsui Exp $	*/
+/*	$NetBSD: dvma.c,v 1.18 2001/01/14 03:23:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -196,7 +196,7 @@ dvma_mapin(kmem_va, len, canwait)
 	len = round_page(len + off); /* Round the buffer length to pages. */
 	npf = btoc(len); /* Determine the number of pages to be mapped. */
 
-	s = splimp();
+	s = splvm();
 	for (;;) {
 		/*
 		 * Try to allocate DVMA space of the appropriate size
@@ -278,7 +278,7 @@ dvma_mapout(dvma_addr, len)
 	pmap_remove(pmap_kernel(), kva, kva + len);
 #endif	/* DVMA_ON_PVLIST */
 
-	s = splimp();
+	s = splvm();
 	rmfree(dvmamap, btoc(len), btoc(kva));
 	wakeup(dvmamap);
 	splx(s);

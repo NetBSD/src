@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.18 2000/06/29 07:19:12 mrg Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.19 2001/01/14 03:23:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@ bus_tmapin(bustype, pa)
 	pa |= bus_info[bustype].base;
 	pa |= PMAP_NC;
 
-	s = splimp();
+	s = splvm();
 	if (tmp_vpages_inuse)
 		panic("bus_tmapin: tmp_vpages_inuse");
 	tmp_vpages_inuse++;
@@ -124,7 +124,7 @@ void bus_tmapout(vp)
 	if (pgva != tmp_vpages[1])
 		return;
 
-	s = splimp();
+	s = splvm();
 	pmap_remove(pmap_kernel(), pgva, pgva + NBPG);
 	--tmp_vpages_inuse;
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.57 2000/11/24 11:57:46 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.58 2001/01/14 03:23:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1570,7 +1570,7 @@ pmap_remove_pte(pte)
 		 * removed, so that it may be modified to point to its new
 		 * neighbor.
 		 */
-		s = splimp();
+		s = splvm();
 		pv_idx = pv->pv_idx;	/* Index of first PTE in PV list */
 		if (pv_idx == targ_idx) {
 			pv->pv_idx = pvebase[targ_idx].pve_next;
@@ -1688,7 +1688,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 {
 	boolean_t insert, managed; /* Marks the need for PV insertion.*/
 	u_short nidx;            /* PV list index                     */
-	int s;                   /* Used for splimp()/splx()          */
+	int s;                   /* Used for splvm()/splx()           */
 	int mapflags;            /* Flags for the mapping (see NOTE1) */
 	u_int a_idx, b_idx, pte_idx; /* table indices                 */
 	a_tmgr_t *a_tbl;         /* A: long descriptor table manager  */
@@ -2042,7 +2042,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		pv = pa2pv(pa);
 		nidx = pteidx(c_pte);
 
-		s = splimp();
+		s = splvm();
 		pvebase[nidx].pve_next = pv->pv_idx;
 		pv->pv_idx = nidx;
 		splx(s);
@@ -2109,7 +2109,7 @@ pmap_enter_kernel(va, pa, prot)
 	/* This array is traditionally named "Sysmap" */
 	pte = &kernCbase[pte_idx];
 
-	s = splimp();
+	s = splvm();
 	if (MMU_VALID_DT(*pte)) {
 		was_valid = TRUE;
 		/*
@@ -2491,7 +2491,7 @@ pmap_copy_page(srcpa, dstpa)
 	srcva = tmp_vpages[0];
 	dstva = tmp_vpages[1];
 
-	s = splimp();
+	s = splvm();
 	if (tmp_vpages_inuse++)
 		panic("pmap_copy_page: temporary vpages are in use.");
 
@@ -2524,7 +2524,7 @@ pmap_zero_page(dstpa)
 	int s;
 
 	dstva = tmp_vpages[1];
-	s = splimp();
+	s = splvm();
 	if (tmp_vpages_inuse++)
 		panic("pmap_zero_page: temporary vpages are in use.");
 
@@ -2715,7 +2715,7 @@ pmap_is_referenced(pg)
 	if (pv->pv_flags & PV_FLAGS_USED)
 		return TRUE;
 
-	s = splimp();
+	s = splvm();
 	/*
 	 * Search through all pv elements pointing
 	 * to this page and query their reference bits
@@ -2758,7 +2758,7 @@ pmap_is_modified(pg)
 	if (pv->pv_flags & PV_FLAGS_MDFY)
 		return TRUE;
 
-	s = splimp();
+	s = splvm();
 	for (idx = pv->pv_idx;
 		 idx != PVE_EOL;
 		 idx = pvebase[idx].pve_next) {
@@ -2796,7 +2796,7 @@ pmap_page_protect(pg, prot)
 	
 	curpmap = current_pmap();
 	pv = pa2pv(pa);
-	s = splimp();
+	s = splvm();
 
 	for (idx = pv->pv_idx;
 		 idx != PVE_EOL;
@@ -2987,7 +2987,7 @@ pmap_clear_pv(pa, flag)
 
 	pv = pa2pv(pa);
 
-	s = splimp();
+	s = splvm();
 	pv->pv_flags &= ~(flag);
 
 	for (idx = pv->pv_idx;
@@ -3626,7 +3626,7 @@ pmap_activate(p)
 	int s;
 
 	if (p == curproc) {
-		s = splimp();
+		s = splvm();
 		_pmap_switch(pmap);
 		splx(s);
 	}

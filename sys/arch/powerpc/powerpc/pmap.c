@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32 2000/09/24 15:26:34 tsubai Exp $	*/
+/*	$NetBSD: pmap.c,v 1.33 2001/01/14 03:26:11 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -561,7 +561,7 @@ pmap_init()
 	/* XXXCDC: ABSOLUTELY WRONG!   uvm_km_zalloc() _CAN_
 		return 0 if out of VM */
 	addr = uvm_km_zalloc(kernel_map, sz);
-	s = splimp();
+	s = splvm();
 	pv = pv_table = (struct pv_entry *)addr;
 	for (i = npgs; --i >= 0;)
 		pv++->pv_idx = -1;
@@ -880,7 +880,7 @@ pmap_enter_pv(pteidx, va, pa)
 	if (!pmap_initialized)
 		return 0;
 
-	s = splimp();
+	s = splvm();
 
 	pv = pa_to_pv(pa);
 	if (first = pv->pv_idx == -1) {
@@ -1018,7 +1018,7 @@ pmap_enter(pm, va, pa, prot, flags)
 			__syncicache((void *)pa, NBPG);
 		}
 
-	s = splimp();
+	s = splvm();
 	pm->pm_stats.resident_count++;
 	/*
 	 * Try to insert directly into HTAB.
@@ -1087,7 +1087,7 @@ pmap_remove(pm, va, endva)
 	pte_t *ptp;
 	struct pte_ovfl *po, *npo;
 
-	s = splimp();
+	s = splvm();
 	while (va < endva) {
 		idx = pteidx(sr = ptesr(pm->pm_sr, va), va);
 		for (ptp = ptable + idx * 8, i = 8; --i >= 0; ptp++)
@@ -1156,7 +1156,7 @@ pmap_extract(pm, va, pap)
 	paddr_t *pap;
 {
 	pte_t *ptp;
-	int s = splimp();
+	int s = splvm();
 	
 	if (!(ptp = pte_find(pm, va))) {
 		splx(s);
@@ -1183,7 +1183,7 @@ pmap_protect(pm, sva, eva, prot)
 	int valid, s;
 	
 	if (prot & VM_PROT_READ) {
-		s = splimp();
+		s = splvm();
 		while (sva < eva) {
 			if (ptp = pte_find(pm, sva)) {
 				valid = ptp->pte_hi & PTE_VALID;
@@ -1233,7 +1233,7 @@ ptemodify(pg, mask, val)
 		return FALSE;
 
 	rv = FALSE;
-	s = splimp();
+	s = splvm();
 	for (; pv; pv = pv->pv_next) {
 		for (ptp = ptable + pv->pv_idx * 8, i = 8; --i >= 0; ptp++)
 			if ((ptp->pte_hi & PTE_VALID)
@@ -1298,7 +1298,7 @@ ptebits(pg, bit)
 	if (pv->pv_idx < 0)
 		return 0;
 	
-	s = splimp();
+	s = splvm();
 	for (; pv; pv = pv->pv_next) {
 		for (ptp = ptable + pv->pv_idx * 8, i = 8; --i >= 0; ptp++)
 			if ((ptp->pte_hi & PTE_VALID)
@@ -1359,7 +1359,7 @@ pmap_page_protect(pg, prot)
 	if (pv == NULL)
 		return;
 
-	s = splimp();
+	s = splvm();
 	while (pv->pv_idx >= 0) {
 		idx = pv->pv_idx;
 		va = pv->pv_va;
