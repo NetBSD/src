@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.41 2001/03/26 12:33:25 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.42 2001/08/26 11:47:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,10 +60,6 @@ bdev_decl(sw);
 bdev_decl(vnd);
 #include "audio.h"
 cdev_decl(audio);
-#include "rz.h"
-#include "tz.h"
-bdev_decl(rz);
-bdev_decl(tz);
 
 struct bdevsw	bdevsw[] =
 {
@@ -87,8 +83,8 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NMD,md),		/* 17: memory disk driver */
 	bdev_tape_init(NST,st),		/* 18: MI SCSI tape */
 	bdev_disk_init(NSD,sd),		/* 19: MI SCSI disk */
-	bdev_tape_init(NTZ, tz),	/* 20: ULTRIX tz tape */
-	bdev_disk_init(NRZ,rz),		/* 21: ULTRIX rz disk & CD-ROM */
+	bdev_notdef(),			/* 20: ULTRIX tz tape */
+	bdev_notdef(),			/* 21: ULTRIX rz disk & CD-ROM */
 	bdev_notdef(),			/* 22: nodev */
 	bdev_notdef(),			/* 23: ULTRIX mscp */
 
@@ -169,9 +165,7 @@ cdev_decl(dtop);
 cdev_decl(fb);
 cdev_decl(px);
 cdev_decl(rcons);
-cdev_decl(rz);
 cdev_decl(scc);
-cdev_decl(tz);
 
 /* a framebuffer with an attached mouse: */
 
@@ -190,7 +184,7 @@ struct cdevsw	cdevsw[] =
 	cdev_fd_init(1,filedesc),	/* 7: file descriptor pseudo-dev */
 	cdev_notdef(),			/* 8: ULTRIX fl */
 	cdev_disk_init(NSD,sd),		/* 9: MI SCSI disk */
-	cdev_tape_init(NTZ,tz),		/* 10: ULTRIX tz tape */
+	cdev_notdef(),			/* 10: ULTRIX tz tape */
 	cdev_disk_init(NVND,vnd),	/* 11: vnode disk driver */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 12: Berkeley packet filter */
 	cdev_notdef(),			/* 13: ULTRIX up */
@@ -236,9 +230,9 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),		/* 51: ULTRIX sh tty */
 	cdev_notdef(),		/* 52: ULTRIX its */
 	cdev_scanner_init(NSS,ss),	/* 53: MI SCSI scanner */
-	cdev_ch_init(NCH,ch),		/* 54: MI SCSI autochanger */
-	cdev_uk_init(NUK,uk),		/* 55: MI SCSI unknown */
-	cdev_disk_init(NRZ,rz), /* 56: ULTRIX rz SCSI, gross coupling to PrestoServe driver */
+	cdev_ch_init(NCH,ch),	/* 54: MI SCSI autochanger */
+	cdev_uk_init(NUK,uk),	/* 55: MI SCSI unknown */
+	cdev_notdef(),		/* 56: ULTRIX rz SCSI, gross coupling to PrestoServe driver */
 	cdev_notdef(),		/* 57: nodev */
 	cdev_notdef(),		/* 58: ULTRIX fc */
 	cdev_notdef(),		/* 59: ULTRIX fg, again gross coupling to PrestoServe driver */
