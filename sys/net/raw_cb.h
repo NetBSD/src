@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.h,v 1.10 1996/05/22 13:55:13 mycroft Exp $	*/
+/*	$NetBSD: raw_cb.h,v 1.11 1996/05/28 23:24:50 pk Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,13 +58,15 @@ struct rawcb {
 #ifdef _KERNEL
 LIST_HEAD(, rawcb) rawcb;		/* head of list */
 
-int	 raw_attach __P((struct socket *, int));
-void	 *raw_ctlinput __P((int, struct sockaddr *, void *));
-void	 raw_detach __P((struct rawcb *));
-void	 raw_disconnect __P((struct rawcb *));
-void	 raw_init __P((void));
-void	 raw_input __P((struct mbuf *, ...));
-int	 raw_usrreq __P((struct socket *,
+int	raw_attach __P((struct socket *, int));
+void	*raw_ctlinput __P((int, struct sockaddr *, void *));
+void	raw_detach __P((struct rawcb *));
+void	raw_disconnect __P((struct rawcb *));
+void	raw_init __P((void));
+void	raw_input __P((struct mbuf *, ...));
+int	raw_usrreq __P((struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
+void	raw_setsockaddr __P((struct rawcb *, struct mbuf *));
+void	raw_setpeeraddr __P((struct rawcb *, struct mbuf *));
 
 #endif /* _KERNEL */
