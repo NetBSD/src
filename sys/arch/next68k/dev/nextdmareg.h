@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdmareg.h,v 1.4 1999/03/14 10:31:05 dbj Exp $	*/
+/*	$NetBSD: nextdmareg.h,v 1.5 1999/08/28 09:19:05 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -88,13 +88,14 @@ struct dma_dev {		/* format of dma device registers */
 /* read bits */
 #define	DMACSR_ENABLE		0x01000000	/* enable dma transfer */
 #define	DMACSR_SUPDATE		0x02000000	/* single update */
+#define	DMACSR_READ		0x04000000	/* dma is ina read operation */
 #define	DMACSR_COMPLETE		0x08000000	/* current dma has completed */
 #define	DMACSR_BUSEXC		0x10000000	/* bus exception occurred */
 /* write bits */
 #define	DMACSR_SETENABLE	0x00010000 	/* set enable */
 #define	DMACSR_SETSUPDATE	0x00020000	/* set single update */
-#define	DMACSR_READ		0x00040000	/* dma from dev to mem */
-#define	DMACSR_WRITE		0x00000000	/* dma from mem to dev */
+#define	DMACSR_SETREAD		0x00040000	/* dma from dev to mem */
+#define	DMACSR_SETWRITE		0x00000000	/* dma from mem to dev */
 #define	DMACSR_CLRCOMPLETE	0x00080000	/* clear complete conditional */
 #define	DMACSR_RESET		0x00100000	/* clr cmplt, sup, enable */
 #define	DMACSR_INITBUF		0x00200000	/* initialize DMA buffers */
