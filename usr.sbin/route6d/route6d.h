@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.h,v 1.6 2001/02/07 13:46:04 itojun Exp $	*/
+/*	$NetBSD: route6d.h,v 1.7 2002/06/07 16:45:30 itojun Exp $	*/
 /*	$KAME: route6d.h,v 1.4 2001/01/15 03:50:54 inoue Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
 */
 
 #define	ROUTE6D_DUMP	"/var/run/route6d_dump"
-#define	ROUTE6D_PID	"/var/run/route6d.pid"
 
 #define	RIP6_VERSION	1
 
