@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.13 2005/03/09 22:39:21 bouyer Exp $ */
+/* $NetBSD: xbd.c,v 1.14 2005/03/11 15:51:25 bouyer Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.13 2005/03/09 22:39:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.14 2005/03/11 15:51:25 bouyer Exp $");
 
 #include "xbd.h"
 #include "rnd.h"
@@ -575,6 +575,8 @@ connect_interface(blkif_fe_interface_status_t *status)
 
 	blkif_evtchn = status->evtchn;
 	blkif_irq = bind_evtchn_to_irq(blkif_evtchn);
+
+	aprint_verbose("xbd: using irq %d\n", blkif_irq);
 
 	event_set_handler(blkif_irq, &xbd_response_handler, NULL, IPL_BIO);
 	hypervisor_enable_irq(blkif_irq);
