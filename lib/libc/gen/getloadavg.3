@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)getloadavg.3	6.3 (Berkeley) 4/19/91
-.\"	$Id: getloadavg.3,v 1.3 1994/01/28 00:19:40 cgd Exp $
+.\"	$Id: getloadavg.3,v 1.4 1994/01/28 04:49:23 cgd Exp $
 .\"
 .Dd April 19, 1991
 .Dt GETLOADAVG 3
@@ -63,10 +63,3 @@ The
 .Fn getloadavg
 function is
 .Ud .
-.Sh BUGS
-Programs using this utility must have read permission on
-.Pa /dev/kmem 
-and must be linked with the
-.Nm kvm
-library.
-These restrictions will eventually be lifted.
