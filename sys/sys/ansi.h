@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.7 2001/10/16 18:04:14 kleink Exp $	*/
+/*	$NetBSD: ansi.h,v 1.8 2001/10/16 18:05:26 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -50,4 +50,4 @@ typedef __uint8_t	__sa_family_t;	/* socket address family */
 typedef unsigned int	__socklen_t;	/* socket-related datum length */
 typedef __uint32_t	__uid_t;	/* user id */
 
-#endif	/* _SYS_ANSI_H_ */
+#endif	/* !_SYS_ANSI_H_ */
