@@ -1,4 +1,4 @@
-/*	$NetBSD: termout.c,v 1.9 1998/11/06 22:14:58 christos Exp $	*/
+/*	$NetBSD: termout.c,v 1.10 1999/07/26 01:49:09 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termout.c	4.3 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: termout.c,v 1.9 1998/11/06 22:14:58 christos Exp $");
+__RCSID("$NetBSD: termout.c,v 1.10 1999/07/26 01:49:09 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -688,7 +688,7 @@ InitTerminal()
 	ClearArray(Terminal);
 	terminalCursorAddress = SetBufferAddress(0,0);
 #if defined(unix)
-	signal(SIGHUP, (void (*))abort);
+	signal(SIGHUP, (void (*)__P((int)))abort);
 #endif
 
 	TryToSend = FastScreen;
