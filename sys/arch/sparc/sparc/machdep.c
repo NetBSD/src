@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70 1996/10/13 03:00:38 christos Exp $ */
+/*	$NetBSD: machdep.c,v 1.71 1996/11/09 23:02:17 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -696,41 +696,31 @@ long	dumplo = 0;
 void
 dumpconf()
 {
-	register int nblks, nmem;
-	register struct memarr *mp;
-	extern struct memarr pmemarr[];	/* XXX */
-	extern int npmemarr;		/* XXX */
+	register int nblks, dumpblks;
 
-	dumpsize = 0;
-	for (mp = pmemarr, nmem = npmemarr; --nmem >= 0; mp++)
-		dumpsize += btoc(mp->len);
+	if (dumpdev == NODEV || bdevsw[major(dumpdev)].d_psize == 0)
+		/* No usable dump device */
+		return;
+
+	nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
+
+	dumpblks = ctod(physmem) + ctod(pmap_dumpsize());
+	if (dumpblks > (nblks - ctod(1)))
+		/*
+		 * dump size is too big for the partition.
+		 * Note, we safeguard a click at the front for a
+		 * possible disk label.
+		 */
+		return;
+
+	/* Put the dump at the end of the partition */
+	dumplo = nblks - dumpblks;
 
 	/*
-	 * savecore views the image in units of pages (i.e., dumpsize is in
-	 * pages) so we round the two mmu entities into page-sized chunks.
-	 * The PMEGs (32kB) and the segment table (512 bytes plus padding)
-	 * are appending to the end of the crash dump.
+	 * savecore(8) expects dumpsize to be the number of pages
+	 * of actual core dumped (i.e. excluding the MMU stuff).
 	 */
-	dumpsize += pmap_dumpsize();
-	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
-		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
-		/*
-		 * Don't dump on the first CLBYTES (why CLBYTES?)
-		 * in case the dump device includes a disk label.
-		 */
-		if (dumplo < btodb(CLBYTES))
-			dumplo = btodb(CLBYTES);
-
-		/*
-		 * If dumpsize is too big for the partition, truncate it.
-		 * Otherwise, put the dump at the end of the partition
-		 * by making dumplo as large as possible.
-		 */
-		if (dumpsize > btoc(dbtob(nblks - dumplo)))
-			dumpsize = btoc(dbtob(nblks - dumplo));
-		else if (dumplo + ctod(dumpsize) > nblks)
-			dumplo = nblks - ctod(dumpsize);
-	}
+	dumpsize = physmem;
 }
 
 #define	BYTES_PER_DUMP	(32 * 1024)	/* must be a multiple of pagesize */
@@ -752,7 +742,7 @@ void
 dumpsys()
 {
 	register int psize;
-	register daddr_t blkno;
+	daddr_t blkno;
 	register int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
 	int error = 0;
 	register struct memarr *mp;
@@ -773,7 +763,7 @@ dumpsys()
 	 */
 	if (dumpsize == 0)
 		dumpconf();
-	if (dumplo < 0)
+	if (dumplo <= 0)
 		return;
 	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
 
@@ -786,7 +776,10 @@ dumpsys()
 	blkno = dumplo;
 	dump = bdevsw[major(dumpdev)].d_dump;
 
-	for (mp = pmemarr, nmem = npmemarr; --nmem >= 0; mp++) {
+	error = pmap_dumpmmu(dump, blkno);
+	blkno += ctod(pmap_dumpsize());
+
+	for (mp = pmemarr, nmem = npmemarr; --nmem >= 0 && error == 0; mp++) {
 		register unsigned i = 0, n;
 		register maddr = mp->addr;
 
@@ -817,8 +810,6 @@ dumpsys()
 			blkno += btodb(n);
 		}
 	}
-	if (!error)
-		error = pmap_dumpmmu(dump, blkno);
 
 	switch (error) {
 
