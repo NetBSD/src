@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.15 2000/05/13 17:22:20 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.16 2000/05/13 18:26:51 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -356,3 +356,10 @@ sys/dev/microcode/isp/asm_pci.h			patch
   Add support for > 12 byte CDBs.  Split out nvram reading into
   per-card functions.  Add proper Ultra2/Ultra3 support.  Upgrade
   firmware.
+
+sys/dev/pci/if_fxpvar.h				patch
+sys/dev/pci/if_fxp.c				patch
+
+  Fix the fxp driver so that it works after a warm-boot from windows
+  and across an APM suspend/resume or hibernate/resume cycle.  Fixes
+  PR#9370, PR#9548, PR#9571 and PR#9573.
