@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.6 2000/05/17 09:25:58 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.7 2000/05/24 20:27:52 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -73,11 +73,6 @@ int sparc_pci_debug = 0x0;
 struct sparc_pci_chipset _sparc_pci_chipset = {
 	NULL,
 };
-
-/* commonly used */
-#define TAG2BUS(tag)	((tag) >> 16) & 0xff;
-#define TAG2DEV(tag)	((tag) >> 11) & 0x1f;
-#define TAG2FN(tag)	((tag) >> 8) & 0x7;
 
 /*
  * functions provided to the MI code.

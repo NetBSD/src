@@ -1,4 +1,4 @@
-/*	$NetBSD: simba.c,v 1.1 1999/06/04 13:42:15 mrg Exp $	*/
+/*	$NetBSD: simba.c,v 1.2 2000/05/24 20:27:52 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -111,17 +111,15 @@ simba_attach(parent, self, aux)
 	 * perhaps it would be all better to probe the simba's and get all
 	 * the info ourselves.. we'll see.
 	 */
-	switch (PPB_BUSINFO_SECONDARY(busdata)) {
-	default:
-		printf("%s: not configured by system firmware (bus %d)\n",
-		    self->dv_xname, PPB_BUSINFO_SECONDARY(busdata));
-		return;
-	case 1:					/* PCI B */
-		pp = sc->sc_simba_b;
-		break;
-	case 2:					/* PCI A */
+
+	if (PPB_BUSINFO_SECONDARY(busdata) == sc->sc_simba_a->pp_bus) {
 		pp = sc->sc_simba_a;
-		break;
+	} else if (PPB_BUSINFO_SECONDARY(busdata) == sc->sc_simba_b->pp_bus) {
+		pp = sc->sc_simba_b;
+	} else {
+		printf("%s: strange bus mapping (bus %d)\n", 
+			self->dv_xname, PPB_BUSINFO_SECONDARY(busdata));
+		return;
 	}
 
 	/*
