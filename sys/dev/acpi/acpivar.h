@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.1 2001/09/28 02:09:24 thorpej Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.2 2001/09/29 05:34:00 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -124,6 +124,11 @@ struct acpi_softc {
 	TAILQ_HEAD(, acpi_scope) sc_scopes;
 };
 
+/*
+ * acpi_attach_args:
+ *
+ *	Used to attach a device instance to the acpi "bus".
+ */
 struct acpi_attach_args {
 	struct acpi_devnode *aa_node;	/* ACPI device node */
 	bus_space_tag_t aa_iot;		/* PCI I/O space tag */
@@ -132,9 +137,125 @@ struct acpi_attach_args {
 	int aa_pciflags;		/* PCI bus flags */
 };
 
+/*
+ * ACPI resources:
+ *
+ *	acpi_io		I/O ports
+ *	acpi_iorange	I/O port range
+ *	acpi_mem	memory region
+ *	acpi_memrange	memory range
+ *	acpi_irq	Interrupt Request
+ *	acpi_drq	DMA request
+ */
+
+struct acpi_io {
+	SIMPLEQ_ENTRY(acpi_io) ar_list;
+	int		ar_index;
+	uint32_t	ar_base;
+	uint32_t	ar_length;
+};
+
+struct acpi_iorange {
+	SIMPLEQ_ENTRY(acpi_iorange) ar_list;
+	int		ar_index;
+	uint32_t	ar_low;
+	uint32_t	ar_high;
+	uint32_t	ar_length;
+	uint32_t	ar_align;
+};
+
+struct acpi_mem {
+	SIMPLEQ_ENTRY(acpi_mem) ar_list;
+	int		ar_index;
+	uint32_t	ar_base;
+	uint32_t	ar_length;
+};
+
+struct acpi_memrange {
+	SIMPLEQ_ENTRY(acpi_memrange) ar_list;
+	int		ar_index;
+	uint32_t	ar_low;
+	uint32_t	ar_high;
+	uint32_t	ar_length;
+	uint32_t	ar_align;
+};
+
+struct acpi_irq {
+	SIMPLEQ_ENTRY(acpi_irq) ar_list;
+	int		ar_index;
+	uint32_t	ar_irq;
+};
+
+struct acpi_drq {
+	SIMPLEQ_ENTRY(acpi_drq) ar_list;
+	int		ar_index;
+	uint32_t	ar_drq;
+};
+
+struct acpi_resources {
+	SIMPLEQ_HEAD(, acpi_io) ar_io;
+	int ar_nio;
+
+	SIMPLEQ_HEAD(, acpi_iorange) ar_iorange;
+	int ar_niorange;
+
+	SIMPLEQ_HEAD(, acpi_mem) ar_mem;
+	int ar_nmem;
+
+	SIMPLEQ_HEAD(, acpi_memrange) ar_memrange;
+	int ar_nmemrange;
+
+	SIMPLEQ_HEAD(, acpi_irq) ar_irq;
+	int ar_nirq;
+
+	SIMPLEQ_HEAD(, acpi_drq) ar_drq;
+	int ar_ndrq;
+};
+
+/*
+ * acpi_resource_parse_ops:
+ *
+ *	The client of ACPI resources specifies these operations
+ *	when the resources are parsed.
+ */
+struct acpi_resource_parse_ops {
+	void	(*init)(struct device *, void *, void **);
+	void	(*fini)(struct device *, void *);
+
+	void	(*ioport)(struct device *, void *, uint32_t, uint32_t);
+	void	(*iorange)(struct device *, void *, uint32_t, uint32_t,
+		    uint32_t, uint32_t);
+
+	void	(*memory)(struct device *, void *, uint32_t, uint32_t);
+	void	(*memrange)(struct device *, void *, uint32_t, uint32_t,
+		    uint32_t, uint32_t);
+
+	void	(*irq)(struct device *, void *, uint32_t);
+	void	(*drq)(struct device *, void *, uint32_t);
+
+	void	(*start_dep)(struct device *, void *, int);
+	void	(*end_dep)(struct device *, void *);
+};
+
 extern struct acpi_softc *acpi_softc;
 extern int acpi_active;
+
+extern const struct acpi_resource_parse_ops acpi_resource_parse_ops_default;
 
 int		acpi_probe(void);
 
 ACPI_STATUS	acpi_eval_integer(ACPI_HANDLE, char *, int *);
+
+ACPI_STATUS	acpi_get(ACPI_HANDLE, ACPI_BUFFER *,
+		    ACPI_STATUS (*)(ACPI_HANDLE, ACPI_BUFFER *));
+
+ACPI_STATUS	acpi_resource_parse(struct device *, struct acpi_devnode *,
+		    void *, const struct acpi_resource_parse_ops *);
+void		acpi_resource_print(struct device *, struct acpi_resources *);
+
+struct acpi_io		*acpi_res_io(struct acpi_resources *, int);
+struct acpi_iorange	*acpi_res_iorange(struct acpi_resources *, int);
+struct acpi_mem		*acpi_res_mem(struct acpi_resources *, int);
+struct acpi_memrange	*acpi_res_memrange(struct acpi_resources *, int);
+struct acpi_irq		*acpi_res_irq(struct acpi_resources *, int);
+struct acpi_drq		*acpi_res_drq(struct acpi_resources *, int);

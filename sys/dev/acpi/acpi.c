@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.1 2001/09/28 02:09:22 thorpej Exp $	*/
+/*	$NetBSD: acpi.c,v 1.2 2001/09/29 05:34:00 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -592,6 +592,11 @@ acpi_system_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
  * ACPI utility routines.
  *****************************************************************************/
 
+/*
+ * acpi_eval_integer:
+ *
+ *	Evaluate an integer object.
+ */
 ACPI_STATUS
 acpi_eval_integer(ACPI_HANDLE handle, char *path, int *valp)
 {
@@ -614,4 +619,29 @@ acpi_eval_integer(ACPI_HANDLE handle, char *path, int *valp)
 	}
 
 	return (rv);
+}
+
+/*
+ * acpi_get:
+ *
+ *	Fetch data info the specified (empty) ACPI buffer.
+ */
+ACPI_STATUS
+acpi_get(ACPI_HANDLE handle, ACPI_BUFFER *buf,
+    ACPI_STATUS (*getit)(ACPI_HANDLE, ACPI_BUFFER *))
+{
+	ACPI_STATUS rv;
+
+	buf->Pointer = NULL;
+	buf->Length = 0;
+
+	rv = (*getit)(handle, buf);
+	if (rv != AE_BUFFER_OVERFLOW)
+		return (rv);
+
+	buf->Pointer = AcpiOsCallocate(buf->Length);
+	if (buf->Pointer == NULL)
+		return (AE_NO_MEMORY);
+
+	return ((*getit)(handle, buf));
 }
