@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.43 2001/07/20 21:59:58 matt Exp $	*/
+/*	$NetBSD: ps.c,v 1.44 2001/07/30 16:22:49 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.43 2001/07/20 21:59:58 matt Exp $");
+__RCSID("$NetBSD: ps.c,v 1.44 2001/07/30 16:22:49 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -483,8 +483,6 @@ pscomp(a, b)
 	if (sortby == SORTMEM)
 		return (VSIZE(kb) - VSIZE(ka));
 	i =  ka->p_tdev - kb->p_tdev;
-	if (i == 0)
-		i = ka->p_pid - kb->p_pid;
 
 	if (i == 0)
 		i = ka->p_pid - kb->p_pid;
