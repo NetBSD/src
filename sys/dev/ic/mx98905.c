@@ -1,4 +1,4 @@
-/*	$NetBSD: mx98905.c,v 1.2 2002/02/17 20:08:34 bjh21 Exp $	*/
+/*	$NetBSD: mx98905.c,v 1.2.10.1 2003/01/27 05:26:37 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.2 2002/02/17 20:08:34 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.2.10.1 2003/01/27 05:26:37 jmc Exp $");
 
 #include <sys/device.h>
 #include <sys/mbuf.h>
@@ -190,6 +190,7 @@ mx98905_write_mbuf(sc, m, buf)
 #ifdef DIAGNOSTIC
 	u_int8_t *lim;
 #endif
+	int i;
 
 	resid = savelen = m->m_pkthdr.len;
 
@@ -278,6 +279,13 @@ mx98905_write_mbuf(sc, m, buf)
 		savebyte[1] = 0;
 		bus_space_write_stream_2(asict, asich, NE2000_ASIC_DATA,
 		    *(u_int16_t *)savebyte);
+	}
+	if (savelen < ETHER_MIN_LEN - ETHER_CRC_LEN) {
+		for(i = 0; i < (ETHER_MIN_LEN - ETHER_CRC_LEN - savelen) >> 1;
+		    i++)
+			bus_space_write_stream_2(asict, asich,
+			    NE2000_ASIC_DATA, 0);
+		savelen = ETHER_MIN_LEN - ETHER_CRC_LEN;
 	}
 	NIC_BARRIER(nict, nich);
 
