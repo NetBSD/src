@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.S,v 1.9 1994/10/27 04:14:29 cgd Exp $	*/
+/*	$NetBSD: asm.S,v 1.10 1995/01/18 17:28:08 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -51,15 +51,16 @@ NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-	.file "asm.s"
+#include <machine/asm.h>
+#define	addr32	.byte 0x67
+#define	data32	.byte 0x66
 
-#include "asm.h"
+CR0_PE		=	0x1
 
-
-CR0_PE	=	0x1
-
-.globl	EXT(ouraddr)
-	.text
+	.data
+	.globl	_ourseg
+_ourseg:
+	.long	0
 
 /*
  * real_to_prot()
@@ -72,7 +73,7 @@ ENTRY(real_to_prot)
 	# load the gdtr
 	addr32
 	data32
-	lgdt	EXT(Gdtr)
+	lgdt	_C_LABEL(Gdtr)
 
 	# set the PE bit of CR0
 	movl	%cr0, %eax
@@ -103,8 +104,7 @@ xprot:
 ENTRY(prot_to_real)
 
 	# set up a dummy stack frame for the second seg change.
-	movl 	_ouraddr, %eax
-	sarl	$4, %eax
+	movl 	_ourseg, %eax
 	pushw	%ax
 	movl	$xreal, %eax	# gas botches pushw $xreal - extra bytes 0, 0
 	pushw	%ax		# decode to add %al, (%eax) (%al usually 0)

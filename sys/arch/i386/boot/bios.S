@@ -1,4 +1,4 @@
-/*	$NetBSD: bios.S,v 1.8 1995/01/18 15:09:55 mycroft Exp $	*/
+/*	$NetBSD: bios.S,v 1.9 1995/01/18 17:28:09 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -51,14 +51,11 @@ NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-	.file	"bios.s"
-
-#include "asm.h"
-	.text
+#include <machine/asm.h>
+#define	addr32	.byte 0x67
+#define	data32	.byte 0x66
 
 /*
-# biosread(dev, cyl, head, sec, nsec, offset)
-#	Read "nsec" sectors from disk to offset "offset" in boot segment
 # BIOS call "INT 0x13 Function 0x2" to read sectors from disk into memory
 #	Call with	%ah = 0x2
 #			%al = number of sectors
@@ -70,7 +67,6 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #	Return:		
 #			%al = 0x0 on success; err code on failure
 */
-
 ENTRY(biosread)
 	pushl	%ebp
 	movl	%esp, %ebp
@@ -90,7 +86,7 @@ ENTRY(biosread)
 	movl	0x1c(%ebp), %ebx	# offset
 				# prot_to_real will set %es to BOOTSEG
 
-	call	EXT(prot_to_real)	# enter real mode
+	call	_C_LABEL(prot_to_real)	# enter real mode
 	movb	$0x2, %ah	# subfunction
 	addr32
 	movb	0x18(%ebp), %al	# number of sectors
@@ -102,7 +98,7 @@ ENTRY(biosread)
 	movl	%eax, %ebx	# save return value (actually movw %ax, %bx)
 
 	data32
-	call	EXT(real_to_prot) # back to protected mode
+	call	_C_LABEL(real_to_prot) # back to protected mode
 
 	xorl	%eax, %eax
 	movb	%bh, %al	# return value in %ax
@@ -137,7 +133,7 @@ ENTRY(putc)
 
 	movb	0x8(%ebp), %cl
 
-	call	EXT(prot_to_real)
+	call	_C_LABEL(prot_to_real)
 	sti
 
 	movb	%cl, %al
@@ -155,7 +151,7 @@ ENTRY(putc)
 
 	cli
 	data32
-	call	EXT(real_to_prot)
+	call	_C_LABEL(real_to_prot)
 
 	popl	%ecx
 	popl	%ebx
@@ -182,7 +178,7 @@ ENTRY(getc)
 	movl	%esp, %ebp
 	pushl	%ebx
 
-	call	EXT(prot_to_real)
+	call	_C_LABEL(prot_to_real)
 	sti
 
 #ifndef SERIAL
@@ -198,7 +194,7 @@ ENTRY(getc)
 
 	cli
 	data32
-	call	EXT(real_to_prot)
+	call	_C_LABEL(real_to_prot)
 
 	xorl	%eax, %eax
 	movb	%bl, %al
@@ -232,7 +228,7 @@ ENTRY(ischar)
 	movl	%esp, %ebp
 	pushl	%ebx
 
-	call	EXT(prot_to_real)
+	call	_C_LABEL(prot_to_real)
 	sti
 
 #ifndef SERIAL
@@ -250,7 +246,7 @@ ENTRY(ischar)
 
 	cli
 	data32
-	call	EXT(real_to_prot)
+	call	_C_LABEL(real_to_prot)
 
 	xorl	%eax, %eax
 	movb	%bl, %al
@@ -276,7 +272,7 @@ ENTRY(get_diskinfo)
 
 	movb	0x8(%ebp), %dl		# diskinfo(drive #)
 
-	call	EXT(prot_to_real)	# enter real mode
+	call	_C_LABEL(prot_to_real)	# enter real mode
 	sti
 
 	movb	$0x08, %ah		# ask for disk info
@@ -301,7 +297,7 @@ ENTRY(get_diskinfo)
 ok:
 	cli
 	data32
-	call	EXT(real_to_prot)	# back to protected mode
+	call	_C_LABEL(real_to_prot)	# back to protected mode
 
 	xorl	%eax, %eax
 
@@ -334,7 +330,7 @@ ENTRY(memsize)
 
 	movl	8(%ebp), %ebx
 
-	call	EXT(prot_to_real)		# enter real mode
+	call	_C_LABEL(prot_to_real)	# enter real mode
 	sti
 
 	testb	%bl, %bl
@@ -354,7 +350,7 @@ xdone:
 
 	cli
 	data32
-	call	EXT(real_to_prot)
+	call	_C_LABEL(real_to_prot)
 
 	movl	%ebx, %eax
 	popl	%ebx
