@@ -2,11 +2,11 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.33 2000/03/08 14:53:33 takemura Exp $
+# 	$NetBSD: GENERIC,v 1.34 2000/03/11 08:51:55 shin Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.33 $"
+#ident 		"GENERIC-$Revision: 1.34 $"
 
 maxusers	8
 
@@ -264,7 +264,7 @@ vrisab4 at vrgiu?
 isa4	at vrisab4
 
 # PCMCIA bus support
-pcmcia*	at pcic? controller ? socket ?
+pcmcia*	at pcic? controller 0 socket ?
 
 # PCMCIA IDE disk
 wdc*	at pcmcia? function ?
