@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.27 2001/01/29 22:19:19 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.28 2001/01/30 01:32:59 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -1344,7 +1344,7 @@ _C_LABEL(MonTrap100):
 
 	.align	2
 1:
-	.long	_exphandler
+	.long	_C_LABEL(exphandler)
 _C_LABEL(MonTrap100_end):
 
 	.align	2
@@ -1356,7 +1356,7 @@ _C_LABEL(MonTrap600):
 
 	.align	2
 1:
-	.long	_ihandler
+	.long	_C_LABEL(ihandler)
 _MonTrap600_end:
 
 /*
