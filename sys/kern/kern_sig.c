@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.100 2000/05/27 00:40:46 sommerfeld Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.100.4.1 2001/07/29 20:04:57 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -332,9 +332,13 @@ void
 execsigs(p)
 	struct proc *p;
 {
-	struct sigacts *ps = p->p_sigacts;
+	struct sigacts *ps;
 	int signum;
 	int prop;
+
+	sigactunshare(p);
+
+	ps = p->p_sigacts;
 
 	/*
 	 * Reset caught signals.  Held signals remain held
