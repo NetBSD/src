@@ -124,7 +124,7 @@ typedef struct VSTREAM_POPEN_ARGS {
 
 /* vstream_parse_args - get arguments from variadic list */
 
-static VSTREAM *vstream_parse_args(VSTREAM_POPEN_ARGS *args, va_list ap)
+static void vstream_parse_args(VSTREAM_POPEN_ARGS *args, va_list ap)
 {
     const char *myname = "vstream_parse_args";
     int     key;
