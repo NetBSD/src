@@ -47,6 +47,11 @@ int berkeley_format = BSD_DEFAULT;	/* 0 means use AT&T-style output.  */
 int show_version = 0;
 int show_help = 0;
 
+int show_totals = 0;
+static bfd_size_type total_bsssize;
+static bfd_size_type total_datasize;
+static bfd_size_type total_textsize;
+
 /* Program exit status.  */
 int return_code = 0;
 
@@ -73,7 +78,7 @@ usage (stream, status)
      int status;
 {
   fprintf (stream, "\
-Usage: %s [-ABdoxV] [--format=berkeley|sysv] [--radix=8|10|16]\n\
+Usage: %s [-ABdotxV] [--format=berkeley|sysv] [--radix=8|10|16]\n\
        [--target=bfdname] [--version] [--help] [file...]\n", program_name);
 #if BSD_DEFAULT
   fputs ("default is --format=berkeley\n", stream);
@@ -110,7 +115,7 @@ main (argc, argv)
   bfd_init ();
   set_default_bfd_target ();
 
-  while ((c = getopt_long (argc, argv, "ABVdox", long_options,
+  while ((c = getopt_long (argc, argv, "ABVdotwx", long_options,
 			   (int *) 0)) != EOF)
     switch (c)
       {
@@ -176,6 +181,10 @@ main (argc, argv)
       case 'o':
 	radix = octal;
 	break;
+      case 't':
+	show_totals = 1;
+	break;
+      case 'w':
       case 0:
 	break;
       case '?':
@@ -192,6 +201,17 @@ main (argc, argv)
   else
     for (; optind < argc;)
       display_file (argv[optind++]);
+
+  if (show_totals && berkeley_format) {
+    bfd_size_type total = total_textsize + total_datasize + total_bsssize;
+
+    lprint_number (7, total_textsize);
+    lprint_number (7, total_datasize);
+    lprint_number (7, total_bsssize);
+    printf (((radix == octal) ? "%-7lo\t%-7lx\t" : "%-7lu\t%-7lx\t"),
+	    (unsigned long) total, (unsigned long) total);
+    fputs ("(TOTALS)\n", stdout);
+  }
 
   return return_code;
 }
@@ -373,6 +393,12 @@ print_berkeley_format (abfd)
 #endif
 
   total = textsize + datasize + bsssize;
+
+  if (show_totals) {
+    total_textsize += textsize;
+    total_datasize += datasize;
+    total_bsssize += bsssize;
+  }
 
   lprint_number (7, textsize);
   lprint_number (7, datasize);
