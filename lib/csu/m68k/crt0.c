@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: crt0.c,v 1.9 1994/07/31 19:57:46 mycroft Exp $
+ *	$Id: crt0.c,v 1.10 1995/01/17 06:10:31 mycroft Exp $
  */
 
 
@@ -240,7 +240,7 @@ __do_dynamic_link ()
 
 	/* Map in data segment of ld.so writable */
 	if (mmap(crt.crt_ba+N_DATADDR(hdr), hdr.a_data,
-			PROT_READ|PROT_EXEC|PROT_WRITE,
+			PROT_READ|PROT_WRITE,
 			MAP_FIXED|MAP_COPY,
 			crt.crt_ldfd, N_DATOFF(hdr)) == -1) {
 		_FATAL("Cannot map ld.so\n");
