@@ -1,3 +1,4 @@
+/*	$NetBSD: pathnames.h,v 1.3 1995/05/12 21:04:32 leo Exp $	*/
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -27,7 +28,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: pathnames.h,v 1.2 1994/06/04 12:13:49 chopps Exp $
  */
 
-#define	_PATH_AMIGACONSOLE	"/dev/ttye0"
+#if defined(amiga) || defined(atari)
+#define	_PATH_CONSOLE	"/dev/ttye0"
+#endif

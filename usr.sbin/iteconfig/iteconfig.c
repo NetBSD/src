@@ -1,3 +1,4 @@
+/*	$NetBSD: iteconfig.c,v 1.4 1995/05/12 21:04:29 leo Exp $	*/
 /*
  * Copyright (c) 1994 Christian E. Hopps
  * All rights reserved.
@@ -27,16 +28,28 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: iteconfig.c,v 1.3 1994/04/10 00:56:57 chopps Exp $
  */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/queue.h>
+
+#if !defined(amiga) && !defined(atari)
+#error "This source is not suitable for this architecture!"
+#endif
+
+#if defined(amiga)
 #include <amiga/dev/grfabs_reg.h>
 #include <amiga/dev/viewioctl.h>
 #include <amiga/dev/iteioctl.h>
+#endif /* defined(amiga)	*/
+
+#if defined(atari)
+#include <atari/dev/grfabs_reg.h>
+#include <atari/dev/viewioctl.h>
+#include <atari/dev/iteioctl.h>
+#endif /* defined(atari)	*/
 
 #include <err.h>
 #include <errno.h>
@@ -54,6 +67,8 @@ void	usage __P((void));
 void	xioctl __P((int, int, void *));
 colormap_t *xgetcmap __P((int, int));
 long	xstrtol __P((char *));
+int	initialize __P((char *, struct itewinsize *, struct itebell *,
+			struct itewinsize *, struct itebell *));
 
 int
 main(argc, argv)
@@ -64,27 +79,30 @@ main(argc, argv)
 	struct itebell ib, newib;
 	struct winsize ws;
 	colormap_t *cm;
-	int ch, fd, i, iflag, max_colors;
+	char *file = _PATH_CONSOLE;
+	int ch, fd, i, iflag, max_colors, did_reset;
 	long val;
 
 	iflag = 0;
+	did_reset = 0;
 
-	fd = open(_PATH_AMIGACONSOLE, O_RDONLY | O_NONBLOCK);
-	if (fd == -1)
-		err(1, "open console");
+	fd = initialize(_PATH_CONSOLE, &is, &ib, &newis, &newib);
 
-	xioctl(fd, ITEIOCGWINSZ, &is);
-	xioctl(fd, ITEIOCGBELL, &ib);
-
-	memcpy(&newis, &is, sizeof(is));
-	memcpy(&newib, &ib, sizeof(ib));
-
-	while ((ch = getopt(argc, argv, "D:H:P:T:V:W:X:Y:d:h:ip:t:v:w:x:y:"))
+	while ((ch = getopt(argc, argv, "D:H:P:T:V:W:X:Y:d:f:h:ip:t:v:w:x:y:"))
 	    != EOF) {
 		switch (ch) {
 		case 'D':		/* undocumented backward compat */
 		case 'd':
 			newis.depth = xstrtol(optarg);
+			break;
+		case 'f':
+			if (did_reset)
+				break;
+			if (fd != -1)
+				close(fd);
+			file = optarg;
+			fd = initialize(optarg, &is, &ib, &newis, &newib);
+			did_reset = optreset = optind = 1;
 			break;
 		case 'H':		/* undocumented backward compat */
 		case 'h':
@@ -123,6 +141,8 @@ main(argc, argv)
 	}
 	argc -= optind;
 	argv += optind;
+	if(fd == -1)
+		err(1, "open \"%s\"", file);
 
 	if (memcmp(&newis, &is, sizeof(is))) {
 		xioctl(fd, ITEIOCSWINSZ, &newis);
@@ -234,6 +254,26 @@ printcmap(cm, ncols)
 	}
 	if ((i + 1) % nel)
 		printf("\n");
+}
+
+int
+initialize(file, is, ib, newis, newib)
+	char	*file;
+	struct itewinsize *is, *newis;
+	struct itebell *ib, *newib;
+{
+	int fd;
+
+	fd = open(file, O_RDONLY | O_NONBLOCK);
+	if (fd == -1)
+		return(-1);
+
+	xioctl(fd, ITEIOCGWINSZ, is);
+	xioctl(fd, ITEIOCGBELL, ib);
+
+	memcpy(newis, is, sizeof(*is));
+	memcpy(newib, ib, sizeof(*ib));
+	return(fd);
 }
 
 void
