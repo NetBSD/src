@@ -1,4 +1,4 @@
-/* $NetBSD: ispmbox.h,v 1.42 2002/08/12 21:33:40 mjacob Exp $ */
+/* $NetBSD: ispmbox.h,v 1.43 2002/08/16 21:43:15 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -679,6 +679,7 @@ typedef struct isp_icb {
 #define	ICBXOPT_RIO_32BIT	2
 #define	ICBXOPT_RIO_16BIT_IOCB	3
 #define	ICBXOPT_RIO_32BIT_IOCB	4
+#define	ICBXOPT_ZIO		5
 
 #define	ICBZOPT_ENA_RDXFR_RDY	0x01
 #define	ICBZOPT_ENA_OOF		(1 << 6) /* out of order frame handling */
