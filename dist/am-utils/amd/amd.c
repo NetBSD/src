@@ -1,7 +1,7 @@
-/*	$NetBSD: amd.c,v 1.3 2001/05/13 18:06:57 veego Exp $	*/
+/*	$NetBSD: amd.c,v 1.4 2002/11/29 23:06:22 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: amd.c,v 1.8.2.3 2001/01/10 03:22:59 ezk Exp
+ * Id: amd.c,v 1.19 2002/06/23 01:05:38 ib42 Exp
  *
  */
 
@@ -72,6 +71,10 @@ jmp_buf select_intr;
 struct amd_stats amd_stats;	/* Server statistics */
 struct in_addr myipaddr;	/* (An) IP address of this host */
 time_t do_mapc_reload = 0;	/* mapc_reload() call required? */
+
+#ifdef HAVE_FS_AUTOFS
+int amd_use_autofs = 0;
+#endif /* HAVE_FS_AUTOFS */
 
 #ifdef HAVE_SIGACTION
 sigset_t masked_sigs;
@@ -120,10 +123,8 @@ sighup(int sig)
   signal(sig, sighup);
 #endif /* REINSTALL_SIGNAL_HANDLER */
 
-#ifdef DEBUG
   if (sig != SIGHUP)
     dlog("spurious call to sighup");
-#endif /* DEBUG */
   /*
    * Force a reload by zero'ing the timer
    */
@@ -273,6 +274,9 @@ init_global_options(void)
 
   /* dismount interval */
   gopt.am_timeo_w = AM_TTL_W;
+
+  /* map reload intervl */
+  gopt.map_reload_interval = ONE_HOUR;
 
   /*
    * various CFM_* flags.
@@ -504,8 +508,13 @@ main(int argc, char *argv[])
   /*
    * Lock process text and data segment in memory.
    */
-#ifdef HAVE_PLOCK
   if (gopt.flags & CFM_PROCESS_LOCK) {
+#if defined(HAVE_PLOCK) || defined(HAVE_MLOCKALL)
+    int locked_ok = 0;
+#else /* not HAVE_PLOCK and not HAVE_MLOCKALL */
+    plog(XLOG_WARNING, "Process memory locking not supported by the OS");
+#endif /* not HAVE_PLOCK and not HAVE_MLOCKALL */
+#ifdef HAVE_PLOCK
 # ifdef _AIX
     /*
      * On AIX you must lower the stack size using ulimit() before calling
@@ -516,13 +525,22 @@ main(int argc, char *argv[])
      */
     plog(XLOG_WARNING, "AIX: may need to lower stack size using ulimit(3) before calling plock");
 # endif /* _AIX */
-    if (plock(PROCLOCK) != 0) {
-      plog(XLOG_WARNING, "Couldn't lock process text and data segment in memory: %m");
-    } else {
-      plog(XLOG_INFO, "Locked process text and data segment in memory");
-    }
-  }
+    if (!locked_ok && plock(PROCLOCK) != 0)
+      plog(XLOG_WARNING, "Couldn't lock process pages in memory using plock(): %m");
+    else
+      locked_ok = 1;
 #endif /* HAVE_PLOCK */
+#ifdef HAVE_MLOCKALL
+    if (!locked_ok && mlockall(MCL_CURRENT|MCL_FUTURE) != 0)
+      plog(XLOG_WARNING, "Couldn't lock process pages in memory using mlockall(): %m");
+    else
+      locked_ok = 1;
+#endif /* HAVE_MLOCKALL */
+#if defined(HAVE_PLOCK) || defined(HAVE_MLOCKALL)
+    if (locked_ok)
+      plog(XLOG_INFO, "Locked process pages in memory");
+#endif /* HAVE_PLOCK || HAVE_MLOCKALL */
+  }
 
 #ifdef HAVE_MAP_NIS
   /*
@@ -543,7 +561,7 @@ main(int argc, char *argv[])
 
   sprintf(pid_fsname, "%s:(pid%ld)", am_get_hostname(), (long) am_mypid);
 
-  do_mapc_reload = clocktime() + ONE_HOUR;
+  do_mapc_reload = clocktime() + gopt.map_reload_interval;
 
   /*
    * Register automounter with system.
@@ -551,6 +569,13 @@ main(int argc, char *argv[])
   error = mount_automounter(ppid);
   if (error && ppid)
     kill(ppid, SIGALRM);
+
+#ifdef HAVE_FS_AUTOFS
+  /* XXX this should be part of going_down(), but I can't move it there because it would be calling non-library code from the library... ugh */
+  if (amd_use_autofs)
+    destroy_autofs_service();
+#endif /* HAVE_FS_AUTOFS */
+
   going_down(error);
 
   abort();
