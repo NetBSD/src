@@ -1,6 +1,8 @@
-/*
- * Copyright (c) 1985, 1989 Regents of the University of California.
- * All rights reserved.
+/*	$NetBSD: res_send.c,v 1.4 1995/02/25 06:21:01 cgd Exp $	*/
+
+/*-
+ * Copyright (c) 1985, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,11 +31,35 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ * -
+ * Portions Copyright (c) 1993 by Digital Equipment Corporation.
+ * 
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies, and that
+ * the name of Digital Equipment Corporation not be used in advertising or
+ * publicity pertaining to distribution of the document or software without
+ * specific, written prior permission.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS" AND DIGITAL EQUIPMENT CORP. DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS.   IN NO EVENT SHALL DIGITAL EQUIPMENT
+ * CORPORATION BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+ * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ * SOFTWARE.
+ * -
+ * --Copyright--
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)res_send.c	6.27 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: res_send.c,v 1.3 1993/08/26 00:46:21 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
+static char rcsid[] = "$Id: res_send.c,v 4.9.1.1 1993/05/02 22:43:03 vixie Rel ";
+#else
+static char rcsid[] = "$NetBSD: res_send.c,v 1.4 1995/02/25 06:21:01 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -46,6 +72,7 @@ static char *rcsid = "$Id: res_send.c,v 1.3 1993/08/26 00:46:21 jtc Exp $";
 #include <sys/uio.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
+#include <arpa/inet.h>
 #include <stdio.h>
 #include <errno.h>
 #include <resolv.h>
@@ -80,32 +107,37 @@ res_send(buf, buflen, answer, anslen)
 	struct timeval timeout;
 	HEADER *hp = (HEADER *) buf;
 	HEADER *anhp = (HEADER *) answer;
+	u_int badns;		/* XXX NSMAX can't exceed #/bits per this */
 	struct iovec iov[2];
 	int terrno = ETIMEDOUT;
 	char junk[512];
 
 #ifdef DEBUG
-	if (_res.options & RES_DEBUG) {
-		printf("res_send()\n");
+	if ((_res.options & RES_DEBUG) || (_res.pfcode & RES_PRF_QUERY)) {
+		printf(";; res_send()\n");
 		__p_query(buf);
 	}
-#endif DEBUG
+#endif
 	if (!(_res.options & RES_INIT))
 		if (res_init() == -1) {
 			return(-1);
 		}
 	v_circuit = (_res.options & RES_USEVC) || buflen > PACKETSZ;
 	id = hp->id;
+	badns = 0;
 	/*
 	 * Send request, RETRY times, or until successful
 	 */
 	for (try = 0; try < _res.retry; try++) {
-	   for (ns = 0; ns < _res.nscount; ns++) {
+	    for (ns = 0; ns < _res.nscount; ns++) {
+		if (badns & (1<<ns))
+			continue;
 #ifdef DEBUG
 		if (_res.options & RES_DEBUG)
-			printf("Querying server (# %d) address = %s\n", ns+1,
-			      inet_ntoa(_res.nsaddr_list[ns].sin_addr));
-#endif DEBUG
+			printf(";; Querying server (# %d) address = %s\n",
+			       ns+1,
+			       inet_ntoa(_res.nsaddr_list[ns].sin_addr));
+#endif
 	usevc:
 		if (v_circuit) {
 			int truncated = 0;
@@ -122,7 +154,7 @@ res_send(buf, buflen, answer, anslen)
 #ifdef DEBUG
 					if (_res.options & RES_DEBUG)
 					    perror("socket (vc) failed");
-#endif DEBUG
+#endif
 					continue;
 				}
 				if (connect(s,
@@ -132,7 +164,7 @@ res_send(buf, buflen, answer, anslen)
 #ifdef DEBUG
 					if (_res.options & RES_DEBUG)
 					    perror("connect failed");
-#endif DEBUG
+#endif
 					(void) close(s);
 					s = -1;
 					continue;
@@ -151,7 +183,7 @@ res_send(buf, buflen, answer, anslen)
 #ifdef DEBUG
 				if (_res.options & RES_DEBUG)
 					perror("write failed");
-#endif DEBUG
+#endif
 				(void) close(s);
 				s = -1;
 				continue;
@@ -171,7 +203,7 @@ res_send(buf, buflen, answer, anslen)
 #ifdef DEBUG
 				if (_res.options & RES_DEBUG)
 					perror("read failed");
-#endif DEBUG
+#endif
 				(void) close(s);
 				s = -1;
 				/*
@@ -193,8 +225,9 @@ res_send(buf, buflen, answer, anslen)
 			if ((resplen = ntohs(*(u_short *)cp)) > anslen) {
 #ifdef DEBUG
 				if (_res.options & RES_DEBUG)
-					fprintf(stderr, "response truncated\n");
-#endif DEBUG
+					fprintf(stderr,
+						";; response truncated\n");
+#endif
 				len = anslen;
 				truncated = 1;
 			} else
@@ -209,7 +242,7 @@ res_send(buf, buflen, answer, anslen)
 #ifdef DEBUG
 				if (_res.options & RES_DEBUG)
 					perror("read failed");
-#endif DEBUG
+#endif
 				(void) close(s);
 				s = -1;
 				continue;
@@ -241,11 +274,10 @@ res_send(buf, buflen, answer, anslen)
 #ifdef DEBUG
 					if (_res.options & RES_DEBUG)
 					    perror("socket (dg) failed");
-#endif DEBUG
+#endif
 					continue;
 				}
 			}
-#if	BSD >= 43
 			/*
 			 * I'm tired of answering this question, so:
 			 * On a 4.3BSD+ machine (client and server,
@@ -269,12 +301,14 @@ res_send(buf, buflen, answer, anslen)
 				 * from another server.
 				 */
 				if (connected == 0) {
-			if (connect(s, (struct sockaddr *)&_res.nsaddr_list[ns],
+					if (connect(s,
+					    (struct sockaddr *)
+					    &_res.nsaddr_list[ns],
 					    sizeof(struct sockaddr)) < 0) {
 #ifdef DEBUG
 						if (_res.options & RES_DEBUG)
 							perror("connect");
-#endif DEBUG
+#endif
 						continue;
 					}
 					connected = 1;
@@ -283,7 +317,7 @@ res_send(buf, buflen, answer, anslen)
 #ifdef DEBUG
 					if (_res.options & RES_DEBUG)
 						perror("send");
-#endif DEBUG
+#endif
 					continue;
 				}
 			} else {
@@ -296,19 +330,16 @@ res_send(buf, buflen, answer, anslen)
 					    sizeof(no_addr));
 					connected = 0;
 				}
-#endif BSD
 				if (sendto(s, buf, buflen, 0,
 				    (struct sockaddr *)&_res.nsaddr_list[ns],
 				    sizeof(struct sockaddr)) != buflen) {
 #ifdef DEBUG
 					if (_res.options & RES_DEBUG)
 						perror("sendto");
-#endif DEBUG
+#endif
 					continue;
 				}
-#if	BSD >= 43
 			}
-#endif
 
 			/*
 			 * Wait for reply
@@ -316,7 +347,7 @@ res_send(buf, buflen, answer, anslen)
 			timeout.tv_sec = (_res.retrans << try);
 			if (try > 0)
 				timeout.tv_sec /= _res.nscount;
-			if (timeout.tv_sec <= 0)
+			if ((long) timeout.tv_sec <= 0)
 				timeout.tv_sec = 1;
 			timeout.tv_usec = 0;
 wait:
@@ -328,7 +359,7 @@ wait:
 #ifdef DEBUG
 				if (_res.options & RES_DEBUG)
 					perror("select");
-#endif DEBUG
+#endif
 				continue;
 			}
 			if (n == 0) {
@@ -337,18 +368,16 @@ wait:
 				 */
 #ifdef DEBUG
 				if (_res.options & RES_DEBUG)
-					printf("timeout\n");
-#endif DEBUG
-#if BSD >= 43
-				gotsomewhere = 1;
+					printf(";; timeout\n");
 #endif
+				gotsomewhere = 1;
 				continue;
 			}
 			if ((resplen = recv(s, answer, anslen, 0)) <= 0) {
 #ifdef DEBUG
 				if (_res.options & RES_DEBUG)
 					perror("recvfrom");
-#endif DEBUG
+#endif
 				continue;
 			}
 			gotsomewhere = 1;
@@ -357,12 +386,24 @@ wait:
 				 * response from old query, ignore it
 				 */
 #ifdef DEBUG
-				if (_res.options & RES_DEBUG) {
-					printf("old answer:\n");
+				if ((_res.options & RES_DEBUG) ||
+				    (_res.pfcode & RES_PRF_REPLY)) {
+					printf(";; old answer:\n");
 					__p_query(answer);
 				}
-#endif DEBUG
+#endif
 				goto wait;
+			}
+			if (anhp->rcode == SERVFAIL || anhp->rcode == NOTIMP ||
+			    anhp->rcode == REFUSED) {
+#ifdef DEBUG
+				if (_res.options & RES_DEBUG) {
+					printf("server rejected query:\n");
+					__p_query(answer);
+				}
+#endif
+				badns |= (1<<ns);
+				continue;
 			}
 			if (!(_res.options & RES_IGNTC) && anhp->tc) {
 				/*
@@ -371,8 +412,8 @@ wait:
 				 */
 #ifdef DEBUG
 				if (_res.options & RES_DEBUG)
-					printf("truncated answer\n");
-#endif DEBUG
+					printf(";; truncated answer\n");
+#endif
 				(void) close(s);
 				s = -1;
 				v_circuit = 1;
@@ -380,11 +421,12 @@ wait:
 			}
 		}
 #ifdef DEBUG
-		if (_res.options & RES_DEBUG) {
-			printf("got answer:\n");
+		if (_res.options & RES_DEBUG)
+			printf(";; got answer:\n");
+		if ((_res.options & RES_DEBUG) ||
+		    (_res.pfcode & RES_PRF_REPLY))
 			__p_query(answer);
-		}
-#endif DEBUG
+#endif
 		/*
 		 * If using virtual circuits, we assume that the first server
 		 * is preferred * over the rest (i.e. it is on the local

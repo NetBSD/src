@@ -1,6 +1,8 @@
-/*
- * Copyright (c) 1985 Regents of the University of California.
- * All rights reserved.
+/*	$NetBSD: res_comp.c,v 1.6 1995/02/25 06:20:55 cgd Exp $	*/
+
+/*-
+ * Copyright (c) 1985, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,11 +31,35 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ * -
+ * Portions Copyright (c) 1993 by Digital Equipment Corporation.
+ * 
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies, and that
+ * the name of Digital Equipment Corporation not be used in advertising or
+ * publicity pertaining to distribution of the document or software without
+ * specific, written prior permission.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS" AND DIGITAL EQUIPMENT CORP. DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS.   IN NO EVENT SHALL DIGITAL EQUIPMENT
+ * CORPORATION BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+ * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ * SOFTWARE.
+ * -
+ * --Copyright--
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)res_comp.c	6.22 (Berkeley) 3/19/91";*/
-static char *rcsid = "$Id: res_comp.c,v 1.5 1994/10/15 07:58:56 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)res_comp.c	8.1 (Berkeley) 6/4/93";
+static char rcsid[] = "$Id: res_comp.c,v 4.9.1.1 1993/05/02 22:43:03 vixie Rel ";
+#else
+static char rcsid[] = "$NetBSD: res_comp.c,v 1.6 1995/02/25 06:20:55 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -42,7 +68,7 @@ static char *rcsid = "$Id: res_comp.c,v 1.5 1994/10/15 07:58:56 deraadt Exp $";
 #include <resolv.h>
 #include <stdio.h>
 
-static dn_find();
+static int dn_find();
 
 /*
  * Expand compressed domain name 'comp_dn' to full domain name.
@@ -301,7 +327,7 @@ u_short
 _getshort(msgp)
 	register u_char *msgp;
 {
-	register u_short u;
+	register u_int16_t u;
 
 	GETSHORT(u, msgp);
 	return (u);
@@ -309,7 +335,7 @@ _getshort(msgp)
 
 u_int32_t
 _getlong(msgp)
-	u_char *msgp;
+	register u_char *msgp;
 {
 	register u_int32_t u;
 
@@ -318,7 +344,7 @@ _getlong(msgp)
 }
 
 void
-#ifdef __STDC__
+#if defined(__STDC__) || defined(__cplusplus)
 __putshort(register u_int16_t s, register u_char *msgp)
 #else
 __putshort(s, msgp)

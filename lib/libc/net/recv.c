@@ -1,6 +1,8 @@
+/*	$NetBSD: recv.c,v 1.6 1995/02/25 06:20:54 cgd Exp $	*/
+
 /*
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,20 +34,23 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)recv.c	5.3 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: recv.c,v 1.5 1994/10/19 03:20:30 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)recv.c	8.2 (Berkeley) 2/21/94";
+#else
+static char rcsid[] = "$NetBSD: recv.c,v 1.6 1995/02/25 06:20:54 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <stdio.h>
+
+#include <stddef.h>
 
 ssize_t
 recv(s, buf, len, flags)
-	int s;
-	void *buf;
+	int s, flags;
 	size_t len;
-	int flags;
+	void *buf;
 {
-	return(recvfrom(s, buf, len, flags, (struct sockaddr *)NULL, 0));
+	return (recvfrom(s, buf, len, flags, NULL, 0));
 }
