@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.68 2000/01/25 01:15:06 sommerfeld Exp $
+$NetBSD: pcmciadevs,v 1.69 2000/01/25 06:52:54 jlam Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -186,7 +186,7 @@ product LUCENT WAVELAN_IEEE	0x0002 WaveLAN/IEEE
 
 /* Aironet */
 product AIRONET PC4500		0x0005 Aironet PC4500 Wireless LAN Adapter
-product AIRONET PC4800		0x0005 Aironet PC4800 Wireless LAN Adapter
+product AIRONET PC4800		0x0007 Aironet PC4800 Wireless LAN Adapter
 
 /* Bay Networks */
 product BAY STACK_650		0x0804 BayStack 650 Wireless LAN
