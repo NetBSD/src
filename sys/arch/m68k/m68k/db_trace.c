@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.34 2001/02/07 23:30:27 chs Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.34.8.1 2001/11/17 13:07:53 scw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,6 +27,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/systm.h>
@@ -441,17 +442,20 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		if (trace_thread) {
 			struct proc *p;
 			struct user *u;
+			struct lwp *l;
 			(*pr)("trace: pid %d ", (int)addr);
 			p = pfind(addr);
 			if (p == NULL) {
 				(*pr)("not found\n");
 				return;
 			}
-			if (!(p->p_flag & P_INMEM)) {
+			/* XXX: Have to pick on some thread... */
+			l = LIST_FIRST(&p->p_lwps);
+			if (!(l->l_flag & L_INMEM)) {
 				(*pr)("swapped out\n");
 				return;
 			}
-			u = p->p_addr;
+			u = l->l_addr;
 			pos.k_fp = u->u_pcb.pcb_regs[PCB_REGS_FP];
 			/*
 			 * Note: The following only works because cpu_switch()

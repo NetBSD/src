@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.1 2000/12/19 21:09:59 scw Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.1.10.1 2001/11/17 13:07:53 scw Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -86,7 +86,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
+#include <sys/pool.h>
 #include <sys/acct.h>
 #include <sys/kernel.h>
 #include <sys/syscall.h>
@@ -123,7 +125,7 @@ extern struct emul emul_netbsd_aoutm68k;
  * Defined in machine-specific code (usually trap.c)
  * XXX: This will disappear when all m68k ports share common trap() code...
  */
-extern void machine_userret(struct proc *, struct frame *, u_quad_t);
+extern void machine_userret(struct lwp *, struct frame *, u_quad_t);
 
 void syscall(register_t, struct frame);
 
@@ -137,6 +139,7 @@ syscall(code, frame)
 {
 	caddr_t params;
 	const struct sysent *callp;
+	struct lwp *l;
 	struct proc *p;
 	int error, opc, nsys;
 	size_t argsize;
@@ -146,9 +149,10 @@ syscall(code, frame)
 	uvmexp.syscalls++;
 	if (!USERMODE(frame.f_sr))
 		panic("syscall");
-	p = curproc;
+	l = curproc;
+	p = l->l_proc;
 	sticks = p->p_sticks;
-	p->p_md.md_regs = frame.f_regs;
+	l->l_md.md_regs = frame.f_regs;
 	opc = frame.f_pc;
 
 	nsys = p->p_emul->e_nsysent;
@@ -178,9 +182,9 @@ syscall(code, frame)
 			 * might have to undo this if the system call
 			 * returns ERESTART.
 			 */
-			p->p_md.md_flags |= MDP_STACKADJ;
+			l->l_md.md_flags |= MDL_STACKADJ;
 		} else
-			p->p_md.md_flags &= ~MDP_STACKADJ;
+			l->l_md.md_flags &= ~MDL_STACKADJ;
 	}
 #endif
 
@@ -260,7 +264,7 @@ syscall(code, frame)
 	else
 		error = 0;
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
+	scdebug_call(l, code, args);
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
@@ -270,14 +274,15 @@ syscall(code, frame)
 		goto bad;
 	rval[0] = 0;
 	rval[1] = frame.f_regs[D1];
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 	switch (error) {
 	case 0:
 		/*
-		 * Reinitialize proc pointer `p' as it may be different
+		 * Reinitialize lwp/proc pointers as they may be different
 		 * if this is a child returning from fork syscall.
 		 */
-		p = curproc;
+		l = curproc;
+		p = l->l_proc;
 		frame.f_regs[D0] = rval[0];
 		frame.f_regs[D1] = rval[1];
 #ifdef COMPAT_AOUT_M68K
@@ -310,17 +315,17 @@ syscall(code, frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
+	scdebug_ret(l, code, error, rval);
 #endif
 #ifdef COMPAT_SUNOS
 	/* need new p-value for this */
-	if (p->p_md.md_flags & MDP_STACKADJ) {
-		p->p_md.md_flags &= ~MDP_STACKADJ;
+	if (l->l_md.md_flags & MDL_STACKADJ) {
+		l->l_md.md_flags &= ~MDL_STACKADJ;
 		if (error == ERESTART)
 			frame.f_regs[SP] -= sizeof (int);
 	}
 #endif
-	machine_userret(p, &frame, sticks);
+	machine_userret(l, &frame, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);
@@ -331,17 +336,58 @@ void
 child_return(arg)
 	void *arg;
 {
-	struct proc *p = arg;
+	struct lwp *l = arg;
+	struct proc *p = l->l_proc;
 	/* See cpu_fork() */
-	struct frame *f = (struct frame *)p->p_md.md_regs;
+	struct frame *f = (struct frame *)l->l_md.md_regs;
 
 	f->f_regs[D0] = 0;
 	f->f_sr &= ~PSL_C;
 	f->f_format = FMT0;
 
-	machine_userret(p, f, 0);
+	machine_userret(l, f, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, SYS_fork, 0, 0);
 #endif
+}
+
+/* 
+ * Start a new LWP
+ */
+void
+startlwp(arg)
+	void *arg;
+{
+	int err;
+	ucontext_t *uc = arg;
+	struct lwp *l = curproc;
+	struct frame *f = (struct frame *)l->l_md.md_regs;
+
+	f->f_regs[D0] = 0;
+	f->f_sr &= ~PSL_C;
+	f->f_format = FMT0;
+
+	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+#if DIAGNOSTIC
+	if (err) {
+		printf("Error %d from cpu_setmcontext.", err);
+	}
+#endif
+	pool_put(&lwp_uc_pool, uc);
+
+	machine_userret(l, f, 0);
+}
+
+/*
+ * XXX This is a terrible name.
+ */
+void
+upcallret(arg)
+	void *arg;
+{
+	struct lwp *l = curproc;
+	struct frame *f = (struct frame *)l->l_md.md_regs;
+
+	machine_userret(l, f, 0);
 }

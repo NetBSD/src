@@ -1,4 +1,4 @@
-/*	$NetBSD: regdump.c,v 1.2 1997/10/21 17:30:15 gwr Exp $	*/
+/*	$NetBSD: regdump.c,v 1.2.32.1 2001/11/17 13:07:53 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,6 +43,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <m68k/m68k.h>
@@ -70,8 +71,9 @@ regdump(tf, sbytes)
 		return;
 	s = splhigh();
 	doingdump = 1;
-	printf("pid = %d, pc = %s, ",
-	       curproc ? curproc->p_pid : -1, hexstr(tf->tf_pc, 8));
+	printf("pid = %d, lid = %d, pc = %s, ",
+	       curproc ? curproc->l_proc->p_pid : -1,
+	       curproc ? curproc->l_lid : -1, hexstr(tf->tf_pc, 8));
 	printf("ps = %s, ", hexstr(tf->tf_sr, 4));
 	printf("sfc = %d, ", getsfc() & 7);
 	printf("dfc = %d\n", getdfc() & 7);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.20 2000/12/22 22:58:54 jdolecek Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.20.8.1 2001/11/17 13:07:54 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/filedesc.h>
@@ -100,13 +101,14 @@ sunos_sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curproc;
+	struct proc *p = l->l_proc;
 	struct sunos_sigframe *fp, kf;
 	struct frame *frame;
 	short ft;
 	int onstack, fsize;
 
-	frame = (struct frame *)p->p_md.md_regs;
+	frame = (struct frame *)l->l_md.md_regs;
 	ft = frame->f_format;
 
 	/* Do we need to jump onto the signal stack? */
@@ -170,7 +172,7 @@ sunos_sendsig(catcher, sig, mask, code)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */ 
 	}
 #ifdef DEBUG
@@ -207,11 +209,12 @@ sunos_sendsig(catcher, sig, mask, code)
  * a machine fault.
  */
 int
-sunos_sys_sigreturn(p, v, retval)
-	struct proc *p;
+sunos_sys_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
+	struct proc *p = l->l_proc;
 	struct sunos_sys_sigreturn_args *uap = v;
 	register struct sunos_sigcontext *scp;
 	register struct frame *frame;
@@ -237,7 +240,7 @@ sunos_sys_sigreturn(p, v, retval)
 	 * Restore the user supplied information
 	 */
 
-	frame = (struct frame *) p->p_md.md_regs;
+	frame = (struct frame *) l->l_md.md_regs;
 	frame->f_regs[SP] = scp->sc_sp;
 	frame->f_pc = scp->sc_pc;
 	frame->f_sr = scp->sc_ps;

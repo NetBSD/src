@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.3 2000/12/22 22:58:54 jdolecek Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.3.8.1 2001/11/17 13:07:53 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,6 +44,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/signal.h>
@@ -70,14 +71,15 @@ void	m68881_restore __P((struct fpframe *));
  * a machine fault.
  */
 int
-compat_13_sys_sigreturn(p, v, retval)
-	struct proc *p;
+compat_13_sys_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct compat_13_sys_sigreturn_args /* {
 		syscallarg(struct sigcontext13 *) sigcntxp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sigcontext13 *scp;
 	struct frame *frame;
 	struct sigcontext13 tsigc;
@@ -101,7 +103,7 @@ compat_13_sys_sigreturn(p, v, retval)
 		return (EINVAL);
 
 	/* Restore register context. */
-	frame = (struct frame *) p->p_md.md_regs;
+	frame = (struct frame *) l->l_md.md_regs;
 
 	/*
 	 * We only support restoring the sigcontext13 in this call.

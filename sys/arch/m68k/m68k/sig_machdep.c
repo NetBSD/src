@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.15.6.2 2001/11/10 21:22:51 scw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.15.6.3 2001/11/17 13:07:53 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,8 +48,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/savar.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/ucontext.h>
@@ -59,6 +62,9 @@
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
+#include <machine/frame.h>
+
+#include <m68k/saframe.h>
 
 extern int fputype;
 extern short exframesize[];
@@ -83,13 +89,22 @@ sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curproc;
+	struct proc *p = l->l_proc;
 	struct sigframe *fp, kf;
 	struct frame *frame;
 	short ft;
 	int onstack, fsize;
 
-	frame = (struct frame *)p->p_md.md_regs;
+	if (p->p_flag & P_SA) {
+		if (code)
+			sa_upcall(l, SA_UPCALL_SIGNAL, l, NULL, sig, code,NULL);
+		else
+			sa_upcall(l, SA_UPCALL_SIGNAL, NULL, l, sig, 0, NULL);
+		return;
+	}
+
+	frame = (struct frame *)l->l_md.md_regs;
 	ft = frame->f_format;
 
 	/* Do we need to jump onto the signal stack? */
@@ -200,7 +215,7 @@ sendsig(catcher, sig, mask, code)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 #ifdef DEBUG
@@ -225,6 +240,148 @@ sendsig(catcher, sig, mask, code)
 #endif
 }
 
+void
+cpu_upcall(l)
+	struct lwp *l;
+{
+	extern char sigcode[], upcallcode[];
+	struct proc *p = l->l_proc;
+	struct sadata *sd = p->p_sa;
+	struct saframe *sfp, sf;
+	struct sa_t **sapp, *sap;
+	struct sa_t self_sa, e_sa, int_sa;
+	struct sa_t *sas[3];
+	struct sadata_upcall *sau;
+	struct frame *frame;
+	void *stack;
+	ucontext_t u, *up;
+	int i, nsas, nevents, nint;
+	int x, y;
+
+	frame = (struct frame *)l->l_md.md_regs;
+
+	KDASSERT(LIST_EMPTY(&sd->sa_upcalls) == 0);
+
+	sau = LIST_FIRST(&sd->sa_upcalls);
+
+	stack = (char *)sau->sau_stack.ss_sp + sau->sau_stack.ss_size;
+
+	self_sa.sa_id = l->l_lid;
+	self_sa.sa_cpu = 0;
+	sas[0] = &self_sa;
+	nsas = 1;
+
+	nevents = 0;
+	if (sau->sau_event) {
+		e_sa.sa_context = cpu_stashcontext(sau->sau_event);
+		e_sa.sa_id = sau->sau_event->l_lid;
+		e_sa.sa_cpu = 0;
+		sas[nsas++] = &e_sa;
+		nevents = 1;
+	}
+
+	nint = 0;
+	if (sau->sau_interrupted) {
+		int_sa.sa_context = cpu_stashcontext(sau->sau_interrupted);
+		int_sa.sa_id = sau->sau_interrupted->l_lid;
+		int_sa.sa_cpu = 0;
+		sas[nsas++] = &int_sa;
+		nint = 1;
+	}
+
+	LIST_REMOVE(sau, sau_next);
+	if (LIST_EMPTY(&sd->sa_upcalls))
+		l->l_flag &= ~L_SA_UPCALL;
+
+	/* Copy out the activation's ucontext */
+	u.uc_stack = sau->sau_stack;
+	u.uc_flags = _UC_STACK;
+	up = stack;
+	up--;
+	if (copyout(&u, up, sizeof(ucontext_t)) != 0) {
+		pool_put(&saupcall_pool, sau);
+#ifdef DIAGNOSTIC
+		printf("cpu_upcall: couldn't copyout activation ucontext"
+		    " for %d.%d\n", l->l_proc->p_pid, l->l_lid);
+#endif
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+	sas[0]->sa_context = up;
+
+	/* Next, copy out the sa_t's and pointers to them. */
+	sap = (struct sa_t *) up;
+	sapp = (struct sa_t **) (sap - nsas);
+	for (i = nsas - 1; i >= 0; i--) {
+		sap--;
+		sapp--;
+		if (((x=copyout(sas[i], sap, sizeof(struct sa_t)) != 0)) ||
+		    ((y=copyout(&sap, sapp, sizeof(struct sa_t *)) != 0))) {
+			/* Copying onto the stack didn't work.  Die. */
+			pool_put(&saupcall_pool, sau);
+#ifdef DIAGNOSTIC
+			printf("cpu_upcall: couldn't copyout sa_t %d for "
+			    "%d.%d (x=%d, y=%d)\n",
+			    i, l->l_proc->p_pid, l->l_lid, x, y);
+#endif
+			sigexit(l, SIGILL);
+			/* NOTREACHED */
+		}
+	}
+
+	/* Finally, copy out the rest of the frame */
+	sfp = (struct saframe *)sapp - 1;
+
+	sf.sa_type = sau->sau_type;
+	sf.sa_sas = sapp;
+	sf.sa_events = nevents;
+	sf.sa_interrupted = nint;
+	sf.sa_sig = sau->sau_sig;
+	sf.sa_code = sau->sau_code;
+	sf.sa_arg = sau->sau_arg;
+	sf.sa_upcall = sd->sa_upcall;
+
+	pool_put(&saupcall_pool, sau);
+
+	if (copyout(&sf, sfp, sizeof(sf)) != 0) {
+		/* Copying onto the stack didn't work. Die. */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	/* XXX hack-o-matic */
+	frame->f_pc = (int)((caddr_t) p->p_sigctx.ps_sigcode + (
+		(caddr_t)upcallcode - (caddr_t)sigcode));
+	frame->f_regs[SP] = (int) sfp;
+	frame->f_regs[A6] = 0; /* indicate call-frame-top to debuggers */
+	frame->f_sr &= ~PSL_T;
+}
+
+/* Save the user-level ucontext_t on the LWP's own stack. */
+ucontext_t *
+cpu_stashcontext(struct lwp *l)
+{
+	ucontext_t u, *up;
+	struct frame *frame;
+	void *stack;
+
+	frame = (struct frame *)l->l_md.md_regs;
+	stack = (char *)frame->f_regs[SP] - sizeof(ucontext_t);
+	getucontext(l, &u);
+	up = stack;
+
+	if (copyout(&u, stack, sizeof(ucontext_t)) != 0) {
+		/* Copying onto the stack didn't work. Die. */
+#ifdef DIAGNOSTIC
+		printf("cpu_stashcontext: couldn't copyout context of %d.%d\n",
+		    l->l_proc->p_pid, l->l_lid);
+#endif
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	return up;
+}
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and
@@ -236,14 +393,15 @@ sendsig(catcher, sig, mask, code)
  * a machine fault.
  */
 int
-sys___sigreturn14(p, v, retval)
-	struct proc *p;
+sys___sigreturn14(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sigcontext *scp;
 	struct frame *frame;
 	struct sigcontext tsigc;
@@ -272,7 +430,7 @@ sys___sigreturn14(p, v, retval)
 		return (EINVAL);
 
 	/* Restore register context. */
-	frame = (struct frame *) p->p_md.md_regs;
+	frame = (struct frame *) l->l_md.md_regs;
 
 	/*
 	 * Grab pointer to hardware state information.
@@ -376,13 +534,13 @@ sys___sigreturn14(p, v, retval)
 }
 
 void
-cpu_getmcontext(p, mcp, flags)
-	struct proc *p;
+cpu_getmcontext(l, mcp, flags)
+	struct lwp *l;
 	mcontext_t *mcp;
 	unsigned int *flags;
 {
 	__greg_t *gr = mcp->__gregs;
-	struct frame *frame = (struct frame *)p->p_md.md_regs;
+	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	unsigned int format = frame->f_format;
 
 	/* Save general registers. */
@@ -442,13 +600,13 @@ cpu_getmcontext(p, mcp, flags)
 }
 
 int
-cpu_setmcontext(p, mcp, flags)
-	struct proc *p;
+cpu_setmcontext(l, mcp, flags)
+	struct lwp *l;
 	const mcontext_t *mcp;
 	unsigned int flags;
 {
 	__greg_t *gr = mcp->__gregs;
-	struct frame *frame = (struct frame *)p->p_md.md_regs;
+	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	unsigned int format = mcp->__mc_pad.mc_frame.format;
 	int sz;
 	
