@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.9 2000/07/17 04:37:27 thorpej Exp $ */
+/* $NetBSD: bba.c,v 1.10 2000/07/17 17:43:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -599,6 +599,7 @@ bba_intr(addr)
 	mask = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_INTR);
 
 	if (mask & IOASIC_INTR_ISDN_TXLOAD) {
+		mask &= ~IOASIC_INTR_ISDN_TXLOAD;
 		d = &sc->sc_tx_dma_state;
 		d->curseg = (d->curseg+1) % d->dmam->dm_nsegs;
 		nphys = (tc_addr_t)d->dmam->dm_segs[d->curseg].ds_addr;
@@ -608,6 +609,7 @@ bba_intr(addr)
 			(*d->intr)(d->intr_arg);
 	}
 	if (mask & IOASIC_INTR_ISDN_RXLOAD) {
+		mask &= ~IOASIC_INTR_ISDN_RXLOAD;
 		d = &sc->sc_rx_dma_state;
 		d->curseg = (d->curseg+1) % d->dmam->dm_nsegs;
 		nphys = (tc_addr_t)d->dmam->dm_segs[d->curseg].ds_addr;
@@ -616,6 +618,7 @@ bba_intr(addr)
 		if (d->intr != NULL)
 			(*d->intr)(d->intr_arg);
 	}
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_INTR, mask);
 
 	splx(s);
 
