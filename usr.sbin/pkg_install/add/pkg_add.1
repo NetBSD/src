@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.33 2002/02/08 01:38:52 ross Exp $
+.\" $NetBSD: pkg_add.1,v 1.34 2002/07/31 01:39:40 jschauma Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -242,7 +242,7 @@ ftp.
 .Sh TECHNICAL DETAILS
 .Nm
 extracts each package's "packing list"
-into a special staging directory in /tmp (or $PKG_TMPDIR if set)
+into a special staging directory in /var/tmp (or $PKG_TMPDIR if set)
 and then runs through the following sequence to fully extract the contents
 of the package:
 .Bl -enum -offset indent
@@ -288,7 +288,7 @@ The only currently implemented option is
 .Cm @option extract-in-place ,
 which causes the package to be extracted directly into its
 prefix directory rather than moving it through a staging area in
-.Pa /tmp .
+.Pa /var/tmp .
 .It
 If
 .Cm @option extract-in-place
@@ -420,7 +420,7 @@ period. FTP URLs may not end with a slash.
 Where to register packages instead of
 .Pa /var/db/pkg .
 .Ss PKG_TMPDIR
-Staging directory for installing packages, defaults to /tmp.
+Staging directory for installing packages, defaults to /var/tmp.
 Set to directory with lots of free disk if you run out of
 space when installing a binary package.
 .Sh EXAMPLES
