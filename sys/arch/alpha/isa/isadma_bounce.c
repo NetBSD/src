@@ -1,4 +1,4 @@
-/* $NetBSD: isadma_bounce.c,v 1.1 2000/06/01 03:55:45 thorpej Exp $ */
+/* $NetBSD: isadma_bounce.c,v 1.2 2000/06/01 05:49:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -36,6 +36,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.2 2000/06/01 05:49:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
