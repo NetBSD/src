@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.35 2003/02/20 00:55:21 matt Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.36 2003/04/29 01:49:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.35 2003/02/20 00:55:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.36 2003/04/29 01:49:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -408,7 +408,7 @@ mii_phy_add_media(struct mii_softc *sc)
 	const char *sep = "";
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-#define	PRINT(n)	printf("%s%s", sep, (n)); sep = ", "
+#define	PRINT(n)	aprint_normal("%s%s", sep, (n)); sep = ", "
 
 	if ((sc->mii_flags & MIIF_NOISOLATE) == 0)
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst),
