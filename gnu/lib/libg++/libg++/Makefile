@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.23 1994/02/10 01:47:47 cgd Exp $
+#	$Id: Makefile,v 1.24 1994/07/06 04:06:27 mycroft Exp $
 
 LIB=		g++
 
@@ -21,8 +21,8 @@ SRCS=	 	AllocRing.cc Obstack.cc builtin.cc \
 CXXFLAGS+=	-nostdinc++ -I$(.CURDIR)/../g++-include \
 		-I$(.CURDIR)/../iostream
 CFLAGS+=	-I$(.CURDIR)
-LDADD=		/usr/lib/c++rt0.o -lcurses
-DPADD=		/usr/lib/c++rt0.o ${LIBCURSES}
+LDADD=		${DESTDIR}/usr/lib/c++rt0.o -lcurses
+DPADD=		${DESTDIR}/usr/lib/c++rt0.o ${LIBCURSES}
 NOMAN=		noman
 .PATH:		$(.CURDIR)/../iostream 
 LIBCURSES!=	printf "xxx:\n\techo \$${LIBCURSES}\n.include <bsd.prog.mk>" |\
