@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.6 1998/01/12 20:35:12 thorpej Exp $	*/
+/*	$NetBSD: iommu.c,v 1.7 1998/01/22 22:09:11 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ iommu_attach(parent, self, args)
 	iommu_va = (iommu_pde_t *)
 		bus_mapin(ca->ca_bustype, ca->ca_paddr, IOMMU_SIZE);
 
-	printf(": range %dMB\n", IOMMU_NENT * IOMMU_PAGE_SIZE / (1024 * 1024));
+	printf("\n");
 }
 
 void
