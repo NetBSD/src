@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.45 2004/07/21 17:49:49 tshiozak Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.46 2004/07/21 18:51:30 tshiozak Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.45 2004/07/21 17:49:49 tshiozak Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.46 2004/07/21 18:51:30 tshiozak Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,8 +67,10 @@ __RCSID("$NetBSD: setlocale.c,v 1.45 2004/07/21 17:49:49 tshiozak Exp $");
 #include <citrus/citrus_namespace.h>
 #include <citrus/citrus_region.h>
 #include <citrus/citrus_lookup.h>
+#include <citrus/citrus_bcs.h>
 
 #define _LOCALE_ALIAS_NAME	"locale.alias"
+#define _LOCALE_SYM_FORCE	"/force"
 
 /*
  * Category names for getenv()
@@ -105,7 +107,9 @@ static char current_locale_string[_LC_LAST * 33];
 char *_PathLocale;
 
 static char *currentlocale __P((void));
-static int load_locale_sub __P((int, const char *));
+static void revert_to_default __P((int));
+static int force_locale_enable __P((int));
+static int load_locale_sub __P((int, const char *, int));
 static char *loadlocale __P((int));
 static const char *__get_locale_env __P((int));
 
@@ -228,12 +232,69 @@ currentlocale()
 	return (current_locale_string);
 }
 
+static void
+revert_to_default(category)
+	int category;
+{
+	switch (category) {
+	case LC_CTYPE:
+#ifdef WITH_RUNE
+		(void)_xpg4_setrunelocale("C");
+		(void)__runetable_to_netbsd_ctype("C");
+#else
+		if (_ctype_ != _C_ctype_) {
+			/* LINTED const castaway */
+			free((void *)_ctype_);
+			_ctype_ = _C_ctype_;
+		}
+		if (_toupper_tab_ != _C_toupper_) {
+			/* LINTED const castaway */
+			free((void *)_toupper_tab_);
+			_toupper_tab_ = _C_toupper_;
+		}
+		if (_tolower_tab_ != _C_tolower_) {
+			/* LINTED const castaway */
+			free((void *)_tolower_tab_);
+			_tolower_tab_ = _C_tolower_;
+		}
+#endif
+		break;
+	case LC_MESSAGES:
+	case LC_COLLATE:
+	case LC_MONETARY:
+	case LC_NUMERIC:
+	case LC_TIME:
+		break;
+	}
+}
+
 static int
-load_locale_sub(category, locname)
+force_locale_enable(category)
+	int category;
+{
+	revert_to_default(category);
+
+	return 0;
+}
+
+static int
+load_locale_sub(category, locname, isspecial)
 	int category;
 	const char *locname;
+	int isspecial;
 {
 	char name[PATH_MAX];
+
+	/* check for the default locales */
+	if (!strcmp(new_categories[category], "C") ||
+	    !strcmp(new_categories[category], "POSIX")) {
+		revert_to_default(category);
+		return 0;
+	}
+
+	/* check whether special symbol */
+	if (isspecial && _bcs_strcasecmp(locname, _LOCALE_SYM_FORCE) == 0)
+		return force_locale_enable(category);
 
 	/* sanity check */
 	if (strchr(locname, '/') != NULL)
@@ -249,8 +310,7 @@ load_locale_sub(category, locname)
 			return -1;
 		if (__runetable_to_netbsd_ctype(locname)) {
 			/* very unfortunate, but need to go to "C" locale */
-			(void)_xpg4_setrunelocale("C");
-			(void)__runetable_to_netbsd_ctype("C");
+			revert_to_default(category);
 			return -1;
 		}
 #else
@@ -299,46 +359,8 @@ loadlocale(category)
 	if (strcmp(new_categories[category], current_categories[category]) == 0)
 		return (current_categories[category]);
 
-	if (!strcmp(new_categories[category], "C") ||
-	    !strcmp(new_categories[category], "POSIX")) {
-
-		switch (category) {
-		case LC_CTYPE:
-#ifdef WITH_RUNE
-			(void)_xpg4_setrunelocale("C");
-			(void)__runetable_to_netbsd_ctype("C");
-#else
-			if (_ctype_ != _C_ctype_) {
-				/* LINTED const castaway */
-				free((void *)_ctype_);
-				_ctype_ = _C_ctype_;
-			}
-			if (_toupper_tab_ != _C_toupper_) {
-				/* LINTED const castaway */
-				free((void *)_toupper_tab_);
-				_toupper_tab_ = _C_toupper_;
-			}
-			if (_tolower_tab_ != _C_tolower_) {
-				/* LINTED const castaway */
-				free((void *)_tolower_tab_);
-				_tolower_tab_ = _C_tolower_;
-			}
-#endif
-		}
-
-		(void)strlcpy(current_categories[category],
-		    new_categories[category],
-		    sizeof(current_categories[category]));
-		return current_categories[category];
-	}
-
-#if 0
-	(void)snprintf(name, sizeof(name), "%s/%s/%s",
-	    _PathLocale, new_categories[category], categories[category]);
-#endif
-
 	/* (1) non-aliased file */
-	if (!load_locale_sub(category, new_categories[category]))
+	if (!load_locale_sub(category, new_categories[category], 0))
 		goto success;
 
 	/* (2) lookup locname/catname type alias */
@@ -348,13 +370,13 @@ loadlocale(category)
 		       new_categories[category], categories[category]);
 	alias = _lookup_alias(aliaspath, loccat, buf, sizeof(buf),
 			      _LOOKUP_CASE_SENSITIVE);
-	if (!load_locale_sub(category, alias))
+	if (!load_locale_sub(category, alias, 1))
 		goto success;
 
 	/* (3) lookup locname type alias */
 	alias = _lookup_alias(aliaspath, new_categories[category],
 			      buf, sizeof(buf), _LOOKUP_CASE_SENSITIVE);
-	if (!load_locale_sub(category, alias))
+	if (!load_locale_sub(category, alias, 1))
 		goto success;
 
 	return NULL;
