@@ -1,4 +1,6 @@
-#	$NetBSD: bsd.endian.mk,v 1.3 2002/06/05 02:47:56 thorpej Exp $
+#	$NetBSD: bsd.endian.mk,v 1.4 2003/05/18 08:19:03 lukem Exp $
+
+.ifndef TARGET_ENDIANNESS
 
 .include <bsd.init.mk>
 
@@ -20,3 +22,5 @@ TARGET_ENDIANNESS=
 #.else
 #TARGET_ENDIANNESS=	unknown
 #.endif
+
+.endif	# TARGET_ENDIANNESS
