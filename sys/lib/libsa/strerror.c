@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.13 2002/02/17 23:18:32 thorpej Exp $	*/
+/*	$NetBSD: strerror.c,v 1.14 2003/02/01 14:53:38 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,48 +37,38 @@
 #include "saerrno.h"
 #include "stand.h"
 
+static const struct mi {
+	int	errno;
+	char	*msg;
+} errlist[] = {
+	{ EADAPT,	"bad adaptor number" },
+	{ ECTLR,	"bad controller number" },
+	{ EUNIT,	"bad drive number" },
+	{ EPART,	"bad partition" },
+	{ ERDLAB,	"can't read disk label" },
+	{ EUNLAB,	"unlabeled" },
+	{ ENXIO,	"Device not configured" },
+	{ EPERM,	"Operation not permitted" },
+	{ ENOENT,	"No such file or directory" },
+	{ ESTALE,	"Stale NFS file handle" },
+	{ EFTYPE,	"Inappropriate file type or format" },
+	{ ENOEXEC,	"Exec format error" },
+	{ EIO,		"Input/output error" },
+	{ EINVAL,	"Invalid argument" },
+	{ ENOTDIR,	"Not a directory" },
+	{ EOFFSET,	"invalid file offset" },
+	{ 0, 0 } };
+
 char *
-strerror(err)
-	int err;
+strerror(int err)
 {
-static	char ebuf[64];
+	static	char ebuf[36];
+	const struct mi *mi;
 
-	switch (err) {
-	case EADAPT:
-		return "bad adaptor number";
-	case ECTLR:
-		return "bad controller number";
-	case EUNIT:
-		return "bad drive number";
-	case EPART:
-		return "bad partition";
-	case ERDLAB:
-		return "can't read disk label";
-	case EUNLAB:
-		return "unlabeled";
-	case ENXIO:
-		return "Device not configured";
-	case EPERM:
-		return "Operation not permitted";
-	case ENOENT:
-		return "No such file or directory";
-	case ESTALE:
-		return "Stale NFS file handle";
-	case EFTYPE:
-		return "Inappropriate file type or format";
-	case ENOEXEC:
-		return "Exec format error";
-	case EIO:
-		return "Input/output error";
-	case EINVAL:
-		return "Invalid argument";
-	case ENOTDIR:
-		return "Not a directory";
-	case EOFFSET:
-		return "invalid file offset";
+	for (mi = errlist; mi->msg; mi++)
+		if (mi->errno == err)
+			return mi->msg;
 
-	default:
-		sprintf(ebuf, "Unknown error: code %d", err);
-		return ebuf;
-	}
+	snprintf(ebuf, sizeof ebuf, "Unknown error: code %d", err);
+	return ebuf;
 }
