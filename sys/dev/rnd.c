@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.22 2001/07/07 17:04:02 thorpej Exp $	*/
+/*	$NetBSD: rnd.c,v 1.22.4.1 2001/09/07 04:45:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -51,6 +51,8 @@
 #include <sys/rnd.h>
 #include <sys/vnode.h>
 #include <sys/pool.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #ifdef __HAVE_CPU_COUNTER
 #include <machine/rnd.h>
@@ -150,12 +152,6 @@ static rndsource_t rnd_source_no_collect = {
 struct callout rnd_callout = CALLOUT_INITIALIZER;
 
 void	rndattach __P((int));
-int	rndopen __P((dev_t, int, int, struct proc *));
-int	rndclose __P((dev_t, int, int, struct proc *));
-int	rndread __P((dev_t, struct uio *, int));
-int	rndwrite __P((dev_t, struct uio *, int));
-int	rndioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	rndpoll __P((dev_t, int, struct proc *));
 
 static inline void	rnd_wakeup_readers(void);
 static inline u_int32_t rnd_estimate_entropy(rndsource_t *, u_int32_t);
@@ -299,8 +295,8 @@ rnd_init(void)
 }
 
 int
-rndopen(dev, flags, ifmt, p)
-	dev_t dev;
+rndopen(devvp, flags, ifmt, p)
+	struct vnode *devvp;
 	int flags, ifmt;
 	struct proc *p;
 {
@@ -308,7 +304,7 @@ rndopen(dev, flags, ifmt, p)
 	if (rnd_ready == 0)
 		return (ENXIO);
 
-	if (minor(dev) == RND_DEV_URANDOM)
+	if (minor(devvp->v_rdev) == RND_DEV_URANDOM)
 		return (0);
 
 	/*
@@ -316,7 +312,7 @@ rndopen(dev, flags, ifmt, p)
 	 * entropy (or have not yet) don't allow it to be opened.  This will
 	 * prevent waiting forever for something that just will not appear.
 	 */
-	if (minor(dev) == RND_DEV_RANDOM) {
+	if (minor(devvp->v_rdev) == RND_DEV_RANDOM) {
 		if (rnd_have_entropy == 0)
 			return (ENXIO);
 		else
@@ -327,8 +323,8 @@ rndopen(dev, flags, ifmt, p)
 }
 
 int
-rndclose(dev, flags, ifmt, p)
-	dev_t dev;
+rndclose(devvp, flags, ifmt, p)
+	struct vnode *devvp;
 	int flags, ifmt;
 	struct proc *p;
 {
@@ -337,8 +333,8 @@ rndclose(dev, flags, ifmt, p)
 }
 
 int
-rndread(dev, uio, ioflag)
-	dev_t dev;
+rndread(devvp, uio, ioflag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int ioflag;
 {
@@ -357,7 +353,7 @@ rndread(dev, uio, ioflag)
 	if (uio->uio_resid == 0)
 		return (0);
 
-	switch (minor(dev)) {
+	switch (minor(devvp->v_rdev)) {
 	case RND_DEV_RANDOM:
 		mode = RND_EXTRACT_GOOD;
 		break;
@@ -434,8 +430,8 @@ out:
 }
 
 int
-rndwrite(dev, uio, ioflag)
-	dev_t dev;
+rndwrite(devvp, uio, ioflag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int ioflag;
 {
@@ -476,8 +472,8 @@ rndwrite(dev, uio, ioflag)
 }
 
 int
-rndioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+rndioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
@@ -654,8 +650,8 @@ rndioctl(dev, cmd, addr, flag, p)
 }
 
 int
-rndpoll(dev, events, p)
-	dev_t dev;
+rndpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
@@ -677,7 +673,7 @@ rndpoll(dev, events, p)
 	/*
 	 * If the minor device is not /dev/random, we are always readable.
 	 */
-	if (minor(dev) != RND_DEV_RANDOM) {
+	if (minor(devvp->v_rdev) != RND_DEV_RANDOM) {
 		revents |= events & (POLLIN | POLLRDNORM);
 		return (revents);
 	}

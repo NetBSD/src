@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.41 2001/09/04 20:27:29 jdolecek Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.41.2.1 2001/09/07 04:45:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -295,7 +295,7 @@ linux_sys_fcntl(p, v, retval)
 	struct vattr va;
 	long pgid;
 	struct pgrp *pgrp;
-	struct tty *tp, *(*d_tty) __P((dev_t));
+	struct tty *tp, *(*d_tty) __P((struct vnode *));
 
 	fd = SCARG(uap, fd);
 	cmd = SCARG(uap, cmd);
@@ -426,7 +426,7 @@ linux_sys_fcntl(p, v, retval)
 		if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)))
 			return error;
 		d_tty = cdevsw[major(va.va_rdev)].d_tty;
-		if (!d_tty || (!(tp = (*d_tty)(va.va_rdev))))
+		if (!d_tty || (!(tp = (*d_tty)(vp))))
 			return EINVAL;
 		if (cmd == LINUX_F_GETOWN) {
 			retval[0] = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PID;

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.36 2001/08/17 05:51:29 chs Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.36.2.1 2001/09/07 04:45:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -773,7 +773,7 @@ genfs_getpages(v)
 		}
 		bp->b_lblkno = 0;
 		bp->b_private = mbp;
-		bp->b_dev = devvp->v_rdev;
+		bp->b_devvp = devvp;
 
 		/* adjust physical blkno for partial blocks */
 		bp->b_blkno = blkno + ((offset - ((off_t)lbn << fs_bshift)) >>
@@ -1056,7 +1056,7 @@ genfs_putpages(v)
 		}
 		bp->b_lblkno = 0;
 		bp->b_private = mbp;
-		bp->b_dev = devvp->v_rdev;
+		bp->b_devvp = devvp;
 
 		/* adjust physical blkno for partial blocks */
 		bp->b_blkno = blkno + ((offset - ((off_t)lbn << fs_bshift)) >>

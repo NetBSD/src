@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.40 2001/07/18 18:25:41 thorpej Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.40.2.1 2001/09/07 04:45:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -317,9 +317,9 @@ bad:
  * still be running in the context of the calling process
  */
 int
-scsipi_do_ioctl(periph, dev, cmd, addr, flag, p)
+scsipi_do_ioctl(periph, devvp, cmd, addr, flag, p)
 	struct scsipi_periph *periph;
-	dev_t dev;
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
@@ -365,7 +365,7 @@ scsipi_do_ioctl(periph, dev, cmd, addr, flag, p)
 			si->si_uio.uio_rw =
 			    (screq->flags & SCCMD_READ) ? UIO_READ : UIO_WRITE;
 			si->si_uio.uio_procp = p;
-			error = physio(scsistrategy, &si->si_bp, dev,
+			error = physio(scsistrategy, &si->si_bp, devvp,
 			    (screq->flags & SCCMD_READ) ? B_READ : B_WRITE,
 			    periph->periph_channel->chan_adapter->adapt_minphys,
 			    &si->si_uio);
@@ -374,7 +374,7 @@ scsipi_do_ioctl(periph, dev, cmd, addr, flag, p)
 			si->si_bp.b_flags = 0;
 			si->si_bp.b_data = 0;
 			si->si_bp.b_bcount = 0;
-			si->si_bp.b_dev = dev;
+			si->si_bp.b_devvp = devvp;
 			si->si_bp.b_proc = p;
 			scsistrategy(&si->si_bp);
 			error = si->si_bp.b_error;

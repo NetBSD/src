@@ -1,4 +1,4 @@
-/*	$NetBSD: if_slvar.h,v 1.24 2001/06/14 05:44:24 itojun Exp $	*/
+/*	$NetBSD: if_slvar.h,v 1.24.4.1 2001/09/07 04:45:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -87,7 +87,7 @@ void	slattach __P((void));
 void	slclose __P((struct tty *));
 void	slinput __P((int, struct tty *));
 int	slioctl __P((struct ifnet *, u_long, caddr_t));
-int	slopen __P((dev_t, struct tty *));
+int	slopen __P((struct vnode *, struct tty *));
 int	sloutput __P((struct ifnet *,
 	    struct mbuf *, struct sockaddr *, struct rtentry *));
 void	slstart __P((struct tty *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.13 2000/03/04 04:22:34 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.13.10.1 2001/09/07 04:45:28 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -177,7 +177,6 @@ rf_ConfigureDiskQueue(
       RF_RowCol_t c,
       RF_DiskQueueSW_t * p,
       RF_SectorCount_t sectPerDisk,
-      dev_t dev,
       int maxOutstanding,
       RF_ShutdownList_t ** listp,
       RF_AllocListElem_t * clList)
@@ -188,7 +187,6 @@ rf_ConfigureDiskQueue(
 	diskqueue->col = c;
 	diskqueue->qPtr = p;
 	diskqueue->qHdr = (p->Create) (sectPerDisk, clList, listp);
-	diskqueue->dev = dev;
 	diskqueue->numOutstanding = 0;
 	diskqueue->queueLength = 0;
 	diskqueue->maxOutstanding = maxOutstanding;
@@ -283,7 +281,6 @@ rf_ConfigureDiskQueues(
 			rc = rf_ConfigureDiskQueue(raidPtr, &diskQueues[r][c],
 						   r, c, p,
 						   raidPtr->sectorsPerDisk, 
-						   raidPtr->Disks[r][c].dev,
 						   cfgPtr->maxOutstandingDiskReqs, 
 						   listp, raidPtr->cleanupList);
 			if (rc)
@@ -296,7 +293,6 @@ rf_ConfigureDiskQueues(
 		rc = rf_ConfigureDiskQueue(raidPtr, &spareQueues[r],
 		    0, raidPtr->numCol + r, p,
 		    raidPtr->sectorsPerDisk,
-		    raidPtr->Disks[0][raidPtr->numCol + r].dev,
 		    cfgPtr->maxOutstandingDiskReqs, listp,
 		    raidPtr->cleanupList);
 		if (rc)

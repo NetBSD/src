@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmuxvar.h,v 1.1 1999/07/29 18:20:43 augustss Exp $	*/
+/*	$NetBSD: wsmuxvar.h,v 1.1.20.1 2001/09/07 04:45:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 struct wsdisplay_softc;
 struct wsplink;
+struct vnode;
 
 struct wsmux_softc {
 	struct device sc_dv;
@@ -53,7 +54,7 @@ struct wsmux_softc {
 };
 
 struct wsmuxops {
-	int (*dopen) __P((dev_t, int, int, struct proc *));
+	int (*dopen) __P((struct vnode *, int, int, struct proc *));
 	int (*dclose) __P((struct device *, int, int, struct proc *));
 	int (*dioctl) __P((struct device *, u_long, caddr_t, int, 
 			   struct proc *));
@@ -67,12 +68,12 @@ int	wsmux_attach_sc __P((
 	  struct wsmux_softc *,
 	  int, struct device *, struct wseventvar *,
 	  struct wsmux_softc **,
-	  struct wsmuxops *));
+	  struct wsmuxops *, int));
 int	wsmux_detach_sc __P((struct wsmux_softc *, struct device *));
 void	wsmux_attach __P((
 	  int, int, struct device *, struct wseventvar *,
 	  struct wsmux_softc **,
-	  struct wsmuxops *));
+	  struct wsmuxops *, int));
 void	wsmux_detach __P((int, struct device *));
 
 int	wsmux_displayioctl __P((struct device *dev, u_long cmd,

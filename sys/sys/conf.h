@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.88 2001/05/02 10:32:08 scw Exp $	*/
+/*	$NetBSD: conf.h,v 1.88.4.1 2001/09/07 04:45:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -62,11 +62,14 @@ struct vnode;
 
 #ifdef _KERNEL
 
-#define	dev_type_open(n)	int n __P((dev_t, int, int, struct proc *))
-#define	dev_type_close(n)	int n __P((dev_t, int, int, struct proc *))
-#define	dev_type_strategy(n)	void n __P((struct buf *))
+#define	dev_type_open(n) \
+	int n __P((struct vnode *, int, int, struct proc *))
+#define	dev_type_close(n) \
+	int n __P((struct vnode *, int, int, struct proc *))
+#define	dev_type_strategy(n) \
+	void n __P((struct buf *))
 #define	dev_type_ioctl(n) \
-	int n __P((dev_t, u_long, caddr_t, int, struct proc *))
+	int n __P((struct vnode *, u_long, caddr_t, int, struct proc *))
 
 #define	dev_decl(n,t)		__CONCAT(dev_type_,t)(__CONCAT(n,t))
 #define	dev_init(c,n,t) \
@@ -77,14 +80,15 @@ struct vnode;
 
 /*
  * Block device switch table
+ * XXX dev_t for d_dump and d_psize
  */
 struct bdevsw {
-	int	(*d_open)	__P((dev_t dev, int oflags, int devtype,
+	int	(*d_open)	__P((struct vnode *, int oflags, int devtype,
 				     struct proc *p));
-	int	(*d_close)	__P((dev_t dev, int fflag, int devtype,
+	int	(*d_close)	__P((struct vnode *, int fflag, int devtype,
 				     struct proc *p));
 	void	(*d_strategy)	__P((struct buf *bp));
-	int	(*d_ioctl)	__P((dev_t dev, u_long cmd, caddr_t data,
+	int	(*d_ioctl)	__P((struct vnode *, u_long cmd, caddr_t data,
 				     int fflag, struct proc *p));
 	int	(*d_dump)	__P((dev_t dev, daddr_t blkno, caddr_t va,
 				    size_t size));
@@ -142,19 +146,22 @@ extern struct bdevsw bdevsw[];
  * Character device switch table
  */
 struct cdevsw {
-	int	(*d_open)	__P((dev_t dev, int oflags, int devtype,
+	int	(*d_open)	__P((struct vnode *, int oflags, int devtype,
 				     struct proc *p));
-	int	(*d_close)	__P((dev_t dev, int fflag, int devtype,
+	int	(*d_close)	__P((struct vnode *, int fflag, int devtype,
 				     struct proc *));
-	int	(*d_read)	__P((dev_t dev, struct uio *uio, int ioflag));
-	int	(*d_write)	__P((dev_t dev, struct uio *uio, int ioflag));
-	int	(*d_ioctl)	__P((dev_t dev, u_long cmd, caddr_t data,
+	int	(*d_read)	__P((struct vnode *, struct uio *uio,
+				     int ioflag));
+	int	(*d_write)	__P((struct vnode *, struct uio *uio,
+				     int ioflag));
+	int	(*d_ioctl)	__P((struct vnode *, u_long cmd, caddr_t data,
 				     int fflag, struct proc *p));
 	void	(*d_stop)	__P((struct tty *tp, int rw));
 	struct tty *
-		(*d_tty)	__P((dev_t dev));
-	int	(*d_poll)	__P((dev_t dev, int events, struct proc *p));
-	paddr_t	(*d_mmap)	__P((dev_t, off_t, int));
+		(*d_tty)	__P((struct vnode *));
+	int	(*d_poll)	__P((struct vnode *, int events,
+				     struct proc *p));
+	paddr_t	(*d_mmap)	__P((struct vnode *, off_t, int));
 	int	d_type;
 };
 
@@ -163,12 +170,12 @@ struct cdevsw {
 extern struct cdevsw cdevsw[];
 
 /* cdevsw-specific types */
-#define	dev_type_read(n)	int n __P((dev_t, struct uio *, int))
-#define	dev_type_write(n)	int n __P((dev_t, struct uio *, int))
+#define	dev_type_read(n)	int n __P((struct vnode *, struct uio *, int))
+#define	dev_type_write(n)	int n __P((struct vnode *, struct uio *, int))
 #define	dev_type_stop(n)	void n __P((struct tty *, int))
-#define	dev_type_tty(n)		struct tty *n __P((dev_t))
-#define	dev_type_poll(n)	int n __P((dev_t, int, struct proc *))
-#define	dev_type_mmap(n)	paddr_t n __P((dev_t, off_t, int))
+#define	dev_type_tty(n)		struct tty *n __P((struct vnode *))
+#define	dev_type_poll(n)	int n __P((struct vnode *, int, struct proc *))
+#define	dev_type_mmap(n)	paddr_t n __P((struct vnode *, off_t, int))
 
 #define	cdev_decl(n) \
 	dev_decl(n,open); dev_decl(n,close); dev_decl(n,read); \
@@ -451,7 +458,7 @@ struct linesw {
 	char	*l_name;	/* Linesw name */
 	int	l_no;		/* Linesw number (compatibility) */
 
-	int	(*l_open)	__P((dev_t dev, struct tty *tp));
+	int	(*l_open)	__P((struct vnode *, struct tty *tp));
 	int	(*l_close)	__P((struct tty *tp, int flags));
 	int	(*l_read)	__P((struct tty *tp, struct uio *uio,
 				     int flag));
@@ -475,7 +482,7 @@ struct linesw *ttyldisc_remove __P((char *name));
 struct linesw *ttyldisc_lookup __P((char *name));
 
 /* For those defining their own line disciplines: */
-#define	ttynodisc ((int (*) __P((dev_t, struct tty *)))enodev)
+#define	ttynodisc ((int (*) __P((struct vnode *, struct tty *)))enodev)
 #define	ttyerrclose ((int (*) __P((struct tty *, int flags)))enodev)
 #define	ttyerrio ((int (*) __P((struct tty *, struct uio *, int)))enodev)
 #define	ttyerrinput ((int (*) __P((int c, struct tty *)))enodev)
@@ -485,22 +492,7 @@ struct linesw *ttyldisc_lookup __P((char *name));
 int	nullioctl __P((struct tty *, u_long, caddr_t, int, struct proc *));
 #endif
 
-/*
- * Swap device table
- */
-struct swdevt {
-	dev_t	sw_dev;
-	int	sw_flags;
-	int	sw_nblks;
-	struct	vnode *sw_vp;
-};
-#define	SW_FREED	0x01
-#define	SW_SEQUENTIAL	0x02
-#define	sw_freed	sw_flags	/* XXX compat */
-
 #ifdef _KERNEL
-extern struct swdevt swdevt[];
-
 dev_t	chrtoblk __P((dev_t));
 int	iskmemdev __P((dev_t));
 int	iszerodev __P((dev_t));

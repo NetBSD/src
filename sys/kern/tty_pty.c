@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.56 2001/05/02 10:32:08 scw Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.56.4.1 2001/09/07 04:45:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -57,6 +57,8 @@
 #include <sys/poll.h>
 #include <sys/malloc.h>
 
+#include <miscfs/specfs/specdev.h>
+
 #define	DEFAULT_NPTYS		16	/* default number of initial ptys */
 #define DEFAULT_MAXPTYS		256	/* default maximum number of ptys */
 
@@ -92,8 +94,6 @@ static struct simplelock pt_softc_mutex = SIMPLELOCK_INITIALIZER;
 
 void	ptyattach __P((int));
 void	ptcwakeup __P((struct tty *, int));
-int	ptcopen __P((dev_t, int, int, struct proc *));
-struct tty *ptytty __P((dev_t));
 void	ptsstart __P((struct tty *));
 int	pty_maxptys __P((int, int));
 
@@ -261,8 +261,8 @@ ptyattach(n)
 
 /*ARGSUSED*/
 int
-ptsopen(dev, flag, devtype, p)
-	dev_t dev;
+ptsopen(devvp, flag, devtype, p)
+	struct vnode *devvp;
 	int flag, devtype;
 	struct proc *p;
 {
@@ -270,11 +270,12 @@ ptsopen(dev, flag, devtype, p)
 	struct tty *tp;
 	int error;
 
-	if ((error = check_pty(dev)))
+	if ((error = check_pty(devvp->v_rdev)))
 		return (error);
 
-	pti = pt_softc[minor(dev)];
+	pti = pt_softc[minor(devvp->v_rdev)];
 	tp = pti->pt_tty;
+	devvp->v_devcookie = pti;
 
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
 		ttychars(tp);		/* Set up default chars */
@@ -297,18 +298,18 @@ ptsopen(dev, flag, devtype, p)
 			if (error)
 				return (error);
 		}
-	error = (*tp->t_linesw->l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(devvp, tp);
 	ptcwakeup(tp, FREAD|FWRITE);
 	return (error);
 }
 
 int
-ptsclose(dev, flag, mode, p)
-	dev_t dev;
+ptsclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	struct pt_softc *pti = pt_softc[minor(dev)];
+	struct pt_softc *pti = devvp->v_devcookie;
 	struct tty *tp = pti->pt_tty;
 	int error;
 
@@ -319,13 +320,13 @@ ptsclose(dev, flag, mode, p)
 }
 
 int
-ptsread(dev, uio, flag)
-	dev_t dev;
+ptsread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
 	struct proc *p = curproc;
-	struct pt_softc *pti = pt_softc[minor(dev)];
+	struct pt_softc *pti = devvp->v_devcookie;
 	struct tty *tp = pti->pt_tty;
 	int error = 0;
 
@@ -373,12 +374,12 @@ again:
  * indirectly, when tty driver calls ptsstart.
  */
 int
-ptswrite(dev, uio, flag)
-	dev_t dev;
+ptswrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct pt_softc *pti = pt_softc[minor(dev)];
+	struct pt_softc *pti = devvp->v_devcookie;
 	struct tty *tp = pti->pt_tty;
 
 	if (tp->t_oproc == 0)
@@ -390,12 +391,12 @@ ptswrite(dev, uio, flag)
  * Poll pseudo-tty.
  */
 int
-ptspoll(dev, events, p)
-	dev_t dev;
+ptspoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct pt_softc *pti = pt_softc[minor(dev)];
+	struct pt_softc *pti = devvp->v_devcookie;
 	struct tty *tp = pti->pt_tty;
 
 	if (tp->t_oproc == 0)
@@ -412,7 +413,7 @@ void
 ptsstart(tp)
 	struct tty *tp;
 {
-	struct pt_softc *pti = pt_softc[minor(tp->t_dev)];
+	struct pt_softc *pti = tp->t_devvp->v_devcookie;
 
 	if (ISSET(tp->t_state, TS_TTSTOP))
 		return;
@@ -428,7 +429,7 @@ ptsstop(tp, flush)
 	struct tty *tp;
 	int flush;
 {
-	struct pt_softc *pti = pt_softc[minor(tp->t_dev)];
+	struct pt_softc *pti = tp->t_devvp->v_devcookie;
 	int flag;
 
 	/* note: FLUSHREAD and FLUSHWRITE already ok */
@@ -452,7 +453,7 @@ ptcwakeup(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	struct pt_softc *pti = pt_softc[minor(tp->t_dev)];
+	struct pt_softc *pti = tp->t_devvp->v_devcookie;
 
 	if (flag & FREAD) {
 		selwakeup(&pti->pt_selr);
@@ -466,8 +467,8 @@ ptcwakeup(tp, flag)
 
 /*ARGSUSED*/
 int
-ptcopen(dev, flag, devtype, p)
-	dev_t dev;
+ptcopen(devvp, flag, devtype, p)
+	struct vnode *devvp;
 	int flag, devtype;
 	struct proc *p;
 {
@@ -475,11 +476,12 @@ ptcopen(dev, flag, devtype, p)
 	struct tty *tp;
 	int error;
 
-	if ((error = check_pty(dev)))
+	if ((error = check_pty(devvp->v_rdev)))
 		return (error);
 
-	pti = pt_softc[minor(dev)];
+	pti = pt_softc[minor(devvp->v_rdev)];
 	tp = pti->pt_tty;
+	devvp->v_devcookie = pti;
 
 	if (tp->t_oproc)
 		return (EIO);
@@ -494,12 +496,12 @@ ptcopen(dev, flag, devtype, p)
 
 /*ARGSUSED*/
 int
-ptcclose(dev, flag, devtype, p)
-	dev_t dev;
+ptcclose(devvp, flag, devtype, p)
+	struct vnode *devvp;
 	int flag, devtype;
 	struct proc *p;
 {
-	struct pt_softc *pti = pt_softc[minor(dev)];
+	struct pt_softc *pti = devvp->v_devcookie;
 	struct tty *tp = pti->pt_tty;
 
 	(void)(*tp->t_linesw->l_modem)(tp, 0);
@@ -509,12 +511,12 @@ ptcclose(dev, flag, devtype, p)
 }
 
 int
-ptcread(dev, uio, flag)
-	dev_t dev;
+ptcread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct pt_softc *pti = pt_softc[minor(dev)];
+	struct pt_softc *pti = devvp->v_devcookie;
 	struct tty *tp = pti->pt_tty;
 	char buf[BUFSIZ];
 	int error = 0, cc;
@@ -579,12 +581,12 @@ ptcread(dev, uio, flag)
 
 
 int
-ptcwrite(dev, uio, flag)
-	dev_t dev;
+ptcwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct pt_softc *pti = pt_softc[minor(dev)];
+	struct pt_softc *pti = devvp->v_devcookie;
 	struct tty *tp = pti->pt_tty;
 	u_char *cp = NULL;
 	int cc = 0;
@@ -668,12 +670,12 @@ block:
 }
 
 int
-ptcpoll(dev, events, p)
-	dev_t dev;
+ptcpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct pt_softc *pti = pt_softc[minor(dev)];
+	struct pt_softc *pti = devvp->v_devcookie;
 	struct tty *tp = pti->pt_tty;
 	int revents = 0;
 	int s = splsoftclock();
@@ -711,10 +713,10 @@ ptcpoll(dev, events, p)
 
 
 struct tty *
-ptytty(dev)
-	dev_t dev;
+ptytty(devvp)
+	struct vnode *devvp;
 {
-	struct pt_softc *pti = pt_softc[minor(dev)];
+	struct pt_softc *pti = devvp->v_devcookie;
 	struct tty *tp = pti->pt_tty;
 
 	return (tp);
@@ -722,14 +724,14 @@ ptytty(dev)
 
 /*ARGSUSED*/
 int
-ptyioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+ptyioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	struct pt_softc *pti = pt_softc[minor(dev)];
+	struct pt_softc *pti = devvp->v_devcookie;
 	struct tty *tp = pti->pt_tty;
 	u_char *cc = tp->t_cc;
 	int stop, error, sig;
@@ -760,7 +762,7 @@ ptyioctl(dev, cmd, data, flag, p)
 		}
 		return(0);
 	} else
-	if (cdevsw[major(dev)].d_open == ptcopen)
+	if (cdevsw[major(devvp->v_rdev)].d_open == ptcopen)
 		switch (cmd) {
 
 		case TIOCGPGRP:

@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.21 2001/01/31 16:19:35 tshiozak Exp $	*/
+/*	$NetBSD: midi.c,v 1.21.6.1 2001/09/07 04:45:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,6 +56,9 @@
 #include <sys/audioio.h>
 #include <sys/midiio.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <dev/audio_if.h>
 #include <dev/midi_if.h>
@@ -389,8 +392,8 @@ midi_out(addr)
 }
 
 int
-midiopen(dev, flags, ifmt, p)
-	dev_t dev;
+midiopen(devvp, flags, ifmt, p)
+	struct vnode *devvp;
 	int flags, ifmt;
 	struct proc *p;
 {
@@ -398,11 +401,13 @@ midiopen(dev, flags, ifmt, p)
 	struct midi_hw_if *hw;
 	int error;
 
-	sc = device_lookup(&midi_cd, MIDIUNIT(dev));
+	sc = device_lookup(&midi_cd, MIDIUNIT(devvp->v_rdev));
 	if (sc == NULL)
 		return (ENXIO);
 	if (sc->dying)
 		return (EIO);
+
+	devvp->v_devcookie = sc;
 
 	DPRINTF(("midiopen %p\n", sc));
 
@@ -436,13 +441,12 @@ midiopen(dev, flags, ifmt, p)
 }
 
 int
-midiclose(dev, flags, ifmt, p)
-	dev_t dev;
+midiclose(devvp, flags, ifmt, p)
+	struct vnode *devvp;
 	int flags, ifmt;
 	struct proc *p;
 {
-	int unit = MIDIUNIT(dev);
-	struct midi_softc *sc = midi_cd.cd_devs[unit];
+	struct midi_softc *sc = devvp->v_devcookie;
 	struct midi_hw_if *hw = sc->hw_if;
 	int s, error;
 
@@ -466,13 +470,12 @@ midiclose(dev, flags, ifmt, p)
 }
 
 int
-midiread(dev, uio, ioflag)
-	dev_t dev;
+midiread(devvp, uio, ioflag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int ioflag;
 {
-	int unit = MIDIUNIT(dev);
-	struct midi_softc *sc = midi_cd.cd_devs[unit];
+	struct midi_softc *sc = devvp->v_devcookie;
 	struct midi_buffer *mb = &sc->inbuf;
 	int error;
 	u_char *outp;
@@ -599,13 +602,12 @@ midi_start_output(sc, intr)
 }
 
 int
-midiwrite(dev, uio, ioflag)
-	dev_t dev;
+midiwrite(devvp, uio, ioflag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int ioflag;
 {
-	int unit = MIDIUNIT(dev);
-	struct midi_softc *sc = midi_cd.cd_devs[unit];
+	struct midi_softc *sc = devvp->v_devcookie;
 	struct midi_buffer *mb = &sc->outbuf;
 	int error;
 	u_char *inp;
@@ -710,15 +712,14 @@ midi_writebytes(unit, buf, cc)
 }
 
 int
-midiioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+midiioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	int unit = MIDIUNIT(dev);
-	struct midi_softc *sc = midi_cd.cd_devs[unit];
+	struct midi_softc *sc = devvp->v_devcookie;
 	struct midi_hw_if *hw = sc->hw_if;
 	int error;
 
@@ -769,13 +770,12 @@ midiioctl(dev, cmd, addr, flag, p)
 }
 
 int
-midipoll(dev, events, p)
-	dev_t dev;
+midipoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	int unit = MIDIUNIT(dev);
-	struct midi_softc *sc = midi_cd.cd_devs[unit];
+	struct midi_softc *sc = devvp->v_devcookie;
 	int revents = 0;
 	int s = splaudio();
 

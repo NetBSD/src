@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.57 2001/09/02 13:11:53 tsutsui Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.57.2.1 2001/09/07 04:45:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -652,8 +652,8 @@ int	scsipi_thread_call_callback __P((struct scsipi_channel *,
 	    void *));
 void	scsipi_async_event __P((struct scsipi_channel *,
 	    scsipi_async_event_t, void *));
-int	scsipi_do_ioctl __P((struct scsipi_periph *, dev_t, u_long, caddr_t,
-	    int, struct proc *));
+int	scsipi_do_ioctl __P((struct scsipi_periph *, struct vnode *, u_long,
+	    caddr_t, int, struct proc *));
 
 void	scsipi_print_xfer_mode __P((struct scsipi_periph *));
 void	scsipi_set_xfer_mode __P((struct scsipi_channel *, int, int));

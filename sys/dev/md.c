@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.26 2001/07/07 17:04:02 thorpej Exp $	*/
+/*	$NetBSD: md.c,v 1.26.4.1 2001/09/07 04:45:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -57,6 +57,9 @@
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/disklabel.h>
+#include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -217,25 +220,27 @@ mdsize(dev_t dev)
 }
 
 int
-mdopen(dev, flag, fmt, proc)
-	dev_t dev;
+mdopen(devvp, flag, fmt, proc)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *proc;
 {
 	int unit;
 	struct md_softc *sc;
 
-	unit = MD_UNIT(dev);
+	unit = MD_UNIT(devvp->v_rdev);
 	if (unit >= ramdisk_ndevs)
 		return ENXIO;
 	sc = ramdisk_devs[unit];
 	if (sc == NULL)
 		return ENXIO;
 
+	devvp->v_devcookie = sc;
+
 	/*
 	 * The raw partition is used for ioctl to configure.
 	 */
-	if (DISKPART(dev) == RAW_PART)
+	if (DISKPART(devvp->v_rdev) == RAW_PART)
 		return 0;
 
 #ifdef	MEMORY_DISK_HOOKS
@@ -254,63 +259,41 @@ mdopen(dev, flag, fmt, proc)
 }
 
 int
-mdclose(dev, flag, fmt, proc)
-	dev_t dev;
+mdclose(devvp, flag, fmt, proc)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *proc;
 {
-	int unit;
-
-	unit = MD_UNIT(dev);
-
-	if (unit >= ramdisk_ndevs)
-		return ENXIO;
 
 	return 0;
 }
 
 int
-mdread(dev, uio, flags)
-	dev_t dev;
+mdread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	int unit;
-	struct md_softc *sc;
-
-	unit = MD_UNIT(dev);
-
-	if (unit >= ramdisk_ndevs)
-		return ENXIO;
-
-	sc = ramdisk_devs[unit];
+	struct md_softc *sc = devvp->v_devcookie;
 
 	if (sc->sc_type == MD_UNCONFIGURED)
 		return ENXIO;
 
-	return (physio(mdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(mdstrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 int
-mdwrite(dev, uio, flags)
-	dev_t dev;
+mdwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	int unit;
-	struct md_softc *sc;
-
-	unit = MD_UNIT(dev);
-
-	if (unit >= ramdisk_ndevs)
-		return ENXIO;
-
-	sc = ramdisk_devs[unit];
+	struct md_softc *sc = devvp->v_devcookie;
 
 	if (sc->sc_type == MD_UNCONFIGURED)
 		return ENXIO;
 
-	return (physio(mdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(mdstrategy, NULL, devvp, B_WRITE, minphys, uio));
 }
 
 /*
@@ -321,13 +304,11 @@ void
 mdstrategy(bp)
 	struct buf *bp;
 {
-	int unit;
 	struct md_softc	*sc;
 	caddr_t	addr;
 	size_t off, xfer;
 
-	unit = MD_UNIT(bp->b_dev);
-	sc = ramdisk_devs[unit];
+	sc = bp->b_devvp->v_devcookie;
 
 	if (sc->sc_type == MD_UNCONFIGURED) {
 		bp->b_error = ENXIO;
@@ -382,22 +363,18 @@ mdstrategy(bp)
 }
 
 int
-mdioctl(dev, cmd, data, flag, proc)
-	dev_t dev;
+mdioctl(devvp, cmd, data, flag, proc)
+	struct vnode *devvp;
 	u_long cmd;
 	int flag;
 	caddr_t data;
 	struct proc *proc;
 {
-	int unit;
-	struct md_softc *sc;
+	struct md_softc *sc = devvp->v_devcookie;
 	struct md_conf *umd;
 
-	unit = MD_UNIT(dev);
-	sc = ramdisk_devs[unit];
-
 	/* If this is not the raw partition, punt! */
-	if (DISKPART(dev) != RAW_PART)
+	if (DISKPART(devvp->v_rdev) != RAW_PART)
 		return ENOTTY;
 
 	umd = (struct md_conf *)data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.16 2001/09/03 14:52:29 reinoud Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.16.2.1 2001/09/07 04:45:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,9 @@
 #include <sys/audioio.h>
 #include <sys/midiio.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <dev/midi_if.h>
 #include <dev/midivar.h>
@@ -157,12 +160,12 @@ sequencerattach(n)
 }
 
 int
-sequenceropen(dev, flags, ifmt, p)
-	dev_t dev;
+sequenceropen(devvp, flags, ifmt, p)
+	struct vnode *devvp;
 	int flags, ifmt;
 	struct proc *p;
 {
-	int unit = SEQUENCERUNIT(dev);
+	int unit = SEQUENCERUNIT(devvp->v_rdev);
 	struct sequencer_softc *sc;
 	struct midi_dev *md;
 	int nmidi;
@@ -174,6 +177,9 @@ sequenceropen(dev, flags, ifmt, p)
 	sc = &seqdevs[unit];
 	if (sc->isopen)
 		return EBUSY;
+
+	devvp->v_devcookie = sc;
+
 	if (SEQ_IS_OLD(unit))
 		sc->mode = SEQ_OLD;
 	else
@@ -305,12 +311,12 @@ seq_startoutput(sc)
 }
 
 int
-sequencerclose(dev, flags, ifmt, p)
-	dev_t dev;
+sequencerclose(devvp, flags, ifmt, p)
+	struct vnode *devvp;
 	int flags, ifmt;
 	struct proc *p;
 {
-	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
+	struct sequencer_softc *sc = devvp->v_devcookie;
 	int n, s;
 
 	DPRINTF(("sequencerclose: %p\n", sc));
@@ -385,12 +391,12 @@ seq_event_intr(addr, iev)
 }
 
 int
-sequencerread(dev, uio, ioflag)
-	dev_t dev;
+sequencerread(devvp, uio, ioflag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int ioflag;
 {
-	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
+	struct sequencer_softc *sc = devvp->v_devcookie;
 	struct sequencer_queue *q = &sc->inq;
 	seq_event_rec ev;
 	int error, s;
@@ -423,12 +429,12 @@ sequencerread(dev, uio, ioflag)
 }
 
 int
-sequencerwrite(dev, uio, ioflag)
-	dev_t dev;
+sequencerwrite(devvp, uio, ioflag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int ioflag;
 {
-	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
+	struct sequencer_softc *sc = devvp->v_devcookie;
 	struct sequencer_queue *q = &sc->outq;
 	int error;
 	seq_event_rec cmdbuf;
@@ -474,14 +480,14 @@ sequencerwrite(dev, uio, ioflag)
 }
 
 int
-sequencerioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+sequencerioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
+	struct sequencer_softc *sc = devvp->v_devcookie;
 	struct synth_info *si;
 	struct midi_dev *md;
 	int devno;
@@ -629,12 +635,12 @@ sequencerioctl(dev, cmd, addr, flag, p)
 }
 
 int
-sequencerpoll(dev, events, p)
-	dev_t dev;
+sequencerpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
+	struct sequencer_softc *sc = devvp->v_devcookie;
 	int revents = 0;
 
 	DPRINTF(("sequencerpoll: %p events=0x%x\n", sc, events));
@@ -1083,19 +1089,46 @@ midiseq_in(md, msg, len)
 	seq_event_intr(md->seq, &ev);
 }
 
+/* XXXDEVVP */
+static int
+midiseq_major(void)
+{
+	static int maj = -1;
+	int i;
+
+	if (maj == -1) {
+		for (i = 0; i < nchrdev; i++) {
+			if (cdevsw[i].d_open == midiopen) {
+				maj = i;
+				break;
+			}
+		}
+	}
+
+	return (maj);
+}
+
 struct midi_dev *
 midiseq_open(unit, flags)
 	int unit;
 	int flags;
 {
 	extern struct cfdriver midi_cd;
-	int error;
+	int error, maj;
+	struct vnode *vp;
 	struct midi_dev *md;
 	struct midi_softc *sc;
 	struct midi_info mi;
 
+	/* XXX DEVVP */
+
+	maj = midiseq_major();
+	if ((error = cdevvp(makedev(maj, unit), &vp)) != 0)
+		return (0);
+
 	DPRINTFN(2, ("midiseq_open: %d %d\n", unit, flags));
-	error = midiopen(makedev(0, unit), flags, 0, 0);
+	error = midiopen(vp, flags, 0, 0);
+	vrele(vp);
 	if (error)
 		return (0);
 	sc = midi_cd.cd_devs[unit];
@@ -1119,8 +1152,18 @@ void
 midiseq_close(md)
 	struct midi_dev *md;
 {
+	struct vnode *vp;
+	int error, maj;
+
+	/* XXX DEVVP */
+
+	maj = midiseq_major();
+	if ((error = cdevvp(makedev(maj, md->unit), &vp)) != 0)
+		return;
+
 	DPRINTFN(2, ("midiseq_close: %d\n", md->unit));
-	midiclose(makedev(0, md->unit), 0, 0, 0);
+	midiclose(vp, 0, 0, 0);
+	vrele(vp);
 	free(md, M_DEVBUF);
 }
 

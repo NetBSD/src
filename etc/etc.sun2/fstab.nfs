@@ -1,4 +1,0 @@
-#	$NetBSD: fstab.nfs,v 1.1 2001/05/18 00:13:27 fredette Exp $
-#
-server:/export/client/root / nfs rw,-r=1024,-w=1024
-server:/export/netbsd.sun2/usr /usr nfs ro,-r=1024,-w=1024

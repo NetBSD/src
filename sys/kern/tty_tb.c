@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tb.c,v 1.26 2001/03/31 00:35:23 enami Exp $	*/
+/*	$NetBSD: tty_tb.c,v 1.26.4.1 2001/09/07 04:45:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -109,7 +109,7 @@ struct tb {
 } tb[NTB];
 
 
-int	tbopen __P((dev_t, struct tty *));
+int	tbopen __P((struct vnode *, struct tty *));
 void	tbclose __P((struct tty *));
 int	tbread __P((struct tty *, struct uio *));
 void	tbinput __P((int, struct tty *));
@@ -121,8 +121,8 @@ void	tbattach __P((int));
  */
 /*ARGSUSED*/
 int
-tbopen(dev, tp)
-	dev_t dev;
+tbopen(devvp, tp)
+	struct vnode *devvp;
 	struct tty *tp;
 {
 	struct tb *tbp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.37 2001/07/18 18:27:08 thorpej Exp $	*/
+/*	$NetBSD: if_se.c,v 1.37.2.1 2001/09/07 04:45:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -83,6 +83,9 @@
 #include <sys/disk.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_ctron_ether.h>
@@ -1157,8 +1160,8 @@ se_disable(sc)
  * open the device.
  */
 int
-seopen(dev, flag, fmt, p)
-	dev_t dev;
+seopen(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -1167,12 +1170,14 @@ seopen(dev, flag, fmt, p)
 	struct scsipi_periph *periph;
 	struct scsipi_adapter *adapt;
 
-	unit = SEUNIT(dev);
+	unit = SEUNIT(devvp->v_rdev);
 	if (unit >= se_cd.cd_ndevs)
 		return (ENXIO);
 	sc = se_cd.cd_devs[unit];
 	if (sc == NULL)
 		return (ENXIO);
+
+	devvp->v_devcookie = sc;
 
 	periph = sc->sc_periph;
 	adapt = periph->periph_channel->chan_adapter;
@@ -1195,12 +1200,12 @@ seopen(dev, flag, fmt, p)
  * occurence of an open device
  */
 int
-seclose(dev, flag, fmt, p)
-	dev_t dev;
+seclose(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
-	struct se_softc *sc = se_cd.cd_devs[SEUNIT(dev)];
+	struct se_softc *sc = devvp->v_devcookie;
 	struct scsipi_periph *periph = sc->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 
@@ -1219,14 +1224,14 @@ seclose(dev, flag, fmt, p)
  * Only does generic scsi ioctls.
  */
 int
-seioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+seioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	struct se_softc *sc = se_cd.cd_devs[SEUNIT(dev)];
+	struct se_softc *sc = devvp->v_devcookie;
 
-	return (scsipi_do_ioctl(sc->sc_periph, dev, cmd, addr, flag, p));
+	return (scsipi_do_ioctl(sc->sc_periph, devvp, cmd, addr, flag, p));
 }

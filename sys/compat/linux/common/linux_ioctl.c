@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.27 2001/06/14 20:32:43 thorpej Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.27.4.1 2001/09/07 04:45:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -111,7 +111,8 @@ linux_sys_ioctl(p, v, retval)
 		struct vnode *vp;
 		struct vattr va;
 		extern int sequencerioctl 
-			__P((dev_t, u_long, caddr_t, int, struct proc *));
+			__P((struct vnode *, u_long, caddr_t, int,
+			struct proc *));
 
 		fdp = p->p_fd;
 		if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.16 2001/05/02 10:32:10 scw Exp $	*/
+/*	$NetBSD: cz.c,v 1.16.4.1 2001/09/07 04:45:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -83,8 +83,11 @@
 #include <sys/kernel.h>
 #include <sys/fcntl.h>
 #include <sys/syslog.h>
+#include <sys/vnode.h>
 
 #include <sys/callout.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -434,8 +437,6 @@ cz_attach(struct device *parent,
 		callout_init(&sc->sc_diag_ch);
 
 		tp = ttymalloc();
-		tp->t_dev = makedev(cztty_major,
-		    (cz->cz_dev.dv_unit * ZFIRM_MAX_CHANNELS) + i);
 		tp->t_oproc = czttystart;
 		tp->t_param = czttyparam;
 		tty_attach(tp);
@@ -903,9 +904,9 @@ cztty_findmajor(void)
  *	Return a pointer to our tty.
  */
 struct tty *
-czttytty(dev_t dev)
+czttytty(struct vnode *devvp)
 {
-	struct cztty_softc *sc = CZTTY_SOFTC(dev);
+	struct cztty_softc *sc = devvp->v_devcookie;
 
 #ifdef DIAGNOSTIC
 	if (sc == NULL)
@@ -963,9 +964,9 @@ cztty_shutdown(struct cztty_softc *sc)
  *	Open a Cyclades-Z serial port.
  */
 int
-czttyopen(dev_t dev, int flags, int mode, struct proc *p)
+czttyopen(struct vnode *devvp, int flags, int mode, struct proc *p)
 {
-	struct cztty_softc *sc = CZTTY_SOFTC(dev);
+	struct cztty_softc *sc = CZTTY_SOFTC(devvp->v_rdev);
 	struct cz_softc *cz;
 	struct tty *tp;
 	int s, error;
@@ -975,6 +976,8 @@ czttyopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	if (sc->sc_channel == CZTTY_CHANNEL_DEAD)
 		return (ENXIO);
+
+	devvp->v_devcookie = sc;
 
 	cz = CZTTY_CZ(sc);
 	tp = sc->sc_tty;
@@ -992,7 +995,7 @@ czttyopen(dev_t dev, int flags, int mode, struct proc *p)
 	if (!ISSET(tp->t_state, TS_ISOPEN) && (tp->t_wopen == 0)) {
 		struct termios t;
 
-		tp->t_dev = dev;
+		tp->t_devvp = devvp;
 
 		/* If we're turning things on, enable interrupts */
 		if ((cz->cz_nopenchan++ == 0) && (cz->cz_ih == NULL)) {
@@ -1055,11 +1058,12 @@ czttyopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	splx(s);
 
-	error = ttyopen(tp, CZTTY_DIALOUT(dev), ISSET(flags, O_NONBLOCK));
+	error = ttyopen(tp, CZTTY_DIALOUT(devvp->v_rdev),
+	    ISSET(flags, O_NONBLOCK));
 	if (error)
 		goto bad;
 
-	error = (*tp->t_linesw->l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(devvp, tp);
 	if (error)
 		goto bad;
 
@@ -1083,9 +1087,9 @@ czttyopen(dev_t dev, int flags, int mode, struct proc *p)
  *	Close a Cyclades-Z serial port.
  */
 int
-czttyclose(dev_t dev, int flags, int mode, struct proc *p)
+czttyclose(struct vnode *devvp, int flags, int mode, struct proc *p)
 {
-	struct cztty_softc *sc = CZTTY_SOFTC(dev);
+	struct cztty_softc *sc = devvp->v_devcookie;
 	struct tty *tp = sc->sc_tty;
 
 	/* XXX This is for cons.c. */
@@ -1113,9 +1117,9 @@ czttyclose(dev_t dev, int flags, int mode, struct proc *p)
  *	Read from a Cyclades-Z serial port.
  */
 int
-czttyread(dev_t dev, struct uio *uio, int flags)
+czttyread(struct vnode *devvp, struct uio *uio, int flags)
 {
-	struct cztty_softc *sc = CZTTY_SOFTC(dev);
+	struct cztty_softc *sc = devvp->v_devcookie;
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flags));
@@ -1127,9 +1131,9 @@ czttyread(dev_t dev, struct uio *uio, int flags)
  *	Write to a Cyclades-Z serial port.
  */
 int
-czttywrite(dev_t dev, struct uio *uio, int flags)
+czttywrite(struct vnode *devvp, struct uio *uio, int flags)
 {
-	struct cztty_softc *sc = CZTTY_SOFTC(dev);
+	struct cztty_softc *sc = devvp->v_devcookie;
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flags));
@@ -1141,12 +1145,12 @@ czttywrite(dev_t dev, struct uio *uio, int flags)
  *	Poll a Cyclades-Z serial port.
  */
 int
-czttypoll(dev, events, p)
-	dev_t dev;
+czttypoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct cztty_softc *sc = CZTTY_SOFTC(dev);
+	struct cztty_softc *sc = devvp->v_devcookie;
 	struct tty *tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
@@ -1158,9 +1162,10 @@ czttypoll(dev, events, p)
  *	Perform a control operation on a Cyclades-Z serial port.
  */
 int
-czttyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+czttyioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
+    struct proc *p)
 {
-	struct cztty_softc *sc = CZTTY_SOFTC(dev);
+	struct cztty_softc *sc = devvp->v_devcookie;
 	struct tty *tp = sc->sc_tty;
 	int s, error;
 
@@ -1353,7 +1358,7 @@ cztty_to_tiocm(struct cztty_softc *sc)
 int
 czttyparam(struct tty *tp, struct termios *t)
 {
-	struct cztty_softc *sc = CZTTY_SOFTC(tp->t_dev);
+	struct cztty_softc *sc = tp->t_devvp->v_devcookie;
 	struct cz_softc *cz = CZTTY_CZ(sc);
 	u_int32_t rs_status;
 	int ospeed, cflag;
@@ -1492,7 +1497,7 @@ czttyparam(struct tty *tp, struct termios *t)
 void
 czttystart(struct tty *tp)
 {
-	struct cztty_softc *sc = CZTTY_SOFTC(tp->t_dev);
+	struct cztty_softc *sc = tp->t_devvp->v_devcookie;
 	int s;
 
 	s = spltty();

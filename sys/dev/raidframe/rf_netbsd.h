@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsd.h,v 1.12 2000/05/28 22:53:49 oster Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.12.8.1 2001/09/07 04:45:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -107,7 +107,6 @@ typedef struct RF_SingleComponent_s {
 
 struct raidcinfo {
 	struct vnode *ci_vp;	/* component device's vnode */
-	dev_t   ci_dev;		/* component device's dev_t */
 	RF_ComponentLabel_t ci_label; /* components RAIDframe label */
 #if 0
 	size_t  ci_size;	/* size */
@@ -122,7 +121,6 @@ struct raidcinfo {
 typedef struct RF_AutoConfig_s {
 	char devname[56];       /* the name of this component */
 	int flag;               /* a general-purpose flag */
-	dev_t dev;              /* the device for this component */
 	struct vnode *vp;       /* Mr. Vnode Pointer */
 	RF_ComponentLabel_t *clabel;  /* the label */
 	struct RF_AutoConfig_s *next; /* the next autoconfig structure 

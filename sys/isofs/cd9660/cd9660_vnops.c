@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.65 2001/08/17 05:54:36 chs Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.65.2.1 2001/09/07 04:45:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -783,7 +783,7 @@ cd9660_strategy(v)
 		return (0);
 	}
 	vp = ip->i_devvp;
-	bp->b_dev = vp->v_rdev;
+	bp->b_devvp = vp;
 	VOCALL (vp->v_op, VOFFSET(vop_strategy), ap);
 	return (0);
 }

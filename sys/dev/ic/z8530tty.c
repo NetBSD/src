@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.77.4.1 2001/09/07 04:45:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -113,6 +113,9 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
@@ -341,7 +344,6 @@ zstty_attach(parent, self, aux)
 	printf("\n");
 
 	tp = ttymalloc();
-	tp->t_dev = dev;
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
 	tp->t_hwiflow = zshwiflow;
@@ -420,10 +422,10 @@ zstty_attach(parent, self, aux)
  * Return pointer to our tty.
  */
 struct tty *
-zstty(dev)
-	dev_t dev;
+zstty(devvp)
+	struct vnode *devvp;
 {
-	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(dev));
+	struct zstty_softc *zst = devvp->v_devcookie;
 
 	return (zst->zst_tty);
 }
@@ -482,8 +484,8 @@ zs_shutdown(zst)
  * Open a zs serial (tty) port.
  */
 int
-zsopen(dev, flags, mode, p)
-	dev_t dev;
+zsopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags;
 	int mode;
 	struct proc *p;
@@ -494,9 +496,11 @@ zsopen(dev, flags, mode, p)
 	int s, s2;
 	int error;
 
-	zst = device_lookup(&zstty_cd, ZSUNIT(dev));
+	zst = device_lookup(&zstty_cd, ZSUNIT(devvp->v_rdev));
 	if (zst == NULL)
 		return (ENXIO);
+
+	devvp->v_devcookie = zst;
 
 	tp = zst->zst_tty;
 	cs = zst->zst_cs;
@@ -518,7 +522,7 @@ zsopen(dev, flags, mode, p)
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		struct termios t;
 
-		tp->t_dev = dev;
+		tp->t_devvp = devvp;
 
 		/* Call the power management hook. */
 		if (cs->enable) {
@@ -606,11 +610,11 @@ zsopen(dev, flags, mode, p)
 
 	splx(s);
 
-	error = ttyopen(tp, ZSDIALOUT(dev), ISSET(flags, O_NONBLOCK));
+	error = ttyopen(tp, ZSDIALOUT(devvp->v_rdev), ISSET(flags, O_NONBLOCK));
 	if (error)
 		goto bad;
 
-	error = (*tp->t_linesw->l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(devvp, tp);
 	if (error)
 		goto bad;
 
@@ -632,13 +636,13 @@ bad:
  * Close a zs serial port.
  */
 int
-zsclose(dev, flags, mode, p)
-	dev_t dev;
+zsclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags;
 	int mode;
 	struct proc *p;
 {
-	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(dev));
+	struct zstty_softc *zst = devvp->v_devcookie;
 	struct tty *tp = zst->zst_tty;
 
 	/* XXX This is for cons.c. */
@@ -664,50 +668,50 @@ zsclose(dev, flags, mode, p)
  * Read/write zs serial port.
  */
 int
-zsread(dev, uio, flags)
-	dev_t dev;
+zsread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(dev));
+	struct zstty_softc *zst = devvp->v_devcookie;
 	struct tty *tp = zst->zst_tty;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flags));
 }
 
 int
-zswrite(dev, uio, flags)
-	dev_t dev;
+zswrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(dev));
+	struct zstty_softc *zst = devvp->v_devcookie;
 	struct tty *tp = zst->zst_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flags));
 }
 
 int
-zspoll(dev, events, p)
-	dev_t dev;
+zspoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(dev));
+	struct zstty_softc *zst = devvp->v_devcookie;
 	struct tty *tp = zst->zst_tty;
 
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 int
-zsioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+zsioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(dev));
+	struct zstty_softc *zst = devvp->v_devcookie;
 	struct zs_chanstate *cs = zst->zst_cs;
 	struct tty *tp = zst->zst_tty;
 	int error;
@@ -926,7 +930,7 @@ static void
 zsstart(tp)
 	struct tty *tp;
 {
-	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(tp->t_dev));
+	struct zstty_softc *zst = tp->t_devvp->v_devcookie;
 	struct zs_chanstate *cs = zst->zst_cs;
 	int s;
 
@@ -989,7 +993,7 @@ zsstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(tp->t_dev));
+	struct zstty_softc *zst = tp->t_devvp->v_devcookie;
 	int s;
 
 	s = splzs();
@@ -1013,7 +1017,7 @@ zsparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(tp->t_dev));
+	struct zstty_softc *zst = tp->t_devvp->v_devcookie;
 	struct zs_chanstate *cs = zst->zst_cs;
 	int ospeed, cflag;
 	u_char tmp3, tmp4, tmp5;
@@ -1313,7 +1317,7 @@ zshwiflow(tp, block)
 	struct tty *tp;
 	int block;
 {
-	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(tp->t_dev));
+	struct zstty_softc *zst = tp->t_devvp->v_devcookie;
 	struct zs_chanstate *cs = zst->zst_cs;
 	int s;
 
@@ -1405,7 +1409,8 @@ zstty_rxint(cs)
 			zs_write_csr(cs, ZSWR0_RESET_ERRORS);
 		}
 
-		cn_check_magic(zst->zst_tty->t_dev, c, zstty_cnm_state);
+		cn_check_magic(zst->zst_tty->t_devvp->v_rdev, c,
+		    zstty_cnm_state);
 		put[0] = c;
 		put[1] = rr1;
 		put += 2;
@@ -1516,7 +1521,8 @@ zstty_stint(cs, force)
 	 * even when interrupts are locking up the machine.
 	 */
 	if (ISSET(rr0, ZSRR0_BREAK))
-		cn_check_magic(zst->zst_tty->t_dev, CNC_BREAK, zstty_cnm_state);
+		cn_check_magic(zst->zst_tty->t_devvp->v_rdev, CNC_BREAK,
+		    zstty_cnm_state);
 
 	if (!force)
 		delta = rr0 ^ cs->cs_rr0;

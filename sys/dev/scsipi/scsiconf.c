@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.161 2001/08/31 07:09:41 augustss Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.161.2.1 2001/09/07 04:45:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -65,6 +65,9 @@
 #include <sys/conf.h>
 #include <sys/fcntl.h>
 #include <sys/scsiio.h>
+#include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -868,13 +871,13 @@ bad:
 /****** Entry points for user control of the SCSI bus. ******/
 
 int
-scsibusopen(dev, flag, fmt, p)
-	dev_t dev;
+scsibusopen(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
 	struct scsibus_softc *sc;
-	int error, unit = minor(dev);
+	int error, unit = minor(devvp->v_rdev);
 
 	if (unit >= scsibus_cd.cd_ndevs ||
 	    (sc = scsibus_cd.cd_devs[unit]) == NULL)
@@ -882,6 +885,8 @@ scsibusopen(dev, flag, fmt, p)
 
 	if (sc->sc_flags & SCSIBUSF_OPEN)
 		return (EBUSY);
+
+	devvp->v_devcookie = sc;
 
 	if ((error = scsipi_adapter_addref(sc->sc_channel->chan_adapter)) != 0)
 		return (error);
@@ -892,12 +897,12 @@ scsibusopen(dev, flag, fmt, p)
 }
 
 int
-scsibusclose(dev, flag, fmt, p)
-	dev_t dev;
+scsibusclose(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
-	struct scsibus_softc *sc = scsibus_cd.cd_devs[minor(dev)];
+	struct scsibus_softc *sc = devvp->v_devcookie;
 
 	scsipi_adapter_delref(sc->sc_channel->chan_adapter);
 
@@ -907,14 +912,14 @@ scsibusclose(dev, flag, fmt, p)
 }
 
 int
-scsibusioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+scsibusioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	struct scsibus_softc *sc = scsibus_cd.cd_devs[minor(dev)];
+	struct scsibus_softc *sc = devvp->v_devcookie;
 	struct scsipi_channel *chan = sc->sc_channel;
 	int error;
 

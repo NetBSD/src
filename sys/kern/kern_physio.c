@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.49 2001/07/24 16:43:03 wiz Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.49.2.1 2001/09/07 04:45:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -70,10 +70,10 @@ void putphysbuf __P((struct buf *bp));
  * Comments in brackets are from Leffler, et al.'s pseudo-code implementation.
  */
 int
-physio(strategy, bp, dev, flags, minphys, uio)
+physio(strategy, bp, devvp, flags, minphys, uio)
 	void (*strategy) __P((struct buf *));
 	struct buf *bp;
-	dev_t dev;
+	struct vnode *devvp;
 	int flags;
 	void (*minphys) __P((struct buf *));
 	struct uio *uio;
@@ -114,7 +114,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 	}
 
 	/* [set up the fixed part of the buffer for a transfer] */
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 	bp->b_error = 0;
 	bp->b_proc = p;
 	LIST_INIT(&bp->b_dep);

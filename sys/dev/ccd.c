@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.73 2001/08/05 11:20:13 jdolecek Exp $	*/
+/*	$NetBSD: ccd.c,v 1.73.2.1 2001/09/07 04:45:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -109,6 +109,8 @@
 #include <sys/lock.h>
 #include <sys/queue.h>
 
+#include <miscfs/specfs/specdev.h>
+
 #include <dev/ccdvar.h>
 
 #if defined(CCDDEBUG) && !defined(DEBUG)
@@ -159,7 +161,7 @@ static	int ccdlookup __P((char *, struct proc *p, struct vnode **));
 static	struct ccdbuf *ccdbuffer __P((struct ccd_softc *, struct buf *,
 		daddr_t, caddr_t, long));
 static	void ccdgetdefaultlabel __P((struct ccd_softc *, struct disklabel *));
-static	void ccdgetdisklabel __P((dev_t));
+static	void ccdgetdisklabel __P((struct vnode *));
 static	void ccdmakedisklabel __P((struct ccd_softc *));
 
 #ifdef DEBUG
@@ -279,7 +281,6 @@ ccdinit(cs, cpaths, vpp, p)
 #endif
 			goto out;
 		}
-		ci->ci_dev = va.va_rdev;
 
 		/*
 		 * Get partition information for the component.
@@ -490,30 +491,31 @@ ccdinterleave(cs)
 
 /* ARGSUSED */
 int
-ccdopen(dev, flags, fmt, p)
-	dev_t dev;
+ccdopen(devvp, flags, fmt, p)
+	struct vnode *devvp;
 	int flags, fmt;
 	struct proc *p;
 {
-	int unit = ccdunit(dev);
+	int unit = ccdunit(devvp->v_rdev);
 	struct ccd_softc *cs;
 	struct disklabel *lp;
 	int error = 0, part, pmask;
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
-		printf("ccdopen(0x%x, 0x%x)\n", dev, flags);
+		printf("ccdopen(0x%x, 0x%x)\n", devvp->v_rdev, flags);
 #endif
 	if (unit >= numccd)
 		return (ENXIO);
 	cs = &ccd_softc[unit];
+	devvp->v_devcookie = cs;
 
 	if ((error = lockmgr(&cs->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
 		return (error);
 
 	lp = cs->sc_dkdev.dk_label;
 
-	part = DISKPART(dev);
+	part = DISKPART(devvp->v_rdev);
 	pmask = (1 << part);
 
 	/*
@@ -522,7 +524,7 @@ ccdopen(dev, flags, fmt, p)
 	 * the in-core disklabel.
 	 */
 	if ((cs->sc_flags & CCDF_INITED) && (cs->sc_dkdev.dk_openmask == 0))
-		ccdgetdisklabel(dev);
+		ccdgetdisklabel(devvp);
 
 	/* Check that the partition exists. */
 	if (part != RAW_PART) {
@@ -554,28 +556,23 @@ ccdopen(dev, flags, fmt, p)
 
 /* ARGSUSED */
 int
-ccdclose(dev, flags, fmt, p)
-	dev_t dev;
+ccdclose(devvp, flags, fmt, p)
+	struct vnode *devvp;
 	int flags, fmt;
 	struct proc *p;
 {
-	int unit = ccdunit(dev);
-	struct ccd_softc *cs;
+	struct ccd_softc *cs = devvp->v_devcookie;
 	int error = 0, part;
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
-		printf("ccdclose(0x%x, 0x%x)\n", dev, flags);
+		printf("ccdclose(0x%x, 0x%x)\n", devvp->v_rdev, flags);
 #endif
-
-	if (unit >= numccd)
-		return (ENXIO);
-	cs = &ccd_softc[unit];
 
 	if ((error = lockmgr(&cs->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
 		return (error);
 
-	part = DISKPART(dev);
+	part = DISKPART(devvp->v_rdev);
 
 	/* ...that much closer to allowing unconfiguration... */
 	switch (fmt) {
@@ -598,20 +595,21 @@ void
 ccdstrategy(bp)
 	struct buf *bp;
 {
-	int unit = ccdunit(bp->b_dev);
-	struct ccd_softc *cs = &ccd_softc[unit];
+	struct ccd_softc *cs = bp->b_devvp->v_devcookie;
 	int s;
 	int wlabel;
 	struct disklabel *lp;
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
-		printf("ccdstrategy(%p): unit %d\n", bp, unit);
+		printf("ccdstrategy(%p): unit %d\n", bp,
+		    DISKUNIT(bp->b_devvp->v_rdev));
 #endif
 	if ((cs->sc_flags & CCDF_INITED) == 0) {
 #ifdef DEBUG
 		if (ccddebug & CCDB_FOLLOW)
-			printf("ccdstrategy: unit %d: not inited\n", unit);
+			printf("ccdstrategy: unit %d: not inited\n",
+			    DISKUNIT(bp->b_devvp->v_rdev));
 #endif
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
@@ -629,7 +627,8 @@ ccdstrategy(bp)
 	 * error, the bounds check will flag that for us.
 	 */
 	wlabel = cs->sc_flags & (CCDF_WLABEL|CCDF_LABELLING);
-	if (DISKPART(bp->b_dev) != RAW_PART)
+	if (DISKPART(bp->b_devvp->v_rdev) != RAW_PART &&
+	    (bp->b_flags & B_DKLABEL) == 0)
 		if (bounds_check_with_label(bp, lp, wlabel) <= 0)
 			goto done;
 
@@ -670,8 +669,10 @@ ccdstart(cs, bp)
 	 * Translate the partition-relative block number to an absolute.
 	 */
 	bn = bp->b_blkno;
-	if (DISKPART(bp->b_dev) != RAW_PART) {
-		pp = &cs->sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)];
+	if (DISKPART(bp->b_devvp->v_rdev) != RAW_PART &&
+	    (bp->b_flags & B_DKLABEL) == 0) {
+		pp = &cs->sc_dkdev.dk_label->d_partitions[
+		    DISKPART(bp->b_devvp->v_rdev)];
 		bn += pp->p_offset;
 	}
 
@@ -786,7 +787,7 @@ ccdbuffer(cs, bp, bn, addr, bcount)
 	cbp->cb_buf.b_flags = bp->b_flags | B_CALL;
 	cbp->cb_buf.b_iodone = ccdiodone;
 	cbp->cb_buf.b_proc = bp->b_proc;
-	cbp->cb_buf.b_dev = ci->ci_dev;		/* XXX */
+	cbp->cb_buf.b_devvp = ci->ci_vp;
 	cbp->cb_buf.b_blkno = cbn + cboff;
 	cbp->cb_buf.b_data = addr;
 	cbp->cb_buf.b_vp = ci->ci_vp;
@@ -807,7 +808,7 @@ ccdbuffer(cs, bp, bn, addr, bcount)
 #ifdef DEBUG
 	if (ccddebug & CCDB_IO)
 		printf(" dev 0x%x(u%lu): cbp %p bn %d addr %p bcnt %ld\n",
-		    ci->ci_dev, (unsigned long) (ci-cs->sc_cinfo), cbp,
+		    ci->ci_vp->v_rdev, (unsigned long) (ci-cs->sc_cinfo), cbp,
 		    cbp->cb_buf.b_blkno, cbp->cb_buf.b_data,
 		    cbp->cb_buf.b_bcount);
 #endif
@@ -856,7 +857,7 @@ ccdiodone(vbp)
 		printf("ccdiodone: bp %p bcount %ld resid %ld\n",
 		       bp, bp->b_bcount, bp->b_resid);
 		printf(" dev 0x%x(u%d), cbp %p bn %d addr %p bcnt %ld\n",
-		       cbp->cb_buf.b_dev, cbp->cb_comp, cbp,
+		       cbp->cb_buf.b_devvp->v_rdev, cbp->cb_comp, cbp,
 		       cbp->cb_buf.b_blkno, cbp->cb_buf.b_data,
 		       cbp->cb_buf.b_bcount);
 	}
@@ -886,22 +887,17 @@ ccdiodone(vbp)
 
 /* ARGSUSED */
 int
-ccdread(dev, uio, flags)
-	dev_t dev;
+ccdread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	int unit = ccdunit(dev);
-	struct ccd_softc *cs;
+	struct ccd_softc *cs = devvp->v_devcookie;
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
-		printf("ccdread(0x%x, %p)\n", dev, uio);
+		printf("ccdread(0x%x, %p)\n", devvp->v_rdev, uio);
 #endif
-	if (unit >= numccd)
-		return (ENXIO);
-	cs = &ccd_softc[unit];
-
 	if ((cs->sc_flags & CCDF_INITED) == 0)
 		return (ENXIO);
 
@@ -910,27 +906,22 @@ ccdread(dev, uio, flags)
 	 * in particular, for raw I/O.  Underlying devices might have some
 	 * non-obvious limits, because of the copy to user-space.
 	 */
-	return (physio(ccdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(ccdstrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 /* ARGSUSED */
 int
-ccdwrite(dev, uio, flags)
-	dev_t dev;
+ccdwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	int unit = ccdunit(dev);
-	struct ccd_softc *cs;
+	struct ccd_softc *cs = devvp->v_devcookie;
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
-		printf("ccdwrite(0x%x, %p)\n", dev, uio);
+		printf("ccdwrite(0x%x, %p)\n", devvp->v_rdev, uio);
 #endif
-	if (unit >= numccd)
-		return (ENXIO);
-	cs = &ccd_softc[unit];
-
 	if ((cs->sc_flags & CCDF_INITED) == 0)
 		return (ENXIO);
 
@@ -939,31 +930,26 @@ ccdwrite(dev, uio, flags)
 	 * in particular, for raw I/O.  Underlying devices might have some
 	 * non-obvious limits, because of the copy to user-space.
 	 */
-	return (physio(ccdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(ccdstrategy, NULL, devvp, B_WRITE, minphys, uio));
 }
 
 int
-ccdioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+ccdioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	int unit = ccdunit(dev);
+	struct ccd_softc *cs = devvp->v_devcookie;
+	struct ccd_ioctl *ccio = (struct ccd_ioctl *)data;
 	int i, j, lookedup = 0, error;
 	int part, pmask;
-	struct ccd_softc *cs;
-	struct ccd_ioctl *ccio = (struct ccd_ioctl *)data;
 	char **cpp;
 	struct vnode **vpp;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
-
-	if (unit >= numccd)
-		return (ENXIO);
-	cs = &ccd_softc[unit];
 
 	/* Must be open for writes for these commands... */
 	switch (cmd) {
@@ -1090,14 +1076,14 @@ ccdioctl(dev, cmd, data, flag, p)
 		 * because space for the disklabel is allocated
 		 * in disk_attach();
 		 */
-		ccio->ccio_unit = unit;
+		ccio->ccio_unit = DISKUNIT(devvp->v_rdev);
 		ccio->ccio_size = cs->sc_size;
 
 		/* Attach the disk. */
 		disk_attach(&cs->sc_dkdev);
 
 		/* Try and read the disklabel. */
-		ccdgetdisklabel(dev);
+		ccdgetdisklabel(devvp);
 		break;
 
 	case CCDIOCCLR:
@@ -1106,7 +1092,7 @@ ccdioctl(dev, cmd, data, flag, p)
 		 * or if both the character and block flavors of this
 		 * partition are open.
 		 */
-		part = DISKPART(dev);
+		part = DISKPART(devvp->v_rdev);
 		pmask = (1 << part);
 		if ((cs->sc_dkdev.dk_openmask & ~pmask) ||
 		    ((cs->sc_dkdev.dk_bopenmask & pmask) &&
@@ -1164,7 +1150,7 @@ ccdioctl(dev, cmd, data, flag, p)
 	case DIOCGPART:
 		((struct partinfo *)data)->disklab = cs->sc_dkdev.dk_label;
 		((struct partinfo *)data)->part =
-		    &cs->sc_dkdev.dk_label->d_partitions[DISKPART(dev)];
+		  &cs->sc_dkdev.dk_label->d_partitions[DISKPART(devvp->v_rdev)];
 		break;
 
 	case DIOCWDINFO:
@@ -1194,8 +1180,8 @@ ccdioctl(dev, cmd, data, flag, p)
 			    || cmd == ODIOCWDINFO
 #endif
 			   )
-				error = writedisklabel(CCDLABELDEV(dev),
-				    ccdstrategy, cs->sc_dkdev.dk_label,
+				error = writedisklabel(devvp, ccdstrategy,
+				    cs->sc_dkdev.dk_label,
 				    cs->sc_dkdev.dk_cpulabel);
 		}
 
@@ -1236,6 +1222,9 @@ int
 ccdsize(dev)
 	dev_t dev;
 {
+#if 1 /* XXXthorpej */
+	return (-1);
+#else
 	struct ccd_softc *cs;
 	struct disklabel *lp;
 	int part, unit, omask, size;
@@ -1265,6 +1254,7 @@ ccdsize(dev)
 		return (-1);
 
 	return (size);
+#endif
 }
 
 int
@@ -1376,11 +1366,10 @@ ccdgetdefaultlabel(cs, lp)
  * up.
  */
 static void
-ccdgetdisklabel(dev)
-	dev_t dev;
+ccdgetdisklabel(devvp)
+	struct vnode *devvp;
 {
-	int unit = ccdunit(dev);
-	struct ccd_softc *cs = &ccd_softc[unit];
+	struct ccd_softc *cs = devvp->v_devcookie;
 	char *errstring;
 	struct disklabel *lp = cs->sc_dkdev.dk_label;
 	struct cpu_disklabel *clp = cs->sc_dkdev.dk_cpulabel;
@@ -1392,7 +1381,7 @@ ccdgetdisklabel(dev)
 	/*
 	 * Call the generic disklabel extraction routine.
 	 */
-	errstring = readdisklabel(CCDLABELDEV(dev), ccdstrategy,
+	errstring = readdisklabel(devvp, ccdstrategy,
 	    cs->sc_dkdev.dk_label, cs->sc_dkdev.dk_cpulabel);
 	if (errstring)
 		ccdmakedisklabel(cs);

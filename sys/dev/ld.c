@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.11 2001/09/06 00:47:56 thorpej Exp $	*/
+/*	$NetBSD: ld.c,v 1.11.2.1 2001/09/07 04:45:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,10 +63,12 @@
 #include <sys/rnd.h>
 #endif
 
+#include <miscfs/specfs/specdev.h>
+
 #include <dev/ldvar.h>
 
 static void	ldgetdefaultlabel(struct ld_softc *, struct disklabel *);
-static void	ldgetdisklabel(struct ld_softc *);
+static void	ldgetdisklabel(struct vnode *);
 static int	ldlock(struct ld_softc *);
 static void	ldminphys(struct buf *bp);
 static void	ldshutdown(void *);
@@ -238,21 +240,24 @@ ldshutdown(void *cookie)
 
 /* ARGSUSED */
 int
-ldopen(dev_t dev, int flags, int fmt, struct proc *p)
+ldopen(struct vnode *devvp, int flags, int fmt, struct proc *p)
 {
 	struct ld_softc *sc;
 	int unit, part;
 
-	unit = DISKUNIT(dev);
+	unit = DISKUNIT(devvp->v_rdev);
 	if ((sc = device_lookup(&ld_cd, unit))== NULL)
 		return (ENXIO);
 	if ((sc->sc_flags & LDF_ENABLED) == 0)
 		return (ENODEV);
-	part = DISKPART(dev);
+	part = DISKPART(devvp->v_rdev);
+
+	devvp->v_devcookie = sc;
+
 	ldlock(sc);
 
 	if (sc->sc_dk.dk_openmask == 0)
-		ldgetdisklabel(sc);
+		ldgetdisklabel(devvp);
 
 	/* Check that the partition exists. */
 	if (part != RAW_PART && (part >= sc->sc_dk.dk_label->d_npartitions ||
@@ -279,14 +284,11 @@ ldopen(dev_t dev, int flags, int fmt, struct proc *p)
 
 /* ARGSUSED */
 int
-ldclose(dev_t dev, int flags, int fmt, struct proc *p)
+ldclose(struct vnode *devvp, int flags, int fmt, struct proc *p)
 {
-	struct ld_softc *sc;
-	int part, unit;
+	struct ld_softc *sc = devvp->v_devcookie;
+	int part = DISKPART(devvp->v_rdev);
 
-	unit = DISKUNIT(dev);
-	part = DISKPART(dev);
-	sc = device_lookup(&ld_cd, unit);
 	ldlock(sc);
 
 	switch (fmt) {
@@ -311,34 +313,33 @@ ldclose(dev_t dev, int flags, int fmt, struct proc *p)
 
 /* ARGSUSED */
 int
-ldread(dev_t dev, struct uio *uio, int ioflag)
+ldread(struct vnode *devvp, struct uio *uio, int ioflag)
 {
 
-	return (physio(ldstrategy, NULL, dev, B_READ, ldminphys, uio));
+	return (physio(ldstrategy, NULL, devvp, B_READ, ldminphys, uio));
 }
 
 /* ARGSUSED */
 int
-ldwrite(dev_t dev, struct uio *uio, int ioflag)
+ldwrite(struct vnode *devvp, struct uio *uio, int ioflag)
 {
 
-	return (physio(ldstrategy, NULL, dev, B_WRITE, ldminphys, uio));
+	return (physio(ldstrategy, NULL, devvp, B_WRITE, ldminphys, uio));
 }
 
 /* ARGSUSED */
 int
-ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
+ldioctl(struct vnode *devvp, u_long cmd, caddr_t addr, int32_t flag,
+    struct proc *p)
 {
-	struct ld_softc *sc;
-	int part, unit, error;
+	struct ld_softc *sc = devvp->v_devcookie;
+	int part, error;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
 	struct disklabel *lp;
 
-	unit = DISKUNIT(dev);
-	part = DISKPART(dev);
-	sc = device_lookup(&ld_cd, unit);
+	part = DISKPART(devvp->v_rdev);
 	error = 0;
 
 	switch (cmd) {
@@ -390,8 +391,7 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 		    || cmd == ODIOCWDINFO
 #endif
 		    ))
-			error = writedisklabel(
-			    MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART), 
+			error = writedisklabel(devvp,
 			    ldstrategy, sc->sc_dk.dk_label, 
 			    sc->sc_dk.dk_cpulabel);
 
@@ -432,10 +432,8 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 void
 ldstrategy(struct buf *bp)
 {
-	struct ld_softc *sc;
+	struct ld_softc *sc = bp->b_devvp->v_devcookie;
 	int s;
-
-	sc = device_lookup(&ld_cd, DISKUNIT(bp->b_dev));
 
 	s = splbio();
 	if (sc->sc_queuecnt >= sc->sc_maxqueuecnt) {
@@ -461,7 +459,7 @@ ldstart(struct ld_softc *sc, struct buf *bp)
 		return (-1);
 	}
 
-	part = DISKPART(bp->b_dev);
+	part = DISKPART(bp->b_devvp->v_rdev);
 	lp = sc->sc_dk.dk_label;
 
 	/*
@@ -488,6 +486,7 @@ ldstart(struct ld_softc *sc, struct buf *bp)
 	 * If past the end of partition, just return.
 	 */
 	if (part != RAW_PART &&
+	    (bp->b_flags & B_DKLABEL) == 0 &&
 	    bounds_check_with_label(bp, lp,
 	    (sc->sc_flags & (LDF_WLABEL | LDF_LABELLING)) != 0) <= 0) {
 		bp->b_resid = bp->b_bcount;
@@ -504,7 +503,8 @@ ldstart(struct ld_softc *sc, struct buf *bp)
 	else
 		bp->b_rawblkno = bp->b_blkno * (DEV_BSIZE / lp->d_secsize);
 
-	if (part != RAW_PART)
+	if (part != RAW_PART &&
+	    (bp->b_flags & B_DKLABEL) == 0)
 		bp->b_rawblkno += lp->d_partitions[part].p_offset;
 
 	s = splbio();
@@ -554,6 +554,7 @@ int
 ldsize(dev_t dev)
 {
 	struct ld_softc *sc;
+	struct vnode *vp;
 	int part, unit, omask, size;
 
 	unit = DISKUNIT(dev);
@@ -565,16 +566,28 @@ ldsize(dev_t dev)
 
 	omask = sc->sc_dk.dk_openmask & (1 << part);
 
-	if (omask == 0 && ldopen(dev, 0, S_IFBLK, NULL) != 0)
-		return (-1);
-	else if (sc->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
+	/* XXXDEVVP */
+
+	if (omask == 0) {
+		if (bdevvp(dev, &vp) != 0)
+			return (-1);
+		if (ldopen(vp, 0, S_IFBLK, NULL) != 0) {
+			vrele(vp);
+			return (-1);
+		}
+	}
+
+	if (sc->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
 	else
 		size = sc->sc_dk.dk_label->d_partitions[part].p_size *
 		    (sc->sc_dk.dk_label->d_secsize / DEV_BSIZE);
-	if (omask == 0 && ldclose(dev, 0, S_IFBLK, NULL) != 0)
-		return (-1);
 
+	if (omask == 0) {
+		if (ldclose(vp, 0, S_IFBLK, NULL) != 0)
+			size = -1;
+		vrele(vp);
+	}
 	return (size);
 }
 
@@ -582,14 +595,15 @@ ldsize(dev_t dev)
  * Load the label information from the specified device.
  */
 static void
-ldgetdisklabel(struct ld_softc *sc)
+ldgetdisklabel(struct vnode *devvp)
 {
+	struct ld_softc *sc = devvp->v_devcookie;
 	const char *errstring;
 
 	ldgetdefaultlabel(sc, sc->sc_dk.dk_label);
 
 	/* Call the generic disklabel extraction routine. */
-	errstring = readdisklabel(MAKEDISKDEV(0, sc->sc_dv.dv_unit, RAW_PART),
+	errstring = readdisklabel(devvp,
 	    ldstrategy, sc->sc_dk.dk_label, sc->sc_dk.dk_cpulabel);
 	if (errstring != NULL)
 		printf("%s: %s\n", sc->sc_dv.dv_xname, errstring);
@@ -726,9 +740,7 @@ lddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 static void
 ldminphys(struct buf *bp)
 {
-	struct ld_softc *sc;
-
-	sc = device_lookup(&ld_cd, DISKUNIT(bp->b_dev));
+	struct ld_softc *sc = bp->b_devvp->v_devcookie;
 
 	if (bp->b_bcount > sc->sc_maxxfer)
 		bp->b_bcount = sc->sc_maxxfer;

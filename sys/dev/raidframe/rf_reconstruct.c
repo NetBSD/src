@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.29 2001/07/18 06:45:34 thorpej Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.29.2.1 2001/09/07 04:45:30 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -352,7 +352,6 @@ rf_ReconstructFailedDiskBasic(raidPtr, row, col)
 		/* fix up the component label */
 		/* Don't actually need the read here.. */
 		raidread_component_label(
-                        raidPtr->raid_cinfo[srow][scol].ci_dev,
 			raidPtr->raid_cinfo[srow][scol].ci_vp,
 			&c_label);
 		
@@ -374,7 +373,6 @@ rf_ReconstructFailedDiskBasic(raidPtr, row, col)
 		/* XXXX MORE NEEDED HERE */
 		
 		raidwrite_component_label(
-                        raidPtr->raid_cinfo[srow][scol].ci_dev,
 			raidPtr->raid_cinfo[srow][scol].ci_vp,
 			&c_label);
 		
@@ -537,9 +535,6 @@ rf_ReconstructInPlace(raidPtr, row, col)
 				dpart.part->p_size - rf_protectedSectors;
 			
 			raidPtr->raid_cinfo[row][col].ci_vp = vp;
-			raidPtr->raid_cinfo[row][col].ci_dev = va.va_rdev;
-			
-			raidPtr->Disks[row][col].dev = va.va_rdev;
 			
 			/* we allow the user to specify that only a 
 			   fraction of the disks should be used this is 
@@ -595,8 +590,7 @@ rf_ReconstructInPlace(raidPtr, row, col)
 		
 		/* fix up the component label */
 		/* Don't actually need the read here.. */
-		raidread_component_label(raidPtr->raid_cinfo[row][col].ci_dev,
-					 raidPtr->raid_cinfo[row][col].ci_vp,
+		raidread_component_label(raidPtr->raid_cinfo[row][col].ci_vp,
 					 &c_label);
 
 		raid_init_component_label(raidPtr, &c_label);
@@ -612,8 +606,7 @@ rf_ReconstructInPlace(raidPtr, row, col)
 
 		raidPtr->parity_good = RF_RAID_CLEAN;
 	
-		raidwrite_component_label(raidPtr->raid_cinfo[row][col].ci_dev,
-					  raidPtr->raid_cinfo[row][col].ci_vp,
+		raidwrite_component_label(raidPtr->raid_cinfo[row][col].ci_vp,
 					  &c_label);
 
 	}

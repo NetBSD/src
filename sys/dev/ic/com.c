@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.188 2001/08/27 14:27:01 enami Exp $	*/
+/*	$NetBSD: com.c,v 1.188.2.1 2001/09/07 04:45:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -115,6 +115,7 @@
 #include <sys/malloc.h>
 #include <sys/timepps.h>
 #include <sys/vnode.h>
+#include <miscfs/specfs/specdev.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -768,8 +769,8 @@ com_shutdown(sc)
 }
 
 int
-comopen(dev, flag, mode, p)
-	dev_t dev;
+comopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -778,7 +779,7 @@ comopen(dev, flag, mode, p)
 	int s, s2;
 	int error;
 
-	sc = device_lookup(&com_cd, COMUNIT(dev));
+	sc = device_lookup(&com_cd, COMUNIT(devvp->v_rdev));
 	if (sc == NULL || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK) ||
 		sc->sc_rbuf == NULL)
 		return (ENXIO);
@@ -801,6 +802,8 @@ comopen(dev, flag, mode, p)
 		p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
+	devvp->v_devcookie = sc;
+
 	s = spltty();
 
 	/*
@@ -809,7 +812,7 @@ comopen(dev, flag, mode, p)
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		struct termios t;
 
-		tp->t_dev = dev;
+		tp->t_devvp = devvp;
 
 		s2 = splserial();
 		COM_LOCK(sc);
@@ -898,11 +901,12 @@ comopen(dev, flag, mode, p)
 	
 	splx(s);
 
-	error = ttyopen(tp, COMDIALOUT(dev), ISSET(flag, O_NONBLOCK));
+	error = ttyopen(tp, COMDIALOUT(devvp->v_rdev),
+	    ISSET(flag, O_NONBLOCK));
 	if (error)
 		goto bad;
 
-	error = (*tp->t_linesw->l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(devvp, tp);
 	if (error)
 		goto bad;
 
@@ -921,12 +925,12 @@ bad:
 }
  
 int
-comclose(dev, flag, mode, p)
-	dev_t dev;
+comclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
+	struct com_softc *sc = devvp->v_devcookie;
 	struct tty *tp = sc->sc_tty;
 
 	/* XXX This is for cons.c. */
@@ -952,12 +956,12 @@ comclose(dev, flag, mode, p)
 }
  
 int
-comread(dev, uio, flag)
-	dev_t dev;
+comread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
+	struct com_softc *sc = devvp->v_devcookie;
 	struct tty *tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -967,12 +971,12 @@ comread(dev, uio, flag)
 }
  
 int
-comwrite(dev, uio, flag)
-	dev_t dev;
+comwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
+	struct com_softc *sc = devvp->v_devcookie;
 	struct tty *tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -982,12 +986,12 @@ comwrite(dev, uio, flag)
 }
 
 int
-compoll(dev, events, p)
-	dev_t dev;
+compoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
+	struct com_softc *sc = devvp->v_devcookie;
 	struct tty *tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -997,24 +1001,24 @@ compoll(dev, events, p)
 }
 
 struct tty *
-comtty(dev)
-	dev_t dev;
+comtty(devvp)
+	struct vnode *devvp;
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
+	struct com_softc *sc = devvp->v_devcookie;
 	struct tty *tp = sc->sc_tty;
 
 	return (tp);
 }
 
 int
-comioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+comioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
+	struct com_softc *sc = devvp->v_devcookie;
 	struct tty *tp = sc->sc_tty;
 	int error;
 	int s;
@@ -1357,7 +1361,7 @@ comparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(tp->t_dev));
+	struct com_softc *sc = tp->t_devvp->v_devcookie;
 	int ospeed;
 	u_char lcr;
 	int s;
@@ -1614,7 +1618,7 @@ comhwiflow(tp, block)
 	struct tty *tp;
 	int block;
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(tp->t_dev));
+	struct com_softc *sc = tp->t_devvp->v_devcookie;
 	int s;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -1675,7 +1679,7 @@ void
 comstart(tp)
 	struct tty *tp;
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(tp->t_dev));
+	struct com_softc *sc = tp->t_devvp->v_devcookie;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int s;
@@ -1748,7 +1752,7 @@ comstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(tp->t_dev));
+	struct com_softc *sc = tp->t_devvp->v_devcookie;
 	int s;
 
 	s = splserial();
@@ -2042,7 +2046,7 @@ comintr(arg)
 		lsr = bus_space_read_1(iot, ioh, com_lsr);
 		if (ISSET(lsr, LSR_BI)) {
 			int cn_trapped = 0;
-			cn_check_magic(sc->sc_tty->t_dev,
+			cn_check_magic(sc->sc_tty->t_devvp->v_rdev,
 				       CNC_BREAK, com_cnm_state);
 			if (cn_trapped)
 				continue;
@@ -2060,7 +2064,7 @@ comintr(arg)
 				int cn_trapped = 0;
 				put[0] = bus_space_read_1(iot, ioh, com_data);
 				put[1] = lsr;
-				cn_check_magic(sc->sc_tty->t_dev,
+				cn_check_magic(sc->sc_tty->t_devvp->v_rdev,
 					       put[0], com_cnm_state);
 				if (cn_trapped) {
 					lsr = bus_space_read_1(iot, ioh, com_lsr);

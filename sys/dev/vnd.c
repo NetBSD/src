@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.72 2001/07/07 17:04:02 thorpej Exp $	*/
+/*	$NetBSD: vnd.c,v 1.72.4.1 2001/09/07 04:45:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@ void	vndiodone __P((struct buf *));
 void	vndshutdown __P((void));
 
 void	vndgetdefaultlabel __P((struct vnd_softc *, struct disklabel *));
-void	vndgetdisklabel __P((dev_t));
+void	vndgetdisklabel __P((struct vnode *));
 
 static	int vndlock __P((struct vnd_softc *));
 static	void vndunlock __P((struct vnd_softc *));
@@ -201,30 +201,32 @@ vndattach(num)
 }
 
 int
-vndopen(dev, flags, mode, p)
-	dev_t dev;
+vndopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
-	int unit = vndunit(dev);
+	int unit = vndunit(devvp->v_rdev);
 	struct vnd_softc *sc;
 	int error = 0, part, pmask;
 	struct disklabel *lp;
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndopen(0x%x, 0x%x, 0x%x, %p)\n", dev, flags, mode, p);
+		printf("vndopen(0x%x, 0x%x, 0x%x, %p)\n", devvp->v_rdev,
+		    flags, mode, p);
 #endif
 	if (unit >= numvnd)
 		return (ENXIO);
 	sc = &vnd_softc[unit];
+	devvp->v_devcookie = sc;
 
 	if ((error = vndlock(sc)) != 0)
 		return (error);
 
 	lp = sc->sc_dkdev.dk_label;
 
-	part = DISKPART(dev);
+	part = DISKPART(devvp->v_rdev);
 	pmask = (1 << part);
 
 	/*
@@ -233,7 +235,7 @@ vndopen(dev, flags, mode, p)
 	 * in-core disklabel.
 	 */
 	if ((sc->sc_flags & VNF_INITED) && (sc->sc_dkdev.dk_openmask == 0))
-		vndgetdisklabel(dev);
+		vndgetdisklabel(devvp);
 
 	/* Check that the partitions exists. */
 	if (part != RAW_PART) {
@@ -264,28 +266,24 @@ vndopen(dev, flags, mode, p)
 }
 
 int
-vndclose(dev, flags, mode, p)
-	dev_t dev;
+vndclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
-	int unit = vndunit(dev);
-	struct vnd_softc *sc;
+	struct vnd_softc *sc = devvp->v_devcookie;
 	int error = 0, part;
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndclose(0x%x, 0x%x, 0x%x, %p)\n", dev, flags, mode, p);
+		printf("vndclose(0x%x, 0x%x, 0x%x, %p)\n", devvp->v_rdev,
+		    flags, mode, p);
 #endif
-
-	if (unit >= numvnd)
-		return (ENXIO);
-	sc = &vnd_softc[unit];
 
 	if ((error = vndlock(sc)) != 0)
 		return (error);
 
-	part = DISKPART(dev);
+	part = DISKPART(devvp->v_rdev);
 
 	/* ...that much closer to allowing unconfiguration... */
 	switch (mode) {
@@ -311,8 +309,7 @@ void
 vndstrategy(bp)
 	struct buf *bp;
 {
-	int unit = vndunit(bp->b_dev);
-	struct vnd_softc *vnd = &vnd_softc[unit];
+	struct vnd_softc *vnd = bp->b_devvp->v_devcookie;
 	struct vndxfer *vnx;
 	int s, bsize, resid;
 	off_t bn;
@@ -323,7 +320,8 @@ vndstrategy(bp)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndstrategy(%p): unit %d\n", bp, unit);
+		printf("vndstrategy(%p): unit %d\n", bp,
+		    DISKUNIT(bp->b_devvp->v_rdev));
 #endif
 	if ((vnd->sc_flags & VNF_INITED) == 0) {
 		bp->b_error = ENXIO;
@@ -351,7 +349,8 @@ vndstrategy(bp)
 	 * the bounds check will flag that for us.
 	 */
 	wlabel = vnd->sc_flags & (VNF_WLABEL|VNF_LABELLING);
-	if (DISKPART(bp->b_dev) != RAW_PART)
+	if (DISKPART(bp->b_devvp->v_rdev) != RAW_PART &&
+	    (bp->b_flags & B_DKLABEL) == 0)
 		if (bounds_check_with_label(bp, lp, wlabel) <= 0)
 			goto done;
 
@@ -366,8 +365,10 @@ vndstrategy(bp)
 	/*
 	 * Translate the partition-relative block number to an absolute.
 	 */
-	if (DISKPART(bp->b_dev) != RAW_PART) {
-		pp = &vnd->sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)];
+	if (DISKPART(bp->b_devvp->v_rdev) != RAW_PART &&
+	    (bp->b_flags & B_DKLABEL) == 0) {
+		pp = &vnd->sc_dkdev.dk_label->d_partitions[
+		    DISKPART(bp->b_devvp->v_rdev)];
 		bn += pp->p_offset;
 	}
 
@@ -538,7 +539,7 @@ vndiodone(bp)
 	struct vndbuf *vbp = (struct vndbuf *) bp;
 	struct vndxfer *vnx = (struct vndxfer *)vbp->vb_xfer;
 	struct buf *pbp = vnx->vx_bp;
-	struct vnd_softc *vnd = &vnd_softc[vndunit(pbp->b_dev)];
+	struct vnd_softc *vnd = pbp->b_devvp->v_devcookie;
 	int s, resid;
 
 	s = splbio();
@@ -610,65 +611,54 @@ vndiodone(bp)
 
 /* ARGSUSED */
 int
-vndread(dev, uio, flags)
-	dev_t dev;
+vndread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	int unit = vndunit(dev);
-	struct vnd_softc *sc;
+	struct vnd_softc *sc = devvp->v_devcookie;
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndread(0x%x, %p)\n", dev, uio);
+		printf("vndread(0x%x, %p)\n", devvp->v_rdev, uio);
 #endif
-
-	if (unit >= numvnd)
-		return (ENXIO);
-	sc = &vnd_softc[unit];
 
 	if ((sc->sc_flags & VNF_INITED) == 0)
 		return (ENXIO);
 
-	return (physio(vndstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(vndstrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 /* ARGSUSED */
 int
-vndwrite(dev, uio, flags)
-	dev_t dev;
+vndwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	int unit = vndunit(dev);
-	struct vnd_softc *sc;
+	struct vnd_softc *sc = devvp->v_devcookie;
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndwrite(0x%x, %p)\n", dev, uio);
+		printf("vndwrite(0x%x, %p)\n", devvp->v_rdev, uio);
 #endif
-
-	if (unit >= numvnd)
-		return (ENXIO);
-	sc = &vnd_softc[unit];
 
 	if ((sc->sc_flags & VNF_INITED) == 0)
 		return (ENXIO);
 
-	return (physio(vndstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(vndstrategy, NULL, devvp, B_WRITE, minphys, uio));
 }
 
 /* ARGSUSED */
 int
-vndioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+vndioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	int unit = vndunit(dev);
-	struct vnd_softc *vnd;
+	struct vnd_softc *vnd = devvp->v_devcookie;
 	struct vnd_ioctl *vio;
 	struct vattr vattr;
 	struct nameidata nd;
@@ -681,15 +671,13 @@ vndioctl(dev, cmd, data, flag, p)
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndioctl(0x%x, 0x%lx, %p, 0x%x, %p): unit %d\n",
-		    dev, cmd, data, flag, p, unit);
+		    devvp->v_rdev, cmd, data, flag, p,
+		    DISKUNIT(devvp->v_rdev));
 #endif
 	error = suser(p->p_ucred, &p->p_acflag);
 	if (error)
 		return (error);
-	if (unit >= numvnd)
-		return (ENXIO);
 
-	vnd = &vnd_softc[unit];
 	vio = (struct vnd_ioctl *)data;
 
 	/* Must be open for writes for these commands... */
@@ -845,7 +833,8 @@ vndioctl(dev, cmd, data, flag, p)
 
 		/* Attach the disk. */
 		memset(vnd->sc_xname, 0, sizeof(vnd->sc_xname)); /* XXX */
-		sprintf(vnd->sc_xname, "vnd%d", unit);		/* XXX */
+		sprintf(vnd->sc_xname, "vnd%d",			 /* XXX */
+		    DISKUNIT(devvp->v_rdev));
 		vnd->sc_dkdev.dk_name = vnd->sc_xname;
 		disk_attach(&vnd->sc_dkdev);
 
@@ -856,7 +845,7 @@ vndioctl(dev, cmd, data, flag, p)
 		    0, 0, "vndbpl", 0, NULL, NULL, M_DEVBUF);
 
 		/* Try and read the disklabel. */
-		vndgetdisklabel(dev);
+		vndgetdisklabel(devvp);
 
 		vndunlock(vnd);
 
@@ -871,7 +860,7 @@ vndioctl(dev, cmd, data, flag, p)
 		 * or if both the character and block flavors of this
 		 * partition are open.
 		 */
-		part = DISKPART(dev);
+		part = DISKPART(devvp->v_rdev);
 		pmask = (1 << part);
 		if ((vnd->sc_dkdev.dk_openmask & ~pmask) ||
 		    ((vnd->sc_dkdev.dk_bopenmask & pmask) &&
@@ -913,7 +902,7 @@ vndioctl(dev, cmd, data, flag, p)
 	case DIOCGPART:
 		((struct partinfo *)data)->disklab = vnd->sc_dkdev.dk_label;
 		((struct partinfo *)data)->part =
-		    &vnd->sc_dkdev.dk_label->d_partitions[DISKPART(dev)];
+		 &vnd->sc_dkdev.dk_label->d_partitions[DISKPART(devvp->v_rdev)];
 		break;
 
 	case DIOCWDINFO:
@@ -947,8 +936,8 @@ vndioctl(dev, cmd, data, flag, p)
 			    || cmd == ODIOCWDINFO
 #endif
 			   )
-				error = writedisklabel(VNDLABELDEV(dev),
-				    vndstrategy, vnd->sc_dkdev.dk_label,
+				error = writedisklabel(devvp, vndstrategy,
+				    vnd->sc_dkdev.dk_label,
 				    vnd->sc_dkdev.dk_cpulabel);
 		}
 
@@ -1091,6 +1080,9 @@ int
 vndsize(dev)
 	dev_t dev;
 {
+#if 1 /* XXXthorpej */
+	return (-1);
+#else
 	struct vnd_softc *sc;
 	struct disklabel *lp;
 	int part, unit, omask;
@@ -1121,6 +1113,7 @@ vndsize(dev)
 		return (-1);
 
 	return (size);
+#endif
 }
 
 int
@@ -1174,10 +1167,10 @@ vndgetdefaultlabel(sc, lp)
  * Read the disklabel from a vnd.  If one is not present, create a fake one.
  */
 void
-vndgetdisklabel(dev)
-	dev_t dev;
+vndgetdisklabel(devvp)
+	struct vnode *devvp;
 {
-	struct vnd_softc *sc = &vnd_softc[vndunit(dev)];
+	struct vnd_softc *sc = devvp->v_devcookie;
 	char *errstring;
 	struct disklabel *lp = sc->sc_dkdev.dk_label;
 	struct cpu_disklabel *clp = sc->sc_dkdev.dk_cpulabel;
@@ -1190,7 +1183,7 @@ vndgetdisklabel(dev)
 	/*
 	 * Call the generic disklabel extraction routine.
 	 */
-	errstring = readdisklabel(VNDLABELDEV(dev), vndstrategy, lp, clp);
+	errstring = readdisklabel(devvp, vndstrategy, lp, clp);
 	if (errstring) {
 		/*
 		 * Lack of disklabel is common, but we print the warning

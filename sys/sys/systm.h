@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.136 2001/07/07 17:07:26 perry Exp $	*/
+/*	$NetBSD: systm.h,v 1.136.4.1 2001/09/07 04:45:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -180,7 +180,7 @@ enum hashtype {
 
 void	*hashinit __P((int, enum hashtype, int, int, u_long *));
 void	hashdone __P((void *, int));
-int	seltrue __P((dev_t dev, int events, struct proc *p));
+int	seltrue __P((struct vnode *devvp, int events, struct proc *p));
 int	sys_nosys __P((struct proc *, void *, register_t *));
 
 

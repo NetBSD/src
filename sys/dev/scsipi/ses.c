@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.11 2001/07/18 18:25:41 thorpej Exp $ */
+/*	$NetBSD: ses.c,v 1.11.2.1 2001/09/07 04:45:32 thorpej Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -47,6 +47,8 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 #include <machine/stdarg.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_all.h>
@@ -131,9 +133,7 @@ static int safte_set_objstat __P((ses_softc_t *, ses_objstat *, int));
 #define	WRITE_BUFFER		0x3b
 #define	READ_BUFFER		0x3c
 
-int sesopen __P((dev_t, int, int, struct proc *));
-int sesclose __P((dev_t, int, int, struct proc *));
-int sesioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+cdev_decl(ses);
 
 static int ses_runcmd	__P((struct ses_softc *, char *, int, char *, int *));
 static void ses_log	__P((struct ses_softc *, const char *, ...))
@@ -290,8 +290,8 @@ ses_device_type(sa)
 }
 
 int
-sesopen(dev, flags, fmt, p)
-	dev_t dev;
+sesopen(devvp, flags, fmt, p)
+	struct vnode *devvp;
 	int flags;
 	int fmt;
 	struct proc *p;
@@ -299,7 +299,7 @@ sesopen(dev, flags, fmt, p)
 	struct ses_softc *softc;
 	int error, unit;
 
-	unit = SESUNIT(dev);
+	unit = SESUNIT(devvp->v_rdev);
 	if (unit >= ses_cd.cd_ndevs)
 		return (ENXIO);
 	softc = ses_cd.cd_devs[unit];
@@ -323,6 +323,7 @@ sesopen(dev, flags, fmt, p)
 	if (error != 0)
                 goto out;
 
+	devvp->v_devcookie = softc;
 
 	softc->ses_flags |= SES_FLAG_OPEN;
 	if ((softc->ses_flags & SES_FLAG_INITIALIZED) == 0) {
@@ -338,21 +339,13 @@ out:
 }
 
 int
-sesclose(dev, flags, fmt, p)
-	dev_t dev;
+sesclose(devvp, flags, fmt, p)
+	struct vnode *devvp;
 	int flags;
 	int fmt;
 	struct proc *p;
 {
-	struct ses_softc *softc;
-	int unit;
-
-	unit = SESUNIT(dev);
-	if (unit >= ses_cd.cd_ndevs)
-		return (ENXIO);
-	softc = ses_cd.cd_devs[unit];
-	if (softc == NULL)
-		return (ENXIO);
+	struct ses_softc *softc = devvp->v_devcookie;
 
 	scsipi_wait_drain(softc->sc_periph);
 	scsipi_adapter_delref(softc->sc_periph->periph_channel->chan_adapter);
@@ -361,8 +354,8 @@ sesclose(dev, flags, fmt, p)
 }
 
 int
-sesioctl(dev, cmd, arg_addr, flag, p)
-	dev_t dev;
+sesioctl(devvp, cmd, arg_addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t arg_addr;
 	int flag;       
@@ -371,7 +364,7 @@ sesioctl(dev, cmd, arg_addr, flag, p)
 	ses_encstat tmp;
 	ses_objstat objs;
 	ses_object obj, *uobj;
-	struct ses_softc *ssc = ses_cd.cd_devs[SESUNIT(dev)];
+	struct ses_softc *ssc = devvp->v_devcookie;
 	void *addr;
 	int error, i;
 
@@ -484,7 +477,7 @@ sesioctl(dev, cmd, arg_addr, flag, p)
 
 	default:
 		error = scsipi_do_ioctl(ssc->sc_periph,
-			    dev, cmd, addr, flag, p);
+			    devvp, cmd, addr, flag, p);
 		break;
 	}
 	return (error);

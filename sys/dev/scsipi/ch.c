@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.47 2001/07/18 18:21:05 thorpej Exp $	*/
+/*	$NetBSD: ch.c,v 1.47.2.1 2001/09/07 04:45:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -54,6 +54,8 @@
 #include <sys/time.h>
 #include <sys/select.h>
 #include <sys/poll.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_all.h>
@@ -242,8 +244,8 @@ chattach(parent, self, aux)
 }
 
 int
-chopen(dev, flags, fmt, p)
-	dev_t dev;
+chopen(devvp, flags, fmt, p)
+	struct vnode *devvp;
 	int flags, fmt;
 	struct proc *p;
 {
@@ -252,10 +254,12 @@ chopen(dev, flags, fmt, p)
 	struct scsipi_adapter *adapt;
 	int unit, error;
 
-	unit = CHUNIT(dev);
+	unit = CHUNIT(devvp->v_rdev);
 	if ((unit >= ch_cd.cd_ndevs) ||
 	    ((sc = ch_cd.cd_devs[unit]) == NULL))
 		return (ENXIO);
+
+	devvp->v_devcookie = sc;
 
 	periph = sc->sc_periph;
 	adapt = periph->periph_channel->chan_adapter;
@@ -298,12 +302,12 @@ chopen(dev, flags, fmt, p)
 }
 
 int
-chclose(dev, flags, fmt, p)
-	dev_t dev;
+chclose(devvp, flags, fmt, p)
+	struct vnode *devvp;
 	int flags, fmt;
 	struct proc *p;
 {
-	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
+	struct ch_softc *sc = devvp->v_devcookie;
 	struct scsipi_periph *periph = sc->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 
@@ -318,12 +322,12 @@ chclose(dev, flags, fmt, p)
 }
 
 int
-chread(dev, uio, flags)
-	dev_t dev;
+chread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
+	struct ch_softc *sc = devvp->v_devcookie;
 	int error;
 
 	if (uio->uio_resid != CHANGER_EVENT_SIZE)
@@ -340,14 +344,14 @@ chread(dev, uio, flags)
 }
 
 int
-chioctl(dev, cmd, data, flags, p)
-	dev_t dev;
+chioctl(devvp, cmd, data, flags, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flags;
 	struct proc *p;
 {
-	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
+	struct ch_softc *sc = devvp->v_devcookie;
 	int error = 0;
 
 	/*
@@ -436,7 +440,7 @@ chioctl(dev, cmd, data, flags, p)
 	/* Implement prevent/allow? */
 
 	default:
-		error = scsipi_do_ioctl(sc->sc_periph, dev, cmd, data,
+		error = scsipi_do_ioctl(sc->sc_periph, devvp, cmd, data,
 		    flags, p);
 		break;
 	}
@@ -445,12 +449,12 @@ chioctl(dev, cmd, data, flags, p)
 }
 
 int
-chpoll(dev, events, p)
-	dev_t dev;
+chpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
+	struct ch_softc *sc = devvp->v_devcookie;
 	int revents;
 
 	revents = events & (POLLOUT | POLLWRNORM);

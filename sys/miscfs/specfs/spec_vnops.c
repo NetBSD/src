@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.56 2001/08/18 05:34:46 chs Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.56.2.1 2001/09/07 04:45:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -200,7 +200,7 @@ spec_open(v)
 		if (cdevsw[maj].d_type == D_TTY)
 			vp->v_flag |= VISTTY;
 		VOP_UNLOCK(vp, 0);
-		error = (*cdevsw[maj].d_open)(dev, ap->a_mode, S_IFCHR, p);
+		error = (*cdevsw[maj].d_open)(vp, ap->a_mode, S_IFCHR, p);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		return (error);
 
@@ -220,11 +220,11 @@ spec_open(v)
 		 */
 		if ((error = vfs_mountedon(vp)) != 0)
 			return (error);
-		error = (*bdevsw[maj].d_open)(dev, ap->a_mode, S_IFBLK, p);
+		error = (*bdevsw[maj].d_open)(vp, ap->a_mode, S_IFBLK, p);
 		if (error) {
 			return error;
 		}
-		error = (*bdevsw[major(vp->v_rdev)].d_ioctl)(vp->v_rdev,
+		error = (*bdevsw[major(vp->v_rdev)].d_ioctl)(vp,
 		    DIOCGPART, (caddr_t)&pi, FREAD, curproc);
 		if (error == 0) {
 			vp->v_uvm.u_size = (voff_t)pi.disklab->d_secsize *
@@ -266,7 +266,7 @@ spec_read(v)
 	int bsize, bscale, ssize;
 	struct partinfo dpart;
 	int n, on, majordev;
-	int (*ioctl) __P((dev_t, u_long, caddr_t, int, struct proc *));
+	int (*ioctl) __P((struct vnode *, u_long, caddr_t, int, struct proc *));
 	int error = 0;
 
 #ifdef DIAGNOSTIC
@@ -283,7 +283,7 @@ spec_read(v)
 	case VCHR:
 		VOP_UNLOCK(vp, 0);
 		error = (*cdevsw[major(vp->v_rdev)].d_read)
-			(vp->v_rdev, uio, ap->a_ioflag);
+			(vp, uio, ap->a_ioflag);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		return (error);
 
@@ -294,7 +294,7 @@ spec_read(v)
 		ssize = DEV_BSIZE;
 		if ((majordev = major(vp->v_rdev)) < nblkdev &&
 		    (ioctl = bdevsw[majordev].d_ioctl) != NULL &&
-		    (*ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&dpart, FREAD, p) == 0) {
+		    (*ioctl)(vp, DIOCGPART, (caddr_t)&dpart, FREAD, p) == 0) {
 			if (dpart.part->p_fstype == FS_BSDFFS &&
 			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
 				bsize = dpart.part->p_frag *
@@ -352,7 +352,7 @@ spec_write(v)
 	int bsize, bscale, ssize;
 	struct partinfo dpart;
 	int n, on, majordev;
-	int (*ioctl) __P((dev_t, u_long, caddr_t, int, struct proc *));
+	int (*ioctl) __P((struct vnode *, u_long, caddr_t, int, struct proc *));
 	int error = 0;
 
 #ifdef DIAGNOSTIC
@@ -367,7 +367,7 @@ spec_write(v)
 	case VCHR:
 		VOP_UNLOCK(vp, 0);
 		error = (*cdevsw[major(vp->v_rdev)].d_write)
-			(vp->v_rdev, uio, ap->a_ioflag);
+			(vp, uio, ap->a_ioflag);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		return (error);
 
@@ -380,7 +380,7 @@ spec_write(v)
 		ssize = DEV_BSIZE;
 		if ((majordev = major(vp->v_rdev)) < nblkdev &&
 		    (ioctl = bdevsw[majordev].d_ioctl) != NULL &&
-		    (*ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&dpart, FREAD, p) == 0) {
+		    (*ioctl)(vp, DIOCGPART, (caddr_t)&dpart, FREAD, p) == 0) {
 			if (dpart.part->p_fstype == FS_BSDFFS &&
 			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
 				bsize = dpart.part->p_frag *
@@ -444,8 +444,8 @@ spec_ioctl(v)
 	switch (ap->a_vp->v_type) {
 
 	case VCHR:
-		return ((*cdevsw[maj].d_ioctl)(dev, ap->a_command, ap->a_data,
-		    ap->a_fflag, ap->a_p));
+		return ((*cdevsw[maj].d_ioctl)(ap->a_vp, ap->a_command,
+		    ap->a_data, ap->a_fflag, ap->a_p));
 
 	case VBLK:
 		if (ap->a_command == 0 && (long)ap->a_data == B_TAPE) {
@@ -454,8 +454,8 @@ spec_ioctl(v)
 			else
 				return (1);
 		}
-		return ((*bdevsw[maj].d_ioctl)(dev, ap->a_command, ap->a_data,
-		   ap->a_fflag, ap->a_p));
+		return ((*bdevsw[maj].d_ioctl)(ap->a_vp, ap->a_command,
+		    ap->a_data, ap->a_fflag, ap->a_p));
 
 	default:
 		panic("spec_ioctl");
@@ -479,7 +479,8 @@ spec_poll(v)
 
 	case VCHR:
 		dev = ap->a_vp->v_rdev;
-		return (*cdevsw[major(dev)].d_poll)(dev, ap->a_events, ap->a_p);
+		return (*cdevsw[major(dev)].d_poll)(ap->a_vp, ap->a_events,
+		    ap->a_p);
 
 	default:
 		return (genfs_poll(v));
@@ -524,7 +525,7 @@ spec_strategy(v)
 	if (!(bp->b_flags & B_READ) &&
 	    (LIST_FIRST(&bp->b_dep)) != NULL && bioops.io_start)
 		(*bioops.io_start)(bp);
-	(*bdevsw[major(bp->b_dev)].d_strategy)(bp);
+	(*bdevsw[major(bp->b_devvp->v_rdev)].d_strategy)(bp);
 	return (0);
 }
 
@@ -581,7 +582,7 @@ spec_close(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	dev_t dev = vp->v_rdev;
-	int (*devclose) __P((dev_t, int, int, struct proc *));
+	int (*devclose) __P((struct vnode *, int, int, struct proc *));
 	int mode, error, count, flags, flags1;
 
 	count = vcount(vp);
@@ -664,7 +665,7 @@ spec_close(v)
 	if (!(flags1 & FNONBLOCK))
 		VOP_UNLOCK(vp, 0);
 
-	error =  (*devclose)(dev, flags1, mode, ap->a_p);
+	error =  (*devclose)(vp, flags1, mode, ap->a_p);
 
 	if (!(flags1 & FNONBLOCK))
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);

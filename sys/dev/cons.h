@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.18 2000/05/08 16:30:58 itojun Exp $	*/
+/*	$NetBSD: cons.h,v 1.18.10.1 2001/09/07 04:45:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,12 +77,12 @@ extern	struct consdev constab[];
 extern	struct consdev *cn_tab;
 
 void	cninit __P((void));
-int	cnopen __P((dev_t, int, int, struct proc *));
-int	cnclose __P((dev_t, int, int, struct proc *));
-int	cnread __P((dev_t, struct uio *, int));
-int	cnwrite __P((dev_t, struct uio *, int));
-int	cnioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	cnpoll __P((dev_t, int, struct proc *));
+int	cnopen __P((struct vnode *, int, int, struct proc *));
+int	cnclose __P((struct vnode *, int, int, struct proc *));
+int	cnread __P((struct vnode *, struct uio *, int));
+int	cnwrite __P((struct vnode *, struct uio *, int));
+int	cnioctl __P((struct vnode *, u_long, caddr_t, int, struct proc *));
+int	cnpoll __P((struct vnode *, int, struct proc *));
 int	cngetc __P((void));
 int	cngetsn __P((char *, int));
 void	cnputc __P((int));

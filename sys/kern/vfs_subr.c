@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.156 2001/08/03 06:00:13 jdolecek Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.156.2.1 2001/09/07 04:45:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -876,9 +876,9 @@ bgetvp(vp, bp)
 	s = splbio();
 	bp->b_vp = vp;
 	if (vp->v_type == VBLK || vp->v_type == VCHR)
-		bp->b_dev = vp->v_rdev;
+		bp->b_devvp = vp;
 	else
-		bp->b_dev = NODEV;
+		bp->b_devvp = NULL;
 	/*
 	 * Insert onto list for new vnode.
 	 */
@@ -916,6 +916,40 @@ brelvp(bp)
 	bp->b_vp = NULL;
 	HOLDRELE(vp);
 	splx(s);
+}
+
+/*
+ * Associate a device vnode with a buffer.
+ */
+void
+bgetdevvp(vp, bp)
+	struct vnode *vp;
+	struct buf *bp;
+{
+
+	/*
+	 * We don't need to do any reference counting on the device
+	 * vnode by making the assumption that something else already
+	 * have the device open, and thus has a reference on the vnode.
+	 */
+	if (bp->b_devvp != NULL)
+		panic("bgetdevvp: not free, bp %p\n", bp);
+
+	bp->b_devvp = vp;
+}
+
+/*
+ * Disassociate a device vnode from a buffer.
+ */
+void
+breldevvp(bp)
+	struct buf *bp;
+{
+
+	if (bp->b_devvp == NULL)
+		panic("breldevvp: vp NULL, bp %p", bp);
+
+	bp->b_devvp = NULL;
 }
 
 /*
@@ -2718,7 +2752,8 @@ vfs_buf_print(bp, full, pr)
 	char buf[1024];
 
 	(*pr)("  vp %p lblkno 0x%x blkno 0x%x dev 0x%x\n",
-		  bp->b_vp, bp->b_lblkno, bp->b_blkno, bp->b_dev);
+		  bp->b_vp, bp->b_lblkno, bp->b_blkno,
+		  bp->b_devvp ? bp->b_devvp->v_rdev : NODEV);
 
 	bitmask_snprintf(bp->b_flags, buf_flagbits, buf, sizeof(buf));
 	(*pr)("  error %d flags 0x%s\n", bp->b_error, buf);

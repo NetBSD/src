@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.h,v 1.8 2000/03/27 03:25:17 oster Exp $	*/
+/*	$NetBSD: rf_disks.h,v 1.8.10.1 2001/09/07 04:45:29 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -72,7 +72,6 @@ struct RF_RaidDisk_s {
 					   the partition, from the disklabel */
 	int     auto_configured;/* 1 if this component was autoconfigured.
 				   0 otherwise. */
-	dev_t   dev;
 };
 /*
  * An RF_DiskOp_t ptr is really a pointer to a UAGT_CCB, but I want

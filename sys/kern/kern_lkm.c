@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.56 2001/06/05 12:36:08 mrg Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.56.4.1 2001/09/07 04:45:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -57,6 +57,8 @@
 #include <sys/syscallargs.h>
 #include <sys/conf.h>
 
+#include <miscfs/specfs/specdev.h>
+
 #include <sys/lkm.h>
 #include <sys/syscall.h>
 #ifdef DDB
@@ -109,15 +111,15 @@ static int _lkm_compat __P((struct lkm_table *, int));
 
 /*ARGSUSED*/
 int
-lkmopen(dev, flag, devtype, p)
-	dev_t dev;
+lkmopen(devvp, flag, devtype, p)
+	struct vnode *devvp;
 	int flag;
 	int devtype;
 	struct proc *p;
 {
 	int error;
 
-	if (minor(dev) != 0)
+	if (minor(devvp->v_rdev) != 0)
 		return (ENXIO);		/* bad minor # */
 
 	/*
@@ -172,8 +174,8 @@ lkmunreserve()
 }
 
 int
-lkmclose(dev, flag, mode, p)
-	dev_t dev;
+lkmclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
@@ -205,8 +207,8 @@ lkmclose(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-lkmioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+lkmioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;

@@ -1,4 +1,4 @@
-/* $NetBSD: mem.c,v 1.30 2001/07/12 23:25:39 thorpej Exp $ */
+/* $NetBSD: mem.c,v 1.30.4.1 2001/09/07 04:45:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.30 2001/07/12 23:25:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.30.4.1 2001/09/07 04:45:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -55,6 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.30 2001/07/12 23:25:39 thorpej Exp $");
 #include <sys/malloc.h>
 #include <sys/msgbuf.h>
 #include <sys/mman.h>
+#include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <machine/cpu.h>
 #include <machine/conf.h>
@@ -72,8 +75,8 @@ extern caddr_t msgbufaddr;
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
+mmopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -83,8 +86,8 @@ mmopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
+mmclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -94,8 +97,8 @@ mmclose(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
+mmrw(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
@@ -113,7 +116,7 @@ mmrw(dev, uio, flags)
 				panic("mmrw");
 			continue;
 		}
-		switch (minor(dev)) {
+		switch (minor(devvp->v_rdev)) {
 
 /* minor device 0 is physical memory */
 		case 0:
@@ -189,8 +192,8 @@ kmemphys:
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
+mmmmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
@@ -202,7 +205,7 @@ mmmmap(dev, off, prot)
 	 * and /dev/zero is a hack that is handled via the default
 	 * pager in mmap().
 	 */
-	if (minor(dev) != 0)
+	if (minor(devvp->v_rdev) != 0)
 		return (-1);
 
 	/*

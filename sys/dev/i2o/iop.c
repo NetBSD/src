@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.16 2001/08/22 09:42:05 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.16.2.1 2001/09/07 04:45:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -54,6 +54,9 @@
 #include <sys/endian.h>
 #include <sys/conf.h>
 #include <sys/kthread.h>
+#include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -2414,12 +2417,13 @@ int iop_util_eventreg(struct iop_softc *sc, struct iop_initiator *ii, int mask)
 }
 
 int
-iopopen(dev_t dev, int flag, int mode, struct proc *p)
+iopopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct iop_softc *sc;
 
-	if ((sc = device_lookup(&iop_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup(&iop_cd, minor(devvp->v_rdev))) == NULL)
 		return (ENXIO);
+	devvp->v_devcookie = sc;
 	if ((sc->sc_flags & IOP_ONLINE) == 0)
 		return (ENXIO);
 	if ((sc->sc_flags & IOP_OPEN) != 0)
@@ -2430,18 +2434,19 @@ iopopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-iopclose(dev_t dev, int flag, int mode, struct proc *p)
+iopclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct iop_softc *sc;
 
-	sc = device_lookup(&iop_cd, minor(dev));
+	sc = devvp->v_devcookie;
 	sc->sc_flags &= ~IOP_OPEN;
 
 	return (0);
 }
 
 int
-iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+iopioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
+    struct proc *p)
 {
 	struct iop_softc *sc;
 	struct iovec *iov;
@@ -2450,7 +2455,7 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	if (securelevel >= 2)
 		return (EPERM);
 
-	sc = device_lookup(&iop_cd, minor(dev));
+	sc = devvp->v_devcookie;
 
 	switch (cmd) {
 	case IOPIOCPT:

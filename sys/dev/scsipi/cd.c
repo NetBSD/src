@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.157 2001/09/02 13:11:53 tsutsui Exp $	*/
+/*	$NetBSD: cd.c,v 1.157.2.1 2001/09/07 04:45:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -79,6 +79,8 @@
 #include <sys/rnd.h>
 #endif
 
+#include <miscfs/specfs/specdev.h>
+
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipi_cd.h>
 #include <dev/scsipi/scsipi_disk.h>	/* rw_big and start_stop come */
@@ -110,7 +112,7 @@ void	cdunlock __P((struct cd_softc *));
 void	cdstart __P((struct scsipi_periph *));
 void	cdminphys __P((struct buf *));
 void	cdgetdefaultlabel __P((struct cd_softc *, struct disklabel *));
-void	cdgetdisklabel __P((struct cd_softc *));
+void	cdgetdisklabel __P((struct vnode *));
 void	cddone __P((struct scsipi_xfer *));
 void	cdbounce __P((struct buf *));
 int	cd_interpret_sense __P((struct scsipi_xfer *));
@@ -316,8 +318,8 @@ cdunlock(cd)
  * open the device. Make sure the partition info is a up-to-date as can be.
  */
 int 
-cdopen(dev, flag, fmt, p)
-	dev_t dev;
+cdopen(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -328,20 +330,22 @@ cdopen(dev, flag, fmt, p)
 	int unit, part;
 	int error;
 
-	unit = CDUNIT(dev);
+	unit = CDUNIT(devvp->v_rdev);
 	if (unit >= cd_cd.cd_ndevs)
 		return (ENXIO);
 	cd = cd_cd.cd_devs[unit];
 	if (cd == NULL)
 		return (ENXIO);
 
+	devvp->v_devcookie = cd;
+
 	periph = cd->sc_periph;
 	adapt = periph->periph_channel->chan_adapter;
-	part = CDPART(dev);
+	part = CDPART(devvp->v_rdev);
 
 	SC_DEBUG(periph, SCSIPI_DB1,
-	    ("cdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
-	    cd_cd.cd_ndevs, CDPART(dev)));
+	    ("cdopen: dev=0x%x (unit %d (of %d), partition %d)\n",
+	    devvp->v_rdev, unit, cd_cd.cd_ndevs, CDPART(devvp->v_rdev)));
 
 	/*
 	 * If this is the first open of this device, add a reference
@@ -425,7 +429,7 @@ cdopen(dev, flag, fmt, p)
 			SC_DEBUG(periph, SCSIPI_DB3, ("Params loaded "));
 
 			/* Fabricate a disk label. */
-			cdgetdisklabel(cd);
+			cdgetdisklabel(devvp);
 			SC_DEBUG(periph, SCSIPI_DB3, ("Disklabel fabricated "));
 		}
 	}
@@ -477,15 +481,15 @@ bad4:
  * occurence of an open device
  */
 int 
-cdclose(dev, flag, fmt, p)
-	dev_t dev;
+cdclose(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
-	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
+	struct cd_softc *cd = devvp->v_devcookie;
 	struct scsipi_periph *periph = cd->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
-	int part = CDPART(dev);
+	int part = CDPART(devvp->v_rdev);
 	int error;
 
 	if ((error = cdlock(cd)) != 0)
@@ -528,7 +532,7 @@ void
 cdstrategy(bp)
 	struct buf *bp;
 {
-	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(bp->b_dev)];
+	struct cd_softc *cd = bp->b_devvp->v_devcookie;
 	struct disklabel *lp;
 	struct scsipi_periph *periph = cd->sc_periph;
 	daddr_t blkno;
@@ -570,7 +574,8 @@ cdstrategy(bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (CDPART(bp->b_dev) != RAW_PART &&
+	if (CDPART(bp->b_devvp->v_rdev) != RAW_PART &&
+	    (bp->b_flags & B_DKLABEL) == 0 &&
 	    bounds_check_with_label(bp, lp,
 	    (cd->flags & (CDF_WLABEL|CDF_LABELLING)) != 0) <= 0)
 		goto done;
@@ -580,8 +585,9 @@ cdstrategy(bp)
 	 * terms of the device's logical block size.
 	 */
 	blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
-	if (CDPART(bp->b_dev) != RAW_PART)
-		blkno += lp->d_partitions[CDPART(bp->b_dev)].p_offset;
+	if (CDPART(bp->b_devvp->v_rdev) != RAW_PART &&
+	    (bp->b_flags & B_DKLABEL) == 0)
+		blkno += lp->d_partitions[CDPART(bp->b_devvp->v_rdev)].p_offset;
 
 	bp->b_rawblkno = blkno;
 
@@ -858,7 +864,7 @@ cdbounce(bp)
 		 * XXXX any of this write stuff?
 		 */
 		if (bp->b_flags & B_READ) {
-			struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(bp->b_dev)];
+			struct cd_softc *cd = bp->b_devvp->v_devcookie;
 			struct buf *nbp;
 			int s;
 
@@ -969,7 +975,7 @@ void
 cdminphys(bp)
 	struct buf *bp;
 {
-	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(bp->b_dev)];
+	struct cd_softc *cd = bp->b_devvp->v_devcookie;
 	long max;
 
 	/*
@@ -994,23 +1000,23 @@ cdminphys(bp)
 }
 
 int
-cdread(dev, uio, ioflag)
-	dev_t dev;
+cdread(devvp, uio, ioflag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int ioflag;
 {
 
-	return (physio(cdstrategy, NULL, dev, B_READ, cdminphys, uio));
+	return (physio(cdstrategy, NULL, devvp, B_READ, cdminphys, uio));
 }
 
 int
-cdwrite(dev, uio, ioflag)
-	dev_t dev;
+cdwrite(devvp, uio, ioflag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int ioflag;
 {
 
-	return (physio(cdstrategy, NULL, dev, B_WRITE, cdminphys, uio));
+	return (physio(cdstrategy, NULL, devvp, B_WRITE, cdminphys, uio));
 }
 
 /*
@@ -1046,16 +1052,16 @@ msf2lba (m, s, f)
  * Knows about the internals of this device
  */
 int
-cdioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+cdioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
+	struct cd_softc *cd = devvp->v_devcookie;
 	struct scsipi_periph *periph = cd->sc_periph;
-	int part = CDPART(dev);
+	int part = CDPART(devvp->v_rdev);
 	int error;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
@@ -1398,7 +1404,7 @@ cdioctl(dev, cmd, addr, flag, p)
 	default:
 		if (part != RAW_PART)
 			return (ENOTTY);
-		return (scsipi_do_ioctl(periph, dev, cmd, addr, flag, p));
+		return (scsipi_do_ioctl(periph, devvp, cmd, addr, flag, p));
 	}
 
 #ifdef DIAGNOSTIC
@@ -1462,9 +1468,10 @@ cdgetdefaultlabel(cd, lp)
  * data tracks from the TOC and put it in the disklabel
  */
 void
-cdgetdisklabel(cd)
-	struct cd_softc *cd;
+cdgetdisklabel(devvp)
+	struct vnode *devvp;
 {
+	struct cd_softc *cd = devvp->v_devcookie;
 	struct disklabel *lp = cd->sc_dk.dk_label;
 	char *errstring;
 
@@ -1475,8 +1482,8 @@ cdgetdisklabel(cd)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	errstring = readdisklabel(MAKECDDEV(0, cd->sc_dev.dv_unit, RAW_PART),
-	    cdstrategy, lp, cd->sc_dk.dk_cpulabel);
+	errstring = readdisklabel(devvp, cdstrategy, lp,
+	    cd->sc_dk.dk_cpulabel);
 	if (errstring) {
 		printf("%s: %s\n", cd->sc_dev.dv_xname, errstring);
 		goto error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.64 2001/06/16 08:28:39 jdolecek Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.64.4.1 2001/09/07 04:45:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -451,7 +451,11 @@ fdesc_open(v)
 		return (ENODEV);
 
 	case Fctty:
-		return (cttyopen(devctty, ap->a_mode, 0, ap->a_p));
+		/*
+		 * XXX cttyopen() doesn't use the vnode it's passed.
+		 * XXX --thorpej@netbsd.org
+		 */
+		return (cttyopen(NULL, ap->a_mode, 0, ap->a_p));
 	case Froot:
 	case Fdevfd:
 	case Flink:
@@ -851,7 +855,11 @@ fdesc_read(v)
 	switch (VTOFDESC(vp)->fd_type) {
 	case Fctty:
 		VOP_UNLOCK(vp, 0);
-		error = cttyread(devctty, ap->a_uio, ap->a_ioflag);
+		/*
+		 * XXX cttyread() doesn't use the vnode it's passed.
+		 * XXX --thorpej@netbsd.org
+		 */
+		error = cttyread(NULL, ap->a_uio, ap->a_ioflag);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		break;
 
@@ -879,7 +887,11 @@ fdesc_write(v)
 	switch (VTOFDESC(vp)->fd_type) {
 	case Fctty:
 		VOP_UNLOCK(vp, 0);
-		error = cttywrite(devctty, ap->a_uio, ap->a_ioflag);
+		/*
+		 * XXX cttywrite() doesn't use the vnode it's passed.
+		 * XXX --thorpej@netbsd.org
+		 */
+		error = cttywrite(NULL, ap->a_uio, ap->a_ioflag);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		break;
 
@@ -907,7 +919,11 @@ fdesc_ioctl(v)
 
 	switch (VTOFDESC(ap->a_vp)->fd_type) {
 	case Fctty:
-		error = cttyioctl(devctty, ap->a_command, ap->a_data,
+		/*
+		 * XXX cttyioctl() doesn't use the vnode it's passed.
+		 * XXX --thorpej@netbsd.org
+		 */
+		error = cttyioctl(NULL, ap->a_command, ap->a_data,
 				  ap->a_fflag, ap->a_p);
 		break;
 
@@ -932,7 +948,11 @@ fdesc_poll(v)
 
 	switch (VTOFDESC(ap->a_vp)->fd_type) {
 	case Fctty:
-		revents = cttypoll(devctty, ap->a_events, ap->a_p);
+		/*
+		 * XXX cttypoll() doesn't use the vnode it's passed.
+		 * XXX --thorpej@netbsd.org
+		 */
+		revents = cttypoll(NULL, ap->a_events, ap->a_p);
 		break;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.48 2001/04/24 04:30:58 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.48.6.1 2001/09/07 04:45:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,6 +53,9 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/fcntl.h>
+#include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <machine/cpu.h>
 #include <machine/conf.h>
@@ -64,13 +67,13 @@ caddr_t zeropage;
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
+mmopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
 
-	switch (minor(dev)) {
+	switch (minor(devvp->v_rdev)) {
 #ifdef COMPAT_10
 	/* This is done by i386_iopl(3) now. */
 	case 14:
@@ -90,8 +93,8 @@ mmopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
+mmclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -101,8 +104,8 @@ mmclose(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
+mmrw(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
@@ -113,7 +116,7 @@ mmrw(dev, uio, flags)
 	static int physlock;
 	vm_prot_t prot;
 
-	if (minor(dev) == 0) {
+	if (minor(devvp->v_rdev) == 0) {
 		/* lock against other uses of shared vmmap */
 		while (physlock > 0) {
 			physlock++;
@@ -133,7 +136,7 @@ mmrw(dev, uio, flags)
 				panic("mmrw");
 			continue;
 		}
-		switch (minor(dev)) {
+		switch (minor(devvp->v_rdev)) {
 
 /* minor device 0 is physical memory */
 		case 0:
@@ -186,7 +189,7 @@ mmrw(dev, uio, flags)
 			return (ENXIO);
 		}
 	}
-	if (minor(dev) == 0) {
+	if (minor(devvp->v_rdev) == 0) {
 		if (physlock > 1)
 			wakeup((caddr_t)&physlock);
 		physlock = 0;
@@ -195,8 +198,8 @@ mmrw(dev, uio, flags)
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
+mmmmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
@@ -210,7 +213,7 @@ mmmmap(dev, off, prot)
 	 * and /dev/zero is a hack that is handled via the default
 	 * pager in mmap().
 	 */
-	if (minor(dev) != 0)
+	if (minor(devvp->v_rdev) != 0)
 		return (-1);
 
 	if ((u_int)off > ctob(physmem) && suser(p->p_ucred, &p->p_acflag) != 0)

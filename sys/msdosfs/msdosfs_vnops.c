@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.111 2001/08/24 10:24:46 wiz Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.111.2.1 2001/09/07 04:45:41 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -1759,7 +1759,7 @@ msdosfs_strategy(v)
 	 */
 
 	vp = dep->de_devvp;
-	bp->b_dev = vp->v_rdev;
+	bp->b_devvp = vp;
 	VOCALL(vp->v_op, VOFFSET(vop_strategy), ap);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.53 2001/01/23 17:04:30 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.53.6.1 2001/09/07 04:45:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,8 @@
 #include <sys/select.h>
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -314,9 +316,9 @@ usbctlprint(void *aux, const char *pnp)
 #endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 int
-usbopen(dev_t dev, int flag, int mode, struct proc *p)
+usbopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
-	int unit = minor(dev);
+	int unit = minor(devvp->v_rdev);
 	struct usb_softc *sc;
 
 	if (unit == USB_DEV_MINOR) {
@@ -336,12 +338,12 @@ usbopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-usbread(dev_t dev, struct uio *uio, int flag)
+usbread(struct vnode *devvp, struct uio *uio, int flag)
 {
 	struct usb_event ue;
 	int s, error, n;
 
-	if (minor(dev) != USB_DEV_MINOR)
+	if (minor(devvp->v_rdev) != USB_DEV_MINOR)
 		return (ENXIO);
 
 	if (uio->uio_resid != sizeof(struct usb_event))
@@ -369,9 +371,9 @@ usbread(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-usbclose(dev_t dev, int flag, int mode, struct proc *p)
+usbclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
-	int unit = minor(dev);
+	int unit = minor(devvp->v_rdev);
 
 	if (unit == USB_DEV_MINOR) {
 		usb_async_proc = 0;
@@ -382,10 +384,11 @@ usbclose(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
+usbioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
+    struct proc *p)
 {
 	struct usb_softc *sc;
-	int unit = minor(devt);
+	int unit = minor(devvp->v_rdev);
 
 	if (unit == USB_DEV_MINOR) {
 		switch (cmd) {
@@ -503,11 +506,11 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 int
-usbpoll(dev_t dev, int events, struct proc *p)
+usbpoll(struct vnode *devvp, int events, struct proc *p)
 {
 	int revents, mask, s;
 
-	if (minor(dev) == USB_DEV_MINOR) {
+	if (minor(devvp->v_rdev) == USB_DEV_MINOR) {
 		revents = 0;
 		mask = POLLIN | POLLRDNORM;
 		

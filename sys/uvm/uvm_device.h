@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.h,v 1.9 2000/05/28 10:21:55 drochner Exp $	*/
+/*	$NetBSD: uvm_device.h,v 1.9.8.1 2001/09/07 04:45:46 thorpej Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
 struct uvm_device {
 	struct uvm_object u_obj;	/* the actual VM object */
 	int u_flags;			/* flags [LOCKED BY UDV_LOCK!] */
-	dev_t u_device;		/* our device */
+	struct vnode *u_devvp;		/* our device */
 	LIST_ENTRY(uvm_device) u_list; /* list of device objects */
 };
 

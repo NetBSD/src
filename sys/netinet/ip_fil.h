@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.39 2001/03/26 06:13:13 mike Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.39.4.1 2001/09/07 04:45:43 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -560,12 +560,13 @@ extern	int	iplidentify __P((char *));
       (NetBSD >= 199511) || defined(__OpenBSD__)
 #    if defined(__NetBSD__) || (_BSDI_VERSION >= 199701) || \
        defined(__OpenBSD__) || (__FreeBSD_version >= 300000)
-extern	int	iplioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+extern	int	iplioctl __P((struct vnode *, u_long, caddr_t, int,
+		    struct proc *));
 #    else
 extern	int	iplioctl __P((dev_t, int, caddr_t, int, struct proc *));
 #    endif
-extern	int	iplopen __P((dev_t, int, int, struct proc *));
-extern	int	iplclose __P((dev_t, int, int, struct proc *));
+extern	int	iplopen __P((struct vnode *, int, int, struct proc *));
+extern	int	iplclose __P((struct vnode *, int, int, struct proc *));
 #   else
 #    ifndef	linux
 extern	int	iplopen __P((dev_t, int));
@@ -578,7 +579,7 @@ extern	void	iplclose __P((struct inode *, struct file *));
 #    endif /* !linux */
 #   endif /* (_BSDI_VERSION >= 199510) */
 #   if	BSD >= 199306
-extern	int	iplread __P((dev_t, struct uio *, int));
+extern	int	iplread __P((struct vnode *, struct uio *, int));
 #   else
 #    ifndef linux
 extern	int	iplread __P((dev_t, struct uio *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.17 2001/07/18 16:12:31 thorpej Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.17.2.1 2001/09/07 04:45:20 thorpej Exp $	*/
 
 /*
  * 
@@ -69,6 +69,9 @@ extern int coda_nc_initialized;    /* Set if cache has been initialized */
 #include <sys/ioctl.h>
 #include <sys/poll.h>
 #include <sys/select.h>
+#include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <miscfs/syncfs/syncfs.h>
 
@@ -119,8 +122,8 @@ vcodaattach(n)
  * These functions are written for NetBSD.
  */
 int 
-vc_nb_open(dev, flag, mode, p)    
-    dev_t        dev;      
+vc_nb_open(devvp, flag, mode, p)    
+    struct vnode *devvp;
     int          flag;     
     int          mode;     
     struct proc *p;             /* NetBSD only */
@@ -129,13 +132,16 @@ vc_nb_open(dev, flag, mode, p)
     
     ENTRY;
 
-    if (minor(dev) >= NVCODA || minor(dev) < 0)
+    if (minor(devvp->v_rdev) >= NVCODA || minor(devvp->v_rdev) < 0)
 	return(ENXIO);
     
     if (!coda_nc_initialized)
 	coda_nc_init();
     
-    vcp = &coda_mnttbl[minor(dev)].mi_vcomm;
+    vcp = &coda_mnttbl[minor(devvp->v_rdev)].mi_vcomm;
+
+    devvp->v_devcookie = &coda_mnttbl[minor(devvp->v_rdev)];
+
     if (VC_OPEN(vcp))
 	return(EBUSY);
     
@@ -144,15 +150,15 @@ vc_nb_open(dev, flag, mode, p)
     INIT_QUEUE(vcp->vc_replys);
     MARK_VC_OPEN(vcp);
     
-    coda_mnttbl[minor(dev)].mi_vfsp = NULL;
-    coda_mnttbl[minor(dev)].mi_rootvp = NULL;
+    coda_mnttbl[minor(devvp->v_rdev)].mi_vfsp = NULL;
+    coda_mnttbl[minor(devvp->v_rdev)].mi_rootvp = NULL;
 
     return(0);
 }
 
 int 
-vc_nb_close (dev, flag, mode, p)    
-    dev_t        dev;      
+vc_nb_close (devvp, flag, mode, p)    
+    struct vnode *devvp;
     int          flag;     
     int          mode;     
     struct proc *p;
@@ -164,10 +170,7 @@ vc_nb_close (dev, flag, mode, p)
 	
     ENTRY;
 
-    if (minor(dev) >= NVCODA || minor(dev) < 0)
-	return(ENXIO);
-
-    mi = &coda_mnttbl[minor(dev)];
+    mi = devvp->v_devcookie;
     vcp = &(mi->mi_vcomm);
     
     if (!VC_OPEN(vcp))
@@ -238,26 +241,25 @@ vc_nb_close (dev, flag, mode, p)
     err = dounmount(mi->mi_vfsp, flag, p);
     if (err)
 	myprintf(("Error %d unmounting vfs in vcclose(%d)\n", 
-	           err, minor(dev)));
+	           err, minor(devvp->v_rdev)));
     return 0;
 }
 
 int 
-vc_nb_read(dev, uiop, flag)   
-    dev_t        dev;  
+vc_nb_read(devvp, uiop, flag)   
+    struct vnode *devvp;
     struct uio  *uiop; 
     int          flag;
 {
     struct vcomm *	vcp;
     struct vmsg *vmp;
+    struct coda_mntinfo *mi;
     int error = 0;
     
     ENTRY;
 
-    if (minor(dev) >= NVCODA || minor(dev) < 0)
-	return(ENXIO);
-    
-    vcp = &coda_mnttbl[minor(dev)].mi_vcomm;
+    mi = devvp->v_devcookie;
+    vcp = &mi->mi_vcomm;
     /* Get message at head of request queue. */
     if (EMPTY(vcp->vc_requests))
 	return(0);	/* Nothing to read */
@@ -297,13 +299,14 @@ vc_nb_read(dev, uiop, flag)
 }
 
 int
-vc_nb_write(dev, uiop, flag)   
-    dev_t        dev;  
+vc_nb_write(devvp, uiop, flag)   
+    struct vnode *devvp;
     struct uio  *uiop; 
     int          flag;
 {
     struct vcomm *	vcp;
     struct vmsg *vmp;
+    struct coda_mntinfo *mi;
     struct coda_out_hdr *out;
     u_long seq;
     u_long opcode;
@@ -312,10 +315,8 @@ vc_nb_write(dev, uiop, flag)
 
     ENTRY;
 
-    if (minor(dev) >= NVCODA || minor(dev) < 0)
-	return(ENXIO);
-    
-    vcp = &coda_mnttbl[minor(dev)].mi_vcomm;
+    mi = devvp->v_devcookie;
+    vcp = &mi->mi_vcomm;
     
     /* Peek at the opcode, unique without transfering the data. */
     uiop->uio_rw = UIO_WRITE;
@@ -397,8 +398,8 @@ vc_nb_write(dev, uiop, flag)
 }
 
 int
-vc_nb_ioctl(dev, cmd, addr, flag, p) 
-    dev_t         dev;       
+vc_nb_ioctl(devvp, cmd, addr, flag, p) 
+    struct vnode *devvp;
     u_long        cmd;       
     caddr_t       addr;      
     int           flag;      
@@ -451,20 +452,19 @@ vc_nb_ioctl(dev, cmd, addr, flag, p)
 }
 
 int
-vc_nb_poll(dev, events, p)         
-    dev_t         dev;    
+vc_nb_poll(devvp, events, p)         
+    struct vnode *devvp;
     int           events;   
     struct proc  *p;
 {
+    struct coda_mntinfo *mi;
     struct vcomm *vcp;
     int event_msk = 0;
 
     ENTRY;
-    
-    if (minor(dev) >= NVCODA || minor(dev) < 0)
-	return(ENXIO);
-    
-    vcp = &coda_mnttbl[minor(dev)].mi_vcomm;
+
+    mi = devvp->v_devcookie;
+    vcp = &mi->mi_vcomm;
     
     event_msk = events & (POLLIN|POLLRDNORM);
     if (!event_msk)

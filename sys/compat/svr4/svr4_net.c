@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.26 2001/06/14 20:32:45 thorpej Exp $	 */
+/*	$NetBSD: svr4_net.c,v 1.26.4.1 2001/09/07 04:45:21 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -65,6 +65,8 @@
 #include <sys/conf.h>
 #include <sys/mount.h>
 
+#include <miscfs/specfs/specdev.h>
+
 #include <sys/syscallargs.h>
 
 #include <compat/svr4/svr4_types.h>
@@ -116,8 +118,8 @@ svr4_netattach(n)
 
 
 int
-svr4_netopen(dev, flag, mode, p)
-	dev_t dev;
+svr4_netopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
@@ -134,7 +136,7 @@ svr4_netopen(dev, flag, mode, p)
 	if (p->p_dupfd >= 0)
 		return ENODEV;
 
-	switch (minor(dev)) {
+	switch (minor(devvp->v_rdev)) {
 	case dev_udp:
 		family = AF_INET;
 		type = SOCK_DGRAM;

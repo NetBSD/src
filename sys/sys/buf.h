@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.47 2001/06/10 18:43:25 ragge Exp $	*/
+/*	$NetBSD: buf.h,v 1.47.4.1 2001/09/07 04:45:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -179,7 +179,7 @@ struct buf {
 	long	b_bufsize;		/* Allocated buffer size. */
 	long	b_bcount;		/* Valid bytes in buffer. */
 	long	b_resid;		/* Remaining I/O. */
-	dev_t	b_dev;			/* Device associated with buffer. */
+	struct	vnode *b_devvp;		/* Device associated with buffer. */
 	struct {
 		caddr_t	b_addr;		/* Memory, superblocks, indirect etc. */
 	} b_un;
@@ -231,6 +231,7 @@ struct buf {
 #define	B_RAW		0x00080000	/* Set by physio for raw transfers. */
 #define	B_READ		0x00100000	/* Read buffer. */
 #define	B_TAPE		0x00200000	/* Magnetic tape I/O. */
+#define	B_DKLABEL	0x00400000	/* Disklabel I/O. */
 #define	B_WANTED	0x00800000	/* Process wants this buffer. */
 #define	B_WRITE		0x00000000	/* Write buffer (pseudo flag). */
 #define	B_XXX		0x02000000	/* Debugging flag. */
@@ -302,12 +303,15 @@ struct buf *getnewbuf __P((int slpflag, int slptimeo));
 struct buf *incore __P((struct vnode *, daddr_t));
 
 void	minphys __P((struct buf *bp));
-int	physio __P((void (*strategy)(struct buf *), struct buf *bp, dev_t dev,
-		    int flags, void (*minphys)(struct buf *), struct uio *uio));
+int	physio __P((void (*strategy)(struct buf *), struct buf *bp,
+		    struct vnode *devvp, int flags,
+		    void (*minphys)(struct buf *), struct uio *uio));
 
 void  brelvp __P((struct buf *));
 void  reassignbuf __P((struct buf *, struct vnode *));
 void  bgetvp __P((struct vnode *, struct buf *));
+void  bgetdevvp __P((struct vnode *, struct buf *));
+void  breldevvp __P((struct buf *));
 #ifdef DDB
 void	vfs_buf_print __P((struct buf *, int, void (*)(const char *, ...)));
 #endif

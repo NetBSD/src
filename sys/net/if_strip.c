@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.39 2001/06/14 05:44:25 itojun Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.39.4.1 2001/09/07 04:45:42 thorpej Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -112,6 +112,7 @@
 #include <sys/callout.h>
 #endif
 #include <sys/syslog.h>
+#include <sys/vnode.h>
 
 #include <machine/cpu.h>
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
@@ -430,8 +431,8 @@ stripinit(sc)
  */
 /* ARGSUSED */
 int
-stripopen(dev, tp)
-	dev_t dev;
+stripopen(devvp, tp)
+	struct vnode *devvp;
 	struct tty *tp;
 {
 	struct proc *p = curproc;		/* XXX */

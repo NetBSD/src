@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.42 2001/08/05 11:26:52 jdolecek Exp $ */
+/* $NetBSD: wskbd.c,v 1.42.2.1 2001/09/07 04:45:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.42 2001/08/05 11:26:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.42.2.1 2001/09/07 04:45:35 thorpej Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -103,6 +103,8 @@ __KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.42 2001/08/05 11:26:52 jdolecek Exp $");
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
@@ -283,6 +285,8 @@ struct wsmuxops wskbd_muxops = {
 };
 #endif
 
+int	wskbd_major = -1;
+
 #if NWSDISPLAY > 0
 static void wskbd_repeat __P((void *v));
 #endif
@@ -365,6 +369,15 @@ wskbd_attach(parent, self, aux)
 #endif
 	sc->sc_isconsole = ap->console;
 
+	if (wskbd_major == -1) {
+		int maj;
+
+		for (maj = 0; maj < nchrdev; maj++)
+			if (cdevsw[maj].d_open == wskbdopen)
+				break;
+		wskbd_major = maj;
+	}
+
 #if NWSMUX > 0 || NWSDISPLAY > 0
 	mux = sc->sc_dv.dv_cfdata->wskbddevcf_mux;
 	if (sc->sc_isconsole && mux != WSKBDDEVCF_MUX_DEFAULT) {
@@ -424,7 +437,7 @@ wskbd_attach(parent, self, aux)
 #if NWSMUX > 0
 	if (mux != WSKBDDEVCF_MUX_DEFAULT)
 		wsmux_attach(mux, WSMUX_KBD, &sc->sc_dv, &sc->sc_events, 
-			     &sc->sc_mux, &wskbd_muxops);
+			     &sc->sc_mux, &wskbd_muxops, wskbd_major);
 #endif
 
 }
@@ -519,8 +532,7 @@ wskbd_detach(self, flags)
 {
 	struct wskbd_softc *sc = (struct wskbd_softc *)self;
 	struct wseventvar *evar;
-	int maj, mn;
-	int s;
+	int s, mn;
 #if NWSMUX > 0
 	int mux;
 
@@ -545,14 +557,9 @@ wskbd_detach(self, flags)
 		splx(s);
 	}
 
-	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == wskbdopen)
-			break;
-
 	/* Nuke the vnodes for any open instances. */
 	mn = self->dv_unit;
-	vdevgone(maj, mn, mn, VCHR);
+	vdevgone(wskbd_major, mn, mn, VCHR);
 
 	return (0);
 }
@@ -695,15 +702,15 @@ wskbd_enable(sc, on)
 }
 
 int
-wskbdopen(dev, flags, mode, p)
-	dev_t dev;
+wskbdopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
 	struct wskbd_softc *sc;
 	int unit;
 
-	unit = minor(dev);
+	unit = minor(devvp->v_rdev);
 	if (unit >= wskbd_cd.cd_ndevs ||	/* make sure it was attached */
 	    (sc = wskbd_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
@@ -724,6 +731,8 @@ wskbdopen(dev, flags, mode, p)
 	if (sc->sc_events.io)			/* and that it's not in use */
 		return (EBUSY);
 
+	devvp->v_devcookie = sc;
+
 	sc->sc_events.io = p;
 	wsevent_init(&sc->sc_events);		/* may cause sleep */
 
@@ -735,12 +744,12 @@ wskbdopen(dev, flags, mode, p)
 }
 
 int
-wskbdclose(dev, flags, mode, p)
-	dev_t dev;
+wskbdclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
-	return (wskbddoclose(wskbd_cd.cd_devs[minor(dev)], flags, mode, p));
+	return (wskbddoclose(devvp->v_devcookie, flags, mode, p));
 }
 
 int
@@ -767,12 +776,12 @@ wskbddoclose(dv, flags, mode, p)
 }
 
 int
-wskbdread(dev, uio, flags)
-	dev_t dev;
+wskbdread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	struct wskbd_softc *sc = wskbd_cd.cd_devs[minor(dev)];
+	struct wskbd_softc *sc = devvp->v_devcookie;
 	int error;
 
 	if (sc->sc_dying)
@@ -788,14 +797,14 @@ wskbdread(dev, uio, flags)
 }
 
 int
-wskbdioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+wskbdioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	return (wskbddoioctl(wskbd_cd.cd_devs[minor(dev)], cmd, data, flag,p));
+	return (wskbddoioctl(devvp->v_devcookie, cmd, data, flag,p));
 }
 
 /* A wrapper around the ioctl() workhorse to make reference counting easy. */
@@ -1053,12 +1062,12 @@ getkeyrepeat:
 }
 
 int
-wskbdpoll(dev, events, p)
-	dev_t dev;
+wskbdpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct wskbd_softc *sc = wskbd_cd.cd_devs[minor(dev)];
+	struct wskbd_softc *sc = devvp->v_devcookie;
 
 	return (wsevent_poll(&sc->sc_events, events, p));
 }
@@ -1091,7 +1100,7 @@ wskbd_set_console_display(displaydv, muxsc)
 		return (0);
 	sc->sc_displaydv = displaydv;
 	(void)wsmux_attach_sc(muxsc, WSMUX_KBD, &sc->sc_dv, &sc->sc_events, 
-			      &sc->sc_mux, &wskbd_muxops);
+			      &sc->sc_mux, &wskbd_muxops, wskbd_major);
 	return (&sc->sc_dv);
 }
 
@@ -1156,7 +1165,7 @@ wskbd_add_mux(unit, muxsc)
 		return (EBUSY);
 
 	return (wsmux_attach_sc(muxsc, WSMUX_KBD, &sc->sc_dv, &sc->sc_events, 
-				&sc->sc_mux, &wskbd_muxops));
+				&sc->sc_mux, &wskbd_muxops, wskbd_major));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.69 2001/04/03 20:25:22 ragge Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.69.4.1 2001/09/07 04:45:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -465,6 +465,7 @@ struct partinfo {
 
 #ifdef _KERNEL
 struct buf_queue;
+struct vnode;
 
 void	 diskerr
 	    __P((struct buf *, char *, char *, int, int, struct disklabel *));
@@ -474,10 +475,10 @@ void	 disksort_tail __P((struct buf_queue *, struct buf *));
 u_int	 dkcksum __P((struct disklabel *));
 int	 setdisklabel __P((struct disklabel *, struct disklabel *, u_long,
 	    struct cpu_disklabel *));
-char	*readdisklabel __P((dev_t, void (*)(struct buf *), struct disklabel *,
-	    struct cpu_disklabel *));
-int	 writedisklabel __P((dev_t, void (*)(struct buf *), struct disklabel *,
-	    struct cpu_disklabel *));
+char	*readdisklabel __P((struct vnode *, void (*)(struct buf *),
+	    struct disklabel *, struct cpu_disklabel *));
+int	 writedisklabel __P((struct vnode *, void (*)(struct buf *),
+	    struct disklabel *, struct cpu_disklabel *));
 int	 bounds_check_with_label __P((struct buf *, struct disklabel *, int));
 #endif
 #endif /* _LOCORE */

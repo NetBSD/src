@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.16 2000/12/30 23:14:52 david Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.16.6.1 2001/09/07 04:45:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -50,6 +50,7 @@
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <miscfs/procfs/procfs.h>
+#include <miscfs/specfs/specdev.h>
 
 int
 procfs_dostatus(curp, p, pfs, uio)
@@ -87,8 +88,8 @@ procfs_dostatus(curp, p, pfs, uio)
 	ps += sprintf(ps, " %d %d %d %d ", pid, ppid, pgid, sid);
 
 	if ((p->p_flag&P_CONTROLT) && (tp = sess->s_ttyp))
-		ps += sprintf(ps, "%d,%d ", major(tp->t_dev),
-		    minor(tp->t_dev));
+		ps += sprintf(ps, "%d,%d ", major(tp->t_devvp->v_rdev),
+		    minor(tp->t_devvp->v_rdev));
 	else
 		ps += sprintf(ps, "%d,%d ", -1, -1);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.57 2001/09/06 06:18:40 thorpej Exp $ */
+/* $NetBSD: scc.c,v 1.57.2.1 2001/09/07 04:45:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.57 2001/09/06 06:18:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.57.2.1 2001/09/07 04:45:20 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dec_3000_300.h"
@@ -89,6 +89,9 @@ __KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.57 2001/09/06 06:18:40 thorpej Exp $");
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <dev/cons.h>
 
@@ -337,7 +340,6 @@ sccattach(parent, self, aux)
 			tty_attach(tp);
 		pdp->p_arg = (long)tp;
 		pdp->p_fcn = (void (*)__P((struct tty*)))0;
-		tp->t_dev = (dev_t)((sc->sc_dv.dv_unit << 1) | cntr);
 		pdp++;
 	}
 	/* What's the warning here? Defaulting to softCAR on line 2? */
@@ -446,8 +448,8 @@ sccreset(sc)
 }
 
 int
-sccopen(dev, flag, mode, p)
-	dev_t dev;
+sccopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -457,14 +459,16 @@ sccopen(dev, flag, mode, p)
 	int s, error = 0;
 	int firstopen = 0;
 
-	unit = SCCUNIT(dev);
+	unit = SCCUNIT(devvp->v_rdev);
 	if (unit >= scc_cd.cd_ndevs)
 		return (ENXIO);
 	sc = scc_cd.cd_devs[unit];
 	if (!sc)
 		return (ENXIO);
 
-	line = SCCLINE(dev);
+	devvp->v_devcookie = sc;
+
+	line = SCCLINE(devvp->v_rdev);
 	if (sc->scc_pdma[line].p_addr == NULL)
 		return (ENXIO);
 	tp = sc->scc_tty[line];
@@ -474,7 +478,7 @@ sccopen(dev, flag, mode, p)
 	}
 	tp->t_oproc = sccstart;
 	tp->t_param = sccparam;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
 		firstopen = 1;
@@ -495,7 +499,7 @@ sccopen(dev, flag, mode, p)
 		ttsetwater(tp);
 	} else if ((tp->t_state & TS_XCLUDE) && curproc->p_ucred->cr_uid != 0)
 		return (EBUSY);
-	(void) sccmctl(sc, SCCLINE(dev), DML_DTR, DMSET);
+	(void) sccmctl(sc, SCCLINE(devvp->v_rdev), DML_DTR, DMSET);
 	s = spltty();
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	    !(tp->t_state & TS_CARR_ON)) {
@@ -509,23 +513,23 @@ sccopen(dev, flag, mode, p)
 	splx(s);
 	if (error)
 		return (error);
-	error = (*tp->t_linesw->l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(devvp, tp);
 
 	return (error);
 }
 
 /*ARGSUSED*/
 int
-sccclose(dev, flag, mode, p)
-	dev_t dev;
+sccclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	register struct scc_softc *sc = scc_cd.cd_devs[SCCUNIT(dev)];
+	register struct scc_softc *sc = devvp->v_devcookie;
 	register struct tty *tp;
 	register int line;
 
-	line = SCCLINE(dev);
+	line = SCCLINE(devvp->v_rdev);
 	tp = sc->scc_tty[line];
 	if (sc->scc_wreg[line].wr5 & ZSWR5_BREAK) {
 		sc->scc_wreg[line].wr5 &= ~ZSWR5_BREAK;
@@ -539,65 +543,62 @@ sccclose(dev, flag, mode, p)
 }
 
 int
-sccread(dev, uio, flag)
-	dev_t dev;
+sccread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
 	register struct scc_softc *sc;
 	register struct tty *tp;
 
-	sc = scc_cd.cd_devs[SCCUNIT(dev)];		/* XXX*/
-	tp = sc->scc_tty[SCCLINE(dev)];
+	sc = devvp->v_devcookie;
+	tp = sc->scc_tty[SCCLINE(devvp->v_rdev)];
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
-sccwrite(dev, uio, flag)
-	dev_t dev;
+sccwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
 	register struct scc_softc *sc;
 	register struct tty *tp;
 
-	sc = scc_cd.cd_devs[SCCUNIT(dev)];	/* XXX*/
-	tp = sc->scc_tty[SCCLINE(dev)];
+	sc = devvp->v_devcookie;
+	tp = sc->scc_tty[SCCLINE(devvp->v_rdev)];
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
-sccpoll(dev, events, p)
-	dev_t dev;
+sccpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 	register struct scc_softc *sc;
 	register struct tty *tp;
 
-	sc = scc_cd.cd_devs[SCCUNIT(dev)];	/* XXX*/
-	tp = sc->scc_tty[SCCLINE(dev)];
+	sc = devvp->v_devcookie;
+	tp = sc->scc_tty[SCCLINE(devvp->v_rdev)];
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
-scctty(dev)
-	dev_t dev;
+scctty(devvp)
+	struct vnode *devvp;
 {
-	register struct scc_softc *sc;
+	register struct scc_softc *sc = devvp->v_devcookie;
 	register struct tty *tp;
-	register int unit = SCCUNIT(dev);
 
-	if ((unit >= scc_cd.cd_ndevs) || (sc = scc_cd.cd_devs[unit]) == 0)
-		return (0);
-	tp = sc->scc_tty[SCCLINE(dev)];
+	tp = sc->scc_tty[SCCLINE(devvp->v_rdev)];
 	return (tp);
 }
 
 /*ARGSUSED*/
 int
-sccioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+sccioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
@@ -607,8 +608,8 @@ sccioctl(dev, cmd, data, flag, p)
 	register struct tty *tp;
 	int error, line;
 
-	line = SCCLINE(dev);
-	sc = scc_cd.cd_devs[SCCUNIT(dev)];
+	line = SCCLINE(devvp->v_rdev);
+	sc = devvp->v_devcookie;
 	tp = sc->scc_tty[line];
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
@@ -672,8 +673,8 @@ sccparam(tp, t)
 	register struct scc_softc *sc;
 
 	/* Extract the softc and call cold_sccparam to do all the work. */
-	sc = scc_cd.cd_devs[SCCUNIT(tp->t_dev)];
-	return cold_sccparam(tp, t, sc, SCCLINE(tp->t_dev));
+	sc = tp->t_devvp->v_devcookie;
+	return cold_sccparam(tp, t, sc, SCCLINE(tp->t_devvp->v_rdev));
 }
 
 
@@ -939,8 +940,8 @@ sccstart(tp)
 	u_char temp;
 	int s, sendone;
 
-	sc = scc_cd.cd_devs[SCCUNIT(tp->t_dev)];
-	dp = &sc->scc_pdma[SCCLINE(tp->t_dev)];
+	sc = tp->t_devvp->v_devcookie;
+	dp = &sc->scc_pdma[SCCLINE(tp->t_devvp->v_rdev)];
 	regs = (scc_regmap_t *)dp->p_addr;
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
@@ -954,25 +955,6 @@ sccstart(tp)
 	}
 	if (tp->t_outq.c_cc == 0)
 		goto out;
-	/* handle console specially */
-	if (tp == scctty(makedev(SCCDEV,SCCKBD_PORT)) && raster_console()) {
-		while (tp->t_outq.c_cc > 0) {
-			cc = getc(&tp->t_outq) & 0x7f;
-			cnputc(cc);
-		}
-		/*
-		 * After we flush the output queue we may need to wake
-		 * up the process that made the output.
-		 */
-		if (tp->t_outq.c_cc <= tp->t_lowat) {
-			if (tp->t_state & TS_ASLEEP) {
-				tp->t_state &= ~TS_ASLEEP;
-				wakeup((caddr_t)&tp->t_outq);
-			}
-			selwakeup(&tp->t_wsel);
-		}
-		goto out;
-	}
 	cc = ndqb(&tp->t_outq, 0);
 
 	tp->t_state |= TS_BUSY;
@@ -982,7 +964,7 @@ sccstart(tp)
 	/*
 	 * Enable transmission and send the first char, as required.
 	 */
-	chan = SCCLINE(tp->t_dev);
+	chan = SCCLINE(tp->t_devvp->v_rdev);
 	SCC_READ_REG(regs, chan, SCC_RR0, temp);
 	sendone = (temp & ZSRR0_TX_READY);
 	SCC_READ_REG(regs, chan, SCC_RR15, temp);
@@ -1016,8 +998,8 @@ sccstop(tp, flag)
 	register struct scc_softc *sc;
 	register int s;
 
-	sc = scc_cd.cd_devs[SCCUNIT(tp->t_dev)];
-	dp = &sc->scc_pdma[SCCLINE(tp->t_dev)];
+	sc = tp->t_devvp->v_devcookie;
+	dp = &sc->scc_pdma[SCCLINE(tp->t_devvp->v_rdev)];
 	s = spltty();
 	if (tp->t_state & TS_BUSY) {
 		dp->p_end = dp->p_mem;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.57 2000/07/06 01:47:37 thorpej Exp $	*/
+/*	$NetBSD: lpt.c,v 1.57.6.1 2001/09/07 04:45:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -64,6 +64,9 @@
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/syslog.h>
+#include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -117,13 +120,13 @@ lpt_attach_subr(sc)
  * Reset the printer, then wait until it's selected and not busy.
  */
 int
-lptopen(dev, flag, mode, p)
-	dev_t dev;
+lptopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
-	u_char flags = LPTFLAGS(dev);
+	u_char flags = LPTFLAGS(devvp->v_rdev);
 	struct lpt_softc *sc;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -131,7 +134,7 @@ lptopen(dev, flag, mode, p)
 	int error;
 	int spin;
 
-	sc = device_lookup(&lpt_cd, LPTUNIT(dev));
+	sc = device_lookup(&lpt_cd, LPTUNIT(devvp->v_rdev));
 	if (!sc || !sc->sc_dev_ok)
 		return ENXIO;
 
@@ -148,6 +151,8 @@ lptopen(dev, flag, mode, p)
 
 	if (sc->sc_state)
 		return EBUSY;
+
+	devvp->v_devcookie = sc;
 
 	sc->sc_state = LPT_INIT;
 	sc->sc_flags = flags;
@@ -242,13 +247,13 @@ lptwakeup(arg)
  * Close the device, and free the local line buffer.
  */
 int
-lptclose(dev, flag, mode, p)
-	dev_t dev;
+lptclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
-	struct lpt_softc *sc = device_lookup(&lpt_cd, LPTUNIT(dev));
+	struct lpt_softc *sc = devvp->v_devcookie;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
@@ -336,12 +341,12 @@ lptpushbytes(sc)
  * chars moved to the output queue.
  */
 int
-lptwrite(dev, uio, flags)
-	dev_t dev;
+lptwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	struct lpt_softc *sc = device_lookup(&lpt_cd, LPTUNIT(dev));
+	struct lpt_softc *sc = devvp->v_devcookie;
 	size_t n;
 	int error = 0;
 
@@ -405,8 +410,8 @@ lptintr(arg)
 }
 
 int
-lptioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+lptioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;

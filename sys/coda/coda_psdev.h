@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.h,v 1.1 1998/09/25 15:01:13 rvb Exp $	*/
+/*	$NetBSD: coda_psdev.h,v 1.1.28.1 2001/09/07 04:45:21 thorpej Exp $	*/
 
 /*
  * 
@@ -31,10 +31,6 @@
  * 	@(#) coda/coda_psdev.h,v 1.1 1998/08/29 21:26:45 rvb Exp $ 
  */
 
+#include <sys/conf.h>
 
-int vc_nb_open(dev_t dev, int flag, int mode, struct proc *p);
-int vc_nb_close (dev_t dev, int flag, int mode, struct proc *p);
-int vc_nb_read(dev_t dev, struct uio *uiop, int flag);
-int vc_nb_write(dev_t dev, struct uio *uiop, int flag);
-int vc_nb_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p);
-int vc_nb_poll(dev_t dev, int events, struct proc *p);
+cdev_decl(vc_nb_);

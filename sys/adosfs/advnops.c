@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.60 2001/05/30 11:40:35 mrg Exp $	*/
+/*	$NetBSD: advnops.c,v 1.60.4.1 2001/09/07 04:45:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -414,7 +414,7 @@ adosfs_strategy(v)
 		goto reterr;
 	}
 	vp = ap->amp->devvp;
-	bp->b_dev = vp->v_rdev;
+	bp->b_devvp = vp;
 	VOCALL(vp->v_op, VOFFSET(vop_strategy), sp);
 reterr:
 #ifdef ADOSFS_DIAGNOSTIC

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.138 2001/09/03 18:51:43 is Exp $	*/
+/*	$NetBSD: audio.c,v 1.138.2.1 2001/09/07 04:45:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -78,6 +78,9 @@
 #include <sys/conf.h>
 #include <sys/audioio.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
@@ -100,7 +103,8 @@ int	audio_blk_ms = AUDIO_BLK_MS;
 int	audiosetinfo __P((struct audio_softc *, struct audio_info *));
 int	audiogetinfo __P((struct audio_softc *, struct audio_info *));
 
-int	audio_open __P((dev_t, struct audio_softc *, int, int, struct proc *));
+int	audio_open __P((struct vnode *, struct audio_softc *, int, int,
+	    struct proc *));
 int	audio_close __P((struct audio_softc *, int, int, struct proc *));
 int	audio_read __P((struct audio_softc *, struct uio *, int));
 int	audio_write __P((struct audio_softc *, struct uio *, int));
@@ -108,7 +112,8 @@ int	audio_ioctl __P((struct audio_softc *, u_long, caddr_t, int, struct proc *))
 int	audio_poll __P((struct audio_softc *, int, struct proc *));
 paddr_t	audio_mmap __P((struct audio_softc *, off_t, int));
 
-int	mixer_open __P((dev_t, struct audio_softc *, int, int, struct proc *));
+int	mixer_open __P((struct vnode *, struct audio_softc *, int, int,
+	    struct proc *));
 int	mixer_close __P((struct audio_softc *, int, int, struct proc *));
 int	mixer_ioctl __P((struct audio_softc *, u_long, caddr_t, int, struct proc *));
 static	void mixer_remove __P((struct audio_softc *, struct proc *p));
@@ -550,32 +555,34 @@ audio_free_ring(sc, r)
 }
 
 int
-audioopen(dev, flags, ifmt, p)
-	dev_t dev;
+audioopen(devvp, flags, ifmt, p)
+	struct vnode *devvp;
 	int flags, ifmt;
 	struct proc *p;
 {
 	struct audio_softc *sc;
 	int error;
 
-	sc = device_lookup(&audio_cd, AUDIOUNIT(dev));
+	sc = device_lookup(&audio_cd, AUDIOUNIT(devvp->v_rdev));
 	if (sc == NULL)
 		return (ENXIO);
 
 	if (sc->sc_dying)
 		return (EIO);
 
+	devvp->v_devcookie = sc;
+
 	sc->sc_refcnt++;
-	switch (AUDIODEV(dev)) {
+	switch (AUDIODEV(devvp->v_rdev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
-		error = audio_open(dev, sc, flags, ifmt, p);
+		error = audio_open(devvp, sc, flags, ifmt, p);
 		break;
 	case AUDIOCTL_DEVICE:
 		error = 0;
 		break;
 	case MIXER_DEVICE:
-		error = mixer_open(dev, sc, flags, ifmt, p);
+		error = mixer_open(devvp, sc, flags, ifmt, p);
 		break;
 	default:
 		error = ENXIO;
@@ -587,16 +594,15 @@ audioopen(dev, flags, ifmt, p)
 }
 
 int
-audioclose(dev, flags, ifmt, p)
-	dev_t dev;
+audioclose(devvp, flags, ifmt, p)
+	struct vnode *devvp;
 	int flags, ifmt;
 	struct proc *p;
 {
-	int unit = AUDIOUNIT(dev);
-	struct audio_softc *sc = audio_cd.cd_devs[unit];
+	struct audio_softc *sc = devvp->v_devcookie;
 	int error;
 
-	switch (AUDIODEV(dev)) {
+	switch (AUDIODEV(devvp->v_rdev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
 		error = audio_close(sc, flags, ifmt, p);
@@ -615,23 +621,19 @@ audioclose(dev, flags, ifmt, p)
 }
 
 int
-audioread(dev, uio, ioflag)
-	dev_t dev;
+audioread(devvp, uio, ioflag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int ioflag;
 {
-	struct audio_softc *sc;
+	struct audio_softc *sc = devvp->v_devcookie;
 	int error;
-
-	sc = device_lookup(&audio_cd, AUDIOUNIT(dev));
-	if (sc == NULL)
-		return (ENXIO);
 
 	if (sc->sc_dying)
 		return (EIO);
 
 	sc->sc_refcnt++;
-	switch (AUDIODEV(dev)) {
+	switch (AUDIODEV(devvp->v_rdev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
 		error = audio_read(sc, uio, ioflag);
@@ -650,23 +652,19 @@ audioread(dev, uio, ioflag)
 }
 
 int
-audiowrite(dev, uio, ioflag)
-	dev_t dev;
+audiowrite(devvp, uio, ioflag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int ioflag;
 {
-	struct audio_softc *sc;
+	struct audio_softc *sc = devvp->v_devcookie;
 	int error;
-
-	sc = device_lookup(&audio_cd, AUDIOUNIT(dev));
-	if (sc == NULL)
-		return (ENXIO);
 
 	if (sc->sc_dying)
 		return (EIO);
 
 	sc->sc_refcnt++;
-	switch (AUDIODEV(dev)) {
+	switch (AUDIODEV(devvp->v_rdev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
 		error = audio_write(sc, uio, ioflag);
@@ -685,22 +683,21 @@ audiowrite(dev, uio, ioflag)
 }
 
 int
-audioioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+audioioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	int unit = AUDIOUNIT(dev);
-	struct audio_softc *sc = audio_cd.cd_devs[unit];
+	struct audio_softc *sc = devvp->v_devcookie;
 	int error;
 
 	if (sc->sc_dying)
 		return (EIO);
 
 	sc->sc_refcnt++;
-	switch (AUDIODEV(dev)) {
+	switch (AUDIODEV(devvp->v_rdev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
 	case AUDIOCTL_DEVICE:
@@ -719,20 +716,19 @@ audioioctl(dev, cmd, addr, flag, p)
 }
 
 int
-audiopoll(dev, events, p)
-	dev_t dev;
+audiopoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	int unit = AUDIOUNIT(dev);
-	struct audio_softc *sc = audio_cd.cd_devs[unit];
+	struct audio_softc *sc = devvp->v_devcookie;
 	int error;
 
 	if (sc->sc_dying)
 		return (EIO);
 
 	sc->sc_refcnt++;
-	switch (AUDIODEV(dev)) {
+	switch (AUDIODEV(devvp->v_rdev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
 		error = audio_poll(sc, events, p);
@@ -751,20 +747,19 @@ audiopoll(dev, events, p)
 }
 
 paddr_t
-audiommap(dev, off, prot)
-	dev_t dev;
+audiommap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
-	int unit = AUDIOUNIT(dev);
-	struct audio_softc *sc = audio_cd.cd_devs[unit];
+	struct audio_softc *sc = devvp->v_devcookie;
 	paddr_t error;
 
 	if (sc->sc_dying)
 		return (-1);
 
 	sc->sc_refcnt++;
-	switch (AUDIODEV(dev)) {
+	switch (AUDIODEV(devvp->v_rdev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
 		error = audio_mmap(sc, off, prot);
@@ -920,8 +915,8 @@ audio_wakeup(chan)
 }
 
 int
-audio_open(dev, sc, flags, ifmt, p)
-	dev_t dev;
+audio_open(devvp, sc, flags, ifmt, p)
+	struct vnode *devvp;
 	struct audio_softc *sc;
 	int flags, ifmt;
 	struct proc *p;
@@ -976,7 +971,7 @@ audio_open(dev, sc, flags, ifmt, p)
 	 * The /dev/audio is always (re)set to 8-bit MU-Law mono
 	 * For the other devices, you get what they were last set to.
 	 */
-	if (ISDEVAUDIO(dev)) {
+	if (ISDEVAUDIO(devvp->v_rdev)) {
 		/* /dev/audio */
 		sc->sc_rparams = audio_default;
 		sc->sc_pparams = audio_default;
@@ -2904,8 +2899,8 @@ audiogetinfo(sc, ai)
  * Mixer driver
  */
 int
-mixer_open(dev, sc, flags, ifmt, p)
-	dev_t dev;
+mixer_open(devvp, sc, flags, ifmt, p)
+	struct vnode *devvp;
 	struct audio_softc *sc;
 	int flags, ifmt;
 	struct proc *p;

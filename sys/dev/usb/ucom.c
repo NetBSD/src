@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.39 2001/08/16 22:31:24 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.39.2.1 2001/09/07 04:45:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -58,6 +58,8 @@
 #include <sys/rnd.h>
 #endif
 #endif
+
+#include <miscfs/specfs/specdev.h>
 
 #include <dev/usb/usb.h>
 
@@ -288,9 +290,9 @@ ucom_shutdown(struct ucom_softc *sc)
 }
 
 int
-ucomopen(dev_t dev, int flag, int mode, struct proc *p)
+ucomopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
-	int unit = UCOMUNIT(dev);
+	int unit = UCOMUNIT(devvp->v_rdev);
 	usbd_status err;
 	struct ucom_softc *sc;
 	struct tty *tp;
@@ -308,6 +310,8 @@ ucomopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
 		return (ENXIO);
+
+	devvp->v_devcookie = sc;
 
 	tp = sc->sc_tty;
 
@@ -335,7 +339,7 @@ ucomopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		struct termios t;
 
-		tp->t_dev = dev;
+		tp->t_devvp = devvp;
 
 		if (sc->sc_methods->ucom_open != NULL) {
 			error = sc->sc_methods->ucom_open(sc->sc_parent,
@@ -442,11 +446,12 @@ ucomopen(dev_t dev, int flag, int mode, struct proc *p)
 	wakeup(&sc->sc_opening);
 	splx(s);
 
-	error = ttyopen(tp, UCOMDIALOUT(dev), ISSET(flag, O_NONBLOCK));
+	error = ttyopen(tp, UCOMDIALOUT(devvp->v_rdev), ISSET(flag,
+	    O_NONBLOCK));
 	if (error)
 		goto bad;
 
-	error = (*tp->t_linesw->l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(devvp, tp);
 	if (error)
 		goto bad;
 
@@ -483,12 +488,12 @@ bad:
 }
 
 int
-ucomclose(dev_t dev, int flag, int mode, struct proc *p)
+ucomclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
-	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
+	struct ucom_softc *sc = devvp->v_devcookie;
 	struct tty *tp = sc->sc_tty;
 
-	DPRINTF(("ucomclose: unit=%d\n", UCOMUNIT(dev)));
+	DPRINTF(("ucomclose: unit=%d\n", UCOMUNIT(devvp->v_rdev)));
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		return (0);
 
@@ -516,9 +521,9 @@ ucomclose(dev_t dev, int flag, int mode, struct proc *p)
 }
  
 int
-ucomread(dev_t dev, struct uio *uio, int flag)
+ucomread(struct vnode *devvp, struct uio *uio, int flag)
 {
-	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
+	struct ucom_softc *sc = devvp->v_devcookie;
 	struct tty *tp = sc->sc_tty;
 	int error;
 
@@ -533,9 +538,9 @@ ucomread(dev_t dev, struct uio *uio, int flag)
 }
  
 int
-ucomwrite(dev_t dev, struct uio *uio, int flag)
+ucomwrite(struct vnode *devvp, struct uio *uio, int flag)
 {
-	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
+	struct ucom_softc *sc = devvp->v_devcookie;
 	struct tty *tp = sc->sc_tty;
 	int error;
 
@@ -550,12 +555,12 @@ ucomwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-ucompoll(dev, events, p)
-	dev_t dev;
+ucompoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
+	struct ucom_softc *sc = devvp->v_devcookie;
 	struct tty *tp = sc->sc_tty;
 	int error;
 
@@ -570,18 +575,19 @@ ucompoll(dev, events, p)
 }
 
 struct tty *
-ucomtty(dev_t dev)
+ucomtty(struct vnode *devvp)
 {
-	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
+	struct ucom_softc *sc = devvp->v_devcookie;
 	struct tty *tp = sc->sc_tty;
 
 	return (tp);
 }
 
 int
-ucomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+ucomioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
+    struct proc *p)
 {
-	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
+	struct ucom_softc *sc = devvp->v_devcookie;
 	int error;
 
 	sc->sc_refcnt++;
@@ -789,7 +795,7 @@ ucom_status_change(struct ucom_softc *sc)
 Static int
 ucomparam(struct tty *tp, struct termios *t)
 {
-	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(tp->t_dev)];
+	struct ucom_softc *sc = tp->t_devvp->v_devcookie;
 	int error;
 
 	if (sc->sc_dying)
@@ -883,7 +889,7 @@ XXX
 Static void
 ucomstart(struct tty *tp)
 {
-	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(tp->t_dev)];
+	struct ucom_softc *sc = tp->t_devvp->v_devcookie;
 	usbd_status err;
 	int s;
 	u_char *data;
@@ -951,7 +957,7 @@ ucomstop(struct tty *tp, int flag)
 {
 	DPRINTF(("ucomstop: flag=%d\n", flag));
 #if 0
-	/*struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(tp->t_dev)];*/
+	/*struct ucom_softc *sc = tp->t_devvp->v_devcookie;*/
 	int s;
 
 	s = spltty();

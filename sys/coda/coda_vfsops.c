@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.12 2001/07/18 16:12:31 thorpej Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.12.2.1 2001/09/07 04:45:21 thorpej Exp $	*/
 
 /*
  * 
@@ -65,6 +65,7 @@
 #include <coda/coda_venus.h>
 #include <coda/coda_subr.h>
 #include <coda/coda_opstats.h>
+#include <coda/coda_psdev.h>
 /* for VN_RDEV */
 #include <miscfs/specfs/specdev.h>
 
@@ -86,7 +87,6 @@ struct coda_op_stats coda_vfsopstats[CODA_VFSOPS_SIZE];
 #define MRAK_INT_GEN(op) (coda_vfsopstats[op].gen_intrn++)
 
 extern int coda_nc_initialized;     /* Set if cache has been initialized */
-extern int vc_nb_open __P((dev_t, int, int, struct proc *));
 extern struct cdevsw cdevsw[];    /* For sanity check in coda_mount */
 extern const struct vnodeopv_desc coda_vnodeop_opv_desc;
 

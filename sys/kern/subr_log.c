@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.20 2000/05/28 18:31:13 jhawk Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.20.8.1 2001/09/07 04:45:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -103,8 +103,8 @@ initmsgbuf(buf, bufsize)
 
 /*ARGSUSED*/
 int
-logopen(dev, flags, mode, p)
-	dev_t dev;
+logopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
@@ -130,8 +130,8 @@ logopen(dev, flags, mode, p)
 
 /*ARGSUSED*/
 int
-logclose(dev, flag, mode, p)
-	dev_t dev;
+logclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -143,8 +143,8 @@ logclose(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-logread(dev, uio, flag)
-	dev_t dev;
+logread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
@@ -190,8 +190,8 @@ logread(dev, uio, flag)
 
 /*ARGSUSED*/
 int
-logpoll(dev, events, p)
-	dev_t dev;
+logpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
@@ -232,8 +232,8 @@ logwakeup()
 
 /*ARGSUSED*/
 int
-logioctl(dev, com, data, flag, p)
-	dev_t dev;
+logioctl(devvp, com, data, flag, p)
+	struct vnode *devvp;
 	u_long com;
 	caddr_t data;
 	int flag;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.15 2001/01/26 02:16:24 oster Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.15.6.1 2001/09/07 04:45:28 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -169,9 +169,6 @@ rf_CopybackReconstructedData(raidPtr)
 		    rf_protectedSectors;
 
 		raidPtr->raid_cinfo[frow][fcol].ci_vp = vp;
-		raidPtr->raid_cinfo[frow][fcol].ci_dev = va.va_rdev;
-
-		raidPtr->Disks[frow][fcol].dev = va.va_rdev;	/* XXX or the above? */
 
 		/* we allow the user to specify that only a fraction of the
 		 * disks should be used this is just for debug:  it speeds up
@@ -234,9 +231,8 @@ rf_CopybackReconstructedData(raidPtr)
 
 	/* Data has been restored.  Fix up the component label. */
 	/* Don't actually need the read here.. */
-	raidread_component_label( raidPtr->raid_cinfo[frow][fcol].ci_dev,
-				  raidPtr->raid_cinfo[frow][fcol].ci_vp,
-				  &c_label);
+	raidread_component_label(raidPtr->raid_cinfo[frow][fcol].ci_vp,
+	    &c_label);
 	
 	raid_init_component_label( raidPtr, &c_label );
 
@@ -244,9 +240,8 @@ rf_CopybackReconstructedData(raidPtr)
 	c_label.column = fcol;
 	c_label.partitionSize = raidPtr->Disks[frow][fcol].partitionSize;
 
-	raidwrite_component_label( raidPtr->raid_cinfo[frow][fcol].ci_dev,
-				   raidPtr->raid_cinfo[frow][fcol].ci_vp,
-				   &c_label);
+	raidwrite_component_label(raidPtr->raid_cinfo[frow][fcol].ci_vp,
+	    &c_label);
 }
 
 
