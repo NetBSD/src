@@ -1,3 +1,5 @@
+/*	$NetBSD: dir.h,v 1.5 1994/12/21 20:00:20 mycroft Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
