@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2001/07/02 17:19:09 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2001/07/07 16:35:22 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -108,20 +108,10 @@ extern int nfs_mountroot(void);
 extern int (*mountroot)(void);
 #endif
 
-extern char edata[], end[];
 /* curpcb is defined in locore.s */
 struct user *proc0paddr;
 char machine[]		= MACHINE;
 char machine_arch[]	= MACHINE_ARCH;
-
-/* SH-core */
-#define VBRINIT		((caddr_t)SH3_PHYS_TO_P1SEG(DRAM_BANK0_START))
-#define Trap100Vec	(VBRINIT + 0x100)
-#define TLBVECTOR	(VBRINIT + 0x400)
-#define Trap600Vec	(VBRINIT + 0x600)
-extern char MonTrap100[], MonTrap100_end[];
-extern char MonTrap600[], MonTrap600_end[];
-extern char tlbmisshandler_stub[], tlbmisshandler_stub_end[];
 
 paddr_t msgbuf_paddr;
 vaddr_t ram_start = SH3_PHYS_TO_P1SEG(DRAM_BANK0_START);
@@ -167,6 +157,11 @@ struct bootinfo *bootinfo;
 void
 machine_startup(int argc, char *argv[], struct bootinfo *bi)
 {
+	extern char trap_base[], edata[], end[];
+	/* exception handler */
+	extern char MonTrap100[], MonTrap100_end[];
+	extern char MonTrap600[], MonTrap600_end[];
+	extern char tlbmisshandler_stub[], tlbmisshandler_stub_end[];
 	static struct bootinfo __bootinfo;
 	vaddr_t proc0_sp;
 	vaddr_t kernend;
@@ -311,11 +306,11 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	SHREG_TTB = (u_int)pagedir;
 
 	/* install trap handler */
-	bcopy(MonTrap100, Trap100Vec, MonTrap100_end - MonTrap100);
-	bcopy(MonTrap600, Trap600Vec, MonTrap600_end - MonTrap600);
-	bcopy(tlbmisshandler_stub, TLBVECTOR,
-	      tlbmisshandler_stub_end - tlbmisshandler_stub);
-	__asm__ __volatile__ ("ldc	%0, vbr" :: "r"(VBRINIT));
+	memcpy(trap_base + 0x100, MonTrap100, MonTrap100_end - MonTrap100);
+	memcpy(trap_base + 0x600, MonTrap600, MonTrap600_end - MonTrap600);
+	memcpy(trap_base + 0x400, tlbmisshandler_stub,
+	    tlbmisshandler_stub_end - tlbmisshandler_stub);
+	__asm__ __volatile__ ("ldc	%0, vbr" :: "r"(trap_base));
 
 	/* enable MMU */
 #ifdef SH4
