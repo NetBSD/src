@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.14 2003/12/28 01:21:37 christos Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.15 2004/06/20 18:09:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.14 2003/12/28 01:21:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.15 2004/06/20 18:09:46 thorpej Exp $");
 
 #undef	TCICDEBUG
 
@@ -50,8 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.14 2003/12/28 01:21:37 christos Exp $");
 
 #include <dev/ic/tcic2reg.h>
 #include <dev/ic/tcic2var.h>
-
-#include "locators.h"
 
 #ifdef TCICDEBUG
 int	tcic_debug = 1;
@@ -542,24 +540,24 @@ tcic_submatch(parent, cf, aux)
 
 	switch (h->sock) {
 	case 0:
-		if (cf->cf_loc[PCMCIABUSCF_CONTROLLER] !=
+		if (cf->pcmciabuscf_controller !=
 		    PCMCIABUSCF_CONTROLLER_DEFAULT &&
-		    cf->cf_loc[PCMCIABUSCF_CONTROLLER] != 0)
+		    cf->pcmciabuscf_controller != 0)
 			return 0;
-		if (cf->cf_loc[PCMCIABUSCF_SOCKET] !=
+		if (cf->pcmciabuscf_socket !=
 		    PCMCIABUSCF_SOCKET_DEFAULT &&
-		    cf->cf_loc[PCMCIABUSCF_SOCKET] != 0)
+		    cf->pcmciabuscf_socket != 0)
 			return 0;
 
 		break;
 	case 1:
-		if (cf->cf_loc[PCMCIABUSCF_CONTROLLER] !=
+		if (cf->pcmciabuscf_controller !=
 		    PCMCIABUSCF_CONTROLLER_DEFAULT &&
-		    cf->cf_loc[PCMCIABUSCF_CONTROLLER] != 0)
+		    cf->pcmciabuscf_controller != 0)
 			return 0;
-		if (cf->cf_loc[PCMCIABUSCF_SOCKET] !=
+		if (cf->pcmciabuscf_socket !=
 		    PCMCIABUSCF_SOCKET_DEFAULT &&
-		    cf->cf_loc[PCMCIABUSCF_SOCKET] != 1)
+		    cf->pcmciabuscf_socket != 1)
 			return 0;
 
 		break;
