@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)procfs_vnops.c	8.8 (Berkeley) 6/15/94
- *	$Id: procfs_vnops.c,v 1.22 1994/06/15 22:59:15 mycroft Exp $
+ *	$Id: procfs_vnops.c,v 1.23 1994/06/16 06:01:19 mycroft Exp $
  */
 
 /*
@@ -590,7 +590,6 @@ procfs_lookup(ap)
 	struct vnode **vpp = ap->a_vpp;
 	struct vnode *dvp = ap->a_dvp;
 	char *pname = cnp->cn_nameptr;
-	int error = 0;
 	pid_t pid;
 	struct vnode *nvp;
 	struct pfsnode *pfs;
@@ -627,10 +626,8 @@ procfs_lookup(ap)
 		return (procfs_allocvp(dvp->v_mount, vpp, pid, Pproc));
 
 	case Pproc:
-		if (cnp->cn_flags & ISDOTDOT) {
-			error = procfs_root(dvp->v_mount, vpp);
-			return (error);
-		}
+		if (cnp->cn_flags & ISDOTDOT)
+			return (procfs_root(dvp->v_mount, vpp));
 
 		procp = PFIND(pfs->pfs_pid);
 		if (procp == 0)
@@ -651,8 +648,7 @@ procfs_lookup(ap)
 	found:
 		if (pfs_type == Pfile) {
 			nvp = procfs_findtextvp(procp);
-			if (nvp == NULLVP)
-				return (ENXIO);
+			/* We already checked that it exists. */
 			VREF(nvp);
 			VOP_LOCK(nvp);
 			*vpp = nvp;
