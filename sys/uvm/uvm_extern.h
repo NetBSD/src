@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.98.4.1 2005/01/25 12:55:32 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.98.4.2 2005/01/25 12:58:28 yamt Exp $	*/
 
 /*
  *
@@ -145,6 +145,7 @@ typedef off_t voff_t;		/* XXX: offset within a uvm_object */
 #define UVM_FLAG_NOWAIT  0x400000 /* not allowed to sleep */
 #define UVM_FLAG_QUANTUM 0x800000 /* entry never be splitted later */
 #define UVM_FLAG_WAITVA  0x1000000 /* wait for va */
+#define UVM_FLAG_VAONLY  0x2000000 /* unmap: no pages are mapped */
 
 /* macros to extract info */
 #define UVM_PROTECTION(X)	((X) & UVM_PROT_MASK)
@@ -159,12 +160,17 @@ typedef off_t voff_t;		/* XXX: offset within a uvm_object */
 #define UVM_UNKNOWN_OFFSET ((voff_t) -1)
 
 /*
- * the following defines are for uvm_km_kmemalloc's flags
+ * the following defines are for uvm_km_alloc/free's flags
  */
-#define UVM_KMF_VALLOC	0x1			/* allocate VA only */
-#define UVM_KMF_CANFAIL	0x2			/* caller handles failure */
+#define UVM_KMF_WIRED	0x1			/* allocation type: wired */
+#define UVM_KMF_PAGEABLE 0x2			/* allocation type: pageable */
+#define UVM_KMF_VAONLY	0x4			/* allocation type: VA only */
+#define	UVM_KMF_TYPEMASK (UVM_KMF_VAONLY | UVM_KMF_PAGEABLE | UVM_KMF_WIRED)
+#define UVM_KMF_CANFAIL	0x8			/* caller handles failure */
+#define UVM_KMF_ZERO	0x10			/* want zero filled memory */
 #define UVM_KMF_TRYLOCK	UVM_FLAG_TRYLOCK	/* try locking only */
 #define UVM_KMF_NOWAIT	UVM_FLAG_NOWAIT		/* not allowed to sleep */
+#define UVM_KMF_WAITVA	UVM_FLAG_WAITVA		/* sleep for va */
 
 /*
  * the following defines the strategies for uvm_pagealloc_strat()
@@ -526,10 +532,6 @@ extern struct vm_map *phys_map;
  * macros
  */
 
-/* zalloc zeros memory, alloc does not */
-#define uvm_km_zalloc(MAP,SIZE) uvm_km_alloc1(MAP,SIZE,TRUE)
-#define uvm_km_alloc(MAP,SIZE)  uvm_km_alloc1(MAP,SIZE,FALSE)
-
 #define vm_resident_count(vm) (pmap_resident_count((vm)->vm_map.pmap))
 
 #include <sys/mallocvar.h>
@@ -595,66 +597,20 @@ void			uvm_init(void);
 int			uvm_io(struct vm_map *, struct uio *);
 
 /* uvm_km.c */
-vaddr_t			uvm_km_alloc1(struct vm_map *, vsize_t, boolean_t);
-void			uvm_km_free(struct vm_map *, vaddr_t, vsize_t);
-#define uvm_km_free_wakeup(map, start, size) uvm_km_free((map), (start), (size))
-vaddr_t			uvm_km_kmemalloc1(struct vm_map *, struct
-			    uvm_object *, vsize_t, vsize_t, voff_t, int);
+vaddr_t			uvm_km_alloc(struct vm_map *, vsize_t, vsize_t,
+			    uvm_flag_t);
+void			uvm_km_free(struct vm_map *, vaddr_t, vsize_t,
+			    uvm_flag_t);
+
 struct vm_map		*uvm_km_suballoc(struct vm_map *, vaddr_t *,
 			    vaddr_t *, vsize_t, int, boolean_t,
 			    struct vm_map_kernel *);
-vaddr_t			uvm_km_valloc1(struct vm_map *, vsize_t,
-			    vsize_t, voff_t, uvm_flag_t);
-vaddr_t			uvm_km_alloc_poolpage1(struct vm_map *,
-			    struct uvm_object *, boolean_t);
-void			uvm_km_free_poolpage1(struct vm_map *, vaddr_t);
-vaddr_t			uvm_km_alloc_poolpage_cache(struct vm_map *,
-			    struct uvm_object *, boolean_t);
+vaddr_t			uvm_km_alloc_poolpage(struct vm_map *, boolean_t);
+void			uvm_km_free_poolpage(struct vm_map *, vaddr_t);
+vaddr_t			uvm_km_alloc_poolpage_cache(struct vm_map *, boolean_t);
 void			uvm_km_free_poolpage_cache(struct vm_map *, vaddr_t);
 void			uvm_km_vacache_init(struct vm_map *,
 			    const char *, size_t);
-
-static __inline vaddr_t
-uvm_km_kmemalloc(struct vm_map *map, struct uvm_object *obj, vsize_t sz,
-    int flags)
-{
-
-	return uvm_km_kmemalloc1(map, obj, sz, 0, UVM_UNKNOWN_OFFSET, flags);
-}
-
-static __inline vaddr_t
-uvm_km_valloc(struct vm_map *map, vsize_t sz)
-{
-
-	return uvm_km_valloc1(map, sz, 0, UVM_UNKNOWN_OFFSET, UVM_KMF_NOWAIT);
-}
-
-static __inline vaddr_t
-uvm_km_valloc_align(struct vm_map *map, vsize_t sz, vsize_t align)
-{
-
-	return uvm_km_valloc1(map, sz, align, UVM_UNKNOWN_OFFSET,
-	    UVM_KMF_NOWAIT);
-}
-
-static __inline vaddr_t
-uvm_km_valloc_prefer_wait(struct vm_map *map, vsize_t sz, voff_t prefer)
-{
-
-	return uvm_km_valloc1(map, sz, 0, prefer, 0);
-}
-
-static __inline vaddr_t
-uvm_km_valloc_wait(struct vm_map *map, vsize_t sz)
-{
-
-	return uvm_km_valloc1(map, sz, 0, UVM_UNKNOWN_OFFSET, 0);
-}
-
-#define	uvm_km_alloc_poolpage(waitok)					\
-	uvm_km_alloc_poolpage1(kmem_map, NULL, (waitok))
-#define	uvm_km_free_poolpage(addr)					\
-	uvm_km_free_poolpage1(kmem_map, (addr))
 
 /* uvm_map.c */
 int			uvm_map(struct vm_map *, vaddr_t *, vsize_t,

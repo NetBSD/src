@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.183 2005/01/23 15:58:13 chs Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.183.2.1 2005/01/25 12:58:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.183 2005/01/23 15:58:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.183.2.1 2005/01/25 12:58:28 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -776,6 +776,7 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 	int error;
 
 	KASSERT((flags & UVM_FLAG_QUANTUM) == 0 || VM_MAP_IS_KERNEL(map));
+	KASSERT((size & PAGE_MASK) == 0);
 
 	/*
 	 * for pager_map, allocate the new entry first to avoid sleeping
@@ -804,6 +805,13 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 		error = uvm_map_enter(map, &args, new_entry);
 		*startp = args.uma_start;
 	}
+
+#if defined(DEBUG)
+	if (!error && VM_MAP_IS_KERNEL(map)) {
+		uvm_km_check_empty(*startp, *startp + size,
+		    (map->flags & VM_MAP_INTRSAFE) != 0);
+	}
+#endif /* defined(DEBUG) */
 
 	return error;
 }
@@ -1831,7 +1839,7 @@ nextgap:
 void
 uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
     struct vm_map_entry **entry_list /* OUT */,
-    struct uvm_mapent_reservation *umr)
+    struct uvm_mapent_reservation *umr, int flags)
 {
 	struct vm_map_entry *entry, *first_entry, *next;
 	vaddr_t len;
@@ -1904,7 +1912,11 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 		if (VM_MAPENT_ISWIRED(entry)) {
 			uvm_map_entry_unwire(map, entry);
 		}
-		if ((map->flags & VM_MAP_PAGEABLE) == 0) {
+		if (flags & UVM_FLAG_VAONLY) {
+
+			/* nothing */
+
+		} else if ((map->flags & VM_MAP_PAGEABLE) == 0) {
 
 			/*
 			 * if the map is non-pageable, any pages mapped there
@@ -1957,9 +1969,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 			pmap_remove(pmap_kernel(), entry->start,
 			    entry->start + len);
-			uvm_km_pgremove(entry->object.uvm_obj,
-			    entry->start - vm_map_min(kernel_map),
-			    entry->end - vm_map_min(kernel_map));
+			uvm_km_pgremove(entry->start, entry->end);
 
 			/*
 			 * null out kernel_object reference, we've just
@@ -1991,6 +2001,11 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 				if (pmap_extract(vm_map_pmap(map), va, NULL)) {
 					panic("uvm_unmap_remove: has mapping");
 				}
+			}
+
+			if (VM_MAP_IS_KERNEL(map)) {
+				uvm_km_check_empty(entry->start, entry->end,
+				    (map->flags & VM_MAP_INTRSAFE) != 0);
 			}
 		}
 #endif /* defined(DEBUG) */
@@ -3797,7 +3812,7 @@ uvmspace_free(struct vmspace *vm)
 #endif
 	if (map->nentries) {
 		uvm_unmap_remove(map, map->min_offset, map->max_offset,
-		    &dead_entries, NULL);
+		    &dead_entries, NULL, 0);
 		if (dead_entries != NULL)
 			uvm_unmap_detach(dead_entries, 0);
 	}
@@ -4284,7 +4299,7 @@ uvm_kmapent_free(struct vm_map_entry *entry)
 
 	va = (vaddr_t)ukh;
 	KASSERT((va & PAGE_MASK) == 0);
-	uvm_unmap_remove(map, va, va + PAGE_SIZE, &deadentry, NULL);
+	uvm_unmap_remove(map, va, va + PAGE_SIZE, &deadentry, NULL, 0);
 	KASSERT(deadentry->flags & UVM_MAP_KERNEL);
 	KASSERT(deadentry->flags & UVM_MAP_KMAPENT);
 	KASSERT(deadentry->next == NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.65 2005/01/01 21:00:06 yamt Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.65.4.1 2005/01/25 12:58:29 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.65 2005/01/01 21:00:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.65.4.1 2005/01/25 12:58:29 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -95,7 +95,12 @@ uvm_pager_init()
 	    FALSE, NULL);
 	simple_lock_init(&pager_map_wanted_lock);
 	pager_map_wanted = FALSE;
-	emergva = uvm_km_valloc(kernel_map, round_page(MAXPHYS));
+	emergva = uvm_km_alloc(kernel_map, round_page(MAXPHYS), 0,
+	    UVM_KMF_VAONLY);
+#if defined(DEBUG)
+	if (emergva == 0)
+		panic("emergva");
+#endif
 	emerginuse = FALSE;
 
 	/*
@@ -224,7 +229,7 @@ uvm_pagermapout(kva, npages)
 	}
 
 	vm_map_lock(pager_map);
-	uvm_unmap_remove(pager_map, kva, kva + size, &entries, NULL);
+	uvm_unmap_remove(pager_map, kva, kva + size, &entries, NULL, 0);
 	simple_lock(&pager_map_wanted_lock);
 	if (pager_map_wanted) {
 		pager_map_wanted = FALSE;
