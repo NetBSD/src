@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.76 1997/06/14 22:24:15 is Exp $
+#	$NetBSD: GENERIC,v 1.77 1997/06/16 21:12:43 is Exp $
 
 #
 # GENERIC AMIGA
@@ -16,6 +16,13 @@ options 	RTC_OFFSET=300
 #
 options 	DRACO
 
+options 	BB060STUPIDROM	# You need this, if you have a non-DraCo
+				# 68060 with an OS ROM up to (at least) 
+				# V40 (OS3.1) and want to boot with the
+				# bootblock.
+				# You don't need this if you have a DraCo,
+				# have no 68060 or NEVER use the bootblock
+#
 # processors this kernel should support
 #
 options 	M68060		# support for 060
