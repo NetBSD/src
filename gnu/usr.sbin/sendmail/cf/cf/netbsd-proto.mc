@@ -1,4 +1,4 @@
-# $NetBSD: netbsd-proto.mc,v 1.9 2001/01/15 17:57:44 itojun Exp $
+# $NetBSD: netbsd-proto.mc,v 1.10 2002/09/30 01:27:05 grant Exp $
 
 divert(-1)
 #
@@ -42,8 +42,9 @@ divert(-1)
 #
 
 include(`../m4/cf.m4')
-VERSIONID(`@(#)netbsd-proto.mc	$Revision: 1.9 $')
+VERSIONID(`@(#)netbsd-proto.mc	$Revision: 1.10 $')
 OSTYPE(bsd4.4)dnl
+DOMAIN(generic)dnl
 MAILER(local)dnl
 MAILER(smtp)dnl
 define(`confAUTO_REBUILD', True)dnl
