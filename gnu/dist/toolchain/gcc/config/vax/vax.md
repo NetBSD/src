@@ -1276,21 +1276,21 @@
   rtx label = gen_label_rtx ();
   rtx temp = gen_reg_rtx (SImode);
 
-  emit_move_insn (temp, const0_rtx);
   emit_insn (gen_ffssi_1 (temp, operands[1]));
   emit_jump_insn (gen_beq (label));
   emit_insn (gen_incsi (temp, temp));
   emit_label (label);
-  if (temp != operands[0])
+  if ( !rtx_equal_p (temp, operands[0]))
     emit_move_insn (operands[0], temp);
   DONE;
 }");
 
 (define_insn "ffssi_1"
-  [(set (match_operand:SI 0 "vax_lvalue_operand" "=r")
-        (unspec:SI [(match_operand:SI 1 "general_operand" "g")] 0))]
+  [(set (match_operand:SI 0 "vax_lvalue_operand" "=&r")
+        (unspec:SI [(match_operand:SI 1 "general_operand" "g")] 0))
+   (set (cc0) (match_dup 0))]
   ""
-  "ffs %0,$32,%1,%0")
+  "clrl %0\;ffs %0,$32,%1,%0")
   
 ;;- Multiply instructions.
 
