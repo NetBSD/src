@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.2 1999/03/31 01:50:25 cgd Exp $	*/
+/*	$NetBSD: fstat.c,v 1.3 2000/03/30 12:19:48 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@ fstat(fd, sb)
 	int fd;
 	struct stat *sb;
 {
-	register struct open_file *f = &files[fd];
+	struct open_file *f = &files[fd];
 
 #if !defined(LIBSA_NO_FD_CHECKING)
 	if ((unsigned)fd >= SOPEN_MAX || f->f_flags == 0) {

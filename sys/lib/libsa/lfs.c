@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.5 1999/11/13 21:17:56 thorpej Exp $ */
+/* $NetBSD: lfs.c,v 1.6 2000/03/30 12:19:48 augustss Exp $ */
 
 /*-
  * Copyright (c) 1993
@@ -145,8 +145,8 @@ static int	search_directory __P((char *, struct open_file *, ino_t *));
 static int
 find_inode_sector(ino_t inumber, struct open_file *f, ufs_daddr_t *isp)
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
-	register struct fs *fs = fp->f_fs;
+	struct file *fp = (struct file *)f->f_fsdata;
+	struct fs *fs = fp->f_fs;
 	ufs_daddr_t ifileent_blkno;
 	char *ent_in_buf;
 	size_t buf_after_ent;
@@ -186,8 +186,8 @@ read_inode(inumber, f)
 	ino_t inumber;
 	struct open_file *f;
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
-	register struct fs *fs = fp->f_fs;
+	struct file *fp = (struct file *)f->f_fsdata;
+	struct fs *fs = fp->f_fs;
 	struct dinode *dip;
 	ufs_daddr_t inode_sector;
 	size_t rsize;
@@ -233,7 +233,7 @@ read_inode(inumber, f)
 	 * Clear out the old buffers
 	 */
 	{
-		register int level;
+		int level;
 
 		for (level = 0; level < NIADDR; level++)
 			fp->f_blkno[level] = -1;
@@ -254,8 +254,8 @@ block_map(f, file_block, disk_block_p)
 	daddr_t file_block;
 	daddr_t *disk_block_p;	/* out */
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
-	register struct fs *fs = fp->f_fs;
+	struct file *fp = (struct file *)f->f_fsdata;
+	struct fs *fs = fp->f_fs;
 	int level;
 	int idx;
 	daddr_t ind_block_num;
@@ -366,10 +366,10 @@ buf_read_file(f, buf_p, size_p)
 	char **buf_p;		/* out */
 	size_t *size_p;		/* out */
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
-	register struct fs *fs = fp->f_fs;
+	struct file *fp = (struct file *)f->f_fsdata;
+	struct fs *fs = fp->f_fs;
 	long off;
-	register daddr_t file_block;
+	daddr_t file_block;
 	daddr_t	disk_block;
 	size_t block_size;
 	int rc;
@@ -434,8 +434,8 @@ search_directory(name, f, inumber_p)
 	struct open_file *f;
 	ino_t *inumber_p;		/* out */
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
-	register struct direct *dp;
+	struct file *fp = (struct file *)f->f_fsdata;
+	struct direct *dp;
 	struct direct *edp;
 	char *buf;
 	size_t buf_size;
@@ -484,8 +484,8 @@ lfs_open(path, f)
 	struct open_file *f;
 {
 #ifndef LIBSA_FS_SINGLECOMPONENT
-	register char *cp, *ncp;
-	register int c;
+	char *cp, *ncp;
+	int c;
 #endif
 	ino_t inumber;
 	struct file *fp;
@@ -524,8 +524,8 @@ lfs_open(path, f)
 	 * Calculate indirect block levels.
 	 */
 	{
-		register int mult;
-		register int level;
+		int mult;
+		int level;
 
 		mult = 1;
 		for (level = 0; level < NIADDR; level++) {
@@ -562,7 +562,7 @@ lfs_open(path, f)
 		 * Get next component of path name.
 		 */
 		{
-			register int len = 0;
+			int len = 0;
 
 			ncp = cp;
 			while ((c = *cp) != '\0' && c != '/') {
@@ -621,7 +621,7 @@ lfs_open(path, f)
 				 */
 				size_t buf_size;
 				daddr_t	disk_block;
-				register struct fs *fs = fp->f_fs;
+				struct fs *fs = fp->f_fs;
 
 				if (!buf)
 					buf = alloc(fs->fs_bsize);
@@ -699,7 +699,7 @@ int
 lfs_close(f)
 	struct open_file *f;
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
+	struct file *fp = (struct file *)f->f_fsdata;
 	int level;
 
 	f->f_fsdata = (void *)0;
@@ -729,12 +729,12 @@ lfs_read(f, start, size, resid)
 	size_t size;
 	size_t *resid;	/* out */
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
-	register size_t csize;
+	struct file *fp = (struct file *)f->f_fsdata;
+	size_t csize;
 	char *buf;
 	size_t buf_size;
 	int rc = 0;
-	register char *addr = start;
+	char *addr = start;
 
 	while (size != 0) {
 		if (fp->f_seekp >= fp->f_di.di_size)
@@ -782,7 +782,7 @@ lfs_seek(f, offset, where)
 	off_t offset;
 	int where;
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
+	struct file *fp = (struct file *)f->f_fsdata;
 
 	switch (where) {
 	case SEEK_SET:
@@ -806,7 +806,7 @@ lfs_stat(f, sb)
 	struct open_file *f;
 	struct stat *sb;
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
+	struct file *fp = (struct file *)f->f_fsdata;
 
 	/* only important stuff */
 	sb->st_mode = fp->f_di.di_mode;

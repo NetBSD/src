@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.4 1999/02/11 09:10:44 pk Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.5 2000/03/30 12:19:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -63,11 +63,11 @@
  */
 int
 in_cksum(p, len)
-	register void *p;
-	register int len;
+	void *p;
+	int len;
 {
-	register int sum = 0, oddbyte = 0, v = 0;
-	register u_char *cp = p;
+	int sum = 0, oddbyte = 0, v = 0;
+	u_char *cp = p;
 
 	/* we assume < 2^16 bytes being summed */
 	while (len > 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.c,v 1.7 1999/03/30 22:03:47 cgd Exp $	*/
+/*	$NetBSD: bcopy.c,v 1.8 2000/03/30 12:19:47 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -49,8 +49,8 @@ bcopy(s1, s2, n)
 	void *s2;
 	size_t n;
 {
-	register const char *f = s1;
-	register char *t = s2;
+	const char *f = s1;
+	char *t = s2;
 
 	if (f < t) {
 		f += n;
