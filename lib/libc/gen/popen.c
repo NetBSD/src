@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.16 1998/02/02 02:41:28 perry Exp $	*/
+/*	$NetBSD: popen.c,v 1.17 1998/02/02 02:54:28 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: popen.c,v 1.16 1998/02/02 02:41:28 perry Exp $");
+__RCSID("$NetBSD: popen.c,v 1.17 1998/02/02 02:54:28 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -128,7 +128,7 @@ popen(command, type)
 		for (old = pidlist; old; old = old->next)
 			close(fileno(old->fp));
 		
-		execl(_PATH_BSHELL, "sh", "-c", program, NULL);
+		execl(_PATH_BSHELL, "sh", "-c", command, NULL);
 		_exit(127);
 		/* NOTREACHED */
 	}
