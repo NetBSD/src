@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.13 2002/01/04 21:18:59 briggs Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.14 2002/01/16 23:37:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -614,8 +614,7 @@ initarm(void)
 		size_t totalsize = (uintptr_t) _end - KERNEL_TEXT_BASE;
 		u_int logical;
 
-		/* Round down text size and round up total size. */
-		textsize = textsize & ~PGOFSET;
+		textsize = (textsize + PGOFSET) & ~PGOFSET;
 		totalsize = (totalsize + PGOFSET) & ~PGOFSET;
 		
 		logical = 0x00200000;	/* offset of kernel in RAM */
@@ -623,15 +622,18 @@ initarm(void)
 		/*
 		 * This maps the kernel text/data/bss VA==PA.
 		 */
-		logical += map_chunk(0, l2pagetable, KERNEL_BASE + logical,
+		logical += map_chunk(l1pagetable, l2pagetable,
+		    KERNEL_BASE + logical,
 		    physical_start + logical, textsize,
 		    AP_KRW, PT_CACHEABLE);
-		logical += map_chunk(0, l2pagetable, KERNEL_BASE + logical,
+		logical += map_chunk(l1pagetable, l2pagetable,
+		    KERNEL_BASE + logical,
 		    physical_start + logical, totalsize - textsize,
 		    AP_KRW, PT_CACHEABLE);
 
 #if 0 /* XXX No symbols yet. */
-		logical += map_chunk(0, l2pagetable, KERNEL_BASE + logical,
+		logical += map_chunk(l1pagetable, l2pagetable,
+		    KERNEL_BASE + logical,
 		    physical_start + logical, kernexec->a_syms + sizeof(int)
 		    + *(u_int *)((int)end + kernexec->a_syms + sizeof(int)),
 		    AP_KRW, PT_CACHEABLE);
