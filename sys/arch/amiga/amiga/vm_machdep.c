@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.30 1997/05/19 10:14:50 veego Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.31 1997/09/18 03:38:31 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -367,7 +367,7 @@ vmapbuf(bp, sz)
 	addr = bp->b_saveaddr = bp->b_un.b_addr;
 	off = (int)addr & PGOFSET;
 	p = bp->b_proc;
-	npf = btoc(round_page(bp->b_bcount + off));
+	npf = btoc(round_page(sz + off));
 	kva = kmem_alloc_wait(phys_map, ctob(npf));
 	bp->b_un.b_addr = (caddr_t) (kva + off);
 	while (npf--) {
@@ -398,7 +398,7 @@ vunmapbuf(bp, sz)
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
-	npf = btoc(round_page(bp->b_bcount + ((int)addr & PGOFSET)));
+	npf = btoc(round_page(sz + ((int)addr & PGOFSET)));
 	kva = (vm_offset_t)((int)addr & ~PGOFSET);
 	kmem_free_wakeup(phys_map, kva, ctob(npf));
 	bp->b_un.b_addr = bp->b_saveaddr;
