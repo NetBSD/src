@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.10.2.3 1996/02/17 23:27:08 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.10.2.4 1996/02/26 15:38:27 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -204,6 +204,8 @@ void
 dma_reset(sc)
 	struct dma_softc *sc;
 {
+	DMAWAIT(sc);
+	DMA_DRAIN(sc);				/* Drain (DMA rev 1) */
 	DMACSR(sc) &= ~D_EN_DMA;		/* Stop DMA */
 	DMAWAIT1(sc);				/* let things drain */
 	DMACSR(sc) |= D_RESET;			/* reset DMA */
