@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.10 2000/10/02 17:21:26 itojun Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.11 2000/10/02 23:49:02 itojun Exp $	*/
 /*	$KAME: esp_core.c,v 1.44 2000/09/20 18:15:22 itojun Exp $	*/
 
 /*
@@ -422,6 +422,7 @@ esp_cbc_mature(sav)
 		break;
 	case SADB_X_EALG_BLOWFISHCBC:
 	case SADB_X_EALG_CAST128CBC:
+		break;
 #ifdef SADB_X_EALG_RIJNDAELCBC
 	case SADB_X_EALG_RIJNDAELCBC:
 #endif
