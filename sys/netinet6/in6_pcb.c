@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.49 2002/06/11 19:40:00 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.50 2002/08/20 22:06:04 itojun Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.49 2002/06/11 19:40:00 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.50 2002/08/20 22:06:04 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -228,13 +228,19 @@ in6_pcbbind(in6p, nam, p)
 			 * bind to an anycast address might accidentally
 			 * cause sending a packet with an anycast source
 			 * address, so we forbid it.
+			 *
+			 * We should allow to bind to a deprecated address,
+			 * since the application dare to use it.
+			 * But, can we assume that they are careful enough
+			 * to check if the address is deprecated or not?
+			 * Maybe, as a safeguard, we should have a setsockopt
+			 * flag to control the bind(2) behavior against
+			 * deprecated addresses (default: forbid bind(2)).
 			 */
 			if (ia &&
 			    ((struct in6_ifaddr *)ia)->ia6_flags &
-			    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|
-			     IN6_IFF_DETACHED|IN6_IFF_DEPRECATED)) {
+			    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|IN6_IFF_DETACHED))
 				return(EADDRNOTAVAIL);
-			}
 		}
 		if (lport) {
 #ifndef IPNOPRIVPORTS
