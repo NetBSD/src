@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.7 2004/01/13 23:37:30 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -33,9 +33,9 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.6 2003/10/31 18:32:09 brooks Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.8 2004/04/02 20:22:25 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.7 2004/01/13 23:37:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $");
 #endif
 
 /*
@@ -120,6 +120,7 @@ ieee80211_proto_attach(struct ifnet *ifp)
 #endif
 	ic->ic_fragthreshold = 2346;		/* XXX not used yet */
 	ic->ic_fixed_rate = -1;			/* no fixed rate */
+	ic->ic_protmode = IEEE80211_PROT_CTSONLY;
 
 #ifdef __FreeBSD__
 	mtx_init(&ic->ic_mgtq.ifq_mtx, ifp->if_xname, "mgmt send q", MTX_DEF);
@@ -280,8 +281,17 @@ ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni, int flags
 			 * Check against supported rates.
 			 */
 			for (j = 0; j < srs->rs_nrates; j++) {
-				if (r == RV(srs->rs_rates[j]))
+				if (r == RV(srs->rs_rates[j])) {
+					/*
+					 * Overwrite with the supported rate
+					 * value so any basic rate bit is set.
+					 * This insures that response we send
+					 * to stations have the necessary basic
+					 * rate bit set.
+					 */
+					nrs->rs_rates[i] = srs->rs_rates[j];
 					break;
+				}
 			}
 			if (j == srs->rs_nrates) {
 				/*
