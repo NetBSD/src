@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.31 1998/10/19 22:19:27 tron Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.32 1998/10/21 22:24:28 tron Exp $	*/
 
 /*
  * Implementation of SVID semaphores
@@ -8,7 +8,7 @@
  * This software is provided ``AS IS'' without any warranties of any kind.
  */
 
-#include "opt_sysv.h"
+#define SYSVSEM
 
 #include <sys/param.h>
 #include <sys/systm.h>
