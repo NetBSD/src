@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.68 2002/10/18 00:30:10 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.69 2002/10/18 10:24:40 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1652,3 +1652,7 @@ bin/ps/keywords.c				1.28 via patch
 sbin/route/route.c				1.60-1.61 via patch
 
   Correct prefixlen option handling.
+
+sys/netinet/tcp_input.c				1.156 via patch
+
+  Correct log_refused check (TH_SYN, !TH_RST and !TH_ACK).  Fixes PR#18669.
