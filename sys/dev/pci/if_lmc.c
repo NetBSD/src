@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc.c,v 1.6 2000/11/14 18:42:56 thorpej Exp $	*/
+/*	$NetBSD: if_lmc.c,v 1.7 2001/04/09 19:34:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -1336,6 +1336,7 @@ lmc_attach(lmc_softc_t * const sc)
 	if_attach(ifp);
 
 #if defined(__NetBSD__) || defined(__FreeBSD__)
+	sc->lmc_sppp.pp_framebytes = 3;	/* 1 flag byte, 2 byte FCS */
 	sppp_attach((struct ifnet *)&sc->lmc_sppp);
 	sc->lmc_sppp.pp_flags = PP_CISCO | PP_KEEPALIVE;
 #endif
