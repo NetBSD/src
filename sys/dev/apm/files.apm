@@ -1,0 +1,12 @@
+# $NetBSD: files.apm,v 1.1 2000/07/02 09:48:12 takemura Exp $
+
+#
+# Common APM support files
+#
+defopt	opt_apm.h APM_DISABLE APM_FORCE_64K_SEGMENTS APM_NO_IDLE
+	APM_NO_STANDBY APM_V10_ONLY APM_NO_V12 APMDEBUG APMDEBUG_VALUE
+	APM_POWER_PRINT APM_DISABLE_INTERRUPTS
+device apmif {}
+device apm
+attach apm at apmif
+file	dev/apm/apm.c			apm needs-count
