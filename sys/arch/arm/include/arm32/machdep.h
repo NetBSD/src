@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.1 2002/01/05 22:41:48 chris Exp $ */
+/* $NetBSD: machdep.h,v 1.2 2002/01/07 22:58:08 chris Exp $ */
 
 #ifndef _ARM32_BOOT_MACHDEP_H_
 #define _ARM32_BOOT_MACHDEP_H_
@@ -12,4 +12,16 @@ void data_abort_handler __P((trapframe_t *));
 void prefetch_abort_handler __P((trapframe_t *));
 void dumpsys	__P((void));
 
+/* 
+ * note that we use void * as all the platforms have different ideas on what
+ * the structure is
+ */
+u_int initarm __P((void *));
+
+/* from arm/arm32/intr.c */
+void dosoftints __P((void));
+void set_spl_masks __P((void));
+#ifdef DIAGNOSTIC
+void dump_spl_masks __P((void));
+#endif
 #endif
