@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.32 1997/06/19 20:54:15 pk Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.33 1998/01/03 02:49:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -251,7 +251,7 @@ again:
 	 * Finish creating the child process.  It will return through a
 	 * different path later.
 	 */
-	vm_fork(p1, p2);
+	vm_fork(p1, p2, FALSE);
 
 	/*
 	 * Make child runnable, set start time, and add to run queue.
