@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.h,v 1.2 1994/11/20 20:54:00 deraadt Exp $ */
+/*	$NetBSD: auxreg.h,v 1.3 1995/02/22 21:13:02 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,3 +68,11 @@
 #define LED_FLIP	*AUXIO_REG = (*AUXIO_REG | AUXIO_MB1) ^ AUXIO_LED
 
 #define	AUXIO_BITS	"\20\6FHD\5FDC\4FDS\3FTC\2FEJ\1LED"
+
+#ifndef LOCORE
+/*
+ * Copy of AUXIO_REG for the benefit of assembler modules (eg. trap handlers)
+ * as AUXREG_VA depends on NBPG which is not a constant.
+ */
+volatile u_char *auxio_reg;
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.7 1995/02/18 09:33:29 pk Exp $ */
+/*	$NetBSD: auxreg.c,v 1.8 1995/02/22 21:13:01 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -107,6 +107,7 @@ auxregattach(parent, self, aux)
 	struct romaux *ra = &ca->ca_ra;
 
 	(void)mapdev(ra->ra_paddr, AUXREG_VA, sizeof(long), ca->ca_bustype);
+	auxio_reg = AUXIO_REG;
 	printf("\n");
 #ifdef BLINK
 	blink((caddr_t)0);
