@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.12 1999/12/12 11:30:19 veego Exp $
+#	$NetBSD: Makefile,v 1.13 2000/05/03 11:40:56 veego Exp $
 
 PROG=	ipsend
-SRCS=	ipsend.c ip.c ipsopt.c 44arp.c sbpf.c iplang_l.l iplang_y.y
+SRCS=	ipsend.c ip.c ipsopt.c iplang_l.l iplang_y.y sbpf.c sock.c 44arp.c
 YHEADER=1
 LDADD=	-ll
 DPADD=	${LIBL}

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.12 1999/12/12 11:30:31 veego Exp $
+#	$NetBSD: Makefile,v 1.13 2000/05/03 11:40:56 veego Exp $
 
 PROG=	iptest
-SRCS=	iptest.c iptests.c ip.c sbpf.c 44arp.c sock.c
+SRCS=	iptest.c iptests.c ip.c sbpf.c sock.c 44arp.c
 MAN=	iptest.1
 CPPFLAGS+=-I${.CURDIR}/../../../dist/ipf
 
