@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_meter.c	7.11 (Berkeley) 4/20/91
- *	$Id: vm_meter.c,v 1.8 1994/01/07 22:38:25 mycroft Exp $
+ *	$Id: vm_meter.c,v 1.9 1994/01/28 04:50:47 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -154,4 +154,28 @@ loadav(avg, n)
 	for (i = 0; i < 3; i++)
 		avenrun[i] = (double) averunnable.ldavg[i] / FSCALE;
 #endif /* COMPAT_43 */
+}
+
+/*
+ * Get load average (i.e. avenrunnable, via kinfo).
+ */
+/* ARGSUSED */
+kinfo_loadavg(op, where, acopysize, arg, aneeded)
+	int op;
+	char *where;
+	int *acopysize, arg, *aneeded;
+{
+	int error;
+
+	if (where == NULL || acopysize == NULL) {
+		*aneeded = sizeof(struct loadavg);
+		return 0;
+	}
+	if (*acopysize != sizeof(struct loadavg)) {
+		*aneeded = sizeof(struct loadavg);
+		*acopysize = 0;
+		return 0;
+	}
+	*aneeded = 0;
+	return copyout(&averunnable, where, *acopysize);
 }
