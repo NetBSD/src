@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2000/05/02 18:20:41 nonaka Exp $
+#	$NetBSD: Makefile,v 1.20 2001/10/15 16:22:53 uch Exp $
 
 SUBDIR=	mbr
 .if ${MACHINE} == "i386"
@@ -7,7 +7,7 @@ SUBDIR+= mbr_bootsel
 
 .if (${MACHINE} == "i386" || ${MACHINE} == "bebox" || ${MACHINE} == "cobalt" ||\
     ${MACHINE} == "ofppc" || ${MACHINE} == "hpcmips" || ${MACHINE} == "arc" ||\
-    ${MACHINE} == "prep")
+    ${MACHINE} == "prep" || ${MACHINE} == "playstation2")
 PROG=	fdisk 
 SRCS=	fdisk.c
 DPADD+=	${LIBUTIL}
