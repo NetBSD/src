@@ -1,4 +1,4 @@
-/*	$NetBSD: null_subr.c,v 1.2.2.1 1994/08/19 12:13:34 mycroft Exp $	*/
+/*	$NetBSD: null_subr.c,v 1.2.2.2 1994/09/20 06:43:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,7 @@
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
+#include <miscfs/specfs/specdev.h>
 #include <miscfs/nullfs/null.h>
 
 #define LOG2_SIZEVNODE 7		/* log2(sizeof struct vnode) */
@@ -119,8 +120,8 @@ loop:
 
 /*
  * Make a new null_node node.
- * Vp is the alias vnode, lofsvp is the lower vnode.
- * Maintain a reference to (lowervp).
+ * Vp is the alias vnode, lowervp is the lower vnode.
+ * Maintain a reference to lowervp.
  */
 static int
 null_node_alloc(mp, lowervp, vpp)
@@ -130,34 +131,93 @@ null_node_alloc(mp, lowervp, vpp)
 {
 	struct null_node_hashhead *hd;
 	struct null_node *xp;
-	struct vnode *othervp, *vp;
+	struct vnode *vp, *nvp;
 	int error;
+	extern int (**dead_vnodeop_p)();
 
-	if (error = getnewvnode(VT_NULL, mp, null_vnodeop_p, vpp))
+	if (error = getnewvnode(VT_NULL, mp, null_vnodeop_p, &vp))
 		return (error);
-	vp = *vpp;
-
-	MALLOC(xp, struct null_node *, sizeof(struct null_node), M_TEMP, M_WAITOK);
 	vp->v_type = lowervp->v_type;
-	xp->null_vnode = vp;
+
+	MALLOC(xp, struct null_node *, sizeof(struct null_node), M_TEMP,
+	    M_WAITOK);
+	if (vp->v_type == VBLK || vp->v_type == VCHR) {
+		MALLOC(vp->v_specinfo, struct specinfo *,
+		    sizeof(struct specinfo), M_VNODE, M_WAITOK);
+		vp->v_rdev = lowervp->v_rdev;
+	}
+
 	vp->v_data = xp;
+	xp->null_vnode = vp;
 	xp->null_lowervp = lowervp;
 	/*
 	 * Before we insert our new node onto the hash chains,
 	 * check to see if someone else has beaten us to it.
 	 * (We could have slept in MALLOC.)
 	 */
-	if (othervp = null_node_find(lowervp)) {
+	if (nvp = null_node_find(lowervp)) {
+		*vpp = nvp;
+
+		/* free the substructures we've allocated. */
 		FREE(xp, M_TEMP);
-		vp->v_type = VBAD;	/* node is discarded */
-		vp->v_usecount = 0;	/* XXX */
-		*vpp = othervp;
-		return 0;
-	};
-	VREF(lowervp);   /* Extra VREF will be vrele'd in null_node_create */
+		if (vp->v_type == VBLK || vp->v_type == VCHR)
+			FREE(vp->v_specinfo, M_VNODE);
+
+		vp->v_type = VBAD;		/* node is discarded */
+		vp->v_op = dead_vnodeop_p;	/* so ops will still work */
+		vrele(vp);			/* get rid of it. */
+		return (0);
+	}
+
+	/*
+	 * XXX if it's a device node, it needs to be checkalias()ed.
+	 * however, for locking reasons, that's just not possible.
+	 * so we have to do most of the dirty work inline.  Note that
+	 * this is a limited case; we know that there's going to be
+	 * an alias, and we know that that alias will be a "real"
+	 * device node, i.e. not tagged VT_NON.
+	 */
+	if (vp->v_type == VBLK || vp->v_type == VCHR) {
+		struct vnode *cvp, **cvpp;
+
+		cvpp = &speclisth[SPECHASH(vp->v_rdev)];
+loop:
+		for (cvp = *cvpp; cvp; cvp = cvp->v_specnext) {
+			if (vp->v_rdev != cvp->v_rdev ||
+			    vp->v_type != cvp->v_type)
+				continue;
+
+			/*
+			 * Alias, but not in use, so flush it out.
+			 */
+			if (cvp->v_usecount == 0) {
+				vgone(cvp);
+				goto loop;
+			}
+			if (vget(cvp, 0))	/* can't lock; will die! */
+				goto loop;
+			break;
+		}
+
+		vp->v_hashchain = cvpp;
+		vp->v_specnext = *cvpp;
+		vp->v_specflags = 0;
+		*cvpp = vp;
+#ifdef DIAGNOSTIC
+		if (cvp == NULLVP)
+			panic("null_node_alloc: no alias for device");
+#endif
+		vp->v_flag |= VALIASED;
+		cvp->v_flag |= VALIASED;
+		vrele(cvp);
+	}
+	/* XXX end of transmogrified checkalias() */
+
+	*vpp = vp;
+	VREF(lowervp);	/* Extra VREF will be vrele'd in null_node_create */
 	hd = NULL_NHASH(lowervp);
 	LIST_INSERT_HEAD(hd, xp, null_hash);
-	return 0;
+	return (0);
 }
 
 
