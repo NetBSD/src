@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)svi_util.c	8.33 (Berkeley) 3/10/94";
+static const char sccsid[] = "@(#)svi_util.c	8.54 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -40,7 +40,6 @@ static char sccsid[] = "@(#)svi_util.c	8.33 (Berkeley) 3/10/94";
 #include <sys/time.h>
 
 #include <bitstring.h>
-#include <curses.h>
 #include <errno.h>
 #include <limits.h>
 #include <signal.h>
@@ -51,6 +50,7 @@ static char sccsid[] = "@(#)svi_util.c	8.33 (Berkeley) 3/10/94";
 #include <unistd.h>
 
 #include "compat.h"
+#include <curses.h>
 #include <db.h>
 #include <regex.h>
 
@@ -58,44 +58,7 @@ static char sccsid[] = "@(#)svi_util.c	8.33 (Berkeley) 3/10/94";
 #include "../vi/vcmd.h"
 #include "excmd.h"
 #include "svi_screen.h"
-
-/*
- * vbell --
- *	Set up the visual bell information.  Broken out into a
- *	separate routine so don't allocate 4K every time we beep.
- */
-static int
-vbell(sp)
-	SCR *sp;
-{
-	size_t len;
-	char *s, *t, b1[2048], b2[2048];
-
-	/* Get the termcap information. */
-	s = O_STR(sp, O_TERM);
-	if (tgetent(b1, s) != 1) {
-		msgq(sp, M_ERR, "No termcap entry for %s", s);
-		return (1);
-	}
-
-	/* Get the visual bell string. */
-	t = b2;
-	if (tgetstr("vb", &t) == NULL) {
-		msgq(sp, M_VINFO,
-		    "No visual bell for %s terminal type", s);
-		return (1);
-	}
-	if ((len = t - b2) == 0)
-		return (1);
-
-	/* Free the old one, save the new one. */
-	MALLOC_RET(sp, s, char *, len);
-	memmove(s, b2, len);
-	if (SVP(sp)->VB != NULL)
-		free(SVP(sp)->VB);
-	SVP(sp)->VB = s;
-	return (0);
-}
+#include "../sex/sex_screen.h"
 
 /*
  * svi_bell --
@@ -105,17 +68,18 @@ void
 svi_bell(sp)
 	SCR *sp;
 {
-	if (O_ISSET(sp, O_FLASH) && !F_ISSET(SVP(sp), SVI_NO_VBELL))
-		if (SVP(sp)->VB != NULL) {
-			(void)tputs(SVP(sp)->VB, 1, svi_putchar);
-			(void)fflush(stdout);
-		} else {
-			if (vbell(sp))
-				F_SET(SVP(sp), SVI_NO_VBELL);
-			svi_bell(sp);
-		}
+#ifdef SYSV_CURSES
+	if (O_ISSET(sp, O_FLASH))
+		flash();
 	else
+		beep();
+#else
+	if (O_ISSET(sp, O_FLASH) && SVP(sp)->VB != NULL) {
+		(void)tputs(SVP(sp)->VB, 1, vi_putchar);
+		(void)fflush(stdout);
+	} else
 		(void)write(STDOUT_FILENO, "\007", 1);	/* '\a' */
+#endif
 	F_CLR(sp, S_BELLSCHED);
 }
 
@@ -135,7 +99,10 @@ svi_optchange(sp, opt)
 			FREE(SVP(sp)->VB, strlen(SVP(sp)->VB) + 1);
 			SVP(sp)->VB = NULL;
 		}
-		F_CLR(SVP(sp), SVI_NO_VBELL);
+
+		/* Reset the screen size. */
+		if (sp->s_window(sp, 0))
+			return (1);
 		F_SET(sp, S_RESIZE);
 		break;
 	case O_WINDOW:
@@ -163,16 +130,19 @@ svi_busy(sp, msg)
 	 * search.c:f_search() is called from ex/ex_tag.c:ex_tagfirst(),
 	 * which runs before the screen really exists.  Make sure we don't
 	 * step on anything.
+	 *
+	 * If the terminal isn't initialized, there's nothing to do.
 	 */
-	if (F_ISSET(sp->gp, G_CURSES_INIT)) {
-		MOVE(sp, INFOLINE(sp), 0);
-		if (msg) {
-			ADDSTR(msg);
-			clrtoeol();
-		}
-		refresh();
-		F_SET(SVP(sp), SVI_CUR_INVALID);
+	if (!F_ISSET(SVP(sp), SVI_CURSES_INIT))
+		return (0);
+
+	MOVE(sp, INFOLINE(sp), 0);
+	if (msg) {
+		ADDSTR(msg);
+		clrtoeol();
 	}
+	refresh();
+	F_SET(SVP(sp), SVI_CUR_INVALID);
 	return (0);
 }
 
@@ -185,15 +155,17 @@ svi_keypad(sp, on)
 	SCR *sp;
 	int on;
 {
-	char *sbp, *t, kbuf[2048], sbuf[128];
+#ifdef SYSV_CURSES
+	keypad(stdscr, on ? TRUE : FALSE);
+#else
+	char *sbp, *t, sbuf[128];
 
-	if (tgetent(kbuf, O_STR(sp, O_TERM)) != 1)
-		return;
 	sbp = sbuf;
 	if ((t = tgetstr(on ? "ks" : "ke", &sbp)) == NULL)
 		return;
-	(void)tputs(t, 0, svi_putchar);
+	(void)tputs(t, 0, vi_putchar);
 	(void)fflush(stdout);
+#endif
 }
 
 /*
@@ -218,52 +190,147 @@ svi_clear(sp)
 
 /*
  * svi_suspend --
- *	Suspend the svi screen; don't kill the process group, curses is
- *	expected to do that for us.
+ *	Suspend an svi screen.
+ *
+ * See signal.c for a long discussion of what's going on here.  Let
+ * me put it this way, it's NOT my fault.
  */
 int
 svi_suspend(sp)
 	SCR *sp;
 {
-	struct termios t;
-	int rval;
+	struct termios sv_term;
+	sigset_t set;
+	int oldx, oldy, rval;
+	char *sbp, *t, sbuf[128];
+
+	rval = 0;
+
+	/*
+	 * Block SIGALRM, because vi uses timers to decide when to paint
+	 * busy messages on the screen.
+	 */
+	(void)sigemptyset(&set);
+	(void)sigaddset(&set, SIGALRM);
+	if (sigprocmask(SIG_BLOCK, &set, NULL)) {
+		msgq(sp, M_SYSERR, "suspend: sigblock");
+		return (1);
+	}
+
+	/* Save the current cursor position. */
+	getyx(stdscr, oldy, oldx);
+
+	/*
+	 * Move the cursor to the bottom of the screen.
+	 *
+	 * XXX
+	 * Some curses implementations don't turn off inverse video when
+	 * standend() is called, waiting to see what the next character is
+	 * going to be, instead.  Write a character to force inverse video
+	 * off, and then clear the line.
+	 */
+	MOVE(sp, INFOLINE(sp), 0);
+	ADDCH('.');
+	refresh();
+	MOVE(sp, INFOLINE(sp), 0);
+	clrtoeol();
+	refresh();
 
 	/* Restore the cursor keys to normal mode. */
 	svi_keypad(sp, 0);
 
-	/*
-	 * XXX
-	 * See comment in svi_curses_init().
-	 */
-	if (F_ISSET(sp->gp, G_CURSES_S5CB)) {
-		(void)tcgetattr(STDIN_FILENO, &t);
-		(void)tcsetattr(STDIN_FILENO,
-		    TCSASOFT | TCSADRAIN, &sp->gp->s5_curses_botch);
+	/* Send VE/TE. */
+#ifdef SYSV_CURSES
+	if ((t = tigetstr("cnorm")) != NULL && t != (char *)-1)
+		(void)tputs(t, 0, vi_putchar);
+	if ((t = tigetstr("rmcup")) != NULL && t != (char *)-1)
+		(void)tputs(t, 0, vi_putchar);
+#else
+	sbp = sbuf;
+	if ((t = tgetstr("ve", &sbp)) != NULL)
+		(void)tputs(t, 0, vi_putchar);
+	sbp = sbuf;
+	if ((t = tgetstr("te", &sbp)) != NULL)
+		(void)tputs(t, 0, vi_putchar);
+#endif
+	(void)fflush(stdout);
+
+	/* Save current terminal settings, and restore the original ones. */
+	if (tcgetattr(STDIN_FILENO, &sv_term)) {
+		msgq(sp, M_SYSERR, "suspend: tcgetattr");
+		return (1);
+	}
+	if (tcsetattr(STDIN_FILENO,
+	    TCSASOFT | TCSADRAIN, &sp->gp->original_termios)) {
+		msgq(sp, M_SYSERR, "suspend: tcsetattr original");
+		return (1);
 	}
 
-	F_SET(sp->gp, G_SLEEPING);
-	if (rval = kill(getpid(), SIGTSTP))
-		msgq(sp, M_SYSERR, "SIGTSTP");
-	F_CLR(sp->gp, G_SLEEPING);
+	/* Push out any waiting messages. */
+	(void)write(STDOUT_FILENO, "\n", 1);
+	(void)sex_refresh(sp, sp->ep);
 
-	if (F_ISSET(sp->gp, G_CURSES_S5CB))
-		(void)tcsetattr(STDIN_FILENO, TCSASOFT | TCSADRAIN, &t);
+	/* Stop the process group. */
+	if (kill(0, SIGTSTP)) {
+		msgq(sp, M_SYSERR, "suspend: kill");
+		rval = 1;
+	}
+
+	/* Time passes ... */
+
+	/* Restore current terminal settings. */
+	if (tcsetattr(STDIN_FILENO, TCSASOFT | TCSADRAIN, &sv_term)) {
+		msgq(sp, M_SYSERR, "suspend: tcsetattr current");
+		rval = 1;
+	}
+
+	/* Send TI/VS. */
+#ifdef SYSV_CURSES
+	if ((t = tigetstr("smcup")) != NULL && t != (char *)-1)
+		(void)tputs(t, 0, vi_putchar);
+	if ((t = tigetstr("cvvis")) != NULL && t != (char *)-1)
+		(void)tputs(t, 0, vi_putchar);
+#else
+	sbp = sbuf;
+	if ((t = tgetstr("ti", &sbp)) != NULL)
+		(void)tputs(t, 0, vi_putchar);
+	sbp = sbuf;
+	if ((t = tgetstr("vs", &sbp)) != NULL)
+		(void)tputs(t, 0, vi_putchar);
+#endif
+	(void)fflush(stdout);
 
 	/* Put the cursor keys into application mode. */
-	svi_keypad(sp, 0);
+	svi_keypad(sp, 1);
 
+	/*
+	 * If the screen changed size, do a full refresh.  Otherwise,
+	 * System V has curses repaint it.  4BSD curses will repaint
+	 * it in the wrefresh() call below.
+	 */
+	if (!sp->s_window(sp, 1))
+		(void)sp->s_refresh(sp, sp->ep);
+#ifdef SYSV_CURSES
+	else
+		redrawwin(stdscr);
+#endif
+
+	/*
+	 * Restore the cursor.
+	 *
+	 * !!!
+	 * Don't use MOVE/MOVEA, we don't want to return without resetting
+	 * the signals, regardless.
+	 */
+	(void)move(oldy, oldx);
+	(void)wrefresh(curscr);
+
+	/* Reset the signals. */
+	if (sigprocmask(SIG_UNBLOCK, &set, NULL)) {
+		msgq(sp, M_SYSERR, "suspend: sigblock");
+		rval = 1;
+	}
 	return (rval);
-}
-
-/*
- * svi_putchar --
- *	Functional version of putchar, for tputs.
- */
-void
-svi_putchar(ch)
-	int ch;
-{
-	(void)putchar(ch);
 }
 
 /*

@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)svi_relative.c	8.12 (Berkeley) 3/15/94";
+static const char sccsid[] = "@(#)svi_relative.c	8.17 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,6 +52,9 @@ static char sccsid[] = "@(#)svi_relative.c	8.12 (Berkeley) 3/15/94";
 
 #include "vi.h"
 #include "svi_screen.h"
+
+static size_t svi_screens
+    __P((SCR *, EXF *, char *, size_t, recno_t, size_t *));
 
 /*
  * svi_column --
@@ -108,7 +111,7 @@ svi_opt_screens(sp, ep, lno, cnop)
 
 	/* Trailing '$' if O_LIST option set. */
 	if (O_ISSET(sp, O_LIST) && cnop == NULL)
-		cols += sp->gp->cname['$'].len;
+		cols += KEY_LEN(sp, '$');
 
 	screens = (cols / sp->cols + (cols % sp->cols ? 1 : 0));
 	if (screens == 0)
@@ -127,7 +130,7 @@ svi_opt_screens(sp, ep, lno, cnop)
  *	Return the screen columns necessary to display the line, or,
  *	if specified, the physical character column within the line.
  */
-size_t
+static size_t
 svi_screens(sp, ep, lp, llen, lno, cnop)
 	SCR *sp;
 	EXF *ep;
@@ -136,7 +139,6 @@ svi_screens(sp, ep, lp, llen, lno, cnop)
 	recno_t lno;
 	size_t *cnop;
 {
-	CHNAME const *cname;
 	size_t chlen, cno, len, scno, tab_off;
 	int ch, listset;
 	char *p;
@@ -149,12 +151,11 @@ svi_screens(sp, ep, lp, llen, lno, cnop)
 	if (lp == NULL || llen == 0)
 		return (0);
 
-	cname = sp->gp->cname;
 	listset = O_ISSET(sp, O_LIST);
 
 #define	SET_CHLEN {							\
 	chlen = (ch = *(u_char *)p++) == '\t' &&			\
-	    !listset ? TAB_OFF(sp, tab_off) : cname[ch].len;		\
+	    !listset ? TAB_OFF(sp, tab_off) : KEY_LEN(sp, ch);		\
 }
 #define	TAB_RESET {							\
 	/*								\
@@ -201,23 +202,16 @@ svi_rcm(sp, ep, lno)
 	EXF *ep;
 	recno_t lno;
 {
-	size_t cno, len;
-
-	/* First non-blank character. */
-	if (sp->rcmflags == RCM_FNB) {
-		cno = 0;
-		(void)nonblank(sp, ep, lno, &cno);
-		return (cno);
-	}
-
-	/* First character is easy, and common. */
-	if (sp->rcmflags != RCM_LAST && HMAP->off == 1 && sp->rcm == 0)
-		return (0);
+	size_t len;
 
 	/* Last character is easy, and common. */
-	if (sp->rcmflags == RCM_LAST)
+	if (sp->rcm_last)
 		return (file_gline(sp,
 		    ep, lno, &len) == NULL || len == 0 ? 0 : len - 1);
+
+	/* First character is easy, and common. */
+	if (HMAP->off == 1 && sp->rcm == 0)
+		return (0);
 
 	/*
 	 * Get svi_cm_private() to do the hard work.  If doing leftright
@@ -273,7 +267,6 @@ svi_cm_private(sp, ep, lno, off, cno)
 	recno_t lno;
 	size_t off, cno;
 {
-	CHNAME const *cname;
 	size_t chlen, len, llen, scno, tab_off;
 	int ch, listset;
 	char *lp, *p;
@@ -285,14 +278,13 @@ svi_cm_private(sp, ep, lno, off, cno)
 	if (lp == NULL || llen == 0)
 		return (0);
 
-	cname = sp->gp->cname;
 	listset = O_ISSET(sp, O_LIST);
 
 	/* Discard screen (logical) lines. */
 	for (scno = 0, p = lp, len = llen; --off;) {
-		while (len-- && scno < sp->cols)
+		for (; len && scno < sp->cols; --len)
 			scno += (ch = *(u_char *)p++) == '\t' &&
-			    !listset ? TAB_OFF(sp, scno) : cname[ch].len;
+			    !listset ? TAB_OFF(sp, scno) : KEY_LEN(sp, ch);
 
 		/*
 		 * If reached the end of the physical line, return

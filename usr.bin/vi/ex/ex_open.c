@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_open.c	8.3 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)ex_open.c	8.5 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -66,10 +66,10 @@ ex_open(sp, ep, cmdp)
 	/* If open option off, disallow open command. */
 	if (!O_ISSET(sp, O_OPEN)) {
 		msgq(sp, M_ERR,
-		    "The open command requires that the open option be set.");
+		    "The open command requires that the open option be set");
 		return (1);
 	}
 
-	msgq(sp, M_ERR, "The open command is not yet implemented.");
+	msgq(sp, M_ERR, "The open command is not yet implemented");
 	return (1);
 }

@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)v_put.c	8.8 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)v_put.c	8.10 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -64,11 +64,24 @@ v_Put(sp, ep, vp)
 	EXF *ep;
 	VICMDARG *vp;
 {
+	u_long cnt;
+
 	if (F_ISSET(vp, VC_ISDOT))
 		inc_buf(sp, vp);
 
-	return (put(sp, ep, NULL, F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL,
-	    &vp->m_start, &vp->m_final, 0));
+	/*
+	 * !!!
+	 * Historic vi did not support a count with the 'p' and 'P'
+	 * commands.  It's useful, so we do.
+	 */
+	for (cnt = F_ISSET(vp, VC_C1SET) ? vp->count : 1; cnt--;) {
+		if (put(sp, ep, NULL,
+		    F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL,
+		    &vp->m_start, &vp->m_final, 0))
+			return (1);
+		vp->m_start = vp->m_final;
+	}
+	return (0);
 }
 
 /*
@@ -81,11 +94,24 @@ v_put(sp, ep, vp)
 	EXF *ep;
 	VICMDARG *vp;
 {
+	u_long cnt;
+
 	if (F_ISSET(vp, VC_ISDOT))
 		inc_buf(sp, vp);
 
-	return (put(sp, ep, NULL, F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL,
-	    &vp->m_start, &vp->m_final, 1));
+	/*
+	 * !!!
+	 * Historic vi did not support a count with the 'p' and 'P'
+	 * commands.  It's useful, so we do.
+	 */
+	for (cnt = F_ISSET(vp, VC_C1SET) ? vp->count : 1; cnt--;) {
+		if (put(sp, ep, NULL,
+		    F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL,
+		    &vp->m_start, &vp->m_final, 1))
+			return (1);
+		vp->m_start = vp->m_final;
+	}
+	return (0);
 }
 
 /*

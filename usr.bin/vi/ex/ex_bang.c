@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_bang.c	8.24 (Berkeley) 3/14/94";
+static const char sccsid[] = "@(#)ex_bang.c	8.34 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -55,7 +55,7 @@ static char sccsid[] = "@(#)ex_bang.c	8.24 (Berkeley) 3/14/94";
 
 #include "vi.h"
 #include "excmd.h"
-#include "sex/sex_screen.h"
+#include "../sex/sex_screen.h"
 
 /*
  * ex_bang -- :[line [,line]] ! command
@@ -71,7 +71,7 @@ static char sccsid[] = "@(#)ex_bang.c	8.24 (Berkeley) 3/14/94";
  *
  * There's some fairly amazing slop in this routine to make the different
  * ways of getting here display the right things.  It took a long time to
- * get get right (wrong?), so be careful.
+ * get it right (wrong?), so be careful.
  */
 int
 ex_bang(sp, ep, cmdp)
@@ -94,10 +94,10 @@ ex_bang(sp, ep, cmdp)
 		return (1);
 	}
 
-	/* Swap commands. */
+	/* Set the last bang command. */
 	exp = EXP(sp);
 	if (exp->lastbcomm != NULL)
-		FREE(exp->lastbcomm, strlen(exp->lastbcomm) + 1);
+		free(exp->lastbcomm);
 	if ((exp->lastbcomm = strdup(ap->bp)) == NULL) {
 		msgq(sp, M_SYSERR, NULL);
 		return (1);
@@ -110,7 +110,7 @@ ex_bang(sp, ep, cmdp)
 	 * do it here.
 	 */
 	bp = NULL;
-	if (F_ISSET(cmdp, E_MODIFY)) {
+	if (F_ISSET(cmdp, E_MODIFY) && !F_ISSET(sp, S_EXSILENT)) {
 		if (IN_EX_MODE(sp)) {
 			(void)ex_printf(EXCOOKIE, "!%s\n", ap->bp);
 			(void)ex_fflush(EXCOOKIE);
@@ -126,26 +126,39 @@ ex_bang(sp, ep, cmdp)
 		 * cleaned up.
 		 */
 		if (IN_VI_MODE(sp)) {
-			GET_SPACE_RET(sp, bp, blen, ap->len + 2);
+			GET_SPACE_RET(sp, bp, blen, ap->len + 3);
 			bp[0] = '!';
-			memmove(bp + 1, ap->bp, ap->len + 1);
+			memmove(bp + 1, ap->bp, ap->len);
+			bp[ap->len + 1] = '\n';
+			bp[ap->len + 2] = '\0';
 		}
 	}
 
 	/*
-	 * If addresses were specified, pipe lines from the file through
-	 * the command.
+	 * If addresses were specified, pipe lines from the file through the
+	 * command.
+	 *
+	 * Historically, vi lines were replaced by both the stdout and stderr
+	 * lines of the command, but ex by only the stdout lines.  This makes
+	 * no sense to me, so nvi makes it consistent for both, and matches
+	 * vi's historic behavior.
 	 */
 	if (cmdp->addrcnt != 0) {
-		if (bp != NULL) {
+		/* Autoprint is set historically, even if the command fails. */
+		F_SET(exp, EX_AUTOPRINT);
+
+		/* Vi gets a busy message. */
+		if (bp != NULL)
 			(void)sp->s_busy(sp, bp);
-			FREE_SPACE(sp, bp, blen);
-		}
+
 		/*
 		 * !!!
 		 * Historical vi permitted "!!" in an empty file.  When it
 		 * happens, we get called with two addresses of 1,1 and a
-		 * bad attitude.
+		 * bad attitude.  The simple solution is to turn it into a
+		 * FILTER_READ operation, but that means that we don't put
+		 * an empty line into the default cut buffer as did historic
+		 * vi.  Tough.
 		 */
 		ftype = FILTER;
 		if (cmdp->addr1.lno == 1 && cmdp->addr2.lno == 1) {
@@ -156,12 +169,28 @@ ex_bang(sp, ep, cmdp)
 				ftype = FILTER_READ;
 			}
 		}
-		if (filtercmd(sp, ep,
-		    &cmdp->addr1, &cmdp->addr2, &rm, ap->bp, ftype))
-			return (1);
-		sp->lno = rm.lno;
-		F_SET(exp, EX_AUTOPRINT);
-		return (0);
+		rval = filtercmd(sp, ep,
+		    &cmdp->addr1, &cmdp->addr2, &rm, ap->bp, ftype);
+
+		/*
+		 * If in vi mode, move to the first nonblank.
+		 *
+		 * !!!
+		 * Historic vi wasn't consistent in this area -- if you used
+		 * a forward motion it moved to the first nonblank, but if you
+		 * did a backward motion it didn't.  And, if you followed a
+		 * backward motion with a forward motion, it wouldn't move to
+		 * the nonblank for either.  Going to the nonblank generally
+		 * seems more useful, so we do it.
+		 */
+		if (rval == 0) {
+			sp->lno = rm.lno;
+			if (IN_VI_MODE(sp)) {
+				sp->cno = 0;
+				(void)nonblank(sp, ep, sp->lno, &sp->cno);
+			}
+		}
+		goto ret2;
 	}
 
 	/*
@@ -170,33 +199,44 @@ ex_bang(sp, ep, cmdp)
 	 * If the file has been modified, autowrite is not set and the
 	 * warn option is set, tell the user about the file.
 	 */
-	msg = "\n";
+	msg = NULL;
 	if (F_ISSET(ep, F_MODIFIED))
 		if (O_ISSET(sp, O_AUTOWRITE)) {
 			if (file_write(sp, ep, NULL, NULL, NULL, FS_ALL)) {
 				rval = 1;
-				goto ret;
+				goto ret1;
 			}
-		} else if (O_ISSET(sp, O_WARN))
-			if (IN_VI_MODE(sp) && F_ISSET(cmdp, E_MODIFY))
-				msg = "\nFile modified since last write.\n";
-			else
-				msg = "File modified since last write.\n";
+		} else if (O_ISSET(sp, O_WARN) && !F_ISSET(sp, S_EXSILENT))
+			msg = "File modified since last write.\n";
 
 	/* Run the command. */
 	rval = ex_exec_proc(sp, ap->bp, bp, msg);
-
-	/* Ex terminates with a bang. */
-	if (IN_EX_MODE(sp))
-		(void)write(STDOUT_FILENO, "!\n", 2);
 
 	/* Vi requires user permission to continue. */
 	if (IN_VI_MODE(sp))
 		F_SET(sp, S_CONTINUE);
 
+ret2:	if (IN_EX_MODE(sp)) {
+		/*
+		 * Put ex error messages out so they aren't confused with
+		 * the autoprint output.
+		 */
+		if (rval)
+			(void)sex_refresh(sp, sp->ep);
+
+		/* Ex terminates with a bang, even if the command fails. */
+		if (!F_ISSET(sp, S_EXSILENT))
+			(void)write(STDOUT_FILENO, "!\n", 2);
+	}
+
 	/* Free the extra space. */
-ret:	if (bp != NULL)
+ret1:	if (bp != NULL)
 		FREE_SPACE(sp, bp, blen);
 
-	return (rval);
+	/*
+	 * XXX
+	 * The ! commands never return an error, so that autoprint always
+	 * happens in the ex parser.
+	 */
+	return (0);
 }

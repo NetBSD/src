@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_file.c	8.8 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)ex_file.c	8.11 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -57,7 +57,7 @@ static char sccsid[] = "@(#)ex_file.c	8.8 (Berkeley) 3/8/94";
 
 /*
  * ex_file -- :f[ile] [name]
- *	Status line and change the file's name.
+ *	Change the file's name and display the status line.
  */
 int
 ex_file(sp, ep, cmdp)
@@ -65,8 +65,8 @@ ex_file(sp, ep, cmdp)
 	EXF *ep;
 	EXCMDARG *cmdp;
 {
+	CHAR_T *p;
 	FREF *frp;
-	char *p, *t;
 
 	switch (cmdp->argc) {
 	case 0:
@@ -75,29 +75,29 @@ ex_file(sp, ep, cmdp)
 		frp = sp->frp;
 
 		/* Make sure can allocate enough space. */
-		if ((p = strdup(cmdp->argv[0]->bp)) == NULL) {
-			msgq(sp, M_SYSERR, NULL);
+		if ((p = v_strdup(sp,
+		    cmdp->argv[0]->bp, cmdp->argv[0]->len)) == NULL)
 			return (1);
-		}
 
 		/* If already have a file name, it becomes the alternate. */
-		if ((t = FILENAME(frp)) != NULL)
-			set_alt_name(sp, t);
+		if (!F_ISSET(frp, FR_TMPFILE))
+			set_alt_name(sp, frp->name);
 
-		/* Free any previously changed name. */
-		if (frp->cname != NULL)
-			free(frp->cname);
-		frp->cname = p;
+		/* Free the previous name. */
+		free(frp->name);
+		frp->name = p;
 
-		/* The read-only bit follows the file name; clear it. */
-		F_CLR(frp, FR_RDONLY);
+		/*
+		 * The read-only bit follows the file name; clear it.
+		 * The file has a real name, it's no longer a temporary.
+		 */
+		F_CLR(frp, FR_RDONLY | FR_TMPFILE);
 
 		/* Have to force a write if the file exists, next time. */
-		F_CLR(frp, FR_CHANGEWRITE);
+		F_SET(frp, FR_NAMECHANGE);
 		break;
 	default:
 		abort();
 	}
-	status(sp, ep, sp->lno, 1);
-	return (0);
+	return (msg_status(sp, ep, sp->lno, 1));
 }
