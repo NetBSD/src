@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hpcmips,v 1.3 2002/10/04 18:28:29 elric Exp $
+#	$NetBSD: majors.hpcmips,v 1.4 2002/10/14 04:43:54 takemura Exp $
 #
 # Device majors for hpcmips
 #
@@ -54,3 +54,4 @@ device-major	lkm		char 47			lkm
 device-major	audio		char 48			audio
 device-major	systrace	char 49			systrace
 device-major	cgd		char 50  block 10	cgd
+device-major	apmdev		char 51			apmdev
