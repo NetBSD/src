@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc_obio.c,v 1.17 2003/07/15 02:43:26 lukem Exp $	*/
+/*	$NetBSD: sbc_obio.c,v 1.18 2005/01/15 16:01:00 chs Exp $	*/
 
 /*
  * Copyright (C) 1996,1997 Scott Reynolds.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc_obio.c,v 1.17 2003/07/15 02:43:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc_obio.c,v 1.18 2005/01/15 16:01:00 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -71,21 +71,18 @@ __KERNEL_RCSID(0, "$NetBSD: sbc_obio.c,v 1.17 2003/07/15 02:43:26 lukem Exp $");
 #define	SBC_DMA_OFS_DUO2	0x02000
 #define	SBC_HSK_OFS_DUO2	0x04000
 
-static int	sbc_obio_match __P((struct device *, struct cfdata *, void *));
-static void	sbc_obio_attach __P((struct device *, struct device *, void *));
+static int	sbc_obio_match(struct device *, struct cfdata *, void *);
+static void	sbc_obio_attach(struct device *, struct device *, void *);
 
-void	sbc_intr_enable __P((struct ncr5380_softc *));
-void	sbc_intr_disable __P((struct ncr5380_softc *));
-void	sbc_obio_clrintr __P((struct ncr5380_softc *));
+void	sbc_intr_enable(struct ncr5380_softc *);
+void	sbc_intr_disable(struct ncr5380_softc *);
+void	sbc_obio_clrintr(struct ncr5380_softc *);
 
 CFATTACH_DECL(sbc_obio, sizeof(struct sbc_softc),
     sbc_obio_match, sbc_obio_attach, NULL, NULL);
 
 static int
-sbc_obio_match(parent, cf, args)
-	struct device *parent;
-	struct cfdata *cf;
-	void *args;
+sbc_obio_match(struct device *parent, struct cfdata *cf, void *args)
 {
 	switch (current_mac_model->machineid) {
 	case MACH_MACIIFX:	/* Note: the IIfx isn't (yet) supported. */
@@ -111,9 +108,7 @@ sbc_obio_match(parent, cf, args)
 }
 
 static void
-sbc_obio_attach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+sbc_obio_attach(struct device *parent, struct device *self, void *args)
 {
 	struct sbc_softc *sc = (struct sbc_softc *) self;
 	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *) sc;
@@ -243,8 +238,7 @@ sbc_obio_attach(parent, self, args)
  * Interrupt support routines.
  */
 void
-sbc_intr_enable(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+sbc_intr_enable(struct ncr5380_softc *ncr_sc)
 {
 	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
 	int s, flags;
@@ -262,8 +256,7 @@ sbc_intr_enable(ncr_sc)
 }
 
 void
-sbc_intr_disable(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+sbc_intr_disable(struct ncr5380_softc *ncr_sc)
 {
 	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
 	int s, flags;
@@ -281,8 +274,7 @@ sbc_intr_disable(ncr_sc)
 }
 
 void
-sbc_obio_clrintr(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+sbc_obio_clrintr(struct ncr5380_softc *ncr_sc)
 {
 	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
 	int flags;

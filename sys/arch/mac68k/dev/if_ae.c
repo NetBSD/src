@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.75 2003/07/15 02:43:16 lukem Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.76 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.75 2003/07/15 02:43:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.76 2005/01/15 16:00:59 chs Exp $");
 
 #include "bpfilter.h"
 
@@ -35,10 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.75 2003/07/15 02:43:16 lukem Exp $");
 #include <mac68k/dev/if_aevar.h>
 
 int
-ae_size_card_memory(bst, bsh, ofs)
-	bus_space_tag_t bst;
-	bus_space_handle_t bsh;
-	int ofs;
+ae_size_card_memory(bus_space_tag_t bst, bus_space_handle_t bsh, int ofs)
 {
 	int i1, i2, i3, i4, i8;
 
@@ -101,8 +98,7 @@ ae_size_card_memory(bst, bsh, ofs)
  * `interesting' combination.
  */
 int
-ae_test_mem(sc)
-	struct dp8390_softc *sc;
+ae_test_mem(struct dp8390_softc *sc)
 {
 	bus_space_tag_t buft = sc->sc_buft;
 	bus_space_handle_t bufh = sc->sc_bufh;
@@ -129,10 +125,7 @@ ae_test_mem(sc)
  * As in the test_mem function, we use word-wide writes.
  */
 int
-ae_write_mbuf(sc, m, buf)
-	struct dp8390_softc *sc;
-	struct mbuf *m;
-	int buf;
+ae_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 {
 	u_char *data, savebyte[2];
 	int len, wantbyte;
