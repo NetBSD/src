@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1998/10/04 10:49:58 veego Exp $
+#	$NetBSD: Makefile,v 1.13 1999/07/12 04:13:34 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -10,8 +10,6 @@ SRCS=	kdump.c ioctl.c subr.c
 LDSTATIC?=-static
 CLEANFILES+=ioctl.c
 
-ioctl.c: mkioctls ${DESTDIR}/usr/include/sys/ioctl.h ${DESTDIR}/usr/include/sys/ioctl_compat.h
-	/bin/sh ${.CURDIR}/mkioctls ${DESTDIR}/usr/include/sys/ioctl.h \
-	    ${DESTDIR}/usr/include/sys/ioctl_compat.h > ioctl.c
+.include "Makefile.ioctl-c"
 
 .include <bsd.prog.mk>

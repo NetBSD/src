@@ -1,10 +1,23 @@
-:
-cat <<__EOF__ > misc.c
+#! /bin/sh
+#
+#	$NetBSD: makeerrnos.sh,v 1.1 1999/07/12 04:13:34 mrg Exp $
+
+if [ $# -ne 3 ]; then
+	echo "usage: makeerrnos.sh errno.h signal.h output"
+	exit 1;
+fi
+
+ERRNOH=$1
+SIGNALH=$2
+CFILE=$3.c
+HFILE=$3.h
+
+cat <<__EOF__ > $CFILE
 #include "misc.h"
 
 struct systab errnos[] = {
 __EOF__
-cat /usr/include/sys/errno.h | cpp -dM ${1+"$@"} |
+cat ${DESTDIR}/usr/include/sys/errno.h | cpp -dM |
 awk '
 /^#[ 	]*define[ 	]*E[A-Z0-9]*[ 	]*[0-9-][0-9]*[ 	]*.*/ {
 	for (i = 1; i <= NF; i++)
@@ -18,17 +31,17 @@ awk '
 END {
 	print "	{ \"0\", 0 },\n";
 }
-' | sort -n +2 >> misc.c
+' | sort -n +2 >> $CFILE
 echo "	{ 0L, 0},
-};" >> misc.c
-lines=`wc -l misc.c|awk ' { print $1; } ' -`
+};" >> $CFILE
+lines=`wc -l $CFILE|awk ' { print $1; } ' -`
 lines=`expr $lines - 4`
 
-cat <<__EOF__ >> misc.c
+cat <<__EOF__ >> $CFILE
 
 struct systab signals[] = {
 __EOF__
-cat /usr/include/sys/signal.h | cpp -dM ${1+"$@"} |
+cat ${DESTDIR}/usr/include/sys/signal.h | cpp -dM |
 awk '
 /^#[ 	]*define[ 	]*S[A-Z0-9]*[ 	]*[0-9-][0-9]*[ 	]*.*/ {
 	for (i = 1; i <= NF; i++)
@@ -42,13 +55,13 @@ awk '
 END {
 	print "	{ \"0\", 0 },\n";
 }
-' | sort -n +2 >> misc.c
+' | sort -n +2 >> $CFILE
 echo "	{ 0L, 0},
-};" >> misc.c
-elines=`grep '{ "SIG' misc.c | wc -l`
+};" >> $CFILE
+elines=`grep '{ "SIG' $CFILE | wc -l`
 elines=`expr $elines + 1`
 
-cat <<__EOF__ >misc.h
+cat <<__EOF__ >$HFILE
 struct	systab	{
 	char	*name;
 	int	value;

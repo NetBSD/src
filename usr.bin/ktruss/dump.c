@@ -1,3 +1,5 @@
+/*	$NetBSD: dump.c,v 1.2 1999/07/12 04:13:34 mrg Exp $	*/
+
 /*-
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.1 1999/07/12 03:20:17 darrenr Exp $");
+__RCSID("$NetBSD: dump.c,v 1.2 1999/07/12 04:13:34 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
