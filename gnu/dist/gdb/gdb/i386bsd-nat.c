@@ -182,7 +182,7 @@ fetch_inferior_registers (int regno)
       gregset_t gregs;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &gregs, 0) == -1)
+		  (PTRACE_ARG3_TYPE) &gregs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name ("Couldn't get registers");
 
       supply_gregset (&gregs);
@@ -198,7 +198,7 @@ fetch_inferior_registers (int regno)
 
       if (have_ptrace_xmmregs != 0 &&
 	  ptrace(PT_GETXMMREGS, PIDGET (inferior_ptid),
-		 (PTRACE_ARG3_TYPE) xmmregs, 0) == 0)
+		 (PTRACE_ARG3_TYPE) xmmregs, TIDGET (inferior_ptid)) == 0)
 	{
 	  have_ptrace_xmmregs = 1;
 	  i387_supply_fxsave (xmmregs);
@@ -206,14 +206,14 @@ fetch_inferior_registers (int regno)
       else
 	{
           if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		      (PTRACE_ARG3_TYPE) &fpregs, 0) == -1)
+		      (PTRACE_ARG3_TYPE) &fpregs, TIDGET (inferior_ptid)) == -1)
 	    perror_with_name ("Couldn't get floating point status");
 
 	  supply_fpregset (&fpregs);
 	}
 #else
       if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &fpregs, 0) == -1)
+		  (PTRACE_ARG3_TYPE) &fpregs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name ("Couldn't get floating point status");
 
       supply_fpregset (&fpregs);
@@ -233,13 +233,13 @@ store_inferior_registers (int regno)
       gregset_t gregs;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-                  (PTRACE_ARG3_TYPE) &gregs, 0) == -1)
+                  (PTRACE_ARG3_TYPE) &gregs, TIDGET (inferior_ptid)) == -1)
         perror_with_name ("Couldn't get registers");
 
       fill_gregset (&gregs, regno);
 
       if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-	          (PTRACE_ARG3_TYPE) &gregs, 0) == -1)
+	          (PTRACE_ARG3_TYPE) &gregs, TIDGET (inferior_ptid)) == -1)
         perror_with_name ("Couldn't write registers");
 
       if (regno != -1)
@@ -254,14 +254,14 @@ store_inferior_registers (int regno)
 
       if (have_ptrace_xmmregs != 0 &&
 	  ptrace(PT_GETXMMREGS, PIDGET (inferior_ptid),
-		 (PTRACE_ARG3_TYPE) xmmregs, 0) == 0)
+		 (PTRACE_ARG3_TYPE) xmmregs, TIDGET (inferior_ptid)) == 0)
 	{
 	  have_ptrace_xmmregs = 1;
 
 	  i387_fill_fxsave (xmmregs, regno);
 
 	  if (ptrace (PT_SETXMMREGS, PIDGET (inferior_ptid),
-		      (PTRACE_ARG3_TYPE) xmmregs, 0) == -1)
+		      (PTRACE_ARG3_TYPE) xmmregs, TIDGET (inferior_ptid)) == -1)
             perror_with_name ("Couldn't write XMM registers");
 	}
       else
@@ -269,13 +269,13 @@ store_inferior_registers (int regno)
 	  have_ptrace_xmmregs = 0;
 #endif
           if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		      (PTRACE_ARG3_TYPE) &fpregs, 0) == -1)
+		      (PTRACE_ARG3_TYPE) &fpregs, TIDGET (inferior_ptid)) == -1)
 	    perror_with_name ("Couldn't get floating point status");
 
           fill_fpregset (&fpregs, regno);
   
           if (ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
-		      (PTRACE_ARG3_TYPE) &fpregs, 0) == -1)
+		      (PTRACE_ARG3_TYPE) &fpregs, TIDGET (inferior_ptid)) == -1)
 	    perror_with_name ("Couldn't write floating point status");
 #ifdef HAVE_PT_GETXMMREGS
         }
