@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.61 2003/04/10 01:58:21 christos Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.62 2003/08/23 00:14:29 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.61 2003/04/10 01:58:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.62 2003/08/23 00:14:29 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,6 +157,8 @@ static struct vr_type {
 		"VIA VT3043 (Rhine) 10/100" },
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6102,
 		"VIA VT6102 (Rhine II) 10/100" },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105,
+		"VIA VT6105 (Rhine III) 10/100" },
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,
 		"VIA VT86C100A (Rhine-II) 10/100" },
 	{ 0, 0, NULL }
