@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.153.4.5 2003/06/24 09:37:21 grant Exp $	*/
+/*	$NetBSD: locore.s,v 1.153.4.6 2004/08/13 04:39:19 jmc Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -4041,7 +4041,7 @@ return_from_syscall:
 	.data
 	.globl	intrpending
 intrpending:
-	.space	16 * 8 * PTRSZ
+	.space	16 * 8 * PTRSZ, -1
 
 #ifdef DEBUG
 #define INTRDEBUG_VECTOR	0x1
@@ -4410,9 +4410,9 @@ sparc_intr_retry:
 1:
 	membar	#StoreLoad		! Make sure any failed casxa insns complete
 	LDPTR	[%l4], %l2		! Check a slot
-	brz,pn	%l2, intrcmplt		! Empty list?
-
-	 clr	%l7
+	cmp	%l2, -1
+	beq,pn	CCCR, intrcmplt		! Empty list?
+	 mov	-1, %l7
 	membar	#LoadStore
 	CASPTR	[%l4] ASI_N, %l2, %l7	! Grab the entire list
 	cmp	%l7, %l2
@@ -4435,7 +4435,8 @@ sparc_intr_retry:
 	stx	%g0, [%l1]		! Clear intr source
 	membar	#Sync			! Should not be needed
 0:
-	brnz,pn	%l7, 2b			! 'Nother?
+	cmp	%l7, -1
+	bne,pn	CCCR, 2b		! 'Nother?
 	 mov	%l7, %l2
 
 #else /* INTRLIST */
