@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.6 1999/08/07 23:48:11 oster Exp $
+#	$NetBSD: Makefile,v 1.7 2000/05/23 00:46:53 thorpej Exp $
 PROG=	raidctl 
 SRCS=	rf_configure.c rf_layout.c raidctl.c
 MAN=	raidctl.8
+
+WARNS=2
 
 LOOKHERE = ${.CURDIR}/../../sys/dev/raidframe
 
