@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cmd3.c	5.24 (Berkeley) 6/25/90";*/
-static char rcsid[] = "$Id: cmd3.c,v 1.2 1993/08/01 18:13:11 mycroft Exp $";
+static char rcsid[] = "$Id: cmd3.c,v 1.3 1994/05/22 02:57:35 jtc Exp $";
 #endif /* not lint */
 
 #include "rcv.h"
@@ -416,7 +416,7 @@ unset(arglist)
 			variables[h] = variables[h]->v_link;
 			vfree(vp2->v_name);
 			vfree(vp2->v_value);
-			cfree((char *)vp2);
+			free((char *)vp2);
 			continue;
 		}
 		for (vp = variables[h]; vp->v_link != vp2; vp = vp->v_link)
@@ -424,7 +424,7 @@ unset(arglist)
 		vp->v_link = vp2->v_link;
 		vfree(vp2->v_name);
 		vfree(vp2->v_value);
-		cfree((char *) vp2);
+		free((char *) vp2);
 	}
 	return(errs);
 }
@@ -702,7 +702,7 @@ alternates(namelist)
 		return(0);
 	}
 	if (altnames != 0)
-		cfree((char *) altnames);
+		free((char *) altnames);
 	altnames = (char **) calloc((unsigned) c, sizeof (char *));
 	for (ap = namelist, ap2 = altnames; *ap; ap++, ap2++) {
 		cp = (char *) calloc((unsigned) strlen(*ap) + 1, sizeof (char));

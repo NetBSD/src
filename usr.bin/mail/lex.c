@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lex.c	5.23 (Berkeley) 4/1/91";*/
-static char rcsid[] = "$Id: lex.c,v 1.2 1993/08/01 18:13:03 mycroft Exp $";
+static char rcsid[] = "$Id: lex.c,v 1.3 1994/05/22 02:57:36 jtc Exp $";
 #endif /* not lint */
 
 #include "rcv.h"
@@ -435,7 +435,7 @@ setmsize(sz)
 {
 
 	if (msgvec != 0)
-		cfree((char *) msgvec);
+		free((char *) msgvec);
 	msgvec = (int *) calloc((unsigned) (sz + 1), sizeof *msgvec);
 }
 
