@@ -101,6 +101,9 @@ static int compressreply[NFS_NPROCS] = {
 	TRUE,
 	TRUE,
 };
+
+#ifdef NFSCLIENT
+
 /*
  * NFS server system calls
  * getfh() lives here too, but maybe should move to kern/vfs_syscalls.c
@@ -145,6 +148,10 @@ getfh(p, uap, retval)
 	error = copyout((caddr_t)&fh, (caddr_t)uap->fhp, sizeof (fh));
 	return (error);
 }
+
+#endif /*NFSCLIENT*/
+
+#ifdef NFSSERVER
 
 /*
  * Nfs server psuedo system call for the nfsd's
@@ -311,6 +318,10 @@ bad:
 	return (error);
 }
 
+#endif /* NFSSERVER */
+
+#ifdef NFSCLIENT
+
 /*
  * Nfs pseudo system call for asynchronous i/o daemons.
  * These babies just pretend to be disk interrupt service routines
@@ -374,3 +385,6 @@ async_daemon(p, uap, retval)
 		}
 	}
 }
+
+#endif /* NFSCLIENT*/
+

@@ -65,6 +65,8 @@
 #define	NFSRCHASH(xid)		(((unsigned)((xid)+((xid)>>16)))%NFSRCHSZ)
 #endif
 
+extern int nonidempotent[NFS_NPROCS];
+
 union rhead {
 	union  rhead *rh_head[2];
 	struct nfsrvcache *rh_chain[2];
@@ -76,29 +78,6 @@ static struct nfsrvcache nfsrvcache[NFSRVCACHESIZ];
 #define TRUE	1
 #define	FALSE	0
 
-/*
- * Static array that defines which nfs rpc's are nonidempotent
- */
-int nonidempotent[NFS_NPROCS] = {
-	FALSE,
-	FALSE,
-	TRUE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	FALSE,
-	FALSE,
-};
 
 /* True iff the rpc reply is an nfs status ONLY! */
 static int repliesstatus[NFS_NPROCS] = {
