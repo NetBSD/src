@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.69 2004/04/21 01:05:33 christos Exp $	*/
+/*	$NetBSD: mount.c,v 1.70 2004/04/22 10:17:00 hannken Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.69 2004/04/21 01:05:33 christos Exp $");
+__RCSID("$NetBSD: mount.c,v 1.70 2004/04/22 10:17:00 hannken Exp $");
 #endif
 #endif /* not lint */
 
@@ -540,9 +540,9 @@ prmount(sfp)
 	}
 	if (verbose) {
 		(void)printf("%s", !f++ ? " (" : ", ");
-		(void)printf("reads: sync %llu async %llu",
+		(void)printf("reads: sync %" PRIu64 " async %" PRIu64 "",
 		    sfp->f_syncreads, sfp->f_asyncreads);
-		(void)printf(", writes: sync %llu async %llu",
+		(void)printf(", writes: sync %" PRIu64 " async %" PRIu64 "",
 		    sfp->f_syncwrites, sfp->f_asyncwrites);
 		if (verbose > 1) {
 			char buf[2048];
