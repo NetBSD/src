@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.h,v 1.3 2002/02/25 13:57:24 christos Exp $	 */
+/*	$NetBSD: utmpx.h,v 1.4 2002/03/05 14:23:32 tron Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #define	_UTMPX_H_
 
 #include <sys/socket.h>
+#include <sys/time.h>
 
 #define	_PATH_UTMPX		"/var/run/utmpx"
 #define	_PATH_WTMPX		"/var/log/wtmpx"
