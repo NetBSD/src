@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.3 2003/10/08 04:25:46 lukem Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.4 2003/10/27 13:43:48 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -149,7 +149,7 @@ struct btinfo_biosgeom {
 };
 
 #ifdef _KERNEL
-void *lookup_bootinfo __P((int));
+void *lookup_bootinfo(int);
 #endif
 #endif /* _LOCORE */
 
