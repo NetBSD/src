@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.26 2002/10/04 19:22:40 joda Exp $ */
+/*      $NetBSD: ac97.c,v 1.27 2002/10/06 16:33:35 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.26 2002/10/04 19:22:40 joda Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.27 2002/10/06 16:33:35 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -367,7 +367,7 @@ static const char * const ac97enhancement[] = {
 };
 
 static const char * const ac97feature[] = {
-	"mic channel",
+	"dedicated mic channel",
 	"reserved",
 	"tone",
 	"simulated stereo",
@@ -574,6 +574,7 @@ ac97_attach(host_if)
 	u_int16_t id1, id2, caps;
 	u_int32_t id;
 	mixer_ctrl_t ctl;
+	const char *delim;
 	
 	as = malloc(sizeof(struct ac97_softc), M_DEVBUF, M_WAITOK|M_ZERO);
 
@@ -631,8 +632,45 @@ ac97_attach(host_if)
 			j++;
 		}
 	}
-
 	printf("%s%s\n", j? ", " : "", ac97enhancement[(caps >> 10) & 0x1f]);
+
+	ac97_read(as, AC97_REG_EXT_AUDIO_ID, &caps);
+	if (caps & (AC97_EXT_AUDIO_VRA | AC97_EXT_AUDIO_DRA
+		    | AC97_EXT_AUDIO_SPDIF | AC97_EXT_AUDIO_VRM
+		    | AC97_EXT_AUDIO_CDAC | AC97_EXT_AUDIO_SDAC
+		    | AC97_EXT_AUDIO_LDAC)) {
+		printf("%s:", sc_dev->dv_xname);
+		delim = "";
+
+		if (caps & AC97_EXT_AUDIO_VRA) {
+			printf("%s variable rate audio", delim);
+			delim = ",";
+		}
+		if (caps & AC97_EXT_AUDIO_DRA) {
+			printf("%s double rate output", delim);
+			delim = ",";
+		}
+		if (caps & AC97_EXT_AUDIO_SPDIF) {
+			printf("%s S/PDIF", delim);
+			delim = ",";
+		}
+		if (caps & AC97_EXT_AUDIO_VRM) {
+			printf("%s variable rate dedicated mic", delim);
+			delim = ",";
+		}
+		if (caps & AC97_EXT_AUDIO_CDAC) {
+			printf("%s center DAC", delim);
+			delim = ",";
+		}
+		if (caps & AC97_EXT_AUDIO_SDAC) {
+			printf("%s surround DAC", delim);
+			delim = ",";
+		}
+		if (caps & AC97_EXT_AUDIO_LDAC) {
+			printf("%s LFE DAC", delim);
+		}
+		printf("\n");
+	}
 
 	ac97_setup_source_info(as);
 
