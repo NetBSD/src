@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.13 2004/05/26 17:15:17 kochi Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.14 2004/06/06 17:27:05 martin Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.13 2004/05/26 17:15:17 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.14 2004/06/06 17:27:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,8 @@ struct acpitz_softc {
 };
 
 static void	acpitz_get_status(void *);
-static void	acpitz_get_zone(void *);
+static void	acpitz_get_zone(void *, int);
+static void	acpitz_get_zone_quiet(void *);
 static char*	acpitz_celcius_string(int);
 static void	acpitz_print_status(struct acpitz_softc *);
 static void	acpitz_power_off(struct acpitz_softc *);
@@ -190,7 +191,7 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_zone_expire = ATZ_ZONE_EXPIRE / sc->sc_zone.tzp;
 
-	acpitz_get_zone(sc);
+	acpitz_get_zone(sc, 1);
 	acpitz_get_status(sc);
 
 	rv = AcpiInstallNotifyHandler(sc->sc_devnode->ad_handle,
@@ -209,6 +210,12 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
+acpitz_get_zone_quiet(void *opaque)
+{
+	acpitz_get_zone(opaque, 0);
+}
+
+static void
 acpitz_get_status(void *opaque)
 {
 	struct acpitz_softc *sc = opaque;
@@ -220,7 +227,7 @@ acpitz_get_status(void *opaque)
 		sc->sc_zone_expire = ATZ_ZONE_EXPIRE / sc->sc_zone.tzp;
 		if (sc->sc_flags & ATZ_F_VERBOSE)
 			printf("%s: force refetch zone\n", sc->sc_dev.dv_xname);
-		acpitz_get_zone(sc);
+		acpitz_get_zone(sc, 0);
 	}
 
 	if (acpitz_get_integer(sc, "_TMP", &tmp)) {
@@ -398,7 +405,7 @@ acpitz_power_off(struct acpitz_softc *sc)
 }
 
 static void
-acpitz_get_zone(void *opaque)
+acpitz_get_zone(void *opaque, int verbose)
 {
 	struct acpitz_softc *sc = opaque;
 	ACPI_STATUS rv;
@@ -475,17 +482,19 @@ acpitz_get_zone(void *opaque)
 	acpitz_sane_temp(&sc->sc_zone.hot);
 	acpitz_sane_temp(&sc->sc_zone.psv);
 
-	printf("%s:", sc->sc_dev.dv_xname);
-	if (sc->sc_zone.crt != ATZ_TMP_INVALID)
-		printf(" critical %sC",
-		    acpitz_celcius_string(sc->sc_zone.crt));
-	if (sc->sc_zone.hot != ATZ_TMP_INVALID)
-		printf(" hot %sC",
-		    acpitz_celcius_string(sc->sc_zone.hot));
-	if (sc->sc_zone.psv != ATZ_TMP_INVALID)
-		printf(" passive %sC",
-		    acpitz_celcius_string(sc->sc_zone.tmp));
-	printf("\n");
+	if (verbose) {
+		printf("%s:", sc->sc_dev.dv_xname);
+		if (sc->sc_zone.crt != ATZ_TMP_INVALID)
+			printf(" critical %sC",
+			    acpitz_celcius_string(sc->sc_zone.crt));
+		if (sc->sc_zone.hot != ATZ_TMP_INVALID)
+			printf(" hot %sC",
+			    acpitz_celcius_string(sc->sc_zone.hot));
+		if (sc->sc_zone.psv != ATZ_TMP_INVALID)
+			printf(" passive %sC",
+			    acpitz_celcius_string(sc->sc_zone.tmp));
+		printf("\n");
+	}
 
 	for (i = 0; i < ATZ_NLEVELS; i++)
 		acpitz_sane_temp(&sc->sc_zone.ac[i]);
@@ -510,7 +519,7 @@ acpitz_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 		break;
 	case ACPI_NOTIFY_ThermalZoneTripPointsChanged:
 	case ACPI_NOTIFY_DeviceListsChanged:
-		func = acpitz_get_zone;
+		func = acpitz_get_zone_quiet;
 		name = "get zone";
 		break;
 	default:
