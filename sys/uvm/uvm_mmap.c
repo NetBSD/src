@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.30 1999/07/08 00:52:45 thorpej Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.31 1999/07/10 20:29:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -197,16 +197,16 @@ sys_mincore(p, v, retval)
 		lim = end < entry->end ? end : entry->end;
 
 		/*
-		 * Special case for mapped devices; these are always
-		 * considered resident.
+		 * Special case for objects with no "real" pages.  Those
+		 * are always considered resident (mapped devices).
 		 */
 		if (UVM_ET_ISOBJ(entry)) {
-			extern struct uvm_pagerops uvm_deviceops; /* XXX */
 #ifdef DIAGNOSTIC
 			if (UVM_OBJ_IS_KERN_OBJECT(entry->object.uvm_obj))
 				panic("mincore: user map has kernel object");
 #endif
-			if (entry->object.uvm_obj->pgops == &uvm_deviceops) {
+			if (entry->object.uvm_obj->pgops->pgo_releasepg
+			    == NULL) {
 				for (/* nothing */; start < lim;
 				     start += PAGE_SIZE, vec++)
 					subyte(vec, 1);
