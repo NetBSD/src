@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.407 2001/06/18 22:45:54 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.408 2001/06/27 13:40:12 darcy Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.407 $"
+#ident 		"GENERIC-$Revision: 1.408 $"
 
 maxusers	32		# estimated number of users
 
@@ -52,6 +52,10 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
+#options	SEMMNI=10	# number of semaphore identifiers
+#options	SEMMNS=60	# number of semaphores in system
+#options	SEMUME=10	# max number of undo entries per process
+#options	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
