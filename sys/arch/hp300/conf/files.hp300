@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.26 1997/04/27 21:05:49 thorpej Exp $
+#	$NetBSD: files.hp300,v 1.27 1997/05/05 20:57:29 thorpej Exp $
 #
 # hp300-specific configuration info
 
@@ -7,7 +7,7 @@ maxpartitions 8
 
 maxusers 2 8 64
 
-# CPU configuration options.
+# SPU configuration options.
 defopt	HP320
 defopt	HP330
 defopt	HP340
@@ -21,8 +21,43 @@ defopt	HP400
 defopt	HP425
 defopt	HP433
 
+# Misc. options.
+defopt	USELEDS		# make the lights twinkle
+
 # NOTE!  The order of these lines is significant!  Don't change them
 # unless you absolutely know what you're doing!
+
+#
+# Mainbus
+#
+
+device	mainbus { }
+attach	mainbus at root
+
+#
+# Internal i/o space
+#
+
+device	intio { }
+attach	intio at mainbus
+file	arch/hp300/dev/intio.c		intio
+
+#
+# DIO bus
+#
+
+device	dio { scode = -1 }
+attach	dio at mainbus
+file	arch/hp300/dev/dio.c		dio
+
+#
+# Devices in Internal i/o space
+#
+
+# Apollo Utilility Chip (a.k.a. "Frodo") found on 4xx workstations
+device	frodo { offset = -1 }
+attach	frodo at intio
+file	arch/hp300/dev/frodo.c		frodo
 
 # Frame buffer attribute
 define	grfdev { }
@@ -55,21 +90,6 @@ attach	ite at grf
 file	arch/hp300/dev/ite.c		ite needs-flag
 file	arch/hp300/dev/ite_subr.c	ite
 
-#
-# Mainbus
-#
-
-device	mainbus { }
-attach	mainbus at root
-
-#
-# Internal i/o space
-#
-
-device	intio { }
-attach	intio at mainbus
-file	arch/hp300/dev/intio.c		intio
-
 # Internal i/o framebuffer attachments
 attach	dvbox at intio with dvbox_intio
 attach	gbox at intio with gbox_intio
@@ -77,12 +97,8 @@ attach	rbox at intio with rbox_intio
 attach	topcat at intio with topcat_intio
 
 #
-# DIO bus
+# Devices on the DIO bus
 #
-
-device	dio { scode = -1 }
-attach	dio at mainbus
-file	arch/hp300/dev/dio.c		dio
 
 # DIO framebuffer attachments
 attach	dvbox at dio with dvbox_dio
@@ -176,10 +192,10 @@ file	arch/hp300/hp300/clock.c
 file	arch/hp300/hp300/conf.c
 file	arch/hp300/hp300/db_memrw.c		ddb | kgdb
 file	arch/hp300/hp300/dkbad.c
-file	arch/hp300/hp300/kgdb_glue.c		kgdb compile-with "${NORMAL_C} -fno-defer-pop"
-file	arch/hp300/hp300/kgdb_stub.c		kgdb
+file	arch/hp300/hp300/kgdb_machdep.c		kgdb
 file	arch/hp300/hp300/machdep.c
 file	arch/hp300/hp300/intr.c
+file	arch/hp300/hp300/leds.c			useleds
 file	arch/hp300/hp300/mem.c
 file	arch/hp300/hp300/pmap.c
 file	arch/hp300/hp300/pmap_bootstrap.c
