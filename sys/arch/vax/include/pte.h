@@ -1,4 +1,4 @@
-/*      $NetBSD: pte.h,v 1.14 2000/05/27 21:17:06 ragge Exp $      */
+/*      $NetBSD: pte.h,v 1.15 2000/07/01 06:43:43 matt Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -89,7 +89,7 @@ extern pt_entry_t *Sysmap;
 #define	kvtophys(va) ({ \
 	long r; \
 	asm("extzv $9,$21,%1,%0;ashl $9,*_Sysmap[%0],%0;insv %1,$0,$9,%0" \
-	    : "&=r"(r) : "g"(va) : "cc"); \
+	    : "=&r"(r) : "g"(va) : "cc"); \
 	r; \
 })
 #else /* __GNUC__ */
