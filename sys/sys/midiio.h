@@ -1,11 +1,11 @@
-/*	$NetBSD: midiio.h,v 1.6 1998/09/13 14:46:24 christos Exp $	*/
+/*	$NetBSD: midiio.h,v 1.7 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson
+ * by Lennart Augustsson (augustss@netbsd.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
