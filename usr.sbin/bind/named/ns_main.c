@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_main.c,v 1.1.1.1 1998/10/05 18:02:00 tron Exp $	*/
+/*	$NetBSD: ns_main.c,v 1.2 1998/11/24 06:05:07 ross Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
@@ -829,7 +829,7 @@ stream_getlen(evContext lev, void *uap, int fd, int bytes) {
 	if (evRead(lev, sp->s_rfd, &iov, 1, stream_getmsg, sp, &sp->evID_r)
 	    == -1)
 		ns_panic(ns_log_default, 1, "evRead(fd %d): %s",
-			 (void *)sp->s_rfd, strerror(errno));
+			 sp->s_rfd, strerror(errno));
 	sp->flags |= STREAM_READ_EV;
 }
 
@@ -1485,7 +1485,7 @@ opensocket_f() {
 
 	if (evSelectFD(ev, ds, EV_READ, datagram_read, NULL, &ds_evID) == -1)
 		ns_panic(ns_log_default, 1, "evSelectFD(fd %d): %s",
-			 (void *)ds, strerror(errno));
+			 ds, strerror(errno));
 	/* XXX: should probably use a different FileFunc that only accepts
 	 *	responses, since requests on this socket make no sense.
 	 */
@@ -1849,7 +1849,7 @@ sq_done(struct qstream *sp) {
 	if (evRead(ev, sp->s_rfd, &iov, 1, stream_getlen, sp, &sp->evID_r) ==
 	    -1)
 		ns_panic(ns_log_default, 1, "evRead(fd %d): %s",
-			 (void *)sp->s_rfd, strerror(errno));
+			 sp->s_rfd, strerror(errno));
 	sp->flags |= STREAM_READ_EV;
 }
 
