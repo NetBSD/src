@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.36 2004/05/22 22:52:13 jonathan Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.37 2004/11/30 04:25:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.36 2004/05/22 22:52:13 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.37 2004/11/30 04:25:43 christos Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -109,7 +109,7 @@ int svr4_netattach __P((int));
 int svr4_soo_close __P((struct file *, struct proc *));
 int svr4_ptm_alloc __P((struct proc *));
 
-static struct fileops svr4_netops = {
+static const struct fileops svr4_netops = {
 	soo_read, soo_write, soo_ioctl, soo_fcntl, soo_poll,
 	soo_stat, svr4_soo_close, soo_kqfilter
 };
@@ -211,19 +211,12 @@ svr4_netopen(dev, flag, mode, p)
 		return error;
 	}
 
-	fp->f_flag = FREAD|FWRITE;
+	error = fdclone(p, fp, fd, &svr4_netops, so);
 	fp->f_type = DTYPE_SOCKET;
-	fp->f_ops = &svr4_netops;
-
-	fp->f_data = (caddr_t)so;
-	(void) svr4_stream_get(fp);
+	(void)svr4_stream_get(fp);
 
 	DPRINTF(("ok);\n"));
-
-	curlwp->l_dupfd = fd;	/* XXX */
-	FILE_SET_MATURE(fp);
-	FILE_UNUSE(fp, p);
-	return ENXIO;
+	return error;
 }
 
 
@@ -283,8 +276,8 @@ svr4_ptm_alloc(p)
 		case ENXIO:
 			return error;
 		case 0:
-			curlwp->l_dupfd = fd;	/* XXX */
-			return ENXIO;
+			curlwp->l_dupfd = fd;
+			return EMOVEFD;
 		default:
 			if (ttynumbers[++n] == '\0') {
 				if (ttyletters[++l] == '\0')

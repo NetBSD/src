@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.126 2004/05/31 15:30:55 pk Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.127 2004/11/30 04:25:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.126 2004/05/31 15:30:55 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.127 2004/11/30 04:25:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1515,7 +1515,7 @@ filedescopen(dev_t dev, int mode, int type, struct proc *p)
 	 * will simply report the error.
 	 */
 	curlwp->l_dupfd = minor(dev);	/* XXX */
-	return (ENODEV);
+	return EDUPFD;
 }
 
 /*
@@ -1551,17 +1551,17 @@ dupfdopen(struct proc *p, int indx, int dfd, int mode, int error)
 	/*
 	 * There are two cases of interest here.
 	 *
-	 * For ENODEV simply dup (dfd) to file descriptor
+	 * For EDUPFD simply dup (dfd) to file descriptor
 	 * (indx) and return.
 	 *
-	 * For ENXIO steal away the file structure from (dfd) and
+	 * For EMOVEFD steal away the file structure from (dfd) and
 	 * store it in (indx).  (dfd) is effectively closed by
 	 * this operation.
 	 *
 	 * Any other error code is just returned.
 	 */
 	switch (error) {
-	case ENODEV:
+	case EDUPFD:
 		/*
 		 * Check that the mode the file is being opened for is a
 		 * subset of the mode of the existing descriptor.
@@ -1580,7 +1580,7 @@ dupfdopen(struct proc *p, int indx, int dfd, int mode, int error)
 		FILE_UNUSE_HAVELOCK(wfp, p);
 		return (0);
 
-	case ENXIO:
+	case EMOVEFD:
 		/*
 		 * Steal away the file pointer from dfd, and stuff it into indx.
 		 */
@@ -1837,4 +1837,53 @@ fownsignal(pid_t pgid, int signo, int code, int band, void *fdescdata)
 		kpsignal(p1, &ksi, fdescdata);
 	else if (pgid < 0)
 		kgsignal(-pgid, &ksi, fdescdata);
+}
+
+int
+fdclone(struct proc *p, struct file *fp, int fd, const struct fileops *fops,
+    void *data)
+{
+	fp->f_flag = FREAD | FWRITE;
+	fp->f_type = DTYPE_MISC;
+	fp->f_ops = fops;
+	fp->f_data = data;
+
+	curlwp->l_dupfd = fd;
+
+	FILE_SET_MATURE(fp);
+	FILE_UNUSE(fp, p);
+	return EMOVEFD;
+}
+
+/* ARGSUSED */
+int
+fnullop_fcntl(struct file *fp, u_int cmd, void *data, struct proc *p)
+{
+	if (cmd == F_SETFL)
+		return 0;
+
+	return EOPNOTSUPP;
+}
+
+/* ARGSUSED */
+int
+fnullop_poll(struct file *fp, int which, struct proc *p)
+{
+	return 0;
+}
+
+
+/* ARGSUSED */
+int
+fnullop_kqfilter(struct file *fp, struct knote *kn)
+{
+
+	return 0;
+}
+
+/* ARGSUSED */
+int
+fbadop_stat(struct file *fp, struct stat *sb, struct proc *p)
+{
+	return EOPNOTSUPP;
 }

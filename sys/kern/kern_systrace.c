@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.41 2004/11/28 07:44:05 thorpej Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.42 2004/11/30 04:25:43 christos Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.41 2004/11/28 07:44:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.42 2004/11/30 04:25:43 christos Exp $");
 
 #include "opt_systrace.h"
 
@@ -84,16 +84,13 @@ int	systracef_read(struct file *, off_t *, struct uio *, struct ucred *,
 		int);
 int	systracef_write(struct file *, off_t *, struct uio *, struct ucred *,
 		int);
-int	systracef_fcntl(struct file *, u_int, void *, struct proc *);
 int	systracef_poll(struct file *, int, struct proc *);
 #else
 int	systracef_read(struct file *, off_t *, struct uio *, struct ucred *);
 int	systracef_write(struct file *, off_t *, struct uio *, struct ucred *);
 int	systracef_select(struct file *, int, struct proc *);
 #endif
-int	systracef_kqfilter(struct file *, struct knote *);
 int	systracef_ioctl(struct file *, u_long, void *, struct proc *);
-int	systracef_stat(struct file *, struct stat *, struct proc *);
 int	systracef_close(struct file *, struct proc *);
 
 struct str_policy {
@@ -182,22 +179,15 @@ int	systrace_msg_emul(struct fsystrace *, struct str_process *);
 int	systrace_msg_ugid(struct fsystrace *, struct str_process *);
 int	systrace_make_msg(struct str_process *, int, struct str_message *);
 
-static struct fileops systracefops = {
+static const struct fileops systracefops = {
 	systracef_read,
 	systracef_write,
 	systracef_ioctl,
-#ifdef __NetBSD__
-	systracef_fcntl,
+	fnullop_fcntl,
 	systracef_poll,
-#else
-	systracef_select,
-	systracef_kqfilter,
-#endif
-	systracef_stat,
-	systracef_close
-#ifdef __NetBSD__
-	, systracef_kqfilter
-#endif
+	fbadop_stat,
+	systracef_close,
+	fnullop_kqfilter
 };
 
 #ifdef __NetBSD__
@@ -433,19 +423,6 @@ systracef_ioctl(struct file *fp, u_long cmd, void *data, struct proc *p)
 }
 
 #ifdef __NetBSD__
-/* ARGSUSED */
-int
-systracef_fcntl(struct file *fp, u_int cmd, void *data, struct proc *p)
-{
-
-	if (cmd == F_SETFL)
-		return 0;
-
-	return (EOPNOTSUPP);
-}
-#endif
-
-#ifdef __NetBSD__
 int
 systracef_poll(struct file *fp, int events, struct proc *p)
 {
@@ -487,21 +464,6 @@ systracef_select(struct file *fp, int which, struct proc *p)
 	return (ready);
 }
 #endif /* __NetBSD__ */
-
-/* ARGSUSED */
-int
-systracef_kqfilter(struct file *fp, struct knote *kn)
-{
-	return (1);
-}
-
-
-/* ARGSUSED */
-int
-systracef_stat(struct file *fp, struct stat *sb, struct proc *p)
-{
-	return (EOPNOTSUPP);
-}
 
 /* ARGSUSED */
 int
@@ -610,16 +572,7 @@ systraceopen(dev_t dev, int flag, int mode, struct proc *p)
 	fst->p_ruid = p->p_cred->p_ruid;
 	fst->p_rgid = p->p_cred->p_rgid;
 
-	fp->f_flag = FREAD | FWRITE;
-	fp->f_type = DTYPE_MISC;
-	fp->f_ops = &systracefops;
-	fp->f_data = (caddr_t) fst;
-
-	curlwp->l_dupfd = fd;	/* XXX */
-	FILE_SET_MATURE(fp);
-	FILE_UNUSE(fp, p);
-
-	return (ENXIO);
+	return fdclone(p, fp, fd, &systracefops, fst);
 }
 
 void
