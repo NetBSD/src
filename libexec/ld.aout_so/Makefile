@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2000/09/12 16:39:51 tron Exp $
+#	$NetBSD: Makefile,v 1.31 2001/04/18 11:48:21 tsutsui Exp $
 
 .include <bsd.own.mk>
 .if (${OBJECT_FMT} == "a.out")
@@ -28,8 +28,10 @@ $(PROG):
 
 .S.o:
 	${CPP} ${.IMPSRC} | ${AS} ${ASFLAGS} -o ${.TARGET} -
-.elif (${OBJECT_FMT} == "ELF" && (${MACHINE_ARCH} == "i386" || \
-       ${MACHINE_ARCH} == "sparc"))
+.elif (${OBJECT_FMT} == "ELF" && \
+       (${MACHINE_ARCH} == "i386" || \
+        ${MACHINE_ARCH} == "m68k" || \
+        ${MACHINE_ARCH} == "sparc"))
 
 FILES=		ld.so
 FILESDIR=	/usr/libexec
