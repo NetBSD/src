@@ -25,16 +25,15 @@
  * 4. This notice may not be removed or altered.
  */
 
+#ifndef	lint
+static char rcsid[] = "$Id: apprentice.c,v 1.3 1993/08/01 18:16:26 mycroft Exp $";
+#endif	/* not lint */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include "file.h"
-
-#ifndef	lint
-static char *moduleid = 
-	"@(#)$Id: apprentice.c,v 1.2 1993/06/10 00:38:02 jtc Exp $";
-#endif	/* lint */
 
 #define	EATAB {while (isascii((unsigned char) *l) && \
 		      isspace((unsigned char) *l))  ++l;}

@@ -33,7 +33,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)collect.c	8.1 (Berkeley) 6/7/93";
+/*static char sccsid[] = "from: @(#)collect.c	8.1 (Berkeley) 6/7/93";*/
+static char rcsid[] = "$Id: collect.c,v 1.3 1993/08/01 17:56:39 mycroft Exp $";
 #endif /* not lint */
 
 # include <errno.h>

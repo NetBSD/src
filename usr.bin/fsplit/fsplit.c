@@ -41,7 +41,8 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)fsplit.c	5.5 (Berkeley) 3/12/91";
+/*static char sccsid[] = "from: @(#)fsplit.c	5.5 (Berkeley) 3/12/91";*/
+static char rcsid[] = "$Id: fsplit.c,v 1.2 1993/08/01 18:15:39 mycroft Exp $";
 #endif /* not lint */
 
 #include <ctype.h>

@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)wait.h	6.3 (Berkeley) 5/8/91
+ *	from: @(#)wait.h	6.3 (Berkeley) 5/8/91
+ *	$Id: wait.h,v 1.2 1993/08/01 18:47:50 mycroft Exp $
  */
 
 /* Define how to access the structure that the wait system call stores.

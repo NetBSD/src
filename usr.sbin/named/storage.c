@@ -21,8 +21,9 @@
  *	This software is Copyright (C) 1987 by the United States Army.
  *	All rights reserved.
  */
+
 #ifndef lint
-static char RCSstorage[] = "@(#)$Header: /cvsroot/src/usr.sbin/named/Attic/storage.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+static char rcsid[] = "$Id: storage.c,v 1.2 1993/08/01 17:57:37 mycroft Exp $";
 #endif
 
 #include <sys/param.h>

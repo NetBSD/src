@@ -33,7 +33,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)savemail.c	8.3 (Berkeley) 7/13/93";
+/*static char sccsid[] = "from: @(#)savemail.c	8.3 (Berkeley) 7/13/93";*/
+static char rcsid[] = "$Id: savemail.c,v 1.4 1993/08/01 17:56:24 mycroft Exp $";
 #endif /* not lint */
 
 # include <pwd.h>

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dirent.h	5.18 (Berkeley) 2/23/91
+ *	from: @(#)dirent.h	5.18 (Berkeley) 2/23/91
+ *	$Id: dirent.h,v 1.3 1993/08/01 18:44:56 mycroft Exp $
  */
 
 #ifndef _DIRENT_H_

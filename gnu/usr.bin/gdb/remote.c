@@ -33,11 +33,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/gnu/usr.bin/gdb/Attic/remote.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $;
+ * $Header: /cvsroot/src/gnu/usr.bin/gdb/Attic/remote.c,v 1.2 1993/08/01 18:47:43 mycroft Exp $;
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)remote.c	6.5 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)remote.c	6.5 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: remote.c,v 1.2 1993/08/01 18:47:43 mycroft Exp $";
 #endif /* not lint */
 
 #include "param.h"

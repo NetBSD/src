@@ -1,6 +1,6 @@
-/*-
- * Copyright (c) 1985, 1993
- *	The Regents of the University of California.  All rights reserved.
+/*
+ * Copyright (c) 1983 Regents of the University of California.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,22 +32,20 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)byteorder.c	8.1 (Berkeley) 6/6/93";
+/*static char sccsid[] = "from: @(#)byteorder.c	2.7 (Berkeley) 6/1/90";*/
+static char rcsid[] = "$Id: byteorder.c,v 1.2 1993/08/01 17:55:31 mycroft Exp $";
 #endif /* not lint */
 
-#ifdef sgi
-#ident "$Revision: 1.1.1.2 $"
-#endif
-
 #include "globals.h"
+#include <protocols/timed.h>
 
 /*
  * Two routines to do the necessary byte swapping for timed protocol
  * messages. Protocol is defined in /usr/include/protocols/timed.h
  */
-void
+
 bytenetorder(ptr)
-	struct tsp *ptr;
+struct tsp *ptr;
 {
 	ptr->tsp_seq = htons((u_short)ptr->tsp_seq);
 	switch (ptr->tsp_type) {
@@ -65,9 +63,8 @@ bytenetorder(ptr)
 	}
 }
 
-void
 bytehostorder(ptr)
-	struct tsp *ptr;
+struct tsp *ptr;
 {
 	ptr->tsp_seq = ntohs((u_short)ptr->tsp_seq);
 	switch (ptr->tsp_type) {

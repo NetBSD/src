@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)mkmakefile.c	5.33 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkmakefile.c,v 1.12 1993/07/23 03:01:49 brezak Exp $";
+/*static char sccsid[] = "from: @(#)mkmakefile.c	5.33 (Berkeley) 7/1/91";*/
+static char rcsid[] = "$Id: mkmakefile.c,v 1.13 1993/08/01 18:00:13 mycroft Exp $";
 #endif /* not lint */
 
 /*

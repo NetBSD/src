@@ -7,7 +7,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)inflow.c	6.5 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)inflow.c	6.5 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: inflow.c,v 1.2 1993/08/01 18:47:15 mycroft Exp $";
 #endif /* not lint */
 
 /* Low level interface to ptrace, for GDB when running under Unix.

@@ -35,7 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nonints.h	5.6 (Berkeley) 4/18/91
+ *	from: @(#)nonints.h	5.6 (Berkeley) 4/18/91
+ *	$Id: nonints.h,v 1.2 1993/08/01 18:11:59 mycroft Exp $
  */
 
 char **brk_string(), *emalloc(), *str_concat();

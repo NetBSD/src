@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ftp_var.h	5.9 (Berkeley) 6/1/90
+ *	from: @(#)ftp_var.h	5.9 (Berkeley) 6/1/90
+ *	$Id: ftp_var.h,v 1.2 1993/08/01 18:15:34 mycroft Exp $
  */
 
 /*

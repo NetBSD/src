@@ -33,10 +33,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kgdb_proto.h	6.3 (Berkeley) 5/8/91
+ *	from: @(#)kgdb_proto.h	6.3 (Berkeley) 5/8/91
+ *	$Id: kgdb_proto.h,v 1.2 1993/08/01 18:47:54 mycroft Exp $
  *
- *
- * $Header: /cvsroot/src/gnu/usr.bin/gdb/Attic/kgdb_proto.h,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $ (LBL)
  */
 
 /*

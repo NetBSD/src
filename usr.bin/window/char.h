@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)char.h	3.9 (Berkeley) 6/6/90
+ *	from: @(#)char.h	3.9 (Berkeley) 6/6/90
+ *	$Id: char.h,v 1.2 1993/08/01 18:01:38 mycroft Exp $
  */
 
 /*

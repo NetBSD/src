@@ -35,7 +35,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)rewind.c	5.6 (Berkeley) 1/20/91";
+/*static char sccsid[] = "from: @(#)rewind.c	5.6 (Berkeley) 1/20/91";*/
+static char rcsid[] = "$Id: rewind.c,v 1.2 1993/08/01 18:38:34 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>

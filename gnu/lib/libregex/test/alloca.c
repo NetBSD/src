@@ -1,3 +1,8 @@
+#ifndef lint
+/*static char sccsid[] = "from: @(#)alloca.c	1.1";*/
+static char rcsid[] = "$Id: alloca.c,v 1.2 1993/08/01 18:49:09 mycroft Exp $";
+#endif
+
 /*
 	alloca -- (mostly) portable public-domain implementation -- D A Gwyn
 
@@ -26,9 +31,6 @@
 	allocating any.  It is a good idea to use alloca(0) in
 	your main control loop, etc. to force garbage collection.
 */
-#ifndef lint
-static char	SCCSid[] = "@(#)alloca.c	1.1";	/* for the "what" utility */
-#endif
 
 #ifdef emacs
 #include "config.h"

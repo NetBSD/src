@@ -35,7 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)make.h	5.13 (Berkeley) 3/1/91
+ *	from: @(#)make.h	5.13 (Berkeley) 3/1/91
+ *	$Id: make.h,v 1.2 1993/08/01 18:12:00 mycroft Exp $
  */
 
 /*-

@@ -1,6 +1,3 @@
-/* @(#)yppasswd.x	2.1 88/08/01 4.0 RPCSRC */
-/* @(#)yppasswd.x 1.1 87/04/13 Copyr 1987 Sun Micro */
-
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -29,6 +26,11 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
+#ifndef lint
+/*static char sccsid[] = "from: @(#)yppasswd.x 1.1 87/04/13 Copyr 1987 Sun Micro";*/
+/*static char sccsid[] = "from: @(#)yppasswd.x	2.1 88/08/01 4.0 RPCSRC";*/
+static char rcsid[] = "$Id: yppasswd.x,v 1.3 1993/08/01 18:45:33 mycroft Exp $";
+#endif /* not lint */
 
 /*
  * YP password update protocol

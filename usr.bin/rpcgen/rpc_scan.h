@@ -1,4 +1,3 @@
-/* @(#)rpc_scan.h	2.1 88/08/01 4.0 RPCSRC */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -26,8 +25,11 @@
  * Sun Microsystems, Inc.
  * 2550 Garcia Avenue
  * Mountain View, California  94043
+ *
+ *	from: @(#)rpc_scan.h 1.3 87/03/09 (C) 1987 SMI
+ *	from: @(#)rpc_scan.h	2.1 88/08/01 4.0 RPCSRC
+ *	$Id: rpc_scan.h,v 1.2 1993/08/01 18:09:26 mycroft Exp $
  */
-/* @(#)rpc_scan.h 1.3 87/03/09 (C) 1987 SMI */
 
 /*
  * rpc_scan.h, Definitions for the RPCL scanner 

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ext.h	5.7 (Berkeley) 3/1/91
+ *	from: @(#)ext.h	5.7 (Berkeley) 3/1/91
+ *	$Id: ext.h,v 1.2 1993/08/01 18:29:23 mycroft Exp $
  */
 
 /*

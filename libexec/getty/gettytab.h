@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)gettytab.h	5.5 (Berkeley) 3/27/91
+ *	from: @(#)gettytab.h	5.5 (Berkeley) 3/27/91
+ *	$Id: gettytab.h,v 1.2 1993/08/01 18:30:28 mycroft Exp $
  */
 
 /*

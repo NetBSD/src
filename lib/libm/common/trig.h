@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)trig.h	5.6 (Berkeley) 10/9/90
+ *	from: @(#)trig.h	5.6 (Berkeley) 10/9/90
+ *	$Id: trig.h,v 1.2 1993/08/01 18:35:03 mycroft Exp $
  */
 
 #include "mathimpl.h"

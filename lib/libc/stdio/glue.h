@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)glue.h	5.1 (Berkeley) 1/20/91
+ *	from: @(#)glue.h	5.1 (Berkeley) 1/20/91
+ *	$Id: glue.h,v 1.2 1993/08/01 18:39:02 mycroft Exp $
  */
 
 /*

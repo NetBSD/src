@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)termin.c	4.2 (Berkeley) 4/26/91";
+/*static char sccsid[] = "from: @(#)termin.c	4.2 (Berkeley) 4/26/91";*/
+static char rcsid[] = "$Id: termin.c,v 1.2 1993/08/01 18:05:59 mycroft Exp $";
 #endif /* not lint */
 
 /* this takes characters from the keyboard, and produces 3270 keystroke

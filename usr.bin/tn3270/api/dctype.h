@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dctype.h	4.2 (Berkeley) 4/26/91
+ *	from: @(#)dctype.h	4.2 (Berkeley) 4/26/91
+ *	$Id: dctype.h,v 1.2 1993/08/01 18:06:11 mycroft Exp $
  */
 
 #define	INCLUDED_ECTYPE

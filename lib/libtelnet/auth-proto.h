@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)auth-proto.h	5.2 (Berkeley) 3/22/91
+ *	from: @(#)auth-proto.h	5.2 (Berkeley) 3/22/91
+ *	$Id: auth-proto.h,v 1.2 1993/08/01 18:32:54 mycroft Exp $
  */
 
 /*

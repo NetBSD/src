@@ -19,10 +19,12 @@ In other words, you are welcome to use, share and improve this program.
 You are forbidden to forbid anyone else to use, share and improve
 what you give them.   Help stamp out software-hoarding!  */
 
+#ifndef lint
+/*static char sccsid[] = "from: @(#)nmalloc.c 1 (Caltech) 2/21/82";*/
+static char rcsid[] = "$Id: emacsmalloc.c,v 1.2 1993/08/01 18:49:07 mycroft Exp $";
+#endif
 
 /*
- * @(#)nmalloc.c 1 (Caltech) 2/21/82
- *
  *	U of M Modified: 20 Jun 1983 ACT: strange hacks for Emacs
  *
  *	Nov 1983, Mike@BRL, Added support for 4.1C/4.2 BSD.

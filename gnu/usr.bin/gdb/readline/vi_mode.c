@@ -4,9 +4,12 @@
  *
  * Modified 1991 by Donn Seeley at UUNET Technologies, Inc.
  * Modified 1990 by Van Jacobson at Lawrence Berkeley Laboratory.
- *
- *	@(#)vi_mode.c	6.4 (Berkeley) 5/8/91
  */
+
+#ifndef lint
+/*static char sccsid[] = "from: @(#)vi_mode.c	6.4 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: vi_mode.c,v 1.2 1993/08/01 18:48:04 mycroft Exp $";
+#endif /* not lint */
 
 /* vi_mode.c -- A vi emulation mode for Bash.
    Mostly written by Jeff Sparkes (jeff1@????).

@@ -7,7 +7,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)blockframe.c	6.4 (Berkeley) 5/11/91";
+/*static char sccsid[] = "from: @(#)blockframe.c	6.4 (Berkeley) 5/11/91";*/
+static char rcsid[] = "$Id: blockframe.c,v 1.2 1993/08/01 18:47:25 mycroft Exp $";
 #endif /* not lint */
 
 /* Get info from stack frames;

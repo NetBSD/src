@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)rwhod.h	5.6 (Berkeley) 4/3/91
+ *	from: @(#)rwhod.h	5.6 (Berkeley) 4/3/91
+ *	$Id: rwhod.h,v 1.2 1993/08/01 18:46:08 mycroft Exp $
  */
 
 #ifndef _RWHOD_H_

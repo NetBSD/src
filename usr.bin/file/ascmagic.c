@@ -26,6 +26,10 @@
  * 4. This notice may not be removed or altered.
  */
 
+#ifndef	lint
+static char rcsid[] = "$Id: ascmagic.c,v 1.3 1993/08/01 18:16:28 mycroft Exp $";
+#endif	/* not lint */
+
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -33,11 +37,6 @@
 #include <unistd.h>
 #include "file.h"
 #include "names.h"
-
-#ifndef	lint
-static char *moduleid = 
-	"@(#)$Id: ascmagic.c,v 1.2 1993/06/10 00:38:04 jtc Exp $";
-#endif	/* lint */
 
 			/* an optimisation over plain strcmp() */
 #define	STREQ(a, b)	(*(a) == *(b) && strcmp((a), (b)) == 0)

@@ -30,9 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pathnames.h	6.4 (Berkeley) 6/1/90
- *
- *	$Header: /cvsroot/src/sbin/mount/pathnames.h,v 1.3 1993/03/23 00:28:54 cgd Exp $
+ *	from: @(#)pathnames.h	6.4 (Berkeley) 6/1/90
+ *	$Id: pathnames.h,v 1.4 1993/08/01 18:26:29 mycroft Exp $
  */
 
 #define _PATH_EXECDIR	"/sbin"

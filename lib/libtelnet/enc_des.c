@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)enc_des.c	5.1 (Berkeley) 3/22/91";
+/*static char sccsid[] = "from: @(#)enc_des.c	5.1 (Berkeley) 3/22/91";*/
+static char rcsid[] = "$Id: enc_des.c,v 1.2 1993/08/01 18:32:44 mycroft Exp $";
 #endif /* not lint */
 
 #if	defined(AUTHENTICATE) && defined(ENCRYPT) && defined(DES_ENCRYPT)

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)talk_ctl.h	5.6 (Berkeley) 3/1/91
+ *	from: @(#)talk_ctl.h	5.6 (Berkeley) 3/1/91
+ *	$Id: talk_ctl.h,v 1.2 1993/08/01 18:07:56 mycroft Exp $
  */
 
 extern	struct sockaddr_in daemon_addr;

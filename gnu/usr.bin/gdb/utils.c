@@ -4,12 +4,11 @@
  *
  * Modified 1991 by Donn Seeley at UUNET Technologies, Inc.
  * Modified 1990 by Van Jacobson at Lawrence Berkeley Laboratory.
- *
- * $Header: /cvsroot/src/gnu/usr.bin/gdb/Attic/utils.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $;
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)utils.c	6.4 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)utils.c	6.4 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: utils.c,v 1.2 1993/08/01 18:47:36 mycroft Exp $";
 #endif /* not lint */
 
 /* General utility routines for GDB, the GNU debugger.

@@ -33,7 +33,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)makemap.c	8.1 (Berkeley) 6/7/93";
+/*static char sccsid[] = "from: @(#)makemap.c	8.1 (Berkeley) 6/7/93";*/
+static char rcsid[] = "$Id: makemap.c,v 1.2 1993/08/01 17:56:53 mycroft Exp $";
 #endif /* not lint */
 
 #include <stdio.h>

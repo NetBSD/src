@@ -30,9 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)interface.h	5.6 (Berkeley) 6/1/90
- *
- *	$Header: /cvsroot/src/sbin/routed/Attic/interface.h,v 1.3 1993/03/23 00:30:28 cgd Exp $
+ *	from: @(#)interface.h	5.6 (Berkeley) 6/1/90
+ *	$Id: interface.h,v 1.4 1993/08/01 18:24:36 mycroft Exp $
  */
 
 /*

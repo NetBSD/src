@@ -5,7 +5,8 @@
  * Modified 1991 by Donn Seeley at UUNET Technologies, Inc.
  * Modified 1990 by Van Jacobson at Lawrence Berkeley Laboratory.
  *
- *	@(#)m-sparc.h	6.4 (Berkeley) 5/8/91
+ *	from: @(#)m-sparc.h	6.4 (Berkeley) 5/8/91
+ *	$Id: m-sparc.h,v 1.2 1993/08/01 18:48:34 mycroft Exp $
  */
 
 /* Parameters for execution on a Sun 4, for GDB, the GNU debugger.

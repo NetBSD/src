@@ -38,7 +38,8 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)tput.c	5.7 (Berkeley) 6/7/90";
+/*static char sccsid[] = "from: @(#)tput.c	5.7 (Berkeley) 6/7/90";*/
+static char rcsid[] = "$Id: tput.c,v 1.2 1993/08/01 18:04:38 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/termios.h>

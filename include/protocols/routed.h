@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)routed.h	5.3 (Berkeley) 4/3/91
+ *	from: @(#)routed.h	5.3 (Berkeley) 4/3/91
+ *	$Id: routed.h,v 1.2 1993/08/01 18:46:09 mycroft Exp $
  */
 
 #ifndef _ROUTED_H_

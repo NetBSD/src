@@ -30,9 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dump.h	5.16 (Berkeley) 5/29/91
- *
- *	$Header: /cvsroot/src/sbin/dump/dump.h,v 1.3 1993/03/23 00:27:03 cgd Exp $
+ *	from: @(#)dump.h	5.16 (Berkeley) 5/29/91
+ *	$Id: dump.h,v 1.4 1993/08/01 18:27:52 mycroft Exp $
  */
 
 #define MAXINOPB	(MAXBSIZE / sizeof(struct dinode))

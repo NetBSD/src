@@ -7,7 +7,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)readline.c	6.4 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)readline.c	6.4 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: readline.c,v 1.2 1993/08/01 18:48:07 mycroft Exp $";
 #endif /* not lint */
 
 /* readline.c -- a general facility for reading lines of input

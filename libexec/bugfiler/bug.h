@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)bug.h	5.10 (Berkeley) 2/25/91
+ *	from: @(#)bug.h	5.10 (Berkeley) 2/25/91
+ *	$Id: bug.h,v 1.3 1993/08/01 18:31:30 mycroft Exp $
  *
  *  4/01/93 Fixed BUGS_HOME so it can be defined from the Makefile - rgrimes
  */

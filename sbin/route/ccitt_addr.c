@@ -30,9 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ccitt_addr.c	5.1 (Berkeley) 6/27/91
- *
- *	$Header: /cvsroot/src/sbin/route/Attic/ccitt_addr.c,v 1.3 1993/03/23 00:30:01 cgd Exp $
+ *	from: @(#)ccitt_addr.c	5.1 (Berkeley) 6/27/91
+ *	$Id: ccitt_addr.c,v 1.4 1993/08/01 18:24:59 mycroft Exp $
  */
 /*
  * parse CCITT addresses

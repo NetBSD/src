@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)xx.h	3.5 (Berkeley) 6/6/90
+ *	from: @(#)xx.h	3.5 (Berkeley) 6/6/90
+ *	$Id: xx.h,v 1.2 1993/08/01 18:02:31 mycroft Exp $
  */
 
 struct xx {

@@ -7,7 +7,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)hp300bsd-dep.c	6.10 (Berkeley) 5/12/91";
+/*static char sccsid[] = "from: @(#)hp300bsd-dep.c	6.10 (Berkeley) 5/12/91";*/
+static char rcsid[] = "$Id: m68kbsd-dep.c,v 1.2 1993/08/01 18:48:26 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -30,7 +31,7 @@ static char sccsid[] = "@(#)hp300bsd-dep.c	6.10 (Berkeley) 5/12/91";
  * 675 Mass Ave, Cambridge, MA 02139, USA.  
  */
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/gnu/usr.bin/gdb/config/Attic/m68kbsd-dep.c,v 1.1 1993/05/13 14:12:09 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/gnu/usr.bin/gdb/config/Attic/m68kbsd-dep.c,v 1.2 1993/08/01 18:48:26 mycroft Exp $";
 #endif lint
 
 #include <stdio.h>

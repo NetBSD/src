@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)slc.c	5.7 (Berkeley) 3/1/91";
+/*static char sccsid[] = "from: @(#)slc.c	5.7 (Berkeley) 3/1/91";*/
+static char rcsid[] = "$Id: slc.c,v 1.2 1993/08/01 18:29:16 mycroft Exp $";
 #endif /* not lint */
 
 #include "telnetd.h"

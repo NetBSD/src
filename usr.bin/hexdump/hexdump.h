@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1989 The Regents of the University of California.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)hexdump.h	8.1 (Berkeley) 6/6/93
+ *	from: @(#)hexdump.h	5.4 (Berkeley) 6/1/90
+ *	$Id: hexdump.h,v 1.2 1993/08/01 18:14:51 mycroft Exp $
  */
 
 typedef struct _pr {
@@ -73,26 +74,4 @@ typedef struct _fs {			/* format strings */
 extern FS *fshead;			/* head of format strings list */
 extern int blocksize;			/* data block size */
 enum _vflag { ALL, DUP, FIRST, WAIT };	/* -v values */
-
-void	 add __P((char *));
-void	 addfile __P((char *));
-void	 badcnt __P((char *));
-void	 badconv __P((char *));
-void	 badfmt __P((char *));
-void	 badsfmt __P((void));
-void	 bpad __P((PR *));
-void	 conv_c __P((PR *, u_char *));
-void	 conv_u __P((PR *, u_char *));
-void	 display __P((void));
-void	 doskip __P((char *, int));
-void	 err __P((const char *, ...));
-void	*emalloc __P((int));
-void	 escape __P((char *));
-u_char	*get __P((void));
-void	 newsyntax __P((int, char ***));
-int	 next __P((char **));
-void	 nomem __P((void));
-void	 oldsyntax __P((int, char ***));
-void	 rewrite __P((FS *));
-int	 size __P((FS *));
-void	 usage __P((void));
+char *emalloc();

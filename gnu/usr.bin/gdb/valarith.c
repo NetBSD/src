@@ -7,7 +7,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)valarith.c	6.3 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)valarith.c	6.3 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: valarith.c,v 1.2 1993/08/01 18:47:35 mycroft Exp $";
 #endif /* not lint */
 
 /* Perform arithmetic and other operations on values, for GDB.

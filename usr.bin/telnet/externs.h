@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)externs.h	5.3 (Berkeley) 3/22/91
+ *	from: @(#)externs.h	5.3 (Berkeley) 3/22/91
+ *	$Id: externs.h,v 1.2 1993/08/01 18:07:31 mycroft Exp $
  */
 
 #ifndef	BSD

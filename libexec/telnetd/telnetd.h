@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)telnetd.h	5.3 (Berkeley) 3/1/91
+ *	from: @(#)telnetd.h	5.3 (Berkeley) 3/1/91
+ *	$Id: telnetd.h,v 1.2 1993/08/01 18:29:20 mycroft Exp $
  */
 
 

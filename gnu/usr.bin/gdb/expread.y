@@ -36,7 +36,8 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
    
 %{
 #ifndef lint
-static char sccsid[] = "@(#)expread.y	6.3 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)expread.y	6.3 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: expread.y,v 1.2 1993/08/01 18:47:18 mycroft Exp $";
 #endif /* not lint */
 
 #include <stdio.h>

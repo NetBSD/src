@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)page.h	8.1 (Berkeley) 6/6/93
+ *	from: @(#)page.h	8.1 (Berkeley) 6/6/93
+ *	$Id: page.h,v 1.3 1993/08/01 18:43:34 mycroft Exp $
  */
 
 /*

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)res.h	5.10 (Berkeley) 6/1/90
+ *	from: @(#)res.h	5.10 (Berkeley) 6/1/90
+ *	$Id: res.h,v 1.2 1993/08/01 17:58:03 mycroft Exp $
  */
 
 /*

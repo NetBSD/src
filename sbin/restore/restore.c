@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)restore.c	5.7 (Berkeley) 6/1/90";
+/*static char sccsid[] = "from: @(#)restore.c	5.7 (Berkeley) 6/1/90";*/
+static char rcsid[] = "$Id: restore.c,v 1.2 1993/08/01 18:25:16 mycroft Exp $";
 #endif /* not lint */
 
 #include "restore.h"

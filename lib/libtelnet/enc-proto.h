@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)enc-proto.h	5.2 (Berkeley) 3/22/91
+ *	from: @(#)enc-proto.h	5.2 (Berkeley) 3/22/91
+ *	$Id: enc-proto.h,v 1.2 1993/08/01 18:32:53 mycroft Exp $
  */
 
 /*

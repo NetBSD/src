@@ -35,7 +35,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "@(#)fixdfsi.s	5.4 (Berkeley) 4/12/91"
+	/*.asciz "from: @(#)fixdfsi.s	5.4 (Berkeley) 4/12/91"*/
+	.asciz "$Id: fixdfsi.s,v 1.2 1993/08/01 18:40:52 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 	.globl ___fixdfsi

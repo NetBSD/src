@@ -7,7 +7,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)stack.c	6.3 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)stack.c	6.3 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: stack.c,v 1.2 1993/08/01 18:47:39 mycroft Exp $";
 #endif /* not lint */
 
 /* Print and select stack frames for GDB, the GNU debugger.

@@ -1,4 +1,3 @@
-/* @(#)clnt_generic.c	2.2 88/08/01 4.0 RPCSRC */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -28,8 +27,11 @@
  * Mountain View, California  94043
  */
 #if !defined(lint) && defined(SCCSIDS)
-static char sccsid[] = "@(#)clnt_generic.c 1.4 87/08/11 (C) 1987 SMI";
+/*static char sccsid[] = "from: @(#)clnt_generic.c 1.4 87/08/11 (C) 1987 SMI";*/
+/*static char sccsid[] = "from: @(#)clnt_generic.c	2.2 88/08/01 4.0 RPCSRC";*/
+static char rcsid[] = "$Id: clnt_generic.c,v 1.3 1993/08/01 18:33:51 mycroft Exp $";
 #endif
+
 /*
  * Copyright (C) 1987, Sun Microsystems, Inc.
  */

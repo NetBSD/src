@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)foldit.c	5.1 (Berkeley) 4/18/91";
+/*static char sccsid[] = "from: @(#)foldit.c	5.1 (Berkeley) 4/18/91";*/
+static char rcsid[] = "$Id: foldit.c,v 1.2 1993/08/01 18:04:01 mycroft Exp $";
 #endif /* not lint */
 
 foldit(chunk, col, max)

@@ -1,35 +1,6 @@
 /* cron.h - header for vixie's cron
  *
- * $Header: /cvsroot/src/libexec/crond/Attic/cron.h,v 1.2 1993/05/28 08:34:11 cgd Exp $
- * $Source: /cvsroot/src/libexec/crond/Attic/cron.h,v $
- * $Revision: 1.2 $
- * $Log: cron.h,v $
- * Revision 1.2  1993/05/28 08:34:11  cgd
- * update for newest version of vixie's cron, as of May 27 1993
- *
- * Revision 2.2  1992/12/18  18:47:42  vixie
- * vix/ckp
- *
- * Revision 2.1  90/07/18  00:23:47  vixie
- * Baseline for 4.4BSD release
- * 
- * Revision 2.0  88/12/10  04:57:39  vixie
- * V2 Beta
- * 
- * Revision 1.2  88/11/29  13:05:46  vixie
- * seems to work on Ultrix 3.0 FT1
- * 
- * Revision 1.1  88/11/14  12:27:49  vixie
- * Initial revision
- * 
- * Revision 1.4  87/05/02  17:33:08  paul
- * baseline for mod.sources release
- *
- * vix 14jan87 [0 or 7 can be sunday; thanks, mwm@berkeley]
- * vix 30dec86 [written]
- */
-
-/* Copyright 1988,1990,1993 by Paul Vixie
+ * Copyright 1988,1990,1993 by Paul Vixie
  * All rights reserved
  *
  * Distribute freely, except: don't remove my name from the source or

@@ -41,9 +41,9 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)disklabel.c	5.20 (Berkeley) 2/9/91";
-/* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
-static char rcsid[] = "$Header: /cvsroot/src/sbin/disklabel/Attic/disklabel.c,v 1.5 1993/04/18 18:22:33 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)disklabel.c	1.2 (Symmetric) 11/28/85";*/
+/*static char sccsid[] = "from: @(#)disklabel.c	5.20 (Berkeley) 2/9/91";*/
+static char rcsid[] = "$Id: disklabel.c,v 1.6 1993/08/01 18:28:00 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

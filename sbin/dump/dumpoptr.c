@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)dumpoptr.c	5.8 (Berkeley) 3/7/91";
-static char rcsid[] = "$Header: /cvsroot/src/sbin/dump/Attic/dumpoptr.c,v 1.4 1993/04/20 09:30:45 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)dumpoptr.c	5.8 (Berkeley) 3/7/91";*/
+static char rcsid[] = "$Id: dumpoptr.c,v 1.5 1993/08/01 18:27:46 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)useful.h	8.1 (Berkeley) 6/7/93
+ *	from: @(#)useful.h	8.1 (Berkeley) 6/7/93
+ *	$Id: useful.h,v 1.3 1993/08/01 17:56:05 mycroft Exp $
  */
 
 # include <sys/types.h>

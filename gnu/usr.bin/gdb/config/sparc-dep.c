@@ -7,7 +7,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)sparc-dep.c	6.4 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)sparc-dep.c	6.4 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: sparc-dep.c,v 1.2 1993/08/01 18:48:21 mycroft Exp $";
 #endif /* not lint */
 
 /* Machine-dependent code which would otherwise be in inflow.c and core.c,

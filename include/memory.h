@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)memory.h	5.5 (Berkeley) 6/1/90
+ *	from: @(#)memory.h	5.5 (Berkeley) 6/1/90
+ *	$Id: memory.h,v 1.2 1993/08/01 18:44:48 mycroft Exp $
  */
 
 #include <string.h>

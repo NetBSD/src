@@ -36,7 +36,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "@(#)htons.s	5.1 (Berkeley) 5/12/90"
+	/*.asciz "from: @(#)htons.s	5.1 (Berkeley) 5/12/90"*/
+	.asciz "$Id: htons.s,v 1.2 1993/08/01 18:41:56 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /* hostorder = htons(netorder) */

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
- * Copyright (c) 1980, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1980 The Regents of the University of California.
+ * Copyright (c) 1976 Board of Trustees of the University of Illinois.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
+/*static char sccsid[] = "from: @(#)parse.c	5.12 (Berkeley) 2/26/91";*/
+static char rcsid[] = "$Id: parse.c,v 1.2 1993/08/01 18:14:30 mycroft Exp $";
 #endif /* not lint */
 
 #include <stdio.h>

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ttyent.h	5.7 (Berkeley) 4/3/91
+ *	from: @(#)ttyent.h	5.7 (Berkeley) 4/3/91
+ *	$Id: ttyent.h,v 1.2 1993/08/01 18:45:11 mycroft Exp $
  */
 
 #ifndef	_TTYENT_H_

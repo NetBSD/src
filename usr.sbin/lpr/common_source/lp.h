@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)lp.h	5.5 (Berkeley) 6/1/90
+ *	from: @(#)lp.h	5.5 (Berkeley) 6/1/90
+ *	$Id: lp.h,v 1.2 1993/08/01 17:59:09 mycroft Exp $
  */
 
 /*

@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tzfile.h	5.10 (Berkeley) 4/3/91
+ *	from: @(#)tzfile.h	5.10 (Berkeley) 4/3/91
+ *	$Id: tzfile.h,v 1.2 1993/08/01 18:45:09 mycroft Exp $
  */
 
 #ifndef _TZFILE_H_

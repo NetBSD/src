@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)archive.h	5.8 (Berkeley) 4/12/91
+ *	from: @(#)archive.h	5.8 (Berkeley) 4/12/91
+ *	$Id: archive.h,v 1.2 1993/08/01 18:18:41 mycroft Exp $
  */
 
 /* Ar(1) options. */

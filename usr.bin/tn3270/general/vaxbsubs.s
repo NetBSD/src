@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vaxbsubs.s	4.2 (Berkeley) 4/26/91
+ *	from: @(#)vaxbsubs.s	4.2 (Berkeley) 4/26/91
+ *	$Id: vaxbsubs.s,v 1.2 1993/08/01 18:05:26 mycroft Exp $
  */
 
 /* This is taken from bcmp.s from 4.2.

@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)cksum.m68000.c	2.4 (Berkeley) 4/20/91";
+/*static char sccsid[] = "from: @(#)cksum.m68000.c	2.4 (Berkeley) 4/20/91";*/
+static char rcsid[] = "$Id: cksum.m68000.c,v 1.2 1993/08/01 17:55:29 mycroft Exp $";
 #endif /* not lint */
 
 #include "../globals.h"

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vis.h	5.9 (Berkeley) 4/3/91
+ *	from: @(#)vis.h	5.9 (Berkeley) 4/3/91
+ *	$Id: vis.h,v 1.2 1993/08/01 18:45:04 mycroft Exp $
  */
 
 #ifndef _VIS_H_

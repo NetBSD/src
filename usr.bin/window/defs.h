@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)defs.h	3.21 (Berkeley) 6/6/90
+ *	from: @(#)defs.h	3.21 (Berkeley) 6/6/90
+ *	$Id: defs.h,v 1.2 1993/08/01 18:01:36 mycroft Exp $
  */
 
 #include "ww.h"

@@ -34,17 +34,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00039
- * --------------------         -----   ----------------------
- *
- * 10 Aug 92    David Dawes             Fixed "remove directory" bug
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)job.c	5.15 (Berkeley) 3/1/91";
+/*static char sccsid[] = "from: @(#)job.c	5.15 (Berkeley) 3/1/91";*/
+static char rcsid[] = "$Id: job.c,v 1.3 1993/08/01 18:11:48 mycroft Exp $";
 #endif /* not lint */
 
 /*-

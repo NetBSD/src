@@ -1,4 +1,3 @@
-/* @(#)auth.h	2.3 88/08/07 4.0 RPCSRC; from 1.17 88/02/08 SMI */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -26,6 +25,10 @@
  * Sun Microsystems, Inc.
  * 2550 Garcia Avenue
  * Mountain View, California  94043
+ *
+ *	from: @(#)auth.h 1.17 88/02/08 SMI
+ *	from: @(#)auth.h	2.3 88/08/07 4.0 RPCSRC
+ *	$Id: auth.h,v 1.3 1993/08/01 18:46:00 mycroft Exp $
  */
 
 /*

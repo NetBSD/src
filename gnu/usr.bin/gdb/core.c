@@ -7,7 +7,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)core.c	6.3 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)core.c	6.3 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: core.c,v 1.3 1993/08/01 18:47:22 mycroft Exp $";
 #endif /* not lint */
 
 /* Work with core dump and executable files, for GDB.

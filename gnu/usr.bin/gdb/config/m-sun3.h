@@ -5,7 +5,8 @@
  * Modified 1991 by Donn Seeley at UUNET Technologies, Inc.
  * Modified 1990 by Van Jacobson at Lawrence Berkeley Laboratory.
  *
- *	@(#)m-sun3.h	6.3 (Berkeley) 5/8/91
+ *	from: @(#)m-sun3.h	6.3 (Berkeley) 5/8/91
+ *	$Id: m-sun3.h,v 1.2 1993/08/01 18:48:31 mycroft Exp $
  */
 
 /* Parameters for execution on a Sun, for GDB, the GNU debugger.

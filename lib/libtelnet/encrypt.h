@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)encrypt.h	5.2 (Berkeley) 3/22/91
+ *	from: @(#)encrypt.h	5.2 (Berkeley) 3/22/91
+ *	$Id: encrypt.h,v 1.2 1993/08/01 18:32:51 mycroft Exp $
  */
 
 /*

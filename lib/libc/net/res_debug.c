@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)res_debug.c	5.36 (Berkeley) 3/6/91
+ *	from: @(#)res_debug.c	5.36 (Berkeley) 3/6/91
+ *	$Id: res_debug.c,v 1.2 1993/08/01 18:39:25 mycroft Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)

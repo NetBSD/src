@@ -38,7 +38,8 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)tc2.c	5.3 (Berkeley) 4/12/91";
+/*static char sccsid[] = "from: @(#)tc2.c	5.3 (Berkeley) 4/12/91";*/
+static char rcsid[] = "$Id: tc2.c,v 1.2 1993/08/01 18:32:17 mycroft Exp $";
 #endif /* not lint */
 
 /*

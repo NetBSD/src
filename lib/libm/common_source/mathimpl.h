@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mathimpl.h	5.4 (Berkeley) 3/5/91
+ *	from: @(#)mathimpl.h	5.4 (Berkeley) 3/5/91
+ *	$Id: mathimpl.h,v 1.2 1993/08/01 18:34:55 mycroft Exp $
  */
 
 #include <sys/cdefs.h>

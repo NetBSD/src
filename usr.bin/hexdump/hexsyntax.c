@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)hexsyntax.c	5.2 (Berkeley) 5/8/90";
+/*static char sccsid[] = "from: @(#)hexsyntax.c	5.2 (Berkeley) 5/8/90";*/
+static char rcsid[] = "$Id: hexsyntax.c,v 1.2 1993/08/01 18:14:47 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

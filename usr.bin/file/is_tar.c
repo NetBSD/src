@@ -4,12 +4,14 @@
  * Stolen (by the author!) from the public domain tar program:
  * Pubic Domain version written 26 Aug 1985 John Gilmore (ihnp4!hoptoad!gnu).
  *
- * @(#)list.c 1.18 9/23/86 Public Domain - gnu
- * $Id: is_tar.c,v 1.2 1993/06/10 00:38:12 jtc Exp $
- *
  * Comments changed and some code/comments reformatted
  * for file command by Ian Darwin.
  */
+
+#ifndef lint
+/*static char sccsid[] = "from: @(#)list.c 1.18 9/23/86 Public Domain - gnu";*/
+static char rcsid[] = "$Id: is_tar.c,v 1.3 1993/08/01 18:16:24 mycroft Exp $";
+#endif /* not lint */
 
 #include <string.h>
 #include <ctype.h>

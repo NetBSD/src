@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)fortran.c	5.5 (Berkeley) 2/26/91";
+/*static char sccsid[] = "from: @(#)fortran.c	5.5 (Berkeley) 2/26/91";*/
+static char rcsid[] = "$Id: fortran.c,v 1.2 1993/08/01 18:17:06 mycroft Exp $";
 #endif /* not lint */
 
 #include <stdio.h>

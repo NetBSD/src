@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ww.h	3.63 (Berkeley) 3/2/91
+ *	from: @(#)ww.h	3.63 (Berkeley) 3/2/91
+ *	$Id: ww.h,v 1.2 1993/08/01 18:01:29 mycroft Exp $
  */
 
 #ifdef OLD_TTY

@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)networkdelta.c	2.4 (Berkeley) 6/1/90";
+/*static char sccsid[] = "from: @(#)networkdelta.c	2.4 (Berkeley) 6/1/90";*/
+static char rcsid[] = "$Id: networkdelta.c,v 1.2 1993/08/01 17:55:24 mycroft Exp $";
 #endif /* not lint */
 
 #include "globals.h"

@@ -1,12 +1,3 @@
-/* @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC */
-#ifndef lint
-static  char sccsid[] = "@(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";
-#endif
-
-/*
- * Copyright (c) 1984 by Sun Microsystems, Inc.
- */
-
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -35,9 +26,16 @@ static  char sccsid[] = "@(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
+#ifndef lint
+/*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
+/*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
+static char rcsid[] = "$Id: rstat_proc.c,v 1.3 1993/08/01 18:29:47 mycroft Exp $";
+#endif
 
 /*
  * rstat service:  built with rstat.x and derived from rpc.rstatd.c
+ *
+ * Copyright (c) 1984 by Sun Microsystems, Inc.
  */
 
 #include <signal.h>

@@ -28,7 +28,8 @@
  * Mountain View, California  94043
  */
 #ifndef lint
-static char sccsid[] = "@(#)rpc_clntout.c 1.2 87/06/24 (C) 1987 SMI";
+/*static char sccsid[] = "from: @(#)rpc_clntout.c 1.2 87/06/24 (C) 1987 SMI";*/
+static char rcsid[] = "$Id: rpc_clntout.c,v 1.2 1993/08/01 18:09:23 mycroft Exp $";
 #endif
 
 /*

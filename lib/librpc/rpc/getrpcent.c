@@ -28,7 +28,8 @@
  * Mountain View, California  94043
  */
 #if !defined(lint) && defined(SCCSIDS)
-static char sccsid[] = "@(#)getrpcent.c 1.14 91/03/11 Copyr 1984 Sun Micro";
+/*static char sccsid[] = "from: @(#)getrpcent.c 1.14 91/03/11 Copyr 1984 Sun Micro";*/
+static char rcsid[] = "$Id: getrpcent.c,v 1.5 1993/08/01 18:33:39 mycroft Exp $";
 #endif
 
 /*

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)resolv.h	5.15 (Berkeley) 4/3/91
+ *	from: @(#)resolv.h	5.15 (Berkeley) 4/3/91
+ *	$Id: resolv.h,v 1.2 1993/08/01 18:45:24 mycroft Exp $
  */
 
 #ifndef _RESOLV_H_
