@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.2 2001/09/05 16:17:35 matt Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.3 2002/01/05 22:41:48 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -62,6 +62,8 @@ extern u_int soft_interrupts;	/* Only so we can initialise it */
 
 extern char *_intrnames;
 extern void set_spl_masks	__P((void));
+
+void stray_irqhandler __P((void));
 
 void
 irq_init(void)
