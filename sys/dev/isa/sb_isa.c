@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.10 1997/08/07 12:14:39 augustss Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.11 1997/08/24 20:06:34 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -56,6 +56,8 @@
 
 #include <dev/isa/sbdspvar.h>
 
+static	int sbfind __P((struct device *, struct sbdsp_softc *, struct isa_attach_args *));
+
 int	sb_isa_match __P((struct device *, void *, void *));
 void	sb_isa_attach __P((struct device *, struct device *, void *));
 
@@ -73,13 +75,25 @@ struct cfattach sb_isa_ca = {
 int
 sb_isa_match(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
-	/*
-	 * Indirect brokedness!
-	 */
-	struct sbdsp_softc *sc = match;
-	struct isa_attach_args *ia = aux;
+	struct sbdsp_softc probesc;
+
+	return sbfind(parent, &probesc, aux);
+}
+
+static int
+sbfind(parent, sc, ia)
+	struct device *parent;
+	struct sbdsp_softc *sc;
+	struct isa_attach_args *ia;
+{
+	int rc = 0;
 
 	if (!SB_BASE_VALID(ia->ia_iobase)) {
 		printf("sb: configured iobase 0x%x invalid\n", ia->ia_iobase);
@@ -96,9 +110,6 @@ sb_isa_match(parent, match, aux)
 		return 0;
 	}
 
-	/*
-	 * Indirect brokedness!
-	 */
 	sc->sc_iobase = ia->ia_iobase;
 	sc->sc_irq = ia->ia_irq;
 	sc->sc_drq8 = ia->ia_drq;
@@ -119,11 +130,11 @@ sb_isa_match(parent, match, aux)
 
 	ia->ia_irq = sc->sc_irq;
 
-	return 1;
+	rc = 1;
 
 bad:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, SBP_NPORT);
-	return 0;
+	return rc;
 }
 
 
@@ -137,8 +148,14 @@ sb_isa_attach(parent, self, aux)
 	void *aux;
 {
 	struct sbdsp_softc *sc = (struct sbdsp_softc *)self;
+	struct isa_attach_args *ia = aux;
 
+	if (!sbfind(parent, sc, ia) || 
+	    bus_space_map(sc->sc_iot, ia->ia_iobase, ia->ia_iosize, 
+			  0, &sc->sc_ioh)) {
+		printf("%s: sbfind failed\n", sc->sc_dev.dv_xname);
+		return;
+	}
 	sc->sc_isa = parent;
-
 	sbattach(sc);
 }
