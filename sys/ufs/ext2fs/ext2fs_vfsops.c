@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.36 2000/05/29 18:34:36 mycroft Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.36.2.1 2000/07/03 17:44:02 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -836,17 +836,23 @@ ext2fs_vget(mp, ino, vpp)
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
-	do {
-		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
-			return (0);
-	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
+
+	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
+		return (0);
 
 	/* Allocate a new vnode/inode. */
 	if ((error = getnewvnode(VT_EXT2FS, mp, ext2fs_vnodeop_p, &vp)) != 0) {
 		*vpp = NULL;
-		lockmgr(&ufs_hashlock, LK_RELEASE, 0);
 		return (error);
 	}
+
+	do {
+		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
+			ungetnewvnode(vp);
+			return (0);
+		}
+	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
+
 	ip = pool_get(&ext2fs_inode_pool, PR_WAITOK);
 	memset((caddr_t)ip, 0, sizeof(struct inode));
 	vp->v_data = ip;
