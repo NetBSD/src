@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.10 2002/12/26 11:41:46 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.11 2002/12/26 13:45:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.10 2002/12/26 11:41:46 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.11 2002/12/26 13:45:18 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -160,11 +160,13 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 
 		/*
 		 * If the remote port is a special port (host, kernel or
-		 * bootstrap), the message will be handled by the kernel.
+		 * clock), the message will be handled by the kernel.
 		 */
 		med = (struct mach_emuldata *)p->p_emuldata;
 		mp = ((struct mach_right *)sm->msgh_remote_port)->mr_port;
-		if ((mp == med->med_host) || (mp == med->med_kernel)) {
+		if ((mp == med->med_host) || 
+		    (mp == med->med_kernel) ||
+		    (mp == mach_clock_port)) {
 			/* 
 			 * Look for the function that will handle it,
 			 * using the message id.
