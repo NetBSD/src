@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.10 1995/06/24 20:36:30 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.11 1995/08/14 01:17:02 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -64,8 +64,8 @@ svr4_getcontext(p, uc, mask, oonstack)
 {
 	struct trapframe *tf = p->p_md.md_regs;
 	struct sigacts *psp = p->p_sigacts;
-	svr4_greg_t* r = uc->uc_mcontext.greg;
-	svr4_stack_t *s = &uc->uc_stack;
+	svr4_greg_t *r = uc->uc_mcontext.greg;
+	struct svr4_sigaltstack *s = &uc->uc_stack;
 	struct sigaltstack *sf = &psp->ps_sigstk;
 
 	bzero(uc, sizeof(struct svr4_ucontext));
@@ -138,8 +138,8 @@ svr4_setcontext(p, uc)
 	struct sigcontext *scp, context;
 	struct sigacts *psp = p->p_sigacts;
 	register struct trapframe *tf;
-	svr4_greg_t* r = uc->uc_mcontext.greg;
-	svr4_stack_t *s = &uc->uc_stack;
+	svr4_greg_t *r = uc->uc_mcontext.greg;
+	struct svr4_sigaltstack *s = &uc->uc_stack;
 	struct sigaltstack *sf = &psp->ps_sigstk;
 	int mask;
 
