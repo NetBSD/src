@@ -1,4 +1,4 @@
-.\"	$NetBSD: getopt.1,v 1.6 1997/01/09 20:19:46 tls Exp $
+.\"	$NetBSD: getopt.1,v 1.7 1997/07/18 00:18:26 phil Exp $
 .Dd June 21, 1993
 .Dt GETOPT 1
 .Os
@@ -6,6 +6,7 @@
 .Nm getopt
 .Nd parse command options
 .Sh SYNOPSIS
+.Nm args=\`getopt optstring $*\`
 .Nm set \-\- \`getopt optstring $*\`
 .Sh DESCRIPTION
 .Nm Getopt
@@ -43,12 +44,13 @@ and the option
 which requires an argument.
 .Pp
 .Bd -literal -offset indent
-set \-\- \`getopt abo: $*\`
+args=\`getopt abo: $*\`
 if test $? != 0
 then
 	echo 'Usage: ...'
 	exit 2
 fi
+set \-\- $args
 for i
 do
 	case "$i"
@@ -71,6 +73,20 @@ cmd \-a \-o arg file file
 cmd \-oarg -a file file
 cmd \-a \-oarg \-\- file file
 .Ed
+.Pp
+.St -p1003.2
+mandates that the 
+.Nm sh
+set command return the value of 0 for the exit status.  Therefore,
+the exit status of the
+.Nm getopt
+command is lost when
+.Nm getopt
+and the
+.Nm sh
+set command are used on the same line.  The example given
+is one way to detect errors found by 
+.Nm getopt .
 .Sh SEE ALSO
 .Xr sh 1 ,
 .Xr getopt 3
