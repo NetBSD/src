@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.8 2001/07/26 19:57:15 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.9 2001/07/31 00:12:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,6 +46,31 @@
 #define	NOTREACHED			  \
 	/* force error */		  \
 	int3
+/* Simple versions that don't handle spin-preempt cases */
+
+/* Plain switch that doesn't do any special checking. */
+ENTRY(pthread__switch)
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%esi	/* callee save */
+	pushl	%edi	/* callee save */
+	PIC_PROLOGUE
+	movl	8(%ebp), %eax  /* eax holds the current thread */
+	movl	12(%ebp), %ecx /* ecx holds the thread to switch to  */
+	subl	$CONTEXTSIZE, %esp
+	movl	%esp, PT_UC(%eax)
+	movl	%esp, %edi
+	movl	PT_UC(%ecx),%esi
+	pushl	%esi	/* ucontext_t *ucp */
+	pushl	%edi	/* ucontext_t *oucp */
+	call	PIC_PLT(_C_LABEL(_swapcontext_u))
+	addl	$CONTEXTSIZE+8, %esp
+	PIC_EPILOGUE
+	popl	%edi
+	popl	%esi
+	movl	%ebp, %esp
+	popl	%ebp
+	ret
 
 /* Helper switch code used by pthread__locked_switch and 
  * pthread__upcall_switch.
@@ -103,7 +128,7 @@ ENTRY(pthread__locked_switch)
 #else
 	leal	locked_return_point, %esi
 #endif
-	movl	%esi, 92(%edi)
+	movl	%esi, UC_EIP(%edi)
 	
 	STACK_SWITCH
 	
@@ -146,8 +171,8 @@ locked_no_old_preempt:
 	cmpl	$0, PT_NEXT(%ecx)
 	je	locked_no_new_preempt
 	/* Yes, we were. Bummer. Go to the next element in the chain. */
-	movl	%ecx, PT_SWITCHTO(%eax)
-	movl	%esi, PT_SWITCHTOUC(%eax)
+	movl	%ecx, PT_SWITCHTO(%ecx)
+	movl	%esi, PT_SWITCHTOUC(%ecx)
 	movl	%ecx, %eax
 	movl	PT_NEXT(%ecx), %ecx
 	movl	$-2, %edx
@@ -213,8 +238,8 @@ upcall_no_old_preempt:
 	cmpl	$0, PT_NEXT(%ecx)
 	je	upcall_no_new_preempt
 	/* Yes, we were. Bummer. Go to the next element in the chain. */
-	movl	%ecx, PT_SWITCHTO(%eax)
-	movl	%esi, PT_SWITCHTOUC(%eax)
+	movl	%ecx, PT_SWITCHTO(%ecx)
+	movl	%esi, PT_SWITCHTOUC(%ecx)
 	movl	%ecx, %eax
 	movl	PT_NEXT(%ecx), %ecx
 	movl	$-1, %edx
