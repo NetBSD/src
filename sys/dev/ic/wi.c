@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.56 2002/03/27 08:01:22 onoe Exp $	*/
+/*	$NetBSD: wi.c,v 1.57 2002/03/30 15:58:45 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.56 2002/03/27 08:01:22 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.57 2002/03/30 15:58:45 ichiro Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -2011,7 +2011,7 @@ wi_get_id(sc)
 		break;
 	}
 
-	/* get firmware version */
+	/* get station firmware version */
 	memset(&ver, 0, sizeof(ver));
 	ver.wi_type = WI_RID_STA_IDENTITY;
 	ver.wi_len = 5;
@@ -2039,7 +2039,7 @@ wi_get_id(sc)
 			    (p[6] - '0') * 10 + (p[7] - '0');
 		}
 	}
-	printf(", Firmware: %s %u.%u.%u\n",
+	printf(", Station Firmware: %s %u.%u.%u\n",
 	    (sc->sc_firmware_type == WI_LUCENT ? "Lucent" :
 	    (sc->sc_firmware_type == WI_SYMBOL ? "Symbol" : "Intersil")),
 	    sc->sc_firmware_ver / 10000, (sc->sc_firmware_ver % 10000) / 100,
