@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.3 2004/12/07 04:36:06 jdarrow Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.4 2004/12/20 21:05:34 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.3 2004/12/07 04:36:06 jdarrow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.4 2004/12/20 21:05:34 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -271,11 +271,9 @@ rtw_cardbus_attach(parent, self, aux)
 
 	printf(": %s\n", rcp->rcp_product_name);
 
-#if 0
-	printf("%s: pass %d.%d signature %08x\n", sc->sc_dev.dv_xname,
+	RTW_DPRINTF(("%s: pass %d.%d signature %08x\n", sc->sc_dev.dv_xname,
 	    (rev >> 4) & 0xf, rev & 0xf,
-	    cardbus_conf_read(ct->ct_cc, ct->ct_cf, csc->sc_tag, 0x80));
-#endif
+	    cardbus_conf_read(ct->ct_cc, ct->ct_cf, csc->sc_tag, 0x80)));
 
 	/*
 	 * Map the device.
@@ -284,8 +282,8 @@ rtw_cardbus_attach(parent, self, aux)
 	if (Cardbus_mapreg_map(ct, RTW_PCI_MMBA,
 	    CARDBUS_MAPREG_TYPE_MEM, 0, &regs->r_bt, &regs->r_bh, &adr,
 	    &csc->sc_mapsize) == 0) {
-		printf("%s: %s mapped %lu bytes mem space\n",
-		    sc->sc_dev.dv_xname, __func__, (long)csc->sc_mapsize);
+		RTW_DPRINTF(("%s: %s mapped %lu bytes mem space\n",
+		    sc->sc_dev.dv_xname, __func__, (long)csc->sc_mapsize));
 #if rbus
 #else
 		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
@@ -297,8 +295,8 @@ rtw_cardbus_attach(parent, self, aux)
 	} else if (Cardbus_mapreg_map(ct, RTW_PCI_IOBA,
 	    CARDBUS_MAPREG_TYPE_IO, 0, &regs->r_bt, &regs->r_bh, &adr,
 	    &csc->sc_mapsize) == 0) {
-		printf("%s: %s mapped %lu bytes I/O space\n",
-		    sc->sc_dev.dv_xname, __func__, (long)csc->sc_mapsize);
+		RTW_DPRINTF(("%s: %s mapped %lu bytes I/O space\n",
+		    sc->sc_dev.dv_xname, __func__, (long)csc->sc_mapsize));
 #if rbus
 #else
 		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr+csc->sc_mapsize);
@@ -446,7 +444,7 @@ rtw_cardbus_power(sc, why)
 {
 	struct rtw_cardbus_softc *csc = (void *) sc;
 
-	printf("%s: rtw_cardbus_power\n", sc->sc_dev.dv_xname);
+	RTW_DPRINTF(("%s: rtw_cardbus_power\n", sc->sc_dev.dv_xname));
 
 	if (why == PWR_RESUME) {
 		/*
