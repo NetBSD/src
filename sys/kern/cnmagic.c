@@ -1,4 +1,4 @@
-/*	$NetBSD: cnmagic.c,v 1.4 2001/11/27 20:00:36 bouyer Exp $	*/
+/*	$NetBSD: cnmagic.c,v 1.5 2003/08/22 02:01:32 junyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 Eduardo Horvath
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cnmagic.c,v 1.4 2001/11/27 20:00:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cnmagic.c,v 1.5 2003/08/22 02:01:32 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,8 @@ static unsigned short cn_magic[CNS_LEN];
  * Initialize a cnm_state_t.
  */
 void
-cn_init_magic(cnm_state_t *cnm) {
+cn_init_magic(cnm_state_t *cnm)
+{
 	cnm->cnm_state = 0;
 	cnm->cnm_magic = cn_magic;
 }
@@ -54,7 +55,8 @@ cn_init_magic(cnm_state_t *cnm) {
  * Destroy a cnm_state_t.
  */
 void
-cn_destroy_magic(cnm_state_t *cnm) {
+cn_destroy_magic(cnm_state_t *cnm)
+{
 	cnm->cnm_state = 0;
 	cnm->cnm_magic = NULL;
 }
@@ -69,8 +71,8 @@ cn_set_magic(char *magic)
 	unsigned int i, c, n;
 	unsigned short m[CNS_LEN];
 
-	for (i=0; i<CNS_LEN; i++) {
-		c = (*magic++)&0xff;
+	for (i = 0; i < CNS_LEN; i++) {
+		c = (*magic++) & 0xff;
 		n = *magic ? i+1 : CNS_TERM;
 		switch (c) {
 		case 0:
@@ -89,7 +91,7 @@ cn_set_magic(char *magic)
 			return(0);
 		case 0x27:
 			/* Escape sequence */
-			c = (*magic++)&0xff;
+			c = (*magic++) & 0xff;
 			n = *magic ? i+1 : CNS_TERM;
 			switch (c) {
 			case 0x27:
@@ -113,7 +115,7 @@ cn_set_magic(char *magic)
 			m[i] = ENCODE_STATE(c, n);
 			break;
 		}
-	} 
+	}
 	return (EINVAL);
 }
 
@@ -121,11 +123,12 @@ cn_set_magic(char *magic)
  * Translatea state machine table back to
  * a magic string.
  */
-int 
-cn_get_magic(char *magic, int maglen) {
+int
+cn_get_magic(char *magic, int maglen)
+{
 	unsigned int i, c;
-	
-	for (i=0; i<CNS_LEN;) {
+
+	for (i = 0; i < CNS_LEN;) {
 		c = cn_magic[i];
 		/* Translate a character */
 		switch (CNS_MAGIC_VAL(c)) {
@@ -142,7 +145,7 @@ cn_get_magic(char *magic, int maglen) {
 			*magic++ = 0x27;
 			break;
 		default:
-			*magic++ = (c&0x0ff);
+			*magic++ = (c & 0x0ff);
 			break;
 		}
 		/* Now go to the next state */
