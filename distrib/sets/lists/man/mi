@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.688 2004/04/29 19:42:30 jonathan Exp $
+# $NetBSD: mi,v 1.689 2004/05/03 02:47:04 kochi Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -842,6 +842,7 @@
 ./usr/share/man/cat4/i386/pms.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i386/pnpbios.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/speaker.0		man-obsolete		obsolete
+./usr/share/man/cat4/i386/spic.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i4b.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i4bctl.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i4bipr.0			man-obsolete		obsolete
@@ -1141,7 +1142,6 @@
 ./usr/share/man/cat4/sparc64/sabtty.0		man-sys-catman		.cat
 ./usr/share/man/cat4/spc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/speaker.0			man-sys-catman		.cat
-./usr/share/man/cat4/spic.0			man-sys-catman		.cat
 ./usr/share/man/cat4/spkr.0			man-sys-catman		.cat
 ./usr/share/man/cat4/spp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sqphy.0			man-sys-catman		.cat
@@ -2935,6 +2935,7 @@
 ./usr/share/man/man4/i386/pms.4			man-obsolete		obsolete
 ./usr/share/man/man4/i386/pnpbios.4		man-sys-man		.man
 ./usr/share/man/man4/i386/speaker.4		man-obsolete		obsolete
+./usr/share/man/man4/i386/spic.4		man-sys-man		.man
 ./usr/share/man/man4/i4b.4			man-obsolete		obsolete
 ./usr/share/man/man4/i4bctl.4			man-obsolete		obsolete
 ./usr/share/man/man4/i4bipr.4			man-obsolete		obsolete
@@ -3235,7 +3236,6 @@
 ./usr/share/man/man4/sparc64/sabtty.4		man-sys-man		.man
 ./usr/share/man/man4/spc.4			man-sys-man		.man
 ./usr/share/man/man4/speaker.4			man-sys-man		.man
-./usr/share/man/man4/spic.4			man-sys-man		.man
 ./usr/share/man/man4/spkr.4			man-sys-man		.man
 ./usr/share/man/man4/spp.4			man-sys-man		.man
 ./usr/share/man/man4/sqphy.4			man-sys-man		.man
