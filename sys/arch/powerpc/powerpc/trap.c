@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.5 1998/01/27 09:16:03 sakamoto Exp $	*/
+/*	$NetBSD: trap.c,v 1.6 1998/06/05 11:27:10 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
@@ -40,6 +43,10 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <machine/cpu.h>
 #include <machine/frame.h>
@@ -95,14 +102,21 @@ trap(frame)
 				ftype = VM_PROT_READ | VM_PROT_WRITE;
 			else
 				ftype = VM_PROT_READ;
+#if defined(UVM)
+			if (uvm_fault(map, trunc_page(va), 0, ftype)
+			    == KERN_SUCCESS)
+				break;
+#else
 			if (vm_fault(map, trunc_page(va), ftype, FALSE)
 			    == KERN_SUCCESS)
 				break;
+#endif
 			if (fb = p->p_addr->u_pcb.pcb_onfault) {
 				frame->srr0 = (*fb)[0];
 				frame->fixreg[1] = (*fb)[1];
 				frame->cr = (*fb)[2];
-				bcopy(&(*fb)[3], &frame->fixreg[13], 19);
+				bcopy(&(*fb)[3], &frame->fixreg[13],
+				      19 * sizeof(register_t));
 				return;
 			}
 			map = kernel_map;
@@ -116,10 +130,17 @@ trap(frame)
 				ftype = VM_PROT_READ | VM_PROT_WRITE;
 			else
 				ftype = VM_PROT_READ;
+#if defined(UVM)
+			if (uvm_fault(&p->p_vmspace->vm_map,
+				     trunc_page(frame->dar), 0, ftype)
+			    == KERN_SUCCESS)
+				break;
+#else
 			if (vm_fault(&p->p_vmspace->vm_map,
 				     trunc_page(frame->dar), ftype, FALSE)
 			    == KERN_SUCCESS)
 				break;
+#endif
 		}
 		trapsignal(p, SIGSEGV, EXC_DSI);
 		break;
@@ -128,10 +149,17 @@ trap(frame)
 			int ftype;
 			
 			ftype = VM_PROT_READ | VM_PROT_EXECUTE;
+#if defined(UVM)
+			if (uvm_fault(&p->p_vmspace->vm_map,
+				     trunc_page(frame->srr0), 0, ftype)
+			    == KERN_SUCCESS)
+				break;
+#else
 			if (vm_fault(&p->p_vmspace->vm_map,
 				     trunc_page(frame->srr0), ftype, FALSE)
 			    == KERN_SUCCESS)
 				break;
+#endif
 		}
 		trapsignal(p, SIGSEGV, EXC_ISI);
 		break;
@@ -144,7 +172,11 @@ trap(frame)
 			int nsys, n;
 			register_t args[10];
 			
+#if defined(UVM)
+			uvmexp.syscalls++;
+#else
 			cnt.v_syscall++;
+#endif
 			
 			nsys = p->p_emul->e_nsysent;
 			callp = p->p_emul->e_sysent;
@@ -271,7 +303,11 @@ brain_damage:
 
 	astpending = 0;		/* we are about to do it */
 
+#if defined(UVM)
+	uvmexp.softs++;
+#else
 	cnt.v_soft++;
+#endif
 
 	if (p->p_flag & P_OWEUPC) {
 		p->p_flag &= ~P_OWEUPC;
@@ -403,3 +439,34 @@ copyout(kaddr, udaddr, len)
 	curpcb->pcb_onfault = 0;
 	return 0;
 }
+
+#if defined(UVM)
+/*
+ * kcopy(const void *src, void *dst, size_t len);
+ *
+ * Copy len bytes from src to dst, aborting if we encounter a fatal
+ * page fault.
+ *
+ * kcopy() _must_ save and restore the old fault handler since it is
+ * called by uiomove(), which may be in the path of servicing a non-fatal
+ * page fault.
+ */
+int
+kcopy(src, dst, len)
+	const void *src;
+	void *dst;
+	size_t len;
+{
+	faultbuf env;
+
+	if (setfault(env)) {
+		curpcb->pcb_onfault = 0;
+		return EFAULT;
+	}
+
+	bcopy(src, dst, len);
+
+	curpcb->pcb_onfault = 0;
+	return 0;
+}
+#endif
