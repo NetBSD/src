@@ -2,11 +2,11 @@
 # site-specific startup actions, daemons
 #
 #	From: @(#)rc.local	5.4 (Berkeley) 12/14/90
-#	$Id: rc.local,v 1.9 1994/06/16 18:59:16 deraadt Exp $
+#	$Id: rc.local,v 1.10 1994/06/18 06:38:56 cgd Exp $
 #
 
 if [ ! -f /etc/motd ]; then
-	echo "" >/etc/motd && chmod 664 /etc/motd && chown root:wheel /etc/motd
+	install -c -o root -g wheel -m 664 /dev/null /etc/motd
 fi
 T=/tmp/_motd
 rm -f $T

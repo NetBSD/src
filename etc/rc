@@ -1,5 +1,5 @@
-#	@(#)rc	5.27 (Berkeley) 6/5/91
-#	$Id: rc,v 1.44 1994/06/08 18:47:45 mycroft Exp $
+#	from: @(#)rc	8.2 (Berkeley) 3/17/94
+#	$Id: rc,v 1.45 1994/06/18 06:38:54 cgd Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -78,7 +78,7 @@ mount /var >/dev/null 2>&1
 rm -f /etc/nologin
 rm -f /var/spool/lock/LCK.*
 rm -f /var/spool/uucp/STST/*
-(cd /var/run && { rm -rf -- *; cp /dev/null utmp; chmod 644 utmp; })
+(cd /var/run && { rm -rf -- *; install -c -m 664 -g utmp /dev/null utmp; })
 
 echo -n 'starting rpc daemons:'
 echo -n ' portmap';		portmap
