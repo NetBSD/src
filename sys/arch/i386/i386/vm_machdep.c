@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.74 1998/11/11 06:41:26 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.75 1999/03/24 05:51:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -46,7 +46,6 @@
  */
 
 #include "opt_user_ldt.h"
-#include "opt_uvm.h"
 #include "opt_pmap_new.h"
 
 #include <sys/param.h>
@@ -63,9 +62,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/gdt.h>
@@ -142,11 +139,7 @@ cpu_fork(p1, p2)
 		union descriptor *new_ldt;
 
 		len = pcb->pcb_ldt_len * sizeof(union descriptor);
-#if defined(UVM)
 		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map, len);
-#else
-		new_ldt = (union descriptor *)kmem_alloc(kernel_map, len);
-#endif
 		memcpy(new_ldt, pcb->pcb_ldt, len);
 		pcb->pcb_ldt = new_ldt;
 		ldt_alloc(pcb, new_ldt, len);
@@ -225,16 +218,8 @@ cpu_exit(p)
 #endif
 
 	vm = p->p_vmspace;
-#if !defined(UVM)
-	if (vm->vm_refcnt == 1)
-		vm_map_remove(&vm->vm_map, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS);
-#endif
 
-#if defined(UVM)
 	uvmexp.swtch++;
-#else
-	cnt.v_swtch++;
-#endif
 	switch_exit(p);
 }
 
@@ -431,11 +416,7 @@ vmapbuf(bp, len)
 	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
-#if defined(UVM)
 	taddr= uvm_km_valloc_wait(phys_map, len);
-#else
-	taddr = kmem_alloc_wait(phys_map, len);
-#endif
 	bp->b_data = (caddr_t)(taddr + off);
 	/*
 	 * The region is locked, so we expect that pmap_pte() will return
@@ -476,11 +457,7 @@ vmapbuf(bp, len)
 	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
-#if defined(UVM)
-	taddr= uvm_km_valloc_wait(phys_map, len);
-#else
-	taddr = kmem_alloc_wait(phys_map, len);
-#endif
+	taddr = uvm_km_valloc_wait(phys_map, len);
 	bp->b_data = (caddr_t)(taddr + off);
 	/*
 	 * The region is locked, so we expect that pmap_pte() will return
@@ -512,11 +489,7 @@ vunmapbuf(bp, len)
 	addr = trunc_page(bp->b_data);
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
-#if defined(UVM)
 	uvm_km_free_wakeup(phys_map, addr, len);
-#else
-	kmem_free_wakeup(phys_map, addr, len);
-#endif
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }

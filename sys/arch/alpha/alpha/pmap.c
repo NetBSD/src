@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.83 1999/03/04 06:47:21 chs Exp $ */
+/* $NetBSD: pmap.c,v 1.84 1999/03/24 05:50:51 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -148,7 +148,6 @@
  */
 
 #include "opt_lockdebug.h"
-#include "opt_uvm.h"
 #include "opt_pmap_new.h"
 #include "opt_new_scc_driver.h"
 #include "opt_sysv.h"
@@ -156,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83 1999/03/04 06:47:21 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84 1999/03/24 05:50:51 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,9 +172,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83 1999/03/04 06:47:21 chs Exp $");
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
-#if defined(UVM)
 #include <uvm/uvm.h>
-#endif
 
 #include <machine/cpu.h>
 #if defined(_PMAP_MAY_USE_PROM_CONSOLE) || defined(MULTIPROCESSOR)
@@ -2745,15 +2742,8 @@ pmap_changebit(pa, set, mask, cpu_id)
 		 * XXX don't write protect pager mappings
 		 */
 /* XXX */	if (mask == ~(PG_KWE | PG_UWE)) {
-#if defined(UVM)
 			if (va >= uvm.pager_sva && va < uvm.pager_eva)
 				continue;
-#else
-			extern vaddr_t pager_sva, pager_eva;
-
-			if (va >= pager_sva && va < pager_eva)
-				continue;
-#endif
 		}
 
 		simple_lock(&pv->pv_pmap->pm_slock);
@@ -2906,13 +2896,11 @@ pmap_emulate_reference(p, v, user, write)
 	/* XXX XXX XXX This needs to go away! XXX XXX XXX */
 	/* because: pte/pmap is unlocked now */
 	if ((*pte & faultoff) != 0) {
-#if defined(UVM)
 		/*
 		 * This is apparently normal.  Why? -- cgd
 		 * XXX because was being called on unmanaged pages?
 		 */
 		printf("warning: pmap_changebit didn't.");
-#endif
 		*pte &= ~faultoff;
 		ALPHA_TBIS(v);
 	}
@@ -3293,11 +3281,7 @@ pmap_physpage_alloc(usage)
 	try = 0;	/* try a few times, but give up eventually */
 
 	do {
-#if defined(UVM)
 		pg = uvm_pagealloc(NULL, 0, NULL);
-#else
-		pg = vm_page_alloc1();
-#endif
 		if (pg != NULL) {
 			pa = VM_PAGE_TO_PHYS(pg);
 			pmap_zero_page(pa);
@@ -3385,11 +3369,7 @@ pmap_physpage_free(pa)
 	pvh->pvh_usage = PGU_NORMAL;
 	simple_unlock(&pvh->pvh_slock);
 
-#if defined(UVM)
 	uvm_pagefree(pg);
-#else
-	vm_page_free1(pg);
-#endif
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.20 1999/03/19 05:13:17 cgd Exp $	*/
+/*	$NetBSD: ofw.c,v 1.21 1999/03/24 05:50:56 mrg Exp $	*/
 
 /*
  * Copyright 1997
@@ -39,8 +39,6 @@
  *  Parts of this could be moved to an MI file in time. -JJK
  *
  */
-
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1099,12 +1097,7 @@ ofw_callbackhandler(args)
 #endif
 
 		args_n_results[nargs + 1] =
-#if defined(UVM)
 		uvm_pglistalloc(size, low, high, align, 0, &alloclist, 1, 0);
-#else
-		vm_page_alloc_memory(size, low, high, align, 0, &alloclist,
-		    1, 0);
-#endif
 #if 0
 		printf(" -> 0x%lx", args_n_results[nargs + 1]);
 #endif

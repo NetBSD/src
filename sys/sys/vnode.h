@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.58 1999/03/22 17:01:55 sommerfe Exp $	*/
+/*	$NetBSD: vnode.h,v 1.59 1999/03/24 05:51:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,19 +38,15 @@
 #ifndef _SYS_VNODE_H_
 #define _SYS_VNODE_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_uvm.h"
-#endif
-
 #include <sys/lock.h>
 #include <sys/queue.h>
-#ifdef UVM			/* XXX: clean up includes later */
+
+/* XXX: clean up includes later */
 #include <vm/pglist.h>		/* XXX */
 #include <vm/vm_param.h>	/* XXX */
 #include <sys/lock.h>		/* XXX */
 #include <uvm/uvm_object.h>	/* XXX */
 #include <uvm/uvm_vnode.h>	/* XXX */
-#endif /* UVM */
 
 /*
  * The vnode is the focus of all file activity in UNIX.  There is a
@@ -88,9 +84,7 @@ LIST_HEAD(buflists, buf);
  *     locked by the v_interlock simple lock
  */
 struct vnode {
-#ifdef UVM
 	struct uvm_vnode v_uvm;			/* uvm data */
-#endif
 	u_long	v_flag;				/* vnode flags (see below) */
 	short	v_usecount;			/* reference count of users */
 	short	v_writecount;			/* reference count of writers */
@@ -121,10 +115,6 @@ struct vnode {
 	daddr_t	v_maxra;			/* last readahead block */
 	struct	simplelock v_interlock;		/* lock on usecount and flag */
 	struct	lock *v_vnlock;			/* used for non-locking fs's */
-#ifdef UVM
-#else
-	long	v_spare[5];			/* round to 128 bytes */
-#endif
 	enum	vtagtype v_tag;			/* type of underlying data */
 	void 	*v_data;			/* private data for fs */
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.12 1998/06/02 20:41:55 mark Exp $	*/
+/*	$NetBSD: sfas.c,v 1.13 1999/03/24 05:50:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -49,21 +49,22 @@
  * Modified for NetBSD/arm32 by Scott Stevens
  */
 
-#include "opt_uvm.h"
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
+
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
+
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
-#if defined(UVM)
+
 #include <uvm/uvm_extern.h>
-#endif
+
 #include <machine/pmap.h>
 #include <machine/cpu.h>
 #include <machine/io.h>
@@ -200,11 +201,7 @@ sfasinitialize(dev)
 /*
  * Setup bump buffer.
  */
-#if defined(UVM)
 	dev->sc_bump_va = (u_char *)uvm_km_zalloc(kernel_map, dev->sc_bump_sz);
-#else
-	dev->sc_bump_va = (u_char *)kmem_alloc(kernel_map, dev->sc_bump_sz);
-#endif
 	dev->sc_bump_pa = pmap_extract(kernel_pmap, (vm_offset_t)dev->sc_bump_va);
 
 /*

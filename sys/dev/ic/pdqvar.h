@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.25 1998/10/02 20:00:28 matt Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.26 1999/03/24 05:51:20 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -36,10 +36,6 @@
 
 #ifndef _PDQ_OS_H
 #define	_PDQ_OS_H
-
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_uvm.h"
-#endif
 
 #define	PDQ_OS_TX_TIMEOUT		5	/* seconds */
 
@@ -103,13 +99,8 @@ enum _pdq_type_t {
 #define	PDQ_OS_MEMFREE_CONTIG(p, n)	kmem_free(kernel_map, (vaddr_t) p, n)
 #else
 #if !defined(PDQ_BUS_DMA)
-#if defined(UVM)
 #define	PDQ_OS_MEMALLOC_CONTIG(n)	uvm_km_alloc(kernel_map, round_page(n))
 #define	PDQ_OS_MEMFREE_CONTIG(p, n)	uvm_km_free(kernel_map, (vaddr_t) p, n)
-#else
-#define	PDQ_OS_MEMALLOC_CONTIG(n)	kmem_alloc(kernel_map, round_page(n))
-#define	PDQ_OS_MEMFREE_CONTIG(p, n)	kmem_free(kernel_map, (vaddr_t) p, n)
-#endif
 #endif
 #endif /* __FreeBSD__ */
 

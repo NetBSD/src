@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.28 1999/03/05 21:09:49 mycroft Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.29 1999/03/24 05:51:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -38,7 +38,6 @@
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_ffs.h"
 #include "opt_quota.h"
-#include "opt_uvm.h"
 #endif
 
 #include <sys/param.h>
@@ -51,6 +50,8 @@
 #include <sys/syslog.h>
 
 #include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/ufsmount.h>
@@ -283,11 +284,7 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 	    			     ffs_alloccg);
 	if (bno > 0) {
 		bp->b_blkno = fsbtodb(fs, bno);
-#if defined(UVM)
 		(void) uvm_vnp_uncache(ITOV(ip));
-#else
-		(void) vnode_pager_uncache(ITOV(ip));
-#endif
 		ffs_blkfree(ip, bprev, (long)osize);
 		if (nsize < request)
 			ffs_blkfree(ip, bno + numfrags(fs, nsize),

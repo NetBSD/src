@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.11 1999/03/10 00:20:00 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.12 1999/03/24 05:51:31 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -72,7 +72,6 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_quota.h"
-#include "opt_uvm.h"
 #endif
 
 #include <sys/param.h>
@@ -95,7 +94,8 @@
 #include <ufs/lfs/lfs_extern.h>
 
 #include <vm/vm.h>
-#include <vm/vm_extern.h>
+
+#include <uvm/uvm_extern.h>
 
 int lfs_fragextend __P((struct vnode *, int, int, ufs_daddr_t, struct buf **));
 
@@ -151,11 +151,7 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 						    lastblock, &bp)))
 				return(error);
 			ip->i_ffs_size = (lastblock + 1) * fs->lfs_bsize;
-#if defined(UVM)
 			uvm_vnp_setsize(vp, ip->i_ffs_size);
-#else
-			vnode_pager_setsize(vp, ip->i_ffs_size);
-#endif
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			VOP_BWRITE(bp);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.12 1999/03/05 21:09:49 mycroft Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.13 1999/03/24 05:51:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -37,10 +37,6 @@
  * Modified for ext2fs by Manuel Bouyer.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_uvm.h"
-#endif
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
@@ -54,9 +50,8 @@
 #include <sys/resourcevar.h>
 
 #include <vm/vm.h>
-#if defined(UVM)
+
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -246,13 +241,8 @@ ext2fs_truncate(v)
 		if (error)
 			return (error);
 		oip->i_e2fs_size = length;
-#if defined(UVM)
 		uvm_vnp_setsize(ovp, length);
 		(void) uvm_vnp_uncache(ovp);
-#else
-		vnode_pager_setsize(ovp, length);
-		(void) vnode_pager_uncache(ovp);
-#endif
 		if (aflags & B_SYNC)
 			bwrite(bp);
 		else
@@ -280,11 +270,7 @@ ext2fs_truncate(v)
 			return (error);
 		oip->i_e2fs_size = length;
 		size = fs->e2fs_bsize;
-#if defined(UVM)
 		(void) uvm_vnp_uncache(ovp);
-#else
-		(void) vnode_pager_uncache(ovp);
-#endif
 		memset((char *)bp->b_data + offset, 0,  (u_int)(size - offset));
 		allocbuf(bp, size);
 		if (aflags & B_SYNC)
@@ -292,11 +278,8 @@ ext2fs_truncate(v)
 		else
 			bawrite(bp);
 	}
-#if defined(UVM)
 	uvm_vnp_setsize(ovp, length);
-#else
-	vnode_pager_setsize(ovp, length);
-#endif
+
 	/*
 	 * Calculate index into inode's block list of
 	 * last direct and indirect blocks (if any)

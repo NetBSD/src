@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.14 1998/07/07 17:51:55 mark Exp $	*/
+/*	$NetBSD: undefined.c,v 1.15 1999/03/24 05:50:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,6 @@
 #define FAST_FPE
 
 #include "opt_ddb.h"
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,10 +57,9 @@
 #include <sys/acct.h>
 #endif
 
-#if defined(UVM)
 #include <vm/vm.h>
+
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/frame.h>
@@ -137,11 +135,7 @@ undefinedinstruction(frame)
 		enable_interrupts(I32_bit);
 
 	/* Update vmmeter statistics */
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-    	cnt.v_trap++;
-#endif
 
 	fault_pc = frame->tf_pc - INSN_SIZE;
 

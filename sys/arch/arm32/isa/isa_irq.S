@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irq.S,v 1.5 1998/09/05 04:05:31 mark Exp $	*/
+/*	$NetBSD: isa_irq.S,v 1.6 1999/03/24 05:50:56 mrg Exp $	*/
 
 /*
  * Copyright 1997
@@ -75,7 +75,6 @@
  */
 
 #include "opt_irqstats.h"
-#include "opt_uvm.h"
 
 #include "assym.h"
 #include <machine/asm.h>
@@ -435,11 +434,7 @@ ENTRY(irq_setmasks)
 	mov	pc, lr
 
 Lcnt:
-#if defined(UVM)
 	.word	_uvmexp
-#else
-	.word	_cnt
-#endif
 
 Lintrcnt:
 	.word	_intrcnt

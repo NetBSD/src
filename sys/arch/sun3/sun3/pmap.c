@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.109 1999/02/26 22:03:29 is Exp $	*/
+/*	$NetBSD: pmap.c,v 1.110 1999/03/24 05:51:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -87,7 +87,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,19 +101,11 @@
 #include <vm/vm_prot.h>
 #include <vm/vm_page.h>
 
-#if defined(UVM)
 #include <uvm/uvm.h>
-/* XXX - Gratuitous name changes... */
-#define vm_set_page_size uvm_setpagesize
-#define kmem_alloc uvm_km_alloc
+
 /* XXX - Pager hacks... (explain?) */
 #define PAGER_SVA (uvm.pager_sva)
 #define PAGER_EVA (uvm.pager_eva)
-#else	/* UVM */
-extern vm_offset_t pager_sva, pager_eva;
-#define PAGER_SVA (pager_sva)
-#define PAGER_EVA (pager_eva)
-#endif	/* UVM */
 
 #include <m68k/m68k.h>
 
@@ -1142,7 +1133,7 @@ pv_init()
 
 	/* Now allocate the whole thing. */
 	sz = m68k_round_page(sz);
-	p = (char*) kmem_alloc(kernel_map, sz);
+	p = (char*) uvm_km_alloc(kernel_map, sz);
 	if (p == NULL)
 		panic("pmap:pv_init: alloc failed");
 	bzero(p, sz);
@@ -1844,7 +1835,7 @@ pmap_bootstrap(nextva)
 	avail_next = avail_start;
 
 	PAGE_SIZE = NBPG;
-	vm_set_page_size();
+	uvm_setpagesize();
 
 	/* after setting up some structures */
 
@@ -1914,26 +1905,14 @@ pmap_page_upload()
 		 */
 		a = atop(avail_start);
 		b = atop(hole_start);
-#if defined(UVM)
 		uvm_page_physload(a, b, a, b, VM_FREELIST_DEFAULT);
-#else
-		vm_page_physload(a, b, a, b);
-#endif
 		c = atop(hole_start + hole_size);
 		d = atop(avail_end);
-#if defined(UVM)
 		uvm_page_physload(b, d, c, d, VM_FREELIST_DEFAULT);
-#else
-		vm_page_physload(b, d, c, d);
-#endif
 	} else {
 		a = atop(avail_start);
 		d = atop(avail_end);
-#if defined(UVM)
 		uvm_page_physload(a, d, a, d, VM_FREELIST_DEFAULT);
-#else
-		vm_page_physload(a, d, a, d);
-#endif
 	}
 }
 
@@ -2542,11 +2521,7 @@ _pmap_fault(map, va, ftype)
 		if (pmap_fault_reload(pmap, va, ftype))
 			return KERN_SUCCESS;
 	}
-#if defined(UVM)
 	rv = uvm_fault(map, va, 0, ftype);
-#else
-	rv = vm_fault(map, va, ftype, FALSE);
-#endif
 
 #ifdef	PMAP_DEBUG
 	if (pmap_debug & PMD_FAULT) {

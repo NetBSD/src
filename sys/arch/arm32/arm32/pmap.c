@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.47 1999/03/24 02:45:27 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.48 1999/03/24 05:50:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -58,7 +58,6 @@
 /* Include header files */
 
 #include "opt_pmap_debug.h"
-#include "opt_uvm.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,9 +71,7 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
-#if defined(UVM)
 #include <uvm/uvm.h>
-#endif
 
 #include <machine/bootconfig.h>
 #include <machine/bus.h>
@@ -261,12 +258,8 @@ pmap_alloc_pv()
 	 */
 
 	if (pv_nfree == 0) {
-#if defined(UVM)
 		/* NOTE: can't lock kernel_map here */
 		MALLOC(pvp, struct pv_page *, NBPG, M_VMPVENT, M_WAITOK);
-#else
-		pvp = (struct pv_page *)kmem_alloc(kernel_map, NBPG);
-#endif
 		if (pvp == 0)
 			panic("pmap_alloc_pv: kmem_alloc() failed");
 		pvp->pvp_pgi.pgi_freelist = pv = &pvp->pvp_pv[1];
@@ -314,11 +307,7 @@ pmap_free_pv(pv)
 	case NPVPPG:
 		pv_nfree -= NPVPPG - 1;
 		TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
-#if defined(UVM)
 		FREE((vm_offset_t)pvp, M_VMPVENT);
-#else
-		kmem_free(kernel_map, (vm_offset_t)pvp, NBPG);
-#endif
 		break;
 	}
 }
@@ -379,11 +368,7 @@ pmap_collect_pv()
 
 	for (pvp = pv_page_collectlist.tqh_first; pvp; pvp = npvp) {
 		npvp = pvp->pvp_pgi.pgi_list.tqe_next;
-#if defined(UVM)
 		FREE((vm_offset_t)pvp, M_VMPVENT);
-#else
-		kmem_free(kernel_map, (vm_offset_t)pvp, NBPG);
-#endif
 	}
 }
 #endif
@@ -628,7 +613,7 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 {
 	int loop;
 	vm_offset_t start, end;
-#if defined(UVM) && NISADMA > 0
+#if NISADMA > 0
 	vm_offset_t istart;
 	vm_size_t isize;
 #endif
@@ -644,11 +629,7 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 	/*
 	 * Initialize PAGE_SIZE-dependent variables.
 	 */
-#if defined(UVM)
 	uvm_setpagesize();
-#else
-	vm_set_page_size();
-#endif
 
 	loop = 0;
 	while (loop < bootconfig.dramblocks) {
@@ -661,7 +642,6 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 #if 0
 		printf("%d: %lx -> %lx\n", loop, start, end - 1);
 #endif
-#if defined(UVM)
 #if NISADMA > 0
 		if (pmap_isa_dma_range_intersect(start, end - start,
 		    &istart, &isize)) {
@@ -714,10 +694,6 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 		uvm_page_physload(atop(start), atop(end),
 		    atop(start), atop(end), VM_FREELIST_DEFAULT);
 #endif /* NISADMA > 0 */
-#else	/* UVM */
-		vm_page_physload(atop(start), atop(end),
-		    atop(start), atop(end));
-#endif /* UVM */
 		++loop;
 	}
 
@@ -785,11 +761,7 @@ pmap_init()
 		npages += (vm_physmem[lcv].end - vm_physmem[lcv].start);
 	s = (vm_size_t) (sizeof(struct pv_entry) * npages + npages);
 	s = round_page(s);
-#if defined(UVM)
 	addr = (vm_offset_t)uvm_km_zalloc(kernel_map, s);
-#else
-	addr = (vm_offset_t)kmem_alloc(kernel_map, s);
-#endif
 	if (addr == NULL)
 		panic("pmap_init");
 
@@ -910,11 +882,7 @@ pmap_alloc_l1pt(void)
 	pt_entry_t *pte;
 
 	/* Allocate virtual address space for the L1 page table */
-#if defined(UVM)
 	va = uvm_km_valloc(kernel_map, PD_SIZE);
-#else
-	va = kmem_alloc_pageable(kernel_map, PD_SIZE);
-#endif
 	if (va == 0) {
 #ifdef DIAGNOSTIC
 		printf("pmap: Cannot allocate pageable memory for L1\n");
@@ -929,13 +897,8 @@ pmap_alloc_l1pt(void)
 	 * Allocate pages from the VM system.
 	 */
 	TAILQ_INIT(&pt->pt_plist);
-#if defined(UVM)
 	error = uvm_pglistalloc(PD_SIZE, physical_start, physical_end,
 	    PD_SIZE, 0, &pt->pt_plist, 1, M_WAITOK);
-#else
-	error = vm_page_alloc_memory(PD_SIZE, physical_start, physical_end,
-	    PD_SIZE, 0, &pt->pt_plist, 1, M_WAITOK);
-#endif
 	if (error) {
 #ifdef DIAGNOSTIC
 		printf("pmap: Cannot allocate physical memory for L1 (%d)\n",
@@ -943,11 +906,7 @@ pmap_alloc_l1pt(void)
 #endif	/* DIAGNOSTIC */
 		/* Release the resources we already have claimed */
 		free(pt, M_VMPMAP);
-#if defined(UVM)
 		uvm_km_free(kernel_map, va, PD_SIZE);
-#else
-		kmem_free(kernel_map, va, PD_SIZE);
-#endif
 		return(NULL);
 	}
 
@@ -989,18 +948,10 @@ pmap_free_l1pt(pt)
 	pmap_remove(kernel_pmap, pt->pt_va, pt->pt_va + PD_SIZE);
 
 	/* Return the physical memory */
-#if defined(UVM)
 	uvm_pglistfree(&pt->pt_plist);
-#else
-	vm_page_free_memory(&pt->pt_plist);
-#endif
 
 	/* Free the virtual space */
-#if defined(UVM)
 	uvm_km_free(kernel_map, pt->pt_va, PD_SIZE);
-#else
-	kmem_free(kernel_map, pt->pt_va, PD_SIZE);
-#endif
 
 	/* Free the l1pt structure */
 	free(pt, M_VMPMAP);
@@ -1071,11 +1022,7 @@ pmap_allocpagedir(pmap)
 		panic("pmap_allocpagedir: have pt already\n");
 	}
 #endif	/* DIAGNOSTIC */
-#if defined(UVM)
 	pmap->pm_vptpt = uvm_km_zalloc(kernel_map, NBPG);
-#else
-	pmap->pm_vptpt = kmem_alloc(kernel_map, NBPG);
-#endif
 	pmap->pm_pptpt = pmap_extract(kernel_pmap, pmap->pm_vptpt) & PG_FRAME;
 	/* Revoke cacheability and bufferability */
 	/* XXX should be done better than this */
@@ -1150,11 +1097,7 @@ pmap_freepagedir(pmap)
 	pmap_t pmap;
 {
 	/* Free the memory used for the page table mapping */
-#if defined(UVM)
 	uvm_km_free(kernel_map, (vm_offset_t)pmap->pm_vptpt, NBPG);
-#else
-	kmem_free(kernel_map, (vm_offset_t)pmap->pm_vptpt, NBPG);
-#endif
 
 	/* junk the L1 page table */
 	if (pmap->pm_l1pt->pt_flags & PTFLAG_STATIC) {
@@ -1237,11 +1180,7 @@ pmap_release(pmap)
 			page = PHYS_TO_VM_PAGE(pmap_pte_pa(pte));
 			if (page == NULL)
 				panic("pmap_release: bad address for phys page");
-#if defined(UVM)
 			uvm_pagefree(page);
-#else
-			vm_page_free1(page);
-#endif
 		}
 	}
 	/* Free the page dir */
@@ -1261,7 +1200,7 @@ pmap_reference(pmap)
 {
 	if (pmap == NULL)
 		return;
-                                  
+
 	simple_lock(&pmap->pm_lock);
 	pmap->pm_count++;
 	simple_unlock(&pmap->pm_lock);
@@ -1335,8 +1274,7 @@ pmap_pageable(pmap, sva, eva, pageable)
 		 */
 		pmap_clear_modify(pa);
 	}
-}                                     
-
+}
 
 /*
  * Activate the address space for the specified process.  If the process
@@ -1762,7 +1700,7 @@ pmap_remove_all(pa)
 		/* Wired bit */
 		if (pv->pv_flags & PT_W)
 			pmap->pm_stats.wired_count--;
-          
+
 		/*
 		 * Invalidate the PTEs.
 		 * XXX: should cluster them up and invalidate as many
@@ -2051,11 +1989,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 
 		/* Allocate a page table */
 		for (;;) {
-#if defined(UVM)
 			page = uvm_pagealloc(NULL, 0, NULL);
-#else
-			page = vm_page_alloc1();
-#endif
 			if (page != NULL)
 				break;
 			
@@ -2076,11 +2010,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 			if (pmap == pmap_kernel())
 				panic("pmap_enter: kernel pmap and no more free pages");
 			else {
-#if defined(UVM)
 				uvm_wait("pmap_enter");
-#else
-				vm_wait("pmap_enter");
-#endif
 			}
 		}
 
@@ -2093,7 +2023,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		pte = pmap_pte(pmap, va);
 		if (!pte)
 			panic("Failure 04 in pmap_enter(pmap=%p, va=%08lx pa=%08lx)\n",
-			    pmap, va, pa);                                               
+			    pmap, va, pa);
 	}
 
 	/* More debugging info */
@@ -2598,15 +2528,8 @@ pmap_changebit(pa, setbits, maskbits)
 			 * XXX don't write protect pager mappings
 			 */
 			if (maskbits & (PT_Wr|PT_M|PT_H)) {
-#if defined(UVM)
-                                if (va >= uvm.pager_sva && va < uvm.pager_eva)
-                                	continue;
-#else
-				extern vm_offset_t pager_sva, pager_eva;
-
-				if (va >= pager_sva && va < pager_eva)
+				if (va >= uvm.pager_sva && va < uvm.pager_eva)
 					continue;
-#endif
 			}
 
 			pv->pv_flags = (pv->pv_flags & ~maskbits) | setbits;

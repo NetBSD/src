@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.14 1998/11/19 15:38:24 mrg Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.15 1999/03/24 05:51:10 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -60,8 +60,6 @@
  *
  * XXX should defer colormap updates to vertical retrace interrupts
  */
-
-#include "opt_uvm.h"
 
 /*
  * The following is for debugging only; it opens up a security hole
@@ -457,15 +455,9 @@ cgfourteenioctl(dev, cmd, data, flags, p)
 			if ((u_int)p->size.x > 32 || (u_int)p->size.y > 32)
 				return (EINVAL);
 			count = p->size.y * 32 / NBBY;
-#if defined(UVM)
 			if (!uvm_useracc(p->image, count, B_READ) ||
 			    !uvm_useracc(p->mask, count, B_READ))
 				return (EFAULT);
-#else
-			if (!useracc(p->image, count, B_READ) ||
-			    !useracc(p->mask, count, B_READ))
-				return (EFAULT);
-#endif
 		}
 
 		/* parameters are OK; do it */
@@ -760,17 +752,10 @@ cg14_get_cmap(p, cm, cmsize)
 	}
 #endif
 
-#if defined(UVM)
         if (!uvm_useracc(p->red, count, B_WRITE) ||
             !uvm_useracc(p->green, count, B_WRITE) ||
             !uvm_useracc(p->blue, count, B_WRITE))
                 return (EFAULT);
-#else
-        if (!useracc(p->red, count, B_WRITE) ||
-            !useracc(p->green, count, B_WRITE) ||
-            !useracc(p->blue, count, B_WRITE))
-                return (EFAULT);
-#endif
         for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 4, i++) {
                 p->red[i] = cp[3];
                 p->green[i] = cp[2];
@@ -802,17 +787,10 @@ cg14_put_cmap(p, cm, cmsize)
 	}
 #endif
 
-#if defined(UVM)
         if (!uvm_useracc(p->red, count, B_READ) ||
             !uvm_useracc(p->green, count, B_READ) ||
             !uvm_useracc(p->blue, count, B_READ))
                 return (EFAULT);
-#else
-        if (!useracc(p->red, count, B_READ) ||
-            !useracc(p->green, count, B_READ) ||
-            !useracc(p->blue, count, B_READ))
-                return (EFAULT);
-#endif
         for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 4, i++) {
                 cp[3] = p->red[i];
                 cp[2] = p->green[i];

@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.29 1998/10/18 16:02:34 christos Exp $ */
+/*	$NetBSD: iommu.c,v 1.30 1999/03/24 05:51:11 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -45,12 +45,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
-#include <uvm/uvm.h>
-#else
-#define uvm_km_valloc(m,s)	kmem_alloc_pageable(m,s)
-#define uvm_unmap(m,a,s)	kmem_free(m,a,s)
-#endif
+#include <uvm/uvm_extern.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/bus.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.h,v 1.30 1999/01/16 20:00:28 chuck Exp $	*/
+/*	$NetBSD: vm_page.h,v 1.31 1999/03/24 05:51:35 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -70,10 +70,6 @@
 #ifndef	_VM_PAGE_
 #define	_VM_PAGE_
 
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_uvm.h"
-#endif
-
 /*
  *	Management of resident (logical) pages.
  *
@@ -99,7 +95,6 @@
  *	queues (P) [or both].
  */
 
-#if defined(UVM)
 /*
  * locking note: the mach version of this data structure had bit
  * fields for the flags, and the bit fields were divided into two
@@ -114,9 +109,6 @@
 
 #include <uvm/uvm_extern.h>
 #include <vm/pglist.h>
-#else
-TAILQ_HEAD(pglist, vm_page);
-#endif /* UVM */
 
 struct vm_page {
   TAILQ_ENTRY(vm_page)	pageq;		/* queue info for FIFO
@@ -124,12 +116,8 @@ struct vm_page {
   TAILQ_ENTRY(vm_page)	hashq;		/* hash table links (O)*/
   TAILQ_ENTRY(vm_page)	listq;		/* pages in same object (O)*/
 
-#if !defined(UVM) /* uvm uses obju */
-  vm_object_t		object;		/* which object am I in (O,P)*/
-#endif
   vaddr_t		offset;		/* offset into object (O,P) */
 
-#if defined(UVM)
   struct uvm_object	*uobject;	/* object (O,P) */
   struct vm_anon	*uanon;		/* anon (O,P) */
   u_short		flags;		/* object flags [O] */
@@ -139,13 +127,8 @@ struct vm_page {
   u_int			loan_count;	/* number of active loans
 					 * to read: [O or P]
 					 * to modify: [O _and_ P] */
-#else
-  u_short		wire_count;	/* wired down maps refs (P) */
-  u_short		flags;		/* see below */
-#endif
-
   paddr_t		phys_addr;	/* physical address of page */
-#if defined(UVM) && defined(UVM_PAGE_TRKOWN)
+#if defined(UVM_PAGE_TRKOWN)
   /* debugging fields to track page ownership */
   pid_t			owner;		/* proc that set PG_BUSY */
   char			*owner_tag;	/* why it was set busy */
@@ -157,7 +140,6 @@ struct vm_page {
  *
  * Note: PG_FILLED and PG_DIRTY are added for the filesystems.
  */
-#if defined(UVM)
 
 /*
  * locking rules:
@@ -188,34 +170,6 @@ struct vm_page {
 					   uvm_object */
 #define PQ_SWAPBACKED	(PQ_ANON|PQ_AOBJ)
 
-#else
-#define	PG_INACTIVE	0x0001		/* page is in inactive list (P) */
-#define	PG_ACTIVE	0x0002		/* page is in active list (P) */
-#define	PG_LAUNDRY	0x0004		/* page is being cleaned now (P)*/
-#define	PG_CLEAN	0x0008		/* page has not been modified
-					   There exists a case where this bit
-					   will be cleared, although the page
-					   is not physically dirty, which is
-					   when a collapse operation moves
-					   pages between two different pagers.
-					   The bit is then used as a marker
-					   for the pageout daemon to know it
-					   should be paged out into the target
-					   pager. */
-#define	PG_BUSY		0x0010		/* page is in transit (O) */
-#define	PG_WANTED	0x0020		/* someone is waiting for page (O) */
-#define	PG_TABLED	0x0040		/* page is in VP table (O) */
-#define	PG_COPYONWRITE	0x0080		/* must copy page before changing (O) */
-#define	PG_FICTITIOUS	0x0100		/* physical page doesn't exist (O) */
-#define	PG_FAKE		0x0200		/* page is placeholder for pagein (O) */
-#define	PG_FILLED	0x0400		/* client flag to set when filled */
-#define	PG_DIRTY	0x0800		/* client flag to set when dirty */
-#define	PG_FREE		0x1000		/* XXX page is on free list */
-#define	PG_FAULTING	0x2000		/* page is being faulted in */
-#define	PG_PAGEROWNED	0x4000		/* DEBUG: async paging op in progress */
-#define	PG_PTPAGE	0x8000		/* DEBUG: is a user page table page */
-#endif
-
 /*
  * physical memory layout structure
  *
@@ -242,9 +196,7 @@ struct vm_physseg {
 	vaddr_t		end;		/* (PF# of last page in segment) + 1 */
 	vaddr_t		avail_start;	/* PF# of first free page in segment */
 	vaddr_t		avail_end;	/* (PF# of last free page in segment) +1  */
-#if defined(UVM)
 	int	free_list;		/* which free list they belong on */
-#endif
 	struct	vm_page *pgs;		/* vm_page structures (from start) */
 	struct	vm_page *lastpg;	/* vm_page structure for end */
 	struct	pmap_physseg pmseg;	/* pmap specific (MD) data */
@@ -421,15 +373,7 @@ PHYS_TO_VM_PAGE(pa)
 	return(NULL);
 }
 
-#if defined(UVM)
-
 #define VM_PAGE_IS_FREE(entry)  ((entry)->pqflags & PQ_FREE)
-
-#else /* UVM */
-
-#define VM_PAGE_IS_FREE(entry)  ((entry)->flags & PG_FREE)
-
-#endif /* UVM */
 
 extern
 simple_lock_data_t	vm_page_queue_lock;	/* lock on active and inactive

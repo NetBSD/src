@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcconsole.c,v 1.20 1999/01/01 12:45:12 mark Exp $	*/
+/*	$NetBSD: vidcconsole.c,v 1.21 1999/03/24 05:50:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -44,8 +44,6 @@
  * Last updated : 07/02/96
  */
 
-#include "opt_uvm.h"
-
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,9 +61,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/param.h>
@@ -1332,11 +1328,7 @@ vidc_cursor_init(vc)
 
 	if (!cursor_data) {
 		/* Allocate cursor memory first time round */
-#if defined(UVM)
 		cursor_data = (char *)uvm_km_zalloc(kernel_map, NBPG);
-#else
-		cursor_data = (char *)kmem_alloc(kernel_map, NBPG);
-#endif
 		if (!cursor_data)
 			panic("Cannot allocate memory for hardware cursor\n");
 		IOMD_WRITE_WORD(IOMD_CURSINIT, pmap_extract(kernel_pmap,

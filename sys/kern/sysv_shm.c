@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.51 1999/03/24 05:51:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -48,12 +48,7 @@
 #include <sys/syscallargs.h>
 
 #include <vm/vm.h>
-#ifdef UVM
 #include <uvm/uvm_extern.h>
-#else
-#include <vm/vm_map.h>
-#include <vm/vm_kern.h>
-#endif
 
 struct shmid_ds *shm_find_segment_by_shmid __P((int));
 
@@ -78,11 +73,7 @@ struct shmid_ds *shm_find_segment_by_shmid __P((int));
 int shm_last_free, shm_nused, shm_committed;
 
 struct shm_handle {
-#ifdef UVM
 	struct uvm_object *shm_object;
-#else
-	vm_object_t shm_object;
-#endif
 };
 
 struct shmmap_state {
@@ -138,11 +129,7 @@ shm_deallocate_segment(shmseg)
 
 	shm_handle = shmseg->shm_internal;
 	size = (shmseg->shm_segsz + CLOFSET) & ~CLOFSET;
-#ifdef UVM
 	uao_detach(shm_handle->shm_object);
-#else
-	vm_object_deallocate(shm_handle->shm_object);
-#endif
 	free((caddr_t)shm_handle, M_SHM);
 	shmseg->shm_internal = NULL;
 	shm_committed -= btoc(size);
@@ -162,12 +149,7 @@ shm_delete_mapping(vm, shmmap_s)
 	segnum = IPCID_TO_IX(shmmap_s->shmid);
 	shmseg = &shmsegs[segnum];
 	size = (shmseg->shm_segsz + CLOFSET) & ~CLOFSET;
-#ifdef UVM
 	result = uvm_deallocate(&vm->vm_map, shmmap_s->va, size);
-#else
-	result = vm_map_remove(&vm->vm_map,
-			       shmmap_s->va, shmmap_s->va + size);
-#endif
 	if (result != KERN_SUCCESS)
 		return EINVAL;
 	shmmap_s->shmid = -1;
@@ -268,7 +250,6 @@ sys_shmat(p, v, retval)
 		    round_page(p->p_vmspace->vm_taddr + MAXTSIZ + MAXDSIZ);
 	}
 	shm_handle = shmseg->shm_internal;
-#ifdef UVM
 	uao_reference(shm_handle->shm_object);
 	rv = uvm_map(&p->p_vmspace->vm_map, &attach_va, size,
 		     shm_handle->shm_object, 0,
@@ -277,18 +258,6 @@ sys_shmat(p, v, retval)
 	if (rv != KERN_SUCCESS) {
 	    return ENOMEM;
 	}
-#else
-	vm_object_reference(shm_handle->shm_object);
-	rv = vm_map_find(&p->p_vmspace->vm_map, shm_handle->shm_object,
-		0, &attach_va, size, (flags & MAP_FIXED)?0:1);
-	if (rv != KERN_SUCCESS) {
-		return ENOMEM;
-	}
-	vm_map_protect(&p->p_vmspace->vm_map, attach_va, attach_va + size,
-		       prot, 0);
-	vm_map_inherit(&p->p_vmspace->vm_map,
-		attach_va, attach_va + size, VM_INHERIT_SHARE);
-#endif
 
 	shmmap_s->va = attach_va;
 	shmmap_s->shmid = SCARG(uap, shmid);
@@ -414,9 +383,6 @@ shmget_allocate_segment(p, uap, mode, retval)
 	struct ucred *cred = p->p_ucred;
 	struct shmid_ds *shmseg;
 	struct shm_handle *shm_handle;
-#ifndef UVM
-	vm_pager_t pager;
-#endif
 	int error = 0;
 	
 	if (SCARG(uap, size) < shminfo.shmmin ||
@@ -449,28 +415,8 @@ shmget_allocate_segment(p, uap, mode, retval)
 	shm_handle = (struct shm_handle *)
 	    malloc(sizeof(struct shm_handle), M_SHM, M_WAITOK);
 	shmid = IXSEQ_TO_IPCID(segnum, shmseg->shm_perm);
-	
 
-#ifdef UVM
 	shm_handle->shm_object = uao_create(size, 0);
-#else
-	shm_handle->shm_object = vm_object_allocate(size);
-	if (shm_handle->shm_object == NULL) {
-		/* XXX cannot happen */
-		error = ENOMEM;
-		goto out;
-	}
-	/*
-	 * We make sure that we have allocated a pager before we need
-	 * to.
-	 */
-	pager = vm_pager_allocate(PG_DFLT, 0, size, VM_PROT_DEFAULT, 0);
-	if (pager == NULL) {
-		error = ENOMEM;
-		goto out;
-	}
-	vm_object_setpager(shm_handle->shm_object, pager, 0, 0);
-#endif
 
 	shmseg->shm_internal = shm_handle;
 	shmseg->shm_perm.cuid = shmseg->shm_perm.uid = cred->cr_uid;
@@ -485,17 +431,7 @@ shmget_allocate_segment(p, uap, mode, retval)
 	shm_committed += btoc(size);
 	shm_nused++;
 
-#ifndef UVM
-out:
-	if (error) {
-		if (shm_handle->shm_object != NULL)
-			vm_object_deallocate(shm_handle->shm_object);
-		free(shm_handle, M_SHM);
-		shmseg->shm_perm.mode = (shmseg->shm_perm.mode & SHMSEG_WANTED)
-		    | SHMSEG_FREE;
-	} else
-#endif
-		*retval = shmid;
+	*retval = shmid;
 	if (shmseg->shm_perm.mode & SHMSEG_WANTED) {
 		/*
 		 * Somebody else wanted this key while we were asleep.  Wake

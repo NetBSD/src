@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.43 1998/12/01 04:31:02 thorpej Exp $	*/
+/*	$NetBSD: vector.s,v 1.44 1999/03/24 05:51:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_uvm.h"
 
 #include <i386/isa/icu.h>
 #include <dev/isa/isareg.h>
@@ -156,11 +155,7 @@
  * On exit, we jump to Xdoreti(), to process soft interrupts and ASTs.
  */
 
-#if defined(UVM)
 #define MY_COUNT _C_LABEL(uvmexp)
-#else
-#define MY_COUNT _C_LABEL(cnt)
-#endif
 
 /* XXX See comment in locore.s */
 #ifdef __ELF__

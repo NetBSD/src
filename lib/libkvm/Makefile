@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 1999/02/24 15:10:16 drochner Exp $
+#	$NetBSD: Makefile,v 1.29 1999/03/24 05:50:50 mrg Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	kvm
@@ -34,9 +34,6 @@ MLINKS+=kvm_dump.3 kvm_dump_inval.3
 .include <bsd.lib.mk>
 
 # XXX
-.if defined(UVM)
-CPPFLAGS+=      -DUVM
-.endif
 .if defined(PMAP_NEW)
 CPPFLAGS+=      -DPMAP_NEW
 .endif
