@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.1.2.3 1997/12/05 14:46:57 simonb Exp $	*/
+/*	$NetBSD: label.c,v 1.1.2.4 1997/12/18 20:27:57 perry Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.1.2.3 1997/12/05 14:46:57 simonb Exp $");
+__RCSID("$NetBSD: label.c,v 1.1.2.4 1997/12/18 20:27:57 perry Exp $");
 #endif
 
 #include <sys/types.h>
@@ -119,7 +119,7 @@ checklabel(partinfo *lp, int nparts, int rawpart, int bsdpart,
 				continue;
 
 			jstart = jp[D_OFFSET];
-			jstop = jstart = jp[D_SIZE];
+			jstop = jstart + jp[D_SIZE];
 
 			/* overlap? */
 			if ((istart <= jstart && jstart < istop) ||
