@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 1996/04/18 02:14:48 cgd Exp $
+#	$NetBSD: Makefile,v 1.27 1996/05/10 21:27:32 scottr Exp $
 
 LIB=	kern
 NOPIC=
@@ -24,6 +24,9 @@ SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 
 # Other stuff
 SRCS+=	
+
+# Files to clean up
+CLEANFILES+= lib${LIB}.o lib${LIB}.po
 
 # mcount cannot be compiled with profiling
 mcount.po: mcount.o
