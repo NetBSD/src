@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.128 2002/07/04 23:32:06 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.129 2002/07/09 23:10:04 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -348,10 +348,24 @@ sendsig(sig, mask, code)
 	fp--;
 
 	/* Build stack frame for signal trampoline. */
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+#if 1 /* COMPAT_16 */
+	case 0:
+		frame.sf_ra = (int)p->p_sigctx.ps_sigcode;
+		break;
+#endif /* COMPAT_16 */
+
+	case 1:
+		frame.sf_ra = (int)ps->sa_sigdesc[sig].sd_tramp;
+		break;
+
+	default:
+		/* Don't know what trampoline version; kill it. */
+		sigexit(p, SIGILL);
+	}
 	frame.sf_signum = sig;
 	frame.sf_code = code;
 	frame.sf_scp = &fp->sf_sc;
-	frame.sf_handler = catcher;
 
 	/* Save the register context. */
 	frame.sf_sc.sc_fp = regs->r_fp;
@@ -394,26 +408,13 @@ sendsig(sig, mask, code)
 	}
 
 	/*
-	 * Build context to run handler in.  Note the trampoline version
-	 * numbers are coordinated with machine-dependent code in libc.
+	 * Build context to run handler in.  We invoke the handler
+	 * directly, only returning via the trampoline.  Note the
+	 * trampoline version numbers are coordinated with machine-
+	 * dependent code in libc.
 	 */
-	switch (ps->sa_sigdesc[sig].sd_vers) {
-#if 1 /* COMPAT_16 */
-	case 0:
-		regs->r_sp = (int)fp;
-		regs->r_pc = (int)p->p_sigctx.ps_sigcode;
-		break;
-#endif /* COMPAT_16 */
-
-	case 1:
-		regs->r_sp = (int)fp;
-		regs->r_pc = (int)ps->sa_sigdesc[sig].sd_tramp;
-		break;
-
-	default:
-		/* Don't know what trampoline version; kill it. */
-		sigexit(p, SIGILL);
-	}
+	regs->r_sp = (int)fp;
+	regs->r_pc = (int)catcher;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
