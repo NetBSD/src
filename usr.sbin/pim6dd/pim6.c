@@ -1,4 +1,4 @@
-/*	$NetBSD: pim6.c,v 1.3 1999/12/10 06:13:32 itojun Exp $	*/
+/*	$NetBSD: pim6.c,v 1.4 2000/02/28 07:17:34 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -64,7 +64,7 @@
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
  *
- *  KAME Id: pim6.c,v 1.3 1999/10/26 08:39:19 itojun Exp
+ *  KAME Id: pim6.c,v 1.5 2000/02/28 07:16:37 itojun Exp
  */
 
 #include "defs.h"
@@ -98,9 +98,11 @@ static int pim6_cksum __P((u_short *, struct in6_addr *,
 void
 init_pim6()
 {
-	static u_char sndcmsgbuf[CMSG_SPACE(sizeof(struct in6_pktinfo))];
+	static u_char *sndcmsgbuf = NULL;
+	static int sndcmsglen;
 	struct cmsghdr *cmsgp = (struct cmsghdr *)sndcmsgbuf;
 
+	sndcmsglen = CMSG_SPACE(sizeof(struct in6_pktinfo));
 	if ((pim6_socket = socket(AF_INET6, SOCK_RAW, IPPROTO_PIM)) < 0) 
 		log(LOG_ERR, errno, "PIM6 socket");
 
@@ -124,8 +126,10 @@ init_pim6()
 	sndmh.msg_namelen = sizeof(struct sockaddr_in6);
 	sndmh.msg_iov = sndiov;
 	sndmh.msg_iovlen = 1;
+	if (sndcmsgbuf == NULL && (sndcmsgbuf = malloc(sndcmsglen)) == NULL)
+		log(LOG_ERR, 0, "malloc failed");
 	sndmh.msg_control = (caddr_t)sndcmsgbuf;
-	sndmh.msg_controllen = sizeof(sndcmsgbuf);
+	sndmh.msg_controllen = sndcmsglen;
 	/* initilization cmsg for specifing outgoing interfaces and source */
 	sndpktinfo = (struct in6_pktinfo *)CMSG_DATA(cmsgp);
 	cmsgp->cmsg_len = CMSG_SPACE(sizeof(struct in6_pktinfo));
