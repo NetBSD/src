@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)limits.h	7.2 (Berkeley) 6/28/90
- *	$Id: limits.h,v 1.5 1994/10/05 17:16:42 jtc Exp $
+ *	$Id: limits.h,v 1.6 1994/10/18 00:25:29 jtc Exp $
  */
 
 #define	CHAR_BIT	8		/* number of bits in a char */
@@ -73,11 +73,11 @@
 #define LONG_BIT	32
 #define WORD_BIT	32
 
-#define DBL_DIG		16
-#define DBL_MAX		1.701411834604692294E+38
-#define DBL_MIN		2.938735877055718770E-39
+#define DBL_DIG		15
+#define DBL_MIN		2.2250738585072014E-308
+#define DBL_MAX		1.7976931348623157E+308
 
 #define FLT_DIG		6
-#define FLT_MAX		1.70141173E+38F
-#define FLT_MIN		2.93873588E-39F
+#define FLT_MAX		3.40282347E+38F
+#define FLT_MIN		1.17549435E-38F
 #endif
