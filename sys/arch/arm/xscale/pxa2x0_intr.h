@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.h,v 1.1 2002/10/19 19:31:39 bsh Exp $ */
+/*	$NetBSD: pxa2x0_intr.h,v 1.2 2003/01/03 01:13:59 thorpej Exp $ */
 
 /* Derived from i80321_intr.h */
 
@@ -39,6 +39,10 @@
 
 #ifndef _PXA2X0_INTR_H_
 #define _PXA2X0_INTR_H_
+
+#define	ARM_IRQ_HANDLER	_C_LABEL(pxa2x0_irq_handler)
+
+#ifndef _LOCORE
 
 #include <arm/cpu.h>
 #include <arm/armreg.h>
@@ -157,5 +161,7 @@ void	_setsoftintr(int);
 #define	_setsoftintr(si)	pxa2x0_setsoftintr(si)
 
 #endif	/* !EVBARM_SPL_NOINTR */
+
+#endif /* ! _LOCORE */
 
 #endif _PXA2X0_INTR_H_
