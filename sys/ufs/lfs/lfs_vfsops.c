@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.62 2000/12/03 07:34:49 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.63 2001/01/22 12:17:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -106,11 +106,11 @@
 
 int lfs_mountfs __P((struct vnode *, struct mount *, struct proc *));
 
-extern struct vnodeopv_desc lfs_vnodeop_opv_desc;
-extern struct vnodeopv_desc lfs_specop_opv_desc;
-extern struct vnodeopv_desc lfs_fifoop_opv_desc;
+extern const struct vnodeopv_desc lfs_vnodeop_opv_desc;
+extern const struct vnodeopv_desc lfs_specop_opv_desc;
+extern const struct vnodeopv_desc lfs_fifoop_opv_desc;
 
-struct vnodeopv_desc *lfs_vnodeopv_descs[] = {
+const struct vnodeopv_desc * const lfs_vnodeopv_descs[] = {
 	&lfs_vnodeop_opv_desc,
 	&lfs_specop_opv_desc,
 	&lfs_fifoop_opv_desc,

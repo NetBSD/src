@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.31 2000/06/10 18:27:02 assar Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.32 2001/01/22 12:17:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -324,9 +324,9 @@ fdesc_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	return (EOPNOTSUPP);
 }
 
-extern struct vnodeopv_desc fdesc_vnodeop_opv_desc;
+extern const struct vnodeopv_desc fdesc_vnodeop_opv_desc;
 
-struct vnodeopv_desc *fdesc_vnodeopv_descs[] = {
+const struct vnodeopv_desc * const fdesc_vnodeopv_descs[] = {
 	&fdesc_vnodeop_opv_desc,
 	NULL,
 };

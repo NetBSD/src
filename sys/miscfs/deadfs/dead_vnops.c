@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.29 2000/05/27 04:52:37 thorpej Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.30 2001/01/22 12:17:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -97,7 +97,7 @@ int	chkvnlock __P((struct vnode *));
 
 int (**dead_vnodeop_p) __P((void *));
 
-struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
+const struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, dead_lookup },		/* lookup */
 	{ &vop_create_desc, dead_create },		/* create */
@@ -144,7 +144,7 @@ struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_bwrite_desc, dead_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
-struct vnodeopv_desc dead_vnodeop_opv_desc =
+const struct vnodeopv_desc dead_vnodeop_opv_desc =
 	{ &dead_vnodeop_p, dead_vnodeop_entries };
 
 /*
