@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.36 2002/02/16 02:07:56 enami Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.37 2002/02/16 02:11:43 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.36 2002/02/16 02:07:56 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.37 2002/02/16 02:11:43 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -567,7 +567,7 @@ sysctl_disknames(void *vwhere, size_t *sizep)
 			} else {
 				buf[0] = ' ';
 				strncpy(buf + 1, diskp->dk_name,
-				    sizeof(buf - 1));
+				    sizeof(buf) - 1);
 			}
 			buf[DK_DISKNAMELEN] = '\0';
 			slen = strlen(buf);
