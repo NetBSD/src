@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.71 1999/10/30 22:30:43 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.72 1999/10/31 22:34:58 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -933,3 +933,25 @@ sys/dev/cons.c					1.33
 
   Catch a console configuration error.  Instead of jumping through
   cdevsw indexed on major(NODEV), call panic, fixing PR#8690.
+
+share/man/man5/passwd.5				1.13
+
+  Document what an & in the GECOS field does, fixing PR#8655.
+
+usr.sbin/pppd/pppd/pppd.8			1.26
+
+  Document the callback option, fixing PR#8550.
+
+share/man/man4/audio.4				1.29
+
+  Add missing "that" in AUDIO_WSEEK description, fixing PR#8664.
+
+sys/arch/hp300/dev/scsi				1.26
+
+  Print vendor/product/rev also for SCSI-3 devices.
+
+distrib/utils/sysinst/net.c			1.55
+
+  Do not mislead users by inserting "lookup files bind" in
+  /etc/resolv.conf; after we converted to nsswitch this is
+  handled elsewhere.
