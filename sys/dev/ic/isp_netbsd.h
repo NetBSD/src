@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.48 2002/02/21 22:32:42 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.49 2002/03/31 17:56:54 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -175,25 +175,20 @@ case SYNC_REQUEST:						\
 case SYNC_RESULT:						\
 {								\
 	off_t off = (off_t) offset * QENTRY_LEN;		\
-	off += ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp));		\
 	bus_dmamap_sync(isp->isp_dmatag, isp->isp_rsdmap,	\
 	    off, size, BUS_DMASYNC_POSTREAD);			\
 	break;							\
 }								\
 case SYNC_SFORDEV:						\
 {								\
-	off_t off =						\
-	    ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp)) +		\
-	    ISP_QUEUE_SIZE(RESULT_QUEUE_LEN(isp)) + offset;	\
+	off_t off = (off_t) offset;				\
 	bus_dmamap_sync(isp->isp_dmatag, isp->isp_scdmap,	\
 	    off, size, BUS_DMASYNC_PREWRITE);			\
 	break;							\
 }								\
 case SYNC_SFORCPU:						\
 {								\
-	off_t off =						\
-	    ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp)) +		\
-	    ISP_QUEUE_SIZE(RESULT_QUEUE_LEN(isp)) + offset;	\
+	off_t off = (off_t) offset;				\
 	bus_dmamap_sync(isp->isp_dmatag, isp->isp_scdmap,	\
 	    off, size, BUS_DMASYNC_POSTREAD);			\
 	break;							\
