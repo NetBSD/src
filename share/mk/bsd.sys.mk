@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.36 1999/08/21 14:17:07 sommerfeld Exp $
+#	$NetBSD: bsd.sys.mk,v 1.37 1999/09/16 00:28:31 sommerfeld Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -39,6 +39,7 @@ HOST_LDFLAGS?=
 
 OBJCOPY?=	objcopy
 STRIPPROG?=	strip
+CONFIG?=	config
 
 .SUFFIXES:	.m .o .ln .lo
 
