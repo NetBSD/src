@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.69 2003/09/03 19:29:14 dsl Exp $	*/
+/*	$NetBSD: newfs.c,v 1.70 2003/09/11 12:19:45 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.69 2003/09/03 19:29:14 dsl Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.70 2003/09/11 12:19:45 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -196,6 +196,7 @@ int	maxbsize = 0;		/* maximum clustering */
 int	minfree = MINFREE;	/* free space threshold */
 int	opt = DEFAULTOPT;	/* optimization preference (space or time) */
 int	density;		/* number of bytes per inode */
+int	num_inodes;		/* number of inoder (overrides density) */
 int	maxcontig = 0;		/* max contiguous blocks to allocate */
 int	maxbpg;			/* maximum blocks per file in a cyl group */
 int	avgfilesize = AVFILESIZ;/* expected average file size */
@@ -252,8 +253,8 @@ main(int argc, char *argv[])
 		errx(1, "insane maxpartitions value %d", maxpartitions);
 
 	opstring = mfs ?
-	    "NT:a:b:c:d:e:f:g:h:i:m:o:p:s:u:" :
-	    "B:FINO:S:T:Za:b:c:d:e:f:g:h:i:l:m:o:p:r:s:u:v:";
+	    "NT:a:b:c:d:e:f:g:h:i:m:n:o:p:s:u:" :
+	    "B:FINO:S:T:Za:b:c:d:e:f:g:h:i:l:m:n:o:p:r:s:u:v:";
 	while ((ch = getopt(argc, argv, opstring)) != -1)
 		switch (ch) {
 		case 'B':
@@ -334,6 +335,10 @@ main(int argc, char *argv[])
 		case 'm':
 			minfree = strsuftoi("free space %",
 			    optarg, 0, 99);
+			break;
+		case 'n':
+			num_inodes = strsuftoi("number of inodes",
+			    optarg, 1, INT_MAX);
 			break;
 		case 'o':
 			if (mfs)
@@ -467,6 +472,7 @@ main(int argc, char *argv[])
 						err(1, "writing image");
 					bufrem -= i;
 				}
+				free(buf);
 			}
 
 		}
@@ -875,6 +881,7 @@ struct help_strings {
 	{ BOTH,		"-h avgfpdir\taverage files per directory" },
 	{ BOTH,		"-i density\tnumber of bytes per inode" },
 	{ BOTH,		"-m minfree\tminimum free space %%" },
+	{ BOTH,		"-n inodes\tnumder of inodes" },
 	{ BOTH,		"-o optim\toptimization preference (`space' or `time')"
 			    },
 	{ MFS_MOUNT,	"-p perm\t\tpermissions (in octal)" },
