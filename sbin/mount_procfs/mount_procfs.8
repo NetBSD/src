@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_procfs.8,v 1.15 1999/07/19 08:02:07 jlam Exp $
+.\"	$NetBSD: mount_procfs.8,v 1.15.6.1 2000/06/22 16:05:40 minoura Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -84,7 +84,7 @@ Each directory contains several files.
 .It Pa cmdline
 This file is readonly and returns null-terminated strings
 corresponding to the process' command line arguments.  For
-a system or zonbie process, this file contains only a string
+a system or zombie process, this file contains only a string
 with the name of the process.
 .It Pa ctl
 a writeonly file which supports a variety

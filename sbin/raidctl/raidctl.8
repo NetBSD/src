@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.17 2000/02/26 19:43:07 oster Exp $
+.\"     $NetBSD: raidctl.8,v 1.17.2.1 2000/06/22 16:05:42 minoura Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -221,8 +221,8 @@ Fails the specified
 .Ar component , 
 if necessary, and immediately begins a reconstruction back to 
 .Ar component .
-This is another mechanism for starting the reconstruction process if a
-component has a hardware failure.
+This is useful for reconstructing back onto a component after
+it has been replaced following a failure.
 .It Fl s Ar dev
 Display the status of the RAIDframe device for each of the components
 and spares.  
@@ -444,7 +444,8 @@ required for the auto-detection and auto-configuration of RAID sets at
 boot time.  For a component label to be considered valid, that
 particular component label must be in agreement with the other
 component labels in the set.  For example, the serial number,
-'modification counter', number of rows and number of columns must all
+.Sq modification counter , 
+number of rows and number of columns must all
 be in agreement.  If any of these are different, then the component is
 not considered to be part of the set.  See
 .Xr raid 4

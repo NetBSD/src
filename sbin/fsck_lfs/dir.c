@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.3 2000/05/23 01:48:52 perseant Exp $	 */
+/* $NetBSD: dir.c,v 1.3.2.1 2000/06/22 16:05:24 minoura Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -299,7 +299,7 @@ fileerror(ino_t cwd, ino_t ino, char *errmesg)
 	pinode(ino);
 	printf("\n");
 	getpathname(pathbuf, cwd, ino);
-	if (ino < ROOTINO || ino > maxino) {
+	if (ino < ROOTINO || ino >= maxino) {
 		pfatal("NAME=%s\n", pathbuf);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.34 2000/05/27 15:30:12 simonb Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.34.2.1 2000/06/22 16:05:53 minoura Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.34 2000/05/27 15:30:12 simonb Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.34.2.1 2000/06/22 16:05:53 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -582,13 +582,16 @@ parse(string, flags)
 		return;
 	}
 	if (special & CPTIME) {
-		long *cp_time = (long *)buf;
+		u_int64_t *cp_time = (u_int64_t *)buf;
 
 		if (!nflag)
 			printf("%s: ", string);
-		printf(
-		    "user = %ld, nice = %ld, sys = %ld, intr = %ld, idle = %ld\n",
-		    cp_time[0], cp_time[1], cp_time[2], cp_time[3], cp_time[4]);
+		printf("user = %llu, nice = %llu, sys = %llu, intr = %llu, "
+		    "idle = %llu\n", (unsigned long long) cp_time[0],
+		    (unsigned long long) cp_time[1],
+		    (unsigned long long) cp_time[2],
+		    (unsigned long long) cp_time[3],
+		    (unsigned long long) cp_time[4]);
 		return;
 	}
 		
@@ -791,7 +794,7 @@ struct ctlname icmp6name[] = ICMPV6CTL_NAMES;
 struct ctlname tcp6name[] = TCP6CTL_NAMES;
 #endif
 struct ctlname udp6name[] = UDP6CTL_NAMES;
-struct ctlname pim6name[] = PIMCTL_NAMES;
+struct ctlname pim6name[] = PIM6CTL_NAMES;
 struct ctlname ipsec6name[] = IPSEC6CTL_NAMES;
 struct list inet6list = { inet6name, IPV6PROTO_MAXID };
 struct list inet6vars[] = {
@@ -847,7 +850,7 @@ struct list inet6vars[] = {
 /*100*/	{ 0, 0 },
 	{ 0, 0 },
 	{ 0, 0 },
-	{ pim6name, PIMCTL_MAXID },	/* pim6 */
+	{ pim6name, PIM6CTL_MAXID },	/* pim6 */
 };
 
 /*

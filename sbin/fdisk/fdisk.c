@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.39 2000/01/31 15:54:48 soda Exp $ */
+/*	$NetBSD: fdisk.c,v 1.39.2.1 2000/06/22 16:05:23 minoura Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.39 2000/01/31 15:54:48 soda Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.39.2.1 2000/06/22 16:05:23 minoura Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -186,6 +186,9 @@ struct part_type {
 	{0x41, "Linux/MINIX (sharing disk with DRDOS) or Personal RISC boot"},
 	{0x42, "SFS or Linux swap (sharing disk with DRDOS)"},
 	{0x43, "Linux native (sharing disk with DRDOS)"},
+	{0x4D, "QNX4.x"},
+	{0x4E, "QNX4.x 2nd part"},
+	{0x4F, "QNX4.x 3rd part"},
 	{0x50, "DM (disk manager)"},
 	{0x51, "DM6 Aux1 (or Novell)"},
 	{0x52, "CP/M or Microport SysV/AT"},
@@ -208,9 +211,6 @@ struct part_type {
 	{0x74, reserved},
 	{0x75, "PC/IX"},
 	{0x76, reserved},
-	{0x77, "QNX4.x"},
-	{0x78, "QNX4.x 2nd part"},
-	{0x79, "QNX4.x 3rd part"},
 	{0x80, "MINIX until 1.4a"},
 	{0x81, "MINIX since 1.4b, early Linux, Mitac dmgr"},
 	{0x82, "Linux swap or Prime or Solaris"},
@@ -1190,6 +1190,11 @@ dos(sector, cylinderp, headp, sectorp)
 	unsigned char *cylinderp, *headp, *sectorp;
 {
 	int cylinder, head;
+	int biosmaxsec;
+
+	biosmaxsec = dos_cylinders * dos_heads * dos_sectors - 1;
+	if (sector > biosmaxsec)
+		sector = biosmaxsec;
 
 	cylinder = sector / dos_cylindersectors;
 
@@ -1198,8 +1203,6 @@ dos(sector, cylinderp, headp, sectorp)
 	head = sector / dos_sectors;
 	sector -= head * dos_sectors;
 
-	if (cylinder >= MAXCYL)
-		cylinder = MAXCYL - 1;
 	*cylinderp = DOSCYL(cylinder);
 	*headp = head;
 	*sectorp = DOSSECT(sector + 1, cylinder);

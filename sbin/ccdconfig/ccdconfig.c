@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.29 2000/02/16 06:52:32 enami Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.29.2.1 2000/06/22 16:05:19 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,10 +41,8 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.29 2000/02/16 06:52:32 enami Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.29.2.1 2000/06/22 16:05:19 minoura Exp $");
 #endif
-
-#define __POOL_EXPOSE			/* dev/ccdvar.h uses struct pool */
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

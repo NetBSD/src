@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.5 1999/03/30 17:32:44 mycroft Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.5.8.1 2000/06/22 16:05:45 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -47,9 +47,9 @@ typedef struct {
 } arg_t;
 
 arg_t source_types[] = {
-	{ "unknown", RND_TYPE_UNKNOWN },
+	{ "???",     RND_TYPE_UNKNOWN },
 	{ "disk",    RND_TYPE_DISK },
-	{ "network", RND_TYPE_NET },
+	{ "net",     RND_TYPE_NET },
 	{ "net",     RND_TYPE_NET },
 	{ "tape",    RND_TYPE_TAPE },
 	{ "tty",     RND_TYPE_TTY },
@@ -62,6 +62,7 @@ char *find_name(u_int32_t);
 void do_ioctl(rndctl_t *);
 char * strflags(u_int32_t);
 void do_list(int, u_int32_t, char *);
+void do_stats(void);
 
 static void
 usage(void)
@@ -128,20 +129,23 @@ strflags(u_int32_t fl)
 	static char str[512];
 
 	str[0] = 0;
-	strcat(str, "<");
-
 	if (fl & RND_FLAG_NO_ESTIMATE)
-		strcat(str, "no");
-	strcat(str, "estimate, ");
+		;
+	else 
+		strcat(str, "estimate");
+	
 	if (fl & RND_FLAG_NO_COLLECT)
-		strcat(str, "no");
-	strcat(str, "collect>");
-
+		;
+	else {
+		if (str[0])
+			strcat(str, ", ");
+		strcat(str, "collect");
+	}
+	
 	return str;
 }
 
-#define HEADER "Device Name      Type           Bits Flags\n" \
-               "---------------- -------- ---------- -----\n"
+#define HEADER "Source                 Bits Type      Flags\n"
 
 void
 do_list(int all, u_int32_t type, char *name)
@@ -162,10 +166,10 @@ do_list(int all, u_int32_t type, char *name)
 		if (res < 0)
 			err(1, "ioctl(RNDGETSRCNAME)");
 		printf(HEADER);
-		printf("%-16s %-8s %10u %s\n",
+		printf("%-16s %10u %-4s %s\n",
 		       rstat_name.source.name,
-		       find_name(rstat_name.source.type),
 		       rstat_name.source.total,
+		       find_name(rstat_name.source.type),
 		       strflags(rstat_name.source.flags));
 		close(fd);
 		return;
@@ -190,10 +194,10 @@ do_list(int all, u_int32_t type, char *name)
 		for (res = 0 ; res < rstat.count ; res++) {
 			if ((all != 0)
 			    || (type == rstat.source[res].type))
-				printf("%-16s %-8s %10u %s\n",
+				printf("%-16s %10u %-4s %s\n",
 				       rstat.source[res].name,
-				       find_name(rstat.source[res].type),
 				       rstat.source[res].total,
+				       find_name(rstat.source[res].type),
 				       strflags(rstat.source[res].flags));
 		}
 		start += rstat.count;
@@ -201,6 +205,31 @@ do_list(int all, u_int32_t type, char *name)
 
 	close(fd);
 }
+
+void
+do_stats()
+{
+	rndpoolstat_t rs;
+	int fd;
+	
+	fd = open("/dev/urandom", O_RDONLY, 0644);
+	if (fd < 0)
+		err(1, "open");
+	
+	if (ioctl(fd, RNDGETPOOLSTAT, &rs) < 0)
+		err(1, "ioctl(RNDGETPOOLSTAT)");
+
+	printf("\t%9d bits mixed into pool\n", rs.added);
+	printf("\t%9d bits currently stored in pool (max %d)\n",
+	    rs.curentropy, rs.maxentropy);
+	printf("\t%9d bits of entropy discarded due to full pool\n",
+	    rs.discarded);
+	printf("\t%9d hard-random bits generated\n", rs.removed);
+	printf("\t%9d pseudo-random bits generated\n", rs.generated);
+
+	close(fd);
+}
+
 
 int
 main(int argc, char **argv)
@@ -210,6 +239,7 @@ main(int argc, char **argv)
 	int       cmd;
 	int       lflag;
 	int       mflag;
+	int       sflag;
 	u_int32_t type;
 	char      name[16];
 
@@ -221,7 +251,7 @@ main(int argc, char **argv)
 	mflag = 0;
 	type = 0xff;
 
-	while ((ch = getopt(argc, argv, "CEcelt:d:")) != -1)
+	while ((ch = getopt(argc, argv, "CEcelt:d:s")) != -1)
 		switch(ch) {
 		case 'C':
 			rctl.flags |= RND_FLAG_NO_COLLECT;
@@ -261,6 +291,9 @@ main(int argc, char **argv)
 			type = 0xff;
 			strncpy(name, optarg, 16);
 			break;
+		case 's':
+			sflag++;
+			break;
 		case '?':
 		default:
 			usage();
@@ -269,19 +302,19 @@ main(int argc, char **argv)
 	/*
 	 * cannot list and modify at the same time
 	 */
-	if (lflag != 0 && mflag != 0)
+	if ((lflag != 0 || sflag != 0) && mflag != 0)
 		usage();
 
 	/*
 	 * bomb out on no-ops
 	 */
-	if (lflag == 0 && mflag == 0)
+	if (lflag == 0 && mflag == 0 && sflag == 0)
 		usage();
 
 	/*
 	 * if not listing, we need a device name or a type
 	 */
-	if (lflag == 0 && cmd == 0)
+	if (lflag == 0 && cmd == 0 && sflag == 0)
 		usage();
 
 	/*
@@ -301,5 +334,8 @@ main(int argc, char **argv)
 	if (lflag != 0)
 		do_list(cmd == 0, type, name);
 
+	if (sflag != 0)
+		do_stats();
+	
 	return 0;
 }

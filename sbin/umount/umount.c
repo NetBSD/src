@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.26 1999/11/09 15:06:34 drochner Exp $	*/
+/*	$NetBSD: umount.c,v 1.26.2.1 2000/06/22 16:05:56 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.26 1999/11/09 15:06:34 drochner Exp $");
+__RCSID("$NetBSD: umount.c,v 1.26.2.1 2000/06/22 16:05:56 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,14 +70,15 @@ typedef enum { MNTANY, MNTON, MNTFROM } mntwhat;
 
 int	fake, fflag, verbose, raw;
 char	*nfshost;
+struct addrinfo *nfshost_ai = NULL;
 
 int	 checkvfsname __P((const char *, char **));
 char	*getmntname __P((char *, mntwhat, char **));
 char	**makevfslist __P((char *));
 int	 main __P((int, char *[]));
-int	 namematch __P((struct hostent *));
+int	 namematch __P((struct addrinfo *));
+int	 sacmp __P((struct sockaddr *, struct sockaddr *));
 int	 selected __P((int));
-int	 umountall __P((char **));
 int	 umountfs __P((char *, char **));
 void	 usage __P((void));
 int	 xdr_dir __P((XDR *, char *));
@@ -90,6 +91,7 @@ main(argc, argv)
 	int all, ch, errs, mnts;
 	char **typelist = NULL;
 	struct statfs *mntbuf;
+	struct addrinfo hints;
 
 	/* Start disks transferring immediately. */
 	sync();
@@ -98,8 +100,6 @@ main(argc, argv)
 	while ((ch = getopt(argc, argv, "AaFfRh:t:v")) != -1)
 		switch (ch) {
 		case 'A':
-			all = 2;
-			break;
 		case 'a':
 			all = 1;
 			break;
@@ -110,7 +110,7 @@ main(argc, argv)
 			fflag = MNT_FORCE;
 			break;
 		case 'h':	/* -h implies -A. */
-			all = 2;
+			all = 1;
 			nfshost = optarg;
 			break;
 		case 'R':
@@ -137,14 +137,17 @@ main(argc, argv)
 	/* -h implies "-t nfs" if no -t flag. */
 	if ((nfshost != NULL) && (typelist == NULL))
 		typelist = makevfslist("nfs");
+
+	if (nfshost != NULL) {
+		memset(&hints, 0, sizeof hints);
+		getaddrinfo(nfshost, NULL, &hints, &nfshost_ai);
+	}
 		
 	errs = 0;
-	switch (all) {
-	case 2:
+	if (all) {
 		if ((mnts = getmntinfo(&mntbuf, MNT_NOWAIT)) == 0) {
 			warn("getmntinfo");
 			errs = 1;
-			break;
 		}
 		for (errs = 0, mnts--; mnts > 0; mnts--) {
 			if (checkvfsname(mntbuf[mnts].f_fstypename, typelist))
@@ -152,47 +155,12 @@ main(argc, argv)
 			if (umountfs(mntbuf[mnts].f_mntonname, typelist) != 0)
 				errs = 1;
 		}
-		break;
-	case 1:
-		if (setfsent() == 0)
-			err(1, "%s", _PATH_FSTAB);
-		errs = umountall(typelist);
-		break;
-	case 0:
+	} else {
 		for (errs = 0; *argv != NULL; ++argv)
 			if (umountfs(*argv, typelist) != 0)
 				errs = 1;
-		break;
 	}
 	exit(errs);
-}
-
-
-int
-umountall(typelist)
-	char **typelist;
-{
-	struct statfs *fs;
-	int n;
-	int rval;
-
-	n = getmntinfo(&fs, MNT_NOWAIT);
-	if (n == 0)
-		err(1, NULL);
-
-	rval = 0;
-	while (--n >= 0) {
-		/* Ignore the root. */
-		if (strncmp(fs[n].f_mntonname, "/", MNAMELEN) == 0)
-			continue;
-
-		if (checkvfsname(fs[n].f_fstypename, typelist))
-			continue;
-
-		if (umountfs(fs[n].f_mntonname, typelist))
-			rval = 1;
-	}
-	return (rval);
 }
 
 int
@@ -201,16 +169,13 @@ umountfs(name, typelist)
 	char **typelist;
 {
 	enum clnt_stat clnt_stat;
-	struct hostent *hp;
-	struct sockaddr_in saddr;
 	struct stat sb;
-	struct timeval pertry, try;
+	struct timeval try;
 	CLIENT *clp;
-	int so;
 	char *type, *delimp, *hostp, *mntpt, rname[MAXPATHLEN];
 	mntwhat what;
+	struct addrinfo *ai, hints;
 
-	hp = NULL;
 	delimp = NULL;
 
 	if (raw) {
@@ -258,23 +223,24 @@ umountfs(name, typelist)
 		if (checkvfsname(type, typelist))
 			return (1);
 
-		hp = NULL;
+		memset(&hints, 0, sizeof hints);
+		ai = NULL;
 		if (!strncmp(type, MOUNT_NFS, MFSNAMELEN)) {
 			if ((delimp = strchr(name, '@')) != NULL) {
 				hostp = delimp + 1;
 				*delimp = '\0';
-				hp = gethostbyname(hostp);
+				getaddrinfo(hostp, NULL, &hints, &ai);
 				*delimp = '@';
-			} else if ((delimp = strchr(name, ':')) != NULL) {
+			} else if ((delimp = strrchr(name, ':')) != NULL) {
 				*delimp = '\0';
 				hostp = name;
-				hp = gethostbyname(hostp);
+				getaddrinfo(hostp, NULL, &hints, &ai);
 				name = delimp + 1;
 				*delimp = ':';
 			}
 		}
 
-		if (!namematch(hp))
+		if (!namematch(ai))
 			return (1);
 	}
 
@@ -289,21 +255,14 @@ umountfs(name, typelist)
 	}
 
 	if (!raw && !strncmp(type, MOUNT_NFS, MFSNAMELEN) &&
-	    (hp != NULL) && !(fflag & MNT_FORCE)) {
+	    (ai != NULL) && !(fflag & MNT_FORCE)) {
 		*delimp = '\0';
-		memset(&saddr, 0, sizeof(saddr));
-		saddr.sin_family = AF_INET;
-		saddr.sin_port = 0;
-		memmove(&saddr.sin_addr, hp->h_addr, hp->h_length);
-		pertry.tv_sec = 3;
-		pertry.tv_usec = 0;
-		so = RPC_ANYSOCK;
-		if ((clp = clntudp_create(&saddr,
-		    RPCPROG_MNT, RPCMNT_VER1, pertry, &so)) == NULL) {
+		clp = clnt_create(hostp, RPCPROG_MNT, RPCMNT_VER1, "udp");
+		if (clp  == NULL) {
 			clnt_pcreateerror("Cannot MNT PRC");
 			return (1);
 		}
-		clp->cl_auth = authunix_create_default();
+		clp->cl_auth = authsys_create_default();
 		try.tv_sec = 20;
 		try.tv_usec = 0;
 		clnt_stat = clnt_call(clp,
@@ -349,32 +308,55 @@ getmntname(name, what, type)
 }
 
 int
-namematch(hp)
-	struct hostent *hp;
+sacmp(struct sockaddr *sa1, struct sockaddr *sa2)
 {
-	char *cp, **np;
+	void *p1, *p2;
+	int len;
 
-	if ((hp == NULL) || (nfshost == NULL))
-		return (1);
+	if (sa1->sa_family != sa2->sa_family)
+		return 1;
 
-	if (strcasecmp(nfshost, hp->h_name) == 0)
-		return (1);
-
-	if ((cp = strchr(hp->h_name, '.')) != NULL) {
-		*cp = '\0';
-		if (strcasecmp(nfshost, hp->h_name) == 0)
-			return (1);
+	switch (sa1->sa_family) {
+	case AF_INET:
+		p1 = &((struct sockaddr_in *)sa1)->sin_addr;
+		p2 = &((struct sockaddr_in *)sa2)->sin_addr;
+		len = 4;
+		break;
+	case AF_INET6:
+		p1 = &((struct sockaddr_in6 *)sa1)->sin6_addr;
+		p2 = &((struct sockaddr_in6 *)sa2)->sin6_addr;
+		len = 16;
+		if (((struct sockaddr_in6 *)sa1)->sin6_scope_id !=
+		    ((struct sockaddr_in6 *)sa2)->sin6_scope_id)
+			return 1;
+		break;
+	default:
+		return 1;
 	}
-	for (np = hp->h_aliases; *np; np++) {
-		if (strcasecmp(nfshost, *np) == 0)
-			return (1);
-		if ((cp = strchr(*np, '.')) != NULL) {
-			*cp = '\0';
-			if (strcasecmp(nfshost, *np) == 0)
-				return (1);
+
+	return memcmp(p1, p2, len);
+}
+
+int
+namematch(ai)
+	struct addrinfo *ai;
+{
+	struct addrinfo *aip;
+
+	if (nfshost == NULL || nfshost_ai == NULL)
+		return (1);
+
+	while (ai != NULL) {
+		aip = nfshost_ai;
+		while (aip != NULL) {
+			if (sacmp(ai->ai_addr, aip->ai_addr) == 0)
+				return 1;
+			aip = aip->ai_next;
 		}
+		ai = ai->ai_next;
 	}
-	return (0);
+
+	return 0;
 }
 
 /*

@@ -1,4 +1,4 @@
-.\"	$NetBSD: tunefs.8,v 1.19 2000/04/27 21:34:27 nathanw Exp $
+.\"	$NetBSD: tunefs.8,v 1.19.2.1 2000/06/22 16:05:54 minoura Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,7 @@
 .Op Fl e Ar maxbpg
 .Op Fl m Ar minfree
 .Bk -words
-.Op Fl n Ar soft_dependency_enabling
+.\" .Op Fl n Ar soft_dependency_enabling
 .Op Fl o Ar optimize_preference
 .Ek
 .Op Fl t Ar trackskew
@@ -119,21 +119,21 @@ threshold.
 Note that if the value is raised above the current usage level,
 users will be unable to allocate files until enough files have
 been deleted to get under the higher threshold.
-.It Fl n Ar soft_dependency_enabling
-The soft dependency code allows most filesystem I/O to be done
-asynchronously by reordering dependant writes to ensure that the
-on-disk metadata is self-consistent even when updates are deferred. 
-Additionally, metadata updates are aggregated, reducing the total 
-number of writes performed.
-Use of this facility does not require any changes to the filesystem,
-so it can be enabled or disabled any time that the filesystem is unmounted.
-This experimental facility is turned off by default.
-It is turned on by using
-.Fl n
-enable;
-it is turned off by using
-.Fl n
-disable.
+.\" .It Fl n Ar soft_dependency_enabling
+.\" The soft dependency code allows most filesystem I/O to be done
+.\" asynchronously by reordering dependant writes to ensure that the
+.\" on-disk metadata is self-consistent even when updates are deferred. 
+.\" Additionally, metadata updates are aggregated, reducing the total 
+.\" number of writes performed.
+.\" Use of this facility does not require any changes to the filesystem,
+.\" so it can be enabled or disabled any time that the filesystem is unmounted.
+.\" This experimental facility is turned off by default.
+.\" It is turned on by using
+.\" .Fl n
+.\" enable;
+.\" it is turned off by using
+.\" .Fl n
+.\" disable.
 .It Fl o Ar optimize_preference
 The file system can either try to minimize the time spent
 allocating blocks, or it can attempt to minimize the space

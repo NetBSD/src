@@ -1,4 +1,4 @@
-.\"	$NetBSD: rndctl.8,v 1.5 1999/03/10 05:16:18 erh Exp $
+.\"	$NetBSD: rndctl.8,v 1.5.8.1 2000/06/22 16:05:44 minoura Exp $
 .\"
 .\" Copyright (c) 1997 Michael Graff
 .\" All rights reserved.
@@ -44,8 +44,12 @@
 .Sh DESCRIPTION
 The
 .Nm
-program manages which devices timing information is to be collected by,
-and alters the estimation of entropy of sources.
+program displays statistics on the current state of the 
+.Xr rnd 4
+pseudo-driver, and allows the administrator to control which sources
+are allowed to contribute to the randomness pool maintained by 
+.Xr rnd 4 ,
+as well as whether a given source is counts as strongly random.
 .Sh OPTIONS
 The following options are available:
 .Bl -tag -width 123456
@@ -56,15 +60,21 @@ device name or device type.
 Enable collection of timing information for the given
 device name of device type.
 .It Fl E
-Disable entropy estimation from the collected timing information
-for the given device name or device type.  The timing information is still
-collected and mixed into the internal entropy pool, but no entropy is assumed
-to be present.
+Disable entropy estimation from the collected timing information for
+the given device name or device type.  If collection is still enabled,
+timing information is still collected and mixed into the internal
+entropy pool, but no entropy is assumed to be present.
 .It Fl e
 Enable entropy estimation using the collected timing information
 for the given device name or device type.
+.It Fl s
+Display statistics on the current state of the random collection pool.
 .It Fl l
-List all sources, or only those specified by the
+List all sources, or, if the
+.Fl t
+or
+.Fl d
+flags are specified, only those specified by the
 .Ar devtype
 or
 .Ar devname
@@ -79,8 +89,18 @@ Only the device named
 is altered or displayed.
 .El
 .Sh WARNINGS
-Turning on entropy collection from unsafe sources can weaken system security.
+Turning on entropy estimation from unsafe or predictable sources will
+weaken system security, while turning on entropy collection from such
+sources may weaken system security.
+.Pp
 Care should be taken when using this command.
+.Sh FILES
+.Bl -tag -width /dev/urandomx -compact
+.It Pa /dev/random
+Returns ``good'' values only
+.It Pa /dev/urandom
+Always returns data, degenerates to a pseudo-random generator
+.El
 .Sh HISTORY
 The
 .Nm
