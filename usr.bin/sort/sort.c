@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.27 2001/05/14 21:52:21 jdolecek Exp $	*/
+/*	$NetBSD: sort.c,v 1.28 2002/11/27 14:44:46 tron Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.27 2001/05/14 21:52:21 jdolecek Exp $");
+__RCSID("$NetBSD: sort.c,v 1.28 2002/11/27 14:44:46 tron Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -252,7 +252,7 @@ main(argc, argv)
 	} else if (!(ch = access(outpath, 0)) &&
 	    strncmp(_PATH_DEV, outpath, 5)) {
 		static const struct sigaction act =
-		    { onsignal, {{0}}, SA_RESTART | SA_RESETHAND };
+		    { {onsignal}, {{0}}, SA_RESTART | SA_RESETHAND };
 		static const int sigtable[] = {SIGHUP, SIGINT, SIGPIPE,
 		    SIGXCPU, SIGXFSZ, SIGVTALRM, SIGPROF, 0};
 		int outfd;
