@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.6 1997/08/13 17:39:19 cgd Exp $
+.\" $NetBSD: bus_dma.9,v 1.6.2.1 1997/11/11 14:04:51 mrg Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,7 +39,20 @@
 .Dt BUS_DMA 9
 .Os NetBSD
 .Sh NAME
-.Nm bus_dma
+.Nm bus_dma ,
+.Nm bus_dmamap_create ,
+.Nm bus_dmamap_destroy ,
+.Nm bus_dmamap_load ,
+.Nm bus_dmamap_load_mbuf ,
+.Nm bus_dmamap_load_uio ,
+.Nm bus_dmamap_load_raw ,
+.Nm bus_dmamap_unload ,
+.Nm bus_dmamap_sync ,
+.Nm bus_dmamem_alloc ,
+.Nm bus_dmamem_free ,
+.Nm bus_dmamem_map ,
+.Nm bus_dmamem_unmap ,
+.Nm bus_dmamem_mmap
 .Nd Bus and Machine Independent DMA Mapping Interface
 .Sh SYNOPSIS
 .Fd #include <machine/bus.h>
