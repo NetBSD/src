@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.127 2003/02/27 01:39:56 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.128 2003/03/01 05:41:56 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.127 2003/02/27 01:39:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.128 2003/03/01 05:41:56 atatat Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -1823,6 +1823,8 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	ki->p_ruid = p->p_cred->p_ruid;
 	ki->p_gid = p->p_ucred->cr_gid;
 	ki->p_rgid = p->p_cred->p_rgid;
+	ki->p_svuid = p->p_cred->p_svuid;
+	ki->p_svgid = p->p_cred->p_svgid;
 
 	memcpy(ki->p_groups, p->p_cred->pc_ucred->cr_groups,
 	    min(sizeof(ki->p_groups), sizeof(p->p_cred->pc_ucred->cr_groups)));
