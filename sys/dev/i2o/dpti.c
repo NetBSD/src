@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.15 2003/10/29 02:13:09 mycroft Exp $	*/
+/*	$NetBSD: dpti.c,v 1.16 2003/10/30 01:58:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.15 2003/10/29 02:13:09 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.16 2003/10/30 01:58:17 simonb Exp $");
 
 #include "opt_i2o.h"
 
@@ -440,7 +440,7 @@ dpti_passthrough(struct dpti_softc *sc, caddr_t data, struct proc *proc)
 	u_int32_t mbtmp[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
 	u_int32_t rbtmp[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
 	int rv, msgsize, repsize, sgoff, i, mapped, nbuf, nfrag, j, sz;
-	u_int32_t *p, *pmax, *pstart;
+	u_int32_t *p, *pmax;
 
 	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
 	im = NULL;
@@ -583,7 +583,7 @@ dpti_passthrough(struct dpti_softc *sc, caddr_t data, struct proc *proc)
 			 */
 			nfrag = 0;
 			sz = 0;
-			for (pstart = p; p <= pmax; p += 2) {
+			for (; p <= pmax; p += 2) {
 				if (nfrag == DPTI_MAX_SEGS) {
 					DPRINTF(("%s: too many segments\n",
 					    sc->sc_dv.dv_xname));

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.164 2003/10/25 18:34:14 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.165 2003/10/30 01:58:17 simonb Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.164 2003/10/25 18:34:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.165 2003/10/30 01:58:17 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -702,7 +702,6 @@ raidstrategy(bp)
 	unsigned int raidID = raidunit(bp->b_dev);
 	RF_Raid_t *raidPtr;
 	struct raid_softc *rs = &raid_softc[raidID];
-	struct disklabel *lp;
 	int     wlabel;
 
 	if ((rs->sc_flags & RAIDF_INITED) ==0) {
@@ -732,7 +731,6 @@ raidstrategy(bp)
 		biodone(bp);
 		return;
 	}
-	lp = rs->sc_dkdev.dk_label;
 
 	/*
 	 * Do bounds checking and adjust transfer.  If there's an
@@ -767,7 +765,6 @@ raidread(dev, uio, flags)
 {
 	int     unit = raidunit(dev);
 	struct raid_softc *rs;
-	int     part;
 
 	if (unit >= numraid)
 		return (ENXIO);
@@ -775,7 +772,6 @@ raidread(dev, uio, flags)
 
 	if ((rs->sc_flags & RAIDF_INITED) == 0)
 		return (ENXIO);
-	part = DISKPART(dev);
 
 	return (physio(raidstrategy, NULL, dev, B_READ, minphys, uio));
 

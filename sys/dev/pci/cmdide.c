@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.3 2003/10/24 00:24:15 mycroft Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.4 2003/10/30 01:58:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -272,7 +272,6 @@ cmd_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 static void
 cmd0643_9_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {	 
-	struct pciide_channel *cp;
 	int channel;
 	pcireg_t rev = PCI_REVISION(pa->pa_class);
 
@@ -348,10 +347,9 @@ cmd0643_9_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		pci_conf_read(sc->sc_pc, sc->sc_tag, 0x58)),
 		DEBUG_PROBE);
 
-	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
-		cp = &sc->pciide_channels[channel];
+	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++)
 		cmd_channel_map(pa, sc, channel);
-	}
+
 	/*
 	 * note - this also makes sure we clear the irq disable and reset
 	 * bits
@@ -462,7 +460,6 @@ cmd646_9_irqack(struct channel_softc *chp)
 static void
 cmd680_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {	 
-	struct pciide_channel *cp;
 	int channel;
 
 	if (pciide_chipen(sc, pa) == 0)
@@ -491,10 +488,8 @@ cmd680_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pciide_pci_write(sc->sc_pc, sc->sc_tag, 0x84, 0x00);
 	pciide_pci_write(sc->sc_pc, sc->sc_tag, 0x8a,
 	    pciide_pci_read(sc->sc_pc, sc->sc_tag, 0x8a) | 0x01);
-	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
-		cp = &sc->pciide_channels[channel];
+	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++)
 		cmd680_channel_map(pa, sc, channel);
-	}
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.10 2003/10/25 18:35:42 christos Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.11 2003/10/30 01:58:17 simonb Exp $	*/
 
 /*
  * Copyright 1997
@@ -186,7 +186,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.10 2003/10/25 18:35:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.11 2003/10/30 01:58:17 simonb Exp $");
 
 #include "opt_inet.h"
 
@@ -1286,9 +1286,6 @@ cs_counter_event(struct cs_softc *sc, u_int16_t cntEvent)
 void 
 cs_buffer_event(struct cs_softc *sc, u_int16_t bufEvent)
 {
-	struct ifnet *ifp;
-
-	ifp = &sc->sc_ethercom.ec_if;
 
 	/*
 	 * multiple events can be in the buffer event register at one time so
