@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.13 1999/11/06 20:33:05 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.14 1999/11/23 23:52:42 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -241,6 +241,7 @@ lfs_bwrite_ext(bp, flags)
 		fs->lfs_avail -= db;
 		++locked_queue_count;
 		locked_queue_bytes += bp->b_bufsize;
+		s = splbio();
 #ifdef LFS_HONOR_RDONLY
 		/*
 		 * XXX KS - Don't write blocks if we're mounted ro.
@@ -253,7 +254,6 @@ lfs_bwrite_ext(bp, flags)
 #endif
 			bp->b_flags |= B_DELWRI | B_LOCKED;
 		bp->b_flags &= ~(B_READ | B_ERROR);
-		s = splbio();
 		reassignbuf(bp, bp->b_vp);
 		splx(s);
 

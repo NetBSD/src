@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.2 1999/11/15 18:49:10 fvdl Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.3 1999/11/23 23:52:41 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -62,7 +62,7 @@ static int stat_rush_requests;		/* number of times I/O speeded up */
 static int syncer_delayno = 0;
 static long syncer_last;
 static struct synclist *syncer_workitem_pending;
-static struct proc *updateproc = NULL;
+struct proc *updateproc = NULL;
 
 void
 vn_initialize_syncerd()
