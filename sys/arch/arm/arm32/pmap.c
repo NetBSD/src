@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.23 2001/09/15 20:36:33 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.24 2001/09/29 09:39:12 chris Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <machine/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.23 2001/09/15 20:36:33 chs Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24 2001/09/29 09:39:12 chris Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -2538,6 +2538,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 * pte pointer is NULL then we are missing the L2 page table
 	 * so we need to create one.
 	 */
+	/* XXX horrible hack to get us working with lockdebug */
+	simple_lock(&pmap->pm_obj.vmobjlock);
 	pte = pmap_pte(pmap, va);
 	if (!pte) {
 		struct vm_page *ptp;
@@ -2713,6 +2715,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	cpu_tlb_flushID_SE(va);
 	error = 0;
 out:
+	simple_unlock(&pmap->pm_obj.vmobjlock);
 	PMAP_MAP_TO_HEAD_UNLOCK();
 	PDEBUG(5, printf("pmap_enter: pte = V%p %08x\n", pte, *pte));
 
@@ -2737,6 +2740,8 @@ pmap_kenter_pa(va, pa, prot)
 		 * kernel as required.
 		 */
 
+	    	/* must lock the pmap */
+	    	simple_lock(&(pmap_kernel()->pm_obj.vmobjlock));
 		/* Allocate a page table */
 		pg = uvm_pagealloc(&(pmap_kernel()->pm_obj), 0, NULL,
 		    UVM_PGA_USERESERVE | UVM_PGA_ZERO);
@@ -2747,6 +2752,7 @@ pmap_kenter_pa(va, pa, prot)
 
 		/* Wire this page table into the L1. */
 		pmap_map_in_l1(pmap, va, VM_PAGE_TO_PHYS(pg), TRUE);
+		simple_unlock(&(pmap_kernel()->pm_obj.vmobjlock));
 	}
 	pte = vtopte(va);
 	KASSERT(!pmap_pte_v(pte));
