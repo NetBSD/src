@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.8 1998/01/20 20:39:06 mycroft Exp $	*/
+/*	$NetBSD: strptime.c,v 1.9 1998/01/20 20:41:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.8 1998/01/20 20:39:06 mycroft Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.9 1998/01/20 20:41:49 mycroft Exp $");
 #endif
 
 #include "namespace.h"
@@ -320,7 +320,7 @@ literal:
 			tm->tm_year = i - TM_YEAR_BASE;
 			break;
 
-		case 'y':	/* The year within the 20th century. */
+		case 'y':	/* The year within 100 years of the epoch. */
 			_LEGAL_ALT(_ALT_E | _ALT_O);
 			if (!(_conv_num(&bp, &i, 0, 99)))
 				return (0);
