@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.45 2003/09/08 17:54:35 wiz Exp $
+.\" $NetBSD: doc2html,v 1.46 2005/02/07 01:11:14 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -774,6 +774,10 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 .de At
 AT&T UNIX\\$*
 ..
+.de An
+.	recurse \\$@
+.	pc-fin
+..
 .de Lk
 .	as doc-pcresult <a href="\\$1">\\$1</a>
 .	shift
@@ -1357,6 +1361,7 @@ AT&T UNIX\\$*
 .als doc2html@@Mt Mt
 .als doc2html@@Lk Lk
 .als doc2html@@No No
+.als doc2html@@An An
 .
 .rn em doc-real-em
 .de em
