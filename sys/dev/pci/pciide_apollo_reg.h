@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_apollo_reg.h,v 1.6 2000/05/15 08:46:01 bouyer Exp $	*/
+/*	$NetBSD: pciide_apollo_reg.h,v 1.6.4.1 2001/02/04 18:44:24 he Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -88,7 +88,8 @@
 	(((1 - (channel)) << 4) + ((1 - (drive)) << 3)))
 #define APO_UDMA_EN_MTH(channel, drive) (0x80 << \
 	(((1 - (channel)) << 4) + ((1 - (drive)) << 3)))
+#define APO_UDMA_CLK66(channel) (0x08 << ((1 - (channel)) << 4))
 
-static int8_t apollo_udma_tim[] = {0x03, 0x02, 0x00};
+static int8_t apollo_udma_tim[] = {0x03, 0x02, 0x00, 0x02, 0x00};
 static int8_t apollo_pio_set[] = {0x0a, 0x0a, 0x0a, 0x02, 0x02};
 static int8_t apollo_pio_rec[] = {0x08, 0x08, 0x08, 0x02, 0x00};
