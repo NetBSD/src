@@ -1,4 +1,4 @@
-.\"	$NetBSD: getfsstat.2,v 1.6 1995/06/29 11:40:44 cgd Exp $
+.\"	$NetBSD: getfsstat.2,v 1.7 1996/08/09 19:09:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,8 +49,8 @@
 .Fn Getfsstat
 returns information about all mounted file systems.
 .Fa Buf
-is a pointer to
-.Xr statfs
+is a pointer to an array of
+.Nm statfs
 structures defined as follows:
 .Bd -literal
 typedef struct { int32_t val[2]; } fsid_t;
