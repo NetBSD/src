@@ -1,4 +1,4 @@
-.\"	$NetBSD: truncate.2,v 1.10 1999/12/02 21:42:40 kleink Exp $
+.\"	$NetBSD: truncate.2,v 1.11 2000/05/28 09:41:52 jdolecek Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,14 +54,20 @@ causes the file named by
 .Fa path
 or referenced by
 .Fa fd
-to be truncated to at most
+to have a size of
 .Fa length
-bytes in size.  If the file previously
+bytes.  If the file previously
 was larger than this size, the extra data
-is lost.
+is discarded. If it was previously shorter than
+.Fa length ,
+its size is increased to the specified value and
+the extended area appears as if it were zero-filled.
+
 With
 .Fn ftruncate ,
-the file must be open for writing.
+the file must be open for writing; for
+.Fn truncate ,
+the process must have write permissions for the file.
 .Sh RETURN VALUES
 A value of 0 is returned if the call succeeds.  If the call
 fails a -1 is returned, and the global variable
