@@ -1,4 +1,4 @@
-/* $NetBSD: systmodes.S,v 1.2 2001/03/13 07:41:26 ross Exp $ */
+/* $NetBSD: systmodes.S,v 1.3 2001/03/22 12:05:36 ross Exp $ */
 
 /* This is a derivative work. */
 
@@ -64,27 +64,7 @@ this code that are retained.
 
 	.text
 
-/*
--------------------------------------------------------------------------------
-Sets the system's IEC/IEEE floating-point rounding mode.  Also disables all
-system exception traps.
--------------------------------------------------------------------------------
-*/
-
 #include <machine/asm.h>
-
-ENTRY(syst_float_set_rounding_mode)
-	movb 4(%esp),%al
-	andb $3,%al
-	shlw $10,%ax
-	orw $63,%ax
-	subl $2,%esp
-	fnstcw 0(%esp)
-	andw $768,0(%esp)
-	orw %ax,0(%esp)
-	fldcw 0(%esp)
-	addl $2,%esp
-	ret
 
 /*
 -------------------------------------------------------------------------------
