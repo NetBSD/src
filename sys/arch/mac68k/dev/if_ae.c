@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.67 1998/01/12 19:22:07 thorpej Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.67.26.1 2000/08/06 02:08:01 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -113,8 +113,11 @@ ae_write_mbuf(sc, m, buf)
 	int buf;
 {
 	u_char *data, savebyte[2];
+	u_int16_t *pshort;
 	int len, wantbyte;
 	u_short totlen = 0;
+
+	pshort = (u_int16_t *) &savebyte[0];
 
 	wantbyte = 0;
 
@@ -127,7 +130,7 @@ ae_write_mbuf(sc, m, buf)
 			if (wantbyte) {
 				savebyte[1] = *data;
 				bus_space_write_region_2(sc->sc_buft,
-				    sc->sc_bufh, buf, savebyte, 1);
+				    sc->sc_bufh, buf, pshort, 1);
 				buf += 2;
 				data++;
 				len--;
@@ -136,7 +139,7 @@ ae_write_mbuf(sc, m, buf)
 			/* Output contiguous words. */
 			if (len > 1) {
 				bus_space_write_region_2(sc->sc_buft,
-				    sc->sc_bufh, buf, data, len >> 1);
+				    sc->sc_bufh, buf, pshort, len >> 1);
 				buf += len & ~1;
 				data += len & ~1;
 				len &= 1;
@@ -152,7 +155,7 @@ ae_write_mbuf(sc, m, buf)
 	if (wantbyte) {
 		savebyte[1] = 0;
 		bus_space_write_region_2(sc->sc_buft, sc->sc_bufh,
-		    buf, savebyte, 1);
+		    buf, pshort, 1);
 	}
 	return (totlen);
 }

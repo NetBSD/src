@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.57 2000/03/18 20:53:24 scottr Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.57.4.1 2000/08/06 02:08:04 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -209,7 +209,7 @@ bad:
 	gm->hres = image.hRes;
 	gm->vres = image.vRes;
 	gm->fbsize = gm->height * gm->rowbytes;
-	gm->fbbase = (caddr_t)sc->sc_handle;	/* XXX evil hack */
+	gm->fbbase = (caddr_t)(sc->sc_handle.base);	/* XXX evil hack */
 	gm->fboff = image.offset;
 
 	strncpy(cardname, nubus_get_card_name(sc->sc_tag, sc->sc_handle,
@@ -482,7 +482,7 @@ grfmv_intr_cb264(vsc)
 	volatile char *slotbase;
 
 	sc = (struct grfbus_softc *)vsc;
-	slotbase = (volatile char *)sc->sc_handle;	/* XXX evil hack */
+	slotbase = (volatile char *)(sc->sc_handle.base); /* XXX evil hack */
 	asm volatile("	movl	%0,a0
 			movl	a0@(0xff6028),d0
 			andl	#0x2,d0
@@ -536,7 +536,7 @@ grfmv_intr_cb364(vsc)
 	volatile char *slotbase;
 
 	sc = (struct grfbus_softc *)vsc;
-	slotbase = (volatile char *)sc->sc_handle;	/* XXX evil hack */
+	slotbase = (volatile char *)(sc->sc_handle.base); /* XXX evil hack */
 	asm volatile("	movl	%0,a0
 			movl	a0@(0xfe6028),d0
 			andl	#0x2,d0
