@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.214 2002/04/21 00:06:03 lukem Exp $
+#	$NetBSD: Makefile,v 1.215 2002/04/26 15:43:39 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -187,6 +187,8 @@ install-etc-files: check_DESTDIR
 		${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
 		    ${NAMEDB} ${DESTDIR}/etc/namedb)
 	(cd rc.d; ${MAKE} install)
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+		postinstall ${DESTDIR}/etc
 	${INSTALL_SYMLINK} -o root -g wheel -m 755 \
 		${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
 	${INSTALL_SYMLINK} -o root -g wheel -m 755 \
