@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94"; */
-static char *rcsid = "$Id: pstat.c,v 1.6 1994/08/31 03:48:18 mycroft Exp $";
+static char *rcsid = "$Id: pstat.c,v 1.7 1995/01/04 05:35:47 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1149,6 +1149,6 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: pstat -Tfnstv [system] [-M core] [-N system]\n");
+	    "usage: pstat [-Tfnstv] [-M core] [-N system]\n");
 	exit(1);
 }
