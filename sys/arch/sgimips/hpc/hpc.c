@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.30 2004/12/30 02:35:41 rumble Exp $	*/
+/*	$NetBSD: hpc.c,v 1.31 2004/12/30 23:18:09 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.30 2004/12/30 02:35:41 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.31 2004/12/30 23:18:09 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ const struct hpc_device {
 	{ "zsc",
 	  HPC_BASE_ADDRESS_0,
 	  /* XXX Magic numbers */
-	  HPC_PBUS_CH6_DEVREGS + IOC_SERIAL_REGS, 0,
+	  HPC3_PBUS_CH6_DEVREGS + IOC_SERIAL_REGS, 0,
 	  29,
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
@@ -91,13 +91,13 @@ const struct hpc_device {
 
 	{ "pckbc",
 	  HPC_BASE_ADDRESS_0,
-	  HPC_PBUS_CH6_DEVREGS + IOC_KB_REGS, 0,
+	  HPC3_PBUS_CH6_DEVREGS + IOC_KB_REGS, 0,
 	  28,
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
 	{ "sq",
 	  HPC_BASE_ADDRESS_0,
-	  HPC_ENET_DEVREGS, HPC_ENET_REGS,
+	  HPC3_ENET_DEVREGS, HPC3_ENET_REGS,
 	  3,
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
@@ -133,13 +133,13 @@ const struct hpc_device {
 
 	{ "wdsc",
 	  HPC_BASE_ADDRESS_0,
-	  HPC_SCSI0_DEVREGS, HPC_SCSI0_REGS,
+	  HPC3_SCSI0_DEVREGS, HPC3_SCSI0_REGS,
 	  1,	/* XXX 1 = IRQ_LOCAL0 + 1 */
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
 	{ "wdsc",
 	  HPC_BASE_ADDRESS_0,
-	  HPC_SCSI1_DEVREGS, HPC_SCSI1_REGS,
+	  HPC3_SCSI1_DEVREGS, HPC3_SCSI1_REGS,
 	  2,	/* XXX 2 = IRQ_LOCAL0 + 2 */
 	  HPCDEV_IP22 },
 
@@ -157,13 +157,13 @@ const struct hpc_device {
 
 	{ "dsclock",
 	  HPC_BASE_ADDRESS_0,
-	  HPC_PBUS_BBRAM, 0,
+	  HPC3_PBUS_BBRAM, 0,
 	  -1,
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
 	{ "haltwo",
 	  HPC_BASE_ADDRESS_0,
-	  HPC_PBUS_CH0_DEVREGS, HPC_PBUS_DMAREGS,
+	  HPC3_PBUS_CH0_DEVREGS, HPC3_PBUS_DMAREGS,
 	  8 + 4, /* XXX IRQ_LOCAL1 + 4 */
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
@@ -253,68 +253,68 @@ static struct hpc_values hpc1_values = {
 
 static struct hpc_values hpc3_values = {
 	.revision		3,
-	.scsi0_regs =		HPC_SCSI0_REGS,
-	.scsi0_regs_size =	HPC_SCSI0_REGS_SIZE,
-	.scsi0_cbp =		HPC_SCSI0_CBP,
-	.scsi0_ndbp =		HPC_SCSI0_NDBP,
-	.scsi0_bc =		HPC_SCSI0_BC,
-	.scsi0_ctl =		HPC_SCSI0_CTL,
-	.scsi0_gio =		HPC_SCSI0_GIO,
-	.scsi0_dev =		HPC_SCSI0_DEV,
-	.scsi0_dmacfg =		HPC_SCSI0_DMACFG,
-	.scsi0_piocfg =		HPC_SCSI0_PIOCFG,
-	.scsi1_regs =		HPC_SCSI1_REGS,
-	.scsi1_regs_size =	HPC_SCSI1_REGS_SIZE,
-	.scsi1_cbp =		HPC_SCSI1_CBP,
-	.scsi1_ndbp =		HPC_SCSI1_NDBP,
-	.scsi1_bc =		HPC_SCSI1_BC,
-	.scsi1_ctl =		HPC_SCSI1_CTL,
-	.scsi1_gio =		HPC_SCSI1_GIO,
-	.scsi1_dev =		HPC_SCSI1_DEV,
-	.scsi1_dmacfg =		HPC_SCSI1_DMACFG,
-	.scsi1_piocfg =		HPC_SCSI1_PIOCFG,
-	.dmactl_dir =		HPC_DMACTL_DIR,
-	.dmactl_flush =		HPC_DMACTL_FLUSH,
-	.dmactl_active =	HPC_DMACTL_ACTIVE,
-	.dmactl_reset =		HPC_DMACTL_RESET,
-	.enet_regs =		HPC_ENET_REGS,
-	.enet_regs_size =	HPC_ENET_REGS_SIZE,
+	.scsi0_regs =		HPC3_SCSI0_REGS,
+	.scsi0_regs_size =	HPC3_SCSI0_REGS_SIZE,
+	.scsi0_cbp =		HPC3_SCSI0_CBP,
+	.scsi0_ndbp =		HPC3_SCSI0_NDBP,
+	.scsi0_bc =		HPC3_SCSI0_BC,
+	.scsi0_ctl =		HPC3_SCSI0_CTL,
+	.scsi0_gio =		HPC3_SCSI0_GIO,
+	.scsi0_dev =		HPC3_SCSI0_DEV,
+	.scsi0_dmacfg =		HPC3_SCSI0_DMACFG,
+	.scsi0_piocfg =		HPC3_SCSI0_PIOCFG,
+	.scsi1_regs =		HPC3_SCSI1_REGS,
+	.scsi1_regs_size =	HPC3_SCSI1_REGS_SIZE,
+	.scsi1_cbp =		HPC3_SCSI1_CBP,
+	.scsi1_ndbp =		HPC3_SCSI1_NDBP,
+	.scsi1_bc =		HPC3_SCSI1_BC,
+	.scsi1_ctl =		HPC3_SCSI1_CTL,
+	.scsi1_gio =		HPC3_SCSI1_GIO,
+	.scsi1_dev =		HPC3_SCSI1_DEV,
+	.scsi1_dmacfg =		HPC3_SCSI1_DMACFG,
+	.scsi1_piocfg =		HPC3_SCSI1_PIOCFG,
+	.dmactl_dir =		HPC3_DMACTL_DIR,
+	.dmactl_flush =		HPC3_DMACTL_FLUSH,
+	.dmactl_active =	HPC3_DMACTL_ACTIVE,
+	.dmactl_reset =		HPC3_DMACTL_RESET,
+	.enet_regs =		HPC3_ENET_REGS,
+	.enet_regs_size =	HPC3_ENET_REGS_SIZE,
 	.enet_intdelay =	0,
 	.enet_intdelayval =	0,
-	.enetr_cbp =		HPC_ENETR_CBP,
-	.enetr_ndbp =		HPC_ENETR_NDBP,
-	.enetr_bc =		HPC_ENETR_BC,
-	.enetr_ctl =		HPC_ENETR_CTL,
-	.enetr_ctl_active =	ENETR_CTL_ACTIVE,
-	.enetr_reset =		HPC_ENETR_RESET,
-	.enetr_dmacfg =		HPC_ENETR_DMACFG,
-	.enetr_piocfg =		HPC_ENETR_PIOCFG,
-	.enetx_cbp =		HPC_ENETX_CBP,
-	.enetx_ndbp =		HPC_ENETX_NDBP,
-	.enetx_bc =		HPC_ENETX_BC,
-	.enetx_ctl =		HPC_ENETX_CTL,
-	.enetx_ctl_active =	ENETX_CTL_ACTIVE,
-	.enetx_dev =		HPC_ENETX_DEV,
-	.enetr_fifo =		HPC_ENETR_FIFO,
-	.enetr_fifo_size =	HPC_ENETR_FIFO_SIZE,
-	.enetx_fifo =		HPC_ENETX_FIFO,
-	.enetx_fifo_size =	HPC_ENETX_FIFO_SIZE,
-	.scsi0_devregs_size =	HPC_SCSI0_DEVREGS_SIZE,
-	.scsi1_devregs_size =	HPC_SCSI1_DEVREGS_SIZE,
-	.enet_devregs =		HPC_ENET_DEVREGS,
-	.enet_devregs_size =	HPC_ENET_DEVREGS_SIZE,
-	.pbus_fifo =		HPC_PBUS_FIFO,
-	.pbus_fifo_size =	HPC_PBUS_FIFO_SIZE,
-	.pbus_bbram =		HPC_PBUS_BBRAM,
+	.enetr_cbp =		HPC3_ENETR_CBP,
+	.enetr_ndbp =		HPC3_ENETR_NDBP,
+	.enetr_bc =		HPC3_ENETR_BC,
+	.enetr_ctl =		HPC3_ENETR_CTL,
+	.enetr_ctl_active =	HPC3_ENETR_CTL_ACTIVE,
+	.enetr_reset =		HPC3_ENETR_RESET,
+	.enetr_dmacfg =		HPC3_ENETR_DMACFG,
+	.enetr_piocfg =		HPC3_ENETR_PIOCFG,
+	.enetx_cbp =		HPC3_ENETX_CBP,
+	.enetx_ndbp =		HPC3_ENETX_NDBP,
+	.enetx_bc =		HPC3_ENETX_BC,
+	.enetx_ctl =		HPC3_ENETX_CTL,
+	.enetx_ctl_active =	HPC3_ENETX_CTL_ACTIVE,
+	.enetx_dev =		HPC3_ENETX_DEV,
+	.enetr_fifo =		HPC3_ENETR_FIFO,
+	.enetr_fifo_size =	HPC3_ENETR_FIFO_SIZE,
+	.enetx_fifo =		HPC3_ENETX_FIFO,
+	.enetx_fifo_size =	HPC3_ENETX_FIFO_SIZE,
+	.scsi0_devregs_size =	HPC3_SCSI0_DEVREGS_SIZE,
+	.scsi1_devregs_size =	HPC3_SCSI1_DEVREGS_SIZE,
+	.enet_devregs =		HPC3_ENET_DEVREGS,
+	.enet_devregs_size =	HPC3_ENET_DEVREGS_SIZE,
+	.pbus_fifo =		HPC3_PBUS_FIFO,
+	.pbus_fifo_size =	HPC3_PBUS_FIFO_SIZE,
+	.pbus_bbram =		HPC3_PBUS_BBRAM,
 	.scsi_max_xfer =	MAX_SCSI_XFER,
 	.scsi_dma_segs =	(MAX_SCSI_XFER / 8192),
 	.scsi_dma_segs_size =	8192,
 	.clk_freq =		100,
-	.dma_datain_cmd =	HPC_DMACTL_ACTIVE,
-	.dma_dataout_cmd =	(HPC_DMACTL_ACTIVE | HPC_DMACTL_DIR),
-	.scsi_dmactl_flush =	HPC_DMACTL_FLUSH,
-	.scsi_dmactl_active =	HPC_DMACTL_ACTIVE,
-	.scsi_dmactl_reset =	HPC_DMACTL_RESET
+	.dma_datain_cmd =	HPC3_DMACTL_ACTIVE,
+	.dma_dataout_cmd =	(HPC3_DMACTL_ACTIVE | HPC3_DMACTL_DIR),
+	.scsi_dmactl_flush =	HPC3_DMACTL_FLUSH,
+	.scsi_dmactl_active =	HPC3_DMACTL_ACTIVE,
+	.scsi_dmactl_reset =	HPC3_DMACTL_RESET
 };
 
 
