@@ -1,12 +1,12 @@
 #	from: @(#)Makefile    6.2 (Berkeley) 3/25/91
-#	$Id: Makefile,v 1.8 1993/10/07 07:24:24 cgd Exp $
+#	$Id: Makefile,v 1.9 1993/12/05 00:50:49 cgd Exp $
 
 PROG=           cc
 SRCS=           gcc.c version.c obstack.c
 MAN1=		gcc.0 g++.0
 BINDIR=		/usr/bin
 CFLAGS+=        -I$(.CURDIR) -I$(.CURDIR)/../common \
-                 -I$(.CURDIR)/../arch -I$(.CURDIR)/../arch/$(MACHINE)
+                 -I$(.CURDIR)/../arch -I$(.CURDIR)/../arch/$(MACHINE_ARCH)
 LDADD+=		-lgnumalloc
 DPADD+=		/usr/lib/libgnumalloc.a
 

@@ -1,11 +1,11 @@
-#	$Id: Makefile,v 1.2 1993/10/03 13:50:49 pk Exp $
+#	$Id: Makefile,v 1.3 1993/12/05 00:51:23 cgd Exp $
 
 LIB=	cc1
 NOPROFILE=
 NOPIC=
 
-CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../arch -I${.CURDIR}/../arch/${MACHINE}
-.PATH:	${.CURDIR}/../arch/${MACHINE}
+CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../arch -I${.CURDIR}/../arch/${MACHINE_ARCH}
+.PATH:	${.CURDIR}/../arch/${MACHINE_ARCH}
 
 # machine-independent
 SRCS+=	c-common.c caller-save.c calls.c combine.c convert.c cse.c dbxout.c \
