@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.3 2002/12/06 02:07:53 thorpej Exp $	*/
+/*	$NetBSD: inet.c,v 1.4 2003/03/19 14:04:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -176,6 +176,7 @@ main(int argc, char **argv)
 	if (sock == -1)
 		err(1, "ir: socket");
 	memset((void *)&sa, 0, sizeof(sa));
+	sa.sin_family = AF_INET;
 	if (bind(sock, (struct sockaddr *)&sa, sizeof(sa)) == -1)
 		err(1, "ir: bind");
 
