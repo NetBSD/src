@@ -1,10 +1,10 @@
-#	$Id: Makefile,v 1.5 1993/08/02 17:43:00 mycroft Exp $
+#	$Id: Makefile,v 1.6 1995/10/26 00:58:54 jtc Exp $
 
 PROG=		groff
 SRCS=		groff.cc pipeline.c
 CFLAGS+=	-I$(.CURDIR)/../include
 LDADD+=		$(LIBGROFF) -lm
-DPADD+=		$(LIBGROFF) $(LIBMATH)
+DPADD+=		$(LIBGROFF) $(LIBM)
 
 .include "../../Makefile.inc"
 .include "../Makefile.cfg"
