@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.71 2000/05/25 21:32:41 jhawk Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.72 2000/05/26 20:25:57 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -63,6 +63,9 @@
 
 #ifdef DDB
 #include <ddb/ddbvar.h>
+#include <machine/db_machdep.h>
+#include <ddb/db_command.h>
+#include <ddb/db_interface.h>
 #endif
 
 #ifdef IPKDB
@@ -214,6 +217,12 @@ panic(fmt, va_alist)
 #ifdef DDB
 	if (db_onpanic)
 		Debugger();
+	else {
+		printf("Begin traceback...\n");
+		db_stack_trace_print((db_expr_t)__builtin_frame_address(0),
+		    TRUE, 65535, "", printf);
+		printf("End traceback...\n");
+	}
 #endif
 	cpu_reboot(bootopt, NULL);
 }
