@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.11 1997/03/13 01:04:02 cgd Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.12 1997/04/10 02:48:45 cgd Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -85,7 +85,10 @@
 #define bootverbose	0
 #endif
 
-#define PCI_BASEADR0	PCI_MAPREG_START
+#define PCI_BASEADR_IO	0x10
+#define PCI_BASEADR_MEM	0x14
+
+int	ahc_pci_prefer_io = 0;      /* 1 -> map via I/O (patchable data) */
 
 #endif /* defined(__NetBSD__) */
 
@@ -315,9 +318,10 @@ ahc_pci_attach(parent, self, aux)
 #elif defined(__NetBSD__)
 	struct pci_attach_args *pa = aux;
 	struct ahc_data *ahc = (void *)self;
-	bus_addr_t iobase;
-	bus_size_t iosize;
-	bus_space_handle_t ioh;
+	bus_addr_t busbase;
+	bus_size_t bussize;
+	bus_space_tag_t st;
+	bus_space_handle_t sh;
 	pci_intr_handle_t ih;
 	const char *intrstr;
 #endif
@@ -340,10 +344,27 @@ ahc_pci_attach(parent, self, aux)
 	 */
 	io_port &= 0xfffffffe;
 #elif defined(__NetBSD__)
-	if (pci_io_find(pa->pa_pc, pa->pa_tag, PCI_BASEADR0, &iobase, &iosize))
+	if (ahc_pci_prefer_io) {
+		if (pci_io_find(pa->pa_pc, pa->pa_tag, PCI_BASEADR_IO,
+		    &busbase, &bussize)) {
+			printf(": unable to find PCI I/O base\n");
+			return;
+		}
+		st = pa->pa_iot;
+	} else {
+		if (pci_mem_find(pa->pa_pc, pa->pa_tag, PCI_BASEADR_MEM,
+		    &busbase, &bussize, NULL)) {
+			printf(": unable to find PCI memory base\n");
+			return;
+		}
+		st = pa->pa_memt;
+	}
+	if (bus_space_map(st, busbase, bussize, 0, &sh)) {
+		printf(": unable to map %s registers\n",
+		    ahc_pci_prefer_io ? "I/O" : "memory");
 		return;
-	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &ioh))
-		return;
+	}
+	printf("\n");
 #endif
 
 #if defined(__FreeBSD__)
@@ -399,17 +420,15 @@ ahc_pci_attach(parent, self, aux)
 	if(ahc_t & AHC_ULTRA)
 		ultra_enb = inb(SXFRCTL0 + io_port) & ULTRAEN;
 #else
-	our_id = bus_space_read_1(pa->pa_iot, ioh, SCSIID) & OID;
+	our_id = bus_space_read_1(st, sh, SCSIID) & OID;
 	if(ahc_t & AHC_ULTRA)
-		ultra_enb = bus_space_read_1(pa->pa_iot, ioh,
-		    SXFRCTL0) & ULTRAEN;
+		ultra_enb = bus_space_read_1(st, sh, SXFRCTL0) & ULTRAEN;
 #endif
 
 #if defined(__FreeBSD__)
 	ahc_reset(io_port);
 #elif defined(__NetBSD__)
-	printf("\n");
-	ahc_reset(ahc->sc_dev.dv_xname, pa->pa_iot, ioh);
+	ahc_reset(ahc->sc_dev.dv_xname, st, sh);
 #endif
 
 	if(ahc_t & AHC_AIC7870){
@@ -459,7 +478,7 @@ ahc_pci_attach(parent, self, aux)
 		return;
 	}
 #elif defined(__NetBSD__)
-	ahc_construct(ahc, pa->pa_iot, ioh, ahc_t, ahc_f);
+	ahc_construct(ahc, st, sh, ahc_t, ahc_f);
 
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 			 pa->pa_intrline, &ih)) {
@@ -630,8 +649,8 @@ load_seeprom(ahc)
 #if defined(__FreeBSD__)
 	sd.sd_iobase = ahc->baseport + SEECTL;
 #elif defined(__NetBSD__)
-	sd.sd_iot = ahc->sc_iot;
-	sd.sd_ioh = ahc->sc_ioh;
+	sd.sd_st = ahc->sc_st;
+	sd.sd_sh = ahc->sc_sh;
 	sd.sd_offset = SEECTL;
 #endif
 	sd.sd_MS = SEEMS;
