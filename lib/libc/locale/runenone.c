@@ -1,8 +1,11 @@
-/*	$NetBSD: multibyte.c,v 1.9 2000/04/01 19:42:57 erh Exp $	*/
+/*	$NetBSD: runenone.c,v 1.2 2000/12/21 11:29:47 itojun Exp $	*/
 
-/*
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+/*-
+ * Copyright (c) 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Paul Borman at Krystal Technologies.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,123 +39,77 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char *sccsid = "from: @(#)multibyte.c	5.1 (Berkeley) 2/18/91";
+static char sccsid[] = "@(#)none.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: multibyte.c,v 1.9 2000/04/01 19:42:57 erh Exp $");
+__RCSID("$NetBSD: runenone.c,v 1.2 2000/12/21 11:29:47 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include <assert.h>
+#include <stddef.h>
+#include <stdio.h>
+#include "rune.h"
 #include <errno.h>
 #include <stdlib.h>
 
-/*
- * Stub multibyte character functions.
- * This cheezy implementation is fixed to the native single-byte
- * character set.
- */
+rune_t	_none_sgetrune __P((_RuneLocale *, const char *, size_t, char const **, void *));
+int	_none_sputrune __P((_RuneLocale *, rune_t, char *, size_t, char **, void *));
+
+static _RuneState _NONE_RuneState = {
+	0,		/* sizestate */
+	NULL,		/* initstate */
+	NULL,		/* packstate */
+	NULL		/* unpackstate */
+};
+
+int _none_init __P((_RuneLocale *rl));
 
 int
-mblen(s, n)
-	const char *s;
-	size_t n;
+_none_init(rl)
+	_RuneLocale *rl;
 {
-	if (s == NULL || *s == '\0')
-		return 0;
-	if (n == 0)
-		return -1;
-	return 1;
+	rl->__rune_sgetrune = _none_sgetrune;
+	rl->__rune_sputrune = _none_sputrune;
+
+	rl->__rune_RuneState = &_NONE_RuneState;
+	rl->__rune_mb_cur_max = 1;
+
+	return(0);
 }
 
-/*ARGSUSED*/
+/* ARGSUSED */
+rune_t
+_none_sgetrune(rl, string, n, result, state)
+	_RuneLocale *rl;
+	const char *string;
+	size_t n;
+	char const **result;
+	void *state;
+{
+	if (n < 1) {
+		if (result)
+			*result = string;
+		return(_INVALID_RUNE);
+	}
+	if (result)
+		*result = string + 1;
+	return(*string & 0xff);
+}
+
+/* ARGSUSED */
 int
-mbtowc(pwc, s, n)
-	wchar_t *pwc;
-	const char *s;
+_none_sputrune(rl, c, string, n, result, state)
+	_RuneLocale *rl;
+	rune_t c;
+	char *string, **result;
 	size_t n;
+	void *state;
 {
-	if (s == NULL)
-		return 0;
-	if (n == 0)
-		return -1;
-	if (pwc)
-		*pwc = (wchar_t) *s;
-	return (*s != '\0');
-}
-
-/*ARGSUSED*/
-int
-#ifdef __STDC__
-wctomb(char *s, wchar_t wchar)
-#else
-wctomb(s, wchar)
-	char *s;
-	wchar_t wchar;
-#endif
-{
-	if (s == NULL)
-		return 0;
-
-	*s = (char) wchar;
-	return 1;
-}
-
-/*ARGSUSED*/
-size_t
-mbstowcs(pwcs, s, n)
-	wchar_t *pwcs;
-	const char *s;
-	size_t n;
-{
-	int count = 0;
-
-	_DIAGASSERT(s != NULL);
-
-	if (n != 0) {
-		if (pwcs != NULL) {
-			do {
-				if ((*pwcs++ = (wchar_t) *s++) == 0)
-					break;
-				count++;
-			} while (--n != 0);
-		} else {
-			do {
-				if (((wchar_t)*s++) == 0)
-					break;
-				count++;
-			} while (--n != 0);
-		}
-	}
-	
-	return count;
-}
-
-/*ARGSUSED*/
-size_t
-wcstombs(s, pwcs, n)
-	char *s;
-	const wchar_t *pwcs;
-	size_t n;
-{
-	int count = 0;
-
-	_DIAGASSERT(pwcs != NULL);
-	if (pwcs == NULL)
-		return (0);
-
-	if (s == NULL) {
-		while (*pwcs++ != 0)
-			count++;
-		return(count);
-	}
-
-	if (n != 0) {
-		do {
-			if ((*s++ = (char) *pwcs++) == 0)
-				break;
-			count++;
-		} while (--n != 0);
-	}
-
-	return count;
+	if (n >= 1) {
+		if (string)
+			*string = c;
+		if (result)
+			*result = string + 1;
+	} else if (result)
+		*result = (char *)0;
+	return(1);
 }
