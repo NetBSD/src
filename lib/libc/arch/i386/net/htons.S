@@ -34,17 +34,17 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)htons.s	5.2 (Berkeley) 12/17/90
- *	$Id: htons.S,v 1.3 1994/03/12 01:52:14 jtc Exp $
+ *	$Id: htons.S,v 1.4 1994/03/16 17:34:15 jtc Exp $
  */
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-RCSID("$Id: htons.S,v 1.3 1994/03/12 01:52:14 jtc Exp $")
+RCSID("$Id: htons.S,v 1.4 1994/03/16 17:34:15 jtc Exp $")
 #endif
 
 /* netorder = htons(hostorder) */
 ENTRY(htons)
 	movzwl	4(%esp),%eax
-	xchgb	%al,%ah
+	rorw	$8,%ax
 	ret
