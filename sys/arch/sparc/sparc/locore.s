@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.142 2001/06/08 16:15:23 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.143 2001/06/10 10:50:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -3986,7 +3986,7 @@ _C_LABEL(cpu_hatch):
 	be	1b
 	 ld	[%l1], %l0
 
-#if defined(MULTIPROCESSOR)
+#if defined(MULTIPROCESSOR) && 0	/* doesn't quite work yet */
 	set	_C_LABEL(proc0), %g3		! p = proc0
 	sethi	%hi(_C_LABEL(sched_whichqs)), %g2
 	sethi	%hi(cpcb), %g6
