@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.20 2001/05/10 01:37:42 itojun Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.21 2001/05/14 13:35:21 itojun Exp $	*/
 /*	$KAME: in_gif.c,v 1.53 2001/05/03 14:51:48 itojun Exp $	*/
 
 /*
@@ -150,29 +150,12 @@ in_gif_output(ifp, family, m, rt)
 
 	bzero(&iphdr, sizeof(iphdr));
 	iphdr.ip_src = sin_src->sin_addr;
-	if (ifp->if_flags & IFF_LINK0) {
-		/* multi-destination mode */
-		if (sin_dst->sin_addr.s_addr != INADDR_ANY)
-			iphdr.ip_dst = sin_dst->sin_addr;
-		else if (rt) {
-			if (family != AF_INET) {
-				m_freem(m);
-				return EINVAL;	/*XXX*/
-			}
-			iphdr.ip_dst = ((struct sockaddr_in *)
-					(rt->rt_gateway))->sin_addr;
-		} else {
-			m_freem(m);
-			return ENETUNREACH;
-		}
-	} else {
-		/* bidirectional configured tunnel mode */
-		if (sin_dst->sin_addr.s_addr != INADDR_ANY)
-			iphdr.ip_dst = sin_dst->sin_addr;
-		else {
-			m_freem(m);
-			return ENETUNREACH;
-		}
+	/* bidirectional configured tunnel mode */
+	if (sin_dst->sin_addr.s_addr != INADDR_ANY)
+		iphdr.ip_dst = sin_dst->sin_addr;
+	else {
+		m_freem(m);
+		return ENETUNREACH;
 	}
 	iphdr.ip_p = proto;
 	/* version will be set in ip_output() */
@@ -350,10 +333,6 @@ gif_encapcheck4(m, off, proto, arg)
 		addrmatch |= 1;
 	if (dst->sin_addr.s_addr == ip.ip_src.s_addr)
 		addrmatch |= 2;
-	else if ((sc->gif_if.if_flags & IFF_LINK0) != 0 &&
-		 dst->sin_addr.s_addr == INADDR_ANY) {
-		addrmatch |= 2; /* we accept any source */
-	}
 	if (addrmatch != 3)
 		return 0;
 
@@ -397,6 +376,5 @@ gif_encapcheck4(m, off, proto, arg)
 		rtfree(rt);
 	}
 
-	/* prioritize: IFF_LINK0 mode is less preferred */
-	return (sc->gif_if.if_flags & IFF_LINK0) ? 32 : 32 * 2;
+	return 32 * 2;
 }
