@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.10 1997/10/20 23:02:09 mikel Exp $	*/
+/*	$NetBSD: apropos.c,v 1.11 1997/11/12 00:04:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)apropos.c	8.8 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: apropos.c,v 1.10 1997/10/20 23:02:09 mikel Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.11 1997/11/12 00:04:49 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,8 @@ __RCSID("$NetBSD: apropos.c,v 1.10 1997/10/20 23:02:09 mikel Exp $");
 #include "pathnames.h"
 
 static int *found, foundman;
+
+#define	MAXLINELEN	8192		/* max line handled */
 
 int main __P((int, char **));
 void apropos __P((char **, char *, int));
@@ -150,7 +152,7 @@ apropos(argv, path, buildpath)
 	int buildpath;
 {
 	char *end, *name, **p;
-	char buf[LINE_MAX + 1], wbuf[LINE_MAX + 1];
+	char buf[MAXLINELEN + 1], wbuf[MAXLINELEN + 1];
 	char hold[MAXPATHLEN + 1];
 
 	for (name = path; name; name = end) {	/* through name list */
