@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.c,v 1.2 1996/01/02 20:59:20 leo Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.3 1996/03/10 11:42:35 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -45,7 +45,6 @@
 #include <machine/mfp.h>
 #include <atari/atari/device.h>
 #include <atari/dev/grfabs_reg.h>
-#include <atari/dev/grfabs_fal.h>
 
 /*
  * Function decls
@@ -60,6 +59,7 @@ static void	  falcon_free_view __P((view_t *));
 static void	  falcon_remove_view __P((view_t *));
 static int	  falcon_use_colormap __P((view_t *, colormap_t *));
 static void	  falcon_detect __P((dmode_t *));
+static struct videl *falcon_getreg __P((u_short));
 
 /*
  * Our function switch table
@@ -73,71 +73,78 @@ struct grfabs_sw fal_vid_sw = {
 };
 
 static dmode_t vid_modes[] = {
-    { { NULL, NULL }, "falauto",{   0,    0 },  0, RES_FALAUTO    ,&fal_vid_sw},
-    { { NULL, NULL }, "sthigh", { 640,  400 },  1, RES_FAL_STHIGH ,&fal_vid_sw},
-    { { NULL, NULL }, "stmid",  { 640,  200 },  2, RES_FAL_STMID  ,&fal_vid_sw},
-    { { NULL, NULL }, "stlow",  { 320,  200 },  4, RES_FAL_STLOW  ,&fal_vid_sw},
-    { { NULL, NULL }, "ttlow",  { 320,  480 },  8, RES_FAL_TTLOW  ,&fal_vid_sw},
-    { { NULL, NULL }, "vga2",   { 640,  480 },  1, RES_VGA2       ,&fal_vid_sw},
-    { { NULL, NULL }, "vga4",   { 640,  480 },  2, RES_VGA4       ,&fal_vid_sw},
-    { { NULL, NULL }, "vga16",  { 640,  480 },  4, RES_VGA16      ,&fal_vid_sw},
-    { { NULL, NULL }, "vga256", { 640,  480 },  8, RES_VGA256     ,&fal_vid_sw},
-    { { NULL, NULL }, "highcol",{ 320,  200 }, 16, RES_DIRECT     ,&fal_vid_sw},
-    { { NULL, NULL }, NULL,  }
+    { {NULL,NULL}, "falauto", {   0,  0 },  0, RES_FALAUTO   , &fal_vid_sw},
+    { {NULL,NULL}, "sthigh",  { 640,400 },  1, RES_FAL_STHIGH, &fal_vid_sw},
+    { {NULL,NULL}, "stmid",   { 640,200 },  2, RES_FAL_STMID , &fal_vid_sw},
+    { {NULL,NULL}, "stlow",   { 320,200 },  4, RES_FAL_STLOW , &fal_vid_sw},
+    { {NULL,NULL}, "ttlow",   { 320,480 },  8, RES_FAL_TTLOW , &fal_vid_sw},
+    { {NULL,NULL}, "vga2",    { 640,480 },  1, RES_VGA2      , &fal_vid_sw},
+    { {NULL,NULL}, "vga4",    { 640,480 },  2, RES_VGA4      , &fal_vid_sw},
+    { {NULL,NULL}, "vga16",   { 640,480 },  4, RES_VGA16     , &fal_vid_sw},
+    { {NULL,NULL}, "vga256",  { 640,480 },  8, RES_VGA256    , &fal_vid_sw},
+    { {NULL,NULL}, "highcol", { 320,200 }, 16, RES_DIRECT    , &fal_vid_sw},
+    { {NULL,NULL},  NULL,  }
 };
 
 /*
  * The following table contains timing values for the various video modes.
- * I have only a multisync monitor, therefore I can not say if this values
- * are useful at other monitors.
+ * I have only a multisync display, therefore I can not say if this values
+ * are useful at other displays.
  * Use other video modes at YOUR OWN RISK.
  * THERE IS NO WARRENTY ABOUT THIS VALUES TO WORK WITH A PARTICULAR
- * MONITOR. -- Thomas
+ * DISPLAY. -- Thomas
  */
 static struct videl videlinit[] = {
-	{ RES_FALAUTO,		/* autodedect				*/
+	{ RES_FALAUTO,		    /* autodedect			    */
 	0x0, 0x0, 0x0,   0x0, 0x0,   0x0,  0x0,  0x0,  0x0,   0x0,  0x0,  0x0,
 	0x0, 0x0,   0x0,   0x0,  0x0,  0x0,   0x0,   0x0,   0x0 },
 
-	{ RES_FAL_STHIGH,	/* sthigh, 640x400, 2 colors		*/ 
+	{ FAL_VGA | RES_FAL_STHIGH, /* sthigh, 640x400, 2 colors	    */ 
 	0x2, 0x0, 0x28,  0x0, 0x400, 0xc6, 0x8d, 0x15, 0x273, 0x50, 0x96, 0x0, 
 	0x0, 0x419, 0x3af, 0x8f, 0x8f, 0x3af, 0x415, 0x186, 0x8 },
 
-	{ RES_FAL_STMID,	/* stmid, 640x200, 4 colors		*/
+#if 0 /* not yet */
+	{ FAL_SM | RES_FAL_STHIGH,  /* sthigh, 640x400, 2 colors	    */
+	0x0, 0x0, 0x28,  0x2, 0x0,   0x1a, 0x0,  0x0,  0x20f, 0xc,  0x14, 0x0,
+	0x0, 0x3e9, 0x0,   0x0,  0x43, 0x363, 0x3e7, 0x80,  0x8 },
+#endif
+
+	{ FAL_VGA | RES_FAL_STMID,  /* stmid, 640x200, 4 colors		    */
 	0x2, 0x0, 0x50,  0x1, 0x0,   0x17, 0x12, 0x1,  0x20e, 0xd,  0x11, 0x0, 
 	0x0, 0x419, 0x3af, 0x8f, 0x8f, 0x3af, 0x415, 0x186, 0x9 },
 
-	{ RES_FAL_STLOW,	/* stlow, 320x200, 16 colors		*/
+	{ FAL_VGA | RES_FAL_STLOW,  /* stlow, 320x200, 16 colors	    */
 	0x2, 0x0, 0x50,  0x0, 0x0,   0x17, 0x12, 0x1,  0x20e, 0xd,  0x11, 0x0, 
 	0x0, 0x419, 0x3af, 0x8f, 0x8f, 0x3af, 0x415, 0x186, 0x5 },
 
-	{ RES_FAL_TTLOW,	/* ttlow, 320x480, 256 colors		*/
+	{ FAL_VGA | RES_FAL_TTLOW,  /* ttlow, 320x480, 256 colors	    */
 	0x2, 0x0, 0xa0,  0x0, 0x10,  0xc6, 0x8d, 0x15, 0x29a, 0x7b, 0x96, 0x0, 
 	0x0, 0x419, 0x3ff, 0x3f, 0x3f, 0x3ff, 0x415, 0x186, 0x4 },
 
-	{ RES_VGA2,		/* vga, 640x480, 2 colors		*/
+	{ FAL_VGA | RES_VGA2,	    /* vga, 640x480, 2 colors		    */
 	0x2, 0x0, 0x28,  0x0, 0x400, 0xc6, 0x8d, 0x15, 0x273, 0x50, 0x96, 0x0, 
 	0x0, 0x419, 0x3ff, 0x3f, 0x3f, 0x3ff, 0x415, 0x186, 0x8 },
 
-	{ RES_VGA4,		/* vga, 640x480, 4 colors		*/
+	{ FAL_VGA | RES_VGA4,	    /* vga, 640x480, 4 colors		    */
 	0x2, 0x0, 0x50,  0x1, 0x0,   0x17, 0x12, 0x1,  0x20e, 0xd,  0x11, 0x0, 
 	0x0, 0x419, 0x3ff, 0x3f, 0x3f, 0x3ff, 0x415, 0x186, 0x8 },
 
-	{ RES_VGA16,		/* vga, 640x480, 16 colors		*/
+	{ FAL_VGA | RES_VGA16,	    /* vga, 640x480, 16 colors		    */
 	0x2, 0x0, 0xa0,  0x1, 0x0,   0xc6, 0x8d, 0x15, 0x2a3, 0x7c, 0x96, 0x0, 
 	0x0, 0x419, 0x3ff, 0x3f, 0x3f, 0x3ff, 0x415, 0x186, 0x8 },
 
-	{ RES_VGA256,		/* vga, 640x480, 256 colors		*/
+	{ FAL_VGA | RES_VGA256,	    /* vga, 640x480, 256 colors		    */
 	0x2, 0x0, 0x140, 0x1, 0x10,  0xc6, 0x8d, 0x15, 0x2ab, 0x84, 0x96, 0x0, 
 	0x0, 0x419, 0x3ff, 0x3f, 0x3f, 0x3ff, 0x415, 0x186, 0x8 },
 
-	{ RES_DIRECT,		/* direct video, 320x200, 65536 colors	*/
+	{ FAL_VGA | RES_DIRECT,	    /* direct video, 320x200, 65536 colors  */
 	0x2, 0x0, 0x140, 0x0, 0x100, 0xc6, 0x8d, 0x15, 0x2ac, 0x91, 0x96, 0x0, 
 	0x0, 0x419, 0x3ff, 0x3f, 0x3f, 0x3ff, 0x415, 0x186, 0x4 },
 
-	{ 0xffff }		/* end of list				*/
+	{ 0xffff }		    /* end of list			    */
 };
 
+static u_short mon_type;
 /*
  * XXX: called from ite console init routine.
  * Initialize list of posible video modes.
@@ -147,19 +154,29 @@ falcon_probe_video(modelp)
 MODES	*modelp;
 {
 	dmode_t	*dm;
+	struct videl *vregs;
 	int	i;
 
-	/* Currently we support only one mode of the falcon video system.
-	 * This is the mode that is initialized before NetBSD starts. This
-	 * is possible since the bios has already done that work. 
+	/* XXX: The address definition should moved to a header file */
+	mon_type = *(volatile unsigned char *)(0xff8006L);
+	mon_type = (mon_type & 0xc0) << 2;
+
+	/*
+	 * get all posible modes
 	 */
 
 	for (i = 0; (dm = &vid_modes[i])->name != NULL; i++) {
-		if (dm->vm_reg == RES_FALAUTO) {
+		if (dm->vm_mode == RES_FALAUTO) {
+			dm->vm_regs = falcon_getreg(RES_FALAUTO);
 			falcon_detect(dm);
 			LIST_INSERT_HEAD(modelp, dm, link);
-		} else
-			LIST_INSERT_HEAD(modelp, dm, link);
+		} else {
+			vregs = falcon_getreg(dm->vm_mode | mon_type);
+			if (vregs) {
+				dm->vm_regs = vregs;
+				LIST_INSERT_HEAD(modelp, dm, link);
+			}
+		}
 	}
 
 	/*
@@ -170,17 +187,17 @@ MODES	*modelp;
 }
 
 static struct videl *
-falcon_getreg(vm_reg)
-u_short vm_reg;
+falcon_getreg(mode)
+u_short mode;
 {
 	int i;
 	struct videl *vregs;
 	
-	for (i = 0; (vregs = &videlinit[i])->vm_reg != 0xffff; i++)
-		if (vregs->vm_reg == vm_reg)
+	for (i = 0; (vregs = &videlinit[i])->video_mode != 0xffff; i++)
+		if ((vregs->video_mode) == mode)
 			return vregs;
 
-	return &videlinit[0]; /* should never happen */
+	return NULL; /* mode not found */
 }
 
 static void
@@ -188,13 +205,11 @@ falcon_detect(dm)
 dmode_t *dm;
 {
 	u_short	falshift, stshift;
-	struct videl *vregs;
+	struct videl *vregs = dm->vm_regs;
 
 	/*
 	 * First get the the videl register values
 	 */
-
-	vregs = falcon_getreg(dm->vm_reg);
 
 	vregs->vd_syncmode	= VIDEO->vd_sync;
 	vregs->vd_line_wide	= VIDEO->vd_line_wide;
@@ -262,9 +277,7 @@ view_t *v;
 {
 	dmode_t	*dm = v->mode;
 	bmap_t	*bm = v->bitmap;
-	struct videl *vregs;
-
-	vregs = falcon_getreg(dm->vm_reg);
+	struct videl *vregs = v->mode->vm_regs;
 
 	if (dm->current_view) {
 		/*
@@ -277,10 +290,17 @@ view_t *v;
 
 	falcon_use_colormap(v, v->colormap);
 
-	/* XXX: should use vbl for this	*/
+	/* XXX: should use vbl for this */
+
 	VIDEO->vd_raml   =  (u_long)bm->hw_address & 0xff;
 	VIDEO->vd_ramm   = ((u_long)bm->hw_address >>  8) & 0xff;
 	VIDEO->vd_ramh   = ((u_long)bm->hw_address >> 16) & 0xff;
+
+	/*
+	 * Write to videl registers only on VGA displays
+	 * This is only a hack. Must be fixed soon. XXX -- Thomas
+	 */
+	if(mon_type != FAL_VGA) return;
 
 	VIDEO->vd_v_freq_tim	= vregs->vd_v_freq_tim;
 	VIDEO->vd_v_ss		= vregs->vd_v_ss;
