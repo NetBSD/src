@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.81 2001/08/07 13:57:24 christos Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.82 2001/10/21 23:18:50 mjl Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -327,6 +327,11 @@ static const struct ne2000dev {
     { PCMCIA_STR_COREGA_ETHER_PCC_T,
       PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_ETHER_PCC_T,
       PCMCIA_CIS_COREGA_ETHER_PCC_T,
+      0, -1, { 0x00, 0x00, 0xf4 } },
+
+    { PCMCIA_STR_COREGA_ETHER_PCC_TD,
+      PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_ETHER_PCC_TD,
+      PCMCIA_CIS_COREGA_ETHER_PCC_TD,
       0, -1, { 0x00, 0x00, 0xf4 } },
 
     { PCMCIA_STR_COREGA_ETHER_II_PCC_T,
