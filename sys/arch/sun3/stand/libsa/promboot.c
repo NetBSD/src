@@ -10,6 +10,7 @@
 char prom_bootdev[32];
 char *prom_bootfile;
 int prom_boothow;
+int debug;
 
 /*
  * Get useful info from the PROM bootparams struct, i.e.:
@@ -58,6 +59,7 @@ prom_get_boot_info()
 				break;
 			case 'd':
 				prom_boothow |= RB_KDB;
+				debug = 1;
 				break;
 			}
 		}
