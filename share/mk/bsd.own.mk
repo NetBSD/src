@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.396 2003/11/27 13:10:00 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.397 2003/12/03 10:26:45 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -33,24 +33,13 @@ TOOLCHAIN_MISSING=	no
 #
 # not working:
 #
-.if ${MACHINE_ARCH} == "sh3el" || \
+.if ${MACHINE_ARCH} == "pc532" || \
+    ${MACHINE_ARCH} == "sh3el" || \
     ${MACHINE_ARCH} == "sh3eb" || \
     ${MACHINE_ARCH} == "vax"
 HAVE_GCC3?=	no
 .else
 HAVE_GCC3?=	yes
-.endif
-
-#
-# Transitional for toolchain upgrade to binutils 2.14
-#
-HAVE_BINUTILS214?=	no	# for now
-.if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "arm" || \
-    ${MACHINE_ARCH} == "armeb"
-HAVE_BINUTILS214?=	yes
-.else
-HAVE_BINUTILS214?=	no
 .endif
 
 # Do we want to use tools/toolchain or not?
@@ -59,21 +48,12 @@ USE_TOOLS_TOOLCHAIN=no
 .endif
 USE_TOOLS_TOOLCHAIN?=yes
 
-#
-# XXX TEMPORARY: If ns32k and not using an external toolchain, then we have
-# to use -idirafter rather than -isystem, because the compiler is too old
-# to use -isystem.
-#
-.if ${MACHINE_CPU} == "ns32k" && !defined(EXTERNAL_TOOLCHAIN)
-CPPFLAG_ISYSTEM=	-idirafter
-CPPFLAG_ISYSTEMXX=	-isystem
-.else
 CPPFLAG_ISYSTEM=	-isystem
+# GCC2 did not have -isystem-cxx
 .if ${USE_TOOLS_TOOLCHAIN} == "yes"
 CPPFLAG_ISYSTEMXX=	-isystem
 .else
 CPPFLAG_ISYSTEMXX=	-isystem-cxx
-.endif
 .endif
 
 .if empty(.MAKEFLAGS:M-V*)
@@ -113,6 +93,16 @@ _SRC_TOP_OBJ_!=		cd ${_SRC_TOP_} && ${PRINTOBJDIR}
 
 .endif	# _SRC_TOP_ != ""		# }
 
+
+#
+# Transitional for toolchain upgrade to binutils 2.14
+# this has to be down here to get the definition of NETBSDSRCDIR.
+#
+.if exists(${NETBSDSRCDIR}/gnu/usr.bin/binutils/libbfd/arch/${MACHINE_ARCH}/config.h)
+HAVE_BINUTILS214?=	yes
+.else
+HAVE_BINUTILS214?=	no
+.endif
 
 .if (${_SRC_TOP_} != "") && \
     (${TOOLCHAIN_MISSING} != "yes" || defined(EXTERNAL_TOOLCHAIN))
