@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.3 2004/03/28 09:01:26 martti Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.4 2004/04/01 09:24:58 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -440,7 +440,7 @@ int mode;
 	{
 	case FIONREAD :
 #ifdef IPFILTER_LOG
-		error = COPYOUT(&iplused[IPL_LOGIPF], (caddr_t)data,
+		BCOPYOUT(&iplused[IPL_LOGIPF], (caddr_t)data,
 			       sizeof(iplused[IPL_LOGIPF]));
 #endif
 		break;
@@ -448,9 +448,7 @@ int mode;
 		if (!(mode & FWRITE))
 			error = EPERM;
 		else {
-			error = COPYIN(data, &tmp, sizeof(tmp));
-			if (error)
-				break;
+			BCOPYIN(data, &tmp, sizeof(tmp));
 			if (tmp) {
 				if (fr_running > 0)
 					error = 0;
@@ -480,10 +478,10 @@ int mode;
 		if (!(mode & FWRITE))
 			error = EPERM;
 		else
-			error = COPYIN(data, &fr_flags, sizeof(fr_flags));
+			BCOPYIN(data, &fr_flags, sizeof(fr_flags));
 		break;
 	case SIOCGETFF :
-		error = COPYOUT(&fr_flags, data, sizeof(fr_flags));
+		BCOPYOUT(&fr_flags, data, sizeof(fr_flags));
 		break;
 	case SIOCFUNCL :
 		error = fr_resolvefunc(data);
@@ -528,22 +526,17 @@ int mode;
 		if (!(mode & FWRITE))
 			error = EPERM;
 		else {
-			error = COPYIN(data, &tmp, sizeof(tmp));
-			if (!error) {
-				tmp = frflush(unit, tmp);
-				error = COPYOUT(&tmp, data, sizeof(tmp));
-			}
+			BCOPYIN(data, &tmp, sizeof(tmp));
+			tmp = frflush(unit, tmp);
+			BCOPYOUT(&tmp, data, sizeof(tmp));
 		}
 		break;
 	case SIOCSTLCK :
-		error = COPYIN(data, &tmp, sizeof(tmp));
-		if (error == 0) {
-			fr_state_lock = tmp;
-			fr_nat_lock = tmp;
-			fr_frag_lock = tmp;
-			fr_auth_lock = tmp;
-		} else
-			error = EFAULT;
+		BCOPYIN(data, &tmp, sizeof(tmp));
+		fr_state_lock = tmp;
+		fr_nat_lock = tmp;
+		fr_frag_lock = tmp;
+		fr_auth_lock = tmp;
 		break;
 #ifdef IPFILTER_LOG
 	case	SIOCIPFFB :
