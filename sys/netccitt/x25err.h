@@ -1,7 +1,7 @@
-/*	$NetBSD: x25err.h,v 1.5 1994/06/29 06:37:47 cgd Exp $	*/
+/*	$NetBSD: x25err.h,v 1.6 1998/09/13 16:21:19 christos Exp $	*/
 
 /*
- * Copyright (c) University of British Columbia, 1984
+ * Copyright (c) 1984 University of British Columbia.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *

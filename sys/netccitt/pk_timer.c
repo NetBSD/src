@@ -1,8 +1,9 @@
-/*	$NetBSD: pk_timer.c,v 1.6 1996/02/13 22:05:39 christos Exp $	*/
+/*	$NetBSD: pk_timer.c,v 1.7 1998/09/13 16:21:19 christos Exp $	*/
 
 /* 
- * Copyright (C) Dirk Husemann, Computer Science Department IV, 
- * 		 University of Erlangen-Nuremberg, Germany, 1990, 1991, 1992
+ * Copyright (c) 1990, 1991, 1992
+ *		Dirk Husemann, Computer Science Department IV, 
+ * 		University of Erlangen-Nuremberg, Germany.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  * 

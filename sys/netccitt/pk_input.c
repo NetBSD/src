@@ -1,9 +1,9 @@
-/*	$NetBSD: pk_input.c,v 1.12 1998/07/05 03:14:44 jonathan Exp $	*/
+/*	$NetBSD: pk_input.c,v 1.13 1998/09/13 16:21:19 christos Exp $	*/
 
 /*
- * Copyright (c) University of British Columbia, 1984
- * Copyright (C) Computer Science Department IV,
- * 		 University of Erlangen-Nuremberg, Germany, 1992
+ * Copyright (c) 1984 University of British Columbia.
+ * Copyright (c) 1992 Computer Science Department IV,
+ * 		University of Erlangen-Nuremberg, Germany.
  * Copyright (c) 1991, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
