@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.rpc.mk,v 1.5 2003/07/14 00:52:12 lukem Exp $
+#	$NetBSD: bsd.rpc.mk,v 1.6 2003/07/28 15:25:06 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -16,7 +16,7 @@ ${I}: ${I:.h=.x}
 
 CLEANFILES += ${RPC_INCS}
 
-.depend: ${RPC_INCS}
+${DEPENDSRCS}: ${RPC_INCS}
 
 .endif
 
@@ -29,7 +29,7 @@ ${I}: ${RPC_XDIR}${I:_xdr.c=.x}
 
 CLEANFILES += ${RPC_XDRFILES}
 
-.depend: ${RPC_XDRFILES}
+${DEPENDSRCS}: ${RPC_XDRFILES}
 
 .endif
 
@@ -48,7 +48,7 @@ ${I}: ${RPC_XDIR}${I:_svc.c=.x}
 
 CLEANFILES += ${RPC_SVCFILES}
 
-.depend: ${RPC_SVCFILES}
+${DEPENDSRCS}: ${RPC_SVCFILES}
 
 ##### Pull in related .mk logic
 .include <bsd.obj.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2003/04/11 22:46:02 thorpej Exp $
+#	$NetBSD: Makefile,v 1.12 2003/07/28 15:25:04 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -46,7 +46,7 @@ stringify.sed: ${G_STRINGIFY}
 .include ".depend.${f}"
 .endif
 
-.depend: .depend.${f}
+${DEPENDSRCS}: .depend.${f}
 .depend.${f}: ${f}.sh
 	(srcdir=${DIST}/ld . ${>:M*.sh} && \
 		if [ x"$$TEMPLATE_NAME" != x ]; then \
