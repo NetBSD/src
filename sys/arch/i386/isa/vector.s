@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.33 1996/11/20 10:47:14 jonathan Exp $	*/
+/*	$NetBSD: vector.s,v 1.34 1996/11/20 11:37:52 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -331,8 +331,6 @@ IDTVEC(recurse)
 
 /* Old-style vmstat -i interrupt counters.  Should be replaced with evcnts. */
 	.globl	_intrnames, _eintrnames, _intrcnt, _eintrcnt
-	.data
-	.align 4
 
 	/* Names */
 _intrnames:
@@ -354,14 +352,13 @@ _strayintrnames:
 _eintrnames:
 
 	/* And counters */
+	.data
+	.align 4
 _intrcnt:
 _slowintrcnt:
 	.long	0, 0, 0, 0, 0, 0, 0, 0
 	.long	0, 0, 0, 0, 0, 0, 0, 0
 
-	.globl _vassa_intrcnt
-_vassa_intrcnt:
-	.long	0, 0, 0, 0
 _fastintrcnt:
 	.long	0, 0, 0, 0, 0, 0, 0, 0
 	.long	0, 0, 0, 0, 0, 0, 0, 0
@@ -369,9 +366,11 @@ _fastintrcnt:
 _strayintrcnt:
 	.long	0, 0, 0, 0, 0, 0, 0, 0
 	.long	0, 0, 0, 0, 0, 0, 0, 0
+
 _spareintrcnt:
 	/* spare, for local use */
 	.long	0, 0, 0, 0, 0, 0, 0, 0
 	.long	0, 0, 0, 0, 0, 0, 0, 0
 _eintrcnt:
+
 	.text
