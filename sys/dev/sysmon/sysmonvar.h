@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.2 2000/11/04 18:37:19 thorpej Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.3 2000/11/05 04:06:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -40,6 +40,9 @@
 #include <sys/wdog.h>
 #include <sys/queue.h>
 
+#define	SYSMON_MINOR_ENVSYS	0
+#define	SYSMON_MINOR_WDOG	1
+
 struct sysmon_envsys {
 	int32_t sme_envsys_version;	/* ENVSYS API version */
 
@@ -74,8 +77,18 @@ struct sysmon_wdog {
 	pid_t smw_tickler;		/* last process to tickle */
 };
 
+struct proc;
+
+int	sysmonopen_envsys(dev_t, int, int, struct proc *);
+int	sysmonclose_envsys(dev_t, int, int, struct proc *);
+int	sysmonioctl_envsys(dev_t, u_long, caddr_t, int, struct proc *);
+
 int	sysmon_envsys_register(struct sysmon_envsys *);
 void	sysmon_envsys_unregister(struct sysmon_envsys *);
+
+int	sysmonopen_wdog(dev_t, int, int, struct proc *);
+int	sysmonclose_wdog(dev_t, int, int, struct proc *);
+int	sysmonioctl_wdog(dev_t, u_long, caddr_t, int, struct proc *);
 
 int	sysmon_wdog_register(struct sysmon_wdog *);
 void	sysmon_wdog_unregister(struct sysmon_wdog *);
