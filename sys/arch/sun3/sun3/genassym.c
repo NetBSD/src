@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.51 2000/05/26 00:36:51 thorpej Exp $	*/
+/*	$NetBSD: genassym.c,v 1.52 2000/06/29 07:19:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -68,7 +68,7 @@
 #include <sys/proc.h>
 #include <sys/syscall.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #ifdef COMPAT_SVR4
 #include <compat/svr4/svr4_syscall.h>

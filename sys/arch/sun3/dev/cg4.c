@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.20 2000/06/26 04:56:12 simonb Exp $	*/
+/*	$NetBSD: cg4.c,v 1.21 2000/06/29 07:18:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
 #include <sys/proc.h>
 #include <sys/tty.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
