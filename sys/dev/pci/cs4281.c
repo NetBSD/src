@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.1 2001/01/22 01:34:42 augustss Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.2 2001/01/22 01:44:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -78,11 +78,6 @@
 #define MAX_FIFO_SIZE 64 /* 128/2channels */
 #endif
 
-/* XXX: now this is required only to support NetBSD-1.5.... */
-#ifndef PCI_PRODUCT_CIRRUS_CS4281
-#define PCI_PRODUCT_CIRRUS_CS4281 (0x6005)
-#endif
-
 /* IF functions for audio driver */
 int	cs4281_match(struct device *, struct cfdata *, void *);
 void	cs4281_attach(struct device *, struct device *, void *);
@@ -104,7 +99,7 @@ void	 cs4281_set_adc_rate(struct cs428x_softc *, int );
 int      cs4281_init(struct cs428x_softc *);
 
 /* Power Management */
-void cs4281_power		__P((int, void *));
+void cs4281_power(int, void *);
 
 #define NOT_SHARED
 
@@ -128,7 +123,8 @@ void cs4281_free(void *, void *, int);
 paddr_t cs4281_mappage(void *, void *, off_t, int);
 
 /* internal functions */
-int cs4281_allocmem(struct cs428x_softc*, size_t, int, int, struct cs428x_dma *);
+int cs4281_allocmem(struct cs428x_softc*, size_t, int, int,
+		    struct cs428x_dma *);
 int cs4281_src_wait(struct cs428x_softc *);
 
 #if defined(CS4281_DEBUG)
@@ -170,7 +166,7 @@ struct audio_hw_if cs4281_hw_if = {
 	cs4281_trigger_input,
 };
 
-#if NMIDI > 0
+#if NMIDI > 0 && 0
 /* Midi Interface */
 void	cs4281_midi_close(void*);
 void	cs4281_midi_getinfo(void *, struct midi_info *);
@@ -198,7 +194,6 @@ struct audio_device cs4281_device = {
 };
 
 
-/* trivial */
 int
 cs4281_match(parent, match, aux) 
 	struct device *parent;
@@ -214,7 +209,6 @@ cs4281_match(parent, match, aux)
 	return 0;
 }
 
-/* It seems to work */
 void
 cs4281_attach(parent, self, aux)
 	struct device *parent;
@@ -264,12 +258,7 @@ cs4281_attach(parent, self, aux)
 #endif
 	
 	/* Map and establish the interrupt. */
-#if 1
 	if (pci_intr_map(pa, &ih)) { 
-#else /* old */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-			 pa->pa_intrline, &ih)) {
-#endif
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -311,7 +300,7 @@ cs4281_attach(parent, self, aux)
 	}
 	audio_attach_mi(&cs4281_hw_if, sc, &sc->sc_dev);
 
-#if NMIDI > 0
+#if NMIDI > 0 && 0
 	midi_attach_mi(&cs4281_midi_hw_if, sc, &sc->sc_dev);
 #endif
 
@@ -525,7 +514,6 @@ cs4281_set_params(addr, setmode, usemode, play, rec)
 	return 0;
 }
 
-/* Confirmed 2000/12/26 */
 int
 cs4281_halt_output(addr)
 	void *addr;
@@ -539,7 +527,6 @@ cs4281_halt_output(addr)
 	return 0;
 }
 
-/* Confirmed 2000/12/26 */
 int
 cs4281_halt_input(addr)
 	void *addr;
@@ -553,7 +540,6 @@ cs4281_halt_input(addr)
 	return 0;
 }
 
-/* trivial */
 int
 cs4281_getdev(addr, retp)
      void *addr;
@@ -758,7 +744,6 @@ cs4281_trigger_input(addr, start, end, blksize, intr, arg, param)
 }
 
 /* convert sample rate to register value */
-/* Confirmed 2000/12/26 */
 u_int8_t
 cs4281_sr2regval(rate)
      int rate;
@@ -797,7 +782,6 @@ cs4281_sr2regval(rate)
 }
 
 	
-/* Confirmed 2000/12/26 */
 void
 cs4281_set_dac_rate(sc, rate)
 	struct cs428x_softc *sc;
@@ -806,7 +790,6 @@ cs4281_set_dac_rate(sc, rate)
 	BA0WRITE4(sc, CS4281_DACSR, cs4281_sr2regval(rate));
 }
 
-/* Confirmed 2000/12/26 */
 void
 cs4281_set_adc_rate(sc, rate)
 	struct cs428x_softc *sc;
@@ -815,7 +798,6 @@ cs4281_set_adc_rate(sc, rate)
 	BA0WRITE4(sc, CS4281_ADCSR, cs4281_sr2regval(rate));
 }
 
-/* Confirmed 2000/12/26 */
 int
 cs4281_init(sc)
      struct cs428x_softc *sc;
