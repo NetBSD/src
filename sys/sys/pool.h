@@ -1,11 +1,12 @@
-/*	$NetBSD: pool.h,v 1.13 1999/03/31 01:14:06 thorpej Exp $	*/
+/*	$NetBSD: pool.h,v 1.14 1999/03/31 23:23:47 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Paul Kranenburg.
+ * by Paul Kranenburg; by Jason R. Thorpe of the Numerical Aerospace
+ * Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,12 +44,23 @@
 #include "opt_pool.h"
 #endif
 
+#ifdef _KERNEL
+#define	__POOL_EXPOSE
+#endif
+
+#ifdef __POOL_EXPOSE
 #include <sys/lock.h>
 #include <sys/queue.h>
+#include <sys/time.h>
+#endif
 
 #define PR_HASHTABSIZE		8
 
-typedef struct pool {
+struct pool;
+typedef struct pool *pool_handle_t;
+
+#ifdef __POOL_EXPOSE
+struct pool {
 	TAILQ_ENTRY(pool)
 			pr_poollist;
 	TAILQ_HEAD(,pool_item_header)
@@ -73,7 +85,7 @@ typedef struct pool {
 	void		*(*pr_alloc) __P((unsigned long, int, int));
 	void		(*pr_free) __P((void *, unsigned long, int));
 	int		pr_mtype;	/* memory allocator tag */
-	char		*pr_wchan;	/* tsleep(9) identifier */
+	const char	*pr_wchan;	/* tsleep(9) identifier */
 	unsigned int	pr_flags;	/* r/w flags */
 	unsigned int	pr_roflags;	/* r/o flags */
 #define PR_MALLOCOK	1
@@ -87,14 +99,15 @@ typedef struct pool {
 #define PR_LOGGING	128
 
 	/*
-	 * `pr_lock' protects the pool's data structures when removing
-	 * items from or returning items to the pool.
-	 * `pr_resourcelock' is used to serialize access to the pool's
-	 * back-end page allocator. At the same time it also protects
-	 * the `pr_maxpages', `pr_minpages' and `pr_minitems' fields.
+	 * `pr_slock' protects the pool's data structures when removing
+	 * items from or returning items to the pool, or when reading
+	 * or updating read/write fields in the pool descriptor.
+	 *
+	 * We assume back-end page allocators provide their own locking
+	 * scheme.  They will be called with the pool descriptor _unlocked_,
+	 * since the page allocators may block.
 	 */
-	struct simplelock	pr_lock;
-	struct lock		pr_resourcelock;
+	struct simplelock	pr_slock;
 
 	LIST_HEAD(,pool_item_header)		/* Off-page page headers */
 			pr_hashtab[PR_HASHTABSIZE];
@@ -127,15 +140,17 @@ typedef struct pool {
 	int		pr_curlogentry;
 	int		pr_logsize;
 #endif
-} *pool_handle_t;
+};
+#endif /* __POOL_EXPOSE */
 
+#ifdef _KERNEL
 pool_handle_t	pool_create __P((size_t, u_int, u_int,
-				 int, char *, size_t,
+				 int, const char *, size_t,
 				 void *(*)__P((unsigned long, int, int)),
 				 void  (*)__P((void *, unsigned long, int)),
 				 int));
 void		pool_init __P((struct pool *, size_t, u_int, u_int,
-				 int, char *, size_t,
+				 int, const char *, size_t,
 				 void *(*)__P((unsigned long, int, int)),
 				 void  (*)__P((void *, unsigned long, int)),
 				 int));
@@ -153,11 +168,10 @@ int		pool_prime __P((pool_handle_t, int, caddr_t));
 void		pool_setlowat __P((pool_handle_t, int));
 void		pool_sethiwat __P((pool_handle_t, int));
 void		pool_sethardlimit __P((pool_handle_t, int, const char *, int));
-void		pool_print __P((pool_handle_t, char *));
 void		pool_reclaim __P((pool_handle_t));
 void		pool_drain __P((void *));
 #if defined(POOL_DIAGNOSTIC) || defined(DEBUG)
-void		pool_print __P((struct pool *, char *));
+void		pool_print __P((struct pool *, const char *));
 int		pool_chk __P((struct pool *, char *));
 #endif
 
@@ -167,5 +181,6 @@ int		pool_chk __P((struct pool *, char *));
  */
 void		*pool_page_alloc_nointr __P((unsigned long, int, int));
 void		pool_page_free_nointr __P((void *, unsigned long, int));
+#endif /* _KERNEL */
 
 #endif /* _SYS_POOL_H_ */
