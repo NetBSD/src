@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.mmeye.inc,v 1.5 2001/11/20 12:56:33 lukem Exp $
+#	$NetBSD: Makefile.mmeye.inc,v 1.6 2001/12/09 05:00:47 atatat Exp $
 
 MACHINE_ARCH=sh3eb
 
-TEXTADDR=8c010000
+TEXTADDR?=8c010000
 .if ${OBJECT_FMT} == "ELF"
-LINKFLAGS=	-N -Ttext ${TEXTADDR} -e start
+LINKFORMAT=	-N
 .endif
