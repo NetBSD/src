@@ -86,7 +86,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: strtod.c,v 1.8 1993/12/03 03:30:16 briggs Exp $";
+static char *rcsid = "$Id: strtod.c,v 1.9 1993/12/07 18:54:32 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef i386
@@ -2453,6 +2453,10 @@ __dtoa
 		}
  ret1:
 	Bfree(b);
+	if (s == s0) {				/* don't return empty string */
+		*s++ = '0';
+		k = 0;
+	}
 	*s = 0;
 	*decpt = k + 1;
 	if (rve)
