@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.96 2003/09/12 07:38:10 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.97 2003/09/12 11:09:32 itojun Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.96 2003/09/12 07:38:10 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.97 2003/09/12 11:09:32 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -113,6 +113,9 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.96 2003/09/12 07:38:10 itojun Exp $");
 #endif
 
 #define FULLMASK	0xff
+#ifdef FAST_IPSEC
+#define _BITS(bytes)	((bytes) << 3)
+#endif
 
 /*
  * Note on SA reference counting:
@@ -932,6 +935,12 @@ key_delsav(sav)
 	if (sav->spihash.le_prev || sav->spihash.le_next)
 		LIST_REMOVE(sav, spihash);
 
+#ifdef FAST_IPSEC
+	if (sav->tdb_xform != NULL) {
+		sav->tdb_xform->xf_zeroize(sav);
+		sav->tdb_xform = NULL;
+	}
+#endif
 	if (sav->key_auth != NULL) {
 		bzero(_KEYBUF(sav->key_auth), _KEYLEN(sav->key_auth));
 		KFREE(sav->key_auth);
@@ -2926,6 +2935,12 @@ key_setsaval(sav, m, mhp)
 	sav->lft_c = NULL;
 	sav->lft_h = NULL;
 	sav->lft_s = NULL;
+#ifdef FAST_IPSEC
+	sav->tdb_xform = NULL;
+	sav->tdb_encalgxform = NULL;
+	sav->tdb_authalgxform = NULL;
+	sav->tdb_compalgxform = NULL;
+#endif
 
 	/* SA */
 	if (mhp->ext[SADB_EXT_SA] != NULL) {
@@ -3039,6 +3054,9 @@ key_setsaval(sav, m, mhp)
 	switch (mhp->msg->sadb_msg_satype) {
 	case SADB_SATYPE_ESP:
 #ifdef IPSEC_ESP
+#ifdef FAST_IPSEC
+		error = xform_init(sav, XF_ESP);
+#else
 		algo = esp_algorithm_lookup(sav->alg_enc);
 		if (algo && algo->ivlen)
 			sav->ivlen = (*algo->ivlen)(algo, sav);
@@ -3054,15 +3072,31 @@ key_setsaval(sav, m, mhp)
 		/* initialize */
 		key_randomfill(sav->iv, sav->ivlen);
 #endif
+#endif
 		break;
 	case SADB_SATYPE_AH:
+#ifdef FAST_IPSEC
+		error = xform_init(sav, XF_AH);
+#endif
+		break;
 	case SADB_X_SATYPE_IPCOMP:
+#ifdef FAST_IPSEC
+		error = xform_init(sav, XF_IPCOMP);
+#endif
 		break;
 	default:
 		ipseclog((LOG_DEBUG, "key_setsaval: invalid SA type.\n"));
 		error = EINVAL;
 		goto fail;
 	}
+#ifdef FAST_IPSEC
+	if (error) {
+		ipseclog((LOG_DEBUG,
+		    "key_setsaval: unable to initialize SA type %u.\n",
+		    mhp->msg->sadb_msg_satype));
+		goto fail;
+	}
+#endif
 
 	/* reset created */
 	sav->created = time.tv_sec;
@@ -3204,6 +3238,7 @@ key_mature(sav)
 
 	/* check satype */
 	switch (sav->sah->saidx.proto) {
+#ifdef IPSEC_ESP
 	case IPPROTO_ESP:
 		/* check flags */
 		if ((sav->flags & SADB_X_EXT_OLD) &&
@@ -3212,12 +3247,17 @@ key_mature(sav)
 			    "invalid flag (derived) given to old-esp.\n"));
 			return EINVAL;
 		}
+#ifdef FAST_IPSEC
+		error = xform_init(sav, XF_ESP);
+#else
 		if (sav->alg_auth == SADB_AALG_NONE)
 			checkmask = 1;
 		else
 			checkmask = 3;
 		mustmask = 1;
+#endif
 		break;
+#endif
 	case IPPROTO_AH:
 		/* check flags */
 		if (sav->flags & SADB_X_EXT_DERIV) {
@@ -3230,8 +3270,12 @@ key_mature(sav)
 			    "protocol and algorithm mismated.\n"));
 			return (EINVAL);
 		}
+#ifdef FAST_IPSEC
+		error = xform_init(sav, XF_AH);
+#else
 		checkmask = 2;
 		mustmask = 2;
+#endif
 		break;
 	case IPPROTO_IPCOMP:
 		if (sav->alg_auth != SADB_AALG_NONE) {
@@ -3241,17 +3285,23 @@ key_mature(sav)
 		}
 		if ((sav->flags & SADB_X_EXT_RAWCPI) == 0 &&
 		    ntohl(sav->spi) >= 0x10000) {
-			ipseclog((LOG_DEBUG, "key_mature: invalid cpi for IPComp.\n"));
+			ipseclog((LOG_DEBUG,
+			    "key_mature: invalid cpi for IPComp.\n"));
 			return (EINVAL);
 		}
+#ifdef FAST_IPSEC
+		error = xform_init(sav, XF_IPCOMP);
+#else
 		checkmask = 4;
 		mustmask = 4;
+#endif
 		break;
 	default:
 		ipseclog((LOG_DEBUG, "key_mature: Invalid satype.\n"));
 		return EPROTONOSUPPORT;
 	}
 
+#ifndef FAST_IPSEC
 	/* check authentication algorithm */
 	if ((checkmask & 2) != 0) {
 		const struct ah_algorithm *algo;
@@ -3347,8 +3397,12 @@ key_mature(sav)
 	}
 
 	key_sa_chgstate(sav, SADB_SASTATE_MATURE);
-
-	return 0;
+	return (0);
+#else
+	if (error == 0)
+		key_sa_chgstate(sav, SADB_SASTATE_MATURE);
+	return (error);
+#endif
 }
 
 /*
@@ -5615,7 +5669,11 @@ static struct mbuf *
 key_getcomb_esp()
 {
 	struct sadb_comb *comb;
+#ifdef FAST_IPSEC
+	struct enc_xform *algo;
+#else
 	const struct esp_algorithm *algo;
+#endif
 	struct mbuf *result = NULL, *m, *n;
 	int encmin;
 	int i, off, o;
@@ -5628,12 +5686,21 @@ key_getcomb_esp()
 		if (!algo)
 			continue;
 
+#ifdef FAST_IPSEC
+		if (_BITS(algo->keymax) < ipsec_esp_keymin)
+			continue;
+		if (_BITS(algo->keymin) < ipsec_esp_keymin)
+			encmin = ipsec_esp_keymin;
+		else
+			encmin = _BITS(algo->keymin);
+#else
 		if (algo->keymax < ipsec_esp_keymin)
 			continue;
 		if (algo->keymin < ipsec_esp_keymin)
 			encmin = ipsec_esp_keymin;
 		else
 			encmin = algo->keymin;
+#endif
 
 		if (ipsec_esp_auth)
 			m = key_getcomb_ah();
@@ -5672,7 +5739,11 @@ key_getcomb_esp()
 			key_getcomb_setlifetime(comb);
 			comb->sadb_comb_encrypt = i;
 			comb->sadb_comb_encrypt_minbits = encmin;
+#ifdef FAST_IPSEC
+			comb->sadb_comb_encrypt_maxbits = _BITS(algo->keymax);
+#else
 			comb->sadb_comb_encrypt_maxbits = algo->keymax;
+#endif
 		}
 
 		if (!result)
@@ -5697,7 +5768,11 @@ static struct mbuf *
 key_getcomb_ah()
 {
 	struct sadb_comb *comb;
+#ifdef FAST_IPSEC
+	struct auth_hash *algo;
+#else
 	const struct ah_algorithm *algo;
+#endif
 	struct mbuf *m;
 	int min;
 	int i;
@@ -5714,12 +5789,21 @@ key_getcomb_ah()
 		if (!algo)
 			continue;
 
+#ifdef FAST_IPSEC
+		if (_BITS(algo->keymax) < ipsec_ah_keymin)
+			continue;
+		if (_BITS(algo->keymin) < ipsec_ah_keymin)
+			min = ipsec_ah_keymin;
+		else
+			min = _BITS(algo->keymin);
+#else
 		if (algo->keymax < ipsec_ah_keymin)
 			continue;
 		if (algo->keymin < ipsec_ah_keymin)
 			min = ipsec_ah_keymin;
 		else
 			min = algo->keymin;
+#endif
 
 		if (!m) {
 #ifdef DIAGNOSTIC
@@ -6405,13 +6489,22 @@ key_register(so, m, mhp)
 		off += PFKEY_ALIGN8(sizeof(*sup));
 
 		for (i = 1; i <= SADB_EALG_MAX; i++) {
+#ifdef FAST_IPSEC
+			struct enc_xform *ealgo;
+#else
 			const struct esp_algorithm *ealgo;
+#endif
 
 			ealgo = esp_algorithm_lookup(i);
 			if (!ealgo)
 				continue;
 			alg = (struct sadb_alg *)(mtod(n, caddr_t) + off);
 			alg->sadb_alg_id = i;
+#ifdef FAST_IPSEC
+			alg->sadb_alg_ivlen = ealgo->blocksize;
+			alg->sadb_alg_minbits = _BITS(ealgo->minkey);
+			alg->sadb_alg_maxbits = _BITS(ealgo->maxkey);
+#else
 			if (ealgo && ealgo->ivlen) {
 				/*
 				 * give NULL to get the value preferred by
@@ -6423,6 +6516,7 @@ key_register(so, m, mhp)
 				alg->sadb_alg_ivlen = 0;
 			alg->sadb_alg_minbits = ealgo->keymin;
 			alg->sadb_alg_maxbits = ealgo->keymax;
+#endif
 			off += PFKEY_ALIGN8(sizeof(struct sadb_alg));
 		}
 	}
