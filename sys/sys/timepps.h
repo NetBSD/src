@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps.h,v 1.2 1999/11/04 05:34:00 jonathan Exp $	*/
+/*	$NetBSD: timepps.h,v 1.3 2000/01/19 03:33:18 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -146,6 +146,9 @@ static __inline int time_pps_fetch __P((pps_handle_t handle,
 	const struct timespec *timeout));
 static __inline int time_pps_wait __P((pps_handle_t handle,
        const struct timespec *timeout, pps_info_t *ppsinfobuf));
+
+static __inline int time_pps_kcbind __P((pps_handle_t handle,
+	 const int kernel_consumer, const int edge, const int tsformat));
 
 static __inline int
 time_pps_create(filedes, handle)
