@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.19 2001/01/07 22:59:23 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.20 2001/01/08 15:21:56 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -182,7 +182,7 @@
 	
 #define CLEAR_RESCHED(treg)				 \
 	xorl	%eax,%eax				;\
-	movl	%eax,_C_LABEL(cpu_info_store)+CPU_INFO_RESCHED		; 
+	movl	%eax,_C_LABEL(cpu_info_primary)+CPU_INFO_RESCHED		; 
 	
 #endif
 
@@ -2554,7 +2554,7 @@ IDTVEC(trap07)
 	GET_CPUINFO(%eax)
 	pushl	%eax
 #else
-	pushl	_C_LABEL(cpu_info_store)		
+	pushl	_C_LABEL(cpu_info_primary)		
 #endif
 	call	_C_LABEL(npxdna)
 	addl	$4,%esp
