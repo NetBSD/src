@@ -1,6 +1,7 @@
-m	$NetBSD: Makefile.host,v 1.8 2001/11/11 01:36:15 jmc Exp $
+#	$NetBSD: Makefile.host,v 1.9 2001/11/12 17:46:35 tv Exp $
 
 # Preload <bsd.obj.mk> to set up obj rules (with proper ${.CURDIR}).
+OBJHOSTMACHINE=	# set
 .include <bsd.obj.mk>
 
 # We might need the PRINTOBJDIR variable -- make sure it's defined.
