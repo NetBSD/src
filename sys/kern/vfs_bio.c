@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.98 2003/12/02 03:36:33 dbj Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.99 2003/12/02 04:18:19 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -80,7 +80,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.98 2003/12/02 03:36:33 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.99 2003/12/02 04:18:19 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,6 +156,21 @@ int count_lock_queue(void);
 #define	binsheadfree(bp, dp)	TAILQ_INSERT_HEAD(dp, bp, b_freelist)
 #define	binstailfree(bp, dp)	TAILQ_INSERT_TAIL(dp, bp, b_freelist)
 
+#ifdef DEBUG
+int debug_verify_freelist = 0;
+int checkfreelist(struct buf *, struct bqueues *);
+int
+checkfreelist(struct buf *bp, struct bqueues *dp)
+{
+  struct buf *b;
+  TAILQ_FOREACH(b, dp, b_freelist) {
+    if (b == bp)
+      return 1;
+  }
+  return 0;
+}
+#endif
+
 void
 bremfree(bp)
 	struct buf *bp;
@@ -163,6 +178,12 @@ bremfree(bp)
 	struct bqueues *dp = NULL;
 
 	LOCK_ASSERT(simple_lock_held(&bqueue_slock));
+
+  KDASSERT(!debug_verify_freelist ||
+      checkfreelist(bp, &bufqueues[BQ_AGE]) ||
+      checkfreelist(bp, &bufqueues[BQ_LRU]) ||
+      checkfreelist(bp, &bufqueues[BQ_LOCKED]) ||
+      checkfreelist(bp, &bufqueues[BQ_EMPTY]));
 
 	/*
 	 * We only calculate the head of the freelist when removing
@@ -580,11 +601,18 @@ brelse(bp)
 		 * otherwise leave it in its current position.
 		 */
 		CLR(bp->b_flags, B_VFLUSH);
-		if (!ISSET(bp->b_flags, B_ERROR|B_INVAL|B_LOCKED|B_AGE))
+		if (!ISSET(bp->b_flags, B_ERROR|B_INVAL|B_LOCKED|B_AGE)) {
+			KDASSERT(!debug_verify_freelist || checkfreelist(bp, &bufqueues[BQ_LRU]));
 			goto already_queued;
-		else
+		} else {
 			bremfree(bp);
+		}
 	}
+
+  KDASSERT(!debug_verify_freelist || !checkfreelist(bp, &bufqueues[BQ_AGE]));
+  KDASSERT(!debug_verify_freelist || !checkfreelist(bp, &bufqueues[BQ_LRU]));
+  KDASSERT(!debug_verify_freelist || !checkfreelist(bp, &bufqueues[BQ_EMPTY]));
+  KDASSERT(!debug_verify_freelist || !checkfreelist(bp, &bufqueues[BQ_LOCKED]));
 
 	if ((bp->b_bufsize <= 0) || ISSET(bp->b_flags, B_INVAL)) {
 		/*
