@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.383 2003/02/22 03:20:47 lukem Exp $
+# $NetBSD: mi,v 1.384 2003/02/22 23:39:54 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -51,7 +51,6 @@
 ./etc/mail		base-sendmail-root
 ./etc/mtree		base-sys-root
 ./etc/namedb		base-bind-root
-./var/db/obsolete	base-sys-root
 ./etc/openssl		base-crypto-root
 ./etc/openssl/certs	base-crypto-root
 ./etc/openssl/misc	base-crypto-root
@@ -2455,6 +2454,14 @@
 ./var/cron/tabs			base-cron-root
 ./var/db			base-sys-root
 ./var/db/ns			base-sys-root
+./var/db/obsolete		base-sys-root
+./var/db/obsolete/base		base-sys-root
+./var/db/obsolete/comp		base-sys-root
+./var/db/obsolete/etc		base-sys-root
+./var/db/obsolete/games		base-sys-root
+./var/db/obsolete/man		base-sys-root
+./var/db/obsolete/misc		base-sys-root
+./var/db/obsolete/text		base-sys-root
 ./var/games			base-games-root
 ./var/games/hackdir		base-games-root
 ./var/games/hackdir/save	base-games-root
