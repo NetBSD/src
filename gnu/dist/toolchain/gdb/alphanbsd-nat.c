@@ -15,10 +15,8 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-
-This file was developed by Gordon W. Ross <gwr@netbsd.org>
-as a derivation from alpha-nat.c and m68knbsd-nat.c.  */
+Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.  */
 
 #include "defs.h"
 #include "inferior.h"
@@ -69,69 +67,39 @@ get_longjmp_target (pc)
   return 1;
 }
 
-/* Extract the register values out of the core file and store
-   them where `read_register' will find them.
+static char zerobuf[MAX_REGISTER_RAW_SIZE] = {0};
 
-   CORE_REG_SECT points to the register values themselves, read into memory.
-   CORE_REG_SIZE is the size of that area.
-   WHICH says which set of registers we are handling (0 = int, 2 = float
-         on machines where they are discontiguous).
-   REG_ADDR is the offset from u.u_ar0 to the register values relative to
-            core_reg_sect.  This is used with old-fashioned core files to
-	    locate the registers in a large upage-plus-stack ".reg" section.
-	    Original upage address X is at location core_reg_sect+x+reg_addr.
- */
+/* Determine if PT_GETREGS fetches this register. */
+#define GETREGS_SUPPLIES(regno) \
+  (((regno) >= V0_REGNUM && (regno) <= ZERO_REGNUM) || \
+   (regno) >= PC_REGNUM)
 
 static void
-fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
-     char *core_reg_sect;
-     unsigned core_reg_size;
-     int which;
-     CORE_ADDR reg_addr;
+supply_regs (regs)
+     char *regs;
 {
-  struct md_coredump *core_reg;
-  struct trapframe *tf;
-  struct fpreg *fs;
-  register int regnum;
+  int i;
 
-  /* Table to map a gdb regnum to an index in the trapframe regs. */
-  static int core_reg_mapping[ZERO_REGNUM] = {
-    FRAME_V0,  FRAME_T0,  FRAME_T1,  FRAME_T2,
-    FRAME_T3,  FRAME_T4,  FRAME_T5,  FRAME_T6,
-    FRAME_T7,  FRAME_S0,  FRAME_S1,  FRAME_S2,
-    FRAME_S3,  FRAME_S4,  FRAME_S5,  FRAME_S6,
-    FRAME_A0,  FRAME_A1,  FRAME_A2,  FRAME_A3,
-    FRAME_A4,  FRAME_A5,  FRAME_T8,  FRAME_T9,
-    FRAME_T10, FRAME_T11, FRAME_RA,  FRAME_T12,
-    FRAME_AT,  FRAME_GP,  FRAME_SP };
+  /* Conveniently, GDB's register indices map directly to the NetBSD
+     "reg" structure.  */
+  for (i = V0_REGNUM; i < ZERO_REGNUM; i++)
+    supply_register (i, regs + (i * 8));
+  supply_register (ZERO_REGNUM, zerobuf);
 
-  /* We get everything from the .reg section. */
-  if (which != 0)
-    return;
+  /* The PC rides in the R_ZERO slot of the "reg" structure.  */
+  supply_register (PC_REGNUM, regs + (31 * 8));
+}
 
-  core_reg = (struct md_coredump *)core_reg_sect;
-  tf = &core_reg->md_tf;
-  fs = &core_reg->md_fpstate;
+static void
+supply_fpregs (fregs)
+     char *fregs;
+{
+  int i;
 
-  if (core_reg_size < sizeof(*core_reg)) {
-    fprintf_unfiltered (gdb_stderr, "Couldn't read regs from core file\n");
-    return;
-  }
+  for (i = FP0_REGNUM; i < FPCR_REGNUM; i++)
+    supply_register (i, fregs + ((i - FP0_REGNUM) * 8));
 
-  /* Integer registers */
-  for (regnum = 0; regnum < ZERO_REGNUM; regnum++)
-    *(long *) &registers[REGISTER_BYTE (regnum)] = tf->tf_regs[regnum];
-  *(long *) &registers[REGISTER_BYTE (ZERO_REGNUM)] = 0;
-
-  /* Floating point registers */
-  memcpy (&registers[REGISTER_BYTE (FP0_REGNUM)],
-	  &fs->fpr_regs[0], sizeof(fs->fpr_regs));
-
-  /* Special registers (PC, VFP) */
-  *(long *) &registers[REGISTER_BYTE (PC_REGNUM)] = tf->tf_regs[FRAME_PC];
-  *(long *) &registers[REGISTER_BYTE (FP_REGNUM)] = 0;
-
-  registers_fetched ();
+  supply_register (FPCR_REGNUM, fregs + (32 * 8));
 }
 
 void
@@ -141,25 +109,19 @@ fetch_inferior_registers (regno)
   struct reg inferior_registers;
   struct fpreg inferior_fp_registers;
 
-  /* Integer registers */
-  ptrace (PT_GETREGS, inferior_pid,
-	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
-  /* The PC travels in the R_ZERO slot. */
-  *(long *) &registers[REGISTER_BYTE (PC_REGNUM)] =
-    inferior_registers.r_regs[R_ZERO];
-  inferior_registers.r_regs[R_ZERO] = 0;
-  memcpy (&registers[REGISTER_BYTE (0)],
-	  &inferior_registers.r_regs[0],
-	  sizeof(inferior_registers.r_regs));
+  if (regno == -1 || GETREGS_SUPPLIES (regno))
+    {
+      ptrace (PT_GETREGS, inferior_pid,
+              (PTRACE_ARG3_TYPE) &inferior_registers, 0);
+      supply_regs ((char *) &inferior_registers);
 
-  /* Floating point registers */
+      if (regno != -1)
+        return;
+    }
+
   ptrace (PT_GETFPREGS, inferior_pid,
-	  (PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
-  memcpy (&registers[REGISTER_BYTE (FP0_REGNUM)],
-	  &inferior_fp_registers.fpr_regs[0],
-	  sizeof(inferior_fp_registers.fpr_regs));
-
-  registers_fetched ();
+          (PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
+  supply_fpregs ((char *) &inferior_fp_registers);
 }
 
 void
@@ -186,16 +148,85 @@ store_inferior_registers (regno)
   inferior_fp_registers.fpr_cr = 0;
   ptrace (PT_SETFPREGS, inferior_pid,
 	  (PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
-
-  registers_fetched ();
 }
+
+static void
+fetch_core_registers (core_reg_sect, core_reg_size, which, ignore)
+     char *core_reg_sect;
+     unsigned core_reg_size;
+     int which;
+     CORE_ADDR ignore;
+{
+  struct md_coredump *core_reg;
+  char *regs;
+  register int regnum;
+
+  /* Table to map a gdb regnum to an index in the trapframe regs. */
+  static int core_reg_mapping[ZERO_REGNUM] = {
+    FRAME_V0,  FRAME_T0,  FRAME_T1,  FRAME_T2,
+    FRAME_T3,  FRAME_T4,  FRAME_T5,  FRAME_T6,
+    FRAME_T7,  FRAME_S0,  FRAME_S1,  FRAME_S2,
+    FRAME_S3,  FRAME_S4,  FRAME_S5,  FRAME_S6,
+    FRAME_A0,  FRAME_A1,  FRAME_A2,  FRAME_A3,
+    FRAME_A4,  FRAME_A5,  FRAME_T8,  FRAME_T9,
+    FRAME_T10, FRAME_T11, FRAME_RA,  FRAME_T12,
+    FRAME_AT,  FRAME_GP,  FRAME_SP };
+
+  /* We get everything from the .reg section. */
+  if (which != 0)
+    return;
+
+  core_reg = (struct md_coredump *)core_reg_sect;
+  regs = (char *) &core_reg->md_tf;
+
+  if (core_reg_size < sizeof(*core_reg)) {
+    fprintf_unfiltered (gdb_stderr, "Couldn't read regs from core file\n");
+    return;
+  }
+
+  /* Integer registers */
+  for (regnum = 0; regnum < ZERO_REGNUM; regnum++)
+    supply_register (regnum, regs + (core_reg_mapping[regnum] * 8));
+  supply_register (ZERO_REGNUM, zerobuf);
+
+  /* Floating point registers */
+  supply_fpregs ((char *) &core_reg->md_fpstate);
+
+  /* Special registers (PC, VFP) */
+  supply_register (PC_REGNUM, regs + (FRAME_PC * 8));
+  supply_register (FP_REGNUM, zerobuf);
+}
+
+static void
+fetch_elfcore_registers (core_reg_sect, core_reg_size, which, ignore)
+     char *core_reg_sect;
+     unsigned core_reg_size;
+     int which;
+     CORE_ADDR ignore;
+{
+  switch (which)
+    {
+    case 0:  /* Integer registers */
+      if (core_reg_size != sizeof (struct reg))
+	warning ("Wrong size register set in core file.");
+      else
+	supply_regs (core_reg_sect);
+      break;
+
+    case 2:  /* Floating point registers */
+      if (core_reg_size != sizeof (struct fpreg))
+	warning ("Wrong size FP register set in core file.");
+      else
+	supply_fpregs (core_reg_sect);
+      break;
+
+    default:
+      /* Don't know what kind of register request this is; just ignore it.  */
+      break;
+    }
+}
+
 
-
-/*
- * kernel_u_size() is not helpful on NetBSD because
- * the "u" struct is NOT in the core dump file.
- */
-
 #ifdef  FETCH_KCORE_REGISTERS
 /*
  * Get registers from a kernel crash dump or live kernel.
@@ -233,8 +264,18 @@ static struct core_fns alphanbsd_core_fns =
   NULL					/* next */
 };
 
+static struct core_fns alphanbsd_elfcore_fns =
+{
+  bfd_target_elf_flavour,		/* core_flavour */
+  default_check_format,			/* check_format */
+  default_core_sniffer,			/* core_sniffer */
+  fetch_elfcore_registers,		/* core_read_registers */
+  NULL					/* next */
+};
+
 void
-_initialize_core_alphanbsd ()
+_initialize_alphanbsd_nat ()
 {
   add_core_fns (&alphanbsd_core_fns);
+  add_core_fns (&alphanbsd_elfcore_fns);
 }
