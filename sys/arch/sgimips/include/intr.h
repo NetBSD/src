@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 2001/04/13 23:30:04 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.7 2001/05/11 04:32:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -32,6 +32,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef	_SGIMIPS_INTR_H_
+#define	_SGIMIPS_INTR_H_
+
 #define	IPL_NONE	0	/* Disable only this interrupt. */
 #define	IPL_BIO		1	/* Disable block I/O interrupts. */
 #define	IPL_NET		2	/* Disable network interrupts. */
@@ -50,17 +53,83 @@
 #define IST_EDGE	2	/* edge-triggered */
 #define IST_LEVEL	3	/* level-triggered */
 
-/* Soft interrupt masks. */
-#define SIR_CLOCK	31
-#define SIR_NET		30
-#define SIR_CLOCKMASK	((1 << SIR_CLOCK))
-#define SIR_NETMASK	((1 << SIR_NET) | SIR_CLOCKMASK)
-#define SIR_ALLMASK	(SIR_CLOCKMASK | SIR_NETMASK)
+/* Soft interrupt numbers */
+#ifndef __NO_SOFT_SERIAL_INTERRUPT
+#define	IPL_SOFTSERIAL	0	/* serial software interrupts */
+#endif
+#define	IPL_SOFTNET	1	/* network software interrupts */
+#define	IPL_SOFTCLOCK	2	/* clock software interrupts */
+#define	IPL_NSOFT	3
+
+#define	IPL_SOFTNAMES {							\
+	"serial",							\
+	"net",								\
+	"clock",							\
+}
 
 #ifdef _KERNEL
 #ifndef _LOCORE
 
+#include <sys/queue.h>
+#include <sys/types.h>
+#include <sys/device.h>
 #include <mips/cpuregs.h>
+
+/*
+ * software simulated interrupt
+ */
+#define setsoft(x)	do {			\
+	extern u_int ssir;			\
+	int s;					\
+						\
+	s = splhigh();				\
+	ssir |= 1 << (x);			\
+	_setsoftintr(MIPS_SOFT_INT_MASK_1);	\
+	splx(s);				\
+} while (0)
+
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+
+#define softintr_schedule(arg)						\
+do {									\
+	struct sgi_intrhand *__ih = (arg);				\
+	__ih->ih_pending = 1;						\
+	setsoft(__ih->ih_intrhead->intr_ipl);				\
+} while (0)
+
+extern struct sgi_intrhand *softnet_intrhand;
+
+#define	setsoftnet()	softintr_schedule(softnet_intrhand)
+
+#else /* ! __HAVE_GENERIC_SOFT_INTERRUPTS */
+
+#define SIR_NET		0x01
+#define SIR_SERIAL	0x02
+
+#define setsoftclock()	_setsoftintr(MIPS_SOFT_INT_MASK_0)
+#define setsoftnet()	setsoft(SIR_NET)
+#define setsoftserial()	setsoft(SIR_SERIAL)
+#endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
+
+#define NINTR	32
+
+struct sgi_intrhand {
+	LIST_ENTRY(sgi_intrhand)
+		ih_q;
+	int	(*ih_fun) __P((void *));
+	void	 *ih_arg;
+	struct	sgi_intr *ih_intrhead;
+	int	ih_pending;
+};
+
+struct sgi_intr {
+	LIST_HEAD(,sgi_intrhand)
+		intr_q;
+	struct	evcnt ih_evcnt;
+	unsigned long intr_ipl;
+};
+
+extern struct sgi_intrhand intrtab[];
 
 extern int		_splraise(int);
 extern int		_spllower(int); 
@@ -69,11 +138,6 @@ extern int		_splget(void);
 extern void		_splnone(void); 
 extern void		_setsoftintr(int);
 extern void		_clrsoftintr(int);
-
-#define setsoftclock()	_setsoftintr(MIPS_SOFT_INT_MASK_0)
-#define setsoftnet()	_setsoftintr(MIPS_SOFT_INT_MASK_1)
-#define clearsoftclock() _clrsoftintr(MIPS_SOFT_INT_MASK_0)
-#define clearsoftnet()	_clrsoftintr(MIPS_SOFT_INT_MASK_1)  
 
 extern u_int32_t 	biomask;
 extern u_int32_t 	netmask;
@@ -89,19 +153,24 @@ extern u_int32_t 	clockmask;
 #define splvm()         spltty()
 #define splclock()      _splraise(clockmask)
 #define splstatclock()  splclock()
-#define spllowersoftclock() _spllower(MIPS_SOFT_INT_MASK_0)
-#define splsoftclock()  _splraise(MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1)
-#define splsoftnet()    _splraise(MIPS_SOFT_INT_MASK_1)
 
 #define	splsched()	splhigh()
 #define	spllock()	splhigh()
 #define spllpt()	spltty()
 
-extern unsigned int	intrcnt[];
-#define SOFTCLOCK_INTR	0
-#define SOFTNET_INTR	1  
+#define splsoftclock()	_splraise(MIPS_SOFT_INT_MASK_0)
+#define splsoft()	_splraise(MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1)
+#define spllowersoftclock() _spllower(MIPS_SOFT_INT_MASK_0)
+#define splsoftnet()	splsoft()
 
 extern void *		cpu_intr_establish(int, int, int (*)(void *), void *);
+void *			softintr_establish(int, void (*)(void *), void *);
+void			softintr_disestablish(void *);
+void			softintr_init(void);
+void			softintr_dispatch(void);
+
 
 #endif /* _LOCORE */
 #endif /* _KERNEL */
+
+#endif	/* !_SGIMIPS_INTR_H_ */
