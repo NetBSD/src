@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.43 2002/03/13 04:50:08 lukem Exp $
+# $NetBSD: rc.subr,v 1.44 2002/03/13 06:58:34 lukem Exp $
 #
 # Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -403,7 +403,10 @@ run_rc_command()
 				return 1
 			fi
 
-			eval $_cmd
+			if ! eval $_cmd && [ -z "$_rc_force_run" ]; then
+				return 1
+			fi
+			eval $_postcmd
 			return 0
 		fi
 
