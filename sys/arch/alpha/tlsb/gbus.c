@@ -1,4 +1,4 @@
-/* $NetBSD: gbus.c,v 1.13 2002/10/02 04:06:40 thorpej Exp $ */
+/* $NetBSD: gbus.c,v 1.14 2003/01/01 00:39:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.13 2002/10/02 04:06:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.14 2003/01/01 00:39:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,8 +85,8 @@ gbusprint(aux, pnp)
 	struct gbus_attach_args *ga = aux;
 
 	if (pnp)
-		printf("%s at %s", ga->ga_name, pnp);
-	printf(" offset 0x%lx", ga->ga_offset);
+		aprint_normal("%s at %s", ga->ga_name, pnp);
+	aprint_normal(" offset 0x%lx", ga->ga_offset);
 	return (UNCONF);
 }
 

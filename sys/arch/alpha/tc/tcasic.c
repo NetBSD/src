@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.38 2002/10/02 04:06:40 thorpej Exp $ */
+/* $NetBSD: tcasic.c,v 1.39 2003/01/01 00:39:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.38 2002/10/02 04:06:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.39 2003/01/01 00:39:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ tcasicprint(aux, pnp)
 
 	/* only TCs can attach to tcasics; easy. */
 	if (pnp)
-		printf("tc at %s", pnp);
+		aprint_normal("tc at %s", pnp);
 	return (UNCONF);
 }
 
