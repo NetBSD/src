@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.10 1998/04/13 12:10:27 ragge Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.11 2001/01/28 20:47:45 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -329,19 +329,19 @@ get_operand(ib, size)
 		break;
 
 	case 5:		/* register */
-		add_str(ib, my_db_regs[reg].name);
+		add_str(ib, (char *)my_db_regs[reg].name);
 		break;
 
 	case 6:		/* register deferred */
 		add_char(ib, '(');
-		add_str(ib, my_db_regs[reg].name);
+		add_str(ib, (char *)my_db_regs[reg].name);
 		add_char(ib, ')');
 		break;
 
 	case 7:		/* autodecrement */
 		add_char(ib, '-');
 		add_char(ib, '(');
-		add_str(ib, my_db_regs[reg].name);
+		add_str(ib, (char *)my_db_regs[reg].name);
 		add_char(ib, ')');
 		if (reg == 0x0F) {	/* pc is not allowed in this mode */
 			err_print("autodecrement not allowd for PC.\n");
@@ -381,7 +381,7 @@ get_operand(ib, size)
 			break;
 		}
 		add_char(ib, '(');
-		add_str(ib, my_db_regs[reg].name);
+		add_str(ib, (char *)my_db_regs[reg].name);
 		add_char(ib, ')');
 		add_char(ib, '+');
 		break;
@@ -397,7 +397,7 @@ get_operand(ib, size)
 		/* add_str (ib, "b^"); */
 		add_int(ib, tmp);
 		add_char(ib, '(');
-		add_str(ib, my_db_regs[reg].name);
+		add_str(ib, (char *)my_db_regs[reg].name);
 		add_char(ib, ')');
 		break;
 
@@ -412,7 +412,7 @@ get_operand(ib, size)
 		/* add_str (ib, "w^"); */
 		add_int(ib, tmp);
 		add_char(ib, '(');
-		add_str(ib, my_db_regs[reg].name);
+		add_str(ib, (char *)my_db_regs[reg].name);
 		add_char(ib, ')');
 		break;
 
@@ -427,7 +427,7 @@ get_operand(ib, size)
 		/* add_str (ib, "l^"); */
 		add_int(ib, tmp);
 		add_char(ib, '(');
-		add_str(ib, my_db_regs[reg].name);
+		add_str(ib, (char *)my_db_regs[reg].name);
 		add_char(ib, ')');
 		break;
 
