@@ -1,3 +1,5 @@
+/*	$NetBSD: if_ae.c,v 1.2 1995/08/18 15:53:30 chopps Exp $	*/
+
 /*
  * Copyright (c) 1995 Bernd Ernesti and Klaus Burkert. All rights reserved.
  * Copyright (c) 1992, 1993
