@@ -1,4 +1,6 @@
-/*	$NetBSD: oboe.c,v 1.5.2.4 2002/11/11 22:11:23 nathanw Exp $	*/
+/*	$NetBSD: oboe.c,v 1.5.2.5 2002/12/11 06:38:20 thorpej Exp $	*/
+
+/*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -487,7 +489,7 @@ filt_oboerdetach(struct knote *kn)
 	int s;
 
 	s = splir();
-	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -507,7 +509,7 @@ filt_oboewdetach(struct knote *kn)
 	int s;
 
 	s = splir();
-	SLIST_REMOVE(&sc->sc_wsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_wsel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -525,11 +527,11 @@ oboe_kqfilter(void *h, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rsel.si_klist;
+		klist = &sc->sc_rsel.sel_klist;
 		kn->kn_fop = &oboeread_filtops;
 		break;
 	case EVFILT_WRITE:
-		klist = &sc->sc_wsel.si_klist;
+		klist = &sc->sc_wsel.sel_klist;
 		kn->kn_fop = &oboewrite_filtops;
 		break;
 	default:

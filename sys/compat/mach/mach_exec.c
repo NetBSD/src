@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.2.4.7 2002/11/11 22:07:19 nathanw Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.2.4.8 2002/12/11 06:37:28 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,18 +37,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.2.4.7 2002/11/11 22:07:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.2.4.8 2002/12/11 06:37:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
+#include <sys/exec_macho.h>
 #include <sys/malloc.h>
 
 #include <sys/syscall.h>
 
+#include <uvm/uvm_extern.h>
+#include <uvm/uvm_param.h>
+
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_exec.h>
+
+static void mach_e_proc_exec(struct proc *, struct exec_package *);
+static void mach_e_proc_fork(struct proc *, struct proc *);
+static void mach_e_proc_exit(struct proc *);
 
 extern char sigcode[], esigcode[];
 extern struct sysent sysent[];
@@ -56,9 +64,9 @@ extern struct sysent sysent[];
 extern const char * const syscallnames[];
 #endif
 #ifndef __HAVE_SYSCALL_INTERN
-void syscall __P((void));
+void syscall(void);
 #else
-void mach_syscall_intern __P((struct proc *));
+void mach_syscall_intern(struct proc *);
 #endif
 
 const struct emul emul_mach = {
@@ -81,9 +89,9 @@ const struct emul emul_mach = {
 	sigcode,
 	esigcode,
 	setregs,
-	NULL,
-	NULL,
-	NULL,
+	mach_e_proc_exec,
+	mach_e_proc_fork,
+	mach_e_proc_exit,
 #ifdef __HAVE_SYSCALL_INTERN
 	mach_syscall_intern,
 #else
@@ -96,14 +104,32 @@ const struct emul emul_mach = {
 /*
  * Copy arguments onto the stack in the normal way, but add some
  * extra information in case of dynamic binding.
+ * XXX This needs a cleanup: it is not used anymore by the Darwin 
+ * emulation, and it probably contains Darwin specific bits. 
  */
 int
-exec_mach_copyargs(struct proc *p, struct exec_package *pack,
-    struct ps_strings *arginfo, char **stackp, void *argp)
+exec_mach_copyargs(p, pack, arginfo, stackp, argp)
+	struct proc *p;
+	struct exec_package *pack;
+	struct ps_strings *arginfo;
+	char **stackp;
+	void *argp;
 {
+	struct exec_macho_emul_arg *emea;
 	size_t len;
 	size_t zero = 0;
+	int pagelen = PAGE_SIZE;
 	int error;
+	
+	emea = (struct exec_macho_emul_arg *)pack->ep_emul_arg;
+	
+	*stackp -= 16;
+
+	if ((error = copyout(&pagelen, *stackp, sizeof(pagelen))) != 0) {
+		DPRINTF(("mach: copyout pagelen failed\n"));
+		return error;
+	}
+	*stackp += sizeof(pagelen);
 
 	if ((error = copyargs(p, pack, arginfo, stackp, argp)) != 0) {
 		DPRINTF(("mach: copyargs failed\n"));
@@ -116,15 +142,15 @@ exec_mach_copyargs(struct proc *p, struct exec_package *pack,
 	}
 	*stackp += sizeof(zero);
 
-	if ((error = copyoutstr(pack->ep_emul_arg, *stackp, MAXPATHLEN, &len))
-	    != 0) {
+	if ((error = copyoutstr(emea->filename, 
+	    *stackp, MAXPATHLEN, &len)) != 0) {
 		DPRINTF(("mach: copyout path failed\n"));
 		return error;
 	}
 	*stackp += len + 1;
 
 	/* We don't need this anymore */
-	free(pack->ep_emul_arg, MAXPATHLEN);
+	free(pack->ep_emul_arg, M_EXEC);
 	pack->ep_emul_arg = NULL;
 
 	len = len % sizeof(zero);
@@ -146,7 +172,67 @@ exec_mach_copyargs(struct proc *p, struct exec_package *pack,
 }
 
 int
-exec_mach_probe(char **path) {
+exec_mach_probe(path)
+	char **path;
+{
 	*path = (char *)emul_mach.e_path;
 	return 0;
+}
+
+static void 
+mach_e_proc_exec(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
+{
+	mach_e_proc_init(p, p->p_vmspace);
+
+	return;
+}
+
+static void 
+mach_e_proc_fork(p, parent)
+	struct proc *p;
+	struct proc *parent;
+{
+	struct mach_emuldata *med1;
+	struct mach_emuldata *med2;
+
+	p->p_emuldata = NULL;
+
+	/* Use parent's vmspace because our vmspace may not be setup yet */
+	mach_e_proc_init(p, parent->p_vmspace);
+
+	med1 = p->p_emuldata;
+	med2 = parent->p_emuldata;
+
+	(void)memcpy(med1, med2, sizeof(struct mach_emuldata));
+
+	return;
+}
+
+void 
+mach_e_proc_init(p, vmspace)
+	struct proc *p;
+	struct vmspace *vmspace;
+{
+	struct mach_emuldata *med;
+
+	if (!p->p_emuldata)
+		p->p_emuldata = malloc(sizeof(struct mach_emuldata),
+		    M_EMULDATA, M_WAITOK | M_ZERO);
+
+	med = (struct mach_emuldata *)p->p_emuldata;
+	med->med_p = 0;
+
+	return;
+}
+
+static void 
+mach_e_proc_exit(p)
+	struct proc *p;
+{
+	free(p->p_emuldata, M_EMULDATA);
+	p->p_emuldata = NULL;
+
+	return;
 }

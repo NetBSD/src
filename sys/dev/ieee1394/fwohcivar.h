@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcivar.h,v 1.7.2.6 2002/08/01 02:44:53 nathanw Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.7.2.7 2002/12/11 06:38:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 
 #define	OHCI_LOOP		1000
 #define	OHCI_SELFID_TIMEOUT	(hz * 3)
-#define OHCI_ASYNC_STREAM	0x40
+#define OHCI_ASYNC_STREAM	0x100
 
 struct fwohci_softc;
 struct fwohci_pkt;
@@ -113,6 +113,181 @@ struct fwohci_ctx {
 	struct fwohci_buf *fc_buffers;
 };
 
+
+
+struct fwohci_ir_ctx {
+	struct fwohci_softc *irc_sc;
+
+	int irc_num;		/* context number */
+	int irc_flags;		/* IEEE1394_IR_* */
+	int irc_status;
+#define IRC_STATUS_READY		0x0001
+#define IRC_STATUS_RUN			0x0002
+#define IRC_STATUS_SLEEPING		0x0004
+#define IRC_STATUS_RECEIVE		0x0008
+
+	int irc_pktcount;
+
+	int irc_channel;	/* channel number */
+	int irc_tagbm;		/* tag bitmap */
+	int irc_maxsize;	/* maxmum data size for a packet */
+
+	int irc_maxqueuelen;	/* for debug purpose */
+	int irc_maxqueuepos;
+
+	struct fwohci_desc *irc_readtop;	/* where data start */
+	struct fwohci_desc *irc_writeend;	/* where branch addr is 0 */
+	u_int32_t irc_savedbranch;
+
+	struct fwohci_iso_buf *irc_buf_ptr;
+
+	/* data for descriptor */
+	bus_dma_segment_t irc_desc_seg;
+	bus_dmamap_t irc_desc_dmamap;
+	int irc_desc_num;	/* number of descriptors */
+	int irc_desc_size;	/* actual size in byte */
+	struct fwohci_desc *irc_desc_map; /* Do not change */
+	int irc_desc_nsegs;
+
+	volatile void *irc_waitchan;	/* wait channel */
+	struct selinfo irc_sel;
+
+	/* data for buffer */
+	bus_dma_segment_t irc_buf_segs[16];
+	bus_dmamap_t irc_buf_dmamap;
+	int irc_buf_totalsize;
+	int irc_buf_nsegs;
+	u_int8_t *irc_buf;
+
+	/* for debug purpose */
+#ifdef FWOHCI_WAIT_DEBUG
+	u_int16_t irc_cycle[3];	/* 0 for wait time, 1 for intr time */
+#endif
+};
+
+
+
+/*
+ * Context dedicated for isochronous transmit.  Two data structure are
+ * defined.
+ */
+struct fwohci_it_ctx;
+
+#define IEEE1394_IT_PKTHDR	0x0001
+
+struct fwohci_it_dmabuf {
+	struct fwohci_it_ctx *itd_ctx;
+	int itd_num;
+	int itd_flags;
+#define ITD_FLAGS_LOCK		0x0001
+#define ITD_FLAGS_UNLOCK	0x0000
+#define ITD_FLAGS_LOCK_MASK	0x0001
+
+	/* memory for descriptor */
+	struct fwohci_desc *itd_desc;	/* top of descriptor */
+	bus_addr_t itd_desc_phys;	/* physical addr of 1st descriptor */
+	int itd_descsize;		/* number of total descriptors */
+	struct fwohci_desc *itd_lastdesc;	/* last valid descriptor */
+
+	int itd_maxpacket;		/* maximum packets for the buffer */
+	int itd_npacket;		/* number of valid packets */
+	int itd_maxsize;		/* maximum packet size */
+
+	/* DMA buffer */
+#define FWOHCI_MAX_ITDATASEG	8
+	bus_dma_segment_t itd_seg[FWOHCI_MAX_ITDATASEG];
+	bus_dmamap_t itd_dmamap;
+	int itd_size;			/* count in byte */
+	u_int8_t *itd_buf;
+	int itd_nsegs;
+
+	/* header store descriptor */
+	struct fwohci_desc *itd_store;
+	bus_addr_t itd_store_phys;
+
+	u_int32_t itd_savedbranch;
+
+#if 0
+	int fwohci_itd_construct(struct fwohci_it_ctx *, struct fwohci_it_dmabuf *, int no, struct fwohci_desc *desc, int descsize, int maxsize, paddr_t scratch);
+	void fwohci_itd_destruct(struct fwohci_it_dmabuf *);
+	int fwohci_itd_writedata(struct fwohci_it_dmabuf *, int ndata,
+	    struct ieee1394_it_datalist *);
+	int fwohci_itd_link(struct fwohci_it_dmabuf *, struct fwohci_it_dmabuf *);
+	bus_addr_t fwohci_itd_list_head(struct fwohci_it_dmabuf *);
+	void fwohci_itd_clean(struct fwohci_it_dmabuf *);
+	int fwohci_itd_isfilled(struct fwohci_it_dmabuf *);
+	int fwohci_itd_hasdata(struct fwohci_it_dmabuf *);
+	int fwohci_itd_isfull(struct fwohci_it_dmabuf *);
+#endif
+#define fwohci_itd_list_head(itd)	(itd)->itd_desc_phys
+#define fwohci_itd_hasdata(itd)		(itd)->itd_npacket
+#define fwohci_itd_isfull(itd)						\
+		((itd)->itd_npacket == (itd)->itd_maxpacket)
+#define fwohci_itd_islocked(itd)					\
+		((itd)->itd_flags & ITD_FLAGS_LOCK)
+};
+
+
+struct fwohci_it_ctx {
+	struct fwohci_softc *itc_sc;
+
+	int itc_num;		/* context number */
+
+	volatile int itc_flags;	/* flags */
+#define ITC_FLAGS_RUN		0x0001
+
+	int itc_channel;	/* channel number */
+	int itc_tag;		/* tag */
+	int itc_maxsize;	/* maxmum data size for a packet */
+	int itc_speed;		/* speed */
+
+	struct fwohci_it_dmabuf *itc_buf; /* array for fwohci_it_dmabuf */
+	int itc_bufnum;		/* const: num of elements in itc_buf array */
+
+#if 1
+	volatile struct fwohci_it_dmabuf *itc_buf_start;
+	struct fwohci_it_dmabuf *itc_buf_end;
+	struct fwohci_it_dmabuf *itc_buf_linkend;
+#endif
+	volatile int16_t itc_buf_cnt;	/* # buffers which contain data */
+#if 0
+	int16_t itc_bufidx_start;
+	int16_t itc_bufidx_end;
+	int16_t itc_bufidx_linkend;
+#endif
+
+	/* data for descriptor */
+	bus_dma_segment_t itc_dseg;
+	bus_dmamap_t itc_ddmamap;
+	int itc_descsize;	/* count in byte */
+	u_int8_t *itc_descmap;
+	int itc_dnsegs;
+
+	volatile u_int32_t *itc_scratch; /* descriptor decoder will write */
+	u_int32_t itc_scratch_paddr;
+
+	volatile void *itc_waitchan;	/* wait channel */
+
+	int itc_outpkt;		/* only for debugging */
+
+#if 0
+	struct fwohci_it_ctx *fwohci_it_ctx_construct(int);
+	void fwohci_it_ctx_destruct(struct fwohci_it_ctx *);
+	void fwohci_it_ctx_intr(struct fwohci_it_ctx *);
+	int fwohci_it_ctx_writedata(ieee1394_it_tag_t, int ndata,
+	    struct ieee1394_it_datalist *);
+private:
+	void fwohci_it_ctx_run(struct fwohci_it_ctx *itc);
+	void fwohci_it_intr(struct fwohci_softc *, struct fwohci_it_ctx *);
+#endif
+#define INC_BUF(itc, buf)						\
+	do {								\
+		if (++buf == (itc)->itc_buf + (itc)->itc_bufnum) {	\
+			buf = &(itc)->itc_buf[0];			\
+		}							\
+	} while (0)
+};
+
 struct fwohci_uidtbl {
 	int		fu_valid;
 	u_int8_t	fu_uid[8];
@@ -135,7 +310,8 @@ struct fwohci_softc {
 	struct ieee1394_softc sc_sc1394;
 	struct evcnt sc_intrcnt;
 	struct evcnt sc_isocnt;
-	struct evcnt sc_isopktcnt;
+	struct evcnt sc_ascnt;
+	struct evcnt sc_itintrcnt;
 
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_memh;
@@ -158,6 +334,7 @@ struct fwohci_softc {
 	u_int8_t *sc_descmap;
 	int sc_descsize;
 	int sc_isoctx;
+	int sc_itctx;
 
 	void *sc_shutdownhook;
 	void *sc_powerhook;
@@ -168,9 +345,12 @@ struct fwohci_softc {
 	struct fwohci_ctx *sc_ctx_arrs;
 	struct fwohci_ctx *sc_ctx_atrq;
 	struct fwohci_ctx *sc_ctx_atrs;
-	struct fwohci_ctx **sc_ctx_ir;
+	struct fwohci_ctx **sc_ctx_as; /* previously sc_ctx_ir */
 	struct fwohci_buf sc_buf_cnfrom;
 	struct fwohci_buf sc_buf_selfid;
+
+	struct fwohci_ir_ctx **sc_ctx_ir;
+	struct fwohci_it_ctx **sc_ctx_it;
 
 	struct proc *sc_event_thread;
 

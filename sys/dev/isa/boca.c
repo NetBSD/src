@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.34.2.4 2002/10/18 02:42:08 nathanw Exp $	*/
+/*	$NetBSD: boca.c,v 1.34.2.5 2002/12/11 06:38:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.34.2.4 2002/10/18 02:42:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.34.2.5 2002/12/11 06:38:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,6 +108,8 @@ bocaprobe(parent, self, aux)
 	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
 		return (0);
 
+	iobase = ia->ia_io[0].ir_addr;
+
 	/* if the first port is in use as console, then it. */
 	if (com_is_console(iot, iobase, 0))
 		goto checkmappings;
@@ -122,7 +124,7 @@ bocaprobe(parent, self, aux)
 		goto out;
 
 checkmappings:
-	for (i = 1, iobase = ia->ia_io[0].ir_addr; i < NSLAVES; i++) {
+	for (i = 1; i < NSLAVES; i++) {
 		iobase += COM_NPORTS;
 
 		if (com_is_console(iot, iobase, 0))

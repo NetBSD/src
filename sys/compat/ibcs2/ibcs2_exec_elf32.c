@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_elf32.c,v 1.1.4.2 2001/11/14 19:12:59 nathanw Exp $	*/
+/*	$NetBSD: ibcs2_exec_elf32.c,v 1.1.4.3 2002/12/11 06:37:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_elf32.c,v 1.1.4.2 2001/11/14 19:12:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_elf32.c,v 1.1.4.3 2002/12/11 06:37:12 thorpej Exp $");
 
 #define ELFSIZE		32
 
@@ -127,19 +127,14 @@ ibcs2_elf32_probe(p, epp, eh, itp, pos)
 	char *itp;
 	vaddr_t *pos;
 {
-	const char *bp;
 	int error;
-	size_t len;
 
 	if ((error = ibcs2_elf32_signature(p, epp, eh)) != 0)
                 return error;
 
 	if (itp[0]) {
-		if ((error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path, itp, &bp, 0)))
+		if ((error = emul_find_interp(p, epp->ep_esch->es_emul->e_path, itp)))
 			return error;
-		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
-			return error;
-		free((void *)bp, M_TEMP);
 	}
 	*pos = ELF32_NO_ADDR;
 	return 0;

@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.306.2.22 2002/11/26 18:17:49 thorpej Exp $
+$NetBSD: pcidevs,v 1.306.2.23 2002/12/11 06:38:21 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1856,6 +1856,7 @@ product RICOH Rx5C475	0x0475 5C475 PCI-CardBus bridge
 product RICOH RL5C476	0x0476 5C476 PCI-CardBus bridge
 product RICOH Rx5C477	0x0477 5C477 PCI-CardBus bridge
 product RICOH Rx5C478	0x0478 5C478 PCI-CardBus bridge
+product RICOH Rx5C552	0x0552 5C552 PCI-CardBus bridge/Firewire
 
 /* RISCom (SDL Communications, Inc?) products */
 product RISCOM N2	0x5568	N2

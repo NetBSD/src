@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.27.2.11 2002/11/11 22:12:00 nathanw Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.27.2.12 2002/12/11 06:38:36 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.27.2.11 2002/11/11 22:12:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.27.2.12 2002/12/11 06:38:36 thorpej Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -233,11 +233,14 @@ FreeReconDesc(reconDesc)
 	RF_RaidReconDesc_t *reconDesc;
 {
 #if RF_RECON_STATS > 0
-	printf("RAIDframe: %lu recon event waits, %lu recon delays\n",
-	    (long) reconDesc->numReconEventWaits, (long) reconDesc->numReconExecDelays);
+	printf("raid%d: %lu recon event waits, %lu recon delays\n",
+	       reconDesc->raidPtr->raidid,
+	       (long) reconDesc->numReconEventWaits, 
+	       (long) reconDesc->numReconExecDelays);
 #endif				/* RF_RECON_STATS > 0 */
-	printf("RAIDframe: %lu max exec ticks\n",
-	    (long) reconDesc->maxReconExecTicks);
+	printf("raid%d: %lu max exec ticks\n",
+	       reconDesc->raidPtr->raidid,
+	       (long) reconDesc->maxReconExecTicks);
 #if (RF_RECON_STATS > 0) || defined(KERNEL)
 	printf("\n");
 #endif				/* (RF_RECON_STATS > 0) || KERNEL */
@@ -374,6 +377,10 @@ rf_ReconstructFailedDiskBasic(raidPtr, row, col)
 			raidPtr->raid_cinfo[srow][scol].ci_vp,
 			&c_label);
 		
+
+		rf_update_component_labels(raidPtr, 
+					   RF_NORMAL_COMPONENT_UPDATE);
+
 	}
 	return (rc);
 }
@@ -413,31 +420,6 @@ rf_ReconstructInPlace(raidPtr, row, col)
 	         * disk at a time for each array.
 	         */
 		RF_LOCK_MUTEX(raidPtr->mutex);
-		if ((raidPtr->Disks[row][col].status == rf_ds_optimal) &&
-		    (raidPtr->numFailures > 0)) { 
-			/* XXX 0 above shouldn't be constant!!! */
-			/* some component other than this has failed.
-			   Let's not make things worse than they already
-			   are... */
-			printf("raid%d: Unable to reconstruct to disk at:\n",
-			       raidPtr->raidid);
-			printf("raid%d:     Row: %d Col: %d   Too many failures.\n",
-			       raidPtr->raidid, row, col);
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
-			return (EINVAL);
-		}
-		if (raidPtr->Disks[row][col].status == rf_ds_reconstructing) {
-			printf("raid%d: Unable to reconstruct to disk at:\n",
-			       raidPtr->raidid);
-			printf("raid%d:    Row: %d Col: %d   Reconstruction already occuring!\n", raidPtr->raidid, row, col);
-
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
-			return (EINVAL);
-		}
-		if (raidPtr->Disks[row][col].status == rf_ds_spared) {
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
-			return (EINVAL);
-		}
 
 		if (raidPtr->Disks[row][col].status != rf_ds_failed) {
 			/* "It's gone..." */
@@ -623,6 +605,9 @@ rf_ReconstructInPlace(raidPtr, row, col)
 		raidwrite_component_label(raidPtr->raid_cinfo[row][col].ci_dev,
 					  raidPtr->raid_cinfo[row][col].ci_vp,
 					  &c_label);
+
+		rf_update_component_labels(raidPtr, 
+					   RF_NORMAL_COMPONENT_UPDATE);
 
 	}
 	RF_SIGNAL_COND(raidPtr->waitForReconCond);

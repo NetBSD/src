@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_fasttraps_cpu.c,v 1.1.2.2 2002/11/11 22:07:34 nathanw Exp $ */
+/*	$NetBSD: mach_fasttraps_cpu.c,v 1.1.2.3 2002/12/11 06:37:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_fasttraps_cpu.c,v 1.1.2.2 2002/11/11 22:07:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_fasttraps_cpu.c,v 1.1.2.3 2002/12/11 06:37:34 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -46,16 +46,33 @@ __KERNEL_RCSID(0, "$NetBSD: mach_fasttraps_cpu.c,v 1.1.2.2 2002/11/11 22:07:34 n
 #include <compat/mach/arch/powerpc/fasttraps/mach_fasttraps_syscall.h>
 #include <compat/mach/arch/powerpc/fasttraps/mach_fasttraps_syscallargs.h>
 
+#define mach_ignoreZeroFaultbit	0
+#define mach_floatUsedbit	1
+#define mach_vectorUsedbit	2
+#define mach_runningVMbit	4
+#define mach_floatCngbit	5
+#define mach_vectorCngbit	6
+#define mach_timerPopbit	7
+#define mach_userProtKeybit	8
+#define mach_trapUnalignbit	9 
+#define mach_notifyUnalignbit	10
+#define mach_bbThreadbit	28
+#define mach_bbNoMachSCbit	29
+#define mach_bbPreemptivebit	30
+#define mach_spfReserved1	31      
+
+/* We do not emulate anything here right now */
 int
-mach_sys_fp_status(p, v, retval)
+mach_sys_processor_facilities_used(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	printf("mach_sys_fp_status()\n");
+	*retval = 0;
 	return 0;
 }
 
+/* This seems to be called only from within the kernel in Mach */
 int
 mach_sys_load_msr(p, v, retval)
 	struct proc *p;

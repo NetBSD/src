@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.2.2.6 2002/05/29 21:32:45 nathanw Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.2.2.7 2002/12/11 06:37:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.2.2.6 2002/05/29 21:32:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.2.2.7 2002/12/11 06:37:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ linux_sys___sysctl(struct lwp *l, void *v, register_t *retval)
 }
 
 char linux_sysname[128] = "Linux";
-#ifdef __i386__
+#if defined(__i386__) || defined(__powerpc__)
 char linux_release[128] = "2.4.18";
 char linux_version[128] = "#0 Wed Feb 20 20:00:02 CET 2002";
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.12.2.6 2002/08/01 02:44:11 nathanw Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.12.2.7 2002/12/11 06:37:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.12.2.6 2002/08/01 02:44:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.12.2.7 2002/12/11 06:37:10 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -143,9 +143,9 @@ freebsd_sys_sigaction4(l, v, retval)
 		error = copyin(SCARG(uap, nsa), &nesa, sizeof(nesa));
 		if (error)
 			return (error);
-		nbsa.sa_handler = nesa.sa_handler;
-		nbsa.sa_mask    = nesa.sa_mask;
-		nbsa.sa_flags   = nesa.sa_flags;
+		nbsa.sa_handler = nesa.freebsd_sa_handler;
+		nbsa.sa_mask    = nesa.freebsd_sa_mask;
+		nbsa.sa_flags   = nesa.freebsd_sa_flags;
 	}
 	error = sigaction1(p, SCARG(uap, signum),
 	    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0,
@@ -153,9 +153,9 @@ freebsd_sys_sigaction4(l, v, retval)
 	if (error)
 		return (error);
 	if (SCARG(uap, osa)) {
-		oesa.sa_handler = obsa.sa_handler;
-		oesa.sa_mask    = obsa.sa_mask;
-		oesa.sa_flags   = obsa.sa_flags;
+		oesa.freebsd_sa_handler = obsa.sa_handler;
+		oesa.freebsd_sa_mask    = obsa.sa_mask;
+		oesa.freebsd_sa_flags   = obsa.sa_flags;
 		error = copyout(&oesa, SCARG(uap, osa), sizeof(oesa));
 		if (error)
 			return (error);

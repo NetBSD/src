@@ -1,7 +1,7 @@
-/*	$NetBSD: sbp2.c,v 1.1.2.2 2002/02/28 04:13:36 nathanw Exp $	*/
+/*	$NetBSD: sbp2.c,v 1.1.2.3 2002/12/11 06:38:08 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,11 +36,60 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-static int sbp2_print_data(struct configrom_data *);
-static int sbp2_print_dir(u_int8_t);
-static void sbp2_init(struct fwnode_softc *, struct fwnode_device_cap *);
-static void sbp2_login(struct ieee1394_abuf *, int);
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.1.2.3 2002/12/11 06:38:08 thorpej Exp $");
+
+#include <sys/param.h>
+#include <sys/kernel.h>
+#include <sys/device.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
+#include <sys/lock.h>
+
+#include <machine/bus.h>
+#include <machine/limits.h>
+
+#include <dev/std/ieee1212reg.h>
+#include <dev/std/ieee1212var.h>
+#include <dev/ieee1394/ieee1394reg.h>
+#include <dev/ieee1394/ieee1394var.h>
+#include <dev/ieee1394/sbp2reg.h>
+#include <dev/ieee1394/sbp2var.h>
+#include <dev/ieee1394/sbpscsireg.h>
+
+static void sbp2_print_data(struct p1212_data *);
+static void sbp2_print_dir(struct p1212_dir *);
+static void sbp2_login(struct sbp2 *, struct sbp2_lun *);
+static void sbp2_login_ans(struct ieee1394_abuf *, int);
 static void sbp2_login_resp(struct ieee1394_abuf *, int);
+static struct sbp2_lun *sbp2_alloc_lun(u_int32_t, u_int32_t, u_int32_t,
+    u_int32_t, u_int32_t);
+static void sbp2_logout(struct sbp2 *, struct sbp2_lun *);
+static void sbp2_relogin(struct ieee1394_softc *, void *);
+static struct sbp2_orb *sbp2_alloc_orb(void);
+static void sbp2_free_orb(struct sbp2_orb *);
+static void sbp2_alloc_data_mapping(struct sbp2 *, struct sbp2_mapping *,
+    u_char *, u_int32_t, u_int8_t);
+static void sbp2_free_data_mapping(struct sbp2 *, struct sbp2_mapping *);
+static u_int64_t sbp2_alloc_addr(struct sbp2 *);
+static void sbp2_free_addr(struct sbp2 *, u_int64_t);
+static void sbp2_orb_resp(struct ieee1394_abuf *, int);
+static void sbp2_data_resp(struct ieee1394_abuf *, int);
+static void sbp2_enable_status(struct ieee1394_abuf *, int);
+static void sbp2_null_resp(struct ieee1394_abuf *, int);
+static void sbp2_doorbell_reset(struct ieee1394_abuf *, int);
+static void sbp2_status_resp(struct sbp2_status *, void *);
+#ifdef SBP2_DEBUG
+static void sbp2_agent_status(struct ieee1394_abuf *, int);
+#endif
+
+static CIRCLEQ_HEAD(, sbp2_orb) sbp2_freeorbs =
+    CIRCLEQ_HEAD_INITIALIZER(sbp2_freeorbs);
+static struct simplelock sbp2_freeorbs_lock = SIMPLELOCK_INITIALIZER;
+static struct sbp2_orb status_orb;
+static TAILQ_HEAD(, sbp2_map) sbp2_maps =
+    TAILQ_HEAD_INITIALIZER(sbp2_maps);
+static struct simplelock sbp2_maps_lock = SIMPLELOCK_INITIALIZER;
 
 #ifdef SBP2_DEBUG
 #define DPRINTF(x)      if (sbp2debug) printf x
@@ -51,241 +100,1257 @@ int     sbp2debug = 1;
 #define DPRINTFN(n,x)
 #endif
 
-/* XXX: All the sbp2 routines are a complete hack simply to probe a device for
-   the moment to make sure all the other code is good. This should all be gutted
-   out to it's own file and properly abstracted.
-*/
-
-static int
-sbp2_print_data(struct configrom_data *data)
+static void
+sbp2_print_data(struct p1212_data *data)
 {
-	switch (data->key_value) {
+	switch (data->com.key.key_value) {
 	case SBP2_KEYVALUE_Command_Set:
 		printf("SBP2 Command Set: ");
-		if (data->val == 0x104d8)
+		if (data->com.key.val == SBPSCSI_COMMAND_SET)
 			printf("SCSI 2\n");
 		else
 			printf("0x%08x\n", data->val);
 		break;
 	case SBP2_KEYVALUE_Unit_Characteristics:
-		printf("SBP2 Unit Characteristics: 0x%08x\n", data->val);
+		printf("SBP2 Unit Characteristics: 0x%08x\n",data->com.key.val);
 		break;
 	case SBP2_KEYVALUE_Command_Set_Revision:
-		printf("SBP2 Command Set Revision: 0x%08x\n", data->val);
+		printf("SBP2 Command Set Revision: 0x%08x\n",data->com.key.val);
 		break;
 	case SBP2_KEYVALUE_Command_Set_Spec_Id:
-		printf("SBP2 Command Set Spec Id: 0x%08x\n", data->val);
+		printf("SBP2 Command Set Spec Id: 0x%08x\n", data->com.key.val);
 		break;
 	case SBP2_KEYVALUE_Firmware_Revision:
-		printf("SBP2 Firmware Revision: 0x%08x\n", data->val);
+		printf("SBP2 Firmware Revision: 0x%08x\n", data->com.key.val);
 		break;
 	case SBP2_KEYVALUE_Reconnect_Timeout:
-		printf("SBP2 Reconnect Timeout: 0x%08x\n", data->val);
+		printf("SBP2 Reconnect Timeout: 0x%08x\n", data->com.key.val);
 		break;
 	case SBP2_KEYVALUE_Unit_Unique_Id:
-		printf("SBP2 Unit Unique Id: 0x%08x\n", data->val);
+		printf("SBP2 Unit Unique Id: 0x%08x\n", data->com.key.val);
 		break;
 	case P1212_KEYVALUE_Unit_Dependent_Info:
-		if (data->key_type == P1212_KEYTYPE_Immediate) 
-			printf("SBP2 Logical Unit Number: 0x%08x\n", data->val);
-		else if (data->key_type == P1212_KEYTYPE_Offset) 
-			printf("SBP2 Management Agent: 0x%08x\n", data->val);
+		if (data->com.key.key_type == P1212_KEYTYPE_Immediate) 
+			printf("SBP2 Logical Unit Number: 0x%08x\n",
+			    data->com.key.val);
+		else if (data->com.key.key_type == P1212_KEYTYPE_Offset) 
+			printf("SBP2 Management Agent: 0x%08x\n",
+			    data->com.key.val);
 		break;
 	default:
-		return 0;
-	}
-	return 1;
-}
-
-static int
-sbp2_print_dir(u_int8_t dir_type)
-{
-	switch(dir_type) {
-	case SBP2_KEYVALUE_Logical_Unit_Directory:
-		printf("Logical Unit ");
+		printf("Unknown SBP2 key and value: 0x%08x 0x%08x\n",
+		    data->com.key.key_value, data->com.key.val);
 		break;
-	default:
-		return 0;
 	}
-	return 1;
-}
-
-static void
-sbp2_init(struct fwnode_softc *sc, struct fwnode_device_cap *devcap)
-{
-	struct ieee1394_abuf *ab, *ab2;
-	u_int32_t loc = ((u_int32_t *)devcap->dev_data)[0];
-	
-	devcap->dev_valid = 0;
-	ab = malloc(sizeof(struct ieee1394_abuf), M_1394DATA, M_WAITOK);
-	memset(ab, 0, sizeof(struct ieee1394_abuf));
-	ab->ab_data = malloc(8, M_1394DATA, M_WAITOK);
-	memset(ab->ab_data, 0, 8);
-	ab2 = malloc(sizeof(struct ieee1394_abuf), M_1394DATA, M_WAITOK);
-	memset(ab2, 0, sizeof(struct ieee1394_abuf));
-	
-	loc *= 4;
-	ab->ab_length = 8;
-	ab->ab_req = (struct ieee1394_softc *)sc;
-	ab->ab_retlen = 0;
-	ab->ab_cb = NULL;
-	ab->ab_cbarg = NULL;
-	ab->ab_csr = CSR_BASE + loc;
-	ab->ab_data[0] = htonl((u_int32_t)(SBP2_LOGIN_ORB >> 32));
-	ab->ab_data[1] = (u_int32_t)(SBP2_LOGIN_ORB & 0xffffffff);
-	ab->ab_tcode = IEEE1394_TCODE_WRITE_REQ_BLOCK;
-	
-	ab2->ab_length = 32;
-	ab2->ab_tcode = IEEE1394_TCODE_READ_REQ_BLOCK;
-	ab2->ab_retlen = 0;
-	ab2->ab_data = NULL;
-	ab2->ab_csr = SBP2_LOGIN_ORB;
-	ab2->ab_cb = sbp2_login;
-	ab2->ab_cbarg = devcap;
-	ab2->ab_req = (struct ieee1394_softc *)sc;
-	
-	sc->sc1394_inreg(ab2, FALSE);
-	sc->sc1394_write(ab);
 	return;
 }
 
 static void
-sbp2_login(struct ieee1394_abuf *ab, int rcode)
+sbp2_print_dir(struct p1212_dir *dir)
 {
-	struct fwnode_softc *sc = (struct fwnode_softc *)ab->ab_req;
-	/*    struct fwnode_device_cap *devcap = ab->ab_cbarg;*/
-	struct ieee1394_abuf *statab, *respab;
+	switch(dir->com.key.key_type) {
+	case SBP2_KEYVALUE_Logical_Unit_Directory:
+		printf("Logical Unit\n");
+		break;
+	default:
+		printf("Unknown SBP2 key and value: 0x%08x 0x%08x\n",
+		    dir->com.key.key_value, dir->com.key.val);
+		break;
+	}
+	return;
+}
+
+#define VALID_SBP2_IMM(data) { \
+if (data->com.key.key_type != P1212_KEYTYPE_Immediate) { \
+	DPRINTF(("Unknown SBP2 key and value: 0x%08x 0x%08x\n", \
+		    data->com.key.key_value, data->com.key.val)); \
+	break; \
+} \
+} 
+
+struct sbp2 *
+sbp2_init(struct ieee1394_softc *sc, struct p1212_dir *udir)
+{
+	struct sbp2 *sbp2;
+	struct sbp2_map *sbp2_map;
+	struct p1212_data *data;
+	struct p1212_dir *dir;
+	struct sbp2_lun *lun;
+	u_int32_t *luns;
+	int32_t cmd_spec_id, cmd_set, cmd_set_rev;
+	int i, luncnt, found;
+	
+	sbp2 = malloc(sizeof (struct sbp2), M_1394DATA, M_WAITOK|M_ZERO);
+	luns = NULL;
+	luncnt = 0;
+	
+	sbp2->sc = sc;
+	sc->sc1394_callback.sc1394_reset = sbp2_relogin;
+	sc->sc1394_callback.sc1394_resetarg = sbp2;
+	simple_lock_init(&sbp2->orblist_lock);
+	
+	found = 0;
+	simple_lock(&sbp2_maps_lock);
+	if (!TAILQ_EMPTY(&sbp2_maps)) {
+		TAILQ_FOREACH(sbp2_map, &sbp2_maps, map_list) {
+			if (sbp2_map->sc_bus ==
+			    (struct ieee1394_softc *)sc->sc1394_dev.dv_parent) {
+				sbp2_map->refcnt++;
+				found = 1;
+				sbp2->map = sbp2_map;
+				break;
+			}
+		}
+	}
+	simple_unlock(&sbp2_maps_lock);
+	if (!found) {
+		sbp2_map = malloc(sizeof (struct sbp2_map), M_1394DATA,
+		    M_WAITOK|M_ZERO);
+		simple_lock_init(&sbp2_map->maplock);
+		simple_lock(&sbp2_map->maplock);
+		simple_lock(&sbp2_maps_lock);
+		TAILQ_INSERT_TAIL(&sbp2_maps, sbp2_map, map_list);
+		simple_unlock(&sbp2_maps_lock);
+		sbp2_map->sc_bus =
+		    (struct ieee1394_softc *)sc->sc1394_dev.dv_parent;
+		sbp2_map->refcnt = 1;
+		sbp2->map = sbp2_map;
+		simple_unlock(&sbp2_map->maplock);
+		
+		status_orb.cmd.ab_addr = sbp2_alloc_addr(sbp2);
+		status_orb.cmd.ab_length = SBP2_STATUS_SIZE;
+		status_orb.cmd.ab_req = sc;
+		status_orb.cmd.ab_cb = sbp2_orb_resp;
+		status_orb.cmd.ab_cbarg = &status_orb;
+		status_orb.cmd.ab_tcode = IEEE1394_TCODE_WRITE_REQ_BLOCK;
+		status_orb.state = SBP2_ORB_STATUS_STATE;
+		status_orb.sbp2 = sbp2;
+		sc->sc1394_callback.sc1394_inreg(&status_orb.cmd, 1);
+		
+	} 
+	
+	TAILQ_INIT(&sbp2->luns);
+	CIRCLEQ_INIT(&sbp2->orbs);
+
+	TAILQ_FOREACH(data, &udir->data_root, data) {
+		switch (data->com.key.key_value) {
+		case SBP2_KEYVALUE_Command_Set_Spec_Id:
+			VALID_SBP2_IMM(data);
+			sbp2->cmd_spec_id = data->com.key.val;
+			data->print = sbp2_print_data;
+			break;
+		case SBP2_KEYVALUE_Command_Set:
+			VALID_SBP2_IMM(data);
+			sbp2->cmd_set = data->com.key.val;
+			data->print = sbp2_print_data;
+			break;
+		case SBP2_KEYVALUE_Unit_Characteristics:
+			VALID_SBP2_IMM(data);
+			sbp2->orb_size = (data->com.key.val & 0xff);
+			sbp2->orb_timeout = ((data->com.key.val >> 8) & 0xff);
+			data->print = sbp2_print_data;
+			break;
+		case SBP2_KEYVALUE_Command_Set_Revision:
+			VALID_SBP2_IMM(data);
+			sbp2->cmd_set_rev = data->com.key.val;
+			data->print = sbp2_print_data;
+			break;
+		case SBP2_KEYVALUE_Firmware_Revision:
+			VALID_SBP2_IMM(data);
+			sbp2->firmware_rev = data->com.key.val;
+			data->print = sbp2_print_data;
+			break;
+		case SBP2_KEYVALUE_Reconnect_Timeout:
+			VALID_SBP2_IMM(data);
+			sbp2->max_reconnect = (data->com.key.val & 0xffff);
+			data->print = sbp2_print_data;
+			break;
+		case SBP2_KEYVALUE_Logical_Unit_Number:
+			/*
+			 * This is either lun or management reg offset 
+			 * depending on type. 
+			 */
+
+			if (data->com.key.key_type == P1212_KEYTYPE_Immediate) {
+
+				/* Save until done with data entries. */
+				luncnt++;
+				luns = realloc(luns, sizeof(u_int32_t) * luncnt,
+				    M_1394DATA, M_WAITOK);
+				luns[luncnt - 1] = data->com.key.val;
+				data->print = sbp2_print_data;
+			}
+			if (data->com.key.key_type == P1212_KEYTYPE_Offset) {
+				if (data->com.key.val < SBP2_MIN_MGMT_OFFSET) {
+					DPRINTF(("Management reg offset too "
+					    "small: 0x%08x\n", 
+					    data->com.key.val));
+					break;
+				}
+				sbp2->mgmtreg = (data->com.key.val * 4) + 
+				    CSR_BASE;
+				data->print = sbp2_print_data;
+			}
+			break;
+		case SBP2_KEYVALUE_Unit_Unique_Id:
+			if (data->com.key.key_type != P1212_KEYTYPE_Leaf) {
+				DPRINTF(("Unknown SBP2 key and value: "
+					    "0x%08x 0x%08x\n", \
+					    data->com.key.key_value,
+					    data->com.key.val)); \
+				break;
+			}
+#ifdef DIAGNOSTIC
+			if (data->leafdata == NULL) {
+				printf ("sbp2: No leaf data?\n");
+				break;
+			}
+			if (data->leafdata->len != 2) {
+				printf ("sbp2: Unique ID must be length 2\n");
+				break;
+			}
+#endif
+			memcpy (&sbp2->uniq_id, &data->leafdata->data[0], 4);
+			memcpy (&sbp2->uniq_id+4, &data->leafdata->data[1], 4);
+			data->print = sbp2_print_data;
+			break;
+		default:
+			break;
+		}
+	}
+
+	for (i = 0; i < luncnt; i++) {
+		lun = sbp2_alloc_lun(luns[i], sbp2->orb_size,
+		    sbp2->cmd_spec_id, sbp2->cmd_set, sbp2->cmd_set_rev);
+		sbp2->luncnt++;
+		TAILQ_INSERT_TAIL(&sbp2->luns, lun, lun_list);
+	}
+	free(luns, M_1394DATA);
+	
+	/*
+	 * A little complicated since entries can come in any order in a ROM
+	 * directory.
+	 *
+	 * For each logical unit directory, scan it for overriding command set
+	 * values. Then go back and for each logical unit found setup a lun
+	 * with the appropriate default or overriden cmd_set values.
+	 */
+
+	TAILQ_FOREACH(dir, &udir->subdir_root, dir) {
+		if (dir->com.key.key_value ==
+		    SBP2_KEYVALUE_Logical_Unit_Directory) {
+			dir->print = sbp2_print_dir;
+			cmd_spec_id = -1;
+			cmd_set = -1;
+			cmd_set_rev = -1;
+			TAILQ_FOREACH(data, &dir->data_root, data) {
+				switch(data->com.key.key_value) {
+				case SBP2_KEYVALUE_Command_Set_Spec_Id:
+					cmd_spec_id = data->com.key.val;
+					data->print = sbp2_print_data;
+					break;
+				case SBP2_KEYVALUE_Command_Set:
+					cmd_set = data->com.key.val;
+					data->print = sbp2_print_data;
+					break;
+				case SBP2_KEYVALUE_Command_Set_Revision:
+					cmd_set_rev = data->com.key.val;
+					data->print = sbp2_print_data;
+					break;
+				default:
+					break;
+				}
+			}
+			if (cmd_spec_id == -1)
+				cmd_spec_id = sbp2->cmd_spec_id;
+			if (cmd_set == -1)
+				cmd_set = sbp2->cmd_set;
+			if (cmd_set_rev == -1)
+				cmd_set_rev = sbp2->cmd_set_rev;
+			
+			TAILQ_FOREACH(data, &dir->data_root, data) {
+				if (data->com.key.key_value ==
+				    SBP2_KEYVALUE_Logical_Unit_Number) {
+					lun = sbp2_alloc_lun(data->com.key.val,
+					    sbp2->orb_size, cmd_spec_id,
+					    cmd_set, cmd_set_rev);
+					TAILQ_INSERT_TAIL(&sbp2->luns, lun,
+					    lun_list);
+					sbp2->luncnt++;
+					data->print = sbp2_print_data;
+				}
+			}
+		}
+	}
+	return sbp2;
+}
+
+#undef VALID_SBP2_IMM
+
+static struct sbp2_lun *
+sbp2_alloc_lun(u_int32_t luninfo, u_int32_t orb_size, u_int32_t cmd_spec_id,
+    u_int32_t cmd_set, u_int32_t cmd_set_rev)
+{
+	struct sbp2_lun *lun;
+
+	lun = malloc(sizeof(struct sbp2_lun), M_1394DATA, M_WAITOK|M_ZERO);
+
+	lun->cmd_spec_id = cmd_spec_id;
+	lun->cmd_set = cmd_set;
+	lun->cmd_set_rev = cmd_set_rev;
+
+	lun->lun = luninfo & 0xffff;
+	lun->ordered = ((luninfo >> 22) & 0x1);
+	lun->dev_type = ((luninfo >> 16) & 0x1f);
+	lun->command.ab_data = malloc(orb_size, M_1394DATA, M_WAITOK|M_ZERO);
+	lun->doorbell.ab_data = malloc(orb_size, M_1394DATA, M_WAITOK|M_ZERO);
+	lun->status.ab_data = malloc(orb_size, M_1394DATA, M_WAITOK|M_ZERO);
+	return lun;
+}
+
+static void
+sbp2_login(struct sbp2 *sbp2, struct sbp2_lun *lun)
+{
+	struct sbp2_orb *orb;
+	u_int64_t respaddr, orbaddr;
+
+	orb = sbp2_alloc_orb();
+	
+	lun->command.ab_length = 8;
+	lun->command.ab_req = sbp2->sc;
+	lun->command.ab_cb = sbp2_null_resp;
+	lun->command.ab_cbarg = sbp2;
+	
+	orbaddr = sbp2_alloc_addr(sbp2);
+	lun->command.ab_addr = sbp2->mgmtreg;
+	lun->command.ab_data[0] = IEEE1394_CREATE_ADDR_HIGH(orbaddr);
+	lun->command.ab_data[1] = IEEE1394_CREATE_ADDR_LOW(orbaddr);
+	lun->command.ab_tcode = IEEE1394_TCODE_WRITE_REQ_BLOCK;
+	
+	respaddr = sbp2_alloc_addr(sbp2);
+	orb->cmd.ab_req = sbp2->sc;
+	orb->cmd.ab_length = SBP2_LOGIN_SIZE;
+	orb->cmd.ab_tcode = IEEE1394_TCODE_READ_REQ_BLOCK;
+	orb->cmd.ab_data[0] = 0;
+	orb->cmd.ab_data[1] = 0;
+	orb->cmd.ab_data[2] = IEEE1394_CREATE_ADDR_HIGH(respaddr);
+	orb->cmd.ab_data[3] = IEEE1394_CREATE_ADDR_LOW(respaddr);
+	orb->cmd.ab_data[4] |= SBP2_LOGIN_SET_EXCLUSIVE;
+
+	/* Ask for reasonable reconnect time. */
+	orb->cmd.ab_data[4] |= SBP2_LOGIN_SET_RECONNECT(SBP2_RECONNECT);
+	orb->cmd.ab_data[4] |= lun->loginid;
+	orb->cmd.ab_data[4] = htonl(orb->cmd.ab_data[4]);
+
+	/* Allow max login response. */
+	orb->cmd.ab_data[5] = htonl(SBP2_LOGIN_MAX_RESP);
+	orb->cmd.ab_data[6] = IEEE1394_CREATE_ADDR_HIGH(status_orb.cmd.ab_addr);
+	orb->cmd.ab_data[7] = IEEE1394_CREATE_ADDR_LOW(status_orb.cmd.ab_addr);
+	
+	orb->cmd.ab_addr = orbaddr;
+	orb->cmd.ab_cb = sbp2_login_ans;
+	orb->cmd.ab_cbarg = orb;
+	orb->sbp2 = sbp2;
+	
+	lun->doorbell.ab_addr = respaddr;
+	lun->doorbell.ab_length = SBP2_LOGIN_MAX_RESP;
+	lun->doorbell.ab_req = sbp2->sc;
+	lun->doorbell.ab_cb = sbp2_login_resp;
+	lun->doorbell.ab_cbarg = lun;
+	lun->doorbell.ab_tcode = IEEE1394_TCODE_WRITE_REQ_BLOCK;
+	
+	sbp2->sc->sc1394_callback.sc1394_inreg(&orb->cmd, 0);
+	sbp2->sc->sc1394_callback.sc1394_inreg(&lun->doorbell, 1);
+	sbp2->sc->sc1394_callback.sc1394_write(&lun->command);
+	
+	simple_lock(&sbp2->orblist_lock);
+	orb = sbp2_alloc_orb();
+	orb->cmd.ab_addr = sbp2_alloc_addr(sbp2);
+	orb->cmd.ab_req = sbp2->sc;
+	orb->cmd.ab_tcode = IEEE1394_TCODE_READ_REQ_BLOCK;
+	orb->cmd.ab_length = (sbp2->orb_size * 4);
+	orb->cmd.ab_data[0] = htonl(SBP2_ORB_NULL_POINTER);
+	orb->cmd.ab_data[4] = htonl(SBP2_ORB_FMT_DUMMY_MASK);
+	orb->cmd.ab_subok = 1;
+	orb->cmd.ab_cb = sbp2_orb_resp;
+	orb->cmd.ab_cbarg = orb;
+	orb->sbp2 = sbp2;
+
+	/*
+	 * XXX: Even though the notify bit isn't set some SBP2 devices always
+	 * seem to return status on a dummy orb.
+	 */
+
+	orb->cb = sbp2_status_resp;
+	CIRCLEQ_INSERT_HEAD(&sbp2->orbs, orb, orb_list);
+	simple_unlock(&sbp2->orblist_lock);
+	sbp2->sc->sc1394_callback.sc1394_inreg(&orb->cmd, 0);
+
+	return;
+}
+
+static void
+sbp2_login_ans(struct ieee1394_abuf *ab, int rcode)
+{
+	struct ieee1394_softc *sc = ab->ab_req;
+	struct sbp2_orb *orb = ab->ab_cbarg;
 	
 	/* Got a read so allocate the buffer and write out the response. */
 	
-	if (rcode) {
-#ifdef FW_DEBUG
-		printf ("sbp2_login: Bad return code: %d\n", rcode);
-#endif
-		if (ab->ab_data)
-			free (ab->ab_data, M_1394DATA);
-		free(ab, M_1394DATA);
+	if (orb->state != SBP2_ORB_INIT_STATE) {
+		sbp2_free_orb(orb);
+		return;
 	}
 	
-	sc->sc1394_unreg(ab, FALSE);
+	sc->sc1394_callback.sc1394_unreg(ab, 0);
 
-	ab->ab_data = malloc(32, M_1394DATA, M_WAITOK);
-	respab = malloc(sizeof(struct ieee1394_abuf), M_1394DATA, M_WAITOK);
-	statab = malloc(sizeof(struct ieee1394_abuf), M_1394DATA, M_WAITOK);
-	memset(respab, 0, sizeof(struct ieee1394_abuf));
-	memset(statab, 0, sizeof(struct ieee1394_abuf));
+	if (rcode) {
+		DPRINTF(("sbp2_login: Bad return code: %d\n", rcode));
+		sbp2_free_orb(orb);
+		return;
+	}
 	
-	statab->ab_length = 32;
-	statab->ab_tcode = IEEE1394_TCODE_WRITE_REQ_BLOCK;
-	statab->ab_retlen = 0;
-	statab->ab_data = NULL;
-	statab->ab_csr = SBP2_LOGIN_STATUS;
-	statab->ab_cb = sbp2_login_resp;
-	statab->ab_cbarg = ab->ab_cbarg;
-	statab->ab_req = ab->ab_req;
-	
-	sc->sc1394_inreg(statab, TRUE);
-	
-	respab->ab_length = 16;
-	respab->ab_tcode = IEEE1394_TCODE_WRITE_REQ_BLOCK;
-	respab->ab_retlen = 0;
-	respab->ab_data = NULL;
-	respab->ab_csr = SBP2_LOGIN_RESP;
-	respab->ab_cb = sbp2_login_resp;
-	respab->ab_cbarg = ab->ab_cbarg;
-	respab->ab_req = ab->ab_req;
-	
-	sc->sc1394_inreg(respab, TRUE);
-	
-	memset(ab->ab_data, 0, 32);
-
-	/* Fill in a login packet. First 2 quads are 0 for password. */
-
-	/* Addr for response. */
-	ab->ab_data[2] = htonl(SBP2_LOGIN_RESP >> 32);
-	ab->ab_data[3] = htonl(SBP2_LOGIN_RESP & 0xffffffff);
-
-	/* Set notify and exclusive use bits. Login to lun 0 (XXX) */
-	ab->ab_data[4] = htonl(0x90000000);
-
-	/* Password length (0) and login response length (16) */
-	ab->ab_data[5] = htonl(0x00000010);
-
-	/* Addr for status packet. */
-	ab->ab_data[6] = htonl(SBP2_LOGIN_STATUS >> 32);
-	ab->ab_data[7] = htonl(SBP2_LOGIN_STATUS & 0xffffffff);
-
-	ab->ab_retlen = 0;
-	ab->ab_cb = NULL;
-	ab->ab_cbarg = NULL;
-	ab->ab_tcode = IEEE1394_TCODE_READ_RESP_BLOCK;
-	ab->ab_length = 32;
-	
-	sc->sc1394_write(ab);
+	orb->cmd.ab_tcode = IEEE1394_TCODE_READ_RESP_BLOCK;
+	orb->state = SBP2_ORB_SENT_STATE;
+	sc->sc1394_callback.sc1394_write(&orb->cmd);
+	return;
 }
 
 static void
 sbp2_login_resp(struct ieee1394_abuf *ab, int rcode)
 {
-	struct fwnode_softc *sc = (struct fwnode_softc *)ab->ab_req;
-	struct fwnode_device_cap *devcap = ab->ab_cbarg;
-	u_int64_t csr;
-	int resp, src, status, len, dead;
-#ifdef FW_DEBUG
+	struct ieee1394_softc *sc = ab->ab_req;
+	struct sbp2_lun *lun = ab->ab_cbarg;
+	struct sbp2_orb *orb;
+	struct sbp2 *sbp2 = lun->command.ab_cbarg;
+
+#ifdef SBP2_DEBUG
 	int i;
 #endif
 	
+	sc->sc1394_callback.sc1394_unreg(&lun->doorbell, 1);
+
 	if (rcode) {
 		DPRINTF(("Bad return code: %d\n", rcode));
-		if (ab->ab_data)
-			free(ab->ab_data, M_1394DATA);
-		free(ab, M_1394DATA);
+		return;
 	}
 	
-	DPRINTF(("csr: 0x%016qx\n", (quad_t)ab->ab_csr));
-	for (i = 0; i < (ab->ab_retlen / 4); i++) 
-		DPRINTF(("%d: 0x%08x\n", i, ntohl(ab->ab_data[i])));
+	DPRINTF(("csr: 0x%016qx\n", (quad_t)ab->ab_addr));
+#ifdef SBP2_DEBUG
+	if (sbp2debug > 2) 
+		for (i = 0; i < (ab->ab_retlen / 4); i++) 
+			DPRINTF(("%d: 0x%08x\n", i, ntohl(ab->ab_data[i])));
+#endif
 	
-	if (ab->ab_csr == SBP2_LOGIN_RESP) {
-		devcap->dev_valid |= 0x01;
-		devcap->dev_spec = ntohl(ab->ab_data[0]) & 0xffff;
-		devcap->dev_cmdptr =
-		    (((u_int64_t)(ntohl(ab->ab_data[1]) & 0xfff)) << 32) +
-		    ntohl(ab->ab_data[2]);
-	}
-	if (ab->ab_csr == SBP2_LOGIN_STATUS) {
-		status = ntohl(ab->ab_data[0]);
-		src = (status >> 30) & 0x3;
-		resp = (status >> 28) & 0x3;
-		dead = (status >> 27) & 0x1;
-		len = (status >> 24) & 0x7;
-		csr = ((u_int64_t)(status & 0xffff) << 32) |
-		    ntohl(ab->ab_data[1]);
-		status = (status >> 16) & 0xff;
-		DPRINTF(("status -- src: %d, resp: %d, dead: %d, len: %d, "
-		    "status: %d\nstatus -- csr: 0x%016qx\n", src, resp, dead,
-		    (len + 1) * 4, status, (quad_t)csr));
-		if ((src == 0) && (resp == 0) && (dead == 0) && (status == 0) &&
-		    (csr == SBP2_LOGIN_ORB)) {
-			devcap->dev_valid |= 0x02;
-			DPRINTF(("Got a valid status\n"));
-		}
-	}
-	if (devcap->dev_valid == 0x3) {
-		devcap->name = "fwscsi";
-		sc->sc_child = config_found(&sc->sc_sc1394.sc1394_dev, devcap,
-		    fwnode_print);
-	}
+	lun->cmdreg = SBP2_LOGINRESP_CREATE_CMDREG(ntohl(ab->ab_data[1]),
+	    ntohl(ab->ab_data[2]));
+	if (SBP2_LOGINRESP_GET_LENGTH(ntohl(ab->ab_data[0])) ==
+	    SBP2_LOGIN_MAX_RESP)
+		lun->reconnect =
+		    SBP2_LOGINRESP_GET_RECONNECT(ntohl(ab->ab_data[3]));
+	lun->loginid = SBP2_LOGINRESP_GET_LOGINID(ntohl(ab->ab_data[0]));
+	lun->login_flag = SBP2_LOGGED_IN;
+
+	lun->doorbell.ab_addr = lun->cmdreg + SBP2_CMDREG_AGENT_RESET;
+	lun->doorbell.ab_length = 4;
+	lun->doorbell.ab_req = sc;
+	lun->doorbell.ab_cb = sbp2_enable_status;
+	lun->doorbell.ab_cbarg = lun;
+	lun->doorbell.ab_tcode = IEEE1394_TCODE_WRITE_REQ_QUAD;
+	lun->doorbell.ab_data[0] = 0xffffffff;
 
 	/*
-	 * Leave the handler for status since unsolicited status will get sent
-	 * to the addr specified in the login packet.
+	 * Reset the state engine, plug the address of the first orb into
+	 * the orb pointer and off we go.
 	 */
+
+	lun->command.ab_addr = lun->cmdreg + SBP2_CMDREG_ORB_POINTER;
+	lun->command.ab_length = 8;
+	lun->command.ab_req = sc;
+	lun->command.ab_cb = sbp2_doorbell_reset;
+	lun->command.ab_cbarg = lun;
+	lun->command.ab_tcode = IEEE1394_TCODE_WRITE_REQ_BLOCK;
+	simple_lock(&sbp2->orblist_lock);
+	orb = CIRCLEQ_LAST(&sbp2->orbs);
+	simple_lock(&orb->orb_lock);
+	lun->command.ab_data[0] = IEEE1394_CREATE_ADDR_HIGH(orb->cmd.ab_addr);
+	lun->command.ab_data[1] = IEEE1394_CREATE_ADDR_LOW(orb->cmd.ab_addr);
+	simple_unlock(&orb->orb_lock);
+	simple_unlock(&sbp2->orblist_lock);
+	sc->sc1394_callback.sc1394_write(&lun->doorbell);
+	sc->sc1394_callback.sc1394_write(&lun->command);
+	lun->state = SBP2_STATE_ACTIVE;
+
+	return;
+}
+
+static void
+sbp2_enable_status(struct ieee1394_abuf *ab, int rcode)
+{
+	struct sbp2_lun *lun = ab->ab_cbarg;
+
+	lun->doorbell.ab_cb = sbp2_doorbell_reset;
+	lun->doorbell.ab_addr = lun->cmdreg +
+	    SBP2_CMDREG_UNSOLICITED_STATUS_ENABLE;
+	ab->ab_req->sc1394_callback.sc1394_write(&lun->doorbell);
+	return;
+}
+
+static void
+sbp2_doorbell_reset(struct ieee1394_abuf *ab, int rcode)
+{
+	struct sbp2_lun *lun = ab->ab_cbarg;
+
+	if (lun->cmdreg)
+		lun->doorbell.ab_addr = lun->cmdreg + SBP2_CMDREG_DOORBELL;
+	return;
+}
+
+static void
+sbp2_null_resp(struct ieee1394_abuf *ab, int rcode)
+{
+	return;
+}
+
+static void
+sbp2_status_resp(struct sbp2_status *status, void *arg)
+{
+	DPRINTFN(1, ("Got a status response in sbp2_status_resp\n"));
+	DPRINTFN(1, ("status: resp 0x%04x, sbp_status 0x%04x\n", status->resp,
+		     status->sbp_status));
 	
-	if (ab->ab_csr == SBP2_LOGIN_RESP) {
-		sc->sc1394_unreg(ab, TRUE);
-		free(ab->ab_data, M_1394DATA);
-		free(ab, M_1394DATA);
+}
+
+int
+sbp2_match(struct p1212_dir *udir)
+{
+        struct p1212_key **keys;
+
+	keys = p1212_find(udir, P1212_KEYTYPE_Immediate,
+			  P1212_KEYVALUE_Unit_Spec_Id, 0);
+	if (keys && keys[0]->val == SBP2_UNIT_SPEC_ID) {
+		keys = p1212_find(udir, P1212_KEYTYPE_Immediate,
+				  P1212_KEYVALUE_Unit_Sw_Version, 0);
+		if (keys && keys[0]->val == SBP2_UNIT_SW_VERSION)
+			return 1;
+	}
+	return 0;
+}
+
+static void
+sbp2_logout(struct sbp2 *sbp2, struct sbp2_lun *lun)
+{
+	DPRINTF(("Called sbp2_logout\n"));
+	return;
+}
+
+void
+sbp2_free(struct sbp2 *sbp2)
+{
+	struct sbp2_orb *orb;
+	struct sbp2_lun *lun;
+	
+	while (CIRCLEQ_FIRST(&sbp2->orbs) != (void *)&sbp2->orbs) {
+		orb = CIRCLEQ_FIRST(&sbp2->orbs);
+		CIRCLEQ_REMOVE(&sbp2->orbs, orb, orb_list);
+		(void)sbp2_abort(orb);
+		free (orb, M_1394DATA);
+	}
+	while (TAILQ_FIRST(&sbp2->luns) != NULL) {
+		lun = TAILQ_FIRST(&sbp2->luns);
+		TAILQ_REMOVE(&sbp2->luns, lun, lun_list);
+		if (lun->login_flag)
+			sbp2_logout(sbp2, lun);
+		free (lun, M_1394DATA);
+	}
+	simple_lock(&sbp2_maps_lock);
+	if (!--sbp2->map->refcnt) {
+		TAILQ_REMOVE(&sbp2_maps, sbp2->map, map_list);
+		free(sbp2->map, M_1394DATA);
+	}
+	simple_unlock(&sbp2_maps_lock);
+	sbp2->sc->sc1394_callback.sc1394_unreg(&status_orb.cmd, 1);
+}
+
+#ifdef FW_DEBUG
+extern int fwdebug;
+#endif
+
+void *
+sbp2_runcmd(struct sbp2 *sbp2, struct sbp2_cmd *cmd)
+{
+#ifdef DIAGNOSTIC
+	int found = 0;
+#endif
+	struct sbp2_orb *orb, *toporb;
+	struct ieee1394_softc *psc =
+	    (struct ieee1394_softc *) sbp2->sc->sc1394_dev.dv_parent;
+	struct sbp2_lun *lun;
+	u_int64_t addr;
+	
+#ifdef FW_DEBUG
+	if (sbp2debug > 2)
+		fwdebug = 3;
+#endif
+	TAILQ_FOREACH(lun, &sbp2->luns, lun_list)
+		if (lun->lun == cmd->lun) {
+#ifdef DIAGNOSTIC
+			found = 1;
+#endif
+			break;
+		}
+	
+#ifdef DIAGNOSTIC
+	if (!found) {
+		DPRINTF(("Got a request for an invalid lun: %d\n", cmd->lun));
+		return NULL;
+	}
+	if (cmd->cmdlen % 4) {
+		DPRINTF(("cmdlen is not 4 byte aligned: %d\n", cmd->cmdlen));
+		return NULL;
+	}
+	if ((cmd->cmdlen / 4) > (sbp2->orb_size - 5)) {
+		DPRINTF(("cmdlen too large: len - %d max - %d\n",
+			    cmd->cmdlen / 4, sbp2->orb_size - 5));
+		return NULL;
+	}
+#endif
+	if (lun->login_flag != SBP2_LOGGED_IN)
+		sbp2_login(sbp2, lun);
+	
+	orb = sbp2_alloc_orb();
+
+	orb->cmd.ab_addr = sbp2_alloc_addr(sbp2);
+	orb->cb = cmd->cb;
+	orb->cb_arg = cmd->cb_arg;
+	orb->cmd.ab_subok = 1;
+
+	orb->cmd.ab_req = sbp2->sc;
+	orb->cmd.ab_tcode = IEEE1394_TCODE_READ_REQ_BLOCK;
+	orb->cmd.ab_length = (sbp2->orb_size * 4);
+	orb->cmd.ab_data[0] = htonl(SBP2_ORB_NULL_POINTER);
+	orb->cmd.ab_data[4] |= SBP2_ORB_NOTIFY_MASK;
+
+	if (cmd->rw == SBP_WRITE)
+		orb->cmd.ab_data[4] |= SBP2_ORB_RW_MASK;
+	orb->cmd.ab_data[4] |= SBP2_ORB_SET_SPEED(sbp2->sc->sc1394_link_speed);
+	orb->cmd.ab_data[4] = htonl(orb->cmd.ab_data[4]);
+	
+	memcpy(&orb->cmd.ab_data[5], cmd->cmd, cmd->cmdlen);
+	
+	orb->cmd.ab_cb = sbp2_orb_resp;
+	orb->cmd.ab_cbarg = orb;
+	orb->lun = lun;
+	orb->sbp2 = sbp2;
+	
+	if (cmd->data) {
+		/* XXX: Handle uio and large data chunks via page tables. */
+		if ((cmd->datalen == 0) || (cmd->datalen > 65536))
+			return NULL;
+
+		sbp2_alloc_data_mapping(sbp2, &orb->data_map, cmd->data,
+		    cmd->datalen, cmd->rw);
+		orb->data.ab_req = sbp2->sc;
+		if (cmd->rw == SBP_WRITE)
+			orb->data.ab_tcode = IEEE1394_TCODE_WRITE_REQ_BLOCK;
+		else
+			orb->data.ab_tcode = IEEE1394_TCODE_READ_REQ_BLOCK;
+		orb->data.ab_length = cmd->datalen;
+		orb->data.ab_addr = orb->data_map.fwaddr;
+		orb->data.ab_cb = sbp2_data_resp;
+		orb->data.ab_cbarg = orb;
+		orb->data.ab_data = (u_int32_t *)cmd->data;
+		orb->cmd.ab_data[2] =
+		    IEEE1394_CREATE_ADDR_HIGH(orb->data.ab_addr);
+		orb->cmd.ab_data[2] |=
+		    htonl((0xffc0 | psc->sc1394_node_id) << 16);
+		orb->cmd.ab_data[3] =
+		    IEEE1394_CREATE_ADDR_LOW(orb->data.ab_addr);
+		orb->cmd.ab_data[4] |= htonl(0x00900000);
+		orb->cmd.ab_data[4] |= htonl(cmd->datalen);
+		
+		sbp2->sc->sc1394_callback.sc1394_inreg(&orb->data, 1);
 	}
 	
+	simple_lock(&sbp2->orblist_lock);
+	toporb = CIRCLEQ_FIRST(&sbp2->orbs);
+	simple_lock(&toporb->orb_lock);
+	addr = orb->cmd.ab_addr;
+	toporb->cmd.ab_data[0] = IEEE1394_CREATE_ADDR_HIGH(addr);
+	toporb->cmd.ab_data[1] = IEEE1394_CREATE_ADDR_LOW(addr);
+	if (lun->state == SBP2_STATE_SUSPENDED) {
+		DPRINTFN(1, ("Ringing doorbell\n"));
+		sbp2->sc->sc1394_callback.sc1394_write(&lun->doorbell);
+		lun->state = SBP2_STATE_ACTIVE;
+	} else if (lun->state == SBP2_STATE_DEAD) {
+		toporb = CIRCLEQ_LAST(&sbp2->orbs);
+		lun->doorbell.ab_addr = lun->cmdreg + SBP2_CMDREG_AGENT_RESET;
+		lun->doorbell.ab_cb = sbp2_enable_status;
+		lun->command.ab_data[0] =
+		    IEEE1394_CREATE_ADDR_HIGH(toporb->cmd.ab_addr);
+		lun->command.ab_data[1] =
+		    IEEE1394_CREATE_ADDR_LOW(toporb->cmd.ab_addr);
+		toporb->state = SBP2_ORB_INIT_STATE;
+		sbp2->sc->sc1394_callback.sc1394_write(&lun->doorbell);
+		sbp2->sc->sc1394_callback.sc1394_write(&lun->command);
+	}
+	lun->state = SBP2_STATE_ACTIVE;
+	
+	CIRCLEQ_INSERT_HEAD(&sbp2->orbs, orb, orb_list);
+	simple_unlock(&toporb->orb_lock);
+	simple_unlock(&sbp2->orblist_lock);
+
+	sbp2->sc->sc1394_callback.sc1394_inreg(&orb->cmd, 0);
+	return orb;
+}
+
+#ifdef SBP2_DEBUG
+static void
+sbp2_agent_status(struct ieee1394_abuf *abuf, int status)
+{
+	DPRINTF(("sbp2_agent_status: 0x%08x\n", ntohl(abuf->ab_data[0])));
+	return;
+}
+#endif
+
+static void
+sbp2_orb_resp(struct ieee1394_abuf *abuf, int status)
+{
+	struct sbp2_orb *statorb, *orb, *torb;
+	u_int64_t addr;
+	int found = 0;
+	u_int32_t t;
+	
+	orb = abuf->ab_cbarg;
+	
+	DPRINTFN(1, ("orb addr: 0x%016qx\n", orb->cmd.ab_addr));
+        DPRINTFN(1, ("orb next ptr: 0x%08x%08x\n", ntohl(orb->cmd.ab_data[0]), ntohl(orb->cmd.ab_data[1])));
+	DPRINTFN(1, ("retlen: %d, length: %d\n", abuf->ab_retlen,
+		     abuf->ab_length));
+
+#ifdef SBP2_DEBUG
+        if ((sbp2debug > 3) && orb->lun) {
+		orb->lun->status.ab_addr = 
+		    orb->lun->cmdreg + SBP2_CMDREG_AGENT_STATE;
+		orb->lun->status.ab_cb = sbp2_agent_status;
+		orb->lun->status.ab_cbarg = orb->lun;
+		orb->lun->status.ab_length = 4;
+		orb->lun->status.ab_req = orb->sbp2->sc;
+		orb->lun->status.ab_tcode = IEEE1394_TCODE_READ_REQ_QUAD;
+		orb->sbp2->sc->sc1394_callback.sc1394_read(&orb->lun->status);
+        }
+#endif
+	simple_lock(&orb->orb_lock);
+	switch (orb->state) {
+	case SBP2_ORB_INIT_STATE:
+		orb->state = SBP2_ORB_SENT_STATE;
+		abuf->ab_tcode = IEEE1394_TCODE_READ_RESP_BLOCK;
+		abuf->ab_req->sc1394_callback.sc1394_write(&orb->cmd);
+		if (orb == CIRCLEQ_FIRST(&orb->sbp2->orbs))
+			orb->lun->state = SBP2_STATE_SUSPENDED;
+		break;
+	case SBP2_ORB_SENT_STATE:
+
+		/*
+		 * After it's been sent turn this into a dummy orb. That way
+		 * if the engine stalls and has to be restarted this orb getting
+		 * reread won't cause duplicate work.
+		 */
+		
+		orb->state = SBP2_ORB_STATUS_STATE;
+		orb->cmd.ab_data[4] |= htonl(SBP2_ORB_FMT_DUMMY_MASK);
+		break;
+	case SBP2_ORB_STATUS_STATE:
+
+		/*
+		 * If it's not the fifo addr then just resend the orb out as
+		 * the doorbell was rung to reread.
+		 */
+		
+		if (orb->cmd.ab_addr != status_orb.cmd.ab_addr) {
+			orb->state = SBP2_ORB_NEXT_ORB_STATE;
+			abuf->ab_tcode = IEEE1394_TCODE_READ_RESP_BLOCK;
+			abuf->ab_length = abuf->ab_retlen;
+			abuf->ab_req->sc1394_callback.sc1394_write(&orb->cmd);
+			break;
+		}
+
+		/*
+		 * The orb passed in is the generic status. Find the one it
+		 * goes with so status can be filled in and passed back up.
+		 */
+		
+		addr = ntohl(abuf->ab_data[0]);
+		addr &= 0x0000ffff;
+		addr = (addr << 32);
+		addr |= ntohl(abuf->ab_data[1]);
+		simple_lock(&orb->sbp2->orblist_lock);
+		CIRCLEQ_FOREACH(statorb, &orb->sbp2->orbs, orb_list) {
+			if (addr == statorb->cmd.ab_addr) {
+				found = 1;
+				break;
+			}
+		}
+		simple_unlock(&orb->sbp2->orblist_lock);
+		simple_lock(&statorb->orb_lock);
+		
+		/* XXX: Need to handle unsolicited correctly. */
+		if (SBP2_STATUS_GET_DEAD(ntohl(abuf->ab_data[0]))) {
+			DPRINTFN(1, ("Transitioning to dead state\n"));
+			statorb->lun->state = SBP2_STATE_DEAD;
+		}
+		if (!found) {
+#ifdef SBP2_DEBUG
+			u_int32_t i = ntohl(abuf->ab_data[0]);
+#endif
+			DPRINTF(("Got a status block for an unknown orb addr:"
+			    " 0x%016qx\n", addr));
+			DPRINTF(("resp: 0x%x status: 0x%x len: 0x%x\n",
+				    SBP2_STATUS_GET_RESP(i),
+				    SBP2_STATUS_GET_STATUS(i),
+				    SBP2_STATUS_GET_LEN(i) - 1));
+			return;
+		}
+		statorb->status.resp =
+		    SBP2_STATUS_GET_RESP(ntohl(abuf->ab_data[0]));
+		statorb->status.sbp_status =
+		    SBP2_STATUS_GET_STATUS(ntohl(abuf->ab_data[0]));
+		statorb->status.datalen =
+		    SBP2_STATUS_GET_LEN(ntohl(abuf->ab_data[0])) - 1;
+		if (statorb->status.datalen)
+			statorb->status.data = &abuf->ab_data[2];
+		if ((statorb->status.resp == SBP2_STATUS_TRANSPORT_FAIL) &&
+		    (statorb->status.sbp_status == SBP2_STATUS_UNSPEC_ERROR)) {
+			t = statorb->status.sbp_status;
+			statorb->status.object = SBP2_STATUS_GET_OBJECT(t);
+			statorb->status.bus_error =
+			    SBP2_STATUS_GET_BUS_ERROR(t);
+		}
+		simple_unlock(&statorb->orb_lock);
+		statorb->cb(&statorb->status, statorb->cb_arg);
+		statorb->cb = sbp2_status_resp;
+		
+		/* If it's not the null pointer orb, free it. */
+		if ((statorb->cmd.ab_data[0] == ntohl(SBP2_ORB_NULL_POINTER)))
+			break;
+		orb = statorb;
+		/* Fall through. */
+		
+	case SBP2_ORB_NEXT_ORB_STATE:
+		simple_lock(&orb->sbp2->orblist_lock);
+
+		/*
+		 * Always leave the last orb on the list so the doorbell can
+		 * be rang.
+		 */
+		
+		if (orb != CIRCLEQ_FIRST(&orb->sbp2->orbs)) {
+			orb->cmd.ab_tcode = IEEE1394_TCODE_READ_REQ_BLOCK;
+			orb->sbp2->sc->sc1394_callback.sc1394_unreg(&orb->cmd,
+			    0);
+
+			/*
+			 * Some SBP2 devices do unordered status returns. To
+			 * account for that if this isn't the last on the queue
+			 * make sure the address pointers for the next orb point
+			 * to the correct places.
+			 */
+
+			if (orb != CIRCLEQ_LAST(&orb->sbp2->orbs)) {
+				torb = CIRCLEQ_NEXT(orb, orb_list);
+				torb->cmd.ab_data[0] = orb->cmd.ab_data[0];
+				torb->cmd.ab_data[1] = orb->cmd.ab_data[1];
+			}
+			CIRCLEQ_REMOVE(&orb->sbp2->orbs, orb, orb_list);
+			simple_unlock(&orb->sbp2->orblist_lock);
+			simple_unlock(&orb->orb_lock);
+			sbp2_free_orb(orb);
+			return;
+		}
+		simple_unlock(&orb->sbp2->orblist_lock);
+		break;
+	case SBP2_ORB_FREE_STATE:
+		break;
+	default:
+		panic("Invalid orb state: %d\n", orb->state);
+		break;
+	}
+	simple_unlock(&orb->orb_lock);
+}
+
+static void
+sbp2_data_resp(struct ieee1394_abuf *abuf, int rcode)
+{
+	struct sbp2_orb *orb;
+	u_int32_t offset;
+	unsigned char *addr;
+	
+	orb = abuf->ab_cbarg;
+	
+	simple_lock(&orb->orb_lock);
+
+	addr = orb->data_map.laddr;
+	offset = abuf->ab_addr - orb->data_map.fwaddr;
+	switch (abuf->ab_tcode) {
+	case IEEE1394_TCODE_WRITE_REQ_BLOCK:
+		memcpy(addr + offset, abuf->ab_data, abuf->ab_retlen);
+		free(abuf->ab_data, M_1394DATA);
+		break;
+	case IEEE1394_TCODE_READ_REQ_BLOCK:
+		orb->resp.ab_addr = abuf->ab_addr;
+		orb->resp.ab_tcode = IEEE1394_TCODE_READ_RESP_BLOCK;
+		orb->resp.ab_tlabel = abuf->ab_tlabel;
+		orb->resp.ab_length = abuf->ab_retlen;
+		orb->resp.ab_req = abuf->ab_req;
+		orb->resp.ab_data = (u_int32_t *)(addr + offset);
+		orb->resp.ab_cb = sbp2_data_resp;
+		orb->resp.ab_cbarg = orb;
+		orb->sbp2->sc->sc1394_callback.sc1394_write(&orb->resp);
+		break;
+	case IEEE1394_TCODE_READ_RESP_BLOCK:
+		break;
+	default:
+		panic("Invalid tcode: 0x%0x\n", abuf->ab_tcode);
+	}
+	
+	simple_unlock(&orb->orb_lock);
+}
+
+void *
+sbp2_abort(void *handle)
+{
+	struct sbp2_orb *orb = handle;
+	void *arg;
+	int remove;
+	
+	DPRINTF(("Called sbp2_abort\n"));
+
+	remove = 0;
+	simple_lock(&orb->sbp2->orblist_lock);
+	simple_lock(&orb->orb_lock);
+	arg = orb->cb_arg;
+	if (orb != CIRCLEQ_FIRST(&orb->sbp2->orbs)) {
+		remove = 1;
+		CIRCLEQ_REMOVE(&orb->sbp2->orbs, orb, orb_list);
+	} else {
+		orb->state = SBP2_ORB_INIT_STATE;
+		orb->cmd.ab_data[4] |= htonl(SBP2_ORB_FMT_DUMMY_MASK);
+	}
+	
+	simple_unlock(&orb->orb_lock);
+	simple_unlock(&orb->sbp2->orblist_lock);
+	
+	if (remove)
+		sbp2_free_orb(orb);
+	
+	return arg;
+}
+
+static void
+sbp2_relogin(struct ieee1394_softc *sc, void *arg)
+{
+	struct sbp2 *sbp2 = arg;
+
+	DPRINTF(("Called sbp2_relogin\n"));
+	if (sbp2)
+		return;
+}
+
+void
+sbp2_reset_lun(struct sbp2 *sbp2, u_int16_t lun)
+{
+	DPRINTF(("Called sbp2_reset_lun\n"));
+	return;
+}
+
+static struct sbp2_orb *
+sbp2_alloc_orb(void)
+{
+	struct sbp2_orb *orb = NULL;
+	int i;
+	
+	simple_lock(&sbp2_freeorbs_lock);
+	if (CIRCLEQ_EMPTY(&sbp2_freeorbs)) {
+		DPRINTFN(2, ("Alloc'ing more orbs\n"));
+		for (i = 0; i < SBP2_NUM_ALLOC; i++) {
+			simple_unlock(&sbp2_freeorbs_lock);
+			orb = malloc(sizeof(struct sbp2_orb), M_1394DATA,
+			    M_WAITOK|M_ZERO);
+			orb->cmd.ab_data = malloc(SBP2_MAX_ORB, M_1394DATA,
+			    M_WAITOK|M_ZERO);
+			simple_lock_init(&orb->orb_lock);
+			simple_lock(&sbp2_freeorbs_lock);
+			CIRCLEQ_INSERT_TAIL(&sbp2_freeorbs, orb, orb_list);
+		}
+		simple_unlock(&sbp2_freeorbs_lock);
+		orb = malloc(sizeof(struct sbp2_orb), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
+		orb->cmd.ab_data = malloc(SBP2_MAX_ORB, M_1394DATA,
+		    M_WAITOK|M_ZERO);
+		simple_lock_init(&orb->orb_lock);
+		return orb;
+	} else {
+		orb = CIRCLEQ_FIRST(&sbp2_freeorbs);
+		CIRCLEQ_REMOVE(&sbp2_freeorbs, orb, orb_list);
+	}
+	simple_unlock(&sbp2_freeorbs_lock);
+	orb->state = SBP2_ORB_INIT_STATE;
+	return orb;
+}
+
+static void
+sbp2_free_orb(struct sbp2_orb *orb)
+{
+	simple_lock(&orb->orb_lock);
+	if (orb->data_map.laddr) {
+		orb->sbp2->sc->sc1394_callback.sc1394_unreg(&orb->data, 1);
+		sbp2_free_data_mapping(orb->sbp2, &orb->data_map);
+	}
+	sbp2_free_addr(orb->sbp2, orb->cmd.ab_addr);
+
+	simple_lock(&sbp2_freeorbs_lock);
+	memset(orb->cmd.ab_data, 0, SBP2_MAX_ORB);
+	memset(&orb->status, 0, sizeof(struct sbp2_status));
+	memset(&orb->data_map, 0, sizeof(struct sbp2_mapping));
+	orb->sbp2 = NULL;
+	orb->lun = NULL;
+	orb->cb = NULL;
+	orb->cb_arg = NULL;
+	orb->state = SBP2_ORB_FREE_STATE;
+	CIRCLEQ_INSERT_TAIL(&sbp2_freeorbs, orb, orb_list);
+	simple_unlock(&sbp2_freeorbs_lock);
+	simple_unlock(&orb->orb_lock);
+}
+
+static void
+sbp2_alloc_data_mapping(struct sbp2 *sbp2, struct sbp2_mapping *map,
+    u_char *data, u_int32_t datalen, u_int8_t rw)
+{
+	int byte, bitpos, found;
+	u_int32_t size, count, startbyte, startbit;
+	unsigned char bit;
+	
+	size = datalen / SBP_DATA_BLOCK_SIZE;
+	if (datalen % SBP_DATA_BLOCK_SIZE)
+		size++;
+
+	map->laddr = data;
+	map->size = datalen;
+	map->rw = rw;
+	
+	simple_lock(&sbp2->map->maplock);
+	count = found = 0;
+	startbyte = 0;
+	startbit = 0;
+	for (byte = 0; byte < sizeof(sbp2->map->datamap); byte++) {
+		for (bitpos = 0; bitpos < CHAR_BIT; bitpos++) {
+			bit = 0x1 << bitpos;
+			if ((sbp2->map->datamap[byte] & bit) == 0) {
+				if (++count == size) {
+					found = 1;
+					break;
+				}
+			} else {
+				count = 0;
+				if (bitpos != (CHAR_BIT - 1)) {
+					startbyte = byte;
+					startbit = bitpos + 1;
+				} else {
+					startbyte = byte + 1;
+					startbit = 0;
+				}
+			}
+		}
+		if (found)
+			break;
+	}
+
+	/* Gets a little complicated to handle crossing bytes on the ends. */
+	
+	/* Handle the bits on the front end if they start in the middle */
+	if (startbit) {
+		count = CHAR_BIT - startbit;
+		if (size < count)
+			count = size;
+		for (bitpos = 0; bitpos < count; bitpos++) {
+			bit = 0x1 << (bitpos + startbit);
+			size--;
+			sbp2->map->datamap[startbyte] |= bit;
+		}
+		startbyte++;
+	}
+
+	/* Allocate bytes at a time */
+	if (size) {
+		count = startbyte + (size / CHAR_BIT);
+		for (byte = startbyte; byte < count; byte++) {
+			sbp2->map->datamap[byte] = 0xff;
+			size -= CHAR_BIT;
+		}
+		/* If any bits are left allocate them out of the next byte */
+		if (size) {
+#ifdef DEBUG
+			if (size >= CHAR_BIT)
+				panic ("Too many bits left to allocate: %d",
+				    size);
+#endif
+			for (bitpos = 0; bitpos < size; bitpos++) {
+				bit = 0x1 << bitpos;
+				sbp2->map->datamap[byte] |= bit;
+			}
+		}
+	}
+
+	/* Adjust back one if the bits started 1 byte back */
+	if (startbit)
+		startbyte--;
+	map->fwaddr = SBP_DATA_BEG +
+	    (((startbyte * CHAR_BIT) + startbit) * SBP_DATA_BLOCK_SIZE);
+
+	simple_unlock(&sbp2->map->maplock);
+}
+
+static u_int64_t
+sbp2_alloc_addr(struct sbp2 *sbp2)
+{
+	u_int64_t addr;
+	int byte, bitpos, found;
+	unsigned char bit;
+	
+	found = 0;
+	simple_lock(&sbp2->map->maplock);
+
+	addr = SBP_ADDR_BEG + (sbp2->map->next_addr * SBP_ADDR_BLOCK_SIZE);
+	byte = sbp2->map->next_addr / CHAR_BIT;
+	bitpos = sbp2->map->next_addr % CHAR_BIT;
+	bit = 0x1 << bitpos;
+	
+#ifdef DIAGNOSTIC
+	if (sbp2->map->addrmap[byte] & bit)
+		panic("Already allocated address 0x%016qx\n", addr);
+#endif
+	sbp2->map->addrmap[byte] |= bit;
+
+	for (; byte < (sizeof(sbp2->map->addrmap) - byte); byte++) {
+		for (bitpos = 0; bitpos < CHAR_BIT; bitpos++) {
+			bit = 0x1 << bitpos;
+			if ((sbp2->map->addrmap[byte] & bit) == 0) {
+				found = 1;
+				break;
+			}
+		}
+		if (found)
+			break;
+	}
+	sbp2->map->next_addr = (byte * CHAR_BIT) + bitpos;
+	
+	simple_unlock(&sbp2->map->maplock);
+	
+#ifdef DIAGNOSTIC
+	if (sbp2->map->next_addr >= SBP_ADDR_MAX)
+		panic("XXX: Used 64k of sbp addr's.\n");
+#endif
+	return addr;
+}
+
+static void
+sbp2_free_data_mapping(struct sbp2 *sbp2, struct sbp2_mapping *map)
+{
+	int byte, bitpos;
+	u_int32_t size, count, startbyte, off, startbit;
+	unsigned char bit;
+
+	simple_lock(&sbp2->map->maplock);
+
+        size = map->size / SBP_DATA_BLOCK_SIZE;
+        if (map->size % SBP_DATA_BLOCK_SIZE)
+                size++;
+	off = ((int)(map->fwaddr - SBP_DATA_BEG) / SBP_DATA_BLOCK_SIZE);
+	
+	startbyte = off / CHAR_BIT;
+	startbit = off % CHAR_BIT;
+
+	/*
+	 * 3 parts. Any bits in the middle of the first byte.
+	 * Then bytes until whole bytes are done.
+	 * Finally, any left over remaining bits.
+	 */
+
+	if (startbit) {
+		count = CHAR_BIT - startbit;
+		if (size < count)
+			count = size;
+		for (bitpos = 0; bitpos < count; bitpos++) {
+			bit = 0x1 << (bitpos + startbit);
+#ifdef DIAGNOSTIC
+			if (!(sbp2->map->datamap[startbyte] & bit))
+				panic("Freeing addr not allocated: 0x%016qx",
+				    map->fwaddr);
+#endif
+			bit = ~bit;
+			size--;
+			sbp2->map->datamap[startbyte] &= bit;
+		}
+		startbyte++;
+	}
+
+	if (size) {
+		count = startbyte + (size / CHAR_BIT);
+		for (byte = startbyte; byte < count; byte++) {
+#ifdef DIAGNOSTIC
+			if (!(sbp2->map->datamap[byte]))
+				panic("Freeing addr not allocated: 0x%016qx", 
+				    map->fwaddr);
+#endif
+			size -= CHAR_BIT;
+			sbp2->map->datamap[byte] = 0;
+		}
+		/* If any bits are left free them out of the next byte */
+		if (size) {
+#ifdef DEBUG
+			if (size >= CHAR_BIT)
+				panic ("Too many bits left to free: %d", size);
+#endif
+			for (bitpos = 0; bitpos < size; bitpos++) {
+				bit = 0x1 << bitpos;
+#ifdef DIAGNOSTIC
+				if (!(sbp2->map->datamap[byte] & bit))
+					panic("Freeing addr not allocated: "
+					    "0x%016qx", map->fwaddr);
+#endif
+				bit = ~bit;
+				sbp2->map->datamap[byte] &= bit;
+			}
+		}
+	}
+	if (startbit)
+		startbyte--;
+
+	simple_unlock(&sbp2->map->maplock);
+
+	return;
+}
+
+static void
+sbp2_free_addr(struct sbp2 *sbp2, u_int64_t addr)
+{
+	int off, byte, bitpos;
+	unsigned char bit;
+
+	off = ((int)(addr - SBP_ADDR_BEG) / SBP_ADDR_BLOCK_SIZE);
+	
+	byte = off / CHAR_BIT;
+	bitpos = off % CHAR_BIT;
+	bit = 0x1 << bitpos;
+
+	simple_lock(&sbp2->map->maplock);
+#ifdef DIAGNOSTIC
+	if (!(sbp2->map->addrmap[byte] & bit))
+		panic("Freeing addr not allocated: 0x%016qx\n", addr);
+#endif
+	bit = ~bit;
+	sbp2->map->addrmap[byte] &= bit;
+	if (sbp2->map->next_addr > off)
+		sbp2->map->next_addr = off;
+	simple_unlock(&sbp2->map->maplock);
 }

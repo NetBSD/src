@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.c,v 1.8.4.5 2002/06/20 03:44:22 nathanw Exp $	*/
+/*	$NetBSD: rbus.c,v 1.8.4.6 2002/12/11 06:37:49 thorpej Exp $	*/
 /*
  * Copyright (c) 1999 and 2000
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.8.4.5 2002/06/20 03:44:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.8.4.6 2002/12/11 06:37:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,14 +124,14 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 
 		if (decodesize == align) {
 			if(extent_alloc_subregion(rbt->rb_ext, substart,
-			    subend, size, align, 0, exflags, (u_long *)&result)) {
+			    subend, size, align, 0, exflags, (void *)&result)) {
 				return 1;
 			}
 		} else if (decodesize == 0) {
 			/* maybe, the resister is overflowed. */
       
 			if (extent_alloc_subregion(rbt->rb_ext, addr,
-			    addr + size, size, 1, 0, exflags, (u_long *)&result)) {
+			    addr + size, size, 1, 0, exflags, (void *)&result)) {
 				return 1;
 			}
 		} else {
@@ -149,7 +149,7 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 			     search_addr += boundary) {
 				val = extent_alloc_subregion(rbt->rb_ext,
 				    search_addr, search_addr + size, size,
-				    align, 0, exflags, (u_long *)&result);
+				    align, 0, exflags, (void *)&result);
 				DPRINTF(("rbus: trying [%lx:%lx] %lx\n",
 				    search_addr, search_addr + size, align));
 				if (val == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.12.2.9 2002/10/18 02:44:05 nathanw Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.12.2.10 2002/12/11 06:38:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.12.2.9 2002/10/18 02:44:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.12.2.10 2002/12/11 06:38:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -522,7 +522,7 @@ espattach(esc, gluep)
 	}
 
 	/* Establish interrupt channel */
-	icookie = bus_intr_establish(esc->sc_bustag, esc->sc_pri, IPL_BIO, 0,
+	icookie = bus_intr_establish(esc->sc_bustag, esc->sc_pri, IPL_BIO,
 				     ncr53c9x_intr, sc);
 
 	/* register interrupt stats */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.24.2.13 2002/11/11 22:11:07 nathanw Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.24.2.14 2002/12/11 06:38:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.24.2.13 2002/11/11 22:11:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.24.2.14 2002/12/11 06:38:17 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1264,7 +1264,7 @@ SIP_DECL(start)(struct ifnet *ifp)
 		/*
 		 * Initialize the transmit descriptors.
 		 */
-		for (nexttx = sc->sc_txnext, seg = 0;
+		for (nexttx = lasttx = sc->sc_txnext, seg = 0;
 		     seg < dmamap->dm_nsegs;
 		     seg++, nexttx = SIP_NEXTTX(nexttx)) {
 			/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.17.2.20 2002/11/11 22:10:09 nathanw Exp $	*/
+/*	$NetBSD: wi.c,v 1.17.2.21 2002/12/11 06:38:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.17.2.20 2002/11/11 22:10:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.17.2.21 2002/12/11 06:38:03 thorpej Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -254,6 +254,13 @@ wi_attach(struct wi_softc *sc)
 			setbit(ic->ic_chan_avail, i + 1);
 	}
 
+	sc->sc_dbm_adjust = 100; /* default */
+
+	if (sc->sc_firmware_type == WI_INTERSIL &&
+	    wi_read_rid(sc, WI_RID_DBM_ADJUST, &val, &buflen) == 0) {
+		sc->sc_dbm_adjust = le16toh(val);
+	}
+
 	/* Find default IBSS channel */
 	buflen = sizeof(val);
 	if (wi_read_rid(sc, WI_RID_OWN_CHNL, &val, &buflen) == 0)
@@ -287,6 +294,7 @@ wi_attach(struct wi_softc *sc)
 		break;
 
 	case WI_INTERSIL:
+		sc->sc_flags |= WI_FLAGS_HAS_FRAGTHR;
 		sc->sc_flags |= WI_FLAGS_HAS_ROAMING;
 		sc->sc_flags |= WI_FLAGS_HAS_SYSSCALE;
 		if (sc->sc_sta_firmware_ver >= 800) {
@@ -324,6 +332,7 @@ wi_attach(struct wi_softc *sc)
 
 	sc->sc_max_datalen = 2304;
 	sc->sc_rts_thresh = 2347;
+	sc->sc_frag_thresh = 2346;
 	sc->sc_system_scale = 1;
 	sc->sc_cnfauthmode = IEEE80211_AUTH_OPEN;
 	sc->sc_roaming_mode = 1;
@@ -565,6 +574,8 @@ wi_init(struct ifnet *ifp)
 	/* not yet common 802.11 configuration */
 	wi_write_val(sc, WI_RID_MAX_DATALEN, sc->sc_max_datalen);
 	wi_write_val(sc, WI_RID_RTS_THRESH, sc->sc_rts_thresh);
+	if (sc->sc_flags & WI_FLAGS_HAS_FRAGTHR)
+		wi_write_val(sc, WI_RID_FRAG_THRESH, sc->sc_frag_thresh);
 
 	/* driver specific 802.11 configuration */
 	if (sc->sc_flags & WI_FLAGS_HAS_SYSSCALE)
@@ -1419,17 +1430,8 @@ wi_get_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case WI_RID_ENCRYPTION:
 	case WI_RID_TX_CRYPT_KEY:
 	case WI_RID_DEFLT_CRYPT_KEYS:
-		return ieee80211_cfgget(ifp, cmd, data);
-
 	case WI_RID_TX_RATE:
-		if (ic->ic_fixed_rate < 0)
-			wreq.wi_val[0] = htole16(3);	/*XXX*/
-		else
-			wreq.wi_val[0] = htole16(
-			    (ic->ic_sup_rates[ic->ic_fixed_rate] &
-			    IEEE80211_RATE_VAL) / 2);
-		len = sizeof(u_int16_t);
-		break;
+		return ieee80211_cfgget(ifp, cmd, data);
 
 	case WI_RID_MICROWAVE_OVEN:
 		if (sc->sc_enabled && (sc->sc_flags & WI_FLAGS_HAS_MOR)) {
@@ -1458,6 +1460,16 @@ wi_get_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 		wreq.wi_val[0] = htole16(sc->sc_system_scale);
+		len = sizeof(u_int16_t);
+		break;
+
+	case WI_RID_FRAG_THRESH:
+		if (sc->sc_enabled && (sc->sc_flags & WI_FLAGS_HAS_FRAGTHR)) {
+			error = wi_read_rid(sc, wreq.wi_type, wreq.wi_val,
+			    &len);
+			break;
+		}
+		wreq.wi_val[0] = htole16(sc->sc_frag_thresh);
 		len = sizeof(u_int16_t);
 		break;
 
@@ -1555,6 +1567,7 @@ wi_set_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case WI_RID_MICROWAVE_OVEN:
 	case WI_RID_ROAMING_MODE:
 	case WI_RID_SYSTEM_SCALE:
+	case WI_RID_FRAG_THRESH:
 		if (wreq.wi_type == WI_RID_MICROWAVE_OVEN &&
 		    (sc->sc_flags & WI_FLAGS_HAS_MOR) == 0)
 			break;
@@ -1563,6 +1576,9 @@ wi_set_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		if (wreq.wi_type == WI_RID_SYSTEM_SCALE &&
 		    (sc->sc_flags & WI_FLAGS_HAS_SYSSCALE) == 0)
+			break;
+		if (wreq.wi_type == WI_RID_FRAG_THRESH &&
+		    (sc->sc_flags & WI_FLAGS_HAS_FRAGTHR) == 0)
 			break;
 		/* FALLTHROUGH */
 	case WI_RID_RTS_THRESH:
@@ -1575,6 +1591,9 @@ wi_set_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 				break;
 		}
 		switch (wreq.wi_type) {
+		case WI_RID_FRAG_THRESH:
+			sc->sc_frag_thresh = le16toh(wreq.wi_val[0]);
+			break;
 		case WI_RID_RTS_THRESH:
 			sc->sc_rts_thresh = le16toh(wreq.wi_val[0]);
 			break;
@@ -1672,6 +1691,15 @@ wi_write_txrate(struct wi_softc *sc)
 			rate = 3;	/* auto */
 		break;
 	default:
+		/* Choose a bit according to this table.
+		 *
+		 * bit | data rate
+		 * ----+-------------------
+		 * 0   | 1Mbps
+		 * 1   | 2Mbps
+		 * 2   | 5.5Mbps
+		 * 3   | 11Mbps
+		 */
 		for (i = 8; i > 0; i >>= 1) {
 			if (rate >= i)
 				break;

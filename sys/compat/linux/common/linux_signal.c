@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.31.2.8 2002/08/01 02:44:18 nathanw Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.31.2.9 2002/12/11 06:37:24 thorpej Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.31.2.8 2002/08/01 02:44:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.31.2.9 2002/12/11 06:37:24 thorpej Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -226,14 +226,14 @@ linux_old_to_native_sigaction(bsa, lsa)
 	struct sigaction *bsa;
 	const struct linux_old_sigaction *lsa;
 {
-	bsa->sa_handler = lsa->sa_handler;
-	linux_old_to_native_sigset(&bsa->sa_mask, &lsa->sa_mask);
-	bsa->sa_flags = linux_to_native_sigflags(lsa->sa_flags);
+	bsa->sa_handler = lsa->linux_sa_handler;
+	linux_old_to_native_sigset(&bsa->sa_mask, &lsa->linux_sa_mask);
+	bsa->sa_flags = linux_to_native_sigflags(lsa->linux_sa_flags);
 #ifndef __alpha__
 /*
  * XXX: On the alpha sa_restorer is elsewhere.
  */
-	if (lsa->sa_restorer != NULL)
+	if (lsa->linux_sa_restorer != NULL)
 		DPRINTF(("linux_old_to_native_sigaction: "
 		    "sa_restorer ignored\n"));
 #endif
@@ -244,11 +244,11 @@ native_to_linux_old_sigaction(lsa, bsa)
 	struct linux_old_sigaction *lsa;
 	const struct sigaction *bsa;
 {
-	lsa->sa_handler = bsa->sa_handler;
-	native_to_linux_old_sigset(&lsa->sa_mask, &bsa->sa_mask);
-	lsa->sa_flags = native_to_linux_sigflags(bsa->sa_flags);
+	lsa->linux_sa_handler = bsa->sa_handler;
+	native_to_linux_old_sigset(&lsa->linux_sa_mask, &bsa->sa_mask);
+	lsa->linux_sa_flags = native_to_linux_sigflags(bsa->sa_flags);
 #ifndef __alpha__
-	lsa->sa_restorer = NULL;
+	lsa->linux_sa_restorer = NULL;
 #endif
 }
 
@@ -258,11 +258,11 @@ linux_to_native_sigaction(bsa, lsa)
 	struct sigaction *bsa;
 	const struct linux_sigaction *lsa;
 {
-	bsa->sa_handler = lsa->sa_handler;
-	linux_to_native_sigset(&bsa->sa_mask, &lsa->sa_mask);
-	bsa->sa_flags = linux_to_native_sigflags(lsa->sa_flags);
+	bsa->sa_handler = lsa->linux_sa_handler;
+	linux_to_native_sigset(&bsa->sa_mask, &lsa->linux_sa_mask);
+	bsa->sa_flags = linux_to_native_sigflags(lsa->linux_sa_flags);
 #ifndef __alpha__
-	if (lsa->sa_restorer != 0)
+	if (lsa->linux_sa_restorer != 0)
 		DPRINTF(("linux_to_native_sigaction: sa_restorer ignored\n"));
 #endif
 }
@@ -272,11 +272,11 @@ native_to_linux_sigaction(lsa, bsa)
 	struct linux_sigaction *lsa;
 	const struct sigaction *bsa;
 {
-	lsa->sa_handler = bsa->sa_handler;
-	native_to_linux_sigset(&lsa->sa_mask, &bsa->sa_mask);
-	lsa->sa_flags = native_to_linux_sigflags(bsa->sa_flags);
+	lsa->linux_sa_handler = bsa->sa_handler;
+	native_to_linux_sigset(&lsa->linux_sa_mask, &bsa->sa_mask);
+	lsa->linux_sa_flags = native_to_linux_sigflags(bsa->sa_flags);
 #ifndef __alpha__
-	lsa->sa_restorer = NULL;
+	lsa->linux_sa_restorer = NULL;
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.101.2.12 2002/10/18 02:44:29 nathanw Exp $	*/
+/*	$NetBSD: ohci.c,v 1.101.2.13 2002/12/11 06:38:49 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.101.2.12 2002/10/18 02:44:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.101.2.13 2002/12/11 06:38:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -636,6 +636,8 @@ ohci_free_sitd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 		panic("ohci_free_sitd: sitd=%p not done", sitd);
 		return;
 	}
+	/* Warn double free */
+	sitd->isdone = 0;
 #endif
 
 	s = splusb();
@@ -1275,9 +1277,11 @@ ohci_softintr(void *v)
 	ohci_soft_itd_t *sitd, *sidone, *sitdnext;
 	ohci_soft_td_t  *std,  *sdone,  *stdnext;
 	usbd_xfer_handle xfer;
+	struct ohci_pipe *opipe;
 	int len, cc, s;
+	int i, j, actlen, iframes, uedir;
 
-	DPRINTFN(10,("ohci_softintr: enter\n:"));
+	DPRINTFN(10,("ohci_softintr: enter\n"));
 
 	sc->sc_bus.intr_context++;
 
@@ -1331,7 +1335,9 @@ ohci_softintr(void *v)
 				xfer->actlen += len;
 			if (std->flags & OHCI_CALL_DONE) {
 				xfer->status = USBD_NORMAL_COMPLETION;
+				s = splusb();
 				usb_transfer_complete(xfer);
+				splx(s);
 			}
 			ohci_free_std(sc, std);
 		} else {
@@ -1341,8 +1347,7 @@ ohci_softintr(void *v)
 			 * the endpoint.
 			 */
 			ohci_soft_td_t *p, *n;
-			struct ohci_pipe *opipe =
-				(struct ohci_pipe *)xfer->pipe;
+			opipe = (struct ohci_pipe *)xfer->pipe;
 
 			DPRINTFN(15,("ohci_process_done: error cc=%d (%s)\n",
 			  OHCI_TD_GET_CC(le32toh(std->td.td_flags)),
@@ -1362,7 +1367,9 @@ ohci_softintr(void *v)
 				xfer->status = USBD_STALLED;
 			else
 				xfer->status = USBD_IOERROR;
+			s = splusb();
 			usb_transfer_complete(xfer);
+			splx(s);
 		}
 	}
 
@@ -1392,22 +1399,50 @@ ohci_softintr(void *v)
 			printf("ohci_softintr: sitd=%p is done\n", sitd);
 		sitd->isdone = 1;
 #endif
-		cc = OHCI_ITD_GET_CC(le32toh(sitd->itd.itd_flags));
-		if (cc == OHCI_CC_NO_ERROR) {
-			/* XXX compute length for input */
-			struct ohci_pipe *opipe =
-				(struct ohci_pipe *)xfer->pipe;
-			if (sitd->flags & OHCI_CALL_DONE) {
-				opipe->u.iso.inuse -= xfer->nframes;
-				/* XXX update frlengths with actual length */
-				/* XXX xfer->actlen = actlen; */
-				xfer->status = USBD_NORMAL_COMPLETION;
-				usb_transfer_complete(xfer);
+		if (sitd->flags & OHCI_CALL_DONE) {
+			ohci_soft_itd_t *next;
+
+			opipe = (struct ohci_pipe *)xfer->pipe;
+			opipe->u.iso.inuse -= xfer->nframes;
+			uedir = UE_GET_DIR(xfer->pipe->endpoint->edesc->
+			    bEndpointAddress);
+			xfer->status = USBD_NORMAL_COMPLETION;
+			actlen = 0;
+			for (i = 0, sitd = xfer->hcpriv;;
+			    sitd = next) {
+				next = sitd->nextitd;
+				if (OHCI_ITD_GET_CC(le32toh(sitd->
+				    itd.itd_flags)) != OHCI_CC_NO_ERROR)
+					xfer->status = USBD_IOERROR;
+				/* For input, update frlengths with actual */
+				/* XXX anything necessary for output? */
+				if (uedir == UE_DIR_IN &&
+				    xfer->status == USBD_NORMAL_COMPLETION) {
+					iframes = OHCI_ITD_GET_FC(le32toh(
+					    sitd->itd.itd_flags));
+					for (j = 0; j < iframes; i++, j++) {
+						len = le16toh(sitd->
+						    itd.itd_offset[j]);
+						len =
+						    (OHCI_ITD_PSW_GET_CC(len) ==
+						    OHCI_CC_NOT_ACCESSED) ? 0 :
+						    OHCI_ITD_PSW_LENGTH(len);
+						xfer->frlengths[i] = len;
+						actlen += len;
+					}
+				}
+				if (sitd->flags & OHCI_CALL_DONE)
+					break;
+				ohci_free_sitd(sc, sitd);
 			}
-		} else {
-			/* XXX Do more */
-			xfer->status = USBD_IOERROR;
+			ohci_free_sitd(sc, sitd);
+			if (uedir == UE_DIR_IN &&
+			    xfer->status == USBD_NORMAL_COMPLETION)
+				xfer->actlen = actlen;
+
+			s = splusb();
 			usb_transfer_complete(xfer);
+			splx(s);
 		}
 	}
 
@@ -1748,7 +1783,7 @@ ohci_rem_ed(ohci_soft_ed_t *sed, ohci_soft_ed_t *head)
 	SPLUSBCHECK;
 
 	/* XXX */
-	for (p = head; p == NULL && p->next != sed; p = p->next)
+	for (p = head; p != NULL && p->next != sed; p = p->next)
 		;
 	if (p == NULL)
 		panic("ohci_rem_ed: ED not found");
@@ -2103,6 +2138,8 @@ ohci_close_pipe(usbd_pipe_handle pipe, ohci_soft_ed_t *head)
 	}
 #endif
 	ohci_rem_ed(sed, head);
+	/* Make sure the host controller is not touching this ED */
+	usb_delay_ms(&sc->sc_bus, 1);
 	splx(s);
 	ohci_free_sed(sc, opipe->sed);
 }
@@ -3239,6 +3276,7 @@ ohci_device_isoc_enter(usbd_xfer_handle xfer)
 
 	s = splusb();
 	opipe->tail.itd = nsitd;
+	sed->ed.ed_flags &= htole32(~OHCI_ED_SKIP);
 	sed->ed.ed_tailp = htole32(nsitd->physaddr);
 	splx(s);
 
@@ -3334,20 +3372,9 @@ ohci_device_isoc_abort(usbd_xfer_handle xfer)
 void
 ohci_device_isoc_done(usbd_xfer_handle xfer)
 {
-	struct ohci_pipe *opipe = (struct ohci_pipe *)xfer->pipe;
-	ohci_softc_t *sc = (ohci_softc_t *)opipe->pipe.device->bus;
-	ohci_soft_itd_t *sitd, *nsitd;
 
 	DPRINTFN(1,("ohci_device_isoc_done: xfer=%p\n", xfer));
 
-	for (sitd = xfer->hcpriv;
-	     !(sitd->flags & OHCI_CALL_DONE);
-	     sitd = nsitd) {
-		nsitd = sitd->nextitd;
-		DPRINTFN(1,("ohci_device_isoc_done: free sitd=%p\n", sitd));
-		ohci_free_sitd(sc, sitd);
-	}
-	ohci_free_sitd(sc, sitd);
 	xfer->hcpriv = NULL;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.3.20.4 2002/10/18 02:43:57 nathanw Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.3.20.5 2002/12/11 06:38:38 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.3.20.4 2002/10/18 02:43:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.3.20.5 2002/12/11 06:38:38 thorpej Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -63,7 +63,10 @@ rf_MakeReconControl(reconDesc, frow, fcol, srow, scol)
 	RF_ReconCtrl_t *reconCtrlPtr;
 	RF_ReconBuffer_t *rbuf;
 	RF_LayoutSW_t *lp;
-	int     retcode, rc;
+#if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
+	int     retcode;
+#endif
+	int rc;
 	RF_RowCol_t i;
 
 	lp = raidPtr->Layout.map;
@@ -101,6 +104,7 @@ rf_MakeReconControl(reconDesc, frow, fcol, srow, scol)
 		numSpareRUs = 0;
 	}
 
+#if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
 	/*
          * Not all distributed sparing archs need dynamic mappings
          */
@@ -110,6 +114,7 @@ rf_MakeReconControl(reconDesc, frow, fcol, srow, scol)
 			RF_PANIC();	/* XXX fix this */
 		}
 	}
+#endif
 	/* make the reconstruction map */
 	reconCtrlPtr->reconMap = rf_MakeReconMap(raidPtr, (int) (layoutPtr->SUsPerRU * layoutPtr->sectorsPerStripeUnit),
 	    raidPtr->sectorsPerDisk, numSpareRUs);
@@ -143,7 +148,6 @@ rf_MakeReconControl(reconDesc, frow, fcol, srow, scol)
 		return (NULL);
 	}
 	reconCtrlPtr->fullBufferList = NULL;
-	reconCtrlPtr->priorityList = NULL;
 	reconCtrlPtr->floatingRbufs = NULL;
 	reconCtrlPtr->committedRbufs = NULL;
 	for (i = 0; i < raidPtr->numFloatingReconBufs; i++) {
@@ -331,12 +335,6 @@ rf_CheckFloatingRbufCount(raidPtr, dolock)
 		if (rbuf->type == RF_RBUF_TYPE_FLOATING)
 			sum++;
 	}
-	for (rbuf = raidPtr->reconControl[frow]->priorityList; rbuf; 
-	     rbuf = rbuf->next) {
-		if (rbuf->type == RF_RBUF_TYPE_FLOATING)
-			sum++;
-	}
-
 	RF_ASSERT(sum == raidPtr->numFloatingReconBufs);
 
 	if (dolock)

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.62.2.6 2002/11/11 22:09:30 nathanw Exp $	*/
+/*	$NetBSD: i82365.c,v 1.62.2.7 2002/12/11 06:37:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.62.2.6 2002/11/11 22:09:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.62.2.7 2002/12/11 06:37:53 thorpej Exp $");
 
 #define	PCICDEBUG
 
@@ -119,6 +119,7 @@ pcic_vendor(h)
 	struct pcic_handle *h;
 {
 	int reg;
+	int vendor;
 
 	/*
 	 * the chip_id of the cirrus toggles between 11 and 00 after a write.
@@ -141,10 +142,47 @@ pcic_vendor(h)
 
 	reg = pcic_read(h, PCIC_IDENT);
 
-	if ((reg & PCIC_IDENT_REV_MASK) == PCIC_IDENT_REV_I82365SLR0)
-		return (PCIC_VENDOR_I82365SLR0);
-	else
-		return (PCIC_VENDOR_I82365SLR1);
+	switch (reg) {
+	case PCIC_IDENT_ID_INTEL0:
+		vendor = PCIC_VENDOR_I82365SLR0;
+		break;
+	case PCIC_IDENT_ID_INTEL1:
+		vendor = PCIC_VENDOR_I82365SLR1;
+		break;
+	case PCIC_IDENT_ID_INTEL2:
+		vendor = PCIC_VENDOR_I82365SL_DF;
+		break;
+	case PCIC_IDENT_ID_IBM1:
+	case PCIC_IDENT_ID_IBM2:
+		vendor = PCIC_VENDOR_IBM;
+		break;
+	case PCIC_IDENT_ID_IBM3:
+		vendor = PCIC_VENDOR_IBM_KING;
+		break;
+	default:
+		vendor = PCIC_VENDOR_UNKNOWN;
+		break;
+	}
+
+	if (vendor == PCIC_VENDOR_I82365SLR0 ||
+	    vendor == PCIC_VENDOR_I82365SLR1) {
+		/*
+		 * check for Ricoh RF5C[23]96
+		 */
+		reg = pcic_read(h, PCIC_RICOH_REG_CHIP_ID);
+		switch (reg) {
+		case PCIC_RICOH_CHIP_ID_5C296:
+			vendor = PCIC_VENDOR_RICOH_5C296;
+			break;
+		case PCIC_RICOH_CHIP_ID_5C396:
+			vendor = PCIC_VENDOR_RICOH_5C396;
+			break;
+		default:
+			break;
+		}
+	}
+
+	return ( vendor );
 }
 
 char *
@@ -160,6 +198,16 @@ pcic_vendor_to_string(vendor)
 		return ("Cirrus PD6710");
 	case PCIC_VENDOR_CIRRUS_PD672X:
 		return ("Cirrus PD672X");
+	case PCIC_VENDOR_I82365SL_DF:
+		return ("Intel 82365SL-DF");
+	case PCIC_VENDOR_RICOH_5C296:
+		return ("Ricoh RF5C296");
+	case PCIC_VENDOR_RICOH_5C396:
+		return ("Ricoh RF5C396");
+	case PCIC_VENDOR_IBM:
+		return ("IBM PCIC");
+	case PCIC_VENDOR_IBM_KING:
+		return ("IBM KING");
 	}
 
 	return ("Unknown controller");
@@ -1361,6 +1409,7 @@ pcic_chip_socket_enable(pch)
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
 	int cardtype, win, intr, pwr;
+	int vcc_3v, regtmp;
 #if defined(DIAGNOSTIC) || defined(PCICDEBUG)
 	int reg;
 #endif
@@ -1384,6 +1433,36 @@ pcic_chip_socket_enable(pch)
 	 * we are changing Vcc (Toff).
 	 */
 	pcic_delay(h, 300 + 100, "pccen0");
+
+	/*
+	 * power hack for RICOH RF5C[23]96
+	 */
+	switch( h->vendor ) {
+	case PCIC_VENDOR_RICOH_5C296:
+	case PCIC_VENDOR_RICOH_5C396:
+		vcc_3v = 0;
+		regtmp = pcic_read(h, PCIC_CARD_DETECT);
+		if(regtmp & PCIC_CARD_DETECT_GPI_ENABLE) {
+			DPRINTF(("\nGPI is enabled. Can't sense VS1\n"));
+		} else {
+			regtmp = pcic_read(h, PCIC_IF_STATUS) ;
+			vcc_3v = (regtmp & PCIC_IF_STATUS_GPI) ? 1 : 0;
+			DPRINTF(("\n5VDET = %s\n",
+				 vcc_3v ? "1 (3.3V)" : "0 (5V)"));
+		}
+
+		regtmp = pcic_read(h, PCIC_RICOH_REG_MCR2);
+		regtmp &= ~PCIC_RICOH_MCR2_VCC_SEL_MASK;
+		if(vcc_3v) {
+			regtmp |= PCIC_RICOH_MCR2_VCC_SEL_3V;
+		} else {
+			regtmp |= PCIC_RICOH_MCR2_VCC_SEL_5V;
+		}
+		pcic_write(h, PCIC_RICOH_REG_MCR2, regtmp);
+		break;
+	default:
+		break;
+	}
 
 #ifdef VADEM_POWER_HACK
 	bus_space_write_1(sc->iot, sc->ioh, PCIC_REG_INDEX, 0x0e);

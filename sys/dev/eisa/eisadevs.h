@@ -1,10 +1,10 @@
-/*	$NetBSD: eisadevs.h,v 1.23.2.2 2001/09/21 22:35:29 nathanw Exp $	*/
+/*	$NetBSD: eisadevs.h,v 1.23.2.3 2002/12/11 06:37:50 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.24 2001/09/14 13:41:29 martin Exp 
+ *	NetBSD: eisadevs,v 1.25 2002/11/16 10:03:32 tsutsui Exp 
  */
 
 /*
@@ -142,6 +142,7 @@
 /* Standard Microsystems (SMC) */
 #define	EISA_PRODUCT_SMC8010	"Standard Microsystems Corp. Ethercard Elite32C Ultra"
 #define	EISA_PRODUCT_SMC0110	"Standard Microsystems Corp. Elite32 Ethernet"
+#define	EISA_PRODUCT_SMCA010	"Standard Microsystems Corp. Ether 10/100 (9232DST)"
 
 /* UltraStor products */
 #define	EISA_PRODUCT_USC0240	"UltraStor 24f SCSI"

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.156.2.18 2002/11/11 22:12:15 nathanw Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.156.2.19 2002/12/11 06:38:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.156.2.18 2002/11/11 22:12:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.156.2.19 2002/12/11 06:38:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -494,6 +494,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "VMware", "Virtual",            "1.0"},
 				PQUIRK_NOSTARTUNIT|PQUIRK_NODOORLOCK},
+	{{T_CDROM, T_REMOV,
+	 "NEC     ", "CD-ROM DRIVE:222", ""},	  PQUIRK_NOLUNS|PQUIRK_NOSYNC},
 
 	{{T_DIRECT, T_FIXED,
 	 "MICROP  ", "1588-15MBSUN0669", ""},     PQUIRK_AUTOSAVE},

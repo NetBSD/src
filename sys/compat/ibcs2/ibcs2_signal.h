@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.h,v 1.10.2.1 2002/04/17 00:04:48 nathanw Exp $	*/
+/*	$NetBSD: ibcs2_signal.h,v 1.10.2.2 2002/12/11 06:37:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -95,9 +95,9 @@ typedef long	ibcs2_sigset_t;
 typedef void	(*ibcs2_sig_t) __P((int));
 
 struct ibcs2_sigaction {
-	ibcs2_sig_t	sa_handler;
-	ibcs2_sigset_t	sa_mask;
-	int		sa_flags;
+	ibcs2_sig_t	ibcs2_sa_handler;
+	ibcs2_sigset_t	ibcs2_sa_mask;
+	int		ibcs2_sa_flags;
 };
 
 /* sa_flags */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.8.2.2 2002/11/11 22:11:19 nathanw Exp $	*/
+/*	$NetBSD: machfb.c,v 1.8.2.3 2002/12/11 06:38:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -630,6 +630,9 @@ mach64_init_screen(struct mach64_softc *sc, struct mach64screen *scr,
 void
 mach64_init(struct mach64_softc *sc)
 {
+	u_int32_t *p32, saved_value;
+	u_int8_t *p;
+	int need_swap;
 
 	if (bus_space_map(sc->sc_memt, sc->sc_aperbase, sc->sc_apersize,
 		BUS_SPACE_MAP_LINEAR, &sc->sc_memh)) {
@@ -642,10 +645,22 @@ mach64_init(struct mach64_softc *sc)
 	    sc->sc_regsize, &sc->sc_regh);
 	sc->sc_regbase = sc->sc_aperbase + 0x7ffc00;
 
-#if _BYTE_ORDER == _BIG_ENDIAN
-	sc->sc_aperbase += 0x800000;
-	sc->sc_apersize -= 0x800000;
-#endif
+	/*
+	 * Test wether the aperture is byte swapped or not
+	 */
+	p32 = (u_int32_t*)sc->sc_aperbase;
+	saved_value = *p32;
+	p = (u_int8_t*)sc->sc_aperbase;
+	*p32 = 0x12345678;
+	if (p[0] == 0x12 && p[1] == 0x34 && p[2] == 0x56 && p[3] == 0x78)
+		need_swap = 0;
+	else
+		need_swap = 1;
+	if (need_swap) {
+		sc->sc_aperbase += 0x800000;
+		sc->sc_apersize -= 0x800000;
+	}
+	*p32 = saved_value;
 
 	LIST_INIT(&sc->screens);
 	sc->active = NULL;

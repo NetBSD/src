@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_errno.c,v 1.1.2.2 2002/11/11 22:07:18 nathanw Exp $ */
+/*	$NetBSD: mach_errno.c,v 1.1.2.3 2002/12/11 06:37:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,8 +37,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.1.2.2 2002/11/11 22:07:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.1.2.3 2002/12/11 06:37:28 thorpej Exp $");
 
+#include <sys/types.h>
+#include <sys/systm.h>
+#include <sys/null.h>
+#include <sys/errno.h>
+
+#include <compat/mach/mach_types.h>
+#include <compat/mach/mach_message.h>
 #include <compat/mach/mach_errno.h>
 
 int native_to_mach_errno[] = {
@@ -54,7 +61,7 @@ int native_to_mach_errno[] = {
 	MACH_KERN_FAILURE,			/* EBADF */
 	MACH_KERN_FAILURE,			/* ECHILD */	/* 10 */
 	MACH_KERN_FAILURE,			/* EDEADLK */
-	MACH_KERN_FAILURE,			/* ENOMEM */
+	MACH_KERN_NO_SPACE,			/* ENOMEM */
 	MACH_KERN_FAILURE,			/* EACCES */
 	MACH_KERN_INVALID_ADDRESS,		/* EFAULT */
 	MACH_KERN_FAILURE,			/* ENOTBLK */	/* 15 */
@@ -129,3 +136,26 @@ int native_to_mach_errno[] = {
 	MACH_KERN_FAILURE,			/* EOVERFLOW */
 	MACH_KERN_FAILURE,			/* EILSEQ */	/* 85 */
 };
+
+int
+mach_msg_error(p, msgh, req, rep, error, maxlen, dst)
+	struct proc *p;
+	mach_msg_header_t *msgh;
+	mach_msg_header_t *req;
+	mach_error_reply_t *rep;
+	int error;
+	size_t maxlen;
+	mach_msg_header_t *dst;
+{	
+	bzero(rep, sizeof(*rep));
+
+	rep->rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->msgh_local_port;
+	rep->rep_msgh.msgh_id = req->msgh_id + 100;
+	rep->rep_retval = native_to_mach_errno[error];
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	return MACH_MSG_RETURN(p, rep, msgh, sizeof(*rep), maxlen, dst);
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.8.2.8 2002/11/11 22:12:57 nathanw Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.8.2.9 2002/12/11 06:38:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,6 +67,14 @@ Static const struct umass_quirk umass_quirks[] = {
 	},
 
 	{ { USB_VENDOR_DMI, USB_PRODUCT_DMI_SA2_0 },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NOMODESENSE,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
+	{ { USB_VENDOR_EASYDISK, USB_PRODUCT_EASYDISK_EASYDISK },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
 	  PQUIRK_NOMODESENSE,
@@ -202,6 +210,14 @@ Static const struct umass_quirk umass_quirks[] = {
 	  NULL, NULL
 	},
 
+	{ { USB_VENDOR_OTI, USB_PRODUCT_OTI_SOLID },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NOMODESENSE,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
 	{ { USB_VENDOR_PEN, USB_PRODUCT_PEN_USBDISK },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  UMASS_QUIRK_NO_MAX_LUN | UMASS_QUIRK_NO_START_STOP,
@@ -220,7 +236,7 @@ Static const struct umass_quirk umass_quirks[] = {
 
 	{ { USB_VENDOR_SCANLOGIC, USB_PRODUCT_SCANLOGIC_SL11R },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UFI,
-	  0,
+	  UMASS_QUIRK_WRONG_CSWTAG,
 	  0,
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL

@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.21.2.8 2002/11/11 22:08:50 nathanw Exp $	*/
+/*	$NetBSD: rnd.c,v 1.21.2.9 2002/12/11 06:37:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.21.2.8 2002/11/11 22:08:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.21.2.9 2002/12/11 06:37:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -713,7 +713,7 @@ filt_rnddetach(struct knote *kn)
 	int s;
 
 	s = splsoftclock();
-	SLIST_REMOVE(&rnd_selq.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&rnd_selq.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -744,7 +744,7 @@ rndkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &rnd_selq.si_klist;
+		klist = &rnd_selq.sel_klist;
 		if (minor(dev) == RND_DEV_URANDOM)
 			kn->kn_fop = &rnd_seltrue_filtops;
 		else
@@ -752,7 +752,7 @@ rndkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	case EVFILT_WRITE:
-		klist = &rnd_selq.si_klist;
+		klist = &rnd_selq.sel_klist;
 		kn->kn_fop = &rnd_seltrue_filtops;
 		break;
 

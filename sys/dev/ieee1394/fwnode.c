@@ -1,4 +1,4 @@
-/*	$NetBSD: fwnode.c,v 1.5.2.8 2002/10/18 02:42:06 nathanw Exp $	*/
+/*	$NetBSD: fwnode.c,v 1.5.2.9 2002/12/11 06:38:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.5.2.8 2002/10/18 02:42:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.5.2.9 2002/12/11 06:38:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -103,10 +103,14 @@ fwnode_attach(struct device *parent, struct device *self, void *aux)
 	
 	sc->sc_sc1394.sc1394_node_id = fwa->nodeid;
 	memcpy(sc->sc_sc1394.sc1394_guid, fwa->uid, 8);
-	sc->sc1394_read = fwa->read;
-	sc->sc1394_write = fwa->write;
-	sc->sc1394_inreg = fwa->inreg;
-	sc->sc1394_unreg = fwa->unreg;
+	sc->sc_sc1394.sc1394_callback.sc1394_read =
+	    psc->sc1394_callback.sc1394_read;
+	sc->sc_sc1394.sc1394_callback.sc1394_write =
+	    psc->sc1394_callback.sc1394_write;
+	sc->sc_sc1394.sc1394_callback.sc1394_inreg =
+	    psc->sc1394_callback.sc1394_inreg;
+	sc->sc_sc1394.sc1394_callback.sc1394_unreg =
+	    psc->sc1394_callback.sc1394_unreg;
 	
 	/* XXX. Fix the fw code to use the generic routines. */
 	sc->sc_sc1394.sc1394_ifinreg = psc->sc1394_ifinreg;
@@ -124,7 +128,7 @@ fwnode_attach(struct device *parent, struct device *self, void *aux)
 	ab->ab_retlen = 0;
 	ab->ab_cbarg = NULL;
 	ab->ab_cb = fwnode_configrom_input;
-	sc->sc1394_read(ab);
+	sc->sc_sc1394.sc1394_callback.sc1394_read(ab);
 }
 
 int
@@ -135,8 +139,9 @@ fwnode_detach(struct device *self, int flags)
 	
 	if (sc->sc_children) {
 		children = sc->sc_children;
-		while (*children++)
+		do {
 			config_detach(*children, 0);
+		} while (*(++children));
 		free(sc->sc_children, M_DEVBUF);
 	}
 	
@@ -216,7 +221,7 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 		ab->ab_retlen = 0;
 		ab->ab_cbarg = NULL;
 		ab->ab_cb = fwnode_configrom_input;
-		sc->sc1394_read(ab);
+		sc->sc_sc1394.sc1394_callback.sc1394_read(ab);
 		return;
 	} else {
 		sc->sc_sc1394.sc1394_configrom_len = ab->ab_retlen;
@@ -270,13 +275,13 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 		    sc->sc_sc1394.sc1394_dev.dv_xname, 
 		    ieee1394_speeds[sc->sc_sc1394.sc1394_link_speed],
 		    IEEE1394_MAX_REC(sc->sc_sc1394.sc1394_max_receive));
+		sc->sc_children = p1212_match_units(&sc->sc_sc1394.sc1394_dev,
+			sc->sc_configrom->root, fwnode_print);
 #ifdef FWNODE_DEBUG
 		fwnode_dump_rom(sc, sc->sc_sc1394.sc1394_configrom, 
 			sc->sc_sc1394.sc1394_configrom_len);
 		p1212_print(sc->sc_configrom->root);
 #endif
-		sc->sc_children = p1212_match_units(&sc->sc_sc1394.sc1394_dev,
-			sc->sc_configrom->root, fwnode_print);
 	}
 }
 

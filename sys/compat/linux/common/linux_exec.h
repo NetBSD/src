@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.14.2.8 2002/08/27 23:46:21 nathanw Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.14.2.9 2002/12/11 06:37:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -78,6 +78,10 @@
 
 #define LINUX_N_BSSADDR(x,m) (LINUX_N_DATADDR(x,m) + (x).a_data)
 
+#ifndef LINUX_MACHDEP_ELF_COPYARGS
+#define LINUX_ELF_AUX_ENTRIES	13	/* we push 13 parameters */
+#endif
+
 /* 
  * From Linux's include/linux/elf.h
  */
@@ -127,10 +131,14 @@ void linux_trapsignal __P((struct lwp *, int, u_long));
 #ifdef EXEC_ELF32
 int linux_elf32_probe __P((struct proc *, struct exec_package *, void *,
     char *, vaddr_t *));
+int linux_elf32_copyargs __P((struct proc *, struct exec_package *,
+    struct ps_strings *, char **, void *));
 #endif
 #ifdef EXEC_ELF64
 int linux_elf64_probe __P((struct proc *, struct exec_package *, void *,
     char *, vaddr_t *));
+int linux_elf64_copyargs __P((struct proc *, struct exec_package *,
+    struct ps_strings *, char **, void *));
 #endif
 __END_DECLS
 #endif /* !_KERNEL */

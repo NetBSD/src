@@ -1,4 +1,4 @@
-/*	$NetBSD: dptreg.h,v 1.9.4.1 2001/06/21 20:02:26 nathanw Exp $	*/
+/*	$NetBSD: dptreg.h,v 1.9.4.2 2002/12/11 06:37:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
@@ -98,11 +98,21 @@ struct eata_cp {
 	u_int8_t	cp_cdb_more0[3];	/* SCSI CDB */
 	u_int8_t	cp_cdb_len;		/* SCSI CDB */
 	u_int8_t	cp_cdb_more1[7];	/* SCSI CDB */
+
 	u_int32_t	cp_datalen;		/* Bytes of data/SG list */
 	u_int32_t	cp_ccbid;		/* ID of software CCB */
 	u_int32_t	cp_dataaddr;		/* Addr of data/SG list */
 	u_int32_t	cp_stataddr;		/* Addr of status packet */
 	u_int32_t	cp_senseaddr;		/* Addr of req. sense */
+} __attribute__ ((__packed__));
+
+struct eata_ucp {
+	u_int8_t	ucp_cp[sizeof(struct eata_cp) - 5*4];	/* XXX */;
+	u_long		ucp_datalen;
+	u_long		ucp_ccbid;
+	caddr_t		ucp_dataaddr;
+	caddr_t		ucp_stataddr;
+	caddr_t		ucp_senseaddr;
 } __attribute__ ((__packed__));
 
 #define CP_C0_SCSI_RESET	0x01	/* Cause a bus reset */

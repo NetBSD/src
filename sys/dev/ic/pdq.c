@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.29.4.3 2002/06/20 03:44:56 nathanw Exp $	*/
+/*	$NetBSD: pdq.c,v 1.29.4.4 2002/12/11 06:38:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq.c,v 1.29.4.3 2002/06/20 03:44:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq.c,v 1.29.4.4 2002/12/11 06:38:02 thorpej Exp $");
 
 #define	PDQ_HWSUPPORT	/* for pdq.h */
 
@@ -88,10 +88,6 @@ static const char * const pdq_station_events[] = {
     "Trace Received"
 };
 
-static const char * const pdq_station_arguments[] = {
-    "Reason"
-};
-
 static const char * const pdq_link_events[] = {
     "Transmit Underrun",
     "Transmit Failed",
@@ -114,17 +110,16 @@ static const char * const pdq_link_events[] = {
     "Directed Beacon Received",
 };
 
+#if 0
+static const char * const pdq_station_arguments[] = {
+    "Reason"
+};
+
 static const char * const pdq_link_arguments[] = {
     "Reason",
     "Data Link Header",
     "Source",
     "Upstream Neighbor"
-};
-
-static const char * const pdq_phy_events[] = {
-    "LEM Error Monitor Reject",
-    "Elasticy Buffer Error",
-    "Link Confidence Test Reject"
 };
 
 static const char * const pdq_phy_arguments[] = {
@@ -137,12 +132,21 @@ static const char * const * const pdq_event_arguments[] = {
     pdq_phy_arguments
 };
 
+#endif
+
+
+static const char * const pdq_phy_events[] = {
+    "LEM Error Monitor Reject",
+    "Elasticy Buffer Error",
+    "Link Confidence Test Reject"
+};
+
 static const char * const * const pdq_event_codes[] = {
     pdq_station_events,
     pdq_link_events,
     pdq_phy_events
 };
-
+
 static const char * const pdq_station_types[] = {
     "SAS", "DAC", "SAC", "NAC", "DAS"
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.2.4.9 2002/11/11 22:12:47 nathanw Exp $	*/
+/*	$NetBSD: ehci.c,v 1.2.4.10 2002/12/11 06:38:49 thorpej Exp $	*/
 
 /*
  * TODO
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.2.4.9 2002/11/11 22:12:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.2.4.10 2002/12/11 06:38:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,6 +200,7 @@ Static void		ehci_abort_xfer(usbd_xfer_handle, usbd_status);
 
 #ifdef EHCI_DEBUG
 Static void		ehci_dump_regs(ehci_softc_t *);
+Static void		ehci_dump(void);
 Static ehci_softc_t 	*theehci;
 Static void		ehci_dump_link(ehci_link_t, int);
 Static void		ehci_dump_sqtds(ehci_soft_qtd_t *);
@@ -1052,6 +1053,16 @@ ehci_dump_regs(ehci_softc_t *sc)
 	for (i = 1; i <= sc->sc_noport; i++)
 		printf("port %d status=0x%08x\n", i,
 		       EOREAD4(sc, EHCI_PORTSC(i)));
+}
+
+/*
+ * Unused function - this is meant to be called from a kernel
+ * debugger.
+ */
+void
+ehci_dump()
+{
+	ehci_dump_regs(theehci);
 }
 
 void

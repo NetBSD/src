@@ -1,4 +1,4 @@
-/*	$NetBSD: fmv.c,v 1.2.2.2 2002/10/18 02:41:50 nathanw Exp $	*/
+/*	$NetBSD: fmv.c,v 1.2.2.3 2002/12/11 06:37:53 thorpej Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fmv.c,v 1.2.2.2 2002/10/18 02:41:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fmv.c,v 1.2.2.3 2002/12/11 06:37:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ fmv_attach(sc)
 	printf(": %s Ethernet\n", typestr);
 
 	/* This interface is always enabled. */
-	sc->sc_flags |= FE_FLAGS_ENABLED;
+	sc->sc_stat |= FE_STAT_ENABLED;
 
 	/*
 	 * Minimum initialization of the hardware.
@@ -163,7 +163,7 @@ fmv_attach(sc)
 	/*
 	 * Do generic MB86960 attach.
 	 */
-	mb86960_attach(sc, MB86960_TYPE_86965, myea);
+	mb86960_attach(sc, myea);
 
 	/* Is this really needs to be done here? XXX */
 	/* Turn the "master interrupt control" flag of ASIC on. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365reg.h,v 1.6 2000/02/28 07:33:08 mycroft Exp $	*/
+/*	$NetBSD: i82365reg.h,v 1.6.6.1 2002/12/11 06:37:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -62,6 +62,13 @@
 #define	PCIC_IDENT_REV_MASK			0x0F
 #define	PCIC_IDENT_REV_I82365SLR0		0x02
 #define	PCIC_IDENT_REV_I82365SLR1		0x03
+
+#define PCIC_IDENT_ID_INTEL0 0x82
+#define PCIC_IDENT_ID_INTEL1 0x83
+#define PCIC_IDENT_ID_INTEL2 0x84
+#define PCIC_IDENT_ID_IBM1 0x88
+#define PCIC_IDENT_ID_IBM2 0x89
+#define PCIC_IDENT_ID_IBM3 0x8A
 
 #define	PCIC_IF_STATUS				0x01	/* RO */
 #define	PCIC_IF_STATUS_GPI			0x80 /* General Purpose Input */
@@ -336,3 +343,11 @@
 #define PCIC_CIRRUS_EXTENDED_DATA		0x2F
 #define PCIC_CIRRUS_EXT_CONTROL_1		0x03
 #define PCIC_CIRRUS_EXT_CONTROL_1_PCI_INTR_MASK	0x18
+
+#define PCIC_RICOH_REG_CHIP_ID 0x3A
+#define PCIC_RICOH_CHIP_ID_5C296 0x32
+#define PCIC_RICOH_CHIP_ID_5C396 0xB2
+#define PCIC_RICOH_REG_MCR2 0x2F
+#define PCIC_RICOH_MCR2_VCC_SEL_MASK 0x01
+#define PCIC_RICOH_MCR2_VCC_SEL_3V 0x01
+#define PCIC_RICOH_MCR2_VCC_SEL_5V 0x00

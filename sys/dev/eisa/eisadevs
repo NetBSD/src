@@ -1,4 +1,4 @@
-$NetBSD: eisadevs,v 1.21.2.2 2001/09/21 22:35:29 nathanw Exp $
+$NetBSD: eisadevs,v 1.21.2.3 2002/12/11 06:37:50 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -159,6 +159,7 @@ product NEC 8200	EATA SCSI controller
 /* Standard Microsystems (SMC) */
 product SMC 8010	Ethercard Elite32C Ultra
 product SMC 0110	Elite32 Ethernet
+product SMC A010	Ether 10/100 (9232DST)
 
 /* UltraStor products */
 product USC 0240	24f SCSI

@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.21.2.6 2002/11/11 22:08:48 nathanw Exp $	*/
+/*	$NetBSD: midi.c,v 1.21.2.7 2002/12/11 06:37:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.21.2.6 2002/11/11 22:08:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.21.2.7 2002/12/11 06:37:48 thorpej Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -777,7 +777,7 @@ filt_midirdetach(struct knote *kn)
 	int s;
 
 	s = splaudio();
-	SLIST_REMOVE(&sc->rsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->rsel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -802,7 +802,7 @@ filt_midiwdetach(struct knote *kn)
 	int s;
 
 	s = splaudio();
-	SLIST_REMOVE(&sc->wsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->wsel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -830,12 +830,12 @@ midikqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->rsel.si_klist;
+		klist = &sc->rsel.sel_klist;
 		kn->kn_fop = &midiread_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &sc->wsel.si_klist;
+		klist = &sc->wsel.sel_klist;
 		kn->kn_fop = &midiwrite_filtops;
 		break;
 

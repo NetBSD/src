@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_types.h,v 1.2.4.3 2002/11/11 22:07:29 nathanw Exp $	 */
+/*	$NetBSD: mach_types.h,v 1.2.4.4 2002/12/11 06:37:33 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,12 +41,12 @@
 
 typedef int mach_port_t;
 typedef int mach_port_name_t;
+typedef int mach_port_type_t;
 typedef int mach_kern_return_t;
 typedef int mach_clock_res_t;
 typedef int mach_clock_id_t;
 typedef int mach_boolean_t;
 typedef int mach_sleep_type_t;
-typedef int mach_timespec_t;
 typedef int mach_absolute_time_t;
 typedef int mach_integer_t;
 typedef int mach_cpu_type_t;
@@ -58,12 +58,20 @@ typedef int mach_vm_prot_t;
 typedef unsigned int mach_natural_t;
 typedef unsigned int mach_vm_size_t;
 typedef unsigned long mach_vm_offset_t;
-typedef void *mach_cproc_t;	/* Unkown, see xnu/osfmk/ppc/hw_exception.s */
 
-typedef struct {
+/* 
+ * This is called cproc_t in Mach (cthread_t in Darwin). It is a pointer to 
+ * a struct cproc (struct cthread in Darwin), which is stored in userland and
+ * seems to be opaque to the kernel. The kernel just has to store and restore
+ * it with cthread_self() (pthread_self() in Darwin) and _cthread_set_self()
+ * (_pthread_set_self() in Darwin). 
+ */
+typedef void *mach_cproc_t;	
+
+typedef struct mach_timebase_info {
 	u_int32_t	numer;
 	u_int32_t	denom;
-} mach_timebase_info_t;
+} *mach_timebase_info_t;
 
 typedef struct {
 	u_int8_t       mig_vers;

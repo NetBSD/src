@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.12.2.11 2002/10/18 02:43:22 nathanw Exp $	*/
+/*	$NetBSD: twe.c,v 1.12.2.12 2002/12/11 06:38:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.12.2.11 2002/10/18 02:43:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.12.2.12 2002/12/11 06:38:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,7 +335,7 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Find attached units. */ 
 	rv = twe_param_get(sc, TWE_PARAM_UNITSUMMARY,
-	    TWE_PARAM_UNITSUMMARY_Status, TWE_MAX_UNITS, NULL, (void **)&dtp);
+	    TWE_PARAM_UNITSUMMARY_Status, TWE_MAX_UNITS, NULL, (void *)&dtp);
 	if (rv != 0) {
 		printf("%s: can't detect attached units (%d)\n",
 		    sc->sc_dv.dv_xname, rv);
@@ -351,7 +351,7 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	   	}
 
 		rv = twe_param_get(sc, TWE_PARAM_UNITINFO + i,
-		    TWE_PARAM_UNITINFO_Capacity, 4, NULL, (void **)&ctp);
+		    TWE_PARAM_UNITINFO_Capacity, 4, NULL, (void *)&ctp);
 		if (rv != 0) {
 			printf("%s: error %d fetching capacity for unit %d\n",
 			    sc->sc_dv.dv_xname, rv, i);
@@ -409,7 +409,7 @@ twe_reset(struct twe_softc *sc)
 	/* Pull AENs out of the controller; look for a soft reset AEN. */
 	for (got = 0;;) {
 		rv = twe_param_get(sc, TWE_PARAM_AEN, TWE_PARAM_AEN_UnitCode,
-		    2, NULL, (void **)&tp);
+		    2, NULL, (void *)&tp);
 		if (rv != 0)
 			printf("%s: error %d while draining response queue\n",
 			    sc->sc_dv.dv_xname, rv);

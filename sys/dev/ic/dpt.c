@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.25.2.5 2002/10/18 02:41:50 nathanw Exp $	*/
+/*	$NetBSD: dpt.c,v 1.25.2.6 2002/12/11 06:37:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -38,6 +38,29 @@
  */
 
 /*
+ * Copyright (c) 1996-2000 Distributed Processing Technology Corporation
+ * Copyright (c) 2000 Adaptec Corporation
+ * All rights reserved.
+ *
+ * TERMS AND CONDITIONS OF USE
+ *
+ * Redistribution and use in source form, with or without modification, are
+ * permitted provided that redistributions of source code must retain the
+ * above copyright notice, this list of conditions and the following disclaimer.
+ *
+ * This software is provided `as is' by Adaptec and any express or implied
+ * warranties, including, but not limited to, the implied warranties of
+ * merchantability and fitness for a particular purpose, are disclaimed. In no
+ * event shall Adaptec be liable for any direct, indirect, incidental, special,
+ * exemplary or consequential damages (including, but not limited to,
+ * procurement of substitute goods or services; loss of use, data, or profits;
+ * or business interruptions) however caused and on any theory of liability,
+ * whether in contract, strict liability, or tort (including negligence or
+ * otherwise) arising in any way out of the use of this driver software, even
+ * if advised of the possibility of such damage.
+ */
+
+/*
  * Portions of this code fall under the following copyright:
  *
  * Originally written by Julian Elischer (julian@tfs.com)
@@ -55,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.25.2.5 2002/10/18 02:41:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.25.2.6 2002/12/11 06:37:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,10 +86,14 @@ __KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.25.2.5 2002/10/18 02:41:50 nathanw Exp $")
 #include <sys/queue.h>
 #include <sys/buf.h>
 #include <sys/endian.h>
+#include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
+#ifdef i386
+#include <machine/pio.h>
+#endif
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -74,6 +101,14 @@ __KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.25.2.5 2002/10/18 02:41:50 nathanw Exp $")
 
 #include <dev/ic/dptreg.h>
 #include <dev/ic/dptvar.h>
+
+#include <dev/i2o/dptivar.h>
+
+#ifdef DEBUG
+#define	DPRINTF(x)		printf x
+#else
+#define	DPRINTF(x)
+#endif
 
 #define dpt_inb(x, o)		\
     bus_space_read_1((x)->sc_iot, (x)->sc_ioh, (o))
@@ -103,17 +138,70 @@ static const char * const dpt_cname[] = {
 
 static void	*dpt_sdh;
 
+dev_type_open(dptopen);
+dev_type_ioctl(dptioctl);
+
+const struct cdevsw dpt_cdevsw = {
+	dptopen, nullclose, noread, nowrite, dptioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
+
+extern struct cfdriver dpt_cd;
+
+static struct dpt_sig dpt_sig = {
+	{ 'd', 'P', 't', 'S', 'i', 'G'},
+	SIG_VERSION,
+#if defined(i386)
+	PROC_INTEL,
+#elif defined(powerpc)
+	PROC_POWERPC,
+#elif defined(alpha)
+	PROC_ALPHA,
+#elif defined(__mips__)
+	PROC_MIPS,
+#elif defined(sparc64)
+	PROC_ULTRASPARC,
+#else
+	0xff,
+#endif
+#if defined(i386)
+	PROC_386 | PROC_486 | PROC_PENTIUM | PROC_SEXIUM,
+#else
+	0,
+#endif
+	FT_HBADRVR,
+	0,
+	OEM_DPT,
+	OS_FREE_BSD,	/* XXX */
+	CAP_ABOVE16MB,
+	DEV_ALL,
+	ADF_ALL_EATA,
+	0,
+	0,
+	DPT_VERSION,
+	DPT_REVISION,
+	DPT_SUBREVISION,
+	DPT_MONTH,
+	DPT_DAY,
+	DPT_YEAR,
+	""		/* Will be filled later */
+};
+
 static void	dpt_ccb_abort(struct dpt_softc *, struct dpt_ccb *);
 static void	dpt_ccb_done(struct dpt_softc *, struct dpt_ccb *);
 static int	dpt_ccb_map(struct dpt_softc *, struct dpt_ccb *);
 static int	dpt_ccb_poll(struct dpt_softc *, struct dpt_ccb *);
 static void	dpt_ccb_unmap(struct dpt_softc *, struct dpt_ccb *);
 static int	dpt_cmd(struct dpt_softc *, struct dpt_ccb *, int, int);
+static void	dpt_ctlrinfo(struct dpt_softc *, struct dpt_eata_ctlrinfo *);
 static void	dpt_hba_inquire(struct dpt_softc *, struct eata_inquiry_data **);
 static void	dpt_minphys(struct buf *);
+static int	dpt_passthrough(struct dpt_softc *, struct eata_ucp *,
+				struct proc *);
 static void	dpt_scsipi_request(struct scsipi_channel *,
 				   scsipi_adapter_req_t, void *);
 static void	dpt_shutdown(void *);
+static void	dpt_sysinfo(struct dpt_softc *, struct dpt_sysinfo *);
 static int	dpt_wait(struct dpt_softc *, u_int8_t, u_int8_t, int);
 
 static __inline__ struct dpt_ccb	*dpt_ccb_alloc(struct dpt_softc *);
@@ -139,6 +227,7 @@ dpt_ccb_free(struct dpt_softc *sc, struct dpt_ccb *ccb)
 	int s;
 
 	ccb->ccb_flg = 0;
+	ccb->ccb_savesp = NULL;
 	s = splbio();
 	SLIST_INSERT_HEAD(&sc->sc_ccb_free, ccb, ccb_chain);
 	splx(s);
@@ -207,6 +296,8 @@ dpt_intr(void *cookie)
 
 		ccb->ccb_hba_status = sp->sp_hba_status & 0x7f;
 		ccb->ccb_scsi_status = sp->sp_scsi_status;
+		if (ccb->ccb_savesp != NULL)
+			memcpy(ccb->ccb_savesp, sp, sizeof(*sp));
 
 		/* 
 		 * Ack the interrupt and process the CCB.  If this
@@ -218,6 +309,8 @@ dpt_intr(void *cookie)
 		junk = dpt_inb(sc, HA_STATUS);
 		if ((ccb->ccb_flg & CCB_PRIVATE) == 0)
 			dpt_ccb_done(sc, ccb);
+		else if ((ccb->ccb_flg & CCB_WAIT) != 0)
+			wakeup(ccb);
 	}
 
 	return (forus);
@@ -240,7 +333,8 @@ dpt_init(struct dpt_softc *sc, const char *intrstr)
 	char model[16];
 
 	ec = &sc->sc_ec;
-	
+	sprintf(dpt_sig.dsDescription, "NetBSD %s DPT driver", osrelease);
+
 	/*
 	 * Allocate the CCB/status packet/scratch DMA map and load.
 	 */
@@ -376,8 +470,8 @@ dpt_init(struct dpt_softc *sc, const char *intrstr)
 	memset(adapt, 0, sizeof(*adapt));
 	adapt->adapt_dev = &sc->sc_dv;
 	adapt->adapt_nchannels = maxchannel + 1;
-	adapt->adapt_openings = sc->sc_nccbs;
-	adapt->adapt_max_periph = sc->sc_nccbs;
+	adapt->adapt_openings = sc->sc_nccbs - 1;
+	adapt->adapt_max_periph = sc->sc_nccbs - 1;
 	adapt->adapt_request = dpt_scsipi_request;
 	adapt->adapt_minphys = dpt_minphys;
 
@@ -1012,4 +1106,270 @@ dpt_hba_inquire(struct dpt_softc *sc, struct eata_inquiry_data **ei)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, sc->sc_scroff, 
 	    sizeof(struct eata_inquiry_data), BUS_DMASYNC_POSTREAD);
 	dpt_ccb_free(sc, ccb);
+}
+
+int
+dptopen(dev_t dev, int flag, int mode, struct proc *p)
+{
+
+	if (securelevel > 1)
+		return (EPERM);
+	if (device_lookup(&dpt_cd, minor(dev)) == NULL)
+		return (ENXIO);
+
+	return (0);
+}
+
+int
+dptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+{
+	struct dpt_softc *sc;
+	int rv;
+
+	sc = device_lookup(&dpt_cd, minor(dev));
+
+	switch (cmd & 0xffff) {
+	case DPT_SIGNATURE:
+		memcpy(data, &dpt_sig, min(IOCPARM_LEN(cmd), sizeof(dpt_sig)));
+		break;
+
+	case DPT_CTRLINFO:
+		dpt_ctlrinfo(sc, (struct dpt_eata_ctlrinfo *)data);
+		break;
+
+	case DPT_SYSINFO:
+		dpt_sysinfo(sc, (struct dpt_sysinfo *)data);
+		break;
+
+	case DPT_BLINKLED:
+		/*
+		 * XXX Don't know how to get this from EATA boards.  I think
+		 * it involves waiting for a "DPT" sequence from HA_ERROR
+		 * and then reading one of the HA_ICMD registers.
+		 */
+		*(int *)data = 0;
+		break;
+
+	case DPT_EATAUSRCMD:
+		if (sc->sc_uactive++)
+			tsleep(&sc->sc_uactive, PRIBIO, "dptslp", 0);
+
+		rv = dpt_passthrough(sc, (struct eata_ucp *)data, p);
+
+		sc->sc_uactive--;
+		wakeup_one(&sc->sc_uactive);
+		return (rv);
+
+	default:
+		DPRINTF(("%s: unknown ioctl %lx\n", sc->sc_dv.dv_xname, cmd));
+		return (ENOTTY);
+	}
+
+	return (0);
+}
+
+void
+dpt_ctlrinfo(struct dpt_softc *sc, struct dpt_eata_ctlrinfo *info)
+{
+
+	memset(info, 0, sizeof(*info));
+	info->id = sc->sc_hbaid[0];
+	info->vect = sc->sc_isairq;
+	info->base = sc->sc_isaport;
+	info->qdepth = sc->sc_nccbs;
+	info->sgsize = DPT_SG_SIZE * sizeof(struct eata_sg);
+	info->heads = 16;
+	info->sectors = 63;
+	info->do_drive32 = 1;
+	info->primary = 1;
+	info->cpLength = sizeof(struct eata_cp);
+	info->spLength = sizeof(struct eata_sp);
+	info->drqNum = sc->sc_isadrq;
+}
+
+void
+dpt_sysinfo(struct dpt_softc *sc, struct dpt_sysinfo *info)
+{
+#ifdef i386
+	int i, j;
+#endif
+
+	memset(info, 0, sizeof(*info));
+
+#ifdef i386
+	outb (0x70, 0x12);
+	i = inb(0x71);
+	j = i >> 4;
+	if (i == 0x0f) {
+		outb (0x70, 0x19);
+		j = inb (0x71);
+	}
+	info->drive0CMOS = j;
+
+	j = i & 0x0f;
+	if (i == 0x0f) {
+		outb (0x70, 0x1a);
+		j = inb (0x71);
+	}
+	info->drive1CMOS = j;
+	info->processorFamily = dpt_sig.dsProcessorFamily;
+
+	/*
+	 * Get the conventional memory size from CMOS.
+	 */
+	outb(0x70, 0x16);
+	j = inb(0x71);
+	j <<= 8;
+	outb(0x70, 0x15);
+	j |= inb(0x71);
+	info->conventionalMemSize = j;
+
+	/*
+	 * Get the extended memory size from CMOS.
+	 */
+	outb(0x70, 0x31);
+	j = inb(0x71);
+	j <<= 8;
+	outb(0x70, 0x30);
+	j |= inb(0x71);
+	info->extendedMemSize = j;
+
+	switch (cpu_class) {
+	case CPUCLASS_386:
+		info->processorType = PROC_386;
+		break;
+	case CPUCLASS_486:
+		info->processorType = PROC_486;
+		break;
+	case CPUCLASS_586:
+		info->processorType = PROC_PENTIUM;
+		break;
+	case CPUCLASS_686:
+	default:
+		info->processorType = PROC_SEXIUM;
+		break;
+	}
+
+	info->flags = SI_CMOS_Valid | SI_BusTypeValid |
+	    SI_MemorySizeValid | SI_NO_SmartROM;
+#else
+	info->flags = SI_BusTypeValid | SI_NO_SmartROM;
+#endif
+
+	info->busType = sc->sc_bustype;
+}
+
+int
+dpt_passthrough(struct dpt_softc *sc, struct eata_ucp *ucp, struct proc *proc)
+{
+	struct dpt_ccb *ccb;
+	struct eata_sp sp;
+	struct eata_cp *cp;
+	struct eata_sg *sg;
+	bus_dmamap_t xfer;
+	bus_dma_segment_t *ds;
+	int datain, s, rv, i, uslen;
+
+	/*
+	 * Get a CCB and fill.
+	 */
+	ccb = dpt_ccb_alloc(sc);
+	ccb->ccb_flg |= CCB_PRIVATE | CCB_WAIT;
+	ccb->ccb_timeout = 0;
+	ccb->ccb_savesp = &sp;
+
+	cp = &ccb->ccb_eata_cp;
+	memcpy(cp, ucp->ucp_cp, sizeof(ucp->ucp_cp));
+	uslen = cp->cp_senselen;
+	cp->cp_ccbid = ccb->ccb_id;
+	cp->cp_senselen = sizeof(ccb->ccb_sense);
+	cp->cp_senseaddr = htobe32(sc->sc_dmamap->dm_segs[0].ds_addr +
+	    CCB_OFF(sc, ccb) + offsetof(struct dpt_ccb, ccb_sense));
+	cp->cp_stataddr = htobe32(sc->sc_stppa);
+
+	/*
+	 * Map data transfers.
+	 */
+	if (ucp->ucp_dataaddr && ucp->ucp_datalen) {
+		xfer = ccb->ccb_dmamap_xfer;
+		datain = ((cp->cp_ctl0 & CP_C0_DATA_IN) != 0);
+
+		if (ucp->ucp_datalen > DPT_MAX_XFER) {
+			DPRINTF(("%s: xfer too big\n", sc->sc_dv.dv_xname));
+			dpt_ccb_free(sc, ccb);
+			return (EFBIG);
+		}
+		rv = bus_dmamap_load(sc->sc_dmat, xfer,
+		    ucp->ucp_dataaddr, ucp->ucp_datalen, proc,
+		    BUS_DMA_WAITOK | BUS_DMA_STREAMING |
+		    (datain ? BUS_DMA_READ : BUS_DMA_WRITE));
+		if (rv != 0) {
+			DPRINTF(("%s: map failed; %d\n", sc->sc_dv.dv_xname,
+			    rv));
+			dpt_ccb_free(sc, ccb);
+			return (rv);
+		}
+
+		bus_dmamap_sync(sc->sc_dmat, xfer, 0, xfer->dm_mapsize,
+		    (datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE));
+
+		sg = ccb->ccb_sg;
+		ds = xfer->dm_segs;
+		for (i = 0; i < xfer->dm_nsegs; i++, sg++, ds++) {
+	 		sg->sg_addr = htobe32(ds->ds_addr);
+	 		sg->sg_len = htobe32(ds->ds_len);
+ 		}
+		cp->cp_dataaddr = htobe32(CCB_OFF(sc, ccb) + 
+		    sc->sc_dmamap->dm_segs[0].ds_addr +
+		    offsetof(struct dpt_ccb, ccb_sg));
+		cp->cp_datalen = htobe32(i * sizeof(struct eata_sg));
+		cp->cp_ctl0 |= CP_C0_SCATTER;
+	} else {
+		cp->cp_dataaddr = 0;
+		cp->cp_datalen = 0;
+	}
+
+	/*
+	 * Start the command and sleep on completion.
+	 */
+	PHOLD(curlwp);	/* XXXJRT curlwp */
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, CCB_OFF(sc, ccb), 
+	    sizeof(struct dpt_ccb), BUS_DMASYNC_PREWRITE);
+	s = splbio();
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, sc->sc_stpoff, 
+	    sizeof(struct eata_sp), BUS_DMASYNC_PREREAD);
+	if (dpt_cmd(sc, ccb, CP_DMA_CMD, 0))
+		panic("%s: dpt_cmd failed", sc->sc_dv.dv_xname);
+	tsleep(ccb, PWAIT, "dptucmd", 0);
+	splx(s);
+	PRELE(curlwp);	/* XXXJRT curlwp */
+
+	/*
+	 * Sync up the DMA map and copy out results.
+	 */
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, CCB_OFF(sc, ccb), 
+	    sizeof(struct dpt_ccb), BUS_DMASYNC_POSTWRITE);
+
+	if (cp->cp_datalen != 0) {
+		bus_dmamap_sync(sc->sc_dmat, xfer, 0, xfer->dm_mapsize,
+		    (datain ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
+		bus_dmamap_unload(sc->sc_dmat, xfer);
+	}
+
+	if (ucp->ucp_stataddr != NULL) {
+		rv = copyout(&sp, ucp->ucp_stataddr, sizeof(sp));
+		if (rv != 0)
+			DPRINTF(("%s: sp copyout() failed\n",
+			    sc->sc_dv.dv_xname));
+	}
+	if (rv == 0 && ucp->ucp_senseaddr != NULL) {
+		i = min(uslen, sizeof(ccb->ccb_sense));
+		rv = copyout(&ccb->ccb_sense, ucp->ucp_senseaddr, i);
+		if (rv != 0)
+			DPRINTF(("%s: sense copyout() failed\n",
+			    sc->sc_dv.dv_xname));
+	}
+
+	dpt_ccb_free(sc, ccb);
+	return (rv);
 }

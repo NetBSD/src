@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugMem.c,v 1.7.6.4 2002/10/18 02:43:45 nathanw Exp $	*/
+/*	$NetBSD: rf_debugMem.c,v 1.7.6.5 2002/12/11 06:38:33 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -29,15 +29,10 @@
 /* debugMem.c:  memory usage debugging stuff.
  * Malloc, Calloc, and Free are #defined everywhere
  * to do_malloc, do_calloc, and do_free.
- *
- * if RF_UTILITY is nonzero, it means were compiling one of the
- * raidframe utility programs, such as rfctrl or smd.  In this
- * case, we eliminate all references to the threads package
- * and to the allocation list stuff.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_debugMem.c,v 1.7.6.4 2002/10/18 02:43:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_debugMem.c,v 1.7.6.5 2002/12/11 06:38:33 thorpej Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.8.2.5 2002/10/18 02:42:08 nathanw Exp $	*/
+/*	$NetBSD: aria.c,v 1.8.2.6 2002/12/11 06:38:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 Roland C. Dowdeswell.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.8.2.5 2002/10/18 02:42:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.8.2.6 2002/12/11 06:38:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.8.2.5 2002/10/18 02:42:08 nathanw Exp $")
 
 #include <dev/mulaw.h>
 #include <dev/isa/isavar.h>
-#include <i386/isa/icu.h>
 
 #include <dev/isa/ariareg.h>
 

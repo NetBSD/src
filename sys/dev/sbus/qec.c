@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.12.2.7 2002/10/18 02:44:10 nathanw Exp $ */
+/*	$NetBSD: qec.c,v 1.12.2.8 2002/12/11 06:38:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.12.2.7 2002/10/18 02:44:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.12.2.8 2002/12/11 06:38:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,9 +70,9 @@ static void *qec_intr_establish __P((
 		bus_space_tag_t,
 		int,			/*bus interrupt priority*/
 		int,			/*`device class' interrupt level*/
-		int,			/*flags*/
 		int (*) __P((void *)),	/*handler*/
-		void *));		/*arg*/
+		void *,			/*arg*/
+		void (*) __P((void))));	/*optional fast trap handler*/
 
 CFATTACH_DECL(qec, sizeof(struct qec_softc),
     qecmatch, qecattach, NULL, NULL);
@@ -259,13 +259,13 @@ qec_bus_map(t, baddr, size, flags, va, hp)
 }
 
 void *
-qec_intr_establish(t, pri, level, flags, handler, arg)
+qec_intr_establish(t, pri, level, handler, arg, fastvec)
 	bus_space_tag_t t;
 	int pri;
 	int level;
-	int flags;
 	int (*handler) __P((void *));
 	void *arg;
+	void (*fastvec) __P((void));	/* ignored */
 {
 	struct qec_softc *sc = t->cookie;
 
@@ -282,7 +282,7 @@ qec_intr_establish(t, pri, level, flags, handler, arg)
 		pri = sc->sc_intr->oi_pri;
 	}
 
-	return (bus_intr_establish(t->parent, pri, level, flags, handler, arg));
+	return (bus_intr_establish(t->parent, pri, level, handler, arg));
 }
 
 void

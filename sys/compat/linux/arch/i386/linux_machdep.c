@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.62.2.15 2002/10/18 02:41:09 nathanw Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.62.2.16 2002/12/11 06:37:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.62.2.15 2002/10/18 02:41:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.62.2.16 2002/12/11 06:37:19 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -120,7 +120,12 @@ int linux_write_ldt __P((struct lwp *, struct linux_sys_modify_ldt_args *,
 
 static struct biosdisk_info *fd2biosinfo __P((struct proc *, struct file *));
 extern struct disklist *i386_alldisks;
+static void linux_savecontext __P((struct lwp *, struct trapframe *,
+    sigset_t *, struct linux_sigcontext *));
+static void linux_rt_sendsig __P((int, sigset_t *, u_long));
+static void linux_old_sendsig __P((int, sigset_t *, u_long));
 
+extern char linux_sigcode[], linux_rt_sigcode[];
 /*
  * Deal with some i386-specific things in the Linux emulation code.
  */
@@ -188,68 +193,170 @@ linux_sendsig(sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
+	if (SIGACTION(curproc, sig).sa_flags & SA_SIGINFO)
+		linux_rt_sendsig(sig, mask, code);
+	else
+		linux_old_sendsig(sig, mask, code);
+}
+
+
+static void
+linux_savecontext(l, tf, mask, sc)
+	struct lwp *l;
+	struct trapframe *tf;
+	sigset_t *mask;
+	struct linux_sigcontext *sc;
+{
+	/* Save register context. */
+#ifdef VM86
+	if (tf->tf_eflags & PSL_VM) {
+		sc->sc_gs = tf->tf_vm86_gs;
+		sc->sc_fs = tf->tf_vm86_fs;
+		sc->sc_es = tf->tf_vm86_es;
+		sc->sc_ds = tf->tf_vm86_ds;
+		sc->sc_eflags = get_vflags(l);
+	} else
+#endif
+	{
+		sc->sc_gs = tf->tf_gs;
+		sc->sc_fs = tf->tf_fs;		
+		sc->sc_es = tf->tf_es;
+		sc->sc_ds = tf->tf_ds;
+		sc->sc_eflags = tf->tf_eflags;
+	}
+	sc->sc_edi = tf->tf_edi;
+	sc->sc_esi = tf->tf_esi;
+	sc->sc_esp = tf->tf_esp;
+	sc->sc_ebp = tf->tf_ebp;
+	sc->sc_ebx = tf->tf_ebx;
+	sc->sc_edx = tf->tf_edx;
+	sc->sc_ecx = tf->tf_ecx;
+	sc->sc_eax = tf->tf_eax;
+	sc->sc_eip = tf->tf_eip;
+	sc->sc_cs = tf->tf_cs;
+	sc->sc_esp_at_signal = tf->tf_esp;
+	sc->sc_ss = tf->tf_ss;
+	sc->sc_err = tf->tf_err;
+	sc->sc_trapno = tf->tf_trapno;
+	sc->sc_cr2 = l->l_addr->u_pcb.pcb_cr2;
+	sc->sc_387 = NULL;
+
+	/* Save signal stack. */
+	/* Linux doesn't save the onstack flag in sigframe */
+
+	/* Save signal mask. */
+	native_to_linux_old_sigset(&sc->sc_mask, mask);
+}
+
+static void
+linux_rt_sendsig(sig, mask, code)
+	int sig;
+	sigset_t *mask;
+	u_long code;
+{
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
+	struct trapframe *tf;
+	struct linux_rt_sigframe *fp, frame;
+	int onstack;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
+	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
+
+	tf = l->l_md.md_regs;
+	/* Do we need to jump onto the signal stack? */
+	onstack = (sas->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
+
+
+	/* Allocate space for the signal handler context. */
+	if (onstack)
+		fp = (struct linux_rt_sigframe *)((caddr_t)sas->ss_sp +
+		    sas->ss_size);
+	else
+		fp = (struct linux_rt_sigframe *)tf->tf_esp;
+	fp--;
+
+	DPRINTF(("rt: onstack = %d, fp = %p sig = %d eip = 0x%x\n", onstack, fp,
+	    sig, tf->tf_eip));
+
+	/* Build stack frame for signal trampoline. */
+	frame.sf_handler = catcher;
+	frame.sf_sig = native_to_linux_signo[sig];
+	frame.sf_sip = &fp->sf_si;
+	frame.sf_scp = &fp->sf_sc;
+
+	/*
+	 * XXX: zero siginfo out until we provide more info.
+	 */
+	(void)memset(&frame.sf_si, 0, sizeof(frame.sf_si));
+
+	/* Save register context. */
+	linux_savecontext(l, tf, mask, &frame.sf_sc);
+
+	if (copyout(&frame, fp, sizeof(frame)) != 0) {
+		/*
+		 * Process has trashed its stack; give it an illegal
+		 * instruction to halt it in its tracks.
+		 */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	/*
+	 * Build context to run handler in.
+	 */
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_eip = ((int)p->p_sigctx.ps_sigcode) + 
+	    (linux_rt_sigcode - linux_sigcode);
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
+	tf->tf_esp = (int)fp;
+	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		sas->ss_flags |= SS_ONSTACK;
+}
+
+static void
+linux_old_sendsig(sig, mask, code)
+	int sig;
+	sigset_t *mask;
+	u_long code;
+{
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct linux_sigframe *fp, frame;
 	int onstack;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
+	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
 
 	tf = l->l_md.md_regs;
+
 	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	onstack = (sas->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		fp = (struct linux_sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-					  p->p_sigctx.ps_sigstk.ss_size);
+		fp = (struct linux_sigframe *) ((caddr_t)sas->ss_sp +
+		    sas->ss_size);
 	else
 		fp = (struct linux_sigframe *)tf->tf_esp;
 	fp--;
+
+	DPRINTF(("old: onstack = %d, fp = %p sig = %d eip = 0x%x\n",
+	    onstack, fp, sig, tf->tf_eip));
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_handler = catcher;
 	frame.sf_sig = native_to_linux_signo[sig];
 
-	/* Save register context. */
-#ifdef VM86
-	if (tf->tf_eflags & PSL_VM) {
-		frame.sf_sc.sc_gs = tf->tf_vm86_gs;
-		frame.sf_sc.sc_fs = tf->tf_vm86_fs;
-		frame.sf_sc.sc_es = tf->tf_vm86_es;
-		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
-		frame.sf_sc.sc_eflags = get_vflags(l);
-	} else
-#endif
-	{
-		frame.sf_sc.sc_gs = tf->tf_gs;
-		frame.sf_sc.sc_fs = tf->tf_fs;		
-		frame.sf_sc.sc_es = tf->tf_es;
-		frame.sf_sc.sc_ds = tf->tf_ds;
-		frame.sf_sc.sc_eflags = tf->tf_eflags;
-	}
-	frame.sf_sc.sc_edi = tf->tf_edi;
-	frame.sf_sc.sc_esi = tf->tf_esi;
-	frame.sf_sc.sc_ebp = tf->tf_ebp;
-	frame.sf_sc.sc_ebx = tf->tf_ebx;
-	frame.sf_sc.sc_edx = tf->tf_edx;
-	frame.sf_sc.sc_ecx = tf->tf_ecx;
-	frame.sf_sc.sc_eax = tf->tf_eax;
-	frame.sf_sc.sc_eip = tf->tf_eip;
-	frame.sf_sc.sc_cs = tf->tf_cs;
-	frame.sf_sc.sc_esp_at_signal = tf->tf_esp;
-	frame.sf_sc.sc_ss = tf->tf_ss;
-	frame.sf_sc.sc_err = tf->tf_err;
-	frame.sf_sc.sc_trapno = tf->tf_trapno;
-	frame.sf_sc.sc_cr2 = l->l_addr->u_pcb.pcb_cr2;
-
-	/* Save signal stack. */
-	/* Linux doesn't save the onstack flag in sigframe */
-
-	/* Save signal mask. */
-	native_to_linux_old_sigset(&frame.sf_sc.sc_mask, mask);
+	linux_savecontext(l, tf, mask, &frame.sf_sc);
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
@@ -275,7 +382,7 @@ linux_sendsig(sig, mask, code)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		sas->ss_flags |= SS_ONSTACK;
 }
 
 /*
@@ -312,6 +419,7 @@ linux_sys_sigreturn(l, v, retval)
 	struct trapframe *tf;
 	sigset_t mask;
 	ssize_t ss_gap;
+	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
 
 	/*
 	 * The trampoline code hands us the context.
@@ -320,17 +428,22 @@ linux_sys_sigreturn(l, v, retval)
 	 */
 	scp = SCARG(uap, scp);
 	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
-		return (EFAULT);
+		return EFAULT;
 
 	/* Restore register context. */
 	tf = l->l_md.md_regs;
+
+	DPRINTF(("sigreturn enter esp=%x eip=%x\n", tf->tf_esp, tf->tf_eip));
 #ifdef VM86
 	if (context.sc_eflags & PSL_VM) {
+		void syscall_vm86 __P((struct trapframe));
+
 		tf->tf_vm86_gs = context.sc_gs;
 		tf->tf_vm86_fs = context.sc_fs;
 		tf->tf_vm86_es = context.sc_es;
 		tf->tf_vm86_ds = context.sc_ds;
 		set_vflags(l, context.sc_eflags);
+		p->p_md.md_syscall = syscall_vm86;
 	} else
 #endif
 	{
@@ -342,12 +455,16 @@ linux_sys_sigreturn(l, v, retval)
 		 */
 		if (((context.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
 		    !USERMODE(context.sc_cs, context.sc_eflags))
-			return (EINVAL);
+			return EINVAL;
 
 		tf->tf_gs = context.sc_gs;
 		tf->tf_fs = context.sc_fs;
 		tf->tf_es = context.sc_es;
 		tf->tf_ds = context.sc_ds;
+#ifdef VM86
+		if (tf->tf_eflags & PSL_VM)
+			(*p->p_emul->e_syscall_intern)(p);
+#endif
 		tf->tf_eflags = context.sc_eflags;
 	}
 	tf->tf_edi = context.sc_edi;
@@ -368,17 +485,17 @@ linux_sys_sigreturn(l, v, retval)
 	 * to save the onstack flag.
 	 */
 	ss_gap = (ssize_t)
-	    ((caddr_t) context.sc_esp_at_signal - (caddr_t) p->p_sigctx.ps_sigstk.ss_sp);
-	if (ss_gap >= 0  && ss_gap < p->p_sigctx.ps_sigstk.ss_size)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+	    ((caddr_t) context.sc_esp_at_signal - (caddr_t) sas->ss_sp);
+	if (ss_gap >= 0 && ss_gap < sas->ss_size)
+		sas->ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		sas->ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	linux_old_to_native_sigset(&mask, &context.sc_mask);
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
-
-	return (EJUSTRETURN);
+	DPRINTF(("sigreturn exit esp=%x eip=%x\n", tf->tf_esp, tf->tf_eip));
+	return EJUSTRETURN;
 }
 
 #ifdef USER_LDT

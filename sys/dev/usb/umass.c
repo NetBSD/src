@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.52.2.9 2002/11/11 22:12:55 nathanw Exp $	*/
+/*	$NetBSD: umass.c,v 1.52.2.10 2002/12/11 06:38:52 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.52.2.9 2002/11/11 22:12:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.52.2.10 2002/12/11 06:38:52 thorpej Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -1119,6 +1119,10 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 		if ((sc->sc_quirks & UMASS_QUIRK_WRONG_CSWSIG) &&
 		    UGETDW(sc->csw.dCSWSignature) == CSWSIGNATURE_OLYMPUS_C1)
 			USETDW(sc->csw.dCSWSignature, CSWSIGNATURE);
+
+		/* Translate invalid command-status tags */
+		if (sc->sc_quirks & UMASS_QUIRK_WRONG_CSWTAG)
+			USETDW(sc->csw.dCSWTag, UGETDW(sc->cbw.dCBWTag));
 
 		/* Check CSW and handle any error */
 		if (UGETDW(sc->csw.dCSWSignature) != CSWSIGNATURE) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.2.2.7 2002/11/11 22:11:28 nathanw Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.2.2.8 2002/12/11 06:38:21 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.2.2.7 2002/11/11 22:11:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.2.2.8 2002/12/11 06:38:21 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -841,12 +841,14 @@ configure_bridge(pciconf_dev_t *pd)
 		mem_base  = 0x100000;	/* 1M */
 		mem_limit = 0x000000;
 	}
+#if ULONG_MAX > 0xffffffff
 	if (mem_limit > 0xFFFFFFFFULL) {
 		printf("Bus %d bridge MEM range out of range.  ", pb->busno);
 		printf("Disabling MEM accesses\n");
 		mem_base  = 0x100000;	/* 1M */
 		mem_limit = 0x000000;
 	}
+#endif
 	mem = (((mem_base >> 20) & PCI_BRIDGE_MEMORY_BASE_MASK)
 	    << PCI_BRIDGE_MEMORY_BASE_SHIFT);
 	mem |= (((mem_limit >> 20) & PCI_BRIDGE_MEMORY_LIMIT_MASK)
@@ -862,6 +864,7 @@ configure_bridge(pciconf_dev_t *pd)
 		mem_limit = 0x000000;
 	}
 	mem = pci_conf_read(pb->pc, pd->tag, PCI_BRIDGE_PREFETCHMEM_REG);
+#if ULONG_MAX > 0xffffffff
 	if (!PCI_BRIDGE_PREFETCHMEM_64BITS(mem) && mem_limit > 0xFFFFFFFFULL) {
 		printf("Bus %d bridge does not support 64-bit PMEM.  ",
 		    pb->busno);
@@ -869,6 +872,7 @@ configure_bridge(pciconf_dev_t *pd)
 		mem_base  = 0x100000;	/* 1M */
 		mem_limit = 0x000000;
 	}
+#endif
 	mem = (((mem_base >> 20) & PCI_BRIDGE_PREFETCHMEM_BASE_MASK)
 	    << PCI_BRIDGE_PREFETCHMEM_BASE_SHIFT);
 	mem |= (((mem_limit >> 20) & PCI_BRIDGE_PREFETCHMEM_LIMIT_MASK)
@@ -923,6 +927,11 @@ configure_bus(pciconf_bus_t *pb)
 	pciconf_dev_t	*pd;
 	int		def_ltim, max_ltim, band, bus_mhz;
 
+	if (pb->ndevs == 0) {
+		if (pci_conf_debug)
+			printf("PCI bus %d - no devices\n", pb->busno);
+		return (1);
+	}
 	bus_mhz = pb->freq_66 ? 66 : 33;
 	max_ltim = pb->max_mingnt * bus_mhz / 4;	/* cvt to cycle count */
 	band = 40000000;			/* 0.25us cycles/sec */

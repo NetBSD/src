@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.12.2.5 2002/10/18 02:43:19 nathanw Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.12.2.6 2002/12/11 06:38:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.12.2.5 2002/10/18 02:43:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.12.2.6 2002/12/11 06:38:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.12.2.5 2002/10/18 02:43:19 nathanw Exp $
 #include <dev/pci/pcscpreg.h>
 
 #define IO_MAP_REG	0x10
-#define MEM_MAP_REG	0x14
 
 struct pcscp_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
@@ -153,9 +152,6 @@ pcscp_match(parent, match, aux)
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_AMD_PCSCSI_PCI:
-#if 0
-	case PCI_PRODUCT_AMD_PCNETS_PCI:
-#endif
 		return 1;
 	}
 	return 0;
@@ -172,42 +168,28 @@ pcscp_attach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	struct pcscp_softc *esc = (void *)self;
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
-	bus_space_tag_t st, iot, memt;
-	bus_space_handle_t sh, ioh, memh;
-	int ioh_valid, memh_valid;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	pcireg_t csr;
 	bus_dma_segment_t seg;
 	int error, rseg;
+	char devinfo[256];
 
-	ioh_valid = (pci_mapreg_map(pa, IO_MAP_REG,
-	    PCI_MAPREG_TYPE_IO, 0,
-	    &iot, &ioh, NULL, NULL) == 0);
-#if 0	/* XXX cannot use memory map? */
-	memh_valid = (pci_mapreg_map(pa, MEM_MAP_REG,
-	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &memt, &memh, NULL, NULL) == 0);
-#else
-	memh_valid = 0;
-#endif
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	printf(": %s\n", devinfo);
 
-	if (memh_valid) {
-		st = memt;
-		sh = memh;
-	} else if (ioh_valid) {
-		st = iot;
-		sh = ioh;
-	} else {
-		printf(": unable to map registers\n");
+	if (pci_mapreg_map(pa, IO_MAP_REG, PCI_MAPREG_TYPE_IO, 0,
+	    &iot, &ioh, NULL, NULL)) {
+		printf("%s: unable to map registers\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	printf("\n");
 
 	sc->sc_glue = &pcscp_glue;
 
-	esc->sc_st = st;
-	esc->sc_sh = sh;
+	esc->sc_st = iot;
+	esc->sc_sh = ioh;
 	esc->sc_dmat = pa->pa_dmat;
 
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
