@@ -1,0 +1,117 @@
+#! /bin/sh
+#
+#	$NetBSD: ntp2netbsd,v 1.1 2000/03/29 12:25:55 simonb Exp $
+#
+# Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#	This product includes software developed by the NetBSD
+#	Foundation, Inc. and its contributors.
+# 4. Neither the name of The NetBSD Foundation nor the names of its
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# ntp2netbsd:  convert a ntp source tree into a
+# netbsd ntp source tree, under basesrc/dist,
+# based on bind2netbsd by Bernd Ernesti
+
+if [ $# -ne 2 ]; then echo "ntp2netbsd src dest"; exit 1; fi
+
+r=$1
+d=$2/basesrc/dist/ntp
+
+case "$d" in
+	/*)
+		;;
+	*)
+		d=`/bin/pwd`/$d
+		;;
+esac
+
+case "$r" in
+	/*)
+		;;
+	*)
+		r=`/bin/pwd`/$r
+		;;
+esac
+
+echo preparing directory $d
+rm -rf $d
+mkdir -p $d
+
+### Copy the files and directories
+echo copying $r to $d
+cd $r
+pax -rw * $d
+
+echo removing unneeded directories and files
+
+### Remove unneeded directories
+cd $d
+rm -r ports
+
+### Remove .cvsignore
+find $d -name '.cvsignore*' -exec rm {} \;
+
+### Remove the $'s around RCS tags
+find $d -type f -print | xargs egrep -l '\$(Id|Created|Header)' | while read f; do
+	sed -e 's/\$\(Id.*\) \$/\1/' \
+	    -e 's/\$\(Created.*\) \$/\1/' \
+	    -e 's/\$\(Header.*\) \$/\1/' \
+	    < $f > /tmp/ntp1f$$ && mv /tmp/ntp1f$$ $f && \
+	echo removed \$RCS tag from $f
+done
+
+### Add our NetBSD RCS Id
+find $d -name '*.[chly]' -print | while read c; do
+	sed 1q < $c | grep -q '\$NetBSD' || (
+echo "/*	\$NetBSD\$	*/" >/tmp/ntp3n$$
+echo "" >>/tmp/ntp3n$$
+cat $c  >> /tmp/ntp3n$$
+mv /tmp/ntp3n$$ $c && echo added NetBSD RCS tag to $c
+	)
+done
+
+echo done
+
+### Clean up any CVS directories that might be around.
+echo "cleaning up CVS residue."
+(
+	cd $d
+	find . -type d -name "CVS" -print | xargs rm -r
+)
+echo done
+
+### Fixing file and directory permissions.
+echo "Fixing file/directory permissions."
+(
+	cd $d
+	find . -type f -print | xargs chmod u+rw,go+r
+	find . -type d -print | xargs chmod u+rwx,go+rx
+)
+echo done
+
+exit 0
