@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.c,v 1.1 1997/01/24 01:52:57 cgd Exp $	*/
+/* $NetBSD: prom.c,v 1.2 1997/04/06 08:41:00 cgd Exp $ */
 
 /*  
  * Mach Operating System

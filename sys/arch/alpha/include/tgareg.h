@@ -1,4 +1,4 @@
-/*	$NetBSD: tgareg.h,v 1.1 1996/04/12 01:44:23 cgd Exp $	*/
+/* $NetBSD: tgareg.h,v 1.2 1997/04/06 08:47:44 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

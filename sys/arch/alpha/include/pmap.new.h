@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.h,v 1.3 1996/08/20 23:02:59 cgd Exp $	*/
+/* $NetBSD: pmap.new.h,v 1.4 1997/04/06 08:47:34 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996 Carnegie Mellon University

@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_cpu.h,v 1.7 1996/11/23 06:25:31 cgd Exp $	*/
+/* $NetBSD: alpha_cpu.h,v 1.8 1997/04/06 08:47:14 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.

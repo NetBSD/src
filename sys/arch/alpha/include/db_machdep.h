@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.3 1997/02/06 21:16:28 gwr Exp $	*/
+/* $NetBSD: db_machdep.h,v 1.4 1997/04/06 08:47:21 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.

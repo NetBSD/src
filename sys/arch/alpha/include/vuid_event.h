@@ -1,4 +1,4 @@
-/*	$NetBSD: vuid_event.h,v 1.1 1996/04/12 01:45:47 cgd Exp $ */
+/* $NetBSD: vuid_event.h,v 1.2 1997/04/06 08:47:47 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
