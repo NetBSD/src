@@ -1,4 +1,4 @@
-#	$NetBSD: BOAT_ANCHOR,v 1.55 1996/03/05 01:32:11 thorpej Exp $
+#	$NetBSD: BOAT_ANCHOR,v 1.56 1996/03/07 00:48:34 jtk Exp $
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
@@ -161,7 +161,7 @@ ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC, 3C503, and NE[12]000
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
 
 #sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
-#spkr0	at isa? ...
+#spkr0	at isa? port 0x61
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 2		# packet filter
