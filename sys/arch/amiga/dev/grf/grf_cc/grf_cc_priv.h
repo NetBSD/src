@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: grf_cc_priv.h,v 1.2 1994/01/29 07:00:34 chopps Exp $
+ *	$Id: grf_cc_priv.h,v 1.3 1994/01/30 08:25:16 chopps Exp $
  */
 
 #if ! defined (_GRF_CCPRIV_H)
@@ -150,6 +150,12 @@ int cc_a2024_use_colormap (view_t *v, colormap_t *);
 int cc_a2024_get_colormap (view_t *v, colormap_t *);
 colormap_t * cc_a2024_alloc_colormap (int);
 
+#if defined (GRF_PAL)
+extern cop_t std_pal_a2024_copper_list[];
+extern int std_pal_a2024_copper_list_len;
+extern int std_pal_a2024_copper_list_size;
+#endif
+
 extern cop_t std_a2024_copper_list[];
 extern int std_a2024_copper_list_len;
 extern int std_a2024_copper_list_size;
@@ -173,6 +179,9 @@ extern monitor_t *cc_monitor;
 #if defined (GRF_ECS)
 #define CALC_DIWHIGH(hs, vs, he, ve) \
         ((u_word)((he&0x100)<<5)|(ve&0x700)|((hs&0x100)>>3)|((vs&0x700)>>8))
+#define USE_CON3 0x0001
+#else
+#define USE_CON3 0x0
 #endif
 
 #endif /* _GRF_CCPRIV_H */

@@ -1,6 +1,9 @@
 /*
- * Copyright (c) 1994 Christian E. Hopps
+ * Copyright (c) 1993 Christian E. Hopps
  * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Christian E. Hopps.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,24 +15,26 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christian E. Hopps.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  *
- *	$Id: grf_cc_a2024_mode.c,v 1.3 1994/01/30 08:25:02 chopps Exp $
  */
-#if defined (GRF_A2024)
+#if defined (GRF_A2024) && defined (GRF_PAL)
 
 #include "grf_cc_priv.h"
 #include "../../../amiga/cc_2024.h"
@@ -41,8 +46,8 @@
 #define D(x)
 #endif
 
-static void a2024_mode_vbl_handler (dmode_t *d);
-static void display_a2024_view (view_t *v);
+static void pal_a2024_mode_vbl_handler (dmode_t *d);
+static void display_pal_a2024_view (view_t *v);
 static view_t *get_current_view (dmode_t *d);
 
 /* -------
@@ -65,34 +70,34 @@ enum frame_numbers {
     F_TOTAL
 };
 
-static dmode_t a2024_mode;
-static dmdata_t a2024_mode_data;
-static cop_t *a2024_frames[F_TOTAL];
+static dmode_t pal_a2024_mode;
+static dmdata_t pal_a2024_mode_data;
+static cop_t *pal_a2024_frames[F_TOTAL];
 static u_byte *hedley_init;			  /* init bitplane. */
 static dmode_t *this;
 static dmdata_t *this_data;
 
 dmode_t *
-cc_init_ntsc_a2024 (void)
+cc_init_pal_a2024 (void)
 {
     /* this function should only be called once. */
     if (!this) {
 	int i;
-	u_word len = std_a2024_copper_list_len;
+	u_word len = std_pal_a2024_copper_list_len;
 	cop_t *cp;
 	
-	this = &a2024_mode;
-	this_data = &a2024_mode_data;
+	this = &pal_a2024_mode;
+	this_data = &pal_a2024_mode_data;
 	bzero (this, sizeof (dmode_t));
 	bzero (this_data, sizeof (dmdata_t));
 
-	this->name = "ntsc: A2024 15khz";
+	this->name = "pal: A2024 15khz";
 	this->nominal_size.width = 1024;
-	this->nominal_size.height = 800;
+	this->nominal_size.height = 1024;
 	this_data->max_size.width = 1024;
-	this_data->max_size.height = 800;
+	this_data->max_size.height = 1024;
 	this_data->min_size.width = 1024;
-	this_data->min_size.height = 800;
+	this_data->min_size.height = 1024;
 	this_data->min_depth = 1;
 	this_data->max_depth = 2;
 	this->data = this_data;
@@ -103,14 +108,14 @@ cc_init_ntsc_a2024 (void)
 
 	this_data->use_colormap = cc_a2024_use_colormap;
 	this_data->get_colormap = cc_a2024_get_colormap;
-	this_data->display_view = display_a2024_view;
+	this_data->display_view = display_pal_a2024_view;
 	this_data->alloc_colormap = cc_a2024_alloc_colormap;
 	this_data->monitor = cc_monitor;
 
 	this_data->flags |= DMF_HEDLEY_EXP;
 
-	this_data->frames = a2024_frames;
-	this_data->frames[F_QUAD0] = alloc_chipmem (std_a2024_copper_list_size*F_TOTAL);
+	this_data->frames = pal_a2024_frames;
+	this_data->frames[F_QUAD0] = alloc_chipmem (std_pal_a2024_copper_list_size*F_TOTAL);
 	if (!this_data->frames[F_QUAD0]) {
 	    panic ("couldn't get chipmem for copper list");
 	}
@@ -124,7 +129,7 @@ cc_init_ntsc_a2024 (void)
 	hedley_init[0] = 0x03;
 
 	/* copy image of standard copper list. */
-	bcopy (std_a2024_copper_list, this_data->frames[0], std_a2024_copper_list_size);
+	bcopy (std_pal_a2024_copper_list, this_data->frames[0], std_pal_a2024_copper_list_size);
 
 	/* set the init plane pointer. */
 	cp = find_copper_inst (this_data->frames[F_QUAD0], CI_MOVE(R_BPL0PTH));
@@ -133,11 +138,11 @@ cc_init_ntsc_a2024 (void)
 
 	for (i = 1; i < F_TOTAL; i++) {	    
 	    this_data->frames[i] = &this_data->frames[i-1][len];
-	    bcopy (this_data->frames[0], this_data->frames[i], std_a2024_copper_list_size);
+	    bcopy (this_data->frames[0], this_data->frames[i], std_pal_a2024_copper_list_size);
 	}	
 	
 	this_data->bplcon0 = 0x8200;		  /* hires */
-	this_data->vbl_handler = (vbl_handler_func *) a2024_mode_vbl_handler;
+	this_data->vbl_handler = (vbl_handler_func *) pal_a2024_mode_vbl_handler;
 	
 		    
 	dadd_head (&MDATA(cc_monitor)->modes, &this->node);
@@ -146,7 +151,7 @@ cc_init_ntsc_a2024 (void)
 }
 
 static void
-display_a2024_view (view_t *v)
+display_pal_a2024_view (view_t *v)
 {
     if (this_data->current_view != v) {
 	vdata_t *vd = VDATA(v);
@@ -174,20 +179,20 @@ display_a2024_view (view_t *v)
 	tmp = find_copper_inst (tmp, CI_MOVE(R_BPLCON0)); /* grab third one. */
 	tmp->cp.inst.operand = this_data->bplcon0 | ((depth & 0x7) << 13); /* times 2 */
 	
-	bcopy (this_data->frames[F_STORE_QUAD0], this_data->frames[F_STORE_QUAD1], std_a2024_copper_list_size);
-	bcopy (this_data->frames[F_STORE_QUAD0], this_data->frames[F_STORE_QUAD2], std_a2024_copper_list_size);
-	bcopy (this_data->frames[F_STORE_QUAD0], this_data->frames[F_STORE_QUAD3], std_a2024_copper_list_size);
+	bcopy (this_data->frames[F_STORE_QUAD0], this_data->frames[F_STORE_QUAD1], std_pal_a2024_copper_list_size);
+	bcopy (this_data->frames[F_STORE_QUAD0], this_data->frames[F_STORE_QUAD2], std_pal_a2024_copper_list_size);
+	bcopy (this_data->frames[F_STORE_QUAD0], this_data->frames[F_STORE_QUAD3], std_pal_a2024_copper_list_size);
 
 	/*
 	 * Mark Id's
 	 */
-	tmp = find_copper_inst (this_data->frames[F_STORE_QUAD1], CI_WAIT (126,21));
+	tmp = find_copper_inst (this_data->frames[F_STORE_QUAD1], CI_WAIT (126,29));
 	CBUMP(tmp);
 	CMOVE (tmp, R_COLOR01, QUAD1_ID);
-	tmp = find_copper_inst (this_data->frames[F_STORE_QUAD2], CI_WAIT (126,21));
+	tmp = find_copper_inst (this_data->frames[F_STORE_QUAD2], CI_WAIT (126,29));
 	CBUMP(tmp);
 	CMOVE (tmp, R_COLOR01, QUAD2_ID);
-	tmp = find_copper_inst (this_data->frames[F_STORE_QUAD3], CI_WAIT (126,21));
+	tmp = find_copper_inst (this_data->frames[F_STORE_QUAD3], CI_WAIT (126,29));
 	CBUMP(tmp);
 	CMOVE (tmp, R_COLOR01, QUAD3_ID);
 
@@ -217,7 +222,7 @@ display_a2024_view (view_t *v)
 	    CMOVE (tmp, R_BPL3PTL, LOADDR (PREP_DMA_MEM (&plane[1][full_line])));
 	}
 #if defined (GRF_ECS)
-	CMOVE (tmp, R_DIWHIGH, 0x2000);
+	CMOVE (tmp, R_DIWHIGH, 0x2100);
 #endif
 	CMOVE (tmp, R_COP1LCH, HIADDR (PREP_DMA_MEM (this_data->frames[F_STORE_QUAD1])));
 	CMOVE (tmp, R_COP1LCL, LOADDR (PREP_DMA_MEM (this_data->frames[F_STORE_QUAD1])));
@@ -236,7 +241,7 @@ display_a2024_view (view_t *v)
 	    CMOVE (tmp, R_BPL3PTL, LOADDR (PREP_DMA_MEM (&plane[1][full_line+HALF_2024_LINE])));
 	}
 #if defined (GRF_ECS)
-	CMOVE (tmp, R_DIWHIGH, 0x2000);
+	CMOVE (tmp, R_DIWHIGH, 0x2100);
 #endif
 	CMOVE (tmp, R_COP1LCH, HIADDR (PREP_DMA_MEM (this_data->frames[F_STORE_QUAD2])));
 	CMOVE (tmp, R_COP1LCL, LOADDR (PREP_DMA_MEM (this_data->frames[F_STORE_QUAD2])));
@@ -255,7 +260,7 @@ display_a2024_view (view_t *v)
 	    CMOVE (tmp, R_BPL3PTL, LOADDR (PREP_DMA_MEM (&plane[1][half_plane+full_line])));
 	}
 #if defined (GRF_ECS)
-	CMOVE (tmp, R_DIWHIGH, 0x2000);
+	CMOVE (tmp, R_DIWHIGH, 0x2100);
 #endif
 	CMOVE (tmp, R_COP1LCH, HIADDR (PREP_DMA_MEM (this_data->frames[F_STORE_QUAD3])));
 	CMOVE (tmp, R_COP1LCL, LOADDR (PREP_DMA_MEM (this_data->frames[F_STORE_QUAD3])));
@@ -274,7 +279,7 @@ display_a2024_view (view_t *v)
 	    CMOVE (tmp, R_BPL3PTL, LOADDR (PREP_DMA_MEM (&plane[1][half_plane+full_line+HALF_2024_LINE])));
 	}
 #if defined (GRF_ECS)
-	CMOVE (tmp, R_DIWHIGH, 0x2000);
+	CMOVE (tmp, R_DIWHIGH, 0x2100);
 #endif
 	CMOVE (tmp, R_COP1LCH, HIADDR (PREP_DMA_MEM (this_data->frames[F_STORE_QUAD0])));
 	CMOVE (tmp, R_COP1LCL, LOADDR (PREP_DMA_MEM (this_data->frames[F_STORE_QUAD0])));
@@ -303,11 +308,11 @@ get_current_view (dmode_t *d)
 }
 
 static void
-a2024_mode_vbl_handler (dmode_t *d)
+pal_a2024_mode_vbl_handler (dmode_t *d)
 {
     u_word vp = ((custom.vposr & 0x0007) << 8) | ((custom.vhposr) >> 8);
 
-    if (vp < 12) {
+    if (vp < 20) {
 	custom.cop1lc = PREP_DMA_MEM (this_data->frames[this_data->hedley_current]);
 	custom.copjmp1 = 0;
     }
@@ -315,5 +320,5 @@ a2024_mode_vbl_handler (dmode_t *d)
     this_data->hedley_current &= 0x3;		  /* if 4 then 0. */
 }
 
-#endif /* GRF_A2024 */
+#endif /* GRF_A2024 & GRF_PAL */
 

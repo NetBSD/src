@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: grf_cc_mode.c,v 1.2 1994/01/29 07:00:26 chopps Exp $
+ *	$Id: grf_cc_mode.c,v 1.3 1994/01/30 08:25:09 chopps Exp $
  */
 #include "errno.h"
 #include "grf_cc_priv.h"
@@ -50,6 +50,7 @@ dmode_t *(*mode_init_funcs[])(void) = {
 #endif /* GRF_NTSC */
 #if defined (GRF_PAL)
 #if defined (GRF_A2024)
+    cc_init_pal_a2024,
     cc_init_pal_hires_dlace,
 #endif /* GRF_A2024 */
     cc_init_pal_hires_lace,
@@ -149,7 +150,7 @@ cc_alloc_colormap (int depth)
 	cm->blue_mask = 0x0F;
 	cm->first = 0;
 	cm->size = size;
-	cm->entry = &cm[1];			  /* table directly after. */
+	cm->entry = (u_long *) &cm[1]; /* table directly after. */
 	for (i=0; i < min(size,32); i++) {
 	    cm->entry[i] = CM_WTOL(cc_default_colors[i]);
 	}
@@ -170,7 +171,7 @@ cc_a2024_alloc_colormap (int depth)
 	cm->grey_mask = 0x03;
 	cm->first = 0;
 	cm->size = size;
-	cm->entry = &cm[1];			  /* table directly after. */
+	cm->entry = (u_long *) &cm[1]; /* table directly after. */
 	for (i=0; i < size; i++) {
 	    cm->entry[i] = CM_WTOL(cc_a2024_default_colors[i]);
 	}
