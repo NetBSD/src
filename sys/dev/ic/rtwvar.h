@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.5 2004/12/19 08:19:26 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.6 2004/12/20 23:05:41 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -345,7 +345,7 @@ struct rtw_sa2400 {
 	int			sa_digphy;	/* 1: digital PHY */
 };
 
-typedef void (*rtw_pwrstate_t)(struct rtw_regs *, enum rtw_pwrstate, int);
+typedef void (*rtw_pwrstate_t)(struct rtw_regs *, enum rtw_pwrstate, int, int);
 
 enum rtw_access {RTW_ACCESS_NONE = 0,
 		 RTW_ACCESS_CONFIG = 1,

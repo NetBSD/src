@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphyio.c,v 1.2 2004/12/13 00:48:02 dyoung Exp $ */
+/* $NetBSD: rtwphyio.c,v 1.3 2004/12/20 23:05:41 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.2 2004/12/13 00:48:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.3 2004/12/20 23:05:41 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ rtw_rf_hostbangbits(struct rtw_regs *regs, u_int32_t bits, int lo_to_hi,
 		mask = 1 << (nbits - 1);
 
 	for (i = 0; i < nbits; i++) {
-		RTW_DPRINTF2(("%s: bits %#08x mask %#08x -> bit %#08x\n",
+		RTW_DPRINTF3(("%s: bits %#08x mask %#08x -> bit %#08x\n",
 		    __func__, bits, mask, bits & mask));
 
 		if ((bits & mask) != 0)
