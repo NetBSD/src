@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2000/08/13 16:22:53 itojun Exp $
+#	$NetBSD: Makefile,v 1.4 2000/10/10 11:17:49 itojun Exp $
 #	install these sources in /usr/share/sendmail/ostype
 
 DIST=		${.CURDIR}/../../../../dist
@@ -12,9 +12,9 @@ FILES=		aix2.m4 aix3.m4 aix4.m4 altos.m4 amdahl-uts.m4 aux.m4 \
 		isc4.1.m4 linux.m4 maxion.m4 mklinux.m4 nextstep.m4 \
 		openbsd.m4 osf1.m4 powerux.m4 ptx2.m4 qnx.m4 \
 		riscos4.5.m4 sco-uw-2.1.m4 sco3.2.m4 sinix.m4 \
-		solaris2.m4 solaris2.ml.m4 solaris2.pre5.m4 sunos3.5.m4 \
-		sunos4.1.m4 svr4.m4 ultrix4.m4 unixware7.m4 unknown.m4 \
-		uxpds.m4
+		solaris2.m4 solaris2.ml.m4 solaris2.pre5.m4 solaris8.m4 \
+		sunos3.5.m4 sunos4.1.m4 svr4.m4 ultrix4.m4 unixware7.m4 \
+		unknown.m4 uxpds.m4
 
 all:
 
