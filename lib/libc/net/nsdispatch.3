@@ -1,4 +1,4 @@
-.\"	$NetBSD: nsdispatch.3,v 1.19 2004/09/28 11:37:26 lukem Exp $
+.\"	$NetBSD: nsdispatch.3,v 1.20 2004/09/28 14:44:05 lukem Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -71,8 +71,10 @@ is passed to each callback function to modify as necessary
 .Pp
 Each callback has the function signature described by the typedef:
 .Pp
+.Bd -ragged -offset indent
 .Ft typedef int
 .Fn \*(lp*nss_method\*(rp "void *retval" "void *cb_data" "va_list ap" ;
+.Ed
 .Pp
 .Va dtab
 is an array of
@@ -89,7 +91,8 @@ typedef struct {
 .Bd -ragged -offset indent
 The
 .Fa dtab
-array should consist of one entry for each source type that is implemented,
+array should consist of one entry for each source type that has a
+static implementation,
 with
 .Va src
 as the name of the source,
@@ -197,9 +200,11 @@ When a module is loaded,
 .Fn nsdispatch
 looks for and calls the following function in the module:
 .Pp
+.Bd -ragged -offset indent
 .Ft ns_mtab *
 .Fn nss_module_register "const char *source" "u_int *nelems" \
     "nss_module_unregister_fn *unreg" ;
+.Ed
 .Pp
 .Bl -tag -width source
 .It Fa source
@@ -222,8 +227,10 @@ unloaded.
 .Pp
 The unregister function signature is described by the typedef:
 .Pp
+.Bd -ragged -offset indent
 .Ft typedef void
 .Fn \*(lp*nss_module_unregister_fn\*(rp "ns_mtab *mtab" "u_int nelems" ;
+.Ed
 .Pp
 .Fn nss_module_register
 returns an array of
