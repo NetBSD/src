@@ -1,4 +1,4 @@
-.\"	$NetBSD: rup.1,v 1.10 1996/09/27 01:46:09 thorpej Exp $
+.\"	$NetBSD: rup.1,v 1.11 1997/10/19 14:25:00 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -38,11 +38,11 @@
 .Nm rup 
 .Nd remote status display
 .Sh SYNOPSIS
-.Nm rup 
+.Nm
 .Op Fl dhlt
 .Op Ar host ...
 .Sh DESCRIPTION
-.Nm rup
+.Nm
 displays a summary of the current system status of a particular
 .Em host 
 or all hosts on the local network.
@@ -69,7 +69,7 @@ The
 .Xr rpc.rstatd 8
 daemon must be running on the remote host for this command to
 work.
-.Nm rup
+.Nm
 uses an RPC protocol defined in /usr/include/rpcsvc/rstat.x.
 .Sh EXAMPLE
 .Bd -unfilled -offset indent -compact
@@ -99,7 +99,7 @@ and cannot accommodate any RPC-based services.  The host may be down.
 .Xr rpc.rstatd 8
 .Sh HISTORY
 The
-.Nm rup
+.Nm
 command
 appeared in
 .Tn SunOS .

@@ -1,4 +1,4 @@
-/*	$NetBSD: rup.c,v 1.14 1997/08/24 10:53:16 drochner Exp $	*/
+/*	$NetBSD: rup.c,v 1.15 1997/10/19 14:25:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rup.c,v 1.14 1997/08/24 10:53:16 drochner Exp $");
+__RCSID("$NetBSD: rup.c,v 1.15 1997/10/19 14:25:03 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -264,7 +264,7 @@ onehost(host)
 		return;
 	}
 
-	bzero((char *)&host_stat, sizeof(host_stat));
+	memset((char *)&host_stat, 0, sizeof(host_stat));
 	if (clnt_call(rstat_clnt, RSTATPROC_STATS, xdr_void, NULL, xdr_statstime, &host_stat, timeout) != RPC_SUCCESS) {
 		warnx("%s",  clnt_sperror(rstat_clnt, host));
 		return;
