@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.7 2002/01/04 06:51:02 thorpej Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.8 2002/08/27 14:18:41 christos Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.7 2002/01/04 06:51:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.8 2002/08/27 14:18:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,8 @@ static struct execsw exec_svr4_elf =
 	  { ELFNAME2(svr4,probe) },
 	  NULL,
 	  EXECSW_PRIO_ANY,
-	  SVR4_AUX_ARGSIZ,
-	  svr4_copyargs,
+	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
+	  elf32_copyargs,
 	  NULL,
 	  coredump_elf32 };
 #else
@@ -74,9 +74,10 @@ static struct execsw exec_svr4_elf =
 	{ sizeof (Elf64_Ehdr),
 	  exec_elf64_makecmds,
 	  { ELFNAME2(svr4,probe) },
-	  NULL, EXECSW_PRIO_ANY,
-	  SVR4_AUX_ARGSIZ64,
-	  svr4_copyargs64,
+	  NULL,
+	  EXECSW_PRIO_ANY,
+	  howmany(ELF_AUX_ENTRIES * sizeof(Aux64Info), sizeof (Elf64_Addr)),
+	  elf64_copyargs,
 	  NULL,
 	  coredump_elf64 };
 #endif
