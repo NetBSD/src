@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.276 2001/08/25 15:51:36 thorpej Exp $
+# $NetBSD: mi,v 1.277 2001/09/02 22:56:52 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -925,6 +925,9 @@
 ./usr/share/keymaps/x68k			base-sys-share
 ./usr/share/ldscripts				base-util-share
 ./usr/share/locale				base-locale-share
+./usr/share/locale/cs				base-locale-cs
+./usr/share/locale/cs/LC_MESSAGES		base-locale-cs
+./usr/share/locale/cs/LC_MESSAGES/texinfo.mo	base-texinfo_locale-cs
 ./usr/share/locale/cs_CZ.ISO8859-2		base-locale-cs
 ./usr/share/locale/cs_CZ.ISO8859-2/LC_CTYPE	base-locale-cs
 ./usr/share/locale/da				base-locale-da
@@ -937,6 +940,9 @@
 ./usr/share/locale/de/LC_MESSAGES		base-locale-de
 ./usr/share/locale/de/LC_MESSAGES/grep.mo	base-util_locale-de
 ./usr/share/locale/de/LC_MESSAGES/texinfo.mo	base-texinfo_locale-de
+./usr/share/locale/de_AT			base-locale-de
+./usr/share/locale/de_AT/LC_MESSAGES		base-locale-de
+./usr/share/locale/de_AT/LC_MESSAGES/texinfo.mo	base-texinfo_locale-de
 ./usr/share/locale/de_AT.ISO8859-1		base-locale-de
 ./usr/share/locale/de_AT.ISO8859-1/LC_CTYPE	base-locale-de
 ./usr/share/locale/de_AT.ISO8859-15		base-locale-de
@@ -970,6 +976,9 @@
 ./usr/share/locale/en_US.ISO8859-15/LC_CTYPE	base-locale-en
 ./usr/share/locale/en_US.UTF-8			base-locale-en
 ./usr/share/locale/en_US.UTF-8/LC_CTYPE		base-locale-en
+./usr/share/locale/eo				base-locale-eo
+./usr/share/locale/eo/LC_MESSAGES		base-locale-eo
+./usr/share/locale/eo/LC_MESSAGES/texinfo.mo	base-texinfo_locale-eo
 ./usr/share/locale/es				base-locale-es
 ./usr/share/locale/es/LC_MESSAGES		base-locale-es
 ./usr/share/locale/es/LC_MESSAGES/grep.mo	base-util_locale-es
@@ -1037,6 +1046,7 @@
 ./usr/share/locale/nl				base-locale-nl
 ./usr/share/locale/nl/LC_MESSAGES		base-locale-nl
 ./usr/share/locale/nl/LC_MESSAGES/grep.mo	base-locale-nl
+./usr/share/locale/nl/LC_MESSAGES/texinfo.mo	base-texinfo_locale-nl
 ./usr/share/locale/nl_BE.ISO8859-1		base-locale-nl
 ./usr/share/locale/nl_BE.ISO8859-1/LC_CTYPE	base-locale-nl
 ./usr/share/locale/nl_BE.ISO8859-15		base-locale-nl
@@ -1048,6 +1058,7 @@
 ./usr/share/locale/no				base-locale-no
 ./usr/share/locale/no/LC_MESSAGES		base-locale-no
 ./usr/share/locale/no/LC_MESSAGES/grep.mo	base-locale-no
+./usr/share/locale/no/LC_MESSAGES/texinfo.mo	base-texinfo_locale-no
 ./usr/share/locale/no@nynorsk			base-locale-no
 ./usr/share/locale/no@nynorsk/LC_MESSAGES	base-locale-no
 ./usr/share/locale/no_NO.ISO8859-1		base-locale-no
@@ -1071,6 +1082,7 @@
 ./usr/share/locale/ru				base-locale-ru
 ./usr/share/locale/ru/LC_MESSAGES		base-locale-ru
 ./usr/share/locale/ru/LC_MESSAGES/grep.mo	base-locale-ru
+./usr/share/locale/ru/LC_MESSAGES/texinfo.mo	base-texinfo_locale-ru
 ./usr/share/locale/ru_RU.CP866			base-locale-ru
 ./usr/share/locale/ru_RU.CP866/LC_CTYPE		base-locale-ru
 ./usr/share/locale/ru_RU.ISO8859-5		base-locale-ru
