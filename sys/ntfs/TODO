@@ -25,13 +25,15 @@ NTFS - list of things to do in no particular order:
   are available in the cache before doing the bmap operation first
 	(from Chuq)
 
-- working VOP_BALLOC()
+- working VOP_BALLOC() (new in UBC)
 	(from Chuq)
-
-- mountroot support
 
 - implement writing into resident attributes, so it would be possible
    to write into "small" files (<30KB) too
 	(from Semen Ustimenko <semenu@FreeBSD.org>)
 
-- support mount update 
+- support mount update
+
+- really implement sync
+
+- write necessary bits to support NTFS in libsa
