@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.5 1999/10/27 14:01:04 joda Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.6 1999/10/29 07:29:08 haya Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 and 1999
@@ -112,13 +112,15 @@ cardbusmatch(parent, cf, aux)
     return 0;
   }
 
+#if 0
   /* which function? */
   if (cf->cbslotcf_func != CBSLOT_UNK_FUNC &&
       cf->cbslotcf_func != cba->cba_function) {
-    DPRINTF(("pccardmatch: function differs %d <=> %d\n",
+    DPRINTF(("cardbusmatch: function differs %d <=> %d\n",
 	     cf->cbslotcf_func, cba->cba_function));
     return 0;
   }
+#endif
 
   if (cba->cba_function < 0 || cba->cba_function > 255) {
     return 0;
