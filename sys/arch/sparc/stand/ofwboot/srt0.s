@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.1 2000/08/20 14:58:42 mrg Exp $	*/
+/*	$NetBSD: srt0.s,v 1.2 2002/10/30 01:46:09 petrov Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,6 +35,9 @@
 #include <machine/param.h>
 #include <machine/frame.h>
 #include <machine/asm.h>
+
+	.register %g2,#ignore
+	.register %g3,#ignore
 
 /*
  * Globals
