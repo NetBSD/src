@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.19 1998/06/09 00:05:45 thorpej Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.20 1998/06/25 19:18:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -288,7 +288,7 @@ le_isa_attach(parent, lesc, ia, p)
 	bus_space_handle_t ioh;
 	bus_dma_tag_t dmat = ia->ia_dmat;
 	bus_dma_segment_t seg;
-	int i, rseg;
+	int i, rseg, error;
 
 	printf(": %s Ethernet\n", p->name);
 
@@ -357,14 +357,19 @@ le_isa_attach(parent, lesc, ia, p)
 	sc->sc_wrcsr = le_isa_wrcsr;
 	sc->sc_hwinit = NULL;
 
-	printf("%s", sc->sc_dev.dv_xname);
-	am7990_config(sc);
-
-	if (ia->ia_drq != DRQUNK)
-		isa_dmacascade(ia->ia_ic, ia->ia_drq);
+	if (ia->ia_drq != DRQUNK) {
+		if ((error = isa_dmacascade(ia->ia_ic, ia->ia_drq)) != 0) {
+			printf("%s: unable to cascade DRQ, error = %d\n",
+			    sc->sc_dev.dv_xname, error);
+			return;
+		}
+	}
 
 	lesc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, le_isa_intredge, sc);
+
+	printf("%s", sc->sc_dev.dv_xname);
+	am7990_config(sc);
 }
 
 /*

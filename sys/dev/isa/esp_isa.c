@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isa.c,v 1.10 1998/06/09 07:24:59 thorpej Exp $	*/
+/*	$NetBSD: esp_isa.c,v 1.11 1998/06/25 19:18:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -411,6 +411,7 @@ esp_isa_attach(parent, self, aux)
 	bus_space_handle_t ioh;
 	struct esp_probe_data epd;
 	isa_chipset_tag_t ic = ia->ia_ic;
+	int error;
 
 	printf("\n");
 	ESP_TRACE(("[esp_isa_attach] "));
@@ -425,8 +426,13 @@ esp_isa_attach(parent, self, aux)
 		return;
 	}
 
-	if (ia->ia_drq != DRQUNK)
-		isa_dmacascade(ic, ia->ia_drq);
+	if (ia->ia_drq != DRQUNK) {
+		if ((error = isa_dmacascade(ic, ia->ia_drq)) != 0) {
+			printf("%s: unable to cascade DRQ, error = %d\n",
+			    sc->sc_dev.dv_xname, error);
+			return;
+		}
+	}
 
 	esc->sc_ih = isa_intr_establish(ic, ia->ia_irq, IST_EDGE, IPL_BIO,
 	    (int (*)(void *))ncr53c9x_intr, esc);

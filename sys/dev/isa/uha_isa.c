@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.14 1998/06/09 07:25:06 thorpej Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.15 1998/06/25 19:18:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -126,6 +126,7 @@ uha_isa_attach(parent, self, aux)
 	bus_space_handle_t ioh;
 	struct uha_probe_data upd;
 	isa_chipset_tag_t ic = ia->ia_ic;
+	int error;
 
 	printf("\n");
 
@@ -144,7 +145,11 @@ uha_isa_attach(parent, self, aux)
 
 	if (upd.sc_drq != -1) {
 		sc->sc_dmaflags = 0;
-		isa_dmacascade(ic, upd.sc_drq);
+		if ((error = isa_dmacascade(ic, upd.sc_drq)) != 0) {
+			printf("%s: unable to cascade DRQ, error = %d\n",
+			    sc->sc_dev.dv_xname, error);
+			return;
+		}
 	} else {
 		/*
 		 * We have a VLB controller, and can do 32-bit DMA.

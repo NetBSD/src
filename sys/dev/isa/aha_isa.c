@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_isa.c,v 1.9 1998/06/09 07:24:55 thorpej Exp $	*/
+/*	$NetBSD: aha_isa.c,v 1.10 1998/06/25 19:18:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -111,6 +111,7 @@ aha_isa_attach(parent, self, aux)
 	bus_space_handle_t ioh;
 	struct aha_probe_data apd;
 	isa_chipset_tag_t ic = ia->ia_ic;
+	int error;
 
 	printf("\n");
 
@@ -127,8 +128,13 @@ aha_isa_attach(parent, self, aux)
 		return;
 	}
 
-	if (apd.sc_drq != -1)
-		isa_dmacascade(ic, apd.sc_drq);
+	if (apd.sc_drq != -1) {
+		if ((error = isa_dmacascade(ic, apd.sc_drq)) != 0) {
+			printf("%s: unable to cascade DRQ, error = %d\n",
+			    sc->sc_dev.dv_xname, error);
+			return;
+		}
+	}
 
 	sc->sc_ih = isa_intr_establish(ic, apd.sc_irq, IST_EDGE, IPL_BIO,
 	    aha_intr, sc);

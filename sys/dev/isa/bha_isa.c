@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.12 1998/06/09 07:24:57 thorpej Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.13 1998/06/25 19:18:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -111,6 +111,7 @@ bha_isa_attach(parent, self, aux)
 	bus_space_handle_t ioh;
 	struct bha_probe_data bpd;
 	isa_chipset_tag_t ic = ia->ia_ic;
+	int error;
 
 	printf("\n");
 
@@ -128,9 +129,13 @@ bha_isa_attach(parent, self, aux)
 	}
 
 	sc->sc_dmaflags = 0;
-	if (bpd.sc_drq != -1)
-		isa_dmacascade(ic, bpd.sc_drq);
-	else {
+	if (bpd.sc_drq != -1) {
+		if ((error = isa_dmacascade(ic, bpd.sc_drq)) != 0) {
+			printf("%s: unable to cascade DRQ, error = %d\n",
+			    sc->sc_dev.dv_xname, error);
+			return;
+		}
+	} else {
 		/*
 		 * We have a VLB controller.  If we're at least both
 		 * hardware revision E and firmware revision 3.37,

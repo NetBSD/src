@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.35 1998/06/09 01:04:18 thorpej Exp $	*/
+/*	$NetBSD: isadma.c,v 1.36 1998/06/25 19:18:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -187,7 +187,7 @@ _isa_dmainit(ids, bst, dmat, dev)
  * _isa_dmacascade(): program 8237 DMA controller channel to accept
  * external dma control by a board.
  */
-void
+int
 _isa_dmacascade(ids, chan)
 	struct isa_dma_state *ids;
 	int chan;
@@ -196,13 +196,13 @@ _isa_dmacascade(ids, chan)
 
 	if (chan < 0 || chan > 7) {
 		printf("%s: bogus drq %d\n", ids->ids_dev->dv_xname, chan);
-		goto lose;
+		return (EINVAL);
 	}
 
 	if (ISA_DMA_DRQ_ISFREE(ids, chan) == 0) {
 		printf("%s: DRQ %d is not free\n", ids->ids_dev->dv_xname,
 		    chan);
-		goto lose;
+		return (EAGAIN);
 	}
 
 	ISA_DMA_DRQ_ALLOC(ids, chan);
@@ -216,10 +216,7 @@ _isa_dmacascade(ids, chan)
 		    DMA2_MODE, ochan | DMA37MD_CASCADE);
 
 	_isa_dmaunmask(ids, chan);
-	return;
-
- lose:
-	panic("_isa_dmacascade");
+	return (0);
 }
 
 int
@@ -233,7 +230,7 @@ _isa_dmamap_create(ids, chan, size, flags)
 
 	if (chan < 0 || chan > 7) {
 		printf("%s: bogus drq %d\n", ids->ids_dev->dv_xname, chan);
-		goto lose;
+		return (EINVAL);
 	}
 
 	if (chan & 4)
@@ -247,16 +244,13 @@ _isa_dmamap_create(ids, chan, size, flags)
 	if (ISA_DMA_DRQ_ISFREE(ids, chan) == 0) {
 		printf("%s: drq %d is not free\n", ids->ids_dev->dv_xname,
 		    chan);
-		goto lose;
+		return (EAGAIN);
 	}
 
 	ISA_DMA_DRQ_ALLOC(ids, chan);
 
 	return (bus_dmamap_create(ids->ids_dmat, size, 1, size, maxsize,
 	    flags, &ids->ids_dmamaps[chan]));
-
- lose:
-	panic("_isa_dmamap_create");
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isapnp.c,v 1.10 1998/06/09 00:05:19 thorpej Exp $	*/
+/*	$NetBSD: if_le_isapnp.c,v 1.11 1998/06/25 19:18:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -193,7 +193,7 @@ le_isapnp_attach(parent, self, aux)
 	bus_space_handle_t ioh;
 	bus_dma_tag_t dmat;
 	bus_dma_segment_t seg;
-	int i, rseg;
+	int i, rseg, error;
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
 		printf("%s: error in region allocation\n",
@@ -262,15 +262,21 @@ le_isapnp_attach(parent, self, aux)
 	sc->sc_wrcsr = le_isapnp_wrcsr;
 	sc->sc_hwinit = NULL;
 
-	printf("%s: %s %s\n", sc->sc_dev.dv_xname, ipa->ipa_devident,
-	    ipa->ipa_devclass);
-	am7990_config(sc);
-
-	if (ipa->ipa_ndrq > 0)
-		isa_dmacascade(ipa->ipa_ic, ipa->ipa_drq[0].num);
+	if (ipa->ipa_ndrq > 0) {
+		if ((error = isa_dmacascade(ipa->ipa_ic,
+		    ipa->ipa_drq[0].num)) != 0) {
+			printf("%s: unable to cascade DRQ, error = %d\n",
+			    sc->sc_dev.dv_xname, error);
+			return;
+		}
+	}
 
 	lesc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
 	    ipa->ipa_irq[0].type, IPL_NET, le_isapnp_intredge, sc);
+
+	printf("%s: %s %s\n", sc->sc_dev.dv_xname, ipa->ipa_devident,
+	    ipa->ipa_devclass);
+	am7990_config(sc);
 }
 
 
