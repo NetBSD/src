@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.16 2002/09/06 13:18:43 gehenna Exp $
+#	$NetBSD: Makefile,v 1.17 2002/11/26 23:30:23 lukem Exp $
 
-KDIR=	/sys/arch/sparc64/include
 INCSDIR= /usr/include/sparc64
 
 INCS=	ansi.h aout_machdep.h asm.h autoconf.h \

@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2001/11/22 17:59:57 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2002/11/26 23:30:12 lukem Exp $
 
-KDIR=	/sys/arch/arm/include/arm26
 INCSDIR= /usr/include/arm/arm26
 
 INCS=	types.h

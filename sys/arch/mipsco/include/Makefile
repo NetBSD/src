@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.12 2002/09/06 13:18:43 gehenna Exp $
+#	$NetBSD: Makefile,v 1.13 2002/11/26 23:30:19 lukem Exp $
 
-KDIR=	/sys/arch/mipsco/include
 INCSDIR= /usr/include/mipsco
 
 INCS=	ansi.h aout_machdep.h asm.h autoconf.h \

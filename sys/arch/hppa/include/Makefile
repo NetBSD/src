@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 2002/08/07 05:15:25 briggs Exp $
+#	$NetBSD: Makefile,v 1.3 2002/11/26 23:30:26 lukem Exp $
 
-KDIR=	/sys/arch/hppa/include
 INCSDIR= /usr/include/hppa
 
 INCS=	ansi.h aout_machdep.h asm.h \

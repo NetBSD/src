@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.3 2000/04/19 06:39:16 itojun Exp $
+#	$NetBSD: Makefile,v 1.4 2002/11/26 23:30:32 lukem Exp $
 
-KDIR=	/sys/netinet
 INCSDIR= /usr/include/netinet
 
 INCS=	icmp6.h icmp_var.h if_atm.h if_ether.h if_inarp.h \

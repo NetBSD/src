@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 2002/02/09 17:44:40 kleink Exp $
+#	$NetBSD: Makefile,v 1.3 2002/11/26 23:30:22 lukem Exp $
 
-KDIR=	/sys/arch/powerpc/include/mpc6xx
 INCSDIR= /usr/include/powerpc/mpc6xx
 
 INCS=	bat.h \
