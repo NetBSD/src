@@ -11,13 +11,12 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $Id: math_private.h,v 1.4 1996/05/07 20:26:07 mark Exp $
+ * $Id: math_private.h,v 1.5 1996/10/13 00:04:56 christos Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
 #define _MATH_PRIVATE_H_
 
-#include <machine/endian.h>
 #include <sys/types.h>
 
 /* The original fdlibm code used statements like:
