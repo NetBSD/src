@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.41 1996/04/30 00:56:45 thorpej Exp $ */
+/*	$NetBSD: clock.c,v 1.42 1996/05/02 18:17:44 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -117,7 +117,7 @@ extern struct idprom idprom;
  * OCLOCK support: 4/100's and 4/200's have the old clock.
  */
 static int oldclk = 0;
-volatile struct intersil7170 *i7;
+struct intersil7170 *i7;
 
 static long oclk_get_secs __P((void));
 static void oclk_get_dt __P((struct date_time *));
@@ -182,9 +182,9 @@ struct cfdriver clock_cd = {
 static int	timermatch __P((struct device *, void *, void *));
 static void	timerattach __P((struct device *, struct device *, void *));
 
-volatile struct timer_4m	*timerreg_4m;	/* XXX - need more cleanup */
-volatile struct counter_4m	*counterreg_4m;
-#define	timerreg4		((volatile struct timerreg_4 *)TIMERREG_VA)
+struct timer_4m	*timerreg_4m;	/* XXX - need more cleanup */
+struct counter_4m	*counterreg_4m;
+#define	timerreg4		((struct timerreg_4 *)TIMERREG_VA)
 
 struct cfattach timer_ca = {
 	sizeof(struct device), timermatch, timerattach
@@ -240,9 +240,8 @@ oclockattach(parent, self, aux)
 	register int h;
 
 	oldclk = 1;  /* we've got an oldie! */
-	printf("\n");
 
-	i7 = (volatile struct intersil7170 *)
+	i7 = (struct intersil7170 *)
 		mapiodev(ra->ra_reg, 0, sizeof(*i7), ca->ca_bustype);
 
 	idp = &idprom;
@@ -252,33 +251,33 @@ oclockattach(parent, self, aux)
 	h |= idp->id_hostid[2];
 	hostid = h;
 
-#ifdef SUN4_DLYCAL /* XXX - Needs testing.. */
-	/* Calibrate delay() */
+	/* 
+	 * calibrate delay() 
+	 */
 	ienab_bic(IE_L14 | IE_L10);	/* disable all clock intrs */
 	for (timerblurb = 1; ; timerblurb++) {
-		int ireg;
-		i7->clk_intr_reg = INTERSIL_INTER_CSECONDS; /* 1/100 sec */
-		intersil_enable(i7);		/* enable clock */
+		volatile register char *ireg = &i7->clk_intr_reg;
+		register int ival;
+		*ireg = INTERSIL_INTER_CSECONDS; /* 1/100 sec */
+		intersil_enable(i7);		 /* enable clock */
+		while ((*ireg & INTERSIL_INTER_PENDING) == 0)
+			/* sync with interrupt */;
+		while ((*ireg & INTERSIL_INTER_PENDING) == 0)
+			/* XXX: do it again, seems to need it */;
 		delay(10000);			/* Probe 1/100 sec delay */
-		ireg = intersil_clear(i7);	/* clear interrupts */
+		ival = *ireg;			/* clear, save value */
 		intersil_disable(i7);		/* disable clock */
-		if (ireg & INTERSIL_INTER_PENDING)
+		if (ival & INTERSIL_INTER_PENDING) {
+			printf(" delay constant %d%s\n", timerblurb,
+				(timerblurb == 1) ? " [TOO SMALL?]" : "");
 			break;
+		}
 		if (timerblurb > 10) {
-			printf("oclock: calibration failing; clamped at %d\n",
+			printf("\noclock: calibration failing; clamped at %d\n",
 			       timerblurb);
 			break;
 		}
 	}
-#else
-	/*
-	 * feel free to improve this code
-	 */
-	if (cpumod == SUN4_100)
-		timerblurb = 3; /* 4/100, untested */
-	else
-		timerblurb = (cacheinfo.c_enabled) ? 6 : 3; /* 4/200 */
-#endif
 #endif /* SUN4 */
 }
 
@@ -479,22 +478,25 @@ timerattach(parent, self, aux)
 {
 	struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
-
-	printf("\n");
+	volatile int *cnt = NULL, *lim = NULL;
+		/* XXX: must init to NULL to avoid stupid gcc -Wall warning */
 
 	if (CPU_ISSUN4M) {
 		(void)mapdev(&ra->ra_reg[ra->ra_nreg-1], TIMERREG_VA, 0,
 			     sizeof(struct timer_4m), ca->ca_bustype);
 		(void)mapdev(&ra->ra_reg[0], COUNTERREG_VA, 0,
 			     sizeof(struct counter_4m), ca->ca_bustype);
-		timerreg_4m = (volatile struct timer_4m *)TIMERREG_VA;
-		counterreg_4m = (volatile struct counter_4m *)COUNTERREG_VA;
+		timerreg_4m = (struct timer_4m *)TIMERREG_VA;
+		counterreg_4m = (struct counter_4m *)COUNTERREG_VA;
 
 		/* Put processor counter in "timer" mode */
 		timerreg_4m->t_cfg = 0;
+
+		cnt = &counterreg_4m->t_counter;
+		lim = &counterreg_4m->t_limit;
 	}
 
-	if (CPU_ISSUN4OR4C)
+	if (CPU_ISSUN4OR4C) {
 		/*
 		 * This time, we ignore any existing virtual address because
 		 * we have a fixed virtual address for the timer, to make
@@ -503,6 +505,10 @@ timerattach(parent, self, aux)
 		(void)mapdev(ra->ra_reg, TIMERREG_VA, 0,
 			     sizeof(struct timerreg_4), ca->ca_bustype);
 
+		cnt = &timerreg4->t_c14.t_counter;
+		lim = &timerreg4->t_c14.t_limit;
+	}
+
 	timerok = 1;
 
 	/*
@@ -510,39 +516,31 @@ timerattach(parent, self, aux)
 	 * until a delay(100) actually reads (at least) 100 us on the clock.
 	 * Note: sun4m clocks tick with 500ns periods.
 	 */
+
 	for (timerblurb = 1; ; timerblurb++) {
 		volatile int discard;
 		register int t0, t1;
 
 		/* Reset counter register by writing some large limit value */
-		if (CPU_ISSUN4M) {
-			discard = counterreg_4m->t_limit;
-			counterreg_4m->t_limit = tmr_ustolim(TMR_MASK-1);
-		} else {
-			discard = timerreg4->t_c14.t_limit;
-			timerreg4->t_c14.t_limit = tmr_ustolim(TMR_MASK-1);
-		}
+		discard = *lim;
+		*lim = tmr_ustolim(TMR_MASK-1);
 
-		t0 = ((CPU_ISSUN4M
-			? counterreg_4m->t_counter
-			: timerreg4->t_c14.t_counter)
-			>> TMR_SHIFT) & TMR_MASK;
-
+		t0 = *cnt;
 		delay(100);
-
-		t1 = CPU_ISSUN4M
-			? counterreg_4m->t_counter
-			: timerreg4->t_c14.t_counter;
+		t1 = *cnt;
 
 		if (t1 & TMR_LIMIT)
 			panic("delay calibration");
 
+		t0 = (t0 >> TMR_SHIFT) & TMR_MASK;
 		t1 = (t1 >> TMR_SHIFT) & TMR_MASK;
 
 		if (t1 >= t0 + 100)
 			break;
 
 	}
+
+	printf(" delay constant %d\n", timerblurb);
 
 	/* should link interrupt handlers here, rather than compiled-in? */
 }
