@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.24 2000/02/17 18:42:21 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.25 2000/03/01 19:00:51 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -173,6 +173,8 @@ static struct aue_type aue_devs[] = {
 	{ USB_VENDOR_COREGA, USB_PRODUCT_COREGA_FETHER_USB_TX },
 	{ 0, 0 }
 };
+
+static struct timeval aue_errinterval = { 0, 2500000 }; /* 0.25 s*/
 
 USB_DECLARE_DRIVER(aue);
 
@@ -1164,8 +1166,13 @@ aue_rxeof(xfer, priv, status)
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
 			return;
-		printf("%s: usb error on rx: %s\n", USBDEVNAME(sc->aue_dev),
-		    usbd_errstr(status));
+		sc->aue_rx_errs++;
+		if (ratecheck(&sc->aue_rx_notice, &aue_errinterval)) {
+			printf("%s: %u usb errors on rx: %s\n",
+			   USBDEVNAME(sc->aue_dev), sc->aue_rx_errs,
+			   usbd_errstr(status));
+			sc->aue_rx_errs = 0;
+		}
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall(sc->aue_ep[AUE_ENDPT_RX]);
 		goto done;
@@ -1213,6 +1220,7 @@ aue_rxeof(xfer, priv, status)
 		goto done1;
 	}
 
+#if NBPFILTER > 0
 	/*
 	 * Handle BPF listeners. Let the BPF user see the packet, but
 	 * don't pass it up to the ether_input() layer unless it's
@@ -1230,6 +1238,7 @@ aue_rxeof(xfer, priv, status)
 			goto done1;
 		}
 	}
+#endif
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", USBDEVNAME(sc->aue_dev),
 		    __FUNCTION__, m->m_len));
@@ -1429,12 +1438,14 @@ aue_start(ifp)
 		return;
 	}
 
+#if NBPFILTER > 0
 	/*
 	 * If there's a BPF listener, bounce a copy of this frame
 	 * to him.
 	 */
 	if (ifp->if_bpf)
 		BPF_MTAP(ifp, m_head);
+#endif
 
 	ifp->if_flags |= IFF_OACTIVE;
 
