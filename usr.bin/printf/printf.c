@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.18 1997/10/19 22:57:05 lukem Exp $	*/
+/*	$NetBSD: printf.c,v 1.19 1998/02/03 03:10:15 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,20 +45,21 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.18 1997/10/19 22:57:05 lukem Exp $");
+__RCSID("$NetBSD: printf.c,v 1.19 1998/02/03 03:10:15 perry Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 
 #include <ctype.h>
+#include <err.h>
+#include <errno.h>
+#include <limits.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
-#include <locale.h>
-#include <errno.h>
-#include <err.h>
+#include <unistd.h>
 
 static int	 print_escape_str __P((const char *));
 static size_t	 print_escape __P((const char *));
