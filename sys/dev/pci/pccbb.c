@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.69 2001/10/17 10:25:51 haya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.70 2001/11/02 03:32:33 haya Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -422,6 +422,7 @@ pccbbattach(parent, self, aux)
 	bus_addr_t sockbase;
 	char devinfo[256];
 	int flags;
+	int pwrmgt_offs;
 
 	sc->sc_chipset = cb_chipset(pa->pa_id, &flags);
 
@@ -446,6 +447,22 @@ pccbbattach(parent, self, aux)
 #endif /* rbus */
 
 	sc->sc_base_memh = 0;
+
+	/* power management: set D0 state */
+	sc->sc_pwrmgt_offs = 0;
+	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT,
+	    &pwrmgt_offs, 0)) {
+		reg = pci_conf_read(pc, pa->pa_tag, pwrmgt_offs + 4);
+		if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0 ||
+		    reg & 0x100 /* PCI_PMCSR_PME_EN */) {
+			reg &= ~PCI_PMCSR_STATE_MASK;
+			reg |= PCI_PMCSR_STATE_D0;
+			reg &= ~(0x100 /* PCI_PMCSR_PME_EN */);
+			pci_conf_write(pc, pa->pa_tag, pwrmgt_offs + 4, reg);
+		}
+
+		sc->sc_pwrmgt_offs = pwrmgt_offs;
+	}
 
 	/* 
 	 * MAP socket registers and ExCA registers on memory-space
@@ -3253,7 +3270,7 @@ pccbb_powerhook(why, arg)
 	void *arg;
 {
 	struct pccbb_softc *sc = arg;
-	u_int32_t reg;
+	pcireg_t reg;
 	bus_space_tag_t base_memt = sc->sc_base_memt;	/* socket regs memory */
 	bus_space_handle_t base_memh = sc->sc_base_memh;
 
@@ -3271,6 +3288,32 @@ pccbb_powerhook(why, arg)
 	}
 
 	if (why == PWR_RESUME) {
+		if (sc->sc_pwrmgt_offs != 0) {
+			reg = pci_conf_read(sc->sc_pc, sc->sc_tag,
+			    sc->sc_pwrmgt_offs + 4);
+			if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0 ||
+			    reg & 0x100) {
+				/* powrstate != D0 */
+
+				printf("%s going back to D0 mode\n",
+				    sc->sc_dev.dv_xname);
+				reg &= ~PCI_PMCSR_STATE_MASK;
+				reg |= PCI_PMCSR_STATE_D0;
+				reg &= ~(0x100 /* PCI_PMCSR_PME_EN */);
+				pci_conf_write(sc->sc_pc, sc->sc_tag,
+				    sc->sc_pwrmgt_offs + 4, reg);
+
+				pci_conf_write(sc->sc_pc, sc->sc_tag,
+				    PCI_SOCKBASE, sc->sc_sockbase);
+				pci_conf_write(sc->sc_pc, sc->sc_tag,
+				    PCI_BUSNUM, sc->sc_busnum);
+				pccbb_chipinit(sc);
+				/* setup memory and io space window for CB */
+				pccbb_winset(0x1000, sc, sc->sc_memt);
+				pccbb_winset(0x04, sc, sc->sc_iot);
+			}
+		}
+
 		if (pci_conf_read (sc->sc_pc, sc->sc_tag, PCI_SOCKBASE) == 0)
 			/* BIOS did not recover this register */
 			pci_conf_write (sc->sc_pc, sc->sc_tag,
