@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.455 2002/07/09 19:43:57 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.456 2002/07/09 23:50:29 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.451 2002/07/09 19:43:03 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.452 2002/07/09 23:47:45 matt Exp 
  */
 
 /*
@@ -836,6 +836,11 @@
 #define	PCI_PRODUCT_APPLE_UNINORTH3	0x002e		/* UniNorth Host-PCI Bridge */
 #define	PCI_PRODUCT_APPLE_UNINORTH4	0x002f		/* UniNorth Host-PCI Bridge */
 #define	PCI_PRODUCT_APPLE_PANGEA_FW	0x0030		/* Pangea Firewire */
+#define	PCI_PRODUCT_APPLE_UNINORTH_FW	0x0031		/* UniNorth Firewire */
+#define	PCI_PRODUCT_APPLE_GMAC3	0x0032		/* GMAC Ethernet */
+#define	PCI_PRODUCT_APPLE_UNINORTH_AGP3	0x0034		/* UniNorth AGP Bridge */
+#define	PCI_PRODUCT_APPLE_UNINORTH5	0x0035		/* UniNorth Host-PCI Bridge */
+#define	PCI_PRODUCT_APPLE_UNINORTH6	0x0036		/* UniNorth Host-PCI Bridge */
 
 /* ARC Logic products */
 #define	PCI_PRODUCT_ARC_1000PV	0xa091		/* 1000PV */

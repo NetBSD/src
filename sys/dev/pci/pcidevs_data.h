@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.453 2002/07/09 19:43:58 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.454 2002/07/09 23:50:31 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.451 2002/07/09 19:43:03 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.452 2002/07/09 23:47:45 matt Exp 
  */
 
 /*
@@ -1196,6 +1196,36 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Apple Computer",
 	    "Pangea Firewire",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH_FW,
+	    0,
+	    "Apple Computer",
+	    "UniNorth Firewire",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GMAC3,
+	    0,
+	    "Apple Computer",
+	    "GMAC Ethernet",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH_AGP3,
+	    0,
+	    "Apple Computer",
+	    "UniNorth AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH5,
+	    0,
+	    "Apple Computer",
+	    "UniNorth Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH6,
+	    0,
+	    "Apple Computer",
+	    "UniNorth Host-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV,
