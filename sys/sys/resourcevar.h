@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,11 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)resourcevar.h	7.1 (Berkeley) 5/9/91
+ *	@(#)resourcevar.h	8.3 (Berkeley) 2/22/94
  */
 
-#ifndef	_RESOURCEVAR_H_		/* tmp for user.h */
-#define	_RESOURCEVAR_H_
+#ifndef	_SYS_RESOURCEVAR_H_
+#define	_SYS_RESOURCEVAR_H_
 
 /*
  * Kernel per-process accounting / statistics
@@ -50,16 +50,16 @@ struct pstats {
 	struct	itimerval p_timer[3];	/* virtual-time timers */
 
 	struct uprof {			/* profile arguments */
-		short	*pr_base;	/* buffer base */
-		unsigned pr_size;	/* buffer size */
-		unsigned pr_off;	/* pc offset */
-		unsigned pr_scale;	/* pc scaling */
+		caddr_t	pr_base;	/* buffer base */
+		u_long	pr_size;	/* buffer size */
+		u_long	pr_off;		/* pc offset */
+		u_long	pr_scale;	/* pc scaling */
+		u_long	pr_addr;	/* temp storage for addr until AST */
+		u_long	pr_ticks;	/* temp storage for ticks until AST */
 	} p_prof;
 #define	pstat_endcopy	p_start
 	struct	timeval p_start;	/* starting time */
 };
-
-void addupc(int, struct uprof *, int);	/* process profiling */ 
 
 /*
  * Kernel shareable process resource limits.  Because this structure
@@ -71,13 +71,20 @@ void addupc(int, struct uprof *, int);	/* process profiling */
  */
 struct plimit {
 	struct	rlimit pl_rlimit[RLIM_NLIMITS];
-	int	p_lflags;		/* below */
+#define	PL_SHAREMOD	0x01		/* modifications are shared */
+	int	p_lflags;
 	int	p_refcnt;		/* number of references */
 };
 
-/* pl_lflags: */
-#define	PL_SHAREMOD	0x01		/* modifications are shared */
+/* add user profiling from AST */
+#define	ADDUPROF(p)							\
+	addupc_task(p,							\
+	    (p)->p_stats->p_prof.pr_addr, (p)->p_stats->p_prof.pr_ticks)
 
-/* make copy of plimit structure */
-struct	plimit *limcopy __P((struct plimit *lim));
-#endif	/* !_RESOURCEVAR_H_ */
+#ifdef KERNEL
+void	 addupc_intr __P((struct proc *p, u_long pc, u_int ticks));
+void	 addupc_task __P((struct proc *p, u_long pc, u_int ticks));
+struct plimit
+	*limcopy __P((struct plimit *lim));
+#endif
+#endif	/* !_SYS_RESOURCEVAR_H_ */

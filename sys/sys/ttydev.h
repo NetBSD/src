@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,13 +30,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ttydev.h	7.8 (Berkeley) 5/9/91
+ *	@(#)ttydev.h	8.2 (Berkeley) 1/4/94
  */
 
 /* COMPATABILITY HEADER FILE */
 
-#ifndef _TTYDEV_H_
-#define	_TTYDEV_H_
+#ifndef _SYS_TTYDEV_H_
+#define	_SYS_TTYDEV_H_
 
 #ifdef USE_OLD_TTY
 #define B0	0
@@ -57,4 +57,4 @@
 #define EXTB	15
 #endif /* USE_OLD_TTY */
 
-#endif /* !_TTYDEV_H_ */
+#endif /* !_SYS_TTYDEV_H_ */

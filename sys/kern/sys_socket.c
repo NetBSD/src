@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1990 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,21 +30,22 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)sys_socket.c	7.11 (Berkeley) 4/16/91
+ *	@(#)sys_socket.c	8.1 (Berkeley) 6/10/93
  */
 
-#include "param.h"
-#include "systm.h"
-#include "file.h"
-#include "mbuf.h"
-#include "protosw.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "ioctl.h"
-#include "stat.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/file.h>
+#include <sys/mbuf.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
 
-#include "net/if.h"
-#include "net/route.h"
+#include <net/if.h>
+#include <net/route.h>
 
 struct	fileops socketops =
     { soo_read, soo_write, soo_ioctl, soo_select, soo_close };
@@ -144,7 +145,8 @@ soo_select(fp, which, p)
 			splx(s);
 			return (1);
 		}
-		sbselqueue(&so->so_rcv, p);
+		selrecord(p, &so->so_rcv.sb_sel);
+		so->so_rcv.sb_flags |= SB_SEL;
 		break;
 
 	case FWRITE:
@@ -152,16 +154,17 @@ soo_select(fp, which, p)
 			splx(s);
 			return (1);
 		}
-		sbselqueue(&so->so_snd, p);
+		selrecord(p, &so->so_snd.sb_sel);
+		so->so_snd.sb_flags |= SB_SEL;
 		break;
 
 	case 0:
-		if (so->so_oobmark ||
-		    (so->so_state & SS_RCVATMARK)) {
+		if (so->so_oobmark || (so->so_state & SS_RCVATMARK)) {
 			splx(s);
 			return (1);
 		}
-		sbselqueue(&so->so_rcv, p);
+		selrecord(p, &so->so_rcv.sb_sel);
+		so->so_rcv.sb_flags |= SB_SEL;
 		break;
 	}
 	splx(s);
@@ -174,6 +177,7 @@ soo_stat(so, ub)
 {
 
 	bzero((caddr_t)ub, sizeof (*ub));
+	ub->st_mode = S_IFSOCK;
 	return ((*so->so_proto->pr_usrreq)(so, PRU_SENSE,
 	    (struct mbuf *)ub, (struct mbuf *)0, 
 	    (struct mbuf *)0));

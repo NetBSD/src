@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Rick Macklem at The University of Guelph.
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfsswapvmunix.c	7.1 (Berkeley) 3/4/91
+ *	@(#)nfsswapvmunix.c	8.1 (Berkeley) 6/10/93
  */
 
 /*
@@ -42,13 +42,14 @@
  * See /sys/nfs/nfsdiskless.h for details of the fields.
  */
 
-#include "../sys/param.h"
-#include "../sys/conf.h"
-#include "../sys/socket.h"
-#include "../sys/mount.h"
-#include "../net/if.h"
-#include "../nfs/nfsv2.h"
-#include "../nfs/nfsdiskless.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/socket.h>
+#include <sys/mount.h>
+
+#include <net/if.h>
+#include <nfs/nfsv2.h>
+#include <nfs/nfsdiskless.h>
 
 extern int nfs_mountroot();
 int (*mountroot)() = nfs_mountroot;

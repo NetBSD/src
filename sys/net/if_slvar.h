@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,9 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_slvar.h	7.7 (Berkeley) 5/7/91
+ *	@(#)if_slvar.h	8.3 (Berkeley) 2/1/94
  *
- * $Header: /cvsroot/src/sys/net/if_slvar.h,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $
+ * $Header: /cvsroot/src/sys/net/if_slvar.h,v 1.1.1.2 1998/03/01 02:10:07 fvdl Exp $
  */
 
 /*
@@ -50,24 +50,31 @@ struct sl_softc {
 	u_char	*sc_buf;		/* input buffer */
 	u_int	sc_flags;		/* see below */
 	u_int	sc_escape;	/* =1 if last char input was FRAME_ESCAPE */
-	u_int	sc_bytessent;
-	u_int	sc_bytesrcvd;
 	long	sc_lasttime;		/* last time a char arrived */
-	long	sc_starttime;		/* last time a char arrived */
 	long	sc_abortcount;		/* number of abort esacpe chars */
+	long	sc_starttime;		/* time of first abort in window */
 #ifdef INET				/* XXX */
 	struct	slcompress sc_comp;	/* tcp compression data */
 #endif
+	caddr_t	sc_bpf;			/* BPF data */
 };
 
-/* visible flags */
-#define	SC_COMPRESS	0x0002		/* compress TCP traffic */
-#define	SC_NOICMP	0x0004		/* supress ICMP traffic */
-#define	SC_AUTOCOMP	0x0008		/* auto-enable TCP compression */
-/* internal flags (should be separate) */
-#define	SC_ABORT	0x10000		/* have been sent an abort request */
+/* internal flags */
+#define	SC_ERROR	0x0001		/* had an input error */
 
-/* this stuff doesn't belong here... */
-#define	SLIOCGFLAGS	_IOR('t', 90, int)	/* get configuration flags */
-#define	SLIOCSFLAGS	_IOW('t', 89, int)	/* set configuration flags */
-#define	SLIOCGUNIT	_IOR('t', 88, int)	/* get slip unit number */
+/* visible flags */
+#define	SC_COMPRESS	IFF_LINK0	/* compress TCP traffic */
+#define	SC_NOICMP	IFF_LINK1	/* supress ICMP traffic */
+#define	SC_AUTOCOMP	IFF_LINK2	/* auto-enable TCP compression */
+
+#ifdef KERNEL
+void	slattach __P((void));
+void	slclose __P((struct tty *));
+void	slinput __P((int, struct tty *));
+int	slioctl __P((struct ifnet *, int, caddr_t));
+int	slopen __P((dev_t, struct tty *));
+int	sloutput __P((struct ifnet *,
+	    struct mbuf *, struct sockaddr *, struct rtentry *));
+void	slstart __P((struct tty *));
+int	sltioctl __P((struct tty *, int, caddr_t, int));
+#endif /* KERNEL */

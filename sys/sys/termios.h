@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988, 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1989, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,14 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)termios.h	7.22 (Berkeley) 5/7/91
+ *	@(#)termios.h	8.3 (Berkeley) 3/28/94
  */
 
-/*
- *  termios structure
- */
-#ifndef _TERMIOS_H_
-#define _TERMIOS_H_
+#ifndef _SYS_TERMIOS_H_
+#define _SYS_TERMIOS_H_
 
 /* 
  * Special Control Characters 
@@ -77,8 +74,8 @@
 #ifndef _POSIX_SOURCE
 #define VSTATUS		18	/* ICANON */
 /*			19	   spare 2 */
-#define	NCCS		20
 #endif
+#define	NCCS		20
 
 #define _POSIX_VDISABLE	((unsigned char)'\377')
 
@@ -218,25 +215,18 @@ struct termios {
 #define B19200	19200
 #define B38400	38400
 #ifndef _POSIX_SOURCE
+#define B7200	7200
+#define B14400	14400
+#define B28800	28800
+#define B57600	57600
+#define B76800	76800
+#define B115200	115200
+#define B230400	230400
 #define EXTA	19200
 #define EXTB	38400
-#endif  /*_POSIX_SOURCE */
+#endif  /* !_POSIX_SOURCE */
 
 #ifndef KERNEL
-
-#include <sys/cdefs.h>
-
-__BEGIN_DECLS
-speed_t	cfgetispeed __P((const struct termios *));
-speed_t	cfgetospeed __P((const struct termios *));
-int	cfsetispeed __P((struct termios *, speed_t));
-int	cfsetospeed __P((struct termios *, speed_t));
-int	tcdrain __P((int));
-int	tcflow __P((int, int));
-int	tcflush __P((int, int));
-int	tcgetattr __P((int, struct termios *));
-int	tcsendbreak __P((int, int));
-int	tcsetattr __P((int, int, const struct termios *));
 
 #define	TCIFLUSH	1
 #define	TCOFLUSH	2
@@ -246,23 +236,43 @@ int	tcsetattr __P((int, int, const struct termios *));
 #define TCIOFF		3
 #define TCION		4
 
+#include <sys/cdefs.h>
+
+__BEGIN_DECLS
+speed_t	cfgetispeed __P((const struct termios *));
+speed_t	cfgetospeed __P((const struct termios *));
+int	cfsetispeed __P((struct termios *, speed_t));
+int	cfsetospeed __P((struct termios *, speed_t));
+int	tcgetattr __P((int, struct termios *));
+int	tcsetattr __P((int, int, const struct termios *));
+int	tcdrain __P((int));
+int	tcflow __P((int, int));
+int	tcflush __P((int, int));
+int	tcsendbreak __P((int, int));
+
 #ifndef _POSIX_SOURCE
 void	cfmakeraw __P((struct termios *));
-void	cfsetspeed __P((struct termios *, speed_t));
-#endif /* !POSIX */
+int	cfsetspeed __P((struct termios *, speed_t));
+#endif /* !_POSIX_SOURCE */
 __END_DECLS
 
 #endif /* !KERNEL */
 
+#ifndef _POSIX_SOURCE
+
+/*
+ * Include tty ioctl's that aren't just for backwards compatibility
+ * with the old tty driver.  These ioctl definitions were previously
+ * in <sys/ioctl.h>.
+ */
+#include <sys/ttycom.h>
+#endif
+
 /*
  * END OF PROTECTED INCLUDE.
  */
-#endif /* !_TERMIOS_H_ */
+#endif /* !_SYS_TERMIOS_H_ */
 
 #ifndef _POSIX_SOURCE
-#ifdef KERNEL
-#include "ttydefaults.h"
-#else
 #include <sys/ttydefaults.h>
 #endif
-#endif  /*_POSIX_SOURCE */
