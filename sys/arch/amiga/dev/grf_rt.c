@@ -1,5 +1,5 @@
 /*
- *	$Id: grf_rt.c,v 1.9 1994/04/22 01:35:16 chopps Exp $
+ *	$Id: grf_rt.c,v 1.10 1994/04/26 03:48:08 chopps Exp $
  */
 
 #include "grf.h"
@@ -727,9 +727,7 @@ int rt_init (struct grf_softc *gp, struct amiga_device *ad, struct amiga_hw *ahw
 
   current_mon = monitor_defs + retina_default_mon;
 
-  if (rt_load_mon (gp, current_mon))
-	  retina_inited = rt_load_mon(gp, current_mon);
-	  
+  retina_inited = rt_load_mon(gp, current_mon);
   return(retina_inited);		/* XXX Markus maybe you */
 					/* XXX can make this cleaner. */
 }
