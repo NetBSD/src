@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.7.10.1 2000/06/22 07:09:06 thorpej Exp $	*/
+/*	$NetBSD: utilities.c,v 1.7.10.2 2000/06/22 07:12:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.7.10.1 2000/06/22 07:09:06 thorpej Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.7.10.2 2000/06/22 07:12:36 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -317,7 +317,9 @@ printsub(direction, pointer, length)
     int		  length;	/* length of suboption data */
 {
     register int i;
+#ifdef	ENCRYPTION
     char buf[512];
+#endif	/* ENCRYPTION */
     extern int want_status_response;
 
     if (showoptions || direction == 0 ||
