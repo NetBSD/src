@@ -70,7 +70,7 @@ file	arch/mips/sibyte/dev/sbsmbus.c		smbus
 device	xirtc
 attach	xirtc at smbus
 
-device	strtc
-attach	strtc at smbus
+device	m41t81rtc
+attach	m41t81rtc at smbus
 
-file	arch/sbmips/sbmips/rtc.c		xirtc | strtc
+file	arch/sbmips/sbmips/rtc.c		xirtc | m41t81rtc

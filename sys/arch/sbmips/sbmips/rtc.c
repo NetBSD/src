@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.c,v 1.8 2003/07/15 03:35:51 lukem Exp $ */
+/* $NetBSD: rtc.c,v 1.9 2003/10/25 15:05:00 simonb Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.8 2003/07/15 03:35:51 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.9 2003/10/25 15:05:00 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -96,7 +96,7 @@ static int time_writertc(int, int, int, int, int);
 CFATTACH_DECL(xirtc, sizeof(struct rtc_softc),
     xirtc_match, xirtc_attach, NULL, NULL);
 
-CFATTACH_DECL(strtc, sizeof(struct rtc_softc),
+CFATTACH_DECL(m41t81rtc, sizeof(struct rtc_softc),
     strtc_match, strtc_attach, NULL, NULL);
 
 static int rtcfound = 0;

@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.22 2003/10/25 13:21:13 simonb Exp $
+# $NetBSD: GENERIC,v 1.23 2003/10/25 15:05:00 simonb Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.22 $"
+#ident 		"GENERIC-$Revision: 1.23 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 options 	DEBUG		# extra kernel debugging support
@@ -127,7 +127,7 @@ sbscn*		at sbobio? offset ?
 smbus*		at sbobio? offset ?
 
 xirtc*		at smbus? chan ? dev ?		# Xicor X1241 RTC
-strtc*		at smbus? chan ? dev ?		# ST M41T81 RTC
+m41t81rtc*	at smbus? chan ? dev ?		# ST M41T81 RTC
 
 # MII/PHY support
 brgphy*		at mii? phy ?
