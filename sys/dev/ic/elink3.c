@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.91 1996/04/19 00:01:19 christos Exp $	*/
+/*	$NetBSD: elink3.c,v 1.1 1996/04/25 02:17:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -65,73 +65,21 @@
 #include <net/bpfdesc.h>
 #endif
 
-#include "pci.h"
-
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-#include <dev/isa/isavar.h>
-#include <dev/isa/if_epreg.h>
-#include <dev/isa/elink.h>
-
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcidevs.h>
-
-/* PCI constants */
-#define PCI_VENDORID(x)		((x) & 0xFFFF)
-#define PCI_CHIPID(x)		(((x) >> 16) & 0xFFFF)
-#define PCI_CONN		0x48    /* Connector type */
-#define PCI_CBIO		0x10    /* Configuration Base IO Address */
-
+#include <dev/ic/elink3var.h>
+#include <dev/ic/elink3reg.h>
 
 #define ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN   1518
 #define ETHER_ADDR_LEN  6
-/*
- * Ethernet software status per interface.
- */
-struct ep_softc {
-	struct device sc_dev;
-	void *sc_ih;
-	bus_io_handle_t sc_ioh;
-	struct arpcom sc_arpcom;	/* Ethernet common part		*/
-	int	ep_iobase;		/* i/o bus address		*/
-	char    ep_connectors;		/* Connectors on this card.	*/
-#define MAX_MBS	8			/* # of mbufs we keep around	*/
-	struct mbuf *mb[MAX_MBS];	/* spare mbuf storage.		*/
-	int	next_mb;		/* Which mbuf to use next. 	*/
-	int	last_mb;		/* Last mbuf.			*/
-	int	tx_start_thresh;	/* Current TX_start_thresh.	*/
-	int	tx_succ_ok;		/* # packets sent in sequence   */
-					/* w/o underrun			*/
-	u_char	bustype;
-#define EP_BUS_ISA	  	0x0
-#define	EP_BUS_PCMCIA	  	0x1
-#define	EP_BUS_EISA	  	0x2
-#define EP_BUS_PCI	  	0x3
-
-#define EP_IS_BUS_32(a)	((a) & 0x2)
-};
-
-static int epprobe __P((struct device *, void *, void *));
-static void epattach __P((struct device *, struct device *, void *));
-
-/* XXX the following two structs should be different. */
-struct cfattach ep_isa_ca = {
-	sizeof(struct ep_softc), epprobe, epattach
-};
-
-struct cfattach ep_pci_ca = {
-	sizeof(struct ep_softc), epprobe, epattach
-};
 
 struct cfdriver ep_cd = {
 	NULL, "ep", DV_IFNET
 };
 
-int epintr __P((void *));
-static void eptxstat __P((struct ep_softc *));
+static void epxstat __P((struct ep_softc *));
 static int epstatus __P((struct ep_softc *));
 void epinit __P((struct ep_softc *));
 int epioctl __P((struct ifnet *, u_long, caddr_t));
@@ -145,183 +93,11 @@ void epmbufempty __P((struct ep_softc *));
 void epstop __P((struct ep_softc *));
 void epsetfilter __P((struct ep_softc *));
 void epsetlink __P((struct ep_softc *));
-static void epconfig __P((struct ep_softc *, u_int));
-static void epaddcard __P((int, int, int));
+u_short epreadeeprom __P((int id_port, int offset));
 
-static u_short epreadeeprom __P((int id_port, int offset));
 static int epbusyeeprom __P((struct ep_softc *));
 
-#define MAXEPCARDS 20	/* if you have 21 cards in your machine... you lose */
-
-static struct epcard {
-	int	iobase;
-	int	irq;
-	char	available;
-	char	bustype;
-} epcards[MAXEPCARDS];
-static int nepcards;
-
-static void
-epaddcard(iobase, irq, bustype)
-	int iobase;
-	int irq;
-	char bustype;
-{
-
-	if (nepcards >= MAXEPCARDS)
-		return;
-	epcards[nepcards].iobase = iobase;
-	epcards[nepcards].irq = (irq == 2) ? 9 : irq;
-	epcards[nepcards].available = 1;
-	epcards[nepcards].bustype = bustype;
-	nepcards++;
-}
-
-/*
- * 3c579 cards on the EISA bus are probed by their slot number. 3c509
- * cards on the ISA bus are probed in ethernet address order. The probe
- * sequence requires careful orchestration, and we'd like like to allow
- * the irq and base address to be wildcarded. So, we probe all the cards
- * the first time epprobe() is called. On subsequent calls we look for
- * matching cards.
- */
-int
-epprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-	struct ep_softc *sc = match;
-	struct isa_attach_args *ia = aux;
-	static int probed;
-	int slot, iobase, i;
-	u_short vendor, model;
-	int k, k2;
-
-#if NPCI > 0
-	extern struct cfdriver pci_cd;
-
-	if (parent->dv_cfdata->cf_driver == &pci_cd) {
-		struct pci_attach_args *pa = (struct pci_attach_args *) aux;
-
-		if (PCI_VENDORID(pa->pa_id) != PCI_VENDOR_3COM)
-			return 0;
-
-		switch (PCI_CHIPID(pa->pa_id)) {
-		case PCI_PRODUCT_3COM_3C590:
-		case PCI_PRODUCT_3COM_3C595:
-			break;
-		default:
-			return 0;
-		}
-
-		if (nepcards >= MAXEPCARDS)
-			return 0;
-
-		epcards[nepcards++].available = 0;
-		return 1;
-	}
-#endif
-
-	if (!probed) {
-		probed = 1;
-
-		/* find all EISA cards */
-		for (slot = 1; slot < 16; slot++) {
-			iobase = 0x1000 * slot;
-
-			vendor = htons(inw(iobase + EISA_VENDOR));
-			if (vendor != MFG_ID)
-				continue;
-
-			model = htons(inw(iobase + EISA_MODEL));
-			if ((model & 0xfff0) != PROD_ID) {
-#ifndef trusted
-				printf("epprobe: ignoring model %04x\n", model);
-#endif
-				continue;
-			}
-
-			outb(iobase + EISA_CONTROL, EISA_ENABLE | EISA_RESET);
-			delay(10);
-			outb(iobase + EISA_CONTROL, EISA_ENABLE);
-			/* Wait for reset? */
-			delay(1000);
-
-			k = inw(iobase + EP_W0_ADDRESS_CFG);
-			k = (k & 0x1f) * 0x10 + 0x200;
-
-			k2 = inw(iobase + EP_W0_RESOURCE_CFG);
-			k2 >>= 12;
-			epaddcard(iobase, k2, EP_BUS_EISA);
-		}
-
-		for (slot = 0; slot < 10; slot++) {
-			elink_reset();
-			elink_idseq(ELINK_509_POLY);
-
-			/* Untag all the adapters so they will talk to us. */
-			if (slot == 0)
-				outb(ELINK_ID_PORT, TAG_ADAPTER + 0);
-
-			vendor =
-			    htons(epreadeeprom(ELINK_ID_PORT, EEPROM_MFG_ID));
-			if (vendor != MFG_ID)
-				continue;
-
-			model =
-			    htons(epreadeeprom(ELINK_ID_PORT, EEPROM_PROD_ID));
-			if ((model & 0xfff0) != PROD_ID) {
-#ifndef trusted
-				printf("epprobe: ignoring model %04x\n", model);
-#endif
-				continue;
-			}
-
-			k = epreadeeprom(ELINK_ID_PORT, EEPROM_ADDR_CFG);
-			k = (k & 0x1f) * 0x10 + 0x200;
-
-			k2 = epreadeeprom(ELINK_ID_PORT, EEPROM_RESOURCE_CFG);
-			k2 >>= 12;
-			epaddcard(k, k2, EP_BUS_ISA);
-
-			/* so card will not respond to contention again */
-			outb(ELINK_ID_PORT, TAG_ADAPTER + 1);
-
-			/*
-			 * XXX: this should probably not be done here
-			 * because it enables the drq/irq lines from
-			 * the board. Perhaps it should be done after
-			 * we have checked for irq/drq collisions?
-			 */
-			outb(ELINK_ID_PORT, ACTIVATE_ADAPTER_TO_CONFIG);
-		}
-		/* XXX should we sort by ethernet address? */
-	}
-
-	for (i = 0; i < nepcards; i++) {
-		if (epcards[i].available == 0)
-			continue;
-		if (ia->ia_iobase != IOBASEUNK &&
-		    ia->ia_iobase != epcards[i].iobase)
-			continue;
-		if (ia->ia_irq != IRQUNK &&
-		    ia->ia_irq != epcards[i].irq)
-			continue;
-		goto good;
-	}
-	return 0;
-
-good:
-	epcards[i].available = 0;
-	sc->bustype = epcards[i].bustype;
-	ia->ia_iobase = epcards[i].iobase;
-	ia->ia_irq = epcards[i].irq;
-	ia->ia_iosize = 0x10;
-	ia->ia_msize = 0;
-	return 1;
-}
-
-static void
+void
 epconfig(sc, conn)
 	struct ep_softc *sc;
 	u_int conn;
@@ -331,7 +107,7 @@ epconfig(sc, conn)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	sc->ep_connectors = 0;
-	printf(": ");
+	printf("%s: ", sc->sc_dev.dv_xname);
 	if (conn & IS_AUI) {
 		printf("aui");
 		sc->ep_connectors |= AUI;
@@ -385,103 +161,6 @@ epconfig(sc, conn)
 #endif
 
 	sc->tx_start_thresh = 20;	/* probably a good starting point. */
-}
-
-static void
-epattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	struct ep_softc *sc = (void *)self;
-	u_short conn = 0;
-#if NPCI > 0
-	extern struct cfdriver pci_cd;
-
-	if (parent->dv_cfdata->cf_driver == &pci_cd) {
-		struct pci_attach_args *pa = aux;
-		bus_io_addr_t iobase;
-		bus_io_size_t iosize;
-		u_short i;
-		int error;
-
-		error = pci_io_find(pa->pa_pc, pa->pa_tag, PCI_CBIO,
-		     &iobase, &iosize);
-		if (error) {
-			printf(": couldn't find io");
-			return;
-		}
-		error = bus_io_map(pa->pa_bc, iobase, iosize, &sc->sc_ioh);
-		if (error) {
-			printf(": couldn't map io");
-			return;
-		}
-		
-		sc->bustype = EP_BUS_PCI;
-		sc->ep_iobase = iobase; /* & 0xfffffff0 */
-		i = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CONN);
-
-		/*
-		 * Bits 13,12,9 of the isa adapter are the same as bits 
-		 * 5,4,3 of the pci adapter
-		 */
-		if (i & IS_PCI_AUI)
-			conn |= IS_AUI;
-		if (i & IS_PCI_BNC)
-			conn |= IS_BNC;
-		if (i & IS_PCI_UTP)
-			conn |= IS_UTP;
-
-		GO_WINDOW(0);
-	}
-	else
-#endif
-	{
-		struct isa_attach_args *ia = aux;
-
-		sc->ep_iobase = ia->ia_iobase;
-		GO_WINDOW(0);
-		conn = inw(ia->ia_iobase + EP_W0_CONFIG_CTRL);
-	}
-
-	epconfig(sc, conn);
-
-
-#if NPCI > 0
-	if (parent->dv_cfdata->cf_driver == &pci_cd) {
-		struct pci_attach_args *pa = aux;
-		pci_intr_handle_t intrh;
-		const char *intrstr;
-
-		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-		    pci_conf_read(pa->pa_pc, pa->pa_tag,
-		    PCI_COMMAND_STATUS_REG) | PCI_COMMAND_MASTER_ENABLE);
-
-                if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin, 
-                    pa->pa_intrline, &intrh)) { 
-                        printf(": couldn't map interrupt");
-                        return;
-                }
-
-		intrstr = pci_intr_string(pa->pa_pc, intrh);
-
-		sc->sc_ih = pci_intr_establish(pa->pa_pc, intrh, IPL_NET,
-		    epintr, sc);
-		if (sc->sc_ih == NULL) {
-			printf(": couldn't establish interrupt");
-			if (intrstr != NULL)
-				printf("at %s", intrstr);
-			printf("\n");
-			return;
-		}
-		epstop(sc);
-	}
-	else
-#endif
-	{
-		struct isa_attach_args *ia = aux;
-		sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq,
-		    IST_EDGE, IPL_NET, epintr, sc);
-	}
 }
 
 /*
@@ -1251,7 +930,7 @@ epstop(sc)
  * returned to us by inb().  Hence; we read 16 times getting one
  * bit of data with each read.
  */
-static u_short
+u_short
 epreadeeprom(id_port, offset)
 	int     id_port;
 	int     offset;
