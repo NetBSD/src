@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gv.c,v 1.8 2003/08/07 16:30:23 agc Exp $	*/
+/*	$NetBSD: grf_gv.c,v 1.9 2004/01/25 13:17:00 minoura Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_gv.c,v 1.8 2003/08/07 16:30:23 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_gv.c,v 1.9 2004/01/25 13:17:00 minoura Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -96,8 +96,8 @@ __KERNEL_RCSID(0, "$NetBSD: grf_gv.c,v 1.8 2003/08/07 16:30:23 agc Exp $");
 
 #include <machine/cpu.h>
 
-int gv_init __P((struct grf_softc *, caddr_t));
-int gv_mode __P((struct grf_softc *, u_long, caddr_t));
+int gv_init(struct grf_softc *, caddr_t);
+int gv_mode(struct grf_softc *, u_long, caddr_t);
 
 /* Initialize hardware.
  * Must fill in the grfinfo structure in g_softc.
@@ -144,7 +144,7 @@ gv_init(gp, addr)
 	}
 	gi->gd_colors  = 16;
 
-	return(1);
+	return 1;
 }
 
 /*
@@ -178,72 +178,11 @@ gv_mode(gp, cmd, data)
 		gp->g_data = 0;
 		break;
 
-#ifdef COMPAT_HPUX
-	case GM_DESCRIBE:
-	{
-		struct grf_fbinfo *fi = (struct grf_fbinfo *)data;
-		struct grfinfo *gi = &gp->g_display;
-		int i;
-
-		/* feed it what HP-UX expects */
-		fi->id = gi->gd_id;
-		fi->mapsize = gi->gd_fbsize;
-		fi->dwidth = gi->gd_dwidth;
-		fi->dlength = gi->gd_dheight;
-		fi->width = gi->gd_fbwidth;
-		fi->length = gi->gd_fbheight;
-		fi->bpp = NBBY;
-		fi->xlen = (fi->width * fi->bpp) / NBBY;
-		fi->npl = gi->gd_planes;
-		fi->bppu = fi->npl;
-		fi->nplbytes = fi->xlen * ((fi->length * fi->bpp) / NBBY);
-		/* XXX */
-		switch (gp->g_sw->gd_hwid) {
-		case GID_HRCCATSEYE:
-			memcpy(fi->name, "HP98550", 8);
-			break;
-		case GID_LRCATSEYE:
-			memcpy(fi->name, "HP98549", 8);
-			break;
-		case GID_HRMCATSEYE:
-			memcpy(fi->name, "HP98548", 8);
-			break;
-		case GID_TOPCAT:
-			switch (gi->gd_colors) {
-			case 64:
-				memcpy(fi->name, "HP98547", 8);
-				break;
-			case 16:
-				memcpy(fi->name, "HP98545", 8);
-				break;
-			case 2:
-				memcpy(fi->name, "HP98544", 8);
-				break;
-			}
-			break;
-		}
-		fi->attr = 2;	/* HW block mover */
-		/*
-		 * If mapped, return the UVA where mapped.
-		 */
-		if (gp->g_data) {
-			fi->regbase = gp->g_data;
-			fi->fbbase = fi->regbase + gp->g_display.gd_regsize;
-		} else {
-			fi->fbbase = 0;
-			fi->regbase = 0;
-		}
-		for (i = 0; i < 6; i++)
-			fi->regions[i] = 0;
-		break;
-	}
-#endif
-#if 1
 	case GM_GRFSETVMODE:
 		if (*(int *)data == 1) {
 			struct grfinfo *gi = &gp->g_display;
 			volatile struct crtc *crtc = &IODEVbase->io_crtc;
-			/* CRTC に設定を行ない、dwidth と dheight をいじる */
+			/* Reset CRTC, set dwidth and dheight accordingly */
 			crtc->r20 = (crtc->r20 & 0xFF00) | 0x1a;
 			crtc->r08 = 0x1b;
 			crtc->r07 = 0x19c;
@@ -258,11 +197,10 @@ gv_mode(gp, cmd, data)
 			gi->gd_dheight = 768;
 		}
 		break;
-#endif
 
 	default:
 		error = EINVAL;
 		break;
 	}
-	return(error);
+	return error;
 }
