@@ -33,7 +33,7 @@
  */
 /*
  * The console device driver for Alice.
- * $Id: console.c,v 1.4 1993/12/15 03:09:05 briggs Exp $
+ * $Id: console.c,v 1.5 1993/12/21 03:16:01 briggs Exp $
  *
  * April 11th, 1992 LK
  *  Original
@@ -83,6 +83,8 @@ char serial_boot_echo=0;
 #include "../mac68k/myframe.h"
 #include "serreg.h"
 #include "console.h"
+
+#include "asc.h" /* for sound */
 
 #include "grf.h"
 #include "grfioctl.h"
@@ -434,8 +436,9 @@ static void flashscreen(int vtnum)
 
 static beep(int vtnum)
 {
-  /* Can't do sound yet: */
-  flashscreen(vtnum);
+  struct vt *v=&vt[vtnum];
+
+  if (v->visible) asc_ringbell();
 }
 
 static void drawweirdcharacter (struct vt *v, int x, int y, int attr,
@@ -1604,6 +1607,27 @@ conioctl(dev_t dev, int cmd, caddr_t data, int flag)
 				/* vt[curvt].numtcols, */
 				/* vt[curvt].numtrows); */
 
+			}
+			break;
+		case CON_SETBEEP:
+			{
+				struct beeps	beep;
+				int		i;
+
+				beep = *(struct beeps *) data;
+				return (asc_setbellparams(beep.freq,
+							  beep.length,
+							  beep.vol));
+			}
+			break;
+		case CON_GETBEEP:
+			{
+				int	freq, len, vol;
+
+				asc_getbellparams(&freq, &len, &vol);
+				((struct beeps *)data)->freq   = freq;
+				((struct beeps *)data)->length = len;
+				((struct beeps *)data)->vol    = vol;
 			}
 			break;
 		default:
