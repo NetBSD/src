@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.6 2000/08/20 21:50:12 thorpej Exp $ */
+/* $NetBSD: sched.h,v 1.7 2000/08/21 02:07:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -212,7 +212,7 @@ extern struct simplelock sched_lock;
 
 #define	SCHED_LOCK(s)							\
 do {									\
-	s = splhigh();							\
+	s = splsched();							\
 	simple_lock(&sched_lock);					\
 } while (0)
 
@@ -230,7 +230,7 @@ void	sched_unlock_idle(void);
 #define	SCHED_ASSERT_LOCKED()		/* nothing */
 #define	SCHED_ASSERT_UNLOCKED()		/* nothing */
 
-#define	SCHED_LOCK(s)			s = splhigh()
+#define	SCHED_LOCK(s)			s = splsched()
 #define	SCHED_UNLOCK(s)			splx(s)
 
 #endif /* MULTIPROCESSOR || LOCKDEBUG */
