@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.28 2003/05/04 01:05:24 gmcgarry Exp $	*/
+/*	$NetBSD: histedit.c,v 1.29 2003/05/04 06:36:50 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.28 2003/05/04 01:05:24 gmcgarry Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.29 2003/05/04 06:36:50 gmcgarry Exp $");
 #endif
 #endif /* not lint */
 
@@ -526,8 +526,6 @@ histcmd(int argc, char **argv)
 }
 int
 inputrc(int argc, char **argv)
-	int argc;
-	char **argv;
 {
 	error("not compiled with history support");
 	/* NOTREACHED */
