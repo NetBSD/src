@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.2 1997/01/07 12:42:17 tls Exp $ */
+/*	$NetBSD: extern.h,v 1.3 1997/04/19 07:35:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -249,10 +249,10 @@ struct shipspecs {
 	char gunR;
 	char carL;
 	char carR;
-	char rig1;
-	char rig2;
-	char rig3;
-	char rig4;
+	int rig1;
+	int rig2;
+	int rig3;
+	int rig4;
 	short pts;
 };
 struct shipspecs specs[];
