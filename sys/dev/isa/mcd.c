@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.31 1995/03/27 18:08:34 mycroft Exp $	*/
+/*	$NetBSD: mcd.c,v 1.32 1995/03/27 21:44:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -705,7 +705,6 @@ mcdprobe(parent, match, aux)
 	struct mcd_softc *sc = match;
 	struct isa_attach_args *ia = aux;
 	int iobase = ia->ia_iobase;
-	int irq;
 	int i;
 	struct mcd_mbox mbx;
 
