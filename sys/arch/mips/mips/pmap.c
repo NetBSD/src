@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.81 2000/02/11 19:25:16 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.82 2000/03/14 14:10:08 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81 2000/02/11 19:25:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.82 2000/03/14 14:10:08 soren Exp $");
 
 /*
  *	Manages physical address maps.
@@ -2062,7 +2062,7 @@ pmap_remove_pv(pmap, va, pa)
 	if (CPUISMIPS3 && pv->pv_flags & PV_UNCACHED) {
 		/*
 		 * Page is currently uncached, check if alias mapping has been
-		 * removed.  If it was, then renable caching.
+		 * removed.  If it was, then reenable caching.
 		 */
 		pv = pa_to_pvh(pa);
 		for (npv = pv->pv_next; npv; npv = npv->pv_next) {
