@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.9 1995/11/28 08:39:56 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.10 1996/09/03 03:12:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -52,7 +52,7 @@
 8	STD		{ int hpux_sys_creat(char *path, int mode); }
 9	NOARGS	 	{ int sys_link(char *path, char *link); }
 10	STD		{ int hpux_sys_unlink(char *path); }
-11	STD		{ int hpux_sys_execv(char * path, char * * argp); }
+11	STD		{ int hpux_sys_execv(char * path, char **argp); }
 12	STD		{ int hpux_sys_chdir(char *path); }
 13	STD		{ int hpux_sys_time_6x(time_t *t); }
 14	STD		{ int hpux_sys_mknod(char *path, int mode, int dev); }
@@ -108,7 +108,7 @@
 					  int dev, int request); }
 58	STD		{ int hpux_sys_readlink(char *path, char *buf, \
 					  int count); }
-59	NOARGS		{ int sys_execve(char *path, char **argp, \
+59	STD		{ int hpux_sys_execve(char *path, char **argp, \
 			    char **envp); }
 60	NOARGS		{ int sys_umask(int newmask); }
 61	NOARGS		{ int sys_chroot(char *path); }
