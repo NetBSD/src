@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.37 2003/11/02 16:26:10 cl Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.38 2003/11/02 17:04:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.37 2003/11/02 16:26:10 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.38 2003/11/02 17:04:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,7 +338,9 @@ sa_yield(struct lwp *l)
 	struct lwp *l2;
 #endif
 	struct proc *p = l->l_proc;
+#ifdef DEBUG
 	struct sadata *sa = p->p_sa;
+#endif
 	int ret, s;
 	
 	/*
