@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.297 1998/03/25 16:30:43 chuck Exp $	*/
+/*	$NetBSD: machdep.c,v 1.298 1998/03/30 06:02:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -274,7 +274,7 @@ static	long ioport_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 struct	extent *ioport_ex;
 struct	extent *iomem_ex;
-static	ioport_malloc_safe;
+static	int ioport_malloc_safe;
 
 /*
  * Size of memory segments, before any memory is stolen.
@@ -642,7 +642,7 @@ cpu_startup()
  */
 caddr_t
 allocsys(v)
-	register caddr_t v;
+	caddr_t v;
 {
 
 #define	valloc(name, type, num) \
@@ -1091,8 +1091,8 @@ sendsig(catcher, sig, mask, code)
 	int sig, mask;
 	u_long code;
 {
-	register struct proc *p = curproc;
-	register struct trapframe *tf;
+	struct proc *p = curproc;
+	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
 	int oonstack;
@@ -1200,7 +1200,7 @@ sys_sigreturn(p, v, retval)
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext *scp, context;
-	register struct trapframe *tf;
+	struct trapframe *tf;
 
 	tf = p->p_md.md_regs;
 
@@ -1591,8 +1591,8 @@ setregs(p, pack, stack)
 	struct exec_package *pack;
 	u_long stack;
 {
-	register struct pcb *pcb = &p->p_addr->u_pcb;
-	register struct trapframe *tf;
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct trapframe *tf;
 
 #if NNPX > 0
 	/* If we were using the FPU, forget about it. */
@@ -1687,8 +1687,8 @@ setsegment(sd, base, limit, type, dpl, def32, gran)
 }
 
 #define	IDTVEC(name)	__CONCAT(X, name)
-extern	IDTVEC(syscall), IDTVEC(osyscall);
-extern	*IDTVEC(exceptions)[];
+extern	int IDTVEC(syscall), IDTVEC(osyscall);
+extern	int *IDTVEC(exceptions)[];
 
 void
 init386(first_avail)
@@ -1894,8 +1894,8 @@ _insque(v1, v2)
 	void *v1;
 	void *v2;
 {
-	register struct queue *elem = v1, *head = v2;
-	register struct queue *next;
+	struct queue *elem = v1, *head = v2;
+	struct queue *next;
 
 	next = head->q_next;
 	elem->q_next = next;
@@ -1911,8 +1911,8 @@ void
 _remque(v)
 	void *v;
 {
-	register struct queue *elem = v;
-	register struct queue *next, *prev;
+	struct queue *elem = v;
+	struct queue *next, *prev;
 
 	next = elem->q_next;
 	prev = elem->q_prev;
