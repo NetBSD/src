@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.yp,v 1.16 2001/07/03 18:15:06 christos Exp $
+#	$NetBSD: Makefile.yp,v 1.17 2001/08/05 12:40:15 hubertf Exp $
 #
 # This is the YP Makefile, used to create and push YP maps.
 #
@@ -23,7 +23,8 @@ NOPUSH?=	""
 YPDBDIR=	/var/yp
 DIR=		/etc
 AMDDIR=		/etc/amd
-DOMAIN=		"`/usr/bin/basename ${.CURDIR}`"
+AMDMAPS=	amd.home
+DOMAIN=		${.CURDIR:T}
 
 AWK=		/usr/bin/awk
 CAT=		/bin/cat
@@ -48,7 +49,7 @@ YPPUSH=		/usr/sbin/yppush
 # We have a rule for ypservers, but we don't build it by default, since
 # it seldom changes (only when slaves are added/deleted).
 
-all: passwd aliases amd.home ethers group hosts ipnodes netgroup networks rpc services protocols netid
+all: passwd aliases ${AMDMAPS} ethers group hosts ipnodes netgroup networks rpc services protocols netid
 
 __makedbmesc:	.USEBEFORE
 	if [ -f ${.ALLSRC} ]; then \
@@ -160,19 +161,21 @@ aliases.time: ${DIR}/mail/aliases
 	fi
 
 
-amd.home.time: ${AMDDIR}/amd.home __makedbmesc
+.for MAP in ${AMDMAPS}
+${MAP}.time: ${AMDDIR}/${MAP} __makedbmesc
 	-@if [ -f ${.ALLSRC} ]; then \
 		${TOUCH} ${.TARGET}; \
-		${ECHO} "updated amd.home"; \
+		${ECHO} "updated ${MAP}"; \
 		if [ ! ${NOPUSH} ]; then \
-			${YPPUSH} -d ${DOMAIN} amd.home; \
-			${ECHO} "pushed amd.home"; \
+			${YPPUSH} -d ${DOMAIN} ${MAP}; \
+			${ECHO} "pushed ${MAP}"; \
 		else \
 			: ; \
 		fi \
 	else \
 		${ECHO} "couldn't find ${.ALLSRC}"; \
 	fi
+.endfor # AMDMAPS
 
 
 ethers.time: ${DIR}/ethers
@@ -410,7 +413,9 @@ group: group.time
 hosts: hosts.time
 ipnodes: ipnodes.time
 aliases: aliases.time
-amd.home: amd.home.time
+.for MAP in ${AMDMAPS}
+${MAP}: ${MAP}.time
+.endfor # AMDMAPS
 ethers: ethers.time
 netgroup: netgroup.time
 networks: networks.time
@@ -425,7 +430,9 @@ ${DIR}/passwd:
 ${DIR}/group:
 ${DIR}/hosts:
 ${DIR}/mail/aliases:
-${AMDDIR}/amd.home:
+.for MAP in ${AMDMAPS}
+${AMDDIR}/${MAP}:
+.endfor # AMDMAPS
 ${DIR}/ethers:
 ${DIR}/master.passwd:
 ${DIR}/netgroup:
