@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.50 2003/05/02 08:45:10 dsl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.51 2003/05/02 09:36:46 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.50 2003/05/02 08:45:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.51 2003/05/02 09:36:46 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ mbr_findslice(dp, bp)
  *
  * Returns null on success and an error string on failure.
  */
-static char *
+const char *
 readdisklabel(dev, strat, lp, osdep)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
