@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.47 2000/03/31 22:12:56 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.48 2000/04/01 14:54:51 augustss Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.47 2000/03/31 22:12:56 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.48 2000/04/01 14:54:51 augustss Exp $");
 #endif
 #endif
 
@@ -364,7 +364,7 @@ pkg_do(char *pkg)
 			 */
 			char *s;
 			
-			if (((s = strrchr(p->name, '-')) != NULL) || (s = strpbrk(p->name, "<>[]?*{") != NULL)) {
+			if ((s = strrchr(p->name, '-')) != NULL || (s = strpbrk(p->name, "<>[]?*{")) != NULL) {
 				char    buf[FILENAME_MAX];
 		
 				(void) snprintf(buf, sizeof(buf), "%.*s[0-9]*",
