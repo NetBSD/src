@@ -1,4 +1,4 @@
-/*	$NetBSD: strlen.c,v 1.12 2003/08/07 16:43:51 agc Exp $	*/
+/*	$NetBSD: strlen.c,v 1.13 2004/01/31 16:56:12 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)strlen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strlen.c,v 1.12 2003/08/07 16:43:51 agc Exp $");
+__RCSID("$NetBSD: strlen.c,v 1.13 2004/01/31 16:56:12 uebayasi Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,6 +55,7 @@ strlen(str)
 
 	_DIAGASSERT(str != NULL);
 
-	for (s = str; *s; ++s);
+	for (s = str; *s; ++s)
+		continue;
 	return(s - str);
 }
