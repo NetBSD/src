@@ -1,4 +1,4 @@
-.\"	$NetBSD: patch.1,v 1.11 2005/03/25 23:49:28 wiz Exp $ -*- nroff -*-
+.\"	$NetBSD: patch.1,v 1.12 2005/03/25 23:55:02 wiz Exp $ -*- nroff -*-
 .rn '' }`
 .de Sh
 .br
@@ -212,19 +212,14 @@ patch file, however.)
 .I Patch
 recognizes the following switches:
 .TP 5
-.B \-b or \-\-suffix
-causes the next argument to be interpreted as the backup extension, to be
-used in place of \*(L".orig\*(R" or \*(L"~\*(R".
-.TP 5
 .B \-B or \-\-prefix
 causes the next argument to be interpreted as a prefix to the backup file
 name.
 If this argument is specified any argument from -b will be ignored.
 .TP 5
-.B \-c or \-\-context
-forces
-.I patch
-to interpret the patch file as a context diff.
+.B \-b or \-\-suffix
+causes the next argument to be interpreted as the backup extension, to be
+used in place of \*(L".orig\*(R" or \*(L"~\*(R".
 .TP 5
 .B \-C or \-\-dry\-run
 causes
@@ -232,11 +227,10 @@ causes
 to report what would be done, but not to actually modify any files
 or create any rejects.
 .TP 5
-.B \-d or \-\-directory
-causes
+.B \-c or \-\-context
+forces
 .I patch
-to interpret the next argument as a directory, and cd to it before doing
-anything else.
+to interpret the patch file as a context diff.
 .TP 5
 .B \-D or \-\-ifdef
 causes
@@ -247,15 +241,30 @@ Note that, unlike the C compiler, there must be a space between the
 .B \-D
 and the argument.
 .TP 5
-.B \-e or \-\-ed
-forces
+.B \-d or \-\-directory
+causes
 .I patch
-to interpret the patch file as an ed script.
+to interpret the next argument as a directory, and cd to it before doing
+anything else.
 .TP 5
 .B \-E or \-\-remove-empty-files
 causes
 .I patch
 to remove output files that are empty after the patches have been applied.
+.TP 5
+.B \-e or \-\-ed
+forces
+.I patch
+to interpret the patch file as an ed script.
+.TP 5
+.B \-F\*[Lt]number\*[Gt] or \-\-fuzz \*[Lt]number\*[Gt]
+sets the maximum fuzz factor.
+This switch only applies to context diffs, and causes
+.I patch
+to ignore up to that many lines in looking for places to install a hunk.
+Note that a larger fuzz factor increases the odds of a faulty patch.
+The default fuzz factor is 2, and it may not be set to more than
+the number of lines of context in the context diff, ordinarily 3.
 .TP 5
 .B \-f or \-\-force
 forces
@@ -273,24 +282,6 @@ for that.
 .B \-i \*[Lt]patchfile\*[Gt] or \-\-patchfile \*[Lt]patchfile\*[Gt]
 Read the patch to be applied from the specified file.
 .TP 5
-.B \-t or \-\-batch
-similar to
-.BR \-f ,
-in that it suppresses questions, but makes some different assumptions:
-skip patches for which a file to patch can't be found (the same as \fB\-f\fP);
-skip patches for which the file has the wrong version for the ``Prereq:'' line
-in the patch; and assume that patches are reversed if they look like
-they are.
-.TP 5
-.B \-F\*[Lt]number\*[Gt] or \-\-fuzz \*[Lt]number\*[Gt]
-sets the maximum fuzz factor.
-This switch only applies to context diffs, and causes
-.I patch
-to ignore up to that many lines in looking for places to install a hunk.
-Note that a larger fuzz factor increases the odds of a faulty patch.
-The default fuzz factor is 2, and it may not be set to more than
-the number of lines of context in the context diff, ordinarily 3.
-.TP 5
 .B \-l or \-\-ignore-whitespace
 causes the pattern matching to be done loosely, in case the tabs and
 spaces have been munged in your input file.
@@ -299,17 +290,17 @@ in the input file.
 Normal characters must still match exactly.
 Each line of the context must still match a line in the input file.
 .TP 5
-.B \-n or \-\-normal
-forces
-.I patch
-to interpret the patch file as a normal diff.
-.TP 5
 .B \-N or \-\-forward
 causes
 .I patch
 to ignore patches that it thinks are reversed or already applied.
 See also
 .B \-R .
+.TP 5
+.B \-n or \-\-normal
+forces
+.I patch
+to interpret the patch file as a normal diff.
 .TP 5
 .B \-o or \-\-output
 causes the next argument to be interpreted as the output file name.
@@ -352,9 +343,6 @@ or the directory specified by the
 .B \-d
 switch.
 .TP 5
-.B \-r or \-\-reject-file
-causes the next argument to be interpreted as the reject file name.
-.TP 5
 .B \-R or \-\-reverse
 tells
 .I patch
@@ -384,10 +372,8 @@ Luckily, most patches add or change lines rather than delete them, so most
 reversed normal diffs will begin with a delete, which will fail, triggering
 the heuristic.)
 .TP 5
-.B \-s or \-\-quiet or \-\-silent
-makes
-.I patch
-do its work silently, unless an error occurs.
+.B \-r or \-\-reject-file
+causes the next argument to be interpreted as the reject file name.
 .TP 5
 .B \-S or \-\-skip
 causes
@@ -400,15 +386,24 @@ Thus
 .sp
 will ignore the first and second of three patches.
 .TP 5
+.B \-s or \-\-quiet or \-\-silent
+makes
+.I patch
+do its work silently, unless an error occurs.
+.TP 5
+.B \-t or \-\-batch
+similar to
+.BR \-f ,
+in that it suppresses questions, but makes some different assumptions:
+skip patches for which a file to patch can't be found (the same as \fB\-f\fP);
+skip patches for which the file has the wrong version for the ``Prereq:'' line
+in the patch; and assume that patches are reversed if they look like
+they are.
+.TP 5
 .B \-u or \-\-unified
 forces
 .I patch
 to interpret the patch file as a unified context diff (a unidiff).
-.TP 5
-.B \-v or \-\-version
-causes
-.I patch
-to print out its revision header and patch level.
 .TP 5
 .B \-V or \-\-version-control
 causes the next argument to be interpreted as a method for creating
@@ -442,6 +437,11 @@ This is the default.
 `never' or `simple'
 Always make simple backups.
 .RE
+.TP 5
+.B \-v or \-\-version
+causes
+.I patch
+to print out its revision header and patch level.
 .TP 5
 .B \-x\*[Lt]number\*[Gt] or \-\-debug \*[Lt]number\*[Gt]
 sets internal debugging flags, and is of interest only to
