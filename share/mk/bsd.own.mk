@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.315 2002/09/27 21:37:57 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.316 2002/10/22 18:48:29 perry Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -281,6 +281,8 @@ SYMLINK?=	-l s
 
 METALOG?=	${DESTDIR}/METALOG
 INSTPRIV?=	${UNPRIVED:D-U -M ${METALOG}}
+SYSPKGTAG?=	${SYSPKG:D-T ${SYSPKG}_pkg}
+SYSPKGDOCTAG?=	${SYSPKG:D-T ${SYSPKG}-doc_pkg}
 STRIPFLAG?=	-s
 
 .if ${NEED_OWN_INSTALL_TARGET} == "yes"
