@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.59 1995/06/04 12:57:52 mycroft Exp $	*/
+/*	$NetBSD: tty.c,v 1.60 1995/06/04 14:01:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1045,9 +1045,10 @@ ttyblock(tp)
 	 */
 	if (total >= TTYHOG / 2 &&
 	    !ISSET(tp->t_state, TS_TBLOCK) &&
-	    !ISSET(tp->t_lflag, ICANON) || tp->t_canq.c_cc > 0 &&
-	    tp->t_cc[VSTOP] != _POSIX_VDISABLE) {
-		if (putc(tp->t_cc[VSTOP], &tp->t_outq) == 0) {
+	    !ISSET(tp->t_lflag, ICANON) || tp->t_canq.c_cc > 0) {
+		if (ISSET(tp->t_iflag, IXOFF) &&
+		    tp->t_cc[VSTOP] != _POSIX_VDISABLE &&
+		    putc(tp->t_cc[VSTOP], &tp->t_outq) == 0) {
 			SET(tp->t_state, TS_TBLOCK);
 			ttstart(tp);
 		}
@@ -1372,7 +1373,8 @@ read:
 	 */
 	s = spltty();
 	if (ISSET(tp->t_state, TS_TBLOCK) && tp->t_rawq.c_cc < TTYHOG/5) {
-		if (cc[VSTART] != _POSIX_VDISABLE &&
+		if (ISSET(tp->t_iflag, IXOFF) &&
+		    cc[VSTART] != _POSIX_VDISABLE &&
 		    putc(cc[VSTART], &tp->t_outq) == 0) {
 			CLR(tp->t_state, TS_TBLOCK);
 			ttstart(tp);
