@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.42 2001/05/02 10:32:16 scw Exp $	*/
+/*	$NetBSD: dca.c,v 1.43 2001/05/30 15:24:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -82,6 +82,8 @@
  *  be any harmful side-effects from setting this bit on non-affected
  *  machines.
  */
+
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

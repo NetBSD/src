@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.46 2001/05/02 10:32:16 scw Exp $	*/
+/*	$NetBSD: dcm.c,v 1.47 2001/05/30 15:24:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -87,6 +87,9 @@
 /*
  *  98642/MUX
  */
+
+#include "opt_kgdb.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_550.c,v 1.13 2001/05/02 02:30:30 thorpej Exp $ */
+/* $NetBSD: dec_550.c,v 1.14 2001/05/30 15:24:27 lukem Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -30,9 +30,11 @@
  * Additional Copyright (c) 1997 by Matthew Jacob for NASA/Ames Research Center
  */
 
+#include "opt_kgdb.h"
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.13 2001/05/02 02:30:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.14 2001/05/30 15:24:27 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
