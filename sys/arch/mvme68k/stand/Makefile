@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2001/07/19 18:18:30 scw Exp $
+#	$NetBSD: Makefile,v 1.5 2002/05/28 19:34:15 bjh21 Exp $
 
-SUBDIR= libbug libsa sboot netboot bootxx bootsd bootst \
+SUBDIR= libbug libsa .WAIT sboot netboot bootxx bootsd bootst \
 	installboot
 
 .ifmake !(install)
