@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.1 2001/08/17 21:37:28 thorpej Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.2 2003/02/15 00:46:30 perseant Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -102,6 +102,8 @@
 #define	BRDGGMA			19	/* get max age (ifbrparam) */
 #define	BRDGSMA			20	/* set max age (ifbrparam) */
 #define	BRDGSIFPRIO		21	/* set if priority (ifbreq) */
+#define BRDGGFILT	        22	/* get filter flags (ifbrparam) */
+#define BRDGSFILT	        23	/* set filter flags (ifbrparam) */
 
 /*
  * Generic bridge control request.
@@ -124,6 +126,10 @@ struct ifbreq {
 /* BRDGFLUSH */
 #define	IFBF_FLUSHDYN		0x00	/* flush learned addresses only */
 #define	IFBF_FLUSHALL		0x01	/* flush all addresses */
+
+/* BRDGSFILT */
+#define IFBF_FILT_USEIPF	0x00000001 /* enable ipf on bridge */
+#define IFBF_FILT_MASK		0x00000001 /* mask of valid values */
 
 /* STP port states */
 #define	BSTP_IFSTATE_DISABLED	0
@@ -190,6 +196,7 @@ struct ifbrparam {
 #define	ifbrp_hellotime	ifbrp_ifbrpu.ifbrpu_int8	/* hello time (sec) */
 #define	ifbrp_fwddelay	ifbrp_ifbrpu.ifbrpu_int8	/* fwd time (sec) */
 #define	ifbrp_maxage	ifbrp_ifbrpu.ifbrpu_int8	/* max age (sec) */
+#define	ifbrp_filter	ifbrp_ifbrpu.ifbrpu_int32	/* filtering flags */
 
 #ifdef _KERNEL
 /*
@@ -287,6 +294,7 @@ struct bridge_softc {
 	LIST_HEAD(, bridge_rtnode) *sc_rthash;	/* our forwarding table */
 	LIST_HEAD(, bridge_rtnode) sc_rtlist;	/* list version of above */
 	uint32_t		sc_rthash_key;	/* key for hash */
+	uint32_t		sc_filter_flags; /* ipf and flags */
 };
 
 extern const uint8_t bstp_etheraddr[];
