@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.63 2002/04/12 08:11:02 gmcgarry Exp $
+#	$NetBSD: HOMEWORLD,v 1.64 2002/04/14 01:42:53 mycroft Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	HOMEWORLD - TNF mail/gnats
@@ -234,9 +234,8 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 # wscons
 pckbc0	at isa?			# pc keyboard controller
 pckbd*	at pckbc?		# PC keyboard
-# "opms" should not be enabled together with "pms" or "pmsi"
+# "opms" should not be enabled together with "pms"
 #pms*		at pckbc?		# PS/2 mouse for wsmouse
-#pmsi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
 #opms*		at pckbc?		# backwards compatible PS/2 mouse
 #vga0		at isa?
 vga*		at pci?
@@ -245,7 +244,6 @@ wsdisplay*	at vga? console ?
 #wsdisplay*	at pcdisplay? console ?
 wskbd*	at pckbd? console ?
 #wsmouse*	at pms?
-#wsmouse*	at pmsi?
 
 pcppi0	at isa?
 sysbeep0	at pcppi?
