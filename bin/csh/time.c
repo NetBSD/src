@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.6 1995/03/21 09:03:27 cgd Exp $	*/
+/*	$NetBSD: time.c,v 1.7 1995/03/21 13:55:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: time.c,v 1.6 1995/03/21 09:03:27 cgd Exp $";
+static char rcsid[] = "$NetBSD: time.c,v 1.7 1995/03/21 13:55:25 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -111,8 +111,8 @@ void
 ruadd(ru, ru2)
     register struct rusage *ru, *ru2;
 {
-    tvadd(&ru->ru_utime, &ru2->ru_utime);
-    tvadd(&ru->ru_stime, &ru2->ru_stime);
+    timeradd(&ru->ru_utime, &ru2->ru_utime, &ru->ru_utime);
+    timeradd(&ru->ru_stime, &ru2->ru_stime, &ru->ru_stime);
     if (ru2->ru_maxrss > ru->ru_maxrss)
 	ru->ru_maxrss = ru2->ru_maxrss;
 
@@ -249,30 +249,8 @@ pdeltat(t1, t0)
 {
     struct timeval td;
 
-    tvsub(&td, t1, t0);
+    timersub(t1, t0, &td);
     (void) fprintf(cshout, "%d.%01d", td.tv_sec, td.tv_usec / 100000);
-}
-
-void
-tvadd(tsum, t0)
-    struct timeval *tsum, *t0;
-{
-
-    tsum->tv_sec += t0->tv_sec;
-    tsum->tv_usec += t0->tv_usec;
-    if (tsum->tv_usec > 1000000)
-	tsum->tv_sec++, tsum->tv_usec -= 1000000;
-}
-
-void
-tvsub(tdiff, t1, t0)
-    struct timeval *tdiff, *t1, *t0;
-{
-
-    tdiff->tv_sec = t1->tv_sec - t0->tv_sec;
-    tdiff->tv_usec = t1->tv_usec - t0->tv_usec;
-    if (tdiff->tv_usec < 0)
-	tdiff->tv_sec--, tdiff->tv_usec += 1000000;
 }
 
 #define  P2DIG(i) (void) fprintf(cshout, "%d%d", (i) / 10, (i) % 10)
