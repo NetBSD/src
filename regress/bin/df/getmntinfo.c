@@ -1,4 +1,4 @@
-/*	$NetBSD: getmntinfo.c,v 1.3 2004/07/17 00:31:38 enami Exp $	*/
+/*	$NetBSD: getmntinfo.c,v 1.4 2004/07/27 01:50:35 enami Exp $	*/
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -83,10 +83,8 @@ setup_filer(void)
 	};
 	static const int minfree[] = { 0, 5, 10, 15, };
 	static const int consumed[] = { 0, 20, 60, 95, 100 };
-	struct statvfs *sf;
 
-	sf = getnewstatvfs();
-	*sf = tmpl;
+	*getnewstatvfs() = tmpl;
 	other_variants(&tmpl, minfree, sizeof(minfree) / sizeof(minfree[0]),
 	    consumed, sizeof(consumed) / sizeof(consumed[0]));
 }
@@ -118,10 +116,8 @@ setup_ld0g(void)
 	};
 	static const int minfree[] = { 0, 5, 10, 15, };
 	static const int consumed[] = { 0, 20, 60, 95, 100 };
-	struct statvfs *sf;
 
-	sf = getnewstatvfs();
-	*sf = tmpl;
+	*getnewstatvfs() = tmpl;
 	other_variants(&tmpl, minfree, sizeof(minfree) / sizeof(minfree[0]),
 	    consumed, sizeof(consumed) / sizeof(consumed[0]));
 }
@@ -150,10 +146,37 @@ setup_strpct(void)
 #undef TOTAL
 #undef BSIZE
 	};
-	struct statvfs *sf;
 
-	sf = getnewstatvfs();
-	*sf = tmpl;
+	*getnewstatvfs() = tmpl;
+}
+
+/*
+ * Parameter taken from:
+ * http://www.netbsd.org/cgi-bin/query-pr-single.pl?number=23600
+ */
+void
+setup_pr23600(void)
+{
+	static const struct statvfs tmpl = {
+#define	BSIZE	512
+#define	TOTAL	20971376ULL
+#define	USED	5719864ULL
+#define	AVAIL	15251512ULL
+		.f_bsize = BSIZE,
+		.f_frsize = BSIZE,
+		.f_blocks = TOTAL,
+		.f_bfree = TOTAL - USED,
+		.f_bavail = AVAIL,
+		.f_bresvd = TOTAL - USED - AVAIL,
+		.f_mntfromname = "/dev/wd0e",
+		.f_mntonname = "/mount/windows/C",
+#undef AVAIL
+#undef USED
+#undef TOTAL
+#undef BSIZE
+	};
+
+	*getnewstatvfs() = tmpl;
 }
 
 int
@@ -163,6 +186,7 @@ getmntinfo(struct statvfs **mntbuf, int flags)
 	setup_filer();
 	setup_ld0g();
 	setup_strpct();
+	setup_pr23600();
 
 	*mntbuf = allstatvfs;
 	return (sfused);
