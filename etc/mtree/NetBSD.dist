@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.240 2003/07/25 16:55:15 mrg Exp $
+#	$NetBSD: NetBSD.dist,v 1.241 2003/07/25 22:59:58 jonathan Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -49,6 +49,7 @@
 ./usr/include/altq
 ./usr/include/arpa
 ./usr/include/cdk
+./usr/include/crypto
 ./usr/include/dev
 ./usr/include/dev/ata
 ./usr/include/dev/dec
