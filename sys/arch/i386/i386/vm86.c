@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.14 1996/04/30 10:35:25 mycroft Exp $	*/
+/*	$NetBSD: vm86.c,v 1.15 1996/05/03 19:42:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@
 #include <machine/vm86.h>
 
 static void fast_intxx __P((struct proc *, int));
+static __inline int is_bitset __P((int, caddr_t));
 
 #define	CS(tf)		(*(u_short *)&tf->tf_cs)
 #define	IP(tf)		(*(u_short *)&tf->tf_eip)
@@ -141,7 +142,7 @@ __asm__ __volatile__( \
 __res; })
 
 
-static __inline__ int
+static __inline int
 is_bitset(nr, bitmap)
 	int nr;
 	caddr_t bitmap;
