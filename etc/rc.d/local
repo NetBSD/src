@@ -1,11 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: local,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+# $NetBSD: local,v 1.2 2000/03/13 04:03:58 lukem Exp $
 #
 
-# REQUIRE: daemon
+# REQUIRE: DAEMON
 # PROVIDE: local
-# BEFORE: login
+# BEFORE: LOGIN
 
 . /etc/rc.subr
 . /etc/rc.conf
