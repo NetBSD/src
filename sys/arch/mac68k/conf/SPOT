@@ -1,4 +1,4 @@
-#	$NetBSD: SPOT,v 1.1 1996/02/11 00:17:13 scottr Exp $
+#	$NetBSD: SPOT,v 1.2 1996/03/12 21:06:27 scottr Exp $
 #
 # SPOT
 
@@ -6,6 +6,7 @@ include	"std.mac68k"
 
 maxusers	16
 
+makeoptions CC="cc -m68030"
 options         MAXFDESCS=2048
 
 # Standard system options
@@ -50,10 +51,7 @@ options		MAPMEM
 options		SYSVSHM,SYSVSEM,SYSVMSG
 
 # Mac-specific options
-options		M68040
-options		M68030		# Includes the 020+851
-options		FPSP
-#options	FPU_EMULATE
+options		M68030
 options		COMPAT_NOMID
 options		COMPAT_SUNOS
 options		COMPAT_09
