@@ -1,4 +1,4 @@
-/* $NetBSD: zlib.h,v 1.9 1999/10/26 22:16:48 itojun Exp $ */
+/* $NetBSD: zlib.h,v 1.10 2000/10/04 17:12:01 sommerfeld Exp $ */
 
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.1.3, July 9th, 1998
@@ -715,7 +715,8 @@ ZEXTERN int ZEXPORT    gzwrite OF((gzFile file,
    (0 in case of error).
 */
 
-ZEXTERN int ZEXPORTVA   gzprintf OF((gzFile file, const char *format, ...));
+ZEXTERN int ZEXPORTVA   gzprintf OF((gzFile file, const char *format, ...))
+		__attribute__((__format__(__printf__, 2, 3)));
 /*
      Converts, formats, and writes the args to the compressed file under
    control of the format string, as in fprintf. gzprintf returns the number of
