@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.108 1997/08/27 18:00:13 is Exp $	*/
+/*	$NetBSD: com.c,v 1.109 1997/09/16 20:34:23 is Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -109,7 +109,7 @@ static void com_enable_debugport __P((struct com_softc *));
 #endif
 void	com_attach_subr	__P((struct com_softc *sc));
 void	comdiag		__P((void *));
-int	comspeed	__P((long));
+int	comspeed	__P((long, long));
 static	u_char	cflag2lcr __P((tcflag_t));
 int	comparam	__P((struct tty *, struct termios *));
 void	comstart	__P((struct tty *));
@@ -180,8 +180,8 @@ void	com_kgdb_putc __P((void *, int));
 #define	COMUNIT(x)	(minor(x))
 
 int
-comspeed(speed)
-	long speed;
+comspeed(speed, frequency)
+	long speed, frequency;
 {
 #define	divrnd(n, q)	(((n)*2/(q)+1)/2)	/* divide and round off */
 
@@ -193,10 +193,10 @@ comspeed(speed)
 #endif
 	if (speed <= 0)
 		return (-1);
-	x = divrnd((COM_FREQ / 16), speed);
+	x = divrnd(frequency / 16, speed);
 	if (x <= 0)
 		return (-1);
-	err = divrnd((COM_FREQ / 16) * 1000, speed * x) - 1000;
+	err = divrnd(frequency * 1000 / 16, speed * x) - 1000;
 	if (err < 0)
 		err = -err;
 	if (err > COM_TOLERANCE)
@@ -847,7 +847,7 @@ comparam(tp, t)
 	struct termios *t;
 {
 	struct com_softc *sc = com_cd.cd_devs[COMUNIT(tp->t_dev)];
-	int ospeed = comspeed(t->c_ospeed);
+	int ospeed = comspeed(t->c_ospeed, sc->sc_frequency);
 	u_char lcr;
 	int s;
 
@@ -1613,10 +1613,10 @@ com_common_putc(iot, ioh, c)
  * Initialize UART to known state.
  */
 int
-cominit(iot, iobase, rate, cflag, iohp)
+cominit(iot, iobase, rate, frequency, cflag, iohp)
 	bus_space_tag_t iot;
 	int iobase;
-	int rate;
+	int rate, frequency;
 	tcflag_t cflag;
 	bus_space_handle_t *iohp;
 {
@@ -1626,7 +1626,7 @@ cominit(iot, iobase, rate, cflag, iohp)
 		return(ENOMEM); /* ??? */
 
 	bus_space_write_1(iot, ioh, com_lcr, LCR_DLAB);
-	rate = comspeed(rate);
+	rate = comspeed(rate, frequency);
 	bus_space_write_1(iot, ioh, com_dlbl, rate);
 	bus_space_write_1(iot, ioh, com_dlbh, rate >> 8);
 	bus_space_write_1(iot, ioh, com_lcr, cflag2lcr(cflag));
@@ -1644,17 +1644,17 @@ cominit(iot, iobase, rate, cflag, iohp)
  */
 
 int
-comcnattach(iot, iobase, rate, cflag)
+comcnattach(iot, iobase, rate, frequency, cflag)
 	bus_space_tag_t iot;
 	int iobase;
-	int rate;
+	int rate, frequency;
 	tcflag_t cflag;
 {
 	int res;
 	static struct consdev comcons = { NULL, NULL,
 	comcngetc, comcnputc, comcnpollc, NODEV, CN_NORMAL};
 
-	res = cominit(iot, iobase, rate, cflag, &comconsioh);
+	res = cominit(iot, iobase, rate, frequency, cflag, &comconsioh);
 	if(res) return(res);
 
 	cn_tab = &comcons;
@@ -1697,7 +1697,7 @@ comcnpollc(dev, on)
 
 #ifdef KGDB
 int
-com_kgdb_attach(iot, iobase, rate, cflag)
+com_kgdb_attach(iot, iobase, rate, frequency, cflag)
 	bus_space_tag_t iot;
 	int iobase;
 	int rate;
@@ -1708,7 +1708,7 @@ com_kgdb_attach(iot, iobase, rate, cflag)
 	if (iot == comconstag && iobase == comconsaddr)
 		return(EBUSY); /* cannot share with console */
 
-	res = cominit(iot, iobase, rate, cflag, &com_kgdb_ioh);
+	res = cominit(iot, iobase, rate, frequency, cflag, &com_kgdb_ioh);
 	if(res) return(res);
 
 	kgdb_attach(com_kgdb_getc, com_kgdb_putc, NULL);

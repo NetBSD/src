@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.14 1997/08/23 14:01:34 drochner Exp $	*/
+/*	$NetBSD: comvar.h,v 1.15 1997/09/16 20:34:29 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -30,10 +30,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int comcnattach __P((bus_space_tag_t, int, int, tcflag_t));
+int comcnattach __P((bus_space_tag_t, int, int, int, tcflag_t));
 
 #ifdef KGDB
-int com_kgdb_attach __P((bus_space_tag_t, int, int, tcflag_t));
+int com_kgdb_attach __P((bus_space_tag_t, int, int, int, tcflag_t));
 #endif
 
 int com_is_console __P((bus_space_tag_t, int, bus_space_handle_t *));
@@ -62,6 +62,7 @@ struct com_softc {
 	int sc_errors;
 
 	int sc_iobase;
+	int sc_frequency;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
@@ -110,7 +111,8 @@ struct com_softc {
 int comprobe1 __P((bus_space_tag_t, bus_space_handle_t, int));
 int comintr __P((void *));
 void com_attach_subr __P((struct com_softc *));
-int cominit 		__P((bus_space_tag_t, int, int, tcflag_t, bus_space_handle_t *));
+int cominit __P((bus_space_tag_t, int, int, int, tcflag_t,
+	bus_space_handle_t *));
 
 #ifndef __GENERIC_SOFT_INTERRUPTS
 #ifdef alpha

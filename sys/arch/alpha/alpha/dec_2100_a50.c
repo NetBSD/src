@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2100_a50.c,v 1.32 1997/09/02 20:43:07 thorpej Exp $ */
+/* $NetBSD: dec_2100_a50.c,v 1.33 1997/09/16 20:34:41 is Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2100_a50.c,v 1.32 1997/09/02 20:43:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2100_a50.c,v 1.33 1997/09/16 20:34:41 is Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,8 @@ dec_2100_a50_cons_init()
 			DELAY(160000000 / comcnrate);
 
 			if(comcnattach(&acp->ac_iot, 0x3f8, comcnrate,
-				    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
+			    COM_FREQ,
+			    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
 				panic("can't init serial console");
 
 			break;
