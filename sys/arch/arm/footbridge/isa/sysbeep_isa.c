@@ -1,4 +1,4 @@
-/*	$NetBSD: sysbeep_isa.c,v 1.2 2002/09/27 20:30:38 thorpej Exp $	*/
+/*	$NetBSD: sysbeep_isa.c,v 1.3 2002/10/01 04:26:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,9 +49,8 @@ void sysbeep_isa_attach __P((struct device *parent, struct device *self, void *a
 void sysbeep_isa __P((int pitch, int period));
 
 /* device attach structure */
-const struct cfattach sysbeep_isa_ca = {
-	sizeof(struct device), sysbeep_isa_match, sysbeep_isa_attach
-};
+CFATTACH_DECL(sysbeep_isa, sizeof(struct device),
+    sysbeep_isa_match, sysbeep_isa_attach, NULL, NULL)
 
 static int ppi_attached;
 static pcppi_tag_t ppicookie;
