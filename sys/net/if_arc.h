@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arc.h,v 1.8 1999/01/16 13:01:20 is Exp $	*/
+/*	$NetBSD: if_arc.h,v 1.9 1999/02/25 11:20:34 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -74,8 +74,7 @@ struct	arc_header {
 
 #define	ARC_HDRLEN		3
 #define	ARC_HDRNEWLEN		6
-#define	ARC_HDRNEWLEN_EXC_1201	10	/* RFC 1201, Novell PHDS */
-#define	ARC_HDRNEWLEN_EXC_8782	9	/* ATA 878.2 */
+#define	ARC_HDRNEWLEN_EXC	10
 
 /* these lengths are data link layer length - 2*ARC_ADDR_LEN */
 #define	ARC_MIN_LEN		1
