@@ -1,3 +1,5 @@
+/*	$NetBSD: db_machdep.h,v 1.12 1994/10/26 07:50:44 cgd Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University

@@ -1,3 +1,5 @@
+|	$NetBSD: oc_cksum.s,v 1.4 1994/10/26 07:51:13 cgd Exp $
+
 | Copyright (c) 1988 Regents of the University of California.
 | All rights reserved.
 |
@@ -29,8 +31,7 @@
 | OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 | SUCH DAMAGE.
 |
-|	from: @(#)oc_cksum.s	7.2 (Berkeley) 11/3/90
-|	$Id: oc_cksum.s,v 1.3 1994/03/01 07:47:59 glass Exp $
+|	@(#)oc_cksum.s	7.2 (Berkeley) 11/3/90
 |
 |
 | oc_cksum: ones complement 16 bit checksum for MC68020.
