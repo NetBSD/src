@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kernfs_vnops.c,v 1.7 1993/05/20 04:01:31 cgd Exp $
+ *	$Id: kernfs_vnops.c,v 1.8 1993/05/28 14:12:17 cgd Exp $
  */
 
 /*
@@ -312,6 +312,52 @@ kernfs_open(vp, mode, cred, p)
 	return (0);
 }
 
+/*
+ * Check mode permission on target pointer. Mode is READ, WRITE or EXEC.
+ * The mode is shifted to select the owner/group/other fields. The
+ * super user is granted all permissions.
+ */
+kernfs_access(vp, mode, cred, p)
+        struct vnode *vp;
+        register int mode;
+        struct ucred *cred;
+        struct proc *p;
+{
+        struct kern_target *kt = VTOKERN(vp)->kf_kt;
+        register gid_t *gp;
+        int i, error;
+
+#ifdef KERN_DIAGNOSTIC
+        if (!VOP_ISLOCKED(vp)) {
+                vprint("kernfs_access: not locked", vp);
+                panic("kernfs_access: not locked");
+        }
+#endif
+        /*
+         * If you're the super-user, you always get access.
+         */
+        if (cred->cr_uid == 0)
+                return (0);
+        /*
+         * Access check is based on only one of owner, group, public.
+         * If not owner, then check group. If not a member of the
+         * group, then check public access.
+         */
+        if (cred->cr_uid != /* kt->kt_uid XXX */ 0) {
+                mode >>= 3;
+                gp = cred->cr_groups;
+                for (i = 0; i < cred->cr_ngroups; i++, gp++)
+                        if (/* kt->kt_gid XXX */ 0 == *gp)
+                                goto found;
+                mode >>= 3;
+found:
+                ;
+        }
+        if (((vp->v_flag & VROOT ? KTM_DIR_MODE : kt->kt_rw) & mode) == mode)
+                return (0);
+        return (EACCES);
+}
+
 kernfs_getattr(vp, vap, cred, p)
 	struct vnode *vp;
 	struct vattr *vap;
@@ -551,11 +597,6 @@ kernfs_nullop()
 #define kernfs_close ((int (*) __P(( \
 		struct vnode *vp, \
 		int fflag, \
-		struct ucred *cred, \
-		struct proc *p))) nullop)
-#define kernfs_access ((int (*) __P(( \
-		struct vnode *vp, \
-		int mode, \
 		struct ucred *cred, \
 		struct proc *p))) nullop)
 #define	kernfs_ioctl ((int (*) __P(( \
