@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.11.2.5 2004/05/29 21:20:44 tron Exp $	*/
+/*	$NetBSD: key.c,v 1.11.2.6 2004/05/30 07:02:32 tron Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/key.c,v 1.3.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.11.2.5 2004/05/29 21:20:44 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.11.2.6 2004/05/30 07:02:32 tron Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -385,6 +385,8 @@ static int key_spdflush __P((struct socket *, struct mbuf *,
 	const struct sadb_msghdr *));
 static int key_spddump __P((struct socket *, struct mbuf *,
 	const struct sadb_msghdr *));
+static struct mbuf * key_setspddump __P((int *errorp));
+static struct mbuf * key_setspddump_chain __P((int *errorp, int *lenp));
 static struct mbuf *key_setdumpsp __P((struct secpolicy *,
 	u_int8_t, u_int32_t, u_int32_t));
 static u_int key_getspreqmsglen __P((struct secpolicy *));
@@ -477,6 +479,8 @@ static int key_register __P((struct socket *, struct mbuf *,
 static int key_expire __P((struct secasvar *));
 static int key_flush __P((struct socket *, struct mbuf *,
 	const struct sadb_msghdr *));
+static struct mbuf *key_setdump_chain __P((u_int8_t req_satype, int *errorp,
+	int *lenp));
 static int key_dump __P((struct socket *, struct mbuf *,
 	const struct sadb_msghdr *));
 static int key_promisc __P((struct socket *, struct mbuf *,
@@ -2399,6 +2403,61 @@ key_spdflush(so, m, mhp)
 	return key_sendup_mbuf(so, m, KEY_SENDUP_ALL);
 }
 
+static struct sockaddr key_src = { 2, PF_KEY, };
+
+static struct mbuf *
+key_setspddump_chain(int *errorp, int *lenp)
+{
+	struct secpolicy *sp;
+	int cnt;
+	u_int dir;
+	struct mbuf *m, *n, *prev;
+	int totlen;
+
+	*lenp = 0;
+
+	/* search SPD entry and get buffer size. */
+	cnt = 0;
+	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
+		LIST_FOREACH(sp, &sptree[dir], chain) {
+			cnt++;
+		}
+	}
+
+	if (cnt == 0) {
+		*errorp = ENOENT;
+		return (NULL);
+	}
+
+	m = NULL;
+	prev = m;
+	totlen = 0;
+	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
+		LIST_FOREACH(sp, &sptree[dir], chain) {
+			--cnt;
+			n = key_setdumpsp(sp, SADB_X_SPDDUMP, cnt, 0);
+
+			if (!n) {
+				*errorp = ENOBUFS;
+				if (m) m_freem(m);
+				return (NULL);
+			}
+
+			totlen += n->m_pkthdr.len;
+			if (!m) {
+				m = n;
+			} else {
+				prev->m_nextpkt = n;
+			}
+			prev = n;
+		}
+	}
+
+	*lenp = totlen;
+	*errorp = 0;
+	return (m);
+}
+
 /*
  * SADB_SPDDUMP processing
  * receive
@@ -2411,44 +2470,65 @@ key_spdflush(so, m, mhp)
  * m will always be freed.
  */
 static int
-key_spddump(so, m, mhp)
+key_spddump(so, m0, mhp)
 	struct socket *so;
-	struct mbuf *m;
+	struct mbuf *m0;
 	const struct sadb_msghdr *mhp;
 {
-	struct secpolicy *sp;
-	int cnt;
-	u_int dir;
 	struct mbuf *n;
+	int error, len;
+	int ok, s;
 
 	/* sanity check */
-	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
+	if (so == NULL || m0 == NULL || mhp == NULL || mhp->msg == NULL)
 		panic("key_spddump: NULL pointer is passed.\n");
 
-	/* search SPD entry and get buffer size. */
-	cnt = 0;
-	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
-		LIST_FOREACH(sp, &sptree[dir], chain) {
-			cnt++;
-		}
+
+	/*
+	 * If the requestor has insufficient socket-buffer space
+	 * for the entire chain, nobody gets any response to the DUMP.
+	 * XXX For now, only the requestor ever gets anything.
+	 * Moreover, if the requestor has any space at all, they receive
+	 * the entire chain, otherwise the request is refused with  ENOBUFS.
+	 */
+	if (sbspace(&so->so_rcv) <= 0) {
+		return key_senderror(so, m0, ENOBUFS);
 	}
 
-	if (cnt == 0)
-		return key_senderror(so, m, ENOENT);
+	s = splsoftnet();
+	n = key_setspddump_chain(&error, &len);
+	splx(s);
 
-	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
-		LIST_FOREACH(sp, &sptree[dir], chain) {
-			--cnt;
-			n = key_setdumpsp(sp, SADB_X_SPDDUMP, cnt,
-			    mhp->msg->sadb_msg_pid);
+	if (n == NULL) {
+		return key_senderror(so, m0, ENOENT);
+	}
+	pfkeystat.in_total++;
+	pfkeystat.in_bytes += len;
 
-			if (n)
-				key_sendup_mbuf(so, n, KEY_SENDUP_ONE);
-		}
+	/*
+	 * PF_KEY DUMP responses are no longer broadcast to all PF_KEY sockets.
+	 * The requestor receives either the entire chain, or an
+	 * error message with ENOBUFS.
+	 */
+
+	/*
+	 * sbappendchainwith record takes the chain of entries, one
+	 * packet-record per SPD entry, prepends the key_src sockaddr
+	 * to each packet-record, links the sockaddr mbufs into a new
+	 * list of records, then   appends the entire resulting
+	 * list to the requesting socket.
+	 */
+	ok = sbappendaddrchain(&so->so_rcv, (struct sockaddr *)&key_src,
+	        n, SB_PRIO_ONESHOT_OVERFLOW);
+
+	if (!ok) {
+		pfkeystat.in_nomem++;
+		m_freem(n);
+		return key_senderror(so, m0, ENOBUFS);
 	}
 
-	m_freem(m);
-	return 0;
+	m_freem(m0);
+	return error;
 }
 
 static struct mbuf *
@@ -6544,6 +6624,103 @@ key_flush(so, m, mhp)
 	return key_sendup_mbuf(so, m, KEY_SENDUP_ALL);
 }
 
+
+static struct mbuf *
+key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp)
+{
+	struct secashead *sah;
+	struct secasvar *sav;
+	u_int16_t proto;
+	u_int stateidx;
+	u_int8_t satype;
+	u_int8_t state;
+	int cnt;
+	struct mbuf *m, *n, *prev;
+	int totlen;
+
+	*lenp = 0;
+
+	/* map satype to proto */
+	if ((proto = key_satype2proto(req_satype)) == 0) {
+		*errorp = EINVAL;
+		return (NULL);
+	}
+
+	/* count sav entries to be sent to userland. */
+	cnt = 0;
+	LIST_FOREACH(sah, &sahtree, chain) {
+		if (req_satype != SADB_SATYPE_UNSPEC &&
+		    proto != sah->saidx.proto)
+			continue;
+
+		for (stateidx = 0;
+		     stateidx < _ARRAYLEN(saorder_state_any);
+		     stateidx++) {
+			state = saorder_state_any[stateidx];
+			LIST_FOREACH(sav, &sah->savtree[state], chain) {
+				cnt++;
+			}
+		}
+	}
+
+	if (cnt == 0) {
+		*errorp = ENOENT;
+		return (NULL);
+	}
+
+	/* send this to the userland, one at a time. */
+	m = NULL;
+	prev = m;
+	LIST_FOREACH(sah, &sahtree, chain) {
+		if (req_satype != SADB_SATYPE_UNSPEC &&
+		    proto != sah->saidx.proto)
+			continue;
+
+		/* map proto to satype */
+		if ((satype = key_proto2satype(sah->saidx.proto)) == 0) {
+			m_freem(m);
+			*errorp = EINVAL;
+			return (NULL);
+		}
+
+		for (stateidx = 0;
+		     stateidx < _ARRAYLEN(saorder_state_any);
+		     stateidx++) {
+			state = saorder_state_any[stateidx];
+			LIST_FOREACH(sav, &sah->savtree[state], chain) {
+				n = key_setdumpsa(sav, SADB_DUMP, satype,
+				    --cnt, 0);
+				if (!n) {
+					m_freem(m);
+					*errorp = ENOBUFS;
+					return (NULL);
+				}
+
+				totlen += n->m_pkthdr.len;
+				if (!m)
+					m = n;
+				else
+					prev->m_nextpkt = n;
+				prev = n;
+			}
+		}
+	}
+
+	if (!m) {
+		*errorp = EINVAL;
+		return (NULL);
+	}
+
+	if ((m->m_flags & M_PKTHDR) != 0) {
+		m->m_pkthdr.len = 0;
+		for (n = m; n; n = n->m_next)
+			m->m_pkthdr.len += n->m_len;
+	}
+
+	*errorp = 0;
+	return (m);
+}
+
 /*
  * SADB_DUMP processing
  * dump all entries including status of DEAD in SAD.
@@ -6557,80 +6734,70 @@ key_flush(so, m, mhp)
  * m will always be freed.
  */
 static int
-key_dump(so, m, mhp)
+key_dump(so, m0, mhp)
 	struct socket *so;
-	struct mbuf *m;
+	struct mbuf *m0;
 	const struct sadb_msghdr *mhp;
 {
-	struct secashead *sah;
-	struct secasvar *sav;
 	u_int16_t proto;
-	u_int stateidx;
 	u_int8_t satype;
-	u_int8_t state;
-	int cnt;
-	struct sadb_msg *newmsg;
 	struct mbuf *n;
+	int s;
+	int error, len, ok;
 
 	/* sanity check */
-	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
+	if (so == NULL || m0 == NULL || mhp == NULL || mhp->msg == NULL)
 		panic("key_dump: NULL pointer is passed.\n");
 
 	/* map satype to proto */
-	if ((proto = key_satype2proto(mhp->msg->sadb_msg_satype)) == 0) {
+	satype = mhp->msg->sadb_msg_satype;
+	if ((proto = key_satype2proto(satype)) == 0) {
 		ipseclog((LOG_DEBUG, "key_dump: invalid satype is passed.\n"));
-		return key_senderror(so, m, EINVAL);
+		return key_senderror(so, m0, EINVAL);
 	}
 
-	/* count sav entries to be sent to the userland. */
-	cnt = 0;
-	LIST_FOREACH(sah, &sahtree, chain) {
-		if (mhp->msg->sadb_msg_satype != SADB_SATYPE_UNSPEC
-		 && proto != sah->saidx.proto)
-			continue;
-
-		for (stateidx = 0;
-		     stateidx < _ARRAYLEN(saorder_state_any);
-		     stateidx++) {
-			state = saorder_state_any[stateidx];
-			LIST_FOREACH(sav, &sah->savtree[state], chain) {
-				cnt++;
-			}
-		}
+	/*
+	 * If the requestor has insufficient socket-buffer space
+	 * for the entire chain, nobody gets any response to the DUMP.
+	 * XXX For now, only the requestor ever gets anything.
+	 * Moreover, if the requestor has any space at all, they receive
+	 * the entire chain, otherwise the request is refused with ENOBUFS.
+	 */
+	if (sbspace(&so->so_rcv) <= 0) {
+		return key_senderror(so, m0, ENOBUFS);
 	}
 
-	if (cnt == 0)
-		return key_senderror(so, m, ENOENT);
+	s = splsoftnet();
+	n = key_setdump_chain(satype, &error, &len);
+	splx(s);
 
-	/* send this to the userland, one at a time. */
-	newmsg = NULL;
-	LIST_FOREACH(sah, &sahtree, chain) {
-		if (mhp->msg->sadb_msg_satype != SADB_SATYPE_UNSPEC
-		 && proto != sah->saidx.proto)
-			continue;
+	if (n == NULL) {
+		return key_senderror(so, m0, ENOENT);
+	}
+	pfkeystat.in_total++;
+	pfkeystat.in_bytes += len;
 
-		/* map proto to satype */
-		if ((satype = key_proto2satype(sah->saidx.proto)) == 0) {
-			ipseclog((LOG_DEBUG, "key_dump: there was invalid proto in SAD.\n"));
-			return key_senderror(so, m, EINVAL);
-		}
+	/*
+	 * PF_KEY DUMP responses are no longer broadcast to all PF_KEY sockets.
+	 * The requestor receives either the entire chain, or an
+	 * error message with ENOBUFS.
+	 *
+	 * sbappendaddrchain() takes the chain of entries, one
+	 * packet-record per SPD entry, prepends the key_src sockaddr
+	 * to each packet-record, links the sockaddr mbufs into a new
+	 * list of records, then   appends the entire resulting
+	 * list to the requesting socket.
+	 */
+	ok = sbappendaddrchain(&so->so_rcv, (struct sockaddr *)&key_src,
+	        n, SB_PRIO_ONESHOT_OVERFLOW);
 
-		for (stateidx = 0;
-		     stateidx < _ARRAYLEN(saorder_state_any);
-		     stateidx++) {
-			state = saorder_state_any[stateidx];
-			LIST_FOREACH(sav, &sah->savtree[state], chain) {
-				n = key_setdumpsa(sav, SADB_DUMP, satype,
-				    --cnt, mhp->msg->sadb_msg_pid);
-				if (!n)
-					return key_senderror(so, m, ENOBUFS);
-
-				key_sendup_mbuf(so, n, KEY_SENDUP_ONE);
-			}
-		}
+	if (!ok) {
+		pfkeystat.in_nomem++;
+		m_freem(n);
+		return key_senderror(so, m0, ENOBUFS);
 	}
 
-	m_freem(m);
+	m_freem(m0);
 	return 0;
 }
 
