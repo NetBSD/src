@@ -1,4 +1,4 @@
-/*      $NetBSD: psl.h,v 1.7 1999/08/05 18:31:06 thorpej Exp $      */
+/*      $NetBSD: psl.h,v 1.8 2001/05/29 21:29:32 ragge Exp $      */
 
 /*
  * Rewritten for the VAX port. Based on Berkeley code. /IC
@@ -104,9 +104,10 @@
  * Macros to decode processor status word.
  */
 #define	CLKF_USERMODE(framep)	((((framep)->ps) & (PSL_U)) == PSL_U)
-#define	CLKF_BASEPRI(framep)	((((framep)->ps) & (PSL_IPL1F)) == 0)
+#define	CLKF_BASEPRI(framep)	((((framep)->ps) & (PSL_IPL1F)) < PSL_IPL02)
 #define	CLKF_PC(framep)		((framep)->pc)
-#define	CLKF_INTR(framep)	((((framep)->ps) & (PSL_IS)) == PSL_IS)
+#define	CLKF_INTR(framep)	(((((framep)->ps) & (PSL_IS)) == PSL_IS) && \
+				    !CLKF_BASEPRI(framep))
 #define PSL2IPL(ps)             ((ps) >> 16)
 
 #endif
