@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.28 2003/09/06 09:04:52 rearnsha Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -332,10 +332,37 @@ void	arm9_context_switch	__P((void));
 void	arm9_setup		__P((char *string));
 #endif
 
-#if defined(CPU_ARM9) || defined(CPU_SA110) || defined(CPU_SA1100) || \
-    defined(CPU_SA1110) || defined(CPU_XSCALE_80200) || \
-    defined(CPU_XSCALE_80321) || defined(CPU_XSCALE_PXA2X0) || \
-    defined(CPU_XSCALE_IXP425)
+#ifdef CPU_ARM10
+void	arm10_setttb		__P((u_int));
+
+void	arm10_tlb_flushID_SE	__P((u_int));
+void	arm10_tlb_flushI_SE	__P((u_int));
+
+void	arm10_icache_sync_all	__P((void));
+void	arm10_icache_sync_range	__P((vaddr_t, vsize_t));
+
+void	arm10_dcache_wbinv_all	__P((void));
+void	arm10_dcache_wbinv_range __P((vaddr_t, vsize_t));
+void	arm10_dcache_inv_range	__P((vaddr_t, vsize_t));
+void	arm10_dcache_wb_range	__P((vaddr_t, vsize_t));
+
+void	arm10_idcache_wbinv_all	__P((void));
+void	arm10_idcache_wbinv_range __P((vaddr_t, vsize_t));
+
+void	arm10_context_switch	__P((void));
+
+void	arm10_setup		__P((char *string));
+
+extern unsigned arm10_dcache_sets_max;
+extern unsigned arm10_dcache_sets_inc;
+extern unsigned arm10_dcache_index_max;
+extern unsigned arm10_dcache_index_inc;
+#endif
+
+#if defined(CPU_ARM9) || defined(CPU_ARM10) || defined(CPU_SA110) || \
+    defined(CPU_SA1100) || defined(CPU_SA1110) || \
+    defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
+    defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
 
 void	armv4_tlb_flushID	__P((void));
 void	armv4_tlb_flushI	__P((void));
