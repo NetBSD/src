@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312var.h,v 1.4 2001/11/09 23:15:53 thorpej Exp $	*/
+/*	$NetBSD: i80312var.h,v 1.5 2001/11/29 08:27:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -60,6 +60,7 @@ struct i80312_softc {
 	bus_space_handle_t sc_ppb_sh;
 	bus_space_handle_t sc_atu_sh;
 	bus_space_handle_t sc_mem_sh;
+	bus_space_handle_t sc_intc_sh;
 
 	/*
 	 * Secondary IDSEL Select bits for providing a private
@@ -150,9 +151,14 @@ struct i80312_softc {
 	struct bus_space sc_pci_memt;
 	struct arm32_bus_dma_tag sc_pci_dmat;
 	struct arm32_pci_chipset sc_pci_chipset;
+
+	/* GPIO state */
+	uint8_t sc_gpio_dir;	/* GPIO pin direction (1 == output) */
+	uint8_t sc_gpio_val;	/* GPIO output pin value */
 };
 
 extern struct bus_space i80312_bs_tag;
+extern struct i80312_softc *i80312_softc;
 
 void	i80312_sdram_bounds(bus_space_tag_t, bus_space_handle_t,
 	    paddr_t *, psize_t *);
@@ -162,6 +168,10 @@ void	i80312_attach(struct i80312_softc *);
 void	i80312_bs_init(bus_space_tag_t, void *);
 void	i80312_io_bs_init(bus_space_tag_t, void *);
 void	i80312_mem_bs_init(bus_space_tag_t, void *);
+
+void	i80312_gpio_set_direction(uint8_t, uint8_t);
+void	i80312_gpio_set_val(uint8_t, uint8_t);
+uint8_t	i80312_gpio_get_val(void);
 
 void	i80312_pci_dma_init(bus_dma_tag_t, void *);
 
