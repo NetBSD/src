@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.31 1998/01/31 00:37:39 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.32 1998/03/20 19:56:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -171,7 +171,12 @@ pciattach(parent, self, aux)
 
 		tag = pci_make_tag(pc, bus, device, 0);
 		id = pci_conf_read(pc, tag, PCI_ID_REG);
-		if (id == 0 || id == 0xffffffff)
+
+		/* Invalid vendor ID value? */
+		if (PCI_VENDOR(id) == 0xffff)
+			continue;
+		/* XXX Not invalid, but we've done this ~forever. */
+		if (PCI_VENDOR(id) == 0)
 			continue;
 
 		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
@@ -180,11 +185,16 @@ pciattach(parent, self, aux)
 		for (function = 0; function < nfunctions; function++) {
 			tag = pci_make_tag(pc, bus, device, function);
 			id = pci_conf_read(pc, tag, PCI_ID_REG);
-			if (id == 0 || id == 0xffffffff)
-				continue;
 			csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 			class = pci_conf_read(pc, tag, PCI_CLASS_REG);
 			intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+
+			/* Invalid vendor ID value? */
+			if (PCI_VENDOR(id) == 0xffff)
+				continue;
+			/* XXX Not invalid, but we've done this ~forever. */
+			if (PCI_VENDOR(id) == 0)
+				continue;
 
 			pa.pa_iot = iot;
 			pa.pa_memt = memt;
