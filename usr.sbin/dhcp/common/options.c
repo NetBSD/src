@@ -3,7 +3,7 @@
    DHCP options parsing and reassembly. */
 
 /*
- * Copyright (c) 1995-2000 Internet Software Consortium.
+ * Copyright (c) 1995-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: options.c,v 1.3.2.2 2000/10/18 04:11:11 tv Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: options.c,v 1.3.2.3 2001/04/04 20:55:13 he Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #define DHCP_OPTION_DATA
@@ -117,12 +117,12 @@ int parse_options (packet)
 
 int parse_option_buffer (options, buffer, length, universe)
 	struct option_state *options;
-	unsigned char *buffer;
+	const unsigned char *buffer;
 	unsigned length;
 	struct universe *universe;
 {
 	unsigned char *t;
-	unsigned char *end = buffer + length;
+	const unsigned char *end = buffer + length;
 	unsigned len, offset;
 	int code;
 	struct option_cache *op = (struct option_cache *)0;
@@ -142,14 +142,22 @@ int parse_option_buffer (options, buffer, length, universe)
 			continue;
 		}
 
+		/* Don't look for length if the buffer isn't that big. */
+		if (offset + 2 > length) {
+			len = 65536;
+			goto bogus;
+		}
+
 		/* All other fields (except end, see above) have a
 		   one-byte length. */
 		len = buffer [offset + 1];
 
 		/* If the length is outrageous, the options are bad. */
 		if (offset + len + 2 > length) {
-			log_error ("Client option %s (%d) larger than buffer.",
-				   dhcp_options [code].name, len);
+		      bogus:
+			log_error ("parse_option_buffer: option %s (%d) %s.",
+				   dhcp_options [code].name, len,
+				   "larger than buffer");
 			buffer_dereference (&bp, MDL);
 			return 0;
 		}
@@ -163,7 +171,7 @@ int parse_option_buffer (options, buffer, length, universe)
 		      (parse_encapsulated_suboptions
 		       (options, universe -> options [code],
 			buffer + offset + 2, len,
-			universe, (struct universe *)0)))) {
+			universe, (const char *)0)))) {
 		    save_option_buffer (universe, options, bp,
 					&bp -> data [offset + 2], len,
 					universe -> options [code], 1);
@@ -179,15 +187,11 @@ int parse_option_buffer (options, buffer, length, universe)
    or it's not well-formed, return zero; otherwise, return 1, indicating
    that we succeeded in de-encapsulating it. */
 
-int parse_encapsulated_suboptions (struct option_state *options,
-				   struct option *eopt,
-				   unsigned char *buffer,
-				   unsigned len, struct universe *eu,
-				   struct universe *vu)
+struct universe *find_option_universe (struct option *eopt, const char *uname)
 {
-	struct universe *universe;
 	int i;
 	char *s, *t;
+	struct universe *universe = (struct universe *)0;
 
 	/* Look for the E option in the option format. */
 	s = strchr (eopt -> format, 'E');
@@ -203,10 +207,14 @@ int parse_encapsulated_suboptions (struct option_state *options,
 		log_error ("internal encapsulation format error 2.");
 		return 0;
 	}
-	if (t == s) {
-		/* It's the vendor universe. */
-		universe = vu;
-	} else {
+	if (t == s && uname) {
+		for (i = 0; i < universe_count; i++) {
+			if (!strcmp (universes [i] -> name, uname)) {
+				universe = universes [i];
+				break;
+			}
+		}
+	} else if (t != s) {
 		for (i = 0; i < universe_count; i++) {
 			if (strlen (universes [i] -> name) == t - s &&
 			    !memcmp (universes [i] -> name,
@@ -216,6 +224,22 @@ int parse_encapsulated_suboptions (struct option_state *options,
 			}
 		}
 	}
+	return universe;
+}
+
+/* If an option in an option buffer turns out to be an encapsulation,
+   figure out what to do.   If we don't know how to de-encapsulate it,
+   or it's not well-formed, return zero; otherwise, return 1, indicating
+   that we succeeded in de-encapsulating it. */
+
+int parse_encapsulated_suboptions (struct option_state *options,
+				   struct option *eopt,
+				   const unsigned char *buffer,
+				   unsigned len, struct universe *eu,
+				   const char *uname)
+{
+	int i;
+	struct universe *universe = find_option_universe (eopt, uname);
 
 	/* If we didn't find the universe, we can't do anything with it
 	   right now (e.g., we can't decode vendor options until we've
@@ -231,21 +255,21 @@ int parse_encapsulated_suboptions (struct option_state *options,
 	i = (*universe -> decode) (options, buffer, len, universe);
 
 	/* If there is stuff before the suboptions, we have to keep it. */
-	if (s != eopt -> format)
+	if (eopt -> format [0] != 'E')
 		return 0;
 	/* Otherwise, return the status of the decode function. */
 	return i;
 }
 
 int fqdn_universe_decode (struct option_state *options,
-			  unsigned char *buffer,
+			  const unsigned char *buffer,
 			  unsigned length, struct universe *u)
 {
 	char *name;
 	struct buffer *bp = (struct buffer *)0;
 
 	/* FQDN options have to be at least four bytes long. */
-	if (length < 4)
+	if (length < 3)
 		return 0;
 
 	/* Save the contents of the option in a buffer. */
@@ -267,19 +291,118 @@ int fqdn_universe_decode (struct option_state *options,
 		return 0;
 	}
 
-	if (buffer [0] & 2)	/* no-client-update */
-		bp -> data [1] = 1;
-	else
-		bp -> data [1] = 0;
-	if (!save_option_buffer (&fqdn_universe, options, bp,
-				 &bp -> data [1], 1,
-				 &fqdn_options [FQDN_NO_CLIENT_UPDATE], 0))
-	    goto bad;
-
 	if (buffer [0] & 1)	/* server-update */
 		bp -> data [2] = 1;
 	else
 		bp -> data [2] = 0;
+	if (buffer [0] & 2)	/* no-client-update */
+		bp -> data [1] = 1;
+	else
+		bp -> data [1] = 0;
+
+	/* XXX Ideally we should store the name in DNS format, so if the
+	   XXX label isn't in DNS format, we convert it to DNS format,
+	   XXX rather than converting labels specified in DNS format to
+	   XXX the plain ASCII representation.   But that's hard, so
+	   XXX not now. */
+
+	/* Not encoded using DNS format? */
+	if (!bp -> data [0]) {
+		unsigned i;
+
+		/* Some broken clients NUL-terminate this option. */
+		if (buffer [length - 1] == 0) {
+			--length;
+			bp -> data [1] = 1;
+		}
+
+		/* Determine the length of the hostname component of the
+		   name.  If the name contains no '.' character, it
+		   represents a non-qualified label. */
+		for (i = 3; i < length && buffer [i] != '.'; i++);
+		i -= 3;
+
+		/* Note: If the client sends a FQDN, the first '.' will
+		   be used as a NUL terminator for the hostname. */
+		if (i)
+			if (!save_option_buffer (&fqdn_universe, options, bp,
+						 &bp -> data[5], i,
+						 &fqdn_options [FQDN_HOSTNAME],
+						 0))
+			goto bad;
+		/* Note: If the client sends a single label, the
+		   FQDN_DOMAINNAME option won't be set. */
+		if (length > 4 + i &&
+		    !save_option_buffer (&fqdn_universe, options, bp,
+					 &bp -> data[6 + i], length - 4 - i,
+					 &fqdn_options [FQDN_DOMAINNAME], 1))
+			goto bad;
+		/* Also save the whole name. */
+		if (length > 3)
+			if (!save_option_buffer (&fqdn_universe, options, bp,
+						 &bp -> data [5], length - 3,
+						 &fqdn_options [FQDN_FQDN], 1))
+				goto bad;
+	} else {
+		unsigned len;
+		unsigned total_len = 0;
+		unsigned first_len = 0;
+		int terminated = 0;
+		unsigned char *s;
+
+		s = &bp -> data[5];
+
+		while (s < &bp -> data[0] + length + 2) {
+			len = *s;
+			if (len > 63) {
+				log_info ("fancy bits in fqdn option");
+				return 0;
+			}	
+			if (len == 0) {
+				terminated = 1;
+				break;
+			}
+			if (s + len > &bp -> data [0] + length + 3) {
+				log_info ("fqdn tag longer than buffer");
+				return 0;
+			}
+
+			if (first_len == 0) {
+				first_len = len;
+			}
+
+			*s = '.';
+			s += len + 1;
+			total_len += len;
+		}
+
+		if (!terminated) {
+			first_len = total_len;
+		}
+
+		if (first_len > 0 &&
+		    !save_option_buffer (&fqdn_universe, options, bp,
+					 &bp -> data[6], first_len,
+					 &fqdn_options [FQDN_HOSTNAME], 0))
+			goto bad;
+		if (total_len > 0 && first_len != total_len) {
+			if (!save_option_buffer
+			    (&fqdn_universe, options, bp,
+			     &bp -> data[6 + first_len], total_len - first_len,
+			     &fqdn_options [FQDN_DOMAINNAME], 1))
+				goto bad;
+		}
+		if (total_len > 0)
+			if (!save_option_buffer (&fqdn_universe, options, bp,
+						 &bp -> data [6], total_len,
+						 &fqdn_options [FQDN_FQDN], 1))
+				goto bad;
+	}
+
+	if (!save_option_buffer (&fqdn_universe, options, bp,
+				 &bp -> data [1], 1,
+				 &fqdn_options [FQDN_NO_CLIENT_UPDATE], 0))
+	    goto bad;
 	if (!save_option_buffer (&fqdn_universe, options, bp,
 				 &bp -> data [2], 1,
 				 &fqdn_options [FQDN_SERVER_UPDATE], 0))
@@ -294,46 +417,7 @@ int fqdn_universe_decode (struct option_state *options,
 				 &fqdn_options [FQDN_RCODE2], 0))
 		goto bad;
 
-	/* XXX Ideally we should store the name in DNS format, so if the
-	   XXX label isn't in DNS format, we convert it to DNS format,
-	   XXX rather than converting labels specified in DNS format to
-	   XXX the plain ASCII representation.   But that's hard, so
-	   XXX not now. */
-
-	/* Not encoded using DNS format? */
-	if (!bp -> data [0]) {
-		if (!save_option_buffer (&fqdn_universe, options, bp,
-					 &bp -> data [5], length - 3,
-					 &fqdn_options [FQDN_NAME], 1))
-			goto bad;
-	} else {
-		int len;
-		unsigned char *s, *t, *u;
-
-		u = t = s = &bp -> data [5];
-		do {
-			len = *s++;
-			if (len > 63) {
-				log_info ("fancy bits in fqdn option");
-				return 0;
-			}	
-			if (len == 0) {
-				*t++ = '.';
-				break;
-			}
-			if (s + len > &bp -> data [0] + length + 3) {
-				log_info ("fqdn tag longer than buffer");
-				return 0;
-			}
-			while (len--)
-				*t++ = *s++;
-			*t++ = '.';
-		} while (s + len < &bp -> data [0] + length + 3);
-		if (!save_option_buffer (&fqdn_universe, options, bp,
-					 &bp -> data [5], (unsigned)(t - u),
-					 &fqdn_options [FQDN_NAME], 1))
-			goto bad;
-	}
+	buffer_dereference (&bp, MDL);
 	return 1;
 }
 
@@ -341,11 +425,13 @@ int fqdn_universe_decode (struct option_state *options,
    three seperate buffers if needed.  This allows us to cons up a set
    of vendor options using the same routine. */
 
-int cons_options (inpacket, outpacket, lease, mms, in_options, cfg_options,
+int cons_options (inpacket, outpacket, lease, client_state,
+		  mms, in_options, cfg_options,
 		  scope, overload, terminate, bootpp, prl, vuname)
 	struct packet *inpacket;
 	struct dhcp_packet *outpacket;
 	struct lease *lease;
+	struct client_state *client_state;
 	int mms;
 	struct option_state *in_options;
 	struct option_state *cfg_options;
@@ -368,6 +454,7 @@ int cons_options (inpacket, outpacket, lease, mms, in_options, cfg_options,
 	struct option_cache *op;
 	struct data_string ds;
 	pair pp, *hash;
+	int need_endopt = 0;
 
 	memset (&ds, 0, sizeof ds);
 
@@ -378,7 +465,8 @@ int cons_options (inpacket, outpacket, lease, mms, in_options, cfg_options,
 	if (!mms && inpacket &&
 	    (op = lookup_option (&dhcp_universe, inpacket -> options,
 				 DHO_DHCP_MAX_MESSAGE_SIZE))) {
-		evaluate_option_cache (&ds, inpacket, lease, in_options,
+		evaluate_option_cache (&ds, inpacket,
+				       lease, client_state, in_options,
 				       cfg_options, scope, op, MDL);
 		if (ds.len >= sizeof (u_int16_t))
 			mms = getUShort (ds.data);
@@ -508,8 +596,7 @@ int cons_options (inpacket, outpacket, lease, mms, in_options, cfg_options,
 				     (main_buffer_size - 7 +
 				      ((overload & 1) ? DHCP_FILE_LEN : 0) +
 				      ((overload & 2) ? DHCP_SNAME_LEN : 0)),
-				     inpacket,
-				     lease,
+				     inpacket, lease, client_state,
 				     in_options, cfg_options, scope,
 				     priority_list, priority_len,
 				     main_buffer_size,
@@ -529,11 +616,9 @@ int cons_options (inpacket, outpacket, lease, mms, in_options, cfg_options,
 		memcpy (&outpacket -> options [mainbufix],
 			buffer, option_size);
 		mainbufix += option_size;
-		if (mainbufix < main_buffer_size) {
-			agentix = mainbufix;
-			outpacket -> options [mainbufix++] = DHO_END;
-		} else
-			agentix = mainbufix;
+		agentix = mainbufix;
+		if (mainbufix < main_buffer_size)
+			need_endopt = 1;
 		length = DHCP_FIXED_NON_UDP + mainbufix;
 	} else {
 		outpacket -> options [mainbufix++] = DHO_DHCP_OPTION_OVERLOAD;
@@ -586,23 +671,31 @@ int cons_options (inpacket, outpacket, lease, mms, in_options, cfg_options,
 	agentix +=
 		store_options (&outpacket -> options [agentix],
 			       1500 - DHCP_FIXED_LEN - agentix,
-			       inpacket, lease, 
+			       inpacket, lease, client_state,
 			       in_options, cfg_options, scope,
 			       priority_list, priority_len,
 			       1500 - DHCP_FIXED_LEN - agentix,
 			       1500 - DHCP_FIXED_LEN - agentix, 0, (char *)0);
+
+	/* Tack a DHO_END option onto the packet if we need to. */
+	if (agentix < 1500 - DHCP_FIXED_LEN && need_endopt)
+		outpacket -> options [agentix++] = DHO_END;
+
+	/* Figure out the length. */
+	length = DHCP_FIXED_NON_UDP + agentix;
 	return length;
 }
 
 /* Store all the requested options into the requested buffer. */
 
-int store_options (buffer, buflen, packet, lease,
+int store_options (buffer, buflen, packet, lease, client_state,
 		   in_options, cfg_options, scope, priority_list, priority_len,
 		   first_cutoff, second_cutoff, terminate, vuname)
 	unsigned char *buffer;
 	unsigned buflen;
 	struct packet *packet;
 	struct lease *lease;
+	struct client_state *client_state;
 	struct option_state *in_options;
 	struct option_state *cfg_options;
 	struct binding_scope **scope;
@@ -651,6 +744,8 @@ int store_options (buffer, buflen, packet, lease,
 	    int have_encapsulation = 0;
 	    struct data_string encapsulation;
 
+	    memset (&encapsulation, 0, sizeof encapsulation);
+
 	    /* Code for next option to try to store. */
 	    code = priority_list [i];
 	    
@@ -689,6 +784,7 @@ int store_options (buffer, buflen, packet, lease,
 						 vendor_cfg_option -> code);
 			    if (tmp)
 				evaluate_option_cache (&name, packet, lease,
+						       client_state,
 						       in_options,
 						       cfg_options,
 						       scope, tmp, MDL);
@@ -704,10 +800,9 @@ int store_options (buffer, buflen, packet, lease,
 		    /* If we found a universe, and there are options configured
 		       for that universe, try to encapsulate it. */
 		    if (name.len) {
-			memset (&encapsulation, 0, sizeof encapsulation);
 			have_encapsulation =
 				(option_space_encapsulate
-				 (&encapsulation, packet, lease,
+				 (&encapsulation, packet, lease, client_state,
 				  in_options, cfg_options, scope, &name));
 			data_string_forget (&name, MDL);
 		    }
@@ -729,10 +824,13 @@ int store_options (buffer, buflen, packet, lease,
 	    
 	    /* Find the value of the option... */
 	    if (oc) {
-		evaluate_option_cache (&od, packet, lease, in_options,
+		evaluate_option_cache (&od, packet,
+				       lease, client_state, in_options,
 				       cfg_options, scope, oc, MDL);
 		if (!od.len) {
 		    data_string_forget (&encapsulation, MDL);
+		    data_string_forget (&od, MDL);
+		    have_encapsulation = 0;
 		    continue;
 		}
 	    }
@@ -826,8 +924,8 @@ int store_options (buffer, buflen, packet, lease,
 
 /* Format the specified option so that a human can easily read it. */
 
-const char *pretty_print_option (code, data, len, emit_commas, emit_quotes)
-	unsigned int code;
+const char *pretty_print_option (option, data, len, emit_commas, emit_quotes)
+	struct option *option;
 	const unsigned char *data;
 	unsigned len;
 	int emit_commas;
@@ -838,42 +936,46 @@ const char *pretty_print_option (code, data, len, emit_commas, emit_quotes)
 	int numhunk = -1;
 	int numelem = 0;
 	char fmtbuf [32];
-	int i, j, k;
+	struct enumeration *enumbuf [32];
+	int i, j, k, l;
 	char *op = optbuf;
 	const unsigned char *dp = data;
 	struct in_addr foo;
 	char comma;
-
-	/* Code should be between 0 and 255. */
-	if (code > 255)
-		log_fatal ("pretty_print_option: bad code %d\n", code);
 
 	if (emit_commas)
 		comma = ',';
 	else
 		comma = ' ';
 	
+	memset (enumbuf, 0, sizeof enumbuf);
+
 	/* Figure out the size of the data. */
-	for (i = 0; dhcp_options [code].format [i]; i++) {
+	for (l = i = 0; option -> format [i]; i++, l++) {
 		if (!numhunk) {
-			log_error ("%s: Extra codes in format string: %s\n",
-				   dhcp_options [code].name,
-				   &(dhcp_options [code].format [i]));
+			log_error ("%s: Extra codes in format string: %s",
+				   option -> name,
+				   &(option -> format [i]));
 			break;
 		}
 		numelem++;
-		fmtbuf [i] = dhcp_options [code].format [i];
-		switch (dhcp_options [code].format [i]) {
+		fmtbuf [l] = option -> format [i];
+		switch (option -> format [i]) {
 		      case 'a':
 			--numelem;
-			fmtbuf [i] = 0;
+			fmtbuf [l] = 0;
 			numhunk = 0;
 			break;
 		      case 'A':
 			--numelem;
-			fmtbuf [i] = 0;
+			fmtbuf [l] = 0;
 			numhunk = 0;
 			break;
+		      case 'E':
+			/* Skip the universe name. */
+			while (option -> format [i] &&
+			       option -> format [i] != '.')
+				i++;
 		      case 'X':
 			for (k = 0; k < len; k++) {
 				if (!isascii (data [k]) ||
@@ -884,20 +986,29 @@ const char *pretty_print_option (code, data, len, emit_commas, emit_quotes)
 			   character we found is a trailing NUL, it's
 			   okay to print this option as text. */
 			if (k == len || (k + 1 == len && data [k] == 0)) {
-				fmtbuf [i] = 't';
+				fmtbuf [l] = 't';
 				numhunk = -2;
 			} else {
-				fmtbuf [i] = 'x';
+				fmtbuf [l] = 'x';
 				hunksize++;
 				comma = ':';
 				numhunk = 0;
 			}
-			fmtbuf [i + 1] = 0;
+			fmtbuf [l + 1] = 0;
 			break;
 		      case 't':
-			fmtbuf [i] = 't';
-			fmtbuf [i + 1] = 0;
+			fmtbuf [l] = 't';
+			fmtbuf [l + 1] = 0;
 			numhunk = -2;
+			break;
+		      case 'N':
+			k = i;
+			while (option -> format [i] &&
+			       option -> format [i] != '.')
+				i++;
+			enumbuf [l] = find_enumeration (&option -> format [k],
+							i - k);
+			hunksize += 1;
 			break;
 		      case 'I':
 		      case 'l':
@@ -916,9 +1027,9 @@ const char *pretty_print_option (code, data, len, emit_commas, emit_quotes)
 		      case 'e':
 			break;
 		      default:
-			log_error ("%s: garbage in format string: %s\n",
-			      dhcp_options [code].name,
-			      &(dhcp_options [code].format [i]));
+			log_error ("%s: garbage in format string: %s",
+			      option -> name,
+			      &(option -> format [i]));
 			break;
 		} 
 	}
@@ -926,14 +1037,14 @@ const char *pretty_print_option (code, data, len, emit_commas, emit_quotes)
 	/* Check for too few bytes... */
 	if (hunksize > len) {
 		log_error ("%s: expecting at least %d bytes; got %d",
-		      dhcp_options [code].name,
+		      option -> name,
 		      hunksize, len);
 		return "<error>";
 	}
 	/* Check for too many bytes... */
 	if (numhunk == -1 && hunksize < len)
 		log_error ("%s: %d extra bytes",
-		      dhcp_options [code].name,
+		      option -> name,
 		      len - hunksize);
 
 	/* If this is an array, compute its size. */
@@ -942,7 +1053,7 @@ const char *pretty_print_option (code, data, len, emit_commas, emit_quotes)
 	/* See if we got an exact number of hunks. */
 	if (numhunk > 0 && numhunk * hunksize < len)
 		log_error ("%s: %d extra bytes at end of array\n",
-		      dhcp_options [code].name,
+		      option -> name,
 		      len - numhunk * hunksize);
 
 	/* A one-hunk array prints the same as a single hunk. */
@@ -980,6 +1091,21 @@ const char *pretty_print_option (code, data, len, emit_commas, emit_quotes)
 					*op++ = '"';
 				*op = 0;
 				break;
+				/* pretty-printing an array of enums is
+				   going to get ugly. */
+			      case 'N':
+				if (!enumbuf [j])
+					goto enum_as_num;
+				for (i = 0; ;i++) {
+					if (!enumbuf [j] -> values [i].name)
+						goto enum_as_num;
+					if (enumbuf [j] -> values [i].value ==
+					    *dp)
+						break;
+				}
+				strcpy (op, enumbuf [j] -> values [i].name);
+				op += strlen (op);
+				break;
 			      case 'I':
 				foo.s_addr = htonl (getULong (dp));
 				strcpy (op, inet_ntoa (foo));
@@ -1006,6 +1132,7 @@ const char *pretty_print_option (code, data, len, emit_commas, emit_quotes)
 				sprintf (op, "%d", *(const char *)dp++);
 				break;
 			      case 'B':
+			      enum_as_num:
 				sprintf (op, "%d", *dp++);
 				break;
 			      case 'x':
@@ -1030,12 +1157,13 @@ const char *pretty_print_option (code, data, len, emit_commas, emit_quotes)
 	return optbuf;
 }
 
-int get_option (result, universe, packet, lease,
+int get_option (result, universe, packet, lease, client_state,
 		in_options, cfg_options, options, scope, code)
 	struct data_string *result;
 	struct universe *universe;
 	struct packet *packet;
 	struct lease *lease;
+	struct client_state *client_state;
 	struct option_state *in_options;
 	struct option_state *cfg_options;
 	struct option_state *options;
@@ -1049,8 +1177,8 @@ int get_option (result, universe, packet, lease,
 	oc = ((*universe -> lookup_func) (universe, options, code));
 	if (!oc)
 		return 0;
-	if (!evaluate_option_cache (result, packet, lease, in_options,
-				    cfg_options, scope, oc, MDL))
+	if (!evaluate_option_cache (result, packet, lease, client_state,
+				    in_options, cfg_options, scope, oc, MDL))
 		return 0;
 	return 1;
 }
@@ -1081,6 +1209,7 @@ void set_option (universe, options, option, op)
 		break;
 
 	      case supersede_option_statement:
+	      case send_option_statement:
 		/* Install the option, replacing any existing version. */
 		save_option (universe, options, option);
 		break;
@@ -1135,6 +1264,8 @@ struct option_cache *lookup_option (universe, options, code)
 	struct option_state *options;
 	unsigned code;
 {
+	if (!options)
+		return (struct option_cache *)0;
 	if (universe -> lookup_func)
 		return (*universe -> lookup_func) (universe, options, code);
 	else
@@ -1189,6 +1320,7 @@ int save_option_buffer (struct universe *universe,
 	if (!bp) {
 		if (!buffer_allocate (&lbp, length, MDL)) {
 			log_error ("no memory for option buffer.");
+
 			option_cache_dereference (&op, MDL);
 			return 0;
 		}
@@ -1422,12 +1554,13 @@ int hashed_option_state_dereference (universe, state, file, line)
 	return 1;
 }
 
-int store_option (result, universe, packet, lease,
+int store_option (result, universe, packet, lease, client_state,
 		  in_options, cfg_options, scope, oc)
 	struct data_string *result;
 	struct universe *universe;
 	struct packet *packet;
 	struct lease *lease;
+	struct client_state *client_state;
 	struct option_state *in_options;
 	struct option_state *cfg_options;
 	struct binding_scope **scope;
@@ -1438,8 +1571,8 @@ int store_option (result, universe, packet, lease,
 	memset (&d1, 0, sizeof d1);
 	memset (&d2, 0, sizeof d2);
 
-	if (evaluate_option_cache (&d2, packet, lease, in_options,
-				   cfg_options, scope, oc, MDL)) {
+	if (evaluate_option_cache (&d2, packet, lease, client_state,
+				   in_options, cfg_options, scope, oc, MDL)) {
 		if (!buffer_allocate (&d1.buffer,
 				      (result -> len +
 				       universe -> length_size +
@@ -1470,11 +1603,12 @@ int store_option (result, universe, packet, lease,
 	return 0;
 }
 	
-int option_space_encapsulate (result, packet, lease,
+int option_space_encapsulate (result, packet, lease, client_state,
 			      in_options, cfg_options, scope, name)
 	struct data_string *result;
 	struct packet *packet;
 	struct lease *lease;
+	struct client_state *client_state;
 	struct option_state *in_options;
 	struct option_state *cfg_options;
 	struct binding_scope **scope;
@@ -1490,17 +1624,19 @@ int option_space_encapsulate (result, packet, lease,
 
 	if (u -> encapsulate)
 		return (*u -> encapsulate) (result, packet, lease,
+					    client_state,
 					    in_options, cfg_options, scope, u);
 	log_error ("encapsulation requested for %s with no support.",
 		   name -> data);
 	return 0;
 }
 
-int hashed_option_space_encapsulate (result, packet, lease,
+int hashed_option_space_encapsulate (result, packet, lease, client_state,
 				     in_options, cfg_options, scope, universe)
 	struct data_string *result;
 	struct packet *packet;
 	struct lease *lease;
+	struct client_state *client_state;
 	struct option_state *in_options;
 	struct option_state *cfg_options;
 	struct binding_scope **scope;
@@ -1520,8 +1656,9 @@ int hashed_option_space_encapsulate (result, packet, lease,
 	status = 0;
 	for (i = 0; i < OPTION_HASH_SIZE; i++) {
 		for (p = hash [i]; p; p = p -> cdr) {
-			if (store_option (result, universe, packet, lease,
-					  in_options, cfg_options, scope,
+			if (store_option (result, universe, packet,
+					  lease, client_state, in_options,
+					  cfg_options, scope,
 					  (struct option_cache *)p -> car))
 				status = 1;
 		}
@@ -1530,34 +1667,39 @@ int hashed_option_space_encapsulate (result, packet, lease,
 	return status;
 }
 
-int nwip_option_space_encapsulate (result, packet, lease,
+int nwip_option_space_encapsulate (result, packet, lease, client_state,
 				   in_options, cfg_options, scope, universe)
 	struct data_string *result;
 	struct packet *packet;
 	struct lease *lease;
+	struct client_state *client_state;
 	struct option_state *in_options;
 	struct option_state *cfg_options;
 	struct binding_scope **scope;
 	struct universe *universe;
 {
-	pair p, *hash;
+	pair ocp;
 	int status;
 	int i;
 	static struct option_cache *no_nwip;
 	struct data_string ds;
+	struct option_chain_head *head;
 
 	if (universe -> index >= cfg_options -> universe_count)
 		return 0;
+	head = ((struct option_chain_head *)
+		cfg_options -> universes [fqdn_universe.index]);
+	if (!head)
+		return 0;
 
-	hash = cfg_options -> universes [universe -> index];
 	status = 0;
-	for (i = 0; hash && i < OPTION_HASH_SIZE; i++) {
-		for (p = hash [i]; p; p = p -> cdr) {
-			if (store_option (result, universe, packet, lease,
-					  in_options, cfg_options, scope,
-					  (struct option_cache *)p -> car))
-				status = 1;
-		}
+	for (ocp = head -> first; ocp; ocp = ocp -> cdr) {
+		struct option_cache *oc = (struct option_cache *)(ocp -> car);
+		if (store_option (result, universe, packet,
+				  lease, client_state, in_options,
+				  cfg_options, scope,
+				  (struct option_cache *)ocp -> car))
+			status = 1;
 	}
 
 	/* If there's no data, the nwip suboption is supposed to contain
@@ -1574,8 +1716,8 @@ int nwip_option_space_encapsulate (result, packet, lease,
 		}
 		if (no_nwip) {
 			if (store_option (result, universe, packet, lease,
-					  in_options, cfg_options,
-					  scope, no_nwip))
+					  client_state, in_options,
+					  cfg_options, scope, no_nwip))
 				status = 1;
 		}
 	} else {
@@ -1597,44 +1739,49 @@ int nwip_option_space_encapsulate (result, packet, lease,
 	return status;
 }
 
-int fqdn_option_space_encapsulate (result, packet, lease,
+int fqdn_option_space_encapsulate (result, packet, lease, client_state,
 				   in_options, cfg_options, scope, universe)
 	struct data_string *result;
 	struct packet *packet;
 	struct lease *lease;
+	struct client_state *client_state;
 	struct option_state *in_options;
 	struct option_state *cfg_options;
 	struct binding_scope **scope;
 	struct universe *universe;
 {
-	struct option_cache *oc;
+	pair ocp;
 	struct data_string results [FQDN_SUBOPTION_COUNT + 1];
 	unsigned i;
 	unsigned len;
 	struct buffer *bp = (struct buffer *)0;
+	struct option_chain_head *head;
 
 	/* If there's no FQDN universe, don't encapsulate. */
-	if (!cfg_options -> universes [fqdn_universe.index])
+	if (fqdn_universe.index >= cfg_options -> universe_count)
+		return 0;
+	head = ((struct option_chain_head *)
+		cfg_options -> universes [fqdn_universe.index]);
+	if (!head)
 		return 0;
 
 	/* Figure out the values of all the suboptions. */
 	memset (results, 0, sizeof results);
-	for (oc = ((struct option_cache *)
-		   cfg_options -> universes [universe -> index]);
-	     oc; oc = oc -> next) {
+	for (ocp = head -> first; ocp; ocp = ocp -> cdr) {
+		struct option_cache *oc = (struct option_cache *)(ocp -> car);
 		if (oc -> option -> code > FQDN_SUBOPTION_COUNT)
 			continue;
 		evaluate_option_cache (&results [oc -> option -> code],
-				       packet, lease, in_options,
+				       packet, lease, client_state, in_options,
 				       cfg_options, scope,  oc, MDL);
 	}
-	len = 4 + results [FQDN_NAME].len;
+	len = 4 + results [FQDN_FQDN].len;
 	/* Save the contents of the option in a buffer. */
 	if (!buffer_allocate (&bp, len, MDL)) {
 		log_error ("no memory for option buffer.");
 		return 0;
 	}
-	result -> buffer = bp;
+	buffer_reference (&result -> buffer, bp, MDL);
 	result -> len = 3;
 	result -> data = &bp -> data [0];
 
@@ -1656,33 +1803,33 @@ int fqdn_option_space_encapsulate (result, packet, lease,
 		int i;
 		bp -> data [0] |= 4;
 		out = &bp -> data [3];
-		if (results [FQDN_NAME].len) {
+		if (results [FQDN_FQDN].len) {
 			i = 0;
-			while (i < results [FQDN_NAME].len) {
+			while (i < results [FQDN_FQDN].len) {
 				int j;
 				for (j = i; ('.' !=
-					     results [FQDN_NAME].data [j]) &&
-					     j < results [FQDN_NAME].len; j++)
+					     results [FQDN_FQDN].data [j]) &&
+					     j < results [FQDN_FQDN].len; j++)
 					;
 				*out++ = j - i;
-				memcpy (out, &results [FQDN_NAME].data [i],
+				memcpy (out, &results [FQDN_FQDN].data [i],
 					(unsigned)(j - i));
 				out += j - i;
 				i = j;
-				if (results [FQDN_NAME].data [j] == '.')
+				if (results [FQDN_FQDN].data [j] == '.')
 					i++;
 			}
-			if ((results [FQDN_NAME].data
-			     [results [FQDN_NAME].len - 1] == '.'))
+			if ((results [FQDN_FQDN].data
+			     [results [FQDN_FQDN].len - 1] == '.'))
 				*out++ = 0;
 			result -> len = out - result -> data;
 			result -> terminated = 0;
 		}
 	} else {
-		if (results [FQDN_NAME].len) {
-			memcpy (&bp -> data [3], results [FQDN_NAME].data,
-				results [FQDN_NAME].len);
-			result -> len += results [FQDN_NAME].len;
+		if (results [FQDN_FQDN].len) {
+			memcpy (&bp -> data [3], results [FQDN_FQDN].data,
+				results [FQDN_FQDN].len);
+			result -> len += results [FQDN_FQDN].len;
 			result -> terminated = 0;
 		}
 	}
@@ -1690,27 +1837,57 @@ int fqdn_option_space_encapsulate (result, packet, lease,
 		if (results [i].len)
 			data_string_forget (&results [i], MDL);
 	}
+	buffer_dereference (&bp, MDL);
 	return 1;
 }
 
 void option_space_foreach (struct packet *packet, struct lease *lease,
+			   struct client_state *client_state,
 			   struct option_state *in_options,
 			   struct option_state *cfg_options,
 			   struct binding_scope **scope,
 			   struct universe *u, void *stuff,
 			   void (*func) (struct option_cache *,
 					 struct packet *,
-					 struct lease *, struct option_state *,
+					 struct lease *, struct client_state *,
+					 struct option_state *,
 					 struct option_state *,
 					 struct binding_scope **,
 					 struct universe *, void *))
 {
 	if (u -> foreach)
-		(*u -> foreach) (packet, lease, in_options, cfg_options,
-				 scope, u, stuff, func);
+		(*u -> foreach) (packet, lease, client_state, in_options,
+				 cfg_options, scope, u, stuff, func);
+}
+
+void suboption_foreach (struct packet *packet, struct lease *lease,
+			struct client_state *client_state,
+			struct option_state *in_options,
+			struct option_state *cfg_options,
+			struct binding_scope **scope,
+			struct universe *u, void *stuff,
+			void (*func) (struct option_cache *,
+				      struct packet *,
+				      struct lease *, struct client_state *,
+				      struct option_state *,
+				      struct option_state *,
+				      struct binding_scope **,
+				      struct universe *, void *),
+			struct option_cache *oc,
+			const char *vsname)
+{
+	struct universe *universe = find_option_universe (oc -> option,
+							  vsname);
+	int i;
+
+	if (universe -> foreach)
+		(*universe -> foreach) (packet, lease, client_state,
+					in_options, cfg_options,
+					scope, universe, stuff, func);
 }
 
 void hashed_option_space_foreach (struct packet *packet, struct lease *lease,
+				  struct client_state *client_state,
 				  struct option_state *in_options,
 				  struct option_state *cfg_options,
 				  struct binding_scope **scope,
@@ -1718,6 +1895,7 @@ void hashed_option_space_foreach (struct packet *packet, struct lease *lease,
 				  void (*func) (struct option_cache *,
 						struct packet *,
 						struct lease *,
+						struct client_state *,
 						struct option_state *,
 						struct option_state *,
 						struct binding_scope **,
@@ -1738,7 +1916,7 @@ void hashed_option_space_foreach (struct packet *packet, struct lease *lease,
 		/* XXX save _all_ options! XXX */
 		for (p = hash [i]; p; p = p -> cdr) {
 			oc = (struct option_cache *)p -> car;
-			(*func) (oc, packet, lease,
+			(*func) (oc, packet, lease, client_state,
 				 in_options, cfg_options, scope, u, stuff);
 		}
 	}
@@ -1749,47 +1927,69 @@ void save_linked_option (universe, options, oc)
 	struct option_state *options;
 	struct option_cache *oc;
 {
-	struct option_cache **tail;
+	pair *tail;
+	pair np = (pair )0;
+	struct option_chain_head *head;
+
+	if (universe -> index >= options -> universe_count)
+		return;
+	head = ((struct option_chain_head *)
+		options -> universes [universe -> index]);
+	if (!head) {
+		if (!option_chain_head_allocate (((struct option_chain_head **)
+						  &options -> universes
+						  [universe -> index]), MDL))
+			return;
+		head = ((struct option_chain_head *)
+			options -> universes [universe -> index]);
+	}
 
 	/* Find the tail of the list. */
-	for (tail = ((struct option_cache **)
-		     &options -> universes [universe -> index]);
-	     *tail; tail = &((*tail) -> next)) {
-		if ((*tail) -> option == oc -> option) {
-			if ((*tail) -> next) {
-				option_cache_reference (&oc -> next,
-							(*tail) -> next, MDL);
-			}
-			option_cache_dereference (tail, MDL);
-			break;
+	for (tail = &head -> first; *tail; tail = &((*tail) -> cdr)) {
+		if (oc -> option ==
+		    ((struct option_cache *)((*tail) -> car)) -> option) {
+			option_cache_dereference ((struct option_cache **)
+						  (&(*tail) -> car), MDL);
+			option_cache_reference ((struct option_cache **)
+						(&(*tail) -> car), oc, MDL);
+			return;
 		}
 	}
 
-	option_cache_reference (tail, oc, MDL);
+	*tail = cons (0, 0);
+	if (*tail) {
+		option_cache_reference ((struct option_cache **)
+					(&(*tail) -> car), oc, MDL);
+	}
 }
 
-int linked_option_space_encapsulate (result, packet, lease,
+int linked_option_space_encapsulate (result, packet, lease, client_state,
 				    in_options, cfg_options, scope, universe)
 	struct data_string *result;
 	struct packet *packet;
 	struct lease *lease;
+	struct client_state *client_state;
 	struct option_state *in_options;
 	struct option_state *cfg_options;
 	struct binding_scope **scope;
 	struct universe *universe;
 {
 	int status;
-	struct option_cache *oc;
+	pair oc;
+	struct option_chain_head *head;
 
 	if (universe -> index >= cfg_options -> universe_count)
 		return 0;
+	head = ((struct option_chain_head *)
+		cfg_options -> universes [universe -> index]);
+	if (!head)
+		return 0;
 
 	status = 0;
-	for (oc = ((struct option_cache *)
-		   cfg_options -> universes [universe -> index]);
-	     oc; oc = oc -> next) {
-		if (store_option (result, universe, packet, lease,
-				  in_options, cfg_options, scope, oc))
+	for (oc = head -> first; oc; oc = oc -> cdr) {
+		if (store_option (result, universe, packet,
+				  lease, client_state, in_options, cfg_options,
+				  scope, (struct option_cache *)(oc -> car)))
 			status = 1;
 	}
 
@@ -1801,22 +2001,25 @@ void delete_linked_option (universe, options, code)
 	struct option_state *options;
 	int code;
 {
-	struct option_cache **tail, *tmp = (struct option_cache *)0;
+	pair *tail, tmp = (pair)0;
+	struct option_chain_head *head;
 
-	/* Find the tail of the list. */
-	for (tail = ((struct option_cache **)
-		     &options -> universes [universe -> index]);
-	     *tail; tail = &((*tail) -> next)) {
-		if ((*tail) -> option -> code == code) {
-			if ((*tail) -> next) {
-				option_cache_reference (&tmp,
-							(*tail) -> next, MDL);
-				option_cache_dereference (tail, MDL);
-			}
-			if (tmp) {
-				option_cache_reference (tail, tmp, MDL);
-				option_cache_dereference (&tmp, MDL);
-			}
+	if (universe -> index >= options -> universe_count)
+		return;
+	head = ((struct option_chain_head *)
+		options -> universes [universe -> index]);
+	if (!head)
+		return;
+
+	for (tail = &head -> first; *tail; tail = &((*tail) -> cdr)) {
+		if (code ==
+		    ((struct option_cache *)(*tail) -> car) -> option -> code)
+		{
+			tmp = (*tail) -> cdr;
+			option_cache_dereference ((struct option_cache **)
+						  (&(*tail) -> car), MDL);
+			dfree (*tail, MDL);
+			(*tail) = tmp;
 			break;
 		}
 	}
@@ -1827,16 +2030,20 @@ struct option_cache *lookup_linked_option (universe, options, code)
 	struct option_state *options;
 	unsigned code;
 {
-	struct option_cache *oc;
+	pair oc;
+	struct option_chain_head *head;
 
 	if (universe -> index >= options -> universe_count)
 		return 0;
+	head = ((struct option_chain_head *)
+		options -> universes [universe -> index]);
+	if (!head)
+		return 0;
 
-	for (oc = ((struct option_cache *)
-		   options -> universes [universe -> index]);
-	     oc; oc = oc -> next) {
-		if (oc -> option -> code == code) {
-			return oc;
+	for (oc = head -> first; oc; oc = oc -> cdr) {
+		if (code ==
+		    ((struct option_cache *)(oc -> car)) -> option -> code) {
+			return (struct option_cache *)(oc -> car);
 		}
 	}
 
@@ -1849,38 +2056,38 @@ int linked_option_state_dereference (universe, state, file, line)
 	const char *file;
 	int line;
 {
-	struct option_cache **tail;
-
-	/* Find the tail of the list. */
-	tail = ((struct option_cache **)
-		&state -> universes [universe -> index]);
-	if (*tail)
-		return option_cache_dereference (tail, file, line);
-	return 1;
+	return (option_chain_head_dereference
+		((struct option_chain_head **)
+		 (&state -> universes [universe -> index]), MDL));
 }
 
 void linked_option_space_foreach (struct packet *packet, struct lease *lease,
-				 struct option_state *in_options,
-				 struct option_state *cfg_options,
-				 struct binding_scope **scope,
-				 struct universe *u, void *stuff,
-				 void (*func) (struct option_cache *,
-					       struct packet *,
-					       struct lease *,
-					       struct option_state *,
-					       struct option_state *,
-					       struct binding_scope **,
-					       struct universe *, void *))
+				  struct client_state *client_state,
+				  struct option_state *in_options,
+				  struct option_state *cfg_options,
+				  struct binding_scope **scope,
+				  struct universe *u, void *stuff,
+				  void (*func) (struct option_cache *,
+						struct packet *,
+						struct lease *,
+						struct client_state *,
+						struct option_state *,
+						struct option_state *,
+						struct binding_scope **,
+						struct universe *, void *))
 {
-	struct option_cache *oc;
+	pair car;
+	struct option_chain_head *head;
 
 	if (u -> index >= cfg_options -> universe_count)
 		return;
-
-	for (oc = ((struct option_cache *)
-		   cfg_options -> universes [u -> index]);
-	     oc; oc = oc -> next) {
-		(*func) (oc, packet, lease,
+	head = ((struct option_chain_head *)
+		cfg_options -> universes [u -> index]);
+	if (!head)
+		return;
+	for (car = head -> first; car; car = car -> cdr) {
+		(*func) ((struct option_cache *)(car -> car),
+			 packet, lease, client_state,
 			 in_options, cfg_options, scope, u, stuff);
 	}
 }
@@ -1898,6 +2105,10 @@ void do_packet (interface, packet, len, from_port, from, hfrom)
 	struct packet *decoded_packet;
 #if defined (DEBUG_MEMORY_LEAKAGE)
 	unsigned long previous_outstanding = dmalloc_outstanding;
+#endif
+
+#if defined (TRACING)
+	trace_inpacket_stash (interface, packet, len, from_port, from, hfrom);
 #endif
 
 	decoded_packet = (struct packet *)0;
@@ -1936,6 +2147,7 @@ void do_packet (interface, packet, len, from_port, from, hfrom)
 			memset (&dp, 0, sizeof dp);
 			evaluate_option_cache (&dp, decoded_packet,
 					       (struct lease *)0,
+					       (struct client_state *)0,
 					       decoded_packet -> options,
 					       (struct option_state *)0,
 					       (struct binding_scope **)0,
