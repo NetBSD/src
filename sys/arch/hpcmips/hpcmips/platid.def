@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.17 2000/02/14 06:55:36 jun Exp $	*/
+/*	$NetBSD: platid.def,v 1.18 2000/03/30 16:26:51 jun Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -74,6 +74,7 @@ NEC {
       CPU=MIPS_VR_4111 300 -"300"
       CPU=MIPS_VR_4121 320 -"320"
       CPU=MIPS_VR_4111 forDoCoMo --" MobileGearII for DoCoMo"
+      CPU=MIPS_VR_4102 mpro700 --" MobilePro 700"
     }
     5XX "500 series" {
       CPU=MIPS_VR_4111 500 -"500"
