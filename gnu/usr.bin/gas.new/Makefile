@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2000/12/05 09:59:31 scw Exp $
+#	$NetBSD: Makefile,v 1.15 2001/01/04 08:08:39 itojun Exp $
 #
 
 .include <bsd.own.mk>
@@ -6,6 +6,8 @@
 # Override to make a cross assembler.
 .if ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
 TARGET_ARCH ?=	mips
+.elif ${MACHINE_ARCH} == "sh3eb" || ${MACHINE_ARCH} == "sh3el"
+TARGET_ARCH ?=	sh3
 .else
 TARGET_ARCH ?=	${MACHINE_ARCH}
 .endif
