@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldmmap.c,v 1.52 2000/06/29 02:40:39 mrg Exp $	*/
+/*	$NetBSD: linux_oldmmap.c,v 1.53 2000/12/29 20:08:54 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ linux_sys_old_mmap(p, v, retval)
 	SCARG(&nlmap,prot) = lmap.lm_prot;
 	SCARG(&nlmap,flags) = lmap.lm_flags;
 	SCARG(&nlmap,fd) = lmap.lm_fd;
-	SCARG(&nlmap,offset) = lmap.lm_pos;
+	SCARG(&nlmap,offset) = (unsigned)lmap.lm_pos;
 
 	return linux_sys_mmap(p, &nlmap, retval);
 }
