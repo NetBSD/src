@@ -1,4 +1,4 @@
-/*	$NetBSD: uboot.c,v 1.8 2001/10/09 16:03:11 tsutsui Exp $	*/
+/*	$NetBSD: uboot.c,v 1.9 2002/03/16 06:20:08 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -36,14 +36,9 @@
  */
 
 #include <sys/param.h>
-#include <sys/reboot.h>
 #include <sys/boot_flag.h>
-#include <a.out.h>
 
 #include <lib/libsa/stand.h>
-#include <lib/libsa/loadfile.h>
-
-#include <machine/bootinfo.h>
 
 #include <hp300/stand/common/samachdep.h>
 
@@ -76,7 +71,6 @@ static int bdev, badapt, bctlr, bunit, bpart;
 
 void main __P((void));
 void getbootdev __P((int *));
-void exec_hp300 __P((char *, u_long, int));
 
 void
 main()
@@ -142,36 +136,4 @@ getbootdev(howto)
 		}
 	} else
 		printf("\n");
-}
-
-#define	round_to_size(x) \
-	(((x) + sizeof(u_long) - 1) & ~(sizeof(u_long) - 1))
-
-void
-exec_hp300(file, loadaddr, howto)
-	char *file;
-	u_long loadaddr;
-	int howto;
-{
-	u_long marks[MARK_MAX];
-	struct btinfo_magic *bt;
-	int fd;
-
-	marks[MARK_START] = loadaddr;
-	if ((fd = loadfile(name, marks, LOAD_KERNEL)) == -1)
-		return;
-
-	marks[MARK_END] = round_to_size(marks[MARK_END] - loadaddr);
-	printf("Start @ 0x%lx [%ld=0x%lx-0x%lx]...\n",
-	    marks[MARK_ENTRY], marks[MARK_NSYM],
-	    marks[MARK_SYM], marks[MARK_END]);
-
-	bt = (struct btinfo_magic *)lowram;
-        bt->common.type = BTINFO_MAGIC;
-        bt->magic1 = BOOTINFO_MAGIC1;
-        bt->magic2 = BOOTINFO_MAGIC2;
-
-	machdep_start((char *)marks[MARK_ENTRY], howto,
-	    (char *)loadaddr, (char *)marks[MARK_SYM],
-	    (char *)marks[MARK_END]);
 }
