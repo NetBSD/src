@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.25 2000/02/29 21:37:01 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.26 2000/03/24 22:16:42 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -235,7 +235,7 @@ USB_MATCH(umass)
 	if (id != NULL
 	    && id->bInterfaceClass == UICLASS_MASS
 	    && id->bInterfaceSubClass == UISUBCLASS_SCSI
-	    && id->bInterfaceProtocol == UIPROTO_MASS_BULK_P)
+	    && id->bInterfaceProtocol == UIPROTO_MASS_BBB_P)
 		return(UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
 
 	return(UMATCH_NONE);
@@ -283,8 +283,8 @@ USB_ATTACH(umass)
 	case UIPROTO_MASS_CBI_I:	protocol = "CBI with CCI"; break;
 	case UIPROTO_MASS_CBI:		protocol = "CBI";	break;
 #endif
-	case UIPROTO_MASS_BULK:		/* XXX Is this really right? */
-	case UIPROTO_MASS_BULK_P:	protocol = "Bulk-Only";	break;
+	case UIPROTO_MASS_BBB:		/* XXX Is this really right? */
+	case UIPROTO_MASS_BBB_P:	protocol = "Bulk-Only";	break;
 	default:
 		panic("umass_attach: impossible protocol");
 	}
