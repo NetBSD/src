@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.4 1993/10/09 09:59:35 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.5 1993/10/09 10:06:25 mycroft Exp $
  */
 
 
@@ -1543,8 +1543,9 @@ ENTRY(cpu_swtch)
 	movl	%eax,PCB_CMAP2(%ecx)	# in our context
 	movl	$0,_curproc		#  out of process
 
-	call	_splhigh
-	movw	%ax,PCB_IML(%ecx)	# save ipl
+	movl	_cpl,%eax		# splhigh()
+	movl	$-1,_cpl
+	movw	%eax,PCB_IML(%ecx)	# save ipl
 
 	/* save is done, now choose a new process or idle */
 sw1:
@@ -1628,8 +1629,8 @@ swfnd:
 #endif
 	sti				# splx() doesn't do an sti/cli
 
-	movw    PCB_IML(%edx),%ax
-	pushl   %ax
+	movw    PCB_IML(%edx),%eax
+	pushl   %eax
 	call    _splx			# restore the process's ipl
 	addl	$4, %esp
 
@@ -1665,8 +1666,8 @@ ENTRY(swtch_to_inactive)
  */
 ENTRY(savectx)
 	movl	4(%esp),%ecx
-	movw	_cpl,%ax
-	movw	%ax,PCB_IML(%ecx)
+	movw	_cpl,%eax
+	movw	%eax,PCB_IML(%ecx)
 	movl	(%esp),%eax	
 	movl	%eax,PCB_EIP(%ecx)
 	movl	%ebx,PCB_EBX(%ecx)
