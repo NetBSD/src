@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.17 2001/12/22 11:58:35 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.18 2001/12/24 14:48:31 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -1110,3 +1110,29 @@ sys/dev/pckbc/pckbd.c				1.29
   pckbc_enqueue_cmd, which is not intended for use during autoconfig.
   This fixes some problems where keyboards would not work with
   wscons on i386.
+
+sys/kern/sys_generic.c				1.60
+lib/libc/sys/poll.2				1.11
+
+  Make poll(2) ignore negative file descriptors, which is in line
+  with the Single Unix Specification.
+
+usr.sbin/lpr/common_source/common.c		1.21
+
+  Use getifaddrs(3) instead of gethostname(3) for local address
+  detection.
+
+sys/netinet6/in6.c				1.38
+
+  Make sure we don't use an uninitialized pointer.
+
+sys/dev/pci/pccbb.c				1.70 partial, via patch
+
+  Add PCI power management control to the PCI-CardBus bridge.
+  Fixes PR#14149.
+
+lib/libc/time/strftime.c			1.12 via patch
+lib/libc/time/strftime.3			1.8,1.10-1.12
+
+  Switch to widely circulated tzcode (2000g) implementation; it
+  implements C99 features.
