@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.96 1999/10/12 17:08:57 jdolecek Exp $	*/
+/*	$NetBSD: systm.h,v 1.97 1999/10/14 18:42:16 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -307,8 +307,8 @@ void	kmstartup __P((void));
 
 #ifdef _KERNEL
 #ifdef DDB
-void	Debugger __P((void));
 void	cpu_Debugger __P((void));
+#define Debugger	cpu_Debugger
 /*
  * Enter debugger(s) from console attention if enabled
  */
