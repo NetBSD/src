@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.14.2.1 2000/07/31 05:33:27 mrg Exp $	*/
+/*	$NetBSD: hme.c,v 1.14.2.2 2000/10/25 16:38:55 tv Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -231,7 +231,8 @@ hme_config(sc)
 
 	/* Load the buffer */
 	if ((error = bus_dmamap_load(dmatag, sc->sc_dmamap,
-	    sc->sc_rb.rb_membase, size, NULL, BUS_DMA_NOWAIT)) != 0) {
+	    sc->sc_rb.rb_membase, size, NULL,
+	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: DMA buffer map load error %d\n",
 			sc->sc_dev.dv_xname, error);
 		bus_dmamem_free(dmatag, &seg, rseg);
