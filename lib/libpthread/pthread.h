@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.1.2.17 2002/11/03 12:26:30 skrll Exp $	*/
+/*	$NetBSD: pthread.h,v 1.1.2.18 2003/01/07 17:25:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -141,6 +141,13 @@ int	pthread_rwlock_unlock(pthread_rwlock_t *rwlock);
 int	pthread_rwlockattr_init(pthread_rwlockattr_t *attr);
 int	pthread_rwlockattr_destroy(pthread_rwlockattr_t *attr);
 
+int	pthread_barrier_init(pthread_barrier_t *barrier,
+	    const pthread_barrierattr_t *attr, unsigned int count);
+int	pthread_barrier_wait(pthread_barrier_t *barrier);
+int	pthread_barrier_destroy(pthread_barrier_t *barrier);
+int	pthread_barrierattr_init(pthread_barrierattr_t *attr);
+int	pthread_barrierattr_destroy(pthread_barrierattr_t *attr);
+
 int 	*pthread__errno(void);
 __END_DECLS
 
@@ -155,6 +162,8 @@ __END_DECLS
 
 #define PTHREAD_CANCEL_ENABLE		0
 #define PTHREAD_CANCEL_DISABLE		1
+
+#define PTHREAD_BARRIER_SERIAL_THREAD	1234567
 
 /*
  * POSIX 1003.1-2001, section 2.5.9.3: "The symbolic constant

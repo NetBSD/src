@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.1.2.11 2003/01/06 19:56:19 nathanw Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.1.2.12 2003/01/07 17:25:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,6 +66,8 @@ struct	pthread_condattr_st;
 struct	pthread_spin_st;
 struct	pthread_rwlock_st;
 struct	pthread_rwlockattr_st;
+struct	pthread_barrier_st;
+struct	pthread_barrierattr_st;
 
 typedef struct pthread_st *pthread_t;
 typedef struct pthread_attr_st pthread_attr_t;
@@ -77,6 +79,8 @@ typedef struct pthread_once_st pthread_once_t;
 typedef struct pthread_spinlock_st pthread_spinlock_t;
 typedef struct pthread_rwlock_st pthread_rwlock_t;
 typedef struct pthread_rwlockattr_st pthread_rwlockattr_t;
+typedef struct pthread_barrier_st pthread_barrier_t;
+typedef struct pthread_barrierattr_st pthread_barrierattr_t;
 typedef int pthread_key_t;
 
 struct	pthread_attr_st {
@@ -211,5 +215,28 @@ struct	pthread_rwlockattr_st {
 #define _PT_RWLOCKATTR_MAGIC	0x99990909
 #define _PT_RWLOCKATTR_DEAD	0xDEAD0909
 
+struct	pthread_barrier_st {
+	unsigned int	ptb_magic;
+
+	/* Protects data below */
+	pthread_spin_t	ptb_lock;
+
+	struct pthread_queue_t	ptb_waiters;
+	unsigned int	ptb_initcount;
+	unsigned int	ptb_curcount;
+
+	void		*ptb_private;
+};
+
+#define	_PT_BARRIER_MAGIC	0x88880008
+#define	_PT_BARRIER_DEAD	0xDEAD0008
+
+struct	pthread_barrierattr_st {
+	unsigned int	ptba_magic;
+	void		*ptba_private;
+};
+
+#define	_PT_BARRIERATTR_MAGIC	0x88880808
+#define	_PT_BARRIERATTR_DEAD	0xDEAD0808
 
 #endif	/* _LIB_PTHREAD_TYPES_H */
