@@ -29,7 +29,7 @@
  */
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc_util.c 1.5 87/06/24 (C) 1987 SMI";*/
-static char rcsid[] = "$Id: rpc_util.c,v 1.3 1993/08/01 18:09:15 mycroft Exp $";
+static char rcsid[] = "$Id: rpc_util.c,v 1.4 1995/03/06 04:59:37 cgd Exp $";
 #endif
 
 /*
@@ -63,7 +63,7 @@ static int printwhere();
  */
 reinitialize()
 {
-	bzero(curline, MAXLINESIZE);
+	memset(curline, 0, MAXLINESIZE);
 	where = curline;
 	linenum = 0;
 	defined = NULL;

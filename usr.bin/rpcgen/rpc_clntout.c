@@ -29,7 +29,7 @@
  */
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc_clntout.c 1.2 87/06/24 (C) 1987 SMI";*/
-static char rcsid[] = "$Id: rpc_clntout.c,v 1.2 1993/08/01 18:09:23 mycroft Exp $";
+static char rcsid[] = "$Id: rpc_clntout.c,v 1.3 1995/03/06 04:59:08 cgd Exp $";
 #endif
 
 /*
@@ -113,7 +113,7 @@ printbody(proc)
 	}
 	f_print(fout, "res;\n");
 	f_print(fout, "\n");
- 	f_print(fout, "\tbzero((char *)%sres, sizeof(res));\n",
+ 	f_print(fout, "\tmemset((char *)%sres, 0, sizeof(res));\n",
  		ampr(proc->res_type));
 	f_print(fout,
 		"\tif (clnt_call(clnt, %s, xdr_%s, argp, xdr_%s, %sres, TIMEOUT) != RPC_SUCCESS) {\n",
