@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.18 2001/01/13 16:09:04 tshiozak Exp $	*/
+/*	$NetBSD: midi.c,v 1.19 2001/01/13 16:16:12 tshiozak Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -146,6 +146,7 @@ midiattach(parent, self, aux)
 
 	sc->hw_if = hwp;
 	sc->hw_hdl = hdlp;
+	sc->dying = 0;
 	midi_attach(sc, parent);
 }
 
