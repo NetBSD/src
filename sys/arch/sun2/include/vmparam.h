@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.4 2001/05/01 02:19:19 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5 2001/06/14 13:18:54 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
 #define	VM_FREELIST_DEFAULT	0
 
 #ifdef	_LKM
-#define	USRSTACK KERNBASE
+#undef	KERNBASE
 extern	char KERNBASE[];
 #endif	/* _LKM */
 
