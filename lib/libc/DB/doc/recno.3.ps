@@ -1,0 +1,356 @@
+%!PS-Adobe-3.0
+%%Creator: groff version 1.03
+%%DocumentNeededResources: font Times-Roman
+%%+ font Times-Bold
+%%+ font Times-Italic
+%%DocumentSuppliedResources: procset grops 1.03 0
+%%Pages: 2
+%%PageOrder: Ascend
+%%Orientation: Portrait
+%%EndComments
+%%BeginProlog
+%%BeginResource: procset grops 1.03 0
+
+/setpacking where {
+	pop
+	currentpacking
+	true setpacking
+} if
+
+/grops 120 dict dup begin 
+
+% The ASCII code of the space character.
+/SC 32 def
+
+/A /show load def
+/B { 0 SC 3 -1 roll widthshow } bind def
+/C { 0 exch ashow } bind def
+/D { 0 exch 0 SC 5 2 roll awidthshow } bind def
+/E { 0 rmoveto show } bind def
+/F { 0 rmoveto 0 SC 3 -1 roll widthshow } bind def
+/G { 0 rmoveto 0 exch ashow } bind def
+/H { 0 rmoveto 0 exch 0 SC 5 2 roll awidthshow } bind def
+/I { 0 exch rmoveto show } bind def
+/J { 0 exch rmoveto 0 SC 3 -1 roll widthshow } bind def
+/K { 0 exch rmoveto 0 exch ashow } bind def
+/L { 0 exch rmoveto 0 exch 0 SC 5 2 roll awidthshow } bind def
+/M { rmoveto show } bind def
+/N { rmoveto 0 SC 3 -1 roll widthshow } bind def
+/O { rmoveto 0 exch ashow } bind def
+/P { rmoveto 0 exch 0 SC 5 2 roll awidthshow } bind def
+/Q { moveto show } bind def 
+/R { moveto 0 SC 3 -1 roll widthshow } bind def
+/S { moveto 0 exch ashow } bind def
+/T { moveto 0 exch 0 SC 5 2 roll awidthshow } bind def
+
+% name size font SF -
+
+/SF {
+	findfont exch
+	[ exch dup 0 exch 0 exch neg 0 0 ] makefont
+	dup setfont
+	[ exch /setfont cvx ] cvx bind def
+} bind def
+
+% name a c d font MF -
+
+/MF {
+	findfont
+	[ 5 2 roll
+	0 3 1 roll % b
+	neg 0 0 ] makefont
+	dup setfont
+	[ exch /setfont cvx ] cvx bind def
+} bind def
+
+/level0 0 def
+/RES 0 def
+/PL 0 def
+/LS 0 def
+
+% BP -
+
+/BP {
+	/level0 save def
+	1 setlinecap
+	1 setlinejoin
+	72 RES div dup scale
+	LS {
+		90 rotate
+	} {
+		0 PL translate
+	} ifelse
+	1 -1 scale
+} bind def
+
+/EP {
+	level0 restore
+	showpage
+} bind def
+
+
+% centerx centery radius startangle endangle DA -
+
+/DA {
+	newpath arcn stroke
+} bind def
+
+% x y SN - x' y'
+% round a position to nearest (pixel + (.25,.25))
+
+/SN {
+	transform 
+	.25 sub exch .25 sub exch
+	round .25 add exch round .25 add exch
+	itransform
+} bind def
+	
+% endx endy startx starty DL -
+% we round the endpoints of the line, so that parallel horizontal
+% and vertical lines will appear even
+
+/DL {
+	SN
+	moveto
+	SN
+	lineto stroke
+} bind def
+
+% centerx centery radius DC -
+
+/DC {
+	newpath 0 360 arc closepath
+} bind def
+
+
+/TM matrix def
+
+%  width height centerx centery DE -
+
+/DE {
+	TM currentmatrix pop
+	translate scale newpath 0 0 .5 0 360 arc closepath
+	TM setmatrix
+} bind def
+
+% these are for splines
+
+/RC /rcurveto load def
+/RL /rlineto load def
+/ST /stroke load def
+/MT /moveto load def
+/CL /closepath load def
+
+% fill the last path
+
+% amount FL -
+
+/FL {
+	currentgray exch setgray fill setgray
+} bind def
+
+% fill with the ``current color''
+
+/BL /fill load def
+
+/LW /setlinewidth load def
+% new_font_name encoding_vector old_font_name RE -
+
+/RE {
+	findfont
+	dup maxlength dict begin
+	{
+		1 index /FID ne { def } { pop pop } ifelse
+	} forall
+	/Encoding exch def
+	dup /FontName exch def
+	currentdict end definefont pop
+} bind def
+
+/DEFS 0 def
+
+% hpos vpos EBEGIN -
+
+/EBEGIN {
+	moveto
+	DEFS begin
+} bind def
+
+/EEND /end load def
+
+/CNT 0 def
+/level1 0 def
+
+% llx lly newwid wid newht ht newllx newlly PBEGIN -
+
+/PBEGIN {
+	/level1 save def
+	translate
+	div 3 1 roll div exch scale
+	neg exch neg exch translate
+	% set the graphics state to default values
+	0 setgray
+	0 setlinecap
+	1 setlinewidth
+	0 setlinejoin
+	10 setmiterlimit
+	[] 0 setdash
+	/setstrokeadjust where {
+		pop
+		false setstrokeadjust
+	} if
+	/setoverprint where {
+		pop
+		false setoverprint
+	} if
+	newpath
+	/CNT countdictstack def
+	userdict begin
+	/showpage {} def
+} bind def
+
+/PEND {
+	clear
+	countdictstack CNT sub { end } repeat
+	level1 restore
+} bind def
+
+end def
+
+/setpacking where {
+	pop
+	setpacking
+} if
+%%EndResource
+%%EndProlog
+%%BeginSetup
+%%IncludeResource: font Times-Roman
+%%IncludeResource: font Times-Bold
+%%IncludeResource: font Times-Italic
+grops begin/DEFS 1 dict def DEFS begin/u{.001 mul}bind def end/RES 72 def/PL
+792 def/LS false def/ENC0[/asciicircum/asciitilde/Scaron/Zcaron/scaron/zcaron
+/Ydieresis/trademark/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef
+/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef
+/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/space/exclam
+/quotedbl/numbersign/dollar/percent/ampersand/quoteright/parenleft/parenright
+/asterisk/plus/comma/hyphen/period/slash/zero/one/two/three/four/five/six/seven
+/eight/nine/colon/semicolon/less/equal/greater/question/at/A/B/C/D/E/F/G/H/I/J
+/K/L/M/N/O/P/Q/R/S/T/U/V/W/X/Y/Z/bracketleft/backslash/bracketright/circumflex
+/underscore/quoteleft/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z
+/braceleft/bar/braceright/tilde/.notdef/quotesinglbase/guillemotleft
+/guillemotright/bullet/florin/fraction/perthousand/dagger/daggerdbl/endash
+/emdash/ff/fi/fl/ffi/ffl/dotlessi/dotlessj/grave/hungarumlaut/dotaccent/breve
+/caron/ring/ogonek/quotedblleft/quotedblright/oe/lslash/quotedblbase/OE/Lslash
+/.notdef/exclamdown/cent/sterling/currency/yen/brokenbar/section/dieresis
+/copyright/ordfeminine/guilsinglleft/logicalnot/minus/registered/macron/degree
+/plusminus/twosuperior/threesuperior/acute/mu/paragraph/periodcentered/cedilla
+/onesuperior/ordmasculine/guilsinglright/onequarter/onehalf/threequarters
+/questiondown/Agrave/Aacute/Acircumflex/Atilde/Adieresis/Aring/AE/Ccedilla
+/Egrave/Eacute/Ecircumflex/Edieresis/Igrave/Iacute/Icircumflex/Idieresis/Eth
+/Ntilde/Ograve/Oacute/Ocircumflex/Otilde/Odieresis/multiply/Oslash/Ugrave
+/Uacute/Ucircumflex/Udieresis/Yacute/Thorn/germandbls/agrave/aacute/acircumflex
+/atilde/adieresis/aring/ae/ccedilla/egrave/eacute/ecircumflex/edieresis/igrave
+/iacute/icircumflex/idieresis/eth/ntilde/ograve/oacute/ocircumflex/otilde
+/odieresis/divide/oslash/ugrave/uacute/ucircumflex/udieresis/yacute/thorn
+/ydieresis]def/Times-Italic@0 ENC0/Times-Italic RE/Times-Bold@0 ENC0/Times-Bold
+RE/Times-Roman@0 ENC0/Times-Roman RE
+%%EndSetup
+%%Page: 1 1
+%%BeginPageSetup
+BP
+%%EndPageSetup
+/F0 10/Times-Roman@0 SF 175.95(RECNO\(3\) 1992 RECNO\(3\))72 48 R/F1 9
+/Times-Bold@0 SF(NAME)72 84 Q F0
+(recno \255 record number database access method)108 96 Q F1(SYNOPSIS)72 112.8
+Q/F2 10/Times-Bold@0 SF(#include <sys/types.h>)108 124.8 Q(#include <db.h>)108
+136.8 Q F1(DESCRIPTION)72 153.6 Q F0 1.152(The routine)108 165.6 R/F3 10
+/Times-Italic@0 SF(dbopen)3.652 E F0 1.152
+(is the library interface to database \214les.)3.652 F 1.151
+(One of the supported \214le formats is record)6.152 F 1.161(number \214les.)
+108 177.6 R 1.161(The general description of the database access methods is in)
+6.161 F F3(dbopen)3.662 E F0 1.162(\(3\), this manual page).21 F
+(describes only the recno speci\214c information.)108 189.6 Q 1.917(The record\
+ number data structure is either variable or \214xed-length records stored in \
+a \215at-\214le format,)108 206.4 R 2.01(accessed by the logical record number)
+108 218.4 R 7.01(.T)-.55 G 2.01
+(he existence of record number \214ve implies the existence of)286.13 218.4 R
+.867(records one through four)108 230.4 R 3.367(,a)-.4 G .866
+(nd the deletion of record number one causes record number \214ve to be renum-)
+219.648 230.4 R .269(bered to record number four)108 242.4 R 2.769(,a)-.4 G
+2.769(sw)231.125 242.4 S .269(ell as the cursor)245.004 242.4 R 2.769(,i)-.4 G
+2.77(fp)316.5 242.4 S .27(ositioned after record number one, to shift down one)
+327.6 242.4 R(record.)108 254.4 Q .341
+(The recno access method speci\214c data structure provided to)108 271.2 R F3
+(dbopen)2.841 E F0 .34(is de\214ned in the <db.h> include \214le as)2.841 F
+(follows:)108 283.2 Q(typedef struct {)108 300 Q(u_char bval;)144 312 Q
+(u_int cachesize;)144 324 Q(u_long \215ags;)144 336 Q(int lorder;)144 348 Q
+(size_t reclen;)144 360 Q 2.5(}R)108 372 S(ECNOINFO;)121.97 372 Q
+(The elements of this structure are de\214ned as follows:)108 388.8 Q 16.28
+(bval The)108 405.6 R .168(delimiting byte to be used to mark the end of a rec\
+ord for variable-length records, and the pad)2.668 F .766
+(character for \214xed-length records.)144 417.6 R .765
+(If no value is speci\214ed, newlines \(`)5.766 F(`\\n')-.74 E .765
+('\) are used to mark the)-.74 F(end of variable-length records and \214xed-le\
+ngth records are padded with spaces.)144 429.6 Q(cachesize)108 446.4 Q 3.143
+(As)144 458.4 S .644(uggested maximum size, in bytes, of the memory cache.)
+158.253 458.4 R .644(This value is)5.644 F F2(only)3.144 E F0(advisory)3.144 E
+3.144(,a)-.65 G .644(nd the)514.636 458.4 R
+(access method will allocate more memory rather than fail.)144 470.4 Q 14.61
+(\215ags The)108 487.2 R(\215ag value is speci\214ed by)2.5 E F3(or)2.5 E F0
+('ing any of the following values:).53 E(R_FIXEDLEN)144 504 Q .949
+(The records are \214xed-length, not byte delimited.)180 516 R .949
+(The structure element)5.949 F F3 -.37(re)3.449 G(clen).37 E F0(speci\214es)
+3.449 E(the length of the record, and the structure element)180 528 Q F3(bval)
+2.5 E F0(is used as the pad character)2.5 E(.)-.55 E(R_NOKEY)144 544.8 Q 2.296
+(In the interface speci\214ed by)180 556.8 R F3(dbopen)4.796 E F0 4.796(,t).21
+G 2.296(he sequential record retrieval \214lls in both the)344.786 556.8 R
+-2.13(caller ')180 568.8 R 3.502(sk)-.55 G 1.002(ey and data structures.)
+217.752 568.8 R 1.001(If the R_NOKEY \215ag is speci\214ed, the)6.002 F F3
+(cursor)3.501 E F0(routines)3.501 E .678
+(are not required to \214ll in the key structure.)180 580.8 R .679
+(This permits applications to retrieve records)5.679 F
+(at the end of \214les without reading all of the intervening records.)180
+592.8 Q(R_SNAPSHOT)144 609.6 Q .958
+(This \215ag requires that a snapshot of the \214le be taken when)180 621.6 R
+F3(dbopen)3.458 E F0 .958(is called, instead of)3.458 F
+(permitting any unmodi\214ed records to be read from the original \214le.)180
+633.6 Q 9.62(lorder The)108 650.4 R 1.586
+(byte order for integers in the stored database metadata.)4.085 F 1.586
+(The number should represent the)6.586 F .667
+(order as an integer; for example, big endian order would be the number 4,321.)
+144 662.4 R(If)5.666 E F3(lor)3.166 E(der)-.37 E F0 .666(is 0 \(no)3.166 F
+(order is speci\214ed\) the current host order is used.)144 674.4 Q 9.07
+(reclen The)108 691.2 R(length of a \214xed-length record.)2.5 E .958(The data\
+ part of the key/data pair used by the recno access method is the same as othe\
+r access methods.)108 708 R .176(The key is dif)108 720 R 2.676(ferent. The)
+-.18 F F3(data)2.676 E F0 .175
+(\214eld of the key should be a pointer to a memory location of type)2.675 F F3
+-.37(re)2.675 G(cno_t).37 E F0 2.675(,a).6 G(s)536.11 720 Q 203.455
+(4, December)72 768 R(1)535 768 Q EP
+%%Page: 2 2
+%%BeginPageSetup
+BP
+%%EndPageSetup
+/F0 10/Times-Roman@0 SF 175.95(RECNO\(3\) 1992 RECNO\(3\))72 48 R .447
+(de\214ned in the <db.h> include \214le.)108 84 R .447
+(This type is normally the lar)5.447 F .447
+(gest unsigned integral type available to the)-.18 F 2.5(implementation. The)
+108 96 R/F1 10/Times-Italic@0 SF(size)2.5 E F0
+(\214eld of the key should be the size of that type.)2.5 E .043
+(In the interface speci\214ed by)108 112.8 R F1(dbopen)2.542 E F0 2.542(,u).21
+G .042(sing the)261.484 112.8 R F1(put)2.542 E F0 .042
+(interface to create a new record will cause the creation of)2.542 F .755(mult\
+iple, empty records if the record number is more than one greater than the lar)
+108 124.8 R .755(gest record currently in)-.18 F(the database.)108 136.8 Q/F2 9
+/Times-Bold@0 SF(SEE ALSO)72 153.6 Q F1(dbopen)108 165.6 Q F0(\(3\),).21 E F1
+(hash)2.5 E F0(\(3\),).23 E F1(mpool)2.5 E F0(\(3\),).48 E F1 -.37(re)2.5 G
+(cno).37 E F0(\(3\)).17 E F1 2.744(Document Pr)108 189.6 R 2.744
+(ocessing in a Relational Database System)-.37 F F0 5.244(,M).26 G 2.743
+(ichael Stonebraker)362.078 189.6 R 5.243(,H)-.4 G 2.743(eidi Stettner)454.084
+189.6 R 5.243(,J)-.4 G(oseph)516.67 189.6 Q(Kalash, Antonin Guttman, Nadene L)
+108 201.6 Q(ynn, Memorandum No. UCB/ERL M82/32, May 1982.)-.55 E F2(BUGS)72
+218.4 Q F0(Only big and little endian byte order is supported.)108 230.4 Q
+203.455(4, December)72 768 R(2)535 768 Q EP
+%%Trailer
+end
+%%EOF
