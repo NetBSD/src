@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.17 2003/11/17 10:16:18 cube Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.18 2004/01/08 22:48:26 cube Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.17 2003/11/17 10:16:18 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.18 2004/01/08 22:48:26 cube Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -949,6 +949,8 @@ ksymsopen(dev_t dev, int oflags, int devtype, struct proc *p)
 
 	if (minor(dev))
 		return ENXIO;
+	if (ksymsinited == 0)
+		return ENXIO;
 
 	ksyms_hdr.kh_shdr[SYMTAB].sh_size = symsz;
 	ksyms_hdr.kh_shdr[STRTAB].sh_offset = symsz +
@@ -991,8 +993,6 @@ ksymsread(dev_t dev, struct uio *uio, int ioflag)
 		printf("ksymsread: offset 0x%llx resid 0x%lx\n",
 		    (long long)uio->uio_offset, uio->uio_resid);
 #endif
-	if (ksymsinited == 0)
-		return ENXIO;
 
 	off = uio->uio_offset;
 	if (off >= (strsz + symsz + HDRSIZ))
