@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplay.c,v 1.5 2000/09/29 06:35:57 deberg Exp $ */
+/* $NetBSD: nextdisplay.c,v 1.6 2001/06/15 21:56:06 dbj Exp $ */
 
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -199,7 +199,7 @@ nextdisplay_init(dc, color)
 		*(u_int32_t *)(dc->dc_videobase + i) = 
 			(color ? 0x0 : 0xffffffff);
 
-	printf("done clearing\n", dc->dc_videobase);
+	printf("done clearing\n");
 
 	rap = &dc->dc_raster;
 	rap->width = dc->dc_wid;
