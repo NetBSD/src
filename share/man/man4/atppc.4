@@ -1,4 +1,4 @@
-.\"	$NetBSD: atppc.4,v 1.7 2004/01/28 17:25:12 jdolecek Exp $
+.\"	$NetBSD: atppc.4,v 1.8 2004/01/28 18:48:33 jdolecek Exp $
 .\"
 .\" Copyright (C) Gary Thorpe 2003
 .\" All rights reserved.
@@ -12,6 +12,7 @@
 .Sh SYNOPSIS
 .Cd "atppc* at isa? port 0x378 irq 7 drq 3 flags 0x00"
 .Cd "atppc* at acpi?"
+.Cd "atppc* at ofisa?"
 .Cd "atppc* at pnpbios? index ?"
 .Cd "atppc* at puc? port ?"
 .Cd options ATPPC_VERBOSE
@@ -76,6 +77,7 @@ not supported, but are being planned.
 .Xr isa 4 ,
 .Xr isapnp 4 ,
 .Xr lpt 4 ,
+.Xr ofisa 4 ,
 .Xr ppbus 4 ,
 .Xr puc 4
 .Xr 
