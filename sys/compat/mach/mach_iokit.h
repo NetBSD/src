@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.h,v 1.5 2003/02/09 22:13:46 manu Exp $ */
+/*	$NetBSD: mach_iokit.h,v 1.6 2003/02/16 18:33:35 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -126,13 +126,9 @@ typedef struct {
 typedef struct {
 	mach_msg_header_t req_msgh;
 	mach_ndr_record_t req_ndr;
-	mach_msg_type_number_t req_planeoffset;
-	mach_msg_type_number_t req_planecount;
-	char req_plane[128];
-	mach_msg_type_number_t req_property_nameoffser;
+	mach_msg_type_number_t req_property_nameoffset;
 	mach_msg_type_number_t req_property_namecount;
 	char req_propery_name[128];
-	int req_options;
 } mach_io_registry_entry_get_property_request_t;
 
 typedef struct {
