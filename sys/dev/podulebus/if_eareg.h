@@ -1,4 +1,4 @@
-/* $NetBSD: if_eareg.h,v 1.1 2001/03/24 00:14:53 bjh21 Exp $ */
+/* $NetBSD: if_eareg.h,v 1.2 2001/03/25 01:08:56 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -36,13 +36,10 @@
  */
 
 /*
- * SEEQ 8005 Register Definitions
+ * Atomwide Ether3 Register Definitions
  */
 
 #define EA_8005_BASE	0x000
 #define EA_8005_SHIFT	5
-
-#define EA_TX_BUFFER_SIZE	0x4000
-#define EA_RX_BUFFER_SIZE	0xC000
 
 /* End of if_eareg.h */
