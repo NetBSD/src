@@ -1,4 +1,4 @@
-/*	$NetBSD: whois.c,v 1.18 2002/06/13 23:26:43 wiz Exp $	*/
+/*	$NetBSD: whois.c,v 1.19 2003/06/23 13:05:55 agc Exp $	*/
 
 /*
  * RIPE version marten@ripe.net
@@ -58,7 +58,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: whois.c,v 1.18 2002/06/13 23:26:43 wiz Exp $");
+__RCSID("$NetBSD: whois.c,v 1.19 2003/06/23 13:05:55 agc Exp $");
 #endif
 #endif /* not lint */
 #endif /* not RIPE */
@@ -68,6 +68,10 @@ __RCSID("$NetBSD: whois.c,v 1.18 2002/06/13 23:26:43 wiz Exp $");
 char sccsid[] =
     "@(#)whois.c 5.11 (Berkeley) 3/2/91 - RIPE 1.15 94/09/07 marten@ripe.net";
 #endif /* not lint */
+#ifndef lint
+__RCSID("$NetBSD: whois.c,v 1.19 2003/06/23 13:05:55 agc Exp $");
+#endif
+
 #endif /* RIPE */
 
 #include <sys/types.h>

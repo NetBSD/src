@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.9 2002/10/16 10:40:17 yamt Exp $	*/
+/*	$NetBSD: pmc.c,v 1.10 2003/06/23 13:05:50 agc Exp $	*/
 
 /*
  * Copyright 2000 Wasabi Systems, Inc.
@@ -34,6 +34,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: pmc.c,v 1.10 2003/06/23 13:05:50 agc Exp $");
+#endif
 
 #include <sys/types.h>
 #include <machine/sysarch.h>

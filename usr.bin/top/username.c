@@ -1,4 +1,4 @@
-/*	$NetBSD: username.c,v 1.4 2002/07/16 00:40:51 itojun Exp $	*/
+/*	$NetBSD: username.c,v 1.5 2003/06/23 13:05:53 agc Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -46,6 +46,11 @@
  *  but hey, this is a cache, not the Library of Congress.
  *  This makes the table size independent of the passwd file size.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: username.c,v 1.5 2003/06/23 13:05:53 agc Exp $");
+#endif
 
 #include <stdio.h>
 #include <pwd.h>
