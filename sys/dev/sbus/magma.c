@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.10.2.4 2002/06/23 17:48:40 jdolecek Exp $	*/
+/*	$NetBSD: magma.c,v 1.10.2.5 2002/06/28 07:27:38 jdolecek Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.10.2.4 2002/06/23 17:48:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.10.2.5 2002/06/28 07:27:38 jdolecek Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -1646,19 +1646,6 @@ mbppioctl(dev, cmd, data, flags, p)
 	}
 
 	return(error);
-}
-
-/*
- * poll routine
- */
-int
-mbpppoll(dev, rw, p)
-	dev_t dev;
-	int rw;
-	struct proc *p;
-{
-
-	return(ENODEV);
 }
 
 int
