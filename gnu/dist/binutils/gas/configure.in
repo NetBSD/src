@@ -392,7 +392,7 @@ changequote([,])dnl
       ppc-*-aix5*)			fmt=coff em=aix5 ;;
       ppc-*-aix*)			fmt=coff ;;
       ppc-*-beos*)			fmt=coff ;;
-      ppc-*-*n*bsd* | ppc-*-elf*)	fmt=elf ;;
+      ppc-*-*n*bsd* | ppc-*-elf*)	fmt=elf em=nbsd ;;
       ppc-*-eabi* | ppc-*-sysv4*)	fmt=elf ;;
       ppc-*-linux-gnu*)			fmt=elf
 	    case "$endian" in

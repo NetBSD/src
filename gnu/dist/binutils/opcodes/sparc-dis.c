@@ -704,7 +704,7 @@ print_insn_sparc (memaddr, info)
 		     call _printf
 		     or %o1, %lo(_foo), %o1  */
 
-		  if (is_delayed_branch (prev_insn))
+		  if (memaddr >= 8 && is_delayed_branch (prev_insn))
 		    {
 		      if (memaddr >= 8)
 			errcode = (*info->read_memory_func)

@@ -592,7 +592,9 @@ bfd_generic_openr_next_archived_file (archive, last_file)
 	 Note that last_file->origin can be odd in the case of
 	 BSD-4.4-style element with a long odd size.  */
       filestart = last_file->origin + size;
-      filestart += filestart % 2;
+      if (!strncmp(arch_hdr (last_file)->ar_name, "#1/", 3))
+	size += strlen(normalize(last_file, last_file->filename));
+      filestart += size % 2;
     }
 
   return _bfd_get_elt_at_filepos (archive, filestart);
@@ -1774,13 +1776,23 @@ _bfd_write_archive_contents (arch)
   for (current = arch->archive_head; current; current = current->next)
     {
       char buffer[DEFAULT_BUFFERSIZE];
-      unsigned int remaining = arelt_size (current);
+      unsigned int saved_size = arelt_size (current);
+      unsigned int remaining = saved_size;
       struct ar_hdr *hdr = arch_hdr (current);
 
       /* Write ar header.  */
       if (bfd_bwrite ((PTR) hdr, (bfd_size_type) sizeof (*hdr), arch)
 	  != sizeof (*hdr))
 	return FALSE;
+      /* Write filename if it is a 4.4BSD extended file, and add to size.  */
+      if (!strncmp (hdr->ar_name, "#1/", 3))
+	{
+	  const char *normal = normalize (current, current->filename);
+	  unsigned int thislen = strlen (normal);
+	  if (bfd_write (normal, 1, thislen, arch) != thislen)
+	    return FALSE;
+	  saved_size += thislen;
+	}
       if (bfd_seek (current, (file_ptr) 0, SEEK_SET) != 0)
 	return FALSE;
       while (remaining)
@@ -1799,7 +1811,7 @@ _bfd_write_archive_contents (arch)
 	    return FALSE;
 	  remaining -= amt;
 	}
-      if ((arelt_size (current) % 2) == 1)
+      if ((saved_size % 2) == 1)
 	{
 	  if (bfd_bwrite ("\012", (bfd_size_type) 1, arch) != 1)
 	    return FALSE;
@@ -2030,8 +2042,11 @@ bsd_write_armap (arch, elength, map, orl_count, stridx)
 	{
 	  do
 	    {
-	      firstreal += arelt_size (current) + sizeof (struct ar_hdr);
-	      firstreal += firstreal % 2;
+	      unsigned int size = arelt_size (current);
+	      if (!strncmp(arch_hdr (current)->ar_name, "#1/", 3))
+		size += strlen(normalize(current, current->filename));
+	      firstreal += size + sizeof (struct ar_hdr);
+	      firstreal += size % 2;
 	      current = current->next;
 	    }
 	  while (current != map[count].u.abfd);
