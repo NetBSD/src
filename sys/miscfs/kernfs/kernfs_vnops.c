@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.42 1996/02/13 13:12:55 mycroft Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -216,7 +216,7 @@ kernfs_xread(kt, off, bufp, len)
 		struct timeval tv;
 
 		microtime(&tv);
-		sprintf(*bufp, "%d %d\n", tv.tv_sec, tv.tv_usec);
+		sprintf(*bufp, "%ld %ld\n", tv.tv_sec, tv.tv_usec);
 		break;
 	}
 
@@ -263,7 +263,7 @@ kernfs_xread(kt, off, bufp, len)
 
 	case KTT_AVENRUN:
 		averunnable.fscale = FSCALE;
-		sprintf(*bufp, "%ld %ld %ld %ld\n",
+		sprintf(*bufp, "%d %d %d %ld\n",
 		    averunnable.ldavg[0], averunnable.ldavg[1],
 		    averunnable.ldavg[2], averunnable.fscale);
 		break;

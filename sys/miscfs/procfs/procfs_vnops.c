@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.39 1996/02/13 13:12:59 mycroft Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -416,7 +416,7 @@ procfs_print(v)
 	} */ *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
 
-	printf("tag VT_PROCFS, type %d, pid %d, mode %x, flags %x\n",
+	printf("tag VT_PROCFS, type %d, pid %d, mode %x, flags %lx\n",
 	    pfs->pfs_type, pfs->pfs_pid, pfs->pfs_mode, pfs->pfs_flags);
 	return 0;
 }
