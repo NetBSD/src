@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.20 2001/10/27 00:39:29 augustss Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.21 2001/10/29 01:02:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -412,6 +412,7 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		s = spltty();
 		get = evar->get;
 		put = evar->put;
+		ev = &evar->q[put];
 		if (++put % WSEVENT_QSIZE == get) {
 			put--;
 			splx(s);
@@ -419,7 +420,6 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		}
 		if (put >= WSEVENT_QSIZE)
 			put = 0;
-		ev = &evar->q[put];
 		*ev = *(struct wscons_event *)data;
 		microtime(&thistime);
 		TIMEVAL_TO_TIMESPEC(&thistime, &ev->time);
