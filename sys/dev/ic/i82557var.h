@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.17 2001/05/21 20:59:39 thorpej Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.18 2001/05/21 21:47:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -195,9 +195,12 @@ struct fxp_softc {
 
 	int	sc_flags;		/* misc. flags */
 
-#define	FXPF_WANTINIT		0x01	/* want a re-init */
-#define	FXPF_MII		0x02	/* device uses MII */
-#define FXPF_ATTACHED		0x04	/* attach has succeeded */
+#define	FXPF_MII		0x01	/* device uses MII */
+#define	FXPF_ATTACHED		0x02	/* attach has succeeded */
+#define	FXPF_WANTINIT		0x04	/* want a re-init */
+#define	FXPF_HAS_RESUME_BUG	0x08	/* has the resume bug */
+#define	FXPF_FIX_RESUME_BUG	0x10	/* currently need to work-around
+					   the resume bug */
 
 	int	sc_txpending;		/* number of TX requests pending */
 	int	sc_txdirty;		/* first dirty TX descriptor */

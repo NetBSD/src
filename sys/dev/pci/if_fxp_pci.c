@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.12 2000/12/28 22:59:13 sommerfeld Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.13 2001/05/21 21:47:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -317,6 +317,13 @@ fxp_pci_attach(parent, self, aux)
 	 * XXX Perhaps report '557, '558, '559 based on revision?
 	 */
 	printf(": %s, rev %d\n", fpp->fpp_name, PCI_REVISION(pa->pa_class));
+
+	/*
+	 * The 82801BA Ethernet has a bug which requires us to send a
+	 * NOP before a CU_RESUME if we're in 10baseT mode.
+	 */
+	if (fpp->fpp_prodid == PCI_PRODUCT_INTEL_82801BA_LAN)
+		sc->sc_flags |= FXPF_HAS_RESUME_BUG;
 
 	/* Make sure bus-mastering is enabled. */
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.46 2001/05/21 20:59:38 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.47 2001/05/21 21:47:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -223,6 +223,21 @@ fxp_scb_wait(struct fxp_softc *sc)
 		delay(2);
 	if (i == 0)
 		printf("%s: WARNING: SCB timed out!\n", sc->sc_dev.dv_xname);
+}
+
+/*
+ * Submit a command to the i82557.
+ */
+static __inline void
+fxp_scb_cmd(struct fxp_softc *sc, u_int8_t cmd)
+{
+
+	if (cmd == FXP_SCB_COMMAND_CU_RESUME &&
+	    (sc->sc_flags & FXPF_FIX_RESUME_BUG) != 0) {
+		CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_CB_COMMAND_NOP);
+		fxp_scb_wait(sc);
+	}
+	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, cmd);
 }
 
 /*
@@ -850,7 +865,7 @@ fxp_start(struct ifnet *ifp)
 		 * Issue a Resume command in case the chip was suspended.
 		 */
 		fxp_scb_wait(sc);
-		CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_RESUME);
+		fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_RESUME);
 
 		/* Set a watchdog timer in case the chip flakes out. */
 		ifp->if_timer = 5;
@@ -1005,8 +1020,7 @@ fxp_intr(void *arg)
 			CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL,
 			    rxmap->dm_segs[0].ds_addr +
 			    RFA_ALIGNMENT_FUDGE);
-			CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND,
-			    FXP_SCB_COMMAND_RU_START);
+			fxp_scb_cmd(sc, FXP_SCB_COMMAND_RU_START);
 		}
 
 		/*
@@ -1142,8 +1156,7 @@ fxp_tick(void *arg)
 		 * Start another stats dump.
 		 */
 		FXP_CDSTATSSYNC(sc, BUS_DMASYNC_PREREAD);
-		CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND,
-		    FXP_SCB_COMMAND_CU_DUMPRESET);
+		fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_DUMPRESET);
 	} else {
 		/*
 		 * A previous command is still waiting to be accepted.
@@ -1302,10 +1315,10 @@ fxp_init(struct ifnet *ifp)
 	 */
 	fxp_scb_wait(sc);
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, 0);
-	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_BASE);
+	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_BASE);
 
 	fxp_scb_wait(sc);
-	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_RU_BASE);
+	fxp_scb_cmd(sc, FXP_SCB_COMMAND_RU_BASE);
 
 	/*
 	 * Initialize the multicast filter.  Do this now, since we might
@@ -1330,7 +1343,7 @@ fxp_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL,
 	    sc->sc_cddma + FXP_CDSTATSOFF);
 	FXP_CDSTATSSYNC(sc, BUS_DMASYNC_PREREAD);
-	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_DUMP_ADR);
+	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_DUMP_ADR);
 
 	cbp = &sc->sc_control_data->fcd_configcb;
 	memset(cbp, 0, sizeof(struct fxp_cb_config));
@@ -1386,7 +1399,7 @@ fxp_init(struct ifnet *ifp)
 	 */
 	fxp_scb_wait(sc);
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, sc->sc_cddma + FXP_CDCONFIGOFF);
-	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_START);
+	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 	/* ...and wait for it to complete. */
 	i = 1000;
 	do {
@@ -1418,7 +1431,7 @@ fxp_init(struct ifnet *ifp)
 	 */
 	fxp_scb_wait(sc);
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, sc->sc_cddma + FXP_CDIASOFF);
-	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_START);
+	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 	/* ...and wait for it to complete. */
 	i = 1000;
 	do {
@@ -1480,7 +1493,7 @@ fxp_init(struct ifnet *ifp)
 	 */
 	fxp_scb_wait(sc);
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, FXP_CDTXADDR(sc, sc->sc_txlast));
-	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_START);
+	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 
 	/*
 	 * Initialize receiver buffer area - RFA.
@@ -1489,7 +1502,7 @@ fxp_init(struct ifnet *ifp)
 	fxp_scb_wait(sc);
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL,
 	    rxmap->dm_segs[0].ds_addr + RFA_ALIGNMENT_FUDGE);
-	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_RU_START);
+	fxp_scb_cmd(sc, FXP_SCB_COMMAND_RU_START);
 
 	if (sc->sc_flags & FXPF_MII) {
 		/*
@@ -1640,8 +1653,18 @@ fxp_mdi_read(struct device *self, int phy, int reg)
 void
 fxp_statchg(struct device *self)
 {
+	struct fxp_softc *sc = (void *) self;
 
-	/* Nothing to do. */
+	/*
+	 * Determine whether or not we have to work-around the
+	 * Resume Bug.
+	 */
+	if (sc->sc_flags & FXPF_HAS_RESUME_BUG) {
+		if (IFM_TYPE(sc->sc_mii.mii_media_active) == IFM_10_T)
+			sc->sc_flags |= FXPF_FIX_RESUME_BUG;
+		else
+			sc->sc_flags &= ~FXPF_FIX_RESUME_BUG;
+	}
 }
 
 void
@@ -1785,7 +1808,7 @@ fxp_mc_setup(struct fxp_softc *sc)
 	 */
 	fxp_scb_wait(sc);
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, sc->sc_cddma + FXP_CDMCSOFF);
-	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_START);
+	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 
 	/* ...and wait for it to complete. */
 	count = 1000;
