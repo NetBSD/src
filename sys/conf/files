@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.715 2005/04/03 11:21:44 jdolecek Exp $
+#	$NetBSD: files,v 1.716 2005/04/06 11:33:54 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1240,6 +1240,7 @@ file	kern/kern_uuid.c
 file	kern/kern_xxx.c
 file	kern/kgdb_stub.c		kgdb
 file	kern/subr_autoconf.c
+file	kern/subr_blist.c
 file	kern/subr_devsw.c
 file	kern/subr_disk.c
 file	kern/subr_evcnt.c
