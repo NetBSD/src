@@ -59,21 +59,19 @@
 #ifndef HEADER_DES_H
 #define HEADER_DES_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 
 #ifdef _KERBEROS_DES_H
 #error <openssl/des.h> replaces <kerberos/des.h>.
 #endif
 
-#include <stdio.h>
 #include <sys/types.h>
 #define	DES_LONG	u_int32_t
 #include <openssl/opensslconf.h> /* DES_LONG */
 #include <openssl/e_os2.h>	/* OPENSSL_EXTERN */
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 typedef unsigned char des_cblock[8];
 typedef /* const */ unsigned char const_des_cblock[8];
@@ -148,14 +146,14 @@ void des_ecb_encrypt(const_des_cblock *input,des_cblock *output,
 	Data is a pointer to 2 unsigned long's and ks is the
 	des_key_schedule to use.  enc, is non zero specifies encryption,
 	zero if decryption. */
-void des_encrypt(DES_LONG *data,des_key_schedule ks, int enc);
+void des_encrypt1(DES_LONG *data,des_key_schedule ks, int enc);
 
-/* 	This functions is the same as des_encrypt() except that the DES
+/* 	This functions is the same as des_encrypt1() except that the DES
 	initial permutation (IP) and final permutation (FP) have been left
-	out.  As for des_encrypt(), you should not use this function.
+	out.  As for des_encrypt1(), you should not use this function.
 	It is used by the routines in the library that implement triple DES.
 	IP() des_encrypt2() des_encrypt2() des_encrypt2() FP() is the same
-	as des_encrypt() des_encrypt() des_encrypt() except faster :-). */
+	as des_encrypt1() des_encrypt1() des_encrypt1() except faster :-). */
 void des_encrypt2(DES_LONG *data,des_key_schedule ks, int enc);
 
 void des_encrypt3(DES_LONG *data, des_key_schedule ks1,
@@ -190,7 +188,7 @@ int des_enc_write(int fd,const void *buf,int len,des_key_schedule sched,
 		  des_cblock *iv);
 char *des_fcrypt(const char *buf,const char *salt, char *ret);
 char *des_crypt(const char *buf,const char *salt);
-#if !defined(PERL5) && !defined(__FreeBSD__) && !defined(NeXT)
+#if !defined(PERL5) && !defined(__FreeBSD__) && !defined(NeXT) && !defined(_UWIN) && !defined(__NetBSD__)
 char *crypt(const char *buf,const char *salt);
 #endif
 void des_ofb_encrypt(const unsigned char *in,unsigned char *out,int numbits,
@@ -224,9 +222,6 @@ void des_cfb64_encrypt(const unsigned char *in,unsigned char *out,long length,
 void des_ofb64_encrypt(const unsigned char *in,unsigned char *out,long length,
 		       des_key_schedule schedule,des_cblock *ivec,int *num);
 int des_read_pw(char *buf,char *buff,int size,const char *prompt,int verify);
-
-/* Extra functions from Mark Murray <mark@grondar.za> */
-void des_cblock_print_file(const_des_cblock *cb, FILE *fp);
 
 /* The following functions are not in the normal unix build or the
  * SSLeay build.  When using the SSLeay build, use RAND_seed()
