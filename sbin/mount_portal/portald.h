@@ -1,4 +1,4 @@
-/*	$NetBSD: portald.h,v 1.4 1995/04/23 10:33:23 cgd Exp $	*/
+/*	$NetBSD: portald.h,v 1.5 1999/08/16 06:55:27 bgrayson Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,6 +73,10 @@ extern int portal_file __P((struct portal_cred *,
 				char *key, char **v, int so, int *fdp));
 extern int portal_tcp __P((struct portal_cred *,
 				char *key, char **v, int so, int *fdp));
+extern int portal_rfilter __P((struct portal_cred *,
+				char *key, char **v, int so, int *fdp));
+extern int portal_wfilter __P((struct portal_cred *,
+				char *key, char **v, int so, int *fdp));
 
 /*
  * Global functions
@@ -80,3 +84,4 @@ extern int portal_tcp __P((struct portal_cred *,
 extern void activate __P((qelem *q, int so));
 extern char **conf_match __P((qelem *q, char *key));
 extern void conf_read __P((qelem *q, char *conf));
+extern int lose_credentials __P((struct portal_cred *));
