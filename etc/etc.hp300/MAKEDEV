@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.56 2003/07/27 14:18:03 itojun Exp $
+#	$NetBSD: MAKEDEV,v 1.57 2003/08/01 02:17:48 tsutsui Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -48,14 +48,15 @@
 # Tapes:
 #	ct*	HP300 HP-IB cartridge tape
 #	mt*	(Magnetic) 9-track reel tape
-#	st*	Exabyte tape
+#	st*	SCSI tapes
 # Disks:
 #	ccd*	"concatenated" pseudo-disks
+#	cd*	SCSI CD-ROM
 #	cgd*	cryptographic pseudo-disks
 #	md*	memory pseudo-disk devices
 #	raid*	RAIDframe disk driver
 #	rd*	HP300 HP-IB disks
-#	sd*	HP300 SCSI disks
+#	sd*	SCSI disks
 #	vnd*	"file" pseudo-disks
 # Terminal multiplexors:
 #	dca*	HP200/300 single port serial interface
@@ -71,6 +72,7 @@
 #	wsmux*	wscons events multiplexor
 #	wsfont*	console font control
 # Special purpose devices:
+#	ch*	SCSI media changer
 #	clockctl clock control for non root users
 #	fd	file descriptors
 #	grf*	raw interface to HP300 graphics devices
@@ -83,7 +85,9 @@
 #	pf	PF packet filter
 #	random	Random number generator
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
+#	ss*	SCSI scanner
 #	systrace syscall tracer
+#	uk*	unknown SCSI device
 #
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin
@@ -107,15 +111,16 @@ do
 case $i in
 
 init|all)
-	makedev std fd ct0 ct1 st0 st1 ccd0 ccd1 ccd2 rd0 rd1 rd2 md0 md1
+	makedev std fd ct0 ct1 ccd0 ccd1 ccd2 rd0 rd1 rd2 md0 md1
 	makedev cgd0 cgd1 cgd2 cgd3
 #	makedev wscons # should be after 'std'
-	makedev sd0 sd1 sd2 pty0 vnd0 vnd1 vnd2 vnd3
+	makedev sd0 sd1 sd2 cd0 cd1 st0 st1 ch0 pty0 vnd0 vnd1 vnd2 vnd3
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	makedev hil grf0 ite0 dca0 dcm0 dcm1 dcm2 dcm3 apci0
 	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	makedev tun0 tun1 tun2 tun3 lkm ipl pf random
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
+	makedev ss0 uk0 uk1
 	makedev local
 	makedev clockctl
 	makedev systrace
@@ -225,6 +230,18 @@ md*)
 	chmod 640 md${unit}? #rmd${unit}?
 	;;
 
+ss*)
+	case $i in
+	ss*) name=ss;	unit=${i#ss};	chr=49;;
+	esac
+	rm -f $name$unit n$name$unit en$name$unit
+	mknod $name$unit	c $chr $(($unit * 16 + 0))
+	mknod n$name$unit	c $chr $(($unit * 16 + 1))
+	mknod en$name$unit	c $chr $(($unit * 16 + 3))
+	chgrp operator $name$unit n$name$unit en$name$unit
+	chmod 640 $name$unit n$name$unit en$name$unit
+	;;
+
 ccd*|cgd*|fd*|raid*|rd*|sd*|vnd*)
 	case $i in
 	rd*) name=rd; unit=${i#rd}; blk=2; chr=9;;
@@ -261,6 +278,30 @@ ccd*|cgd*|fd*|raid*|rd*|sd*|vnd*)
 		echo bad unit for disk in: $i
 		;;
 	esac
+	;;
+
+ch*|uk*)
+	case $i in
+	ch*) name=ch;	unit=${i#ch};	chr=48;;
+	uk*) name=uk;	unit=${i#uk};	chr=50;;
+	esac
+	rm -f $name$unit
+	mknod $name$unit	c $chr $unit
+	chgrp operator $name$unit
+	chmod 640 $name$unit
+	;;
+
+cd*)
+	case $i in
+	cd*) name=cd;	unit=${i#cd};	chr=47;	blk=17;;
+	esac
+	rm -f $name$unit? r$name$unit?
+	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
+	mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
+	mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
+	mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
+	chgrp operator $name$unit? r$name$unit?
+	chmod 640 $name$unit? r$name$unit?
 	;;
 
 dca*)
