@@ -1789,7 +1789,7 @@ fwohci_if_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	void (*handler)(struct device *, struct mbuf *) = arg;
 
 #ifdef FW_DEBUG
-	{ int n;
+	{ int i;
 	printf("fwohci_if_input: tcode=0x%x, dlen=%d",
 	    pkt->fp_tcode, pkt->fp_dlen);
 	for (i = 0; i < pkt->fp_hlen/4; i++)
