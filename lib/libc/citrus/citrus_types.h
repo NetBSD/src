@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_types.h,v 1.1 2003/06/25 09:51:41 tshiozak Exp $	*/
+/*	$NetBSD: citrus_types.h,v 1.2 2003/07/21 07:10:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,6 +28,10 @@
 
 #ifndef _CITRUS_TYPES_H_
 #define _CITRUS_TYPES_H_
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 typedef uint32_t	_citrus_wc_t;
 typedef uint32_t	_citrus_index_t;
