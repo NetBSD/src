@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.100 2005/01/24 21:25:09 matt Exp $	*/
+/*	$NetBSD: if.h,v 1.101 2005/02/26 22:45:09 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -549,13 +549,13 @@ struct ifmediareq {
 	int	*ifm_ulist;			/* media words */
 };
 
- 
+
 struct  ifdrv {
 	char		ifd_name[IFNAMSIZ];	/* if name, e.g. "en0" */
 	unsigned long	ifd_cmd;
 	size_t		ifd_len;
 	void		*ifd_data;
-}; 
+};
 
 /*
  * Structure used in SIOCGIFCONF request.
@@ -825,7 +825,7 @@ int	sysctl_ifq __P((int *name, u_int namelen, void *oldp,
 
 #ifdef _NETBSD_SOURCE
 /*
- * sysctl for ifq (per-protocol packet input queue variant of ifqueue) 
+ * sysctl for ifq (per-protocol packet input queue variant of ifqueue)
  */
 #define CTL_IFQ_NAMES  { \
 	{ 0, 0 }, \

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.116 2005/02/03 23:42:53 perry Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.117 2005/02/26 22:45:12 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.116 2005/02/03 23:42:53 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.117 2005/02/26 22:45:12 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -910,7 +910,7 @@ send:
 
 #ifdef TCP_SIGNATURE
 #if defined(INET6) && defined(FAST_IPSEC)
-	if (tp->t_family == AF_INET) 
+	if (tp->t_family == AF_INET)
 #endif
 	if (tp->t_flags & TF_SIGNATURE) {
 		u_char *bp;
@@ -1076,7 +1076,7 @@ send:
 		u_int8_t *sigp;
 
 		sav = tcp_signature_getsav(m, th);
-		
+
 		if (sav == NULL) {
 			if (m)
 				m_freem(m);
@@ -1284,7 +1284,7 @@ send:
 		else
 			opts = NULL;
 		error = ip6_output(m, opts, (struct route_in6 *)ro,
-			so->so_options & SO_DONTROUTE, 
+			so->so_options & SO_DONTROUTE,
 			(struct ip6_moptions *)0, so, NULL);
 		break;
 	    }

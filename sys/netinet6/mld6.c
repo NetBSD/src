@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.26 2004/03/28 08:28:50 christos Exp $	*/
+/*	$NetBSD: mld6.c,v 1.27 2005/02/26 22:45:12 perry Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.26 2004/03/28 08:28:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.27 2005/02/26 22:45:12 perry Exp $");
 
 #include "opt_inet.h"
 
@@ -505,6 +505,6 @@ mld6_sendpkt(in6m, type, dst)
 		break;
 	}
 
-	ip6_output(mh, &ip6_opts, NULL, ia ? 0 : IPV6_UNSPECSRC, 
+	ip6_output(mh, &ip6_opts, NULL, ia ? 0 : IPV6_UNSPECSRC,
 	    &im6o, (struct socket *)NULL, NULL);
 }

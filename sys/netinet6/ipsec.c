@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.99 2004/10/27 23:16:56 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.100 2005/02/26 22:45:12 perry Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.99 2004/10/27 23:16:56 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.100 2005/02/26 22:45:12 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2232,7 +2232,7 @@ ipsec6_encapsulate(m, sav)
 	ip6->ip6_nxt = IPPROTO_IPV6;
 	in6_embedscope(&ip6->ip6_src,
 	    (struct sockaddr_in6 *)&sav->sah->saidx.src, NULL, NULL);
-	in6_embedscope(&ip6->ip6_dst, 
+	in6_embedscope(&ip6->ip6_dst,
 	    (struct sockaddr_in6 *)&sav->sah->saidx.dst, NULL, NULL);
 	ip6->ip6_hlim = IPV6_DEFHLIM;
 
@@ -3587,7 +3587,7 @@ sysctl_ipsec(SYSCTLFN_ARGS)
 	case IPSECCTL_DEF_ESP_NETLEV:
 	case IPSECCTL_DEF_AH_TRANSLEV:
 	case IPSECCTL_DEF_AH_NETLEV:
-		if (t != IPSEC_LEVEL_USE && 
+		if (t != IPSEC_LEVEL_USE &&
 		    t != IPSEC_LEVEL_REQUIRE)
 			return (EINVAL);
 		ipsec_invalpcbcacheall();
