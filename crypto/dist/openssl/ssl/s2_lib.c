@@ -260,20 +260,26 @@ SSL_CIPHER *ssl2_get_cipher(unsigned int u)
 
 int ssl2_pending(SSL *s)
 	{
-	return(s->s2->ract_data_length);
+	return SSL_in_init(s) ? 0 : s->s2->ract_data_length;
 	}
 
 int ssl2_new(SSL *s)
 	{
 	SSL2_STATE *s2;
 
-	if ((s2=Malloc(sizeof *s2)) == NULL) goto err;
+	if ((s2=OPENSSL_malloc(sizeof *s2)) == NULL) goto err;
 	memset(s2,0,sizeof *s2);
 
-	if ((s2->rbuf=Malloc(
+#if SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER + 3 > SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER + 2
+#  error "assertion failed"
+#endif
+
+	if ((s2->rbuf=OPENSSL_malloc(
 		SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER+2)) == NULL) goto err;
-	if ((s2->wbuf=Malloc(
-		SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER+2)) == NULL) goto err;
+	/* wbuf needs one byte more because when using two-byte headers,
+	 * we leave the first byte unused in do_ssl_write (s2_pkt.c) */
+	if ((s2->wbuf=OPENSSL_malloc(
+		SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER+3)) == NULL) goto err;
 	s->s2=s2;
 
 	ssl2_clear(s);
@@ -281,9 +287,9 @@ int ssl2_new(SSL *s)
 err:
 	if (s2 != NULL)
 		{
-		if (s2->wbuf != NULL) Free(s2->wbuf);
-		if (s2->rbuf != NULL) Free(s2->rbuf);
-		Free(s2);
+		if (s2->wbuf != NULL) OPENSSL_free(s2->wbuf);
+		if (s2->rbuf != NULL) OPENSSL_free(s2->rbuf);
+		OPENSSL_free(s2);
 		}
 	return(0);
 	}
@@ -296,10 +302,10 @@ void ssl2_free(SSL *s)
 	    return;
 
 	s2=s->s2;
-	if (s2->rbuf != NULL) Free(s2->rbuf);
-	if (s2->wbuf != NULL) Free(s2->wbuf);
+	if (s2->rbuf != NULL) OPENSSL_free(s2->rbuf);
+	if (s2->wbuf != NULL) OPENSSL_free(s2->wbuf);
 	memset(s2,0,sizeof *s2);
-	Free(s2);
+	OPENSSL_free(s2);
 	s->s2=NULL;
 	}
 
@@ -384,7 +390,7 @@ SSL_CIPHER *ssl2_get_cipher_by_char(const unsigned char *p)
 	cpp=(SSL_CIPHER **)OBJ_bsearch((char *)&cp,
 		(char *)sorted,
 		SSL2_NUM_CIPHERS,sizeof(SSL_CIPHER *),
-		(int (*)())ssl_cipher_ptr_id_cmp);
+		FP_ICC ssl_cipher_ptr_id_cmp);
 	if ((cpp == NULL) || !(*cpp)->valid)
 		return(NULL);
 	else
