@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.106.4.3 1997/02/27 19:17:28 is Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.106.4.4 1997/02/28 16:09:38 is Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -1469,7 +1469,7 @@ edinit(sc)
 	/* Copy out our station address. */
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
 		NIC_PUT(iot, ioh, nicbase, ED_P1_PAR0 + i,
-		    sc->sc_enaddr[i]);
+		    LLADDR(ifp->if_sadl)[i]);
 
 	/* Set multicast filter on chip. */
 	ed_getmcaf(&sc->sc_ethercom, mcaf);
@@ -2070,10 +2070,8 @@ edioctl(ifp, cmd, data)
 				ina->x_host =
 				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else {
-				bcopy(ina->x_host.c_host, sc->sc_enaddr,
-				    sizeof(sc->sc_enaddr));
 				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
-				    sizeof(sc->sc_enaddr));
+				    ETHER_ADDR_LEN);
 			}
 			/* Set new address. */
 			edinit(sc);
