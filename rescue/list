@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.8 2003/10/21 10:08:40 lukem Exp $
+#	$NetBSD: list,v 1.9 2003/11/29 05:47:51 simonb Exp $
 
 SRCDIRS	bin
 
@@ -133,4 +133,4 @@ SRCDIRS	gnu/usr.bin
 PROG	gzip		gunzip gzcat zcat 
 
 
-LIBS	liboverride.o -lbz2 -lcrypt -ledit -lipsec -lkvm -ll -lm -lrmt -ltermcap -lutil -lz 
+LIBS	liboverride.o -lbz2 -lcrypt -ledit -lipsec -lkvm -ll -lm -lrmt -ltermcap -lutil -lz -levent
