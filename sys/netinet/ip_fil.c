@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.34 1999/02/02 19:57:31 cjs Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.35 1999/08/26 02:15:35 marc Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.34 1999/02/02 19:57:31 cjs Exp $";
+static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.35 1999/08/26 02:15:35 marc Exp $";
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.0.2.44.2.10 1998/11/22 01:50:22 darrenr Exp ";
@@ -1105,6 +1105,8 @@ frdest_t *fdp;
 			error = ENOBUFS;	/* ??? */
 			goto sendorfree;
 		}
+		m->m_pkthdr.len = mhlen + len;
+		m->m_pkthdr.rcvif = (struct ifnet *)0;
 # ifndef sparc
 		mhip->ip_off = htons((u_short)mhip->ip_off);
 # endif
