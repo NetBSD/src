@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.94 2000/11/14 16:23:40 hubertf Exp $
+.\"	$NetBSD: main,v 1.95 2000/11/14 16:35:11 hubertf Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -270,7 +270,7 @@ Several code audits were performed. One audit replaced
 string routines that were used without bound checking, and another 
 one to identify and disable
 places where format strings were used in an
-unsafe way, allowing arbitrary data enterred by (possibly) mallicious
+unsafe way, allowing arbitrary data entered by (possibly) malicious
 users to overwrite application code, and leading from Denial of
 Service attacks to compromised system.
 .bullet)
