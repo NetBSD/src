@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_proto.c,v 1.10 1998/03/01 02:22:34 fvdl Exp $	*/
+/*	$NetBSD: uipc_proto.c,v 1.11 1998/07/18 05:04:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -71,5 +71,5 @@ struct protosw unixsw[] = {
 };
 
 struct domain unixdomain =
-    { AF_UNIX, "unix", 0, unp_externalize, unp_dispose,
+    { AF_LOCAL, "unix", 0, unp_externalize, unp_dispose,
       unixsw, &unixsw[sizeof(unixsw)/sizeof(unixsw[0])] };

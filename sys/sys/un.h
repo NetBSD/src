@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.18 1998/03/01 02:24:15 fvdl Exp $	*/
+/*	$NetBSD: un.h,v 1.19 1998/07/18 05:04:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -43,7 +43,7 @@
  */
 struct	sockaddr_un {
 	u_char	sun_len;		/* total sockaddr length */
-	u_char	sun_family;		/* AF_UNIX */
+	u_char	sun_family;		/* AF_LOCAL */
 	char	sun_path[104];		/* path name (gag) */
 };
 
