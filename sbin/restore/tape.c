@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.38 1999/01/03 01:50:34 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.38.2.1 2000/01/31 19:46:54 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.38 1999/01/03 01:50:34 lukem Exp $");
+__RCSID("$NetBSD: tape.c,v 1.38.2.1 2000/01/31 19:46:54 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -508,10 +508,9 @@ printdumpinfo()
 	fprintf(stdout, "Dump   date: %s", ctime(&spcl.c_date));
 	fprintf(stdout, "Dumped from: %s",
 	    (spcl.c_ddate == 0) ? "the epoch\n" : ctime(&spcl.c_ddate));
-	if (spcl.c_host[0] == '\0')
-		return;
 	fprintf(stderr, "Level %d dump of %s on %s:%s\n",
-		spcl.c_level, spcl.c_filesys, spcl.c_host, spcl.c_dev);
+		spcl.c_level, spcl.c_filesys, 
+		*spcl.c_host? spcl.c_host: "[unknown]", spcl.c_dev);
 	fprintf(stderr, "Label: %s\n", spcl.c_label);
 }
 
