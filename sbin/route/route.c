@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.33 1999/09/03 03:47:39 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.34 1999/11/01 13:32:38 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.33 1999/09/03 03:47:39 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.34 1999/11/01 13:32:38 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 
@@ -1411,7 +1411,7 @@ print_getmsg(rtm, msglen)
 	struct rt_msghdr *rtm;
 	int msglen;
 {
-	struct sockaddr *dst = NULL, *gate = NULL, *mask = NULL;
+	struct sockaddr *dst = NULL, *gate = NULL, *mask = NULL, *ifa = NULL;
 	struct sockaddr_dl *ifp = NULL;
 	struct sockaddr *sa;
 	char *cp;
@@ -1452,6 +1452,9 @@ print_getmsg(rtm, msglen)
 					   ((struct sockaddr_dl *)sa)->sdl_nlen)
 						ifp = (struct sockaddr_dl *)sa;
 					break;
+				case RTA_IFA:
+					ifa = sa;
+					break;
 				}
 				ADVANCE(cp, sa);
 			}
@@ -1468,6 +1471,8 @@ print_getmsg(rtm, msglen)
 	}
 	if (gate && rtm->rtm_flags & RTF_GATEWAY)
 		(void)printf("    gateway: %s\n", routename(gate));
+	if (ifa)
+		(void)printf(" local addr: %s\n", routename(ifa));
 	if (ifp)
 		(void)printf("  interface: %.*s\n",
 		    ifp->sdl_nlen, ifp->sdl_data);
