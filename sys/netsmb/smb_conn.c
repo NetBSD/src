@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.c,v 1.5 2003/02/18 10:16:49 jdolecek Exp $	*/
+/*	$NetBSD: smb_conn.c,v 1.6 2003/02/24 09:55:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.5 2003/02/18 10:16:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.6 2003/02/24 09:55:37 jdolecek Exp $");
 
 /*
  * Connection engine.
@@ -67,7 +67,7 @@ SYSCTL_NODE(_net, OID_AUTO, smb, CTLFLAG_RW, NULL, "SMB protocol");
 
 MALLOC_DEFINE(M_SMBCONN, "SMB conn", "SMB connection");
 
-static void smb_co_init(struct smb_connobj *cp, int level, char *objname);
+static void smb_co_init(struct smb_connobj *cp, int level, const char *objname);
 static void smb_co_done(struct smb_connobj *cp);
 static int  smb_co_lockstatus(struct smb_connobj *cp);
 
@@ -98,10 +98,10 @@ smb_sm_done(void)
 {
 
 	/* XXX: hold the mutex */
-	if (smb_vclist.co_usecount > 1) {
-		SMBERROR("%d connections still active\n", smb_vclist.co_usecount - 1);
-		return EBUSY;
-	}
+#ifdef DIAGNOSTIC
+	if (smb_vclist.co_usecount > 1)
+		panic("%d connections still active\n", smb_vclist.co_usecount - 1);
+#endif
 	smb_co_done(&smb_vclist);
 	return 0;
 }
@@ -226,7 +226,7 @@ out:
  * Common code for connection object
  */
 static void
-smb_co_init(struct smb_connobj *cp, int level, char *objname)
+smb_co_init(struct smb_connobj *cp, int level, const char *objname)
 {
 	SLIST_INIT(&cp->co_children);
 	smb_sl_init(&cp->co_interlock, objname);
@@ -240,7 +240,9 @@ static void
 smb_co_done(struct smb_connobj *cp)
 {
 	smb_sl_destroy(&cp->co_interlock);
-#ifndef __NetBSD__
+#ifdef __NetBSD__
+	lockmgr(&cp->co_lock, LK_DRAIN, NULL);
+#else
 	lockdestroy(&cp->co_lock);
 #endif
 }
@@ -275,20 +277,19 @@ void
 smb_co_rele(struct smb_connobj *cp, struct smb_cred *scred)
 {
 	SMB_CO_LOCK(cp);
+	lockmgr(&cp->co_lock, LK_RELEASE | LK_INTERLOCK, &cp->co_interlock);
 	if (cp->co_usecount > 1) {
 		cp->co_usecount--;
 		SMB_CO_UNLOCK(cp);
 		return;
 	}
-	if (cp->co_usecount == 0) {
-		SMBERROR("negative use_count for object %d", cp->co_level);
-		SMB_CO_UNLOCK(cp);
-		return;
-	}
+#ifdef DIAGNOSTIC
+	if (cp->co_usecount == 0)
+		panic("negative use_count for object %d", cp->co_level);
+#endif
 	cp->co_usecount--;
 	cp->co_flags |= SMBO_GONE;
 
-	lockmgr(&cp->co_lock, LK_DRAIN | LK_INTERLOCK, &cp->co_interlock);
 	smb_co_gone(cp, scred);
 }
 
@@ -313,23 +314,21 @@ smb_co_get(struct smb_connobj *cp, int flags, struct smb_cred *scred)
 void
 smb_co_put(struct smb_connobj *cp, struct smb_cred *scred)
 {
-	int flags;
 
-	flags = LK_RELEASE;
 	SMB_CO_LOCK(cp);
 	if (cp->co_usecount > 1) {
 		cp->co_usecount--;
 	} else if (cp->co_usecount == 1) {
 		cp->co_usecount--;
 		cp->co_flags |= SMBO_GONE;
-		flags = LK_DRAIN;
-	} else {
-		SMBERROR("negative usecount");
 	}
+#ifdef DIAGNOSTIC
+	else
+		panic("smb_co_put: negative usecount");
+#endif
 	lockmgr(&cp->co_lock, LK_RELEASE | LK_INTERLOCK, &cp->co_interlock);
 	if ((cp->co_flags & SMBO_GONE) == 0)
 		return;
-	lockmgr(&cp->co_lock, LK_DRAIN, NULL);
 	smb_co_gone(cp, scred);
 }
 
@@ -347,11 +346,11 @@ smb_co_lock(struct smb_connobj *cp, int flags)
 		return EINVAL;
 	if ((flags & LK_TYPE_MASK) == 0)
 		flags |= LK_EXCLUSIVE;
+#ifdef DEBUG
 	if (smb_co_lockstatus(cp) == LK_EXCLUSIVE && 
-	    (flags & LK_CANRECURSE) == 0) {
-		SMBERROR("recursive lock for object %d\n", cp->co_level);
-		return 0;
-	}
+	    (flags & LK_CANRECURSE) == 0)
+		panic("recursive lock for object %d\n", cp->co_level);
+#endif
 	return lockmgr(&cp->co_lock, flags, &cp->co_interlock);
 }
 

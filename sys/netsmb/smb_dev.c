@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.11 2003/02/18 12:18:29 jdolecek Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.12 2003/02/24 09:55:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -231,11 +231,15 @@ nsmb_dev_close(dev_t dev, int flag, int fmt, struct proc *p)
 	}
 	smb_makescred(&scred, p, NULL);
 	ssp = sdp->sd_share;
-	if (ssp != NULL)
+	if (ssp != NULL) {
+		smb_share_lock(ssp, 0);
 		smb_share_rele(ssp, &scred);
+	}
 	vcp = sdp->sd_vc;
-	if (vcp != NULL)
+	if (vcp != NULL) {
+		smb_vc_lock(vcp, 0);
 		smb_vc_rele(vcp, &scred);
+	}
 /*
 	smb_flushq(&sdp->sd_rqlist);
 	smb_flushq(&sdp->sd_rplist);
