@@ -1,6 +1,9 @@
 /*
- *	$Id: ite_cc.c,v 1.18 1994/06/13 08:13:00 chopps Exp $
+ *	$Id: ite_cc.c,v 1.19 1994/06/15 19:06:11 chopps Exp $
  */
+
+#include "grfcc.h"
+#if NGRFCC > 0
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -982,3 +985,5 @@ scrollbmap (bmap_t *bm, u_short x, u_short y, u_short width, u_short height, sho
 	}
     }
 }
+
+#endif /* NGRFCC */

@@ -1,9 +1,9 @@
 /*
- *	$Id: grf_rh.c,v 1.1 1994/06/05 07:48:42 chopps Exp $
+ *	$Id: grf_rh.c,v 1.2 1994/06/15 19:06:00 chopps Exp $
  */
 
-#include "grf.h"
-#if NGRF > 0
+#include "grfrh.h"
+#if NGRFRH > 0
 
 /*
  * Graphics routines for the Retina BLT Z3 board,
@@ -33,6 +33,11 @@ int rh_setvmode __P((struct grf_softc *gp, unsigned int mode, int txtonly));
 extern unsigned char kernel_font_8x8_width, kernel_font_8x8_height;
 extern unsigned char kernel_font_8x8_lo, kernel_font_8x8_hi;
 extern unsigned char kernel_font_8x8[];
+#ifdef KFONT_8X11
+extern unsigned char kernel_font_8x11_width, kernel_font_8x11_height;
+extern unsigned char kernel_font_8x11_lo, kernel_font_8x11_hi;
+extern unsigned char kernel_font_8x11[];
+#endif
 
 
 /*
@@ -582,7 +587,7 @@ rh_mondefok(mdp)
 		return(1);
 	case 4:
 		if (mdp->FX == 4 || (mdp->FX >= 7 && mdp->FX <= 16))
-			return(0);
+			return(1);
 		/*FALLTHROUGH*/
 	default:
 		return(0);
@@ -1068,21 +1073,31 @@ static struct MonDef monitor_defs[] = {
   /* Text-mode definitions */
 
   /* horizontal 31.5 kHz */
+#ifdef KFONT_8X11
+  { 50000000,  28,  640, 506,   81, 86, 93, 98, 95, 513, 513, 521, 535, 535,
+      4, RZ3StdPalette, 80,  46,  3680,    8,    11, kernel_font_8x11, 32,  255},
+#else
   { 50000000,  28,  640, 512,   81, 86, 93, 98, 95, 513, 513, 521, 535, 535,
       4, RZ3StdPalette, 80,  64,  5120,    8,     8, kernel_font_8x8,   32,  255},
-#if 0
-  /* horizontal 31.62 KHz (1950) */
-  { 32000000,  0,  800, 600,  201,202,218,249,248, 601, 602, 612, 628, 628,
-      8, RZ3StdPalette,1280,1024,  5120,    8,     8, kernel_font_8x8,   32,  255},
 #endif
 
   /* horizontal 38kHz */
+#ifdef KFONT_8X11
+  { 75000000,  28,  768, 594,   97, 99,107,120,117, 601, 615, 625, 638, 638,
+      4, RZ3StdPalette, 96,  54,  5184,    8,     11, kernel_font_8x11,   32,  255},
+#else
   { 75000000,  28,  768, 600,   97, 99,107,120,117, 601, 615, 625, 638, 638,
       4, RZ3StdPalette, 96,  75,  7200,    8,     8, kernel_font_8x8,   32,  255},
+#endif
 
   /* horizontal 64kHz */
+#ifdef KFONT_8X11
+  { 50000000, 24,  768, 594,   97,104,112,122,119, 601, 606, 616, 628, 628,
+      4, RZ3StdPalette, 96,  54,  5184,    8,     8, kernel_font_8x8,   32,  255},
+#else
   { 50000000, 24,  768, 600,   97,104,112,122,119, 601, 606, 616, 628, 628,
       4, RZ3StdPalette, 96,  75,  7200,    8,     8, kernel_font_8x8,   32,  255},
+#endif
 
   /* 8-bit gfx-mode definitions */
 
@@ -1166,9 +1181,15 @@ static struct MonDef monitor_defs[] = {
 };
 
 static const char *monitor_descr[] = {
+#ifdef KFONT_8X11
+  "80x46 (640x506) 31.5kHz",
+  "96x54 (768x594) 38kHz",
+  "96x54 (768x594) 64kHz",
+#else
   "80x64 (640x512) 31.5kHz",
   "96x75 (768x600) 38kHz",
   "96x75 (768x600) 64kHz",
+#endif
 
   "GFX-8 (640x480) 31.5kHz",
   "GFX-8 (640x480) 38kHz",

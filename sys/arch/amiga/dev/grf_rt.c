@@ -1,9 +1,9 @@
 /*
- *	$Id: grf_rt.c,v 1.14 1994/06/05 07:45:12 chopps Exp $
+ *	$Id: grf_rt.c,v 1.15 1994/06/15 19:06:05 chopps Exp $
  */
 
-#include "grf.h"
-#if NGRF > 0
+#include "grfrt.h"
+#if NGRFRT > 0
 
 /* Graphics routines for the Retina board, 
    using the NCR 77C22E+ VGA controller. */
