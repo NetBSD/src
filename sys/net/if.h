@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.32 1998/05/22 17:47:22 matt Exp $	*/
+/*	$NetBSD: if.h,v 1.33 1999/03/10 03:28:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -361,7 +361,7 @@ void	ether_ifattach __P((struct ifnet *, u_int8_t *));
 void	ether_input __P((struct ifnet *, struct ether_header *, struct mbuf *));
 int	ether_output __P((struct ifnet *,
 	   struct mbuf *, struct sockaddr *, struct rtentry *));
-char	*ether_sprintf __P((u_char *));
+char	*ether_sprintf __P((const u_char *));
 
 void	if_attach __P((struct ifnet *));
 void	if_down __P((struct ifnet *));
