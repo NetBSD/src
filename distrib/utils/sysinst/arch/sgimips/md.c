@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.12 2003/11/13 02:33:39 sekiya Exp $	*/
+/*	$NetBSD: md.c,v 1.13 2003/11/13 08:03:03 sekiya Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -115,11 +115,14 @@ md_post_disklabel(void)
 	set_swap(diskdev, bsdlabel);
         if (strstr(instsys.version, "(INSTALL32_IP3x)"))   
 		return run_prog(RUN_DISPLAY, MSG_cmdfail,
-	    		"%s %s", "/usr/mdec/sgivol -f -w boot /usr/mdec/boot.ip32",
+	    		"%s %s", "/usr/mdec/sgivol -f -w boot /usr/mdec/ip3xboot",
 			diskdev);
 	else
+	run_prog(RUN_DISPLAY, MSG_cmdfail,
+	 		"%s %s", "/usr/mdec/sgivol -f -w aoutboot /usr/mdec/aoutboot",
+			diskdev);
 	return run_prog(RUN_DISPLAY, MSG_cmdfail,
-	    		"%s %s", "/usr/mdec/sgivol -f -w boot /usr/mdec/boot",
+	 		"%s %s", "/usr/mdec/sgivol -f -w boot /usr/mdec/ip2xboot",
 			diskdev);
 }
 
