@@ -1,4 +1,9 @@
-/*	$NetBSD: lookup.c,v 1.3 1998/01/09 08:09:12 perry Exp $	*/
+/*	$NetBSD: lookup.c,v 1.4 1998/03/14 04:39:54 lukem Exp $	*/
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: lookup.c,v 1.4 1998/03/14 04:39:54 lukem Exp $");
+#endif
 
 /*
  * lookup.c - Lookup IP address, HW address, netmask
@@ -12,7 +17,6 @@
 
 #ifdef	ETC_ETHERS
 #include <net/if_ether.h>
-extern int ether_hostton();
 #endif
 
 #include <netdb.h>

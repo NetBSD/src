@@ -23,8 +23,10 @@
  * This file was copied from tcpdump-2.1.1 and modified.
  * There is an e-mail list for tcpdump: <tcpdump@ee.lbl.gov>
  */
+
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: print-bootp.c,v 1.3 1997/10/18 04:37:03 lukem Exp $";
+__RCSID("$NetBSD: print-bootp.c,v 1.4 1998/03/14 04:39:54 lukem Exp $");
 /* 93/10/10 <gwr@mc.com> New data-driven option print routine. */
 #endif
 
@@ -41,11 +43,19 @@ static char rcsid[] = "$NetBSD: print-bootp.c,v 1.3 1997/10/18 04:37:03 lukem Ex
 #include "bootp.h"
 #include "bootptest.h"
 
+#ifdef	__STDC__
+#define P(args) args
+#else
+#define P(args) ()
+#endif
+
 /* These decode the vendor data. */
-static void rfc1048_print();
-static void cmu_print();
-static void other_print();
-static void dump_hex();
+static void cmu_print P((u_char *, int));
+static void dump_hex P((u_char *, int));
+static void other_print P((u_char *, int));
+static void rfc1048_print P((u_char *, int));
+
+#undef P
 
 /*
  * Print bootp requests
@@ -271,8 +281,6 @@ rfc1048_opts[] = {
 };
 #define	KNOWN_OPTIONS (sizeof(rfc1048_opts) / sizeof(rfc1048_opts[0]))
 
-static void print_string();
-
 static void
 rfc1048_print(bp, length)
 	register u_char *bp;
@@ -280,7 +288,7 @@ rfc1048_print(bp, length)
 {
 	u_char tag;
 	u_char *ep;
-	register int len, j;
+	register int len;
 	u_int32 ul;
 	u_short us;
 	struct in_addr ia;
@@ -433,7 +441,6 @@ other_print(bp, length)
 {
 	u_char *ep;					/* end pointer */
 	u_char *zp;					/* points one past last non-zero byte */
-	register int i, j;
 
 	/* Setup end pointer */
 	ep = bp + length;

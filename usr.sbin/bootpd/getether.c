@@ -1,4 +1,9 @@
-/*	$NetBSD: getether.c,v 1.2 1998/01/09 08:09:08 perry Exp $	*/
+/*	$NetBSD: getether.c,v 1.3 1998/03/14 04:39:54 lukem Exp $	*/
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: getether.c,v 1.3 1998/03/14 04:39:54 lukem Exp $");
+#endif
 
 /*
  * getether.c : get the ethernet address of an interface
@@ -14,10 +19,22 @@
 #include <sys/socket.h>
 
 #include <ctype.h>
+#include <string.h>
 #include <syslog.h>
+#include <unistd.h>
 
 #include "report.h"
 #define EALEN 6
+
+#ifdef	__STDC__
+#define P(args) args
+#else
+#define P(args) ()
+#endif
+
+extern int getether P((char *, char *));
+
+#undef P
 
 #if defined(ultrix) || (defined(__osf__) && defined(__alpha))
 /*
@@ -32,6 +49,7 @@
 #include <sys/ioctl.h>
 #include <net/if.h>				/* struct ifdevea */
 
+int
 getether(ifname, eap)
 	char *ifname, *eap;
 {
@@ -110,13 +128,14 @@ getether(ifname, eap)
 #include <net/if_dl.h>
 #include <net/if_types.h>
 
+int
 getether(ifname, eap)
 	char *ifname;				/* interface name from ifconfig structure */
 	char *eap;					/* Ether address (output) */
 {
 	int fd, rc = -1;
 	register int n;
-	struct ifreq ibuf[16], ifr;
+	struct ifreq ibuf[16];
 	struct ifconf ifc;
 	register struct ifreq *ifrp, *ifend;
 

@@ -1,4 +1,9 @@
-/*	$NetBSD: getif.c,v 1.3 1998/01/09 08:09:08 perry Exp $	*/
+/*	$NetBSD: getif.c,v 1.4 1998/03/14 04:39:54 lukem Exp $	*/
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: getif.c,v 1.4 1998/03/14 04:39:54 lukem Exp $");
+#endif
 
 /*
  * getif.c : get an interface structure
@@ -36,7 +41,15 @@
 static struct ifreq ifreq[10];	/* Holds interface configuration */
 static struct ifconf ifconf;	/* points to ifreq */
 
-static int nmatch();
+#ifdef	__STDC__
+#define P(args) args
+#else
+#define P(args) ()
+#endif
+
+static int nmatch P((u_char *, u_char *));
+
+#undef P
 
 /* Return a pointer to the interface struct for the passed address. */
 struct ifreq *
@@ -86,7 +99,7 @@ getif(s, addrp)
 	while (len > 0) {
 		ifrq = (struct ifreq *) p;
 		sip = (struct sockaddr_in *) &ifrq->ifr_addr;
-		m = nmatch(addrp, &(sip->sin_addr));
+		m = nmatch((u_char *)addrp, (u_char *)&(sip->sin_addr));
 		if (m > maxmatch) {
 			maxmatch = m;
 			ifrmax = ifrq;
