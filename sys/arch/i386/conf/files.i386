@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.91 1997/10/17 18:45:53 bouyer Exp $
+#	$NetBSD: files.i386,v 1.92 1997/10/20 20:26:25 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -219,8 +219,7 @@ include "../../../dev/mii/files.mii"
 # XXX this needs to be done very late, so it's done here.  This feels
 # like a kludge, but it might be for the best.
 device	pcic {[controller = -1], [socket = -1]}
-# XXX move to dev/ic
-file	dev/isa/i82365.c		pcic
+file	dev/ic/i82365.c			pcic
 
 # PCIC pcmcia contoller
 attach	pcic at isa with pcic_isa
