@@ -1,4 +1,4 @@
-/*	$NetBSD: sprint.c,v 1.9 1998/09/09 17:22:31 tron Exp $	*/
+/*	$NetBSD: sprint.c,v 1.10 1998/12/19 16:01:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sprint.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sprint.c,v 1.9 1998/09/09 17:22:31 tron Exp $");
+__RCSID("$NetBSD: sprint.c,v 1.10 1998/12/19 16:01:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,8 @@ sflag_print()
 		pn = tmp;
 
 		for (w = pn->whead; w != NULL; w = w->next) {
-			(void)printf("%-*.*s %-*.*s ", UT_NAMESIZE, UT_NAMESIZE,
+			(void)printf("%-*.*s %-*.*s ", (int)UT_NAMESIZE, 
+			    (int)UT_NAMESIZE,
 			    pn->name, MAXREALNAME, MAXREALNAME,
 			    pn->realname ? pn->realname : "");
 			if (!w->loginat) {
@@ -161,15 +162,15 @@ stimeprint(w)
 	struct tm *delta;
 
 	delta = gmtime(&w->idletime);
-	if (!delta->tm_yday)
-		if (!delta->tm_hour)
+	if (!delta->tm_yday) {
+		if (!delta->tm_hour) {
 			if (!delta->tm_min)
 				(void)printf("    -");
 			else
 				(void)printf("%5d", delta->tm_min);
-		else
+		} else
 			(void)printf("%2d:%02d",
 			    delta->tm_hour, delta->tm_min);
-	else
+	} else
 		(void)printf("%4dd", delta->tm_yday);
 }
