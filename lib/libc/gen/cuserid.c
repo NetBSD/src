@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getlogin.c	5.9 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: cuserid.c,v 1.1 1993/10/11 19:45:55 jtc Exp $";
+static char *rcsid = "$Id: cuserid.c,v 1.2 1993/11/29 19:39:44 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -46,6 +46,7 @@ char *
 cuserid(s)
 	char *s;
 {
+	static char def[L_cuserid];
 	register struct passwd *pwd;
 
 	if ((pwd = getpwuid(geteuid())) == NULL) {
@@ -56,6 +57,7 @@ cuserid(s)
 	if (s) {
 		(void)strncpy(s, pwd->pw_name, L_cuserid);
 		return (s);
-	}
-	return (pwd->pw_name);
+	} 
+	(void)strncpy(def, pwd->pw_name, L_cuserid);
+	return (def);
 }
