@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 2001/02/23 21:23:49 reinoud Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 2001/03/04 03:40:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -787,7 +787,7 @@ paddr_t	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 int	_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
-	    vm_offset_t low, vm_offset_t high));
+	    vaddr_t low, vaddr_t high));
 #endif /* _ARM32_BUS_DMA_PRIVATE */
 
 #endif /* _ARM32_BUS_H_ */

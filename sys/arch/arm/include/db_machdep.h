@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.1 2001/02/23 21:23:47 reinoud Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.2 2001/03/04 03:50:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -42,7 +42,7 @@
 
 /* end of mangling */
 
-typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
+typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 
 typedef trapframe_t db_regs_t;

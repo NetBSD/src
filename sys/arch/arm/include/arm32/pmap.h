@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.1 2001/02/23 21:23:49 reinoud Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2 2001/03/04 03:50:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -47,7 +47,7 @@
 struct l1pt {
 	SIMPLEQ_ENTRY(l1pt)	pt_queue;	/* Queue pointers */
 	struct pglist		pt_plist;	/* Allocated page list */
-	vm_offset_t		pt_va;		/* Allocated virtual address */
+	vaddr_t			pt_va;		/* Allocated virtual address */
 	int	                pt_flags;	/* Flags */
 };
 #define	PTFLAG_STATIC		1		/* Statically allocated */
@@ -61,8 +61,8 @@ struct pmap {
 	pd_entry_t		*pm_pdir;	/* KVA of page directory */
 	struct l1pt		*pm_l1pt;	/* L1 descriptor */
 	void			*pm_unused1;	/* Reserved for l2 map */
-	vm_offset_t		pm_pptpt;	/* PA of pt's page table */
-	vm_offset_t		pm_vptpt;	/* VA of pt's page table */
+	vaddr_t			pm_pptpt;	/* PA of pt's page table */
+	vaddr_t			pm_vptpt;	/* VA of pt's page table */
 	short			pm_dref;	/* page directory ref count */
 	short			pm_count;	/* pmap reference count */
 	simple_lock_data_t	pm_lock;	/* lock on pmap */
@@ -78,7 +78,7 @@ typedef struct pmap *pmap_t;
 typedef struct pv_entry {
 	struct pv_entry *pv_next;       /* next pv_entry */
 	pmap_t          pv_pmap;        /* pmap where mapping lies */
-	vm_offset_t     pv_va;          /* virtual address for mapping */
+	vaddr_t         pv_va;          /* virtual address for mapping */
 	int             pv_flags;       /* flags */
 } *pv_entry_t;
 
@@ -115,7 +115,7 @@ struct pv_page {
  * entry address for each page hook.
  */
 typedef struct {
-        vm_offset_t va;
+        vaddr_t va;
         pt_entry_t *pte;
 } pagehook_t;
 
@@ -125,8 +125,8 @@ typedef struct {
  * addresses of various pages
  */
 typedef struct {
-	vm_offset_t pv_pa;
-	vm_offset_t pv_va;
+	vaddr_t pv_pa;
+	vaddr_t pv_va;
 } pv_addr_t;
 
 /*
@@ -155,10 +155,10 @@ extern struct pmap	kernel_pmap_store;  /* kernel_pmap points to this */
 /*
  * Functions that we need to export
  */
-extern boolean_t pmap_testbit __P((vm_offset_t, int));
-extern void pmap_changebit __P((vm_offset_t, int, int));
-extern vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
-void	pmap_procwr __P((struct proc *, vm_offset_t, u_long));
+extern boolean_t pmap_testbit __P((vaddr_t, int));
+extern void pmap_changebit __P((vaddr_t, int, int));
+extern vaddr_t pmap_map __P((vaddr_t, vaddr_t, vaddr_t, int));
+void	pmap_procwr __P((struct proc *, vaddr_t, u_long));
 #define	PMAP_NEED_PROCWR
 
 #endif	/* _KERNEL */
@@ -177,7 +177,7 @@ void	pmap_procwr __P((struct proc *, vm_offset_t, u_long));
 	((*vtopte(va) & PG_FRAME) | ((unsigned int)(va) & ~PG_FRAME))
 
 /* L1 and L2 page table macros */
-#define pmap_pde(m, v) (&((m)->pm_pdir[((vm_offset_t)(v) >> PDSHIFT)&4095]))
+#define pmap_pde(m, v) (&((m)->pm_pdir[((vaddr_t)(v) >> PDSHIFT)&4095]))
 #define pmap_pte_pa(pte)	(*(pte) & PG_FRAME)
 #define pmap_pde_v(pde)		(*(pde) != 0)
 #define pmap_pte_v(pte)		(*(pte) != 0)
