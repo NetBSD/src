@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.53 2002/10/02 16:52:47 thorpej Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.54 2002/10/04 18:58:45 soren Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.53 2002/10/02 16:52:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.54 2002/10/04 18:58:45 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,9 +345,9 @@ atapibusprint(aux, pnp)
 	inqbuf = &sa->sa_inqbuf;
 
 	dtype = scsipi_dtype(inqbuf->type & SID_TYPE);
-	printf(" drive %d: <%s, %s, %s> type %d %s %s",
-	    sa->sa_periph->periph_target ,inqbuf->vendor,
-	    inqbuf->product, inqbuf->revision, inqbuf->type, dtype,
+	printf(" drive %d: <%s, %s, %s> %s %s",
+	    sa->sa_periph->periph_target, inqbuf->vendor,
+	    inqbuf->product, inqbuf->revision, dtype,
 	    inqbuf->removable ? "removable" : "fixed");
 	return (UNCONF);
 }
