@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.1 2002/11/25 22:25:13 manu Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.2 2002/11/26 00:05:41 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.1 2002/11/25 22:25:13 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.2 2002/11/26 00:05:41 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,8 +82,7 @@ darwin_sys_sigaction(p, v, retval)
 		osa = stackgap_alloc(p, &sg, sizeof(struct sigaction));
 
 	sa.sa_handler = dsa.sa_handler.__sa_handler;
-	bzero(&sa.sa_mask.__bits, sizeof(sa.sa_mask.__bits));
-	sa.sa_mask.__bits[0] = dsa.sa_mask;
+	native_sigset13_to_sigset(&dsa.sa_mask, &sa.sa_mask);
 	if (dsa.sa_mask & DARWIN_SA_USERTRAMP)
 		DPRINTF(("darwin_sys_sigaction: ignoring SA_USERTRAMP\n"));
 	sa.sa_flags = dsa.sa_mask & ~DARWIN_SA_USERTRAMP;
@@ -109,6 +108,7 @@ darwin_sys_sigaction(p, v, retval)
 
 	sa13.sa_handler = sa.sa_handler;
 	sa13.sa_mask = sa.sa_mask.__bits[0];
+	native_sigset_to_sigset13(&sa.sa_mask, &sa13.sa_mask);
 	sa13.sa_flags = sa.sa_flags;
 
 	if ((error = copyout(&sa13, SCARG(uap, osa), sizeof(sa13))) != 0)
