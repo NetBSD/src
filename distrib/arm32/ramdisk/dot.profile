@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.4.2.1 1999/06/26 23:54:51 cgd Exp $
+#	$NetBSD: dot.profile,v 1.4.2.2 1999/06/27 00:20:10 cgd Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -39,7 +39,7 @@ export HOME
 
 umask 022
 
-ROOTDEV=/dev/md0
+ROOTDEV=/dev/md0a
 
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
