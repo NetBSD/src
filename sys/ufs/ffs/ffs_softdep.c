@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.27 2002/02/10 18:06:03 chs Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.28 2002/02/14 00:49:56 wiz Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.27 2002/02/10 18:06:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.28 2002/02/14 00:49:56 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -105,13 +105,14 @@ const char *softdep_typenames[] = {
 	"allocindir",
 	"freefrag",
 	"freeblks",
+	"freefile",
 	"diradd",
 	"mkdir",
 	"dirrem",
 	"newdirblk",
 };
 #define TYPENAME(type) \
-	((unsigned)(type) < D_LAST ? softdep_typenames[type] : "???")
+	((unsigned)(type) <= D_LAST ? softdep_typenames[type] : "???")
 /*
  * Finding the current process.
  */
