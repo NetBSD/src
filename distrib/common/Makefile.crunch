@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile.crunch,v 1.11 2002/10/17 02:05:36 lukem Exp $
+#	$NetBSD: Makefile.crunch,v 1.12 2003/03/11 07:18:38 lukem Exp $
 #
 # Makefile snippet to build a crunchgen(1)ed binary from the provided lists
-#
-
 #
 # Required variables:
 #	NETBSDSRCDIR	top level of src tree (set by <bsd.own.mk>)
@@ -22,6 +20,10 @@
 # Variables modified by this:
 #	CRUNCHENV	may get SMALLPROG=1 or SMALLPROG_INET6=1 added
 #
+
+.if !defined(_MAKEFILE_CRUNCH_)
+_MAKEFILE_CRUNCH_=1
+
 
 SMALLPROG?=		1
 SMALLPROG_INET6?=	0
@@ -58,3 +60,6 @@ cleancrunchgen:
 		${MAKE} -j 1 -f ${CRUNCHBIN}.mk clean; \
 	fi
 	rm -f ${CRUNCHBIN}.mk
+
+
+.endif	# _MAKEFILE_CRUNCH_

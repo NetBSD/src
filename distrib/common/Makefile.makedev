@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile.makedev,v 1.4 2003/03/10 23:42:45 lukem Exp $
+#	$NetBSD: Makefile.makedev,v 1.5 2003/03/11 07:18:38 lukem Exp $
 #
 # Makefile snippet to add ${MAKEDEVTARGETS} devices to the mtree list
 # (if set), otherwise copy etc.${MACHINE}/MAKEDEV to ./dev
 #
 # If this is to be used with Makefile.image, then this file should be
 # .include-d first.
-#
-
 #
 # Required variables:
 #	NETBSDSRCDIR	top level of src tree (set by <bsd.own.mk>)
@@ -18,6 +16,10 @@
 # Variables modified by this:
 #	MTREECONF	may get "devices.spec" added to it
 #
+
+.if !defined(_MAKEFILE_MAKEDEV_)
+_MAKEFILE_MAKEDEV_=1
+
 
 MAKEDEVSPEC?=	devices.spec
 
@@ -56,3 +58,6 @@ IMAGEDEPENDS+=	${NETBSDSRCDIR}/etc/etc.${MACHINE}/MAKEDEV
 ${MAKEDEVSPEC}:	.PHONY
 
 .endif	# ! MAKEDEVTARGETS
+
+
+.endif	# _MAKEFILE_MAKEDEV_
