@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)main.c	5.2 (Berkeley) 4/18/93
- *	$Id: main.c,v 1.3 1993/12/04 06:06:10 cgd Exp $
+ *	$Id: main.c,v 1.4 1994/01/08 18:19:58 cgd Exp $
  */
 
 #ifndef lint
@@ -233,7 +233,8 @@ usage:
 }
 
 /*
- * Make a symlink for "machine" so that "#include <machine/foo.h>" works.
+ * Make a symlink for "machine" so that "#include <machine/foo.h>" works,
+ * and for the machine's CPU architecture, so that works as well.
  */
 static int
 mksymlinks()
@@ -249,6 +250,21 @@ mksymlinks()
 		(void)fprintf(stderr, "config: symlink(%s -> %s): %s\n",
 		    p, buf, strerror(errno));
 	free(p);
+
+	if (machinearch != NULL) {
+		p = path(machinearch);
+		(void)sprintf(buf, "../../../%s/include", machinearch);
+	} else {
+		p = path(machine);
+		(void)sprintf(buf, "machine");
+	}
+	(void)unlink(p);
+	ret = symlink(buf, p);
+	if (ret)
+		(void)fprintf(stderr, "config: symlink(%s -> %s): %s\n",
+		    p, buf, strerror(errno));
+	free(p);
+
 	return (ret);
 }
 
