@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.10 1998/07/24 20:28:48 thorpej Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.11 1998/07/31 20:46:37 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -1001,8 +1001,10 @@ uvm_km_valloc_wait(map, size)
  * => if the pmap specifies an alternate mapping method, we use it.
  */
 
+/* ARGSUSED */
 vm_offset_t
-uvm_km_alloc_poolpage()
+uvm_km_alloc_poolpage1(map)
+	vm_map_t map;
 {
 #if defined(PMAP_MAP_POOLPAGE)
 	struct vm_page *pg;
@@ -1020,7 +1022,7 @@ uvm_km_alloc_poolpage()
 	int s;
 
 	s = splimp();
-	va = uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object, PAGE_SIZE,
+	va = uvm_km_kmemalloc(map, uvmexp.kmem_object, PAGE_SIZE,
 	    UVM_KMF_NOWAIT);
 	splx(s);
 	return (va);
@@ -1033,8 +1035,10 @@ uvm_km_alloc_poolpage()
  * => if the pmap specifies an alternate unmapping method, we use it.
  */
 
+/* ARGSUSED */
 void
-uvm_km_free_poolpage(addr)
+uvm_km_free_poolpage1(map, addr)
+	vm_map_t map;
 	vm_offset_t addr;
 {
 #if defined(PMAP_UNMAP_POOLPAGE)
@@ -1046,7 +1050,7 @@ uvm_km_free_poolpage(addr)
 	int s;
 
 	s = splimp();
-	uvm_km_free(kmem_map, addr, PAGE_SIZE);
+	uvm_km_free(map, addr, PAGE_SIZE);
 	splx(s);
 #endif /* PMAP_UNMAP_POOLPAGE */
 }
