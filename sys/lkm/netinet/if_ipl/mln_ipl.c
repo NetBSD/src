@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.28 2002/03/14 12:33:20 martti Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.29 2002/09/06 16:56:13 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.28 2002/03/14 12:33:20 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.29 2002/09/06 16:56:13 gehenna Exp $");
 
 #include <sys/param.h>
 
@@ -77,6 +77,9 @@ static	char	*ipf_devfiles[] = { IPL_NAME, IPL_NAT, IPL_STATE, IPL_AUTH,
 
 #if (defined(NetBSD1_0) && (NetBSD1_0 > 1)) || \
     (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199511))
+#if defined(__NetBSD__) && (__NetBSD_Version__ >= 106080000)
+extern const struct cdevsw ipl_cdevsw;
+#else
 struct	cdevsw	ipldevsw = 
 {
 	iplopen,		/* open */
@@ -90,6 +93,7 @@ struct	cdevsw	ipldevsw =
 	0,			/* mmap */
 	NULL			/* strategy */
 };
+#endif
 #else
 struct	cdevsw	ipldevsw = 
 {
@@ -110,7 +114,11 @@ struct	cdevsw	ipldevsw =
 #endif
 int	ipl_major = 0;
 
+#if defined(__NetBSD__) && (__NetBSD_Version__ >= 106080000)
+MOD_DEV(IPL_VERSION, "ipl", NULL, -1, &ipl_cdevsw, -1);
+#else
 MOD_DEV(IPL_VERSION, LM_DT_CHAR, -1, &ipldevsw);
+#endif
 
 extern int vd_unuseddev __P((void));
 extern struct cdevsw cdevsw[];
@@ -140,7 +148,9 @@ static int iplaction(lkmtp, cmd)
 struct lkm_table *lkmtp;
 int cmd;
 {
+#if !defined(__NetBSD__) || (__NetBSD_Version__ < 106080000)
 	int i;
+#endif
 	struct lkm_dev *args = lkmtp->private.lkm_dev;
 	int err = 0;
 
@@ -150,6 +160,14 @@ int cmd;
 		if (lkmexists(lkmtp))
 			return EEXIST;
 
+#if defined(__NetBSD__) && (__NetBSD_Version__ >= 106080000)
+		err = devsw_attach(args->lkm_devname,
+				   args->lkm_bdev, &args->lkm_bdevmaj,
+				   args->lkm_cdev, &args->lkm_cdevmaj);
+		if (err != 0)
+			return (err);
+		ipl_major = args->lkm_cdevmaj;
+#else
 		for (i = 0; i < nchrdev; i++)
 			if (cdevsw[i].d_open == (dev_type_open((*)))lkmenodev ||
 			    cdevsw[i].d_open == iplopen)
@@ -161,9 +179,15 @@ int cmd;
 
 		ipl_major = i;
 		args->lkm_offset = i;   /* slot in cdevsw[] */
+#endif
 		printf("IP Filter: loaded into slot %d\n", ipl_major);
 		return ipl_load();
 	case LKM_E_UNLOAD :
+#if defined(__NetBSD__) && (__NetBSD_Version__ >= 106080000)
+		devsw_detach(args->lkm_bdev, args->lkm_cdev);
+		args->lkm_bdevmaj = -1;
+		args->lkm_cdevmaj = -1;
+#endif
 		err = ipl_unload();
 		if (!err)
 			printf("IP Filter: unloaded from slot %d\n",
