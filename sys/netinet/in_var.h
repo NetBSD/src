@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.32 1998/12/19 02:46:12 thorpej Exp $	*/
+/*	$NetBSD: in_var.h,v 1.33 1999/05/03 22:12:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,13 +144,17 @@ void	in_socktrim __P((struct sockaddr_in *));
 /*
  * Macro for finding whether an internet address (in_addr) belongs to one
  * of our interfaces (in_ifaddr).  NULL if the address isn't ours.
+ *
+ * Note that even if we find an interface with the address we're looking
+ * for, we should skip that interface if it is not up.
  */
 #define INADDR_TO_IA(addr, ia) \
 	/* struct in_addr addr; */ \
 	/* struct in_ifaddr *ia; */ \
 { \
 	for (ia = IN_IFADDR_HASH((addr).s_addr).lh_first; \
-	    ia != NULL && !in_hosteq(ia->ia_addr.sin_addr, (addr)); \
+	    ia != NULL && !in_hosteq(ia->ia_addr.sin_addr, (addr)) && \
+	    (ia->ia_ifp->if_flags & IFF_UP) == 0; \
 	    ia = ia->ia_hash.le_next) \
 		 continue; \
 }
