@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.7 1994/11/20 20:53:02 deraadt Exp $ */
+/*	$NetBSD: aout_machdep.h,v 1.8 1997/03/15 20:54:10 pk Exp $ */
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -43,7 +43,7 @@ enum reloc_type {
 	RELOC_PC10,	RELOC_PC22,
 	RELOC_JMP_TBL,
 	RELOC_UNUSED3,
-	RELOC_GLOB_DAT,	RELOC_JMP_SLOT,	RELOC_RELATIVE,
+	RELOC_GLOB_DAT,	RELOC_JMP_SLOT,	RELOC_RELATIVE
 };
 
 /* Relocation format. */
