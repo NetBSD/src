@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.c,v 1.8 2001/04/10 08:07:56 itojun Exp $	*/
+/*	$NetBSD: channels.c,v 1.9 2001/05/08 03:02:35 onoe Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -1283,6 +1283,7 @@ channel_input_data(int type, int plen, void *ctxt)
 
 	/* Ignore any data for non-open channels (might happen on close) */
 	if (c->type != SSH_CHANNEL_OPEN &&
+	    c->type != SSH_CHANNEL_CONNECTING &&
 	    c->type != SSH_CHANNEL_X11_OPEN)
 		return;
 
