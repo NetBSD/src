@@ -38,7 +38,7 @@
  * from: Utah $Hdr: swap_pager.c 1.4 91/04/30$
  *
  *	from: @(#)swap_pager.c	7.4 (Berkeley) 5/7/91
- *	$Id: swap_pager.c,v 1.4 1993/05/20 03:59:15 cgd Exp $
+ *	$Id: swap_pager.c,v 1.5 1993/06/29 19:38:50 mycroft Exp $
  */
 
 /*
@@ -586,10 +586,8 @@ swap_pager_io(swp, m, flags)
 	bp->b_flags = B_BUSY | (flags & B_READ);
 	bp->b_proc = &proc0;	/* XXX (but without B_PHYS set this is ok) */
 	bp->b_un.b_addr = (caddr_t)kva;
-#ifndef MYCROFT_IS_A_DORK
 	if (!swb->swb_block)
 		panic("swap_pager_io: page to first block\n");
-#endif
 	bp->b_blkno = swb->swb_block + btodb(off);
 	VHOLD(swapdev_vp);
 	bp->b_vp = swapdev_vp;
