@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.63 2004/08/11 17:49:27 mycroft Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.64 2004/08/11 18:41:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,6 @@ struct wdc_softc {
 	int           cap;		/* controller capabilities */
 #define	WDC_CAPABILITY_DATA16	0x0001	/* can do 16-bit data access */
 #define	WDC_CAPABILITY_DATA32	0x0002	/* can do 32-bit data access */
-#define	WDC_CAPABILITY_DATA1K	0x8000	/* CF-style data port */
 #define WDC_CAPABILITY_MODE	0x0004	/* controller knows its PIO/DMA modes */
 #define	WDC_CAPABILITY_DMA	0x0008	/* DMA */
 #define	WDC_CAPABILITY_UDMA	0x0010	/* Ultra-DMA/33 */
@@ -174,6 +173,10 @@ struct wdc_softc {
 
 	/* if WDC_CAPABILITY_IRQACK set in 'cap' */
 	void		(*irqack)(struct wdc_channel *);
+
+	/* overridden if the backend has a different data transfer method */
+	void	(*datain_pio)(struct wdc_channel *, int, void *, size_t);
+	void	(*dataout_pio)(struct wdc_channel *, int, void *, size_t);
 };
 
 /*
