@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.26 2004/01/05 23:23:32 jmmv Exp $	*/
+/*	$NetBSD: systrace.c,v 1.27 2004/01/17 18:54:32 provos Exp $	*/
 /*	$OpenBSD: systrace.c,v 1.32 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -426,7 +426,7 @@ usage(void)
 int
 requestor_start(char *path, int docradle)
 {
-	char *argv[2];
+	char *argv[3];
 	int pair[2];
 	pid_t pid;
 
