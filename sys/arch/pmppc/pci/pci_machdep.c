@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.4 2003/01/01 21:00:42 augustss Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.5 2003/01/12 00:52:45 augustss Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -189,7 +189,7 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		printf("pci_intr_map: no mapping for pin %c\n", '@' + pin);
 		goto bad;
 	}
-printf("pci_intr_map pin=%d line=%d\n", pin, line);
+	/*printf("pci_intr_map pin=%d line=%d\n", pin, line);*/
 
 	switch (line & 3) {	/* XXX what should this be? */
 	case 0: *ihp = PMPPC_I_BPMC_INTA; break;
@@ -245,13 +245,6 @@ void
 pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin, int swiz,
     int *iline)
 {
-	int i;
-
-printf("pci_conf_interrupt: bus=%d dev=%d pin=%d swiz=%d\n", bus, dev, pin, swiz);
-	if (bus == 0) {
-		i = dev;
-	} else {
-		i = ((swiz + dev + 3) & 3);
-	}
-	*iline = i;
+	/*printf("pci_conf_interrupt: bus=%d dev=%d pin=%d swiz=%d\n", bus, dev, pin, swiz);*/
+	*iline = (swiz + dev) & 3;;
 }
