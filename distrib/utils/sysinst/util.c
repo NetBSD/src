@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.89 2003/04/06 16:12:37 jmmv Exp $	*/
+/*	$NetBSD: util.c,v 1.90 2003/05/09 12:34:42 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,7 +68,9 @@ struct  tarstats {
 
 int	extract_file (char *path);
 int	extract_dist (void);
+#if 0
 int	cleanup_dist (const char *path);
+#endif
 int	distribution_sets_exist_p (const char *path);
 static int check_for (unsigned int mode, const char *pathname);
 
@@ -525,10 +527,12 @@ extract_dist()
 				tarstats.nskipped++;
 				continue;
 			}
+#if 0
 			if (cleanup_dist(list->name) == 0) {
 				msg_display(MSG_cleanup_warn);
 				process_menu(MENU_ok);
 			}
+#endif
 			(void)snprintf(distname, STRSIZE, "%s%s", list->name,
 			    dist_postfix);
 			(void)snprintf(fname, STRSIZE, "%s/%s", ext_dir,
@@ -557,6 +561,8 @@ extract_dist()
 		return 1;
 	}
 }
+
+#if 0	/* { NOMORE */
 
 /*
  * Do pre-extract cleanup for set 'name':
@@ -737,6 +743,7 @@ cleanup_dist(name)
 		process_menu(MENU_ok);
 	return retval;
 }
+#endif	/* } NOMORE */
 
 /*
  * Get and unpack the distribution.
