@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.14 1999/02/27 10:44:26 pk Exp $	 */
+/*	$NetBSD: reloc.c,v 1.15 1999/02/27 21:38:04 scottr Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -154,8 +154,10 @@ _rtld_relocate_nonplt_object(
 	Elf_Addr        *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 	const Elf_Sym   *def;
 	const Obj_Entry *defobj;
+#if defined(__i386__) || defined(__alpha__)
 	extern Elf_Addr  _GLOBAL_OFFSET_TABLE_[];
 	extern Elf_Dyn   _DYNAMIC;
+#endif
 	Elf_Addr         tmp;
 
 	switch (ELF_R_TYPE(rela->r_info)) {
@@ -325,7 +327,7 @@ _rtld_relocate_nonplt_object(
 
 	case R_TYPE(RELATIVE):	/* word32 B + A */
 		tmp = (Elf_Addr)(obj->relocbase + rela->r_addend);
-		if (obj == &_rtld_objself && *where == tmp;
+		if (obj == &_rtld_objself && *where == tmp)
 			break;	/* GOT - already done */
 
 		*where = tmp;
