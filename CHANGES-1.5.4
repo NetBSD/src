@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.46 2002/09/09 08:06:36 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.47 2002/09/11 00:07:42 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1435,3 +1435,12 @@ sys/arch/i386/pci/pci_machdep.c			1.46
   PCI bridge (440BX).
   Note that there's still a problem that emulated 21140 cannot be driven
   by if_tlp.  Workaround is to use if_de.
+
+libexec/Makefile				1.43
+usr.bin/Makefile				1.126
+distrib/sets/lists/base/mi			1.350 via patch
+distrib/sets/lists/man/mi			1.513 via patch
+distrib/sets/lists/man/obsolete.mi		1.52
+distrib/sets/lists/base/obsolete.mi		1.53
+  obsolete usr.bin/kf and libexec/kfd for security issues, and are no longer
+  needeed.

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.169.2.27 2001/12/09 19:39:03 he Exp $
+# $NetBSD: mi,v 1.169.2.28 2002/09/11 00:07:40 itojun Exp $
 .
 ./altroot
 ./bin
@@ -245,7 +245,6 @@
 ./usr/bin/jot
 ./usr/bin/kdestroy
 ./usr/bin/kdump
-./usr/bin/kf
 ./usr/bin/kinit
 ./usr/bin/klist
 ./usr/bin/kpasswd
@@ -482,7 +481,6 @@
 ./usr/libexec/hpropd
 ./usr/libexec/identd
 ./usr/libexec/kadmind
-./usr/libexec/kfd
 ./usr/libexec/kpasswdd
 ./usr/libexec/lfs_cleanerd
 ./usr/libexec/locate.bigram
