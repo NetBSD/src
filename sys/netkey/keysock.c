@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.15 2002/01/31 06:35:25 itojun Exp $	*/
+/*	$NetBSD: keysock.c,v 1.16 2002/03/01 04:16:38 itojun Exp $	*/
 /*	$KAME: keysock.c,v 1.23 2000/09/22 08:26:33 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.15 2002/01/31 06:35:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.16 2002/03/01 04:16:38 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -71,30 +71,18 @@ struct pfkeystat pfkeystat;
  * key_usrreq()
  * derived from net/rtsock.c:route_usrreq()
  */
-#ifndef __NetBSD__
-int
-key_usrreq(so, req, m, nam, control)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-#else
 int
 key_usrreq(so, req, m, nam, control, p)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
 	struct proc *p;
-#endif /*__NetBSD__*/
 {
 	int error = 0;
 	struct keycb *kp = (struct keycb *)sotorawcb(so);
 	int s;
 
-#ifdef __NetBSD__
 	s = splsoftnet();
-#else
-	s = splnet();
-#endif
 	if (req == PRU_ATTACH) {
 		kp = (struct keycb *)malloc(sizeof(*kp), M_PCB, M_WAITOK);
 		so->so_pcb = (caddr_t)kp;
@@ -194,11 +182,7 @@ key_output(m, va_alist)
 	}
 
 	/*XXX giant lock*/
-#ifdef __NetBSD__
 	s = splsoftnet();
-#else
-	s = splnet();
-#endif
 	error = key_parse(m, so);
 	m = NULL;
 	splx(s);
