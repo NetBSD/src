@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.135 2003/10/03 15:35:03 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.136 2003/10/03 15:35:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.135 2003/10/03 15:35:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.136 2003/10/03 15:35:54 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -2180,6 +2180,7 @@ lfs_cluster_aiodone(struct buf *bp)
 		LFS_BCLEAN_LOG(fs, tbp);
 
 		if (!(tbp->b_flags & B_CALL)) {
+			KASSERT(tbp->b_flags & B_LOCKED);
 			s = splbio();
 			simple_lock(&bqueue_slock);
 			bremfree(tbp);
