@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.2 2000/01/10 15:17:32 pk Exp $
+#	$NetBSD: Makefile,v 1.3 2000/05/02 13:57:27 sjg Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
 
 .include "${TOP}/Makefile.inc"
 
-KERN=		${TOP}/../../sys/arch/${MACHINE}/compile/INSTALL/netbsd
+.include <bsd.kernobj.mk>
+KERN=		${KERNOBJDIR}/INSTALL/netbsd
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
