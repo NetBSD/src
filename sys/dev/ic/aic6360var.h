@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360var.h,v 1.1 1997/10/06 19:49:19 christos Exp $	*/
+/*	$NetBSD: aic6360var.h,v 1.2 1997/10/16 22:57:02 enami Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -116,7 +116,6 @@ struct aic_softc {
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
-	void *sc_ih;
 
 	struct scsipi_link sc_link;	/* prototype for subdevs */
 
