@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.56 2003/09/20 23:44:07 cl Exp $	*/
+/*	$NetBSD: trap.c,v 1.57 2003/10/21 00:49:34 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.56 2003/09/20 23:44:07 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.57 2003/10/21 00:49:34 fvdl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -155,7 +155,7 @@ userret(l, pc, oticks)
 		/*
 		 * We are being preempted.
 		 */
-		preempt(NULL);
+		preempt(0);
 		while ((sig = CURSIG(l)) != 0)
 			postsig(sig);
 	}

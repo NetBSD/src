@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.10 2003/10/13 21:12:12 cl Exp $	*/
+/*	$NetBSD: trap.c,v 1.11 2003/10/21 00:49:34 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.10 2003/10/13 21:12:12 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.11 2003/10/21 00:49:34 fvdl Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -202,7 +202,7 @@ userret (struct lwp *l, register_t pc, u_quad_t oticks)
 		/*
 		 * We're being preempted.
 		 */
-		preempt(NULL);
+		preempt(0);
 		while ((sig = CURSIG(l)) != 0)
 			postsig(sig);
 	}
