@@ -1,4 +1,4 @@
-/*	$NetBSD: dtf_comms.c,v 1.1 2002/07/05 13:32:04 scw Exp $	*/
+/*	$NetBSD: dtf_comms.c,v 1.2 2002/09/12 12:38:42 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -229,12 +229,13 @@ dtf_get_args(void)
 
 	trap_v->dt_magic = DTF_ASEBRK_GETARGS;
 	trap_v->dt_params = (u_int32_t)params_p;
-	__cpu_cache_purge((vaddr_t)trap_v, sizeof(struct dtf_trap));
+	__cpu_cache_dpurge((vaddr_t)trap_v, trap_p, sizeof(struct dtf_trap));
 
 	params_v->dp_desc = (u_int32_t)packet_p;
-	__cpu_cache_purge((vaddr_t)params_v, sizeof(struct dtf_params));
+	__cpu_cache_dpurge((vaddr_t)params_v, params_p,
+	    sizeof(struct dtf_params));
 
-	__cpu_cache_invalidate((vaddr_t)packet_v, DTF_MAX_PACKET_LEN);
+	__cpu_cache_dinv((vaddr_t)packet_v, packet_p, DTF_MAX_PACKET_LEN);
 
 	_dtf_trap(dtf_fpfreg_p, trap_p, dtf_frob_p);
 
@@ -260,16 +261,17 @@ static int
 dtf_send_packet(void)
 {
 
-	__cpu_cache_purge((vaddr_t)packet_v, DTF_MAX_PACKET_LEN);
+	__cpu_cache_dpurge((vaddr_t)packet_v, packet_p, DTF_MAX_PACKET_LEN);
 
 	trap_v->dt_magic = DTF_ASEBRK_DTF;
 	trap_v->dt_params = (u_int32_t)params_p;
-	__cpu_cache_purge((vaddr_t)trap_v, sizeof(struct dtf_trap));
+	__cpu_cache_dpurge((vaddr_t)trap_v, trap_p, sizeof(struct dtf_trap));
 
 	params_v->dp_desc = (u_int32_t)packet_p;
 	params_v->dp_cid = 0;
 	params_v->dp_direction = DTF_DIRECTION_TARGET2HOST;
-	__cpu_cache_purge((vaddr_t)params_v, sizeof(struct dtf_params));
+	__cpu_cache_dpurge((vaddr_t)params_v, params_p,
+	    sizeof(struct dtf_params));
 
 	_dtf_trap(dtf_fpfreg_p, trap_p, dtf_frob_p);
 
@@ -282,14 +284,15 @@ dtf_recv_packet(u_int16_t cid)
 
 	trap_v->dt_magic = DTF_ASEBRK_DTF;
 	trap_v->dt_params = (u_int32_t)params_p;
-	__cpu_cache_purge((vaddr_t)trap_v, sizeof(struct dtf_trap));
+	__cpu_cache_dpurge((vaddr_t)trap_v, trap_p, sizeof(struct dtf_trap));
 
 	params_v->dp_desc = (u_int32_t)packet_p;
 	params_v->dp_cid = cid;
 	params_v->dp_direction = DTF_DIRECTION_HOST2TARGET;
-	__cpu_cache_purge((vaddr_t)params_v, sizeof(struct dtf_params));
+	__cpu_cache_dpurge((vaddr_t)params_v, params_p,
+	    sizeof(struct dtf_params));
 
-	__cpu_cache_invalidate((vaddr_t)packet_v, DTF_MAX_PACKET_LEN);
+	__cpu_cache_dinv((vaddr_t)packet_v, packet_p, DTF_MAX_PACKET_LEN);
 
 	_dtf_trap(dtf_fpfreg_p, trap_p, dtf_frob_p);
 
