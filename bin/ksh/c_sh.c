@@ -1,4 +1,4 @@
-/*	$NetBSD: c_sh.c,v 1.5 2003/01/04 23:43:02 wiz Exp $	*/
+/*	$NetBSD: c_sh.c,v 1.6 2003/01/20 08:49:00 dsl Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -882,7 +882,7 @@ const struct builtin shbuiltins [] = {
 	{"*=return", c_exitreturn},
 	{"*=set", c_set},
 	{"*=shift", c_shift},
-	{"=times", c_times},
+	{"*=times", c_times},
 	{"*=trap", c_trap},
 	{"+=wait", c_wait},
 	{"+read", c_read},
