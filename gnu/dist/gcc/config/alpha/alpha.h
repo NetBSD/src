@@ -474,14 +474,14 @@ extern void override_options ();
    a bug in DEC's assembler. */
 
 #define LOOP_ALIGN(LABEL) \
-  (optimize > 0 && write_symbols != SDB_DEBUG ? 4 : 0)
+  (!optimize_size && optimize > 0 && write_symbols != SDB_DEBUG ? 4 : 0)
 
 /* This is how to align an instruction for optimal branching.  On
    Alpha we'll get better performance by aligning on an octaword
    boundary.  */
 
 #define ALIGN_LABEL_AFTER_BARRIER(FILE)	\
-  (optimize > 0 && write_symbols != SDB_DEBUG ? 4 : 0)
+  (!optimize_size && optimize > 0 && write_symbols != SDB_DEBUG ? 4 : 0)
 
 /* No data type wants to be aligned rounder than this.  */
 #define BIGGEST_ALIGNMENT 64
