@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 1998/02/19 23:14:22 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 1998/02/23 20:05:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -226,6 +226,10 @@ mach_init(argc, argv, code)
 	v = (caddr_t)pica_round_page(end);
 	bzero(edata, v - edata);
 
+	/*
+	 * Set the VM page size.
+	 */
+	vm_set_page_size();
 
 	/*
 	 * Copy exception-dispatch code down to exception vector.
