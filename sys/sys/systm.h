@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.94 1999/09/10 00:03:52 tron Exp $	*/
+/*	$NetBSD: systm.h,v 1.95 1999/09/15 19:35:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -291,6 +291,7 @@ void	longjmp	__P((label_t *));
 void	consinit __P((void));
 
 void	cpu_startup __P((void));
+void	cpu_configure __P((void));
 void	cpu_rootconf __P((void));
 void	cpu_dumpconf __P((void));
 void	cpu_set_kpc __P((struct proc *, void (*)(void *), void *));
