@@ -226,14 +226,12 @@ mail_owner = postfix
 # $inet_interfaces.  If this parameter is defined, then the SMTP server
 # will reject mail for unknown local users.
 #
-# The local_recipient_maps parameter accepts tables with bare usernames
-# such as unix:passwd.byname and alias maps.
+# If you use the default Postfix local delivery agent for local
+# delivery, uncomment the definition below.
 #
 # Beware: if the Postfix SMTP server runs chrooted, you may have to
-# copy the passwd database into the jail. This is system dependent.
-#
-# FOR THIS TO WORK, DO NOT SPECIFY VIRTUAL DOMAINS IN MYDESTINATION.
-# MYDESTINATION MUST LIST NON-VIRTUAL DOMAINS ONLY.
+# copy the passwd (not shadow) database into the jail. This is
+# system dependent.
 #
 #local_recipient_maps = $alias_maps unix:passwd.byname
 

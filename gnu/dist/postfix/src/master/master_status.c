@@ -113,7 +113,7 @@ static void master_status_event(int event, char *context)
     }
     if (proc->serv != serv)
 	msg_panic("%s: pointer corruption: %p != %p",
-		  myname, (char *) proc->serv, (char *) serv);
+		  myname, (void *) proc->serv, (void *) serv);
 
     /*
      * Update our idea of the child process status. Allow redundant status

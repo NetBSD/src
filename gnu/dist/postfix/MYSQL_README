@@ -3,7 +3,8 @@
 We've written code to add a mysql map type.  It utilizes the mysql
 client library, which can be obtained from:
 
-		   http://www.tcx.se/download.html
+	http://www.mysql.com/downloads/
+	http://sourceforge.net/projects/mysql/
 
 In order to build postfix with mysql map support, you will need to add 
 -DHAS_MYSQL and -I for the directory containing the mysql headers, and 
