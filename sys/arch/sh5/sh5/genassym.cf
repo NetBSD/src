@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.4 2002/08/29 16:04:10 scw Exp $
+#	$NetBSD: genassym.cf,v 1.5 2002/08/31 09:12:59 scw Exp $
 
 # Copyright 2002 Wasabi Systems, Inc.
 # All rights reserved.
@@ -251,6 +251,7 @@ define	MDP_FPSAVED		MDP_FPSAVED
 
 define	T_TRAP			T_TRAP
 define	T_AST			T_AST
+define	T_NMI			T_NMI
 define	T_WTLBMISS		T_WTLBMISS
 define	T_ITLBMISS		T_ITLBMISS
 
