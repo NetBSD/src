@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.185 2002/04/07 15:26:13 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.186 2002/04/07 15:31:56 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -427,7 +427,6 @@
 ./usr/share/man/cat8/alpha
 ./usr/share/man/cat8/amiga
 ./usr/share/man/cat8/arc
-./usr/share/man/cat8/arm32
 ./usr/share/man/cat8/atari
 ./usr/share/man/cat8/bebox
 ./usr/share/man/cat8/cats
@@ -513,7 +512,6 @@
 ./usr/share/man/man8/alpha
 ./usr/share/man/man8/amiga
 ./usr/share/man/man8/arc
-./usr/share/man/man8/arm32
 ./usr/share/man/man8/atari
 ./usr/share/man/man8/bebox
 ./usr/share/man/man8/cats
@@ -595,15 +593,17 @@
 ./usr/share/man/html8
 ./usr/share/man/html8/acorn26
 ./usr/share/man/html8/acorn32
+./usr/share/man/html8/algor
 ./usr/share/man/html8/alpha
 ./usr/share/man/html8/amiga
 ./usr/share/man/html8/arc
-./usr/share/man/html8/arm32
 ./usr/share/man/html8/atari
 ./usr/share/man/html8/bebox
+./usr/share/man/html8/cats
 ./usr/share/man/html8/cobalt
 ./usr/share/man/html8/dreamcast
 ./usr/share/man/html8/evbarm
+./usr/share/man/html8/evbsh3
 ./usr/share/man/html8/hp300
 ./usr/share/man/html8/hpcmips
 ./usr/share/man/html8/hpcsh
@@ -614,15 +614,18 @@
 ./usr/share/man/html8/mipsco
 ./usr/share/man/html8/mmeye
 ./usr/share/man/html8/mvme68k
+./usr/share/man/html8/mvmeppc
 ./usr/share/man/html8/netwinder
 ./usr/share/man/html8/news68k
 ./usr/share/man/html8/newsmips
 ./usr/share/man/html8/next68k
 ./usr/share/man/html8/pc532
+./usr/share/man/html8/playstation
 ./usr/share/man/html8/pmax
 ./usr/share/man/html8/prep
 ./usr/share/man/html8/sandpoint
 ./usr/share/man/html8/sgimips
+./usr/share/man/html8/shark
 ./usr/share/man/html8/sparc
 ./usr/share/man/html8/sparc64
 ./usr/share/man/html8/sun2
