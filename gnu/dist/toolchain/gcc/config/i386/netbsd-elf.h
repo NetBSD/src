@@ -411,7 +411,9 @@ dtors_section ()							\
 
 #define SELECT_SECTION(DECL,RELOC)					\
 {									\
-  if (TREE_CODE (DECL) == STRING_CST)					\
+  if (flag_pic && RELOC)						\
+    data_section ();							\
+  else if (TREE_CODE (DECL) == STRING_CST)				\
     {									\
       if (! flag_writable_strings)					\
 	const_section ();						\
@@ -420,11 +422,7 @@ dtors_section ()							\
     }									\
   else if (TREE_CODE (DECL) == VAR_DECL)				\
     {									\
-      if ((flag_pic && RELOC)						\
-	  || !TREE_READONLY (DECL) || TREE_SIDE_EFFECTS (DECL)		\
-	  || !DECL_INITIAL (DECL)					\
-	  || (DECL_INITIAL (DECL) != error_mark_node			\
-	      && !TREE_CONSTANT (DECL_INITIAL (DECL))))			\
+      if (! DECL_READONLY_SECTION (DECL, RELOC))			\
 	data_section ();						\
       else								\
 	const_section ();						\
