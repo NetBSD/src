@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321.c,v 1.2.2.1 2002/11/11 22:45:48 he Exp $	*/
+/*	$NetBSD: i80321.c,v 1.2.2.2 2002/12/07 19:15:57 he Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -203,6 +203,7 @@ i80321_attach(struct i80321_softc *sc)
 	i80321_mem_bs_init(&sc->sc_pci_memt, sc);
 	i80321_pci_dma_init(&sc->sc_pci_dmat, sc);
 	i80321_pci_init(&sc->sc_pci_chipset, sc);
+	i80321_local_dma_init(&sc->sc_local_dmat, sc);
 
 	/*
 	 * Attach all the IOP built-ins.
