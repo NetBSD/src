@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.19 2004/12/23 06:08:52 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.20 2004/12/23 06:12:43 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.19 2004/12/23 06:08:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.20 2004/12/23 06:12:43 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2544,6 +2544,8 @@ rtw_start(struct ifnet *ifp)
 			ctl0 |= RTW_TXCTL0_RTSEN;
 
 		d0 = &stx->stx_d0;
+
+		*(uint16_t*)wh->i_dur = htole16(d0->d_data_dur);
 
 		ctl1 = LSHIFT(d0->d_plcp_len, RTW_TXCTL1_LENGTH_MASK) |
 		    LSHIFT(d0->d_rts_dur, RTW_TXCTL1_RTSDUR_MASK);
