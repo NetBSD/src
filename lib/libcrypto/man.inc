@@ -73,8 +73,7 @@ MAN+=	openssl.cnf.5
 
 MAN+=	des_modes.7
 
-MLINKS+=openssl_des.3 des.3 \
-	openssl_des.3 des_cbc_cksum.3 \
+MLINKS+=openssl_des.3 des_cbc_cksum.3 \
 	openssl_des.3 des_cfb64_encrypt.3 \
 	openssl_des.3 des_cfb_encrypt.3 \
 	openssl_des.3 des_crypt.3 \
