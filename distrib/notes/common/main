@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.80 2000/10/11 11:56:28 tsutsui Exp $
+.\"	$NetBSD: main,v 1.81 2000/10/11 12:18:45 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .\"	--------------------  CONFIGURATION  --------------------
 .
 .nr FOR_RELEASE 1
-.ds MACHINE_LIST alpha amiga amigappc arc arm26 arm32 atari bebox cobolt
+.ds MACHINE_LIST alpha amiga amigappc arc arm26 arm32 atari bebox cobalt
 .as MACHINE_LIST " evbsh3 hp300 hpcmips i386 luna68k mac68k macppc mmeye
 .as MACHINE_LIST " mvme68k news68k newsmips next68k ofppc pc532 pmax
 .as MACHINE_LIST " prep sgimips sparc sparc64 sun3 vax x68k
@@ -152,7 +152,7 @@ release. Some highlights include:
 Ports to new platforms including:
 arc,
 arm26,
-cobolt,
+cobalt,
 evbsh3,
 hpcmips,
 luna68k,
