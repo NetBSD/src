@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.12 2001/10/13 20:03:38 augustss Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.13 2001/10/21 23:04:57 jmc Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -541,6 +541,7 @@ wsmuxdoioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 	case WSMUX_ADD_DEVICE:
 #define d ((struct wsmux_device *)data)
 		switch (d->type) {
+#if NWSMUX > 0
 #if NWSMOUSE > 0
 		case WSMUX_MOUSE:
 			return (wsmouse_add_mux(d->idx, sc));
@@ -549,7 +550,6 @@ wsmuxdoioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		case WSMUX_KBD:
 			return (wskbd_add_mux(d->idx, sc));
 #endif
-#if NWSMUX > 0
 		case WSMUX_MUX:
 			return (wsmux_add_mux(d->idx, sc));
 #endif
@@ -558,6 +558,7 @@ wsmuxdoioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		}
 	case WSMUX_REMOVE_DEVICE:
 		switch (d->type) {
+#if NWSMUX > 0
 #if NWSMOUSE > 0
 		case WSMUX_MOUSE:
 			return (wsmouse_rem_mux(d->idx, sc));
@@ -566,7 +567,6 @@ wsmuxdoioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		case WSMUX_KBD:
 			return (wskbd_rem_mux(d->idx, sc));
 #endif
-#if NWSMUX > 0
 		case WSMUX_MUX:
 			return (wsmux_rem_mux(d->idx, sc));
 #endif
