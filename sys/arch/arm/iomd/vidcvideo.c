@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.17 2003/05/06 00:29:57 reinoud Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.18 2003/10/24 23:03:50 chris Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.17 2003/05/06 00:29:57 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.18 2003/10/24 23:03:50 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -914,7 +914,7 @@ static void vv_copyrows(id, srcrow, dstrow, nrows)
 		vidcvideo_progr_scroll();	/* sadistic ; shouldnt this be on vsync? */
 
 		/* wipe out remains of the screen if nessisary */
-		if (ri->ri_emuheight != ri->ri_height) vv_eraserows(id, ri->ri_rows, 1, NULL);
+		if (ri->ri_emuheight != ri->ri_height) vv_eraserows(id, ri->ri_rows, 1, 0);
 		return;
 	};
 
