@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.89 2004/08/12 22:39:41 thorpej Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.90 2004/08/13 12:42:11 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.89 2004/08/12 22:39:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.90 2004/08/13 12:42:11 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -272,10 +272,6 @@ wdc_pcmcia_attach(parent, self, aux)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
 	}
 
-	error = wdc_pcmcia_enable(self, 1);
-	if (error)
-		goto fail;
-
 	wdc_init_shadow_regs(&sc->wdc_channel);
 	sc->sc_wdcdev.PIO_cap = 0;
 	sc->wdc_chanlist[0] = &sc->wdc_channel;
@@ -284,6 +280,10 @@ wdc_pcmcia_attach(parent, self, aux)
 	sc->wdc_channel.ch_channel = 0;
 	sc->wdc_channel.ch_wdc = &sc->sc_wdcdev;
 	sc->wdc_channel.ch_queue = &sc->wdc_chqueue;
+
+	error = wdc_pcmcia_enable(self, 1);
+	if (error)
+		goto fail;
 
 	/* We can enable and disable the controller. */
 	sc->sc_wdcdev.sc_atapi_adapter._generic.adapt_enable =
