@@ -1,4 +1,4 @@
-/*	$NetBSD: pioc.c,v 1.4 1998/09/22 00:33:51 mark Exp $	*/     
+/*	$NetBSD: pioc.c,v 1.5 2001/02/24 20:08:53 reinoud Exp $	*/     
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -46,7 +46,7 @@
 #include <sys/device.h>
 
 #include <machine/bus.h>
-#include <arm32/mainbus/mainbus.h>
+#include <arm/mainbus/mainbus.h>
 #include <arm32/mainbus/piocreg.h>
 #include <arm32/mainbus/piocvar.h>
 
