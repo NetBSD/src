@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.32 2002/10/27 20:48:15 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.33 2002/12/08 01:35:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.32 2002/10/27 20:48:15 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.33 2002/12/08 01:35:13 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,6 +76,7 @@ static int ul_oct(u_long, char *, int, int);
 #if !defined(NET2_STAT) && !defined(_LP64)
 static int ull_oct(unsigned long long, char *, int, int);
 #endif
+static int tar_gnutar_exclude_one(const char *, size_t);
 
 /*
  * Routines common to all versions of tar
@@ -1223,19 +1224,65 @@ name_split(char *name, int len)
 	return(start);
 }
 
+/* convert a glob into a RE, and add it to the list */
+static int
+tar_gnutar_exclude_one(const char *line, size_t len)
+{
+	char sbuf[MAXPATHLEN * 2 + 1 + 5];
+	int i, j;
+
+	if (line[len - 1] == '\n')
+		len--;
+	for (i = 0, j = 2; i < len; i++) {
+		/*
+		 * convert glob to regexp, escaping everything
+		 */
+		if (line[i] == '*')
+			sbuf[j++] = '.';
+		else if (line[i] == '?') {
+			sbuf[j++] = '.';
+			continue;
+		} else if (!isalnum(line[i]) && !isblank(line[i]))
+			sbuf[j++] = '\\';
+		sbuf[j++] = line[i];
+	}
+	sbuf[0] = sbuf[j + 1] = sbuf[j + 2] = '/';
+	sbuf[1] = '^';
+	sbuf[j] = '$';
+	sbuf[j + 3] = '\0';
+printf("rep_add(%s)\n", sbuf);
+	if (rep_add(sbuf) < 0)
+		return (-1);
+
+	return (0);
+}
+
 /*
- * deal with GNU tar -X switch.  basically, we go through each line of
- * the file, building a string from the "glob" lines in the file into
- * RE lines, of the form `/^RE$//', which we pass to rep_add(), which
- * will add a empty replacement (exclusion), for the named files.
+ * deal with GNU tar -X/--exclude-from & --exclude switchs.  basically,
+ * we go through each line of the file, building a string from the "glob"
+ * lines in the file into RE lines, of the form `/^RE$//', which we pass
+ * to rep_add(), which will add a empty replacement (exclusion), for the
+ * named files.
  */
+int
+tar_gnutar_minus_minus_exclude(path)
+	const char *path;
+{
+	size_t	len = strlen(path);
+
+	if (len > MAXPATHLEN)
+		tty_warn(0, "pathname too long: %s", path);
+	
+	return (tar_gnutar_exclude_one(path, len));
+}
+
 int
 tar_gnutar_X_compat(path)
 	const char *path;
 {
-	char *line, sbuf[MAXPATHLEN * 2 + 1 + 5];
+	char *line;
 	FILE *fp;
-	int lineno = 0, i, j;
+	int lineno = 0;
 	size_t len;
 
 	fp = fopen(path, "r");
@@ -1251,25 +1298,7 @@ tar_gnutar_X_compat(path)
 			tty_warn(0, "pathname too long, line %d of %s",
 			    lineno, path);
 		}
-		if (line[len - 1] == '\n')
-			len--;
-		for (i = 0, j = 2; i < len; i++) {
-			/*
-			 * convert glob to regexp, escaping everything
-			 */
-			if (line[i] == '*')
-				sbuf[j++] = '.';
-			else if (line[i] == '?')
-				line[i] = '.';
-			else if (!isalnum(line[i]) && !isblank(line[i]))
-				sbuf[j++] = '\\';
-			sbuf[j++] = line[i];
-		}
-		sbuf[0] = sbuf[j + 1] = sbuf[j + 2] = '/';
-		sbuf[1] = '^';
-		sbuf[j] = '$';
-		sbuf[j + 3] = '\0';
-		if (rep_add(sbuf) < 0)
+		if (tar_gnutar_exclude_one(line, len))
 			return (-1);
 	}
 	return (0);
