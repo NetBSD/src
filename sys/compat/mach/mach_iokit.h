@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.h,v 1.18 2003/09/11 23:16:18 manu Exp $ */
+/*	$NetBSD: mach_iokit.h,v 1.19 2003/10/18 13:25:27 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -418,7 +418,7 @@ typedef struct {
 	mach_ndr_record_t req_ndr;
 	int req_selector;
 	mach_msg_type_number_t req_incount;
-	int req_in[4096];
+	char req_in[4096];
 	mach_msg_type_number_t req_outcount;
 	
 } mach_io_connect_method_structi_structo_request_t;
