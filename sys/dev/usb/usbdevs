@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.66 1999/12/25 21:55:59 augustss Exp $
+$NetBSD: usbdevs,v 1.67 1999/12/29 21:28:31 tron Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,6 +97,7 @@ vendor ELSA		0x05cc	ELSA Gmbh
 vendor EIZONANAO	0x05e7	EIZO Nanao
 vendor PIENGINEERING	0x05f3  P.I. Engineering
 vendor CHIC		0x05fe	Chic Technology
+vendor SOLIDYEAR	0x060b	Solid Year
 vendor MACALLY		0x0618	Macally
 vendor MULTITECH	0x06e0	MultiTech
 vendor ADS		0x06e1	ADS Technologies
@@ -327,6 +328,9 @@ product SHUTTLE EUSB		0x0001	E-USB Bridge
 
 /* SIIG products */
 product SIIG DIGIFILMREADER	0x0004	DigiFilm-Combo Reader
+
+/* SOLID YEAR products */
+product	SOLIDYEAR KEYBOARD	0x2101	Solid Year USB keyboard
 
 /* STMicroelectronics products */
 product STMICRO COMMUNICATOR	0x7554	USB Communicator
