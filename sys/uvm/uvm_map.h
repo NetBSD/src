@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.12 1999/05/20 23:03:23 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.13 1999/05/23 06:27:13 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -146,6 +146,7 @@ vm_map_entry_t	uvm_map_findspace __P((vm_map_t, vaddr_t, vsize_t,
 			boolean_t));
 int		uvm_map_inherit __P((vm_map_t, vaddr_t, vaddr_t,
 			vm_inherit_t));
+int		uvm_map_advice __P((vm_map_t, vaddr_t, vaddr_t, int));
 void		uvm_map_init __P((void));
 boolean_t	uvm_map_lookup_entry __P((vm_map_t, vaddr_t, 
 			vm_map_entry_t *));
