@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.90 2000/05/07 00:25:58 wiz Exp $
+#	$NetBSD: files.pci,v 1.91 2000/05/08 16:40:44 joda Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -300,3 +300,13 @@ file dev/pci/universe_pci.c univ_pci
 device btvmeii: vmebus, univ_pci
 attach btvmeii at pci
 file dev/pci/btvmeii.c btvmeii
+
+# VT86C686A power management
+device viapm {}
+attach viapm at pci
+file dev/pci/viapm.c	viapm
+
+# hardware monitoring part of viapm
+device viaenv
+attach viaenv at viapm
+file dev/pci/viaenv.c	viaenv needs-flag
