@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.4 2002/01/16 05:56:54 thorpej Exp $ */
+/* $NetBSD: if_ie.c,v 1.5 2002/02/18 19:22:14 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -60,6 +60,9 @@
 #include "opt_ns.h"
 
 #include <sys/param.h>
+
+__RCSID("$NetBSD: if_ie.c,v 1.5 2002/02/18 19:22:14 bjh21 Exp $");
+
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
@@ -175,6 +178,24 @@ static int command_and_wait __P(( struct ie_softc *sc, u_short cmd,
 int ieprobe __P((struct device *, struct cfdata *, void *));
 void ieattach __P((struct device *, struct device *, void *));
 
+static __inline void ie_cli(struct ie_softc *);
+static __inline void ieattn(struct ie_softc *);
+static __inline void setpage(struct ie_softc *, u_long);
+static void ie_ack(struct ie_softc *, u_short);
+void PWriteShorts(char *, char *, int);
+void ReadShorts(char *, char *, int);
+static void run_tdr(struct ie_softc *);
+u_long setup_rfa(struct ie_softc *, u_long);
+static __inline int ie_buflen(struct ie_softc *, int);
+static __inline int ie_packet_len(struct ie_softc *);
+struct mbuf *ieget(struct ie_softc *, int *);
+void ie_drop_packet_buffer(struct ie_softc *);
+void ie_read_frame(struct ie_softc *, int num);
+void ierint(struct ie_softc *);
+void iexmit(struct ie_softc *);
+static void start_receiver(struct ie_softc *);
+
+
 /*
  * Our cfattach structure for the autoconfig system to chew on
  */
@@ -194,16 +215,6 @@ ie_cli(sc)
 	struct ie_softc *sc;
 {
 	WriteByte(sc->sc_fastbase + (IE_CONTROL<<2), IE_CONT_CLI);
-}
-
-/*
- * Cool down the i82586, like its namesake, it gets very hot
- */
-
-static __inline void
-ie_cooldown(temperature)
-	int temperature;
-{
 }
 
 /* 
