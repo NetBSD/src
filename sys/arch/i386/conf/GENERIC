@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.213 1999/01/22 05:40:16 sakamoto Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -395,6 +395,7 @@ fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
+vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 
 # EISA network interfaces
 ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
