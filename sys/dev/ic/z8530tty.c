@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.65 2000/03/23 07:01:34 thorpej Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.66 2000/03/24 11:46:47 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -1614,7 +1614,7 @@ zstty_rxsoft(zst, tp)
 	if (cc == zstty_rbuf_size) {
 		zst->zst_floods++;
 		if (zst->zst_errors++ == 0)
-			callout_start(&zst->zst_diag_ch, 60 * hz,
+			callout_reset(&zst->zst_diag_ch, 60 * hz,
 			    zstty_diag, zst);
 	}
 
@@ -1632,7 +1632,7 @@ zstty_rxsoft(zst, tp)
 			if (ISSET(rr1, ZSRR1_DO)) {
 				zst->zst_overflows++;
 				if (zst->zst_errors++ == 0)
-					callout_start(&zst->zst_diag_ch,
+					callout_reset(&zst->zst_diag_ch,
 					    60 * hz, zstty_diag, zst);
 			}
 			if (ISSET(rr1, ZSRR1_FE))

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.4 2000/03/23 07:01:44 thorpej Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.5 2000/03/24 11:46:48 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -160,6 +160,7 @@ int	kbd_cc_close __P((struct cons_channel *));
 struct cons_channel {
 	/* Provided by lower driver */
 	void	*cc_dev;			/* Lower device private data */
+	struct callout	cc_callout;
 	int	(*cc_iopen)			/* Open lower device */
 			__P((struct cons_channel *));
 	int	(*cc_iclose)			/* Close lower device */

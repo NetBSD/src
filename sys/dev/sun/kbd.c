@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.25 2000/03/23 07:01:44 thorpej Exp $	*/
+/*	$NetBSD: kbd.c,v 1.26 2000/03/24 11:46:47 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -752,7 +752,7 @@ kbd_input_raw(k, c)
 		/* Setup for auto-repeat after initial delay. */
 		k->k_repeating = 1;
 		k->k_repeatsym = keysym;
-		callout_reset(&k->k_reset_ch, k->k_repeat_start,
+		callout_reset(&k->k_repeat_ch, k->k_repeat_start,
 		    kbd_repeat, k);
 		return;
 	}
