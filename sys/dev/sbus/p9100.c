@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.1 2000/08/20 22:27:07 pk Exp $ */
+/*	$NetBSD: p9100.c,v 1.2 2001/01/07 05:41:50 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -287,10 +287,10 @@ p9100_shutdown(arg)
 	void *arg;
 {
 	struct p9100_softc *sc = arg;
+#ifdef RASTERCONSOLE
 	struct fbdevice *fb = &sc->sc_fb;
 	int i;
 
-#ifdef RASTERCONSOLE
 	for (i = 0; i < fb->fb_type.fb_size; i++) {
 	     if (fb->fb_pixels[i] == 1) {
 		 fb->fb_pixels[i] = 0;
