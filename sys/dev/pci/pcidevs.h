@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.120.2.11 2000/07/07 18:24:53 he Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.120.2.12 2000/07/23 17:56:10 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.113.2.9 2000/06/03 18:31:43 he Exp 
+ *	NetBSD: pcidevs,v 1.113.2.10 2000/07/07 17:13:50 he Exp 
  */
 
 /*
@@ -1290,7 +1290,12 @@
 #define	PCI_PRODUCT_WINBOND_W89C940F	0x0940		/* W89C940F Ethernet */
 
 /* Yamaha products */
-#define	PCI_PRODUCT_YAMAHA_YMF724E_V	0x0004		/* 724 Audio */
+#define	PCI_PRODUCT_YAMAHA_YMF724	0x0004		/* 724 Audio */
+#define	PCI_PRODUCT_YAMAHA_YMF740	0x000A		/* 740 Audio */
+#define	PCI_PRODUCT_YAMAHA_YMF740C	0x000C		/* 740C (DS-1) Audio */
+#define	PCI_PRODUCT_YAMAHA_YMF724F	0x000D		/* 724F (DS-1) Audio */
+#define	PCI_PRODUCT_YAMAHA_YMF744B	0x0010		/* 744 (DS-1S) Audio */
+#define	PCI_PRODUCT_YAMAHA_YMF754	0x0012		/* 754 (DS-1E) Audio */
 
 /* Zeinet products */
 #define	PCI_PRODUCT_ZEINET_1221	0x0001		/* 1221 */
