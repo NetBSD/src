@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_pageout.c,v 1.23 1996/02/05 01:54:07 christos Exp $	*/
+/*	$NetBSD: vm_pageout.c,v 1.24 1996/09/18 02:04:50 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -70,6 +70,7 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/kernel.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
@@ -319,14 +320,13 @@ vm_pageout_page(m, object)
 		break;
 	case VM_PAGER_AGAIN:
 	{
-		extern int lbolt;
-
 		/*
 		 * FAIL on a write is interpreted to mean a resource
 		 * shortage, so we put pause for awhile and try again.
 		 * XXX could get stuck here.
 		 */
-		(void) tsleep((caddr_t)&lbolt, PZERO|PCATCH, "pageout", 0);
+		(void) tsleep((caddr_t)&vm_pages_needed, PZERO|PCATCH,
+		    "pageout", hz);
 		break;
 	}
 	case VM_PAGER_FAIL:
@@ -451,9 +451,8 @@ again:
 	 * XXX rethink this
 	 */
 	if (postatus == VM_PAGER_AGAIN) {
-		extern int lbolt;
-
-		(void) tsleep((caddr_t)&lbolt, PZERO|PCATCH, "pageout", 0);
+		(void) tsleep((caddr_t)&vm_pages_needed, PZERO|PCATCH,
+		    "pageout", hz);
 		goto again;
 	} else if (postatus == VM_PAGER_BAD)
 		panic("vm_pageout_cluster: VM_PAGER_BAD");
