@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.31 1999/08/26 20:44:50 is Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.32 1999/08/27 19:23:19 is Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -281,7 +281,7 @@ bah_reset(sc)
 #endif
 
 	/* tell the routing level about the (possibly changed) link address */
-	arc_ifattach(ifp, linkaddress);
+	arc_storelladdr(ifp, linkaddress);
 
 	/* POR is NMI, but we need it below: */
 	sc->sc_intmask = BAH_RECON|BAH_POR;
