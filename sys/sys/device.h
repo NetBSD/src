@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.10 1996/02/27 21:45:51 cgd Exp $	*/
+/*	$NetBSD: device.h,v 1.11 1996/03/05 22:14:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -135,6 +135,7 @@ struct pdevinit {
 	int	pdev_count;
 };
 
+#ifdef _KERNEL
 struct	device *alldevs;	/* head of list of all devices */
 struct	evcnt *allevents;	/* head of list of all events */
 
@@ -148,5 +149,6 @@ void evcnt_attach __P((struct device *, const char *, struct evcnt *));
 
 /* compatibility definitions */
 #define config_found(d, a, p)	config_found_sm((d), (a), (p), NULL)
+#endif /* _KERNEL */
 
 #endif /* !_SYS_DEVICE_H_ */
