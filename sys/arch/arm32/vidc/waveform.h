@@ -1,4 +1,4 @@
-/*	$NetBSD: waveform.h,v 1.3 1997/10/14 12:03:20 mark Exp $	*/
+/*	$NetBSD: waveform.h,v 1.4 2001/01/22 13:31:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-static unsigned char beep_waveform[] = {
+static const unsigned char beep_waveform[] = {
     0x00, 0x06, 0x18, 0x2a, 0x3e, 0x4a, 0x54, 0x60,
     0x64, 0x68, 0x6a, 0x6a, 0x66, 0x62, 0x54, 0x3e,
     0x00, 0x45, 0x61, 0x6f, 0x7f, 0x87, 0x8d, 0x91,
