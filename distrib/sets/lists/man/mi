@@ -519,7 +519,6 @@
 ./usr/share/man/cat5/resolv.conf.0
 ./usr/share/man/cat5/rhosts.0
 ./usr/share/man/cat5/rpc.0
-./usr/share/man/cat5/securenet.0
 ./usr/share/man/cat5/security.conf.0
 ./usr/share/man/cat5/services.0
 ./usr/share/man/cat5/shells.0
@@ -535,7 +534,6 @@
 ./usr/share/man/cat5/vgrindefs.0
 ./usr/share/man/cat5/weekly.conf.0
 ./usr/share/man/cat5/wtmp.0
-./usr/share/man/cat5/ypserv.acl.0
 ./usr/share/man/cat7/ascii.0
 ./usr/share/man/cat7/environ.0
 ./usr/share/man/cat7/hier.0
@@ -1596,7 +1594,6 @@
 ./usr/share/man/man5/resolv.conf.5
 ./usr/share/man/man5/rhosts.5
 ./usr/share/man/man5/rpc.5
-./usr/share/man/man5/securenet.5
 ./usr/share/man/man5/security.conf.5
 ./usr/share/man/man5/services.5
 ./usr/share/man/man5/shells.5
@@ -1612,7 +1609,6 @@
 ./usr/share/man/man5/vgrindefs.5
 ./usr/share/man/man5/weekly.conf.5
 ./usr/share/man/man5/wtmp.5
-./usr/share/man/man5/ypserv.acl.5
 ./usr/share/man/man7/ascii.7
 ./usr/share/man/man7/environ.7
 ./usr/share/man/man7/hier.7
