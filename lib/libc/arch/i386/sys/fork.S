@@ -1,4 +1,4 @@
-/*	$NetBSD: fork.S,v 1.6 1997/07/16 14:37:30 christos Exp $	*/
+/*	$NetBSD: fork.S,v 1.7 2000/06/26 06:32:57 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,12 +40,16 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: fork.S,v 1.6 1997/07/16 14:37:30 christos Exp $")
+	RCSID("$NetBSD: fork.S,v 1.7 2000/06/26 06:32:57 kleink Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-SYSCALL(fork)
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(fork, _fork)
+#endif
+
+_SYSCALL(_fork,fork)
 	decl	%edx	/* from 1 to 0 in child, 0 to -1 in parent */
 	andl	%edx,%eax
 	ret		/* pid = fork(); */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fork.S,v 1.1 2000/05/09 21:55:51 bjh21 Exp $	*/
+/*	$NetBSD: fork.S,v 1.2 2000/06/26 06:32:56 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,7 +37,11 @@
 
 #include "SYS.h"
 
-SYSCALL(fork)
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(fork, _fork)
+#endif
+
+_SYSCALL(_fork,fork)
 	sub	r1, r1, #0x00000001
 	and	r0, r0, r1
 #ifdef __APCS_26__
