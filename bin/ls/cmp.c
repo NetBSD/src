@@ -1,4 +1,4 @@
-/*	$NetBSD: cmp.c,v 1.15 2000/07/23 20:50:44 mycroft Exp $	*/
+/*	$NetBSD: cmp.c,v 1.16 2000/07/29 03:46:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)cmp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cmp.c,v 1.15 2000/07/23 20:50:44 mycroft Exp $");
+__RCSID("$NetBSD: cmp.c,v 1.16 2000/07/29 03:46:14 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,23 +69,23 @@ __RCSID("$NetBSD: cmp.c,v 1.15 2000/07/23 20:50:44 mycroft Exp $");
 #endif
 
 int
-namecmp(a, b)
-	const FTSENT *a, *b;
+namecmp(const FTSENT *a, const FTSENT *b)
 {
+
 	return (strcmp(a->fts_name, b->fts_name));
 }
 
 int
-revnamecmp(a, b)
-	const FTSENT *a, *b;
+revnamecmp(const FTSENT *a, const FTSENT *b)
 {
+
 	return (strcmp(b->fts_name, a->fts_name));
 }
 
 int
-modcmp(a, b)
-	const FTSENT *a, *b;
+modcmp(const FTSENT *a, const FTSENT *b)
 {
+
 	if (b->fts_statp->st_mtime > a->fts_statp->st_mtime)
 		return (1);
 	else if (b->fts_statp->st_mtime < a->fts_statp->st_mtime)
@@ -99,9 +99,9 @@ modcmp(a, b)
 }
 
 int
-revmodcmp(a, b)
-	const FTSENT *a, *b;
+revmodcmp(const FTSENT *a, const FTSENT *b)
 {
+
 	if (b->fts_statp->st_mtime > a->fts_statp->st_mtime)
 		return (-1);
 	else if (b->fts_statp->st_mtime < a->fts_statp->st_mtime)
@@ -115,9 +115,9 @@ revmodcmp(a, b)
 }
 
 int
-acccmp(a, b)
-	const FTSENT *a, *b;
+acccmp(const FTSENT *a, const FTSENT *b)
 {
+
 	if (b->fts_statp->st_atime > a->fts_statp->st_atime)
 		return (1);
 	else if (b->fts_statp->st_atime < a->fts_statp->st_atime)
@@ -131,9 +131,9 @@ acccmp(a, b)
 }
 
 int
-revacccmp(a, b)
-	const FTSENT *a, *b;
+revacccmp(const FTSENT *a, const FTSENT *b)
 {
+
 	if (b->fts_statp->st_atime > a->fts_statp->st_atime)
 		return (-1);
 	else if (b->fts_statp->st_atime < a->fts_statp->st_atime)
@@ -147,9 +147,9 @@ revacccmp(a, b)
 }
 
 int
-statcmp(a, b)
-	const FTSENT *a, *b;
+statcmp(const FTSENT *a, const FTSENT *b)
 {
+
 	if (b->fts_statp->st_ctime > a->fts_statp->st_ctime)
 		return (1);
 	else if (b->fts_statp->st_ctime < a->fts_statp->st_ctime)
@@ -163,9 +163,9 @@ statcmp(a, b)
 }
 
 int
-revstatcmp(a, b)
-	const FTSENT *a, *b;
+revstatcmp(const FTSENT *a, const FTSENT *b)
 {
+
 	if (b->fts_statp->st_ctime > a->fts_statp->st_ctime)
 		return (-1);
 	else if (b->fts_statp->st_ctime < a->fts_statp->st_ctime)
@@ -179,9 +179,9 @@ revstatcmp(a, b)
 }
 
 int
-sizecmp(a, b)
-	const FTSENT *a, *b;
+sizecmp(const FTSENT *a, const FTSENT *b)
 {
+
 	if (b->fts_statp->st_size > a->fts_statp->st_size)
 		return (1);
 	if (b->fts_statp->st_size < a->fts_statp->st_size)
@@ -191,9 +191,9 @@ sizecmp(a, b)
 }
 
 int
-revsizecmp(a, b)
-	const FTSENT *a, *b;
+revsizecmp(const FTSENT *a, const FTSENT *b)
 {
+
 	if (b->fts_statp->st_size > a->fts_statp->st_size)
 		return (-1);
 	if (b->fts_statp->st_size < a->fts_statp->st_size)

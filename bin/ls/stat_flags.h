@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_flags.h,v 1.1 1998/10/10 07:38:22 mrg Exp $	*/
+/*	$NetBSD: stat_flags.h,v 1.2 2000/07/29 03:46:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,5 +35,5 @@
  *	@(#)extern.h	8.1 (Berkeley) 5/31/93
  */
 
-char	*flags_to_string __P((u_long, char *));
-int	 string_to_flags __P((char **, u_long *, u_long *));
+char	*flags_to_string(u_long, char *);
+int	 string_to_flags(char **, u_long *, u_long *);
