@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.56 1998/08/26 03:03:33 mrg Exp $
+.\"	$NetBSD: options.4,v 1.57 1998/08/29 15:32:07 mrg Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -124,7 +124,17 @@ interface was introduced.
 Enable binary compatibility with
 .Nx 1.3 .
 This allows the use of old syscalls for
-.Fn sigaltstack .
+.Fn sigaltstack ,
+and also enables the old
+.Xr swapctl 2
+command
+.Dv SWAP_STATS
+(now called
+.Dv SWAP_OSTATS ) ,
+which does not include the
+.Fa se_path
+member of
+.Va struct swapent .
 .It Cd options COMPAT_43
 Enables compatibility with
 .Bx 4.3 .
