@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.44 2000/05/28 19:03:55 sommerfeld Exp $	*/
+/*	$NetBSD: db_command.c,v 1.45 2000/06/06 05:06:25 jhawk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -626,7 +626,7 @@ db_fncall(addr, have_addr, count, modif)
 
 	retval = (*func)(args[0], args[1], args[2], args[3], args[4],
 			 args[5], args[6], args[7], args[8], args[9]);
-	db_printf("%#ln\n", retval);
+	db_printf("%s\n", db_num_to_str(retval));
 }
 
 void
