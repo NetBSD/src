@@ -1,4 +1,4 @@
-/*	$NetBSD: rrs.c,v 1.19 1998/01/05 22:00:58 cgd Exp $	*/
+/*	$NetBSD: rrs.c,v 1.19.2.1 1998/06/10 22:20:29 tv Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -292,9 +292,11 @@ claim_rrs_reloc(entry, rp, sp, relocation)
 {
 	struct relocation_info	*r = rrs_next_reloc();
 
+#if !defined(__arm32__) /* XXX spews too much on the arm32 right now. */
 	if (rp->r_address < text_start + text_size)
 		warnx("%s: RRS text relocation at %#x for \"%s\"",
 			get_file_name(entry), rp->r_address, sp->name);
+#endif
 
 #ifdef DEBUG
 printf("claim_rrs_reloc: %s in %s\n", sp->name, get_file_name(entry));
@@ -451,7 +453,11 @@ printf("claim_rrs_gotslot: %s(%d,%#x) slot offset %#x, addend %#x\n",
 		 * Reduce to just a base-relative translation.
 		 */
 
+#if defined(__arm32__) && 1 /* XXX MAGIC! */
+		*GOTP(sp->gotslot_offset) = sp->value /*+ addend*/;
+#else
 		*GOTP(sp->gotslot_offset) = sp->value + addend;
+#endif
 		reloc_type = RELTYPE_RELATIVE;
 
 	} else if ((link_mode & SYMBOLIC) || rrs_section_type == RRS_PARTIAL) {
@@ -517,7 +523,11 @@ claim_rrs_internal_gotslot(entry, rp, lsp, addend)
 {
 	struct relocation_info	*r;
 
+#if defined(__arm32__) && 1 /* XXX MAGIC! */
+	addend = lsp->nzlist.nz_value; /*XXX */
+#else
 	addend += lsp->nzlist.nz_value;
+#endif
 
 	if (!RELOC_STATICS_THROUGH_GOT_P(r))
 		return addend - got_symbol->value;
