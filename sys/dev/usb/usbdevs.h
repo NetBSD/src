@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.21 1999/01/26 22:32:22 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.22 1999/03/29 17:24:33 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.21 1999/01/26 22:21:55 augustss Exp 
+ *	NetBSD: usbdevs,v 1.22 1999/03/29 17:23:45 augustss Exp 
  */
 
 /*
@@ -64,6 +64,7 @@
 #define	USB_VENDOR_CONNECTIX	0x0478		/* Connectix */
 #define	USB_VENDOR_ACER	0x04a5		/* Acer Peripherals */
 #define	USB_VENDOR_CYPRESS	0x04b4		/* Cypress Semiconductor */
+#define	USB_VENDOR_EPSON	0x04b8		/* Epson */
 #define	USB_VENDOR_3COM	0x04c1		/* 3Com */
 #define	USB_VENDOR_KONICA	0x04c8		/* Konica Corporation */
 #define	USB_VENDOR_SHUTTLE	0x04e6		/* Shuttle Technology */
@@ -129,6 +130,9 @@
 
 /* Cypress Semiconduuctor products */
 #define	USB_PRODUCT_CYPRESS_MOUSE	0x0001		/* mouse */
+
+/* Epson products */
+#define	USB_PRODUCT_EPSON_PRINTER3	0x0003		/* printer adapter */
 
 /* 3Com products */
 #define	USB_PRODUCT_3COM_USR56K	0x3021		/* U.S.Robotics 56000 Voice USB Modem */
