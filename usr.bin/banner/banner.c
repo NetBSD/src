@@ -1,4 +1,4 @@
-/*	$NetBSD: banner.c,v 1.7 2001/02/20 23:51:59 cgd Exp $	*/
+/*	$NetBSD: banner.c,v 1.8 2003/03/13 11:57:23 mjl Exp $	*/
 
 /*
  *	Changes for banner(1)
@@ -62,7 +62,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: banner.c,v 1.7 2001/02/20 23:51:59 cgd Exp $");
+__RCSID("$NetBSD: banner.c,v 1.8 2003/03/13 11:57:23 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,7 +141,7 @@ scan_out(int scfd, char *scsp, int dlm)
 		if (BackGnd != ' ')
 		    *strp++ = BackGnd;
 		sp = scsp;
-		for (nchrs = 0; ; ) {
+		for (nchrs = 0; *sp != dlm && *sp != '\0'; ) {
 			d = dropit(c = TRC(cc = *sp++));
 			if ((!d && scnhgt > HEIGHT) || (scnhgt <= Drop && d))
 				for (j = WIDTH; --j;)
@@ -152,7 +152,7 @@ scan_out(int scfd, char *scsp, int dlm)
 			else
 				strp = scnline(
 				    scnkey_lpd[(int)c][scnhgt-1-d], strp, cc);
-			if (*sp == dlm || *sp == '\0' || nchrs++ >= PW/(WIDTH+1)-1)
+			if (nchrs++ >= PW/(WIDTH+1)-1)
 				break;
 			*strp++ = BackGnd;
 		}
@@ -197,9 +197,8 @@ main(int argc, char **argv)
 	}
 
 	for (; optind < argc; ++optind) {
-		(void)strncpy(word, argv[optind], sizeof (word) - 1);
-		word[sizeof (word) - 1] = '\0';
-		scan_out(1, word, '\0');
+		(void)strlcpy(word, argv[optind], sizeof (word));
+		scan_out(STDOUT_FILENO, word, '\0');
 	}
 	exit(0);
 }
