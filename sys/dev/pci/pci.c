@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.48 2000/05/10 08:39:58 kleink Exp $	*/
+/*	$NetBSD: pci.c,v 1.49 2000/06/28 16:08:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -63,13 +63,20 @@ struct pci_softc {
 	u_int sc_intrswiz;
 	pcitag_t sc_intrtag;
 	int sc_flags;
+#ifdef __PCI_OFW_BINDING
+	int sc_node;
+#endif
 };
 
 struct cfattach pci_ca = {
 	sizeof(struct pci_softc), pcimatch, pciattach
 };
 
+#ifdef __PCI_OFW_BINDING
+void	pci_ofw_probe_bus __P((struct device *));
+#else
 void	pci_probe_bus __P((struct device *));
+#endif
 int	pciprint __P((void *, const char *));
 int	pcisubmatch __P((struct device *, struct cfdata *, void *));
 
@@ -126,6 +133,19 @@ pcimatch(parent, cf, aux)
 	return 1;
 }
 
+#ifdef __PCI_OFW_BINDING
+void
+pci_ofw_probe_bus(self)
+	struct device *self;
+{
+	struct pci_softc *sc = (struct pci_softc *)self;
+	int node;
+
+	for (node = OF_child(sc->sc_node); node; node = OF_peer(node)) {
+
+	}
+}
+#else
 void
 pci_probe_bus(self)
 	struct device *self;
@@ -228,6 +248,7 @@ pci_probe_bus(self)
 		}
 	}
 }
+#endif
 
 void
 pciattach(parent, self, aux)
@@ -286,8 +307,13 @@ pciattach(parent, self, aux)
 	sc->sc_intrswiz = pba->pba_intrswiz;
 	sc->sc_intrtag = pba->pba_intrtag;
 	sc->sc_flags = pba->pba_flags;
+#ifdef __PCI_OFW_BINDING
+	sc->sc_node = pba->pba_node;
 
+	pci_ofw_probe_bus(self);
+#else
 	pci_probe_bus(self);
+#endif
 }
 
 int

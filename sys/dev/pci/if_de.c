@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.91 2000/06/26 14:21:11 mrg Exp $	*/
+/*	$NetBSD: if_de.c,v 1.92 2000/06/28 16:08:42 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -99,9 +99,12 @@
 #include <netns/ns_if.h>
 #endif
 
-#include <vm/vm.h>
+#if defined(__NetBSD__)
+#include <uvm/uvm_extern.h>
+#endif
 
 #if defined(__FreeBSD__)
+#include <vm/vm.h>
 #include <vm/pmap.h>
 #include <pci.h>
 #include <netinet/if_ether.h>

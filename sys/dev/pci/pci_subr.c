@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.35 2000/03/22 00:36:29 cgd Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.36 2000/06/28 16:08:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -685,7 +685,7 @@ pci_conf_print_type0(pc, tag, regs)
 		printf("(pin D)");
 		break;
 	default:
-		printf("(???)");
+		printf("(? ? ?)");
 		break;
 	}
 	printf("\n");
@@ -839,7 +839,7 @@ pci_conf_print_type1(pc, tag, regs)
 		printf("(pin D)");
 		break;
 	default:
-		printf("(???)");
+		printf("(? ? ?)");
 		break;
 	}
 	printf("\n");
@@ -952,7 +952,7 @@ pci_conf_print_type2(pc, tag, regs)
 		printf("(pin D)");
 		break;
 	default:
-		printf("(???)");
+		printf("(? ? ?)");
 		break;
 	}
 	printf("\n");

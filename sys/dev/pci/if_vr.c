@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.34 2000/03/23 07:01:39 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.35 2000/06/28 16:08:46 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
 #include <sys/socket.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>		/* for PAGE_SIZE */
+#include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
 
 #include <net/if.h>
 #include <net/if_arp.h>

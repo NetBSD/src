@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.33 2000/06/26 14:21:12 mrg Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.34 2000/06/28 16:08:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -83,10 +83,9 @@
 #include <netns/ns_if.h>
 #endif
 
-#include <vm/vm.h>
-
 #if defined(__NetBSD__)
 #include <net/if_ether.h>
+#include <uvm/uvm_extern.h>
 #if defined(INET)
 #include <netinet/if_inarp.h>
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.31 2000/06/26 14:21:11 mrg Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.32 2000/06/28 16:08:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -72,9 +72,8 @@
 #include <net/if_fddi.h>
 #endif
 
-#include <vm/vm.h>
-
 #if defined(__FreeBSD__)
+#include <vm/vm.h>
 #include "fpa.h"
 #include <netinet/if_ether.h>
 #include <pci/pcivar.h>
