@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.5 2001/12/04 23:33:33 augustss Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.6 2001/12/05 01:13:58 augustss Exp $	*/
 
 /*
  * TODO
@@ -12,7 +12,8 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (lennart@augustsson.net).
+ * by Lennart Augustsson (lennart@augustsson.net) and Tommy Bohlin
+ * (tommy@gatespace.com).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -45,6 +46,7 @@
 
 /*
  * Loosely based on ppp_tty.c.
+ * Framing and dongle handing written by Tommy Bohlin.
  */
 
 #include <sys/param.h>
